@@ -24,49 +24,15 @@ Constructing the canonical distributive law
 - [x] Step 6: Unit coherence
   (`polyFreeMPure_proof_irrel`,
   `polyDistLaw_unit_approx`, `polyDistLaw_unit`)
+- [x] Step 4: Naturality of `polyDistLawMor`
+  (`polyDistLaw_annot_natural`,
+  `polyCofixApprox_intro_polyScale_congr`,
+  `polyDistLaw_naturality_approx_leaf`,
+  `polyDistLaw_naturality_approx`,
+  `polyDistLaw_naturality`)
 - [x] Import added to `GebLean.lean`
 
 ## Remaining Tasks
-
-- [ ] Step 4: Naturality of `polyDistLawMor`
-  - Need `NatTrans` construction
-  - Proof by `PolyCofix.ext` + induction on approx depth
-  - **Node case compiles** (uses `polyDistLaw_annot_natural`
-    + `congr 1` + `funext` + IH)
-  - **Leaf case is blocked** by dependent-type transport:
-    the P-index `(polyCofreeMapAt ... mA).head.2` differs
-    propositionally from `mA.head.2` (equal by
-    `polyCofreeMapAt_head_snd`), and this affects the
-    children domain types.  `subst`/`rw`/`congr` all fail
-    because the P-index appears in dependent positions.
-  - **Recommended approach**: define a helper lemma
-    `polyCofixApprox_intro_polyScale_congr` that takes
-    the index and children equalities as `HEq` arguments
-    (the version with `{p1 p2}` as implicit parameters
-    and `subst` in the proof compiles).  The remaining
-    issue is constructing the children `HEq` for the
-    leaf case: each child from `polyFreeMCoalgStrAt` on
-    the mapped tree relates to the mapped version of the
-    child from the original tree via the IH, but the
-    transport through `polyCofreeMapAt` children must be
-    made explicit.
-  - Utility lemmas available:
-    - `polyDistLaw_annot_natural` (annotation compatibility)
-    - `polyCofreeMapAt_head_snd` (P-index preservation)
-    - `polyCofreeExtract_mapAt_val` (annotation value)
-    - `polyCofreeCounit_naturality` (counit naturality)
-    - `polyFreeMapAt_comp` (free map composition)
-    - `polyCofixApprox_intro_polyScale_congr` (intro eq)
-  - Consider writing a lemma about `polyCofreeMapAt`
-    children: `(polyCofreeMapAt A B P f mA).children e1
-    ≍ polyCofreeMapAt A B P f (mA.children e2)` when
-    `HEq e1 e2` (with appropriate casts from `hidx`)
-- [ ] Step 6: Unit coherence
-  (`T.eta.app (D.obj A) >> dist.app A = D.map (T.eta.app A)`)
-  - LHS: embed in leaf then unfold via anamorphism
-  - RHS: map annotations by `polyFreeUnit`
-  - Both produce same cofree element at each approx depth
-  - Similar proof structure to `polyCofree_right_triangle_approx`
 - [ ] Step 7: Comultiplication coherence
   - Both sides map `T(D(A)) --> D(D(T(A)))`
   - Use `polyCofixUnfoldHom_unique`: show both are coalgebra

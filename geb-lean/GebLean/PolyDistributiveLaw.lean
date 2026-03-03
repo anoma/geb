@@ -449,4 +449,531 @@ lemma polyDistLaw_unit
     intro n
     exact polyDistLaw_unit_approx A P m n
 
+/-! ## Step 4: Naturality of the Distributive Law
+
+Naturality states: for all `f : A ⟶ B`,
+```
+T(D(f)) ≫ lambda_B = lambda_A ≫ D(T(f))
+```
+where `T(D(f)) = polyFreeMap ... (polyCofreeMap A B P f)` and
+`D(T(f)) = polyCofreeMap ... (polyFreeMap A B P f)`.
+
+The proof proceeds by `PolyCofix.ext` + induction on the
+approximation depth.
+-/
+
+/--
+Annotation naturality: the T-annotation component of the
+distributive law scale coalgebra commutes with `f`.
+
+Concretely, applying `T(D(f))` to a tree and then extracting
+the T(B)-annotation equals extracting the T(A)-annotation
+and then applying `T(f)`.
+-/
+lemma polyDistLaw_annot_natural
+    (A B : Over X) (P : PolyEndo X) (f : A ⟶ B)
+    {x : X}
+    (t : PolyFreeM (polyCofreeCarrier A P) P x) :
+    polyFreeMapAt
+      (polyCofreeCarrier B P) B P
+      (polyCofreeCounit B P) x
+      (polyFreeMapAt
+        (polyCofreeCarrier A P)
+        (polyCofreeCarrier B P) P
+        (polyCofreeMap A B P f) x t) =
+    polyFreeMapAt A B P f x
+      (polyFreeMapAt
+        (polyCofreeCarrier A P) A P
+        (polyCofreeCounit A P) x t) := by
+  rw [← polyFreeMapAt_comp]
+  rw [← polyFreeMapAt_comp]
+  congr 1
+  exact polyCofreeCounit_naturality A B P f
+
+/--
+`polyCofixUnfoldApprox` results are HEq when the base
+points are equal and the inputs are HEq.
+-/
+lemma polyCofixUnfoldApprox_input_heq
+    (Q : PolyEndo X) (α : PolyCoalg Q) {n : Nat}
+    {x1 x2 : X} (hx : x1 = x2)
+    {v1 : { a // α.V.hom a = x1 }}
+    {v2 : { a // α.V.hom a = x2 }}
+    (hv : HEq v1 v2) :
+    HEq (polyCofixUnfoldApprox Q α n x1 v1)
+        (polyCofixUnfoldApprox Q α n x2 v2) := by
+  subst hx
+  exact heq_of_eq (congrArg _ (eq_of_heq hv))
+
+/--
+For `polyScale` approximations, two `.intro` values are equal
+when their P-indices match, annotations match, and children
+match (with the same domain since the P-indices agree).
+-/
+lemma polyCofixApprox_intro_polyScale_congr
+    (T : Over X) (P : PolyEndo X) {n : Nat} {x : X}
+    {a1 : { v : T.left // T.hom v = x }}
+    {a2 : { v : T.left // T.hom v = x }}
+    {p1 p2 : polyBetweenIndex X X P x}
+    (hp : p1 = p2)
+    (ha : a1 = a2)
+    {ch1 :
+      ∀ (e : (polyBetweenFamily X X P x p1).left),
+      PolyCofixApprox (polyScale T P) n
+        ((polyBetweenFamily X X P x p1).hom e)}
+    {ch2 :
+      ∀ (e : (polyBetweenFamily X X P x p2).left),
+      PolyCofixApprox (polyScale T P) n
+        ((polyBetweenFamily X X P x p2).hom e)}
+    (hch : HEq ch1 ch2) :
+    @PolyCofixApprox.intro X (polyScale T P) n x
+      ⟨a1, p1⟩ ch1 =
+    @PolyCofixApprox.intro X (polyScale T P) n x
+      ⟨a2, p2⟩ ch2 := by
+  subst hp
+  subst ha
+  exact congrArg _ (eq_of_heq hch)
+
+/--
+Leaf case of approximation-level naturality.
+
+When the tree is a leaf `Sum.inl c` (embedding a cofree
+comonad element), the anamorphism on the mapped leaf equals
+the cofree map of the anamorphism on the original leaf.
+-/
+lemma polyDistLaw_naturality_approx_leaf
+    (A B : Over X) (P : PolyEndo X) (f : A ⟶ B)
+    {x : X}
+    (c : { a // (polyCofreeCarrier A P).hom a = x })
+    (n : Nat)
+    (ih : ∀ {x : X}
+      (t : PolyFreeM (polyCofreeCarrier A P) P x),
+      polyCofixUnfoldApprox
+        (polyScale (polyFreeMCarrier B P) P)
+        (polyDistLawScaleCoalg B P) n x
+        ⟨⟨x, polyFreeMapAt
+          (polyCofreeCarrier A P)
+          (polyCofreeCarrier B P) P
+          (polyCofreeMap A B P f) x t⟩, rfl⟩ =
+      polyCofreeMapApprox
+        (polyFreeMCarrier A P)
+        (polyFreeMCarrier B P) P
+        (polyFreeMap A B P f)
+        (polyCofixUnfoldApprox
+          (polyScale (polyFreeMCarrier A P) P)
+          (polyDistLawScaleCoalg A P) n x
+          ⟨⟨x, t⟩, rfl⟩)) :
+    polyCofixUnfoldApprox
+      (polyScale (polyFreeMCarrier B P) P)
+      (polyDistLawScaleCoalg B P) (n + 1) x
+      ⟨⟨x, polyFreeMapAt
+        (polyCofreeCarrier A P)
+        (polyCofreeCarrier B P) P
+        (polyCofreeMap A B P f) x
+        (PolyFix.mk x (Sum.inl c) nofun)⟩, rfl⟩ =
+    polyCofreeMapApprox
+      (polyFreeMCarrier A P)
+      (polyFreeMCarrier B P) P
+      (polyFreeMap A B P f)
+      (polyCofixUnfoldApprox
+        (polyScale (polyFreeMCarrier A P) P)
+        (polyDistLawScaleCoalg A P) (n + 1) x
+        ⟨⟨x,
+          PolyFix.mk x (Sum.inl c) nofun⟩, rfl⟩) := by
+  obtain ⟨⟨xm, m⟩, rfl⟩ := c
+  simp only [polyCofixUnfoldApprox,
+    polyDistLawScaleCoalg,
+    polyDistLawScaleCoalgStr,
+    Over.homMk_left,
+    polyDistLawScaleCoalgStrLeft,
+    polyDistLawScaleCoalgStrAt,
+    polyFreeMapAt, polyFreeMBind,
+    polyFreeMCoalgStrAt,
+    polyFreeMPure,
+    polyCofreeMapApprox]
+  refine polyCofixApprox_intro_polyScale_congr
+    (polyFreeMCarrier B P) P
+    (polyCofreeMapAt_head_snd A B P f m) ?_ ?_
+  · -- Annotation equality: leaf of counit_B(cofreeMap_f m)
+    -- = freeMap_f (leaf of counit_A m)
+    simp only [polyFreeMap, Over.homMk_left,
+      polyFreeMapLeft, polyFreeMapAt,
+      polyFreeMBind, polyFreeMPure]
+    congr 1
+    congr 1
+    congr 1
+    congr 1
+    ext
+    exact congrFun
+      (congrArg CommaMorphism.left
+        (polyCofreeCounit_naturality A B P f))
+      ⟨xm, m⟩
+  · -- Children HEq
+    apply Function.hfunext
+    · exact congrArg
+        (fun p =>
+          (polyBetweenFamily X X P
+            ((polyCofreeCarrier A P).hom ⟨xm, m⟩)
+            p).left)
+        (polyCofreeMapAt_head_snd A B P f m)
+    · intro a a' ha
+      have hfib := overType_hom_heq
+        (congrArg (polyBetweenFamily X X P
+          ((polyCofreeCarrier A P).hom ⟨xm, m⟩))
+          (polyCofreeMapAt_head_snd A B P f m))
+        a a' ha
+      have ih_eq := ih
+        (PolyFix.mk _
+          (Sum.inl
+            ⟨((polyCofreeStr A P).left
+                ⟨xm, m⟩).snd.snd.left a',
+              rfl⟩)
+          nofun)
+      refine HEq.trans ?_ (HEq.trans
+        (heq_of_eq ih_eq) ?_)
+      · apply polyCofixUnfoldApprox_input_heq
+          _ _ hfib
+        dsimp only [polyFreeMapAt, polyFreeMBind,
+          polyFreeMPure]
+        refine subtype_heq_of_val_eq ?_ ?_
+        · ext y
+          dsimp only [polyDistLawScaleCoalg,
+            polyDistLawScaleCoalgStr,
+            polyFreeMCarrier, polyFixCarrier,
+            polyCofreeCarrier, polyCofixCarrier,
+            familySliceForward,
+            familySliceForwardObj,
+            polyScale, polyScaleAt,
+            polyScaleFamily,
+            ccrObjMk,
+            polyBetweenFamily, polyToOverFamily,
+            ccrFamily,
+            polyCofreeStr, polyCofreeStrLeft,
+            polyCofreeStrFamily,
+            polyCofreeChildrenMor]
+          simp only [Over.mk_hom, Over.homMk_left]
+          exact Iff.of_eq (congrArg _ hfib)
+        · refine Sigma.ext ?_ ?_
+          · dsimp only [polyCofreeStr,
+              polyCofreeStrLeft,
+              polyCofreeStrFamily,
+              polyCofreeMap, polyCofreeMapLeft,
+              polyCofreeChildrenMor,
+              polyCofreeCarrier, polyCofixCarrier,
+              familySliceForward,
+              familySliceForwardObj]
+            simp only [Over.homMk_left,
+              Over.mk_hom]
+            exact hfib
+          · dsimp only [polyCofreeStr,
+              polyCofreeMap,
+              polyCofreeCarrier, polyCofixCarrier,
+              familySliceForward,
+              familySliceForwardObj]
+            simp only [Over.homMk_left,
+              Over.mk_hom]
+            dsimp only [polyCofreeStrLeft,
+              polyCofreeMapLeft,
+              polyCofreeStrFamily,
+              polyCofreeChildrenMor]
+            simp only [Over.homMk_left]
+            congr 1
+            congr 1
+            · exact congrArg Subtype
+                (funext fun v =>
+                  congrArg (Eq v.fst) hfib)
+            · exact congrArg
+                (polyBetweenIndex X X P) hfib
+            · exact subtype_heq_of_val_eq
+                (funext fun v =>
+                  congrArg (Eq v.fst) hfib)
+                (Sigma.ext hfib
+                  (polyCofreeMapAt_children_heq
+                    A B P f m a' a
+                    ha.symm).symm)
+      · exact heq_of_eq (by
+          congr 1; congr 1
+          refine Subtype.ext (Sigma.ext rfl ?_)
+          refine heq_of_eq ?_
+          dsimp only [polyCofreeCarrier,
+            polyCofixCarrier,
+            familySliceForward,
+            familySliceForwardObj,
+            polyCofreeStr, polyCofreeStrLeft,
+            polyCofreeStrFamily,
+            polyCofreeChildrenMor,
+            polyBetweenFamily, polyToOverFamily,
+            ccrFamily]
+          simp only [Over.mk_hom,
+            Over.homMk_left]
+          congr 1
+          funext e; exact PEmpty.elim e)
+
+/--
+Approximation-level naturality: the anamorphism applied to
+a mapped tree agrees at every depth with the mapped anamorphism
+of the original tree.
+-/
+lemma polyDistLaw_naturality_approx
+    (A B : Over X) (P : PolyEndo X) (f : A ⟶ B)
+    {x : X}
+    (t : PolyFreeM (polyCofreeCarrier A P) P x)
+    (n : Nat) :
+    polyCofixUnfoldApprox
+      (polyScale (polyFreeMCarrier B P) P)
+      (polyDistLawScaleCoalg B P) n x
+      ⟨⟨x, polyFreeMapAt
+        (polyCofreeCarrier A P)
+        (polyCofreeCarrier B P) P
+        (polyCofreeMap A B P f) x t⟩, rfl⟩ =
+    polyCofreeMapApprox
+      (polyFreeMCarrier A P)
+      (polyFreeMCarrier B P) P
+      (polyFreeMap A B P f)
+      (polyCofixUnfoldApprox
+        (polyScale (polyFreeMCarrier A P) P)
+        (polyDistLawScaleCoalg A P) n x
+        ⟨⟨x, t⟩, rfl⟩) := by
+  induction n generalizing x t with
+  | zero =>
+    simp only [polyCofixUnfoldApprox,
+      polyCofreeMapApprox]
+  | succ n ih =>
+    match t with
+    | PolyFix.mk _ (Sum.inr p) children =>
+      simp only [polyCofixUnfoldApprox,
+        polyDistLawScaleCoalg,
+        polyDistLawScaleCoalgStr,
+        Over.homMk_left,
+        polyDistLawScaleCoalgStrLeft,
+        polyDistLawScaleCoalgStrAt,
+        polyFreeMapAt, polyFreeMBind,
+        polyFreeMCoalgStrAt,
+        polyCofreeMapApprox]
+      congr 1
+      · congr 1
+        apply Subtype.ext
+        simp only [polyFreeMap, Over.homMk_left,
+          polyFreeMapLeft]
+        exact congrArg (Sigma.mk x)
+          (polyDistLaw_annot_natural A B P f
+            (PolyFix.mk x (Sum.inr p) children))
+      · funext e
+        exact ih (children e)
+    | PolyFix.mk _ (Sum.inl c) _ =>
+      exact polyDistLaw_naturality_approx_leaf
+        A B P f c n ih
+
+/-! ## Annotation Reindexing for Anamorphisms
+
+Given a `polyScale(A, P)`-coalgebra `alpha` on V and a
+morphism `f : A ⟶ B`, the composition of the anamorphism
+from `alpha` with `polyCofreeMap f` equals the anamorphism
+from a reindexed `polyScale(B, P)`-coalgebra where the
+annotation component is composed with `f`.
+-/
+
+/--
+Reindex the annotation in a `polyScale(A, P)` evaluation
+from A to B via `f : A ⟶ B`.  The underlying function maps
+`(x, ((a, ha), p), ch)` to `(x, ((f.left a, hb), p), ch)`
+where `hb` uses `f`'s fiber-preservation.
+-/
+def polyScaleReindexLeft
+    (A B : Over X) (P : PolyEndo X) (f : A ⟶ B)
+    (V : Over X) :
+    ((polyEndoFunctor X (polyScale A P)).obj V).left →
+    ((polyEndoFunctor X (polyScale B P)).obj V).left :=
+  fun ⟨x, (⟨a, ha⟩, p), ch⟩ =>
+    ⟨x,
+     (⟨f.left a, by
+        rw [← ha]; exact congrFun (Over.w f) a⟩,
+      p),
+     ch⟩
+
+/--
+The reindexing preserves the fiber projection.
+-/
+lemma polyScaleReindex_comm
+    (A B : Over X) (P : PolyEndo X) (f : A ⟶ B)
+    (V : Over X) :
+    polyScaleReindexLeft A B P f V ≫
+    ((polyEndoFunctor X (polyScale B P)).obj V).hom =
+    ((polyEndoFunctor X (polyScale A P)).obj V).hom :=
+  rfl
+
+/--
+Reindex a `polyScale(A, P)`-coalgebra to a
+`polyScale(B, P)`-coalgebra by composing the annotation
+component with `f : A ⟶ B`.
+-/
+def polyScaleReindexCoalg
+    (A B : Over X) (P : PolyEndo X) (f : A ⟶ B)
+    (α : PolyCoalg (polyScale A P)) :
+    PolyCoalg (polyScale B P) where
+  V := α.V
+  str := α.str ≫ Over.homMk
+    (polyScaleReindexLeft A B P f α.V)
+    (polyScaleReindex_comm A B P f α.V)
+
+/--
+Reduction lemma for `polyCofreeMapApprox` on an `.intro`
+constructor with an abstract (non-destructured) position.
+-/
+@[simp]
+lemma polyCofreeMapApprox_intro
+    (A B : Over X) (P : PolyEndo X) (f : A ⟶ B)
+    {n : Nat} {y : X}
+    (i : polyBetweenIndex X X (polyScale A P) y)
+    (children :
+      ∀ (e : (polyBetweenFamily X X
+        (polyScale A P) y i).left),
+        PolyCofixApprox (polyScale A P) n
+          ((polyBetweenFamily X X
+            (polyScale A P) y i).hom e)) :
+    polyCofreeMapApprox A B P f
+      (PolyCofixApprox.intro y i children) =
+    @PolyCofixApprox.intro X (polyScale B P) n y
+      (⟨⟨f.left i.1.val,
+          polyCofreeMap_fiber_eq A B f i.1⟩,
+        i.2⟩)
+      (fun e =>
+        polyCofreeMapApprox A B P f (children e)) := by
+  cases i with
+  | mk a b => rfl
+
+/--
+Approximation-level lemma: mapping annotations by `f`
+after unfolding from a `polyScale(A, P)`-coalgebra equals
+unfolding from the reindexed `polyScale(B, P)`-coalgebra.
+-/
+lemma polyScaleReindex_approx
+    (A B : Over X) (P : PolyEndo X) (f : A ⟶ B)
+    (α : PolyCoalg (polyScale A P))
+    (n : Nat) {x : X}
+    (s : { v : α.V.left // α.V.hom v = x }) :
+    polyCofreeMapApprox A B P f
+      (polyCofixUnfoldApprox
+        (polyScale A P) α n x s) =
+    polyCofixUnfoldApprox
+      (polyScale B P)
+      (polyScaleReindexCoalg A B P f α) n x s := by
+  induction n generalizing x s with
+  | zero =>
+    simp only [polyCofixUnfoldApprox,
+      polyCofreeMapApprox]
+  | succ n ih =>
+    simp only [polyCofixUnfoldApprox]
+    rw [polyCofreeMapApprox_cast]
+    congr 1
+    rw [polyCofreeMapApprox_intro]
+    congr 1
+    funext e
+    exact ih _
+
+/--
+Mapping annotations by `f` after unfolding from a
+`polyScale(A, P)`-coalgebra equals unfolding from
+the reindexed `polyScale(B, P)`-coalgebra.
+-/
+lemma polyScaleReindex
+    (A B : Over X) (P : PolyEndo X) (f : A ⟶ B)
+    (α : PolyCoalg (polyScale A P)) :
+    polyCofixUnfold (polyScale A P) α ≫
+    polyCofreeMap A B P f =
+    polyCofixUnfold (polyScale B P)
+      (polyScaleReindexCoalg A B P f α) := by
+  apply Over.OverMorphism.ext
+  funext a
+  simp only [Over.comp_left, types_comp_apply,
+    polyCofixUnfold, polyCofixUnfoldLeft,
+    Over.homMk_left,
+    polyCofreeMap, polyCofreeMapLeft]
+  apply Sigma.ext
+  · rfl
+  · simp only [heq_eq_eq, polyCofreeMapAt]
+    apply PolyCofix.ext
+    intro n
+    exact polyScaleReindex_approx
+      A B P f α n _
+
+/--
+Naturality of the distributive law:
+`T(D(f)) ≫ lambda_B = lambda_A ≫ D(T(f))`.
+-/
+lemma polyDistLaw_naturality
+    (A B : Over X) (P : PolyEndo X) (f : A ⟶ B) :
+    polyFreeMap
+      (polyCofreeCarrier A P)
+      (polyCofreeCarrier B P) P
+      (polyCofreeMap A B P f) ≫
+    polyDistLawMor B P =
+    polyDistLawMor A P ≫
+    polyCofreeMap
+      (polyFreeMCarrier A P)
+      (polyFreeMCarrier B P) P
+      (polyFreeMap A B P f) := by
+  apply Over.OverMorphism.ext
+  funext ⟨x, t⟩
+  simp only [Over.comp_left, types_comp_apply,
+    polyFreeMap, Over.homMk_left,
+    polyFreeMapLeft,
+    polyDistLawMor, polyCofixUnfold,
+    polyCofixUnfoldLeft,
+    polyCofreeMap, polyCofreeMapLeft]
+  apply Sigma.ext
+  · rfl
+  · simp only [heq_eq_eq, polyCofreeMapAt]
+    apply PolyCofix.ext
+    intro n
+    exact polyDistLaw_naturality_approx
+      A B P f t n
+
+/-! ## Step 7: Comultiplication Coherence
+
+Comultiplication coherence states:
+```
+T.map(D.δ_A) ≫ dist_{DA} ≫ D.map(dist_A)
+  = dist_A ≫ D.δ_{TA}
+```
+Both sides are morphisms `T(D(A)) → D(D(T(A)))`.
+
+The LHS first duplicates cofree annotations (applying
+the comultiplication to each leaf), then distributes over
+the doubled cofree structure, then re-annotates using
+the original distributive law.
+
+The RHS first distributes then duplicates.
+
+The proof uses the comonad counit law
+`D.δ_A ≫ D.ε_{DA} = id` (the left triangle identity)
+to simplify the root annotation of the LHS, reducing
+to an approximation-level induction.
+-/
+
+/--
+The counit law applied inside `polyFreeMapAt`: mapping
+by the comultiplication then the counit is the identity.
+-/
+lemma polyDistLaw_comul_annot_eq
+    (A : Over X) (P : PolyEndo X) {x : X}
+    (t : PolyFreeM (polyCofreeCarrier A P) P x) :
+    polyFreeMapAt
+      (polyCofreeCarrier (polyCofreeCarrier A P) P)
+      (polyCofreeCarrier A P) P
+      (polyCofreeCounit (polyCofreeCarrier A P) P)
+      x
+      (polyFreeMapAt
+        (polyCofreeCarrier A P)
+        (polyCofreeCarrier
+          (polyCofreeCarrier A P) P) P
+        (polyCoalgUnit P (polyCofreeCoalg A P))
+        x t) = t := by
+  rw [← polyFreeMapAt_comp]
+  have h : polyCoalgUnit P (polyCofreeCoalg A P) ≫
+      polyCofreeCounit (polyCofreeCarrier A P) P =
+      𝟙 (polyCofreeCarrier A P) :=
+    polyCofree_left_triangle P (polyCofreeCoalg A P)
+  rw [h, polyFreeMapAt_id]
+
 end GebLean
