@@ -260,6 +260,8 @@ This section defines evaluation for arbitrary domain categories. The existing
 
 section GeneralPolynomialFunctors
 
+universe u''
+
 variable {D : Type u'} [Category.{u} D]
 
 /--
@@ -267,44 +269,44 @@ Evaluation of a polynomial functor at an object of `D`.
 Given a polynomial `P = (I, F)` where `F : I → D` and an object `A : D`,
 the evaluation `P(A) = Σ_{i : I} Hom_D(F(i), A)` is a type.
 -/
-def ccrEval (P : CoprodCovarRepCat D) (A : D) : Type _ :=
+def ccrEval (P : CoprodCovarRepCat.{u', u, u''} D) (A : D) :=
   Σ i : ccrIndex P, (ccrFamily P i ⟶ A)
 
 /--
 Extract the index from an element of a polynomial evaluation.
 -/
-def ccrEvalIndex {P : CoprodCovarRepCat D} {A : D} (x : ccrEval P A) :
+def ccrEvalIndex {P : CoprodCovarRepCat.{u', u, u''} D} {A : D} (x : ccrEval P A) :
     ccrIndex P :=
   x.1
 
 /--
 Extract the morphism from an element of a polynomial evaluation.
 -/
-def ccrEvalMor {P : CoprodCovarRepCat D} {A : D} (x : ccrEval P A) :
+def ccrEvalMor {P : CoprodCovarRepCat.{u', u, u''} D} {A : D} (x : ccrEval P A) :
     ccrFamily P (ccrEvalIndex x) ⟶ A :=
   x.2
 
 /--
 Construct an element of a polynomial evaluation from an index and a morphism.
 -/
-def ccrEvalMk {P : CoprodCovarRepCat D} {A : D}
+def ccrEvalMk {P : CoprodCovarRepCat.{u', u, u''} D} {A : D}
     (i : ccrIndex P) (f : ccrFamily P i ⟶ A) : ccrEval P A :=
   ⟨i, f⟩
 
 @[simp]
-lemma ccrEvalMk_index {P : CoprodCovarRepCat D} {A : D}
+lemma ccrEvalMk_index {P : CoprodCovarRepCat.{u', u, u''} D} {A : D}
     (i : ccrIndex P) (f : ccrFamily P i ⟶ A) :
     ccrEvalIndex (ccrEvalMk i f) = i := rfl
 
 @[simp]
-lemma ccrEvalMk_mor {P : CoprodCovarRepCat D} {A : D}
+lemma ccrEvalMk_mor {P : CoprodCovarRepCat.{u', u, u''} D} {A : D}
     (i : ccrIndex P) (f : ccrFamily P i ⟶ A) :
     ccrEvalMor (ccrEvalMk i f) = f := rfl
 
 /--
 Extensionality for polynomial evaluations.
 -/
-lemma ccrEval_ext {P : CoprodCovarRepCat D} {A : D} (x y : ccrEval P A)
+lemma ccrEval_ext {P : CoprodCovarRepCat.{u', u, u''} D} {A : D} (x y : ccrEval P A)
     (hi : ccrEvalIndex x = ccrEvalIndex y)
     (hm : ccrEvalMor x ≍ ccrEvalMor y) : x = y := by
   obtain ⟨ix, mx⟩ := x
@@ -316,33 +318,33 @@ lemma ccrEval_ext {P : CoprodCovarRepCat D} {A : D} (x y : ccrEval P A)
   rfl
 
 @[simp]
-lemma ccrEvalMk_eta {P : CoprodCovarRepCat D} {A : D} (x : ccrEval P A) :
+lemma ccrEvalMk_eta {P : CoprodCovarRepCat.{u', u, u''} D} {A : D} (x : ccrEval P A) :
     ccrEvalMk (ccrEvalIndex x) (ccrEvalMor x) = x := rfl
 
 /--
 The action of a polynomial functor on morphisms.
 Given `f : A ⟶ B`, maps `⟨i, h⟩ : ccrEval P A` to `⟨i, h ≫ f⟩ : ccrEval P B`.
 -/
-def ccrEvalMap {P : CoprodCovarRepCat D} {A B : D} (f : A ⟶ B) :
+def ccrEvalMap {P : CoprodCovarRepCat.{u', u, u''} D} {A B : D} (f : A ⟶ B) :
     ccrEval P A → ccrEval P B :=
   fun ⟨i, h⟩ => ⟨i, h ≫ f⟩
 
 @[simp]
-lemma ccrEvalMap_index {P : CoprodCovarRepCat D} {A B : D} (f : A ⟶ B)
+lemma ccrEvalMap_index {P : CoprodCovarRepCat.{u', u, u''} D} {A B : D} (f : A ⟶ B)
     (x : ccrEval P A) : ccrEvalIndex (ccrEvalMap f x) = ccrEvalIndex x := rfl
 
 @[simp]
-lemma ccrEvalMap_mor {P : CoprodCovarRepCat D} {A B : D} (f : A ⟶ B)
+lemma ccrEvalMap_mor {P : CoprodCovarRepCat.{u', u, u''} D} {A B : D} (f : A ⟶ B)
     (x : ccrEval P A) : ccrEvalMor (ccrEvalMap f x) = ccrEvalMor x ≫ f := rfl
 
 @[simp]
-lemma ccrEvalMap_id {P : CoprodCovarRepCat D} {A : D} :
+lemma ccrEvalMap_id {P : CoprodCovarRepCat.{u', u, u''} D} {A : D} :
     ccrEvalMap (𝟙 A) = (id : ccrEval P A → ccrEval P A) := by
   funext ⟨i, h⟩
   simp only [ccrEvalMap, Category.comp_id, id_eq]
 
 @[simp]
-lemma ccrEvalMap_comp {P : CoprodCovarRepCat D} {A B C : D} (f : A ⟶ B) (g : B ⟶ C) :
+lemma ccrEvalMap_comp {P : CoprodCovarRepCat.{u', u, u''} D} {A B C : D} (f : A ⟶ B) (g : B ⟶ C) :
     ccrEvalMap (f ≫ g) = ccrEvalMap g ∘ ccrEvalMap (P := P) f := by
   funext ⟨i, h⟩
   simp only [ccrEvalMap, Category.assoc, Function.comp_apply]
@@ -350,7 +352,7 @@ lemma ccrEvalMap_comp {P : CoprodCovarRepCat D} {A B C : D} (f : A ⟶ B) (g : B
 /--
 A polynomial functor `P : CoprodCovarRepCat D` gives a functor `D ⥤ Type`.
 -/
-def ccrToFunctor (P : CoprodCovarRepCat D) : D ⥤ Type _ where
+def ccrToFunctor (P : CoprodCovarRepCat.{u', u, u''} D) : D ⥤ Type _ where
   obj := ccrEval P
   map := ccrEvalMap
   map_id := fun _ => ccrEvalMap_id
@@ -369,33 +371,33 @@ that `ccrEvalMap h ⟨i, f⟩ = ⟨j, g⟩`, which means `i = j` and `f ≫ h = 
 -/
 
 /-- The category of elements of a polynomial functor. -/
-abbrev ccrElements (P : CoprodCovarRepCat D) : Type _ := (ccrToFunctor P).Elements
+abbrev ccrElements (P : CoprodCovarRepCat.{u', u, u''} D) : Type _ := (ccrToFunctor P).Elements
 
 /-- Objects of the category of elements: pairs `(A, x)` where `x : ccrEval P A`. -/
-abbrev ccrElementsObj (P : CoprodCovarRepCat D) : Type _ := (ccrToFunctor P).Elements
+abbrev ccrElementsObj (P : CoprodCovarRepCat.{u', u, u''} D) : Type _ := (ccrToFunctor P).Elements
 
-instance ccrElementsCategory (P : CoprodCovarRepCat D) :
+instance ccrElementsCategory (P : CoprodCovarRepCat.{u', u, u''} D) :
     Category (ccrElements P) :=
   inferInstance
 
 /-- Morphisms in the category of elements. -/
-abbrev ccrElementsMor {P : CoprodCovarRepCat D} (X Y : ccrElements P) : Type _ :=
+abbrev ccrElementsMor {P : CoprodCovarRepCat.{u', u, u''} D} (X Y : ccrElements P) : Type _ :=
   X ⟶ Y
 
 /-- The base object of an element in the category of elements. -/
-def ccrElementsBase {P : CoprodCovarRepCat D} (e : ccrElements P) : D := e.fst
+def ccrElementsBase {P : CoprodCovarRepCat.{u', u, u''} D} (e : ccrElements P) : D := e.fst
 
 /-- The fiber (the element of `ccrEval P A`) of an element in the category of
 elements. -/
-def ccrElementsFiber {P : CoprodCovarRepCat D} (e : ccrElements P) :
+def ccrElementsFiber {P : CoprodCovarRepCat.{u', u, u''} D} (e : ccrElements P) :
     ccrEval P (ccrElementsBase e) := e.snd
 
 /-- The position component of an element in the category of elements. -/
-def ccrElementsPos {P : CoprodCovarRepCat D} (e : ccrElements P) : ccrIndex P :=
+def ccrElementsPos {P : CoprodCovarRepCat.{u', u, u''} D} (e : ccrElements P) : ccrIndex P :=
   (ccrElementsFiber e).1
 
 /-- The morphism component of an element in the category of elements. -/
-def ccrElementsHom {P : CoprodCovarRepCat D} (e : ccrElements P) :
+def ccrElementsHom {P : CoprodCovarRepCat.{u', u, u''} D} (e : ccrElements P) :
     ccrFamily P (ccrElementsPos e) ⟶ ccrElementsBase e :=
   (ccrElementsFiber e).2
 
