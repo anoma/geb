@@ -33,6 +33,7 @@ Constructing the canonical distributive law
 - [x] Import added to `GebLean.lean`
 
 ## Remaining Tasks
+
 - [ ] Step 7: Comultiplication coherence
   - Both sides map `T(D(A)) --> D(D(T(A)))`
   - Use `polyCofixUnfoldHom_unique`: show both are coalgebra

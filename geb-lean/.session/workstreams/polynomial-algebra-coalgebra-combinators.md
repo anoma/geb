@@ -159,6 +159,15 @@ endofunctors.
   `rho : Sigma(Id x B) => B . T` for polynomial signature and
   behavior endofunctors
 
+### Phase 4: Pattern runs on matter
+
+- [x] D1: Define Dirichlet/parallel product `P ⊗ Q` of polynomial
+  endofunctors (in `GebLean/Utilities/SlicePolynomial.lean`)
+- [ ] D2: Construct interaction map
+  `Xi : m_P ⊗ c_Q -> m_{P ⊗ Q}` (pattern runs on matter)
+- [ ] D3: Verify module structure of free monad functor over
+  cofree comonad functor
+
 ### Deferred
 
 These are documented for future consideration but not
@@ -168,12 +177,6 @@ currently planned for implementation.
   unary algebras (algebra side of Adamek intersection theorem)
 - [ ] B2: Make explicit the fiber decomposition of the copresheaf
   functor over the terminal coalgebra anamorphism
-- [x] D1: Define Dirichlet/parallel product `P ⊗ Q` of polynomial
-  endofunctors (in `GebLean/Utilities/SlicePolynomial.lean`)
-- [ ] D2: Construct interaction map
-  `Xi : m_P ⊗ c_Q -> m_{P ⊗ Q}` (pattern runs on matter)
-- [ ] D3: Verify module structure of free monad functor over
-  cofree comonad functor
 - [ ] E2: Construct operational monad (lifting syntax monad to
   B-coalgebras via structural recursion with accumulators)
 - [ ] F1: Define Stone topology on `PolyCofreeShape P x` using
