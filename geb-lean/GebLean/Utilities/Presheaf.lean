@@ -1,4 +1,5 @@
 import GebLean.Utilities.Opposites
+import Mathlib.CategoryTheory.Functor.FunctorHom
 import Mathlib.CategoryTheory.Whiskering
 import Mathlib.CategoryTheory.Limits.FunctorCategory.Shapes.Pullbacks
 import Mathlib.CategoryTheory.Limits.Types.Pullbacks
@@ -1533,5 +1534,79 @@ instance yonedaExt_isLeftKanExtension
         (yonedaExtUnitNatTrans F))⟩
 
 end YonedaExtensionKan
+
+section FunctorHomSections
+
+variable {C : Type u} [Category.{v} C]
+
+/-- Convert a section of `F.functorHom G` to
+a natural transformation `F ⟶ G`. Each section
+provides a `HomObj` at every stage; evaluating at
+the identity morphism extracts the nat trans
+components. -/
+def functorHomSectionToNatTrans
+    {F G : Cᵒᵖ ⥤ Type (max u v)}
+    (s : (F.functorHom G).sections) :
+    F ⟶ G where
+  app c x := (s.val c).app c (𝟙 c) x
+  naturality {c d} f := by
+    ext x
+    simp only [types_comp_apply]
+    have hn := congr_fun
+      ((s.val c).naturality f (𝟙 c)) x
+    simp only [types_comp_apply] at hn
+    rw [← hn]
+    have h : (s.val d).app d (𝟙 d) =
+      ((F.functorHom G).map f (s.val c)).app
+        d (𝟙 d) := by
+      rw [s.property f]
+    rw [h]
+    dsimp [Functor.functorHom,
+      Functor.homObjFunctor]
+    simp
+
+/-- Convert a natural transformation `F ⟶ G` to
+a global section of `F.functorHom G`. Uses
+`HomObj.ofNatTrans`, which ignores the
+representable parameter, giving a constant
+section. -/
+def natTransToFunctorHomSection
+    {F G : Cᵒᵖ ⥤ Type (max u v)}
+    (α : F ⟶ G) :
+    (F.functorHom G).sections :=
+  ⟨fun _ => Functor.HomObj.ofNatTrans α,
+   fun {c d} f => by
+    dsimp [Functor.functorHom,
+      Functor.homObjFunctor]
+    ext ⟨⟩
+    simp [Functor.HomObj.ofNatTrans]⟩
+
+theorem functorHomSection_roundTrip_left
+    {F G : Cᵒᵖ ⥤ Type (max u v)}
+    (α : F ⟶ G) :
+    functorHomSectionToNatTrans
+      (natTransToFunctorHomSection α) = α := by
+  ext c x
+  simp [functorHomSectionToNatTrans,
+    natTransToFunctorHomSection,
+    Functor.HomObj.ofNatTrans]
+
+theorem functorHomSection_roundTrip_right
+    {F G : Cᵒᵖ ⥤ Type (max u v)}
+    (s : (F.functorHom G).sections) :
+    natTransToFunctorHomSection
+      (functorHomSectionToNatTrans s) = s := by
+  ext c Y f x
+  dsimp [natTransToFunctorHomSection,
+    functorHomSectionToNatTrans,
+    Functor.HomObj.ofNatTrans]
+  have hsec := congrArg
+    (fun h => h.app Y (𝟙 Y) x) (s.property f)
+  dsimp [Functor.functorHom,
+    Functor.homObjFunctor] at hsec
+  simp at hsec
+  exact hsec.symm
+
+end FunctorHomSections
 
 end GebLean
