@@ -2584,4 +2584,140 @@ theorem pshTypeExpr_iep
 
 end IdentityExtension
 
+section FreeTheorems
+
+variable {C : Type u} [Category.{v} C]
+
+/-- Forward direction of the dialgebra
+equivalence: a parametric family for the
+dialgebra type expression `F → G` determines
+a natural transformation `F ⟶ G`. -/
+def pshDialgebraParametric_toNatTrans
+    {F G : (Cᵒᵖ ⥤ Type (max u v)) ⥤
+           (Cᵒᵖ ⥤ Type (max u v))}
+    (p : PshParametricFamily
+      (pshDialgebraTypeExpr F G)) :
+    F ⟶ G where
+  app P :=
+    functorHomSectionToNatTrans (p.app P)
+  naturality {P Q} β := by
+    ext c x
+    simp only [functorHomSectionToNatTrans,
+      NatTrans.comp_app, types_comp_apply]
+    have hpar := p.parametric_graphRel β c
+    simp only [pshDialgebraTypeExpr,
+      PshTypeExpr.relInterp] at hpar
+    rw [pshBarrLiftRel_graph,
+      pshBarrLiftRel_graph] at hpar
+    exact (pshArrowRel_graph_apply
+      hpar c (𝟙 c) x).symm
+
+/-- Backward direction: a natural transformation
+`η : F ⟶ G` determines a parametric family for
+the dialgebra type expression. -/
+def natTrans_toPshDialgebraParametric
+    {F G : (Cᵒᵖ ⥤ Type (max u v)) ⥤
+           (Cᵒᵖ ⥤ Type (max u v))}
+    (η : F ⟶ G) :
+    PshParametricFamily
+      (pshDialgebraTypeExpr F G) where
+  app P :=
+    natTransToFunctorHomSection (η.app P)
+  parametric P Q R c := by
+    simp only [pshDialgebraTypeExpr,
+      PshTypeExpr.fullRelInterp]
+    simp only [pshArrowRel, pshProdOverToRel,
+      Subfunctor.range, Set.mem_range]
+    refine ⟨⟨((natTransToFunctorHomSection
+      (η.app P)).val c,
+      (natTransToFunctorHomSection
+      (η.app Q)).val c),
+      fun d f w => ?_⟩, rfl⟩
+    simp only [Over.mk_hom,
+      Subfunctor.ι_app]
+    dsimp [natTransToFunctorHomSection,
+      Functor.HomObj.ofNatTrans]
+    have hw := w.property
+    simp only [pshBarrLiftRel, pshProdOverToRel,
+      Subfunctor.range_obj,
+      Set.mem_range] at hw
+    obtain ⟨t, ht⟩ := hw
+    refine ⟨⟨((η.app P).app d w.val.1,
+      (η.app Q).app d w.val.2), ?_⟩, rfl⟩
+    simp only [pshBarrLiftRel, pshProdOverToRel,
+      Subfunctor.range_obj, Set.mem_range]
+    refine ⟨(η.app R.toFunctor).app d t, ?_⟩
+    simp only [pshBarrLift, Over.mk_hom]
+      at ht ⊢
+    dsimp [pshProdLift] at ht ⊢
+    have ht₁ := congr_arg Prod.fst ht
+    have ht₂ := congr_arg Prod.snd ht
+    simp only at ht₁ ht₂
+    apply Prod.ext
+    · have := congr_fun
+        (NatTrans.congr_app (η.naturality
+          (Subfunctor.ι R ≫
+            pshProdFst P Q)).symm d) t
+      simp only [NatTrans.comp_app,
+        types_comp_apply] at this
+      rw [this, ht₁]
+    · have := congr_fun
+        (NatTrans.congr_app (η.naturality
+          (Subfunctor.ι R ≫
+            pshProdSnd P Q)).symm d) t
+      simp only [NatTrans.comp_app,
+        types_comp_apply] at this
+      rw [this, ht₂]
+
+/-- Round-trip: parametric → nat trans → parametric
+is the identity. -/
+theorem pshDialgebra_left_inv
+    {F G : (Cᵒᵖ ⥤ Type (max u v)) ⥤
+           (Cᵒᵖ ⥤ Type (max u v))}
+    (p : PshParametricFamily
+      (pshDialgebraTypeExpr F G)) :
+    natTrans_toPshDialgebraParametric
+      (pshDialgebraParametric_toNatTrans p) =
+      p := by
+  apply PshParametricFamily.ext
+  funext P
+  simp only [natTrans_toPshDialgebraParametric,
+    pshDialgebraParametric_toNatTrans]
+  exact functorHomSection_roundTrip_right
+    (p.app P)
+
+/-- Round-trip: nat trans → parametric → nat trans
+is the identity. -/
+theorem pshDialgebra_right_inv
+    {F G : (Cᵒᵖ ⥤ Type (max u v)) ⥤
+           (Cᵒᵖ ⥤ Type (max u v))}
+    (η : F ⟶ G) :
+    pshDialgebraParametric_toNatTrans
+      (natTrans_toPshDialgebraParametric η) =
+      η := by
+  ext P c x
+  simp only [pshDialgebraParametric_toNatTrans,
+    natTrans_toPshDialgebraParametric]
+  exact congr_fun (NatTrans.congr_app
+    (functorHomSection_roundTrip_left
+      (η.app P)) c) x
+
+/-- Parametric families for the dialgebra type
+expression `F → G` are equivalent to natural
+transformations `F ⟶ G`. This is the presheaf-
+category generalization of
+`dialgebraParametricEquivNatTrans`. -/
+def pshDialgebraParametricEquivNatTrans
+    (F G : (Cᵒᵖ ⥤ Type (max u v)) ⥤
+           (Cᵒᵖ ⥤ Type (max u v))) :
+    PshParametricFamily
+      (pshDialgebraTypeExpr F G) ≃
+    (F ⟶ G) where
+  toFun := pshDialgebraParametric_toNatTrans
+  invFun := natTrans_toPshDialgebraParametric
+  left_inv := pshDialgebra_left_inv
+  right_inv := pshDialgebra_right_inv
+
+end FreeTheorems
+
 end GebLean

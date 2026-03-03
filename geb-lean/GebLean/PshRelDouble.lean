@@ -2604,6 +2604,44 @@ theorem pshArrowRel_id
                w.property)⟩
     · rfl
 
+/-- Membership in the arrow relation at graph
+relations: if `(g₁, g₂)` belong to
+`pshArrowRel (pshRelGraph α) (pshRelGraph β)`,
+then for all stages `d`, morphisms `f : c ⟶ d`,
+and elements `x : A₁.obj d`, the equation
+`β(g₁(f, x)) = g₂(f, α(x))` holds. -/
+theorem pshArrowRel_graph_apply
+    {A₁ A₂ B₁ B₂ :
+      Dᵒᵖ ⥤ Type (max u₁ v₁)}
+    {α : A₁ ⟶ A₂} {β : B₁ ⟶ B₂}
+    {c : Dᵒᵖ}
+    {g₁ : (A₁.functorHom B₁).obj c}
+    {g₂ : (A₂.functorHom B₂).obj c}
+    (h : (g₁, g₂) ∈
+      (pshArrowRel (pshRelGraph α)
+        (pshRelGraph β)).obj c)
+    (d : Dᵒᵖ) (f : c ⟶ d)
+    (x : A₁.obj d) :
+    β.app d (g₁.app d f x) =
+      g₂.app d f (α.app d x) := by
+  simp only [pshArrowRel, pshProdOverToRel,
+    Subfunctor.range, Set.mem_range] at h
+  obtain ⟨⟨⟨a₁, a₂⟩, hpred⟩, heq⟩ := h
+  have ha₁ : a₁ = g₁ :=
+    congr_arg Prod.fst heq
+  have ha₂ : a₂ = g₂ :=
+    congr_arg Prod.snd heq
+  subst ha₁; subst ha₂
+  have hspec := hpred d f
+    ⟨(x, α.app d x), rfl⟩
+  obtain ⟨s, hs⟩ := hspec
+  simp only [Over.mk_hom,
+    Subfunctor.ι_app] at hs
+  have hfst := congr_arg Prod.fst hs
+  have hsnd := congr_arg Prod.snd hs
+  simp only at hfst hsnd
+  rw [← hfst, ← hsnd]; exact s.property
+
 /-- The range of `pshArrowRelOver R S` is contained
 in `pshArrowRel (pshProdOverToRel R)
 (pshProdOverToRel S)`. -/

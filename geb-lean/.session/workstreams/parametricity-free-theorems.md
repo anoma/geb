@@ -312,10 +312,14 @@ the Hermida/Reddy/Robinson paper. See
   extending the `RelInterpComposition.lean` analysis to
   presheaves. (Former F6.)
 
-- [ ] **P6d. Presheaf-level free theorem equivalences.**
+- [~] **P6d. Presheaf-level free theorem equivalences.**
   Generalize `dialgebraParametricEquivNatTrans`,
   `initialAlgebraParametricEquiv`, and
   `dinaturalNumbersParametricEquiv` to `PSh(C)`.
+  Done: `pshDialgebraParametricEquivNatTrans` in
+  `PshTypeExpr.lean`.
+  Remaining: `pshAlgebraParametricEquivParanat`,
+  presheaf-level composition/Church equivalences.
 
 - [ ] **P6e. Twisted-arrow parametric embedding.**
   (Former W6.) Investigate whether `ParametricCopresheaf`
