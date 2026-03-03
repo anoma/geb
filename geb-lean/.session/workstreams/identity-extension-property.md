@@ -87,9 +87,16 @@ in `PshRelSpanDiagram.lean`.
   iff `α ≫ g = f ≫ β`. This is subsumptivity
   stated as a 2-cell characterization in the
   double category of presheaf relations.
+- `VertEdge`, `VertEdgeHom`, `vertEdgeCategory`,
+  `HorEdge`, `HorEdgeHom`, `horEdgeCategory` in
+  `DoubleCategory.lean`: horizontal and vertical
+  1-categories of a double category (general
+  construction).
 - `PshRelEdge`, `PshRelEdgeHom`, `Category`
   instance in `PshRelDouble.lean`: the edge
-  (horizontal) category of the double category.
+  (horizontal) category of the double category,
+  defined as abbreviations for the general
+  `VertEdge`/`vertEdgeCategory` construction.
 - `pshRelEdgeGraphFunctor` in `PshRelDouble.lean`:
   `Arrow (Cᵒᵖ ⥤ Type w) ⥤ PshRelEdge C`.
 - `pshRelEdgeGraphFullyFaithful` in

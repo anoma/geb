@@ -968,44 +968,27 @@ end PshRelDoubleCategory
 
 section PshRelEdgeCategory
 
-/-- An edge in the double category of presheaf
-relations: a pair of presheaves together with
-a relation between them. -/
-@[ext]
-structure PshRelEdge (C : Type u)
-    [Category.{v} C] where
-  src : Cᵒᵖ ⥤ Type w
-  tgt : Cᵒᵖ ⥤ Type w
-  rel : PshRel src tgt
+/-- The edge category of the double category of
+presheaf relations, as an instance of the
+horizontal 1-category of vertical edges.
+Objects are presheaf relations; morphisms are
+pairs of natural transformations with a 2-cell
+compatibility condition. -/
+abbrev PshRelEdge (C : Type u)
+    [Category.{v} C] :=
+  VertEdge (Obj := Cᵒᵖ ⥤ Type w) PshRel
 
-/-- A morphism between edges: a pair of natural
-transformations on source and target presheaves
-compatible with the relations (a 2-cell in the
-double category). -/
-@[ext]
-structure PshRelEdgeHom
-    (R S : PshRelEdge.{u, v, w} C) where
-  srcMap : R.src ⟶ S.src
-  tgtMap : R.tgt ⟶ S.tgt
-  compat : pshRelRelated srcMap tgtMap
-    R.rel S.rel
+/-- Morphisms in the presheaf relation edge
+category, as an instance of the general
+vertical-edge morphism construction. -/
+abbrev PshRelEdgeHom :=
+  VertEdgeHom
+    (hhs := homSetOfQuiver (Cᵒᵖ ⥤ Type w))
+    pshRelSQS
 
 instance : Category
-    (PshRelEdge.{u, v, w} C) where
-  Hom := PshRelEdgeHom
-  id R :=
-    { srcMap := 𝟙 R.src
-      tgtMap := 𝟙 R.tgt
-      compat := pshRelRelatedSqHorId R.rel }
-  comp f g :=
-    { srcMap := f.srcMap ≫ g.srcMap
-      tgtMap := f.tgtMap ≫ g.tgtMap
-      compat :=
-        pshRelRelatedHComp f.compat g.compat }
-  id_comp f := by ext <;> simp
-  comp_id f := by ext <;> simp
-  assoc f g h := by
-    ext <;> simp [Category.assoc]
+    (PshRelEdge.{u, v, w} C) :=
+  vertEdgeCategory pshRelSQS pshRelDoubleData
 
 /-- The graph functor from the arrow category of
 presheaves to the edge category of the double
@@ -1018,16 +1001,16 @@ def pshRelEdgeGraphFunctor :
   obj f :=
     { src := f.left
       tgt := f.right
-      rel := pshRelGraph f.hom }
+      edge := pshRelGraph f.hom }
   map {f g} sq :=
     { srcMap := sq.left
       tgtMap := sq.right
-      compat :=
+      sq :=
         (pshRelRelated_graph_iff
           f.hom g.hom sq.left sq.right).mpr
           sq.w.symm }
-  map_id _ := PshRelEdgeHom.ext rfl rfl
-  map_comp _ _ := PshRelEdgeHom.ext rfl rfl
+  map_id _ := VertEdgeHom.ext rfl rfl
+  map_comp _ _ := VertEdgeHom.ext rfl rfl
 
 /-- The graph functor to the edge category is
 fully faithful: morphisms between graph relations
@@ -1041,9 +1024,9 @@ def pshRelEdgeGraphFullyFaithful :
     Arrow.homMk h.srcMap h.tgtMap
       ((pshRelRelated_graph_iff
         f.hom g.hom h.srcMap h.tgtMap).mp
-        h.compat).symm
+        h.sq).symm
   map_preimage _ :=
-    PshRelEdgeHom.ext rfl rfl
+    VertEdgeHom.ext rfl rfl
   preimage_map _ := by
     apply CommaMorphism.ext <;> rfl
 

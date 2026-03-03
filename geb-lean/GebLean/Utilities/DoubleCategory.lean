@@ -5117,4 +5117,155 @@ structure HorModData {Obj₁ : Type u₁}
     HorModOps ops₂ τ σ,
     HorModLaws ops₁ ops₂ toHorModOps
 
+/-! ## 1-categories of edges
+
+Given a double category, we can form two 1-categories
+from its edges:
+
+- The *horizontal 1-category* has vertical edges
+  (morphisms in `vhs`) as objects and 2-cells as
+  morphisms, composed horizontally.
+
+- The *vertical 1-category* has horizontal edges
+  (morphisms in `hhs`) as objects and 2-cells as
+  morphisms, composed vertically.
+
+These require the hom-sets and square sets to be
+`Type`-valued (not `Prop`-valued) so that the
+resulting categories have `Type`-valued hom-sets. -/
+
+section EdgeCategories
+
+variable {Obj : Type u}
+  {vhs : Obj → Obj → Type vMor}
+  {hhs : Obj → Obj → Type hMor}
+
+/-- A vertical edge in a double category: a pair
+of objects with a vertical morphism between them. -/
+@[ext]
+structure VertEdge
+    (vhs : Obj → Obj → Type vMor) where
+  src : Obj
+  tgt : Obj
+  edge : vhs src tgt
+
+/-- A morphism in the horizontal 1-category of
+vertical edges: a pair of horizontal morphisms
+with a `Prop`-valued 2-cell between them. -/
+@[ext]
+structure VertEdgeHom
+    (sqs : ∀ {A B C D : Obj},
+      vhs A C → vhs B D →
+      hhs A B → hhs C D → Prop)
+    (R S : VertEdge vhs) where
+  srcMap : hhs R.src S.src
+  tgtMap : hhs R.tgt S.tgt
+  sq : sqs R.edge S.edge srcMap tgtMap
+
+/-- A horizontal edge in a double category: a pair
+of objects with a horizontal morphism between
+them. -/
+@[ext]
+structure HorEdge
+    (hhs : Obj → Obj → Type hMor) where
+  src : Obj
+  tgt : Obj
+  edge : hhs src tgt
+
+/-- A morphism in the vertical 1-category of
+horizontal edges: a pair of vertical morphisms
+with a `Prop`-valued 2-cell between them. -/
+@[ext]
+structure HorEdgeHom
+    (sqs : ∀ {A B C D : Obj},
+      vhs A C → vhs B D →
+      hhs A B → hhs C D → Prop)
+    (R S : HorEdge hhs) where
+  srcMap : vhs R.src S.src
+  tgtMap : vhs R.tgt S.tgt
+  sq : sqs srcMap tgtMap R.edge S.edge
+
+variable
+  (sqs : ∀ {A B C D : Obj},
+    vhs A C → vhs B D →
+    hhs A B → hhs C D → Prop)
+  (data : DoubleCategoryData
+    (vhs := (vhs : Obj → Obj →
+      Sort (vMor + 1)))
+    (hhs := (hhs : Obj → Obj →
+      Sort (hMor + 1)))
+    (sqs := (sqs : SquareSet
+      (vhs : Obj → Obj → Sort (vMor + 1))
+      (hhs : Obj → Obj → Sort (hMor + 1)))))
+
+/-- The horizontal 1-category of vertical edges.
+Objects are vertical edges and morphisms are
+pairs of horizontal morphisms with a 2-cell,
+composed horizontally. -/
+instance vertEdgeCategory :
+    Category (VertEdge (Obj := Obj) vhs) where
+  Hom := VertEdgeHom sqs
+  id R :=
+    { srcMap := data.hId R.src
+      tgtMap := data.hId R.tgt
+      sq := data.sqHorId R.edge }
+  comp f g :=
+    { srcMap := data.hComp f.srcMap g.srcMap
+      tgtMap := data.hComp f.tgtMap g.tgtMap
+      sq := data.sqHComp f.sq g.sq }
+  id_comp f :=
+    VertEdgeHom.ext
+      (data.laws.horLaws.id_laws.id_comp
+        f.srcMap)
+      (data.laws.horLaws.id_laws.id_comp
+        f.tgtMap)
+  comp_id f :=
+    VertEdgeHom.ext
+      (data.laws.horLaws.id_laws.comp_id
+        f.srcMap)
+      (data.laws.horLaws.id_laws.comp_id
+        f.tgtMap)
+  assoc f g h :=
+    VertEdgeHom.ext
+      (data.laws.horLaws.assoc
+        f.srcMap g.srcMap h.srcMap)
+      (data.laws.horLaws.assoc
+        f.tgtMap g.tgtMap h.tgtMap)
+
+/-- The vertical 1-category of horizontal edges.
+Objects are horizontal edges and morphisms are
+pairs of vertical morphisms with a 2-cell,
+composed vertically. -/
+instance horEdgeCategory :
+    Category (HorEdge (Obj := Obj) hhs) where
+  Hom := HorEdgeHom sqs
+  id R :=
+    { srcMap := data.vId R.src
+      tgtMap := data.vId R.tgt
+      sq := data.sqVertId R.edge }
+  comp f g :=
+    { srcMap := data.vComp f.srcMap g.srcMap
+      tgtMap := data.vComp f.tgtMap g.tgtMap
+      sq := data.sqVComp f.sq g.sq }
+  id_comp f :=
+    HorEdgeHom.ext
+      (data.laws.vertLaws.id_laws.id_comp
+        f.srcMap)
+      (data.laws.vertLaws.id_laws.id_comp
+        f.tgtMap)
+  comp_id f :=
+    HorEdgeHom.ext
+      (data.laws.vertLaws.id_laws.comp_id
+        f.srcMap)
+      (data.laws.vertLaws.id_laws.comp_id
+        f.tgtMap)
+  assoc f g h :=
+    HorEdgeHom.ext
+      (data.laws.vertLaws.assoc
+        f.srcMap g.srcMap h.srcMap)
+      (data.laws.vertLaws.assoc
+        f.tgtMap g.tgtMap h.tgtMap)
+
+end EdgeCategories
+
 end GebLean
