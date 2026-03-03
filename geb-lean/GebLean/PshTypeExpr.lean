@@ -171,6 +171,43 @@ theorem PshTypeExpr.fullRelInterp_id
     simp only [fullRelInterp, ih₁, ih₂,
       pshArrowRel_id, interp]
 
+/-- The type expression for a dialgebra
+`F(X) → G(X)` with covariant `F` and `G`.
+Presheaf-level generalization of
+`dialgebraTypeExpr`. -/
+def pshDialgebraTypeExpr
+    (F G : (Cᵒᵖ ⥤ Type (max u v)) ⥤
+           (Cᵒᵖ ⥤ Type (max u v))) :
+    PshTypeExpr C :=
+  .arrow (.leaf F) (.leaf G)
+
+/-- The type expression for `(F(X) → X) → X`
+(the initial algebra / catamorphism type).
+Presheaf-level generalization of
+`algebraTypeExpr`. -/
+def pshAlgebraTypeExpr
+    (F : (Cᵒᵖ ⥤ Type (max u v)) ⥤
+         (Cᵒᵖ ⥤ Type (max u v))) :
+    PshTypeExpr C :=
+  let x := PshTypeExpr.leaf (𝟭 _)
+  .arrow (.arrow (.leaf F) x) x
+
+/-- The type expression for
+`(X → X) → (X → X)` (the dinatural number
+type). Presheaf-level generalization of
+`dinaturalTypeExpr`. -/
+def pshDinaturalTypeExpr :
+    PshTypeExpr C :=
+  let x := PshTypeExpr.leaf (𝟭 _)
+  .arrow (.arrow x x) (.arrow x x)
+
+/-- The type expression for `X → X`.
+Presheaf-level generalization of
+`homTypeExpr`. -/
+abbrev pshHomTypeExpr :
+    PshTypeExpr C :=
+  .arrow .var .var
+
 /-- The profunctor map for a type expression:
 given `f : P' ⟶ P` (contravariant) and
 `g : Q ⟶ Q'` (covariant), maps
