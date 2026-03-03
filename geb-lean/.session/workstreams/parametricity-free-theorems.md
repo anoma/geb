@@ -307,19 +307,60 @@ the Hermida/Reddy/Robinson paper. See
   `PshParametricFamily T.toPshTypeExpr` without `choice`.
   (Former F7.)
 
-- [ ] **P6c. relInterp composition at PshRel level.**
-  Determine when `T.fullRelInterp` preserves `pshRelComp`,
-  extending the `RelInterpComposition.lean` analysis to
+- [x] **P6c. relInterp composition at PshRel level.**
+  Extended the `RelInterpComposition.lean` analysis to
   presheaves. (Former F6.)
+  In `PshRelDouble.lean`: `pshArrowRel_comp` (arrow
+  relations compose from domain decomposition and
+  codomain composition witnesses).
+  In `PshTypeExpr.lean`:
+  `PshTypeExpr.isArrowFree`, `arrowFreeMap`,
+  `fullRelInterp_eq_pshRelGraph` (arrow-free expressions
+  map graph relations to graph relations),
+  `arrowFreeMap_comp` (functoriality),
+  `relInterp_comp_of_isArrowFree` (arrow-free equality),
+  `hasRelInterpComp` (syntactic composability check),
+  `relInterp_comp_of_hasComp` (composition for
+  expressions satisfying `hasRelInterpComp`),
+  `relInterp_comp_le` (subfunctor inclusion form),
+  `relInterp_comp_eq` (equality for arrow-free).
+  Examples: `pshDialgebraTypeExpr_hasComp` (positive),
+  `pshDinaturalTypeExpr_not_hasComp` and
+  `pshAlgebraTypeExpr_not_hasComp` (negative).
+  For general (non-graph) relations, `pshBarrLiftRel`
+  does not preserve `pshRelComp`; the composition
+  analysis applies to graph relations only.
 
 - [~] **P6d. Presheaf-level free theorem equivalences.**
   Generalize `dialgebraParametricEquivNatTrans`,
   `initialAlgebraParametricEquiv`, and
   `dinaturalNumbersParametricEquiv` to `PSh(C)`.
-  Done: `pshDialgebraParametricEquivNatTrans` in
+  Done: `pshDialgebraParametricEquivNatTrans`,
+  `pshAlgebraParametricEquivParanat`,
+  `pshDinaturalParametricEquivParanat` in
   `PshTypeExpr.lean`.
-  Remaining: `pshAlgebraParametricEquivParanat`,
-  presheaf-level composition/Church equivalences.
+  Infrastructure for Church numerals:
+  `homObjIterateN`, `homObjIterateN_comm`,
+  `homObjIterateN_map`, `homObjIterateNNatTrans`,
+  `pshNatToDinaturalParanat`,
+  `pshDinaturalParanatToNat`,
+  `pshDinaturalParanatToNat_pshNatTo`
+  (forward-backward round trip).
+  Remaining: `pshDinaturalNumbersParametricEquiv`,
+  `pshInitialAlgebraParametricEquiv`.
+  Both face a shared obstacle: the backward-forward
+  round trip (and for initial algebras, the forward
+  direction itself) requires converting stage-local
+  algebra/endomorphism elements into global nat
+  trans (to apply fold/catamorphism). At the Type
+  level there is only one stage, so local = global.
+  For general `C`, `PshDinaturalParanat ≅ ℕ` requires
+  `C` to be connected (for a discrete 2-object
+  category, `PshDinaturalParanat ≅ ℕ × ℕ`).
+  Approaches requiring infrastructure not yet
+  available: colimit/density argument, NNO in the
+  presheaf topos, connectivity hypothesis with
+  `IsConnected C`.
 
 - [ ] **P6e. Twisted-arrow parametric embedding.**
   (Former W6.) Investigate whether `ParametricCopresheaf`

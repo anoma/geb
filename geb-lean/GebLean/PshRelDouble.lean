@@ -1624,6 +1624,34 @@ theorem pshBarrLiftRel_id
     pshBarrLiftRel_graph, G.map_id,
     pshRelGraph_eq_id]
 
+/-- The Barr extension through the identity
+functor is the identity: `pshBarrLiftRel (𝟭 _)
+R = R`. -/
+@[simp]
+theorem pshBarrLiftRel_functor_id
+    {P Q : Cᵒᵖ ⥤ Type w}
+    (R : PshRel P Q) :
+    pshBarrLiftRel (𝟭 _) R = R := by
+  simp only [pshBarrLiftRel, pshBarrLift,
+    CategoryTheory.Functor.id_map,
+    pshProdOverToRel, Over.mk_hom,
+    pshProdLift_fst_snd, Subfunctor.range_ι]
+
+theorem pshBarrLiftRel_mem_of_map
+    {P Q : Cᵒᵖ ⥤ Type w}
+    (G : (Cᵒᵖ ⥤ Type w) ⥤
+         (Cᵒᵖ ⥤ Type w))
+    (R : PshRel P Q)
+    {c : Cᵒᵖ}
+    (z : (G.obj R.toFunctor).obj c) :
+    ((G.map (R.ι ≫ pshProdFst P Q)).app c z,
+     (G.map (R.ι ≫ pshProdSnd P Q)).app c z)
+      ∈ (pshBarrLiftRel G R).obj c := by
+  simp only [pshBarrLiftRel, pshBarrLift,
+    pshProdOverToRel, Subfunctor.range,
+    Set.mem_range, Over.mk_hom]
+  exact ⟨z, rfl⟩
+
 /-- The Barr extension preserves relatedness: if
 `α` and `β` are `(R, S)`-related at the `PshProdOver`
 level, then `G.map α` and `G.map β` are
@@ -2642,6 +2670,133 @@ theorem pshArrowRel_graph_apply
   simp only at hfst hsnd
   rw [← hfst, ← hsnd]; exact s.property
 
+/-- Introduction rule for membership in the arrow
+relation between graph relations: a pair `(g₁, g₂)`
+belongs to `pshArrowRel (pshRelGraph α)
+(pshRelGraph β)` when applying `g₁` and `β` on
+domain elements commutes with applying `α` and
+`g₂`. This is the converse of
+`pshArrowRel_graph_apply`. -/
+theorem pshArrowRel_graph_intro
+    {A₁ A₂ B₁ B₂ :
+      Dᵒᵖ ⥤ Type (max u₁ v₁)}
+    {α : A₁ ⟶ A₂} {β : B₁ ⟶ B₂}
+    {c : Dᵒᵖ}
+    {g₁ : (A₁.functorHom B₁).obj c}
+    {g₂ : (A₂.functorHom B₂).obj c}
+    (h : ∀ (d : Dᵒᵖ) (k : c ⟶ d)
+      (x : A₁.obj d),
+      β.app d (g₁.app d k x) =
+        g₂.app d k (α.app d x)) :
+    (g₁, g₂) ∈
+      (pshArrowRel (pshRelGraph α)
+        (pshRelGraph β)).obj c := by
+  simp only [pshArrowRel, pshProdOverToRel,
+    Subfunctor.range, Set.mem_range]
+  refine ⟨⟨(g₁, g₂), fun d k w => ?_⟩, rfl⟩
+  obtain ⟨⟨x, y⟩, (hxy : α.app d x = y)⟩ := w
+  simp only [Over.mk_hom, Subfunctor.ι_app]
+  refine ⟨⟨(g₁.app d k x, g₂.app d k y),
+    ?_⟩, rfl⟩
+  change β.app d (g₁.app d k x) = g₂.app d k y
+  rw [h d k x, hxy]
+
+/-- Extraction rule for the arrow relation when
+the codomain is a graph relation: given membership
+in `pshArrowRel R (pshRelGraph β)` and a related
+pair `(w₁, w₂) ∈ R`, applying `g₁` and `β` to
+`w₁` equals applying `g₂` to `w₂`. -/
+theorem pshArrowRel_graphCod_apply
+    {A₁ A₂ B₁ B₂ :
+      Dᵒᵖ ⥤ Type (max u₁ v₁)}
+    {R : PshRel A₁ A₂}
+    {β : B₁ ⟶ B₂}
+    {c : Dᵒᵖ}
+    {g₁ : (A₁.functorHom B₁).obj c}
+    {g₂ : (A₂.functorHom B₂).obj c}
+    (h : (g₁, g₂) ∈
+      (pshArrowRel R
+        (pshRelGraph β)).obj c)
+    {d : Dᵒᵖ} (k : c ⟶ d)
+    {w₁ : A₁.obj d} {w₂ : A₂.obj d}
+    (hw : (w₁, w₂) ∈ R.obj d) :
+    β.app d (g₁.app d k w₁) =
+      g₂.app d k w₂ := by
+  simp only [pshArrowRel, pshProdOverToRel,
+    Subfunctor.range, Set.mem_range] at h
+  obtain ⟨⟨⟨a₁, a₂⟩, hpred⟩, heq⟩ := h
+  have ha₁ : a₁ = g₁ :=
+    congr_arg Prod.fst heq
+  have ha₂ : a₂ = g₂ :=
+    congr_arg Prod.snd heq
+  subst ha₁; subst ha₂
+  have hspec := hpred d k ⟨(w₁, w₂), hw⟩
+  obtain ⟨s, hs⟩ := hspec
+  simp only [Over.mk_hom,
+    Subfunctor.ι_app] at hs
+  have hfst := congr_arg Prod.fst hs
+  have hsnd := congr_arg Prod.snd hs
+  simp only at hfst hsnd
+  rw [← hfst, ← hsnd]; exact s.property
+
+theorem pshArrowRel_intro
+    {A₁ A₂ B₁ B₂ :
+      Dᵒᵖ ⥤ Type (max u₁ v₁)}
+    {R : PshRel A₁ A₂}
+    {S : PshRel B₁ B₂}
+    {c : Dᵒᵖ}
+    {g₁ : (A₁.functorHom B₁).obj c}
+    {g₂ : (A₂.functorHom B₂).obj c}
+    (h : ∀ (d : Dᵒᵖ) (k : c ⟶ d)
+      (a₁ : A₁.obj d) (a₂ : A₂.obj d),
+      (a₁, a₂) ∈ R.obj d →
+      (g₁.app d k a₁, g₂.app d k a₂) ∈
+        S.obj d) :
+    (g₁, g₂) ∈
+      (pshArrowRel R S).obj c := by
+  simp only [pshArrowRel, pshProdOverToRel,
+    Subfunctor.range, Set.mem_range]
+  refine ⟨⟨(g₁, g₂), fun d k w => ?_⟩, rfl⟩
+  simp only [Over.mk_hom, Subfunctor.ι_app]
+  exact ⟨⟨(g₁.app d k w.val.1,
+    g₂.app d k w.val.2),
+    h d k w.val.1 w.val.2 w.property⟩,
+    rfl⟩
+
+theorem pshArrowRel_apply
+    {A₁ A₂ B₁ B₂ :
+      Dᵒᵖ ⥤ Type (max u₁ v₁)}
+    {R : PshRel A₁ A₂}
+    {S : PshRel B₁ B₂}
+    {c : Dᵒᵖ}
+    {g₁ : (A₁.functorHom B₁).obj c}
+    {g₂ : (A₂.functorHom B₂).obj c}
+    (h : (g₁, g₂) ∈
+      (pshArrowRel R S).obj c)
+    {d : Dᵒᵖ} (k : c ⟶ d)
+    {a₁ : A₁.obj d} {a₂ : A₂.obj d}
+    (ha : (a₁, a₂) ∈ R.obj d) :
+    (g₁.app d k a₁, g₂.app d k a₂) ∈
+      S.obj d := by
+  simp only [pshArrowRel, pshProdOverToRel,
+    Subfunctor.range, Set.mem_range] at h
+  obtain ⟨⟨⟨h₁, h₂⟩, hpred⟩, heq⟩ := h
+  have hg₁ : h₁ = g₁ :=
+    congr_arg Prod.fst heq
+  have hg₂ : h₂ = g₂ :=
+    congr_arg Prod.snd heq
+  subst hg₁; subst hg₂
+  have hspec :=
+    hpred d k ⟨(a₁, a₂), ha⟩
+  simp only [Over.mk_hom,
+    Subfunctor.ι_app] at hspec
+  obtain ⟨s, hs⟩ := hspec
+  have hfst := congr_arg Prod.fst hs
+  have hsnd := congr_arg Prod.snd hs
+  simp only at hfst hsnd
+  rw [← hfst, ← hsnd]
+  exact s.property
+
 /-- The range of `pshArrowRelOver R S` is contained
 in `pshArrowRel (pshProdOverToRel R)
 (pshProdOverToRel S)`. -/
@@ -2784,6 +2939,40 @@ theorem pshArrowRel_related
         hα)
       (pshRelRelated_toPshProdOverRelated
         hβ))
+
+/-- Arrow relations compose: if `w₁, w₂` are
+related by `pshArrowRel R₁ S₁` and `w₂, w₃` by
+`pshArrowRel R₂ S₂`, then `w₁, w₃` are related
+by `pshArrowRel (pshRelComp R₁ R₂)
+(pshRelComp S₁ S₂)`.  The proof decomposes
+`pshRelComp`-membership in the domain to
+obtain an intermediate element, applies both
+hypotheses, and composes the codomain
+witnesses. -/
+theorem pshArrowRel_comp
+    {A₁ A₂ A₃ B₁ B₂ B₃ :
+      Dᵒᵖ ⥤ Type (max u₁ v₁)}
+    {R₁ : PshRel A₁ A₂}
+    {R₂ : PshRel A₂ A₃}
+    {S₁ : PshRel B₁ B₂}
+    {S₂ : PshRel B₂ B₃}
+    {c : Dᵒᵖ}
+    {w₁ : (A₁.functorHom B₁).obj c}
+    {w₂ : (A₂.functorHom B₂).obj c}
+    {w₃ : (A₃.functorHom B₃).obj c}
+    (h₁₂ : (w₁, w₂) ∈
+      (pshArrowRel R₁ S₁).obj c)
+    (h₂₃ : (w₂, w₃) ∈
+      (pshArrowRel R₂ S₂).obj c) :
+    (w₁, w₃) ∈
+      (pshArrowRel (pshRelComp R₁ R₂)
+        (pshRelComp S₁ S₂)).obj c := by
+  apply pshArrowRel_intro
+  intro d k a₁ a₃ hmem
+  obtain ⟨a₂, hr₁, hr₂⟩ := hmem
+  exact ⟨w₂.app d k a₂,
+    pshArrowRel_apply h₁₂ k hr₁,
+    pshArrowRel_apply h₂₃ k hr₂⟩
 
 end PshInternalHom
 

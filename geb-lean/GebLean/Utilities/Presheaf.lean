@@ -1606,6 +1606,23 @@ theorem functorHomSection_roundTrip_right
   simp at hsec
   exact hsec.symm
 
+theorem functorHomSection_val_app
+    {F G : Cᵒᵖ ⥤ Type (max u v)}
+    (s : (F.functorHom G).sections)
+    {c d : Cᵒᵖ} (k : c ⟶ d)
+    (x : F.obj d) :
+    (s.val c).app d k x =
+      (functorHomSectionToNatTrans s).app
+        d x := by
+  have hsec := congrArg
+    (fun h => h.app d (𝟙 d) x)
+    (s.property k)
+  dsimp [Functor.functorHom,
+    Functor.homObjFunctor] at hsec
+  simp only [Category.comp_id] at hsec
+  dsimp [functorHomSectionToNatTrans]
+  exact hsec
+
 end FunctorHomSections
 
 end GebLean

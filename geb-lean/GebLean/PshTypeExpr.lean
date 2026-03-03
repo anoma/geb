@@ -93,6 +93,28 @@ def PshTypeExpr.interp :
   | .arrow T₁ T₂, P, Q =>
     (T₁.interp Q P).functorHom (T₂.interp P Q)
 
+@[simp]
+theorem PshTypeExpr.interp_var
+    (P Q : Cᵒᵖ ⥤ Type (max u v)) :
+    PshTypeExpr.var.interp P Q = Q := rfl
+
+@[simp]
+theorem PshTypeExpr.interp_app
+    (G : (Cᵒᵖ ⥤ Type (max u v)) ⥤
+         (Cᵒᵖ ⥤ Type (max u v)))
+    (T : PshTypeExpr C)
+    (P Q : Cᵒᵖ ⥤ Type (max u v)) :
+    (PshTypeExpr.app G T).interp P Q =
+    G.obj (T.interp P Q) := rfl
+
+@[simp]
+theorem PshTypeExpr.interp_arrow
+    (T₁ T₂ : PshTypeExpr C)
+    (P Q : Cᵒᵖ ⥤ Type (max u v)) :
+    (T₁.arrow T₂).interp P Q =
+    (T₁.interp Q P).functorHom
+      (T₂.interp P Q) := rfl
+
 /-- The relational interpretation of a type
 expression. Given a morphism `α : P ⟶ Q`, lifts it
 to a relation between `T.interp P P` and
@@ -171,6 +193,189 @@ theorem PshTypeExpr.fullRelInterp_id
     simp only [fullRelInterp, ih₁, ih₂,
       pshArrowRel_id, interp]
 
+/-- A presheaf type expression is arrow-free when
+it contains no `arrow` constructor. For arrow-free
+expressions, `fullRelInterp R` reduces to the
+Barr extension of `R` through the functorial
+composition, and in particular maps graph relations
+to graph relations. -/
+def PshTypeExpr.isArrowFree :
+    PshTypeExpr C → Bool
+  | .var => true
+  | .app _ T => T.isArrowFree
+  | .arrow _ _ => false
+
+/-- The covariant map of an arrow-free presheaf
+type expression at `α : P ⟶ Q`, producing a
+natural transformation
+`T.interp P P ⟶ T.interp Q Q`. For arrow-free
+`T`, `interp T P Q` depends only on `Q`, so
+this is the natural covariant action. -/
+def PshTypeExpr.arrowFreeMap
+    (T : PshTypeExpr C)
+    (haf : T.isArrowFree = true)
+    {P Q : Cᵒᵖ ⥤ Type (max u v)}
+    (α : P ⟶ Q) :
+    T.interp P P ⟶ T.interp Q Q :=
+  match T, haf with
+  | .var, _ => α
+  | .app G T, haf =>
+    G.map (T.arrowFreeMap haf α)
+
+/-- For arrow-free presheaf type expressions,
+the full relational interpretation at a graph
+relation is the graph of the covariant map. -/
+theorem PshTypeExpr.fullRelInterp_eq_pshRelGraph
+    (T : PshTypeExpr C)
+    (haf : T.isArrowFree = true)
+    {P Q : Cᵒᵖ ⥤ Type (max u v)}
+    (α : P ⟶ Q) :
+    T.fullRelInterp (pshRelGraph α) =
+      pshRelGraph (T.arrowFreeMap haf α) := by
+  match T, haf with
+  | .var, _ => rfl
+  | .app G T, haf =>
+    simp only [fullRelInterp, arrowFreeMap,
+      T.fullRelInterp_eq_pshRelGraph haf α,
+      pshBarrLiftRel_graph]
+
+/-- `arrowFreeMap` preserves composition. -/
+theorem PshTypeExpr.arrowFreeMap_comp
+    (T : PshTypeExpr C)
+    (haf : T.isArrowFree = true)
+    {P Q W : Cᵒᵖ ⥤ Type (max u v)}
+    (α : P ⟶ Q) (β : Q ⟶ W) :
+    T.arrowFreeMap haf (α ≫ β) =
+      T.arrowFreeMap haf α ≫
+        T.arrowFreeMap haf β := by
+  match T, haf with
+  | .var, _ => rfl
+  | .app G T, haf =>
+    simp only [arrowFreeMap,
+      T.arrowFreeMap_comp haf α β,
+      Functor.map_comp]
+
+/-- `relInterp` composes for arrow-free presheaf
+type expressions: `pshRelComp (T.relInterp α)
+(T.relInterp β) = T.relInterp (α ≫ β)`. -/
+theorem PshTypeExpr.relInterp_comp_of_isArrowFree
+    (T : PshTypeExpr C)
+    (haf : T.isArrowFree = true)
+    {P Q W : Cᵒᵖ ⥤ Type (max u v)}
+    (α : P ⟶ Q) (β : Q ⟶ W) :
+    pshRelComp (T.relInterp α)
+      (T.relInterp β) =
+      T.relInterp (α ≫ β) := by
+  rw [← T.fullRelInterp_graph,
+    ← T.fullRelInterp_graph,
+    ← T.fullRelInterp_graph,
+    T.fullRelInterp_eq_pshRelGraph haf,
+    T.fullRelInterp_eq_pshRelGraph haf,
+    T.fullRelInterp_eq_pshRelGraph haf,
+    pshRelGraph_comp,
+    T.arrowFreeMap_comp haf]
+
+/-- A presheaf type expression has composable
+`relInterp` when every `arrow` node has an
+arrow-free domain. Arrow-free types compose via
+graph-relation composition; arrow types compose
+when the domain decomposes (requiring
+arrow-freeness) and the codomain composes
+(recursive). -/
+def PshTypeExpr.hasRelInterpComp :
+    PshTypeExpr C → Bool
+  | .var => true
+  | .app _ T => T.isArrowFree
+  | .arrow T₁ T₂ =>
+    T₁.isArrowFree && T₂.hasRelInterpComp
+
+/-- `relInterp` composes for presheaf type
+expressions satisfying `hasRelInterpComp`. Given
+morphisms `α : P ⟶ Q` and `β : Q ⟶ W`, and
+elements related by both `T.relInterp α` and
+`T.relInterp β`, the elements are related by
+`T.relInterp (α ≫ β)`.
+
+The proof follows the Type-level version: `var`
+and `app` reduce to graph composition, and
+`arrow` uses domain decomposition (from
+arrow-freeness) and codomain composition
+(recursive). -/
+theorem PshTypeExpr.relInterp_comp_of_hasComp
+    (T : PshTypeExpr C)
+    (hc : T.hasRelInterpComp = true)
+    {P Q W : Cᵒᵖ ⥤ Type (max u v)}
+    (α : P ⟶ Q) (β : Q ⟶ W)
+    {c : Cᵒᵖ}
+    {x : (T.interp P P).obj c}
+    {y : (T.interp Q Q).obj c}
+    {z : (T.interp W W).obj c}
+    (hα : (x, y) ∈ (T.relInterp α).obj c)
+    (hβ : (y, z) ∈ (T.relInterp β).obj c) :
+    (x, z) ∈ (T.relInterp (α ≫ β)).obj c := by
+  match T, hc with
+  | .var, _ =>
+    have heq := PshTypeExpr.relInterp_comp_of_isArrowFree
+      (PshTypeExpr.var (C := C)) rfl α β
+    rw [← heq]; exact ⟨y, hα, hβ⟩
+  | .app G T, hc =>
+    simp only [hasRelInterpComp] at hc
+    have heq := PshTypeExpr.relInterp_comp_of_isArrowFree
+      (.app G T) hc α β
+    rw [← heq]; exact ⟨y, hα, hβ⟩
+  | .arrow T₁ T₂, hc =>
+    simp only [hasRelInterpComp,
+      Bool.and_eq_true] at hc
+    obtain ⟨haf₁, hc₂⟩ := hc
+    simp only [relInterp] at hα hβ ⊢
+    apply pshArrowRel_intro
+    intro d k a₁ a₃ hmem
+    have heq₁ :=
+      T₁.relInterp_comp_of_isArrowFree
+        haf₁ α β
+    have hmem' : (a₁, a₃) ∈
+        (pshRelComp (T₁.relInterp α)
+          (T₁.relInterp β)).obj d := by
+      rw [heq₁]; exact hmem
+    obtain ⟨a₂, hr₁, hr₂⟩ := hmem'
+    exact T₂.relInterp_comp_of_hasComp hc₂
+      α β
+      (pshArrowRel_apply hα k hr₁)
+      (pshArrowRel_apply hβ k hr₂)
+
+/-- `relInterp` composition as a subfunctor
+inclusion: for type expressions satisfying
+`hasRelInterpComp`, the composite of two
+relational interpretations is contained in the
+relational interpretation of the composed
+morphism. -/
+theorem PshTypeExpr.relInterp_comp_le
+    (T : PshTypeExpr C)
+    (hc : T.hasRelInterpComp = true)
+    {P Q W : Cᵒᵖ ⥤ Type (max u v)}
+    (α : P ⟶ Q) (β : Q ⟶ W) :
+    pshRelComp (T.relInterp α)
+      (T.relInterp β) ≤
+      T.relInterp (α ≫ β) := by
+  intro c ⟨x, z⟩ ⟨y, hα, hβ⟩
+  exact T.relInterp_comp_of_hasComp
+    hc α β hα hβ
+
+/-- For arrow-free presheaf type expressions,
+`relInterp` composition gives strict equality,
+not just inclusion: the composite relation
+equals the relational interpretation of the
+composed morphism. -/
+theorem PshTypeExpr.relInterp_comp_eq
+    (T : PshTypeExpr C)
+    (haf : T.isArrowFree = true)
+    {P Q W : Cᵒᵖ ⥤ Type (max u v)}
+    (α : P ⟶ Q) (β : Q ⟶ W) :
+    pshRelComp (T.relInterp α)
+      (T.relInterp β) =
+      T.relInterp (α ≫ β) :=
+  T.relInterp_comp_of_isArrowFree haf α β
+
 /-- The type expression for a dialgebra
 `F(X) → G(X)` with covariant `F` and `G`.
 Presheaf-level generalization of
@@ -207,6 +412,40 @@ Presheaf-level generalization of
 abbrev pshHomTypeExpr :
     PshTypeExpr C :=
   .arrow .var .var
+
+/-- The dialgebra type `F(X) → G(X)` has
+composable `relInterp`. -/
+theorem pshDialgebraTypeExpr_hasComp
+    (F G : (Cᵒᵖ ⥤ Type (max u v)) ⥤
+           (Cᵒᵖ ⥤ Type (max u v))) :
+    (pshDialgebraTypeExpr F G).hasRelInterpComp
+      = true := by
+  simp [pshDialgebraTypeExpr,
+    PshTypeExpr.hasRelInterpComp,
+    PshTypeExpr.isArrowFree]
+
+/-- The dinatural type `(X → X) → (X → X)` does
+NOT have composable `relInterp`: the domain
+`X → X` is not arrow-free. -/
+theorem pshDinaturalTypeExpr_not_hasComp :
+    PshTypeExpr.hasRelInterpComp
+      (pshDinaturalTypeExpr (C := C)) =
+      false := by
+  simp [pshDinaturalTypeExpr,
+    PshTypeExpr.hasRelInterpComp,
+    PshTypeExpr.isArrowFree]
+
+/-- The algebra type `(F(X) → X) → X` does NOT
+have composable `relInterp`: the domain
+`F(X) → X` is not arrow-free. -/
+theorem pshAlgebraTypeExpr_not_hasComp
+    (F : (Cᵒᵖ ⥤ Type (max u v)) ⥤
+         (Cᵒᵖ ⥤ Type (max u v))) :
+    (pshAlgebraTypeExpr F).hasRelInterpComp
+      = false := by
+  simp [pshAlgebraTypeExpr,
+    PshTypeExpr.hasRelInterpComp,
+    PshTypeExpr.isArrowFree]
 
 /-- The profunctor map for a type expression:
 given `f : P' ⟶ P` (contravariant) and
@@ -2721,9 +2960,11 @@ def pshDialgebraParametricEquivNatTrans
 /-- Presheaf-level algebra paranaturality: a
 family assigning to each presheaf `P` a section
 of `((F P).functorHom P).functorHom P` such
-that for every algebra homomorphism
-`f : (P, α) → (Q, β)`, applying the section to
-`α` and mapping by `f` equals applying to `β`.
+that for any morphism `f : P ⟶ Q` and any
+stage-level elements `w₁, w₂` in the function
+hom presheaf related by the inner arrow
+relation, applying the section and mapping by
+`f` preserves the relation.
 
 This is the presheaf-category generalization of
 `Paranat (AlgProf F) IdProf`. -/
@@ -2735,18 +2976,574 @@ structure PshAlgParanat
     ((pshAlgebraTypeExpr F).interp P P).sections
   paranatural :
     ∀ (P Q : Cᵒᵖ ⥤ Type (max u v))
-      (f : P ⟶ Q)
-      (α : F.obj P ⟶ P) (β : F.obj Q ⟶ Q),
-      α ≫ f = F.map f ≫ β →
-      ∀ (c : Cᵒᵖ),
-        let φP := functorHomSectionToNatTrans
-          (app P)
-        let φQ := functorHomSectionToNatTrans
-          (app Q)
-        let αs := natTransToFunctorHomSection α
-        let βs := natTransToFunctorHomSection β
-        f.app c (φP.app c (αs.val c)) =
-          φQ.app c (βs.val c)
+      (f : P ⟶ Q) (c : Cᵒᵖ)
+      (w₁ : ((F.obj P).functorHom P).obj c)
+      (w₂ : ((F.obj Q).functorHom Q).obj c),
+      (w₁, w₂) ∈
+        (pshArrowRel (pshRelGraph (F.map f))
+          (pshRelGraph f)).obj c →
+      f.app c
+        ((functorHomSectionToNatTrans
+          (app P)).app c w₁) =
+        (functorHomSectionToNatTrans
+          (app Q)).app c w₂
+
+/-- Forward direction: a parametric family for
+the algebra type expression determines an
+algebra-paranatural family. -/
+def pshAlgebraParametric_toPshAlgParanat
+    {F : (Cᵒᵖ ⥤ Type (max u v)) ⥤
+         (Cᵒᵖ ⥤ Type (max u v))}
+    (p : PshParametricFamily
+      (pshAlgebraTypeExpr F)) :
+    PshAlgParanat F where
+  app := p.app
+  paranatural P Q f c w₁ w₂ hmem := by
+    have hpar := p.parametric_graphRel f c
+    simp only [pshAlgebraTypeExpr,
+      PshTypeExpr.relInterp] at hpar
+    rw [pshBarrLiftRel_graph,
+      pshBarrLiftRel_graph] at hpar
+    simp only [CategoryTheory.Functor.id_map]
+      at hpar
+    exact pshArrowRel_graphCod_apply
+      hpar (𝟙 c) hmem
+
+def pshAlgParanat_toPshAlgebraParametric
+    {F : (Cᵒᵖ ⥤ Type (max u v)) ⥤
+         (Cᵒᵖ ⥤ Type (max u v))}
+    (q : PshAlgParanat F) :
+    PshParametricFamily
+      (pshAlgebraTypeExpr F) where
+  app := q.app
+  parametric P Q R c := by
+    simp only [pshAlgebraTypeExpr,
+      PshTypeExpr.fullRelInterp,
+      pshBarrLiftRel_functor_id]
+    apply pshArrowRel_intro
+    intro d k w₁ w₂ hmem
+    rw [functorHomSection_val_app
+      (q.app P) k,
+      functorHomSection_val_app
+        (q.app Q) k]
+    set S := R.toFunctor
+    set π₁ := R.ι ≫ pshProdFst P Q
+    set π₂ := R.ι ≫ pshProdSnd P Q
+    set φP :=
+      functorHomSectionToNatTrans (q.app P)
+    set φQ :=
+      functorHomSectionToNatTrans (q.app Q)
+    set φS :=
+      functorHomSectionToNatTrans (q.app S)
+    have hw_rel :
+        ∀ (e : Cᵒᵖ) (l : d ⟶ e)
+          (z : (F.obj S).obj e),
+          (w₁.app e l
+            ((F.map π₁).app e z),
+           w₂.app e l
+            ((F.map π₂).app e z)) ∈
+            R.obj e :=
+      fun e l z =>
+        pshArrowRel_apply hmem l
+          (pshBarrLiftRel_mem_of_map F R z)
+    let w_S :
+        ((F.obj S).functorHom S).obj d :=
+      { app := fun e l z =>
+          ⟨(w₁.app e l ((F.map π₁).app e z),
+            w₂.app e l ((F.map π₂).app e z)),
+           hw_rel e l z⟩
+        naturality := fun {e e'} f z => by
+          ext x
+          apply Subtype.ext
+          simp only [types_comp_apply]
+          apply Prod.ext
+          · have hnat₁ := congr_fun
+              ((F.map π₁).naturality f) x
+            simp only [types_comp_apply]
+              at hnat₁
+            rw [hnat₁]
+            exact congr_fun
+              (w₁.naturality f z)
+              ((F.map π₁).app e x)
+          · have hnat₂ := congr_fun
+              ((F.map π₂).naturality f) x
+            simp only [types_comp_apply]
+              at hnat₂
+            rw [hnat₂]
+            exact congr_fun
+              (w₂.naturality f z)
+              ((F.map π₂).app e x)
+      }
+    have hmem₁ :
+        (w_S, w₁) ∈
+          (pshArrowRel
+            (pshRelGraph (F.map π₁))
+            (pshRelGraph π₁)).obj d :=
+      pshArrowRel_graph_intro
+        (fun e l x => by
+          change π₁.app e (w_S.app e l x) =
+            w₁.app e l ((F.map π₁).app e x)
+          dsimp [π₁, pshProdFst])
+    have hmem₂ :
+        (w_S, w₂) ∈
+          (pshArrowRel
+            (pshRelGraph (F.map π₂))
+            (pshRelGraph π₂)).obj d :=
+      pshArrowRel_graph_intro
+        (fun e l x => by
+          change π₂.app e (w_S.app e l x) =
+            w₂.app e l ((F.map π₂).app e x)
+          dsimp [π₂, pshProdSnd])
+    have hp₁ :=
+      q.paranatural S P π₁ d w_S w₁ hmem₁
+    have hp₂ :=
+      q.paranatural S Q π₂ d w_S w₂ hmem₂
+    set s := φS.app d w_S
+    have hs_mem : s.val ∈ R.obj d :=
+      s.property
+    rw [show s.val = (s.val.1, s.val.2)
+      from rfl] at hs_mem
+    have hs₁ : s.val.1 = φP.app d w₁ := by
+      change (π₁.app d s) = φP.app d w₁
+      exact hp₁
+    have hs₂ : s.val.2 = φQ.app d w₂ := by
+      change (π₂.app d s) = φQ.app d w₂
+      exact hp₂
+    rw [← hs₁, ← hs₂]
+    exact hs_mem
+
+theorem pshAlgebra_left_inv
+    {F : (Cᵒᵖ ⥤ Type (max u v)) ⥤
+         (Cᵒᵖ ⥤ Type (max u v))}
+    (p : PshParametricFamily
+      (pshAlgebraTypeExpr F)) :
+    pshAlgParanat_toPshAlgebraParametric
+      (pshAlgebraParametric_toPshAlgParanat
+        p) = p := by
+  ext P c
+  rfl
+
+theorem pshAlgebra_right_inv
+    {F : (Cᵒᵖ ⥤ Type (max u v)) ⥤
+         (Cᵒᵖ ⥤ Type (max u v))}
+    (q : PshAlgParanat F) :
+    pshAlgebraParametric_toPshAlgParanat
+      (pshAlgParanat_toPshAlgebraParametric
+        q) = q := by
+  ext P c
+  rfl
+
+def pshAlgebraParametricEquivParanat
+    (F : (Cᵒᵖ ⥤ Type (max u v)) ⥤
+         (Cᵒᵖ ⥤ Type (max u v))) :
+    PshParametricFamily
+      (pshAlgebraTypeExpr F) ≃
+    PshAlgParanat F where
+  toFun := pshAlgebraParametric_toPshAlgParanat
+  invFun :=
+    pshAlgParanat_toPshAlgebraParametric
+  left_inv := pshAlgebra_left_inv
+  right_inv := pshAlgebra_right_inv
+
+/-- Presheaf-level dinatural paranaturality: a
+family assigning to each presheaf `P` a section
+of `(P.functorHom P).functorHom (P.functorHom P)`
+such that for any morphism `f : P ⟶ Q` and any
+stage-level endomorphism elements `w₁, w₂` in the
+function hom presheaf related by the inner arrow
+relation, applying the section preserves the
+arrow relation.
+
+This is the presheaf-category generalization of
+`Paranat HomProf HomProf`. -/
+@[ext]
+structure PshDinaturalParanat where
+  app : (P : Cᵒᵖ ⥤ Type (max u v)) →
+    ((pshDinaturalTypeExpr
+      (C := C)).interp P P).sections
+  paranatural :
+    ∀ (P Q : Cᵒᵖ ⥤ Type (max u v))
+      (f : P ⟶ Q) (c : Cᵒᵖ)
+      (w₁ : (P.functorHom P).obj c)
+      (w₂ : (Q.functorHom Q).obj c),
+      (w₁, w₂) ∈
+        (pshArrowRel (pshRelGraph f)
+          (pshRelGraph f)).obj c →
+      ((functorHomSectionToNatTrans
+          (app P)).app c w₁,
+       (functorHomSectionToNatTrans
+          (app Q)).app c w₂) ∈
+        (pshArrowRel (pshRelGraph f)
+          (pshRelGraph f)).obj c
+
+/-- Forward direction: a parametric family for
+the dinatural type expression determines a
+dinatural-paranatural family. -/
+def pshDinaturalParametric_toPshDinaturalParanat
+    {C : Type u} [Category.{v} C]
+    (p : PshParametricFamily
+      (pshDinaturalTypeExpr (C := C))) :
+    PshDinaturalParanat (C := C) where
+  app := p.app
+  paranatural P Q f c w₁ w₂ hmem := by
+    have hpar := p.parametric_graphRel f c
+    simp only [pshDinaturalTypeExpr,
+      PshTypeExpr.relInterp,
+      pshBarrLiftRel_functor_id] at hpar
+    exact pshArrowRel_apply hpar (𝟙 c) hmem
+
+def pshDinaturalParanat_toPshDinaturalParametric
+    {C : Type u} [Category.{v} C]
+    (q : PshDinaturalParanat (C := C)) :
+    PshParametricFamily
+      (pshDinaturalTypeExpr (C := C)) where
+  app := q.app
+  parametric P Q R c := by
+    simp only [pshDinaturalTypeExpr,
+      PshTypeExpr.fullRelInterp,
+      pshBarrLiftRel_functor_id]
+    apply pshArrowRel_intro
+    intro d k w₁ w₂ hmem_outer
+    rw [functorHomSection_val_app
+      (q.app P) k,
+      functorHomSection_val_app
+        (q.app Q) k]
+    apply pshArrowRel_intro
+    intro e l a₁ a₂ hmem_inner
+    set S := R.toFunctor
+    set π₁ := R.ι ≫ pshProdFst P Q
+    set π₂ := R.ι ≫ pshProdSnd P Q
+    set φP :=
+      functorHomSectionToNatTrans (q.app P)
+    set φQ :=
+      functorHomSectionToNatTrans (q.app Q)
+    set φS :=
+      functorHomSectionToNatTrans (q.app S)
+    have hw_rel :
+        ∀ (e' : Cᵒᵖ) (l' : d ⟶ e')
+          (a₁' : P.obj e') (a₂' : Q.obj e'),
+          (a₁', a₂') ∈ R.obj e' →
+          (w₁.app e' l' a₁',
+           w₂.app e' l' a₂') ∈
+            R.obj e' :=
+      fun e' l' a₁' a₂' h' =>
+        pshArrowRel_apply hmem_outer l' h'
+    let w_S :
+        ((S.functorHom S).obj d) :=
+      { app := fun e' l' s =>
+          ⟨(w₁.app e' l' s.val.1,
+            w₂.app e' l' s.val.2),
+           hw_rel e' l' s.val.1 s.val.2
+             s.property⟩
+        naturality := fun {e₁ e₂} f s => by
+          ext x
+          apply Subtype.ext
+          simp only [types_comp_apply]
+          apply Prod.ext
+          · exact congr_fun
+              (w₁.naturality f s) x.val.1
+          · exact congr_fun
+              (w₂.naturality f s) x.val.2
+      }
+    have hmem₁ :
+        (w_S, w₁) ∈
+          (pshArrowRel
+            (pshRelGraph π₁)
+            (pshRelGraph π₁)).obj d :=
+      pshArrowRel_graph_intro
+        (fun e' l' x => by
+          change π₁.app e' (w_S.app e' l' x) =
+            w₁.app e' l' (π₁.app e' x)
+          dsimp [π₁, pshProdFst])
+    have hmem₂ :
+        (w_S, w₂) ∈
+          (pshArrowRel
+            (pshRelGraph π₂)
+            (pshRelGraph π₂)).obj d :=
+      pshArrowRel_graph_intro
+        (fun e' l' x => by
+          change π₂.app e' (w_S.app e' l' x) =
+            w₂.app e' l' (π₂.app e' x)
+          dsimp [π₂, pshProdSnd])
+    have hp₁ :=
+      q.paranatural S P π₁ d w_S w₁ hmem₁
+    have hp₂ :=
+      q.paranatural S Q π₂ d w_S w₂ hmem₂
+    let s : S.obj e :=
+      ⟨(a₁, a₂), hmem_inner⟩
+    have hgraph₁ :
+        (s, a₁) ∈
+          (pshRelGraph π₁).obj e := by
+      change π₁.app e s = a₁
+      dsimp [π₁, pshProdFst]
+    have hgraph₂ :
+        (s, a₂) ∈
+          (pshRelGraph π₂).obj e := by
+      change π₂.app e s = a₂
+      dsimp [π₂, pshProdSnd]
+    have hs₁ :=
+      pshArrowRel_graphCod_apply
+        hp₁ l hgraph₁
+    have hs₂ :=
+      pshArrowRel_graphCod_apply
+        hp₂ l hgraph₂
+    set t := (φS.app d w_S).app e l s
+    have ht_mem := t.property
+    rw [show t.val = (t.val.1, t.val.2)
+      from rfl] at ht_mem
+    have ht₁ : t.val.1 =
+        (φP.app d w₁).app e l a₁ := by
+      change (π₁.app e t) =
+        (φP.app d w₁).app e l a₁
+      exact hs₁
+    have ht₂ : t.val.2 =
+        (φQ.app d w₂).app e l a₂ := by
+      change (π₂.app e t) =
+        (φQ.app d w₂).app e l a₂
+      exact hs₂
+    rw [← ht₁, ← ht₂]
+    exact ht_mem
+
+theorem pshDinatural_left_inv
+    {C : Type u} [Category.{v} C]
+    (p : PshParametricFamily
+      (pshDinaturalTypeExpr (C := C))) :
+    pshDinaturalParanat_toPshDinaturalParametric
+      (pshDinaturalParametric_toPshDinaturalParanat
+        p) = p := by
+  ext P c
+  rfl
+
+theorem pshDinatural_right_inv
+    {C : Type u} [Category.{v} C]
+    (q : PshDinaturalParanat (C := C)) :
+    pshDinaturalParametric_toPshDinaturalParanat
+      (pshDinaturalParanat_toPshDinaturalParametric
+        q) = q := by
+  ext P c
+  rfl
+
+/-- Parametric families for the dinatural type
+expression `(X → X) → (X → X)` are equivalent to
+presheaf-level dinatural paranaturality. This is
+the presheaf-category generalization of
+`dinaturalParametricEquivParanat`. -/
+def pshDinaturalParametricEquivParanat
+    (C : Type u) [Category.{v} C] :
+    PshParametricFamily
+      (pshDinaturalTypeExpr (C := C)) ≃
+    PshDinaturalParanat (C := C) where
+  toFun :=
+    pshDinaturalParametric_toPshDinaturalParanat
+  invFun :=
+    pshDinaturalParanat_toPshDinaturalParametric
+  left_inv := pshDinatural_left_inv
+  right_inv := pshDinatural_right_inv
+
+/-- Iterate an endomorphism element in the
+internal hom presheaf `n` times. `homObjIterateN 0`
+is the identity, `homObjIterateN (n+1)` applies
+the endomorphism once after iterating `n` times. -/
+def homObjIterateN :
+    ℕ → {P : Cᵒᵖ ⥤ Type (max u v)} →
+    {c : Cᵒᵖ} →
+    (P.functorHom P).obj c →
+    (P.functorHom P).obj c
+  | 0, _, _, _ => Functor.HomObj.id _
+  | n + 1, _, _, w =>
+    (homObjIterateN n w).comp w
+
+@[simp]
+theorem homObjIterateN_zero
+    {P : Cᵒᵖ ⥤ Type (max u v)}
+    {c : Cᵒᵖ}
+    (w : (P.functorHom P).obj c) :
+    homObjIterateN 0 w =
+    Functor.HomObj.id _ := rfl
+
+@[simp]
+theorem homObjIterateN_succ
+    {P : Cᵒᵖ ⥤ Type (max u v)}
+    {c : Cᵒᵖ}
+    (n : ℕ)
+    (w : (P.functorHom P).obj c) :
+    homObjIterateN (n + 1) w =
+    (homObjIterateN n w).comp w := rfl
+
+/-- Iteration commutes with presheaf morphisms:
+if `f` relates endomorphisms `w₁` and `w₂`
+pointwise (i.e., `f ∘ w₁ = w₂ ∘ f` at each
+stage), then `f ∘ w₁^n = w₂^n ∘ f`. -/
+theorem homObjIterateN_comm
+    {P Q : Cᵒᵖ ⥤ Type (max u v)}
+    {c : Cᵒᵖ} (n : ℕ)
+    (f : P ⟶ Q)
+    (w₁ : (P.functorHom P).obj c)
+    (w₂ : (Q.functorHom Q).obj c)
+    (hcomm : ∀ (d : Cᵒᵖ) (l : c ⟶ d)
+      (x : P.obj d),
+      f.app d (w₁.app d l x) =
+        w₂.app d l (f.app d x)) :
+    ∀ (d : Cᵒᵖ) (l : c ⟶ d) (x : P.obj d),
+      f.app d
+        ((homObjIterateN n w₁).app d l x) =
+      (homObjIterateN n w₂).app d l
+        (f.app d x) := by
+  induction n with
+  | zero => intro d l x; rfl
+  | succ n ih =>
+    intro d l x
+    simp only [homObjIterateN_succ,
+      Functor.HomObj.comp_app, types_comp_apply]
+    rw [hcomm d l _, ih d l x]
+
+/-- Iteration commutes with the internal hom
+presheaf map (restriction of the stage
+parameter). -/
+theorem homObjIterateN_map
+    {P : Cᵒᵖ ⥤ Type (max u v)}
+    {c d : Cᵒᵖ} (g : c ⟶ d) (n : ℕ)
+    (w : (P.functorHom P).obj c) :
+    homObjIterateN n
+      ((P.functorHom P).map g w) =
+    (P.functorHom P).map g
+      (homObjIterateN n w) := by
+  induction n with
+  | zero =>
+    apply Functor.functorHom_ext
+    intro e l
+    simp only [homObjIterateN_zero]
+    dsimp [Functor.functorHom,
+      Functor.homObjFunctor,
+      Functor.HomObj.id, Functor.HomObj.ofNatTrans]
+  | succ n ih =>
+    change (homObjIterateN n
+        ((P.functorHom P).map g w)).comp
+      ((P.functorHom P).map g w) =
+      (P.functorHom P).map g
+        ((homObjIterateN n w).comp w)
+    rw [ih]
+    ext e l x
+    rfl
+
+/-- The natural transformation on `P.functorHom P`
+given by iterating an endomorphism `n` times. -/
+def homObjIterateNNatTrans
+    {C : Type u} [Category.{v} C]
+    (n : ℕ) (P : Cᵒᵖ ⥤ Type (max u v)) :
+    P.functorHom P ⟶ P.functorHom P where
+  app c w := homObjIterateN n w
+  naturality {c d} f := by
+    funext w; exact homObjIterateN_map f n w
+
+/-- Given `n : ℕ`, the presheaf-level dinatural
+paranatural transformation that iterates an
+endomorphism `n` times. -/
+def pshNatToDinaturalParanat
+    {C : Type u} [Category.{v} C]
+    (n : ℕ) :
+    PshDinaturalParanat (C := C) where
+  app P :=
+    natTransToFunctorHomSection
+      (homObjIterateNNatTrans n P)
+  paranatural P Q f c w₁ w₂ hmem := by
+    simp only [functorHomSection_roundTrip_left,
+      homObjIterateNNatTrans]
+    apply pshArrowRel_graph_intro
+    intro d k x
+    exact homObjIterateN_comm n f w₁ w₂
+      (fun d' k' x' =>
+        pshArrowRel_graph_apply hmem d' k' x')
+      d k x
+
+/-- The constant presheaf on `ULift ℕ`,
+used for evaluating Church numerals at
+presheaf level. -/
+abbrev pshConstNat (C : Type u) [Category.{v} C] :
+    Cᵒᵖ ⥤ Type (max u v) :=
+  (Functor.const Cᵒᵖ).obj (ULift.{max u v} ℕ)
+
+/-- The successor endomorphism on the constant
+presheaf `Δ(ULift ℕ)`. -/
+def pshConstSucc :
+    pshConstNat C ⟶ pshConstNat C where
+  app _ x := ULift.up (x.down + 1)
+  naturality := by intros; rfl
+
+/-- Pushing a section forward through a nat trans
+preserves the section condition. -/
+def pshSectionMap
+    {F G : Cᵒᵖ ⥤ Type (max u v)}
+    (φ : F ⟶ G)
+    (s : F.sections) : G.sections :=
+  ⟨fun c => φ.app c (s.val c),
+   fun {c d} f => by
+    have hnat :=
+      congr_fun (φ.naturality f) (s.val c)
+    simp only [types_comp_apply] at hnat
+    rw [s.property f] at hnat
+    exact hnat.symm⟩
+
+/-- Extract a natural number from a presheaf-level
+dinatural paranatural transformation by evaluating
+at the constant presheaf `Δ(ULift ℕ)` with the
+successor endomorphism and starting from zero.
+Requires `[Inhabited C]` to provide a stage. -/
+def pshDinaturalParanatToNat
+    [Inhabited C]
+    (α : PshDinaturalParanat (C := C)) : ℕ :=
+  let P := pshConstNat C
+  let φ : P.functorHom P ⟶ P.functorHom P :=
+    functorHomSectionToNatTrans (α.app P)
+  let succSec :=
+    natTransToFunctorHomSection pshConstSucc
+  let resultSec := pshSectionMap φ succSec
+  let resultNT :=
+    functorHomSectionToNatTrans resultSec
+  (resultNT.app (Opposite.op default)
+    (ULift.up 0)).down
+
+/-- Iterating the successor `HomObj` `n` times and
+evaluating at `ULift.up 0` gives `ULift.up n`. -/
+theorem homObjIterateN_constSucc_zero
+    (n : ℕ) (c : Cᵒᵖ)
+    (succHom : ((pshConstNat C).functorHom
+      (pshConstNat C)).obj c)
+    (h : ∀ (d : Cᵒᵖ) (l : c ⟶ d)
+      (x : (pshConstNat C).obj d),
+      succHom.app d l x =
+        ULift.up (x.down + 1)) :
+    (homObjIterateN n succHom).app c (𝟙 c)
+      (ULift.up 0) =
+    ULift.up n := by
+  induction n with
+  | zero => rfl
+  | succ n ih =>
+    simp only [homObjIterateN_succ]
+    change succHom.app c (𝟙 c)
+      ((homObjIterateN n succHom).app c (𝟙 c)
+        (ULift.up 0)) = ULift.up (↑n + 1)
+    rw [ih, h]
+
+theorem pshDinaturalParanatToNat_pshNatTo
+    [Inhabited C]
+    (n : ℕ) :
+    pshDinaturalParanatToNat
+      (pshNatToDinaturalParanat (C := C) n) = n := by
+  simp only [pshDinaturalParanatToNat,
+    pshNatToDinaturalParanat]
+  rw [functorHomSection_roundTrip_left]
+  simp only [pshSectionMap,
+    functorHomSectionToNatTrans,
+    homObjIterateNNatTrans]
+  have h := homObjIterateN_constSucc_zero
+    (C := C) n (Opposite.op default)
+    ((natTransToFunctorHomSection
+      pshConstSucc).val (Opposite.op default))
+    (fun d l x => by
+      simp [natTransToFunctorHomSection,
+        Functor.HomObj.ofNatTrans, pshConstSucc])
+  exact congrArg ULift.down h
 
 end FreeTheorems
 
