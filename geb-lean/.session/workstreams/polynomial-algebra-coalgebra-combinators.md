@@ -158,6 +158,8 @@ endofunctors.
 - [ ] E1: Define abstract GSOS rules as natural transformations
   `rho : Sigma(Id x B) => B . T` for polynomial signature and
   behavior endofunctors
+- [ ] E2: Construct operational monad (lifting syntax monad to
+  B-coalgebras via structural recursion with accumulators)
 
 ### Phase 4: Pattern runs on matter
 
@@ -177,8 +179,6 @@ currently planned for implementation.
   unary algebras (algebra side of Adamek intersection theorem)
 - [ ] B2: Make explicit the fiber decomposition of the copresheaf
   functor over the terminal coalgebra anamorphism
-- [ ] E2: Construct operational monad (lifting syntax monad to
-  B-coalgebras via structural recursion with accumulators)
 - [ ] F1: Define Stone topology on `PolyCofreeShape P x` using
   finite tree approximations from `PolyFix P x`
 - [ ] F2: Prove Stone space properties for finite polynomials
