@@ -84,14 +84,19 @@ the (co)limit picture for finitary polynomial algebras.
   coequalizer of free P-algebras (no finitariness needed);
   also added `OfAlg` variants taking `PolyAlg P` and
   transferring via `polyAlgMonadEquiv`
-- [ ] A3: Prove that `polyFreeMonad X P` preserves filtered
-  colimits when `PolyEndoFinitary P` holds (the free monad
-  on a finitary functor is finitary)
-- [ ] A1: Prove `HasColimitsOfSize.{u, u} (PolyAlg P)` under the
-  hypothesis `[PolyEndoFinitary P]`, by showing a finitary
-  polynomial endofunctor preserves filtered colimits (finite
-  products commute with filtered colimits), then applying
-  Linton's theorem via the monad equivalence
+- [x] A3: Proved that `polyFreeMonad X P` preserves filtered
+  colimits when `PolyBetweenFinitary X X P` holds.  Also
+  proved preservation of reflexive coequalizers.  In
+  `GebLean/PolyFilteredColimits.lean` and
+  `GebLean/PolyAlgColimits.lean`
+- [x] A1: Proved `HasColimitsOfSize.{u, u} (PolyAlg P)` under
+  `[PolyBetweenFinitary X X P]`.  Chain: filtered colimit
+  preservation (A3) + reflexive coequalizer preservation
+  -> HasReflexiveCoequalizers + HasFilteredColimits for
+  PolyAlg P -> HasBinaryCoproducts (Beck construction) ->
+  HasFiniteCoproducts -> HasCoequalizers (coprod trick) ->
+  HasFiniteColimits -> HasColimitsOfSize.  In
+  `GebLean/PolyAlgColimits.lean`
 - [x] H0: Prove `PreservesLimitsOfShape J (polyEndoFunctor P)`
   for any `[IsConnected J]` (polynomial functors preserve
   connected limits; no finitariness needed).  Proved for all
