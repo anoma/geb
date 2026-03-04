@@ -45,9 +45,17 @@ Constructing the canonical distributive law
     Remaining subgoal requires
     `polyCofixUnfoldAt_children_heq` (M-type children
     = recursive anamorphism application)
-  - Status: node proof complete up to the M-type children
-    lemma call; leaf case outlined; waiting on
-    `polyCofixUnfoldAt_children_heq` in PolyAlg.lean
+  - `polyCofixUnfoldAt_children_heq` added to
+    PolyAlg.lean (general anamorphism children lemma)
+  - Node case fully proved using `Sigma.ext hfst hch`
+    to close the M-type children subgoal
+  - Leaf case: same structure but `polyFreeMCoalgStrAt`
+    at `Sum.inl c` applies cofree structure map and
+    wraps children in `polyFreeMPure`; needs analogous
+    proof with the same `Sigma.ext` pattern
+  - Helper lemmas: `polyDistLaw_hx_rfl`,
+    `polyDistLaw_comul_head_snd_node`,
+    `polyDistLaw_comul_family_eq_node`
 - [ ] Step 8: Multiplication coherence
   - Both sides map `T(T(D(A))) --> D(T(A))`
   - Similar approach to Step 7 with
