@@ -335,4 +335,68 @@ def gExtEndPowerEquiv (pt Y : C) :
 
 end FinalEquiv
 
+/-!
+## Power-End Mendler Algebras
+
+A `PowerEndMendlerAlgebra G` packages a carrier `pt` and
+an element of `typeEnd (powerSliceProf G pt pt)`, i.e.,
+a family `∀ A, G(A,A) ⟶ pt^(A ⟶ pt)` satisfying the
+end wedge condition.
+
+This is the power-end counterpart of `MendlerAlgebra G`,
+which packages `∀ A (γ : A ⟶ pt), G(A,A) ⟶ pt` with
+dinaturality.
+-/
+
+section PowerEndMendlerAlg
+
+variable
+  {C : Type v} [Category.{v} C]
+  [HasCopowers C] [HasPowers C]
+  (G : Cᵒᵖ ⥤ C ⥤ C)
+
+/-- A power-end Mendler algebra for an endodifunctor
+`G`. The algebra data is an element of
+`typeEnd (powerSliceProf G pt pt)`. -/
+@[ext]
+structure PowerEndMendlerAlgebra where
+  /-- The carrier object. -/
+  pt : C
+  /-- The algebra data: an element of the end
+  `∫_A (G(A,A) ⟶ pt^(A ⟶ pt))`. -/
+  str : typeEnd (powerSliceProf G pt pt)
+
+namespace PowerEndMendlerAlgebra
+
+variable {G}
+
+/-- The algebra operation at object `A`:
+`G(A,A) ⟶ power pt (A ⟶ pt)`. -/
+def algOp (m : PowerEndMendlerAlgebra G)
+    (A : C) :
+    (G.obj (Opposite.op A)).obj A ⟶
+      HasPowers.power m.pt (A ⟶ m.pt) :=
+  m.str.val A
+
+omit [HasCopowers C] in
+/-- The wedge condition extracted from the end data:
+for `f : i ⟶ j`, the covariant and contravariant
+paths from `G(j, i)` to `power pt (i ⟶ pt)` agree. -/
+theorem wedgeCondition (m : PowerEndMendlerAlgebra G)
+    {i j : C} (f : i ⟶ j) :
+    (G.map f.op).app i ≫ m.algOp i ≫
+      HasPowers.mapIdx (f ≫ ·) =
+    (G.obj (Opposite.op j)).map f ≫ m.algOp j := by
+  change (G.map f.op).app i ≫ m.str.val i ≫
+      HasPowers.mapIdx (f ≫ ·) =
+    (G.obj (Opposite.op j)).map f.op.unop ≫
+      m.str.val j
+  have h := m.str.property f
+  dsimp only [powerSliceProf] at h
+  exact h
+
+end PowerEndMendlerAlgebra
+
+end PowerEndMendlerAlg
+
 end GebLean
