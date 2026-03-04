@@ -1,4 +1,5 @@
 import GebLean.PolyDistributiveLaw
+import GebLean.PolyUMorph
 import GebLean.Utilities.GSOSRule
 import GebLean.Utilities.LambdaBialgebra
 
@@ -11,57 +12,32 @@ universe u
 variable {X : Type u}
 
 /--
-The object component of the identity-behavior functor
-for polynomial endofunctors: `A ↦ A ×_X Q(A)` where
-`Q = polyEndoFunctor X Q_poly`.
+The identity-behavior product as a polynomial endofunctor.
+Given a behavior polynomial `Q : PolyEndo X`, the
+polynomial `polyIdBehaviorPoly Q` evaluates to the functor
+`A ↦ A ×_X Q(A)`: the binary product of the identity
+polynomial with `Q` in the polynomial category.
 -/
-def polyIdBehaviorObj
-    (Q : PolyEndo X) (A : Over X) : Over X :=
-  overPullback A ((polyEndoFunctor X Q).obj A)
+abbrev polyIdBehaviorPoly
+    (Q : PolyEndo X) : PolyEndo X :=
+  pbBinaryProdObj (polyBetweenId X) Q
 
 /--
-The morphism component of the identity-behavior functor:
-given `f : A ⟶ B`, produce
-`A ×_X Q(A) ⟶ B ×_X Q(B)` via `(f, Q(f))`.
--/
-def polyIdBehaviorMap
-    (Q : PolyEndo X) {A B : Over X} (f : A ⟶ B) :
-    polyIdBehaviorObj Q A ⟶ polyIdBehaviorObj Q B :=
-  overPullbackMap f ((polyEndoFunctor X Q).map f)
+A GSOS rule for polynomial endofunctors on `Over X`,
+expressed as a morphism in the polynomial category.
 
-/--
-The identity-behavior functor `A ↦ A ×_X Q(A)` on
-`Over X`, where `Q = polyEndoFunctor X Q_poly`.
--/
-def polyIdBehaviorFunctor
-    (Q : PolyEndo X) : Over X ⥤ Over X where
-  obj := polyIdBehaviorObj Q
-  map := polyIdBehaviorMap Q
-  map_id := fun A => by
-    apply Over.OverMorphism.ext; funext p
-    simp only [
-      polyIdBehaviorMap, overPullbackMap]
-    rfl
-  map_comp := fun {A B C} f g => by
-    apply Over.OverMorphism.ext; funext p
-    simp only [
-      polyIdBehaviorMap, overPullbackMap,
-      Over.homMk_left, Over.comp_left]
-    congr 1
+Given signature `P` and behavior `Q`, a GSOS rule is a
+morphism `P ∘ (Id × Q) ⟶ Q ∘ T_P` in `PolyEndo X`,
+where `Id × Q` is the identity-behavior polynomial and
+`T_P = polyFreeMPoly P` is the free monad polynomial.
 
-/--
-A GSOS rule for polynomial endofunctors on `Over X`.
-Given signature `P` and behavior `Q`, a GSOS rule is
-a natural transformation
-`P(A ×_X Q(A)) → Q(T_P(A))`
-where `T_P` is the free monad on `P`.
+Applying `polyBetweenEvalCatFunctor` recovers the
+natural transformation `P(A ×_X Q(A)) ⟶ Q(T_P(A))`.
 -/
 @[ext]
 structure PolyGSOSRule (P Q : PolyEndo X) where
   rule :
-    polyIdBehaviorFunctor Q ⋙
-      polyEndoFunctor X P ⟶
-    (polyFreeMonad X P).toFunctor ⋙
-      polyEndoFunctor X Q
+    polyBetweenComp P (polyIdBehaviorPoly Q) ⟶
+    polyBetweenComp Q (polyFreeMPoly P)
 
 end GebLean
