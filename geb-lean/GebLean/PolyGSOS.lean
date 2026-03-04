@@ -587,6 +587,34 @@ lemma polyGSOSFoldCata_snd_fst_eq
   | PolyFix.mk _ (Sum.inl ⟨⟨_, _⟩, rfl⟩) _ => rfl
   | PolyFix.mk _ (Sum.inr _) _ => rfl
 
+/--
+The Q-index that the GSOS pipeline produces for a node,
+computed purely from the P-index and per-child Q-indices.
+This does not depend on the carrier `A`.
+-/
+def polyGSOSNodeQIdx
+    (P Q : PolyEndo X)
+    (rho : PolyGSOSRule P Q) {x : X}
+    (p : polyBetweenIndex X X P x)
+    (childQIdx :
+      (e : (ccrFamily (P x) p).left) →
+      polyBetweenIndex X X Q
+        ((ccrFamily (P x) p).hom e)) :
+    polyBetweenIndex X X Q x :=
+  let innerIdx :
+      (e : (ccrFamily (P x) p).left) →
+      ccrIndex ((polyIdBehaviorPoly Q)
+        ((ccrFamily (P x) p).hom e)) :=
+    fun e => fun
+      | Sum.inl _ => PUnit.unit
+      | Sum.inr _ => childQIdx e
+  let compIdx :
+      ccrIndex
+        (polyBetweenComp P
+          (polyIdBehaviorPoly Q) x) :=
+    ⟨p, innerIdx⟩
+  (ccrReindex (rho.rule x) compIdx).1
+
 def polyGSOSFoldQIndex
     (A : Over X) (P Q : PolyEndo X)
     (rho : PolyGSOSRule P Q) {x : X}
@@ -611,6 +639,26 @@ lemma polyGSOSFoldQIndex_leaf
     polyFreeMPure,
     polyGSOSFoldCataWithFiber,
     polyGSOSFoldLeafAt]
+
+lemma polyGSOSFoldQIndex_node_unfold
+    (A : Over X) (P Q : PolyEndo X)
+    (rho : PolyGSOSRule P Q) {x : X}
+    (p : polyBetweenIndex X X P x)
+    (children :
+      (e : (ccrFamily (P x) p).left) →
+        PolyFreeM
+          (polyCofreeCarrier A Q) P
+          ((ccrFamily (P x) p).hom e)) :
+    polyGSOSFoldQIndex A P Q rho
+      (PolyFix.mk x (Sum.inr p) children) =
+    polyGSOSNodeQIdx P Q rho p
+      (fun e => polyGSOSFoldQIndex A P Q rho
+        (children e)) := by
+  simp only [polyGSOSFoldQIndex,
+    polyGSOSFoldCataWithFiber,
+    polyGSOSNodeQIdx]
+  simp only [polyGSOSFoldNodeAt]
+  _
 
 lemma polyGSOSFoldQIndex_eq_node
     (A B : Over X) (P Q : PolyEndo X)
@@ -640,8 +688,12 @@ lemma polyGSOSFoldQIndex_eq_node
         (PolyFix.mk x (Sum.inr p) children)) =
     polyGSOSFoldQIndex A P Q rho
       (PolyFix.mk x (Sum.inr p) children) := by
-  simp only [polyGSOSFoldQIndex]
-  _
+  simp only [polyFreeMapAt, polyFreeMBind]
+  rw [polyGSOSFoldQIndex_node_unfold B]
+  rw [polyGSOSFoldQIndex_node_unfold A]
+  congr 1
+  funext e
+  exact ih e
 
 lemma polyGSOSFoldQIndex_eq
     (A B : Over X) (P Q : PolyEndo X)
