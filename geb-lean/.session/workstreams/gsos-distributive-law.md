@@ -5,11 +5,13 @@
 ## Completed
 
 ### PolyGSOSRule structure (PolyGSOS.lean)
+
 - `PolyGSOSRule P Q`: a GSOS rule as a polynomial morphism
   `P . (Id x Q) --> Q . T_P`
 - `polyIdBehaviorPoly Q`: the identity-behavior product polynomial
 
 ### Fold algebra (PolyGSOS.lean)
+
 - `polyGSOSFoldLeafAt`: leaf handler mapping cofree elements
   to product pairs via eta and Q(eta)(str)
 - `polyGSOSFoldNodeAt`: node handler applying the GSOS rule
@@ -19,6 +21,7 @@
 - `polyGSOSFoldCata`: fold as an Over X morphism
 
 ### Distributive law morphism (PolyGSOS.lean)
+
 - `polyGSOSScaleCoalgStrAt`: polyScale(T_P(A), Q)-coalgebra
   combining T_P(epsilon_Q) annotation with fold's Q-structure
 - `polyGSOSDistLawMor`: the distributive law T_P(D_Q(A)) -> D_Q(T_P(A))
@@ -27,7 +30,9 @@
 ## Pending
 
 ### Coherence axioms
+
 Four axioms from DistributiveLaw structure:
+
 1. **unit**: `eta_{D_Q(A)} ; dist = D_Q(eta_A)`
 2. **mul**: `mu_{D_Q(A)} ; dist = T_P(dist) ; dist_{T_P(A)} ; D_Q(mu_A)`
 3. **counit**: `dist ; epsilon_{T_P(A)} = T_P(epsilon_A)`
@@ -38,6 +43,7 @@ a template.  Counit is typically the easiest; multiplication is the
 hardest.
 
 ### Packaging
+
 - Natural transformation wrapping `polyGSOSDistLawMor`
 - `DistributiveLaw` instance
 - Operational monad via `liftedMonad`
@@ -45,6 +51,7 @@ hardest.
 ## Design notes
 
 The node handler pipeline in `polyGSOSFoldNodeAt`:
+
 1. `prodComp`: convert overPullback to product polynomial evaluation
 2. `polyBetweenComp_eval_fiberEquiv.invFun`: to composite evaluation
 3. `polyBetweenMorphEvalAt rho.rule`: apply GSOS rule
@@ -56,5 +63,6 @@ The `join` morphism uses `polyFreeMPolyEval_to_polyFreeM` followed by
 
 The `prodComp` morphism constructs product polynomial evaluation from
 a pullback pair by:
+
 - Identity component: maps to the first projection element
 - Q component: maps to the Q-evaluation child morphism
