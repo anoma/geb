@@ -100,7 +100,7 @@ with Q.
 
 Target structure:
 
-```
+```text
 structure DistributiveLaw (T : Monad C) (D : Comonad C)
   dist : D.toFunctor >> T.toFunctor --> T.toFunctor >> D.toFunctor
   unit : forall X,
@@ -185,12 +185,7 @@ line 280, ~15 lines).
 
 Build and fix errors.
 
-**Step 3: Commit**
-
-```
-git add GebLean/PolyGSOS.lean
-git commit -m "GSOS counit coherence proof"
-```
+Step 3: Commit with `git commit -m "GSOS counit coherence proof"`.
 
 ---
 
@@ -266,12 +261,7 @@ Template: `polyDistLaw_unit` (line 431, ~20 lines).
 
 Build and fix errors.
 
-**Step 3: Commit**
-
-```
-git add GebLean/PolyGSOS.lean
-git commit -m "GSOS unit coherence proof"
-```
+Step 3: Commit with `git commit -m "GSOS unit coherence proof"`.
 
 ---
 
@@ -427,7 +417,7 @@ apply `polyGSOSDistLaw_naturality_approx`.
 
 Build and fix errors.
 
-**Step 5: Write NatTrans packaging**
+Step 5: Write NatTrans packaging.
 
 ```lean
 def polyGSOSDistLawNatApp
@@ -463,12 +453,7 @@ def polyGSOSDistLawNat
 
 Build and fix errors.
 
-**Step 6: Commit**
-
-```
-git add GebLean/PolyGSOS.lean
-git commit -m "GSOS naturality proof and NatTrans"
-```
+Step 6: Commit with `git commit -m "GSOS naturality proof and NatTrans"`.
 
 ---
 
@@ -478,7 +463,7 @@ git commit -m "GSOS naturality proof and NatTrans"
 
 - Modify: `GebLean/PolyGSOS.lean`
 
-**Step 1: Write annotation equality lemma**
+Step 1: Write annotation equality lemma.
 
 ```lean
 lemma polyGSOSDistLaw_comul_annot_eq
@@ -498,7 +483,7 @@ T_P(eps_Q)` (since `eps . delta = id` by comonad law).
 
 Build and fix errors.
 
-**Step 2: Write leaf approximation lemma**
+Step 2: Write leaf approximation lemma.
 
 ```lean
 lemma polyGSOSDistLaw_comul_approx_leaf
@@ -513,7 +498,7 @@ lemma polyGSOSDistLaw_comul_approx_leaf
 
 Build and fix errors.
 
-**Step 3: Write node approximation lemma**
+Step 3: Write node approximation lemma.
 
 ```lean
 lemma polyGSOSDistLaw_comul_approx_node
@@ -565,12 +550,8 @@ Strategy: `Over.OverMorphism.ext`, `funext`,
 
 Build and fix errors.
 
-**Step 6: Commit**
-
-```
-git add GebLean/PolyGSOS.lean
-git commit -m "GSOS comultiplication coherence proof"
-```
+Step 6: Commit with
+`git commit -m "GSOS comultiplication coherence proof"`.
 
 ---
 
@@ -580,7 +561,7 @@ git commit -m "GSOS comultiplication coherence proof"
 
 - Modify: `GebLean/PolyGSOS.lean`
 
-**Step 1: Define LHS coalgebra structure**
+Step 1: Define LHS coalgebra structure.
 
 The LHS `mu_{D_Q(A)} >> dist` composes monad
 multiplication with the distributive law.  Express this as
@@ -603,7 +584,7 @@ combines `mu` with the scale coalgebra.
 
 Build and fix errors.
 
-**Step 2: Prove LHS coalgebra homomorphism**
+Step 2: Prove LHS coalgebra homomorphism.
 
 Show that `polyFreeCounitFold` (monad multiplication)
 is a coalgebra morphism from `polyGSOSDistLaw_mu_coalg`
@@ -621,14 +602,14 @@ coalgebra structure.
 
 Build and fix errors.
 
-**Step 3: Define RHS coalgebra structure**
+Step 3: Define RHS coalgebra structure.
 
 The RHS `T_P(dist) >> dist_{T_P(A)} >> D_Q(mu_A)`.
 Express as an anamorphism via `polyScaleReindex`.
 
 Build and fix errors.
 
-**Step 4: Prove RHS coalgebra condition**
+Step 4: Prove RHS coalgebra condition.
 
 Show the composition `T_P(dist) >> dist_{T_P(A)}`
 followed by `D_Q(mu)` satisfies the required coalgebra
@@ -670,12 +651,8 @@ Template: `polyDistLaw_mul`
 
 Build and fix errors.
 
-**Step 6: Commit**
-
-```
-git add GebLean/PolyGSOS.lean
-git commit -m "GSOS multiplication coherence proof"
-```
+Step 6: Commit with
+`git commit -m "GSOS multiplication coherence proof"`.
 
 ---
 
@@ -725,18 +702,10 @@ def polyGSOSDistributiveLaw
 
 Build and fix errors.
 
-**Step 2: Commit and verify**
+Step 2: Build, test, and commit with
+`git commit -m "GSOS distributive law instance"`.
 
-```
-lake build
-lake test
-git add GebLean/PolyGSOS.lean
-git commit -m "GSOS distributive law instance"
-```
-
-**Step 3: Update session workstream**
-
-Update `.session/workstreams/gsos-distributive-law.md`
+Step 3: Update `.session/workstreams/gsos-distributive-law.md`
 to reflect completion.
 
 ---
