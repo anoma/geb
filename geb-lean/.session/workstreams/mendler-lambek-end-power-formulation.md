@@ -2,7 +2,7 @@
 
 ## Status
 
-Active
+Complete
 
 ## Context
 
@@ -114,7 +114,7 @@ File: `GebLean/MendlerLambekEndPower.lean`
   `(CopowerGExtObj G pt ⟶ Y) ≃
     typeEnd (powerSliceProf G pt Y)`
 
-### Phase 2: Power-End Mendler Algebras (NEXT)
+### Phase 2: Power-End Mendler Algebras (DONE)
 
 Tasks 5-8 define the power-end Mendler algebra category
 and establish its equivalence with conventional algebras.
@@ -141,7 +141,7 @@ component, currying `(A ⟶ pt) → (G(A,A) ⟶ pt)` into
 
 File: `GebLean/MendlerLambekEndPower.lean`
 
-- [ ] 5a. Define `PowerEndMendlerAlgebra G`:
+- [x] 5a. Define `PowerEndMendlerAlgebra G`:
 
   ```lean
   structure PowerEndMendlerAlgebra where
@@ -153,7 +153,7 @@ File: `GebLean/MendlerLambekEndPower.lean`
   `∀ A, G(A,A) ⟶ pt^(A ⟶ pt)` satisfying the end wedge
   condition (naturality in A).
 
-- [ ] 5b. Define accessor abbreviations parallel to
+- [x] 5b. Define accessor abbreviations parallel to
   `MendlerAlgebra`:
   - `algOp (m : PowerEndMendlerAlgebra G) (A : C) :
       G(A,A) ⟶ power m.pt (A ⟶ m.pt)` — the algebra
@@ -165,7 +165,7 @@ File: `GebLean/MendlerLambekEndPower.lean`
 
 File: `GebLean/MendlerLambekEndPower.lean`
 
-- [ ] 6a. Define `PowerEndMendlerAlgebraHom`:
+- [x] 6a. Define `PowerEndMendlerAlgebraHom`:
 
   ```lean
   structure PowerEndMendlerAlgebraHom
@@ -201,28 +201,28 @@ File: `GebLean/MendlerLambekEndPower.lean`
   equals the appropriate composition, then verify it
   matches the existing condition under the equivalence.
 
-- [ ] 6b. Define identity, composition for
+- [x] 6b. Define identity, composition for
   `PowerEndMendlerAlgebraHom`
 
-- [ ] 6c. Define `PowerEndMendlerAlgebraCat`:
+- [x] 6c. Define `PowerEndMendlerAlgebraCat`:
   `Category (PowerEndMendlerAlgebra G)`
 
 #### Task 7: Equivalence with MendlerAlgebra
 
 File: `GebLean/MendlerLambekEndPower.lean`
 
-- [ ] 7a. Define `MendlerAlgebra.toPowerEnd`:
+- [x] 7a. Define `MendlerAlgebra.toPowerEnd`:
   `MendlerAlgebra G → PowerEndMendlerAlgebra G`
   — applies `copowerPowerEquiv` componentwise to convert
   `∀ A (γ : A ⟶ pt), G(A,A) ⟶ pt` to
   `∀ A, G(A,A) ⟶ pt^(A ⟶ pt)`, with the wedge condition
   following from dinaturality.
 
-- [ ] 7b. Define `PowerEndMendlerAlgebra.toMendler`:
+- [x] 7b. Define `PowerEndMendlerAlgebra.toMendler`:
   `PowerEndMendlerAlgebra G → MendlerAlgebra G`
   — applies `copowerPowerEquiv.symm` (uncurrying).
 
-- [ ] 7c. Lift to functors and prove they form an
+- [x] 7c. Lift to functors and prove they form an
   equivalence:
   `mendlerAlgPowerEndEquiv :
     MendlerAlgebra G ≌ PowerEndMendlerAlgebra G`
@@ -237,7 +237,7 @@ File: `GebLean/MendlerLambekEndPower.lean`
 
 File: `GebLean/MendlerLambekEndPower.lean`
 
-- [ ] 8a. Compose equivalences to get the final result:
+- [x] 8a. Compose equivalences to get the final result:
 
   ```lean
   mendlerLambekEndPowerEquiv :
