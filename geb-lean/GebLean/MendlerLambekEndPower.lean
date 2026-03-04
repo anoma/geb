@@ -178,4 +178,137 @@ def powerSliceProf
 
 end PowerEnd
 
+/-!
+## Copower-Power End Equivalence
+
+The componentwise `copowerPowerEquiv` lifts to an
+equivalence on ends:
+`typeEnd (copowerProf (HomToProf pt) G ⇓ Y) ≃
+  typeEnd (powerSliceProf G pt Y)`.
+-/
+
+section EndEquiv
+
+variable
+  {C : Type v} [Category.{v} C]
+  [HasCopowers C] [HasPowers C]
+  (G : Cᵒᵖ ⥤ C ⥤ C) (pt Y : C)
+
+open HasCopowers HasPowers
+
+def endCopowerPowerEquiv :
+    typeEnd
+      (copowerProf (HomToProf pt) G ⇓ Y) ≃
+      typeEnd (powerSliceProf G pt Y) where
+  toFun x := ⟨
+    fun j => copowerPowerEquiv
+      (j ⟶ pt) ((G.obj (Opposite.op j)).obj j) Y
+      (x.val j),
+    fun {i j} f => by
+      apply HasPowers.ext; intro s
+      simp only [powerSliceProf,
+        copowerPowerEquiv_apply]
+      simp only [Category.assoc]
+      rw [HasPowers.mapIdx_proj]
+      rw [HasPowers.fac, HasPowers.fac]
+      -- Goal: (G.map f.op).app i ≫ inj (f ≫ s) ≫ x i
+      --     = (G.obj (op j)).map f ≫ inj s ≫ x j
+      -- From x.property f (wedge condition):
+      --   bimap (f ≫ ·) ((G.map f.op).app i) ≫ x i
+      --   = mapVal ((G.obj (op j)).map f) ≫ x j
+      -- Apply inj s to both sides:
+      have wx := x.property f
+      simp only [sliceProfunctor, copowerProf,
+        copowerProfInner] at wx
+      -- wx : bimap _ _ ≫ x i = bimap _ _ ≫ x j
+      have wx := x.property f
+      simp only [sliceProfunctor, copowerProf,
+        copowerProfInner] at wx
+      rw [HasCopowers.bimap_eq_mapVal_mapIdx,
+        HasCopowers.bimap_eq_mapVal_mapIdx,
+        Category.assoc, Category.assoc] at wx
+      have h : HasCopowers.inj _ _ s ≫
+          HasCopowers.mapVal ((G.map f.op).app i)
+          ≫ HasCopowers.mapIdx
+            (((HomToProf pt).map f.op).app i)
+          ≫ x.val i
+        = HasCopowers.inj _ _ s ≫
+          HasCopowers.mapVal
+            ((G.obj (Opposite.op j)).map
+              f.op.unop)
+          ≫ HasCopowers.mapIdx
+            (((HomToProf pt).obj
+              (Opposite.op j)).map f.op.unop)
+          ≫ x.val j :=
+        congrArg (HasCopowers.inj _ _ s ≫ ·) wx
+      rw [← Category.assoc
+        (HasCopowers.inj _ _ s)
+        (HasCopowers.mapVal _),
+        HasCopowers.mapVal_inj,
+        ← Category.assoc
+          (HasCopowers.inj _ _ s)
+          (HasCopowers.mapVal _),
+        HasCopowers.mapVal_inj] at h
+      simp only [Category.assoc] at h
+      rw [← Category.assoc
+        (HasCopowers.inj _ _ _)
+        (HasCopowers.mapIdx _),
+        HasCopowers.mapIdx_inj,
+        ← Category.assoc
+          (HasCopowers.inj _ _ _)
+          (HasCopowers.mapIdx _),
+        HasCopowers.mapIdx_inj] at h
+      rw [HomToProf_map_app,
+        HomToProf_obj_map] at h
+      exact h⟩
+  invFun y := ⟨
+    fun j => (copowerPowerEquiv
+      (j ⟶ pt) ((G.obj (Opposite.op j)).obj j) Y
+      ).symm (y.val j),
+    fun {i j} f => by
+      simp only [sliceProfunctor, copowerProf,
+        copowerProfInner,
+        copowerPowerEquiv_symm_apply]
+      apply HasCopowers.ext; intro s
+      rw [HasCopowers.bimap_eq_mapVal_mapIdx,
+        HasCopowers.bimap_eq_mapVal_mapIdx,
+        Category.assoc, Category.assoc]
+      rw [← Category.assoc
+        (HasCopowers.inj _ _ s)
+        (HasCopowers.mapVal _),
+        HasCopowers.mapVal_inj]
+      rw [← Category.assoc
+        (HasCopowers.inj _ _ s)
+        (HasCopowers.mapVal _),
+        HasCopowers.mapVal_inj]
+      simp only [Category.assoc]
+      rw [← Category.assoc
+        (HasCopowers.inj _ _ _)
+        (HasCopowers.mapIdx _),
+        HasCopowers.mapIdx_inj]
+      rw [← Category.assoc
+        (HasCopowers.inj _ _ _)
+        (HasCopowers.mapIdx _),
+        HasCopowers.mapIdx_inj]
+      rw [HomToProf_map_app,
+        HomToProf_obj_map]
+      rw [HasCopowers.fac, HasCopowers.fac]
+      have wy := y.property f
+      simp only [powerSliceProf] at wy
+      have h := congrArg
+        (· ≫ HasPowers.proj _ _ s) wy
+      simp only [Category.assoc] at h
+      erw [HasPowers.mapIdx_proj] at h
+      exact h⟩
+  left_inv x := by
+    apply Subtype.ext; funext j
+    exact (copowerPowerEquiv _ _ _).left_inv
+      (x.val j)
+  right_inv y := by
+    apply Subtype.ext; funext j
+    exact (copowerPowerEquiv _ _ _).right_inv
+      (y.val j)
+
+end EndEquiv
+
 end GebLean
