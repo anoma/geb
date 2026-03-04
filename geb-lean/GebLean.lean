@@ -35,6 +35,7 @@ import GebLean.PolyAdjunctions
 import GebLean.PolyAlg
 import GebLean.PolyAlgColimits
 import GebLean.PolyDistributiveLaw
+import GebLean.PolyGSOS
 import GebLean.PolyAlgUMorph
 import GebLean.PolyFilteredColimits
 import GebLean.PolyLimits
