@@ -34,25 +34,13 @@ Constructing the canonical distributive law
 
 ## Remaining Tasks
 
-- [ ] Step 7: Comultiplication coherence
-  - Both sides map `T(D(A)) --> D(D(T(A)))`
-  - Proof by approximation-level induction; node and
-    leaf cases separated
-  - Node case: annotation match via
-    `polyDistLaw_comul_annot_eq`, P-index match by
-    `congr`, children by `ih(ch e)` after
-    `erw [polyScaleReindex_approx, ih (ch e)]`.
-    Remaining subgoal requires
-    `polyCofixUnfoldAt_children_heq` (M-type children
-    = recursive anamorphism application)
-  - `polyCofixUnfoldAt_children_heq` added to
-    PolyAlg.lean (general anamorphism children lemma)
-  - Node case fully proved using `Sigma.ext hfst hch`
-    to close the M-type children subgoal
-  - Leaf case: same structure but `polyFreeMCoalgStrAt`
-    at `Sum.inl c` applies cofree structure map and
-    wraps children in `polyFreeMPure`; needs analogous
-    proof with the same `Sigma.ext` pattern
+- [x] Step 7: Comultiplication coherence (approx level)
+  - `polyDistLaw_comul_approx` proved via induction
+    on depth n, dispatching to node and leaf cases
+  - Node case uses `Sigma.ext` with
+    `polyCofixUnfoldAt_children_heq` (in PolyAlg.lean)
+  - Leaf case uses `polyFreeMPure_cofree_sigma_eq`
+    helper and `polyCoalgUnitAt_children_heq`
   - Leaf case: `obtain ⟨c_val, hc⟩ := c; subst hc`
     eliminates the cofree fiber transport. After that,
     the match on `polyFreeMPure` must be reduced
