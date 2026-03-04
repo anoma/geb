@@ -712,4 +712,33 @@ def mendlerAlgPowerEndEquiv :
 
 end MendlerPowerEndEquiv
 
+/-!
+## Power-End Mendler-Lambek Equivalence
+
+Composition of `mendlerAlgPowerEndEquiv` with
+`mendlerLambekEquiv` yields the equivalence between
+power-end Mendler algebras and conventional algebras.
+-/
+
+section MendlerLambekEndPower
+
+variable
+  {C : Type v} [Category.{v} C]
+  [HasCopowers C] [HasPowers C]
+  (G : Cᵒᵖ ⥤ C ⥤ C)
+  [HasAllHomToProfCoends G]
+
+/-- The Mendler-Lambek equivalence expressed via
+ends and powers:
+`PowerEndMendlerAlgebra G ≌
+  ConventionalAlgebra (GExtFunctor G)`. -/
+def mendlerLambekEndPowerEquiv :
+    PowerEndMendlerAlgebra G ≌
+      ConventionalAlgebra
+        (HasAllHomToProfCoends.GExtFunctor G) :=
+  (mendlerAlgPowerEndEquiv G).symm.trans
+    (mendlerLambekEquiv G)
+
+end MendlerLambekEndPower
+
 end GebLean
