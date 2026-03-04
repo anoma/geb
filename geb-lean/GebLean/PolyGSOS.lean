@@ -11,6 +11,17 @@ universe u
 
 variable {X : Type u}
 
+@[simp]
+lemma sigma_fst_eqRec {I : Type*}
+    {F : I → Type*}
+    {G : (i : I) → F i → Type*}
+    {i₁ i₂ : I} (h : i₁ = i₂)
+    (b : F i₁) (c : G i₁ b) :
+    (h ▸ ⟨b, c⟩ :
+      (a : F i₂) × G i₂ a).fst =
+    (h ▸ b : F i₂) := by
+  subst h; rfl
+
 /--
 The identity-behavior product as a polynomial endofunctor.
 Given a behavior polynomial `Q : PolyEndo X`, the
@@ -554,5 +565,95 @@ lemma polyGSOSDistLaw_annot_natural
   rw [← polyFreeMapAt_comp]
   congr 1
   exact polyCofreeCounit_naturality A B Q f
+
+lemma polyGSOSFoldCata_snd_fst_eq
+    (A : Over X) (P Q : PolyEndo X)
+    (rho : PolyGSOSRule P Q) {x : X}
+    (t : PolyFreeM (polyCofreeCarrier A Q) P x) :
+    (polyGSOSFoldCataWithFiber
+      A P Q rho t).val.val.2.1 = x :=
+  match t with
+  | PolyFix.mk _ (Sum.inl ⟨⟨_, _⟩, rfl⟩) _ => rfl
+  | PolyFix.mk _ (Sum.inr _) _ => rfl
+
+def polyGSOSFoldQIndex
+    (A : Over X) (P Q : PolyEndo X)
+    (rho : PolyGSOSRule P Q) {x : X}
+    (t : PolyFreeM
+      (polyCofreeCarrier A Q) P x) :
+    polyBetweenIndex X X Q x :=
+  (polyGSOSFoldCata_snd_fst_eq
+    A P Q rho t) ▸
+  (polyGSOSFoldCataWithFiber
+    A P Q rho t).val.val.2.2.1
+
+lemma polyGSOSFoldQIndex_leaf
+    (A : Over X) (P Q : PolyEndo X)
+    (rho : PolyGSOSRule P Q) {x : X}
+    (d : PolyCofreeM A Q x) :
+    polyGSOSFoldQIndex A P Q rho
+      (polyFreeMPure
+        (polyCofreeCarrier A Q) P
+        ⟨⟨x, d⟩, rfl⟩) =
+    d.head.2 := by
+  simp only [polyGSOSFoldQIndex,
+    polyFreeMPure,
+    polyGSOSFoldCataWithFiber,
+    polyGSOSFoldLeafAt]
+
+lemma polyGSOSFoldQIndex_eq_node
+    (A B : Over X) (P Q : PolyEndo X)
+    (rho : PolyGSOSRule P Q) (f : A ⟶ B)
+    {x : X} (p : polyBetweenIndex X X P x)
+    (children :
+      (e : (ccrFamily (P x) p).left) →
+        PolyFreeM
+          (polyCofreeCarrier A Q) P
+          ((ccrFamily (P x) p).hom e))
+    (ih :
+      ∀ (e : (ccrFamily (P x) p).left),
+        polyGSOSFoldQIndex B P Q rho
+          (polyFreeMapAt
+            (polyCofreeCarrier A Q)
+            (polyCofreeCarrier B Q) P
+            (polyCofreeMap A B Q f)
+            ((ccrFamily (P x) p).hom e)
+            (children e)) =
+        polyGSOSFoldQIndex A P Q rho
+          (children e)) :
+    polyGSOSFoldQIndex B P Q rho
+      (polyFreeMapAt
+        (polyCofreeCarrier A Q)
+        (polyCofreeCarrier B Q) P
+        (polyCofreeMap A B Q f) x
+        (PolyFix.mk x (Sum.inr p) children)) =
+    polyGSOSFoldQIndex A P Q rho
+      (PolyFix.mk x (Sum.inr p) children) :=
+  _
+
+lemma polyGSOSFoldQIndex_eq
+    (A B : Over X) (P Q : PolyEndo X)
+    (rho : PolyGSOSRule P Q) (f : A ⟶ B)
+    {x : X}
+    (t : PolyFreeM
+      (polyCofreeCarrier A Q) P x) :
+    polyGSOSFoldQIndex B P Q rho
+      (polyFreeMapAt
+        (polyCofreeCarrier A Q)
+        (polyCofreeCarrier B Q) P
+        (polyCofreeMap A B Q f) x t) =
+    polyGSOSFoldQIndex A P Q rho t := by
+  induction t with
+  | mk x i children ih =>
+    match i with
+    | Sum.inl ⟨⟨_, d⟩, rfl⟩ =>
+      simp only [polyFreeMapAt, polyFreeMBind,
+        polyGSOSFoldQIndex,
+        polyGSOSFoldCataWithFiber,
+        polyGSOSFoldLeafAt]
+      exact polyCofreeMapAt_head_snd A B Q f d
+    | Sum.inr p =>
+      exact polyGSOSFoldQIndex_eq_node
+        A B P Q rho f p children ih
 
 end GebLean
