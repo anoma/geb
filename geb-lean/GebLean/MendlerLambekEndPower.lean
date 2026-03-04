@@ -611,6 +611,105 @@ def PowerEndMendlerAlgebra.toMendlerHom
     rw [Category.assoc]
     exact f.comm_proj A γ
 
+omit [HasCopowers C] in
+/-- The functor from Mendler algebras to power-end
+Mendler algebras. -/
+@[simps]
+def toPowerEndFunctor :
+    MendlerAlgebra G ⥤ PowerEndMendlerAlgebra G where
+  obj := MendlerAlgebra.toPowerEnd G
+  map := MendlerAlgebra.toPowerEndHom G
+  map_id _ := by
+    apply PowerEndMendlerAlgebraHom.ext; rfl
+  map_comp _ _ := by
+    apply PowerEndMendlerAlgebraHom.ext; rfl
+
+omit [HasCopowers C] in
+/-- The functor from power-end Mendler algebras to
+Mendler algebras. -/
+@[simps]
+def toMendlerFunctor :
+    PowerEndMendlerAlgebra G ⥤ MendlerAlgebra G where
+  obj := PowerEndMendlerAlgebra.toMendler G
+  map := PowerEndMendlerAlgebra.toMendlerHom G
+  map_id _ := by
+    apply MendlerAlgebraHom.ext; rfl
+  map_comp _ _ := by
+    apply MendlerAlgebraHom.ext; rfl
+
+omit [HasCopowers C] [HasPowers C] in
+@[simp]
+theorem eqToHom_mendler_hom
+    {m₁ m₂ : MendlerAlgebra G} (h : m₁ = m₂) :
+    (eqToHom h).hom =
+      eqToHom (congrArg MendlerAlgebra.pt h) := by
+  subst h; rfl
+
+omit [HasCopowers C] in
+@[simp]
+theorem eqToHom_powerEnd_hom
+    {m₁ m₂ : PowerEndMendlerAlgebra G}
+    (h : m₁ = m₂) :
+    (eqToHom h).hom =
+      eqToHom
+        (congrArg PowerEndMendlerAlgebra.pt h) := by
+  subst h; rfl
+
+omit [HasCopowers C] [HasPowers C] in
+@[simp]
+theorem comp_mendler_hom
+    {m₁ m₂ m₃ : MendlerAlgebra G}
+    (f : m₁ ⟶ m₂) (g : m₂ ⟶ m₃) :
+    (f ≫ g).hom = f.hom ≫ g.hom := rfl
+
+omit [HasCopowers C] in
+@[simp]
+theorem comp_powerEnd_hom
+    {m₁ m₂ m₃ : PowerEndMendlerAlgebra G}
+    (f : m₁ ⟶ m₂) (g : m₂ ⟶ m₃) :
+    (f ≫ g).hom = f.hom ≫ g.hom := rfl
+
+omit [HasCopowers C] in
+/-- The equivalence between Mendler algebras and
+power-end Mendler algebras. -/
+def mendlerAlgPowerEndEquiv :
+    MendlerAlgebra G ≌ PowerEndMendlerAlgebra G :=
+  CategoryTheory.Equivalence.mk
+    (toPowerEndFunctor G)
+    (toMendlerFunctor G)
+    (NatIso.ofComponents
+      (fun m => eqToIso
+        (toPowerEnd_toMendler G m).symm)
+      (fun {_m₁ _m₂} f => by
+        apply MendlerAlgebraHom.ext
+        simp only [Functor.id_map, Functor.comp_map,
+          Functor.id_obj, Functor.comp_obj,
+          comp_mendler_hom, eqToHom_mendler_hom,
+          toPowerEndFunctor_obj,
+          toPowerEndFunctor_map,
+          toMendlerFunctor_obj,
+          toMendlerFunctor_map,
+          MendlerAlgebra.toPowerEndHom,
+          PowerEndMendlerAlgebra.toMendlerHom,
+          eqToIso.hom, eqToHom_refl,
+          Category.comp_id, Category.id_comp]))
+    (NatIso.ofComponents
+      (fun m => eqToIso
+        (toMendler_toPowerEnd G m))
+      (fun {_m₁ _m₂} f => by
+        apply PowerEndMendlerAlgebraHom.ext
+        simp only [Functor.id_map, Functor.comp_map,
+          Functor.id_obj, Functor.comp_obj,
+          comp_powerEnd_hom, eqToHom_powerEnd_hom,
+          toPowerEndFunctor_obj,
+          toPowerEndFunctor_map,
+          toMendlerFunctor_obj,
+          toMendlerFunctor_map,
+          MendlerAlgebra.toPowerEndHom,
+          PowerEndMendlerAlgebra.toMendlerHom,
+          eqToIso.hom, eqToHom_refl,
+          Category.comp_id, Category.id_comp]))
+
 end MendlerPowerEndEquiv
 
 end GebLean
