@@ -1204,9 +1204,20 @@ lemma polyDistLaw_comul_approx_node
   erw [polyScaleReindex_approx]
   erw [ih (ch e)]
   congr 1
-  -- M-type children equality: needs
-  -- polyCofixUnfoldAt_children_heq
-  _
+  apply Subtype.ext
+  simp only [polyCofreeStrFamily,
+    polyCofreeChildrenMor, Over.homMk_left]
+  have hch := polyCofixUnfoldAt_children_heq
+    (polyScale (polyFreeMCarrier A P) P)
+    (polyDistLawScaleCoalg A P)
+    ⟨x, PolyFix.mk x (Sum.inr p) ch⟩
+    e e HEq.rfl
+  have hfst := polyCofixUnfold_coalg_comm_child_fst_eq
+    (polyScale (polyFreeMCarrier A P) P)
+    (polyDistLawScaleCoalg A P)
+    ⟨x, PolyFix.mk x (Sum.inr p) ch⟩
+    e e HEq.rfl
+  exact Sigma.ext hfst hch
 
 /-! ### Comultiplication coherence: leaf case -/
 
@@ -1253,6 +1264,21 @@ lemma polyDistLaw_comul_approx_leaf
       (n + 1) x
       (polyDistLaw_comul_rhsInput A P
         (PolyFix.mk x (Sum.inl c) ch)) := by
+  conv_lhs => rw [← polyScaleReindex_approx]
+  simp only [polyCofixUnfoldApprox,
+    polyCoalgUnitApprox,
+    polyDistLawScaleCoalg,
+    polyDistLawScaleCoalgStr,
+    polyDistLawScaleCoalgStrLeft,
+    polyDistLawScaleCoalgStrAt,
+    Over.homMk_left]
+  rw [polyDistLaw_comul_annot_eq]
+  simp only [polyCofreeMapApprox_intro]
+  simp only [polyFreeMapAt, polyFreeMBind,
+    polyFreeMCoalgStrAt,
+    polyCofreeCoalg, polyCofreeStr,
+    polyCofreeStrLeft,
+    Over.homMk_left]
   _
 
 /-! ### Main comultiplication coherence lemma -/
