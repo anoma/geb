@@ -39,6 +39,11 @@ private def propCat : Cat.{0, 0} := Cat.of Prop
 
 private def typeCat.{u} : Cat.{u, u + 1} := Cat.of (Type u)
 
+private def overTypeCat.{u} (X : Type u) : Cat.{u, u + 1} := Cat.of (Over X)
+
+private def psubtypeExample.{u} (α : Sort u) : (α → Prop) → Sort (max 1 u) :=
+  Subtype.{u} (α := α)
+
 end InstanceIllustrations
 
 namespace UniverseIllustrations
