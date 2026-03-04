@@ -1,5 +1,7 @@
 import GebLean.RestrictedCoendAsColimit
 import GebLean.Utilities.EndsAndCoends
+import Mathlib.CategoryTheory.Monoidal.Closed.Basic
+import Mathlib.CategoryTheory.Limits.Shapes.End
 
 /-!
 # Mendler-Lambek Equivalence via Ends and Powers
@@ -937,5 +939,526 @@ theorem powerEndGExtMap_id (pt : C) :
     (𝟙 _)
 
 end PowerEndGExt
+
+/-!
+## Impredicative GExtFunctor via Internal Homs and Ends
+
+For a category `C` with `MonoidalClosed` (providing internal
+hom `ihom`) and `HasPowers` (providing `power Y S` for
+`S : Type v`), we construct `PowerEndGExtObj G pt` as an
+object of `C` defined entirely via ends, powers, and internal
+homs — without reference to copowers or coends.
+
+The construction has two layers:
+
+1. The inner profunctor `ihomPowerProf G pt Y : Cᵒᵖ ⥤ C ⥤ C`
+   sends `(op A, B)` to `G(op B, A) ⟶[C] power Y (B ⟶ pt)`.
+   Its end (parameterized via `HasTerminalWedge`) gives, for
+   each `Y`, an object `innerEnd Y : C`.
+
+2. The outer profunctor `churchProf : Cᵒᵖ ⥤ C ⥤ C` sends
+   `(op Y₁, Y₂)` to `innerEnd Y₁ ⟶[C] Y₂`. Its end gives
+   `PowerEndGExtObj G pt : C`.
+-/
+
+section ImpredicativeGExt
+
+open MonoidalClosed
+
+variable
+  {C : Type v} [Category.{v} C]
+  [MonoidalCategory C] [MonoidalClosed C]
+  [HasPowers C]
+
+/-- A terminal wedge for a profunctor `F : Jᵒᵖ ⥤ J ⥤ C`
+bundles a wedge together with a proof that it is a limit.
+This provides a computable end object. -/
+structure HasTerminalWedge
+    {J : Type v} [Category.{v} J]
+    (F : Jᵒᵖ ⥤ J ⥤ C) where
+  wedge : Wedge F
+  isLimit : IsLimit wedge
+
+/-- The internal-hom power-slice profunctor: sends
+`(op A, B)` to `G(op B, A) ⟶[C] power Y (B ⟶ pt)`.
+
+This is the internalization of `powerSliceProf`:
+where `powerSliceProf` produces hom-sets in `Type v`,
+this produces internal hom objects in `C`. -/
+def ihomPowerProf
+    (G : Cᵒᵖ ⥤ C ⥤ C)
+    (pt Y : C) : Cᵒᵖ ⥤ C ⥤ C where
+  obj A := {
+    obj := fun B =>
+      (ihom ((G.obj (Opposite.op B)).obj A.unop)).obj
+        (HasPowers.power Y (B ⟶ pt))
+    map := fun {B₁ B₂} g =>
+      (MonoidalClosed.pre
+        ((G.map g.op).app A.unop)).app _ ≫
+        (ihom _).map (HasPowers.mapIdx (g ≫ ·))
+    map_id := fun B => by
+      change (MonoidalClosed.pre
+        ((G.map (𝟙 B).op).app A.unop)).app _ ≫
+        (ihom _).map
+          (HasPowers.mapIdx (𝟙 B ≫ ·)) = 𝟙 _
+      have hG : (G.map (𝟙 B).op).app A.unop =
+          𝟙 _ := by
+        rw [op_id, G.map_id]
+        rfl
+      have hIdx : (𝟙 B ≫ · : (B ⟶ pt) →
+          (B ⟶ pt)) = _root_.id :=
+        funext (fun _ => Category.id_comp _)
+      rw [hG, MonoidalClosed.pre_id,
+        NatTrans.id_app, Category.id_comp,
+        hIdx, HasPowers.mapIdx_id,
+        CategoryTheory.Functor.map_id]
+    map_comp := fun {B₁ B₂ B₃} f g => by
+      have hGcomp :
+          (G.map (f ≫ g).op).app A.unop =
+          (G.map g.op).app A.unop ≫
+            (G.map f.op).app A.unop := by
+        rw [op_comp, Functor.map_comp]; rfl
+      have hIdx : ((f ≫ g) ≫ · :
+          (B₃ ⟶ pt) → (B₁ ⟶ pt)) =
+          (f ≫ ·) ∘ (g ≫ ·) :=
+        funext (fun s =>
+          (Category.assoc f g s))
+      rw [hGcomp, MonoidalClosed.pre_map,
+        NatTrans.comp_app,
+        hIdx, HasPowers.mapIdx_comp,
+        CategoryTheory.Functor.map_comp]
+      simp only [Category.assoc]
+      congr 1
+      rw [← Category.assoc, ← Category.assoc]
+      congr 1
+      exact MonoidalClosed.pre_comm_ihom_map
+        ((G.map g.op).app A.unop)
+        (HasPowers.mapIdx (f ≫ ·))
+  }
+  map {A₁ A₂} h := {
+    app := fun B =>
+      (MonoidalClosed.pre
+        ((G.obj (Opposite.op B)).map h.unop)).app _
+    naturality := fun {B₁ B₂} g => by
+      simp only [Category.assoc]
+      slice_lhs 2 3 =>
+        rw [← MonoidalClosed.pre_comm_ihom_map]
+      rw [← Category.assoc
+        ((MonoidalClosed.pre _).app _)
+        ((MonoidalClosed.pre _).app _),
+        ← NatTrans.comp_app,
+        ← MonoidalClosed.pre_map]
+      rw [← Category.assoc
+        ((MonoidalClosed.pre _).app _)
+        ((MonoidalClosed.pre _).app _),
+        ← NatTrans.comp_app,
+        ← MonoidalClosed.pre_map]
+      rw [(G.map g.op).naturality h.unop]
+  }
+  map_id := fun A => by
+    ext B
+    change (MonoidalClosed.pre
+      ((G.obj (Opposite.op B)).map
+        (𝟙 A).unop)).app _ = 𝟙 _
+    rw [unop_id, CategoryTheory.Functor.map_id,
+      MonoidalClosed.pre_id, NatTrans.id_app]
+  map_comp := fun {A₁ A₂ A₃} f g => by
+    ext B
+    change (MonoidalClosed.pre
+      ((G.obj (Opposite.op B)).map
+        (f ≫ g).unop)).app _ =
+      (MonoidalClosed.pre
+        ((G.obj (Opposite.op B)).map
+          f.unop)).app _ ≫
+      (MonoidalClosed.pre
+        ((G.obj (Opposite.op B)).map
+          g.unop)).app _
+    rw [unop_comp, Functor.map_comp,
+      MonoidalClosed.pre_map, NatTrans.comp_app]
+
+/-- Given terminal wedges for `F` and `F'` and a natural
+transformation `α : F ⟶ F'`, produce a morphism between
+the end objects by composing each projection with the
+diagonal component of `α` and lifting. -/
+def HasTerminalWedge.map
+    {J : Type v} [Category.{v} J]
+    {F F' : Jᵒᵖ ⥤ J ⥤ C}
+    (tw : HasTerminalWedge F) (tw' : HasTerminalWedge F')
+    (α : F ⟶ F') :
+    tw.wedge.pt ⟶ tw'.wedge.pt :=
+  Wedge.IsLimit.lift tw'.isLimit
+    (fun j =>
+      tw.wedge.ι j ≫ (α.app (Opposite.op j)).app j)
+    (fun i j g => by
+      simp only [Category.assoc]
+      rw [← (α.app (Opposite.op i)).naturality g,
+        ← Category.assoc,
+        tw.wedge.condition g,
+        Category.assoc]
+      congr 1
+      exact congr_arg (fun τ => NatTrans.app τ j)
+        (α.naturality g.op))
+
+/-- The natural transformation
+`ihomPowerProf G pt Y₁ ⟶ ihomPowerProf G pt Y₂`
+induced by `f : Y₁ ⟶ Y₂`, given by postcomposing
+with `mapVal f` inside the internal hom at each
+component. -/
+def ihomPowerProfMapY
+    (G : Cᵒᵖ ⥤ C ⥤ C)
+    (pt : C) {Y₁ Y₂ : C} (f : Y₁ ⟶ Y₂) :
+    ihomPowerProf G pt Y₁ ⟶ ihomPowerProf G pt Y₂ where
+  app A := {
+    app := fun B =>
+      (ihom ((G.obj (Opposite.op B)).obj A.unop)).map
+        (HasPowers.mapVal f)
+    naturality := fun {B₁ B₂} g => by
+      simp only [ihomPowerProf, Category.assoc]
+      rw [← (ihom ((G.obj (Opposite.op B₂)).obj
+        A.unop)).map_comp,
+        ← HasPowers.bimap_eq_mapIdx_mapVal,
+        HasPowers.bimap_eq_mapVal_mapIdx,
+        (ihom ((G.obj (Opposite.op B₂)).obj
+        A.unop)).map_comp]
+      rw [← Category.assoc
+        ((MonoidalClosed.pre _).app _)
+        ((ihom _).map _),
+        ← Category.assoc
+        ((ihom _).map _)
+        ((MonoidalClosed.pre _).app _)]
+      congr 1
+      exact MonoidalClosed.pre_comm_ihom_map
+        ((G.map g.op).app A.unop)
+        (HasPowers.mapVal f)
+  }
+  naturality := fun {A₁ A₂} h => by
+    ext B
+    simp only [NatTrans.comp_app, ihomPowerProf]
+    exact MonoidalClosed.pre_comm_ihom_map
+      ((G.obj (Opposite.op B)).map h.unop)
+      (HasPowers.mapVal f)
+
+omit [MonoidalCategory C] [MonoidalClosed C]
+  [HasPowers C] in
+@[simp]
+theorem HasTerminalWedge.map_ι
+    {J : Type v} [Category.{v} J]
+    {F F' : Jᵒᵖ ⥤ J ⥤ C}
+    (tw : HasTerminalWedge F) (tw' : HasTerminalWedge F')
+    (α : F ⟶ F') (j : J) :
+    tw.map tw' α ≫ tw'.wedge.ι j =
+      tw.wedge.ι j ≫ (α.app (Opposite.op j)).app j :=
+  Wedge.IsLimit.lift_ι _ _ _ _
+
+omit [MonoidalCategory C] [MonoidalClosed C]
+  [HasPowers C] in
+theorem HasTerminalWedge.hom_ext
+    {J : Type v} [Category.{v} J]
+    {F : Jᵒᵖ ⥤ J ⥤ C}
+    (tw : HasTerminalWedge F)
+    {X : C} {f g : X ⟶ tw.wedge.pt}
+    (h : ∀ j, f ≫ tw.wedge.ι j = g ≫ tw.wedge.ι j) :
+    f = g :=
+  Multifork.IsLimit.hom_ext tw.isLimit h
+
+omit [MonoidalCategory C] [MonoidalClosed C]
+  [HasPowers C] in
+theorem HasTerminalWedge.map_id
+    {J : Type v} [Category.{v} J]
+    {F : Jᵒᵖ ⥤ J ⥤ C}
+    (tw : HasTerminalWedge F) :
+    tw.map tw (𝟙 F) = 𝟙 tw.wedge.pt := by
+  apply tw.hom_ext
+  intro j
+  simp
+
+omit [MonoidalCategory C] [MonoidalClosed C]
+  [HasPowers C] in
+theorem HasTerminalWedge.map_comp
+    {J : Type v} [Category.{v} J]
+    {F F' F'' : Jᵒᵖ ⥤ J ⥤ C}
+    (tw : HasTerminalWedge F) (tw' : HasTerminalWedge F')
+    (tw'' : HasTerminalWedge F'')
+    (α : F ⟶ F') (β : F' ⟶ F'') :
+    tw.map tw'' (α ≫ β) =
+      tw.map tw' α ≫ tw'.map tw'' β := by
+  apply tw''.hom_ext
+  intro j
+  calc tw.map tw'' (α ≫ β) ≫ tw''.wedge.ι j
+      = tw.wedge.ι j ≫
+        ((α ≫ β).app (Opposite.op j)).app j :=
+        map_ι tw tw'' (α ≫ β) j
+    _ = tw.wedge.ι j ≫
+        (α.app (Opposite.op j)).app j ≫
+        (β.app (Opposite.op j)).app j := by
+        rw [NatTrans.comp_app, NatTrans.comp_app]
+    _ = (tw.map tw' α ≫ tw'.wedge.ι j) ≫
+        (β.app (Opposite.op j)).app j := by
+        rw [← Category.assoc,
+          ← map_ι tw tw' α j]
+    _ = tw.map tw' α ≫
+        (tw'.wedge.ι j ≫
+          (β.app (Opposite.op j)).app j) := by
+        rw [Category.assoc]
+    _ = tw.map tw' α ≫
+        (tw'.map tw'' β ≫ tw''.wedge.ι j) := by
+        rw [← map_ι tw' tw'' β j]
+    _ = (tw.map tw' α ≫ tw'.map tw'' β) ≫
+        tw''.wedge.ι j := by
+        rw [← Category.assoc]
+
+/-- The inner end functor: for each `Y`, takes the end
+of `ihomPowerProf G pt Y` to produce an object of `C`.
+This sends `Y` to `∫_A G(A,A) ⟶[C] power Y (A ⟶ pt)`.
+-/
+def ihomPowerEndFunctor
+    (G : Cᵒᵖ ⥤ C ⥤ C) (pt : C)
+    (tw : ∀ Y : C,
+      HasTerminalWedge (ihomPowerProf G pt Y)) :
+    C ⥤ C where
+  obj Y := (tw Y).wedge.pt
+  map {Y₁ Y₂} f :=
+    (tw Y₁).map (tw Y₂) (ihomPowerProfMapY G pt f)
+  map_id Y := by
+    rw [show ihomPowerProfMapY G pt (𝟙 Y) = 𝟙 _
+      from _]
+    · exact (tw Y).map_id
+    · ext A B
+      simp only [ihomPowerProfMapY, NatTrans.id_app,
+        HasPowers.mapVal_id,
+        CategoryTheory.Functor.map_id]; rfl
+  map_comp {Y₁ Y₂ Y₃} f g := by
+    rw [show ihomPowerProfMapY G pt (f ≫ g) =
+      ihomPowerProfMapY G pt f ≫
+        ihomPowerProfMapY G pt g
+      from _]
+    · exact (tw Y₁).map_comp (tw Y₂) (tw Y₃) _ _
+    · ext A B
+      simp only [ihomPowerProfMapY, NatTrans.comp_app,
+        HasPowers.mapVal_comp,
+        CategoryTheory.Functor.map_comp]
+
+/-- The outer Church-encoding profunctor: sends
+`(op Y₁, Y₂)` to
+`ihomPowerEndFunctor.obj Y₁ ⟶[C] Y₂`.
+Its end gives the impredicative `GExtObj`. -/
+def churchProf
+    (G : Cᵒᵖ ⥤ C ⥤ C) (pt : C)
+    (tw : ∀ Y : C,
+      HasTerminalWedge (ihomPowerProf G pt Y)) :
+    Cᵒᵖ ⥤ C ⥤ C where
+  obj Y := (ihom ((ihomPowerEndFunctor G pt tw).obj
+    Y.unop))
+  map {Y₁ Y₂} f :=
+    MonoidalClosed.pre
+      ((ihomPowerEndFunctor G pt tw).map f.unop)
+  map_id Y := by
+    rw [unop_id,
+      CategoryTheory.Functor.map_id,
+      MonoidalClosed.pre_id]
+  map_comp {Y₁ Y₂ Y₃} f g := by
+    rw [unop_comp,
+      CategoryTheory.Functor.map_comp,
+      MonoidalClosed.pre_map]
+
+/-- The impredicative `GExtObj` defined entirely via
+ends, powers, and internal homs. Given terminal wedges
+for the inner profunctor (for each `Y`) and for the
+outer Church-encoding profunctor, this is the object
+`∫_Y (∫_A G(A,A) ⟶[C] Y^(A→pt)) ⟶[C] Y`. -/
+def ImpredicativeGExtObj
+    (G : Cᵒᵖ ⥤ C ⥤ C) (pt : C)
+    (tw : ∀ Y : C,
+      HasTerminalWedge (ihomPowerProf G pt Y))
+    (twOuter : HasTerminalWedge
+      (churchProf G pt tw)) : C :=
+  twOuter.wedge.pt
+
+/-- The natural transformation
+`ihomPowerProf G pt₂ Y ⟶ ihomPowerProf G pt₁ Y`
+induced by `h : pt₁ ⟶ pt₂`, given by postcomposing
+with `mapIdx (· ≫ h)` inside the internal hom at
+each component. This is contravariant in `pt`. -/
+def ihomPowerProfMapPt
+    (G : Cᵒᵖ ⥤ C ⥤ C)
+    {pt₁ pt₂ : C} (h : pt₁ ⟶ pt₂) (Y : C) :
+    ihomPowerProf G pt₂ Y ⟶
+      ihomPowerProf G pt₁ Y where
+  app A := {
+    app := fun B =>
+      (ihom ((G.obj (Opposite.op B)).obj
+        A.unop)).map
+        (HasPowers.mapIdx (· ≫ h))
+    naturality := fun {B₁ B₂} g => by
+      simp only [ihomPowerProf, Category.assoc]
+      -- Combine ihom.map on LHS (positions 2+3)
+      slice_lhs 2 3 =>
+        rw [← CategoryTheory.Functor.map_comp]
+      -- Use ← pre_comm on RHS (positions 1+2)
+      -- to move ihom.map before pre
+      rw [← Category.assoc
+        ((ihom _).map (HasPowers.mapIdx _)),
+        ← MonoidalClosed.pre_comm_ihom_map
+          ((G.map g.op).app A.unop)
+          (HasPowers.mapIdx (· ≫ h))]
+      simp only [Category.assoc]
+      -- Combine ihom.map on RHS (positions 2+3)
+      slice_rhs 2 3 =>
+        rw [← CategoryTheory.Functor.map_comp]
+      -- Both sides: pre(Gg) ≫ ihom(G(B₂,A)).map(...)
+      -- Show the arguments are equal
+      congr 1
+      congr 1
+      rw [← HasPowers.mapIdx_comp,
+        ← HasPowers.mapIdx_comp]
+      congr 1
+      funext s
+      simp only [Function.comp_apply]
+      exact (Category.assoc g s h).symm
+  }
+  naturality := fun {A₁ A₂} g => by
+    ext B
+    simp only [NatTrans.comp_app, ihomPowerProf]
+    exact MonoidalClosed.pre_comm_ihom_map
+      ((G.obj (Opposite.op B)).map g.unop)
+      (HasPowers.mapIdx (· ≫ h))
+
+/-- The `ihomPowerProfMapPt` and `ihomPowerProfMapY`
+natural transformations commute: changing `pt` and
+changing `Y` can be done in either order. At each
+component this reduces to the interchange of
+`mapIdx` and `mapVal` via `bimap`. -/
+theorem ihomPowerProfMapPt_mapY_comm
+    (G : Cᵒᵖ ⥤ C ⥤ C)
+    {pt₁ pt₂ : C} (h : pt₁ ⟶ pt₂)
+    {Y₁ Y₂ : C} (f : Y₁ ⟶ Y₂) :
+    ihomPowerProfMapPt G h Y₁ ≫
+      ihomPowerProfMapY G pt₁ f =
+    ihomPowerProfMapY G pt₂ f ≫
+      ihomPowerProfMapPt G h Y₂ := by
+  ext A B
+  simp only [NatTrans.comp_app, ihomPowerProfMapPt,
+    ihomPowerProfMapY,
+    ← CategoryTheory.Functor.map_comp]
+  congr 1
+  rw [← HasPowers.bimap_eq_mapIdx_mapVal,
+    HasPowers.bimap_eq_mapVal_mapIdx]
+
+/-- The natural transformation
+`churchProf G pt₁ tw₁ ⟶ churchProf G pt₂ tw₂`
+induced by `h : pt₁ ⟶ pt₂`, given by composing
+the contravariant inner-end map (via
+`ihomPowerProfMapPt`) with `pre`. -/
+def churchProfMapPt
+    (G : Cᵒᵖ ⥤ C ⥤ C)
+    {pt₁ pt₂ : C} (h : pt₁ ⟶ pt₂)
+    (tw₁ : ∀ Y : C,
+      HasTerminalWedge (ihomPowerProf G pt₁ Y))
+    (tw₂ : ∀ Y : C,
+      HasTerminalWedge (ihomPowerProf G pt₂ Y)) :
+    churchProf G pt₁ tw₁ ⟶
+      churchProf G pt₂ tw₂ where
+  app Y := {
+    app := fun Z =>
+      MonoidalClosed.pre
+        ((tw₂ Y.unop).map (tw₁ Y.unop)
+          (ihomPowerProfMapPt G h Y.unop))
+        |>.app Z
+    naturality := fun {Z₁ Z₂} f => by
+      simp only [churchProf]
+      exact (MonoidalClosed.pre_comm_ihom_map
+        ((tw₂ Y.unop).map (tw₁ Y.unop)
+          (ihomPowerProfMapPt G h Y.unop))
+        f).symm
+  }
+  naturality := fun {Y₁ Y₂} g => by
+    ext Z
+    simp only [NatTrans.comp_app, churchProf]
+    rw [← NatTrans.comp_app, ← NatTrans.comp_app,
+      ← MonoidalClosed.pre_map,
+      ← MonoidalClosed.pre_map]
+    congr 2
+    simp only [ihomPowerEndFunctor]
+    rw [← HasTerminalWedge.map_comp,
+      ← HasTerminalWedge.map_comp]
+    congr 1
+    exact ihomPowerProfMapPt_mapY_comm G h g.unop
+
+theorem ihomPowerProfMapPt_id
+    (G : Cᵒᵖ ⥤ C ⥤ C) (pt : C) (Y : C) :
+    ihomPowerProfMapPt G (𝟙 pt) Y =
+      𝟙 (ihomPowerProf G pt Y) := by
+  ext A B
+  simp only [ihomPowerProfMapPt, NatTrans.id_app,
+    Category.comp_id]
+  change (ihom _).map (HasPowers.mapIdx _root_.id) =
+    𝟙 _
+  rw [HasPowers.mapIdx_id,
+    CategoryTheory.Functor.map_id]
+
+theorem ihomPowerProfMapPt_comp
+    (G : Cᵒᵖ ⥤ C ⥤ C)
+    {pt₁ pt₂ pt₃ : C}
+    (h₁ : pt₁ ⟶ pt₂) (h₂ : pt₂ ⟶ pt₃) (Y : C) :
+    ihomPowerProfMapPt G (h₁ ≫ h₂) Y =
+    ihomPowerProfMapPt G h₂ Y ≫
+      ihomPowerProfMapPt G h₁ Y := by
+  ext A B
+  simp only [ihomPowerProfMapPt, NatTrans.comp_app,
+    ← CategoryTheory.Functor.map_comp]
+  congr 1
+  rw [← HasPowers.mapIdx_comp]
+  congr 1
+  funext s
+  exact (Category.assoc s h₁ h₂).symm
+
+/-- The impredicative GExt endofunctor, defined
+entirely via ends, powers, and internal homs.
+Sends `pt` to `∫_Y (∫_A G(A,A) ⟶[C] Y^(A→pt)) ⟶[C] Y`
+and acts on morphisms by transporting both the inner
+and outer ends. -/
+def ImpredicativeGExtFunctor
+    (G : Cᵒᵖ ⥤ C ⥤ C)
+    (twInner : ∀ (pt Y : C),
+      HasTerminalWedge (ihomPowerProf G pt Y))
+    (twOuter : ∀ (pt : C),
+      HasTerminalWedge
+        (churchProf G pt (twInner pt))) :
+    C ⥤ C where
+  obj pt :=
+    ImpredicativeGExtObj G pt (twInner pt)
+      (twOuter pt)
+  map {pt₁ pt₂} h :=
+    (twOuter pt₁).map (twOuter pt₂)
+      (churchProfMapPt G h (twInner pt₁)
+        (twInner pt₂))
+  map_id pt := by
+    rw [show churchProfMapPt G (𝟙 pt)
+        (twInner pt) (twInner pt) = 𝟙 _ from _]
+    · exact (twOuter pt).map_id
+    · ext Y Z
+      simp only [NatTrans.id_app,
+        churchProfMapPt, churchProf]
+      rw [ihomPowerProfMapPt_id,
+        HasTerminalWedge.map_id,
+        MonoidalClosed.pre_id]
+      rfl
+  map_comp {pt₁ pt₂ pt₃} h₁ h₂ := by
+    rw [show churchProfMapPt G (h₁ ≫ h₂)
+        (twInner pt₁) (twInner pt₃) =
+      churchProfMapPt G h₁ (twInner pt₁)
+        (twInner pt₂) ≫
+      churchProfMapPt G h₂ (twInner pt₂)
+        (twInner pt₃) from _]
+    · exact (twOuter pt₁).map_comp
+        (twOuter pt₂) (twOuter pt₃) _ _
+    · ext Y Z
+      simp only [NatTrans.comp_app,
+        churchProfMapPt, churchProf]
+      rw [ihomPowerProfMapPt_comp,
+        HasTerminalWedge.map_comp,
+        MonoidalClosed.pre_map, NatTrans.comp_app]
+
+end ImpredicativeGExt
 
 end GebLean
