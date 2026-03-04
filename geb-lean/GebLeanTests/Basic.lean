@@ -41,6 +41,13 @@ private def typeCat.{u} : Cat.{u, u + 1} := Cat.of (Type u)
 
 private def overTypeCat.{u} (X : Type u) : Cat.{u, u + 1} := Cat.of (Over X)
 
+private def psigmaExample.{u, v} (α : Sort u) : (α → Sort v) → Sort (max 1 u v) :=
+  PSigma.{u} (α := α)
+
+private def psigmaNotationExample.{u, v} (α : Sort u) (β : α → Sort v) :
+  Sort (max 1 u v) :=
+    Σ' (a : α), β a
+
 private def psubtypeExample.{u} (α : Sort u) : (α → Prop) → Sort (max 1 u) :=
   Subtype.{u} (α := α)
 
