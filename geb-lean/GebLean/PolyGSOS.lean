@@ -386,4 +386,173 @@ def polyGSOSDistLawMor
     (polyScale (polyFreeMCarrier A P) Q)
     (polyGSOSScaleCoalg A P Q rho)
 
+lemma polyGSOSDistLawMor_head_fst
+    (A : Over X) (P Q : PolyEndo X)
+    (rho : PolyGSOSRule P Q) {x : X}
+    (t : PolyFreeM (polyCofreeCarrier A Q) P x) :
+    let m := polyCofixUnfoldAt
+      (polyScale (polyFreeMCarrier A P) Q)
+      (polyGSOSScaleCoalg A P Q rho)
+      x ⟨⟨x, t⟩, rfl⟩
+    (polyCofreeExtract
+      (polyFreeMCarrier A P) Q m).val =
+    ⟨x, polyFreeMapAt
+      (polyCofreeCarrier A Q) A P
+      (polyCofreeCounit A Q) x t⟩ := by
+  simp only [polyCofreeExtract, PolyCofix.head,
+    polyCofixUnfoldAt, polyCofixUnfoldApprox]
+  simp only [polyGSOSScaleCoalg,
+    polyGSOSScaleCoalgStr, Over.homMk_left]
+  simp only [PolyCofixApprox.getIndex,
+    polyGSOSScaleCoalgStrAt]
+
+lemma polyGSOSDistLaw_counit
+    (A : Over X) (P Q : PolyEndo X)
+    (rho : PolyGSOSRule P Q) :
+    polyGSOSDistLawMor A P Q rho ≫
+    polyCofreeCounit (polyFreeMCarrier A P) Q =
+    polyFreeMap
+      (polyCofreeCarrier A Q) A P
+      (polyCofreeCounit A Q) := by
+  apply Over.OverMorphism.ext
+  funext ⟨x, t⟩
+  simp only [Over.comp_left, types_comp_apply,
+    polyGSOSDistLawMor, polyCofixUnfold,
+    Over.homMk_left, polyCofixUnfoldLeft,
+    polyCofreeCounit, polyCofreeCounitLeft,
+    polyFreeMap, polyFreeMapLeft]
+  exact polyGSOSDistLawMor_head_fst A P Q rho t
+
+lemma polyGSOSDistLaw_unit_approx
+    (A : Over X) (P Q : PolyEndo X)
+    (rho : PolyGSOSRule P Q) {x : X}
+    (m : PolyCofreeM A Q x) (n : Nat) :
+    polyCofixUnfoldApprox
+      (polyScale (polyFreeMCarrier A P) Q)
+      (polyGSOSScaleCoalg A P Q rho) n x
+      ⟨⟨x, polyFreeMPure
+        (polyCofreeCarrier A Q) P
+        ⟨⟨x, m⟩, rfl⟩⟩, rfl⟩ =
+    polyCofreeMapApprox A
+      (polyFreeMCarrier A P) Q
+      (polyFreeUnit A P) (m.approx n) := by
+  induction n generalizing x m with
+  | zero =>
+    simp only [polyCofixUnfoldApprox]
+    cases m.approx 0
+    rfl
+  | succ n ih =>
+    have hidx_eq :
+      (m.approx (n + 1)).getIndex = m.head :=
+      m.index_eq_head n
+    generalize ha :
+      m.approx (n + 1) = a at hidx_eq
+    match a, hidx_eq with
+    | .intro _ idx childFun, hidx_eq =>
+      subst hidx_eq
+      simp only [polyCofixUnfoldApprox,
+        polyGSOSScaleCoalg,
+        polyGSOSScaleCoalgStr,
+        Over.homMk_left,
+        polyGSOSScaleCoalgStrAt,
+        polyGSOSFoldCataWithFiber,
+        polyGSOSFoldLeafAt,
+        polyFreeMapAt, polyFreeMBind,
+        polyFreeMPure,
+        polyCofreeCounit,
+        polyCofreeCounitLeft]
+      congr 1
+      · -- Scale index equality
+        congr 1
+        apply Subtype.ext
+        simp only [polyFreeUnit,
+          Over.homMk_left, polyFreeUnitLeft]
+        apply Sigma.ext
+        · exact m.head.1.property.symm
+        · apply polyFreeMPure_proof_irrel
+      · -- Children equality
+        funext e
+        have hchild :
+          (m.children e).approx n =
+            childFun e := by
+          simp only [PolyCofix.children,
+            PolyCofix.childApproxAt]
+          cases n with
+          | zero =>
+            simp only [
+              PolyCofix.childApproxAt_zero]
+            exact
+              (PolyCofixApprox.approx_zero_eq_continue
+                (childFun e)).symm
+          | succ k =>
+            simp only [
+              PolyCofix.childApproxAt_succ]
+            have heq1 :
+              (m.approx (k + 2)).getIndex =
+                m.head :=
+              m.index_eq_head (k + 1)
+            conv_lhs =>
+              rw [PolyCofix.childApproxAt_succ_aux_proof_irrel
+                m.head (m.approx (k + 2))
+                (m.index_eq_head (k + 1))
+                heq1 e]
+            generalize haa :
+              m.approx (k + 2) = aa at heq1
+            rw [ha] at haa
+            subst haa
+            conv_lhs =>
+              rw [PolyCofix.childApproxAt_succ_aux_proof_irrel
+                m.head
+                (.intro x m.head childFun)
+                heq1 rfl e]
+            exact
+              PolyCofix.childApproxAt_succ_aux_intro
+                m.head childFun e
+        rw [← hchild]
+        exact ih (m.children e)
+
+lemma polyGSOSDistLaw_unit
+    (A : Over X) (P Q : PolyEndo X)
+    (rho : PolyGSOSRule P Q) :
+    polyFreeUnit (polyCofreeCarrier A Q) P ≫
+    polyGSOSDistLawMor A P Q rho =
+    polyCofreeMap A
+      (polyFreeMCarrier A P) Q
+      (polyFreeUnit A P) := by
+  apply Over.OverMorphism.ext
+  funext ⟨x, m⟩
+  simp only [Over.comp_left, types_comp_apply,
+    polyFreeUnit, Over.homMk_left,
+    polyFreeUnitLeft,
+    polyGSOSDistLawMor, polyCofixUnfold,
+    polyCofixUnfoldLeft,
+    polyCofreeMap, polyCofreeMapLeft]
+  apply Sigma.ext
+  · rfl
+  · simp only [heq_eq_eq, polyCofreeMapAt]
+    apply PolyCofix.ext
+    intro n
+    exact polyGSOSDistLaw_unit_approx
+      A P Q rho m n
+
+lemma polyGSOSDistLaw_annot_natural
+    (A B : Over X) (P Q : PolyEndo X)
+    (f : A ⟶ B) {x : X}
+    (t : PolyFreeM (polyCofreeCarrier A Q) P x) :
+    polyFreeMapAt
+      (polyCofreeCarrier B Q) B P
+      (polyCofreeCounit B Q) x
+      (polyFreeMapAt
+        (polyCofreeCarrier A Q)
+        (polyCofreeCarrier B Q) P
+        (polyCofreeMap A B Q f) x t) =
+    polyFreeMapAt A B P f x
+      (polyFreeMapAt
+        (polyCofreeCarrier A Q) A P
+        (polyCofreeCounit A Q) x t) := by
+  rw [← polyFreeMapAt_comp]
+  rw [← polyFreeMapAt_comp]
+  congr 1
+  exact polyCofreeCounit_naturality A B Q f
+
 end GebLean
