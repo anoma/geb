@@ -576,6 +576,41 @@ theorem toMendler_toPowerEnd
     apply HasPowers.ext; intro γ
     exact HasPowers.fac _ γ
 
+omit [HasCopowers C] in
+/-- The forward functor mapping morphisms of Mendler
+algebras to morphisms of power-end Mendler algebras. -/
+def MendlerAlgebra.toPowerEndHom
+    {m₁ m₂ : MendlerAlgebra G}
+    (f : m₁ ⟶ m₂) :
+    m₁.toPowerEnd ⟶ m₂.toPowerEnd where
+  hom := f.hom
+  comm A := by
+    apply HasPowers.ext; intro γ
+    simp only [Category.assoc]
+    dsimp only [MendlerAlgebra.toPowerEnd,
+      PowerEndMendlerAlgebra.algOp]
+    rw [HasPowers.mapVal_proj,
+      HasPowers.mapIdx_proj]
+    rw [← Category.assoc, HasPowers.fac,
+      HasPowers.fac]
+    exact f.comm A γ
+
+omit [HasCopowers C] in
+/-- The backward functor mapping morphisms of power-end
+Mendler algebras to morphisms of Mendler algebras. -/
+def PowerEndMendlerAlgebra.toMendlerHom
+    {m₁ m₂ : PowerEndMendlerAlgebra G}
+    (f : m₁ ⟶ m₂) :
+    m₁.toMendler ⟶ m₂.toMendler where
+  hom := f.hom
+  comm A γ := by
+    simp only [PowerEndMendlerAlgebra.toMendler,
+      MendlerAlgebra.mk',
+      MendlerAlgebra.family,
+      MendlerAlgebraOver.family]
+    rw [Category.assoc]
+    exact f.comm_proj A γ
+
 end MendlerPowerEndEquiv
 
 end GebLean
