@@ -809,4 +809,81 @@ def mendlerLambekCopowerCoendEquiv :
 
 end CopowerCoendGExt
 
+/-!
+## Power-Slice Profunctor Reindexing
+
+Given `h : pt₁ ⟶ pt₂`, postcomposition with
+`HasPowers.mapIdx (· ≫ h)` at each component defines a
+natural transformation
+`powerSliceProf G pt₂ Y ⟶ powerSliceProf G pt₁ Y`.
+
+This reindexes the power `Y^(B ⟶ pt₂)` to
+`Y^(B ⟶ pt₁)` via precomposition with `h`.
+-/
+
+section PowerSliceReindex
+
+variable
+  {C : Type v} [Category.{v} C]
+  [HasCopowers C] [HasPowers C]
+  (G : Cᵒᵖ ⥤ C ⥤ C) {pt₁ pt₂ : C}
+  (h : pt₁ ⟶ pt₂) (Y : C)
+
+open HasPowers
+
+/-- Reindexing the power-slice profunctor along
+`h : pt₁ ⟶ pt₂`: postcomposition with
+`mapIdx (· ≫ h)` at each component. -/
+def powerSliceProfReindex :
+    powerSliceProf G pt₂ Y ⟶
+      powerSliceProf G pt₁ Y where
+  app A := {
+    app := fun B φ => φ ≫ mapIdx (· ≫ h)
+    naturality := fun {B₁ B₂} g => by
+      ext φ
+      simp only [types_comp_apply, powerSliceProf,
+        Category.assoc]
+      congr 1
+      apply HasPowers.ext; intro s
+      simp only [Category.assoc, mapIdx_proj]
+  }
+  naturality {A₁ A₂} f := by
+    ext B φ
+    simp only [NatTrans.comp_app, types_comp_apply,
+      powerSliceProf, Category.assoc]
+
+omit [HasCopowers C] in
+/-- Reindexing by the identity is the identity
+natural transformation. -/
+theorem powerSliceProfReindex_id (pt Y : C) :
+    powerSliceProfReindex G (𝟙 pt) Y =
+      𝟙 (powerSliceProf G pt Y) := by
+  ext A B φ
+  simp only [powerSliceProfReindex,
+    NatTrans.id_app, types_id_apply]
+  have : (· ≫ 𝟙 pt : (B ⟶ pt) → (B ⟶ pt)) = id :=
+    funext (fun _ => Category.comp_id _)
+  rw [this, mapIdx_id, Category.comp_id]
+
+omit [HasCopowers C] in
+/-- Reindexing by a composition decomposes as
+the composition of the individual reindexings. -/
+theorem powerSliceProfReindex_comp
+    {pt₃ : C} (h₁ : pt₁ ⟶ pt₂) (h₂ : pt₂ ⟶ pt₃)
+    (Y : C) :
+    powerSliceProfReindex G (h₁ ≫ h₂) Y =
+      powerSliceProfReindex G h₂ Y ≫
+        powerSliceProfReindex G h₁ Y := by
+  ext A B φ
+  simp only [powerSliceProfReindex,
+    NatTrans.comp_app, types_comp_apply,
+    Category.assoc]
+  congr 1
+  have : (· ≫ h₁ ≫ h₂ : (B ⟶ pt₁) → (B ⟶ pt₃)) =
+      (· ≫ h₂) ∘ (· ≫ h₁) :=
+    funext (fun s => (Category.assoc s h₁ h₂).symm)
+  rw [this, mapIdx_comp]
+
+end PowerSliceReindex
+
 end GebLean
