@@ -886,4 +886,56 @@ theorem powerSliceProfReindex_comp
 
 end PowerSliceReindex
 
+/-!
+## Power-End GExtFunctor (Impredicative)
+
+The `PowerEndGExtFunctor` is an endofunctor `C ⥤ C`
+with carrier `CopowerGExtObj G pt` and maps defined
+via the end-power characterization
+`gExtEndPowerEquiv`, using `powerSliceProfReindex` to
+reindex along morphisms. The functor action is defined
+impredicatively: for `h : pt₁ ⟶ pt₂`, the map is
+`equiv⁻¹(typeEnd.map (reindex h) (equiv(𝟙)))`.
+-/
+
+section PowerEndGExt
+
+open HasAllCopowerProfCoends HasAllHomToProfCoends
+open HasPowers
+
+variable
+  {C : Type v} [Category.{v} C]
+  [HasCopowers C] [HasPowers C]
+  (G : Cᵒᵖ ⥤ C ⥤ C)
+  [HasAllCopowerProfCoends G]
+
+/-- The impredicative map for the power-end
+GExtFunctor: given `h : pt₁ ⟶ pt₂`, sends
+`𝟙 : CopowerGExtObj G pt₂ ⟶ CopowerGExtObj G pt₂`
+through `gExtEndPowerEquiv`, reindexes via
+`powerSliceProfReindex G h`, and maps back. -/
+def powerEndGExtMap {pt₁ pt₂ : C} (h : pt₁ ⟶ pt₂) :
+    CopowerGExtObj G pt₁ ⟶ CopowerGExtObj G pt₂ :=
+  (gExtEndPowerEquiv G pt₁
+    (CopowerGExtObj G pt₂)).symm
+    (typeEnd.map (J := C)
+      (powerSliceProfReindex G h
+        (CopowerGExtObj G pt₂))
+      (gExtEndPowerEquiv G pt₂
+        (CopowerGExtObj G pt₂) (𝟙 _)))
+
+theorem powerEndGExtMap_id (pt : C) :
+    powerEndGExtMap G (𝟙 pt) = 𝟙 _ := by
+  unfold powerEndGExtMap
+  rw [powerSliceProfReindex_id]
+  have hmid : ∀ (F : Cᵒᵖ ⥤ C ⥤ Type v)
+      (x : typeEnd F),
+      typeEnd.map (J := C) (𝟙 F) x = x :=
+    fun F x => Subtype.ext (funext (fun _ => rfl))
+  rw [hmid]
+  exact (gExtEndPowerEquiv G pt _).symm_apply_apply
+    (𝟙 _)
+
+end PowerEndGExt
+
 end GebLean
