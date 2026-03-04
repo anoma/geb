@@ -35,6 +35,7 @@ import GebLean.PolyAdjunctions
 import GebLean.PolyAlg
 import GebLean.PolyAlgColimits
 import GebLean.PolyDistributiveLaw
+import GebLean.PolyGSOS
 import GebLean.PolyAlgUMorph
 import GebLean.PolyFilteredColimits
 import GebLean.PolyLimits
@@ -57,6 +58,7 @@ import GebLean.Utilities.ConnectedComponents
 import GebLean.Utilities.ConnectedGrothendieck
 import GebLean.Utilities.DistributiveLaw
 import GebLean.Utilities.DoubleCategory
+import GebLean.Utilities.GSOSRule
 import GebLean.Utilities.LambdaBialgebra
 import GebLean.Utilities.Elements
 import GebLean.Utilities.EndsAndCoends

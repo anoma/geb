@@ -1553,31 +1553,31 @@ private def pbTerminalCone :
    IsTerminal.ofUniqueHom pbTerminalFrom
      (fun _ f => pbTerminalFrom_unique _ f)⟩
 
-private abbrev pbBinaryProdFamily
+abbrev pbBinaryProdFamily
     (P Q : PolyFunctorBetweenCat.{u, u} X Y) :
     PUnit.{u + 1} ⊕ PUnit.{u + 1} →
     PolyFunctorBetweenCat.{u, u} X Y
   | Sum.inl _ => P
   | Sum.inr _ => Q
 
-private def pbBinaryProdObj
+def pbBinaryProdObj
     (P Q : PolyFunctorBetweenCat.{u, u} X Y) :
     PolyFunctorBetweenCat.{u, u} X Y :=
   polyBetweenProd _ (pbBinaryProdFamily P Q)
 
-private def pbBinaryFst
+def pbBinaryFst
     (P Q : PolyFunctorBetweenCat.{u, u} X Y) :
     pbBinaryProdObj P Q ⟶ P :=
   polyBetweenProj _ (pbBinaryProdFamily P Q)
     (Sum.inl PUnit.unit)
 
-private def pbBinarySnd
+def pbBinarySnd
     (P Q : PolyFunctorBetweenCat.{u, u} X Y) :
     pbBinaryProdObj P Q ⟶ Q :=
   polyBetweenProj _ (pbBinaryProdFamily P Q)
     (Sum.inr PUnit.unit)
 
-private def pbBinaryLift
+def pbBinaryLift
     (P Q : PolyFunctorBetweenCat.{u, u} X Y)
     {T : PolyFunctorBetweenCat.{u, u} X Y}
     (f : T ⟶ P) (g : T ⟶ Q) :
@@ -1585,7 +1585,7 @@ private def pbBinaryLift
   polyBetweenProdLift _ (pbBinaryProdFamily P Q) T
     (fun | Sum.inl _ => f | Sum.inr _ => g)
 
-private theorem pbBinaryLift_fst
+theorem pbBinaryLift_fst
     (P Q : PolyFunctorBetweenCat.{u, u} X Y)
     {T : PolyFunctorBetweenCat.{u, u} X Y}
     (f : T ⟶ P) (g : T ⟶ Q) :
@@ -1595,7 +1595,7 @@ private theorem pbBinaryLift_fst
     (fun | Sum.inl _ => f | Sum.inr _ => g)
     (Sum.inl PUnit.unit)
 
-private theorem pbBinaryLift_snd
+theorem pbBinaryLift_snd
     (P Q : PolyFunctorBetweenCat.{u, u} X Y)
     {T : PolyFunctorBetweenCat.{u, u} X Y}
     (f : T ⟶ P) (g : T ⟶ Q) :
@@ -1605,7 +1605,7 @@ private theorem pbBinaryLift_snd
     (fun | Sum.inl _ => f | Sum.inr _ => g)
     (Sum.inr PUnit.unit)
 
-private theorem pbBinaryLift_unique
+theorem pbBinaryLift_unique
     (P Q : PolyFunctorBetweenCat.{u, u} X Y)
     {T : PolyFunctorBetweenCat.{u, u} X Y}
     (f : T ⟶ P) (g : T ⟶ Q)
