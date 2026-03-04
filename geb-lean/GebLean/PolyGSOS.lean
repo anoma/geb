@@ -305,4 +305,85 @@ def polyGSOSFoldCata
       (polyGSOSFoldCataWithFiber
         A P Q rho t).prop)
 
+/--
+The `polyScale(T_P(A), Q)`-coalgebra structure on
+`T_P(D_Q(A))` at a fiber element.  The annotation is
+obtained by applying `T_P(epsilon_Q)` (mapping each
+cofree leaf to its root annotation), and the Q-structure
+comes from the GSOS fold's second projection.
+-/
+def polyGSOSScaleCoalgStrAt
+    (A : Over X) (P Q : PolyEndo X)
+    (rho : PolyGSOSRule P Q) {x : X}
+    (t : PolyFreeM
+      (polyCofreeCarrier A Q) P x) :
+    polyBetweenEvalFamily X X
+      (polyScale (polyFreeMCarrier A P) Q)
+      (polyFreeMCarrier
+        (polyCofreeCarrier A Q) P) x :=
+  let DQ := polyCofreeCarrier A Q
+  let TDQ := polyFreeMCarrier DQ P
+  let TA := polyFreeMCarrier A P
+  let foldWithFiber :=
+    polyGSOSFoldCataWithFiber A P Q rho t
+  let foldResult := foldWithFiber.val
+  let fiberEq := foldWithFiber.prop
+  let qEval := foldResult.val.2
+  let qFiber := qEval.1
+  let qFiberEq : qFiber = x :=
+    foldResult.prop.symm.trans fiberEq
+  let qEvalAtX :
+      polyBetweenEvalFamily X X Q TDQ x :=
+    qFiberEq ▸ qEval.2
+  let annotation :
+      { a : TA.left // TA.hom a = x } :=
+    ⟨⟨x, polyFreeMapAt DQ A P
+      (polyCofreeCounit A Q) x t⟩, rfl⟩
+  ⟨(annotation, qEvalAtX.1), qEvalAtX.2⟩
+
+/--
+The `polyScale(T_P(A), Q)`-coalgebra structure map on
+`T_P(D_Q(A))` as an `Over X` morphism.
+-/
+def polyGSOSScaleCoalgStr
+    (A : Over X) (P Q : PolyEndo X)
+    (rho : PolyGSOSRule P Q) :
+    polyFreeMCarrier (polyCofreeCarrier A Q) P ⟶
+    (polyEndoFunctor X
+      (polyScale (polyFreeMCarrier A P) Q)).obj
+      (polyFreeMCarrier
+        (polyCofreeCarrier A Q) P) :=
+  Over.homMk
+    (fun ⟨x, t⟩ =>
+      ⟨x, polyGSOSScaleCoalgStrAt A P Q rho t⟩)
+    rfl
+
+/--
+The `polyScale(T_P(A), Q)`-coalgebra on `T_P(D_Q(A))`
+induced by a GSOS rule.
+-/
+def polyGSOSScaleCoalg
+    (A : Over X) (P Q : PolyEndo X)
+    (rho : PolyGSOSRule P Q) :
+    PolyCoalg
+      (polyScale (polyFreeMCarrier A P) Q) where
+  V := polyFreeMCarrier
+    (polyCofreeCarrier A Q) P
+  str := polyGSOSScaleCoalgStr A P Q rho
+
+/--
+The GSOS distributive law morphism at a given object
+`A : Over X`.  Maps `T_P(D_Q(A))` to `D_Q(T_P(A))`
+by unfolding the `polyScale` coalgebra into the cofree
+comonad.
+-/
+def polyGSOSDistLawMor
+    (A : Over X) (P Q : PolyEndo X)
+    (rho : PolyGSOSRule P Q) :
+    polyFreeMCarrier (polyCofreeCarrier A Q) P ⟶
+    polyCofreeCarrier (polyFreeMCarrier A P) Q :=
+  polyCofixUnfold
+    (polyScale (polyFreeMCarrier A P) Q)
+    (polyGSOSScaleCoalg A P Q rho)
+
 end GebLean
