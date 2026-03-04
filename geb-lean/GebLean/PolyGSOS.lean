@@ -22,6 +22,17 @@ lemma sigma_fst_eqRec {I : Type*}
     (h ▸ b : F i₂) := by
   subst h; rfl
 
+@[simp]
+lemma ptoef_fst_eqRec
+    {D : Type*} [Category D] {Y : Type*}
+    (P : PolyToOverCat (D := D) Y) (A : D)
+    {y₁ y₂ : Y} (h : y₁ = y₂)
+    (ev : polyToOverEvalFamily Y P A y₁) :
+    (h ▸ ev :
+      polyToOverEvalFamily Y P A y₂).fst =
+    h ▸ ev.fst := by
+  subst h; rfl
+
 /--
 The identity-behavior product as a polynomial endofunctor.
 Given a behavior polynomial `Q : PolyEndo X`, the
@@ -628,7 +639,8 @@ lemma polyGSOSFoldQIndex_eq_node
         (polyCofreeMap A B Q f) x
         (PolyFix.mk x (Sum.inr p) children)) =
     polyGSOSFoldQIndex A P Q rho
-      (PolyFix.mk x (Sum.inr p) children) :=
+      (PolyFix.mk x (Sum.inr p) children) := by
+  simp only [polyGSOSFoldQIndex]
   _
 
 lemma polyGSOSFoldQIndex_eq
