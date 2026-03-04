@@ -2750,4 +2750,134 @@ def coendExplicitEquiv (P : Cᵒᵖ ⥤ C ⥤ Type w')
 
 end ExplicitCoendElement
 
+section CopowerProfCoends
+
+/-!
+### Copower-Profunctor Coends and Their Equivalence to Restricted Coends
+
+The equivalence `homRestrictedCopowerEquiv` transfers between the category
+of hom-restricted cowedges and the category of cowedges over the copower
+profunctor. Since equivalences of categories preserve initial objects,
+we can transfer coend existence between the two formulations.
+-/
+
+variable {C : Type u} [Category.{v} C] [HasCopowers C]
+variable (G : Cᵒᵖ ⥤ C ⥤ C)
+
+/-- A copower-profunctor coend cowedge bundles an initial cowedge
+for the copower profunctor `copowerProf (HomToProf pt) G`. -/
+structure CopowerCoendCone (pt : C) where
+  cowedge : HomCopowerCowedge G pt
+  isInitial : Limits.IsInitial cowedge
+
+/-- For `G^e` to be defined via copower-profunctor coends,
+we need the cowedge category `HomCopowerCowedge G pt` to have
+an initial object for all `pt`. -/
+class HasAllCopowerProfCoends where
+  cone : ∀ (pt : C), CopowerCoendCone G pt
+
+namespace HasAllHomToProfCoends
+
+open HasRestrictedCoend
+
+variable [HasAllHomToProfCoends G]
+
+/-- Transfer restricted coend existence to
+copower-profunctor coend existence. The equivalence
+`homRestrictedCopowerEquiv` maps the initial
+restricted cowedge to an initial copower cowedge
+via `isInitialOfEquivFunctor`. -/
+def toCopowerProfCoends :
+    HasAllCopowerProfCoends G where
+  cone pt :=
+    let e := homRestrictedCopowerEquiv G pt
+    let rc := restrictedCoend G (HomToProf pt)
+    let hrc :=
+      restrictedCoendIsInitial G (HomToProf pt)
+    ⟨e.functor.obj rc,
+     isInitialOfEquivFunctor e hrc⟩
+
+end HasAllHomToProfCoends
+
+namespace HasAllCopowerProfCoends
+
+open HasRestrictedCoend
+
+variable [HasAllCopowerProfCoends G]
+
+/-- The initial copower cowedge at `pt`. -/
+def copowerCoend (pt : C) :
+    HomCopowerCowedge G pt :=
+  (HasAllCopowerProfCoends.cone (G := G) pt).cowedge
+
+/-- The initial copower cowedge is initial. -/
+def copowerCoendIsInitial (pt : C) :
+    Limits.IsInitial (copowerCoend G pt) :=
+  (HasAllCopowerProfCoends.cone (G := G) pt).isInitial
+
+/-- Transfer copower-profunctor coend existence to
+restricted coend existence. The inverse equivalence
+`(homRestrictedCopowerEquiv G pt).symm` maps the
+initial copower cowedge to an initial restricted
+cowedge. -/
+def toHomToProfCoends :
+    HasAllHomToProfCoends G where
+  hasCoend pt :=
+    let e :=
+      (homRestrictedCopowerEquiv G pt).symm
+    let rc := e.functor.obj (copowerCoend G pt)
+    let hrc := isInitialOfEquivFunctor e
+      (copowerCoendIsInitial G pt)
+    ⟨⟨rc, hrc⟩⟩
+
+/-- The carrier of the copower-profunctor coend. -/
+def CopowerGExtObj (pt : C) : C :=
+  (copowerCoend G pt).pt
+
+/-- The injection from the copower into the coend:
+for each `A`, a morphism
+`(A ⟶ pt) . G(A,A) ⟶ CopowerGExtObj G pt`. -/
+def CopowerGExtInj (pt : C) (A : C) :
+    (copowerProfInner (HomToProf pt) G
+      (Opposite.op A)).obj A ⟶
+      CopowerGExtObj G pt :=
+  (copowerCoend G pt).π A
+
+/-- Under `HasAllCopowerProfCoends`, we derive
+`HasAllHomToProfCoends`, so `GExtFunctor` and
+`mendlerLambekEquiv` from `WeightedAlg` apply. -/
+instance instHomToProfCoends :
+    HasAllHomToProfCoends G :=
+  toHomToProfCoends G
+
+/-- The Mendler-Lambek equivalence under the
+assumption that copower-profunctor coends exist.
+This follows from the transfer to restricted coends
+and the existing `mendlerLambekEquiv`. -/
+def mendlerLambekCopowerEquiv :
+    MendlerAlgebra G ≌
+      ConventionalAlgebra
+        (HasAllHomToProfCoends.GExtFunctor G) :=
+  mendlerLambekEquiv G
+
+/-- The carrier of the copower-profunctor coend
+is isomorphic to the carrier of the restricted
+coend (both are initial in equivalent categories,
+so their carriers are isomorphic). -/
+def copowerGExtIso (pt : C) :
+    CopowerGExtObj G pt ≅
+      HasAllHomToProfCoends.GExtObj G pt :=
+  isInitialCowedgeIso
+    (copowerProf (HomToProf pt) G)
+    (isInitialOfEquivFunctor
+      (homRestrictedCopowerEquiv G pt)
+      (HasRestrictedCoend.restrictedCoendIsInitial
+        G (HomToProf pt)))
+    (copowerCoendIsInitial G pt)
+  |>.symm
+
+end HasAllCopowerProfCoends
+
+end CopowerProfCoends
+
 end GebLean

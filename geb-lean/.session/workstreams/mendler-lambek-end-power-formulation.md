@@ -20,16 +20,16 @@ powers.
 
 Starting from:
 
-```
+```text
 G^e(pt) = restricted coend of G by HomToProf(pt)
         = initial hom-restricted cowedge
-```
+```text
 
 Derive:
 
-```
+```text
 Hom(G^e(pt), Y) ≅ ∫_A Hom(G(A,A), Y^(A→pt))
-```
+```text
 
 where `Y^(A→pt)` denotes the power and `∫_A` denotes the end.
 This characterizes `G^e` via ends and powers rather than coends.

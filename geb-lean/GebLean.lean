@@ -18,6 +18,7 @@ import GebLean.FreeCoequalizerCompletion
 import GebLean.FreeToposBT
 import GebLean.HexagonCat
 import GebLean.LayeredEquivalence
+import GebLean.MendlerLambekEndPower
 import GebLean.PLang
 import GebLean.PLang.CatJudgCoprAdjunction
 import GebLean.PLang.CatJudgGrAdjunction
