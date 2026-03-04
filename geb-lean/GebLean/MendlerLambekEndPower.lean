@@ -487,4 +487,95 @@ instance PowerEndMendlerAlgebraCat :
 
 end PowerEndMendlerAlg
 
+/-!
+## Equivalence: MendlerAlgebra ≌ PowerEndMendlerAlgebra
+
+The equivalence applies `copowerPowerEquiv` componentwise:
+- Forward: `family j γ ↦ lift (family j)` (currying)
+- Backward: `algOp j ↦ (fun γ => algOp j ≫ proj γ)` (uncurrying)
+-/
+
+section MendlerPowerEndEquiv
+
+variable
+  {C : Type v} [Category.{v} C]
+  [HasCopowers C] [HasPowers C]
+  (G : Cᵒᵖ ⥤ C ⥤ C)
+
+/-- Convert a Mendler algebra to a power-end Mendler
+algebra by lifting the family into a power. -/
+def MendlerAlgebra.toPowerEnd
+    (m : MendlerAlgebra G) :
+    PowerEndMendlerAlgebra G where
+  pt := m.pt
+  str := ⟨
+    fun j => HasPowers.lift (m.family j),
+    fun {i j} f => by
+      dsimp only [powerSliceProf]
+      apply HasPowers.ext; intro s
+      simp only [Category.assoc]
+      erw [HasPowers.mapIdx_proj]
+      rw [HasPowers.fac, HasPowers.fac]
+      exact m.dinaturality f s⟩
+
+/-- Convert a power-end Mendler algebra to a
+Mendler algebra by projecting from the power. -/
+def PowerEndMendlerAlgebra.toMendler
+    (m : PowerEndMendlerAlgebra G) :
+    MendlerAlgebra G :=
+  MendlerAlgebra.mk' m.pt
+    (fun j γ => m.algOp j ≫ HasPowers.proj _ _ γ)
+    (fun i j f β => by
+      simp only [Profunctor.lmap, Profunctor.rmap,
+        sliceProfunctor_obj_map,
+        sliceProfunctor_map_app,
+        HomToProf_map_app, HomToProf_obj_map,
+        Quiver.Hom.unop_op]
+      have h := m.wedgeCondition f
+      have hp := congrArg
+        (· ≫ HasPowers.proj _ _ β) h
+      simp only [Category.assoc] at hp
+      erw [HasPowers.mapIdx_proj] at hp
+      exact hp.symm)
+
+omit [HasCopowers C] in
+/-- Round-trip: `toPowerEnd` then `toMendler` is the
+identity on `MendlerAlgebra`. -/
+theorem toPowerEnd_toMendler
+    (m : MendlerAlgebra G) :
+    (m.toPowerEnd).toMendler = m := by
+  cases m with
+  | mk pt mao =>
+    simp only [MendlerAlgebra.toPowerEnd,
+      PowerEndMendlerAlgebra.toMendler,
+      MendlerAlgebra.mk']
+    congr 1
+    cases mao with
+    | mk rco =>
+      congr 1
+      cases rco with
+      | mk fam dinat =>
+        congr 1
+        funext j γ
+        exact HasPowers.fac _ γ
+
+omit [HasCopowers C] in
+/-- Round-trip: `toMendler` then `toPowerEnd` is the
+identity on `PowerEndMendlerAlgebra`. -/
+theorem toMendler_toPowerEnd
+    (m : PowerEndMendlerAlgebra G) :
+    (m.toMendler).toPowerEnd = m := by
+  cases m with
+  | mk pt str =>
+    simp only [MendlerAlgebra.toPowerEnd,
+      PowerEndMendlerAlgebra.toMendler,
+      MendlerAlgebra.mk',
+      PowerEndMendlerAlgebra.algOp]
+    congr 1
+    apply Subtype.ext; funext j
+    apply HasPowers.ext; intro γ
+    exact HasPowers.fac _ γ
+
+end MendlerPowerEndEquiv
+
 end GebLean
