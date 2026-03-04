@@ -1219,6 +1219,35 @@ lemma polyDistLaw_comul_approx_node
     e e HEq.rfl
   exact Sigma.ext hfst hch
 
+/--
+When two sigma pairs wrap the same type-level data
+related by fiber equality and M-type heterogeneous
+equality, the sigma pairs (of free monad pure terms
+wrapping cofree elements) are equal.
+-/
+lemma polyFreeMPure_cofree_sigma_eq
+    (C : Over X) (P : PolyEndo X)
+    {x₁ x₂ : X} (hx : x₁ = x₂)
+    {c₁ : PolyCofreeM C P x₁}
+    {c₂ : PolyCofreeM C P x₂}
+    (hc : HEq c₁ c₂) :
+    (⟨x₁, PolyFix.mk x₁
+      (Sum.inl (⟨⟨x₁, c₁⟩, rfl⟩ :
+        { a : (Σ x, PolyCofreeM C P x) //
+          a.1 = x₁ }))
+      (fun e => PEmpty.elim e)⟩ :
+      (Σ x, PolyFreeM
+        (polyCofreeCarrier C P) P x)) =
+    ⟨x₂, PolyFix.mk x₂
+      (Sum.inl (⟨⟨x₂, c₂⟩, rfl⟩ :
+        { a : (Σ x, PolyCofreeM C P x) //
+          a.1 = x₂ }))
+      (fun e => PEmpty.elim e)⟩ := by
+  subst hx
+  have := eq_of_heq hc
+  subst this
+  rfl
+
 /-! ### Comultiplication coherence: leaf case -/
 
 /--
@@ -1264,7 +1293,133 @@ lemma polyDistLaw_comul_approx_leaf
       (n + 1) x
       (polyDistLaw_comul_rhsInput A P
         (PolyFix.mk x (Sum.inl c) ch)) := by
-  _
+  obtain ⟨⟨y, m_val⟩, hc⟩ := c
+  have hc' : y = x := hc
+  subst hc'
+  conv_lhs => rw [← polyScaleReindex_approx]
+  simp only [polyCofixUnfoldApprox,
+    polyCoalgUnitApprox,
+    polyDistLawScaleCoalg,
+    polyDistLawScaleCoalgStr,
+    polyDistLawScaleCoalgStrLeft,
+    polyDistLawScaleCoalgStrAt,
+    Over.homMk_left]
+  rw [polyDistLaw_comul_annot_eq]
+  simp only [polyCofreeMapApprox_intro,
+    polyCoalgUnit, polyCoalgUnitLeft,
+    polyCoalgUnitAt, polyCoalgUnitApprox]
+  simp only [polyFreeMapAt, polyFreeMBind,
+    polyFreeMCoalgStrAt, polyFreeMPure,
+    polyCofreeCoalg, polyCofreeStr,
+    polyCofreeStrLeft,
+    Over.homMk_left]
+  congr 1
+  funext e
+  erw [polyScaleReindex_approx]
+  -- Use ih for the e-th cofree child
+  -- wrapped in a free monad leaf.
+  let child_e :=
+    (polyCofreeChildrenMor A P m_val).left e
+  have hchild_e_fib :
+      (polyCofreeCarrier A P).hom child_e =
+      (polyBetweenFamily X X P y
+        m_val.head.2).hom e :=
+    congrFun
+      (Over.w (polyCofreeChildrenMor A P m_val))
+      e
+  let t_e : PolyFreeM
+    (polyCofreeCarrier A P) P
+    ((polyBetweenFamily X X P y
+      m_val.head.2).hom e) :=
+    polyFreeMPure (polyCofreeCarrier A P) P
+      ⟨child_e, hchild_e_fib⟩
+  have ih_e := ih t_e
+  -- The LHS has the same coalgebra as ih_e's LHS
+  -- (polyDistLaw_comul_lhsCoalg), same n, same
+  -- fiber. The only difference is the input
+  -- subtype. Since the input subtype has the same
+  -- carrier type, equality of .val suffices.
+  -- Use congrArg to transport ih_e's LHS to
+  -- the goal's LHS, and similarly for the RHS.
+  refine Eq.trans ?lhs_eq (Eq.trans ih_e ?rhs_eq)
+  · -- LHS: show goal's input .val = ih_e's input .val
+    -- Reduce polyFreeMBind on polyFreeMPure via
+    -- the monad left identity.
+    congr 1
+    apply Subtype.ext
+    simp only [polyDistLaw_comul_lhsInput,
+      polyFreeMapAt, polyFreeMBind,
+      polyFreeMPure,
+      polyCoalgUnit, polyCoalgUnitLeft,
+      polyCofreeStrFamily, polyCofreeChildrenMor,
+      Over.homMk_left,
+      polyCofreeCoalg]
+    -- Both sides are sigma pairs
+    -- ⟨fib_pt, PolyFix.mk fib_pt
+    --   (Sum.inl ⟨cofree_element, proof⟩) nofun⟩.
+    -- The fib_pt's match, so Sigma.ext reduces to
+    -- showing the cofree elements are equal.
+    -- The LHS has PolyCofix.children of the unit
+    -- M-type at ⟨y, m_val⟩ at e;
+    -- the RHS has polyCoalgUnitAt at child_e.
+    -- These are related by the coalgebra hom
+    -- property of the unit.
+    have hfst_unit :=
+      polyCofixUnfold_coalg_comm_child_fst_eq P
+        (polyCofreeCoalg A P) ⟨y, m_val⟩
+        e e HEq.rfl
+    have hch_unit :=
+      polyCofixUnfoldAt_children_heq P
+        (polyCofreeCoalg A P) ⟨y, m_val⟩
+        e e HEq.rfl
+    -- Both sides of the equality are sigma pairs
+    -- ⟨fib, PolyFix.mk fib
+    --   (Sum.inl ⟨⟨fib, cofix⟩, rfl⟩) nofun⟩
+    -- where fib and cofix differ by hfst_unit
+    -- and hch_unit respectively.
+    -- Build the equality by subst in a helper.
+    -- First reduce polyFreeMBind on the RHS
+    -- and align the coalgebra representations.
+    simp only [polyFreeMBind, polyFreeMPure,
+      t_e, polyCofreeCoalg, polyCofreeStr,
+      polyCoalgUnitAt
+      ] at hfst_unit hch_unit ⊢
+    -- hch_unit has the children on the right;
+    -- the helper expects them on the left.
+    -- Align polyCofixUnfoldAt in hch_unit to
+    -- match the expanded M-type in the goal.
+    simp only [polyCofixUnfoldAt
+      ] at hch_unit
+    exact polyFreeMPure_cofree_sigma_eq
+      (polyCofreeCarrier A P) P
+      hfst_unit hch_unit.symm
+  · -- RHS: show ih_e's output .val = goal's output .val
+    -- This is the coalgebra hom property of the
+    -- distributive law anamorphism.
+    have hfst :=
+      polyCofixUnfold_coalg_comm_child_fst_eq
+        (polyScale (polyFreeMCarrier A P) P)
+        (polyDistLawScaleCoalg A P)
+        (⟨y, PolyFix.mk y
+          (Sum.inl ⟨⟨y, m_val⟩, hc⟩) ch⟩ :
+          (polyFreeMCarrier
+            (polyCofreeCarrier A P) P).left)
+        e e HEq.rfl
+    have hch :=
+      polyCofixUnfoldAt_children_heq
+        (polyScale (polyFreeMCarrier A P) P)
+        (polyDistLawScaleCoalg A P)
+        (⟨y, PolyFix.mk y
+          (Sum.inl ⟨⟨y, m_val⟩, hc⟩) ch⟩ :
+          (polyFreeMCarrier
+            (polyCofreeCarrier A P) P).left)
+        e e HEq.rfl
+    congr 1
+    apply Subtype.ext
+    simp only [polyDistLaw_comul_rhsInput,
+      polyCofreeStrFamily, polyCofreeChildrenMor,
+      Over.homMk_left]
+    exact Sigma.ext hfst hch
 
 /-! ### Main comultiplication coherence lemma -/
 
