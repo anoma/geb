@@ -53,9 +53,19 @@ Constructing the canonical distributive law
     at `Sum.inl c` applies cofree structure map and
     wraps children in `polyFreeMPure`; needs analogous
     proof with the same `Sigma.ext` pattern
+  - Leaf case: `obtain ⟨c_val, hc⟩ := c; subst hc`
+    eliminates the cofree fiber transport. After that,
+    the match on `polyFreeMPure` must be reduced
+    (add `polyFreeMPure` to simp). The match on
+    `polyCoalgUnit.left c_val` also needs reduction.
+    Once matches reduce, the proof follows the same
+    `congr 1; funext e; erw [polyScaleReindex_approx];
+    erw [ih (ch e)]; congr 1; Subtype.ext; Sigma.ext`
+    pattern as the node case.
   - Helper lemmas: `polyDistLaw_hx_rfl`,
     `polyDistLaw_comul_head_snd_node`,
-    `polyDistLaw_comul_family_eq_node`
+    `polyDistLaw_comul_family_eq_node`,
+    `polyCofixUnfoldAt_children_heq` (in PolyAlg.lean)
 - [ ] Step 8: Multiplication coherence
   - Both sides map `T(T(D(A))) --> D(T(A))`
   - Similar approach to Step 7 with

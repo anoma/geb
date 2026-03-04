@@ -1264,21 +1264,6 @@ lemma polyDistLaw_comul_approx_leaf
       (n + 1) x
       (polyDistLaw_comul_rhsInput A P
         (PolyFix.mk x (Sum.inl c) ch)) := by
-  conv_lhs => rw [← polyScaleReindex_approx]
-  simp only [polyCofixUnfoldApprox,
-    polyCoalgUnitApprox,
-    polyDistLawScaleCoalg,
-    polyDistLawScaleCoalgStr,
-    polyDistLawScaleCoalgStrLeft,
-    polyDistLawScaleCoalgStrAt,
-    Over.homMk_left]
-  rw [polyDistLaw_comul_annot_eq]
-  simp only [polyCofreeMapApprox_intro]
-  simp only [polyFreeMapAt, polyFreeMBind,
-    polyFreeMCoalgStrAt,
-    polyCofreeCoalg, polyCofreeStr,
-    polyCofreeStrLeft,
-    Over.homMk_left]
   _
 
 /-! ### Main comultiplication coherence lemma -/
