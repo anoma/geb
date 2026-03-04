@@ -211,16 +211,6 @@ def endCopowerPowerEquiv :
       simp only [Category.assoc]
       rw [HasPowers.mapIdx_proj]
       rw [HasPowers.fac, HasPowers.fac]
-      -- Goal: (G.map f.op).app i ≫ inj (f ≫ s) ≫ x i
-      --     = (G.obj (op j)).map f ≫ inj s ≫ x j
-      -- From x.property f (wedge condition):
-      --   bimap (f ≫ ·) ((G.map f.op).app i) ≫ x i
-      --   = mapVal ((G.obj (op j)).map f) ≫ x j
-      -- Apply inj s to both sides:
-      have wx := x.property f
-      simp only [sliceProfunctor, copowerProf,
-        copowerProfInner] at wx
-      -- wx : bimap _ _ ≫ x i = bimap _ _ ≫ x j
       have wx := x.property f
       simp only [sliceProfunctor, copowerProf,
         copowerProfInner] at wx
@@ -310,5 +300,39 @@ def endCopowerPowerEquiv :
       (y.val j)
 
 end EndEquiv
+
+/-!
+## Final Characterization
+
+Composing all three steps gives the end-power
+characterization of `G^e`:
+`Hom(CopowerGExtObj G pt, Y) ≃
+  typeEnd (powerSliceProf G pt Y)`.
+
+On the diagonal at `A`, `powerSliceProf G pt Y` gives
+`G(A, A) ⟶ Y^(A ⟶ pt)`, so the end is over all `A`
+of morphisms `G(A, A) ⟶ Y^(A ⟶ pt)`.
+-/
+
+section FinalEquiv
+
+variable
+  {C : Type v} [Category.{v} C]
+  [HasCopowers C] [HasPowers C]
+  (G : Cᵒᵖ ⥤ C ⥤ C)
+  [HasAllCopowerProfCoends G]
+
+open HasAllCopowerProfCoends
+
+/-- The end-power characterization of `G^e`:
+`Hom(CopowerGExtObj G pt, Y) ≃
+  typeEnd (powerSliceProf G pt Y)`. -/
+def gExtEndPowerEquiv (pt Y : C) :
+    (CopowerGExtObj G pt ⟶ Y) ≃
+      typeEnd (powerSliceProf G pt Y) :=
+  (copowerGExtHomEndEquiv G pt Y).trans
+    (endCopowerPowerEquiv G pt Y)
+
+end FinalEquiv
 
 end GebLean
