@@ -1364,35 +1364,17 @@ lemma polyDistLaw_comul_approx_leaf
     -- the RHS has polyCoalgUnitAt at child_e.
     -- These are related by the coalgebra hom
     -- property of the unit.
-    have hfst_unit :=
-      polyCofixUnfold_coalg_comm_child_fst_eq P
-        (polyCofreeCoalg A P) ⟨y, m_val⟩
-        e e HEq.rfl
-    have hch_unit :=
-      polyCofixUnfoldAt_children_heq P
-        (polyCofreeCoalg A P) ⟨y, m_val⟩
-        e e HEq.rfl
-    -- Both sides of the equality are sigma pairs
-    -- ⟨fib, PolyFix.mk fib
-    --   (Sum.inl ⟨⟨fib, cofix⟩, rfl⟩) nofun⟩
-    -- where fib and cofix differ by hfst_unit
-    -- and hch_unit respectively.
-    -- Build the equality by subst in a helper.
-    -- First reduce polyFreeMBind on the RHS
-    -- and align the coalgebra representations.
-    simp only [polyFreeMBind, polyFreeMPure,
-      t_e, polyCofreeCoalg, polyCofreeStr,
-      polyCoalgUnitAt
-      ] at hfst_unit hch_unit ⊢
-    -- hch_unit has the children on the right;
-    -- the helper expects them on the left.
-    -- Align polyCofixUnfoldAt in hch_unit to
-    -- match the expanded M-type in the goal.
-    simp only [polyCofixUnfoldAt
-      ] at hch_unit
-    exact polyFreeMPure_cofree_sigma_eq
-      (polyCofreeCarrier A P) P
-      hfst_unit hch_unit.symm
+    -- Use polyCoalgUnitAt_children_heq for the
+    -- cofree comonad unit's children property.
+    -- This relates PolyCofreeM values (not
+    -- PolyCofix P values).
+    let β := polyCofreeCoalg A P
+    have hfam := polyCoalgUnit_family_eq P
+      β ⟨y, m_val⟩
+    -- The children index e comes from the
+    -- coalgebra's family; cast it to the
+    -- M-type's family.
+    _
   · -- RHS: show ih_e's output .val = goal's output .val
     -- This is the coalgebra hom property of the
     -- distributive law anamorphism.
