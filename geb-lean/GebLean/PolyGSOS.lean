@@ -33,6 +33,17 @@ lemma ptoef_fst_eqRec
     h ▸ ev.fst := by
   subst h; rfl
 
+@[simp]
+lemma eqRec_dep_piApply
+    {Y : Type*} {y₁ y₂ : Y}
+    (h : y₁ = y₂)
+    {I : Type*}
+    {F : I → Y → Type*}
+    (f : (i : I) → F i y₁) (i : I) :
+    (h ▸ f : (i : I) → F i y₂) i =
+    (h ▸ f i : F i y₂) := by
+  subst h; rfl
+
 /--
 The identity-behavior product as a polynomial endofunctor.
 Given a behavior polynomial `Q : PolyEndo X`, the
@@ -657,8 +668,35 @@ lemma polyGSOSFoldQIndex_node_unfold
   simp only [polyGSOSFoldQIndex,
     polyGSOSFoldCataWithFiber,
     polyGSOSNodeQIdx]
-  simp only [polyGSOSFoldNodeAt]
-  _
+  dsimp only [polyGSOSFoldNodeAt,
+    ccrEvalMap, ccrEvalMk,
+    ccrEvalIndex, ccrEvalMor,
+    polyBetweenComp_eval_fiberEquiv,
+    polyBetweenComp_eval_fiberEquiv_toFun,
+    polyBetweenComp_eval_fiberEquiv_invFun,
+    polyBetweenMorphEvalAt,
+    pbefMk, pbefIndex, pbefMor,
+    ptoefMk, ptoefIndex, ptoefMor,
+    ccrReindex, ccrFiberMor,
+    mor_to_pbe_fiber_index,
+    mor_to_ptoe_fiber_index,
+    mor_to_ptoe_fiber,
+    ptoeLeftFiber]
+  simp only [ptoef_fst_eqRec]
+  apply congrArg Sigma.fst
+  apply congrArg (rho.rule x).base
+  apply congrArg (Sigma.mk p)
+  funext eg
+  simp only [CategoryTheory.Over.comp_left,
+    CategoryTheory.Over.homMk_left,
+    CategoryTheory.types_comp,
+    Function.comp_apply]
+  funext i
+  match i with
+  | Sum.inl _ =>
+    rfl
+  | Sum.inr _ =>
+    rw [eqRec_dep_piApply]
 
 lemma polyGSOSFoldQIndex_eq_node
     (A B : Over X) (P Q : PolyEndo X)
