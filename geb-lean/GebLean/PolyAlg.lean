@@ -1817,6 +1817,263 @@ lemma polyCofixUnfold_coalg_comm_snd (P : PolyEndo X) (α : PolyCoalg P)
   · exact polyCofixUnfold_coalg_comm_mor_heq P α a
 
 /--
+Children of `polyCofixUnfoldAt` are `polyCofixUnfoldAt`
+applied to child elements. This is the coinductive
+unfolding property for general anamorphisms.
+-/
+lemma polyCofixUnfoldAt_children_heq
+    (P : PolyEndo X) (α : PolyCoalg P)
+    (a : α.V.left)
+    (e1 : (polyBetweenFamily X X P
+      (α.str.left a).fst
+      (α.str.left a).snd.fst).left)
+    (e2 : (polyBetweenFamily X X P (α.V.hom a)
+      (polyCofixUnfoldAt P α (α.V.hom a)
+        ⟨a, rfl⟩).head).left)
+    (he : HEq e1 e2) :
+    HEq
+      (polyCofixUnfoldAt P α
+        (α.V.hom
+          ((α.str.left a).snd.snd.left e1))
+        ⟨(α.str.left a).snd.snd.left e1, rfl⟩)
+      ((polyCofixUnfoldAt P α (α.V.hom a)
+        ⟨a, rfl⟩).children e2) := by
+  let parent :=
+    polyCofixUnfoldAt P α (α.V.hom a) ⟨a, rfl⟩
+  let child1 := polyCofixUnfoldAt P α
+    (α.V.hom ((α.str.left a).snd.snd.left e1))
+    ⟨(α.str.left a).snd.snd.left e1, rfl⟩
+  let child2 := parent.children e2
+  have hfiber1 :
+      α.V.hom
+        ((α.str.left a).snd.snd.left e1) =
+      (polyBetweenFamily X X P (α.V.hom a)
+        parent.head).hom e2 :=
+    polyCofixUnfold_coalg_comm_child_fst_eq
+      P α a e1 e2 he
+  have step1 : HEq child1 (hfiber1 ▸ child1) :=
+    heq_eqRec hfiber1 child1
+  have step2 : hfiber1 ▸ child1 = child2 := by
+    apply PolyCofix.ext
+    intro n
+    show (hfiber1 ▸ child1).approx n =
+      child2.approx n
+    cases n with
+    | zero =>
+      rw [PolyCofix.approx_cast hfiber1 child1 0]
+      have h1 : child1.approx 0 =
+          PolyCofixApprox.continue _ := rfl
+      have h2 : child2.approx 0 =
+          PolyCofixApprox.continue _ := rfl
+      rw [h1, h2]
+      exact PolyCofixApprox.continue_cast hfiber1
+    | succ n =>
+      rw [PolyCofix.approx_cast
+        hfiber1 child1 (n + 1)]
+      have h1 : child1.approx (n + 1) =
+          polyCofixUnfoldApprox P α (n + 1) _
+            ⟨(α.str.left a).snd.snd.left e1,
+              rfl⟩ := rfl
+      have h2 : child2.approx (n + 1) =
+          parent.childApproxAt e2 (n + 1) := rfl
+      rw [h1, h2]
+      simp only [PolyCofix.childApproxAt,
+        PolyCofix.childApproxAt_succ]
+      let strResult := α.str.left a
+      let childMor := strResult.2.2
+      have hfst : (α.str.left a).1 = α.V.hom a :=
+        polyCofixUnfold_coalg_comm_fst_eq P α a
+      let hx := hfst
+      let childrenFun :
+          ∀ (e : (polyBetweenFamily X X P
+            strResult.1
+            strResult.2.1).left),
+          PolyCofixApprox P (n + 1)
+            ((polyBetweenFamily X X P
+              strResult.1
+              strResult.2.1).hom e) :=
+        fun e =>
+          let childVal := childMor.left e
+          let hChild :
+              α.V.hom childVal =
+              (polyBetweenFamily X X P
+                strResult.1
+                strResult.2.1).hom e :=
+            congrFun (Over.w childMor) e
+          polyCofixUnfoldApprox P α (n + 1)
+            _ ⟨childVal, hChild⟩
+      have hhead :=
+        polyCofixUnfoldAt_head_rfl P α a
+      have happrox_form :
+          parent.approx (n + 2) =
+          hx ▸ PolyCofixApprox.intro strResult.1
+            strResult.2.1 childrenFun := rfl
+      have hidx_eq :
+          (hx ▸ PolyCofixApprox.intro strResult.1
+            strResult.2.1
+            childrenFun).getIndex =
+          hx ▸ strResult.2.1 :=
+        PolyCofixApprox.getIndex_cast
+          strResult.2.1 childrenFun hx
+      have hhead_eq :
+          parent.head = hx ▸ strResult.2.1 :=
+        hhead
+      have hidx_eq' :
+          (hx ▸ PolyCofixApprox.intro strResult.1
+            strResult.2.1
+            childrenFun).getIndex =
+          hx ▸ strResult.2.1 := hidx_eq
+      have hfamilyEq2 :
+          polyBetweenFamily X X P
+            (α.V.hom a) parent.head =
+          polyBetweenFamily X X P
+            (α.V.hom a)
+            (hx ▸ strResult.2.1) := by
+        rw [hhead_eq]
+      let e2' :
+          (polyBetweenFamily X X P
+            (α.V.hom a)
+            (hx ▸ strResult.2.1)).left :=
+        hfamilyEq2 ▸ e2
+      have he2_heq : HEq e2 e2' :=
+        heq_eqRec hfamilyEq2 e2
+      have hfamilyEq1 :
+          polyBetweenFamily X X P strResult.1
+            strResult.2.1 =
+          polyBetweenFamily X X P (α.V.hom a)
+            (hx ▸ strResult.2.1) := by
+        have hfamilyHeq :=
+          polyBetweenFamily_heq hx _ _
+            (heq_eqRec
+              (motive := fun y =>
+                polyBetweenIndex X X P y)
+              hx strResult.2.1)
+        exact eq_of_heq hfamilyHeq
+      have he1e2' : HEq e1 e2' :=
+        he.trans he2_heq
+      have hfib' :
+          (polyBetweenFamily X X P strResult.1
+            strResult.2.1).hom e1 =
+          (polyBetweenFamily X X P (α.V.hom a)
+            (hx ▸ strResult.2.1)).hom e2' :=
+        overType_hom_heq hfamilyEq1 e1 e2'
+          he1e2'
+      have hcastResult :
+          PolyCofix.childApproxAt_succ_aux
+            (hx ▸ strResult.2.1)
+            (hx ▸ PolyCofixApprox.intro
+              strResult.1 strResult.2.1
+              childrenFun) hidx_eq' e2' =
+          hfib' ▸ childrenFun e1 :=
+        PolyCofix.childApproxAt_succ_aux_cast
+          hx strResult.2.1 childrenFun
+          hidx_eq' e2' e1 he1e2' hfib'
+      have hRhsFib :
+          (polyBetweenFamily X X P (α.V.hom a)
+            parent.head).hom e2 =
+          (polyBetweenFamily X X P (α.V.hom a)
+            (hx ▸ strResult.2.1)).hom e2' :=
+        overType_hom_heq hfamilyEq2 e2 e2'
+          he2_heq
+      have hRhsChildApprox_heq : HEq
+          (PolyCofix.childApproxAt_succ_aux
+            parent.head
+            (parent.approx (n + 2))
+            (parent.index_eq_head (n + 1)) e2)
+          (PolyCofix.childApproxAt_succ_aux
+            (hx ▸ strResult.2.1)
+            (hx ▸ PolyCofixApprox.intro
+              strResult.1 strResult.2.1
+              childrenFun)
+            hidx_eq' e2') := by
+        have hhead_heq :
+            HEq parent.head
+              (hx ▸ strResult.2.1) :=
+          heq_of_eq hhead_eq
+        have happrox_heq :
+            HEq (parent.approx (n + 2))
+            (hx ▸ PolyCofixApprox.intro
+              strResult.1 strResult.2.1
+              childrenFun) :=
+          heq_of_eq happrox_form
+        exact
+          PolyCofix.childApproxAt_succ_aux_heq
+            rfl _ _ hhead_heq _ _
+            happrox_heq _ _ _ _ he2_heq
+      let rhs' :=
+        PolyCofix.childApproxAt_succ_aux
+          (hx ▸ strResult.2.1)
+          (hx ▸ PolyCofixApprox.intro strResult.1
+            strResult.2.1 childrenFun) hidx_eq'
+          e2'
+      have hRhs'_heq :
+          HEq rhs' (hRhsFib.symm ▸ rhs') :=
+        heq_eqRec hRhsFib.symm rhs'
+      have hRhsForm :
+          PolyCofix.childApproxAt_succ_aux
+            parent.head
+            (parent.approx (n + 2))
+            (parent.index_eq_head (n + 1))
+            e2 =
+          hRhsFib.symm ▸
+            PolyCofix.childApproxAt_succ_aux
+              (hx ▸ strResult.2.1)
+              (hx ▸ PolyCofixApprox.intro
+                strResult.1 strResult.2.1
+                childrenFun)
+              hidx_eq' e2' := by
+        apply eq_of_heq
+        exact hRhsChildApprox_heq.trans
+          hRhs'_heq
+      rw [hRhsForm, hcastResult]
+      let hChildProof :
+          α.V.hom (childMor.left e1) =
+          (polyBetweenFamily X X P strResult.1
+            strResult.2.1).hom e1 :=
+        congrFun (Over.w childMor) e1
+      have hChildrenFunEq :
+          childrenFun e1 =
+          hChildProof ▸
+            polyCofixUnfoldApprox P α (n + 1)
+              (α.V.hom (childMor.left e1))
+              ⟨childMor.left e1, rfl⟩ := by
+        simp only [childrenFun]
+        have hCast :=
+          polyCofixUnfoldApprox_cast P α (n + 1)
+            (α.V.hom (childMor.left e1))
+            ((polyBetweenFamily X X P strResult.1
+              strResult.2.1).hom e1)
+            (childMor.left e1) rfl hChildProof
+        rw [hCast]
+      rw [hChildrenFunEq]
+      apply eq_of_heq
+      let lhsVal :=
+        polyCofixUnfoldApprox P α (n + 1)
+          (α.V.hom (childMor.left e1))
+          ⟨childMor.left e1, rfl⟩
+      have hLhsHeq :
+          HEq (hfiber1 ▸ lhsVal) lhsVal :=
+        (heq_eqRec hfiber1 lhsVal).symm
+      have hRhsHeq :
+          HEq (hRhsFib.symm ▸
+            (hfib' ▸ (hChildProof ▸ lhsVal)))
+            lhsVal := by
+        have h1 :
+            HEq (hChildProof ▸ lhsVal)
+              lhsVal :=
+          (heq_eqRec hChildProof lhsVal).symm
+        have h2 :
+            HEq (hfib' ▸
+              (hChildProof ▸ lhsVal))
+              lhsVal :=
+          HEq.trans
+            (heq_eqRec hfib' _).symm h1
+        exact HEq.trans
+          (heq_eqRec hRhsFib.symm _).symm h2
+      exact hLhsHeq.trans hRhsHeq.symm
+  exact step1.trans (heq_of_eq step2)
+
+/--
 LHS equals RHS.
 -/
 lemma polyCofixUnfold_coalg_comm_eq (P : PolyEndo X) (α : PolyCoalg P)

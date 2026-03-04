@@ -976,4 +976,318 @@ lemma polyDistLaw_comul_annot_eq
     polyCofree_left_triangle P (polyCofreeCoalg A P)
   rw [h, polyFreeMapAt_id]
 
+/-! ### Abbreviations for the comultiplication coherence proof
+
+The comultiplication coherence equation involves deeply
+nested types.  The following abbreviations reduce the
+verbosity of the lemma signatures.
+-/
+
+/--
+The `polyScale(D(T(A)), P)`-coalgebra used on the LHS
+of comultiplication coherence: the `polyDistLawScaleCoalg`
+at `D(A)` reindexed by `dist_A`.
+-/
+abbrev polyDistLaw_comul_lhsCoalg
+    (A : Over X) (P : PolyEndo X) :
+    PolyCoalg (polyScale
+      (polyCofreeCarrier
+        (polyFreeMCarrier A P) P) P) :=
+  polyScaleReindexCoalg
+    (polyFreeMCarrier
+      (polyCofreeCarrier A P) P)
+    (polyCofreeCarrier
+      (polyFreeMCarrier A P) P) P
+    (polyDistLawMor A P)
+    (polyDistLawScaleCoalg
+      (polyCofreeCarrier A P) P)
+
+/--
+The `P`-coalgebra on `D(T(A))` used on the RHS of
+comultiplication coherence.
+-/
+abbrev polyDistLaw_comul_rhsCoalg
+    (A : Over X) (P : PolyEndo X) :
+    PolyCoalg P :=
+  polyCofreeCoalg (polyFreeMCarrier A P) P
+
+/--
+The LHS input: `T.map(δ_A)(t)`, i.e., `polyFreeMapAt`
+by the comultiplication applied to `t`.  The result
+lives in `T(D(D(A)))`.
+-/
+abbrev polyDistLaw_comul_lhsInput
+    (A : Over X) (P : PolyEndo X) {x : X}
+    (t : PolyFreeM (polyCofreeCarrier A P) P x) :
+    { a : (polyFreeMCarrier
+        (polyCofreeCarrier
+          (polyCofreeCarrier A P) P) P).left //
+      (polyFreeMCarrier
+        (polyCofreeCarrier
+          (polyCofreeCarrier A P) P) P).hom
+        a = x } :=
+  ⟨⟨x, polyFreeMapAt
+    (polyCofreeCarrier A P)
+    (polyCofreeCarrier
+      (polyCofreeCarrier A P) P) P
+    (polyCoalgUnit P (polyCofreeCoalg A P))
+    x t⟩, rfl⟩
+
+/--
+The RHS input: `dist_A(t)`, i.e., the anamorphism
+applied to `t`.
+-/
+abbrev polyDistLaw_comul_rhsInput
+    (A : Over X) (P : PolyEndo X) {x : X}
+    (t : PolyFreeM (polyCofreeCarrier A P) P x) :
+    { a : (polyCofreeCarrier
+        (polyFreeMCarrier A P) P).left //
+      (polyCofreeCarrier
+        (polyFreeMCarrier A P) P).hom a = x } :=
+  ⟨⟨x, polyCofixUnfoldAt
+    (polyScale (polyFreeMCarrier A P) P)
+    (polyDistLawScaleCoalg A P) x
+    ⟨⟨x, t⟩, rfl⟩⟩, rfl⟩
+
+/-! ### Comultiplication coherence: RHS child equality
+
+The RHS of the comultiplication coherence at a node
+`PolyFix.mk x (Sum.inr p) ch` involves extracting the
+children of the M-type `dist_A(node(p,ch))`.  The
+following lemma shows that the e-th child of this M-type
+(as used by `polyCoalgUnitApprox`) equals
+`polyDistLaw_comul_rhsInput A P (ch e)`.
+-/
+
+/--
+The `hx` transport in `polyCofixUnfoldApprox` for
+`polyDistLawScaleCoalg A P` is always a proof of `x = x`,
+hence propositionally `rfl`.
+-/
+private lemma polyDistLaw_hx_rfl
+    (A : Over X) (P : PolyEndo X) {x : X}
+    (t : PolyFreeM (polyCofreeCarrier A P) P x) :
+    (congrFun
+      (Over.w (polyDistLawScaleCoalg A P).str)
+      (⟨x, t⟩ :
+        (polyFreeMCarrier
+          (polyCofreeCarrier A P) P).left)) =
+    (rfl : x = x) :=
+  Subsingleton.elim _ _
+
+/--
+At a node `PolyFix.mk x (Sum.inr p) ch`, the head of
+`polyCofixUnfoldAt (polyScale TA P) α x ⟨⟨x, node⟩, rfl⟩`
+has P-component `p`.
+-/
+lemma polyDistLaw_comul_head_snd_node
+    (A : Over X) (P : PolyEndo X) {x : X}
+    (p : polyBetweenIndex X X P x)
+    (ch : ∀ (e : (polyBetweenFamily X X
+        (polyTranslate
+          (polyCofreeCarrier A P) P)
+        x (Sum.inr p)).left),
+      PolyFix
+        (polyTranslate (polyCofreeCarrier A P) P)
+        ((polyBetweenFamily X X
+          (polyTranslate
+            (polyCofreeCarrier A P) P)
+          x (Sum.inr p)).hom e)) :
+    (polyCofixUnfoldAt
+      (polyScale (polyFreeMCarrier A P) P)
+      (polyDistLawScaleCoalg A P) x
+      ⟨⟨x, PolyFix.mk x (Sum.inr p) ch⟩,
+        rfl⟩).head.2 = p := by
+  simp only [PolyCofix.head,
+    polyCofixUnfoldAt, polyCofixUnfoldApprox,
+    PolyCofixApprox.getIndex,
+    polyDistLawScaleCoalg,
+    polyDistLawScaleCoalgStr,
+    polyDistLawScaleCoalgStrLeft,
+    polyDistLawScaleCoalgStrAt,
+    Over.homMk_left,
+    polyFreeMCoalgStrAt]
+
+/--
+The family equality for the distributive law anamorphism
+at a node: the `polyBetweenFamily` for the head of the
+M-type equals the `polyBetweenFamily` for `p`.
+-/
+lemma polyDistLaw_comul_family_eq_node
+    (A : Over X) (P : PolyEndo X) {x : X}
+    (p : polyBetweenIndex X X P x)
+    (ch : ∀ (e : (polyBetweenFamily X X
+        (polyTranslate
+          (polyCofreeCarrier A P) P)
+        x (Sum.inr p)).left),
+      PolyFix
+        (polyTranslate (polyCofreeCarrier A P) P)
+        ((polyBetweenFamily X X
+          (polyTranslate
+            (polyCofreeCarrier A P) P)
+          x (Sum.inr p)).hom e)) :
+    let m := polyCofixUnfoldAt
+      (polyScale (polyFreeMCarrier A P) P)
+      (polyDistLawScaleCoalg A P) x
+      ⟨⟨x, PolyFix.mk x (Sum.inr p) ch⟩, rfl⟩
+    polyBetweenFamily X X
+      (polyScale (polyFreeMCarrier A P) P)
+      x m.head =
+    polyBetweenFamily X X P x p := by
+  intro m
+  change polyBetweenFamily X X P x m.head.2 =
+    polyBetweenFamily X X P x p
+  rw [polyDistLaw_comul_head_snd_node A P p ch]
+
+/-! ### Comultiplication coherence: node case -/
+
+/--
+Node case of the approximation-level comultiplication
+coherence.
+-/
+lemma polyDistLaw_comul_approx_node
+    (A : Over X) (P : PolyEndo X) {x : X}
+    (p : polyBetweenIndex X X P x)
+    (ch : ∀ (e : (polyBetweenFamily X X
+        (polyTranslate
+          (polyCofreeCarrier A P) P)
+        x (Sum.inr p)).left),
+      PolyFix
+        (polyTranslate (polyCofreeCarrier A P) P)
+        ((polyBetweenFamily X X
+          (polyTranslate
+            (polyCofreeCarrier A P) P)
+          x (Sum.inr p)).hom e))
+    (n : Nat)
+    (ih : ∀ {x : X}
+      (t : PolyFreeM
+        (polyCofreeCarrier A P) P x),
+      polyCofixUnfoldApprox
+        (polyScale (polyCofreeCarrier
+          (polyFreeMCarrier A P) P) P)
+        (polyDistLaw_comul_lhsCoalg A P)
+        n x
+        (polyDistLaw_comul_lhsInput A P t) =
+      polyCoalgUnitApprox P
+        (polyDistLaw_comul_rhsCoalg A P)
+        n x
+        (polyDistLaw_comul_rhsInput A P t)) :
+    polyCofixUnfoldApprox
+      (polyScale (polyCofreeCarrier
+        (polyFreeMCarrier A P) P) P)
+      (polyDistLaw_comul_lhsCoalg A P)
+      (n + 1) x
+      (polyDistLaw_comul_lhsInput A P
+        (PolyFix.mk x (Sum.inr p) ch)) =
+    polyCoalgUnitApprox P
+      (polyDistLaw_comul_rhsCoalg A P)
+      (n + 1) x
+      (polyDistLaw_comul_rhsInput A P
+        (PolyFix.mk x (Sum.inr p) ch)) := by
+  conv_lhs => rw [← polyScaleReindex_approx]
+  simp only [polyCofixUnfoldApprox,
+    polyCoalgUnitApprox,
+    polyDistLawScaleCoalg,
+    polyDistLawScaleCoalgStr,
+    polyDistLawScaleCoalgStrLeft,
+    polyDistLawScaleCoalgStrAt,
+    Over.homMk_left]
+  rw [polyDistLaw_comul_annot_eq]
+  simp only [polyCofreeMapApprox_intro]
+  simp only [polyFreeMapAt, polyFreeMBind,
+    polyFreeMCoalgStrAt,
+    polyCofreeCoalg, polyCofreeStr,
+    polyCofreeStrLeft,
+    Over.homMk_left]
+  congr 1
+  funext e
+  erw [polyScaleReindex_approx]
+  erw [ih (ch e)]
+  congr 1
+  -- M-type children equality: needs
+  -- polyCofixUnfoldAt_children_heq
+  _
+
+/-! ### Comultiplication coherence: leaf case -/
+
+/--
+Leaf case of the approximation-level comultiplication
+coherence.
+-/
+lemma polyDistLaw_comul_approx_leaf
+    (A : Over X) (P : PolyEndo X) {x : X}
+    (c : { a // (polyCofreeCarrier A P).hom a = x })
+    (ch : ∀ (e : (polyBetweenFamily X X
+        (polyTranslate
+          (polyCofreeCarrier A P) P)
+        x (Sum.inl c)).left),
+      PolyFix
+        (polyTranslate (polyCofreeCarrier A P) P)
+        ((polyBetweenFamily X X
+          (polyTranslate
+            (polyCofreeCarrier A P) P)
+          x (Sum.inl c)).hom e))
+    (n : Nat)
+    (ih : ∀ {x : X}
+      (t : PolyFreeM
+        (polyCofreeCarrier A P) P x),
+      polyCofixUnfoldApprox
+        (polyScale (polyCofreeCarrier
+          (polyFreeMCarrier A P) P) P)
+        (polyDistLaw_comul_lhsCoalg A P)
+        n x
+        (polyDistLaw_comul_lhsInput A P t) =
+      polyCoalgUnitApprox P
+        (polyDistLaw_comul_rhsCoalg A P)
+        n x
+        (polyDistLaw_comul_rhsInput A P t)) :
+    polyCofixUnfoldApprox
+      (polyScale (polyCofreeCarrier
+        (polyFreeMCarrier A P) P) P)
+      (polyDistLaw_comul_lhsCoalg A P)
+      (n + 1) x
+      (polyDistLaw_comul_lhsInput A P
+        (PolyFix.mk x (Sum.inl c) ch)) =
+    polyCoalgUnitApprox P
+      (polyDistLaw_comul_rhsCoalg A P)
+      (n + 1) x
+      (polyDistLaw_comul_rhsInput A P
+        (PolyFix.mk x (Sum.inl c) ch)) := by
+  _
+
+/-! ### Main comultiplication coherence lemma -/
+
+/--
+Approximation-level comultiplication coherence:
+at every depth, the LHS (T.map(δ_A) followed by the
+reindexed anamorphism) equals the RHS (dist_A followed
+by δ_{TA}).
+-/
+lemma polyDistLaw_comul_approx
+    (A : Over X) (P : PolyEndo X) {x : X}
+    (t : PolyFreeM (polyCofreeCarrier A P) P x)
+    (n : Nat) :
+    polyCofixUnfoldApprox
+      (polyScale
+        (polyCofreeCarrier
+          (polyFreeMCarrier A P) P) P)
+      (polyDistLaw_comul_lhsCoalg A P)
+      n x
+      (polyDistLaw_comul_lhsInput A P t) =
+    polyCoalgUnitApprox P
+      (polyDistLaw_comul_rhsCoalg A P) n x
+      (polyDistLaw_comul_rhsInput A P t) := by
+  induction n generalizing x t with
+  | zero =>
+    simp only [polyCofixUnfoldApprox,
+      polyCoalgUnitApprox]
+  | succ n ih =>
+    match t with
+    | PolyFix.mk _ (Sum.inr p) ch =>
+      exact polyDistLaw_comul_approx_node
+        A P p ch n ih
+    | PolyFix.mk _ (Sum.inl c) ch =>
+      exact polyDistLaw_comul_approx_leaf
+        A P c ch n ih
+
 end GebLean

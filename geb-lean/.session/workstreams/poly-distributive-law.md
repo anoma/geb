@@ -36,9 +36,18 @@ Constructing the canonical distributive law
 
 - [ ] Step 7: Comultiplication coherence
   - Both sides map `T(D(A)) --> D(D(T(A)))`
-  - Use `polyCofixUnfoldHom_unique`: show both are coalgebra
-    homomorphisms from the same source to the terminal
-    `polyScale(D(T(A)), P)`-coalgebra
+  - Proof by approximation-level induction; node and
+    leaf cases separated
+  - Node case: annotation match via
+    `polyDistLaw_comul_annot_eq`, P-index match by
+    `congr`, children by `ih(ch e)` after
+    `erw [polyScaleReindex_approx, ih (ch e)]`.
+    Remaining subgoal requires
+    `polyCofixUnfoldAt_children_heq` (M-type children
+    = recursive anamorphism application)
+  - Status: node proof complete up to the M-type children
+    lemma call; leaf case outlined; waiting on
+    `polyCofixUnfoldAt_children_heq` in PolyAlg.lean
 - [ ] Step 8: Multiplication coherence
   - Both sides map `T(T(D(A))) --> D(T(A))`
   - Similar approach to Step 7 with
