@@ -153,8 +153,11 @@ laws and bialgebras (not specific to polynomial functors).
 Instantiate the distributive law framework for our polynomial
 endofunctors.
 
-- [ ] C3: Construct the canonical distributive law between
-  `polyFreeMonad X P` and `polyCofreeComonad X P`
+- [x] C3: Construct the canonical distributive law between
+  `polyFreeMonad X P` and `polyCofreeComonad X P`.
+  `polyDistributiveLaw P : DistributiveLaw
+  (polyFreeMonad X P) (polyCofreeComonad X P)`.
+  In `GebLean/PolyDistributiveLaw.lean`.
 
 ### Phase 4: Pattern runs on matter
 

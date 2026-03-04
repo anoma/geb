@@ -1,4 +1,5 @@
 import GebLean.PolyAlg
+import GebLean.Utilities.DistributiveLaw
 
 /-!
 # Distributive Law for Polynomial Endofunctors
@@ -1454,5 +1455,1113 @@ lemma polyDistLaw_comul_approx
     | PolyFix.mk _ (Sum.inl c) ch =>
       exact polyDistLaw_comul_approx_leaf
         A P c ch n ih
+
+/-! ## Step 7: Comultiplication coherence (morphism level)
+
+Lift `polyDistLaw_comul_approx` from approximation level
+to a morphism equality via `PolyCofix.ext`.
+-/
+
+/--
+Comultiplication coherence:
+`T.map(D.delta_A) ≫ dist_{DA} ≫ D.map(dist_A) =
+  dist_A ≫ D.delta_{TA}`.
+-/
+lemma polyDistLaw_comul
+    (A : Over X) (P : PolyEndo X) :
+    polyFreeMap (polyCofreeCarrier A P)
+      (polyCofreeCarrier
+        (polyCofreeCarrier A P) P) P
+      (polyCoalgUnit P (polyCofreeCoalg A P)) ≫
+    polyDistLawMor (polyCofreeCarrier A P) P ≫
+    polyCofreeMap
+      (polyFreeMCarrier
+        (polyCofreeCarrier A P) P)
+      (polyCofreeCarrier
+        (polyFreeMCarrier A P) P) P
+      (polyDistLawMor A P) =
+    polyDistLawMor A P ≫
+    polyCoalgUnit P
+      (polyCofreeCoalg
+        (polyFreeMCarrier A P) P) := by
+  apply Over.OverMorphism.ext
+  funext ⟨x, t⟩
+  simp only [Over.comp_left, types_comp_apply,
+    polyFreeMap, Over.homMk_left,
+    polyFreeMapLeft,
+    polyDistLawMor, polyCofixUnfold,
+    polyCofixUnfoldLeft,
+    polyCofreeMap, polyCofreeMapLeft,
+    polyCoalgUnit, polyCoalgUnitLeft]
+  apply Sigma.ext
+  · rfl
+  · simp only [heq_eq_eq]
+    apply PolyCofix.ext
+    intro n
+    simp only [polyCofreeMapAt,
+      polyCofixUnfoldAt, polyCoalgUnitAt]
+    erw [polyScaleReindex_approx]
+    exact polyDistLaw_comul_approx A P t n
+
+/-! ## Step 8: Multiplication Coherence
+
+Multiplication coherence states:
+```
+T.μ.app (D.obj A) ≫ dist.app A =
+  T.map(dist.app A) ≫ dist.app (T.obj A) ≫
+  D.map(T.μ.app A)
+```
+
+Both sides are morphisms `T(T(D(A))) → D(T(A))`.
+
+The LHS first flattens the outer T via monad multiplication,
+then distributes.
+
+The RHS first distributes each inner T(D(A))-leaf via
+dist_A, then distributes over the entire structure, then
+maps annotations by the monad multiplication.
+-/
+
+/--
+Given a sigma pair equality `s = ⟨a, b⟩` and a proof
+`h : s.1 = a`, the transported second component equals `b`.
+-/
+lemma sigma_snd_of_eq {α : Type u}
+    {β : α → Type u}
+    {s : (a : α) × β a} {a : α} {b : β a}
+    (heq : s = ⟨a, b⟩)
+    (h : s.1 = a) :
+    h ▸ s.2 = b := by
+  subst heq; rfl
+
+/--
+The monad multiplication at the fiber level.
+Given a tree of trees, flatten by substituting each leaf
+(which wraps a tree) with that tree.
+-/
+def polyFreeMJoinMor
+    (A : Over X) (P : PolyEndo X) {x : X}
+    (t : PolyFreeM (polyFreeMCarrier A P) P x) :
+    PolyFreeM A P x :=
+  polyFreeMBind (polyFreeMCarrier A P) A P t
+    (fun _ ⟨⟨_, t'⟩, hy⟩ => hy ▸ t')
+
+/--
+`polyFreeMJoinMor` at a leaf extracts the inner tree,
+transported to the fiber `x` via the fiber proof.
+-/
+lemma polyFreeMJoinMor_leaf
+    (A : Over X) (P : PolyEndo X) {x : X}
+    (a : { v : (polyFreeMCarrier A P).left //
+      (polyFreeMCarrier A P).hom v = x }) :
+    polyFreeMJoinMor A P
+      (polyFreeMPure
+        (polyFreeMCarrier A P) P a) =
+    a.property ▸ a.val.2 := by
+  simp only [polyFreeMJoinMor, polyFreeMPure,
+    polyFreeMBind]
+  obtain ⟨⟨fst, snd⟩, prop⟩ := a
+  subst prop
+  rfl
+
+
+/--
+`polyFreeMJoinMor` at a node: the result is
+`polyFreeMBind` distributing the bind over children.
+This is definitional.
+-/
+@[simp]
+lemma polyFreeMJoinMor_node
+    (A : Over X) (P : PolyEndo X) {x : X}
+    (p : polyBetweenIndex X X P x)
+    (ch : ∀ (e : (polyBetweenFamily X X
+        (polyTranslate (polyFreeMCarrier A P) P)
+        x (Sum.inr p)).left),
+      PolyFix
+        (polyTranslate (polyFreeMCarrier A P) P)
+        ((polyBetweenFamily X X
+          (polyTranslate (polyFreeMCarrier A P) P)
+          x (Sum.inr p)).hom e)) :
+    polyFreeMJoinMor A P
+      (PolyFix.mk x (Sum.inr p) ch) =
+    (PolyFix.mk x (Sum.inr p)
+      (fun e => polyFreeMJoinMor A P (ch e)) :
+      PolyFreeM A P x) := by
+  rfl
+
+/--
+The monad multiplication `T.μ.app A` equals
+`polyFreeCounitFold P (polyFreeAlg A P)`.
+-/
+lemma polyFreeMonad_mu_eq
+    (A : Over X) (P : PolyEndo X) :
+    (polyFreeMonad X P).μ.app A =
+    polyFreeCounitFold P (polyFreeAlg A P) := by
+  simp only [polyFreeMonad,
+    Adjunction.toMonad_μ]
+  rfl
+
+/--
+The monad functor map `T.map f` equals
+`polyFreeMap ... f`.
+-/
+lemma polyFreeMonad_map_eq
+    (A B : Over X) (P : PolyEndo X) (f : A ⟶ B) :
+    (polyFreeMonad X P).toFunctor.map f =
+    polyFreeMap A B P f := by
+  simp only [polyFreeMonad,
+    Adjunction.toMonad]
+  rfl
+
+/-! ### Abbreviations for multiplication coherence -/
+
+/-- The T(A) carrier abbreviation. -/
+abbrev polyDistLaw_TA (A : Over X) (P : PolyEndo X) :
+    Over X :=
+  polyFreeMCarrier A P
+
+/--
+The RHS coalgebra for multiplication coherence:
+`polyDistLawScaleCoalg` at `T(A)` reindexed by `μ`.
+
+This is a `polyScale(T(A), P)`-coalgebra on
+`T(D(T(A)))`.
+-/
+abbrev polyDistLaw_mul_rhsCoalg
+    (A : Over X) (P : PolyEndo X) :
+    PolyCoalg (polyScale
+      (polyDistLaw_TA A P) P) :=
+  polyScaleReindexCoalg
+    (polyDistLaw_TA (polyDistLaw_TA A P) P)
+    (polyDistLaw_TA A P) P
+    (polyFreeCounitFold P (polyFreeAlg A P))
+    (polyDistLawScaleCoalg
+      (polyDistLaw_TA A P) P)
+
+/--
+The monad multiplication `T.μ.app A` at the left
+component equals the application of
+`polyFreeMJoinMor`.
+-/
+lemma polyFreeMonad_mu_left_eq
+    (A : Over X) (P : PolyEndo X)
+    (w : (polyFreeMCarrier
+      (polyFreeMCarrier A P) P).left) :
+    ((polyFreeMonad X P).μ.app A).left w =
+    ⟨w.1, polyFreeMJoinMor A P w.2⟩ := by
+  obtain ⟨x, t⟩ := w
+  change (polyFreeCounitFold P
+    (polyFreeAlg A P)).left ⟨x, t⟩ = _
+  simp only [polyFreeCounitFold,
+    Over.homMk_left,
+    polyFreeCounitFoldLeft]
+  induction t with
+  | mk y idx children ih =>
+    cases idx with
+    | inl a =>
+      simp only [polyFreeCounitFoldAt,
+        polyFreeMJoinMor, polyFreeMBind]
+      obtain ⟨⟨fst, snd⟩, prop⟩ := a
+      subst prop
+      rfl
+    | inr p =>
+      simp only [polyFreeCounitFoldAt,
+        polyFreeMJoinMor, polyFreeMBind]
+      simp only [polyFreeAlg, polyFreeMStr,
+        Over.homMk_left, polyFreeMStrLeft,
+        polyFreeMStrFamily, pbefIndex,
+        pbefMor, ptoefIndex, ccrEvalIndex,
+        ptoefMor, ccrEvalMor]
+      apply Sigma.ext
+      · rfl
+      · simp only [heq_eq_eq]
+        congr 1
+        funext e
+        exact sigma_snd_of_eq (ih e) _
+
+/--
+Precomposition of a coalgebra morphism with the
+terminal anamorphism: if `g : α ⟶ β` is a coalgebra
+morphism, then `g.f ≫ polyCofixUnfold P β =
+polyCofixUnfold P α`.
+-/
+lemma polyCofixUnfold_precomp (P : PolyEndo X)
+    (α β : PolyCoalg P)
+    (g : α ⟶ β) :
+    g.f ≫ polyCofixUnfold P β =
+    polyCofixUnfold P α := by
+  have h : g ≫ polyCofixUnfoldHom P β =
+    polyCofixUnfoldHom P α :=
+    polyCofixUnfoldHom_unique P α
+      (g ≫ polyCofixUnfoldHom P β)
+  exact congrArg
+    Endofunctor.Coalgebra.Hom.f h
+
+/--
+Naturality of `polyFreeMJoinMor` with respect to
+`polyFreeMapAt`: for any `f : A --> B`,
+`T(f)(join(t)) = join(T(T(f))(t))`.
+
+This is the pointwise version of `mu_A ≫ T(f) =
+T(T(f)) ≫ mu_B`.
+-/
+lemma polyFreeMJoinMor_nat
+    (A B : Over X) (P : PolyEndo X) (f : A ⟶ B)
+    {x : X}
+    (t : PolyFreeM
+      (polyFreeMCarrier A P) P x) :
+    polyFreeMapAt A B P f x
+      (polyFreeMJoinMor A P t) =
+    polyFreeMJoinMor B P
+      (polyFreeMapAt
+        (polyFreeMCarrier A P)
+        (polyFreeMCarrier B P) P
+        (polyFreeMap A B P f) x t) := by
+  -- Both sides unfold to polyFreeMBind.
+  -- Use bind associativity + pure_bind.
+  unfold polyFreeMapAt polyFreeMJoinMor
+  rw [polyFreeM_bind_assoc,
+    polyFreeM_bind_assoc]
+  congr 1
+  funext y' ⟨⟨fst, snd⟩, prop⟩
+  subst prop
+  simp only [polyFreeM_pure_bind,
+    polyFreeMapAt,
+    polyFreeMap, Over.homMk_left,
+    polyFreeMapLeft]
+
+/-! ### Multiplication coherence via coalgebra morphisms
+
+Both sides of the multiplication coherence equation
+equal the anamorphism from a common
+`polyScale(T(A), P)`-coalgebra on `T(T(D(A)))`.
+
+The proof constructs a source coalgebra `gamma` and
+shows that both `mu` and `T(dist)` are coalgebra
+morphisms from `gamma`, then applies
+`polyCofixUnfold_precomp` to conclude.
+-/
+
+/--
+The `polyScale(T(A), P)`-coalgebra structure on
+`T(T(D(A)))` at a fiber element.
+
+The P-part is the P-coalgebra on `T(D(A))`
+(from lifting the cofree P-coalgebra on `D(A)`)
+further lifted to `T(T(D(A)))`.
+
+The annotation is `T(eps_A)(mu(t))`.
+-/
+def polyDistLaw_mul_srcCoalgStrAt
+    (A : Over X) (P : PolyEndo X)
+    {x : X}
+    (t : PolyFreeM
+      (polyFreeMCarrier
+        (polyCofreeCarrier A P) P) P x) :
+    polyBetweenEvalFamily X X
+      (polyScale (polyFreeMCarrier A P) P)
+      (polyFreeMCarrier
+        (polyFreeMCarrier
+          (polyCofreeCarrier A P) P) P) x :=
+  let DA := polyCofreeCarrier A P
+  let TDA := polyFreeMCarrier DA P
+  let pCoalg :=
+    polyFreeMCoalgStrAt TDA P
+      (polyFreeMCoalgStr DA P
+        (polyCofreeStr A P)) t
+  let mu_t : PolyFreeM DA P x :=
+    polyFreeMJoinMor DA P t
+  let ta : PolyFreeM A P x :=
+    polyFreeMapAt DA A P
+      (polyCofreeCounit A P) x mu_t
+  ⟨(⟨⟨x, ta⟩, rfl⟩, pCoalg.1), pCoalg.2⟩
+
+/--
+The underlying function of the source coalgebra
+structure map for multiplication coherence.
+-/
+def polyDistLaw_mul_srcCoalgStrLeft
+    (A : Over X) (P : PolyEndo X) :
+    (polyFreeMCarrier
+      (polyFreeMCarrier
+        (polyCofreeCarrier A P) P) P).left →
+    ((polyEndoFunctor X
+      (polyScale (polyFreeMCarrier A P) P)).obj
+      (polyFreeMCarrier
+        (polyFreeMCarrier
+          (polyCofreeCarrier A P) P) P)).left :=
+  fun ⟨x, t⟩ =>
+    ⟨x, polyDistLaw_mul_srcCoalgStrAt A P t⟩
+
+/--
+The source coalgebra structure map commutes with
+projections.
+-/
+lemma polyDistLaw_mul_srcCoalgStr_comm
+    (A : Over X) (P : PolyEndo X) :
+    polyDistLaw_mul_srcCoalgStrLeft A P ≫
+    ((polyEndoFunctor X
+      (polyScale (polyFreeMCarrier A P) P)).obj
+      (polyFreeMCarrier
+        (polyFreeMCarrier
+          (polyCofreeCarrier A P) P) P)).hom =
+    (polyFreeMCarrier
+      (polyFreeMCarrier
+        (polyCofreeCarrier A P) P) P).hom := rfl
+
+/--
+The `polyScale(T(A), P)`-coalgebra structure map
+on `T(T(D(A)))`.
+-/
+def polyDistLaw_mul_srcCoalgStr
+    (A : Over X) (P : PolyEndo X) :
+    polyFreeMCarrier
+      (polyFreeMCarrier
+        (polyCofreeCarrier A P) P) P ⟶
+    (polyEndoFunctor X
+      (polyScale (polyFreeMCarrier A P) P)).obj
+      (polyFreeMCarrier
+        (polyFreeMCarrier
+          (polyCofreeCarrier A P) P) P) :=
+  Over.homMk
+    (polyDistLaw_mul_srcCoalgStrLeft A P)
+    (polyDistLaw_mul_srcCoalgStr_comm A P)
+
+/--
+The `polyScale(T(A), P)`-coalgebra on `T(T(D(A)))`:
+the common source for both sides of the multiplication
+coherence equation.
+-/
+def polyDistLaw_mul_srcCoalg
+    (A : Over X) (P : PolyEndo X) :
+    PolyCoalg
+      (polyScale (polyFreeMCarrier A P) P) where
+  V := polyFreeMCarrier
+    (polyFreeMCarrier
+      (polyCofreeCarrier A P) P) P
+  str := polyDistLaw_mul_srcCoalgStr A P
+
+/--
+Multiplication coherence:
+`T.μ.app (D.obj A) ≫ dist.app A =
+  T.map(dist.app A) ≫ dist.app (T.obj A) ≫
+  D.map(T.μ.app A)`.
+-/
+lemma polyDistLaw_mul
+    (A : Over X) (P : PolyEndo X) :
+    let DA := polyCofreeCarrier A P
+    let TA := polyFreeMCarrier A P
+    let TDA := polyFreeMCarrier DA P
+    polyFreeCounitFold P (polyFreeAlg DA P) ≫
+    polyDistLawMor A P =
+    polyFreeMap TDA
+      (polyCofreeCarrier TA P) P
+      (polyDistLawMor A P) ≫
+    polyDistLawMor TA P ≫
+    polyCofreeMap
+      (polyFreeMCarrier TA P)
+      TA P
+      (polyFreeCounitFold P
+        (polyFreeAlg A P)) := by
+  -- Prove coalgebra morphism conditions as
+  -- intermediate goals.
+  have mu_hom_h :
+    (polyDistLaw_mul_srcCoalg A P).str ≫
+    (polyEndoFunctor X
+      (polyScale (polyFreeMCarrier A P) P)).map
+      (polyFreeCounitFold P
+        (polyFreeAlg
+          (polyCofreeCarrier A P) P)) =
+    polyFreeCounitFold P
+      (polyFreeAlg (polyCofreeCarrier A P) P) ≫
+    (polyDistLawScaleCoalg A P).str := by
+    apply Over.OverMorphism.ext
+    funext ⟨x, t⟩
+    simp only [Over.comp_left, types_comp_apply]
+    induction t with
+    | mk y idx children ih =>
+      cases idx with
+      | inr p =>
+        -- The node case: both sides produce the
+        -- same P-structure with the same annotation
+        -- and children, related by
+        -- `polyFreeMonad_mu_left_eq`.
+        -- The fold (catamorphism) representation and
+        -- the bind representation of `mu` agree.
+        -- Use `polyFreeMonad_mu_left_eq` to rewrite
+        -- `mu.left` at each child.
+        have hmu : ∀ e,
+            ((polyFreeCounitFold P
+              (polyFreeAlg
+                (polyCofreeCarrier A P) P)).left
+              ⟨(polyBetweenFamily X X P y p).hom e,
+                children e⟩) =
+            ⟨(polyBetweenFamily X X P y p).hom e,
+              polyFreeMJoinMor
+                (polyCofreeCarrier A P) P
+                (children e)⟩ := by
+          intro e
+          rw [← polyFreeMonad_mu_eq]
+          exact polyFreeMonad_mu_left_eq
+            (polyCofreeCarrier A P) P _
+        -- Both sides, once `mu` is expressed via
+        -- `joinMor`, agree definitionally.
+        -- Express `mu.left ⟨y, node(p, ch)⟩` via
+        -- `polyFreeMonad_mu_left_eq`.
+        have hmu_node :
+          (polyFreeCounitFold P
+            (polyFreeAlg
+              (polyCofreeCarrier A P) P)).left
+            ⟨y, PolyFix.mk y
+              (Sum.inr p) children⟩ =
+          ⟨y, polyFreeMJoinMor
+            (polyCofreeCarrier A P) P
+            (PolyFix.mk y (Sum.inr p)
+              children)⟩ := by
+          rw [← polyFreeMonad_mu_eq]
+          exact polyFreeMonad_mu_left_eq
+            (polyCofreeCarrier A P) P _
+        -- Rewrite `mu.left` on the RHS.
+        rw [hmu_node]
+        -- Now the RHS has `distLawScaleCoalg.str.left
+        --   ⟨y, joinMor(node(p, ch))⟩`.
+        -- `joinMor(node(p, ch))` reduces to
+        -- `node(p, joinMor ∘ ch)`.
+        -- The LHS has `(.map mu).left
+        --   (srcCoalg.str.left ⟨y, node(p, ch)⟩)`.
+        -- After unfolding srcCoalg at a node:
+        -- annotation = T(eps_A)(joinMor(node(p, ch)))
+        --            = T(eps_A)(node(p, joinMor ∘ ch))
+        -- P-index = p
+        -- children = ch (the TTDA children)
+        -- Then `.map mu` maps each child by mu.
+        -- `mu.left ⟨y_e, ch_e⟩ = ⟨y_e, joinMor ch_e⟩`
+        -- by `hmu`.
+        -- After unfolding distLawScaleCoalg at
+        -- `⟨y, node(p, joinMor ∘ ch)⟩`:
+        -- annotation = T(eps_A)(node(p, joinMor ∘ ch))
+        -- P-index = p
+        -- children = `e ↦ ⟨y_e, joinMor(ch_e)⟩`
+        -- These match the LHS.
+        -- Unfold and simplify everything.
+        simp only [Over.homMk_left,
+          polyDistLaw_mul_srcCoalg,
+          polyDistLaw_mul_srcCoalgStr,
+          polyDistLaw_mul_srcCoalgStrLeft,
+          polyDistLaw_mul_srcCoalgStrAt,
+          polyFreeMCoalgStrAt,
+          polyFreeMCoalgStr,
+          polyDistLawScaleCoalg,
+          polyDistLawScaleCoalgStr,
+          polyDistLawScaleCoalgStrLeft,
+          polyDistLawScaleCoalgStrAt,
+          polyEndoFunctor,
+          polyBetweenEvalFunctor,
+          polyToOverFunctor,
+          polyToOverEvalMap,
+          familySliceForward,
+          familySliceForwardMap,
+          polyToOverEvalFamilyMap,
+          ccrEvalMap,
+          polyFreeMJoinMor, polyFreeMBind,
+          polyFreeCounitFold]
+        -- The remaining difference is in the
+        -- children morphism. The LHS composes
+        -- `Over.homMk ... ≫ Over.homMk fold.left`,
+        -- while the RHS directly applies joinMor.
+        -- Simplify the composition and apply hmu.
+        congr 1; congr 1
+        apply Over.OverMorphism.ext
+        funext e
+        simp only [Over.comp_left,
+          types_comp_apply,
+          Over.homMk_left]
+        change (polyFreeCounitFold P
+          (polyFreeAlg
+            (polyCofreeCarrier A P) P)).left
+          ⟨(polyBetweenFamily X X P y p).hom e,
+            children e⟩ = _
+        rw [hmu e]
+        simp only [polyFreeMJoinMor]
+      | inl a =>
+        -- Leaf case: `mu(pure(a)) = a`, so the
+        -- P-coalgebra structure commutes.
+        obtain ⟨⟨x_a, t_a⟩, ha⟩ := a
+        subst ha
+        -- Now `a = ⟨⟨x_a, t_a⟩, rfl⟩` and the
+        -- tree is `polyFreeMPure ... a`.
+        -- `mu.left ⟨x_a, pure(a)⟩ = ⟨x_a, t_a⟩`
+        -- by monad left unit.
+        -- Unfold both sides.
+        simp only [Over.homMk_left,
+          polyDistLaw_mul_srcCoalg,
+          polyDistLaw_mul_srcCoalgStr,
+          polyDistLaw_mul_srcCoalgStrLeft,
+          polyDistLaw_mul_srcCoalgStrAt,
+          polyFreeMCoalgStrAt,
+          polyFreeMCoalgStr,
+          polyFreeMJoinMor, polyFreeMBind,
+          polyFreeMPure,
+          polyDistLawScaleCoalg,
+          polyDistLawScaleCoalgStr,
+          polyDistLawScaleCoalgStrLeft,
+          polyDistLawScaleCoalgStrAt,
+          polyEndoFunctor,
+          polyBetweenEvalFunctor,
+          polyToOverFunctor,
+          polyToOverEvalMap,
+          familySliceForward,
+          familySliceForwardMap,
+          polyToOverEvalFamilyMap,
+          ccrEvalMap,
+          polyFreeCounitFold,
+          polyFreeCounitFoldLeft,
+          polyFreeCounitFoldAt,
+          polyFreeAlg, polyFreeMStr]
+        -- The goal depends on the structure of
+        -- `t_a : PolyFreeM DA P x_a`.
+        -- Case split on `t_a`.
+        match t_a with
+        | PolyFix.mk _ (Sum.inl c) _ =>
+          -- `t_a` is a leaf in `T(DA)`, wrapping
+          -- a cofree element `c`.
+          -- `polyFreeMCoalgStrAt` at `inl c`
+          -- delegates to `polyCofreeStr`.
+          -- `mu(pure(pure(c))) = pure(c)` by
+          -- monad left unit.
+          -- After simp, both sides directly
+          -- apply the cofree coalgebra to `c`.
+          simp only [polyFreeMCoalgStrAt,
+            polyFreeMCoalgStrLeft,
+            polyFreeMPure]
+          rfl
+        | PolyFix.mk _ (Sum.inr p_inner)
+            ch_inner =>
+          -- `t_a` is a node in `T(DA)`.
+          -- `polyFreeMCoalgStrAt` at `inr p_inner`
+          -- returns `(p_inner, ch_inner)` directly.
+          -- `mu(pure(node(p, ch))) = node(p, ch)`
+          -- by monad left unit.
+          simp only [polyFreeMCoalgStrAt,
+            polyFreeMCoalgStrLeft]
+          rfl
+  have tdist_hom_h :
+    (polyDistLaw_mul_srcCoalg A P).str ≫
+    (polyEndoFunctor X
+      (polyScale (polyFreeMCarrier A P) P)).map
+      (polyFreeMap
+        (polyFreeMCarrier
+          (polyCofreeCarrier A P) P)
+        (polyCofreeCarrier
+          (polyFreeMCarrier A P) P) P
+        (polyDistLawMor A P)) =
+    polyFreeMap
+      (polyFreeMCarrier
+        (polyCofreeCarrier A P) P)
+      (polyCofreeCarrier
+        (polyFreeMCarrier A P) P) P
+      (polyDistLawMor A P) ≫
+    (polyDistLaw_mul_rhsCoalg A P).str := by
+    apply Over.OverMorphism.ext
+    funext ⟨x, t⟩
+    simp only [Over.comp_left, types_comp_apply]
+    induction t with
+    | mk y idx children ih =>
+      cases idx with
+      | inr p =>
+        -- Node case.
+        -- Unfold srcCoalg.str at the node, then
+        -- unfold polyEndoFunctor.map, polyFreeMap,
+        -- polyFreeMapAt, rhsCoalg definitions, etc.
+        simp only [
+          polyDistLaw_mul_srcCoalg,
+          polyDistLaw_mul_srcCoalgStr,
+          Over.homMk_left,
+          polyDistLaw_mul_srcCoalgStrLeft,
+          polyDistLaw_mul_srcCoalgStrAt,
+          polyFreeMCoalgStrAt,
+          polyFreeMCoalgStr,
+          polyDistLaw_mul_rhsCoalg,
+          polyDistLawScaleCoalg,
+          polyDistLawScaleCoalgStr,
+          polyEndoFunctor,
+          polyBetweenEvalFunctor,
+          polyToOverFunctor,
+          polyToOverEvalMap,
+          familySliceForward,
+          familySliceForwardMap,
+          polyToOverEvalFamilyMap,
+          ccrEvalMap,
+          polyFreeMap, polyFreeMapLeft]
+        -- The RHS involves T(dist)(node(p, ch))
+        -- which by polyFreeMapAt/polyFreeMBind at
+        -- Sum.inr reduces to node(p, T(dist) ∘ ch).
+        -- Then polyFreeMCoalgStrAt at Sum.inr
+        -- extracts (p, children) directly.
+        dsimp only [
+          polyFreeMapAt, polyFreeMBind,
+          polyFreeMCoalgStrAt]
+        -- Split the outer sigma structure.
+        -- congr splits into annotation + children;
+        -- children are closed automatically.
+        congr 1; congr 1; congr 1
+        -- The remaining goal is the annotation
+        -- Subtype equality.
+        -- Derive it from the morphism-level equation
+        -- mu_DA ≫ T(eps_A) = T(T(eps_A)) ≫ mu_A
+        -- evaluated at ⟨y, node(p, ch)⟩, combined
+        -- with counit coherence T(eps_A) = dist ≫
+        -- eps_{TA}.
+        apply Subtype.ext
+        -- Goal: ⟨y, T(eps_A)(join(node(p,ch)))⟩ =
+        --       fold_A ⟨y,
+        --         T(eps_{TA})(T(dist)(node(p,ch)))⟩
+        -- Get the naturality equation:
+        -- mu_DA ≫ T(eps_A) = T(T(eps_A)) ≫ mu_A
+        have h_mu_nat :=
+          ((polyFreeMonad X P).μ.naturality
+            (polyCofreeCounit A P)).symm
+        simp only [Functor.comp_map] at h_mu_nat
+        rw [polyFreeMonad_mu_eq,
+          polyFreeMonad_mu_eq,
+          polyFreeMonad_map_eq,
+          polyFreeMonad_map_eq] at h_mu_nat
+        -- h_mu_nat :
+        --   fold_DA ≫ T(eps_A) =
+        --   T(T(eps_A)) ≫ fold_A
+        -- Rewrite T(T(eps_A)) via counit coherence.
+        rw [show polyFreeMap
+          (polyCofreeCarrier A P) A P
+          (polyCofreeCounit A P) =
+          polyDistLawMor A P ≫
+          polyCofreeCounit
+            (polyFreeMCarrier A P) P
+          from (polyDistLaw_counit A P).symm]
+          at h_mu_nat
+        rw [polyFreeMap_comp] at h_mu_nat
+        -- h_mu_nat :
+        --   fold_DA ≫ T(eps_A) =
+        --   T(dist) ≫ T(eps_{TA}) ≫ fold_A
+        -- Apply at ⟨y, node(p, ch)⟩.
+        have h_eq := congrFun
+          (congrArg CommaMorphism.left h_mu_nat)
+          ⟨y, PolyFix.mk y (Sum.inr p) children⟩
+        simp only [Over.comp_left,
+          types_comp_apply] at h_eq
+        -- Rewrite fold_DA to joinMor via
+        -- polyFreeMonad_mu_left_eq.
+        rw [show (polyFreeCounitFold P
+          (polyFreeAlg
+            (polyCofreeCarrier A P) P)).left
+          ⟨y, PolyFix.mk y (Sum.inr p) children⟩ =
+          ⟨y, polyFreeMJoinMor
+            (polyCofreeCarrier A P) P
+            (PolyFix.mk y (Sum.inr p) children)⟩
+          from by
+            rw [← polyFreeMonad_mu_eq]
+            exact polyFreeMonad_mu_left_eq
+              (polyCofreeCarrier A P) P _]
+          at h_eq
+        -- Unfold T(eps_A) on the LHS and
+        -- T(dist) ≫ T(eps_{TA}) on the RHS of
+        -- h_eq to match the goal.
+        simp only [polyFreeMap] at h_eq
+        exact h_eq
+      | inl a =>
+        -- Leaf case: the tree is pure(a) where
+        -- a.val : T(DA).
+        -- Use the anamorphism for dist
+        -- at the morphism level.
+        obtain ⟨⟨x_a, t_a⟩, ha⟩ := a
+        subst ha
+        -- Unfold structural definitions.
+        simp only [
+          polyDistLaw_mul_srcCoalg,
+          polyDistLaw_mul_srcCoalgStr,
+          Over.homMk_left,
+          polyDistLaw_mul_srcCoalgStrLeft,
+          polyDistLaw_mul_srcCoalgStrAt,
+          polyFreeMCoalgStrAt,
+          polyFreeMCoalgStr,
+          polyScaleReindexCoalg,
+          polyScaleReindexLeft,
+          polyDistLawScaleCoalg,
+          polyDistLawScaleCoalgStr,
+          polyDistLawScaleCoalgStrLeft,
+          polyDistLawScaleCoalgStrAt,
+          polyEndoFunctor,
+          polyBetweenEvalFunctor,
+          polyToOverFunctor,
+          polyToOverEvalMap,
+          familySliceForward,
+          familySliceForwardMap,
+          polyToOverEvalFamilyMap,
+          ccrEvalMap,
+          polyFreeMap, polyFreeMapLeft,
+          Over.comp_left, types_comp_apply,
+          polyFreeMPure,
+          polyCofreeCounit,
+          polyCofreeStr, polyCofreeStrLeft,
+          polyFreeMJoinMor, polyFreeMBind]
+        dsimp only [
+          polyFreeMapAt, polyFreeMBind,
+          polyFreeMPure,
+          polyFreeMCoalgStrAt,
+          polyFreeMCoalgStr,
+          polyFreeMCoalgStrLeft,
+          polyCofreeStrFamily]
+        -- The goal is:
+        -- P.map(T(dist))(srcCoalg.str(
+        --   pure(⟨x_a,t_a⟩)))
+        -- = rhsCoalg.str(T(dist)(
+        --   pure(⟨x_a,t_a⟩)))
+        -- Both sides reduce to a polyScale
+        -- value ⟨fiber, ⟨annot, pidx,
+        --   children⟩⟩.
+        -- The annotation on the LHS is
+        -- T(eps_A)(⟨x_a, t_a⟩) and on the
+        -- RHS is eps_{TA}(dist(⟨x_a,t_a⟩)).
+        -- These are equal by counit
+        -- coherence.
+        -- The P-data on the LHS has children
+        -- that are pure-wrapped, composed
+        -- with T(dist). The P-data on the RHS
+        -- is the cofree destruct of
+        -- dist(⟨x_a,t_a⟩), also pure-wrapped.
+        -- Both P-data components are related
+        -- by the anamorphism for dist.
+        --
+        -- Strategy: construct a common value
+        -- and show both sides equal it.
+        -- The common value is:
+        --   ⟨fiber, ⟨annot, pidx,
+        --     pure ∘ cofixChildren⟩⟩
+        -- where cofixChildren comes from
+        -- cofixDest(dist(⟨x_a,t_a⟩)).
+        --
+        -- Split into annotation + children.
+        -- First close the annotation and
+        -- P-index, then handle children.
+        congr 1; congr 1
+        -- Remaining: children morphism
+        -- equality. The LHS is
+        -- rawChildren ≫ T(dist) and the
+        -- RHS is cofixChildren, both as
+        -- Over.homMk values. Use the
+        -- anamorphism at ⟨x_a, t_a⟩.
+        have h_ana :=
+          polyCofixUnfold_coalg_comm
+            (polyScale
+              (polyFreeMCarrier A P) P)
+            (polyDistLawScaleCoalg A P)
+        have h_ana_at := congrFun
+          (congrArg CommaMorphism.left
+            h_ana)
+          ⟨x_a, t_a⟩
+        simp only [Over.comp_left,
+          types_comp_apply] at h_ana_at
+        -- h_ana_at :
+        -- P.map(dist)(coalg.str(⟨x_a,t_a⟩))
+        -- = cofixDest(dist(⟨x_a,t_a⟩))
+        -- Unfold the coalg.str side.
+        simp only [
+          polyDistLawScaleCoalg,
+          polyDistLawScaleCoalgStr,
+          polyDistLawScaleCoalgStrLeft,
+          polyDistLawScaleCoalgStrAt,
+          polyEndoFunctor,
+          polyBetweenEvalFunctor,
+          polyToOverFunctor,
+          polyToOverEvalMap,
+          familySliceForward,
+          familySliceForwardMap,
+          polyToOverEvalFamilyMap,
+          ccrEvalMap,
+          polyCofixDest,
+          polyCofixDestLeft,
+          polyCofixDestFamily,
+          polyCofreeStr,
+          polyCofreeStrLeft,
+          polyFreeMCoalgStrAt,
+          Over.homMk_left]
+          at h_ana_at
+        -- h_ana_at is now:
+        -- ⟨x_a, ⟨pidx, children ≫ dist⟩⟩
+        -- = ⟨x_a, ⟨cofixPidx,
+        --   cofixChildren⟩⟩
+        -- Extract the children component
+        -- (third level of the sigma).
+        have h_snd :=
+          (Sigma.mk.inj h_ana_at).2
+        have h_inner :=
+          eq_of_heq h_snd
+        have h_ch :=
+          eq_of_heq
+            (Sigma.mk.inj h_inner).2
+        -- h_ch : rawChildren ≫ dist =
+        --   cofixChildren (as Over.homMk)
+        -- The goal is:
+        -- rawChildren_pure ≫ T(dist) =
+        --   cofixChildren_pure
+        -- where rawChildren_pure wraps
+        -- each raw child in pure.
+        -- Apply ext and funext.
+        apply Over.OverMorphism.ext
+        funext e_ch
+        simp only [Over.comp_left,
+          types_comp_apply,
+          Over.homMk_left,
+          polyFreeMapLeft,
+          polyFreeMapAt,
+          polyFreeMBind,
+          polyFreeMPure]
+        -- At each point, the LHS is
+        -- ⟨fiber, T(dist)(pure(rawChild))⟩
+        -- = ⟨fiber, pure(dist(rawChild))⟩
+        -- and the RHS is
+        -- ⟨fiber, pure(cofixChild)⟩.
+        -- congr 1 splits the pair.
+        congr 1
+        -- The tree component remains.
+        -- Extract h_ch at e_ch.
+        have h_ch_at := congrFun
+          (congrArg CommaMorphism.left
+            h_ch) e_ch
+        simp only [Over.comp_left,
+          types_comp_apply]
+          at h_ch_at
+        -- h_ch_at gives us the equality
+        -- between the D(TA)-level values
+        -- on both sides.
+        -- Both sides of the goal are
+        -- PolyFix.mk with Sum.inl and empty
+        -- children: pure leaf nodes whose
+        -- content is given by h_ch_at.
+        -- congr 1 on PolyFix.mk closes the
+        -- fiber and children, leaving
+        -- Sum.inl ⟨v1, _⟩ = Sum.inl ⟨v2, _⟩.
+        congr 1
+        -- congr 1 on Sum.inl leaves
+        -- ⟨v1, _⟩ = ⟨v2, _⟩.
+        congr 1
+        -- Subtype.ext reduces to v1 = v2.
+        apply Subtype.ext
+        -- The goal is now:
+        -- dist.left(rawChild(e_ch)) =
+        -- cofixChild.val(e_ch)
+        -- Use h_ch_at directly.
+        exact h_ch_at
+  have lhs_eq :
+    polyFreeCounitFold P
+      (polyFreeAlg (polyCofreeCarrier A P) P) ≫
+    polyDistLawMor A P =
+    polyCofixUnfold
+      (polyScale (polyFreeMCarrier A P) P)
+      (polyDistLaw_mul_srcCoalg A P) :=
+    polyCofixUnfold_precomp
+      (polyScale (polyFreeMCarrier A P) P)
+      (polyDistLaw_mul_srcCoalg A P)
+      (polyDistLawScaleCoalg A P)
+      ⟨polyFreeCounitFold P
+        (polyFreeAlg (polyCofreeCarrier A P) P),
+       mu_hom_h⟩
+  have rhs_eq1 :
+    polyDistLawMor (polyFreeMCarrier A P) P ≫
+    polyCofreeMap
+      (polyFreeMCarrier
+        (polyFreeMCarrier A P) P)
+      (polyFreeMCarrier A P) P
+      (polyFreeCounitFold P
+        (polyFreeAlg A P)) =
+    polyCofixUnfold
+      (polyScale (polyFreeMCarrier A P) P)
+      (polyDistLaw_mul_rhsCoalg A P) :=
+    polyScaleReindex
+      (polyFreeMCarrier (polyFreeMCarrier A P) P)
+      (polyFreeMCarrier A P) P
+      (polyFreeCounitFold P (polyFreeAlg A P))
+      (polyDistLawScaleCoalg
+        (polyFreeMCarrier A P) P)
+  have rhs_eq2 :
+    polyFreeMap
+      (polyFreeMCarrier
+        (polyCofreeCarrier A P) P)
+      (polyCofreeCarrier
+        (polyFreeMCarrier A P) P) P
+      (polyDistLawMor A P) ≫
+    polyCofixUnfold
+      (polyScale (polyFreeMCarrier A P) P)
+      (polyDistLaw_mul_rhsCoalg A P) =
+    polyCofixUnfold
+      (polyScale (polyFreeMCarrier A P) P)
+      (polyDistLaw_mul_srcCoalg A P) :=
+    polyCofixUnfold_precomp
+      (polyScale (polyFreeMCarrier A P) P)
+      (polyDistLaw_mul_srcCoalg A P)
+      (polyDistLaw_mul_rhsCoalg A P)
+      ⟨polyFreeMap
+        (polyFreeMCarrier
+          (polyCofreeCarrier A P) P)
+        (polyCofreeCarrier
+          (polyFreeMCarrier A P) P) P
+        (polyDistLawMor A P),
+       tdist_hom_h⟩
+  dsimp only []
+  rw [lhs_eq, rhs_eq1, rhs_eq2]
+
+/--
+The monad unit `T.η.app A` equals `polyFreeUnit A P`.
+-/
+lemma polyFreeMonad_eta_eq
+    (A : Over X) (P : PolyEndo X) :
+    (polyFreeMonad X P).η.app A =
+    polyFreeUnit A P := by
+  simp only [polyFreeMonad,
+    Adjunction.toMonad_η]
+  rfl
+
+/--
+The comonad counit `D.ε.app A` equals
+`polyCofreeCounit A P`.
+-/
+lemma polyCofreeComonad_eps_eq
+    (A : Over X) (P : PolyEndo X) :
+    (polyCofreeComonad X P).ε.app A =
+    polyCofreeCounit A P := by
+  simp only [polyCofreeComonad,
+    Adjunction.toComonad_ε]
+  rfl
+
+/--
+The comonad comultiplication `D.δ.app A` equals
+`polyCoalgUnit P (polyCofreeCoalg A P)`.
+-/
+lemma polyCofreeComonad_delta_eq
+    (A : Over X) (P : PolyEndo X) :
+    (polyCofreeComonad X P).δ.app A =
+    polyCoalgUnit P (polyCofreeCoalg A P) := by
+  simp only [polyCofreeComonad,
+    Adjunction.toComonad_δ]
+  rfl
+
+/--
+The comonad functor map `D.map f` equals
+`polyCofreeMap ... f`.
+-/
+lemma polyCofreeComonad_map_eq
+    (A B : Over X) (P : PolyEndo X) (f : A ⟶ B) :
+    (polyCofreeComonad X P).toFunctor.map f =
+    polyCofreeMap A B P f := by
+  simp only [polyCofreeComonad,
+    Adjunction.toComonad]
+  rfl
+
+/-! ## Step 9: Packaging as a Distributive Law
+
+Package the four coherence lemmas and
+naturality into a `DistributiveLaw` structure,
+giving a distributive law of the free monad
+`T = polyFreeMonad X P` over the cofree comonad
+`D = polyCofreeComonad X P`.
+-/
+
+/--
+The `T.toFunctor.obj` applied to `A` is
+`polyFreeMCarrier A P`.
+-/
+lemma polyFreeMonad_obj_eq
+    (A : Over X) (P : PolyEndo X) :
+    (polyFreeMonad X P).toFunctor.obj A =
+    polyFreeMCarrier A P := by
+  simp only [polyFreeMonad,
+    Adjunction.toMonad]
+  rfl
+
+/--
+The `D.toFunctor.obj` applied to `A` is
+`polyCofreeCarrier A P`.
+-/
+lemma polyCofreeComonad_obj_eq
+    (A : Over X) (P : PolyEndo X) :
+    (polyCofreeComonad X P).toFunctor.obj A =
+    polyCofreeCarrier A P := by
+  simp only [polyCofreeComonad,
+    Adjunction.toComonad]
+  rfl
+
+/--
+The distributive law natural transformation
+`lambda : D ⋙ T ⟶ T ⋙ D` at each object.
+-/
+def polyDistLawNatApp
+    (A : Over X) (P : PolyEndo X) :
+    ((polyCofreeComonad X P).toFunctor ⋙
+      (polyFreeMonad X P).toFunctor).obj A ⟶
+    ((polyFreeMonad X P).toFunctor ⋙
+      (polyCofreeComonad X P).toFunctor).obj A :=
+  polyDistLawMor A P
+
+/--
+Naturality of the distributive law in terms of
+the monad and comonad functors.
+-/
+lemma polyDistLawNat_naturality
+    (A B : Over X) (P : PolyEndo X) (f : A ⟶ B) :
+    ((polyCofreeComonad X P).toFunctor ⋙
+      (polyFreeMonad X P).toFunctor).map f ≫
+    polyDistLawNatApp B P =
+    polyDistLawNatApp A P ≫
+    ((polyFreeMonad X P).toFunctor ⋙
+      (polyCofreeComonad X P).toFunctor).map f := by
+  simp only [Functor.comp_map,
+    polyFreeMonad_map_eq,
+    polyCofreeComonad_map_eq]
+  exact polyDistLaw_naturality A B P f
+
+/--
+The distributive law as a natural transformation
+`D ⋙ T ⟶ T ⋙ D`.
+-/
+def polyDistLawNat (P : PolyEndo X) :
+    (polyCofreeComonad X P).toFunctor ⋙
+      (polyFreeMonad X P).toFunctor ⟶
+    (polyFreeMonad X P).toFunctor ⋙
+      (polyCofreeComonad X P).toFunctor where
+  app := fun A => polyDistLawNatApp A P
+  naturality := fun {A B} f =>
+    polyDistLawNat_naturality A B P f
+
+/--
+The polynomial distributive law of the free monad
+over the cofree comonad.
+-/
+def polyDistributiveLaw
+    (P : PolyEndo X) :
+    DistributiveLaw
+      (polyFreeMonad X P)
+      (polyCofreeComonad X P) where
+  dist := polyDistLawNat P
+  unit := fun A => by
+    simp only [polyDistLawNat, polyDistLawNatApp,
+      polyFreeMonad_eta_eq,
+      polyCofreeComonad_map_eq]
+    exact polyDistLaw_unit A P
+  counit := fun A => by
+    simp only [polyDistLawNat, polyDistLawNatApp,
+      polyCofreeComonad_eps_eq,
+      polyFreeMonad_map_eq]
+    exact polyDistLaw_counit A P
+  mul := fun A => by
+    simp only [polyDistLawNat, polyDistLawNatApp,
+      polyFreeMonad_mu_eq,
+      polyFreeMonad_map_eq,
+      polyCofreeComonad_map_eq]
+    exact polyDistLaw_mul A P
+  comul := fun A => by
+    simp only [polyDistLawNat, polyDistLawNatApp,
+      polyCofreeComonad_delta_eq,
+      polyCofreeComonad_map_eq,
+      polyFreeMonad_map_eq]
+    exact polyDistLaw_comul A P
 
 end GebLean

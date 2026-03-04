@@ -2,7 +2,8 @@
 
 ## Status
 
-Active
+Distributive law complete (Steps 1-9). GSOS rules
+(Steps 10-14) remain.
 
 ## Context
 
@@ -54,12 +55,29 @@ Constructing the canonical distributive law
     `polyDistLaw_comul_head_snd_node`,
     `polyDistLaw_comul_family_eq_node`,
     `polyCofixUnfoldAt_children_heq` (in PolyAlg.lean)
-- [ ] Step 8: Multiplication coherence
-  - Both sides map `T(T(D(A))) --> D(T(A))`
-  - Similar approach to Step 7 with
-    `polyCofixUnfoldHom_unique`
-- [ ] Step 9: Package as `DistributiveLaw`
-  - Requires Steps 4-8
+- [x] Step 8: Multiplication coherence
+  - `polyDistLaw_mul` proved via terminal coalgebra
+    uniqueness (`polyCofixUnfold_precomp`).
+  - Defined `polyDistLaw_mul_srcCoalg` and
+    `polyDistLaw_mul_rhsCoalg` as the source and target
+    coalgebras on `T(T(D(A)))`.
+  - Both sides shown equal as anamorphisms of
+    `polyDistLaw_mul_srcCoalg` using coalgebra
+    homomorphism precomposition.
+  - Node/leaf cases of `tdist_hom_h` proved;
+    the leaf case avoids inner case splitting on
+    `t_a` by working at the abstract anamorphism level.
+- [x] Step 9: Package as `DistributiveLaw`
+  - `polyDistLawNat`: natural transformation
+    `D . T --> T . D`
+  - `polyDistributiveLaw`: full `DistributiveLaw`
+    structure with all four coherence conditions
+  - Translation lemmas (`polyFreeMonad_eta_eq`,
+    `polyFreeMonad_mu_eq`, `polyFreeMonad_map_eq`,
+    `polyCofreeComonad_eps_eq`,
+    `polyCofreeComonad_delta_eq`,
+    `polyCofreeComonad_map_eq`) bridge between
+    categorical and concrete formulations
 - [ ] Steps 10-14: GSOS rules (E1)
   - `PolyGSOS.lean` (new file)
   - Fiberwise product, `GSOSRule` structure,
