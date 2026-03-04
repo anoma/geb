@@ -254,6 +254,29 @@ File: `GebLean/MendlerLambekEndPower.lean`
   Yoneda-style argument that the representable
   characterization determines the algebra structure.
 
+### Phase 3: PowerEndGExtFunctor (DONE)
+
+Task 9 defines `PowerEndGExtFunctor G`, naturally
+isomorphic to `GExtFunctor G` but with carrier
+`CopowerGExtObj G` (copower-profunctor coend), and
+composes the full equivalence.
+
+#### Task 9: PowerEndGExtFunctor and full equivalence
+
+File: `GebLean/MendlerLambekEndPower.lean`
+
+- [x] 9a. Define `PowerEndGExtFunctor G : C ⥤ C` with
+  `obj pt := CopowerGExtObj G pt` and maps via
+  `copowerGExtIso` conjugation
+- [x] 9b. Define `powerEndGExtNatIso :
+  PowerEndGExtFunctor G ≅ GExtFunctor G` using
+  `copowerGExtIso` as components
+- [x] 9c. Define `mendlerLambekPowerEndFullEquiv :
+  PowerEndMendlerAlgebra G ≌
+    ConventionalAlgebra (PowerEndGExtFunctor G)`
+  using `mendlerLambekEndPowerEquiv` composed with
+  `Endofunctor.Algebra.equivOfNatIso`
+
 ## Notes
 
 ### Existing Infrastructure (Phase 1)

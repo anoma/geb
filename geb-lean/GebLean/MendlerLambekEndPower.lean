@@ -741,4 +741,73 @@ def mendlerLambekEndPowerEquiv :
 
 end MendlerLambekEndPower
 
+/-!
+## Power-End GExtFunctor
+
+The `PowerEndGExtFunctor` is an endofunctor `C ⥤ C`
+naturally isomorphic to `GExtFunctor G`, with its carrier
+defined as `CopowerGExtObj G` (the copower-profunctor
+coend) rather than through restricted coends.
+
+The representable characterization
+`(PowerEndGExtFunctor G |>.obj pt ⟶ Y) ≃
+  typeEnd (powerSliceProf G pt Y)`
+expresses its hom-sets via ends and powers.
+-/
+
+section PowerEndGExt
+
+open HasAllCopowerProfCoends HasAllHomToProfCoends
+
+variable
+  {C : Type v} [Category.{v} C]
+  [HasCopowers C] [HasPowers C]
+  (G : Cᵒᵖ ⥤ C ⥤ C)
+  [HasAllCopowerProfCoends G]
+
+/-- The power-end GExtFunctor: an endofunctor `C ⥤ C`
+whose object map is `CopowerGExtObj G` (the
+copower-profunctor coend carrier). Naturally isomorphic
+to the restricted-coend-based `GExtFunctor G`. -/
+@[simps]
+def PowerEndGExtFunctor : C ⥤ C where
+  obj pt := CopowerGExtObj G pt
+  map {pt₁ pt₂} h :=
+    (copowerGExtIso G pt₁).hom ≫
+      (GExtFunctor G).map h ≫
+      (copowerGExtIso G pt₂).inv
+  map_id pt := by
+    simp only [CategoryTheory.Functor.map_id,
+      GExtFunctor_obj]
+    simp only [Category.id_comp, Iso.hom_inv_id]
+  map_comp {pt₁ pt₂ pt₃} h₁ h₂ := by
+    rw [CategoryTheory.Functor.map_comp]
+    simp only [Category.assoc]
+    congr 1; congr 1
+    simp only [← Category.assoc,
+      Iso.inv_hom_id, Category.id_comp]
+
+/-- The natural isomorphism between `PowerEndGExtFunctor`
+and `GExtFunctor`, with components given by
+`copowerGExtIso`. -/
+def powerEndGExtNatIso :
+    PowerEndGExtFunctor G ≅ GExtFunctor G :=
+  NatIso.ofComponents
+    (fun pt => copowerGExtIso G pt)
+    (fun {pt₁ pt₂} h => by
+      simp only [PowerEndGExtFunctor_map,
+        Category.assoc]
+      simp only [Iso.inv_hom_id, Category.comp_id])
+
+/-- The equivalence of power-end Mendler algebras with
+conventional algebras of `PowerEndGExtFunctor G`. -/
+def mendlerLambekPowerEndFullEquiv :
+    PowerEndMendlerAlgebra G ≌
+      ConventionalAlgebra (PowerEndGExtFunctor G) :=
+  mendlerLambekEndPowerEquiv G |>.trans
+    (Endofunctor.Algebra.equivOfNatIso
+      (powerEndGExtNatIso G)).symm
+
+end PowerEndGExt
+
 end GebLean
