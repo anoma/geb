@@ -1306,8 +1306,7 @@ lemma polyDistLaw_comul_approx_leaf
     Over.homMk_left]
   rw [polyDistLaw_comul_annot_eq]
   simp only [polyCofreeMapApprox_intro,
-    polyCoalgUnit, polyCoalgUnitLeft,
-    polyCoalgUnitAt, polyCoalgUnitApprox]
+    polyCoalgUnit]
   simp only [polyFreeMapAt, polyFreeMBind,
     polyFreeMCoalgStrAt, polyFreeMPure,
     polyCofreeCoalg, polyCofreeStr,
@@ -1342,39 +1341,57 @@ lemma polyDistLaw_comul_approx_leaf
   -- Use congrArg to transport ih_e's LHS to
   -- the goal's LHS, and similarly for the RHS.
   refine Eq.trans ?lhs_eq (Eq.trans ih_e ?rhs_eq)
-  · -- LHS: show goal's input .val = ih_e's input .val
+  · -- LHS: show goal's input .val = ih_e's
+    -- input .val.
     -- Reduce polyFreeMBind on polyFreeMPure via
     -- the monad left identity.
     congr 1
     apply Subtype.ext
-    simp only [polyDistLaw_comul_lhsInput,
-      polyFreeMapAt, polyFreeMBind,
+    simp only [polyFreeMapAt,
       polyFreeMPure,
       polyCoalgUnit, polyCoalgUnitLeft,
       polyCofreeStrFamily, polyCofreeChildrenMor,
       Over.homMk_left,
       polyCofreeCoalg]
-    -- Both sides are sigma pairs
-    -- ⟨fib_pt, PolyFix.mk fib_pt
-    --   (Sum.inl ⟨cofree_element, proof⟩) nofun⟩.
-    -- The fib_pt's match, so Sigma.ext reduces to
-    -- showing the cofree elements are equal.
-    -- The LHS has PolyCofix.children of the unit
-    -- M-type at ⟨y, m_val⟩ at e;
-    -- the RHS has polyCoalgUnitAt at child_e.
-    -- These are related by the coalgebra hom
-    -- property of the unit.
-    -- Use polyCoalgUnitAt_children_heq for the
-    -- cofree comonad unit's children property.
-    -- This relates PolyCofreeM values (not
-    -- PolyCofix P values).
+    -- Both sides are sigma pairs wrapping
+    -- PolyCofreeM values. The LHS has
+    -- .children of polyCoalgUnitAt at
+    -- ⟨y, m_val⟩; the RHS has polyCoalgUnitAt
+    -- at child_e. Use the children property
+    -- of polyCoalgUnitAt.
     let β := polyCofreeCoalg A P
-    have hfam := polyCoalgUnit_family_eq P
-      β ⟨y, m_val⟩
-    -- The children index e comes from the
-    -- coalgebra's family; cast it to the
-    -- M-type's family.
-    _
+    have hfam :=
+      polyCoalgUnit_family_eq P β ⟨y, m_val⟩
+    have hfibEq :
+      β.V.hom
+        ((β.str.left ⟨y, m_val⟩).2.2.left e) =
+      (polyBetweenFamily X X P (β.V.hom
+          ⟨y, m_val⟩)
+        ((polyCoalgUnitAt P β (β.V.hom
+          ⟨y, m_val⟩) ⟨⟨y, m_val⟩, rfl⟩
+          ).head.2)).hom
+        (cast (congrArg (fun F => F.left)
+          hfam) e) := by
+      exact overType_hom_heq hfam e _ (cast_heq
+        (congrArg (fun F => F.left) hfam)
+        e).symm
+    have hch :=
+      polyCoalgUnitAt_children_heq P
+        β ⟨y, m_val⟩ e hfibEq
+    -- hch relates polyCoalgUnitAt at child
+    -- with .children of parent at cast e.
+    -- The sigma pair equality requires
+    -- matching fibers and HEq of M-types.
+    -- Reduce RHS polyFreeMBind on
+    -- polyFreeMPure.
+    simp only [polyFreeMBind, polyFreeMPure,
+      t_e, polyCofreeStr, polyCoalgUnitAt]
+    -- Now use the helper lemma with
+    -- hch.symm (children on left) and
+    -- hfibEq for the fiber.
+    exact polyFreeMPure_cofree_sigma_eq
+      (polyCofreeCarrier A P) P
+      hfibEq hch.symm
   · -- RHS: show ih_e's output .val = goal's output .val
     -- This is the coalgebra hom property of the
     -- distributive law anamorphism.
@@ -1398,8 +1415,8 @@ lemma polyDistLaw_comul_approx_leaf
         e e HEq.rfl
     congr 1
     apply Subtype.ext
-    simp only [polyDistLaw_comul_rhsInput,
-      polyCofreeStrFamily, polyCofreeChildrenMor,
+    simp only [polyCofreeStrFamily,
+      polyCofreeChildrenMor,
       Over.homMk_left]
     exact Sigma.ext hfst hch
 
