@@ -397,6 +397,94 @@ theorem wedgeCondition (m : PowerEndMendlerAlgebra G)
 
 end PowerEndMendlerAlgebra
 
+/-- A morphism of power-end Mendler algebras. -/
+@[ext]
+structure PowerEndMendlerAlgebraHom
+    (m₁ m₂ : PowerEndMendlerAlgebra G) where
+  /-- The underlying morphism in C. -/
+  hom : m₁.pt ⟶ m₂.pt
+  /-- The compatibility condition: for each `A`,
+  `algOp A ≫ mapVal hom = algOp A ≫ mapIdx (· ≫ hom)`.
+  Equivalently, for all `γ : A ⟶ m₁.pt`:
+  `algOp A ≫ proj γ ≫ hom = algOp A ≫ proj (γ ≫ hom)`. -/
+  comm : ∀ (A : C),
+    m₁.algOp A ≫ HasPowers.mapVal hom =
+    m₂.algOp A ≫ HasPowers.mapIdx (· ≫ hom)
+
+namespace PowerEndMendlerAlgebraHom
+
+variable {G}
+
+omit [HasCopowers C] in
+/-- The elementwise form of the compatibility
+condition. -/
+theorem comm_proj
+    {m₁ m₂ : PowerEndMendlerAlgebra G}
+    (f : PowerEndMendlerAlgebraHom G m₁ m₂)
+    (A : C) (γ : A ⟶ m₁.pt) :
+    m₁.algOp A ≫ HasPowers.proj _ _ γ ≫ f.hom =
+    m₂.algOp A ≫
+      HasPowers.proj _ _ (γ ≫ f.hom) := by
+  have h := congrArg (· ≫ HasPowers.proj _ _ γ)
+    (f.comm A)
+  simp only [Category.assoc] at h
+  rw [HasPowers.mapVal_proj,
+    HasPowers.mapIdx_proj] at h
+  exact h
+
+/-- Identity morphism on a power-end Mendler algebra. -/
+@[simps]
+def id (m : PowerEndMendlerAlgebra G) :
+    PowerEndMendlerAlgebraHom G m m where
+  hom := 𝟙 m.pt
+  comm _ := by
+    simp only [HasPowers.mapVal_id,
+      Category.comp_id]
+    symm
+    erw [HasPowers.mapIdx_id, Category.comp_id]
+
+/-- Composition of power-end Mendler algebra
+morphisms. -/
+@[simps]
+def comp
+    {m₁ m₂ m₃ : PowerEndMendlerAlgebra G}
+    (f : PowerEndMendlerAlgebraHom G m₁ m₂)
+    (g : PowerEndMendlerAlgebraHom G m₂ m₃) :
+    PowerEndMendlerAlgebraHom G m₁ m₃ where
+  hom := f.hom ≫ g.hom
+  comm A := by
+    apply HasPowers.ext; intro γ
+    simp only [Category.assoc]
+    rw [HasPowers.mapVal_proj,
+      HasPowers.mapIdx_proj]
+    conv_lhs =>
+      rw [← Category.assoc
+        (HasPowers.proj _ _ γ) f.hom g.hom,
+        ← Category.assoc (m₁.algOp A)
+        (HasPowers.proj _ _ γ ≫ f.hom) g.hom]
+    rw [f.comm_proj A γ, Category.assoc,
+      g.comm_proj A (γ ≫ f.hom)]
+    simp only [Category.assoc]
+
+end PowerEndMendlerAlgebraHom
+
+/-- The category of power-end Mendler algebras
+for `G`. -/
+instance PowerEndMendlerAlgebraCat :
+    Category (PowerEndMendlerAlgebra G) where
+  Hom := PowerEndMendlerAlgebraHom G
+  id := PowerEndMendlerAlgebraHom.id
+  comp := PowerEndMendlerAlgebraHom.comp
+  id_comp _ := by
+    ext; simp [PowerEndMendlerAlgebraHom.comp,
+      PowerEndMendlerAlgebraHom.id]
+  comp_id _ := by
+    ext; simp [PowerEndMendlerAlgebraHom.comp,
+      PowerEndMendlerAlgebraHom.id]
+  assoc _ _ _ := by
+    ext; simp [PowerEndMendlerAlgebraHom.comp,
+      Category.assoc]
+
 end PowerEndMendlerAlg
 
 end GebLean
