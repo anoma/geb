@@ -120,12 +120,14 @@ Tasks 5-8 define the power-end Mendler algebra category
 and establish its equivalence with conventional algebras.
 
 The existing `MendlerAlgebra G` bundles:
+
 - carrier `pt : C`
 - family `∀ A (γ : A ⟶ pt), G(A,A) ⟶ pt`
   (equivalently, a `ParanatSig (HomToProf pt) (G ⇓ pt)`)
 - dinaturality of the family
 
 The power-end version bundles:
+
 - carrier `pt : C`
 - element of `typeEnd (powerSliceProf G pt pt)`,
   i.e., a family `∀ A, G(A,A) ⟶ pt^(A ⟶ pt)` satisfying
@@ -140,11 +142,13 @@ component, currying `(A ⟶ pt) → (G(A,A) ⟶ pt)` into
 File: `GebLean/MendlerLambekEndPower.lean`
 
 - [ ] 5a. Define `PowerEndMendlerAlgebra G`:
-  ```
+
+  ```lean
   structure PowerEndMendlerAlgebra where
     pt : C
     str : typeEnd (powerSliceProf G pt pt)
   ```
+
   The `str` field packages a family
   `∀ A, G(A,A) ⟶ pt^(A ⟶ pt)` satisfying the end wedge
   condition (naturality in A).
@@ -162,7 +166,8 @@ File: `GebLean/MendlerLambekEndPower.lean`
 File: `GebLean/MendlerLambekEndPower.lean`
 
 - [ ] 6a. Define `PowerEndMendlerAlgebraHom`:
-  ```
+
+  ```lean
   structure PowerEndMendlerAlgebraHom
       (m₁ m₂ : PowerEndMendlerAlgebra G) where
     hom : m₁.pt ⟶ m₂.pt
@@ -172,6 +177,7 @@ File: `GebLean/MendlerLambekEndPower.lean`
           (G.map hom.op).app A ≫
           m₂.algOp A ≫ HasPowers.mapIdx (hom ≫ ·)
   ```
+
   (The exact form of `comm` needs verification; it should
   express that `hom` is compatible with the algebra
   structures. The condition says that for each `A`, the
@@ -180,10 +186,12 @@ File: `GebLean/MendlerLambekEndPower.lean`
 
   Alternative (may be cleaner): the compatibility condition
   could be expressed as: for all `A` and `s : A ⟶ m₁.pt`,
-  ```
+
+  ```lean
   m₁.algOp A ≫ proj s = (G.obj (op A)).map hom ≫
     (G.map hom.op).app A ≫ m₂.algOp A ≫ proj (s ≫ hom)
   ```
+
   which is the power-end form of the existing
   `MendlerAlgebraHom.comm`:
   `m₁.family A γ ≫ hom = m₂.family A (γ ≫ hom)`.
@@ -230,11 +238,13 @@ File: `GebLean/MendlerLambekEndPower.lean`
 File: `GebLean/MendlerLambekEndPower.lean`
 
 - [ ] 8a. Compose equivalences to get the final result:
-  ```
+
+  ```lean
   mendlerLambekEndPowerEquiv :
     PowerEndMendlerAlgebra G ≌
       ConventionalAlgebra (GExtFunctor G)
   ```
+
   This is `mendlerAlgPowerEndEquiv.symm.trans
     mendlerLambekEquiv` (or
   `mendlerLambekCopowerEquiv` if using copower coends).
@@ -283,11 +293,13 @@ File: `GebLean/MendlerLambekEndPower.lean`
 ### Dependencies
 
 Phase 1:
+
 - Task 1 and Task 2 are independent
 - Task 3 depends on Tasks 1 and 2
 - Task 4 depends on Task 3
 
 Phase 2:
+
 - Task 5 depends on Task 4 (uses `powerSliceProf`)
 - Task 6 depends on Task 5
 - Task 7 depends on Tasks 5, 6, and Phase 1
