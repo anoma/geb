@@ -839,7 +839,65 @@ lemma polyGSOSScaleCoalg_morphism_h
   | mk y idx children ih =>
     match idx with
     | Sum.inl ⟨⟨_, d⟩, rfl⟩ =>
-      _
+      simp only [Over.comp_left, types_comp_apply,
+        polyScaleReindexCoalg,
+        polyGSOSScaleCoalg,
+        polyGSOSScaleCoalgStr, Over.homMk_left,
+        polyGSOSScaleCoalgStrAt,
+        polyGSOSFoldCataWithFiber,
+        polyGSOSFoldLeafAt,
+        polyScaleReindexLeft,
+        polyCofreeCounit, polyCofreeCounitLeft,
+        polyFreeMap, polyFreeMapLeft,
+        polyFreeMapAt, polyFreeMBind,
+        polyCofreeMap, polyCofreeMapLeft,
+        polyFreeMPure,
+        polyEndoFunctor,
+        polyBetweenEvalFunctor,
+        polyToOverFunctor,
+        polyToOverEvalMap_left,
+        ccrEvalMap]
+      have hannot :
+          f.left (polyCofreeExtract A Q d).val =
+          (polyCofreeExtract B Q
+            (polyCofreeMapAt A B Q f d)).val :=
+        (polyCofreeExtract_mapAt_val
+          A B Q f d).symm
+      have hqidx :
+          d.head.2 =
+          (polyCofreeMapAt A B Q f d).head.2 :=
+        (polyCofreeMapAt_head_snd
+          A B Q f d).symm
+      congr 1; congr 1
+      · congr 1
+        apply Subtype.ext
+        exact Sigma.ext rfl
+          (heq_of_eq (eq_of_heq
+            (polyFix_leaf_heq_of_val_eq _ _ hannot)))
+      · -- Q-children HEq
+        apply polyBetweenFamily_mor_heq
+          rfl _ _ (heq_of_eq hqidx)
+        simp only [Over.comp_left, types_comp,
+          Over.homMk_left]
+        apply Function.hfunext
+        · exact congrArg
+            (fun q => (polyBetweenFamily
+              X X Q y q).left) hqidx
+        · intro e₁ e₂ he
+          simp only [Function.comp_apply,
+            polyFreeMapLeft, polyFreeMapAt,
+            polyFreeMBind, polyFreeMPure]
+          have hfib := overType_hom_heq
+            (congrArg (polyBetweenFamily X X Q y)
+              hqidx) e₁ e₂ he
+          exact heq_of_eq_of_heq
+            (Sigma.ext rfl (heq_of_eq rfl))
+            (heq_of_eq (Sigma.ext hfib
+              (polyFix_leaf_heq_of_val_eq _ _
+                (Sigma.ext hfib
+                  (polyCofreeMapAt_children_heq
+                    A B Q f d
+                    e₁ e₂ he)))))
     | Sum.inr p =>
       _
 
