@@ -713,7 +713,7 @@ to reflect completion.
 ## Estimated effort
 
 | Task | Estimated lines | Difficulty |
-|------|----------------|------------|
+| ---- | -------------- | ---------- |
 | 1. Counit | ~30 | Low |
 | 2. Unit | ~140 | Medium |
 | 3. Naturality | ~250 | Medium |
@@ -734,7 +734,7 @@ to reflect completion.
   are the primary reference for every step.
 - The GSOS-specific differences are in the fold handlers
   (`polyGSOSFoldLeafAt`, `polyGSOSFoldNodeAt`) which use
-  the GSOS rule `rho` — trace through these carefully
+  the GSOS rule `rho` — trace through these
   when adapting from the P=Q template.
 - Helper lemmas from `PolyDistributiveLaw.lean` like
   `polyCofixUnfoldApprox_input_heq` and

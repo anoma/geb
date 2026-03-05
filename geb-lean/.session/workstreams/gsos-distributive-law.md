@@ -99,8 +99,7 @@ Two unsolved goals in `polyGSOSScaleCoalg_morphism_h`:
   `polyGSOSFoldQIndex_eq_node`, `polyGSOSFoldQIndex_eq`:
   Q-index is carrier-independent
 - `polyGSOSFoldCata_natural` (incomplete: Prod.snd node case)
-- `polyGSOSDistLaw_naturality_approx` (written but not verified
-  due to compilation blocked by line 1021)
+- `polyGSOSDistLaw_naturality_approx` (written but not verified)
 
 ## Current state (2026-03-05, updated)
 
@@ -120,7 +119,7 @@ Two unsolved goals in `polyGSOSScaleCoalg_morphism_h`:
 
 ### Dependency chain
 
-```
+```lean
 polyGSOSFoldNodeAt_snd_natural  (bottleneck)
     ↓
 polyGSOSFoldQeval_natural  (induction on t, node case
@@ -147,7 +146,7 @@ polyEndoFunctor, polyBetweenEvalFunctor,
 polyToOverFunctor, polyToOverEvalMap_left]` and
 `congr 1`, the goal reduces to:
 
-```
+```lean
 ccrEvalMap freeMap (pipeline_A node_A) = pipeline_B node_B
 ```
 
@@ -210,7 +209,7 @@ into `pipeline_B node_B`
 by commuting `freeMap` past each pipeline step,
 working outside-in.
 
-```
+```lean
 ccrEvalMap freeMap (ccrEvalMap join_A (toFun_A
   (rhoEval_A (invFun_A (ccrEvalMap prodComp_A
   node_A)))))
@@ -283,7 +282,7 @@ At each P-direction `e`:
 
 **Difficulty**: Medium. Main work is decomposing
 the `prodComp` output and matching components.
-Needs careful handling of the `Over X` morphism
+Needs handling of the `Over X` morphism
 `w` conditions and the Sigma structure.
 
 **Implementation**: Inline `have` in proof.
@@ -331,6 +330,7 @@ P-direction. Post-composing with `h` distributes:
 
 **Proof sketch**: By the Sigma equality of
 `polyBetweenEvalFamily` values:
+
 - Index part: `rfl` (definitional, if `ptoefIndex`
   reduction works through `ccrEvalMap`)
 - Morphism part: `Over.OverMorphism.ext; funext
@@ -409,6 +409,7 @@ where `join = Over.homMk (fun ⟨x', evalElem⟩ =>
 (fun _ a => a.prop ▸ a.val.2)⟩) rfl`.
 
 **Why it holds**: The join morphism:
+
 1. Converts a `polyFreeMPoly P` evaluation into a
    `PolyFreeM TDQ P` tree (via
    `polyFreeMPolyEval_to_polyFreeM`)
@@ -449,6 +450,7 @@ polyFreeMBind TDQ_B DQ_B P
 sub_B`
 
 This is bind-map interchange. Proof via:
+
 - `polyFreeMapAt_as_bind` (PolyAlg:5765)
 - `polyFreeM_bind_assoc` (PolyAlg:3494)
 - `polyFreeM_pure_bind` (PolyAlg:3466)
@@ -495,16 +497,19 @@ Once `polyGSOSFoldNodeAt_snd_natural` compiles,
 `polyGSOSFoldQeval_natural` compiles (line 994).
 
 At line 1217, the goal is:
-```
+
+```lean
 polyFreeMapLeft DQ_A DQ_B P cofreeMap
   (catA.val.val.2.snd.snd.left e₁) =
 catB.val.val.2.snd.snd.left e₂
 ```
+
 i.e., `freeMap.left (qMor_A.left e₁) =
 qMor_B.left e₂` where `e₁ ≍ e₂`.
 
 This follows from `polyGSOSFoldQeval_natural`
 applied to `PolyFix.mk y (Sum.inr p) children`:
+
 1. `polyGSOSFoldQeval_natural` gives
    `GSOSQMap.left catA.val.val.2 = catB.val.val.2`
 2. Unfolding: `⟨y, ⟨qIdx_A, qMor_A ≫ freeMap⟩⟩ =
@@ -520,6 +525,7 @@ applied to `PolyFix.mk y (Sum.inr p) children`:
 Note: `polyGSOSFoldQeval_natural` for the full
 tree is NOT circular with `polyGSOSScaleCoalg_morphism_h`
 because:
+
 - `polyGSOSFoldQeval_natural` is proved by its OWN
   induction on `t`, separate from the induction in
   `polyGSOSScaleCoalg_morphism_h`
@@ -598,7 +604,7 @@ After `dsimp`, the goal compares (using Sigma structure):
   `polyFix_leaf_heq_of_val_eq`.
 
 The nested Sigma/Scale/Subtype structure requires
-careful `congr`/`Sigma.ext` decomposition.
+`congr`/`Sigma.ext` decomposition.
 
 Build checkpoint.
 
@@ -772,7 +778,7 @@ In the P=Q case, the P-coalgebra on T(D(A)) uses
 `polyFreeMCoalgStrAt`. In the GSOS case, we use the
 GSOS fold instead.
 
-Two sub-options:
+Two possibilities:
 
 - (a) Define via `polyFreeMCoalgStrAt` for the outer
   P-structure, then use the GSOS fold for Q-structure

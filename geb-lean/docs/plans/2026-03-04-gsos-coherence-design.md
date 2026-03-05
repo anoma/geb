@@ -120,7 +120,7 @@ approximation approach.
 
 **Estimated size**: ~600 lines
 
-**Strategy**: This is the hardest axiom.  The P=Q proof
+**Strategy**: This is the hardest proof.  The P=Q proof
 uses `polyCofixUnfold_precomp` to express both sides as
 anamorphisms and then shows both sides satisfy the same
 coalgebra condition.

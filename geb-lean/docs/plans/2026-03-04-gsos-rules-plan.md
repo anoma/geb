@@ -448,7 +448,7 @@ Build: should compile.
 
 ---
 
-## Task 6: Coherence -- Counit Axiom
+## Task 6: Coherence -- Counit
 
 **Files:**
 
@@ -480,7 +480,7 @@ Build after proving.
 
 ---
 
-## Task 7: Coherence -- Unit Axiom
+## Task 7: Coherence -- Unit
 
 **Files:**
 
@@ -526,7 +526,7 @@ Follow `polyDistLaw_naturality` proof pattern.
 
 ---
 
-## Task 9: Coherence -- Comultiplication Axiom
+## Task 9: Coherence -- Comultiplication
 
 **Files:**
 
@@ -543,7 +543,7 @@ Follow `polyDistLaw_comul` proof pattern.
 
 ---
 
-## Task 10: Coherence -- Multiplication Axiom
+## Task 10: Coherence -- Multiplication
 
 **Files:**
 
@@ -758,7 +758,7 @@ Recurring techniques:
 4. `polyCofixUnfold_precomp` and `polyCofixUnfold_unique`
    for anamorphism equalities
 5. Induction on `PolyFreeM` trees for the multiplication
-   axiom
+   coherence
 6. Factor out helper lemmas when proofs grow beyond
    ~30 lines (per CLAUDE.md guidelines)
 7. Use underscores to check goal types at each step
