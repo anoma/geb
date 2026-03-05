@@ -2193,6 +2193,200 @@ private theorem cgeChurchLeg_wedge
   congr 1
   exact twOuter.wedge.condition f
 
+/-- Type alias for the global section `gs` of the
+inner end at `CopowerGExtObj`, derived from the
+identity via `gExtEndPowerEquiv`. -/
+private abbrev bwdGlobalSection
+    (pt : C)
+    (twInner : ∀ Y : C,
+      HasTerminalWedge (ihomPowerProf G pt Y)) :
+    𝟙_ C ⟶ (twInner (CopowerGExtObj G pt)).wedge.pt :=
+  typeEndToGlobalSection G pt (CopowerGExtObj G pt)
+    (twInner (CopowerGExtObj G pt))
+    (gExtEndPowerEquiv G pt (CopowerGExtObj G pt)
+      (𝟙 (CopowerGExtObj G pt)))
+
+/-- Type alias for the functorial map on inner ends
+induced by `cgeChurchLeg Y`. -/
+private abbrev innerEndMap
+    (pt : C)
+    (twInner : ∀ Y : C,
+      HasTerminalWedge (ihomPowerProf G pt Y))
+    (Y : C) :
+    (twInner (CopowerGExtObj G pt)).wedge.pt ⟶
+      (twInner
+        ((ihom ((twInner Y).wedge.pt)).obj Y)
+      ).wedge.pt :=
+  (ihomPowerEndFunctor G pt twInner).map
+    (cgeChurchLeg G pt twInner Y)
+
+omit [BraidedCategory C] [HasCopowers C]
+  [HasPowers C] [HasAllCopowerProfCoends G] in
+/-- `(pre h).app Z ≫ ihomEvalAt gs = ihomEvalAt
+(gs ≫ h)` where `pre` is contravariant
+precomposition on the internal hom. -/
+private theorem pre_comp_ihomEvalAt
+    {X X' Y : C} (gs : 𝟙_ C ⟶ X)
+    (h : X ⟶ X') :
+    (MonoidalClosed.pre h).app Y ≫ ihomEvalAt gs =
+      ihomEvalAt (gs ≫ h) := by
+  simp only [ihomEvalAt]
+  slice_lhs 1 2 =>
+    rw [← NatTrans.comp_app,
+      ← MonoidalClosed.pre_map]
+  simp only [Category.assoc]
+
+/-- The outer wedge condition applied at the
+morphism `cgeChurchLeg Y`, relating
+`ι cge ≫ (ihom _).map (cgeChurchLeg Y)` to
+`ι Z ≫ pre(innerEndMap)`. -/
+private theorem ι_cge_ihomMap_cgeChurchLeg
+    (pt : C)
+    (twInner : ∀ Y : C,
+      HasTerminalWedge (ihomPowerProf G pt Y))
+    (twOuter : HasTerminalWedge
+      (churchProf G pt twInner))
+    (Y : C) :
+    let cge := CopowerGExtObj G pt
+    let Z := (ihom ((twInner Y).wedge.pt)).obj Y
+    Multifork.ι twOuter.wedge cge ≫
+    (ihom (twInner cge).wedge.pt).map
+      (cgeChurchLeg G pt twInner Y) =
+    Multifork.ι twOuter.wedge Z ≫
+    (MonoidalClosed.pre
+      (innerEndMap G pt twInner Y)).app Z := by
+  intro cge Z
+  exact twOuter.wedge.condition
+    (cgeChurchLeg G pt twInner Y)
+
+/-- The coend injection at `A`, followed by
+the copower injection at `s`, followed by
+`cgeChurchLeg Y`, gives the Church component
+at `Y`. -/
+private theorem inj_inj_cgeChurchLeg
+    (pt : C)
+    (twInner : ∀ Y : C,
+      HasTerminalWedge (ihomPowerProf G pt Y))
+    (twOuter : HasTerminalWedge
+      (churchProf G pt twInner))
+    (Y A : C) (s : A ⟶ pt) :
+    HasCopowers.inj (A ⟶ pt)
+      ((G.obj (Opposite.op A)).obj A) s ≫
+    CopowerGExtInj G pt A ≫
+    cgeChurchLeg G pt twInner Y =
+    churchComponent G pt twInner Y A s := by
+  rw [← fwd_comp_ι_eq_cgeChurchLeg G pt twInner
+    twOuter Y,
+    ← Category.assoc (CopowerGExtInj G pt A),
+    inj_comp_forward G pt twInner twOuter A,
+    ← Category.assoc, HasCopowers.fac]
+  exact twOuter.isLimit.fac
+    (Wedge.mk _
+      (fun Y' =>
+        churchComponent G pt twInner Y' A s)
+      (fun {_ _} f =>
+        churchComponent_wedge
+          G pt twInner A s f))
+    (WalkingMulticospan.left Y)
+
+/-- Per-component enriched Yoneda chain: the Church
+component at `Z = [(twInner Y).pt, Y]` composed with
+`ihomEvalAt(gs ≫ m)` recovers the Church component
+at `Y`. -/
+private theorem churchComponent_Z_ihomEvalAt
+    (pt : C)
+    (twInner : ∀ Y : C,
+      HasTerminalWedge (ihomPowerProf G pt Y))
+    (twOuter : HasTerminalWedge
+      (churchProf G pt twInner))
+    (Y A : C) (s : A ⟶ pt) :
+    let Z := (ihom ((twInner Y).wedge.pt)).obj Y
+    churchComponent G pt twInner Z A s ≫
+    ihomEvalAt (bwdGlobalSection G pt twInner ≫
+      innerEndMap G pt twInner Y) =
+    churchComponent G pt twInner Y A s := by
+  intro Z
+  let cge := CopowerGExtObj G pt
+  let gs := bwdGlobalSection G pt twInner
+  let m := innerEndMap G pt twInner Y
+  have expand : ihomEvalAt (gs ≫ m) =
+      (MonoidalClosed.pre m).app Z ≫ ihomEvalAt gs :=
+    (pre_comp_ihomEvalAt gs m).symm
+  have wedge :
+      churchComponent G pt twInner Z A s ≫
+        (MonoidalClosed.pre m).app Z =
+      churchComponent G pt twInner cge A s ≫
+        (ihom (twInner cge).wedge.pt).map
+          (cgeChurchLeg G pt twInner Y) :=
+    (churchComponent_wedge G pt twInner A s
+      (cgeChurchLeg G pt twInner Y)).symm
+  rw [expand, ← Category.assoc, wedge,
+    Category.assoc,
+    ihomEvalAt_natural gs
+      (cgeChurchLeg G pt twInner Y),
+    ← Category.assoc,
+    churchComponent_ihomEvalAt_eq G pt twInner A s,
+    Category.assoc]
+  exact inj_inj_cgeChurchLeg G pt twInner twOuter
+    Y A s
+
+/-- Lifting the per-component chain to the coend
+level: `cgeChurchLeg Z ≫ ihomEvalAt(gs ≫ m)` equals
+`cgeChurchLeg Y`. This is `fwd ≫ (target equation)`,
+meaning `fwd` can be factored on the left. -/
+private theorem cgeChurchLeg_Z_ihomEvalAt
+    (pt : C)
+    (twInner : ∀ Y : C,
+      HasTerminalWedge (ihomPowerProf G pt Y))
+    (twOuter : HasTerminalWedge
+      (churchProf G pt twInner))
+    (Y : C) :
+    let Z := (ihom ((twInner Y).wedge.pt)).obj Y
+    cgeChurchLeg G pt twInner Z ≫
+    ihomEvalAt (bwdGlobalSection G pt twInner ≫
+      innerEndMap G pt twInner Y) =
+    cgeChurchLeg G pt twInner Y := by
+  intro Z
+  apply (copowerGExtHomEndEquiv G pt
+    ((ihom ((twInner Y).wedge.pt)).obj Y)).injective
+  apply Subtype.ext
+  funext A
+  simp only [copowerGExtHomEndEquiv_val]
+  apply HasCopowers.ext
+  intro s
+  change HasCopowers.inj (A ⟶ pt) _ s ≫
+      CopowerGExtInj G pt A ≫
+      cgeChurchLeg G pt twInner Z ≫
+      ihomEvalAt (bwdGlobalSection G pt twInner ≫
+        innerEndMap G pt twInner Y) =
+    HasCopowers.inj (A ⟶ pt) _ s ≫
+      CopowerGExtInj G pt A ≫
+      cgeChurchLeg G pt twInner Y
+  rw [reassoc_of%
+    (inj_inj_cgeChurchLeg G pt twInner twOuter
+      Z A s),
+    inj_inj_cgeChurchLeg G pt twInner twOuter
+      Y A s]
+  exact churchComponent_Z_ihomEvalAt G pt twInner
+    twOuter Y A s
+
+/-- The reduced enriched Yoneda condition:
+evaluating the outer end projection at `Z` using the
+pushed-forward global section `gs ≫ innerEndMap`
+recovers the projection at `Y`. -/
+private theorem ι_Z_ihomEvalAt_eq_ι_Y
+    (pt : C)
+    (twInner : ∀ Y : C,
+      HasTerminalWedge (ihomPowerProf G pt Y))
+    (twOuter : HasTerminalWedge
+      (churchProf G pt twInner))
+    (Y : C) :
+    let Z := (ihom ((twInner Y).wedge.pt)).obj Y
+    Multifork.ι twOuter.wedge Z ≫
+    ihomEvalAt (bwdGlobalSection G pt twInner ≫
+      innerEndMap G pt twInner Y) =
+    Multifork.ι twOuter.wedge Y := _
+
 /-- The backward map composed with a `cgeChurchLeg`
 gives the corresponding terminal wedge projection.
 This is the enriched Yoneda factoring condition. -/
@@ -2209,22 +2403,16 @@ private theorem bwd_comp_cgeChurchLeg
     Multifork.ι twOuter.wedge Y := by
   unfold impredicativeGExtToCopowerGExt
   simp only [Category.assoc]
-  -- ι cge ≫ ihomEvalAt gs ≫ cgeChurchLeg Y = ι Y
-  -- Use ihomEvalAt_natural to push ihomEvalAt past
-  -- cgeChurchLeg Y
-  slice_lhs 2 3 =>
-    rw [← ihomEvalAt_natural]
-  -- ι cge ≫ (ihom _).map (cgeChurchLeg Y) ≫
-  --   ihomEvalAt gs = ι Y
-  -- Remaining: this is the enriched Yoneda factoring
-  -- condition. The `ihomEvalAt_natural` rewrite
-  -- gives back `ι cge ≫ ihomEvalAt gs ≫
-  -- cgeChurchLeg Y = ι Y` (circular). The wedge
-  -- condition introduces higher-type indices.
-  -- The proof requires a direct computation of
-  -- `ihomEvalAt gs` on the `cgeChurchLeg` leg,
-  -- using the inner end structure.
-  sorry
+  rw [← ihomEvalAt_natural
+    (bwdGlobalSection G pt twInner)
+    (cgeChurchLeg G pt twInner Y),
+    ← Category.assoc,
+    ι_cge_ihomMap_cgeChurchLeg G pt twInner
+      twOuter Y,
+    Category.assoc,
+    pre_comp_ihomEvalAt]
+  exact ι_Z_ihomEvalAt_eq_ι_Y G pt twInner
+    twOuter Y
 
 theorem impredicativeGExt_backward_forward
     (pt : C)
