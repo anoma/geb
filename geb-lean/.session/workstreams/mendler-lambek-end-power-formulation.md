@@ -296,16 +296,32 @@ We have:
   `twOuter.wedge.ι cge ≫ ihomEvalAt gs`)
 - `copowerGExt_backward_forward : fwd ≫ bwd = 𝟙`
   (line 2010, proved)
-- `impredicativeGExt_backward_forward : bwd ≫ fwd = 𝟙`
-  (line 2055, **TO PROVE**)
+- `impredicativeGExt_backward_forward :
+  bwd ≫ fwd = 𝟙` (**TO PROVE**)
 
-Proving `bwd ≫ fwd = 𝟙` is the remaining proof
-obligation. This cannot be derived from
-`fwd ≫ bwd = 𝟙` by abstract categorical reasoning
-(section-retraction pairs do not automatically yield
-isomorphisms). The proof uses the enriched Yoneda
-argument via constructing a terminal
-`churchProf`-wedge on `CopowerGExtObj`.
+#### Analysis of the proof obligation
+
+Proving `bwd ≫ fwd = 𝟙` cannot be derived from
+`fwd ≫ bwd = 𝟙` by abstract categorical reasoning.
+Confirmed approaches that do NOT work:
+
+1. **Section-retraction algebra**: `fwd ≫ bwd = 𝟙`
+   makes fwd split mono (hence mono) and bwd split
+   epi (hence epi), but neither mono+epi in a
+   general category, nor mono-of-fwd applied to
+   fwd's right-cancellation, yield `bwd ≫ fwd = 𝟙`.
+2. **Joint epicity of churchLift family**: The
+   derived fact `churchLift A s ≫ (bwd ≫ fwd) =
+   churchLift A s` is provable, but the churchLift
+   family is not jointly epic (they are lifts into
+   a limit, not colimit injections).
+3. **isIso_of_epi_of_isSplitMono**: Would require
+   showing fwd is epi, which is equivalent to the
+   original problem.
+
+The proof genuinely requires the **enriched Yoneda
+argument** via the specific terminal wedge and
+coend structures.
 
 #### Available helper lemmas (all proved)
 
@@ -326,260 +342,147 @@ argument via constructing a terminal
    `(ihom X).map f ≫ ihomEvalAt gs =
    ihomEvalAt gs ≫ f`
 
-#### Derived facts (provable from helpers)
+#### Proof strategy: terminal wedge on cge
 
-- `churchLift A s ≫ (bwd ≫ fwd) = churchLift A s`
-  (from helpers 1 and 2, by
-  `churchLift A s ≫ bwd ≫ fwd =
-   inj(s) ≫ CopowerGExtInj A ≫ fwd =
-   inj(s) ≫ HasCopowers.desc ... = churchLift A s`)
-- `churchLift A s ≫ (bwd ≫ fwd) ≫ ι Y =
-  churchComponent Y A s`
-  (from above plus `twOuter.isLimit.fac`)
+Construct a terminal `churchProf`-wedge with apex
+`CopowerGExtObj G pt`, then use `isTerminalWedgeIso`
+to get `ImpredicativeGExtObj ≅ CopowerGExtObj` with
+both round-trips free. Match the iso components with
+`fwd` and `bwd`.
 
-#### Sub-step 9b-i: Define `cgeChurchLeg`
+##### Step A: Define `cgeChurchLeg Y`
 
-```
-def cgeChurchLeg Y :
-    CopowerGExtObj G pt ⟶
-      (churchProf G pt twInner).obj (op Y)).obj Y
-```
-
-The legs of a `churchProf`-wedge with apex
-`CopowerGExtObj G pt`. Defined as the unique morphism
-from the coend `cge` such that for each `A`:
+Define `cgeChurchLeg Y : cge → [(twInner Y).pt, Y]`
+as the unique coend-morphism satisfying:
 `CopowerGExtInj A ≫ cgeChurchLeg Y =
- HasCopowers.desc (fun s => churchComponent Y A s)`.
+ HasCopowers.desc (fun s => churchComponent Y A s)`
 
-Construction: use `(gExtEndPowerEquiv G pt
-[(twInner Y).pt, Y]).symm` applied to the type-end
-element whose components at `A` are
+Construction: use `gExtEndPowerEquiv.symm` applied
+to the typeEnd element with components
 `HasPowers.lift (fun s => churchComponent Y A s)`.
-Need to verify the wedge condition on the power-slice
-profunctor, which follows from
-`churchComponent_wedge` and `churchComponent_dinatural`.
-
-Alternatively, use
-`copowerGExtHomEndEquiv.symm (cowedge)` where the
-cowedge at `A` is
-`HasCopowers.desc (fun s => churchComponent Y A s)`.
-The cowedge condition follows from
+The wedge condition for typeEnd follows from
 `churchComponent_dinatural`.
 
-Once defined, verify:
-`CopowerGExtInj A ≫ cgeChurchLeg Y =
-HasCopowers.desc (fun s => churchComponent Y A s)`
+##### Step B: cgeChurchLeg wedge condition
 
-#### Sub-step 9b-ii: `cgeChurchLeg` wedge condition
-
-Prove for `f : Y₁ → Y₂`:
+Show for `f : Y₁ → Y₂`:
 `cgeChurchLeg Y₁ ≫ (churchProf.obj (op Y₁)).map f =
  cgeChurchLeg Y₂ ≫ (churchProf.map f.op).app Y₂`
 
-Both sides are maps `cge → [(twInner Y₁).pt, Y₂]`.
-Reduce to checking at each `CopowerGExtInj A` using
-`copowerGExtHomEndEquiv.injective`, then at each
-`HasCopowers.inj s`. At each `(A, s)`, this follows
-from `churchComponent_wedge`.
+Reduce to injection level via
+`copowerGExtHomEndEquiv.injective`, then to
+per-s level via `HasCopowers.ext`. At each `(A, s)`,
+follows from `churchComponent_wedge`.
 
-#### Sub-step 9b-iii: `cgeChurchLeg` factoring
+##### Step C: Show `fwd ≫ ι Y = cgeChurchLeg Y`
 
-Prove `fwd ≫ ι Y = cgeChurchLeg Y`, i.e., the
-forward map followed by the terminal wedge projection
-equals the independently-defined leg.
+Reduce to injection level. At each `(A, s)`:
+LHS = `churchLift A s ≫ ι Y = churchComponent Y A s`
+RHS = definition of `cgeChurchLeg`. Both equal.
 
-Both sides are maps `cge → [(twInner Y).pt, Y]`.
-Reduce to checking at `CopowerGExtInj A` and
-`HasCopowers.inj s`:
-- LHS: `inj(s) ≫ CopowerGExtInj A ≫ fwd ≫ ι Y =
-  inj(s) ≫ HasCopowers.desc (churchLift A) ≫ ι Y =
-  churchLift A s ≫ ι Y = churchComponent Y A s`
-  (by `inj_comp_forward`, `HasCopowers.fac`, fac)
-- RHS: `inj(s) ≫ CopowerGExtInj A ≫ cgeChurchLeg Y =
-  inj(s) ≫ HasCopowers.desc (churchComponent Y A) =
-  churchComponent Y A s`
-  (by the defining property of `cgeChurchLeg`)
+##### Step D: Terminality factoring
 
-#### Sub-step 9b-iv: Terminal wedge lift
+For a general `churchProf`-wedge W with apex X,
+define lift `h := W.ι cge ≫ ihomEvalAt gs : X → cge`.
 
-Define the lift for the cge wedge: given a
-`churchProf`-wedge W with apex X, the lift is
-`h = W.ι cge ≫ ihomEvalAt gs : X → cge`.
+Need: `h ≫ cgeChurchLeg Y = W.ι Y` for all Y.
 
-Prove factoring: `h ≫ cgeChurchLeg Y = W.ι Y`.
-
-This is: `W.ι cge ≫ ihomEvalAt gs ≫ cgeChurchLeg Y =
+This is `W.ι cge ≫ ihomEvalAt gs ≫ cgeChurchLeg Y =
 W.ι Y`.
 
-Strategy: reduce `ihomEvalAt gs ≫ cgeChurchLeg Y`
-to a form involving the wedge condition of W.
+**This is the hard step.** Two approaches:
 
-Using `ihomEvalAt_natural`:
-`ihomEvalAt gs ≫ cgeChurchLeg Y =
- (ihom (twInner cge).pt).map (cgeChurchLeg Y) ≫
- ihomEvalAt gs`
+**Approach D1 (curry-level):** Show
+`ihomEvalAt gs ≫ cgeChurchLeg Y :
+[(twInner cge).pt, cge] → [(twInner Y).pt, Y]`
+by uncurrying both sides to
+`[(twInner cge).pt, cge] ⊗ (twInner Y).pt → Y`,
+then verify at each inner end projection.
 
-(where the right `ihomEvalAt gs` now targets
-`[(twInner Y).pt, Y]`)
+**Approach D2 (wedge condition + naturality):**
+Use `ihomEvalAt_natural` to rewrite
+`ihomEvalAt gs ≫ cgeChurchLeg Y` as
+`(ihom _).map (cgeChurchLeg Y) ≫ ihomEvalAt gs`.
+Then use the wedge condition of W applied at the
+morphism `cgeChurchLeg Y : cge → [(twInner Y).pt, Y]`
+in the indexing category C.
 
-Then `W.ι cge ≫ (ihom (twInner cge).pt).map
-(cgeChurchLeg Y)` relates to the wedge condition of W
-evaluated at a morphism `cge → [(twInner Y).pt, Y]`.
+The wedge condition gives:
+`W.ι cge ≫ (ihom (twInner cge).pt).map
+(cgeChurchLeg Y) = W.ι [(twInner Y).pt, Y] ≫
+(pre (ihomPowerEndFunctor.map (cgeChurchLeg Y))
+).app [(twInner Y).pt, Y]`
 
-**Alternative factoring strategy**: Reduce to
-checking at each inner end projection and each
-coend injection, using the specific structure of
-`ihomEvalAt`, `gs`, and `cgeChurchLeg`.
+This introduces `W.ι [(twInner Y).pt, Y]` at a
+different index, leading to an infinite regress.
+So Approach D2 alone is insufficient.
 
-At injection `CopowerGExtInj A` and coprojection
-`HasCopowers.inj s`:
-`churchComponent cge A s ≫ ihomEvalAt gs ≫
-cgeChurchLeg Y`
-`= (inj(s) ≫ CopowerGExtInj A) ≫ cgeChurchLeg Y`
-(by `churchComponent_ihomEvalAt_eq`)
-`= inj(s) ≫ HasCopowers.desc (churchComponent Y A)`
-(by defining property of `cgeChurchLeg`)
-`= churchComponent Y A s`
-(by `HasCopowers.fac`)
+**Approach D3 (direct computation):** Define
+`evalLeg Y := ihomEvalAt gs ≫ cgeChurchLeg Y` and
+show `W.ι cge ≫ evalLeg Y = W.ι Y` by expressing
+both sides as curried forms and comparing their
+uncurried counterparts at each inner end projection.
 
-And `churchComponent Y A s = churchLift A s ≫ ι Y`.
+This requires a **generalized
+churchComponent_ihomEvalAt_eq** that works for
+arbitrary wedge legs rather than specific ones.
+Specifically, prove:
+For any `φ : X → [(twInner cge).pt, cge]` and
+the global section `gs`:
+`φ ≫ ihomEvalAt gs ≫ cgeChurchLeg Y`
+can be expressed in terms of `φ` composed with
+the inner end structure.
 
-So precomposing the LHS with `churchLift A s` gives
-`churchComponent Y A s = churchLift A s ≫ ι Y`,
-which matches `churchLift A s ≫ W.ι Y` when
-`W = twOuter.wedge`.
+This is essentially the enriched Yoneda lemma
+at the morphism level.
 
-For a GENERAL wedge W: we need
-`W.ι cge ≫ ihomEvalAt gs ≫ cgeChurchLeg Y = W.ι Y`.
-
-This does NOT follow from the injection-level
-argument because the `churchLift` family is specific
-to `twOuter.wedge`, not a general wedge.
-
-**Revised strategy for terminality:**
-
-The factoring for a general W requires showing that
-`ihomEvalAt gs ≫ cgeChurchLeg Y` has a specific
-relationship to the `churchProf` wedge condition.
-
-Define: `evalLeg Y := ihomEvalAt gs ≫ cgeChurchLeg Y
-: [(twInner cge).pt, cge] → [(twInner Y).pt, Y]`.
-
-Need to show: for any churchProf-wedge W with
-apex X, `W.ι cge ≫ evalLeg Y = W.ι Y`.
-
-This is equivalent to showing `evalLeg Y` is the
-morphism that the churchProf wedge condition
-prescribes between components cge and Y.
-
-**Key decomposition of `evalLeg Y`**: Using curry
-bijectivity, `evalLeg Y` is determined by its
-uncurried form
-`[(twInner cge).pt, cge] ⊗ (twInner Y).pt → Y`.
-
-The proof reduces to showing this equals a specific
-composition involving the inner end projections,
-braiding, evaluation, and power projections — which
-is how `churchComponent` is defined.
-
-This decomposition is a generalization of
-`churchComponent_ihomEvalAt_eq` from specific
-injection-level morphisms to the full morphism
-`evalLeg Y`.
-
-**Further investigation needed for sub-step 9b-iv.**
-This is the hard step and may require additional
+**Current recommendation:** Begin implementing
+Steps A-C (which are straightforward) and then
+tackle Step D. Step D may require 2-3 additional
 lemmas about the interaction of `ihomEvalAt` with
-the inner end structure. If proving terminality of
-the cge wedge proves intractable, an alternative is:
+the inner/outer end structures.
 
-**Alternative approach (bypass terminality):**
-Prove `bwd ≫ fwd = 𝟙` directly by:
-1. Apply `Multifork.IsLimit.hom_ext` to reduce to
-   per-Y components
-2. For each Y, show
-   `ι cge ≫ ihomEvalAt gs ≫ fwd ≫ ι Y = ι Y`
-3. Use `ihomEvalAt_natural` to rewrite
-   `ihomEvalAt gs ≫ (fwd ≫ ι Y)` as
-   `(ihom _).map (fwd ≫ ι Y) ≫ ihomEvalAt gs`
-4. Use the twOuter wedge condition with
-   Y₁ = cge and f = (fwd ≫ ι Y) (but note f goes
-   from cge to [(twInner Y).pt, Y], not from cge
-   to Y, so the wedge condition applies with Y₂ =
-   [(twInner Y).pt, Y])
-5. Continue reducing using wedge conditions and
-   `ihomEvalAt` properties
+##### Step E: Terminality uniqueness
 
-Both approaches require further exploration. The
-terminal-wedge approach is cleaner architecturally
-but may require the same amount of proof work.
+If `h₁, h₂ : X → cge` both satisfy
+`h_i ≫ cgeChurchLeg Y = W.ι Y` for all Y,
+then `h₁ = h₂`.
 
-#### Sub-step 9b-v: Terminal wedge uniqueness
+Reduce to `CopowerGExtInj A ≫ h₁ =
+CopowerGExtInj A ≫ h₂` via
+`copowerGExtHomEndEquiv.injective`. At each A,
+compose with `HasCopowers.inj s` and use the
+`cgeChurchLeg` characterization to show both
+sides equal the same `churchComponent`-based
+expression.
 
-Prove uniqueness of the lift. If `h₁, h₂ : X → cge`
-both satisfy `h_i ≫ cgeChurchLeg Y = W.ι Y`, then
-`h₁ = h₂`.
+##### Step F: Assemble iso via isTerminalWedgeIso
 
-Reduce to showing
-`CopowerGExtInj A ≫ h₁ = CopowerGExtInj A ≫ h₂`
-for all A (using `copowerGExtHomEndEquiv.injective`),
-then `HasCopowers.inj s ≫ CopowerGExtInj A ≫ h_i`
-for all s (using `HasCopowers.ext`), which equals
-`HasCopowers.inj s ≫ HasCopowers.desc
-(churchComponent Y A) ≫ (ihomEvalAt gsY)`... this
-needs further development.
+Use `isTerminalWedgeIso (churchProf G pt twInner)
+twOuter.isTerminal cgeTerminal` to get
+`ImpredicativeGExtObj ≅ CopowerGExtObj`. Show the
+iso components match `bwd` and `fwd` by uniqueness
+of the terminal lifts. Then both round-trip proofs
+come for free from `isTerminalWedgeIso`.
 
-Uniqueness may follow from the Yoneda embedding
-being faithful, or from the inner end structure.
+##### Step G: Bundle NatIso (9b)
 
-#### Sub-step 9b-vi: Bundle component iso
-
-Once `impredicativeGExt_backward_forward` is proved:
-```
-def impredicativeGExtCopowerIso pt :
-    ImpredicativeGExtObj G pt twInner twOuter ≅
-    CopowerGExtObj G pt where
-  hom := bwd
-  inv := fwd
-  hom_inv_id := impredicativeGExt_backward_forward
-  inv_hom_id := copowerGExt_backward_forward
-```
-
-Component iso for nat iso:
-```
-def impredicativeGExtGExtIso pt :
-    ImpredicativeGExtObj G pt twInner twOuter ≅
-    GExtObj G pt :=
-  impredicativeGExtCopowerIso pt ≪≫ copowerGExtIso
-```
-
-#### Sub-step 9b-vii: Naturality
-
-Prove naturality of the component isos. For
-`h : pt₁ → pt₂`:
-`ImpredicativeGExtFunctor.map h ≫
- (impredicativeGExtGExtIso pt₂).hom =
- (impredicativeGExtGExtIso pt₁).hom ≫
- GExtFunctor.map h`
-
-This involves showing that the backward map `bwd`
-commutes with the functorial maps of both functors,
-up to the `copowerGExtIso` components.
-
-#### Sub-step 9b-viii: Bundle NatIso
-
-```
+```lean
 def powerEndGExtNatIso :
     ImpredicativeGExtFunctor G twInner twOuter ≅
     GExtFunctor G :=
   NatIso.ofComponents
-    (fun pt => impredicativeGExtGExtIso pt)
+    (fun pt => iso_from_step_F pt ≪≫ copowerGExtIso)
     (fun h => naturality_proof h)
 ```
 
-#### Sub-step 9c: Final equivalence
+Naturality follows from the naturality of
+`copowerGExtIso` and the functorial maps of both
+functors.
 
-```
+##### Step H: Final equivalence (9c)
+
+```lean
 def mendlerLambekPowerEndFullEquiv :
     PowerEndMendlerAlgebra G ≌
     ConventionalAlgebra
