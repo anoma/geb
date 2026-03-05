@@ -892,7 +892,7 @@ end PowerSliceReindex
 /-!
 ## Power-End GExtFunctor (Impredicative)
 
-The `PowerEndGExtFunctor` is an endofunctor `C ⥤ C`
+The `ImpredicativeGExtFunctor` is an endofunctor `C ⥤ C`
 with carrier `CopowerGExtObj G pt` and maps defined
 via the end-power characterization
 `gExtEndPowerEquiv`, using `powerSliceProfReindex` to
