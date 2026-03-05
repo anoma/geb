@@ -813,6 +813,270 @@ private lemma polyFreeMStrFamily_natural
     polyFreeMapLeft, polyFreeMapAt]
   exact (polyFreeMBind_cast _ _ _ _ _ _).symm
 
+private lemma polyGSOSFoldLeafAt_snd_natural
+    (A B : Over X) (P Q : PolyEndo X)
+    (f : A ⟶ B) {x : X}
+    (d : PolyCofreeM A Q x) :
+    let DQ_A := polyCofreeCarrier A Q
+    let DQ_B := polyCofreeCarrier B Q
+    let freeMap :=
+      polyFreeMap DQ_A DQ_B P
+        (polyCofreeMap A B Q f)
+    ((polyEndoFunctor X Q).map freeMap).left
+      (polyGSOSFoldLeafAt A P Q d).val.2 =
+    (polyGSOSFoldLeafAt B P Q
+      (polyCofreeMapAt A B Q f d)).val.2 := by
+  simp only [polyGSOSFoldLeafAt,
+    polyEndoFunctor, polyBetweenEvalFunctor,
+    polyToOverFunctor, polyToOverEvalMap_left,
+    ccrEvalMap]
+  have hidx :=
+    (polyCofreeMapAt_head_snd A B Q f d).symm
+  exact Sigma.ext rfl (heq_of_eq
+    (Sigma.ext hidx (by
+      apply polyBetweenFamily_mor_heq rfl _ _
+        (heq_of_eq hidx)
+      simp only [Over.comp_left, Over.homMk_left,
+        polyFreeMap]
+      apply Function.hfunext
+        (congrArg (fun q =>
+          (polyBetweenFamily X X Q x q).left)
+          hidx)
+      intro e₁ e₂ he
+      simp only [types_comp_apply]
+      apply heq_of_eq
+      simp only [polyFreeMapLeft,
+        polyFreeMapAt, polyFreeM_pure_bind,
+        polyCofreeMap]
+      have hhom := overType_hom_heq
+        (congrArg (polyBetweenFamily X X Q x)
+          hidx)
+        e₁ e₂ he
+      have hchild :=
+        polyCofreeMapAt_children_heq
+          A B Q f d e₁ e₂ he
+      dsimp only [Over.homMk_left,
+        polyCofreeMapLeft]
+      let mkLeaf :
+          (polyCofreeCarrier B Q).left →
+          (polyFreeMCarrier
+            (polyCofreeCarrier B Q) P).left :=
+        fun v =>
+          ⟨(polyCofreeCarrier B Q).hom v,
+            polyFreeMPure
+              (polyCofreeCarrier B Q) P
+              ⟨v, rfl⟩⟩
+      have hval :=
+        @Sigma.ext X
+          (fun y => PolyCofreeM B Q y)
+          ⟨_, polyCofreeMapAt A B Q f
+            (PolyCofix.children d e₁)⟩
+          ⟨_, PolyCofix.children
+            (polyCofreeMapAt A B Q f d) e₂⟩
+          hhom hchild
+      convert congrArg mkLeaf hval using 1)))
+
+private abbrev GSOSFreeMap
+    (A B : Over X) (P Q : PolyEndo X)
+    (f : A ⟶ B) :
+    polyFreeMCarrier (polyCofreeCarrier A Q) P ⟶
+    polyFreeMCarrier (polyCofreeCarrier B Q) P :=
+  polyFreeMap (polyCofreeCarrier A Q)
+    (polyCofreeCarrier B Q) P
+    (polyCofreeMap A B Q f)
+
+private abbrev GSOSQMap
+    (A B : Over X) (P Q : PolyEndo X)
+    (f : A ⟶ B) :
+    (polyEndoFunctor X Q).obj
+      (polyFreeMCarrier
+        (polyCofreeCarrier A Q) P) ⟶
+    (polyEndoFunctor X Q).obj
+      (polyFreeMCarrier
+        (polyCofreeCarrier B Q) P) :=
+  (polyEndoFunctor X Q).map
+    (GSOSFreeMap A B P Q f)
+
+private abbrev GSOSNodeChildren
+    (A : Over X) (P Q : PolyEndo X) {y : X}
+    (p : polyBetweenIndex X X P y) :=
+  (e : (polyBetweenFamily X X
+      (polyTranslate
+        (polyCofreeCarrier A Q) P)
+      y (Sum.inr p)).left) →
+    PolyFreeM (polyCofreeCarrier A Q) P
+      ((polyBetweenFamily X X
+        (polyTranslate
+          (polyCofreeCarrier A Q) P)
+        y (Sum.inr p)).hom e)
+
+private lemma polyGSOSFoldNodeAt_snd_natural
+    (A B : Over X) (P Q : PolyEndo X)
+    (rho : PolyGSOSRule P Q) (f : A ⟶ B)
+    {y : X}
+    (p : polyBetweenIndex X X P y)
+    (children :
+      GSOSNodeChildren A P Q p)
+    (ih : ∀ (e : (polyBetweenFamily X X
+        (polyTranslate
+          (polyCofreeCarrier A Q) P)
+        y (Sum.inr p)).left),
+      (GSOSQMap A B P Q f).left
+        (polyGSOSFoldCataWithFiber
+          A P Q rho (children e)).val.val.2 =
+      (polyGSOSFoldCataWithFiber
+        B P Q rho
+        (polyFreeMapAt
+          (polyCofreeCarrier A Q)
+          (polyCofreeCarrier B Q) P
+          (polyCofreeMap A B Q f)
+          _ (children e))).val.val.2) :
+    (GSOSQMap A B P Q f).left
+      (polyGSOSFoldNodeAt A P Q rho
+        (pbefMk p (Over.homMk
+          (fun e =>
+            (polyGSOSFoldCataWithFiber
+              A P Q rho (children e)).val)
+          (funext fun e =>
+            (polyGSOSFoldCataWithFiber
+              A P Q rho
+              (children e)).prop)))).val.2 =
+    (polyGSOSFoldNodeAt B P Q rho
+      (pbefMk p (Over.homMk
+        (fun e =>
+          (polyGSOSFoldCataWithFiber
+            B P Q rho
+            (polyFreeMapAt
+              (polyCofreeCarrier A Q)
+              (polyCofreeCarrier B Q) P
+              (polyCofreeMap A B Q f)
+              _ (children e))).val)
+        (funext fun e =>
+          (polyGSOSFoldCataWithFiber
+            B P Q rho
+            (polyFreeMapAt
+              (polyCofreeCarrier A Q)
+              (polyCofreeCarrier B Q) P
+              (polyCofreeMap A B Q f)
+              _ (children e))).prop)))).val.2 := by
+  let DQ_A := polyCofreeCarrier A Q
+  let DQ_B := polyCofreeCarrier B Q
+  let TDQ_A := polyFreeMCarrier DQ_A P
+  let TDQ_B := polyFreeMCarrier DQ_B P
+  let freeMap := GSOSFreeMap A B P Q f
+  let Prod_A :=
+    overPullback TDQ_A
+      ((polyEndoFunctor X Q).obj TDQ_A)
+  let Prod_B :=
+    overPullback TDQ_B
+      ((polyEndoFunctor X Q).obj TDQ_B)
+  -- Extract the rho-naturality pointwise from
+  -- the morphism-level lemma
+  have rho_nat :
+      ∀ (ev : polyBetweenEvalFamily X X
+        (polyBetweenComp P
+          (polyIdBehaviorPoly Q))
+        TDQ_A y),
+      ccrEvalMap freeMap
+        (polyBetweenMorphEvalAt X X rho.rule
+          TDQ_A y ev) =
+      polyBetweenMorphEvalAt X X rho.rule
+        TDQ_B y (ccrEvalMap freeMap ev) := by
+    intro ev
+    obtain ⟨i, m⟩ := ev
+    simp only [polyBetweenMorphEvalAt,
+      ccrEvalMap, ptoefMk, ptoefIndex,
+      ptoefMor, ccrReindex, ccrFiberMor,
+      ccrEvalMk, ccrEvalIndex, ccrEvalMor,
+      CategoryTheory.Category.assoc]
+  _
+
+private lemma polyGSOSFoldQeval_natural
+    (A B : Over X) (P Q : PolyEndo X)
+    (rho : PolyGSOSRule P Q) (f : A ⟶ B)
+    {x : X}
+    (t : PolyFreeM
+      (polyCofreeCarrier A Q) P x) :
+    let DQ_A := polyCofreeCarrier A Q
+    let DQ_B := polyCofreeCarrier B Q
+    let freeMap :=
+      polyFreeMap DQ_A DQ_B P
+        (polyCofreeMap A B Q f)
+    ((polyEndoFunctor X Q).map freeMap).left
+      (polyGSOSFoldCataWithFiber
+        A P Q rho t).val.val.2 =
+    (polyGSOSFoldCataWithFiber
+      B P Q rho
+      (polyFreeMapAt DQ_A DQ_B P
+        (polyCofreeMap A B Q f) x t)).val.val.2
+    := by
+  induction t with
+  | mk y idx children ih =>
+    match idx with
+    | Sum.inl ⟨⟨_, d⟩, rfl⟩ =>
+      simp only [polyFreeMapAt,
+        polyGSOSFoldCataWithFiber]
+      exact polyGSOSFoldLeafAt_snd_natural
+        A B P Q f d
+    | Sum.inr p =>
+      simp only [polyFreeMapAt,
+        polyGSOSFoldCataWithFiber,
+        polyFreeMBind]
+      exact polyGSOSFoldNodeAt_snd_natural
+        A B P Q rho f p children ih
+
+private lemma polyGSOSFoldFst_natural
+    (A B : Over X) (P Q : PolyEndo X)
+    (rho : PolyGSOSRule P Q) (f : A ⟶ B)
+    {x : X}
+    (t : PolyFreeM
+      (polyCofreeCarrier A Q) P x) :
+    (polyGSOSFoldCataWithFiber B P Q rho
+      (polyFreeMapAt
+        (polyCofreeCarrier A Q)
+        (polyCofreeCarrier B Q) P
+        (polyCofreeMap A B Q f) x t)).val.val.1 =
+    (polyFreeMap
+      (polyCofreeCarrier A Q)
+      (polyCofreeCarrier B Q) P
+      (polyCofreeMap A B Q f)).left
+      (polyGSOSFoldCataWithFiber
+        A P Q rho t).val.val.1 := by
+  induction t with
+  | mk y idx children ih =>
+    match idx with
+    | Sum.inl ⟨⟨_, d⟩, rfl⟩ =>
+      simp only [polyFreeMapAt, polyFreeMBind,
+        polyGSOSFoldCataWithFiber,
+        polyGSOSFoldLeafAt,
+        polyFreeMap, Over.homMk_left,
+        polyFreeMapLeft]
+      rw [polyFreeM_pure_bind]
+      simp only [polyCofreeMap, Over.homMk_left,
+        polyCofreeMapLeft]
+      rfl
+    | Sum.inr p =>
+      simp only [polyGSOSFoldCataWithFiber,
+        polyGSOSFoldNodeAt,
+        polyFreeMap, Over.homMk_left,
+        polyFreeMapLeft]
+      apply congrArg (Sigma.mk y)
+      simp only [pbefMk_index, pbefMk_mor]
+      rw [← polyFreeMStrFamily_natural
+        (polyCofreeCarrier A Q)
+        (polyCofreeCarrier B Q) P
+        (polyCofreeMap A B Q f) y p]
+      congr 1; congr 1
+      apply Over.OverMorphism.ext
+      funext e
+      simp only [Over.comp_left, types_comp_apply,
+        polyFreeMap, Over.homMk_left,
+        polyFreeMapLeft, overPullbackFst]
+      have := ih e
+      simp only [polyFreeMapAt, polyFreeMap,
+        Over.homMk_left, polyFreeMapLeft] at this
+      exact this
+
 lemma polyGSOSScaleCoalg_morphism_h
     (A B : Over X) (P Q : PolyEndo X)
     (rho : PolyGSOSRule P Q) (f : A ⟶ B) :
@@ -899,7 +1163,58 @@ lemma polyGSOSScaleCoalg_morphism_h
                     A B Q f d
                     e₁ e₂ he)))))
     | Sum.inr p =>
-      _
+      simp only [Over.comp_left, types_comp_apply,
+        polyScaleReindexCoalg,
+        polyScaleReindexLeft,
+        polyGSOSScaleCoalg,
+        polyGSOSScaleCoalgStr,
+        Over.homMk_left,
+        polyGSOSScaleCoalgStrAt,
+        polyEndoFunctor,
+        polyBetweenEvalFunctor,
+        polyToOverFunctor,
+        polyToOverEvalMap_left,
+        ccrEvalMap,
+        polyFreeMap, Over.homMk_left,
+        polyFreeMapLeft]
+      have hqidx : (polyGSOSFoldCataWithFiber
+            A P Q rho
+            (PolyFix.mk y (Sum.inr p)
+              children)).val.val.2.snd.fst =
+          (polyGSOSFoldCataWithFiber
+            B P Q rho
+            (polyFreeMapAt
+              (polyCofreeCarrier A Q)
+              (polyCofreeCarrier B Q) P
+              (polyCofreeMap A B Q f) y
+              (PolyFix.mk y (Sum.inr p)
+                children))).val.val.2.snd.fst := by
+        have := polyGSOSFoldQIndex_eq
+          A B P Q rho f
+          (PolyFix.mk y (Sum.inr p) children)
+        simp only [polyGSOSFoldQIndex] at this
+        exact this.symm
+      congr 1; congr 1
+      · congr 1
+        apply Subtype.ext
+        exact Sigma.ext rfl
+          (heq_of_eq
+            (polyGSOSDistLaw_annot_natural
+              A B P Q f
+              (PolyFix.mk y (Sum.inr p)
+                children)).symm)
+      · apply polyBetweenFamily_mor_heq
+          rfl _ _ (heq_of_eq hqidx)
+        simp only [Over.comp_left, types_comp]
+        apply Function.hfunext
+        · exact congrArg
+            (fun q => (polyBetweenFamily
+              X X Q y q).left) hqidx
+        · intro e₁ e₂ he
+          simp only [Over.homMk_left,
+            Function.comp]
+          apply heq_of_eq
+          _
 
 lemma polyGSOSDistLaw_naturality
     (A B : Over X) (P Q : PolyEndo X)

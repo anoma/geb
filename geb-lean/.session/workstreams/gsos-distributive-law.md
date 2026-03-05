@@ -102,6 +102,235 @@ Two unsolved goals in `polyGSOSScaleCoalg_morphism_h`:
 - `polyGSOSDistLaw_naturality_approx` (written but not verified
   due to compilation blocked by line 1021)
 
+## Current state (2026-03-05)
+
+### What compiles
+
+- `polyGSOSFoldNodeAt_snd_natural` (line 913): Type
+  signature compiles. Inner `rho_nat` helper compiles.
+  Main body has underscore at line 1005.
+- `polyGSOSFoldQeval_natural` (line 1026): Uses
+  `polyGSOSFoldNodeAt_snd_natural` in node case.
+  Leaf case proved.
+- `polyGSOSScaleCoalg_morphism_h` (line 1080): Leaf
+  case proved. Node case has underscore at line 1217 for
+  Q-children.
+- `polyGSOSDistLaw_naturality` (line 1219): Compiles
+  given `polyGSOSScaleCoalg_morphism_h`.
+
+### The Q-children pipeline naturality problem
+
+File `GebLean/PolyGSOS.lean`, lemma
+`polyGSOSFoldNodeAt_snd_natural` at line 913.
+
+Goal (at the underscore, line 1005, after `congr 1`):
+
+```
+ccrEvalMap freeMap (pipeline_A node_A) = pipeline_B node_B
+```
+
+where `pipeline = ccrEvalMap join . toFun . rhoEval .
+invFun . ccrEvalMap prodComp` and:
+
+- `node_A = pbefMk p childMor_A` with
+  `childMor_A.left e = catA_e.val`
+- `node_B = pbefMk p childMor_B` with
+  `childMor_B.left e = catB_e.val`
+- `catA_e = polyGSOSFoldCataWithFiber A ... (children e)`
+- `catB_e = polyGSOSFoldCataWithFiber B ...
+  (polyFreeMapAt ... (children e))`
+
+Available hypotheses:
+
+- `ih`: `GSOSQMap.left catA_e.val.val.2 =
+  catB_e.val.val.2` (Q-eval naturality per child)
+- `h_fst` (to be proved via `polyGSOSFoldFst_natural`):
+  `catB_e.val.val.1 = freeMap.left catA_e.val.val.1`
+  (fst naturality per child)
+- `rho_nat`: `ccrEvalMap freeMap (rhoEval_A ev) =
+  rhoEval_B (ccrEvalMap freeMap ev)` (rho naturality)
+
+### Proof plan: push freeMap through the pipeline
+
+The chain of equalities (all at `ccrEval` level):
+
+```
+ccrEvalMap freeMap (ccrEvalMap join_A (toFun_A
+  (rhoEval_A (invFun_A (ccrEvalMap prodComp_A node_A)))))
+
+= ccrEvalMap (join_A >> freeMap) (toFun_A (...))
+  [by ccrEvalMap_comp]
+
+= ccrEvalMap join_B (ccrEvalMap (TP.map freeMap)
+    (toFun_A (...)))
+  [by join_nat + ccrEvalMap_comp]
+
+= ccrEvalMap join_B (toFun_B (ccrEvalMap freeMap
+    (rhoEval_A (...))))
+  [by toFun_nat]
+
+= ccrEvalMap join_B (toFun_B (rhoEval_B
+    (ccrEvalMap freeMap (invFun_A (...)))))
+  [by rho_nat]
+
+= ccrEvalMap join_B (toFun_B (rhoEval_B (invFun_B
+    (ccrEvalMap (IQ.map freeMap) (...)))))
+  [by invFun_nat]
+
+= ccrEvalMap join_B (toFun_B (rhoEval_B (invFun_B
+    (ccrEvalMap prodComp_B node_B))))
+  [by children_nat + prodComp_nat]
+```
+
+### Sub-lemmas needed
+
+#### S1. children\_nat: childMor\_A >> pullbackMap = childMor\_B
+
+`pullbackMap = overPullbackMap freeMap (Q.map freeMap)`
+
+Proof: `Over.OverMorphism.ext; funext e; Sigma.ext`.
+For `.1`: use `polyGSOSFoldFst_natural`.
+For `.2`: use `ih`.
+The proof of the subtype condition follows from
+the Over-morphism `w` properties.
+
+Location in code: inline `have` in proof.
+
+#### S2. prodComp\_nat: prodComp\_A >> IQ.map freeMap = pullbackMap >> prodComp\_B
+
+This is a morphism equation in `Over X`. Prove by
+`Over.OverMorphism.ext; funext elem; simp`.
+
+For each pullback element `elem = ((t, qeval), prop)`:
+- The y-coordinate matches
+- The IQ-index: `(fun | inl _ => PUnit.unit | inr _ =>
+  q_idx)` is the same on both sides because
+  `ccrEvalMap freeMap` preserves ccrEval indices
+- The IQ-morphism: on `inl`, both give `freeMap.left t`;
+  on `inr`, both give `freeMap.left (q_mor.left dir)`
+
+Location in code: inline `have` in proof or separate
+private lemma.
+
+#### S3. invFun\_nat: ccrEvalMap freeMap . invFun\_A = invFun\_B . ccrEvalMap (IQ.map freeMap)
+
+`invFun = polyBetweenComp_eval_fiberEquiv_invFun`
+
+This holds because `invFun` restructures indices/fibers
+without touching the morphism target. Post-composing
+with `freeMap` distributes through the restructuring:
+
+- Index: `mor_to_pbe_fiber_index (h >> IQ.map freeMap) eg
+  = mor_to_pbe_fiber_index h eg`
+  (IQ.map preserves indices)
+- Morphism: `(mor_to_pbe_fiber_mor (h >> IQ.map freeMap)
+  eg).left ef = freeMap.left
+  ((mor_to_pbe_fiber_mor h eg).left ef)`
+  (IQ.map post-composes with freeMap)
+
+Proof: `funext ev; obtain ⟨ig, h⟩ := ev; Sigma.ext`
+then `Over.OverMorphism.ext; funext`.
+
+Location: separate private lemma (or inline `have`).
+
+#### S4. rho\_nat (already proved)
+
+Existing `have rho_nat` in the proof context.
+
+#### S5. toFun\_nat: ccrEvalMap (TP.map freeMap) . toFun\_A = toFun\_B . ccrEvalMap freeMap
+
+`toFun = polyBetweenComp_eval_fiberEquiv_toFun`
+
+Symmetric to S3. `toFun` restructures composite eval
+to factored eval. Post-composing distributes:
+
+- Outer g-index: preserved (same `ig`)
+- For each `eg`: f-eval index = `pf eg` (same)
+- f-eval morphism: `Over.homMk (fun ef =>
+  (mor >> freeMap).left (eg, ef))` on the LHS
+  vs `Over.homMk (fun ef => mor.left (eg, ef))
+  >> freeMap` on the RHS. Both give
+  `freeMap.left (mor.left (eg, ef))`.
+
+Proof: `funext ev; obtain ⟨⟨ig, pf⟩, mor⟩ := ev;
+Sigma.ext` then `Over.OverMorphism.ext; funext`.
+
+Location: separate private lemma (or inline `have`).
+
+#### S6. join\_nat: join\_A >> freeMap = TP.map freeMap >> join\_B
+
+`join = Over.homMk (fun (x', evalElem) =>
+  (x', polyFreeMBind TDQ DQ P
+    (polyFreeMPolyEval_to_polyFreeM TDQ P evalElem)
+    (fun _ a => a.prop >> a.val.2))) rfl`
+
+Proof uses two existing lemmas:
+
+1. `polyFreeMPolyEval_to_M_natural` (PolyAlg.lean:8423):
+   `polyFreeMapAt TDQ_A TDQ_B P freeMap x'
+   (polyFreeMPolyEval_to_polyFreeM TDQ_A P evalElem)
+   = polyFreeMPolyEval_to_polyFreeM TDQ_B P
+   (ccrEvalMap freeMap evalElem)`
+
+2. Monad multiplication naturality:
+   `polyFreeMapAt DQ_A DQ_B P cofreeMap x'
+   (polyFreeMBind TDQ_A DQ_A P tree sub_A)
+   = polyFreeMBind TDQ_B DQ_B P
+   (polyFreeMapAt TDQ_A TDQ_B P freeMap x' tree) sub_B`
+
+   Derivation via monad laws:
+   - LHS = `bind tree sub_A >>= pure_cofreeMap`
+     [by `polyFreeMapAt_as_bind`]
+   - = `bind tree (sub_A >>> pure_cofreeMap)`
+     [by `polyFreeM_bind_assoc`]
+   - = `bind tree (fun y a =>
+     polyFreeMapAt ... cofreeMap _ (sub_A y a))`
+     [by `polyFreeMapAt_as_bind` backwards]
+   - RHS = `bind (bind tree pure_freeMap) sub_B`
+     [by `polyFreeMapAt_as_bind` on tree_B]
+   - = `bind tree (pure_freeMap >>> sub_B)`
+     [by `polyFreeM_bind_assoc`]
+   - = `bind tree (fun y a =>
+     sub_B _ (freeMap.left a, ...))`
+     [by `polyFreeM_pure_bind`]
+   - Both leaf functions produce
+     `h >> polyFreeMapAt DQ_A DQ_B P cofreeMap x'' t_A`
+     by `polyFreeMapAt_transport` and proof irrelevance.
+
+   Location: separate private lemma
+   `gsosJoin_bind_natural` or similar. Or use
+   `polyFreeMJoin_natural` (PolyAlg.lean:8366) if the
+   bind-based join can be expressed via polyFreeMJoin.
+
+Proof of `join_nat`: `Over.OverMorphism.ext; funext
+(x', evalElem)`. Use lemma 1 to rewrite. Use lemma 2
+to close.
+
+Location: separate private lemma.
+
+### Existing lemmas to use
+
+| Lemma | File:Line | Purpose |
+| ----- | --------- | ------- |
+| `ccrEvalMap_comp` | Polynomial:347 | Combine ccrEvalMap compositions |
+| `ccrEvalMap_id` | Polynomial:341 | Identity map |
+| `polyBetweenMorphEval_natural` | Polynomial:1341 | Morphism eval naturality |
+| `polyBetweenComp_eval_fiberEquiv_toFun` | Polynomial:1677 | toFun definition |
+| `polyBetweenComp_eval_fiberEquiv_invFun` | Polynomial:1691 | invFun definition |
+| `mor_to_pbe_fiber_index` | Polynomial:1250 | Index extraction |
+| `mor_to_pbe_fiber_mor` | Polynomial:1259 | Morphism extraction |
+| `overPullbackMap` | Utilities/Slice:740 | Pullback map |
+| `polyGSOSFoldFst_natural` | PolyGSOS:1028 | Fst component naturality |
+| `polyFreeMPolyEval_to_M_natural` | PolyAlg:8423 | Eval-to-tree naturality |
+| `polyFreeMJoin_natural` | PolyAlg:8366 | Join naturality |
+| `polyFreeMapAt_as_bind` | PolyAlg:5765 | Map as bind |
+| `polyFreeM_bind_assoc` | PolyAlg:3494 | Bind associativity |
+| `polyFreeM_pure_bind` | PolyAlg:3466 | Pure-bind law |
+| `polyFreeMapAt_transport` | PolyAlg:5734 | Transport commutes with map |
+| `polyFreeMBind_transport` | PolyAlg:5743 | Transport commutes with bind |
+| `Over.OverMorphism.ext` | Utilities | Over morphism extensionality |
+| `polyFreeMapAt_comp` | PolyAlg:5825 | Map composition |
+
 ## Pending: detailed step-by-step plan
 
 ### Phase N: Complete naturality
