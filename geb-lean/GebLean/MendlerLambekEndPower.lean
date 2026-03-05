@@ -1893,6 +1893,146 @@ private theorem churchComponent_ihomEvalAt_eq
   simp
   congr 1
 
+omit [MonoidalCategory C] [MonoidalClosed C]
+  [BraidedCategory C] [HasPowers C] in
+private theorem copowerGExtHomEndEquiv_val
+    (pt Y : C)
+    (f : CopowerGExtObj G pt ⟶ Y) (A : C) :
+    (copowerGExtHomEndEquiv G pt Y f).val A =
+      CopowerGExtInj G pt A ≫ f := by
+  change (homOrdinaryWedge
+    (copowerProf (HomToProf pt) G)
+    (copowerCoend G pt) Y).ι A f =
+    CopowerGExtInj G pt A ≫ f
+  unfold homOrdinaryWedge
+  dsimp only [trivialWeightedWedgeWedgeEquiv,
+    trivialWeightedCowedgeCowedgeEquiv,
+    trivialWeightedWedgeConeEquiv,
+    trivialWeightedCowedgeCoconeEquiv]
+  simp only [Equivalence.symm_functor,
+    Equivalence.symm_inverse,
+    Equivalence.trans_functor,
+    Equivalence.trans_inverse,
+    Functor.comp_obj]
+  dsimp only [wedgeConeEquiv, coneWeightedConeEquiv,
+    coconeWeightedCoconeEquiv, cowedgeCoconeEquiv,
+    Equivalence.symm, Equivalence.trans,
+    Functor.comp_obj,
+    coneToWedgeFunctor, coneToWedge,
+    coneToWedgeComponents,
+    weightedConeToConeFunctor,
+    weightedConeToCone,
+    coconeToWeightedCoconeFunctor,
+    coconeToWeightedCocone,
+    cowedgeToCoconeFunctor, cowedgeToCocone,
+    homWeightedWedge]
+  simp only [Wedge.mk_ι]
+  have h := cowedgeToCoconeιApp_at_id
+    (copowerProf (HomToProf pt) G)
+    (copowerCoend G pt).pt
+    (fun j =>
+      Multicofork.π (copowerCoend G pt) j) A
+  simp only [CopowerGExtInj]
+  rw [← h]
+  simp
+  congr 1
+
+private theorem churchLift_comp_backward
+    (pt : C)
+    (twInner : ∀ Y : C,
+      HasTerminalWedge (ihomPowerProf G pt Y))
+    (twOuter : HasTerminalWedge
+      (churchProf G pt twInner))
+    (A : C) (s : A ⟶ pt) :
+    churchLift G pt twInner twOuter A s ≫
+      impredicativeGExtToCopowerGExt
+        G pt twInner twOuter =
+    HasCopowers.inj (A ⟶ pt)
+      ((G.obj (Opposite.op A)).obj A) s ≫
+      CopowerGExtInj G pt A := by
+  let cge := CopowerGExtObj G pt
+  let e := gExtEndPowerEquiv G pt cge (𝟙 cge)
+  let gs := typeEndToGlobalSection G pt cge
+    (twInner cge) e
+  change churchLift G pt twInner twOuter A s ≫
+    twOuter.wedge.ι cge ≫ ihomEvalAt gs =
+    HasCopowers.inj (A ⟶ pt)
+      ((G.obj (Opposite.op A)).obj A) s ≫
+    CopowerGExtInj G pt A
+  have fac :
+      churchLift G pt twInner twOuter A s ≫
+        Multifork.ι twOuter.wedge cge =
+      churchComponent G pt twInner cge A s :=
+    twOuter.isLimit.fac
+      (Wedge.mk _
+        (fun Y =>
+          churchComponent G pt twInner Y A s)
+        (fun {_ _} f =>
+          churchComponent_wedge
+            G pt twInner A s f))
+      (WalkingMulticospan.left cge)
+  rw [reassoc_of% fac]
+  exact churchComponent_ihomEvalAt_eq
+    G pt twInner A s
+
+private theorem inj_comp_forward
+    (pt : C)
+    (twInner : ∀ Y : C,
+      HasTerminalWedge (ihomPowerProf G pt Y))
+    (twOuter : HasTerminalWedge
+      (churchProf G pt twInner))
+    (A : C) :
+    CopowerGExtInj G pt A ≫
+      copowerGExtToImpredicativeGExt
+        G pt twInner twOuter =
+    HasCopowers.desc (fun s =>
+      churchLift G pt twInner twOuter A s) := by
+  rw [← copowerGExtHomEndEquiv_val]
+  let ImpGExt :=
+    ImpredicativeGExtObj G pt twInner twOuter
+  change (copowerGExtHomEndEquiv G pt ImpGExt
+    (copowerGExtToImpredicativeGExt
+      G pt twInner twOuter)).val A = _
+  unfold copowerGExtToImpredicativeGExt
+    gExtEndPowerEquiv
+  simp only [Equiv.symm_trans_apply]
+  rw [(copowerGExtHomEndEquiv G pt ImpGExt
+    ).apply_symm_apply]
+  change (copowerPowerEquiv _ _ _).symm
+    (HasPowers.lift
+      (fun s => churchLift G pt twInner twOuter A s))
+    = _
+  simp only [copowerPowerEquiv_symm_apply]
+  congr 1
+  funext s
+  simp only [HasPowers.fac]
+
+theorem copowerGExt_backward_forward
+    (pt : C)
+    (twInner : ∀ Y : C,
+      HasTerminalWedge (ihomPowerProf G pt Y))
+    (twOuter : HasTerminalWedge
+      (churchProf G pt twInner)) :
+    copowerGExtToImpredicativeGExt
+      G pt twInner twOuter ≫
+    impredicativeGExtToCopowerGExt
+      G pt twInner twOuter =
+    𝟙 (CopowerGExtObj G pt) := by
+  apply (copowerGExtHomEndEquiv G pt
+    (CopowerGExtObj G pt)).injective
+  apply Subtype.ext
+  funext A
+  simp only [copowerGExtHomEndEquiv_val,
+    Category.comp_id]
+  apply HasCopowers.ext
+  intro s
+  rw [← Category.assoc (CopowerGExtInj G pt A),
+    inj_comp_forward,
+    ← Category.assoc (HasCopowers.inj _ _ s),
+    HasCopowers.fac]
+  exact churchLift_comp_backward
+    G pt twInner twOuter A s
+
 end ImpredicativeGExtIso
 
 end GebLean
