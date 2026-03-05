@@ -552,29 +552,41 @@ Q-index), not for Q-children — those come from
 
 ### Existing lemmas to use
 
-| Lemma | File:Line | Purpose |
-| ----- | --------- | ------- |
-| `ccrEvalMap_comp` | Polynomial:347 | `ccrEvalMap (f ≫ g) = ccrEvalMap g ∘ ccrEvalMap f` |
-| `ccrEvalMap_id` | Polynomial:341 | Identity map |
-| `ccrEvalMap_index` | Polynomial:333 | `ccrEvalIndex (ccrEvalMap f x) = ccrEvalIndex x` (simp, rfl) |
-| `ccrEvalMap_mor` | Polynomial:337 | `ccrEvalMor (ccrEvalMap f x) = ccrEvalMor x ≫ f` (simp, rfl) |
-| `polyBetweenComp_eval_fiberEquiv_toFun` | Polynomial:1677 | toFun definition |
-| `polyBetweenComp_eval_fiberEquiv_invFun` | Polynomial:1691 | invFun definition |
-| `mor_to_pbe_fiber_index` | Polynomial:1250 | Index extraction |
-| `mor_to_pbe_fiber_mor` | Polynomial:1259 | Morphism extraction |
-| `mor_to_pbe_fiber_index_homMk_rfl` | Polynomial:1279 | Index with `Over.homMk` reduces |
-| `mor_to_pbe_fiber_mor_homMk_rfl` | Polynomial:1292 | Morphism with `Over.homMk` reduces |
-| `overPullbackMap` | Utilities/Slice:740 | Pullback map |
-| `polyGSOSFoldFst_natural` | PolyGSOS:1028 | Fst component naturality |
-| `polyFreeMPolyEval_to_M_natural` | PolyAlg:8423 | Eval-to-tree naturality |
-| `polyFreeMJoin_natural` | PolyAlg:8366 | Join naturality |
-| `polyFreeMapAt_as_bind` | PolyAlg:5765 | Map as bind |
-| `polyFreeM_bind_assoc` | PolyAlg:3494 | Bind associativity |
-| `polyFreeM_pure_bind` | PolyAlg:3466 | Pure-bind law |
-| `polyFreeMapAt_transport` | PolyAlg:5734 | Transport commutes with map |
-| `polyFreeMBind_transport` | PolyAlg:5743 | Transport commutes with bind |
-| `Over.OverMorphism.ext` | Utilities | Over morphism extensionality |
-| `polyFreeMapAt_comp` | PolyAlg:5825 | Map composition |
+| Lemma | Loc | Purpose |
+| ----- | --- | ------- |
+| `ccrEvalMap_comp` | Poly:347 | map comp |
+| `ccrEvalMap_id` | Poly:341 | map id |
+| `ccrEvalMap_index` | Poly:333 | index pres |
+| `ccrEvalMap_mor` | Poly:337 | mor comp |
+| `pbce_fiberEquiv_toFun` | Poly:1677 | toFun def |
+| `pbce_fiberEquiv_invFun` | Poly:1691 | invFun def |
+| `mor_to_pbe_fiber_index` | Poly:1250 | idx extr |
+| `mor_to_pbe_fiber_mor` | Poly:1259 | mor extr |
+| `m_t_pbe_fi_homMk_rfl` | Poly:1279 | idx homMk |
+| `m_t_pbe_fm_homMk_rfl` | Poly:1292 | mor homMk |
+| `overPullbackMap` | Slice:740 | pb map |
+| `polyGSOSFoldFst_nat` | GSOS:1028 | fst nat |
+| `pfmPolyEval_to_M_nat` | Alg:8423 | eval->tree |
+| `polyFreeMJoin_nat` | Alg:8366 | join nat |
+| `polyFreeMapAt_as_bind` | Alg:5765 | map=bind |
+| `polyFreeM_bind_assoc` | Alg:3494 | bind assoc |
+| `polyFreeM_pure_bind` | Alg:3466 | pure-bind |
+| `pfmMapAt_transport` | Alg:5734 | transport |
+| `pfmBind_transport` | Alg:5743 | bind xport |
+| `Over.OverMorphism.ext` | Util | over ext |
+| `polyFreeMapAt_comp` | Alg:5825 | map comp |
+
+Full names for abbreviated entries above:
+
+- `pbce_` = `polyBetweenComp_eval_`
+- `m_t_pbe_fi_` = `mor_to_pbe_fiber_index_`
+- `m_t_pbe_fm_` = `mor_to_pbe_fiber_mor_`
+- `polyGSOSFoldFst_nat` = `polyGSOSFoldFst_natural`
+- `pfmPolyEval_to_M_nat` =
+  `polyFreeMPolyEval_to_M_natural`
+- `polyFreeMJoin_nat` = `polyFreeMJoin_natural`
+- `pfmMapAt_transport` = `polyFreeMapAt_transport`
+- `pfmBind_transport` = `polyFreeMBind_transport`
 
 ## Pending: detailed step-by-step plan
 
