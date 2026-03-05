@@ -406,7 +406,7 @@ helpful to:
 3. Generalize using the same axioms in
    arbitrary `C`
 
-The key structural fact: `MonoidalClosed.pre`
+`MonoidalClosed.pre`
 is defined via a conjugate equivalence that
 relates natural transformations and corresponds
 to the theory of mates. Mathlib may have lemmas
@@ -492,7 +492,7 @@ determines the morphism uniquely.
 
 **Statement**: For `Z = [innerEnd_Y, Y]`:
 
-```
+```lean
 Multifork.ι twOuter.wedge Z ≫
   ihomEvalAt (gs ≫ m) =
 Multifork.ι twOuter.wedge Y
@@ -648,11 +648,12 @@ per-`(A, s)` level via
 `churchComponent_wedge`.
 
 ##### Step C: Show `fwd ≫ ι Y = cgeChurchLeg Y`
+
 (DONE)
 
 `fwd_comp_ι_eq_cgeChurchLeg` (proved).
 
-##### Step D: Terminality factoring (BLOCKED)
+##### Step D: Terminality factoring
 
 For a `churchProf`-wedge `(X, legs)`, the
 candidate lift is
@@ -703,7 +704,8 @@ If `h₁, h₂ : X → cge` both satisfy
 then `h₁ = h₂`.
 
 Reduce via `copowerGExtHomEndEquiv.injective`
-+ `HasCopowers.ext`. At each `(A, s)`:
+
+- `HasCopowers.ext`. At each `(A, s)`:
 `h_i ≫ CopowerGExtInj A ≫ HasCopowers.inj s =
  h_i ≫ (something)`. Use
 `inj_inj_cgeChurchLeg` to show both sides
