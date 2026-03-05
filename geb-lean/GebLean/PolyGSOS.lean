@@ -910,6 +910,58 @@ private abbrev GSOSNodeChildren
           (polyCofreeCarrier A Q) P)
         y (Sum.inr p)).hom e)
 
+private lemma polyGSOSFoldFst_natural
+    (A B : Over X) (P Q : PolyEndo X)
+    (rho : PolyGSOSRule P Q) (f : A ⟶ B)
+    {x : X}
+    (t : PolyFreeM
+      (polyCofreeCarrier A Q) P x) :
+    (polyGSOSFoldCataWithFiber B P Q rho
+      (polyFreeMapAt
+        (polyCofreeCarrier A Q)
+        (polyCofreeCarrier B Q) P
+        (polyCofreeMap A B Q f) x t)).val.val.1 =
+    (polyFreeMap
+      (polyCofreeCarrier A Q)
+      (polyCofreeCarrier B Q) P
+      (polyCofreeMap A B Q f)).left
+      (polyGSOSFoldCataWithFiber
+        A P Q rho t).val.val.1 := by
+  induction t with
+  | mk y idx children ih =>
+    match idx with
+    | Sum.inl ⟨⟨_, d⟩, rfl⟩ =>
+      simp only [polyFreeMapAt, polyFreeMBind,
+        polyGSOSFoldCataWithFiber,
+        polyGSOSFoldLeafAt,
+        polyFreeMap, Over.homMk_left,
+        polyFreeMapLeft]
+      rw [polyFreeM_pure_bind]
+      simp only [polyCofreeMap, Over.homMk_left,
+        polyCofreeMapLeft]
+      rfl
+    | Sum.inr p =>
+      simp only [polyGSOSFoldCataWithFiber,
+        polyGSOSFoldNodeAt,
+        polyFreeMap, Over.homMk_left,
+        polyFreeMapLeft]
+      apply congrArg (Sigma.mk y)
+      simp only [pbefMk_index, pbefMk_mor]
+      rw [← polyFreeMStrFamily_natural
+        (polyCofreeCarrier A Q)
+        (polyCofreeCarrier B Q) P
+        (polyCofreeMap A B Q f) y p]
+      congr 1; congr 1
+      apply Over.OverMorphism.ext
+      funext e
+      simp only [Over.comp_left, types_comp_apply,
+        polyFreeMap, Over.homMk_left,
+        polyFreeMapLeft, overPullbackFst]
+      have := ih e
+      simp only [polyFreeMapAt, polyFreeMap,
+        Over.homMk_left, polyFreeMapLeft] at this
+      exact this
+
 private lemma polyGSOSFoldNodeAt_snd_natural
     (A B : Over X) (P Q : PolyEndo X)
     (rho : PolyGSOSRule P Q) (f : A ⟶ B)
@@ -996,6 +1048,10 @@ private lemma polyGSOSFoldNodeAt_snd_natural
     polyToOverEvalMap_left]
   -- Strip outer Sigma.mk y
   congr 1
+  -- Both sides are ccrEval values (Sigma of index and morphism)
+  -- Reduce outer ccrEvalMaps to Sigma form
+  simp only [ccrEvalMap]
+  -- Now goal is ⟨idx_A, mor_A ≫ join_A ≫ freeMap⟩ = ⟨idx_B, mor_B ≫ join_B⟩
   _
 
 private lemma polyGSOSFoldQeval_natural
@@ -1031,58 +1087,6 @@ private lemma polyGSOSFoldQeval_natural
         polyFreeMBind]
       exact polyGSOSFoldNodeAt_snd_natural
         A B P Q rho f p children ih
-
-private lemma polyGSOSFoldFst_natural
-    (A B : Over X) (P Q : PolyEndo X)
-    (rho : PolyGSOSRule P Q) (f : A ⟶ B)
-    {x : X}
-    (t : PolyFreeM
-      (polyCofreeCarrier A Q) P x) :
-    (polyGSOSFoldCataWithFiber B P Q rho
-      (polyFreeMapAt
-        (polyCofreeCarrier A Q)
-        (polyCofreeCarrier B Q) P
-        (polyCofreeMap A B Q f) x t)).val.val.1 =
-    (polyFreeMap
-      (polyCofreeCarrier A Q)
-      (polyCofreeCarrier B Q) P
-      (polyCofreeMap A B Q f)).left
-      (polyGSOSFoldCataWithFiber
-        A P Q rho t).val.val.1 := by
-  induction t with
-  | mk y idx children ih =>
-    match idx with
-    | Sum.inl ⟨⟨_, d⟩, rfl⟩ =>
-      simp only [polyFreeMapAt, polyFreeMBind,
-        polyGSOSFoldCataWithFiber,
-        polyGSOSFoldLeafAt,
-        polyFreeMap, Over.homMk_left,
-        polyFreeMapLeft]
-      rw [polyFreeM_pure_bind]
-      simp only [polyCofreeMap, Over.homMk_left,
-        polyCofreeMapLeft]
-      rfl
-    | Sum.inr p =>
-      simp only [polyGSOSFoldCataWithFiber,
-        polyGSOSFoldNodeAt,
-        polyFreeMap, Over.homMk_left,
-        polyFreeMapLeft]
-      apply congrArg (Sigma.mk y)
-      simp only [pbefMk_index, pbefMk_mor]
-      rw [← polyFreeMStrFamily_natural
-        (polyCofreeCarrier A Q)
-        (polyCofreeCarrier B Q) P
-        (polyCofreeMap A B Q f) y p]
-      congr 1; congr 1
-      apply Over.OverMorphism.ext
-      funext e
-      simp only [Over.comp_left, types_comp_apply,
-        polyFreeMap, Over.homMk_left,
-        polyFreeMapLeft, overPullbackFst]
-      have := ih e
-      simp only [polyFreeMapAt, polyFreeMap,
-        Over.homMk_left, polyFreeMapLeft] at this
-      exact this
 
 lemma polyGSOSScaleCoalg_morphism_h
     (A B : Over X) (P Q : PolyEndo X)
