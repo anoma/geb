@@ -2172,6 +2172,60 @@ private theorem fwd_comp_ι_eq_cgeChurchLeg
   -- = churchComponent Y A s (by HasPowers.fac)
   simp only [HasCopowers.fac, HasPowers.fac]
 
+private theorem cgeChurchLeg_wedge
+    (pt : C)
+    (twInner : ∀ Y : C,
+      HasTerminalWedge (ihomPowerProf G pt Y))
+    (twOuter : HasTerminalWedge
+      (churchProf G pt twInner))
+    {Y₁ Y₂ : C} (f : Y₁ ⟶ Y₂) :
+    cgeChurchLeg G pt twInner Y₁ ≫
+      ((churchProf G pt twInner).obj
+        (Opposite.op Y₁)).map f =
+    cgeChurchLeg G pt twInner Y₂ ≫
+      ((churchProf G pt twInner).map f.op).app Y₂ :=
+  by
+  rw [← fwd_comp_ι_eq_cgeChurchLeg G pt twInner
+    twOuter,
+    ← fwd_comp_ι_eq_cgeChurchLeg G pt twInner
+    twOuter]
+  simp only [Category.assoc]
+  congr 1
+  exact twOuter.wedge.condition f
+
+/-- The backward map composed with a `cgeChurchLeg`
+gives the corresponding terminal wedge projection.
+This is the enriched Yoneda factoring condition. -/
+private theorem bwd_comp_cgeChurchLeg
+    (pt : C)
+    (twInner : ∀ Y : C,
+      HasTerminalWedge (ihomPowerProf G pt Y))
+    (twOuter : HasTerminalWedge
+      (churchProf G pt twInner))
+    (Y : C) :
+    impredicativeGExtToCopowerGExt
+      G pt twInner twOuter ≫
+    cgeChurchLeg G pt twInner Y =
+    Multifork.ι twOuter.wedge Y := by
+  unfold impredicativeGExtToCopowerGExt
+  simp only [Category.assoc]
+  -- ι cge ≫ ihomEvalAt gs ≫ cgeChurchLeg Y = ι Y
+  -- Use ihomEvalAt_natural to push ihomEvalAt past
+  -- cgeChurchLeg Y
+  slice_lhs 2 3 =>
+    rw [← ihomEvalAt_natural]
+  -- ι cge ≫ (ihom _).map (cgeChurchLeg Y) ≫
+  --   ihomEvalAt gs = ι Y
+  -- Remaining: this is the enriched Yoneda factoring
+  -- condition. The `ihomEvalAt_natural` rewrite
+  -- gives back `ι cge ≫ ihomEvalAt gs ≫
+  -- cgeChurchLeg Y = ι Y` (circular). The wedge
+  -- condition introduces higher-type indices.
+  -- The proof requires a direct computation of
+  -- `ihomEvalAt gs` on the `cgeChurchLeg` leg,
+  -- using the inner end structure.
+  sorry
+
 theorem impredicativeGExt_backward_forward
     (pt : C)
     (twInner : ∀ Y : C,
@@ -2183,60 +2237,12 @@ theorem impredicativeGExt_backward_forward
     copowerGExtToImpredicativeGExt
       G pt twInner twOuter =
     𝟙 (ImpredicativeGExtObj G pt twInner twOuter) := by
-  let fwd := copowerGExtToImpredicativeGExt
-    G pt twInner twOuter
-  let bwd := impredicativeGExtToCopowerGExt
-    G pt twInner twOuter
-  let cge := CopowerGExtObj G pt
-  have hfb : fwd ≫ bwd = 𝟙 _ :=
-    copowerGExt_backward_forward G pt twInner twOuter
-  -- bwd ≫ fwd is an idempotent endomorphism of
-  -- twOuter.wedge.pt. We show it equals 𝟙 by the
-  -- universal property of the terminal wedge:
-  -- both bwd ≫ fwd and 𝟙 are lifts of
-  -- twOuter.wedge into itself, so they're equal
-  -- by uniqueness. The factoring condition for
-  -- bwd ≫ fwd uses fwd ≫ bwd = 𝟙 and helper
-  -- lemmas.
-  --
-  -- Step 1: show ∀ Y, (bwd ≫ fwd) ≫ ι Y = ι Y
-  -- by showing ∀ (A : C) (s : A ⟶ pt),
-  --   churchLift A s ≫ (bwd ≫ fwd) ≫ ι Y =
-  --   churchLift A s ≫ ι Y
-  -- and using the fact that fwd is mono (split mono)
-  -- composed with colimit injections, which are
-  -- jointly epic.
-  -- Use the universal property: bwd ≫ fwd is the
-  -- unique endomorphism h of twOuter.wedge.pt such
-  -- that ∀ Y, h ≫ ι Y equals the leg specified by
-  -- composing bwd's image with fwd's structure. We
-  -- show it equals 𝟙 by showing both are lifts of
-  -- the same legs.
-  --
-  -- The proof works by showing that fwd is a
-  -- section-retraction pair in the wedge category,
-  -- not just in C.
-  apply twOuter.hom_ext
+  apply Multifork.IsLimit.hom_ext twOuter.isLimit
   intro Y
-  simp only [Category.id_comp]
-  -- Goal: bwd ≫ fwd ≫ ι Y = ι Y
-  -- We know: fwd ≫ bwd = 𝟙
-  -- Unfold bwd to: ι cge ≫ ihomEvalAt gs
-  -- So: (ι cge ≫ ihomEvalAt gs) ≫ fwd ≫ ι Y = ι Y
-  -- i.e., ι cge ≫ ihomEvalAt gs ≫ fwd ≫ ι Y = ι Y
-  --
-  -- Strategy: Show fwd ≫ ι Y equals the
-  -- HasCopowers.desc / churchComponent composition,
-  -- then compute ihomEvalAt gs applied to it.
-  --
-  -- Step 1: Characterize fwd ≫ ι Y at injection
-  -- level using inj_comp_forward + HasCopowers.fac.
-  -- Step 2: Use churchComponent_ihomEvalAt_eq to
-  -- compute ihomEvalAt gs ≫ (fwd ≫ ι Y) at
-  -- injection level.
-  -- Step 3: Use twOuter.isLimit.fac (via ι cge) to
-  -- combine.
-  sorry
+  simp only [Category.id_comp, Category.assoc]
+  rw [fwd_comp_ι_eq_cgeChurchLeg G pt twInner
+    twOuter Y,
+    bwd_comp_cgeChurchLeg G pt twInner twOuter Y]
 
 end ImpredicativeGExtIso
 
