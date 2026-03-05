@@ -2370,68 +2370,6 @@ private theorem cgeChurchLeg_Z_ihomEvalAt
   exact churchComponent_Z_ihomEvalAt G pt twInner
     twOuter Y A s
 
-/-- The reduced enriched Yoneda condition:
-evaluating the outer end projection at `Z` using the
-pushed-forward global section `gs ≫ innerEndMap`
-recovers the projection at `Y`. -/
-private theorem ι_Z_ihomEvalAt_eq_ι_Y
-    (pt : C)
-    (twInner : ∀ Y : C,
-      HasTerminalWedge (ihomPowerProf G pt Y))
-    (twOuter : HasTerminalWedge
-      (churchProf G pt twInner))
-    (Y : C) :
-    let Z := (ihom ((twInner Y).wedge.pt)).obj Y
-    Multifork.ι twOuter.wedge Z ≫
-    ihomEvalAt (bwdGlobalSection G pt twInner ≫
-      innerEndMap G pt twInner Y) =
-    Multifork.ι twOuter.wedge Y := _
-
-/-- The backward map composed with a `cgeChurchLeg`
-gives the corresponding terminal wedge projection.
-This is the enriched Yoneda factoring condition. -/
-private theorem bwd_comp_cgeChurchLeg
-    (pt : C)
-    (twInner : ∀ Y : C,
-      HasTerminalWedge (ihomPowerProf G pt Y))
-    (twOuter : HasTerminalWedge
-      (churchProf G pt twInner))
-    (Y : C) :
-    impredicativeGExtToCopowerGExt
-      G pt twInner twOuter ≫
-    cgeChurchLeg G pt twInner Y =
-    Multifork.ι twOuter.wedge Y := by
-  unfold impredicativeGExtToCopowerGExt
-  simp only [Category.assoc]
-  rw [← ihomEvalAt_natural
-    (bwdGlobalSection G pt twInner)
-    (cgeChurchLeg G pt twInner Y),
-    ← Category.assoc,
-    ι_cge_ihomMap_cgeChurchLeg G pt twInner
-      twOuter Y,
-    Category.assoc,
-    pre_comp_ihomEvalAt]
-  exact ι_Z_ihomEvalAt_eq_ι_Y G pt twInner
-    twOuter Y
-
-theorem impredicativeGExt_backward_forward
-    (pt : C)
-    (twInner : ∀ Y : C,
-      HasTerminalWedge (ihomPowerProf G pt Y))
-    (twOuter : HasTerminalWedge
-      (churchProf G pt twInner)) :
-    impredicativeGExtToCopowerGExt
-      G pt twInner twOuter ≫
-    copowerGExtToImpredicativeGExt
-      G pt twInner twOuter =
-    𝟙 (ImpredicativeGExtObj G pt twInner twOuter) := by
-  apply Multifork.IsLimit.hom_ext twOuter.isLimit
-  intro Y
-  simp only [Category.id_comp, Category.assoc]
-  rw [fwd_comp_ι_eq_cgeChurchLeg G pt twInner
-    twOuter Y,
-    bwd_comp_cgeChurchLeg G pt twInner twOuter Y]
-
 end ImpredicativeGExtIso
 
 end GebLean
