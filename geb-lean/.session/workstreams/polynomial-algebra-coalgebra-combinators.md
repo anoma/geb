@@ -178,8 +178,8 @@ endofunctors.
 - [ ] E2: Construct operational monad (lifting syntax monad to
   B-coalgebras via structural recursion with accumulators).
   In progress: distributive law morphism and counit/unit
-  coherence proofs complete; naturality in progress
-  (blocked by one HEq at line 1021); comultiplication,
+  coherence proofs complete; naturality in progress;
+  comultiplication,
   multiplication, and packaging pending.
   See `gsos-distributive-law.md` for detailed sub-steps.
 
