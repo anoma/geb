@@ -996,18 +996,6 @@ private lemma polyGSOSFoldNodeAt_snd_natural
     polyToOverEvalMap_left]
   -- Strip outer Sigma.mk y
   congr 1
-  -- Try to close the ccrEval equality
-  simp only [
-    polyBetweenComp_eval_fiberEquiv_toFun,
-    polyBetweenComp_eval_fiberEquiv_invFun,
-    polyBetweenMorphEvalAt,
-    ccrEvalMap, ccrEvalMk, ccrEvalIndex, ccrEvalMor,
-    ptoefMk, ptoefIndex, ptoefMor,
-    ccrReindex, ccrFiberMor,
-    pbefMk_index, pbefMk_mor, pbefIndex, pbefMor,
-    Over.comp_left, types_comp_apply,
-    CategoryTheory.Category.assoc,
-    Over.homMk_left]
   _
 
 private lemma polyGSOSFoldQeval_natural
