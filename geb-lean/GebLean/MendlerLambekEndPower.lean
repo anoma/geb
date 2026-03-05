@@ -1,6 +1,7 @@
 import GebLean.RestrictedCoendAsColimit
 import GebLean.Utilities.EndsAndCoends
 import Mathlib.CategoryTheory.Monoidal.Closed.Basic
+import Mathlib.CategoryTheory.Monoidal.Braided.Basic
 import Mathlib.CategoryTheory.Limits.Shapes.End
 
 /-!
@@ -1460,5 +1461,438 @@ def ImpredicativeGExtFunctor
         MonoidalClosed.pre_map, NatTrans.comp_app]
 
 end ImpredicativeGExt
+
+/-!
+## Natural Isomorphism: Impredicative and Copower-Coend GExt
+
+When `C` is a braided monoidal closed category with
+copowers and powers, the impredicative GExt object
+(defined via internal homs and ends) is naturally
+isomorphic to the copower-coend GExt object (defined
+as a colimit). The isomorphism uses the braiding to
+swap tensor factors in the monoidal closed adjunction.
+
+Composing with `mendlerLambekCopowerCoendEquiv` yields
+the equivalence between power-end Mendler algebras and
+conventional algebras of `ImpredicativeGExtFunctor`.
+-/
+
+section ImpredicativeGExtIso
+
+open MonoidalClosed MonoidalCategory
+open HasAllCopowerProfCoends HasAllHomToProfCoends
+
+variable
+  {C : Type v} [Category.{v} C]
+  [MonoidalCategory C] [MonoidalClosed C]
+  [BraidedCategory C]
+  [HasCopowers C] [HasPowers C]
+  (G : Cᵒᵖ ⥤ C ⥤ C)
+  [HasAllCopowerProfCoends G]
+
+/-- Evaluate the internal hom `[X, Y]` at a global
+element `p : 𝟙_ C ⟶ X`, yielding a morphism
+`[X, Y] ⟶ Y`. Uses `MonoidalClosed.pre` composed
+with the unit-ihom isomorphism. -/
+def ihomEvalAt {X Y : C} (p : 𝟙_ C ⟶ X) :
+    (ihom X).obj Y ⟶ Y :=
+  (MonoidalClosed.pre p).app Y ≫
+    (λ_ ((ihom (𝟙_ C)).obj Y)).inv ≫
+    (ihom.ev (𝟙_ C)).app Y
+
+omit [BraidedCategory C] [HasCopowers C]
+  [HasPowers C] in
+/-- `curry' e ≫ (pre f).app Y = curry' (f ≫ e)`:
+precomposition on the internal hom by `f` after
+currying is the same as currying the composition. -/
+theorem curry'_pre_app
+    {X X' Y : C} (e : X ⟶ Y) (f : X' ⟶ X) :
+    curry' e ≫ (MonoidalClosed.pre f).app Y =
+      curry' (f ≫ e) := by
+  simp only [curry']
+  rw [curry_pre_app]
+  congr 1
+  rw [← Category.assoc, rightUnitor_naturality,
+    Category.assoc]
+
+omit [BraidedCategory C] [HasCopowers C]
+  [HasAllCopowerProfCoends G] in
+private theorem typeEndToGlobalSection_wedge
+    (pt Y : C)
+    (e : typeEnd (powerSliceProf G pt Y))
+    {A₁ A₂ : C} (f : A₁ ⟶ A₂) :
+    curry' (e.val A₁) ≫
+      ((ihomPowerProf G pt Y).obj
+        (Opposite.op A₁)).map f =
+    curry' (e.val A₂) ≫
+      ((ihomPowerProf G pt Y).map f.op).app A₂ := by
+  change curry' (e.val A₁) ≫
+    (MonoidalClosed.pre
+      ((G.map f.op).app A₁)).app _ ≫
+    (ihom _).map (HasPowers.mapIdx (f ≫ ·)) =
+    curry' (e.val A₂) ≫
+    (MonoidalClosed.pre
+      ((G.obj (Opposite.op A₂)).map f)).app _
+  rw [← Category.assoc,
+    curry'_pre_app _ ((G.map f.op).app A₁),
+    curry'_ihom_map, curry'_pre_app]
+  have h := e.property f
+  simp only [powerSliceProf,
+    Quiver.Hom.unop_op] at h
+  rw [← Category.assoc] at h
+  exact congrArg curry' h
+
+def typeEndToGlobalSection
+    (pt Y : C)
+    (tw : HasTerminalWedge (ihomPowerProf G pt Y))
+    (e : typeEnd (powerSliceProf G pt Y)) :
+    𝟙_ C ⟶ tw.wedge.pt :=
+  tw.isLimit.lift
+    (Wedge.mk (𝟙_ C)
+      (fun A => curry' (e.val A))
+      (fun {_ _} f =>
+        typeEndToGlobalSection_wedge G pt Y e f))
+
+/-- The backward map from `ImpredicativeGExtObj` to
+`CopowerGExtObj`, constructed via the Church encoding's
+universal property. Evaluates the outer end projection
+at the copower-coend object using a global section
+derived from the identity morphism. -/
+def impredicativeGExtToCopowerGExt
+    (pt : C)
+    (twInner : ∀ Y : C,
+      HasTerminalWedge (ihomPowerProf G pt Y))
+    (twOuter : HasTerminalWedge
+      (churchProf G pt twInner)) :
+    ImpredicativeGExtObj G pt twInner twOuter ⟶
+      CopowerGExtObj G pt :=
+  let cge := CopowerGExtObj G pt
+  let e := gExtEndPowerEquiv G pt cge (𝟙 cge)
+  let gs := typeEndToGlobalSection G pt cge
+    (twInner cge) e
+  twOuter.wedge.ι cge ≫ ihomEvalAt gs
+
+/-- The curried Church-encoding component: given
+`A : C` and `s : A ⟶ pt`, produces a morphism
+`G(A,A) ⟶ [twInner(Y).pt, Y]`
+by currying the composition of inner end projection,
+evaluation, and power projection, using the braiding
+to swap tensor factors.
+
+The uncurried version is the chain:
+```
+  G(A,A) ⊗ twInner(Y).pt
+    ⟶ twInner(Y).pt ⊗ G(A,A)              (braiding)
+    ⟶ [G(A,A), Y^{A→pt}] ⊗ G(A,A)        (inner end proj ⊗ 𝟙)
+    ⟶ Y^{A→pt}                             (evaluation)
+    ⟶ Y                                    (power projection at s)
+``` -/
+def churchComponent
+    (pt : C)
+    (twInner : ∀ Y : C,
+      HasTerminalWedge (ihomPowerProf G pt Y))
+    (Y : C) (A : C) (s : A ⟶ pt) :
+    (G.obj (Opposite.op A)).obj A ⟶
+      (ihom ((twInner Y).wedge.pt)).obj Y :=
+  let GA := (G.obj (Opposite.op A)).obj A
+  let YpowA := HasPowers.power Y (A ⟶ pt)
+  let innerProj : (twInner Y).wedge.pt ⟶
+      (ihom GA).obj YpowA :=
+    (twInner Y).wedge.ι A
+  curry (innerProj ▷ GA ≫
+    (β_ _ GA).hom ≫
+    (ihom.ev GA).app YpowA ≫
+    HasPowers.proj Y (A ⟶ pt) s)
+
+omit [HasCopowers C]
+  [HasAllCopowerProfCoends G] in
+theorem churchComponent_wedge
+    (pt : C)
+    (twInner : ∀ Y : C,
+      HasTerminalWedge (ihomPowerProf G pt Y))
+    (A : C) (s : A ⟶ pt)
+    {Y₁ Y₂ : C} (f : Y₁ ⟶ Y₂) :
+    churchComponent G pt twInner Y₁ A s ≫
+      ((churchProf G pt twInner).obj
+        (Opposite.op Y₁)).map f =
+    churchComponent G pt twInner Y₂ A s ≫
+      ((churchProf G pt twInner).map f.op).app Y₂ :=
+  by
+  simp only [churchComponent, churchProf,
+    ihomPowerEndFunctor]
+  rw [← curry_natural_right, curry_pre_app]
+  congr 1
+  slice_rhs 1 2 =>
+    rw [← comp_whiskerRight,
+      HasTerminalWedge.map_ι,
+      comp_whiskerRight]
+  simp only [Category.assoc]
+  congr 1
+  simp only [ihomPowerProfMapY]
+  conv_rhs =>
+    rw [BraidedCategory.braiding_naturality_left_assoc]
+  rw [ihom.ev_naturality_assoc]
+  simp only [Quiver.Hom.unop_op,
+    HasPowers.mapVal_proj]
+  rfl
+
+omit [HasCopowers C] [HasPowers C]
+  [HasAllCopowerProfCoends G] in
+private theorem whisker_braided_eval_pre
+    {W X X' Y' : C}
+    (ι : W ⟶ (ihom X).obj Y') (h : X' ⟶ X) :
+    W ◁ h ≫ ι ▷ X ≫
+      (β_ ((ihom X).obj Y') X).hom ≫
+      (ihom.ev X).app Y' =
+    (ι ≫ (MonoidalClosed.pre h).app Y') ▷
+        X' ≫
+      (β_ ((ihom X').obj Y') X').hom ≫
+      (ihom.ev X').app Y' := by
+  slice_lhs 1 2 => rw [whisker_exchange]
+  slice_lhs 2 3 =>
+    rw [BraidedCategory.braiding_naturality_right]
+  slice_lhs 3 4 =>
+    rw [← id_tensor_pre_app_comp_ev]
+  slice_lhs 2 3 =>
+    rw [← BraidedCategory.braiding_naturality_left]
+  slice_lhs 1 2 => rw [← comp_whiskerRight]
+  simp only [Category.assoc]
+
+omit [HasCopowers C]
+  [HasAllCopowerProfCoends G] in
+theorem churchComponent_dinatural
+    (pt : C)
+    (twInner : ∀ Y : C,
+      HasTerminalWedge (ihomPowerProf G pt Y))
+    (Y : C) {A₁ A₂ : C} (f : A₁ ⟶ A₂)
+    (s : A₂ ⟶ pt) :
+    (G.map f.op).app A₁ ≫
+      churchComponent G pt twInner Y A₁ (f ≫ s) =
+    (G.obj (Opposite.op A₂)).map f ≫
+      churchComponent G pt twInner Y A₂ s := by
+  simp only [churchComponent]
+  have wedgeCond := (twInner Y).wedge.condition f
+  simp only [ihomPowerProf] at wedgeCond
+  simp only [Quiver.Hom.unop_op] at wedgeCond
+  rw [← curry_natural_left, ← curry_natural_left]
+  congr 1
+  rw [← HasPowers.mapIdx_proj]
+  slice_lhs 1 4 =>
+    rw [whisker_braided_eval_pre]
+  slice_lhs 3 4 =>
+    rw [← ihom.ev_naturality]
+  slice_lhs 2 3 =>
+    rw [← BraidedCategory.braiding_naturality_left]
+  slice_lhs 1 2 =>
+    rw [← comp_whiskerRight]
+  simp only [Category.assoc]
+  rw [wedgeCond]
+  symm
+  slice_lhs 1 4 =>
+    rw [whisker_braided_eval_pre]
+  simp only [Category.assoc]
+
+/-- Given `A : C`, `s : A ⟶ pt`, and the church
+component at each `Y`, produce a morphism
+`G(A,A) ⟶ ImpredicativeGExtObj G pt twInner twOuter`
+by assembling the church components into a wedge for
+the outer end and lifting. -/
+def churchLift
+    (pt : C)
+    (twInner : ∀ Y : C,
+      HasTerminalWedge (ihomPowerProf G pt Y))
+    (twOuter : HasTerminalWedge
+      (churchProf G pt twInner))
+    (A : C) (s : A ⟶ pt) :
+    (G.obj (Opposite.op A)).obj A ⟶
+      ImpredicativeGExtObj G pt twInner twOuter :=
+  twOuter.isLimit.lift
+    (Wedge.mk ((G.obj (Opposite.op A)).obj A)
+      (fun Y => churchComponent G pt twInner Y A s)
+      (fun {_ _} f =>
+        churchComponent_wedge G pt twInner A s f))
+
+omit [HasCopowers C]
+  [HasAllCopowerProfCoends G] in
+private theorem churchLiftPowerEndWedge
+    (pt : C)
+    (twInner : ∀ Y : C,
+      HasTerminalWedge (ihomPowerProf G pt Y))
+    (twOuter : HasTerminalWedge
+      (churchProf G pt twInner))
+    {A₁ A₂ : C} (f : A₁ ⟶ A₂) :
+    ((powerSliceProf G pt
+        (ImpredicativeGExtObj G pt twInner twOuter)
+      ).obj (Opposite.op A₁)).map f
+      (HasPowers.lift (fun s =>
+        churchLift G pt twInner twOuter A₁ s)) =
+    ((powerSliceProf G pt
+        (ImpredicativeGExtObj G pt twInner twOuter)
+      ).map f.op).app A₂
+      (HasPowers.lift (fun s =>
+        churchLift G pt twInner twOuter A₂ s)) := by
+  simp only [powerSliceProf]
+  apply HasPowers.ext
+  intro s
+  simp only [Category.assoc]
+  rw [HasPowers.mapIdx_proj]
+  simp only [HasPowers.fac]
+  simp only [Quiver.Hom.unop_op]
+  apply Multifork.IsLimit.hom_ext twOuter.isLimit
+  intro Y
+  simp only [Category.assoc]
+  have fac1 :
+      churchLift G pt twInner twOuter A₁ (f ≫ s) ≫
+        Multifork.ι twOuter.wedge Y =
+      churchComponent G pt twInner Y A₁ (f ≫ s) :=
+    twOuter.isLimit.fac
+      (Wedge.mk _ (fun Y =>
+        churchComponent G pt twInner Y A₁ (f ≫ s))
+        (fun {_ _} g =>
+          churchComponent_wedge G pt twInner A₁
+            (f ≫ s) g))
+      (WalkingMulticospan.left Y)
+  have fac2 :
+      churchLift G pt twInner twOuter A₂ s ≫
+        Multifork.ι twOuter.wedge Y =
+      churchComponent G pt twInner Y A₂ s :=
+    twOuter.isLimit.fac
+      (Wedge.mk _ (fun Y =>
+        churchComponent G pt twInner Y A₂ s)
+        (fun {_ _} g =>
+          churchComponent_wedge G pt twInner A₂ s g))
+      (WalkingMulticospan.left Y)
+  simp only [
+    show _ ≫ Multifork.ι twOuter.wedge Y =
+      _ from fac1,
+    show _ ≫ Multifork.ι twOuter.wedge Y =
+      _ from fac2]
+  exact churchComponent_dinatural
+    G pt twInner Y f s
+
+def copowerGExtToImpredicativeGExt
+    (pt : C)
+    (twInner : ∀ Y : C,
+      HasTerminalWedge (ihomPowerProf G pt Y))
+    (twOuter : HasTerminalWedge
+      (churchProf G pt twInner)) :
+    CopowerGExtObj G pt ⟶
+      ImpredicativeGExtObj G pt twInner twOuter :=
+  (gExtEndPowerEquiv G pt
+    (ImpredicativeGExtObj G pt twInner twOuter)).symm
+    ⟨fun A =>
+      HasPowers.lift (fun s =>
+        churchLift G pt twInner twOuter A s),
+    fun {_ _} f =>
+      churchLiftPowerEndWedge G pt twInner twOuter f⟩
+
+omit [BraidedCategory C] [HasCopowers C]
+  [HasPowers C] [HasAllCopowerProfCoends G] in
+private theorem curry_ihomEvalAt
+    {X Y Z : C} (gs : 𝟙_ C ⟶ X)
+    (h : X ⊗ Y ⟶ Z) :
+    curry h ≫ ihomEvalAt gs =
+      (λ_ Y).inv ≫ gs ▷ Y ≫ h := by
+  simp only [ihomEvalAt]
+  rw [← Category.assoc (curry h), curry_pre_app,
+    ← Category.assoc (curry _),
+    leftUnitor_inv_naturality,
+    Category.assoc,
+    whiskerLeft_curry_ihom_ev_app]
+
+private theorem churchComponent_ihomEvalAt_eq
+    (pt : C)
+    (twInner : ∀ Y : C,
+      HasTerminalWedge (ihomPowerProf G pt Y))
+    (A : C) (s : A ⟶ pt) :
+    let cge := CopowerGExtObj G pt
+    let e := gExtEndPowerEquiv G pt cge (𝟙 cge)
+    let gs := typeEndToGlobalSection G pt cge
+      (twInner cge) e
+    churchComponent G pt twInner cge A s ≫
+      ihomEvalAt gs =
+    HasCopowers.inj (A ⟶ pt)
+      ((G.obj (Opposite.op A)).obj A) s ≫
+      CopowerGExtInj G pt A := by
+  intro cge e gs
+  unfold churchComponent
+  rw [curry_ihomEvalAt]
+  rw [← comp_whiskerRight_assoc gs
+    (Multifork.ι (twInner cge).wedge A)]
+  have gs_fac : gs ≫ Multifork.ι (twInner cge).wedge A =
+      curry' (e.val A) :=
+    (twInner cge).isLimit.fac
+      (Wedge.mk (𝟙_ C)
+        (fun A => curry' (e.val A))
+        (fun {_ _} f =>
+          typeEndToGlobalSection_wedge G pt cge e f))
+      (WalkingMulticospan.left A)
+  rw [gs_fac]
+  have braid :=
+    BraidedCategory.braiding_naturality_left
+      (curry' (e.val A))
+      ((G.obj (Opposite.op A)).obj A)
+  simp only [Opposite.unop_op] at braid
+  rw [reassoc_of% braid, leftUnitor_inv_braiding_assoc]
+  have whisk :=
+    whiskerLeft_curry'_ihom_ev_app (e.val A)
+  simp only [Opposite.unop_op] at whisk
+  rw [reassoc_of% whisk, Iso.inv_hom_id_assoc]
+  change (gExtEndPowerEquiv G pt cge (𝟙 cge)).val A ≫
+    HasPowers.proj cge (A ⟶ pt) s =
+    HasCopowers.inj (A ⟶ pt)
+      ((G.obj (Opposite.op A)).obj A) s ≫
+    CopowerGExtInj G pt A
+  change HasPowers.lift
+    (fun s => HasCopowers.inj (A ⟶ pt)
+      ((G.obj (Opposite.op A)).obj A) s ≫
+      (copowerGExtHomEndEquiv G pt cge
+        (𝟙 cge)).val A) ≫
+    HasPowers.proj cge (A ⟶ pt) s =
+    HasCopowers.inj (A ⟶ pt)
+      ((G.obj (Opposite.op A)).obj A) s ≫
+    CopowerGExtInj G pt A
+  rw [HasPowers.fac]
+  congr 1
+  change (copowerGExtHomEndEquiv G pt cge
+    (𝟙 cge)).val A = CopowerGExtInj G pt A
+  change (homOrdinaryWedge
+    (copowerProf (HomToProf pt) G)
+    (copowerCoend G pt) cge).ι A (𝟙 cge) =
+    CopowerGExtInj G pt A
+  unfold homOrdinaryWedge
+  dsimp only [trivialWeightedWedgeWedgeEquiv,
+    trivialWeightedCowedgeCowedgeEquiv,
+    trivialWeightedWedgeConeEquiv,
+    trivialWeightedCowedgeCoconeEquiv]
+  simp only [Equivalence.symm_functor,
+    Equivalence.symm_inverse,
+    Equivalence.trans_functor,
+    Equivalence.trans_inverse,
+    Functor.comp_obj]
+  dsimp only [wedgeConeEquiv, coneWeightedConeEquiv,
+    coconeWeightedCoconeEquiv, cowedgeCoconeEquiv,
+    Equivalence.symm, Equivalence.trans,
+    Functor.comp_obj,
+    coneToWedgeFunctor, coneToWedge,
+    coneToWedgeComponents,
+    weightedConeToConeFunctor,
+    weightedConeToCone,
+    coconeToWeightedCoconeFunctor,
+    coconeToWeightedCocone,
+    cowedgeToCoconeFunctor, cowedgeToCocone,
+    homWeightedWedge]
+  simp only [Wedge.mk_ι]
+  erw [Category.comp_id]
+  have h := cowedgeToCoconeιApp_at_id
+    (copowerProf (HomToProf pt) G)
+    (copowerCoend G pt).pt
+    (fun j => Multicofork.π (copowerCoend G pt) j) A
+  simp only [CopowerGExtInj]
+  rw [← h]
+  simp
+  congr 1
+
+end ImpredicativeGExtIso
 
 end GebLean

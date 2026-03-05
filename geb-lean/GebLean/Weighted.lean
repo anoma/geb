@@ -7174,22 +7174,18 @@ twisted arrow category: `End P ≅ lim_{TwistedArrow C} (profunctorOnTwistedArro
 def trivialWeightedWedgeConeEquiv {D : Type w} [Category.{v} D]
     (P : Cᵒᵖ ⥤ C ⥤ D) :
     WeightedWedge (terminalProfunctor (C := C)) P ≌
-    Cone (profunctorOnTwistedArrow C P) := by
-  unfold WeightedWedge
-  rw [constProfunctorOnTwistedArrow_eq_unitWeight]
-  exact (coneWeightedConeEquiv (profunctorOnTwistedArrow C P)).symm
+    Cone (profunctorOnTwistedArrow C P) :=
+  (coneWeightedConeEquiv
+    (profunctorOnTwistedArrow C P)).symm
 
 /-- Weighted cowedges with trivial (unit) weight are equivalent to ordinary
 cocones. This is the dual of `trivialWeightedWedgeConeEquiv`. -/
 def trivialWeightedCowedgeCoconeEquiv {D : Type w} [Category.{v} D]
     (P : Cᵒᵖ ⥤ C ⥤ D) :
     WeightedCowedge (terminalProfunctor (C := C)) P ≌
-    Cocone (profunctorOnCoTwistedArrow C P) := by
-  unfold WeightedCowedge
-  have h : profunctorOnOpCoTwistedArrow C (terminalProfunctor (C := C)) =
-           unitWeightOp (CoTwistedArrow C) := rfl
-  rw [h]
-  exact (coconeWeightedCoconeEquiv (profunctorOnCoTwistedArrow C P)).symm
+    Cocone (profunctorOnCoTwistedArrow C P) :=
+  (coconeWeightedCoconeEquiv
+    (profunctorOnCoTwistedArrow C P)).symm
 
 /-!
 ### Equivalence of Weighted Ends/Coends with Mathlib Ends/Coends
