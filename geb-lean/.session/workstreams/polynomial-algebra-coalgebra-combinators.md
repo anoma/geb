@@ -170,11 +170,18 @@ endofunctors.
 
 ### Phase 5: GSOS rules
 
-- [ ] E1: Define abstract GSOS rules as natural transformations
+- [x] E1: Define abstract GSOS rules as natural transformations
   `rho : Sigma(Id x B) => B . T` for polynomial signature and
-  behavior endofunctors
+  behavior endofunctors.  `GSOSRule` in
+  `GebLean/Utilities/GSOSRule.lean` and `PolyGSOSRule` in
+  `GebLean/PolyGSOS.lean`.
 - [ ] E2: Construct operational monad (lifting syntax monad to
-  B-coalgebras via structural recursion with accumulators)
+  B-coalgebras via structural recursion with accumulators).
+  In progress: distributive law morphism and counit/unit
+  coherence proofs complete; naturality in progress
+  (blocked by one HEq at line 1021); comultiplication,
+  multiplication, and packaging pending.
+  See `gsos-distributive-law.md` for detailed sub-steps.
 
 ### Deferred
 
