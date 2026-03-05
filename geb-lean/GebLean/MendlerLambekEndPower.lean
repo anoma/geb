@@ -2033,6 +2033,211 @@ theorem copowerGExt_backward_forward
   exact churchLift_comp_backward
     G pt twInner twOuter A s
 
+omit [BraidedCategory C] [HasCopowers C]
+  [HasPowers C] [HasAllCopowerProfCoends G] in
+private theorem ihomEvalAt_natural
+    {X Y₁ Y₂ : C} (gs : 𝟙_ C ⟶ X)
+    (f : Y₁ ⟶ Y₂) :
+    (ihom X).map f ≫ ihomEvalAt gs =
+      ihomEvalAt gs ≫ f := by
+  simp only [ihomEvalAt]
+  slice_lhs 1 2 =>
+    rw [(MonoidalClosed.pre gs).naturality f]
+  simp only [Category.assoc]
+  congr 1
+  slice_lhs 1 2 =>
+    rw [leftUnitor_inv_naturality
+      ((ihom (𝟙_ C)).map f)]
+  simp only [Category.assoc]
+  congr 1
+  exact (ihom.ev (𝟙_ C)).naturality f
+
+omit [HasCopowers C]
+  [HasAllCopowerProfCoends G] in
+private theorem churchComponent_powerSliceWedge
+    (pt : C)
+    (twInner : ∀ Y : C,
+      HasTerminalWedge (ihomPowerProf G pt Y))
+    (Y : C) {A₁ A₂ : C} (f : A₁ ⟶ A₂) :
+    ((powerSliceProf G pt
+        ((ihom ((twInner Y).wedge.pt)).obj Y)
+      ).obj (Opposite.op A₁)).map f
+      (HasPowers.lift (fun s =>
+        churchComponent G pt twInner Y A₁ s)) =
+    ((powerSliceProf G pt
+        ((ihom ((twInner Y).wedge.pt)).obj Y)
+      ).map f.op).app A₂
+      (HasPowers.lift (fun s =>
+        churchComponent G pt twInner Y A₂ s)) := by
+  simp only [powerSliceProf]
+  apply HasPowers.ext
+  intro s
+  simp only [Category.assoc]
+  rw [HasPowers.mapIdx_proj]
+  simp only [HasPowers.fac]
+  simp only [Quiver.Hom.unop_op]
+  exact churchComponent_dinatural
+    G pt twInner Y f s
+
+/-- The leg of a `churchProf`-wedge with apex
+`CopowerGExtObj G pt`. For each `Y`, this produces
+a morphism
+`CopowerGExtObj G pt ⟶ [(twInner Y).pt, Y]`
+by lifting the `churchComponent` family through the
+coend and power structures. -/
+def cgeChurchLeg
+    (pt : C)
+    (twInner : ∀ Y : C,
+      HasTerminalWedge (ihomPowerProf G pt Y))
+    (Y : C) :
+    CopowerGExtObj G pt ⟶
+      (ihom ((twInner Y).wedge.pt)).obj Y :=
+  (gExtEndPowerEquiv G pt
+    ((ihom ((twInner Y).wedge.pt)).obj Y)).symm
+    ⟨fun A =>
+      HasPowers.lift (fun s =>
+        churchComponent G pt twInner Y A s),
+    fun {_ _} f =>
+      churchComponent_powerSliceWedge
+        G pt twInner Y f⟩
+
+private theorem fwd_comp_ι_eq_cgeChurchLeg
+    (pt : C)
+    (twInner : ∀ Y : C,
+      HasTerminalWedge (ihomPowerProf G pt Y))
+    (twOuter : HasTerminalWedge
+      (churchProf G pt twInner))
+    (Y : C) :
+    copowerGExtToImpredicativeGExt
+      G pt twInner twOuter ≫
+    Multifork.ι twOuter.wedge Y =
+    cgeChurchLeg G pt twInner Y := by
+  let Z := (ihom ((twInner Y).wedge.pt)).obj Y
+  apply (copowerGExtHomEndEquiv G pt Z).injective
+  apply Subtype.ext
+  funext A
+  rw [copowerGExtHomEndEquiv_val]
+  rw [← Category.assoc,
+    inj_comp_forward G pt twInner twOuter]
+  -- LHS: HasCopowers.desc (churchLift A) ≫ ι Y
+  -- RHS: CopowerGExtInj A ≫ cgeChurchLeg Y
+  -- The cgeChurchLeg side: unfold and use
+  -- gExtEndPowerEquiv.symm's defining property
+  -- RHS: unfold cgeChurchLeg via gExtEndPowerEquiv
+  unfold cgeChurchLeg gExtEndPowerEquiv
+  simp only [Equiv.symm_trans_apply]
+  rw [(copowerGExtHomEndEquiv G pt Z).apply_symm_apply]
+  -- Now RHS is (endCopowerPowerEquiv.symm ⟨...⟩).val A
+  -- which is copowerPowerEquiv.symm (HasPowers.lift ...)
+  -- = HasCopowers.desc (fun s => HasPowers.lift ... ≫
+  --   HasPowers.proj s)
+  -- = HasCopowers.desc (fun s => churchComponent Y A s)
+  -- RHS is endCopowerPowerEquiv.symm applied at A,
+  -- which reduces to
+  -- HasCopowers.desc (fun s =>
+  --   HasPowers.lift (churchComponent Y A) ≫
+  --   HasPowers.proj s)
+  -- = HasCopowers.desc (fun s =>
+  --   churchComponent Y A s)
+  simp only [endCopowerPowerEquiv]
+  change (HasCopowers.desc
+    (fun s => churchLift G pt twInner twOuter A s)) ≫
+    Multifork.ι twOuter.wedge Y =
+    HasCopowers.desc (fun s =>
+      HasPowers.lift
+        (fun s' =>
+          churchComponent G pt twInner Y A s') ≫
+      HasPowers.proj _ _ s)
+  apply HasCopowers.ext
+  intro s
+  -- LHS: inj(s) ≫ desc(churchLift A) ≫ ι Y
+  rw [← Category.assoc, HasCopowers.fac]
+  -- LHS: churchLift A s ≫ ι Y
+  -- = churchComponent Y A s (by fac)
+  have fac : churchLift G pt twInner twOuter A s ≫
+      Multifork.ι twOuter.wedge Y =
+    churchComponent G pt twInner Y A s :=
+    twOuter.isLimit.fac
+      (Wedge.mk _
+        (fun Y' =>
+          churchComponent G pt twInner Y' A s)
+        (fun {_ _} f =>
+          churchComponent_wedge
+            G pt twInner A s f))
+      (WalkingMulticospan.left Y)
+  rw [fac]
+  -- RHS: inj(s) ≫ desc(fun s' =>
+  --   lift(churchComponent Y A) ≫ proj s')
+  -- = lift(churchComponent Y A) ≫ proj s
+  -- = churchComponent Y A s (by HasPowers.fac)
+  simp only [HasCopowers.fac, HasPowers.fac]
+
+theorem impredicativeGExt_backward_forward
+    (pt : C)
+    (twInner : ∀ Y : C,
+      HasTerminalWedge (ihomPowerProf G pt Y))
+    (twOuter : HasTerminalWedge
+      (churchProf G pt twInner)) :
+    impredicativeGExtToCopowerGExt
+      G pt twInner twOuter ≫
+    copowerGExtToImpredicativeGExt
+      G pt twInner twOuter =
+    𝟙 (ImpredicativeGExtObj G pt twInner twOuter) := by
+  let fwd := copowerGExtToImpredicativeGExt
+    G pt twInner twOuter
+  let bwd := impredicativeGExtToCopowerGExt
+    G pt twInner twOuter
+  let cge := CopowerGExtObj G pt
+  have hfb : fwd ≫ bwd = 𝟙 _ :=
+    copowerGExt_backward_forward G pt twInner twOuter
+  -- bwd ≫ fwd is an idempotent endomorphism of
+  -- twOuter.wedge.pt. We show it equals 𝟙 by the
+  -- universal property of the terminal wedge:
+  -- both bwd ≫ fwd and 𝟙 are lifts of
+  -- twOuter.wedge into itself, so they're equal
+  -- by uniqueness. The factoring condition for
+  -- bwd ≫ fwd uses fwd ≫ bwd = 𝟙 and helper
+  -- lemmas.
+  --
+  -- Step 1: show ∀ Y, (bwd ≫ fwd) ≫ ι Y = ι Y
+  -- by showing ∀ (A : C) (s : A ⟶ pt),
+  --   churchLift A s ≫ (bwd ≫ fwd) ≫ ι Y =
+  --   churchLift A s ≫ ι Y
+  -- and using the fact that fwd is mono (split mono)
+  -- composed with colimit injections, which are
+  -- jointly epic.
+  -- Use the universal property: bwd ≫ fwd is the
+  -- unique endomorphism h of twOuter.wedge.pt such
+  -- that ∀ Y, h ≫ ι Y equals the leg specified by
+  -- composing bwd's image with fwd's structure. We
+  -- show it equals 𝟙 by showing both are lifts of
+  -- the same legs.
+  --
+  -- The proof works by showing that fwd is a
+  -- section-retraction pair in the wedge category,
+  -- not just in C.
+  apply twOuter.hom_ext
+  intro Y
+  simp only [Category.id_comp]
+  -- Goal: bwd ≫ fwd ≫ ι Y = ι Y
+  -- We know: fwd ≫ bwd = 𝟙
+  -- Unfold bwd to: ι cge ≫ ihomEvalAt gs
+  -- So: (ι cge ≫ ihomEvalAt gs) ≫ fwd ≫ ι Y = ι Y
+  -- i.e., ι cge ≫ ihomEvalAt gs ≫ fwd ≫ ι Y = ι Y
+  --
+  -- Strategy: Show fwd ≫ ι Y equals the
+  -- HasCopowers.desc / churchComponent composition,
+  -- then compute ihomEvalAt gs applied to it.
+  --
+  -- Step 1: Characterize fwd ≫ ι Y at injection
+  -- level using inj_comp_forward + HasCopowers.fac.
+  -- Step 2: Use churchComponent_ihomEvalAt_eq to
+  -- compute ihomEvalAt gs ≫ (fwd ≫ ι Y) at
+  -- injection level.
+  -- Step 3: Use twOuter.isLimit.fac (via ι cge) to
+  -- combine.
+  sorry
+
 end ImpredicativeGExtIso
 
 end GebLean
