@@ -962,6 +962,61 @@ private lemma polyGSOSFoldFst_natural
         Over.homMk_left, polyFreeMapLeft] at this
       exact this
 
+private lemma subst_sigma_fst_irrel
+    {α : Type u} {I : α → Type u}
+    {F : (a : α) → I a → Type u}
+    {G : (a : α) → I a → Type u}
+    {a b : α} (p₁ p₂ : a = b)
+    (i : I a) (m₁ : F a i) (m₂ : G a i) :
+    (p₁ ▸ (⟨i, m₁⟩ : Σ j, F a j)).fst =
+    (p₂ ▸ (⟨i, m₂⟩ : Σ j, G a j)).fst := by
+  subst p₁; rfl
+
+private lemma mor_to_pbe_fiber_index_postcomp
+    (f : PolyEndo X) (A B : Over X)
+    {C : Over X} (hMor : C ⟶ polyBetweenEval X X f A)
+    (h : A ⟶ B) (c : C.left) :
+    mor_to_pbe_fiber_index
+      (hMor ≫ polyToOverEvalMap X f h) c =
+    mor_to_pbe_fiber_index hMor c := by
+  simp only [mor_to_pbe_fiber_index,
+    mor_to_ptoe_fiber_index, ptoefIndex,
+    mor_to_ptoe_fiber, ptoeLeftFiber,
+    Over.comp_left, types_comp_apply,
+    polyToOverEvalMap_left, ccrEvalMap,
+    ccrEvalIndex]
+  generalize (hMor.left c).fst = y₀
+  intro p₁ p₂
+  subst p₁
+  rfl
+
+private lemma polyBetweenComp_eval_invFun_natural
+    (g f : PolyEndo X)
+    (A B : Over X) (h : A ⟶ B) (z : X)
+    (v : polyBetweenEvalFamily X X g
+      (polyBetweenEval X X f A) z) :
+    ccrEvalMap h
+      ((polyBetweenComp_eval_fiberEquiv
+        g f A z).invFun v) =
+    (polyBetweenComp_eval_fiberEquiv
+      g f B z).invFun
+      (ccrEvalMap
+        ((polyEndoFunctor X f).map h) v) := by
+  obtain ⟨ig, hMor⟩ := v
+  simp only [ccrEvalMap,
+    polyEndoFunctor, polyBetweenEvalFunctor,
+    polyToOverFunctor]
+  unfold polyBetweenComp_eval_fiberEquiv
+  simp only [polyBetweenComp_eval_fiberEquiv_invFun,
+    pbefIndex, pbefMor, ptoefIndex, ptoefMor]
+  apply Sigma.ext
+  · dsimp only [ccrEvalIndex, ccrEvalMor,
+      Sigma.fst]
+    congr 1; funext eg
+    exact mor_to_pbe_fiber_index_postcomp
+      f A B hMor h eg
+  · _
+
 private lemma polyGSOSFoldNodeAt_snd_natural
     (A B : Over X) (P Q : PolyEndo X)
     (rho : PolyGSOSRule P Q) (f : A ⟶ B)
