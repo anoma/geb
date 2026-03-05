@@ -268,10 +268,10 @@ File: `GebLean/MendlerLambekEndPower.lean`
 - [x] 9a. Define `PowerEndGExtFunctor G : C ⥤ C` with
   `obj pt := CopowerGExtObj G pt` and maps via
   `copowerGExtIso` conjugation
-- [x] 9b. Define `powerEndGExtNatIso :
+- [ ] 9b. Define `powerEndGExtNatIso :
   PowerEndGExtFunctor G ≅ GExtFunctor G` using
   `copowerGExtIso` as components
-- [x] 9c. Define `mendlerLambekPowerEndFullEquiv :
+- [ ] 9c. Define `mendlerLambekPowerEndFullEquiv :
   PowerEndMendlerAlgebra G ≌
     ConventionalAlgebra (PowerEndGExtFunctor G)`
   using `mendlerLambekEndPowerEquiv` composed with
