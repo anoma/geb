@@ -813,207 +813,71 @@ private lemma polyFreeMStrFamily_natural
     polyFreeMapLeft, polyFreeMapAt]
   exact (polyFreeMBind_cast _ _ _ _ _ _).symm
 
-lemma polyGSOSDistLaw_naturality_approx
+lemma polyGSOSScaleCoalg_morphism_h
     (A B : Over X) (P Q : PolyEndo X)
-    (rho : PolyGSOSRule P Q) (f : A ⟶ B)
-    {x : X}
-    (t : PolyFreeM
-      (polyCofreeCarrier A Q) P x)
-    (n : Nat) :
-    polyCofixUnfoldApprox
-      (polyScale (polyFreeMCarrier B P) Q)
-      (polyGSOSScaleCoalg B P Q rho) n x
-      ⟨⟨x, polyFreeMapAt
-        (polyCofreeCarrier A Q)
-        (polyCofreeCarrier B Q) P
-        (polyCofreeMap A B Q f) x t⟩, rfl⟩ =
-    polyCofreeMapApprox
+    (rho : PolyGSOSRule P Q) (f : A ⟶ B) :
+    (polyScaleReindexCoalg
       (polyFreeMCarrier A P)
       (polyFreeMCarrier B P) Q
       (polyFreeMap A B P f)
-      (polyCofixUnfoldApprox
-        (polyScale (polyFreeMCarrier A P) Q)
-        (polyGSOSScaleCoalg A P Q rho) n x
-        ⟨⟨x, t⟩, rfl⟩) := by
-  induction n generalizing x t with
-  | zero =>
-    simp only [polyCofixUnfoldApprox,
-      polyCofreeMapApprox]
-  | succ n ih =>
-    match t with
-    | PolyFix.mk _ (Sum.inr p) children =>
-      simp only [polyCofixUnfoldApprox,
-        polyGSOSScaleCoalg,
-        polyGSOSScaleCoalgStr,
-        Over.homMk_left,
-        polyGSOSScaleCoalgStrAt,
-        polyFreeMapAt, polyFreeMBind,
-        polyCofreeMapApprox]
-      refine polyCofixApprox_intro_polyScale_congr
+      (polyGSOSScaleCoalg A P Q rho)).str ≫
+    (polyEndoFunctor X
+      (polyScale (polyFreeMCarrier B P) Q)).map
+      (polyFreeMap
+        (polyCofreeCarrier A Q)
+        (polyCofreeCarrier B Q) P
+        (polyCofreeMap A B Q f)) =
+    polyFreeMap
+      (polyCofreeCarrier A Q)
+      (polyCofreeCarrier B Q) P
+      (polyCofreeMap A B Q f) ≫
+    (polyGSOSScaleCoalg B P Q rho).str := by
+  apply Over.OverMorphism.ext
+  funext ⟨x, t⟩
+  simp only [Over.comp_left, types_comp_apply]
+  induction t with
+  | mk y idx children ih =>
+    match idx with
+    | Sum.inl ⟨⟨_, d⟩, rfl⟩ =>
+      _
+    | Sum.inr p =>
+      _
+
+lemma polyGSOSDistLaw_naturality
+    (A B : Over X) (P Q : PolyEndo X)
+    (rho : PolyGSOSRule P Q) (f : A ⟶ B) :
+    polyFreeMap
+      (polyCofreeCarrier A Q)
+      (polyCofreeCarrier B Q) P
+      (polyCofreeMap A B Q f) ≫
+    polyGSOSDistLawMor B P Q rho =
+    polyGSOSDistLawMor A P Q rho ≫
+    polyCofreeMap
+      (polyFreeMCarrier A P)
+      (polyFreeMCarrier B P) Q
+      (polyFreeMap A B P f) := by
+  have rhs_eq :=
+    polyScaleReindex
+      (polyFreeMCarrier A P)
+      (polyFreeMCarrier B P) Q
+      (polyFreeMap A B P f)
+      (polyGSOSScaleCoalg A P Q rho)
+  have lhs_eq :=
+    polyCofixUnfold_precomp
+      (polyScale (polyFreeMCarrier B P) Q)
+      (polyScaleReindexCoalg
+        (polyFreeMCarrier A P)
         (polyFreeMCarrier B P) Q
-        (polyGSOSFoldQIndex_eq A B P Q rho f
-          (PolyFix.mk x (Sum.inr p) children))
-        ?_ ?_
-      · apply Subtype.ext
-        simp only [polyFreeMap, Over.homMk_left,
-          polyFreeMapLeft]
-        exact congrArg (Sigma.mk x)
-          (polyGSOSDistLaw_annot_natural
-            A B P Q f
-            (PolyFix.mk x (Sum.inr p) children))
-      · apply Function.hfunext
-        · exact congrArg
-            (fun q =>
-              (polyBetweenFamily X X Q x q).left)
-            (polyGSOSFoldQIndex_eq A B P Q rho f
-              (PolyFix.mk x (Sum.inr p)
-                children))
-        · intro a a' ha
-          have hfib := overType_hom_heq
-            (congrArg
-              (polyBetweenFamily X X Q x)
-              (polyGSOSFoldQIndex_eq A B P Q rho f
-                (PolyFix.mk x (Sum.inr p)
-                  children)))
-            a a' ha
-          have ih_eq := ih
-            ((polyGSOSFoldCataWithFiber
-              A P Q rho
-              (PolyFix.mk x (Sum.inr p)
-                children)).val.val.2.snd.snd.left
-              a').2
-          refine HEq.trans ?_ (HEq.trans
-            (heq_of_eq ih_eq) ?_)
-          · apply polyCofixUnfoldApprox_input_heq
-              _ _ hfib
-            _
-          · exact heq_of_eq rfl
-    | PolyFix.mk _ (Sum.inl c) _ =>
-      obtain ⟨⟨xm, m⟩, rfl⟩ := c
-      simp only [polyCofixUnfoldApprox,
-        polyGSOSScaleCoalg,
-        polyGSOSScaleCoalgStr,
-        Over.homMk_left,
-        polyGSOSScaleCoalgStrAt,
-        polyFreeMapAt, polyFreeMBind,
-        polyFreeMPure,
-        polyGSOSFoldCataWithFiber,
-        polyGSOSFoldLeafAt,
-        polyCofreeMapApprox,
-        polyCofreeMap, polyCofreeMapLeft,
-        polyCofreeCounit,
-        polyCofreeCounitLeft]
-      refine polyCofixApprox_intro_polyScale_congr
-        (polyFreeMCarrier B P) Q
-        (polyCofreeMapAt_head_snd A B Q f m)
-        ?_ ?_
-      · apply Subtype.ext
-        simp only [polyFreeMap, Over.homMk_left,
-          polyFreeMapLeft, polyFreeMapAt,
-          polyFreeMBind, polyFreeMPure]
-        congr 1
-        congr 1
-        congr 1
-        exact Subtype.ext
-          (polyCofreeExtract_mapAt_val A B Q f m)
-      · apply Function.hfunext
-        · exact congrArg
-            (fun q =>
-              (polyBetweenFamily X X Q
-                ((polyCofreeCarrier A Q).hom
-                  ⟨xm, m⟩) q).left)
-            (polyCofreeMapAt_head_snd A B Q f m)
-        · intro a a' ha
-          have hfib := overType_hom_heq
-            (congrArg (polyBetweenFamily X X Q
-              ((polyCofreeCarrier A Q).hom ⟨xm, m⟩))
-              (polyCofreeMapAt_head_snd A B Q f m))
-            a a' ha
-          have ih_eq := ih
-            (PolyFix.mk _
-              (Sum.inl
-                ⟨⟨(polyBetweenFamily X X Q
-                    ((polyCofreeCarrier A Q).hom
-                      ⟨xm, m⟩) m.head.2).hom a',
-                  m.children a'⟩,
-                rfl⟩)
-              nofun)
-          refine HEq.trans ?_ (HEq.trans
-            (heq_of_eq ih_eq) ?_)
-          · apply polyCofixUnfoldApprox_input_heq
-              _ _ hfib
-            dsimp only [polyFreeMapAt,
-              polyFreeMBind, polyFreeMPure]
-            refine subtype_heq_of_val_eq ?_ ?_
-            · ext y
-              dsimp only [polyGSOSScaleCoalg,
-                polyGSOSScaleCoalgStr,
-                polyFreeMCarrier, polyFixCarrier,
-                polyCofreeCarrier,
-                polyCofixCarrier,
-                familySliceForward,
-                familySliceForwardObj,
-                polyScale, polyScaleAt,
-                polyScaleFamily,
-                ccrObjMk,
-                polyBetweenFamily,
-                polyToOverFamily,
-                ccrFamily,
-                polyCofreeStr, polyCofreeStrLeft,
-                polyCofreeStrFamily,
-                polyCofreeChildrenMor]
-              simp only [Over.mk_hom]
-              exact Iff.of_eq (congrArg _ hfib)
-            · refine Sigma.ext ?_ ?_
-              · dsimp only [polyCofreeStr,
-                  polyCofreeStrLeft,
-                  polyCofreeStrFamily,
-                  polyCofreeMap,
-                  polyCofreeMapLeft,
-                  polyCofreeChildrenMor,
-                  polyCofreeCarrier,
-                  polyCofixCarrier,
-                  familySliceForward,
-                  familySliceForwardObj]
-                exact hfib
-              · dsimp only [polyCofreeStr,
-                  polyCofreeMap,
-                  polyCofreeCarrier,
-                  polyCofixCarrier,
-                  familySliceForward,
-                  familySliceForwardObj]
-                simp only [Over.mk_hom]
-                congr 1
-                congr 1
-                · exact congrArg Subtype
-                    (funext fun v =>
-                      congrArg (Eq v.fst) hfib)
-                · exact congrArg
-                    (polyBetweenIndex X X P) hfib
-                · exact subtype_heq_of_val_eq
-                    (funext fun v =>
-                      congrArg (Eq v.fst) hfib)
-                    (Sigma.ext hfib
-                      (polyCofreeMapAt_children_heq
-                        A B Q f m a' a
-                        ha.symm).symm)
-          · exact heq_of_eq (by
-              congr 1; congr 1
-              refine Subtype.ext
-                (Sigma.ext rfl ?_)
-              refine heq_of_eq ?_
-              dsimp only [polyCofreeCarrier,
-                polyCofixCarrier,
-                familySliceForward,
-                familySliceForwardObj,
-                polyCofreeStr, polyCofreeStrLeft,
-                polyCofreeStrFamily,
-                polyCofreeChildrenMor,
-                polyBetweenFamily,
-                polyToOverFamily,
-                ccrFamily]
-              simp only [Over.mk_hom]
-              congr 1
-              funext e; exact PEmpty.elim e)
+        (polyFreeMap A B P f)
+        (polyGSOSScaleCoalg A P Q rho))
+      (polyGSOSScaleCoalg B P Q rho)
+      ⟨polyFreeMap
+        (polyCofreeCarrier A Q)
+        (polyCofreeCarrier B Q) P
+        (polyCofreeMap A B Q f),
+       polyGSOSScaleCoalg_morphism_h
+        A B P Q rho f⟩
+  simp only [polyGSOSDistLawMor]
+  rw [rhs_eq, lhs_eq]
 
 end GebLean

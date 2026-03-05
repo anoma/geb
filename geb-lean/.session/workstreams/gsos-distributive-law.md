@@ -1,16 +1,56 @@
 # GSOS Distributive Law
 
-## Status: Naturality in progress, coherence proofs pending
+## Status: Naturality coalgebra morphism proof in progress
 
 ## Current build state
 
-File: `GebLean/PolyGSOS.lean` (1226 lines)
+File: `GebLean/PolyGSOS.lean` (883 lines)
 
-Single compilation error at line 1021: unsolved HEq goal in
-`polyGSOSFoldCata_natural`, node case, `Prod.snd` branch.
-This blocks compilation of everything after line 1021,
-including `polyGSOSDistLaw_naturality_approx` (which is
-written but cannot be verified).
+Architecture change: replaced depth-indexed
+`polyGSOSDistLaw_naturality_approx` with a coalgebra
+morphism approach using `polyCofixUnfold_precomp` and
+`polyScaleReindex`.
+
+`polyGSOSDistLaw_naturality` compiles given the coalgebra
+morphism lemma `polyGSOSScaleCoalg_morphism_h`.
+
+Two unsolved goals in `polyGSOSScaleCoalg_morphism_h`:
+
+1. Leaf case (line 842, `Sum.inl` branch): the scale
+   coalgebra structure on a pure leaf (wrapping cofree
+   element d) must commute with mapping.  The goal is
+   an equality of Scale evaluations (nested Sigma pairs
+   `⟨y, ((annot, qidx), qchildren)⟩`).
+
+   Annotation: `polyCofreeExtract_mapAt_val`
+   (use `congrArg (Sigma.mk y)` then
+   `congrArg (polyFreeMPure _ P ·)` then
+   `Subtype.ext`).
+
+   Q-index: `polyCofreeMapAt_head_snd`.
+
+   Q-children: the A-side children composed with
+   `polyFreeMap(polyCofreeMap f)` vs B-side children.
+   Use `polyBetweenFamily_mor_heq`, `funext_heq`,
+   then per-direction: the LHS is `polyFreeMPure` of
+   `polyCofreeMapLeft f (cofreeChild A e1)` and the
+   RHS is `polyFreeMPure` of `cofreeChild B e2`.
+   Close with `polyCofreeMapAt_children_heq` +
+   `polyFreeMPure_proof_irrel`.
+
+2. Node case (line 843, `Sum.inr p` branch): the scale
+   coalgebra structure on a P-node must commute with
+   mapping.  The IH gives the coalgebra morphism
+   condition for each P-child direction.  Needs:
+
+   Annotation: `polyGSOSDistLaw_annot_natural`.
+
+   Q-index: `polyGSOSFoldQIndex_eq`.
+
+   Q-children: the GSOS pipeline (prodComp ->
+   comp\_eval -> rho.rule -> comp\_eval -> join) must
+   commute with mapping given per-P-child fold
+   naturality (from IH).  This is the hardest part.
 
 ## Completed
 
@@ -64,65 +104,68 @@ written but cannot be verified).
 
 ## Pending: detailed step-by-step plan
 
-### Phase N: Complete naturality (unblock compilation)
+### Phase N: Complete naturality
 
-#### N1. Fix polyGSOSFoldCata\_natural line 1021
+Architecture: coalgebra morphism approach using
+`polyCofixUnfold_precomp` and `polyScaleReindex`.
+`polyGSOSDistLaw_naturality` already compiles given the
+coalgebra morphism lemma.
 
-The goal is showing the Q-evaluation (second component) of
-`polyGSOSFoldNodeAt` commutes with `polyFreeMap`/
-`polyCofreeMap`.  The first component (Prod.fst) is already
-proved.
+#### N1. Complete leaf case of polyGSOSScaleCoalg\_morphism\_h
 
-Strategy options:
+The leaf tree is `PolyFix.mk y (Sum.inl ⟨⟨y, d⟩, rfl⟩) _`
+where `d : PolyCofreeM A Q y`.  The fold produces
+`polyGSOSFoldLeafAt`, giving `(eta(d), Q(eta)(str(d)))`.
 
-- (a) Prove the HEq directly by unfolding `polyGSOSFoldNodeAt`
-  and showing the GSOS rule application commutes with mapping
-  (uses naturality of `rho.rule`).
-- (b) Factor out `polyGSOSFoldNodeAt_snd_natural` as a helper
-  lemma.
+After `dsimp`, the goal compares (using Sigma structure):
 
-The HEq involves:
+- Annotation: `f.left(polyCofreeExtract A Q d)` vs
+  `polyCofreeExtract B Q (polyCofreeMapAt f d)`.
+  Use `polyCofreeExtract_mapAt_val`.
+- Q-index: `d.head.2` vs `(polyCofreeMapAt f d).head.2`.
+  Use `polyCofreeMapAt_head_snd`.
+- Q-children: A-side children composed with
+  `polyFreeMap(polyCofreeMap f)` vs B-side children.
+  Use `polyCofreeMapAt_children_heq` +
+  `polyFix_leaf_heq_of_val_eq`.
 
-- `prodComp` naturality (the overPullback-to-polyIdBehavior
-  conversion commutes with mapping)
-- `polyBetweenComp_eval_fiberEquiv` commutes with mapping
-- `rho.rule.app` naturality (automatic from NatTrans)
-- `ccrEvalMap join` commutes with mapping
+The nested Sigma/Scale/Subtype structure requires
+careful `congr`/`Sigma.ext` decomposition.
 
-If the proof grows beyond ~30 lines, factor sub-lemmas.
+Build checkpoint.
 
-Build checkpoint: `lake build GebLean.PolyGSOS` should
-succeed with no errors after this step.
+#### N2. Complete node case of polyGSOSScaleCoalg\_morphism\_h
 
-#### N2. Verify polyGSOSDistLaw\_naturality\_approx compiles
+The node tree is `PolyFix.mk y (Sum.inr p) children`.
+The IH gives the coalgebra morphism condition for each
+P-child.  The fold computes Q-structure via the GSOS
+pipeline: prodComp -> comp\_eval -> rho.rule ->
+comp\_eval -> join.
 
-After N1, the file should compile.  Run `lake build` and
-check for any errors in the naturality\_approx proof
-(lines 1023-1224).  Fix any issues.
+After `dsimp`, the goal compares:
 
-Build checkpoint: clean compilation.
+- Annotation: use `polyGSOSDistLaw_annot_natural`.
+- Q-index: use `polyGSOSFoldQIndex_eq`.
+- Q-children: the GSOS pipeline must commute with
+  mapping.  This is the hardest part.
 
-#### N3. Write polyGSOSDistLaw\_naturality
+For Q-children pipeline naturality, the argument is:
 
-Type signature:
+1. The `prodComp` step commutes because per-P-child
+   products commute (via IH projected to each component).
+2. `polyBetweenComp_eval_fiberEquiv` is structural.
+3. `rho.rule` commutes by polynomial morphism naturality.
+4. `ccrEvalMap join` commutes because free monad bind
+   commutes with mapping.
 
-```text
-polyFreeMap (polyCofreeCarrier A Q) (polyCofreeCarrier B Q) P
-    (polyCofreeMap A B Q f) >>
-  polyGSOSDistLawMor B P Q rho =
-  polyGSOSDistLawMor A P Q rho >>
-  polyCofreeMap (polyFreeMCarrier A P)
-    (polyFreeMCarrier B P) Q (polyFreeMap A B P f)
-```
+Factor sub-lemmas for each pipeline step if needed.
 
-Pattern: `Over.OverMorphism.ext`, `funext`, `Sigma.ext`
-(fiber `rfl`), `PolyCofix.ext`, `intro n`, apply
-`polyGSOSDistLaw_naturality_approx`.
+Build checkpoint.
 
-Template: `polyDistLaw_naturality`
-(PolyDistributiveLaw.lean line 906, ~20 lines).
+#### N3. Verify full build
 
-Build checkpoint: `lake build GebLean.PolyGSOS`.
+Both leaf and node cases complete => no underscores =>
+`lake build GebLean.PolyGSOS` should succeed.
 
 #### N4. Write NatTrans packaging
 
