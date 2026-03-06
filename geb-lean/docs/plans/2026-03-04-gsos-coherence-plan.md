@@ -20,404 +20,106 @@ differs in using separate polynomials P (signature) and Q
 
 ---
 
+## Pre-task: Fix current build errors
+
+Before proceeding with coherence proofs, the staged code in
+`GebLean/PolyGSOS.lean` has three errors and two holes that
+must be resolved.  See
+`.session/workstreams/gsos-distributive-law.md` for detailed
+fix instructions.
+
+Summary:
+
+1. Fix `mor_to_pbe_fiber_index_postcomp` (generalize failure)
+2. Fix reversed equality in invFun_natural fst case
+3. Fill invFun_natural snd case (HEq of morphisms)
+4. Write `polyBetweenComp_eval_toFun_natural` (new lemma)
+5. Write join naturality lemma (new lemma)
+6. Assemble `polyGSOSFoldNodeAt_snd_natural` (pipeline chain)
+7. Fill `polyGSOSScaleCoalg_morphism_h` Q-children
+8. Build checkpoint
+
+---
+
 ## Reference: Existing Infrastructure
 
-### File: `GebLean/PolyGSOS.lean` (current state, 389 lines)
+### File: `GebLean/PolyGSOS.lean` (current state, 1323 lines)
 
-Definitions already present:
+Definitions already present and compiling:
 
-- `PolyGSOSRule P Q` — GSOS rule structure
-- `polyGSOSFoldLeafAt` — leaf handler for fold
-- `polyGSOSFoldNodeAt` — node handler for fold
-- `polyGSOSFoldCataWithFiber` — catamorphism with fiber
-  proof
-- `polyGSOSFoldCata` — fold as Over X morphism
-- `polyGSOSScaleCoalgStrAt` — scale coalgebra structure
-  at a point
-- `polyGSOSScaleCoalgStr` — scale coalgebra structure map
-- `polyGSOSScaleCoalg` — the PolyCoalg instance
-- `polyGSOSDistLawMor` — distributive law morphism via
-  `polyCofixUnfold`
+- `PolyGSOSRule P Q` --- GSOS rule structure
+- `polyGSOSFoldLeafAt` --- leaf handler for fold
+- `polyGSOSFoldNodeAt` --- node handler for fold
+- `polyGSOSFoldCataWithFiber` --- catamorphism with fiber
+- `polyGSOSFoldCata` --- fold as Over X morphism
+- `polyGSOSScaleCoalgStrAt` --- scale coalgebra structure
+- `polyGSOSScaleCoalgStr` --- scale coalgebra structure map
+- `polyGSOSScaleCoalg` --- the PolyCoalg instance
+- `polyGSOSDistLawMor` --- distributive law morphism
+- `polyGSOSDistLawMor_head_fst` --- head annotation lemma
+- `polyGSOSDistLaw_counit` --- counit coherence (done)
+- `polyGSOSDistLaw_unit_approx` --- depth-indexed unit
+- `polyGSOSDistLaw_unit` --- unit coherence (done)
+- `polyGSOSDistLaw_annot_natural` --- annotation naturality
+- `polyGSOSFoldQIndex_eq` --- Q-index naturality
+- `polyGSOSFoldFst_natural` --- fold fst naturality
+- `polyGSOSFoldLeafAt_snd_natural` --- leaf Q-eval nat
+- `polyGSOSScaleCoalg_morphism_h` --- leaf case done
+- `polyGSOSDistLaw_naturality` --- compiles given morphism_h
 
-### File: `GebLean/PolyDistributiveLaw.lean` (template)
+### Reusable helper lemmas (parametric)
 
-Reusable helper lemmas (parametric in polynomial argument):
+From `PolyDistributiveLaw.lean`:
 
-- `polyFreeMonad_eta_eq` (line 2415):
-  `(polyFreeMonad X P).eta.app A = polyFreeUnit A P`
-- `polyFreeMonad_mu_eq` (line 1596):
-  `(polyFreeMonad X P).mu.app A = polyFreeCounitFold P
-  (polyFreeAlg A P)`
-- `polyFreeMonad_map_eq` (line 1608):
-  `(polyFreeMonad X P).toFunctor.map f =
-  polyFreeMap A B P f`
-- `polyCofreeComonad_eps_eq` (line 2427):
-  `(polyCofreeComonad X P).eps.app A =
-  polyCofreeCounit A P`
-- `polyCofreeComonad_delta_eq` (line 2439):
-  `(polyCofreeComonad X P).delta.app A =
-  polyCoalgUnit P (polyCofreeCoalg A P)`
-- `polyCofreeComonad_map_eq` (line 2451):
-  `(polyCofreeComonad X P).toFunctor.map f =
-  polyCofreeMap A B P f`
+- `polyFreeMonad_eta_eq` (line 2415)
+- `polyFreeMonad_mu_eq` (line 1596)
+- `polyFreeMonad_map_eq` (line 1608)
+- `polyCofreeComonad_eps_eq` (line 2427)
+- `polyCofreeComonad_delta_eq` (line 2439)
+- `polyCofreeComonad_map_eq` (line 2451)
 
-For GSOS: instantiate monad lemmas with P, comonad lemmas
-with Q.
+Instantiate monad lemmas with P, comonad lemmas with Q.
 
-### File: `GebLean/PolyAlg.lean`
+From `PolyDistributiveLaw.lean` (structural):
 
-- `polyCofixUnfold` (line 1378): anamorphism from coalgebra
-  to terminal coalgebra
-- `polyCofixUnfoldAt` (line 1355): pointwise anamorphism
-- `polyCofixUnfoldApprox` (line 1281): depth-indexed
-  approximation
-- `PolyCofix.ext` (line 1026): extensionality via
-  approximations
-- `polyCofreeMapApprox` (line 6175): depth-indexed cofree
-  map
-- `polyCofreeMapAt_head_snd` (line 6264): cofree map
-  preserves Q-index
-- `polyCofixUnfold_coalg_comm` (line 2085): coalgebra
-  morphism condition for anamorphism
-- `polyCofreeCounit_naturality` (in PolyAlg.lean):
-  naturality of epsilon_Q
+- `polyCofixUnfold_precomp` (line 1688)
+- `polyScaleReindex` (line 880)
+- `polyCofixUnfoldApprox_input_heq` (line 498)
+- `polyCofixApprox_intro_polyScale_congr` (line 514)
 
-### File: `GebLean/PolyDistributiveLaw.lean`
-
-- `polyCofixUnfold_precomp` (line 1688):
-  `g.f >> polyCofixUnfold P beta =
-  polyCofixUnfold P alpha`
-  (when g is a coalgebra morphism alpha -> beta)
-- `polyScaleReindex` (line 880):
-  `polyCofixUnfold >> polyCofreeMap f =
-  polyCofixUnfold (reindexed coalgebra)`
-- `polyCofixUnfoldApprox_input_heq` (line 498): HEq
-  for approx with equal inputs
-- `polyCofixApprox_intro_polyScale_congr` (line 514):
-  equality of .intro when components match
-
-### File: `GebLean/Utilities/DistributiveLaw.lean`
-
-Target structure:
+### Target structure: `DistributiveLaw`
 
 ```text
 structure DistributiveLaw (T : Monad C) (D : Comonad C)
-  dist : D.toFunctor >> T.toFunctor --> T.toFunctor >> D.toFunctor
+  dist : D.toFunctor ⋙ T.toFunctor ⟶
+    T.toFunctor ⋙ D.toFunctor
   unit : forall X,
-    T.eta.app (D.obj X) >> dist.app X =
+    T.eta.app (D.obj X) ≫ dist.app X =
     D.map (T.eta.app X)
   mul : forall X,
-    T.mu.app (D.obj X) >> dist.app X =
-    T.map (dist.app X) >> dist.app (T.obj X) >>
+    T.mu.app (D.obj X) ≫ dist.app X =
+    T.map (dist.app X) ≫ dist.app (T.obj X) ≫
     D.map (T.mu.app X)
   counit : forall X,
-    dist.app X >> D.eps.app (T.obj X) =
+    dist.app X ≫ D.eps.app (T.obj X) =
     T.map (D.eps.app X)
   comul : forall X,
-    T.map (D.delta.app X) >>
-    dist.app (D.obj X) >>
+    T.map (D.delta.app X) ≫
+    dist.app (D.obj X) ≫
     D.map (dist.app X) =
-    dist.app X >> D.delta.app (T.obj X)
+    dist.app X ≫ D.delta.app (T.obj X)
 ```
 
 ---
 
-## Task 1: Counit proof
+## Task 1: Complete naturality (pre-task + NatTrans)
 
-**Files:**
+**Files:** Modify `GebLean/PolyGSOS.lean`
 
-- Modify: `GebLean/PolyGSOS.lean` (append after
-  `polyGSOSDistLawMor`, before `end GebLean`)
+See `.session/workstreams/gsos-distributive-law.md` for the
+detailed fix plan with intermediate lemma signatures.
 
-**Step 1: Write `polyGSOSDistLawMor_head_fst`**
-
-This lemma states that the head annotation of the
-anamorphism output equals `T_P(eps_Q)` applied to
-the input.
-
-Type signature:
-
-```lean
-lemma polyGSOSDistLawMor_head_fst
-    (A : Over X) (P Q : PolyEndo X)
-    (rho : PolyGSOSRule P Q) {x : X}
-    (t : PolyFreeM (polyCofreeCarrier A Q) P x) :
-    let m := polyCofixUnfoldAt
-      (polyScale (polyFreeMCarrier A P) Q)
-      (polyGSOSScaleCoalg A P Q rho)
-      x ⟨⟨x, t⟩, rfl⟩
-    (polyCofreeExtract
-      (polyFreeMCarrier A P) Q m).val =
-    ⟨x, polyFreeMapAt
-      (polyCofreeCarrier A Q) A P
-      (polyCofreeCounit A Q) x t⟩
-```
-
-Strategy: Unfold `polyCofixUnfoldAt` and
-`polyGSOSScaleCoalgStrAt`.  The annotation field is
-constructed as `polyFreeMapAt ... (polyCofreeCounit A Q)
-x t` by definition.  Should be `rfl` or near-`rfl`.
-
-Build and fix errors.
-
-**Step 2: Write `polyGSOSDistLaw_counit`**
-
-Type signature:
-
-```lean
-lemma polyGSOSDistLaw_counit
-    (A : Over X) (P Q : PolyEndo X)
-    (rho : PolyGSOSRule P Q) :
-    polyGSOSDistLawMor A P Q rho ≫
-    polyCofreeCounit (polyFreeMCarrier A P) Q =
-    polyFreeMap
-      (polyCofreeCarrier A Q) A P
-      (polyCofreeCounit A Q)
-```
-
-Strategy: `Over.OverMorphism.ext`, `funext`,
-`simp only` with unfolding lemmas for
-`polyCofixUnfold`, `polyCofreeCounit`, `polyFreeMap`,
-then apply `polyGSOSDistLawMor_head_fst`.
-
-Template: `polyDistLaw_counit` (PolyDistributiveLaw.lean
-line 280, ~15 lines).
-
-Build and fix errors.
-
-Step 3: Commit with `git commit -m "GSOS counit coherence proof"`.
-
----
-
-## Task 2: Unit proof
-
-**Files:**
-
-- Modify: `GebLean/PolyGSOS.lean`
-
-**Step 1: Write `polyGSOSDistLaw_unit_approx`**
-
-Type signature:
-
-```lean
-lemma polyGSOSDistLaw_unit_approx
-    (A : Over X) (P Q : PolyEndo X)
-    (rho : PolyGSOSRule P Q) {x : X}
-    (m : PolyCofreeM A Q x) (n : Nat) :
-    polyCofixUnfoldApprox
-      (polyScale (polyFreeMCarrier A P) Q)
-      (polyGSOSScaleCoalg A P Q rho) n x
-      ⟨⟨x, polyFreeMPure
-        (polyCofreeCarrier A Q) P
-        ⟨⟨x, m⟩, rfl⟩⟩, rfl⟩ =
-    polyCofreeMapApprox A
-      (polyFreeMCarrier A P) Q
-      (polyFreeUnit A P) (m.approx n)
-```
-
-Strategy: Induction on `n`.
-
-- Base (n=0): both sides are `.continue`/`.trunc`, `rfl`
-  or simple simp.
-- Succ (n+1): The input is `polyFreeMPure(cofree elem)`.
-  The fold of a pure leaf is `polyGSOSFoldLeafAt`.
-  The scale coalgebra structure at this leaf gives:
-  - annotation:
-    `T_P(eps_Q)(eta(m)) = eta(eps_Q(m)) = eta(head(m))`
-  - Q-index: `m.head.2` (preserved by fold leaf handler)
-  - children: recursive call on `m.children e`
-
-  The RHS unfolds `polyCofreeMapApprox` on `m.approx
-  (n+1)`, which maps each annotation via `polyFreeUnit`
-  and recurses on children.
-
-  Show annotation equality and children equality (IH).
-
-Template: `polyDistLaw_unit_approx`
-(PolyDistributiveLaw.lean line 334, ~100 lines).
-
-Build and fix errors.
-
-**Step 2: Write `polyGSOSDistLaw_unit`**
-
-Type signature:
-
-```lean
-lemma polyGSOSDistLaw_unit
-    (A : Over X) (P Q : PolyEndo X)
-    (rho : PolyGSOSRule P Q) :
-    polyFreeUnit (polyCofreeCarrier A Q) P ≫
-    polyGSOSDistLawMor A P Q rho =
-    polyCofreeMap A
-      (polyFreeMCarrier A P) Q
-      (polyFreeUnit A P)
-```
-
-Strategy: `Over.OverMorphism.ext`, `funext`,
-`Sigma.ext` (fiber is `rfl`), `PolyCofix.ext`,
-`intro n`, apply `polyGSOSDistLaw_unit_approx`.
-
-Template: `polyDistLaw_unit` (line 431, ~20 lines).
-
-Build and fix errors.
-
-Step 3: Commit with `git commit -m "GSOS unit coherence proof"`.
-
----
-
-## Task 3: Naturality proof
-
-**Files:**
-
-- Modify: `GebLean/PolyGSOS.lean`
-
-**Step 1: Write `polyGSOSDistLaw_annot_natural`**
-
-Type signature:
-
-```lean
-lemma polyGSOSDistLaw_annot_natural
-    (A B : Over X) (P Q : PolyEndo X)
-    (f : A ⟶ B) {x : X}
-    (t : PolyFreeM (polyCofreeCarrier A Q) P x) :
-    polyFreeMapAt
-      (polyCofreeCarrier B Q) B P
-      (polyCofreeCounit B Q) x
-      (polyFreeMapAt
-        (polyCofreeCarrier A Q)
-        (polyCofreeCarrier B Q) P
-        (polyCofreeMap A B Q f) x t) =
-    polyFreeMapAt A B P f x
-      (polyFreeMapAt
-        (polyCofreeCarrier A Q) A P
-        (polyCofreeCounit A Q) x t)
-```
-
-Strategy: `rw [polyFreeMapAt_comp (both sides)]`,
-`congr 1`, `exact polyCofreeCounit_naturality A B Q f`.
-
-Template: `polyDistLaw_annot_natural`
-(PolyDistributiveLaw.lean line 474, ~10 lines).
-
-Build and fix errors.
-
-**Step 2: Write `polyGSOSDistLaw_naturality_approx_leaf`**
-
-This handles the leaf case of the depth-indexed
-naturality proof.
-
-Type signature (analogous to
-`polyDistLaw_naturality_approx_leaf` at line 544):
-
-```lean
-lemma polyGSOSDistLaw_naturality_approx_leaf
-    (A B : Over X) (P Q : PolyEndo X)
-    (rho : PolyGSOSRule P Q) (f : A ⟶ B) {x : X}
-    (c : { a //
-      (polyCofreeCarrier A Q).hom a = x })
-    (n : Nat)
-    (ih : forall {x : X}
-      (t : PolyFreeM
-        (polyCofreeCarrier A Q) P x),
-      polyCofixUnfoldApprox
-        (polyScale (polyFreeMCarrier B P) Q)
-        (polyGSOSScaleCoalg B P Q rho) n x
-        ⟨⟨x, polyFreeMapAt
-          (polyCofreeCarrier A Q)
-          (polyCofreeCarrier B Q) P
-          (polyCofreeMap A B Q f) x t⟩, rfl⟩ =
-      polyCofreeMapApprox
-        (polyFreeMCarrier A P)
-        (polyFreeMCarrier B P) Q
-        (polyFreeMap A B P f)
-        (polyCofixUnfoldApprox
-          (polyScale (polyFreeMCarrier A P) Q)
-          (polyGSOSScaleCoalg A P Q rho) n x
-          ⟨⟨x, t⟩, rfl⟩)) :
-    <goal for leaf at depth n+1>
-```
-
-Strategy: Unfold definitions for the leaf case.  The
-fold of a leaf produces `polyGSOSFoldLeafAt`, whose
-annotation and Q-structure commute with `f` via
-`polyGSOSDistLaw_annot_natural` and the leaf handler's
-construction.  Use `polyCofixApprox_intro_polyScale_congr`
-and IH on children.
-
-Build and fix errors.
-
-**Step 3: Write `polyGSOSDistLaw_naturality_approx`**
-
-Type signature:
-
-```lean
-lemma polyGSOSDistLaw_naturality_approx
-    (A B : Over X) (P Q : PolyEndo X)
-    (rho : PolyGSOSRule P Q) (f : A ⟶ B) {x : X}
-    (t : PolyFreeM (polyCofreeCarrier A Q) P x)
-    (n : Nat) :
-    polyCofixUnfoldApprox
-      (polyScale (polyFreeMCarrier B P) Q)
-      (polyGSOSScaleCoalg B P Q rho) n x
-      ⟨⟨x, polyFreeMapAt
-        (polyCofreeCarrier A Q)
-        (polyCofreeCarrier B Q) P
-        (polyCofreeMap A B Q f) x t⟩, rfl⟩ =
-    polyCofreeMapApprox
-      (polyFreeMCarrier A P)
-      (polyFreeMCarrier B P) Q
-      (polyFreeMap A B P f)
-      (polyCofixUnfoldApprox
-        (polyScale (polyFreeMCarrier A P) Q)
-        (polyGSOSScaleCoalg A P Q rho) n x
-        ⟨⟨x, t⟩, rfl⟩)
-```
-
-Strategy: Induction on `n`.
-
-- Base: trivial.
-- Succ: match on `t`.
-  - Node `(Sum.inr pIdx) children`:
-    Show annotation equality via
-    `polyGSOSDistLaw_annot_natural`.
-    Show Q-index equality (preserved by fold node
-    handler).
-    Show children equality via IH.
-  - Leaf `(Sum.inl c) _`:
-    Apply `polyGSOSDistLaw_naturality_approx_leaf`.
-
-Template: `polyDistLaw_naturality_approx`
-(PolyDistributiveLaw.lean line 718, ~100 lines).
-
-Build and fix errors.
-
-**Step 4: Write `polyGSOSDistLaw_naturality`**
-
-Type signature:
-
-```lean
-lemma polyGSOSDistLaw_naturality
-    (A B : Over X) (P Q : PolyEndo X)
-    (rho : PolyGSOSRule P Q) (f : A ⟶ B) :
-    polyFreeMap
-      (polyCofreeCarrier A Q)
-      (polyCofreeCarrier B Q) P
-      (polyCofreeMap A B Q f) ≫
-    polyGSOSDistLawMor B P Q rho =
-    polyGSOSDistLawMor A P Q rho ≫
-    polyCofreeMap
-      (polyFreeMCarrier A P)
-      (polyFreeMCarrier B P) Q
-      (polyFreeMap A B P f)
-```
-
-Strategy: `Over.OverMorphism.ext`, `funext`,
-`Sigma.ext` (fiber `rfl`), `PolyCofix.ext`, `intro n`,
-apply `polyGSOSDistLaw_naturality_approx`.
-
-Build and fix errors.
-
-Step 5: Write NatTrans packaging.
+After fixes, write NatTrans packaging:
 
 ```lean
 def polyGSOSDistLawNatApp
@@ -437,7 +139,12 @@ lemma polyGSOSDistLawNat_naturality
     polyGSOSDistLawNatApp B P Q rho =
     polyGSOSDistLawNatApp A P Q rho ≫
     ((polyFreeMonad X P).toFunctor ⋙
-      (polyCofreeComonad X Q).toFunctor).map f
+      (polyCofreeComonad X Q).toFunctor).map f := by
+  simp only [Functor.comp_map,
+    polyFreeMonad_map_eq,
+    polyCofreeComonad_map_eq,
+    polyGSOSDistLawNatApp]
+  exact polyGSOSDistLaw_naturality A B P Q rho f
 
 def polyGSOSDistLawNat
     (P Q : PolyEndo X)
@@ -446,59 +153,62 @@ def polyGSOSDistLawNat
       (polyFreeMonad X P).toFunctor ⟶
     (polyFreeMonad X P).toFunctor ⋙
       (polyCofreeComonad X Q).toFunctor where
-  app := fun A => polyGSOSDistLawNatApp A P Q rho
+  app := fun A =>
+    polyGSOSDistLawNatApp A P Q rho
   naturality := fun {A B} f =>
     polyGSOSDistLawNat_naturality A B P Q rho f
 ```
 
-Build and fix errors.
-
-Step 6: Commit with `git commit -m "GSOS naturality proof and NatTrans"`.
+Build, then commit:
+"GSOS naturality proof and NatTrans packaging"
 
 ---
 
-## Task 4: Comultiplication proof
+## Task 2: Comultiplication proof
 
-**Files:**
+**Files:** Modify `GebLean/PolyGSOS.lean`
 
-- Modify: `GebLean/PolyGSOS.lean`
+### Intermediate lemmas (factored out)
 
-Step 1: Write annotation equality lemma.
+#### Lemma CM-1: Annotation equality
 
 ```lean
 lemma polyGSOSDistLaw_comul_annot_eq
     (A : Over X) (P Q : PolyEndo X)
     (rho : PolyGSOSRule P Q) {x : X}
-    (t : PolyFreeM (polyCofreeCarrier A Q) P x) :
-    <annotation of LHS at t = annotation of RHS at t>
+    (t : PolyFreeM
+      (polyCofreeCarrier A Q) P x) :
+    polyFreeMapAt ... (polyCofreeCounit A Q ≫ ...)
+      x (polyFreeMapAt ...
+        (polyCoalgUnit Q ...) x t) =
+    polyFreeMapAt ... (polyCofreeCounit A Q) x t
 ```
 
-The LHS applies `T_P(delta)` then `dist_{D_Q(A)}` then
-`D_Q(dist)`.  The RHS applies `dist` then
-`delta_{T_P(A)}`.
+Uses: `polyCofree_left_triangle` (eps . delta = id),
+`polyFreeMapAt_comp`.
 
-For the annotation component, show that
-`T_P(eps_Q . D_Q(eps_Q) . delta) =
-T_P(eps_Q)` (since `eps . delta = id` by comonad law).
+~20 lines. Template: `polyDistLaw_comul_annot_eq`.
 
-Build and fix errors.
-
-Step 2: Write leaf approximation lemma.
+#### Lemma CM-2: Leaf approximation
 
 ```lean
 lemma polyGSOSDistLaw_comul_approx_leaf
     (A : Over X) (P Q : PolyEndo X)
     (rho : PolyGSOSRule P Q) {x : X}
-    (c : { a //
-      (polyCofreeCarrier A Q).hom a = x })
+    (c : { v : (polyCofreeCarrier A Q).left //
+      (polyCofreeCarrier A Q).hom v = x })
     (n : Nat)
-    (ih : <inductive hypothesis>) :
-    <leaf case at depth n+1>
+    (ih : <depth-n IH for all trees>) :
+    <LHS approx at leaf, depth n+1> =
+    <RHS approx at leaf, depth n+1>
 ```
 
-Build and fix errors.
+Uses: `polyGSOSDistLaw_unit_approx`, comonad laws,
+`polyCofreeMapApprox` properties.
 
-Step 3: Write node approximation lemma.
+~170 lines. Template: `polyDistLaw_comul_approx_leaf`.
+
+#### Lemma CM-3: Node approximation
 
 ```lean
 lemma polyGSOSDistLaw_comul_approx_node
@@ -506,21 +216,35 @@ lemma polyGSOSDistLaw_comul_approx_node
     (rho : PolyGSOSRule P Q) {x : X}
     (pIdx : polyBetweenIndex X X P x)
     (children : ...) (n : Nat)
-    (ih : <inductive hypothesis>) :
-    <node case at depth n+1>
+    (ih : <depth-n IH for all trees>) :
+    <LHS approx at node, depth n+1> =
+    <RHS approx at node, depth n+1>
 ```
 
-Build and fix errors.
+Uses: CM-1 for annotation,
+`polyGSOSFoldQIndex` properties for Q-index,
+`polyCofixApprox_intro_polyScale_congr`, IH for children.
 
-**Step 4: Write `polyGSOSDistLaw_comul_approx`**
+~110 lines. Template: `polyDistLaw_comul_approx_node`.
 
-Depth-indexed induction combining leaf and node cases.
+#### Lemma CM-4: Main induction
 
-Build and fix errors.
+```lean
+lemma polyGSOSDistLaw_comul_approx
+    (A : Over X) (P Q : PolyEndo X)
+    (rho : PolyGSOSRule P Q) {x : X}
+    (t : PolyFreeM
+      (polyCofreeCarrier A Q) P x)
+    (n : Nat) :
+    <LHS approx at t, depth n> =
+    <RHS approx at t, depth n>
+```
 
-**Step 5: Write `polyGSOSDistLaw_comul`**
+Induction on n, dispatching to CM-2/CM-3.
 
-Type signature:
+~30 lines. Template: `polyDistLaw_comul_approx`.
+
+### Main theorem
 
 ```lean
 lemma polyGSOSDistLaw_comul
@@ -529,7 +253,8 @@ lemma polyGSOSDistLaw_comul
     polyFreeMap (polyCofreeCarrier A Q)
       (polyCofreeCarrier
         (polyCofreeCarrier A Q) Q) P
-      (polyCoalgUnit Q (polyCofreeCoalg A Q)) ≫
+      (polyCoalgUnit Q
+        (polyCofreeCoalg A Q)) ≫
     polyGSOSDistLawMor
       (polyCofreeCarrier A Q) P Q rho ≫
     polyCofreeMap
@@ -544,125 +269,214 @@ lemma polyGSOSDistLaw_comul
         (polyFreeMCarrier A P) Q)
 ```
 
-Strategy: `Over.OverMorphism.ext`, `funext`,
-`Sigma.ext`, `PolyCofix.ext`, `intro n`, apply
-`polyGSOSDistLaw_comul_approx`.
+Proof: `Over.OverMorphism.ext`, `funext`, `Sigma.ext`,
+`PolyCofix.ext`, `intro n`, apply CM-4.
 
-Build and fix errors.
+~40 lines. Template: `polyDistLaw_comul`.
 
-Step 6: Commit with
-`git commit -m "GSOS comultiplication coherence proof"`.
+Build, then commit:
+"GSOS comultiplication coherence proof"
 
 ---
 
-## Task 5: Multiplication proof
+## Task 3: Multiplication proof
 
-**Files:**
+**Files:** Modify `GebLean/PolyGSOS.lean`
 
-- Modify: `GebLean/PolyGSOS.lean`
+### Source coalgebra definition
 
-Step 1: Define LHS coalgebra structure.
-
-The LHS `mu_{D_Q(A)} >> dist` composes monad
-multiplication with the distributive law.  Express this as
-an anamorphism by showing `T_P(T_P(D_Q(A)))` carries a
-`polyScale(T_P(A), Q)`-coalgebra structure via the fold
-applied to the flattened tree.
+#### Sub-lemma MU-1: Source coalgebra structure
 
 ```lean
-def polyGSOSDistLaw_mu_coalg
+def polyGSOSDistLaw_mul_srcCoalgStrAt
     (A : Over X) (P Q : PolyEndo X)
-    (rho : PolyGSOSRule P Q) :
-    PolyCoalg (polyScale (polyFreeMCarrier A P) Q)
+    (rho : PolyGSOSRule P Q) {x : X}
+    (t : PolyFreeM
+      (polyFreeMCarrier
+        (polyCofreeCarrier A Q) P) P x) :
+    polyBetweenEvalFamily X X
+      (polyScale (polyFreeMCarrier A P) Q)
+      (polyFreeMCarrier
+        (polyFreeMCarrier
+          (polyCofreeCarrier A Q) P) P) x
 ```
 
-where the carrier is
-`polyFreeMCarrier (polyFreeMCarrier
-  (polyCofreeCarrier A Q) P) P`
-(i.e., `T_P(T_P(D_Q(A)))`) and the structure map
-combines `mu` with the scale coalgebra.
+Combines:
 
-Build and fix errors.
+- Annotation: `T_P(eps_Q)(mu(t))`
+- Q-structure: fold(mu(t)), with Q-children embedded
+  into `T_P(T_P(D_Q(A)))` via `polyFreeUnit` (eta)
 
-Step 2: Prove LHS coalgebra homomorphism.
+The eta embedding is the technique that makes
+`Scale.map(mu)` recover the original Q-children via
+`mu . eta = id` (monad left unit law).
 
-Show that `polyFreeCounitFold` (monad multiplication)
-is a coalgebra morphism from `polyGSOSDistLaw_mu_coalg`
-to `polyGSOSScaleCoalg`.
+~20 lines. Template: `polyDistLaw_mul_srcCoalgStrAt`.
+
+#### Sub-lemma MU-1b: Packaging (~60 lines)
+
+- `polyGSOSDistLaw_mul_srcCoalgStrLeft`
+- `polyGSOSDistLaw_mul_srcCoalgStr_comm`
+- `polyGSOSDistLaw_mul_srcCoalgStr`
+- `polyGSOSDistLaw_mul_srcCoalg`
+
+Template: lines 1783-1842.
+
+### RHS coalgebra definition
 
 ```lean
-lemma polyGSOSDistLaw_mu_hom
+def polyGSOSDistLaw_mul_rhsCoalg
     (A : Over X) (P Q : PolyEndo X)
     (rho : PolyGSOSRule P Q) :
-    <mu is a coalgebra morphism>
+    PolyCoalg
+      (polyScale (polyFreeMCarrier A P) Q) :=
+  polyScaleReindexCoalg
+    (polyFreeMCarrier
+      (polyFreeMCarrier A P) P)
+    (polyFreeMCarrier A P) Q
+    (polyFreeCounitFold P (polyFreeAlg A P))
+    (polyGSOSScaleCoalg
+      (polyFreeMCarrier A P) P Q rho)
 ```
 
-This requires showing the fold commutes with the scale
-coalgebra structure.
+~10 lines. Template: line 1630.
 
-Build and fix errors.
+### Coalgebra morphism conditions
 
-Step 3: Define RHS coalgebra structure.
+#### Sub-lemma MU-3: mu_hom_h (~180 lines)
 
-The RHS `T_P(dist) >> dist_{T_P(A)} >> D_Q(mu_A)`.
-Express as an anamorphism via `polyScaleReindex`.
+```lean
+lemma polyGSOSDistLaw_mu_hom_h
+    (A : Over X) (P Q : PolyEndo X)
+    (rho : PolyGSOSRule P Q) :
+    (polyGSOSDistLaw_mul_srcCoalg
+      A P Q rho).str ≫
+    (polyEndoFunctor X
+      (polyScale (polyFreeMCarrier A P) Q)).map
+      (polyFreeCounitFold P
+        (polyFreeAlg
+          (polyCofreeCarrier A Q) P)) =
+    polyFreeCounitFold P
+      (polyFreeAlg
+        (polyCofreeCarrier A Q) P) ≫
+    (polyGSOSScaleCoalg A P Q rho).str
+```
 
-Build and fix errors.
+This says mu is a coalgebra morphism. The proof
+by induction on tree t has:
 
-Step 4: Prove RHS coalgebra condition.
+**Node case**: `mu(node(p, ch)) = node(p, mu . ch)`.
+Both sides compute `fold(node(p, mu(ch_e)))` which
+is `nodeHandler(p, fold(mu(ch_e)))`. The srcCoalg
+embeds Q-children via eta; after `Scale.map(mu)`,
+`mu(eta(child)) = child` by left unit. Annotation
+matches by `polyFreeMapAt_comp` and mu's node behavior.
 
-Show the composition `T_P(dist) >> dist_{T_P(A)}`
-followed by `D_Q(mu)` satisfies the required coalgebra
-condition.
+**Leaf case**: `mu(leaf(a)) = a.val.2` (inner tree).
+Both sides compute `fold(a.val.2)`. Q-children:
+srcCoalg embeds via eta; `mu(eta(child)) = child`.
+Annotation matches since `T_P(eps_Q)(mu(leaf(a)))` =
+`T_P(eps_Q)(a.val.2)`.
 
-Build and fix errors.
+**Sub-lemmas to factor out**:
 
-**Step 5: Write `polyGSOSDistLaw_mul`**
+- mu_hom_h_node_annot: annotation equality at nodes
+- mu_hom_h_node_qidx: Q-index equality at nodes
+- mu_hom_h_leaf: full leaf case
+- mu_hom_h_node_qchildren: Q-children after mu.eta=id
 
-Type signature:
+Template: lines 1868-2047.
+
+#### Sub-lemma MU-4: tdist_hom_h (~300 lines)
+
+```lean
+lemma polyGSOSDistLaw_tdist_hom_h
+    (A : Over X) (P Q : PolyEndo X)
+    (rho : PolyGSOSRule P Q) :
+    (polyGSOSDistLaw_mul_srcCoalg
+      A P Q rho).str ≫
+    (polyEndoFunctor X
+      (polyScale (polyFreeMCarrier A P) Q)).map
+      (polyFreeMap
+        (polyCofreeCarrier A Q)
+        (polyCofreeCarrier
+          (polyFreeMCarrier A P) Q) P
+        (polyGSOSDistLawMor A P Q rho)) =
+    polyFreeMap
+      (polyCofreeCarrier A Q)
+      (polyCofreeCarrier
+        (polyFreeMCarrier A P) Q) P
+      (polyGSOSDistLawMor A P Q rho) ≫
+    (polyGSOSDistLaw_mul_rhsCoalg
+      A P Q rho).str
+```
+
+This says `T_P(dist)` is a coalgebra morphism. The proof
+uses:
+
+- Counit coherence for annotation:
+  `T_P(eps_Q)(T_P(dist)(t))` =
+  `T_P(eps_Q . dist)(t)` = `T_P(T_P(eps_Q))(t)`
+  by `polyGSOSDistLaw_counit` and `polyFreeMapAt_comp`.
+- `polyCofixUnfold_coalg_comm` for Q-structure.
+- Induction on tree for pointwise equality.
+
+**Sub-lemmas to factor out**:
+
+- tdist_hom_h_node_annot: annotation at nodes
+- tdist_hom_h_node_qstructure: Q-structure at nodes
+- tdist_hom_h_leaf: full leaf case
+
+Template: lines 2048-2353.
+
+### Task's Main theorem
 
 ```lean
 lemma polyGSOSDistLaw_mul
     (A : Over X) (P Q : PolyEndo X)
     (rho : PolyGSOSRule P Q) :
-    let DQ := polyCofreeCarrier A Q
-    let TA := polyFreeMCarrier A P
-    let TDQ := polyFreeMCarrier DQ P
-    polyFreeCounitFold P (polyFreeAlg DQ P) ≫
+    polyFreeCounitFold P
+      (polyFreeAlg
+        (polyCofreeCarrier A Q) P) ≫
     polyGSOSDistLawMor A P Q rho =
-    polyFreeMap TDQ
-      (polyCofreeCarrier TA Q) P
+    polyFreeMap
+      (polyFreeMCarrier
+        (polyCofreeCarrier A Q) P)
+      (polyCofreeCarrier
+        (polyFreeMCarrier A P) Q) P
       (polyGSOSDistLawMor A P Q rho) ≫
-    polyGSOSDistLawMor TA P Q rho ≫
+    polyGSOSDistLawMor
+      (polyFreeMCarrier A P) P Q rho ≫
     polyCofreeMap
-      (polyFreeMCarrier TA P)
-      TA Q
+      (polyFreeMCarrier
+        (polyFreeMCarrier A P) P)
+      (polyFreeMCarrier A P) Q
       (polyFreeCounitFold P
         (polyFreeAlg A P))
 ```
 
-Strategy: Express both sides as anamorphisms using
-`polyCofixUnfold_precomp` and `polyScaleReindex`.
-Show they agree because they are anamorphisms from
-the same coalgebra.
+Assembly via `polyCofixUnfold_precomp`:
 
-Template: `polyDistLaw_mul`
-(PolyDistributiveLaw.lean line 1850, ~560 lines).
+1. `lhs_eq`: `mu ≫ dist = polyCofixUnfold srcCoalg`
+   (by mu_hom_h)
+2. `rhs_eq1`: `dist_{TA} ≫ D_Q(mu) =
+   polyCofixUnfold rhsCoalg` (by `polyScaleReindex`)
+3. `rhs_eq2`: `T(dist) ≫ polyCofixUnfold rhsCoalg =
+   polyCofixUnfold srcCoalg` (by tdist_hom_h)
+4. Conclude: `lhs = polyCofixUnfold srcCoalg = rhs`
 
-Build and fix errors.
+~60 lines. Template: lines 2354-2410.
 
-Step 6: Commit with
-`git commit -m "GSOS multiplication coherence proof"`.
+Build, then commit:
+"GSOS multiplication coherence proof"
 
 ---
 
-## Task 6: Final packaging
+## Task 4: Final packaging
 
-**Files:**
+**Files:** Modify `GebLean/PolyGSOS.lean`
 
-- Modify: `GebLean/PolyGSOS.lean`
-
-**Step 1: Write `polyGSOSDistributiveLaw`**
+### Step 4-1: DistributiveLaw instance
 
 ```lean
 def polyGSOSDistributiveLaw
@@ -700,13 +514,32 @@ def polyGSOSDistributiveLaw
     exact polyGSOSDistLaw_comul A P Q rho
 ```
 
-Build and fix errors.
+### Step 4-2: Operational monad
 
-Step 2: Build, test, and commit with
-`git commit -m "GSOS distributive law instance"`.
+```lean
+def polyGSOSOperationalMonad
+    (P Q : PolyEndo X)
+    (rho : PolyGSOSRule P Q) :
+    Monad
+      (polyCofreeComonad X Q).Coalgebra :=
+  liftedMonad
+    (polyGSOSDistributiveLaw P Q rho)
+```
 
-Step 3: Update `.session/workstreams/gsos-distributive-law.md`
-to reflect completion.
+### Step 4-3: Full build and test
+
+```bash
+lake build && lake test
+```
+
+### Step 4-4: Commit
+
+"GSOS distributive law and operational monad"
+
+### Step 4-5: Update session documents
+
+Mark E1 and E2 as completed in
+`polynomial-algebra-coalgebra-combinators.md`.
 
 ---
 
@@ -714,13 +547,11 @@ to reflect completion.
 
 | Task | Estimated lines | Difficulty |
 | ---- | -------------- | ---------- |
-| 1. Counit | ~30 | Low |
-| 2. Unit | ~140 | Medium |
-| 3. Naturality | ~250 | Medium |
-| 4. Comul | ~450 | High |
-| 5. Mul | ~650 | Very high |
-| 6. Packaging | ~60 | Low |
-| **Total** | **~1580** | |
+| 1. Naturality (fix + NatTrans) | ~280 | Medium |
+| 2. Comultiplication | ~450 | High |
+| 3. Multiplication | ~650 | Very high |
+| 4. Packaging | ~60 | Low |
+| **Total** | **~1440** | |
 
 ## Notes for implementer
 
@@ -728,16 +559,25 @@ to reflect completion.
   `Sigma` ext, `PolyCofix` ext, depth induction.
 - Use underscores (`_`) liberally to check intermediate
   goal types.
-- When `simp` doesn't close a goal, try `unfold`/`show`
+- When `simp` does not close a goal, try `unfold`/`show`
   to make the goal explicit, then proceed manually.
 - The P=Q template proofs in `PolyDistributiveLaw.lean`
   are the primary reference for every step.
 - The GSOS-specific differences are in the fold handlers
   (`polyGSOSFoldLeafAt`, `polyGSOSFoldNodeAt`) which use
-  the GSOS rule `rho` — trace through these
-  when adapting from the P=Q template.
+  the GSOS rule `rho` --- trace through these when
+  adapting from the P=Q template.
 - Helper lemmas from `PolyDistributiveLaw.lean` like
   `polyCofixUnfoldApprox_input_heq` and
   `polyCofixApprox_intro_polyScale_congr` are parametric
-  and can be applied directly (they take a generic
-  `PolyEndo X` argument, not specifically P).
+  and can be applied directly.
+- The multiplication proof's source coalgebra embeds
+  fold Q-children via `polyFreeUnit` (eta) so that
+  `Scale.map(mu)` recovers them via `mu . eta = id`.
+  This is the central design choice for MU-1.
+- When a proof exceeds ~30 lines, factor out helper
+  lemmas using the factoring-out-lemmas technique from
+  CLAUDE.md.
+- For HEq goals from dependent types, use the pattern:
+  establish index equality first, then cast HEq to Eq
+  using `heq_of_eq` or `heq_iff_eq`.

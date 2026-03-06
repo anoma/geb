@@ -1,955 +1,717 @@
 # GSOS Distributive Law
 
-## Status: Naturality coalgebra morphism proof in progress
+## Status: Naturality proof in progress (3 errors + 2 holes)
 
 ## Current build state
 
-File: `GebLean/PolyGSOS.lean` (883 lines)
+File: `GebLean/PolyGSOS.lean` (1323 lines, staged but not
+committed)
 
-Architecture change: replaced depth-indexed
-`polyGSOSDistLaw_naturality_approx` with a coalgebra
-morphism approach using `polyCofixUnfold_precomp` and
-`polyScaleReindex`.
+Three build errors and two holes (`_` placeholders):
 
-`polyGSOSDistLaw_naturality` compiles given the coalgebra
-morphism lemma `polyGSOSScaleCoalg_morphism_h`.
+### Error 1 (line 988): `mor_to_pbe_fiber_index_postcomp`
 
-Two unsolved goals in `polyGSOSScaleCoalg_morphism_h`:
+The `generalize` tactic fails because the expression
+`(hMor.left c).fst` appears under dependent transport
+(`eqRec`) in a way that entangles the proof with the
+expression being generalized.
 
-1. Leaf case (line 842, `Sum.inl` branch): the scale
-   coalgebra structure on a pure leaf (wrapping cofree
-   element d) must commute with mapping.  The goal is
-   an equality of Scale evaluations (nested Sigma pairs
-   `⟨y, ((annot, qidx), qchildren)⟩`).
+**Fix**: Replace the proof body. The goal after `simp` is:
 
-   Annotation: `polyCofreeExtract_mapAt_val`
-   (use `congrArg (Sigma.mk y)` then
-   `congrArg (polyFreeMPure _ P ·)` then
-   `Subtype.ext`).
+```text
+(p1 ▸ match (hMor.left c).snd with
+  | ⟨i, h_1⟩ => ⟨i, h_1 ≫ h⟩).fst =
+(p2 ▸ (hMor.left c).snd).fst
+```
 
-   Q-index: `polyCofreeMapAt_head_snd`.
+Both sides transport a Sigma whose `.fst` is the same
+index `i`. Use `subst_sigma_fst_irrel` (defined at line
+965 of the same file) which proves exactly this pattern:
+two `eqRec`-transported Sigmas with the same `.fst`
+component have equal `.fst` projections regardless of
+different proofs and different `.snd` components.
 
-   Q-children: the A-side children composed with
-   `polyFreeMap(polyCofreeMap f)` vs B-side children.
-   Use `polyBetweenFamily_mor_heq`, `funext_heq`,
-   then per-direction: the LHS is `polyFreeMPure` of
-   `polyCofreeMapLeft f (cofreeChild A e1)` and the
-   RHS is `polyFreeMPure` of `cofreeChild B e2`.
-   Close with `polyCofreeMapAt_children_heq` +
-   `polyFreeMPure_proof_irrel`.
+Also swap the conclusion direction to match the usage
+site (line 1016 currently needs `.symm`).
 
-2. Node case (line 843, `Sum.inr p` branch): the scale
-   coalgebra structure on a P-node must commute with
-   mapping.  The IH gives the coalgebra morphism
-   condition for each P-child direction.  Needs:
+### Error 2 (line 1016): reversed equality
 
-   Annotation: `polyGSOSDistLaw_annot_natural`.
+`mor_to_pbe_fiber_index_postcomp` proves `A = B` but the
+goal is `B = A`. After fixing Error 1 by swapping the
+conclusion, this resolves automatically.
 
-   Q-index: `polyGSOSFoldQIndex_eq`.
+### Error 3 (line 1018): `snd` case of Sigma.ext
 
-   Q-children: the GSOS pipeline (prodComp ->
-   comp\_eval -> rho.rule -> comp\_eval -> join) must
-   commute with mapping given per-P-child fold
-   naturality (from IH).  This is the hardest part.
+In `polyBetweenComp_eval_invFun_natural`, the `snd` case
+of `Sigma.ext` is an underscore. The goal is an HEq
+between morphism parts:
+
+```text
+⟨..., Over.homMk (fun ⟨eg, ef⟩ =>
+  (mor_to_pbe_fiber_mor hMor eg).left ef) ... ≫ h⟩.snd
+≍
+⟨..., Over.homMk (fun ⟨eg, ef⟩ =>
+  (mor_to_pbe_fiber_mor (hMor ≫ post) eg).left ef)
+  ...⟩.snd
+```
+
+**Fix**: The `.snd` on the LHS is `Over.homMk ... ≫ h`
+and on the RHS is `Over.homMk ...`. Pointwise, the LHS
+gives `h.left ((mor_to_pbe_fiber_mor hMor eg).left ef)`
+and the RHS gives
+`(mor_to_pbe_fiber_mor (hMor ≫ post) eg).left ef`.
+These should be definitionally equal after unfolding
+`mor_to_pbe_fiber_mor` and `polyToOverEvalMap`.
+
+Approach: After the `fst` equality is established (giving
+the index equality needed for the HEq), cast the HEq to
+an Eq via `heq_of_eq` (if indices are definitionally
+equal after rewriting) or use dependent rewriting. Then
+apply `Over.OverMorphism.ext`, `funext ⟨eg, ef⟩`, and
+unfold definitions to reach `rfl` or a `simp`.
+
+### Hole 1 (line 1110): `polyGSOSFoldNodeAt_snd_natural`
+
+The pipeline naturality for node cases. The goal
+(from LSP) is a large match-expression equality comparing:
+
+- LHS: the GSOS pipeline applied to A-side children, then
+  post-composed with `freeMap`
+- RHS: the GSOS pipeline applied to B-side children
+
+The pipeline is five steps:
+
+1. `prodComp`: overPullback to product polynomial eval
+2. `invFun`: P-eval-at-(IQ.obj) to composite (P.IQ)-eval
+3. `rhoEval`: apply GSOS rule
+4. `toFun`: composite (Q.TP)-eval to Q-eval-at-(TP.obj)
+5. `ccrEvalMap join`: flatten via free monad mu
+
+**Strategy**: Commute `freeMap` from the outermost
+position inward through each step, using a chain of
+rewrites. Each step requires a naturality lemma.
+
+See "Proof plan for polyGSOSFoldNodeAt_snd_natural" below.
+
+### Hole 2 (line 1283): `polyGSOSScaleCoalg_morphism_h`
+
+Node case Q-children in the coalgebra morphism proof.
+The goal (from LSP):
+
+```text
+polyFreeMapLeft DQ_A DQ_B P (polyCofreeMap A B Q f)
+    (fold_A_node.snd.snd.left e1) =
+fold_B_node.snd.snd.left e2
+```
+
+where `e1 ≍ e2` (HEq due to equal Q-indices via `hqidx`).
+
+**Fix**: Once `polyGSOSFoldNodeAt_snd_natural` (Hole 1)
+compiles, `polyGSOSFoldQeval_natural` (line 1112) compiles
+automatically. Apply `polyGSOSFoldQeval_natural` to the
+full node tree `PolyFix.mk y (Sum.inr p) children` to get
+the Sigma equality of Q-evaluations. Decompose into index
+equality (already have `hqidx`) and morphism HEq. The
+morphism HEq at `e1 ≍ e2` gives:
+
+```text
+freeMap.left (qMor_A.left e1) = qMor_B.left e2
+```
+
+which is exactly the goal (after unfolding
+`polyFreeMapLeft`).
+
+## Proof plan for polyGSOSFoldNodeAt_snd_natural
+
+### Chain of rewrites
+
+Starting from:
+
+```text
+ccrEvalMap freeMap (pipeline_A node_A)
+```
+
+Rewrite outside-in:
+
+```text
+ccrEvalMap freeMap
+  (ccrEvalMap join_A
+    (toFun_A (rhoEval_A (invFun_A
+      (ccrEvalMap prodComp_A node_A)))))
+
+-- Step 4 (join naturality):
+= ccrEvalMap join_B
+    (ccrEvalMap (TP.map freeMap)
+      (toFun_A (rhoEval_A (invFun_A
+        (ccrEvalMap prodComp_A node_A)))))
+
+-- Step 3 (toFun naturality):
+= ccrEvalMap join_B
+    (toFun_B (ccrEvalMap freeMap
+      (rhoEval_A (invFun_A
+        (ccrEvalMap prodComp_A node_A)))))
+
+-- Step 2 (rho naturality, already proved):
+= ccrEvalMap join_B
+    (toFun_B (rhoEval_B
+      (ccrEvalMap freeMap (invFun_A
+        (ccrEvalMap prodComp_A node_A)))))
+
+-- Step 1 (invFun naturality):
+= ccrEvalMap join_B
+    (toFun_B (rhoEval_B
+      (invFun_B (ccrEvalMap (IQ.map freeMap)
+        (ccrEvalMap prodComp_A node_A)))))
+
+-- Step 0 (children + prodComp naturality):
+= ccrEvalMap join_B
+    (toFun_B (rhoEval_B
+      (invFun_B (ccrEvalMap prodComp_B node_B))))
+
+= pipeline_B node_B
+```
+
+### Sub-lemmas needed
+
+#### Step 4: join naturality (new lemma)
+
+**Statement** (as Over X morphism equality):
+
+```lean
+join_A ≫ freeMap =
+  (polyEndoFunctor X (polyFreeMPoly P)).map freeMap
+  ≫ join_B
+```
+
+where `join` is the `Over.homMk` defined in
+`polyGSOSFoldNodeAt` (lines 216-226) that converts a
+`polyFreeMPoly P` evaluation element into a flattened
+`PolyFreeM DQ P` tree via `polyFreeMPolyEval_to_polyFreeM`
+followed by `polyFreeMBind`.
+
+**Proof approach**: `Over.OverMorphism.ext`, `funext`, then
+show pointwise equality. The LHS applies `freeMap.left`
+after bind. The RHS maps the evaluation element by
+`TP.map(freeMap)` and then binds.
+
+Use:
+
+- `polyFreeMPolyEval_to_polyFreeM` naturality: need to
+  show or find that mapping the evaluation by
+  `TP.map(freeMap)` and then converting to tree equals
+  converting to tree and then mapping by `freeMap`.
+  Check for existing lemma or prove inline.
+- `polyFreeMapAt` as bind (`polyFreeMapAt_as_bind`) to
+  express freeMap as a bind, then use bind associativity
+  (`polyFreeM_bind_assoc`) and pure-bind
+  (`polyFreeM_pure_bind`).
+
+Alternatively, use `polyFreeMJoin_natural` (PolyAlg:8366)
+if the join can be expressed as `polyFreeMJoin` composed
+with some mapping.
+
+**Difficulty**: Medium-High.
+
+#### Step 3: toFun naturality (new lemma)
+
+**Statement**:
+
+```lean
+private lemma polyBetweenComp_eval_toFun_natural
+    (g f : PolyEndo X) (A B : Over X)
+    (h : A ⟶ B) (z : X)
+    (v : polyBetweenEvalFamily X X
+      (polyBetweenComp g f) A z) :
+    ccrEvalMap ((polyEndoFunctor X g).map h)
+      ((polyBetweenComp_eval_fiberEquiv
+        g f A z).toFun v) =
+    (polyBetweenComp_eval_fiberEquiv
+      g f B z).toFun (ccrEvalMap h v)
+```
+
+**Proof approach**: `obtain` the composite index and
+morphism. Apply `Sigma.ext`:
+
+- Index: `rfl` (outer g-index is preserved)
+- Morphism: `Over.OverMorphism.ext`, `funext eg`. At each
+  g-direction, the inner f-evaluation morphism is
+  post-composed with `h`. After unfolding `toFun`
+  (which uses `Over.homMk (fun ef => mor.left ⟨eg, ef⟩)`),
+  the equality should be definitional.
+
+**Difficulty**: Low-Medium.
+
+#### Step 1: invFun naturality (fix existing lemma)
+
+Already exists as `polyBetweenComp_eval_invFun_natural`
+(line 993). Needs the three errors fixed (Steps A-C in
+the fix plan).
+
+#### Step 0: children + prodComp naturality (inline)
+
+**Statement** (combined):
+
+```text
+ccrEvalMap (IQ.map freeMap)
+  (ccrEvalMap prodComp_A node_A) =
+ccrEvalMap prodComp_B node_B
+```
+
+**Proof approach**: After unfolding, this becomes a
+Sigma equality of evaluation elements. At each P-direction
+`e`, the components are:
+
+- y-coordinate: both sides give the fold result's fiber,
+  which matches by `polyGSOSFoldCataWithFiber.prop`
+- IQ-index: `fun | inl _ => PUnit.unit | inr _ => qIdx`.
+  The `inl` branch gives `PUnit.unit` on both sides. The
+  `inr` branch gives Q-indices which are equal by `ih`
+  (the inductive hypothesis gives Q-eval naturality per
+  child, whose `.fst` gives Q-index equality).
+- IQ-morphism at `inl`: LHS gives
+  `freeMap.left (catA_e.val.val.1)`, RHS gives
+  `catB_e.val.val.1`. Equal by
+  `polyGSOSFoldFst_natural` (reversed).
+- IQ-morphism at `inr, dir`: LHS gives
+  `freeMap.left (qMor_A.left dir)`, RHS gives
+  `qMor_B.left dir`. Equal by extracting from `ih`
+  (the inductive hypothesis gives the full Q-eval Sigma
+  equality, whose `.snd` gives morphism HEq).
+
+**Difficulty**: Medium. Main work is decomposing the
+`prodComp` output structure.
+
+Should be factored out into a separate named lemma.
+
+### Assembly
+
+Use `calc` or sequential `conv`/`rw` to chain the five
+steps. Each step rewrites one level of the pipeline.
+
+The proof would look approximately like:
+
+```lean
+calc ccrEvalMap freeMap (pipeline_A)
+    = ccrEvalMap join_B (ccrEvalMap (TP.map freeMap)
+        (toFun_A ...)) := by
+        rw [← ccrEvalMap_comp]; congr 1; exact join_nat
+  _ = ccrEvalMap join_B (toFun_B
+        (ccrEvalMap freeMap (rho_A ...))) := by
+        congr 1; exact toFun_nat
+  _ = ccrEvalMap join_B (toFun_B
+        (rho_B (ccrEvalMap freeMap (invFun_A ...)))) := by
+        congr 1; congr 1; exact rho_nat
+  _ = ccrEvalMap join_B (toFun_B
+        (rho_B (invFun_B (ccrEvalMap (IQ.map freeMap)
+          ...)))) := by
+        congr 1; congr 1; congr 1; exact invFun_nat
+  _ = pipeline_B := by
+        congr 1; congr 1; congr 1; congr 1
+        exact prodComp_nat
+```
+
+### Implementation order
+
+1. Fix `mor_to_pbe_fiber_index_postcomp` (Error 1)
+2. Fix invFun_natural fst case (Error 2) --- auto-fixed
+3. Fill invFun_natural snd case (Error 3)
+4. Write `polyBetweenComp_eval_toFun_natural` (Step 3)
+5. Write join naturality lemma (Step 4)
+6. Assemble `polyGSOSFoldNodeAt_snd_natural` (Hole 1)
+7. Fill `polyGSOSScaleCoalg_morphism_h` Q-children (Hole 2)
+8. Build checkpoint
+
+### Existing lemmas to use
+
+| Lemma | File | Purpose |
+| ----- | ---- | ------- |
+| `ccrEvalMap_comp` | Poly | map composition |
+| `ccrEvalMap_id` | Poly | map identity |
+| `ccrEvalMap_index` | Poly | index preserved |
+| `ccrEvalMap_mor` | Poly | morphism composed |
+| `subst_sigma_fst_irrel` | GSOS:965 | eqRec fst |
+| `mor_to_pbe_fiber_index` | Poly:1250 | idx extract |
+| `mor_to_pbe_fiber_mor` | Poly:1259 | mor extract |
+| `polyGSOSFoldFst_natural` | GSOS:913 | fold fst nat |
+| `polyGSOSFoldQIndex_eq` | GSOS:736 | Q-idx nat |
+| `polyFreeMJoin_natural` | Alg:8366 | join nat |
+| `polyFreeMapAt_as_bind` | Alg:5765 | map as bind |
+| `polyFreeM_bind_assoc` | Alg:3494 | bind assoc |
+| `polyFreeM_pure_bind` | Alg:3466 | pure-bind |
+| `polyFreeMapAt_comp` | Alg:5825 | map comp |
+| `polyCofreeMapAt_head_snd` | Alg:6264 | cofree idx |
+| `polyCofreeCounit_naturality` | Alg | eps nat |
+| `Over.OverMorphism.ext` | Util | over ext |
+| `polyBetweenFamily_mor_heq` | Poly | family heq |
 
 ## Completed
 
 ### PolyGSOSRule structure (PolyGSOS.lean)
 
-- `PolyGSOSRule P Q`: a GSOS rule as a polynomial morphism
+- `PolyGSOSRule P Q`: GSOS rule as polynomial morphism
   `P . (Id x Q) --> Q . T_P`
-- `polyIdBehaviorPoly Q`: the identity-behavior product polynomial
+- `polyIdBehaviorPoly Q`: identity-behavior product
 
 ### Fold algebra (PolyGSOS.lean)
 
-- `polyGSOSFoldLeafAt`: leaf handler mapping cofree elements
-  to product pairs via eta and Q(eta)(str)
-- `polyGSOSFoldNodeAt`: node handler applying the GSOS rule
-  pipeline: prodComp -> comp\_eval -> rho -> comp\_eval -> Q(join)
-- `polyGSOSFoldCataWithFiber`: recursive catamorphism with fiber
-  preservation proof
-- `polyGSOSFoldCata`: fold as an Over X morphism
+- `polyGSOSFoldLeafAt`: leaf handler
+- `polyGSOSFoldNodeAt`: node handler (pipeline)
+- `polyGSOSFoldCataWithFiber`: catamorphism with fiber
+- `polyGSOSFoldCata`: fold as Over X morphism
 
 ### Distributive law morphism (PolyGSOS.lean)
 
-- `polyGSOSScaleCoalgStrAt`: polyScale(T\_P(A), Q)-coalgebra
-  combining T\_P(epsilon\_Q) annotation with fold's Q-structure
-- `polyGSOSDistLawMor`: the distributive law
-  T\_P(D\_Q(A)) -> D\_Q(T\_P(A)) via polyCofixUnfold of the
-  scale coalgebra
+- `polyGSOSScaleCoalgStrAt`: scale coalgebra structure
+- `polyGSOSDistLawMor`: dist law via polyCofixUnfold
 
-### Counit coherence (PolyGSOS.lean)
+### Counit coherence (done)
 
-- `polyGSOSDistLawMor_head_fst`: head annotation equals
-  T\_P(eps\_Q) applied to input
-- `polyGSOSDistLaw_counit`: dist . eps\_{T\_P(A)} = T\_P(eps\_A)
+- `polyGSOSDistLawMor_head_fst`
+- `polyGSOSDistLaw_counit`
 
-### Unit coherence (PolyGSOS.lean)
+### Unit coherence (done)
 
-- `polyGSOSDistLaw_unit_approx`: depth-indexed unit proof
-- `polyGSOSDistLaw_unit`: eta\_{D\_Q(A)} . dist = D\_Q(eta\_A)
+- `polyGSOSDistLaw_unit_approx`
+- `polyGSOSDistLaw_unit`
 
-### Naturality helpers (PolyGSOS.lean)
+### Naturality helpers (done, modulo holes)
 
-- `polyGSOSDistLaw_annot_natural`: annotation naturality
-- `polyGSOSFoldCata_snd_fst_eq`: fold Q-fiber equals input fiber
-- `polyGSOSNodeQIdx`: carrier-independent Q-index computation
-- `polyGSOSFoldQIndex`: Q-index of fold result
-- `polyGSOSFoldQIndex_leaf`, `polyGSOSFoldQIndex_node_unfold`,
-  `polyGSOSFoldQIndex_eq_node`, `polyGSOSFoldQIndex_eq`:
-  Q-index is carrier-independent
-- `polyGSOSFoldCata_natural` (incomplete: Prod.snd node case)
-- `polyGSOSDistLaw_naturality_approx` (written but not verified)
+- `polyGSOSDistLaw_annot_natural`
+- `polyGSOSFoldCata_snd_fst_eq`
+- `polyGSOSNodeQIdx`, `polyGSOSFoldQIndex`
+- `polyGSOSFoldQIndex_leaf`, `_node_unfold`, `_eq_node`,
+  `_eq`
+- `polyGSOSFoldFst_natural`
+- `polyGSOSFoldLeafAt_snd_natural`
+- `polyGSOSScaleCoalg_morphism_h` (leaf case done)
+- `polyGSOSDistLaw_naturality` (compiles given morphism_h)
 
-## Current state (2026-03-05, updated)
+## Remaining phases
 
-### What compiles
+### Phase N: Complete naturality (current)
 
-- `polyGSOSFoldNodeAt_snd_natural` (line 913): Type
-  signature compiles. Inner `rho_nat` helper compiles.
-  Main body has underscore at line 992.
-- `polyGSOSFoldQeval_natural` (line 994): Uses
-  `polyGSOSFoldNodeAt_snd_natural` in node case.
-  Leaf case proved.
-- `polyGSOSScaleCoalg_morphism_h` (line 1080): Leaf
-  case proved. Node case has underscore at line 1217 for
-  Q-children.
-- `polyGSOSDistLaw_naturality` (line 1219): Compiles
-  given `polyGSOSScaleCoalg_morphism_h`.
+Fix errors, fill holes as described above. Then:
 
-### Dependency chain
+#### N-pack: NatTrans packaging (~30 lines)
+
+Three definitions following PolyDistributiveLaw.lean
+lines 2463-2500:
 
 ```lean
-polyGSOSFoldNodeAt_snd_natural  (bottleneck)
-    ↓
-polyGSOSFoldQeval_natural  (induction on t, node case
-    delegates to polyGSOSFoldNodeAt_snd_natural)
-    ↓
-polyGSOSScaleCoalg_morphism_h line 1217
-    (use polyGSOSFoldQeval_natural + Sigma decomposition)
-    ↓
-polyGSOSDistLaw_naturality  (already compiles given above)
+def polyGSOSDistLawNatApp
+    (A : Over X) (P Q : PolyEndo X)
+    (rho : PolyGSOSRule P Q) :
+    ((polyCofreeComonad X Q).toFunctor ⋙
+      (polyFreeMonad X P).toFunctor).obj A ⟶
+    ((polyFreeMonad X P).toFunctor ⋙
+      (polyCofreeComonad X Q).toFunctor).obj A :=
+  polyGSOSDistLawMor A P Q rho
+
+lemma polyGSOSDistLawNat_naturality ... :=
+  -- simp with polyCofreeComonad_map_eq,
+  -- polyFreeMonad_map_eq, then exact
+  -- polyGSOSDistLaw_naturality
+
+def polyGSOSDistLawNat ... : NatTrans ... where
+  app := polyGSOSDistLawNatApp
+  naturality := polyGSOSDistLawNat_naturality
 ```
 
-Once `polyGSOSFoldNodeAt_snd_natural` compiles,
-everything else follows.
+Commit: "GSOS naturality proof and NatTrans packaging"
 
-### The Q-children pipeline naturality problem
+### Phase CM: Comultiplication coherence (~450 lines)
 
-File `GebLean/PolyGSOS.lean`, lemma
-`polyGSOSFoldNodeAt_snd_natural` at line 913.
+Statement:
 
-#### Goal structure
-
-After `simp only [polyGSOSFoldNodeAt, GSOSQMap,
-polyEndoFunctor, polyBetweenEvalFunctor,
-polyToOverFunctor, polyToOverEvalMap_left]` and
-`congr 1`, the goal reduces to:
-
-```lean
-ccrEvalMap freeMap (pipeline_A node_A) = pipeline_B node_B
+```text
+T_P(delta_A) ≫ dist_{D_Q(A)} ≫ D_Q(dist_A) =
+  dist_A ≫ delta_{T_P(A)}
 ```
 
-where `pipeline = ccrEvalMap join . toFun . rhoEval .
-invFun . ccrEvalMap prodComp` and:
+Architecture: Both sides map
+`T_P(D_Q(A)) → D_Q(D_Q(T_P(A)))`. Reduce to
+depth-indexed approximation via `PolyCofix.ext`, induct
+on depth with node/leaf case analysis.
 
-- `node_A = pbefMk p childMor_A` with
-  `childMor_A.left e = catA_e.val`
-- `node_B = pbefMk p childMor_B` with
-  `childMor_B.left e = catB_e.val`
-- `catA_e = polyGSOSFoldCataWithFiber A ...
-  (children e)`
-- `catB_e = polyGSOSFoldCataWithFiber B ...
-  (polyFreeMapAt ... (children e))`
+Template: `polyDistLaw_comul` in PolyDistributiveLaw.lean
+(lines 959-1500).
 
-#### Available hypotheses
+#### CM-1: `polyGSOSDistLaw_comul_annot_eq` (~20 lines)
 
-- `ih`: `GSOSQMap.left catA_e.val.val.2 =
-  catB_e.val.val.2` (Q-eval naturality per child)
-- `h_fst`: `catB_e.val.val.1 = freeMap.left
-  catA_e.val.val.1` (fst naturality per child,
-  via `polyGSOSFoldFst_natural`)
-- `rho_nat`: `ccrEvalMap freeMap (rhoEval_A ev) =
-  rhoEval_B (ccrEvalMap freeMap ev)` (rho naturality)
+**Statement**: The annotation component of the LHS
+(which applies `T_P(eps_Q . D_Q(eps_Q) . delta_Q)`)
+equals the annotation of the RHS
+(which applies `T_P(eps_Q)`).
 
-#### Pipeline operations
+**Proof**: Use comonad law `eps . delta = id`
+(`polyCofree_left_triangle`) composed with
+`polyFreeMapAt_comp`.
 
-`polyGSOSFoldNodeAt` (lines 135-231) applies five
-operations:
+**Dependencies**: None.
 
-1. `ccrEvalMap prodComp`: overPullback -> IQ-eval.
-   `prodComp` maps `(fst, snd)` to
-   `⟨y, ⟨fun | inl _ => PUnit.unit | inr _ =>
-   snd.2.1, morph⟩⟩` where `morph(inl) = fst`,
-   `morph(inr, dir) = snd.2.2.left dir`.
+#### CM-2: `polyGSOSDistLaw_comul_approx_leaf` (~170 lines)
 
-2. `invFun` = `polyBetweenComp_eval_fiberEquiv_invFun
-   P IQ TDQ y`: P-eval at IQ.obj -> composite P.IQ
-   eval. Restructures using `mor_to_pbe_fiber_index`
-   and `mor_to_pbe_fiber_mor`.
+**Statement**: At depth n+1, the leaf case (pure leaf
+`eta(d)` where `d : PolyCofreeM A Q x`) holds.
 
-3. `polyBetweenMorphEvalAt rho.rule TDQ y`:
-   composite P.IQ eval -> composite Q.TP eval.
-   Index: `ccrReindex (rho.rule y)`.
-   Morph: `ccrFiberMor (rho.rule y) ... ≫ input.mor`.
+**Proof sketch**:
 
-4. `toFun` = `polyBetweenComp_eval_fiberEquiv_toFun
-   Q TP TDQ y`: composite Q.TP eval -> Q-eval at
-   TP.obj. Index: outer Q-index. Morph: restructured.
+- LHS: `T_P(delta)(eta(d))` = `eta(delta(d))`, then
+  `dist(eta(delta(d)))` by unit coherence =
+  `D_Q(eta)(delta(d))`, then `D_Q(dist)(...)` =
+  `D_Q(dist . eta)(delta(d))` =
+  `D_Q(D_Q(eta))(delta(d))`.
+- RHS: `dist(eta(d))` by unit coherence =
+  `D_Q(eta)(d)`, then `delta(D_Q(eta)(d))` by comonad
+  comultiplication naturality.
+- Show these match at depth n+1 using IH on children.
+- Uses `polyGSOSDistLaw_unit_approx`,
+  `polyCofreeMapApprox` properties, and comonad laws.
 
-5. `ccrEvalMap join`: Q-eval at TP.obj -> Q-eval at
-   TDQ. `join` uses `polyFreeMPolyEval_to_polyFreeM`
-   then `polyFreeMBind` to flatten tree-of-trees.
+**Dependencies**: Unit coherence (done).
 
-### Proof plan: push freeMap from outside to inside
+#### CM-3: `polyGSOSDistLaw_comul_approx_node` (~110 lines)
 
-Strategy: rewrite
-`ccrEvalMap freeMap (pipeline_A node_A)`
-into `pipeline_B node_B`
-by commuting `freeMap` past each pipeline step,
-working outside-in.
+**Statement**: At depth n+1, the node case
+(P-node with children) holds.
 
-```lean
-ccrEvalMap freeMap (ccrEvalMap join_A (toFun_A
-  (rhoEval_A (invFun_A (ccrEvalMap prodComp_A
-  node_A)))))
+**Proof sketch**:
 
--- Step 4 (join_nat):
-= ccrEvalMap join_B (ccrEvalMap (TP.map freeMap)
-    (toFun_A (rhoEval_A (invFun_A
-    (ccrEvalMap prodComp_A node_A)))))
+- Annotation equality from CM-1.
+- Q-index equality: both sides produce the same Q-index
+  because the fold's Q-index is carrier-independent
+  (by `polyGSOSFoldQIndex` properties extended to the
+  comultiplication setting).
+- Q-children: by IH on each Q-direction.
+- Uses `polyCofixApprox_intro_polyScale_congr`.
 
--- Step 3 (toFun_nat):
-= ccrEvalMap join_B (toFun_B (ccrEvalMap freeMap
-    (rhoEval_A (invFun_A
-    (ccrEvalMap prodComp_A node_A)))))
+**Dependencies**: CM-1.
 
--- Step 2 (rho_nat, already proved):
-= ccrEvalMap join_B (toFun_B (rhoEval_B
-    (ccrEvalMap freeMap (invFun_A
-    (ccrEvalMap prodComp_A node_A)))))
+#### CM-4: `polyGSOSDistLaw_comul_approx` (~30 lines)
 
--- Step 1 (invFun_nat):
-= ccrEvalMap join_B (toFun_B (rhoEval_B
-    (invFun_B (ccrEvalMap (IQ.map freeMap)
-    (ccrEvalMap prodComp_A node_A)))))
+**Statement**: Depth-indexed equality for all n and all
+trees t.
 
--- Step 0 (children_nat + prodComp_nat):
-= ccrEvalMap join_B (toFun_B (rhoEval_B
-    (invFun_B (ccrEvalMap prodComp_B node_B))))
+**Proof**: Induction on n. Base case trivial. Inductive
+case matches on tree structure, dispatching to CM-2
+(leaf) and CM-3 (node).
+
+**Dependencies**: CM-2, CM-3.
+
+#### CM-5: `polyGSOSDistLaw_comul` (~40 lines)
+
+**Statement**: The full morphism equality.
+
+**Proof**: `Over.OverMorphism.ext`, `funext ⟨x, t⟩`,
+`Sigma.ext` (fiber `rfl`), `PolyCofix.ext`, `intro n`,
+apply CM-4.
+
+**Dependencies**: CM-4.
+
+Commit: "GSOS comultiplication coherence proof"
+
+### Phase MU: Multiplication coherence (~650 lines)
+
+Statement:
+
+```text
+mu_{D_Q(A)} ≫ dist_A =
+  T_P(dist_A) ≫ dist_{T_P(A)} ≫ D_Q(mu_A)
 ```
 
-### Sub-lemmas for each step
+Architecture: Express both sides as anamorphisms from
+`polyScale(T_P(A), Q)`-coalgebras on
+`T_P(T_P(D_Q(A)))`, then show they are the unique
+coalgebra morphism using `polyCofixUnfold_precomp`.
 
-#### Step 0: children + prodComp naturality
+Template: `polyDistLaw_mul` in PolyDistributiveLaw.lean
+(lines 1630-2410).
 
-**Statement (combined)**:
-`ccrEvalMap (IQ.map freeMap) (ccrEvalMap prodComp_A
-node_A) = ccrEvalMap prodComp_B node_B`
+#### MU-1: Source coalgebra definition (~80 lines)
 
-Equivalently: `childMor_A ≫ prodComp_A ≫ IQ.map
-freeMap = childMor_B ≫ prodComp_B`.
-
-**Proof sketch**: `Over.OverMorphism.ext; funext e`.
-At each P-direction `e`:
-
-- y-coordinate: `catA_e.val.prop` gives
-  `catA_e.val.val.1.1 = catA_e.val.val.2.1`;
-  similarly for B side. The y-coordinates match
-  because both sides produce the y-coordinate from
-  the fold result.
-
-- IQ-index: `fun | inl _ => PUnit.unit |
-  inr _ => qIdx`. From `ih`, `ccrEvalMap freeMap`
-  preserves Q-indices: `catA_e.val.val.2.2.1 =
-  catB_e.val.val.2.2.1`. The `inl` branch gives
-  `PUnit.unit` on both sides. So IQ-indices match.
-
-- IQ-morphism at `inl`: LHS gives
-  `freeMap.left (catA_e.val.val.1)`.
-  RHS gives `catB_e.val.val.1`.
-  These are equal by `h_fst` (reversed).
-
-- IQ-morphism at `inr, dir`: LHS gives
-  `freeMap.left (catA_e.val.val.2.2.2.left dir)`.
-  RHS gives `catB_e.val.val.2.2.2.left dir`.
-  These are equal because from `ih`,
-  `ccrEvalMap freeMap ⟨qIdx_A, qMor_A⟩ =
-  ⟨qIdx_B, qMor_B⟩`, so `qMor_A ≫ freeMap =
-  qMor_B` (after index transport), giving
-  `freeMap.left (qMor_A.left dir) =
-  qMor_B.left dir`.
-
-**Difficulty**: Medium. Main work is decomposing
-the `prodComp` output and matching components.
-Needs handling of the `Over X` morphism
-`w` conditions and the Sigma structure.
-
-**Implementation**: Inline `have` in proof.
-Alternatively, define `prodComp_natural` as a
-private lemma stating the morphism equation
-`prodComp_A ≫ IQ.map freeMap =
-overPullbackMap freeMap GSOSQMap ≫ prodComp_B`,
-then combine with children naturality
-`childMor_A ≫ overPullbackMap freeMap GSOSQMap =
-childMor_B`.
-
-#### Step 1: invFun naturality
-
-**Statement**: For any
-`v : polyBetweenEvalFamily Y Z g (polyBetweenEval
-  X Y f A) z`,
-`ccrEvalMap h (invFun g f A z v) =
-  invFun g f B z (ccrEvalMap (f_eval.map h) v)`
-
-where `h : A ⟶ B` and `f_eval.map h =
-(polyEndoFunctor X f).map h`.
-
-**Why it holds**: `invFun` restructures a
-P-eval-at-(f.obj A) into a composite (P.f)-eval-at-A
-using `mor_to_pbe_fiber_index` and
-`mor_to_pbe_fiber_mor`. These extract index and
-morphism from the inner f-evaluation at each
-P-direction. Post-composing with `h` distributes:
-
-- Index: `mor_to_pbe_fiber_index (childMor ≫
-  f.map h) eg = mor_to_pbe_fiber_index childMor eg`
-  because `f.map h` preserves evaluation indices
-  (it only post-composes the morphism part via
-  `ccrEvalMap`). This should be DEFINITIONAL because
-  `ptoefIndex` extracts the first field of the eval
-  pair, which is the same before and after
-  `ccrEvalMap h`.
-
-- Morphism: `(mor_to_pbe_fiber_mor (childMor ≫
-  f.map h) eg).left ef = h.left
-  ((mor_to_pbe_fiber_mor childMor eg).left ef)`
-  because `f.map h` post-composes with `h`, and
-  `mor_to_pbe_fiber_mor` extracts the morphism whose
-  `.left` gives `h.left (...)` after composition.
-
-**Proof sketch**: By the Sigma equality of
-`polyBetweenEvalFamily` values:
-
-- Index part: `rfl` (definitional, if `ptoefIndex`
-  reduction works through `ccrEvalMap`)
-- Morphism part: `Over.OverMorphism.ext; funext
-  ⟨eg, ef⟩; rfl` (if definitional), or
-  `simp [ccrEvalMap, mor_to_pbe_fiber_mor, ...]`.
-
-**Difficulty**: Low-Medium. Should reduce to simple
-unfolding if the definitions are transparent enough.
-
-**Implementation**: Prove as a general private lemma
-`polyBetweenComp_eval_invFun_natural` in
-`Polynomial.lean` or inline in `PolyGSOS.lean`.
-
-#### Step 2: rho naturality (already proved)
-
-Existing `have rho_nat` in the proof context.
-
-Uses: `polyBetweenMorphEvalAt` definition and
-`ccrEvalMap` / `ccrReindex` / `ccrFiberMor`
-distributivity, with `Category.assoc`.
-
-#### Step 3: toFun naturality
-
-**Statement**: For any composite eval `v`,
-`ccrEvalMap (g_eval.map h) (toFun g f A z v) =
-  toFun g f B z (ccrEvalMap h v)`
-
-where `g_eval.map h = (polyEndoFunctor X g).map h`.
-
-**Why it holds**: `toFun` restructures a composite
-(g.f)-eval-at-A into a g-eval-at-(f.obj A). The
-outer g-index is preserved. For each g-direction,
-the inner f-evaluation is constructed by
-`Over.homMk (fun ef => mor.left ⟨eg, ef⟩) ...`.
-
-Post-composing with `h` distributes:
-
-- Index: `ig` (the outer g-index from the composite
-  index `⟨ig, pf⟩`). Same on both sides
-  (definitional).
-
-- Morphism: The g-evaluation morphism maps each
-  g-direction `eg` to a `(f.obj A).left` element
-  `⟨y_eg, ⟨pf eg, Over.homMk (fun ef =>
-  mor.left ⟨eg, ef⟩) ...⟩⟩`. After `g_eval.map h`,
-  the inner f-eval morphism is post-composed with
-  `h`: `Over.homMk (fun ef => h.left
-  (mor.left ⟨eg, ef⟩)) ...`. On the other hand,
-  `ccrEvalMap h v` replaces `mor` with `mor ≫ h`,
-  and `toFun` applied to this gives
-  `Over.homMk (fun ef => (mor ≫ h).left ⟨eg, ef⟩)
-  ... = Over.homMk (fun ef => h.left
-  (mor.left ⟨eg, ef⟩)) ...`. Same result.
-
-**Proof sketch**: Similar structure to Step 1.
-`Sigma.ext` with `rfl` for index, then
-`Over.OverMorphism.ext; funext eg`. At each `eg`,
-show the eval elements match by
-`Sigma.ext rfl (Sigma.ext rfl
-(Over.OverMorphism.ext (funext ef)))`.
-
-**Difficulty**: Low-Medium. Parallel to Step 1.
-
-**Implementation**: Prove as general private lemma
-`polyBetweenComp_eval_toFun_natural` or inline.
-
-#### Step 4: join naturality
-
-**Statement**: `join_A ≫ freeMap =
-(polyEndoFunctor X (polyFreeMPoly P)).map freeMap
-≫ join_B`
-
-where `join = Over.homMk (fun ⟨x', evalElem⟩ =>
-⟨x', polyFreeMBind TDQ DQ P
-(polyFreeMPolyEval_to_polyFreeM TDQ P evalElem)
-(fun _ a => a.prop ▸ a.val.2)⟩) rfl`.
-
-**Why it holds**: The join morphism:
-
-1. Converts a `polyFreeMPoly P` evaluation into a
-   `PolyFreeM TDQ P` tree (via
-   `polyFreeMPolyEval_to_polyFreeM`)
-2. Binds this tree, substituting each leaf
-   `a : TDQ.left` with `a.prop ▸ a.val.2 :
-   PolyFreeM DQ P ...` (the sub-tree stored in
-   the leaf)
-
-Naturality says: mapping then joining = joining
-then mapping.
-
-At each `⟨x', evalElem⟩`:
-
-LHS: `freeMap.left (x', polyFreeMBind TDQ_A DQ_A P
-(polyFreeMPolyEval_to_polyFreeM TDQ_A P evalElem)
-sub_A)` where `sub_A _ a = a.prop ▸ a.val.2`.
-
-This is `(x', polyFreeMapAt DQ_A DQ_B P cofreeMap x'
-(polyFreeMBind TDQ_A DQ_A P tree_A sub_A))`.
-
-RHS: `(x', polyFreeMBind TDQ_B DQ_B P
-(polyFreeMPolyEval_to_polyFreeM TDQ_B P
-(ccrEvalMap (TP.map freeMap) evalElem))
-sub_B)`.
-
-Using `polyFreeMPolyEval_to_M_natural` (PolyAlg:8423):
-`polyFreeMapAt TDQ_A TDQ_B P freeMap x' tree_A =
-polyFreeMPolyEval_to_polyFreeM TDQ_B P
-(ccrEvalMap (TP.map freeMap) evalElem)`
-
-So RHS tree = `polyFreeMapAt ... freeMap ... tree_A`.
-
-Then the equality reduces to:
-`polyFreeMapAt DQ_A DQ_B P cofreeMap x'
-(polyFreeMBind TDQ_A DQ_A P tree_A sub_A) =
-polyFreeMBind TDQ_B DQ_B P
-(polyFreeMapAt TDQ_A TDQ_B P freeMap x' tree_A)
-sub_B`
-
-This is bind-map interchange. Proof via:
-
-- `polyFreeMapAt_as_bind` (PolyAlg:5765)
-- `polyFreeM_bind_assoc` (PolyAlg:3494)
-- `polyFreeM_pure_bind` (PolyAlg:3466)
-- `polyFreeMapAt_transport` (PolyAlg:5734)
-
-Alternatively, check if `polyFreeMJoin_natural`
-(PolyAlg:8366) applies directly, which would
-avoid the bind-level argument.
-
-**Difficulty**: Medium-High. The bind-map
-interchange requires several monad law applications
-and proof irrelevance arguments. May be the
-hardest individual step.
-
-**Implementation**: Separate private lemma
-`gsosJoin_natural` or similar.
-
-### Assembling the proof of polyGSOSFoldNodeAt\_snd\_natural
-
-```lean
-:= by
-  let DQ_A := polyCofreeCarrier A Q
-  let DQ_B := polyCofreeCarrier B Q
-  let TDQ_A := polyFreeMCarrier DQ_A P
-  let TDQ_B := polyFreeMCarrier DQ_B P
-  let freeMap := GSOSFreeMap A B P Q f
-  have rho_nat : ... := by ...  -- already proved
-  have h_fst : ... := by ...  -- from polyGSOSFoldFst_natural
-  -- Unfold polyGSOSFoldNodeAt and GSOSQMap
-  simp only [polyGSOSFoldNodeAt, GSOSQMap,
-    polyEndoFunctor, polyBetweenEvalFunctor,
-    polyToOverFunctor, polyToOverEvalMap_left]
-  congr 1
-  -- Now goal is the ccrEval equality.
-  -- Apply the chain of rewrites using
-  -- steps 0-4 established above.
-  -- Method: use `conv` or `calc` or sequential
-  -- `rw` with the sub-lemmas.
-```
-
-### Resolving line 1217 after polyGSOSFoldNodeAt\_snd\_natural
-
-Once `polyGSOSFoldNodeAt_snd_natural` compiles,
-`polyGSOSFoldQeval_natural` compiles (line 994).
-
-At line 1217, the goal is:
-
-```lean
-polyFreeMapLeft DQ_A DQ_B P cofreeMap
-  (catA.val.val.2.snd.snd.left e₁) =
-catB.val.val.2.snd.snd.left e₂
-```
-
-i.e., `freeMap.left (qMor_A.left e₁) =
-qMor_B.left e₂` where `e₁ ≍ e₂`.
-
-This follows from `polyGSOSFoldQeval_natural`
-applied to `PolyFix.mk y (Sum.inr p) children`:
-
-1. `polyGSOSFoldQeval_natural` gives
-   `GSOSQMap.left catA.val.val.2 = catB.val.val.2`
-2. Unfolding: `⟨y, ⟨qIdx_A, qMor_A ≫ freeMap⟩⟩ =
-   ⟨y, ⟨qIdx_B, qMor_B⟩⟩`
-3. Sigma decomposition: `qIdx_A = qIdx_B` (which is
-   `hqidx`) and `qMor_A ≫ freeMap ≍ qMor_B` (HEq
-   from index change)
-4. At `e₁ ≍ e₂`, the HEq on morphisms gives
-   `(qMor_A ≫ freeMap).left e₁ = qMor_B.left e₂`
-5. `(qMor_A ≫ freeMap).left e₁ =
-   freeMap.left (qMor_A.left e₁)` = the goal.
-
-Note: `polyGSOSFoldQeval_natural` for the full
-tree is NOT circular with `polyGSOSScaleCoalg_morphism_h`
-because:
-
-- `polyGSOSFoldQeval_natural` is proved by its OWN
-  induction on `t`, separate from the induction in
-  `polyGSOSScaleCoalg_morphism_h`
-- The `ih` in `polyGSOSScaleCoalg_morphism_h` at
-  line 1217 gives the coalgebra morphism condition
-  per child, but `polyGSOSFoldQeval_natural` doesn't
-  use this — it has its own induction hypothesis
-
-The `ih` from `polyGSOSScaleCoalg_morphism_h` is
-only needed for the outer structure (annotation,
-Q-index), not for Q-children — those come from
-`polyGSOSFoldQeval_natural`.
-
-### Implementation order
-
-1. Prove Step 1 (invFun_nat) as a general lemma
-2. Prove Step 3 (toFun_nat) as a general lemma
-3. Prove Step 4 (join_nat) as a private lemma
-4. Prove Step 0 (children + prodComp) inline
-5. Assemble `polyGSOSFoldNodeAt_snd_natural`
-6. Verify `polyGSOSFoldQeval_natural` compiles
-7. Fill line 1217 using `polyGSOSFoldQeval_natural`
-8. Build checkpoint
-
-### Existing lemmas to use
-
-| Lemma | Loc | Purpose |
-| ----- | --- | ------- |
-| `ccrEvalMap_comp` | Poly:347 | map comp |
-| `ccrEvalMap_id` | Poly:341 | map id |
-| `ccrEvalMap_index` | Poly:333 | index pres |
-| `ccrEvalMap_mor` | Poly:337 | mor comp |
-| `pbce_fiberEquiv_toFun` | Poly:1677 | toFun def |
-| `pbce_fiberEquiv_invFun` | Poly:1691 | invFun def |
-| `mor_to_pbe_fiber_index` | Poly:1250 | idx extr |
-| `mor_to_pbe_fiber_mor` | Poly:1259 | mor extr |
-| `m_t_pbe_fi_homMk_rfl` | Poly:1279 | idx homMk |
-| `m_t_pbe_fm_homMk_rfl` | Poly:1292 | mor homMk |
-| `overPullbackMap` | Slice:740 | pb map |
-| `polyGSOSFoldFst_nat` | GSOS:1028 | fst nat |
-| `pfmPolyEval_to_M_nat` | Alg:8423 | eval->tree |
-| `polyFreeMJoin_nat` | Alg:8366 | join nat |
-| `polyFreeMapAt_as_bind` | Alg:5765 | map=bind |
-| `polyFreeM_bind_assoc` | Alg:3494 | bind assoc |
-| `polyFreeM_pure_bind` | Alg:3466 | pure-bind |
-| `pfmMapAt_transport` | Alg:5734 | transport |
-| `pfmBind_transport` | Alg:5743 | bind xport |
-| `Over.OverMorphism.ext` | Util | over ext |
-| `polyFreeMapAt_comp` | Alg:5825 | map comp |
-
-Full names for abbreviated entries above:
-
-- `pbce_` = `polyBetweenComp_eval_`
-- `m_t_pbe_fi_` = `mor_to_pbe_fiber_index_`
-- `m_t_pbe_fm_` = `mor_to_pbe_fiber_mor_`
-- `polyGSOSFoldFst_nat` = `polyGSOSFoldFst_natural`
-- `pfmPolyEval_to_M_nat` =
-  `polyFreeMPolyEval_to_M_natural`
-- `polyFreeMJoin_nat` = `polyFreeMJoin_natural`
-- `pfmMapAt_transport` = `polyFreeMapAt_transport`
-- `pfmBind_transport` = `polyFreeMBind_transport`
-
-## Pending: detailed step-by-step plan
-
-### Phase N: Complete naturality
-
-Architecture: coalgebra morphism approach using
-`polyCofixUnfold_precomp` and `polyScaleReindex`.
-`polyGSOSDistLaw_naturality` already compiles given the
-coalgebra morphism lemma.
-
-#### N1. Complete leaf case of polyGSOSScaleCoalg\_morphism\_h
-
-The leaf tree is `PolyFix.mk y (Sum.inl ⟨⟨y, d⟩, rfl⟩) _`
-where `d : PolyCofreeM A Q y`.  The fold produces
-`polyGSOSFoldLeafAt`, giving `(eta(d), Q(eta)(str(d)))`.
-
-After `dsimp`, the goal compares (using Sigma structure):
-
-- Annotation: `f.left(polyCofreeExtract A Q d)` vs
-  `polyCofreeExtract B Q (polyCofreeMapAt f d)`.
-  Use `polyCofreeExtract_mapAt_val`.
-- Q-index: `d.head.2` vs `(polyCofreeMapAt f d).head.2`.
-  Use `polyCofreeMapAt_head_snd`.
-- Q-children: A-side children composed with
-  `polyFreeMap(polyCofreeMap f)` vs B-side children.
-  Use `polyCofreeMapAt_children_heq` +
-  `polyFix_leaf_heq_of_val_eq`.
-
-The nested Sigma/Scale/Subtype structure requires
-`congr`/`Sigma.ext` decomposition.
-
-Build checkpoint.
-
-#### N2. Complete node case of polyGSOSScaleCoalg\_morphism\_h
-
-The node tree is `PolyFix.mk y (Sum.inr p) children`.
-The IH gives the coalgebra morphism condition for each
-P-child.  The fold computes Q-structure via the GSOS
-pipeline: prodComp -> comp\_eval -> rho.rule ->
-comp\_eval -> join.
-
-After `dsimp`, the goal compares:
-
-- Annotation: use `polyGSOSDistLaw_annot_natural`.
-- Q-index: use `polyGSOSFoldQIndex_eq`.
-- Q-children: the GSOS pipeline must commute with
-  mapping.  This is the hardest part.
-
-For Q-children pipeline naturality, the argument is:
-
-1. The `prodComp` step commutes because per-P-child
-   products commute (via IH projected to each component).
-2. `polyBetweenComp_eval_fiberEquiv` is structural.
-3. `rho.rule` commutes by polynomial morphism naturality.
-4. `ccrEvalMap join` commutes because free monad bind
-   commutes with mapping.
-
-Factor sub-lemmas for each pipeline step if needed.
-
-Build checkpoint.
-
-#### N3. Verify full build
-
-Both leaf and node cases complete => no underscores =>
-`lake build GebLean.PolyGSOS` should succeed.
-
-#### N4. Write NatTrans packaging
-
-Three definitions:
-
-- `polyGSOSDistLawNatApp A P Q rho` (type wrapper)
-- `polyGSOSDistLawNat_naturality A B P Q rho f`
-  (delegates to `polyGSOSDistLaw_naturality` after simp
-  with `polyCofreeComonad_map_eq` and `polyFreeMonad_map_eq`)
-- `polyGSOSDistLawNat P Q rho` (NatTrans definition)
-
-Template: PolyDistributiveLaw.lean lines 2463-2500.
-
-Build checkpoint: `lake build GebLean.PolyGSOS`.
-
-#### N5. Commit
-
-Message: "GSOS naturality proof and NatTrans packaging"
-
-### Phase CM: Comultiplication coherence
-
-#### CM1. Write abbreviations for nested types
-
-Following the pattern from `polyDistLaw_comul_lhsCoalg` etc.
-in PolyDistributiveLaw.lean (lines 992-1051):
-
-- `polyGSOSDistLaw_comul_lhsCoalg A P Q rho`:
-  `PolyCoalg (polyScale (polyCofreeCarrier
-  (polyFreeMCarrier A P) Q) Q)` --- the
-  `polyGSOSScaleCoalg` at `D_Q(A)` reindexed by `dist`
-- `polyGSOSDistLaw_comul_rhsCoalg A P Q`:
-  `PolyCoalg Q` --- `polyCofreeCoalg (polyFreeMCarrier A P) Q`
-- `polyGSOSDistLaw_comul_lhsInput A P Q rho`:
-  `T_P(delta_A)(t)` --- polyFreeMapAt by polyCoalgUnit
-- `polyGSOSDistLaw_comul_rhsInput A P Q rho`:
-  `dist_A(t)` --- polyCofixUnfoldAt of polyGSOSScaleCoalg
-
-Build checkpoint: verify signatures compile.
-
-#### CM2. Write polyGSOSDistLaw\_comul\_annot\_eq
-
-Show: `T_P(eps_Q . D_Q(eps_Q) . delta_Q) = T_P(eps_Q)`.
-Uses `polyCofree_left_triangle` (comonad law
-`eps . delta = id`) composed with `polyFreeMapAt_comp`.
-
-Template: `polyDistLaw_comul_annot_eq` (line 959, ~20 lines).
-
-Build checkpoint.
-
-#### CM3. Write RHS child equality helper
-
-Like `polyDistLaw_comul_family_eq_node` (line 1117) and
-`polyDistLaw_comul_head_snd_node` (line 1084).  These
-show that at a node, the children of `dist(node(p,ch))`
-(extracted from the cofree M-type) match the expected
-recursive structure.
-
-In the GSOS case, the Q-indices come from
-`polyGSOSFoldQIndex` rather than from the P-coalgebra
-structure directly.  May need GSOS-specific versions.
-
-Build checkpoint.
-
-#### CM4. Write polyGSOSDistLaw\_comul\_approx\_node
-
-Depth-indexed proof for the node case at depth n+1.
-Takes IH as parameter.
-
-Strategy: unfold both sides, use
-`polyCofixApprox_intro_polyScale_congr`, show annotation
-equality via CM2, show Q-index equality, show children
-equality via IH.
-
-Template: `polyDistLaw_comul_approx_node`
-(line 1149, ~110 lines).
-
-Build checkpoint.
-
-#### CM5. Write polyGSOSDistLaw\_comul\_approx\_leaf
-
-Depth-indexed proof for the leaf case at depth n+1.
-Takes IH as parameter.
-
-Strategy: unfold leaf case for both sides, show annotations
-match (via CM2 for the annotation component), show
-Q-structure matches, apply IH on children.
-
-Template: `polyDistLaw_comul_approx_leaf`
-(line 1258, ~170 lines).
-
-Build checkpoint.
-
-#### CM6. Write polyGSOSDistLaw\_comul\_approx
-
-Main induction on `n`, dispatching to node/leaf cases.
-
-Template: `polyDistLaw_comul_approx` (line 1432, ~30 lines).
-
-Build checkpoint.
-
-#### CM7. Write polyGSOSDistLaw\_comul
-
-Lift from approximation to full morphism equality.
-
-Pattern: `Over.OverMorphism.ext`, `funext`, `Sigma.ext`,
-`PolyCofix.ext`, `intro n`, apply approx.
-
-Template: `polyDistLaw_comul` (line 1470, ~40 lines).
-
-Build checkpoint.
-
-#### CM8. Commit
-
-Message: "GSOS comultiplication coherence proof"
-
-### Phase MU: Multiplication coherence
-
-The multiplication proof uses a different strategy from
-the other coherence proofs: rather than direct depth-indexed
-induction, express both sides as anamorphisms from the same
-`polyScale`-coalgebra and use `polyCofixUnfold_precomp`.
-
-Template: `polyDistLaw_mul` (lines 1850-2410, ~560 lines).
-
-#### MU1. Write polyGSOSDistLaw\_mul\_srcCoalgStrAt
-
+**`polyGSOSDistLaw_mul_srcCoalgStrAt`** (~20 lines):
 The `polyScale(T_P(A), Q)`-coalgebra structure on
-`T_P(T_P(D_Q(A)))`.  Combines:
+`T_P(T_P(D_Q(A)))`. Combines:
 
-- Annotation: `T_P(eps_Q)(mu(t))` where
-  mu = polyFreeMJoinMor and eps\_Q = polyCofreeCounit
-- Q-index/children: from `polyGSOSFoldCata` applied to
-  `polyFreeMJoinMor(t)` (the fold of the flattened tree)
+- Annotation: `T_P(eps_Q)(mu(t))` where mu =
+  `polyFreeMJoin` or `polyFreeCounitFold`
+- Q-index: from `polyGSOSFoldCata` applied to mu(t)
+- Q-children: `eta ≫ (polyGSOSFoldCata(mu(t))).Q-children`
+  --- embed fold's Q-children into T_P(T_P(D_Q(A))) via
+  the free monad unit, so that `Scale.map(mu)` recovers
+  them via `mu . eta = id`
 
-In the P=Q case, the P-coalgebra on T(D(A)) uses
-`polyFreeMCoalgStrAt`. In the GSOS case, we use the
-GSOS fold instead.
+**Packaging** (~60 lines):
 
-Two possibilities:
+- `polyGSOSDistLaw_mul_srcCoalgStrLeft`
+- `polyGSOSDistLaw_mul_srcCoalgStr_comm`
+- `polyGSOSDistLaw_mul_srcCoalgStr`
+- `polyGSOSDistLaw_mul_srcCoalg`
 
-- (a) Define via `polyFreeMCoalgStrAt` for the outer
-  P-structure, then use the GSOS fold for Q-structure
-- (b) Define directly combining join + GSOS fold
+Template: lines 1755-1842.
 
-Following the P=Q template (line 1755), use approach (a):
-the outer free monad structure gives the P-coalgebra,
-and we pair it with `T_P(eps_Q)(mu(t))` for annotation
-and the GSOS fold for Q-structure.
+**Dependencies**: polyGSOSFoldCata.
 
-Template: `polyDistLaw_mul_srcCoalgStrAt`
-(line 1755, ~20 lines).
+#### MU-2: RHS coalgebra definition (~10 lines)
 
-Build checkpoint.
-
-#### MU2. Write packaging definitions
-
-Write `_srcCoalgStrLeft`, `_srcCoalgStr_comm`,
-`_srcCoalgStr`, `_srcCoalg`.
-
-Direct adaptation of lines 1783-1842.
-
-Build checkpoint.
-
-#### MU3. Write polyGSOSDistLaw\_mul\_rhsCoalg
-
-The `polyScale(T_P(A), Q)`-coalgebra on `D_Q(T_P(A))`
-obtained by reindexing the GSOS scale coalgebra at T\_P(A)
-by `polyFreeCounitFold P (polyFreeAlg A P)` (monad mu).
+**`polyGSOSDistLaw_mul_rhsCoalg`**: The
+`polyScale(T_P(A), Q)`-coalgebra on `D_Q(T_P(A))`
+obtained by reindexing the GSOS scale coalgebra at
+`T_P(A)` by `polyFreeCounitFold P (polyFreeAlg A P)`
+(monad mu).
 
 Uses `polyScaleReindexCoalg`.
 
-Template: `polyDistLaw_mul_rhsCoalg`
-(line 1630, ~10 lines).
+Template: line 1630.
 
-Build checkpoint.
+**Dependencies**: polyGSOSScaleCoalg.
 
-#### MU4. Prove mu\_hom\_h (LHS coalgebra morphism condition)
+#### MU-3: LHS coalgebra morphism (`mu_hom_h`) (~180 lines)
 
-Show: `srcCoalg.str >> Scale.map(mu) = mu >> scaleCoalg.str`
+**Statement**: mu is a coalgebra morphism from srcCoalg
+to the GSOS scale coalgebra.
 
-This is the most technically demanding sub-proof.  The
-P=Q template (lines 1868-2047) does this by:
+**Proof approach**:
 
 1. `Over.OverMorphism.ext`, `funext`, induction on tree
-2. Node case: unfold everything, use
-   `polyFreeMonad_mu_left_eq` to express `mu.left` via
-   `polyFreeMJoinMor`
-3. Leaf case: multiple sub-cases for inner tree structure
+2. **Node case** (t = node(pIdx, children)):
+   - `mu(node) = node(pIdx, mu ∘ children)`
+   - srcCoalgStr computes fold(mu(node))
+   - fold(mu(node)) = fold(node(pIdx, mu∘children))
+     = nodeHandler(pIdx, fold(mu(children_e)))
+   - After Scale.map(mu), Q-children become
+     `mu(eta(fold-child)) = fold-child`
+   - RHS: scaleCoalgStr(node(pIdx, mu∘children)) computes
+     fold on the same tree, giving same result
+   - Close via IH on children
+3. **Leaf case** (t = leaf(a)):
+   - `mu(leaf(a)) = a.val.2` (inner tree, transported)
+   - srcCoalgStr computes fold(a.val.2)
+   - After Scale.map(mu), Q-children become
+     `mu(eta(fold-child)) = fold-child`
+   - RHS: scaleCoalgStr(a.val.2) computes fold(a.val.2)
+   - Same result, close directly
 
-In the GSOS case, the proof structure is similar but
-involves the GSOS fold rather than the P-coalgebra.  The
-fold on `mu(t)` must equal `mu` composed with the fold on
-each inner tree.
+**Sub-lemmas to factor out**:
 
-This requires showing:
-`polyGSOSFoldCata(mu(t)) = mu_*(polyGSOSFoldCata(t))`
-where `mu_*` is an appropriate lifting.
+- mu_hom_h_node_annot: annotation equality at nodes
+- mu_hom_h_node_qidx: Q-index equality at nodes
+- mu_hom_h_leaf: full leaf case
+- mu_hom_h_node_qchildren: Q-children after mu.eta=id
 
-This may require `polyGSOSFoldCata_natural` or a new
-lemma about fold and join.
+Template: lines 1868-2047.
 
-Sub-steps:
+**Dependencies**: MU-1, polyGSOSScaleCoalg.
 
-1. MU4a. Write type signature with underscore body
-2. MU4b. Reduce to pointwise via
-   `Over.OverMorphism.ext`, `funext`
-3. MU4c. Induct on tree structure
-4. MU4d. Handle node case (P-node): unfold srcCoalg, use
-   `polyFreeMonad_mu_left_eq` for mu, show fold commutes
-5. MU4e. Handle leaf case: sub-case on inner tree
-   structure (pure leaves vs nodes in the inner T\_P)
+#### MU-4: RHS coalgebra morphism (`tdist_hom_h`) (~300 lines)
 
-Factor helper lemmas as needed when sub-proofs exceed
-~30 lines.
+**Statement**: `T_P(dist)` is a coalgebra morphism from
+srcCoalg to rhsCoalg.
 
-Build checkpoint after each sub-step.
+**Proof approach**:
 
-#### MU5. Prove tdist\_hom\_h (RHS coalgebra morphism condition)
+1. `Over.OverMorphism.ext`, `funext`, induction on tree
+2. **Node case**: Annotation equality uses counit
+   coherence (`polyGSOSDistLaw_counit`) and mu naturality.
+   Q-structure uses `polyCofixUnfold_coalg_comm` relating
+   dist's output structure to the scale coalgebra.
+3. **Leaf case**: Show dist applied to pure leaf matches
+   the expected structure.
 
-Show: `srcCoalg.str >> Scale.map(T(dist)) =
-T(dist) >> rhsCoalg.str`
+**Sub-lemmas to factor out**:
+
+- tdist_hom_h_node_annot: annotation at nodes
+- tdist_hom_h_node_qstructure: Q-structure at nodes
+- tdist_hom_h_leaf: full leaf case
 
 Template: lines 2048-2353.
 
-This involves showing the source coalgebra structure
-commutes with `polyFreeMap ... (polyGSOSDistLawMor ...)`.
+**Dependencies**: MU-1, MU-2, counit coherence (done).
 
-Sub-steps:
-
-1. MU5a. Write type signature with underscore body
-2. MU5b. Reduce to pointwise via ext/funext
-3. MU5c. Induct on tree structure
-4. MU5d. Handle node case: annotation equality uses counit
-   coherence (`polyGSOSDistLaw_counit`) and mu naturality
-5. MU5e. Handle leaf case: show dist applied to pure leaf
-   matches the expected structure
-
-Build checkpoint after each sub-step.
-
-#### MU6. Assemble polyGSOSDistLaw\_mul
+#### MU-5: Assembly (`polyGSOSDistLaw_mul`) (~60 lines)
 
 With `mu_hom_h` and `tdist_hom_h`, apply
 `polyCofixUnfold_precomp` twice:
 
-1. `lhs_eq`: mu >> dist = polyCofixUnfold srcCoalg
-   (via `polyCofixUnfold_precomp` with mu\_hom\_h)
-2. `rhs_eq1`: dist\_{TA} >> D\_Q(mu) =
-   polyCofixUnfold rhsCoalg
+1. `lhs_eq`: `mu ≫ dist = polyCofixUnfold srcCoalg`
+   (via `polyCofixUnfold_precomp` with mu_hom_h)
+2. `rhs_eq1`: `dist_{TA} ≫ D_Q(mu) =
+   polyCofixUnfold rhsCoalg`
    (via `polyScaleReindex`)
-3. `rhs_eq2`: T(dist) >> polyCofixUnfold rhsCoalg =
-   polyCofixUnfold srcCoalg
-   (via `polyCofixUnfold_precomp` with tdist\_hom\_h)
+3. `rhs_eq2`: `T(dist) ≫ polyCofixUnfold rhsCoalg =
+   polyCofixUnfold srcCoalg`
+   (via `polyCofixUnfold_precomp` with tdist_hom_h)
 4. `rw [lhs_eq, rhs_eq1, rhs_eq2]`
 
-Template: lines 2354-2410 (~60 lines).
+Template: lines 2354-2410.
 
-Build checkpoint.
+**Dependencies**: MU-3, MU-4.
 
-#### MU7. Commit
+Commit: "GSOS multiplication coherence proof"
 
-Message: "GSOS multiplication coherence proof"
+### Phase PK: Final packaging (~60 lines)
 
-### Phase PK: Final packaging
+#### PK-1: `polyGSOSDistributiveLaw` (~40 lines)
 
-#### PK1. Write polyGSOSDistributiveLaw
-
-Combine all four axioms + naturality into a
-`DistributiveLaw` instance.  Each field delegates to its
-corresponding lemma after `simp` unfolding of
-`polyFreeMonad_eta_eq`, `polyCofreeComonad_eps_eq`, etc.
+```lean
+def polyGSOSDistributiveLaw
+    (P Q : PolyEndo X)
+    (rho : PolyGSOSRule P Q) :
+    DistributiveLaw
+      (polyFreeMonad X P)
+      (polyCofreeComonad X Q) where
+  dist := polyGSOSDistLawNat P Q rho
+  unit := fun A => by
+    simp only [polyGSOSDistLawNat,
+      polyGSOSDistLawNatApp,
+      polyFreeMonad_eta_eq,
+      polyCofreeComonad_map_eq]
+    exact polyGSOSDistLaw_unit A P Q rho
+  counit := fun A => by
+    simp only [polyGSOSDistLawNat,
+      polyGSOSDistLawNatApp,
+      polyCofreeComonad_eps_eq,
+      polyFreeMonad_map_eq]
+    exact polyGSOSDistLaw_counit A P Q rho
+  mul := fun A => by
+    simp only [polyGSOSDistLawNat,
+      polyGSOSDistLawNatApp,
+      polyFreeMonad_mu_eq,
+      polyFreeMonad_map_eq,
+      polyCofreeComonad_map_eq]
+    exact polyGSOSDistLaw_mul A P Q rho
+  comul := fun A => by
+    simp only [polyGSOSDistLawNat,
+      polyGSOSDistLawNatApp,
+      polyCofreeComonad_delta_eq,
+      polyCofreeComonad_map_eq,
+      polyFreeMonad_map_eq]
+    exact polyGSOSDistLaw_comul A P Q rho
+```
 
 Template: PolyDistributiveLaw.lean lines 2510-2567.
 
-Build checkpoint.
-
-#### PK2. Write polyGSOSOperationalMonad
+#### PK-2: `polyGSOSOperationalMonad` (~5 lines)
 
 ```lean
-def polyGSOSOperationalMonad P Q rho :
+def polyGSOSOperationalMonad
+    (P Q : PolyEndo X)
+    (rho : PolyGSOSRule P Q) :
     Monad (polyCofreeComonad X Q).Coalgebra :=
   liftedMonad (polyGSOSDistributiveLaw P Q rho)
 ```
 
-Build checkpoint.
-
-#### PK3. Full build and test
+#### PK-3: Full build and test
 
 ```bash
 lake build && lake test
 ```
 
-#### PK4. Commit
+Commit: "GSOS distributive law and operational monad"
 
-Message: "GSOS distributive law and operational monad"
+#### PK-4: Update session documents
 
-#### PK5. Update session documents
-
-Mark E1 and E2 as complete in
+Mark completed in
 `polynomial-algebra-coalgebra-combinators.md`.
 Update this file to reflect completion.
 
@@ -957,47 +719,25 @@ Update this file to reflect completion.
 
 When resuming after compaction/restart:
 
-1. Run `lake build GebLean.PolyGSOS 2>&1 | head -5` to see
-   current state
-2. Check which phase we're in by looking at the last commit
-   message (`git log --oneline -5`)
+1. Run `lake build GebLean.PolyGSOS 2>&1 | head -20` to
+   see current errors
+2. Check `git log --oneline -5` for last commit
 3. Find the next uncompleted step in this document
-4. For each step, use the underscore technique from CLAUDE.md:
-   write the signature with underscore body, build, check
-   goal type, fill in
-5. After completing a phase, commit and update this document
-
-## Design notes
-
-The node handler pipeline in `polyGSOSFoldNodeAt`:
-
-1. `prodComp`: convert overPullback to product polynomial
-   evaluation
-2. `polyBetweenComp_eval_fiberEquiv.invFun`: to composite
-   evaluation
-3. `polyBetweenMorphEvalAt rho.rule`: apply GSOS rule
-4. `polyBetweenComp_eval_fiberEquiv.toFun`: from composite
-   evaluation
-5. `ccrEvalMap join`: flatten via free monad multiplication
-
-The `join` morphism uses `polyFreeMPolyEval_to_polyFreeM`
-followed by `polyFreeMBind` to flatten tree-of-trees.
-
-The `prodComp` morphism constructs product polynomial
-evaluation from a pullback pair by:
-
-- Identity component: maps to the first projection element
-- Q component: maps to the Q-evaluation child morphism
+4. For each step, use the underscore technique:
+   write signature with `_` body, build, check goal,
+   fill in
+5. After completing a phase, commit and update this doc
 
 ## Template references
 
-All proofs follow patterns from `PolyDistributiveLaw.lean`:
+All proofs follow patterns from
+`PolyDistributiveLaw.lean`:
 
-| GSOS proof | Template              | Lines     | Est. lines |
-| ---------- | --------------------- | --------- | ---------- |
-| counit     | `polyDistLaw_counit`  | 280-294   | ~15 (done) |
-| unit       | `polyDistLaw_unit`    | 334-480   | ~120 (done)|
-| naturality | `polyDistLaw_nat`     | 474-940   | ~250       |
-| comul      | `polyDistLaw_comul`   | 959-1500  | ~450       |
-| mul        | `polyDistLaw_mul`     | 1630-2410 | ~650       |
-| packaging  | final section         | 2463-2567 | ~60        |
+| GSOS proof | Template | Lines | Est. |
+| ---------- | -------- | ----- | ---- |
+| counit | `polyDistLaw_counit` | 280-294 | done |
+| unit | `polyDistLaw_unit` | 334-480 | done |
+| naturality | `polyDistLaw_nat` | 474-940 | ~250 |
+| comul | `polyDistLaw_comul` | 959-1500 | ~450 |
+| mul | `polyDistLaw_mul` | 1630-2410 | ~650 |
+| packaging | final section | 2463-2567 | ~60 |
