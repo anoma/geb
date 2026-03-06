@@ -18,6 +18,15 @@ and three layered approaches (PBTO/Lawvere, tree calculus,
 hybrid). The recommended starting point is the Kleisli
 category of `polyFreeMPoly (polyProd X)`.
 
+The theory should be self-reflective both computationally
+(tree calculus: programs computing on programs) and
+logically (the theory can reason about its own morphisms,
+propositions, and proofs). Three candidate "internal
+universes" are under consideration: the coalgebra topos,
+the realizability topos of the tree calculus PCA, and the
+free topos with binary tree object. See design doc
+section "Internal Logic and Self-Reflection".
+
 ## Files
 
 - `GebLean/PLang/TermCat.lean` — primary implementation
@@ -73,12 +82,24 @@ All of these are in the existing codebase:
   `comp_assoc`) from monad laws
 - [ ] Define `treeKleisliCategory` — the Category instance
 
+### Phase 1.5: Internal Representation
+
+- [ ] Define `Omega` concretely as a coalgebra of
+  `polyProd X` — the subobject classifier of the
+  coalgebra topos
+- [ ] Compute sieves on `PolyCofreeCat (polyProd X)`
+  concretely (downward-closed sets of tree paths)
+- [ ] Define exponential `[A, B]` concretely for specific
+  coalgebras A, B
+- [ ] Represent the Kleisli category (or its morphism
+  set) as a coalgebra/copresheaf within the topos
+
 ### Phase 2: Tree Calculus Reduction
 
 - [ ] Use finite-branching isomorphism to define
   leaf/stem/fork case analysis (child count 0, 1, 2)
-- [ ] Define the 5 triage reduction rules as morphisms or
-  coalgebra, using child-count cases
+- [ ] Define the 5 triage reduction rules both externally
+  (Lean functions) and internally (coalgebra morphisms)
 - [ ] Show confluence (non-overlapping rules)
 - [ ] Define PCA structure (K and S from rules 1-2)
 - [ ] Connect to GSOS if infrastructure available
@@ -89,7 +110,18 @@ All of these are in the existing codebase:
 - [ ] Construct lambda-bialgebra from tree calculus
   reduction
 - [ ] Explore coalgebra topos structure
-- [ ] Investigate realizability connection
+- [ ] Investigate realizability topos and its relationship
+  to the coalgebra topos
+
+### Phase 4: Free Topos and Logical Equivalences
+
+- [ ] Investigate the free topos with binary tree object
+- [ ] Compare its internal logic with the free topos with
+  NNO — are they logically equivalent?
+- [ ] Relate the free topos to the coalgebra topos and/or
+  the realizability topos
+- [ ] Study how polynomials expressed internally provide
+  inductive/coinductive type formation within the topos
 
 ### Open design questions
 
@@ -97,7 +129,14 @@ All of these are in the existing codebase:
   property
 - [ ] Triage encoding: GSOS vs direct coalgebra vs
   child-count decomposition via isomorphism
-- [ ] Realizability topos vs coalgebra topos relationship
+- [ ] Are the coalgebra topos and realizability topos
+  equivalent for the tree calculus PCA?
+- [ ] Is the free topos with binary tree object logically
+  equivalent to the free topos with NNO?
+- [ ] Concrete subobject classifier: what does Omega look
+  like as a coalgebra of `polyProd X`?
+- [ ] Can the external Kleisli category be represented
+  internally as a coalgebra/copresheaf?
 - [ ] Unlabeled trees: use terminal object as generator?
 - [ ] Child-count truncation: can 0/1/2 child cases be
   expressed as polynomial equalizer or quotient?
@@ -119,3 +158,11 @@ All of these are in the existing codebase:
   stem (1 child), fork (2 children) classification.
   See design doc section "Binary-to-Finite-Branching
   Isomorphism".
+- The theory needs two levels: external (Lean) and
+  internal (within the topos). Polynomials provide
+  internal type formation (inductive/coinductive types)
+  but not full internal logic (polynomial category is
+  not a topos). The topos structure from the coalgebra
+  category provides the full internal logic.
+  See design doc section "Internal Logic and
+  Self-Reflection".
