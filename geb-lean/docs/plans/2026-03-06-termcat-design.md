@@ -710,6 +710,81 @@ comonad counit/comult) rather than manual pattern-matching
 on tree constructors. This ensures that the definitions are
 portable across different representations of binary trees.
 
+## Binary-to-Finite-Branching Isomorphism
+
+Binary trees with left-associative application are
+isomorphic to finite-branching trees (rose trees). The
+expression `(((a b) c) d)` can equivalently be read as a
+node `a` with children `[b, c, d]`. See
+[treecalcul.us/specification](https://treecalcul.us/specification/)
+for this observation.
+
+### The Isomorphism
+
+For labeled binary trees `T = polyFreeMCarrier A (polyProd X)`:
+
+```text
+T  ~=  A *_X List(T)
+```
+
+A labeled binary tree is a root label `a : A` together
+with a (possibly empty) list of subtree children, all at
+the same fiber. The maps are:
+
+- Forward: `leaf(a) |-> (a, [])`;
+  `fork(t1, t2) |-> let (a, cs) = fwd(t1); (a, cs ++ [t2])`
+- Backward: `(a, []) |-> leaf(a)`;
+  `(a, ts) |-> foldl fork (leaf(a)) ts`
+
+### Leaf, Stem, and Fork
+
+Under this isomorphism, the tree calculus classification
+by child count becomes:
+
+- **Leaf**: 0 children — `(a, [])`
+- **Stem**: 1 child — `(a, [t])`
+- **Fork**: 2 children — `(a, [t1, t2])`
+
+The triage rules (3a-3c) perform case analysis on this
+child count. This resolves the earlier question of why
+"stem" is not a constructor of the binary tree type: it
+is a constructor of the finite-branching view, which
+classifies trees by the length of their child list.
+
+### Polynomial Interpretation
+
+In `Over X`, the list functor is the free monad of the
+identity polynomial:
+
+```text
+List(B) = polyFreeMCarrier B (polyBetweenId X)
+```
+
+So the isomorphism relates two free monads:
+
+```text
+polyFreeMCarrier A (polyProd X)
+  ~=  A *_X polyFreeMCarrier T (polyBetweenId X)
+```
+
+where `T = polyFreeMCarrier A (polyProd X)` on the right.
+This is a fixed-point characterization: binary trees
+(free monad of product) satisfy the rose-tree equation
+(root label times free monad of identity applied to
+self).
+
+### Implementation Plan
+
+This isomorphism should be formalized early, as it:
+
+1. Provides the leaf/stem/fork case analysis needed for
+   tree calculus reduction rules
+1. Connects `polyProdFreeM` to `polyBetweenId`, relating
+   two polynomial structures already in the codebase
+1. Should be constructed using only universal morphisms
+   (fold for the forward direction, the algebra structure
+   for the backward direction)
+
 ## Open Questions
 
 1. **Paramorphism vs catamorphism**: Should the PBTO
@@ -721,7 +796,9 @@ portable across different representations of binary trees.
 1. **Tree calculus encoding**: What is the polynomial
    morphism that best encodes the 5 triage rules? Can the
    GSOS framework (`PolyGSOSRule`) be completed and used,
-   or is a direct coalgebra encoding better?
+   or is a direct coalgebra encoding better? The
+   binary-to-finite-branching isomorphism provides a
+   natural decomposition for the triage cases.
 
 1. **Realizability connection**: Does the coalgebra topos
    `PolyCoalg (polyProd X) ~= copresheaves` relate to the
@@ -734,13 +811,13 @@ portable across different representations of binary trees.
    structure? Can we get a finite-limit theory by combining
    products and equalizers?
 
-1. **Triage as coalgebra**: The triage operation (case
-   analysis on leaf/stem/fork) is a 3-way decomposition.
-   Is there a polynomial whose coalgebras capture triage?
-   The translate polynomial `polyTranslate` gives
-   `1 + (- * -)`, which distinguishes leaves from forks —
-   but stems (`triangle x`) are application of one
-   argument, not a constructor of the binary tree type.
+1. **Triage via child-count decomposition**: The
+   binary-to-finite-branching isomorphism decomposes trees
+   as `A *_X List(T)`. The list `List(T)` can be split by
+   length into `1 + T + T*T + T*T*T + ...`. The triage
+   rules use only the first three cases (0, 1, 2
+   children). Can this truncation be expressed as a
+   polynomial equalizer or quotient?
 
 1. **Unlabeled trees**: Specializing to unlabeled trees by
    applying the free monad to the terminal object gives
@@ -750,7 +827,7 @@ portable across different representations of binary trees.
 
 ## Recommended Execution Order
 
-### Phase 1: Kleisli Category (Primary Target)
+### Phase 1: Kleisli Category and Isomorphism
 
 1. Define `treeFoldAlg` — convenience wrapper packaging a
    leaf map and fork map into a
@@ -759,6 +836,11 @@ portable across different representations of binary trees.
    to `polyProd`
 1. Prove `treeFold_unique` — uniqueness, from
    `polyFixFoldUnique`
+1. Prove the binary-to-finite-branching isomorphism:
+   `polyFreeMCarrier A (polyProd X) ~=`
+   `A *_X polyFreeMCarrier T (polyBetweenId X)` using
+   fold for the forward direction and algebra structure
+   for the backward direction
 1. Define `treeKleisliHom` — the morphism type
    `A -> polyFreeMCarrier B (polyProd X)`
 1. Define `treeKleisliComp` — composition via bind/graft
@@ -770,8 +852,10 @@ portable across different representations of binary trees.
 
 ### Phase 2: Tree Calculus Reduction
 
+1. Use the finite-branching isomorphism to define
+   leaf/stem/fork case analysis (child count 0, 1, 2)
 1. Define the 5 triage reduction rules as morphisms (or
-   as a coalgebra)
+   as a coalgebra), using child-count cases
 1. Show confluence (the 5 rules are non-overlapping)
 1. Define the PCA structure (K and S from rules 1-2)
 1. Connect to GSOS if the infrastructure is available

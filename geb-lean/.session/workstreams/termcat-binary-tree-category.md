@@ -42,13 +42,14 @@ All of these are in the existing codebase:
 - `polyFixFold` (`PolyAlg.lean:308`)
 - `polyFixFoldUnique_at` (`PolyAlg.lean:382`)
 - `polyTranslate` (`PolyAlg.lean:2766`)
+- `polyBetweenId X` (`Polynomial.lean:1431`)
 - `polyCoalgCopresheafEquiv` (`CofreeCategory.lean:3327`)
 - `DistributiveLaw` (`Utilities/DistributiveLaw.lean`)
 - `LambdaBialgebra` (`Utilities/LambdaBialgebra.lean:26`)
 
 ## Tasks
 
-### Phase 1: Kleisli Category (primary target)
+### Phase 1: Kleisli Category and Isomorphism
 
 - [ ] Define `treeFoldAlg` — convenience wrapper: leaf
   map + fork map into `polyTranslate A (polyProd X)`
@@ -56,6 +57,13 @@ All of these are in the existing codebase:
 - [ ] Define `treeFold` — parametrized fold specialized
   to `polyProd`
 - [ ] Prove `treeFold_unique` — from `polyFixFoldUnique`
+- [ ] Prove binary-to-finite-branching isomorphism:
+  `polyFreeMCarrier A (polyProd X) ~=`
+  `A *_X polyFreeMCarrier T (polyBetweenId X)`.
+  Uses fold (forward) and algebra structure (backward).
+  Relates free monad of product to free monad of identity
+  (list). Provides leaf/stem/fork case analysis by child
+  count (0, 1, 2).
 - [ ] Define `treeKleisliHom` — morphism type
   `A -> polyFreeMCarrier B (polyProd X)`
 - [ ] Define `treeKleisliComp` — composition via
@@ -67,8 +75,10 @@ All of these are in the existing codebase:
 
 ### Phase 2: Tree Calculus Reduction
 
+- [ ] Use finite-branching isomorphism to define
+  leaf/stem/fork case analysis (child count 0, 1, 2)
 - [ ] Define the 5 triage reduction rules as morphisms or
-  coalgebra
+  coalgebra, using child-count cases
 - [ ] Show confluence (non-overlapping rules)
 - [ ] Define PCA structure (K and S from rules 1-2)
 - [ ] Connect to GSOS if infrastructure available
@@ -85,9 +95,12 @@ All of these are in the existing codebase:
 
 - [ ] Paramorphism vs catamorphism for PBTO universal
   property
-- [ ] Triage encoding: GSOS vs direct coalgebra
+- [ ] Triage encoding: GSOS vs direct coalgebra vs
+  child-count decomposition via isomorphism
 - [ ] Realizability topos vs coalgebra topos relationship
 - [ ] Unlabeled trees: use terminal object as generator?
+- [ ] Child-count truncation: can 0/1/2 child cases be
+  expressed as polynomial equalizer or quotient?
 
 ## Notes
 
@@ -100,3 +113,9 @@ All of these are in the existing codebase:
   defined; the Kleisli category is new
 - The coalgebra category `PolyCoalg (polyProd X)` is
   already defined and known to be a topos
+- Binary trees ~= finite-branching trees: the isomorphism
+  `T ~= A *_X List(T)` relates free monad of product to
+  free monad of identity. This gives leaf (0 children),
+  stem (1 child), fork (2 children) classification.
+  See design doc section "Binary-to-Finite-Branching
+  Isomorphism".
