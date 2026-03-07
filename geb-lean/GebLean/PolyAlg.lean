@@ -637,6 +637,28 @@ section PolyCofixApprox
 variable {X : Type u}
 
 /--
+The polynomial endofunctor on `Over (Nat × X)` whose W-type
+(`PolyFix`) is isomorphic to `PolyCofixApprox P`.
+
+At `(0, x)`: one position (`PUnit`), no children.
+At `(n + 1, x)`: positions are `polyBetweenIndex X X P x`,
+children at index `i` map each fiber element `e` of
+`polyBetweenFamily X X P x i` to `(n, hom e)`.
+-/
+def polyCofixApproxPoly (P : PolyEndo X) :
+    PolyEndo (Nat × X) :=
+  fun nx =>
+    match nx with
+    | (0, _) =>
+      ccrObjMk (fun _ : PUnit =>
+        Over.mk (f := fun e : PEmpty => PEmpty.elim e))
+    | (n + 1, x) =>
+      ccrObjMk (fun i : polyBetweenIndex X X P x =>
+        Over.mk (f := fun
+          (e : (polyBetweenFamily X X P x i).left) =>
+          (n, (polyBetweenFamily X X P x i).hom e)))
+
+/--
 Approximations of the cofixed point at depth `n`.
 
 At depth 0, we have no information (just a placeholder).
@@ -648,6 +670,100 @@ inductive PolyCofixApprox (P : PolyEndo X) : Nat → X → Type u where
       (children : ∀ (e : (polyBetweenFamily X X P x i).left),
         PolyCofixApprox P n ((polyBetweenFamily X X P x i).hom e)) :
       PolyCofixApprox P (n + 1) x
+
+/--
+Forward direction of the isomorphism: convert a W-type
+element of `polyCofixApproxPoly P` to `PolyCofixApprox P`.
+-/
+def polyCofixApproxFromPoly (P : PolyEndo X)
+    (n : Nat) (x : X) :
+    PolyFix (polyCofixApproxPoly P) (n, x) →
+    PolyCofixApprox P n x :=
+  fun t => match n, t with
+  | 0, PolyFix.mk (_, x) _ _ =>
+    PolyCofixApprox.continue x
+  | n + 1, PolyFix.mk (_, x) i children =>
+    PolyCofixApprox.intro x i
+      (fun e => polyCofixApproxFromPoly P n
+        ((polyBetweenFamily X X P x i).hom e)
+        (children e))
+
+/--
+Backward direction of the isomorphism: convert a
+`PolyCofixApprox P` to a W-type element of
+`polyCofixApproxPoly P`.
+-/
+def polyCofixApproxToPoly (P : PolyEndo X)
+    (n : Nat) (x : X) :
+    PolyCofixApprox P n x →
+    PolyFix (polyCofixApproxPoly P) (n, x) :=
+  fun a => match a with
+  | PolyCofixApprox.continue x =>
+    PolyFix.mk (0, x) PUnit.unit
+      (fun e => PEmpty.elim e)
+  | PolyCofixApprox.intro x i children =>
+    PolyFix.mk (_, x) i
+      (fun e => polyCofixApproxToPoly P _ _
+        (children e))
+
+/--
+Left inverse: `fromPoly ∘ toPoly = id`.
+-/
+theorem polyCofixApproxFromPoly_toPoly
+    (P : PolyEndo X) (n : Nat) (x : X)
+    (a : PolyCofixApprox P n x) :
+    polyCofixApproxFromPoly P n x
+      (polyCofixApproxToPoly P n x a) = a := by
+  induction a with
+  | «continue» _ => rfl
+  | intro x i children ih =>
+    simp only [polyCofixApproxToPoly,
+      polyCofixApproxFromPoly]
+    congr 1
+    funext e
+    exact ih e
+
+/--
+Right inverse: `toPoly ∘ fromPoly = id`.
+-/
+theorem polyCofixApproxToPoly_fromPoly
+    (P : PolyEndo X) (n : Nat) (x : X)
+    (t : PolyFix (polyCofixApproxPoly P) (n, x)) :
+    polyCofixApproxToPoly P n x
+      (polyCofixApproxFromPoly P n x t) = t := by
+  match n, t with
+  | 0, PolyFix.mk (_, _) i children =>
+    simp only [polyCofixApproxFromPoly,
+      polyCofixApproxToPoly]
+    have hi : i = PUnit.unit := PUnit.eq_punit i
+    subst hi
+    congr 1
+    funext e
+    exact PEmpty.elim e
+  | n + 1, PolyFix.mk (_, _) i children =>
+    simp only [polyCofixApproxFromPoly,
+      polyCofixApproxToPoly]
+    congr 1
+    funext e
+    exact polyCofixApproxToPoly_fromPoly P n
+      ((polyBetweenFamily X X P _ i).hom e)
+      (children e)
+
+/--
+The equivalence between the W-type of
+`polyCofixApproxPoly P` and `PolyCofixApprox P`.
+-/
+def polyCofixApproxEquiv (P : PolyEndo X)
+    (n : Nat) (x : X) :
+    PolyFix (polyCofixApproxPoly P) (n, x) ≃
+    PolyCofixApprox P n x := {
+  toFun := polyCofixApproxFromPoly P n x
+  invFun := polyCofixApproxToPoly P n x
+  left_inv :=
+    polyCofixApproxToPoly_fromPoly P n x
+  right_inv :=
+    polyCofixApproxFromPoly_toPoly P n x
+}
 
 /--
 Extract the index from a non-zero depth approximation.
