@@ -581,6 +581,7 @@ applies `mu_A` to the Scale annotation at `T_P(A)`:
 `mu_A(T_P(eps_Q at TA)(node(p, T(dist)∘ch)))`.
 
 Need:
+
 ```text
 T_P(eps_Q at A)(mu_{DQ}(t)) =
   mu_A(T_P(eps_Q at TA)(T_P(dist)(t)))
