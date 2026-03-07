@@ -46,8 +46,13 @@ Verified Theorems sections). Among the contents documented:
 
 ### Book — progress by chapter
 
-- [ ] Front matter, TOC, list of figures (pp. i-x)
-- [ ] Ch 1: Introduction (pp. 3-9)
+- [x] Front matter, TOC, list of figures (pp. i-x) —
+  no extractable content.
+- [x] Ch 1: Introduction (pp. 3-9) — overview only,
+  no new definitions or theorems. Notes: "all named
+  theorems verified in Coq", Polish notation encoding
+  of bf shown (Figure 1.1), critique of Church-Turing
+  Thesis previewed.
 - [x] Ch 2: Equational Reasoning (pp. 11-21) —
   pedagogical; arithmetic theorems 1-7, structural
   induction, translations. No tree calculus content.
@@ -79,9 +84,20 @@ Verified Theorems sections). Among the contents documented:
   meaningful translation definition (Def 50), SK embeds
   in tree calc (Thm 51), no reverse translation
   (Thm 54). Written.
-- [ ] Ch 9: Lambda-Abstraction in VA-Calculus (pp. 101-111)
-- [ ] Ch 10: Divide-and-Conquer in SF-Calculus (pp. 113-121)
-- [ ] Ch 11: Concluding Remarks (pp. 123-129)
+- [x] Ch 9: Lambda-Abstraction in VA-Calculus (pp.
+  101-111) — VA-calculus syntax and 7 rules, confluence
+  (Thm 55), bracket/star beta (Thms 56-57), SK embeds
+  in VA (Thm 58), no equality in VA (Thm 59),
+  bidirectional translations with tree calc (Thms 60-61),
+  no VA-to-SK translation (Cor 62). Written.
+- [x] Ch 10: Divide-and-Conquer in SF-Calculus (pp.
+  113-121) — SF-calculus syntax and 7 rules, confluence
+  (Thm 63), equality (Thms 64-65), bidirectional
+  translations with tree calc (Thms 66-67). Written.
+- [x] Ch 11: Concluding Remarks (pp. 123-129) —
+  completeness hierarchy (extensional, intensional,
+  program-complete), meaningful translation vs
+  Church-Turing equivalence. No new theorems. Written.
 - [ ] Appendix A: Church-Turing Thesis (pp. 131-149)
 
 ### Coq files — not yet read

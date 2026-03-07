@@ -837,6 +837,160 @@ complete.
   with Theorem 61 would yield a translation from tree
   calculus to SK-calculus, contradicting Theorem 54.)
 
+## SF-Calculus (Book, Chapter 10)
+
+SF-calculus uses two operators `S` and `F`. `S` provides
+duplication (`S x y z --> x z (y z)`); `F` provides
+factorisation, dispatching on whether its first argument
+is an atom or a compound (partially applied operator).
+The two conceptual rules for `F` are:
+
+```text
+F x y z --> y        (if x is an atom)
+F (w x) y z --> z w x  (if w x is a compound)
+```
+
+These are expanded into seven non-overlapping reduction
+rules (Figure 10.1 in the book). Programs are
+irreducible terms, which can be thought of as binary
+trees with nodes labelled by `S` or `F`.
+
+SF-calculus embeds SK-calculus (`K = FF`) and supports
+program equality, tagging, and pattern matching. The
+factorisation operator `F` provides a general approach
+to divide-and-conquer: if the argument is a compound,
+divide it (extract left and right components); if it is
+an atom, conquer it. The component functions `left` and
+`right` extract the two parts of a compound:
+`left (w x) = w`, `right (w x) = x`.
+
+SF-calculus and tree calculus have equivalent expressive
+power: meaningful translations exist in both directions.
+Both translations use tagging to preserve intensional
+information about the source operators.
+
+### Verified Theorems (Book, Chapter 10)
+
+- **Theorem 63**: Reduction of SF-calculus is confluent.
+- **Theorem 64** (`equal_sf_programs`):
+  `equal p p --> K` for all SF-programs `p`.
+- **Theorem 65** (`unequal_sf_programs`):
+  `equal p q --> KI` for all SF-programs `p` and `q`
+  that are not equal.
+- **Theorem 66** (`meaningful_translation_from_tree_to_sf`):
+  There is a meaningful translation from tree calculus
+  to SF-calculus. (Translates the triangle operator
+  using tags to record which reduction rule applies.)
+- **Theorem 67** (`meaningful_translation_from_sf_to_tree`):
+  There is a meaningful translation from SF-calculus to
+  tree calculus. (Uses `ternary_op{f}`, a tagged
+  fixpoint combinator that delays evaluation until three
+  arguments are received. Maps `S` to
+  `ternary_op{S}` and `F` to `ternary_op{getTag}`.)
+
+## Completeness Hierarchy (Book, Chapter 11)
+
+The book distinguishes three levels of completeness for
+models of computation:
+
+- **Extensionally complete** (= combinatorially complete):
+  supports all combinators. SK-calculus, VA-calculus,
+  SF-calculus, and tree calculus are all extensionally
+  complete.
+- **Intensionally complete**: supports arbitrary program
+  analyses via pattern matching. Tree calculus and
+  SF-calculus are intensionally complete. SK-calculus,
+  VA-calculus, and the traditional models (Turing
+  machines, lambda-calculus, mu-recursive functions)
+  are not.
+- **Program-complete**: Turing-complete, supports the
+  same class of functions of binary trees as tree
+  calculus, and supports an invertible function from
+  programs to binary natural trees. Tree calculus is
+  program-complete by definition. SF-calculus is
+  program-complete (the translation from programs to
+  natural trees is definable by pattern matching).
+  The traditional models are not program-complete
+  because their programs are not binary trees.
+
+The Church-Turing Thesis equates computational models
+by the class of *numerical functions* they compute;
+meaningful translation (Definition 50) is a stricter
+comparison that also preserves application structure,
+values, and variables. Under meaningful translation,
+tree calculus is strictly more expressive than
+combinatory logic (translation exists in one direction
+only).
+
+## Models of Computability (Book, Appendix A)
+
+Appendix A (by Jay and Vergara) defines formal notions
+of *model of computability* and *simulation* to compare
+expressive power across different computational models.
+
+A *model of computability* `(D, F)` consists of a domain
+`D` (a set of values) and a collection `F` of partial
+functions from powers of `D` to `D`. A *simulation* of
+`(D1, F1)` in `(D2, F2)` is an injective encoding
+`rho : D1 -> D2` such that every function in `F1` can be
+simulated in `F2` via the encoding. A *recoding* is the
+composition `rho2 . rho1 : D1 -> D1` obtained from
+simulations in both directions. Model `(D2, F2)` is *at
+least as expressive* as `(D1, F1)` if the recoding is
+computable in `F2`. The two are *weakly equivalent* if
+each is at least as expressive as the other; they are
+*equivalent* if the recodings have computable inverses.
+
+Two versions of the Church-Turing Thesis are
+distinguished:
+
+- **(NCT)** Numerical Church's Thesis: every effectively
+  calculable numerical function is general recursive.
+- **(SCT)** Symbolic Church's Thesis: every effectively
+  calculable function can be simulated by a general
+  recursive function.
+
+Similarly, two versions of Turing's Thesis:
+
+- **(NTT)** Numerical: every numerical function that would
+  naturally be regarded as computable is Turing
+  computable.
+- **(STT)** Symbolic: every function that would naturally
+  be regarded as computable can be simulated by a
+  Turing-computable function.
+
+### Verified Theorems (Book, Appendix A)
+
+- **Corollary 68**: Church's delta (equality of closed
+  normal lambda-terms) is lambda-definable (follows
+  from Kleene's statement).
+- **Corollary 69**: Church's delta is not
+  lambda-definable (follows from Barendregt).
+  (These two corollaries exhibit the contradiction in
+  the standard account.)
+- **Theorem 70**: Any model of computability that is at
+  least as expressive as the recursive function model
+  can define equality of values.
+- **Corollary 71**: The normal model of computability for
+  SK-calculus is not weakly equivalent to the recursive
+  function model. (SK-calculus cannot define equality
+  of values.)
+- **Corollary 72**: No lambda-model of higher-order
+  programming is weakly equivalent to the recursive
+  model of computability.
+- **Theorem 73**: Turing's Numerical Thesis is logically
+  equivalent to Church's Numerical Thesis.
+- **Theorem 74**: The recursive model of computability is
+  weakly equivalent to any Turing model.
+- **Corollary 75**: Turing's Symbolic Thesis is logically
+  equivalent to Church's Symbolic Thesis.
+- **Corollary 76**: No lambda-model of higher-order
+  programming is weakly equivalent to the Turing model.
+- **Theorem 77**: The normal model of computability for
+  SF-calculus is equivalent to the recursive model.
+  (Both recodings are computable: Godelisation in one
+  direction, pattern-matching in the other.)
+
 ## References
 
 ### Specification and Implementations
