@@ -705,6 +705,374 @@ mapping according to the first observation step:
 
 ---
 
+## 10. Requirements on the Base Category
+
+The constructions above are stated for P-**Alg** and
+P-**Coalg** over **Set**. This section analyzes what
+properties a base category E must have for
+P-**Coalg**(E) to admit the same constructions, and
+in particular for P-**Coalg**(E) to be a topos.
+
+### 10.1 Construction-by-Construction Requirements
+
+Each construction in P-**Coalg**(E) imposes
+requirements on E:
+
+- **Initial coalgebra** (Section 1.2): U creates
+  colimits unconditionally, so E must have an initial
+  object.
+- **Terminal coalgebra / M-type** (Section 1.2): This
+  is the most demanding requirement. E must support
+  the construction of the terminal coalgebra of P.
+  See Section 10.2.
+- **Products of coalgebras** (Section 3.2): Products
+  in P-**Coalg**(E) are pullbacks over the terminal
+  coalgebra Z. E must have pullbacks, and P must
+  preserve them.
+- **Coproducts** (Section 4.2): U creates colimits
+  unconditionally. E must have finite coproducts.
+- **Equalizers** (Section 5.2): P must preserve
+  equalizers (which polynomial functors do). E must
+  have equalizers.
+- **Coequalizers** (Section 6.2): U creates colimits
+  unconditionally. E must have coequalizers.
+- **Pullbacks** (Section 7.2): P must preserve
+  pullbacks (which polynomial functors do). E must
+  have pullbacks.
+- **Pushouts** (Section 8.2): U creates colimits
+  unconditionally. E must have finite colimits.
+- **Subobject classifier** (Section 9.1): Constructed
+  from cosieves on the path category C under the
+  copresheaf equivalence. E does NOT need a subobject
+  classifier.
+- **Exponentials** (Section 9.2): Constructed from
+  the standard copresheaf formula. E does NOT need
+  exponentials or Cartesian closure.
+
+In summary, E must be finitely complete (terminal
+object, pullbacks, equalizers) and finitely cocomplete
+(initial object, coproducts, coequalizers), and must
+support M-types for P. The subobject classifier and
+exponentials of P-**Coalg**(E) are *outputs* of the
+construction, not inputs.
+
+### 10.2 M-Type Construction Requirements
+
+The terminal coalgebra (M-type) for P can be
+constructed via Adamek's chain: the limit of the
+omega-op sequence
+
+`... -> P^3(1) -> P^2(1) -> P(1) -> 1`
+
+where 1 is the terminal object and each arrow is the
+image under P of the previous one.
+
+This requires E to have:
+
+1. A terminal object 1.
+2. Countable inverse limits (limits of omega-op
+   chains).
+3. P must preserve this specific limit.
+
+For polynomial P, the chain converges in omega steps,
+and polynomial functors preserve the relevant limits.
+
+#### 10.2.1 Finitary vs. Infinitary Polynomials
+
+The requirements depend on the polynomial's arities:
+
+**Finitary polynomials** (each `X^{B(a)}` has B(a)
+finite, e.g. `P(X) = A + X^2`): The term `X^{B(a)}`
+is a finite product `X x X x ... x X`, not a function
+type. The construction requires:
+
+- Finite products (for `X^n`)
+- Finite coproducts (for the sum structure)
+- Countable inverse limits (for the omega-op chain)
+- A natural number object (for indexing approximation
+  depth)
+
+No exponentials or Cartesian closure is needed.
+
+**Infinitary polynomials** (some B(a) is infinite,
+e.g. `P(X) = X^Nat`): The term `X^{B(a)}` is a
+genuine exponential (function type `B(a) -> X`).
+The construction additionally requires:
+
+- Exponentials for the relevant B(a) (or local
+  Cartesian closure for general dependent
+  polynomials)
+- The omega-op chain may require more than omega steps
+  to converge
+
+#### 10.2.2 The Approximation Construction
+
+In the GebLean codebase, M-types are constructed via
+consistent sequences of finite approximations
+(`PolyCofixApprox` and `PolyCofixAgree` in
+`PolyAlg.lean`). An element of the M-type is a
+dependent pair:
+
+- A sequence of approximations indexed by depth
+  (Pi type over Nat)
+- A proof that consecutive approximations agree
+  (Pi type over Nat)
+
+This construction requires:
+
+- W-types (for the inductive approximation types)
+- Dependent products (Pi types) over Nat
+- Dependent sums (Sigma types) for bundling
+
+For finitary polynomials like `P(X) = A + X^2`, the
+children function at each node is a function from a
+finite type (a 2-element type for binary trees),
+which is equivalent to a finite product. No general
+exponentials are needed.
+
+For infinitary polynomials, the children function
+would be a function from an infinite type, requiring
+genuine exponentials in E.
+
+#### 10.2.3 Summary for P(X) = A + X^2
+
+The M-type construction for the binary product
+polynomial requires E to have:
+
+- Finite products (for `X x X`)
+- Finite coproducts (for `A + (-)`)
+- Terminal object
+- Natural number object
+- Countable inverse limits (or equivalently, dependent
+  products over Nat)
+
+E does NOT need exponentials, Cartesian closure, or a
+subobject classifier. The finite arity (2) means all
+branching is captured by finite products.
+
+### 10.3 Finitary Topos Requirements
+
+For a finitary polynomial P and base category E,
+P-**Coalg**(E) is a topos when E has:
+
+1. Finite limits (terminal object, pullbacks,
+   equalizers)
+2. Finite colimits (initial object, coproducts,
+   coequalizers)
+3. A natural number object
+4. Countable inverse limits (for the M-type chain)
+
+The coalgebra topos construction is
+"topos-generating": it takes a finitely complete,
+finitely cocomplete base category with NNO and
+countable limits, and produces a topos with subobject
+classifier and exponentials. These are constructed
+from the copresheaf/cosieve structure, not inherited
+from E.
+
+---
+
+## 11. Candidate Base Categories
+
+Two candidates for the base category E are considered:
+partial equivalence relations (PERs) on a type, and
+parametric relations in the sense of Reynolds and
+Wadler. The goal is to find a base category that is
+self-reflective: the theory's types and morphisms
+should be representable within the theory itself.
+
+### 11.1 PER(T): Partial Equivalence Relations
+
+Let T be a type equipped with a partial combinatory
+algebra (PCA) structure. The category PER(T) has:
+
+- **Objects**: PERs on T (symmetric, transitive
+  relations; not necessarily reflexive).
+- **Morphisms R -> S**: elements t of T that "track"
+  the function: for all x, y, if x R y then
+  `(t . x) S (t . y)`, where `(.)` is application
+  in the PCA.
+
+The quotient `T/R` (restricted to dom(R)) is the
+"type represented by R."
+
+#### 11.1.1 Categorical Properties
+
+PER(T) for a PCA T has the following properties
+(established in the realizability literature):
+
+- Finite limits: terminal object, products, pullbacks,
+  equalizers.
+- Finite colimits: initial object, coproducts,
+  coequalizers.
+- Locally Cartesian closed (exponentials in every
+  slice).
+- Regular category (kernel pairs have coequalizers;
+  regular epimorphisms are stable under pullback).
+- NOT exact: not every equivalence relation is
+  effective (is a kernel pair).
+- NOT a topos: lacks a subobject classifier and power
+  objects.
+
+PER(T) is equivalent to the category of modest sets
+(Mod_T), a full subcategory of the category of
+assemblies Asm(T).
+
+#### 11.1.2 Relationship to Realizability Toposes
+
+The realizability topos RT(T) is the ex/reg completion
+of Asm(T): it freely adds quotients of equivalence
+relations. RT(T) IS an elementary topos. PER(T) embeds
+into RT(T) but is not itself a topos.
+
+The coalgebra topos construction could potentially
+bridge this gap: if P-**Coalg**(PER(T)) is a topos
+(given the requirements in Section 10.3), it would
+produce topos structure from a non-topos base.
+
+#### 11.1.3 Tree Calculus as PCA
+
+For T = unlabeled binary trees with the tree calculus
+reduction rules (triage), T forms a PCA. The tree
+calculus is Turing-complete, and its intensional
+nature (rules 3a-3c allow programs to inspect program
+structure) gives it a self-reflection property not
+present in SK-calculus.
+
+PER(tree calculus) would provide a self-reflective
+base: programs are trees, data are trees, and PERs
+on trees are (in principle) representable as trees.
+
+### 11.2 Parametric Relations (Reynolds/Wadler)
+
+The parametric approach defines morphisms as families
+satisfying the parametricity condition: preservation
+of all relations.
+
+#### 11.2.1 Structure in the Codebase
+
+The codebase implements parametric relations at
+several levels:
+
+- `PshRelCat C` (PshRelDouble.lean): Objects are
+  presheaves, morphisms are `PshRel P Q`
+  (isomorphism classes of relations). The graph
+  functor `pshRelGraphFunctor` embeds ordinary
+  natural transformations as graph relations.
+- `TypeExprCat` (ParanaturalTopos.lean): Objects are
+  type expressions, morphisms are
+  `ParametricFamily (.arrow T₁ T₂)`. Morphisms from
+  the unit object to T correspond to
+  `ParametricFamily T`.
+- The parametric copresheaf category
+  `PshRelSpanObj C => Type` is a Grothendieck topos.
+
+#### 11.2.2 Categorical Properties
+
+The parametric copresheaf topos has all the properties
+needed: it is a Grothendieck topos with all limits,
+colimits, W-types, subobject classifier, and
+exponentials. However, it is an external construction
+(over Type) rather than an internal one (within the
+theory of binary trees).
+
+The category `TypeExprCat` currently has `var`, `app`,
+and `arrow` constructors but lacks product and
+coproduct type expressions, so it does not yet have
+all finite (co)limits.
+
+#### 11.2.3 Functions as Graphs of Relations
+
+A distinguishing feature of the parametric approach:
+morphisms (parametric families) arise from relations
+that happen to be functional. The graph functor
+`pshRelGraphFunctor` is faithful, embedding the
+ordinary category of functions into the relational
+category. This means functions are not primitive but
+are derived from the relational structure.
+
+### 11.3 The Hybrid Approach
+
+PERs on binary trees can serve as the base category
+E, with parametric relations derived as structure
+within E:
+
+1. **Base**: PER(T) provides types (PERs on trees)
+   and morphisms (tracked functions).
+2. **Relations between types**: Given PERs R and S on
+   T, a relation between the types `T/R` and `T/S`
+   is encoded as a PER Q on `T` (using the pairing
+   combinator `node(x, y)` to encode pairs) satisfying
+   compatibility with R and S.
+3. **Reflexive graph structure**: The identity
+   extension property (R itself, viewed as a relation
+   from R to R, is distinguished) gives a reflexive
+   graph category structure on PER(T), recovering the
+   Dunphy-Reddy / Hermida-Reddy-Robinson framework.
+4. **Coalgebra topos**: Apply the P-**Coalg**
+   construction to PER(T) to obtain a topos with
+   full internal logic.
+
+This hybrid approach has precedent: Sojakova, Spitters,
+and van der Weide (2018) show that the Longo-Moggi PER
+model arises as an instance of the abstract relational
+parametricity framework.
+
+### 11.4 Self-Representation
+
+For the theory to be self-reflective, its types and
+morphisms must be representable within itself:
+
+- **PERs on tree calculus**: A PER is a set of pairs
+  of trees. A decidable PER can be represented as a
+  tree-calculus program (a tree) that decides
+  membership. The intensional self-reflection of tree
+  calculus (programs inspecting programs without Godel
+  numbering) makes this natural.
+- **Parametric relations**: Self-representation is
+  provided by the subobject classifier Omega of the
+  parametric copresheaf topos, but this representation
+  is abstract (sieves on representables) rather than
+  computational.
+- **Hybrid**: PERs provide computational
+  self-representation (programs as trees); the
+  coalgebra topos provides logical
+  self-representation (Omega, exponentials). The
+  open question is whether these coincide — whether
+  the coalgebra topos of the tree calculus PCA is
+  equivalent to (or embeds into) the realizability
+  topos RT(tree calculus).
+
+### 11.5 Comparison
+
+| Property | PER(T) | Parametric | Hybrid |
+| - | - | - | - |
+| Finite limits | Y | Y | Y |
+| Finite colimits | Y | Y | Y |
+| Locally cart. closed | Y | Y | Y |
+| Exact | N | Y | Via coalg. topos |
+| Topos | N | Y | Via coalg. topos |
+| W-types | In RT(T) | Y | Via coalg. topos |
+| Subobject classifier | N | Y | Via coalg. topos |
+| Computational self-repr. | Y | Abstract | Y |
+| Logical self-repr. | N | Y | Via coalg. topos |
+
+### 11.6 Open Questions
+
+- Is the coalgebra topos P-**Coalg**(PER(tree calc.))
+  equivalent to (or related to) the realizability
+  topos RT(tree calculus)?
+- Does PER(tree calculus) have the countable inverse
+  limits needed for the M-type construction?
+- Can the parametric copresheaf topos be recovered as
+  P-**Coalg** of some suitable base category?
+- At what point in the construction does
+  self-representation become possible — can the base
+  category represent its own PERs before the
+  coalgebra topos construction, or only after?
+
+---
+
 ## References
 
 - Adamek, J. "Introduction to coalgebra." *Theory and
@@ -719,6 +1087,14 @@ mapping according to the first observation step:
   coalgebras." PhD thesis, Carnegie Mellon (2001).
 - Rutten, J.J.M.M. "Universal coalgebra: a theory of
   systems." *Theoretical Computer Science* 249 (2000).
+- Sojakova, K., Spitters, B., and van der Weide, N.
+  "A general framework for relational parametricity."
+  arXiv:1805.00067 (2018).
+- Van den Berg, B. and de Marchi, F. "Non-well-founded
+  trees in categories." *Annals of Pure and Applied
+  Logic* 146 (2007).
+- Van Oosten, J. *Realizability: An Introduction to
+  Its Categorical Side.* Elsevier (2008).
 - Worrell, J. "A note on coalgebras and presheaves."
   *Mathematical Structures in Computer Science* 15
   (2005): 475-483.
