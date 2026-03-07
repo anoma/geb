@@ -638,6 +638,205 @@ Bits are `0 = triangle` and `1 = K triangle`. Bytes
 are 8-tuples of bits. ASCII characters are represented
 by their bytecodes. Strings are lists of characters.
 
+## Rewriting Theory (Book, Chapter 7)
+
+Chapter 7 orients the equational rules as directed
+rewriting rules and develops the metatheory of reduction.
+
+### Reduction and Simultaneous Reduction
+
+Reduction `-->` is the compatible closure of the three
+oriented rules (K, S, F). Simultaneous reduction `-->`
+(written `s_red1` in the Coq formalization) allows
+multiple redexes to be contracted in a single step,
+including within subterms.
+
+### Verified Theorems (Book, Chapter 7)
+
+- **Theorem 32** (`diamond_s_red1`):
+  Simultaneous reduction has the diamond property:
+  if `M --> N1` and `M --> N2` (by simultaneous
+  reduction), then there exists `P` with `N1 --> P`
+  and `N2 --> P`.
+- **Theorem 33** (`confluence_tree_calculus`):
+  Reduction of tree calculus is confluent. (Follows
+  from the diamond property of simultaneous reduction,
+  since simultaneous reduction contains single-step
+  reduction and is contained in its transitive closure.)
+- **Corollary 34**: Every tree has at most one normal
+  form.
+- **Theorem 35** (`halting_problem_insoluble`):
+  The halting problem is insoluble in tree calculus:
+  there is no tree-calculus program that decides whether
+  an arbitrary program halts. (Proved by diagonalization.)
+- **Theorem 36** (`standardization`):
+  Standard reduction theorem. Every reduction sequence
+  can be rearranged into a standard sequence (head
+  reductions first, then internal reductions).
+- **Corollary 37** (`leftmost_reduction`):
+  If a term has a normal form, leftmost outermost
+  reduction finds it.
+- **Theorem 38** (`head_reduction_to_factorable_form`):
+  Every program can be head-reduced to a factorable form
+  (leaf, stem, or fork).
+
+### Self-Evaluator Completeness
+
+- **Theorem 40** (`bf_to_branch_first_eval`):
+  Converse of branch-first evaluator soundness: if
+  `bf M N` reduces to a program `P`, then `M, N => P`
+  by branch-first evaluation.
+- **Corollary 41** (`branch_first_eval_iff_bf`):
+  Branch-first evaluation is equivalent to `bf`:
+  `M, N => P` if and only if `bf M N -->* P`.
+- **Theorem 42** (`root_eval_iff_root`):
+  Root evaluation is equivalent to `root`:
+  `M => P` if and only if `root M -->* P`.
+- **Theorem 43** (`rb_eval_iff_rb`):
+  Root-and-branch evaluation is equivalent to `rb`:
+  `'M Downarrow P` if and only if `rb 'M -->* P`.
+- **Theorem 44** (`rf_eval_iff_rf`):
+  Root-first evaluation is equivalent to `rf`:
+  `'(M N) Downarrow P` if and only if `rf M N -->* P`.
+
+Each completeness result shows that the self-evaluator
+does no more and no less than its corresponding
+evaluation strategy.
+
+## Incompleteness of Combinatory Logic (Book, Chapter 8)
+
+SK-calculus has reduction rules `K x y --> x` and
+`S x y z --> x z (y z)`. It is combinatorially complete
+(every combinator can be represented) and confluent
+(Theorem 45). However, it cannot decide equality of its
+own programs: there is no SK-term `eq` such that
+`eq M M x y -->* x` for all programs `M` and
+`eq M N x y -->* y` when `M` is not identical to `N`.
+
+The reason is that SK-calculus cannot separate identity
+programs. An *identity program* is a program `M` such
+that `M x -->* x`. A *separator* for programs `M1`, `M2`
+is a program `s` with `s M1 x y --> x` and
+`s M2 x y --> y`. Both `SKK` and `SKS` are identity
+programs, but they cannot be separated in SK-calculus.
+
+A *meaningful translation* between applicative rewriting
+systems preserves: (1) computational equality, (2)
+application structure, (3) values (programs translate to
+programs), and (4) variables. There is a meaningful
+translation from SK-calculus to tree calculus (mapping
+`S` to `S` and `K` to `K`), but no meaningful translation
+in the other direction.
+
+### Verified Theorems (Book, Chapter 8)
+
+- **Theorem 45** (`confluence_SK`):
+  Reduction of SK-calculus is confluent.
+- **Lemma 46** (`pentagon_id_red_s_red1`):
+  Identity reduction and simultaneous reduction satisfy
+  a pentagon property.
+- **Lemma 47** (`pentagon_id_red_s_red`):
+  Generalization of Lemma 46 to multiple parallel
+  reductions.
+- **Theorem 48** (`no_separable_identities_in_SK`):
+  Identity programs do not have separators in
+  SK-calculus. (Proved by applying the pentagon lemma
+  to show that any separator for two identity programs
+  would force its two outputs to share a reduct,
+  contradicting confluence.)
+- **Theorem 49**
+  (`equality_of_programs_is_not_definable_in_SK`):
+  There is no equality term in SK-calculus. (Follows
+  from Theorem 48, since `eq` applied to `SKK` and
+  `SKS` would be a separator.)
+- **Definition 50**: A *meaningful translation* between
+  applicative rewriting systems preserves equality,
+  application, values, and variables.
+- **Theorem 51**
+  (`meaningful_translation_from_sk_to_tree`):
+  There is a meaningful translation from SK-calculus
+  to tree calculus.
+- **Lemma 52**
+  (`meaningful_translation_preserves_identity_programs`):
+  Meaningful translations from SK-calculus to tree
+  calculus preserve identity programs.
+- **Lemma 53**
+  (`meaningful_translation_preserves_separators`):
+  Meaningful translations from SK-calculus to tree
+  calculus preserve separators.
+- **Theorem 54** (`no_translation_tree_to_sk`):
+  There is no meaningful translation from tree calculus
+  to SK-calculus. (Tree calculus has separable identity
+  programs `tag{K, I}` and `tag{KI, I}`, which any
+  meaningful translation would carry to separable
+  identity programs in SK-calculus, contradicting
+  Theorem 48.)
+
+## VA-Calculus (Book, Chapter 9)
+
+VA-calculus is a variant of lambda-calculus with two
+ternary operators `V` and `A`. `V` builds de Bruijn
+indices; `A` builds abstractions carrying an environment.
+Terms are `M, N ::= V | A | M N`. The seven reduction
+rules handle suspension, zero index, successor index,
+application within abstractions, empty environment,
+substitution, and nested abstraction — all without
+meta-theoretic side conditions on scope.
+
+Programs of VA-calculus are applications of `V` or `A`
+to zero, one, or two arguments. VA-calculus is
+combinatorially complete (S and K are definable via star
+abstraction) and confluent, but cannot define equality
+of its own programs (for the same reason as SK-calculus:
+inseparable identity programs exist).
+
+Meaningful translations exist in both directions between
+VA-calculus and tree calculus. The translation from
+VA-calculus to tree calculus uses tagging to record which
+reduction rule applies to each operator. The translation
+from tree calculus to VA-calculus uses tagging (which
+VA-calculus supports via its first-class substitutions)
+to encode the leaf/stem/fork structure. However, the
+round-trip (double translation) is not definable within
+VA-calculus, so the translations do not make VA-calculus
+complete.
+
+### Verified Theorems (Book, Chapter 9)
+
+- **Theorem 55** (`confluence_va_calculus`):
+  VA-calculus is confluent. (Proved via simultaneous
+  reduction with non-overlapping rules.)
+- **Theorem 56** (`bracket_beta`):
+  Bracket abstraction in VA-calculus satisfies beta:
+  `([x]t) u -->* {u/x} t`.
+- **Theorem 57** (`star_beta`):
+  Star abstraction in VA-calculus satisfies beta:
+  `(lambda* x. t) u --> {u/x} t`.
+- **Theorem 58**
+  (`meaningful_translation_from_sk_to_va`):
+  There is a meaningful translation from SK-calculus
+  to VA-calculus.
+- **Theorem 59**
+  (`equality_of_programs_is_not_definable_in_va`):
+  Equality of normal forms is not definable in
+  VA-calculus. (Proved as for SK-calculus, using
+  identity programs `I` and `AVI` which are
+  inseparable.)
+- **Theorem 60** (`meaningful_translation_va_to_tree`):
+  There is a meaningful translation from VA-calculus
+  to tree calculus. (Uses tagged fixpoint combinators
+  `Y_2t` to translate `V` and `A`, with tags encoding
+  which reduction rule applies.)
+- **Theorem 61**
+  (`meaningful_translation_from_tree_to_va`):
+  There is a meaningful translation from tree calculus
+  to VA-calculus. (Uses tagging within VA-calculus to
+  encode the leaf/stem/fork dispatch.)
+- **Corollary 62**: There is no meaningful translation
+  from VA-calculus to combinatory logic. (Composing
+  with Theorem 61 would yield a translation from tree
+  calculus to SK-calculus, contradicting Theorem 54.)
+
 ## References
 
 ### Specification and Implementations

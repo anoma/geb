@@ -69,8 +69,16 @@ Verified Theorems sections). Among the contents documented:
   evaluation strategies (branch-first, root,
   root-and-branch, root-first), self-evaluators bf/
   root/rb/rf, quotation, Thms 14-18. Written.
-- [ ] Ch 7: Rewriting (pp. 77-90)
-- [ ] Ch 8: Incompleteness of Combinatory Logic (pp. 91-99)
+- [x] Ch 7: Rewriting (pp. 77-90) — diamond property
+  (Thm 32), confluence (Thm 33), halting insolubility
+  (Thm 35), standardization (Thm 36), head reduction
+  (Thm 38), evaluator completeness (Thms 40-44). Written.
+- [x] Ch 8: Incompleteness of Combinatory Logic (pp.
+  91-99) — SK confluence (Thm 45), no separable
+  identities (Thm 48), no equality term in SK (Thm 49),
+  meaningful translation definition (Def 50), SK embeds
+  in tree calc (Thm 51), no reverse translation
+  (Thm 54). Written.
 - [ ] Ch 9: Lambda-Abstraction in VA-Calculus (pp. 101-111)
 - [ ] Ch 10: Divide-and-Conquer in SF-Calculus (pp. 113-121)
 - [ ] Ch 11: Concluding Remarks (pp. 123-129)
