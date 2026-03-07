@@ -1579,4 +1579,115 @@ lemma polyGSOSDistLaw_naturality
   simp only [polyGSOSDistLawMor]
   rw [rhs_eq, lhs_eq]
 
+def polyGSOSDistLawNatApp
+    (A : Over X) (P Q : PolyEndo X)
+    (rho : PolyGSOSRule P Q) :
+    ((polyCofreeComonad X Q).toFunctor ⋙
+      (polyFreeMonad X P).toFunctor).obj A ⟶
+    ((polyFreeMonad X P).toFunctor ⋙
+      (polyCofreeComonad X Q).toFunctor).obj A :=
+  polyGSOSDistLawMor A P Q rho
+
+lemma polyGSOSDistLawNat_naturality
+    (A B : Over X) (P Q : PolyEndo X)
+    (rho : PolyGSOSRule P Q) (f : A ⟶ B) :
+    ((polyCofreeComonad X Q).toFunctor ⋙
+      (polyFreeMonad X P).toFunctor).map f ≫
+    polyGSOSDistLawNatApp B P Q rho =
+    polyGSOSDistLawNatApp A P Q rho ≫
+    ((polyFreeMonad X P).toFunctor ⋙
+      (polyCofreeComonad X Q).toFunctor).map f := by
+  simp only [Functor.comp_map,
+    polyFreeMonad_map_eq,
+    polyCofreeComonad_map_eq,
+    polyGSOSDistLawNatApp]
+  exact polyGSOSDistLaw_naturality A B P Q rho f
+
+def polyGSOSDistLawNat
+    (P Q : PolyEndo X)
+    (rho : PolyGSOSRule P Q) :
+    (polyCofreeComonad X Q).toFunctor ⋙
+      (polyFreeMonad X P).toFunctor ⟶
+    (polyFreeMonad X P).toFunctor ⋙
+      (polyCofreeComonad X Q).toFunctor where
+  app := fun A =>
+    polyGSOSDistLawNatApp A P Q rho
+  naturality := fun {A B} f =>
+    polyGSOSDistLawNat_naturality A B P Q rho f
+
+private lemma polyGSOSDistLaw_comul_annot_eq
+    (A : Over X) (P Q : PolyEndo X) {x : X}
+    (t : PolyFreeM
+      (polyCofreeCarrier A Q) P x) :
+    polyFreeMapAt
+      (polyCofreeCarrier
+        (polyCofreeCarrier A Q) Q)
+      (polyCofreeCarrier A Q) P
+      (polyCofreeCounit
+        (polyCofreeCarrier A Q) Q)
+      x
+      (polyFreeMapAt
+        (polyCofreeCarrier A Q)
+        (polyCofreeCarrier
+          (polyCofreeCarrier A Q) Q) P
+        (polyCoalgUnit Q (polyCofreeCoalg A Q))
+        x t) = t := by
+  rw [← polyFreeMapAt_comp]
+  have h :
+      polyCoalgUnit Q (polyCofreeCoalg A Q) ≫
+      polyCofreeCounit
+        (polyCofreeCarrier A Q) Q =
+      𝟙 (polyCofreeCarrier A Q) :=
+    polyCofree_left_triangle Q
+      (polyCofreeCoalg A Q)
+  rw [h, polyFreeMapAt_id]
+
+abbrev polyGSOSDistLaw_comul_lhsCoalg
+    (A : Over X) (P Q : PolyEndo X)
+    (rho : PolyGSOSRule P Q) :
+    PolyCoalg (polyScale
+      (polyCofreeCarrier
+        (polyFreeMCarrier A P) Q) Q) :=
+  polyScaleReindexCoalg
+    (polyFreeMCarrier
+      (polyCofreeCarrier A Q) P)
+    (polyCofreeCarrier
+      (polyFreeMCarrier A P) Q) Q
+    (polyGSOSDistLawMor A P Q rho)
+    (polyGSOSScaleCoalg
+      (polyCofreeCarrier A Q) P Q rho)
+
+abbrev polyGSOSDistLaw_comul_lhsInput
+    (A : Over X) (P Q : PolyEndo X) {x : X}
+    (t : PolyFreeM
+      (polyCofreeCarrier A Q) P x) :
+    { a : (polyFreeMCarrier
+        (polyCofreeCarrier
+          (polyCofreeCarrier A Q) Q) P).left //
+      (polyFreeMCarrier
+        (polyCofreeCarrier
+          (polyCofreeCarrier A Q) Q)
+        P).hom a = x } :=
+  ⟨⟨x, polyFreeMapAt
+    (polyCofreeCarrier A Q)
+    (polyCofreeCarrier
+      (polyCofreeCarrier A Q) Q) P
+    (polyCoalgUnit Q (polyCofreeCoalg A Q))
+    x t⟩, rfl⟩
+
+abbrev polyGSOSDistLaw_comul_rhsInput
+    (A : Over X) (P Q : PolyEndo X)
+    (rho : PolyGSOSRule P Q) {x : X}
+    (t : PolyFreeM
+      (polyCofreeCarrier A Q) P x) :
+    { a : (polyCofreeCarrier
+        (polyFreeMCarrier A P) Q).left //
+      (polyCofreeCarrier
+        (polyFreeMCarrier A P) Q).hom
+        a = x } :=
+  ⟨⟨x, polyCofixUnfoldAt
+    (polyScale (polyFreeMCarrier A P) Q)
+    (polyGSOSScaleCoalg A P Q rho) x
+    ⟨⟨x, t⟩, rfl⟩⟩, rfl⟩
+
 end GebLean
