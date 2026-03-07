@@ -408,9 +408,9 @@ topos of the tree calculus PCA is an open question.
 
 #### Approach B References
 
-- [Tree Calculus spec](https://treecalcul.us/specification/)
-- [Barry Jay's Coq formalization](https://github.com/barry-jay-personal/tree-calculus)
-- Barry Jay, "Reflective Programs in Tree Calculus"
+- [Tree calculus reference](../tree-calculus.md) — syntax,
+  reduction rules, PCA structure, self-reflection,
+  references to implementations and formalization
 - [nLab: Realizability topos](https://ncatlab.org/nlab/show/realizability+topos)
 - [nLab: Partial combinatory algebra](https://ncatlab.org/nlab/show/partial+combinatory+algebra)
 - `PolyDistributiveLaw.lean`
@@ -1144,7 +1144,9 @@ part of the target construction.
    — finite unlabeled binary trees. Tree calculus is
    well-studied, with algorithms and proofs formalized
    in Barry Jay's book (*Reflective Programs in Tree
-   Calculus*) and in Coq.
+   Calculus*) and in Coq. See
+   [tree calculus reference](../tree-calculus.md) for
+   syntax, reduction rules, and references.
 
 2. **Identify the primitive-recursive subset.** Define a
    syntactic fragment of tree calculus terms that can
@@ -1202,8 +1204,8 @@ part of the target construction.
   interpreter for the language.
 
 - **Syntactic criterion first, proof-carrying code
-  later.** Two options exist for recognizing terminating
-  programs:
+  later.** At least two possibilities exist for recognizing
+  terminating programs:
 
   - *Syntactic criterion (Option 1)*: Define a syntactic
     fragment and check membership. This is conservative

@@ -39,9 +39,9 @@ the realizability topos of the tree calculus PCA, and the
 free topos with binary tree object. See design doc
 section "Internal Logic and Self-Reflection".
 
-Two options exist for recognizing terminating programs:
-(1) syntactic criterion — decidable membership in a
-syntactic fragment (starting point); (2) proof-carrying
+At least two possibilities exist for recognizing terminating
+programs: (1) syntactic criterion — decidable membership in
+a syntactic fragment (starting point); (2) proof-carrying
 code — programs accompanied by termination proofs as
 trees (later extension, built within the language on
 top of Option 1). See design doc section "Design
@@ -54,6 +54,9 @@ Principles".
 - `GebLean/PLang.lean` — index (already imports
   `TermCat`)
 - `docs/plans/2026-03-06-termcat-design.md` — design doc
+- `docs/tree-calculus.md` — tree calculus reference
+  (syntax, reduction rules, PCA structure,
+  self-reflection, external references)
 - `docs/polynomial-algebra-coalgebra-categories.md` —
   reference document on universal properties of P-Alg
   and P-Coalg, base category requirements, and
