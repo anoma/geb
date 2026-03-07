@@ -126,6 +126,80 @@ def polyGSOSFoldLeaf
     rfl
 
 /--
+The pairing morphism that identifies the fiber product
+`A ×_X Q(A)` with the evaluation of the behavior
+polynomial `(Id × Q)(A)`.
+
+Given an element `(a, (y, qIdx, qMor))` of the pullback
+(where `A.hom a = y`), produce the `(Id × Q)` evaluation
+`(y, pos, coprodMor)` where `pos` selects `PUnit` for the
+identity component and `qIdx` for the Q component, and
+`coprodMor` routes identity directions to `a` and Q
+directions to `qMor`.
+-/
+def overPullbackToIdQEval
+    (Q : PolyEndo X) (A : Over X) :
+    overPullback A
+      ((polyEndoFunctor X Q).obj A) ⟶
+    (polyEndoFunctor X
+      (polyIdBehaviorPoly Q)).obj A :=
+  Over.homMk
+    (fun elem =>
+      let t := elem.val.1
+      let qEval := elem.val.2
+      let y := qEval.1
+      let qIdx := qEval.2.1
+      let qChildMor := qEval.2.2
+      let pos :
+          ccrIndex ((polyIdBehaviorPoly Q) y) :=
+        fun
+          | Sum.inl _ => PUnit.unit
+          | Sum.inr _ => qIdx
+      let coprodMor :
+          ccrFamily
+            ((polyIdBehaviorPoly Q) y) pos ⟶
+            A :=
+        Over.homMk
+          (fun ⟨i, dir⟩ =>
+            match i with
+            | Sum.inl _ => t
+            | Sum.inr _ => qChildMor.left dir)
+          (by
+            funext ⟨i, dir⟩
+            match i with
+            | Sum.inl _ =>
+              exact elem.prop
+            | Sum.inr _ =>
+              exact congrFun
+                (Over.w qChildMor) dir)
+      ⟨y, ⟨pos, coprodMor⟩⟩)
+    (by
+      funext elem
+      exact elem.prop.symm)
+
+/--
+The join morphism for free monad evaluations: given a
+Q-evaluation element `(x, (shape, mor))` where `mor`
+maps leaf positions into `T_P(A)`, convert the shape
+to a `T_P(T_P(A))` tree and join it to `T_P(A)`.
+
+This is the evaluation-level version of the monadic
+multiplication `mu : T_P(T_P(A)) → T_P(A)`.
+-/
+def polyFreeMJoinEval
+    (A : Over X) (P : PolyEndo X) :
+    polyBetweenEval X X (polyFreeMPoly P)
+      (polyFreeMCarrier A P) ⟶
+    polyFreeMCarrier A P :=
+  Over.homMk
+    (fun ⟨x, evalElem⟩ =>
+      ⟨x, polyFreeMJoinMor A P
+        (polyFreeMPolyEval_to_polyFreeM
+          (polyFreeMCarrier A P) P
+          evalElem)⟩)
+    rfl
+
+/--
 The node handler for the GSOS parameterized fold.
 Given a P-operation whose children are in the product
 type, produce a new product element by reconstructing
@@ -162,46 +236,8 @@ def polyGSOSFoldNodeAt
     pbefMk pIdx childFst
   let fst : TDQ.left :=
     ⟨x, polyFreeMStrFamily DQ P x fstElem⟩
-  let prodComp :
-      overPullback TDQ
-        ((polyEndoFunctor X Q).obj TDQ) ⟶
-      (polyEndoFunctor X
-        (polyIdBehaviorPoly Q)).obj TDQ :=
-    Over.homMk
-      (fun elem =>
-        let t := elem.val.1
-        let qEval := elem.val.2
-        let y := qEval.1
-        let qIdx := qEval.2.1
-        let qChildMor := qEval.2.2
-        let pos :
-            ccrIndex ((polyIdBehaviorPoly Q) y) :=
-          fun
-            | Sum.inl _ => PUnit.unit
-            | Sum.inr _ => qIdx
-        let coprodMor :
-            ccrFamily
-              ((polyIdBehaviorPoly Q) y) pos ⟶
-              TDQ :=
-          Over.homMk
-            (fun ⟨i, dir⟩ =>
-              match i with
-              | Sum.inl _ => t
-              | Sum.inr _ => qChildMor.left dir)
-            (by
-              funext ⟨i, dir⟩
-              match i with
-              | Sum.inl _ =>
-                exact elem.prop
-              | Sum.inr _ =>
-                exact congrFun
-                  (Over.w qChildMor) dir)
-        ⟨y, ⟨pos, coprodMor⟩⟩)
-      (by
-        funext elem
-        exact elem.prop.symm)
   let nodeConv :=
-    ccrEvalMap prodComp node
+    ccrEvalMap (overPullbackToIdQEval Q TDQ) node
   let compInput :=
     (polyBetweenComp_eval_fiberEquiv
       P (polyIdBehaviorPoly Q) TDQ x).invFun
@@ -213,18 +249,8 @@ def polyGSOSFoldNodeAt
     (polyBetweenComp_eval_fiberEquiv
       Q (polyFreeMPoly P) TDQ x).toFun
       rhoResult
-  let join :
-      polyBetweenEval X X
-        (polyFreeMPoly P) TDQ ⟶ TDQ :=
-    Over.homMk
-      (fun ⟨x', evalElem⟩ =>
-        let tree :=
-          polyFreeMPolyEval_to_polyFreeM TDQ P
-            evalElem
-        ⟨x', polyFreeMBind TDQ DQ P tree
-          (fun _ a => a.prop ▸ a.val.2)⟩)
-      rfl
-  let qAtTdq := ccrEvalMap join qAtTpTdq
+  let qAtTdq :=
+    ccrEvalMap (polyFreeMJoinEval DQ P) qAtTpTdq
   let snd :
       ((polyEndoFunctor X Q).obj TDQ).left :=
     ⟨x, qAtTdq⟩
@@ -669,6 +695,8 @@ lemma polyGSOSFoldQIndex_node_unfold
     polyGSOSFoldCataWithFiber,
     polyGSOSNodeQIdx]
   dsimp only [polyGSOSFoldNodeAt,
+    overPullbackToIdQEval,
+    polyFreeMJoinEval,
     ccrEvalMap, ccrEvalMk,
     ccrEvalIndex, ccrEvalMor,
     polyBetweenComp_eval_fiberEquiv,
@@ -1001,6 +1029,28 @@ private lemma mor_to_pbe_fiber_index_postcomp
   simp only []
   simp only [ptoef_fst_eqRec]
 
+private lemma ccrEvalMap_eqRec
+    {Y : Type u}
+    {F : Y → ↑(CoprodCovarRepCat (Over X))}
+    {A B : Over X} (h : A ⟶ B) {y₁ y₂ : Y}
+    (p : y₁ = y₂) (v : ccrEval (F y₁) A) :
+    ccrEvalMap h (p ▸ v) = p ▸ ccrEvalMap h v := by
+  subst p; rfl
+
+private lemma mor_to_pbe_fiber_postcomp_eq
+    (f : PolyEndo X) (A B : Over X)
+    {C : Over X}
+    (hMor : C ⟶ polyBetweenEval X X f A)
+    (h : A ⟶ B) (c : C.left) :
+    ccrEvalMap h (mor_to_pbe_fiber hMor c) =
+    mor_to_pbe_fiber
+      (hMor ≫ polyToOverEvalMap X f h) c := by
+  unfold mor_to_pbe_fiber mor_to_ptoe_fiber
+  generalize mor_to_ptoe_y X hMor c = p₁
+  erw [ccrEvalMap_eqRec h p₁
+    (ptoeLeftFiber X (hMor.left c))]
+  rfl
+
 private lemma polyBetweenComp_eval_invFun_natural
     (g f : PolyEndo X)
     (A B : Over X) (h : A ⟶ B) (z : X)
@@ -1020,13 +1070,123 @@ private lemma polyBetweenComp_eval_invFun_natural
   unfold polyBetweenComp_eval_fiberEquiv
   simp only [polyBetweenComp_eval_fiberEquiv_invFun,
     pbefIndex, pbefMor, ptoefIndex, ptoefMor]
-  apply Sigma.ext
-  · dsimp only [ccrEvalIndex, ccrEvalMor,
-      Sigma.fst]
-    congr 1; funext eg
-    exact mor_to_pbe_fiber_index_postcomp
-      f A B hMor h eg
-  · _
+  simp only [ccrEvalIndex, ccrEvalMor]
+  have h_fiber : ∀ eg,
+      ccrEvalMap h (mor_to_pbe_fiber hMor eg) =
+      mor_to_pbe_fiber
+        (hMor ≫ polyToOverEvalMap X f h) eg :=
+    fun eg =>
+      mor_to_pbe_fiber_postcomp_eq f A B hMor h eg
+  let build :
+      (∀ (eg : (ccrFamily (g z) ig).left),
+        polyBetweenEvalFamily X X f B
+          ((ccrFamily (g z) ig).hom eg)) →
+      ccrEval ((polyBetweenComp g f) z) B :=
+    fun fiber =>
+      ⟨⟨ig, fun eg => ptoefIndex X (fiber eg)⟩,
+       Over.homMk
+         (fun ⟨eg, ef⟩ =>
+           (ptoefMor X (fiber eg)).left ef)
+         (by
+           funext ⟨eg, ef⟩
+           exact congrFun
+             (Over.w (ptoefMor X (fiber eg))) ef)⟩
+  change build (fun eg =>
+      ccrEvalMap h (mor_to_pbe_fiber hMor eg)) =
+    build (fun eg =>
+      mor_to_pbe_fiber
+        (hMor ≫ polyToOverEvalMap X f h) eg)
+  exact congrArg build (funext h_fiber)
+
+private lemma ccrEvalMap_comp_apply
+    {D : Type u} [Category D]
+    {P : CoprodCovarRepCat D} {A B C : D}
+    (f : A ⟶ B) (g : B ⟶ C)
+    (x : ccrEval P A) :
+    ccrEvalMap g (ccrEvalMap f x) =
+    ccrEvalMap (f ≫ g) x :=
+  (congrFun (ccrEvalMap_comp f g) x).symm
+
+private lemma morphEvalAt_ccrEvalMap_comm
+    {P Q : PolyFunctorBetweenCat X X}
+    (α : P ⟶ Q)
+    {A B : Over X} (h : A ⟶ B) (y : X)
+    (v : polyBetweenEvalFamily X X P A y) :
+    ccrEvalMap h
+      (polyBetweenMorphEvalAt X X α A y v) =
+    polyBetweenMorphEvalAt X X α B y
+      (ccrEvalMap h v) := by
+  obtain ⟨idx, mor⟩ := v
+  simp only [polyBetweenMorphEvalAt,
+    ccrEvalMap, ptoefMk, ptoefIndex, ptoefMor,
+    ccrEvalMk, ccrEvalIndex, ccrEvalMor,
+    ccrReindex, ccrFiberMor,
+    CategoryTheory.Category.assoc]
+
+private lemma polyBetweenComp_eval_toFun_natural
+    (g f : PolyEndo X)
+    (A B : Over X) (h : A ⟶ B) (z : X)
+    (v : polyBetweenEvalFamily X X
+      (polyBetweenComp g f) A z) :
+    ccrEvalMap
+      ((polyEndoFunctor X f).map h)
+      ((polyBetweenComp_eval_fiberEquiv
+        g f A z).toFun v) =
+    (polyBetweenComp_eval_fiberEquiv
+      g f B z).toFun
+      (ccrEvalMap h v) := by
+  obtain ⟨⟨ig, pf⟩, mor⟩ := v
+  simp only [polyBetweenComp_eval_fiberEquiv,
+    polyBetweenComp_eval_fiberEquiv_toFun,
+    ccrEvalMap, polyEndoFunctor,
+    polyBetweenEvalFunctor, polyToOverFunctor]
+  congr 1
+
+private lemma overPullbackToIdQEval_comm
+    (Q : PolyEndo X) (A B : Over X) (g : A ⟶ B) :
+    overPullbackToIdQEval Q A ≫
+      (polyEndoFunctor X
+        (polyIdBehaviorPoly Q)).map g =
+    overPullbackMap g
+      ((polyEndoFunctor X Q).map g) ≫
+      overPullbackToIdQEval Q B := by
+  apply Over.OverMorphism.ext
+  funext ⟨⟨a, ⟨z, qIdx, qMor⟩⟩, hfib⟩
+  simp only [Over.comp_left, types_comp_apply,
+    overPullbackToIdQEval, Over.homMk_left,
+    overPullbackMap, polyEndoFunctor,
+    polyBetweenEvalFunctor, polyToOverFunctor,
+    polyToOverEvalMap_left, ccrEvalMap]
+  congr 1; congr 1
+  apply Over.OverMorphism.ext
+  funext ⟨i, dir⟩
+  match i with
+  | Sum.inl _ => rfl
+  | Sum.inr _ => rfl
+
+private lemma polyFreeMJoinEval_natural
+    (A B : Over X) (P : PolyEndo X)
+    (g : A ⟶ B) :
+    polyFreeMJoinEval A P ≫
+      polyFreeMap A B P g =
+    (polyEndoFunctor X (polyFreeMPoly P)).map
+      (polyFreeMap A B P g) ≫
+    polyFreeMJoinEval B P := by
+  apply Over.OverMorphism.ext
+  funext ⟨x, eval⟩
+  simp only [Over.comp_left, types_comp_apply,
+    polyFreeMJoinEval, Over.homMk_left,
+    polyFreeMap, polyFreeMapLeft,
+    polyEndoFunctor, polyBetweenEvalFunctor,
+    polyToOverFunctor, polyToOverEvalMap_left,
+    ccrEvalMap]
+  apply congrArg (Sigma.mk x)
+  rw [polyFreeMJoinMor_nat]
+  congr 1
+  exact polyFreeMPolyEval_to_M_natural
+    (polyFreeMCarrier A P)
+    (polyFreeMCarrier B P)
+    P (polyFreeMap A B P g) eval
 
 private lemma polyGSOSFoldNodeAt_snd_natural
     (A B : Over X) (P Q : PolyEndo X)
@@ -1077,48 +1237,86 @@ private lemma polyGSOSFoldNodeAt_snd_natural
               (polyCofreeCarrier B Q) P
               (polyCofreeMap A B Q f)
               _ (children e))).prop)))).val.2 := by
+  simp only [polyGSOSFoldNodeAt,
+    GSOSQMap, polyEndoFunctor,
+    polyBetweenEvalFunctor, polyToOverFunctor,
+    polyToOverEvalMap_left]
   let DQ_A := polyCofreeCarrier A Q
   let DQ_B := polyCofreeCarrier B Q
   let TDQ_A := polyFreeMCarrier DQ_A P
   let TDQ_B := polyFreeMCarrier DQ_B P
   let freeMap := GSOSFreeMap A B P Q f
-  let Prod_A :=
-    overPullback TDQ_A
-      ((polyEndoFunctor X Q).obj TDQ_A)
-  let Prod_B :=
-    overPullback TDQ_B
-      ((polyEndoFunctor X Q).obj TDQ_B)
-  -- Extract the rho-naturality pointwise from
-  -- the morphism-level lemma
-  have rho_nat :
-      ∀ (ev : polyBetweenEvalFamily X X
-        (polyBetweenComp P
-          (polyIdBehaviorPoly Q))
-        TDQ_A y),
-      ccrEvalMap freeMap
-        (polyBetweenMorphEvalAt X X rho.rule
-          TDQ_A y ev) =
-      polyBetweenMorphEvalAt X X rho.rule
-        TDQ_B y (ccrEvalMap freeMap ev) := by
-    intro ev
-    obtain ⟨i, m⟩ := ev
-    simp only [polyBetweenMorphEvalAt,
-      ccrEvalMap, ptoefMk, ptoefIndex,
-      ptoefMor, ccrReindex, ccrFiberMor,
-      ccrEvalMk, ccrEvalIndex, ccrEvalMor,
-      CategoryTheory.Category.assoc]
-  -- Unfold the pipeline definitions
-  simp only [polyGSOSFoldNodeAt,
-    GSOSQMap, polyEndoFunctor,
-    polyBetweenEvalFunctor, polyToOverFunctor,
-    polyToOverEvalMap_left]
-  -- Strip outer Sigma.mk y
   congr 1
-  -- Both sides are ccrEval values (Sigma of index and morphism)
-  -- Reduce outer ccrEvalMaps to Sigma form
-  simp only [ccrEvalMap]
-  -- Now goal is ⟨idx_A, mor_A ≫ join_A ≫ freeMap⟩ = ⟨idx_B, mor_B ≫ join_B⟩
-  _
+  -- Push ccrEvalMap freeMap backward through
+  -- the pipeline: join, toFun, rho, invFun, prodComp.
+  -- Step 1: join.
+  rw [ccrEvalMap_comp_apply
+    (polyFreeMJoinEval DQ_A P)
+    (GSOSFreeMap A B P Q f)]
+  conv_lhs =>
+    rw [show (polyFreeMJoinEval DQ_A P ≫
+        GSOSFreeMap A B P Q f) =
+      ((polyEndoFunctor X (polyFreeMPoly P)).map
+        (GSOSFreeMap A B P Q f) ≫
+        polyFreeMJoinEval DQ_B P)
+      from polyFreeMJoinEval_natural
+        DQ_A DQ_B P (polyCofreeMap A B Q f)]
+  rw [← ccrEvalMap_comp_apply
+    ((polyEndoFunctor X (polyFreeMPoly P)).map
+      (GSOSFreeMap A B P Q f))
+    (polyFreeMJoinEval DQ_B P)]
+  congr 1
+  -- Step 2: toFun.
+  rw [polyBetweenComp_eval_toFun_natural
+    Q (polyFreeMPoly P) TDQ_A TDQ_B
+    (GSOSFreeMap A B P Q f) y]
+  congr 1
+  -- Step 3: morphEvalAt.
+  rw [morphEvalAt_ccrEvalMap_comm rho.rule
+    (GSOSFreeMap A B P Q f) y]
+  congr 1
+  -- Step 4: invFun.
+  rw [polyBetweenComp_eval_invFun_natural
+    P (polyIdBehaviorPoly Q) TDQ_A TDQ_B
+    (GSOSFreeMap A B P Q f) y]
+  congr 1
+  -- Step 5: prodComp.
+  rw [ccrEvalMap_comp_apply
+    (overPullbackToIdQEval Q TDQ_A)
+    ((polyEndoFunctor X
+      (polyIdBehaviorPoly Q)).map
+      (GSOSFreeMap A B P Q f))]
+  conv_lhs =>
+    rw [show (overPullbackToIdQEval Q TDQ_A ≫
+        (polyEndoFunctor X
+          (polyIdBehaviorPoly Q)).map
+          (GSOSFreeMap A B P Q f)) =
+      (overPullbackMap (GSOSFreeMap A B P Q f)
+        ((polyEndoFunctor X Q).map
+          (GSOSFreeMap A B P Q f)) ≫
+        overPullbackToIdQEval Q TDQ_B)
+      from overPullbackToIdQEval_comm
+        Q TDQ_A TDQ_B (GSOSFreeMap A B P Q f)]
+  rw [← ccrEvalMap_comp_apply
+    (overPullbackMap (GSOSFreeMap A B P Q f)
+      ((polyEndoFunctor X Q).map
+        (GSOSFreeMap A B P Q f)))
+    (overPullbackToIdQEval Q TDQ_B)]
+  congr 1
+  -- Step 6: Children equality via ih and
+  -- fst_natural.
+  simp only [ccrEvalMap, pbefMk, ptoefMk,
+    ccrEvalMk]
+  congr 1
+  apply Over.OverMorphism.ext
+  funext e
+  simp only [Over.comp_left, types_comp_apply,
+    Over.homMk_left, overPullbackMap]
+  apply Subtype.ext
+  apply Prod.ext
+  · exact (polyGSOSFoldFst_natural
+      A B P Q rho f (children e)).symm
+  · exact ih e
 
 private lemma polyGSOSFoldQeval_natural
     (A B : Over X) (P Q : PolyEndo X)
@@ -1153,6 +1351,39 @@ private lemma polyGSOSFoldQeval_natural
         polyFreeMBind]
       exact polyGSOSFoldNodeAt_snd_natural
         A B P Q rho f p children ih
+
+private lemma polyBetweenEvalMap_mor_apply
+    (P : PolyEndo X) {A B : Over X} (f : A ⟶ B)
+    (eval_a :
+      (polyBetweenEval X X P A).left)
+    (eval_b :
+      (polyBetweenEval X X P B).left)
+    (h : ((polyEndoFunctor X P).map f).left
+      eval_a = eval_b)
+    {e₁ : (polyBetweenFamily X X P
+      eval_a.1 eval_a.2.1).left}
+    {e₂ : (polyBetweenFamily X X P
+      eval_b.1 eval_b.2.1).left}
+    (he : e₁ ≍ e₂) :
+    f.left (eval_a.2.2.left e₁) =
+    eval_b.2.2.left e₂ := by
+  obtain ⟨z_a, idx_a, mor_a⟩ := eval_a
+  obtain ⟨z_b, idx_b, mor_b⟩ := eval_b
+  simp only [polyEndoFunctor,
+    polyBetweenEvalFunctor,
+    polyToOverFunctor,
+    polyToOverEvalMap_left,
+    ccrEvalMap] at h
+  obtain ⟨rfl, h₂⟩ := Sigma.mk.inj h
+  obtain ⟨rfl, h₃⟩ :=
+    Sigma.mk.inj (eq_of_heq h₂)
+  simp only at he
+  have he' := eq_of_heq he
+  subst he'
+  exact congrFun
+    (congrArg CommaMorphism.left
+      (eq_of_heq h₃))
+    e₁
 
 lemma polyGSOSScaleCoalg_morphism_h
     (A B : Over X) (P Q : PolyEndo X)
@@ -1291,7 +1522,25 @@ lemma polyGSOSScaleCoalg_morphism_h
           simp only [Over.homMk_left,
             Function.comp]
           apply heq_of_eq
-          _
+          exact polyBetweenEvalMap_mor_apply
+            Q (GSOSFreeMap A B P Q f)
+            (polyGSOSFoldCataWithFiber
+              A P Q rho
+              (PolyFix.mk y (Sum.inr p)
+                children)).val.val.2
+            (polyGSOSFoldCataWithFiber
+              B P Q rho
+              (polyFreeMapAt
+                (polyCofreeCarrier A Q)
+                (polyCofreeCarrier B Q) P
+                (polyCofreeMap A B Q f) y
+                (PolyFix.mk y (Sum.inr p)
+                  children))).val.val.2
+            (polyGSOSFoldQeval_natural
+              A B P Q rho f
+              (PolyFix.mk y (Sum.inr p)
+                children))
+            he
 
 lemma polyGSOSDistLaw_naturality
     (A B : Over X) (P Q : PolyEndo X)
