@@ -2699,4 +2699,44 @@ def polyGSOSDistLaw_mul_srcCoalgStrAt
     qEvalAtX.2 ≫ polyFreeUnit TDQ P
   ⟨(annotation, qEvalAtX.1), qChildrenEta⟩
 
+def polyGSOSDistLaw_mul_srcCoalgStr
+    (A : Over X) (P Q : PolyEndo X)
+    (rho : PolyGSOSRule P Q) :
+    polyFreeMCarrier
+      (polyFreeMCarrier
+        (polyCofreeCarrier A Q) P) P ⟶
+    (polyEndoFunctor X
+      (polyScale (polyFreeMCarrier A P) Q)).obj
+      (polyFreeMCarrier
+        (polyFreeMCarrier
+          (polyCofreeCarrier A Q) P) P) :=
+  Over.homMk
+    (fun ⟨x, t⟩ =>
+      ⟨x, polyGSOSDistLaw_mul_srcCoalgStrAt
+        A P Q rho t⟩)
+    rfl
+
+def polyGSOSDistLaw_mul_srcCoalg
+    (A : Over X) (P Q : PolyEndo X)
+    (rho : PolyGSOSRule P Q) :
+    PolyCoalg
+      (polyScale (polyFreeMCarrier A P) Q) where
+  V := polyFreeMCarrier
+    (polyFreeMCarrier
+      (polyCofreeCarrier A Q) P) P
+  str := polyGSOSDistLaw_mul_srcCoalgStr
+    A P Q rho
+
+abbrev polyGSOSDistLaw_mul_rhsCoalg
+    (A : Over X) (P Q : PolyEndo X)
+    (rho : PolyGSOSRule P Q) :
+    PolyCoalg
+      (polyScale (polyFreeMCarrier A P) Q) :=
+  polyScaleReindexCoalg
+    (polyFreeMCarrier (polyFreeMCarrier A P) P)
+    (polyFreeMCarrier A P) Q
+    (polyFreeCounitFold P (polyFreeAlg A P))
+    (polyGSOSScaleCoalg
+      (polyFreeMCarrier A P) P Q rho)
+
 end GebLean
