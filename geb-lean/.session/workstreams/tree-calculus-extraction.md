@@ -24,9 +24,11 @@ before marking that part of extraction complete in this document.
 
 ## Progress
 
-### Paper (13 pages)
+### Paper (13 pages) — COMPLETE
 
-13 pages to read. Among the contents that must be documented:
+13 pages read. Extracted results written to
+`docs/tree-calculus.md` (Type System, Programs, and
+Verified Theorems sections). Among the contents documented:
 
 - Type system: tree types `T ::= L | S U | F U V | U -> V`
   with subtyping
@@ -46,8 +48,14 @@ before marking that part of extraction complete in this document.
 
 - [ ] Front matter, TOC, list of figures (pp. i-x)
 - [ ] Ch 1: Introduction (pp. 3-9)
-- [ ] Ch 2: Equational Reasoning (pp. 11-21)
-- [ ] Ch 3: Tree Calculus (pp. 23-37)
+- [x] Ch 2: Equational Reasoning (pp. 11-21) —
+  pedagogical; arithmetic theorems 1-7, structural
+  induction, translations. No tree calculus content.
+- [x] Ch 3: Tree Calculus (pp. 23-37) — 3-rule
+  equational presentation (K, S, F), derived combinators
+  (K, I, D, S), booleans, pairs, natural numbers,
+  isZero, predecessor, parametric query, fundamental
+  queries (isLeaf, isStem, isFork). Written to doc.
 - [ ] Ch 4: Extensional Programs (pp. 39-51)
 - [ ] Ch 5: Intensional Programs (pp. 53-62)
 - [ ] Ch 6: Reflective Programs (pp. 63-71)
