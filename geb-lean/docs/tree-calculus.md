@@ -133,6 +133,79 @@ See the design document sections "Universe B:
 Realizability Topos" and "12.1 The Realizability
 Topos RT(T)" for details.
 
+## Self-Evaluators (Book, Chapter 6)
+
+Four evaluation strategies are defined for tree calculus,
+each with a corresponding self-evaluator program:
+
+1. **Branch-first evaluation** (`M, N => P`): all
+   branches are evaluated before the root. Analogous
+   to eager evaluation. The self-evaluator `bf`
+   satisfies: if `M, N => P` then `bf M N = P`
+   (Theorem 15, `branch_first_eval_to_bf`). The
+   evaluator `bf` can be applied to itself.
+2. **Root evaluation** (`M => P`): evaluates just enough
+   to determine whether the root is a leaf, stem, or
+   fork. Produces factorable forms whose branches may
+   contain unevaluated computations, represented via
+   *quotation*. The self-evaluator `root` satisfies:
+   if `M => P` then `root M = P`
+   (Theorem 16, `root_eval_to_root`).
+3. **Root-and-branch evaluation** (`M Downarrow P`):
+   root evaluation followed by recursive branch
+   evaluation. The self-evaluator `rb` satisfies:
+   if `'M Downarrow P` then `rb 'M = P`
+   (Theorem 17, `rb_eval_implies_rb`).
+4. **Root-first evaluation**: root-and-branch evaluation
+   applied to quotations of programs. The self-evaluator
+   `rf` satisfies: if `'(M N) Downarrow P` then
+   `rf M N = P`
+   (Theorem 18, `root_first_eval_to_rf`).
+
+Branch-first evaluation is deterministic: for each
+application there is a unique rule that can be applied
+(Theorem 14, `branch_first_eval_program`: if
+`M, N => P` then `P` is a program).
+
+### Quotation
+
+Quotation of a program `M` produces a binary tree with
+no stems (all applications become forks of quotations):
+
+```text
+'triangle = triangle
+'(M N)    = triangle ('M) ('N)
+```
+
+Quotation of arbitrary computations is not definable as
+a program (it does not preserve evaluation). Quotation
+of programs is definable:
+
+```text
+quote = Y_2{lambda* x. isStem x
+            (triangle (x triangle) (K triangle)
+              (lambda* q. (lambda* x1. K (K (q x1)))))
+            (triangle x (K triangle)
+              (lambda* x1. lambda* x2.
+                lambda q. triangle (K (q x1)) (q x2)))}
+```
+
+### Construction of bf
+
+The branch-first self-evaluator is structured as:
+
+```text
+bf = Y_2{onFork{triage{bf_leaf,
+                        bf_stem{eager},
+                        bf_fork}}}
+```
+
+where `onFork{f}` leaves leaves and stems unchanged
+and applies `f` to the branches of forks. The three
+triage cases implement the K, S, and F rules
+respectively, with `eager` forcing evaluation of
+arguments before applying the rule.
+
 ## Book Structure
 
 The book *Reflective Programs in Tree Calculus* (Jay, 2021)
@@ -392,6 +465,178 @@ Each is a binary tree; its size is the number of nodes.
 - `Z{f}` (fixpoint combinator): satisfies
   `Z{f} x --> f (Z{f}) x`. Used to define recursive
   functions.
+- `wait{x, y}`: delays application of `x` to `y`
+  until a third argument is supplied (Chapter 4).
+  `wait{x, y} z = x y z`. Definition:
+  `wait{x, y} = d{I} (d{K y} (K x))`.
+- `Y_2{f}` (stable fixpoint function): satisfies
+  `Y_2 f x = f x (Y_2 f)` (Chapter 4, Theorem 10).
+  Unlike the standard Y combinator, `Y_2{f}` is
+  always a program (binary tree in normal form) when
+  `f` is. Built from `Z{swap{f}}` using `wait` and
+  `self_apply = d{I} I`.
+- `plus`: addition of natural numbers, defined via
+  `Y_2` (Chapter 4).
+- `list_map`, `list_foldleft`, `list_foldright`:
+  standard list operations, defined via `Y_2`
+  (Chapter 4).
+
+## Abstraction (Book, Chapter 4)
+
+Bracket abstraction `[x]t` and star abstraction
+`lambda* x. t` provide variable binding in tree
+calculus. Both satisfy the beta rule:
+
+```text
+([x]t) u = {u/x} t       (Theorem 8, bracket_beta)
+(lambda* x. t) u = {u/x} t  (Theorem 9, star_beta)
+```
+
+Bracket abstraction is defined by:
+
+```text
+[x] x   = I
+[x] y   = K y        (y != x)
+[x] O   = K O        (O an operator)
+[x] u v = d{[x]v} ([x]u)
+```
+
+Bracket abstractions are always stable (none of the
+evaluation rules can fire on them), but the output can
+be up to 5 times larger than the input: if `M` has size
+`k`, then `[x]M` has size `5k - 2`.
+
+Star abstraction optimizes bracket abstraction by
+exploiting variable occurrence:
+
+```text
+lambda* x. t   = K t           (x not in t)
+lambda* x. t x = t             (x not in t)
+lambda* x. x   = I
+lambda* x. t u = d{lambda* x. u} (lambda* x. t)
+                                   (otherwise)
+```
+
+Star abstractions may require evaluation (unlike bracket
+abstractions), but produce smaller output. Any combinator
+`M` is also `lambda* x. M x`, so star abstractions
+subsume combinators.
+
+### Waiting and Stable Fixpoints
+
+The `wait` combinator delays evaluation: `wait{M, N}`
+must receive a third argument `P` before `M` is applied
+to `N`. This is used to define stable fixpoint functions.
+
+The standard Y combinator satisfies `Y f = f (Y f)` but
+`Y f` is not a program (it has no normal form). The
+`Y_2` combinator instead satisfies `Y_2 f x = f x (Y_2 f)`
+(Theorem 10, `fixpoint_function`), and `Y_2{f}` is
+always a program when `f` is.
+
+Construction:
+
+```text
+self_apply = d{I} I
+Z{f}       = wait{self_apply,
+               d{wait1{self_apply} (K f)}}
+swap{f}    = d{K f} d{d{K} (K triangle)} (K triangle)
+Y_2{f}     = Z{swap{f}}
+```
+
+## Intensional Programs (Book, Chapter 5)
+
+Intensional programs query the internal structure of
+their arguments. Extensional programs (Chapter 4) treat
+arguments as opaque functions; intensional programs treat
+them as inspectable data structures.
+
+### Verified Theorems (Book, Chapter 5)
+
+- **Theorem 11** (`equal_programs`):
+  `equal M M = K` for all programs `M`.
+- **Theorem 12** (`unequal_programs`):
+  If `M` is not identical to `N` then
+  `equal M N = K I` for all programs `M` and `N`.
+- **Theorem 13** (`tree_calculus_supports_tagging`):
+  Tree calculus supports tagging: there exist term
+  forms `tag` and `getTag` such that
+  `tag{t, f} x = f x` and `getTag(tag{t, f}) = t`.
+
+### Tagging
+
+A tag attaches metadata `t` to a function `f` without
+affecting its functional behavior:
+
+```text
+tag{t, f}  = d{t} (d{f} (K K))
+getTag     = lambda* p. first{first{p} triangle}
+untag      = lambda* x. fst{fst{snd{x}} triangle}
+```
+
+Tags can carry type information, comments, or any other
+data. A tagged fixpoint combinator `Y_2t{t, f}` threads
+tags through recursive calls.
+
+### Triage Combinator
+
+The `triage_comb` operator generalizes the fundamental
+queries by accepting three function arguments `f0`, `f1`,
+`f2` for the leaf, stem, and fork cases:
+
+```text
+triage{f0, f1, f2} triangle     = f0
+triage{f0, f1, f2} (triangle x) = f1 x
+triage{f0, f1, f2} (triangle x y) = f2 x y
+```
+
+The programs `size` and `equal` can be re-expressed
+using `triage`.
+
+### Simple Types (Internal)
+
+The book defines simple types internally as trees:
+
+```text
+T ::= o | iota | T -> T
+
+[o]       = triangle "Bool"     (stem)
+[iota]    = triangle "Nat"      (stem)
+[U -> T]  = triangle [U] [T]    (fork)
+```
+
+A typed term `t^T` is represented as `tag{T, t}`.
+Type checking is defined as a tree-calculus program
+`type_check` that verifies function types match argument
+types using `equal` on the type tags. Typed application
+`typed_app` applies the untagged functions and re-tags
+the result.
+
+### Pattern Matching
+
+Pattern-matching functions have the form:
+
+```text
+p1 => s1 | p2 => s2 | ... | pk => sk | r
+```
+
+Each extension `p => s | r` is defined as
+`wait{p => s, r}`, so extensions are always programs.
+Pattern cases are defined by structural induction on
+patterns `p, q ::= x | triangle | triangle p | triangle p q`.
+
+### Data Structures
+
+Lists use the leaf/fork convention:
+
+```text
+nil       = triangle           (leaf)
+cons h t  = triangle h t       (fork)
+```
+
+Bits are `0 = triangle` and `1 = K triangle`. Bytes
+are 8-tuples of bits. ASCII characters are represented
+by their bytecodes. Strings are lists of characters.
 
 ## References
 

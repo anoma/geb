@@ -56,9 +56,19 @@ Verified Theorems sections). Among the contents documented:
   (K, I, D, S), booleans, pairs, natural numbers,
   isZero, predecessor, parametric query, fundamental
   queries (isLeaf, isStem, isFork). Written to doc.
-- [ ] Ch 4: Extensional Programs (pp. 39-51)
-- [ ] Ch 5: Intensional Programs (pp. 53-62)
-- [ ] Ch 6: Reflective Programs (pp. 63-71)
+- [x] Ch 4: Extensional Programs (pp. 39-51) —
+  bracket abstraction (Thm 8), star abstraction (Thm 9),
+  wait{x,y}, self_apply, Z{f}, swap{f}, Y_2{f}
+  (Thm 10: fixpoint_function), plus, lists, strings,
+  list_map, list_foldleft, list_foldright. Written.
+- [x] Ch 5: Intensional Programs (pp. 53-62) —
+  size, equal (Thm 11-12), tagging (Thm 13),
+  triage_comb, simple types as trees, type_check,
+  typed_app, pattern matching. Written.
+- [x] Ch 6: Reflective Programs (pp. 63-71) — four
+  evaluation strategies (branch-first, root,
+  root-and-branch, root-first), self-evaluators bf/
+  root/rb/rf, quotation, Thms 14-18. Written.
 - [ ] Ch 7: Rewriting (pp. 77-90)
 - [ ] Ch 8: Incompleteness of Combinatory Logic (pp. 91-99)
 - [ ] Ch 9: Lambda-Abstraction in VA-Calculus (pp. 101-111)
