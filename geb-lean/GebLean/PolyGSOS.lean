@@ -2637,4 +2637,66 @@ lemma polyGSOSDistLaw_comul
     at h_lhs h_rhs ⊢
   exact h_lhs.trans h_rhs.symm
 
+/-! ### Multiplication coherence
+
+Both sides of the multiplication coherence equation
+equal the anamorphism from a common
+`polyScale(T_P(A), Q)`-coalgebra on
+`T_P(T_P(D_Q(A)))`.
+
+The proof constructs a source coalgebra `gamma` and
+shows that both `mu` and `T_P(dist)` are coalgebra
+morphisms from `gamma`, then applies
+`polyCofixUnfold_precomp` to conclude.
+-/
+
+/--
+The `polyScale(T_P(A), Q)`-coalgebra structure on
+`T_P(T_P(D_Q(A)))` at a fiber element.
+
+The annotation is `T_P(eps_Q)(mu(t))`.
+The Q-eval comes from the GSOS fold of `mu(t)`,
+with Q-children wrapped via `polyFreeUnit` (eta).
+-/
+def polyGSOSDistLaw_mul_srcCoalgStrAt
+    (A : Over X) (P Q : PolyEndo X)
+    (rho : PolyGSOSRule P Q)
+    {x : X}
+    (t : PolyFreeM
+      (polyFreeMCarrier
+        (polyCofreeCarrier A Q) P) P x) :
+    polyBetweenEvalFamily X X
+      (polyScale (polyFreeMCarrier A P) Q)
+      (polyFreeMCarrier
+        (polyFreeMCarrier
+          (polyCofreeCarrier A Q) P) P) x :=
+  let DQ := polyCofreeCarrier A Q
+  let TDQ := polyFreeMCarrier DQ P
+  let TTDQ := polyFreeMCarrier TDQ P
+  let TA := polyFreeMCarrier A P
+  let mu_t : PolyFreeM DQ P x :=
+    polyFreeMJoinMor DQ P t
+  let ta : PolyFreeM A P x :=
+    polyFreeMapAt DQ A P
+      (polyCofreeCounit A Q) x mu_t
+  let foldWithFiber :=
+    polyGSOSFoldCataWithFiber A P Q rho mu_t
+  let foldResult := foldWithFiber.val
+  let fiberEq := foldWithFiber.prop
+  let qEval := foldResult.val.2
+  let qFiber := qEval.1
+  let qFiberEq : qFiber = x :=
+    foldResult.prop.symm.trans fiberEq
+  let qEvalAtX :
+      polyBetweenEvalFamily X X Q TDQ x :=
+    qFiberEq ▸ qEval.2
+  let annotation :
+      { a : TA.left // TA.hom a = x } :=
+    ⟨⟨x, ta⟩, rfl⟩
+  let qChildrenEta :
+      polyBetweenFamily X X Q x
+        qEvalAtX.1 ⟶ TTDQ :=
+    qEvalAtX.2 ≫ polyFreeUnit TDQ P
+  ⟨(annotation, qEvalAtX.1), qChildrenEta⟩
+
 end GebLean
