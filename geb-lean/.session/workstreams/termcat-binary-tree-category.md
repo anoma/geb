@@ -34,6 +34,10 @@ section "Internal Logic and Self-Reflection".
 - `GebLean/PLang.lean` — index (already imports
   `TermCat`)
 - `docs/plans/2026-03-06-termcat-design.md` — design doc
+- `docs/polynomial-algebra-coalgebra-categories.md` —
+  reference document on universal properties of P-Alg
+  and P-Coalg, base category requirements, and
+  candidate base categories (Sections 10-11)
 
 ## Dependencies
 
@@ -81,6 +85,44 @@ All of these are in the existing codebase:
 - [ ] Prove category laws (`id_comp`, `comp_id`,
   `comp_assoc`) from monad laws
 - [ ] Define `treeKleisliCategory` — the Category instance
+
+### Phase 0: Base Category Selection
+
+Analysis in `docs/polynomial-algebra-coalgebra-categories.md`
+Sections 10-11. Findings:
+
+- P-Coalg(E) is a topos when E has: finite limits,
+  finite colimits, NNO (or countable limits for the
+  approximation chain), and P preserves connected limits.
+- E does NOT need exponentials or a subobject classifier;
+  those are outputs of the topos construction.
+- For finitary P(X) = A + X^2, the M-type construction
+  requires only finite products (X^2 = X * X), not
+  exponentials.
+- The codebase M-type construction (`PolyCofixApprox`,
+  `PolyCofixAgree` in `PolyAlg.lean`) uses countable
+  limits (inverse limit of truncated approximations).
+
+Three candidate base categories:
+
+1. PER(tree calc.) — regular, locally cartesian closed,
+   has NNO, but not exact (not a topos). Its ex/reg
+   completion is the realizability topos RT(tree calc.).
+2. Parametric relations (`PshRelCat`, `TypeExprCat`,
+   `ParametricFamily` in codebase) — presheaf-like,
+   has limits/colimits, represents functions as
+   functional relations.
+3. Hybrid: PER(tree calc.) as computational base,
+   parametric relations derived as reflexive graph
+   structure. Recommended approach.
+
+- [ ] Decide on base category (PER, parametric, or
+  hybrid)
+- [ ] Verify chosen base category has the required
+  universal properties (finite limits, finite colimits,
+  NNO, countable limits)
+- [ ] Construct P-Coalg over chosen base and confirm
+  topos structure
 
 ### Phase 1.5: Internal Representation
 
@@ -140,6 +182,15 @@ All of these are in the existing codebase:
 - [ ] Unlabeled trees: use terminal object as generator?
 - [ ] Child-count truncation: can 0/1/2 child cases be
   expressed as polynomial equalizer or quotient?
+- [ ] Base category choice: PER(tree calc.) vs parametric
+  relations vs hybrid — see Section 11 of the reference
+  document for detailed comparison
+- [ ] Does PER(tree calc.) satisfy countable-limit
+  requirement for M-type construction?
+- [ ] Can the ex/reg completion (PER -> RT) be avoided
+  by working directly in P-Coalg(PER)?
+- [ ] Self-representability: can the base category
+  represent its own morphisms internally?
 
 ## Notes
 
@@ -166,3 +217,13 @@ All of these are in the existing codebase:
   category provides the full internal logic.
   See design doc section "Internal Logic and
   Self-Reflection".
+- The coalgebra topos construction is a "topos
+  generator": it takes a non-topos base E (needing
+  only finite (co)limits and NNO) and produces a
+  topos P-Coalg(E) with subobject classifier and
+  exponentials. See reference document Section 10.
+- For finitary polynomials (like polyProd), exponentials
+  are NOT needed in E; X^2 is a finite product.
+- The copresheaf equivalence (`polyCoalgCopresheafEquiv`)
+  provides independent confirmation of coalgebraic
+  constructions via Set^C for path category C.
