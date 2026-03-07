@@ -991,6 +991,145 @@ Similarly, two versions of Turing's Thesis:
   (Both recodings are computable: Godelisation in one
   direction, pattern-matching in the other.)
 
+## Coq Formalization
+
+The Coq formalization at
+[barry-jay-personal/tree-calculus](https://github.com/barry-jay-personal/tree-calculus)
+provides machine-checked proofs for all named theorems
+in the book. The nine `.v` files correspond to the
+book's chapters.
+
+### File: Tree_Calculus.v (Chapters 2-3)
+
+Defines the `Tree` type (with constructors `Node` and
+`App`), the quotient construction for equational
+reasoning, and the basic combinators:
+
+- `K`, `I`, `D`, `Sop`, `d`
+- Booleans: `conjunction`, `disjunction`, `implies`,
+  `negation`, `bi_implies`
+- Pairs: `Pair`, `first`, `second`
+- Naturals: `zero`, `successor`, `isZero`, `predecessor`
+- Queries: `query`, `isLeaf`, `isStem`, `isFork`
+- The `program` inductive predicate
+
+### File: Rewriting_partI.v (Chapters 3-6)
+
+Defines the directed reduction relation `t_red1` (five
+rules: `k_red`, `s_red`, `f_red`, `appl_red`,
+`appr_red`) and its multi-step closure `t_red`. Contains
+all extensional, intensional, and reflective program
+constructions:
+
+- **Extensional**: `bracket`, `star`, `substitute`,
+  `occurs`, fixpoints (`Y`, `Z`, `Y2`, `self_apply`,
+  `swap`), waiting (`W`, `wait`, `wait1`), arithmetic
+  (`plus`, `times`, `minus`), lists (`t_nil`, `t_cons`,
+  `list_map`, `list_foldleft`, `list_foldright`),
+  mu-recursive function translation (`recfun`,
+  `rf_to_tree`)
+- **Intensional**: `size`, `equal`, `tag`, `getTag`,
+  `untag`, `triage`, pattern matching (`extension`,
+  `tree_case`)
+- **Reflective**: `eager`, `bf`, `quote`, `root`, `rb`,
+  `rf`, evaluation relations (`branch_first_eval`,
+  `root_eval`, `rb_eval`, `root_first_eval`)
+- Theorems: `bracket_beta`, `star_beta`, `Z_red`,
+  `fixpoint_function`, `Y2_program`, `equal_programs`,
+  `unequal_programs`,
+  `tree_calculus_support_tagging`,
+  `branch_first_eval_to_bf`, `root_eval_to_root`,
+  `rb_eval_implies_rb`, `root_first_eval_to_rf`
+
+### File: Rewriting_theorems.v (Chapter 7)
+
+Develops the metatheory of reduction:
+
+- **Simultaneous reduction**: `s_red1`, `s_red`
+- **Diamond property**: `diamond_s_red1_s_red1`
+  (simultaneous reduction has the diamond property)
+- **Confluence**: `confluence_tree_calculus`
+- **Stability**: `programs_are_stable`,
+  `programs_are_stable2`
+- **Halting**: `halting_problem_insoluble`
+- **Standardization**: `standardization`,
+  `leftmost_reduction`,
+  `head_reduction_to_factorable_form`
+- **Evaluator completeness**:
+  `branch_first_eval_iff_bf`, `root_eval_iff_root`,
+  `rb_eval_iff_rb`, `root_first_eval_iff_rf`
+- **Active/needy analysis**: `active`, `needs`,
+  `bf_needy`, `root_needy`, `rb_needy` (used to prove
+  evaluator completeness by showing evaluators do no
+  more than their strategy allows)
+
+### File: Extensional_Programs.v (Chapter 4)
+
+Alternative development of extensional programs with
+the directed reduction relation. Contains:
+
+- `bracket_beta`, `star_beta`, `Z_red`,
+  `fixpoint_function`
+- Arithmetic: `plus_zero`, `plus_successor`
+- mu-recursive functions: `rf_to_tree_preserves_eval`
+- Lists: `map_nil`, `map_cons`, `list_foldleft_nil`,
+  `list_foldleft_cons`, `list_foldright_nil`,
+  `list_foldright_cons`
+
+### File: Intensional_Programs.v (Chapter 5)
+
+- `size_leaf`, `size_stem`, `size_fork`
+- `equal_programs`, `unequal_programs`
+- `tag_apply`, `getTag_tag`, `untag_tag`
+- `triage_leaf`, `triage_stem`, `triage_fork`
+- Pattern matching: `extension_leaf`, `extension_stem`,
+  `extension_fork`
+- Typed application: `typed_app_red`, `type_check`
+
+### File: Reflective_Programs.v (Chapter 6)
+
+- `branch_first_eval_to_bf` (soundness of bf)
+- `root_eval_to_root` (soundness of root)
+- `rb_eval_implies_rb` (soundness of rb)
+- `root_first_eval_to_rf` (soundness of rf)
+- `quote_red`, `eager_of_factorable`
+- `bf_leaf_red`, `bf_stem_red`, `bf_fork_red`
+
+### File: Incompleteness_of_Combinatory_Logic.v (Ch 8)
+
+Defines the `SK` inductive type and its reduction
+relation `sk_red1`:
+
+- `confluence_sk_red` (SK-calculus is confluent)
+- `no_separable_identities_in_SK` (identity programs
+  have no separators)
+- `equality_of_programs_is_not_definable_in_SK`
+- `meaningful_translation_from_sk_to_tree`
+- `no_translation_tree_to_sk`
+
+### File: Lambda_Abstraction_in_VA_Calculus.v (Ch 9)
+
+Defines the `VA` inductive type with operators `Vop`
+and `Lam`:
+
+- `confluence_va_calculus`
+- `meaningful_translation_from_sk_to_va`
+- `equality_of_programs_is_not_definable_in_va`
+- `meaningful_translation_from_tree_to_va`
+- `meaningful_translation_from_ac_to_tree` (VA to tree)
+- Translation machinery: `kernel`, `V_t`, `A_t`
+
+### File: Divide_and_Conquer_in_SF_Calculus.v (Ch 10)
+
+Defines the `SF` inductive type with operators `Sop`
+and `Fop`:
+
+- `equal_sf_programs`, `unequal_sf_programs`
+- `meaningful_translation_from_tree_to_sf`
+- `meaningful_translation_from_sf_to_tree`
+- Translation machinery: `kernel`, `tree_to_sf`,
+  `sf_to_tree`
+
 ## References
 
 ### Specification and Implementations

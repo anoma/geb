@@ -2,7 +2,7 @@
 
 ## Status
 
-Active
+Complete
 
 ## Context
 
@@ -107,17 +107,25 @@ Verified Theorems sections). Among the contents documented:
   (symbolic theses equiv, lambda not weakly equiv to
   Turing), Thm 77 (SF equiv to recursive). Written.
 
-### Coq files — not yet read
+### Coq files — COMPLETE
 
-- [ ] `Tree_Calculus.v`
-- [ ] `Rewriting_partI.v`
-- [ ] `Rewriting_theorems.v`
-- [ ] `Extensional_Programs.v`
-- [ ] `Intensional_Programs.v`
-- [ ] `Reflective_Programs.v`
-- [ ] `Divide_and_Conquer_in_SF_Calculus.v`
-- [ ] `Incompleteness_of_Combinatory_Logic.v`
-- [ ] `Lambda_Abstraction_in_VA_Calculus.v`
+- [x] `Tree_Calculus.v` — types, combinators, queries
+- [x] `Rewriting_partI.v` — reduction, extensional/
+  intensional/reflective programs, evaluators
+- [x] `Rewriting_theorems.v` — confluence, halting,
+  standardization, evaluator completeness
+- [x] `Extensional_Programs.v` — bracket/star beta,
+  fixpoints, arithmetic, lists, mu-recursive
+- [x] `Intensional_Programs.v` — size, equal, tagging,
+  triage, pattern matching
+- [x] `Reflective_Programs.v` — bf, root, rb, rf
+  soundness
+- [x] `Divide_and_Conquer_in_SF_Calculus.v` — SF type,
+  equality, bidirectional translations
+- [x] `Incompleteness_of_Combinatory_Logic.v` — SK
+  confluence, no separators, no equality, translations
+- [x] `Lambda_Abstraction_in_VA_Calculus.v` — VA
+  confluence, no equality, bidirectional translations
 
 ## Extracted Results
 
