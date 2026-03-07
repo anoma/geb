@@ -1082,6 +1082,213 @@ from the free topos.
    copresheaf within the topos, so that the internal
    logic can reason about Kleisli morphisms?
 
+1. **Primitive-recursive fragment definition**: What is
+   the precise syntactic criterion for the
+   primitive-recursive subset of tree calculus? The
+   criterion must be tight enough that membership is
+   decidable by a primitive-recursive program, and
+   broad enough to include fold over binary trees with
+   parameters.
+
+1. **Self-recognizer expressibility**: Can a correct
+   and complete recognizer for the primitive-recursive
+   fragment be written within the fragment itself? If
+   the fragment is too weak to express its own
+   recognizer, it must be widened; if too strong, it
+   may not terminate.
+
+1. **Proof-carrying code format**: When extending
+   beyond the syntactic criterion (Option 2), what
+   constitutes a valid termination proof expressed as a
+   tree? Candidates include: ordinal notations below
+   epsilon_0, well-founded recursion witnesses, or
+   sized-type annotations. The format must be
+   verifiable by a primitive-recursive checker.
+
+1. **Language tower granularity**: What intermediate
+   language layers sit between the primitive-recursive
+   subset and full tree calculus? Candidates include:
+   multiply recursive functions (Ackermann-level),
+   System T (higher-order primitive recursion),
+   System F (polymorphism), and bar recursion. Each
+   layer would have its own type-checker written in
+   the layer below.
+
+## Bootstrapping Strategy: Tree Calculus First
+
+### Motivation
+
+The original plan considered starting with a weak language
+(primitive tree-recursive functions via the Lawvere theory /
+PBTO from Approach A) and extending upward toward Turing
+completeness. An alternative strategy reverses this: start
+with tree calculus (already Turing-complete and
+self-reflective), carve out a terminating subset, and use
+that subset to bootstrap further language layers.
+
+The reason to avoid starting with a Turing-complete
+calculus is that type-checking requires termination: a
+type-checker that might loop is not a type-checker.
+However, the realizability topos construction requires
+termination witnesses anyway — elements of RT(T) are
+assemblies carrying realizers, and morphisms are tracked
+by trees that are *total* on their domain. Building
+termination witnesses is therefore not extra work but
+part of the target construction.
+
+### The Approach
+
+1. **Start with tree calculus.** Formalize the five
+   triage reduction rules on
+   `PolyFix (polyTranslate (overTerminal X) (polyProd X))`
+   — finite unlabeled binary trees. Tree calculus is
+   well-studied, with algorithms and proofs formalized
+   in Barry Jay's book (*Reflective Programs in Tree
+   Calculus*) and in Coq.
+
+2. **Identify the primitive-recursive subset.** Define a
+   syntactic fragment of tree calculus terms that can
+   only compute primitive-recursive functions over binary
+   trees. This fragment corresponds to functions definable
+   via `polyFixFold` (catamorphism) into suitable algebras
+   — the parametrized binary tree object from Approach A.
+   Terms in this fragment use fold but not general
+   fixed-point combinators (such as Y or Turing's
+   fixed-point combinator expressed in tree calculus).
+
+3. **Prove termination in Lean.** Show that every term
+   in the syntactic fragment terminates: reduction
+   always reaches a normal form. The proof strategy is
+   structural: fold on a well-founded tree terminates
+   because the tree's height decreases at each recursive
+   call. Lean verifies this against standard mathematics.
+
+4. **Write a self-recognizer.** Implement a tree-calculus
+   program, *itself in the primitive-recursive subset*,
+   that decides whether a given tree is in the
+   primitive-recursive subset. Tree calculus's triage
+   rules enable this directly: the recognizer inspects
+   the structure of its input (another tree) without
+   Gödel encoding. Prove in Lean that this recognizer
+   is correct (sound and complete with respect to the
+   syntactic criterion) and that it terminates.
+
+5. **Bootstrap.** The self-recognizer serves as a
+   gatekeeper: only programs it accepts are eligible to
+   serve as type-checkers for further language layers.
+   These layers can define more expressive type systems
+   (System T, System F, etc.), each verified by a
+   type-checker in the layer below, building up in
+   stages — but always with tree calculus as the ambient
+   computational universe.
+
+### Design Principles
+
+- **Minimize code to self-description.** The goal is to
+  reach a self-describing language — one that can express
+  itself without external interpretation — with as
+  little code and as little structural overhead as
+  possible. Tree calculus is well-suited because its
+  syntax (binary trees) and semantics (five reduction
+  rules) are both minimal.
+
+- **Lean verifies assumptions, does not interpret.**
+  Lean's role is to verify that the bootstrapping
+  assumptions hold (termination of the
+  primitive-recursive subset, correctness of the
+  self-recognizer) against standard mathematics. Once
+  verified, the language operates on its own terms. Lean
+  is a proof checker for the foundation, not an
+  interpreter for the language.
+
+- **Syntactic criterion first, proof-carrying code
+  later.** Two options exist for recognizing terminating
+  programs:
+
+  - *Syntactic criterion (Option 1)*: Define a syntactic
+    fragment and check membership. This is conservative
+    (rejects some terminating programs) but sound and
+    decidable. It connects to the Lawvere theory / PBTO
+    approach (Approach A): the syntactic fragment is
+    the Lawvere theory of binary tree algebras, where
+    every morphism is definable by catamorphism.
+
+  - *Proof-carrying code (Option 2)*: A program is
+    accepted when accompanied by a termination proof
+    (itself a tree). The checker verifies proof validity.
+    This is more expressive but requires defining valid
+    termination proofs within the system. It connects
+    to the realizability topos approach (Approach B):
+    realizers carry computational evidence, and the
+    termination proof is part of that evidence. Tree
+    calculus's self-reflective nature (triage rules
+    allow programs to inspect proof structure) makes
+    this a natural extension.
+
+  Option 1 is the starting point. Option 2 is a
+  subsequent application of the reflective capabilities,
+  built *within* the language on top of Option 1's
+  type-checkable syntax.
+
+### Why Tree Calculus First Works
+
+- **Self-application is native.** Triage rules let
+  programs inspect other programs structurally. The
+  self-recognizer ("is this program primitive-recursive?")
+  is a tree operating on trees, which is what tree
+  calculus does natively. In a system based on System T
+  or primitive recursive functionals, writing a
+  self-recognizer would require encoding programs as
+  data first.
+
+- **Termination witnesses are realizability
+  infrastructure.** The termination proofs built for
+  primitive-recursive operators are the realizers needed
+  for the realizability topos. Each primitive-recursive
+  function gets a realizer (a tree) that witnesses its
+  totality. This work directly constructs the assembly
+  structure of RT(T).
+
+- **Polynomial infrastructure connects directly.** Tree
+  calculus operates on elements of
+  `PolyFix (polyTranslate (overTerminal X) (polyProd X))`.
+  The fold `polyFixFold` gives catamorphism, which is
+  primitive recursion over trees. The primitive-recursive
+  subset corresponds to functions definable via
+  `polyFixFold` into suitable algebras.
+
+- **The subset recognizer bootstraps the tower.** Once
+  termination-checked, the primitive-recursive subset
+  can define more sophisticated type systems, which
+  verify termination of broader program classes, building
+  up in layers — always within the ambient tree calculus.
+
+### Relationship to Earlier Approaches
+
+The bootstrapping strategy subsumes the earlier phased
+plan (Approaches A, B, C) but reorders it:
+
+- **Approach A (PBTO / Lawvere theory)** becomes the
+  *syntactic criterion* for the primitive-recursive
+  subset — the same mathematical content, but situated
+  within tree calculus rather than developed
+  independently.
+
+- **Approach B (tree calculus / bialgebra semantics)**
+  becomes the *starting point* rather than a later
+  phase. The reduction rules, PCA structure, and
+  lambda-bialgebra are formalized first.
+
+- **Approach C (hybrid / incremental)** is preserved:
+  the layers (primitive-recursive, then richer type
+  systems, then proof-carrying code) are incremental,
+  each independently valuable.
+
+The Kleisli category, coalgebra topos, and internal
+representation work from the original plan remain
+relevant and can proceed in parallel with the
+bootstrapping.
+
 ## Recommended Execution Order
 
 ### Phase 1: Kleisli Category and Isomorphism
@@ -1121,7 +1328,7 @@ from the free topos.
    morphism set) as a coalgebra/copresheaf within the
    topos
 
-### Phase 2: Tree Calculus Reduction
+### Phase 2: Tree Calculus Reduction and Bootstrapping
 
 1. Use the finite-branching isomorphism to define
    leaf/stem/fork case analysis (child count 0, 1, 2)
@@ -1129,6 +1336,16 @@ from the free topos.
    (Lean functions) and internally (coalgebra morphisms)
 1. Show confluence (the 5 rules are non-overlapping)
 1. Define the PCA structure (K and S from rules 1-2)
+1. Define the primitive-recursive syntactic fragment:
+   terms that compute only via `polyFixFold` into
+   algebras, excluding general fixed-point combinators
+1. Prove in Lean that all terms in the syntactic
+   fragment terminate (reduction reaches a normal form)
+1. Implement the self-recognizer: a tree-calculus
+   program, itself in the primitive-recursive fragment,
+   that decides membership in the fragment
+1. Prove in Lean that the self-recognizer is correct
+   (sound and complete) and terminates
 1. Connect to GSOS if the infrastructure is available
 
 ### Phase 3: Lambda-Bialgebra and Topos
@@ -1141,8 +1358,18 @@ from the free topos.
 1. Investigate the realizability topos and its
    relationship to the coalgebra topos
 
-### Phase 4: Free Topos and Logical Equivalences
+### Phase 4: Language Tower and Proof-Carrying Code
 
+1. Use the primitive-recursive self-recognizer as a
+   gatekeeper to define which programs are eligible
+   to serve as type-checkers
+1. Define richer type systems (System T, System F
+   analogues) as tree-calculus programs, type-checked
+   by the primitive-recursive layer
+1. Investigate proof-carrying code (Option 2): extend
+   the recognizer to accept programs accompanied by
+   termination proofs expressed as trees, verified by
+   the recognizer using triage
 1. Investigate the free topos with binary tree object
 1. Compare its internal logic with the free topos with
    NNO — are they logically equivalent?

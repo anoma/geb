@@ -12,11 +12,23 @@ monad of `polyProd X`) in `GebLean/PLang/TermCat.lean`.
 Design document:
 `docs/plans/2026-03-06-termcat-design.md`
 
+**Bootstrapping strategy (decided 2026-03-07)**: Start
+with tree calculus (Turing-complete, self-reflective),
+carve out a terminating primitive-recursive subset, prove
+termination in Lean, and write a self-recognizer within
+that subset. The self-recognizer serves as a gatekeeper
+for type-checkers of further language layers. This
+reverses the original plan of building a weak language
+first and extending upward. See design doc section
+"Bootstrapping Strategy: Tree Calculus First".
+
 The design explores six candidate categories (algebra,
 Kleisli, Lawvere, coalgebra, lambda-bialgebra, co-Kleisli)
 and three layered approaches (PBTO/Lawvere, tree calculus,
-hybrid). The recommended starting point is the Kleisli
-category of `polyFreeMPoly (polyProd X)`.
+hybrid). The Kleisli category of
+`polyFreeMPoly (polyProd X)` provides the categorical
+framework; tree calculus provides the computational
+starting point.
 
 The theory should be self-reflective both computationally
 (tree calculus: programs computing on programs) and
@@ -26,6 +38,14 @@ universes" are under consideration: the coalgebra topos,
 the realizability topos of the tree calculus PCA, and the
 free topos with binary tree object. See design doc
 section "Internal Logic and Self-Reflection".
+
+Two options exist for recognizing terminating programs:
+(1) syntactic criterion — decidable membership in a
+syntactic fragment (starting point); (2) proof-carrying
+code — programs accompanied by termination proofs as
+trees (later extension, built within the language on
+top of Option 1). See design doc section "Design
+Principles".
 
 ## Files
 
@@ -136,7 +156,7 @@ Three candidate base categories:
 - [ ] Represent the Kleisli category (or its morphism
   set) as a coalgebra/copresheaf within the topos
 
-### Phase 2: Tree Calculus Reduction
+### Phase 2: Tree Calculus Reduction and Bootstrapping
 
 - [ ] Use finite-branching isomorphism to define
   leaf/stem/fork case analysis (child count 0, 1, 2)
@@ -144,6 +164,16 @@ Three candidate base categories:
   (Lean functions) and internally (coalgebra morphisms)
 - [ ] Show confluence (non-overlapping rules)
 - [ ] Define PCA structure (K and S from rules 1-2)
+- [ ] Define the primitive-recursive syntactic fragment:
+  terms computing only via `polyFixFold` into algebras,
+  excluding general fixed-point combinators
+- [ ] Prove in Lean that all terms in the syntactic
+  fragment terminate
+- [ ] Implement the self-recognizer: a tree-calculus
+  program, itself in the primitive-recursive fragment,
+  that decides membership in the fragment
+- [ ] Prove in Lean that the self-recognizer is correct
+  (sound and complete) and terminates
 - [ ] Connect to GSOS if infrastructure available
 
 ### Phase 3: Lambda-Bialgebra and Topos
@@ -155,8 +185,16 @@ Three candidate base categories:
 - [ ] Investigate realizability topos and its relationship
   to the coalgebra topos
 
-### Phase 4: Free Topos and Logical Equivalences
+### Phase 4: Language Tower and Proof-Carrying Code
 
+- [ ] Use the primitive-recursive self-recognizer as a
+  gatekeeper for type-checker eligibility
+- [ ] Define richer type systems (System T, System F
+  analogues) as tree-calculus programs, type-checked by
+  the primitive-recursive layer
+- [ ] Investigate proof-carrying code (Option 2): extend
+  the recognizer to accept programs accompanied by
+  termination proofs expressed as trees
 - [ ] Investigate the free topos with binary tree object
 - [ ] Compare its internal logic with the free topos with
   NNO — are they logically equivalent?
@@ -191,6 +229,18 @@ Three candidate base categories:
   by working directly in P-Coalg(PER)?
 - [ ] Self-representability: can the base category
   represent its own morphisms internally?
+- [ ] Primitive-recursive fragment definition: precise
+  syntactic criterion, decidable by a program within
+  the fragment itself
+- [ ] Self-recognizer expressibility: can the recognizer
+  be written within the fragment it recognizes?
+- [ ] Proof-carrying code format: what constitutes a
+  valid termination proof as a tree? (ordinal notations,
+  well-founded recursion witnesses, sized-type
+  annotations)
+- [ ] Language tower granularity: what layers sit between
+  primitive recursion and full tree calculus? (multiply
+  recursive, System T, System F, bar recursion)
 
 ## Notes
 
@@ -227,3 +277,22 @@ Three candidate base categories:
 - The copresheaf equivalence (`polyCoalgCopresheafEquiv`)
   provides independent confirmation of coalgebraic
   constructions via Set^C for path category C.
+- Bootstrapping strategy: tree calculus first, carve out
+  primitive-recursive subset, prove termination, write
+  self-recognizer. Lean verifies assumptions against
+  standard mathematics but does not interpret the
+  language. Goal: minimal code to self-description.
+- Syntactic criterion (Option 1) is the starting point
+  for recognizing terminating programs. Proof-carrying
+  code (Option 2) is a later extension built within
+  the language itself using tree calculus's reflective
+  capabilities.
+- Termination witnesses built for the primitive-recursive
+  subset are the realizers needed for the realizability
+  topos — this work is not scaffolding but directly
+  constructs assembly structure.
+- The primitive-recursive subset corresponds to functions
+  definable via `polyFixFold` into suitable algebras
+  (the PBTO / Lawvere theory from Approach A, now
+  situated within tree calculus rather than developed
+  independently).
