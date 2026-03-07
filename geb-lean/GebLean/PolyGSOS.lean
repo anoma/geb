@@ -2739,4 +2739,42 @@ abbrev polyGSOSDistLaw_mul_rhsCoalg
     (polyGSOSScaleCoalg
       (polyFreeMCarrier A P) P Q rho)
 
+lemma polyGSOSDistLaw_mul_mu_hom
+    (A : Over X) (P Q : PolyEndo X)
+    (rho : PolyGSOSRule P Q) :
+    let DQ := polyCofreeCarrier A Q
+    (polyGSOSDistLaw_mul_srcCoalg A P Q rho).str ≫
+    (polyEndoFunctor X
+      (polyScale (polyFreeMCarrier A P) Q)).map
+      (polyFreeCounitFold P
+        (polyFreeAlg DQ P)) =
+    polyFreeCounitFold P (polyFreeAlg DQ P) ≫
+    (polyGSOSScaleCoalg A P Q rho).str := by
+  intro DQ
+  apply Over.OverMorphism.ext
+  funext ⟨x, t⟩
+  have hmu :
+      (polyFreeCounitFold P
+        (polyFreeAlg DQ P)).left ⟨x, t⟩ =
+      ⟨x, polyFreeMJoinMor DQ P t⟩ := by
+    rw [← polyFreeMonad_mu_eq]
+    exact polyFreeMonad_mu_left_eq DQ P ⟨x, t⟩
+  simp only [Over.comp_left, types_comp_apply,
+    polyGSOSScaleCoalg,
+    polyGSOSScaleCoalgStr,
+    Over.homMk_left,
+    polyGSOSScaleCoalgStrAt]
+  rw [hmu]
+  simp only [
+    polyGSOSDistLaw_mul_srcCoalg,
+    polyGSOSDistLaw_mul_srcCoalgStr,
+    Over.homMk_left,
+    polyGSOSDistLaw_mul_srcCoalgStrAt,
+    polyEndoFunctor,
+    polyBetweenEvalFunctor,
+    polyToOverFunctor,
+    polyToOverEvalMap_left,
+    ccrEvalMap]
+  congr 1
+
 end GebLean
