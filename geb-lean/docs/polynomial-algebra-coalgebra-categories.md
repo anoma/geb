@@ -1073,6 +1073,274 @@ morphisms must be representable within itself:
 
 ---
 
+## 12. Concrete Descriptions of Two Topoi
+
+The polynomial `P(X) = 1 + X^2` (unlabeled binary
+trees, i.e. A = 1) gives rise to two topoi built from
+the same raw material — binary trees — but from
+opposite directions. The realizability topos is built
+from *application* (composing trees as programs); the
+coalgebra topos is built from *observation*
+(decomposing trees as data). This section describes
+each concretely and identifies the lambda-bialgebra
+structure as the bridge between them.
+
+### 12.1 The Realizability Topos RT(T)
+
+Let T be the set of all finite binary trees (the
+initial algebra W of `P(X) = 1 + X^2`), equipped with
+the tree calculus reduction rules as a PCA structure.
+The partial application `a . b` is defined when
+reducing `a b` terminates, and equals the normal form.
+
+#### 12.1.1 Assemblies
+
+The category Asm(T) has:
+
+- **Objects (assemblies)**: A pair (X, E) where X is a
+  set and `E: X -> P(T) \ {empty}` assigns to each
+  element a nonempty set of *realizers* — trees that
+  witness or encode that element.
+- **Morphisms `f: (X, E_X) -> (Y, E_Y)`**: A function
+  `f: X -> Y` that is *tracked*: there exists a tree
+  `r` in T such that for all `x` in X, for all
+  `t` in `E_X(x)`, the application `r . t` is defined
+  and `r . t` is in `E_Y(f(x))`.
+
+Morphisms are total functions that are uniformly
+computable: a single program `r` works for all inputs.
+The partiality of the PCA enters through the
+application operation, but morphisms themselves are
+total and tracked.
+
+The realizability topos RT(T) is the ex/reg completion
+of Asm(T). The completion freely adds quotients of
+equivalence relations, making the category exact.
+
+#### 12.1.2 Concrete Structure
+
+- **NNO**: The natural numbers N with `E(n) = {n_T}`
+  where `n_T` is the tree encoding of n. Tracked
+  functions `N -> N` are the total computable functions
+  on natural numbers.
+- **Subobject classifier Omega**: The carrier is
+  `P(T)` (all sets of trees). An element S of
+  `P(T)` represents the truth value "witnessed by S."
+  The element `S = empty` represents false; any
+  nonempty S represents a shade of true (different
+  sets of witnesses give different truth values). The
+  assembly structure is `E(S) = S` for `S` nonempty,
+  and `E(empty) = {k}` for a fixed realizer k.
+  The law of excluded middle fails: there is no tree
+  that uniformly decides all propositions.
+- **Exponentials**: The exponential `[A, B]` in RT(T)
+  has as elements the tracked functions from A to B,
+  with realizers being the tracking trees themselves.
+  The internal function space consists of computable
+  functions carrying their own programs as witnesses.
+
+#### 12.1.3 Internal Logic
+
+The internal logic of RT(T) is a form of recursive
+realizability. A proposition is true if it has a
+realizer — a finite binary tree that witnesses it.
+This gives a constructive logic (no excluded middle)
+with a computational interpretation: every proof of
+existence comes with a program that computes a witness.
+
+### 12.2 The Coalgebra Topos P-Coalg(1 + X^2)
+
+For `P(X) = 1 + X^2`, the category P-**Coalg**
+consists of deterministic binary branching transition
+systems.
+
+#### 12.2.1 Objects and Morphisms
+
+A P-coalgebra is a pair (X, alpha: X -> 1 + X^2).
+Each state x in X is classified by alpha as:
+
+- **Leaf**: `alpha(x) = inl(*)` — the state has no
+  successors.
+- **Node**: `alpha(x) = inr(l, r)` — the state has
+  two successor states l and r in X.
+
+A morphism `f: (X, alpha) -> (Y, beta)` is a function
+`f: X -> Y` satisfying `beta . f = (1 + f^2) . alpha`:
+leaves map to leaves, and nodes map to nodes with
+corresponding children mapped by f. This is a
+bisimulation-respecting map.
+
+#### 12.2.2 Terminal Coalgebra
+
+The terminal coalgebra Z consists of all finite and
+infinite binary trees. The unique morphism from any
+coalgebra (X, alpha) to Z sends each state x to its
+complete unfolding: the (possibly infinite) tree
+obtained by repeatedly applying alpha.
+
+The initial algebra W (finite binary trees) embeds
+into Z. Every element of Z is the limit of its finite
+approximations (truncations at increasing depth).
+
+#### 12.2.3 Subobject Classifier
+
+The carrier of Omega consists of binary trees (elements
+of Z) in which every tree position is assigned a truth
+value from `{True, False}`, subject to the cosieve
+condition: if a position is labeled True, then all
+descendant positions are also labeled True.
+
+This gives many truth values beyond True and False:
+"true below depth 3 on the left branch," "true
+everywhere except the right-right-left subtree," etc.
+The truth values form a Heyting algebra indexed by
+tree structure.
+
+- The element `true` has every position labeled True.
+- The element `false` has every position labeled False.
+
+#### 12.2.4 Internal Logic
+
+Propositions in P-**Coalg** are Omega-valued:
+tree-shaped truth assignments. A statement can be
+"true along some branches and false along others." This
+gives a branching-time logic where truth varies along
+paths through the tree of observations.
+
+#### 12.2.5 Copresheaf Perspective
+
+Under the copresheaf equivalence `P-Coalg ~ Set^C`
+(where C is the path category with objects = depth
+levels and morphisms = binary navigation strings),
+a copresheaf assigns to each depth n a set `F(n)` of
+"views truncated at depth n," with restriction maps
+ensuring compatibility. This is the approximation
+view: objects are compatible families of finite
+observations, and the M-type construction in the
+codebase (`PolyCofixApprox`, `PolyCofixAgree`) builds
+elements of Z in exactly this way.
+
+### 12.3 Comparison
+
+| Aspect | RT(T) | P-Coalg(1 + X^2) |
+| - | - | - |
+| Built from | Application | Observation |
+| Objects | Sets + computability witness | Branching systems |
+| Morphisms | Tracked total functions | Bisimulation maps |
+| Subobj. classifier | Witness sets | Truth-labeled trees |
+| Internal logic | Realizability | Branching-time |
+| Carrier of Omega | P(T) (sets of trees) | Trees with truth labels |
+| Partiality | In PCA application | In infinite branches |
+
+Both topoi are constructive (excluded middle fails in
+both). Both are built from binary trees, but they
+capture different structure: RT(T) captures what trees
+*do* as programs; P-**Coalg** captures what trees *are*
+as data.
+
+### 12.4 The Lambda-Bialgebra Bridge
+
+The initial algebra W (finite binary trees) is
+simultaneously:
+
+- A P-**algebra**: the structure map
+  `alpha: 1 + W^2 -> W` provides constructors (leaf
+  and node).
+- A P-**coalgebra**: the structure map
+  `gamma: W -> 1 + W^2` provides destructors
+  (pattern-matching on the root).
+
+The tree calculus reduction rules define the
+interaction between these two structures. When a tree
+is *observed* (coalgebra) after being *constructed*
+(algebra) — i.e., when pattern-matching is applied to
+an application — the reduction rules specify the
+result. This is the distributive law of a
+lambda-bialgebra.
+
+#### 12.4.1 The Distributive Law
+
+In the GSOS / operational semantics framework:
+
+- The **free monad** T of P gives the syntax side:
+  building tree terms, substituting, grafting.
+- The **cofree comonad** D of P gives the behavior
+  side: observing, decomposing, streaming out
+  structure.
+- The **distributive law** `lambda: T . D -> D . T`
+  defines operational semantics: given a program
+  (T-term) applied to an observable state
+  (D-coalgebra), one reduction step produces an
+  observable state of programs.
+
+The tree calculus reduction rules define this
+distributive law. Each rule takes an algebraic
+construction (application of the tree combinator to
+arguments) and produces a result described in terms of
+sub-observations and sub-constructions:
+
+1. `triangle triangle x y -> x` (discard and return)
+2. `triangle (triangle a) x y -> a y (x y)` (distribute
+   and apply)
+3. `triangle (triangle a b) x y -> a y (b y)` (fork
+   case)
+
+The interleaving of algebra (building new trees from
+pieces) and coalgebra (pattern-matching on tree
+structure) is the distributive law.
+
+#### 12.4.2 Bridging the Two Topoi
+
+The lambda-bialgebra structure on W suggests functors
+between the two topoi:
+
+- **P-Coalg -> RT(T)**: Given a coalgebra (X, alpha),
+  the tree calculus can compute on X by using the
+  coalgebra structure to observe states and the
+  reduction rules to process observations. The tracked
+  functions are those that operate on X via the
+  coalgebra structure.
+- **RT(T) -> P-Coalg**: Given an assembly (X, E), the
+  realizer trees in E(x) are themselves elements of W,
+  which embeds into the terminal coalgebra Z. The
+  assembly carries coalgebraic structure inherited from
+  its realizers.
+- **Geometric morphism**: The lambda-bialgebra may
+  mediate a geometric morphism (adjoint pair of
+  functors preserving finite limits) between the two
+  topoi. The direct image functor would send
+  coalgebras to assemblies (extracting computational
+  content from observational structure), and the
+  inverse image functor would send assemblies to
+  coalgebras (embedding computational witnesses into
+  observational data).
+
+The lambda-bialgebra framework is implemented in the
+codebase (`LambdaBialgebra` at
+`Utilities/LambdaBialgebra.lean`, `DistributiveLaw` at
+`Utilities/DistributiveLaw.lean`).
+
+#### 12.4.3 Reconciliation
+
+The lambda-bialgebra perspective suggests that the
+realizability and coalgebra topoi are not independent
+alternatives but two aspects of the same structure.
+The "hybrid approach" of Section 11.3 can be
+understood as: PER(T) provides the computational
+substrate (algebra side), the coalgebra topos
+construction provides the observational/logical
+substrate (coalgebra side), and the distributive law
+from the tree calculus reduction rules ensures these
+are compatible.
+
+The open question of whether P-**Coalg**(PER(T)) is
+equivalent to (or embeds into) RT(T) can be restated:
+does the lambda-bialgebra structure on W extend to a
+geometric morphism between the two topoi, and if so, is
+it an equivalence?
+
+---
+
 ## References
 
 - Adamek, J. "Introduction to coalgebra." *Theory and
@@ -1085,11 +1353,22 @@ morphisms must be representable within itself:
   Cambridge Philosophical Society* 154 (2013).
 - Hughes, J. "A study of categories of algebras and
   coalgebras." PhD thesis, Carnegie Mellon (2001).
+- Jay, B. "A combinatory account of internal
+  structure." *Journal of Symbolic Logic* 89 (2024).
+- Klin, B. and Nachyla, B. "Presenting functors on
+  many-sorted varieties and applications."
+  *Information and Computation* 265 (2019).
+- Lenisa, M., Power, J., and Watanabe, H.
+  "Distributivity for endofunctors, pointed and
+  co-pointed endofunctors, monads and comonads."
+  *ENTCS* 33 (2000).
 - Rutten, J.J.M.M. "Universal coalgebra: a theory of
   systems." *Theoretical Computer Science* 249 (2000).
 - Sojakova, K., Spitters, B., and van der Weide, N.
   "A general framework for relational parametricity."
   arXiv:1805.00067 (2018).
+- Turi, D. and Plotkin, G. "Towards a mathematical
+  operational semantics." *Proceedings of LICS* (1997).
 - Van den Berg, B. and de Marchi, F. "Non-well-founded
   trees in categories." *Annals of Pure and Applied
   Logic* 146 (2007).
