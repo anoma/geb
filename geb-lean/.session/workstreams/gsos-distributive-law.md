@@ -296,7 +296,7 @@ technique:
 
 ---
 
-### Phase MU: Multiplication coherence (~550 lines)
+### Phase MU: Multiplication coherence (~400 lines)
 
 Statement:
 
@@ -314,78 +314,114 @@ coalgebra morphism using `polyCofixUnfold_precomp`.
 
 The source coalgebra embeds fold Q-children via
 `polyFreeUnit` (eta) so that `Scale.map(mu)` recovers
-them via `mu o eta = id` (monad left unit law). This is
-the design choice from the P=Q template.
+them via `mu o eta = id` (monad left unit law).
 
 Template: `polyDistLaw_mul` in PolyDistributiveLaw.lean
 (lines 1630-2410).
 
+Lessons from comul coherence:
+
+- The polyCofixUnfold_precomp assembly pattern is
+  straightforward (~35 lines).
+- Coalgebra morphism proofs decompose into annotation +
+  qIdx + qChildren via Sigma.ext + Prod.ext.
+- For nodes, polyGSOSFoldCata_snd_fst_eq gives rfl, so
+  polyGSOSFoldQIndex is definitionally equal to the raw
+  .2.snd.fst, simplifying qIdx proofs.
+- The pipeline naturality sub-lemmas are generic in the
+  morphism and can be reused.
+
 #### MU-1: Source coalgebra definition (~80 lines)
 
-##### MU-1a: `polyGSOSDistLaw_mul_srcCoalgStrAt`
+##### MU-1a: `polyGSOSDistLaw_mul_srcCoalgStrAt` (done)
 
-Given `t : PolyFreeM (polyFreeMCarrier DQ P) P x`
-(a tree in `T_P(T_P(D_Q(A)))`), produce a
-`polyBetweenEvalFamily X X (polyScale TA Q) TTDQ x`:
+At `t : T_P(T_P(D_Q(A)))`, produces
+`polyScale(T_P(A), Q)` element:
 
-```text
-let mu_t := polyFreeMJoinMor DQ P t
-let foldResult := polyGSOSFoldCataWithFiber A P Q
-  rho mu_t
-let annot := polyFreeMapAt DQ A P eps_Q x mu_t
-let qIdx := foldResult.val.val.2.1
-let qChildren := fun e =>
-    polyFreeMPure ... (foldResult.val.val.2.2.left e)
-return ((annot, qIdx), qChildren_mor)
-```
+- annotation: `T_P(eps_Q)(mu(t))`
+- Q-eval: from `polyGSOSFoldCataWithFiber A P Q rho
+  (mu(t))`, with fiber transport
+- Q-children: fold Q-children composed with eta
+  (`polyFreeUnit TDQ P`)
 
 ##### MU-1b through MU-1e
 
-Package as `PolyCoalg (polyScale TA Q)`.
-
-**Dependencies**: `polyGSOSFoldCataWithFiber`,
-`polyFreeMJoinMor`, `polyFreeMapAt`.
+Package as `PolyCoalg (polyScale TA Q)`:
+`srcCoalgStrLeft`, `srcCoalgStr_comm`, `srcCoalgStr`,
+`srcCoalg`.
 
 #### MU-2: RHS coalgebra (~10 lines)
 
-```text
+```lean
 polyGSOSDistLaw_mul_rhsCoalg :=
-  polyScaleReindexCoalg TTA TA Q mu_A
+  polyScaleReindexCoalg ... mu_A
     (polyGSOSScaleCoalg TA P Q rho)
 ```
 
-#### MU-H: mu naturality at eps_Q (~25 lines)
+where `mu_A = polyFreeCounitFold P (polyFreeAlg A P)`.
 
-`T_P(eps_Q)(mu_{DQ}(t)) =
-  mu_A(T_P(T_P(eps_Q))(t))`
+#### MU-H: Monad left unit (~15 lines)
 
-Check whether `polyFreeMJoinMor_nat`
-(PolyDistributiveLaw:1708) already provides this.
+`polyFreeMJoinMor DQ P (polyFreeMPure TDQ P v) = v`
 
-#### MU-3: mu coalgebra morphism (~150 lines)
+This is `mu(eta(v)) = v`, needed for mu_hom_h.
+Might exist as `polyFreeM_pure_bind` or similar.
 
-mu is coalgebra morphism from srcCoalg to the GSOS
-scale coalgebra at A. Uses monad left unit
-`mu(eta(child)) = child` for Q-children.
+#### MU-3: mu coalgebra morphism (~50 lines)
 
-#### MU-4: T_P(dist) coalgebra morphism (~250 lines)
+mu is coalgebra morphism from srcCoalg to
+`polyGSOSScaleCoalg A P Q rho`.
 
-T_P(dist) is coalgebra morphism from srcCoalg to
-rhsCoalg. Uses `polyCofixUnfold_coalg_comm` and
-counit coherence.
+Revised estimate: much simpler than originally planned.
+Both sides compute fold(mu(t)) for annotation and
+Q-eval. The only difference is Q-children:
 
-#### MU-5: Assembly (~50 lines)
+- LHS: `fold.qChildren >> eta >> mu`
+- RHS: `fold.qChildren`
+
+By monad left unit `eta >> mu = id`, these are equal.
+No induction on tree structure needed — the proof
+works for all t uniformly.
+
+#### MU-4: T_P(dist) coalgebra morphism (~200 lines)
+
+T_P(dist_A) is coalgebra morphism from srcCoalg to
+rhsCoalg. This is the hardest sub-lemma.
+
+Goal: `srcCoalg.str >> Scale.map(T_P(lambda_A)) =
+  T_P(lambda_A) >> rhsCoalg.str`
+
+Requires relating `fold_A(mu(t))` to
+`fold_{TA}(T_P(lambda_A)(t))` at the Q-eval level.
+
+Proof approach: induction on tree t.
+
+- Leaf `t = leaf(s)`: `mu(leaf(s)) = s` and
+  `T_P(lambda_A)(leaf(s)) = leaf(lambda_A(s))`.
+  Need: `fold_A(s) ~ fold_{TA}(leaf(lambda_A(s)))`.
+  Leaf of fold at TA uses counit of dist law.
+- Node `t = node(p, ch)`: functorial in per-child
+  results via IH.
+
+Helper lemmas needed:
+
+- Q-eval naturality under mu+lambda (new)
+- Counit coherence (existing: polyGSOSDistLaw_counit)
+- Pipeline sub-lemmas (reusable)
+
+#### MU-5: Assembly (~40 lines)
 
 ```lean
-have lhs := polyCofixUnfold_precomp _ src dst
-  ⟨mu, mu_hom⟩
-have rhs1 := polyScaleReindex ...
+have lhs := polyCofixUnfold_precomp _ src
+  (polyGSOSScaleCoalg A) ⟨mu, mu_hom⟩
+have rhs1 := polyScaleReindex ... mu_A
+  (polyGSOSScaleCoalg TA)
 have rhs2 := polyCofixUnfold_precomp _ src rhs
   ⟨T(dist), tdist_hom⟩
-rw [lhs, rhs1, rhs2]
+simp only [polyGSOSDistLawMor]
+exact (lhs.trans rhs2.symm).trans
+  (congrArg ... rhs1)
 ```
-
-Template: lines 2354-2410.
 
 ---
 
@@ -432,15 +468,16 @@ lake build && lake test
 | CM-B | Full Q-eval delta | ~120 | done |
 | CM-C | lhs coalg morphism | ~150 | done |
 | CM-D | Comul assembly | ~35 | done |
-| MU-1 | Src coalgebra | ~80 | pending |
+| MU-1a | Src coalg StrAt | ~30 | done |
+| MU-1b | Src coalg packaging | ~50 | pending |
 | MU-2 | RHS coalgebra | ~10 | pending |
-| MU-H | mu nat at eps | ~25 | pending |
-| MU-3 | mu_hom_h | ~150 | pending |
-| MU-4 | tdist_hom_h | ~250 | pending |
-| MU-5 | Assembly | ~50 | pending |
+| MU-H | Monad left unit | ~15 | pending |
+| MU-3 | mu_hom_h | ~50 | pending |
+| MU-4 | tdist_hom_h | ~200 | pending |
+| MU-5 | Assembly | ~40 | pending |
 | PK-1 | DistributiveLaw | ~40 | pending |
 | PK-2 | Operational monad | ~5 | pending |
-| | **Total remaining** | **~975** | |
+| | **Total remaining** | **~465** | |
 
 ## Resumption guide
 
