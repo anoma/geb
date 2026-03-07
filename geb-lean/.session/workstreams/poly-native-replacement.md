@@ -22,6 +22,31 @@ annotations use `PolyCofreeAnnotPosAt` (and its variant
 The free monad uses `PolyFreeMLeafPos` for leaf positions in tree
 shapes.
 
+The procedure for each type is:
+
+1. Identify the base type `B` that the type family is indexed over.
+   When a type has multiple indices (e.g. `Nat → X → Type`),
+   uncurry to a single index type (e.g. `Nat × X`).  The
+   equivalence `familySliceEquiv` (in `Polynomial.lean`) witnesses
+   that families of types over `B` correspond to objects of
+   `Over B`.
+2. Define a `PolyEndo B` whose constructors at each base point
+   match those of the Lean type.  Each constructor becomes a
+   position (index) of the polynomial; each recursive argument
+   becomes a child in the family.  Non-recursive types use empty
+   families.
+3. Prove `PolyFix` of that `PolyEndo` is isomorphic to the Lean
+   type.
+4. Replace all uses of the Lean type with the `PolyFix` version
+   and remove the Lean type.
+
+For `Prop`-valued types, produce a `Type`-valued `PolyFix` and
+quotient by `trueSetoid` to obtain a subsingleton, then show
+logical equivalence with the `Prop` version.
+
+The detailed plan with polynomial definitions is in
+`docs/plans/2026-03-07-poly-native-replacement.md`.
+
 For each type below, the work has two phases:
 
 1. Define a `PolyEndo` whose `PolyFix` is isomorphic to the Lean
