@@ -1,11 +1,11 @@
 # GSOS Distributive Law
 
-## Status: Comultiplication coherence in progress
+## Status: Multiplication coherence pending
 
 ## Current build state
 
-File: `GebLean/PolyGSOS.lean` (~2070 lines, four
-underscore holes for comultiplication sub-lemmas)
+File: `GebLean/PolyGSOS.lean` (~2640 lines, compiles
+cleanly with no warnings)
 
 ## Completed
 
@@ -97,7 +97,7 @@ Pipeline naturality sub-lemmas:
 
 ## Remaining phases
 
-### Phase CM: Comultiplication coherence (in progress)
+### Phase CM: Comultiplication coherence (done)
 
 #### Strategy: `polyCofixUnfold_precomp` at morphism level
 
@@ -122,7 +122,7 @@ lambda_A >> delta_{TA}
     [by polyCofixUnfold_precomp with rhs_hom]
 ```
 
-**LHS path** (in progress):
+**LHS path** (done):
 
 ```text
 T_P(delta_A) >> lambda_{DQA} >> DQ(lambda_A)
@@ -134,10 +134,7 @@ T_P(delta_A) >> lambda_{DQA} >> DQ(lambda_A)
 
 Both sides = `polyCofixUnfold(srcCoalg)`. QED.
 
-#### Current underscore holes (four)
-
-All four have correct type signatures; see line numbers
-in PolyGSOS.lean.
+#### Completed sub-lemmas
 
 ##### CM-A: `polyGSOSFoldLeafAt_snd_natural_delta`
 
@@ -431,10 +428,10 @@ lake build && lake test
 | ----- | ----- | ----- | ------ |
 | N | NatTrans packaging | ~30 | done |
 | CM-inf | Comul infrastructure | ~400 | done |
-| CM-A | Leaf Q-eval delta | ~60 | stub |
-| CM-B | Full Q-eval delta | ~120 | stub |
-| CM-C | lhs coalg morphism | ~150 | stub |
-| CM-D | Comul assembly | ~35 | stub |
+| CM-A | Leaf Q-eval delta | ~60 | done |
+| CM-B | Full Q-eval delta | ~120 | done |
+| CM-C | lhs coalg morphism | ~150 | done |
+| CM-D | Comul assembly | ~35 | done |
 | MU-1 | Src coalgebra | ~80 | pending |
 | MU-2 | RHS coalgebra | ~10 | pending |
 | MU-H | mu nat at eps | ~25 | pending |
@@ -460,27 +457,12 @@ When resuming after compaction/restart:
 
 ### Current state (for resumption)
 
-The file has four underscore holes at:
+Comultiplication coherence (CM) is complete. All four
+sub-lemmas (CM-A through CM-D) compile cleanly. The
+file is at ~2640 lines with no warnings.
 
-- `polyGSOSFoldLeafAt_snd_natural_delta` (CM-A)
-- `polyGSOSFoldQeval_natural_delta` (CM-B)
-- `polyGSOSDistLaw_comul_lhs_hom` (CM-C)
-- `polyGSOSDistLaw_comul` (CM-D)
-
-All four have correct type signatures (confirmed by
-build producing only "don't know how to synthesize
-placeholder" errors).
-
-The execution order is: CM-D first (assembly, to
-verify structure), then CM-A, CM-B, CM-C.
-
-The old approximation-level approach (induction on
-depth n, case-split on tree structure) was ABANDONED
-because the IH for the node case does not apply to
-Q-children. The Q-children from the GSOS fold at
-DQ(A) applied to T_P(delta)(t) live in
-T_P(DQ(DQA)), which are not of the form
-T_P(delta)(something) that the IH needs.
+Next: Phase MU (multiplication coherence), then
+Phase PK (packaging).
 
 ## Techniques
 
