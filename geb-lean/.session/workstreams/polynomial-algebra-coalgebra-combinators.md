@@ -177,10 +177,10 @@ endofunctors.
   `GebLean/PolyGSOS.lean`.
 - [ ] E2: Construct operational monad (lifting syntax monad to
   B-coalgebras via structural recursion with accumulators).
-  In progress: distributive law morphism and counit/unit
-  coherence proofs complete; naturality in progress;
-  comultiplication,
-  multiplication, and packaging pending.
+  In progress: distributive law morphism, counit, unit, and
+  naturality proofs complete (~1560 lines compiling cleanly);
+  comultiplication, multiplication, NatTrans packaging, and
+  final `DistributiveLaw` packaging pending.
   See `gsos-distributive-law.md` for detailed sub-steps.
 
 ### Deferred

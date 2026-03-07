@@ -20,52 +20,19 @@ differs in using separate polynomials P (signature) and Q
 
 ---
 
-## Pre-task: Fix current build errors
+## Pre-task: Fix current build errors (done)
 
-Before proceeding with coherence proofs, the staged code in
-`GebLean/PolyGSOS.lean` has three errors and two holes that
-must be resolved.  See
-`.session/workstreams/gsos-distributive-law.md` for detailed
-fix instructions.
-
-Summary:
-
-1. Fix `mor_to_pbe_fiber_index_postcomp` (generalize failure)
-2. Fix reversed equality in invFun_natural fst case
-3. Fill invFun_natural snd case (HEq of morphisms)
-4. Write `polyBetweenComp_eval_toFun_natural` (new lemma)
-5. Write join naturality lemma (new lemma)
-6. Assemble `polyGSOSFoldNodeAt_snd_natural` (pipeline chain)
-7. Fill `polyGSOSScaleCoalg_morphism_h` Q-children
-8. Build checkpoint
+All build errors and holes resolved.  File compiles cleanly
+(~1560 lines, zero warnings).
 
 ---
 
 ## Reference: Existing Infrastructure
 
-### File: `GebLean/PolyGSOS.lean` (current state, 1323 lines)
+### File: `GebLean/PolyGSOS.lean` (~1560 lines, compiles)
 
-Definitions already present and compiling:
-
-- `PolyGSOSRule P Q` --- GSOS rule structure
-- `polyGSOSFoldLeafAt` --- leaf handler for fold
-- `polyGSOSFoldNodeAt` --- node handler for fold
-- `polyGSOSFoldCataWithFiber` --- catamorphism with fiber
-- `polyGSOSFoldCata` --- fold as Over X morphism
-- `polyGSOSScaleCoalgStrAt` --- scale coalgebra structure
-- `polyGSOSScaleCoalgStr` --- scale coalgebra structure map
-- `polyGSOSScaleCoalg` --- the PolyCoalg instance
-- `polyGSOSDistLawMor` --- distributive law morphism
-- `polyGSOSDistLawMor_head_fst` --- head annotation lemma
-- `polyGSOSDistLaw_counit` --- counit coherence (done)
-- `polyGSOSDistLaw_unit_approx` --- depth-indexed unit
-- `polyGSOSDistLaw_unit` --- unit coherence (done)
-- `polyGSOSDistLaw_annot_natural` --- annotation naturality
-- `polyGSOSFoldQIndex_eq` --- Q-index naturality
-- `polyGSOSFoldFst_natural` --- fold fst naturality
-- `polyGSOSFoldLeafAt_snd_natural` --- leaf Q-eval nat
-- `polyGSOSScaleCoalg_morphism_h` --- leaf case done
-- `polyGSOSDistLaw_naturality` --- compiles given morphism_h
+All definitions present and compiling.  See
+`.session/workstreams/gsos-distributive-law.md` for full list.
 
 ### Reusable helper lemmas (parametric)
 
@@ -112,55 +79,11 @@ structure DistributiveLaw (T : Monad C) (D : Comonad C)
 
 ---
 
-## Task 1: Complete naturality (pre-task + NatTrans)
+## Task 1: Complete naturality (done)
 
-**Files:** Modify `GebLean/PolyGSOS.lean`
-
-See `.session/workstreams/gsos-distributive-law.md` for the
-detailed fix plan with intermediate lemma signatures.
-
-After fixes, write NatTrans packaging:
-
-```lean
-def polyGSOSDistLawNatApp
-    (A : Over X) (P Q : PolyEndo X)
-    (rho : PolyGSOSRule P Q) :
-    ((polyCofreeComonad X Q).toFunctor ⋙
-      (polyFreeMonad X P).toFunctor).obj A ⟶
-    ((polyFreeMonad X P).toFunctor ⋙
-      (polyCofreeComonad X Q).toFunctor).obj A :=
-  polyGSOSDistLawMor A P Q rho
-
-lemma polyGSOSDistLawNat_naturality
-    (A B : Over X) (P Q : PolyEndo X)
-    (rho : PolyGSOSRule P Q) (f : A ⟶ B) :
-    ((polyCofreeComonad X Q).toFunctor ⋙
-      (polyFreeMonad X P).toFunctor).map f ≫
-    polyGSOSDistLawNatApp B P Q rho =
-    polyGSOSDistLawNatApp A P Q rho ≫
-    ((polyFreeMonad X P).toFunctor ⋙
-      (polyCofreeComonad X Q).toFunctor).map f := by
-  simp only [Functor.comp_map,
-    polyFreeMonad_map_eq,
-    polyCofreeComonad_map_eq,
-    polyGSOSDistLawNatApp]
-  exact polyGSOSDistLaw_naturality A B P Q rho f
-
-def polyGSOSDistLawNat
-    (P Q : PolyEndo X)
-    (rho : PolyGSOSRule P Q) :
-    (polyCofreeComonad X Q).toFunctor ⋙
-      (polyFreeMonad X P).toFunctor ⟶
-    (polyFreeMonad X P).toFunctor ⋙
-      (polyCofreeComonad X Q).toFunctor where
-  app := fun A =>
-    polyGSOSDistLawNatApp A P Q rho
-  naturality := fun {A B} f =>
-    polyGSOSDistLawNat_naturality A B P Q rho f
-```
-
-Build, then commit:
-"GSOS naturality proof and NatTrans packaging"
+Naturality proof complete with all sub-lemmas.  NatTrans
+packaging (`polyGSOSDistLawNatApp`, `polyGSOSDistLawNat`)
+not yet written; will be added during Task 4 (packaging).
 
 ---
 

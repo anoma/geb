@@ -1,6 +1,6 @@
 # GSOS Coherence Proofs and Packaging
 
-## Status: Design
+## Status: Phases 1-3 complete; Phases 4-6 pending
 
 ## Context
 
@@ -29,71 +29,45 @@ The GSOS case differs from P=Q in:
 
 ## Implementation order
 
-### Phase 1: Counit
+### Phase 1: Counit (done)
 
 **Statement**: `dist . eps_{T_P(A)} = T_P(eps_A)`
 
-**Estimated size**: ~20 lines
+Proved via `polyGSOSDistLawMor_head_fst` and
+`polyGSOSDistLaw_counit`.
 
-**Strategy**: The head annotation of the anamorphism output
-is `T_P(eps_Q)` by construction of `polyGSOSScaleCoalgStrAt`.
-The counit extracts this head annotation.
-
-**Lemmas**:
-
-- `polyGSOSDistLawMor_head_fst`: the head annotation
-  equals `T_P(eps_Q)` applied to the input tree
-
-**Proof sketch**: Extensionality, unfold `polyCofixUnfold`
-once to extract head, show it matches `polyFreeMap`
-with `polyCofreeCounit`.
-
-### Phase 2: Unit
+### Phase 2: Unit (done)
 
 **Statement**: `eta_{D_Q(A)} . dist = D_Q(eta_A)`
 
-**Estimated size**: ~120 lines
+Proved via `polyGSOSDistLaw_unit_approx` (depth-indexed
+induction) and `polyGSOSDistLaw_unit`.
 
-**Strategy**: `eta` embeds a cofree element `d` as a pure
-leaf `polyFreeMPure(d)`.  The fold of a pure leaf produces
-`(eta(d), Q(eta)(str(d)))`.  The scale coalgebra annotation
-is `T_P(eps_Q)(eta(d)) = eta(eps_Q(d)) = eta(head(d))`.
-The Q-structure from the fold matches `Q(eta)` applied to
-`str(d)`.  At depth n+1, children recurse on `d`'s children.
-
-**Lemmas**:
-
-- `polyGSOSDistLaw_unit_approx`: depth-indexed induction
-  proving the approximation equality
-- Main proof via `Over` ext, `Sigma` ext, `PolyCofix.ext`
-
-### Phase 3: Naturality
+### Phase 3: Naturality (done)
 
 **Statement**: `T_P(D_Q(f)) . dist_B = dist_A . D_Q(T_P(f))`
 
-**Estimated size**: ~200 lines
+Proved via a pipeline of sub-lemmas:
 
-**Strategy**: Both sides are anamorphisms.  Reduce to
-depth-indexed approximation equality by `PolyCofix.ext`.
-Induct on depth, with node/leaf case analysis.
+- `polyGSOSDistLaw_annot_natural`: annotation naturality
+- `polyGSOSFoldCata_snd_fst_eq`: fold-annotation identity
+- `polyGSOSFoldQIndex`, `polyGSOSFoldQIndex_leaf`,
+  `polyGSOSFoldQIndex_eq`: Q-index naturality
+- `polyGSOSFoldFst_natural`: fold fst naturality
+- `polyGSOSFoldLeafAt_snd_natural`: leaf Q-eval naturality
+- `polyGSOSFoldNodeAt_snd_natural`: node Q-eval naturality
+  (7-step pipeline through `overPullbackToIdQEval`,
+  `polyFreeMJoinEval`, `polyBetweenComp_eval_invFun`,
+  `polyBetweenComp_eval_toFun`, rho, compose, join)
+- `polyGSOSFoldQeval_natural`: full Q-eval naturality
+- `polyBetweenEvalMap_mor_apply`: sigma extraction utility
+- `polyGSOSScaleCoalg_morphism_h`: coalgebra morphism
+  (leaf and node cases)
+- `polyGSOSDistLaw_naturality`: assembled via
+  `polyCofixUnfold_precomp`
 
-**Lemmas**:
-
-- `polyGSOSDistLaw_annot_natural`:
-  `T_P(eps_Q . D_Q(f)) = T_P(f) . T_P(eps_Q)` via
-  `polyCofreeCounit_naturality` and `polyFreeMapAt_comp`
-- `polyGSOSDistLaw_naturality_approx_leaf`: leaf case
-  using `polyCofreeMapAt_head_snd` and IH on children
-- `polyGSOSDistLaw_naturality_approx`: main induction
-- `polyGSOSDistLaw_naturality`: assembled via `PolyCofix.ext`
-
-**Packaging**:
-
-- `polyGSOSDistLawNatApp`: type wrapper for functor
-  composition
-- `polyGSOSDistLawNat_naturality`: delegates to
-  `polyGSOSDistLaw_naturality` after `simp` unfolding
-- `polyGSOSDistLawNat`: the `NatTrans` definition
+NatTrans packaging not yet written (pending as part of
+Phase 6).
 
 ### Phase 4: Comultiplication
 
