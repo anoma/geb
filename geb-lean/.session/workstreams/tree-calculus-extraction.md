@@ -98,7 +98,14 @@ Verified Theorems sections). Among the contents documented:
   completeness hierarchy (extensional, intensional,
   program-complete), meaningful translation vs
   Church-Turing equivalence. No new theorems. Written.
-- [ ] Appendix A: Church-Turing Thesis (pp. 131-149)
+- [x] Appendix A: Church-Turing Thesis (pp. 131-149) —
+  models of computability, simulation, weak equivalence,
+  NCT/SCT/NTT/STT distinctions, Thm 70 (expressiveness
+  implies equality), Cor 71-72 (SK/lambda not weakly
+  equiv to recursive), Thm 73-74 (numerical theses
+  equiv, recursive weakly equiv to Turing), Cor 75-76
+  (symbolic theses equiv, lambda not weakly equiv to
+  Turing), Thm 77 (SF equiv to recursive). Written.
 
 ### Coq files — not yet read
 
