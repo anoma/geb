@@ -394,14 +394,94 @@ Goal: `srcCoalg.str >> Scale.map(T_P(lambda_A)) =
 Requires relating `fold_A(mu(t))` to
 `fold_{TA}(T_P(lambda_A)(t))` at the Q-eval level.
 
-Proof approach: induction on tree t.
+Current status: The proof decomposes into leaf + node.
+Leaf case is done. Node case decomposes via `congr`
+into annotation + qidx + qchildren. Annotation is
+done. The qidx and qchildren branches are factored
+into separate lemmas with underscore bodies:
 
-- Leaf `t = leaf(s)`: `mu(leaf(s)) = s` and
-  `T_P(lambda_A)(leaf(s)) = leaf(lambda_A(s))`.
-  Need: `fold_A(s) ~ fold_{TA}(leaf(lambda_A(s)))`.
-  Leaf of fold at TA uses counit of dist law.
-- Node `t = node(p, ch)`: functorial in per-child
-  results via IH.
+- `polyGSOSDistLaw_mul_tdist_node_qidx`
+- `polyGSOSDistLaw_mul_tdist_node_qchildren`
+
+##### MU-4 qidx plan
+
+Goal (readable):
+
+```lean
+srcQEvalAt(node(p, children)).fst =
+  polyGSOSFoldNodeAt(TA, pbefMk p rhsChildMor)
+    .val.2.snd.fst
+```
+
+Both sides run the `polyGSOSFoldNodeAtGen` pipeline
+with `pbefMk p childMor` and extract the Q-index.
+The Q-index is:
+
+```lean
+((rho.rule x).base ⟨p, pf'⟩).fst
+```
+
+where `pf'(eg)` is a function mapping each P-direction
+to the child Q-index at that direction. The function
+`pf'` differs between LHS and RHS:
+
+- LHS: child Q-index from `srcQEvalAt(children eg)`
+- RHS: child Q-index from
+  `polyGSOSFoldCataWithFiber(polyFreeMapAt(lam, eg))`
+
+These agree by `ih`. The Q-index reduction chain is:
+
+1. `.val.2.snd.fst` on `polyGSOSFoldNodeAtGen` =
+   `qAtTb.fst` (by Subtype/Prod/Sigma projections)
+2. `qAtTb.fst = qAtTpTb.fst` (by ccrEvalMap def)
+3. `qAtTpTb.fst = rhoResult.1.1`
+   (by fiberEquiv_toFun def)
+4. `rhoResult.1 = ccrReindex(rho.rule x, compInput)`
+   (by polyBetweenMorphEvalAt def)
+5. The `.1` of ccrReindex result is the Q-index
+
+Steps 1-5 are all definitional (Sigma/Subtype fst on
+constructors), so Lean should reduce them via `dsimp`.
+
+Proof steps:
+
+1. Unfold `srcQEvalAt` and `polyGSOSFoldNodeAt` to
+   expose `polyGSOSFoldNodeAtGen` on both sides
+2. Use `dsimp` or `simp` selectively on index-
+   extraction definitions (ccrEvalMap, fiberEquiv_toFun,
+   polyBetweenMorphEvalAt, fiberEquiv_invFun,
+   overPullbackToIdQEval) to reduce `.fst` chain
+3. After reduction, both sides should be
+   `((rho.rule x).base ⟨p, pf'⟩).fst`
+4. `congr 1` + `funext eg` to get per-child qidx
+5. Use `ih(eg)` (extracting .fst component) to close
+
+If step 2 makes the goal unreadable, factor out a
+helper `polyGSOSFoldNodeAtGen_qidx_eq` that states
+the Q-index in terms of the child Q-indices.
+
+##### MU-4 qchildren plan
+
+Goal (readable):
+
+```lean
+srcQEvalAt(node).snd ≫ Over.homMk(T(lam)) ≍
+  polyGSOSFoldNodeAt(TA, pbefMk p rhsChildMor)
+    .val.2.snd.snd
+```
+
+This is a HEq between Q-children morphisms. After
+establishing Q-index agreement (from qidx), the types
+agree and HEq reduces to Eq.
+
+Proof steps:
+
+1. Use qidx result to transport types
+2. Unfold enough to see both sides are morphisms
+   `ccrFamily(Q x, qidx) ⟶ TA`
+3. `Over.OverMorphism.ext` + `funext` to reduce to
+   pointwise equality
+4. Per-child equality from `ih`
 
 Helper lemmas needed:
 
@@ -473,7 +553,7 @@ lake build && lake test
 | MU-2 | RHS coalgebra | ~10 | pending |
 | MU-H | Monad left unit | ~15 | pending |
 | MU-3 | mu_hom_h | ~50 | pending |
-| MU-4 | tdist_hom_h | ~200 | pending |
+| MU-4 | tdist_hom_h | ~200 | in progress |
 | MU-5 | Assembly | ~40 | pending |
 | PK-1 | DistributiveLaw | ~40 | pending |
 | PK-2 | Operational monad | ~5 | pending |
@@ -494,12 +574,29 @@ When resuming after compaction/restart:
 
 ### Current state (for resumption)
 
-Comultiplication coherence (CM) is complete. All four
-sub-lemmas (CM-A through CM-D) compile cleanly. The
-file is at ~2640 lines with no warnings.
+Phase MU (multiplication coherence) is in progress.
+MU-1 through MU-3 are done. MU-4 (tdist coalgebra
+morphism) is partially done:
 
-Next: Phase MU (multiplication coherence), then
-Phase PK (packaging).
+- Leaf case: done
+- Node annotation branch: done
+- Node qidx branch: factored into
+  `polyGSOSDistLaw_mul_tdist_node_qidx` with `_` body
+  (takes `ih` parameter). Needs: reduce the `.fst`
+  projection chain through the pipeline, then use
+  `ih` for per-child Q-index equality.
+- Node qchildren branch: factored into
+  `polyGSOSDistLaw_mul_tdist_node_qchildren` with `_`
+  body (takes `ih` parameter). Needs: establish type
+  equality from qidx, then per-child morphism equality
+  from `ih`.
+
+The main proof `polyGSOSDistLaw_mul_tdist_node` is
+clean (no warnings) — it dispatches to the three
+factored lemmas.
+
+File: `GebLean/PolyGSOS.lean` (~4200 lines, 2 errors
+from `_` placeholders in qidx and qchildren lemmas).
 
 ## Techniques
 
