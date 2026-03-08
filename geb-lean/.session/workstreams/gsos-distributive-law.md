@@ -648,6 +648,47 @@ factored lemmas.
 File: `GebLean/PolyGSOS.lean` (~4200 lines, 2 errors
 from `_` placeholders in qidx and qchildren lemmas).
 
+## Structural observations
+
+### polyScaleFamily ignores annotation
+
+`polyScaleFamily A Q x (annotation, qi) =
+  polyBetweenFamily X X Q x qi`
+
+The Scale family depends only on the Q-index `qi`, NOT
+on the annotation.  This means a projection
+`⟨(a, qi), qmor⟩ ↦ ⟨qi, qmor⟩` from Scale evaluations
+to Q evaluations is well-typed.  Use `congrArg` with
+this projection on a Scale equality from `ih` to extract
+Q-eval equalities needed for children conditions.
+
+### polyFreeMap_comm is rfl
+
+`polyFreeMap_comm A B P f = rfl`, so
+`polyFreeMap = Over.homMk polyFreeMapLeft rfl`
+definitionally.  This simplifies goals involving
+`polyFreeMap` since the commutativity proof disappears.
+
+### ccrEvalMap preserves index
+
+`ccrEvalMap f ⟨i, h⟩ = ⟨i, h ≫ f⟩` — preserves
+the sigma index, only post-composes the morphism.
+
+### polyGSOSFoldNodeAtGen_qeval_natural
+
+The generalized pipeline Q-eval naturality lemma
+(Lemma B at ~line 1657) works for any carrier morphism
+`g : B1 ⟶ B2`.  It requires a children condition:
+per-P-dir, `overPullbackMap(T(g), Q(T(g)))(node1 d) =
+  node2 d`.
+
+To close qchildren: apply Lemma B with g = lam,
+then supply the children condition (Lemma C) which
+decomposes into:
+
+- fst (tree): polyGSOSFoldCata_fst_eq (Lemma A)
+- snd (Q-eval): extract from ih via Scale→Q projection
+
 ## Techniques
 
 ### Factoring-out-lemmas (from CLAUDE.md)
