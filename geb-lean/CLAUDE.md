@@ -49,8 +49,9 @@ When making changes to Lean code:
    `lake build` and `lake test`.
 2. **Iterate on errors**: If the build fails, fix errors yourself and rebuild
    before proposing a change.
-3. **No warnings or sorry**: Code must build **without any warnings**,
-   including:
+3. **No warnings or sorry or admit**:
+   `admit` must never be used anywhere at any point.
+   Code must build **without any warnings**, including:
    - No `declaration uses 'sorry'` warnings (never use `sorry`)
    - No unused variable or parameter warnings
    - No other linter warnings
