@@ -1106,7 +1106,7 @@ end QuotientAlgebra
 
 /-! ## EAT Quotient Structure
 
-For an EAT to admit quotient algebras, we need to be able to define
+For an EAT to have quotient algebras, we need to be able to define
 an algebra structure on the quotient carrier. This requires lifting
 the structure map through products of quotients.
 
