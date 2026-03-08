@@ -34,6 +34,37 @@ lemma ptoef_fst_eqRec
   subst h; rfl
 
 @[simp]
+lemma ccrEvalMap_fst
+    {D : Type*} [Category D]
+    {P : CoprodCovarRepCat D}
+    {A B : D} (f : A ⟶ B)
+    (y : ccrEval P A) :
+    (ccrEvalMap f y).fst = y.fst :=
+  match y with | ⟨_, _⟩ => rfl
+
+@[simp]
+lemma polyBetweenComp_eval_fiberEquiv_toFun_fst
+    {X Y Z : Type u}
+    (g : PolyFunctorBetweenCat Y Z)
+    (f : PolyFunctorBetweenCat X Y)
+    (A : Over X) (z : Z)
+    (y : polyBetweenEvalFamily X Z
+      (polyBetweenComp g f) A z) :
+    (polyBetweenComp_eval_fiberEquiv_toFun
+      g f A z y).fst = y.fst.fst :=
+  rfl
+
+@[simp]
+lemma polyBetweenMorphEvalAt_fst
+    {X Y : Type u}
+    {P Q : PolyFunctorBetweenCat X Y}
+    (α : P ⟶ Q) (A : Over X) (y : Y)
+    (ev : polyBetweenEvalFamily X Y P A y) :
+    (polyBetweenMorphEvalAt X Y α A y ev).fst =
+    ccrReindex (α y) (ptoefIndex Y ev) :=
+  rfl
+
+@[simp]
 lemma eqRec_dep_piApply
     {Y : Type*} {y₁ y₂ : Y}
     (h : y₁ = y₂)
@@ -417,6 +448,43 @@ def polyGSOSFoldCata
     (funext fun ⟨_, t⟩ =>
       (polyGSOSFoldCataWithFiber
         A P Q rho t).prop)
+
+private lemma sigma_subst_snd_of_eq
+    {α : Type*} {β : α → Type*}
+    {s : Σ x, β x} {a : α} {b : β a}
+    (heq : s = ⟨a, b⟩)
+    (hfst : s.1 = a) :
+    hfst ▸ s.2 = b := by
+  subst heq; rfl
+
+private lemma polyGSOSFoldCata_fst_eq
+    (A : Over X) (P Q : PolyEndo X)
+    (rho : PolyGSOSRule P Q) {x : X}
+    (t : PolyFreeM
+      (polyCofreeCarrier A Q) P x) :
+    (polyGSOSFoldCataWithFiber
+      A P Q rho t).val.val.1 = ⟨x, t⟩ := by
+  induction t with
+  | mk y idx children ih =>
+    match idx with
+    | Sum.inl ⟨⟨_, d⟩, rfl⟩ =>
+      simp only [polyGSOSFoldCataWithFiber,
+        polyGSOSFoldLeafAt, polyFreeMPure]
+      congr 1; congr 1
+      exact funext fun e => PEmpty.elim e
+    | Sum.inr p =>
+      simp only [polyGSOSFoldCataWithFiber,
+        polyGSOSFoldNodeAt]
+      congr 1
+      simp only [polyFreeMStrFamily,
+        pbefMk_index]
+      congr 1
+      funext e
+      simp only [pbefMk_mor, Over.comp_left,
+        types_comp_apply, Over.homMk_left,
+        overPullbackFst]
+      have ihe := ih e
+      exact sigma_subst_snd_of_eq ihe _
 
 /--
 The `polyScale(T_P(A), Q)`-coalgebra structure on
@@ -1585,6 +1653,90 @@ private lemma polyGSOSFoldNodeAt_snd_natural
   · exact (polyGSOSFoldFst_natural
       A B P Q rho f (children e)).symm
   · exact ih e
+
+private lemma polyGSOSFoldNodeAtGen_qeval_natural
+    (B1 B2 : Over X) (P Q : PolyEndo X)
+    (rho : PolyGSOSRule P Q)
+    (g : B1 ⟶ B2)
+    {y : X}
+    (node1 :
+      polyBetweenEvalFamily X X P
+        (overPullback
+          (polyFreeMCarrier B1 P)
+          ((polyEndoFunctor X Q).obj
+            (polyFreeMCarrier B1 P)))
+        y)
+    (node2 :
+      polyBetweenEvalFamily X X P
+        (overPullback
+          (polyFreeMCarrier B2 P)
+          ((polyEndoFunctor X Q).obj
+            (polyFreeMCarrier B2 P)))
+        y)
+    (hnode :
+      ccrEvalMap
+        (overPullbackMap
+          (polyFreeMap B1 B2 P g)
+          ((polyEndoFunctor X Q).map
+            (polyFreeMap B1 B2 P g)))
+        node1 =
+      node2) :
+    ccrEvalMap
+      (polyFreeMap B1 B2 P g)
+      (polyGSOSFoldNodeAtGen
+        B1 P Q rho node1).val.2.2 =
+    (polyGSOSFoldNodeAtGen
+      B2 P Q rho node2).val.2.2 := by
+  let TB1 := polyFreeMCarrier B1 P
+  let TB2 := polyFreeMCarrier B2 P
+  let freeMap := polyFreeMap B1 B2 P g
+  simp only [polyGSOSFoldNodeAtGen]
+  rw [ccrEvalMap_comp_apply
+    (polyFreeMJoinEval B1 P) freeMap]
+  conv_lhs =>
+    rw [show (polyFreeMJoinEval B1 P ≫
+        freeMap) =
+      ((polyEndoFunctor X
+        (polyFreeMPoly P)).map freeMap ≫
+        polyFreeMJoinEval B2 P)
+      from polyFreeMJoinEval_natural
+        B1 B2 P g]
+  rw [← ccrEvalMap_comp_apply
+    ((polyEndoFunctor X
+      (polyFreeMPoly P)).map freeMap)
+    (polyFreeMJoinEval B2 P)]
+  congr 1
+  rw [polyBetweenComp_eval_toFun_natural
+    Q (polyFreeMPoly P) TB1 TB2
+    freeMap y]
+  congr 1
+  rw [morphEvalAt_ccrEvalMap_comm
+    rho.rule freeMap y]
+  congr 1
+  rw [polyBetweenComp_eval_invFun_natural
+    P (polyIdBehaviorPoly Q) TB1 TB2
+    freeMap y]
+  congr 1
+  rw [ccrEvalMap_comp_apply
+    (overPullbackToIdQEval Q TB1)
+    ((polyEndoFunctor X
+      (polyIdBehaviorPoly Q)).map freeMap)]
+  conv_lhs =>
+    rw [show (overPullbackToIdQEval Q TB1 ≫
+        (polyEndoFunctor X
+          (polyIdBehaviorPoly Q)).map
+          freeMap) =
+      (overPullbackMap freeMap
+        ((polyEndoFunctor X Q).map
+          freeMap) ≫
+        overPullbackToIdQEval Q TB2)
+      from overPullbackToIdQEval_comm
+        Q TB1 TB2 freeMap]
+  rw [← ccrEvalMap_comp_apply
+    (overPullbackMap freeMap
+      ((polyEndoFunctor X Q).map freeMap))
+    (overPullbackToIdQEval Q TB2)]
+  congr 1
 
 private lemma polyGSOSFoldQeval_natural
     (A B : Over X) (P Q : PolyEndo X)
@@ -3087,61 +3239,6 @@ private lemma polyGSOSDistLaw_mul_mu_hom_leaf
   congr 1
 
 /--
-For a sigma pair `v = ⟨a, b⟩`, a transport along
-any proof `h' : v.fst = a` applied to `v.snd`
-yields `b`.
--/
-private lemma sigma_snd_cast_of_sigma_eq
-    {α : Type u} {β : α → Type u}
-    {v : @Sigma α β} {a : α} {b : β a}
-    (h : v = ⟨a, b⟩) (h' : v.fst = a) :
-    h' ▸ v.snd = b := by
-  cases v; cases h; rfl
-
-/--
-The tree component of the GSOS fold catamorphism
-recovers the original tree: the first projection
-of `polyGSOSFoldCataWithFiber` at `t` equals the
-`Over X` pair `⟨x, t⟩`.
--/
-private lemma polyGSOSFoldCata_fst_eq
-    (A : Over X) (P Q : PolyEndo X)
-    (rho : PolyGSOSRule P Q) {x : X}
-    (t : PolyFreeM
-      (polyCofreeCarrier A Q) P x) :
-    (polyGSOSFoldCataWithFiber
-      A P Q rho t).val.val.1 =
-    ⟨x, t⟩ := by
-  induction t with
-  | mk y idx children ih =>
-    cases idx with
-    | inl a =>
-      obtain ⟨⟨x_a, d_a⟩, ha⟩ := a
-      subst ha
-      simp only [polyGSOSFoldCataWithFiber,
-        polyGSOSFoldLeafAt, polyFreeMPure]
-      congr 1
-      congr 1
-      funext e
-      exact PEmpty.elim e
-    | inr p =>
-      simp only [polyGSOSFoldCataWithFiber,
-        polyGSOSFoldNodeAt,
-        polyFreeMStrFamily, pbefMk,
-        pbefIndex, pbefMor]
-      dsimp only [ptoefIndex, ptoefMk,
-        ccrEvalIndex, ccrEvalMk]
-      congr 1
-      congr 1
-      funext e
-      dsimp only [ptoefMor, ccrEvalMor, ccrEvalMk]
-      simp only [CategoryTheory.Over.comp_left,
-        Over.homMk_left, overPullbackFst]
-      simp only [CategoryTheory.types_comp]
-      dsimp only [Function.comp]
-      exact sigma_snd_cast_of_sigma_eq (ih e) _
-
-/--
 The Q-index produced by `srcQEvalAt` (the source
 coalgebra's Q-evaluation) equals the Q-index from
 the standard GSOS fold applied to the joined tree.
@@ -3929,7 +4026,27 @@ private lemma polyGSOSDistLaw_mul_tdist_node_qidx
         (polyFreeMCarrier
           (polyCofreeCarrier A Q) P)
         P
-        ((polyBetweenFamily X X P x p).hom e)) :
+        ((polyBetweenFamily X X P x p).hom e))
+    (_ih :
+      ∀ (e : (polyBetweenFamily X X P
+        x p).left),
+      let DQ := polyCofreeCarrier A Q
+      let TA := polyFreeMCarrier A P
+      let DQTA := polyCofreeCarrier TA Q
+      let TDQ := polyFreeMCarrier DQ P
+      let tlam := polyFreeMap TDQ DQTA P
+        (polyGSOSDistLawMor A P Q rho)
+      ((polyEndoFunctor X
+        (polyScale TA Q)).map tlam).left
+        ((polyGSOSDistLaw_mul_srcCoalg
+          A P Q rho).str.left
+          ⟨(polyBetweenFamily X X P x p).hom e,
+           children e⟩) =
+      (polyGSOSDistLaw_mul_rhsCoalg
+        A P Q rho).str.left
+        (tlam.left
+          ⟨(polyBetweenFamily X X P x p).hom e,
+           children e⟩)) :
     let TA := polyFreeMCarrier A P
     let DQTA := polyCofreeCarrier TA Q
     let TDQ :=
@@ -3959,26 +4076,47 @@ private lemma polyGSOSDistLaw_mul_tdist_node_qidx
     (polyGSOSFoldNodeAt TA P Q rho
       (pbefMk p rhsChildMor)).val.2.snd.fst := by
   intro TA DQTA TDQ lam TDQTA Prod rhsChildMor
-  dsimp only [
+  -- Both sides run polyGSOSFoldNodeAtGen with
+  -- pbefMk p childMor and extract the Q-index.
+  -- Both reduce to polyGSOSNodeQIdx P Q rho p
+  --   (per-child-Q-index).
+  -- Unfold both sides and the intermediate pipeline
+  -- simultaneously.
+  simp only [
     polyGSOSDistLaw_mul_srcQEvalAt,
     polyGSOSFoldNodeAt,
     polyGSOSFoldNodeAtGen,
-    ccrEvalMap,
+    overPullbackToIdQEval,
+    polyFreeMJoinEval,
+    ccrEvalMap, ccrEvalMk,
+    ccrEvalIndex, ccrEvalMor,
     polyBetweenComp_eval_fiberEquiv,
     polyBetweenComp_eval_fiberEquiv_toFun,
     polyBetweenComp_eval_fiberEquiv_invFun,
     polyBetweenMorphEvalAt,
-    overPullbackToIdQEval,
-    polyFreeMJoinEval,
     pbefMk, pbefIndex, pbefMor,
     ptoefMk, ptoefIndex, ptoefMor,
     ccrReindex, ccrFiberMor,
-    ccrEvalIndex, ccrEvalMor, ccrEvalMk,
     mor_to_pbe_fiber_index,
     mor_to_ptoe_fiber_index,
     mor_to_ptoe_fiber,
     ptoeLeftFiber]
-  _
+  apply congrArg Sigma.fst
+  apply congrArg ((rho.rule x).base)
+  apply congrArg (Sigma.mk p)
+  funext eg
+  simp only [Over.comp_left, types_comp_apply,
+    Over.homMk_left]
+  funext idx
+  cases idx with
+  | inl _ => rfl
+  | inr _ =>
+    simp only [ptoef_fst_eqRec]
+    rw [polyGSOSDistLaw_mul_srcQEvalAt_fst,
+      polyGSOSFoldQIndex_mul_eq]
+    unfold polyGSOSFoldQIndex
+    simp
+    congr 1
 
 private lemma
     polyGSOSDistLaw_mul_tdist_node_qchildren
@@ -4043,6 +4181,39 @@ private lemma
         rfl ≍
     (polyGSOSFoldNodeAt TA P Q rho
       (pbefMk p rhsChildMor)).val.2.snd.snd := by
+  intro TA DQTA TDQ lam TDQTA Prod rhsChildMor
+  -- The HEq is between two compositions of
+  -- Over X morphisms.  Both go through the
+  -- rho.rule pipeline but differ in per-child
+  -- data (related by ih) and in the final
+  -- join/map step (related by naturality of mu).
+  -- Strategy: unfold the polyGSOSFoldNodeAt on
+  -- the RHS enough to see the composition
+  -- structure, then show each component matches.
+  -- Both sides are Over X morphisms with:
+  -- Same target: TDQTA = polyFreeMCarrier DQTA P
+  -- Different sources (Q-families at the Q-indices
+  -- proved equal in qidx).
+  -- Strategy: use source equality to convert HEq
+  -- to Eq, then Over.OverMorphism.ext + funext_heq.
+  have hqidx :=
+    polyGSOSDistLaw_mul_tdist_node_qidx
+      A P Q rho p children ih
+  have hsrcEq :
+      ccrFamily (Q x)
+        (polyGSOSDistLaw_mul_srcQEvalAt A P Q rho
+          (PolyFix.mk x (Sum.inr p) children)).fst =
+      ccrFamily (Q x)
+        (polyGSOSFoldNodeAt TA P Q rho
+          (pbefMk p rhsChildMor)).val.2.snd.fst :=
+    congrArg (ccrFamily (Q x)) hqidx
+  apply heq_of_cast_eq
+    (congrArg (· ⟶ TDQTA) hsrcEq)
+  apply Over.OverMorphism.ext
+  funext e
+  rw [over_cast_left hsrcEq]
+  simp only [Over.comp_left, types_comp_apply,
+    Over.homMk_left]
   _
 
 private lemma polyGSOSDistLaw_mul_tdist_node
@@ -4187,7 +4358,7 @@ private lemma polyGSOSDistLaw_mul_tdist_node
         exact h_eq
       · exact
           polyGSOSDistLaw_mul_tdist_node_qidx
-            A P Q rho p children
+            A P Q rho p children ih
     · exact
         polyGSOSDistLaw_mul_tdist_node_qchildren
           A P Q rho p children ih

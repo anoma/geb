@@ -460,7 +460,7 @@ If step 2 makes the goal unreadable, factor out a
 helper `polyGSOSFoldNodeAtGen_qidx_eq` that states
 the Q-index in terms of the child Q-indices.
 
-##### MU-4 qchildren plan
+##### MU-4 qchildren plan (revised)
 
 Goal (readable):
 
@@ -470,24 +470,74 @@ srcQEvalAt(node).snd ≫ Over.homMk(T(lam)) ≍
     .val.2.snd.snd
 ```
 
-This is a HEq between Q-children morphisms. After
-establishing Q-index agreement (from qidx), the types
-agree and HEq reduces to Eq.
+HEq between Q-children morphisms. Source types
+agree by qidx.
 
-Proof steps:
+Strategy: 6-step pipeline push (generalized version
+of `polyGSOSFoldNodeAt_snd_natural`), with a new
+"fold preserves tree" lemma for the children step.
 
-1. Use qidx result to transport types
-2. Unfold enough to see both sides are morphisms
-   `ccrFamily(Q x, qidx) ⟶ TA`
-3. `Over.OverMorphism.ext` + `funext` to reduce to
-   pointwise equality
-4. Per-child equality from `ih`
+###### Lemma A: polyGSOSFoldCata_fst_eq (~20 lines)
 
-Helper lemmas needed:
+Location: after polyGSOSFoldCataWithFiber (~line 490)
 
-- Q-eval naturality under mu+lambda (new)
-- Counit coherence (existing: polyGSOSDistLaw_counit)
-- Pipeline sub-lemmas (reusable)
+Statement: `fold(A, t).val.val.1 = ⟨x, t⟩`
+
+Proof: induction on t.
+
+- Leaf: fst = `⟨x, polyFreeMPure(leaf)⟩`. The
+  original tree t is `PolyFix.mk x (Sum.inl ...) ch`.
+  polyFreeMPure creates a PolyFix.mk with the same
+  index and an empty-family children function. Since
+  the family at Sum.inl is empty, `ch` and the
+  pure's children are equal by funext over the empty
+  type. So fst.2 = t.
+- Node: fst = `⟨x, node(p, d ↦ fold(ch d).fst.2)⟩`.
+  By IH, `fold(ch d).fst = ⟨x_d, ch d⟩`, so
+  `fold(ch d).fst.2 = ch d`. Hence fst = ⟨x, t⟩.
+
+###### Lemma B: polyGSOSFoldNodeAtGen_snd_natural (~80 lines)
+
+Location: near polyGSOSFoldNodeAt_snd_natural
+
+Statement: For `g : B1 ⟶ B2`, if per-P-dir:
+`overPullbackMap(T(g), Q(T(g)))(childMor1 d) =
+  childMor2 d`
+then:
+`Q(T(g)).left(polyGSOSFoldNodeAtGen(B1, ...).val.2) =
+  polyGSOSFoldNodeAtGen(B2, ...).val.2`
+
+Proof: same 6-step pipeline push as
+polyGSOSFoldNodeAt_snd_natural:
+
+1. Join: polyFreeMJoinEval_natural
+2. toFun: polyBetweenComp_eval_toFun_natural
+3. rho: morphEvalAt_ccrEvalMap_comm
+4. invFun: polyBetweenComp_eval_invFun_natural
+5. prodComp: overPullbackToIdQEval_comm
+6. Children: congr + Over.OverMorphism.ext + funext +
+   hypothesis
+
+###### Lemma C: polyGSOSFoldMul_child_pullback_eq (~30 lines)
+
+Location: near qchildren lemma
+
+Statement: per-P-dir d,
+`overPullbackMap(T(lam), Q(T(lam)))
+  (childMor_LHS d) = childMor_RHS d`
+
+Proof: Subtype.ext + Prod.ext
+
+- fst: polyGSOSFoldCata_fst_eq (Lemma A)
+- snd: extract Q-eval from ih(d) via Scale
+  component projections
+
+###### Closing qchildren (~15 lines)
+
+Apply Lemma B with B1=TDQ, B2=DQTA, g=lam,
+children condition from Lemma C. Get full .2
+equality. Extract .snd (Q-children) using hqidx
+for type agreement.
 
 #### MU-5: Assembly (~40 lines)
 
@@ -580,16 +630,16 @@ morphism) is partially done:
 
 - Leaf case: done
 - Node annotation branch: done
-- Node qidx branch: factored into
-  `polyGSOSDistLaw_mul_tdist_node_qidx` with `_` body
-  (takes `ih` parameter). Needs: reduce the `.fst`
-  projection chain through the pipeline, then use
-  `ih` for per-child Q-index equality.
-- Node qchildren branch: factored into
-  `polyGSOSDistLaw_mul_tdist_node_qchildren` with `_`
-  body (takes `ih` parameter). Needs: establish type
-  equality from qidx, then per-child morphism equality
-  from `ih`.
+- Node qidx branch: done
+  (`polyGSOSDistLaw_mul_tdist_node_qidx`, compiling)
+- Node qchildren branch: in progress
+  (`polyGSOSDistLaw_mul_tdist_node_qchildren`).
+  Partial proof reduces to per-element goal via
+  heq_of_cast_eq + Over.OverMorphism.ext + funext.
+  Requires: polyGSOSFoldCata_fst_eq (new),
+  polyGSOSFoldNodeAtGen_snd_natural (new),
+  polyGSOSFoldMul_child_pullback_eq (new).
+  See "MU-4 qchildren plan (revised)" above.
 
 The main proof `polyGSOSDistLaw_mul_tdist_node` is
 clean (no warnings) — it dispatches to the three
