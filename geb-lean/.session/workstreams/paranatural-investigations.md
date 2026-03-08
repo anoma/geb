@@ -1813,7 +1813,7 @@ At the initial factorisation d = (a, 𝟙, f): σ = h works, so every (h, k) ∈
 End_{Arr}(f) lifts to (h, h, k). At the terminal factorisation d = (b, f, 𝟙):
 σ = k works, so every (h, k) lifts to (h, k, k).
 
-At interior factorisations, not all (h, k) may admit a compatible σ. The set
+At interior factorisations, not all (h, k) need have a compatible σ. The set
 of liftable (h, k) depends on the midpoint structure.
 
 **Arr(C) CCC characterizes full parametricity.** When C is CCC, Arr(C) =
