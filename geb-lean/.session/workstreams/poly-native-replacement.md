@@ -2,7 +2,9 @@
 
 ## Status
 
-Active
+Active -- Phase 1 complete (all polynomial versions defined
+and proven isomorphic).  Phase 2 (replacing Lean versions)
+remains.
 
 ## Context
 
@@ -78,7 +80,7 @@ This is a W-type over the base `Nat × X`.  The polynomial
   `(polyBetweenFamily X X P x i).left`, each mapping to
   `(n, (polyBetweenFamily X X P x i).hom e)`.
 
-- [ ] Polynomial version defined and proven isomorphic
+- [x] Polynomial version defined and proven isomorphic
 - [ ] Lean version replaced and removed
 
 #### PolyCofixAgree (line 677)
@@ -96,7 +98,7 @@ then show it is logically equivalent to the `Prop`-valued version.
 Alternatively, define it as a predicate on the polynomial version
 of `PolyCofixApprox`.
 
-- [ ] Polynomial version defined and proven isomorphic
+- [x] Polynomial version defined and proven isomorphic
 - [ ] Lean version replaced and removed
 
 #### PolyCofix (line 783)
@@ -111,7 +113,7 @@ have polynomial versions, `PolyCofix` should be redefined in terms
 of those polynomial versions (keeping the same structure-of-sequences
 form, but with polynomial components).
 
-- [ ] Polynomial version defined and proven isomorphic
+- [x] Polynomial version defined and proven isomorphic
 - [ ] Lean version replaced and removed
 
 ### Cofree comonad annotation types
@@ -131,7 +133,7 @@ shape tree `s`.  It can be expressed as a `PolyFix` over a base type
 that tracks both the current node in the shape and the remaining
 depth.
 
-- [ ] Polynomial version defined and proven isomorphic
+- [x] Polynomial version defined and proven isomorphic
 - [ ] Lean version replaced and removed
 
 #### PolyCofreeAnnotPosAtM (line 4273)
@@ -141,7 +143,7 @@ Variant of `PolyCofreeAnnotPosAt` operating on
 `PolyCofreeShape P x` (which specializes `A` to
 `overTerminal X`).  Same recursive structure.
 
-- [ ] Polynomial version defined and proven isomorphic
+- [x] Polynomial version defined and proven isomorphic
 - [ ] Lean version replaced and removed
 
 ### Free monad leaf position type
@@ -157,7 +159,7 @@ This computes the leaf positions of a free monad tree shape.  It
 can be expressed as a `PolyFix` over a base type that tracks the
 current subtree of the shape.
 
-- [ ] Polynomial version defined and proven isomorphic
+- [x] Polynomial version defined and proven isomorphic
 - [ ] Lean version replaced and removed
 
 ### Path segment type
@@ -173,7 +175,7 @@ expressed as a degenerate polynomial with the appropriate index
 type and an empty family (no recursive children), making
 `PolyFix` of that polynomial isomorphic to the sigma type.
 
-- [ ] Polynomial version defined and proven isomorphic
+- [x] Polynomial version defined and proven isomorphic
 - [ ] Lean version replaced and removed
 
 ## Prop-valued Types and Subsingleton Quotients

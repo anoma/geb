@@ -4068,6 +4068,145 @@ def PolyFreeMLeafPos (P : PolyEndo X) {x : X} :
       PolyFreeMLeafPos P (children e)
 
 /--
+Polynomial endofunctor on
+`Σ x, PolyFreeMShape P x` whose `PolyFix`
+encodes leaf positions in a free monad tree
+shape.
+
+At a leaf node `(x, mk _ (inl _) _)`:
+one position, no children (gives `PUnit`).
+At an internal node `(x, mk _ (inr p) ch)`:
+positions are the child edges; each maps
+to the subtree at that child.
+-/
+def polyFreeMLeafPosPoly (P : PolyEndo X) :
+    PolyEndo (Σ x, PolyFreeMShape P x) :=
+  fun ⟨x, t⟩ => match t with
+  | PolyFix.mk _ (Sum.inl _) _ =>
+    ccrObjMk (fun (_ : PUnit) =>
+      overEmpty (Σ x, PolyFreeMShape P x))
+  | PolyFix.mk _ (Sum.inr p) children =>
+    ccrObjMk
+      (fun (e :
+          (polyBetweenFamily X X P x p).left) =>
+        Over.mk (f := fun (_ : PUnit) =>
+          ⟨(polyBetweenFamily X X P x p).hom e,
+            children e⟩))
+
+/--
+Convert a `PolyFix (polyFreeMLeafPosPoly P)`
+element to `PolyFreeMLeafPos P`.
+-/
+def polyFreeMLeafPosFromPoly (P : PolyEndo X)
+    {x : X} (t : PolyFreeMShape P x) :
+    PolyFix (polyFreeMLeafPosPoly P) ⟨x, t⟩ →
+    PolyFreeMLeafPos P t :=
+  match t with
+  | PolyFix.mk _ (Sum.inl _) _ =>
+    fun wt =>
+      match wt with
+      | PolyFix.mk _ PUnit.unit _ => PUnit.unit
+  | PolyFix.mk _ (Sum.inr _) children =>
+    fun wt =>
+      match wt with
+      | PolyFix.mk _ e ch =>
+        ⟨e, polyFreeMLeafPosFromPoly P
+          (children e) (ch PUnit.unit)⟩
+
+/--
+Convert a `PolyFreeMLeafPos P` element to
+a `PolyFix (polyFreeMLeafPosPoly P)` element.
+-/
+def polyFreeMLeafPosToPoly (P : PolyEndo X)
+    {x : X} (t : PolyFreeMShape P x) :
+    PolyFreeMLeafPos P t →
+    PolyFix (polyFreeMLeafPosPoly P) ⟨x, t⟩ := by
+  match t with
+  | PolyFix.mk _ (Sum.inl a) ch =>
+    intro _
+    exact PolyFix.mk _ (show PUnit from .unit)
+      (fun e => PEmpty.elim e)
+  | PolyFix.mk _ (Sum.inr p) children =>
+    intro ⟨e, pos⟩
+    exact PolyFix.mk _ (show
+      (polyBetweenFamily X X P x p).left from e)
+      (fun _ =>
+        polyFreeMLeafPosToPoly P
+          (children e) pos)
+
+/--
+Round-trip from `PolyFix` to leaf position
+and back.
+-/
+lemma polyFreeMLeafPos_toPoly_fromPoly
+    (P : PolyEndo X) {x : X}
+    (t : PolyFreeMShape P x)
+    (w : PolyFix (polyFreeMLeafPosPoly P)
+      ⟨x, t⟩) :
+    polyFreeMLeafPosToPoly P t
+      (polyFreeMLeafPosFromPoly P t w) = w := by
+  match t with
+  | PolyFix.mk _ (Sum.inl _) _ =>
+    match w with
+    | PolyFix.mk _ (i : PUnit) ch =>
+      cases i
+      simp only [polyFreeMLeafPosToPoly]
+      congr 1
+      funext e; exact PEmpty.elim e
+  | PolyFix.mk _ (Sum.inr _) children =>
+    match w with
+    | PolyFix.mk _ e ch =>
+      simp only [polyFreeMLeafPosFromPoly,
+        polyFreeMLeafPosToPoly]
+      congr 1
+      funext u
+      cases u
+      exact polyFreeMLeafPos_toPoly_fromPoly P
+        (children e) (ch PUnit.unit)
+
+/--
+Round-trip from leaf position to `PolyFix`
+and back.
+-/
+lemma polyFreeMLeafPos_fromPoly_toPoly
+    (P : PolyEndo X) {x : X}
+    (t : PolyFreeMShape P x)
+    (pos : PolyFreeMLeafPos P t) :
+    polyFreeMLeafPosFromPoly P t
+      (polyFreeMLeafPosToPoly P t pos) =
+    pos := by
+  match t with
+  | PolyFix.mk _ (Sum.inl _) _ =>
+    change _ = (pos : PUnit)
+    cases pos
+    rfl
+  | PolyFix.mk _ (Sum.inr _) children =>
+    obtain ⟨e, rest⟩ := (pos :
+      Σ (e : _), PolyFreeMLeafPos P
+        (children e))
+    simp only [polyFreeMLeafPosToPoly,
+      polyFreeMLeafPosFromPoly]
+    congr 1
+    exact polyFreeMLeafPos_fromPoly_toPoly P
+      (children e) rest
+
+/--
+The equivalence between
+`PolyFix (polyFreeMLeafPosPoly P) ⟨x, t⟩`
+and `PolyFreeMLeafPos P t`.
+-/
+def polyFreeMLeafPosEquiv (P : PolyEndo X)
+    {x : X} (t : PolyFreeMShape P x) :
+    PolyFix (polyFreeMLeafPosPoly P) ⟨x, t⟩ ≃
+    PolyFreeMLeafPos P t where
+  toFun := polyFreeMLeafPosFromPoly P t
+  invFun := polyFreeMLeafPosToPoly P t
+  left_inv :=
+    polyFreeMLeafPos_toPoly_fromPoly P t
+  right_inv :=
+    polyFreeMLeafPos_fromPoly_toPoly P t
+
+/--
 The fiber of a leaf position. Given a tree shape and a leaf position in it,
 returns the fiber at which that leaf lives.
 -/
@@ -4531,6 +4670,154 @@ def PolyCofreeAnnotPosAt (P : PolyEndo X) {x : X}
       PolyCofreeAnnotPosAt P (s.children e) n
 
 /--
+Polynomial endofunctor on
+`Nat × (Σ x, PolyCofreeShape P x)` whose
+`PolyFix` encodes annotation positions in a
+cofree comonad shape at a given depth.
+
+At depth 0: one position, no children.
+At depth `n + 1`: positions are child edges;
+each child maps to `(n, subtree)`.
+-/
+def polyCofreeAnnotPosAtPoly (P : PolyEndo X) :
+    PolyEndo (Nat × (Σ x, PolyCofreeShape P x)) :=
+  fun ⟨n, x, s⟩ => match n with
+  | 0 => ccrObjMk (fun (_ : PUnit) =>
+      overEmpty
+        (Nat × (Σ x, PolyCofreeShape P x)))
+  | n + 1 => ccrObjMk
+      (fun (e :
+        (polyBetweenFamily X X P x
+          s.head.2).left) =>
+        Over.mk (f := fun (_ : PUnit) =>
+          (n,
+            ⟨(polyBetweenFamily X X P x
+                s.head.2).hom e,
+              s.children e⟩)))
+
+/--
+Convert a `PolyFix (polyCofreeAnnotPosAtPoly P)`
+element to `PolyCofreeAnnotPosAt P s n`.
+-/
+def polyCofreeAnnotPosAtFromPoly
+    (P : PolyEndo X) {x : X}
+    (s : PolyCofreeShape P x) (n : Nat) :
+    PolyFix (polyCofreeAnnotPosAtPoly P)
+      (n, ⟨x, s⟩) →
+    PolyCofreeAnnotPosAt P s n := by
+  match n with
+  | 0 =>
+    intro w
+    exact PUnit.unit
+  | n + 1 =>
+    intro w
+    match w with
+    | PolyFix.mk _ e ch =>
+      exact ⟨e, polyCofreeAnnotPosAtFromPoly P
+        (s.children e) n (ch PUnit.unit)⟩
+
+/--
+Convert a `PolyCofreeAnnotPosAt P s n` element
+to `PolyFix (polyCofreeAnnotPosAtPoly P)`.
+-/
+def polyCofreeAnnotPosAtToPoly
+    (P : PolyEndo X) {x : X}
+    (s : PolyCofreeShape P x) (n : Nat) :
+    PolyCofreeAnnotPosAt P s n →
+    PolyFix (polyCofreeAnnotPosAtPoly P)
+      (n, ⟨x, s⟩) := by
+  match n with
+  | 0 =>
+    intro _
+    exact PolyFix.mk _ (show PUnit from .unit)
+      (fun e => PEmpty.elim e)
+  | n + 1 =>
+    intro ⟨e, rest⟩
+    exact PolyFix.mk _ (show
+      (polyBetweenFamily X X P x
+        s.head.2).left from e)
+      (fun _ =>
+        polyCofreeAnnotPosAtToPoly P
+          (s.children e) n rest)
+
+/--
+Round-trip from `PolyFix` to annotation position
+and back.
+-/
+lemma polyCofreeAnnotPosAt_toPoly_fromPoly
+    (P : PolyEndo X) {x : X}
+    (s : PolyCofreeShape P x) (n : Nat)
+    (w : PolyFix (polyCofreeAnnotPosAtPoly P)
+      (n, ⟨x, s⟩)) :
+    polyCofreeAnnotPosAtToPoly P s n
+      (polyCofreeAnnotPosAtFromPoly P s n w) =
+    w := by
+  match n with
+  | 0 =>
+    match w with
+    | PolyFix.mk _ (i : PUnit) ch =>
+      cases i
+      simp only [polyCofreeAnnotPosAtToPoly]
+      congr 1
+      funext e; exact PEmpty.elim e
+  | n + 1 =>
+    match w with
+    | PolyFix.mk _ e ch =>
+      simp only [polyCofreeAnnotPosAtFromPoly,
+        polyCofreeAnnotPosAtToPoly]
+      congr 1
+      funext u
+      cases u
+      exact polyCofreeAnnotPosAt_toPoly_fromPoly P
+        (s.children e) n (ch PUnit.unit)
+
+/--
+Round-trip from annotation position to `PolyFix`
+and back.
+-/
+lemma polyCofreeAnnotPosAt_fromPoly_toPoly
+    (P : PolyEndo X) {x : X}
+    (s : PolyCofreeShape P x) (n : Nat)
+    (pos : PolyCofreeAnnotPosAt P s n) :
+    polyCofreeAnnotPosAtFromPoly P s n
+      (polyCofreeAnnotPosAtToPoly P s n pos) =
+    pos := by
+  match n with
+  | 0 =>
+    change _ = (pos : PUnit)
+    cases pos
+    rfl
+  | n + 1 =>
+    obtain ⟨e, rest⟩ := (pos :
+      Σ (e : _),
+        PolyCofreeAnnotPosAt P (s.children e) n)
+    simp only [polyCofreeAnnotPosAtToPoly,
+      polyCofreeAnnotPosAtFromPoly]
+    congr 1
+    exact polyCofreeAnnotPosAt_fromPoly_toPoly P
+      (s.children e) n rest
+
+/--
+The equivalence between
+`PolyFix (polyCofreeAnnotPosAtPoly P)
+  (n, ⟨x, s⟩)` and
+`PolyCofreeAnnotPosAt P s n`.
+-/
+def polyCofreeAnnotPosAtEquiv (P : PolyEndo X)
+    {x : X} (s : PolyCofreeShape P x) (n : Nat) :
+    PolyFix (polyCofreeAnnotPosAtPoly P)
+      (n, ⟨x, s⟩) ≃
+    PolyCofreeAnnotPosAt P s n where
+  toFun :=
+    polyCofreeAnnotPosAtFromPoly P s n
+  invFun :=
+    polyCofreeAnnotPosAtToPoly P s n
+  left_inv :=
+    polyCofreeAnnotPosAt_toPoly_fromPoly P s n
+  right_inv :=
+    polyCofreeAnnotPosAt_fromPoly_toPoly P s n
+
+/--
 Annotation positions in a cofree comonad shape: either the root or a position
 at some depth.
 -/
@@ -4813,6 +5100,168 @@ def PolyCofreeAnnotPosAtM (A : Over X) (P : PolyEndo X) {x : X}
   | n + 1 =>
     Σ (e : (polyBetweenFamily X X (polyScale A P) x m.head).left),
       PolyCofreeAnnotPosAtM A P (m.children e) n
+
+/--
+Polynomial endofunctor on
+`Nat × (Σ x, PolyCofreeM A P x)` whose
+`PolyFix` encodes annotation positions in an
+M-type at a given depth.
+
+At depth 0: one position, no children.
+At depth `n + 1`: positions are child edges;
+each child maps to `(n, subtree)`.
+-/
+def polyCofreeAnnotPosAtMPoly
+    (A : Over X) (P : PolyEndo X) :
+    PolyEndo
+      (Nat × (Σ x, PolyCofreeM A P x)) :=
+  fun ⟨n, x, m⟩ => match n with
+  | 0 => ccrObjMk (fun (_ : PUnit) =>
+      overEmpty
+        (Nat × (Σ x, PolyCofreeM A P x)))
+  | n + 1 => ccrObjMk
+      (fun (e :
+        (polyBetweenFamily X X (polyScale A P)
+          x m.head).left) =>
+        Over.mk (f := fun (_ : PUnit) =>
+          (n,
+            ⟨(polyBetweenFamily X X
+                (polyScale A P)
+                x m.head).hom e,
+              m.children e⟩)))
+
+/--
+Convert a
+`PolyFix (polyCofreeAnnotPosAtMPoly A P)`
+element to `PolyCofreeAnnotPosAtM A P m n`.
+-/
+def polyCofreeAnnotPosAtMFromPoly
+    (A : Over X) (P : PolyEndo X) {x : X}
+    (m : PolyCofreeM A P x) (n : Nat) :
+    PolyFix (polyCofreeAnnotPosAtMPoly A P)
+      (n, ⟨x, m⟩) →
+    PolyCofreeAnnotPosAtM A P m n := by
+  match n with
+  | 0 =>
+    intro _
+    exact PUnit.unit
+  | n + 1 =>
+    intro w
+    match w with
+    | PolyFix.mk _ e ch =>
+      exact ⟨e,
+        polyCofreeAnnotPosAtMFromPoly A P
+          (m.children e) n (ch PUnit.unit)⟩
+
+/--
+Convert a `PolyCofreeAnnotPosAtM A P m n`
+element to
+`PolyFix (polyCofreeAnnotPosAtMPoly A P)`.
+-/
+def polyCofreeAnnotPosAtMToPoly
+    (A : Over X) (P : PolyEndo X) {x : X}
+    (m : PolyCofreeM A P x) (n : Nat) :
+    PolyCofreeAnnotPosAtM A P m n →
+    PolyFix (polyCofreeAnnotPosAtMPoly A P)
+      (n, ⟨x, m⟩) := by
+  match n with
+  | 0 =>
+    intro _
+    exact PolyFix.mk _ (show PUnit from .unit)
+      (fun e => PEmpty.elim e)
+  | n + 1 =>
+    intro ⟨e, rest⟩
+    exact PolyFix.mk _ (show
+      (polyBetweenFamily X X (polyScale A P)
+        x m.head).left from e)
+      (fun _ =>
+        polyCofreeAnnotPosAtMToPoly A P
+          (m.children e) n rest)
+
+/--
+Round-trip from `PolyFix` to M-type annotation
+position and back.
+-/
+lemma polyCofreeAnnotPosAtM_toPoly_fromPoly
+    (A : Over X) (P : PolyEndo X) {x : X}
+    (m : PolyCofreeM A P x) (n : Nat)
+    (w : PolyFix (polyCofreeAnnotPosAtMPoly A P)
+      (n, ⟨x, m⟩)) :
+    polyCofreeAnnotPosAtMToPoly A P m n
+      (polyCofreeAnnotPosAtMFromPoly A P
+        m n w) =
+    w := by
+  match n with
+  | 0 =>
+    match w with
+    | PolyFix.mk _ (i : PUnit) ch =>
+      cases i
+      simp only [polyCofreeAnnotPosAtMToPoly]
+      congr 1
+      funext e; exact PEmpty.elim e
+  | n + 1 =>
+    match w with
+    | PolyFix.mk _ e ch =>
+      simp only [polyCofreeAnnotPosAtMFromPoly,
+        polyCofreeAnnotPosAtMToPoly]
+      congr 1
+      funext u
+      cases u
+      exact
+        polyCofreeAnnotPosAtM_toPoly_fromPoly
+          A P (m.children e) n (ch PUnit.unit)
+
+/--
+Round-trip from M-type annotation position
+to `PolyFix` and back.
+-/
+lemma polyCofreeAnnotPosAtM_fromPoly_toPoly
+    (A : Over X) (P : PolyEndo X) {x : X}
+    (m : PolyCofreeM A P x) (n : Nat)
+    (pos : PolyCofreeAnnotPosAtM A P m n) :
+    polyCofreeAnnotPosAtMFromPoly A P m n
+      (polyCofreeAnnotPosAtMToPoly A P
+        m n pos) =
+    pos := by
+  match n with
+  | 0 =>
+    change _ = (pos : PUnit)
+    cases pos
+    rfl
+  | n + 1 =>
+    obtain ⟨e, rest⟩ := (pos :
+      Σ (e : _),
+        PolyCofreeAnnotPosAtM A P
+          (m.children e) n)
+    simp only [polyCofreeAnnotPosAtMToPoly,
+      polyCofreeAnnotPosAtMFromPoly]
+    congr 1
+    exact
+      polyCofreeAnnotPosAtM_fromPoly_toPoly
+        A P (m.children e) n rest
+
+/--
+The equivalence between
+`PolyFix (polyCofreeAnnotPosAtMPoly A P)
+  (n, ⟨x, m⟩)` and
+`PolyCofreeAnnotPosAtM A P m n`.
+-/
+def polyCofreeAnnotPosAtMEquiv
+    (A : Over X) (P : PolyEndo X)
+    {x : X} (m : PolyCofreeM A P x) (n : Nat) :
+    PolyFix (polyCofreeAnnotPosAtMPoly A P)
+      (n, ⟨x, m⟩) ≃
+    PolyCofreeAnnotPosAtM A P m n where
+  toFun :=
+    polyCofreeAnnotPosAtMFromPoly A P m n
+  invFun :=
+    polyCofreeAnnotPosAtMToPoly A P m n
+  left_inv :=
+    polyCofreeAnnotPosAtM_toPoly_fromPoly
+      A P m n
+  right_inv :=
+    polyCofreeAnnotPosAtM_fromPoly_toPoly
+      A P m n
 
 /--
 The fiber at an M-type position at depth n.
