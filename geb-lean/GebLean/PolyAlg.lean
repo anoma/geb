@@ -1175,6 +1175,27 @@ def polyCofixToPoly (P : PolyEndo X) (x : X)
     polyCofixAgreeToQ P ag
 
 /--
+Two `PolyCofixPoly` values with the same
+`approx` field are equal, because `PolyCofixAgreeQ`
+is a subsingleton at each base point.
+-/
+lemma PolyCofixPoly.ext_approx
+    {P : PolyEndo X} {x : X}
+    {m1 m2 : PolyCofixPoly P x}
+    (h : m1.approx = m2.approx) : m1 = m2 := by
+  cases m1 with
+  | mk a1 c1 =>
+    cases m2 with
+    | mk a2 c2 =>
+      simp only [] at h
+      subst h
+      congr 1
+      funext n
+      exact
+        (Quotient.trueSetoid_subsingleton _).allEq
+          _ _
+
+/--
 Round-trip `PolyCofixPoly → PolyCofix → PolyCofixPoly`
 returns the original element.
 -/
@@ -1182,29 +1203,11 @@ lemma polyCofixToPoly_fromPoly (P : PolyEndo X)
     (x : X) (m : PolyCofixPoly P x) :
     polyCofixToPoly P x (polyCofixFromPoly P x m) =
     m := by
-  cases m with
-  | mk a c =>
-    simp only [polyCofixFromPoly, polyCofixToPoly]
-    have happ : ∀ n,
-        polyCofixApproxToPoly P n x
-          (polyCofixApproxFromPoly P n x
-            (a n)) =
-        a n :=
-      fun n =>
-        polyCofixApproxToPoly_fromPoly P n x _
-    have heq : (fun n =>
-        polyCofixApproxToPoly P n x
-          (polyCofixApproxFromPoly P n x
-            (a n))) = a :=
-      funext happ
-    revert c
-    simp only [heq]
-    intro c
-    congr 1
-    funext n
-    exact
-      (Quotient.trueSetoid_subsingleton _).allEq
-        _ _
+  apply PolyCofixPoly.ext_approx
+  funext n
+  simp only [polyCofixFromPoly, polyCofixToPoly]
+  exact
+    polyCofixApproxToPoly_fromPoly P n x _
 
 /--
 Round-trip `PolyCofix → PolyCofixPoly → PolyCofix`
@@ -4428,6 +4431,92 @@ structure PolyCofreePathSeg (P : PolyEndo X) where
   fiber : X
   idx : polyBetweenIndex X X P fiber
   childIdx : (polyBetweenFamily X X P fiber idx).left
+
+/--
+Polynomial endofunctor whose `PolyFix` at fiber `x`
+is isomorphic to the set of path-segment data at `x`:
+a pair `(idx, childIdx)` with no recursive children.
+-/
+def polyCofreePathSegPoly (P : PolyEndo X) :
+    PolyEndo X :=
+  fun x => ccrObjMk
+    (fun (_ : Σ (idx : polyBetweenIndex X X P x),
+        (polyBetweenFamily X X P x idx).left) =>
+      overEmpty X)
+
+/--
+Convert a `PolyFix` element of
+`polyCofreePathSegPoly P` at fiber `x`
+to a `PolyCofreePathSeg P` with `fiber = x`.
+-/
+def polyCofreePathSegFromPoly (P : PolyEndo X)
+    (x : X) :
+    PolyFix (polyCofreePathSegPoly P) x →
+    { s : PolyCofreePathSeg P // s.fiber = x }
+  | PolyFix.mk _ ⟨idx, childIdx⟩ _ =>
+    ⟨⟨x, idx, childIdx⟩, rfl⟩
+
+/--
+Convert a `PolyCofreePathSeg P` with `fiber = x`
+to a `PolyFix` element of
+`polyCofreePathSegPoly P` at fiber `x`.
+-/
+def polyCofreePathSegToPoly (P : PolyEndo X)
+    (x : X)
+    (s : { s : PolyCofreePathSeg P //
+      s.fiber = x }) :
+    PolyFix (polyCofreePathSegPoly P) x := by
+  obtain ⟨⟨f, idx, childIdx⟩, hf⟩ := s
+  subst hf
+  exact PolyFix.mk _
+    ⟨idx, childIdx⟩
+    (fun e => PEmpty.elim e)
+
+/--
+Round-trip from `PolyFix` to subtype and back.
+-/
+lemma polyCofreePathSeg_toPoly_fromPoly
+    (P : PolyEndo X) (x : X)
+    (t : PolyFix (polyCofreePathSegPoly P) x) :
+    polyCofreePathSegToPoly P x
+      (polyCofreePathSegFromPoly P x t) = t := by
+  cases t with
+  | mk _ idx children =>
+    obtain ⟨i, c⟩ := idx
+    simp only [polyCofreePathSegFromPoly,
+      polyCofreePathSegToPoly]
+    congr 1
+    funext e
+    exact PEmpty.elim e
+
+/--
+Round-trip from subtype to `PolyFix` and back.
+-/
+lemma polyCofreePathSeg_fromPoly_toPoly
+    (P : PolyEndo X) (x : X)
+    (s : { s : PolyCofreePathSeg P //
+      s.fiber = x }) :
+    polyCofreePathSegFromPoly P x
+      (polyCofreePathSegToPoly P x s) = s := by
+  obtain ⟨⟨f, idx, childIdx⟩, hf⟩ := s
+  subst hf
+  rfl
+
+/--
+The equivalence between
+`PolyFix (polyCofreePathSegPoly P) x`
+and path segments with `fiber = x`.
+-/
+def polyCofreePathSegEquiv (P : PolyEndo X)
+    (x : X) :
+    PolyFix (polyCofreePathSegPoly P) x ≃
+    { s : PolyCofreePathSeg P // s.fiber = x } where
+  toFun := polyCofreePathSegFromPoly P x
+  invFun := polyCofreePathSegToPoly P x
+  left_inv :=
+    polyCofreePathSeg_toPoly_fromPoly P x
+  right_inv :=
+    polyCofreePathSeg_fromPoly_toPoly P x
 
 /--
 Annotation positions in a cofree comonad shape at depth n.
