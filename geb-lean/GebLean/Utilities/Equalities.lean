@@ -1227,6 +1227,15 @@ theorem sigma_subst_fst_stable {α : Type*} {I : Type*} {β : α → I → Type*
   subst h
   rfl
 
+@[simp]
+theorem sigma_subst_fst {α : Type*}
+    {I : α → Type*}
+    {F : (a : α) → I a → Type*}
+    {a b : α} (h : a = b)
+    (s : Σ j : I a, F a j) :
+    (h ▸ s).fst = h ▸ s.fst := by
+  subst h; rfl
+
 /--
 Equality of triple-nested sigma types when all three indices are equal
 and the innermost values (in a product) are HEq. The structure is:
