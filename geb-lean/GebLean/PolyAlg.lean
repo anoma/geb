@@ -1,5 +1,6 @@
 import GebLean.PolyAdjunctions
 import GebLean.Utilities.Equalities
+import GebLean.Utilities.SetoidCat
 import Mathlib.CategoryTheory.Adjunction.Limits
 import Mathlib.Data.Finset.Lattice.Fold
 import Mathlib.Data.Fintype.Sigma
@@ -966,20 +967,60 @@ instance instSubsingletonPolyCofixAgreePolyFix
   ⟨polyCofixAgreePolyFix_eq P base⟩
 
 /--
-The `PolyFix` of `polyCofixAgreePoly P` at a base
-point `⟨n, x, a, b⟩` is nonempty if and only if
-`PolyCofixAgree P a b` holds.
+The quotient of `PolyFix (polyCofixAgreePoly P)` by
+`trueSetoid`, producing a subsingleton in `Type u`.
 -/
-theorem polyCofixAgreeEquiv (P : PolyEndo X)
+abbrev PolyCofixAgreeQ (P : PolyEndo X)
+    (base : PolyCofixAgreeBase P) : Type u :=
+  Quotient (@trueSetoid
+    (PolyFix (polyCofixAgreePoly P) base))
+
+/--
+Forward: quotient of polynomial agree to
+`PolyCofixAgree`.
+-/
+def polyCofixAgreeFromQ (P : PolyEndo X)
     (n : Nat) (x : X)
     (a : PolyCofixApprox P n x)
     (b : PolyCofixApprox P (n + 1) x) :
-    Nonempty (PolyFix (polyCofixAgreePoly P)
-      (⟨n, x, a, b⟩ :
-        PolyCofixAgreeBase P)) ↔
+    PolyCofixAgreeQ P ⟨n, x, a, b⟩ →
     PolyCofixAgree P a b :=
-  ⟨fun ⟨t⟩ => polyCofixAgreeFromPoly P n x a b t,
-   fun ag => ⟨polyCofixAgreeToPoly P a b ag⟩⟩
+  Quotient.lift
+    (polyCofixAgreeFromPoly P n x a b)
+    (fun _ _ _ =>
+      (inferInstance :
+        Subsingleton (PolyCofixAgree P a b)).allEq
+          _ _)
+
+/--
+Backward: `PolyCofixAgree` to quotient of polynomial
+agree.
+-/
+def polyCofixAgreeToQ (P : PolyEndo X)
+    {n : Nat} {x : X}
+    {a : PolyCofixApprox P n x}
+    {b : PolyCofixApprox P (n + 1) x}
+    (ag : PolyCofixAgree P a b) :
+    PolyCofixAgreeQ P ⟨n, x, a, b⟩ :=
+  Quotient.mk _ (polyCofixAgreeToPoly P a b ag)
+
+/--
+The quotient `PolyCofixAgreeQ P` at a base point
+`⟨n, x, a, b⟩` is equivalent to
+`PolyCofixAgree P a b`.
+-/
+def polyCofixAgreeEquiv (P : PolyEndo X)
+    (n : Nat) (x : X)
+    (a : PolyCofixApprox P n x)
+    (b : PolyCofixApprox P (n + 1) x) :
+    PolyCofixAgreeQ P ⟨n, x, a, b⟩ ≃
+    PLift (PolyCofixAgree P a b) where
+  toFun q := ⟨polyCofixAgreeFromQ P n x a b q⟩
+  invFun p := polyCofixAgreeToQ P p.down
+  left_inv := fun _ =>
+    (Quotient.trueSetoid_subsingleton _).allEq _ _
+  right_inv := fun _ =>
+    (instSubsingletonPLift).allEq _ _
 
 lemma PolyCofixApprox.continue_cast {P : PolyEndo X} {x y : X} (h : x = y) :
     h ▸ PolyCofixApprox.continue (P := P) x = PolyCofixApprox.continue y := by
@@ -1070,6 +1111,24 @@ section PolyCofix
 variable {X : Type u}
 
 /--
+The cofixed point (M-type) of a polynomial endofunctor
+at a fiber, with polynomial components.
+
+The approximations are W-type elements of
+`polyCofixApproxPoly P` and the consistency witnesses
+are quotient elements of `polyCofixAgreePoly P`.
+-/
+structure PolyCofixPoly (P : PolyEndo X) (x : X) where
+  approx :
+    ∀ n, PolyFix (polyCofixApproxPoly P) (n, x)
+  consistent :
+    ∀ n, PolyCofixAgreeQ P
+      ⟨n, x,
+        polyCofixApproxFromPoly P n x (approx n),
+        polyCofixApproxFromPoly P (n + 1) x
+          (approx (n + 1))⟩
+
+/--
 The cofixed point (M-type) of a polynomial endofunctor at a fiber.
 
 An element consists of:
@@ -1079,6 +1138,99 @@ An element consists of:
 structure PolyCofix (P : PolyEndo X) (x : X) where
   approx : ∀ n, PolyCofixApprox P n x
   consistent : ∀ n, PolyCofixAgree P (approx n) (approx (n + 1))
+
+/--
+Convert a `PolyCofixPoly` to a `PolyCofix` by
+converting each polynomial approximation and
+extracting agree witnesses from quotients.
+-/
+def polyCofixFromPoly (P : PolyEndo X) (x : X)
+    (m : PolyCofixPoly P x) : PolyCofix P x where
+  approx n :=
+    polyCofixApproxFromPoly P n x (m.approx n)
+  consistent n :=
+    polyCofixAgreeFromQ P n x _ _ (m.consistent n)
+
+/--
+Convert a `PolyCofix` to a `PolyCofixPoly` by
+converting each approximation to polynomial form
+and wrapping agree witnesses in quotients.
+-/
+def polyCofixToPoly (P : PolyEndo X) (x : X)
+    (m : PolyCofix P x) : PolyCofixPoly P x where
+  approx n :=
+    polyCofixApproxToPoly P n x (m.approx n)
+  consistent n :=
+    let a := polyCofixApproxFromPoly P n x
+      (polyCofixApproxToPoly P n x (m.approx n))
+    let b := polyCofixApproxFromPoly P (n + 1) x
+      (polyCofixApproxToPoly P (n + 1) x
+        (m.approx (n + 1)))
+    let ha : a = m.approx n :=
+      polyCofixApproxFromPoly_toPoly P n x _
+    let hb : b = m.approx (n + 1) :=
+      polyCofixApproxFromPoly_toPoly P (n + 1) x _
+    let ag : PolyCofixAgree P a b :=
+      ha ▸ hb ▸ m.consistent n
+    polyCofixAgreeToQ P ag
+
+/--
+Round-trip `PolyCofixPoly → PolyCofix → PolyCofixPoly`
+returns the original element.
+-/
+lemma polyCofixToPoly_fromPoly (P : PolyEndo X)
+    (x : X) (m : PolyCofixPoly P x) :
+    polyCofixToPoly P x (polyCofixFromPoly P x m) =
+    m := by
+  cases m with
+  | mk a c =>
+    simp only [polyCofixFromPoly, polyCofixToPoly]
+    have happ : ∀ n,
+        polyCofixApproxToPoly P n x
+          (polyCofixApproxFromPoly P n x
+            (a n)) =
+        a n :=
+      fun n =>
+        polyCofixApproxToPoly_fromPoly P n x _
+    have heq : (fun n =>
+        polyCofixApproxToPoly P n x
+          (polyCofixApproxFromPoly P n x
+            (a n))) = a :=
+      funext happ
+    revert c
+    simp only [heq]
+    intro c
+    congr 1
+    funext n
+    exact
+      (Quotient.trueSetoid_subsingleton _).allEq
+        _ _
+
+/--
+Round-trip `PolyCofix → PolyCofixPoly → PolyCofix`
+returns the original element.
+-/
+lemma polyCofixFromPoly_toPoly (P : PolyEndo X)
+    (x : X) (m : PolyCofix P x) :
+    polyCofixFromPoly P x (polyCofixToPoly P x m) =
+    m := by
+  cases m with
+  | mk a c =>
+    simp only [polyCofixFromPoly, polyCofixToPoly]
+    congr 1
+    · exact funext fun n =>
+        polyCofixApproxFromPoly_toPoly P n x _
+
+/--
+The equivalence between `PolyCofixPoly P x`
+and `PolyCofix P x`.
+-/
+def polyCofixEquiv (P : PolyEndo X) (x : X) :
+    PolyCofixPoly P x ≃ PolyCofix P x where
+  toFun := polyCofixFromPoly P x
+  invFun := polyCofixToPoly P x
+  left_inv := polyCofixToPoly_fromPoly P x
+  right_inv := polyCofixFromPoly_toPoly P x
 
 /--
 Get the head (index) of a cofixed point element.
