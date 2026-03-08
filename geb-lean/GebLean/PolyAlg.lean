@@ -801,6 +801,186 @@ inductive PolyCofixAgree (P : PolyEndo X) :
       (h : ∀ e, PolyCofixAgree P (f e) (f' e)) :
       PolyCofixAgree P (.intro x i f) (.intro x i f')
 
+/--
+The base type for the polynomial encoding of `PolyCofixAgree`:
+pairs of successive approximations at the same fiber.
+-/
+abbrev PolyCofixAgreeBase (P : PolyEndo X) : Type u :=
+  Σ (n : Nat) (x : X),
+    PolyCofixApprox P n x × PolyCofixApprox P (n + 1) x
+
+/--
+The polynomial endofunctor on
+`Over (PolyCofixAgreeBase P)` whose `PolyFix` encodes
+`PolyCofixAgree P`.
+
+At depth 0 (the `continue` case), there is one position
+and no children.  At depth `n + 1`, a position exists
+exactly when the two `.intro` nodes share the same index;
+children recurse on each fiber element.
+-/
+def polyCofixAgreePoly (P : PolyEndo X) :
+    PolyEndo (PolyCofixAgreeBase P) :=
+  fun ⟨n, x, a, b⟩ =>
+    match n, a, b with
+    | 0, _, b₁ =>
+      ccrObjMk (fun _ : PUnit =>
+        Over.mk
+          (f := fun e : PEmpty => PEmpty.elim e))
+    | n + 1, PolyCofixApprox.intro x₁ i f, b₁ =>
+      ccrObjMk
+        (fun (p : ULift.{u}
+            (PLift (b₁.getIndex = i))) =>
+          let h := p.down.down
+          Over.mk
+            (f := fun
+              (e : (polyBetweenFamily X X P
+                x₁ i).left) =>
+              (⟨n,
+                (polyBetweenFamily X X P
+                  x₁ i).hom e,
+                f e,
+                (h ▸ b₁.getChildren) e⟩ :
+                PolyCofixAgreeBase P)))
+
+/--
+Forward direction: convert a `PolyFix` of `polyCofixAgreePoly P`
+to `PolyCofixAgree P`.
+-/
+def polyCofixAgreeFromPoly (P : PolyEndo X)
+    (n : Nat) (x : X)
+    (a : PolyCofixApprox P n x)
+    (b : PolyCofixApprox P (n + 1) x) :
+    PolyFix (polyCofixAgreePoly P)
+      (⟨n, x, a, b⟩ : PolyCofixAgreeBase P) →
+    PolyCofixAgree P a b :=
+  fun t => match n, a, b, t with
+  | 0, PolyCofixApprox.continue x₁, b₁,
+      PolyFix.mk _ _ _ =>
+    PolyCofixAgree.continue x₁ b₁
+  | n + 1, PolyCofixApprox.intro x₁ i f,
+      PolyCofixApprox.intro _ j g,
+      PolyFix.mk _ idx children =>
+    let h : j = i := idx.down.down
+    match j, g, idx, children, h with
+    | _, g₁, _, children₁, rfl =>
+      PolyCofixAgree.intro f g₁
+        (fun e =>
+          polyCofixAgreeFromPoly P n
+            ((polyBetweenFamily X X P x₁ i
+              ).hom e)
+            (f e) (g₁ e)
+            (children₁ e))
+
+/--
+Backward direction: convert a `PolyCofixAgree P` to
+the corresponding `PolyFix`.
+
+The recursion proceeds on the approximation structure
+(in `Type`), extracting `Prop`-valued lemmas from the
+agreement proof.  This avoids the large elimination
+restriction.
+-/
+def polyCofixAgreeToPoly (P : PolyEndo X)
+    {n : Nat} {x : X}
+    (a : PolyCofixApprox P n x)
+    (b : PolyCofixApprox P (n + 1) x)
+    (ag : PolyCofixAgree P a b) :
+    PolyFix (polyCofixAgreePoly P)
+      (⟨n, x, a, b⟩ :
+        PolyCofixAgreeBase P) :=
+  match n, a, b with
+  | 0, .continue _, _ =>
+    PolyFix.mk _ PUnit.unit
+      (fun e => PEmpty.elim e)
+  | k + 1, .intro _ i f, .intro _ j g =>
+    have h : j = i := by cases ag; rfl
+    match j, g, ag, h with
+    | _, g₁, ag₁, rfl =>
+      have hch :
+          ∀ e, PolyCofixAgree P (f e) (g₁ e) :=
+        by cases ag₁ with
+           | intro _ _ h_ch => exact h_ch
+      PolyFix.mk _
+        (ULift.up (PLift.up rfl))
+        (fun e => polyCofixAgreeToPoly P
+          (f e) (g₁ e) (hch e))
+
+/--
+`ULift (PLift p)` for `p : Prop` is a subsingleton.
+-/
+instance instSubsingletonULiftPLift
+    {p : Prop} :
+    Subsingleton (ULift.{u} (PLift p)) :=
+  ⟨fun ⟨⟨_⟩⟩ ⟨⟨_⟩⟩ => rfl⟩
+
+/--
+The index type of `polyCofixAgreePoly P` at every
+base point is a subsingleton.
+-/
+theorem polyCofixAgreePolyIndex_subsingleton
+    (P : PolyEndo X)
+    (base : PolyCofixAgreeBase P) :
+    Subsingleton (polyBetweenIndex
+      (PolyCofixAgreeBase P)
+      (PolyCofixAgreeBase P)
+      (polyCofixAgreePoly P) base) := by
+  obtain ⟨n, x, a, b⟩ := base
+  match n, a with
+  | 0, PolyCofixApprox.continue _ =>
+    exact instSubsingletonPUnit
+  | _ + 1, PolyCofixApprox.intro _ _ _ =>
+    exact instSubsingletonULiftPLift
+
+/--
+Any two `PolyFix` elements of `polyCofixAgreePoly P`
+at the same base point are equal.
+
+The proof proceeds by structural induction on one
+tree and case-splitting on the other, using the
+subsingleton property of the index type at each node.
+-/
+theorem polyCofixAgreePolyFix_eq
+    (P : PolyEndo X)
+    (base : PolyCofixAgreeBase P)
+    (t₁ t₂ : PolyFix
+      (polyCofixAgreePoly P) base) :
+    t₁ = t₂ := by
+  match t₁, t₂ with
+  | PolyFix.mk _ idx₁ ch₁,
+      PolyFix.mk _ idx₂ ch₂ =>
+    have hidx : idx₁ = idx₂ :=
+      (polyCofixAgreePolyIndex_subsingleton
+        P base).allEq idx₁ idx₂
+    subst hidx
+    congr 1
+    funext e
+    exact polyCofixAgreePolyFix_eq P _ (ch₁ e)
+      (ch₂ e)
+
+instance instSubsingletonPolyCofixAgreePolyFix
+    (P : PolyEndo X)
+    (base : PolyCofixAgreeBase P) :
+    Subsingleton (PolyFix
+      (polyCofixAgreePoly P) base) :=
+  ⟨polyCofixAgreePolyFix_eq P base⟩
+
+/--
+The `PolyFix` of `polyCofixAgreePoly P` at a base
+point `⟨n, x, a, b⟩` is nonempty if and only if
+`PolyCofixAgree P a b` holds.
+-/
+theorem polyCofixAgreeEquiv (P : PolyEndo X)
+    (n : Nat) (x : X)
+    (a : PolyCofixApprox P n x)
+    (b : PolyCofixApprox P (n + 1) x) :
+    Nonempty (PolyFix (polyCofixAgreePoly P)
+      (⟨n, x, a, b⟩ :
+        PolyCofixAgreeBase P)) ↔
+    PolyCofixAgree P a b :=
+  ⟨fun ⟨t⟩ => polyCofixAgreeFromPoly P n x a b t,
+   fun ag => ⟨polyCofixAgreeToPoly P a b ag⟩⟩
+
 lemma PolyCofixApprox.continue_cast {P : PolyEndo X} {x y : X} (h : x = y) :
     h ▸ PolyCofixApprox.continue (P := P) x = PolyCofixApprox.continue y := by
   subst h
