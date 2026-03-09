@@ -419,8 +419,20 @@ Omega_2  <  Omega_2 -> Fix (forall X_vec. U -> V)
 where `Fix T = (T -> T) -> T` and `X_vec` is a
 sequence of type variables. This axiom allows typing
 recursive functions defined via `Z{f}`. Without it,
-only terminating (primitive-recursive) functions are
-typeable.
+`Z{f}` cannot be typed, and since all recursion in
+tree calculus goes through `Z{f}` (or `Y_2{f}`, which
+is defined in terms of `Z`), no recursive functions
+are typeable — not even primitive-recursive ones like
+fold over trees.
+
+The one partial exception is iteration over
+Church-encoded data: the quantified type
+`Nat = forall X. (X -> X) -> (X -> X)` has iteration
+built in (a Church numeral `n` applies a function
+`n` times), so functions on naturals that use only
+iteration are typeable without `Omega_2`. But this is
+a property of the Church encoding, not of the
+recursion infrastructure.
 
 #### Closure Conditions
 
@@ -788,10 +800,15 @@ The type system has several distinctive properties:
    lambda or application is needed.
 
 5. **The fixpoint axiom is isolable.** Removing the
-   `Omega_2` subtyping axiom restricts the system to
-   terminating (primitive-recursive) programs. The
-   other axioms continue to type all fold-definable
-   functions.
+   `Omega_2` subtyping axiom prevents typing of all
+   recursive functions (since all recursion in tree
+   calculus goes through `Z{f}`, which uses `omega_2`).
+   The remaining axioms type non-recursive combinators
+   and iteration over Church-encoded data whose fold
+   is built into their quantified type. Fold over
+   natural binary trees (the catamorphism) is not
+   typeable without `Omega_2`, since it must be
+   implemented via `Z{f}` in tree calculus.
 
 6. **The A type former is conservative.** Adding or
    removing the `A` type axioms affects only the
