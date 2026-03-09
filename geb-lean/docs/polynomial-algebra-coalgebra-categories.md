@@ -710,7 +710,7 @@ mapping according to the first observation step:
 The constructions above are stated for P-**Alg** and
 P-**Coalg** over **Set**. This section analyzes what
 properties a base category E must have for
-P-**Coalg**(E) to admit the same constructions, and
+P-**Coalg**(E) to allow the same constructions, and
 in particular for P-**Coalg**(E) to be a topos.
 
 ### 10.1 Construction-by-Construction Requirements
