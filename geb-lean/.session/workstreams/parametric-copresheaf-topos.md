@@ -218,6 +218,61 @@ framework.
   families to presheaf-level ones. (Connects to former
   task P5b in `parametricity-free-theorems.md`.)
 
+### Edge category quasitopos
+
+- [x] **T20. Name the category instance.** Give the
+  `Category` instance on `PshRelEdge C` the explicit
+  name `pshRelEdgeCategory`. (`PshRelDouble.lean`)
+
+- [x] **T21. Exponential in PshRelEdge C.** Show the
+  exponential equals
+  `(FunctorHom, FunctorHom, pshArrowRel)`.
+  Verify the exponential adjunction directly.
+  (`PshRelEdgeExp.lean`)
+  Ref: `docs/parametric-copresheaf-topos.md` Section 11.5.
+
+- [ ] **T22. Identity extension as functor property.**
+  Show `pshRelIdentFunctor` preserves exponentials
+  (the IEP as a cartesian closed functor property).
+  Ref: `docs/parametric-copresheaf-topos.md` Section 11.6.
+
+- [ ] **T23. pshRelIdentFunctor preserves limits.**
+  Show `pshRelIdentFunctor` preserves products and
+  general limits.
+  Ref: `docs/parametric-copresheaf-topos.md` Section 11.6.
+
+- [ ] **T24. Inclusion into PSh(C x I^op).** Construct
+  the fully faithful inclusion
+  `PshRelEdge C -> PSh(C x I^op)` and its left adjoint
+  (the separation reflector).
+  Ref: `docs/parametric-copresheaf-topos.md` Section 11.4.
+
+- [ ] **T25. Extraction functor.** Construct
+  `PshParametricPresheaf C -> PshRelEdge C` sending a
+  copresheaf to a single relation. Investigate its
+  properties.
+  Ref: `docs/parametric-copresheaf-topos.md` Section 11.8.
+
+### Lattice-enriched sites
+
+- [ ] **T26. Lattice-enriched span site.** Investigate
+  adding Heyting algebra structure (inclusions R <= S)
+  to `PshRelSpanObj C` as morphisms between relation
+  nodes. Determine whether embedded copresheaves
+  satisfy monotonicity.
+  Ref: `docs/parametric-copresheaf-topos.md` Section 11.10.
+
+- [ ] **T27. Yoneda-restricted subobject site.** Define
+  the small site using `YonedaRel X Y` with lattice
+  and base-change structure. Investigate whether Kan
+  extension along Yoneda recovers parametric structure.
+  Ref: `docs/parametric-copresheaf-topos.md` Section 11.10.
+
+- [ ] **T28. Sep_J equivalence.** Construct the
+  equivalence `PshRelEdge C ~= Sep_J(C x I^op)`
+  explicitly (walking span I, topology J, separation).
+  Ref: `docs/parametric-copresheaf-topos.md` Section 11.2.
+
 ### Documentation
 
 - [ ] **T18. Annotate PshRelSpanDiagram.lean.** Add

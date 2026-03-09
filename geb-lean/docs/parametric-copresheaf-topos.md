@@ -842,6 +842,260 @@ The separation reflector
 `PSh(C x I^op) => PshRelEdge C` may provide a
 bridge connecting the two perspectives.
 
+### 11.10 The subobject classifier and lattice-enriched sites
+
+In any topos `E`, the subobject classifier `Omega`
+is an internal Heyting algebra: a bicartesian closed
+poset, and therefore an internal category with
+objects = truth values and morphisms = implications
+(ordering). In `PSh(C)`, `Omega(c)` = the set of
+sieves on `c`, ordered by inclusion.
+
+Relations in `PSh(C)` are classified by `Omega`:
+
+```text
+Sub(P x Q)  ~=  Hom(P x Q, Omega)
+            ~=  Hom(P, [Q, Omega])
+            =   Hom(P, P(Q))
+```
+
+where `P(Q) = [Q, Omega]` is the power object. So
+`PshRel P Q` is the set of global sections of the
+presheaf `Hom(P x Q, Omega)`, and
+`PshRelEdge C` is the Grothendieck construction
+of the functor
+`(P, Q) |-> Hom(P x Q, Omega) : (PSh(C) x PSh(C))^op -> Set`.
+
+For representable presheaves, `YonedaRel X Y` =
+`Sub(y(X) x y(Y))` is a Heyting algebra. Each
+element is a subfunctor that at stage `c` picks
+a subset of `Hom(c, X) x Hom(c, Y)` closed under
+precomposition. This is equivalent to a sieve-like
+structure on the pair `(X, Y)`.
+
+#### Candidate: lattice-enriched span site
+
+The "awkwardness" of `PshRelSpanObj C` stems from
+two structural choices:
+
+1. **No morphisms between type nodes.** This is
+   structurally necessary: adding `C`-morphisms
+   between type nodes would impose the
+   equivariance/naturality condition on
+   interpretations, producing the paranaturality
+   condition rather than full parametricity. Since
+   parametricity strictly subsumes paranaturality
+   (divergence results in Section 7), the absence
+   of type-node morphisms is a feature.
+
+2. **No morphisms between relation nodes.** This
+   is where improvement may be possible. Each
+   `Sub(P x Q)` is a Heyting algebra, and adding
+   inclusions `R <= S` as morphisms between
+   relation nodes would impose monotonicity on the
+   relational interpretation.
+
+A **lattice-enriched span site** `S_C'` would have:
+
+- Type objects: `typeNode P` for each presheaf `P`
+- Relation objects: `relNode P Q R` for each
+  `R : PshRel P Q`
+- Span projections: `relNode P Q R => typeNode P`
+  and `relNode P Q R => typeNode Q`
+- **Lattice inclusions**: `relNode P Q R => relNode P Q S`
+  when `R <= S` as subfunctors
+- **No** morphisms between type nodes
+
+Copresheaves on `S_C'` satisfy:
+
+- Span compatibility (relational witnesses project
+  correctly)
+- **Monotonicity**: if `R <= S`, then the `R`-witness
+  type maps to the `S`-witness type
+
+This is a strictly smaller category than
+`PshParametricPresheaf C` (fewer copresheaves,
+because of monotonicity). The question is whether
+the relational interpretations arising from the
+embeddings (covariant, contravariant, profunctor)
+satisfy monotonicity.
+
+For the covariant embedding, `pshBarrLiftSkel G R`
+is monotone in `R` (image preserves subobject
+ordering). For the arrow relation, monotonicity
+in the output relation holds, but the input
+relation is contravariant (`R_1 <= R_1'` gives
+`pshArrowRelSkel R_1' R_2 <= pshArrowRelSkel R_1 R_2`).
+This means the lattice enrichment must be
+covariant for some relation-node morphisms and
+contravariant for others, reflecting the
+mixed-variance structure of the arrow relation.
+
+#### Candidate: Yoneda-restricted subobject site
+
+Restricting to representable presheaves gives
+a potentially small site:
+
+- Type objects: `X` for each `X : C`
+- Relation objects: `(X, Y, R)` for each
+  `R : YonedaRel X Y`
+- Span projections and lattice inclusions as above
+- Base change: for `f : X' => X`, `g : Y' => Y`,
+  a morphism
+  `(X', Y', pullback R along (f, g)) => (X, Y, R)`
+
+If `C` is small, this site is essentially small
+(objects indexed by
+`C + Sigma_{X,Y : C} Sub(y(X) x y(Y))`, which is
+a set). Copresheaves on it form a Grothendieck
+topos.
+
+Extension to general presheaves would use the
+Yoneda extension (left Kan extension along the
+Yoneda embedding). Whether this preserves the
+parametricity structure is an open question
+connected to the density theorem and existing
+infrastructure (`yonedaULift`, `yonedaExt` in
+`Presheaf.lean`).
+
+#### The fibration perspective
+
+The boundary functor
+`pshRelBoundaryFunctor : PshRelEdge C => PSh(C) x PSh(C)`
+is a pre-fibered category (proven in
+`PshRelDouble.lean`). The fiber over `(P, Q)` is
+`Sub(P x Q)`, which is a Heyting algebra. The
+Grothendieck construction of this fibration IS
+`PshRelEdge C`.
+
+The subobject classifier `Omega` of `PSh(C)` is
+the representing object for the fibers: the fiber
+over `(P, Q)` is `Hom(P x Q, Omega)`. So the
+fibration structure of `PshRelEdge C` is
+controlled by `Omega`.
+
+This suggests a connection: `PshRelEdge C` is
+the **total category of the Omega-valued
+subobject fibration** over `PSh(C) x PSh(C)`.
+The structure of `Omega` as an internal Heyting
+algebra (and hence as an internal category)
+determines the lattice structure on the fibers,
+the base change functors (pullback of subobjects),
+and the logical operations available on relations.
+
+### 11.11 Open questions
+
+#### Q1: PSh(C x I^op) vs PshParametricPresheaf C
+
+`PSh(C x I^op)` handles one span at a time (an
+object is a single span of presheaves).
+`PshParametricPresheaf C` handles all relations
+simultaneously (an object assigns data to every
+presheaf and every relation independently). The
+parametricity condition requires consistency
+across all relations simultaneously, which
+`PshParametricPresheaf C` captures through its
+copresheaf structure.
+
+Does `PSh(C x I^op)` allow a construction that
+recovers the "all relations at once" aspect?
+Possible approaches:
+
+- Internal presheaves on `Omega` within
+  `PSh(C x I^op)` (internalizing the subobject
+  lattice)
+- Power object constructions (using `P(Q) = [Q, Omega]`
+  to parameterize over all relations)
+- Eilenberg-Moore algebras for the power monad
+  `P : E -> E` given by `P(X) = Omega^X`
+
+#### Q2: Lattice enrichment and variance
+
+Does the lattice-enriched span site `S_C'` give a
+strictly better "ambient topos" than
+`PshParametricPresheaf C`? The answer depends on
+whether the relational interpretations arising from
+standard embeddings satisfy the monotonicity
+condition. The mixed variance of the arrow relation
+suggests that the enrichment must account for
+variance, possibly via a *Dialectica-like*
+construction.
+
+#### Q3: Yoneda extension of parametric structure
+
+For the Yoneda-restricted subobject site: does the
+left Kan extension along the Yoneda embedding
+preserve the parametricity structure? This connects
+to existing task P6b in
+`parametricity-free-theorems.md` and the
+infrastructure in `yonedaULift`, `yonedaExt`.
+
+#### Q4: Internal Heyting algebra and directed type theory
+
+The subobject classifier `Omega`, viewed as an
+internal category (via its Heyting algebra
+structure), determines a notion of "internal
+presheaves on Omega." The category of such
+internal presheaves (externalized via the
+Grothendieck construction) may provide a
+canonical ambient topos that reflects the full
+subobject lattice structure. This connects to
+the Neumann-Licata directed type theory (POPL
+2026), where directionality is built into the
+type theory via an internal notion of ordering.
+
+### 11.12 Formalization candidates
+
+The following are candidates for Lean formalization,
+ordered roughly by dependency:
+
+- **(a)** Construct the equivalence
+  `PshRelEdge C ~= Sep_J(C x I^op)` explicitly.
+  Requires defining the walking span category `I`,
+  the product site `C x I^op`, the Grothendieck
+  topology `J`, and the separation condition.
+
+- **(b)** Show the exponential in `PshRelEdge C`
+  equals `(FunctorHom, FunctorHom, pshArrowRelSkel)`.
+  Verify the exponential adjunction directly in
+  `PshRelEdge C`. Uses existing `pshArrowRelSkel`
+  and `pshIhomProfMap` infrastructure.
+
+- **(c)** Show `pshRelIdentFunctor` preserves
+  exponentials (the Identity Extension Property
+  as a functor property). Uses (b) and the
+  identity extension result.
+
+- **(d)** Show `pshRelIdentFunctor` preserves
+  products and limits.
+
+- **(e)** Construct the inclusion
+  `PshRelEdge C -> PSh(C x I^op)` as an explicit
+  fully faithful functor, and its left adjoint
+  (the separation reflector).
+
+- **(f)** Construct the extraction functor
+  `PshParametricPresheaf C -> PshRelEdge C` that
+  sends a copresheaf to a single relation.
+  Investigate its properties (faithful? full?
+  preserves limits?).
+
+- **(g)** Investigate whether the lattice-enriched
+  span site `S_C'` (adding Heyting algebra
+  structure to `PshRelSpanObj C`) gives a
+  Grothendieck topos that improves on
+  `PshParametricPresheaf C`. This requires:
+  defining the enriched site, verifying that
+  embedded copresheaves satisfy monotonicity,
+  and characterizing the resulting topos.
+
+- **(h)** Investigate the Yoneda-restricted
+  subobject site (restricting to representable
+  presheaves with `YonedaRel` and the subobject
+  lattice structure). Determine whether Kan
+  extension along the Yoneda embedding recovers
+  the full parametric structure.
+
 ## References
 
 ### Codebase documents
