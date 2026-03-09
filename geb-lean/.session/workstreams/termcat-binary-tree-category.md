@@ -56,7 +56,8 @@ Principles".
 - `docs/plans/2026-03-06-termcat-design.md` — design doc
 - `docs/tree-calculus.md` — tree calculus reference
   (syntax, reduction rules, PCA structure,
-  self-reflection, external references)
+  self-reflection, type system (detailed), external
+  references)
 - `docs/polynomial-algebra-coalgebra-categories.md` —
   reference document on universal properties of P-Alg
   and P-Coalg, base category requirements, and

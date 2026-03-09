@@ -240,94 +240,596 @@ proofs in the accompanying Coq formalization.
 ## Type System
 
 The paper *Typed Program Analysis without Encodings* (Jay,
-PEPM '25) develops a type system for tree calculus. Tree
-types have the grammar:
+PEPM '25) develops a type system for tree calculus. The
+system is distinctive in several respects: programs are
+typed as both data structures (via tree types) and
+functions (via function types), with a subtyping relation
+connecting the two views. The expressive power of the
+system is determined entirely by the choice of subtyping
+axioms. Two type derivation rules suffice for all typing
+judgments; the subtyping relation carries the entire
+computational content.
+
+The system is developed in stages across the paper.
+Section 2 types traditional combinatory logic (SK-calculus)
+with subtyping. Section 3 extends to triage calculus.
+Sections 4-8 introduce extensions (lambda-abstraction,
+booleans and naturals, fixpoints, generic queries, and
+self-interpretation), each requiring additional subtyping
+axioms. Section 9 presents the combined system. Section 10
+proves subject reduction. The account below follows the
+combined system of Section 9, noting which axioms are
+needed for which features.
+
+### Type Grammar
+
+The full type grammar (Section 9) is:
 
 ```text
-T ::= L | S U | F U V | U -> V
+T, U, V  ::=  L  |  S U  |  F U V  |  U -> V
+             |  X  |  forall X. T  |  A T
 ```
 
-where `L` is the leaf type, `S U` is the stem type (a stem
-whose child has type `U`), `F U V` is the fork type (left
-child `U`, right child `V`), and `U -> V` is the function
-type. Subtyping is defined on these types.
+The type formers are:
 
-Two derivation rules suffice for the entire type system:
+- `L` — leaf type. The type of the leaf node (triangle).
+- `S U` — stem type. The type of a stem whose child
+  has type `U`. A stem is a tree of the form
+  `triangle M` where `M : U`.
+- `F U V` — fork type. The type of a fork whose left
+  child has type `U` and right child has type `V`. A
+  fork is a tree of the form `triangle M N` where
+  `M : U` and `N : V`.
+- `U -> V` — function type. The type of a function
+  from `U` to `V`.
+- `X` — type variable.
+- `forall X. T` — universally quantified type.
+  Quantification over type variables, as in System F.
+  Instantiation is handled by subtyping (see below),
+  not by a separate elimination rule.
+- `A T` — "as-function" type. Records that `T` is
+  expected to eventually become a function type. Used
+  to type the self-interpreter (see the section on
+  the A type former below).
 
-1. **Leaf subtyping**: `Gamma |- leaf : T` when `L <: T`.
-2. **Application**: `Gamma |- t u : V` when
-   `Gamma |- t : U -> V` and `Gamma |- u : U`.
+The first three formers (`L`, `S`, `F`) are the *tree
+type formers*: they describe the structure of a program
+viewed as data. The function type `U -> V` describes a
+program viewed as a function. The subtyping relation
+connects these two views.
 
-Type constants include `Bool` (the type of `tt` and `ff`),
-`Nat` (Peano naturals encoded as trees), and `Omega_2`
-(a fixpoint type satisfying `Omega_2 = Omega_2 -> Omega_2`).
+### Tree Types and progty
 
-### Verified Theorems (from the Paper)
+Every program (closed normal form) `p` has a canonical
+*tree type* `progty(p)`, defined by structural recursion:
 
-The following theorems are stated in the paper and verified
-in the accompanying Coq formalization. Coq lemma names are
-given in parentheses where available.
+```text
+progty(triangle)    =  L
+progty(triangle q)  =  S progty(q)
+progty(triangle q r) = F progty(q) progty(r)
+```
 
-#### Confluence and Normal Forms
+The tree type records the exact shape of a program: whether
+it is a leaf, a stem (and the type of its child), or a
+fork (and the types of both children). Every program is
+typeable at its tree type:
+
+- **Theorem 3.4** (`programs_have_types`):
+  `p : progty(p)` for every program `p`.
+
+### Subtyping Relation
+
+The subtyping relation `U < V` (read "`U` is a subtype
+of `V`") is the central mechanism of the type system. Each
+reduction rule of the calculus inspires a subtyping axiom
+that captures when a tree type can be used as a function
+type.
+
+#### Structural Subtyping Axioms
+
+The first three axioms describe how applying arguments to a
+tree builds up its tree type:
+
+```text
+L      <  U -> S U
+S U    <  V -> F U V
+F L U  <  V -> U
+```
+
+The first says that a leaf, when given an argument of type
+`U`, produces a stem `S U`. The second says that a stem
+`S U`, when given an argument of type `V`, produces a
+fork `F U V`. The third is the K-combinator rule:
+`K = triangle triangle` has tree type `F L L`; the
+axiom `F L U < V -> U` says that `K u` returns `u`
+regardless of the next argument. More generally, any fork
+whose first component is a leaf acts as a K-like
+projection.
+
+#### Reduction-Inspired Subtyping Axioms
+
+Each reduction rule produces a subtyping axiom. The
+five triage reduction rules yield:
+
+**Rule 1 (K rule)**: `triangle triangle y z --> y`.
+Since `K = triangle triangle : F L L`, applying `K`
+to `y : V` gives `F L V`, and the next application
+must return `y`. This is captured by `F L U < V -> U`
+(axiom 3 above).
+
+**Rule 2 (S rule)**:
+`triangle (triangle x) y z --> x z (y z)`.
+Given `x : U -> V -> T`, `y : U -> V`, `z : U`, the
+result `x z (y z)` has type `T`. The subtyping axiom
+is:
+
+```text
+F (S (U -> V -> T)) (U -> V)  <  U -> T
+```
+
+**Rules 3-5 (triage rules)**:
+`triangle (triangle w x) y z --> triage(w, x, y)`
+where the result depends on the structure of `z`. The
+three cases yield:
+
+```text
+F (F U V) W        <  L -> U
+F (F U (V1 -> V2)) W  <  S V1 -> V2
+F (F U V) (W1 -> W2 -> W3)  <  F W1 W2 -> W3
+```
+
+Rule 3 (leaf case): if `z` is a leaf, return `w`.
+Rule 4 (stem case): if `z` is a stem `triangle u`,
+return `x u`. Rule 5 (fork case): if
+`z` is a fork `triangle u v`, return `y u v`.
+
+#### Quantifier Distribution Axioms
+
+Quantified types distribute over the type formers:
+
+```text
+forall X. S U       <  S (forall X. U)
+forall X. F U V     <  F (forall X. U) (forall X. V)
+forall X. A U       <  A (forall X. U)
+forall X. U -> V    <  (forall X. U) -> (forall X. V)
+```
+
+Instantiation and generalization:
+
+```text
+forall X. T    <  {U/X} T
+T              <  forall X. T   (if X is not free in T)
+```
+
+These rules handle parametric polymorphism. The
+instantiation rule `forall X. T < {U/X} T` replaces a
+separate elimination form: instead of explicit type
+application, subtyping performs instantiation.
+
+#### Fixpoint Subtyping
+
+The fixpoint type `Omega_2` is defined as
+`progty(omega_2)` where `omega_2` is the fixpoint
+combinator component. Its subtyping axiom is:
+
+```text
+Omega_2  <  Omega_2 -> Fix (forall X_vec. U -> V)
+```
+
+where `Fix T = (T -> T) -> T` and `X_vec` is a
+sequence of type variables. This axiom allows typing
+recursive functions defined via `Z{f}`. Without it,
+only terminating (primitive-recursive) functions are
+typeable.
+
+#### Closure Conditions
+
+The subtyping relation is the smallest relation
+satisfying the axioms above and closed under:
+
+- **Reflexivity**: `T < T`.
+- **Transitivity**: if `T < U` and `U < V` then
+  `T < V`.
+- **Contravariance of function types**: if
+  `U2 < U1` and `V1 < V2` then
+  `U1 -> V1 < U2 -> V2`.
+
+#### Minimal Collection of Axioms
+
+The paper's Figure 3 presents a minimal collection of
+subtyping axioms for the base system (without
+quantifiers, A types, or fixpoint types):
+
+```text
+L                                  <  U -> S U
+S U                                <  V -> F U V
+F L U                              <  V -> U
+F (S (U -> V -> T)) (U -> V)      <  U -> T
+F (F U V) W                        <  L -> U
+F (F U (V1 -> V2)) W              <  S V1 -> V2
+F (F U V) (W1 -> W2 -> W3)        <  F W1 W2 -> W3
+```
+
+The full collection (Figure 10) adds the quantifier
+distribution axioms, the fixpoint axiom, the A type
+axioms (see below), and the specialized axioms for
+typing the self-interpreter's components.
+
+### Type Derivation Rules
+
+Only two derivation rules are needed for the entire
+type system:
+
+**Leaf rule**: A leaf can have any type that `L` is a
+subtype of.
+
+```text
+  Leaf < T
+-----------
+ triangle : T
+```
+
+**Application rule**: If the function has type `U -> V`
+and the argument has type `U`, the result has type `V`.
+
+```text
+ M : U -> V    N : U
+----------------------
+      M N : V
+```
+
+With term variables and type contexts (Section 4), two
+more rules are added:
+
+**Variable rule**: A variable has any supertype of its
+context assignment.
+
+```text
+ Gamma(x) < T
+--------------
+ Gamma |- x : T
+```
+
+**Lambda rule**: Lambda-abstraction builds function
+types.
+
+```text
+ Gamma, x : U |- t : T
+------------------------
+ Gamma |- lambda x. t : U -> T
+```
+
+The general subsumption rule (if `M : U` and `U < V`
+then `M : V`) is not a separate derivation rule; it
+follows by induction on the structure of `M`:
+
+- **Theorem 9.1** (`derive_subtype`): For all type
+  contexts `Gamma` and terms `t`, if
+  `Gamma |- t : T1` and `T1 < T2` then
+  `Gamma |- t : T2`.
+
+### Type Constants
+
+Type constants for booleans and natural numbers are
+defined as quantified function types, following
+System F:
+
+```text
+Bool  =  forall X. X -> X -> X
+Nat   =  forall X. (X -> X) -> (X -> X)
+```
+
+The subtyping of `Bool` supports conditionals:
+`Bool < U -> U -> U` for any `U`. The subtyping of
+`Nat` supports iterators: `Nat < (U -> U) -> (U -> U)`
+for any `U`.
+
+The representation of standard values is:
+
+```text
+true   =  K             : Bool
+false  =  K I           : Bool
+zero   =  K I           : Nat
+succ   =  S_1{S_1{K triangle}{S_1{K triangle} K}}
+                         : Nat -> Nat
+```
+
+Note that `false` and `zero` are both represented by
+`K I`. Tagging (see Section 5 of the paper) can
+disambiguate them.
+
+### Typing of Standard Combinators
+
+The subtyping axioms suffice to derive the expected
+types of all standard combinators:
+
+- **Theorem 3.3** (`derive_basic`): For all types
+  `U`, `V`, and `T`:
+
+```text
+K         :  U -> V -> U
+S         :  (U -> V -> T) -> (U -> V) -> (U -> T)
+I         :  T -> T
+swap{f}   :  V -> U -> T       (given f : U -> V -> T)
+wait{M,N} :  V -> T
+              (given M : U -> V -> T and N : U)
+wait2{M,N,P} : W -> T
+              (given M : U -> V -> W -> T,
+                     N : U, P : V)
+```
+
+### The A Type Former
+
+The `A T` type ("as-function type") is introduced in
+Section 8 to address a specific technical obstacle in
+typing the breadth-first self-interpreter `bf`.
+
+#### Motivation
+
+When `bf` encounters a fork `triangle u v`, it must
+recursively evaluate both branches: `bf (bf u z) (bf v z)`.
+The types of `bf u z` and `bf v z` are not known to be
+function types at the point where `bffs` (the stem handler
+of `bf`) is being typed — the typing of `bffs` cannot
+"look ahead" to see that its results will eventually be
+applied. The `A T` type records the expectation that `T`
+will become a function type once enough information is
+available.
+
+#### Subtyping Rules for A
+
+```text
+T          <  A T
+A (U -> V) <  U -> V
+```
+
+The first rule says that any term of type `T` also has
+type `A T` — the `A` wrapper can always be added. The
+second says that if `A` wraps a function type, the `A`
+can be removed — `A (U -> V)` is a function type.
+
+Together, these rules allow deferred resolution: a
+subexpression can be given type `A T` initially, and
+once the context establishes that `T` is a function
+type, the `A` dissolves.
+
+#### Additional Axioms for bf
+
+The self-interpreter's components require two further
+subtyping axioms connecting `A` types with tree types:
+
+```text
+F (S (bffsa U)) (A V)
+    <  A (F (S U) V)
+
+F (F U (A V)) (bfffa (A W))
+    <  A (F (F U V) W)
+```
+
+where `bffsa` and `bfffa` are defined in terms of
+the types of `bf`'s subcomponents:
+
+```text
+bfffa U = F (S (F L (forall X. forall Y.
+            (X -> A X))) (A U))
+bffsa U = F (S (F L (forall X. forall Y.
+            (X -> Y) -> (X -> Y))))
+            (bfffa (A U))
+```
+
+With these axioms, `bf` receives the type:
+
+```text
+bf : forall X. forall Y. (X -> Y) -> (X -> Y)
+```
+
+This type says that `bf` takes a function and returns
+a function of the same type. The self-interpreter can
+be applied to itself (`bf bf`), and the type is
+preserved.
+
+### Covariance and the General Triage Rule
+
+The subtyping rules for triage (rules 3-5) have a
+general form that uses covariance. Define abbreviations:
+
+```text
+AsLf{Z, T}  =  {L / Z} T
+AsSm{Z, T}  =  forall X. X -> {S X / Z} T
+AsFk{Z, T}  =  forall X. forall Y.
+                  X -> Y -> {F X Y / Z} T
+                  (if X, Y are not free in T)
+```
+
+Then the general triage subtyping rule is:
+
+```text
+F (F AsLf{Z,T} AsSm{Z,T}) AsFk{Z,T}
+    <  forall Z. Z -> T
+```
+
+provided `Z` appears *covariantly* in `T`. Covariance
+is defined in the standard way (positive position in
+function types). This general rule subsumes all three
+triage axioms as special cases and captures the
+polymorphism of generic queries.
+
+For example, `isLeaf` has a triage type where `T` is
+instantiated to `Bool`, and `size` has a triage type
+where `T` is instantiated to `Nat`.
+
+### Typing of Generic Queries
+
+Generic queries have types of the form
+`forall X. X -> Bool` (or `-> Nat`, etc.). Their typing
+uses the general triage subtyping rule. The queries
+are:
+
+```text
+isLeaf  =  triage{true, K false, K^2 false}
+isStem  =  triage{false, K true, K^2 false}
+isFork  =  triage{false, K false, K^2 true}
+```
+
+Each has type `forall X. X -> Bool`. The program `size`
+has type `forall X. X -> Nat`.
+
+- **Theorem 7.1** (`derive_size`):
+  `size : forall X. X -> Nat`.
+
+The program `equal` has a more general type:
+
+- **Theorem 7.3** (`derive_equal`):
+  `equal : forall X. forall Y. X -> Y -> Bool`.
+
+The generality from `forall X. X -> Bool` to
+`forall X. forall Y. X -> Y -> Bool` is needed because
+equality compares two trees that may have different
+types.
+
+### Typing of Fixpoint Functions
+
+Recursive functions are constructed via `Z{f}`, which
+satisfies:
+
+- **Theorem 6.1** (`Z_red`):
+  `Z{f} x --> f Z{f} x`.
+
+The typing of `Z{f}` uses the `Omega_2` fixpoint type.
+Given `f` of type
+`(forall X_vec. U -> V) -> (forall X_vec. U -> V)`,
+the fixpoint combinator produces:
+
+- **Theorem 6.2** (`derive_Z`): For all type contexts
+  `Gamma`, sequences of type variables `X_vec`, and
+  types `U` and `V`:
+
+```text
+ Gamma |- f : (forall X_vec. U -> V)
+                -> (forall X_vec. U -> V)
+-----------------------------------------
+ Gamma |- Z{f} : forall X_vec. U -> V
+```
+
+### Typing of Lambda-Abstraction
+
+Lambda-abstraction is defined as a macro (not a
+primitive) using star abstraction (see the Abstraction
+section above). The typing rule for lambda-abstraction
+follows:
+
+- **Theorem 4.1** (`star_beta`):
+  `(lambda x. t) u --> {u/x} t`.
+- **Theorem 4.2** (`derive_star`): For all type
+  contexts `Gamma`, term variables `x`, and terms `t`:
+
+```text
+ Gamma, x : U |- t : T
+-----------------------
+ Gamma |- lambda x. t : U -> T
+```
+
+### Subject Reduction
+
+The culminating property of the type system: reduction
+preserves typing.
+
+- **Theorem 10.6** (`reduction_preserves_typing`):
+  For all type contexts `Gamma`, terms `t1` and `t2`,
+  and types `T`: if `Gamma |- t1 : T` and
+  `t1 --> t2` then `Gamma |- t2 : T`.
+
+The proof proceeds by examining each reduction rule
+and showing that the corresponding subtyping axiom
+captures the type-preservation argument. The five
+triage reduction rules yield five intermediate
+theorems:
+
+- **Theorem 10.1** (`subtype_from_fork_of_leaf_to_fun`):
+  `F L V < Z -> T` implies `V < T` for all `V`,
+  `Z`, `T`.
+- **Theorem 10.2**
+  (`subtype_from_fork_of_stem_to_funty`):
+  If `F (S U) V < Z -> T` then there exists `Y`
+  such that `U < Z -> Y -> T` and `V < Z -> Y`.
+- **Theorem 10.3** (`subtype_from_fork_of_fork_of_leaf`):
+  If `F (F W U) V < L -> T` then `W < T`.
+- **Theorem 10.4** (`subtype_from_fork_of_fork_of_stem`):
+  If `F (F W U) V < S Z -> T` then `U < Z -> T`.
+- **Theorem 10.5** (`subtype_from_fork_of_fork_of_fork`):
+  If `F (F W U) V < F Z1 Z2 -> T` then
+  `V < Z1 -> Z2 -> T`.
+
+### Properties of the Type System
+
+The type system has several distinctive properties:
+
+1. **Every program is typeable.** The tree type
+   `progty(p)` provides a canonical type for every
+   program `p`. Unlike many type systems, there are no
+   untypeable normal forms.
+
+2. **Subtyping encodes operational semantics.** Each
+   reduction rule of the calculus corresponds to a
+   subtyping axiom. The proof that reduction preserves
+   typing recapitulates the correctness proof of each
+   combinator.
+
+3. **Two derivation rules suffice.** The leaf rule and
+   the application rule generate all typing judgments.
+   The entire complexity of the system resides in the
+   subtyping relation.
+
+4. **Parametric polymorphism via subtyping.** Universal
+   quantification is introduced by subtyping
+   (`T < forall X. T` when `X` is not free in `T`)
+   and eliminated by subtyping
+   (`forall X. T < {U/X} T`). No separate type-level
+   lambda or application is needed.
+
+5. **The fixpoint axiom is isolable.** Removing the
+   `Omega_2` subtyping axiom restricts the system to
+   terminating (primitive-recursive) programs. The
+   other axioms continue to type all fold-definable
+   functions.
+
+6. **The A type former is conservative.** Adding or
+   removing the `A` type axioms affects only the
+   typeability of the self-interpreter and similar
+   programs. Other typings are not affected.
+
+### Type Inference (Open)
+
+The paper does not address type inference. The author's
+blog posts (January-March 2025) explore this question
+and identify several obstacles:
+
+- The subtyping relation makes inference harder than
+  in Hindley-Milner: checking `T < U -> V` and
+  inferring the result type `V` are mutually
+  recursive.
+- Each program has a *principal type* (its tree type
+  `progty(p)`), but the relationship between principal
+  types and function types is mediated by subtyping,
+  which may not be decidable in the full system.
+- The additional axioms for generic queries (`A`
+  types, covariance) add further layers to the
+  inference problem.
+- A unique-type approach (where every combinator has
+  exactly one inferred type) is under investigation
+  but faces the difficulty that a single combinator
+  may serve as both data and function.
+
+Whether type inference is decidable for the full system
+remains an open question.
+
+### Confluence and Normal Forms (from the Paper)
 
 - **Theorem 3.1** (`confluence_tree_calculus`):
   Reduction of triage calculus is confluent.
 - **Theorem 3.2** (`head_reduction_to_factorable_form`):
   Reduction to factorable form can always begin with
   head reduction.
-
-#### Typing of Combinators
-
-- **Theorem 3.3** (`derive_basic`): K, S, I, and
-  `swap{f}` are derivable with their expected types.
-- **Theorem 3.4** (`programs_have_types`): Every
-  program `p` has a canonical type `progty(p)`.
-
-#### Lambda-Abstraction
-
-- **Theorem 4.1** (`star_beta`): Lambda-abstraction
-  satisfies beta reduction:
-  `(lambda x. t) u --> {u/x} t`.
-- **Theorem 4.2** (`derive_star`): Lambda-abstractions
-  can be typed in context.
-
-#### Fixpoint Combinator
-
-- **Theorem 6.1** (`Z_red`):
-  `Z{f} x --> f (Z{f}) x`
-  (fixpoint combinator reduction).
-- **Theorem 6.2** (`derive_Z`): The fixpoint combinator
-  can be typed.
-
-#### Programs on Trees
-
-- **Theorem 7.1** (`derive_size`):
-  `size : forall X. X -> Nat`.
-- **Theorem 7.2** (`equality_of_programs`):
-  `equal M N` reduces to `tt` if `M = N`, else `ff`.
-- **Theorem 7.3** (`derive_equal`):
-  `equal : forall X. forall Y. X -> Y -> Bool`.
-
-#### Self-Interpreter
-
-- **Theorem 8.1** (`branch_first_eval_iff_bf`):
-  `t, u || p` iff `bf t u --> p` (self-interpreter
-  correctness). The self-interpreter `bf` has type
-  `forall X. forall Y. (X -> Y) -> (X -> Y)` and
-  consists of 877 nodes.
-
-#### Subtyping
-
-- **Theorem 9.1** (`derive_subtype`): Subtyping is
-  admissible.
-- **Theorems 10.1-10.5**: Subtyping lemmas for
-  fork-of-leaf, fork-of-stem, and fork-of-fork cases.
-
-#### Subject Reduction
-
-- **Theorem 10.6** (`reduction_preserves_typing`):
-  If `Gamma |- t1 : T` and `t1 --> t2` then
-  `Gamma |- t2 : T`.
 
 ## Equational Presentation (Book)
 
