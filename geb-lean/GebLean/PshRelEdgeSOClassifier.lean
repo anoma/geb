@@ -66,6 +66,7 @@ this assigns the type of sieves on `c.unop` in
 `C`. Given `f : c ⟶ d` in `Cᵒᵖ` (corresponding
 to `f.unop : d.unop ⟶ c.unop` in `C`), the
 action is pullback of sieves along `f.unop`. -/
+@[reducible]
 def pshSievePresheaf :
     Cᵒᵖ ⥤ Type (max u v) where
   obj c := Sieve c.unop
@@ -99,6 +100,7 @@ variable (C : Type u) [Category.{v} C]
 `Ω` is the sieve presheaf and `full` is the
 full relation (all pairs of sieves are
 related). -/
+@[reducible]
 def pshRelEdgeSOClassifier :
     PshRelEdge.{u, v, max u v} C :=
   { src := pshSievePresheaf C
@@ -170,6 +172,50 @@ theorem pshClassifyingSieve_eq_top_iff
     p ∈ S.obj c
   simp [FunctorToTypes.map_id_apply]
 
+/-- Membership in a sieve is equivalent to the
+pullback being the maximal sieve. -/
+theorem sieve_mem_iff_pullback_eq_top
+    {X Y : C} (S : Sieve X) (f : Y ⟶ X) :
+    S f ↔ S.pullback f = ⊤ := by
+  rw [← Sieve.id_mem_iff_eq_top]
+  simp [Sieve.pullback]
+
+/-- The classifying map is the unique natural
+transformation whose preimage of `⊤` is `S`.
+The proof uses naturality of `χ` to relate
+`χ(c)(p)` at an arbitrary morphism `f` to
+membership of `P.map(f)(p)` in `S`, recovering
+the defining formula of `pshClassifyingSieve`. -/
+theorem pshClassifyingMap_unique
+    {P : Cᵒᵖ ⥤ Type (max u v)}
+    (S : Subfunctor P)
+    (χ : P ⟶ pshSievePresheaf C)
+    (hχ : ∀ (c : Cᵒᵖ) (p : P.obj c),
+      χ.app c p = ⊤ ↔ p ∈ S.obj c) :
+    χ = pshClassifyingMap S := by
+  apply NatTrans.ext
+  funext c p
+  apply Sieve.ext
+  intro d f
+  simp only [pshClassifyingMap,
+    pshClassifyingSieve]
+  have hnat : χ.app (Opposite.op d)
+      (P.map f.op p) =
+      (χ.app c p).pullback f := by
+    exact congr_fun (χ.naturality f.op) p
+  constructor
+  · intro hf
+    have hpb :=
+      (sieve_mem_iff_pullback_eq_top
+        (χ.app c p) f).mp hf
+    rw [← hnat] at hpb
+    exact (hχ _ _).mp hpb
+  · intro hmem
+    have htop := (hχ _ _).mpr hmem
+    rw [hnat] at htop
+    exact (sieve_mem_iff_pullback_eq_top
+      (χ.app c p) f).mpr htop
+
 /-- The classifying edge morphism for a strong
 sub-edge. Given subfunctors `SP ≤ E.src` and
 `SQ ≤ E.tgt`, the classifying morphism sends
@@ -230,9 +276,9 @@ theorem pshRelEdgeSOClassify_pullback
     pshRelEdgeTerminalMap _ ≫
       pshRelEdgeSOTrue C := by
   apply VertEdgeHom.ext
-  · ext c ⟨p, hp⟩
-    apply Sieve.ext
-    intro d f
+  · apply NatTrans.ext; funext c
+    funext ⟨p, hp⟩
+    apply Sieve.ext; intro d f
     simp only [
       pshRelEdgeStrongSubInclusion,
       pshRelEdgeSOClassify,
@@ -243,9 +289,9 @@ theorem pshRelEdgeSOClassify_pullback
       pshClassifyingSieve, Subfunctor.ι]
     exact ⟨fun _ => trivial,
       fun _ => SP.map f.op hp⟩
-  · ext c ⟨q, hq⟩
-    apply Sieve.ext
-    intro d f
+  · apply NatTrans.ext; funext c
+    funext ⟨q, hq⟩
+    apply Sieve.ext; intro d f
     simp only [
       pshRelEdgeStrongSubInclusion,
       pshRelEdgeSOClassify,
@@ -256,6 +302,33 @@ theorem pshRelEdgeSOClassify_pullback
       pshClassifyingSieve, Subfunctor.ι]
     exact ⟨fun _ => trivial,
       fun _ => SQ.map f.op hq⟩
+
+/-- The classifying edge morphism is unique:
+if `χ : E ⟶ (Ω, Ω, full)` satisfies the
+membership characterization on both source and
+target components, then
+`χ = pshRelEdgeSOClassify E SP SQ`. -/
+theorem pshRelEdgeSOClassify_unique
+    {E : PshRelEdge.{u, v, max u v} C}
+    (SP : Subfunctor E.src)
+    (SQ : Subfunctor E.tgt)
+    (χ : E ⟶ pshRelEdgeSOClassifier C)
+    (hSrc : ∀ (c : Cᵒᵖ)
+        (p : E.src.obj c),
+      (χ.srcMap.app c p : Sieve c.unop) =
+        ⊤ ↔ p ∈ SP.obj c)
+    (hTgt : ∀ (c : Cᵒᵖ)
+        (q : E.tgt.obj c),
+      (χ.tgtMap.app c q : Sieve c.unop) =
+        ⊤ ↔ q ∈ SQ.obj c) :
+    χ = pshRelEdgeSOClassify E SP SQ := by
+  have hsrc :=
+    pshClassifyingMap_unique SP
+      χ.srcMap hSrc
+  have htgt :=
+    pshClassifyingMap_unique SQ
+      χ.tgtMap hTgt
+  exact VertEdgeHom.ext hsrc htgt
 
 end ClassifyingMap
 
