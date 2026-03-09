@@ -1624,7 +1624,7 @@ abbrev constPresheafEmbedding :=
 
 /-- The empty presheaf relation between any
 two presheaves. -/
-def pshRelEmpty
+def pshRelEmptyOver
     {C : Type u} [Category.{v} C]
     (P Q : Cᵒᵖ ⥤ Type w) :
     PshRel P Q where
@@ -1648,10 +1648,10 @@ theorem constPresheaf_natTrans_app_eq
     intro P'
     have h₁ := η.naturality
       (PshRelSpanHom.fstProj P P'
-        (pshRelEmpty P P'))
+        (pshRelEmptyOver P P'))
     have h₂ := η.naturality
       (PshRelSpanHom.sndProj P P'
-        (pshRelEmpty P P'))
+        (pshRelEmptyOver P P'))
     simp only [Functor.const_obj_obj,
       Functor.const_obj_map, Category.id_comp,
       Category.comp_id] at h₁ h₂

@@ -48,6 +48,7 @@ import GebLean.Polynomial
 import GebLean.ProfAlg
 import GebLean.PshRelDouble
 import GebLean.PshRelEdgeExp
+import GebLean.PshRelEdgeLimits
 import GebLean.PshRelSpanDiagram
 import GebLean.PshTypeExpr
 import GebLean.RelInterpComposition
