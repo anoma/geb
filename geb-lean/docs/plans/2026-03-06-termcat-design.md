@@ -177,12 +177,40 @@ from Lawvere-style theories to tree calculus semantics.
 - `EATCongruence T` (`PLang/IndexedEAT.lean:110`):
   Equations respected by structure map.
 
-### GSOS Rules (Incomplete)
+### GSOS Rules
 
+- `GSOSRule Sigma B T prod`
+  (`Utilities/GSOSRule.lean:~80`):
+  Abstract GSOS rule: natural transformation
+  `Sigma(X * B(X)) -> B(T(X))` (Turi-Plotkin
+  formulation).
+- `PolyGSOSRule P Q` (`PolyGSOS.lean:89`):
+  Polynomial GSOS rule:
+  `P . (Id * Q) => Q . T_P`.
 - `polyIdBehaviorPoly Q` (`PolyGSOS.lean`):
   `Id * Q` polynomial.
-- `PolyGSOSRule P Q` (`PolyGSOS.lean`):
-  Rule: `P . (Id * Q) => Q . T_P`.
+- `polyGSOSFoldCata` (`PolyGSOS.lean:~376`):
+  Catamorphism computing operational semantics from
+  a GSOS rule — folds over cofree comonad elements.
+- `polyGSOSScaleCoalg` (`PolyGSOS.lean:~558`):
+  Coalgebra structure on `T_P(D_Q(A))` derived from
+  the GSOS fold.
+- `polyGSOSDistLawNat P Q rho`
+  (`PolyGSOS.lean:~2002`):
+  Natural transformation `D_Q . T_P -> T_P . D_Q`
+  with naturality proof.
+- `polyGSOSDistributiveLaw P Q rho`
+  (`PolyGSOS.lean:~4675`):
+  Complete distributive law
+  `DistributiveLaw (polyFreeMonad X P)
+    (polyCofreeComonad X Q)` constructed from a GSOS
+  rule, with all four coherence axioms (unit, counit,
+  multiplication, comultiplication) proved.
+- `polyGSOSOperationalMonad P Q rho`
+  (`PolyGSOS.lean:~4709`):
+  Operational monad: lifts the free monad to a monad
+  on `(polyCofreeComonad X Q).Coalgebra` via the
+  distributive law.
 
 ### Dinatural Numbers (Analogy)
 
@@ -400,8 +428,6 @@ topos of the tree calculus PCA is an open question.
   arguments)
 - (-) Encoding the 5 rules in polynomial morphisms
   requires care
-- (-) The GSOS infrastructure in the codebase is
-  incomplete
 - (-) Connection between coalgebra topos and realizability
   topos is speculative
 - (-) More mathematically involved than Approach A
@@ -419,7 +445,8 @@ topos of the tree calculus PCA is an open question.
   (lambda-bialgebra definition)
 - `CofreeCategory.lean:3327`
   (`polyCoalgCopresheafEquiv`)
-- `PolyGSOS.lean` (GSOS rule structure, incomplete)
+- `PolyGSOS.lean` (GSOS rule structure, distributive
+  law construction, operational monad)
 
 ### Approach C: Hybrid — Incremental Layering
 
@@ -1459,6 +1486,212 @@ analysis and relate to our existing open questions:
   for a term exactly a realizer witnessing the
   assembly morphism?
 
+## GSOS Infrastructure and Triage Reduction
+
+The codebase now has a complete GSOS implementation
+(`PolyGSOS.lean`, ~4700 lines) that constructs
+distributive laws and operational monads from GSOS rules.
+This section analyzes how to use it for tree calculus.
+
+### What the GSOS Infrastructure Provides
+
+Given polynomial endofunctors `P` (syntax) and `Q`
+(behavior) on `Over X`, and a GSOS rule
+`rho : PolyGSOSRule P Q` (a polynomial morphism
+`P . (Id * Q) -> Q . T_P`), the infrastructure
+automatically constructs:
+
+1. **Catamorphism** (`polyGSOSFoldCata`): a fold over
+   cofree comonad elements that computes the
+   operational semantics step by step.
+2. **Scale coalgebra** (`polyGSOSScaleCoalg`): a
+   coalgebra structure on `T_P(D_Q(A))` (free monad
+   of cofree comonad).
+3. **Distributive law** (`polyGSOSDistributiveLaw`):
+   `DistributiveLaw (polyFreeMonad X P)
+     (polyCofreeComonad X Q)` with all four coherence
+   axioms proved (unit, counit, multiplication,
+   comultiplication).
+4. **Operational monad** (`polyGSOSOperationalMonad`):
+   a monad on the category of Q-coalgebras, obtained
+   by lifting the free monad through the distributive
+   law.
+
+The Eilenberg-Moore algebras of the operational monad
+are lambda-bialgebras: objects carrying both a
+`T_P`-algebra (syntax) and a `D_Q`-coalgebra (behavior)
+structure, interacting coherently via the distributive
+law.
+
+### Encoding Triage as a GSOS Rule
+
+To use this for tree calculus, we need to choose `P`
+(syntax) and `Q` (behavior) and define the GSOS rule.
+
+**Syntax functor**: `P = polyProd X`. A P-algebra
+structure on `C` is a binary operation
+`C *_X C -> C` (forking). The free monad
+`T_P = polyFreeMonad X (polyProd X)` builds labeled
+binary trees.
+
+**Behavior functor**: `Q` must capture what can be
+observed about a tree calculus term after reduction.
+A factorable form (the result of head-reducing a term)
+is either a leaf, a stem, or a fork. The observation
+is: "what is the top-level structure of this term's
+normal form, and what are its immediate subterms?"
+
+Candidates for `Q`:
+
+- `Q = polyProd X` (same as P). The behavior is
+  binary decomposition — observing the two children
+  of a fork. The cofree comonad `D_Q` is infinite
+  binary streams. This is the most natural choice
+  since syntax and behavior share the same branching
+  structure, and the coalgebra topos
+  `PolyCoalg (polyProd X)` is already established.
+
+- `Q = polyTranslate (overTerminal X) (polyProd X)`.
+  The behavior is "either a value (leaf) or a binary
+  decomposition." This adds an explicit termination
+  signal (the leaf case), distinguishing "done" from
+  "has two sub-behaviors."
+
+- A custom polynomial encoding the three-way
+  triage (leaf/stem/fork) with 0/1/2 sub-behaviors
+  respectively. This matches the triage structure
+  most directly but introduces a new polynomial.
+
+The choice of `Q` determines the cofree comonad and
+hence the coalgebra topos in which the operational
+semantics lives.
+
+**The GSOS rule**: for `P = Q = polyProd X`, the rule
+`rho : P . (Id * P) -> P . T_P` says: given a fork
+of two subterms, where each subterm carries both a
+value (its current state) and a binary decomposition
+(its behavior), produce a binary decomposition of new
+free monad terms. The five triage rules each handle
+one case pattern:
+
+- Rule 1 (K): left child is a leaf-leaf fork (K).
+  Return the value of the right child.
+- Rule 2 (S): left child is a leaf-stem.
+  Apply S-reduction.
+- Rules 3-5 (triage): left child is a fork.
+  Dispatch on the right child's structure.
+
+The triage rules require inspecting two levels of
+structure (the fork's first child is itself a fork
+whose children determine the case). Whether this
+two-level inspection fits naturally into the GSOS
+rule format — which provides `Id * Q` (one level of
+value and one level of behavior) for each subterm —
+is a design question. Options include:
+
+- Using the `Id` component to access the subterm's
+  value (tree type) and pattern-matching on it.
+- Choosing `Q` to expose enough structure that the
+  GSOS rule can see both the top-level and the
+  next-level classification.
+- Defining the GSOS rule on a richer syntax functor
+  that encodes the triage structure directly.
+
+### What GSOS Gives Us Over Manual Construction
+
+Without GSOS, the plan (Phase 2-3) was:
+
+1. Define triage rules as Lean functions (external).
+2. Define triage rules as coalgebra morphisms
+   (internal).
+3. Manually construct the distributive law.
+4. Manually verify the four coherence axioms.
+5. Construct the lambda-bialgebra.
+
+With GSOS, Steps 3-5 are automatic:
+
+1. Define triage rules as a GSOS rule `rho`.
+2. The distributive law is `polyGSOSDistributiveLaw
+   (polyProd X) Q rho` — all coherence axioms are
+   already proved.
+3. The operational monad is
+   `polyGSOSOperationalMonad (polyProd X) Q rho`.
+4. Lambda-bialgebras are the Eilenberg-Moore algebras
+   of this monad.
+
+This reduces Phase 3 to defining `rho` and verifying
+that it correctly encodes the triage rules (a
+correctness statement, not a coherence proof). The
+categorical infrastructure is handled by the GSOS
+machinery.
+
+### Implications for the Phase Structure
+
+The availability of GSOS suggests reorganizing Phases
+2 and 3:
+
+**Revised Phase 2** (Tree Calculus Reduction):
+
+1. Choose the behavior functor `Q`.
+2. Define the GSOS rule
+   `rho : PolyGSOSRule (polyProd X) Q` encoding the
+   five triage reduction rules.
+3. Verify that `rho` correctly encodes triage:
+   the GSOS fold on ground terms reproduces the
+   reduction rules.
+4. Show confluence (the five rules are non-overlapping).
+5. Define the PCA structure (K and S from rules 1-2).
+
+**Revised Phase 3** (Lambda-Bialgebra and Topos):
+
+1. Obtain the distributive law from
+   `polyGSOSDistributiveLaw`.
+2. Obtain the operational monad from
+   `polyGSOSOperationalMonad`.
+3. Study the Eilenberg-Moore category of the
+   operational monad (= lambda-bialgebras for this
+   distributive law).
+4. Connect to the coalgebra topos via
+   `polyCoalgCopresheafEquiv`.
+5. Investigate the realizability topos.
+
+Steps 1-2 of Phase 3 are now a single definition
+each, rather than multi-hundred-line constructions.
+
+### Open Questions from GSOS
+
+- **Choice of Q**: Which behavior polynomial is the
+  right fit for triage calculus? The three candidates
+  above (`polyProd X`, `polyTranslate` variant,
+  custom triage polynomial) have different
+  trade-offs.
+
+- **Two-level pattern matching**: Can the triage
+  rules' two-level structure (the fork's first child
+  is itself classified) be encoded in a single GSOS
+  rule, or does it require a two-step decomposition
+  (first classify the fork, then classify its first
+  child)?
+
+- **Relationship to the existing distributive law**:
+  `PolyDistributiveLaw.lean` already constructs the
+  canonical distributive law between the free monad
+  and cofree comonad of the *same* polynomial P.
+  The GSOS-generated distributive law uses
+  `polyGSOSDistributiveLaw P Q rho` for potentially
+  different P and Q. When `P = Q`, how do these
+  relate? Is the canonical distributive law the
+  "trivial" GSOS rule (identity behavior), and the
+  triage rule a non-trivial extension?
+
+- **Operational monad and the primitive-recursive
+  fragment**: The Eilenberg-Moore algebras of the
+  operational monad are the "well-behaved" objects
+  (those with coherent syntax + semantics). Is
+  there a sub-monad corresponding to the
+  primitive-recursive fragment — a monad whose
+  algebras satisfy a termination condition?
+
 ## Bootstrapping Strategy: Tree Calculus First
 
 ### Motivation
@@ -1677,10 +1910,15 @@ bootstrapping.
 
 ### Phase 2: Tree Calculus Reduction and Bootstrapping
 
+1. Choose the behavior polynomial `Q` for triage
+   calculus (see "GSOS Infrastructure and Triage
+   Reduction" section above)
 1. Use the finite-branching isomorphism to define
    leaf/stem/fork case analysis (child count 0, 1, 2)
-1. Define the 5 triage reduction rules both externally
-   (Lean functions) and internally (coalgebra morphisms)
+1. Define the 5 triage reduction rules as a GSOS rule
+   `rho : PolyGSOSRule (polyProd X) Q`
+1. Verify that the GSOS fold on ground terms reproduces
+   the triage reduction rules
 1. Show confluence (the 5 rules are non-overlapping)
 1. Define the PCA structure (K and S from rules 1-2)
 1. Define the primitive-recursive syntactic fragment:
@@ -1693,15 +1931,19 @@ bootstrapping.
    that decides membership in the fragment
 1. Prove in Lean that the self-recognizer is correct
    (sound and complete) and terminates
-1. Connect to GSOS if the infrastructure is available
 
 ### Phase 3: Lambda-Bialgebra and Topos
 
-1. Specialize the distributive law to `polyProd X`
-1. Construct a lambda-bialgebra from the tree calculus
-   reduction
-1. Explore the coalgebra topos structure for tree
-   behaviors
+1. Obtain the distributive law from
+   `polyGSOSDistributiveLaw (polyProd X) Q rho` —
+   this is now a single definition (all coherence
+   axioms are already proved by the GSOS machinery)
+1. Obtain the operational monad from
+   `polyGSOSOperationalMonad (polyProd X) Q rho`
+1. Study the Eilenberg-Moore category of the
+   operational monad (= lambda-bialgebras)
+1. Connect to the coalgebra topos via
+   `polyCoalgCopresheafEquiv`
 1. Investigate the realizability topos and its
    relationship to the coalgebra topos
 

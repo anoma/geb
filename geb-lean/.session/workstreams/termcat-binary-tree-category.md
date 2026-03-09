@@ -162,10 +162,15 @@ Three candidate base categories:
 
 ### Phase 2: Tree Calculus Reduction and Bootstrapping
 
+- [ ] Choose the behavior polynomial `Q` for triage
+  calculus (see design doc section "GSOS Infrastructure
+  and Triage Reduction")
 - [ ] Use finite-branching isomorphism to define
   leaf/stem/fork case analysis (child count 0, 1, 2)
-- [ ] Define the 5 triage reduction rules both externally
-  (Lean functions) and internally (coalgebra morphisms)
+- [ ] Define the 5 triage reduction rules as a GSOS rule
+  `rho : PolyGSOSRule (polyProd X) Q`
+- [ ] Verify that the GSOS fold on ground terms
+  reproduces the triage reduction rules
 - [ ] Show confluence (non-overlapping rules)
 - [ ] Define PCA structure (K and S from rules 1-2)
 - [ ] Define the primitive-recursive syntactic fragment:
@@ -178,16 +183,20 @@ Three candidate base categories:
   that decides membership in the fragment
 - [ ] Prove in Lean that the self-recognizer is correct
   (sound and complete) and terminates
-- [ ] Connect to GSOS if infrastructure available
 
 ### Phase 3: Lambda-Bialgebra and Topos
 
-- [ ] Specialize distributive law to `polyProd X`
-- [ ] Construct lambda-bialgebra from tree calculus
-  reduction
-- [ ] Explore coalgebra topos structure
-- [ ] Investigate realizability topos and its relationship
-  to the coalgebra topos
+- [ ] Obtain distributive law from
+  `polyGSOSDistributiveLaw (polyProd X) Q rho`
+  (all coherence axioms proved by GSOS machinery)
+- [ ] Obtain operational monad from
+  `polyGSOSOperationalMonad (polyProd X) Q rho`
+- [ ] Study the Eilenberg-Moore category of the
+  operational monad (= lambda-bialgebras)
+- [ ] Connect to coalgebra topos via
+  `polyCoalgCopresheafEquiv`
+- [ ] Investigate realizability topos and its
+  relationship to the coalgebra topos
 
 ### Phase 4: Language Tower and Proof-Carrying Code
 
