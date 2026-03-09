@@ -384,4 +384,158 @@ def pshRelEdgeEqualizerLift
 
 end Equalizer
 
+section Coequalizer
+
+variable {E₁ E₂ : PshRelEdge.{u, v, w} C}
+  (f g : E₁ ⟶ E₂)
+
+/-- The generating relation for the coequalizer:
+`x` and `y` are related if some element maps to
+`x` under `α` and to `y` under `β`. -/
+def pshCoequalizerRel
+    {P Q : Cᵒᵖ ⥤ Type w}
+    (α β : P ⟶ Q) (c : Cᵒᵖ) :
+    Q.obj c → Q.obj c → Prop :=
+  fun x y => ∃ p : P.obj c,
+    α.app c p = x ∧ β.app c p = y
+
+/-- The coequalizer presheaf: at each stage,
+the quotient of the codomain by the relation
+identifying images of `α` and `β`. -/
+def pshCoequalizerPresheaf
+    {P Q : Cᵒᵖ ⥤ Type w}
+    (α β : P ⟶ Q) :
+    Cᵒᵖ ⥤ Type w where
+  obj c := Quot (pshCoequalizerRel α β c)
+  map {c d} h := Quot.lift
+    (fun q => Quot.mk _ (Q.map h q))
+    (fun _ _ ⟨p, hx, hy⟩ => by
+      subst hx; subst hy
+      exact Quot.sound
+        ⟨P.map h p,
+         congr_fun (α.naturality h) p,
+         congr_fun (β.naturality h) p⟩)
+  map_id X := by
+    funext q; induction q using Quot.ind with
+    | mk x =>
+      change Quot.mk _ (Q.map (𝟙 X) x) =
+        Quot.mk _ x
+      congr 1
+      exact FunctorToTypes.map_id_apply Q x
+  map_comp {X Y Z} f' g' := by
+    funext q; induction q using Quot.ind with
+    | mk x =>
+      change Quot.mk _ (Q.map (f' ≫ g') x) =
+        Quot.mk _ (Q.map g' (Q.map f' x))
+      congr 1
+      exact FunctorToTypes.map_comp_apply
+        Q f' g' x
+
+/-- The projection from the codomain presheaf
+to the coequalizer presheaf. -/
+def pshCoequalizerProjection
+    {P Q : Cᵒᵖ ⥤ Type w}
+    (α β : P ⟶ Q) :
+    Q ⟶ pshCoequalizerPresheaf α β where
+  app _ q := Quot.mk _ q
+
+/-- The projection coequalizes: composing `α`
+then projecting equals composing `β` then
+projecting. -/
+theorem pshCoequalizer_condition
+    {P Q : Cᵒᵖ ⥤ Type w}
+    (α β : P ⟶ Q) :
+    α ≫ pshCoequalizerProjection α β =
+    β ≫ pshCoequalizerProjection α β := by
+  ext c p
+  exact Quot.sound ⟨p, rfl, rfl⟩
+
+/-- Descent from the coequalizer: given
+`h : Q ⟶ R` with `α ≫ h = β ≫ h`, produce
+a map from the coequalizer to `R`. -/
+def pshCoequalizerDesc
+    {P Q R : Cᵒᵖ ⥤ Type w}
+    {α β : P ⟶ Q}
+    (h : Q ⟶ R) (w : α ≫ h = β ≫ h) :
+    pshCoequalizerPresheaf α β ⟶ R where
+  app c := Quot.lift (h.app c)
+    (fun _ _ ⟨p, hx, hy⟩ => by
+      subst hx; subst hy
+      exact congr_fun
+        (NatTrans.congr_app w c) p)
+  naturality {c d} k := by
+    funext q; induction q using Quot.ind with
+    | mk x =>
+      exact congr_fun (h.naturality k) x
+
+/-- The coequalizer relation: the image of
+`E₂.edge` under the quotient maps. A pair of
+quotient elements is related if it has
+representatives related in `E₂.edge`. -/
+def pshRelCoequalizer :
+    PshRel (pshCoequalizerPresheaf
+        f.srcMap g.srcMap)
+      (pshCoequalizerPresheaf
+        f.tgtMap g.tgtMap) where
+  obj c :=
+    { pq |
+      ∃ s t, (s, t) ∈ E₂.edge.obj c ∧
+        Quot.mk _ s = pq.1 ∧
+        Quot.mk _ t = pq.2 }
+  map {c d} h := by
+    intro ⟨qs, qt⟩ ⟨s, t, hst, hs, ht⟩
+    exact ⟨E₂.src.map h s, E₂.tgt.map h t,
+      E₂.edge.map h hst,
+      congrArg ((pshCoequalizerPresheaf
+        f.srcMap g.srcMap).map h) hs,
+      congrArg ((pshCoequalizerPresheaf
+        f.tgtMap g.tgtMap).map h) ht⟩
+
+/-- The coequalizer in `PshRelEdge C`. -/
+def pshRelEdgeCoequalizer :
+    PshRelEdge.{u, v, w} C :=
+  { src := pshCoequalizerPresheaf
+      f.srcMap g.srcMap
+    tgt := pshCoequalizerPresheaf
+      f.tgtMap g.tgtMap
+    edge := pshRelCoequalizer f g }
+
+/-- The projection morphism from the domain
+to the coequalizer edge. -/
+def pshRelEdgeCoequalizerProjection :
+    E₂ ⟶ pshRelEdgeCoequalizer f g :=
+  { srcMap := pshCoequalizerProjection
+      f.srcMap g.srcMap
+    tgtMap := pshCoequalizerProjection
+      f.tgtMap g.tgtMap
+    sq := fun _ s t hst =>
+      ⟨s, t, hst, rfl, rfl⟩ }
+
+/-- The coequalizer projection coequalizes: -/
+theorem pshRelEdgeCoequalizer_condition :
+    f ≫ pshRelEdgeCoequalizerProjection f g =
+    g ≫ pshRelEdgeCoequalizerProjection f g := by
+  apply VertEdgeHom.ext <;>
+  · ext c p
+    exact Quot.sound ⟨p, rfl, rfl⟩
+
+/-- Given a morphism `h : E₂ ⟶ B` with
+`f ≫ h = g ≫ h`, descend to a morphism
+`pshRelEdgeCoequalizer f g ⟶ B`. -/
+def pshRelEdgeCoequalizerDesc
+    {B : PshRelEdge.{u, v, w} C}
+    (h : E₂ ⟶ B)
+    (w : f ≫ h = g ≫ h) :
+    pshRelEdgeCoequalizer f g ⟶ B :=
+  { srcMap := pshCoequalizerDesc h.srcMap
+      (congrArg (·.srcMap) w)
+    tgtMap := pshCoequalizerDesc h.tgtMap
+      (congrArg (·.tgtMap) w)
+    sq := by
+      intro c qs qt ⟨s, t, hst, hs, ht⟩
+      subst hs; subst ht
+      exact h.sq c s t hst }
+
+end Coequalizer
+
 end GebLean

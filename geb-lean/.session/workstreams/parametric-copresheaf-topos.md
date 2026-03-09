@@ -231,6 +231,10 @@ framework.
   (`PshRelEdgeExp.lean`)
   Ref: `docs/parametric-copresheaf-topos.md` Section 11.5.
 
+- [x] **T21b. Finite limits and colimits in PshRelEdge C.**
+  Terminal, initial, binary coproducts, equalizers,
+  coequalizers. (`PshRelEdgeLimits.lean`)
+
 - [ ] **T22. Identity extension as functor property.**
   Show `pshRelIdentFunctor` preserves exponentials
   (the IEP as a cartesian closed functor property).
