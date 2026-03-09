@@ -1,11 +1,12 @@
 # GSOS Distributive Law
 
-## Status: Multiplication coherence pending
+## Status: Complete
 
 ## Current build state
 
-File: `GebLean/PolyGSOS.lean` (~2640 lines, compiles
-cleanly with no warnings)
+File: `GebLean/PolyGSOS.lean` (~4720 lines, compiles
+cleanly with no warnings). Full `lake build` and
+`lake test` pass. Only standard axioms.
 
 ## Completed
 
@@ -95,7 +96,7 @@ Pipeline naturality sub-lemmas:
   under T_P(delta)
 - `GSOSDeltaFreeMap`, `GSOSDeltaQMap`: type aliases
 
-## Remaining phases
+## Completed (continued)
 
 ### Phase CM: Comultiplication coherence (done)
 
@@ -599,54 +600,33 @@ lake build && lake test
 | CM-C | lhs coalg morphism | ~150 | done |
 | CM-D | Comul assembly | ~35 | done |
 | MU-1a | Src coalg StrAt | ~30 | done |
-| MU-1b | Src coalg packaging | ~50 | pending |
-| MU-2 | RHS coalgebra | ~10 | pending |
-| MU-H | Monad left unit | ~15 | pending |
-| MU-3 | mu_hom_h | ~50 | pending |
-| MU-4 | tdist_hom_h | ~200 | in progress |
-| MU-5 | Assembly | ~40 | pending |
-| PK-1 | DistributiveLaw | ~40 | pending |
-| PK-2 | Operational monad | ~5 | pending |
-| | **Total remaining** | **~465** | |
+| MU-1b | Src coalg packaging | ~50 | done |
+| MU-2 | RHS coalgebra | ~10 | done |
+| MU-H | Monad left unit | ~15 | done |
+| MU-3 | mu_hom_h | ~50 | done |
+| MU-4 | tdist_hom_h | ~200 | done |
+| MU-5 | Assembly | ~40 | done |
+| PK-1 | DistributiveLaw | ~40 | done |
+| PK-2 | Operational monad | ~5 | done |
+| | **All complete** | | |
 
-## Resumption guide
+## Current state
 
-When resuming after compaction/restart:
+All phases complete. The full GSOS implementation
+chain is:
 
-1. Run `lake build GebLean.PolyGSOS 2>&1 | head -20`
-   to see current errors
-2. Check `git log --oneline -5` for last commit
-3. Find the next uncompleted step in this document
-4. For each step, use the underscore technique:
-   write signature with `_` body, build, check goal,
-   fill in
-5. After completing a phase, commit and update this doc
+- `PolyGSOSRule P Q`: GSOS rule structure
+- `polyGSOSDistLawMor`: distributive law morphism
+  via anamorphism (polyCofixUnfold)
+- Five coherence proofs: counit, unit, naturality,
+  comultiplication, multiplication
+- `polyGSOSDistributiveLaw`: `DistributiveLaw`
+  instance packaging all coherence
+- `polyGSOSOperationalMonad`: operational monad on
+  Q-coalgebras via `liftedMonad`
 
-### Current state (for resumption)
-
-Phase MU (multiplication coherence) is in progress.
-MU-1 through MU-3 are done. MU-4 (tdist coalgebra
-morphism) is partially done:
-
-- Leaf case: done
-- Node annotation branch: done
-- Node qidx branch: done
-  (`polyGSOSDistLaw_mul_tdist_node_qidx`, compiling)
-- Node qchildren branch: in progress
-  (`polyGSOSDistLaw_mul_tdist_node_qchildren`).
-  Partial proof reduces to per-element goal via
-  heq_of_cast_eq + Over.OverMorphism.ext + funext.
-  Requires: polyGSOSFoldCata_fst_eq (new),
-  polyGSOSFoldNodeAtGen_snd_natural (new),
-  polyGSOSFoldMul_child_pullback_eq (new).
-  See "MU-4 qchildren plan (revised)" above.
-
-The main proof `polyGSOSDistLaw_mul_tdist_node` is
-clean (no warnings) — it dispatches to the three
-factored lemmas.
-
-File: `GebLean/PolyGSOS.lean` (~4200 lines, 2 errors
-from `_` placeholders in qidx and qchildren lemmas).
+File: `GebLean/PolyGSOS.lean` (~4720 lines, zero
+errors/warnings, standard axioms only).
 
 ## Structural observations
 

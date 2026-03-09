@@ -4118,6 +4118,205 @@ private lemma polyGSOSDistLaw_mul_tdist_node_qidx
     simp
     congr 1
 
+private lemma polyGSOSFoldCast_fst
+    (A : Over X) (P Q : PolyEndo X)
+    (rho : PolyGSOSRule P Q) {x : X}
+    (t : PolyFreeM
+      (polyCofreeCarrier A Q) P x) :
+    (polyGSOSFoldCata_snd_fst_eq
+      A P Q rho t ▸
+    (polyGSOSFoldCataWithFiber
+      A P Q rho t).val.val.2.snd).fst =
+    polyGSOSFoldQIndex A P Q rho t := by
+  match t with
+  | PolyFix.mk _ (Sum.inl ⟨⟨_, _⟩, rfl⟩) _ =>
+    rfl
+  | PolyFix.mk _ (Sum.inr _) _ => rfl
+
+private lemma polyGSOSFoldQeval_natural_mul
+    (A : Over X) (P Q : PolyEndo X)
+    (rho : PolyGSOSRule P Q)
+    {x : X}
+    (t : PolyFreeM
+      (polyFreeMCarrier
+        (polyCofreeCarrier A Q) P) P x) :
+    let DQ := polyCofreeCarrier A Q
+    let TA := polyFreeMCarrier A P
+    let DQTA := polyCofreeCarrier TA Q
+    let TDQ := polyFreeMCarrier DQ P
+    let lam := polyGSOSDistLawMor A P Q rho
+    let tlam := polyFreeMap TDQ DQTA P lam
+    ((polyEndoFunctor X Q).map tlam).left
+      ⟨x, polyGSOSDistLaw_mul_srcQEvalAt
+        A P Q rho t⟩ =
+    (polyGSOSFoldCataWithFiber TA P Q rho
+      (polyFreeMapAt TDQ DQTA P lam
+        x t)).val.val.2 := by
+  intro DQ TA DQTA TDQ lam tlam
+  induction t with
+  | mk y idx children ih =>
+    match idx with
+    | Sum.inl ⟨⟨_, tree⟩, rfl⟩ =>
+      simp only [polyFreeMapAt,
+        polyFreeMBind,
+        polyFreeMPure,
+        polyGSOSDistLaw_mul_srcQEvalAt,
+        polyEndoFunctor,
+        polyBetweenEvalFunctor,
+        polyToOverFunctor,
+        polyToOverEvalMap_left,
+        ccrEvalMap]
+      let d := polyCofixUnfoldAt
+        (polyScale TA Q)
+        (polyGSOSScaleCoalg A P Q rho) y
+        ⟨⟨y, tree⟩, rfl⟩
+      change _ = (polyGSOSFoldLeafAt TA P Q
+        d).val.2
+      simp only [polyGSOSFoldLeafAt,
+        polyEndoFunctor,
+        polyBetweenEvalFunctor,
+        polyToOverFunctor]
+      have hidx :=
+        (polyGSOSDistLawMor_head_snd
+          A P Q rho tree).symm
+      simp only [polyGSOSFoldQIndex] at hidx
+      have hidx' :=
+        (polyGSOSFoldCast_fst
+          A P Q rho tree).trans hidx
+      exact Sigma.ext rfl (heq_of_eq
+        (Sigma.ext hidx' (by
+          apply polyBetweenFamily_mor_heq
+            rfl _ _ (heq_of_eq hidx')
+          simp only [Over.comp_left,
+            Over.homMk_left]
+          apply Function.hfunext
+            (congrArg (fun q =>
+              (polyBetweenFamily X X Q y q
+                ).left)
+              hidx')
+          intro e₁ e₂ he
+          simp only [types_comp_apply]
+          apply heq_of_eq
+          let v' :=
+            (polyGSOSFoldCata_snd_fst_eq
+              A P Q rho tree ▸
+            (polyGSOSFoldCataWithFiber
+              A P Q rho tree
+              ).val.val.2.snd).snd.left e₁
+          have hstep : tlam.left
+              (polyFreeUnitLeft TDQ P v') =
+              (polyFreeUnitLeft DQTA P
+                (lam.left v') :
+                (polyFreeMCarrier DQTA P
+                  ).left) := rfl
+          have hfiber :=
+            polyCofixUnfold_coalg_comm_child_fst_eq
+              (polyScale TA Q)
+              (polyGSOSScaleCoalg A P Q rho)
+              ⟨y, tree⟩ e₁ e₂ he
+          have hcofix :=
+            polyCofixUnfoldAt_children_heq
+              (polyScale TA Q)
+              (polyGSOSScaleCoalg A P Q rho)
+              ⟨y, tree⟩ e₁ e₂ he
+          have hlamv : lam.left v' =
+              ⟨(polyBetweenFamily X X Q y
+                  d.head.2).hom e₂,
+                d.children e₂⟩ :=
+            (show lam.left v' =
+              ⟨(polyGSOSScaleCoalg A P Q
+                  rho).V.hom v',
+                polyCofixUnfoldAt
+                  (polyScale TA Q)
+                  (polyGSOSScaleCoalg A P Q rho)
+                  ((polyGSOSScaleCoalg A P Q
+                    rho).V.hom v')
+                  ⟨v', rfl⟩⟩
+            from rfl).trans
+              (Sigma.ext hfiber hcofix)
+          exact hstep.trans
+            (congrArg
+              (polyFreeUnitLeft DQTA P)
+              hlamv))))
+    | Sum.inr p =>
+      simp only [polyFreeMapAt, polyFreeMBind,
+        polyGSOSFoldCataWithFiber,
+        polyGSOSDistLaw_mul_srcQEvalAt,
+        polyGSOSFoldNodeAt,
+        polyGSOSFoldNodeAtGen,
+        polyEndoFunctor,
+        polyBetweenEvalFunctor,
+        polyToOverFunctor,
+        polyToOverEvalMap_left]
+      congr 1
+      rw [ccrEvalMap_comp_apply
+        (polyFreeMJoinEval TDQ P) tlam]
+      conv_lhs =>
+        rw [show (polyFreeMJoinEval TDQ P ≫
+            tlam) =
+          ((polyEndoFunctor X
+            (polyFreeMPoly P)).map tlam ≫
+            polyFreeMJoinEval DQTA P)
+          from polyFreeMJoinEval_natural
+            TDQ DQTA P lam]
+      rw [← ccrEvalMap_comp_apply
+        ((polyEndoFunctor X
+          (polyFreeMPoly P)).map tlam)
+        (polyFreeMJoinEval DQTA P)]
+      congr 1
+      rw [polyBetweenComp_eval_toFun_natural
+        Q (polyFreeMPoly P)
+        (polyFreeMCarrier TDQ P)
+        (polyFreeMCarrier DQTA P)
+        tlam y]
+      congr 1
+      rw [morphEvalAt_ccrEvalMap_comm rho.rule
+        tlam y]
+      congr 1
+      rw [polyBetweenComp_eval_invFun_natural
+        P (polyIdBehaviorPoly Q)
+        (polyFreeMCarrier TDQ P)
+        (polyFreeMCarrier DQTA P)
+        tlam y]
+      congr 1
+      rw [ccrEvalMap_comp_apply
+        (overPullbackToIdQEval Q
+          (polyFreeMCarrier TDQ P))
+        ((polyEndoFunctor X
+          (polyIdBehaviorPoly Q)).map tlam)]
+      conv_lhs =>
+        rw [show (overPullbackToIdQEval Q
+            (polyFreeMCarrier TDQ P) ≫
+            (polyEndoFunctor X
+              (polyIdBehaviorPoly Q)).map
+              tlam) =
+          (overPullbackMap tlam
+            ((polyEndoFunctor X Q).map tlam) ≫
+            overPullbackToIdQEval Q
+              (polyFreeMCarrier DQTA P))
+          from overPullbackToIdQEval_comm
+            Q (polyFreeMCarrier TDQ P)
+            (polyFreeMCarrier DQTA P) tlam]
+      rw [← ccrEvalMap_comp_apply
+        (overPullbackMap tlam
+          ((polyEndoFunctor X Q).map tlam))
+        (overPullbackToIdQEval Q
+          (polyFreeMCarrier DQTA P))]
+      congr 1
+      simp only [ccrEvalMap, pbefMk, ptoefMk,
+        ccrEvalMk]
+      congr 1
+      apply Over.OverMorphism.ext
+      funext e
+      simp only [Over.comp_left,
+        types_comp_apply,
+        Over.homMk_left, overPullbackMap]
+      apply Subtype.ext
+      apply Prod.ext
+      · exact (polyGSOSFoldCata_fst_eq
+          TA P Q rho _).symm
+      · exact ih e
+
 private lemma
     polyGSOSDistLaw_mul_tdist_node_qchildren
     (A : Over X) (P Q : PolyEndo X)
@@ -4214,7 +4413,15 @@ private lemma
   rw [over_cast_left hsrcEq]
   simp only [Over.comp_left, types_comp_apply,
     Over.homMk_left]
-  _
+  exact polyBetweenEvalMap_mor_apply Q
+    (polyFreeMap TDQ DQTA P lam)
+    ⟨x, polyGSOSDistLaw_mul_srcQEvalAt A P Q rho
+      (PolyFix.mk x (Sum.inr p) children)⟩
+    (polyGSOSFoldNodeAt TA P Q rho
+      (pbefMk p rhsChildMor)).val.2
+    (polyGSOSFoldQeval_natural_mul A P Q rho
+      (PolyFix.mk x (Sum.inr p) children))
+    (cast_heq _ e)
 
 private lemma polyGSOSDistLaw_mul_tdist_node
     (A : Over X) (P Q : PolyEndo X)
@@ -4398,5 +4605,112 @@ lemma polyGSOSDistLaw_mul_tdist_hom
       subst ha
       exact polyGSOSDistLaw_mul_tdist_leaf
         A P Q rho t_a
+
+lemma polyGSOSDistLaw_mul
+    (A : Over X) (P Q : PolyEndo X)
+    (rho : PolyGSOSRule P Q) :
+    let DQ := polyCofreeCarrier A Q
+    let TA := polyFreeMCarrier A P
+    let DQTA := polyCofreeCarrier TA Q
+    let TDQ := polyFreeMCarrier DQ P
+    polyFreeCounitFold P (polyFreeAlg DQ P) ≫
+    polyGSOSDistLawMor A P Q rho =
+    polyFreeMap TDQ DQTA P
+      (polyGSOSDistLawMor A P Q rho) ≫
+    polyGSOSDistLawMor TA P Q rho ≫
+    polyCofreeMap
+      (polyFreeMCarrier TA P) TA Q
+      (polyFreeCounitFold P
+        (polyFreeAlg A P)) := by
+  intro DQ TA DQTA TDQ
+  have mu_hom_h :=
+    polyGSOSDistLaw_mul_mu_hom A P Q rho
+  have tdist_hom_h :=
+    polyGSOSDistLaw_mul_tdist_hom A P Q rho
+  have lhs_eq :
+      polyFreeCounitFold P
+        (polyFreeAlg DQ P) ≫
+      polyGSOSDistLawMor A P Q rho =
+      polyCofixUnfold (polyScale TA Q)
+        (polyGSOSDistLaw_mul_srcCoalg
+          A P Q rho) :=
+    polyCofixUnfold_precomp
+      (polyScale TA Q)
+      (polyGSOSDistLaw_mul_srcCoalg A P Q rho)
+      (polyGSOSScaleCoalg A P Q rho)
+      ⟨polyFreeCounitFold P
+        (polyFreeAlg DQ P),
+       mu_hom_h⟩
+  have rhs_eq1 :
+      polyGSOSDistLawMor TA P Q rho ≫
+      polyCofreeMap
+        (polyFreeMCarrier TA P) TA Q
+        (polyFreeCounitFold P
+          (polyFreeAlg A P)) =
+      polyCofixUnfold (polyScale TA Q)
+        (polyGSOSDistLaw_mul_rhsCoalg
+          A P Q rho) :=
+    polyScaleReindex
+      (polyFreeMCarrier TA P) TA Q
+      (polyFreeCounitFold P (polyFreeAlg A P))
+      (polyGSOSScaleCoalg TA P Q rho)
+  have rhs_eq2 :
+      polyFreeMap TDQ DQTA P
+        (polyGSOSDistLawMor A P Q rho) ≫
+      polyCofixUnfold (polyScale TA Q)
+        (polyGSOSDistLaw_mul_rhsCoalg
+          A P Q rho) =
+      polyCofixUnfold (polyScale TA Q)
+        (polyGSOSDistLaw_mul_srcCoalg
+          A P Q rho) :=
+    polyCofixUnfold_precomp
+      (polyScale TA Q)
+      (polyGSOSDistLaw_mul_srcCoalg A P Q rho)
+      (polyGSOSDistLaw_mul_rhsCoalg A P Q rho)
+      ⟨polyFreeMap TDQ DQTA P
+        (polyGSOSDistLawMor A P Q rho),
+       tdist_hom_h⟩
+  rw [lhs_eq, rhs_eq1, rhs_eq2]
+
+def polyGSOSDistributiveLaw
+    (P Q : PolyEndo X)
+    (rho : PolyGSOSRule P Q) :
+    DistributiveLaw
+      (polyFreeMonad X P)
+      (polyCofreeComonad X Q) where
+  dist := polyGSOSDistLawNat P Q rho
+  unit := fun A => by
+    simp only [polyGSOSDistLawNat,
+      polyGSOSDistLawNatApp,
+      polyFreeMonad_eta_eq,
+      polyCofreeComonad_map_eq]
+    exact polyGSOSDistLaw_unit A P Q rho
+  counit := fun A => by
+    simp only [polyGSOSDistLawNat,
+      polyGSOSDistLawNatApp,
+      polyCofreeComonad_eps_eq,
+      polyFreeMonad_map_eq]
+    exact polyGSOSDistLaw_counit A P Q rho
+  mul := fun A => by
+    simp only [polyGSOSDistLawNat,
+      polyGSOSDistLawNatApp,
+      polyFreeMonad_mu_eq,
+      polyFreeMonad_map_eq,
+      polyCofreeComonad_map_eq]
+    exact polyGSOSDistLaw_mul A P Q rho
+  comul := fun A => by
+    simp only [polyGSOSDistLawNat,
+      polyGSOSDistLawNatApp,
+      polyCofreeComonad_delta_eq,
+      polyCofreeComonad_map_eq,
+      polyFreeMonad_map_eq]
+    exact polyGSOSDistLaw_comul A P Q rho
+
+def polyGSOSOperationalMonad
+    (P Q : PolyEndo X)
+    (rho : PolyGSOSRule P Q) :
+    CategoryTheory.Monad
+      (polyCofreeComonad X Q).Coalgebra :=
+  liftedMonad (polyGSOSDistributiveLaw P Q rho)
 
 end GebLean
