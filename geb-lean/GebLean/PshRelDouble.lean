@@ -1041,7 +1041,7 @@ abbrev PshRelEdgeHom :=
     (hhs := homSetOfQuiver (Cᵒᵖ ⥤ Type w))
     pshRelSQS
 
-instance : Category
+instance pshRelEdgeCategory : Category
     (PshRelEdge.{u, v, w} C) :=
   vertEdgeCategory pshRelSQS pshRelDoubleData
 

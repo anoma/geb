@@ -602,6 +602,246 @@ develop and validate the theory. They provide:
 These remain as computational tools and test cases, but
 the general theory rests on the copresheaf topos alone.
 
+## 11. The edge category quasitopos
+
+### 11.1 The vertical edge category
+
+The vertical edge category `PshRelEdge C` of the double
+category of presheaf relations has:
+
+- **Objects**: triples `(P, Q, R)` where
+  `P, Q : C^op => Type` are presheaves and
+  `R : PshRel P Q` is a subfunctor of `P x Q`
+- **Morphisms** `(P, Q, R) => (P', Q', S)`: pairs
+  `(alpha : P => P', beta : Q => Q')` of natural
+  transformations such that `alpha` and `beta` map
+  R-related pairs to S-related pairs
+  (`pshRelRelated alpha beta R S`)
+
+Code: `PshRelEdge` (`PshRelDouble.lean`), category
+instance `pshRelEdgeCategory` (`PshRelDouble.lean`).
+
+### 11.2 Separated presheaf characterization
+
+Let `I = {0 <-- 01 --> 1}` be the walking span
+category. An object of `PSh(C x I^op)` assigns to each
+`c : C^op`:
+
+- A set `F_0(c)` (at vertex 0)
+- A set `F_1(c)` (at vertex 1)
+- A set `F_01(c)` (at the span vertex)
+- Maps `F_01(c) => F_0(c)` and `F_01(c) => F_1(c)`
+
+functorially in `c`. This is a span of presheaves.
+
+The Grothendieck topology `J` on `(C^op x I)` generated
+by covering each `(c, 01)` by `{(c, 01 => 0), (c, 01 => 1)}`
+defines a separation condition: a presheaf `F` is
+`J`-separated when `F(c, 01) => F(c, 0) x F(c, 1)` is
+injective at each stage `c`. This is exactly the
+condition that `F_01` is a subfunctor of `F_0 x F_1`.
+
+There is an equivalence of categories:
+
+```text
+PshRelEdge C  ~=  Sep_J(C x I^op)
+```
+
+- **Objects**: a separated presheaf assigns P(c), Q(c),
+  R(c) with R(c) ↪ P(c) x Q(c), matching a subfunctor
+  of the product.
+- **Morphisms**: since the target is separated, a
+  natural transformation at the 01-component is
+  uniquely determined by its 0- and 1-components.
+  The compatibility condition reduces to
+  `pshRelRelated`.
+
+The J-sheaves (where `F(c, 01) => F(c, 0) x F(c, 1)` is
+bijective, forcing `R = P x Q`) form the sheaf topos:
+
+```text
+Sh_J(C x I^op)  ~=  PSh(C) x PSh(C)  ~=  PSh(C ⊔ C)
+```
+
+This gives a chain of inclusions:
+
+```text
+PSh(C ⊔ C) ~= Sh_J  ↪  Sep_J ~= PshRelEdge C
+                                  ↪  PSh(C x I^op)
+```
+
+### 11.3 Quasitopos structure
+
+As a category of J-separated presheaves for a
+Grothendieck topology on a small category,
+`PshRelEdge C` is a **Grothendieck quasitopos**
+(Wyler 1991, Borceux "Handbook of Categorical
+Algebra" Vol. 3). It has:
+
+- All small limits and colimits
+- Exponential objects (cartesian closed)
+- Local cartesian closure
+- A strong subobject classifier
+- Epi-mono factorization (regular)
+
+It is not a topos: it lacks a (full) subobject
+classifier. Non-strong monomorphisms exist (e.g.,
+a proper inclusion `R ⊊ P x Q` into the total
+relation).
+
+### 11.4 Reflective and coreflective inclusions
+
+The inclusion `PshRelEdge C ↪ PSh(C x I^op)` has a
+left adjoint: the **separation reflector**
+`sep : PSh(C x I^op) => PshRelEdge C`, which replaces
+a span `(P, Q, F_01)` with the image
+`(P, Q, Im(F_01 => P x Q))`. This makes `PshRelEdge C`
+a **reflective subcategory** of `PSh(C x I^op)`.
+
+The inclusion `PSh(C ⊔ C) ↪ PshRelEdge C` sends
+`(P, Q)` to the total relation `(P, Q, P x Q)`. The
+sheafification left adjoint `PshRelEdge C => PSh(C ⊔ C)`
+sends `(P, Q, R)` to `(P, Q)` (forgetting the relation).
+
+```text
+PSh(C x I^op)  --sep-->  PshRelEdge C  --forget-->
+                                          PSh(C ⊔ C)
+     ↑                       ↑                ↑
+  inclusion              inclusion         inclusion
+     |                       |                |
+PSh(C x I^op)  <--incl--  PshRelEdge C  <--total--
+                                          PSh(C ⊔ C)
+```
+
+### 11.5 Exponentials and the arrow relation
+
+The exponential in `PshRelEdge C` of two objects
+`(A_1, B_1, R_1)` and `(A_2, B_2, R_2)` is:
+
+```text
+[(A_1, B_1, R_1), (A_2, B_2, R_2)]
+  = (A_1.functorHom A_2,
+     B_1.functorHom B_2,
+     pshArrowRelSkel R_1 R_2)
+```
+
+The arrow relation `pshArrowRelSkel R_1 R_2` relates
+`f : [A_1, A_2](c)` and `g : [B_1, B_2](c)` when `f`
+maps R_1-related inputs to R_2-related outputs via
+`g`. This is the presheaf-level analogue of Wadler's
+relational interpretation of function types.
+
+Verification via the exponential adjunction:
+morphisms `(P, Q, S) x (A_1, B_1, R_1) => (A_2, B_2, R_2)`
+in `PshRelEdge C` consist of `phi : P x A_1 => A_2`
+and `psi : Q x B_1 => B_2` preserving
+`(S x R_1)`-relatedness to `R_2`-relatedness. By the
+internal hom adjunction in `PSh(C)`, this transposes to
+`alpha : P => [A_1, A_2]` and `beta : Q => [B_1, B_2]`
+mapping S-related pairs to
+`pshArrowRelSkel R_1 R_2`-related pairs.
+
+Code: `pshArrowRelSkel` and `pshIhomProfMap`
+(`PshRelDouble.lean`).
+
+### 11.6 Identity extension as exponential preservation
+
+The identity section functor
+`pshRelIdentFunctor : PSh(C) => PshRelEdge C` sends
+`P` to the identity relation `(P, P, Delta_P)`.
+
+This functor preserves exponentials:
+`pshArrowRelSkel Delta_P Delta_Q = Delta_{[P, Q]}`.
+
+Verification: `(f, g)` is arrow-related at diagonal
+relations iff for all equal pairs `a = a'`,
+`f(a) = g(a')`, which gives `f = g`. So the arrow
+relation on diagonals is the diagonal of the
+internal hom.
+
+This is the **Identity Extension Property**
+(Reynolds, Hermida-Reddy-Robinson Proposition 6.3),
+now characterized as the statement that
+`pshRelIdentFunctor` is a cartesian closed functor.
+
+Properties of `pshRelIdentFunctor`:
+
+- Fully faithful (morphisms between identity relations
+  are pairs `(alpha, alpha)`, determined by `alpha`)
+- Preserves all limits (identity on products is
+  product of identities: `Delta_{P x Q} = Delta_P x Delta_Q`)
+- Preserves exponentials (identity extension property)
+
+### 11.7 Yoneda embedding into the edge category
+
+The composite
+`C --yoneda--> PSh(C) --pshRelIdentFunctor--> PshRelEdge C`
+embeds `C` into the quasitopos. It is:
+
+- Fully faithful (composite of fully faithful functors)
+- Preserves all limits that exist in `C`
+- Preserves cartesian closed structure when it exists
+  (via identity extension)
+
+Code: `pshRelIdentFunctor` (`PshRelDouble.lean`),
+`yoneda` (mathlib).
+
+### 11.8 Comparison: PshRelEdge C vs PshParametricPresheaf C
+
+| Property | PshRelEdge C | PshParametricPresheaf C |
+| -------- | ------------ | ----------------------- |
+| Definition | Sep_J(C x I^op) | PSh(PshRelSpanObj C) |
+| Topos? | N (quasitopos) | Y (Grothendieck) |
+| Subobj. classifier | Strong only | Full |
+| Objects | Single relations | Functors on all spans |
+| Ambient topos | PSh(C x I^op) | = itself |
+| Size of diagram cat. | C x I^op (small) | PshRelSpanObj C (large) |
+
+`PshRelEdge C` makes relations into objects with
+morphisms between them. `PshParametricPresheaf C`
+assigns interpretations to all relations
+simultaneously (a copresheaf on the span category).
+
+The ambient presheaf topos `PSh(C x I^op)` contains
+`PshRelEdge C` as a reflective subcategory and may
+serve as an alternative ambient topos. See
+Section 11.9.
+
+### 11.9 PSh(C x I^op) as an ambient topos
+
+`PSh(C x I^op)` is the category of "spans of
+presheaves on C" (without the joint monomorphism
+condition). It is a Grothendieck topos with a
+small diagram category `C x I^op`.
+
+Comparison with `PshParametricPresheaf C`:
+
+- `PshRelSpanObj C` has one span per presheaf
+  relation `R : PshRel P Q`, with no morphisms
+  between distinct type nodes or relation nodes.
+  It is a large category (its objects are indexed
+  by presheaves and their relations).
+- `C x I^op` has one copy of the span shape per
+  object `c` of `C`. It is a small category.
+
+An object of `PSh(C x I^op)` is a span
+`(P, Q, R)` of presheaves with maps `R => P` and
+`R => Q`, without requiring joint monicity.
+Morphisms are triples `(alpha, beta, gamma)` with
+naturality squares. This is richer than
+`PshParametricPresheaf C` in that it has
+morphisms connecting different "stages" of the
+span (via the functoriality in `C`), but it does
+not independently assign relation data to each
+`PshRel P Q`.
+
+The relationship between these categories and
+their relative merits as ambient universes for
+parametricity requires further investigation.
+The separation reflector
+`PSh(C x I^op) => PshRelEdge C` may provide a
+bridge connecting the two perspectives.
+
 ## References
 
 ### Codebase documents
