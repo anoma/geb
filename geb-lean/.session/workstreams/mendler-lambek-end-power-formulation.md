@@ -2,7 +2,8 @@
 
 ## Status
 
-Phase 3, Tasks 9b-9c in progress
+Phase 3: concrete-first approach to the gap. Plan at
+`docs/plans/2026-03-09-mendler-lambek-end-power-completion.md`
 
 ## Context
 
