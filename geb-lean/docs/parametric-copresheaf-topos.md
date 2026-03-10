@@ -253,6 +253,100 @@ characterization is the content of
 `parametricFamilyIsLimit` (`ParanaturalTopos.lean:4662`)
 at the type level.
 
+#### 4.5.1 Mechanism: how limits produce parametricity
+
+The span diagram `relSpanDiagram T` assigns to each
+relation-node object the **fiber type**
+`T.relFiber R`, which is a subtype:
+
+```text
+T.relFiber R =
+  { p : T.interp I₀ I₀ × T.interp I₁ I₁ //
+    T.fullRelInterp R p.1 p.2 }
+```
+
+The two span projections extract the endpoints:
+
+```text
+fstProj : relFiber(R) → interp(I₀, I₀)
+                         via p ↦ p.val.1
+sndProj : relFiber(R) → interp(I₁, I₁)
+                         via p ↦ p.val.2
+```
+
+A cone over this diagram with vertex `V` consists
+of maps `πᵢ : V → T.interp I I` (at each type-node)
+and `πᵣ : V → T.relFiber R` (at each relation-node).
+Cone naturality at the span projections requires:
+
+```text
+πᵣ(x).val.1 = πᵢ₀(x)    (via s.w fstProj)
+πᵣ(x).val.2 = πᵢ₁(x)    (via s.w sndProj)
+```
+
+Since `πᵣ(x) : T.relFiber R` carries a proof that
+`T.fullRelInterp R πᵣ(x).val.1 πᵣ(x).val.2`,
+substituting the cone naturality equalities gives
+`T.fullRelInterp R (πᵢ₀(x)) (πᵢ₁(x))`: the
+type-node values are R-related.
+
+This is the content of `relSpanCone_parametric`
+(`ParanaturalTopos.lean:4633`). The limit of
+`relSpanDiagram T` is therefore exactly the type of
+families `(I ↦ T.interp I I)` satisfying the
+parametricity condition for all relations.
+
+The parametricity condition is encoded in the
+**types** of the diagram objects (via the subtype
+`T.relFiber R`), not in morphisms between objects.
+The span projections serve only to ensure that
+the fiber endpoints match the type-node choices.
+No lattice morphisms between relation nodes are
+needed.
+
+#### 4.5.2 Colimits: existential parametric types
+
+The colimit of `relSpanDiagram T` is the quotient:
+
+```text
+colim(relSpanDiagram T) =
+  (∐ᵢ T.interp I I  ⊔  ∐ᵣ T.relFiber R) / ~
+```
+
+where `~` identifies, for each `R : I₀ → I₁ → Prop`
+and each fiber element `⟨(x, y), proof⟩`:
+
+- `x` in the `I₀` summand with
+  `⟨(x, y), proof⟩` in the `R` summand
+- `y` in the `I₁` summand with
+  `⟨(x, y), proof⟩` in the `R` summand
+
+After quotienting, two elements
+`x : T.interp I I` and `y : T.interp J J` become
+identified when there exists a relation
+`R : I → J → Prop` with `T.fullRelInterp R x y`.
+This is the existential parametric type:
+
+```text
+∃X. T(X) ≅ (Σ I, T.interp I I) /
+  (x ~ y iff ∃ R, T.fullRelInterp R x y)
+```
+
+The impredicative encoding
+`∃X. T(X) ≅ ∀Y. (∀X. T(X) → Y) → Y`
+translates to:
+
+```text
+colim(relSpanDiagram T) ≅
+  ∀ Y, (lim(relSpanDiagram (T → Y))) → Y
+```
+
+where the inner limit ranges over parametric
+consumers. Whether this coincides with the direct
+colimit depends on whether the exponential in the
+copresheaf topos matches the type-expression
+internal hom (tasks T1, T3).
+
 ### 4.6 Parametricity is naturality
 
 In Wadler's framework, the Parametricity Theorem states
@@ -1013,13 +1107,40 @@ Possible approaches:
 
 Does the lattice-enriched span site `S_C'` give a
 strictly better "ambient topos" than
-`PshParametricPresheaf C`? The answer depends on
-whether the relational interpretations arising from
-standard embeddings satisfy the monotonicity
-condition. The mixed variance of the arrow relation
-suggests that the enrichment must account for
-variance, possibly via a *Dialectica-like*
-construction.
+`PshParametricPresheaf C`? The answer is **no**:
+the three standard embeddings have incompatible
+variance with respect to the subobject ordering
+on relations.
+
+**Variance of the Barr extensions:**
+
+- Covariant: `pshBarrLiftRel G R` is **monotone**
+  in `R`. Proof: `pshBarrLiftRel_mono`
+  (`PshRelDouble.lean`). Enlarging `R` to `S ≥ R`
+  enlarges the image under `G.map`.
+- Contravariant: `pshContraBarrLiftRel F R` is
+  **antitone** in `R`. The equalizer defining
+  `pshContraBarrLiftRel` consists of elements
+  where two maps agree; when `R ≤ S`, the
+  map `homOfLe` from `S` to `R` carries agreement
+  on `S` to agreement on `R`, but not conversely.
+  Enlarging `R` shrinks the equalizer.
+- Profunctor: `pshProfBarrLiftRel G R` is
+  **neither monotone nor antitone** in `R`. The
+  diagonal application `G.obj(op(R.toProdPresheaf),
+  R.toProdPresheaf)` has the relation appearing in
+  both a contravariant and a covariant position,
+  making one-variable monotonicity impossible.
+
+**Consequence:** adding covariant lattice
+inclusions `R ≤ S` as morphisms between relation
+nodes accommodates the covariant embedding but
+breaks the contravariant embedding. Adding
+contravariant inclusions does the reverse. No
+single lattice enrichment accommodates all three
+embedding classes simultaneously. The absence of
+inter-relation morphisms in `PshRelSpanObj C` is
+therefore structurally necessary.
 
 #### Q3: Yoneda extension of parametric structure
 
