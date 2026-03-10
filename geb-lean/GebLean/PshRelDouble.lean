@@ -1887,6 +1887,32 @@ theorem pshBarrLiftRelMap_comp
   simp [pshBarrLiftRelMap, Subfunctor.lift,
     pshProdLift, FunctorToTypes.prod.lift]
 
+/-- The Barr extension as an endofunctor on the
+edge category `PshRelEdge C`. Given an endofunctor
+`G` on `PSh(C)`, produces a functor on the edge
+category that applies `G` to both source and target
+presheaves and extends `G` to relations via
+`pshBarrLiftRel`. -/
+def pshBarrLiftEdgeFunctor
+    (G : (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w)) :
+    PshRelEdge.{u, v, w} C ⥤
+    PshRelEdge.{u, v, w} C where
+  obj R :=
+    { src := G.obj R.src
+      tgt := G.obj R.tgt
+      edge := pshBarrLiftRel G R.edge }
+  map f :=
+    { srcMap := G.map f.srcMap
+      tgtMap := G.map f.tgtMap
+      sq := pshBarrLiftRel_related G f.sq }
+  map_id R :=
+    VertEdgeHom.ext
+      (G.map_id R.src) (G.map_id R.tgt)
+  map_comp f g :=
+    VertEdgeHom.ext
+      (G.map_comp f.srcMap g.srcMap)
+      (G.map_comp f.tgtMap g.tgtMap)
+
 end PshBarrExtension
 
 section PshContraBarrExtension

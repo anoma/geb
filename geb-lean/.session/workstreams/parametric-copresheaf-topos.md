@@ -252,11 +252,9 @@ framework.
   initial object, and coequalizers.
   (`PshRelEdgeIdentPreservation.lean`)
 
-- [ ] **T23c. pshBarrLiftRel as endofunctor.**
-  Package `pshBarrLiftRel` as an endofunctor on
-  `PshRelEdge C` (the functor laws are proved but
-  were not declared as a `Functor` instance because
-  the edge category was not yet defined at the time).
+- [x] **T23c. pshBarrLiftRel as endofunctor.**
+  `pshBarrLiftEdgeFunctor G : PshRelEdge C ⥤ PshRelEdge C`.
+  (`PshRelDouble.lean`)
 
 - [ ] **T24. Inclusion into PSh(C x I^op).** Construct
   the fully faithful inclusion
