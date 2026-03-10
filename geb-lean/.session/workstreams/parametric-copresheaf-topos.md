@@ -235,14 +235,16 @@ framework.
   Terminal, initial, binary coproducts, equalizers,
   coequalizers. (`PshRelEdgeLimits.lean`)
 
-- [ ] **T22. Identity extension as functor property.**
+- [x] **T22. Identity extension as functor property.**
   Show `pshRelIdentFunctor` preserves exponentials
   (the IEP as a cartesian closed functor property).
+  (`PshRelEdgeIdentPreservation.lean`)
   Ref: `docs/parametric-copresheaf-topos.md` Section 11.6.
 
-- [ ] **T23. pshRelIdentFunctor preserves limits.**
-  Show `pshRelIdentFunctor` preserves products and
-  general limits.
+- [x] **T23. pshRelIdentFunctor preserves limits.**
+  Show `pshRelIdentFunctor` preserves products,
+  terminal object, and equalizers.
+  (`PshRelEdgeIdentPreservation.lean`)
   Ref: `docs/parametric-copresheaf-topos.md` Section 11.6.
 
 - [ ] **T24. Inclusion into PSh(C x I^op).** Construct

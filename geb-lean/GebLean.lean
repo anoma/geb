@@ -49,6 +49,7 @@ import GebLean.ProfAlg
 import GebLean.PshRelDouble
 import GebLean.PshRelEdgeExp
 import GebLean.PshRelEdgeLimits
+import GebLean.PshRelEdgeIdentPreservation
 import GebLean.PshRelEdgeSOClassifier
 import GebLean.PshRelSpanDiagram
 import GebLean.PshTypeExpr
