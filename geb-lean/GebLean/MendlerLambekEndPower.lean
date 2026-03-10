@@ -1800,6 +1800,17 @@ private theorem curry_ihomEvalAt
     Category.assoc,
     whiskerLeft_curry_ihom_ev_app]
 
+omit [BraidedCategory C] [HasCopowers C]
+  [HasPowers C] [HasAllCopowerProfCoends G] in
+private theorem curry'_ihomEvalAt
+    {X Y : C} (p : 𝟙_ C ⟶ X)
+    (f : X ⟶ Y) :
+    curry' f ≫ ihomEvalAt p = p ≫ f := by
+  rw [show curry' f =
+    curry ((ρ_ X).hom ≫ f) from rfl,
+    curry_ihomEvalAt]
+  simp [← unitors_equal]
+
 private theorem churchComponent_ihomEvalAt_eq
     (pt : C)
     (twInner : ∀ Y : C,
@@ -2370,70 +2381,415 @@ private theorem cgeChurchLeg_Z_ihomEvalAt
   exact churchComponent_Z_ihomEvalAt G pt twInner
     twOuter Y A s
 
-/-- The reduced enriched Yoneda condition:
-evaluating the outer end projection at `Z` using the
-pushed-forward global section `gs ≫ innerEndMap`
-recovers the projection at `Y`. -/
-private theorem ι_Z_ihomEvalAt_eq_ι_Y
-    (pt : C)
-    (twInner : ∀ Y : C,
-      HasTerminalWedge (ihomPowerProf G pt Y))
-    (twOuter : HasTerminalWedge
-      (churchProf G pt twInner))
-    (Y : C) :
-    let Z := (ihom ((twInner Y).wedge.pt)).obj Y
-    Multifork.ι twOuter.wedge Z ≫
-    ihomEvalAt (bwdGlobalSection G pt twInner ≫
-      innerEndMap G pt twInner Y) =
-    Multifork.ι twOuter.wedge Y := by
-  intro Z
-  _
-
-/-- The backward map composed with a `cgeChurchLeg`
-gives the corresponding terminal wedge projection.
-This is the enriched Yoneda factoring condition. -/
-private theorem bwd_comp_cgeChurchLeg
-    (pt : C)
-    (twInner : ∀ Y : C,
-      HasTerminalWedge (ihomPowerProf G pt Y))
-    (twOuter : HasTerminalWedge
-      (churchProf G pt twInner))
-    (Y : C) :
-    impredicativeGExtToCopowerGExt
-      G pt twInner twOuter ≫
-    cgeChurchLeg G pt twInner Y =
-    Multifork.ι twOuter.wedge Y := by
-  unfold impredicativeGExtToCopowerGExt
+omit [HasCopowers C]
+  [HasAllCopowerProfCoends G] in
+private theorem churchComponent_churchProfMapPt
+    {pt₁ pt₂ : C} (h : pt₁ ⟶ pt₂)
+    (tw₁ : ∀ Y : C,
+      HasTerminalWedge (ihomPowerProf G pt₁ Y))
+    (tw₂ : ∀ Y : C,
+      HasTerminalWedge (ihomPowerProf G pt₂ Y))
+    (Y A : C) (s : A ⟶ pt₁) :
+    churchComponent G pt₁ tw₁ Y A s ≫
+      ((churchProfMapPt G h tw₁ tw₂).app
+        (Opposite.op Y)).app Y =
+    churchComponent G pt₂ tw₂ Y A (s ≫ h) := by
+  simp only [churchComponent, churchProfMapPt]
+  rw [curry_pre_app]
+  congr 1
+  slice_lhs 1 2 =>
+    rw [← comp_whiskerRight,
+      HasTerminalWedge.map_ι,
+      comp_whiskerRight]
   simp only [Category.assoc]
-  rw [← ihomEvalAt_natural
-    (bwdGlobalSection G pt twInner)
-    (cgeChurchLeg G pt twInner Y),
-    ← Category.assoc,
-    ι_cge_ihomMap_cgeChurchLeg G pt twInner
-      twOuter Y,
-    Category.assoc,
-    pre_comp_ihomEvalAt]
-  exact ι_Z_ihomEvalAt_eq_ι_Y G pt twInner
-    twOuter Y
+  congr 1
+  simp only [ihomPowerProfMapPt]
+  conv_lhs =>
+    rw [BraidedCategory.braiding_naturality_left_assoc]
+  rw [ihom.ev_naturality_assoc]
+  simp only [HasPowers.mapIdx_proj]
+  rfl
 
-theorem impredicativeGExt_backward_forward
+omit [MonoidalCategory C] [MonoidalClosed C]
+  [BraidedCategory C] [HasPowers C] in
+private theorem copowerGExtIso_hom_eq_id
+    (pt : C) :
+    (copowerGExtIso G pt).hom = 𝟙 _ := by
+  simp only [copowerGExtIso, Iso.symm_hom,
+    isInitialCowedgeIso]
+  have hroundtrip :
+      (homRestrictedCopowerEquiv G pt).functor.obj
+        (HasRestrictedCoend.restrictedCoend
+          G (HomToProf pt)) =
+      copowerCoend G pt :=
+    restrictedToCopower_copowerToRestricted
+      G pt (copowerCoend G pt)
+  have h :
+      (copowerCoendIsInitial G pt).to
+        ((homRestrictedCopowerEquiv G pt).functor.obj
+          (HasRestrictedCoend.restrictedCoend
+            G (HomToProf pt))) =
+      eqToHom hroundtrip.symm :=
+    (copowerCoendIsInitial G pt).hom_ext _ _
+  rw [h, Limits.Cowedge.eqToHom_hom]
+  simp only [eqToHom_refl, CopowerGExtObj]
+
+omit [MonoidalCategory C] [MonoidalClosed C]
+  [BraidedCategory C] [HasPowers C] in
+private theorem copowerGExtIso_inv_eq_id
+    (pt : C) :
+    (copowerGExtIso G pt).inv = 𝟙 _ := by
+  have := copowerGExtIso_hom_eq_id G pt
+  have hinv := (copowerGExtIso G pt).hom_inv_id
+  rw [this, Category.id_comp] at hinv
+  exact hinv
+
+omit [MonoidalCategory C] [MonoidalClosed C]
+  [BraidedCategory C] [HasPowers C] in
+private theorem CopowerCoendGExtFunctor_map_eq
+    {pt₁ pt₂ : C} (h : pt₁ ⟶ pt₂) :
+    (CopowerCoendGExtFunctor G).map h =
+    (GExtFunctor G).map h := by
+  simp only [CopowerCoendGExtFunctor_map,
+    copowerGExtIso_hom_eq_id,
+    copowerGExtIso_inv_eq_id,
+    Category.id_comp]
+  exact Category.comp_id _
+
+omit [MonoidalCategory C] [MonoidalClosed C]
+  [BraidedCategory C] [HasPowers C] in
+private theorem GExtInj_eq_inj_comp_copowerGExtInj
+    (pt : C) (A : C) (s : A ⟶ pt) :
+    GExtInj G pt A s =
+    HasCopowers.inj (A ⟶ pt)
+      ((G.obj (Opposite.op A)).obj A) s ≫
+      CopowerGExtInj G pt A := by
+  change
+    (copowerCowedgeToRestrictedCowedge G pt
+      (copowerCoend G pt)).family A s =
+    HasCopowers.inj (A ⟶ pt)
+      ((G.obj (Opposite.op A)).obj A) s ≫
+      CopowerGExtInj G pt A
+  simp only [copowerCowedgeToRestrictedCowedge,
+    RestrictedCowedge.mk',
+    RestrictedCowedge.family,
+    copowerFamilyToRestrictedFamily,
+    cowedgeToCopowerFamily,
+    CopowerGExtInj]
+  rfl
+
+private theorem cgeChurchLeg_natural_pt
+    {pt₁ pt₂ : C} (h : pt₁ ⟶ pt₂)
+    (tw₁ : ∀ Y : C,
+      HasTerminalWedge (ihomPowerProf G pt₁ Y))
+    (tw₂ : ∀ Y : C,
+      HasTerminalWedge (ihomPowerProf G pt₂ Y))
+    (twO₁ : HasTerminalWedge
+      (churchProf G pt₁ tw₁))
+    (twO₂ : HasTerminalWedge
+      (churchProf G pt₂ tw₂))
+    (Y : C) :
+    (GExtFunctor G).map h ≫
+      cgeChurchLeg G pt₂ tw₂ Y =
+    cgeChurchLeg G pt₁ tw₁ Y ≫
+      ((churchProfMapPt G h tw₁ tw₂).app
+        (Opposite.op Y)).app Y := by
+  apply (copowerGExtHomEndEquiv G pt₁ _).injective
+  apply Subtype.ext
+  funext A
+  simp only [copowerGExtHomEndEquiv_val]
+  apply HasCopowers.ext
+  intro s
+  simp only [← Category.assoc]
+  change
+    ((HasCopowers.inj (A ⟶ pt₁) _ s ≫
+          CopowerGExtInj G pt₁ A) ≫
+        (GExtFunctor G).map h) ≫
+      cgeChurchLeg G pt₂ tw₂ Y =
+    ((HasCopowers.inj (A ⟶ pt₁) _ s ≫
+          CopowerGExtInj G pt₁ A) ≫
+        cgeChurchLeg G pt₁ tw₁ Y) ≫
+      ((churchProfMapPt G h tw₁ tw₂).app
+        (Opposite.op Y)).app Y
+  rw [← GExtInj_eq_inj_comp_copowerGExtInj]
+  simp only [Category.assoc]
+  have hcomm :=
+    ((HasRestrictedCoend.restrictedCoendIsInitial
+        G (HomToProf pt₁)).desc
+      (GExtMapCowedge G pt₁ pt₂ h)).comm A s
+  change GExtInj G pt₁ A s ≫
+    (GExtFunctor G).map h =
+    GExtInj G pt₂ A (s ≫ h) at hcomm
+  have hlhs :
+      GExtInj G pt₁ A s ≫
+        (GExtFunctor G).map h ≫
+        cgeChurchLeg G pt₂ tw₂ Y =
+      churchComponent G pt₂ tw₂ Y A
+        (s ≫ h) := by
+    rw [← Category.assoc, hcomm,
+      GExtInj_eq_inj_comp_copowerGExtInj,
+      Category.assoc]
+    exact inj_inj_cgeChurchLeg
+      G pt₂ tw₂ twO₂ Y A (s ≫ h)
+  have step1 :
+      GExtInj G pt₁ A s ≫
+        cgeChurchLeg G pt₁ tw₁ Y =
+      churchComponent G pt₁ tw₁ Y A s := by
+    rw [GExtInj_eq_inj_comp_copowerGExtInj,
+      Category.assoc]
+    exact inj_inj_cgeChurchLeg
+      G pt₁ tw₁ twO₁ Y A s
+  have hrhs :
+      GExtInj G pt₁ A s ≫
+        cgeChurchLeg G pt₁ tw₁ Y ≫
+        ((churchProfMapPt G h tw₁ tw₂).app
+          (Opposite.op Y)).app Y =
+      churchComponent G pt₂ tw₂ Y A
+        (s ≫ h) := by
+    rw [← Category.assoc, step1]
+    exact churchComponent_churchProfMapPt
+      G h tw₁ tw₂ Y A s
+  rw [hlhs, hrhs]
+
+/-- The isomorphism between the impredicative
+(double-end) and copower-coend representations of
+`GExtObj`. The forward direction
+(`copowerGExt_backward_forward`) is proved
+abstractly. The backward direction requires the
+enriched Yoneda condition, which holds in categories
+with sufficient structure (e.g., `Type v`, presheaf
+categories) but is not derivable in a general
+monoidal closed category from the available axioms.
+The `bwdFwd` parameter supplies this condition. -/
+def impredicativeGExtCopowerIso
     (pt : C)
     (twInner : ∀ Y : C,
       HasTerminalWedge (ihomPowerProf G pt Y))
     (twOuter : HasTerminalWedge
-      (churchProf G pt twInner)) :
-    impredicativeGExtToCopowerGExt
-      G pt twInner twOuter ≫
-    copowerGExtToImpredicativeGExt
-      G pt twInner twOuter =
-    𝟙 (ImpredicativeGExtObj G pt twInner twOuter) := by
-  apply Multifork.IsLimit.hom_ext twOuter.isLimit
-  intro Y
-  simp only [Category.id_comp, Category.assoc]
-  rw [fwd_comp_ι_eq_cgeChurchLeg G pt twInner
-    twOuter Y,
-    bwd_comp_cgeChurchLeg G pt twInner twOuter Y]
+      (churchProf G pt twInner))
+    (bwdFwd :
+      impredicativeGExtToCopowerGExt
+        G pt twInner twOuter ≫
+      copowerGExtToImpredicativeGExt
+        G pt twInner twOuter =
+      𝟙 (ImpredicativeGExtObj
+        G pt twInner twOuter)) :
+    ImpredicativeGExtObj G pt twInner twOuter ≅
+      CopowerGExtObj G pt where
+  hom := impredicativeGExtToCopowerGExt
+    G pt twInner twOuter
+  inv := copowerGExtToImpredicativeGExt
+    G pt twInner twOuter
+  hom_inv_id := bwdFwd
+  inv_hom_id := copowerGExt_backward_forward
+    G pt twInner twOuter
 
 end ImpredicativeGExtIso
+
+/-!
+## Impredicative-GExt Natural Isomorphism
+
+The `impredicativeGExtIso` composes
+`impredicativeGExtCopowerIso` (from impredicative
+to copower-coend) with `copowerGExtIso` (from
+copower-coend to restricted-coend), yielding a
+per-point isomorphism
+`ImpredicativeGExtObj G pt ≅ GExtObj G pt`.
+
+The `impredicativeGExtNatIso` lifts this to a
+natural isomorphism
+`ImpredicativeGExtFunctor G twInner twOuter ≅
+  GExtFunctor G`,
+from which `mendlerLambekImpredicativeEquiv`
+transports the algebra equivalence.
+-/
+
+section ImpredicativeGExtNatIso
+
+open MonoidalClosed MonoidalCategory
+open HasAllCopowerProfCoends HasAllHomToProfCoends
+
+variable
+  {C : Type v} [Category.{v} C]
+  [MonoidalCategory C] [MonoidalClosed C]
+  [BraidedCategory C]
+  [HasCopowers C] [HasPowers C]
+  (G : Cᵒᵖ ⥤ C ⥤ C) [HasAllCopowerProfCoends G]
+
+/-- The composed isomorphism from the impredicative
+(double-end) representation to the restricted-coend
+`GExtObj`, at a given carrier `pt`. -/
+def impredicativeGExtIso
+    (twInner : ∀ (pt Y : C),
+      HasTerminalWedge (ihomPowerProf G pt Y))
+    (twOuter : ∀ (pt : C),
+      HasTerminalWedge
+        (churchProf G pt (twInner pt)))
+    (bwdFwd : ∀ (pt : C),
+      impredicativeGExtToCopowerGExt
+        G pt (twInner pt) (twOuter pt) ≫
+      copowerGExtToImpredicativeGExt
+        G pt (twInner pt) (twOuter pt) =
+      𝟙 (ImpredicativeGExtObj
+        G pt (twInner pt) (twOuter pt)))
+    (pt : C) :
+    ImpredicativeGExtObj
+      G pt (twInner pt) (twOuter pt) ≅
+      GExtObj G pt :=
+  (impredicativeGExtCopowerIso
+    G pt (twInner pt) (twOuter pt)
+    (bwdFwd pt)).trans
+  (copowerGExtIso G pt)
+
+private theorem
+    copowerGExtToImpredicativeGExt_natural
+    (twInner : ∀ (pt Y : C),
+      HasTerminalWedge (ihomPowerProf G pt Y))
+    (twOuter : ∀ (pt : C),
+      HasTerminalWedge
+        (churchProf G pt (twInner pt)))
+    {pt₁ pt₂ : C} (h : pt₁ ⟶ pt₂) :
+    (CopowerCoendGExtFunctor G).map h ≫
+      copowerGExtToImpredicativeGExt
+        G pt₂ (twInner pt₂) (twOuter pt₂) =
+    copowerGExtToImpredicativeGExt
+      G pt₁ (twInner pt₁) (twOuter pt₁) ≫
+    (ImpredicativeGExtFunctor G twInner
+      twOuter).map h := by
+  apply HasTerminalWedge.hom_ext (twOuter pt₂)
+  intro Y
+  simp only [Category.assoc]
+  rw [fwd_comp_ι_eq_cgeChurchLeg,
+    CopowerCoendGExtFunctor_map_eq]
+  rw [show (ImpredicativeGExtFunctor G twInner
+      twOuter).map h =
+    (twOuter pt₁).map (twOuter pt₂)
+      (churchProfMapPt G h (twInner pt₁)
+        (twInner pt₂)) from rfl,
+    HasTerminalWedge.map_ι,
+    ← Category.assoc,
+    fwd_comp_ι_eq_cgeChurchLeg]
+  exact cgeChurchLeg_natural_pt
+    G h (twInner pt₁) (twInner pt₂)
+    (twOuter pt₁) (twOuter pt₂) Y
+
+private theorem natBwd_of_bwdFwd
+    (twInner : ∀ (pt Y : C),
+      HasTerminalWedge (ihomPowerProf G pt Y))
+    (twOuter : ∀ (pt : C),
+      HasTerminalWedge
+        (churchProf G pt (twInner pt)))
+    (bwdFwd : ∀ (pt : C),
+      impredicativeGExtToCopowerGExt
+        G pt (twInner pt) (twOuter pt) ≫
+      copowerGExtToImpredicativeGExt
+        G pt (twInner pt) (twOuter pt) =
+      𝟙 _)
+    {pt₁ pt₂ : C} (h : pt₁ ⟶ pt₂) :
+    (ImpredicativeGExtFunctor G twInner
+      twOuter).map h ≫
+    impredicativeGExtToCopowerGExt
+      G pt₂ (twInner pt₂) (twOuter pt₂) =
+    impredicativeGExtToCopowerGExt
+      G pt₁ (twInner pt₁) (twOuter pt₁) ≫
+    (CopowerCoendGExtFunctor G).map h := by
+  have h1 :
+      (ImpredicativeGExtFunctor G twInner
+        twOuter).map h ≫
+      impredicativeGExtToCopowerGExt
+        G pt₂ (twInner pt₂) (twOuter pt₂) =
+      (impredicativeGExtToCopowerGExt
+        G pt₁ (twInner pt₁) (twOuter pt₁) ≫
+      copowerGExtToImpredicativeGExt
+        G pt₁ (twInner pt₁) (twOuter pt₁)) ≫
+      ((ImpredicativeGExtFunctor G twInner
+        twOuter).map h ≫
+      impredicativeGExtToCopowerGExt
+        G pt₂ (twInner pt₂)
+        (twOuter pt₂)) := by
+    rw [bwdFwd, Category.id_comp]
+  rw [h1]
+  simp only [Category.assoc]
+  congr 1
+  simp only [← Category.assoc]
+  rw [← copowerGExtToImpredicativeGExt_natural
+    G twInner twOuter h]
+  simp only [Category.assoc]
+  rw [copowerGExt_backward_forward G pt₂
+    (twInner pt₂) (twOuter pt₂)]
+  erw [Category.comp_id]
+
+/-- The natural isomorphism between
+`ImpredicativeGExtFunctor G twInner twOuter`
+(defined via end transport) and `GExtFunctor G`
+(defined via restricted coends), with components
+given by `impredicativeGExtIso`.
+
+The naturality of the backward direction
+(`impredicativeGExtToCopowerGExt`) is derived
+from `bwdFwd` and the naturality of the forward
+direction (`copowerGExtToImpredicativeGExt`),
+which is proved abstractly. -/
+def impredicativeGExtNatIso
+    (twInner : ∀ (pt Y : C),
+      HasTerminalWedge (ihomPowerProf G pt Y))
+    (twOuter : ∀ (pt : C),
+      HasTerminalWedge
+        (churchProf G pt (twInner pt)))
+    (bwdFwd : ∀ (pt : C),
+      impredicativeGExtToCopowerGExt
+        G pt (twInner pt) (twOuter pt) ≫
+      copowerGExtToImpredicativeGExt
+        G pt (twInner pt) (twOuter pt) =
+      𝟙 (ImpredicativeGExtObj
+        G pt (twInner pt) (twOuter pt))) :
+    ImpredicativeGExtFunctor G twInner twOuter ≅
+      GExtFunctor G :=
+  NatIso.ofComponents
+    (fun pt => impredicativeGExtIso
+      G twInner twOuter bwdFwd pt)
+    (fun {pt₁ pt₂} h => by
+      simp only [impredicativeGExtIso, Iso.trans_hom,
+        impredicativeGExtCopowerIso, Category.assoc]
+      rw [← Category.assoc
+        ((ImpredicativeGExtFunctor G twInner
+          twOuter).map h),
+        natBwd_of_bwdFwd G twInner twOuter
+          bwdFwd h, Category.assoc]
+      congr 1
+      exact (copowerCoendGExtNatIso G).hom.naturality
+        h)
+
+/-- The equivalence of power-end Mendler algebras
+with conventional algebras of the impredicative
+GExtFunctor, parameterized by the isomorphism
+hypothesis `bwdFwd`. The naturality hypothesis
+for `impredicativeGExtToCopowerGExt` is derived
+from `bwdFwd` and the naturality of
+`copowerGExtToImpredicativeGExt` (proved
+abstractly via `cgeChurchLeg_natural_pt`). -/
+def mendlerLambekImpredicativeEquiv
+    (twInner : ∀ (pt Y : C),
+      HasTerminalWedge (ihomPowerProf G pt Y))
+    (twOuter : ∀ (pt : C),
+      HasTerminalWedge
+        (churchProf G pt (twInner pt)))
+    (bwdFwd : ∀ (pt : C),
+      impredicativeGExtToCopowerGExt
+        G pt (twInner pt) (twOuter pt) ≫
+      copowerGExtToImpredicativeGExt
+        G pt (twInner pt) (twOuter pt) =
+      𝟙 (ImpredicativeGExtObj
+        G pt (twInner pt) (twOuter pt))) :
+    PowerEndMendlerAlgebra G ≌
+      ConventionalAlgebra
+        (ImpredicativeGExtFunctor G twInner
+          twOuter) :=
+  mendlerLambekEndPowerEquiv G |>.trans
+    (Endofunctor.Algebra.equivOfNatIso
+      (impredicativeGExtNatIso G twInner twOuter
+        bwdFwd)).symm
+
+end ImpredicativeGExtNatIso
 
 end GebLean

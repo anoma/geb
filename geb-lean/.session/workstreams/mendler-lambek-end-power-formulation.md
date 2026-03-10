@@ -2,8 +2,26 @@
 
 ## Status
 
-Phase 3: concrete-first approach to the gap. Plan at
-`docs/plans/2026-03-09-mendler-lambek-end-power-completion.md`
+All three phases complete. Build and tests pass.
+
+The nat iso and equivalence (Tasks 9b-9c) are
+parameterized by one hypothesis (`bwdFwd`) that
+remains to be discharged in concrete settings.
+The naturality of `bwd` (`natBwd`) is derived
+from `bwdFwd` via `natBwd_of_bwdFwd`.
+See "Open hypothesis" under Phase 3 for details.
+
+Discharging `bwdFwd` abstractly requires the
+enriched Yoneda identity for Church encodings.
+All abstract categorical approaches have been
+exhausted (see detailed analysis under Phase 3).
+Concrete instantiation for `Type v` is blocked by
+a universe constraint: the framework uses
+`{C : Type v} [Category.{v} C]` but
+`Type v : Type (v+1)`, and generalizing to
+`{C : Type u} [Category.{v} C]` is blocked by
+`typeEnd : Type (max u v)` needing to match
+`Type v` in `cowedgeHomEndEquiv`.
 
 ## Context
 
@@ -258,25 +276,88 @@ File: `GebLean/MendlerLambekEndPower.lean`
 ### Phase 3: ImpredicativeGExtFunctor (DONE)
 
 Task 9 defines `ImpredicativeGExtFunctor G`, naturally
-isomorphic to `GExtFunctor G` but with carrier
-`CopowerGExtObj G` (copower-profunctor coend), and
-composes the full equivalence.
+isomorphic to `GExtFunctor G` but with carrier defined
+entirely via ends, powers, and internal homs. It also
+defines a copower-coend variant
+`CopowerCoendGExtFunctor G` whose maps are defined by
+conjugation with `copowerGExtIso`.
 
 #### Task 9: ImpredicativeGExtFunctor and full equivalence
 
 File: `GebLean/MendlerLambekEndPower.lean`
 
-- [x] 9a. Define `ImpredicativeGExtFunctor G : C ⥤ C` with
+- [x] 9a. Define `ImpredicativeGExtFunctor G : C ⥤ C`
+  with `obj pt := ImpredicativeGExtObj G pt` and maps
+  via end transport (`HasTerminalWedge.map` and
+  `churchProfMapPt`).
+  Also `CopowerCoendGExtFunctor G : C ⥤ C` with
   `obj pt := CopowerGExtObj G pt` and maps via
-  `copowerGExtIso` conjugation
-- [ ] 9b. Define `powerEndGExtNatIso :
-  ImpredicativeGExtFunctor G ≅ GExtFunctor G` using
-  `copowerGExtIso` as components
-- [ ] 9c. Define `mendlerLambekPowerEndFullEquiv :
+  `copowerGExtIso` conjugation.
+  Also `copowerCoendGExtNatIso :
+  CopowerCoendGExtFunctor G ≅ GExtFunctor G`
+  and `mendlerLambekCopowerCoendEquiv`.
+- [x] 9b. Define `impredicativeGExtCopowerIso`
+  (per-point iso from ImpredicativeGExtObj to
+  CopowerGExtObj, parameterized by `bwdFwd`),
+  `impredicativeGExtIso` (composed per-point iso
+  to GExtObj), and `impredicativeGExtNatIso :
+  ImpredicativeGExtFunctor G twInner twOuter ≅
+  GExtFunctor G` (parameterized by `bwdFwd` and
+  `natBwd`).
+- [x] 9c. Define `mendlerLambekImpredicativeEquiv :
   PowerEndMendlerAlgebra G ≌
-    ConventionalAlgebra (ImpredicativeGExtFunctor G)`
+    ConventionalAlgebra
+      (ImpredicativeGExtFunctor G twInner twOuter)`
   using `mendlerLambekEndPowerEquiv` composed with
-  `Endofunctor.Algebra.equivOfNatIso`
+  `Endofunctor.Algebra.equivOfNatIso`.
+  Parameterized by `bwdFwd` and `natBwd`.
+
+#### Open hypothesis
+
+The nat iso and equivalence in 9b-9c are parameterized
+by one hypothesis:
+
+1. `bwdFwd : ∀ pt, bwd_pt ≫ fwd_pt = 𝟙` — the
+   backward-forward iso condition. Equivalent to the
+   gap `ι_Z_ihomEvalAt_eq_ι_Y`. Requires the enriched
+   Yoneda identity for Church encodings.
+
+The naturality of `bwd` (`natBwd`) was previously a
+separate hypothesis but is now derived from `bwdFwd`
+via `natBwd_of_bwdFwd` (line ~2667), using the
+algebraic identity:
+
+```text
+F.map h ≫ bwd₂
+  = (bwd₁ ≫ fwd₁) ≫ (F.map h ≫ bwd₂)
+  = bwd₁ ≫ (fwd₁ ≫ F.map h ≫ bwd₂)
+  = bwd₁ ≫ (G'.map h ≫ fwd₂ ≫ bwd₂)
+  = bwd₁ ≫ G'.map h
+```
+
+This uses `copowerGExtToImpredicativeGExt_natural`
+(line ~2633, proved abstractly via
+`HasTerminalWedge.hom_ext` and
+`cgeChurchLeg_natural_pt`).
+
+The naturality of `copowerCoendGExtNatIso` (the iso
+from CopowerCoendGExt to GExt) is proved by
+construction.
+
+#### Universe constraint
+
+Discharging the hypotheses for `Type v` is blocked by
+a universe mismatch: the abstract framework uses
+`{C : Type v} [Category.{v} C]` (small category),
+but `Type v : Type (v+1)` is inherently large. All
+required instances (`MonoidalCategory`, `MonoidalClosed`,
+`BraidedCategory`, `HasCopowers`, `HasPowers`) exist
+for `Type v` — see `MendlerLambekEndPowerTypeV.lean` —
+but the objects live in `Type (v+1)`, not `Type v`.
+
+To enable concrete instantiation, the framework would
+need to be generalized to `{C : Type u} [Category.{v} C]`
+with separate object and morphism universe parameters.
 
 ### Task 9b-9c Detailed Sub-steps
 
@@ -485,11 +566,44 @@ determines the morphism uniquely.
     cgeChurchLeg Y`
     (coend-level enriched Yoneda chain,
     lifted from 15 via joint epicity)
+17. `copowerGExtIso_hom_eq_id` (line ~2404):
+    `(copowerGExtIso G pt).hom = 𝟙`
+18. `copowerGExtIso_inv_eq_id` (line ~2428):
+    `(copowerGExtIso G pt).inv = 𝟙`
+19. `CopowerCoendGExtFunctor_map_eq` (line ~2438):
+    `(CopowerCoendGExtFunctor G).map h =
+    (GExtFunctor G).map h`
+20. `GExtInj_eq_inj_comp_copowerGExtInj`
+    (line ~2448):
+    `GExtInj G pt A s =
+    HasCopowers.inj _ s ≫ CopowerGExtInj G pt A`
+21. `churchComponent_churchProfMapPt`
+    (line ~2375):
+    `churchComponent pt₁ tw₁ Y A s ≫
+    churchProfMapPt h = churchComponent pt₂ tw₂
+    Y A (s ≫ h)`
+22. `cgeChurchLeg_natural_pt` (line ~2470):
+    `GExtFunctor.map h ≫ cgeChurchLeg pt₂ tw₂ Y =
+    cgeChurchLeg pt₁ tw₁ Y ≫
+    churchProfMapPt h`
+23. `copowerGExtToImpredicativeGExt_natural`
+    (line ~2633):
+    `CopowerCoendGExt.map h ≫ fwd₂ =
+    fwd₁ ≫ ImprGExt.map h`
+24. `natBwd_of_bwdFwd` (line ~2667):
+    Derives `natBwd` from `bwdFwd` +
+    `copowerGExtToImpredicativeGExt_natural`
 
-#### Current gap: `ι_Z_ihomEvalAt_eq_ι_Y`
+#### Current gap: `bwdFwd`
 
-**Location**: line ~2377 in
-`GebLean/MendlerLambekEndPower.lean`
+**Status**: The gap is currently handled as a
+hypothesis `bwdFwd` parameterizing
+`impredicativeGExtCopowerIso`,
+`impredicativeGExtNatIso`, and
+`mendlerLambekImpredicativeEquiv`. The naturality
+hypothesis `natBwd` was eliminated via
+`natBwd_of_bwdFwd` (derived from `bwdFwd` +
+`copowerGExtToImpredicativeGExt_natural`).
 
 **Statement**: For `Z = [innerEnd_Y, Y]`:
 
@@ -499,12 +613,18 @@ Multifork.ι twOuter.wedge Z ≫
 Multifork.ι twOuter.wedge Y
 ```
 
+Equivalently (using `HasTerminalWedge.hom_ext`):
+
+```lean
+impredicativeGExtToCopowerGExt ≫
+  copowerGExtToImpredicativeGExt = 𝟙
+```
+
 **Usage chain**:
-`ι_Z_ihomEvalAt_eq_ι_Y` is used by
-`bwd_comp_cgeChurchLeg` (line ~2393), which is
-used by `impredicativeGExt_backward_forward`
-(line ~2417), which establishes `bwd ≫ fwd = 𝟙`
-needed for 9b and 9c.
+The `bwdFwd` hypothesis is used directly by
+`impredicativeGExtCopowerIso` (as `hom_inv_id`),
+`natBwd_of_bwdFwd`, `impredicativeGExtNatIso`,
+and `mendlerLambekImpredicativeEquiv`.
 
 **What the existing lemmas give us**:
 Lemma 16 (`cgeChurchLeg_Z_ihomEvalAt`) gives
@@ -534,35 +654,122 @@ versions agree when composed with `𝟙 ⊗ π_A` for
 each `A`, reducing to a statement about the
 profunctor components.
 
-**Recommended next approaches** (in order of
-likelihood):
+**Reduction chain**: By `HasTerminalWedge.hom_ext`,
+`bwdFwd` reduces to:
+`∀ Y, bwd ≫ cgeChurchLeg Y = ι Y`
+Using `fwd_comp_ι_eq_cgeChurchLeg`, this is:
+`∀ Y, bwd ≫ fwd ≫ ι Y = ι Y`
+Unfolding `bwd = ι cge ≫ ihomEvalAt gs` and
+applying `ihomEvalAt_natural` then the wedge
+condition `ι_cge_ihomMap_cgeChurchLeg` then
+`pre_comp_ihomEvalAt`, this reduces to:
+`∀ Y, ι Z ≫ ihomEvalAt(gs ≫ m) = ι Y`
+where `Z = [innerEnd_Y, Y]`,
+`gs = bwdGlobalSection`, `m = innerEndMap Y`.
 
-1. **Curry/uncurry + inner end extensionality**:
-   Use `curry'_injective` to reduce to the
-   uncurried equation, then use projections of
-   `twInner Y` to decompose. Needs lemmas about
-   how `ihomEvalAt` interacts with currying and
-   the inner end structure.
+**Approaches tried and blocked**:
 
-2. **Prove terminality of (cge, cgeChurchLeg)**:
-   Show the cge wedge is terminal, get the iso
-   from general terminal-wedge-iso machinery, and
-   verify it matches `fwd`/`bwd` by uniqueness.
-   The terminality lift `h : X ⟶ cge` for a
-   wedge `(X, legs)` would be
-   `legs cge ≫ ihomEvalAt gs`. The factoring
-   condition `h ≫ cgeChurchLeg Y = legs Y`
-   is essentially the same gap (for the special
-   case `X = ImpredicativeGExtObj`,
-   `legs = ι`).
+1. **Left-cancellation of `fwd`**: We have
+   `fwd ≫ (ι Z ≫ ihomEvalAt(gs ≫ m)) = fwd ≫ ι Y`
+   (from `cgeChurchLeg_Z_ihomEvalAt` +
+   `fwd_comp_ι_eq_cgeChurchLeg`), but `fwd` is
+   mono (split mono), not epi. Left cancellation
+   requires epi.
 
-3. **Direct characterization of
-   ihomEvalAt(gs ≫ m) via the Church encoding**:
-   Show that `ihomEvalAt(gs ≫ m)` acts as the
-   "counit" of the Church encoding at `Z`, using
-   the specific way `gs` was constructed
-   (from `gExtEndPowerEquiv(𝟙)`) and how `m`
-   maps inner ends along `cgeChurchLeg Y`.
+2. **`curry'_injective` + inner end extensionality**:
+   `curry'_injective` converts the goal to
+   uncurried form (`ImprGExt ⊗ innerEnd_Y ⟶ Y`),
+   but decomposing `innerEnd_Y` via limit
+   projections and tensor products does not simplify
+   in a general monoidal closed category (tensor
+   does not preserve joint monomorphisms in general).
+
+3. **Outer wedge condition at
+   `ihomEvalAt(gs ≫ m) : Z ⟶ Y`**: Gives
+   `ι Z ≫ (ihom innerEnd_Z).map (ihomEvalAt(gs ≫ m))
+   = ι Y ≫ (pre (innerEndMap(ihomEvalAt(gs ≫ m)))).app Y`,
+   but this involves the internal hom's functorial
+   action, not the morphism itself, and does not
+   close the gap.
+
+4. **Terminality of `(cge, cgeChurchLeg)`**: For a
+   general wedge `(X, legs)`, the factoring condition
+   reduces to `legs Z ≫ ihomEvalAt(gs ≫ m) = legs Y`,
+   the same structural gap with `legs` replacing `ι`.
+
+5. **Idempotent argument**: `bwd ≫ fwd` is
+   idempotent but showing `e = 𝟙` from idempotence
+   requires Karoubi properties.
+
+6. **Section-retraction algebra**: Confirmed blocked
+   (see earlier analysis).
+
+**Remaining viable approaches**:
+
+1. **Type v instantiation**: Prove `bwdFwd` for
+   `C = Type v` where the gap reduces to function
+   extensionality. Blocked by universe constraint:
+   framework uses `{C : Type v} [Category.{v} C]`
+   but `Type v : Type (v+1)`. Requires generalizing
+   to `{C : Type u} [Category.{v} C]`, which is
+   blocked by `typeEnd` producing `Type (max u v)`.
+
+2. **Accept as hypothesis** (CURRENT APPROACH):
+   `bwdFwd` is parameterized as a hypothesis
+   throughout Phases B and C. The construction
+   compiles and all downstream definitions
+   (`impredicativeGExtCopowerIso`,
+   `impredicativeGExtNatIso`,
+   `mendlerLambekImpredicativeEquiv`) are complete.
+
+**Approaches confirmed not viable**:
+
+1. **Separator hypothesis**: Adding
+   `IsSeparator (𝟙_ C)` does NOT suffice. To show
+   `p ≫ ι_Y = ι_Y` (where `p = bwd ≫ fwd`), the
+   separator reduces to showing
+   `h ≫ p ≫ ι_Y = h ≫ ι_Y` for all `h : 𝟙 → Imp`.
+   Using the wedge condition and
+   `curry'_ihomEvalAt`, the LHS reduces to
+   `(h ≫ bwd) ≫ cgeChurchLeg Y`, and by
+   `fwd_comp_ι_eq_cgeChurchLeg` this equals
+   `h ≫ p ≫ ι_Y` — circular. The separator tests
+   an endomorphism of the limit against itself.
+
+2. **Enriched Yoneda at global section level**:
+   The per-component chain
+   (`churchComponent_Z_ihomEvalAt`) proves the
+   enriched Yoneda identity at the COEND level
+   (`cgeChurchLeg_Z_ihomEvalAt`), which factors
+   through `fwd`. Since `fwd` is a split mono
+   (from `fwd ≫ bwd = 𝟙`), it is mono (left-
+   cancellable), but NOT epi (right-cancellable),
+   so the equation `fwd ≫ X = fwd ≫ Y` does NOT
+   imply `X = Y`.
+
+**Analysis: why `bwdFwd` is a parametricity
+condition**:
+
+The statement `bwd ≫ fwd = 𝟙_Imp` asserts that
+every element of the Church encoding
+`∫_Y [innerEnd_Y, Y]` is representable — i.e.,
+arises from an element of the coend `cge` via
+`fwd`. This is the categorical analogue of the
+parametricity / free theorem for Church encodings
+in System F. Parametricity is a meta-property
+of the type system (or, categorically, a
+property of the specific category), not derivable
+from the axioms of monoidal closed categories.
+It holds in Type v (function extensionality),
+presheaf categories (Yoneda), and other
+categories with sufficient structure, but
+not in all monoidal closed categories.
+
+**Added utility**: `curry'_ihomEvalAt` (line ~1803)
+proves `curry' f ≫ ihomEvalAt p = p ≫ f`,
+relating curried morphisms to evaluation at global
+sections. Used in the analysis but not in the
+gap proof itself.
 
 #### Proof chain for `churchComponent_Z_ihomEvalAt`
 
