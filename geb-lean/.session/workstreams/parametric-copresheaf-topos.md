@@ -247,6 +247,17 @@ framework.
   (`PshRelEdgeIdentPreservation.lean`)
   Ref: `docs/parametric-copresheaf-topos.md` Section 11.6.
 
+- [x] **T23b. pshRelIdentFunctor preserves colimits.**
+  Show `pshRelIdentFunctor` preserves coproducts,
+  initial object, and coequalizers.
+  (`PshRelEdgeIdentPreservation.lean`)
+
+- [ ] **T23c. pshBarrLiftRel as endofunctor.**
+  Package `pshBarrLiftRel` as an endofunctor on
+  `PshRelEdge C` (the functor laws are proved but
+  were not declared as a `Functor` instance because
+  the edge category was not yet defined at the time).
+
 - [ ] **T24. Inclusion into PSh(C x I^op).** Construct
   the fully faithful inclusion
   `PshRelEdge C -> PSh(C x I^op)` and its left adjoint
