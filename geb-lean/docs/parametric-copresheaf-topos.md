@@ -170,22 +170,37 @@ the terminal category.
 
 ### 4.1 Definition
 
-The **parametric copresheaf topos** is the functor category
+The **parametric functor category** is
 
 ```text
-PshParametricPresheaf C :=
-  PshRelSpanObj C => Type
+PshParametricFunctor C E := PshRelSpanObj C => E
 ```
 
-(with appropriate universe annotations). More generally,
-`PshParametricFunctor C E := PshRelSpanObj C => E` for
-an arbitrary target category `E`.
+for a domain category `C` (determining the presheaf
+relations) and target category `E`.
 
-Code: `PshParametricFunctor` (`PshRelSpanDiagram.lean:111`),
-`PshParametricPresheaf` (`PshRelSpanDiagram.lean:125`).
+The **parametric copresheaf topos** is the
+presheaf-valued specialization
 
-As a functor category into `Type`, this is a
-**Grothendieck topos**. It therefore has:
+```text
+PshParametricPresheaf C D :=
+  PshRelSpanObj C => (D^op => Type)
+```
+
+where `D` is an independent category parameter.
+When `D = Discrete PUnit`, `D`-presheaves reduce
+to types, recovering `Type`-valued copresheaves.
+When `D = C`, the copresheaf is doubly
+parameterized by `C`.
+
+Code: `PshParametricFunctor`
+(`PshRelSpanDiagram.lean:306`),
+`PshParametricPresheaf`
+(`PshRelSpanDiagram.lean:320`).
+
+As a functor category into `Type` (or into a
+presheaf category), this is a **Grothendieck
+topos**. It therefore has:
 
 - All small limits and colimits
 - Exponential objects (internal hom)
@@ -194,54 +209,137 @@ As a functor category into `Type`, this is a
 
 ### 4.2 Objects: relational diagrams
 
-An object `F : PshParametricPresheaf C` assigns:
+An object `F : PshParametricPresheaf C D` assigns:
 
-- To each presheaf `P`: a type `F(.typeNode P)`, the
-  "interpretation at `P`"
-- To each relation `R : PshRel P Q`: a type
-  `F(.relNode P Q R)`, the "R-relatedness witnesses"
-- Projection maps `F(fstProj) : F(R) => F(P)` and
-  `F(sndProj) : F(R) => F(Q)`, extracting which
-  elements are related
+- To each presheaf `P : C^op => Type`: an object
+  `F(.typeNode P) : D^op => Type` (a `D`-presheaf
+  of "interpretations at `P`")
+- To each relation `R : PshRel P Q`: an object
+  `F(.relNode P Q R) : D^op => Type` (a `D`-presheaf
+  of "R-relatedness witnesses")
+- Projection maps
+  `F(fstProj) : F(.relNode P Q R) => F(.typeNode P)`
+  and
+  `F(sndProj) : F(.relNode P Q R) => F(.typeNode Q)`
+  (natural transformations of `D`-presheaves)
 
-The projections make `F(R)` a span over `F(P) x F(Q)`,
-defining a relation on `F(P) x F(Q)` for each input
-relation `R`. A copresheaf is therefore a systematic
-assignment of "relational interpretations" to all
-presheaf relations.
+The projections make `F(.relNode P Q R)` a span
+of `D`-presheaves over `F(.typeNode P)` and
+`F(.typeNode Q)`. At each stage `d : D^op`, the
+composite
+
+```text
+(F(fstProj).app d, F(sndProj).app d) :
+  F(.relNode P Q R).obj d =>
+    F(.typeNode P).obj d x F(.typeNode Q).obj d
+```
+
+sends witnesses to pairs. The induced relation
+on `F(.typeNode P).obj d x F(.typeNode Q).obj d`
+is the **image** of this map.
+
+In general, this span map need not be injective:
+a copresheaf may assign multiple distinct
+witnesses for the same pair. The relation is
+**proof-relevant**. When the projections are
+jointly monic (`HasJointlyMonicProjections`,
+`SpanFamily.lean:354`), the relation degenerates
+to a property (proof-irrelevant).
+
+Note that `C` (the domain) and `D` (the target
+presheaf parameter) are independent. When
+`D = Discrete PUnit`, `D`-presheaves reduce to
+types, and the copresheaf assigns a bare type
+to each node. When `D = C`, the copresheaf is
+doubly parameterized.
+
+#### Equivalence with span family data
+
+The unpacked form of a copresheaf is
+`SpanFamilyData` (`SpanFamily.lean:26`):
+
+```text
+SpanFamilyData :=
+  { vertexObj : (C^op => Type) => D
+    edgeObj : (P Q : C^op => Type) =>
+      PshRel P Q => D
+    fstProj : edgeObj P Q R => vertexObj P
+    sndProj : edgeObj P Q R => vertexObj Q }
+```
+
+The equivalence `pshParametricFunctorSpanFamilyEquiv`
+(`PshRelSpanDiagram.lean:330`) identifies
+`PshParametricFunctor C D` with
+`SpanFamily (C^op => Type) PshRel D`, and the
+further equivalence `spanFamilyEquiv`
+(`SpanFamily.lean:298`) identifies `SpanFamily`
+with `SpanFamilyData`. This provides the
+"intuitive" unpacked view of copresheaves
+as vertex-object families, edge-object families,
+and projection morphisms.
 
 ### 4.3 Morphisms: relation-preserving maps
 
-A morphism `eta : F => G` in the copresheaf topos
-(= natural transformation) has:
+A morphism `eta : F => G` in the copresheaf
+category (= natural transformation) has:
 
-- Components `eta(.typeNode P) : F(P) => G(P)` for
-  each presheaf `P`
-- Components `eta(.relNode P Q R) : F(R) => G(R)` for
-  each relation `R`
-- Naturality: if `w` witnesses that `x_0` and `x_1`
-  are F-related via R, then `eta(R)(w)` witnesses that
-  `eta(P)(x_0)` and `eta(Q)(x_1)` are G-related via R
+- Components
+  `eta(.typeNode P) : F(.typeNode P) => G(.typeNode P)`
+  for each presheaf `P`
+- Components
+  `eta(.relNode P Q R) :
+    F(.relNode P Q R) => G(.relNode P Q R)`
+  for each relation `R`
+- Naturality at projections:
+  `eta(.relNode P Q R) >> G(fstProj) =
+    F(fstProj) >> eta(.typeNode P)`
+  (F-witnesses map to G-witnesses preserving
+  endpoints)
 
-This is exactly a **parametric morphism**: a family of maps
-indexed by presheaves that preserves relatedness under all
-relations.
+The unpacked form is `SpanFamilyHom`
+(`SpanFamily.lean:40`):
+
+```text
+SpanFamilyHom F G :=
+  { vertexMap : (P) => F.vertexObj P => G.vertexObj P
+    edgeMap : (R) => F.edgeObj R => G.edgeObj R
+    fstCompat : edgeMap R >> G.fstProj R =
+      F.fstProj R >> vertexMap P
+    sndCompat : edgeMap R >> G.sndProj R =
+      F.sndProj R >> vertexMap Q }
+```
+
+This is a **parametric morphism**: a family of maps
+indexed by presheaves that preserves relatedness
+under all relations.
+
+When the target has jointly monic projections,
+`edgeMap` is determined by `vertexMap`
+(`spanFamilyHom_ext_vertexMap`,
+`SpanFamily.lean:374`).
 
 ### 4.4 Sections: parametric families
 
 A **section** (global element) of `F` is a natural
-transformation from the terminal copresheaf to `F`. It
-picks:
+transformation from the terminal copresheaf to `F`.
+For a `Type`-valued copresheaf, this picks:
 
-- One element `s(P) in F(P)` for each presheaf `P`
-- One witness `s(R) in F(R)` for each relation `R`
+- One element `s(P) in F(.typeNode P)` for each
+  presheaf `P`
+- One witness `s(R) in F(.relNode P Q R)` for each
+  relation `R`
 
 with `F(fstProj)(s(R)) = s(P)` and
 `F(sndProj)(s(R)) = s(Q)`.
 
 The witness condition says: the chosen elements are
-related under every relation. This is precisely the
+related under every relation. This is the
 **parametricity condition**.
+
+For a `D`-presheaf-valued copresheaf, a section picks
+a section of each `D`-presheaf `F(.typeNode P)` and
+`F(.relNode P Q R)`, with the same endpoint
+compatibility.
 
 ### 4.5 Equivalently: limits
 
@@ -366,23 +464,156 @@ structure of a Grothendieck topos, which is standard.
 
 ### 4.7 Type formers as topos operations
 
-Because `PshParametricPresheaf C` is a topos, all
-standard type formers are available and automatically
-respect parametricity:
+Because `PshParametricPresheaf C D` is a functor
+category, all limits and colimits are computed
+**pointwise**: `(F ⊕ G)(X) = F(X) ⊕ G(X)`,
+`(F × G)(X) = F(X) × G(X)`, etc. for each object
+`X` of `PshRelSpanObj C`. This pointwise computation
+produces the correct parametric type formers:
 
 | Type former | Topos operation | Parametricity |
 | ---------- | -------------- | ------------- |
-| `forall X. T(X)` | Limit (end) | Sections of limits are limits of sections |
-| `exists X. T(X)` | Colimit (coend) | Standard |
-| `T_1 -> T_2` | Exponential `[F, G]` | Internal hom in topos |
-| `T_1 x T_2` | Product | Standard |
-| `T_1 + T_2` | Coproduct | Standard |
+| `forall X. T(X)` | Limit (end) | Section 4.5 |
+| `exists X. T(X)` | Colimit (coend) | Section 4.5.2 |
+| `T_1 -> T_2` | Exponential `[F, G]` | Section 4.7.3 |
+| `T_1 x T_2` | Product | Section 4.7.1 |
+| `T_1 + T_2` | Coproduct | Section 4.7.2 |
 | Subtype | Subobject | Via subobject classifier |
 
-The exponential `[F, G]` assigns to `.typeNode P` the
-set of parametric maps from `F` to `G` "at stage P,"
-and to `.relNode P Q R` the relatedness witnesses for
-such maps. This is the parametric function type.
+#### 4.7.1 Products
+
+The product `F × G` in `PshParametricFunctor C E`
+assigns:
+
+```text
+(F × G)(.typeNode P) = F(.typeNode P) × G(.typeNode P)
+(F × G)(.relNode P Q R) =
+  F(.relNode P Q R) × G(.relNode P Q R)
+```
+
+A witness in the product is a pair of witnesses.
+The projections decompose componentwise:
+
+```text
+(F × G)(fstProj)(w_F, w_G) =
+  (F(fstProj)(w_F), G(fstProj)(w_G))
+```
+
+This matches Wadler's relational interpretation
+of product types: `rel(A × B)(R)` consists of
+pairs `((a₁, b₁), (a₂, b₂))` where `a₁` R-relates
+to `a₂` via `A` and `b₁` R-relates to `b₂` via `B`.
+
+#### 4.7.2 Coproducts
+
+The coproduct `F ⊕ G` assigns:
+
+```text
+(F ⊕ G)(.typeNode P) =
+  F(.typeNode P) ⊕ G(.typeNode P)
+(F ⊕ G)(.relNode P Q R) =
+  F(.relNode P Q R) ⊕ G(.relNode P Q R)
+```
+
+A witness in the coproduct is either an F-witness
+(via `inl`) or a G-witness (via `inr`). An
+F-witness projects to F-elements at both
+endpoints; a G-witness projects to G-elements.
+There are **no witnesses for mixed pairs**: an
+F-element at `.typeNode P` and a G-element at
+`.typeNode Q` have no witness in
+`F(.relNode P Q R) ⊕ G(.relNode P Q R)` that
+projects to them.
+
+This matches Wadler's relational interpretation
+of sum types: `rel(A + B)(R) = rel(A)(R) + rel(B)(R)`,
+where `inl(a₁)` and `inl(a₂)` are related iff
+`a₁` R-relates to `a₂` via `A`, `inr(b₁)` and
+`inr(b₂)` are related iff `b₁` R-relates to
+`b₂` via `B`, and `inl/inr` mixtures are never
+related.
+
+**Compatibility with the covariant embedding.**
+For endofunctors `G₁, G₂ : PSh(C) => PSh(C)`,
+the coproduct `G₁ ⊕ G₂` (pointwise:
+`(G₁ ⊕ G₂)(P) = G₁(P) ⊕ G₂(P)`) has Barr
+extension:
+
+```text
+pshBarrLiftRel (G₁ ⊕ G₂) R ≅
+  pshBarrLiftRel G₁ R ⊕ pshBarrLiftRel G₂ R
+```
+
+because `(G₁ ⊕ G₂).map(R.ι)` decomposes as
+`G₁.map(R.ι) ⊕ G₂.map(R.ι)` and the image
+decomposes into the two summands with no mixed
+terms. This gives:
+
+```text
+embed(G₁ ⊕ G₂) ≅ embed(G₁) ⊕ embed(G₂)
+```
+
+so the covariant embedding preserves coproducts.
+
+**Compatibility with identity extension.** The
+identity section functor preserves coproducts:
+`I(A ⊕ B) = I(A) ⊕ I(B)` in `PshRelEdge C`.
+The diagonal relation on a coproduct presheaf
+is the coproduct of the diagonal relations,
+with mixed pairs never equal. This is the
+identity extension property for sum types.
+
+Code: `pshRelId_coprod` and
+`pshRelIdentFunctor_preserves_coprod`
+(`PshRelEdgeIdentPreservation.lean:108,197`).
+
+#### 4.7.3 Exponentials
+
+The exponential `[F, G]` in
+`PshParametricPresheaf C D` assigns to
+`.typeNode P` the `D`-presheaf of parametric maps
+from `F` to `G` "at stage P", and to
+`.relNode P Q R` the `D`-presheaf of relatedness
+witnesses for such maps.
+
+For the edge category `PshRelEdge C`, the
+exponential is computed explicitly:
+
+```text
+[(A₁, B₁, R₁), (A₂, B₂, R₂)]
+  = (A₁.functorHom A₂,
+     B₁.functorHom B₂,
+     pshArrowRelSkel R₁ R₂)
+```
+
+where `pshArrowRelSkel R₁ R₂` relates `f` and `g`
+when `f` maps R₁-related inputs to R₂-related
+outputs via `g`. This is the presheaf-level
+analogue of Wadler's relational interpretation of
+function types (Section 11.5).
+
+The identity section functor preserves
+exponentials: `pshArrowRelSkel ΔA ΔB = Δ[A,B]`.
+Code: `pshRelIdentFunctor_preserves_exp`
+(`PshRelEdgeIdentPreservation.lean:141`).
+
+#### 4.7.4 Why pointwise computation is correct
+
+The correctness of the pointwise construction
+follows from the span shape of `PshRelSpanObj C`.
+Each type former decomposes relatedness correctly
+because the witness type at each relation node is
+the corresponding type-former applied to the
+witness types of the components. The span
+projections then force the decomposition to
+respect endpoints.
+
+This is definitional rather than a theorem: it
+follows from how limits and colimits in functor
+categories are computed (pointwise in the target
+`E`). The span shape ensures that pointwise
+computation at relation nodes produces the correct
+relational interpretation.
 
 ## 5. Embeddings
 
