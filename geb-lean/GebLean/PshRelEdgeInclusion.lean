@@ -480,4 +480,32 @@ def pshRelEdgeSepAdjunction (C : Type u)
       | .some .right => rfl
   }
 
+instance pshRelEdgeInclusionFull (C : Type u)
+    [Category.{v} C] :
+    (pshRelEdgeInclusionFunctor.{u, v, w}
+      C).Full :=
+  (pshRelEdgeInclusionFullyFaithful C).full
+
+instance pshRelEdgeInclusionFaithful
+    (C : Type u) [Category.{v} C] :
+    (pshRelEdgeInclusionFunctor.{u, v, w}
+      C).Faithful :=
+  (pshRelEdgeInclusionFullyFaithful C).faithful
+
+instance pshRelEdgeInclusionReflective
+    (C : Type u) [Category.{v} C] :
+    Reflective
+      (pshRelEdgeInclusionFunctor.{u, v, w}
+        C) where
+  L := pshRelEdgeSepFunctor C
+  adj := pshRelEdgeSepAdjunction C
+
+instance pshRelEdgeSepCounitIsIso
+    (C : Type u) [Category.{v} C] :
+    IsIso
+      (pshRelEdgeSepAdjunction.{u, v, w}
+        C).counit :=
+  (pshRelEdgeSepAdjunction C
+    ).counit_isIso_of_R_fully_faithful
+
 end GebLean
