@@ -538,4 +538,78 @@ def pshRelEdgeCoequalizerDesc
 
 end Coequalizer
 
+section CategoricalLimits
+
+/-- The terminal edge is a terminal object in
+`PshRelEdge C` in the sense of `IsTerminal`. -/
+def pshRelEdgeIsTerminal (C : Type u)
+    [Category.{v} C] :
+    IsTerminal
+      (pshRelEdgeTerminal.{u, v, w} C) :=
+  IsTerminal.ofUniqueHom
+    (fun E => pshRelEdgeTerminalMap E)
+    (fun _ f => pshRelEdgeTerminalMap_unique f)
+
+instance pshRelEdgeHasTerminal (C : Type u)
+    [Category.{v} C] :
+    HasTerminal (PshRelEdge.{u, v, w} C) :=
+  (pshRelEdgeIsTerminal C).hasTerminal
+
+/-- The product fan in `PshRelEdge C` is a limit
+cone. -/
+def pshRelEdgeProdIsLimit
+    (E₁ E₂ : PshRelEdge.{u, v, w} C) :
+    IsLimit (BinaryFan.mk
+      (pshRelEdgeProdFst E₁ E₂)
+      (pshRelEdgeProdSnd E₁ E₂)) :=
+  BinaryFan.isLimitMk
+    (fun s => pshRelEdgePair s.fst s.snd)
+    (fun s => by
+      apply VertEdgeHom.ext <;>
+      · ext c p; rfl)
+    (fun s => by
+      apply VertEdgeHom.ext <;>
+      · ext c p; rfl)
+    (fun s m h₁ h₂ => by
+      apply VertEdgeHom.ext
+      · ext c p
+        dsimp [pshRelEdgePair, pshProdLift,
+          FunctorToTypes.prod.lift]
+        exact Prod.ext
+          (congrFun (congr_fun
+            (congrArg NatTrans.app
+              (congrArg VertEdgeHom.srcMap h₁))
+            c) p)
+          (congrFun (congr_fun
+            (congrArg NatTrans.app
+              (congrArg VertEdgeHom.srcMap h₂))
+            c) p)
+      · ext c p
+        dsimp [pshRelEdgePair, pshProdLift,
+          FunctorToTypes.prod.lift]
+        exact Prod.ext
+          (congrFun (congr_fun
+            (congrArg NatTrans.app
+              (congrArg VertEdgeHom.tgtMap h₁))
+            c) p)
+          (congrFun (congr_fun
+            (congrArg NatTrans.app
+              (congrArg VertEdgeHom.tgtMap h₂))
+            c) p))
+
+instance pshRelEdgeHasLimitPair
+    {E₁ E₂ : PshRelEdge.{u, v, w} C} :
+    HasLimit (pair E₁ E₂) :=
+  HasLimit.mk
+    ⟨_, pshRelEdgeProdIsLimit E₁ E₂⟩
+
+instance pshRelEdgeHasBinaryProducts
+    (C : Type u) [Category.{v} C] :
+    HasBinaryProducts
+      (PshRelEdge.{u, v, w} C) :=
+  @hasBinaryProducts_of_hasLimit_pair
+    _ _ (fun {_ _} => pshRelEdgeHasLimitPair)
+
+end CategoricalLimits
+
 end GebLean
