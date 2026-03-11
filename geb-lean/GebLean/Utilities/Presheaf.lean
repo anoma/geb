@@ -37,6 +37,19 @@ precomposition induces functors in the opposite direction:
   to the covariant hom-functor of `A`, then `(F ⟶ G) ≃ G.obj A`
 * `coyonedaEquivOfNatIsoTypeId` - Specialization to `C = Type v` with
   `G = 𝟭 (Type v)`, giving `(F ⟶ 𝟭 (Type v)) ≃ A`
+
+## Functorial covariant Yoneda natural isomorphisms
+
+* `coyonedaNatIsoOfNatIso` - Lifts `coyonedaEquivOfNatIso` to a
+  natural isomorphism of functors `(C ⥤ Type v) ⥤ Type v`,
+  using `curriedCoyonedaLemma` (requires `SmallCategory C`)
+* `coyonedaNatIsoOfNatIsoLarge` - General-universe version using
+  `largeCurriedCoyonedaLemma` with `uliftFunctor`
+* `coyonedaNatIsoOfNatIsoTypeId` - Specialization to `C = Type v`
+* `uliftCoyonedaNatIsoOfNatIso` - Version using `uliftCoyoneda`,
+  allowing copresheaf target `Type (max w v)` with `w ≠ v`
+* `uliftCoyonedaNatIsoOfNatIsoTypeId` - Specialization to
+  `C = Type v` with lifted codomain `Type (max w v)`
 -/
 
 universe v u
@@ -866,6 +879,8 @@ end CoPshClassifier
 
 section CoyonedaIso
 
+universe w
+
 open Opposite
 
 /--
@@ -896,6 +911,127 @@ def coyonedaEquivOfNatIsoTypeId
     (i : F ≅ coyoneda.obj (op A)) :
     (F ⟶ 𝟭 (Type v)) ≃ A :=
   coyonedaEquivOfNatIso i
+
+/--
+Natural isomorphism version of `coyonedaEquivOfNatIso`.
+If a copresheaf `F` is naturally isomorphic to the
+covariant hom-functor of `A`, then the representable
+functor `G ↦ (F ⟶ G)` on the copresheaf category is
+naturally isomorphic to the evaluation functor
+`G ↦ G.obj A`.
+
+This lifts `coyonedaEquivOfNatIso` from an object-level
+equivalence to a natural isomorphism of functors
+`(C ⥤ Type v) ⥤ Type v`, using `curriedCoyonedaLemma`.
+
+The `SmallCategory` constraint (objects and morphisms
+in the same universe) is needed so that hom-sets and
+evaluation values both lie in `Type v`.
+-/
+def coyonedaNatIsoOfNatIso
+    {C : Type v} [SmallCategory C]
+    {A : C} {F : C ⥤ Type v}
+    (i : F ≅ coyoneda.obj (op A)) :
+    coyoneda.obj (op F) ≅
+      (evaluation C (Type v)).obj A :=
+  (coyoneda.mapIso i.op).symm ≪≫
+    curriedCoyonedaLemma.app A
+
+/--
+General-universe natural isomorphism version of
+`coyonedaEquivOfNatIso`, analogous to
+`largeCurriedCoyonedaLemma`.
+
+When `C : Type u` with `Category.{v} C` and `u ≠ v`,
+the hom-type `(F ⟶ G)` lies in `Type (max u v)` while
+`G.obj A` lies in `Type v`. The `uliftFunctor` bridges
+this gap by lifting evaluation values to
+`Type (max u v)`.
+
+For `SmallCategory C` (where `u = v`), use
+`coyonedaNatIsoOfNatIso` instead, which avoids the
+`ULift` wrapper.
+-/
+def coyonedaNatIsoOfNatIsoLarge
+    {C : Type u} [Category.{v} C]
+    {A : C} {F : C ⥤ Type v}
+    (i : F ≅ coyoneda.obj (op A)) :
+    coyoneda.obj (op F) ≅
+      ((evaluation C (Type v)).obj A ⋙
+        uliftFunctor.{u}) :=
+  (coyoneda.mapIso i.op).symm ≪≫
+    largeCurriedCoyonedaLemma.app A
+
+/--
+Specialization of `coyonedaNatIsoOfNatIsoLarge` to
+`C = Type v`: if a copresheaf
+`F : Type v ⥤ Type v` is naturally isomorphic to the
+covariant hom-functor of `A : Type v`, then the
+representable functor `G ↦ (F ⟶ G)` is naturally
+isomorphic to the evaluation-and-lift functor
+`G ↦ ULift (G.obj A)`.
+
+Because `Type v` with `Category.{v}` is not a
+`SmallCategory` (its objects live in `Type (v + 1)`
+while morphisms live in `Type v`), the `ULift` wrapper
+is unavoidable in the functorial version.
+The object-level `coyonedaEquivOfNatIsoTypeId` avoids
+this because `Equiv` is universe-polymorphic.
+-/
+def coyonedaNatIsoOfNatIsoTypeId
+    {A : Type v} {F : Type v ⥤ Type v}
+    (i : F ≅ coyoneda.obj (op A)) :
+    coyoneda.obj (op F) ≅
+      ((evaluation (Type v) (Type v)).obj A ⋙
+        uliftFunctor.{v + 1}) :=
+  coyonedaNatIsoOfNatIsoLarge i
+
+/--
+Natural isomorphism for copresheaves isomorphic to a
+universe-lifted covariant hom-functor. Given
+`i : F ≅ uliftCoyoneda.{w}.obj (op A)` where
+`F : C ⥤ Type (max w v)`, this produces a natural
+isomorphism between the representable functor
+`G ↦ (F ⟶ G)` and the lifted evaluation functor
+`G ↦ ULift (G.obj A)`.
+
+This generalizes `coyonedaNatIsoOfNatIsoLarge` by
+allowing the copresheaf target universe to differ from
+the morphism universe via `uliftCoyoneda`. The
+construction uses `uliftCoyonedaRightOpCompCoyoneda`.
+-/
+def uliftCoyonedaNatIsoOfNatIso
+    {C : Type u} [Category.{v} C]
+    {A : C} {F : C ⥤ Type (max w v)}
+    (i : F ≅ uliftCoyoneda.{w}.obj (op A)) :
+    coyoneda.obj (op F) ≅
+      ((evaluation C (Type (max w v))).obj A ⋙
+        uliftFunctor.{u}) :=
+  (coyoneda.mapIso i.op).symm ≪≫
+    uliftCoyonedaRightOpCompCoyoneda.app A
+
+/--
+Specialization of `uliftCoyonedaNatIsoOfNatIso` to
+`C = Type v`: if `F : Type v ⥤ Type (max w v)` is
+naturally isomorphic to the universe-lifted
+covariant hom-functor of `A : Type v`, then the
+representable functor `G ↦ (F ⟶ G)` is naturally
+isomorphic to the lifted evaluation functor
+`G ↦ ULift (G.obj A)`.
+
+The domain (`Type v`) and codomain (`Type (max w v)`)
+of `F` can live at different universe levels. When
+`w ≤ v`, `max w v = v` and this reduces to the
+same-universe case of `coyonedaNatIsoOfNatIsoTypeId`.
+-/
+def uliftCoyonedaNatIsoOfNatIsoTypeId
+    {A : Type v}
+    {F : Type v ⥤ Type (max w v)}
+    (i : F ≅ uliftCoyoneda.{w}.obj (op A)) :
+    coyoneda.obj (op F) ≅
+      ((evaluation (Type v) (Type (max w v))).obj A ⋙
+        uliftFunctor.{v + 1}) :=
+  uliftCoyonedaNatIsoOfNatIso i
 
 end CoyonedaIso
 
