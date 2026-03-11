@@ -615,6 +615,133 @@ categories are computed (pointwise in the target
 computation at relation nodes produces the correct
 relational interpretation.
 
+### 4.8 Adjunction lifting
+
+Type formers arising from universal properties
+(products, coproducts, exponentials) are
+characterized by adjunctions. The Barr extension
+(Section 1.3) lifts endofunctors to relations,
+but it does not correctly lift multi-argument
+type formers: Barr-extending a partially applied
+bifunctor replaces the fixed argument's relational
+structure with the diagonal.
+
+For example, Barr-extending `(. + B_0)` at
+relation `R : PshRel P Q` yields:
+
+```text
+pshBarrLiftRel (. + B_0) R =
+  { (inl(p), inl(q)) | (p, q) in R }
+  ∪ { (inr(b), inr(b)) | b in B_0 }
+```
+
+The right component carries only the diagonal of
+`B_0`, not an independent relation `R_2`. This
+is NOT the parametric coproduct relation
+`pshRelCoprod R_1 R_2`, which allows an arbitrary
+`R_2` on the right.
+
+#### 4.8.1 The adjunction lift recipe
+
+Given an adjunction `G ⊣ F` (or `F ⊣ G`) where
+`F : D -> PSh(C)` is a type former and
+`G : PSh(C) -> D` is the structural adjunct, the
+canonical parametric lift proceeds as follows:
+
+1. **Determine the edge category of D.** For each
+   category `D` appearing in the adjunction,
+   determine the corresponding relational category
+   `Edge(D)`.
+
+2. **Lift the structural adjunct.** The functor
+   `G : PSh(C) -> D` lifts to
+   `G~ : PshRelEdge(C) -> Edge(D)`. This is
+   typically straightforward because `G` has
+   a canonical action on relations (e.g., the
+   diagonal `Delta` maps `(P, Q, R)` to
+   `((P, Q, R), (P, Q, R))`).
+
+3. **Define the type former as the adjoint of
+   the lifted structural functor.** The
+   left (or right) adjoint of `G~` in
+   `PshRelEdge(C)` is the canonical parametric
+   lift `F~` of the type former.
+
+The following table records the instances of
+this recipe for the standard type formers:
+
+| Adjunction | D | Edge(D) | G~ | F~ |
+| ---------- | - | ------- | -- | -- |
+| `+ ⊣ Delta` | `PSh(C)^2` | `PshRelEdge(C)^2` | `(E, E)` | `pshRelEdgeCoprod` |
+| `Delta ⊣ x` | `PSh(C)^2` | `PshRelEdge(C)^2` | `(E, E)` | `pshRelEdgeProd` |
+| `x ⊣ [-,-]` | `PSh(C)^2` | `PshRelEdge(C)^2` | `x~` | `pshRelEdgeExp` |
+| `! ⊣ Delta_0` | `1` | `1` | `*` | `pshRelEdgeTerminal` |
+| `Delta_0 ⊣ !` | `1` | `1` | `*` | `pshRelEdgeInitial` |
+
+Code: `pshRelEdgeCoprod`
+(`PshRelEdgeLimits.lean:228`),
+`pshRelEdgeProd` (`PshRelEdgeExp.lean`),
+`pshRelEdgeExp` (`PshRelEdgeExp.lean`).
+
+#### 4.8.2 Properties of adjunction lifts
+
+**Graph preservation.** When specializing the
+lifted type former at graph relations
+`pshRelGraph(f)`, the result is the graph of the
+type former applied to the underlying morphisms.
+For coproducts:
+
+```text
+pshRelCoprod (pshRelGraph f_1) (pshRelGraph f_2)
+  = pshRelGraph (f_1 + f_2)
+```
+
+because `inl(a_1)` relates to `inl(b_1)` iff
+`f_1(a_1) = b_1`, and `inr(a_2)` relates to
+`inr(b_2)` iff `f_2(a_2) = b_2`, which is the
+graph of `Sum.map f_1 f_2`. This is the "free
+theorem" content for sum types.
+
+**Identity extension.** The identity section
+functor `pshRelIdentFunctor` preserves
+adjunction lifts: for each type former `F`,
+
+```text
+I(F(A_1, ..., A_n)) = F~(I(A_1), ..., I(A_n))
+```
+
+This follows from `pshRelIdentFunctor` preserving
+all finite limits and colimits
+(`PshRelEdgeIdentPreservation.lean`) and
+exponentials (`pshRelIdentFunctor_preserves_exp`).
+
+**Compatibility with the copresheaf topos.**
+At the `PshParametricFunctor C E` level, the
+adjunction lift is postcomposition: `G ⊣ F`
+in `E` gives `(G o -) ⊣ (F o -)` in the functor
+category. This produces the pointwise (co)limits
+of Section 4.7, which are the correct parametric
+constructions.
+
+#### 4.8.3 Limitations
+
+Step 1 of the recipe (determining `Edge(D)`) is
+not mechanical. For `D = PSh(C)^n`, the edge
+category is `PshRelEdge(C)^n` — this follows from
+the product structure. For `D = PSh(B)` with
+`B != C`, the edge category would be
+`PshRelEdge(B)`, but the relationship between
+`PshRelEdge(B)` and `PshRelEdge(C)` is not
+immediate.
+
+For `D` not of the form `PSh(B)` or a product
+thereof, it is not clear how to determine
+`Edge(D)` canonically. The recipe applies when
+`D` has a natural "relational" or "double
+categorical" structure, but a general construction
+of `Edge(D)` from `D` alone remains an open
+question (Section 11.11, Q5).
+
 ## 5. Embeddings
 
 Several classes of categorical data embed into the
@@ -1395,6 +1522,58 @@ subobject lattice structure. This connects to
 the Neumann-Licata directed type theory (POPL
 2026), where directionality is built into the
 type theory via an internal notion of ordering.
+
+#### Q5: Canonical edge category construction
+
+The adjunction lift recipe (Section 4.8) requires
+determining the edge category `Edge(D)` for the
+"other" category `D` in the adjunction. For
+`D = PSh(C)^n`, the answer is `PshRelEdge(C)^n`.
+For `D = PSh(B)`, the answer is `PshRelEdge(B)`.
+
+Is there a canonical construction `Edge(-)` that
+takes an arbitrary category `D` (or a category
+with suitable structure) and produces its edge
+category? Candidates:
+
+- **Double-categorical structure.** If `D` has
+  a double category of relations (analogous to
+  `PshRelDouble` for presheaf categories), then
+  `Edge(D)` is its vertical edge category. The
+  question reduces to: which categories admit a
+  canonical double category of relations?
+
+- **Internal relations.** In a regular category
+  `D`, one can form the category of internal
+  relations (jointly monic spans). This gives
+  `Edge(D)` as the category of "relation triples"
+  `(A, B, R)` with `R ↪ A x B`. For `D = PSh(C)`,
+  this recovers `PshRelEdge(C)`.
+
+- **Subobject fibration.** `Edge(D)` could be
+  defined as the total category of the subobject
+  fibration over `D x D`, sending `(A, B)` to
+  `Sub(A x B)`. This is the Grothendieck
+  construction of
+  `(A, B) |-> Sub(A x B) : (D x D)^op -> Cat`.
+  For `D = PSh(C)`, this gives `PshRelEdge(C)`
+  (Section 11.10, fibration perspective).
+
+- **Power object.** If `D` is a topos with power
+  object `P(B) = [B, Omega]`, then `Edge(D)` is
+  the total category of
+  `(A, B) |-> Hom(A, P(B)) : (D x D)^op -> Set`,
+  which is equivalent to the subobject fibration.
+
+The regularity-based and subobject-based
+approaches apply whenever `D` has finite limits
+and a suitable notion of subobject (regular
+monomorphisms suffice). Whether these produce
+the correct `Edge(D)` for the adjunction lift
+recipe — and whether the lifted adjunctions
+preserve the expected properties (graph
+preservation, identity extension) — requires
+further investigation.
 
 ### 11.12 Formalization candidates
 
