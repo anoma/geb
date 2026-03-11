@@ -1517,7 +1517,7 @@ target type: a morphism `φ : Y → Z` induces a nat trans
 by post-composition. -/
 def sliceProfunctorPoly.mapNatTrans
     (P : Jᵒᵖ ⥤ J ⥤ Type v)
-    {Y Z : Type (max u v)} (φ : Y → Z) :
+    {Y Z : Type w} (φ : Y → Z) :
     sliceProfunctorPoly P Y ⟶
       sliceProfunctorPoly P Z where
   app a :=
@@ -1526,7 +1526,7 @@ def sliceProfunctorPoly.mapNatTrans
   naturality := by intros; rfl
 
 /-- The functor
-`Type (max u v) ⥤ (Jᵒᵖ ⥤ J ⥤ Type (max u v))`
+`Type w ⥤ (Jᵒᵖ ⥤ J ⥤ Type (max v w))`
 sending `Y` to `sliceProfunctorPoly P Y`, the
 profunctor `(op j, k) ↦ P(op k, j) → Y`.
 
@@ -1536,14 +1536,14 @@ It is the analogue for profunctor `P` of
 case `P = coyoneda`). -/
 def sliceProfunctorPolyFunctor
     (P : Jᵒᵖ ⥤ J ⥤ Type v) :
-    Type (max u v) ⥤
-      (Jᵒᵖ ⥤ J ⥤ Type (max u v)) where
+    Type w ⥤
+      (Jᵒᵖ ⥤ J ⥤ Type (max v w)) where
   obj Y := sliceProfunctorPoly P Y
   map φ := sliceProfunctorPoly.mapNatTrans P φ
   map_id := by intros; rfl
   map_comp := by intros; rfl
 
-/-- The copresheaf on `Type (max u v)` sending `Y`
+/-- The copresheaf on `Type w` sending `Y`
 to `typeEnd (sliceProfunctorPoly P Y)`, the end of
 the profunctor `(op j, k) ↦ P(op k, j) → Y`.
 
@@ -1555,7 +1555,7 @@ playing the role of the weighted limit: elements of
 condition. -/
 def endLimitFunctor
     (P : Jᵒᵖ ⥤ J ⥤ Type v) :
-    Type (max u v) ⥤ Type (max u v) :=
+    Type w ⥤ Type (max u v w) :=
   sliceProfunctorPolyFunctor P ⋙ typeEndFunctor J
 
 /-- The mapping-out formula for coends in terms of
@@ -1568,7 +1568,7 @@ condition, which is exactly the data of a function
 from the coend quotient `typeCoend P` to `Y`. -/
 def typeCoend.endEquiv
     (P : Jᵒᵖ ⥤ J ⥤ Type v)
-    (Y : Type (max u v)) :
+    (Y : Type w) :
     (typeCoend P → Y) ≃
       typeEnd (sliceProfunctorPoly P Y) where
   toFun g :=
@@ -2412,6 +2412,154 @@ def pointwiseTypeCoend.copowerEquiv
         (W.flip.obj e) D).obj e :=
   Equiv.refl _
 
+/-!
+### Pointwise Coend-End Equivalences
+
+The Type-level coend-end formula
+`typeCoend.endEquiv : (typeCoend P → Y) ≃
+  typeEnd (sliceProfunctorPoly P Y)`
+lifts pointwise: at each `e : E`, functions from the
+pointwise coend to `G.obj e` correspond to the end of
+`sliceProfunctorPoly` applied to the double-flipped
+profunctor at `e`.
+
+Similarly, `coendHomNatIsoEnd`,
+`typeCoend.endRepresentable`,
+and `typeCoend.endImpredicative` all lift pointwise.
+-/
+
+/-- Pointwise coend-end equivalence: at each `e : E`,
+functions from `(pointwiseTypeCoend P).obj e` to
+`G.obj e` correspond to the end of
+`sliceProfunctorPoly P_e (G.obj e)`, where `P_e` is
+the profunctor obtained by evaluating at `e` after
+the double flip.
+
+An element of the right side is a family
+`∀ j, P_e(op j, j) → G.obj e` satisfying the dual
+wedge condition. -/
+def pointwiseTypeCoend.endEquiv
+    (P : Kᵒᵖ ⥤ K ⥤ (E ⥤ Type v))
+    (G : E ⥤ Type v) (e : E) :
+    ((pointwiseTypeCoend P).obj e →
+      G.obj e) ≃
+      typeEnd (sliceProfunctorPoly
+        (((profunctorDoubleFlipEquiv (K := K)
+          (E := E)).functor.obj P).obj e)
+        (G.obj e)) :=
+  typeCoend.endEquiv
+    (((profunctorDoubleFlipEquiv (K := K)
+      (E := E)).functor.obj P).obj e)
+    (G.obj e)
+
+/-- Pointwise coend-end natural isomorphism: at each
+`e : E`, `endLimitFunctor P_e` is naturally isomorphic
+to `coyoneda.obj (op ((pointwiseTypeCoend P).obj e))`
+as copresheaves on
+`Type (max u v)`. -/
+def pointwiseTypeCoend.coendHomNatIsoEnd
+    (P : Kᵒᵖ ⥤ K ⥤ (E ⥤ Type v)) (e : E) :
+    let P_e : Kᵒᵖ ⥤ K ⥤ Type v :=
+      (((profunctorDoubleFlipEquiv (K := K)
+        (E := E)).functor.obj P).obj e)
+    endLimitFunctor P_e ≅
+      coyoneda.obj
+        (Opposite.op (typeCoend P_e)) :=
+  let P_e : Kᵒᵖ ⥤ K ⥤ Type v :=
+    (((profunctorDoubleFlipEquiv (K := K)
+      (E := E)).functor.obj P).obj e)
+  NatIso.ofComponents
+    (fun Y =>
+      (typeCoend.endEquiv P_e Y).symm.toIso)
+    (fun {Y Z} f => by
+      ext ⟨val, _⟩
+      funext q
+      exact Quot.inductionOn q (fun _ => rfl))
+
+/-- Pointwise representable characterization of coends
+via ends: at each `e : E`, natural transformations
+from `endLimitFunctor P_e` to
+`G : Type (max u v) ⥤ Type (max u v)`
+correspond to
+`G.obj ((pointwiseTypeCoend P).obj e)`. -/
+def pointwiseTypeCoend.endRepresentable
+    (P : Kᵒᵖ ⥤ K ⥤ (E ⥤ Type v)) (e : E)
+    (G : Type (max u v) ⥤ Type (max u v)) :
+    let P_e : Kᵒᵖ ⥤ K ⥤ Type v :=
+      (((profunctorDoubleFlipEquiv (K := K)
+        (E := E)).functor.obj P).obj e)
+    (endLimitFunctor P_e ⟶ G) ≃
+      G.obj (typeCoend P_e) :=
+  coyonedaEquivOfNatIso
+    (pointwiseTypeCoend.coendHomNatIsoEnd P e)
+
+/-- Functorial version of
+`pointwiseTypeCoend.endRepresentable`:
+at each `e : E`, the representable functor
+`G ↦ (endLimitFunctor P_e ⟶ G)` on the copresheaf
+category `Type (max u v) ⥤ Type (max u v)` is
+naturally isomorphic to the evaluation-and-lift
+functor
+`G ↦ ULift (G.obj (typeCoend P_e))`. -/
+def pointwiseTypeCoend.endRepresentableNatIso
+    (P : Kᵒᵖ ⥤ K ⥤ (E ⥤ Type v)) (e : E) :
+    let P_e : Kᵒᵖ ⥤ K ⥤ Type v :=
+      (((profunctorDoubleFlipEquiv (K := K)
+        (E := E)).functor.obj P).obj e)
+    coyoneda.obj
+      (Opposite.op (endLimitFunctor P_e)) ≅
+      ((evaluation (Type (max u v))
+        (Type (max u v))).obj
+        (typeCoend P_e) ⋙
+        uliftFunctor.{max u v + 1}) :=
+  coyonedaNatIsoOfNatIsoLarge
+    (pointwiseTypeCoend.coendHomNatIsoEnd P e)
+
+/-- Pointwise impredicative characterization of coends
+via ends: at each `e : E`, natural transformations
+from `endLimitFunctor P_e` to the identity functor on
+`Type (max u v)` correspond to elements of
+`(pointwiseTypeCoend P).obj e`. -/
+def pointwiseTypeCoend.endImpredicative
+    (P : Kᵒᵖ ⥤ K ⥤ (E ⥤ Type v)) (e : E) :
+    let P_e : Kᵒᵖ ⥤ K ⥤ Type v :=
+      (((profunctorDoubleFlipEquiv (K := K)
+        (E := E)).functor.obj P).obj e)
+    (endLimitFunctor P_e ⟶
+      𝟭 (Type (max u v))) ≃
+      typeCoend P_e :=
+  coyonedaEquivOfNatIso
+    (pointwiseTypeCoend.coendHomNatIsoEnd P e)
+
+/-- Functorial version of
+`pointwiseTypeCoend.endImpredicative`:
+at each `e : E`, the representable functor
+`G ↦ (endLimitFunctor P_e ⟶ G)` on the copresheaf
+category `Type (max u v) ⥤ Type (max u v)` is
+naturally isomorphic to the evaluation-and-lift
+functor
+`G ↦ ULift (G.obj (typeCoend P_e))`.
+
+This is the same natural isomorphism as
+`pointwiseTypeCoend.endRepresentableNatIso`; the
+impredicative characterization at the object level
+(`pointwiseTypeCoend.endImpredicative`) is the
+`𝟭 (Type (max u v))` component of this natural
+isomorphism (modulo `ULift`). -/
+def pointwiseTypeCoend.endImpredicativeNatIso
+    (P : Kᵒᵖ ⥤ K ⥤ (E ⥤ Type v)) (e : E) :
+    let P_e : Kᵒᵖ ⥤ K ⥤ Type v :=
+      (((profunctorDoubleFlipEquiv (K := K)
+        (E := E)).functor.obj P).obj e)
+    coyoneda.obj
+      (Opposite.op (endLimitFunctor P_e)) ≅
+      ((evaluation (Type (max u v))
+        (Type (max u v))).obj
+        (typeCoend P_e) ⋙
+        uliftFunctor.{max u v + 1}) :=
+  coyonedaNatIsoOfNatIsoLarge
+    (pointwiseTypeCoend.coendHomNatIsoEnd P e)
+
 end PointwisePresheaf
 
 section PointwisePresheafAdjunctions
@@ -2575,19 +2723,14 @@ def pointwiseNatTransIntroEquiv
     (W.flip.obj e) (D.flip.obj e)
 
 /-!
-### Pointwise Maps-Out and Coend-End Equivalences
+### Pointwise Maps-Out
 
 The Type-level maps-out formula
-`typeCoend.endEquiv : (typeCoend P → Y) ≃
-  typeEnd (sliceProfunctorPoly P Y)`
-lifts pointwise: at each `e : E`, functions from the
-pointwise coend to `G.obj e` correspond to the end of
-`sliceProfunctorPoly` applied to the double-flipped
-profunctor at `e`.
-
-Similarly, `typeCoend.mapsOutEquiv`,
-`coendHomNatIsoEnd`, `typeCoend.endRepresentable`,
-and `typeCoend.endImpredicative` all lift pointwise.
+`typeCoend.mapsOutEquiv` lifts pointwise: at each
+`e : E`, functions from the pointwise coend to
+`G.obj e` correspond to nat trans from the
+double-flipped profunctor at `e` to
+`sliceProfunctorPoly coyoneda (G.obj e)`.
 -/
 
 /-- Pointwise maps-out characterization of the coend:
@@ -2608,134 +2751,6 @@ def pointwiseTypeCoend.mapsOutEquiv
     (((profunctorDoubleFlipEquiv (K := K)
       (E := E)).functor.obj P).obj e)
     (G.obj e)
-
-/-- Pointwise coend-end equivalence: at each `e : E`,
-functions from `(pointwiseTypeCoend P).obj e` to
-`G.obj e` correspond to the end of
-`sliceProfunctorPoly P_e (G.obj e)`, where `P_e` is
-the profunctor obtained by evaluating at `e` after
-the double flip.
-
-An element of the right side is a family
-`∀ j, P_e(op j, j) → G.obj e` satisfying the dual
-wedge condition. -/
-def pointwiseTypeCoend.endEquiv
-    (P : Kᵒᵖ ⥤ K ⥤ (E ⥤ Type v))
-    (G : E ⥤ Type v) (e : E) :
-    ((pointwiseTypeCoend P).obj e →
-      G.obj e) ≃
-      typeEnd (sliceProfunctorPoly
-        (((profunctorDoubleFlipEquiv (K := K)
-          (E := E)).functor.obj P).obj e)
-        (G.obj e)) :=
-  typeCoend.endEquiv
-    (((profunctorDoubleFlipEquiv (K := K)
-      (E := E)).functor.obj P).obj e)
-    (G.obj e)
-
-/-- Pointwise coend-end natural isomorphism: at each
-`e : E`, `endLimitFunctor P_e` is naturally isomorphic
-to `coyoneda.obj (op ((pointwiseTypeCoend P).obj e))`
-as copresheaves on `Type v`. -/
-def pointwiseTypeCoend.coendHomNatIsoEnd
-    (P : Kᵒᵖ ⥤ K ⥤ (E ⥤ Type v)) (e : E) :
-    let P_e : Kᵒᵖ ⥤ K ⥤ Type v :=
-      (((profunctorDoubleFlipEquiv (K := K)
-        (E := E)).functor.obj P).obj e)
-    endLimitFunctor P_e ≅
-      coyoneda.obj
-        (Opposite.op (typeCoend P_e)) :=
-  let P_e : Kᵒᵖ ⥤ K ⥤ Type v :=
-    (((profunctorDoubleFlipEquiv (K := K)
-      (E := E)).functor.obj P).obj e)
-  NatIso.ofComponents
-    (fun Y =>
-      (typeCoend.endEquiv P_e Y).symm.toIso)
-    (fun {Y Z} f => by
-      ext ⟨val, _⟩
-      funext q
-      exact Quot.inductionOn q (fun _ => rfl))
-
-/-- Pointwise representable characterization of coends
-via ends: at each `e : E`, natural transformations
-from `endLimitFunctor P_e` to `G : Type v ⥤ Type v`
-correspond to
-`G.obj ((pointwiseTypeCoend P).obj e)`. -/
-def pointwiseTypeCoend.endRepresentable
-    (P : Kᵒᵖ ⥤ K ⥤ (E ⥤ Type v)) (e : E)
-    (G : Type v ⥤ Type v) :
-    let P_e : Kᵒᵖ ⥤ K ⥤ Type v :=
-      (((profunctorDoubleFlipEquiv (K := K)
-        (E := E)).functor.obj P).obj e)
-    (endLimitFunctor P_e ⟶ G) ≃
-      G.obj (typeCoend P_e) :=
-  coyonedaEquivOfNatIso
-    (pointwiseTypeCoend.coendHomNatIsoEnd P e)
-
-/-- Functorial version of
-`pointwiseTypeCoend.endRepresentable`:
-at each `e : E`, the representable functor
-`G ↦ (endLimitFunctor P_e ⟶ G)` on the copresheaf
-category `Type v ⥤ Type v` is naturally isomorphic to
-the evaluation-and-lift functor
-`G ↦ ULift (G.obj (typeCoend P_e))`.
-
-The `ULift` wrapper is necessary because `Type v`
-with `Category.{v}` is not a `SmallCategory`. -/
-def pointwiseTypeCoend.endRepresentableNatIso
-    (P : Kᵒᵖ ⥤ K ⥤ (E ⥤ Type v)) (e : E) :
-    let P_e : Kᵒᵖ ⥤ K ⥤ Type v :=
-      (((profunctorDoubleFlipEquiv (K := K)
-        (E := E)).functor.obj P).obj e)
-    coyoneda.obj
-      (Opposite.op (endLimitFunctor P_e)) ≅
-      ((evaluation (Type v) (Type v)).obj
-        (typeCoend P_e) ⋙
-        uliftFunctor.{v + 1}) :=
-  coyonedaNatIsoOfNatIsoTypeId
-    (pointwiseTypeCoend.coendHomNatIsoEnd P e)
-
-/-- Pointwise impredicative characterization of coends
-via ends: at each `e : E`, natural transformations
-from `endLimitFunctor P_e` to the identity functor on
-`Type v` correspond to elements of
-`(pointwiseTypeCoend P).obj e`. -/
-def pointwiseTypeCoend.endImpredicative
-    (P : Kᵒᵖ ⥤ K ⥤ (E ⥤ Type v)) (e : E) :
-    let P_e : Kᵒᵖ ⥤ K ⥤ Type v :=
-      (((profunctorDoubleFlipEquiv (K := K)
-        (E := E)).functor.obj P).obj e)
-    (endLimitFunctor P_e ⟶ 𝟭 (Type v)) ≃
-      typeCoend P_e :=
-  coyonedaEquivOfNatIsoTypeId
-    (pointwiseTypeCoend.coendHomNatIsoEnd P e)
-
-/-- Functorial version of
-`pointwiseTypeCoend.endImpredicative`:
-at each `e : E`, the representable functor
-`G ↦ (endLimitFunctor P_e ⟶ G)` on the copresheaf
-category `Type v ⥤ Type v` is naturally isomorphic
-to the evaluation-and-lift functor
-`G ↦ ULift (G.obj (typeCoend P_e))`.
-
-This is the same natural isomorphism as
-`pointwiseTypeCoend.endRepresentableNatIso`; the
-impredicative characterization at the object level
-(`pointwiseTypeCoend.endImpredicative`) is the
-`𝟭 (Type v)` component of this natural isomorphism
-(modulo `ULift`). -/
-def pointwiseTypeCoend.endImpredicativeNatIso
-    (P : Kᵒᵖ ⥤ K ⥤ (E ⥤ Type v)) (e : E) :
-    let P_e : Kᵒᵖ ⥤ K ⥤ Type v :=
-      (((profunctorDoubleFlipEquiv (K := K)
-        (E := E)).functor.obj P).obj e)
-    coyoneda.obj
-      (Opposite.op (endLimitFunctor P_e)) ≅
-      ((evaluation (Type v) (Type v)).obj
-        (typeCoend P_e) ⋙
-        uliftFunctor.{v + 1}) :=
-  coyonedaNatIsoOfNatIsoTypeId
-    (pointwiseTypeCoend.coendHomNatIsoEnd P e)
 
 /-!
 ### Pointwise Impredicative and Representable Coends
