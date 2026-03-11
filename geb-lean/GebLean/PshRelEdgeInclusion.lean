@@ -3,6 +3,8 @@ import Mathlib.CategoryTheory.Limits.Shapes.Pullback.Cospan
 import Mathlib.CategoryTheory.Adjunction.Reflective
 import Mathlib.CategoryTheory.Limits.Preserves.Shapes.Products
 import Mathlib.CategoryTheory.Limits.Constructions.FiniteProductsOfBinaryProducts
+import Mathlib.CategoryTheory.Monoidal.Cartesian.FunctorCategory
+import Mathlib.CategoryTheory.Monoidal.Closed.Ideal
 
 open CategoryTheory Limits
 
@@ -843,6 +845,42 @@ instance pshRelEdgeReflectorPreservesBinaryProducts
         (pshRelEdgeInclusionFunctor.{u, v, w}
           C)) :=
   pshRelEdgeSepPreservesBinaryProducts C
+
+def pshRelEdgeTerminalLimitCone
+    (C : Type u) [Category.{v} C] :
+    LimitCone
+      (Functor.empty.{0}
+        (PshRelEdge.{u, v, w} C)) where
+  cone :=
+    { pt := pshRelEdgeTerminal C
+      π := (Functor.uniqueFromEmpty _).hom }
+  isLimit :=
+    { lift := fun s =>
+        pshRelEdgeTerminalMap s.pt
+      fac := fun _ => by rintro ⟨⟨⟩⟩ }
+
+def pshRelEdgeProdLimitCone
+    (E₁ E₂ : PshRelEdge.{u, v, w} C) :
+    LimitCone (pair E₁ E₂) where
+  cone := BinaryFan.mk
+    (pshRelEdgeProdFst E₁ E₂)
+    (pshRelEdgeProdSnd E₁ E₂)
+  isLimit := pshRelEdgeProdIsLimit E₁ E₂
+
+instance pshRelEdgeCartesianMonoidal
+    (C : Type u) [Category.{v} C] :
+    CartesianMonoidalCategory
+      (PshRelEdge.{u, v, w} C) :=
+  CartesianMonoidalCategory.ofChosenFiniteProducts
+    (pshRelEdgeTerminalLimitCone C)
+    (pshRelEdgeProdLimitCone)
+
+instance pshRelEdgeExponentialIdeal
+    (C : Type u) [Category.{v} C] :
+    ExponentialIdeal
+      (pshRelEdgeInclusionFunctor.{u, v, max v u}
+        C) :=
+  exponentialIdeal_of_preservesBinaryProducts _
 
 end SepPreservesProducts2
 

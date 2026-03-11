@@ -271,11 +271,13 @@ framework.
   `pshRelEdgeSepPreservesTerminal`,
   `pshRelEdgeSepPreservesFiniteProducts`,
   `pshRelEdgeReflectorPreservesBinaryProducts`.
-  (`PshRelEdgeInclusion.lean`)
-  The `ExponentialIdeal` conclusion requires
-  `CartesianMonoidalCategory` and `MonoidalClosed`
-  instances on the functor category, which are not
-  yet set up.
+  `CartesianMonoidalCategory (PshRelEdge C)` via
+  `ofChosenFiniteProducts`.
+  `ExponentialIdeal (pshRelEdgeInclusionFunctor C)`.
+  `MonoidalClosed` for functor categories into
+  presheaf categories via currying equivalence
+  (`functorCatMonoidalClosed` in `Presheaf.lean`).
+  (`PshRelEdgeInclusion.lean`, `Presheaf.lean`)
   Ref: `docs/parametric-copresheaf-topos.md`
   Section 11.4.
 

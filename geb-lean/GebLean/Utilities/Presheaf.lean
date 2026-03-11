@@ -1655,18 +1655,80 @@ abbrev uncurriedFunctorCat
 -- The right adjoint to tensoring by F in the
 -- curried functor category, defined by
 -- transporting through the currying equivalence.
+-- Abbreviation for the currying equivalence at
+-- the universes used in this section.
+abbrev functorCatCurrying
+    (J : Type u₁) [Category.{v₁} J]
+    (C : Type u₂) [Category.{v₂} C] :
+    (J ⥤ (Cᵒᵖ ⥤ Type max v₁ v₂ u₁ u₂)) ≌
+    (J × Cᵒᵖ ⥤ Type max v₁ v₂ u₁ u₂) :=
+  currying (C := J) (D := Cᵒᵖ)
+    (E := Type max v₁ v₂ u₁ u₂)
+
+-- The right adjoint to tensoring by F in the
+-- curried functor category, defined via the
+-- currying equivalence and the internal hom in
+-- `(J × Cᵒᵖ) ⥤ Type w`.
 def functorCatIhom
     (F : J ⥤ (Cᵒᵖ ⥤ Type max v₁ v₂ u₁ u₂)) :
     (J ⥤ (Cᵒᵖ ⥤ Type max v₁ v₂ u₁ u₂)) ⥤
     (J ⥤ (Cᵒᵖ ⥤ Type max v₁ v₂ u₁ u₂)) :=
-  (currying (C := J) (D := Cᵒᵖ)
-    (E := Type max v₁ v₂ u₁ u₂)).functor ⋙
+  (functorCatCurrying J C).functor ⋙
     FunctorToTypes.rightAdj
-      ((currying (C := J) (D := Cᵒᵖ)
-        (E := Type max v₁ v₂ u₁ u₂)).functor.obj
-          F) ⋙
-    (currying (C := J) (D := Cᵒᵖ)
-      (E := Type max v₁ v₂ u₁ u₂)).inverse
+      ((functorCatCurrying J C).functor.obj F) ⋙
+    (functorCatCurrying J C).inverse
+
+-- The adjunction `tensorLeft F ⊣ functorCatIhom
+-- F`, constructed by transporting the existing
+-- adjunction through the currying equivalence.
+-- This works because uncurry preserves the
+-- monoidal product definitionally.
+-- The hom-set bijection for the tensor-hom
+-- adjunction in the curried functor category.
+-- Chains: `(F ⊗ G ⟶ H) ≃ (uncurry G ⟶
+-- rightAdj(uncurry F)(uncurry H)) ≃ (G ⟶
+-- ihom(F)(H))`.
+def functorCatHomEquiv
+    (F G H : J ⥤ (Cᵒᵖ ⥤
+      Type max v₁ v₂ u₁ u₂)) :
+    (F ⊗ G ⟶ H) ≃
+    (G ⟶ (functorCatIhom F).obj H) :=
+  let e := functorCatCurrying J C
+  let F' := e.functor.obj F
+  -- Step 1: (F ⊗ G ⟶ H) ≃ (uncurry(F ⊗ G)
+  -- ⟶ uncurry H) = (F' ⊗ uncurry G ⟶ uncurry H)
+  (e.fullyFaithfulFunctor.homEquiv
+    (X := F ⊗ G) (Y := H)).trans
+    -- Step 2: ≃ (uncurry G ⟶ rightAdj F'
+    -- (uncurry H))
+    ((FunctorToTypes.adj F').homEquiv
+      (e.functor.obj G)
+      (e.functor.obj H)|>.trans
+    -- Step 3: ≃ (G ⟶ curry(rightAdj F'
+    -- (uncurry H))) = (G ⟶ ihom(F)(H))
+    -- using e.functor ⊣ e.inverse: (F(G) ⟶ B)
+    -- ≃ (G ⟶ e.inverse(B))
+    (e.toAdjunction.homEquiv G _))
+
+def functorCatAdj
+    (F : J ⥤ (Cᵒᵖ ⥤
+      Type max v₁ v₂ u₁ u₂)) :
+    tensorLeft F ⊣ functorCatIhom F :=
+  Adjunction.mkOfHomEquiv
+    { homEquiv := functorCatHomEquiv F }
+
+instance functorCatClosed
+    (F : J ⥤ (Cᵒᵖ ⥤
+      Type max v₁ v₂ u₁ u₂)) :
+    Closed F where
+  rightAdj := functorCatIhom F
+  adj := functorCatAdj F
+
+instance functorCatMonoidalClosed
+    (J : Type u₁) [Category.{v₁} J]
+    (C : Type u₂) [Category.{v₂} C] :
+    MonoidalClosed
+      (J ⥤ (Cᵒᵖ ⥤ Type max v₁ v₂ u₁ u₂)) where
 
 end FunctorCategoryMonoidalClosed
 
