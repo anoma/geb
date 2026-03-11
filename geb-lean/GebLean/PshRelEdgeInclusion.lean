@@ -1,5 +1,8 @@
-import GebLean.PshRelDouble
+import GebLean.PshRelEdgeLimits
 import Mathlib.CategoryTheory.Limits.Shapes.Pullback.Cospan
+import Mathlib.CategoryTheory.Adjunction.Reflective
+import Mathlib.CategoryTheory.Limits.Preserves.Shapes.Products
+import Mathlib.CategoryTheory.Limits.Constructions.FiniteProductsOfBinaryProducts
 
 open CategoryTheory Limits
 
@@ -500,6 +503,36 @@ instance pshRelEdgeInclusionReflective
   L := pshRelEdgeSepFunctor C
   adj := pshRelEdgeSepAdjunction C
 
+section SepPreservesProducts
+
+variable (F G : WalkingSpan ⥤ (Cᵒᵖ ⥤ Type w))
+
+/-- The pointwise product of two span functors
+in `[WalkingSpan, PSh(C)]`. -/
+def spanProd :
+    WalkingSpan ⥤ (Cᵒᵖ ⥤ Type w) where
+  obj j := pshProdPresheaf (F.obj j) (G.obj j)
+  map f := pshProdMap (F.map f) (G.map f)
+  map_id j := by simp [pshProdMap_id]
+  map_comp f g := by
+    simp [pshProdMap_comp]
+
+/-- First projection from the pointwise product
+to the first factor. -/
+def spanProdFst :
+    spanProd F G ⟶ F where
+  app j := pshProdFst (F.obj j) (G.obj j)
+  naturality j j' f := by ext c ⟨x, y⟩; rfl
+
+/-- Second projection from the pointwise product
+to the second factor. -/
+def spanProdSnd :
+    spanProd F G ⟶ G where
+  app j := pshProdSnd (F.obj j) (G.obj j)
+  naturality j j' f := by ext c ⟨x, y⟩; rfl
+
+end SepPreservesProducts
+
 instance pshRelEdgeSepCounitIsIso
     (C : Type u) [Category.{v} C] :
     IsIso
@@ -507,5 +540,310 @@ instance pshRelEdgeSepCounitIsIso
         C).counit :=
   (pshRelEdgeSepAdjunction C
     ).counit_isIso_of_R_fully_faithful
+
+section SepPreservesProducts2
+
+variable {C : Type u} [Category.{v} C]
+
+/-- Pointwise pairing: given natural
+transformations `H ⟶ F` and `H ⟶ G` in
+`[WalkingSpan, PSh(C)]`, produce `H ⟶ spanProd
+F G` by pairing at each vertex. -/
+def spanProdLift
+    {F G H : WalkingSpan ⥤ (Cᵒᵖ ⥤ Type w)}
+    (α : H ⟶ F) (β : H ⟶ G) :
+    H ⟶ spanProd F G where
+  app j := pshProdLift (α.app j) (β.app j)
+  naturality j j' f := by
+    apply pshProdPresheaf_hom_ext
+    · simp only [Category.assoc, spanProd,
+        pshProdMap_fst]
+      simp only [← Category.assoc,
+        pshProdLift, FunctorToTypes.prod.lift,
+        pshProdFst, FunctorToTypes.prod.fst]
+      exact α.naturality f
+    · simp only [Category.assoc, spanProd,
+        pshProdMap_snd]
+      simp only [← Category.assoc,
+        pshProdLift, FunctorToTypes.prod.lift,
+        pshProdSnd, FunctorToTypes.prod.snd]
+      exact β.naturality f
+
+/-- The cone for `Discrete.functor f` in
+`[WalkingSpan, PSh(C)]` given by the pointwise
+product. -/
+def spanProdCone
+    (f : WalkingPair →
+      (WalkingSpan ⥤ (Cᵒᵖ ⥤ Type w))) :
+    Cone (Discrete.functor f) where
+  pt := spanProd (f .left) (f .right)
+  π := Discrete.natTrans (fun ⟨i⟩ =>
+    match i with
+    | .left => spanProdFst (f .left) (f .right)
+    | .right => spanProdSnd (f .left) (f .right))
+
+/-- The pointwise product cone is a limit in
+`[WalkingSpan, PSh(C)]`. -/
+def spanProdIsLimit
+    (f : WalkingPair →
+      (WalkingSpan ⥤ (Cᵒᵖ ⥤ Type w))) :
+    IsLimit (spanProdCone f) where
+  lift s := spanProdLift
+    (s.π.app ⟨.left⟩) (s.π.app ⟨.right⟩)
+  fac s j := by
+    match j with
+    | ⟨.left⟩ => ext k c x; rfl
+    | ⟨.right⟩ => ext k c x; rfl
+  uniq s m hm := by
+    have h₁ := hm ⟨.left⟩
+    have h₂ := hm ⟨.right⟩
+    ext j c x
+    apply Prod.ext
+    · have := congr_fun (congr_app
+        (congr_app h₁ j) c) x
+      dsimp [spanProdCone, spanProdFst,
+        Discrete.natTrans] at this
+      dsimp [spanProdLift, pshProdLift,
+        FunctorToTypes.prod.lift,
+        pshProdFst, FunctorToTypes.prod.fst]
+      exact this
+    · have := congr_fun (congr_app
+        (congr_app h₂ j) c) x
+      dsimp [spanProdCone, spanProdSnd,
+        Discrete.natTrans] at this
+      dsimp [spanProdLift, pshProdLift,
+        FunctorToTypes.prod.lift,
+        pshProdSnd, FunctorToTypes.prod.snd]
+      exact this
+
+/-- The lift for the mapped cone: given a cone
+over `Discrete.functor f ⋙ sep` in `PshRelEdge
+C`, construct a morphism to `sep(spanProd)`. -/
+def sepMapSpanProdLift
+    (f : WalkingPair →
+      (WalkingSpan ⥤ (Cᵒᵖ ⥤ Type w)))
+    (s : Cone (Discrete.functor f ⋙
+      pshRelEdgeSepFunctor.{u, v, w} C)) :
+    s.pt ⟶
+    (pshRelEdgeSepFunctor C).obj
+      (spanProd (f .left) (f .right)) :=
+  { srcMap := pshProdLift
+      (s.π.app ⟨.left⟩).srcMap
+      (s.π.app ⟨.right⟩).srcMap
+    tgtMap := pshProdLift
+      (s.π.app ⟨.left⟩).tgtMap
+      (s.π.app ⟨.right⟩).tgtMap
+    sq := by
+      intro c p q hpq
+      obtain ⟨r₁, hr₁⟩ :=
+        (s.π.app ⟨.left⟩).sq c p q hpq
+      obtain ⟨r₂, hr₂⟩ :=
+        (s.π.app ⟨.right⟩).sq c p q hpq
+      dsimp [pshRelEdgeSepFunctor,
+        pshRelEdgeSepObj, Subfunctor.range,
+        pshProdLift,
+        FunctorToTypes.prod.lift] at hr₁ hr₂
+      have h₁₁ := congr_arg Prod.fst hr₁
+      have h₁₂ := congr_arg Prod.snd hr₁
+      have h₂₁ := congr_arg Prod.fst hr₂
+      have h₂₂ := congr_arg Prod.snd hr₂
+      dsimp at h₁₁ h₁₂ h₂₁ h₂₂
+      dsimp [pshRelEdgeSepFunctor,
+        pshRelEdgeSepObj, Subfunctor.range]
+      refine ⟨(r₁, r₂), ?_⟩
+      dsimp [spanProd, pshProdMap,
+        pshProdLift,
+        FunctorToTypes.prod.lift,
+        pshProdFst, FunctorToTypes.prod.fst,
+        pshProdSnd, FunctorToTypes.prod.snd]
+      exact Prod.ext
+        (Prod.ext h₁₁ h₂₁)
+        (Prod.ext h₁₂ h₂₂)
+  }
+
+/-- The image of the pointwise product cone
+under `sep` is a limit in `PshRelEdge C`. -/
+def sepMapSpanProdIsLimit
+    (f : WalkingPair →
+      (WalkingSpan ⥤ (Cᵒᵖ ⥤ Type w))) :
+    IsLimit ((pshRelEdgeSepFunctor.{u, v, w}
+      C).mapCone (spanProdCone f)) where
+  lift s := sepMapSpanProdLift f s
+  fac s j := by
+    match j with
+    | ⟨.left⟩ =>
+      apply VertEdgeHom.ext <;>
+      · ext c x; rfl
+    | ⟨.right⟩ =>
+      apply VertEdgeHom.ext <;>
+      · ext c x; rfl
+  uniq s m hm := by
+    have h₁ := hm ⟨.left⟩
+    have h₂ := hm ⟨.right⟩
+    apply VertEdgeHom.ext
+    · apply pshProdPresheaf_hom_ext
+      · have : m.srcMap ≫
+            pshProdFst _ _ =
+          (s.π.app ⟨.left⟩).srcMap := by
+          have := congr_arg VertEdgeHom.srcMap h₁
+          dsimp [Functor.mapCone, spanProdCone,
+            pshRelEdgeSepFunctor,
+            pshRelEdgeSepMap,
+            Discrete.natTrans] at this
+          exact this
+        dsimp [sepMapSpanProdLift]
+        rw [← this]
+      · have : m.srcMap ≫
+            pshProdSnd _ _ =
+          (s.π.app ⟨.right⟩).srcMap := by
+          have := congr_arg VertEdgeHom.srcMap h₂
+          dsimp [Functor.mapCone, spanProdCone,
+            pshRelEdgeSepFunctor,
+            pshRelEdgeSepMap,
+            Discrete.natTrans] at this
+          exact this
+        dsimp [sepMapSpanProdLift]
+        rw [← this]
+    · apply pshProdPresheaf_hom_ext
+      · have : m.tgtMap ≫
+            pshProdFst _ _ =
+          (s.π.app ⟨.left⟩).tgtMap := by
+          have := congr_arg VertEdgeHom.tgtMap h₁
+          dsimp [Functor.mapCone, spanProdCone,
+            pshRelEdgeSepFunctor,
+            pshRelEdgeSepMap,
+            Discrete.natTrans] at this
+          exact this
+        dsimp [sepMapSpanProdLift]
+        rw [← this]
+      · have : m.tgtMap ≫
+            pshProdSnd _ _ =
+          (s.π.app ⟨.right⟩).tgtMap := by
+          have := congr_arg VertEdgeHom.tgtMap h₂
+          dsimp [Functor.mapCone, spanProdCone,
+            pshRelEdgeSepFunctor,
+            pshRelEdgeSepMap,
+            Discrete.natTrans] at this
+          exact this
+        dsimp [sepMapSpanProdLift]
+        rw [← this]
+
+instance pshRelEdgeSepPreservesProduct
+    (f : WalkingPair →
+      (WalkingSpan ⥤ (Cᵒᵖ ⥤ Type w))) :
+    PreservesLimit (Discrete.functor f)
+      (pshRelEdgeSepFunctor.{u, v, w} C) :=
+  preservesLimit_of_preserves_limit_cone
+    (spanProdIsLimit f)
+    (sepMapSpanProdIsLimit f)
+
+instance pshRelEdgeSepPreservesBinaryProducts
+    (C : Type u) [Category.{v} C] :
+    PreservesLimitsOfShape (Discrete WalkingPair)
+      (pshRelEdgeSepFunctor.{u, v, w} C) :=
+  preservesLimitsOfShape_of_discrete _
+
+/-- The constant span at the unit presheaf,
+serving as a terminal object in
+`WalkingSpan ⥤ PSh(C)`. -/
+def spanTerminal :
+    WalkingSpan ⥤ (Cᵒᵖ ⥤ Type w) :=
+  (Functor.const _).obj (pshUnitPresheaf C)
+
+/-- The unique morphism from any span to the
+terminal span. -/
+def spanTerminalMap
+    (F : WalkingSpan ⥤ (Cᵒᵖ ⥤ Type w)) :
+    F ⟶ spanTerminal (C := C) where
+  app _ := pshUnitMap _
+
+/-- The cone for `Discrete.functor f` in
+`[WalkingSpan, PSh(C)]` for
+`f : PEmpty → ...`, given by the terminal span.
+-/
+def spanTerminalCone
+    (f : PEmpty →
+      (WalkingSpan ⥤ (Cᵒᵖ ⥤ Type w))) :
+    Cone (Discrete.functor f) where
+  pt := spanTerminal (C := C)
+  π := Discrete.natTrans (fun ⟨i⟩ => i.elim)
+
+/-- The terminal cone is a limit for the empty
+diagram. -/
+def spanTerminalIsLimit
+    (f : PEmpty →
+      (WalkingSpan ⥤ (Cᵒᵖ ⥤ Type w))) :
+    IsLimit (spanTerminalCone (C := C) f) where
+  lift s := spanTerminalMap s.pt
+  fac _ j := j.as.elim
+  uniq s m _ := by
+    ext j c x
+    match j with
+    | .none =>
+      exact ULift.ext _ _
+        (Subsingleton.elim _ _)
+    | .some .left =>
+      exact ULift.ext _ _
+        (Subsingleton.elim _ _)
+    | .some .right =>
+      exact ULift.ext _ _
+        (Subsingleton.elim _ _)
+
+/-- The `sep` image of the terminal cone is a
+limit for the empty diagram in `PshRelEdge C`.
+-/
+def sepMapSpanTerminalIsLimit
+    (f : PEmpty →
+      (WalkingSpan ⥤ (Cᵒᵖ ⥤ Type w))) :
+    IsLimit ((pshRelEdgeSepFunctor.{u, v, w}
+      C).mapCone (spanTerminalCone f)) where
+  lift s :=
+    { srcMap := pshUnitMap s.pt.src
+      tgtMap := pshUnitMap s.pt.tgt
+      sq := by
+        intro c _ _ _
+        dsimp [pshRelEdgeSepFunctor,
+          pshRelEdgeSepObj, Subfunctor.range,
+          spanTerminal, pshProdLift,
+          FunctorToTypes.prod.lift,
+          pshUnitPresheaf]
+        exact ⟨⟨PUnit.unit⟩, rfl⟩ }
+  fac _ j := j.as.elim
+  uniq _ m _ := by
+    apply VertEdgeHom.ext <;>
+    · ext c x
+      exact ULift.ext _ _
+        (Subsingleton.elim _ _)
+
+instance pshRelEdgeSepPreservesTerminalProduct
+    (f : PEmpty →
+      (WalkingSpan ⥤ (Cᵒᵖ ⥤ Type w))) :
+    PreservesLimit (Discrete.functor f)
+      (pshRelEdgeSepFunctor.{u, v, w} C) :=
+  preservesLimit_of_preserves_limit_cone
+    (spanTerminalIsLimit f)
+    (sepMapSpanTerminalIsLimit f)
+
+instance pshRelEdgeSepPreservesTerminal
+    (C : Type u) [Category.{v} C] :
+    PreservesLimitsOfShape (Discrete PEmpty)
+      (pshRelEdgeSepFunctor.{u, v, w} C) :=
+  preservesLimitsOfShape_of_discrete _
+
+instance pshRelEdgeSepPreservesFiniteProducts
+    (C : Type u) [Category.{v} C] :
+    PreservesFiniteProducts
+      (pshRelEdgeSepFunctor.{u, v, w} C) :=
+  PreservesFiniteProducts.of_preserves_binary_and_terminal _
+
+instance pshRelEdgeReflectorPreservesBinaryProducts
+    (C : Type u) [Category.{v} C] :
+    PreservesLimitsOfShape (Discrete WalkingPair)
+      (reflector
+        (pshRelEdgeInclusionFunctor.{u, v, w}
+          C)) :=
+  pshRelEdgeSepPreservesBinaryProducts C
+
+end SepPreservesProducts2
 
 end GebLean

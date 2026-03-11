@@ -610,6 +610,12 @@ instance pshRelEdgeHasBinaryProducts
   @hasBinaryProducts_of_hasLimit_pair
     _ _ (fun {_ _} => pshRelEdgeHasLimitPair)
 
+instance pshRelEdgeHasFiniteProducts
+    (C : Type u) [Category.{v} C] :
+    HasFiniteProducts
+      (PshRelEdge.{u, v, w} C) :=
+  hasFiniteProducts_of_has_binary_and_terminal
+
 end CategoricalLimits
 
 end GebLean
