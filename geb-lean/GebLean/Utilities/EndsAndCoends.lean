@@ -651,30 +651,45 @@ and a weighted colimit by `W * F = coend^j W(j) . F(j)`
 
 section TypeWeightedLimits
 
-variable {J : Type v} [Category.{v} J]
+variable {J : Type u} [Category.{v} J]
 
-/-- The weighted limit of `F : J ⥤ Type v` weighted by
-`W : J ⥤ Type v`, computed as the end of the power
+/-- The weighted limit of `F : J ⥤ Type w` weighted by
+`W : J ⥤ Type w`, computed as the end of the power
 profunctor `(op j₁, j₂) ↦ W(j₁) → F(j₂)`. -/
 def typeWeightedLimit
-    (W : J ⥤ Type v) (F : J ⥤ Type v) : Type v :=
-  typeEnd (powerProfunctor (C := Type v) W F)
+    (W : J ⥤ Type w) (F : J ⥤ Type w) : Type (max u w) :=
+  typeEnd.{v, u, w} (powerProfunctor (CPow := typesHasPowers.{w}) W F)
 
-/-- The weighted colimit of `F : J ⥤ Type v` weighted by
-`W : Jᵒᵖ ⥤ Type v`, computed as the coend of the copower
+/-- The weighted colimit of `F : J ⥤ Type w` weighted by
+`W : Jᵒᵖ ⥤ Type w`, computed as the coend of the copower
 profunctor `(op j₁, j₂) ↦ W(j₁) × F(j₂)`. -/
 def typeWeightedColimit
-    (W : Jᵒᵖ ⥤ Type v) (F : J ⥤ Type v) : Type v :=
-  typeCoend (copowerProfunctor (C := Type v) W F)
+    (W : Jᵒᵖ ⥤ Type w) (F : J ⥤ Type w) : Type (max u w) :=
+  typeCoend (copowerProfunctor (C := Type w) W F)
 
-/-- The weighted cone over `F` with weight `W` whose apex is
-`typeWeightedLimit W F`, obtained by transporting the terminal
-end wedge through the cone-wedge equivalence. -/
+end TypeWeightedLimits
+
+section TypeWeightedLimitCones
+
+variable {J : Type v} [Category.{v} J]
+
+/-- The weighted cone over `F` with weight `W` whose apex
+is `typeWeightedLimit W F`, obtained by transporting the
+terminal end wedge through the cone-wedge equivalence.
+The cone definitions require `J : Type v` (matching the
+morphism universe) because `weightedConeWedgeEquiv`
+constrains the target category `C` to share `J`'s
+morphism universe `v`, and the weight must land in
+`Type v`.  With `W, F : J ⥤ Type v`, the end
+`typeEnd (powerProfunctor W F) : Type (max v v) = Type v`
+so the apex matches the `WeightedCone` universe. -/
 def typeWeightedLimitCone
     (W : J ⥤ Type v) (F : J ⥤ Type v) :
     WeightedCone (C := Type v) W F :=
   (weightedConeWedgeEquiv W F).inverse.obj
-    (typeEndWedge (powerProfunctor (C := Type v) W F))
+    (typeEndWedge
+      (powerProfunctor
+        (CPow := typesHasPowers.{v}) W F))
 
 /-- The weighted cone `typeWeightedLimitCone W F` is a
 weighted limit. -/
@@ -683,37 +698,49 @@ def typeWeightedLimitCone_isWeightedLimit
     IsWeightedLimit (typeWeightedLimitCone W F) :=
   isWeightedLimitOfIsTerminalPowerWedge W F
     (typeEndWedge_isTerminal
-      (powerProfunctor (C := Type v) W F))
+      (powerProfunctor
+        (CPow := typesHasPowers.{v}) W F))
 
-/-- The weighted cocone over `F` with weight `W` whose apex
-is `typeWeightedColimit W F`, obtained by transporting the
-initial coend cowedge through the cocone-cowedge
-equivalence. -/
+/-- The weighted cocone over `F` with weight `W` whose
+apex is `typeWeightedColimit W F`, obtained by
+transporting the initial coend cowedge through the
+cocone-cowedge equivalence.  Subject to the same
+universe constraint as `typeWeightedLimitCone`. -/
 def typeWeightedColimitCocone
     (W : Jᵒᵖ ⥤ Type v) (F : J ⥤ Type v) :
     WeightedCocone (C := Type v) W F :=
   (weightedCoconeCowedgeEquiv W F).inverse.obj
     (typeCoendCowedge
-      (copowerProfunctor (C := Type v) W F))
+      (copowerProfunctor
+        (C := Type v) W F))
 
-/-- The weighted cocone `typeWeightedColimitCocone W F` is
-a weighted colimit. -/
+/-- The weighted cocone `typeWeightedColimitCocone W F`
+is a weighted colimit. -/
 def typeWeightedColimitCocone_isWeightedColimit
     (W : Jᵒᵖ ⥤ Type v) (F : J ⥤ Type v) :
     IsWeightedColimit
       (typeWeightedColimitCocone W F) :=
   isWeightedColimitOfIsInitialCopowerCowedge W F
     (typeCoendCowedge_isInitial
-      (copowerProfunctor (C := Type v) W F))
+      (copowerProfunctor
+        (C := Type v) W F))
+
+end TypeWeightedLimitCones
+
+section TypeWeightedLimits
+
+variable {J : Type u} [Category.{v} J]
 
 /-- The functorial action of the power profunctor in `F`:
 given `α : F ⟶ G`, produces a natural transformation
 `powerProfunctor W F ⟶ powerProfunctor W G` by
 post-composing with `α` at each component. -/
-def powerProfunctorMapF (W : J ⥤ Type v)
-    {F G : J ⥤ Type v} (α : F ⟶ G) :
-    powerProfunctor (C := Type v) W F ⟶
-      powerProfunctor (C := Type v) W G where
+def powerProfunctorMapF (W : J ⥤ Type w)
+    {F G : J ⥤ Type w} (α : F ⟶ G) :
+    powerProfunctor
+      (CPow := typesHasPowers.{w}) W F ⟶
+      powerProfunctor
+        (CPow := typesHasPowers.{w}) W G where
   app j :=
     { app := fun j' => HasPowers.mapVal (α.app j')
       naturality := fun {j₁ j₂} g => by
@@ -728,11 +755,12 @@ def powerProfunctorMapF (W : J ⥤ Type v)
     rw [← HasPowers.bimap_eq_mapIdx_mapVal,
       ← HasPowers.bimap_eq_mapVal_mapIdx]
 
-/-- The weighted limit functor `(J ⥤ Type v) ⥤ Type v`
-for a fixed weight `W`, sending `F` to the end of the
-power profunctor `powerProfunctor W F`. -/
-def typeWeightedLimitFunctor (W : J ⥤ Type v) :
-    (J ⥤ Type v) ⥤ Type v where
+/-- The weighted limit functor
+`(J ⥤ Type w) ⥤ Type (max u w)` for a fixed weight `W`,
+sending `F` to the end of the power profunctor
+`powerProfunctor W F`. -/
+def typeWeightedLimitFunctor (W : J ⥤ Type w) :
+    (J ⥤ Type w) ⥤ Type (max u w) where
   obj F := typeWeightedLimit W F
   map α := typeEnd.map J (powerProfunctorMapF W α)
   map_id F := by
@@ -754,10 +782,10 @@ def typeWeightedLimitFunctor (W : J ⥤ Type v) :
 given `α : F ⟶ G`, produces a natural transformation
 `copowerProfunctor W F ⟶ copowerProfunctor W G` by
 applying `α` to the second component of each copower. -/
-def copowerProfunctorMapF (W : Jᵒᵖ ⥤ Type v)
-    {F G : J ⥤ Type v} (α : F ⟶ G) :
-    copowerProfunctor (C := Type v) W F ⟶
-      copowerProfunctor (C := Type v) W G where
+def copowerProfunctorMapF (W : Jᵒᵖ ⥤ Type w)
+    {F G : J ⥤ Type w} (α : F ⟶ G) :
+    copowerProfunctor (C := Type w) W F ⟶
+      copowerProfunctor (C := Type w) W G where
   app j :=
     { app := fun j' =>
         HasCopowers.mapVal (α.app j')
@@ -774,11 +802,12 @@ def copowerProfunctorMapF (W : Jᵒᵖ ⥤ Type v)
     rw [← HasCopowers.bimap_eq_mapIdx_mapVal,
       ← HasCopowers.bimap_eq_mapVal_mapIdx]
 
-/-- The weighted colimit functor `(J ⥤ Type v) ⥤ Type v`
-for a fixed weight `W`, sending `F` to the coend of the
-copower profunctor `copowerProfunctor W F`. -/
-def typeWeightedColimitFunctor (W : Jᵒᵖ ⥤ Type v) :
-    (J ⥤ Type v) ⥤ Type v where
+/-- The weighted colimit functor
+`(J ⥤ Type w) ⥤ Type (max u w)` for a fixed weight `W`,
+sending `F` to the coend of the copower profunctor
+`copowerProfunctor W F`. -/
+def typeWeightedColimitFunctor (W : Jᵒᵖ ⥤ Type w) :
+    (J ⥤ Type w) ⥤ Type (max u w) where
   obj F := typeWeightedColimit W F
   map α :=
     typeCoend.map J (copowerProfunctorMapF W α)
@@ -796,7 +825,7 @@ consists of families `x : (j : J) → W(j) → F(j)` satisfying
 the wedge condition, which in `Type v` is exactly the naturality
 condition for a natural transformation `W ⟶ F`. -/
 def typeWeightedLimit.natTransEquiv
-    (W F : J ⥤ Type v) :
+    (W F : J ⥤ Type w) :
     typeWeightedLimit W F ≃ (W ⟶ F) where
   toFun := fun ⟨x, hx⟩ =>
     { app := x
@@ -806,10 +835,10 @@ def typeWeightedLimit.natTransEquiv
   left_inv := fun ⟨_, _⟩ => rfl
   right_inv := fun _ => rfl
 
-/-- The component isomorphism in `Type v` from
-`natTransEquiv`: `typeWeightedLimit W F ≅ (W ⟶ F)`. -/
+/-- The component isomorphism from `natTransEquiv`:
+`typeWeightedLimit W F ≅ (W ⟶ F)`. -/
 def typeWeightedLimit.natTransIso
-    (W F : J ⥤ Type v) :
+    (W F : J ⥤ Type w) :
     typeWeightedLimit W F ≅ (W ⟶ F) where
   hom := (natTransEquiv W F).toFun
   inv := (natTransEquiv W F).invFun
@@ -822,7 +851,7 @@ def typeWeightedLimit.natTransIso
 `typeWeightedLimitFunctor W` is naturally isomorphic to
 `coyoneda.obj (op W)`, which sends `F ↦ (W ⟶ F)`. -/
 def typeWeightedLimitFunctor.natIso
-    (W : J ⥤ Type v) :
+    (W : J ⥤ Type w) :
     typeWeightedLimitFunctor W ≅
       coyoneda.obj (Opposite.op W) :=
   NatIso.ofComponents
@@ -918,10 +947,12 @@ def typeWeightedColimit.yonedaEquiv
 the weight `W`: given `α : W ⟶ W'`, produces
 `powerProfunctor W' F ⟶ powerProfunctor W F` by
 pre-composing with `α` at each component. -/
-def powerProfunctorMapW (F : J ⥤ Type v)
-    {W W' : J ⥤ Type v} (α : W ⟶ W') :
-    powerProfunctor (C := Type v) W' F ⟶
-      powerProfunctor (C := Type v) W F where
+def powerProfunctorMapW (F : J ⥤ Type w)
+    {W W' : J ⥤ Type w} (α : W ⟶ W') :
+    powerProfunctor
+      (CPow := typesHasPowers.{w}) W' F ⟶
+      powerProfunctor
+        (CPow := typesHasPowers.{w}) W F where
   app j :=
     { app := fun j' =>
         HasPowers.mapIdx (α.app j.unop)
@@ -943,8 +974,8 @@ def powerProfunctorMapW (F : J ⥤ Type v)
 for fixed `F`, sends `W ↦ typeWeightedLimit W F`.
 Contravariant because the power profunctor is contravariant
 in its indexing set. -/
-def typeWeightedLimitFunctorInW (F : J ⥤ Type v) :
-    (J ⥤ Type v)ᵒᵖ ⥤ Type v where
+def typeWeightedLimitFunctorInW (F : J ⥤ Type w) :
+    (J ⥤ Type w)ᵒᵖ ⥤ Type (max u w) where
   obj W := typeWeightedLimit W.unop F
   map f :=
     typeEnd.map J (powerProfunctorMapW F f.unop)
@@ -971,10 +1002,10 @@ def typeWeightedLimitFunctorInW (F : J ⥤ Type v) :
 the weight `W`: given `α : W ⟶ W'`, produces
 `copowerProfunctor W F ⟶ copowerProfunctor W' F` by
 applying `α` to the first component of each copower. -/
-def copowerProfunctorMapW (F : J ⥤ Type v)
-    {W W' : Jᵒᵖ ⥤ Type v} (α : W ⟶ W') :
-    copowerProfunctor (C := Type v) W F ⟶
-      copowerProfunctor (C := Type v) W' F where
+def copowerProfunctorMapW (F : J ⥤ Type w)
+    {W W' : Jᵒᵖ ⥤ Type w} (α : W ⟶ W') :
+    copowerProfunctor (C := Type w) W F ⟶
+      copowerProfunctor (C := Type w) W' F where
   app j :=
     { app := fun j' =>
         HasCopowers.mapIdx (α.app j)
@@ -994,8 +1025,8 @@ def copowerProfunctorMapW (F : J ⥤ Type v)
 
 /-- The covariant weighted colimit functor in the weight:
 for fixed `F`, sends `W ↦ typeWeightedColimit W F`. -/
-def typeWeightedColimitFunctorInW (F : J ⥤ Type v) :
-    (Jᵒᵖ ⥤ Type v) ⥤ Type v where
+def typeWeightedColimitFunctorInW (F : J ⥤ Type w) :
+    (Jᵒᵖ ⥤ Type w) ⥤ Type (max u w) where
   obj W := typeWeightedColimit W F
   map α :=
     typeCoend.map J (copowerProfunctorMapW F α)
@@ -1005,11 +1036,12 @@ def typeWeightedColimitFunctorInW (F : J ⥤ Type v) :
     ext ⟨_, _⟩; rfl
 
 /-- The weighted limit bifunctor
-`(J ⥤ Type v)ᵒᵖ ⥤ (J ⥤ Type v) ⥤ Type v`, sending
-`(W, F) ↦ typeWeightedLimit W F`. Contravariant in `W`,
-covariant in `F`. -/
+`(J ⥤ Type w)ᵒᵖ ⥤ (J ⥤ Type w) ⥤ Type (max u w)`,
+sending `(W, F) ↦ typeWeightedLimit W F`.
+Contravariant in `W`, covariant in `F`. -/
 def typeWeightedLimitBifunctor :
-    (J ⥤ Type v)ᵒᵖ ⥤ (J ⥤ Type v) ⥤ Type v where
+    (J ⥤ Type w)ᵒᵖ ⥤
+      (J ⥤ Type w) ⥤ Type (max u w) where
   obj W := typeWeightedLimitFunctor W.unop
   map f :=
     { app := fun F =>
@@ -1054,11 +1086,12 @@ def typeWeightedLimitBifunctor :
       HasPowers.proj, types_comp_apply]
 
 /-- The weighted colimit bifunctor
-`(Jᵒᵖ ⥤ Type v) ⥤ (J ⥤ Type v) ⥤ Type v`, sending
-`(W, F) ↦ typeWeightedColimit W F`. Covariant in both
-arguments. -/
+`(Jᵒᵖ ⥤ Type w) ⥤ (J ⥤ Type w) ⥤ Type (max u w)`,
+sending `(W, F) ↦ typeWeightedColimit W F`.
+Covariant in both arguments. -/
 def typeWeightedColimitBifunctor :
-    (Jᵒᵖ ⥤ Type v) ⥤ (J ⥤ Type v) ⥤ Type v where
+    (Jᵒᵖ ⥤ Type w) ⥤
+      (J ⥤ Type w) ⥤ Type (max u w) where
   obj W := typeWeightedColimitFunctor W
   map α :=
     { app := fun F =>
