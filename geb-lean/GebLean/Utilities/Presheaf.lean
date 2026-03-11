@@ -8,6 +8,8 @@ import Mathlib.CategoryTheory.Functor.KanExtension.Basic
 import Mathlib.CategoryTheory.Topos.Classifier
 import Mathlib.CategoryTheory.Subfunctor.Image
 import Mathlib.CategoryTheory.Subfunctor.Sieves
+import Mathlib.CategoryTheory.Monoidal.Closed.FunctorToTypes
+import Mathlib.CategoryTheory.Monoidal.Cartesian.FunctorCategory
 
 /-!
 # Presheaf and Copresheaf Construction Functors
@@ -1624,5 +1626,48 @@ theorem functorHomSection_val_app
   exact hsec
 
 end FunctorHomSections
+
+section FunctorCategoryMonoidalClosed
+
+/-! ## Monoidal closed structure on functor categories
+
+The functor category `J ⥤ (Cᵒᵖ ⥤ Type w)` is monoidal closed.
+This follows from the currying equivalence
+`(J ⥤ Cᵒᵖ ⥤ Type w) ≌ (J × Cᵒᵖ ⥤ Type w)`
+and the fact that `(J × Cᵒᵖ) ⥤ Type w` is
+monoidal closed (`FunctorToTypes.monoidalClosed`).
+-/
+
+open CategoryTheory MonoidalCategory Functor
+
+universe u₁ v₁ u₂ v₂
+
+variable {J : Type u₁} [Category.{v₁} J]
+variable {C : Type u₂} [Category.{v₂} C]
+
+-- Abbreviation for the uncurried functor
+-- category, where MonoidalClosed is available.
+abbrev uncurriedFunctorCat
+    (J : Type u₁) [Category.{v₁} J]
+    (C : Type u₂) [Category.{v₂} C] :=
+  J × Cᵒᵖ ⥤ Type max v₁ v₂ u₁ u₂
+
+-- The right adjoint to tensoring by F in the
+-- curried functor category, defined by
+-- transporting through the currying equivalence.
+def functorCatIhom
+    (F : J ⥤ (Cᵒᵖ ⥤ Type max v₁ v₂ u₁ u₂)) :
+    (J ⥤ (Cᵒᵖ ⥤ Type max v₁ v₂ u₁ u₂)) ⥤
+    (J ⥤ (Cᵒᵖ ⥤ Type max v₁ v₂ u₁ u₂)) :=
+  (currying (C := J) (D := Cᵒᵖ)
+    (E := Type max v₁ v₂ u₁ u₂)).functor ⋙
+    FunctorToTypes.rightAdj
+      ((currying (C := J) (D := Cᵒᵖ)
+        (E := Type max v₁ v₂ u₁ u₂)).functor.obj
+          F) ⋙
+    (currying (C := J) (D := Cᵒᵖ)
+      (E := Type max v₁ v₂ u₁ u₂)).inverse
+
+end FunctorCategoryMonoidalClosed
 
 end GebLean
