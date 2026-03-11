@@ -164,12 +164,12 @@ end TypeCoendCowedge
 
 section Functors
 
-variable (J : Type v) [Category.{v} J]
+variable (J : Type u) [Category.{v} J]
 
 /-- The action of a natural transformation `α : F ⟶ G` on
 `typeEnd`: maps a compatible family for `F` to one for `G`
 by applying `α` componentwise. -/
-def typeEnd.map {F G : Jᵒᵖ ⥤ J ⥤ Type v} (α : F ⟶ G) :
+def typeEnd.map {F G : Jᵒᵖ ⥤ J ⥤ Type w} (α : F ⟶ G) :
     typeEnd F → typeEnd G :=
   fun ⟨x, hx⟩ => ⟨fun j => (α.app (Opposite.op j)).app j (x j),
     fun {i j} f => by
@@ -184,8 +184,9 @@ def typeEnd.map {F G : Jᵒᵖ ⥤ J ⥤ Type v} (α : F ⟶ G) :
       exact h1.symm.trans h2⟩
 
 /-- The computable end functor
-`(Jᵒᵖ ⥤ J ⥤ Type v) ⥤ Type v`. -/
-def typeEndFunctor : (Jᵒᵖ ⥤ J ⥤ Type v) ⥤ Type v where
+`(Jᵒᵖ ⥤ J ⥤ Type w) ⥤ Type (max u w)`. -/
+def typeEndFunctor :
+    (Jᵒᵖ ⥤ J ⥤ Type w) ⥤ Type (max u w) where
   obj := typeEnd
   map := typeEnd.map J
   map_id := fun _ => by
@@ -198,7 +199,7 @@ def typeEndFunctor : (Jᵒᵖ ⥤ J ⥤ Type v) ⥤ Type v where
 /-- The action of a natural transformation `α : F ⟶ G` on
 `typeCoend`: maps the quotient for `F` to the quotient for
 `G` by applying `α` componentwise on representatives. -/
-def typeCoend.map {F G : Jᵒᵖ ⥤ J ⥤ Type v}
+def typeCoend.map {F G : Jᵒᵖ ⥤ J ⥤ Type w}
     (α : F ⟶ G) : typeCoend F → typeCoend G :=
   Quot.map
     (fun ⟨j, x⟩ =>
@@ -219,9 +220,9 @@ def typeCoend.map {F G : Jᵒᵖ ⥤ J ⥤ Type v}
           ((α.app (Opposite.op j)).app i x))
 
 /-- The computable coend functor
-`(Jᵒᵖ ⥤ J ⥤ Type v) ⥤ Type v`. -/
+`(Jᵒᵖ ⥤ J ⥤ Type w) ⥤ Type (max u w)`. -/
 def typeCoendFunctor :
-    (Jᵒᵖ ⥤ J ⥤ Type v) ⥤ Type v where
+    (Jᵒᵖ ⥤ J ⥤ Type w) ⥤ Type (max u w) where
   obj := typeCoend
   map := typeCoend.map J
   map_id := fun _ => by
@@ -625,15 +626,15 @@ Every profunctor `F : Jᵒᵖ ⥤ J ⥤ Type v` has a terminal wedge
 
 section TypeInstances
 
-variable {J : Type v} [Category.{v} J]
+variable {J : Type u} [Category.{v} J]
 
 instance typeHasTerminalWedge
-    (F : Jᵒᵖ ⥤ J ⥤ Type v) :
+    (F : Jᵒᵖ ⥤ J ⥤ Type (max u w)) :
     HasTerminal (Wedge F) :=
   (typeEndWedge_isTerminal F).hasTerminal
 
 instance typeHasInitialCowedge
-    (F : Jᵒᵖ ⥤ J ⥤ Type v) :
+    (F : Jᵒᵖ ⥤ J ⥤ Type (max u w)) :
     HasInitial (Cowedge F) :=
   (typeCoendCowedge_isInitial F).hasInitial
 
