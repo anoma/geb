@@ -262,10 +262,16 @@ framework.
   (the separation reflector).
   Ref: `docs/parametric-copresheaf-topos.md` Section 11.4.
 
-- [ ] **T25. Extraction functor.** Construct
-  `PshParametricPresheaf C -> PshRelEdge C` sending a
-  copresheaf to a single relation. Investigate its
-  properties.
+- [ ] **T25. Evaluation functors.** For each
+  relation `(P, Q, R)`, construct the evaluation functor
+  `eval_{P,Q,R} : PshParametricFunctor C E -> Spans(E)`
+  sending `F` to `(F(.typeNode P), F(.typeNode Q),
+  F(.relNode P Q R))` with projections `F(fstProj)`,
+  `F(sndProj)`. Investigate the profunctor assembling
+  these: `PshRelEdge(C)^op x PshParametricFunctor(C, E)
+  -> E`. Note: there is no single functor
+  `PshParametricPresheaf C -> PshRelEdge C` without
+  fixing a relation.
   Ref: `docs/parametric-copresheaf-topos.md` Section 11.8.
 
 ### Lattice-enriched sites

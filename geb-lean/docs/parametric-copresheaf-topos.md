@@ -1605,11 +1605,17 @@ ordered roughly by dependency:
   fully faithful functor, and its left adjoint
   (the separation reflector).
 
-- **(f)** Construct the extraction functor
-  `PshParametricPresheaf C -> PshRelEdge C` that
-  sends a copresheaf to a single relation.
-  Investigate its properties (faithful? full?
-  preserves limits?).
+- **(f)** Construct the family of evaluation
+  functors: for each `(P, Q, R)`,
+  `eval_{P,Q,R} : PshParametricFunctor C E -> Spans(E)`
+  sending `F` to
+  `(F(.typeNode P), F(.typeNode Q), F(.relNode P Q R))`
+  with projections `F(fstProj)`, `F(sndProj)`.
+  Investigate the profunctor assembling these:
+  `PshRelEdge(C)^op x PshParametricFunctor(C, E) -> E`.
+  Note: there is no single functor
+  `PshParametricPresheaf C -> PshRelEdge C` without
+  fixing a relation.
 
 - **(g)** Investigate whether the lattice-enriched
   span site `S_C'` (adding Heyting algebra
