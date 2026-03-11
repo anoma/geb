@@ -1153,6 +1153,30 @@ theorem pshRelIdentFunctor_tgt :
       (Cᵒᵖ ⥤ Type w) ⥤ _) :=
   rfl
 
+/-- A relatedness square between identity
+relations forces the two maps to be equal. -/
+theorem pshRelRelated_id_eq
+    {P Q : Cᵒᵖ ⥤ Type w}
+    {α β : P ⟶ Q}
+    (h : pshRelRelated α β
+      (pshRelId P) (pshRelId Q)) :
+    α = β := by
+  ext c p
+  exact h c p p rfl
+
+/-- The identity section functor is fully
+faithful. -/
+def pshRelIdentFunctor_fullyFaithful :
+    (pshRelIdentFunctor :
+      (Cᵒᵖ ⥤ Type w) ⥤
+        PshRelEdge.{u, v, w} C
+    ).FullyFaithful where
+  preimage h := h.srcMap
+  map_preimage h :=
+    VertEdgeHom.ext rfl
+      (pshRelRelated_id_eq h.sq)
+  preimage_map _ := rfl
+
 /-- The Cartesian lift of a morphism
 `(α, β) : (P', Q') ⟶ (R.src, R.tgt)` in the
 product category along the boundary functor.

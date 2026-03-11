@@ -1141,6 +1141,31 @@ classifier. Non-strong monomorphisms exist (e.g.,
 a proper inclusion `R ⊊ P x Q` into the total
 relation).
 
+`PshRelEdge C` is not balanced (a morphism that is
+both mono and epi need not be iso). Consider the
+morphism
+`(id, id) : (P, P, emptyset) => (P, P, Delta_P)`
+where `P` is nonempty. This is:
+
+- **Mono**: the underlying presheaf maps `(id, id)`
+  are jointly monic.
+- **Epi**: the underlying presheaf maps are epi
+  (both are identity), and since any extension of
+  `(id, id)` to a third object determines its
+  action on the relation by relatedness preservation,
+  `(id, id)` is epi.
+- **Not iso**: the inverse would require
+  `(id, id) : (P, P, Delta_P) => (P, P, emptyset)`
+  to preserve relatedness, mapping diagonal pairs to
+  the empty relation; but `(a, a) in Delta_P` with
+  `P` nonempty gives `(a, a) notin emptyset`.
+
+Non-balancedness follows from the quasitopos
+structure: in a quasitopos, non-strong monomorphisms
+are not isomorphisms even when they are epi, because
+they do not factor through the strong subobject
+classifier.
+
 ### 11.4 Reflective and coreflective inclusions
 
 The inclusion `PshRelEdge C ↪ PSh(C x I^op)` has a
@@ -1218,8 +1243,10 @@ now characterized as the statement that
 
 Properties of `pshRelIdentFunctor`:
 
-- Fully faithful (morphisms between identity relations
-  are pairs `(alpha, alpha)`, determined by `alpha`)
+- Fully faithful (`pshRelIdentFunctor_fullyFaithful`,
+  `PshRelDouble.lean`; morphisms between identity
+  relations are pairs `(alpha, alpha)`, determined
+  by `alpha`, via `pshRelRelated_id_eq`)
 - Preserves all limits (identity on products is
   product of identities: `Delta_{P x Q} = Delta_P x Delta_Q`)
 - Preserves exponentials (identity extension property)
@@ -1287,6 +1314,23 @@ span (via the functoriality in `C`), but it does
 not independently assign relation data to each
 `PshRel P Q`.
 
+By currying, `PSh(C x I^op)` is equivalent to
+`[I^op, PSh(C)]`: functors from the walking
+span category to presheaf categories. An object
+is a span-shaped diagram `P <-- R --> Q` in
+`PSh(C)`. The currying equivalence is standard
+at the `Cat` level:
+`PSh(C x I^op) = [(C x I^op)^op, Type]`
+`~= [(C^op x I), Type]`
+`~= [I, [C^op, Type]]`
+`~= [I^op, PSh(C)]^op^op`
+using the universal property of the product of
+categories and the fact that `I` is self-dual
+(the walking span is isomorphic to its opposite).
+In Lean, the equivalence would use
+`Functor.curry` and `Functor.uncurry` from
+mathlib.
+
 The relationship between these categories and
 their relative merits as ambient universes for
 parametricity requires further investigation.
@@ -1294,7 +1338,102 @@ The separation reflector
 `PSh(C x I^op) => PshRelEdge C` may provide a
 bridge connecting the two perspectives.
 
-### 11.10 The subobject classifier and lattice-enriched sites
+### 11.10 The topos landscape around PshRelEdge
+
+The following chain of functors connects the
+categories in our construction:
+
+```text
+PSh(C) --ident--> PshRelEdge C --incl--> PSh(C x I^op)
+```
+
+where:
+
+- `ident = pshRelIdentFunctor` sends `P` to
+  `(P, P, Delta_P)`. It is fully faithful
+  (`pshRelIdentFunctor_fullyFaithful`,
+  `PshRelDouble.lean`) and preserves all finite
+  limits, finite colimits, and exponentials
+  (Sections 11.6, 11.7;
+  `PshRelEdgeIdentPreservation.lean`).
+- `incl = pshRelEdgeInclusionFunctor` sends
+  `(P, Q, R)` to the span
+  `P <-- R.toFunctor --> Q` in `PSh(C)`.
+  It is fully faithful
+  (`pshRelEdgeInclusionFullyFaithful`,
+  `PshRelEdgeInclusion.lean`). It has a left
+  adjoint (the separation reflector, not yet
+  formalized).
+
+Composing these gives a fully faithful embedding
+`PSh(C) -> PSh(C x I^op)`.
+
+Structural properties along this chain:
+
+| Category | Topos? | Balanced? | Size |
+| -------- | ------ | --------- | ---- |
+| PSh(C) | Y | Y | small site |
+| PshRelEdge C | N (quasitopos) | N | small site |
+| PSh(C x I^op) | Y | Y | small site |
+
+`PshRelEdge C` sits between two toposes. The
+outer topos `PSh(C x I^op)` is the presheaf topos
+on `C x I^op`, equivalent to `[I^op, PSh(C)]`
+(Section 11.9).
+
+#### Ex/reg completion conjecture
+
+The **exact completion** (or ex/reg completion)
+`ex/reg(E)` of a regular category `E` freely
+adjoins quotients of equivalence relations. For
+a quasitopos `E`, the ex/reg completion is a
+topos (Carboni, "Some free constructions in
+realizability and proof theory", 1995; Menni,
+"Exact completions and toposes", 2000).
+
+`PshRelEdge C` is a quasitopos (Section 11.3),
+hence regular. Its ex/reg completion is a topos.
+
+**Conjecture**: `ex/reg(PshRelEdge C) ~= PSh(C x I^op)`.
+
+Evidence:
+
+- `PSh(C x I^op)` is a topos containing
+  `PshRelEdge C` as a reflective subcategory with
+  left-exact reflector (the separation reflector
+  sends a span to its image in the product, which
+  preserves finite limits).
+- The objects of `PSh(C x I^op)` that are NOT in
+  `PshRelEdge C` are spans `P <-- R --> Q` where
+  `R -> P x Q` is not injective. These are
+  quotient-like: the fibers of `R -> P x Q` give
+  an equivalence relation on `R` whose quotient is
+  a subobject of `P x Q` (i.e., a separated
+  presheaf).
+- The ex/reg completion of `Sep_J` for a subcanonical
+  topology `J` on a presheaf category is known to be
+  `Sh_J` in some cases; here the topology is not
+  subcanonical, so the situation may differ. The
+  ex/reg completion of `Sep_J(D)` for a general
+  topology `J` on a presheaf category `PSh(D)` is
+  `PSh(D)` itself when `Sep_J(D)` generates `PSh(D)`
+  under exact completion.
+
+If the conjecture holds, then
+`PSh(C x I^op)` is the canonical topos completion
+of the parametric quasitopos, and the chain becomes:
+
+```text
+PSh(C) --ident--> PshRelEdge C --incl-->
+  ex/reg(PshRelEdge C) ~= PSh(C x I^op)
+```
+
+This would give a precise sense in which
+`PSh(C x I^op)` is the "nearest topos" to
+`PshRelEdge C`: it is obtained by freely
+adjoining quotients.
+
+### 11.11 The subobject classifier and lattice-enriched sites
 
 In any topos `E`, the subobject classifier `Omega`
 is an internal Heyting algebra: a bicartesian closed
@@ -1435,7 +1574,7 @@ determines the lattice structure on the fibers,
 the base change functors (pullback of subobjects),
 and the logical operations available on relations.
 
-### 11.11 Open questions
+### 11.12 Open questions
 
 #### Q1: PSh(C x I^op) vs PshParametricPresheaf C
 
@@ -1575,7 +1714,25 @@ preserve the expected properties (graph
 preservation, identity extension) — requires
 further investigation.
 
-### 11.12 Formalization candidates
+#### Q6: Ex/reg completion of PshRelEdge
+
+Is `ex/reg(PshRelEdge C) ~= PSh(C x I^op)`?
+(See Section 11.10 for the conjecture and
+evidence.) If so, the presheaf topos on
+`C x I^op` is the canonical topos completion of
+the parametric quasitopos. Verification would
+require:
+
+- Showing that the inclusion
+  `PshRelEdge C -> PSh(C x I^op)` has a left exact
+  left adjoint (i.e., that the separation reflector
+  preserves finite limits)
+- Verifying the universal property of the ex/reg
+  completion: that every left exact functor from
+  `PshRelEdge C` to a topos factors uniquely through
+  `PSh(C x I^op)`
+
+### 11.13 Formalization candidates
 
 The following are candidates for Lean formalization,
 ordered roughly by dependency:
@@ -1595,15 +1752,41 @@ ordered roughly by dependency:
 - **(c)** Show `pshRelIdentFunctor` preserves
   exponentials (the Identity Extension Property
   as a functor property). Uses (b) and the
-  identity extension result.
+  identity extension result. **Done:**
+  `pshRelIdentFunctor_preserves_exp`
+  (`PshRelEdgeIdentPreservation.lean`).
 
 - **(d)** Show `pshRelIdentFunctor` preserves
-  products and limits.
+  products, limits, and colimits. **Done:**
+  `pshRelIdentFunctor_preserves_prod`,
+  `_preserves_terminal`, `_preserves_initial`,
+  `_preserves_coprod`, `_preserves_equalizer`,
+  `_preserves_coequalizer`
+  (`PshRelEdgeIdentPreservation.lean`).
+
+- **(d')** Show `pshRelIdentFunctor` is fully
+  faithful. The functor sends `P` to
+  `(P, P, Delta_P)`. A morphism
+  `(alpha, beta) : (P, P, Delta_P) => (Q, Q, Delta_Q)`
+  preserving diagonal relatedness forces
+  `alpha = beta`: for all `a`, `(a, a) in Delta_P`
+  implies `(alpha(a), beta(a)) in Delta_Q`, i.e.,
+  `alpha(a) = beta(a)`. So `Hom(ident(P), ident(Q))`
+  is isomorphic to `Hom(P, Q)`. **Done:**
+  `pshRelIdentFunctor_fullyFaithful`
+  (`PshRelDouble.lean`).
 
 - **(e)** Construct the inclusion
   `PshRelEdge C -> PSh(C x I^op)` as an explicit
   fully faithful functor, and its left adjoint
-  (the separation reflector).
+  (the separation reflector). **Partially done:**
+  `pshRelEdgeInclusionFunctor` and
+  `pshRelEdgeInclusionFullyFaithful`
+  (`PshRelEdgeInclusion.lean`) give the
+  fully faithful functor
+  `PshRelEdge C -> [WalkingSpan, PSh(C)]`.
+  The left adjoint (separation reflector) is
+  not yet formalized.
 
 - **(f)** Construct the family of evaluation
   functors: for each `(P, Q, R)`,

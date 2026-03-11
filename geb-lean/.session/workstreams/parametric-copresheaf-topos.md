@@ -256,11 +256,14 @@ framework.
   `pshBarrLiftEdgeFunctor G : PshRelEdge C ⥤ PshRelEdge C`.
   (`PshRelDouble.lean`)
 
-- [ ] **T24. Inclusion into PSh(C x I^op).** Construct
+- [x] **T24. Inclusion into PSh(C x I^op).** Construct
   the fully faithful inclusion
-  `PshRelEdge C -> PSh(C x I^op)` and its left adjoint
-  (the separation reflector).
-  Ref: `docs/parametric-copresheaf-topos.md` Section 11.4.
+  `PshRelEdge C -> [WalkingSpan, PSh(C)]`.
+  `pshRelEdgeInclusionFunctor` with
+  `pshRelEdgeInclusionFullyFaithful`.
+  (`PshRelEdgeInclusion.lean`)
+  Left adjoint (separation reflector) not yet done.
+  Ref: `docs/parametric-copresheaf-topos.md` Section 11.10.
 
 - [ ] **T25. Evaluation functors.** For each
   relation `(P, Q, R)`, construct the evaluation functor
