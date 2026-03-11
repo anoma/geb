@@ -616,6 +616,76 @@ instance pshRelEdgeHasFiniteProducts
       (PshRelEdge.{u, v, w} C) :=
   hasFiniteProducts_of_has_binary_and_terminal
 
+def pshRelEdgeIsInitial (C : Type u)
+    [Category.{v} C] :
+    IsInitial
+      (pshRelEdgeInitial.{u, v, w} C) :=
+  IsInitial.ofUniqueHom
+    (fun E => pshRelEdgeInitialMap E)
+    (fun _ f => pshRelEdgeInitialMap_unique f)
+
+instance pshRelEdgeHasInitial (C : Type u)
+    [Category.{v} C] :
+    HasInitial (PshRelEdge.{u, v, w} C) :=
+  (pshRelEdgeIsInitial C).hasInitial
+
+def pshRelEdgeCoprodIsColimit
+    (E₁ E₂ : PshRelEdge.{u, v, w} C) :
+    IsColimit (BinaryCofan.mk
+      (pshRelEdgeCoprodInl E₁ E₂)
+      (pshRelEdgeCoprodInr E₁ E₂)) :=
+  BinaryCofan.isColimitMk
+    (fun s => pshRelEdgeCoprodDesc s.inl s.inr)
+    (fun s => by
+      apply VertEdgeHom.ext <;>
+      · ext c p; rfl)
+    (fun s => by
+      apply VertEdgeHom.ext <;>
+      · ext c p; rfl)
+    (fun s m h₁ h₂ => by
+      apply VertEdgeHom.ext
+      · ext c p
+        dsimp [pshRelEdgeCoprodDesc,
+          pshCoprodDesc]
+        match p with
+        | Sum.inl p₁ =>
+          exact congrFun (congr_fun
+            (congrArg NatTrans.app
+              (congrArg VertEdgeHom.srcMap h₁))
+            c) p₁
+        | Sum.inr p₂ =>
+          exact congrFun (congr_fun
+            (congrArg NatTrans.app
+              (congrArg VertEdgeHom.srcMap h₂))
+            c) p₂
+      · ext c p
+        dsimp [pshRelEdgeCoprodDesc,
+          pshCoprodDesc]
+        match p with
+        | Sum.inl p₁ =>
+          exact congrFun (congr_fun
+            (congrArg NatTrans.app
+              (congrArg VertEdgeHom.tgtMap h₁))
+            c) p₁
+        | Sum.inr p₂ =>
+          exact congrFun (congr_fun
+            (congrArg NatTrans.app
+              (congrArg VertEdgeHom.tgtMap h₂))
+            c) p₂)
+
+instance pshRelEdgeHasColimitPair
+    {E₁ E₂ : PshRelEdge.{u, v, w} C} :
+    HasColimit (pair E₁ E₂) :=
+  HasColimit.mk
+    ⟨_, pshRelEdgeCoprodIsColimit E₁ E₂⟩
+
+instance pshRelEdgeHasBinaryCoproducts
+    (C : Type u) [Category.{v} C] :
+    HasBinaryCoproducts
+      (PshRelEdge.{u, v, w} C) :=
+  @hasBinaryCoproducts_of_hasColimit_pair
+    _ _ (fun {_ _} => pshRelEdgeHasColimitPair)
+
 end CategoricalLimits
 
 end GebLean
