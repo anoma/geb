@@ -1700,6 +1700,25 @@ def typeCoend.endRepresentable
   coyonedaEquivOfNatIso
     (coendHomNatIsoEnd P)
 
+/-- Functorial version of `typeCoend.endRepresentable`:
+the representable functor
+`G ↦ (endLimitFunctor P ⟶ G)` on the copresheaf
+category `Type v ⥤ Type v` is naturally isomorphic to
+the evaluation-and-lift functor
+`G ↦ ULift (G.obj (typeCoend P))`.
+
+The `ULift` wrapper is necessary because `Type v` with
+`Category.{v}` is not a `SmallCategory`. -/
+def typeCoend.endRepresentableNatIso
+    (P : Jᵒᵖ ⥤ J ⥤ Type v) :
+    coyoneda.obj
+      (Opposite.op (endLimitFunctor P)) ≅
+      ((evaluation (Type v) (Type v)).obj
+        (typeCoend P) ⋙
+        uliftFunctor.{v + 1}) :=
+  coyonedaNatIsoOfNatIsoTypeId
+    (coendHomNatIsoEnd P)
+
 /-- Impredicative characterization of coends via ends:
 elements of `typeCoend P` correspond to natural
 transformations from `endLimitFunctor P` to the
@@ -1712,6 +1731,29 @@ def typeCoend.endImpredicative
     (endLimitFunctor P ⟶ 𝟭 (Type v)) ≃
       typeCoend P :=
   coyonedaEquivOfNatIsoTypeId
+    (coendHomNatIsoEnd P)
+
+/-- Functorial version of `typeCoend.endImpredicative`:
+the representable functor
+`G ↦ (endLimitFunctor P ⟶ G)` on the copresheaf
+category `Type v ⥤ Type v` is naturally isomorphic to
+the evaluation-and-lift functor
+`G ↦ ULift (G.obj (typeCoend P))`.
+
+This is the same natural isomorphism as
+`typeCoend.endRepresentableNatIso`; the impredicative
+characterization at the object level
+(`typeCoend.endImpredicative`) is the `𝟭 (Type v)`
+component of this natural isomorphism (modulo `ULift`).
+-/
+def typeCoend.endImpredicativeNatIso
+    (P : Jᵒᵖ ⥤ J ⥤ Type v) :
+    coyoneda.obj
+      (Opposite.op (endLimitFunctor P)) ≅
+      ((evaluation (Type v) (Type v)).obj
+        (typeCoend P) ⋙
+        uliftFunctor.{v + 1}) :=
+  coyonedaNatIsoOfNatIsoTypeId
     (coendHomNatIsoEnd P)
 
 end NinjaYoneda
@@ -2312,6 +2354,29 @@ def pointwiseTypeCoend.endRepresentable
   coyonedaEquivOfNatIso
     (pointwiseTypeCoend.coendHomNatIsoEnd P e)
 
+/-- Functorial version of
+`pointwiseTypeCoend.endRepresentable`:
+at each `e : E`, the representable functor
+`G ↦ (endLimitFunctor P_e ⟶ G)` on the copresheaf
+category `Type v ⥤ Type v` is naturally isomorphic to
+the evaluation-and-lift functor
+`G ↦ ULift (G.obj (typeCoend P_e))`.
+
+The `ULift` wrapper is necessary because `Type v` with
+`Category.{v}` is not a `SmallCategory`. -/
+def pointwiseTypeCoend.endRepresentableNatIso
+    (P : Kᵒᵖ ⥤ K ⥤ (E ⥤ Type v)) (e : E) :
+    let P_e : Kᵒᵖ ⥤ K ⥤ Type v :=
+      (((profunctorDoubleFlipEquiv (K := K)
+        (E := E)).functor.obj P).obj e)
+    coyoneda.obj
+      (Opposite.op (endLimitFunctor P_e)) ≅
+      ((evaluation (Type v) (Type v)).obj
+        (typeCoend P_e) ⋙
+        uliftFunctor.{v + 1}) :=
+  coyonedaNatIsoOfNatIsoTypeId
+    (pointwiseTypeCoend.coendHomNatIsoEnd P e)
+
 /-- Pointwise impredicative characterization of coends
 via ends: at each `e : E`, natural transformations from
 `endLimitFunctor P_e` to the identity functor on
@@ -2325,6 +2390,33 @@ def pointwiseTypeCoend.endImpredicative
     (endLimitFunctor P_e ⟶ 𝟭 (Type v)) ≃
       typeCoend P_e :=
   coyonedaEquivOfNatIsoTypeId
+    (pointwiseTypeCoend.coendHomNatIsoEnd P e)
+
+/-- Functorial version of
+`pointwiseTypeCoend.endImpredicative`:
+at each `e : E`, the representable functor
+`G ↦ (endLimitFunctor P_e ⟶ G)` on the copresheaf
+category `Type v ⥤ Type v` is naturally isomorphic to
+the evaluation-and-lift functor
+`G ↦ ULift (G.obj (typeCoend P_e))`.
+
+This is the same natural isomorphism as
+`pointwiseTypeCoend.endRepresentableNatIso`; the
+impredicative characterization at the object level
+(`pointwiseTypeCoend.endImpredicative`) is the
+`𝟭 (Type v)` component of this natural isomorphism
+(modulo `ULift`). -/
+def pointwiseTypeCoend.endImpredicativeNatIso
+    (P : Kᵒᵖ ⥤ K ⥤ (E ⥤ Type v)) (e : E) :
+    let P_e : Kᵒᵖ ⥤ K ⥤ Type v :=
+      (((profunctorDoubleFlipEquiv (K := K)
+        (E := E)).functor.obj P).obj e)
+    coyoneda.obj
+      (Opposite.op (endLimitFunctor P_e)) ≅
+      ((evaluation (Type v) (Type v)).obj
+        (typeCoend P_e) ⋙
+        uliftFunctor.{v + 1}) :=
+  coyonedaNatIsoOfNatIsoTypeId
     (pointwiseTypeCoend.coendHomNatIsoEnd P e)
 
 /-!

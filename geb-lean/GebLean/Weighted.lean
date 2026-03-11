@@ -2302,6 +2302,27 @@ def IsWeightedColimit.weightedColimitRepresentable
   coyonedaEquivOfNatIso
     (homNatIsoWeightedLimit hc).symm
 
+/-- Functorial version of
+`weightedColimitRepresentable`: given a weighted
+colimit `c` of `D` by `W'`, the representable
+copresheaf `G ↦ (weightedLimitFunctor W' D ⟶ G)` is
+naturally isomorphic to the evaluation-and-lift functor
+`G ↦ ULift (G.obj c.pt)`.
+
+This lifts the object-level equivalence to a natural
+isomorphism of functors `(C ⥤ Type v) ⥤ Type (max u v)`,
+using `coyonedaNatIsoOfNatIsoLarge`. -/
+def IsWeightedColimit.weightedColimitRepresentableNatIso
+    {W' : Jᵒᵖ ⥤ Type v} {D : J ⥤ C}
+    {c : WeightedCocone W' D}
+    (hc : IsWeightedColimit c) :
+    coyoneda.obj
+      (Opposite.op (weightedLimitFunctor W' D)) ≅
+      ((evaluation C (Type v)).obj c.pt ⋙
+        uliftFunctor.{u}) :=
+  coyonedaNatIsoOfNatIsoLarge
+    (homNatIsoWeightedLimit hc).symm
+
 /-- Given a weighted colimit `c` of a diagram
 `D : J ⥤ Type v` by `W' : Jᵒᵖ ⥤ Type v`, elements of the
 colimit apex `c.pt` correspond to natural transformations
@@ -2317,6 +2338,27 @@ def IsWeightedColimit.weightedColimitImpredicative
     (hc : IsWeightedColimit c) :
     (weightedLimitFunctor W' D ⟶ 𝟭 (Type v)) ≃ c.pt :=
   coyonedaEquivOfNatIsoTypeId
+    (homNatIsoWeightedLimit hc).symm
+
+/-- Functorial version of
+`weightedColimitImpredicative`: the representable
+copresheaf `G ↦ (weightedLimitFunctor W' D ⟶ G)` on
+`Type v ⥤ Type v` is naturally isomorphic to the
+evaluation-and-lift functor
+`G ↦ ULift (G.obj c.pt)`.
+
+This is the same natural isomorphism as
+`weightedColimitRepresentableNatIso` specialized to
+`C = Type v`. -/
+def IsWeightedColimit.weightedColimitImpredicativeNatIso
+    {W' : Jᵒᵖ ⥤ Type v} {D : J ⥤ Type v}
+    {c : WeightedCocone W' D}
+    (hc : IsWeightedColimit c) :
+    coyoneda.obj
+      (Opposite.op (weightedLimitFunctor W' D)) ≅
+      ((evaluation (Type v) (Type v)).obj c.pt ⋙
+        uliftFunctor.{v + 1}) :=
+  coyonedaNatIsoOfNatIsoTypeId
     (homNatIsoWeightedLimit hc).symm
 
 end WeightedLimitColimitFunctors
