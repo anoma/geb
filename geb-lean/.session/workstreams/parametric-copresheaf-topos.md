@@ -266,6 +266,18 @@ framework.
   (`PshRelEdgeInclusion.lean`)
   Ref: `docs/parametric-copresheaf-topos.md` Section 11.10.
 
+- [ ] **T24b. Reflector preserves finite products.**
+  Show `pshRelEdgeSepFunctor` preserves binary
+  products and the terminal object, yielding
+  `PreservesFiniteProducts`. The relation component
+  follows from `Im(f x g) = Im(f) x Im(g)` for
+  pointwise images. Implies `ExponentialIdeal` via
+  `Mathlib.CategoryTheory.Monoidal.Closed.Ideal`,
+  hence the inclusion preserves exponentials.
+  (`PshRelEdgeInclusion.lean`)
+  Ref: `docs/parametric-copresheaf-topos.md`
+  Section 11.4.
+
 - [ ] **T25. Evaluation functors.** For each
   relation `(P, Q, R)`, construct the evaluation functor
   `eval_{P,Q,R} : PshParametricFunctor C E -> Spans(E)`

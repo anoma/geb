@@ -1175,6 +1175,27 @@ a span `(P, Q, F_01)` with the image
 `(P, Q, Im(F_01 => P x Q))`. This makes `PshRelEdge C`
 a **reflective subcategory** of `PSh(C x I^op)`.
 
+**Formalized:** `pshRelEdgeSepFunctor` (the reflector),
+`pshRelEdgeSepAdjunction` (the adjunction
+`pshRelEdgeSepFunctor ⊣ pshRelEdgeInclusionFunctor`),
+`pshRelEdgeInclusionReflective` (the `Reflective`
+instance), and `pshRelEdgeSepCounitIsIso` (the counit
+is a natural isomorphism, since the right adjoint is
+fully faithful). (`PshRelEdgeInclusion.lean`)
+
+**Product preservation and exponential ideals.**
+The separation reflector preserves finite products.
+The vertex components are preserved trivially (products
+in the functor category are pointwise). For the
+relation component, the result follows from the
+pointwise computation of images in presheaf categories:
+`Im(f x g) = Im(f) x Im(g)` when images are computed
+stagewise. This product preservation is equivalent to
+`PshRelEdge C` being an **exponential ideal** in
+`PSh(C x I^op)` (by
+`Mathlib.CategoryTheory.Monoidal.Closed.Ideal`),
+meaning the inclusion functor preserves exponentials.
+
 The inclusion `PSh(C ⊔ C) ↪ PshRelEdge C` sends
 `(P, Q)` to the total relation `(P, Q, P x Q)`. The
 sheafification left adjoint `PshRelEdge C => PSh(C ⊔ C)`
@@ -1381,7 +1402,7 @@ outer topos `PSh(C x I^op)` is the presheaf topos
 on `C x I^op`, equivalent to `[I^op, PSh(C)]`
 (Section 11.9).
 
-#### Ex/reg completion conjecture
+#### Ex/reg completion and the three-layer picture
 
 The **exact completion** (or ex/reg completion)
 `ex/reg(E)` of a regular category `E` freely
@@ -1394,44 +1415,76 @@ realizability and proof theory", 1995; Menni,
 `PshRelEdge C` is a quasitopos (Section 11.3),
 hence regular. Its ex/reg completion is a topos.
 
-**Conjecture**: `ex/reg(PshRelEdge C) ~= PSh(C x I^op)`.
-
-Evidence:
-
-- `PSh(C x I^op)` is a topos containing
-  `PshRelEdge C` as a reflective subcategory with
-  left-exact reflector (the separation reflector
-  sends a span to its image in the product, which
-  preserves finite limits).
-- The objects of `PSh(C x I^op)` that are NOT in
-  `PshRelEdge C` are spans `P <-- R --> Q` where
-  `R -> P x Q` is not injective. These are
-  quotient-like: the fibers of `R -> P x Q` give
-  an equivalence relation on `R` whose quotient is
-  a subobject of `P x Q` (i.e., a separated
-  presheaf).
-- The ex/reg completion of `Sep_J` for a subcanonical
-  topology `J` on a presheaf category is known to be
-  `Sh_J` in some cases; here the topology is not
-  subcanonical, so the situation may differ. The
-  ex/reg completion of `Sep_J(D)` for a general
-  topology `J` on a presheaf category `PSh(D)` is
-  `PSh(D)` itself when `Sep_J(D)` generates `PSh(D)`
-  under exact completion.
-
-If the conjecture holds, then
-`PSh(C x I^op)` is the canonical topos completion
-of the parametric quasitopos, and the chain becomes:
+**Resolved conjecture.** The earlier conjecture
+`ex/reg(PshRelEdge C) ~= PSh(C x I^op)` does
+not hold as stated. The correct picture is the
+standard presheaf/separated/sheaf layering
+(Menni, "Exact completions and toposes", 2000;
+Menni, "Closure operators in exact completions",
+TAC 2001):
 
 ```text
-PSh(C) --ident--> PshRelEdge C --incl-->
-  ex/reg(PshRelEdge C) ~= PSh(C x I^op)
+PSh(C x I^op)      presheaf topos (exact)
+     |
+     | separation reflector
+     v
+PshRelEdge C        separated presheaves (regular)
+     |
+     | sheafification
+     v
+Sh_J(C x I^op)     sheaf topos (exact)
 ```
 
-This would give a precise sense in which
-`PSh(C x I^op)` is the "nearest topos" to
-`PshRelEdge C`: it is obtained by freely
-adjoining quotients.
+The three layers correspond to:
+
+| Sheaf theory | Completion theory |
+| ------------ | ----------------- |
+| PSh(D) | C (category with finite limits) |
+| Sep_J(D) | C_reg (regular completion) |
+| Sh_J(D) | C_ex (exact completion) |
+
+The ex/reg completion goes **downward** from
+`Sep_J` to `Sh_J`, not upward to `PSh`. In
+Menni's framework, the plus construction applied
+once yields a separated presheaf (the regular
+completion step); applied twice yields a sheaf
+(the exact completion step). The factorization
+`C_{ex/lex} = (C_{reg/lex})_{ex/reg}` mirrors
+this two-step sheafification.
+
+The objects of `ex/reg(PshRelEdge C)` would be
+equivalence relations internal to `PshRelEdge C`,
+which are structured triples satisfying
+reflexivity, symmetry, and transitivity. These
+are far more constrained than arbitrary spans in
+`PSh(C x I^op)`. By Lack's result, the ex/reg
+completion of a regular category is the closure
+under finite limits and coequalizers of
+equivalence relations within a suitable ambient
+topos — this closure is generally smaller than
+the full presheaf topos.
+
+The analogy suggests that the ex/reg completion
+of `PshRelEdge C` is the sheaf topos
+`Sh_J(C x I^op)`, sitting below `PshRelEdge C`
+in the inclusion chain, not above it.
+
+**References:**
+
+- Carboni, Vitale, "Regular and exact
+  completions", JPAA 125, 1998
+- Menni, "Exact completions and toposes",
+  Edinburgh thesis, 2000
+- Menni, "Closure operators in exact
+  completions", TAC 8, 2001
+- Lack, "A note on the exact completion of a
+  regular category", TAC 5, 1999
+- Garner, Lack, "Grothendieck quasitoposes",
+  J. Algebra 355, 2012
+- Shulman, "Exact completions and small sheaves",
+  TAC 27, 2012
+- Trotta, Maietti, "Quasitoposes as elementary
+  quotient completions", 2024
 
 ### 11.11 The subobject classifier and lattice-enriched sites
 
@@ -1714,23 +1767,39 @@ preserve the expected properties (graph
 preservation, identity extension) — requires
 further investigation.
 
-#### Q6: Ex/reg completion of PshRelEdge
+#### Q6: Ex/reg completion of PshRelEdge (resolved)
 
-Is `ex/reg(PshRelEdge C) ~= PSh(C x I^op)`?
-(See Section 11.10 for the conjecture and
-evidence.) If so, the presheaf topos on
-`C x I^op` is the canonical topos completion of
-the parametric quasitopos. Verification would
-require:
+The conjecture
+`ex/reg(PshRelEdge C) ~= PSh(C x I^op)` does not
+hold. See Section 11.10 for the corrected picture:
+the ex/reg completion goes downward to the sheaf
+topos `Sh_J(C x I^op)`, not upward to the presheaf
+topos. The remaining questions are:
 
-- Showing that the inclusion
-  `PshRelEdge C -> PSh(C x I^op)` has a left exact
-  left adjoint (i.e., that the separation reflector
-  preserves finite limits)
-- Verifying the universal property of the ex/reg
-  completion: that every left exact functor from
-  `PshRelEdge C` to a topos factors uniquely through
-  `PSh(C x I^op)`
+- What is `Sh_J(C x I^op)` concretely?
+- What structure does the sheaf topos inherit from
+  `PshRelEdge C` (e.g., does the sheafification
+  preserve the parametricity interpretation)?
+
+#### Q7: Span bicategory
+
+Spans in a category with pullbacks form a
+bicategory (nLab, "span", Section "The bicategory
+of spans"). Mathlib has the `Bicategory` typeclass
+but no instance for spans. Since presheaf
+categories have all pullbacks, `PSh(C)` admits a
+bicategory of spans. The objects of `PshRelEdge C`
+are spans `P <- R -> Q` in `PSh(C)`, and the
+composition of spans via pullback gives a
+bicategorical structure. Constructing this
+instance would require:
+
+- Span composition via pullbacks (mathlib has
+  `PullbackCone.pasteHoriz` and pasting lemmas)
+- Associator from pullback associativity (mathlib
+  has `pullbackRightPullbackFstIso`)
+- 2-morphisms as span maps
+- Pentagon and triangle identities
 
 ### 11.13 Formalization candidates
 
@@ -1779,14 +1848,24 @@ ordered roughly by dependency:
 - **(e)** Construct the inclusion
   `PshRelEdge C -> PSh(C x I^op)` as an explicit
   fully faithful functor, and its left adjoint
-  (the separation reflector). **Partially done:**
-  `pshRelEdgeInclusionFunctor` and
-  `pshRelEdgeInclusionFullyFaithful`
-  (`PshRelEdgeInclusion.lean`) give the
-  fully faithful functor
-  `PshRelEdge C -> [WalkingSpan, PSh(C)]`.
-  The left adjoint (separation reflector) is
-  not yet formalized.
+  (the separation reflector). **Done:**
+  `pshRelEdgeInclusionFunctor`,
+  `pshRelEdgeInclusionFullyFaithful`,
+  `pshRelEdgeSepFunctor`,
+  `pshRelEdgeSepAdjunction`,
+  `pshRelEdgeInclusionReflective`,
+  `pshRelEdgeSepCounitIsIso`
+  (`PshRelEdgeInclusion.lean`).
+
+- **(e')** Show the separation reflector preserves
+  finite products, establishing `PshRelEdge C` as
+  an exponential ideal in `PSh(C x I^op)`. The
+  vertex components are preserved trivially; the
+  relation component follows from `Im(f x g) =
+  Im(f) x Im(g)` computed pointwise. Uses
+  `exponentialIdeal_of_preservesBinaryProducts`
+  from `Mathlib.CategoryTheory.Monoidal.Closed.Ideal`.
+  Implies the inclusion preserves exponentials.
 
 - **(f)** Construct the family of evaluation
   functors: for each `(P, Q, R)`,
