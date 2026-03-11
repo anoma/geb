@@ -1,8 +1,6 @@
 import GebLean.PshRelDouble
 import Mathlib.CategoryTheory.Limits.Shapes.Pullback.Cospan
 
-set_option autoImplicit false
-set_option relaxedAutoImplicit false
 open CategoryTheory Limits
 
 namespace GebLean
