@@ -2035,10 +2035,12 @@ theorem pointwiseTypeEnd_obj_eq
 evaluates to the type-level weighted limit of the
 diagram restricted to `e`. -/
 theorem pointwiseTypeWeightedLimit_obj_eq
-    (W : K ⥤ Type v)
+    (W : K ⥤ (E ⥤ Type v))
     (D : K ⥤ (E ⥤ Type v)) (e : E) :
-    (pointwiseTypeWeightedLimit W D).obj e =
-      typeWeightedLimit W (D.flip.obj e) :=
+    (pointwiseTypeWeightedLimit
+      (W.flip.obj e) D).obj e =
+      typeWeightedLimit
+        (W.flip.obj e) (D.flip.obj e) :=
   rfl
 
 /-- At each `e : E`, the pointwise coend evaluates to
@@ -2056,10 +2058,12 @@ theorem pointwiseTypeCoend_obj_eq
 evaluates to the type-level weighted colimit of the
 diagram restricted to `e`. -/
 theorem pointwiseTypeWeightedColimit_obj_eq
-    (W : Kᵒᵖ ⥤ Type v)
+    (W : Kᵒᵖ ⥤ (E ⥤ Type v))
     (D : K ⥤ (E ⥤ Type v)) (e : E) :
-    (pointwiseTypeWeightedColimit W D).obj e =
-      typeWeightedColimit W (D.flip.obj e) :=
+    (pointwiseTypeWeightedColimit
+      (W.flip.obj e) D).obj e =
+      typeWeightedColimit
+        (W.flip.obj e) (D.flip.obj e) :=
   rfl
 
 variable (K)
@@ -2102,12 +2106,13 @@ equivalent to the set of natural transformations
 from the weight `W` to the diagram restricted to
 `e`. -/
 def pointwiseTypeWeightedLimit.natTransEquiv
-    (W : K ⥤ Type v)
+    (W : K ⥤ (E ⥤ Type v))
     (D : K ⥤ (E ⥤ Type v)) (e : E) :
-    (pointwiseTypeWeightedLimit W D).obj e ≃
-      (W ⟶ D.flip.obj e) :=
-  typeWeightedLimit.natTransEquiv W
-    (D.flip.obj e)
+    (pointwiseTypeWeightedLimit
+      (W.flip.obj e) D).obj e ≃
+      (W.flip.obj e ⟶ D.flip.obj e) :=
+  typeWeightedLimit.natTransEquiv
+    (W.flip.obj e) (D.flip.obj e)
 
 /-!
 ### Pointwise Ninja Yoneda
@@ -2229,16 +2234,17 @@ limit of the diagram `homFromFunctor (D.flip.obj e)
 (G.obj e)`, which sends `j ↦ G.obj e → D(j)(e)`. -/
 def pointwiseTypeWeightedLimit.introEquiv
     (G : E ⥤ Type v)
-    (W : K ⥤ Type v)
+    (W : K ⥤ (E ⥤ Type v))
     (D : K ⥤ (E ⥤ Type v))
     (e : E) :
     (G.obj e →
-      (pointwiseTypeWeightedLimit W D).obj e) ≃
-      typeWeightedLimit W
+      (pointwiseTypeWeightedLimit
+        (W.flip.obj e) D).obj e) ≃
+      typeWeightedLimit (W.flip.obj e)
         (homFromFunctor (D.flip.obj e)
           (G.obj e)) :=
   typeWeightedLimit.introEquiv
-    (G.obj e) W (D.flip.obj e)
+    (G.obj e) (W.flip.obj e) (D.flip.obj e)
 
 /-- Pointwise introduction via nat trans: at each
 `e : E`, a function from `G.obj e` into the space of
@@ -2248,15 +2254,16 @@ equivalent to a nat trans
 which sends `j ↦ G.obj e → D(j)(e)`. -/
 def pointwiseNatTransIntroEquiv
     (G : E ⥤ Type v)
-    (W : K ⥤ Type v)
+    (W : K ⥤ (E ⥤ Type v))
     (D : K ⥤ (E ⥤ Type v))
     (e : E) :
-    (G.obj e → (W ⟶ D.flip.obj e)) ≃
-      (W ⟶ D.flip.obj e ⋙
+    (G.obj e →
+      (W.flip.obj e ⟶ D.flip.obj e)) ≃
+      (W.flip.obj e ⟶ D.flip.obj e ⋙
         coyoneda.obj
           (Opposite.op (G.obj e))) :=
-  natTransIntroEquiv (G.obj e) W
-    (D.flip.obj e)
+  natTransIntroEquiv (G.obj e)
+    (W.flip.obj e) (D.flip.obj e)
 
 /-!
 ### Pointwise Maps-Out and Coend-End Equivalences
@@ -2706,13 +2713,15 @@ This follows from
 combined with
 `pointwiseTypeWeightedLimit.natTransEquiv`. -/
 def pointwiseTypeEnd.powerNatTransEquiv
-    (W : K ⥤ Type v)
+    (W : K ⥤ (E ⥤ Type v))
     (D : K ⥤ (E ⥤ Type v)) (e : E) :
     (pointwiseTypeEnd
       (powerProfunctor
-        (C := E ⥤ Type v) W D)).obj e ≃
-      (W ⟶ D.flip.obj e) :=
-  pointwiseTypeWeightedLimit.natTransEquiv W D e
+        (C := E ⥤ Type v)
+        (W.flip.obj e) D)).obj e ≃
+      (W.flip.obj e ⟶ D.flip.obj e) :=
+  pointwiseTypeWeightedLimit.natTransEquiv
+    W D e
 
 /-- The pointwise coend of the copower profunctor has
 the colimit universal property: at each `e : E`, its
@@ -2720,12 +2729,14 @@ elements are in bijection with cowedge data, i.e.,
 quotients of `Σ j, W.obj (op j) × (D.flip.obj e).obj j`
 by the coend relation. -/
 def pointwiseTypeCoend.copowerEquiv
-    (W : Kᵒᵖ ⥤ Type v)
+    (W : Kᵒᵖ ⥤ (E ⥤ Type v))
     (D : K ⥤ (E ⥤ Type v)) (e : E) :
     (pointwiseTypeCoend
       (copowerProfunctor
-        (C := E ⥤ Type v) W D)).obj e ≃
-      (pointwiseTypeWeightedColimit W D).obj e :=
+        (C := E ⥤ Type v)
+        (W.flip.obj e) D)).obj e ≃
+      (pointwiseTypeWeightedColimit
+        (W.flip.obj e) D).obj e :=
   Equiv.refl _
 
 end PointwisePresheaf
