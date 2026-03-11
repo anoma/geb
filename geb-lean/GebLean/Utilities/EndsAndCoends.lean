@@ -2032,8 +2032,9 @@ theorem pointwiseTypeEnd_obj_eq
   rfl
 
 /-- At each `e : E`, the pointwise weighted limit
-evaluates to the type-level weighted limit of the
-diagram restricted to `e`. -/
+with weight `W.flip.obj e` evaluates to the
+type-level weighted limit of the weight and diagram
+restricted to `e`. -/
 theorem pointwiseTypeWeightedLimit_obj_eq
     (W : K ⥤ (E ⥤ Type v))
     (D : K ⥤ (E ⥤ Type v)) (e : E) :
@@ -2055,7 +2056,8 @@ theorem pointwiseTypeCoend_obj_eq
   rfl
 
 /-- At each `e : E`, the pointwise weighted colimit
-evaluates to the type-level weighted colimit of the
+with weight `W.flip.obj e` evaluates to the
+type-level weighted colimit of the weight and
 diagram restricted to `e`. -/
 theorem pointwiseTypeWeightedColimit_obj_eq
     (W : Kᵒᵖ ⥤ (E ⥤ Type v))
@@ -2103,8 +2105,7 @@ variable {K}
 
 /-- At each `e : E`, the pointwise weighted limit is
 equivalent to the set of natural transformations
-from the weight `W` to the diagram restricted to
-`e`. -/
+from `W.flip.obj e` to `D.flip.obj e`. -/
 def pointwiseTypeWeightedLimit.natTransEquiv
     (W : K ⥤ (E ⥤ Type v))
     (D : K ⥤ (E ⥤ Type v)) (e : E) :
@@ -2229,9 +2230,9 @@ def pointwiseTypeEnd.introEquiv
 
 /-- Pointwise introduction rule for weighted limits:
 at each `e : E`, a function from `G.obj e` into the
-pointwise weighted limit is equivalent to the weighted
-limit of the diagram `homFromFunctor (D.flip.obj e)
-(G.obj e)`, which sends `j ↦ G.obj e → D(j)(e)`. -/
+pointwise weighted limit (with weight `W.flip.obj e`)
+is equivalent to the weighted limit of
+`homFromFunctor (D.flip.obj e) (G.obj e)`. -/
 def pointwiseTypeWeightedLimit.introEquiv
     (G : E ⥤ Type v)
     (W : K ⥤ (E ⥤ Type v))
@@ -2248,10 +2249,10 @@ def pointwiseTypeWeightedLimit.introEquiv
 
 /-- Pointwise introduction via nat trans: at each
 `e : E`, a function from `G.obj e` into the space of
-natural transformations `W ⟶ D.flip.obj e` is
-equivalent to a nat trans
-`W ⟶ D.flip.obj e ⋙ coyoneda.obj (op (G.obj e))`,
-which sends `j ↦ G.obj e → D(j)(e)`. -/
+natural transformations
+`W.flip.obj e ⟶ D.flip.obj e` is equivalent to a
+nat trans `W.flip.obj e ⟶ D.flip.obj e ⋙
+coyoneda.obj (op (G.obj e))`. -/
 def pointwiseNatTransIntroEquiv
     (G : E ⥤ Type v)
     (W : K ⥤ (E ⥤ Type v))
@@ -2436,9 +2437,10 @@ coends and weighted colimits lift pointwise.
 
 /-- Pointwise impredicative weighted colimits: at each
 `e : E`, natural transformations from
-`weightedLimitFunctor W (D.flip.obj e)` to the
-identity on `Type v` correspond to elements of
-`(pointwiseTypeWeightedColimit W D).obj e`. -/
+`weightedLimitFunctor (W.flip.obj e) (D.flip.obj e)`
+to the identity on `Type v` correspond to elements of
+the pointwise weighted colimit with weight
+`W.flip.obj e`. -/
 def pointwiseTypeWeightedColimit.impredicative
     (W : Kᵒᵖ ⥤ (E ⥤ Type v))
     (D : K ⥤ (E ⥤ Type v)) (e : E) :
@@ -2450,10 +2452,10 @@ def pointwiseTypeWeightedColimit.impredicative
 
 /-- Pointwise representable weighted colimits: at each
 `e : E`, natural transformations from
-`weightedLimitFunctor W (D.flip.obj e)` to
-`G : Type v ⥤ Type v` correspond to
-`G.obj ((pointwiseTypeWeightedColimit W D).obj e)`.
--/
+`weightedLimitFunctor (W.flip.obj e) (D.flip.obj e)`
+to `G : Type v ⥤ Type v` correspond to
+`G.obj` of the pointwise weighted colimit with weight
+`W.flip.obj e`. -/
 def pointwiseTypeWeightedColimit.representable
     (W : Kᵒᵖ ⥤ (E ⥤ Type v))
     (D : K ⥤ (E ⥤ Type v)) (e : E)
@@ -2703,10 +2705,11 @@ theorem pointwiseTypeWeightedColimit_eq_coend
           (C := E ⥤ Type v) W D) :=
   rfl
 
-/-- The pointwise end of the power profunctor has the
-nat-trans universal property: at each `e : E`, its
-elements are in bijection with natural transformations
-`W ⟶ D.flip.obj e`.
+/-- The pointwise end of the power profunctor
+(with weight `W.flip.obj e`) has the nat-trans
+universal property: at each `e : E`, its elements
+are in bijection with natural transformations
+`W.flip.obj e ⟶ D.flip.obj e`.
 
 This follows from
 `pointwiseTypeWeightedLimit_eq_end` (which is `rfl`)
@@ -2723,11 +2726,11 @@ def pointwiseTypeEnd.powerNatTransEquiv
   pointwiseTypeWeightedLimit.natTransEquiv
     W D e
 
-/-- The pointwise coend of the copower profunctor has
-the colimit universal property: at each `e : E`, its
-elements are in bijection with cowedge data, i.e.,
-quotients of `Σ j, W.obj (op j) × (D.flip.obj e).obj j`
-by the coend relation. -/
+/-- The pointwise coend of the copower profunctor
+(with weight `W.flip.obj e`) has the colimit
+universal property: at each `e : E`, its elements
+are in bijection with the pointwise weighted colimit
+with the same weight. -/
 def pointwiseTypeCoend.copowerEquiv
     (W : Kᵒᵖ ⥤ (E ⥤ Type v))
     (D : K ⥤ (E ⥤ Type v)) (e : E) :
