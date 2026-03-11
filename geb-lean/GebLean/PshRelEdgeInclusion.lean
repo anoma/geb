@@ -884,4 +884,400 @@ instance pshRelEdgeExponentialIdeal
 
 end SepPreservesProducts2
 
+section InclusionPreservesCoproducts
+
+variable {C : Type u} [Category.{v} C]
+
+/-- The subfunctor total space of a coproduct
+relation is the coproduct of the total spaces.
+This is the natural isomorphism witnessing that
+`(R₁ ⊕ R₂).toFunctor ≅ R₁.toFunctor ⊕ R₂.toFunctor`
+where ⊕ is the coproduct presheaf. -/
+private def pshRelCoprodToFunctorFwdAux
+    {P₁ Q₁ P₂ Q₂ : Cᵒᵖ ⥤ Type w}
+    (R₁ : PshRel P₁ Q₁)
+    (R₂ : PshRel P₂ Q₂)
+    (c : Cᵒᵖ)
+    (p : P₁.obj c ⊕ P₂.obj c)
+    (q : Q₁.obj c ⊕ Q₂.obj c)
+    (h : (p, q) ∈ (pshRelCoprod R₁ R₂).obj c) :
+    R₁.toFunctor.obj c ⊕
+      R₂.toFunctor.obj c :=
+  match p, q, h with
+  | Sum.inl p₁, Sum.inl q₁, h =>
+    Sum.inl ⟨(p₁, q₁), h⟩
+  | Sum.inr p₂, Sum.inr q₂, h =>
+    Sum.inr ⟨(p₂, q₂), h⟩
+  | Sum.inl _, Sum.inr _, h =>
+    False.elim h
+  | Sum.inr _, Sum.inl _, h =>
+    False.elim h
+
+def pshRelCoprodToFunctorFwd
+    {P₁ Q₁ P₂ Q₂ : Cᵒᵖ ⥤ Type w}
+    (R₁ : PshRel P₁ Q₁)
+    (R₂ : PshRel P₂ Q₂) :
+    (pshRelCoprod R₁ R₂).toFunctor ⟶
+      pshCoprodPresheaf
+        R₁.toFunctor R₂.toFunctor where
+  app c x :=
+    pshRelCoprodToFunctorFwdAux
+      R₁ R₂ c x.val.1 x.val.2 x.prop
+  naturality {c d} f := by
+    ext ⟨⟨p, q⟩, h⟩
+    dsimp [pshRelCoprodToFunctorFwdAux]
+    match p, q, h with
+    | Sum.inl _, Sum.inl _, _ => rfl
+    | Sum.inr _, Sum.inr _, _ => rfl
+    | Sum.inl _, Sum.inr _, h =>
+      exact False.elim h
+    | Sum.inr _, Sum.inl _, h =>
+      exact False.elim h
+
+def pshRelCoprodToFunctorBwd
+    {P₁ Q₁ P₂ Q₂ : Cᵒᵖ ⥤ Type w}
+    (R₁ : PshRel P₁ Q₁)
+    (R₂ : PshRel P₂ Q₂) :
+    pshCoprodPresheaf
+      R₁.toFunctor R₂.toFunctor ⟶
+      (pshRelCoprod R₁ R₂).toFunctor where
+  app c x :=
+    match x with
+    | Sum.inl ⟨(p₁, q₁), h⟩ =>
+      ⟨(Sum.inl p₁, Sum.inl q₁), h⟩
+    | Sum.inr ⟨(p₂, q₂), h⟩ =>
+      ⟨(Sum.inr p₂, Sum.inr q₂), h⟩
+  naturality {c d} f := by
+    ext (⟨⟨_, _⟩, _⟩ | ⟨⟨_, _⟩, _⟩) <;> rfl
+
+def pshCoprodIsColimit
+    (P Q : Cᵒᵖ ⥤ Type w) :
+    IsColimit (BinaryCofan.mk
+      (pshCoprodInl P Q)
+      (pshCoprodInr P Q)) :=
+  BinaryCofan.isColimitMk
+    (fun s => pshCoprodDesc s.inl s.inr)
+    (fun s => by ext c p; rfl)
+    (fun s => by ext c p; rfl)
+    (fun s m h₁ h₂ => by
+      ext c (p | p)
+      · exact congrFun
+          (congr_fun (congrArg NatTrans.app h₁)
+            c) p
+      · exact congrFun
+          (congr_fun (congrArg NatTrans.app h₂)
+            c) p)
+
+def pshRelCoprodToFunctorIso
+    {P₁ Q₁ P₂ Q₂ : Cᵒᵖ ⥤ Type w}
+    (R₁ : PshRel P₁ Q₁)
+    (R₂ : PshRel P₂ Q₂) :
+    (pshRelCoprod R₁ R₂).toFunctor ≅
+      pshCoprodPresheaf
+        R₁.toFunctor R₂.toFunctor where
+  hom := pshRelCoprodToFunctorFwd R₁ R₂
+  inv := pshRelCoprodToFunctorBwd R₁ R₂
+  hom_inv_id := by
+    ext c ⟨⟨p, q⟩, h⟩
+    dsimp [pshRelCoprodToFunctorFwd,
+      pshRelCoprodToFunctorFwdAux,
+      pshRelCoprodToFunctorBwd]
+    match p, q, h with
+    | Sum.inl _, Sum.inl _, _ => rfl
+    | Sum.inr _, Sum.inr _, _ => rfl
+    | Sum.inl _, Sum.inr _, h =>
+      exact False.elim h
+    | Sum.inr _, Sum.inl _, h =>
+      exact False.elim h
+  inv_hom_id := by
+    ext c (⟨⟨_, _⟩, _⟩ | ⟨⟨_, _⟩, _⟩) <;> rfl
+
+private def inclusionCoprodDesc
+    (E₁ E₂ : PshRelEdge.{u, v, w} C)
+    (s : Cocone (pair E₁ E₂ ⋙
+      pshRelEdgeInclusionFunctor C)) :
+    (pshRelEdgeInclusionFunctor C).obj
+      (pshRelEdgeCoprod E₁ E₂) ⟶ s.pt where
+  app j :=
+    match j with
+    | .some .left => pshCoprodDesc
+        ((s.ι.app ⟨.left⟩).app
+          (.some .left))
+        ((s.ι.app ⟨.right⟩).app
+          (.some .left))
+    | .some .right => pshCoprodDesc
+        ((s.ι.app ⟨.left⟩).app
+          (.some .right))
+        ((s.ι.app ⟨.right⟩).app
+          (.some .right))
+    | .none =>
+        (pshRelCoprodToFunctorIso
+          E₁.edge E₂.edge).hom ≫
+        pshCoprodDesc
+          ((s.ι.app ⟨.left⟩).app .none)
+          ((s.ι.app ⟨.right⟩).app .none)
+  naturality {j j'} f := by
+    cases f with
+    | id j =>
+      erw [(pshRelEdgeSpan
+        (pshRelEdgeCoprod E₁ E₂)).map_id j,
+        Category.id_comp,
+        s.pt.map_id j,
+        Category.comp_id]
+    | init b =>
+      ext c ⟨⟨p, q⟩, h⟩
+      match b, p, q, h with
+      | .left, Sum.inl p₁, Sum.inl q₁, h =>
+        change ((s.ι.app ⟨.left⟩).app
+            (.some .left)).app c p₁ =
+          (s.pt.map
+            (WidePushoutShape.Hom.init
+              .left)).app c
+          (((s.ι.app ⟨.left⟩).app .none).app
+            c ⟨(p₁, q₁), h⟩)
+        have := congr_fun (congr_app
+          ((s.ι.app ⟨.left⟩).naturality
+            (WidePushoutShape.Hom.init
+              .left)) c)
+          ⟨(p₁, q₁), h⟩
+        dsimp [types_comp_apply,
+          pshRelEdgeSpan, span,
+          WidePushoutShape.wideSpan,
+          pshRelFstProj,
+          Subfunctor.toFunctor] at this
+        exact this
+      | .left, Sum.inr p₂, Sum.inr q₂, h =>
+        change ((s.ι.app ⟨.right⟩).app
+            (.some .left)).app c p₂ =
+          (s.pt.map
+            (WidePushoutShape.Hom.init
+              .left)).app c
+          (((s.ι.app ⟨.right⟩).app .none).app
+            c ⟨(p₂, q₂), h⟩)
+        have := congr_fun (congr_app
+          ((s.ι.app ⟨.right⟩).naturality
+            (WidePushoutShape.Hom.init
+              .left)) c)
+          ⟨(p₂, q₂), h⟩
+        dsimp [types_comp_apply,
+          pshRelEdgeSpan, span,
+          WidePushoutShape.wideSpan,
+          pshRelFstProj,
+          Subfunctor.toFunctor] at this
+        exact this
+      | .left, Sum.inl _, Sum.inr _, h =>
+        exact False.elim h
+      | .left, Sum.inr _, Sum.inl _, h =>
+        exact False.elim h
+      | .right, Sum.inl p₁, Sum.inl q₁, h =>
+        change ((s.ι.app ⟨.left⟩).app
+            (.some .right)).app c q₁ =
+          (s.pt.map
+            (WidePushoutShape.Hom.init
+              .right)).app c
+          (((s.ι.app ⟨.left⟩).app .none).app
+            c ⟨(p₁, q₁), h⟩)
+        have := congr_fun (congr_app
+          ((s.ι.app ⟨.left⟩).naturality
+            (WidePushoutShape.Hom.init
+              .right)) c)
+          ⟨(p₁, q₁), h⟩
+        dsimp [types_comp_apply,
+          pshRelEdgeSpan, span,
+          WidePushoutShape.wideSpan,
+          pshRelSndProj,
+          Subfunctor.toFunctor] at this
+        exact this
+      | .right, Sum.inr p₂, Sum.inr q₂, h =>
+        change ((s.ι.app ⟨.right⟩).app
+            (.some .right)).app c q₂ =
+          (s.pt.map
+            (WidePushoutShape.Hom.init
+              .right)).app c
+          (((s.ι.app ⟨.right⟩).app .none).app
+            c ⟨(p₂, q₂), h⟩)
+        have := congr_fun (congr_app
+          ((s.ι.app ⟨.right⟩).naturality
+            (WidePushoutShape.Hom.init
+              .right)) c)
+          ⟨(p₂, q₂), h⟩
+        dsimp [types_comp_apply,
+          pshRelEdgeSpan, span,
+          WidePushoutShape.wideSpan,
+          pshRelSndProj,
+          Subfunctor.toFunctor] at this
+        exact this
+      | .right, Sum.inl _, Sum.inr _, h =>
+        exact False.elim h
+      | .right, Sum.inr _, Sum.inl _, h =>
+        exact False.elim h
+
+def inclusionMapCoprodCoconeIsColimit
+    (E₁ E₂ : PshRelEdge.{u, v, w} C) :
+    IsColimit
+      ((pshRelEdgeInclusionFunctor C).mapCocone
+        (BinaryCofan.mk
+          (pshRelEdgeCoprodInl E₁ E₂)
+          (pshRelEdgeCoprodInr E₁ E₂))) where
+  desc s := inclusionCoprodDesc E₁ E₂ s
+  fac s j := by
+    apply NatTrans.ext; funext k
+    match j, k with
+    | ⟨.left⟩, .some .left => ext c p₁; rfl
+    | ⟨.left⟩, .some .right => ext c q₁; rfl
+    | ⟨.left⟩, .none => ext c ⟨⟨p₁, q₁⟩, h⟩; rfl
+    | ⟨.right⟩, .some .left => ext c p₂; rfl
+    | ⟨.right⟩, .some .right => ext c q₂; rfl
+    | ⟨.right⟩, .none =>
+      ext c ⟨⟨p₂, q₂⟩, h⟩; rfl
+  uniq s m hm := by
+    apply NatTrans.ext; funext k
+    match k with
+    | .some .left =>
+      have h₁ := congr_fun
+        (congr_arg NatTrans.app (hm ⟨.left⟩))
+        (.some WalkingPair.left)
+      have h₂ := congr_fun
+        (congr_arg NatTrans.app (hm ⟨.right⟩))
+        (.some WalkingPair.left)
+      dsimp [Functor.mapCocone,
+        pshRelEdgeInclusionFunctor,
+        pshRelEdgeSpanMap, pshRelEdgeSpan,
+        span, WidePushoutShape.wideSpan,
+        inclusionCoprodDesc,
+        pshRelEdgeCoprodInl,
+        pshRelEdgeCoprodInr] at h₁ h₂ ⊢
+      ext c (p | p)
+      · exact congr_fun (congr_app h₁ c) p
+      · exact congr_fun (congr_app h₂ c) p
+    | .some .right =>
+      have h₁ := congr_fun
+        (congr_arg NatTrans.app (hm ⟨.left⟩))
+        (.some WalkingPair.right)
+      have h₂ := congr_fun
+        (congr_arg NatTrans.app (hm ⟨.right⟩))
+        (.some WalkingPair.right)
+      dsimp [Functor.mapCocone,
+        pshRelEdgeInclusionFunctor,
+        pshRelEdgeSpanMap, pshRelEdgeSpan,
+        span, WidePushoutShape.wideSpan,
+        inclusionCoprodDesc,
+        pshRelEdgeCoprodInl,
+        pshRelEdgeCoprodInr] at h₁ h₂ ⊢
+      ext c (p | p)
+      · exact congr_fun (congr_app h₁ c) p
+      · exact congr_fun (congr_app h₂ c) p
+    | .none =>
+      have h₁ := congr_fun
+        (congr_arg NatTrans.app (hm ⟨.left⟩))
+          (.none : WalkingSpan)
+      have h₂ := congr_fun
+        (congr_arg NatTrans.app (hm ⟨.right⟩))
+          (.none : WalkingSpan)
+      dsimp [Functor.mapCocone,
+        pshRelEdgeInclusionFunctor,
+        pshRelEdgeSpanMap, pshRelEdgeSpan,
+        span, WidePushoutShape.wideSpan,
+        pshRelRelatedTotalMap,
+        inclusionCoprodDesc,
+        pshRelCoprodToFunctorIso,
+        pshRelCoprodToFunctorFwd,
+        pshRelCoprodToFunctorFwdAux,
+        pshRelEdgeCoprodInl,
+        pshRelEdgeCoprodInr,
+        pshCoprodInl, pshCoprodInr,
+        pshCoprodDesc] at h₁ h₂ ⊢
+      ext c ⟨⟨p, q⟩, h⟩
+      match p, q, h with
+      | Sum.inl p₁, Sum.inl q₁, h =>
+        exact congr_fun (congr_app h₁ c)
+          ⟨(p₁, q₁), h⟩
+      | Sum.inr p₂, Sum.inr q₂, h =>
+        exact congr_fun (congr_app h₂ c)
+          ⟨(p₂, q₂), h⟩
+      | Sum.inl _, Sum.inr _, h =>
+        exact False.elim h
+      | Sum.inr _, Sum.inl _, h =>
+        exact False.elim h
+
+instance inclusionPreservesColimitPairEdge
+    (E₁ E₂ : PshRelEdge.{u, v, w} C) :
+    PreservesColimit (pair E₁ E₂)
+      (pshRelEdgeInclusionFunctor C) :=
+  preservesColimit_of_preserves_colimit_cocone
+    (pshRelEdgeCoprodIsColimit E₁ E₂)
+    (inclusionMapCoprodCoconeIsColimit E₁ E₂)
+
+instance inclusionPreservesBinaryCoproducts
+    (C : Type u) [Category.{v} C] :
+    PreservesColimitsOfShape
+      (Discrete WalkingPair)
+      (pshRelEdgeInclusionFunctor.{u, v, w}
+        C) where
+  preservesColimit {F} := by
+    haveI := inclusionPreservesColimitPairEdge
+      (F.obj ⟨.left⟩) (F.obj ⟨.right⟩)
+    exact preservesColimit_of_iso_diagram _
+      (diagramIsoPair F).symm
+
+private def inclusionInitialMap
+    (G : WalkingSpan ⥤ (Cᵒᵖ ⥤ Type w)) :
+    (pshRelEdgeInclusionFunctor C).obj
+      (pshRelEdgeInitial C) ⟶ G where
+  app j := match j with
+    | .some .left =>
+      pshEmptyMap (G.obj (.some .left))
+    | .some .right =>
+      pshEmptyMap (G.obj (.some .right))
+    | .none =>
+      { app := fun c x => (x.val.1.down).elim
+        naturality := fun {_ _} _ => by
+          ext ⟨⟨p, _⟩, _⟩; exact p.down.elim }
+  naturality {j j'} f := by
+    ext c x
+    match j with
+    | .some .left =>
+      exact (x : ULift PEmpty).down.elim
+    | .some .right =>
+      exact (x : ULift PEmpty).down.elim
+    | .none =>
+      exact ((x : { pq : ULift PEmpty × _ //
+        _ }).val.1.down).elim
+
+instance inclusionPreservesInitialObj
+    (C : Type u) [Category.{v} C] :
+    PreservesColimit (Functor.empty.{0}
+      (PshRelEdge.{u, v, w} C))
+      (pshRelEdgeInclusionFunctor C) :=
+  preservesColimit_of_preserves_colimit_cocone
+    (pshRelEdgeIsInitial C)
+    ((isColimitMapCoconeEmptyCoconeEquiv
+      (pshRelEdgeInclusionFunctor C)
+      (pshRelEdgeInitial C)).symm
+      (IsInitial.ofUniqueHom
+        (fun G => inclusionInitialMap G)
+        (fun G f => by
+          apply NatTrans.ext; funext j
+          match j with
+          | .some .left =>
+            ext c (e : ULift PEmpty)
+            exact e.down.elim
+          | .some .right =>
+            ext c (e : ULift PEmpty)
+            exact e.down.elim
+          | .none =>
+            ext c ⟨⟨p, _⟩, _⟩
+            exact p.down.elim)))
+
+instance inclusionPreservesInitial
+    (C : Type u) [Category.{v} C] :
+    PreservesColimitsOfShape
+      (Discrete PEmpty.{1})
+      (pshRelEdgeInclusionFunctor.{u, v, w}
+        C) :=
+  preservesColimitsOfShape_pempty_of_preservesInitial
+    _
+
+end InclusionPreservesCoproducts
+
 end GebLean

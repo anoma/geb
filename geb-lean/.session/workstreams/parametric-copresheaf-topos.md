@@ -281,6 +281,13 @@ framework.
   Ref: `docs/parametric-copresheaf-topos.md`
   Section 11.4.
 
+- [x] **T24c. Inclusion preserves coproducts.**
+  `inclusionPreservesColimitPairEdge`,
+  `inclusionPreservesBinaryCoproducts`,
+  `inclusionPreservesInitialObj`,
+  `inclusionPreservesInitial`.
+  (`PshRelEdgeInclusion.lean`)
+
 - [ ] **T25. Evaluation functors.** For each
   relation `(P, Q, R)`, construct the evaluation functor
   `eval_{P,Q,R} : PshParametricFunctor C E -> Spans(E)`
