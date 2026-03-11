@@ -363,7 +363,7 @@ theorem lift_proj {X : C} {S : Type w} {Y : C} (g : Y ⟶ power X S) :
 end HasPowers
 
 /-- Type u has powers: the power `X ^. S` is the function space `S → X`. -/
-instance typesHasPowers : HasPowers (Type u) where
+instance typesHasPowers : HasPowers.{u + 1, u} (Type u) where
   power X S := S → X
   proj X S s := fun f => f s
   lift f := fun y s => f s y
@@ -810,7 +810,7 @@ section WeightedViaEnds
 
 open CategoryTheory Limits Opposite
 
-universe u₁ v₁ u₂ v₂
+universe u₁ v₁ u₂ v₂ w₁
 
 variable {J : Type u₁} [Category.{v₁} J] {C : Type u₂} [Category.{v₂} C]
 
@@ -828,7 +828,7 @@ The coend of this profunctor gives the weighted colimit `W * F`.
 
 section CopowerProfunctor
 
-variable [HasCopowers C] (W : Jᵒᵖ ⥤ Type v₁) (F : J ⥤ C)
+variable [CCopow : HasCopowers C] (W : Jᵒᵖ ⥤ Type w₁) (F : J ⥤ C)
 
 /-- The inner functor of the copower profunctor: for a fixed `j : Jᵒᵖ`,
 maps `j' : J` to `W(j) ·. F(j')`.
@@ -897,7 +897,7 @@ The end of this profunctor gives the weighted limit `{W, F}`.
 
 section PowerProfunctor
 
-variable [HasPowers C] (W : J ⥤ Type v₁) (F : J ⥤ C)
+variable [CPow : HasPowers C] (W : J ⥤ Type w₁) (F : J ⥤ C)
 
 /-- The inner functor of the power profunctor: for a fixed `j : Jᵒᵖ`,
 maps `j' : J` to `F(j') ^. W(j.unop)`.
