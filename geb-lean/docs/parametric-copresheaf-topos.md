@@ -1679,7 +1679,7 @@ category? Candidates:
   a double category of relations (analogous to
   `PshRelDouble` for presheaf categories), then
   `Edge(D)` is its vertical edge category. The
-  question reduces to: which categories admit a
+  question reduces to: which categories have a
   canonical double category of relations?
 
 - **Internal relations.** In a regular category
