@@ -261,8 +261,9 @@ framework.
   `PshRelEdge C -> [WalkingSpan, PSh(C)]`.
   `pshRelEdgeInclusionFunctor` with
   `pshRelEdgeInclusionFullyFaithful`.
+  Separation reflector `pshRelEdgeSepFunctor` with
+  adjunction `pshRelEdgeSepAdjunction`.
   (`PshRelEdgeInclusion.lean`)
-  Left adjoint (separation reflector) not yet done.
   Ref: `docs/parametric-copresheaf-topos.md` Section 11.10.
 
 - [ ] **T25. Evaluation functors.** For each
