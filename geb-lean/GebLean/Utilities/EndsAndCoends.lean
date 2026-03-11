@@ -2432,12 +2432,12 @@ coends and weighted colimits lift pointwise.
 identity on `Type v` correspond to elements of
 `(pointwiseTypeWeightedColimit W D).obj e`. -/
 def pointwiseTypeWeightedColimit.impredicative
-    (W : Kᵒᵖ ⥤ Type v)
+    (W : Kᵒᵖ ⥤ (E ⥤ Type v))
     (D : K ⥤ (E ⥤ Type v)) (e : E) :
-    (weightedLimitFunctor W (D.flip.obj e) ⟶
+    (weightedLimitFunctor (W.flip.obj e) (D.flip.obj e) ⟶
       𝟭 (Type v)) ≃
-      (pointwiseTypeWeightedColimit W D).obj e :=
-  typeWeightedColimit.impredicative W
+      (pointwiseTypeWeightedColimit (W.flip.obj e) D).obj e :=
+  typeWeightedColimit.impredicative (W.flip.obj e)
     (D.flip.obj e)
 
 /-- Pointwise representable weighted colimits: at each
@@ -2447,15 +2447,15 @@ def pointwiseTypeWeightedColimit.impredicative
 `G.obj ((pointwiseTypeWeightedColimit W D).obj e)`.
 -/
 def pointwiseTypeWeightedColimit.representable
-    (W : Kᵒᵖ ⥤ Type v)
+    (W : Kᵒᵖ ⥤ (E ⥤ Type v))
     (D : K ⥤ (E ⥤ Type v)) (e : E)
     (G : Type v ⥤ Type v) :
-    (weightedLimitFunctor W (D.flip.obj e) ⟶
+    (weightedLimitFunctor (W.flip.obj e) (D.flip.obj e) ⟶
       G) ≃
       G.obj
-        ((pointwiseTypeWeightedColimit W D).obj
+        ((pointwiseTypeWeightedColimit (W.flip.obj e) D).obj
           e) :=
-  typeWeightedColimit.representable W
+  typeWeightedColimit.representable (W.flip.obj e)
     (D.flip.obj e) G
 
 /-- Pointwise impredicative coends via weighted
