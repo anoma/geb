@@ -27,7 +27,7 @@ namespace GebLean
 open CategoryTheory
 open CategoryTheory.Limits
 
-universe v u
+universe v u w
 
 variable {J : Type u} [Category.{v} J]
 
@@ -35,25 +35,25 @@ variable {J : Type u} [Category.{v} J]
 constructed as the subtype of families `(j : J) → (F.obj (op j)).obj j`
 satisfying the wedge condition: for every morphism `f : i ⟶ j`,
 `(F.obj (op i)).map f (x i) = (F.map f.op).app j (x j)`. -/
-def typeEnd (F : Jᵒᵖ ⥤ J ⥤ Type v) : Type (max u v) :=
+def typeEnd (F : Jᵒᵖ ⥤ J ⥤ Type w) : Type (max u w) :=
   { x : (j : J) → (F.obj (Opposite.op j)).obj j //
     ∀ {i j : J} (f : i ⟶ j),
       (F.obj (Opposite.op i)).map f (x i) =
         (F.map f.op).app j (x j) }
 
 /-- Projection from `typeEnd F` to the component at `j`. -/
-def typeEnd.proj (F : Jᵒᵖ ⥤ J ⥤ Type v) (j : J) :
+def typeEnd.proj (F : Jᵒᵖ ⥤ J ⥤ Type w) (j : J) :
     typeEnd F → (F.obj (Opposite.op j)).obj j :=
   fun x => x.val j
 
 section TypeEndWedge
 
-variable {J : Type v} [Category.{v} J]
+variable {J : Type u} [Category.{v} J]
 
 /-- The wedge with apex `typeEnd F` in `Type v`.
 The projections are `typeEnd.proj` and the wedge condition
 follows from the subtype predicate of `typeEnd`. -/
-def typeEndWedge (F : Jᵒᵖ ⥤ J ⥤ Type v) : Wedge F :=
+def typeEndWedge (F : Jᵒᵖ ⥤ J ⥤ Type (max u w)) : Wedge F :=
   Wedge.mk (typeEnd F) (fun j => typeEnd.proj F j)
     (fun {i j} f => by
       ext x
@@ -63,7 +63,7 @@ def typeEndWedge (F : Jᵒᵖ ⥤ J ⥤ Type v) : Wedge F :=
 of `F` in `Type v`).  Given any other wedge `s`, the
 unique morphism `s.pt → typeEnd F` packages the wedge
 projections into a compatible family. -/
-def typeEndWedge_isLimit (F : Jᵒᵖ ⥤ J ⥤ Type v) :
+def typeEndWedge_isLimit (F : Jᵒᵖ ⥤ J ⥤ Type (max u w)) :
     IsLimit (typeEndWedge F) :=
   Multifork.IsLimit.mk (typeEndWedge F)
     (fun s => fun x => ⟨fun j => s.ι j x,
@@ -75,7 +75,7 @@ def typeEndWedge_isLimit (F : Jᵒᵖ ⥤ J ⥤ Type v) :
         congr_fun (hm j) x))))
 
 /-- `typeEndWedge F` is a terminal wedge. -/
-def typeEndWedge_isTerminal (F : Jᵒᵖ ⥤ J ⥤ Type v) :
+def typeEndWedge_isTerminal (F : Jᵒᵖ ⥤ J ⥤ Type (max u w)) :
     IsTerminal (typeEndWedge F) :=
   (Cone.isLimitEquivIsTerminal _)
     (typeEndWedge_isLimit F)
@@ -95,7 +95,7 @@ For a morphism `f : i ⟶ j` and element
 `x : (F.obj (op j)).obj i`, identifies
 `⟨i, (F.map f.op).app i x⟩` with
 `⟨j, (F.obj (op j)).map f x⟩`. -/
-inductive typeCoendRel (F : Jᵒᵖ ⥤ J ⥤ Type v) :
+inductive typeCoendRel (F : Jᵒᵖ ⥤ J ⥤ Type w) :
     (Σ (j : J), (F.obj (Opposite.op j)).obj j) →
     (Σ (j : J), (F.obj (Opposite.op j)).obj j) → Prop
   | intro {i j : J} (f : i ⟶ j)
@@ -107,12 +107,12 @@ inductive typeCoendRel (F : Jᵒᵖ ⥤ J ⥤ Type v) :
 /-- The coend of a profunctor `F : Jᵒᵖ ⥤ J ⥤ Type v` in `Type`,
 constructed as a quotient of `Σ (j : J), (F.obj (op j)).obj j`
 by the cowedge relation `typeCoendRel`. -/
-def typeCoend (F : Jᵒᵖ ⥤ J ⥤ Type v) :
-    Type (max u v) :=
+def typeCoend (F : Jᵒᵖ ⥤ J ⥤ Type w) :
+    Type (max u w) :=
   Quot (typeCoendRel F)
 
 /-- Injection from the `j`-th component into `typeCoend F`. -/
-def typeCoend.inj (F : Jᵒᵖ ⥤ J ⥤ Type v) (j : J) :
+def typeCoend.inj (F : Jᵒᵖ ⥤ J ⥤ Type w) (j : J) :
     (F.obj (Opposite.op j)).obj j → typeCoend F :=
   fun x => Quot.mk _ ⟨j, x⟩
 
@@ -120,12 +120,12 @@ end TypeCoend
 
 section TypeCoendCowedge
 
-variable {J : Type v} [Category.{v} J]
+variable {J : Type u} [Category.{v} J]
 
 /-- The cowedge with apex `typeCoend F` in `Type v`.
 The injections are `typeCoend.inj` and the cowedge condition
 follows from `Quot.sound` applied to `typeCoendRel`. -/
-def typeCoendCowedge (F : Jᵒᵖ ⥤ J ⥤ Type v) :
+def typeCoendCowedge (F : Jᵒᵖ ⥤ J ⥤ Type (max u w)) :
     Cowedge F :=
   Cowedge.mk (typeCoend F) (fun j => typeCoend.inj F j)
     (fun {i j} f => by
@@ -135,7 +135,7 @@ def typeCoendCowedge (F : Jᵒᵖ ⥤ J ⥤ Type v) :
 /-- `typeCoendCowedge F` is a colimit cowedge (i.e., the
 coend of `F` in `Type v`). -/
 def typeCoendCowedge_isColimit
-    (F : Jᵒᵖ ⥤ J ⥤ Type v) :
+    (F : Jᵒᵖ ⥤ J ⥤ Type (max u w)) :
     IsColimit (typeCoendCowedge F) :=
   Multicofork.IsColimit.mk (typeCoendCowedge F)
     (fun s => Quot.lift (fun ⟨j, x⟩ => s.π j x)
@@ -151,7 +151,7 @@ def typeCoendCowedge_isColimit
 
 /-- `typeCoendCowedge F` is an initial cowedge. -/
 def typeCoendCowedge_isInitial
-    (F : Jᵒᵖ ⥤ J ⥤ Type v) :
+    (F : Jᵒᵖ ⥤ J ⥤ Type (max u w)) :
     IsInitial (typeCoendCowedge F) :=
   (Cocone.isColimitEquivIsInitial _)
     (typeCoendCowedge_isColimit F)
