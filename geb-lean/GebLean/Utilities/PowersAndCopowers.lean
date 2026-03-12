@@ -374,15 +374,15 @@ instance typesHasPowers : HasPowers.{u + 1, u} (Type u) where
 
 section PresheafPowersAndCopowers
 
-universe u₁ v₁
+universe u₁ v₁ w₁
 
 variable {E : Type u₁} [Category.{v₁} E]
 
 /-- Presheaf categories have copowers:
 the copower `S ·. G` is the functor `e ↦ S × G.obj e`. -/
 instance presheafHasCopowers :
-    HasCopowers (E ⥤ Type v₁) where
-  copower (S : Type v₁) (G : E ⥤ Type v₁) :=
+    HasCopowers (E ⥤ Type w₁) where
+  copower (S : Type w₁) (G : E ⥤ Type w₁) :=
     { obj := fun e => S × G.obj e
       map := fun f ⟨s, x⟩ => (s, G.map f x) }
   inj S G s :=
@@ -402,8 +402,8 @@ instance presheafHasCopowers :
 /-- Presheaf categories have powers:
 the power `G ^. S` is the functor `e ↦ (S → G.obj e)`. -/
 instance presheafHasPowers :
-    HasPowers (E ⥤ Type v₁) where
-  power (G : E ⥤ Type v₁) (S : Type v₁) :=
+    HasPowers (E ⥤ Type w₁) where
+  power (G : E ⥤ Type w₁) (S : Type w₁) :=
     { obj := fun e => S → G.obj e
       map := fun f h s => G.map f (h s) }
   proj G S s :=
