@@ -2291,13 +2291,13 @@ theorem pshContraBarrLiftRel_related
       c ((F.map α.op).app c a) =
     (F.map (R.ι ≫ pshProdSnd P P').op).app
       c ((F.map β.op).app c b)
-  have key_fst :
+  have comm_fst :
       α.op ≫ (R.ι ≫
         pshProdFst P P').op =
       (S.ι ≫ pshProdFst Q Q').op ≫
         φ.op := by
     rw [← op_comp, ← op_comp, hfst]
-  have key_snd :
+  have comm_snd :
       β.op ≫ (R.ι ≫
         pshProdSnd P P').op =
       (S.ι ≫ pshProdSnd Q Q').op ≫
@@ -2312,7 +2312,7 @@ theorem pshContraBarrLiftRel_related
     change (F.map α.op ≫
       F.map (R.ι ≫ pshProdFst P P').op).app
         c a = _
-    rw [← F.map_comp, key_fst, F.map_comp]
+    rw [← F.map_comp, comm_fst, F.map_comp]
     rfl
   have rhs_eq :
       (F.map (R.ι ≫ pshProdSnd P P').op).app
@@ -2323,7 +2323,7 @@ theorem pshContraBarrLiftRel_related
     change (F.map β.op ≫
       F.map (R.ι ≫ pshProdSnd P P').op).app
         c b = _
-    rw [← F.map_comp, key_snd, F.map_comp]
+    rw [← F.map_comp, comm_snd, F.map_comp]
     rfl
   rw [lhs_eq, rhs_eq]
   exact congrArg
@@ -3640,6 +3640,181 @@ def pshIhomYonedaULiftIso :
       simp only [Category.assoc])
 
 end YonedaPreservesIhomULift
+
+section BarrLiftComposition
+
+/-!
+## Barr lift and relation composition
+
+The composition of presheaf relations can be
+defined via existential quantification
+(`pshRelComp`) or via a pullback (`pshProdOverComp`).
+The two agree at the relation level.
+
+The Barr extension `pshBarrLiftRel G` interacts
+with relation composition via the pullback
+structure of `pshProdOverComp`: the Barr lift of
+the pullback-based composition maps into both
+`pshBarrLiftRel G (pshRelComp R S)` and
+`pshRelComp (pshBarrLiftRel G R)
+  (pshBarrLiftRel G S)`.
+
+Neither containment reverses in general:
+`pshBarrLiftRel G (pshRelComp R S) ≤
+  pshRelComp (pshBarrLiftRel G R)
+    (pshBarrLiftRel G S)` requires decomposing
+witnesses in `G((R;S).toFunctor)` into matched
+pairs in `G(R.toFunctor)` and `G(S.toFunctor)`,
+which needs a natural section of the epi from
+the pullback presheaf to the composite relation
+presheaf.  The reverse containment requires
+combining matched pairs from `G(R.toFunctor)`
+and `G(S.toFunctor)` into a single witness in
+`G(pullback)`, which needs `G` to preserve the
+pullback over `Q`.
+-/
+
+variable {C : Type u} [Category.{v} C]
+
+/-- The range of the pullback-based composition
+`pshProdOverComp` agrees with the existential-based
+composition `pshRelComp`. -/
+theorem pshProdOverToRel_comp
+    {P Q W : Cᵒᵖ ⥤ Type w}
+    (R : PshRel P Q) (S : PshRel Q W) :
+    pshProdOverToRel
+      (pshProdOverComp
+        (Over.mk R.ι) (Over.mk S.ι)) =
+    pshRelComp R S := by
+  ext c ⟨p, w'⟩
+  simp only [pshProdOverToRel, Subfunctor.range,
+    Set.mem_range, pshRelComp]
+  constructor
+  · rintro ⟨z, hz⟩
+    set f := R.ι ≫ pshProdSnd P Q
+    set g := S.ι ≫ pshProdFst Q W
+    set r := (presheafPullbackFst f g).app c z
+    set s := (presheafPullbackSnd f g).app c z
+    have heq : f.app c r = g.app c s :=
+      congr_fun (congr_app
+        (presheafPullbackCondition f g) c) z
+    simp only [f, g, NatTrans.comp_app,
+      types_comp_apply] at heq
+    have hp : (pshProdFst P Q).app c
+        (R.ι.app c r) = p := by
+      have h := congr_arg Prod.fst hz
+      simp only [pshProdOverComp, Over.mk_hom,
+        pshProdLift, FunctorToTypes.prod] at h
+      exact h
+    have hw : (pshProdSnd Q W).app c
+        (S.ι.app c s) = w' := by
+      have h := congr_arg Prod.snd hz
+      simp only [pshProdOverComp, Over.mk_hom,
+        pshProdLift, FunctorToTypes.prod] at h
+      exact h
+    refine ⟨(pshProdSnd P Q).app c
+      (R.ι.app c r), ?_, ?_⟩
+    · rw [← hp]
+      change (R.ι.app c r) ∈ R.obj c
+      exact r.prop
+    · rw [heq, ← hw]
+      change (S.ι.app c s) ∈ S.obj c
+      exact s.prop
+  · rintro ⟨q, hR, hS⟩
+    exact ⟨⟨(⟨(p, q), hR⟩, ⟨(q, w'), hS⟩),
+      rfl⟩, rfl⟩
+
+/-- The Barr lift of the pullback-based composition
+is contained in the Barr lift of the existential
+composition: `pshBarrLift G (pshProdOverComp R S)`
+has range in `pshBarrLiftRel G (pshRelComp R S)`.
+This follows from the general containment
+`pshProdOverToRel_pshBarrLift_le` and the equality
+`pshProdOverToRel_comp`. -/
+theorem pshBarrLift_comp_le_barrLiftRel_comp
+    {P Q W : Cᵒᵖ ⥤ Type w}
+    (G : (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w))
+    (R : PshRel P Q) (S : PshRel Q W) :
+    pshProdOverToRel
+      (pshBarrLift G
+        (pshProdOverComp
+          (Over.mk R.ι) (Over.mk S.ι))) ≤
+    pshBarrLiftRel G (pshRelComp R S) := by
+  rw [← pshProdOverToRel_comp R S]
+  exact pshProdOverToRel_pshBarrLift_le G
+    (pshProdOverComp (Over.mk R.ι) (Over.mk S.ι))
+
+/-- The Barr lift of the pullback-based composition
+is contained in the relational composition of
+individual Barr lifts.  From a witness
+`z ∈ G(R ×_Q S)`, the pullback projections yield
+`G.map(pb_fst)(z) ∈ G(R.toFunctor)` and
+`G.map(pb_snd)(z) ∈ G(S.toFunctor)` matching over
+`G(Q)` via `presheafPullbackCondition`. -/
+theorem pshBarrLift_comp_le_relComp_barrLiftRel
+    {P Q W : Cᵒᵖ ⥤ Type w}
+    (G : (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w))
+    (R : PshRel P Q) (S : PshRel Q W) :
+    pshProdOverToRel
+      (pshBarrLift G
+        (pshProdOverComp
+          (Over.mk R.ι) (Over.mk S.ι))) ≤
+    pshRelComp
+      (pshBarrLiftRel G R)
+      (pshBarrLiftRel G S) := by
+  intro c ⟨a, b⟩ hmem
+  simp only [pshProdOverToRel, Subfunctor.range,
+    Set.mem_range] at hmem
+  obtain ⟨z, hz⟩ := hmem
+  set pb_f := R.ι ≫ pshProdSnd P Q
+  set pb_g := S.ι ≫ pshProdFst Q W
+  -- Witnesses for Barr lift membership
+  set wR :=
+    (G.map (presheafPullbackFst pb_f pb_g)).app
+      c z with hwR
+  set wS :=
+    (G.map (presheafPullbackSnd pb_f pb_g)).app
+      c z with hwS
+  -- Extract component equalities from hz
+  have ha := congr_arg Prod.fst hz
+  dsimp [pshBarrLift,
+    FunctorToTypes.prod.lift] at ha
+  simp only [pshProdOverComp, Over.mk_hom,
+    FunctorToTypes.prod.lift_fst] at ha
+  have hb := congr_arg Prod.snd hz
+  dsimp [pshBarrLift,
+    FunctorToTypes.prod.lift] at hb
+  simp only [pshProdOverComp, Over.mk_hom,
+    FunctorToTypes.prod.lift_snd] at hb
+  refine ⟨(G.map (R.ι ≫ pshProdSnd P Q)).app
+    c wR, ?_, ?_⟩
+  · -- (a, q) ∈ pshBarrLiftRel G R
+    rw [show a = (G.map (R.ι ≫
+        pshProdFst P Q)).app c wR from by
+      rw [hwR, ← ha]
+      simp only [G.map_comp, NatTrans.comp_app,
+        types_comp_apply]; rfl]
+    exact pshBarrLiftRel_mem_of_map G R wR
+  · -- (q, b) ∈ pshBarrLiftRel G S
+    rw [show b = (G.map (S.ι ≫
+        pshProdSnd Q W)).app c wS from by
+      rw [hwS, ← hb]
+      simp only [G.map_comp, NatTrans.comp_app,
+        types_comp_apply]; rfl]
+    rw [show (G.map (R.ι ≫ pshProdSnd P Q)).app
+        c wR =
+      (G.map (S.ι ≫ pshProdFst Q W)).app
+        c wS from by
+      rw [hwR, hwS]
+      have comm := congr_arg
+        (fun f => (G.map f).app c z)
+        (presheafPullbackCondition pb_f pb_g)
+      simp only [G.map_comp, NatTrans.comp_app,
+        types_comp_apply] at comm
+      exact comm]
+    exact pshBarrLiftRel_mem_of_map G S wS
+
+end BarrLiftComposition
 
 section TypeRelations
 
