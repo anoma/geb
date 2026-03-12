@@ -14,17 +14,15 @@ presheaf).  All downstream files compile with no warnings.
 - Core definitions (`PshRel`, `pshRelId`, `pshRelComp`,
   `pshRelGraph`, `pshRelDagger`, `pshRelRelated`) rewritten
   to use `Subfunctor`.
-- `pshBarrLiftSkel`: changed from `Skeleton.lift` to
+- `pshBarrLiftRel` (formerly `pshBarrLiftSkel`): changed
+  from `Skeleton.lift` to
   `pshProdOverToRel (pshBarrLift G (Over.mk R.ι))`.
-- `pshBarrLiftSkel_graph`: rewritten using
+- `pshBarrLiftRel_graph` (formerly
+  `pshBarrLiftSkel_graph`): rewritten using
   `pshProdOverToRel_iso` and `pshProdOverToRel_graph`.
-- `pshBarrLiftSkel_related`: rewritten using
-  `pshRelRelated_toPshProdOverRelated` and
-  `pshProdOverRelated_topshRelRelated` helpers.
-- `pshArrowRelSkel`: changed from `Skeleton.lift2` to
+- `pshArrowRel` (formerly `pshArrowRelSkel`): changed
+  from `Skeleton.lift2` to
   `pshProdOverToRel (pshArrowRel ...)`.
-- `pshArrowRelSkel_related`: rewritten using the same
-  helper lemmas.
 - Helper lemmas added: `pshRelGraph_ι_fst_iso`,
   `pshRelGraph_ι_snd`, `pshProdOverToRel_iso`,
   `pshProdOverToRel_graph`,

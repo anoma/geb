@@ -1,4 +1,4 @@
-# Workstream: Parametric Copresheaf Topos
+# Workstream: Parametric Polymorphism via PshRelEdge
 
 ## Status
 
@@ -6,386 +6,449 @@ Active
 
 ## Context
 
-Develop the general theory of parametric polymorphism via the
-copresheaf topos `PshParametricPresheaf C = PshRelSpanObj C => Type`.
-This workstream concerns the category-theoretically generic
-constructions only (PshRelDouble, YonedaRel, PshRelSpanObj,
-and the copresheaf topos), not the exploratory inductive
-constructions (TypeExpr, PshTypeExpr, fullRelInterp).
+Develop the general theory of parametric polymorphism via
+the edge category `PshRelEdge C` and its reflective
+embedding into the presheaf topos `[WalkingSpan, PSh(C)]`.
 
-See `docs/parametric-copresheaf-topos.md` for the conceptual
-framework.
+`PshRelEdge C` is the category of presheaf relations:
+objects are triples `(P, Q, R : PshRel P Q)`, morphisms
+are pairs of natural transformations preserving
+relatedness.  This is a standard double-categorical
+construction (the horizontal edge category of the double
+category of relations internal to `PSh(C)`), enriched
+over a presheaf topos.
 
-### Alternate characterizations
+### Relationship to Wadler's framework
 
-The copresheaf topos `PshParametricPresheaf C` is defined over
-`PshRelSpanObj C`, which forgets most of the underlying
-category's morphisms and only recovers a notion of
-parametricity once a limit is taken. We have developed
-alternate characterizations that are more categorically
-natural:
+The primary goal is to match each concept in Wadler's
+"Theorems for free!" (1989) and the Reasonably Polymorphic
+blog post with a generalized version using `PshRelEdge C`
+and `[WalkingSpan, PSh(C)]`.  See the Wadler correspondence
+section below for the concept mapping.
 
-- **Edge category `PshRelEdge C`**: triples
-  `(P, Q, R : PshRel P Q)` with morphisms preserving
-  relatedness.  Has exponentials
-  `(FunctorHom, FunctorHom, pshArrowRel)`, finite
-  limits/colimits, and a strong subobject classifier.
-  (`PshRelEdgeExp.lean`, `PshRelEdgeLimits.lean`,
-  `PshRelEdgeSOClassifier.lean`)
+### Why PshRelEdge (not PshRelSpanObj)
 
-- **Reflective subcategory of a presheaf topos**:
-  `PshRelEdge C` embeds fully faithfully into
-  `WalkingSpan ⥤ PSh(C)` (the functor category of
-  span-shaped diagrams in presheaves) via
-  `pshRelEdgeInclusionFunctor`, with left adjoint
-  `pshRelEdgeSepFunctor` (separation by image of the
-  pairing map).  The reflector preserves finite products,
-  and the inclusion is an exponential ideal.
-  (`PshRelEdgeInclusion.lean`)
+The former approach used `PshRelSpanObj C`, a category
+whose objects are type-nodes and relation-nodes with only
+projection morphisms.  That category ignores most morphisms
+of the underlying category `C` and only recovers
+parametricity after taking a limit or colimit.
 
-- **Span bicategory**: `PshSpanBicat C` provides the
-  bicategory of spans in `PSh(C)`, with 1-cells as spans
-  `P <- R -> Q` (encoded as `Over (P x Q)`), span
-  composition via presheaf pullback, and all 12 bicategory
-  coherence axioms.  (`PshSpanBicategory.lean`)
+`PshRelEdge C` is categorically natural: it respects
+morphisms from the start, has a rich structure (finite
+limits/colimits, exponentials, strong subobject
+classifier), and embeds reflectively into the presheaf
+topos `[WalkingSpan, PSh(C)]` (itself a presheaf category
+by uncurrying).
 
-- **SpanFamily characterization**: `SpanFamily V E D`
-  provides an equivalent unpacked view of parametric
-  functors as families of spans indexed by a graph, with
-  `spanFamilyEquiv` giving the equivalence.
-  (`Utilities/SpanFamily.lean`)
-
-This gives a three-layer picture:
+The three-layer picture:
 
 ```text
-PSh(C x I^op)       presheaf topos (exact)
-     |
-     | separation reflector (pshRelEdgeSepFunctor)
-     v
-PshRelEdge C        separated presheaves (quasitopos)
-     |
-     | sheafification (conjectural)
-     v
-Sh_J(C x I^op)     sheaf topos (exact)
+[WalkingSpan, PSh(C)]  presheaf topos (exact)
+       |
+       | pshRelEdgeSepFunctor (separation reflector)
+       v
+  PshRelEdge C          quasitopos (separated presheaves)
+       |
+       | sheafification (conjectural)
+       v
+  Sh_J(C x I^op)       sheaf topos (exact)
 ```
+
+### Relationship to old frameworks
+
+- **PshRelSpanObj / PshParametricFunctor /
+  PshParametricPresheaf**: Still exist in
+  `PshRelSpanDiagram.lean` but are being superseded by
+  `PshRelEdge`.  Definitions that target `PshRelSpanObj`
+  (such as the covariant/contravariant/profunctor
+  embeddings) need PshRelEdge analogues.
+- **PshTypeExpr / PshParametricFamily**: Exploratory
+  inductive constructions.  Not standard category theory;
+  we aim to handle arbitrary categories rather than
+  specific inductive type systems.
+- **SpanFamily**: Equivalent unpacked view of copresheaves
+  on `PshRelSpanObj`.  Useful for IEP analysis but
+  secondary to the PshRelEdge approach.
 
 ## Completed
 
-- [x] **Double category of presheaf relations.** `PshRelDouble`
-  with identity, composition, dagger, graph functor, and all
-  double category laws. (`PshRelDouble.lean`)
-  Ref: `docs/parametric-copresheaf-topos.md` Section 1.
+### Double category and relation infrastructure
 
-- [x] **Yoneda relation double category.** `YonedaRelDouble`
-  with identity, composition, graph functor, and double
-  category laws. Terminal specialization to `Discrete PUnit`.
-  (`YonedaRelDouble.lean`)
-  Ref: `docs/parametric-copresheaf-topos.md` Section 2.
-
-- [x] **Relational span category.** `PshRelSpanObj C` with
-  category instance, collage characterization
-  (`pshRelSpanCollageIso`), and terminal specialization
-  (`relSpanPshRelSpanIso`). (`PshRelSpanDiagram.lean`)
-  Ref: `docs/parametric-copresheaf-topos.md` Section 3.
-
-- [x] **Covariant embedding (fully faithful).**
-  `pshCovariantEmbedding` with `pshCovariantEmbedding_fullyFaithful`.
-  (`PshRelSpanDiagram.lean`)
-  Ref: `docs/parametric-copresheaf-topos.md` Section 5.1.
-
-- [x] **Contravariant embedding (fully faithful).**
-  `pshContravariantEmbedding` with
-  `pshContravariantEmbedding_fullyFaithful`.
-  (`PshRelSpanDiagram.lean`)
-  Ref: `docs/parametric-copresheaf-topos.md` Section 5.2.
-
-- [x] **Profunctor embedding.**
-  `pshProfunctorEmbedding`.
-  (`PshRelSpanDiagram.lean`)
-  Ref: `docs/parametric-copresheaf-topos.md` Section 5.3.
-
-- [x] **Paranatural embedding (faithful).**
-  `pshParanaturalProfEmbedding` with
-  `pshParanaturalProfEmbedding_faithful`.
-  (`PshRelSpanDiagram.lean`)
-  Ref: `docs/parametric-copresheaf-topos.md` Section 5.4.
-
-- [x] **Barr extension infrastructure.** Covariant
-  (`pshBarrLiftSkel`), contravariant
-  (`pshContraBarrLiftSkel`), profunctor
-  (`pshProfBarrLiftSkel`), with graph preservation
-  (`pshBarrLiftSkel_graph`). (`PshRelDouble.lean`)
-  Ref: `docs/parametric-copresheaf-topos.md` Section 1.3.
-
-- [x] **Arrow relation.** `pshArrowRelSkel` with
-  relatedness preservation (`pshArrowRelSkel_related`).
+- [x] **Double category of presheaf relations.**
+  `PshRelDouble` with `pshRelId`, `pshRelComp`,
+  `pshRelGraph`, `pshRelDagger`, `pshRelRelated`,
+  `pshRelGraphFunctor`, and all double category laws.
   (`PshRelDouble.lean`)
-  Ref: `docs/parametric-copresheaf-topos.md` Section 1.4.
 
-- [x] **Parametricity-paranaturality separation.**
-  `divApplyId_parametric`, `divApplyId_not_paranatural`,
-  `divParametric_not_implies_divParanatural`.
-  (`ParanaturalTopos.lean`)
-  Ref: `docs/parametric-copresheaf-topos.md` Section 7.
+- [x] **Yoneda relation double category.**
+  `YonedaRelDouble` with identity, composition, graph
+  functor, double category laws, and terminal
+  specialization.  (`YonedaRelDouble.lean`)
 
-- [x] **Fully faithful diagram functor.**
-  `pshRelSpanDiagramFunctor` with full faithfulness, for
-  PshTypeExpr. (`PshRelSpanDiagram.lean`)
-  Ref: `docs/parametric-copresheaf-topos.md` Section 5.
+- [x] **Barr extension (relation lifting).** Covariant
+  `pshBarrLiftRel`, contravariant `pshContraBarrLiftRel`,
+  profunctor `pshProfBarrLiftRel`, with graph
+  preservation `pshBarrLiftRel_graph`.
+  (`PshRelDouble.lean`)
 
-- [x] **Type-level equivalences.** `relSpanPshRelSpanIso`,
-  `parametricFunctorEquiv`, `parametricCopresheafEquiv`.
-  (`PshRelSpanDiagram.lean`)
-  Ref: `docs/parametric-copresheaf-topos.md` Section 5.5.
+- [x] **Arrow relation.** `pshArrowRel` with relatedness
+  preservation.  (`PshRelDouble.lean`)
 
-- [x] **T1. Presheaf exponentials.** General presheaf
-  categories have `MonoidalClosed` structure via
-  `functorCatMonoidalClosed` (`Presheaf.lean`).  For
-  `PshRelEdge C`, the exponential is explicitly
-  `(FunctorHom, FunctorHom, pshArrowRel)`
-  (`PshRelEdgeExp.lean`).  Yoneda preserves exponentials
-  via `pshIhomYonedaIso` (`PshRelDouble.lean`).
+- [x] **Barr lift as edge endofunctor.**
+  `pshBarrLiftEdgeFunctor G : PshRelEdge C => PshRelEdge C`.
+  (`PshRelDouble.lean`)
 
-- [x] **T2. Subobject classifiers.** General presheaf
-  subobject classifier `pshClassifierData` and copresheaf
-  classifier `coPshClassifierData` (`Presheaf.lean`).
-  Strong subobject classifier `pshRelEdgeSOClassifier`
-  for `PshRelEdge C` (`PshRelEdgeSOClassifier.lean`).
+### PshRelEdge category structure
 
-- [x] **T3. Sections of exponentials.**
-  `functorHomSectionToNatTrans` with roundtrip
-  `functorHomSection_roundTrip_left` and
-  `functorHomSection_roundTrip_right` showing sections
-  of `[F, G]` correspond to natural transformations
-  `F => G`. (`Presheaf.lean`)
+- [x] **Named category instance.** `pshRelEdgeCategory`
+  (`PshRelDouble.lean`)
 
-- [x] **T4. Identity extension for embedded copresheaves.**
-  `HasIdentityExtension` structure with
-  `pshCovariantSpanData_iep`,
-  `pshContravariantSpanData_iep` for both embedding
-  families.  Non-IEP counterexample
-  `pshFullProductData_not_iep`.
-  (`SpanFamily.lean`, `PshRelSpanDiagram.lean`)
-  See also `identity-extension-property.md`.
+- [x] **Finite limits and colimits.** Terminal, initial,
+  binary products, binary coproducts, equalizers,
+  coequalizers.  (`PshRelEdgeLimits.lean`)
 
-- [x] **T5. Identity extension characterization.**
-  `HasIdentityExtension.monicProjectionAt` shows IEP
-  implies monic projections.
-  `spanFamilyHom_ext_vertexMap` shows parametricity
-  subsumes naturality.  Fibration structure via
-  `pshRelCartesianLift` and
-  `IsPreFibered pshRelBoundaryFunctor`.
-  (`SpanFamily.lean`, `PshRelDouble.lean`)
-  See also `identity-extension-property.md`.
-
-- [x] **T20. Name the category instance.** Give the
-  `Category` instance on `PshRelEdge C` the explicit
-  name `pshRelEdgeCategory`. (`PshRelDouble.lean`)
-
-- [x] **T21. Exponential in PshRelEdge C.** Show the
-  exponential equals
-  `(FunctorHom, FunctorHom, pshArrowRel)`.
-  Verify the exponential adjunction directly.
+- [x] **Exponential.** `(FunctorHom, FunctorHom,
+  pshArrowRel)` with exponential adjunction.
   (`PshRelEdgeExp.lean`)
-  Ref: `docs/parametric-copresheaf-topos.md` Section 11.5.
 
-- [x] **T21b. Finite limits and colimits in PshRelEdge C.**
-  Terminal, initial, binary coproducts, equalizers,
-  coequalizers. (`PshRelEdgeLimits.lean`)
+- [x] **Strong subobject classifier.**
+  `pshRelEdgeSOClassifier` = `(Omega, Omega, full)`.
+  Classifying morphism `pshRelEdgeSOClassify`, uniqueness
+  `pshRelEdgeSOClassify_unique`, and pullback
+  characterization `pshRelEdgeSOClassify_pullback`.
+  (`PshRelEdgeSOClassifier.lean`)
 
-- [x] **T22. Identity extension as functor property.**
-  Show `pshRelIdentFunctor` preserves exponentials
-  (the IEP as a cartesian closed functor property).
-  (`PshRelEdgeIdentPreservation.lean`)
-  Ref: `docs/parametric-copresheaf-topos.md` Section 11.6.
+### Identity section functor (Wadler: identity extension)
 
-- [x] **T23. pshRelIdentFunctor preserves limits.**
-  Show `pshRelIdentFunctor` preserves products,
-  terminal object, and equalizers.
-  (`PshRelEdgeIdentPreservation.lean`)
-  Ref: `docs/parametric-copresheaf-topos.md` Section 11.6.
+- [x] **pshRelIdentFunctor.** Sends `P` to
+  `(P, P, pshRelId P)`.  (`PshRelDouble.lean`)
 
-- [x] **T23b. pshRelIdentFunctor preserves colimits.**
-  Show `pshRelIdentFunctor` preserves coproducts,
-  initial object, and coequalizers.
+- [x] **Preserves exponentials.**
+  `pshRelIdentFunctor_preserves_exp`: the IEP as a
+  cartesian closed functor property.
   (`PshRelEdgeIdentPreservation.lean`)
 
-- [x] **T23c. pshBarrLiftRel as endofunctor.**
-  `pshBarrLiftEdgeFunctor G : PshRelEdge C ⥤ PshRelEdge C`.
-  (`PshRelDouble.lean`)
+- [x] **Preserves limits.** Products, terminal, equalizers.
+  (`PshRelEdgeIdentPreservation.lean`)
 
-- [x] **T24. Inclusion into PSh(C x I^op).** Construct
-  the fully faithful inclusion
-  `PshRelEdge C -> [WalkingSpan, PSh(C)]`.
+- [x] **Preserves colimits.** Coproducts, initial,
+  coequalizers.  (`PshRelEdgeIdentPreservation.lean`)
+
+- [x] **Factorization through Over Omega.**
+  `pshOverOmegaEdgeFunctor : Over Omega => PshRelEdge C`
+  sends `(X, chi)` to `(X, X, Delta_chi)`.
+  `pshTruthLabelFunctor : PSh(C) => Over Omega` sends
+  `X` to `(X, true . !_X)`.
+  `pshRelIdentFunctor_factorization :
+  pshTruthLabelFunctor >> pshOverOmegaEdgeFunctor =
+  pshRelIdentFunctor`.
+  (`PshRelEdgeOverOmega.lean`)
+
+  The reverse map `(P, Q, R) |-> (P x Q, chi_R)` from
+  `PshRelEdge C` to `Over Omega` is NOT functorial:
+  the `Over.w` condition requires sieve equality
+  (biconditional), while `PshRelEdge` morphisms only
+  give the forward direction.
+
+### Reflective embedding into presheaf topos
+
+- [x] **Fully faithful inclusion.**
   `pshRelEdgeInclusionFunctor` with
   `pshRelEdgeInclusionFullyFaithful`.
-  Separation reflector `pshRelEdgeSepFunctor` with
-  adjunction `pshRelEdgeSepAdjunction`.
   (`PshRelEdgeInclusion.lean`)
-  Ref: `docs/parametric-copresheaf-topos.md` Section 11.10.
 
-- [x] **T24b. Reflector preserves finite products.**
-  `pshRelEdgeSepPreservesBinaryProducts`,
-  `pshRelEdgeSepPreservesTerminal`,
+- [x] **Separation reflector.**
+  `pshRelEdgeSepFunctor` with adjunction
+  `pshRelEdgeSepAdjunction`.
+  (`PshRelEdgeInclusion.lean`)
+
+- [x] **Reflector preserves finite products.**
   `pshRelEdgeSepPreservesFiniteProducts`,
-  `pshRelEdgeReflectorPreservesBinaryProducts`.
-  `CartesianMonoidalCategory (PshRelEdge C)` via
-  `ofChosenFiniteProducts`.
-  `ExponentialIdeal (pshRelEdgeInclusionFunctor C)`.
-  `MonoidalClosed` for functor categories into
-  presheaf categories via currying equivalence
-  (`functorCatMonoidalClosed` in `Presheaf.lean`).
-  (`PshRelEdgeInclusion.lean`, `Presheaf.lean`)
-  Ref: `docs/parametric-copresheaf-topos.md`
-  Section 11.4.
+  `CartesianMonoidalCategory (PshRelEdge C)`.
+  (`PshRelEdgeInclusion.lean`)
 
-- [x] **T24c. Inclusion preserves coproducts.**
-  `inclusionPreservesColimitPairEdge`,
+- [x] **Exponential ideal.**
+  `ExponentialIdeal (pshRelEdgeInclusionFunctor C)`.
+  (`PshRelEdgeInclusion.lean`)
+
+- [x] **Inclusion preserves coproducts.**
   `inclusionPreservesBinaryCoproducts`,
-  `inclusionPreservesInitialObj`,
   `inclusionPreservesInitial`.
   (`PshRelEdgeInclusion.lean`)
 
-- [x] **T24d. Span bicategory.**
+### Span bicategory
+
+- [x] **PshSpanBicategory.**
   `pshSpanBicategory : Bicategory (PshSpanBicat C)` with
-  all 12 coherence axioms.  Span composition via presheaf
-  pullback, whiskering via pullback lifting.
+  all 12 coherence axioms.
   (`PshSpanBicategory.lean`)
+
+### Presheaf infrastructure
+
+- [x] **Presheaf exponentials.** `functorCatMonoidalClosed`
+  for general presheaf categories.  (`Presheaf.lean`)
+
+- [x] **Subobject classifiers.** `pshClassifierData`,
+  `coPshClassifierData`.  (`Presheaf.lean`)
+
+- [x] **Sections of exponentials.**
+  `functorHomSectionToNatTrans` with roundtrips.
+  (`Presheaf.lean`)
+
+### Old-framework results (PshRelSpanObj-based)
+
+These are completed in the old framework but need
+PshRelEdge analogues to be considered done for the new
+approach:
+
+- [x] (old) **Relational span category.**
+  `PshRelSpanObj C`, `pshRelSpanCollageIso`,
+  `relSpanPshRelSpanIso`.
+  (`PshRelSpanDiagram.lean`)
+
+- [x] (old) **Covariant embedding (fully faithful).**
+  `pshCovariantEmbedding` into `PshRelSpanObj`.
+  (`PshRelSpanDiagram.lean`)
+
+- [x] (old) **Contravariant embedding (fully faithful).**
+  `pshContravariantEmbedding` into `PshRelSpanObj`.
+  (`PshRelSpanDiagram.lean`)
+
+- [x] (old) **Profunctor embedding.**
+  `pshProfunctorEmbedding` into `PshRelSpanObj`.
+  (`PshRelSpanDiagram.lean`)
+
+- [x] (old) **Paranatural embedding (faithful).**
+  `pshParanaturalProfEmbedding` into `PshRelSpanObj`.
+  (`PshRelSpanDiagram.lean`)
+
+- [x] (old) **Identity extension for SpanFamily.**
+  `HasIdentityExtension`, `pshCovariantSpanData_iep`,
+  `pshContravariantSpanData_iep`.
+  (`SpanFamily.lean`, `PshRelSpanDiagram.lean`)
+
+- [x] (old) **Parametricity-paranaturality separation.**
+  `divApplyId_parametric`, `divApplyId_not_paranatural`.
+  (`ParanaturalTopos.lean`)
 
 ## Tasks
 
-### Graph restriction and free theorems
+### Wadler correspondence (new)
 
-- [ ] **T6. Graph subcategory.** Define the subcategory of
-  `PshRelSpanObj C` generated by graph relations
-  `pshRelGraph alpha` for natural transformations
-  `alpha : P => Q`. Copresheaves on this subcategory
-  impose only the wedge/naturality condition, not full
-  parametricity.
-  Ref: `docs/parametric-copresheaf-topos.md` Section 10.4.
+Formalize the Wadler/"Theorems for free!" correspondence
+using `PshRelEdge C` and `[WalkingSpan, PSh(C)]`.
 
-- [ ] **T7. Graph restriction functor.** Define the
-  restriction functor from `PshParametricPresheaf C` to
-  copresheaves on the graph subcategory (T6). Show that
-  this forgets the "extra" parametricity data beyond
-  naturality.
+- [ ] **W1. Graph restriction to naturality.** Formalize
+  the reduction from parametricity to naturality when
+  relations are restricted to graphs.  Given an edge
+  morphism `(alpha, beta)` between identity edges
+  `(P, P, Delta_P)` and `(Q, Q, Delta_Q)`, the
+  relatedness square forces `alpha = beta`, recovering
+  a single natural transformation.  More generally,
+  for `pshBarrLiftEdgeFunctor G` applied to graph
+  edges, the Barr extension of a graph is a graph
+  (`pshBarrLiftRel_graph`), giving Wadler's "free
+  theorem" reduction.
+  Wadler: Section 3.1 (rearrangements commute with map).
 
-- [ ] **T8. Free theorem derivation.** For copresheaves in
-  the image of `pshCovariantEmbedding`, show that
-  restricting to graph relations yields the naturality
-  condition. Connect to `pshBarrLiftSkel_graph`.
-  Ref: `docs/parametric-copresheaf-topos.md` Section 6.
+- [ ] **W2. Rearrangement theorem.** For `r : ∀X. X* -> X*`
+  (generalized: a section of the exponential edge
+  `[(P, P, Delta_P), (G P, G P, Delta_{G P})]`), derive
+  the commutativity `G(alpha) . r_P = r_Q . G(alpha)`
+  for all `alpha : P => Q`.  This is the presheaf-level
+  generalization of Wadler Section 3.1.
 
-### Sections of specific copresheaves
+- [ ] **W3. Map decomposition.** For `m : ∀X.∀Y.(X -> Y)
+  -> X* -> Y*`, derive `m(f) = f* . m(id)` (Wadler
+  Section 3.5).  Generalized: sections of the
+  exponential edge for the arrow-to-Barr-lift natural
+  transformation type decompose as Barr lift composed
+  with a rearrangement.
 
-- [ ] **T9. Sections of covariant copresheaves.** Show that
-  sections of `pshCovariantEmbedding.obj G` correspond to
-  (some known mathematical object -- likely "parametric
-  elements" of `G` in a suitable sense). At
-  `C = Discrete PUnit`, these should specialize to
-  sections of `covariantEmbedding.obj G` which are
-  natural-transformation-like.
+- [ ] **W4. Fold free theorem.** Formalize Wadler
+  Section 3.2/3.6: fold commutes with algebra
+  homomorphisms.  In our framework: the exponential
+  edge for the fold type forces the fold parametricity
+  condition.
 
-- [ ] **T10. Sections of contravariant copresheaves.** Same
-  for `pshContravariantEmbedding.obj F`.
+- [ ] **W5. Sort/nub conditional free theorems.**
+  Wadler Section 3.3: `sort` commutes with monotone
+  maps, `nub` commutes with injective maps.  In our
+  framework: the exponential edge for the sort type
+  has a conditional relatedness square (the relation
+  on the ordering/equality must preserve the relevant
+  structure).
 
-- [ ] **T11. Sections of profunctor copresheaves.** Same
-  for `pshProfunctorEmbedding.obj G`. At the type level,
-  these should relate to extranatural transformations or
-  wedge elements.
+- [ ] **W6. Filter decomposition.** Wadler Section 3.7:
+  filter commutes with maps that preserve the
+  predicate.  Generalized in PshRelEdge.
 
-### Relation composition
+- [ ] **W7. Polymorphic equality impossibility.** Wadler
+  Section 3.4: no parametric inhabitant of
+  `∀X. X -> X -> Bool` equals polymorphic equality.
+  In PshRelEdge: the exponential edge for this type has
+  no section with the equality property.
 
-- [ ] **T12. Relation composition and copresheaves.**
-  Determine when a copresheaf `F` satisfies
-  `F(R_1 ; R_2) ~= F(R_1) ;_F F(R_2)` (composition of
-  the induced relations). This is the copresheaf-level
-  analogue of the question studied in
-  `RelInterpComposition.lean`. Characterize which
-  copresheaves have this property.
+- [ ] **W8. Yoneda isomorphism.** Wadler Section 3.8:
+  `∀X. (A -> X) -> X ≅ A`.  In PshRelEdge: the
+  exponential edge from a constant-A edge to the
+  identity edge has sections equivalent to elements of
+  `A`.  The inverse direction uses parametricity (the
+  section must be natural, hence determined by its
+  value at `id_A`).
+
+- [ ] **W9. Parametricity as tautology in PshRelEdge.**
+  Make precise that Wadler's Parametricity Theorem
+  (Section 6) is tautological in our framework: a
+  section of a copresheaf on `PshRelEdge` satisfies
+  parametricity by definition (it is the naturality
+  condition for the section).  Formalize the comparison
+  between Wadler's inductive proof and our definitional
+  approach.
+
+### Embedding endofunctors into PshRelEdge
+
+Port the embeddings from PshRelSpanObj to PshRelEdge.
+
+- [ ] **E1. Covariant Barr embedding into PshRelEdge.**
+  Given `G : PSh(C) => PSh(C)`, construct a functor
+  `PSh(C) => PshRelEdge C` sending `P` to
+  `(G P, G P, pshBarrLiftRel G (pshRelId P))`.
+  Show this factors through `pshRelIdentFunctor`
+  composed with `pshBarrLiftEdgeFunctor G`.
+
+- [ ] **E2. Contravariant Barr embedding into PshRelEdge.**
+  Analogous for `F : PSh(C)^op => PSh(C)` using
+  `pshContraBarrLiftRel`.
+
+- [ ] **E3. Profunctor Barr embedding into PshRelEdge.**
+  For `H : PSh(C)^op x PSh(C) => PSh(C)`, embed via
+  `pshProfBarrLiftRel`.
+
+- [ ] **E4. Sections of Barr-embedded edges.**
+  Characterize sections of the edges from E1-E3.  For
+  covariant `G`, sections should correspond to
+  "parametric elements" of `G`.  At `C = Discrete PUnit`,
+  these should specialize to type-level parametric
+  families.
+
+### Graph subcategory and naturality
+
+- [ ] **G1. Graph subcategory of PshRelEdge.** Define the
+  full subcategory of `PshRelEdge C` consisting of
+  graph edges `(P, Q, pshRelGraph alpha)`.  Show this
+  is equivalent to the arrow category `PSh(C)^{->}`.
+  Copresheaves on graph edges impose only naturality,
+  not full parametricity.
+
+- [ ] **G2. Graph restriction functor.** Define the
+  restriction from copresheaves on `PshRelEdge C` to
+  copresheaves on the graph subcategory (G1).  Show
+  this forgets parametricity data beyond naturality.
+
+- [ ] **G3. Free theorem derivation via graphs.** For edges
+  in the image of the covariant Barr embedding (E1),
+  show that restricting to graph edges yields the
+  naturality condition.  Uses `pshBarrLiftRel_graph`.
+
+### Relation composition in PshRelEdge
+
+- [ ] **R1. Relation composition and edge morphisms.**
+  Determine when an edge endofunctor `F` satisfies
+  `F(R_1 ; R_2) ≅ F(R_1) ;_F F(R_2)`.  This is the
+  edge-category analogue of `RelInterpComposition.lean`.
 
 ### Comparison with paranaturality
 
-- [ ] **T13. Paranatural embedding non-fullness.** Give a
-  concrete presheaf-level example of a parametric morphism
-  that is not paranatural (generalizing the type-level
-  divergence examples). This would demonstrate the
-  non-fullness of `pshParanaturalProfEmbedding` at the
-  presheaf level.
+- [ ] **C1. Paranatural vs parametric in PshRelEdge.**
+  Give a concrete edge-level example of a parametric
+  morphism that is not paranatural.  This generalizes
+  the type-level divergence (`divApplyId_parametric`,
+  `divApplyId_not_paranatural`) to presheaves.
 
-- [ ] **T14. Characterize the gap.** For a profunctor
-  `G : PSh(C)^op x PSh(C) => PSh(C)`, characterize the
-  difference between `Hom(pshProfunctorEmbedding.obj G, F)`
-  and `Paranat G (diagonal of F)`. The kernel of the
-  forgetful map from parametric to paranatural morphisms
-  measures the additional content of parametricity.
+- [ ] **C2. Characterize the parametric-paranatural gap.**
+  For a profunctor `H`, characterize the difference
+  between parametric and paranatural morphisms in
+  terms of edge-category structure.
 
-### Internal language
+### Internal language and type theory
 
-- [ ] **T15. Internal parametricity statement.** Formulate
-  the statement "every element of every type is parametric"
-  in the internal language of the copresheaf topos and
-  verify it holds. This is the topos-internal version of
-  Wadler's Parametricity Theorem.
-  Ref: `docs/parametric-copresheaf-topos.md` Section 10.5.
+- [ ] **I1. Internal parametricity statement.** Formulate
+  "every element of every type is parametric" in the
+  internal language of `[WalkingSpan, PSh(C)]` and
+  verify it holds for elements in the image of the
+  inclusion from `PshRelEdge C`.
 
-- [ ] **T16. Directed type theory connection.** Investigate
+- [ ] **I2. Directed type theory connection.** Investigate
   the connection between the internal language of the
-  copresheaf topos and the directed type theory of
-  Neumann-Licata (POPL 2026). The copresheaf topos may
-  provide a semantic model.
-  Ref: `docs/parametric-copresheaf-topos.md` Section 10.5.
+  presheaf topos `[WalkingSpan, PSh(C)]` and
+  Neumann-Licata directed type theory (POPL 2026).
 
-### Yoneda extension
+### Structural results
 
-- [ ] **T17. Yoneda extension of sections.** Given a section
-  of a copresheaf restricted to representable presheaves
-  (via `yonedaULift`), extend it to all presheaves via
-  the Yoneda extension / density theorem. This would give
-  a choice-free forward bridge from type-level parametric
-  families to presheaf-level ones. (Connects to former
-  task P5b in `parametricity-free-theorems.md`.)
+- [ ] **S1. Sep_J equivalence.** Construct the equivalence
+  `PshRelEdge C ≅ Sep_J(C x I^op)` explicitly (walking
+  span I, topology J, separation).
 
-### Edge category quasitopos
-
-- [ ] **T25. Evaluation functors.** For each
-  relation `(P, Q, R)`, construct the evaluation functor
-  `eval_{P,Q,R} : PshParametricFunctor C E -> Spans(E)`
-  sending `F` to `(F(.typeNode P), F(.typeNode Q),
-  F(.relNode P Q R))` with projections `F(fstProj)`,
-  `F(sndProj)`. Investigate the profunctor assembling
-  these: `PshRelEdge(C)^op x PshParametricFunctor(C, E)
-  -> E`. Note: there is no single functor
-  `PshParametricPresheaf C -> PshRelEdge C` without
-  fixing a relation.
-  Ref: `docs/parametric-copresheaf-topos.md` Section 11.8.
-
-### Lattice-enriched sites
-
-- [ ] **T26. Lattice-enriched span site.** Investigate
-  adding Heyting algebra structure (inclusions R <= S)
-  to `PshRelSpanObj C` as morphisms between relation
-  nodes. Determine whether embedded copresheaves
-  satisfy monotonicity.
-  Ref: `docs/parametric-copresheaf-topos.md` Section 11.10.
-
-- [ ] **T27. Yoneda-restricted subobject site.** Define
-  the small site using `YonedaRel X Y` with lattice
-  and base-change structure. Investigate whether Kan
-  extension along Yoneda recovers parametric structure.
-  Ref: `docs/parametric-copresheaf-topos.md` Section 11.10.
-
-- [ ] **T28. Sep_J equivalence.** Construct the
-  equivalence `PshRelEdge C ~= Sep_J(C x I^op)`
-  explicitly (walking span I, topology J, separation).
-  Ref: `docs/parametric-copresheaf-topos.md` Section 11.2.
+- [ ] **S2. Yoneda extension.** Given a section restricted
+  to representable presheaves (via Yoneda), extend to
+  all presheaves via the density theorem.
 
 ### Documentation
 
-- [ ] **T18. Annotate PshRelSpanDiagram.lean.** Add
-  comments explaining the conceptual role of each
-  definition, referencing
-  `docs/parametric-copresheaf-topos.md`.
+- [ ] **D1. Annotate PshRelDouble.lean.** Add comments
+  explaining the Wadler correspondence for each
+  definition.
 
-- [ ] **T19. Annotate PshRelDouble.lean.** Same for the
-  double category infrastructure.
+- [ ] **D2. Annotate PshRelEdge files.** Add comments to
+  `PshRelEdgeExp.lean`, `PshRelEdgeLimits.lean`,
+  `PshRelEdgeSOClassifier.lean`,
+  `PshRelEdgeIdentPreservation.lean`,
+  `PshRelEdgeInclusion.lean`,
+  `PshRelEdgeOverOmega.lean` explaining their role in
+  the Wadler correspondence.
+
+- [ ] **D3. Update docs/parametric-copresheaf-topos.md.**
+  Rewrite to center on PshRelEdge rather than
+  PshRelSpanObj.
+
+## Wadler Correspondence
+
+- **Type as set**: presheaf `P : C^op => Type`
+- **Type as relation**: `pshRelId P` via
+  `pshRelIdentFunctor` (`PshRelDouble.lean`)
+- **Relation**: `PshRel P Q = Subfunctor(P x Q)`
+  (`PshRelDouble.lean:208`)
+- **Identity relation**: `pshRelId P`
+  (`PshRelDouble.lean:214`)
+- **Graph of function**: `pshRelGraph alpha`
+  (`PshRelDouble.lean:418`)
+- **Product relation**: edge product
+  (`PshRelEdgeLimits.lean`)
+- **Coproduct relation**: edge coproduct
+  (`PshRelEdgeLimits.lean`)
+- **List/functor relation**: `pshBarrLiftRel G R`
+  (`PshRelDouble.lean:1382`)
+- **Function relation**: `pshArrowRel R1 R2`
+  (`PshRelDouble.lean:2633`)
+- **Exponential edge**:
+  `(FunctorHom, FunctorHom, pshArrowRel)`
+  (`PshRelEdgeExp.lean`)
+- **Universal quantification**: section / limit
+- **Identity extension**: `pshRelIdentFunctor`
+  preserves structure
+  (`PshRelEdgeIdentPreservation.lean`)
+- **Parametricity Theorem**: naturality of sections
+  (tautological)
+- **Free theorem**: graph restriction
+  (tasks W1, G1-G3; planned)
+- **Blog: relations to bifunctors**: reflective
+  embedding (`PshRelEdgeInclusion.lean`)
+- **Subobject classifier**: `pshRelEdgeSOClassifier`
+  (`PshRelEdgeSOClassifier.lean`)
+- **Over Omega factorization**:
+  `pshRelIdentFunctor_factorization`
+  (`PshRelEdgeOverOmega.lean`)
+- **Fixpoints**: polynomial initial algebras
+  (`PolyAlg*.lean`)

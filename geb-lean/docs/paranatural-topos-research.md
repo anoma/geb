@@ -1,6 +1,15 @@
 # Paranatural Topos Research
 
-## Question
+> **Resolved.** The answer is: `PshRelEdge C` is a
+> quasitopos (separated presheaves in the presheaf
+> topos `[WalkingSpan, PSh(C)]`).  The ambient
+> presheaf topos is the exact completion.  The former
+> search for a topos of profunctors with paranatural
+> morphisms was resolved by the copresheaf/edge
+> category approach.  See
+> `.session/workstreams/parametric-copresheaf-topos.md`.
+
+## Question (historical)
 
 Is there a subcategory of profunctors with paranatural
 transformations as morphisms that forms a topos?

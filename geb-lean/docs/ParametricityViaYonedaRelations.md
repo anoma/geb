@@ -1,5 +1,14 @@
 # Parametricity via Yoneda Relations
 
+> **Partially superseded.** The analysis of the
+> Reynolds/Wadler correspondence here remains valid,
+> but the framework has shifted from `PshRelSpanObj`
+> copresheaves to `PshRelEdge C` (the edge category
+> of presheaf relations) with its reflective embedding
+> into `[WalkingSpan, PSh(C)]`.  See
+> `.session/workstreams/parametric-copresheaf-topos.md`
+> for the current framework and Wadler correspondence.
+
 ## Overview
 
 This document analyzes the relationship between Reynolds/Wadler

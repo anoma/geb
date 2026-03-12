@@ -29,7 +29,7 @@ presheaf `P x Q`. Concretely, `R` picks out, at each stage
 `c : C^op`, a subset of `P(c) x Q(c)`, compatibly with
 restriction maps.
 
-Code: `PshRel` (`PshRelDouble.lean:206`), defined as
+Code: `PshRel` (`PshRelDouble.lean:208`), defined as
 `Subfunctor (pshProdPresheaf P Q)`.
 
 ### 1.2 Double category structure
@@ -43,22 +43,22 @@ Presheaf relations form a double category `PshRelDouble`:
   `beta : Q => Q'` and vertical morphisms `R : PshRel P Q`,
   `S : PshRel P' Q'`, a square witnesses that `alpha` and
   `beta` map R-related pairs to S-related pairs
-  (`pshRelRelated`, `PshRelDouble.lean:682`)
+  (`pshRelRelated`, `PshRelDouble.lean`)
 
 Operations and laws:
 
 | Operation | Code | Line |
 | --------- | ---- | ---- |
-| Identity relation | `pshRelId` | 212 |
-| Relation composition | `pshRelComp` | 358 |
-| Graph of nat. trans. | `pshRelGraph` | 416 |
-| Dagger (transpose) | `pshRelDagger` | 535 |
-| Graph functor | `pshRelGraphFunctor` | 472 |
-| Left identity | `pshRelComp_id_left` | 371 |
-| Right identity | `pshRelComp_id_right` | 385 |
-| Associativity | `pshRelComp_assoc` | 399 |
-| Dagger involution | `pshRelDagger_dagger` | 541 |
-| Double cat. data | `pshRelDoubleData` | 917 |
+| Identity relation | `pshRelId` | 214 |
+| Relation composition | `pshRelComp` | |
+| Graph of nat. trans. | `pshRelGraph` | 418 |
+| Dagger (transpose) | `pshRelDagger` | |
+| Graph functor | `pshRelGraphFunctor` | 488 |
+| Left identity | `pshRelComp_id_left` | |
+| Right identity | `pshRelComp_id_right` | |
+| Associativity | `pshRelComp_assoc` | |
+| Dagger involution | `pshRelDagger_dagger` | |
+| Double cat. data | `pshRelDoubleData` | |
 
 All references in `GebLean/PshRelDouble.lean`.
 
@@ -66,33 +66,33 @@ All references in `GebLean/PshRelDouble.lean`.
 
 Given an endofunctor `G : PSh(C) => PSh(C)` and a relation
 `R : PshRel P Q`, the **Barr extension** (relation lifting)
-`pshBarrLiftSkel G R : PshRel (G P) (G Q)` produces the
+`pshBarrLiftRel G R : PshRel (G P) (G Q)` produces the
 relation whose witnesses are pairs `(G(pi_1)(w), G(pi_2)(w))`
 for `w` in the Barr lift of `R` through `G`.
 
 Variants:
 
-| Variant | Functor type | Code | Line |
-| ------- | ----------- | ---- | ---- |
-| Covariant | `PSh(C) => PSh(C)` | `pshBarrLiftSkel` | 999 |
-| Contravariant | `PSh(C)^op => PSh(C)` | `pshContraBarrLiftSkel` | 1494 |
-| Profunctor | `PSh(C)^op x PSh(C) => PSh(C)` | `pshProfBarrLiftSkel` | 1714 |
-| Arrow | internal hom | `pshArrowRelSkel` | 2158 |
+| Variant | Functor type | Code |
+| ------- | ----------- | ---- |
+| Covariant | `PSh(C) => PSh(C)` | `pshBarrLiftRel` |
+| Contravariant | `PSh(C)^op => PSh(C)` | `pshContraBarrLiftRel` |
+| Profunctor | `PSh(C)^op x PSh(C) => PSh(C)` | `pshProfBarrLiftRel` |
+| Arrow | internal hom | `pshArrowRel` |
 
 All in `GebLean/PshRelDouble.lean`.
 
 The Barr extension of a graph relation recovers the graph of
-the functor's action: `pshBarrLiftSkel_graph`
-(`PshRelDouble.lean:1186`).
+the functor's action: `pshBarrLiftRel_graph`
+(`PshRelDouble.lean:1580`).
 
 ### 1.4 Arrow relation
 
 Given relations `R_1 : PshRel P_1 Q_1` and
 `R_2 : PshRel P_2 Q_2`, the arrow relation
-`pshArrowRelSkel R_1 R_2` relates internal-hom elements
+`pshArrowRel R_1 R_2` relates internal-hom elements
 `f : P_1 => P_2` and `g : Q_1 => Q_2` when `f` maps
 R_1-related inputs to R_2-related outputs via `g`
-(`PshRelDouble.lean:2158`).
+(`PshRelDouble.lean:2633`).
 
 This is the presheaf-level analogue of Wadler's relational
 interpretation of function types.
@@ -583,17 +583,17 @@ exponential is computed explicitly:
 [(A₁, B₁, R₁), (A₂, B₂, R₂)]
   = (A₁.functorHom A₂,
      B₁.functorHom B₂,
-     pshArrowRelSkel R₁ R₂)
+     pshArrowRel R₁ R₂)
 ```
 
-where `pshArrowRelSkel R₁ R₂` relates `f` and `g`
+where `pshArrowRel R₁ R₂` relates `f` and `g`
 when `f` maps R₁-related inputs to R₂-related
 outputs via `g`. This is the presheaf-level
 analogue of Wadler's relational interpretation of
 function types (Section 11.5).
 
 The identity section functor preserves
-exponentials: `pshArrowRelSkel ΔA ΔB = Δ[A,B]`.
+exponentials: `pshArrowRel ΔA ΔB = Δ[A,B]`.
 Code: `pshRelIdentFunctor_preserves_exp`
 (`PshRelEdgeIdentPreservation.lean:141`).
 
@@ -753,7 +753,7 @@ An endofunctor `G : PSh(C) => PSh(C)` determines a
 copresheaf via the Barr extension:
 
 - `.typeNode P |-> G(P)`
-- `.relNode P Q R |-> pshBarrLiftSkel G R`
+- `.relNode P Q R |-> pshBarrLiftRel G R`
 
 This embedding is **fully faithful**: natural
 transformations between endofunctors correspond
@@ -772,7 +772,7 @@ determines a copresheaf via the contravariant Barr
 extension (pullback along relation projections):
 
 - `.typeNode P |-> F(op P)`
-- `.relNode P Q R |-> pshContraBarrLiftSkel F R`
+- `.relNode P Q R |-> pshContraBarrLiftRel F R`
 
 This embedding is also **fully faithful**.
 
@@ -787,7 +787,7 @@ A profunctor `G : PSh(C)^op x PSh(C) => PSh(C)`
 embeds via the profunctor Barr extension:
 
 - `.typeNode P |-> G(op P, P)` (diagonal)
-- `.relNode P Q R |-> pshProfBarrLiftSkel G R`
+- `.relNode P Q R |-> pshProfBarrLiftRel G R`
 
 Code: `pshProfunctorEmbedding`
 (`PshRelSpanDiagram.lean:1229`).
@@ -836,7 +836,7 @@ condition specializes to an equational constraint.
 
 The graph relation `pshRelGraph alpha`
 (`PshRelDouble.lean:416`) satisfies
-`pshBarrLiftSkel_graph` (`PshRelDouble.lean:1186`):
+`pshBarrLiftRel_graph` (`PshRelDouble.lean:1580`):
 the Barr extension of a graph relation is the graph of
 the functor's action. This means the relatedness witness
 degenerates to a function equation.
@@ -997,7 +997,7 @@ The exponential `[F, G]` in `PshParametricPresheaf C`
 exists by general topos theory. Its concrete description
 would show what "parametric function type" looks like at
 each stage and relation. This may connect to the arrow
-relation `pshArrowRelSkel` and the internal hom
+relation `pshArrowRel` and the internal hom
 `pshIhomProfMap`.
 
 ### 10.2 Identity extension
@@ -1220,10 +1220,10 @@ The exponential in `PshRelEdge C` of two objects
 [(A_1, B_1, R_1), (A_2, B_2, R_2)]
   = (A_1.functorHom A_2,
      B_1.functorHom B_2,
-     pshArrowRelSkel R_1 R_2)
+     pshArrowRel R_1 R_2)
 ```
 
-The arrow relation `pshArrowRelSkel R_1 R_2` relates
+The arrow relation `pshArrowRel R_1 R_2` relates
 `f : [A_1, A_2](c)` and `g : [B_1, B_2](c)` when `f`
 maps R_1-related inputs to R_2-related outputs via
 `g`. This is the presheaf-level analogue of Wadler's
@@ -1237,9 +1237,9 @@ and `psi : Q x B_1 => B_2` preserving
 internal hom adjunction in `PSh(C)`, this transposes to
 `alpha : P => [A_1, A_2]` and `beta : Q => [B_1, B_2]`
 mapping S-related pairs to
-`pshArrowRelSkel R_1 R_2`-related pairs.
+`pshArrowRel R_1 R_2`-related pairs.
 
-Code: `pshArrowRelSkel` and `pshIhomProfMap`
+Code: `pshArrowRel` and `pshIhomProfMap`
 (`PshRelDouble.lean`).
 
 ### 11.6 Identity extension as exponential preservation
@@ -1249,7 +1249,7 @@ The identity section functor
 `P` to the identity relation `(P, P, Delta_P)`.
 
 This functor preserves exponentials:
-`pshArrowRelSkel Delta_P Delta_Q = Delta_{[P, Q]}`.
+`pshArrowRel Delta_P Delta_Q = Delta_{[P, Q]}`.
 
 Verification: `(f, g)` is arrow-related at diagonal
 relations iff for all equal pairs `a = a'`,
@@ -1564,12 +1564,12 @@ the relational interpretations arising from the
 embeddings (covariant, contravariant, profunctor)
 satisfy monotonicity.
 
-For the covariant embedding, `pshBarrLiftSkel G R`
+For the covariant embedding, `pshBarrLiftRel G R`
 is monotone in `R` (image preserves subobject
 ordering). For the arrow relation, monotonicity
 in the output relation holds, but the input
 relation is contravariant (`R_1 <= R_1'` gives
-`pshArrowRelSkel R_1' R_2 <= pshArrowRelSkel R_1 R_2`).
+`pshArrowRel R_1' R_2 <= pshArrowRel R_1 R_2`).
 This means the lattice enrichment must be
 covariant for some relation-node morphisms and
 contravariant for others, reflecting the
@@ -1813,9 +1813,9 @@ ordered roughly by dependency:
   topology `J`, and the separation condition.
 
 - **(b)** Show the exponential in `PshRelEdge C`
-  equals `(FunctorHom, FunctorHom, pshArrowRelSkel)`.
+  equals `(FunctorHom, FunctorHom, pshArrowRel)`.
   Verify the exponential adjunction directly in
-  `PshRelEdge C`. Uses existing `pshArrowRelSkel`
+  `PshRelEdge C`. Uses existing `pshArrowRel`
   and `pshIhomProfMap` infrastructure.
 
 - **(c)** Show `pshRelIdentFunctor` preserves

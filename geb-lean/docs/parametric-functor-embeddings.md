@@ -1,5 +1,14 @@
 # Embeddings Into and Out of ParametricCopresheaf
 
+> **Superseded.** This document describes the type-level
+> `RelSpanObj`-based embedding framework.  The current
+> approach uses `PshRelEdge C` and
+> `[WalkingSpan, PSh(C)]` instead.  See
+> `.session/workstreams/parametric-copresheaf-topos.md`
+> for the current framework.  The embeddings described
+> here still exist in code but target the old
+> `PshRelSpanObj` category.
+
 ## Definition
 
 `ParametricFunctor E := RelSpanObj ⥤ E`, the

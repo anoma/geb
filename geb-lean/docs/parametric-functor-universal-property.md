@@ -1,5 +1,12 @@
 # Universal Property of ParametricFunctor
 
+> **Superseded.** This document describes universal
+> properties of the type-level `RelSpanObj`-based
+> framework.  The current approach uses `PshRelEdge C`
+> and `[WalkingSpan, PSh(C)]`.  See
+> `.session/workstreams/parametric-copresheaf-topos.md`
+> for the current framework.
+
 ## Context
 
 `ParametricFunctor E := RelSpanObj ⥤ E` is the
