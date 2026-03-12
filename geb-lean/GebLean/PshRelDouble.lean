@@ -2261,6 +2261,41 @@ theorem pshContraBarrLiftRel_related
   exact congrArg
     ((F.map φ.op).app c) hS
 
+/-- The contravariant Barr extension as a functor
+from the opposite of the edge category
+`PshRelEdge C` to `PshRelEdge C`. Given a
+contravariant endofunctor `F` on `PSh(C)`, produces
+a functor that applies `F` contravariantly to both
+source and target presheaves and extends `F` to
+relations via `pshContraBarrLiftRel`. -/
+def pshContraBarrLiftEdgeFunctor
+    (F :
+      (Cᵒᵖ ⥤ Type w)ᵒᵖ ⥤
+        (Cᵒᵖ ⥤ Type w)) :
+    (PshRelEdge.{u, v, w} C)ᵒᵖ ⥤
+    PshRelEdge.{u, v, w} C where
+  obj R :=
+    { src := F.obj (Opposite.op R.unop.src)
+      tgt := F.obj (Opposite.op R.unop.tgt)
+      edge :=
+        pshContraBarrLiftRel F R.unop.edge }
+  map f :=
+    { srcMap := F.map f.unop.srcMap.op
+      tgtMap := F.map f.unop.tgtMap.op
+      sq :=
+        pshContraBarrLiftRel_related
+          F f.unop.sq }
+  map_id R :=
+    VertEdgeHom.ext
+      (F.map_id (Opposite.op R.unop.src))
+      (F.map_id (Opposite.op R.unop.tgt))
+  map_comp f g :=
+    VertEdgeHom.ext
+      (F.map_comp
+        f.unop.srcMap.op g.unop.srcMap.op)
+      (F.map_comp
+        f.unop.tgtMap.op g.unop.tgtMap.op)
+
 end PshContraBarrExtension
 
 section PshProfBarrExtension
