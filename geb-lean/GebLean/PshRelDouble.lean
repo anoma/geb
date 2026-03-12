@@ -218,6 +218,33 @@ def pshRelId
     rintro ⟨_, _⟩ h
     exact congrArg (P.map f) h
 
+/-- The diagonal subfunctor `pshRelId P` is
+isomorphic to `P` via the first projection.
+The inverse sends `a` to the diagonal pair
+`(a, a)`. -/
+def pshRelIdIso
+    (P : Cᵒᵖ ⥤ Type w) :
+    (pshRelId P).toFunctor ≅ P where
+  hom := (pshRelId P).ι ≫ pshProdFst P P
+  inv :=
+    { app := fun c a => ⟨(a, a), rfl⟩
+      naturality := fun c d f => by
+        ext a; apply Subtype.ext
+        exact Prod.ext rfl rfl }
+  hom_inv_id := by
+    ext c ⟨⟨x, y⟩, (h : x = y)⟩
+    exact Subtype.ext (Prod.ext rfl h)
+  inv_hom_id := by ext; rfl
+
+/-- The two projections from the diagonal
+relation `pshRelId P` are equal. -/
+theorem pshRelId_fst_eq_snd
+    (P : Cᵒᵖ ⥤ Type w) :
+    (pshRelId P).ι ≫ pshProdFst P P =
+    (pshRelId P).ι ≫ pshProdSnd P P := by
+  ext c ⟨⟨_, _⟩, (h : _ = _)⟩
+  exact h
+
 /-- Projection from a proof-relevant relation
 (span into `P × Q`) to a subfunctor of `P × Q`,
 given by the image of the span morphism. -/
