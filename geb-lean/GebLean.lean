@@ -52,6 +52,7 @@ import GebLean.PshRelEdgeExp
 import GebLean.PshRelEdgeLimits
 import GebLean.PshRelEdgeIdentPreservation
 import GebLean.PshRelEdgeInclusion
+import GebLean.PshRelEdgeOverOmega
 import GebLean.PshRelEdgeSOClassifier
 import GebLean.PshRelSpanDiagram
 import GebLean.PshTypeExpr
