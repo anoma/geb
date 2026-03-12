@@ -2,7 +2,9 @@
 
 ## Status
 
-All three phases complete. Build and tests pass.
+Phases 1-3 complete. Phase 4 tasks 10a-10c (universe
+generalization) complete. Task 10d (Type v
+instantiation) remains.
 
 The nat iso and equivalence (Tasks 9b-9c) are
 parameterized by one hypothesis (`bwdFwd`) that
@@ -15,13 +17,26 @@ Discharging `bwdFwd` abstractly requires the
 enriched Yoneda identity for Church encodings.
 All abstract categorical approaches have been
 exhausted (see detailed analysis under Phase 3).
-Concrete instantiation for `Type v` is blocked by
-a universe constraint: the framework uses
-`{C : Type v} [Category.{v} C]` but
-`Type v : Type (v+1)`, and generalizing to
-`{C : Type u} [Category.{v} C]` is blocked by
-`typeEnd : Type (max u v)` needing to match
-`Type v` in `cowedgeHomEndEquiv`.
+
+### Universe generalization progress
+
+Recent commits generalized upstream dependencies:
+
+- `EndsAndCoends.lean`: `typeEnd` generalized
+  to `Type w` target, `J : Type u` index
+- `Weighted.lean`: `ordinaryHomIsoEndApex`
+  already uses `{C : Type u}`
+- `RestrictedCoendAsColimit.lean`: already uses
+  `{C : Type u} [Category.{v} C]`
+- `WeightedAlg.lean`: already uses
+  `{C : Type u} [Category.{v} C]`
+- `MendlerLambekEndPower.lean`: generalized to
+  `{C : Type u} [Category.{v} C]`
+
+All section variables, `HasTerminalWedge`,
+and `cowedgeHomEndEquiv` have been generalized.
+The remaining work is `Type v` instantiation
+(Task 10d).
 
 ## Context
 
@@ -1015,3 +1030,103 @@ Phase 2:
 - Task 8 composes existing equivalences rather than
   constructing a direct proof, to minimize new proof
   obligations.
+
+### Phase 4: Universe Generalization (10a-10c DONE)
+
+Generalize `MendlerLambekEndPower.lean` from
+`{C : Type v} [Category.{v} C]` to
+`{C : Type u} [Category.{v} C]` so that the
+framework can be instantiated for `C = Type v`
+(where `Type v : Type (v+1)`, requiring `u = v+1`).
+
+#### Analysis
+
+The obstacle was `cowedgeHomEndEquiv`, which returns
+`(c.pt ⟶ Y) ≃ typeEnd (P ⇓ Y)`. When `C : Type u`:
+
+- LHS `(c.pt ⟶ Y) : Type v` (morphism universe)
+- RHS `typeEnd (P ⇓ Y) : Type (max u v)`
+
+The previous implementation went through
+`ordinaryHomIsoEndApex`, which gives a categorical
+`≅` in `Type v` and requires the terminal wedge
+apex to also be in `Type v`. The `typeEndWedge`
+apex is in `Type (max u v)`, so this path fails
+when `u > v`.
+
+The resolution: `Equiv` (unlike `Iso`) is
+universe-polymorphic — `Equiv α β` allows
+`α : Sort u₁` and `β : Sort u₂` with `u₁ ≠ u₂`.
+So `(c.pt ⟶ Y) ≃ typeEnd (P ⇓ Y)` is well-typed
+at any universe levels. The equiv can be constructed
+directly from the coend universal property
+(`homOrdinaryWedge_isTerminal`) without going
+through `typeEndWedge`.
+
+#### Phase 4 tasks
+
+##### Task 10a: Generalize `HasTerminalWedge` (DONE)
+
+Changed `{J : Type v} [Category.{v} J]` to
+`{J : Type u} [Category.{v} J]` in the structure
+and all four methods (`map`, `map_ι`, `hom_ext`,
+`map_id`, `map_comp`).
+
+##### Task 10b: Rewrite `cowedgeHomEndEquiv` (DONE)
+
+Replaced the `ordinaryHomIsoEndApex`-based
+implementation with a direct `Equiv` construction:
+
+- `toFun`: uses `homOrdinaryWedge` legs to build
+  the compatible family in `typeEnd (P ⇓ Y)`
+- `invFun`: constructs a `PUnit.{v+1}` wedge
+  from the compatible family and lifts through
+  `Wedge.IsLimit.lift` (derived from
+  `homOrdinaryWedge_isTerminal`)
+- `left_inv`: by `Multifork.IsLimit.hom_ext`
+  (uniqueness of the lift)
+- `right_inv`: by `Wedge.IsLimit.lift_ι`
+  (projection of the lift)
+
+##### Task 10c: Generalize section variables (DONE)
+
+Changed all `{C : Type v} [Category.{v} C]` to
+`{C : Type u} [Category.{v} C]` (14 occurrences)
+throughout `MendlerLambekEndPower.lean`. The
+`typeEnd` elements now live in `Type (max u v)`
+instead of `Type v`; this is transparent to
+downstream code since `Equiv` bridges the gap.
+No downstream proof breakage occurred (the two
+`change` tactics referencing `homOrdinaryWedge`
+still work because `cowedgeHomEndEquiv.toFun`
+reduces through the same `homOrdinaryWedge` legs).
+
+##### Task 10d: Verify `Type v` instantiability
+
+After generalization, verify that the framework
+can at least be STATED for `C = Type v`. The
+`HasTerminalWedge` instances needed for `twInner`
+and `twOuter` require large limits in `Type v`
+that may need to be supplied as hypotheses or
+constructed for specific `G`.
+
+#### `Type v` instantiation obstacles
+
+Even after universe generalization, instantiating
+for `C = Type v` requires:
+
+1. `HasTerminalWedge (ihomPowerProf G pt Y)` for
+   each `Y : Type v` — an end in `Type v` of a
+   `(Type v)`-indexed profunctor. This is a large
+   limit. `Type v` lacks large limits in general.
+
+2. `HasTerminalWedge (churchProf G pt tw)` — the
+   outer end (Church encoding), same issue.
+
+These limits exist for specific `G` where the
+end has a small representative in `Type v`. For
+abstract `G`, they may need to be supplied as
+hypotheses alongside `bwdFwd`. The `bwdFwd`
+proof itself (for `Type v`) would follow from
+function extensionality once the framework is
+properly instantiated.

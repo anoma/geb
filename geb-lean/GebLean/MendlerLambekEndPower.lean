@@ -30,7 +30,7 @@ namespace GebLean
 open CategoryTheory
 open CategoryTheory.Limits
 
-universe v w
+universe u v w
 
 /-!
 ## Coend-End Duality for Initial Cowedges
@@ -43,27 +43,57 @@ isomorphic to the explicit end `typeEnd (P ⇓ Y)`.
 section CoendEndDuality
 
 variable
-  {C : Type v} [Category.{v} C]
+  {C : Type u} [Category.{v} C]
   {D : Type w} [Category.{v} D]
 
 /-- Coend-end duality for initial cowedges:
 given a coend cowedge `c` (initial in `Cowedge P`),
 `(c.pt ⟶ Y) ≃ typeEnd (P ⇓ Y)`.
 
-Combines `ordinaryHomIsoEndApex` (relating the
-coend apex hom to any terminal wedge apex) with
-`typeEndWedge_isTerminal` (making `typeEnd` the apex
-of a terminal wedge). -/
+The forward direction uses `homOrdinaryWedge` legs
+to build the compatible family. The inverse uses
+`Wedge.IsLimit.lift` to recover the morphism from
+the universal property. -/
 def cowedgeHomEndEquiv
     (P : Cᵒᵖ ⥤ C ⥤ D)
     {c : Cowedge (J := C) (C := D) P}
     (hc : IsInitial c) (Y : D) :
     (c.pt ⟶ Y) ≃ typeEnd (P ⇓ Y) :=
-  let iso := ordinaryHomIsoEndApex P hc Y
-    (typeEndWedge_isTerminal (P ⇓ Y))
-  ⟨iso.hom, iso.inv,
-   fun x => congr_fun iso.hom_inv_id x,
-   fun x => congr_fun iso.inv_hom_id x⟩
+  let tw := homOrdinaryWedge P c Y
+  let isLim : IsLimit tw :=
+    (Cone.isLimitEquivIsTerminal _).symm
+      (homOrdinaryWedge_isTerminal P hc Y)
+  { toFun := fun f =>
+      ⟨fun j => tw.ι j f,
+       fun {i} {j} g =>
+        congr_fun (tw.condition g) f⟩
+    invFun := fun x =>
+      Wedge.IsLimit.lift isLim
+        (fun j (_ : PUnit.{v + 1}) => x.val j)
+        (by intro i j g
+            exact funext (fun _ => x.property g))
+        PUnit.unit
+    left_inv := fun f₀ => by
+      dsimp only []
+      have h := Multifork.IsLimit.hom_ext
+        (hK := isLim)
+        (f := Wedge.IsLimit.lift isLim
+          (fun j (_ : PUnit.{v + 1}) =>
+            tw.ι j f₀)
+          (by intro i j g
+              exact funext (fun _ =>
+                congr_fun (tw.condition g) f₀)))
+        (g := fun _ => f₀)
+        (h := fun j => by
+          ext u; exact congr_fun
+            (Wedge.IsLimit.lift_ι isLim _ _ j)
+            u)
+      exact congr_fun h PUnit.unit
+    right_inv := fun x => by
+      apply Subtype.ext; ext j
+      exact congr_fun
+        (Wedge.IsLimit.lift_ι isLim _ _ j)
+        PUnit.unit }
 
 end CoendEndDuality
 
@@ -80,7 +110,7 @@ end:
 section EndFormula
 
 variable
-  {C : Type v} [Category.{v} C] [HasCopowers C]
+  {C : Type u} [Category.{v} C] [HasCopowers C]
   (G : Cᵒᵖ ⥤ C ⥤ C)
   [HasAllCopowerProfCoends G]
 
@@ -119,7 +149,7 @@ covariantly in `B`.
 section PowerEnd
 
 variable
-  {C : Type v} [Category.{v} C]
+  {C : Type u} [Category.{v} C]
   [HasCopowers C] [HasPowers C]
 
 /-- The power-slice profunctor: sends
@@ -193,7 +223,7 @@ equivalence on ends:
 section EndEquiv
 
 variable
-  {C : Type v} [Category.{v} C]
+  {C : Type u} [Category.{v} C]
   [HasCopowers C] [HasPowers C]
   (G : Cᵒᵖ ⥤ C ⥤ C) (pt Y : C)
 
@@ -320,7 +350,7 @@ of morphisms `G(A, A) ⟶ Y^(A ⟶ pt)`.
 section FinalEquiv
 
 variable
-  {C : Type v} [Category.{v} C]
+  {C : Type u} [Category.{v} C]
   [HasCopowers C] [HasPowers C]
   (G : Cᵒᵖ ⥤ C ⥤ C)
   [HasAllCopowerProfCoends G]
@@ -354,7 +384,7 @@ dinaturality.
 section PowerEndMendlerAlg
 
 variable
-  {C : Type v} [Category.{v} C]
+  {C : Type u} [Category.{v} C]
   [HasCopowers C] [HasPowers C]
   (G : Cᵒᵖ ⥤ C ⥤ C)
 
@@ -501,7 +531,7 @@ The equivalence applies `copowerPowerEquiv` componentwise:
 section MendlerPowerEndEquiv
 
 variable
-  {C : Type v} [Category.{v} C]
+  {C : Type u} [Category.{v} C]
   [HasCopowers C] [HasPowers C]
   (G : Cᵒᵖ ⥤ C ⥤ C)
 
@@ -726,7 +756,7 @@ power-end Mendler algebras and conventional algebras.
 section MendlerLambekEndPower
 
 variable
-  {C : Type v} [Category.{v} C]
+  {C : Type u} [Category.{v} C]
   [HasCopowers C] [HasPowers C]
   (G : Cᵒᵖ ⥤ C ⥤ C)
   [HasAllHomToProfCoends G]
@@ -759,7 +789,7 @@ section CopowerCoendGExt
 open HasAllCopowerProfCoends HasAllHomToProfCoends
 
 variable
-  {C : Type v} [Category.{v} C]
+  {C : Type u} [Category.{v} C]
   [HasCopowers C] [HasPowers C]
   (G : Cᵒᵖ ⥤ C ⥤ C)
   [HasAllCopowerProfCoends G]
@@ -827,7 +857,7 @@ This reindexes the power `Y^(B ⟶ pt₂)` to
 section PowerSliceReindex
 
 variable
-  {C : Type v} [Category.{v} C]
+  {C : Type u} [Category.{v} C]
   [HasCopowers C] [HasPowers C]
   (G : Cᵒᵖ ⥤ C ⥤ C) {pt₁ pt₂ : C}
   (h : pt₁ ⟶ pt₂) (Y : C)
@@ -907,7 +937,7 @@ open HasAllCopowerProfCoends HasAllHomToProfCoends
 open HasPowers
 
 variable
-  {C : Type v} [Category.{v} C]
+  {C : Type u} [Category.{v} C]
   [HasCopowers C] [HasPowers C]
   (G : Cᵒᵖ ⥤ C ⥤ C)
   [HasAllCopowerProfCoends G]
@@ -967,7 +997,7 @@ section ImpredicativeGExt
 open MonoidalClosed
 
 variable
-  {C : Type v} [Category.{v} C]
+  {C : Type u} [Category.{v} C]
   [MonoidalCategory C] [MonoidalClosed C]
   [HasPowers C]
 
@@ -975,7 +1005,7 @@ variable
 bundles a wedge together with a proof that it is a limit.
 This provides a computable end object. -/
 structure HasTerminalWedge
-    {J : Type v} [Category.{v} J]
+    {J : Type u} [Category.{v} J]
     (F : Jᵒᵖ ⥤ J ⥤ C) where
   wedge : Wedge F
   isLimit : IsLimit wedge
@@ -1082,7 +1112,7 @@ transformation `α : F ⟶ F'`, produce a morphism between
 the end objects by composing each projection with the
 diagonal component of `α` and lifting. -/
 def HasTerminalWedge.map
-    {J : Type v} [Category.{v} J]
+    {J : Type u} [Category.{v} J]
     {F F' : Jᵒᵖ ⥤ J ⥤ C}
     (tw : HasTerminalWedge F) (tw' : HasTerminalWedge F')
     (α : F ⟶ F') :
@@ -1143,7 +1173,7 @@ omit [MonoidalCategory C] [MonoidalClosed C]
   [HasPowers C] in
 @[simp]
 theorem HasTerminalWedge.map_ι
-    {J : Type v} [Category.{v} J]
+    {J : Type u} [Category.{v} J]
     {F F' : Jᵒᵖ ⥤ J ⥤ C}
     (tw : HasTerminalWedge F) (tw' : HasTerminalWedge F')
     (α : F ⟶ F') (j : J) :
@@ -1154,7 +1184,7 @@ theorem HasTerminalWedge.map_ι
 omit [MonoidalCategory C] [MonoidalClosed C]
   [HasPowers C] in
 theorem HasTerminalWedge.hom_ext
-    {J : Type v} [Category.{v} J]
+    {J : Type u} [Category.{v} J]
     {F : Jᵒᵖ ⥤ J ⥤ C}
     (tw : HasTerminalWedge F)
     {X : C} {f g : X ⟶ tw.wedge.pt}
@@ -1165,7 +1195,7 @@ theorem HasTerminalWedge.hom_ext
 omit [MonoidalCategory C] [MonoidalClosed C]
   [HasPowers C] in
 theorem HasTerminalWedge.map_id
-    {J : Type v} [Category.{v} J]
+    {J : Type u} [Category.{v} J]
     {F : Jᵒᵖ ⥤ J ⥤ C}
     (tw : HasTerminalWedge F) :
     tw.map tw (𝟙 F) = 𝟙 tw.wedge.pt := by
@@ -1176,7 +1206,7 @@ theorem HasTerminalWedge.map_id
 omit [MonoidalCategory C] [MonoidalClosed C]
   [HasPowers C] in
 theorem HasTerminalWedge.map_comp
-    {J : Type v} [Category.{v} J]
+    {J : Type u} [Category.{v} J]
     {F F' F'' : Jᵒᵖ ⥤ J ⥤ C}
     (tw : HasTerminalWedge F) (tw' : HasTerminalWedge F')
     (tw'' : HasTerminalWedge F'')
@@ -1483,7 +1513,7 @@ open MonoidalClosed MonoidalCategory
 open HasAllCopowerProfCoends HasAllHomToProfCoends
 
 variable
-  {C : Type v} [Category.{v} C]
+  {C : Type u} [Category.{v} C]
   [MonoidalCategory C] [MonoidalClosed C]
   [BraidedCategory C]
   [HasCopowers C] [HasPowers C]
@@ -2610,7 +2640,7 @@ open MonoidalClosed MonoidalCategory
 open HasAllCopowerProfCoends HasAllHomToProfCoends
 
 variable
-  {C : Type v} [Category.{v} C]
+  {C : Type u} [Category.{v} C]
   [MonoidalCategory C] [MonoidalClosed C]
   [BraidedCategory C]
   [HasCopowers C] [HasPowers C]
