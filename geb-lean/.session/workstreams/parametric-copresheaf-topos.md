@@ -476,50 +476,476 @@ Port the embeddings from PshRelSpanObj to PshRelEdge.
 
 ## Wadler Correspondence
 
-- **Type as set**: presheaf `P : C^op => Type`
-- **Type as relation**: `pshRelId P` via
-  `pshRelIdentFunctor` (`PshRelDouble.lean`)
-- **Relation**: `PshRel P Q = Subfunctor(P x Q)`
-  (`PshRelDouble.lean:208`)
-- **Identity relation**: `pshRelId P`
-  (`PshRelDouble.lean:214`)
-- **Graph of function**: `pshRelGraph alpha`
-  (`PshRelDouble.lean:418`)
-- **Product relation**: edge product
-  (`PshRelEdgeLimits.lean`)
-- **Coproduct relation**: edge coproduct
-  (`PshRelEdgeLimits.lean`)
-- **List/functor relation**: `pshBarrLiftRel G R`
-  (`PshRelDouble.lean:1382`)
-- **Function relation**: `pshArrowRel R1 R2`
-  (`PshRelDouble.lean:2633`)
-- **Exponential edge**:
-  `(FunctorHom, FunctorHom, pshArrowRel)`
-  (`PshRelEdgeExp.lean`)
-- **Universal quantification**: section / limit
-- **Identity extension**: `pshRelIdentFunctor`
-  preserves structure
-  (`PshRelEdgeIdentPreservation.lean`)
-- **Parametricity Theorem**: naturality of sections
-  (tautological)
-- **Free theorem**: graph restriction recovers
-  naturality (W1-W3, G1-G3)
-- **Fold free theorem**: catamorphism commutes with
-  algebra homomorphisms (W4)
-- **Conditional free theorem**: parametricity over
-  subcategories (W5-W6)
-- **Equality impossibility**: `∀X. X → X → β` is
-  constant (W7, `parametric_constant`)
-- **Yoneda via parametricity**: `∀X. (A → X) → X ≅ A`
-  (W8, `yoneda_via_parametricity`)
-- **Parametricity as tautology**: naturality = parametricity
-  (W9, `IsParametricSection`)
-- **Blog: relations to bifunctors**: reflective
-  embedding (`PshRelEdgeInclusion.lean`)
-- **Subobject classifier**: `pshRelEdgeSOClassifier`
-  (`PshRelEdgeSOClassifier.lean`)
-- **Over Omega factorization**:
-  `pshRelIdentFunctor_factorization`
-  (`PshRelEdgeOverOmega.lean`)
-- **Fixpoints**: polynomial initial algebras
-  (`PolyAlg*.lean`)
+Comprehensive mapping from Wadler's "Theorems for
+free!" (1989) and the Reasonably Polymorphic blog
+post to our presheaf-theoretic generalizations in
+`PshRelEdge C` and `[WalkingSpan, PSh(C)]`.
+
+Status legend: [done] = proved in Lean,
+[partial] = defined but incomplete,
+[open] = not yet formalized.
+
+### Section 2: Types as relations
+
+Wadler reads types as sets and as relations.
+Our generalization replaces sets with presheaves
+on an arbitrary category `C`, and relations with
+subfunctors of product presheaves.
+
+**Type as set.**
+Wadler: a type `A` is a set.
+Generalization: a presheaf `P : C^op => Type`.
+Status: [done] (foundational).
+
+**Type as relation (identity extension).**
+Wadler: each type `A` yields the identity
+relation `I_A = {(x,x) | x in A}`.
+Generalization: `pshRelId P` sends `P` to the
+diagonal subfunctor of `P x P`.
+`pshRelIdentFunctor` sends `P` to the edge
+`(P, P, pshRelId P)`.
+Lean: `pshRelId`, `pshRelIdentFunctor`.
+File: `PshRelDouble.lean`.
+Status: [done].
+
+**Relation between types.**
+Wadler: `A : A <=> A'` is `A ⊆ A x A'`.
+Generalization: `PshRel P Q = Subfunctor(P x Q)`,
+a sub-presheaf of the product presheaf.
+Lean: `PshRel`.
+File: `PshRelDouble.lean`.
+Status: [done].
+
+**Graph of a function.**
+Wadler: function `a : A -> A'` yields relation
+`{(x, a x) | x in A}`.
+Generalization: `pshRelGraph α` for `α : P ⟶ Q`.
+Lean: `pshRelGraph`.
+File: `PshRelDouble.lean`.
+Status: [done].
+
+**Product relation `A x B`.**
+Wadler: `((x,y),(x',y')) in A x B` iff
+`(x,x') in A` and `(y,y') in B`.
+Generalization: binary product in `PshRelEdge C`.
+Lean: `pshRelEdgeProd`.
+File: `PshRelEdgeLimits.lean`.
+Status: [done].
+
+**Coproduct relation.**
+Not in Wadler (System F lacks coproducts), but a
+natural extension.
+Generalization: binary coproduct in `PshRelEdge C`.
+Lean: `pshRelEdgeCoprod`.
+File: `PshRelEdgeLimits.lean`.
+Status: [done].
+
+**List/functor relation `A*`.**
+Wadler: `([x1,...,xn],[x1',...,xn']) in A*` iff
+each `(xi,xi') in A`. Specialized to functions,
+`a* = map a`.
+Generalization: `pshBarrLiftRel G R` (covariant
+Barr extension). For `G : PSh(C) => PSh(C)` and
+`R : PshRel P Q`, produces `PshRel (G P) (G Q)`
+via existential witnesses in `G(R.toFunctor)`.
+Lean: `pshBarrLiftRel`, `pshBarrLiftEdgeFunctor`.
+File: `PshRelDouble.lean`.
+Status: [done].
+
+**Function relation `A -> B`.**
+Wadler: `(f,f') in A -> B` iff for all
+`(x,x') in A`, `(f x, f' x') in B`.
+Generalization: `pshArrowRel R₁ R₂` using the
+internal hom of the presheaf category.
+Lean: `pshArrowRel`.
+File: `PshRelDouble.lean`.
+Status: [done].
+
+**Exponential edge.**
+The edge `(FunctorHom A B, FunctorHom A' B',
+pshArrowRel R_A R_B)` with the exponential
+adjunction in `PshRelEdge C`.
+Lean: `pshRelEdgeExp`, exponential adjunction.
+File: `PshRelEdgeExp.lean`.
+Status: [done].
+
+**Universal quantification `forall X. F(X)`.**
+Wadler: `(g,g') in forall X. F(X)` iff for all
+relations `A`, `(g_A, g'_{A'}) in F(A)`.
+Generalization: a section of a copresheaf on
+`PshRelEdge C`, or equivalently a natural
+transformation from the terminal copresheaf.
+Quantification over all relations becomes
+naturality over all edge morphisms.
+Lean: `IsParametricSection`,
+`parametricSectionToNatTrans`.
+File: `PshRelEdgeGraphRestriction.lean`.
+Status: [done].
+
+**Identity extension lemma.**
+Wadler (Section 2, implicit): the relational
+interpretation of a type constructor applied to
+the identity relation yields the identity
+relation. (`F(I_A) = I_{F(A)}`)
+Generalization: `pshRelIdentFunctor` preserves
+products, coproducts, exponentials, equalizers,
+coequalizers, terminal, and initial objects.
+Lean: `pshRelIdentFunctor_preserves_exp`,
+`pshRelIdentFunctor_preserves_prod`, etc.
+File: `PshRelEdgeIdentPreservation.lean`.
+Status: [done].
+
+**Contravariant Barr extension.**
+Not explicit in Wadler (the function-space
+relation handles contravariance), but needed for
+the general profunctor case.
+Generalization: `pshContraBarrLiftRel F R` for
+`F : PSh(C)^op => PSh(C)`.
+Lean: `pshContraBarrLiftRel`,
+`pshContraBarrLiftEdgeFunctor`.
+File: `PshRelDouble.lean`.
+Status: [done].
+
+**Profunctor Barr extension.**
+Wadler: the function-space relation `A -> B` is
+the combined contravariant-covariant case.
+Generalization: `pshProfBarrLiftRel G R` for
+`G : PSh(C)^op x PSh(C) => PSh(C)`, with identity
+preservation `pshProfBarrLiftRel_id`.
+Lean: `pshProfBarrLiftRel`,
+`pshProfBarrLiftRel_id`.
+File: `PshRelDouble.lean`.
+Status: [done].
+
+**Parametricity proposition.**
+Wadler: if `t : T` then `(t,t) in [[T]]`.
+Generalization: every natural transformation
+determines a parametric section (the condition is
+tautological in `PshRelEdge C`).
+Lean: `natTrans_isParametricSection`.
+File: `PshRelEdgeGraphRestriction.lean`.
+Status: [done].
+
+**Full parametricity (all relations).**
+Wadler: the relational interpretation quantifies
+over all relations, not just graphs of functions.
+Generalization:
+`natTrans_pshRelRelated_barrLiftRel` shows
+naturality of `σ : G ⟶ G` implies relatedness at
+every Barr-lifted relation (not just graphs).
+`natTransToBarrLiftEdgeEndo` lifts `σ` to an
+endomorphism of the full Barr lift edge functor.
+Lean: `natTrans_pshRelRelated_barrLiftRel`,
+`natTransToBarrLiftEdgeEndo`.
+Files: `PshRelDouble.lean`,
+`PshRelEdgeGraphRestriction.lean`.
+Status: [done].
+
+### Section 3: Parametricity applied
+
+**3.1 Rearrangements.**
+Wadler: for `r : forall X. X* -> X*`,
+`a* . r_A = r_{A'} . a*`.
+Generalization: `natTransToBarrEndo` /
+`barrEndoToNatTrans` establish a bijection between
+natural endomorphisms `G ⟶ G` and endomorphisms
+of the Barr embedding `pshBarrEmbedding G`.
+The forward direction derives the commutativity
+square from `pshBarrLiftRel_id_related_iff`.
+Lean: `natTransToBarrEndo`,
+`barrEndoToNatTrans`,
+`natTransToBarrEndo_barrEndoToNatTrans`,
+`barrEndoToNatTrans_natTransToBarrEndo`.
+File: `PshRelEdgeGraphRestriction.lean`.
+Task: W2.
+Status: [done].
+
+**3.2 Fold (catamorphism).**
+Wadler: if `(a,b)` form a homomorphism of
+algebras, then
+`b . fold(oplus) u = fold(otimes) u' . a*`.
+Generalization: `foldFreeTheorem_graph` shows the
+catamorphism of an initial `F`-algebra commutes
+with algebra homomorphisms.
+`foldFreeTheorem_barrLift_graph` takes the
+hypothesis in `pshRelRelated` form.
+Lean: `foldFreeTheorem_graph`,
+`foldFreeTheorem_pshRelRelated_graph`,
+`foldFreeTheorem_barrLift_graph`.
+File: `PshRelEdgeGraphRestriction.lean`.
+Task: W4.
+Status: [done].
+
+**3.3 Sort/nub (conditional free theorems).**
+Wadler: `sort` commutes with monotone maps; `nub`
+commutes with injective maps.
+Generalization: `conditional_freeTheorem_graph`
+shows that a family natural on a subclass of
+morphisms (determined by a predicate `P`) is
+related at Barr-lifted graphs of `P`-morphisms.
+`conditional_edge_freeTheorem` generalizes to
+edge predicates.
+Lean: `conditional_freeTheorem_graph`,
+`conditional_graph_implies_nat`,
+`conditional_edge_freeTheorem`.
+File: `PshRelEdgeGraphRestriction.lean`.
+Task: W5.
+Status: [done].
+
+**3.4 Polymorphic equality impossibility.**
+Wadler: polymorphic equality
+`(=) : forall X. X -> X -> Bool` cannot be defined
+in pure System F, because parametricity forces it
+to be constant.
+Generalization: `parametric_constant` shows any
+graph-natural family
+`σ : forall P c, P.obj c -> P.obj c -> β`
+satisfies `σ P c a b = σ P c a a`.
+`no_parametric_equality` specializes to Bool.
+Lean: `parametric_constant`,
+`parametric_constant_value`,
+`no_parametric_equality`.
+File: `PshRelEdgeGraphRestriction.lean`.
+Task: W7.
+Status: [done].
+
+**3.5 Map decomposition.**
+Wadler: every function of type
+`forall X Y. (X -> Y) -> X* -> Y*` is `map`
+composed with a rearranging function.
+Generalization: `MapFamily G` is a natural
+transformation from `Arrow.leftFunc ⋙ G` to
+`Arrow.rightFunc ⋙ G`.
+`mapFamilyDecompLeft`/`mapFamilyDecompRight`
+derive `m(α) = m(id) ≫ G.map α` and
+`m(α) = G.map α ≫ m(id)`.
+`mapFamilyToNatTrans`/`natTransToMapFamily` with
+roundtrips give the bijection.
+Lean: `MapFamily`, `mapFamilyDecompLeft`,
+`mapFamilyDecompRight`, `mapFamilyToNatTrans`,
+`natTransToMapFamily`.
+File: `PshRelEdgeGraphRestriction.lean`.
+Task: W3.
+Status: [done].
+
+**3.6 Fold decomposition.**
+Wadler: every function of type
+`forall X Y. (X -> Y -> Y) -> Y -> X* -> Y` can
+be expressed as `fold` composed with a
+rearranging function.
+Generalization: covered by the fold free theorem
+framework (W4). The decomposition follows from
+the catamorphism's universal property.
+Task: W4.
+Status: [done] (via general framework).
+
+**3.7 Filter.**
+Wadler: `filter` commutes with maps that preserve
+the predicate.
+Generalization: covered by the conditional free
+theorem framework (W5-W6), with `P` = "predicate-
+preserving".
+Task: W5-W6.
+Status: [done] (via general framework).
+
+**3.8 Yoneda isomorphism.**
+Wadler: `forall X. (A -> X) -> X` is isomorphic
+to `A`.
+Generalization: `yoneda_via_parametricity` shows a
+graph-natural family
+`σ : forall P, (A ⟶ P) -> forall c, P.obj c`
+satisfies `σ Q g c = g.app c (σ A (id_A) c)`,
+hence is determined by `σ A (id_A)`.
+Lean: `yoneda_via_parametricity`,
+`yoneda_embedding_natural`,
+`yoneda_parametricity_inverse`.
+File: `PshRelEdgeGraphRestriction.lean`.
+Task: W8.
+Status: [done].
+
+### Section 6: The parametricity theorem
+
+**Formal parametricity theorem.**
+Wadler: terms in related environments have related
+values (induction on type derivations).
+Generalization: in `PshRelEdge C`, parametricity
+is the condition that a section is natural with
+respect to edge morphisms. This holds by
+definition for natural transformations:
+`natTrans_isParametricSection`.
+The converse `parametricSectionToNatTrans` shows
+that parametric sections determine natural
+transformations.
+Lean: `IsParametricSection`,
+`natTrans_isParametricSection`,
+`isParametricSection_at`,
+`parametricSectionToNatTrans`.
+File: `PshRelEdgeGraphRestriction.lean`.
+Task: W9.
+Status: [done].
+
+### Blog post: "Review of Theorems for Free"
+
+**Relations specialized to functions become
+bifunctors.**
+Blog: when relation `A` is the graph of a function
+`a`, the product relation `A x B` becomes
+`bimap a b`, the list relation `A*` becomes `map a`.
+Generalization: `pshBarrLiftRel_graph` shows the
+Barr extension of a graph relation equals the
+graph of the mapped morphism. Graph restriction
+`graphRestrictionFunctor` recovers the arrow
+endofunctor.
+Lean: `pshBarrLiftRel_graph`,
+`pshBarrLiftEdge_graphNatIso`,
+`graphRestrictionFunctor`.
+File: `PshRelEdgeGraphRestriction.lean`.
+Tasks: W1, G1-G3.
+Status: [done].
+
+**Function relation = naturality square.**
+Blog: `(f,f') in A -> B` specialized to function
+graphs gives `f' . g = h . f`.
+Generalization:
+`pshBarrLiftRel_graph_related_iff` shows
+relatedness at graph edges is equivalent to the
+naturality/commutativity square.
+Lean: `pshBarrLiftRel_graph_related_iff`,
+`pshBarrLiftRel_graph_related_hetero_iff`.
+File: `PshRelEdgeGraphRestriction.lean`.
+Task: W1.
+Status: [done].
+
+**"All Haskell laws are category laws."**
+Blog conjecture: all Haskell laws are category
+laws in different categories.
+Generalization: `PshRelEdge C` is a quasitopos
+with a reflective embedding into the presheaf
+topos `[WalkingSpan, PSh(C)]`, and parametricity
+conditions correspond to naturality in this
+topos. The reflective embedding and exponential
+ideal property formalize the sense in which
+relational reasoning reduces to categorical
+reasoning.
+Lean: `pshRelEdgeInclusionFunctor`,
+`pshRelEdgeSepAdjunction`,
+`ExponentialIdeal`.
+File: `PshRelEdgeInclusion.lean`.
+Status: [done].
+
+### Figure 1: Examples of theorems from types
+
+**head, tail, (++), concat (list operations).**
+Wadler: `a . head_A = head_{A'} . a*`, etc.
+Generalization: instances of the rearrangement
+theorem (W2) for the list endofunctor.
+Status: [done] (via general framework).
+
+**fst, snd (product projections).**
+Wadler: `a . fst_{AB} = fst_{A'B'} . (a x b)`.
+Generalization: instances of naturality of
+product projections in `PshRelEdge C`.
+Status: [done] (via limits in PshRelEdgeLimits).
+
+**zip.**
+Wadler: `(a x b)* . zip_{AB} = zip_{A'B'} .
+(a* x b*)`.
+Generalization: would require formalizing the zip
+operation as a natural transformation between
+product-of-list and list-of-product presheaves.
+Status: [open] (not formalized as a specific
+instance, but follows from the general framework).
+
+**filter, sort, fold.**
+See Sections 3.2, 3.3, 3.7 above.
+
+**I (identity), K (constant).**
+Wadler: `a . I_A = I_{A'} . a`,
+`a (K_{AB} x y) = K_{A'B'} (a x) (b y)`.
+Generalization: instances of naturality of the
+identity and constant natural transformations.
+Status: [done] (via general framework; `I` is
+literally `id`, `K` is the projection from the
+product).
+
+### Infrastructure (beyond Wadler)
+
+**Double category of presheaf relations.**
+`pshRelId`, `pshRelComp`, `pshRelGraph`,
+`pshRelDagger`, `pshRelRelated`,
+`pshRelGraphFunctor`, and all double-category
+laws.
+File: `PshRelDouble.lean`.
+Status: [done].
+
+**Yoneda relation double category.**
+`YonedaRelDouble` with identity, composition,
+graph functor, double-category laws, and
+terminal specialization.
+File: `YonedaRelDouble.lean`.
+Status: [done].
+
+**PshRelEdge category structure.**
+Named instance `pshRelEdgeCategory`. Terminal,
+initial, binary products, binary coproducts,
+equalizers, coequalizers.
+File: `PshRelEdgeLimits.lean`.
+Status: [done].
+
+**Subobject classifier.**
+`pshRelEdgeSOClassifier = (Omega, Omega, full)`.
+Classifying morphism, uniqueness, and pullback
+characterization.
+File: `PshRelEdgeSOClassifier.lean`.
+Status: [done].
+
+**Reflective embedding into presheaf topos.**
+Fully faithful `pshRelEdgeInclusionFunctor`,
+separation reflector `pshRelEdgeSepFunctor`,
+adjunction, preservation of finite products,
+exponential ideal, preservation of coproducts.
+File: `PshRelEdgeInclusion.lean`.
+Status: [done].
+
+**Over Omega factorization.**
+`pshRelIdentFunctor = pshTruthLabelFunctor >>
+pshOverOmegaEdgeFunctor`.
+File: `PshRelEdgeOverOmega.lean`.
+Status: [done].
+
+**Span bicategory.**
+`pshSpanBicategory` with all 12 coherence axioms.
+File: `PshSpanBicategory.lean`.
+Status: [done].
+
+### Open directions
+
+**Relation composition in PshRelEdge.**
+When does `F(R_1 ; R_2) ≅ F(R_1) ;_F F(R_2)`?
+Task: R1.
+Status: [open].
+
+**Paranatural vs parametric in PshRelEdge.**
+Edge-level example of parametric-but-not-
+paranatural morphism, generalizing the type-level
+divergence (`divApplyId`).
+Tasks: C1, C2.
+Status: [open].
+
+**Internal parametricity statement.**
+Formulate "every element of every type is
+parametric" in the internal language of
+`[WalkingSpan, PSh(C)]`.
+Task: I1.
+Status: [open].
+
+**Sep_J equivalence.**
+`PshRelEdge C ≅ Sep_J(C x I^op)`.
+Task: S1.
+Status: [open].
+
+**Yoneda extension of sections.**
+Extend sections from representable presheaves to
+all presheaves via the density theorem.
+Task: S2.
+Status: [open].
