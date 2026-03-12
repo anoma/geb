@@ -1814,164 +1814,164 @@ end NinjaYonedaAdjunctions
 
 section PointwisePresheaf
 
-universe u₁
+universe u₁ v₁ w₁
 
 variable
   {K : Type u} [Category.{v} K]
-  {E : Type u₁} [Category.{v} E]
+  {E : Type u₁} [Category.{v₁} E]
 
 /-- The pointwise weighted limit presheaf: given
-`D : K ⥤ (E ⥤ Type v)` with weight `W : K ⥤ Type v`,
+`D : K ⥤ (E ⥤ Type w₁)` with weight `W : K ⥤ Type w₁`,
 produces the presheaf
 `e ↦ typeWeightedLimit W (D.flip.obj e)` in
-`E ⥤ Type v`.
+`E ⥤ Type w₁`.
 
-At each `e : E`, `D.flip.obj e : K ⥤ Type v` sends
+At each `e : E`, `D.flip.obj e : K ⥤ Type w₁` sends
 `j ↦ (D.obj j).obj e`, and the weighted limit
 consists of families `(j : K) → W.obj j → D(j)(e)`
 satisfying the wedge condition. -/
 def pointwiseTypeWeightedLimit
-    (W : K ⥤ Type v)
-    (D : K ⥤ (E ⥤ Type v)) :
-    E ⥤ Type (max u v) :=
+    (W : K ⥤ Type w₁)
+    (D : K ⥤ (E ⥤ Type w₁)) :
+    E ⥤ Type (max u w₁) :=
   D.flip ⋙ typeWeightedLimitFunctor W
 
 /-- The pointwise weighted colimit presheaf: given
-`D : K ⥤ (E ⥤ Type v)` with weight
-`W : Kᵒᵖ ⥤ Type v`, produces the presheaf
+`D : K ⥤ (E ⥤ Type w₁)` with weight
+`W : Kᵒᵖ ⥤ Type w₁`, produces the presheaf
 `e ↦ typeWeightedColimit W (D.flip.obj e)` in
-`E ⥤ Type v`. -/
+`E ⥤ Type w₁`. -/
 def pointwiseTypeWeightedColimit
-    (W : Kᵒᵖ ⥤ Type v)
-    (D : K ⥤ (E ⥤ Type v)) :
-    E ⥤ Type (max u v) :=
+    (W : Kᵒᵖ ⥤ Type w₁)
+    (D : K ⥤ (E ⥤ Type w₁)) :
+    E ⥤ Type (max u w₁) :=
   D.flip ⋙ typeWeightedColimitFunctor W
 
 /-- The pointwise end presheaf: given
-`P : Kᵒᵖ ⥤ K ⥤ (E ⥤ Type v)`, produces the presheaf
-`e ↦ typeEnd (P(−)(−)(e))` in `E ⥤ Type v`.
+`P : Kᵒᵖ ⥤ K ⥤ (E ⥤ Type w₁)`, produces the presheaf
+`e ↦ typeEnd (P(−)(−)(e))` in `E ⥤ Type w₁`.
 
 At each `e : E`, the profunctor sends
 `(op j, k) ↦ (P.obj (op j)).obj k |>.obj e`, and the
 end consists of compatible families satisfying the
 wedge condition at `e`. -/
 def pointwiseTypeEnd
-    (P : Kᵒᵖ ⥤ K ⥤ (E ⥤ Type v)) :
-    E ⥤ Type (max u v) :=
-  (P ⋙ flipFunctor K E (Type v)).flip ⋙
+    (P : Kᵒᵖ ⥤ K ⥤ (E ⥤ Type w₁)) :
+    E ⥤ Type (max u w₁) :=
+  (P ⋙ flipFunctor K E (Type w₁)).flip ⋙
     typeEndFunctor K
 
 /-- The pointwise coend presheaf: given
-`P : Kᵒᵖ ⥤ K ⥤ (E ⥤ Type v)`, produces the presheaf
-`e ↦ typeCoend (P(−)(−)(e))` in `E ⥤ Type v`. -/
+`P : Kᵒᵖ ⥤ K ⥤ (E ⥤ Type w₁)`, produces the presheaf
+`e ↦ typeCoend (P(−)(−)(e))` in `E ⥤ Type w₁`. -/
 def pointwiseTypeCoend
-    (P : Kᵒᵖ ⥤ K ⥤ (E ⥤ Type v)) :
-    E ⥤ Type (max u v) :=
-  (P ⋙ flipFunctor K E (Type v)).flip ⋙
+    (P : Kᵒᵖ ⥤ K ⥤ (E ⥤ Type w₁)) :
+    E ⥤ Type (max u w₁) :=
+  (P ⋙ flipFunctor K E (Type w₁)).flip ⋙
     typeCoendFunctor K
 
 /-- The equivalence that rearranges a triply-nested
 functor category by moving the evaluation parameter
 from innermost to outermost position:
-`(Kᵒᵖ ⥤ K ⥤ (E ⥤ Type v)) ≌
-  (E ⥤ Kᵒᵖ ⥤ K ⥤ Type v)`.
+`(Kᵒᵖ ⥤ K ⥤ (E ⥤ Type w₁)) ≌
+  (E ⥤ Kᵒᵖ ⥤ K ⥤ Type w₁)`.
 
 Built from two applications of `Functor.flipping`:
 first an inner flip (via `congrRight`) swapping
 `K` and `E`, then an outer flip swapping `Kᵒᵖ`
 and `E`. -/
 def profunctorDoubleFlipEquiv :
-    (Kᵒᵖ ⥤ K ⥤ (E ⥤ Type v)) ≌
-      (E ⥤ Kᵒᵖ ⥤ K ⥤ Type v) :=
+    (Kᵒᵖ ⥤ K ⥤ (E ⥤ Type w₁)) ≌
+      (E ⥤ Kᵒᵖ ⥤ K ⥤ Type w₁) :=
   (Functor.flipping (C := K) (D := E)
-    (E := Type v)).congrRight.trans
+    (E := Type w₁)).congrRight.trans
     Functor.flipping
 
 /-- The functorial pointwise weighted limit: a functor
-from the diagram category `K ⥤ (E ⥤ Type v)` to the
-presheaf category `E ⥤ Type v`, sending
+from the diagram category `K ⥤ (E ⥤ Type w₁)` to the
+presheaf category `E ⥤ Type w₁`, sending
 `D ↦ D.flip ⋙ typeWeightedLimitFunctor W`.
 
 At each `e : E`, this evaluates to the weighted limit
 `typeWeightedLimit W (D.flip.obj e)`. -/
 def pointwiseTypeWeightedLimitFunctor
-    (W : K ⥤ Type v) :
-    (K ⥤ (E ⥤ Type v)) ⥤
-      (E ⥤ Type (max u v)) :=
+    (W : K ⥤ Type w₁) :
+    (K ⥤ (E ⥤ Type w₁)) ⥤
+      (E ⥤ Type (max u w₁)) :=
   Functor.flipping.functor ⋙
-    (Functor.whiskeringRight E (K ⥤ Type v)
-      (Type (max u v))).obj
+    (Functor.whiskeringRight E (K ⥤ Type w₁)
+      (Type (max u w₁))).obj
       (typeWeightedLimitFunctor W)
 
 theorem pointwiseTypeWeightedLimitFunctor_obj
-    (W : K ⥤ Type v)
-    (D : K ⥤ (E ⥤ Type v)) :
+    (W : K ⥤ Type w₁)
+    (D : K ⥤ (E ⥤ Type w₁)) :
     (pointwiseTypeWeightedLimitFunctor
       (E := E) W).obj D =
       pointwiseTypeWeightedLimit W D :=
   rfl
 
 /-- The functorial pointwise weighted colimit: a functor
-from the diagram category `K ⥤ (E ⥤ Type v)` to the
-presheaf category `E ⥤ Type v`, sending
+from the diagram category `K ⥤ (E ⥤ Type w₁)` to the
+presheaf category `E ⥤ Type w₁`, sending
 `D ↦ D.flip ⋙ typeWeightedColimitFunctor W`. -/
 def pointwiseTypeWeightedColimitFunctor
-    (W : Kᵒᵖ ⥤ Type v) :
-    (K ⥤ (E ⥤ Type v)) ⥤
-      (E ⥤ Type (max u v)) :=
+    (W : Kᵒᵖ ⥤ Type w₁) :
+    (K ⥤ (E ⥤ Type w₁)) ⥤
+      (E ⥤ Type (max u w₁)) :=
   Functor.flipping.functor ⋙
-    (Functor.whiskeringRight E (K ⥤ Type v)
-      (Type (max u v))).obj
+    (Functor.whiskeringRight E (K ⥤ Type w₁)
+      (Type (max u w₁))).obj
       (typeWeightedColimitFunctor W)
 
 theorem pointwiseTypeWeightedColimitFunctor_obj
-    (W : Kᵒᵖ ⥤ Type v)
-    (D : K ⥤ (E ⥤ Type v)) :
+    (W : Kᵒᵖ ⥤ Type w₁)
+    (D : K ⥤ (E ⥤ Type w₁)) :
     (pointwiseTypeWeightedColimitFunctor
       (E := E) W).obj D =
       pointwiseTypeWeightedColimit W D :=
   rfl
 
 /-- The functorial pointwise end: a functor from the
-profunctor category `Kᵒᵖ ⥤ K ⥤ (E ⥤ Type v)` to the
-presheaf category `E ⥤ Type v`, sending
+profunctor category `Kᵒᵖ ⥤ K ⥤ (E ⥤ Type w₁)` to the
+presheaf category `E ⥤ Type w₁`, sending
 `P ↦ pointwiseTypeEnd P`.
 
 Built by composing the double-flip equivalence with
 post-composition by `typeEndFunctor K`. -/
 def pointwiseTypeEndFunctor :
-    (Kᵒᵖ ⥤ K ⥤ (E ⥤ Type v)) ⥤
-      (E ⥤ Type (max u v)) :=
+    (Kᵒᵖ ⥤ K ⥤ (E ⥤ Type w₁)) ⥤
+      (E ⥤ Type (max u w₁)) :=
   (profunctorDoubleFlipEquiv (K := K)
     (E := E)).functor ⋙
     (Functor.whiskeringRight E
-      (Kᵒᵖ ⥤ K ⥤ Type v)
-      (Type (max u v))).obj
+      (Kᵒᵖ ⥤ K ⥤ Type w₁)
+      (Type (max u w₁))).obj
       (typeEndFunctor K)
 
 theorem pointwiseTypeEndFunctor_obj
-    (P : Kᵒᵖ ⥤ K ⥤ (E ⥤ Type v)) :
+    (P : Kᵒᵖ ⥤ K ⥤ (E ⥤ Type w₁)) :
     (pointwiseTypeEndFunctor
       (K := K) (E := E)).obj P =
       pointwiseTypeEnd P :=
   rfl
 
 /-- The functorial pointwise coend: a functor from the
-profunctor category `Kᵒᵖ ⥤ K ⥤ (E ⥤ Type v)` to the
-presheaf category `E ⥤ Type v`, sending
+profunctor category `Kᵒᵖ ⥤ K ⥤ (E ⥤ Type w₁)` to the
+presheaf category `E ⥤ Type w₁`, sending
 `P ↦ pointwiseTypeCoend P`. -/
 def pointwiseTypeCoendFunctor :
-    (Kᵒᵖ ⥤ K ⥤ (E ⥤ Type v)) ⥤
-      (E ⥤ Type (max u v)) :=
+    (Kᵒᵖ ⥤ K ⥤ (E ⥤ Type w₁)) ⥤
+      (E ⥤ Type (max u w₁)) :=
   (profunctorDoubleFlipEquiv (K := K)
     (E := E)).functor ⋙
     (Functor.whiskeringRight E
-      (Kᵒᵖ ⥤ K ⥤ Type v)
-      (Type (max u v))).obj
+      (Kᵒᵖ ⥤ K ⥤ Type w₁)
+      (Type (max u w₁))).obj
       (typeCoendFunctor K)
 
 theorem pointwiseTypeCoendFunctor_obj
-    (P : Kᵒᵖ ⥤ K ⥤ (E ⥤ Type v)) :
+    (P : Kᵒᵖ ⥤ K ⥤ (E ⥤ Type w₁)) :
     (pointwiseTypeCoendFunctor
       (K := K) (E := E)).obj P =
       pointwiseTypeCoend P :=
@@ -1985,7 +1985,7 @@ theorem pointwiseTypeCoendFunctor_obj
 type-level end of the profunctor obtained by evaluating
 at `e` after the double flip. -/
 theorem pointwiseTypeEnd_obj_eq
-    (P : Kᵒᵖ ⥤ K ⥤ (E ⥤ Type v)) (e : E) :
+    (P : Kᵒᵖ ⥤ K ⥤ (E ⥤ Type w₁)) (e : E) :
     (pointwiseTypeEnd P).obj e =
       typeEnd
         ((profunctorDoubleFlipEquiv (K := K)
@@ -1997,8 +1997,8 @@ with weight `W.flip.obj e` evaluates to the
 type-level weighted limit of the weight and diagram
 restricted to `e`. -/
 theorem pointwiseTypeWeightedLimit_obj_eq
-    (W : K ⥤ (E ⥤ Type v))
-    (D : K ⥤ (E ⥤ Type v)) (e : E) :
+    (W : K ⥤ (E ⥤ Type w₁))
+    (D : K ⥤ (E ⥤ Type w₁)) (e : E) :
     (pointwiseTypeWeightedLimit
       (W.flip.obj e) D).obj e =
       typeWeightedLimit
@@ -2009,7 +2009,7 @@ theorem pointwiseTypeWeightedLimit_obj_eq
 the type-level coend of the profunctor obtained by
 evaluating at `e` after the double flip. -/
 theorem pointwiseTypeCoend_obj_eq
-    (P : Kᵒᵖ ⥤ K ⥤ (E ⥤ Type v)) (e : E) :
+    (P : Kᵒᵖ ⥤ K ⥤ (E ⥤ Type w₁)) (e : E) :
     (pointwiseTypeCoend P).obj e =
       typeCoend
         ((profunctorDoubleFlipEquiv (K := K)
@@ -2021,8 +2021,8 @@ with weight `W.flip.obj e` evaluates to the
 type-level weighted colimit of the weight and
 diagram restricted to `e`. -/
 theorem pointwiseTypeWeightedColimit_obj_eq
-    (W : Kᵒᵖ ⥤ (E ⥤ Type v))
-    (D : K ⥤ (E ⥤ Type v)) (e : E) :
+    (W : Kᵒᵖ ⥤ (E ⥤ Type w₁))
+    (D : K ⥤ (E ⥤ Type w₁)) (e : E) :
     (pointwiseTypeWeightedColimit
       (W.flip.obj e) D).obj e =
       typeWeightedColimit
@@ -2033,8 +2033,8 @@ theorem pointwiseTypeWeightedColimit_obj_eq
 equivalent to the set of natural transformations
 from `W.flip.obj e` to `D.flip.obj e`. -/
 def pointwiseTypeWeightedLimit.natTransEquiv
-    (W : K ⥤ (E ⥤ Type v))
-    (D : K ⥤ (E ⥤ Type v)) (e : E) :
+    (W : K ⥤ (E ⥤ Type w₁))
+    (D : K ⥤ (E ⥤ Type w₁)) (e : E) :
     (pointwiseTypeWeightedLimit
       (W.flip.obj e) D).obj e ≃
       (W.flip.obj e ⟶ D.flip.obj e) :=
@@ -2215,59 +2215,59 @@ whisker-right (to post-compose each evaluation with
 the limit functor) and whisker-left (to pre-compose
 with flipping). -/
 def pointwiseTypeWeightedLimitBifunctor :
-    (K ⥤ Type v)ᵒᵖ ⥤
-      (K ⥤ (E ⥤ Type v)) ⥤
-        (E ⥤ Type (max u v)) :=
+    (K ⥤ Type w₁)ᵒᵖ ⥤
+      (K ⥤ (E ⥤ Type w₁)) ⥤
+        (E ⥤ Type (max u w₁)) :=
   typeWeightedLimitBifunctor (J := K) ⋙
-    (Functor.whiskeringRight E (K ⥤ Type v)
-      (Type (max u v))) ⋙
-    (Functor.whiskeringLeft (K ⥤ (E ⥤ Type v))
-      (E ⥤ K ⥤ Type v)
-      (E ⥤ Type (max u v))).obj
+    (Functor.whiskeringRight E (K ⥤ Type w₁)
+      (Type (max u w₁))) ⋙
+    (Functor.whiskeringLeft (K ⥤ (E ⥤ Type w₁))
+      (E ⥤ K ⥤ Type w₁)
+      (E ⥤ Type (max u w₁))).obj
       Functor.flipping.functor
 
 /-- The pointwise weighted colimit bifunctor
-`(Kᵒᵖ ⥤ Type v) ⥤ (K ⥤ (E ⥤ Type v)) ⥤ (E ⥤ Type v)`,
+`(Kᵒᵖ ⥤ Type w₁) ⥤ (K ⥤ (E ⥤ Type w₁)) ⥤ (E ⥤ Type w₁)`,
 sending `(W, D) ↦ pointwiseTypeWeightedColimit W D`.
 Covariant in both arguments. -/
 def pointwiseTypeWeightedColimitBifunctor :
-    (Kᵒᵖ ⥤ Type v) ⥤
-      (K ⥤ (E ⥤ Type v)) ⥤
-        (E ⥤ Type (max u v)) :=
+    (Kᵒᵖ ⥤ Type w₁) ⥤
+      (K ⥤ (E ⥤ Type w₁)) ⥤
+        (E ⥤ Type (max u w₁)) :=
   typeWeightedColimitBifunctor (J := K) ⋙
-    (Functor.whiskeringRight E (K ⥤ Type v)
-      (Type (max u v))) ⋙
-    (Functor.whiskeringLeft (K ⥤ (E ⥤ Type v))
-      (E ⥤ K ⥤ Type v)
-      (E ⥤ Type (max u v))).obj
+    (Functor.whiskeringRight E (K ⥤ Type w₁)
+      (Type (max u w₁))) ⋙
+    (Functor.whiskeringLeft (K ⥤ (E ⥤ Type w₁))
+      (E ⥤ K ⥤ Type w₁)
+      (E ⥤ Type (max u w₁))).obj
       Functor.flipping.functor
 
 /-- The pointwise contravariant weighted limit functor
-in the weight: for fixed `D : K ⥤ (E ⥤ Type v)`, sends
+in the weight: for fixed `D : K ⥤ (E ⥤ Type w₁)`, sends
 `W ↦ pointwiseTypeWeightedLimit W D`. -/
 def pointwiseTypeWeightedLimitFunctorInW
-    (D : K ⥤ (E ⥤ Type v)) :
-    (K ⥤ Type v)ᵒᵖ ⥤
-      (E ⥤ Type (max u v)) :=
+    (D : K ⥤ (E ⥤ Type w₁)) :
+    (K ⥤ Type w₁)ᵒᵖ ⥤
+      (E ⥤ Type (max u w₁)) :=
   typeWeightedLimitBifunctor (J := K) ⋙
-    (Functor.whiskeringLeft E (K ⥤ Type v)
-      (Type (max u v))).obj D.flip
+    (Functor.whiskeringLeft E (K ⥤ Type w₁)
+      (Type (max u w₁))).obj D.flip
 
 /-- The pointwise covariant weighted colimit functor
-in the weight: for fixed `D : K ⥤ (E ⥤ Type v)`, sends
+in the weight: for fixed `D : K ⥤ (E ⥤ Type w₁)`, sends
 `W ↦ pointwiseTypeWeightedColimit W D`. -/
 def pointwiseTypeWeightedColimitFunctorInW
-    (D : K ⥤ (E ⥤ Type v)) :
-    (Kᵒᵖ ⥤ Type v) ⥤
-      (E ⥤ Type (max u v)) :=
+    (D : K ⥤ (E ⥤ Type w₁)) :
+    (Kᵒᵖ ⥤ Type w₁) ⥤
+      (E ⥤ Type (max u w₁)) :=
   typeWeightedColimitBifunctor (J := K) ⋙
-    (Functor.whiskeringLeft E (K ⥤ Type v)
-      (Type (max u v))).obj D.flip
+    (Functor.whiskeringLeft E (K ⥤ Type w₁)
+      (Type (max u w₁))).obj D.flip
 
 theorem
     pointwiseTypeWeightedLimitBifunctor_obj_obj
-    (W : (K ⥤ Type v)ᵒᵖ)
-    (D : K ⥤ (E ⥤ Type v)) :
+    (W : (K ⥤ Type w₁)ᵒᵖ)
+    (D : K ⥤ (E ⥤ Type w₁)) :
     (pointwiseTypeWeightedLimitBifunctor.obj
       W).obj D =
       pointwiseTypeWeightedLimit W.unop D := by
@@ -2281,8 +2281,8 @@ theorem
 
 theorem
     pointwiseTypeWeightedColimitBifunctor_obj_obj
-    (W : Kᵒᵖ ⥤ Type v)
-    (D : K ⥤ (E ⥤ Type v)) :
+    (W : Kᵒᵖ ⥤ Type w₁)
+    (D : K ⥤ (E ⥤ Type w₁)) :
     (pointwiseTypeWeightedColimitBifunctor.obj
       W).obj D =
       pointwiseTypeWeightedColimit W D := by
@@ -2297,8 +2297,8 @@ theorem
 
 theorem
     pointwiseTypeWeightedLimitFunctorInW_obj
-    (D : K ⥤ (E ⥤ Type v))
-    (W : (K ⥤ Type v)ᵒᵖ) :
+    (D : K ⥤ (E ⥤ Type w₁))
+    (W : (K ⥤ Type w₁)ᵒᵖ) :
     (pointwiseTypeWeightedLimitFunctorInW D).obj
       W =
       pointwiseTypeWeightedLimit W.unop D := by
@@ -2311,8 +2311,8 @@ theorem
 
 theorem
     pointwiseTypeWeightedColimitFunctorInW_obj
-    (D : K ⥤ (E ⥤ Type v))
-    (W : Kᵒᵖ ⥤ Type v) :
+    (D : K ⥤ (E ⥤ Type w₁))
+    (W : Kᵒᵖ ⥤ Type w₁) :
     (pointwiseTypeWeightedColimitFunctorInW D).obj
       W =
       pointwiseTypeWeightedColimit W D := by
@@ -2326,28 +2326,28 @@ theorem
 /-- Lifting the type-level natural isomorphism
 `typeWeightedLimitFunctor W ≅ coyoneda.obj (op W)`
 to presheaf-valued diagrams: at each
-`D : K ⥤ (E ⥤ Type v)`, the pointwise weighted
+`D : K ⥤ (E ⥤ Type w₁)`, the pointwise weighted
 limit presheaf is naturally isomorphic to
 `D.flip ⋙ coyoneda.obj (op W)`, which at `e : E`
 gives the nat-trans type `(W ⟶ D.flip.obj e)`. -/
 def pointwiseTypeWeightedLimitFunctor.natIso
-    (W : K ⥤ Type v) :
+    (W : K ⥤ Type w₁) :
     pointwiseTypeWeightedLimitFunctor (E := E) W ≅
       Functor.flipping.functor ⋙
-        (Functor.whiskeringRight E (K ⥤ Type v)
-          (Type (max u v))).obj
+        (Functor.whiskeringRight E (K ⥤ Type w₁)
+          (Type (max u w₁))).obj
           (coyoneda.obj (Opposite.op W)) :=
   Functor.isoWhiskerLeft
     Functor.flipping.functor
-    ((Functor.whiskeringRight E (K ⥤ Type v)
-      (Type (max u v))).mapIso
+    ((Functor.whiskeringRight E (K ⥤ Type w₁)
+      (Type (max u w₁))).mapIso
       (typeWeightedLimitFunctor.natIso W))
 
 /-!
 ### Weighted (Co)Limits as (Co)Ends of Power/Copower
 Profunctors
 
-The pointwise weighted limit of `D : K ⥤ (E ⥤ Type v)`
+The pointwise weighted limit of `D : K ⥤ (E ⥤ Type w₁)`
 equals the pointwise end of the power profunctor built
 using presheaf-valued powers. Dually for colimits and
 coends.
@@ -2356,23 +2356,23 @@ coends.
 /-- The pointwise weighted limit equals the pointwise
 end of the power profunctor. -/
 theorem pointwiseTypeWeightedLimit_eq_end
-    (W : K ⥤ Type v)
-    (D : K ⥤ (E ⥤ Type v)) :
+    (W : K ⥤ Type w₁)
+    (D : K ⥤ (E ⥤ Type w₁)) :
     pointwiseTypeWeightedLimit W D =
       pointwiseTypeEnd
         (powerProfunctor
-          (C := E ⥤ Type v) W D) :=
+          (C := E ⥤ Type w₁) W D) :=
   rfl
 
 /-- The pointwise weighted colimit equals the pointwise
 coend of the copower profunctor. -/
 theorem pointwiseTypeWeightedColimit_eq_coend
-    (W : Kᵒᵖ ⥤ Type v)
-    (D : K ⥤ (E ⥤ Type v)) :
+    (W : Kᵒᵖ ⥤ Type w₁)
+    (D : K ⥤ (E ⥤ Type w₁)) :
     pointwiseTypeWeightedColimit W D =
       pointwiseTypeCoend
         (copowerProfunctor
-          (C := E ⥤ Type v) W D) :=
+          (C := E ⥤ Type w₁) W D) :=
   rfl
 
 /-- The pointwise end of the power profunctor
@@ -2386,11 +2386,11 @@ This follows from
 combined with
 `pointwiseTypeWeightedLimit.natTransEquiv`. -/
 def pointwiseTypeEnd.powerNatTransEquiv
-    (W : K ⥤ (E ⥤ Type v))
-    (D : K ⥤ (E ⥤ Type v)) (e : E) :
+    (W : K ⥤ (E ⥤ Type w₁))
+    (D : K ⥤ (E ⥤ Type w₁)) (e : E) :
     (pointwiseTypeEnd
       (powerProfunctor
-        (C := E ⥤ Type v)
+        (C := E ⥤ Type w₁)
         (W.flip.obj e) D)).obj e ≃
       (W.flip.obj e ⟶ D.flip.obj e) :=
   pointwiseTypeWeightedLimit.natTransEquiv
@@ -2402,11 +2402,11 @@ universal property: at each `e : E`, its elements
 are in bijection with the pointwise weighted colimit
 with the same weight. -/
 def pointwiseTypeCoend.copowerEquiv
-    (W : Kᵒᵖ ⥤ (E ⥤ Type v))
-    (D : K ⥤ (E ⥤ Type v)) (e : E) :
+    (W : Kᵒᵖ ⥤ (E ⥤ Type w₁))
+    (D : K ⥤ (E ⥤ Type w₁)) (e : E) :
     (pointwiseTypeCoend
       (copowerProfunctor
-        (C := E ⥤ Type v)
+        (C := E ⥤ Type w₁)
         (W.flip.obj e) D)).obj e ≃
       (pointwiseTypeWeightedColimit
         (W.flip.obj e) D).obj e :=
