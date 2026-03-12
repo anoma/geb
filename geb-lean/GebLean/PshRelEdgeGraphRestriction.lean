@@ -248,6 +248,31 @@ def pshBarrLiftEdge_identNatIso
       · change G.map α ≫ 𝟙 _ = 𝟙 _ ≫ G.map α
         simp)
 
+/-- The contravariant Barr lift edge functor
+composed with the opposite of the identity
+section is naturally isomorphic to `F` composed
+with the identity section. -/
+def pshContraBarrLiftEdge_identNatIso
+    (F :
+      (Cᵒᵖ ⥤ Type w)ᵒᵖ ⥤
+        (Cᵒᵖ ⥤ Type w)) :
+    (pshRelIdentFunctor :
+      (Cᵒᵖ ⥤ Type w) ⥤
+        PshRelEdge.{u, v, w} C).op ⋙
+      pshContraBarrLiftEdgeFunctor F ≅
+    F ⋙ pshRelIdentFunctor :=
+  NatIso.ofComponents
+    (fun P => pshRelEdgeEqIso
+      (pshContraBarrLiftRel_id F))
+    (fun {P Q} α => by
+      apply VertEdgeHom.ext
+      · change F.map α.unop.op ≫ 𝟙 _ =
+          𝟙 _ ≫ F.map α.unop.op
+        simp
+      · change F.map α.unop.op ≫ 𝟙 _ =
+          𝟙 _ ≫ F.map α.unop.op
+        simp)
+
 end GraphRestrictionFunctor
 
 section BarrEmbeddings
@@ -266,6 +291,28 @@ abbrev pshBarrEmbedding
     (Cᵒᵖ ⥤ Type w) ⥤
     PshRelEdge.{u, v, w} C :=
   pshRelIdentFunctor ⋙ pshBarrLiftEdgeFunctor G
+
+/-- The contravariant Barr embedding of a
+contravariant presheaf endofunctor `F` into
+`PshRelEdge C`. Sends `op P` to
+`(F(op P), F(op P),
+  pshContraBarrLiftRel F (pshRelId P))`.
+This is the composition of the opposite of the
+identity section with
+`pshContraBarrLiftEdgeFunctor F`, and is
+naturally isomorphic to
+`F ⋙ pshRelIdentFunctor` via
+`pshContraBarrLiftEdge_identNatIso`. -/
+abbrev pshContraBarrEmbedding
+    (F :
+      (Cᵒᵖ ⥤ Type w)ᵒᵖ ⥤
+        (Cᵒᵖ ⥤ Type w)) :
+    (Cᵒᵖ ⥤ Type w)ᵒᵖ ⥤
+    PshRelEdge.{u, v, w} C :=
+  (pshRelIdentFunctor :
+    (Cᵒᵖ ⥤ Type w) ⥤
+      PshRelEdge.{u, v, w} C).op ⋙
+    pshContraBarrLiftEdgeFunctor F
 
 end BarrEmbeddings
 
