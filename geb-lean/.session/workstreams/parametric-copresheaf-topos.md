@@ -16,6 +16,59 @@ constructions (TypeExpr, PshTypeExpr, fullRelInterp).
 See `docs/parametric-copresheaf-topos.md` for the conceptual
 framework.
 
+### Alternate characterizations
+
+The copresheaf topos `PshParametricPresheaf C` is defined over
+`PshRelSpanObj C`, which forgets most of the underlying
+category's morphisms and only recovers a notion of
+parametricity once a limit is taken. We have developed
+alternate characterizations that are more categorically
+natural:
+
+- **Edge category `PshRelEdge C`**: triples
+  `(P, Q, R : PshRel P Q)` with morphisms preserving
+  relatedness.  Has exponentials
+  `(FunctorHom, FunctorHom, pshArrowRel)`, finite
+  limits/colimits, and a strong subobject classifier.
+  (`PshRelEdgeExp.lean`, `PshRelEdgeLimits.lean`,
+  `PshRelEdgeSOClassifier.lean`)
+
+- **Reflective subcategory of a presheaf topos**:
+  `PshRelEdge C` embeds fully faithfully into
+  `WalkingSpan ⥤ PSh(C)` (the functor category of
+  span-shaped diagrams in presheaves) via
+  `pshRelEdgeInclusionFunctor`, with left adjoint
+  `pshRelEdgeSepFunctor` (separation by image of the
+  pairing map).  The reflector preserves finite products,
+  and the inclusion is an exponential ideal.
+  (`PshRelEdgeInclusion.lean`)
+
+- **Span bicategory**: `PshSpanBicat C` provides the
+  bicategory of spans in `PSh(C)`, with 1-cells as spans
+  `P <- R -> Q` (encoded as `Over (P x Q)`), span
+  composition via presheaf pullback, and all 12 bicategory
+  coherence axioms.  (`PshSpanBicategory.lean`)
+
+- **SpanFamily characterization**: `SpanFamily V E D`
+  provides an equivalent unpacked view of parametric
+  functors as families of spans indexed by a graph, with
+  `spanFamilyEquiv` giving the equivalence.
+  (`Utilities/SpanFamily.lean`)
+
+This gives a three-layer picture:
+
+```text
+PSh(C x I^op)       presheaf topos (exact)
+     |
+     | separation reflector (pshRelEdgeSepFunctor)
+     v
+PshRelEdge C        separated presheaves (quasitopos)
+     |
+     | sheafification (conjectural)
+     v
+Sh_J(C x I^op)     sheaf topos (exact)
+```
+
 ## Completed
 
 - [x] **Double category of presheaf relations.** `PshRelDouble`
@@ -85,46 +138,121 @@ framework.
   (`PshRelSpanDiagram.lean`)
   Ref: `docs/parametric-copresheaf-topos.md` Section 5.5.
 
+- [x] **T1. Presheaf exponentials.** General presheaf
+  categories have `MonoidalClosed` structure via
+  `functorCatMonoidalClosed` (`Presheaf.lean`).  For
+  `PshRelEdge C`, the exponential is explicitly
+  `(FunctorHom, FunctorHom, pshArrowRel)`
+  (`PshRelEdgeExp.lean`).  Yoneda preserves exponentials
+  via `pshIhomYonedaIso` (`PshRelDouble.lean`).
+
+- [x] **T2. Subobject classifiers.** General presheaf
+  subobject classifier `pshClassifierData` and copresheaf
+  classifier `coPshClassifierData` (`Presheaf.lean`).
+  Strong subobject classifier `pshRelEdgeSOClassifier`
+  for `PshRelEdge C` (`PshRelEdgeSOClassifier.lean`).
+
+- [x] **T3. Sections of exponentials.**
+  `functorHomSectionToNatTrans` with roundtrip
+  `functorHomSection_roundTrip_left` and
+  `functorHomSection_roundTrip_right` showing sections
+  of `[F, G]` correspond to natural transformations
+  `F => G`. (`Presheaf.lean`)
+
+- [x] **T4. Identity extension for embedded copresheaves.**
+  `HasIdentityExtension` structure with
+  `pshCovariantSpanData_iep`,
+  `pshContravariantSpanData_iep` for both embedding
+  families.  Non-IEP counterexample
+  `pshFullProductData_not_iep`.
+  (`SpanFamily.lean`, `PshRelSpanDiagram.lean`)
+  See also `identity-extension-property.md`.
+
+- [x] **T5. Identity extension characterization.**
+  `HasIdentityExtension.monicProjectionAt` shows IEP
+  implies monic projections.
+  `spanFamilyHom_ext_vertexMap` shows parametricity
+  subsumes naturality.  Fibration structure via
+  `pshRelCartesianLift` and
+  `IsPreFibered pshRelBoundaryFunctor`.
+  (`SpanFamily.lean`, `PshRelDouble.lean`)
+  See also `identity-extension-property.md`.
+
+- [x] **T20. Name the category instance.** Give the
+  `Category` instance on `PshRelEdge C` the explicit
+  name `pshRelEdgeCategory`. (`PshRelDouble.lean`)
+
+- [x] **T21. Exponential in PshRelEdge C.** Show the
+  exponential equals
+  `(FunctorHom, FunctorHom, pshArrowRel)`.
+  Verify the exponential adjunction directly.
+  (`PshRelEdgeExp.lean`)
+  Ref: `docs/parametric-copresheaf-topos.md` Section 11.5.
+
+- [x] **T21b. Finite limits and colimits in PshRelEdge C.**
+  Terminal, initial, binary coproducts, equalizers,
+  coequalizers. (`PshRelEdgeLimits.lean`)
+
+- [x] **T22. Identity extension as functor property.**
+  Show `pshRelIdentFunctor` preserves exponentials
+  (the IEP as a cartesian closed functor property).
+  (`PshRelEdgeIdentPreservation.lean`)
+  Ref: `docs/parametric-copresheaf-topos.md` Section 11.6.
+
+- [x] **T23. pshRelIdentFunctor preserves limits.**
+  Show `pshRelIdentFunctor` preserves products,
+  terminal object, and equalizers.
+  (`PshRelEdgeIdentPreservation.lean`)
+  Ref: `docs/parametric-copresheaf-topos.md` Section 11.6.
+
+- [x] **T23b. pshRelIdentFunctor preserves colimits.**
+  Show `pshRelIdentFunctor` preserves coproducts,
+  initial object, and coequalizers.
+  (`PshRelEdgeIdentPreservation.lean`)
+
+- [x] **T23c. pshBarrLiftRel as endofunctor.**
+  `pshBarrLiftEdgeFunctor G : PshRelEdge C ⥤ PshRelEdge C`.
+  (`PshRelDouble.lean`)
+
+- [x] **T24. Inclusion into PSh(C x I^op).** Construct
+  the fully faithful inclusion
+  `PshRelEdge C -> [WalkingSpan, PSh(C)]`.
+  `pshRelEdgeInclusionFunctor` with
+  `pshRelEdgeInclusionFullyFaithful`.
+  Separation reflector `pshRelEdgeSepFunctor` with
+  adjunction `pshRelEdgeSepAdjunction`.
+  (`PshRelEdgeInclusion.lean`)
+  Ref: `docs/parametric-copresheaf-topos.md` Section 11.10.
+
+- [x] **T24b. Reflector preserves finite products.**
+  `pshRelEdgeSepPreservesBinaryProducts`,
+  `pshRelEdgeSepPreservesTerminal`,
+  `pshRelEdgeSepPreservesFiniteProducts`,
+  `pshRelEdgeReflectorPreservesBinaryProducts`.
+  `CartesianMonoidalCategory (PshRelEdge C)` via
+  `ofChosenFiniteProducts`.
+  `ExponentialIdeal (pshRelEdgeInclusionFunctor C)`.
+  `MonoidalClosed` for functor categories into
+  presheaf categories via currying equivalence
+  (`functorCatMonoidalClosed` in `Presheaf.lean`).
+  (`PshRelEdgeInclusion.lean`, `Presheaf.lean`)
+  Ref: `docs/parametric-copresheaf-topos.md`
+  Section 11.4.
+
+- [x] **T24c. Inclusion preserves coproducts.**
+  `inclusionPreservesColimitPairEdge`,
+  `inclusionPreservesBinaryCoproducts`,
+  `inclusionPreservesInitialObj`,
+  `inclusionPreservesInitial`.
+  (`PshRelEdgeInclusion.lean`)
+
+- [x] **T24d. Span bicategory.**
+  `pshSpanBicategory : Bicategory (PshSpanBicat C)` with
+  all 12 coherence axioms.  Span composition via presheaf
+  pullback, whiskering via pullback lifting.
+  (`PshSpanBicategory.lean`)
+
 ## Tasks
-
-### Topos structure
-
-- [ ] **T1. Exponential description.** Compute the concrete
-  form of the exponential `[F, G]` in the copresheaf topos.
-  Determine `[F, G](.typeNode P)` and
-  `[F, G](.relNode P Q R)` explicitly. Relate to
-  `pshArrowRelSkel` and `pshIhomProfMap`.
-  Ref: `docs/parametric-copresheaf-topos.md` Section 10.1.
-
-- [ ] **T2. Subobject classifier description.** Compute the
-  subobject classifier `Omega` of the copresheaf topos
-  concretely. `Omega(.typeNode P)` should be the set of
-  sieves on `.typeNode P` in `PshRelSpanObj C`.
-  Characterize what a "parametric predicate" looks like.
-  Ref: `docs/parametric-copresheaf-topos.md` Section 10.3.
-
-- [ ] **T3. Sections of exponentials.** Show that sections
-  (global elements) of `[F, G]` correspond to natural
-  transformations `F => G` in the copresheaf topos, i.e.,
-  parametric morphisms. This is standard for presheaf
-  toposes but worth verifying concretely.
-
-### Identity extension
-
-- [ ] **T4. Identity extension for embedded copresheaves.**
-  For a copresheaf `F` in the image of
-  `pshCovariantEmbedding`, show that `F(.relNode P P (pshRelId P))`
-  is (equivalent to, or embeds into) the diagonal of
-  `F(.typeNode P)`. This is the copresheaf-topos analogue
-  of Wadler's Identity Extension Lemma. Determine whether
-  this holds for all copresheaves or only embedded ones.
-  Ref: `docs/parametric-copresheaf-topos.md` Section 10.2.
-
-- [ ] **T5. Identity extension for arbitrary copresheaves.**
-  Characterize which copresheaves satisfy
-  `F(pshRelId P) ~= diagonal of F(P)`. Is this a
-  property of a reflective subcategory? Does it hold for
-  all copresheaves arising from the embeddings?
 
 ### Graph restriction and free theorems
 
@@ -219,74 +347,6 @@ framework.
   task P5b in `parametricity-free-theorems.md`.)
 
 ### Edge category quasitopos
-
-- [x] **T20. Name the category instance.** Give the
-  `Category` instance on `PshRelEdge C` the explicit
-  name `pshRelEdgeCategory`. (`PshRelDouble.lean`)
-
-- [x] **T21. Exponential in PshRelEdge C.** Show the
-  exponential equals
-  `(FunctorHom, FunctorHom, pshArrowRel)`.
-  Verify the exponential adjunction directly.
-  (`PshRelEdgeExp.lean`)
-  Ref: `docs/parametric-copresheaf-topos.md` Section 11.5.
-
-- [x] **T21b. Finite limits and colimits in PshRelEdge C.**
-  Terminal, initial, binary coproducts, equalizers,
-  coequalizers. (`PshRelEdgeLimits.lean`)
-
-- [x] **T22. Identity extension as functor property.**
-  Show `pshRelIdentFunctor` preserves exponentials
-  (the IEP as a cartesian closed functor property).
-  (`PshRelEdgeIdentPreservation.lean`)
-  Ref: `docs/parametric-copresheaf-topos.md` Section 11.6.
-
-- [x] **T23. pshRelIdentFunctor preserves limits.**
-  Show `pshRelIdentFunctor` preserves products,
-  terminal object, and equalizers.
-  (`PshRelEdgeIdentPreservation.lean`)
-  Ref: `docs/parametric-copresheaf-topos.md` Section 11.6.
-
-- [x] **T23b. pshRelIdentFunctor preserves colimits.**
-  Show `pshRelIdentFunctor` preserves coproducts,
-  initial object, and coequalizers.
-  (`PshRelEdgeIdentPreservation.lean`)
-
-- [x] **T23c. pshBarrLiftRel as endofunctor.**
-  `pshBarrLiftEdgeFunctor G : PshRelEdge C ⥤ PshRelEdge C`.
-  (`PshRelDouble.lean`)
-
-- [x] **T24. Inclusion into PSh(C x I^op).** Construct
-  the fully faithful inclusion
-  `PshRelEdge C -> [WalkingSpan, PSh(C)]`.
-  `pshRelEdgeInclusionFunctor` with
-  `pshRelEdgeInclusionFullyFaithful`.
-  Separation reflector `pshRelEdgeSepFunctor` with
-  adjunction `pshRelEdgeSepAdjunction`.
-  (`PshRelEdgeInclusion.lean`)
-  Ref: `docs/parametric-copresheaf-topos.md` Section 11.10.
-
-- [x] **T24b. Reflector preserves finite products.**
-  `pshRelEdgeSepPreservesBinaryProducts`,
-  `pshRelEdgeSepPreservesTerminal`,
-  `pshRelEdgeSepPreservesFiniteProducts`,
-  `pshRelEdgeReflectorPreservesBinaryProducts`.
-  `CartesianMonoidalCategory (PshRelEdge C)` via
-  `ofChosenFiniteProducts`.
-  `ExponentialIdeal (pshRelEdgeInclusionFunctor C)`.
-  `MonoidalClosed` for functor categories into
-  presheaf categories via currying equivalence
-  (`functorCatMonoidalClosed` in `Presheaf.lean`).
-  (`PshRelEdgeInclusion.lean`, `Presheaf.lean`)
-  Ref: `docs/parametric-copresheaf-topos.md`
-  Section 11.4.
-
-- [x] **T24c. Inclusion preserves coproducts.**
-  `inclusionPreservesColimitPairEdge`,
-  `inclusionPreservesBinaryCoproducts`,
-  `inclusionPreservesInitialObj`,
-  `inclusionPreservesInitial`.
-  (`PshRelEdgeInclusion.lean`)
 
 - [ ] **T25. Evaluation functors.** For each
   relation `(P, Q, R)`, construct the evaluation functor
