@@ -363,7 +363,7 @@ theorem lift_proj {X : C} {S : Type w} {Y : C} (g : Y ⟶ power X S) :
 end HasPowers
 
 /-- Type u has powers: the power `X ^. S` is the function space `S → X`. -/
-instance typesHasPowers : HasPowers.{u + 1, u} (Type u) where
+instance typesHasPowers : HasPowers.{u + 1, u, u} (Type u) where
   power X S := S → X
   proj X S s := fun f => f s
   lift f := fun y s => f s y
