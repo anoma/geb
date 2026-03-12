@@ -330,9 +330,19 @@ Port the embeddings from PshRelSpanObj to PshRelEdge.
   `pshBarrEmbedding G ≅ G ⋙ pshRelIdentFunctor`.
   (`PshRelEdgeGraphRestriction.lean`)
 
-- [ ] **E2. Contravariant Barr embedding into PshRelEdge.**
-  Analogous for `F : PSh(C)^op => PSh(C)` using
-  `pshContraBarrLiftRel`.
+- [x] **E2. Contravariant Barr embedding into PshRelEdge.**
+  `pshContraBarrLiftEdgeFunctor F :
+  (PshRelEdge C)^op => PshRelEdge C`
+  (`PshRelDouble.lean`), with
+  `pshContraBarrLiftRel_related` proving
+  relatedness preservation. Embedding:
+  `pshContraBarrEmbedding F =
+  pshRelIdentFunctor.op ⋙
+  pshContraBarrLiftEdgeFunctor F`, with
+  `pshContraBarrLiftEdge_identNatIso` giving
+  `pshContraBarrEmbedding F ≅
+  F ⋙ pshRelIdentFunctor`.
+  (`PshRelEdgeGraphRestriction.lean`)
 
 - [ ] **E3. Profunctor Barr embedding into PshRelEdge.**
   For `H : PSh(C)^op x PSh(C) => PSh(C)`, embed via
