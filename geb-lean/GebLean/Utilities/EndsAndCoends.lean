@@ -2394,16 +2394,20 @@ application of the Type-level co-ninja Yoneda
 
 Obtained by whiskering the Type-level co-ninja
 Yoneda natural isomorphism on `E` and
-precomposing with the double-flip equivalence. -/
+precomposing with the double-flip equivalence.
+
+The RHS equals
+`uncurry ⋙ pointwiseTypeWeightedColimitFunctor
+  (homPre ⋙ const E)`
+when the enriched colimit functor is instantiated
+over `Kᵒᵖ × K`. -/
 def pointwiseTypeCoendFunctor.coNinjaYonedaNatIso :
     pointwiseTypeCoendFunctor
       (K := K) (E := E) ≅
-    (profunctorDoubleFlipEquiv (K := K)
-      (E := E)).functor ⋙
-    (Functor.whiskeringRight E _ _).obj
-      (Functor.uncurry ⋙
-        typeWeightedColimitFunctor
-          (homPre (C := K))) :=
+    Functor.uncurry (C := Kᵒᵖ) (D := K)
+      (E := E ⥤ Type v) ⋙
+    pointwiseTypeWeightedColimitFunctor
+      (homPre (C := K) ⋙ Functor.const E) :=
   (profunctorDoubleFlipEquiv (K := K)
     (E := E)).functor.isoWhiskerLeft
     ((Functor.whiskeringRight E _ _).mapIso
@@ -2428,16 +2432,15 @@ def pointwiseTypeEnd.ninjaYonedaEquiv
 
 /-- The pointwise co-ninja Yoneda equivalence at a
 given profunctor and evaluation point: the coend at
-`e` is equivalent to the Type-level weighted colimit
-with weight `homPre`. -/
+`e` is equivalent to the pointwise enriched weighted
+colimit with constant weight `homPre ⋙ const E` and
+diagram `uncurry.obj P`. -/
 def pointwiseTypeCoend.coNinjaYonedaEquiv
     (P : Kᵒᵖ ⥤ K ⥤ (E ⥤ Type v)) (e : E) :
     (pointwiseTypeCoend P).obj e ≃
-      typeWeightedColimit (homPre (C := K))
-        (Functor.uncurry.obj
-          ((profunctorDoubleFlipEquiv (K := K)
-            (E := E)).functor.obj P
-            |>.obj e)) :=
+      (pointwiseTypeWeightedColimit
+        (homPre (C := K) ⋙ Functor.const E)
+        (Functor.uncurry.obj P)).obj e :=
   typeCoend.coNinjaYonedaEquiv
     ((profunctorDoubleFlipEquiv (K := K)
       (E := E)).functor.obj P |>.obj e)
@@ -2609,8 +2612,8 @@ theorem
     (D : K ⥤ (E ⥤ Type w₁)) :
     (pointwiseTypeWeightedColimitBifunctor.obj
       W).obj D =
-      D.flip ⋙
-        typeWeightedColimitFunctor W := by
+      pointwiseTypeWeightedColimit
+        (W ⋙ Functor.const E) D := by
   simp only [
     pointwiseTypeWeightedColimitBifunctor,
     Functor.comp_obj,
@@ -2639,13 +2642,14 @@ theorem
     (W : Kᵒᵖ ⥤ Type w₁) :
     (pointwiseTypeWeightedColimitFunctorInW D).obj
       W =
-      D.flip ⋙
-        typeWeightedColimitFunctor W := by
+      pointwiseTypeWeightedColimit
+        (W ⋙ Functor.const E) D := by
   simp only [
     pointwiseTypeWeightedColimitFunctorInW,
     Functor.comp_obj,
     Functor.whiskeringLeft_obj_obj,
     typeWeightedColimitBifunctor]
+  rfl
 
 /-- Lifting the type-level natural isomorphism
 `typeWeightedLimitFunctor W ≅ coyoneda.obj (op W)`
