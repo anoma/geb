@@ -239,38 +239,47 @@ approach:
 Formalize the Wadler/"Theorems for free!" correspondence
 using `PshRelEdge C` and `[WalkingSpan, PSh(C)]`.
 
-- [ ] **W1. Graph restriction to naturality.** Formalize
-  the reduction from parametricity to naturality when
-  relations are restricted to graphs.  Given an edge
-  morphism `(alpha, beta)` between identity edges
-  `(P, P, Delta_P)` and `(Q, Q, Delta_Q)`, the
-  relatedness square forces `alpha = beta`, recovering
-  a single natural transformation.  More generally,
-  for `pshBarrLiftEdgeFunctor G` applied to graph
-  edges, the Barr extension of a graph is a graph
-  (`pshBarrLiftRel_graph`), giving Wadler's "free
-  theorem" reduction.
-  Wadler: Section 3.1 (rearrangements commute with map).
+- [x] **W1. Graph restriction to naturality.**
+  `pshBarrLiftRel_graph_related_iff`,
+  `pshBarrLiftRel_graph_related_hetero_iff`,
+  `pshBarrLiftRel_id_related_iff`,
+  `arrowEndofunctor`,
+  `pshBarrLiftEdge_graphNatIso`,
+  `pshBarrLiftEdge_identNatIso`.
+  (`PshRelEdgeGraphRestriction.lean`)
 
-- [ ] **W2. Rearrangement theorem.** For `r : ∀X. X* -> X*`
-  (generalized: a section of the exponential edge
-  `[(P, P, Delta_P), (G P, G P, Delta_{G P})]`), derive
-  the commutativity `G(alpha) . r_P = r_Q . G(alpha)`
-  for all `alpha : P => Q`.  This is the presheaf-level
-  generalization of Wadler Section 3.1.
+- [x] **W2. Rearrangement theorem.**
+  `natTransToBarrEndo G σ` embeds `σ : G ⟶ G` as an
+  endomorphism of `pshBarrEmbedding G`.
+  `barrEndoToNatTrans G τ` extracts `G ⟶ G` from any
+  such endomorphism by taking `srcMap`.
+  `natTransToBarrEndo_barrEndoToNatTrans` and
+  `barrEndoToNatTrans_natTransToBarrEndo` establish
+  the bijection, with the forward direction deriving
+  the commutativity square from `pshBarrLiftRel_id_related_iff`.
+  (`PshRelEdgeGraphRestriction.lean`)
 
-- [ ] **W3. Map decomposition.** For `m : ∀X.∀Y.(X -> Y)
-  -> X* -> Y*`, derive `m(f) = f* . m(id)` (Wadler
-  Section 3.5).  Generalized: sections of the
-  exponential edge for the arrow-to-Barr-lift natural
-  transformation type decompose as Barr lift composed
-  with a rearrangement.
+- [x] **W3. Map decomposition.**
+  `MapFamily G` is a natural transformation from
+  `Arrow.leftFunc ⋙ G` to `Arrow.rightFunc ⋙ G`.
+  `mapFamilyDecompLeft` and `mapFamilyDecompRight`
+  derive the decomposition `m(α) = m(𝟙) ≫ G.map α`
+  and `m(α) = G.map α ≫ m(𝟙)` from arrow-category
+  naturality.  `mapFamilyToNatTrans` /
+  `natTransToMapFamily` with roundtrip theorems give
+  a bijection between map families and `G ⟶ G`.
+  (`PshRelEdgeGraphRestriction.lean`)
 
-- [ ] **W4. Fold free theorem.** Formalize Wadler
-  Section 3.2/3.6: fold commutes with algebra
-  homomorphisms.  In our framework: the exponential
-  edge for the fold type forces the fold parametricity
-  condition.
+- [x] **W4. Fold free theorem.**
+  `foldFreeTheorem_graph`: the catamorphism of an
+  initial F-algebra commutes with algebra homomorphisms
+  (Wadler Section 3.2/3.6).
+  `foldFreeTheorem_pshRelRelated_graph`: expressed as
+  `pshRelRelated` at graph edges with `pshRelId` domain.
+  `foldFreeTheorem_barrLift_graph`: takes the algebra
+  homomorphism hypothesis in `pshRelRelated` form at
+  Barr-lifted graph relations.
+  (`PshRelEdgeGraphRestriction.lean`)
 
 - [ ] **W5. Sort/nub conditional free theorems.**
   Wadler Section 3.3: `sort` commutes with monotone
@@ -298,25 +307,28 @@ using `PshRelEdge C` and `[WalkingSpan, PSh(C)]`.
   section must be natural, hence determined by its
   value at `id_A`).
 
-- [ ] **W9. Parametricity as tautology in PshRelEdge.**
-  Make precise that Wadler's Parametricity Theorem
-  (Section 6) is tautological in our framework: a
-  section of a copresheaf on `PshRelEdge` satisfies
-  parametricity by definition (it is the naturality
-  condition for the section).  Formalize the comparison
-  between Wadler's inductive proof and our definitional
-  approach.
+- [x] **W9. Parametricity as tautology in PshRelEdge.**
+  `IsParametricSection F s`: a section is parametric
+  iff it is natural w.r.t. edge morphisms.
+  `natTrans_isParametricSection`: a global section
+  (natural transformation from the terminal copresheaf)
+  is automatically parametric.
+  `parametricSectionToNatTrans`: converse, a parametric
+  section determines a global section.
+  `isParametricSection_at`: the parametricity condition
+  at any edge morphism follows from `hs f` (tautological).
+  (`PshRelEdgeGraphRestriction.lean`)
 
 ### Embedding endofunctors into PshRelEdge
 
 Port the embeddings from PshRelSpanObj to PshRelEdge.
 
-- [ ] **E1. Covariant Barr embedding into PshRelEdge.**
-  Given `G : PSh(C) => PSh(C)`, construct a functor
-  `PSh(C) => PshRelEdge C` sending `P` to
-  `(G P, G P, pshBarrLiftRel G (pshRelId P))`.
-  Show this factors through `pshRelIdentFunctor`
-  composed with `pshBarrLiftEdgeFunctor G`.
+- [x] **E1. Covariant Barr embedding into PshRelEdge.**
+  `pshBarrEmbedding G = pshRelIdentFunctor ⋙
+  pshBarrLiftEdgeFunctor G`, with
+  `pshBarrLiftEdge_identNatIso` giving
+  `pshBarrEmbedding G ≅ G ⋙ pshRelIdentFunctor`.
+  (`PshRelEdgeGraphRestriction.lean`)
 
 - [ ] **E2. Contravariant Barr embedding into PshRelEdge.**
   Analogous for `F : PSh(C)^op => PSh(C)` using
@@ -335,22 +347,31 @@ Port the embeddings from PshRelSpanObj to PshRelEdge.
 
 ### Graph subcategory and naturality
 
-- [ ] **G1. Graph subcategory of PshRelEdge.** Define the
-  full subcategory of `PshRelEdge C` consisting of
-  graph edges `(P, Q, pshRelGraph alpha)`.  Show this
-  is equivalent to the arrow category `PSh(C)^{->}`.
-  Copresheaves on graph edges impose only naturality,
-  not full parametricity.
+- [x] **G1. Graph subcategory of PshRelEdge.**
+  `IsGraphEdge` predicate,
+  `pshRelEdgeGraphSubcatFunctor` (lift to full
+  subcategory), `pshRelEdgeGraphSubcatFullyFaithful`,
+  `pshRelEdgeGraphSubcat_essSurj`.  The graph functor
+  is a fully faithful, essentially surjective
+  embedding into the full subcategory of graph edges.
+  (`PshRelEdgeGraphRestriction.lean`)
 
-- [ ] **G2. Graph restriction functor.** Define the
-  restriction from copresheaves on `PshRelEdge C` to
-  copresheaves on the graph subcategory (G1).  Show
-  this forgets parametricity data beyond naturality.
+- [x] **G2. Graph restriction functor.**
+  `graphRestrictionFunctor`: precomposition with the
+  graph embedding, taking copresheaves on `PshRelEdge C`
+  to copresheaves on `Arrow(PSh C)`.
+  `graphRestriction_barrLiftNatIso`: restriction of the
+  Barr lift to graph edges recovers the arrow
+  endofunctor.
+  (`PshRelEdgeGraphRestriction.lean`)
 
-- [ ] **G3. Free theorem derivation via graphs.** For edges
-  in the image of the covariant Barr embedding (E1),
-  show that restricting to graph edges yields the
-  naturality condition.  Uses `pshBarrLiftRel_graph`.
+- [x] **G3. Free theorem derivation via graphs.**
+  `natTrans_pshRelRelated_barrLiftGraph`: naturality
+  of `σ : G ⟶ G` entails relatedness at every
+  Barr-lifted graph edge.
+  `pshRelRelated_barrLiftGraph_implies_nat`: converse,
+  graph-level parametricity recovers naturality.
+  (`PshRelEdgeGraphRestriction.lean`)
 
 ### Relation composition in PshRelEdge
 

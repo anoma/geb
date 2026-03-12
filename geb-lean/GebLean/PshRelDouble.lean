@@ -2182,6 +2182,85 @@ theorem pshContraBarrLiftRel_id
   simp only [op_id, F.map_id,
     pshRelGraph_eq_id, pshRelDagger_id]
 
+/-- The contravariant Barr extension preserves
+relatedness contravariantly: if `α` and `β`
+carry `R`-related pairs to `S`-related pairs,
+then `F.map α.op` and `F.map β.op` carry
+`pshContraBarrLiftRel F S`-related pairs to
+`pshContraBarrLiftRel F R`-related pairs.
+
+Note the contravariance: the direction of both
+the morphisms and the relations is flipped. -/
+theorem pshContraBarrLiftRel_related
+    {P P' Q Q' : Cᵒᵖ ⥤ Type w}
+    (F :
+      (Cᵒᵖ ⥤ Type w)ᵒᵖ ⥤
+        (Cᵒᵖ ⥤ Type w))
+    {α : P ⟶ Q} {β : P' ⟶ Q'}
+    {R : PshRel P P'} {S : PshRel Q Q'}
+    (h : pshRelRelated α β R S) :
+    pshRelRelated
+      (F.map α.op) (F.map β.op)
+      (pshContraBarrLiftRel F S)
+      (pshContraBarrLiftRel F R) := by
+  obtain ⟨φ, hφ⟩ :=
+    pshRelRelated_toPshProdOverRelated h
+  change φ ≫ S.ι = R.ι ≫ pshProdMap α β at hφ
+  have hfst : φ ≫ (S.ι ≫
+      pshProdFst Q Q') =
+      (R.ι ≫ pshProdFst P P') ≫ α := by
+    simp only [← Category.assoc]
+    rw [hφ, Category.assoc,
+      pshProdMap_fst, Category.assoc]
+  have hsnd : φ ≫ (S.ι ≫
+      pshProdSnd Q Q') =
+      (R.ι ≫ pshProdSnd P P') ≫ β := by
+    simp only [← Category.assoc]
+    rw [hφ, Category.assoc,
+      pshProdMap_snd, Category.assoc]
+  intro c a b hS
+  change (F.map (R.ι ≫ pshProdFst P P').op).app
+      c ((F.map α.op).app c a) =
+    (F.map (R.ι ≫ pshProdSnd P P').op).app
+      c ((F.map β.op).app c b)
+  have key_fst :
+      α.op ≫ (R.ι ≫
+        pshProdFst P P').op =
+      (S.ι ≫ pshProdFst Q Q').op ≫
+        φ.op := by
+    rw [← op_comp, ← op_comp, hfst]
+  have key_snd :
+      β.op ≫ (R.ι ≫
+        pshProdSnd P P').op =
+      (S.ι ≫ pshProdSnd Q Q').op ≫
+        φ.op := by
+    rw [← op_comp, ← op_comp, hsnd]
+  have lhs_eq :
+      (F.map (R.ι ≫ pshProdFst P P').op).app
+        c ((F.map α.op).app c a) =
+      (F.map φ.op).app c
+        ((F.map (S.ι ≫
+          pshProdFst Q Q').op).app c a) := by
+    change (F.map α.op ≫
+      F.map (R.ι ≫ pshProdFst P P').op).app
+        c a = _
+    rw [← F.map_comp, key_fst, F.map_comp]
+    rfl
+  have rhs_eq :
+      (F.map (R.ι ≫ pshProdSnd P P').op).app
+        c ((F.map β.op).app c b) =
+      (F.map φ.op).app c
+        ((F.map (S.ι ≫
+          pshProdSnd Q Q').op).app c b) := by
+    change (F.map β.op ≫
+      F.map (R.ι ≫ pshProdSnd P P').op).app
+        c b = _
+    rw [← F.map_comp, key_snd, F.map_comp]
+    rfl
+  rw [lhs_eq, rhs_eq]
+  exact congrArg
+    ((F.map φ.op).app c) hS
+
 end PshContraBarrExtension
 
 section PshProfBarrExtension
