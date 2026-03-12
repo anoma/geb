@@ -361,7 +361,7 @@ construction.
 
 #### Universe constraint
 
-Discharging the hypotheses for `Type v` is blocked by
+Discharging the hypotheses for `Type v` faces
 a universe mismatch: the abstract framework uses
 `{C : Type v} [Category.{v} C]` (small category),
 but `Type v : Type (v+1)` is inherently large. All
@@ -682,7 +682,7 @@ condition `ι_cge_ihomMap_cgeChurchLeg` then
 where `Z = [innerEnd_Y, Y]`,
 `gs = bwdGlobalSection`, `m = innerEndMap Y`.
 
-**Approaches tried and blocked**:
+**Approaches tried**:
 
 1. **Left-cancellation of `fwd`**: We have
    `fwd ≫ (ι Z ≫ ihomEvalAt(gs ≫ m)) = fwd ≫ ι Y`
@@ -716,18 +716,18 @@ where `Z = [innerEnd_Y, Y]`,
    idempotent but showing `e = 𝟙` from idempotence
    requires Karoubi properties.
 
-6. **Section-retraction algebra**: Confirmed blocked
-   (see earlier analysis).
+6. **Section-retraction algebra**: Invalid.
 
 **Remaining viable approaches**:
 
 1. **Type v instantiation**: Prove `bwdFwd` for
    `C = Type v` where the gap reduces to function
-   extensionality. Blocked by universe constraint:
+   extensionality. Possibly-unnecessary universe constraint:
    framework uses `{C : Type v} [Category.{v} C]`
    but `Type v : Type (v+1)`. Requires generalizing
-   to `{C : Type u} [Category.{v} C]`, which is
-   blocked by `typeEnd` producing `Type (max u v)`.
+   to `{C : Type u} [Category.{v} C]`, which used to
+   fail because `typeEnd` produced `Type (max u v)`,
+   but that has been fixed.
 
 2. **Accept as hypothesis** (CURRENT APPROACH):
    `bwdFwd` is parameterized as a hypothesis
