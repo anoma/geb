@@ -554,20 +554,53 @@ Relevant declarations:
   pullback-preserving functors do not do in general.
   (`PshRelDouble.lean`)
 
-- [ ] **A4. Barr extension as double functor.**
-  Define a `DoubleFunctor` structure (or use the
-  existing `DoubleCategory` utilities) and show
-  `pshBarrLiftRel G` plus `G.map` form a double
-  functor when `G` preserves pullbacks.
-  File: `PshRelDouble.lean`.
+- [x] **A4. Barr extension as lax double functor.**
+  `pshBarrLiftDoubleFunctorOps G` defines the four
+  mapping components (objects, vertical relations,
+  horizontal morphisms, squares).  Six of eight
+  `DoubleFunctorLaws` hold strictly
+  (`pshBarrLiftDF_preservesVId`,
+  `pshBarrLiftDF_preservesHId`,
+  `pshBarrLiftDF_preservesHComp`,
+  `pshBarrLiftDF_preservesSqVertId`,
+  `pshBarrLiftDF_preservesSqHorId`,
+  `pshBarrLiftDF_preservesSqHComp`).
+  Vertical composition is lax:
+  `pshBarrLiftDF_laxVComp` gives
+  `pshRelComp (pshBarrLiftRel G R)
+    (pshBarrLiftRel G S)
+    ≤ pshBarrLiftRel G (pshRelComp R S)`
+  (when `G` preserves pullbacks).  Equality fails
+  in general because the reverse containment needs
+  `G` to preserve the epi
+  `pullbackToRelCompFunctor`.
+  (`PshRelDouble.lean`)
 
-- [ ] **A5. Double adjunction from adjunction.**
-  Given `F ⊣ G` with both preserving pullbacks
-  (automatic in a presheaf topos for standard
-  type-formers), construct the double adjunction
-  between Barr extensions.  The unit/counit are
-  horizontal, and the triangle identities carry over.
-  File: `PshRelDouble.lean`.
+- [x] **A5. Double adjunction from adjunction.**
+  Lifted adjunctions from `PSh(C)` to the edge
+  category `PshRelEdge C`.  Results:
+  - `pshBarrLiftRel_comp_functor_le`: composed
+    Barr lift `pshBarrLiftRel (F ⋙ G) R` is
+    contained in the iterated lift
+    `pshBarrLiftRel G (pshBarrLiftRel F R)`,
+    proved via `Subfunctor.range_comp_le`.
+  - `pshBarrLiftEdgeNatTrans`: any `σ : F ⟶ G`
+    lifts to a natural transformation between
+    Barr extension edge functors, with
+    functoriality (`_id`, `_comp`).
+  - `pshBarrLiftEdgeCompComparison`: lax
+    monoidal comparison from
+    `pshBarrLiftEdgeFunctor (F ⋙ G)` to
+    `pshBarrLiftEdgeFunctor F ⋙
+    pshBarrLiftEdgeFunctor G`.
+  - `adjEdgeUnit`/`adjEdgeCounit`: edge-level
+    unit and counit for `F ⊣ G`.
+  The adjunction is lax because the composition
+  containment is strict only in the forward
+  direction; the reverse needs `G` to preserve
+  epis (automatic for left adjoints in a
+  presheaf topos).
+  (`PshRelDouble.lean`)
 
 - [ ] **A6. Right-adjoint type-formers in PshRelEdge.**
   Show that the internal hom `[A, -]` (as a right

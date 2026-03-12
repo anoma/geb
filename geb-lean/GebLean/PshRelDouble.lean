@@ -4063,6 +4063,386 @@ theorem barrLiftRel_comp_chain
 
 end BarrLiftComposition
 
+section BarrLiftDoubleFunctor
+
+/-!
+## Barr extension as lax double functor
+
+The Barr extension `pshBarrLiftRel G` together
+with `G.map` on horizontal morphisms defines the
+combinatorial data of a double endofunctor on the
+presheaf relation double category.  The identity
+and horizontal composition laws hold strictly, as
+does the square map.  Vertical composition is
+preserved only up to containment (`≤`), making
+this a lax double functor in the direction
+
+```text
+  pshRelComp (pshBarrLiftRel G R)
+             (pshBarrLiftRel G S)
+    ≤ pshBarrLiftRel G (pshRelComp R S)
+```
+
+(when `G` preserves pullbacks).
+
+The reverse containment would require `G` to
+preserve the surjection
+`pullbackToRelCompFunctor`, which right adjoints
+do not do in general.
+-/
+
+variable {C : Type u} [Category.{v} C]
+
+/-- The four mapping components of the Barr
+extension double functor: objects via `G.obj`,
+vertical relations via `pshBarrLiftRel G`,
+horizontal morphisms via `G.map`, and squares
+via `pshBarrLiftRel_related G`. -/
+def pshBarrLiftDoubleFunctorOps
+    (G : (Cᵒᵖ ⥤ Type w) ⥤
+         (Cᵒᵖ ⥤ Type w)) :
+    DoubleFunctorOps
+      PshRel
+      (homSetOfQuiver (Cᵒᵖ ⥤ Type w))
+      pshRelSQS
+      PshRel
+      (homSetOfQuiver (Cᵒᵖ ⥤ Type w))
+      pshRelSQS where
+  objMap := G.obj
+  vertMap := pshBarrLiftRel G
+  horMap := G.map
+  sqMap := pshBarrLiftRel_related G
+
+/-- The Barr extension preserves vertical
+identity relations:
+`pshBarrLiftRel G (pshRelId P) = pshRelId (G.obj P)`.
+-/
+theorem pshBarrLiftDF_preservesVId
+    (G : (Cᵒᵖ ⥤ Type w) ⥤
+         (Cᵒᵖ ⥤ Type w)) :
+    DFPreservesVId
+      pshRelDoubleOps pshRelDoubleOps
+      (pshBarrLiftDoubleFunctorOps G) :=
+  fun _ => pshBarrLiftRel_id G
+
+/-- The Barr extension preserves horizontal
+identity morphisms: `G.map (𝟙 P) = 𝟙 (G.obj P)`.
+-/
+theorem pshBarrLiftDF_preservesHId
+    (G : (Cᵒᵖ ⥤ Type w) ⥤
+         (Cᵒᵖ ⥤ Type w)) :
+    DFPreservesHId
+      pshRelDoubleOps pshRelDoubleOps
+      (pshBarrLiftDoubleFunctorOps G) :=
+  fun _ => G.map_id _
+
+/-- The Barr extension preserves horizontal
+composition: `G.map (α ≫ β) = G.map α ≫ G.map β`.
+-/
+theorem pshBarrLiftDF_preservesHComp
+    (G : (Cᵒᵖ ⥤ Type w) ⥤
+         (Cᵒᵖ ⥤ Type w)) :
+    DFPreservesHComp
+      pshRelDoubleOps pshRelDoubleOps
+      (pshBarrLiftDoubleFunctorOps G) :=
+  fun α β => G.map_comp α β
+
+/-- A natural transformation `σ : F ⟶ G`
+between presheaf endofunctors gives a relatedness
+square between Barr lifts: `(σ.app P, σ.app Q)`
+is `(pshBarrLiftRel F R, pshBarrLiftRel G R)`-
+related for any `R : PshRel P Q`.  The witness
+in `F(R.toFunctor)` is sent to
+`G(R.toFunctor)` via `σ.app R.toFunctor`, and
+naturality of `σ` at the projection morphisms
+gives the component equalities.
+
+This generalizes `natTrans_pshRelRelated_barrLiftRel`
+from endomorphisms `σ : G ⟶ G` to arbitrary
+natural transformations `σ : F ⟶ G`. -/
+theorem natTrans_barrLiftRel_related
+    {P Q : Cᵒᵖ ⥤ Type w}
+    {F G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w)}
+    (σ : F ⟶ G)
+    (R : PshRel P Q) :
+    pshRelRelated (σ.app P) (σ.app Q)
+      (pshBarrLiftRel F R)
+      (pshBarrLiftRel G R) := by
+  intro c a b hmem
+  simp only [pshBarrLiftRel, pshBarrLift,
+    pshProdOverToRel, Subfunctor.range,
+    Set.mem_range, Over.mk_hom] at hmem ⊢
+  obtain ⟨w, hw⟩ := hmem
+  refine ⟨(σ.app R.toFunctor).app c w, ?_⟩
+  have nf := congr_fun (congr_app
+    (σ.naturality
+      (R.ι ≫ pshProdFst P Q)) c) w
+  have ns := congr_fun (congr_app
+    (σ.naturality
+      (R.ι ≫ pshProdSnd P Q)) c) w
+  simp only [NatTrans.comp_app,
+    types_comp_apply] at nf ns
+  have hw₁ := congr_arg Prod.fst hw
+  have hw₂ := congr_arg Prod.snd hw
+  dsimp [pshProdLift,
+    FunctorToTypes.prod] at hw₁ hw₂ ⊢
+  exact Prod.ext
+    (nf.symm.trans (congr_arg _ hw₁))
+    (ns.symm.trans (congr_arg _ hw₂))
+
+/-- The Barr extension through a composite
+`F ⋙ G` is contained in the composed Barr
+extensions `pshBarrLiftRel G (pshBarrLiftRel F R)`.
+The containment factors the composite `G(F(R))`
+through `G(pshBarrLiftRel F R)` using the range
+factorization of the Barr lift of `F`. -/
+theorem pshBarrLiftRel_comp_functor_le
+    {P Q : Cᵒᵖ ⥤ Type w}
+    (F G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w))
+    (R : PshRel P Q) :
+    pshBarrLiftRel (F ⋙ G) R ≤
+      pshBarrLiftRel G
+        (pshBarrLiftRel F R) := by
+  set φ := Subfunctor.lift
+    (pshBarrLift F (Over.mk R.ι)).hom
+    (le_refl _)
+  have hφ_ι :
+      φ ≫ (pshBarrLiftRel F R).ι =
+      (pshBarrLift F (Over.mk R.ι)).hom :=
+    Subfunctor.lift_ι _ _
+  have hfactor :
+      (pshBarrLift (F ⋙ G)
+        (Over.mk R.ι)).hom =
+      G.map φ ≫
+        (pshBarrLift G
+          (Over.mk
+            (pshBarrLiftRel F R).ι)).hom :=
+    pshProdPresheaf_hom_ext
+      (by
+        rw [pshBarrLift_fst, Category.assoc,
+          pshBarrLift_fst, ← G.map_comp,
+          Functor.comp_map]; congr 1)
+      (by
+        rw [pshBarrLift_snd, Category.assoc,
+          pshBarrLift_snd, ← G.map_comp,
+          Functor.comp_map]; congr 1)
+  simp only [pshBarrLiftRel, pshProdOverToRel]
+  rw [hfactor]
+  exact Subfunctor.range_comp_le _ _
+
+/-- The unit of an adjunction `F ⊣ G` preserves
+Barr-lifted relations: `(η P, η Q)` is
+`(R, pshBarrLiftRel (F ⋙ G) R)`-related.
+
+Since `pshBarrLiftRel (𝟭 _) R = R` by
+`pshBarrLiftRel_functor_id`, this is an instance
+of `natTrans_barrLiftRel_related` applied to the
+unit `η : 𝟭 _ ⟶ F ⋙ G`. -/
+theorem adjUnit_barrLiftRel_related
+    {P Q : Cᵒᵖ ⥤ Type w}
+    {F G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w)}
+    (adj : F ⊣ G)
+    (R : PshRel P Q) :
+    pshRelRelated
+      (adj.unit.app P) (adj.unit.app Q)
+      R (pshBarrLiftRel (F ⋙ G) R) := by
+  have h := natTrans_barrLiftRel_related
+    adj.unit R
+  simp only [pshBarrLiftRel_functor_id] at h
+  exact h
+
+/-- The counit of an adjunction `F ⊣ G`
+preserves Barr-lifted relations: `(ε P, ε Q)`
+is `(pshBarrLiftRel (G ⋙ F) R, R)`-related.
+
+Since `pshBarrLiftRel (𝟭 _) R = R` by
+`pshBarrLiftRel_functor_id`, this is an instance
+of `natTrans_barrLiftRel_related` applied to the
+counit `ε : G ⋙ F ⟶ 𝟭 _`. -/
+theorem adjCounit_barrLiftRel_related
+    {P Q : Cᵒᵖ ⥤ Type w}
+    {F G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w)}
+    (adj : F ⊣ G)
+    (R : PshRel P Q) :
+    pshRelRelated
+      (adj.counit.app P) (adj.counit.app Q)
+      (pshBarrLiftRel (G ⋙ F) R) R := by
+  have h := natTrans_barrLiftRel_related
+    adj.counit R
+  simp only [pshBarrLiftRel_functor_id] at h
+  exact h
+
+/-- A natural transformation `σ : F ⟶ G`
+between endofunctors of `PSh(C)` lifts to a
+natural transformation between the corresponding
+Barr extension edge functors. At each edge `R`,
+the lifted transformation applies `σ` to source
+and target, with the square condition given by
+`natTrans_barrLiftRel_related`. -/
+def pshBarrLiftEdgeNatTrans
+    {F G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w)}
+    (σ : F ⟶ G) :
+    pshBarrLiftEdgeFunctor (C := C) F ⟶
+      pshBarrLiftEdgeFunctor G where
+  app R :=
+    { srcMap := σ.app R.src
+      tgtMap := σ.app R.tgt
+      sq := natTrans_barrLiftRel_related
+        σ R.edge }
+  naturality _ _ f :=
+    VertEdgeHom.ext
+      (σ.naturality f.srcMap)
+      (σ.naturality f.tgtMap)
+
+/-- The edge-level lifting is functorial: the
+identity natural transformation lifts to the
+identity. -/
+@[simp]
+theorem pshBarrLiftEdgeNatTrans_id
+    (G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w)) :
+    pshBarrLiftEdgeNatTrans (𝟙 G) =
+      𝟙 (pshBarrLiftEdgeFunctor
+        (C := C) G) := by
+  ext R
+  exact VertEdgeHom.ext rfl rfl
+
+/-- The edge-level lifting preserves
+composition. -/
+@[simp]
+theorem pshBarrLiftEdgeNatTrans_comp
+    {F G H :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w)}
+    (σ : F ⟶ G) (τ : G ⟶ H) :
+    pshBarrLiftEdgeNatTrans (σ ≫ τ) =
+      pshBarrLiftEdgeNatTrans (C := C) σ ≫
+        pshBarrLiftEdgeNatTrans τ := by
+  ext R
+  exact VertEdgeHom.ext rfl rfl
+
+/-- The edge-level Barr extension is lax monoidal
+with respect to functor composition: the Barr
+extension of `F ⋙ G` admits a natural comparison
+morphism into the composition of the individual
+Barr extensions.  The edge comparison has identity
+source and target maps (since `(F ⋙ G).obj` equals
+`G.obj ∘ F.obj` definitionally), with the edge
+containment given by
+`pshBarrLiftRel_comp_functor_le`. -/
+def pshBarrLiftEdgeCompComparison
+    (F G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w)) :
+    pshBarrLiftEdgeFunctor (C := C) (F ⋙ G) ⟶
+      pshBarrLiftEdgeFunctor F ⋙
+        pshBarrLiftEdgeFunctor G where
+  app R :=
+    { srcMap := 𝟙 _
+      tgtMap := 𝟙 _
+      sq := fun c _ _ h =>
+        pshBarrLiftRel_comp_functor_le
+          F G R.edge c h }
+  naturality _ _ f :=
+    VertEdgeHom.ext
+      (show (F ⋙ G).map f.srcMap ≫ 𝟙 _ =
+        𝟙 _ ≫ G.map (F.map f.srcMap) by
+        simp)
+      (show (F ⋙ G).map f.tgtMap ≫ 𝟙 _ =
+        𝟙 _ ≫ G.map (F.map f.tgtMap) by
+        simp)
+
+/-- The edge-level unit of an adjunction
+`F ⊣ G`: a natural transformation from `𝟭` to
+`pshBarrLiftEdgeFunctor (F ⋙ G)`, obtained by
+lifting the unit `η : 𝟭 ⟶ F ⋙ G` via
+`pshBarrLiftEdgeNatTrans` and composing with the
+identity `pshBarrLiftRel_functor_id`. -/
+def adjEdgeUnit
+    {F G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w)}
+    (adj : F ⊣ G) :
+    pshBarrLiftEdgeFunctor (C := C) (𝟭 _) ⟶
+      pshBarrLiftEdgeFunctor (F ⋙ G) :=
+  pshBarrLiftEdgeNatTrans adj.unit
+
+/-- The edge-level counit of an adjunction
+`F ⊣ G`: a natural transformation from
+`pshBarrLiftEdgeFunctor (G ⋙ F)` to `𝟭`,
+obtained by lifting the counit `ε : G ⋙ F ⟶ 𝟭`
+via `pshBarrLiftEdgeNatTrans` and composing with
+the identity `pshBarrLiftRel_functor_id`. -/
+def adjEdgeCounit
+    {F G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w)}
+    (adj : F ⊣ G) :
+    pshBarrLiftEdgeFunctor (C := C) (G ⋙ F) ⟶
+      pshBarrLiftEdgeFunctor (𝟭 _) :=
+  pshBarrLiftEdgeNatTrans adj.counit
+
+/-- Lax vertical composition: the composition
+of Barr-lifted relations is contained in the
+Barr lift of the composed relation. This is the
+lax version of `DFPreservesVComp`; equality does
+not hold in general because `G` need not
+preserve the surjection
+`pullbackToRelCompFunctor`. -/
+theorem pshBarrLiftDF_laxVComp
+    (G : (Cᵒᵖ ⥤ Type w) ⥤
+         (Cᵒᵖ ⥤ Type w))
+    [PreservesLimitsOfShape WalkingCospan G]
+    {P Q W : Cᵒᵖ ⥤ Type w}
+    (R : PshRel P Q) (S : PshRel Q W) :
+    pshRelComp (pshBarrLiftRel G R)
+      (pshBarrLiftRel G S) ≤
+    pshBarrLiftRel G (pshRelComp R S) :=
+  relComp_barrLiftRel_le_of_preservesPullbacks
+    G R S
+
+/-- The Barr extension preserves vertical
+identity squares. -/
+theorem pshBarrLiftDF_preservesSqVertId
+    (G : (Cᵒᵖ ⥤ Type w) ⥤
+         (Cᵒᵖ ⥤ Type w)) :
+    DFPreservesSqVertId
+      pshRelDoubleOps pshRelDoubleOps
+      (pshBarrLiftDoubleFunctorOps G) := by
+  intro _ _ α
+  simp only [pshBarrLiftDoubleFunctorOps,
+    pshRelDoubleOps, pshBarrLiftRel_id]
+  exact HEq.rfl
+
+/-- The Barr extension preserves horizontal
+identity squares. -/
+theorem pshBarrLiftDF_preservesSqHorId
+    (G : (Cᵒᵖ ⥤ Type w) ⥤
+         (Cᵒᵖ ⥤ Type w)) :
+    DFPreservesSqHorId
+      pshRelDoubleOps pshRelDoubleOps
+      (pshBarrLiftDoubleFunctorOps G) := by
+  intro _ _ R
+  simp only [pshBarrLiftDoubleFunctorOps,
+    pshRelDoubleOps, G.map_id]
+  exact HEq.rfl
+
+/-- The Barr extension preserves horizontal
+composition of squares. -/
+theorem pshBarrLiftDF_preservesSqHComp
+    (G : (Cᵒᵖ ⥤ Type w) ⥤
+         (Cᵒᵖ ⥤ Type w)) :
+    DFPreservesSqHComp
+      pshRelDoubleOps pshRelDoubleOps
+      (pshBarrLiftDoubleFunctorOps G) := by
+  intro _ _ _ _ _ _ _ _ _ _ _ _ _ α β
+  simp only [pshBarrLiftDoubleFunctorOps,
+    pshRelDoubleOps, G.map_comp]
+  exact HEq.rfl
+
+end BarrLiftDoubleFunctor
+
 section TypeRelations
 
 /-!
