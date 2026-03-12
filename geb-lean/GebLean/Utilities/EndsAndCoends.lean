@@ -2368,20 +2368,6 @@ def constFunctorHomEquiv
     change G.map (𝟙 e) (f s) = f s
     exact congr_fun (G.map_id e) (f s)
 
-/-- At each `e : E`, the pointwise end of the plain
-power profunctor `powerProfunctor (W.flip.obj e) D`
-is equivalent to the set of natural transformations
-from `W.flip.obj e` to `D.flip.obj e`. -/
-def pointwiseTypeWeightedLimit.natTransEquiv
-    (W : K ⥤ (E ⥤ Type w₁))
-    (D : K ⥤ (E ⥤ Type w₁)) (e : E) :
-    (pointwiseTypeEnd
-      (powerProfunctor (C := E ⥤ Type w₁)
-        (W.flip.obj e) D)).obj e ≃
-      (W.flip.obj e ⟶ D.flip.obj e) :=
-  typeWeightedLimit.natTransEquiv
-    (W.flip.obj e) (D.flip.obj e)
-
 /-- The enriched weighted limit with a
 constant-presheaf weight `W₀ ⋙ Functor.const E`
 agrees pointwise with the Type-level weighted
@@ -2434,6 +2420,22 @@ def enrichedLimitConstWeightEquiv
     exact (constFunctorHomEquiv
       (W₀.obj j) (D.obj j) e).right_inv
       (y.val j)
+
+/-- At each `e : E`, the enriched pointwise weighted
+limit with constant-presheaf weight `W.flip.obj e`
+is equivalent to the set of natural transformations
+from `W.flip.obj e` to `D.flip.obj e`. -/
+def pointwiseTypeWeightedLimit.natTransEquiv
+    (W : K ⥤ (E ⥤ Type w₁))
+    (D : K ⥤ (E ⥤ Type w₁)) (e : E) :
+    (pointwiseTypeWeightedLimit
+      ((W.flip.obj e) ⋙ Functor.const E)
+      D).obj e ≃
+      (W.flip.obj e ⟶ D.flip.obj e) :=
+  (enrichedLimitConstWeightEquiv
+    (W.flip.obj e) D e).trans
+    (typeWeightedLimit.natTransEquiv
+      (W.flip.obj e) (D.flip.obj e))
 
 /-!
 ### Pointwise Ninja Yoneda
@@ -2505,19 +2507,21 @@ def pointwiseTypeCoendFunctor.coNinjaYonedaNatIso :
 
 /-- The pointwise ninja Yoneda equivalence at a
 given profunctor and evaluation point: the end at
-`e` is equivalent to the Type-level weighted limit
-with weight `Functor.hom K`. -/
+`e` is equivalent to the enriched pointwise weighted
+limit with constant weight
+`Functor.hom K ⋙ Functor.const E`. -/
 def pointwiseTypeEnd.ninjaYonedaEquiv
     (P : Kᵒᵖ ⥤ K ⥤ (E ⥤ Type v)) (e : E) :
     (pointwiseTypeEnd P).obj e ≃
-      typeWeightedLimit (Functor.hom K)
-        (Functor.uncurry.obj
-          ((profunctorDoubleFlipEquiv (K := K)
-            (E := E)).functor.obj P
-            |>.obj e)) :=
-  typeEnd.ninjaYonedaEquiv
+      (pointwiseTypeWeightedLimit
+        ((Functor.hom K) ⋙ Functor.const E)
+        (Functor.uncurry.obj P)).obj e :=
+  (typeEnd.ninjaYonedaEquiv
     ((profunctorDoubleFlipEquiv (K := K)
-      (E := E)).functor.obj P |>.obj e)
+      (E := E)).functor.obj P |>.obj e)).trans
+    (enrichedLimitConstWeightEquiv
+      (Functor.hom K)
+      (Functor.uncurry.obj P) e).symm
 
 /-- The pointwise co-ninja Yoneda equivalence at a
 given profunctor and evaluation point: the coend at
@@ -2565,10 +2569,10 @@ def pointwiseTypeEnd.introEquiv
     ((profunctorDoubleFlipEquiv (K := K)
       (E := E)).functor.obj P |>.obj e)
 
-/-- Introduction rule for Type-level weighted limits
+/-- Introduction rule for enriched weighted limits
 lifted pointwise: at each `e : E`, a function from
-`G.obj e` into the Type-level weighted limit
-`typeWeightedLimit (W.flip.obj e) (D.flip.obj e)`
+`G.obj e` into the enriched pointwise weighted limit
+with constant-presheaf weight `W.flip.obj e`
 is equivalent to the weighted limit of
 `homFromFunctor (D.flip.obj e) (G.obj e)`. -/
 def pointwiseTypeWeightedLimit.introEquiv
@@ -2577,13 +2581,18 @@ def pointwiseTypeWeightedLimit.introEquiv
     (D : K ⥤ (E ⥤ Type v))
     (e : E) :
     (G.obj e →
-      typeWeightedLimit (W.flip.obj e)
-        (D.flip.obj e)) ≃
+      (pointwiseTypeWeightedLimit
+        ((W.flip.obj e) ⋙ Functor.const E)
+        D).obj e) ≃
       typeWeightedLimit (W.flip.obj e)
         (homFromFunctor (D.flip.obj e)
           (G.obj e)) :=
-  typeWeightedLimit.introEquiv
-    (G.obj e) (W.flip.obj e) (D.flip.obj e)
+  (Equiv.arrowCongr (Equiv.refl _)
+    (enrichedLimitConstWeightEquiv
+      (W.flip.obj e) D e)).trans
+    (typeWeightedLimit.introEquiv
+      (G.obj e) (W.flip.obj e)
+      (D.flip.obj e))
 
 /-!
 ### Pointwise Yoneda and Co-Yoneda Lemmas
@@ -2594,18 +2603,21 @@ the pointwise weighted (co)limit evaluates to the
 diagram at the representing object.
 -/
 
-/-- Pointwise Yoneda lemma for Type-level weighted
-limits: at each `e : E`, the Type-level weighted
-limit with representable weight
-`coyoneda.obj (op j)` evaluates to
-`(D.obj j).obj e`. -/
+/-- Pointwise Yoneda lemma for enriched weighted
+limits: at each `e : E`, the enriched pointwise
+weighted limit with constant representable weight
+`coyoneda.obj (op j) ⋙ Functor.const E` evaluates
+to `(D.obj j).obj e`. -/
 def pointwiseTypeWeightedLimit.yonedaEquiv
     (j : K) (D : K ⥤ (E ⥤ Type v)) (e : E) :
-    typeWeightedLimit
-      (coyoneda.obj (Opposite.op j))
-      (D.flip.obj e) ≃
+    (pointwiseTypeWeightedLimit
+      ((coyoneda.obj (Opposite.op j)) ⋙
+        Functor.const E) D).obj e ≃
       (D.obj j).obj e :=
-  typeWeightedLimit.yonedaEquiv j (D.flip.obj e)
+  (enrichedLimitConstWeightEquiv
+    (coyoneda.obj (Opposite.op j)) D e).trans
+    (typeWeightedLimit.yonedaEquiv j
+      (D.flip.obj e))
 
 /-- Pointwise co-Yoneda lemma for enriched weighted
 colimits: at each `e : E`, the pointwise enriched
@@ -2800,12 +2812,7 @@ theorem pointwiseTypeWeightedColimit_eq_coend
 (with weight `W.flip.obj e`) has the nat-trans
 universal property: at each `e : E`, its elements
 are in bijection with natural transformations
-`W.flip.obj e ⟶ D.flip.obj e`.
-
-This follows from
-`pointwiseTypeWeightedLimit_eq_end` (which is `rfl`)
-combined with
-`pointwiseTypeWeightedLimit.natTransEquiv`. -/
+`W.flip.obj e ⟶ D.flip.obj e`. -/
 def pointwiseTypeEnd.powerNatTransEquiv
     (W : K ⥤ (E ⥤ Type w₁))
     (D : K ⥤ (E ⥤ Type w₁)) (e : E) :
@@ -2814,8 +2821,8 @@ def pointwiseTypeEnd.powerNatTransEquiv
         (C := E ⥤ Type w₁)
         (W.flip.obj e) D)).obj e ≃
       (W.flip.obj e ⟶ D.flip.obj e) :=
-  pointwiseTypeWeightedLimit.natTransEquiv
-    W D e
+  typeWeightedLimit.natTransEquiv
+    (W.flip.obj e) (D.flip.obj e)
 
 /-- The pointwise coend of the presheaf copower
 profunctor (with weight `W.flip.obj e`) agrees
