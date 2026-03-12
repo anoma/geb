@@ -1,5 +1,7 @@
 import Mathlib.CategoryTheory.Adjunction.Whiskering
+import Mathlib.CategoryTheory.Functor.FunctorHom
 import Mathlib.CategoryTheory.Limits.Shapes.End
+import Mathlib.CategoryTheory.Limits.Shapes.FunctorToTypes
 import Mathlib.CategoryTheory.Monoidal.Closed.Types
 import Mathlib.CategoryTheory.Types.Basic
 import GebLean.Utilities.PowersAndCopowers
@@ -1819,6 +1821,88 @@ universe u₁ v₁ w₁
 variable
   {K : Type u} [Category.{v} K]
   {E : Type u₁} [Category.{v₁} E]
+
+/-- The enriched copower profunctor in copresheaf
+categories.  Given `W : Kᵒᵖ ⥤ (E ⥤ Type w₁)` and
+`D : K ⥤ (E ⥤ Type w₁)`, the profunctor
+`Kᵒᵖ ⥤ K ⥤ (E ⥤ Type w₁)` sends
+`(op j₁, j₂) ↦ FunctorToTypes.prod (W.obj j₁) (D.obj j₂)`,
+the pointwise product of copresheaves.
+
+The coend of this profunctor gives the enriched
+weighted colimit `W ⊗_K D`. -/
+def enrichedCopowerProfunctorInnerMap
+    (W : Kᵒᵖ ⥤ (E ⥤ Type w₁))
+    (D : K ⥤ (E ⥤ Type w₁))
+    (j₁ : Kᵒᵖ) {j₂ j₂' : K} (g : j₂ ⟶ j₂') :
+    FunctorToTypes.prod (W.obj j₁) (D.obj j₂) ⟶
+      FunctorToTypes.prod (W.obj j₁) (D.obj j₂') :=
+  FunctorToTypes.prod.lift
+    FunctorToTypes.prod.fst
+    (FunctorToTypes.prod.snd ≫ D.map g)
+
+def enrichedCopowerProfunctorOuterMap
+    (W : Kᵒᵖ ⥤ (E ⥤ Type w₁))
+    (D : K ⥤ (E ⥤ Type w₁))
+    {j₁ j₁' : Kᵒᵖ} (f : j₁ ⟶ j₁') (j₂ : K) :
+    FunctorToTypes.prod (W.obj j₁) (D.obj j₂) ⟶
+      FunctorToTypes.prod (W.obj j₁') (D.obj j₂) :=
+  FunctorToTypes.prod.lift
+    (FunctorToTypes.prod.fst ≫ W.map f)
+    FunctorToTypes.prod.snd
+
+@[simp]
+theorem enrichedCopowerProfunctorInnerMap_app
+    (W : Kᵒᵖ ⥤ (E ⥤ Type w₁))
+    (D : K ⥤ (E ⥤ Type w₁))
+    (j₁ : Kᵒᵖ) {j₂ j₂' : K} (g : j₂ ⟶ j₂')
+    (e : E) (p : (W.obj j₁).obj e ×
+      (D.obj j₂).obj e) :
+    (enrichedCopowerProfunctorInnerMap
+      W D j₁ g).app e p =
+      (p.1, (D.map g).app e p.2) := rfl
+
+@[simp]
+theorem enrichedCopowerProfunctorOuterMap_app
+    (W : Kᵒᵖ ⥤ (E ⥤ Type w₁))
+    (D : K ⥤ (E ⥤ Type w₁))
+    {j₁ j₁' : Kᵒᵖ} (f : j₁ ⟶ j₁') (j₂ : K)
+    (e : E) (p : (W.obj j₁).obj e ×
+      (D.obj j₂).obj e) :
+    (enrichedCopowerProfunctorOuterMap
+      W D f j₂).app e p =
+      ((W.map f).app e p.1, p.2) := rfl
+
+def enrichedCopowerProfunctor
+    (W : Kᵒᵖ ⥤ (E ⥤ Type w₁))
+    (D : K ⥤ (E ⥤ Type w₁)) :
+    Kᵒᵖ ⥤ K ⥤ (E ⥤ Type w₁) where
+  obj j₁ :=
+    { obj := fun j₂ =>
+        FunctorToTypes.prod (W.obj j₁) (D.obj j₂)
+      map := enrichedCopowerProfunctorInnerMap
+        W D j₁
+      map_id := fun j₂ => by
+        ext e ⟨a, b⟩ <;>
+          simp [enrichedCopowerProfunctorInnerMap]
+      map_comp := fun g g' => by
+        ext e ⟨a, b⟩ <;>
+          simp [enrichedCopowerProfunctorInnerMap] }
+  map f :=
+    { app := enrichedCopowerProfunctorOuterMap
+        W D f
+      naturality := fun {_ _} g => by
+        ext e ⟨a, b⟩ <;>
+          simp [enrichedCopowerProfunctorInnerMap,
+            enrichedCopowerProfunctorOuterMap] }
+  map_id j₁ := by
+    ext j₂ e ⟨a, b⟩ <;>
+      simp [enrichedCopowerProfunctorOuterMap,
+        NatTrans.id_app, types_id_apply]
+  map_comp f f' := by
+    ext j₂ e ⟨a, b⟩ <;>
+      simp [enrichedCopowerProfunctorOuterMap,
+        NatTrans.comp_app, Functor.map_comp]
 
 /-- The pointwise weighted limit presheaf: given
 `D : K ⥤ (E ⥤ Type w₁)` with weight `W : K ⥤ Type w₁`,
