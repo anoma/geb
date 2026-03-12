@@ -1810,6 +1810,47 @@ theorem pshBarrLiftRel_related
       (pshRelRelated_toPshProdOverRelated
         h))
 
+/-- A natural endomorphism of `G` preserves
+relatedness at every Barr-lifted relation.
+Given `σ : G ⟶ G` and `R : PshRel P Q`,
+if `(a, b) ∈ pshBarrLiftRel G R`, then
+`(σ a, σ b) ∈ pshBarrLiftRel G R`.
+
+The witness `w ∈ G(R)` mapping to `(a, b)` is
+sent to `σ(w) ∈ G(R)`, which maps to
+`(σ(a), σ(b))` by naturality of `σ` at the
+projection morphisms `R.ι ≫ fst` and
+`R.ι ≫ snd`. -/
+theorem natTrans_pshRelRelated_barrLiftRel
+    {P Q : Cᵒᵖ ⥤ Type w}
+    (G : (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w))
+    (σ : G ⟶ G)
+    (R : PshRel P Q) :
+    pshRelRelated (σ.app P) (σ.app Q)
+      (pshBarrLiftRel G R)
+      (pshBarrLiftRel G R) := by
+  intro c a b hmem
+  simp only [pshBarrLiftRel, pshBarrLift,
+    pshProdOverToRel, Subfunctor.range,
+    Set.mem_range, Over.mk_hom] at hmem ⊢
+  obtain ⟨w, hw⟩ := hmem
+  refine ⟨(σ.app R.toFunctor).app c w, ?_⟩
+  have nf := congr_fun (congr_app
+    (σ.naturality
+      (R.ι ≫ pshProdFst P Q)) c) w
+  have ns := congr_fun (congr_app
+    (σ.naturality
+      (R.ι ≫ pshProdSnd P Q)) c) w
+  simp only [NatTrans.comp_app,
+    types_comp_apply] at nf ns
+  have hw₁ := congr_arg Prod.fst hw
+  have hw₂ := congr_arg Prod.snd hw
+  dsimp [pshProdLift,
+    FunctorToTypes.prod] at hw₁ hw₂ ⊢
+  exact Prod.ext
+    (nf.symm.trans (congr_arg _ hw₁))
+    (ns.symm.trans (congr_arg _ hw₂))
+
 /-- Transport a `pshBarrLiftRel` along a
 natural transformation `α : G ⟶ H`. Maps
 each related pair `(x, y)` in the Barr lift
@@ -2546,6 +2587,206 @@ theorem pshProfBarrLiftRelMap_ι_snd
   simp [pshProfBarrLiftRelMap,
     pshProfBarrLiftRel, pshProdSnd,
     FunctorToTypes.prod.snd]
+
+/-- The profunctor Barr extension maps the
+identity relation to the identity relation:
+`pshProfBarrLiftRel G (pshRelId P) =
+pshRelId (G.obj (op P, P))`.
+
+The proof uses the isomorphism
+`pshRelIdIso : (pshRelId P).toFunctor ≅ P`
+to show that: (1) both projections from the
+diagonal are equal (`pshRelId_fst_eq_snd`),
+collapsing the two witness conditions; (2) the
+induced map `G.map (π.op, 𝟙)` is an
+isomorphism, making the existential condition
+equivalent to `a = b`. -/
+theorem pshProfBarrLiftRel_id
+    {P : Cᵒᵖ ⥤ Type w}
+    (G :
+      (Cᵒᵖ ⥤ Type w)ᵒᵖ ×
+        (Cᵒᵖ ⥤ Type w) ⥤
+        (Cᵒᵖ ⥤ Type w)) :
+    pshProfBarrLiftRel G (pshRelId P) =
+      pshRelId
+        (G.obj (Opposite.op P, P)) := by
+  have hfs := pshRelId_fst_eq_snd P
+  have hσfst : (pshRelIdIso P).inv ≫
+      ((pshRelId P).ι ≫ pshProdFst P P) =
+      𝟙 P :=
+    (pshRelIdIso P).inv_hom_id
+  have hret :
+      G.map ((((pshRelId P).ι ≫
+          pshProdFst P P).op, 𝟙 P) :
+        (Opposite.op P, P) ⟶
+        (Opposite.op
+          (pshRelId P).toFunctor, P)) ≫
+      G.map (((pshRelIdIso P).inv.op,
+          𝟙 P) :
+        (Opposite.op
+          (pshRelId P).toFunctor, P) ⟶
+        (Opposite.op P, P)) = 𝟙 _ := by
+    rw [← G.map_comp]
+    have : ((((pshRelId P).ι ≫
+          pshProdFst P P).op, 𝟙 P) :
+        (Opposite.op P, P) ⟶
+        (Opposite.op
+          (pshRelId P).toFunctor, P)) ≫
+      (((pshRelIdIso P).inv.op, 𝟙 P) :
+        (Opposite.op
+          (pshRelId P).toFunctor, P) ⟶
+        (Opposite.op P, P)) =
+      𝟙 (Opposite.op P, P) := by
+      change (((pshRelId P).ι ≫
+          pshProdFst P P).op ≫
+        (pshRelIdIso P).inv.op,
+        𝟙 P ≫ 𝟙 P) = (𝟙 _, 𝟙 _)
+      rw [Category.comp_id, ← op_comp, hσfst,
+        op_id]
+    rw [this, G.map_id]
+  ext c ⟨a, b⟩
+  constructor
+  · intro hmem
+    change a = b
+    obtain ⟨w, hw₁, hw₂⟩ := hmem
+    rw [← pshRelId_fst_eq_snd P] at hw₂
+    have heq := hw₁.symm.trans hw₂
+    have ha := congr_fun (congr_app hret c) a
+    have hb := congr_fun (congr_app hret c) b
+    simp only [NatTrans.comp_app,
+      NatTrans.id_app, types_comp_apply,
+      types_id_apply] at ha hb
+    rw [← ha, ← hb]
+    exact congrArg _ heq
+  · intro hmem
+    have hmem' : a = b := hmem
+    subst hmem'
+    have hσsnd : (pshRelIdIso P).inv ≫
+        ((pshRelId P).ι ≫ pshProdSnd P P) =
+        𝟙 P := by
+      rw [← hfs]; exact hσfst
+    change ∃ (w : (G.obj
+        (Opposite.op (pshRelId P).toFunctor,
+          (pshRelId P).toFunctor)).obj c),
+      (G.map ((𝟙 (Opposite.op
+            (pshRelId P).toFunctor),
+          (pshRelId P).ι ≫
+            pshProdFst P P) :
+          (Opposite.op
+            (pshRelId P).toFunctor,
+            (pshRelId P).toFunctor) ⟶
+          (Opposite.op
+            (pshRelId P).toFunctor,
+            P))).app c w =
+      (G.map ((((pshRelId P).ι ≫
+            pshProdFst P P).op, 𝟙 P) :
+          (Opposite.op P, P) ⟶
+          (Opposite.op
+            (pshRelId P).toFunctor,
+            P))).app c a ∧
+      (G.map ((𝟙 (Opposite.op
+            (pshRelId P).toFunctor),
+          (pshRelId P).ι ≫
+            pshProdSnd P P) :
+          (Opposite.op
+            (pshRelId P).toFunctor,
+            (pshRelId P).toFunctor) ⟶
+          (Opposite.op
+            (pshRelId P).toFunctor,
+            P))).app c w =
+      (G.map ((((pshRelId P).ι ≫
+            pshProdSnd P P).op, 𝟙 P) :
+          (Opposite.op P, P) ⟶
+          (Opposite.op
+            (pshRelId P).toFunctor,
+            P))).app c a
+    refine ⟨(G.map
+        ((((pshRelId P).ι ≫
+            pshProdFst P P).op,
+          (pshRelIdIso P).inv) :
+          (Opposite.op P, P) ⟶
+          (Opposite.op
+            (pshRelId P).toFunctor,
+            (pshRelId P).toFunctor))).app
+        c a,
+      ?_, ?_⟩
+    · have step := congr_fun (congr_app
+        (show G.map
+            ((((pshRelId P).ι ≫
+                pshProdFst P P).op,
+              (pshRelIdIso P).inv) :
+              (Opposite.op P, P) ⟶
+              (Opposite.op
+                (pshRelId P).toFunctor,
+                (pshRelId P).toFunctor)) ≫
+          G.map
+            ((𝟙 (Opposite.op
+                (pshRelId P).toFunctor),
+              (pshRelId P).ι ≫
+                pshProdFst P P) :
+              (Opposite.op
+                (pshRelId P).toFunctor,
+                (pshRelId P).toFunctor) ⟶
+              (Opposite.op
+                (pshRelId P).toFunctor,
+                P)) =
+          G.map
+            ((((pshRelId P).ι ≫
+                pshProdFst P P).op,
+              𝟙 P) :
+              (Opposite.op P, P) ⟶
+              (Opposite.op
+                (pshRelId P).toFunctor,
+                P))
+        from by
+          rw [← G.map_comp]; congr 1)
+        c) a
+      simp only [NatTrans.comp_app,
+        types_comp_apply] at step
+      exact step
+    · have step := congr_fun (congr_app
+        (show G.map
+            ((((pshRelId P).ι ≫
+                pshProdFst P P).op,
+              (pshRelIdIso P).inv) :
+              (Opposite.op P, P) ⟶
+              (Opposite.op
+                (pshRelId P).toFunctor,
+                (pshRelId P).toFunctor)) ≫
+          G.map
+            ((𝟙 (Opposite.op
+                (pshRelId P).toFunctor),
+              (pshRelId P).ι ≫
+                pshProdSnd P P) :
+              (Opposite.op
+                (pshRelId P).toFunctor,
+                (pshRelId P).toFunctor) ⟶
+              (Opposite.op
+                (pshRelId P).toFunctor,
+                P)) =
+          G.map
+            ((((pshRelId P).ι ≫
+                pshProdSnd P P).op,
+              𝟙 P) :
+              (Opposite.op P, P) ⟶
+              (Opposite.op
+                (pshRelId P).toFunctor,
+                P))
+        from by
+          rw [← G.map_comp]; congr 1
+          change (((pshRelId P).ι ≫
+              pshProdFst P P).op ≫ 𝟙 _,
+            (pshRelIdIso P).inv ≫
+              ((pshRelId P).ι ≫
+                pshProdSnd P P)) =
+            (((pshRelId P).ι ≫
+              pshProdSnd P P).op, 𝟙 P)
+          rw [Category.comp_id, hσsnd,
+            ← pshRelId_fst_eq_snd])
+        c) a
+      simp only [NatTrans.comp_app,
+        types_comp_apply] at step
+      exact step
 
 end PshProfBarrExtension
 

@@ -638,6 +638,77 @@ theorem pshRelRelated_barrLiftGraph_implies_nat
 
 end FreeTheoremViaGraphs
 
+section BarrLiftEdgeEndo
+
+/-- Lift a natural endomorphism `σ : G ⟶ G` to
+a natural endomorphism of the Barr lift edge
+functor `pshBarrLiftEdgeFunctor G`, acting at
+every edge `(P, Q, R)` as `(σ_P, σ_Q)`.
+
+The relatedness condition
+`natTrans_pshRelRelated_barrLiftRel` ensures
+that `(σ_P, σ_Q)` preserves the Barr-lifted
+relation at every edge. -/
+def natTransToBarrLiftEdgeEndo
+    (G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w))
+    (σ : G ⟶ G) :
+    pshBarrLiftEdgeFunctor (C := C) G ⟶
+    pshBarrLiftEdgeFunctor G where
+  app R :=
+    { srcMap := σ.app R.src
+      tgtMap := σ.app R.tgt
+      sq :=
+        natTrans_pshRelRelated_barrLiftRel
+          G σ R.edge }
+  naturality {_ _} f :=
+    VertEdgeHom.ext
+      (σ.naturality f.srcMap)
+      (σ.naturality f.tgtMap)
+
+/-- Extract a natural endomorphism `G ⟶ G` from
+a natural endomorphism of the Barr lift edge
+functor, by restricting to identity edges and
+taking the source component. -/
+def barrLiftEdgeEndoToNatTrans
+    (G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w))
+    (τ :
+      pshBarrLiftEdgeFunctor (C := C) G ⟶
+      pshBarrLiftEdgeFunctor G) :
+    G ⟶ G where
+  app P :=
+    (τ.app (pshRelIdentFunctor.obj P)).srcMap
+  naturality _ _ α :=
+    congrArg VertEdgeHom.srcMap
+      (τ.naturality
+        (pshRelIdentFunctor.map α))
+
+/-- `barrLiftEdgeEndoToNatTrans` is a left
+inverse of `natTransToBarrLiftEdgeEndo`. -/
+theorem barrLiftEdgeEndoToNatTrans_natTransTo
+    (G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w))
+    (σ : G ⟶ G) :
+    barrLiftEdgeEndoToNatTrans (C := C) G
+      (natTransToBarrLiftEdgeEndo G σ) =
+    σ := rfl
+
+/-- The edge endomorphism at an identity edge
+equals the embedding endomorphism:
+`natTransToBarrLiftEdgeEndo` applied to
+`pshRelIdentFunctor.obj P` equals
+`natTransToBarrEndo` applied to `P`. -/
+theorem natTransToBarrLiftEdgeEndo_restrict
+    (G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w))
+    (σ : G ⟶ G) (P : Cᵒᵖ ⥤ Type w) :
+    (natTransToBarrLiftEdgeEndo (C := C) G
+      σ).app (pshRelIdentFunctor.obj P) =
+    (natTransToBarrEndo G σ).app P := rfl
+
+end BarrLiftEdgeEndo
+
 section FoldFreeTheorem
 
 open Endofunctor in

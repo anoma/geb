@@ -363,16 +363,27 @@ Port the embeddings from PshRelSpanObj to PshRelEdge.
   F ⋙ pshRelIdentFunctor`.
   (`PshRelEdgeGraphRestriction.lean`)
 
-- [ ] **E3. Profunctor Barr embedding into PshRelEdge.**
-  For `H : PSh(C)^op x PSh(C) => PSh(C)`, embed via
-  `pshProfBarrLiftRel`.
+- [x] **E3. Profunctor Barr embedding into PshRelEdge.**
+  `pshProfBarrLiftRel G R` lifts a relation `R` through
+  a profunctor `G : PSh(C)^op x PSh(C) => PSh(C)`.
+  `pshProfBarrLiftRelMap` transports along natural
+  transformations.  `pshProfBarrLiftRel_id` shows the
+  identity relation is preserved.
+  (`PshRelDouble.lean`)
 
-- [ ] **E4. Sections of Barr-embedded edges.**
-  Characterize sections of the edges from E1-E3.  For
-  covariant `G`, sections should correspond to
-  "parametric elements" of `G`.  At `C = Discrete PUnit`,
-  these should specialize to type-level parametric
-  families.
+- [x] **E4. Sections of Barr-embedded edges.**
+  `natTrans_pshRelRelated_barrLiftRel`: naturality of
+  `σ : G ⟶ G` implies relatedness at every
+  Barr-lifted relation (full parametricity theorem).
+  `natTransToBarrLiftEdgeEndo` lifts `σ` to a
+  natural endomorphism of `pshBarrLiftEdgeFunctor G`,
+  `barrLiftEdgeEndoToNatTrans` extracts back,
+  `barrLiftEdgeEndoToNatTrans_natTransTo` gives
+  the left inverse (extraction recovers `σ`),
+  `natTransToBarrLiftEdgeEndo_restrict` shows
+  agreement with `natTransToBarrEndo` at identity
+  edges.
+  (`PshRelDouble.lean`, `PshRelEdgeGraphRestriction.lean`)
 
 ### Graph subcategory and naturality
 
