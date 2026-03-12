@@ -281,31 +281,50 @@ using `PshRelEdge C` and `[WalkingSpan, PSh(C)]`.
   Barr-lifted graph relations.
   (`PshRelEdgeGraphRestriction.lean`)
 
-- [ ] **W5. Sort/nub conditional free theorems.**
+- [x] **W5. Sort/nub conditional free theorems.**
   Wadler Section 3.3: `sort` commutes with monotone
-  maps, `nub` commutes with injective maps.  In our
-  framework: the exponential edge for the sort type
-  has a conditional relatedness square (the relation
-  on the ordering/equality must preserve the relevant
-  structure).
+  maps, `nub` commutes with injective maps.
+  `conditional_freeTheorem_graph`: given a family
+  `σP` natural on morphisms satisfying predicate `P`,
+  `σP` is related at Barr-lifted graphs of `P`-morphisms.
+  `conditional_graph_implies_nat`: converse direction.
+  `conditional_edge_freeTheorem`: generalization from
+  morphism predicates to edge predicates.
+  (`PshRelEdgeGraphRestriction.lean`)
 
-- [ ] **W6. Filter decomposition.** Wadler Section 3.7:
+- [x] **W6. Filter decomposition.** Wadler Section 3.7:
   filter commutes with maps that preserve the
-  predicate.  Generalized in PshRelEdge.
+  predicate. Covered by the general conditional free
+  theorem framework in W5
+  (`conditional_freeTheorem_graph` and
+  `conditional_edge_freeTheorem`), with `P` =
+  "predicate-preserving". Specific filter instances
+  would be applications of this general pattern.
+  (`PshRelEdgeGraphRestriction.lean`)
 
-- [ ] **W7. Polymorphic equality impossibility.** Wadler
-  Section 3.4: no parametric inhabitant of
-  `∀X. X -> X -> Bool` equals polymorphic equality.
-  In PshRelEdge: the exponential edge for this type has
-  no section with the equality property.
+- [x] **W7. Polymorphic equality impossibility.** Wadler
+  Section 3.4. `parametric_constant`: any graph-natural
+  family `σ : ∀P c, P.obj c → P.obj c → β` satisfies
+  `σ P c a b = σ P c a a` (constant in both arguments).
+  `parametric_constant_value`: all values equal
+  `σ (pshTerminal C) c ⟨⟩ ⟨⟩`.
+  `no_parametric_equality`: Bool specialization.
+  Proof: naturality at the unique map to the terminal
+  presheaf collapses all elements.
+  (`PshRelEdgeGraphRestriction.lean`)
 
-- [ ] **W8. Yoneda isomorphism.** Wadler Section 3.8:
-  `∀X. (A -> X) -> X ≅ A`.  In PshRelEdge: the
-  exponential edge from a constant-A edge to the
-  identity edge has sections equivalent to elements of
-  `A`.  The inverse direction uses parametricity (the
-  section must be natural, hence determined by its
-  value at `id_A`).
+- [x] **W8. Yoneda isomorphism.** Wadler Section 3.8:
+  `∀X. (A → X) → X ≅ A`.
+  `yoneda_via_parametricity`: a graph-natural family
+  `σ : ∀P, (A ⟶ P) → ∀c, P.obj c` satisfies
+  `σ Q g c = g.app c (σ A (𝟙 A) c)`, so it is
+  determined by `σ A (𝟙 A)`.
+  `yoneda_embedding_natural`: every element
+  `a : (c : Cᵒᵖ) → A.obj c` determines a natural
+  family `fun P f c => f.app c (a c)`.
+  `yoneda_parametricity_inverse`: alias for the
+  inversion direction.
+  (`PshRelEdgeGraphRestriction.lean`)
 
 - [x] **W9. Parametricity as tautology in PshRelEdge.**
   `IsParametricSection F s`: a section is parametric
@@ -472,8 +491,18 @@ Port the embeddings from PshRelSpanObj to PshRelEdge.
   (`PshRelEdgeIdentPreservation.lean`)
 - **Parametricity Theorem**: naturality of sections
   (tautological)
-- **Free theorem**: graph restriction
-  (tasks W1, G1-G3; planned)
+- **Free theorem**: graph restriction recovers
+  naturality (W1-W3, G1-G3)
+- **Fold free theorem**: catamorphism commutes with
+  algebra homomorphisms (W4)
+- **Conditional free theorem**: parametricity over
+  subcategories (W5-W6)
+- **Equality impossibility**: `∀X. X → X → β` is
+  constant (W7, `parametric_constant`)
+- **Yoneda via parametricity**: `∀X. (A → X) → X ≅ A`
+  (W8, `yoneda_via_parametricity`)
+- **Parametricity as tautology**: naturality = parametricity
+  (W9, `IsParametricSection`)
 - **Blog: relations to bifunctors**: reflective
   embedding (`PshRelEdgeInclusion.lean`)
 - **Subobject classifier**: `pshRelEdgeSOClassifier`

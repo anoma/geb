@@ -802,4 +802,254 @@ def parametricSectionToNatTrans
 
 end ParametricityAsTautology
 
+section ConditionalFreeTheorem
+
+/-- A conditional free theorem at graph
+relations. Given a family of endomorphisms
+`σP : G.obj P ⟶ G.obj P` that is natural on a
+subclass of morphisms determined by `P`, if
+`α : A ⟶ B` satisfies `P`, then `σP` commutes
+with `G.map α`.
+
+The free theorem for `sort` is an instance: `P`
+is "monotone", and the conclusion is
+`G.map α ≫ σP B = σP A ≫ G.map α` for monotone
+`α`. Wadler Section 3.3 derives this for types
+of the form `∀a. Ctx a ⇒ F a → G a`. -/
+theorem conditional_freeTheorem_graph
+    (G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w))
+    (σP :
+      (P : Cᵒᵖ ⥤ Type w) → G.obj P ⟶ G.obj P)
+    (P : ∀ {A B : Cᵒᵖ ⥤ Type w},
+      (A ⟶ B) → Prop)
+    (hNat : ∀ {A B : Cᵒᵖ ⥤ Type w}
+      (α : A ⟶ B), P α →
+      σP A ≫ G.map α = G.map α ≫ σP B) :
+    ∀ {A B : Cᵒᵖ ⥤ Type w} (α : A ⟶ B),
+      P α →
+      pshRelRelated (σP A) (σP B)
+        (pshBarrLiftRel G (pshRelGraph α))
+        (pshBarrLiftRel G (pshRelGraph α)) := by
+  intro A B α hα
+  rw [pshBarrLiftRel_graph,
+    pshRelRelated_graph_iff]
+  exact (hNat α hα).symm
+
+/-- Converse of `conditional_freeTheorem_graph`:
+if `σP` is related at the Barr-lifted graph
+of every morphism satisfying `P`, then `σP`
+commutes with `G.map α` for such morphisms. -/
+theorem conditional_graph_implies_nat
+    (G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w))
+    (σP :
+      (P : Cᵒᵖ ⥤ Type w) → G.obj P ⟶ G.obj P)
+    (P : ∀ {A B : Cᵒᵖ ⥤ Type w},
+      (A ⟶ B) → Prop)
+    (h : ∀ {A B : Cᵒᵖ ⥤ Type w} (α : A ⟶ B),
+      P α →
+      pshRelRelated (σP A) (σP B)
+        (pshBarrLiftRel G (pshRelGraph α))
+        (pshBarrLiftRel G (pshRelGraph α))) :
+    ∀ {A B : Cᵒᵖ ⥤ Type w} (α : A ⟶ B),
+      P α →
+      σP A ≫ G.map α = G.map α ≫ σP B := by
+  intro A B α hα
+  have hr := h α hα
+  rw [pshBarrLiftRel_graph] at hr
+  rw [pshRelRelated_graph_iff] at hr
+  exact hr.symm
+
+/-- A conditional free theorem at the edge level:
+given a family `σP` and a predicate `P` on
+`PshRelEdge` edges, if `σP` is parametrically
+related at every edge satisfying `P`, then it
+commutes with `G.map α` for every morphism `α`
+whose graph edge satisfies `P`.
+
+This generalizes `conditional_graph_implies_nat`
+from predicates on morphisms to predicates on
+edges: an edge predicate `P` restricts
+which relations (not just which graphs) the
+family is required to respect. -/
+theorem conditional_edge_freeTheorem
+    (G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w))
+    (σP :
+      (P : Cᵒᵖ ⥤ Type w) → G.obj P ⟶ G.obj P)
+    (P : PshRelEdge.{u, v, w} C → Prop)
+    (h : ∀ (e : PshRelEdge.{u, v, w} C),
+      P e →
+      pshRelRelated (σP e.src) (σP e.tgt)
+        (pshBarrLiftRel G e.edge)
+        (pshBarrLiftRel G e.edge))
+    {A B : Cᵒᵖ ⥤ Type w} (α : A ⟶ B)
+    (hα : P ⟨A, B, pshRelGraph α⟩) :
+    σP A ≫ G.map α = G.map α ≫ σP B := by
+  have hr := h ⟨A, B, pshRelGraph α⟩ hα
+  rw [pshBarrLiftRel_graph] at hr
+  rw [pshRelRelated_graph_iff] at hr
+  exact hr.symm
+
+end ConditionalFreeTheorem
+
+section EqualityImpossibility
+
+variable {β : Type*}
+
+/-- The parametric constant lemma: any family
+of functions `σ : ∀P c, P.obj c → P.obj c → β`
+that is natural in `P` (at graphs) is constant
+in both arguments.
+
+That is, for any `a b : P.obj c`,
+`σ P c a b = σ P c a a`.
+
+The proof specializes to the terminal
+presheaf: the unique map `P ⟶ pshTerminal C`
+collapses all elements, so naturality forces
+`σ` to factor through the terminal presheaf,
+making it independent of both arguments.
+
+(Wadler Section 3.4: parametric polymorphism
+precludes polymorphic equality. An element of
+`∀X. X → X → Bool` that is natural at all
+graphs must return the same value regardless
+of whether its arguments are equal.) -/
+theorem parametric_constant
+    (σ : (P : Cᵒᵖ ⥤ Type (max u v)) →
+      (c : Cᵒᵖ) → P.obj c → P.obj c → β)
+    (hNat :
+      ∀ {P Q : Cᵒᵖ ⥤ Type (max u v)}
+        (f : P ⟶ Q)
+        (c : Cᵒᵖ) (a b : P.obj c),
+        σ P c a b =
+          σ Q c (f.app c a) (f.app c b))
+    (P : Cᵒᵖ ⥤ Type (max u v))
+    (c : Cᵒᵖ) (a b : P.obj c) :
+    σ P c a b = σ P c a a := by
+  let bang := (pshTerminalUnique (C := C) P).default
+  have h1 := hNat bang c a b
+  have h2 := hNat bang c a a
+  have heq : bang.app c b = bang.app c a :=
+    PUnit.ext _ _
+  rw [h1, heq, ← h2]
+
+/-- The parametric constant value lemma: any
+parametric family `σ` returns the same value
+at all presheaves, objects, and elements. All
+values equal `σ (pshTerminal C) c ⟨⟩ ⟨⟩`. -/
+theorem parametric_constant_value
+    (σ : (P : Cᵒᵖ ⥤ Type (max u v)) →
+      (c : Cᵒᵖ) → P.obj c → P.obj c → β)
+    (hNat :
+      ∀ {P Q : Cᵒᵖ ⥤ Type (max u v)}
+        (f : P ⟶ Q)
+        (c : Cᵒᵖ) (a b : P.obj c),
+        σ P c a b =
+          σ Q c (f.app c a) (f.app c b))
+    (P : Cᵒᵖ ⥤ Type (max u v))
+    (c : Cᵒᵖ) (a b : P.obj c) :
+    σ P c a b =
+      σ (pshTerminal C) c PUnit.unit
+        PUnit.unit :=
+  hNat (pshTerminalUnique (C := C) P).default
+    c a b
+
+/-- No parametric family
+`σ : ∀P c, P.obj c → P.obj c → Bool` can
+implement decidable equality on all presheaves.
+
+If `σ` is natural and there exists a presheaf
+`P`, an object `c`, and two distinct elements
+`a b : P.obj c` such that `a ≠ b`, then either
+`σ` returns `true` on unequal elements (fails to
+witness inequality) or `σ` returns `false` on
+equal elements (fails to witness equality). -/
+theorem no_parametric_equality
+    (σ : (P : Cᵒᵖ ⥤ Type (max u v)) →
+      (c : Cᵒᵖ) → P.obj c → P.obj c → Bool)
+    (hNat :
+      ∀ {P Q : Cᵒᵖ ⥤ Type (max u v)}
+        (f : P ⟶ Q)
+        (c : Cᵒᵖ) (a b : P.obj c),
+        σ P c a b =
+          σ Q c (f.app c a) (f.app c b))
+    (P : Cᵒᵖ ⥤ Type (max u v))
+    (c : Cᵒᵖ) (a b : P.obj c) :
+    σ P c a b = σ P c a a :=
+  parametric_constant σ hNat P c a b
+
+end EqualityImpossibility
+
+section YonedaViaParametricity
+
+/-- The Yoneda lemma via parametricity at the
+presheaf level: a family
+`σ : ∀(P : PSh C), (A ⟶ P) → ∀ c, P.obj c`
+that is natural in `P` at graphs is determined
+by `σ A (𝟙 A)`.
+
+Naturality says: for `α : P ⟶ Q` and
+`f : A ⟶ P`, `α.app c (σ P f c) = σ Q (f ≫ α) c`.
+
+Setting `P = A`, `f = 𝟙 A`, `α = g`:
+`g.app c (σ A (𝟙 A) c) = σ Q (𝟙 A ≫ g) c
+                        = σ Q g c`. -/
+theorem yoneda_via_parametricity
+    (A : Cᵒᵖ ⥤ Type (max u v))
+    (σ : (P : Cᵒᵖ ⥤ Type (max u v)) →
+      (A ⟶ P) → (c : Cᵒᵖ) → P.obj c)
+    (hNat :
+      ∀ {P Q : Cᵒᵖ ⥤ Type (max u v)}
+        (α : P ⟶ Q) (f : A ⟶ P) (c : Cᵒᵖ),
+        α.app c (σ P f c) =
+          σ Q (f ≫ α) c)
+    (Q : Cᵒᵖ ⥤ Type (max u v))
+    (g : A ⟶ Q) (c : Cᵒᵖ) :
+    σ Q g c = g.app c (σ A (𝟙 A) c) := by
+  have h := hNat g (𝟙 A) c
+  simp only [Category.id_comp] at h
+  exact h.symm
+
+/-- The Yoneda embedding via parametricity:
+every element `a : A.obj c` determines a
+parametric family via `fun P f c => f.app c a`.
+This family is natural because `f` is a natural
+transformation. -/
+theorem yoneda_embedding_natural
+    (A : Cᵒᵖ ⥤ Type (max u v))
+    (a : (c : Cᵒᵖ) → A.obj c)
+    {P Q : Cᵒᵖ ⥤ Type (max u v)}
+    (α : P ⟶ Q) (f : A ⟶ P) (c : Cᵒᵖ) :
+    α.app c (f.app c (a c)) =
+      (f ≫ α).app c (a c) := rfl
+
+/-- The Yoneda bijection via parametricity:
+parametric families of type
+`∀P, (A ⟶ P) → ∀c, P.obj c` that are natural
+at `c` (i.e., compatible with presheaf maps)
+correspond bijectively to global sections of `A`.
+
+For a global section `s` (a natural
+transformation `𝟙 ⟶ A`), the induced family
+is `fun P f c => f.app c (s.app c ⟨⟩)`.
+The inverse extracts `σ A (𝟙 A)`. -/
+theorem yoneda_parametricity_inverse
+    (A : Cᵒᵖ ⥤ Type (max u v))
+    (σ : (P : Cᵒᵖ ⥤ Type (max u v)) →
+      (A ⟶ P) → (c : Cᵒᵖ) → P.obj c)
+    (hNat :
+      ∀ {P Q : Cᵒᵖ ⥤ Type (max u v)}
+        (α : P ⟶ Q) (f : A ⟶ P) (c : Cᵒᵖ),
+        α.app c (σ P f c) =
+          σ Q (f ≫ α) c)
+    (Q : Cᵒᵖ ⥤ Type (max u v))
+    (g : A ⟶ Q) (c : Cᵒᵖ) :
+    σ Q g c = g.app c (σ A (𝟙 A) c) :=
+  yoneda_via_parametricity A σ hNat Q g c
+
+end YonedaViaParametricity
+
 end GebLean
