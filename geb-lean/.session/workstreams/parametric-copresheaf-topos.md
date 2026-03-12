@@ -415,10 +415,172 @@ Port the embeddings from PshRelSpanObj to PshRelEdge.
 
 ### Relation composition in PshRelEdge
 
-- [ ] **R1. Relation composition and edge morphisms.**
+- [x] **R1. Relation composition and edge morphisms.**
   Determine when an edge endofunctor `F` satisfies
-  `F(R_1 ; R_2) ≅ F(R_1) ;_F F(R_2)`.  This is the
-  edge-category analogue of `RelInterpComposition.lean`.
+  `F(R_1 ; R_2) ≅ F(R_1) ;_F F(R_2)`.
+  Three theorems in `BarrLiftComposition` section of
+  `PshRelDouble.lean`:
+  (1) `pshProdOverToRel_comp`: pullback-based and
+  existential-based compositions agree at the relation
+  level.
+  (2) `pshBarrLift_comp_le_barrLiftRel_comp`:
+  `pshBarrLift G (R ×_Q S) ≤ pshBarrLiftRel G (R;S)`.
+  (3) `pshBarrLift_comp_le_relComp_barrLiftRel`:
+  `pshBarrLift G (R ×_Q S) ≤
+  pshRelComp (pshBarrLiftRel G R) (pshBarrLiftRel G S)`.
+  The "witnessed Barr lift" is a common refinement.
+  Obstructions to full equality: reverse of (3) needs
+  `G` to preserve the pullback over `Q`; reverse of (2)
+  needs a section of the epi from `G(pullback)` to
+  `G(R;S)`.
+
+### Type-formers as adjoint functors
+
+A "type-former" is a functor `G : PSh(C) → PSh(C)`
+(or between categories built from `PSh(C)`) which has
+a left or right adjoint.  The adjunction structure
+resolves the composition obstructions identified in R1.
+
+**Right adjoints preserve pullbacks.**
+If `G` is a right adjoint, mathlib's
+`Adjunction.rightAdjoint_preservesLimits` gives
+`PreservesLimitsOfSize G`, hence
+`PreservesLimitsOfShape WalkingCospan G` (pullbacks).
+This resolves obstruction (1) from R1: given witnesses
+`wR ∈ G(R.toFunctor)` and `wS ∈ G(S.toFunctor)`
+matching over `G(Q)`, the pullback-preservation
+universal property yields `z ∈ G(R ×_Q S)` mapping
+to `(wR, wS)`.  Combined with theorem (3) from R1,
+this gives:
+
+```text
+pshRelComp (pshBarrLiftRel G R) (pshBarrLiftRel G S)
+  = pshBarrLiftRel G (pshRelComp R S)
+```
+
+**Left adjoints in a topos preserve finite limits.**
+In `PSh(C)` (a presheaf topos), the product functor
+`- × A` is left adjoint to the internal hom `[A, -]`.
+Being a left adjoint in a cartesian closed category,
+`- × A` preserves all colimits.  But `PSh(C)` is also
+locally cartesian closed, so `- × A` preserves all
+finite limits (including pullbacks).  Similarly,
+coproduct functors `- + A` preserve pullbacks in a
+topos (coproducts are universal/disjoint).  So the
+standard left-adjoint type-formers also satisfy the
+pullback-preservation condition.
+
+**The double functor.**
+When `G` preserves pullbacks, the Barr extension gives
+a double functor `PshRelDouble → PshRelDouble`:
+
+- Objects: `G.obj P`
+- Horizontal morphisms: `G.map f`
+- Vertical morphisms: `pshBarrLiftRel G R`
+- 2-cells: `pshBarrLift_related G h` (line 1710)
+- Vertical composition preserved (by pullback pres.)
+
+**Double adjunction.**
+An adjunction `F ⊣ G` where both `F` and `G` preserve
+pullbacks (e.g., both are type-formers in a topos)
+lifts to a double adjunction: the unit `η : Id → GF`
+and counit `ε : FG → Id` are horizontal natural
+transformations, and the Barr extensions provide the
+vertical action with triangle identities inherited
+from the original adjunction.
+
+**Wadler correspondence.**
+In Wadler's framework, the relational interpretation
+of type constructors must compose correctly: `[[F(A)]]`
+at relation `R` should agree with `F̂(R)`, and this
+must be compatible with substitution (= composition).
+The pullback-preservation theorem is the presheaf-level
+formalization of this property.  For all standard
+type-formers (products, coproducts, function spaces,
+universal quantification), the Barr extension is a
+double functor, and adjunctions between type-formers
+lift to double adjunctions.
+
+**Mathlib resources.**
+Relevant declarations:
+
+- `Adjunction.rightAdjoint_preservesLimits`
+  (`Mathlib/CategoryTheory/Adjunction/Limits.lean:204`)
+- `Adjunction.leftAdjoint_preservesColimits`
+  (`Mathlib/CategoryTheory/Adjunction/Limits.lean:91`)
+- `PreservesLimitsOfShape WalkingCospan`
+  (`Mathlib/CategoryTheory/Limits/Preserves/Basic.lean`)
+- `PreservesPullback.iso`
+  (`Mathlib/CategoryTheory/Limits/Preserves/Shapes/Pullbacks.lean:129`)
+- `isLimitOfPreserves`
+  (`Mathlib/CategoryTheory/Limits/Preserves/Basic.lean:116`)
+- `Closed` and `MonoidalClosed`
+  (`Mathlib/CategoryTheory/Monoidal/Closed/Basic.lean`)
+- `Functor.IsRightAdjoint` (auto instance for
+  `PreservesLimitsOfShape`)
+  (`Mathlib/CategoryTheory/Adjunction/Limits.lean:352`)
+
+**Tasks.**
+
+- [x] **A1. Barr lift composition for pullback-preserving
+  functors.**
+  `relComp_barrLiftRel_le_of_preservesPullbacks`:
+  if `[PreservesLimitsOfShape WalkingCospan G]`,
+  then `pshRelComp (pshBarrLiftRel G R)
+  (pshBarrLiftRel G S) ≤
+  pshBarrLiftRel G (pshRelComp R S)`.
+  Proof uses `cospanCompIso`,
+  `IsLimit.postcomposeHomEquiv`, and the projection
+  lemmas `pshProdOverComp_fst`/`_snd`.
+  (`PshRelDouble.lean`)
+
+- [x] **A2. Barr lift composition for right adjoints.**
+  `relComp_barrLiftRel_le_of_rightAdjoint`:
+  if `F ⊣ G`, derives
+  `PreservesLimitsOfShape WalkingCospan G` from
+  `Adjunction.rightAdjoint_preservesLimits` and
+  applies A1.  (`PshRelDouble.lean`)
+
+- [x] **A3. Barr lift composition chain.**
+  `barrLiftRel_comp_chain`: for pullback-preserving
+  `G`, the containment chain
+  `pshProdOverToRel (pshBarrLift G (comp R S))
+  ≤ pshRelComp (pshBarrLiftRel G R)
+              (pshBarrLiftRel G S)
+  ≤ pshBarrLiftRel G (pshRelComp R S)`.
+  The reverse of the second containment (which would
+  give full equality) requires `G` to preserve the
+  epi `pullbackToRelCompFunctor`, which
+  pullback-preserving functors do not do in general.
+  (`PshRelDouble.lean`)
+
+- [ ] **A4. Barr extension as double functor.**
+  Define a `DoubleFunctor` structure (or use the
+  existing `DoubleCategory` utilities) and show
+  `pshBarrLiftRel G` plus `G.map` form a double
+  functor when `G` preserves pullbacks.
+  File: `PshRelDouble.lean`.
+
+- [ ] **A5. Double adjunction from adjunction.**
+  Given `F ⊣ G` with both preserving pullbacks
+  (automatic in a presheaf topos for standard
+  type-formers), construct the double adjunction
+  between Barr extensions.  The unit/counit are
+  horizontal, and the triangle identities carry over.
+  File: `PshRelDouble.lean`.
+
+- [ ] **A6. Right-adjoint type-formers in PshRelEdge.**
+  Show that the internal hom `[A, -]` (as a right
+  adjoint to `- × A`) satisfies A2, giving
+  composition preservation for the function-space
+  Barr extension.  Connect to `pshArrowRel`.
+  File: `PshRelDouble.lean` or new file.
+
+- [ ] **A7. Left-adjoint type-formers in presheaf topos.**
+  Show that product functors `- × A` in `PSh(C)`
+  preserve pullbacks (via cartesian closure +
+  `MonoidalClosed`), hence satisfy A1.
+  File: `PshRelDouble.lean` or new file.
 
 ### Comparison with paranaturality
 
@@ -922,7 +1084,22 @@ Status: [done].
 
 **Relation composition in PshRelEdge.**
 When does `F(R_1 ; R_2) ≅ F(R_1) ;_F F(R_2)`?
-Task: R1.
+Answer: when `G` preserves pullbacks (Barr's theorem).
+This holds for right adjoints (all limits preserved)
+and for left-adjoint type-formers in a presheaf topos
+(finite limits preserved by cartesian closure).
+Task: R1 [done], A1-A7 [open].
+Status: R1 [done], adjunction formalization [open].
+
+**Type-formers as adjoint functors.**
+Right adjoint type-formers (internal hom, dependent
+products) preserve all limits, hence pullbacks; left
+adjoint type-formers (products, coproducts, dependent
+sums) preserve pullbacks in a presheaf topos.  Both
+cases yield Barr extensions that preserve composition,
+giving double functors on `PshRelDouble`.  Adjunctions
+lift to double adjunctions.
+Tasks: A1-A7.
 Status: [open].
 
 **Paranatural vs parametric in PshRelEdge.**
