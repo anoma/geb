@@ -2332,6 +2332,42 @@ theorem pointwiseTypeWeightedColimit_obj_eq
         (D.flip.obj e) :=
   rfl
 
+/-- For a constant presheaf `(Functor.const E).obj S`
+and `G : E ⥤ Type w₁`, the internal hom
+`[const S, G]` evaluated at `e` is equivalent
+to the function type `S → G.obj e`.
+
+An element of `HomObj (const S) G (coyoneda (op e))`
+is a natural family
+`∀ c, (e ⟶ c) → S → G.obj c`;
+the Yoneda lemma determines this family by its
+value at `(e, 𝟙 e)`. -/
+def constFunctorHomEquiv
+    (S : Type w₁) (G : E ⥤ Type w₁) (e : E) :
+    ((Functor.const E).obj S |>.functorHom
+      G).obj e ≃
+      (S → G.obj e) where
+  toFun h s := h.app e (𝟙 e) s
+  invFun f :=
+    { app := fun d φ s => G.map φ (f s)
+      naturality := fun {c d} g φ => by
+        ext s
+        exact congr_fun (G.map_comp φ g) (f s) }
+  left_inv h := by
+    ext d (φ : e ⟶ d) s
+    change G.map φ (h.app e (𝟙 e) s) =
+      h.app d φ s
+    have nat := congr_fun
+      (h.naturality φ (𝟙 e)) s
+    simp only [types_comp_apply] at nat
+    dsimp at nat
+    rw [Category.id_comp] at nat
+    exact nat.symm
+  right_inv f := by
+    ext s
+    change G.map (𝟙 e) (f s) = f s
+    exact congr_fun (G.map_id e) (f s)
+
 /-- At each `e : E`, the pointwise end of the plain
 power profunctor `powerProfunctor (W.flip.obj e) D`
 is equivalent to the set of natural transformations
@@ -2345,6 +2381,59 @@ def pointwiseTypeWeightedLimit.natTransEquiv
       (W.flip.obj e ⟶ D.flip.obj e) :=
   typeWeightedLimit.natTransEquiv
     (W.flip.obj e) (D.flip.obj e)
+
+/-- The enriched weighted limit with a
+constant-presheaf weight `W₀ ⋙ Functor.const E`
+agrees pointwise with the Type-level weighted
+limit.  The equivalence applies
+`constFunctorHomEquiv` componentwise: at each
+`j`, the enriched power
+`[const(W₀ j), D j](e)` is equivalent to
+the plain power `W₀ j → (D j)(e)` by the
+Yoneda lemma for constant presheaves. -/
+def enrichedLimitConstWeightEquiv
+    (W₀ : K ⥤ Type w₁)
+    (D : K ⥤ (E ⥤ Type w₁)) (e : E) :
+    (pointwiseTypeWeightedLimit
+      (W₀ ⋙ Functor.const E) D).obj e ≃
+      typeWeightedLimit W₀
+        (D.flip.obj e) where
+  toFun x :=
+    ⟨fun j => constFunctorHomEquiv
+        (W₀.obj j) (D.obj j) e (x.val j),
+     fun {i j} f => by
+       funext s
+       exact congr_fun
+         (Functor.HomObj.congr_app
+           (x.property f) e (𝟙 e)) s⟩
+  invFun y :=
+    ⟨fun j => (constFunctorHomEquiv
+        (W₀.obj j) (D.obj j) e).symm
+        (y.val j),
+     fun {i j} f => by
+       apply Functor.HomObj.ext
+       funext c φ s
+       change (D.map f).app c
+         ((D.obj i).map φ (y.val i s)) =
+         (D.obj j).map φ
+           (y.val j (W₀.map f s))
+       have nat := congr_fun
+         ((D.map f).naturality φ)
+         (y.val i s)
+       simp only [types_comp_apply] at nat
+       rw [nat]
+       exact congrArg ((D.obj j).map φ)
+         (congr_fun (y.property f) s)⟩
+  left_inv x := by
+    apply Subtype.ext; funext j
+    exact (constFunctorHomEquiv
+      (W₀.obj j) (D.obj j) e).left_inv
+      (x.val j)
+  right_inv y := by
+    apply Subtype.ext; funext j
+    exact (constFunctorHomEquiv
+      (W₀.obj j) (D.obj j) e).right_inv
+      (y.val j)
 
 /-!
 ### Pointwise Ninja Yoneda
