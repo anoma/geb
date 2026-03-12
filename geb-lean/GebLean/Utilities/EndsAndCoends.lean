@@ -3127,6 +3127,59 @@ def pointwiseTypeWeightedLimitFunctor.natIso'
 
 end ConstWeightBridge
 
+section NinjaYonedaBridge
+
+universe w₁
+
+variable
+  {K : Type u} [Category.{w₁} K]
+  {E : Type w₁} [Category.{w₁} E]
+
+/-- The double-flip followed by pointwise uncurry
+equals uncurry followed by flip, as functors
+`(Kᵒᵖ ⥤ K ⥤ (E ⥤ Type w₁)) ⥤
+  (E ⥤ Kᵒᵖ × K ⥤ Type w₁)`. -/
+theorem profunctorDoubleFlipUncurryEq :
+    (profunctorDoubleFlipEquiv
+      (K := K) (E := E)).functor ⋙
+      (Functor.whiskeringRight E _ _).obj
+        Functor.uncurry =
+    Functor.uncurry ⋙
+      Functor.flipping.functor := rfl
+
+/-- The pointwise ninja Yoneda lemma referencing
+the enriched weighted limit functor: the pointwise
+end functor is naturally isomorphic to
+`uncurry ⋙ pointwiseTypeWeightedLimitFunctor
+  ((hom K) ⋙ Functor.const E)`.
+
+Restores the reference to
+`pointwiseTypeWeightedLimitFunctor` in the
+`ninjaYonedaNatIso` statement.
+
+Requires `Category.{w₁} K` (i.e. `v = w₁`) so
+that the hom functor and the enriched limit
+share the same universe. -/
+def pointwiseTypeEndFunctor.ninjaYonedaNatIso' :
+    pointwiseTypeEndFunctor
+      (K := K) (E := E) ≅
+    Functor.uncurry ⋙
+      pointwiseTypeWeightedLimitFunctor
+        ((Functor.hom K) ⋙ Functor.const E) :=
+  pointwiseTypeEndFunctor.ninjaYonedaNatIso ≪≫
+    eqToIso (by
+      rw [← Functor.whiskeringRight_obj_comp]
+      change _ ⋙ (Functor.whiskeringRight E
+        _ _).obj Functor.uncurry ⋙ _ = _
+      rw [← Functor.assoc,
+        profunctorDoubleFlipUncurryEq,
+        Functor.assoc]) ≪≫
+    Functor.isoWhiskerLeft Functor.uncurry
+      (enrichedLimitConstWeightFunctorNatIso
+        (Functor.hom K)).symm
+
+end NinjaYonedaBridge
+
 section PointwisePresheafAdjunctions
 
 universe u₁
