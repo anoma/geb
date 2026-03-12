@@ -2990,6 +2990,143 @@ def pointwiseTypeCoend.endImpredicativeNatIso
 
 end PointwisePresheaf
 
+section ConstWeightBridge
+
+universe w₁
+
+variable
+  {K : Type u} [Category.{v} K]
+  {E : Type w₁} [Category.{w₁} E]
+
+/-- The enriched weighted limit with
+constant-presheaf weight `W₀ ⋙ Functor.const E`
+is naturally isomorphic (as a presheaf on `E`) to
+the Type-level weighted limit applied pointwise.
+Lifts `enrichedLimitConstWeightEquiv` to a
+natural isomorphism of presheaves.
+
+Requires `E : Type w₁` with `Category.{w₁} E` so
+that the enriched universe `max u w₁ w₁ w₁`
+reduces to `max u w₁`. -/
+def enrichedLimitConstWeightNatIso
+    (W₀ : K ⥤ Type w₁)
+    (D : K ⥤ (E ⥤ Type w₁)) :
+    pointwiseTypeWeightedLimit
+      (W₀ ⋙ Functor.const E) D ≅
+      D.flip ⋙
+        typeWeightedLimitFunctor W₀ :=
+  NatIso.ofComponents
+    (fun e => (enrichedLimitConstWeightEquiv
+      W₀ D e).toIso)
+    (fun {e₁ e₂} φ => by
+      ext ⟨x, hx⟩
+      apply Subtype.ext; funext j; funext s
+      change (x j).app e₂ (φ ≫ 𝟙 e₂) s =
+        (D.obj j).map φ ((x j).app e₁
+          (𝟙 e₁) s)
+      rw [Category.comp_id]; symm
+      have nat := congr_fun
+        ((x j).naturality φ (𝟙 e₁)) s
+      simp at nat; exact nat.symm)
+
+/-- The bifunctor evaluation
+`(pointwiseTypeWeightedLimitBifunctor.obj W).obj D`
+is naturally isomorphic to the enriched weighted limit
+with constant-presheaf weight `W.unop ⋙ Functor.const E`.
+
+Composition of the definitional equality
+`pointwiseTypeWeightedLimitBifunctor_obj_obj` with
+the bridge `enrichedLimitConstWeightNatIso`. -/
+def pointwiseTypeWeightedLimitBifunctor_obj_iso
+    (W : (K ⥤ Type w₁)ᵒᵖ)
+    (D : K ⥤ (E ⥤ Type w₁)) :
+    (pointwiseTypeWeightedLimitBifunctor.obj
+      W).obj D ≅
+      pointwiseTypeWeightedLimit
+        (W.unop ⋙ Functor.const E) D :=
+  eqToIso
+    (pointwiseTypeWeightedLimitBifunctor_obj_obj
+      W D) ≪≫
+    (enrichedLimitConstWeightNatIso
+      W.unop D).symm
+
+/-- The functor-in-weight evaluation
+`(pointwiseTypeWeightedLimitFunctorInW D).obj W`
+is naturally isomorphic to the enriched weighted limit
+with constant-presheaf weight `W.unop ⋙ Functor.const E`.
+
+Composition of the definitional equality
+`pointwiseTypeWeightedLimitFunctorInW_obj` with
+the bridge `enrichedLimitConstWeightNatIso`. -/
+def pointwiseTypeWeightedLimitFunctorInW_obj_iso
+    (D : K ⥤ (E ⥤ Type w₁))
+    (W : (K ⥤ Type w₁)ᵒᵖ) :
+    (pointwiseTypeWeightedLimitFunctorInW
+      D).obj W ≅
+      pointwiseTypeWeightedLimit
+        (W.unop ⋙ Functor.const E) D :=
+  eqToIso
+    (pointwiseTypeWeightedLimitFunctorInW_obj
+      D W) ≪≫
+    (enrichedLimitConstWeightNatIso
+      W.unop D).symm
+
+/-- Lifting `enrichedLimitConstWeightNatIso` to a
+natural isomorphism of functors in the diagram `D`:
+`pointwiseTypeWeightedLimitFunctor (W₀ ⋙ const E)`
+is naturally isomorphic to the composition
+`flipping.functor ⋙ whiskeringRight E
+  (typeWeightedLimitFunctor W₀)`.
+
+The naturality in `D` holds because the bridge
+`constFunctorHomEquiv` (extraction at `(e, 𝟙 e)`)
+commutes with post-composition by `α : D₁ ⟶ D₂`. -/
+def enrichedLimitConstWeightFunctorNatIso
+    (W₀ : K ⥤ Type w₁) :
+    pointwiseTypeWeightedLimitFunctor
+      (W₀ ⋙ Functor.const E) ≅
+    Functor.flipping.functor ⋙
+      (Functor.whiskeringRight E (K ⥤ Type w₁)
+        (Type (max u w₁))).obj
+        (typeWeightedLimitFunctor W₀) :=
+  NatIso.ofComponents
+    (fun D => enrichedLimitConstWeightNatIso
+      W₀ D)
+    (fun {D₁ D₂} α => by
+      ext e ⟨x, hx⟩
+      apply Subtype.ext; funext j; funext s
+      change ((α.app j).app e
+        ((x j).app e (𝟙 e) s)) =
+        (α.app j).app e
+          ((x j).app e (𝟙 e) s)
+      rfl)
+
+/-- The enriched weighted limit functor with
+constant-presheaf weight is naturally isomorphic to
+the coyoneda functor applied pointwise, lifting
+`typeWeightedLimitFunctor.natIso` through the
+bridge.
+
+Restores the reference to
+`pointwiseTypeWeightedLimitFunctor` in the statement
+of `pointwiseTypeWeightedLimitFunctor.natIso`. -/
+def pointwiseTypeWeightedLimitFunctor.natIso'
+    (W : K ⥤ Type w₁) :
+    pointwiseTypeWeightedLimitFunctor
+      (E := E) (W ⋙ Functor.const E) ≅
+      Functor.flipping.functor ⋙
+        (Functor.whiskeringRight E (K ⥤ Type w₁)
+          (Type (max u w₁))).obj
+          (coyoneda.obj (Opposite.op W)) :=
+  enrichedLimitConstWeightFunctorNatIso W ≪≫
+    Functor.isoWhiskerLeft
+      Functor.flipping.functor
+      ((Functor.whiskeringRight E (K ⥤ Type w₁)
+        (Type (max u w₁))).mapIso
+        (typeWeightedLimitFunctor.natIso W))
+
+end ConstWeightBridge
+
 section PointwisePresheafAdjunctions
 
 universe u₁
