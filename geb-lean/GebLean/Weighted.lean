@@ -3393,6 +3393,73 @@ def IsTerminal.isInitialOpCowedge
 
 end CowedgeOpDuality
 
+section CowedgeOpWedgeDuality
+
+/-!
+### Cowedge/Wedge Op Duality
+
+Cowedges for `P` are equivalent to the opposite of the wedge
+category for `profunctorSwapOp C P`:
+
+`Cowedge P ≌ (Wedge (profunctorSwapOp C P))ᵒᵖ`
+
+The swap-op profunctor sends `(a, b)` to
+`op ((P.obj (op b)).obj (unop a))`.
+
+The equivalence is composed from three steps (inside the op):
+1. `wedgeConeEquiv` — wedges as cones over `TwistedArrow C`
+2. `Cones.whiskeringEquivalence` — reindexing through
+   `(CoTwistedArrow C)ᵒᵖ ≌ TwistedArrow C`
+3. `Cones.postcomposeEquivalence` — transport along
+   `profunctorSwapOpNatIso`
+
+These compose to `Wedge Q ≌ Cone (profunctorOnCoTwistedArrow
+C P).op`, and chaining with `cowedgeOpConeEquivalence` gives
+the result.
+-/
+
+variable {C : Type u} [Category.{v} C]
+  {D : Type w} [Category.{v} D]
+
+/-- Cowedges for `P` are equivalent to the opposite of
+the wedge category for `profunctorSwapOp C P`. -/
+def cowedgeOpWedgeEquivalence
+    (P : Cᵒᵖ ⥤ C ⥤ D) :
+    Cowedge (J := C) (C := D) P ≌
+    (Wedge (profunctorSwapOp C P))ᵒᵖ :=
+  (cowedgeOpConeEquivalence P).trans
+    (((wedgeConeEquiv (profunctorSwapOp C P)).trans
+      ((Cones.whiskeringEquivalence
+        coTwistedArrowOpEquivTwistedArrow).trans
+        (Cones.postcomposeEquivalence
+          (profunctorSwapOpNatIso C P)))).op.symm)
+
+/-- An initial cowedge maps to a terminal wedge via
+`cowedgeOpWedgeEquivalence`. -/
+def IsInitial.isTerminalOpWedge_cowedge
+    {P : Cᵒᵖ ⥤ C ⥤ D}
+    {c : Cowedge (J := C) (C := D) P}
+    (hc : IsInitial c) :
+    IsTerminal
+      ((cowedgeOpWedgeEquivalence P).functor.obj
+        c).unop :=
+  isTerminalUnopOfIsInitialEquivOp
+    (cowedgeOpWedgeEquivalence P) hc
+
+/-- A terminal wedge for `profunctorSwapOp C P` maps to
+an initial cowedge for `P`. -/
+def IsTerminal.isInitialOpCowedge_wedge
+    {P : Cᵒᵖ ⥤ C ⥤ D}
+    {d : Wedge (profunctorSwapOp C P)}
+    (hd : IsTerminal d) :
+    IsInitial
+      ((cowedgeOpWedgeEquivalence P).inverse.obj
+        (Opposite.op d)) :=
+  isInitialOfIsTerminalEquivOp
+    (cowedgeOpWedgeEquivalence P) hd
+
+end CowedgeOpWedgeDuality
+
 section WeightedCowedgeOpDuality
 
 /-!
