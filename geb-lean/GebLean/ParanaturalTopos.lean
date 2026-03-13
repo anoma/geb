@@ -5447,6 +5447,31 @@ theorem divFullRelParametric_iff_fullRelInterp
       at this
     exact this
 
+/-- `divApplyId` does not preserve
+`profBarrLiftRel` at graph relations. Since
+`profBarrLiftRel` at graphs is equivalent to
+`DiagCompat` (paranaturality), this follows from
+`divApplyId_not_paranatural`. -/
+theorem divApplyId_not_profBarrLift_preserving :
+    ¬ (∀ (I₀ I₁ : Type) (f : I₀ → I₁)
+      (p₀ : diagApp divSource I₀)
+      (p₁ : diagApp divSource I₁),
+      profBarrLiftRel divSource
+        (graphRel f) p₀ p₁ →
+      profBarrLiftRel divTarget
+        (graphRel f)
+        (divApplyId I₀ p₀)
+        (divApplyId I₁ p₁)) := by
+  intro h
+  apply divApplyId_not_paranatural
+  rw [divParanatural_iff_isParanatural]
+  intro I₀ I₁ f d₀ d₁ hcompat
+  exact profBarrLiftRel_graph_implies_diagCompat
+    divTarget f _ _
+    (h I₀ I₁ f d₀ d₁
+      (diagCompat_implies_profBarrLiftRel_graph
+        divSource f d₀ d₁ hcompat))
+
 end ParametricityDivergence
 
 end GebLean

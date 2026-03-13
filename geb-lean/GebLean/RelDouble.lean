@@ -322,4 +322,91 @@ theorem profBarrLiftRel_graph_implies_diagCompat
   rw [← FunctorToTypes.map_comp_apply]
   exact (h_s.symm.trans nat₂).symm
 
+/-- The converse of
+`profBarrLiftRel_graph_implies_diagCompat`:
+`DiagCompat` implies the profunctor Barr lift at
+graph relations. The witness is obtained by
+transporting `d₀` contravariantly along `π₁`
+and covariantly along `graphRelInj f`. -/
+theorem diagCompat_implies_profBarrLiftRel_graph
+    (G : Typeᵒᵖ ⥤ Type ⥤ Type)
+    {I₀ I₁ : Type} (f : I₀ → I₁)
+    (d₀ : diagApp G I₀)
+    (d₁ : diagApp G I₁)
+    (h : DiagCompat G I₀ I₁ f d₀ d₁) :
+    profBarrLiftRel G (graphRel f) d₀ d₁ := by
+  refine ⟨(G.obj (Opposite.op _)).map
+    (graphRelInj f)
+    ((G.map (Quiver.Hom.op
+      fun s : { p : I₀ × I₁ //
+        graphRel f p.1 p.2 } =>
+        (↑s : I₀ × I₁).1)).app I₀ d₀),
+    ?_, ?_⟩
+  · -- π₁ ∘ ι = id, so map π₁ (map ι x) = x
+    simp only [DiagCompat]
+    rw [← FunctorToTypes.map_comp_apply]
+    exact FunctorToTypes.map_id_apply _ _
+  · -- π₂ ∘ ι = f, then naturality + hypothesis
+    simp only [DiagCompat]
+    rw [← FunctorToTypes.map_comp_apply]
+    -- ι ≫ π₂ = f definitionally in Type
+    change (G.obj (Opposite.op
+      { p : I₀ × I₁ //
+        graphRel f p.1 p.2 })).map f
+      ((G.map (Quiver.Hom.op
+        fun s : { p : I₀ × I₁ //
+          graphRel f p.1 p.2 } =>
+          (↑s : I₀ × I₁).1)).app I₀ d₀) =
+      (G.map (Quiver.Hom.op
+        fun s : { p : I₀ × I₁ //
+          graphRel f p.1 p.2 } =>
+          (↑s : I₀ × I₁).2)).app I₁ d₁
+    -- Use naturality of G.map π₁.op at f
+    have nat := congrFun
+      ((G.map (Quiver.Hom.op
+        fun s : { p : I₀ × I₁ //
+          graphRel f p.1 p.2 } =>
+          (↑s : I₀ × I₁).1)).naturality f)
+      d₀
+    simp only [types_comp_apply] at nat
+    rw [← nat, h]
+    -- Goal: (G.map π₁.op).app I₁
+    --   ((G.map f.op).app I₁ d₁)
+    -- = (G.map π₂.op).app I₁ d₁
+    change ((G.map (Quiver.Hom.op f) ≫
+      G.map (Quiver.Hom.op
+        fun s : { p : I₀ × I₁ //
+          graphRel f p.1 p.2 } =>
+          (↑s : I₀ × I₁).1)).app I₁) d₁ =
+      (G.map (Quiver.Hom.op
+        fun s : { p : I₀ × I₁ //
+          graphRel f p.1 p.2 } =>
+          (↑s : I₀ × I₁).2)).app I₁ d₁
+    simp only [← Functor.map_comp,
+      ← op_comp, types_comp]
+    have key : f ∘ (fun s :
+        { p : I₀ × I₁ //
+          graphRel f p.1 p.2 } =>
+        (↑s : I₀ × I₁).1) =
+        (fun s :
+          { p : I₀ × I₁ //
+            graphRel f p.1 p.2 } =>
+          (↑s : I₀ × I₁).2) :=
+      funext fun s => s.property
+    simp only [key]
+
+/-- The profunctor Barr lift at graph relations
+is equivalent to `DiagCompat`. -/
+theorem profBarrLiftRel_graph_iff_diagCompat
+    (G : Typeᵒᵖ ⥤ Type ⥤ Type)
+    {I₀ I₁ : Type} (f : I₀ → I₁)
+    (d₀ : diagApp G I₀)
+    (d₁ : diagApp G I₁) :
+    profBarrLiftRel G (graphRel f) d₀ d₁ ↔
+    DiagCompat G I₀ I₁ f d₀ d₁ :=
+  ⟨profBarrLiftRel_graph_implies_diagCompat
+    G f d₀ d₁,
+   diagCompat_implies_profBarrLiftRel_graph
+    G f d₀ d₁⟩
+
 end GebLean
