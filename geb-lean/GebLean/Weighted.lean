@@ -3277,6 +3277,68 @@ def coconeWeightedCoconeEquiv (D : J ⥤ C) :
 
 end ConeWeightedConeEquivalence
 
+section CoconeOpConeDuality
+
+/-!
+### Cocone/Cone Op Duality
+
+Cocones over `D : J ⥤ C` are categorically equivalent to the
+opposite of the cone category over the opposite diagram `D.op`.
+
+This is derived by composing three equivalences:
+1. `Cocone D ≌ WeightedCocone (unitWeightOp J) D`
+2. `WeightedCocone (unitWeightOp J) D ≌ (WeightedCone (unitWeightOp J) D.op)ᵒᵖ`
+3. `(WeightedCone (unitWeight Jᵒᵖ) D.op)ᵒᵖ ≌ (Cone D.op)ᵒᵖ`
+
+The unit weights `unitWeightOp J` and `unitWeight Jᵒᵖ` are
+definitionally equal.
+-/
+
+variable {J : Type u} [Category.{v} J]
+  {C : Type w} [Category.{v} C]
+
+/-- Cocones over `D` are equivalent to the opposite of the
+cone category over `D.op`. -/
+def coconeOpConeEquivalence (D : J ⥤ C) :
+    Cocone D ≌ (Cone D.op)ᵒᵖ :=
+  (coconeWeightedCoconeEquiv D).trans
+    ((weightedCoconeOpConeEquivalence
+      (unitWeightOp J) D).trans
+      (coneWeightedConeEquiv D.op).symm.op)
+
+/-- Cones over `D.op` are equivalent to the opposite of the
+cocone category over `D`.
+
+Derived from `coconeOpConeEquivalence` via
+`Equivalence.rightOp`. -/
+def coneOpCoconeEquivalence (D : J ⥤ C) :
+    Cone D.op ≌ (Cocone D)ᵒᵖ :=
+  (coconeOpConeEquivalence D).symm.rightOp
+
+/-- An initial cocone maps to a terminal cone over the
+opposite diagram via `coconeOpConeEquivalence`. -/
+def IsInitial.isTerminalOpCone
+    {D : J ⥤ C} {c : Cocone D}
+    (hc : IsInitial c) :
+    IsTerminal
+      ((coconeOpConeEquivalence D).functor.obj
+        c).unop :=
+  isTerminalUnopOfIsInitialEquivOp
+    (coconeOpConeEquivalence D) hc
+
+/-- A terminal cone over the opposite diagram maps to
+an initial cocone via `coconeOpConeEquivalence`. -/
+def IsTerminal.isInitialOpCocone
+    {D : J ⥤ C} {d : Cone D.op}
+    (hd : IsTerminal d) :
+    IsInitial
+      ((coconeOpConeEquivalence D).inverse.obj
+        (Opposite.op d)) :=
+  isInitialOfIsTerminalEquivOp
+    (coconeOpConeEquivalence D) hd
+
+end CoconeOpConeDuality
+
 section WeightedConeElementsEquivalence
 
 /-!
