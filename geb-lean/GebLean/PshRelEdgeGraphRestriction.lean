@@ -903,77 +903,50 @@ section ParametricityAsTautology
 /-- A parametric section of an endofunctor
 `G : PshRelEdge C ⥤ PshRelEdge C` is a cone
 over `G` with vertex the terminal edge.
+This is mathlib's `Limits.Cone G` specialized to
+`pt = pshRelEdgeTerminal C`.
+
 Concretely: for each edge `e`, a morphism
 `⊤ ⟶ G(e)` in `PshRelEdge C`, such that for
 each `f : e₁ ⟶ e₂`, the cone condition
-`s e₁ ≫ G.map f = s e₂` holds.
+`π e₁ ≫ G.map f = π e₂` holds (where
+`π = cone.π.app`).
 
 For `G = pshBarrLiftEdgeFunctor H`, this
-recovers Wadler's parametricity: `s e` picks
+recovers Wadler's parametricity: `π e` picks
 a pair of elements of `H(e.src)` and `H(e.tgt)`
 that are `pshBarrLiftRel H e.rel`-related,
 and the cone condition says these choices are
-compatible across all edge morphisms. The
+compatible across all edge morphisms.  The
 limit of such a cone is the universal type
 `∀X. H(X)` as an object of `PshRelEdge C`. -/
-def IsParametricSection
+abbrev ParametricCone
     (G : PshRelEdge.{u, v, w} C ⥤
-      PshRelEdge.{u, v, w} C)
-    (s : (e : PshRelEdge.{u, v, w} C) →
-      (pshRelEdgeTerminal C ⟶ G.obj e)) :
-    Prop :=
-  ∀ {e₁ e₂ : PshRelEdge.{u, v, w} C}
-    (f : e₁ ⟶ e₂),
-    s e₁ ≫ G.map f = s e₂
+      PshRelEdge.{u, v, w} C) :=
+  { cone : Limits.Cone G //
+    cone.pt = pshRelEdgeTerminal C }
 
-/-- A natural transformation from the constant
-functor at the terminal edge to `G` determines
-a parametric section. -/
-theorem natTrans_isParametricSection
-    (G : PshRelEdge.{u, v, w} C ⥤
-      PshRelEdge.{u, v, w} C)
-    (σ : (Functor.const
-        (PshRelEdge.{u, v, w} C)).obj
-        (pshRelEdgeTerminal C) ⟶ G) :
-    IsParametricSection G
-      (fun e => σ.app e) := by
-  intro e₁ e₂ f
-  have h := σ.naturality f
-  simp at h
-  exact h.symm
-
-/-- The parametricity condition at a specific
-edge morphism `f : e₁ ⟶ e₂`: the cone
-condition `s e₁ ≫ G.map f = s e₂`. -/
-theorem isParametricSection_at
+/-- Build a `ParametricCone` from a family of
+morphisms from the terminal edge satisfying the
+cone condition. -/
+def ParametricCone.mk'
     (G : PshRelEdge.{u, v, w} C ⥤
       PshRelEdge.{u, v, w} C)
     (s : (e : PshRelEdge.{u, v, w} C) →
       (pshRelEdgeTerminal C ⟶ G.obj e))
-    (hs : IsParametricSection G s)
-    {e₁ e₂ : PshRelEdge.{u, v, w} C}
-    (f : e₁ ⟶ e₂) :
-    s e₁ ≫ G.map f = s e₂ :=
-  hs f
-
-/-- The converse of `natTrans_isParametricSection`:
-a parametric section determines a natural
-transformation from the constant functor at
-the terminal edge. -/
-def parametricSectionToNatTrans
-    (G : PshRelEdge.{u, v, w} C ⥤
-      PshRelEdge.{u, v, w} C)
-    (s : (e : PshRelEdge.{u, v, w} C) →
-      (pshRelEdgeTerminal C ⟶ G.obj e))
-    (hs : IsParametricSection G s) :
-    (Functor.const
-      (PshRelEdge.{u, v, w} C)).obj
-      (pshRelEdgeTerminal C) ⟶ G where
-  app e := s e
-  naturality {e₁ e₂} f := by
-    simp only [Functor.const_obj_obj,
-      Functor.const_obj_map, Category.id_comp]
-    exact (hs f).symm
+    (hs : ∀ {e₁ e₂ : PshRelEdge.{u, v, w} C}
+      (f : e₁ ⟶ e₂),
+      s e₁ ≫ G.map f = s e₂) :
+    ParametricCone G :=
+  ⟨{ pt := pshRelEdgeTerminal C
+     π :=
+       { app := fun e => s e
+         naturality := fun {e₁ e₂} f => by
+           simp only [Functor.const_obj_obj,
+             Functor.const_obj_map,
+             Category.id_comp]
+           exact (hs f).symm } },
+   rfl⟩
 
 end ParametricityAsTautology
 
