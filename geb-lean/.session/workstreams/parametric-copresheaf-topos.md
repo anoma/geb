@@ -656,16 +656,22 @@ Relevant declarations:
   - Graph parametricity (DivParametric): holds
   - Full relational parametricity: holds
 
-- [ ] **C2. Characterize the parametric-paranatural gap.**
-  For a profunctor `H`, characterize the difference
-  between parametric and paranatural morphisms in
-  terms of edge-category structure.  The gap arises
-  because `profBarrLiftRel` (existential/Barr lift)
-  treats the profunctor as a black box, while
-  `TypeExpr.relInterp` (arrowRel decomposition)
-  exploits the type expression structure.  The
-  structural question: when does decomposition via
-  arrowRel match the Barr lift?
+- [x] **C2. Characterize the parametric-paranatural gap.**
+  `CommutingEndoPair f h k` (f∘h = k∘f) vs
+  `FactorizableEndoPair f h k` (∃ r, h=r∘f ∧ k=f∘r).
+  Paranaturality tests factorizable pairs;
+  parametricity tests all commuting pairs.
+  `factorizable_implies_commuting`: every
+  factorizable pair commutes.
+  `constTrue_id_not_factorizable`: (constTrue, id, id)
+  commutes but does not factor.
+  `commuting_strictly_contains_factorizable`:
+  factorizable pairs are a strict subset of commuting
+  pairs.
+  `divParanatural_tests_factorizable`,
+  `divParametric_tests_commuting`: connect to the
+  div-type definitions.
+  File: `ParanaturalTopos.lean`.
 
 ### Internal language and type theory
 
@@ -1252,9 +1258,13 @@ at graph relations is equivalent to DiagCompat
 (paranaturality). `divApplyId_not_profBarrLift_preserving`
 (in `ParanaturalTopos.lean`) shows `divApplyId` does
 not preserve profBarrLiftRel at graphs.
-C2 [open]: characterize the parametric-paranatural
-gap structurally.
-Tasks: C1 [done], C2 [open].
+C2 [done]: the gap is the gap between factorizable
+endomorphism pairs (∃ r, h=r∘f ∧ k=f∘r) and
+commuting pairs (f∘h=k∘f). Paranaturality tests
+factorizable pairs; parametricity tests all
+commuting pairs. Concrete non-factorizable witness:
+(const true, id, id).
+Tasks: C1 [done], C2 [done].
 
 **General parametricity notion in PshRelDouble.**
 Define parametric transformation for arbitrary

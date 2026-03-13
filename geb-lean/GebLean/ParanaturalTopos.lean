@@ -5472,6 +5472,126 @@ theorem divApplyId_not_profBarrLift_preserving :
       (diagCompat_implies_profBarrLiftRel_graph
         divSource f d₀ d₁ hcompat))
 
+/-- A commuting endomorphism pair `(h, k)` with
+respect to `f : I₀ → I₁`: endomorphisms `h` of
+`I₀` and `k` of `I₁` satisfying `f ∘ h = k ∘ f`.
+This is the condition tested by the `arrowRel`
+decomposition of `graphRel f` at the endo-type
+`X → X`. -/
+def CommutingEndoPair
+    {I₀ I₁ : Type} (f : I₀ → I₁)
+    (h : I₀ → I₀) (k : I₁ → I₁) : Prop :=
+  f ∘ h = k ∘ f
+
+/-- A factorizable endomorphism pair `(h, k)` with
+respect to `f : I₀ → I₁`: there exists
+`r : I₁ → I₀` such that `h = r ∘ f` and
+`k = f ∘ r`. Factorizable pairs are the ones
+tested by the paranaturality condition, which
+quantifies over `r` and forms the pair
+`(r ∘ f, f ∘ r)`. -/
+def FactorizableEndoPair
+    {I₀ I₁ : Type} (f : I₀ → I₁)
+    (h : I₀ → I₀) (k : I₁ → I₁) : Prop :=
+  ∃ r : I₁ → I₀, h = r ∘ f ∧ k = f ∘ r
+
+/-- Every factorizable endomorphism pair is a
+commuting pair. Given `h = r ∘ f` and
+`k = f ∘ r`, we have
+`f ∘ h = f ∘ r ∘ f = k ∘ f`. -/
+theorem factorizable_implies_commuting
+    {I₀ I₁ : Type} (f : I₀ → I₁)
+    (h : I₀ → I₀) (k : I₁ → I₁)
+    (hfact : FactorizableEndoPair f h k) :
+    CommutingEndoPair f h k := by
+  obtain ⟨r, rfl, rfl⟩ := hfact
+  rfl
+
+/-- The pair `(id, id)` commutes with
+`const true : Bool → Bool`, since
+`(const true) ∘ id = id ∘ (const true)`. -/
+theorem constTrue_id_commuting :
+    CommutingEndoPair
+      (fun _ : Bool => true) id id :=
+  rfl
+
+/-- The pair `(id, id)` does NOT factor through
+`const true : Bool → Bool`. Factorization
+`id = r ∘ (const true)` would require
+`r true = true` and `r true = false`
+(from evaluating at `true` and `false`). -/
+theorem constTrue_id_not_factorizable :
+    ¬ FactorizableEndoPair
+      (fun _ : Bool => true) id id := by
+  intro ⟨r, hh, _⟩
+  have h1 := congr_fun hh true
+  have h2 := congr_fun hh false
+  -- h1 : true = r true, h2 : false = r true
+  exact absurd (h1.trans h2.symm) (by decide)
+
+/-- The `DivParanatural` hypothesis tests exactly
+the factorizable endomorphism pairs: it quantifies
+over `r : I₁ → I₀`, forming the pair
+`(r ∘ f, f ∘ r)`. -/
+theorem divParanatural_tests_factorizable
+    (phi : ParanatSig divSource divTarget)
+    (hpn : DivParanatural phi)
+    {I₀ I₁ : Type} (f : I₀ → I₁)
+    (p : (I₀ → I₀) → I₀)
+    (q : (I₁ → I₁) → I₁)
+    (hfact : ∀ (h : I₀ → I₀)
+      (k : I₁ → I₁),
+      FactorizableEndoPair f h k →
+      f (p h) = q k) :
+    f (phi I₀ p) = phi I₁ q :=
+  hpn I₀ I₁ f p q
+    (fun r => hfact (r ∘ f) (f ∘ r) ⟨r, rfl, rfl⟩)
+
+/-- The `DivParametric` hypothesis tests all
+commuting endomorphism pairs: it quantifies over
+`(h, k)` with `f ∘ h = k ∘ f`. -/
+theorem divParametric_tests_commuting
+    (phi : ParanatSig divSource divTarget)
+    (hparam : DivParametric phi)
+    {I₀ I₁ : Type} (f : I₀ → I₁)
+    (p : (I₀ → I₀) → I₀)
+    (q : (I₁ → I₁) → I₁)
+    (hcomm : ∀ (h : I₀ → I₀)
+      (k : I₁ → I₁),
+      CommutingEndoPair f h k →
+      f (p h) = q k) :
+    f (phi I₀ p) = phi I₁ q :=
+  hparam I₀ I₁ f p q hcomm
+
+/-- The gap between paranaturality and
+parametricity is exactly the gap between
+factorizable and commuting pairs.
+`DivParanatural` admits `(p, q)` whenever
+factorizable pairs are preserved;
+`DivParametric` admits `(p, q)` only when ALL
+commuting pairs are preserved. Since every
+factorizable pair commutes
+(`factorizable_implies_commuting`) but not
+conversely (`constTrue_id_not_factorizable`),
+the parametric hypothesis is strictly stronger,
+making the parametric condition strictly
+weaker. -/
+theorem commuting_strictly_contains_factorizable :
+    (∀ {I₀ I₁ : Type} (f : I₀ → I₁)
+      (h : I₀ → I₀) (k : I₁ → I₁),
+      FactorizableEndoPair f h k →
+      CommutingEndoPair f h k) ∧
+    (∃ (I₀ I₁ : Type)
+      (f : I₀ → I₁)
+      (h : I₀ → I₀) (k : I₁ → I₁),
+      CommutingEndoPair f h k ∧
+      ¬ FactorizableEndoPair f h k) :=
+  ⟨fun f h k => factorizable_implies_commuting f h k,
+   ⟨Bool, Bool,
+    fun _ => true, id, id,
+    constTrue_id_commuting,
+    constTrue_id_not_factorizable⟩⟩
+
 end ParametricityDivergence
 
 end GebLean
