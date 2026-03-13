@@ -3980,6 +3980,28 @@ def weightedConeWhiskeringEquivalence (e : K ≌ J)
       (elementsPrecompEquiv e W)).symm.trans
       (weightedConeElementsEquiv W D).symm)
 
+variable {C' : Type*} [Category.{v₇} C']
+
+/-- Postcomposing the diagram of a weighted cone with an
+equivalence `e : C ≌ C'` gives a categorical equivalence
+`WeightedCone W D ≌ WeightedCone W (D ⋙ e.functor)`.
+
+Defined by composing through the elements bridge:
+`WeightedCone W D ≌ Cone (π W ⋙ D)
+  ≌ Cone ((π W ⋙ D) ⋙ e.functor)
+  ≌ WeightedCone W (D ⋙ e.functor)`,
+where the middle step uses
+`Cones.functorialityEquivalence`. -/
+def weightedConeFunctorialityEquivalence
+    (W : J ⥤ Type v₇) (D : J ⥤ C) (e : C ≌ C') :
+    WeightedCone W D ≌
+    WeightedCone W (D ⋙ e.functor) :=
+  (weightedConeElementsEquiv W D).trans
+    ((Cones.functorialityEquivalence
+      (weightedConeDiagram W D) e).trans
+    (weightedConeElementsEquiv W
+      (D ⋙ e.functor)).symm)
+
 end WeightedConeTransformations
 
 section WeightedCoconeElementsEquivalence
