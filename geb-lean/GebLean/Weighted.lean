@@ -3456,6 +3456,59 @@ def IsTerminal.isWeightedCoendOpCowedge
 
 end WeightedCowedgeOpDuality
 
+section CoWeightedCowedgeOpDuality
+
+/-!
+### Co-Weighted Cowedge/Cone Op Duality
+
+`CoWeightedCowedge W P` is a weighted cocone over
+`TwistedArrow C`, so its duality gives weighted cones
+over `(TwistedArrow C)ᵒᵖ` in `Dᵒᵖ`.
+-/
+
+variable {C : Type u} [Category.{v} C]
+  {D : Type w} [Category.{v} D]
+
+/-- Co-weighted cowedges are equivalent to the opposite
+of a weighted cone category in `Dᵒᵖ`. -/
+def coWeightedCowedgeOpConeEquivalence
+    (W : Cᵒᵖ ⥤ C ⥤ Type v) (P : Cᵒᵖ ⥤ C ⥤ D) :
+    CoWeightedCowedge W P ≌
+    (WeightedCone
+      (profunctorOnOpTwistedArrow C W)
+      (profunctorOnTwistedArrow C P).op)ᵒᵖ :=
+  weightedCoconeOpConeEquivalence
+    (profunctorOnOpTwistedArrow C W)
+    (profunctorOnTwistedArrow C P)
+
+/-- An initial co-weighted cowedge maps to a terminal
+weighted cone in `Dᵒᵖ`. -/
+def IsCoWeightedCoend.isTerminalOpCone
+    {W : Cᵒᵖ ⥤ C ⥤ Type v} {P : Cᵒᵖ ⥤ C ⥤ D}
+    {c : CoWeightedCowedge W P}
+    (hc : IsCoWeightedCoend c) :
+    IsTerminal
+      ((coWeightedCowedgeOpConeEquivalence
+        W P).functor.obj c).unop :=
+  isTerminalUnopOfIsInitialEquivOp
+    (coWeightedCowedgeOpConeEquivalence W P) hc
+
+/-- A terminal weighted cone in `Dᵒᵖ` maps to an
+initial co-weighted cowedge. -/
+def IsTerminal.isCoWeightedCoendOpCowedge
+    {W : Cᵒᵖ ⥤ C ⥤ Type v} {P : Cᵒᵖ ⥤ C ⥤ D}
+    {d : WeightedCone
+      (profunctorOnOpTwistedArrow C W)
+      (profunctorOnTwistedArrow C P).op}
+    (hd : IsTerminal d) :
+    IsCoWeightedCoend
+      ((coWeightedCowedgeOpConeEquivalence
+        W P).inverse.obj (Opposite.op d)) :=
+  isInitialOfIsTerminalEquivOp
+    (coWeightedCowedgeOpConeEquivalence W P) hd
+
+end CoWeightedCowedgeOpDuality
+
 section WeightedConeElementsEquivalence
 
 /-!
