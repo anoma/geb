@@ -3522,6 +3522,77 @@ def IsTerminal.isInitialOpCowedge_wedge
 
 end CowedgeOpWedgeDuality
 
+section WedgeOpCowedgeDuality
+
+/-!
+### Wedge/Cowedge Op Duality
+
+Wedges for `P` are equivalent to the opposite of the cowedge
+category for `profunctorSwapOp C P`:
+
+`Wedge P ≌ (Cowedge (profunctorSwapOp C P))ᵒᵖ`
+
+The equivalence is composed from six steps:
+1. `wedgeConeEquiv` — wedges as cones over `TwistedArrow C`
+2. `Cones.whiskeringEquivalence` — reindexing through
+   `(CoTwistedArrow C)ᵒᵖ ≌ TwistedArrow C`
+3. `Cones.functorialityEquivalence` — transport along
+   `(opOpEquivalence D).symm` into `Dᵒᵖᵒᵖ`
+4. `Cones.postcomposeEquivalence` — transport along
+   `profunctorReverseSwapOpNatIso`
+5. `coneOpCoconeEquivalence` — cone/cocone op duality
+6. `cowedgeCoconeEquiv` — cocones as cowedges
+-/
+
+variable {C : Type u} [Category.{v} C]
+  {D : Type w} [Category.{v} D]
+
+/-- Wedges for `P` are equivalent to the opposite of
+the cowedge category for `profunctorSwapOp C P`. -/
+def wedgeOpCowedgeEquivalence
+    (P : Cᵒᵖ ⥤ C ⥤ D) :
+    Wedge (J := C) (C := D) P ≌
+    (Cowedge (profunctorSwapOp C P))ᵒᵖ :=
+  (wedgeConeEquiv P).trans
+    ((Cones.whiskeringEquivalence
+      coTwistedArrowOpEquivTwistedArrow).trans
+      ((Cones.functorialityEquivalence
+        (profunctorOnOpCoTwistedArrow C P)
+        (opOpEquivalence D).symm).trans
+        ((Cones.postcomposeEquivalence
+          (profunctorReverseSwapOpNatIso C P)).trans
+          ((coneOpCoconeEquivalence
+            (profunctorOnCoTwistedArrow C
+              (profunctorSwapOp C P))).trans
+            (cowedgeCoconeEquiv
+              (profunctorSwapOp C P)).symm.op))))
+
+/-- A terminal wedge maps to an initial cowedge via
+`wedgeOpCowedgeEquivalence`. -/
+def IsTerminal.isInitialOpCowedge_wedge'
+    {P : Cᵒᵖ ⥤ C ⥤ D}
+    {w : Wedge (J := C) (C := D) P}
+    (hw : IsTerminal w) :
+    IsInitial
+      ((wedgeOpCowedgeEquivalence P).functor.obj
+        w).unop :=
+  isInitialUnopOfIsTerminalEquivOp
+    (wedgeOpCowedgeEquivalence P) hw
+
+/-- An initial cowedge for `profunctorSwapOp C P` maps to
+a terminal wedge for `P`. -/
+def IsInitial.isTerminalOpWedge_cowedge'
+    {P : Cᵒᵖ ⥤ C ⥤ D}
+    {c : Cowedge (profunctorSwapOp C P)}
+    (hc : IsInitial c) :
+    IsTerminal
+      ((wedgeOpCowedgeEquivalence P).inverse.obj
+        (Opposite.op c)) :=
+  isTerminalOfIsInitialEquivOp
+    (wedgeOpCowedgeEquivalence P) hc
+
+end WedgeOpCowedgeDuality
+
 section WeightedCowedgeOpDuality
 
 /-!
