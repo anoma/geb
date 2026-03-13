@@ -1013,14 +1013,71 @@ Status: [done].
 **Universal quantification `forall X. F(X)`.**
 Wadler: `(g,g') in forall X. F(X)` iff for all
 relations `A`, `(g_A, g'_{A'}) in F(A)`.
-Generalization: a section of a copresheaf on
-`PshRelEdge C`, or equivalently a natural
-transformation from the terminal copresheaf.
-Quantification over all relations becomes
-naturality over all edge morphisms.
+
+Generalization: given a covariant endofunctor
+`G : PSh(C) => PSh(C)`, its Barr lift
+`pshBarrLiftEdgeFunctor G` is an endofunctor on
+`PshRelEdge C`.  The universal type `∀X. G(X)` is
+the limit of this endofunctor (treated as a
+diagram `PshRelEdge C => PshRelEdge C`).
+
+This limit has two components:
+
+- **At identity edges** `(P, P, pshRelId P)`:
+  `pshBarrLiftRel_id` gives
+  `pshBarrLiftRel G (pshRelId P) = pshRelId (G P)`,
+  so the limit projects to `G(P)` at each `P`.
+  Thus the presheaf-level data is the limit
+  `lim_P G(P)` in `PSh(C)` — an element of each
+  `G(P)`, natural in `P`.
+
+- **At general edges** `(P, Q, R)`: the limit
+  condition requires the chosen elements to be
+  related under `pshBarrLiftRel G R` for every
+  relation `R`.  This is exactly Wadler's
+  parametricity condition: "for all relations `A`,
+  the two values are related under `F(A)`."
+
+The abstract version `IsParametricSection` takes
+an arbitrary copresheaf `F` on `PshRelEdge C` and
+checks that a family of elements is natural over
+all edge morphisms.  For the specific copresheaf
+`e ↦ Hom(⊤, pshBarrLiftEdgeFunctor G (e))`, this
+recovers the limit picture.
+`parametricSectionToNatTrans` and
+`natTrans_isParametricSection` establish the
+equivalence between parametric sections and
+natural transformations from the terminal
+copresheaf.
+
 Lean: `IsParametricSection`,
-`parametricSectionToNatTrans`.
-File: `PshRelEdgeGraphRestriction.lean`.
+`parametricSectionToNatTrans`,
+`pshBarrLiftEdgeFunctor`.
+Files: `PshRelEdgeGraphRestriction.lean`,
+`PshRelDouble.lean`.
+
+**Existential quantification `exists X. F(X)`.**
+Wadler does not treat existential types, but they
+arise naturally as the dual.  Given
+`G : PSh(C) => PSh(C)`, the existential type
+`∃X. G(X)` is the colimit of
+`pshBarrLiftEdgeFunctor G` in `PshRelEdge C`.
+
+- **At identity edges**: the colimit gives the
+  colimit `colim_P G(P)` in `PSh(C)` — the
+  "there exists a presheaf `P` and an element of
+  `G(P)`" data.
+- **At general edges**: the colimit condition
+  requires that two elements are identified when
+  they are related by some `pshBarrLiftRel G R`.
+  This is the dual parametricity condition: an
+  existential package is parametric when its
+  witnesses can be connected by a relation.
+
+`PshRelEdge C` has all finite colimits (and is
+reflective in the presheaf topos
+`[WalkingSpan, PSh(C)]`, which has all small
+colimits), so these existential types exist.
 Status: [done].
 
 **Identity extension lemma.**
@@ -1251,16 +1308,16 @@ is the term semantics.
 
 Generalization:
 
-| Wadler                   | Ours                     |
-|--------------------------|--------------------------|
-| **U** (type universe)    | `PSh(C)` (presheaf cat.) |
-| `D_A` (values)           | sections of presheaf `P` |
-| `A -> B`                 | `FunctorHom A B`         |
-| `forall X. F(X)`         | end/limit of functor     |
-| frame (U,→,∀,D,φ,ψ,Φ,Ψ)  | cartesian closed `PSh(C)`|
-| type environment `Ā`     | functor from type vars   |
-| `[[T]]Ā`                 | evaluation in functor cat|
-| `[[t]]Ā σ̄`               | internal language eval   |
+| Wadler                    | Ours                                |
+|---------------------------|-------------------------------------|
+| **U** (type universe)     | `PSh(C)` (presheaf cat.)            |
+| `D_A` (values)            | sections of presheaf `P`            |
+| `A -> B`                  | `FunctorHom A B`                    |
+| `forall X. F(X)`          | limit of `pshBarrLiftEdgeFunctor G` |
+| frame (U,→,∀,D,φ,ψ,Φ,Ψ)   | cartesian closed `PSh(C)`           |
+| type environment `Ā`      | functor from type vars              |
+| `[[T]]Ā`                  | evaluation in functor cat           |
+| `[[t]]Ā σ̄`                | internal language eval              |
 
 The cartesian closed structure of `PSh(C)`
 provides the isomorphisms `φ/ψ` (exponential
@@ -1280,17 +1337,32 @@ Wadler: terms in related environments have related
 values (induction on type derivations).
 Generalization: in `PshRelEdge C`, parametricity
 is the condition that a section is natural with
-respect to edge morphisms. This holds by
+respect to edge morphisms.  This holds by
 definition for natural transformations:
 `natTrans_isParametricSection`.
 The converse `parametricSectionToNatTrans` shows
 that parametric sections determine natural
 transformations.
+
+For covariant endofunctors: the parametricity
+condition for `∀X. G(X)` is equivalent to the
+section forming a cone over the diagram
+`pshBarrLiftEdgeFunctor G`.  At identity edges,
+`pshBarrLiftRel_id` forces source = target
+projections, recovering the presheaf-level
+limit; at general edges, the cone condition
+encodes that the chosen elements are
+`pshBarrLiftRel G R`-related for all relations
+`R`.  See the "Universal quantification" entry
+in Section 2 above.
+
 Lean: `IsParametricSection`,
 `natTrans_isParametricSection`,
 `isParametricSection_at`,
-`parametricSectionToNatTrans`.
-File: `PshRelEdgeGraphRestriction.lean`.
+`parametricSectionToNatTrans`,
+`pshBarrLiftEdgeFunctor`.
+Files: `PshRelEdgeGraphRestriction.lean`,
+`PshRelDouble.lean`.
 Task: W9.
 Status: [done].
 
@@ -1373,15 +1445,39 @@ type decomposable as a `TypeExpr`, but it is a
 syntactic construction (it depends on the
 expression tree, not just the resulting type).
 
-A general definition of "parametric transformation"
-should be a property of a family of presheaf
-morphisms, defined in terms of `PshRelEdge C`.
+**The limit/colimit picture.**
+For covariant endofunctors, universal and
+existential types are limits and colimits of
+`pshBarrLiftEdgeFunctor G` in `PshRelEdge C`
+(see "Universal quantification" and "Existential
+quantification" above).  A parametric
+transformation `t : ∀X. F(X) → G(X)` between
+covariant endofunctors is then a morphism
+between the limits of
+`pshBarrLiftEdgeFunctor F` and
+`pshBarrLiftEdgeFunctor G`.  Since
+`pshBarrLiftEdgeNatTrans σ` gives a natural
+transformation between these endofunctors for
+each `σ : F ⟶ G`, it induces a morphism
+between the limits automatically.
+
+The open question is extending this picture to
+mixed-variance type-formers.  For types built
+from arrows, the relational interpretation
+uses `arrowRel` rather than Barr lifting.
+A general definition of "parametric
+transformation" should be a property of a
+family of presheaf morphisms, defined in terms
+of `PshRelEdge C`.
+
 Candidates:
 
 - Natural transformations between endofunctors on
   `PshRelEdge C`.  Each type-former lifts to an
-  edge endofunctor via `pshBarrLiftEdgeFunctor`;
-  a parametric morphism would be a natural
+  edge endofunctor via `pshBarrLiftEdgeFunctor`
+  (covariant case) or via `arrowRel`-based
+  constructions (mixed-variance case); a
+  parametric morphism would be a natural
   transformation between such lifted endofunctors.
 - Limits / sections of diagrams in `PshRelEdge C`.
   The quasitopos structure provides all finite
@@ -1645,18 +1741,31 @@ commuting pairs. Concrete non-factorizable witness:
 (const true, id, id).
 Tasks: C1 [done], C2 [done].
 
+**Universal/existential types as limits/colimits.**
+For covariant `G`, `∀X. G(X)` is the limit and
+`∃X. G(X)` is the colimit of
+`pshBarrLiftEdgeFunctor G` in `PshRelEdge C`.
+The connection between `IsParametricSection` and
+these limits is understood conceptually but not
+yet formalized: show that a cone over
+`pshBarrLiftEdgeFunctor G` from the terminal edge
+is equivalent to a parametric section of the
+copresheaf `e ↦ Hom(⊤, pshBarrLiftEdgeFunctor G e)`.
+Status: [open].
+
 **General parametricity notion in PshRelEdge.**
 Define parametric transformation for arbitrary
 type-formers (not just covariant endofunctors)
 purely in PshRelEdge terms.  Profunctors are the
 wrong objects for this (see "Why relations replace
 profunctors" above); the definition must use
-presheaf relations directly.  Candidate
-approaches: natural transformations between
-Barr-lifted edge endofunctors, or limits/sections
-of diagrams in PshRelEdge (which has all finite
-limits as a quasitopos).  Must be preserved by
-arrowRel and coincide with
+presheaf relations directly.  For covariant
+endofunctors, the answer is: a morphism between
+limits of Barr-lifted edge endofunctors.  The
+open question is extending this to mixed-variance
+type-formers, where `arrowRel` replaces Barr
+lifting at each arrow type.
+Must be preserved by arrowRel and coincide with
 `TypeExpr.fullRelInterp` on decomposable types,
 while being strictly weaker than paranaturality
 for types with nested arrow structure.
