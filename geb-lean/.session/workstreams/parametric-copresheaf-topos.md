@@ -643,16 +643,29 @@ Relevant declarations:
 
 ### Comparison with paranaturality
 
-- [ ] **C1. Paranatural vs parametric in PshRelEdge.**
-  Give a concrete edge-level example of a parametric
-  morphism that is not paranatural.  This generalizes
-  the type-level divergence (`divApplyId_parametric`,
-  `divApplyId_not_paranatural`) to presheaves.
+- [x] **C1. Paranatural vs parametric in PshRelEdge.**
+  Generic theorems in `RelDouble.lean`:
+  `diagCompat_implies_profBarrLiftRel_graph`,
+  `profBarrLiftRel_graph_iff_diagCompat` (Barr lift
+  at graph relations iff DiagCompat).
+  Counterexample in `ParanaturalTopos.lean`:
+  `divApplyId_not_profBarrLift_preserving` (divApplyId
+  does not preserve profBarrLiftRel at graphs).
+  The hierarchy for `divApplyId`:
+  - Paranaturality / profBarrLiftRel at graphs: fails
+  - Graph parametricity (DivParametric): holds
+  - Full relational parametricity: holds
 
 - [ ] **C2. Characterize the parametric-paranatural gap.**
   For a profunctor `H`, characterize the difference
   between parametric and paranatural morphisms in
-  terms of edge-category structure.
+  terms of edge-category structure.  The gap arises
+  because `profBarrLiftRel` (existential/Barr lift)
+  treats the profunctor as a black box, while
+  `TypeExpr.relInterp` (arrowRel decomposition)
+  exploits the type expression structure.  The
+  structural question: when does decomposition via
+  arrowRel match the Barr lift?
 
 ### Internal language and type theory
 
@@ -1005,6 +1018,74 @@ File: `PshRelEdgeGraphRestriction.lean`.
 Task: W9.
 Status: [done].
 
+### Open: General parametric transformation
+
+**Parametric transformation (general notion).**
+Wadler: if `t : forall X. F(X) -> G(X)` then for
+all relations `A`, `(t_A, t_{A'}) in F(A) -> G(A)`.
+This requires a general notion of `F(A)` for a type
+constructor `F` and relation `A`.
+Generalization needed: a general double-categorical
+definition of "parametric morphism from F to G" for
+arbitrary profunctors F, G, defined purely in terms
+of PshRelDouble/PshRelEdge.
+Current approaches and their limitations:
+
+- `TypeExpr.fullRelInterp` defines the relational
+  interpretation by structural induction on a type
+  expression tree. Correct for types decomposable
+  as TypeExpr, but syntactic (not a property of the
+  profunctor itself).
+- `profBarrLiftRel` preservation defines
+  parametricity existentially (Barr lift). At graph
+  relations this equals paranaturality
+  (`profBarrLiftRel_graph_iff_diagCompat`), which is
+  strictly stronger than Reynolds parametricity.
+  At all relations, the relationship to
+  `DivFullRelParametric` is unknown.
+Candidate general definitions:
+- Natural transformations between endofunctors on
+  `PshRelEdge C`. Each type-former lifts to an edge
+  endofunctor via `pshBarrLiftEdgeFunctor`; a
+  parametric morphism would be a natural
+  transformation between such lifted endofunctors.
+- Limits / cones of functors into `PshRelEdge C`.
+  The quasitopos structure provides all finite
+  limits; parametricity of a family could be
+  expressed as the family forming a cone or section
+  of a diagram in PshRelEdge.
+A correct general definition would satisfy:
+(a) arrowRel / pshArrowRel preserves it (function
+  type formation is parametricity-preserving);
+(b) functorRelLift / pshBarrLiftRel preserves it
+  at leaves;
+(c) when source/target are built from a TypeExpr,
+  it coincides with `fullRelInterp`.
+Status: [open].
+
+**Equivalence of functors on relations.**
+Wadler/blog: "Relations specialized to functions
+become bifunctors." When a relation is the graph
+of a function, the relational interpretation of a
+type constructor reduces to its bifunctor action.
+The blog conjectures a deeper equivalence: "all
+Haskell laws are category laws in different
+categories."
+Generalization needed: a notion of equivalence of
+endofunctors on PshRelEdge (or of relational
+actions on PshRelDouble). When `G : PSh(C) -> PSh(C)`
+is lifted to `pshBarrLiftEdgeFunctor G`, what
+structural properties does this lift have? Is the
+Barr lift embedding faithful (distinct functors yield
+distinct edge functors)? Full (every edge endofunctor
+arises from a presheaf endofunctor)? When do two
+lifts agree? What is the analogue of Wadler's
+observation that relations specialized to functions
+yield bifunctors — does restriction to the graph
+subcategory of PshRelEdge recover the original
+functor up to isomorphism?
+Status: [open].
+
 ### Blog post: "Review of Theorems for Free"
 
 **Relations specialized to functions become
@@ -1165,7 +1246,28 @@ Status: [done].
 Edge-level example of parametric-but-not-
 paranatural morphism, generalizing the type-level
 divergence (`divApplyId`).
-Tasks: C1, C2.
+C1 [done]: `profBarrLiftRel_graph_iff_diagCompat`
+(generic, in `RelDouble.lean`) shows that Barr lift
+at graph relations is equivalent to DiagCompat
+(paranaturality). `divApplyId_not_profBarrLift_preserving`
+(in `ParanaturalTopos.lean`) shows `divApplyId` does
+not preserve profBarrLiftRel at graphs.
+C2 [open]: characterize the parametric-paranatural
+gap structurally.
+Tasks: C1 [done], C2 [open].
+
+**General parametricity notion in PshRelDouble.**
+Define parametric transformation for arbitrary
+profunctors purely in PshRelDouble/PshRelEdge
+terms.  Candidate approaches: natural
+transformations between Barr-lifted edge
+endofunctors, or limits/sections of diagrams in
+PshRelEdge (which has all finite limits as a
+quasitopos).  Must be preserved by arrowRel at
+arrows and functorRelLift at leaves, and coincide
+with `TypeExpr.fullRelInterp` on decomposable types.
+See "Open: General parametric transformation" in
+the Wadler correspondence section above.
 Status: [open].
 
 **Internal parametricity statement.**
