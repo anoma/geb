@@ -335,7 +335,7 @@ def endCopowerPowerEquiv :
 end EndEquiv
 
 /-!
-## Final Characterization
+## End/Power Characterization
 
 Composing all three steps gives the end-power
 characterization of `G^e`:
@@ -347,7 +347,7 @@ On the diagonal at `A`, `powerSliceProf G pt Y` gives
 of morphisms `G(A, A) ⟶ Y^(A ⟶ pt)`.
 -/
 
-section FinalEquiv
+section GExtEndPowerEquiv
 
 variable
   {C : Type u} [Category.{v} C]
@@ -366,7 +366,7 @@ def gExtEndPowerEquiv (pt Y : C) :
   (copowerGExtHomEndEquiv G pt Y).trans
     (endCopowerPowerEquiv G pt Y)
 
-end FinalEquiv
+end GExtEndPowerEquiv
 
 /-!
 ## Power-End Mendler Algebras
