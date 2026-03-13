@@ -1758,17 +1758,78 @@ Tasks: C1 [done], C2 [done].
 For covariant `G`, `∀X. G(X)` is the limit and
 `∃X. G(X)` is the colimit of
 `pshBarrLiftEdgeFunctor G` in `PshRelEdge C`.
-`ParametricCone G` now directly expresses
-the cone condition for an endofunctor `G` on
-`PshRelEdge C` with vertex the terminal edge.
+`ParametricCone G` is a `Limits.Cone G` with
+vertex the terminal edge; it corresponds to a
+global element of `lim G` via
+`ParametricCone G ≅ Hom(⊤, lim G)`.
 `pshRelEdgeHasLimitsOfSize` and
 `pshRelEdgeHasColimitsOfSize` guarantee
 existence (via the reflective embedding into
 `[WalkingSpan, PSh(C)]`).
+
+The limit `lim G` as an edge `(L_src, L_tgt,
+L_rel)` carries three pieces of data:
+
+- `L_src ≅ lim_P H(P)`: the presheaf of
+  "left-side parametric families"
+- `L_tgt ≅ lim_P H(P)`: the presheaf of
+  "right-side parametric families"
+- `L_rel`: the relation on the universal type,
+  which is Wadler's relatedness on `∀X. F(X)` —
+  two families `g, g'` are related iff for every
+  edge `(P, Q, R)`, the pair `(g_P, g'_Q)` is
+  `pshBarrLiftRel H R`-related.
+
+The relation on the universal type is not
+defined separately; it emerges from computing
+the limit in `PshRelEdge C`.
+
+The two views of a polymorphic function
+`t : ∀X. F(X) → G(X)` are equivalent:
+
+- (a) Natural transformation `σ : F ⟶ G`
+  (the "transformation" view)
+- (b) Global element of
+  `lim(pshBarrLiftEdgeFunctor H)` where
+  `H(X) = FunctorHom(F(X), G(X))`
+  (the "universal type" view)
+
+The equivalence is the full faithfulness of
+`pshBarrEmbeddingFunctor`:
+`barrMapToNatTrans_natTransToBarrMap` and
+`natTransToBarrMap_barrMapToNatTrans` give the
+roundtrip.  The IEP
+(`pshRelIdentFunctor_preserves_exp`) is the
+mechanism: it ensures that at identity edges,
+parametricity reduces to naturality.
+
+Tasks: U1-U4.
 Status: [partial] (`ParametricCone` and
-(co)completeness instances done; showing that
-the limit of `pshBarrLiftEdgeFunctor G` recovers
-the presheaf-level universal type is open).
+(co)completeness instances done; U1-U4 open).
+
+**Weighted-limit quantification hierarchy.**
+The hierarchy of weights on the limit gives
+a hierarchy of quantification strengths:
+
+- Restriction to identity edges: presheaf-level
+  `lim_P G(P)`, no parametricity
+- Restriction to graph edges: rearrangement /
+  free theorem condition (connects to
+  `conditional_freeTheorem_graph` from W5)
+- Full limit (unweighted): full parametricity
+- Weighted limit `{W, G}`: parametricity
+  modulated by weight `W`
+
+Since `PshRelEdge C` already absorbs mixed
+variance (via `arrowRel` for arrows,
+`pshBarrLiftRel` for covariant parts), ordinary
+limits suffice for all type-formers expressible
+as `TypeExpr`.  Wedges / ends on `PshRelEdge C`
+itself would arise for constructions that are
+profunctorial on the edge category — beyond
+Wadler's framework.
+Task: U4.
+Status: [open].
 
 **General parametricity notion in PshRelEdge.**
 Define parametric transformation for arbitrary
