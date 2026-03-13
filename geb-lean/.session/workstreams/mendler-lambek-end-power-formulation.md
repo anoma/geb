@@ -2,9 +2,27 @@
 
 ## Status
 
-Phases 1-3 complete. Phase 4 tasks 10a-10c (universe
-generalization) complete. Task 10d (Type v
-instantiation) remains.
+Phases 1-3 complete. Phase 4 tasks 10a-10d complete.
+
+Task 10d verified presheaf category instantiability
+(generalizing `Type v`). File:
+`GebLean/MendlerLambekPresheaf.lean`. Three
+equivalences stated for `C = E ⥤ Type (max w₁ v₁ u₁)`:
+
+1. `presheafMendlerAlgPowerEndEquiv`:
+   unconditional (copowers/powers automatic).
+2. `presheafMendlerLambekEndPowerEquiv`:
+   requires `HasAllHomToProfCoends G`.
+3. `presheafMendlerLambekImpredicativeEquiv`:
+   requires `HasAllCopowerProfCoends G`,
+   `HasTerminalWedge` (inner/outer), `bwdFwd`.
+
+The `HasTerminalWedge` and coend hypotheses
+involve ends/coends indexed by the presheaf
+category itself (a "large" (co)end). In
+predicative type theory, such (co)ends produce
+types in a strictly larger universe. These are
+supplied parametrically.
 
 The nat iso and equivalence (Tasks 9b-9c) are
 parameterized by one hypothesis (`bwdFwd`) that
@@ -1101,32 +1119,43 @@ No downstream proof breakage occurred (the two
 still work because `cowedgeHomEndEquiv.toFun`
 reduces through the same `homOrdinaryWedge` legs).
 
-##### Task 10d: Verify `Type v` instantiability
+##### Task 10d: Verify presheaf instantiability
 
-After generalization, verify that the framework
-can at least be STATED for `C = Type v`. The
-`HasTerminalWedge` instances needed for `twInner`
-and `twOuter` require large limits in `Type v`
-that may need to be supplied as hypotheses or
-constructed for specific `G`.
+DONE. Verified for presheaf categories
+`E ⥤ Type (max w₁ v₁ u₁)` (generalizing `Type v`).
 
-#### `Type v` instantiation obstacles
+File: `GebLean/MendlerLambekPresheaf.lean`.
 
-Even after universe generalization, instantiating
-for `C = Type v` requires:
+All basic instances resolve automatically:
+`Category`, `MonoidalCategory`, `MonoidalClosed`,
+`BraidedCategory`, `HasCopowers`, `HasPowers`.
 
-1. `HasTerminalWedge (ihomPowerProf G pt Y)` for
-   each `Y : Type v` — an end in `Type v` of a
-   `(Type v)`-indexed profunctor. This is a large
-   limit. `Type v` lacks large limits in general.
+Three equivalences are stated:
 
-2. `HasTerminalWedge (churchProf G pt tw)` — the
-   outer end (Church encoding), same issue.
+1. `presheafMendlerAlgPowerEndEquiv` — unconditional
+2. `presheafMendlerLambekEndPowerEquiv` —
+   requires `HasAllHomToProfCoends G`
+3. `presheafMendlerLambekImpredicativeEquiv` —
+   requires `HasAllCopowerProfCoends G`,
+   `HasTerminalWedge` (inner/outer), `bwdFwd`
 
-These limits exist for specific `G` where the
-end has a small representative in `Type v`. For
-abstract `G`, they may need to be supplied as
-hypotheses alongside `bwdFwd`. The `bwdFwd`
-proof itself (for `Type v`) would follow from
-function extensionality once the framework is
-properly instantiated.
+#### Large-(co)end obstacle
+
+The `HasTerminalWedge` and restricted-coend
+hypotheses involve (co)ends indexed by the
+presheaf category itself. The `typeEnd`
+construction for `J : Type u, Category.{v} J`
+and `F : Jᵒᵖ ⥤ J ⥤ Type w` produces
+`Type (max u w)`. When `J` is the presheaf
+category, `u = w + 1 > w`, so the end lives
+in a strictly larger universe. This is the
+impredicativity barrier: Church encodings
+quantify over all types in the ambient
+universe, which inherently requires a universe
+bump in predicative type theory.
+
+For abstract `G`, the hypotheses are supplied
+parametrically. For specific `G` (e.g.,
+polynomial or representable functors), the ends
+may have small representatives, enabling
+discharge of the hypotheses.
