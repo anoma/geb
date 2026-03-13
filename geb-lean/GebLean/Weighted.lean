@@ -1447,6 +1447,37 @@ def weightedConeEquivElementsPre :
 
 end WeightedConeAsElementsPre
 
+/-- The curried bifunctor exhibiting `WeightedCone` as a
+functorial construction in `(W, D)`. Post-composes
+`ElementsPreF` after `weightedConeUnderCurriedTrifunctor`
+to absorb the cone-point variable into the category of
+elements. The value at `(W, D)` is categorically
+isomorphic to `WeightedCone W D` via
+`weightedConeIsoCat`. -/
+def weightedConeCurriedBifunctor :
+    (J ⥤ Type v)ᵒᵖ ⥤ (J ⥤ C) ⥤ Cat :=
+  weightedConeUnderCurriedTrifunctor ⋙
+    (Functor.whiskeringRight (J ⥤ C)
+      (Cᵒᵖ ⥤ Type (max u₁ v)) Cat).obj
+      (ElementsPreF Cᵒᵖ)
+
+theorem weightedConeCurriedBifunctor_obj_obj
+    (W : J ⥤ Type v) (D : J ⥤ C) :
+    (weightedConeCurriedBifunctor.obj
+      (Opposite.op W)).obj D =
+    Cat.of (WeightedConeElementsPre W D) :=
+  rfl
+
+/-- The `Cat`-isomorphism connecting `WeightedCone W D`
+to the value of `weightedConeCurriedBifunctor` at
+`(W, D)`. -/
+def weightedConeBifunctorIsoCat
+    (W : J ⥤ Type v) (D : J ⥤ C) :
+    Cat.of (WeightedCone W D) ≅
+    (weightedConeCurriedBifunctor.obj
+      (Opposite.op W)).obj D :=
+  weightedConeIsoCat W D
+
 /--
 A morphism between weighted cocones consists of a morphism between the cocone
 points that commutes with the injections for all weight elements.
@@ -1636,6 +1667,37 @@ def weightedCoconeEquivElements :
   Cat.equivOfIso (weightedCoconeIsoCat W D)
 
 end WeightedCoconeAsElements
+
+/-- The curried bifunctor exhibiting `WeightedCocone` as
+a functorial construction in `(W, D)`. Post-composes
+`Functor.elementsFunctor` after
+`weightedCoconeOverCurriedTrifunctor` to absorb the
+cocone-point variable into the category of elements.
+The value at `(W, D)` is categorically isomorphic to
+`WeightedCocone W D` via `weightedCoconeIsoCat`. -/
+def weightedCoconeCurriedBifunctor :
+    (Jᵒᵖ ⥤ Type v)ᵒᵖ ⥤ (J ⥤ C)ᵒᵖ ⥤ Cat :=
+  weightedCoconeOverCurriedTrifunctor ⋙
+    (Functor.whiskeringRight (J ⥤ C)ᵒᵖ
+      (C ⥤ Type (max u₁ v)) Cat).obj
+      Functor.elementsFunctor
+
+theorem weightedCoconeCurriedBifunctor_obj_obj
+    (W : Jᵒᵖ ⥤ Type v) (D : J ⥤ C) :
+    (weightedCoconeCurriedBifunctor.obj
+      (Opposite.op W)).obj (Opposite.op D) =
+    Cat.of (WeightedCoconeElements W D) :=
+  rfl
+
+/-- The `Cat`-isomorphism connecting
+`WeightedCocone W D` to the value of
+`weightedCoconeCurriedBifunctor` at `(W, D)`. -/
+def weightedCoconeBifunctorIsoCat
+    (W : Jᵒᵖ ⥤ Type v) (D : J ⥤ C) :
+    Cat.of (WeightedCocone W D) ≅
+    (weightedCoconeCurriedBifunctor.obj
+      (Opposite.op W)).obj (Opposite.op D) :=
+  weightedCoconeIsoCat W D
 
 section WeightedLimitsColimits
 
