@@ -3912,7 +3912,8 @@ Defined by composing through the elements bridge:
 `WeightedCone W D ≌ Cone (π W ⋙ D) ≌ Cone (π W ⋙ D')
 ≌ WeightedCone W D'`,
 where the middle step uses `Cones.postcomposeEquivalence`
-with the whiskered isomorphism `isoWhiskerLeft (π W) α`. -/
+with the whiskered isomorphism
+`(CategoryOfElements.π W).isoWhiskerLeft α`. -/
 def weightedConePostcomposeEquivalence
     (W : J ⥤ Type v₇) {D D' : J ⥤ C}
     (α : D ≅ D') :
@@ -3921,6 +3922,63 @@ def weightedConePostcomposeEquivalence
     ((Cones.postcomposeEquivalence
       ((CategoryOfElements.π W).isoWhiskerLeft α)).trans
       (weightedConeElementsEquiv W D').symm)
+
+variable {K : Type*} [Category.{v₇} K]
+
+/-- For an equivalence `e : K ≌ J` and `W : J ⥤ Type v`,
+the category of elements of `e.functor ⋙ W` is equivalent
+to that of `W`.
+
+Defined by composing through the Grothendieck construction:
+`(e.functor ⋙ W).Elements
+  ≌ Grothendieck ((e.functor ⋙ W) ⋙ typeToCat)
+  = Grothendieck (e.functor ⋙ (W ⋙ typeToCat))
+  ≌ Grothendieck (W ⋙ typeToCat)
+  ≌ W.Elements`,
+where the middle step uses `Grothendieck.preEquivalence`
+and the outer steps use `grothendieckTypeToCat`. -/
+def elementsPrecompEquiv (e : K ≌ J)
+    (W : J ⥤ Type v₇) :
+    (e.functor ⋙ W).Elements ≌ W.Elements :=
+  (Grothendieck.grothendieckTypeToCat
+    (e.functor ⋙ W)).symm |>.trans
+    (Grothendieck.preEquivalence
+      (W ⋙ typeToCat) e) |>.trans
+    (Grothendieck.grothendieckTypeToCat W)
+
+/-- The diagram for the elements of a precomposed weight
+`e.functor ⋙ W` composed with `e.functor ⋙ D` equals
+the elements precomp functor composed with the diagram
+for `W` and `D`.
+
+This lets `Cones.whiskeringEquivalence` bridge between the
+two weighted-cone-elements diagrams. -/
+theorem elementsPrecompDiagramEq (e : K ≌ J)
+    (W : J ⥤ Type v₇) (D : J ⥤ C) :
+    weightedConeDiagram (e.functor ⋙ W)
+      (e.functor ⋙ D) =
+    (elementsPrecompEquiv e W).functor ⋙
+      weightedConeDiagram W D := rfl
+
+/-- Reindexing weighted cones along a category equivalence
+`e : K ≌ J` gives a categorical equivalence
+`WeightedCone (e.functor ⋙ W) (e.functor ⋙ D) ≌
+  WeightedCone W D`.
+
+Defined by composing through the elements bridge:
+the diagram equality `elementsPrecompDiagramEq` relates
+the two elements-cone diagrams, and
+`Cones.whiskeringEquivalence` with `elementsPrecompEquiv`
+does the reindexing. -/
+def weightedConeWhiskeringEquivalence (e : K ≌ J)
+    (W : J ⥤ Type v₇) (D : J ⥤ C) :
+    WeightedCone (e.functor ⋙ W) (e.functor ⋙ D) ≌
+    WeightedCone W D :=
+  (weightedConeElementsEquiv
+    (e.functor ⋙ W) (e.functor ⋙ D)).trans
+    ((Cones.whiskeringEquivalence
+      (elementsPrecompEquiv e W)).symm.trans
+      (weightedConeElementsEquiv W D).symm)
 
 end WeightedConeTransformations
 
