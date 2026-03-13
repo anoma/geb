@@ -810,9 +810,9 @@ generalization:**
 | Wadler              | C-level             | PSh(C)-level                 |
 |---------------------|---------------------|------------------------------|
 | set                 | object of C         | presheaf P : C^op => Type    |
-| monomorphic fn      | C-morphism f : X→Y  | presheaf morphism α : P ⟶ Q |
+| monomorphic fn      | C-morphism f : X→Y  | presheaf morphism α : P ⟶ Q  |
 | polymorphic type    | endofunctor on C    | endofunctor on PSh(C)        |
-| parametric poly. fn | endo. nat. trans.    | endo. nat. trans. σ : F ⟶ G  |
+| parametric poly. fn | endo. nat. trans.   | endo. nat. trans. σ : F ⟶ G  |
 
 Precise terminology used in this document:
 
@@ -1257,10 +1257,10 @@ Generalization:
 | `D_A` (values)           | sections of presheaf `P` |
 | `A -> B`                 | `FunctorHom A B`         |
 | `forall X. F(X)`         | end/limit of functor     |
-| frame (U,→,∀,D,φ,ψ,Φ,Ψ) | cartesian closed `PSh(C)`|
+| frame (U,→,∀,D,φ,ψ,Φ,Ψ)  | cartesian closed `PSh(C)`|
 | type environment `Ā`     | functor from type vars   |
 | `[[T]]Ā`                 | evaluation in functor cat|
-| `[[t]]Ā σ̄`              | internal language eval   |
+| `[[t]]Ā σ̄`               | internal language eval   |
 
 The cartesian closed structure of `PSh(C)`
 provides the isomorphisms `φ/ψ` (exponential
