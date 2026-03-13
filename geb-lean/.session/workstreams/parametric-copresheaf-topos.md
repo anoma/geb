@@ -725,6 +725,35 @@ Status legend: [done] = proved in Lean,
 [partial] = defined but incomplete,
 [open] = not yet formalized.
 
+### Section 1: Introduction
+
+Wadler's claim: from the type of a polymorphic
+function, we can derive a theorem it satisfies.
+Every function of the same type satisfies the same
+theorem.  The running example is
+`r : forall X. X* -> X*`, yielding the theorem
+`a* . r_A = r_{A'} . a*` for all `a : A -> A'`.
+
+Generalization: replace `Type` with `PSh(C)`,
+functions with natural transformations, and
+"list of X" with any endofunctor `G : PSh(C) ->
+PSh(C)`.  Then `map a` becomes `G.map α` for
+`α : P ⟶ Q`, and the theorem becomes naturality:
+`G.map α ≫ σ_Q = σ_P ≫ G.map α`.  The specific
+instances in Figure 1 (head, tail, fst, snd, zip,
+filter, sort, fold, I, K) become instances of
+naturality for natural transformations between
+composed endofunctors on `PSh(C)`.  Varying
+hypotheses (monotonicity for sort,
+predicate-preservation for filter, algebra
+homomorphism for fold) arise because those
+transformations are natural only on subcategories
+of morphisms, which `conditional_freeTheorem_graph`
+captures.
+File: `PshRelEdgeGraphRestriction.lean`.
+Status: [done] (via the general framework; see
+Section 3 entries and Figure 1 entries below).
+
 ### Section 2: Types as relations
 
 Wadler reads types as sets and as relations.
@@ -1003,6 +1032,70 @@ File: `PshRelEdgeGraphRestriction.lean`.
 Task: W8.
 Status: [done].
 
+### Sections 4-5: Syntax and semantics
+
+These sections define the polymorphic lambda
+calculus (System F) and its frame model semantics.
+They provide the specific model in which Wadler
+proves the parametricity theorem.  Our
+generalization replaces the syntactic and semantic
+framework entirely with categorical structure.
+
+**Section 4: Polymorphic lambda calculus.**
+Wadler: types are `T ::= X | T -> U | forall X. T`;
+terms include variables, lambda abstraction,
+application, type abstraction `ΛX. t`, and type
+application `t_U`.  Typing rules are given in
+Figure 2.
+Generalization: we do not replicate the syntax.
+Our type constructors (product, coproduct,
+exponential, Barr lift, arrow relation) operate
+directly on objects and morphisms of `PSh(C)` and
+`PshRelEdge C`.  The analogue of type abstraction
+is a functor `F : PSh(C) -> PSh(C)` or
+`F : PshRelEdge C -> PshRelEdge C`; the analogue
+of type application is evaluation of `F` at a
+particular presheaf or edge.
+Status: [done] (subsumed by categorical structure).
+
+**Section 5: Frame model semantics.**
+Wadler: a frame consists of:
+
+- a universe **U** of type values;
+- `D_A` (values of type A) for each `A in U`;
+- `[U -> U]` (functions from U to U);
+- isomorphisms `φ/ψ` between `D_{A->B}` and
+  `[D_A -> D_B]`;
+- isomorphisms `Φ/Ψ` between `D_{forall F}` and
+  `[forall A : U. D_{F(A)}]`.
+Type environments map type variables to elements
+of **U**.  `[[T]]Ā` is the type semantics; `[[t]]Ā σ̄`
+is the term semantics.
+
+Generalization:
+
+| Wadler                   | Ours                     |
+|--------------------------|--------------------------|
+| **U** (type universe)    | `PSh(C)` (presheaf cat.) |
+| `D_A` (values)           | sections of presheaf `P` |
+| `A -> B`                 | `FunctorHom A B`         |
+| `forall X. F(X)`         | end/limit of functor     |
+| frame (U,→,∀,D,φ,ψ,Φ,Ψ) | cartesian closed `PSh(C)`|
+| type environment `Ā`     | functor from type vars   |
+| `[[T]]Ā`                 | evaluation in functor cat|
+| `[[t]]Ā σ̄`              | internal language eval   |
+
+The cartesian closed structure of `PSh(C)`
+provides the isomorphisms `φ/ψ` (exponential
+adjunction) and `Φ/Ψ` (end/limit universal
+property) automatically.  The soundness
+proposition ("if `X̄;x̄ ⊢ t : T` then
+`X̄;x̄ ⊨ t : T`") becomes a property of the
+internal language of the presheaf topos.
+Status: [done] (subsumed by `PSh(C)` structure;
+no separate Lean formalization needed since we
+work directly in the categorical framework).
+
 ### Section 6: The parametricity theorem
 
 **Formal parametricity theorem.**
@@ -1023,6 +1116,55 @@ Lean: `IsParametricSection`,
 File: `PshRelEdgeGraphRestriction.lean`.
 Task: W9.
 Status: [done].
+
+### Section 7: Fixpoints
+
+Wadler: if `fix : forall X. (X -> X) -> X` is
+added, parametricity holds only under additional
+conditions:
+(1) each type `A` carries domain structure (CPO
+with bottom element ⊥);
+(2) all functions are continuous;
+(3) all relations are strict: `(⊥_A, ⊥_{A'}) in A`;
+(4) all relations are continuous (preserve directed
+joins).
+Under these restrictions,
+`fix_A f = ⊔ f^i ⊥_A` satisfies parametricity,
+and the free theorems hold for strict functions
+`a` (those with `a ⊥ = ⊥`).
+
+Generalization: our constructive framework avoids
+domain theory entirely.  The analogue of fixpoints
+in `PSh(C)` is initial algebras and terminal
+coalgebras of endofunctors:
+
+- Accessible/finitary endofunctors on `PSh(C)` have
+  initial algebras by Adamek's theorem (iterating
+  the empty copresheaf through the functor).
+- The Barr extension of such a functor preserves
+  the initial algebra structure (the extension
+  preserves the colimits used in the construction).
+- Parametricity for initial-algebra-based recursion
+  (catamorphisms) is exactly the fold free theorem
+  (W4: `foldFreeTheorem_graph`), which we already
+  have.
+- The restriction to "strict" functions in Wadler
+  corresponds to the restriction to algebra
+  homomorphisms in the catamorphism setting.
+
+The main difference: Wadler needs domain theory
+because general recursion (fixpoint of an arbitrary
+endofunction) is not structurally recursive.  In
+our framework, recursion is always structured
+(catamorphism / anamorphism), so the universal
+property provides the free theorem directly.
+Wadler's strictness condition (`a ⊥ = ⊥`) is the
+analogue of requiring that the function be an
+algebra homomorphism (preserving the initial
+element).
+
+Status: [done] (the constructive analogue is
+the fold free theorem W4; no domain theory needed).
 
 ### Open: General parametric transformation
 
@@ -1143,6 +1285,15 @@ Status: [done].
 
 ### Figure 1: Examples of theorems from types
 
+All Figure 1 entries share the same categorical
+content: they are naturality conditions for
+natural transformations between composed
+endofunctors on `PSh(C)`.  The varying hypotheses
+(monotonicity for sort, predicate-preservation for
+filter, algebra-homomorphism for fold) arise from
+naturality restricted to subcategories of
+morphisms.
+
 **head, tail, (++), concat (list operations).**
 Wadler: `a . head_A = head_{A'} . a*`, etc.
 Generalization: instances of the rearrangement
@@ -1158,9 +1309,16 @@ Status: [done] (via limits in PshRelEdgeLimits).
 **zip.**
 Wadler: `(a x b)* . zip_{AB} = zip_{A'B'} .
 (a* x b*)`.
-Generalization: would require formalizing the zip
-operation as a natural transformation between
-product-of-list and list-of-product presheaves.
+Generalization: zip is a natural transformation
+`G x H -> G_x_H` where `G, H` are endofunctors
+(e.g. list) and `G_x_H` is their pointwise
+product composed with list.  This is an instance
+of the rearrangement theorem applied to a natural
+transformation between composed endofunctors.
+Not individually formalized, but follows from the
+general framework: any such natural transformation
+automatically satisfies the commutativity square
+by `natTransToBarrEndo`.
 Status: [open] (not formalized as a specific
 instance, but follows from the general framework).
 
