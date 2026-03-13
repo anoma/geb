@@ -13140,4 +13140,58 @@ def strongRestrictedCowedgeBifunctor :
 
 end CowedgeBifunctor
 
+section WeightedCowedgeWedgeDuality
+
+/-!
+## Weighted cowedge/wedge duality
+
+Establishes that weighted cowedges are equivalent to the
+opposite of a weighted wedge category with swapped-op
+profunctor:
+
+`WeightedCowedge W P ≌ (WeightedWedge W (swapOp C P))ᵒᵖ`
+
+The chain of equivalences is:
+1. `weightedCowedgeOpConeEquivalence` takes weighted
+   cowedges to opposite weighted cones over
+   `(CoTwistedArrow C)ᵒᵖ`
+2. `weightedConePostcomposeEquivalence` with
+   `(profunctorSwapOpNatIso C P).symm` transforms the
+   diagram from `(profCoTwArr C P).op` to
+   `profOnOpCoTwArr C (swapOp C P)`
+3. Since `profOnOpCoTwArr C F` is definitionally
+   `coTwArrOpEquivTwArr.functor ⋙ profTwArr C F`,
+   `weightedConeWhiskeringEquivalence` reindexes from
+   `(CoTwistedArrow C)ᵒᵖ` to `TwistedArrow C`
+4. The result is definitionally `WeightedWedge W (swapOp C P)`
+-/
+
+variable {C : Type u} [Category.{v} C]
+  {D : Type w} [Category.{v} D]
+
+/-- Weighted cowedges over `P` are equivalent to the
+opposite of the weighted wedge category over the
+swapped-op profunctor.
+
+`WeightedCowedge W P ≌
+  (WeightedWedge (D := Dᵒᵖ) W (profunctorSwapOp C P))ᵒᵖ`
+-/
+def weightedCowedgeOpWedgeEquivalence
+    (W : Cᵒᵖ ⥤ C ⥤ Type v)
+    (P : Cᵒᵖ ⥤ C ⥤ D) :
+    WeightedCowedge W P ≌
+    (WeightedWedge (D := Dᵒᵖ) W
+      (profunctorSwapOp C P))ᵒᵖ :=
+  (weightedCowedgeOpConeEquivalence W P).trans
+    ((weightedConePostcomposeEquivalence
+      (profunctorOnOpCoTwistedArrow C W)
+      (profunctorSwapOpNatIso C P).symm).trans
+    (weightedConeWhiskeringEquivalence
+      coTwistedArrowOpEquivTwistedArrow
+      (profunctorOnTwistedArrow C W)
+      (profunctorOnTwistedArrow C
+        (profunctorSwapOp C P)))).op
+
+end WeightedCowedgeWedgeDuality
+
 end GebLean
