@@ -384,7 +384,7 @@ theorem diagCompat_implies_profBarrLiftRel_graph
           (↑s : I₀ × I₁).2)).app I₁ d₁
     simp only [← Functor.map_comp,
       ← op_comp, types_comp]
-    have key : f ∘ (fun s :
+    have comm : f ∘ (fun s :
         { p : I₀ × I₁ //
           graphRel f p.1 p.2 } =>
         (↑s : I₀ × I₁).1) =
@@ -393,7 +393,7 @@ theorem diagCompat_implies_profBarrLiftRel_graph
             graphRel f p.1 p.2 } =>
           (↑s : I₀ × I₁).2) :=
       funext fun s => s.property
-    simp only [key]
+    simp only [comm]
 
 /-- The profunctor Barr lift at graph relations
 is equivalent to `DiagCompat`. -/
