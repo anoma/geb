@@ -4,57 +4,37 @@
 
 Phases 1-3 complete. Phase 4 tasks 10a-10d complete.
 
-Task 10d verified presheaf category instantiability
-(generalizing `Type v`). File:
-`GebLean/MendlerLambekPresheaf.lean`. Three
+File: `GebLean/MendlerLambekPresheaf.lean`. Two
 equivalences stated for `C = E ⥤ Type (max w₁ v₁ u₁)`:
 
 1. `presheafMendlerAlgPowerEndEquiv`:
    unconditional (copowers/powers automatic).
 2. `presheafMendlerLambekEndPowerEquiv`:
    requires `HasAllHomToProfCoends G`.
-3. `presheafMendlerLambekImpredicativeEquiv`:
-   requires `HasAllCopowerProfCoends G`,
-   `HasTerminalWedge` (inner/outer), `bwdFwd`.
 
-The `HasTerminalWedge` and coend hypotheses
-involve ends/coends indexed by the presheaf
-category itself (a "large" (co)end). In
-predicative type theory, such (co)ends produce
-types in a strictly larger universe. These are
-supplied parametrically.
+The `bwdFwd`-parameterized impredicative
+equivalence (`mendlerLambekImpredicativeEquiv`,
+`impredicativeGExtCopowerIso`,
+`impredicativeGExtNatIso`, etc.) was removed.
+It required a parametricity condition that could
+not be discharged in predicative type theory.
+The remaining `ImpredicativeGExtIso` section in
+`MendlerLambekEndPower.lean` retains the
+one-direction morphisms
+(`impredicativeGExtToCopowerGExt`,
+`copowerGExtToImpredicativeGExt`,
+`copowerGExt_backward_forward`) which do not
+require `bwdFwd`.
 
-The nat iso and equivalence (Tasks 9b-9c) are
-parameterized by one hypothesis (`bwdFwd`) that
-remains to be discharged in concrete settings.
-The naturality of `bwd` (`natBwd`) is derived
-from `bwdFwd` via `natBwd_of_bwdFwd`.
-See "Open hypothesis" under Phase 3 for details.
+### Universe generalization
 
-Discharging `bwdFwd` abstractly requires the
-enriched Yoneda identity for Church encodings.
-All abstract categorical approaches have been
-exhausted (see detailed analysis under Phase 3).
-
-### Universe generalization progress
-
-Recent commits generalized upstream dependencies:
-
-- `EndsAndCoends.lean`: `typeEnd` generalized
-  to `Type w` target, `J : Type u` index
-- `Weighted.lean`: `ordinaryHomIsoEndApex`
-  already uses `{C : Type u}`
-- `RestrictedCoendAsColimit.lean`: already uses
-  `{C : Type u} [Category.{v} C]`
-- `WeightedAlg.lean`: already uses
-  `{C : Type u} [Category.{v} C]`
-- `MendlerLambekEndPower.lean`: generalized to
-  `{C : Type u} [Category.{v} C]`
-
-All section variables, `HasTerminalWedge`,
-and `cowedgeHomEndEquiv` have been generalized.
-The remaining work is `Type v` instantiation
-(Task 10d).
+`EndsAndCoends.lean` has universe-generalized
+coend-end duality (`typeCoend.endEquiv` with
+independent universe parameters for profunctor
+values, index category, and target type).
+These may enable a cross-universe approach to
+the Mendler-Lambek equivalence using `typeCoend`
+directly, bypassing `HasAllCopowerProfCoends`.
 
 ## Context
 
