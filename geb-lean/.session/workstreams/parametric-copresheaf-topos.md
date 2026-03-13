@@ -55,6 +55,77 @@ The three-layer picture:
   Sh_J(C x I^op)       sheaf topos (exact)
 ```
 
+### Why relations replace profunctors
+
+Parametric polymorphism associates a "free theorem"
+to each universally-quantified type.  When the
+quantified type has the form `∀X. F(X) → G(X)` for
+covariant functors `F` and `G`, the free theorem
+is a naturality condition, and naturality is
+well-understood.  But for types involving mixed
+variance — such as `∀X. (X → X) → (X → X)` — the
+type-former `X ↦ X → X` is not a functor but a
+profunctor (the hom-profunctor).
+
+To handle profunctors, one might seek a notion of
+"natural transformation between profunctors" that
+captures parametricity.  Dinatural transformations
+(Dubuc-Street), paranatural (strong dinatural)
+transformations, and wedges have all been proposed.
+These work in limited settings:
+
+- **Dialgebra morphisms** (types of the form
+  `∀X. F(X) → G(X)` where F, G are covariant):
+  naturality is the right notion.
+- **Paranatural transformations between
+  dialgebras** (types of the form
+  `∀X. (F(X) → G(X)) → (F'(X) → G'(X))`
+  where F, F', G, G' are covariant):
+  paranaturality agrees with parametricity.
+
+But for types with more nesting of arrow types —
+such as `∀X. ((X → X) → X) → X` — profunctors
+inevitably fail.  We have proved this concretely:
+`divApplyId` has this type, is parametric, but is
+not paranatural (`divApplyId_not_paranatural`).
+The gap is characterized by
+`commuting_strictly_contains_factorizable`:
+paranaturality tests for factorizable endomorphism
+pairs, while parametricity tests for all commuting
+pairs.
+
+The failure is not in the choice of morphisms but
+in the choice of objects: **profunctors are the
+wrong objects for representing parametricity in
+general**.  A profunctor `P : C^op × C → Set`
+captures one level of mixed variance, but types
+like `((X → X) → X) → X` have nested arrow
+types that require representing the relational
+content at each level.  No morphism notion between
+profunctors can recover this information, because
+the profunctor itself has already discarded it.
+
+Relations are the right objects.  A relation
+`R ⊆ P × Q` between presheaves retains enough
+structure to compose freely via `arrowRel` and
+`graphRel`, building up the relational
+interpretation of any type expression to arbitrary
+depth.  In a general categorical setting, relations
+between sets are inadequate (since a general
+category need not have enough global elements), so
+we use presheaf relations `PshRel P Q` — subfunctors
+of product presheaves.
+
+To summarize: profunctors are used in this project
+only to demonstrate (a) the special case where they
+agree with parametricity (paranatural
+transformations between dialgebras) and (b) the
+points at which they inevitably fail (types with
+more arrow nesting than dialgebra morphisms).
+The relational framework (`PshRelEdge C` /
+`PshRelDouble C`) replaces profunctors for the
+general theory of parametricity.
+
 ### Relationship to old frameworks
 
 - **PshRelSpanObj / PshParametricFunctor /
@@ -1277,44 +1348,68 @@ the fold free theorem W4; no domain theory needed).
 **Parametric transformation (general notion).**
 Wadler: if `t : forall X. F(X) -> G(X)` then for
 all relations `A`, `(t_A, t_{A'}) in F(A) -> G(A)`.
-This requires a general notion of `F(A)` for a type
-constructor `F` and relation `A`.
-Generalization needed: a general double-categorical
-definition of "parametric morphism from F to G" for
-arbitrary profunctors F, G, defined purely in terms
-of PshRelDouble/PshRelEdge.
-Current approaches and their limitations:
 
-- `TypeExpr.fullRelInterp` defines the relational
-  interpretation by structural induction on a type
-  expression tree. Correct for types decomposable
-  as TypeExpr, but syntactic (not a property of the
-  profunctor itself).
-- `profBarrLiftRel` preservation defines
-  parametricity existentially (Barr lift). At graph
-  relations this equals paranaturality
-  (`profBarrLiftRel_graph_iff_diagCompat`), which is
-  strictly stronger than Reynolds parametricity.
-  At all relations, the relationship to
-  `DivFullRelParametric` is unknown.
-Candidate general definitions:
+When the type-formers `F` and `G` are covariant
+endofunctors, this is standard naturality and is
+fully handled by `pshBarrEmbeddingFunctor`.
+
+When the type involves mixed variance — e.g.
+`∀X. (X → X) → (X → X)` where `X ↦ X → X` is
+a profunctor — one might seek a notion of
+"morphism between profunctors" (dinatural,
+paranatural, etc.).  But as discussed in "Why
+relations replace profunctors" above, profunctors
+are the wrong objects for this purpose: they
+capture one level of mixed variance, but types
+with nested arrows (like `((X → X) → X) → X`)
+require deeper structure that profunctors discard.
+
+The right approach uses relations directly.
+`TypeExpr.fullRelInterp` computes the correct
+relational interpretation by structural induction
+on a type expression, composing `arrowRel` and
+`graphRel` at each level.  This works for any
+type decomposable as a `TypeExpr`, but it is a
+syntactic construction (it depends on the
+expression tree, not just the resulting type).
+
+A general definition of "parametric transformation"
+should be a property of a family of presheaf
+morphisms, defined in terms of `PshRelEdge C`.
+Candidates:
+
 - Natural transformations between endofunctors on
-  `PshRelEdge C`. Each type-former lifts to an edge
-  endofunctor via `pshBarrLiftEdgeFunctor`; a
-  parametric morphism would be a natural
+  `PshRelEdge C`.  Each type-former lifts to an
+  edge endofunctor via `pshBarrLiftEdgeFunctor`;
+  a parametric morphism would be a natural
   transformation between such lifted endofunctors.
-- Limits / cones of functors into `PshRelEdge C`.
+- Limits / sections of diagrams in `PshRelEdge C`.
   The quasitopos structure provides all finite
   limits; parametricity of a family could be
   expressed as the family forming a cone or section
-  of a diagram in PshRelEdge.
-A correct general definition would satisfy:
-(a) arrowRel / pshArrowRel preserves it (function
-  type formation is parametricity-preserving);
-(b) functorRelLift / pshBarrLiftRel preserves it
-  at leaves;
-(c) when source/target are built from a TypeExpr,
-  it coincides with `fullRelInterp`.
+  of a suitable diagram in PshRelEdge.
+
+A correct definition would satisfy:
+
+(a) `arrowRel` / `pshArrowRel` preserves it
+  (function type formation preserves parametricity);
+(b) `pshBarrLiftRel` preserves it at covariant
+  leaves;
+(c) when source/target are built from a `TypeExpr`,
+  it coincides with `fullRelInterp`;
+(d) it does _not_ reduce to paranaturality in
+  general (since paranaturality is strictly stronger
+  than parametricity for types with deep arrow
+  nesting).
+
+Note: `profBarrLiftRel` preservation (Barr lift on
+profunctors) equals paranaturality at graph
+relations (`profBarrLiftRel_graph_iff_diagCompat`),
+which is too strong.  This is another manifestation
+of profunctors being the wrong objects: their Barr
+lift captures factorizable endomorphism pairs
+rather than all commuting pairs.
+
 Status: [open].
 
 **Equivalence of functors on relations.**
@@ -1550,16 +1645,21 @@ commuting pairs. Concrete non-factorizable witness:
 (const true, id, id).
 Tasks: C1 [done], C2 [done].
 
-**General parametricity notion in PshRelDouble.**
+**General parametricity notion in PshRelEdge.**
 Define parametric transformation for arbitrary
-profunctors purely in PshRelDouble/PshRelEdge
-terms.  Candidate approaches: natural
-transformations between Barr-lifted edge
-endofunctors, or limits/sections of diagrams in
-PshRelEdge (which has all finite limits as a
-quasitopos).  Must be preserved by arrowRel at
-arrows and functorRelLift at leaves, and coincide
-with `TypeExpr.fullRelInterp` on decomposable types.
+type-formers (not just covariant endofunctors)
+purely in PshRelEdge terms.  Profunctors are the
+wrong objects for this (see "Why relations replace
+profunctors" above); the definition must use
+presheaf relations directly.  Candidate
+approaches: natural transformations between
+Barr-lifted edge endofunctors, or limits/sections
+of diagrams in PshRelEdge (which has all finite
+limits as a quasitopos).  Must be preserved by
+arrowRel and coincide with
+`TypeExpr.fullRelInterp` on decomposable types,
+while being strictly weaker than paranaturality
+for types with nested arrow structure.
 See "Open: General parametric transformation" in
 the Wadler correspondence section above.
 Status: [open].
