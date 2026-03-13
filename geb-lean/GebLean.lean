@@ -57,6 +57,7 @@ import GebLean.PshRelEdgeGraphRestriction
 import GebLean.PshRelEdgeSOClassifier
 import GebLean.PshRelSpanDiagram
 import GebLean.PshTypeExpr
+import GebLean.RelDouble
 import GebLean.RelInterpComposition
 import GebLean.RelSpanDiagram
 import GebLean.RestrictedCoendAsColimit
