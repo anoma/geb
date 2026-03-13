@@ -1878,7 +1878,69 @@ def weightedCoconeOpConeEquivalence :
         weightedConeOpCoconeFunctor]
       simp)
 
+/-- The symmetric equivalence: weighted cones over the
+opposite diagram in the opposite category are equivalent
+to the opposite of the weighted cocone category.
+
+Derived from `weightedCoconeOpConeEquivalence` using
+`Equivalence.rightOp`: given `E.symm : (WeightedCone W
+D.op)ᵒᵖ ≌ WeightedCocone W D`, this yields
+`WeightedCone W D.op ≌ (WeightedCocone W D)ᵒᵖ`. -/
+def weightedConeOpCoconeEquivalence :
+    WeightedCone W D.op ≌ (WeightedCocone W D)ᵒᵖ :=
+  (weightedCoconeOpConeEquivalence W D).symm.rightOp
+
 end WeightedCoconeOpCone
+
+/-!
+### Weighted Colimit/Limit Op Duality
+
+An initial weighted cocone (weighted colimit) maps to a
+terminal weighted cone (weighted limit) when transferred
+across the cone-cocone duality, and vice versa.
+-/
+
+section WeightedColimitLimitOpDuality
+
+variable {J : Type u₁} [Category.{v₁, u₁} J]
+  {C : Type u} [Category.{v, u} C]
+  (W : Jᵒᵖ ⥤ Type v) (D : J ⥤ C)
+
+/-- An initial weighted cocone (weighted colimit) maps
+to a terminal weighted cone (weighted limit) over the
+opposite diagram.
+
+Given `c : WeightedCocone W D` with `IsInitial c`, the
+corresponding `weightedCoconeOpCone W D c` is terminal in
+`WeightedCone W D.op`.
+
+Follows from `isTerminalUnopOfIsInitialEquivOp` applied
+to `weightedCoconeOpConeEquivalence`. -/
+def IsWeightedColimit.isWeightedLimitOpCone
+    {c : WeightedCocone W D}
+    (hc : IsWeightedColimit c) :
+    IsWeightedLimit (weightedCoconeOpCone W D c) :=
+  isTerminalUnopOfIsInitialEquivOp
+    (weightedCoconeOpConeEquivalence W D) hc
+
+/-- A terminal weighted cone (weighted limit) over the
+opposite diagram maps to an initial weighted cocone
+(weighted colimit).
+
+Given `d : WeightedCone W D.op` with `IsTerminal d`, the
+corresponding `weightedConeOpCocone W D d` is initial in
+`WeightedCocone W D`.
+
+Follows from `isInitialOfIsTerminalEquivOp` applied to
+`weightedCoconeOpConeEquivalence`. -/
+def IsWeightedLimit.isWeightedColimitOpCocone
+    {d : WeightedCone W D.op}
+    (hd : IsWeightedLimit d) :
+    IsWeightedColimit (weightedConeOpCocone W D d) :=
+  isInitialOfIsTerminalEquivOp
+    (weightedCoconeOpConeEquivalence W D) hd
+
+end WeightedColimitLimitOpDuality
 
 /-!
 ### Weighted Colimit Elimination
