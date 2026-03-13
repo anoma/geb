@@ -2517,6 +2517,77 @@ def isInitialOfEquivFunctor {C' : Type*} [Category C'] {D' : Type*} [Category D'
         |>.trans (Category.id_comp f)
         ).symm))
 
+open Limits in
+/-- Transfer initiality across an op-equivalence to
+terminality.
+
+Given an equivalence `e : A ≌ Bᵒᵖ` and an initial object
+`X` in `A`, the image `(e.functor.obj X).unop` is terminal
+in `B`.
+
+An initial object in `A` maps to an initial object in
+`Bᵒᵖ` via the equivalence, which is a terminal object
+in `B`. -/
+def isTerminalUnopOfIsInitialEquivOp
+    {A : Type*} [Category A]
+    {B : Type*} [Category B]
+    (e : A ≌ Bᵒᵖ) {X : A}
+    (hX : IsInitial X) :
+    IsTerminal (e.functor.obj X).unop :=
+  terminalUnopOfInitial (isInitialOfEquivFunctor e hX)
+
+open Limits in
+/-- Transfer terminality across an op-equivalence to
+initiality.
+
+Given an equivalence `e : A ≌ Bᵒᵖ` and a terminal object
+`Y` in `B`, the image `e.inverse.obj (Opposite.op Y)` is
+initial in `A`.
+
+A terminal object in `B` maps to a terminal object in
+`Bᵒᵖ` (via `initialOpOfTerminal`), then to an initial
+object in `A` via the inverse of the equivalence. -/
+def isInitialOfIsTerminalEquivOp
+    {A : Type*} [Category A]
+    {B : Type*} [Category B]
+    (e : A ≌ Bᵒᵖ) {Y : B}
+    (hY : IsTerminal Y) :
+    IsInitial (e.inverse.obj (Opposite.op Y)) :=
+  isInitialOfEquivFunctor e.symm
+    (initialOpOfTerminal hY)
+
+open Limits in
+/-- Transfer terminality across an op-equivalence to
+initiality (inverse direction).
+
+Given an equivalence `e : A ≌ Bᵒᵖ` and a terminal object
+`X` in `A`, the image `(e.functor.obj X).unop` is initial
+in `B`. -/
+def isInitialUnopOfIsTerminalEquivOp
+    {A : Type*} [Category A]
+    {B : Type*} [Category B]
+    (e : A ≌ Bᵒᵖ) {X : A}
+    (hX : IsTerminal X) :
+    IsInitial (e.functor.obj X).unop :=
+  initialUnopOfTerminal
+    (isTerminalOfEquivFunctor e hX)
+
+open Limits in
+/-- Transfer initiality across an op-equivalence (inverse
+direction).
+
+Given an equivalence `e : A ≌ Bᵒᵖ` and an initial object
+`Y` in `B`, the image `e.inverse.obj (Opposite.op Y)` is
+terminal in `A`. -/
+def isTerminalOfIsInitialEquivOp
+    {A : Type*} [Category A]
+    {B : Type*} [Category B]
+    (e : A ≌ Bᵒᵖ) {Y : B}
+    (hY : IsInitial Y) :
+    IsTerminal (e.inverse.obj (Opposite.op Y)) :=
+  isTerminalOfEquivFunctor e.symm
+    (terminalOpOfInitial hY)
+
 end GebLean
 
 namespace CategoryTheory
