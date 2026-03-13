@@ -1898,6 +1898,75 @@ def profunctorSwapOpNatIso
     (fun f =>
       profSwapOp_map_nat_aux C P f.unop)
 
+private theorem profOpCoTw_opOp_swapOp_obj_eq
+    (P : Cᵒᵖ ⥤ C ⥤ D)
+    (cotw : (CoTwistedArrow C)ᵒᵖ) :
+    (opOp D).obj
+      ((profunctorOnOpCoTwistedArrow C P).obj
+        cotw) =
+    ((profunctorOnCoTwistedArrow C
+      (profunctorSwapOp C P)).op).obj cotw := by
+  simp only [profunctorOnOpCoTwistedArrow,
+    Functor.comp_obj,
+    profunctorOnTwistedArrow_obj,
+    opOp_obj,
+    Functor.op_obj,
+    profunctorOnCoTwistedArrow_obj,
+    profunctorSwapOp_obj_obj]
+  rw [coTwistedArrowOpEquiv_obj_dom,
+    coTwistedArrowOpEquiv_obj_cod]
+
+private theorem profOpCoTw_opOp_swapOp_nat_aux
+    (P : Cᵒᵖ ⥤ C ⥤ D)
+    {tw tw' : CoTwistedArrow C}
+    (g : tw ⟶ tw') :
+    (profunctorOnOpCoTwistedArrow C P ⋙
+        opOp D).map g.op ≫
+      eqToHom (profOpCoTw_opOp_swapOp_obj_eq
+        C P (Opposite.op tw)) =
+    eqToHom (profOpCoTw_opOp_swapOp_obj_eq
+        C P (Opposite.op tw')) ≫
+      ((profunctorOnCoTwistedArrow C
+        (profunctorSwapOp C P)).op).map
+        g.op := by
+  apply Quiver.Hom.unop_inj
+  apply Quiver.Hom.unop_inj
+  simp only [
+    profunctorOnOpCoTwistedArrow,
+    Functor.comp_map,
+    profunctorOnTwistedArrow_map,
+    opOp_map,
+    Functor.op_map,
+    profunctorOnCoTwistedArrow_map,
+    profunctorSwapOp_obj_map,
+    profunctorSwapOp_map_app,
+    unop_comp, Quiver.Hom.unop_op,
+    coTwistedArrowOpEquiv_map_twDomArr,
+    coTwistedArrowOpEquiv_map_twCodArr,
+    eqToHom_refl, Category.id_comp,
+    Category.comp_id]
+  congr 1
+
+/--
+Natural isomorphism between `profunctorOnOpCoTwistedArrow C P`
+post-composed with `opOp D` and
+`(profunctorOnCoTwistedArrow C (profunctorSwapOp C P)).op`.
+
+This witnesses that evaluating `P` on opposite co-twisted
+arrows then double-opping yields the same result as opping
+the evaluation of `profunctorSwapOp C P` on co-twisted arrows.
+-/
+def profunctorReverseSwapOpNatIso
+    (P : Cᵒᵖ ⥤ C ⥤ D) :
+    profunctorOnOpCoTwistedArrow C P ⋙ opOp D ≅
+    (profunctorOnCoTwistedArrow C
+      (profunctorSwapOp C P)).op :=
+  NatIso.ofComponents
+    (fun cotw => eqToIso
+      (profOpCoTw_opOp_swapOp_obj_eq C P cotw))
+    (fun f =>
+      profOpCoTw_opOp_swapOp_nat_aux C P f.unop)
+
 end ProfunctorOnTwistedArrow
 
 end GebLean
