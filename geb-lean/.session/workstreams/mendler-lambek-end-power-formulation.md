@@ -2,7 +2,7 @@
 
 ## Status
 
-Phases 1-3 complete. Phase 4 tasks 10a-10d complete.
+Phases 1-4 complete. Phase 5 in progress.
 
 File: `GebLean/MendlerLambekPresheaf.lean`. Two
 equivalences stated for `C = E ⥤ Type (max w₁ v₁ u₁)`:
@@ -476,3 +476,150 @@ Two equivalences are stated:
 
 The impredicative equivalence (formerly item 3)
 was removed.
+
+### Phase 5: Coend-End Duality for Algebras (IN PROGRESS)
+
+Use the new cowedge/wedge duality infrastructure
+(`cowedgeOpWedgeEquivalence`,
+`weightedCowedgeOpWedgeEquivalence`, etc. in
+`Weighted.lean`) to show a further equivalence of
+`PowerEndMendlerAlgebra G` with conventional algebras
+of a functor defined via ends rather than coends.
+
+#### Mathematical Context
+
+The existing `CopowerCoendGExtFunctor G : C ⥤ C`
+sends `pt ↦ CopowerGExtObj G pt`, where
+`CopowerGExtObj G pt` is the carrier of the coend
+(initial cowedge) of `copowerProf (HomToProf pt) G`.
+
+The duality `cowedgeOpWedgeEquivalence` provides:
+
+```text
+Cowedge (copowerProf (HomToProf pt) G)
+  ≌ (Wedge (profunctorSwapOp C
+       (copowerProf (HomToProf pt) G)))ᵒᵖ
+```
+
+Under this equivalence, the initial cowedge (coend)
+maps to a terminal wedge (end). The wedge category
+lands in `Cᵒᵖ` since `profunctorSwapOp C` sends
+`Cᵒᵖ ⥤ C ⥤ C` to `Cᵒᵖ ⥤ C ⥤ Cᵒᵖ`.
+
+The swapped-op profunctor at `(op A, A)` gives:
+
+```text
+profunctorSwapOp C (copowerProf (HomToProf pt) G)
+  .obj (op A) .obj A
+  = op((A ⟶ pt) · G(A, A))
+```
+
+The terminal wedge has apex
+`op(CopowerGExtObj G pt) : Cᵒᵖ`, with projections
+being morphisms `(A ⟶ pt) · G(A, A) ⟶
+CopowerGExtObj G pt` in `C` — exactly the coend
+injections, repackaged as end projections.
+
+The connection to `powerSliceProf` is via
+`copowerPowerEquiv`: hom from the wedge apex
+`op Y` to the diagonal value
+`op((A ⟶ pt) · G(A, A))` in `Cᵒᵖ` is
+`(A ⟶ pt) · G(A, A) ⟶ Y` in `C`, which by
+copower-power adjunction is
+`G(A, A) ⟶ Y^(A ⟶ pt)` — the `powerSliceProf`
+diagonal.
+
+#### Plan
+
+**Step 1**: Show the relationship between
+`profunctorSwapOp C (copowerProf (HomToProf pt) G)`
+and `powerSliceProf G pt Y`. The hom-set version
+is already captured by `gExtEndPowerEquiv`. The
+categorical version connects
+`cowedgeOpWedgeEquivalence` with
+`endCopowerPowerEquiv`. Look at existing
+infrastructure in `PowersAndCopowers.lean`,
+`EndsAndCoends.lean`, `Weighted.lean`, and
+`WeightedAlg.lean` for end/coend correspondences,
+weighted limit/colimit correspondences, and
+power/copower correspondences (including
+impredicative variants).
+
+**Step 2**: Define `PowerEndGExtFunctor G : C ⥤ C`
+using the end characterization. Since the carrier is
+the same object `CopowerGExtObj G pt` (the duality
+preserves carriers, only wrapping in `op`), the
+functor is naturally isomorphic to
+`CopowerCoendGExtFunctor G`. Use whichever approach
+(direct definition via terminal wedge, or via NatIso
+from the existing functor) produces clearer code.
+
+**Step 3**: Derive the extended equivalence:
+
+```text
+PowerEndMendlerAlgebra G
+  ≌ ConventionalAlgebra (CopowerCoendGExtFunctor G)
+  ≌ ConventionalAlgebra (PowerEndGExtFunctor G)
+```
+
+The second step is via
+`Endofunctor.Algebra.equivOfNatIso`.
+
+**Step 4 (if straightforward)**: Connect to coalgebras in
+`Cᵒᵖ`. The duality gives coalgebras rather than
+algebras since the end lives in `Cᵒᵖ`:
+
+```text
+ConventionalAlgebra (CopowerCoendGExtFunctor G)
+  ≌ (Endofunctor.Coalgebra F')ᵒᵖ
+```
+
+where `F' : Cᵒᵖ ⥤ Cᵒᵖ` is the end-based
+endofunctor on `Cᵒᵖ`. This is lower priority.
+
+#### Relevant Existing Infrastructure
+
+- `cowedgeOpWedgeEquivalence` (Weighted.lean) —
+  `Cowedge P ≌ (Wedge (profunctorSwapOp C P))ᵒᵖ`
+- `wedgeOpCowedgeEquivalence` (Weighted.lean) —
+  `Wedge P ≌ (Cowedge (profunctorSwapOp C P))ᵒᵖ`
+- `weightedCowedgeOpWedgeEquivalence`
+  (Weighted.lean) — weighted version of the above
+- `weightedWedgeOpCowedgeEquivalence`
+  (Weighted.lean) — weighted reverse direction
+- `copowerPowerEquiv` (PowersAndCopowers.lean) —
+  `(S · X ⟶ Y) ≃ (X ⟶ Y^S)`
+- `endCopowerPowerEquiv` (MendlerLambekEndPower) —
+  lifts copowerPowerEquiv to ends
+- `gExtEndPowerEquiv` (MendlerLambekEndPower) —
+  `(CopowerGExtObj G pt ⟶ Y) ≃
+    typeEnd (powerSliceProf G pt Y)`
+- `copowerCoendGExtNatIso` (MendlerLambekEndPower)
+  — `CopowerCoendGExtFunctor G ≅ GExtFunctor G`
+- `Endofunctor.Algebra.equivOfNatIso` (mathlib) —
+  transfers algebra categories along NatIso
+- Various end/coend, power/copower, and
+  weighted limit/colimit correspondences in
+  `PowersAndCopowers.lean`, `EndsAndCoends.lean`,
+  `Weighted.lean`, and `WeightedAlg.lean`
+
+#### Files
+
+Implementation goes in
+`GebLean/MendlerLambekEndPower.lean` (extending
+the existing module).
+
+#### User Direction
+
+The user emphasized:
+
+- Look at existing equivalences in
+  `PowersAndCopowers.lean` and `EndsAndCoends.lean`
+  for correspondences that might be reusable
+- Look at `Weighted.lean` and `WeightedAlg.lean`
+  for end/coend, weighted limit/colimit, and
+  power/copower correspondences
+- Some of these are designed for impredicative
+  polymorphism and might be relevant
+- Step 4 (coalgebras in Cᵒᵖ) is not urgent but
+  can be added if straightforward
