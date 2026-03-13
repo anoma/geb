@@ -725,6 +725,88 @@ Status legend: [done] = proved in Lean,
 [partial] = defined but incomplete,
 [open] = not yet formalized.
 
+### Terminology: levels of morphism
+
+Wadler works in `Set`, where "function" is
+unambiguous.  Our generalization replaces `Set`
+with a category `C` and then lifts to `PSh(C)`,
+introducing several distinct levels of morphism
+that must be distinguished.
+
+**Wadler's concepts and their two-stage
+generalization:**
+
+| Wadler              | C-level             | PSh(C)-level                 |
+|---------------------|---------------------|------------------------------|
+| set                 | object of C         | presheaf P : C^op => Type    |
+| monomorphic fn      | C-morphism f : X→Y  | presheaf morphism α : P ⟶ Q |
+| polymorphic type    | endofunctor on C    | endofunctor on PSh(C)        |
+| parametric poly. fn | endo. nat. trans.    | endo. nat. trans. σ : F ⟶ G  |
+
+Precise terminology used in this document:
+
+- **C-morphism**: a morphism `f : X ⟶ Y` in the
+  base category `C`.  Generalizes Wadler's
+  monomorphic functions.
+- **presheaf morphism**: a natural transformation
+  `α : P ⟶ Q` between presheaves
+  `P Q : C^op ⥤ Type`.  These are the morphisms of
+  `PSh(C)`.  Each C-morphism `f` yields a presheaf
+  morphism `yoneda.map f` between representables.
+- **endofunctor**: a functor `G : PSh(C) ⥤ PSh(C)`.
+  Generalizes Wadler's polymorphic type-formers
+  (e.g. `List`).  An endofunctor `G₀` on `C` lifts
+  to one on `PSh(C)` via Yoneda extension
+  (`yonedaExtFunctor`).
+- **endofunctor natural transformation**: a natural
+  transformation `σ : F ⟶ G` between endofunctors
+  `F G : PSh(C) ⥤ PSh(C)`.  Generalizes Wadler's
+  parametrically polymorphic functions (e.g.
+  `∀X. List(X) → List(X)`).  An endofunctor
+  natural transformation on `C` lifts to one on
+  `PSh(C)` via Yoneda extension.
+
+These four levels are distinct.  In particular,
+"presheaf morphism" and "endofunctor natural
+transformation" are both natural transformations
+in the technical sense, but between different
+categories: the first is a morphism of `PSh(C)`,
+while the second is a morphism in the functor
+category `[PSh(C), PSh(C)]`.
+
+### Why presheaves
+
+The Yoneda lift from `C` to `PSh(C)` is necessary
+because relations require _elements_ to express
+relatedness, and a general category `C` need not
+have global elements.  In `PSh(C)`, every object
+has enough generalized elements (by the Yoneda
+lemma: `Hom(y(X), P) ≅ P(X)`), so relations can
+be defined as subfunctors of products.  The Yoneda
+embedding `y : C ↪ PSh(C)` is fully faithful, so
+`C` embeds without loss of information.
+
+The generalization from Wadler proceeds in two
+stages:
+
+1. Replace `Set` with a category `C`: sets become
+   objects, monomorphic functions become
+   C-morphisms, type-formers become endofunctors,
+   polymorphic functions become endofunctor natural
+   transformations.
+2. Yoneda-lift from `C` to `PSh(C)`: objects become
+   representable presheaves (via `yoneda`),
+   C-morphisms become presheaf morphisms between
+   representables (via `yoneda.map`), endofunctors
+   on `C` become endofunctors on `PSh(C)` (via
+   `yonedaExtFunctor`), and endofunctor natural
+   transformations lift accordingly.
+
+Stage 2 is forced by the need for relations:
+`PSh(C)` has enough elements to define `PshRel`
+(subfunctors of products), while `C` in general
+does not.
+
 ### Section 1: Introduction
 
 Wadler's claim: from the type of a polymorphic
@@ -734,22 +816,38 @@ theorem.  The running example is
 `r : forall X. X* -> X*`, yielding the theorem
 `a* . r_A = r_{A'} . a*` for all `a : A -> A'`.
 
-Generalization: replace `Type` with `PSh(C)`,
-functions with natural transformations, and
-"list of X" with any endofunctor `G : PSh(C) ->
-PSh(C)`.  Then `map a` becomes `G.map α` for
-`α : P ⟶ Q`, and the theorem becomes naturality:
-`G.map α ≫ σ_Q = σ_P ≫ G.map α`.  The specific
-instances in Figure 1 (head, tail, fst, snd, zip,
-filter, sort, fold, I, K) become instances of
-naturality for natural transformations between
-composed endofunctors on `PSh(C)`.  Varying
-hypotheses (monotonicity for sort,
-predicate-preservation for filter, algebra
+Generalization: replace `Set` with `PSh(C)`,
+monomorphic functions with presheaf morphisms,
+polymorphic type-formers (e.g. `List`) with
+endofunctors `G : PSh(C) ⥤ PSh(C)`, and
+parametrically polymorphic functions (e.g.
+`∀X. List(X) → List(X)`) with endofunctor natural
+transformations `σ : F ⟶ G`.  Then `map a`
+becomes `G.map α` for a presheaf morphism
+`α : P ⟶ Q`, and the theorem becomes naturality
+of `σ` with respect to `α`:
+`F.map α ≫ σ_Q = σ_P ≫ G.map α`.
+
+The Barr embedding `pshBarrEmbedding` lifts
+endofunctors on `PSh(C)` to functors
+`PSh(C) ⥤ PshRelEdge C`, and does so functorially
+(`pshBarrEmbeddingFunctor`).  This functor is
+fully faithful
+(`pshBarrEmbeddingFunctor_fullyFaithful`):
+endofunctor natural transformations `σ : F ⟶ G`
+biject with natural transformations
+`pshBarrEmbedding F ⟶ pshBarrEmbedding G`.
+
+The specific instances in Figure 1 (head, tail,
+fst, snd, zip, filter, sort, fold, I, K) become
+instances of naturality for endofunctor natural
+transformations between composed endofunctors on
+`PSh(C)`.  Varying hypotheses (monotonicity for
+sort, predicate-preservation for filter, algebra
 homomorphism for fold) arise because those
-transformations are natural only on subcategories
-of morphisms, which `conditional_freeTheorem_graph`
-captures.
+endofunctor natural transformations are natural
+only on subcategories of presheaf morphisms,
+which `conditional_freeTheorem_graph` captures.
 File: `PshRelEdgeGraphRestriction.lean`.
 Status: [done] (via the general framework; see
 Section 3 entries and Figure 1 entries below).
@@ -758,8 +856,11 @@ Section 3 entries and Figure 1 entries below).
 
 Wadler reads types as sets and as relations.
 Our generalization replaces sets with presheaves
-on an arbitrary category `C`, and relations with
-subfunctors of product presheaves.
+on an arbitrary category `C` (see "Why presheaves"
+above), and relations with subfunctors of product
+presheaves.  Monomorphic functions become presheaf
+morphisms; graphs of functions become graphs of
+presheaf morphisms.
 
 **Type as set.**
 Wadler: a type `A` is a set.
@@ -915,16 +1016,21 @@ Status: [done].
 **3.1 Rearrangements.**
 Wadler: for `r : forall X. X* -> X*`,
 `a* . r_A = r_{A'} . a*`.
-Generalization: `natTransToBarrEndo` /
-`barrEndoToNatTrans` establish a bijection between
-natural endomorphisms `G ⟶ G` and endomorphisms
-of the Barr embedding `pshBarrEmbedding G`.
-The forward direction derives the commutativity
-square from `pshBarrLiftRel_id_related_iff`.
-Lean: `natTransToBarrEndo`,
-`barrEndoToNatTrans`,
-`natTransToBarrEndo_barrEndoToNatTrans`,
-`barrEndoToNatTrans_natTransToBarrEndo`.
+Generalization: `natTransToBarrMap` /
+`barrMapToNatTrans` establish a bijection between
+endofunctor natural transformations `F ⟶ G` and
+natural transformations
+`pshBarrEmbedding F ⟶ pshBarrEmbedding G`.
+The endomorphism case `F = G` gives the
+rearrangement theorem.
+`pshBarrEmbeddingFunctor` packages this as a
+fully faithful functor from endofunctors on
+`PSh(C)` to functors `PSh(C) ⥤ PshRelEdge C`.
+Lean: `natTransToBarrMap`, `barrMapToNatTrans`,
+`pshBarrEmbeddingFunctor`,
+`pshBarrEmbeddingFunctor_fullyFaithful`,
+`natTransToBarrEndo` (endomorphism
+specialization).
 File: `PshRelEdgeGraphRestriction.lean`.
 Task: W2.
 Status: [done].
@@ -1219,20 +1325,28 @@ type constructor reduces to its bifunctor action.
 The blog conjectures a deeper equivalence: "all
 Haskell laws are category laws in different
 categories."
-Generalization needed: a notion of equivalence of
-endofunctors on PshRelEdge (or of relational
-actions on PshRelDouble). When `G : PSh(C) -> PSh(C)`
-is lifted to `pshBarrLiftEdgeFunctor G`, what
-structural properties does this lift have? Is the
-Barr lift embedding faithful (distinct functors yield
-distinct edge functors)? Full (every edge endofunctor
-arises from a presheaf endofunctor)? When do two
-lifts agree? What is the analogue of Wadler's
-observation that relations specialized to functions
-yield bifunctors — does restriction to the graph
-subcategory of PshRelEdge recover the original
-functor up to isomorphism?
-Status: [open].
+Partial answer: `pshBarrEmbeddingFunctor` is a
+fully faithful functor from endofunctors on
+`PSh(C)` to functors `PSh(C) ⥤ PshRelEdge C`.
+This means the Barr embedding preserves and
+reflects the structure of endofunctor natural
+transformations (i.e. Wadler's parametrically
+polymorphic functions).  Distinct endofunctor
+natural transformations yield distinct natural
+transformations between Barr embeddings, and every
+natural transformation between Barr embeddings
+arises from an endofunctor natural transformation.
+Lean: `pshBarrEmbeddingFunctor`,
+`pshBarrEmbeddingFunctor_fullyFaithful`.
+File: `PshRelEdgeGraphRestriction.lean`.
+Remaining open: what is the essential image of
+`pshBarrEmbeddingFunctor`?  Not every functor
+`PSh(C) ⥤ PshRelEdge C` arises as a Barr
+embedding.  The characterization of the essential
+image would complete the analogue of Wadler's
+observation.
+Status: [partial] (full faithfulness proved;
+essential image characterization open).
 
 ### Blog post: "Review of Theorems for Free"
 
@@ -1382,6 +1496,18 @@ Status: [done].
 **Span bicategory.**
 `pshSpanBicategory` with all 12 coherence axioms.
 File: `PshSpanBicategory.lean`.
+Status: [done].
+
+**Barr embedding functoriality.**
+`pshBarrEmbeddingFunctor` is a fully faithful
+functor from endofunctors on `PSh(C)` to
+functors `PSh(C) ⥤ PshRelEdge C`.  Endofunctor
+natural transformations `σ : F ⟶ G` biject with
+natural transformations between Barr embeddings.
+Lean: `pshBarrEmbeddingFunctor`,
+`pshBarrEmbeddingFunctor_fullyFaithful`,
+`natTransToBarrMap`, `barrMapToNatTrans`.
+File: `PshRelEdgeGraphRestriction.lean`.
 Status: [done].
 
 ### Open directions

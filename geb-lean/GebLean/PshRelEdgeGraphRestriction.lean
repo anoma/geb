@@ -34,10 +34,19 @@ specialized to functions yields naturality.
   edge functor composed with the identity section
   agrees with `G` composed with the identity
   section
+* `natTransToBarrMap` / `barrMapToNatTrans`:
+  bijection between endofunctor natural
+  transformations `F ⟶ G` and natural
+  transformations between Barr embeddings
+  `pshBarrEmbedding F ⟶ pshBarrEmbedding G`
+* `pshBarrEmbeddingFunctor`: the Barr embedding
+  as a functor from endofunctors on `PSh(C)` to
+  functors `PSh(C) ⥤ PshRelEdge C`
+* `pshBarrEmbeddingFunctor_fullyFaithful`: the
+  Barr embedding functor is fully faithful
 * `natTransToBarrEndo` / `barrEndoToNatTrans`:
-  bijection between natural transformations
-  `G ⟶ G` and natural endomorphisms of the
-  covariant Barr embedding (rearrangement)
+  specializations to the endomorphism case `F = G`
+  (the rearrangement free theorem)
 * `MapFamily`: natural transformation type for
   map-like operations `(P ⟶ Q) → (G P ⟶ G Q)`
 * `mapFamilyDecompLeft` / `mapFamilyDecompRight`:
@@ -316,76 +325,169 @@ abbrev pshContraBarrEmbedding
 
 end BarrEmbeddings
 
-section Rearrangement
+section BarrEmbeddingFunctoriality
 
-/-- A natural transformation `σ : G ⟶ G` induces
-a natural endomorphism of the covariant Barr
-embedding `pshBarrEmbedding G`. The component at
-`P` has both srcMap and tgtMap equal to
-`σ.app P`. -/
-def natTransToBarrEndo
-    (G :
-      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w))
-    (σ : G ⟶ G) :
-    pshBarrEmbedding (C := C) G ⟶
+/-- A natural transformation `σ : F ⟶ G` between
+endofunctors induces a natural transformation
+between Barr embeddings. The component at `P`
+has both srcMap and tgtMap equal to `σ.app P`.
+
+This generalizes `natTransToBarrEndo` (the
+endomorphism case `F = G`).
+`pshBarrEmbedding` is functorial: see
+`pshBarrEmbeddingFunctor`. -/
+def natTransToBarrMap
+    {F G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w)}
+    (σ : F ⟶ G) :
+    pshBarrEmbedding (C := C) F ⟶
     pshBarrEmbedding G where
   app P :=
     { srcMap := σ.app P
       tgtMap := σ.app P
       sq := by
         change pshRelRelated (σ.app P) (σ.app P)
+          (pshBarrLiftRel F (pshRelId P))
           (pshBarrLiftRel G (pshRelId P))
-          (pshBarrLiftRel G (pshRelId P))
-        rw [pshBarrLiftRel_id]
+        rw [pshBarrLiftRel_id, pshBarrLiftRel_id]
         exact pshRelRelatedSqVertId (σ.app P) }
   naturality {P Q} α :=
     VertEdgeHom.ext (σ.naturality α)
       (σ.naturality α)
 
-/-- A natural endomorphism of the covariant Barr
-embedding yields a natural transformation
-`G ⟶ G` by extracting the srcMap component.
-This is the rearrangement free theorem: the
-endomorphism's naturality in `PshRelEdge`
-implies the commutativity
-`σ_P ≫ G.map α = G.map α ≫ σ_Q`. -/
-def barrEndoToNatTrans
-    (G :
-      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w))
-    (τ : pshBarrEmbedding (C := C) G ⟶
+/-- A natural transformation between Barr
+embeddings yields a natural transformation
+between the underlying endofunctors, by
+extracting the srcMap component.  Naturality
+in `PshRelEdge` implies the commutativity
+`σ_P ≫ G.map α = F.map α ≫ σ_Q`.
+
+This generalizes `barrEndoToNatTrans` (the
+endomorphism case `F = G`). -/
+def barrMapToNatTrans
+    {F G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w)}
+    (τ : pshBarrEmbedding (C := C) F ⟶
       pshBarrEmbedding G) :
-    G ⟶ G where
+    F ⟶ G where
   app P := (τ.app P).srcMap
   naturality _ _ α :=
     congrArg VertEdgeHom.srcMap (τ.naturality α)
 
-/-- The roundtrip
-`natTransToBarrEndo ∘ barrEndoToNatTrans`
+/-- `natTransToBarrMap ∘ barrMapToNatTrans`
+is the identity.  The tgtMap component equals
+srcMap because the Barr lift at the identity
+relation forces equality
+(`pshRelRelated_id_eq`). -/
+theorem natTransToBarrMap_barrMapToNatTrans
+    {F G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w)}
+    (τ : pshBarrEmbedding (C := C) F ⟶
+      pshBarrEmbedding G) :
+    natTransToBarrMap
+      (barrMapToNatTrans τ) = τ := by
+  ext P
+  apply VertEdgeHom.ext
+  · rfl
+  · have hsq := (τ.app P).sq
+    change pshRelRelated _ _
+      (pshBarrLiftRel F (pshRelId P))
+      (pshBarrLiftRel G (pshRelId P)) at hsq
+    rw [pshBarrLiftRel_id, pshBarrLiftRel_id]
+      at hsq
+    exact pshRelRelated_id_eq hsq
+
+/-- `barrMapToNatTrans ∘ natTransToBarrMap`
 is the identity. -/
+theorem barrMapToNatTrans_natTransToBarrMap
+    {F G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w)}
+    (σ : F ⟶ G) :
+    barrMapToNatTrans (C := C)
+      (natTransToBarrMap σ) = σ := rfl
+
+/-- The Barr embedding is a functor from
+endofunctors on `PSh(C)` to functors
+`PSh(C) ⥤ PshRelEdge C`.
+
+On objects: `G ↦ pshBarrEmbedding G`.
+On morphisms: `(σ : F ⟶ G) ↦ natTransToBarrMap σ`.
+
+This functor is fully faithful
+(`pshBarrEmbeddingFunctor_fullyFaithful`). -/
+def pshBarrEmbeddingFunctor :
+    ((Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w)) ⥤
+    ((Cᵒᵖ ⥤ Type w) ⥤
+      PshRelEdge.{u, v, w} C) where
+  obj G := pshBarrEmbedding G
+  map σ := natTransToBarrMap σ
+  map_id _ := by
+    ext P
+    exact VertEdgeHom.ext rfl rfl
+  map_comp _ _ := by
+    ext P
+    exact VertEdgeHom.ext rfl rfl
+
+/-- `pshBarrEmbeddingFunctor` is fully
+faithful: the Barr embedding bijectively maps
+natural transformations between endofunctors
+to natural transformations between their
+Barr embeddings. -/
+def pshBarrEmbeddingFunctor_fullyFaithful :
+    (pshBarrEmbeddingFunctor :
+      ((Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w)) ⥤
+      ((Cᵒᵖ ⥤ Type w) ⥤
+        PshRelEdge.{u, v, w} C)
+    ).FullyFaithful where
+  preimage τ := barrMapToNatTrans τ
+  map_preimage τ :=
+    natTransToBarrMap_barrMapToNatTrans τ
+  preimage_map σ :=
+    barrMapToNatTrans_natTransToBarrMap σ
+
+/-- Specialization: a natural endomorphism
+`σ : G ⟶ G` induces a natural endomorphism of
+`pshBarrEmbedding G`. -/
+abbrev natTransToBarrEndo
+    (G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w))
+    (σ : G ⟶ G) :
+    pshBarrEmbedding (C := C) G ⟶
+    pshBarrEmbedding G :=
+  natTransToBarrMap σ
+
+/-- Specialization: extracting a natural
+endomorphism from a Barr embedding endomorphism.
+This is the rearrangement free theorem: the
+endomorphism's naturality in `PshRelEdge`
+implies the commutativity
+`σ_P ≫ G.map α = G.map α ≫ σ_Q`. -/
+abbrev barrEndoToNatTrans
+    (G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w))
+    (τ : pshBarrEmbedding (C := C) G ⟶
+      pshBarrEmbedding G) :
+    G ⟶ G :=
+  barrMapToNatTrans τ
+
 theorem natTransToBarrEndo_barrEndoToNatTrans
     (G :
       (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w))
     (τ : pshBarrEmbedding (C := C) G ⟶
       pshBarrEmbedding G) :
     natTransToBarrEndo G
-      (barrEndoToNatTrans G τ) = τ := by
-  ext P
-  apply VertEdgeHom.ext
-  · rfl
-  · exact (pshBarrLiftRel_id_related_iff G).mp
-      (τ.app P).sq
+      (barrEndoToNatTrans G τ) = τ :=
+  natTransToBarrMap_barrMapToNatTrans τ
 
-/-- The roundtrip
-`barrEndoToNatTrans ∘ natTransToBarrEndo`
-is the identity. -/
 theorem barrEndoToNatTrans_natTransToBarrEndo
     (G :
       (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w))
     (σ : G ⟶ G) :
     barrEndoToNatTrans (C := C) G
-      (natTransToBarrEndo G σ) = σ := rfl
+      (natTransToBarrEndo G σ) = σ :=
+  barrMapToNatTrans_natTransToBarrMap σ
 
-end Rearrangement
+end BarrEmbeddingFunctoriality
 
 section MapDecomposition
 
