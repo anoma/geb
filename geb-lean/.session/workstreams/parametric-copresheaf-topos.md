@@ -489,6 +489,27 @@ transformations, and the Barr extensions provide the
 vertical action with triangle identities inherited
 from the original adjunction.
 
+**Parametric right adjoints and polynomial functors.**
+The pullback-preservation hypothesis in the Barr lift
+composition results (`relComp_barrLiftRel_le_of_preservesPullbacks`,
+`pshBarrLiftRel_comp_eq`) is weaker than right-adjointness.
+Parametric right adjoints between presheaf categories —
+a generalization of polynomial functors — preserve
+connected limits (pullbacks, equalizers, wide pullbacks),
+though not disconnected limits (products, terminal objects).
+Since pullbacks are connected limits, parametric right
+adjoints (and in particular polynomial functors) are
+sufficient for the Barr lift composition equality.
+Polynomial functors are also parametric left adjoints,
+so they preserve connected colimits (including epis),
+giving the reverse direction of
+`pshBarrLiftRel_comp_functor_le` and hence equality
+`pshBarrLiftRel (F ⋙ G) R = pshBarrLiftRel G (pshBarrLiftRel F R)`
+for polynomial `G`.
+This covers the typical type-forming functors in
+dependent type theory (dependent sums, W-types, etc.)
+without requiring them to be full right adjoints.
+
 **Wadler correspondence.**
 In Wadler's framework, the relational interpretation
 of type constructors must compose correctly: `[[F(A)]]`
@@ -602,18 +623,23 @@ Relevant declarations:
   presheaf topos).
   (`PshRelDouble.lean`)
 
-- [ ] **A6. Right-adjoint type-formers in PshRelEdge.**
-  Show that the internal hom `[A, -]` (as a right
-  adjoint to `- × A`) satisfies A2, giving
-  composition preservation for the function-space
-  Barr extension.  Connect to `pshArrowRel`.
-  File: `PshRelDouble.lean` or new file.
+- [x] **A6. Right-adjoint type-formers in PshRelEdge.**
+  The internal hom functor `pshIhomFunctor A`
+  sends `B` to `A.functorHom B`.  Its Barr extension
+  equals the arrow relation with identity domain:
+  `pshBarrLiftRel_ihom_eq_arrowRel`.  Composition
+  preservation (`pshBarrLiftRel_ihom_comp`) follows
+  from `pshArrowRel_comp` and `pshRelComp_id_left`.
+  (`PshRelDouble.lean`, section `IhomProdFunctors`)
 
-- [ ] **A7. Left-adjoint type-formers in presheaf topos.**
-  Show that product functors `- × A` in `PSh(C)`
-  preserve pullbacks (via cartesian closure +
-  `MonoidalClosed`), hence satisfy A1.
-  File: `PshRelDouble.lean` or new file.
+- [x] **A7. Left-adjoint type-formers in presheaf topos.**
+  The product functor `pshProdRightFunctor A`
+  sends `B` to `B × A`.  Its Barr extension equals the
+  product relation with identity on `A`:
+  `pshBarrLiftRel_prod_eq_prodRel`.  Composition
+  preservation (`pshBarrLiftRel_prod_comp`) follows
+  from `pshProdRel_comp` and `pshRelComp_id_left`.
+  (`PshRelDouble.lean`, section `IhomProdFunctors`)
 
 ### Comparison with paranaturality
 
@@ -1121,8 +1147,8 @@ Answer: when `G` preserves pullbacks (Barr's theorem).
 This holds for right adjoints (all limits preserved)
 and for left-adjoint type-formers in a presheaf topos
 (finite limits preserved by cartesian closure).
-Task: R1 [done], A1-A7 [open].
-Status: R1 [done], adjunction formalization [open].
+Task: R1 [done], A1-A7 [done].
+Status: [done].
 
 **Type-formers as adjoint functors.**
 Right adjoint type-formers (internal hom, dependent
@@ -1133,7 +1159,7 @@ cases yield Barr extensions that preserve composition,
 giving double functors on `PshRelDouble`.  Adjunctions
 lift to double adjunctions.
 Tasks: A1-A7.
-Status: [open].
+Status: [done].
 
 **Paranatural vs parametric in PshRelEdge.**
 Edge-level example of parametric-but-not-

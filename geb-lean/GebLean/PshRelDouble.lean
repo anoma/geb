@@ -4443,6 +4443,318 @@ theorem pshBarrLiftDF_preservesSqHComp
 
 end BarrLiftDoubleFunctor
 
+section IhomProdFunctors
+
+/-!
+## Internal hom and product functors
+
+The covariant internal hom functor `[A, -]`
+sending `B` to `A.functorHom B`, and the product
+functor `- × A` sending `B` to `B × A`. These
+form an adjunction `- × A ⊣ [A, -]` in the
+presheaf category.
+-/
+
+variable {C : Type u} [Category.{v} C]
+
+/-- The covariant internal hom functor `[A, -]`
+in the presheaf category, sending `B` to
+`A.functorHom B` and a morphism `f : B ⟶ B'`
+to `pshIhomProfMap (𝟙 A) f`. -/
+def pshIhomFunctor
+    (A : Cᵒᵖ ⥤ Type (max u v)) :
+    (Cᵒᵖ ⥤ Type (max u v)) ⥤
+      (Cᵒᵖ ⥤ Type (max u v)) where
+  obj B := A.functorHom B
+  map f := pshIhomProfMap (𝟙 A) f
+  map_id _ := pshIhomProfMap_id
+  map_comp f g := by
+    have := pshIhomProfMap_comp
+      (𝟙 A) (𝟙 A) f g
+    simp only [Category.comp_id] at this
+    exact this
+
+/-- The Barr extension of the internal hom
+functor `[A, -]` is contained in the arrow
+relation with identity domain relation: every
+pair in `pshBarrLiftRel (pshIhomFunctor A) R`
+is also in `pshArrowRel (pshRelId A) R`.
+
+The Barr extension constructs witnesses
+existentially (a natural family `z` in
+`[A, R.toFunctor]` projecting to `(g₁, g₂)`),
+while the arrow relation requires relatedness
+for all related inputs. A natural witness
+provides pointwise witnesses, giving the
+containment. -/
+theorem pshBarrLiftRel_ihom_le_arrowRel
+    (A : Cᵒᵖ ⥤ Type (max u v))
+    {P Q : Cᵒᵖ ⥤ Type (max u v)}
+    (R : PshRel P Q) :
+    pshBarrLiftRel (pshIhomFunctor A) R ≤
+      pshArrowRel (pshRelId A) R := by
+  intro c ⟨g₁, g₂⟩ hmem
+  simp only [pshBarrLiftRel, pshProdOverToRel,
+    Subfunctor.range, Set.mem_range] at hmem
+  obtain ⟨z, hz⟩ := hmem
+  apply pshArrowRel_intro
+  intro d k a₁ a₂ hid
+  simp only [pshRelId] at hid
+  have hid' : a₁ = a₂ := hid; subst hid'
+  suffices hsuff :
+      (g₁.app d k a₁, g₂.app d k a₁) =
+      (z.app d k a₁).val by
+    rw [hsuff]; exact (z.app d k a₁).property
+  have hfst := congr_arg
+    (fun p => Prod.fst p |>.app d k a₁) hz
+  have hsnd := congr_arg
+    (fun p => Prod.snd p |>.app d k a₁) hz
+  dsimp [pshBarrLift, pshProdLift,
+    pshIhomFunctor, pshIhomProfMap,
+    Subfunctor.ι] at hfst hsnd
+  exact Prod.ext hfst.symm hsnd.symm
+
+/-- The arrow relation with identity domain
+is contained in the Barr extension of the
+internal hom: every pair in
+`pshArrowRel (pshRelId A) R` is also in
+`pshBarrLiftRel (pshIhomFunctor A) R`.
+
+The proof constructs a natural witness
+`z : (A.functorHom R.toFunctor).obj c` from
+the arrow relation predicate. Since `R.ι` is a
+subfunctor inclusion, the witness at each
+`(d, k, a)` is uniquely determined by
+`(g₁, g₂)`, and the naturality of `g₁, g₂`
+as `HomObj` elements guarantees the naturality
+of `z`. -/
+theorem pshArrowRel_le_barrLiftRel_ihom
+    (A : Cᵒᵖ ⥤ Type (max u v))
+    {P Q : Cᵒᵖ ⥤ Type (max u v)}
+    (R : PshRel P Q) :
+    pshArrowRel (pshRelId A) R ≤
+      pshBarrLiftRel (pshIhomFunctor A) R := by
+  intro c ⟨g₁, g₂⟩ hmem
+  simp only [pshBarrLiftRel, pshProdOverToRel,
+    Subfunctor.range, Set.mem_range]
+  refine ⟨?_, ?_⟩
+  · exact
+      { app := fun d k a =>
+          ⟨(g₁.app d k a, g₂.app d k a),
+           pshArrowRel_apply hmem k rfl⟩
+        naturality := fun {d e} f k => by
+          ext a
+          apply Subtype.ext
+          exact Prod.ext
+            (congr_fun (g₁.naturality f k) a)
+            (congr_fun (g₂.naturality f k) a) }
+  · apply Prod.ext <;> (
+      dsimp [pshBarrLift, pshProdLift,
+        pshIhomFunctor, pshIhomProfMap,
+        Subfunctor.ι]
+      ext d k a; rfl)
+
+/-- The Barr extension of the internal hom
+`[A, -]` equals the arrow relation with
+identity domain:
+`pshBarrLiftRel (pshIhomFunctor A) R =
+pshArrowRel (pshRelId A) R`.
+
+The forward direction
+(`pshBarrLiftRel_ihom_le_arrowRel`) uses the
+natural witness to provide pointwise
+witnesses. The reverse direction
+(`pshArrowRel_le_barrLiftRel_ihom`) assembles
+pointwise witnesses into a natural family,
+exploiting the injectivity of `R.ι`. -/
+theorem pshBarrLiftRel_ihom_eq_arrowRel
+    (A : Cᵒᵖ ⥤ Type (max u v))
+    {P Q : Cᵒᵖ ⥤ Type (max u v)}
+    (R : PshRel P Q) :
+    pshBarrLiftRel (pshIhomFunctor A) R =
+      pshArrowRel (pshRelId A) R :=
+  le_antisymm
+    (pshBarrLiftRel_ihom_le_arrowRel A R)
+    (pshArrowRel_le_barrLiftRel_ihom A R)
+
+/-- The product functor `- × A` in the presheaf
+category, sending `B` to `pshProdPresheaf B A`
+and a morphism `f : B ⟶ B'` to
+`pshProdMap f (𝟙 A)`. -/
+def pshProdRightFunctor
+    (A : Cᵒᵖ ⥤ Type (max u v)) :
+    (Cᵒᵖ ⥤ Type (max u v)) ⥤
+      (Cᵒᵖ ⥤ Type (max u v)) where
+  obj B := pshProdPresheaf B A
+  map f := pshProdMap f (𝟙 A)
+  map_id _ := pshProdMap_id _ _
+  map_comp f g := by
+    have := pshProdMap_comp f (𝟙 A) g (𝟙 A)
+    simp only [Category.comp_id] at this
+    exact this
+
+/-- Composition preservation for the Barr
+extension of the internal hom functor `[A, -]`:
+given related pairs in `pshBarrLiftRel
+(pshIhomFunctor A) R` and `pshBarrLiftRel
+(pshIhomFunctor A) S`, their composite lies in
+`pshBarrLiftRel (pshIhomFunctor A) (pshRelComp R S)`.
+
+The proof rewrites the Barr extension as the
+arrow relation via `pshBarrLiftRel_ihom_eq_arrowRel`,
+applies `pshArrowRel_comp` to compose the arrow
+relations, and rewrites `pshRelComp (pshRelId A)
+(pshRelId A)` to `pshRelId A` via
+`pshRelComp_id_left`. -/
+theorem pshBarrLiftRel_ihom_comp
+    (A : Cᵒᵖ ⥤ Type (max u v))
+    {P Q W : Cᵒᵖ ⥤ Type (max u v)}
+    (R : PshRel P Q) (S : PshRel Q W)
+    {c : Cᵒᵖ}
+    {w₁ : (pshIhomFunctor A |>.obj P).obj c}
+    {w₂ : (pshIhomFunctor A |>.obj Q).obj c}
+    {w₃ : (pshIhomFunctor A |>.obj W).obj c}
+    (h₁₂ : (w₁, w₂) ∈
+      (pshBarrLiftRel (pshIhomFunctor A) R).obj c)
+    (h₂₃ : (w₂, w₃) ∈
+      (pshBarrLiftRel (pshIhomFunctor A) S).obj c) :
+    (w₁, w₃) ∈
+      (pshBarrLiftRel (pshIhomFunctor A)
+        (pshRelComp R S)).obj c := by
+  rw [pshBarrLiftRel_ihom_eq_arrowRel] at h₁₂ h₂₃ ⊢
+  have h := pshArrowRel_comp h₁₂ h₂₃
+  rwa [pshRelComp_id_left] at h
+
+/-- The product of two presheaf relations:
+`pshProdRel R S` relates `(p₁, q₁)` to
+`(p₂, q₂)` iff `(p₁, p₂) ∈ R` and
+`(q₁, q₂) ∈ S`. -/
+def pshProdRel
+    {P₁ P₂ Q₁ Q₂ : Cᵒᵖ ⥤ Type (max u v)}
+    (R : PshRel P₁ P₂)
+    (S : PshRel Q₁ Q₂) :
+    PshRel (pshProdPresheaf P₁ Q₁)
+      (pshProdPresheaf P₂ Q₂) where
+  obj c :=
+    { pq | (pq.1.1, pq.2.1) ∈ R.obj c ∧
+           (pq.1.2, pq.2.2) ∈ S.obj c }
+  map f := by
+    rintro ⟨_, _⟩ ⟨hR, hS⟩
+    exact ⟨R.map f hR, S.map f hS⟩
+
+/-- The Barr extension of the product functor
+`- × A` equals the product relation with the
+identity on `A`: `pshBarrLiftRel
+(pshProdRightFunctor A) R = pshProdRel R
+(pshRelId A)`. A pair `((p₁, a₁), (p₂, a₂))`
+is in the Barr lift iff there exists a witness
+`(r, a)` in `R.toFunctor × A` projecting to
+both sides, which forces `(p₁, p₂) ∈ R` and
+`a₁ = a = a₂`. -/
+theorem pshBarrLiftRel_prod_eq_prodRel
+    (A : Cᵒᵖ ⥤ Type (max u v))
+    {P Q : Cᵒᵖ ⥤ Type (max u v)}
+    (R : PshRel P Q) :
+    pshBarrLiftRel (pshProdRightFunctor A) R =
+      pshProdRel R (pshRelId A) := by
+  ext c ⟨⟨p₁, a₁⟩, ⟨p₂, a₂⟩⟩
+  simp only [pshBarrLiftRel, pshProdOverToRel,
+    Subfunctor.range, Set.mem_range,
+    pshProdRel]
+  constructor
+  · rintro ⟨⟨r, a⟩, hz⟩
+    dsimp [pshBarrLift, pshProdLift,
+      pshProdRightFunctor, pshProdMap,
+      pshProdFst, pshProdSnd,
+      Subfunctor.ι] at hz
+    have h₁ := congr_arg (·.1) hz
+    have h₂ := congr_arg (·.2) hz
+    dsimp at h₁ h₂
+    have hp₁ := congr_arg (·.1) h₁
+    have ha₁ := congr_arg (·.2) h₁
+    have hp₂ := congr_arg (·.1) h₂
+    have ha₂ := congr_arg (·.2) h₂
+    dsimp at hp₁ ha₁ hp₂ ha₂
+    subst hp₁ ha₁ hp₂ ha₂
+    exact ⟨r.property, rfl⟩
+  · rintro ⟨hR, hid⟩
+    dsimp at hR hid
+    simp only [pshRelId] at hid
+    have hid' : a₁ = a₂ := hid; subst hid'
+    refine ⟨(⟨(p₁, p₂), hR⟩, a₁), ?_⟩
+    dsimp [pshBarrLift, pshProdLift,
+      pshProdRightFunctor, pshProdMap,
+      pshProdFst, pshProdSnd,
+      Subfunctor.ι]
+
+/-- Composition preservation for the product
+relation: given `(x, y) ∈ pshProdRel R₁ S₁` and
+`(y, z) ∈ pshProdRel R₂ S₂`, the composite
+`(x, z)` lies in
+`pshProdRel (pshRelComp R₁ R₂)
+  (pshRelComp S₁ S₂)`. -/
+theorem pshProdRel_comp
+    {P₁ P₂ P₃ Q₁ Q₂ Q₃ :
+      Cᵒᵖ ⥤ Type (max u v)}
+    {R₁ : PshRel P₁ P₂}
+    {R₂ : PshRel P₂ P₃}
+    {S₁ : PshRel Q₁ Q₂}
+    {S₂ : PshRel Q₂ Q₃}
+    {c : Cᵒᵖ}
+    {x : (pshProdPresheaf P₁ Q₁).obj c}
+    {y : (pshProdPresheaf P₂ Q₂).obj c}
+    {z : (pshProdPresheaf P₃ Q₃).obj c}
+    (h₁₂ : (x, y) ∈
+      (pshProdRel R₁ S₁).obj c)
+    (h₂₃ : (y, z) ∈
+      (pshProdRel R₂ S₂).obj c) :
+    (x, z) ∈
+      (pshProdRel (pshRelComp R₁ R₂)
+        (pshRelComp S₁ S₂)).obj c := by
+  obtain ⟨hR₁, hS₁⟩ := h₁₂
+  obtain ⟨hR₂, hS₂⟩ := h₂₃
+  exact ⟨⟨y.1, hR₁, hR₂⟩,
+         ⟨y.2, hS₁, hS₂⟩⟩
+
+/-- Composition preservation for the Barr
+extension of the product functor `- × A`:
+given related pairs in
+`pshBarrLiftRel (pshProdRightFunctor A) R`
+and `pshBarrLiftRel (pshProdRightFunctor A) S`,
+the composite lies in
+`pshBarrLiftRel (pshProdRightFunctor A)
+  (pshRelComp R S)`.
+
+The proof rewrites the Barr extension as the
+product relation via
+`pshBarrLiftRel_prod_eq_prodRel`, applies
+`pshProdRel_comp`, and simplifies
+`pshRelComp (pshRelId A) (pshRelId A)` to
+`pshRelId A` via `pshRelComp_id_left`. -/
+theorem pshBarrLiftRel_prod_comp
+    (A : Cᵒᵖ ⥤ Type (max u v))
+    {P Q W : Cᵒᵖ ⥤ Type (max u v)}
+    (R : PshRel P Q) (S : PshRel Q W)
+    {c : Cᵒᵖ}
+    {w₁ : (pshProdRightFunctor A |>.obj P).obj c}
+    {w₂ : (pshProdRightFunctor A |>.obj Q).obj c}
+    {w₃ : (pshProdRightFunctor A |>.obj W).obj c}
+    (h₁₂ : (w₁, w₂) ∈
+      (pshBarrLiftRel
+        (pshProdRightFunctor A) R).obj c)
+    (h₂₃ : (w₂, w₃) ∈
+      (pshBarrLiftRel
+        (pshProdRightFunctor A) S).obj c) :
+    (w₁, w₃) ∈
+      (pshBarrLiftRel (pshProdRightFunctor A)
+        (pshRelComp R S)).obj c := by
+  rw [pshBarrLiftRel_prod_eq_prodRel]
+    at h₁₂ h₂₃ ⊢
+  have h := pshProdRel_comp h₁₂ h₂₃
+  rwa [pshRelComp_id_left] at h
+
+end IhomProdFunctors
+
 section TypeRelations
 
 /-!
