@@ -5346,6 +5346,107 @@ def divParanaturalBundledEquivParanat :
   left_inv _ := rfl
   right_inv _ := rfl
 
+/-- Full relational parametricity for
+`((X → X) → X) → X`: the relational
+interpretation at an arbitrary relation
+`R : I₀ → I₁ → Prop` (not necessarily a graph).
+A family `phi` is fully relationally parametric
+if for all `(p₀, p₁)` satisfying
+`arrowRel (arrowRel R R) R p₀ p₁`, the pair
+`(phi I₀ p₀, phi I₁ p₁)` satisfies `R`.
+
+This is the edge-level parametricity condition:
+an edge `(I₀, I₁, R)` in the relation double
+category is preserved by `phi` iff the
+relational interpretation at `R` holds for the
+pair `(phi I₀, phi I₁)`. -/
+def DivFullRelParametric
+    (phi : ParanatSig divSource divTarget) :
+    Prop :=
+  ∀ (I₀ I₁ : Type)
+    (R : I₀ → I₁ → Prop)
+    (p₀ : (I₀ → I₀) → I₀)
+    (p₁ : (I₁ → I₁) → I₁),
+    arrowRel (arrowRel R R) R p₀ p₁ →
+    R (phi I₀ p₀) (phi I₁ p₁)
+
+/-- Full relational parametricity implies
+graph-level parametricity (`DivParametric`):
+specialize `R` to `graphRel f` and convert
+`arrowRel (graphRel f) (graphRel f) h₀ h₁`
+to `f ∘ h₀ = h₁ ∘ f`. -/
+theorem divFullRelParametric_implies_parametric
+    {phi : ParanatSig divSource divTarget}
+    (h : DivFullRelParametric phi) :
+    DivParametric phi := by
+  intro I₀ I₁ f p q hrel
+  exact h I₀ I₁ (graphRel f) p q
+    (fun h₀ h₁ hendo =>
+      hrel h₀ h₁ (funext fun x =>
+        hendo x (f x) rfl))
+
+/-- `divApplyId` is fully relationally
+parametric: for any relation `R` and any
+`(p₀, p₁)` satisfying
+`arrowRel (arrowRel R R) R`, the pair
+`(p₀ id, p₁ id)` satisfies `R`.
+
+The proof instantiates the gate condition
+with `(id, id)` and observes that
+`arrowRel R R id id` holds since `R` is
+reflexive on related pairs. -/
+theorem divApplyId_fullRelParametric :
+    DivFullRelParametric divApplyId := by
+  intro I₀ I₁ R p₀ p₁ hrel
+  exact hrel id id (fun _ _ h => h)
+
+/-- Full relational parametricity does not imply
+paranaturality. `divApplyId` satisfies
+`DivFullRelParametric` but not `DivParanatural`.
+
+This is the edge-level divergence: `divApplyId`
+preserves all edges in the relation double
+category (arbitrary relations) but fails the
+paranaturality condition (which tests a
+restricted class of inputs). -/
+theorem divFullRelParametric_not_implies_paranatural :
+    ¬ (∀ phi : ParanatSig divSource divTarget,
+      DivFullRelParametric phi →
+        DivParanatural phi) :=
+  fun h => divApplyId_not_paranatural
+    (h divApplyId divApplyId_fullRelParametric)
+
+/-- `DivFullRelParametric phi` is equivalent to
+`∀ I₀ I₁ R, divTypeExpr.fullRelInterp R
+  (phi I₀) (phi I₁)`: the relational
+interpretation at arbitrary relations.
+
+Since each leaf of `divTypeExpr` is
+`.app (𝟭 Type) .var`, the `fullRelInterp`
+expansion introduces `functorRelLift (𝟭 Type)`
+at each variable occurrence, which simplifies
+to the identity by `functorRelLift_id`. -/
+theorem divFullRelParametric_iff_fullRelInterp
+    (phi : ParanatSig divSource divTarget) :
+    DivFullRelParametric phi ↔
+    ∀ (I₀ I₁ : Type)
+      (R : I₀ → I₁ → Prop),
+      divTypeExpr.fullRelInterp R
+        (phi I₀) (phi I₁) := by
+  constructor
+  · intro h I₀ I₁ R
+    simp only [divTypeExpr, divArgTypeExpr,
+      divEndoTypeExpr, TypeExpr.leaf,
+      TypeExpr.fullRelInterp, functorRelLift_id]
+    exact h I₀ I₁ R
+  · intro h I₀ I₁ R
+    have := h I₀ I₁ R
+    simp only [divTypeExpr, divArgTypeExpr,
+      divEndoTypeExpr, TypeExpr.leaf,
+      TypeExpr.fullRelInterp, functorRelLift_id]
+      at this
+    exact this
+
 end ParametricityDivergence
 
 end GebLean
