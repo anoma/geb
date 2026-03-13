@@ -3886,6 +3886,44 @@ def weightedConeElementsEquiv (W : J ⥤ Type v₁) (D : J ⥤ C) :
 
 end WeightedConeElementsEquivalence
 
+section WeightedConeTransformations
+
+/-!
+## Weighted cone postcompose and whisking equivalences
+
+These equivalences transform weighted cones by changing
+the diagram via a natural isomorphism or by reindexing along
+a category equivalence. They compose the
+`weightedConeElementsEquiv` bridge with mathlib's
+`Cones.postcomposeEquivalence` and
+`Cones.whiskeringEquivalence`.
+-/
+
+universe u₇ v₇ u₈
+
+variable {J : Type u₇} [Category.{v₇} J]
+  {C : Type u₈} [Category.{v₇} C]
+
+/-- Postcomposing weighted cones with a natural isomorphism
+`α : D ≅ D'` gives a categorical equivalence
+`WeightedCone W D ≌ WeightedCone W D'`.
+
+Defined by composing through the elements bridge:
+`WeightedCone W D ≌ Cone (π W ⋙ D) ≌ Cone (π W ⋙ D')
+≌ WeightedCone W D'`,
+where the middle step uses `Cones.postcomposeEquivalence`
+with the whiskered isomorphism `isoWhiskerLeft (π W) α`. -/
+def weightedConePostcomposeEquivalence
+    (W : J ⥤ Type v₇) {D D' : J ⥤ C}
+    (α : D ≅ D') :
+    WeightedCone W D ≌ WeightedCone W D' :=
+  (weightedConeElementsEquiv W D).trans
+    ((Cones.postcomposeEquivalence
+      ((CategoryOfElements.π W).isoWhiskerLeft α)).trans
+      (weightedConeElementsEquiv W D').symm)
+
+end WeightedConeTransformations
+
 section WeightedCoconeElementsEquivalence
 
 /-!
