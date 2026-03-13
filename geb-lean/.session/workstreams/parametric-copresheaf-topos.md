@@ -439,14 +439,14 @@ Port the embeddings from PshRelSpanObj to PshRelEdge.
 A "type-former" is a functor `G : PSh(C) → PSh(C)`
 (or between categories built from `PSh(C)`) which has
 a left or right adjoint.  The adjunction structure
-resolves the composition obstructions identified in R1.
+resolves the composition questions identified in R1.
 
 **Right adjoints preserve pullbacks.**
 If `G` is a right adjoint, mathlib's
 `Adjunction.rightAdjoint_preservesLimits` gives
 `PreservesLimitsOfSize G`, hence
 `PreservesLimitsOfShape WalkingCospan G` (pullbacks).
-This resolves obstruction (1) from R1: given witnesses
+This resolves questions (1) from R1: given witnesses
 `wR ∈ G(R.toFunctor)` and `wS ∈ G(S.toFunctor)`
 matching over `G(Q)`, the pullback-preservation
 universal property yields `z ∈ G(R ×_Q S)` mapping
