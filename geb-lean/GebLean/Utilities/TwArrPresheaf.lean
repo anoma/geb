@@ -1769,33 +1769,70 @@ Given a profunctor `P : Cᵒᵖ ⥤ C ⥤ D`, the swap-op profunctor
 `op ((P.obj (op b)).obj (unop a))`.
 
 This swaps the two arguments of `P` and applies `op` to the
-result.
+result. Defined compositionally as: uncurry, take the opposite
+functor, precompose with the self-duality of `Cᵒᵖ × C`, and
+curry again.
 -/
 def profunctorSwapOp (P : Cᵒᵖ ⥤ C ⥤ D) :
-    Cᵒᵖ ⥤ C ⥤ Dᵒᵖ where
-  obj a :=
-    { obj := fun b =>
-        Opposite.op
-          ((P.obj (Opposite.op b)).obj a.unop)
-      map := fun g =>
-        ((P.map g.op).app a.unop).op
-      map_id := by intro b; simp
-      map_comp := by
-        intro b b' b'' g g'; simp }
-  map f :=
-    { app := fun b =>
-        ((P.obj (Opposite.op b)).map f.unop).op
-      naturality := by
-        intro b b' g
-        apply Quiver.Hom.unop_inj
-        simp only [unop_comp, Quiver.Hom.unop_op]
-        exact (P.map g.op).naturality f.unop }
-  map_id := by
-    intro a; ext b
-    apply Quiver.Hom.unop_inj; simp
-  map_comp := by
-    intro a a' a'' f f'; ext b
-    apply Quiver.Hom.unop_inj; simp
+    Cᵒᵖ ⥤ C ⥤ Dᵒᵖ :=
+  Functor.curry.obj
+    ((opProdSymSelfDual C).inverse ⋙
+      (Functor.uncurry.obj P).op)
+
+@[simp]
+theorem profunctorSwapOp_obj_obj
+    (P : Cᵒᵖ ⥤ C ⥤ D)
+    (a : Cᵒᵖ) (b : C) :
+    ((profunctorSwapOp C P).obj a).obj b =
+    Opposite.op
+      ((P.obj (Opposite.op b)).obj a.unop) := by
+  simp only [profunctorSwapOp,
+    Functor.curry_obj_obj_obj,
+    Functor.comp_obj,
+    Functor.op_obj,
+    Functor.uncurry_obj_obj]
+  dsimp [opProdSymSelfDual,
+    opOpProdEquiv, opProdProdOpEquiv,
+    CategoryTheory.Equivalence.trans,
+    CategoryTheory.prodOpEquiv]
+
+@[simp]
+theorem profunctorSwapOp_obj_map
+    (P : Cᵒᵖ ⥤ C ⥤ D)
+    (a : Cᵒᵖ) {b b' : C} (g : b ⟶ b') :
+    ((profunctorSwapOp C P).obj a).map g =
+    ((P.map g.op).app a.unop).op := by
+  apply Quiver.Hom.unop_inj
+  simp only [profunctorSwapOp,
+    Functor.curry_obj_obj_map,
+    Functor.comp_map,
+    Functor.op_map,
+    Functor.uncurry_obj_map,
+    Quiver.Hom.unop_op]
+  dsimp [opProdSymSelfDual,
+    opOpProdEquiv, opProdProdOpEquiv,
+    CategoryTheory.Equivalence.trans,
+    CategoryTheory.prodOpEquiv]
+  simp
+
+@[simp]
+theorem profunctorSwapOp_map_app
+    (P : Cᵒᵖ ⥤ C ⥤ D)
+    {a a' : Cᵒᵖ} (f : a ⟶ a') (b : C) :
+    ((profunctorSwapOp C P).map f).app b =
+    ((P.obj (Opposite.op b)).map f.unop).op := by
+  apply Quiver.Hom.unop_inj
+  simp only [profunctorSwapOp,
+    Functor.curry_obj_map_app,
+    Functor.comp_map,
+    Functor.op_map,
+    Functor.uncurry_obj_map,
+    Quiver.Hom.unop_op]
+  dsimp [opProdSymSelfDual,
+    opOpProdEquiv, opProdProdOpEquiv,
+    CategoryTheory.Equivalence.trans,
+    CategoryTheory.prodOpEquiv]
+  simp
 
 private theorem profSwapOp_opCoTw_obj_eq
     (P : Cᵒᵖ ⥤ C ⥤ D)
@@ -1807,7 +1844,8 @@ private theorem profSwapOp_opCoTw_obj_eq
   simp only [profunctorOnOpCoTwistedArrow,
     Functor.comp_obj,
     profunctorOnTwistedArrow_obj,
-    profunctorSwapOp, Functor.op_obj,
+    profunctorSwapOp_obj_obj,
+    Functor.op_obj,
     profunctorOnCoTwistedArrow_obj]
   rw [coTwistedArrowOpEquiv_obj_dom,
     coTwistedArrowOpEquiv_obj_cod]
@@ -1829,7 +1867,9 @@ private theorem profSwapOp_map_nat_aux
     profunctorOnOpCoTwistedArrow,
     Functor.comp_map,
     profunctorOnTwistedArrow_map,
-    profunctorSwapOp, Functor.op_map,
+    profunctorSwapOp_obj_map,
+    profunctorSwapOp_map_app,
+    Functor.op_map,
     profunctorOnCoTwistedArrow_map,
     unop_comp, Quiver.Hom.unop_op,
     coTwistedArrowOpEquiv_map_twDomArr,
