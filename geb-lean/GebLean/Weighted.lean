@@ -13167,25 +13167,15 @@ section WeightedCowedgeWedgeDuality
 /-!
 ## Weighted cowedge/wedge duality
 
-Establishes that weighted cowedges are equivalent to the
-opposite of a weighted wedge category with swapped-op
+Establishes mutually inverse dualities between weighted
+cowedges and weighted wedges via the swapped-op
 profunctor:
 
-`WeightedCowedge W P ≌ (WeightedWedge W (swapOp C P))ᵒᵖ`
+- `WeightedCowedge W P ≌ (WeightedWedge W (swapOp C P))ᵒᵖ`
+- `WeightedWedge W P ≌ (WeightedCowedge W (swapOp C P))ᵒᵖ`
 
-The chain of equivalences is:
-1. `weightedCowedgeOpConeEquivalence` takes weighted
-   cowedges to opposite weighted cones over
-   `(CoTwistedArrow C)ᵒᵖ`
-2. `weightedConePostcomposeEquivalence` with
-   `(profunctorSwapOpNatIso C P).symm` transforms the
-   diagram from `(profCoTwArr C P).op` to
-   `profOnOpCoTwArr C (swapOp C P)`
-3. Since `profOnOpCoTwArr C F` is definitionally
-   `coTwArrOpEquivTwArr.functor ⋙ profTwArr C F`,
-   `weightedConeWhiskeringEquivalence` reindexes from
-   `(CoTwistedArrow C)ᵒᵖ` to `TwistedArrow C`
-4. The result is definitionally `WeightedWedge W (swapOp C P)`
+Transfer functions for weighted ends and coends are also
+provided.
 -/
 
 variable {C : Type u} [Category.{v} C]
@@ -13213,6 +13203,103 @@ def weightedCowedgeOpWedgeEquivalence
       (profunctorOnTwistedArrow C W)
       (profunctorOnTwistedArrow C
         (profunctorSwapOp C P)))).op
+
+/-- An initial weighted cowedge (weighted coend) maps
+to a terminal weighted wedge (weighted end) in `Dᵒᵖ`
+via `weightedCowedgeOpWedgeEquivalence`. -/
+def IsWeightedCoend.isWeightedEndOpWedge
+    {W : Cᵒᵖ ⥤ C ⥤ Type v} {P : Cᵒᵖ ⥤ C ⥤ D}
+    {c : WeightedCowedge W P}
+    (hc : IsWeightedCoend c) :
+    IsWeightedEnd
+      ((weightedCowedgeOpWedgeEquivalence
+        W P).functor.obj c).unop :=
+  isTerminalUnopOfIsInitialEquivOp
+    (weightedCowedgeOpWedgeEquivalence W P) hc
+
+/-- A terminal weighted wedge (weighted end) in `Dᵒᵖ`
+maps to an initial weighted cowedge (weighted coend)
+via `weightedCowedgeOpWedgeEquivalence`. -/
+def IsWeightedEnd.isWeightedCoendOpCowedge
+    {W : Cᵒᵖ ⥤ C ⥤ Type v} {P : Cᵒᵖ ⥤ C ⥤ D}
+    {w : WeightedWedge (D := Dᵒᵖ) W
+      (profunctorSwapOp C P)}
+    (hw : IsWeightedEnd w) :
+    IsWeightedCoend
+      ((weightedCowedgeOpWedgeEquivalence
+        W P).inverse.obj (Opposite.op w)) :=
+  isInitialOfIsTerminalEquivOp
+    (weightedCowedgeOpWedgeEquivalence W P) hw
+
+/-- Weighted wedges over `P` are equivalent to the
+opposite of the weighted cowedge category over the
+swapped-op profunctor.
+
+`WeightedWedge W P ≌
+  (WeightedCowedge W (profunctorSwapOp C P))ᵒᵖ`
+
+The chain of equivalences is:
+1. Inverse whiskering via `coTwArrOpEquivTwArr`
+   reindexes from `TwistedArrow C` to
+   `(CoTwistedArrow C)ᵒᵖ`
+2. Functoriality with `(opOpEquivalence D).symm` embeds
+   the diagram into `Dᵒᵖᵒᵖ`
+3. Postcompose with `profunctorReverseSwapOpNatIso`
+   transforms the diagram from
+   `profOnOpCoTwArr C P ⋙ opOp D` to
+   `(profCoTwArr C (swapOp C P)).op`
+4. `weightedConeOpCoconeEquivalence` gives the
+   cone/cocone op duality, landing in
+   `(WeightedCowedge W (swapOp C P))ᵒᵖ` -/
+def weightedWedgeOpCowedgeEquivalence
+    (W : Cᵒᵖ ⥤ C ⥤ Type v)
+    (P : Cᵒᵖ ⥤ C ⥤ D) :
+    WeightedWedge W P ≌
+    (WeightedCowedge W
+      (profunctorSwapOp C P))ᵒᵖ :=
+  (weightedConeWhiskeringEquivalence
+    coTwistedArrowOpEquivTwistedArrow
+    (profunctorOnTwistedArrow C W)
+    (profunctorOnTwistedArrow C P)).symm |>.trans
+  (weightedConeFunctorialityEquivalence
+    (profunctorOnOpCoTwistedArrow C W)
+    (profunctorOnOpCoTwistedArrow C P)
+    (opOpEquivalence D).symm) |>.trans
+  (weightedConePostcomposeEquivalence
+    (profunctorOnOpCoTwistedArrow C W)
+    (profunctorReverseSwapOpNatIso C P)) |>.trans
+  (weightedConeOpCoconeEquivalence
+    (profunctorOnOpCoTwistedArrow C W)
+    (profunctorOnCoTwistedArrow C
+      (profunctorSwapOp C P)))
+
+/-- A terminal weighted wedge (weighted end) maps to
+an initial weighted cowedge (weighted coend) for the
+swapped-op profunctor via
+`weightedWedgeOpCowedgeEquivalence`. -/
+def IsWeightedEnd.isWeightedCoendSwapOp
+    {W : Cᵒᵖ ⥤ C ⥤ Type v} {P : Cᵒᵖ ⥤ C ⥤ D}
+    {w : WeightedWedge W P}
+    (hw : IsWeightedEnd w) :
+    IsInitial
+      ((weightedWedgeOpCowedgeEquivalence
+        W P).functor.obj w).unop :=
+  isInitialUnopOfIsTerminalEquivOp
+    (weightedWedgeOpCowedgeEquivalence W P) hw
+
+/-- An initial weighted cowedge (weighted coend) for
+the swapped-op profunctor maps to a terminal weighted
+wedge (weighted end) for `P` via
+`weightedWedgeOpCowedgeEquivalence`. -/
+def IsWeightedCoend.isWeightedEndFromSwapOp
+    {W : Cᵒᵖ ⥤ C ⥤ Type v} {P : Cᵒᵖ ⥤ C ⥤ D}
+    {c : WeightedCowedge W (profunctorSwapOp C P)}
+    (hc : IsWeightedCoend c) :
+    IsWeightedEnd
+      ((weightedWedgeOpCowedgeEquivalence
+        W P).inverse.obj (Opposite.op c)) :=
+  isTerminalOfIsInitialEquivOp
+    (weightedWedgeOpCowedgeEquivalence W P) hc
 
 end WeightedCowedgeWedgeDuality
 
