@@ -5,6 +5,7 @@ import Mathlib.CategoryTheory.Limits.Preserves.Shapes.Products
 import Mathlib.CategoryTheory.Limits.Constructions.FiniteProductsOfBinaryProducts
 import Mathlib.CategoryTheory.Monoidal.Cartesian.FunctorCategory
 import Mathlib.CategoryTheory.Monoidal.Closed.Ideal
+import Mathlib.CategoryTheory.Monad.Limits
 
 open CategoryTheory Limits
 
@@ -1279,5 +1280,30 @@ instance inclusionPreservesInitial
     _
 
 end InclusionPreservesCoproducts
+
+/-- `PshRelEdge C` has all small limits, inherited
+from the ambient presheaf topos
+`[WalkingSpan, PSh(C)]` via the reflective
+embedding (the inclusion, being a right adjoint,
+creates limits). -/
+instance pshRelEdgeHasLimitsOfSize
+    (C : Type u) [Category.{v} C] :
+    HasLimitsOfSize.{w, w}
+      (PshRelEdge.{u, v, w} C) :=
+  hasLimits_of_reflective
+    (pshRelEdgeInclusionFunctor C)
+
+/-- `PshRelEdge C` has all small colimits: for a
+diagram `D` in `PshRelEdge C`, the colimit is
+`L(colim(ι ∘ D))` where `ι` is the inclusion
+and `L = pshRelEdgeSepFunctor` is the reflector.
+The universal property follows from the adjunction
+`L ⊣ ι` and full faithfulness of `ι`. -/
+instance pshRelEdgeHasColimitsOfSize
+    (C : Type u) [Category.{v} C] :
+    HasColimitsOfSize.{w, w}
+      (PshRelEdge.{u, v, w} C) :=
+  hasColimits_of_reflective
+    (pshRelEdgeInclusionFunctor C)
 
 end GebLean

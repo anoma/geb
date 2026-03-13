@@ -248,6 +248,17 @@ general theory of parametricity.
   `inclusionPreservesInitial`.
   (`PshRelEdgeInclusion.lean`)
 
+- [x] **All small limits and colimits.**
+  `pshRelEdgeHasLimitsOfSize`: limits inherited
+  from the ambient presheaf topos (right adjoint
+  inclusion creates limits).
+  `pshRelEdgeHasColimitsOfSize`: colimits via
+  the separation reflector applied to colimits
+  in `[WalkingSpan, PSh(C)]` (reflective
+  subcategory of cocomplete category is
+  cocomplete).
+  (`PshRelEdgeInclusion.lean`)
+
 ### Span bicategory
 
 - [x] **PshSpanBicategory.**
@@ -398,13 +409,16 @@ using `PshRelEdge C` and `[WalkingSpan, PSh(C)]`.
   (`PshRelEdgeGraphRestriction.lean`)
 
 - [x] **W9. Parametricity as tautology in PshRelEdge.**
-  `IsParametricSection F s`: a section is parametric
-  iff it is natural w.r.t. edge morphisms.
-  `natTrans_isParametricSection`: a global section
-  (natural transformation from the terminal copresheaf)
-  is automatically parametric.
+  `IsParametricSection G s`: a parametric section of
+  an endofunctor `G` on `PshRelEdge C` is a cone
+  over `G` with vertex the terminal edge. For each
+  edge `e`, `s e : ⊤ ⟶ G(e)`, with the cone
+  condition `s e₁ ≫ G.map f = s e₂`.
+  `natTrans_isParametricSection`: a natural
+  transformation from the constant functor at ⊤
+  determines a parametric section.
   `parametricSectionToNatTrans`: converse, a parametric
-  section determines a global section.
+  section determines such a natural transformation.
   `isParametricSection_at`: the parametricity condition
   at any edge morphism follows from `hs f` (tautological).
   (`PshRelEdgeGraphRestriction.lean`)
@@ -1038,23 +1052,35 @@ This limit has two components:
   parametricity condition: "for all relations `A`,
   the two values are related under `F(A)`."
 
-The abstract version `IsParametricSection` takes
-an arbitrary copresheaf `F` on `PshRelEdge C` and
-checks that a family of elements is natural over
-all edge morphisms.  For the specific copresheaf
-`e ↦ Hom(⊤, pshBarrLiftEdgeFunctor G (e))`, this
-recovers the limit picture.
+`IsParametricSection G s` takes an endofunctor
+`G` on `PshRelEdge C` and a family
+`s : (e : PshRelEdge C) → (⊤ ⟶ G(e))`,
+expressing parametricity as the cone condition
+`s e₁ ≫ G.map f = s e₂`.  For
+`G = pshBarrLiftEdgeFunctor H`, this is
+the limit picture above.
 `parametricSectionToNatTrans` and
 `natTrans_isParametricSection` establish the
 equivalence between parametric sections and
-natural transformations from the terminal
-copresheaf.
+natural transformations from the constant
+functor at the terminal edge.
+
+`PshRelEdge C` has all small limits and colimits
+(`pshRelEdgeHasLimitsOfSize`,
+`pshRelEdgeHasColimitsOfSize`), inherited from
+the ambient presheaf topos via the reflective
+embedding: limits are created by the inclusion
+(right adjoint), colimits by applying the
+separation reflector to colimits in
+`[WalkingSpan, PSh(C)]`.
 
 Lean: `IsParametricSection`,
 `parametricSectionToNatTrans`,
-`pshBarrLiftEdgeFunctor`.
+`pshBarrLiftEdgeFunctor`,
+`pshRelEdgeHasLimitsOfSize`,
+`pshRelEdgeHasColimitsOfSize`.
 Files: `PshRelEdgeGraphRestriction.lean`,
-`PshRelDouble.lean`.
+`PshRelDouble.lean`, `PshRelEdgeInclusion.lean`.
 
 **Existential quantification `exists X. F(X)`.**
 Wadler does not treat existential types, but they
@@ -1074,10 +1100,9 @@ arise naturally as the dual.  Given
   existential package is parametric when its
   witnesses can be connected by a relation.
 
-`PshRelEdge C` has all finite colimits (and is
-reflective in the presheaf topos
-`[WalkingSpan, PSh(C)]`, which has all small
-colimits), so these existential types exist.
+`PshRelEdge C` has all small colimits
+(`pshRelEdgeHasColimitsOfSize`), so these
+existential types exist.
 Status: [done].
 
 **Identity extension lemma.**
@@ -1745,13 +1770,17 @@ Tasks: C1 [done], C2 [done].
 For covariant `G`, `∀X. G(X)` is the limit and
 `∃X. G(X)` is the colimit of
 `pshBarrLiftEdgeFunctor G` in `PshRelEdge C`.
-The connection between `IsParametricSection` and
-these limits is understood conceptually but not
-yet formalized: show that a cone over
-`pshBarrLiftEdgeFunctor G` from the terminal edge
-is equivalent to a parametric section of the
-copresheaf `e ↦ Hom(⊤, pshBarrLiftEdgeFunctor G e)`.
-Status: [open].
+`IsParametricSection G s` now directly expresses
+the cone condition for an endofunctor `G` on
+`PshRelEdge C` with vertex the terminal edge.
+`pshRelEdgeHasLimitsOfSize` and
+`pshRelEdgeHasColimitsOfSize` guarantee
+existence (via the reflective embedding into
+`[WalkingSpan, PSh(C)]`).
+Status: [partial] (`IsParametricSection` and
+(co)completeness instances done; showing that
+the limit of `pshBarrLiftEdgeFunctor G` recovers
+the presheaf-level universal type is open).
 
 **General parametricity notion in PshRelEdge.**
 Define parametric transformation for arbitrary

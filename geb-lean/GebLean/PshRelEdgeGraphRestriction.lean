@@ -1,4 +1,5 @@
 import GebLean.PshRelDouble
+import GebLean.PshRelEdgeLimits
 import Mathlib.CategoryTheory.Endofunctor.Algebra
 
 /-!
@@ -899,79 +900,80 @@ end FoldFreeTheorem
 
 section ParametricityAsTautology
 
-/-- A section of a copresheaf on `PshRelEdge C` is
-a family assigning an element of `F.obj (op e)` to
-each edge `e`, contravariantly natural in the edge
-morphisms. The naturality condition at an edge
-morphism `(α, β, sq) : e₁ ⟶ e₂` says:
-`F.map (α, β, sq).op (s e₂) = s e₁`.
+/-- A parametric section of an endofunctor
+`G : PshRelEdge C ⥤ PshRelEdge C` is a cone
+over `G` with vertex the terminal edge.
+Concretely: for each edge `e`, a morphism
+`⊤ ⟶ G(e)` in `PshRelEdge C`, such that for
+each `f : e₁ ⟶ e₂`, the cone condition
+`s e₁ ≫ G.map f = s e₂` holds.
 
-This IS the parametricity condition: naturality at
-a morphism in `PshRelEdge C` encodes that the
-section respects the relatedness structure of the
-edge. Wadler's Parametricity Theorem (Section 6)
-proves this inductively on type structure; in
-`PshRelEdge C`, it holds by definition (naturality
-of a section). -/
+For `G = pshBarrLiftEdgeFunctor H`, this
+recovers Wadler's parametricity: `s e` picks
+a pair of elements of `H(e.src)` and `H(e.tgt)`
+that are `pshBarrLiftRel H e.rel`-related,
+and the cone condition says these choices are
+compatible across all edge morphisms. The
+limit of such a cone is the universal type
+`∀X. H(X)` as an object of `PshRelEdge C`. -/
 def IsParametricSection
-    (F : (PshRelEdge.{u, v, w} C)ᵒᵖ ⥤ Type w)
+    (G : PshRelEdge.{u, v, w} C ⥤
+      PshRelEdge.{u, v, w} C)
     (s : (e : PshRelEdge.{u, v, w} C) →
-      F.obj (Opposite.op e)) : Prop :=
+      (pshRelEdgeTerminal C ⟶ G.obj e)) :
+    Prop :=
   ∀ {e₁ e₂ : PshRelEdge.{u, v, w} C}
     (f : e₁ ⟶ e₂),
-    F.map f.op (s e₂) = s e₁
+    s e₁ ≫ G.map f = s e₂
 
-/-- A natural transformation from the terminal
-copresheaf determines a parametric section.
-The naturality of the section is exactly the
-parametricity condition. -/
+/-- A natural transformation from the constant
+functor at the terminal edge to `G` determines
+a parametric section. -/
 theorem natTrans_isParametricSection
-    (F : (PshRelEdge.{u, v, w} C)ᵒᵖ ⥤ Type w)
-    (σ :
-      (Functor.const
-        (PshRelEdge.{u, v, w} C)ᵒᵖ).obj
-        PUnit ⟶ F) :
-    IsParametricSection F
-      (fun e => σ.app (Opposite.op e) ⟨⟩) := by
+    (G : PshRelEdge.{u, v, w} C ⥤
+      PshRelEdge.{u, v, w} C)
+    (σ : (Functor.const
+        (PshRelEdge.{u, v, w} C)).obj
+        (pshRelEdgeTerminal C) ⟶ G) :
+    IsParametricSection G
+      (fun e => σ.app e) := by
   intro e₁ e₂ f
-  have h := congr_fun (σ.naturality f.op) ⟨⟩
-  simp [Functor.const_obj_map] at h
+  have h := σ.naturality f
+  simp at h
   exact h.symm
 
-/-- Parametricity for sections of copresheaves
-on `PshRelEdge C` is tautological: the
-parametricity condition at an edge morphism
-`f : e₁ ⟶ e₂` is definitionally equivalent to
-the naturality condition of the section. The
-proof is `hs f`, i.e., direct application of
-the naturality hypothesis. -/
+/-- The parametricity condition at a specific
+edge morphism `f : e₁ ⟶ e₂`: the cone
+condition `s e₁ ≫ G.map f = s e₂`. -/
 theorem isParametricSection_at
-    (F : (PshRelEdge.{u, v, w} C)ᵒᵖ ⥤ Type w)
+    (G : PshRelEdge.{u, v, w} C ⥤
+      PshRelEdge.{u, v, w} C)
     (s : (e : PshRelEdge.{u, v, w} C) →
-      F.obj (Opposite.op e))
-    (hs : IsParametricSection F s)
+      (pshRelEdgeTerminal C ⟶ G.obj e))
+    (hs : IsParametricSection G s)
     {e₁ e₂ : PshRelEdge.{u, v, w} C}
     (f : e₁ ⟶ e₂) :
-    F.map f.op (s e₂) = s e₁ :=
+    s e₁ ≫ G.map f = s e₂ :=
   hs f
 
 /-- The converse of `natTrans_isParametricSection`:
 a parametric section determines a natural
-transformation from the terminal copresheaf. -/
+transformation from the constant functor at
+the terminal edge. -/
 def parametricSectionToNatTrans
-    (F : (PshRelEdge.{u, v, w} C)ᵒᵖ ⥤ Type w)
+    (G : PshRelEdge.{u, v, w} C ⥤
+      PshRelEdge.{u, v, w} C)
     (s : (e : PshRelEdge.{u, v, w} C) →
-      F.obj (Opposite.op e))
-    (hs : IsParametricSection F s) :
+      (pshRelEdgeTerminal C ⟶ G.obj e))
+    (hs : IsParametricSection G s) :
     (Functor.const
-      (PshRelEdge.{u, v, w} C)ᵒᵖ).obj
-      PUnit ⟶ F where
-  app e _ := s e.unop
+      (PshRelEdge.{u, v, w} C)).obj
+      (pshRelEdgeTerminal C) ⟶ G where
+  app e := s e
   naturality {e₁ e₂} f := by
-    funext _
     simp only [Functor.const_obj_obj,
-      Functor.const_obj_map, types_comp_apply]
-    exact (hs f.unop).symm
+      Functor.const_obj_map, Category.id_comp]
+    exact (hs f).symm
 
 end ParametricityAsTautology
 
