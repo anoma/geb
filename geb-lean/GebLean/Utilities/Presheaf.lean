@@ -13,6 +13,7 @@ import Mathlib.CategoryTheory.Monoidal.Cartesian.FunctorCategory
 import Mathlib.CategoryTheory.Adjunction.Whiskering
 import Mathlib.CategoryTheory.Adjunction.Unique
 import Mathlib.CategoryTheory.Adjunction.Opposites
+import Mathlib.CategoryTheory.Adjunction.FullyFaithful
 
 /-!
 # Presheaf and Copresheaf Construction Functors
@@ -2873,6 +2874,46 @@ def rightYonedaExtFullyFaithful
       rightYonedaExtCounit] at hα ⊢
     simp only [Category.id_comp] at hα
     exact hα
+
+/-- When `F` is fully faithful, the unit of the
+left Kan extension adjunction
+`yonedaExt F ⊣ precompOp F` is a natural
+isomorphism. This follows from `yonedaExt F`
+being fully faithful (Lemma 3.2) and the
+equivalence between fully faithful left adjoints
+and invertible units (Riehl, Lemma 4.5.13). -/
+theorem leftYonedaExtAdj_unit_isIso
+    {F : C ⥤ D}
+    (hF : F.FullyFaithful) :
+    IsIso (leftYonedaExtAdj F :
+      (yonedaExt F :
+        (Cᵒᵖ ⥤ Type (max u v)) ⥤
+          (Dᵒᵖ ⥤ Type (max u v))) ⊣
+      precompOp F).unit :=
+  haveI := (yonedaExtFullyFaithful hF).full
+  haveI := (yonedaExtFullyFaithful hF).faithful
+  inferInstance
+
+/-- When `F` is fully faithful, the counit of the
+right Kan extension adjunction
+`precompOp F ⊣ rightYonedaExt F` is a natural
+isomorphism. This follows from `rightYonedaExt F`
+being fully faithful (Lemma 3.2) and the
+equivalence between fully faithful right adjoints
+and invertible counits (Riehl, Lemma 4.5.13). -/
+theorem rightYonedaExtAdj_counit_isIso
+    {F : C ⥤ D}
+    (hF : F.FullyFaithful) :
+    IsIso (rightYonedaExtAdj F :
+      precompOp F ⊣
+        (rightYonedaExt F :
+          (Cᵒᵖ ⥤ Type (max u v)) ⥤
+            (Dᵒᵖ ⥤ Type (max u v)))).counit :=
+  haveI :=
+    (rightYonedaExtFullyFaithful hF).full
+  haveI :=
+    (rightYonedaExtFullyFaithful hF).faithful
+  inferInstance
 
 end PresheafAdjunctionProperties
 
