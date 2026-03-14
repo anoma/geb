@@ -2015,6 +2015,165 @@ instance rightYonedaExt_isRightKanExtension
         ((rightYonedaExt F).obj P)
         (rightYonedaExtCounit F P))⟩
 
+/-- The unit of the left Yoneda extension at
+a fixed presheaf `P`:
+`P ⟶ F.op ⋙ (yonedaExt F).obj P`.
+At each `c : Cᵒᵖ`, sends `p : P.obj c` to the
+equivalence class of `(c.unop, p, 𝟙)`. -/
+def yonedaExtPresheafUnit
+    (F : C ⥤ D)
+    (P : Cᵒᵖ ⥤ Type (max u v)) :
+    P ⟶ F.op ⋙ (yonedaExt F).obj P where
+  app c p :=
+    Quot.mk _ ⟨c.unop, p, 𝟙 (F.obj c.unop)⟩
+  naturality {c d} g := by
+    funext p
+    apply (Quot.sound _).symm
+    refine ⟨g.unop, ?_, ?_⟩
+    · dsimp [yonedaExtSigmaMap]
+    · dsimp [yonedaExtSigmaMap]
+      simp only [Category.id_comp,
+        Category.comp_id]
+
+/-- Given a natural transformation
+`α : P ⟶ F.op ⋙ Q`, construct a natural
+transformation `(yonedaExt F).obj P ⟶ Q`.
+At `T : Dᵒᵖ`, on a triple `(S, p, t)`, the
+result is `Q.map t.op (α.app (op S) p)`. -/
+def yonedaExtPresheafDesc
+    (F : C ⥤ D)
+    {P : Cᵒᵖ ⥤ Type (max u v)}
+    {Q : Dᵒᵖ ⥤ Type (max u v)}
+    (α : P ⟶ F.op ⋙ Q) :
+    (yonedaExt F).obj P ⟶ Q where
+  app T := Quot.lift
+    (fun x => Q.map x.2.2.op
+      (α.app (Opposite.op x.1) x.2.1))
+    (fun x y ⟨g, hp, ht⟩ => by
+      dsimp
+      rw [← hp]
+      have hα := congr_fun
+        (α.naturality g.op) x.2.1
+      simp only [types_comp_apply] at hα
+      rw [hα]
+      dsimp
+      rw [← types_comp_apply
+        (Q.map (F.map g).op)
+        (Q.map y.2.2.op),
+        ← Q.map_comp,
+        ← op_comp, ht])
+  naturality {T₁ T₂} k := by
+    funext q
+    induction q using Quot.inductionOn
+    rename_i x
+    change Q.map (k.unop ≫ x.2.2).op
+        (α.app (Opposite.op x.1) x.2.1) =
+      Q.map k (Q.map x.2.2.op
+        (α.app (Opposite.op x.1) x.2.1))
+    rw [← types_comp_apply
+      (Q.map x.2.2.op)
+      (Q.map k), ← Q.map_comp]
+    congr 1
+
+/-- The presheaf-level descent map factorizes
+through the unit: for each `c : Cᵒᵖ`,
+`(yonedaExtPresheafUnit F P).app c ≫
+  (yonedaExtPresheafDesc F α).app (F.op.obj c) =
+  α.app c`. -/
+theorem yonedaExtPresheafDesc_fac
+    (F : C ⥤ D)
+    {P : Cᵒᵖ ⥤ Type (max u v)}
+    {Q : Dᵒᵖ ⥤ Type (max u v)}
+    (α : P ⟶ F.op ⋙ Q)
+    (c : Cᵒᵖ) :
+    (yonedaExtPresheafUnit F P).app c ≫
+      (yonedaExtPresheafDesc F α).app
+        (F.op.obj c) =
+    α.app c := by
+  funext p
+  dsimp [yonedaExtPresheafUnit,
+    yonedaExtPresheafDesc]
+  simp
+
+/-- The presheaf-level descent map is unique: any
+`σ` satisfying the factorization at each component
+equals the canonical descent. -/
+theorem yonedaExtPresheafDesc_uniq
+    (F : C ⥤ D)
+    {P : Cᵒᵖ ⥤ Type (max u v)}
+    {Q : Dᵒᵖ ⥤ Type (max u v)}
+    (α : P ⟶ F.op ⋙ Q)
+    (σ : (yonedaExt F).obj P ⟶ Q)
+    (hσ : ∀ (c : Cᵒᵖ),
+      (yonedaExtPresheafUnit F P).app c ≫
+        σ.app (F.op.obj c) = α.app c) :
+    σ = yonedaExtPresheafDesc F α := by
+  ext T q
+  induction q using Quot.inductionOn
+  rename_i x
+  change σ.app T (Quot.mk _ x) =
+    Q.map x.2.2.op
+      (α.app (Opposite.op x.1) x.2.1)
+  have himg : Quot.mk
+      (YonedaExtStep F P T) x =
+      ((yonedaExt F).obj P).map x.2.2.op
+        (Quot.mk _
+          ⟨x.1, x.2.1,
+            𝟙 (F.obj x.1)⟩) := by
+    change _ = Quot.mk _
+      (yonedaExtSigmaMap F P x.2.2.op
+        ⟨x.1, x.2.1, 𝟙 (F.obj x.1)⟩)
+    dsimp [yonedaExtSigmaMap]
+    simp
+  rw [himg]
+  have hnat := congr_fun
+    (σ.naturality x.2.2.op)
+    (Quot.mk _ ⟨x.1, x.2.1,
+      𝟙 (F.obj x.1)⟩)
+  simp only [types_comp_apply] at hnat
+  rw [hnat]
+  exact congrArg (Q.map x.2.2.op)
+    (congr_fun
+      (hσ (Opposite.op x.1)) x.2.1)
+
+/-- The left adjunction of the adjoint triple:
+`yonedaExt F ⊣ precompOp F`. The hom-set
+bijection sends `α : P ⟶ F.op ⋙ Q` to the
+descent `(yonedaExt F).obj P ⟶ Q`, and its
+inverse whiskers by `F.op` after the unit. -/
+def leftYonedaExtAdj (F : C ⥤ D) :
+    (yonedaExt F :
+      (Cᵒᵖ ⥤ Type (max u v)) ⥤
+        (Dᵒᵖ ⥤ Type (max u v))) ⊣
+      precompOp F :=
+  Adjunction.mkOfHomEquiv
+    { homEquiv := fun P Q =>
+        { toFun := fun σ =>
+            yonedaExtPresheafUnit F P ≫
+              Functor.whiskerLeft F.op σ
+          invFun := fun α =>
+            yonedaExtPresheafDesc F α
+          left_inv := fun σ =>
+            (yonedaExtPresheafDesc_uniq F
+              (yonedaExtPresheafUnit F P ≫
+                Functor.whiskerLeft F.op σ)
+              σ (fun _ => rfl)).symm
+          right_inv := fun α => by
+            ext c p
+            exact congr_fun
+              (yonedaExtPresheafDesc_fac
+                F α c) p }
+      homEquiv_naturality_left_symm :=
+        fun f g => by
+          ext T q
+          induction q using Quot.inductionOn
+          rfl
+      homEquiv_naturality_right :=
+        fun f g => by
+          ext c p
+          dsimp [yonedaExtPresheafUnit,
+            precompOp] }
+
 end RightYonedaExtension
 
 section FunctorHomSections
