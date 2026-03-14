@@ -2784,6 +2784,96 @@ theorem rightYonedaExtCounitInvApp_naturality
   rw [hmor, Q.map_comp]
   rfl
 
+/-- When `F` is fully faithful, `rightYonedaExt F`
+is fully faithful. The preimage of
+`α : (rightYonedaExt F).obj P ⟶
+  (rightYonedaExt F).obj Q`
+is obtained by reflecting through the adjunction
+counit, which is invertible when `F` is fully
+faithful. (Lemma 3.2 of
+<https://ncatlab.org/nlab/show/functoriality+of+categories+of+presheaves#properties>,
+right Kan extension case.) -/
+def rightYonedaExtFullyFaithful
+    {F : C ⥤ D}
+    (hF : F.FullyFaithful) :
+    Functor.FullyFaithful
+      (rightYonedaExt F :
+        (Cᵒᵖ ⥤ Type (max u v)) ⥤
+          (Dᵒᵖ ⥤ Type (max u v))) where
+  preimage {P Q} α :=
+    { app := fun c p =>
+        (rightYonedaExtCounit F Q).app c
+          (α.app (F.op.obj c)
+            (rightYonedaExtCounitInvApp
+              hF P c p))
+      naturality := fun {c d} f => by
+        funext p
+        simp only [types_comp_apply]
+        rw [← rightYonedaExtCounitInvApp_naturality
+          hF P f p]
+        have hα := congr_fun
+          (α.naturality (F.op.map f))
+          (rightYonedaExtCounitInvApp hF P c p)
+        simp only [types_comp_apply] at hα
+        rw [hα]
+        have hε := congr_fun
+          ((rightYonedaExtCounit F Q).naturality
+            f)
+          (α.app (F.op.obj c)
+            (rightYonedaExtCounitInvApp
+              hF P c p))
+        simp only [types_comp_apply,
+          Functor.comp_map] at hε
+        exact hε }
+  preimage_map {P Q} f := by
+    ext c p
+    dsimp
+    change (rightYonedaExtCounit F Q).app c
+        (((rightYonedaExt F).map f).app
+          (F.op.obj c)
+          (rightYonedaExtCounitInvApp
+            hF P c p)) =
+      f.app c p
+    dsimp [rightYonedaExtCounitInvApp,
+      rightYonedaExtCounit,
+      rightYonedaExt, rightYonedaExtMap,
+      rightYonedaExtFamilyMapNat]
+    have : hF.preimage (𝟙 (F.obj c.unop)) =
+        𝟙 c.unop :=
+      hF.map_injective (by simp)
+    rw [this]
+    simp
+  map_preimage {P Q} α := by
+    ext T x
+    apply RightYonedaExtFamily.ext'
+    intro S t
+    dsimp [rightYonedaExt, rightYonedaExtMap,
+      rightYonedaExtFamilyMapNat]
+    have hkey :
+        rightYonedaExtCounitInvApp hF P
+          (Opposite.op S) (x.family S t) =
+        ((rightYonedaExt F).obj P).map
+          t.op x := by
+      apply RightYonedaExtFamily.ext'
+      intro S' t'
+      dsimp [rightYonedaExtCounitInvApp,
+        rightYonedaExt, rightYonedaExtObj,
+        rightYonedaExtFamilyMap]
+      rw [x.naturality (hF.preimage t') t,
+        hF.map_preimage]
+    rw [hkey]
+    have hα :=
+      congrArg
+        (fun y =>
+          RightYonedaExtFamily.family y
+            S (𝟙 (F.obj S)))
+        (congr_fun (α.naturality t.op) x)
+    dsimp [rightYonedaExt, rightYonedaExtObj,
+      rightYonedaExtFamilyMap,
+      rightYonedaExtCounit] at hα ⊢
+    simp only [Category.id_comp] at hα
+    exact hα
+
 end PresheafAdjunctionProperties
 
 end GebLean
