@@ -2754,6 +2754,36 @@ theorem rightYonedaExtCounit_counitInvApp
     (𝟙 (F.obj c.unop))]
   simp [hF.map_preimage]
 
+/-- Naturality of `rightYonedaExtCounitInvApp`
+in the stage variable: reflecting and then
+transporting along `F.op.map f` is the same
+as applying `Q.map f` and then reflecting. -/
+theorem rightYonedaExtCounitInvApp_naturality
+    {F : C ⥤ D}
+    (hF : F.FullyFaithful)
+    (Q : Cᵒᵖ ⥤ Type (max u v))
+    {c d : Cᵒᵖ}
+    (f : c ⟶ d)
+    (p : Q.obj c) :
+    ((rightYonedaExt F).obj Q).map
+      (F.op.map f)
+      (rightYonedaExtCounitInvApp hF Q c p) =
+    rightYonedaExtCounitInvApp hF Q d
+      (Q.map f p) := by
+  apply RightYonedaExtFamily.ext'
+  intro S t
+  dsimp [rightYonedaExtCounitInvApp,
+    rightYonedaExt, rightYonedaExtObj,
+    rightYonedaExtFamilyMap]
+  have hmor :
+      (hF.preimage (t ≫ F.map f.unop)).op =
+        f ≫ (hF.preimage t).op := by
+    apply Quiver.Hom.unop_inj
+    exact hF.map_injective (by
+      simp [F.map_comp, hF.map_preimage])
+  rw [hmor, Q.map_comp]
+  rfl
+
 end PresheafAdjunctionProperties
 
 end GebLean
