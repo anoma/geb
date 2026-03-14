@@ -1673,6 +1673,350 @@ instance yonedaExt_isLeftKanExtension
 
 end YonedaExtensionKan
 
+/-! ## Right Yoneda Extension
+
+The right Kan extension of a presheaf along a
+functor, computed pointwise as a subtype of a
+product. Given `F : C ⥤ D` and
+`P : Cᵒᵖ ⥤ Type (max u v)`, the right Yoneda
+extension `(rightYonedaExt F).obj P` is the
+presheaf whose value at `T : Dᵒᵖ` is the end
+
+`∫_{S : C} (F.obj S ⟶ T.unop) → P.obj (op S)`
+
+computed as a subtype of the product, consisting
+of families natural in `S`.
+
+Together with `yonedaExt F` (the left Kan
+extension) and precomposition with `F.op`, these
+form an adjoint triple:
+
+`yonedaExt F ⊣ precompOp F ⊣ rightYonedaExt F`
+-/
+
+section RightYonedaExtension
+
+variable {C : Type u} [Category.{v} C]
+variable {D : Type u} [Category.{v} D]
+
+/-- A natural family for the right Yoneda
+extension: for each `S : C` and
+`t : F.obj S ⟶ T.unop`, an element of
+`P.obj (op S)`, satisfying a naturality condition
+in `S`. -/
+structure RightYonedaExtFamily
+    (F : C ⥤ D)
+    (P : Cᵒᵖ ⥤ Type (max u v))
+    (T : Dᵒᵖ) where
+  family :
+    (S : C) → (F.obj S ⟶ T.unop) →
+      P.obj (Opposite.op S)
+  naturality :
+    ∀ {S₁ S₂ : C} (g : S₂ ⟶ S₁)
+      (t : F.obj S₁ ⟶ T.unop),
+      P.map g.op (family S₁ t) =
+        family S₂ (F.map g ≫ t)
+
+@[ext]
+theorem RightYonedaExtFamily.ext'
+    {F : C ⥤ D}
+    {P : Cᵒᵖ ⥤ Type (max u v)}
+    {T : Dᵒᵖ}
+    {x y : RightYonedaExtFamily F P T}
+    (h : ∀ (S : C) (t : F.obj S ⟶ T.unop),
+      x.family S t = y.family S t) :
+    x = y := by
+  cases x; cases y
+  congr 1
+  funext S t
+  exact h S t
+
+/-- Transport a `RightYonedaExtFamily` along a
+morphism `k : T₁ ⟶ T₂` in `Dᵒᵖ` by precomposing
+the morphism argument with `k.unop`. -/
+def rightYonedaExtFamilyMap
+    (F : C ⥤ D)
+    (P : Cᵒᵖ ⥤ Type (max u v))
+    {T₁ T₂ : Dᵒᵖ} (k : T₁ ⟶ T₂)
+    (x : RightYonedaExtFamily F P T₁) :
+    RightYonedaExtFamily F P T₂ where
+  family S t := x.family S (t ≫ k.unop)
+  naturality g t := by
+    rw [x.naturality g (t ≫ k.unop)]
+    congr 1
+    exact (Category.assoc _ _ _).symm
+
+/-- The right Yoneda extension presheaf. At
+stage `T`, an element is a natural family
+indexed by `(S : C, t : F.obj S ⟶ T.unop)`. -/
+def rightYonedaExtObj
+    (F : C ⥤ D)
+    (P : Cᵒᵖ ⥤ Type (max u v)) :
+    Dᵒᵖ ⥤ Type (max u v) where
+  obj T := RightYonedaExtFamily F P T
+  map k := rightYonedaExtFamilyMap F P k
+  map_id T := by
+    funext x
+    apply RightYonedaExtFamily.ext'
+    intro S t
+    dsimp [rightYonedaExtFamilyMap]
+    congr 1
+    exact Category.comp_id _
+  map_comp k₁ k₂ := by
+    funext x
+    apply RightYonedaExtFamily.ext'
+    intro S t
+    dsimp [rightYonedaExtFamilyMap]
+    congr 1
+    exact (Category.assoc _ _ _).symm
+
+/-- The action of a natural transformation
+`α : P ⟶ Q` on a single family: apply `α` to
+each element, leaving the witness object and
+morphism unchanged. -/
+def rightYonedaExtFamilyMapNat
+    (F : C ⥤ D)
+    {P Q : Cᵒᵖ ⥤ Type (max u v)}
+    (α : P ⟶ Q) (T : Dᵒᵖ)
+    (x : RightYonedaExtFamily F P T) :
+    RightYonedaExtFamily F Q T where
+  family S t := α.app (Opposite.op S) (x.family S t)
+  naturality g t := by
+    have hα := congr_fun
+      (α.naturality g.op) (x.family _ t)
+    simp only [types_comp_apply] at hα
+    rw [← hα, x.naturality g t]
+
+/-- The map component of the right Yoneda
+extension functor: given `α : P ⟶ Q`, produce a
+natural transformation
+`rightYonedaExtObj F P ⟶ rightYonedaExtObj F Q`
+by applying `α` to the element component of each
+family member. -/
+def rightYonedaExtMap
+    (F : C ⥤ D)
+    {P Q : Cᵒᵖ ⥤ Type (max u v)}
+    (α : P ⟶ Q) :
+    rightYonedaExtObj F P ⟶
+      rightYonedaExtObj F Q where
+  app T := rightYonedaExtFamilyMapNat F α T
+  naturality T₁ T₂ k := by
+    funext x
+    apply RightYonedaExtFamily.ext'
+    intro S t
+    rfl
+
+/-- The right Yoneda extension functor: given a
+functor `F : C ⥤ D`, produces a functor between
+presheaf categories. This is the right Kan
+extension `Ran_{F.op}`, computed pointwise as an
+end (subtype of a product). -/
+def rightYonedaExt (F : C ⥤ D) :
+    (Cᵒᵖ ⥤ Type (max u v)) ⥤
+      (Dᵒᵖ ⥤ Type (max u v)) where
+  obj P := rightYonedaExtObj F P
+  map α := rightYonedaExtMap F α
+  map_id P := by
+    ext T x
+    rfl
+  map_comp α β := by
+    ext T x
+    rfl
+
+/-- Alias for `yonedaExt` emphasizing its role
+as the left component of the adjoint triple
+`leftYonedaExt F ⊣ precompOp F ⊣ rightYonedaExt F`.
+-/
+abbrev leftYonedaExt (F : C ⥤ D) :
+    (Cᵒᵖ ⥤ Type (max u v)) ⥤
+      (Dᵒᵖ ⥤ Type (max u v)) :=
+  yonedaExt F
+
+/-- The counit of the right Yoneda extension at
+a fixed presheaf `P`:
+`F.op ⋙ (rightYonedaExt F).obj P ⟶ P`.
+At each `c : Cᵒᵖ`, evaluates a natural family
+at `S = c.unop` and `t = 𝟙 (F.obj c.unop)`. -/
+def rightYonedaExtCounit
+    (F : C ⥤ D)
+    (P : Cᵒᵖ ⥤ Type (max u v)) :
+    F.op ⋙ (rightYonedaExt F).obj P ⟶ P where
+  app c x :=
+    x.family c.unop (𝟙 (F.obj c.unop))
+  naturality {c d} g := by
+    funext x
+    dsimp [rightYonedaExt, rightYonedaExtObj,
+      rightYonedaExtFamilyMap]
+    simp only [Category.id_comp]
+    have h := x.naturality g.unop
+      (𝟙 (F.obj c.unop))
+    simp only [Category.comp_id] at h
+    exact h.symm
+
+/-- Given a natural transformation
+`β : F.op ⋙ G ⟶ P`, construct a natural
+transformation `G ⟶ (rightYonedaExt F).obj P`.
+At `T : Dᵒᵖ` and `q : G.obj T`, the family at
+`(S, t)` is `β.app (op S) (G.map t.op q)`. -/
+def rightYonedaExtLift
+    (F : C ⥤ D)
+    (P : Cᵒᵖ ⥤ Type (max u v))
+    {G : Dᵒᵖ ⥤ Type (max u v)}
+    (β : F.op ⋙ G ⟶ P) :
+    G ⟶ (rightYonedaExt F).obj P where
+  app T q :=
+    { family := fun S t =>
+        β.app (Opposite.op S) (G.map t.op q)
+      naturality := fun g t => by
+        have hβ := congr_fun
+          (β.naturality g.op) (G.map t.op q)
+        simp only [types_comp_apply,
+          Functor.comp_obj, Functor.comp_map]
+            at hβ
+        rw [← hβ, ← types_comp_apply
+          (G.map t.op) (G.map (F.op.map g.op)),
+          ← G.map_comp]
+        simp only [op_comp, Functor.op_map,
+          Quiver.Hom.unop_op] }
+  naturality {T₁ T₂} k := by
+    funext q
+    apply RightYonedaExtFamily.ext'
+    intro S t
+    dsimp [rightYonedaExt, rightYonedaExtObj,
+      rightYonedaExtFamilyMap]
+    rw [← types_comp_apply (G.map k)
+      (G.map t.op), ← G.map_comp]
+
+/-- The lift through `rightYonedaExtCounit`
+recovers `β`: for each `c : Cᵒᵖ`,
+`(rightYonedaExtLift F P β).app (F.op.obj c) ≫
+  (rightYonedaExtCounit F P).app c = β.app c`. -/
+theorem rightYonedaExtLift_fac
+    (F : C ⥤ D)
+    (P : Cᵒᵖ ⥤ Type (max u v))
+    {G : Dᵒᵖ ⥤ Type (max u v)}
+    (β : F.op ⋙ G ⟶ P)
+    (c : Cᵒᵖ) :
+    (rightYonedaExtLift F P β).app
+      (F.op.obj c) ≫
+      (rightYonedaExtCounit F P).app c =
+    β.app c := by
+  funext q
+  dsimp [rightYonedaExtLift,
+    rightYonedaExtCounit]
+  simp
+
+/-- The lift is unique: any `σ` satisfying the
+factorization at each component equals the
+canonical lift. -/
+theorem rightYonedaExtLift_uniq
+    (F : C ⥤ D)
+    (P : Cᵒᵖ ⥤ Type (max u v))
+    {G : Dᵒᵖ ⥤ Type (max u v)}
+    (β : F.op ⋙ G ⟶ P)
+    (σ : G ⟶ (rightYonedaExt F).obj P)
+    (hσ : ∀ (c : Cᵒᵖ),
+      σ.app (F.op.obj c) ≫
+        (rightYonedaExtCounit F P).app c =
+      β.app c) :
+    σ = rightYonedaExtLift F P β := by
+  ext T q
+  apply RightYonedaExtFamily.ext'
+  intro S t
+  have h := congr_fun
+    (hσ (Opposite.op S))
+    (G.map t.op q)
+  dsimp [rightYonedaExtCounit,
+    rightYonedaExtLift] at h ⊢
+  rw [← h]
+  have hnat :=
+    congrArg
+      (fun x =>
+        RightYonedaExtFamily.family
+          x S (𝟙 (F.obj S)))
+      (congr_fun (σ.naturality t.op) q)
+  dsimp [rightYonedaExt, rightYonedaExtObj,
+    rightYonedaExtFamilyMap] at hnat
+  simp only [Category.id_comp] at hnat
+  exact hnat.symm
+
+/-- Precomposition with `F.op` as a functor
+between presheaf categories. -/
+abbrev precompOp (F : C ⥤ D) :
+    (Dᵒᵖ ⥤ Type (max u v)) ⥤
+      (Cᵒᵖ ⥤ Type (max u v)) :=
+  (Functor.whiskeringLeft Cᵒᵖ Dᵒᵖ
+    (Type (max u v))).obj F.op
+
+/-- The right adjunction of the adjoint triple:
+`precompOp F ⊣ rightYonedaExt F`. The hom-set
+bijection sends `β : F.op ⋙ P ⟶ Q` to the lift
+`P ⟶ (rightYonedaExt F).obj Q`, and its inverse
+whiskers by `F.op` and composes with the counit.
+-/
+def rightYonedaExtAdj (F : C ⥤ D) :
+    precompOp F ⊣
+      (rightYonedaExt F :
+        (Cᵒᵖ ⥤ Type (max u v)) ⥤
+          (Dᵒᵖ ⥤ Type (max u v))) :=
+  Adjunction.mkOfHomEquiv
+    { homEquiv := fun P Q =>
+        { toFun := fun β =>
+            rightYonedaExtLift F Q β
+          invFun := fun σ =>
+            Functor.whiskerLeft F.op σ ≫
+              rightYonedaExtCounit F Q
+          left_inv := fun β => by
+            ext c q
+            exact congr_fun
+              (rightYonedaExtLift_fac F Q β c)
+              q
+          right_inv := fun σ =>
+            (rightYonedaExtLift_uniq F Q
+              (Functor.whiskerLeft F.op σ ≫
+                rightYonedaExtCounit F Q)
+              σ (fun _ => rfl)).symm } }
+
+/-- For each right extension `(G, β)` of `P`
+along `F.op`, there is a unique morphism to the
+canonical right extension
+`((rightYonedaExt F).obj P, counit)`. -/
+instance rightYonedaExtRightExtUnique
+    (F : C ⥤ D)
+    (P : Cᵒᵖ ⥤ Type (max u v))
+    (s : Functor.RightExtension F.op P) :
+    Unique (s ⟶ Functor.RightExtension.mk
+      ((rightYonedaExt F).obj P)
+      (rightYonedaExtCounit F P)) where
+  default := CostructuredArrow.homMk
+    (rightYonedaExtLift F P s.hom)
+    (by ext c q
+        exact congr_fun
+          (rightYonedaExtLift_fac F P
+            s.hom c) q)
+  uniq f := by
+    apply CostructuredArrow.ext
+    exact rightYonedaExtLift_uniq F P
+      s.hom f.left (fun c =>
+        congrArg (·.app c)
+          (CostructuredArrow.w f))
+
+/-- The right Yoneda extension
+`(rightYonedaExt F).obj P` is a right Kan
+extension of `P` along `F.op`. -/
+instance rightYonedaExt_isRightKanExtension
+    (F : C ⥤ D)
+    (P : Cᵒᵖ ⥤ Type (max u v)) :
+    ((rightYonedaExt F).obj P).IsRightKanExtension
+      (rightYonedaExtCounit F P) where
+  nonempty_isUniversal :=
+    ⟨Limits.IsTerminal.ofUnique
+      (Functor.RightExtension.mk
+        ((rightYonedaExt F).obj P)
+        (rightYonedaExtCounit F P))⟩
+
+end RightYonedaExtension
+
 section FunctorHomSections
 
 variable {C : Type u} [Category.{v} C]
