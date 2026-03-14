@@ -2461,6 +2461,299 @@ def rightYonedaExtAdj' {F : C ⥤ D} {G : D ⥤ C}
   ((rightYonedaExtAdj G).ofNatIsoLeft
     (rightYonedaExtIsoPrecompOp adj).symm)
 
+/-- When `F` is fully faithful, the inverse of
+the unit `yonedaExtPresheafUnit` at presheaf `P`
+and stage `c : Cᵒᵖ`. Sends the equivalence class
+of `(S, q, t : F.obj S ⟶ F.obj c.unop)` to
+`P.map (hF.preimage t).op q`. -/
+def yonedaExtUnitInvApp
+    {F : C ⥤ D}
+    (hF : F.FullyFaithful)
+    (P : Cᵒᵖ ⥤ Type (max u v))
+    (c : Cᵒᵖ) :
+    ((yonedaExt F).obj P).obj (F.op.obj c) →
+      P.obj c :=
+  Quot.lift
+    (fun x =>
+      P.map (hF.preimage x.2.2).op x.2.1)
+    (fun x y ⟨g, hp, ht⟩ => by
+      change P.map (hF.preimage x.2.2).op
+        x.2.1 =
+        P.map (hF.preimage y.2.2).op y.2.1
+      rw [← hp, ← types_comp_apply
+        (P.map g.op) (P.map _), ← P.map_comp,
+        ← op_comp]
+      have : hF.preimage y.2.2 ≫ g =
+          hF.preimage x.2.2 :=
+        hF.map_injective (by
+          rw [F.map_comp, hF.map_preimage,
+            hF.map_preimage, ht])
+      rw [this])
+
+/-- When `F` is fully faithful, applying the
+unit and then the inverse is the identity. -/
+theorem yonedaExtUnitInvApp_unit
+    {F : C ⥤ D}
+    (hF : F.FullyFaithful)
+    (P : Cᵒᵖ ⥤ Type (max u v))
+    (c : Cᵒᵖ)
+    (p : P.obj c) :
+    yonedaExtUnitInvApp hF P c
+      ((yonedaExtPresheafUnit F P).app c p) =
+      p := by
+  dsimp [yonedaExtUnitInvApp,
+    yonedaExtPresheafUnit]
+  have : hF.preimage (𝟙 (F.obj c.unop)) =
+      𝟙 c.unop :=
+    hF.map_injective (by simp)
+  rw [this]
+  simp
+
+/-- When `F` is fully faithful, applying the
+inverse and then the unit is the identity. -/
+theorem yonedaExtUnit_unitInvApp
+    {F : C ⥤ D}
+    (hF : F.FullyFaithful)
+    (P : Cᵒᵖ ⥤ Type (max u v))
+    (c : Cᵒᵖ)
+    (q : ((yonedaExt F).obj P).obj
+      (F.op.obj c)) :
+    (yonedaExtPresheafUnit F P).app c
+      (yonedaExtUnitInvApp hF P c q) = q := by
+  induction q using Quot.inductionOn
+  rename_i x
+  dsimp [yonedaExtUnitInvApp,
+    yonedaExtPresheafUnit]
+  apply (Quot.sound _).symm
+  refine ⟨hF.preimage x.2.2, ?_, ?_⟩
+  · rfl
+  · dsimp [yonedaExtSigmaMap]
+    simp [hF.map_preimage]
+
+/-- Naturality of `yonedaExtUnitInvApp` in the
+stage variable: transporting along `F.op.map f` and
+then reflecting is the same as reflecting and then
+applying `Q.map f`. -/
+theorem yonedaExtUnitInvApp_naturality
+    {F : C ⥤ D}
+    (hF : F.FullyFaithful)
+    (Q : Cᵒᵖ ⥤ Type (max u v))
+    {c d : Cᵒᵖ}
+    (f : c ⟶ d)
+    (q : ((yonedaExt F).obj Q).obj
+      (F.op.obj c)) :
+    yonedaExtUnitInvApp hF Q d
+      (((yonedaExt F).obj Q).map
+        (F.op.map f) q) =
+      Q.map f
+        (yonedaExtUnitInvApp hF Q c q) := by
+  induction q using Quot.inductionOn
+  rename_i x
+  change Q.map (hF.preimage
+      ((F.op.map f).unop ≫ x.2.2)).op
+      x.2.1 =
+    Q.map f (Q.map (hF.preimage x.2.2).op
+      x.2.1)
+  rw [← types_comp_apply
+    (Q.map (hF.preimage x.2.2).op)
+    (Q.map f), ← Q.map_comp]
+  have hmor : (hF.preimage
+        ((F.op.map f).unop ≫ x.2.2)).op =
+      (hF.preimage x.2.2).op ≫ f := by
+    apply Quiver.Hom.unop_inj
+    exact hF.map_injective (by
+      simp [F.map_comp, hF.map_preimage])
+  rw [hmor]
+
+/-- When `F` is fully faithful, `yonedaExt F` is
+fully faithful. The preimage of
+`α : (yonedaExt F).obj P ⟶ (yonedaExt F).obj Q`
+is obtained by reflecting through the adjunction
+unit, which is invertible when `F` is fully
+faithful. (Lemma 3.2 of
+<https://ncatlab.org/nlab/show/functoriality+of+categories+of+presheaves#properties>,
+left Kan extension case.) -/
+def yonedaExtFullyFaithful
+    {F : C ⥤ D}
+    (hF : F.FullyFaithful) :
+    Functor.FullyFaithful
+      (yonedaExt F :
+        (Cᵒᵖ ⥤ Type (max u v)) ⥤
+          (Dᵒᵖ ⥤ Type (max u v))) where
+  preimage {P Q} α :=
+    { app := fun c p =>
+        yonedaExtUnitInvApp hF Q c
+          (α.app (F.op.obj c)
+            ((yonedaExtPresheafUnit F P).app
+              c p))
+      naturality := fun {c d} f => by
+        funext p
+        simp only [types_comp_apply]
+        have hunit : (yonedaExtPresheafUnit
+            F P).app d (P.map f p) =
+            ((yonedaExt F).obj P).map
+              (F.op.map f)
+              ((yonedaExtPresheafUnit F P).app
+                c p) :=
+          congr_fun ((yonedaExtPresheafUnit
+            F P).naturality f) p
+        rw [hunit]
+        have hα := congr_fun
+          (α.naturality (F.op.map f))
+          ((yonedaExtPresheafUnit F P).app
+            c p)
+        simp only [types_comp_apply] at hα
+        rw [hα]
+        exact yonedaExtUnitInvApp_naturality
+          hF Q f _ }
+  map_preimage {P Q} α := by
+    ext T q
+    induction q using Quot.inductionOn
+    rename_i x
+    let q₀ := Quot.mk
+      (YonedaExtStep F P
+        (Opposite.op (F.obj x.1)))
+      ⟨x.1, x.2.1, 𝟙 (F.obj x.1)⟩
+    have himg : Quot.mk
+        (YonedaExtStep F P T) x =
+        ((yonedaExt F).obj P).map
+          x.2.2.op q₀ := by
+      change _ = Quot.mk _
+        (yonedaExtSigmaMap F P x.2.2.op _)
+      dsimp [yonedaExtSigmaMap]
+      simp
+    rw [himg]
+    have hnat_map := congr_fun
+      (((yonedaExt F).map
+        { app := fun c p =>
+            yonedaExtUnitInvApp hF Q c
+              (α.app (F.op.obj c)
+                ((yonedaExtPresheafUnit
+                  F P).app c p))
+          naturality := by
+            intro c d f; funext p
+            simp only [types_comp_apply]
+            have hunit :
+                (yonedaExtPresheafUnit
+                  F P).app d (P.map f p) =
+                ((yonedaExt F).obj P).map
+                  (F.op.map f)
+                  ((yonedaExtPresheafUnit
+                    F P).app c p) :=
+              congr_fun
+                ((yonedaExtPresheafUnit
+                  F P).naturality f) p
+            rw [hunit]
+            have hα' := congr_fun
+              (α.naturality (F.op.map f))
+              ((yonedaExtPresheafUnit
+                F P).app c p)
+            simp only [types_comp_apply]
+              at hα'
+            rw [hα']
+            exact
+              yonedaExtUnitInvApp_naturality
+                hF Q f _ }
+        ).naturality x.2.2.op) q₀
+    simp only [types_comp_apply] at hnat_map
+    rw [hnat_map]
+    have hnat_α := congr_fun
+      (α.naturality x.2.2.op) q₀
+    simp only [types_comp_apply] at hnat_α
+    rw [hnat_α]
+    apply congrArg
+    exact yonedaExtUnit_unitInvApp hF Q
+      (Opposite.op x.fst)
+      (α.app (F.op.obj (Opposite.op x.fst))
+        q₀)
+  preimage_map {P Q} f := by
+    ext c p
+    dsimp
+    change yonedaExtUnitInvApp hF Q c
+        (((yonedaExt F).map f).app
+          (F.op.obj c)
+          ((yonedaExtPresheafUnit F P).app
+            c p)) =
+      f.app c p
+    dsimp [yonedaExtPresheafUnit]
+    change yonedaExtUnitInvApp hF Q c
+        (Quot.mk _ ⟨c.unop, f.app c p,
+          𝟙 (F.obj c.unop)⟩) =
+      f.app c p
+    dsimp [yonedaExtUnitInvApp]
+    have : hF.preimage (𝟙 (F.obj c.unop)) =
+        𝟙 c.unop :=
+      hF.map_injective (by simp)
+    rw [this]
+    simp
+
+/-- When `F` is fully faithful, the inverse of
+the counit `rightYonedaExtCounit` at presheaf `Q`
+and stage `c : Cᵒᵖ`. Sends `p : Q.obj c` to
+the family `(S, t) ↦ Q.map (hF.preimage t).op p`.
+-/
+def rightYonedaExtCounitInvApp
+    {F : C ⥤ D}
+    (hF : F.FullyFaithful)
+    (Q : Cᵒᵖ ⥤ Type (max u v))
+    (c : Cᵒᵖ)
+    (p : Q.obj c) :
+    ((rightYonedaExt F).obj Q).obj
+      (F.op.obj c) :=
+  { family := fun S t =>
+      Q.map (hF.preimage t).op p
+    naturality := fun g t => by
+      rw [← types_comp_apply
+        (Q.map (hF.preimage t).op) (Q.map g.op),
+        ← Q.map_comp, ← op_comp]
+      have : g ≫ hF.preimage t =
+          hF.preimage (F.map g ≫ t) :=
+        (hF.map_injective (by
+          rw [F.map_comp, hF.map_preimage,
+            hF.map_preimage])).symm
+      rw [this] }
+
+/-- When `F` is fully faithful, applying the
+counit inverse and then the counit is the
+identity. -/
+theorem rightYonedaExtCounitInvApp_counit
+    {F : C ⥤ D}
+    (hF : F.FullyFaithful)
+    (Q : Cᵒᵖ ⥤ Type (max u v))
+    (c : Cᵒᵖ)
+    (p : Q.obj c) :
+    (rightYonedaExtCounit F Q).app c
+      (rightYonedaExtCounitInvApp hF Q c p) =
+      p := by
+  dsimp [rightYonedaExtCounitInvApp,
+    rightYonedaExtCounit]
+  have : hF.preimage (𝟙 (F.obj c.unop)) =
+      𝟙 c.unop :=
+    hF.map_injective (by simp)
+  rw [this]
+  simp
+
+/-- When `F` is fully faithful, applying the
+counit and then the counit inverse is the
+identity. -/
+theorem rightYonedaExtCounit_counitInvApp
+    {F : C ⥤ D}
+    (hF : F.FullyFaithful)
+    (Q : Cᵒᵖ ⥤ Type (max u v))
+    (c : Cᵒᵖ)
+    (x : ((rightYonedaExt F).obj Q).obj
+      (F.op.obj c)) :
+    rightYonedaExtCounitInvApp hF Q c
+      ((rightYonedaExtCounit F Q).app c x) =
+      x := by
+  apply RightYonedaExtFamily.ext'
+  intro S t
+  dsimp [rightYonedaExtCounitInvApp,
+    rightYonedaExtCounit]
+  rw [x.naturality (hF.preimage t)
+    (𝟙 (F.obj c.unop))]
+  simp [hF.map_preimage]
+
 end PresheafAdjunctionProperties
 
 end GebLean
