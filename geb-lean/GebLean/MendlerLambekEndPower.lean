@@ -2780,4 +2780,263 @@ def mendlerLambekPowerEndGExtEquiv :
 
 end PowerEndGExtFunctor
 
+/-!
+## Internal End Characterization of GExt
+
+The internal end `∫_A (G(A,A) →[C] Y^(A→pt))`,
+defined as the terminal wedge of `ihomPowerProf G pt Y`,
+gives an object of `C` characterized entirely by ends,
+powers, and internal homs — no copowers or coends.
+
+When copowers also exist, this end object is naturally
+isomorphic to `ihom(CopowerGExtObj G pt).obj Y`: the
+internal hom from the coend to `Y`. The isomorphism
+`ihomPowerEndIso` bridges the end-based and coend-based
+worlds, and enables transferring the functor structure
+from `PowerEndGExtFunctor` to a functor with end-based
+carrier.
+-/
+
+section IhomPowerEndGExt
+
+variable
+  {C : Type u} [Category.{v} C]
+  [MonoidalCategory C] [MonoidalClosed C]
+  [HasCopowers C] [HasPowers C]
+  (G : Cᵒᵖ ⥤ C ⥤ C)
+  [HasAllCopowerProfCoends G]
+
+/-- The internal-end based GExt object: the terminal
+wedge apex of `ihomPowerProf G pt Y`, giving
+`∫_A (G(A,A) →[C] Y^(A→pt))`. This object is defined
+entirely via ends, powers, and internal homs. -/
+def GExtPowerEndObj
+    (pt Y : C)
+    (tw : HasTerminalWedge (ihomPowerProf G pt Y)) :
+    C :=
+  tw.wedge.pt
+
+open MonoidalClosed MonoidalCategory
+  HasAllCopowerProfCoends
+
+omit [HasCopowers C] [HasPowers C] in
+private theorem uncurry'_pre_comp
+    {X X' Z : C}
+    (g : 𝟙_ C ⟶ (ihom X).obj Z)
+    (h : X' ⟶ X) :
+    h ≫ uncurry' g =
+      uncurry' (g ≫ (MonoidalClosed.pre h).app Z) := by
+  conv_rhs => rw [← curry'_uncurry' g]
+  rw [curry'_pre_app, uncurry'_curry']
+
+omit [HasCopowers C] [HasPowers C] in
+private theorem uncurry'_ihom_comp
+    {X Y Z : C}
+    (g : 𝟙_ C ⟶ (ihom X).obj Y)
+    (k : Y ⟶ Z) :
+    uncurry' g ≫ k =
+      uncurry' (g ≫ (ihom X).map k) := by
+  conv_rhs => rw [← curry'_uncurry' g]
+  rw [curry'_ihom_map, uncurry'_curry']
+
+/-- Global sections of the internal end correspond to
+elements of the type-level end: currying components of
+a wedge into `ihomPowerProf` yields the corresponding
+end element of `powerSliceProf`.
+The forward direction uncurries each wedge projection,
+and the inverse curries each end component and lifts
+via the terminal wedge. -/
+def globalSectionsEndEquiv
+    (pt Y : C)
+    (tw : HasTerminalWedge
+      (ihomPowerProf G pt Y)) :
+    (𝟙_ C ⟶ tw.wedge.pt) ≃
+      typeEnd (powerSliceProf G pt Y) where
+  toFun e :=
+    ⟨fun A => uncurry' (e ≫ tw.wedge.ι A),
+     fun {i j} f => by
+       dsimp only [powerSliceProf]
+       rw [← Category.assoc,
+         uncurry'_pre_comp _ _,
+         uncurry'_ihom_comp _ _,
+         uncurry'_pre_comp _ _]
+       congr 1
+       simp only [Category.assoc]
+       exact congrArg (e ≫ ·)
+         (tw.wedge.condition f)⟩
+  invFun x :=
+    Wedge.IsLimit.lift tw.isLimit
+      (fun A => curry' (x.val A))
+      (fun {i j} f => by
+        dsimp only []
+        simp only [ihomPowerProf]
+        rw [← Category.assoc,
+          curry'_pre_app,
+          curry'_ihom_map,
+          curry'_pre_app]
+        congr 1
+        have h := x.property f
+        dsimp only [powerSliceProf] at h
+        rw [Category.assoc]
+        exact h)
+  left_inv e := by
+    apply tw.hom_ext
+    intro A
+    rw [Wedge.IsLimit.lift_ι]
+    exact curry'_uncurry' _
+  right_inv x := by
+    apply Subtype.ext; funext A
+    dsimp only []
+    rw [Wedge.IsLimit.lift_ι]
+    exact uncurry'_curry' _
+
+/-- The global-sections bridge: morphisms into the
+internal end (terminal wedge apex) correspond to
+morphisms into the internal hom from the coend.
+Composes `globalSectionsEndEquiv`,
+`gExtEndPowerEquiv.symm`, and `curryHomEquiv'`. -/
+def globalSectionsIhomEquiv
+    (pt Y : C)
+    (tw : HasTerminalWedge
+      (ihomPowerProf G pt Y)) :
+    (𝟙_ C ⟶ tw.wedge.pt) ≃
+      (𝟙_ C ⟶ (ihom (CopowerGExtObj G pt)).obj Y) :=
+  (globalSectionsEndEquiv G pt Y tw).trans
+    ((gExtEndPowerEquiv G pt Y).symm.trans
+      curryHomEquiv')
+
+omit [HasAllCopowerProfCoends G] in
+/-- The internal copower-power forward map: sends
+`[S . X, Y] ⟶ [X, Y^S]`. For each `s : S`, the
+coprojection `ι s : X ⟶ S . X` whiskers with the
+evaluation `S . X ⊗ [S . X, Y] ⟶ Y` to give
+`X ⊗ [S . X, Y] ⟶ Y`, then the family is
+assembled via the power lift and curried. -/
+def copowerIhomToPowerIhom
+    (S : Type v) (X Y : C) :
+    (ihom (HasCopowers.copower S X)).obj Y ⟶
+      (ihom X).obj (HasPowers.power Y S) :=
+  MonoidalClosed.curry
+    (HasPowers.lift (fun s =>
+      HasCopowers.inj S X s ▷
+        (ihom (HasCopowers.copower S X)).obj Y ≫
+        MonoidalClosed.uncurry (𝟙 _)))
+
+omit [HasAllCopowerProfCoends G] in
+/-- Naturality of the copower-ihom-to-power-ihom
+map: composing with `pre h` and `(ihom X').map
+(mapIdx g)` on the codomain equals precomposing
+with `bimap g h` on the domain. -/
+lemma copowerIhomToPowerIhom_natural
+    {S T : Type v} {X X' Y : C}
+    (g : T → S) (h : X' ⟶ X) :
+    copowerIhomToPowerIhom S X Y ≫
+      (MonoidalClosed.pre h).app
+        (HasPowers.power Y S) ≫
+      (ihom X').map
+        (HasPowers.mapIdx g) =
+    (MonoidalClosed.pre
+      (HasCopowers.bimap g h)).app Y ≫
+      copowerIhomToPowerIhom T X' Y := by
+  simp only [copowerIhomToPowerIhom]
+  rw [← Category.assoc
+    (MonoidalClosed.curry _)
+    ((MonoidalClosed.pre _).app _),
+    MonoidalClosed.curry_pre_app,
+    ← MonoidalClosed.curry_natural_right,
+    ← MonoidalClosed.curry_natural_left]
+  congr 1
+  apply HasPowers.ext; intro t
+  simp only [Category.assoc,
+    HasPowers.mapIdx_proj, HasPowers.fac]
+  rw [← Category.assoc
+    (h ▷ _) (HasCopowers.inj S X (g t) ▷ _),
+    ← comp_whiskerRight,
+    ← HasCopowers.bimap_inj, comp_whiskerRight,
+    Category.assoc]
+  conv_rhs =>
+    rw [← Category.assoc, whisker_exchange,
+      Category.assoc]
+  rw [← MonoidalClosed.uncurry_natural_left,
+    Category.comp_id,
+    MonoidalClosed.uncurry_pre,
+    ← MonoidalClosed.uncurry_id_eq_ev]
+
+/-- The wedge projection for the internal hom
+from the coend: at `A`, precompose with the coend
+injection and apply the internal copower-power map.
+-/
+def ihomCoendWedgeProj
+    (pt Y : C) (A : C) :
+    (ihom (CopowerGExtObj G pt)).obj Y ⟶
+      (ihomPowerProf G pt Y).obj
+        (Opposite.op A) |>.obj A :=
+  (MonoidalClosed.pre
+    (CopowerGExtInj G pt A)).app Y ≫
+    copowerIhomToPowerIhom
+      (A ⟶ pt)
+      ((G.obj (Opposite.op A)).obj A) Y
+
+/-- The internal hom from the coend carries a
+wedge structure for `ihomPowerProf G pt Y`. -/
+def ihomCoendWedge
+    (pt Y : C) :
+    Wedge (ihomPowerProf G pt Y) :=
+  Wedge.mk
+    ((ihom (CopowerGExtObj G pt)).obj Y)
+    (ihomCoendWedgeProj G pt Y)
+    (fun {i j} f => by
+      simp only [ihomCoendWedgeProj,
+        ihomPowerProf, Category.assoc]
+      rw [copowerIhomToPowerIhom_natural]
+      rw [← Category.assoc
+        ((MonoidalClosed.pre
+          (CopowerGExtInj G pt i)).app Y)
+        ((MonoidalClosed.pre _).app Y),
+        ← NatTrans.comp_app,
+        ← MonoidalClosed.pre_map]
+      have cw : HasCopowers.bimap (fun x ↦ f ≫ x)
+          ((G.map f.op).app i) ≫
+          CopowerGExtInj G pt i =
+        HasCopowers.bimap (fun x ↦ x)
+          ((G.obj (Opposite.op j)).map f) ≫
+          CopowerGExtInj G pt j := by
+        apply HasCopowers.ext; intro s
+        conv_lhs =>
+          rw [← Category.assoc,
+            HasCopowers.bimap_inj,
+            Category.assoc]
+        conv_rhs =>
+          rw [← Category.assoc,
+            HasCopowers.bimap_inj,
+            Category.assoc]
+        have h :=
+          cowedge_is_copowerCowedgeDinatural
+            (HomToProf pt) G
+            (copowerCoend G pt) i j f s
+        simp only [HomToProf_map_app,
+          HomToProf_obj_map,
+          Quiver.Hom.unop_op] at h
+        exact h.symm
+      rw [cw, MonoidalClosed.pre_map,
+        NatTrans.comp_app, Category.assoc]
+      congr 1
+      simp only [Quiver.Hom.unop_op]
+      have h_nat :=
+        copowerIhomToPowerIhom_natural
+          (Y := Y)
+          (fun (x : j ⟶ pt) ↦ x)
+          ((G.obj (Opposite.op j)).map f)
+      have mapIdx_eq :
+          HasPowers.mapIdx
+            (fun (x : j ⟶ pt) ↦ x) =
+          𝟙 (Y ^. (j ⟶ pt)) :=
+        HasPowers.mapIdx_id
+      rw [mapIdx_eq,
+        CategoryTheory.Functor.map_id,
+        Category.comp_id] at h_nat
+      exact h_nat.symm)
+
+end IhomPowerEndGExt
+
 end GebLean
