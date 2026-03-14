@@ -2,7 +2,7 @@
 
 ## Status
 
-Phases 1-4 complete. Phase 5 in progress.
+Phases 1-5 complete.
 
 File: `GebLean/MendlerLambekPresheaf.lean`. Two
 equivalences stated for `C = E ⥤ Type (max w₁ v₁ u₁)`:
@@ -477,7 +477,7 @@ Two equivalences are stated:
 The impredicative equivalence (formerly item 3)
 was removed.
 
-### Phase 5: Coend-End Duality for Algebras (IN PROGRESS)
+### Phase 5: Coend-End Duality for Algebras (DONE)
 
 Use the new cowedge/wedge duality infrastructure
 (`cowedgeOpWedgeEquivalence`,
@@ -576,6 +576,34 @@ ConventionalAlgebra (CopowerCoendGExtFunctor G)
 
 where `F' : Cᵒᵖ ⥤ Cᵒᵖ` is the end-based
 endofunctor on `Cᵒᵖ`. This is lower priority.
+
+#### Completion Notes
+
+Step 1 is implicit in the supporting lemmas:
+
+- `gExtEndPowerEquiv_proj` — projection formula
+  for `gExtEndPowerEquiv`
+- `inj_comp_powerEndGExtMap` — commutativity of
+  `powerEndGExtMap` with coend injections
+
+Step 2: `PowerEndGExtFunctor G : C ⥤ C` defined
+with `obj pt := CopowerGExtObj G pt` and
+`map h := powerEndGExtMap G h`. The composition
+law (`powerEndGExtMap_comp`) proved via the coend
+injection commutativity lemma. The functor is
+naturally isomorphic to `CopowerCoendGExtFunctor G`
+via `powerEndGExtNatIso`, using coend uniqueness
+(`restrictedCoendIsInitial.hom_ext`) to show
+`powerEndGExtMap G h = CopowerCoendGExtFunctor.map h`.
+
+Step 3: `mendlerLambekPowerEndGExtEquiv :
+PowerEndMendlerAlgebra G ≌
+ConventionalAlgebra (PowerEndGExtFunctor G)` derived
+by composing `mendlerLambekCopowerCoendEquiv G` with
+`Endofunctor.Algebra.equivOfNatIso
+(powerEndGExtNatIso G).symm`.
+
+Step 4 (coalgebras in `Cᵒᵖ`) was not pursued.
 
 #### Relevant Existing Infrastructure
 

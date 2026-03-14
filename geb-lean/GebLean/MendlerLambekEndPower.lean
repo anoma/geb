@@ -2582,4 +2582,202 @@ private theorem cgeChurchLeg_natural_pt
 
 end ImpredicativeGExtIso
 
+/-!
+## Power-End GExtFunctor via Coend-End Duality
+
+The `PowerEndGExtFunctor` is an endofunctor `C ⥤ C`
+with the same carrier as `CopowerCoendGExtFunctor G`
+but with maps defined via the end/power
+characterization (`powerEndGExtMap`). It is naturally
+isomorphic to `CopowerCoendGExtFunctor G`, yielding
+an equivalence
+`PowerEndMendlerAlgebra G ≌
+  ConventionalAlgebra (PowerEndGExtFunctor G)`.
+-/
+
+section PowerEndGExtFunctor
+
+open HasAllCopowerProfCoends HasAllHomToProfCoends
+  HasRestrictedCoend
+
+variable
+  {C : Type u} [Category.{v} C]
+  [HasCopowers C] [HasPowers C]
+  (G : Cᵒᵖ ⥤ C ⥤ C)
+  [HasAllCopowerProfCoends G]
+
+/-- Projection formula for `gExtEndPowerEquiv`:
+at component `A` and projection `s`, the end
+element encodes the coend injection.
+
+`(gExtEndPowerEquiv G pt Y f).val A ≫ proj s =
+  inj s ≫ CopowerGExtInj G pt A ≫ f` -/
+theorem gExtEndPowerEquiv_proj
+    (pt Y : C) (f : CopowerGExtObj G pt ⟶ Y)
+    (A : C) (s : A ⟶ pt) :
+    (gExtEndPowerEquiv G pt Y f).val A ≫
+      HasPowers.proj Y (A ⟶ pt) s =
+    HasCopowers.inj (A ⟶ pt)
+        ((G.obj (Opposite.op A)).obj A) s ≫
+      CopowerGExtInj G pt A ≫ f := by
+  change copowerPowerEquiv (A ⟶ pt)
+    ((G.obj (Opposite.op A)).obj A) Y
+    ((copowerGExtHomEndEquiv G pt Y f).val A) ≫
+    HasPowers.proj Y (A ⟶ pt) s = _
+  simp only [copowerPowerEquiv_apply,
+    HasPowers.fac]
+  congr 1
+  exact copowerGExtHomEndEquiv_val G pt Y f A
+
+/-- The commutativity property of `powerEndGExtMap`
+with respect to coend injections: precomposing
+`powerEndGExtMap G h` with the coend injection at
+`(A, s)` gives the injection at `(A, s ≫ h)` into
+`CopowerGExtObj G pt₂`. -/
+theorem inj_comp_powerEndGExtMap
+    {pt₁ pt₂ : C} (h : pt₁ ⟶ pt₂)
+    (A : C) (s : A ⟶ pt₁) :
+    HasCopowers.inj (A ⟶ pt₁)
+        ((G.obj (Opposite.op A)).obj A) s ≫
+      CopowerGExtInj G pt₁ A ≫
+      powerEndGExtMap G h =
+    HasCopowers.inj (A ⟶ pt₂)
+        ((G.obj (Opposite.op A)).obj A) (s ≫ h) ≫
+      CopowerGExtInj G pt₂ A := by
+  rw [← gExtEndPowerEquiv_proj G pt₁ _ _ A s]
+  simp only [powerEndGExtMap,
+    Equiv.apply_symm_apply]
+  change ((gExtEndPowerEquiv G pt₂ _
+    (𝟙 _)).val A ≫ HasPowers.mapIdx (· ≫ h)) ≫
+    HasPowers.proj _ _ s = _
+  rw [Category.assoc, HasPowers.mapIdx_proj,
+    gExtEndPowerEquiv_proj G pt₂ _
+      (𝟙 _) A (s ≫ h), Category.comp_id]
+
+/-- `powerEndGExtMap` preserves composition:
+`powerEndGExtMap G (h₁ ≫ h₂) =
+  powerEndGExtMap G h₁ ≫ powerEndGExtMap G h₂`.
+Proved using the coend injection commutativity:
+both sides yield the same result after precomposing
+with each coend injection. -/
+theorem powerEndGExtMap_comp
+    {pt₁ pt₂ pt₃ : C}
+    (h₁ : pt₁ ⟶ pt₂) (h₂ : pt₂ ⟶ pt₃) :
+    powerEndGExtMap G (h₁ ≫ h₂) =
+      powerEndGExtMap G h₁ ≫
+        powerEndGExtMap G h₂ := by
+  apply (gExtEndPowerEquiv G pt₁
+    (CopowerGExtObj G pt₃)).injective
+  apply Subtype.ext; funext A
+  apply HasPowers.ext; intro s
+  rw [gExtEndPowerEquiv_proj,
+    gExtEndPowerEquiv_proj,
+    inj_comp_powerEndGExtMap G (h₁ ≫ h₂) A s]
+  symm
+  rw [← Category.assoc
+    (CopowerGExtInj G pt₁ A)
+    (powerEndGExtMap G h₁)
+    (powerEndGExtMap G h₂),
+    ← Category.assoc
+      (HasCopowers.inj _ _ s)
+      (CopowerGExtInj G pt₁ A ≫
+        powerEndGExtMap G h₁)
+      (powerEndGExtMap G h₂),
+    inj_comp_powerEndGExtMap G h₁ A s,
+    Category.assoc
+      (HasCopowers.inj _ _ (s ≫ h₁))
+      (CopowerGExtInj G pt₂ A)
+      (powerEndGExtMap G h₂),
+    inj_comp_powerEndGExtMap G h₂ A (s ≫ h₁),
+    Category.assoc s h₁ h₂]
+
+/-- The end-based GExtFunctor: an endofunctor
+`C ⥤ C` with the same carrier as
+`CopowerCoendGExtFunctor G` but with maps defined
+via the end/power characterization
+`powerEndGExtMap`. -/
+@[simps]
+def PowerEndGExtFunctor : C ⥤ C where
+  obj pt := CopowerGExtObj G pt
+  map h := powerEndGExtMap G h
+  map_id pt := powerEndGExtMap_id G pt
+  map_comp h₁ h₂ := powerEndGExtMap_comp G h₁ h₂
+
+/-- The end-based map `powerEndGExtMap G h` equals
+`(GExtFunctor G).map h`: both are the unique morphism
+from the initial restricted coend at `pt₁` to the
+cowedge at `pt₂` obtained by reindexing injections
+along `h`. -/
+private theorem powerEndGExtMap_eq_GExtMap
+    {pt₁ pt₂ : C} (h : pt₁ ⟶ pt₂) :
+    powerEndGExtMap G h =
+      (GExtFunctor G).map h := by
+  let hmorphPE :
+      (restrictedCoend G (HomToProf pt₁)) ⟶
+        (GExtMapCowedge G pt₁ pt₂ h) := {
+    hom := powerEndGExtMap G h
+    comm := fun A s => by
+      change GExtInj G pt₁ A s ≫
+        powerEndGExtMap G h =
+        GExtInj G pt₂ A (s ≫ h)
+      rw [GExtInj_eq_inj_comp_copowerGExtInj
+        G pt₁ A s, Category.assoc,
+        inj_comp_powerEndGExtMap G h A s,
+        ← GExtInj_eq_inj_comp_copowerGExtInj
+          G pt₂ A (s ≫ h)]
+  }
+  have heq : hmorphPE =
+      (restrictedCoendIsInitial G
+        (HomToProf pt₁)).to
+        (GExtMapCowedge G pt₁ pt₂ h) :=
+    (restrictedCoendIsInitial G
+      (HomToProf pt₁)).hom_ext hmorphPE _
+  simp only [GExtFunctor_map, GExtMap,
+    GExtDesc, IsRestrictedCoend.descHom,
+    IsRestrictedCoend.desc]
+  exact congrArg RestrictedCowedge.Hom.hom heq
+
+/-- `PowerEndGExtFunctor G` equals
+`CopowerCoendGExtFunctor G` on morphisms: both
+conjugate through the (trivial) isomorphism
+`copowerGExtIso` and the restricted coend universal
+property. -/
+private theorem powerEndGExtMap_eq
+    {pt₁ pt₂ : C} (h : pt₁ ⟶ pt₂) :
+    powerEndGExtMap G h =
+      (CopowerCoendGExtFunctor G).map h := by
+  rw [powerEndGExtMap_eq_GExtMap,
+    ← CopowerCoendGExtFunctor_map_eq]
+
+/-- Natural isomorphism between
+`PowerEndGExtFunctor G` and
+`CopowerCoendGExtFunctor G`: the component at each
+object is `Iso.refl` (both functors have the same
+carrier `CopowerGExtObj G pt`). -/
+def powerEndGExtNatIso :
+    PowerEndGExtFunctor G ≅
+      CopowerCoendGExtFunctor G :=
+  NatIso.ofComponents
+    (fun _ => Iso.refl _)
+    (fun h => by
+      simp only [PowerEndGExtFunctor_map,
+        Iso.refl_hom, Category.id_comp,
+        Category.comp_id]
+      exact powerEndGExtMap_eq G h)
+
+/-- The equivalence of power-end Mendler algebras
+with conventional algebras of
+`PowerEndGExtFunctor G`, obtained by composing
+`mendlerLambekCopowerCoendEquiv` with the transfer
+along `powerEndGExtNatIso`. -/
+def mendlerLambekPowerEndGExtEquiv :
+    PowerEndMendlerAlgebra G ≌
+      ConventionalAlgebra
+        (PowerEndGExtFunctor G) :=
+  mendlerLambekCopowerCoendEquiv G |>.trans
+    (Endofunctor.Algebra.equivOfNatIso
+      (powerEndGExtNatIso G).symm)
+
+end PowerEndGExtFunctor
+
 end GebLean
