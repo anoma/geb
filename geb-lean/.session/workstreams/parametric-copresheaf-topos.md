@@ -1804,8 +1804,9 @@ mechanism: it ensures that at identity edges,
 parametricity reduces to naturality.
 
 Tasks: U1-U4.
-Status: [partial] (`ParametricCone` and
-(co)completeness instances done; U1-U4 open).
+Status: [partial] U1 done
+(`parametricConeEquiv` in
+`PshRelEdgeGraphRestriction.lean`); U2-U4 open.
 
 **Weighted-limit quantification hierarchy.**
 The hierarchy of weights on the limit gives

@@ -326,6 +326,56 @@ abbrev pshContraBarrEmbedding
 
 end BarrEmbeddings
 
+section BarrLiftProjections
+
+/-- The Barr lift edge functor commutes with the
+source projection: `pshBarrLiftEdgeFunctor G ⋙
+pshRelSrcFunctor = pshRelSrcFunctor ⋙ G`. -/
+theorem pshBarrLiftEdgeFunctor_src
+    (G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w)) :
+    pshBarrLiftEdgeFunctor (C := C) G ⋙
+      pshRelSrcFunctor =
+    pshRelSrcFunctor ⋙ G :=
+  _root_.CategoryTheory.Functor.ext
+    (fun _ => rfl)
+
+/-- The Barr lift edge functor commutes with the
+target projection: `pshBarrLiftEdgeFunctor G ⋙
+pshRelTgtFunctor = pshRelTgtFunctor ⋙ G`. -/
+theorem pshBarrLiftEdgeFunctor_tgt
+    (G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w)) :
+    pshBarrLiftEdgeFunctor (C := C) G ⋙
+      pshRelTgtFunctor =
+    pshRelTgtFunctor ⋙ G :=
+  _root_.CategoryTheory.Functor.ext
+    (fun _ => rfl)
+
+/-- The source projection of the Barr embedding
+recovers the endofunctor:
+`pshBarrEmbedding G ⋙ pshRelSrcFunctor = G`. -/
+theorem pshBarrEmbedding_src
+    (G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w)) :
+    pshBarrEmbedding (C := C) G ⋙
+      pshRelSrcFunctor = G :=
+  _root_.CategoryTheory.Functor.ext
+    (fun _ => rfl)
+
+/-- The target projection of the Barr embedding
+recovers the endofunctor:
+`pshBarrEmbedding G ⋙ pshRelTgtFunctor = G`. -/
+theorem pshBarrEmbedding_tgt
+    (G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w)) :
+    pshBarrEmbedding (C := C) G ⋙
+      pshRelTgtFunctor = G :=
+  _root_.CategoryTheory.Functor.ext
+    (fun _ => rfl)
+
+end BarrLiftProjections
+
 section BarrEmbeddingFunctoriality
 
 /-- A natural transformation `σ : F ⟶ G` between
@@ -948,7 +998,447 @@ def ParametricCone.mk'
            exact (hs f).symm } },
    rfl⟩
 
+open Limits in
+/-- Forward direction of the equivalence
+`ParametricCone G ≃ (⊤ ⟶ s.pt)` for a limit
+cone `s`: extract the limit morphism from a
+parametric cone by composing `eqToHom` (to
+match the cone vertex to the limit lift's
+expected input) with the limit lift. -/
+def parametricConeToLimitHom
+    (G : PshRelEdge.{u, v, w} C ⥤
+      PshRelEdge.{u, v, w} C)
+    {s : Cone G} (hs : IsLimit s)
+    (pc : ParametricCone G) :
+    pshRelEdgeTerminal C ⟶ s.pt :=
+  eqToHom pc.prop.symm ≫ hs.lift pc.val
+
+open Limits in
+/-- Backward direction of the equivalence
+`ParametricCone G ≃ (⊤ ⟶ s.pt)`: build a
+parametric cone from a morphism `⊤ ⟶ s.pt`
+by composing with each limit projection. -/
+def limitHomToParametricCone
+    (G : PshRelEdge.{u, v, w} C ⥤
+      PshRelEdge.{u, v, w} C)
+    {s : Cone G}
+    (f : pshRelEdgeTerminal C ⟶ s.pt) :
+    ParametricCone G :=
+  ⟨{ pt := pshRelEdgeTerminal C
+     π :=
+       { app := fun e => f ≫ s.π.app e
+         naturality := fun {e₁ e₂} g => by
+           simp only [Functor.const_obj_obj,
+             Functor.const_obj_map,
+             Category.id_comp, Category.assoc]
+           rw [s.w g] } },
+   rfl⟩
+
+open Limits in
+/-- Roundtrip: `limitHom → cone → limitHom`
+is the identity. -/
+theorem limitHom_parametricCone_roundtrip
+    (G : PshRelEdge.{u, v, w} C ⥤
+      PshRelEdge.{u, v, w} C)
+    {s : Cone G} (hs : IsLimit s)
+    (f : pshRelEdgeTerminal C ⟶ s.pt) :
+    parametricConeToLimitHom G hs
+      (limitHomToParametricCone G f) = f := by
+  simp only [parametricConeToLimitHom,
+    limitHomToParametricCone, eqToHom_refl,
+    Category.id_comp]
+  exact hs.hom_ext (fun e => hs.fac _ e)
+
+open Limits in
+/-- Roundtrip: `cone → limitHom → cone`
+is the identity. -/
+theorem parametricCone_limitHom_roundtrip
+    (G : PshRelEdge.{u, v, w} C ⥤
+      PshRelEdge.{u, v, w} C)
+    {s : Cone G} (hs : IsLimit s)
+    (pc : ParametricCone G) :
+    limitHomToParametricCone G
+      (parametricConeToLimitHom G hs pc) =
+    pc := by
+  obtain ⟨⟨pt, π⟩, (rfl : pt = _)⟩ := pc
+  simp only [parametricConeToLimitHom,
+    limitHomToParametricCone, eqToHom_refl,
+    Category.id_comp]
+  apply Subtype.ext
+  simp only [Cone.mk.injEq]
+  exact ⟨trivial, heq_of_eq (by
+    ext e; exact hs.fac ⟨_, π⟩ e)⟩
+
+open Limits in
+/-- The equivalence between parametric cones
+(cones over `G` with vertex `⊤`) and morphisms
+`⊤ ⟶ s.pt` for any limit cone `s`. -/
+def parametricConeEquiv
+    (G : PshRelEdge.{u, v, w} C ⥤
+      PshRelEdge.{u, v, w} C)
+    {s : Cone G} (hs : IsLimit s) :
+    ParametricCone G ≃
+    (pshRelEdgeTerminal C ⟶ s.pt) where
+  toFun := parametricConeToLimitHom G hs
+  invFun := limitHomToParametricCone G
+  left_inv :=
+    parametricCone_limitHom_roundtrip G hs
+  right_inv :=
+    limitHom_parametricCone_roundtrip G hs
+
 end ParametricityAsTautology
+
+section IdentityEdgeRecovery
+
+/-- A presheaf section of an endofunctor
+`G : PSh(C) ⥤ PSh(C)` is a cone over `G` with
+vertex the terminal presheaf `pshUnitPresheaf C`.
+Concretely: for each presheaf `P`, a morphism
+`pshUnitPresheaf C ⟶ G.obj P`, natural in `P`.
+This is the presheaf-level analogue of
+`ParametricCone` at the edge level. -/
+abbrev PresheafSection
+    (G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w)) :=
+  { cone : Limits.Cone G //
+    cone.pt = pshUnitPresheaf C }
+
+/-- Build a `PresheafSection` from a family of
+morphisms from the terminal presheaf satisfying
+the cone condition. -/
+def PresheafSection.mk'
+    (G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w))
+    (s : (P : Cᵒᵖ ⥤ Type w) →
+      (pshUnitPresheaf C ⟶ G.obj P))
+    (hs : ∀ {P Q : Cᵒᵖ ⥤ Type w}
+      (α : P ⟶ Q),
+      s P ≫ G.map α = s Q) :
+    PresheafSection G :=
+  ⟨{ pt := pshUnitPresheaf C
+     π :=
+       { app := fun P => s P
+         naturality := fun {P Q} α => by
+           simp only [Functor.const_obj_obj,
+             Functor.const_obj_map,
+             Category.id_comp]
+           exact (hs α).symm } },
+   rfl⟩
+
+/-- Extract a presheaf section from a parametric
+cone of `pshBarrLiftEdgeFunctor G` by restricting
+to identity edges and taking the source component.
+
+At identity edges, `pshBarrLiftRel_id` forces
+`srcMap = tgtMap`, and the source components
+`π.app(pshRelIdentFunctor.obj P).srcMap` form a
+natural family `pshUnitPresheaf C ⟶ G.obj P`
+indexed by presheaves `P`. -/
+def parametricConeSrcSection
+    (G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w))
+    (pc : ParametricCone
+      (pshBarrLiftEdgeFunctor (C := C) G)) :
+    PresheafSection G := by
+  obtain ⟨⟨_, π⟩, rfl⟩ := pc
+  exact PresheafSection.mk' G
+    (fun P =>
+      (π.app (pshRelIdentFunctor.obj P)).srcMap)
+    (fun {P Q} α => by
+      have h := congrArg VertEdgeHom.srcMap
+        (π.naturality
+          (pshRelIdentFunctor.map α))
+      simp only [Functor.const_obj_obj,
+        Functor.const_obj_map,
+        Category.id_comp] at h
+      exact h.symm)
+
+/-- A presheaf section is parametrically related
+at every edge: the source and target components
+are `(pshRelFull, pshBarrLiftRel G R)`-related.
+The witness is the section applied to the domain
+`R.toFunctor` of the relation, with naturality
+at the two projections providing the component
+equalities. -/
+theorem presheafSection_related
+    (G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w))
+    (σ : (P : Cᵒᵖ ⥤ Type w) →
+      (pshUnitPresheaf C ⟶ G.obj P))
+    (hσ : ∀ {P Q : Cᵒᵖ ⥤ Type w}
+      (f : P ⟶ Q),
+      σ P ≫ G.map f = σ Q)
+    (e : PshRelEdge.{u, v, w} C) :
+    pshRelRelated (σ e.src) (σ e.tgt)
+      (pshRelFull C)
+      (pshBarrLiftRel G e.edge) := by
+  intro c a b _
+  have hab : a = b :=
+    ULift.ext _ _ (Subsingleton.elim _ _)
+  subst hab
+  simp only [pshBarrLiftRel, pshBarrLift,
+    pshProdOverToRel, Subfunctor.range,
+    Set.mem_range, Over.mk_hom]
+  refine
+    ⟨(σ e.edge.toFunctor).app c a, ?_⟩
+  dsimp [pshProdLift, FunctorToTypes.prod]
+  have hfst := congr_fun (congr_app
+    (hσ (e.edge.ι ≫
+      pshProdFst e.src e.tgt)) c) a
+  have hsnd := congr_fun (congr_app
+    (hσ (e.edge.ι ≫
+      pshProdSnd e.src e.tgt)) c) a
+  simp only [NatTrans.comp_app,
+    types_comp_apply] at hfst hsnd
+  exact Prod.ext hfst hsnd
+
+/-- Build a parametric cone of
+`pshBarrLiftEdgeFunctor G` from a presheaf
+section of `G`. At each edge
+`e = ⟨P, Q, R⟩`, the cone component sends
+the terminal edge to
+`⟨G.obj P, G.obj Q, pshBarrLiftRel G R⟩`
+via the section components `σ P` and `σ Q`,
+with relatedness witnessed by `σ R.toFunctor`.
+Naturality follows from the presheaf-level
+cone condition. -/
+def presheafSectionToParametricCone
+    (G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w))
+    (ps : PresheafSection G) :
+    ParametricCone
+      (pshBarrLiftEdgeFunctor
+        (C := C) G) := by
+  obtain ⟨⟨_, π⟩, rfl⟩ := ps
+  exact
+    ⟨{ pt := pshRelEdgeTerminal C
+       π :=
+         { app := fun e =>
+             { srcMap := π.app e.src
+               tgtMap := π.app e.tgt
+               sq :=
+                 presheafSection_related G
+                   (fun P => π.app P)
+                   (fun f =>
+                     (Limits.Cone.mk _ π).w f)
+                   e }
+           naturality := fun {e₁ e₂} f => by
+             simp only [Functor.const_obj_obj,
+               Functor.const_obj_map,
+               Category.id_comp]
+             apply VertEdgeHom.ext
+             · exact
+                 ((Limits.Cone.mk _ π).w
+                   f.srcMap).symm
+             · exact
+                 ((Limits.Cone.mk _ π).w
+                   f.tgtMap).symm } },
+     rfl⟩
+
+/-- Extracting then rebuilding a presheaf section
+is the identity. -/
+theorem presheafSection_roundtrip
+    (G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w))
+    (ps : PresheafSection G) :
+    parametricConeSrcSection G
+      (presheafSectionToParametricCone
+        G ps) =
+    ps := by
+  obtain ⟨⟨pt, π⟩, (hpt : pt = _)⟩ := ps
+  subst hpt
+  apply Subtype.ext
+  dsimp [parametricConeSrcSection,
+    presheafSectionToParametricCone,
+    PresheafSection.mk']
+  congr 1
+
+/-- The projection morphism from the identity edge
+on `R.toFunctor` to the edge `⟨P, Q, R⟩`,
+with source and target maps given by the two
+projections of the relation inclusion `R.ι`. -/
+def pshRelIdentToEdgeProj
+    {P Q : Cᵒᵖ ⥤ Type w}
+    (R : PshRel P Q) :
+    pshRelIdentFunctor.obj R.toFunctor ⟶
+    (⟨P, Q, R⟩ :
+      PshRelEdge.{u, v, w} C) :=
+  { srcMap := R.ι ≫ pshProdFst P Q
+    tgtMap := R.ι ≫ pshProdSnd P Q
+    sq := fun c r r' hrr' => by
+      have h : r = r' := hrr'
+      subst h
+      simp only [NatTrans.comp_app,
+        types_comp_apply]
+      convert r.prop using 1 }
+
+/-- For a parametric cone `pc` over
+`pshBarrLiftEdgeFunctor G`, the `srcMap`
+component at edge `e` equals the `srcMap`
+component at the identity edge on `e.src`.
+The proof uses cone naturality at the
+projection morphism
+`pshRelIdentFunctor.obj e.edge.toFunctor ⟶ e`
+and at
+`pshRelIdentFunctor.map (e.edge.ι ≫ π₁)`. -/
+theorem parametricCone_srcMap_eq
+    (G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w))
+    (π : (Functor.const
+        (PshRelEdge.{u, v, w} C)).obj
+      (pshRelEdgeTerminal C) ⟶
+      pshBarrLiftEdgeFunctor (C := C) G)
+    (e : PshRelEdge.{u, v, w} C) :
+    (π.app e).srcMap =
+    (π.app
+      (pshRelIdentFunctor.obj e.src)).srcMap :=
+  by
+  have h₁ := congrArg VertEdgeHom.srcMap
+    ((Limits.Cone.mk _ π).w
+      (pshRelIdentToEdgeProj e.edge))
+  have h₂ := congrArg VertEdgeHom.srcMap
+    ((Limits.Cone.mk _ π).w
+      (pshRelIdentFunctor.map
+        (e.edge.ι ≫
+          pshProdFst e.src e.tgt)))
+  dsimp [pshBarrLiftEdgeFunctor,
+    pshRelIdentFunctor,
+    pshRelIdentToEdgeProj] at h₁ h₂
+  exact h₁.symm.trans h₂
+
+/-- If `f` and `g` are
+`(pshRelFull, pshRelId)`-related, then
+`f = g`. The full relation makes the
+hypothesis unconditional, and the identity
+relation forces equal outputs. -/
+theorem pshRelRelated_full_id_eq
+    {Q : Cᵒᵖ ⥤ Type w}
+    {f g : pshUnitPresheaf C ⟶ Q}
+    (h : pshRelRelated f g
+      (pshRelFull C)
+      (pshRelId Q)) :
+    f = g := by
+  ext c a
+  exact h c a a (Set.mem_univ _)
+
+/-- At an identity edge, the Barr-lifted
+relatedness forces `srcMap = tgtMap`:
+a morphism from the terminal edge to
+`(G P, G P, pshBarrLiftRel G (pshRelId P))`
+has equal source and target components. -/
+theorem vertEdgeHom_srcEqTgt_at_ident
+    (G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w))
+    (P : Cᵒᵖ ⥤ Type w)
+    (f : pshRelEdgeTerminal C ⟶
+      (pshBarrLiftEdgeFunctor (C := C) G).obj
+        (pshRelIdentFunctor.obj P)) :
+    f.srcMap = f.tgtMap := by
+  apply pshRelRelated_full_id_eq
+  change pshRelRelated f.srcMap f.tgtMap
+    (pshRelFull C) (pshRelId (G.obj P))
+  rw [← pshBarrLiftRel_id G]
+  exact f.sq
+
+/-- Analogous to `parametricCone_srcMap_eq`
+for `tgtMap`: the target component at edge `e`
+equals the `srcMap` component at the identity
+edge on `e.tgt`. -/
+theorem parametricCone_tgtMap_eq
+    (G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w))
+    (π : (Functor.const
+        (PshRelEdge.{u, v, w} C)).obj
+      (pshRelEdgeTerminal C) ⟶
+      pshBarrLiftEdgeFunctor (C := C) G)
+    (e : PshRelEdge.{u, v, w} C) :
+    (π.app e).tgtMap =
+    (π.app
+      (pshRelIdentFunctor.obj e.tgt)).srcMap :=
+  by
+  have h₁ :
+      (π.app (pshRelIdentFunctor.obj
+        e.edge.toFunctor)).tgtMap ≫
+      ((pshBarrLiftEdgeFunctor (C := C) G).map
+        (pshRelIdentToEdgeProj
+          e.edge)).tgtMap =
+      (π.app e).tgtMap :=
+    congrArg VertEdgeHom.tgtMap
+      ((Limits.Cone.mk _ π).w
+        (pshRelIdentToEdgeProj e.edge))
+  have h₂ :
+      (π.app (pshRelIdentFunctor.obj
+        e.edge.toFunctor)).srcMap ≫
+      ((pshBarrLiftEdgeFunctor (C := C) G).map
+        (pshRelIdentFunctor.map
+          (e.edge.ι ≫
+            pshProdSnd
+              e.src e.tgt))).srcMap =
+      (π.app
+        (pshRelIdentFunctor.obj
+          e.tgt)).srcMap :=
+    congrArg VertEdgeHom.srcMap
+      ((Limits.Cone.mk _ π).w
+        (pshRelIdentFunctor.map
+          (e.edge.ι ≫
+            pshProdSnd e.src e.tgt)))
+  have h₃ :=
+    vertEdgeHom_srcEqTgt_at_ident G
+      e.edge.toFunctor
+      (π.app (pshRelIdentFunctor.obj
+        e.edge.toFunctor))
+  dsimp [pshBarrLiftEdgeFunctor,
+    pshRelIdentFunctor,
+    pshRelIdentToEdgeProj] at h₁ h₂ h₃
+  rw [← h₃] at h₁
+  exact h₁.symm.trans h₂
+
+/-- Building a presheaf section from a parametric
+cone and then rebuilding the cone recovers
+the original. -/
+theorem parametricCone_roundtrip
+    (G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w))
+    (pc : ParametricCone
+      (pshBarrLiftEdgeFunctor
+        (C := C) G)) :
+    presheafSectionToParametricCone G
+      (parametricConeSrcSection G pc) =
+    pc := by
+  obtain ⟨⟨pt, π⟩, (hpt : pt = _)⟩ := pc
+  subst hpt
+  apply Subtype.ext
+  dsimp [presheafSectionToParametricCone,
+    parametricConeSrcSection,
+    PresheafSection.mk']
+  congr 1
+  ext e
+  apply VertEdgeHom.ext
+  · exact (parametricCone_srcMap_eq G π e).symm
+  · exact (parametricCone_tgtMap_eq G π e).symm
+
+/-- The type of parametric cones over the
+Barr-lifted edge functor of `G` is equivalent
+to the type of presheaf-level sections of `G`.
+This realizes the presheaf-level end as the
+limit over identity edges: a cone over
+`pshBarrLiftEdgeFunctor G` (which tests
+parametricity at every edge) is determined by
+its values at identity edges, which form a
+section of `G`. -/
+def parametricConeEquivPresheafSection
+    (G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w)) :
+    ParametricCone
+      (pshBarrLiftEdgeFunctor
+        (C := C) G) ≃
+    PresheafSection G where
+  toFun := parametricConeSrcSection G
+  invFun := presheafSectionToParametricCone G
+  left_inv := parametricCone_roundtrip G
+  right_inv := presheafSection_roundtrip G
+
+end IdentityEdgeRecovery
 
 section ConditionalFreeTheorem
 
