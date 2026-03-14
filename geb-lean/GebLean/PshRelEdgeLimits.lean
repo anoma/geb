@@ -44,6 +44,36 @@ def pshUnitMap (P : Cᵒᵖ ⥤ Type w) :
     P ⟶ pshUnitPresheaf C where
   app _ _ := ⟨PUnit.unit⟩
 
+/-- The morphism to the unit presheaf is
+unique. -/
+theorem pshUnitMap_unique
+    {P : Cᵒᵖ ⥤ Type w}
+    (f : P ⟶ pshUnitPresheaf C) :
+    f = pshUnitMap P := by
+  ext c p
+  exact ULift.ext _ _
+    (Subsingleton.elim _ _)
+
+/-- `pshUnitPresheaf C` is terminal in
+`Cᵒᵖ ⥤ Type w`. -/
+def pshUnitPresheafIsTerminal (C : Type u)
+    [Category.{v} C] :
+    Limits.IsTerminal
+      (pshUnitPresheaf.{u, v, w} C) :=
+  Limits.IsTerminal.ofUniqueHom
+    (fun P => pshUnitMap P)
+    (fun _ f => pshUnitMap_unique f)
+
+/-- The constant functor at a terminal object
+`t` in `C`, forming the terminal object of
+the functor category `J ⥤ C`. -/
+abbrev constTerminal
+    (J : Type*) [Category J]
+    {C : Type*} [Category C]
+    {t : C} (_ : Limits.IsTerminal t) :
+    J ⥤ C :=
+  (Functor.const J).obj t
+
 /-- The full relation on the unit presheaf:
 all pairs are related. -/
 def pshRelFull (C : Type u) [Category.{v} C] :
