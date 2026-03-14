@@ -10,6 +10,9 @@ import Mathlib.CategoryTheory.Subfunctor.Image
 import Mathlib.CategoryTheory.Subfunctor.Sieves
 import Mathlib.CategoryTheory.Monoidal.Closed.FunctorToTypes
 import Mathlib.CategoryTheory.Monoidal.Cartesian.FunctorCategory
+import Mathlib.CategoryTheory.Adjunction.Whiskering
+import Mathlib.CategoryTheory.Adjunction.Unique
+import Mathlib.CategoryTheory.Adjunction.Opposites
 
 /-!
 # Presheaf and Copresheaf Construction Functors
@@ -2370,5 +2373,94 @@ instance functorCatMonoidalClosed
       (J ⥤ (Cᵒᵖ ⥤ Type max v₁ v₂ u₁ u₂)) where
 
 end FunctorCategoryMonoidalClosed
+
+section PresheafAdjunctionProperties
+
+/-! ## Presheaf adjunction properties
+
+Given an adjunction `F ⊣ G` between categories `C` and
+`D`, the induced Kan extensions and precomposition
+functors on presheaf categories satisfy an adjoint
+triple and interact as described in Lemma 3.1 and
+Lemma 3.2 of
+<https://ncatlab.org/nlab/show/functoriality+of+categories+of+presheaves#properties>.
+-/
+
+variable {C : Type u} [Category.{v} C]
+variable {D : Type u} [Category.{v} D]
+
+/-- Given `adj : F ⊣ G`, precomposition by `F.op`
+is left adjoint to precomposition by `G.op` on
+presheaf categories. This is the image of `adj.op`
+under the `whiskerLeft` construction, which lifts an
+adjunction on base categories to functor categories
+by precomposition. (Property 2 of nLab Lemma 3.1.) -/
+def precompOpAdj {F : C ⥤ D} {G : D ⥤ C}
+    (adj : F ⊣ G) :
+    precompOp F ⊣
+      (precompOp G :
+        (Cᵒᵖ ⥤ Type (max u v)) ⥤
+          (Dᵒᵖ ⥤ Type (max u v))) :=
+  adj.op.whiskerLeft (Type (max u v))
+
+/-- Given `adj : F ⊣ G`, the left Kan extension
+along `G` is isomorphic to precomposition by `F.op`.
+Both are left adjoint to `precompOp G`, so they are
+isomorphic by uniqueness of left adjoints.
+(Property 5 of nLab Lemma 3.1.) -/
+def precompOpIsoYonedaExt {F : C ⥤ D} {G : D ⥤ C}
+    (adj : F ⊣ G) :
+    (precompOp F :
+      (Dᵒᵖ ⥤ Type (max u v)) ⥤
+        (Cᵒᵖ ⥤ Type (max u v))) ≅
+    yonedaExt G :=
+  (precompOpAdj adj).leftAdjointUniq
+    (leftYonedaExtAdj G)
+
+/-- Given `adj : F ⊣ G`, the right Kan extension
+along `F` is isomorphic to precomposition by `G.op`.
+Both are right adjoint to `precompOp F`, so they are
+isomorphic by uniqueness of right adjoints.
+(Property 4 of nLab Lemma 3.1.) -/
+def rightYonedaExtIsoPrecompOp
+    {F : C ⥤ D} {G : D ⥤ C}
+    (adj : F ⊣ G) :
+    (rightYonedaExt F :
+      (Cᵒᵖ ⥤ Type (max u v)) ⥤
+        (Dᵒᵖ ⥤ Type (max u v))) ≅
+    precompOp G :=
+  (rightYonedaExtAdj F).rightAdjointUniq
+    (precompOpAdj adj)
+
+/-- Given `adj : F ⊣ G`, the left Kan extensions
+form an adjoint pair `yonedaExt F ⊣ yonedaExt G`.
+The right adjoint of `yonedaExt F` is `precompOp F`,
+which is isomorphic to `yonedaExt G` by property 5.
+(Property 1 of nLab Lemma 3.1.) -/
+def yonedaExtAdj {F : C ⥤ D} {G : D ⥤ C}
+    (adj : F ⊣ G) :
+    (yonedaExt F :
+      (Cᵒᵖ ⥤ Type (max u v)) ⥤
+        (Dᵒᵖ ⥤ Type (max u v))) ⊣
+    yonedaExt G :=
+  (leftYonedaExtAdj F).ofNatIsoRight
+    (precompOpIsoYonedaExt adj)
+
+/-- Given `adj : F ⊣ G`, the right Kan extensions
+form an adjoint pair `rightYonedaExt F ⊣
+rightYonedaExt G`. The left adjoint of
+`rightYonedaExt G` is `precompOp G`, which is
+isomorphic to `rightYonedaExt F` by property 4.
+(Property 3 of nLab Lemma 3.1.) -/
+def rightYonedaExtAdj' {F : C ⥤ D} {G : D ⥤ C}
+    (adj : F ⊣ G) :
+    (rightYonedaExt F :
+      (Cᵒᵖ ⥤ Type (max u v)) ⥤
+        (Dᵒᵖ ⥤ Type (max u v))) ⊣
+    rightYonedaExt G :=
+  ((rightYonedaExtAdj G).ofNatIsoLeft
+    (rightYonedaExtIsoPrecompOp adj).symm)
+
+end PresheafAdjunctionProperties
 
 end GebLean
