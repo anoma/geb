@@ -3563,11 +3563,7 @@ def mendlerTypeProf.mapPt
 
 /-- The Type-valued Mendler extension: the coend
 of `mendlerTypeProf pt G` in `Type`.
-
-When `C = Type v` and `G(A, B) = g A B`, this
-reduces to the Idris `ProfMendlerExt g pt`
-(`(x : Type ** (x → pt, g x x))`), quotiented
-by dinaturality. -/
+-/
 abbrev mendlerExtType
     (pt : C) (G : Cᵒᵖ ⥤ C ⥤ Type v) :
     Type (max u v) :=
@@ -3579,9 +3575,8 @@ extension: natural transformations from
 identity functor.
 
 When `C = Type v`, this is the impredicative
-encoding `∀ D, (∀ A, (A → pt) → G(A,A) → D) → D`,
-which corresponds to the Idris
-`ProfMendlerUniv g pt`. -/
+encoding `∀ D, (∀ A, (A → pt) → G(A,A) → D) → D`.
+-/
 abbrev mendlerUnivType
     (pt : C) (G : Cᵒᵖ ⥤ C ⥤ Type v) :
     Type (max (u + 1) (v + 1)) :=
@@ -3603,9 +3598,7 @@ def mendlerUnivTypeEquiv
 `h : pt₁ ⟶ pt₂`, maps `mendlerExtType pt₁ G` to
 `mendlerExtType pt₂ G` by postcomposing the hom
 component `(A ⟶ pt₁)` with `h`.
-
-Corresponds to `ProfMendlerExtMap` in the Idris
-code. -/
+-/
 def mendlerExtType.map
     (G : Cᵒᵖ ⥤ C ⥤ Type v)
     {pt₁ pt₂ : C} (h : pt₁ ⟶ pt₂) :
@@ -3620,9 +3613,8 @@ given `h : pt₁ ⟶ pt₂`, maps
 `mendlerUnivType pt₂ G`.
 
 Obtained by conjugating `mendlerExtType.map G h`
-with `mendlerUnivTypeEquiv`. Corresponds to
-`ProfMendlerUnivMap` in the Idris code:
-`gamma x (\y, mya => delta y (mab . mya))`. -/
+with `mendlerUnivTypeEquiv`.
+-/
 def mendlerUnivType.map
     (G : Cᵒᵖ ⥤ C ⥤ Type v)
     {pt₁ pt₂ : C} (h : pt₁ ⟶ pt₂) :
@@ -3709,10 +3701,7 @@ Obtained by composing `Equiv.arrowCongr` of the
 Church-encoding equivalence `mendlerUnivTypeEquiv`
 with the coend algebra characterization
 `mendlerAlgTypeEquiv`.
-
-Corresponds to the Idris `MendlerAlgToFAlgUniv` /
-`FAlgToMendlerAlgUniv` when `C = Type v` and
-`X = pt`. -/
+-/
 def mendlerUnivAlgTypeEquiv
     (pt : C) (G : Cᵒᵖ ⥤ C ⥤ Type v)
     (X : Type w) :
