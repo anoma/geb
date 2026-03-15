@@ -124,7 +124,18 @@ universe u v w
 variable (C : Type u) [Category.{v, u} C]
 variable (P : Cᵒᵖ ⥤ Type max v w)
 
-def colimofRep : Limits.IsColimit (Presheaf.coconeOfRepresentable P) :=
-  Presheaf.colimitOfRepresentable (C := C) P
+def funcToRep : P.Elementsᵒᵖ ⥤ Cᵒᵖ ⥤ Type (max v w) :=
+  Presheaf.functorToRepresentables.{w, v, u} (C := C) P
+
+def coconeOfRep :
+    Limits.Cocone.{v, max u v w, max u v w, max u (v + 1) (w + 1)}
+      (C := Cᵒᵖ ⥤ Type (max v w))
+      (funcToRep C P) :=
+  Presheaf.coconeOfRepresentable.{w, v, u} P
+
+def colimOfRep :
+    Limits.IsColimit.{v, max u v w, max u v w, max u (v + 1) (w + 1)}
+      (coconeOfRep C P) :=
+  Presheaf.colimitOfRepresentable.{w, v, u} (C := C) P
 
 end PresheafIllustrations
