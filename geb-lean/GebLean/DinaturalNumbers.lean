@@ -32,7 +32,6 @@ elements `1 → N` rather than external natural numbers.
 ## References
 
 * Neumann, "Paranatural Category Theory"
-* The Idris-2 implementation in `docs/InternalProfunctor.idr`
 
 -/
 

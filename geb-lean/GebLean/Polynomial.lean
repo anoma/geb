@@ -5441,8 +5441,6 @@ The bicategory of polynomial functors extends to a double category
 - Vertical morphisms: functions
 - Horizontal morphisms: polynomial functors
 - 2-cells: natural transformations from pushouts
-
-See `SlicePolyCat.idr` (`SPFpoDoubleCat`) for the Idris reference.
 -/
 
 /-! ### Pushout of Polynomial Functors
