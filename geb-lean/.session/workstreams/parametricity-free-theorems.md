@@ -105,76 +105,45 @@ framework:
 ### Wadler free theorems in PshRelEdge
 
 See `parametric-copresheaf-topos.md` tasks W1-W9 for
-the detailed Wadler correspondence tasks.  The tasks
-below concern additional free theorem results.
+the detailed Wadler correspondence tasks.  All
+Wadler free theorems (W1-W9) are now formalized at
+the PshRelEdge level.
 
-- [ ] **P3a. Constant-type free theorem.** Prove
-  `ParametricFamily (.arrow .var (.arrow .var .var)) ≅
-  Bool` (or `Fin 2`).  Can be done at type level first.
+### Completed generalized theory
 
-- [ ] **P3b. Yoneda/representability isomorphism.** Prove
-  `∀X. (A -> X) -> X ≅ A` (Wadler Section 3.8).
-  See task W8 in `parametric-copresheaf-topos.md`.
+- [x] **P6a. Parametric cocones.** `ParametricCocone`
+  (dual of `ParametricCone`) for existential types.
+  `parametricCoconeEquiv`, `parametricCoconeInject`,
+  `barrCoconeToPresheafCocone`, `PresheafCosection`.
+  Terminal coalgebra connection deferred (Q11).
 
-- [ ] **P3c. Multi-variable type expressions.** Extend
-  `TypeExpr` to support multiple type variables (needed
-  for fst, snd, K, fold, filter, zip from Wadler).
-  Note: in the PshRelEdge framework, multi-variable
-  types correspond to edges with different source and
-  target presheaves.
-
-- [ ] **P3d. Product type constructor.** Add products to
-  `TypeExpr` (needed for K combinator, zip, and
-  multi-argument results).
-
-- [ ] **P3e. Fold/filter free theorems.** Formalize
-  Wadler Sections 3.2 (fold), 3.3 (sort/nub),
-  3.5 (map decomposition), 3.6 (fold decomposition),
-  3.7 (filter decomposition).
-  See tasks W4-W6 in `parametric-copresheaf-topos.md`.
-
-- [ ] **P3f. Polymorphic equality impossibility.**
-  Wadler Section 3.4.
-  See task W7 in `parametric-copresheaf-topos.md`.
-
-### Weight functors and twisted-arrow connection
-
-- [ ] **P4a. typeExprWeight functor.** Define
-  `typeExprWeight : TypeExpr -> (TwistedArrow Type => Type)`
-  recursively from `relInterp` data.
-
-- [ ] **P4b. Comparison with wedgeWeight.** Construct a
-  natural transformation
-  `typeExprWeight T -> wedgeWeight (T.toProfunctor)`.
-
-- [ ] **P4c. WedgeWeightFactorization.** Formalize the
-  factorization characterization of `wedgeWeight`.
-
-- [ ] **P4d. Parametric weight characterization.** Find
-  the weight `W` such that `ParametricFamily T` is the
-  weighted end with weight `W`.
-
-### Generalized theory
-
-- [ ] **P6a. Parametric cofamilies.** Define
-  `ParametricCofamily` (dual) and prove equivalence
-  with terminal coalgebra carrier.
-
-- [ ] **P6b. Yoneda extension.** Extend a
-  `ParametricFamily T` to all presheaves via the
-  density theorem.
-  See task S2 in `parametric-copresheaf-topos.md`.
+- [x] **P6b. Yoneda extension.** Done as S2 in
+  `parametric-copresheaf-topos.md`.
 
 - [x] **P6c. relInterp composition at PshRel level.**
   `pshArrowRel_comp` in `PshRelDouble.lean`.
 
-- [~] **P6d. Presheaf-level free theorem equivalences.**
-  Done: `pshDialgebraParametricEquivNatTrans`,
-  `pshAlgebraParametricEquivParanat`,
-  `pshDinaturalParametricEquivParanat`.
-  Remaining: `pshDinaturalNumbersParametricEquiv`,
-  `pshInitialAlgebraParametricEquiv` (both face
-  local-to-global obstacle for general `C`).
+### Retired (TypeExpr/PshTypeExpr-specific)
+
+The following tasks are specific to the `TypeExpr` /
+`PshTypeExpr` inductive syntax layer, which is a
+potential front-end but not part of the categorical
+foundations (`PshRelEdge`, `ParametricCone`,
+`PresheafSection`, etc.).  They are retained here
+for reference but are not on the active task list.
+
+- **P3a.** `ParametricFamily (.arrow .var
+  (.arrow .var .var)) ≅ Bool`.
+- **P3c.** Multi-variable `TypeExpr`.
+- **P3d.** Product type constructor for `TypeExpr`.
+- **P4a.** `typeExprWeight` functor.
+- **P4b.** Comparison with `wedgeWeight`.
+- **P4c.** `WedgeWeightFactorization`.
+- **P4d.** Parametric weight characterization.
+- **P6d.** Remaining presheaf-level free theorem
+  equivalences (`pshDinaturalNumbersParametricEquiv`,
+  `pshInitialAlgebraParametricEquiv`). These face a
+  local-to-global obstacle for general `C`.
 
 ## Notes
 

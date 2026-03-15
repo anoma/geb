@@ -1356,6 +1356,30 @@ to ordinary type-level relations
 Mediated by `relSpanPshRelSpanIso`,
 `parametricFunctorEquiv`, `parametricCopresheafEquiv`.
 
+### 10.3 Syntax layers (TypeExpr / PshTypeExpr)
+
+`TypeExpr` (`ParanaturalTopos.lean`) and
+`PshTypeExpr` (`PshTypeExpr.lean`) provide an
+inductive type-expression syntax with `.var`,
+`.app F T`, `.arrow T₁ T₂`. These define
+`relInterp` / `fullRelInterp` by structural
+induction, compute `ParametricFamily T` for
+specific type expressions, and establish
+equivalences such as
+`dialgebraParametricEquivNatTrans` and
+`initialAlgebraParametricEquiv`.
+
+These are potential front-end syntaxes for the
+categorical foundations, not part of the
+foundations themselves. The categorical layer
+(`PshRelEdge`, `ParametricCone`,
+`PresheafSection`, `pshBarrLiftEdgeFunctor`,
+etc.) is independent of `TypeExpr` and handles
+covariant endofunctors directly. Extensions to
+`TypeExpr` (multi-variable types, product types,
+weight functors) are deferred as potential
+future work on the syntax layer.
+
 ## 11. Open questions and future work
 
 ### Q1: PSh(C x I^op) vs PshParametricPresheaf C
