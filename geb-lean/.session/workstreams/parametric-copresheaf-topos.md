@@ -806,8 +806,8 @@ contingent on additional mathlib infrastructure
   `separatedSpan_unit_injective` (unit is
   injective for separated spans).
   The full isomorphism with the separated
-  full subcategory is blocked by a Prop/data
-  boundary: inverting the pairing map requires
+  full subcategory
+  would require inverting the pairing map requires
   extracting witnesses from `Exists`, which is
   not constructively available without
   `Classical.choice`. The existing reflective
