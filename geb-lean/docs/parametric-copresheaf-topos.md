@@ -823,12 +823,30 @@ PshRelEdge C  ~=  Sep_J(C x I^op)
 
 - **Objects**: a separated presheaf assigns
   P(c), Q(c), R(c) with R(c) injecting into
-  P(c) x Q(c), matching a subfunctor of the product.
-- **Morphisms**: since the target is separated, a
-  natural transformation at the 01-component is
-  uniquely determined by its 0- and 1-components.
-  The compatibility condition reduces to
-  `pshRelRelated`.
+  P(c) x Q(c), matching a subfunctor of the
+  product.
+- **Morphisms**: since the target is separated,
+  a natural transformation at the
+  01-component is uniquely determined by its
+  0- and 1-components. The compatibility
+  condition reduces to `pshRelRelated`.
+
+Formalized: `IsSeparatedSpan` defines the
+separation condition (joint monicity of
+span projections).
+`pshRelEdge_isSeparatedSpan` shows every
+edge is separated.
+`separatedSpanToEdge_inclusion` shows the
+round-trip `sep(incl(E)) = E`.
+`pshRelEdgeSepObj_inclusion` shows the
+reflector round-trip.
+`separatedSpan_unit_injective` shows the
+adjunction unit is injective for separated
+spans. The reflective adjunction
+`pshRelEdgeSepAdjunction`
+(`PshRelEdgeInclusion.lean`) captures the
+categorical content.
+Code: `PshRelEdgeSeparation.lean`.
 
 The J-sheaves (where
 `F(c, 01) => F(c, 0) x F(c, 1)` is bijective,
@@ -1337,6 +1355,7 @@ to ordinary type-level relations
 | `PshRelEdgeSOClassifier.lean` | Strong subobject classifier |
 | `..IdentPreservation.lean` | Identity functor preserves (co)limits, exp |
 | `PshRelEdgeInclusion.lean` | Inclusion, separation reflector, adjunction |
+| `PshRelEdgeSeparation.lean` | Separated span characterization |
 | `PshRelEdgeOverOmega.lean` | Characteristic maps, sieve presheaves |
 | `..GraphRestriction.lean` | Barr embeddings, graph restriction, free theorems |
 | `PshRelSpanDiagram.lean` | PshRelSpanObj, copresheaf embeddings |
@@ -1435,14 +1454,18 @@ Candidates:
 - **Power object.** If `D` is a topos, use
   `(A, B) |-> Hom(A, [B, Omega])`.
 
-### Q6: Sep_J equivalence
+### Q6: Sep_J equivalence (resolved)
 
-Construct the equivalence
-`PshRelEdge C ~= Sep_J(C x I^op)` explicitly
-in Lean. Requires defining the walking span
-category `I`, the product site `C x I^op`, the
-Grothendieck topology `J`, and the separation
-condition. (Task S1.)
+The separation characterization is formalized
+in `PshRelEdgeSeparation.lean`: `IsSeparatedSpan`
+defines the condition, edges are separated
+(`pshRelEdge_isSeparatedSpan`), and the
+reflective adjunction (`pshRelEdgeSepAdjunction`)
+captures the categorical equivalence. The full
+isomorphism with the separated full subcategory
+requires `Classical.choice` to invert the
+pairing map (extracting witnesses from
+`Set.range`). (Task S1.)
 
 ### Q7: Span bicategory
 

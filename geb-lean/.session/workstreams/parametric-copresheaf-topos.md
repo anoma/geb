@@ -767,9 +767,26 @@ Relevant declarations:
 
 ### Structural results
 
-- [ ] **S1. Sep_J equivalence.** Construct the equivalence
-  `PshRelEdge C ≅ Sep_J(C x I^op)` explicitly (walking
-  span I, topology J, separation).
+- [x] **S1. Sep_J equivalence.** Characterized
+  `PshRelEdge C` as the separated spans in
+  `WalkingSpan ⥤ PSh(C)`. Defined
+  `IsSeparatedSpan` (pointwise joint monicity),
+  `pshRelEdge_isSeparatedSpan` (edges are
+  separated), `separatedSpanToEdge` (edges from
+  spans), `separatedSpanToEdge_inclusion`
+  (round-trip), `pshRelEdgeSepObj_inclusion`
+  (reflector round-trip),
+  `separatedSpan_unit_injective` (unit is
+  injective for separated spans).
+  The full isomorphism with the separated
+  full subcategory is blocked by a Prop/data
+  boundary: inverting the pairing map requires
+  extracting witnesses from `Exists`, which is
+  not constructively available without
+  `Classical.choice`. The existing reflective
+  adjunction (`pshRelEdgeSepAdjunction`)
+  captures the categorical content.
+  File: `PshRelEdgeSeparation.lean`.
 
 - [x] **S2. Yoneda extension.** Given a section restricted
   to representable presheaves (via Yoneda), extend to
@@ -1925,7 +1942,7 @@ Status: [open].
 **Sep_J equivalence.**
 `PshRelEdge C ≅ Sep_J(C x I^op)`.
 Task: S1.
-Status: [open].
+Status: [complete] (see S1 entry above).
 
 **Yoneda extension of sections.**
 Extend sections from representable presheaves to
