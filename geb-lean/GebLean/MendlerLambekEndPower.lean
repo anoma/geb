@@ -1492,6 +1492,43 @@ def ImpredicativeGExtFunctor
 
 end ImpredicativeGExt
 
+/-- For `ImpredicativeGExtFunctor G` to be defined,
+we need terminal wedges for the inner profunctor
+`ihomPowerProf G pt Y` at all `pt` and `Y`, and for
+the outer Church profunctor `churchProf G pt` at
+all `pt`. This class bundles these assumptions.
+
+This is the end-based dual of
+`HasAllHomToProfCoends G`. -/
+class HasAllHomToProfEnds
+    {C : Type u} [Category.{v} C]
+    [MonoidalCategory C] [MonoidalClosed C]
+    [HasPowers C]
+    (G : Cᵒᵖ ⥤ C ⥤ C) where
+  hasInnerEnd : ∀ (pt Y : C),
+    HasTerminalWedge (ihomPowerProf G pt Y)
+  hasOuterEnd : ∀ (pt : C),
+    HasTerminalWedge
+      (churchProf G pt (hasInnerEnd pt))
+
+namespace HasAllHomToProfEnds
+
+variable
+  {C : Type u} [Category.{v} C]
+  [MonoidalCategory C] [MonoidalClosed C]
+  [HasPowers C]
+  (G : Cᵒᵖ ⥤ C ⥤ C)
+  [HasAllHomToProfEnds G]
+
+/-- The `ImpredicativeGExtFunctor` under the
+bundled end assumptions. -/
+def ImpredicativeGExtFunctor' : C ⥤ C :=
+  ImpredicativeGExtFunctor G
+    (HasAllHomToProfEnds.hasInnerEnd)
+    (HasAllHomToProfEnds.hasOuterEnd)
+
+end HasAllHomToProfEnds
+
 /-!
 ## Morphisms between Impredicative and Copower-Coend GExt
 
@@ -2141,6 +2178,78 @@ def cgeChurchLeg
       churchComponent_powerSliceWedge
         G pt twInner Y f⟩
 
+/-- The componentwise identity for `cgeChurchLeg`:
+the coend injection at `(A, s)` composed with
+`cgeChurchLeg Y` equals the Church component at
+`(Y, A, s)`.
+This is proved directly from the definition of
+`cgeChurchLeg` via `gExtEndPowerEquiv`, without
+requiring an outer terminal wedge. -/
+private theorem CopowerGExtInj_comp_cgeChurchLeg
+    (pt : C)
+    (twInner : ∀ Y : C,
+      HasTerminalWedge (ihomPowerProf G pt Y))
+    (Y A : C) :
+    CopowerGExtInj G pt A ≫
+    cgeChurchLeg G pt twInner Y =
+    HasCopowers.desc (fun s =>
+      churchComponent G pt twInner Y A s) := by
+  rw [← copowerGExtHomEndEquiv_val G pt _
+    (cgeChurchLeg G pt twInner Y) A]
+  conv_lhs =>
+    rw [show cgeChurchLeg G pt twInner Y =
+      (gExtEndPowerEquiv G pt _).symm _ from rfl]
+    rw [gExtEndPowerEquiv]
+  simp only [Equiv.symm_trans_apply,
+    Equiv.apply_symm_apply]
+  change (copowerPowerEquiv _ _ _).symm
+    (HasPowers.lift (fun s =>
+      churchComponent G pt twInner Y A s)) =
+    HasCopowers.desc (fun s =>
+      churchComponent G pt twInner Y A s)
+  simp only [copowerPowerEquiv_symm_apply]
+  apply HasCopowers.ext
+  intro s
+  simp only [HasCopowers.fac, HasPowers.fac]
+
+private theorem inj_inj_cgeChurchLeg_direct
+    (pt : C)
+    (twInner : ∀ Y : C,
+      HasTerminalWedge (ihomPowerProf G pt Y))
+    (Y A : C) (s : A ⟶ pt) :
+    HasCopowers.inj (A ⟶ pt)
+      ((G.obj (Opposite.op A)).obj A) s ≫
+    CopowerGExtInj G pt A ≫
+    cgeChurchLeg G pt twInner Y =
+    churchComponent G pt twInner Y A s := by
+  simp only [CopowerGExtInj_comp_cgeChurchLeg,
+    HasCopowers.fac]
+
+/-- The church profunctor wedge condition for
+`cgeChurchLeg`, proved directly from the definition
+without requiring an outer terminal wedge. -/
+private theorem cgeChurchLeg_wedge_direct
+    (pt : C)
+    (twInner : ∀ Y : C,
+      HasTerminalWedge (ihomPowerProf G pt Y))
+    {Y₁ Y₂ : C} (f : Y₁ ⟶ Y₂) :
+    cgeChurchLeg G pt twInner Y₁ ≫
+      ((churchProf G pt twInner).obj
+        (Opposite.op Y₁)).map f =
+    cgeChurchLeg G pt twInner Y₂ ≫
+      ((churchProf G pt twInner).map f.op).app Y₂ :=
+  by
+  apply (copowerGExtHomEndEquiv G pt _).injective
+  apply Subtype.ext
+  funext A
+  simp only [copowerGExtHomEndEquiv_val,
+    ← Category.assoc,
+    CopowerGExtInj_comp_cgeChurchLeg]
+  apply HasCopowers.ext
+  intro s
+  simp only [← Category.assoc, HasCopowers.fac]
+  exact churchComponent_wedge G pt twInner A s f
+
 private theorem fwd_comp_ι_eq_cgeChurchLeg
     (pt : C)
     (twInner : ∀ Y : C,
@@ -2581,6 +2690,52 @@ private theorem cgeChurchLeg_natural_pt
   rw [hlhs, hrhs]
 
 end ImpredicativeGExtIso
+
+section ChurchLiftDef
+
+variable
+  {C : Type u} [Category.{v} C]
+  [MonoidalCategory C] [MonoidalClosed C]
+  [BraidedCategory C]
+  [HasCopowers C] [HasPowers C]
+  (G : Cᵒᵖ ⥤ C ⥤ C)
+  [HasAllCopowerProfCoends G]
+
+open MonoidalClosed MonoidalCategory
+  HasAllCopowerProfCoends
+
+instance : Category (multicospanShapeEnd C).L :=
+  show Category C from inferInstance
+
+instance : MonoidalCategory
+    (multicospanShapeEnd C).L :=
+  show MonoidalCategory C from inferInstance
+
+instance : MonoidalClosed
+    (multicospanShapeEnd C).L :=
+  show MonoidalClosed C from inferInstance
+
+instance : HasCopowers
+    (multicospanShapeEnd C).L :=
+  show HasCopowers C from inferInstance
+
+instance : HasPowers
+    (multicospanShapeEnd C).L :=
+  show HasPowers C from inferInstance
+
+/-- The lift from a church profunctor wedge `s` to
+`cge`: evaluate the `Y = cge` leg at the enriched
+identity element `curry'(𝟙 cge)`. -/
+def cgeChurchLift (pt : C)
+    (twInner : ∀ Y : C,
+      HasTerminalWedge (ihomPowerProf G pt Y))
+    (s : Wedge (churchProf G pt twInner)) :
+    s.pt ⟶ CopowerGExtObj G pt :=
+  s.ι (CopowerGExtObj G pt) ≫
+    ihomEvalAt
+      (bwdGlobalSection G pt twInner)
+
+end ChurchLiftDef
 
 /-!
 ## Power-End GExtFunctor via Coend-End Duality
@@ -3469,6 +3624,21 @@ def ihomCoendPowerEndNatIso (pt : C) :
       exact
         ihom_map_comp_ihomCoendWedgeProj G pt f A)
 
+/-- The church profunctor wedge with apex
+`CopowerGExtObj G pt` and legs `cgeChurchLeg`.
+This is the enriched Yoneda wedge: for each `Y`,
+the leg sends the coend to `[(ihom cge).obj Y, Y]`
+via the Church encoding. -/
+def cgeChurchWedge (pt : C) :
+    Wedge (churchProf G pt
+      (fun Y => ihomCoendHasTerminalWedge G pt Y)) :=
+  Wedge.mk (CopowerGExtObj G pt)
+    (fun Y => cgeChurchLeg G pt
+      (fun Y => ihomCoendHasTerminalWedge G pt Y) Y)
+    (fun {_ _} f =>
+      cgeChurchLeg_wedge_direct G pt
+        (fun Y => ihomCoendHasTerminalWedge G pt Y) f)
+
 end IhomPowerEndGExtBraided
 
 /-!
@@ -3739,5 +3909,419 @@ def mendlerExtTypeFunctor
   mendlerTypeProfFunctor G ⋙ typeCoendFunctor C
 
 end TypeValuedGExt
+
+section TypeValuedMendlerAlgConnection
+
+/-- Uncurrying a Mendler algebra family to a
+type end family, for `C = Type v`.
+
+Converts the curried family
+`(I : Type v) → (I → pt) → (G(I,I) → pt)`
+to the uncurried family
+`(I : Type v) → ((I → pt) × G(I,I)) → pt`. -/
+def mendlerFamilyUncurry
+    (pt : Type v)
+    (G : (Type v)ᵒᵖ ⥤ Type v ⥤ Type v)
+    (family :
+      ParanatSig (HomToProf pt) (G ⇓ pt)) :
+    (I : Type v) →
+      diagApp
+        (sliceProfunctorPoly
+          (mendlerTypeProf pt G) pt) I :=
+  fun I ⟨γ, g⟩ => family I γ g
+
+/-- Currying a type end family to a Mendler algebra
+family, for `C = Type v`.
+
+Converts the uncurried family
+`(I : Type v) → ((I → pt) × G(I,I)) → pt`
+to the curried family
+`(I : Type v) → (I → pt) → (G(I,I) → pt)`. -/
+def mendlerFamilyCurry
+    (pt : Type v)
+    (G : (Type v)ᵒᵖ ⥤ Type v ⥤ Type v)
+    (family :
+      (I : Type v) →
+        diagApp
+          (sliceProfunctorPoly
+            (mendlerTypeProf pt G) pt) I) :
+    ParanatSig (HomToProf pt) (G ⇓ pt) :=
+  fun I γ g => family I ⟨γ, g⟩
+
+/-- The uncurried family satisfies the wedge
+condition when the original family is dinatural.
+
+The dinaturality condition for the Mendler
+algebra family at `(i, j, f, s)`:
+  `family j s (G(j,j).map f g) =
+   family i (f ≫ s) (G.map f.op .app i g)`
+is exactly the wedge condition for the uncurried
+family at `(i, j, f)` applied to `(s, g)`. -/
+theorem mendlerFamilyUncurry_wedge
+    (pt : Type v)
+    (G : (Type v)ᵒᵖ ⥤ Type v ⥤ Type v)
+    (family :
+      ParanatSig (HomToProf pt) (G ⇓ pt))
+    (hd :
+      IsDinatural (HomToProf pt) (G ⇓ pt)
+        family)
+    {i j : Type v} (f : i ⟶ j) :
+    ((sliceProfunctorPoly
+        (mendlerTypeProf pt G) pt).obj
+      (Opposite.op i)).map f
+      (mendlerFamilyUncurry pt G family i) =
+    ((sliceProfunctorPoly
+        (mendlerTypeProf pt G) pt).map
+      f.op).app j
+      (mendlerFamilyUncurry pt G family j) := by
+  funext ⟨s, g⟩
+  exact (congrFun (hd i j f s) g).symm
+
+/-- The curried family is dinatural when
+the uncurried family satisfies the wedge
+condition. Inverse of
+`mendlerFamilyUncurry_wedge`. -/
+theorem mendlerFamilyCurry_isDinatural
+    (pt : Type v)
+    (G : (Type v)ᵒᵖ ⥤ Type v ⥤ Type v)
+    (family :
+      (I : Type v) →
+        diagApp
+          (sliceProfunctorPoly
+            (mendlerTypeProf pt G) pt) I)
+    (hw : ∀ {i j : Type v} (f : i ⟶ j),
+      ((sliceProfunctorPoly
+          (mendlerTypeProf pt G) pt).obj
+        (Opposite.op i)).map f (family i) =
+      ((sliceProfunctorPoly
+          (mendlerTypeProf pt G) pt).map
+        f.op).app j (family j)) :
+    IsDinatural (HomToProf pt) (G ⇓ pt)
+      (mendlerFamilyCurry pt G family) := by
+  intro i j f s
+  exact funext fun g =>
+    (congrFun (hw f) ⟨s, g⟩).symm
+
+/-- Equivalence between Mendler algebras over
+`pt` and the type end of the uncurried Mendler
+profunctor, for `C = Type v`.
+
+The currying isomorphism
+`(A → B → C) ≃ (A × B → C)` applied
+componentwise converts between the curried
+Mendler algebra family
+`∀ I, (I → pt) → (G(I,I) → pt)`
+and the end of the uncurried profunctor
+`∀ I, ((I → pt) × G(I,I)) → pt`,
+with the dinaturality condition matching
+the wedge condition. -/
+def mendlerAlgOverTypeEndEquiv
+    (pt : Type v)
+    (G : (Type v)ᵒᵖ ⥤ Type v ⥤ Type v) :
+    MendlerAlgebraOver G pt ≃
+      typeEnd
+        (sliceProfunctorPoly
+          (mendlerTypeProf pt G) pt) where
+  toFun m :=
+    ⟨mendlerFamilyUncurry pt G m.family,
+     fun f =>
+       mendlerFamilyUncurry_wedge
+         pt G m.family m.isDinatural f⟩
+  invFun e :=
+    MendlerAlgebraOver.mk' pt
+      (mendlerFamilyCurry pt G e.val)
+      (mendlerFamilyCurry_isDinatural
+        pt G e.val
+        (fun f => e.property f))
+  left_inv _ := rfl
+  right_inv _ := rfl
+
+/-- Equivalence between Mendler algebras over
+`pt` and conventional algebra maps
+`mendlerExtType pt G → pt`, for `C = Type v`.
+
+Composes `mendlerAlgOverTypeEndEquiv` (the
+currying equivalence) with
+`mendlerAlgTypeEquiv` (the coend-end
+algebra characterization). -/
+def mendlerAlgOverAlgMapEquiv
+    (pt : Type v)
+    (G : (Type v)ᵒᵖ ⥤ Type v ⥤ Type v) :
+    MendlerAlgebraOver G pt ≃
+      (mendlerExtType pt G → pt) :=
+  (mendlerAlgOverTypeEndEquiv pt G).trans
+    (mendlerAlgTypeEquiv pt G pt).symm
+
+/-- The Mendler algebra hom condition implies
+the algebra-map commutativity condition.
+
+For `C = Type v`, the Mendler hom condition
+`∀ A γ, m₁.family A γ ≫ h =
+  m₂.family A (γ ≫ h)`
+implies (by extensionality on the coend
+quotient)
+`h ∘ φ₁ = φ₂ ∘ mendlerExtType.map G h`
+where `φ_i = mendlerAlgOverAlgMapEquiv`. -/
+theorem mendlerHom_to_algMapComm
+    (G : (Type v)ᵒᵖ ⥤ Type v ⥤ Type v)
+    (m₁ m₂ : MendlerAlgebra G)
+    (h : m₁.pt ⟶ m₂.pt)
+    (hc : ∀ (A : Type v) (γ : A ⟶ m₁.pt),
+      m₁.family A γ ≫ h =
+        m₂.family A (γ ≫ h)) :
+    h ∘ (mendlerAlgOverAlgMapEquiv m₁.pt G
+        m₁.toMendlerAlgebraOver) =
+      (mendlerAlgOverAlgMapEquiv m₂.pt G
+        m₂.toMendlerAlgebraOver) ∘
+      mendlerExtType.map G h := by
+  funext x
+  exact Quot.inductionOn x
+    fun ⟨j, γ, g⟩ => congrFun (hc j γ) g
+
+/-- The algebra-map commutativity condition
+implies the Mendler algebra hom condition. -/
+theorem algMapComm_to_mendlerHom
+    (G : (Type v)ᵒᵖ ⥤ Type v ⥤ Type v)
+    (m₁ m₂ : MendlerAlgebra G)
+    (h : m₁.pt ⟶ m₂.pt)
+    (hc : h ∘ (mendlerAlgOverAlgMapEquiv m₁.pt G
+        m₁.toMendlerAlgebraOver) =
+      (mendlerAlgOverAlgMapEquiv m₂.pt G
+        m₂.toMendlerAlgebraOver) ∘
+      mendlerExtType.map G h) :
+    ∀ (A : Type v) (γ : A ⟶ m₁.pt),
+      m₁.family A γ ≫ h =
+        m₂.family A (γ ≫ h) := by
+  intro A γ
+  funext g
+  exact congrFun hc
+    (Quot.mk _ ⟨A, γ, g⟩)
+
+end TypeValuedMendlerAlgConnection
+
+/-!
+## End-Based Mendler-Lambek Equivalence
+
+Under `HasAllHomToProfEnds G` (terminal wedges for
+both the inner `ihomPowerProf` and outer `churchProf`
+profunctors), the impredicative GExt endofunctor
+`ImpredicativeGExtFunctor G : C ⥤ C` gives rise to
+an equivalence
+`MendlerAlgebra G ≌ ConventionalAlgebra
+  (ImpredicativeGExtFunctor G)`.
+
+This parallels `mendlerLambekEquiv` from
+`WeightedAlg.lean`, which gives the same equivalence
+under `HasAllHomToProfCoends G` for `GExtFunctor G`.
+-/
+
+section EndBasedMendlerLambek
+
+open MonoidalClosed MonoidalCategory
+
+variable
+  {C : Type u} [Category.{v} C]
+  [MonoidalCategory C] [MonoidalClosed C]
+  [BraidedCategory C]
+  [HasPowers C]
+  (G : Cᵒᵖ ⥤ C ⥤ C)
+  [HasAllHomToProfEnds G]
+
+/-- Given a Mendler algebra family at `pt`, build a
+global section of the inner end at `pt`. The family
+`∀ A (γ : A ⟶ pt), G(A,A) ⟶ pt` is curried to
+`∀ A, G(A,A) ⟶ pt^{A→pt}` via the power lift, then
+`curry'` gives the internal-hom components, and
+the terminal wedge lifts these into a global
+section. -/
+def mendlerGlobalSection
+    (m : MendlerAlgebra G)
+    (twInner : ∀ (pt Y : C),
+      HasTerminalWedge (ihomPowerProf G pt Y)) :
+    𝟙_ C ⟶ (twInner m.pt m.pt).wedge.pt :=
+  (twInner m.pt m.pt).isLimit.lift
+    (Wedge.mk (𝟙_ C)
+      (fun A =>
+        curry' (HasPowers.lift
+          (fun γ => m.family A γ)))
+      (fun {i j} f => by
+        simp only [ihomPowerProf]
+        rw [← Category.assoc,
+          curry'_pre_app,
+          curry'_ihom_map,
+          curry'_pre_app]
+        congr 1
+        apply HasPowers.ext; intro s
+        simp only [Category.assoc,
+          HasPowers.mapIdx_proj, HasPowers.fac,
+          Quiver.Hom.unop_op]
+        have hd := m.isDinatural i j f s
+        simp only [Profunctor.lmap, Profunctor.rmap,
+          sliceProfunctor_obj_map,
+          sliceProfunctor_map_app,
+          Quiver.Hom.unop_op,
+          HomToProf_map_app,
+          HomToProf_obj_map] at hd
+        exact hd.symm))
+
+/-- The floor translation for the end-based
+equivalence: converts a Mendler algebra `(pt, Φ)` to
+a conventional algebra for
+`ImpredicativeGExtFunctor G`. The structure map
+evaluates the outer end projection at `Y = pt` using
+the global section derived from the family. -/
+def impFloor
+    (twInner : ∀ (pt Y : C),
+      HasTerminalWedge (ihomPowerProf G pt Y))
+    (twOuter : ∀ (pt : C),
+      HasTerminalWedge
+        (churchProf G pt (twInner pt)))
+    (m : MendlerAlgebra G) :
+    ConventionalAlgebra
+      (ImpredicativeGExtFunctor G
+        twInner twOuter) where
+  a := m.pt
+  str :=
+    (twOuter m.pt).wedge.ι m.pt ≫
+    ihomEvalAt (mendlerGlobalSection G m twInner)
+
+/-- The ceiling translation for the end-based
+equivalence: converts a conventional algebra for
+`ImpredicativeGExtFunctor G` to a Mendler algebra.
+The Mendler family at `(A, γ)` is `churchLift ≫ str`:
+embed `G(A,A)` into the impredicative GExt object
+via the Church encoding and compose with the algebra
+structure map. -/
+def impCeil
+    (twInner : ∀ (pt Y : C),
+      HasTerminalWedge (ihomPowerProf G pt Y))
+    (twOuter : ∀ (pt : C),
+      HasTerminalWedge
+        (churchProf G pt (twInner pt)))
+    (alg : ConventionalAlgebra
+      (ImpredicativeGExtFunctor G
+        twInner twOuter)) :
+    MendlerAlgebra G where
+  pt := alg.a
+  toMendlerAlgebraOver :=
+    ⟨⟨fun A γ =>
+        churchLift G alg.a (twInner alg.a)
+          (twOuter alg.a) A γ ≫ alg.str,
+      fun i j f s => by
+        simp only [Profunctor.lmap, Profunctor.rmap,
+          sliceProfunctor_obj_map,
+          sliceProfunctor_map_app,
+          Quiver.Hom.unop_op,
+          HomToProf_map_app,
+          HomToProf_obj_map]
+        rw [← Category.assoc, ← Category.assoc]
+        congr 1
+        apply (twOuter alg.a).hom_ext; intro Y
+        simp only [Category.assoc]
+        have fac1 : churchLift G alg.a
+            (twInner alg.a) (twOuter alg.a)
+            j s ≫
+            (twOuter alg.a).wedge.ι Y =
+          churchComponent G alg.a
+            (twInner alg.a) Y j s :=
+          (twOuter alg.a).isLimit.fac
+            (Wedge.mk _
+              (fun Y => churchComponent G alg.a
+                (twInner alg.a) Y j s)
+              (fun {_ _} g =>
+                churchComponent_wedge G alg.a
+                  (twInner alg.a) j s g))
+            (WalkingMulticospan.left Y)
+        have fac2 : churchLift G alg.a
+            (twInner alg.a) (twOuter alg.a)
+            i (f ≫ s) ≫
+            (twOuter alg.a).wedge.ι Y =
+          churchComponent G alg.a
+            (twInner alg.a) Y i (f ≫ s) :=
+          (twOuter alg.a).isLimit.fac
+            (Wedge.mk _
+              (fun Y => churchComponent G alg.a
+                (twInner alg.a) Y i (f ≫ s))
+              (fun {_ _} g =>
+                churchComponent_wedge G alg.a
+                  (twInner alg.a) i (f ≫ s) g))
+            (WalkingMulticospan.left Y)
+        rw [fac1, fac2]
+        exact (churchComponent_dinatural G alg.a
+          (twInner alg.a) Y f s).symm⟩⟩
+
+omit [HasAllHomToProfEnds G] in
+/-- `impCeil ∘ impFloor = id` on Mendler algebras:
+the family recovered by ceiling the floor is the
+original family. -/
+theorem impCeil_impFloor
+    (twInner : ∀ (pt Y : C),
+      HasTerminalWedge (ihomPowerProf G pt Y))
+    (twOuter : ∀ (pt : C),
+      HasTerminalWedge
+        (churchProf G pt (twInner pt)))
+    (m : MendlerAlgebra G) :
+    impCeil G twInner twOuter
+      (impFloor G twInner twOuter m) = m := by
+  cases m with | mk pt u =>
+  cases u with | mk r =>
+  cases r with | mk family isDinat =>
+  simp only [impCeil, impFloor]
+  congr 1
+  apply MendlerAlgebraOver.ext
+  apply RestrictedCowedgeOver.ext
+  funext A γ
+  dsimp only []
+  rw [← Category.assoc]
+  have outerFac : churchLift G pt (twInner pt)
+      (twOuter pt) A γ ≫
+      Multifork.ι (twOuter pt).wedge pt =
+    churchComponent G pt (twInner pt) pt A γ :=
+    (twOuter pt).isLimit.fac
+      (Wedge.mk _
+        (fun Y => churchComponent G pt
+          (twInner pt) Y A γ)
+        (fun {_ _} g =>
+          churchComponent_wedge G pt
+            (twInner pt) A γ g))
+      (WalkingMulticospan.left pt)
+  rw [outerFac]
+  unfold churchComponent
+  rw [curry_ihomEvalAt]
+  rw [← comp_whiskerRight_assoc _
+    (Multifork.ι (twInner pt pt).wedge A)]
+  let m : MendlerAlgebra G :=
+    ⟨pt, ⟨⟨family, isDinat⟩⟩⟩
+  have innerFac :
+      mendlerGlobalSection G m twInner ≫
+        Multifork.ι (twInner pt pt).wedge A =
+      curry'
+        (HasPowers.lift (fun δ => family A δ)) :=
+    (twInner pt pt).isLimit.fac _
+      (WalkingMulticospan.left A)
+  have braid :=
+    BraidedCategory.braiding_naturality_left
+      (mendlerGlobalSection G m twInner ≫
+        Multifork.ι (twInner pt pt).wedge A)
+      ((G.obj (Opposite.op A)).obj A)
+  dsimp only [multicospanIndexEnd,
+    ihomPowerProf, Opposite.unop_op] at braid
+  rw [reassoc_of% braid,
+    leftUnitor_inv_braiding_assoc,
+    innerFac]
+  have whisk :
+      (G.obj (Opposite.op A)).obj A ◁
+        curry'
+          (HasPowers.lift (fun δ => family A δ)) ≫
+        (ihom.ev
+          ((G.obj (Opposite.op A)).obj A)).app
+          (pt ^. (A ⟶ pt)) =
+      (ρ_ ((G.obj (Opposite.op A)).obj A)).hom ≫
+        HasPowers.lift (fun δ => family A δ) :=
+    whiskerLeft_curry'_ihom_ev_app _
+  rw [reassoc_of% whisk, Iso.inv_hom_id_assoc]
+  exact HasPowers.fac _ γ
+
+end EndBasedMendlerLambek
 
 end GebLean
