@@ -1899,4 +1899,324 @@ theorem yoneda_parametricity_inverse
 
 end YonedaViaParametricity
 
+section YonedaExtensionOfSections
+
+variable {C : Type u} [Category.{v} C]
+
+/-- A representable section of an endofunctor
+`G : PSh(C) ⥤ PSh(C)` relative to an embedding
+`Y : C ⥤ PSh(C)` is a natural family of morphisms
+`pshUnitPresheaf C ⟶ G.obj (Y.obj X)` indexed by
+`X : C`. When `Y` is the Yoneda embedding, this
+is the restriction of a `PresheafSection` to
+representable presheaves. -/
+abbrev RepresentableSection
+    (Y : C ⥤ (Cᵒᵖ ⥤ Type w))
+    (G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w)) :=
+  constTerminal C
+    (pshUnitPresheafIsTerminal.{u, v, w} C) ⟶
+    Y ⋙ G
+
+/-- Build a `RepresentableSection` from a family
+of morphisms from the terminal presheaf satisfying
+the naturality condition. -/
+def RepresentableSection.mk'
+    (Y : C ⥤ (Cᵒᵖ ⥤ Type w))
+    (G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w))
+    (s : (X : C) →
+      (pshUnitPresheaf C ⟶ G.obj (Y.obj X)))
+    (hs : ∀ {X X' : C} (f : X ⟶ X'),
+      s X ≫ G.map (Y.map f) = s X') :
+    RepresentableSection Y G :=
+  { app := fun X => s X
+    naturality := fun {X X'} f => by
+      simp only [Functor.const_obj_obj,
+        Functor.const_obj_map,
+        Functor.comp_obj, Functor.comp_map,
+        Category.id_comp]
+      exact (hs f).symm }
+
+/-- The component of a `RepresentableSection`
+at `X : C` is a morphism
+`pshUnitPresheaf C ⟶ G.obj (Y.obj X)`. -/
+@[simp]
+theorem RepresentableSection.mk'_app
+    (Y : C ⥤ (Cᵒᵖ ⥤ Type w))
+    (G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w))
+    (s : (X : C) →
+      (pshUnitPresheaf C ⟶ G.obj (Y.obj X)))
+    (hs : ∀ {X X' : C} (f : X ⟶ X'),
+      s X ≫ G.map (Y.map f) = s X')
+    (X : C) :
+    (RepresentableSection.mk' Y G s hs).app X =
+      s X :=
+  rfl
+
+/-- Restriction of a presheaf section to an
+embedding `Y : C ⥤ PSh(C)`: precomposition with
+`Y` restricts from all presheaves to those in the
+image of `Y`. -/
+def presheafSectionRestrict
+    (Y : C ⥤ (Cᵒᵖ ⥤ Type w))
+    {G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w)}
+    (σ : PresheafSection G) :
+    RepresentableSection Y G where
+  app X := σ.app (Y.obj X)
+  naturality {X X'} f := by
+    have h := σ.naturality (Y.map f)
+    simp only [Functor.const_obj_obj,
+      Functor.const_obj_map,
+      Category.id_comp] at h
+    simp only [Functor.const_obj_obj,
+      Functor.const_obj_map,
+      Functor.comp_obj, Functor.comp_map,
+      Category.id_comp]
+    exact h
+
+/-- The restriction map evaluates to the
+presheaf section at the image of `Y`. -/
+@[simp]
+theorem presheafSectionRestrict_app
+    (Y : C ⥤ (Cᵒᵖ ⥤ Type w))
+    {G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w)}
+    (σ : PresheafSection G)
+    (X : C) :
+    (presheafSectionRestrict Y σ).app X =
+      σ.app (Y.obj X) :=
+  rfl
+
+/-- A presheaf section `σ` is determined by its
+value at the initial presheaf: `σ_P` equals
+`σ_∅ ≫ G.map(!_P)` where `!_P : ∅ → P` is
+the unique morphism from the initial presheaf. -/
+theorem presheafSection_eq_via_initial
+    {G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w)}
+    (σ : PresheafSection G)
+    (P : Cᵒᵖ ⥤ Type w) :
+    σ.app P =
+      σ.app (pshEmptyPresheaf C) ≫
+        G.map (pshEmptyMap P) := by
+  have h := σ.naturality (pshEmptyMap P)
+  simp only [Functor.const_obj_obj,
+    Functor.const_obj_map,
+    Category.id_comp] at h
+  exact h
+
+/-- Construct a presheaf section from a morphism
+`⊤ → G(∅)` by postcomposing with `G.map(!_P)`.
+Naturality follows from the uniqueness of the
+morphism from the initial presheaf. -/
+def presheafSectionOfInitial
+    {G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w)}
+    (τ : pshUnitPresheaf C ⟶
+      G.obj (pshEmptyPresheaf C)) :
+    PresheafSection G :=
+  PresheafSection.mk' G
+    (fun P => τ ≫ G.map (pshEmptyMap P))
+    (fun {P Q} α => by
+      simp only [Category.assoc, ← G.map_comp]
+      have h : pshEmptyMap P ≫ α =
+          pshEmptyMap Q :=
+        pshEmptyMap_unique
+          (pshEmptyMap P ≫ α)
+      rw [h])
+
+/-- Round-trip: constructing a presheaf section
+from its initial-presheaf value recovers the
+original section. -/
+theorem presheafSectionOfInitial_restrict
+    {G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w)}
+    (σ : PresheafSection G) :
+    presheafSectionOfInitial
+      (σ.app (pshEmptyPresheaf C)) = σ := by
+  apply NatTrans.ext
+  funext P
+  simp only [presheafSectionOfInitial,
+    PresheafSection.mk']
+  exact (presheafSection_eq_via_initial σ P).symm
+
+/-- Round-trip: extracting the initial-presheaf
+value from a constructed section recovers the
+original morphism. -/
+theorem presheafSectionOfInitial_app_empty
+    {G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w)}
+    (τ : pshUnitPresheaf C ⟶
+      G.obj (pshEmptyPresheaf C)) :
+    (presheafSectionOfInitial τ).app
+      (pshEmptyPresheaf C) = τ := by
+  simp only [presheafSectionOfInitial,
+    PresheafSection.mk']
+  have h : pshEmptyMap (pshEmptyPresheaf C) =
+      𝟙 (pshEmptyPresheaf.{u, v, w} C) :=
+    (pshEmptyMap_unique
+      (𝟙 (pshEmptyPresheaf C))).symm
+  rw [h, G.map_id, Category.comp_id]
+
+/-- Presheaf sections of `G` are equivalent to
+morphisms from the terminal presheaf to `G`
+applied to the initial presheaf. The forward
+direction evaluates at `∅`; the reverse extends
+via `G.map(!_P)`. -/
+def presheafSectionEquivInitial
+    (G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w)) :
+    PresheafSection G ≃
+      (pshUnitPresheaf C ⟶
+        G.obj (pshEmptyPresheaf C)) where
+  toFun σ := σ.app (pshEmptyPresheaf C)
+  invFun τ := presheafSectionOfInitial τ
+  left_inv σ :=
+    presheafSectionOfInitial_restrict σ
+  right_inv τ :=
+    presheafSectionOfInitial_app_empty τ
+
+/-- The restriction map factors through the
+initial-presheaf value: the component
+`(presheafSectionRestrict Y σ).app X` equals
+`σ_∅ ≫ G.map(!_{Y(X)})`. -/
+theorem presheafSectionRestrict_via_initial
+    (Y : C ⥤ (Cᵒᵖ ⥤ Type w))
+    {G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w)}
+    (σ : PresheafSection G)
+    (X : C) :
+    (presheafSectionRestrict Y σ).app X =
+      σ.app (pshEmptyPresheaf C) ≫
+        G.map (pshEmptyMap (Y.obj X)) := by
+  simp only [presheafSectionRestrict_app]
+  exact presheafSection_eq_via_initial σ
+    (Y.obj X)
+
+/-- Injectivity of restriction holds when the
+maps `G.map(!_{Y(X)}) : G(∅) → G(Y(X))` are
+jointly monic: if two morphisms `τ₁, τ₂ : ⊤ → G(∅)`
+agree after postcomposing with all
+`G.map(!_{Y(X)})`, then `τ₁ = τ₂`. -/
+theorem presheafSectionRestrict_injective
+    (Y : C ⥤ (Cᵒᵖ ⥤ Type w))
+    {G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w)}
+    (hMono : ∀ (τ₁ τ₂ :
+        pshUnitPresheaf C ⟶
+          G.obj (pshEmptyPresheaf C)),
+      (∀ X : C,
+        τ₁ ≫ G.map (pshEmptyMap (Y.obj X)) =
+        τ₂ ≫ G.map (pshEmptyMap (Y.obj X))) →
+      τ₁ = τ₂)
+    {σ₁ σ₂ : PresheafSection G}
+    (hEq : presheafSectionRestrict Y σ₁ =
+      presheafSectionRestrict Y σ₂) :
+    σ₁ = σ₂ := by
+  have hInit : σ₁.app (pshEmptyPresheaf C) =
+      σ₂.app (pshEmptyPresheaf C) := by
+    apply hMono
+    intro X
+    have h₁ := presheafSectionRestrict_via_initial
+      Y σ₁ X
+    have h₂ := presheafSectionRestrict_via_initial
+      Y σ₂ X
+    have hApp : (presheafSectionRestrict Y σ₁).app
+        X =
+        (presheafSectionRestrict Y σ₂).app X :=
+      congr_fun (congr_arg NatTrans.app hEq) X
+    rw [h₁] at hApp
+    rw [h₂] at hApp
+    exact hApp
+  rw [← presheafSectionOfInitial_restrict σ₁,
+    ← presheafSectionOfInitial_restrict σ₂,
+    hInit]
+
+/-- Given a witness `X₀ : C` whose image under
+`Y` is isomorphic to the initial presheaf, extend
+a representable section to a full presheaf section
+by extracting the initial-presheaf value through
+the isomorphism. -/
+def representableSectionExtend
+    (Y : C ⥤ (Cᵒᵖ ⥤ Type w))
+    {G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w)}
+    (X₀ : C)
+    (i : Y.obj X₀ ≅ pshEmptyPresheaf C)
+    (ρ : RepresentableSection Y G) :
+    PresheafSection G :=
+  presheafSectionOfInitial
+    (ρ.app X₀ ≫ G.map i.hom)
+
+/-- Restrict-then-extend recovers the original
+presheaf section. -/
+theorem representableSectionExtend_restrict
+    (Y : C ⥤ (Cᵒᵖ ⥤ Type w))
+    {G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w)}
+    (X₀ : C)
+    (i : Y.obj X₀ ≅ pshEmptyPresheaf C)
+    (σ : PresheafSection G) :
+    representableSectionExtend Y X₀ i
+      (presheafSectionRestrict Y σ) = σ := by
+  simp only [representableSectionExtend,
+    presheafSectionRestrict_app]
+  rw [presheafSection_eq_via_initial σ
+    (Y.obj X₀)]
+  simp only [Category.assoc, ← G.map_comp]
+  have h : pshEmptyMap (Y.obj X₀) ≫ i.hom =
+      𝟙 (pshEmptyPresheaf.{u, v, w} C) :=
+    (pshEmptyMap_unique _).trans
+      (pshEmptyMap_unique _).symm
+  rw [h, G.map_id, Category.comp_id]
+  exact presheafSectionOfInitial_restrict σ
+
+/-- The representable section obtained by
+extending and then restricting agrees at the
+witness object `X₀` with the original, up to
+the isomorphism `i`. -/
+theorem representableSectionExtend_app_X₀
+    (Y : C ⥤ (Cᵒᵖ ⥤ Type w))
+    {G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w)}
+    (X₀ : C)
+    (i : Y.obj X₀ ≅ pshEmptyPresheaf C)
+    (ρ : RepresentableSection Y G) :
+    (presheafSectionRestrict Y
+      (representableSectionExtend Y X₀ i ρ)
+    ).app X₀ =
+      ρ.app X₀ ≫ G.map i.hom ≫
+        G.map (pshEmptyMap (Y.obj X₀)) := by
+  simp only [presheafSectionRestrict_app,
+    representableSectionExtend,
+    presheafSectionOfInitial,
+    PresheafSection.mk']
+  rfl
+
+/-- When `Y.obj X₀ ≅ ∅` and `G` maps `i.inv`
+followed by `i.hom` to the identity on
+`G(Y.obj X₀)`, the extend-then-restrict round-trip
+at `X₀` recovers the original component. -/
+theorem representableSectionExtend_roundtrip_X₀
+    (Y : C ⥤ (Cᵒᵖ ⥤ Type w))
+    {G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w)}
+    (X₀ : C)
+    (i : Y.obj X₀ ≅ pshEmptyPresheaf C)
+    (ρ : RepresentableSection Y G)
+    (hInit :
+      pshEmptyMap (Y.obj X₀) = i.inv) :
+    (presheafSectionRestrict Y
+      (representableSectionExtend Y X₀ i ρ)
+    ).app X₀ = ρ.app X₀ := by
+  rw [representableSectionExtend_app_X₀]
+  simp only [← G.map_comp, hInit,
+    i.hom_inv_id, G.map_id]
+  exact Category.comp_id _
+
+end YonedaExtensionOfSections
+
 end GebLean

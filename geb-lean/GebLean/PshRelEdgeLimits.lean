@@ -128,6 +128,25 @@ def pshEmptyMap (P : Cᵒᵖ ⥤ Type w) :
     pshEmptyPresheaf C ⟶ P where
   app _ e := (e.down).elim
 
+/-- The morphism from the empty presheaf is
+unique. -/
+theorem pshEmptyMap_unique
+    {P : Cᵒᵖ ⥤ Type w}
+    (f : pshEmptyPresheaf C ⟶ P) :
+    f = pshEmptyMap P := by
+  ext c e
+  exact (e.down).elim
+
+/-- `pshEmptyPresheaf C` is initial in
+`Cᵒᵖ ⥤ Type w`. -/
+def pshEmptyPresheafIsInitial (C : Type u)
+    [Category.{v} C] :
+    Limits.IsInitial
+      (pshEmptyPresheaf.{u, v, w} C) :=
+  Limits.IsInitial.ofUniqueHom
+    (fun P => pshEmptyMap P)
+    (fun _ f => pshEmptyMap_unique f)
+
 /-- The empty relation on the empty presheaf. -/
 def pshRelEmpty (C : Type u)
     [Category.{v} C] :

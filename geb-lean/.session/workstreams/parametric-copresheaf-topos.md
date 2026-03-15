@@ -771,9 +771,13 @@ Relevant declarations:
   `PshRelEdge C ≅ Sep_J(C x I^op)` explicitly (walking
   span I, topology J, separation).
 
-- [ ] **S2. Yoneda extension.** Given a section restricted
+- [x] **S2. Yoneda extension.** Given a section restricted
   to representable presheaves (via Yoneda), extend to
   all presheaves via the density theorem.
+  Implemented via initial-presheaf characterization:
+  `presheafSectionEquivInitial`,
+  `representableSectionExtend`,
+  `presheafSectionRestrict_injective`.
 
 ### Documentation
 
@@ -1874,4 +1878,35 @@ Status: [open].
 Extend sections from representable presheaves to
 all presheaves via the density theorem.
 Task: S2.
-Status: [open].
+Status: [in progress].
+Results so far
+(`PshRelEdgeGraphRestriction.lean`,
+section `YonedaExtensionOfSections`):
+- `RepresentableSection Y G`: section of `G`
+  restricted to the image of an embedding
+  `Y : C ⥤ PSh(C)`, parameterized by `Y` to
+  handle universe polymorphism (standard Yoneda
+  is at `Type v` while `G` may act on `Type w`).
+- `presheafSectionRestrict Y σ`: restriction
+  map from `PresheafSection G` to
+  `RepresentableSection Y G`.
+- `presheafSectionEquivInitial G`: presheaf
+  sections are equivalent to morphisms
+  `⊤ → G(∅)` (value at the initial presheaf
+  determines the entire section).
+- `presheafSectionRestrict_injective`:
+  restriction is injective when the maps
+  `G.map(!_{Y(X)}) : G(∅) → G(Y(X))` are
+  jointly monic.
+- `representableSectionExtend Y X₀ i ρ`:
+  extension from representable to full section,
+  given a witness `X₀` with `Y(X₀) ≅ ∅`.
+- `representableSectionExtend_restrict`:
+  restrict-then-extend recovers the original.
+Also added `pshEmptyPresheafIsInitial` and
+`pshEmptyMap_unique` to `PshRelEdgeLimits.lean`.
+Open: full equivalence between restriction and
+extension requires showing the extend-then-restrict
+round-trip recovers the representable section at
+all objects (not just `X₀`), which needs stronger
+conditions on `G` and `Y`.
