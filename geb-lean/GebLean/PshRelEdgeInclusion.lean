@@ -7,6 +7,31 @@ import Mathlib.CategoryTheory.Monoidal.Cartesian.FunctorCategory
 import Mathlib.CategoryTheory.Monoidal.Closed.Ideal
 import Mathlib.CategoryTheory.Monad.Limits
 
+/-!
+# Inclusion of PshRelEdge C into PSh(C x I^op)
+
+This file constructs the inclusion functor from
+the edge category `PshRelEdge C` of presheaf
+relations into the presheaf topos
+`PSh(C x I^op)`, where `I` is the walking span,
+and shows that `PshRelEdge C` is a reflective
+subcategory.
+
+The inclusion sends `(P, Q, R)` to the span of
+presheaves `P <-- R.toFunctor --> Q` and is
+fully faithful
+(`pshRelEdgeInclusionFullyFaithful`).
+
+The left adjoint is the separation reflector
+`pshRelEdgeSepFunctor`, which replaces a span
+`(P, Q, F)` with the image
+`(P, Q, Im(F => P x Q))`. The adjunction
+`pshRelEdgeSepFunctor ⊣
+pshRelEdgeInclusionFunctor` makes `PshRelEdge C`
+a reflective subcategory of `PSh(C x I^op)`,
+with the counit a natural isomorphism.
+-/
+
 open CategoryTheory Limits
 
 namespace GebLean

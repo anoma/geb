@@ -1,5 +1,26 @@
 import GebLean.PshRelDouble
 
+/-!
+# Edge category via the subobject classifier
+
+This file relates `PshRelEdge C` to the slice
+category `Over Ω` where `Ω = pshSieveFunctor C`
+is the subobject classifier in `PSh(C)`.
+
+A characteristic map `χ : X ⟶ Ω` determines a
+diagonal relation on `X` restricted to the
+classified subobject (`pshRelFromSieveMap`).
+The functor `pshOverOmegaEdgeFunctor` sends
+`(X, χ)` to `(X, X, pshRelFromSieveMap χ)` in
+`PshRelEdge C`.
+
+The identity section functor
+`pshRelIdentFunctor` factors as
+`pshTruthLabelFunctor ⋙ pshOverOmegaEdgeFunctor`,
+where `pshTruthLabelFunctor` labels every element
+with the maximal sieve.
+-/
+
 open CategoryTheory
 
 namespace GebLean

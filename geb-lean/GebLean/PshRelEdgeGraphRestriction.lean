@@ -65,6 +65,26 @@ specialized to functions yields naturality.
   lifted functor is fully faithful
 * `pshRelEdgeGraphSubcat_essSurj`: the lifted
   functor is essentially surjective
+
+## Sections and Yoneda extension
+
+* `ParametricCone`: cone over the Barr-lifted
+  edge functor with terminal vertex
+* `PresheafSection`: natural transformation
+  from the terminal presheaf endofunctor to `G`
+* `parametricConeEquivPresheafSection`:
+  parametric cones biject with presheaf sections
+* `presheafSectionEquivInitial`: presheaf
+  sections are determined by their value at the
+  initial presheaf
+* `RepresentableSection`: section restricted to
+  the image of an embedding `Y : C ⥤ PSh(C)`
+* `presheafSectionEquivRepresentable`: full
+  equivalence under weak initiality
+* `presheafSection_empty_of_initial`: no
+  sections when `G(∅)` is initial
+* `presheafSection_unique_of_terminal`:
+  sections are unique when `G(∅)` is terminal
 -/
 
 universe u v w

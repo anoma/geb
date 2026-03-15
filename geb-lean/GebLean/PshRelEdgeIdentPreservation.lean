@@ -7,13 +7,23 @@ The identity section functor
 `pshRelIdentFunctor : PSh(C) ⥤ PshRelEdge C`
 preserves exponentials, all finite limits, and
 all finite colimits. These results express the
-identity extension property (IEP) as a cartesian
-closed functor property that also preserves
-colimits.
+identity extension property (IEP) of Reynolds
+(1983) and Hermida-Reddy-Robinson (2014,
+Proposition 6.3) as a cartesian closed functor
+property that also preserves colimits.
 
-The preservation of colimits is a consequence of
-the diagonal relation being determined by the
-equality structure of the presheaf, which
+The exponential preservation says: the arrow
+relation on diagonal relations is the diagonal
+of the internal hom. This is the presheaf-level
+generalization of Wadler's observation
+(Section 2) that if `A` is the identity
+relation on `A` and `B` is the identity relation
+on `B`, then `A -> B` is the identity relation
+on `A -> B`.
+
+The preservation of colimits is a consequence
+of the diagonal relation being determined by
+the equality structure of the presheaf, which
 commutes with all (co)limit constructions.
 
 ## Main results

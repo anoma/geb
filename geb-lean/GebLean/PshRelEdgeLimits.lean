@@ -10,14 +10,28 @@ objects, binary coproducts, equalizers, and
 coequalizers. Products are defined in
 `PshRelEdgeExp.lean`.
 
+These constructions provide the presheaf-level
+analogues of Wadler's relational interpretations
+of product types (Section 2) and sum types
+(Section 2), as well as the initial and terminal
+presheaves used in the Yoneda extension of
+sections (`PshRelEdgeGraphRestriction.lean`).
+
 ## Main definitions
 
 * `pshRelEdgeTerminal`: terminal object
+  `(⊤, ⊤, pshRelId ⊤)`
 * `pshRelEdgeInitial`: initial object
+  `(∅, ∅, pshRelId ∅)`
 * `pshRelEdgeCoprod`: binary coproduct
-* `pshRelEdgeEqualizer`: equalizer of two morphisms
+* `pshRelEdgeEqualizer`: equalizer of two
+  morphisms
 * `pshRelEdgeCoequalizer`: coequalizer of two
   morphisms
+* `pshEmptyPresheafIsInitial`: the empty
+  presheaf is initial in `PSh(C)`
+* `pshEmptyMap_unique`: uniqueness of morphisms
+  from the initial presheaf
 -/
 
 namespace GebLean

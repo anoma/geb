@@ -20,7 +20,11 @@ The strong subobject classifier is
 `full` is the full relation on `Ω × Ω`. The
 classifying morphism for a strong subobject
 classifies the source and target subfunctors
-independently.
+independently. This is one component of the
+quasitopos structure of `PshRelEdge C`
+(together with the limits, colimits, and
+exponentials from `PshRelEdgeLimits.lean` and
+`PshRelEdgeExp.lean`).
 
 ## Main definitions
 

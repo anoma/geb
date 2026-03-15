@@ -15,26 +15,48 @@ import Mathlib.CategoryTheory.Adjunction.Limits
 /-!
 # Internal Relations in PSh(C)
 
-The double category of internal relations in the presheaf
-category `PSh(C) = Cᵒᵖ ⥤ Type w`.
+The double category of internal relations in the
+presheaf category `PSh(C) = Cᵒᵖ ⥤ Type w`.
+
+This is the presheaf-level generalization of
+Wadler's relational interpretation of types
+(Section 2 of "Theorems for free!"): types
+become presheaves, relations become subfunctors
+of products, graphs of functions become graphs
+of natural transformations.
 
 ## Presheaf representation of relations
 
 The presheaf `P × Q` (pointwise product) for
-`P Q : Cᵒᵖ ⥤ Type w` represents pairs of generalized
-elements of `P` and `Q`.
+`P Q : Cᵒᵖ ⥤ Type w` represents pairs of
+generalized elements of `P` and `Q`.
 
-A proof-relevant relation from `P` to `Q` is a morphism
-into `P × Q` in `PSh(C)`, i.e., an object of the over
-category `Over (P × Q)`.
+A proof-relevant relation from `P` to `Q` is a
+morphism into `P × Q` in `PSh(C)`, i.e., an
+object of the over category `Over (P × Q)`.
 
 ## Double category structure
 
 - Objects: presheaves `P : Cᵒᵖ ⥤ Type w`
 - Horizontal morphisms: natural transformations
-- Vertical morphisms: `PshRel P Q` (isomorphism classes
-  of objects over `P × Q`)
+- Vertical morphisms: `PshRel P Q` (subfunctors
+  of `P × Q`)
 - Squares: `pshRelRelated` (`Prop`-valued)
+
+## Barr extension and the edge category
+
+The Barr extension (`pshBarrLiftRel`) lifts an
+endofunctor `G : PSh(C) ⥤ PSh(C)` to act on
+relations: given `R : PshRel P Q`, it produces
+`pshBarrLiftRel G R : PshRel (G P) (G Q)`.
+This is the presheaf-level analogue of Wadler's
+`A* = {(map a x, map a y) | (x,y) in A}`.
+
+The edge category `PshRelEdge C` has objects
+`(P, Q, R)` with `R : PshRel P Q` and morphisms
+preserving relatedness. The identity section
+functor `pshRelIdentFunctor` sends `P` to
+`(P, P, pshRelId P)`.
 -/
 
 namespace GebLean
@@ -1148,7 +1170,8 @@ def pshRelTgtFunctor :
   map_id _ := rfl
   map_comp _ _ := rfl
 
-/-- The identity section functor from the presheaf
+/-- The identity section functor (Wadler's identity
+extension) from the presheaf
 category to the edge category of presheaf
 relations. Sends each presheaf `P` to the
 identity relation `pshRelId P`. -/
@@ -1604,8 +1627,12 @@ theorem pshProdOverToRel_graph
       exact Prod.ext rfl h⟩
 
 /-- The Barr extension of a graph relation
-`pshRelGraph α` equals
-`pshRelGraph (G.map α)`. -/
+`pshRelGraph α` equals `pshRelGraph (G.map α)`.
+This is the presheaf-level generalization of
+Wadler's observation (Section 3.1) that
+specializing `A*` to a function `a` gives
+`map a`: the relation lifted along a graph
+is the graph of the lifted function. -/
 theorem pshBarrLiftRel_graph
     {P Q : Cᵒᵖ ⥤ Type w}
     (G : (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w))

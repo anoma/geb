@@ -3,10 +3,17 @@ import GebLean.PshRelDouble
 /-!
 # Exponential Structure of the Edge Category
 
-The vertical edge category `PshRelEdge C` of the double
-category of presheaf relations is cartesian closed. The
-exponential of two edges `(A₁, B₁, R)` and `(A₂, B₂, T)`
-is `(A₁.functorHom A₂, B₁.functorHom B₂, pshArrowRel R T)`.
+The vertical edge category `PshRelEdge C` of the
+double category of presheaf relations is cartesian
+closed. The exponential of two edges
+`(A₁, B₁, R)` and `(A₂, B₂, T)` is
+`(A₁.functorHom A₂, B₁.functorHom B₂,
+pshArrowRel R T)`.
+
+This is the presheaf-level analogue of Wadler's
+relational interpretation of function types
+(Section 2): `(f, g) ∈ rel(A → B)` iff `f` maps
+R-related inputs to S-related outputs via `g`.
 
 ## Main definitions
 
@@ -14,7 +21,7 @@ is `(A₁.functorHom A₂, B₁.functorHom B₂, pshArrowRel R T)`.
 * `pshRelEdgeProd`: product in `PshRelEdge C`
 * `pshRelEdgeExp`: exponential in `PshRelEdge C`
 * `pshRelEdgeCurry`: currying for `PshRelEdge C`
-* `pshRelEdgeUncurry`: uncurrying for `PshRelEdge C`
+* `pshRelEdgeUncurry`: uncurrying
 * `pshRelEdgeEval`: evaluation morphism
 * `pshRelEdgeUncurry_curry`: left inverse
 * `pshRelEdgeCurry_uncurry`: right inverse

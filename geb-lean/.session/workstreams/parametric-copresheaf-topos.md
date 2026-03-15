@@ -794,21 +794,36 @@ Relevant declarations:
 
 ### Documentation
 
-- [ ] **D1. Annotate PshRelDouble.lean.** Add comments
-  explaining the Wadler correspondence for each
-  definition.
+- [x] **D1. Annotate PshRelDouble.lean.** Enhanced
+  module comment with Wadler correspondence
+  overview; added Wadler section references to
+  `pshBarrLiftRel_graph` (Section 3.1) and
+  `pshRelIdentFunctor` (identity extension).
 
-- [ ] **D2. Annotate PshRelEdge files.** Add comments to
-  `PshRelEdgeExp.lean`, `PshRelEdgeLimits.lean`,
-  `PshRelEdgeSOClassifier.lean`,
-  `PshRelEdgeIdentPreservation.lean`,
-  `PshRelEdgeInclusion.lean`,
-  `PshRelEdgeOverOmega.lean` explaining their role in
-  the Wadler correspondence.
+- [x] **D2. Annotate PshRelEdge files.** Added
+  module-level `/-! ... -/` comments to
+  `PshRelEdgeInclusion.lean` and
+  `PshRelEdgeOverOmega.lean` (previously missing).
+  Enhanced module comments in
+  `PshRelEdgeExp.lean` (Wadler Section 2 ref),
+  `PshRelEdgeLimits.lean` (Wadler sum/product
+  types, initial presheaf refs),
+  `PshRelEdgeSOClassifier.lean` (quasitopos
+  context), `PshRelEdgeIdentPreservation.lean`
+  (Reynolds/HRR identity extension refs),
+  `PshRelEdgeGraphRestriction.lean` (added
+  sections/Yoneda extension to listing).
 
-- [ ] **D3. Update docs/parametric-copresheaf-topos.md.**
-  Rewrite to center on PshRelEdge rather than
-  PshRelSpanObj.
+- [x] **D3. Update docs/parametric-copresheaf-topos.md.**
+  Full rewrite centering on `PshRelEdge C` as the
+  primary construction. Reorganized from 11
+  sections to 12: PshRelEdge C promoted to
+  Section 2, embeddings to Section 3, graph
+  restriction/free theorems to Section 4,
+  sections/Yoneda extension as new Section 6,
+  ambient topos landscape as Section 7,
+  `PshRelSpanObj` as subsection of Section 7.
+  Updated file map and open questions.
 
 ## Wadler Correspondence
 
