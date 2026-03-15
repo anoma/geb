@@ -2778,6 +2778,19 @@ def mendlerLambekPowerEndGExtEquiv :
     (Endofunctor.Algebra.equivOfNatIso
       (powerEndGExtNatIso G).symm)
 
+/-- The full Mendler-Lambek equivalence between
+Mendler algebras and conventional algebras of
+`PowerEndGExtFunctor G`, obtained by composing
+`mendlerAlgPowerEndEquiv` (power-end algebra
+equivalence) with `mendlerLambekPowerEndGExtEquiv`
+(power-end algebra to conventional algebra). -/
+def mendlerLambekGExtEquiv :
+    MendlerAlgebra G ≌
+      ConventionalAlgebra
+        (PowerEndGExtFunctor G) :=
+  mendlerAlgPowerEndEquiv G |>.trans
+    (mendlerLambekPowerEndGExtEquiv G)
+
 end PowerEndGExtFunctor
 
 /-!
@@ -2962,6 +2975,62 @@ lemma copowerIhomToPowerIhom_natural
     MonoidalClosed.uncurry_pre,
     ← MonoidalClosed.uncurry_id_eq_ev]
 
+omit [HasAllCopowerProfCoends G] in
+/-- Precomposition with `copowerIhomToPowerIhom`:
+expresses `f ≫ copowerIhomToPowerIhom S X Y` as a
+curried power lift where each component whiskers
+the copower injection by `Z` and evaluates via
+`uncurry f`. -/
+lemma comp_copowerIhomToPowerIhom
+    {S : Type v} {X Z Y : C}
+    (f : Z ⟶
+      (ihom (HasCopowers.copower S X)).obj Y) :
+    f ≫ copowerIhomToPowerIhom S X Y =
+    MonoidalClosed.curry
+      (HasPowers.lift (fun t =>
+        (HasCopowers.inj S X t) ▷ Z ≫
+          MonoidalClosed.uncurry f)) := by
+  simp only [copowerIhomToPowerIhom]
+  rw [← MonoidalClosed.curry_natural_left]
+  congr 1
+  apply HasPowers.ext; intro t
+  simp only [Category.assoc, HasPowers.fac]
+  rw [← Category.assoc,
+    whisker_exchange, Category.assoc,
+    ← MonoidalClosed.uncurry_natural_left,
+    Category.comp_id]
+
+omit [HasAllCopowerProfCoends G] in
+/-- Naturality of `copowerIhomToPowerIhom` in the
+target object `Y`: the map commutes with applying
+`(ihom _).map f` on the domain and
+`(ihom X).map (HasPowers.mapVal f)` on the
+codomain. -/
+lemma copowerIhomToPowerIhom_naturalY
+    {S : Type v} {X : C} {Y₁ Y₂ : C}
+    (f : Y₁ ⟶ Y₂) :
+    (ihom (HasCopowers.copower S X)).map f ≫
+      copowerIhomToPowerIhom S X Y₂ =
+    copowerIhomToPowerIhom S X Y₁ ≫
+      (ihom X).map (HasPowers.mapVal f) := by
+  simp only [copowerIhomToPowerIhom]
+  rw [← curry_natural_left,
+    ← curry_natural_right]
+  congr 1
+  apply HasPowers.ext; intro t
+  simp only [Category.assoc]
+  rw [HasPowers.fac, HasPowers.mapVal_proj,
+    ← Category.assoc (HasPowers.lift _),
+    HasPowers.fac, Category.assoc]
+  rw [← Category.assoc
+    (X ◁ (ihom (HasCopowers.copower S X)).map f),
+    whisker_exchange, Category.assoc]
+  congr 1
+  rw [← uncurry_natural_left,
+    Category.comp_id,
+    ← uncurry_natural_right,
+    Category.id_comp]
+
 /-- The wedge projection for the internal hom
 from the coend: at `A`, precompose with the coend
 injection and apply the internal copower-power map.
@@ -3038,5 +3107,368 @@ def ihomCoendWedge
       exact h_nat.symm)
 
 end IhomPowerEndGExt
+
+section IhomPowerEndGExtBraided
+
+variable
+  {C : Type u} [Category.{v} C]
+  [MonoidalCategory C] [MonoidalClosed C]
+  [SymmetricCategory C]
+  [HasCopowers C] [HasPowers C]
+  (G : Cᵒᵖ ⥤ C ⥤ C)
+  [HasAllCopowerProfCoends G]
+
+open MonoidalClosed MonoidalCategory
+  HasAllCopowerProfCoends
+
+/-- Given a wedge `s` for `ihomPowerProf G pt Y` with
+apex `Z`, this produces for each `A : C` and
+`t : A ⟶ pt` a morphism `G(A,A) ⟶ [Z, Y]`. The
+construction whiskers the wedge projection, braids to
+evaluation position, evaluates, and projects. -/
+def ihomCoendLiftComponent
+    (pt Y : C) (s : Wedge (ihomPowerProf G pt Y))
+    (A : C) (t : A ⟶ pt) :
+    (G.obj (Opposite.op A)).obj A ⟶
+      (ihom s.pt).obj Y :=
+  let GA := (G.obj (Opposite.op A)).obj A
+  let YpowA := HasPowers.power Y (A ⟶ pt)
+  let sProj : s.pt ⟶ (ihom GA).obj YpowA :=
+    s.ι A
+  curry (sProj ▷ GA ≫
+    (β_ _ GA).hom ≫
+    (ihom.ev GA).app YpowA ≫
+    HasPowers.proj Y (A ⟶ pt) t)
+
+omit [HasCopowers C] [HasPowers C]
+  [HasAllCopowerProfCoends G] in
+private theorem whisker_braided_eval_pre'
+    {W X X' Y' : C}
+    (ι : W ⟶ (ihom X).obj Y') (h : X' ⟶ X) :
+    W ◁ h ≫ ι ▷ X ≫
+      (β_ ((ihom X).obj Y') X).hom ≫
+      (ihom.ev X).app Y' =
+    (ι ≫ (MonoidalClosed.pre h).app Y') ▷
+        X' ≫
+      (β_ ((ihom X').obj Y') X').hom ≫
+      (ihom.ev X').app Y' := by
+  slice_lhs 1 2 => rw [whisker_exchange]
+  slice_lhs 2 3 =>
+    rw [BraidedCategory.braiding_naturality_right]
+  slice_lhs 3 4 =>
+    rw [← id_tensor_pre_app_comp_ev]
+  slice_lhs 2 3 =>
+    rw [← BraidedCategory.braiding_naturality_left]
+  slice_lhs 1 2 => rw [← comp_whiskerRight]
+  simp only [Category.assoc]
+
+omit [HasCopowers C]
+  [HasAllCopowerProfCoends G] in
+/-- Dinaturality of `ihomCoendLiftComponent`: for
+`f : A₁ ⟶ A₂` and `t : A₂ ⟶ pt`, precomposing with
+`(G.map f.op).app A₁` on one side matches
+precomposing with `(G.obj (op A₂)).map f` on the
+other. -/
+theorem ihomCoendLiftComponent_dinatural
+    (pt Y : C) (s : Wedge (ihomPowerProf G pt Y))
+    {A₁ A₂ : C} (f : A₁ ⟶ A₂) (t : A₂ ⟶ pt) :
+    (G.map f.op).app A₁ ≫
+      ihomCoendLiftComponent G pt Y s A₁ (f ≫ t) =
+    (G.obj (Opposite.op A₂)).map f ≫
+      ihomCoendLiftComponent G pt Y s A₂ t := by
+  simp only [ihomCoendLiftComponent]
+  have wedgeCond := s.condition f
+  simp only [ihomPowerProf] at wedgeCond
+  simp only [Quiver.Hom.unop_op] at wedgeCond
+  rw [← curry_natural_left, ← curry_natural_left]
+  congr 1
+  rw [← HasPowers.mapIdx_proj]
+  slice_lhs 1 4 =>
+    rw [whisker_braided_eval_pre']
+  slice_lhs 3 4 =>
+    rw [← ihom.ev_naturality]
+  slice_lhs 2 3 =>
+    rw [←
+      BraidedCategory.braiding_naturality_left]
+  slice_lhs 1 2 => rw [← comp_whiskerRight]
+  simp only [Category.assoc]
+  rw [wedgeCond]
+  symm
+  slice_lhs 1 4 =>
+    rw [whisker_braided_eval_pre']
+  simp only [Category.assoc]
+
+/-- Assembles the lift components via the copower
+universal property: for each `A`, descends the family
+`t ↦ ihomCoendLiftComponent G pt Y s A t` to produce
+`(A ⟶ pt) · G(A,A) ⟶ [Z, Y]`. -/
+def ihomCoendLiftCopowerMap
+    (pt Y : C) (s : Wedge (ihomPowerProf G pt Y))
+    (A : C) :
+    HasCopowers.copower (A ⟶ pt)
+      ((G.obj (Opposite.op A)).obj A) ⟶
+      (ihom s.pt).obj Y :=
+  HasCopowers.desc
+    (ihomCoendLiftComponent G pt Y s A)
+
+/-- Cowedge for `copowerProf (HomToProf pt) G` with
+apex `(ihom s.pt).obj Y`, assembled from the copower
+maps `ihomCoendLiftCopowerMap`. The cowedge condition
+follows from `ihomCoendLiftComponent_dinatural`. -/
+def ihomCoendLiftCowedge
+    (pt Y : C) (s : Wedge (ihomPowerProf G pt Y)) :
+    HomCopowerCowedge G pt :=
+  Cowedge.mk ((ihom s.pt).obj Y)
+    (fun A => ihomCoendLiftCopowerMap G pt Y s A)
+    (fun {A₁ A₂} f => by
+      simp only [copowerProf_map_app,
+        copowerProf_obj_map]
+      apply HasCopowers.ext
+      intro t
+      rw [reassoc_of% HasCopowers.bimap_inj,
+        ihomCoendLiftCopowerMap,
+        HasCopowers.fac]
+      rw [reassoc_of% HasCopowers.bimap_inj,
+        ihomCoendLiftCopowerMap,
+        HasCopowers.fac]
+      simp only [HomToProf_map_app,
+        Quiver.Hom.unop_op,
+        HomToProf_obj_map]
+      exact ihomCoendLiftComponent_dinatural
+        G pt Y s f t)
+
+/-- The lift from `CopowerGExtObj G pt` to
+`(ihom s.pt).obj Y`, obtained from the coend's
+initiality applied to `ihomCoendLiftCowedge`. -/
+def ihomCoendLift
+    (pt Y : C) (s : Wedge (ihomPowerProf G pt Y)) :
+    CopowerGExtObj G pt ⟶ (ihom s.pt).obj Y :=
+  ((copowerCoendIsInitial G pt).to
+    (ihomCoendLiftCowedge G pt Y s)).hom
+
+/-- The lift for wedge terminality: given a wedge
+`s` for `ihomPowerProf G pt Y`, produce
+`s.pt ⟶ [CopowerGExtObj G pt, Y]` by swapping
+`ihomCoendLift` through the braiding. -/
+def ihomCoendWedgeLift
+    (pt Y : C)
+    (s : Wedge (ihomPowerProf G pt Y)) :
+    s.pt ⟶ (ihom (CopowerGExtObj G pt)).obj Y :=
+  curry
+    ((β_ (CopowerGExtObj G pt) s.pt).hom ≫
+    uncurry (ihomCoendLift G pt Y s))
+
+/-- The factorization property: the lift composed
+with each wedge projection of `ihomCoendWedge`
+recovers the original wedge projection. -/
+theorem ihomCoendWedgeLift_fac
+    (pt Y : C)
+    (s : Wedge (ihomPowerProf G pt Y))
+    (A : C) :
+    ihomCoendWedgeLift G pt Y s ≫
+      (ihomCoendWedge G pt Y).ι A =
+    s.ι A := by
+  simp only [ihomCoendWedgeLift,
+    ihomCoendWedge, Wedge.mk_ι,
+    ihomCoendWedgeProj]
+  rw [← Category.assoc, curry_pre_app]
+  -- Goal:
+  -- curry (CopowerGExtInj G pt A ▷ s.pt ≫
+  --   β_.hom ≫ uncurry (ihomCoendLift ...))
+  -- ≫ copowerIhomToPowerIhom ... = s.ι A
+  -- Use braiding naturality:
+  -- f ▷ Y ≫ β_.hom = β_.hom ≫ Y ◁ f
+  rw [BraidedCategory.braiding_naturality_left_assoc]
+  -- Now: curry (β_.hom ≫ s.pt ◁ CopowerGExtInj ...
+  --   ≫ uncurry (ihomCoendLift ...)) ≫ ...
+  -- Use uncurry_natural_left:
+  -- Y ◁ f ≫ uncurry g = uncurry (f ≫ g)
+  rw [← uncurry_natural_left]
+  -- Now use the coend factorization:
+  -- CopowerGExtInj G pt A ≫ ihomCoendLift G pt Y s
+  -- = (ihomCoendLiftCowedge G pt Y s).π A
+  have coendFac :
+      CopowerGExtInj G pt A ≫
+        ihomCoendLift G pt Y s =
+      ihomCoendLiftCopowerMap G pt Y s A := by
+    simp only [ihomCoendLift,
+      ihomCoendLiftCowedge]
+    exact Multicofork.π_comp_hom
+      (copowerCoend G pt)
+      (ihomCoendLiftCowedge G pt Y s)
+      ((copowerCoendIsInitial G pt).to
+        (ihomCoendLiftCowedge G pt Y s)) A
+  rw [coendFac]
+  simp only [copowerIhomToPowerIhom]
+  rw [← curry_natural_left]
+  rw [← curry_uncurry (Multifork.ι s A)]
+  congr 1
+  apply HasPowers.ext; intro t
+  simp only [Category.assoc, HasPowers.fac]
+  dsimp only [copowerProfInner, HomToProf,
+    Functor.curry_obj_obj_obj, Functor.comp_obj,
+    CategoryTheory.Prod.fst_obj, yoneda_obj_obj]
+  slice_lhs 1 2 => rw [whisker_exchange]
+  simp only [Category.assoc]
+  rw [← uncurry_natural_left, Category.comp_id,
+    uncurry_curry]
+  rw [BraidedCategory.braiding_naturality_left_assoc]
+  rw [← uncurry_natural_left]
+  simp only [ihomCoendLiftCopowerMap, HasCopowers.fac]
+  simp only [ihomCoendLiftComponent, uncurry_curry]
+  rw [BraidedCategory.braiding_naturality_left_assoc]
+  rw [SymmetricCategory.braiding_swap_eq_inv_braiding,
+    Iso.inv_hom_id_assoc, ← Category.assoc]
+  rfl
+
+omit [SymmetricCategory C] [HasAllCopowerProfCoends G]
+  in
+/-- The copower injection whisker composed with
+uncurry equals uncurry of the composition with
+`copowerIhomToPowerIhom` followed by the power
+projection. -/
+private theorem uncurry_copowerIhomToPowerIhom_proj
+    {S : Type v} {X Z Y' : C} (t : S)
+    (f : Z ⟶
+      (ihom (HasCopowers.copower S X)).obj Y') :
+    (HasCopowers.inj S X t) ▷ Z ≫ uncurry f =
+    uncurry
+      (f ≫ copowerIhomToPowerIhom S X Y') ≫
+      HasPowers.proj Y' S t := by
+  rw [comp_copowerIhomToPowerIhom, uncurry_curry,
+    HasPowers.fac]
+
+/-- Uniqueness: any morphism to the wedge apex
+that commutes with all wedge projections equals the
+lift produced by `ihomCoendWedgeLift`. -/
+theorem ihomCoendWedgeLift_uniq
+    (pt Y : C)
+    (s : Wedge (ihomPowerProf G pt Y))
+    (m : s.pt ⟶ (ihomCoendWedge G pt Y).pt)
+    (hm : ∀ A : C,
+      m ≫ (ihomCoendWedge G pt Y).ι A = s.ι A) :
+    m = ihomCoendWedgeLift G pt Y s := by
+  rw [← curry_uncurry m,
+    ← curry_uncurry (ihomCoendWedgeLift G pt Y s)]
+  simp only [ihomCoendWedgeLift, uncurry_curry]
+  congr 1
+  suffices h :
+      curry ((β_ s.pt (CopowerGExtObj G pt)).hom ≫
+        uncurry m) =
+      ihomCoendLift G pt Y s by
+    rw [SymmetricCategory.braiding_swap_eq_inv_braiding,
+      ← h, uncurry_curry, Iso.inv_hom_id_assoc]
+  have hK : Limits.IsColimit (copowerCoend G pt) :=
+    (Cocone.isColimitEquivIsInitial _).symm
+      (copowerCoendIsInitial G pt)
+  apply Multicofork.IsColimit.hom_ext hK
+  intro A
+  have hmA := hm A
+  simp only [ihomCoendWedge, Wedge.mk_ι,
+    ihomCoendWedgeProj] at hmA
+  have coendFac :
+      Multicofork.π (copowerCoend G pt) A ≫
+        ihomCoendLift G pt Y s =
+      ihomCoendLiftCopowerMap G pt Y s A := by
+    simp only [ihomCoendLift, ihomCoendLiftCowedge]
+    exact Multicofork.π_comp_hom
+      (copowerCoend G pt)
+      (ihomCoendLiftCowedge G pt Y s)
+      ((copowerCoendIsInitial G pt).to
+        (ihomCoendLiftCowedge G pt Y s)) A
+  rw [coendFac]
+  apply HasCopowers.ext; intro t
+  rw [ihomCoendLiftCopowerMap, HasCopowers.fac]
+  simp only [ihomCoendLiftComponent]
+  rw [← Category.assoc]
+  rw [← curry_natural_left]
+  congr 1
+  simp only [CopowerGExtObj] at *
+  rw [BraidedCategory.braiding_naturality_right_assoc]
+  rw [comp_whiskerRight]
+  simp only [Category.assoc]
+  rw [← uncurry_pre_app]
+  rw [uncurry_copowerIhomToPowerIhom_proj]
+  simp only [Category.assoc]
+  simp only [CopowerGExtInj] at hmA
+  dsimp only [HomToProf,
+    Functor.curry_obj_obj_obj, Functor.comp_obj,
+    CategoryTheory.Prod.fst_obj, yoneda_obj_obj]
+    at hmA ⊢
+  rw [hmA, uncurry_eq]
+  simp only [Category.assoc]
+  rw [← BraidedCategory.braiding_naturality_left_assoc]
+
+/-- The wedge `ihomCoendWedge G pt Y` is a limit
+wedge (terminal wedge) for `ihomPowerProf G pt Y`,
+assembled from the lift, factorization, and
+uniqueness. -/
+def ihomCoendWedge_isLimit (pt Y : C) :
+    IsLimit (ihomCoendWedge G pt Y) :=
+  Multifork.IsLimit.mk _
+    (ihomCoendWedgeLift G pt Y)
+    (ihomCoendWedgeLift_fac G pt Y)
+    (fun s m hm =>
+      ihomCoendWedgeLift_uniq G pt Y s m hm)
+
+/-- Packages `ihomCoendWedge` and its limit proof
+into a `HasTerminalWedge`. -/
+def ihomCoendHasTerminalWedge (pt Y : C) :
+    HasTerminalWedge (ihomPowerProf G pt Y) :=
+  ⟨ihomCoendWedge G pt Y,
+    ihomCoendWedge_isLimit G pt Y⟩
+
+omit [SymmetricCategory C] in
+/-- `(ihom X).map f` commutes with the coend wedge
+projections, expressing naturality of
+`ihomCoendWedgeProj` in `Y`. -/
+private theorem ihom_map_comp_ihomCoendWedgeProj
+    (pt : C) {Y₁ Y₂ : C} (f : Y₁ ⟶ Y₂)
+    (A : C) :
+    (ihom (CopowerGExtObj G pt)).map f ≫
+      ihomCoendWedgeProj G pt Y₂ A =
+    ihomCoendWedgeProj G pt Y₁ A ≫
+      ((ihomPowerProfMapY G pt f).app
+        (Opposite.op A)).app A := by
+  simp only [ihomCoendWedgeProj]
+  rw [← Category.assoc
+    ((ihom (CopowerGExtObj G pt)).map f),
+    (MonoidalClosed.pre
+      (CopowerGExtInj G pt A)).naturality f,
+    Category.assoc]
+  simp only [copowerProfInner]
+  dsimp only [HomToProf,
+    Functor.curry_obj_obj_obj,
+    Functor.comp_obj,
+    CategoryTheory.Prod.fst_obj,
+    yoneda_obj_obj]
+  rw [copowerIhomToPowerIhom_naturalY]
+  simp only [Category.assoc]
+  congr 2
+
+omit [SymmetricCategory C] in
+/-- When the terminal wedges for `ihomPowerProf`
+come from the coend construction, the internal-end
+functor is naturally isomorphic to `ihom` applied
+to the coend carrier. -/
+def ihomCoendPowerEndNatIso (pt : C) :
+    ihom (CopowerGExtObj G pt) ≅
+      ihomPowerEndFunctor G pt
+        (fun Y =>
+          ihomCoendHasTerminalWedge G pt Y) :=
+  NatIso.ofComponents
+    (fun _ => Iso.refl _)
+    (fun {Y₁ _} f => by
+      simp only [Iso.refl_hom,
+        Category.comp_id, Category.id_comp,
+        ihomPowerEndFunctor]
+      apply
+        (ihomCoendHasTerminalWedge G pt _).hom_ext
+      intro A
+      rw [HasTerminalWedge.map_ι]
+      exact
+        ihom_map_comp_ihomCoendWedgeProj G pt f A)
+
+end IhomPowerEndGExtBraided
 
 end GebLean

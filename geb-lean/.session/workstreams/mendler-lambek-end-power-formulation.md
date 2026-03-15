@@ -2,7 +2,24 @@
 
 ## Status
 
-Phases 1-5 complete.
+Phases 1-5 complete. Phase 6: Tasks 11-13 done;
+Task 14 and rename pending.
+
+Phases 1-5 established the equivalence
+`MendlerAlgebra G ≌ ConventionalAlgebra F`
+where `F = PowerEndGExtFunctor G`, with morphisms
+defined via the end/power characterization. However,
+`F.obj pt` is still defined as `CopowerGExtObj G pt`
+(a coend of copowers). Phase 6 addresses this gap:
+define a functor with end/power-based carrier,
+naturally isomorphic to `PowerEndGExtFunctor G`,
+and transfer the algebra equivalence.
+
+The `ihomCoendWedge` (completed in Phase 5b) shows
+`[CopowerGExtObj G pt, Y]_C` carries a wedge for
+`ihomPowerProf G pt Y`. Proving terminality of this
+wedge establishes the internal representability:
+`∫_A [G(A,A), Y^{A→pt}]_C ≅ [CopowerGExtObj G pt, Y]_C`.
 
 File: `GebLean/MendlerLambekPresheaf.lean`. Two
 equivalences stated for `C = E ⥤ Type (max w₁ v₁ u₁)`:
@@ -651,3 +668,130 @@ The user emphasized:
   polymorphism and might be relevant
 - Step 4 (coalgebras in Cᵒᵖ) is not urgent but
   can be added if straightforward
+
+### Phase 5b: Internal End Characterization (DONE)
+
+Proved `ihomCoendWedge G pt Y`, showing
+`[CopowerGExtObj G pt, Y]_C` carries a wedge for
+`ihomPowerProf G pt Y`. This is a prerequisite
+for Phase 6.
+
+### Phase 6: End-Based GExt Functor (IN PROGRESS)
+
+#### End Goal
+
+Define a functor `F : C ⥤ C` satisfying:
+
+1. `F.obj pt` is defined via ends and powers
+   (no reference to coends or copowers)
+2. `F ≅ PowerEndGExtFunctor G` (natural iso)
+3. `ConventionalAlgebra F ≌ MendlerAlgebra G`
+   (by composing the nat iso with
+   `mendlerLambekPowerEndGExtEquiv`)
+
+The existing `PowerEndGExtFunctor G` (which should
+be renamed — its name suggests end/power-based
+definition, but `obj pt := CopowerGExtObj G pt`
+still references the coend of copowers) satisfies
+conditions 2-3 trivially but NOT condition 1.
+
+#### Renaming
+
+`PowerEndGExtFunctor G` should be renamed to
+reflect that it uses `CopowerGExtObj` (a coend
+of copowers) as its carrier. Suggested name:
+`CopowerCoendGExtEndMapFunctor G` or similar,
+indicating that the carrier is coend-based while
+the maps use the end characterization.
+
+#### Mathematical Analysis
+
+The internal end `∫_A [G(A,A), Y^{A→pt}]_C`
+(terminal wedge apex of `ihomPowerProf G pt Y`)
+equals `[CopowerGExtObj G pt, Y]_C` by the
+`ihomCoendWedge` terminality (once proved).
+
+Setting `Y = pt`: the end-of-powers object at
+`pt` is `[CopowerGExtObj G pt, pt]_C`, which is
+the internal hom from the coend to `pt`. This
+is NOT the same as `CopowerGExtObj G pt`.
+
+The relationship between the two:
+
+- `Hom(𝟙_C, [X, pt]) ≅ Hom(X, pt)` (by the
+  tensor-hom adjunction and unit iso), so
+  global sections of the end biject with
+  conventional algebra structure maps.
+- But `[X, pt] ⟶ pt` (a C-morphism from the
+  end object) is more data than `X ⟶ pt`.
+
+So `pt ↦ [CopowerGExtObj G pt, pt]_C` gives an
+endofunctor whose algebras are RICHER than those
+of `pt ↦ CopowerGExtObj G pt`. The algebra
+categories are not equivalent in general.
+
+#### Open Questions
+
+1. Is there a construction that gives
+   `CopowerGExtObj G pt` as an end object in C
+   (not just characterized by an end)?
+2. Can we define the functor parameterized by
+   abstract terminal wedge families, where the
+   carrier IS the terminal wedge apex, and show
+   the algebra equivalence under the assumption
+   that the terminal wedges come from
+   `ihomCoendWedge`?
+3. For concrete categories (presheaf categories),
+   does the internal end equal the representing
+   object (avoiding the general-category
+   subtlety)?
+
+#### Prerequisite Tasks
+
+##### Task 11: Terminality of ihomCoendWedge (DONE)
+
+Proved `ihomCoendWedge_isLimit` via
+`Multifork.IsLimit.mk`, using
+`ihomCoendWedgeLift` (lift),
+`ihomCoendWedgeLift_fac` (factorization), and
+`ihomCoendWedgeLift_uniq` (uniqueness). Packaged
+as `ihomCoendHasTerminalWedge`.
+
+##### Task 12: Natural iso (DONE)
+
+##### ihomPowerEndFunctor ≅ ihom ∘ CopowerGExtObj
+
+Proved `ihomCoendPowerEndNatIso`:
+`ihom (CopowerGExtObj G pt) ≅
+  ihomPowerEndFunctor G pt
+    (fun Y => ihomCoendHasTerminalWedge G pt Y)`
+via `NatIso.ofComponents` with `Iso.refl`
+components. Naturality follows from
+`ihom_map_comp_ihomCoendWedgeProj` (naturality
+of the coend wedge projections in Y) and
+`HasTerminalWedge.hom_ext` (uniqueness of
+terminal wedge lifts). Supporting lemmas:
+
+- `copowerIhomToPowerIhom_naturalY` — naturality
+  of the copower-ihom-to-power-ihom map in Y
+- `ihom_map_comp_ihomCoendWedgeProj` — `(ihom X).map f`
+  commutes with coend wedge projections
+
+##### Task 13: Composed single equivalence (DONE)
+
+Defined `mendlerLambekGExtEquiv :
+  MendlerAlgebra G ≌
+    ConventionalAlgebra (PowerEndGExtFunctor G)`
+as `mendlerAlgPowerEndEquiv G |>.trans
+    (mendlerLambekPowerEndGExtEquiv G)`.
+
+##### Task 14: End-based functor and algebra equiv
+
+Depends on resolving the open questions above.
+Define the end-based functor and its algebra
+equivalence with `MendlerAlgebra G`.
+
+#### Source Files
+
+Implementation in
+`GebLean/MendlerLambekEndPower.lean`.
