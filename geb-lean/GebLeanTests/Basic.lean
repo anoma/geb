@@ -1,5 +1,6 @@
 import GebLean
 import Mathlib.CategoryTheory.Category.Cat
+import Mathlib.CategoryTheory.Limits.Presheaf
 import Counterexamples.Girard
 
 /-!
@@ -113,3 +114,17 @@ abbrev girard.{u} :=
   Counterexample.girard.{u}
 
 end UniverseIllustrations
+
+namespace PresheafIllustrations
+
+open CategoryTheory
+
+universe u v w
+
+variable (C : Type u) [Category.{v, u} C]
+variable (P : Cᵒᵖ ⥤ Type max v w)
+
+def colimofRep : Limits.IsColimit (Presheaf.coconeOfRepresentable P) :=
+  Presheaf.colimitOfRepresentable (C := C) P
+
+end PresheafIllustrations
