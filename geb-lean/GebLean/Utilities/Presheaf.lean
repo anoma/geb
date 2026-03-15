@@ -1188,6 +1188,25 @@ theorem yonedaULift_obj
       ULift.{u} (Y.unop ⟶ X) :=
   rfl
 
+/-- Functorial version of `yonedaULift`:
+the Yoneda embedding postcomposed with universe
+lifting, as a functor `C ⥤ (Cᵒᵖ ⥤ Type (max u v))`.
+Satisfies `yonedaLarge.obj X = yonedaULift X`
+definitionally. -/
+def yonedaLarge (C : Type u) [Category.{v} C] :
+    C ⥤ (Cᵒᵖ ⥤ Type (max u v)) :=
+  yoneda ⋙
+    (Functor.whiskeringRight Cᵒᵖ
+      (Type v) (Type (max u v))).obj
+      uliftFunctor.{u}
+
+/-- `yonedaLarge.obj X` equals `yonedaULift X`. -/
+@[simp]
+theorem yonedaLarge_obj
+    {C : Type u} [Category.{v} C] (X : C) :
+    (yonedaLarge C).obj X = yonedaULift X :=
+  rfl
+
 section YonedaExtension
 
 variable {C : Type u} [Category.{v} C]

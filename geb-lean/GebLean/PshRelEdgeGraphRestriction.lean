@@ -2217,6 +2217,157 @@ theorem representableSectionExtend_roundtrip_X₀
     i.hom_inv_id, G.map_id]
   exact Category.comp_id _
 
+/-- Any morphism from a presheaf isomorphic to `∅`
+equals the composition through the initial
+presheaf, because morphisms from the initial
+presheaf are unique. -/
+theorem morphism_from_pshEmpty_unique
+    {P Q : Cᵒᵖ ⥤ Type w}
+    (i : P ≅ pshEmptyPresheaf C)
+    (g : P ⟶ Q) :
+    g = i.hom ≫ pshEmptyMap Q := by
+  have h : i.inv ≫ g = pshEmptyMap Q :=
+    pshEmptyMap_unique (i.inv ≫ g)
+  calc g = (i.hom ≫ i.inv) ≫ g := by
+        rw [i.hom_inv_id, Category.id_comp]
+    _ = i.hom ≫ pshEmptyMap Q := by
+        rw [Category.assoc, h]
+
+/-- Extend-then-restrict recovers the original
+representable section when `X₀` is weakly
+initial (every `X` receives a morphism from
+`X₀`). This works because `Y(X₀) ≅ ∅` forces
+any morphism `Y(X₀) → Y(X)` to be unique, so
+`Y.map f = i.hom ≫ pshEmptyMap(Y(X))` for any
+`f : X₀ → X`, and naturality of `ρ` at `f`
+gives the result. -/
+theorem representableSectionExtend_section
+    (Y : C ⥤ (Cᵒᵖ ⥤ Type w))
+    {G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w)}
+    (X₀ : C)
+    (i : Y.obj X₀ ≅ pshEmptyPresheaf C)
+    (hInit : ∀ X : C, X₀ ⟶ X)
+    (ρ : RepresentableSection Y G) :
+    presheafSectionRestrict Y
+      (representableSectionExtend Y X₀ i ρ) =
+        ρ := by
+  apply NatTrans.ext
+  funext X
+  simp only [presheafSectionRestrict_app,
+    representableSectionExtend,
+    presheafSectionOfInitial,
+    PresheafSection.mk']
+  rw [Category.assoc, ← G.map_comp]
+  have hf : Y.map (hInit X) =
+      i.hom ≫ pshEmptyMap (Y.obj X) :=
+    morphism_from_pshEmpty_unique i (Y.map _)
+  rw [← hf]
+  have hnat := ρ.naturality (hInit X)
+  simp only [Functor.const_obj_obj,
+    Functor.const_obj_map, Functor.comp_obj,
+    Functor.comp_map, Category.id_comp] at hnat
+  exact hnat.symm
+
+/-- When `Y(X₀) ≅ ∅` and `X₀` is weakly initial,
+presheaf sections and representable sections are
+equivalent. The forward map restricts to the image
+of `Y`; the inverse extends via the initial
+presheaf. -/
+def presheafSectionEquivRepresentable
+    (Y : C ⥤ (Cᵒᵖ ⥤ Type w))
+    (G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w))
+    (X₀ : C)
+    (i : Y.obj X₀ ≅ pshEmptyPresheaf C)
+    (hInit : ∀ X : C, X₀ ⟶ X) :
+    PresheafSection G ≃
+      RepresentableSection Y G where
+  toFun := presheafSectionRestrict Y
+  invFun := representableSectionExtend Y X₀ i
+  left_inv σ :=
+    representableSectionExtend_restrict Y X₀ i σ
+  right_inv ρ :=
+    representableSectionExtend_section
+      Y X₀ i hInit ρ
+
+/-- Parametric cones of `pshBarrLiftEdgeFunctor G`
+are equivalent to morphisms from the terminal
+presheaf to `G` applied to the initial presheaf.
+Composes `parametricConeEquivPresheafSection`
+with `presheafSectionEquivInitial`. -/
+def parametricConeEquivInitial
+    (G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w)) :
+    ParametricCone
+      (pshBarrLiftEdgeFunctor (C := C) G) ≃
+      (pshUnitPresheaf C ⟶
+        G.obj (pshEmptyPresheaf C)) :=
+  (parametricConeEquivPresheafSection G).trans
+    (presheafSectionEquivInitial G)
+
+open Limits in
+/-- Global sections of the limit of
+`pshBarrLiftEdgeFunctor G` are equivalent to
+morphisms `⊤ → G(∅)`. Composes
+`limitSectionEquivPresheafSection` with
+`presheafSectionEquivInitial`. -/
+def limitSectionEquivInitial
+    (G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w))
+    {s : Cone
+      (pshBarrLiftEdgeFunctor (C := C) G)}
+    (hs : IsLimit s) :
+    (pshRelEdgeTerminal C ⟶ s.pt) ≃
+      (pshUnitPresheaf C ⟶
+        G.obj (pshEmptyPresheaf C)) :=
+  (limitSectionEquivPresheafSection G hs).trans
+    (presheafSectionEquivInitial G)
+
+/-- There is no morphism from the terminal
+presheaf to the initial presheaf when `C` is
+nonempty: the terminal presheaf has an element
+at every component, while the initial presheaf
+is empty everywhere. -/
+theorem no_morphism_terminal_to_initial
+    [Nonempty C]
+    (f : pshUnitPresheaf.{u, v, w} C ⟶
+      pshEmptyPresheaf C) :
+    False :=
+  let ⟨c⟩ := ‹Nonempty C›
+  (f.app (Opposite.op c)
+    ⟨PUnit.unit⟩).down.elim
+
+/-- If `G(∅)` is initial and `C` is nonempty,
+there are no presheaf sections of `G`, because a
+section would require a morphism `⊤ → G(∅) ≅ ∅`,
+but `⊤` is inhabited while `∅` is not. -/
+theorem presheafSection_empty_of_initial
+    [Nonempty C]
+    {G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w)}
+    (hI : Limits.IsInitial
+      (G.obj (pshEmptyPresheaf C)))
+    (σ : PresheafSection G) : False := by
+  let τ := (presheafSectionEquivInitial G) σ
+  exact no_morphism_terminal_to_initial
+    (τ ≫ Limits.IsInitial.to hI
+      (pshEmptyPresheaf.{u, v, w} C))
+
+/-- If `G(∅)` is terminal, then any two
+presheaf sections of `G` are equal, because
+both map to the unique morphism `⊤ → G(∅) ≅ ⊤`
+under `presheafSectionEquivInitial`. -/
+theorem presheafSection_unique_of_terminal
+    {G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w)}
+    (hT : Limits.IsTerminal
+      (G.obj (pshEmptyPresheaf C)))
+    (σ₁ σ₂ : PresheafSection G) :
+    σ₁ = σ₂ := by
+  apply (presheafSectionEquivInitial G).injective
+  exact Limits.IsTerminal.hom_ext hT _ _
+
 end YonedaExtensionOfSections
 
 end GebLean
