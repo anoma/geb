@@ -752,18 +752,45 @@ Relevant declarations:
   div-type definitions.
   File: `ParanaturalTopos.lean`.
 
-### Internal language and type theory
+### Internal language and type theory (retired)
 
-- [ ] **I1. Internal parametricity statement.** Formulate
-  "every element of every type is parametric" in the
-  internal language of `[WalkingSpan, PSh(C)]` and
-  verify it holds for elements in the image of the
-  inclusion from `PshRelEdge C`.
+The following are documented as future work
+contingent on additional mathlib infrastructure
+(internal languages, Mitchell-Benabou formalization).
 
-- [ ] **I2. Directed type theory connection.** Investigate
-  the connection between the internal language of the
-  presheaf topos `[WalkingSpan, PSh(C)]` and
-  Neumann-Licata directed type theory (POPL 2026).
+- **I1. Internal parametricity statement.**
+  Formulate "every element of every type is
+  parametric" in the internal language of
+  `[WalkingSpan, PSh(C)]` and verify it holds
+  for elements in the image of the inclusion
+  from `PshRelEdge C`.
+  The external formulation is already complete
+  (W9/U4: `ParametricCone ≃ PresheafSection`,
+  parametricity is definitional). I1 would add
+  the metamathematical observation that the
+  internal language of the ambient topos
+  expresses parametricity. This requires
+  Mitchell-Benabou language infrastructure
+  that mathlib does not currently provide.
+
+- **I2. Directed type theory connection.**
+  Investigate the connection between the
+  internal language of `[WalkingSpan, PSh(C)]`
+  and Neumann-Licata directed type theory
+  (POPL 2026). The walking span `I` plays
+  the role of an "interval" in directed type
+  theory; separation corresponds to functional
+  directed morphisms; `Ω` as internal Heyting
+  algebra determines internal directed
+  structure. Note: the di-Yoneda lemma claimed
+  in Neumann's work has an error.
+  This requires reading and mapping the
+  Neumann-Licata framework to ours, which is
+  a research investigation rather than a
+  formalization task, and would benefit from
+  more standardized infrastructure in mathlib
+  for internal languages and directed
+  categories.
 
 ### Structural results
 

@@ -1427,7 +1427,7 @@ preserve the parametricity structure? See the
 `yonedaULift`, `yonedaLarge`, `yonedaExt`
 infrastructure in `Utilities/Presheaf.lean`.
 
-### Q4: Internal Heyting algebra and directed type theory
+### Q4: Internal Heyting algebra and directed type theory (deferred)
 
 The subobject classifier `Omega`, viewed as an
 internal category (via its Heyting algebra structure),
@@ -1436,6 +1436,10 @@ Omega." The category of such internal presheaves may
 provide a canonical ambient topos reflecting the full
 subobject lattice structure. This connects to
 Neumann-Licata directed type theory (POPL 2026).
+Note: the di-Yoneda lemma claimed in Neumann's
+work has an error. Deferred pending additional
+mathlib infrastructure for internal languages and
+directed categories.
 
 ### Q5: Canonical edge category construction
 
@@ -1476,13 +1480,18 @@ bicategorical structure. Constructing this would
 require span composition, associators, 2-morphisms,
 and coherence identities.
 
-### Q8: Internal parametricity
+### Q8: Internal parametricity (deferred)
 
 The internal language of the copresheaf topos
 (its Mitchell-Benabou language) provides a type
-theory in which parametricity is a built-in property.
-This may connect to directed type theory and
-parametricity (Neumann-Licata, POPL 2026). (Task I1.)
+theory in which parametricity is a built-in
+property. The external formulation is complete
+(W9/U4: `ParametricCone ≃ PresheafSection`,
+parametricity is definitional). The internal
+formulation would add the metamathematical
+observation that the internal language expresses
+parametricity. Deferred pending Mitchell-Benabou
+language infrastructure in mathlib.
 
 ### Q9: Density-based extension
 
