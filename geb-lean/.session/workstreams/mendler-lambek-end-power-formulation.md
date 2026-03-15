@@ -3,7 +3,8 @@
 ## Status
 
 Phases 1-5 complete. Phase 6: Tasks 11-13 done;
-Task 14 and rename pending.
+Task 14 in progress (Type-valued impredicative
+GExt section complete); rename pending.
 
 Phases 1-5 established the equivalence
 `MendlerAlgebra G ≌ ConventionalAlgebra F`
@@ -790,6 +791,72 @@ as `mendlerAlgPowerEndEquiv G |>.trans
 Depends on resolving the open questions above.
 Define the end-based functor and its algebra
 equivalence with `MendlerAlgebra G`.
+
+###### Type-valued impredicative GExt (DONE)
+
+For a Type-valued profunctor
+`G : Cᵒᵖ ⥤ C ⥤ Type v` over an arbitrary
+category `C : Type u`, the following are defined
+in the `TypeValuedGExt` section of
+`MendlerLambekEndPower.lean`:
+
+- `mendlerTypeProf pt G` — the Type-valued
+  Mendler extension profunctor sending
+  `(op A, B) ↦ (A ⟶ pt) × G(A, B)`.
+- `mendlerTypeProf.mapPt G h` — natural
+  transformation induced by `h : pt₁ ⟶ pt₂`.
+- `mendlerExtType pt G` — the coend
+  (`typeCoend (mendlerTypeProf pt G)`).
+- `mendlerUnivType pt G` — the Church encoding
+  (`endLimitFunctor ⟶ 𝟭`).
+- `mendlerUnivTypeEquiv` — unconditional
+  equivalence between Church encoding and coend
+  (via `typeCoend.endImpredicative`).
+- `mendlerExtType.map`, `mendlerUnivType.map` —
+  functorial actions on the carrier.
+- `mendlerAlgTypeEquiv pt G X` — the coend
+  algebra characterization:
+  `(mendlerExtType pt G → X) ≃
+    typeEnd (sliceProfunctorPoly ...)`.
+- `mendlerUnivAlgTypeEquiv pt G X` — the
+  universal algebra characterization (composing
+  `Equiv.arrowCongr` of `mendlerUnivTypeEquiv`
+  with `mendlerAlgTypeEquiv`).
+- `mendlerTypeProfFunctor G` — packages
+  `pt ↦ mendlerTypeProf pt G` as
+  `C ⥤ (Cᵒᵖ ⥤ C ⥤ Type v)`.
+- `mendlerExtTypeFunctor G` — the Mendler
+  extension as `C ⥤ Type (max u v)`,
+  i.e., `mendlerTypeProfFunctor G ⋙
+  typeCoendFunctor C`.
+- Functor laws: `mapPt_id`, `mapPt_comp`,
+  `map_id`, `map_comp`.
+
+This generalizes the Idris `ProfMendlerExt`,
+`ProfMendlerUniv`, `MendlerAlg`,
+`MendlerAlgToFAlgExt`/`FAlgToMendlerAlgExt`,
+and `MendlerAlgToFAlgUniv`/`FAlgToMendlerAlgUniv`
+from `.claude/docs/InternalProfunctor.idr`
+(lines 3390-3497) to arbitrary categories with
+Type-valued profunctors. The Church encoding
+equivalence is unconditional (no parametricity
+condition).
+
+###### Remaining for Task 14
+
+- Connection to existing C-valued infrastructure
+  (`CopowerGExtObj`, `GExtFunctor`): for `C`
+  with copowers, `CopowerGExtObj G pt` should
+  relate to `mendlerExtType pt G_typed` where
+  `G_typed` is the Type-valued version of
+  `G : Cᵒᵖ ⥤ C ⥤ C` (via Yoneda evaluation).
+  This requires showing that the C-valued coend
+  and the Type-valued coend agree under the
+  Yoneda embedding.
+- Presheaf instantiation: for
+  `C = E ⥤ Type v`, instantiate
+  `mendlerExtTypeFunctor` and connect to
+  `pointwiseTypeCoend.endImpredicative`.
 
 #### Source Files
 

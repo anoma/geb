@@ -3471,4 +3471,284 @@ def ihomCoendPowerEndNatIso (pt : C) :
 
 end IhomPowerEndGExtBraided
 
+/-!
+## Type-Valued Impredicative GExt
+
+For a Type-valued profunctor `G : Cᵒᵖ ⥤ C ⥤ Type v`
+over an arbitrary category `C`, we define the Mendler
+extension profunctor `mendlerTypeProf pt G` sending
+`(op A, B) ↦ (A ⟶ pt) × G(A, B)`. Its coend
+`typeCoend (mendlerTypeProf pt G)` is the existential
+Mendler extension, and by
+`typeCoend.endImpredicative` it is unconditionally
+equivalent to the universal-only Church encoding
+`endLimitFunctor (mendlerTypeProf pt G) ⟶ 𝟭 _`.
+-/
+
+section TypeValuedGExt
+
+variable
+  {C : Type u} [Category.{v} C]
+
+/-- The Type-valued Mendler extension profunctor:
+sends `(op A, B)` to `(A ⟶ pt) × (G.obj (op A)).obj B`.
+
+This is the Type-valued analogue of
+`copowerProf (HomToProf pt) G`, which sends
+`(op A, B)` to the C-valued copower
+`(A ⟶ pt) · G(A, B)`. -/
+def mendlerTypeProf
+    (pt : C) (G : Cᵒᵖ ⥤ C ⥤ Type v) :
+    Cᵒᵖ ⥤ C ⥤ Type v where
+  obj A := {
+    obj := fun B =>
+      (A.unop ⟶ pt) × (G.obj A).obj B
+    map := fun g ⟨s, x⟩ =>
+      ⟨s, (G.obj A).map g x⟩
+    map_id := fun B => by
+      funext ⟨s, x⟩
+      exact Prod.ext rfl
+        (FunctorToTypes.map_id_apply
+          (G.obj A) x)
+    map_comp := fun f g => by
+      funext ⟨s, x⟩
+      exact Prod.ext rfl
+        (FunctorToTypes.map_comp_apply
+          (G.obj A) f g x)
+  }
+  map {A₁ A₂} f := {
+    app := fun B ⟨s, x⟩ =>
+      ⟨f.unop ≫ s, (G.map f).app B x⟩
+    naturality := fun {B₁ B₂} g => by
+      funext ⟨s, x⟩
+      exact Prod.ext rfl
+        (congr_fun ((G.map f).naturality g) x)
+  }
+  map_id A := by
+    ext B ⟨s, x⟩
+    · exact Category.id_comp s
+    · exact congr_fun (congr_arg DFunLike.coe
+        (congr_fun (congr_arg NatTrans.app
+          (G.map_id A)) B)) x
+  map_comp {A₁ A₂ A₃} f g := by
+    ext B ⟨s, x⟩
+    · change (f ≫ g).unop ≫ s =
+        g.unop ≫ (f.unop ≫ s)
+      rw [unop_comp, Category.assoc]
+    · exact congr_fun (congr_arg DFunLike.coe
+        (congr_fun (congr_arg NatTrans.app
+          (G.map_comp f g)) B)) x
+
+/-- The natural transformation
+`mendlerTypeProf pt₁ G ⟶ mendlerTypeProf pt₂ G`
+induced by `h : pt₁ ⟶ pt₂`, sending `(s, x)` to
+`(s ≫ h, x)` (postcomposition on the hom
+component). -/
+def mendlerTypeProf.mapPt
+    (G : Cᵒᵖ ⥤ C ⥤ Type v)
+    {pt₁ pt₂ : C} (h : pt₁ ⟶ pt₂) :
+    mendlerTypeProf pt₁ G ⟶
+      mendlerTypeProf pt₂ G where
+  app A := {
+    app := fun B ⟨s, x⟩ => ⟨s ≫ h, x⟩
+    naturality := fun {B₁ B₂} g => by
+      funext ⟨s, x⟩; rfl
+  }
+  naturality {A₁ A₂} f := by
+    ext B ⟨s, x⟩
+    simp only [NatTrans.comp_app,
+      types_comp_apply, mendlerTypeProf]
+    exact Prod.ext
+      (Category.assoc _ _ _) rfl
+
+/-- The Type-valued Mendler extension: the coend
+of `mendlerTypeProf pt G` in `Type`.
+
+When `C = Type v` and `G(A, B) = g A B`, this
+reduces to the Idris `ProfMendlerExt g pt`
+(`(x : Type ** (x → pt, g x x))`), quotiented
+by dinaturality. -/
+abbrev mendlerExtType
+    (pt : C) (G : Cᵒᵖ ⥤ C ⥤ Type v) :
+    Type (max u v) :=
+  typeCoend (mendlerTypeProf pt G)
+
+/-- The universal-only Church-encoded Mendler
+extension: natural transformations from
+`endLimitFunctor (mendlerTypeProf pt G)` to the
+identity functor.
+
+When `C = Type v`, this is the impredicative
+encoding `∀ D, (∀ A, (A → pt) → G(A,A) → D) → D`,
+which corresponds to the Idris
+`ProfMendlerUniv g pt`. -/
+abbrev mendlerUnivType
+    (pt : C) (G : Cᵒᵖ ⥤ C ⥤ Type v) :
+    Type (max (u + 1) (v + 1)) :=
+  endLimitFunctor (mendlerTypeProf pt G) ⟶
+    𝟭 (Type (max u v))
+
+/-- The unconditional equivalence between the
+Church-encoded Mendler extension and the coend.
+This is `typeCoend.endImpredicative` applied to
+`mendlerTypeProf pt G`. -/
+def mendlerUnivTypeEquiv
+    (pt : C) (G : Cᵒᵖ ⥤ C ⥤ Type v) :
+    mendlerUnivType pt G ≃
+      mendlerExtType pt G :=
+  typeCoend.endImpredicative
+    (mendlerTypeProf pt G)
+
+/-- The functorial action on the coend: given
+`h : pt₁ ⟶ pt₂`, maps `mendlerExtType pt₁ G` to
+`mendlerExtType pt₂ G` by postcomposing the hom
+component `(A ⟶ pt₁)` with `h`.
+
+Corresponds to `ProfMendlerExtMap` in the Idris
+code. -/
+def mendlerExtType.map
+    (G : Cᵒᵖ ⥤ C ⥤ Type v)
+    {pt₁ pt₂ : C} (h : pt₁ ⟶ pt₂) :
+    mendlerExtType pt₁ G →
+      mendlerExtType pt₂ G :=
+  typeCoend.map C
+    (mendlerTypeProf.mapPt G h)
+
+/-- The functorial action on the Church encoding:
+given `h : pt₁ ⟶ pt₂`, maps
+`mendlerUnivType pt₁ G` to
+`mendlerUnivType pt₂ G`.
+
+Obtained by conjugating `mendlerExtType.map G h`
+with `mendlerUnivTypeEquiv`. Corresponds to
+`ProfMendlerUnivMap` in the Idris code:
+`gamma x (\y, mya => delta y (mab . mya))`. -/
+def mendlerUnivType.map
+    (G : Cᵒᵖ ⥤ C ⥤ Type v)
+    {pt₁ pt₂ : C} (h : pt₁ ⟶ pt₂) :
+    mendlerUnivType pt₁ G →
+      mendlerUnivType pt₂ G :=
+  fun γ =>
+    (mendlerUnivTypeEquiv pt₂ G).symm
+      (mendlerExtType.map G h
+        (mendlerUnivTypeEquiv pt₁ G γ))
+
+/-- The Mendler algebra characterization: functions
+from `mendlerExtType pt G` to a target type `X`
+correspond to compatible families
+`∀ A, (A ⟶ pt) × G(A,A) → X`.
+
+This is `typeCoend.endEquiv` applied to
+`mendlerTypeProf pt G`.
+
+When `X = pt` (with `pt : Type v`), the RHS is
+the Mendler algebra structure
+`∀ A (γ : A ⟶ pt), G(A,A) → pt` and the LHS is
+the conventional F-algebra map
+`mendlerExtType pt G → pt`. -/
+def mendlerAlgTypeEquiv
+    (pt : C) (G : Cᵒᵖ ⥤ C ⥤ Type v)
+    (X : Type w) :
+    (mendlerExtType pt G → X) ≃
+      typeEnd
+        (sliceProfunctorPoly
+          (mendlerTypeProf pt G) X) :=
+  typeCoend.endEquiv
+    (mendlerTypeProf pt G) X
+
+theorem mendlerTypeProf.mapPt_id
+    (G : Cᵒᵖ ⥤ C ⥤ Type v) (pt : C) :
+    mendlerTypeProf.mapPt G (𝟙 pt) =
+      𝟙 (mendlerTypeProf pt G) := by
+  ext A B ⟨s, x⟩
+  all_goals simp [mapPt, Category.comp_id]
+
+theorem mendlerTypeProf.mapPt_comp
+    (G : Cᵒᵖ ⥤ C ⥤ Type v)
+    {pt₁ pt₂ pt₃ : C}
+    (h₁ : pt₁ ⟶ pt₂) (h₂ : pt₂ ⟶ pt₃) :
+    mendlerTypeProf.mapPt G (h₁ ≫ h₂) =
+      mendlerTypeProf.mapPt G h₁ ≫
+        mendlerTypeProf.mapPt G h₂ := by
+  ext A B ⟨s, x⟩
+  all_goals simp [mendlerTypeProf, mapPt,
+    Category.assoc]
+
+theorem mendlerExtType.map_id
+    (G : Cᵒᵖ ⥤ C ⥤ Type v) (pt : C) :
+    mendlerExtType.map G (𝟙 pt) = id := by
+  unfold mendlerExtType.map
+  rw [mendlerTypeProf.mapPt_id]
+  exact (typeCoendFunctor C).map_id
+    (mendlerTypeProf pt G)
+
+theorem mendlerExtType.map_comp
+    (G : Cᵒᵖ ⥤ C ⥤ Type v)
+    {pt₁ pt₂ pt₃ : C}
+    (h₁ : pt₁ ⟶ pt₂) (h₂ : pt₂ ⟶ pt₃) :
+    mendlerExtType.map G (h₁ ≫ h₂) =
+      mendlerExtType.map G h₂ ∘
+        mendlerExtType.map G h₁ := by
+  unfold mendlerExtType.map
+  rw [mendlerTypeProf.mapPt_comp]
+  exact (typeCoendFunctor C).map_comp
+    (mendlerTypeProf.mapPt G h₁)
+    (mendlerTypeProf.mapPt G h₂)
+
+/-- Algebra characterization for the
+Church-encoded Mendler extension: functions from
+`mendlerUnivType pt G` to a target type `X`
+correspond to elements of
+`typeEnd
+  (sliceProfunctorPoly
+    (mendlerTypeProf pt G) X)`,
+which assigns to each `A : C` the function type
+`(A ⟶ pt) × G(A,A) → X` (with dinaturality).
+
+Obtained by composing `Equiv.arrowCongr` of the
+Church-encoding equivalence `mendlerUnivTypeEquiv`
+with the coend algebra characterization
+`mendlerAlgTypeEquiv`.
+
+Corresponds to the Idris `MendlerAlgToFAlgUniv` /
+`FAlgToMendlerAlgUniv` when `C = Type v` and
+`X = pt`. -/
+def mendlerUnivAlgTypeEquiv
+    (pt : C) (G : Cᵒᵖ ⥤ C ⥤ Type v)
+    (X : Type w) :
+    (mendlerUnivType pt G → X) ≃
+      typeEnd
+        (sliceProfunctorPoly
+          (mendlerTypeProf pt G) X) :=
+  (Equiv.arrowCongr
+    (mendlerUnivTypeEquiv pt G)
+    (Equiv.refl X)).trans
+    (mendlerAlgTypeEquiv pt G X)
+
+/-- The Mendler profunctor as a functor from `C`
+to the profunctor category `Cᵒᵖ ⥤ C ⥤ Type v`,
+mapping `pt ↦ mendlerTypeProf pt G` and
+`h ↦ mendlerTypeProf.mapPt G h`. -/
+def mendlerTypeProfFunctor
+    (G : Cᵒᵖ ⥤ C ⥤ Type v) :
+    C ⥤ (Cᵒᵖ ⥤ C ⥤ Type v) where
+  obj pt := mendlerTypeProf pt G
+  map h := mendlerTypeProf.mapPt G h
+  map_id pt := mendlerTypeProf.mapPt_id G pt
+  map_comp h₁ h₂ :=
+    mendlerTypeProf.mapPt_comp G h₁ h₂
+
+/-- The Mendler extension as a functor
+`C ⥤ Type (max u v)`, defined as
+`mendlerTypeProfFunctor G ⋙ typeCoendFunctor C`.
+At each object `pt`, the value is
+`typeCoend (mendlerTypeProf pt G)`, i.e.,
+`mendlerExtType pt G`. -/
+def mendlerExtTypeFunctor
+    (G : Cᵒᵖ ⥤ C ⥤ Type v) :
+    C ⥤ Type (max u v) :=
+  mendlerTypeProfFunctor G ⋙ typeCoendFunctor C
+
+end TypeValuedGExt
+
 end GebLean
