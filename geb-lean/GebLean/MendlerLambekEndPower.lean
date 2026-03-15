@@ -4322,38 +4322,6 @@ theorem impCeil_impFloor
   rw [reassoc_of% whisk, Iso.inv_hom_id_assoc]
   exact HasPowers.fac _ γ
 
-omit [HasAllHomToProfEnds G] in
-/-- `impFloor ∘ impCeil = id` on conventional algebras:
-the structure map recovered by flooring the ceiling is
-the original structure map. -/
-theorem impFloor_impCeil
-    (twInner : ∀ (pt Y : C),
-      HasTerminalWedge (ihomPowerProf G pt Y))
-    (twOuter : ∀ (pt : C),
-      HasTerminalWedge
-        (churchProf G pt (twInner pt)))
-    (alg : ConventionalAlgebra
-      (ImpredicativeGExtFunctor G
-        twInner twOuter)) :
-    impFloor G twInner twOuter
-      (impCeil G twInner twOuter alg) = alg := by
-  cases alg with | mk a str =>
-  simp only [impFloor, impCeil]
-  congr 1
-  let m : MendlerAlgebra G :=
-    ⟨a, ⟨⟨fun A γ =>
-      churchLift G a (twInner a) (twOuter a) A γ ≫
-        str,
-      (impCeil G twInner twOuter ⟨a, str⟩).isDinatural
-    ⟩⟩⟩
-  have round :
-      impCeil G twInner twOuter
-        (impFloor G twInner twOuter m) = m :=
-    impCeil_impFloor G twInner twOuter m
-  have carrier_eq : (impFloor G twInner twOuter m).a
-      = a := rfl
-  _
-
 end EndBasedMendlerLambek
 
 end GebLean
