@@ -1017,13 +1017,13 @@ def coconeToCowedgeConstProfFunctor {J : Type*} [Category J]
         -- where fst arr = G.map arr.hom.op
         simp only [coconeToCowedgeConstProf, Multicofork.ofπ_ι_app, multispanShapeCoend_fst]
         have hw := f.w (Opposite.op arr.left)
-        simp only [Functor.const_obj_obj] at hw
+        simp only [] at hw
         rw [Category.assoc, hw]
       | right j =>
         -- j : J directly
         simp only [coconeToCowedgeConstProf, Multicofork.ofπ_ι_app]
         have hw := f.w (Opposite.op j)
-        simp only [Functor.const_obj_obj] at hw
+        simp only [] at hw
         exact hw
   }
 
@@ -1038,7 +1038,7 @@ def cowedgeConstProfToCoconeFunctor {J : Type*} [Category J]
       -- k : Jᵒᵖ, need to relate to WalkingMultispan index
       -- For multispanShapeCoend: .L = Arrow J, .R = J
       -- Use .right case since that's indexed by J
-      simp only [cowedgeConstProfToCocone, Functor.const_obj_obj]
+      simp only [cowedgeConstProfToCocone]
       have h := f.w (WalkingMultispan.right k.unop)
       exact h
   }
@@ -3470,9 +3470,9 @@ The swap-op profunctor sends `(a, b)` to
 
 The equivalence is composed from three steps (inside the op):
 1. `wedgeConeEquiv` — wedges as cones over `TwistedArrow C`
-2. `Cones.whiskeringEquivalence` — reindexing through
+2. `Cone.whiskeringEquivalence` — reindexing through
    `(CoTwistedArrow C)ᵒᵖ ≌ TwistedArrow C`
-3. `Cones.postcomposeEquivalence` — transport along
+3. `Cone.postcomposeEquivalence` — transport along
    `profunctorSwapOpNatIso`
 
 These compose to `Wedge Q ≌ Cone (profunctorOnCoTwistedArrow
@@ -3491,9 +3491,9 @@ def cowedgeOpWedgeEquivalence
     (Wedge (profunctorSwapOp C P))ᵒᵖ :=
   (cowedgeOpConeEquivalence P).trans
     (((wedgeConeEquiv (profunctorSwapOp C P)).trans
-      ((Cones.whiskeringEquivalence
+      ((Cone.whiskeringEquivalence
         coTwistedArrowOpEquivTwistedArrow).trans
-        (Cones.postcomposeEquivalence
+        (Cone.postcomposeEquivalence
           (profunctorSwapOpNatIso C P)))).op.symm)
 
 /-- An initial cowedge maps to a terminal wedge via
@@ -3534,11 +3534,11 @@ category for `profunctorSwapOp C P`:
 
 The equivalence is composed from six steps:
 1. `wedgeConeEquiv` — wedges as cones over `TwistedArrow C`
-2. `Cones.whiskeringEquivalence` — reindexing through
+2. `Cone.whiskeringEquivalence` — reindexing through
    `(CoTwistedArrow C)ᵒᵖ ≌ TwistedArrow C`
-3. `Cones.functorialityEquivalence` — transport along
+3. `Cone.functorialityEquivalence` — transport along
    `(opOpEquivalence D).symm` into `Dᵒᵖᵒᵖ`
-4. `Cones.postcomposeEquivalence` — transport along
+4. `Cone.postcomposeEquivalence` — transport along
    `profunctorReverseSwapOpNatIso`
 5. `coneOpCoconeEquivalence` — cone/cocone op duality
 6. `cowedgeCoconeEquiv` — cocones as cowedges
@@ -3554,12 +3554,12 @@ def wedgeOpCowedgeEquivalence
     Wedge (J := C) (C := D) P ≌
     (Cowedge (profunctorSwapOp C P))ᵒᵖ :=
   (wedgeConeEquiv P).trans
-    ((Cones.whiskeringEquivalence
+    ((Cone.whiskeringEquivalence
       coTwistedArrowOpEquivTwistedArrow).trans
-      ((Cones.functorialityEquivalence
+      ((Cone.functorialityEquivalence
         (profunctorOnOpCoTwistedArrow C P)
         (opOpEquivalence D).symm).trans
-        ((Cones.postcomposeEquivalence
+        ((Cone.postcomposeEquivalence
           (profunctorReverseSwapOpNatIso C P)).trans
           ((coneOpCoconeEquivalence
             (profunctorOnCoTwistedArrow C
@@ -3895,8 +3895,8 @@ These equivalences transform weighted cones by changing
 the diagram via a natural isomorphism or by reindexing along
 a category equivalence. They compose the
 `weightedConeElementsEquiv` bridge with mathlib's
-`Cones.postcomposeEquivalence` and
-`Cones.whiskeringEquivalence`.
+`Cone.postcomposeEquivalence` and
+`Cone.whiskeringEquivalence`.
 -/
 
 universe u₇ v₇ u₈
@@ -3911,7 +3911,7 @@ variable {J : Type u₇} [Category.{v₇} J]
 Defined by composing through the elements bridge:
 `WeightedCone W D ≌ Cone (π W ⋙ D) ≌ Cone (π W ⋙ D')
 ≌ WeightedCone W D'`,
-where the middle step uses `Cones.postcomposeEquivalence`
+where the middle step uses `Cone.postcomposeEquivalence`
 with the whiskered isomorphism
 `(CategoryOfElements.π W).isoWhiskerLeft α`. -/
 def weightedConePostcomposeEquivalence
@@ -3919,7 +3919,7 @@ def weightedConePostcomposeEquivalence
     (α : D ≅ D') :
     WeightedCone W D ≌ WeightedCone W D' :=
   (weightedConeElementsEquiv W D).trans
-    ((Cones.postcomposeEquivalence
+    ((Cone.postcomposeEquivalence
       ((CategoryOfElements.π W).isoWhiskerLeft α)).trans
       (weightedConeElementsEquiv W D').symm)
 
@@ -3951,7 +3951,7 @@ def elementsPrecompEquiv (e : K ≌ J)
 the elements precomp functor composed with the diagram
 for `W` and `D`.
 
-This lets `Cones.whiskeringEquivalence` bridge between the
+This lets `Cone.whiskeringEquivalence` bridge between the
 two weighted-cone-elements diagrams. -/
 theorem elementsPrecompDiagramEq (e : K ≌ J)
     (W : J ⥤ Type v₇) (D : J ⥤ C) :
@@ -3968,7 +3968,7 @@ theorem elementsPrecompDiagramEq (e : K ≌ J)
 Defined by composing through the elements bridge:
 the diagram equality `elementsPrecompDiagramEq` relates
 the two elements-cone diagrams, and
-`Cones.whiskeringEquivalence` with `elementsPrecompEquiv`
+`Cone.whiskeringEquivalence` with `elementsPrecompEquiv`
 does the reindexing. -/
 def weightedConeWhiskeringEquivalence (e : K ≌ J)
     (W : J ⥤ Type v₇) (D : J ⥤ C) :
@@ -3976,7 +3976,7 @@ def weightedConeWhiskeringEquivalence (e : K ≌ J)
     WeightedCone W D :=
   (weightedConeElementsEquiv
     (e.functor ⋙ W) (e.functor ⋙ D)).trans
-    ((Cones.whiskeringEquivalence
+    ((Cone.whiskeringEquivalence
       (elementsPrecompEquiv e W)).symm.trans
       (weightedConeElementsEquiv W D).symm)
 
@@ -3991,13 +3991,13 @@ Defined by composing through the elements bridge:
   ≌ Cone ((π W ⋙ D) ⋙ e.functor)
   ≌ WeightedCone W (D ⋙ e.functor)`,
 where the middle step uses
-`Cones.functorialityEquivalence`. -/
+`Cone.functorialityEquivalence`. -/
 def weightedConeFunctorialityEquivalence
     (W : J ⥤ Type v₇) (D : J ⥤ C) (e : C ≌ C') :
     WeightedCone W D ≌
     WeightedCone W (D ⋙ e.functor) :=
   (weightedConeElementsEquiv W D).trans
-    ((Cones.functorialityEquivalence
+    ((Cone.functorialityEquivalence
       (weightedConeDiagram W D) e).trans
     (weightedConeElementsEquiv W
       (D ⋙ e.functor)).symm)
@@ -7876,6 +7876,7 @@ equivalence between them.
 
 Uses `hasLimitsOfShape_of_equivalence` to transfer `HasTerminal` across
 the categorical equivalence. -/
+@[reducible]
 def hasTerminalWeightedWedgeOfHasTerminalWedge {D : Type w} [Category.{v} D]
     (P : Cᵒᵖ ⥤ C ⥤ D) [HasTerminal (Wedge (J := C) (C := D) P)] :
     HasTerminal (WeightedWedge (terminalProfunctor (C := C)) P) :=
@@ -7884,6 +7885,7 @@ def hasTerminalWeightedWedgeOfHasTerminalWedge {D : Type w} [Category.{v} D]
 
 /-- `HasTerminal (Wedge P)` from `HasTerminal (WeightedWedge W P)` via the
 equivalence between them. -/
+@[reducible]
 def hasTerminalWedgeOfHasTerminalWeightedWedge {D : Type w} [Category.{v} D]
     (P : Cᵒᵖ ⥤ C ⥤ D)
     [HasTerminal (WeightedWedge (terminalProfunctor (C := C)) P)] :
@@ -7896,6 +7898,7 @@ equivalence between them.
 
 Uses `hasColimitsOfShape_of_equivalence` to transfer `HasInitial` across
 the categorical equivalence. -/
+@[reducible]
 def hasInitialWeightedCowedgeOfHasInitialCowedge {D : Type w} [Category.{v} D]
     (P : Cᵒᵖ ⥤ C ⥤ D) [HasInitial (Cowedge (J := C) (C := D) P)] :
     HasInitial (WeightedCowedge (terminalProfunctor (C := C)) P) :=
@@ -7904,6 +7907,7 @@ def hasInitialWeightedCowedgeOfHasInitialCowedge {D : Type w} [Category.{v} D]
 
 /-- `HasInitial (Cowedge P)` from `HasInitial (WeightedCowedge W P)` via the
 equivalence between them. -/
+@[reducible]
 def hasInitialCowedgeOfHasInitialWeightedCowedge {D : Type w} [Category.{v} D]
     (P : Cᵒᵖ ⥤ C ⥤ D)
     [HasInitial (WeightedCowedge (terminalProfunctor (C := C)) P)] :
@@ -7928,6 +7932,7 @@ theorem hasTerminalWeightedWedgeIffHasEnd {D : Type w} [Category.{v} D]
     (hasLimit_iff_hasTerminal_cone _).symm
 
 /-- Construct `HasEnd P` from `HasTerminal (WeightedWedge unitW P)`. -/
+@[reducible]
 def hasEndOfHasTerminalWeightedWedge {D : Type w} [Category.{v} D]
     (P : Cᵒᵖ ⥤ C ⥤ D)
     [HasTerminal (WeightedWedge (terminalProfunctor (C := C)) P)] :
@@ -7935,6 +7940,7 @@ def hasEndOfHasTerminalWeightedWedge {D : Type w} [Category.{v} D]
   (hasTerminalWeightedWedgeIffHasEnd P).mp inferInstance
 
 /-- Construct `HasTerminal (WeightedWedge unitW P)` from `HasEnd P`. -/
+@[reducible]
 def hasTerminalWeightedWedgeOfHasEnd {D : Type w} [Category.{v} D]
     (P : Cᵒᵖ ⥤ C ⥤ D) [HasEnd P] :
     HasTerminal (WeightedWedge (terminalProfunctor (C := C)) P) :=
@@ -7958,6 +7964,7 @@ theorem hasInitialWeightedCowedgeIffHasCoend {D : Type w} [Category.{v} D]
     (hasColimit_iff_hasInitial_cocone _).symm
 
 /-- Construct `HasCoend P` from `HasInitial (WeightedCowedge unitW P)`. -/
+@[reducible]
 def hasCoendOfHasInitialWeightedCowedge {D : Type w} [Category.{v} D]
     (P : Cᵒᵖ ⥤ C ⥤ D)
     [HasInitial (WeightedCowedge (terminalProfunctor (C := C)) P)] :
@@ -7965,6 +7972,7 @@ def hasCoendOfHasInitialWeightedCowedge {D : Type w} [Category.{v} D]
   (hasInitialWeightedCowedgeIffHasCoend P).mp inferInstance
 
 /-- Construct `HasInitial (WeightedCowedge unitW P)` from `HasCoend P`. -/
+@[reducible]
 def hasInitialWeightedCowedgeOfHasCoend {D : Type w} [Category.{v} D]
     (P : Cᵒᵖ ⥤ C ⥤ D) [HasCoend P] :
     HasInitial (WeightedCowedge (terminalProfunctor (C := C)) P) :=
@@ -8063,6 +8071,7 @@ def weightedCoendIsoInitialCowedge {D : Type w} [Category.{v} D]
 
 Given a wedge that is terminal, we can construct the `HasEnd P` instance.
 The wedge's apex then satisfies the universal property of the end. -/
+@[reducible]
 def hasEndOfIsTerminalWedge {D : Type w} [Category.{v} D]
     (P : Cᵒᵖ ⥤ C ⥤ D) (w : Wedge (J := C) (C := D) P) (hw : IsTerminal w) :
     HasEnd P :=
@@ -8072,6 +8081,7 @@ def hasEndOfIsTerminalWedge {D : Type w} [Category.{v} D]
 
 Given a cowedge that is initial, we can construct the `HasCoend P` instance.
 The cowedge's apex then satisfies the universal property of the coend. -/
+@[reducible]
 def hasCoendOfIsInitialCowedge {D : Type w} [Category.{v} D]
     (P : Cᵒᵖ ⥤ C ⥤ D) (w : Cowedge (J := C) (C := D) P) (hw : IsInitial w) :
     HasCoend P :=
@@ -8082,6 +8092,7 @@ def hasCoendOfIsInitialCowedge {D : Type w} [Category.{v} D]
 Given a weighted wedge that is a weighted end, we can construct the `HasEnd P`
 instance. The weighted wedge's apex satisfies the universal property of the
 end. -/
+@[reducible]
 def hasEndOfIsWeightedEnd {D : Type w} [Category.{v} D]
     (P : Cᵒᵖ ⥤ C ⥤ D)
     {c : WeightedWedge (terminalProfunctor (C := C)) P}
@@ -8093,6 +8104,7 @@ def hasEndOfIsWeightedEnd {D : Type w} [Category.{v} D]
 Given a weighted cowedge that is a weighted coend, we can construct the
 `HasCoend P` instance. The weighted cowedge's apex satisfies the universal
 property of the coend. -/
+@[reducible]
 def hasCoendOfIsWeightedCoend {D : Type w} [Category.{v} D]
     (P : Cᵒᵖ ⥤ C ⥤ D)
     {c : WeightedCowedge (terminalProfunctor (C := C)) P}

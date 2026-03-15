@@ -4248,6 +4248,7 @@ position `p`, it is `Σ e, PolyFreeMLeafPos P (children e)`
 where `e` ranges over `(polyBetweenFamily X X P x p).left`,
 which is finite by the finitarity hypothesis.
 -/
+@[reducible]
 def polyFreeMLeafPosFintype
     (P : PolyEndo X)
     [PolyBetweenFinitary X X P]

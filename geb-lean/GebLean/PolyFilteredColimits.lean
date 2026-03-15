@@ -105,8 +105,7 @@ lemma overFilteredFactor
   change (c.ι.app j₀).left (g₀ b) = f.left b
   have hnat :=
     congrArg CommaMorphism.left (c.w (toJ₀ b))
-  simp only [Functor.const_obj_obj,
-    Over.comp_left] at hnat
+  simp only [Over.comp_left] at hnat
   calc (c.ι.app j₀).left (g₀ b)
       = (c.ι.app j₀).left
           ((K.map (toJ₀ b)).left (yB b)) := rfl

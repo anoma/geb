@@ -394,6 +394,7 @@ enumeration of bounded-length paths.
 
 Note: This uses `Fintype.ofEquiv` to transport the fintype instance from
 bounded paths to all paths (they're equal by the bound). -/
+@[reducible]
 def finite_paths_in_finite_acyclic_quiver
     (V : Type u) [inst : AcyclicQuiver.{u, v} V] (instFin : Fintype V)
     (decEqV : DecidableEq V) (fintypeEdge : ∀ a b : V, Fintype (a ⟶ b))

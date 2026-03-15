@@ -434,6 +434,7 @@ end DoubleCategoryData
 /-- Build a mathlib `Category` instance for vertical morphisms.
 
 This requires the vertical hom-set to produce `Type` (not `Prop`). -/
+@[reducible]
 def VertCategoryOfDoubleCategoryData {Obj : Type u}
     {vhs : Obj → Obj → Type vMor} {hhs : HorHomSet Obj}
     {sqs : SquareSet vhs hhs}
@@ -443,6 +444,7 @@ def VertCategoryOfDoubleCategoryData {Obj : Type u}
 /-- Build a mathlib `Category` instance for horizontal morphisms.
 
 This requires the horizontal hom-set to produce `Type` (not `Prop`). -/
+@[reducible]
 def HorCategoryOfDoubleCategoryData {Obj : Type u}
     {vhs : VertHomSet Obj} {hhs : Obj → Obj → Type hMor}
     {sqs : SquareSet vhs hhs}

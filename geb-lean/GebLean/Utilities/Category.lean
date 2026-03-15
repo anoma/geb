@@ -214,6 +214,7 @@ variable {U : Type u} {hs : HomSet.{v, u} U}
 end CategoryData
 
 /-- Build a `Category` typeclass instance from category data. -/
+@[reducible]
 def CategoryOfData {U : Type u} {hs : HomSet.{v, u} U}
     (data : CategoryData U hs) : Category.{v, u} U where
   Hom := hs
@@ -389,6 +390,7 @@ compatible operations. -/
     1. `categoryDataOfCategory` to extract our data structure from V
     2. `CategoryData.ofCompatible` to transfer the laws to U
     3. `CategoryOfData` to build a new `Category` instance on U -/
+@[reducible]
 def categoryOfCompatible {U : Type u} {V : Type u} (e : U ≃ V)
     {hsU : HomSet.{v, u} U}
     [catV : Category.{v, u} V]
@@ -427,6 +429,7 @@ def CategoryOpsCompatibleWithCategory.toCategoryOpsCompatible
 /-- Given a `Category` instance on V and compatible ops on U (expressed via
     `CategoryOpsCompatibleWithCategory`), derive a new `Category` instance
     on U. -/
+@[reducible]
 def categoryOfCompatibleWithCategory {U : Type u} {V : Type u} (e : U ≃ V)
     {hsU : HomSet.{v, u} U}
     [catV : Category.{v, u} V]

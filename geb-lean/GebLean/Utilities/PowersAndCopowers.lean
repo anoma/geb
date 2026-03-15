@@ -1348,6 +1348,7 @@ equivalence between them.
 
 Uses `hasColimitsOfShape_of_equivalence` to transfer `HasInitial` across
 the categorical equivalence. -/
+@[reducible]
 def hasInitialWeightedCoconeOfHasInitialCopowerCowedge
     [HasInitial (Cowedge (copowerProfunctor W F))] :
     HasInitial (WeightedCocone W F) :=
@@ -1356,6 +1357,7 @@ def hasInitialWeightedCoconeOfHasInitialCopowerCowedge
 
 /-- `HasInitial (Cowedge _)` from `HasInitial (WeightedCocone W F)` via the
 equivalence between them. -/
+@[reducible]
 def hasInitialCopowerCowedgeOfHasInitialWeightedCocone
     [HasInitial (WeightedCocone W F)] :
     HasInitial (Cowedge (copowerProfunctor W F)) :=
@@ -1743,6 +1745,7 @@ equivalence between them.
 
 Uses `hasLimitsOfShape_of_equivalence` to transfer `HasTerminal` across
 the categorical equivalence. -/
+@[reducible]
 def hasTerminalWeightedConeOfHasTerminalPowerWedge
     [HasTerminal (Wedge (powerProfunctor W F))] :
     HasTerminal (WeightedCone W F) :=
@@ -1751,6 +1754,7 @@ def hasTerminalWeightedConeOfHasTerminalPowerWedge
 
 /-- `HasTerminal (Wedge _)` from `HasTerminal (WeightedCone W F)` via the
 equivalence between them. -/
+@[reducible]
 def hasTerminalPowerWedgeOfHasTerminalWeightedCone
     [HasTerminal (WeightedCone W F)] :
     HasTerminal (Wedge (powerProfunctor W F)) :=
@@ -1841,6 +1845,7 @@ abbrev weightedCowedgeCowedgeEquiv :
 
 /-- `HasInitial (WeightedCowedge W P)` from
 `HasInitial (Cowedge (copowerWeightedProfunctor W P))`. -/
+@[reducible]
 def hasInitialWeightedCowedgeOfHasInitialCopowerCowedge
     [HasInitial (Cowedge (copowerWeightedProfunctor W P))] :
     HasInitial (WeightedCowedge W P) :=
@@ -1849,6 +1854,7 @@ def hasInitialWeightedCowedgeOfHasInitialCopowerCowedge
 
 /-- `HasInitial (Cowedge (copowerWeightedProfunctor W P))` from
 `HasInitial (WeightedCowedge W P)`. -/
+@[reducible]
 def hasInitialCopowerCowedgeOfHasInitialWeightedCowedge
     [HasInitial (WeightedCowedge W P)] :
     HasInitial (Cowedge (copowerWeightedProfunctor W P)) :=
@@ -1906,6 +1912,7 @@ abbrev weightedWedgeWedgeEquiv :
 
 /-- `HasTerminal (WeightedWedge W P)` from
 `HasTerminal (Wedge (powerWeightedProfunctor W P))`. -/
+@[reducible]
 def hasTerminalWeightedWedgeOfHasTerminalPowerWedge
     [HasTerminal (Wedge (powerWeightedProfunctor W P))] :
     HasTerminal (WeightedWedge W P) :=
@@ -1914,6 +1921,7 @@ def hasTerminalWeightedWedgeOfHasTerminalPowerWedge
 
 /-- `HasTerminal (Wedge (powerWeightedProfunctor W P))` from
 `HasTerminal (WeightedWedge W P)`. -/
+@[reducible]
 def hasTerminalPowerWedgeOfHasTerminalWeightedWedge
     [HasTerminal (WeightedWedge W P)] :
     HasTerminal (Wedge (powerWeightedProfunctor W P)) :=
@@ -1984,6 +1992,7 @@ abbrev coWeightedCowedgeCowedgeEquiv :
 
 /-- `HasInitial (CoWeightedCowedge W P)` from
 `HasInitial (Cowedge (copowerCoWeightedProfunctor W P))`. -/
+@[reducible]
 def hasInitialCoWeightedCowedgeOfHasInitialCopowerCowedge
     [HasInitial (Cowedge (copowerCoWeightedProfunctor W P))] :
     HasInitial (CoWeightedCowedge W P) :=
@@ -1992,6 +2001,7 @@ def hasInitialCoWeightedCowedgeOfHasInitialCopowerCowedge
 
 /-- `HasInitial (Cowedge (copowerCoWeightedProfunctor W P))` from
 `HasInitial (CoWeightedCowedge W P)`. -/
+@[reducible]
 def hasInitialCopowerCowedgeOfHasInitialCoWeightedCowedge
     [HasInitial (CoWeightedCowedge W P)] :
     HasInitial (Cowedge (copowerCoWeightedProfunctor W P)) :=
@@ -2062,6 +2072,7 @@ abbrev coWeightedWedgeWedgeEquiv :
 
 /-- `HasTerminal (CoWeightedWedge W P)` from
 `HasTerminal (Wedge (powerCoWeightedProfunctor W P))`. -/
+@[reducible]
 def hasTerminalCoWeightedWedgeOfHasTerminalPowerWedge
     [HasTerminal (Wedge (powerCoWeightedProfunctor W P))] :
     HasTerminal (CoWeightedWedge W P) :=
@@ -2070,6 +2081,7 @@ def hasTerminalCoWeightedWedgeOfHasTerminalPowerWedge
 
 /-- `HasTerminal (Wedge (powerCoWeightedProfunctor W P))` from
 `HasTerminal (CoWeightedWedge W P)`. -/
+@[reducible]
 def hasTerminalPowerWedgeOfHasTerminalCoWeightedWedge
     [HasTerminal (CoWeightedWedge W P)] :
     HasTerminal (Wedge (powerCoWeightedProfunctor W P)) :=
