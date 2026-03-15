@@ -1411,6 +1411,244 @@ def parametricConeEquivPresheafSection
 
 end IdentityEdgeRecovery
 
+section LimitRecovery
+
+open Limits in
+/-- The composed equivalence: global sections of
+the limit of `pshBarrLiftEdgeFunctor G` in
+`PshRelEdge C` biject with presheaf sections
+of `G`. Restricting the edge-level limit to
+identity edges recovers the presheaf-level end
+`∫_P G(P)`. -/
+def limitSectionEquivPresheafSection
+    (G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w))
+    {s : Cone
+      (pshBarrLiftEdgeFunctor (C := C) G)}
+    (hs : IsLimit s) :
+    (pshRelEdgeTerminal C ⟶ s.pt) ≃
+    PresheafSection G :=
+  (parametricConeEquiv
+    (pshBarrLiftEdgeFunctor G) hs).symm.trans
+    (parametricConeEquivPresheafSection G)
+
+open Limits in
+/-- Direction 1 of `limitSectionEquivPresheafSection`:
+extract a presheaf section from a global section
+of the limit. The section assigns to each presheaf
+`P` the `srcMap` at the identity edge
+`(P, P, pshRelId P)`. -/
+def limitSectionToPresheafSection
+    (G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w))
+    {s : Cone
+      (pshBarrLiftEdgeFunctor (C := C) G)}
+    (hs : IsLimit s)
+    (f : pshRelEdgeTerminal C ⟶ s.pt) :
+    PresheafSection G :=
+  (limitSectionEquivPresheafSection G hs) f
+
+open Limits in
+/-- Direction 2 of `limitSectionEquivPresheafSection`:
+build a global section of the limit from a
+presheaf section. -/
+def presheafSectionToLimitSection
+    (G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w))
+    {s : Cone
+      (pshBarrLiftEdgeFunctor (C := C) G)}
+    (hs : IsLimit s)
+    (ps : PresheafSection G) :
+    pshRelEdgeTerminal C ⟶ s.pt :=
+  (limitSectionEquivPresheafSection G hs).symm
+    ps
+
+open Limits in
+/-- Roundtrip: extracting then rebuilding a
+limit section recovers the original. -/
+theorem limitSection_roundtrip
+    (G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w))
+    {s : Cone
+      (pshBarrLiftEdgeFunctor (C := C) G)}
+    (hs : IsLimit s)
+    (f : pshRelEdgeTerminal C ⟶ s.pt) :
+    presheafSectionToLimitSection G hs
+      (limitSectionToPresheafSection G hs f) =
+    f :=
+  (limitSectionEquivPresheafSection G hs).symm_apply_apply f
+
+open Limits in
+/-- Roundtrip: rebuilding then extracting a
+presheaf section recovers the original. -/
+theorem presheafSection_limitRoundtrip
+    (G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w))
+    {s : Cone
+      (pshBarrLiftEdgeFunctor (C := C) G)}
+    (hs : IsLimit s)
+    (ps : PresheafSection G) :
+    limitSectionToPresheafSection G hs
+      (presheafSectionToLimitSection
+        G hs ps) =
+    ps :=
+  (limitSectionEquivPresheafSection G hs).apply_symm_apply ps
+
+end LimitRecovery
+
+section WadlerRelatedness
+
+/-- For a parametric cone over
+`pshBarrLiftEdgeFunctor G`, the source and
+target projections at an identity edge agree.
+At edge `(P, P, pshRelId P)`, the Barr lift
+gives `pshRelId (G.obj P)`, so the relatedness
+condition forces `srcMap = tgtMap`. -/
+theorem parametricCone_ident_srcEqTgt
+    (G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w))
+    (pc : ParametricCone
+      (pshBarrLiftEdgeFunctor (C := C) G))
+    (P : Cᵒᵖ ⥤ Type w) :
+    (pc.app
+      (pshRelIdentFunctor.obj P)).srcMap =
+    (pc.app
+      (pshRelIdentFunctor.obj P)).tgtMap :=
+  vertEdgeHom_srcEqTgt_at_ident G P
+    (pc.app (pshRelIdentFunctor.obj P))
+
+/-- Wadler's relatedness characterization for
+parametric cones: two limit projections at
+edge `e = (P, Q, R)` yield elements that are
+`(pshBarrLiftRel G R)`-related.
+
+For a parametric cone `pc` and any edge `e`,
+the pair `(srcMap, tgtMap)` of
+`pc.app e : ⊤ ⟶ (G P, G Q, pshBarrLiftRel G R)`
+satisfies the relatedness condition of the
+Barr-lifted relation. This is Wadler's
+condition that `(g_P, g'_Q) ∈ G(R)` for every
+relation `R : P ↔ Q`. -/
+theorem parametricCone_wadlerRelated
+    (G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w))
+    (pc : ParametricCone
+      (pshBarrLiftEdgeFunctor (C := C) G))
+    (e : PshRelEdge.{u, v, w} C) :
+    pshRelRelated
+      (pc.app e).srcMap
+      (pc.app e).tgtMap
+      (pshRelFull C)
+      (pshBarrLiftRel G e.edge) :=
+  (pc.app e).sq
+
+/-- Converse of `parametricCone_wadlerRelated`:
+given a presheaf section `σ`, the parametric
+cone built from `σ` satisfies Wadler's
+relatedness at every edge. The source and
+target components are `σ.app e.src` and
+`σ.app e.tgt`. -/
+theorem presheafSection_wadlerRelated
+    (G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w))
+    (σ : PresheafSection G)
+    (e : PshRelEdge.{u, v, w} C) :
+    pshRelRelated
+      (σ.app e.src)
+      (σ.app e.tgt)
+      (pshRelFull C)
+      (pshBarrLiftRel G e.edge) :=
+  (presheafSectionToParametricCone G σ).app e
+    |>.sq
+
+/-- Wadler's relatedness at graph edges
+specializes to naturality: for a parametric
+cone `pc` and a presheaf morphism `α : P ⟶ Q`,
+the source projections satisfy
+`srcMap_P ≫ G.map α = srcMap_Q`.
+
+At graph edges, `pshBarrLiftRel_graph` reduces
+the Barr-lifted graph relation to
+`pshRelGraph (G.map α)`, so the cone condition
+becomes the naturality condition for the
+extracted presheaf section. -/
+theorem parametricCone_graph_naturality
+    (G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w))
+    (pc : ParametricCone
+      (pshBarrLiftEdgeFunctor (C := C) G))
+    {P Q : Cᵒᵖ ⥤ Type w} (α : P ⟶ Q) :
+    (pc.app
+      (pshRelIdentFunctor.obj P)).srcMap ≫
+      G.map α =
+    (pc.app
+      (pshRelIdentFunctor.obj Q)).srcMap := by
+  have h :=
+    (parametricConeSrcSection G pc).naturality α
+  simp only [Functor.const_obj_obj,
+    Functor.const_obj_map,
+    Category.id_comp] at h
+  exact h.symm
+
+end WadlerRelatedness
+
+section QuantificationHierarchy
+
+/-- The quantification hierarchy collapse: the
+three levels of section types — identity edges,
+graph edges, and all edges — are equivalent for
+`pshBarrLiftEdgeFunctor G`.
+
+- **Identity-restricted**: `PresheafSection G`
+  (natural family `∀P, ⊤ ⟶ G(P)`)
+- **Graph-restricted**: the graph functor is
+  fully faithful
+  (`pshRelEdgeGraphSubcatFullyFaithful`), so
+  the graph cone condition is equivalent to
+  naturality of the presheaf section
+- **Full parametric**: `ParametricCone` (Wadler
+  relatedness at all edges, including non-graph)
+
+The equivalence `ParametricCone ≃ PresheafSection`
+(`parametricConeEquivPresheafSection`) shows
+that the full parametric condition collapses
+to naturality, because the relatedness witnesses
+at general edges are determined by naturality at
+identity edges via `presheafSection_related`.
+
+This is the formal statement that for covariant
+endofunctors `G`, the parametricity condition
+adds nothing beyond naturality. The hierarchy
+becomes genuinely stratified for conditional
+quantification (where only edges satisfying a
+predicate are tested; see
+`conditional_freeTheorem_graph`). -/
+def hierarchyCollapse
+    (G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w)) :
+    ParametricCone
+      (pshBarrLiftEdgeFunctor
+        (C := C) G) ≃
+    PresheafSection G :=
+  parametricConeEquivPresheafSection G
+
+open Limits in
+/-- The hierarchy collapse at the limit level:
+global sections of the limit of
+`pshBarrLiftEdgeFunctor G` in `PshRelEdge C`
+biject with presheaf sections of `G`. -/
+def hierarchyCollapseLimit
+    (G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w))
+    {s : Cone
+      (pshBarrLiftEdgeFunctor (C := C) G)}
+    (hs : IsLimit s) :
+    (pshRelEdgeTerminal C ⟶ s.pt) ≃
+    PresheafSection G :=
+  limitSectionEquivPresheafSection G hs
+
+end QuantificationHierarchy
+
 section ConditionalFreeTheorem
 
 /-- A conditional free theorem at graph

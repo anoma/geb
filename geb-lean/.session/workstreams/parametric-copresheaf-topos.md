@@ -1804,33 +1804,39 @@ mechanism: it ensures that at identity edges,
 parametricity reduces to naturality.
 
 Tasks: U1-U4.
-Status: [partial] U1 done
-(`parametricConeEquiv` in
-`PshRelEdgeGraphRestriction.lean`); U2-U4 open.
+Status: [done] All four completed.
 
-**Weighted-limit quantification hierarchy.**
-The hierarchy of weights on the limit gives
-a hierarchy of quantification strengths:
-
-- Restriction to identity edges: presheaf-level
-  `lim_P G(P)`, no parametricity
-- Restriction to graph edges: rearrangement /
-  free theorem condition (connects to
-  `conditional_freeTheorem_graph` from W5)
-- Full limit (unweighted): full parametricity
-- Weighted limit `{W, G}`: parametricity
-  modulated by weight `W`
-
-Since `PshRelEdge C` already absorbs mixed
-variance (via `arrowRel` for arrows,
-`pshBarrLiftRel` for covariant parts), ordinary
-limits suffice for all type-formers expressible
-as `TypeExpr`.  Wedges / ends on `PshRelEdge C`
-itself would arise for constructions that are
-profunctorial on the edge category — beyond
-Wadler's framework.
-Task: U4.
-Status: [open].
+- [x] **U1.** `parametricConeEquiv`: `ParametricCone G
+  ≃ Hom(⊤, lim G)`.
+  (`PshRelEdgeGraphRestriction.lean`)
+- [x] **U2.** `limitSectionEquivPresheafSection`:
+  `Hom(⊤, lim(pshBarrLiftEdgeFunctor G)) ≃
+  PresheafSection G`.  Also
+  `limitSectionToPresheafSection`,
+  `presheafSectionToLimitSection`, roundtrips.
+  (`PshRelEdgeGraphRestriction.lean`,
+  section `LimitRecovery`)
+- [x] **U3.** Wadler relatedness characterization.
+  `parametricCone_ident_srcEqTgt` (src=tgt at
+  identity edges),
+  `parametricCone_wadlerRelated` (relatedness at
+  all edges via cone projection),
+  `presheafSection_wadlerRelated` (converse),
+  `parametricCone_graph_naturality` (graph edges
+  specialize to naturality).
+  (`PshRelEdgeGraphRestriction.lean`,
+  section `WadlerRelatedness`)
+- [x] **U4.** Quantification hierarchy collapse.
+  `hierarchyCollapse`: `ParametricCone ≃
+  PresheafSection` shows the three levels (identity
+  edges, graph edges, all edges) give the same
+  type of sections for covariant endofunctors.
+  `hierarchyCollapseLimit`: limit-level version.
+  The hierarchy becomes genuinely stratified only
+  for conditional quantification
+  (`conditional_freeTheorem_graph`).
+  (`PshRelEdgeGraphRestriction.lean`,
+  section `QuantificationHierarchy`)
 
 **General parametricity notion in PshRelEdge.**
 Define parametric transformation for arbitrary
