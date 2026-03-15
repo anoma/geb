@@ -3,8 +3,11 @@
 ## Status
 
 Phases 1-5 complete. Phase 6: Tasks 11-13 done;
-Task 14 in progress (Type-valued impredicative
-GExt section complete); rename pending.
+Task 14 in progress. Type-valued impredicative
+GExt section and C=Type v pointwise equivalences
+complete. Categorical equivalence deferred to
+existing `mendlerLambekEquiv` infrastructure
+(under `HasAllHomToProfCoends G`).
 
 Phases 1-5 established the equivalence
 `MendlerAlgebra G ≌ ConventionalAlgebra F`
@@ -842,17 +845,56 @@ Type-valued profunctors. The Church encoding
 equivalence is unconditional (no parametricity
 condition).
 
+###### Type-valued pointwise equivalences (DONE)
+
+For `C = Type v`, the `TypeValuedMendlerAlgConnection`
+section provides:
+
+- `mendlerFamilyUncurry` / `mendlerFamilyCurry`:
+  currying isomorphism between Mendler algebra
+  families and type end families.
+- `mendlerFamilyUncurry_wedge` /
+  `mendlerFamilyCurry_isDinatural`:
+  dinaturality/wedge condition correspondence.
+- `mendlerAlgOverTypeEndEquiv pt G`:
+  `MendlerAlgebraOver G pt ≃ typeEnd
+  (sliceProfunctorPoly (mendlerTypeProf pt G) pt)`.
+  Roundtrip is definitional (`left_inv _ := rfl`,
+  `right_inv _ := rfl`).
+- `mendlerAlgOverAlgMapEquiv pt G`:
+  `MendlerAlgebraOver G pt ≃
+  (mendlerExtType pt G → pt)`.
+- `mendlerHom_to_algMapComm` /
+  `algMapComm_to_mendlerHom`: bidirectional
+  characterization of Mendler hom conditions
+  via `mendlerExtType.map` and
+  `mendlerAlgOverAlgMapEquiv`.
+
+###### Design decision: categorical equivalence
+
+A custom `TypeMendlerAlg` category was
+abandoned: `mendlerExtTypeFunctor G :
+C ⥤ Type (max u v)` crosses universes when
+`C = Type v` (where `u = v+1`), so
+`Endofunctor.Algebra` (which requires `F : C ⥤ C`)
+cannot be used. The constraint `u ≤ v` cannot be
+satisfied since `Type v : Type (v+1)` forces
+`u = v+1`.
+
+The categorical equivalence for `C = Type v`
+should instead use the existing
+`mendlerLambekEquiv` from `WeightedAlg.lean`,
+which gives
+`MendlerAlgebra G ≌ Endofunctor.Algebra
+(GExtFunctor G)` under `HasAllHomToProfCoends G`.
+
 ###### Remaining for Task 14
 
-- Connection to existing C-valued infrastructure
-  (`CopowerGExtObj`, `GExtFunctor`): for `C`
-  with copowers, `CopowerGExtObj G pt` should
-  relate to `mendlerExtType pt G_typed` where
-  `G_typed` is the Type-valued version of
-  `G : Cᵒᵖ ⥤ C ⥤ C` (via Yoneda evaluation).
-  This requires showing that the C-valued coend
-  and the Type-valued coend agree under the
-  Yoneda embedding.
+- Instantiate `HasAllHomToProfCoends G` for
+  `C = Type v` (if possible; requires
+  restricted coends to exist as objects of
+  `Type v`, which involves showing the
+  type-level coend is `Small.{v}`).
 - Presheaf instantiation: for
   `C = E ⥤ Type v`, instantiate
   `mendlerExtTypeFunctor` and connect to

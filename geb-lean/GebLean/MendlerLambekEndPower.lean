@@ -3740,4 +3740,193 @@ def mendlerExtTypeFunctor
 
 end TypeValuedGExt
 
+section TypeValuedMendlerAlgConnection
+
+/-- Uncurrying a Mendler algebra family to a
+type end family, for `C = Type v`.
+
+Converts the curried family
+`(I : Type v) → (I → pt) → (G(I,I) → pt)`
+to the uncurried family
+`(I : Type v) → ((I → pt) × G(I,I)) → pt`. -/
+def mendlerFamilyUncurry
+    (pt : Type v)
+    (G : (Type v)ᵒᵖ ⥤ Type v ⥤ Type v)
+    (family :
+      ParanatSig (HomToProf pt) (G ⇓ pt)) :
+    (I : Type v) →
+      diagApp
+        (sliceProfunctorPoly
+          (mendlerTypeProf pt G) pt) I :=
+  fun I ⟨γ, g⟩ => family I γ g
+
+/-- Currying a type end family to a Mendler algebra
+family, for `C = Type v`.
+
+Converts the uncurried family
+`(I : Type v) → ((I → pt) × G(I,I)) → pt`
+to the curried family
+`(I : Type v) → (I → pt) → (G(I,I) → pt)`. -/
+def mendlerFamilyCurry
+    (pt : Type v)
+    (G : (Type v)ᵒᵖ ⥤ Type v ⥤ Type v)
+    (family :
+      (I : Type v) →
+        diagApp
+          (sliceProfunctorPoly
+            (mendlerTypeProf pt G) pt) I) :
+    ParanatSig (HomToProf pt) (G ⇓ pt) :=
+  fun I γ g => family I ⟨γ, g⟩
+
+/-- The uncurried family satisfies the wedge
+condition when the original family is dinatural.
+
+The dinaturality condition for the Mendler
+algebra family at `(i, j, f, s)`:
+  `family j s (G(j,j).map f g) =
+   family i (f ≫ s) (G.map f.op .app i g)`
+is exactly the wedge condition for the uncurried
+family at `(i, j, f)` applied to `(s, g)`. -/
+theorem mendlerFamilyUncurry_wedge
+    (pt : Type v)
+    (G : (Type v)ᵒᵖ ⥤ Type v ⥤ Type v)
+    (family :
+      ParanatSig (HomToProf pt) (G ⇓ pt))
+    (hd :
+      IsDinatural (HomToProf pt) (G ⇓ pt)
+        family)
+    {i j : Type v} (f : i ⟶ j) :
+    ((sliceProfunctorPoly
+        (mendlerTypeProf pt G) pt).obj
+      (Opposite.op i)).map f
+      (mendlerFamilyUncurry pt G family i) =
+    ((sliceProfunctorPoly
+        (mendlerTypeProf pt G) pt).map
+      f.op).app j
+      (mendlerFamilyUncurry pt G family j) := by
+  funext ⟨s, g⟩
+  exact (congrFun (hd i j f s) g).symm
+
+/-- The curried family is dinatural when
+the uncurried family satisfies the wedge
+condition. Inverse of
+`mendlerFamilyUncurry_wedge`. -/
+theorem mendlerFamilyCurry_isDinatural
+    (pt : Type v)
+    (G : (Type v)ᵒᵖ ⥤ Type v ⥤ Type v)
+    (family :
+      (I : Type v) →
+        diagApp
+          (sliceProfunctorPoly
+            (mendlerTypeProf pt G) pt) I)
+    (hw : ∀ {i j : Type v} (f : i ⟶ j),
+      ((sliceProfunctorPoly
+          (mendlerTypeProf pt G) pt).obj
+        (Opposite.op i)).map f (family i) =
+      ((sliceProfunctorPoly
+          (mendlerTypeProf pt G) pt).map
+        f.op).app j (family j)) :
+    IsDinatural (HomToProf pt) (G ⇓ pt)
+      (mendlerFamilyCurry pt G family) := by
+  intro i j f s
+  exact funext fun g =>
+    (congrFun (hw f) ⟨s, g⟩).symm
+
+/-- Equivalence between Mendler algebras over
+`pt` and the type end of the uncurried Mendler
+profunctor, for `C = Type v`.
+
+The currying isomorphism
+`(A → B → C) ≃ (A × B → C)` applied
+componentwise converts between the curried
+Mendler algebra family
+`∀ I, (I → pt) → (G(I,I) → pt)`
+and the end of the uncurried profunctor
+`∀ I, ((I → pt) × G(I,I)) → pt`,
+with the dinaturality condition matching
+the wedge condition. -/
+def mendlerAlgOverTypeEndEquiv
+    (pt : Type v)
+    (G : (Type v)ᵒᵖ ⥤ Type v ⥤ Type v) :
+    MendlerAlgebraOver G pt ≃
+      typeEnd
+        (sliceProfunctorPoly
+          (mendlerTypeProf pt G) pt) where
+  toFun m :=
+    ⟨mendlerFamilyUncurry pt G m.family,
+     fun f =>
+       mendlerFamilyUncurry_wedge
+         pt G m.family m.isDinatural f⟩
+  invFun e :=
+    MendlerAlgebraOver.mk' pt
+      (mendlerFamilyCurry pt G e.val)
+      (mendlerFamilyCurry_isDinatural
+        pt G e.val
+        (fun f => e.property f))
+  left_inv _ := rfl
+  right_inv _ := rfl
+
+/-- Equivalence between Mendler algebras over
+`pt` and conventional algebra maps
+`mendlerExtType pt G → pt`, for `C = Type v`.
+
+Composes `mendlerAlgOverTypeEndEquiv` (the
+currying equivalence) with
+`mendlerAlgTypeEquiv` (the coend-end
+algebra characterization). -/
+def mendlerAlgOverAlgMapEquiv
+    (pt : Type v)
+    (G : (Type v)ᵒᵖ ⥤ Type v ⥤ Type v) :
+    MendlerAlgebraOver G pt ≃
+      (mendlerExtType pt G → pt) :=
+  (mendlerAlgOverTypeEndEquiv pt G).trans
+    (mendlerAlgTypeEquiv pt G pt).symm
+
+/-- The Mendler algebra hom condition implies
+the algebra-map commutativity condition.
+
+For `C = Type v`, the Mendler hom condition
+`∀ A γ, m₁.family A γ ≫ h =
+  m₂.family A (γ ≫ h)`
+implies (by extensionality on the coend
+quotient)
+`h ∘ φ₁ = φ₂ ∘ mendlerExtType.map G h`
+where `φ_i = mendlerAlgOverAlgMapEquiv`. -/
+theorem mendlerHom_to_algMapComm
+    (G : (Type v)ᵒᵖ ⥤ Type v ⥤ Type v)
+    (m₁ m₂ : MendlerAlgebra G)
+    (h : m₁.pt ⟶ m₂.pt)
+    (hc : ∀ (A : Type v) (γ : A ⟶ m₁.pt),
+      m₁.family A γ ≫ h =
+        m₂.family A (γ ≫ h)) :
+    h ∘ (mendlerAlgOverAlgMapEquiv m₁.pt G
+        m₁.toMendlerAlgebraOver) =
+      (mendlerAlgOverAlgMapEquiv m₂.pt G
+        m₂.toMendlerAlgebraOver) ∘
+      mendlerExtType.map G h := by
+  funext x
+  exact Quot.inductionOn x
+    fun ⟨j, γ, g⟩ => congrFun (hc j γ) g
+
+/-- The algebra-map commutativity condition
+implies the Mendler algebra hom condition. -/
+theorem algMapComm_to_mendlerHom
+    (G : (Type v)ᵒᵖ ⥤ Type v ⥤ Type v)
+    (m₁ m₂ : MendlerAlgebra G)
+    (h : m₁.pt ⟶ m₂.pt)
+    (hc : h ∘ (mendlerAlgOverAlgMapEquiv m₁.pt G
+        m₁.toMendlerAlgebraOver) =
+      (mendlerAlgOverAlgMapEquiv m₂.pt G
+        m₂.toMendlerAlgebraOver) ∘
+      mendlerExtType.map G h) :
+    ∀ (A : Type v) (γ : A ⟶ m₁.pt),
+      m₁.family A γ ≫ h =
+        m₂.family A (γ ≫ h) := by
+  intro A γ
+  funext g
+  exact congrFun hc
+    (Quot.mk _ ⟨A, γ, g⟩)
+
+end TypeValuedMendlerAlgConnection
+
 end GebLean
