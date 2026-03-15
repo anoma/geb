@@ -2434,8 +2434,7 @@ Unlike `ParametricCone`, which is defined
 intrinsically as a natural transformation
 `constTerminal ⟶ G`, the cocone side must
 be parametrized by an explicit colimit
-cocone `s` because the colimit object in
-mathlib is noncomputable. The type
+cocone `s` to be computable.  The type
 `ParametricCocone G s hs` is independent
 of the choice of `s` up to the canonical
 isomorphism between colimit cocone points
@@ -2665,6 +2664,69 @@ theorem parametricCoconeInject_terminal
       (pshRelEdgeTerminal C)
       (x ≫ G.map (pshRelEdgeTerminalMap e)) :=
   by rw [parametricCoconeInject_naturality]
+
+open Limits in
+/-- Extract a cocone for `G` in `PSh(C)` from a
+cocone for `pshBarrLiftEdgeFunctor G` in
+`PshRelEdge C`, by restricting to identity edges
+and taking the source component.
+
+This is the cocone dual of
+`parametricConeSrcSection`: where the cone
+version restricts a cone over all edges to
+identity edges (extracting a section), the
+cocone version restricts a cocone over all edges
+to identity edges (extracting a cosection
+cocone).
+
+The cocone point is `s.pt.src` (the source
+presheaf of the edge cocone point). The cocone
+injection at `P` is the source component
+`s.ι.app(pshRelIdentFunctor.obj P).srcMap`. -/
+def barrCoconeToPresheafCocone
+    (G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w))
+    (s : Cocone
+      (pshBarrLiftEdgeFunctor
+        (C := C) G)) :
+    Cocone G where
+  pt := s.pt.src
+  ι :=
+    { app := fun P =>
+        (s.ι.app
+          (pshRelIdentFunctor.obj P)).srcMap
+      naturality := fun {P Q} α => by
+        have h := congrArg VertEdgeHom.srcMap
+          (s.w (pshRelIdentFunctor.map α))
+        dsimp at h
+        simp only [Functor.const_obj_map]
+        exact h }
+
+open Limits in
+/-- The forward map from a parametric cocone of
+the Barr-lifted edge functor to a global element
+of the extracted presheaf cocone point: extract
+the source component of the edge morphism
+`⊤ ⟶ s.pt`.
+
+Since `⊤_edge.src = pshUnitPresheaf C` and
+`s.pt.src` is the cocone point of the extracted
+presheaf cocone, this gives
+`pshUnitPresheaf C ⟶ s.pt.src`. -/
+def parametricCoconeToPresheafCosection
+    (G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w))
+    {s : Cocone
+      (pshBarrLiftEdgeFunctor
+        (C := C) G)}
+    (hs : IsColimit s)
+    (pc : ParametricCocone C
+      (pshBarrLiftEdgeFunctor (C := C) G)
+      hs) :
+    pshUnitPresheaf C ⟶
+    (barrCoconeToPresheafCocone
+      (C := C) G s).pt :=
+  pc.srcMap
 
 end ExistentialTypes
 

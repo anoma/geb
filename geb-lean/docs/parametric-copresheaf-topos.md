@@ -714,9 +714,67 @@ Code: `no_morphism_terminal_to_initial`,
 `presheafSection_unique_of_terminal`
 (`PshRelEdgeGraphRestriction.lean`).
 
-### 6.6 Future directions
+### 6.6 Existential types (cocones and cosections)
 
-Two extensions are not yet formalized:
+The existential dual of `ParametricCone` is
+`ParametricCocone`: a global element of a
+colimit cocone point. Where `ParametricCone G`
+gives the universal type `∀X. G(X)` (a cone
+over `G` with vertex `⊤`), `ParametricCocone`
+gives the existential type `∃X. G(X)` (a
+morphism `⊤ ⟶ colim G`).
+
+Unlike `ParametricCone`, which is defined
+intrinsically as a natural transformation
+`constTerminal ⟶ G`, the cocone side must be
+parametrized by an explicit colimit cocone `s`
+(to be computable).
+The type `ParametricCocone G s hs` is
+independent of the choice of `s` up to the
+canonical isomorphism between colimit cocone
+points (`parametricCoconeEquiv`).
+
+An element of the colimit is an equivalence
+class of **witnesses**: pairs `(e, x)` where
+`e` is an edge and `x : ⊤ ⟶ G(e)`, with
+`(e₁, x₁) ~ (e₂, x₂)` when they become
+equal after pushing forward along morphisms
+to a common edge.
+
+The colimit injection at the terminal
+edge/presheaf is an epimorphism: every other
+injection factors through it. This is because
+for any `e`, the unique morphism `e ⟶ ⊤` gives
+`s.ι.app e = G.map(e ⟶ ⊤) ≫ s.ι.app ⊤`.
+
+For Barr-lifted edge functors, the source
+extraction `barrCoconeToPresheafCocone` builds
+a cocone for `G` in `PSh(C)` from a cocone
+for `pshBarrLiftEdgeFunctor G` in
+`PshRelEdge C`, by restricting to identity
+edges and taking source components. This is
+the cocone dual of `parametricConeSrcSection`.
+
+Code: `ParametricCocone`,
+`parametricCoconeInject`,
+`parametricCoconeEquiv`,
+`PresheafCosection`,
+`presheafCosectionInject`,
+`presheafCosection_terminal_epi`,
+`barrCoconeToPresheafCocone`,
+`parametricCoconeToPresheafCosection`
+(`PshRelEdgeGraphRestriction.lean`).
+
+A potential connection to terminal coalgebras:
+for a covariant endofunctor `G`, the terminal
+`G`-coalgebra `νG` (when it exists) should
+relate to `ParametricCocone` in the same way
+that initial `G`-algebras relate to
+`ParametricCone` via catamorphisms.
+
+### 6.7 Future directions
+
+Three extensions are not yet formalized:
 
 - **Density-based extension.** Using the colimit
   decomposition of presheaves as colimits of
@@ -727,6 +785,11 @@ Two extensions are not yet formalized:
 - **Right Kan extension.** Relating the initial-
   presheaf characterization to right Kan extension
   along the Yoneda embedding.
+
+- **Terminal coalgebra connection.** Relating
+  `ParametricCocone` to terminal coalgebra
+  carriers, dualizing the initial-algebra /
+  catamorphism connection for `ParametricCone`.
 
 ## 7. The ambient topos landscape
 
@@ -1387,6 +1450,18 @@ Section 6.2.
 Relate the initial-presheaf characterization of
 presheaf sections (Section 6.2) to right Kan
 extension along the Yoneda embedding.
+
+### Q11: Terminal coalgebra and ParametricCocone
+
+Relate `ParametricCocone` (Section 6.6) to
+terminal coalgebra carriers, dualizing the
+type-level result `initialAlgebraParametricEquiv`
+(`ParanaturalTopos.lean`). For a covariant
+endofunctor `G`, the terminal `G`-coalgebra
+`νG` should biject with parametric cocones of
+the Barr-lifted edge functor, with the
+anamorphism (unfold) playing the role that the
+catamorphism (fold) plays for initial algebras.
 
 ## 12. References
 

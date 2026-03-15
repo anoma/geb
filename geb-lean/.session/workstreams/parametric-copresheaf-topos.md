@@ -1870,6 +1870,31 @@ Status: [done] All four completed.
   (`PshRelEdgeGraphRestriction.lean`,
   section `QuantificationHierarchy`)
 
+**Existential types as colimits.**
+`ParametricCocone G s hs` is a global element
+of a colimit cocone point `s.pt`: a morphism
+`⊤ ⟶ s.pt` in `PshRelEdge C`. Unlike the
+universal case, this must be parametrized by
+an explicit colimit cocone (to be computable).
+`parametricCoconeEquiv` shows independence of
+the choice of colimit cocone.
+`parametricCoconeInject` sends a witness
+`⊤ ⟶ G(e)` at edge `e` to a cocone element
+via the colimit injection.
+`presheafCosection_terminal_epi` /
+`parametricCocone_terminal_epi` show the
+injection at the terminal presheaf/edge is epi.
+`barrCoconeToPresheafCocone` extracts a cocone
+for `G` from a cocone for
+`pshBarrLiftEdgeFunctor G` by restricting to
+identity edges and taking source components
+(cocone dual of `parametricConeSrcSection`).
+(`PshRelEdgeGraphRestriction.lean`,
+section `ExistentialTypes`)
+Status: [done] (definitions and cocone
+extraction; terminal coalgebra connection
+deferred to future work).
+
 **General parametricity notion in PshRelEdge.**
 Define parametric transformation for arbitrary
 type-formers (not just covariant endofunctors)
