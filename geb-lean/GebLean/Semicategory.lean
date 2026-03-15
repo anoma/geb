@@ -149,6 +149,7 @@ instance : CoeSort (SemicategoryCat.Large.{u, v}) (Type u) where
   coe V := V.α
 
 /-- Extract the Semicategory instance from a bundled semicategory. -/
+@[reducible]
 def str' (V : SemicategoryCat.Large.{u, v}) : Semicategory.{u, v} V.α :=
   V.str
 

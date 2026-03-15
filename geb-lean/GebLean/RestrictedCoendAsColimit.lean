@@ -2787,6 +2787,7 @@ copower-profunctor coend existence. The equivalence
 `homRestrictedCopowerEquiv` maps the initial
 restricted cowedge to an initial copower cowedge
 via `isInitialOfEquivFunctor`. -/
+@[reducible]
 def toCopowerProfCoends :
     HasAllCopowerProfCoends G where
   cone pt :=
@@ -2820,6 +2821,7 @@ restricted coend existence. The inverse equivalence
 `(homRestrictedCopowerEquiv G pt).symm` maps the
 initial copower cowedge to an initial restricted
 cowedge. -/
+@[reducible]
 def toHomToProfCoends :
     HasAllHomToProfCoends G where
   hasCoend pt :=

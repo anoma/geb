@@ -85,21 +85,21 @@ def GrothendieckContra.{u, v, u₂, v₂} {C : Type u} [CI : Category.{v, u} C]
   (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}) : Type (max u u₂) :=
     GrothendieckContraCat.{u, v, u₂, v₂} (C := C) (CI := CI) F'
 
-@[simp]
+@[reducible, simp]
 def GrothendieckContraCatInst.{u, v, u₂, v₂} {C : Type u} [CI : Category.{v, u} C]
   (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}) :
     Category.{max v v₂, max u u₂}
       (GrothendieckContra.{u, v, u₂, v₂} (C := C) (CI := CI) F') :=
   (GrothendieckContraCat.{u, v, u₂, v₂} (C := C) (CI := CI) F').str
 
-@[simp]
+@[reducible, simp]
 def GrothendieckContraCatStructInst.{u, v, u₂, v₂} {C : Type u} [CI : Category.{v, u} C]
   (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}) :
     CategoryStruct.{max v v₂, max u u₂}
       (GrothendieckContra.{u, v, u₂, v₂} (C := C) (CI := CI) F') :=
   (GrothendieckContraCatInst.{u, v, u₂, v₂} (C := C) (CI := CI) F').toCategoryStruct
 
-@[simp]
+@[reducible, simp]
 def GrothendieckContraQuivInst.{u, v, u₂, v₂} {C : Type u} [CI : Category.{v, u} C]
   (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}) :
     Quiver.{max v v₂, max u u₂}
@@ -3028,6 +3028,7 @@ section FunctorFrom
 variable {F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}}
 variable {T : Type u₁} [Category.{v₁} T]
 
+@[reducible]
 private def CI : Category.{max v v₂, max u u₂} (GrothendieckContra F') :=
   GrothendieckContraCatInst.{u, v, u₂, v₂} (F' := F')
 

@@ -670,13 +670,13 @@ def strongRestrictedCowedge_weightedCocone_equivalence
       (profunctorOnCoTwistedArrow C G) :=
   (strongRestrictedCowedgeEquiv G H)
   |>.trans (cowedgeCoconeEquiv (diagElemProf G H))
-  |>.trans (Limits.Cocones.precomposeEquivalence
+  |>.trans (Limits.Cocone.precomposeEquivalence
     ((eqToIso (profOnCoTwArr_profPullback G
       (DiagElem.forget H))).symm))
   |>.trans (comprehensiveCoconeEquivalence
     (coTwistedArrowMap (DiagElem.forget H))
     (profunctorOnCoTwistedArrow C G))
-  |>.trans (Limits.Cocones.precomposeEquivalence
+  |>.trans (Limits.Cocone.precomposeEquivalence
     (eqToIso (weightedCoconeDiagram_eq
       (cowedgeWeight H)
       (profunctorOnCoTwistedArrow C G))))
@@ -826,7 +826,7 @@ def strongRestrictedWedge_weightedCone_equivalence :
       (profunctorOnTwistedArrow C G) :=
   (strongRestrictedWedgeEquiv G H)
   |>.trans (wedgeConeEquiv (diagElemProf G H))
-  |>.trans (Limits.Cones.postcomposeEquivalence
+  |>.trans (Limits.Cone.postcomposeEquivalence
     (eqToIso (profOnTwArr_profPullback G
       (DiagElem.forget H))))
   |>.trans (comprehensiveConeEquivalence
@@ -1060,7 +1060,7 @@ theorem costructureIntegralWeightedCocone_pt :
     ((strongRestrictedCowedge_weightedCocone_equivalence
       G H).functor.obj
       (costructureIntegralCowedge G H)).pt =
-    CostructureIntegral H G := rfl
+    CostructureIntegral H G := by rfl
 
 /-- The elimination rule for `CostructureIntegral`:
 maps from `CostructureIntegral H G` to any type `Y`

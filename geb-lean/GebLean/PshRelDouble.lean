@@ -3936,7 +3936,7 @@ theorem relComp_barrLiftRel_le_of_preservesPullbacks
         WalkingCospan.left) PUnit.unit
     simp only [types_comp_apply,
       Functor.mapCone_π_app,
-      Cones.postcompose_obj_π,
+      Cone.postcompose_obj_π,
       NatTrans.comp_app,
       cospanCompIso_hom_app_left,
       Category.comp_id] at hfac
@@ -3949,7 +3949,7 @@ theorem relComp_barrLiftRel_le_of_preservesPullbacks
         WalkingCospan.right) PUnit.unit
     simp only [types_comp_apply,
       Functor.mapCone_π_app,
-      Cones.postcompose_obj_π,
+      Cone.postcompose_obj_π,
       NatTrans.comp_app,
       cospanCompIso_hom_app_right,
       Category.comp_id] at hfac

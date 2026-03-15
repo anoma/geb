@@ -640,6 +640,7 @@ def DepCompleteObj.compMor_spec (D : DepCompleteObj)
   (D.exists_.comp f g).snd
 
 /-- Convert a `DepCompleteObj` to a `CategoryStruct`. -/
+@[reducible]
 def depCompleteObjToCategoryStruct (D : DepCompleteObj) :
     CategoryStruct D.toDepCategoryData.objT where
   Hom := D.toDepCategoryData.morT
@@ -791,6 +792,7 @@ theorem depCategoryCat_assoc.{u₁, u₂, u₃, u₄} (D : DepCategoryCat.{u₁,
 /-- Convert a `DepCategoryCat.{u, v, w₃, w₄}` to a `Category` instance.
     Since `DepCategoryData` uses `Sort`, `DepCategoryCat.{u, v, w₃, w₄}` has
     `objT : Sort (u + 1) = Type u` and `morT : Sort (v + 1) = Type v`. -/
+@[reducible]
 def depCategoryCatToCategory.{u, v, w₃, w₄}
     (D : DepCategoryCat.{u, v, w₃, w₄}) :
     Category D.toDepCategoryData.objT where
