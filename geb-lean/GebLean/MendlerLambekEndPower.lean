@@ -2178,6 +2178,78 @@ def cgeChurchLeg
       churchComponent_powerSliceWedge
         G pt twInner Y f⟩
 
+/-- The componentwise identity for `cgeChurchLeg`:
+the coend injection at `(A, s)` composed with
+`cgeChurchLeg Y` equals the Church component at
+`(Y, A, s)`.
+This is proved directly from the definition of
+`cgeChurchLeg` via `gExtEndPowerEquiv`, without
+requiring an outer terminal wedge. -/
+private theorem CopowerGExtInj_comp_cgeChurchLeg
+    (pt : C)
+    (twInner : ∀ Y : C,
+      HasTerminalWedge (ihomPowerProf G pt Y))
+    (Y A : C) :
+    CopowerGExtInj G pt A ≫
+    cgeChurchLeg G pt twInner Y =
+    HasCopowers.desc (fun s =>
+      churchComponent G pt twInner Y A s) := by
+  rw [← copowerGExtHomEndEquiv_val G pt _
+    (cgeChurchLeg G pt twInner Y) A]
+  conv_lhs =>
+    rw [show cgeChurchLeg G pt twInner Y =
+      (gExtEndPowerEquiv G pt _).symm _ from rfl]
+    rw [gExtEndPowerEquiv]
+  simp only [Equiv.symm_trans_apply,
+    Equiv.apply_symm_apply]
+  change (copowerPowerEquiv _ _ _).symm
+    (HasPowers.lift (fun s =>
+      churchComponent G pt twInner Y A s)) =
+    HasCopowers.desc (fun s =>
+      churchComponent G pt twInner Y A s)
+  simp only [copowerPowerEquiv_symm_apply]
+  apply HasCopowers.ext
+  intro s
+  simp only [HasCopowers.fac, HasPowers.fac]
+
+private theorem inj_inj_cgeChurchLeg_direct
+    (pt : C)
+    (twInner : ∀ Y : C,
+      HasTerminalWedge (ihomPowerProf G pt Y))
+    (Y A : C) (s : A ⟶ pt) :
+    HasCopowers.inj (A ⟶ pt)
+      ((G.obj (Opposite.op A)).obj A) s ≫
+    CopowerGExtInj G pt A ≫
+    cgeChurchLeg G pt twInner Y =
+    churchComponent G pt twInner Y A s := by
+  simp only [CopowerGExtInj_comp_cgeChurchLeg,
+    HasCopowers.fac]
+
+/-- The church profunctor wedge condition for
+`cgeChurchLeg`, proved directly from the definition
+without requiring an outer terminal wedge. -/
+private theorem cgeChurchLeg_wedge_direct
+    (pt : C)
+    (twInner : ∀ Y : C,
+      HasTerminalWedge (ihomPowerProf G pt Y))
+    {Y₁ Y₂ : C} (f : Y₁ ⟶ Y₂) :
+    cgeChurchLeg G pt twInner Y₁ ≫
+      ((churchProf G pt twInner).obj
+        (Opposite.op Y₁)).map f =
+    cgeChurchLeg G pt twInner Y₂ ≫
+      ((churchProf G pt twInner).map f.op).app Y₂ :=
+  by
+  apply (copowerGExtHomEndEquiv G pt _).injective
+  apply Subtype.ext
+  funext A
+  simp only [copowerGExtHomEndEquiv_val,
+    ← Category.assoc,
+    CopowerGExtInj_comp_cgeChurchLeg]
+  apply HasCopowers.ext
+  intro s
+  simp only [← Category.assoc, HasCopowers.fac]
+  exact churchComponent_wedge G pt twInner A s f
+
 private theorem fwd_comp_ι_eq_cgeChurchLeg
     (pt : C)
     (twInner : ∀ Y : C,
@@ -2618,6 +2690,52 @@ private theorem cgeChurchLeg_natural_pt
   rw [hlhs, hrhs]
 
 end ImpredicativeGExtIso
+
+section ChurchLiftDef
+
+variable
+  {C : Type u} [Category.{v} C]
+  [MonoidalCategory C] [MonoidalClosed C]
+  [BraidedCategory C]
+  [HasCopowers C] [HasPowers C]
+  (G : Cᵒᵖ ⥤ C ⥤ C)
+  [HasAllCopowerProfCoends G]
+
+open MonoidalClosed MonoidalCategory
+  HasAllCopowerProfCoends
+
+instance : Category (multicospanShapeEnd C).L :=
+  show Category C from inferInstance
+
+instance : MonoidalCategory
+    (multicospanShapeEnd C).L :=
+  show MonoidalCategory C from inferInstance
+
+instance : MonoidalClosed
+    (multicospanShapeEnd C).L :=
+  show MonoidalClosed C from inferInstance
+
+instance : HasCopowers
+    (multicospanShapeEnd C).L :=
+  show HasCopowers C from inferInstance
+
+instance : HasPowers
+    (multicospanShapeEnd C).L :=
+  show HasPowers C from inferInstance
+
+/-- The lift from a church profunctor wedge `s` to
+`cge`: evaluate the `Y = cge` leg at the enriched
+identity element `curry'(𝟙 cge)`. -/
+def cgeChurchLift (pt : C)
+    (twInner : ∀ Y : C,
+      HasTerminalWedge (ihomPowerProf G pt Y))
+    (s : Wedge (churchProf G pt twInner)) :
+    s.pt ⟶ CopowerGExtObj G pt :=
+  s.ι (CopowerGExtObj G pt) ≫
+    ihomEvalAt
+      (bwdGlobalSection G pt twInner)
+
+end ChurchLiftDef
 
 /-!
 ## Power-End GExtFunctor via Coend-End Duality
@@ -3506,6 +3624,21 @@ def ihomCoendPowerEndNatIso (pt : C) :
       exact
         ihom_map_comp_ihomCoendWedgeProj G pt f A)
 
+/-- The church profunctor wedge with apex
+`CopowerGExtObj G pt` and legs `cgeChurchLeg`.
+This is the enriched Yoneda wedge: for each `Y`,
+the leg sends the coend to `[(ihom cge).obj Y, Y]`
+via the Church encoding. -/
+def cgeChurchWedge (pt : C) :
+    Wedge (churchProf G pt
+      (fun Y => ihomCoendHasTerminalWedge G pt Y)) :=
+  Wedge.mk (CopowerGExtObj G pt)
+    (fun Y => cgeChurchLeg G pt
+      (fun Y => ihomCoendHasTerminalWedge G pt Y) Y)
+    (fun {_ _} f =>
+      cgeChurchLeg_wedge_direct G pt
+        (fun Y => ihomCoendHasTerminalWedge G pt Y) f)
+
 end IhomPowerEndGExtBraided
 
 /-!
@@ -4188,6 +4321,38 @@ theorem impCeil_impFloor
     whiskerLeft_curry'_ihom_ev_app _
   rw [reassoc_of% whisk, Iso.inv_hom_id_assoc]
   exact HasPowers.fac _ γ
+
+omit [HasAllHomToProfEnds G] in
+/-- `impFloor ∘ impCeil = id` on conventional algebras:
+the structure map recovered by flooring the ceiling is
+the original structure map. -/
+theorem impFloor_impCeil
+    (twInner : ∀ (pt Y : C),
+      HasTerminalWedge (ihomPowerProf G pt Y))
+    (twOuter : ∀ (pt : C),
+      HasTerminalWedge
+        (churchProf G pt (twInner pt)))
+    (alg : ConventionalAlgebra
+      (ImpredicativeGExtFunctor G
+        twInner twOuter)) :
+    impFloor G twInner twOuter
+      (impCeil G twInner twOuter alg) = alg := by
+  cases alg with | mk a str =>
+  simp only [impFloor, impCeil]
+  congr 1
+  let m : MendlerAlgebra G :=
+    ⟨a, ⟨⟨fun A γ =>
+      churchLift G a (twInner a) (twOuter a) A γ ≫
+        str,
+      (impCeil G twInner twOuter ⟨a, str⟩).isDinatural
+    ⟩⟩⟩
+  have round :
+      impCeil G twInner twOuter
+        (impFloor G twInner twOuter m) = m :=
+    impCeil_impFloor G twInner twOuter m
+  have carrier_eq : (impFloor G twInner twOuter m).a
+      = a := rfl
+  _
 
 end EndBasedMendlerLambek
 

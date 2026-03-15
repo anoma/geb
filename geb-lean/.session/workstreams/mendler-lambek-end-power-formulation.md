@@ -888,8 +888,53 @@ which gives
 `MendlerAlgebra G ≌ Endofunctor.Algebra
 (GExtFunctor G)` under `HasAllHomToProfCoends G`.
 
+###### End-based `impFloor_impCeil` (IN PROGRESS)
+
+New lemmas (no `twOuter` dependency):
+
+- `CopowerGExtInj_comp_cgeChurchLeg`: coend
+  injection composed with church leg = copower
+  desc of church components.
+- `inj_inj_cgeChurchLeg_direct`: full
+  componentwise identity at `(A, s)` level.
+- `cgeChurchLeg_wedge_direct`: church profunctor
+  wedge condition proved from definition.
+- `cgeChurchWedge`: wedge with apex `cge` and
+  legs `cgeChurchLeg` (enriched Yoneda wedge).
+- `cgeChurchLift`: lift from arbitrary church
+  profunctor wedge to `cge` via `bwdGlobalSection`.
+- Bridging instances for
+  `multicospanShapeEnd C` (typeclass synthesis
+  workaround for `maxSynthPendingDepth = 3`).
+
+The `impFloor_impCeil` goal:
+
+```lean
+ι a ≫ ihomEvalAt(mendlerGlobalSection G m
+  twInner) = str
+```
+
+All proof approaches reduce to the enriched
+Yoneda factorization: for a church profunctor
+wedge `s`, the equation
+`s.ι cge ≫ ihomEvalAt(bwdGS) ≫ cgeChurchLeg Y
+  = s.ι Y`
+(the factorization property for `cgeChurchLift`).
+This is NOT provable from wedge conditions alone;
+it IS the terminal wedge property (enriched
+Yoneda lemma). Proving it requires a deeper
+argument, likely specializing to
+`twInner := ihomCoendHasTerminalWedge G pt`
+and using `bwdGS = curry'(𝟙 cge)` under that
+specialization.
+
 ###### Remaining for Task 14
 
+- Prove enriched Yoneda factorization
+  (`cgeChurchLift_fac`) under the
+  `ihomCoendHasTerminalWedge` specialization.
+- Complete `impFloor_impCeil` using the
+  factorization.
 - Instantiate `HasAllHomToProfCoends G` for
   `C = Type v` (if possible; requires
   restricted coends to exist as objects of
