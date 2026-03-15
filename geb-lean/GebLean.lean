@@ -47,6 +47,7 @@ import GebLean.PolyTwCoprType
 import GebLean.PolyUMorph
 import GebLean.Polynomial
 import GebLean.ProfAlg
+import GebLean.PshInternalCat
 import GebLean.PshRelDouble
 import GebLean.PshSpanBicategory
 import GebLean.PshRelEdgeExp

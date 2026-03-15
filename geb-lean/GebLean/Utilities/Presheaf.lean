@@ -172,16 +172,48 @@ def presheafPullbackCone
       (Types.pullbackLimitCone
         (f.app X) (g.app X)).isLimit)
 
-/-- The presheaf pullback cone is a limit. -/
+/-- The presheaf pullback cone is a limit.
+
+This is constructed directly via `isLimitAux`
+rather than using `PullbackCone.combineIsLimit`
+(which goes through `evaluationJointlyReflectsLimits`
+and does not produce definitional reduction of lifts). -/
 def presheafPullbackIsLimit
     (f : F ⟶ H) (g : G ⟶ H) :
     IsLimit (presheafPullbackCone f g) :=
-  PullbackCone.combineIsLimit f g
-    (fun X =>
-      Types.pullbackCone (f.app X) (g.app X))
-    (fun X =>
-      (Types.pullbackLimitCone
-        (f.app X) (g.app X)).isLimit)
+  PullbackCone.isLimitAux _
+    (fun s => {
+      app := fun X a =>
+        ⟨⟨s.fst.app X a, s.snd.app X a⟩,
+          congr_fun (NatTrans.congr_app
+            s.condition X) a⟩
+      naturality := by
+        intro X Y h
+        ext a
+        apply Subtype.ext
+        let cone := presheafPullbackCone f g
+        exact Prod.ext
+          ((congr_fun (s.fst.naturality h)
+              a).trans
+            (congr_fun (cone.fst.naturality h)
+              ⟨⟨s.fst.app X a,
+                s.snd.app X a⟩, _⟩).symm)
+          ((congr_fun (s.snd.naturality h)
+              a).trans
+            (congr_fun (cone.snd.naturality h)
+              ⟨⟨s.fst.app X a,
+                s.snd.app X a⟩, _⟩).symm)
+    })
+    (fun s => by ext X a; rfl)
+    (fun s => by ext X a; rfl)
+    (fun s m w => by
+      ext X a
+      apply Subtype.ext
+      exact Prod.ext
+        (congr_fun (NatTrans.congr_app
+          (w WalkingCospan.left) X) a)
+        (congr_fun (NatTrans.congr_app
+          (w WalkingCospan.right) X) a))
 
 /-- The pullback object of two presheaf morphisms. -/
 abbrev presheafPullback
@@ -200,6 +232,30 @@ abbrev presheafPullbackSnd
     presheafPullback f g ⟶ G :=
   (presheafPullbackCone f g).snd
 
+/-- The first projection from the presheaf pullback,
+applied pointwise, extracts the first component
+of the underlying pair. -/
+@[simp]
+theorem presheafPullbackFst_app_eq
+    (f : F ⟶ H) (g : G ⟶ H)
+    (X : C)
+    (p : (presheafPullback f g).obj X) :
+    (presheafPullbackFst f g).app X p =
+    p.val.1 :=
+  rfl
+
+/-- The second projection from the presheaf pullback,
+applied pointwise, extracts the second component
+of the underlying pair. -/
+@[simp]
+theorem presheafPullbackSnd_app_eq
+    (f : F ⟶ H) (g : G ⟶ H)
+    (X : C)
+    (p : (presheafPullback f g).obj X) :
+    (presheafPullbackSnd f g).app X p =
+    p.val.2 :=
+  rfl
+
 /-- The universal morphism into the presheaf pullback,
 given morphisms into the two factors whose compositions
 with `f` and `g` agree. -/
@@ -211,6 +267,64 @@ abbrev presheafPullbackLift
     P ⟶ presheafPullback f g :=
   PullbackCone.IsLimit.lift
     (presheafPullbackIsLimit f g) h₁ h₂ w
+
+/-- Pointwise first projection of a lifted morphism
+into the presheaf pullback: composing
+`presheafPullbackLift` with `presheafPullbackFst`
+at a specific object and element recovers the first
+component. -/
+@[simp]
+theorem presheafPullbackLift_fst_app
+    (f : F ⟶ H) (g : G ⟶ H)
+    {P : C ⥤ Type w}
+    (h₁ : P ⟶ F) (h₂ : P ⟶ G)
+    (w : h₁ ≫ f = h₂ ≫ g) (X : C)
+    (a : P.obj X) :
+    (presheafPullbackFst f g).app X
+      ((presheafPullbackLift f g
+        h₁ h₂ w).app X a) =
+      h₁.app X a :=
+  congr_fun (NatTrans.congr_app
+    (PullbackCone.IsLimit.lift_fst
+      (presheafPullbackIsLimit f g)
+      h₁ h₂ w) X) a
+
+/-- Pointwise second projection of a lifted morphism
+into the presheaf pullback: composing
+`presheafPullbackLift` with `presheafPullbackSnd`
+at a specific object and element recovers the second
+component. -/
+@[simp]
+theorem presheafPullbackLift_snd_app
+    (f : F ⟶ H) (g : G ⟶ H)
+    {P : C ⥤ Type w}
+    (h₁ : P ⟶ F) (h₂ : P ⟶ G)
+    (w : h₁ ≫ f = h₂ ≫ g) (X : C)
+    (a : P.obj X) :
+    (presheafPullbackSnd f g).app X
+      ((presheafPullbackLift f g
+        h₁ h₂ w).app X a) =
+      h₂.app X a :=
+  congr_fun (NatTrans.congr_app
+    (PullbackCone.IsLimit.lift_snd
+      (presheafPullbackIsLimit f g)
+      h₁ h₂ w) X) a
+
+/-- The value component of a lifted element into
+a presheaf pullback: applying the lift at a
+specific object and element produces the pair
+of the two component values. -/
+@[simp]
+theorem presheafPullbackLift_app_val
+    (f : F ⟶ H) (g : G ⟶ H)
+    {P : C ⥤ Type w}
+    (h₁ : P ⟶ F) (h₂ : P ⟶ G)
+    (w : h₁ ≫ f = h₂ ≫ g)
+    (X : C) (a : P.obj X) :
+    ((presheafPullbackLift f g
+      h₁ h₂ w).app X a).val =
+    (h₁.app X a, h₂.app X a) :=
+  rfl
 
 /-- Isomorphism of presheaf pullbacks induced by
 isomorphisms on the sources.  Given `α : F₁ ≅ F₂` and
