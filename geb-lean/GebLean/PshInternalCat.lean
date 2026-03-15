@@ -1141,6 +1141,290 @@ def rtIso :
   hom_inv_id := rtRoundtrip_fw_bk X
   inv_hom_id := rtRoundtrip_bk_fw X
 
+/-- The action of `catToPshInternalCat` on
+functors: a functor `F : α ⥤ β` induces an
+internal functor between the corresponding
+internal categories. -/
+def catToPshInternalCatMap
+    {α β : Type w'} [Category.{w'} α]
+    [Category.{w'} β] (F : α ⥤ β) :
+    PshInternalFunctor
+      (catToPshInternalCat α)
+      (catToPshInternalCat β) where
+  objMap := constPshMap F.obj
+  morMap := constPshMap
+    (fun ⟨a, b, f⟩ =>
+      ⟨F.obj a, F.obj b, F.map f⟩)
+  compat := by
+    apply pshProdPresheaf_hom_ext
+    · ext ⟨⟨⟨⟩⟩⟩ ⟨a, b, f⟩; rfl
+    · ext ⟨⟨⟨⟩⟩⟩ ⟨a, b, f⟩; rfl
+  id_pres := by
+    ext ⟨⟨⟨⟩⟩⟩ a
+    simp only [FunctorToTypes.comp,
+      catToPsh_idMap_app]
+    dsimp [constPshMap]
+    simp only [CategoryTheory.Functor.map_id]
+  comp_pres := by
+    ext ⟨⟨⟨⟩⟩⟩ ⟨⟨m₁, m₂⟩, h⟩
+    simp only [FunctorToTypes.comp,
+      catToPsh_compMap_eq]
+    dsimp [constPshMap, catCompNat,
+      pshInternalCompPairsMap,
+      presheafPullbackFst, presheafPullbackSnd,
+      presheafPullbackCone, presheafPullbackLift,
+      catMorSpanOver, catMorSrcTgtNat,
+      catMorTgt, catMorSrc,
+      pshProdLift, pshProdFst, pshProdSnd]
+    congr 1; congr 1
+    simp only [CategoryTheory.Functor.map_comp,
+      eqToHom_map]
+
+/-- The forward functor from `Cat` to
+`PshInternalCat (Discrete Unit)`, mapping a
+category to its internal-category encoding
+and functors to internal functors. -/
+def catToPshInternalCatFunctor :
+    Cat.{w', w'} ⥤
+      PshInternalCat.{0, 0, w'}
+        (Discrete Unit) where
+  obj C := catToPshInternalCat C
+  map F := catToPshInternalCatMap F.toFunctor
+  map_id C := by
+    apply PshInternalFunctor.ext'
+    · ext ⟨⟨⟨⟩⟩⟩ a; rfl
+    · ext ⟨⟨⟨⟩⟩⟩ ⟨a, b, f⟩
+      rfl
+  map_comp F G := by
+    apply PshInternalFunctor.ext'
+    · ext ⟨⟨⟨⟩⟩⟩ a; rfl
+    · ext ⟨⟨⟨⟩⟩⟩ ⟨a, b, f⟩; rfl
+
+/-- Extract a functor from an internal functor
+between internal categories in `Psh(1)`. The
+object map evaluates `F.objMap` at the unique
+presheaf object; the morphism map evaluates
+`F.morMap` and adjusts source/target via the
+compatibility condition. -/
+def pshInternalFunctorToFunctor
+    {X Y : PshInternalCat.{0, 0, w'}
+      (Discrete Unit)}
+    (F : PshInternalFunctor X Y) :
+    icObj X ⥤ icObj Y where
+  obj a := F.objMap.app (Opposite.op ⟨⟨⟩⟩) a
+  map {a b} f :=
+    ⟨F.morMap.app (Opposite.op ⟨⟨⟩⟩) f.val,
+      by
+        have hc := congr_fun
+          (congr_app F.compat
+            (Opposite.op ⟨⟨⟩⟩)) f.val
+        dsimp [pshProdMap, pshProdLift,
+          pshProdFst, pshProdSnd] at hc
+        have hfst := congr_arg Prod.fst hc
+        have hsnd := congr_arg Prod.snd hc
+        dsimp at hfst hsnd
+        exact ⟨by
+          change (Y.morSpan.hom.app _ _).1 = _
+          rw [hfst]
+          exact congrArg
+            (F.objMap.app _) f.2.1,
+         by
+          change (Y.morSpan.hom.app _ _).2 = _
+          rw [hsnd]
+          exact congrArg
+            (F.objMap.app _) f.2.2⟩⟩
+  map_id a := by
+    apply Subtype.ext
+    have hid := congr_fun
+      (congr_app F.id_pres
+        (Opposite.op ⟨⟨⟩⟩)) a
+    dsimp [FunctorToTypes.comp] at hid
+    exact hid
+  map_comp {a b c} f g := by
+    apply Subtype.ext
+    have hcomp := congr_fun
+      (congr_app F.comp_pres
+        (Opposite.op ⟨⟨⟩⟩))
+      ⟨⟨f.val, g.val⟩,
+        f.2.2.trans g.2.1.symm⟩
+    dsimp [FunctorToTypes.comp] at hcomp
+    dsimp only [CategoryStruct.comp,
+      icCategory]
+    rw [icComp_val]
+    rw [hcomp]
+    dsimp [pshInternalCompPairsMap,
+      presheafPullbackFst, presheafPullbackSnd,
+      presheafPullbackCone, presheafPullbackLift]
+    rw [icComp_val]
+    rfl
+
+/-- The backward functor from
+`PshInternalCat (Discrete Unit)` to `Cat`,
+mapping an internal category to its extracted
+category and internal functors to functors. -/
+def pshInternalCatToCatFunctor :
+    PshInternalCat.{0, 0, w'}
+      (Discrete Unit) ⥤ Cat.{w', w'} where
+  obj X := Cat.of (icObj X)
+  map F :=
+    Cat.Hom.ofFunctor
+      (pshInternalFunctorToFunctor F)
+  map_id X := by
+    apply Cat.Hom.ext
+    refine CategoryTheory.Functor.ext
+      (fun a => rfl) (fun a b f => ?_)
+    simp only [eqToHom_refl, Category.id_comp,
+      Category.comp_id]
+    apply Subtype.ext
+    dsimp [pshInternalFunctorToFunctor,
+      PshInternalFunctor.id]
+    rfl
+  map_comp {X Y Z} F G := by
+    apply Cat.Hom.ext
+    refine CategoryTheory.Functor.ext
+      (fun a => rfl) (fun a b f => ?_)
+    simp only [eqToHom_refl, Category.id_comp,
+      Category.comp_id]
+    apply Subtype.ext
+    dsimp [pshInternalFunctorToFunctor,
+      PshInternalFunctor.comp]
+    rfl
+
+/-- The forward component of the Cat-side unit
+isomorphism: wraps morphisms of the original
+category into `icHom` subtypes. -/
+def catToIcCat (α : Type w')
+    [Category.{w'} α] :
+    α ⥤ icObj (catToPshInternalCat α) where
+  obj a := a
+  map f := ⟨⟨_, _, f⟩, rfl, rfl⟩
+  map_id a := by
+    apply Subtype.ext; rfl
+  map_comp f g := by
+    apply Subtype.ext
+    dsimp only [CategoryStruct.comp, icCategory]
+    rw [icComp_val]
+    simp only [catToPsh_compMap_eq]
+    dsimp [catCompNat,
+      presheafPullbackFst, presheafPullbackSnd,
+      presheafPullbackCone]
+    simp only [Category.id_comp]
+
+/-- The backward component of the Cat-side unit
+isomorphism: extracts the underlying morphism from
+an `icHom` subtype via `eqToHom` transport. -/
+def icCatToCat (α : Type w')
+    [Category.{w'} α] :
+    icObj (catToPshInternalCat α) ⥤ α where
+  obj a := a
+  map {a b} m :=
+    eqToHom m.2.1.symm ≫
+      m.val.2.2 ≫ eqToHom m.2.2
+  map_id a := by
+    simp only [eqToHom_refl,
+      Category.id_comp, Category.comp_id]
+    rfl
+  map_comp {a b c} f g := by
+    dsimp only [CategoryStruct.comp, icCategory,
+      icComp, icCompApply, icMkCompPair]
+    simp only [catToPsh_compMap_eq]
+    dsimp [catCompNat, presheafPullbackFst,
+      presheafPullbackSnd, presheafPullbackCone]
+    simp only [Category.assoc,
+      eqToHom_trans_assoc]
+
+/-- The Cat-side isomorphism: the original
+category `α` is isomorphic to the extracted
+category `icObj (catToPshInternalCat α)` in
+`Cat`. -/
+def catIcIso (C : Cat.{w', w'}) :
+    C ≅ Cat.of
+      (icObj (catToPshInternalCat C)) where
+  hom := Cat.Hom.ofFunctor (catToIcCat C)
+  inv := Cat.Hom.ofFunctor (icCatToCat C)
+  hom_inv_id := by
+    apply Cat.Hom.ext
+    refine CategoryTheory.Functor.ext
+      (fun a => rfl) (fun a b f => ?_)
+    simp only [eqToHom_refl, Category.id_comp,
+      Category.comp_id]
+    dsimp [catToIcCat, icCatToCat]
+    simp only [Category.id_comp,
+      Category.comp_id]
+  inv_hom_id := by
+    apply Cat.Hom.ext
+    refine CategoryTheory.Functor.ext
+      (fun a => rfl) (fun a b f => ?_)
+    simp only [eqToHom_refl, Category.id_comp,
+      Category.comp_id]
+    obtain ⟨⟨a', b', f'⟩, ha, hb⟩ := f
+    subst ha; subst hb
+    apply Subtype.ext
+    dsimp [catToIcCat, icCatToCat]
+    congr 1; congr 1
+    simp only [Category.id_comp,
+      Category.comp_id]
+
+/-- The unit natural isomorphism: the identity
+functor on `Cat` is naturally isomorphic to the
+composite `catToPshInternalCatFunctor ⋙
+pshInternalCatToCatFunctor`. -/
+def catPshInternalUnitIso :
+    𝟭 Cat.{w', w'} ≅
+      catToPshInternalCatFunctor ⋙
+        pshInternalCatToCatFunctor :=
+  NatIso.ofComponents
+    (fun C => catIcIso C)
+    (fun {C D} F => by
+      apply Cat.Hom.ext
+      refine CategoryTheory.Functor.ext
+        (fun a => rfl) (fun a b f => ?_)
+      simp only [eqToHom_refl,
+        Category.id_comp, Category.comp_id]
+      apply Subtype.ext
+      dsimp [catIcIso, catToIcCat,
+        pshInternalFunctorToFunctor,
+        pshInternalCatToCatFunctor,
+        catToPshInternalCatFunctor,
+        catToPshInternalCatMap, constPshMap])
+
+/-- The counit natural isomorphism:
+`pshInternalCatToCatFunctor ⋙
+catToPshInternalCatFunctor` is naturally isomorphic
+to the identity on `PshInternalCat (Discrete Unit)`.
+Each component is `(rtIso X).symm`. -/
+def catPshInternalCounitIso :
+    pshInternalCatToCatFunctor ⋙
+      catToPshInternalCatFunctor ≅
+      (𝟭 (PshInternalCat.{0, 0, w'}
+        (Discrete Unit))) :=
+  NatIso.ofComponents
+    (fun X => (rtIso X).symm)
+    (fun {X Y} F => by
+      apply PshInternalFunctor.ext'
+      · ext ⟨⟨⟨⟩⟩⟩ a; rfl
+      · ext ⟨⟨⟨⟩⟩⟩ ⟨a, b, f⟩
+        dsimp [PshInternalFunctor.comp,
+          rtBkFunctor, rtBkMorMap,
+          catToPshInternalCatFunctor,
+          catToPshInternalCatMap, constPshMap,
+          pshInternalCatToCatFunctor,
+          pshInternalFunctorToFunctor]
+        rfl)
+
+/-- The equivalence `Cat ≌ PshInternalCat
+(Discrete Unit)`: ordinary categories are
+equivalent to internal categories in presheaves
+over the terminal category. -/
+def catPshInternalEquiv :
+    Cat.{w', w'} ≌
+      PshInternalCat.{0, 0, w'}
+        (Discrete Unit) where
+  functor := catToPshInternalCatFunctor
+  inverse := pshInternalCatToCatFunctor
+  unitIso := catPshInternalUnitIso
+  counitIso := catPshInternalCounitIso
+
 end DiscreteUnitEquiv
 
 end GebLean
