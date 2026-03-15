@@ -1882,6 +1882,7 @@ Status: [in progress].
 Results so far
 (`PshRelEdgeGraphRestriction.lean`,
 section `YonedaExtensionOfSections`):
+
 - `RepresentableSection Y G`: section of `G`
   restricted to the image of an embedding
   `Y : C ⥤ PSh(C)`, parameterized by `Y` to
