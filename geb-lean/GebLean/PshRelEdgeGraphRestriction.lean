@@ -85,6 +85,22 @@ specialized to functions yields naturality.
   sections when `G(∅)` is initial
 * `presheafSection_unique_of_terminal`:
   sections are unique when `G(∅)` is terminal
+
+## Existential types (cocones and cosections)
+
+* `ParametricCocone`: global element of a
+  colimit cocone point in `PshRelEdge C`
+  (existential dual of `ParametricCone`)
+* `parametricCoconeInject`: injection from
+  a witness at edge `e` to a cocone element
+* `parametricCoconeEquiv`: independence of
+  the choice of colimit cocone
+* `PresheafCosection`: global element of a
+  colimit cocone point in `PSh(C)`
+* `presheafCosectionInject`: injection from
+  a witness at presheaf `P`
+* `presheafCosection_terminal_epi`: the
+  colimit injection at `⊤` is epi
 -/
 
 universe u v w
@@ -2389,5 +2405,267 @@ theorem presheafSection_unique_of_terminal
   exact Limits.IsTerminal.hom_ext hT _ _
 
 end YonedaExtensionOfSections
+
+section ExistentialTypes
+
+variable (C : Type u) [Category.{v} C]
+
+/-- A parametric cocone of an endofunctor
+`G : PshRelEdge C ⥤ PshRelEdge C` is a
+global element of a colimit cocone point:
+a morphism `⊤ ⟶ s.pt` in `PshRelEdge C`,
+where `s` is a colimit cocone over `G`.
+
+This is the existential dual of
+`ParametricCone`: where
+`ParametricCone G ≃ Hom(⊤, lim G)` gives
+the universal type `∀X. G(X)`,
+`ParametricCocone G s hs` gives the
+existential type `∃X. G(X)`.
+
+An element of `s.pt` (the colimit) is an
+equivalence class of pairs `(e, x)` where
+`e` is an edge and `x : ⊤ ⟶ G(e)`, with
+`(e₁, x₁) ~ (e₂, x₂)` when they become
+equal after pushing forward along some
+morphisms to a common edge.
+
+Unlike `ParametricCone`, which is defined
+intrinsically as a natural transformation
+`constTerminal ⟶ G`, the cocone side must
+be parametrized by an explicit colimit
+cocone `s` because the colimit object in
+mathlib is noncomputable. The type
+`ParametricCocone G s hs` is independent
+of the choice of `s` up to the canonical
+isomorphism between colimit cocone points
+(`parametricCoconeEquiv`). -/
+abbrev ParametricCocone
+    (G : PshRelEdge.{u, v, w} C ⥤
+      PshRelEdge.{u, v, w} C)
+    {s : Limits.Cocone G}
+    (_ : Limits.IsColimit s) :=
+  pshRelEdgeTerminal C ⟶ s.pt
+
+open Limits in
+/-- The colimit injection sends a witness
+`x : ⊤ ⟶ G(e)` at edge `e` to a parametric
+cocone element by composing with the cocone
+injection `G(e) ⟶ s.pt`. -/
+def parametricCoconeInject
+    (G : PshRelEdge.{u, v, w} C ⥤
+      PshRelEdge.{u, v, w} C)
+    {s : Limits.Cocone G}
+    (hs : IsColimit s)
+    (e : PshRelEdge.{u, v, w} C)
+    (x : pshRelEdgeTerminal C ⟶ G.obj e) :
+    ParametricCocone C G hs :=
+  x ≫ s.ι.app e
+
+open Limits in
+/-- The parametric cocone type is independent of
+the choice of colimit cocone: any two colimit
+cocones `s₁`, `s₂` yield equivalent types of
+parametric cocones via the canonical isomorphism
+between colimit cocone points. -/
+def parametricCoconeEquiv
+    (G : PshRelEdge.{u, v, w} C ⥤
+      PshRelEdge.{u, v, w} C)
+    {s₁ : Cocone G} (hs₁ : IsColimit s₁)
+    {s₂ : Cocone G} (hs₂ : IsColimit s₂) :
+    ParametricCocone C G hs₁ ≃
+    ParametricCocone C G hs₂ where
+  toFun f :=
+    f ≫ (IsColimit.coconePointUniqueUpToIso
+      hs₁ hs₂).hom
+  invFun g :=
+    g ≫ (IsColimit.coconePointUniqueUpToIso
+      hs₂ hs₁).hom
+  left_inv f := by
+    simp only [Category.assoc]
+    rw [show (IsColimit.coconePointUniqueUpToIso
+        hs₁ hs₂).hom ≫
+      (IsColimit.coconePointUniqueUpToIso
+        hs₂ hs₁).hom = 𝟙 _ from
+      hs₁.hom_ext (fun e => by simp)]
+    exact Category.comp_id f
+  right_inv g := by
+    simp only [Category.assoc]
+    rw [show (IsColimit.coconePointUniqueUpToIso
+        hs₂ hs₁).hom ≫
+      (IsColimit.coconePointUniqueUpToIso
+        hs₁ hs₂).hom = 𝟙 _ from
+      hs₂.hom_ext (fun e => by simp)]
+    exact Category.comp_id g
+
+open Limits in
+/-- The injection is natural: for
+`f : e₁ ⟶ e₂`, injecting `x ≫ G.map f` at
+`e₂` equals injecting `x` at `e₁`. -/
+theorem parametricCoconeInject_naturality
+    (G : PshRelEdge.{u, v, w} C ⥤
+      PshRelEdge.{u, v, w} C)
+    {s : Limits.Cocone G}
+    (hs : IsColimit s)
+    {e₁ e₂ : PshRelEdge.{u, v, w} C}
+    (f : e₁ ⟶ e₂)
+    (x : pshRelEdgeTerminal C ⟶ G.obj e₁) :
+    parametricCoconeInject C G hs e₂
+      (x ≫ G.map f) =
+    parametricCoconeInject C G hs e₁ x := by
+  simp only [parametricCoconeInject,
+    Category.assoc]
+  rw [s.w f]
+
+open Limits in
+/-- A presheaf cosection of an endofunctor
+`G : PSh(C) ⥤ PSh(C)` relative to a colimit
+cocone `s` of `G` is a global element of the
+colimit cocone point: a morphism
+`pshUnitPresheaf C ⟶ s.pt`.
+
+This is the existential dual of
+`PresheafSection G`: where a presheaf section
+picks a compatible family of elements across
+all presheaves (the universal type `∀P. G(P)`),
+a presheaf cosection picks a single element of
+the existential type `∃P. G(P)`. -/
+abbrev PresheafCosection
+    (G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w))
+    {s : Cocone G}
+    (_ : IsColimit s) :=
+  pshUnitPresheaf.{u, v, w} C ⟶ s.pt
+
+open Limits in
+/-- The cosection injection sends an element
+`x : pshUnitPresheaf C ⟶ G.obj P` at presheaf
+`P` to a presheaf cosection by composing with
+the cocone injection `G.obj P ⟶ s.pt`. -/
+def presheafCosectionInject
+    {G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w)}
+    {s : Cocone G}
+    (hs : IsColimit s)
+    (P : Cᵒᵖ ⥤ Type w)
+    (x : pshUnitPresheaf C ⟶ G.obj P) :
+    PresheafCosection C G hs :=
+  x ≫ s.ι.app P
+
+open Limits in
+/-- The cosection injection is natural: for
+`α : P ⟶ Q`, injecting `x ≫ G.map α` at
+`Q` equals injecting `x` at `P`. -/
+theorem presheafCosectionInject_naturality
+    {G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w)}
+    {s : Cocone G}
+    (hs : IsColimit s)
+    {P Q : Cᵒᵖ ⥤ Type w}
+    (α : P ⟶ Q)
+    (x : pshUnitPresheaf C ⟶ G.obj P) :
+    presheafCosectionInject C hs Q
+      (x ≫ G.map α) =
+    presheafCosectionInject C hs P x := by
+  simp only [presheafCosectionInject,
+    Category.assoc]
+  rw [s.w α]
+
+open Limits in
+/-- Every presheaf cosection factors through the
+terminal presheaf: the colimit injection at `⊤`
+sends elements of `G(⊤)` to the colimit, and
+every other injection factors through it via
+`G.map(!_P)` where `!_P : P ⟶ ⊤` is the
+unique map.
+
+This is the dual of the initial-presheaf
+characterization: where sections are determined
+by `σ_∅ : ⊤ ⟶ G(∅)` (value at the initial
+presheaf), cosections factor through
+`G(⊤) ⟶ colim G` (injection at the terminal
+presheaf). -/
+theorem presheafCosectionInject_terminal
+    {G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w)}
+    {s : Cocone G}
+    (hs : IsColimit s)
+    (P : Cᵒᵖ ⥤ Type w)
+    (x : pshUnitPresheaf C ⟶ G.obj P) :
+    presheafCosectionInject C hs P x =
+    presheafCosectionInject C hs
+      (pshUnitPresheaf C)
+      (x ≫ G.map (pshUnitMap P)) := by
+  rw [presheafCosectionInject_naturality]
+
+open Limits in
+/-- The colimit injection at the terminal
+presheaf is an epimorphism: since every other
+injection `ι_P = G.map(!_P) ≫ ι_⊤` factors
+through it, any morphism from `s.pt` that
+agrees on `ι_⊤` agrees on all injections
+and hence is determined. -/
+theorem presheafCosection_terminal_epi
+    {G :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w)}
+    {s : Cocone G}
+    (hs : IsColimit s)
+    {X : Cᵒᵖ ⥤ Type w}
+    (g h : s.pt ⟶ X)
+    (heq : s.ι.app (pshUnitPresheaf C) ≫ g =
+      s.ι.app (pshUnitPresheaf C) ≫ h) :
+    g = h := by
+  apply hs.hom_ext
+  intro P
+  have : s.ι.app P =
+      G.map (pshUnitMap P) ≫
+      s.ι.app (pshUnitPresheaf C) :=
+    (s.w (pshUnitMap P)).symm
+  rw [this, Category.assoc, Category.assoc, heq]
+
+open Limits in
+/-- The edge-level analogue: the colimit
+injection at the terminal edge `⊤` is an
+epimorphism in `PshRelEdge C`, since every
+other injection factors through it. -/
+theorem parametricCocone_terminal_epi
+    (G : PshRelEdge.{u, v, w} C ⥤
+      PshRelEdge.{u, v, w} C)
+    {s : Cocone G}
+    (hs : IsColimit s)
+    {X : PshRelEdge.{u, v, w} C}
+    (g h : s.pt ⟶ X)
+    (heq : s.ι.app (pshRelEdgeTerminal C) ≫
+      g =
+      s.ι.app (pshRelEdgeTerminal C) ≫ h) :
+    g = h := by
+  apply hs.hom_ext
+  intro e
+  have : s.ι.app e =
+      G.map (pshRelEdgeTerminalMap e) ≫
+      s.ι.app (pshRelEdgeTerminal C) :=
+    (s.w (pshRelEdgeTerminalMap e)).symm
+  rw [this, Category.assoc, Category.assoc, heq]
+
+open Limits in
+/-- The injection at the terminal edge sends
+an element `x : ⊤ ⟶ G(⊤)` to a parametric
+cocone element by composing with the cocone
+injection at `⊤`. Every other injection
+factors through this one. -/
+theorem parametricCoconeInject_terminal
+    (G : PshRelEdge.{u, v, w} C ⥤
+      PshRelEdge.{u, v, w} C)
+    {s : Limits.Cocone G}
+    (hs : IsColimit s)
+    (e : PshRelEdge.{u, v, w} C)
+    (x : pshRelEdgeTerminal C ⟶ G.obj e) :
+    parametricCoconeInject C G hs e x =
+    parametricCoconeInject C G hs
+      (pshRelEdgeTerminal C)
+      (x ≫ G.map (pshRelEdgeTerminalMap e)) :=
+  by rw [parametricCoconeInject_naturality]
+
+end ExistentialTypes
 
 end GebLean
