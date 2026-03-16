@@ -523,6 +523,38 @@ def pshRelEdgeGlobalElementEquiv
     (pshRelEdgeTerminal C) B).symm.trans
     (Iso.homCongr (ρ_ A) (Iso.refl B))
 
+open MonoidalClosed MonoidalCategory in
+/-- Mathlib's curry for `PshRelEdge C`:
+given `f : A ⊗ B ⟶ D`, produce
+`B ⟶ [A, D]`. -/
+abbrev pshRelEdgeMathCurry
+    {A B D : PshRelEdge.{u, v, max u v} C}
+    [inst : Closed A]
+    (f : A ⊗ B ⟶ D) : B ⟶ (ihom A).obj D :=
+  MonoidalClosed.curry f
+
+open MonoidalClosed MonoidalCategory in
+/-- Mathlib's uncurry for `PshRelEdge C`:
+given `g : B ⟶ [A, D]`, produce
+`A ⊗ B ⟶ D`. -/
+abbrev pshRelEdgeMathUncurry
+    {A B D : PshRelEdge.{u, v, max u v} C}
+    [inst : Closed A]
+    (g : B ⟶ (ihom A).obj D) :
+    A ⊗ B ⟶ D :=
+  MonoidalClosed.uncurry g
+
+open MonoidalClosed MonoidalCategory in
+/-- Internalize a morphism as a global element
+of the internal hom: given `f : A ⟶ B`,
+produce `⊤ ⟶ [A, B]`. -/
+abbrev pshRelEdgeInternalize
+    {A B : PshRelEdge.{u, v, max u v} C}
+    (f : A ⟶ B) :
+    pshRelEdgeTerminal C ⟶
+      pshRelEdgeInternalHom A B :=
+  (pshRelEdgeGlobalElementEquiv A B).symm f
+
 end CartesianClosedInstances
 
 end GebLean
