@@ -144,6 +144,17 @@ def DialgebraProf : Cᵒᵖ ⥤ C ⥤ Type v' where
   map_id x := by ext y a; simp
   map_comp {x₁ x₂ x₃} f g := by ext y a; simp [Category.assoc]
 
+abbrev DialgebraProfType.{w}
+  (F' G' : C ⥤ Type w) :
+    Cᵒᵖ ⥤ C ⥤ Type w :=
+  DialgebraProf (D := Type w) F' G'
+
+abbrev DialgebraProfPresheaf.{u'', v'', w}
+  {E : Type u''} [Category.{v'', u''} E]
+  (F' G' : C ⥤ Eᵒᵖ ⥤ Type w) :
+    Cᵒᵖ ⥤ C ⥤ Type (max u'' w) :=
+  DialgebraProf (D := Eᵒᵖ ⥤ Type w) F' G'
+
 end DialgebraProfunctor
 
 section DialgebraCategory
