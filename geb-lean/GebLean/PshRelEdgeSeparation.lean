@@ -394,6 +394,75 @@ def pshRelEdgeIhom
       pshRelEdgeUncurry_curry_comp,
       Category.assoc]
 
+instance pshRelEdgeBraided
+    (C : Type u) [Category.{v} C] :
+    BraidedCategory
+      (PshRelEdge.{u, v, w} C) :=
+  BraidedCategory.ofCartesianMonoidalCategory
+
+instance pshRelEdgeSymmetric
+    (C : Type u) [Category.{v} C] :
+    SymmetricCategory
+      (PshRelEdge.{u, v, w} C) :=
+  CartesianMonoidalCategory.toSymmetricCategory
+
+open MonoidalCategory in
+/-- Each edge `A` in `PshRelEdge C` is closed:
+`tensorLeft A` has `pshRelEdgeIhom A` as
+right adjoint. The adjunction uses the
+braiding `A ⊗ B ≅ B ⊗ A` to match the
+`tensorLeft` convention with our curry
+convention `pshRelEdgeProd B A ⟶ C ↔
+B ⟶ pshRelEdgeExp A C`. -/
+instance pshRelEdgeClosed
+    (A : PshRelEdge.{u, v, max u v} C) :
+    Closed A where
+  rightAdj := pshRelEdgeIhom A
+  adj := Adjunction.mkOfHomEquiv
+    { homEquiv := fun B D =>
+        { toFun := fun (f : A ⊗ B ⟶ D) =>
+            pshRelEdgeCurry (C := C)
+              ((β_ B A).hom ≫ f)
+          invFun := fun g =>
+            (β_ B A).inv ≫
+              pshRelEdgeUncurry g
+          left_inv := fun f => by
+            simp only [Iso.inv_hom_id_assoc,
+              pshRelEdgeUncurry_curry]
+          right_inv := fun g => by
+            dsimp only []
+            rw [Iso.hom_inv_id_assoc]
+            exact pshRelEdgeCurry_uncurry g }
+      homEquiv_naturality_right := by
+        intro X Y Y' f g
+        simp only [Equiv.coe_fn_mk]
+        symm
+        have inj := fun
+            (a b : X ⟶ pshRelEdgeExp A Y') =>
+          fun (h : pshRelEdgeUncurry a =
+            pshRelEdgeUncurry b) =>
+          (pshRelEdgeCurry_uncurry a).symm.trans
+            (congrArg pshRelEdgeCurry h
+              |>.trans
+              (pshRelEdgeCurry_uncurry b))
+        apply inj
+        change pshRelEdgeUncurry
+          (pshRelEdgeCurry ((β_ X A).hom ≫ f) ≫
+            pshRelEdgeCurry
+              (pshRelEdgeEval A Y ≫ g)) = _
+        rw [pshRelEdgeUncurry_curry_comp,
+          pshRelEdgeUncurry_curry,
+          Category.assoc] }
+
+/-- `PshRelEdge C` is monoidal closed (at
+universe `w = max u v`): every object is
+closed. -/
+instance pshRelEdgeMonoidalClosed
+    (C : Type u) [Category.{v} C] :
+    MonoidalClosed
+      (PshRelEdge.{u, v, max u v} C) where
+  closed A := pshRelEdgeClosed A
+
 end CartesianClosedInstances
 
 end GebLean

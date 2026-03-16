@@ -804,9 +804,12 @@ contingent on additional mathlib infrastructure
   `pshRelEdgePair_curry_eval`,
   `pshRelEdgeUncurry_curry_comp`
   (`PshRelEdgeExp.lean`).
-  Remaining: `Closed` instance (wrapping
-  `pshRelEdgeIhom` as right adjoint of
-  `tensorLeft`), then `MonoidalClosed`.
+  Complete: `pshRelEdgeBraided`,
+  `pshRelEdgeSymmetric`, `pshRelEdgeClosed`,
+  `pshRelEdgeMonoidalClosed`. The full CCC
+  typeclass chain is registered, unlocking
+  mathlib's `unitIsoSelf`, `ihom.adjunction`,
+  and global-element correspondence.
 
 ### Structural results
 
