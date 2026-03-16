@@ -1212,22 +1212,218 @@ The identity section functor preserves coproducts:
 `pshRelIdentFunctor_preserves_coprod`
 (`PshRelEdgeIdentPreservation.lean`).
 
+#### Yoneda embedding and coproducts
+
+The Yoneda embedding `y : C → PSh(C)` preserves
+limits but not colimits. For coproducts, this
+creates two distinct presheaves:
+
+- `y(A + A')` = `X ↦ Hom(X, A + A')`: a
+  morphism `X → A + A'` can examine each
+  element of `X` individually and route some
+  to `A` and others to `A'`.
+- `y(A) + y(A')` = `X ↦ Hom(X, A) + Hom(X, A')`:
+  a *uniform* choice of summand, followed by a
+  morphism `X → A` or `X → A'` for all elements.
+
+For parametric types, the presheaf coproduct
+`y(A) + y(A')` is correct: a parametrically
+polymorphic function `∀X. X → A + A'` cannot
+inspect elements of `X` to decide the summand,
+so it must choose uniformly. The presheaf
+coproduct enforces this uniformity; `y(A + A')`
+does not.
+
+The identity extension property confirms this:
+`I(y(A) + y(A'))` gives the coproduct edge
+where cross-summand pairs `(inl a, inr a')`
+are never related, matching
+`pshRelIdentFunctor_preserves_coprod`.
+`I(y(A + A'))` gives the diagonal on
+`Hom(-, A + A')`, which allows morphisms
+sending different inputs to different summands
+to be self-related.
+
+This is not coincidental. Type formers in
+`PshRelEdge C` are constructed via their
+universal properties (adjunction lifts,
+Section 8.5), not by Yoneda-embedding type
+formers from `C`. The adjunction `+ ⊣ Δ`
+in `PSh(C)` lifts to `pshRelEdgeCoprod ⊣ Δ`
+in `PshRelEdge C`, automatically producing
+the presheaf coproduct. The Yoneda
+embedding's failure to preserve coproducts
+is what separates the two candidates, and
+the adjunction lift selects the presheaf
+coproduct — the one enforcing parametric
+uniformity.
+
+The pattern generalizes: for limits (products,
+terminal objects, equalizers), the Yoneda
+embedding preserves them, so `y(A × B) ≅
+y(A) × y(B)` and there is no ambiguity. For
+colimits (coproducts, initial objects,
+coequalizers), the two candidates diverge,
+and the presheaf colimit is the one
+appropriate for parametric types.
+
 ### 8.3 Exponentials
 
 See Section 2.3. The exponential in `PshRelEdge C`
 uses the arrow relation, and the identity section
 functor preserves exponentials (Section 2.4).
 
-### 8.4 Adjunction lifting
+### 8.4 When the Barr lift is correct
+
+The Barr extension `pshBarrLiftRel G R` gives the
+correct relational interpretation when the type
+former `G` is a **covariant endofunctor acting on
+a single type variable**. The conditions are:
+
+- The type has the form `∀X. G(X)` with `G`
+  covariant and `X` appearing only as the
+  argument to `G`.
+- Identity extension holds:
+  `pshBarrLiftRel G (pshRelId P) = pshRelId (G P)`.
+- Graph preservation holds:
+  `pshBarrLiftRel G (pshRelGraph α) =
+  pshRelGraph (G.map α)`.
+- The Barr embedding functor is fully faithful.
+
+The Barr lift is NOT correct when:
+
+- **Multiple independent type variables.** For a
+  bifunctor `F(A, B)`, the Barr lift of
+  `F(-, B₀)` forces the second argument to
+  carry the diagonal relation `Δ_{B₀}`, losing
+  the independent relation on `B₀`.
+- **Contravariant occurrences.** For `X → B`,
+  the arrow relation `pshArrowRel` is needed;
+  the Barr lift does not capture the
+  contravariant relational structure.
+- **Mixed variance with nesting.** For
+  `(X → X) → X`, the profunctor Barr lift
+  gives paranaturality (factorizable
+  endomorphism pairs), not full parametricity
+  (all commuting pairs). This is the
+  parametricity/paranaturality divergence
+  (Section 5).
+
+The Barr lift is a lax double functor: the
+composition comparison
+`Barr(F ⋙ G) → Barr(F) ⋙ Barr(G)` is a
+morphism that becomes an isomorphism when `G`
+preserves pullbacks (in particular when `G`
+is a right adjoint).
+
+#### Agreement with the adjunction lift
+
+When a multi-argument type former is partially
+applied and the fixed argument carries the
+identity relation, the Barr lift agrees with
+the adjunction lift. This is proven for all
+three standard type formers:
+
+| Type former | Barr lift = Adjunction lift | Code |
+| ----------- | -------------------------- | ---- |
+| `- × B` | `Barr(- × B)(R) = R × Δ_B` | `pshBarrLiftRel_prod_eq_prodRel` |
+| `- + B` | `Barr(- + B)(R) = R ⊕ Δ_B` | `pshBarrLiftRel_coprodRight` |
+| `[B, -]` | `Barr([B,-])(R) = arrow(Δ_B,R)` | `..ihom_eq_arrowRel` |
+
+The pattern: the Barr lift forces the fixed
+argument to the diagonal relation, which
+equals the identity relation `pshRelId`. The
+adjunction lift allows arbitrary relations on
+all arguments. When specialized to the
+identity relation on the fixed argument, the
+two constructions coincide.
+
+Neither construction subsumes the other:
+
+- The Barr lift applies to any covariant
+  endofunctor, including non-adjoints.
+- The adjunction lift handles arbitrary
+  relations on all arguments, not just the
+  diagonal on fixed arguments.
+
+The agreement at the diagonal is guaranteed
+by the identity extension property:
+`I(F(A₁, ..., Aₙ)) = F~(I(A₁), ..., I(Aₙ))`.
+
+#### Barr lift vs adjunction lift for adjoints
+
+For an adjunction `F ⊣ G` between endofunctors
+on `PSh(C)`, the adjunction lift recipe lifts
+`G` via the Barr lift and defines `F'` as the
+left adjoint of `Barr(G)`. The Barr lift of `F`
+and the adjunction lift `F'` can differ.
+
+**Right adjoints:** `Barr(G)` is always the
+correct lift. The adjunction lift uses it
+directly (step 2 of the recipe). No ambiguity.
+
+**Left adjoints:** `Barr(F)` and `F'` agree at
+identity edges (both satisfy identity
+extension) and at graph edges (both satisfy
+graph preservation). They can differ at
+non-identity, non-graph edges. The Barr lift
+gives the *image* of `F` applied to the span;
+the adjunction lift gives a potentially larger
+relation determined by the adjunction
+universal property.
+
+The Barr lift equals the adjunction lift when
+`F` preserves pullbacks (because the
+composition comparison
+`Barr(G ⋙ F) → Barr(G) ⋙ Barr(F)` is then
+an iso, allowing the counit to lift). When
+`F` does not preserve pullbacks, the Barr
+lift gives a strictly smaller edge relation
+than the adjunction lift.
+
+For the specific type formers in our table,
+the left adjoints (`- × B`, `- + B`) preserve
+pullbacks (presheaf products and coproducts
+preserve pullbacks pointwise), so the two
+constructions coincide.
+
+Polynomial functors preserve connected limits
+(proven in the codebase), which include
+pullbacks. Since polynomial functors are
+both left and right adjoints (as part of the
+`Σ_f ⊣ f* ⊣ Π_f` triple), the Barr lift
+and the adjunction lift agree for all
+polynomial functors in both adjoint
+directions.
+
+The implication: the Barr lift is canonical
+for right adjoints and for non-adjoint
+endofunctors. For left adjoints, the
+adjunction lift is more canonical when an
+adjunction is available, as it preserves
+the adjunction structure. The Barr lift may
+give a strictly weaker relational
+interpretation.
+
+Code: `pshBarrLiftDoubleFunctor`,
+`pshBarrLiftEdgeCompIso_of_preservesPullbacks`,
+`pshBarrLiftEdgeCompIso_of_rightAdj`,
+`adjEdgeUnit`, `adjEdgeCounit`
+(`PshRelDouble.lean`);
+`pshBarrLiftRel_coprodRight`
+(`PshRelEdgeSeparation.lean`).
+
+### 8.5 Adjunction lifting
 
 Type formers arising from universal properties
-(products, coproducts, exponentials) are characterized
-by adjunctions. The Barr extension (Section 1.3)
-lifts endofunctors to relations, but it does not
-correctly lift multi-argument type formers:
-Barr-extending a partially applied bifunctor replaces
-the fixed argument's relational structure with the
-diagonal.
+(products, coproducts, exponentials) are
+characterized by adjunctions. When a type former
+depends on multiple type variables or involves
+contravariance, the Barr extension does not
+suffice (Section 8.4). The adjunction lift recipe
+constructs the correct multi-variable relational
+interpretation from the universal property
+directly.
 
 #### The adjunction lift recipe
 
@@ -1291,7 +1487,7 @@ For `D` not of the form `PSh(B)` or a product thereof,
 it is not clear how to determine `Edge(D)` canonically.
 This remains an open question (Section 11, Q5).
 
-### 8.5 Pointwise computation
+### 8.6 Pointwise computation
 
 Because `PshParametricPresheaf C D` is a functor
 category, all limits and colimits are computed
@@ -1443,7 +1639,7 @@ directed categories.
 
 ### Q5: Canonical edge category construction
 
-The adjunction lift recipe (Section 8.4) requires
+The adjunction lift recipe (Section 8.5) requires
 determining `Edge(D)` for the "other" category `D`.
 Candidates:
 

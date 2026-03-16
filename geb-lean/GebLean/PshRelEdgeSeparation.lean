@@ -282,4 +282,70 @@ theorem separatedSpan_unit_injective
     (congr_arg Prod.fst heq')
     (congr_arg Prod.snd heq')
 
+section BarrAdjunctionAgreement
+
+/-- The functor `P ↦ P + B` for a fixed
+presheaf `B`, as a covariant endofunctor. -/
+def pshCoprodRightFunctor
+    (B : Cᵒᵖ ⥤ Type w) :
+    (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w) where
+  obj P := pshCoprodPresheaf P B
+  map {P₁ P₂} f :=
+    pshCoprodDesc
+      (f ≫ pshCoprodInl P₂ B)
+      (pshCoprodInr P₂ B)
+  map_id P := by
+    ext c x; match x with
+    | Sum.inl _ => rfl
+    | Sum.inr _ => rfl
+  map_comp f g := by
+    ext c x; match x with
+    | Sum.inl _ => rfl
+    | Sum.inr _ => rfl
+
+/-- The Barr lift of the coproduct functor
+`(- + B)` at a relation `R` equals the
+coproduct relation `pshRelCoprod R (pshRelId B)`.
+
+This shows that the Barr lift agrees with
+the adjunction lift (which produces
+`pshRelEdgeCoprod`) when the fixed argument
+carries the identity relation. -/
+theorem pshBarrLiftRel_coprodRight
+    {P Q B : Cᵒᵖ ⥤ Type w}
+    (R : PshRel P Q) :
+    pshBarrLiftRel
+      (pshCoprodRightFunctor (C := C) B)
+      R =
+    pshRelCoprod R (pshRelId B) := by
+  apply Subfunctor.ext; funext c
+  ext ⟨pq₁, pq₂⟩
+  simp only [pshBarrLiftRel, pshBarrLift,
+    pshProdOverToRel, Subfunctor.range,
+    Set.mem_range, Over.mk_hom,
+    FunctorToTypes.prod.lift,
+    pshCoprodRightFunctor,
+    pshRelCoprod, pshRelId,
+    Set.mem_setOf_eq]
+  constructor
+  · rintro ⟨r, hr⟩
+    have h₁ := congr_arg Prod.fst hr
+    have h₂ := congr_arg Prod.snd hr
+    dsimp [pshCoprodPresheaf] at h₁ h₂
+    match r with
+    | Sum.inl r' =>
+      rw [← h₁, ← h₂]; exact r'.prop
+    | Sum.inr b =>
+      rw [← h₁, ← h₂]; rfl
+  · intro h
+    match pq₁, pq₂, h with
+    | Sum.inl p, Sum.inl q, h =>
+      exact ⟨Sum.inl ⟨(p, q), h⟩, rfl⟩
+    | Sum.inr b₁, Sum.inr b₂, h =>
+      exact ⟨Sum.inr b₁,
+        congr_arg (fun x => (Sum.inr b₁,
+          Sum.inr x)) h⟩
+
+end BarrAdjunctionAgreement
+
 end GebLean
