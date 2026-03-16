@@ -463,6 +463,66 @@ instance pshRelEdgeMonoidalClosed
       (PshRelEdge.{u, v, max u v} C) where
   closed A := pshRelEdgeClosed A
 
+open MonoidalClosed MonoidalCategory in
+/-- The internal hom object `[A, B]` in
+`PshRelEdge C`, via mathlib's `ihom` from the
+`MonoidalClosed` instance. -/
+abbrev pshRelEdgeInternalHom
+    (A B : PshRelEdge.{u, v, max u v} C) :
+    PshRelEdge.{u, v, max u v} C :=
+  (ihom A).obj B
+
+open MonoidalClosed MonoidalCategory in
+/-- The internal hom functor `[A, -]` in
+`PshRelEdge C`, via mathlib's `ihom`. -/
+abbrev pshRelEdgeInternalHomFunctor
+    (A : PshRelEdge.{u, v, max u v} C) :
+    PshRelEdge.{u, v, max u v} C ⥤
+    PshRelEdge.{u, v, max u v} C :=
+  ihom A
+
+open MonoidalClosed MonoidalCategory in
+/-- The adjunction `- ⊗ A ⊣ [A, -]` in
+`PshRelEdge C`, from mathlib's `ihom`. -/
+abbrev pshRelEdgeIhomAdjunction
+    (A : PshRelEdge.{u, v, max u v} C) :
+    tensorLeft A ⊣ ihom A :=
+  ihom.adjunction A
+
+open MonoidalClosed MonoidalCategory in
+/-- The global-element correspondence: the
+internal hom from the terminal edge to any
+edge `A` is isomorphic to `A` itself.
+`Hom(⊤, [⊤, A]) ≅ Hom(⊤, A)`, which by
+Yoneda means `[⊤, A] ≅ A`. -/
+abbrev pshRelEdgeUnitIsoSelf
+    (A : PshRelEdge.{u, v, max u v} C) :
+    ((𝟙_ (PshRelEdge.{u, v, max u v} C))
+      ⟶[PshRelEdge.{u, v, max u v} C] A) ≅
+    A :=
+  unitIsoSelf (X := A)
+
+open MonoidalClosed MonoidalCategory in
+/-- Global elements of the internal hom
+biject with morphisms:
+`Hom(⊤, [A, B]) ≃ Hom(A, B)`.
+This is the CCC correspondence that connects
+`ParametricCone` (global elements of a limit)
+to natural transformations between
+endofunctors.
+
+The equivalence is the adjunction hom-equiv
+`Hom(A ⊗ ⊤, B) ≅ Hom(⊤, [A, B])` composed
+with the right unitor `A ⊗ ⊤ ≅ A`. -/
+def pshRelEdgeGlobalElementEquiv
+    (A B : PshRelEdge.{u, v, max u v} C) :
+    (pshRelEdgeTerminal C ⟶
+      pshRelEdgeInternalHom A B) ≃
+    (A ⟶ B) :=
+  ((ihom.adjunction A).homEquiv
+    (pshRelEdgeTerminal C) B).symm.trans
+    (Iso.homCongr (ρ_ A) (Iso.refl B))
+
 end CartesianClosedInstances
 
 end GebLean
