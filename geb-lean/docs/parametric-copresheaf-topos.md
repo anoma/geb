@@ -772,24 +772,135 @@ relate to `ParametricCocone` in the same way
 that initial `G`-algebras relate to
 `ParametricCone` via catamorphisms.
 
-### 6.7 Future directions
+### 6.7 Left vs right Kan extension
 
-Three extensions are not yet formalized:
+(Co)limits of shape `J` in `C` are adjunctions:
+`colim_J ⊣ Δ_J ⊣ lim_J` between `C` and `[J, C]`.
+The Yoneda extension triple
+`Lan_y(F) ⊣ F* ⊣ Ran_y(F)` tells us how these
+adjunctions extend to presheaf categories.
+
+Since left Kan extensions preserve left adjoints
+and right Kan extensions preserve right adjoints:
+
+- **Universal types** (`∀X. G(X)`, limits) use
+  the **right** Kan extension `Ran_y(y ∘ F)`.
+  It preserves limits, so:
+  `lim(Ran_y(y ∘ F)) = y(lim F) = Hom(-, lim F)`.
+- **Existential types** (`∃X. G(X)`, colimits) use
+  the **left** Kan extension `Lan_y(y ∘ F)`.
+  It preserves colimits, so:
+  `colim(Lan_y(y ∘ F)) = y(colim F)`.
+
+The choice is forced by the adjunction structure:
+using the left Kan extension for a limit-like
+construction gives the wrong answer
+(`Lan_y(y ∘ F)(∅) = ∅`, yielding no sections),
+because the left Kan extension preserves colimits,
+not limits.
+
+For the full chain from `C` to `PshRelEdge C`:
+
+```text
+lim(Barr(Ran_y(y ∘ F)))
+  = pshRelIdentFunctor(lim(Ran_y(y ∘ F)))
+  = pshRelIdentFunctor(y(lim F))
+  = pshRelIdentFunctor(Hom(-, lim F))
+```
+
+The first equality is the hierarchy collapse
+(covariant endofunctors have identity relation on
+their limit). The second uses that `Ran_y`
+preserves limits. The third is the Yoneda
+embedding definition.
+
+### 6.8 Internalization of parametricity
+
+The limit `lim G` of an endofunctor `G` on
+`PshRelEdge C` is itself an edge
+`(L_src, L_tgt, L_rel)`. The relation `L_rel`
+is the relational content of the universally
+quantified type `∀X. G(X)` — it captures
+Wadler's relatedness condition without defining
+it separately. The relation emerges from
+computing the limit in `PshRelEdge C`.
+
+`ParametricCone G ≅ Hom(⊤, lim G)`
+(`parametricConeEquiv`) gives the global
+elements — the "terms" of the universally
+quantified type in `Type`/`Set`. This is the
+external version. The limit edge itself is the
+internal (relational) version.
+
+For a covariant endofunctor `G` lifted from
+`C` via Yoneda and Barr extension, the limit
+edge is the identity edge on `Hom(-, lim F)`:
+the relational content collapses to the
+diagonal because the parametricity condition
+for covariant types reduces to naturality.
+
+### 6.9 Endofunctor category and exponentials
+
+In a CCC, `Hom(⊤, [A, B]) ≅ Hom(A, B)`
+(global elements of the exponential = morphisms).
+If the endofunctor category
+`[PshRelEdge C, PshRelEdge C]` is CCC (which
+holds when `PshRelEdge C` is CCC and complete),
+then for endofunctors `F, G`:
+
+```text
+Hom(⊤_endo, [F, G]_endo) ≅ Nat(F, G)
+```
+
+For endofunctors lifted from `C`:
+
+- `Nat(lift(F), lift(G)) ≅ Nat(F, G)`
+  (composing full faithfulness of Barr embedding
+  and Yoneda extension).
+- `Hom(⊤_endo, [lift(F), lift(G)]_endo)
+  ≅ Nat(F, G)` (by CCC global-element
+  correspondence).
+
+For dialgebra types with four covariant
+endofunctors `F, G, F', G' : C → C`:
+
+- The type `∀X. (F(X) → G(X)) → (F'(X) → G'(X))`
+  corresponds to
+  `Nat(Hom(lift(F),lift(G)),
+  Hom(lift(F'),lift(G')))`
+  in the endofunctor category.
+- This should be equivalent to
+  `Paranat(DialgProf(F,G), DialgProf(F',G'))`
+  (paranaturality = parametricity at the
+  dialgebra level).
+- The global elements of the double exponential
+  `[Hom(lF,lG), Hom(lF',lG')]` in the
+  category give the same set.
+
+This suggests that hom-objects in the endofunctor
+category of `PshRelEdge C` correctly internalize
+parametricity: naturality for covariant types,
+paranaturality for dialgebra types, and full
+parametricity for deeper nesting — all via
+iterated exponentials.
+
+### 6.10 Future directions
 
 - **Density-based extension.** Using the colimit
   decomposition of presheaves as colimits of
-  representables (the density theorem) to construct
-  sections, rather than the initial-presheaf
-  characterization.
-
-- **Right Kan extension.** Relating the initial-
-  presheaf characterization to right Kan extension
-  along the Yoneda embedding.
-
+  representables to construct sections.
 - **Terminal coalgebra connection.** Relating
   `ParametricCocone` to terminal coalgebra
-  carriers, dualizing the initial-algebra /
-  catamorphism connection for `ParametricCone`.
+  carriers.
+- **Endofunctor category CCC.** Prove the
+  endofunctor category of `PshRelEdge C` is CCC.
+- **Dialgebra equivalence.** Prove
+  `Nat(Hom(lF,lG), Hom(lF',lG'))
+  ≅ Paranat(DialgProf(F,G), DialgProf(F',G'))`
+  in the `PshRelEdge` framework.
+- **Right Kan extension limit preservation.**
+  Prove `lim(Ran_y(y ∘ F)) = y(lim F)` and
+  compose through the Barr lift.
 
 ## 7. The ambient topos landscape
 
