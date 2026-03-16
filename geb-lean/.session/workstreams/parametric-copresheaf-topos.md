@@ -792,6 +792,22 @@ contingent on additional mathlib infrastructure
   for internal languages and directed
   categories.
 
+### Cartesian closed infrastructure
+
+- [~] **CCC instances for PshRelEdge.** Registered
+  `CartesianMonoidalCategory` instance
+  (already in `PshRelEdgeInclusion.lean`).
+  `pshRelEdgeIhom` functor fully proven
+  (`PshRelEdgeSeparation.lean`), using
+  curry-composition lemmas
+  `pshRelEdgeUncurry_precomp`,
+  `pshRelEdgePair_curry_eval`,
+  `pshRelEdgeUncurry_curry_comp`
+  (`PshRelEdgeExp.lean`).
+  Remaining: `Closed` instance (wrapping
+  `pshRelEdgeIhom` as right adjoint of
+  `tensorLeft`), then `MonoidalClosed`.
+
 ### Structural results
 
 - [x] **S1. Sep_J equivalence.** Characterized

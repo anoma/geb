@@ -381,6 +381,57 @@ def pshRelEdgeEval
     pshRelEdgeProd (pshRelEdgeExp A B) A ⟶ B :=
   pshRelEdgeUncurry (𝟙 (pshRelEdgeExp A B))
 
+/-- Uncurry distributes over precomposition:
+`uncurry(α ≫ β)` equals
+`pair(fst ≫ α, snd) ≫ uncurry(β)`. -/
+theorem pshRelEdgeUncurry_precomp
+    {E E' :
+      PshRelEdge.{u, v, max u v} C}
+    (α : E ⟶ E')
+    (β : E' ⟶ pshRelEdgeExp A B) :
+    pshRelEdgeUncurry (α ≫ β) =
+    pshRelEdgePair
+      (pshRelEdgeProdFst E A ≫ α)
+      (pshRelEdgeProdSnd E A) ≫
+    pshRelEdgeUncurry β := by
+  apply VertEdgeHom.ext <;> (
+    ext c ⟨_, _⟩; rfl)
+
+/-- The pair-eval identity: pairing
+`curry(h)` with the identity on `A`, then
+evaluating, recovers `h`. -/
+theorem pshRelEdgePair_curry_eval
+    (h : pshRelEdgeProd E A ⟶ B) :
+    pshRelEdgePair
+      (pshRelEdgeProdFst E A ≫
+        pshRelEdgeCurry h)
+      (pshRelEdgeProdSnd E A) ≫
+    pshRelEdgeEval A B = h := by
+  change pshRelEdgePair _ _ ≫
+    pshRelEdgeUncurry
+      (𝟙 (pshRelEdgeExp A B)) = h
+  rw [← pshRelEdgeUncurry_precomp,
+    Category.comp_id,
+    pshRelEdgeUncurry_curry]
+
+/-- The full curry-composition lemma:
+`uncurry(curry(h) ≫ curry(eval ≫ g))
+= h ≫ g`. -/
+theorem pshRelEdgeUncurry_curry_comp
+    {A B₁ B₂ :
+      PshRelEdge.{u, v, max u v} C}
+    (h : pshRelEdgeProd E A ⟶ B₁)
+    (g : B₁ ⟶ B₂) :
+    pshRelEdgeUncurry
+      (pshRelEdgeCurry h ≫
+        pshRelEdgeCurry
+          (pshRelEdgeEval A B₁ ≫ g)) =
+    h ≫ g := by
+  rw [pshRelEdgeUncurry_precomp,
+    pshRelEdgeUncurry_curry,
+    ← Category.assoc,
+    pshRelEdgePair_curry_eval]
+
 end PshRelEdgeCurryUncurry
 
 end GebLean

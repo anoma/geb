@@ -1,4 +1,6 @@
 import GebLean.PshRelEdgeInclusion
+import GebLean.PshRelEdgeExp
+import Mathlib.CategoryTheory.Monoidal.Cartesian.Basic
 
 /-!
 # PshRelEdge C as separated presheaves
@@ -347,5 +349,51 @@ theorem pshBarrLiftRel_coprodRight
           Sum.inr x)) h⟩
 
 end BarrAdjunctionAgreement
+
+section CartesianClosedInstances
+
+variable {C : Type u} [Category.{v} C]
+
+/-- The exponential right adjoint functor for
+a fixed edge `A`: sends `B` to
+`pshRelEdgeExp A B` and morphisms to the
+appropriate induced maps via post-composition
+currying. The universe `w = max u v` is
+required for the exponential structure. -/
+def pshRelEdgeIhom
+    (A : PshRelEdge.{u, v, max u v} C) :
+    PshRelEdge.{u, v, max u v} C ⥤
+    PshRelEdge.{u, v, max u v} C where
+  obj B := pshRelEdgeExp A B
+  map f := pshRelEdgeCurry
+    (pshRelEdgeEval A _ ≫ f)
+  map_id B := by
+    change pshRelEdgeCurry
+      (pshRelEdgeEval A B ≫
+        𝟙 (B : PshRelEdge.{u, v, max u v} C)) =
+      𝟙 _
+    rw [Category.comp_id]
+    change pshRelEdgeCurry
+      (pshRelEdgeUncurry
+        (𝟙 (pshRelEdgeExp A B))) =
+      𝟙 (pshRelEdgeExp A B)
+    exact pshRelEdgeCurry_uncurry _
+  map_comp {B₁ B₂ B₃} f g := by
+    have inj : ∀ {X Y : PshRelEdge.{u, v,
+        max u v} C}
+        (a b : X ⟶ pshRelEdgeExp A Y),
+        pshRelEdgeUncurry a =
+          pshRelEdgeUncurry b → a = b :=
+      fun a b h =>
+        (pshRelEdgeCurry_uncurry a).symm.trans
+          (congrArg pshRelEdgeCurry h
+            |>.trans
+            (pshRelEdgeCurry_uncurry b))
+    apply inj
+    rw [pshRelEdgeUncurry_curry,
+      pshRelEdgeUncurry_curry_comp,
+      Category.assoc]
+
+end CartesianClosedInstances
 
 end GebLean
