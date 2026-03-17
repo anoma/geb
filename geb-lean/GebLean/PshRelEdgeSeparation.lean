@@ -589,6 +589,8 @@ def yonedaLargeFullyFaithful :
   Yoneda.fullyFaithful.comp
     (whiskerRightULiftFullyFaithful C)
 
+variable {D : Type u} [Category.{v} D]
+
 /-- Extract a morphism `F.obj X ⟶ G.obj X`
 from a natural transformation
 `α : leftYonedaExt F ⟶ leftYonedaExt G` by
@@ -596,12 +598,12 @@ restricting to the representable
 `yonedaULift X` and conjugating with the
 representable isomorphism. -/
 def leftYonedaExtPreimageApp
-    {F G : C ⥤ C}
+    {F G : C ⥤ D}
     (α : leftYonedaExt F ⟶ leftYonedaExt G)
     (X : C) : F.obj X ⟶ G.obj X :=
   Yoneda.fullyFaithful.preimage
     (Functor.FullyFaithful.preimage
-      (whiskerRightULiftFullyFaithful C)
+      (whiskerRightULiftFullyFaithful D)
       ((leftYonedaExtRepresentableULiftIso F X).inv
         ≫ α.app (yonedaULift X)
         ≫ (leftYonedaExtRepresentableULiftIso
@@ -611,16 +613,16 @@ def leftYonedaExtPreimageApp
 in `X`: the family
 `leftYonedaExtRepresentableULiftIso F X` assembles
 into a natural isomorphism
-`F ⋙ yonedaLarge C ≅
+`F ⋙ yonedaLarge D ≅
 (yonedaLarge C) ⋙ leftYonedaExt F`.
 
 This says: applying `F` then embedding via
-`yonedaLarge` is naturally isomorphic to
-embedding via `yonedaLarge` then extending
+`yonedaLarge D` is naturally isomorphic to
+embedding via `yonedaLarge C` then extending
 via `leftYonedaExt F`. -/
 def leftYonedaExtRepresentableNatIso
-    (F : C ⥤ C) :
-    F ⋙ yonedaLarge C ≅
+    (F : C ⥤ D) :
+    F ⋙ yonedaLarge D ≅
       yonedaLarge C ⋙ leftYonedaExt F :=
   NatIso.ofComponents
     (fun X => {
@@ -663,7 +665,7 @@ def leftYonedaExtRepresentableNatIso
 composition used in the preimage: the
 iso conjugation of `α` at a given object. -/
 abbrev leftYonedaExtPreimageULift
-    {F G : C ⥤ C}
+    {F G : C ⥤ D}
     (α : leftYonedaExt F ⟶ leftYonedaExt G)
     (X : C) :
     yonedaULift (F.obj X) ⟶
@@ -679,13 +681,13 @@ This follows from naturality of
 `leftYonedaExtRepresentableNatIso` and
 naturality of `α`. -/
 theorem leftYonedaExtPreimageULift_naturality
-    {F G : C ⥤ C}
+    {F G : C ⥤ D}
     (α : leftYonedaExt F ⟶ leftYonedaExt G)
     {X Y : C} (f : X ⟶ Y) :
-    (yonedaLarge C).map (F.map f) ≫
+    (yonedaLarge D).map (F.map f) ≫
       leftYonedaExtPreimageULift (C := C) α Y =
     leftYonedaExtPreimageULift (C := C) α X ≫
-      (yonedaLarge C).map (G.map f) := by
+      (yonedaLarge D).map (G.map f) := by
   -- The proof chains three naturality
   -- results at the ulift-yoneda level.
   -- Use the NatIso naturality we proved
@@ -697,14 +699,14 @@ theorem leftYonedaExtPreimageULift_naturality
   -- NatIso as a separate lemma about
   -- leftYonedaExtRepresentableULiftIso components.
   have natIsoF_nat :
-      (yonedaLarge C).map (F.map f) ≫
+      (yonedaLarge D).map (F.map f) ≫
         (leftYonedaExtRepresentableULiftIso F Y).inv
       =
       (leftYonedaExtRepresentableULiftIso F X).inv ≫
         (leftYonedaExt F).map
           ((yonedaLarge C).map f) := by
     have h := Iso.hom
-      (leftYonedaExtRepresentableNatIso C F)
+      (@leftYonedaExtRepresentableNatIso C _ D _ F)
       |>.naturality f
     simp only [Functor.comp_map] at h
     exact h
@@ -714,19 +716,19 @@ theorem leftYonedaExtPreimageULift_naturality
         (leftYonedaExtRepresentableULiftIso G Y).hom
       =
       (leftYonedaExtRepresentableULiftIso G X).hom ≫
-        (yonedaLarge C).map (G.map f) := by
+        (yonedaLarge D).map (G.map f) := by
     have h := Iso.inv
-      (leftYonedaExtRepresentableNatIso C G)
+      (@leftYonedaExtRepresentableNatIso C _ D _ G)
       |>.naturality f
     simp only [Functor.comp_map] at h
     exact h
   -- Reassociate to expose the pattern
   -- for natIsoF_nat on the LHS.
-  rw [show (yonedaLarge C).map (F.map f) ≫
+  rw [show (yonedaLarge D).map (F.map f) ≫
     (leftYonedaExtRepresentableULiftIso F Y).inv ≫
     α.app (yonedaULift Y) ≫
     (leftYonedaExtRepresentableULiftIso G Y).hom =
-    ((yonedaLarge C).map (F.map f) ≫
+    ((yonedaLarge D).map (F.map f) ≫
       (leftYonedaExtRepresentableULiftIso F Y).inv)
     ≫ α.app (yonedaULift Y) ≫
     (leftYonedaExtRepresentableULiftIso G Y).hom
@@ -745,7 +747,7 @@ theorem leftYonedaExtPreimageULift_naturality
     (leftYonedaExtRepresentableULiftIso F X).inv ≫
       α.app ((yonedaLarge C).obj X) ≫
       (leftYonedaExtRepresentableULiftIso G X).hom ≫
-      (yonedaLarge C).map (G.map f)
+      (yonedaLarge D).map (G.map f)
   calc (leftYonedaExtRepresentableULiftIso F X).inv
       ≫ (leftYonedaExt F).map
         ((yonedaLarge C).map f) ≫
@@ -766,7 +768,7 @@ theorem leftYonedaExtPreimageULift_naturality
     _ = (leftYonedaExtRepresentableULiftIso F X).inv
       ≫ α.app ((yonedaLarge C).obj X) ≫
       (leftYonedaExtRepresentableULiftIso G X).hom ≫
-      (yonedaLarge C).map (G.map f)
+      (yonedaLarge D).map (G.map f)
       := by simp only [Category.assoc,
         natIsoG_nat]
 
@@ -777,7 +779,7 @@ Follows from `leftYonedaExtPreimageULift_naturality`
 by reflecting through `yoneda` and `ulift`
 full faithfulness. -/
 theorem leftYonedaExtPreimageApp_naturality
-    {F G : C ⥤ C}
+    {F G : C ⥤ D}
     (α : leftYonedaExt F ⟶ leftYonedaExt G)
     {X Y : C} (f : X ⟶ Y) :
     F.map f ≫
@@ -796,26 +798,26 @@ theorem leftYonedaExtPreimageApp_naturality
   congr 1
   -- Inject through wFF to get to ULift level.
   apply Functor.FullyFaithful.map_injective
-    (whiskerRightULiftFullyFaithful C)
+    (whiskerRightULiftFullyFaithful D)
   rw [Functor.map_comp, Functor.map_comp,
     Functor.FullyFaithful.map_preimage
-      (whiskerRightULiftFullyFaithful C),
+      (whiskerRightULiftFullyFaithful D),
     Functor.FullyFaithful.map_preimage
-      (whiskerRightULiftFullyFaithful C)]
+      (whiskerRightULiftFullyFaithful D)]
   -- Now at ULift level.
   exact @leftYonedaExtPreimageULift_naturality
-    C _ _ _ α _ _ f
+    C _ D _ F G α X Y f
 
 /-- The preimage as a natural transformation:
 given `α : leftYonedaExt F ⟶ leftYonedaExt G`,
 produce `F ⟶ G`. -/
 def leftYonedaExtFunctorPreimage
-    {F G : C ⥤ C}
+    {F G : C ⥤ D}
     (α : leftYonedaExt F ⟶ leftYonedaExt G) :
     F ⟶ G where
   app X := leftYonedaExtPreimageApp (C := C) α X
-  naturality _ _ f :=
-    leftYonedaExtPreimageApp_naturality C α f
+  naturality {X Y} f :=
+    @leftYonedaExtPreimageApp_naturality C _ D _ F G α X Y f
 
 
 /-- Every element `Quot.mk ⟨S, g, t⟩` of
@@ -825,9 +827,9 @@ def leftYonedaExtFunctorPreimage
 representable stage `op(F.obj S)` transported
 along `t`. -/
 theorem leftYonedaExtElement_decompose
-    {F : C ⥤ C}
+    {F : C ⥤ D}
     (P : Cᵒᵖ ⥤ Type (max u v))
-    (T : Cᵒᵖ) (S : C)
+    (T : Dᵒᵖ) (S : C)
     (g : P.obj (Opposite.op S))
     (t : T.unop ⟶ F.obj S) :
     Quot.mk (LeftYonedaExtStep F P T)
@@ -846,7 +848,7 @@ theorem leftYonedaExtElement_decompose
 `t = 𝟙`), `leftYonedaExtFunctor.map(preimage α)`
 agrees with `α` for any presheaf `P`. -/
 theorem leftYonedaExtFunctor_map_preimage_id
-    {F G : C ⥤ C}
+    {F G : C ⥤ D}
     (α : leftYonedaExt F ⟶ leftYonedaExt G)
     (P : Cᵒᵖ ⥤ Type (max u v))
     (S : C) (g : P.obj (Opposite.op S)) :
@@ -986,10 +988,10 @@ theorem leftYonedaExtFunctor_map_preimage_id
 /-- The map-preimage roundtrip for a single
 quotient representative `⟨S, g, t⟩`. -/
 theorem leftYonedaExtFunctor_map_preimage_triple
-    {F G : C ⥤ C}
+    {F G : C ⥤ D}
     (α : leftYonedaExt F ⟶ leftYonedaExt G)
     (P : Cᵒᵖ ⥤ Type (max u v))
-    (T : Cᵒᵖ)
+    (T : Dᵒᵖ)
     (S : C)
     (g : P.obj (Opposite.op S))
     (t : T.unop ⟶ F.obj S) :
@@ -1045,7 +1047,7 @@ theorem leftYonedaExtFunctor_map_preimage_triple
 /-- `leftYonedaExtFunctor.map(preimage α) = α`:
 the map-preimage roundtrip. -/
 theorem leftYonedaExtFunctor_map_preimage
-    {F G : C ⥤ C}
+    {F G : C ⥤ D}
     (α : leftYonedaExt F ⟶ leftYonedaExt G) :
     leftYonedaExtFunctor.map
       (leftYonedaExtFunctorPreimage (C := C) α) =
@@ -1058,21 +1060,21 @@ theorem leftYonedaExtFunctor_map_preimage
       (C := C) α P T S g t
 
 /-- `leftYonedaExtFunctor` is fully faithful:
-natural transformations between endofunctors
-`F ⟶ G` biject with natural transformations
+natural transformations between functors
+`F ⟶ G : C ⥤ D` biject with natural transformations
 between their Yoneda extensions
 `leftYonedaExt F ⟶ leftYonedaExt G`. -/
 def leftYonedaExtFunctorFullyFaithful :
     Functor.FullyFaithful
       (leftYonedaExtFunctor :
-        (C ⥤ C) ⥤
+        (C ⥤ D) ⥤
         ((Cᵒᵖ ⥤ Type (max u v)) ⥤
-          (Cᵒᵖ ⥤ Type (max u v)))) where
+          (Dᵒᵖ ⥤ Type (max u v)))) where
   preimage {F G} α :=
     leftYonedaExtFunctorPreimage (C := C) α
   map_preimage {F G} α :=
     @leftYonedaExtFunctor_map_preimage
-      C _ _ _ α
+      C _ D _ F G α
   preimage_map {F G} σ := by
     ext X
     -- preimage(leftYonedaExtFunctor.map σ).app X
@@ -1106,6 +1108,7 @@ end YonedaExtFullFaithfulness
 section RightYonedaExtFullFaithfulness
 
 variable (C : Type u) [Category.{v} C]
+variable {D : Type u} [Category.{v} D]
 
 /-- The tautological family for the right Yoneda
 extension at the Hom-presheaf
@@ -1114,7 +1117,7 @@ extension at the Hom-presheaf
 `(S, t : F.obj S ⟶ G.obj X)` to `ULift.up t`.
 -/
 def rightYonedaExtCanonicalFamily
-    {F G : C ⥤ C} (X : C) :
+    {F G : C ⥤ D} (X : C) :
     RightYonedaExtFamily F
       (F.op ⋙ yonedaULift (G.obj X))
       (Opposite.op (G.obj X)) where
@@ -1132,19 +1135,19 @@ evaluating `α` at the Hom-presheaf
 canonical family, then reading off the
 `(X, 𝟙)` component. -/
 def rightYonedaExtFunctorPreimageApp
-    {F G : C ⥤ C}
+    {F G : C ⥤ D}
     (α : rightYonedaExt F ⟶ rightYonedaExt G)
     (X : C) : F.obj X ⟶ G.obj X :=
   ((α.app (F.op ⋙ yonedaULift (G.obj X))).app
     (Opposite.op (G.obj X))
-    (rightYonedaExtCanonicalFamily C X)).family
+    (@rightYonedaExtCanonicalFamily C _ D _ F G X)).family
     X (𝟙 (G.obj X)) |>.down
 
 /-- The preimage extraction applied to
 `rightYonedaExtFunctor.map σ` recovers
 `σ.app X`. -/
 theorem rightYonedaExtFunctor_preimage_app
-    {F G : C ⥤ C} (σ : F ⟶ G) (X : C) :
+    {F G : C ⥤ D} (σ : F ⟶ G) (X : C) :
     rightYonedaExtFunctorPreimageApp C
       (rightYonedaExtFunctor.map σ) X =
     σ.app X := by
@@ -1163,7 +1166,7 @@ Proved by combining:
 (3) G-family naturality of the output at Y.
 -/
 theorem rightYonedaExtFunctorPreimageApp_nat
-    {F G : C ⥤ C}
+    {F G : C ⥤ D}
     (α : rightYonedaExt F ⟶ rightYonedaExt G)
     {X Y : C} (f : X ⟶ Y) :
     F.map f ≫
@@ -1171,16 +1174,14 @@ theorem rightYonedaExtFunctorPreimageApp_nat
     rightYonedaExtFunctorPreimageApp C α X ≫
       G.map f := by
   -- Step 1: Set up notation.
-  set P_X := F.op ⋙ yonedaULift (C := C)
-    (G.obj X)
-  set P_Y := F.op ⋙ yonedaULift (C := C)
-    (G.obj Y)
+  set P_X := F.op ⋙ yonedaULift (G.obj X)
+  set P_Y := F.op ⋙ yonedaULift (G.obj Y)
   set y_X := (α.app P_X).app
     (Opposite.op (G.obj X))
-    (rightYonedaExtCanonicalFamily C X)
+    (@rightYonedaExtCanonicalFamily C _ D _ F G X)
   set y_Y := (α.app P_Y).app
     (Opposite.op (G.obj Y))
-    (rightYonedaExtCanonicalFamily C Y)
+    (@rightYonedaExtCanonicalFamily C _ D _ F G Y)
   -- The goal reduces to showing two morphisms
   -- are equal: use intermediate
   -- y_Y.family X (G.map f).
@@ -1203,7 +1204,7 @@ theorem rightYonedaExtFunctorPreimageApp_nat
   have hα := congr_fun (congr_app
     (α.naturality γ)
     (Opposite.op (G.obj X)))
-    (rightYonedaExtCanonicalFamily C X)
+    (@rightYonedaExtCanonicalFamily C _ D _ F G X)
   simp only [NatTrans.comp_app,
     types_comp_apply] at hα
   -- Step 4: Stage-naturality of α.app P_Y.
@@ -1215,11 +1216,10 @@ theorem rightYonedaExtFunctorPreimageApp_nat
   have heq_z :
       ((rightYonedaExt F).obj P_Y).map
         (G.map f).op
-        (rightYonedaExtCanonicalFamily C Y) =
+        (@rightYonedaExtCanonicalFamily C _ D _ F G Y) =
       ((rightYonedaExt F).map γ).app
         (Opposite.op (G.obj X))
-        (rightYonedaExtCanonicalFamily
-          C X) := by
+        (@rightYonedaExtCanonicalFamily C _ D _ F G X) := by
     apply RightYonedaExtFamily.ext'
     intro S t
     dsimp [rightYonedaExt, rightYonedaExtObj,
@@ -1272,18 +1272,18 @@ theorem rightYonedaExtFunctorPreimageApp_nat
 given `α : rightYonedaExt F ⟶ rightYonedaExt G`,
 produce `F ⟶ G`. -/
 def rightYonedaExtFunctorPreimage
-    {F G : C ⥤ C}
+    {F G : C ⥤ D}
     (α : rightYonedaExt F ⟶ rightYonedaExt G) :
     F ⟶ G where
   app X :=
     rightYonedaExtFunctorPreimageApp C α X
-  naturality _ _ f :=
-    rightYonedaExtFunctorPreimageApp_nat C α f
+  naturality {X Y} f :=
+    @rightYonedaExtFunctorPreimageApp_nat C _ D _ F G α X Y f
 
 /-- `preimage(rightYonedaExtFunctor.map σ) = σ`:
 the preimage-map roundtrip. -/
 theorem rightYonedaExtFunctor_preimage_map
-    {F G : C ⥤ C} (σ : F ⟶ G) :
+    {F G : C ⥤ D} (σ : F ⟶ G) :
     rightYonedaExtFunctorPreimage C
       (rightYonedaExtFunctor.map σ) = σ := by
   ext X
@@ -1295,7 +1295,7 @@ the map-preimage roundtrip. For each P, T, x,
 S, t, uses α's P-naturality and stage-naturality
 to reduce to the canonical family. -/
 theorem rightYonedaExtFunctor_map_preimage
-    {F G : C ⥤ C}
+    {F G : C ⥤ D}
     (α : rightYonedaExt F ⟶ rightYonedaExt G) :
     rightYonedaExtFunctor.map
       (rightYonedaExtFunctorPreimage C α) =
@@ -1306,8 +1306,7 @@ theorem rightYonedaExtFunctor_map_preimage
   -- Goal: x.family S (σ.app S ≫ t) =
   --   (α.app P).app T x .family S t
   set σ := rightYonedaExtFunctorPreimage C α
-  set P_S := F.op ⋙ yonedaULift (C := C)
-    (G.obj S)
+  set P_S := F.op ⋙ yonedaULift (G.obj S)
   -- β : P_S ⟶ P sends
   -- ULift.up(h : F.obj S' ⟶ G.obj S) to
   -- x.family S' (h ≫ t).
@@ -1326,7 +1325,7 @@ theorem rightYonedaExtFunctor_map_preimage
   have hα := congr_fun (congr_app
     (α.naturality β)
     (Opposite.op (G.obj S)))
-    (rightYonedaExtCanonicalFamily C S)
+    (@rightYonedaExtCanonicalFamily C _ D _ F G S)
   simp only [NatTrans.comp_app,
     types_comp_apply] at hα
   -- Stage-naturality of α.app P at t.op,
@@ -1376,22 +1375,22 @@ theorem rightYonedaExtFunctor_map_preimage
   exact from_hstage
 
 /-- `rightYonedaExtFunctor` is fully faithful:
-natural transformations between endofunctors
-`F ⟶ G` biject with natural transformations
+natural transformations between functors
+`F ⟶ G : C ⥤ D` biject with natural transformations
 between their right Yoneda extensions
 `rightYonedaExt F ⟶ rightYonedaExt G`. -/
 def rightYonedaExtFunctorFullyFaithful :
     Functor.FullyFaithful
       (rightYonedaExtFunctor :
-        (C ⥤ C) ⥤
+        (C ⥤ D) ⥤
         ((Cᵒᵖ ⥤ Type (max u v)) ⥤
-          (Cᵒᵖ ⥤ Type (max u v)))) where
-  preimage α :=
+          (Dᵒᵖ ⥤ Type (max u v)))) where
+  preimage {_F _G} α :=
     rightYonedaExtFunctorPreimage C α
-  map_preimage α :=
+  map_preimage {F G} α :=
     @rightYonedaExtFunctor_map_preimage
-      C _ _ _ α
-  preimage_map σ :=
+      C _ D _ F G α
+  preimage_map {_F _G} σ :=
     rightYonedaExtFunctor_preimage_map C σ
 
 end RightYonedaExtFullFaithfulness
