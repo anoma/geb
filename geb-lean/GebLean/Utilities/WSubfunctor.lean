@@ -1,5 +1,6 @@
 import Mathlib.CategoryTheory.Subfunctor.Basic
 import Mathlib.CategoryTheory.Subfunctor.Image
+import Mathlib.CategoryTheory.Subfunctor.Sieves
 
 /-!
 # Witnessed subfunctors
@@ -171,5 +172,62 @@ theorem toRange_incl (p : F' ⟶ F) :
   simp [toRange, range]
 
 end WSubfunctor
+
+section WSubfunctorSieves
+
+/-! ### Sieves from witnessed subfunctors
+
+When `F : Cᵒᵖ ⥤ Type w` is a presheaf, a
+`WSubfunctor F` determines a sieve at each
+section, using `Nonempty` of the fiber to
+define membership. This agrees with
+`Subfunctor.sieveOfSection` applied to
+`W.toSubfunctor`.
+-/
+
+variable {C : Type u} [Category.{v} C]
+variable {F : Cᵒᵖ ⥤ Type w}
+
+open Opposite
+
+namespace WSubfunctor
+
+/-- The sieve of a witnessed subfunctor at a
+section `s : F.obj U`: the sieve on `U.unop`
+consisting of morphisms `f : V ⟶ U.unop`
+such that `F.map f.op s` has a witness. -/
+def sieveOfSection (W : WSubfunctor F)
+    {U : Cᵒᵖ} (s : F.obj U) :
+    Sieve U.unop where
+  arrows V f :=
+    Nonempty (W.fiber (op V)
+      (F.map f.op s))
+  downward_closed := by
+    intro V₁ V₂ f₁ ⟨⟨a, ha⟩⟩ f₂
+    refine ⟨⟨W.total.map f₂.op a, ?_⟩⟩
+    have nat := congr_fun
+      (W.incl.naturality f₂.op) a
+    simp only [types_comp_apply] at nat
+    rw [nat, ha]
+    exact (congr_fun
+      (F.map_comp f₁.op f₂.op) s).symm
+
+/-- The `WSubfunctor` sieve agrees with the
+`Subfunctor` sieve via `toSubfunctor`. -/
+theorem sieveOfSection_eq_toSubfunctor
+    (W : WSubfunctor F)
+    {U : Cᵒᵖ} (s : F.obj U) :
+    W.sieveOfSection s =
+      W.toSubfunctor.sieveOfSection s := by
+  ext V f
+  dsimp [sieveOfSection,
+    Subfunctor.sieveOfSection,
+    toSubfunctor, Subfunctor.range]
+  exact ⟨fun ⟨⟨a, ha⟩⟩ => ⟨a, ha⟩,
+    fun ⟨a, ha⟩ => ⟨⟨a, ha⟩⟩⟩
+
+end WSubfunctor
+
+end WSubfunctorSieves
 
 end GebLean
