@@ -591,45 +591,45 @@ def yonedaLargeFullyFaithful :
 
 /-- Extract a morphism `F.obj X ⟶ G.obj X`
 from a natural transformation
-`α : yonedaExt F ⟶ yonedaExt G` by
+`α : leftYonedaExt F ⟶ leftYonedaExt G` by
 restricting to the representable
 `yonedaULift X` and conjugating with the
 representable isomorphism. -/
-def yonedaExtPreimageApp
+def leftYonedaExtPreimageApp
     {F G : C ⥤ C}
-    (α : yonedaExt F ⟶ yonedaExt G)
+    (α : leftYonedaExt F ⟶ leftYonedaExt G)
     (X : C) : F.obj X ⟶ G.obj X :=
   Yoneda.fullyFaithful.preimage
     (Functor.FullyFaithful.preimage
       (whiskerRightULiftFullyFaithful C)
-      ((yonedaExtRepresentableULiftIso F X).inv
+      ((leftYonedaExtRepresentableULiftIso F X).inv
         ≫ α.app (yonedaULift X)
-        ≫ (yonedaExtRepresentableULiftIso
+        ≫ (leftYonedaExtRepresentableULiftIso
             G X).hom))
 
 /-- The representable isomorphism is natural
 in `X`: the family
-`yonedaExtRepresentableULiftIso F X` assembles
+`leftYonedaExtRepresentableULiftIso F X` assembles
 into a natural isomorphism
 `F ⋙ yonedaLarge C ≅
-(yonedaLarge C) ⋙ yonedaExt F`.
+(yonedaLarge C) ⋙ leftYonedaExt F`.
 
 This says: applying `F` then embedding via
 `yonedaLarge` is naturally isomorphic to
 embedding via `yonedaLarge` then extending
-via `yonedaExt F`. -/
-def yonedaExtRepresentableNatIso
+via `leftYonedaExt F`. -/
+def leftYonedaExtRepresentableNatIso
     (F : C ⥤ C) :
     F ⋙ yonedaLarge C ≅
-      yonedaLarge C ⋙ yonedaExt F :=
+      yonedaLarge C ⋙ leftYonedaExt F :=
   NatIso.ofComponents
     (fun X => {
-      hom := (yonedaExtRepresentableULiftIso F X).inv
-      inv := (yonedaExtRepresentableULiftIso F X).hom
+      hom := (leftYonedaExtRepresentableULiftIso F X).inv
+      inv := (leftYonedaExtRepresentableULiftIso F X).hom
       hom_inv_id :=
-        (yonedaExtRepresentableULiftIso F X).inv_hom_id
+        (leftYonedaExtRepresentableULiftIso F X).inv_hom_id
       inv_hom_id :=
-        (yonedaExtRepresentableULiftIso F X).hom_inv_id
+        (leftYonedaExtRepresentableULiftIso F X).hom_inv_id
     })
     (fun {X Y} f => by
       ext T ⟨t⟩
@@ -641,95 +641,95 @@ def yonedaExtRepresentableNatIso
       -- = iso(F,Y).inv applied to
       --   (t ≫ F.map f)
       -- = Quot.mk(Y, 𝟙 Y, t ≫ F.map f)
-      -- RHS: (yonedaExt F).map(yonedaLarge.map f)
+      -- RHS: (leftYonedaExt F).map(yonedaLarge.map f)
       --   applied to iso(F,X).inv(t)
-      -- = (yonedaExt F).map(yonedaLarge.map f)
+      -- = (leftYonedaExt F).map(yonedaLarge.map f)
       --   applied to Quot.mk(X, 𝟙 X, t)
       -- = Quot.mk(X, f, t)
-      -- (by the yonedaExt map definition)
+      -- (by the leftYonedaExt map definition)
       -- These are equal in the quotient:
       -- (X, f, t) ~ (Y, 𝟙 Y, t ≫ F.map f)
       -- via the step (Y, f, 𝟙 Y).
-      dsimp [yonedaExtRepresentableULiftIso,
-        yonedaExtUnitULift, yonedaLarge,
-        yonedaULift, yonedaExt, yonedaExtObj,
-        yonedaExtSigmaMap]
+      dsimp [leftYonedaExtRepresentableULiftIso,
+        leftYonedaExtUnitULift, yonedaLarge,
+        yonedaULift, leftYonedaExt, leftYonedaExtObj,
+        leftYonedaExtSigmaMap]
       apply Quot.sound
       exact ⟨f,
-        by dsimp [yonedaExtSigmaMapNat]; simp,
-        by dsimp [yonedaExtSigmaMapNat]⟩)
+        by dsimp [leftYonedaExtSigmaMapNat]; simp,
+        by dsimp [leftYonedaExtSigmaMapNat]⟩)
 
 /-- Abbreviation for the ulift-yoneda-level
 composition used in the preimage: the
 iso conjugation of `α` at a given object. -/
-abbrev yonedaExtPreimageULift
+abbrev leftYonedaExtPreimageULift
     {F G : C ⥤ C}
-    (α : yonedaExt F ⟶ yonedaExt G)
+    (α : leftYonedaExt F ⟶ leftYonedaExt G)
     (X : C) :
     yonedaULift (F.obj X) ⟶
       yonedaULift (G.obj X) :=
-  (yonedaExtRepresentableULiftIso F X).inv ≫
+  (leftYonedaExtRepresentableULiftIso F X).inv ≫
     α.app (yonedaULift X) ≫
-    (yonedaExtRepresentableULiftIso G X).hom
+    (leftYonedaExtRepresentableULiftIso G X).hom
 
 /-- The ulift-level preimage satisfies
 naturality: `yUL(F.map f) ≫ preimageULift(Y)
 = preimageULift(X) ≫ yUL(G.map f)`.
 This follows from naturality of
-`yonedaExtRepresentableNatIso` and
+`leftYonedaExtRepresentableNatIso` and
 naturality of `α`. -/
-theorem yonedaExtPreimageULift_naturality
+theorem leftYonedaExtPreimageULift_naturality
     {F G : C ⥤ C}
-    (α : yonedaExt F ⟶ yonedaExt G)
+    (α : leftYonedaExt F ⟶ leftYonedaExt G)
     {X Y : C} (f : X ⟶ Y) :
     (yonedaLarge C).map (F.map f) ≫
-      yonedaExtPreimageULift (C := C) α Y =
-    yonedaExtPreimageULift (C := C) α X ≫
+      leftYonedaExtPreimageULift (C := C) α Y =
+    leftYonedaExtPreimageULift (C := C) α X ≫
       (yonedaLarge C).map (G.map f) := by
   -- The proof chains three naturality
   -- results at the ulift-yoneda level.
   -- Use the NatIso naturality we proved
-  -- in `yonedaExtRepresentableNatIso` and
+  -- in `leftYonedaExtRepresentableNatIso` and
   -- the naturality of `α`.
-  simp only [yonedaExtPreimageULift,
+  simp only [leftYonedaExtPreimageULift,
     Category.assoc]
   -- Factor: state the naturality of the
   -- NatIso as a separate lemma about
-  -- yonedaExtRepresentableULiftIso components.
+  -- leftYonedaExtRepresentableULiftIso components.
   have natIsoF_nat :
       (yonedaLarge C).map (F.map f) ≫
-        (yonedaExtRepresentableULiftIso F Y).inv
+        (leftYonedaExtRepresentableULiftIso F Y).inv
       =
-      (yonedaExtRepresentableULiftIso F X).inv ≫
-        (yonedaExt F).map
+      (leftYonedaExtRepresentableULiftIso F X).inv ≫
+        (leftYonedaExt F).map
           ((yonedaLarge C).map f) := by
     have h := Iso.hom
-      (yonedaExtRepresentableNatIso C F)
+      (leftYonedaExtRepresentableNatIso C F)
       |>.naturality f
     simp only [Functor.comp_map] at h
     exact h
   have natIsoG_nat :
-      (yonedaExt G).map
+      (leftYonedaExt G).map
           ((yonedaLarge C).map f) ≫
-        (yonedaExtRepresentableULiftIso G Y).hom
+        (leftYonedaExtRepresentableULiftIso G Y).hom
       =
-      (yonedaExtRepresentableULiftIso G X).hom ≫
+      (leftYonedaExtRepresentableULiftIso G X).hom ≫
         (yonedaLarge C).map (G.map f) := by
     have h := Iso.inv
-      (yonedaExtRepresentableNatIso C G)
+      (leftYonedaExtRepresentableNatIso C G)
       |>.naturality f
     simp only [Functor.comp_map] at h
     exact h
   -- Reassociate to expose the pattern
   -- for natIsoF_nat on the LHS.
   rw [show (yonedaLarge C).map (F.map f) ≫
-    (yonedaExtRepresentableULiftIso F Y).inv ≫
+    (leftYonedaExtRepresentableULiftIso F Y).inv ≫
     α.app (yonedaULift Y) ≫
-    (yonedaExtRepresentableULiftIso G Y).hom =
+    (leftYonedaExtRepresentableULiftIso G Y).hom =
     ((yonedaLarge C).map (F.map f) ≫
-      (yonedaExtRepresentableULiftIso F Y).inv)
+      (leftYonedaExtRepresentableULiftIso F Y).inv)
     ≫ α.app (yonedaULift Y) ≫
-    (yonedaExtRepresentableULiftIso G Y).hom
+    (leftYonedaExtRepresentableULiftIso G Y).hom
     from by simp only [Category.assoc],
     natIsoF_nat]
   simp only [Category.assoc]
@@ -738,24 +738,24 @@ theorem yonedaExtPreimageULift_naturality
   -- Cancel common prefix iso_F_X.inv.
   -- Convert yonedaULift to yonedaLarge.obj.
   change
-    (yonedaExtRepresentableULiftIso F X).inv ≫
-      (yonedaExt F).map ((yonedaLarge C).map f) ≫
+    (leftYonedaExtRepresentableULiftIso F X).inv ≫
+      (leftYonedaExt F).map ((yonedaLarge C).map f) ≫
       α.app ((yonedaLarge C).obj Y) ≫
-      (yonedaExtRepresentableULiftIso G Y).hom =
-    (yonedaExtRepresentableULiftIso F X).inv ≫
+      (leftYonedaExtRepresentableULiftIso G Y).hom =
+    (leftYonedaExtRepresentableULiftIso F X).inv ≫
       α.app ((yonedaLarge C).obj X) ≫
-      (yonedaExtRepresentableULiftIso G X).hom ≫
+      (leftYonedaExtRepresentableULiftIso G X).hom ≫
       (yonedaLarge C).map (G.map f)
-  calc (yonedaExtRepresentableULiftIso F X).inv
-      ≫ (yonedaExt F).map
+  calc (leftYonedaExtRepresentableULiftIso F X).inv
+      ≫ (leftYonedaExt F).map
         ((yonedaLarge C).map f) ≫
       α.app ((yonedaLarge C).obj Y) ≫
-      (yonedaExtRepresentableULiftIso G Y).hom
-    _ = (yonedaExtRepresentableULiftIso F X).inv
+      (leftYonedaExtRepresentableULiftIso G Y).hom
+    _ = (leftYonedaExtRepresentableULiftIso F X).inv
       ≫ (α.app ((yonedaLarge C).obj X) ≫
-      (yonedaExt G).map
+      (leftYonedaExt G).map
         ((yonedaLarge C).map f)) ≫
-      (yonedaExtRepresentableULiftIso G Y).hom
+      (leftYonedaExtRepresentableULiftIso G Y).hom
       := by
         simp only [Category.assoc]
         congr 1
@@ -763,29 +763,29 @@ theorem yonedaExtPreimageULift_naturality
           α.naturality
             ((yonedaLarge C).map f),
           Category.assoc]
-    _ = (yonedaExtRepresentableULiftIso F X).inv
+    _ = (leftYonedaExtRepresentableULiftIso F X).inv
       ≫ α.app ((yonedaLarge C).obj X) ≫
-      (yonedaExtRepresentableULiftIso G X).hom ≫
+      (leftYonedaExtRepresentableULiftIso G X).hom ≫
       (yonedaLarge C).map (G.map f)
       := by simp only [Category.assoc,
         natIsoG_nat]
 
-/-- Naturality of `yonedaExtPreimageApp`:
+/-- Naturality of `leftYonedaExtPreimageApp`:
 `F.map f ≫ preimageApp(Y) =
 preimageApp(X) ≫ G.map f`.
-Follows from `yonedaExtPreimageULift_naturality`
+Follows from `leftYonedaExtPreimageULift_naturality`
 by reflecting through `yoneda` and `ulift`
 full faithfulness. -/
-theorem yonedaExtPreimageApp_naturality
+theorem leftYonedaExtPreimageApp_naturality
     {F G : C ⥤ C}
-    (α : yonedaExt F ⟶ yonedaExt G)
+    (α : leftYonedaExt F ⟶ leftYonedaExt G)
     {X Y : C} (f : X ⟶ Y) :
     F.map f ≫
-      yonedaExtPreimageApp (C := C) α Y =
-    yonedaExtPreimageApp (C := C) α X ≫
+      leftYonedaExtPreimageApp (C := C) α Y =
+    leftYonedaExtPreimageApp (C := C) α X ≫
       G.map f := by
   -- First check: does unfold work?
-  simp only [yonedaExtPreimageApp]
+  simp only [leftYonedaExtPreimageApp]
   rw [← Yoneda.fullyFaithful.preimage_map
     (F.map f),
     ← Yoneda.fullyFaithful.preimage_comp,
@@ -803,63 +803,63 @@ theorem yonedaExtPreimageApp_naturality
     Functor.FullyFaithful.map_preimage
       (whiskerRightULiftFullyFaithful C)]
   -- Now at ULift level.
-  exact @yonedaExtPreimageULift_naturality
+  exact @leftYonedaExtPreimageULift_naturality
     C _ _ _ α _ _ f
 
 /-- The preimage as a natural transformation:
-given `α : yonedaExt F ⟶ yonedaExt G`,
+given `α : leftYonedaExt F ⟶ leftYonedaExt G`,
 produce `F ⟶ G`. -/
-def yonedaExtFunctorPreimage
+def leftYonedaExtFunctorPreimage
     {F G : C ⥤ C}
-    (α : yonedaExt F ⟶ yonedaExt G) :
+    (α : leftYonedaExt F ⟶ leftYonedaExt G) :
     F ⟶ G where
-  app X := yonedaExtPreimageApp (C := C) α X
+  app X := leftYonedaExtPreimageApp (C := C) α X
   naturality _ _ f :=
-    yonedaExtPreimageApp_naturality C α f
+    leftYonedaExtPreimageApp_naturality C α f
 
 
 /-- Every element `Quot.mk ⟨S, g, t⟩` of
-`(yonedaExt F).obj P` at stage `T` equals
-`((yonedaExt F).obj P).map t.op
+`(leftYonedaExt F).obj P` at stage `T` equals
+`((leftYonedaExt F).obj P).map t.op
 (Quot.mk ⟨S, g, 𝟙⟩)`: the element at the
 representable stage `op(F.obj S)` transported
 along `t`. -/
-theorem yonedaExtElement_decompose
+theorem leftYonedaExtElement_decompose
     {F : C ⥤ C}
     (P : Cᵒᵖ ⥤ Type (max u v))
     (T : Cᵒᵖ) (S : C)
     (g : P.obj (Opposite.op S))
     (t : T.unop ⟶ F.obj S) :
-    Quot.mk (YonedaExtStep F P T)
+    Quot.mk (LeftYonedaExtStep F P T)
       ⟨S, g, t⟩ =
-    ((yonedaExt F).obj P).map t.op
+    ((leftYonedaExt F).obj P).map t.op
       (Quot.mk
-        (YonedaExtStep F P
+        (LeftYonedaExtStep F P
           (Opposite.op (F.obj S)))
         ⟨S, g, 𝟙 (F.obj S)⟩) := by
   change _ = Quot.mk _
-    (yonedaExtSigmaMap F P t.op _)
-  dsimp [yonedaExtSigmaMap]
+    (leftYonedaExtSigmaMap F P t.op _)
+  dsimp [leftYonedaExtSigmaMap]
   simp
 
 /-- At the representable stage (where
-`t = 𝟙`), `yonedaExtFunctor.map(preimage α)`
+`t = 𝟙`), `leftYonedaExtFunctor.map(preimage α)`
 agrees with `α` for any presheaf `P`. -/
-theorem yonedaExtFunctor_map_preimage_id
+theorem leftYonedaExtFunctor_map_preimage_id
     {F G : C ⥤ C}
-    (α : yonedaExt F ⟶ yonedaExt G)
+    (α : leftYonedaExt F ⟶ leftYonedaExt G)
     (P : Cᵒᵖ ⥤ Type (max u v))
     (S : C) (g : P.obj (Opposite.op S)) :
     (NatTrans.app
-      (yonedaExtFunctor.map
-        (yonedaExtFunctorPreimage (C := C) α))
+      (leftYonedaExtFunctor.map
+        (leftYonedaExtFunctorPreimage (C := C) α))
       P).app (Opposite.op (F.obj S))
       (Quot.mk _
         ⟨S, g, 𝟙 (F.obj S)⟩) =
     (α.app P).app (Opposite.op (F.obj S))
       (Quot.mk _
         ⟨S, g, 𝟙 (F.obj S)⟩) := by
-  -- LHS: Quot.mk(G-step)(yonedaExtSigmaAlpha
+  -- LHS: Quot.mk(G-step)(leftYonedaExtSigmaAlpha
   --   (preimage α) P (op(F.obj S))
   --   ⟨S, g, 𝟙⟩)
   -- = Quot.mk(G-step)
@@ -871,17 +871,17 @@ theorem yonedaExtFunctor_map_preimage_id
   -- Use naturality of α at the presheaf
   -- morphism P → yonedaULift S induced by g.
   -- Factor: first rewrite LHS via
-  -- yonedaExtSigmaAlpha unfolding.
+  -- leftYonedaExtSigmaAlpha unfolding.
   change Quot.mk _ _ = _
-  dsimp [yonedaExtFunctor,
-    yonedaExtFunctorPreimage,
-    yonedaExtPreimageApp,
-    yonedaExtPreimageULift,
+  dsimp [leftYonedaExtFunctor,
+    leftYonedaExtFunctorPreimage,
+    leftYonedaExtPreimageApp,
+    leftYonedaExtPreimageULift,
     whiskerRightULiftFullyFaithful,
-    yonedaExtRepresentableULiftIso,
-    yonedaExtCounitULift,
-    yonedaExtUnitULift,
-    yonedaExtSigmaAlpha,
+    leftYonedaExtRepresentableULiftIso,
+    leftYonedaExtCounitULift,
+    leftYonedaExtUnitULift,
+    leftYonedaExtSigmaAlpha,
     Yoneda.fullyFaithful]
   simp only [Category.id_comp]
   -- Now: Quot.mk(G-step)
@@ -890,9 +890,9 @@ theorem yonedaExtFunctor_map_preimage_id
   -- = α.app P . app (op(F.obj S))
   --   (Quot.mk ⟨S, g, 𝟙⟩)
   -- Step 1: write ⟨S, g, 𝟙⟩ as
-  -- (yonedaExtPresheafUnit F P).app(op S)(g).
+  -- (leftYonedaExtPresheafUnit F P).app(op S)(g).
   -- Step 2: use naturality of α at
-  -- yonedaExtPresheafUnit F P to factor
+  -- leftYonedaExtPresheafUnit F P to factor
   -- through the representable.
   -- Step 3: at the representable, both sides
   -- reduce to the preimage construction.
@@ -917,28 +917,28 @@ theorem yonedaExtFunctor_map_preimage_id
       ⟨S, (ULift.up (𝟙 S),
         𝟙 (F.obj S))⟩)
   -- natα has form:
-  -- (yonedaExt(F).map(η_g) ≫ α.app(P))(...)(q₀)
-  -- = (α.app(yUL S) ≫ yonedaExt(G).map(η_g))(...)(q₀)
+  -- (leftYonedaExt(F).map(η_g) ≫ α.app(P))(...)(q₀)
+  -- = (α.app(yUL S) ≫ leftYonedaExt(G).map(η_g))(...)(q₀)
   -- Unfold the ≫ to get function application.
   simp only [NatTrans.comp_app,
     types_comp_apply] at natα
   -- Now natα is pointwise.
   -- RHS of goal = α(P)(...)(⟨S,g,𝟙⟩)
-  -- = α(P)(...)(yonedaExt(F).map(η_g)(q₀))
-  -- [because yonedaExt(F).map(η_g)(q₀) = ⟨S,g,𝟙⟩]
+  -- = α(P)(...)(leftYonedaExt(F).map(η_g)(q₀))
+  -- [because leftYonedaExt(F).map(η_g)(q₀) = ⟨S,g,𝟙⟩]
   -- = natα LHS
   -- = natα RHS
-  -- = yonedaExt(G).map(η_g)(α(yUL S)(q₀))
+  -- = leftYonedaExt(G).map(η_g)(α(yUL S)(q₀))
   -- = LHS of goal
-  -- [because yonedaExt(G).map(η_g) sends
+  -- [because leftYonedaExt(G).map(η_g) sends
   -- the ULift component to g via η_g]
-  -- Step A: RHS = α(P)(...)(yonedaExt(F).map(η_g)(q₀))
+  -- Step A: RHS = α(P)(...)(leftYonedaExt(F).map(η_g)(q₀))
   conv_rhs =>
     rw [show Quot.mk
-        (YonedaExtStep F P
+        (LeftYonedaExtStep F P
           (Opposite.op (F.obj S)))
         ⟨S, (g, 𝟙 (F.obj S))⟩ =
-      ((yonedaExt F).map η_g).app
+      ((leftYonedaExt F).map η_g).app
         (Opposite.op (F.obj S))
         (Quot.mk _
           ⟨S, (ULift.up (𝟙 S),
@@ -946,16 +946,16 @@ theorem yonedaExtFunctor_map_preimage_id
       from by
         change Quot.mk _ _ = Quot.mk _ _
         congr 1
-        dsimp [yonedaExtSigmaMapNat, η_g]
+        dsimp [leftYonedaExtSigmaMapNat, η_g]
         simp only [P.map_id,
           types_id_apply]]
   -- Use natα to rewrite RHS. After step A,
   -- RHS = natα LHS. Rewrite to natα RHS.
   rw [natα]
   -- Now both sides involve
-  -- (yonedaExt G).map(η_g)(α(yUL S)(q₀)).
+  -- (leftYonedaExt G).map(η_g)(α(yUL S)(q₀)).
   -- LHS = Quot.mk ⟨S, g, Quot.lift(...)(αq).down⟩
-  -- RHS = (yonedaExt G).map(η_g)(αq)
+  -- RHS = (leftYonedaExt G).map(η_g)(αq)
   -- These agree by Quot.inductionOn on αq.
   set αq := (α.app (yonedaULift S)).app
     (Opposite.op (F.obj S))
@@ -970,32 +970,32 @@ theorem yonedaExtFunctor_map_preimage_id
     -- Related by quotient step h_w.
     -- Unfold the RHS directly.
     -- RHS = Quot.mk ⟨W, (P.map(h_w.op)(g), t)⟩
-    -- (after unfolding yonedaExt.map(η_g)).
+    -- (after unfolding leftYonedaExt.map(η_g)).
     -- LHS = Quot.mk ⟨S, (g, t ≫ G.map h_w)⟩
     -- These are related by step h_w:
     -- ⟨S, (g, t ≫ G.map h_w)⟩ ~
     -- ⟨W, (P.map(h_w.op)(g), t)⟩.
     conv_rhs =>
-      dsimp [yonedaExt, yonedaExtObj,
-        yonedaExtMap, yonedaExtSigmaMap, η_g]
+      dsimp [leftYonedaExt, leftYonedaExtObj,
+        leftYonedaExtMap, leftYonedaExtSigmaMap, η_g]
     apply Quot.sound
     exact ⟨h_w,
-      by dsimp [yonedaExtSigmaMapNat],
-      by dsimp [yonedaExtSigmaMapNat]⟩
+      by dsimp [leftYonedaExtSigmaMapNat],
+      by dsimp [leftYonedaExtSigmaMapNat]⟩
 
 /-- The map-preimage roundtrip for a single
 quotient representative `⟨S, g, t⟩`. -/
-theorem yonedaExtFunctor_map_preimage_triple
+theorem leftYonedaExtFunctor_map_preimage_triple
     {F G : C ⥤ C}
-    (α : yonedaExt F ⟶ yonedaExt G)
+    (α : leftYonedaExt F ⟶ leftYonedaExt G)
     (P : Cᵒᵖ ⥤ Type (max u v))
     (T : Cᵒᵖ)
     (S : C)
     (g : P.obj (Opposite.op S))
     (t : T.unop ⟶ F.obj S) :
     (NatTrans.app
-      (yonedaExtFunctor.map
-        (yonedaExtFunctorPreimage (C := C) α))
+      (leftYonedaExtFunctor.map
+        (leftYonedaExtFunctorPreimage (C := C) α))
       P).app T
       (Quot.mk _ ⟨S, g, t⟩) =
     (α.app P).app T
@@ -1003,26 +1003,26 @@ theorem yonedaExtFunctor_map_preimage_triple
   -- Both LHS and RHS are nat trans apps.
   -- Decompose and chain.
   let lhs := NatTrans.app
-    (yonedaExtFunctor.map
-      (yonedaExtFunctorPreimage (C := C) α)) P
+    (leftYonedaExtFunctor.map
+      (leftYonedaExtFunctorPreimage (C := C) α)) P
   let rhs := α.app P
   -- Decompose on both sides.
-  -- yonedaExtFunctor.obj F = yonedaExt F
+  -- leftYonedaExtFunctor.obj F = leftYonedaExt F
   -- definitionally.
   change lhs.app T (Quot.mk _ ⟨S, g, t⟩) =
     rhs.app T (Quot.mk _ ⟨S, g, t⟩)
   conv_lhs =>
-    rw [yonedaExtElement_decompose (C := C) P T S g t]
+    rw [leftYonedaExtElement_decompose (C := C) P T S g t]
   conv_rhs =>
-    rw [yonedaExtElement_decompose (C := C) P T S g t]
+    rw [leftYonedaExtElement_decompose (C := C) P T S g t]
   -- Both sides apply nat trans (lhs/rhs) to
   -- the SAME element: map(t.op)(q₀).
   -- Use congrArg to reduce to the id lemma.
-  have base := yonedaExtFunctor_map_preimage_id
+  have base := leftYonedaExtFunctor_map_preimage_id
     C α P S g
   -- base : lhs.app(op(F.obj S))(q₀) =
   --   rhs.app(op(F.obj S))(q₀)
-  -- Apply ((yonedaExt G).obj P).map(t.op).
+  -- Apply ((leftYonedaExt G).obj P).map(t.op).
   -- lhs.app T (F.map(t.op) q₀)
   -- = G.map(t.op) (lhs.app(op(F.obj S)) q₀)
   -- by naturality of lhs.
@@ -1037,64 +1037,64 @@ theorem yonedaExtFunctor_map_preimage_triple
     (Quot.mk _ ⟨S, g, 𝟙 (F.obj S)⟩)
   simp only [types_comp_apply,
     Opposite.op_unop] at nat_lhs nat_rhs
-  -- nat_lhs uses yonedaExtFunctor.obj F =
-  -- yonedaExt F (definitionally equal).
+  -- nat_lhs uses leftYonedaExtFunctor.obj F =
+  -- leftYonedaExt F (definitionally equal).
   exact nat_lhs.trans
     (congrArg _ base |>.trans nat_rhs.symm)
 
-/-- `yonedaExtFunctor.map(preimage α) = α`:
+/-- `leftYonedaExtFunctor.map(preimage α) = α`:
 the map-preimage roundtrip. -/
-theorem yonedaExtFunctor_map_preimage
+theorem leftYonedaExtFunctor_map_preimage
     {F G : C ⥤ C}
-    (α : yonedaExt F ⟶ yonedaExt G) :
-    yonedaExtFunctor.map
-      (yonedaExtFunctorPreimage (C := C) α) =
+    (α : leftYonedaExt F ⟶ leftYonedaExt G) :
+    leftYonedaExtFunctor.map
+      (leftYonedaExtFunctorPreimage (C := C) α) =
     α := by
   ext P T x
   induction x using Quot.inductionOn with
   | h x =>
     obtain ⟨S, g, t⟩ := x
-    exact yonedaExtFunctor_map_preimage_triple
+    exact leftYonedaExtFunctor_map_preimage_triple
       (C := C) α P T S g t
 
-/-- `yonedaExtFunctor` is fully faithful:
+/-- `leftYonedaExtFunctor` is fully faithful:
 natural transformations between endofunctors
 `F ⟶ G` biject with natural transformations
 between their Yoneda extensions
-`yonedaExt F ⟶ yonedaExt G`. -/
-def yonedaExtFunctorFullyFaithful :
+`leftYonedaExt F ⟶ leftYonedaExt G`. -/
+def leftYonedaExtFunctorFullyFaithful :
     Functor.FullyFaithful
-      (yonedaExtFunctor :
+      (leftYonedaExtFunctor :
         (C ⥤ C) ⥤
         ((Cᵒᵖ ⥤ Type (max u v)) ⥤
           (Cᵒᵖ ⥤ Type (max u v)))) where
   preimage {F G} α :=
-    yonedaExtFunctorPreimage (C := C) α
+    leftYonedaExtFunctorPreimage (C := C) α
   map_preimage {F G} α :=
-    @yonedaExtFunctor_map_preimage
+    @leftYonedaExtFunctor_map_preimage
       C _ _ _ α
   preimage_map {F G} σ := by
     ext X
-    -- preimage(yonedaExtFunctor.map σ).app X
+    -- preimage(leftYonedaExtFunctor.map σ).app X
     -- = yFF.preimage(wFF.preimage(
-    --   iso_X.inv ≫ (yonedaExt σ).app(yUL X)
+    --   iso_X.inv ≫ (leftYonedaExt σ).app(yUL X)
     --   ≫ iso_X.hom))
-    -- The iso conjugation with yonedaExt σ
+    -- The iso conjugation with leftYonedaExt σ
     -- gives yoneda.map(σ.app X) ⋙ ulift.
     -- Reflecting through wFF gives
     -- yoneda.map(σ.app X), then through yFF
     -- gives σ.app X.
-    dsimp [yonedaExtFunctorPreimage,
-      yonedaExtPreimageApp,
-      yonedaExtPreimageULift,
+    dsimp [leftYonedaExtFunctorPreimage,
+      leftYonedaExtPreimageApp,
+      leftYonedaExtPreimageULift,
       whiskerRightULiftFullyFaithful,
-      yonedaExtRepresentableULiftIso,
-      yonedaExtCounitULift,
-      yonedaExtUnitULift,
-      yonedaExtFunctor,
-      yonedaExt, yonedaExtObj,
-      yonedaExtSigmaAlpha,
-      yonedaExtSigmaMapNat,
+      leftYonedaExtRepresentableULiftIso,
+      leftYonedaExtCounitULift,
+      leftYonedaExtUnitULift,
+      leftYonedaExtFunctor,
+      leftYonedaExt, leftYonedaExtObj,
+      leftYonedaExtSigmaAlpha,
+      leftYonedaExtSigmaMapNat,
       Yoneda.fullyFaithful]
     change (𝟙 (F.obj X) ≫ σ.app X) ≫
       G.map (𝟙 X) = σ.app X

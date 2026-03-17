@@ -638,11 +638,11 @@ theorem PshTypeExpr.leaf_relInterp
 presheaf type expression `PshTypeExpr (Type 0)`.
 The `.app F T` case lifts `F : Type ⥤ Type` to an
 endofunctor on `(Type 0)ᵒᵖ ⥤ Type 1` presheaves
-via the Yoneda extension `yonedaExt F`. -/
+via the Yoneda extension `leftYonedaExt F`. -/
 def TypeExpr.toPshTypeExpr :
     TypeExpr → PshTypeExpr (Type 0)
   | .var => .var
-  | .app F T => .app (yonedaExt F) T.toPshTypeExpr
+  | .app F T => .app (leftYonedaExt F) T.toPshTypeExpr
   | .arrow T₁ T₂ =>
     .arrow T₁.toPshTypeExpr T₂.toPshTypeExpr
 
@@ -656,7 +656,7 @@ theorem TypeExpr.toPshTypeExpr_var :
 theorem TypeExpr.toPshTypeExpr_app
     (F : Type ⥤ Type) (T : TypeExpr) :
     (TypeExpr.app F T).toPshTypeExpr =
-      PshTypeExpr.app (yonedaExt F)
+      PshTypeExpr.app (leftYonedaExt F)
         T.toPshTypeExpr :=
   rfl
 
@@ -682,9 +682,9 @@ def TypeExpr.toPshTypeExpr_interp_iso
   match T with
   | .var => Iso.refl _
   | .app F T' =>
-    (yonedaExt F).mapIso
+    (leftYonedaExt F).mapIso
       (T'.toPshTypeExpr_interp_iso A B) ≪≫
-    yonedaExtRepresentableULiftIso F
+    leftYonedaExtRepresentableULiftIso F
       (T'.interp A B)
   | .arrow T₁ T₂ =>
     { hom := pshIhomProfMap
@@ -975,20 +975,20 @@ def yonedaULiftRelPshIso
       NatTrans.id_app, types_id_apply]
 
 /-- The Barr lift of `yonedaULiftRelOver R` via
-`yonedaExt F` faithfully reflects `functorRelLift`
+`leftYonedaExt F` faithfully reflects `functorRelLift`
 at constant sections. -/
 theorem functorRelLift_yonedaULift_bridge
     (F : Type ⥤ Type) {A B : Type}
     (R : A → B → Prop)
     (a₀ : F.obj A) (a₁ : F.obj B) :
     functorRelLift F R a₀ a₁ ↔
-      (pshBarrLift (yonedaExt F)
+      (pshBarrLift (leftYonedaExt F)
         (yonedaULiftRelOver R)).sectionsRelated
         (sectionMap
-          (yonedaExtRepresentableULiftIso F A).inv
+          (leftYonedaExtRepresentableULiftIso F A).inv
           (yonedaULiftSection a₀))
         (sectionMap
-          (yonedaExtRepresentableULiftIso F B).inv
+          (leftYonedaExtRepresentableULiftIso F B).inv
           (yonedaULiftSection a₁)) := by
   constructor
   · rintro ⟨w, hw₁, hw₂⟩
@@ -1026,14 +1026,14 @@ theorem functorRelLift_yonedaULift_bridge
       have comm₁ := spec₁
       dsimp [pshBarrLift, pshProdLift,
         sectionMap, yonedaULiftSection,
-        yonedaExtRepresentableULiftIso] at comm₁
+        leftYonedaExtRepresentableULiftIso] at comm₁
       have comm₁' := congr_arg
         (fun x =>
-          ((yonedaExtCounitULift F A).app
+          ((leftYonedaExtCounitULift F A).app
             (Opposite.op PUnit) x).down
             PUnit.unit) comm₁
-      simp only [yonedaExtCounitULift,
-        yonedaExtUnitULift,
+      simp only [leftYonedaExtCounitULift,
+        leftYonedaExtUnitULift,
         CategoryTheory.Functor.map_id,
         Category.comp_id] at comm₁'
       exact comm₁'
@@ -1045,14 +1045,14 @@ theorem functorRelLift_yonedaULift_bridge
       have comm₂ := spec₂
       dsimp [pshBarrLift, pshProdLift,
         sectionMap, yonedaULiftSection,
-        yonedaExtRepresentableULiftIso] at comm₂
+        leftYonedaExtRepresentableULiftIso] at comm₂
       have comm₂' := congr_arg
         (fun x =>
-          ((yonedaExtCounitULift F B).app
+          ((leftYonedaExtCounitULift F B).app
             (Opposite.op PUnit) x).down
             PUnit.unit) comm₂
-      simp only [yonedaExtCounitULift,
-        yonedaExtUnitULift,
+      simp only [leftYonedaExtCounitULift,
+        leftYonedaExtUnitULift,
         CategoryTheory.Functor.map_id,
         Category.comp_id] at comm₂'
       exact comm₂'
@@ -1072,7 +1072,7 @@ def TypeExpr.fullRelInterpPshRep
   match T with
   | .var => yonedaULiftRelOver R
   | .app F T' =>
-    pshBarrLift (yonedaExt F)
+    pshBarrLift (leftYonedaExt F)
       (T'.fullRelInterpPshRep R)
   | .arrow T₁ T₂ =>
     pshArrowRelOver
@@ -1118,11 +1118,11 @@ theorem TypeExpr.fullRelInterp_pshRep_eq
             ).hom.app
             (Opposite.op E) r).2 =
           p.val.2 := congr_arg Prod.snd hr
-        change (pshBarrLift (yonedaExt F)
+        change (pshBarrLift (leftYonedaExt F)
             (T'.fullRelInterpPshRep R)
             ).hom.app c
             (Quot.mk _ ⟨E, r, h⟩) =
-          (pshBarrLift (yonedaExt F)
+          (pshBarrLift (leftYonedaExt F)
             (Over.mk (Subfunctor.range
               (T'.fullRelInterpPshRep R
                 ).hom).ι)
@@ -1130,21 +1130,21 @@ theorem TypeExpr.fullRelInterp_pshRep_eq
             (Quot.mk _ ⟨E, p, h⟩)
         simp only [pshBarrLift, Over.mk_hom,
           pshProdLift]
-        change ((yonedaExt F).map
+        change ((leftYonedaExt F).map
             ((T'.fullRelInterpPshRep R
               ).hom ≫ pshProdFst _ _)
               |>.app c (Quot.mk _ ⟨E, r, h⟩),
-          (yonedaExt F).map
+          (leftYonedaExt F).map
             ((T'.fullRelInterpPshRep R
               ).hom ≫ pshProdSnd _ _)
               |>.app c (Quot.mk _ ⟨E, r, h⟩))
           =
-          ((yonedaExt F).map
+          ((leftYonedaExt F).map
             ((Subfunctor.range
               (T'.fullRelInterpPshRep R
                 ).hom).ι ≫ pshProdFst _ _)
               |>.app c (Quot.mk _ ⟨E, p, h⟩),
-          (yonedaExt F).map
+          (leftYonedaExt F).map
             ((Subfunctor.range
               (T'.fullRelInterpPshRep R
                 ).hom).ι ≫ pshProdSnd _ _)
@@ -1152,7 +1152,7 @@ theorem TypeExpr.fullRelInterp_pshRep_eq
         apply Prod.ext <;> {
           apply congr_arg (Quot.mk _)
           simp only [
-            yonedaExtSigmaMapNat,
+            leftYonedaExtSigmaMapNat,
             NatTrans.comp_app,
             types_comp_apply]
           have h₁ := congr_arg Prod.fst hr
@@ -1164,7 +1164,7 @@ theorem TypeExpr.fullRelInterp_pshRep_eq
           | exact congr_arg (·, h) h₂
         })
       (pshProdOverToRel_pshBarrLift_le
-        (yonedaExt F)
+        (leftYonedaExt F)
         (T'.fullRelInterpPshRep R))
   | arrow T₁ T₂ ih₁ ih₂ =>
     simp only [TypeExpr.toPshTypeExpr,
@@ -1281,19 +1281,19 @@ theorem TypeExpr.relInterp_bridges
           set g : S → T'.interp A A :=
             fun s => s.val.1
           change Quot.mk _
-            (yonedaExtSigmaMapNat F
+            (leftYonedaExtSigmaMapNat F
               ((T'.fullRelInterpPshRep R
                 ).hom ≫
                 pshProdFst _ _) d
               ⟨S, p₀, fun t =>
                 (choice (hne t)).val⟩) =
             Quot.mk _
-              (yonedaExtSigmaMapNat F
+              (leftYonedaExtSigmaMapNat F
                 (T'.toPshTypeExpr_interp_iso
                   A A).inv d
                 ⟨T'.interp A A,
                   ⟨𝟙 _⟩, f₀⟩)
-          dsimp only [yonedaExtSigmaMapNat]
+          dsimp only [leftYonedaExtSigmaMapNat]
           have psh_cond :
               P₁.map (Quiver.Hom.op g)
               ((T'.toPshTypeExpr_interp_iso
@@ -1323,19 +1323,19 @@ theorem TypeExpr.relInterp_bridges
           set g₂ : S → T'.interp B B :=
             fun s => s.val.2
           change Quot.mk _
-            (yonedaExtSigmaMapNat F
+            (leftYonedaExtSigmaMapNat F
               ((T'.fullRelInterpPshRep R
                 ).hom ≫
                 pshProdSnd _ _) d
               ⟨S, p₀, fun t =>
                 (choice (hne t)).val⟩) =
             Quot.mk _
-              (yonedaExtSigmaMapNat F
+              (leftYonedaExtSigmaMapNat F
                 (T'.toPshTypeExpr_interp_iso
                   B B).inv d
                 ⟨T'.interp B B,
                   ⟨𝟙 _⟩, f₁⟩)
-          dsimp only [yonedaExtSigmaMapNat]
+          dsimp only [leftYonedaExtSigmaMapNat]
           have psh_cond₂ :
               P₂.map (Quiver.Hom.op g₂)
               ((T'.toPshTypeExpr_interp_iso
@@ -1427,7 +1427,7 @@ theorem TypeExpr.relInterp_bridges
           have comm₁ := hw₁
           dsimp [pshBarrLift, pshProdLift,
             TypeExpr.fullRelInterpPshRep,
-            yonedaExtRepresentableULiftIso]
+            leftYonedaExtRepresentableULiftIso]
             at comm₁
           set iso :=
             (TypeExpr.app F T'
@@ -1443,10 +1443,10 @@ theorem TypeExpr.relInterp_bridges
             TypeExpr.toPshTypeExpr_interp_iso,
             Iso.trans,
             CategoryTheory.Functor.mapIso,
-            yonedaExtRepresentableULiftIso,
-            yonedaExt, yonedaExtMap,
-            yonedaExtSigmaMapNat,
-            yonedaExtCounitULift,
+            leftYonedaExtRepresentableULiftIso,
+            leftYonedaExt, leftYonedaExtMap,
+            leftYonedaExtSigmaMapNat,
+            leftYonedaExtCounitULift,
             Quot.map] at comm₁'
           exact comm₁'
         · change (F.map gs ≫ F.map
@@ -1458,7 +1458,7 @@ theorem TypeExpr.relInterp_bridges
           have comm₂ := hw₂
           dsimp [pshBarrLift, pshProdLift,
             TypeExpr.fullRelInterpPshRep,
-            yonedaExtRepresentableULiftIso]
+            leftYonedaExtRepresentableULiftIso]
             at comm₂
           set iso₂ :=
             (TypeExpr.app F T'
@@ -1474,10 +1474,10 @@ theorem TypeExpr.relInterp_bridges
             TypeExpr.toPshTypeExpr_interp_iso,
             Iso.trans,
             CategoryTheory.Functor.mapIso,
-            yonedaExtRepresentableULiftIso,
-            yonedaExt, yonedaExtMap,
-            yonedaExtSigmaMapNat,
-            yonedaExtCounitULift,
+            leftYonedaExtRepresentableULiftIso,
+            leftYonedaExt, leftYonedaExtMap,
+            leftYonedaExtSigmaMapNat,
+            leftYonedaExtCounitULift,
             Quot.map] at comm₂'
           exact comm₂',
     fun a₀ a₁ => by
@@ -1502,16 +1502,16 @@ theorem TypeExpr.relInterp_bridges
             (yonedaULift A) (yonedaULift A)
           set g : S → T'.interp A A :=
             fun s => s.val.1
-          change Quot.mk _ (yonedaExtSigmaMapNat
+          change Quot.mk _ (leftYonedaExtSigmaMapNat
             F ((T'.fullRelInterpPshRep R).hom ≫
               pshProdFst _ _) c
             ⟨S, p₀, fun _ => w⟩) =
-            Quot.mk _ (yonedaExtSigmaMapNat
+            Quot.mk _ (leftYonedaExtSigmaMapNat
               F (T'.toPshTypeExpr_interp_iso A A
                 ).inv c
               ⟨T'.interp A A, ⟨𝟙 _⟩,
                 fun _ => a₀⟩)
-          dsimp only [yonedaExtSigmaMapNat]
+          dsimp only [leftYonedaExtSigmaMapNat]
           have psh_cond : P₁.map (Quiver.Hom.op g)
               ((T'.toPshTypeExpr_interp_iso A A
                 ).inv.app
@@ -1536,16 +1536,16 @@ theorem TypeExpr.relInterp_bridges
             (yonedaULift B) (yonedaULift B)
           set g₂ : S → T'.interp B B :=
             fun s => s.val.2
-          change Quot.mk _ (yonedaExtSigmaMapNat
+          change Quot.mk _ (leftYonedaExtSigmaMapNat
             F ((T'.fullRelInterpPshRep R).hom ≫
               pshProdSnd _ _) c
             ⟨S, p₀, fun _ => w⟩) =
-            Quot.mk _ (yonedaExtSigmaMapNat
+            Quot.mk _ (leftYonedaExtSigmaMapNat
               F (T'.toPshTypeExpr_interp_iso B B
                 ).inv c
               ⟨T'.interp B B, ⟨𝟙 _⟩,
                 fun _ => a₁⟩)
-          dsimp only [yonedaExtSigmaMapNat]
+          dsimp only [leftYonedaExtSigmaMapNat]
           have psh_cond₂ :
               P₂.map (Quiver.Hom.op g₂)
               ((T'.toPshTypeExpr_interp_iso B B
@@ -1630,7 +1630,7 @@ theorem TypeExpr.relInterp_bridges
             TypeExpr.toInterpSection,
             sectionMap, yonedaULiftSection,
             TypeExpr.fullRelInterpPshRep,
-            yonedaExtRepresentableULiftIso
+            leftYonedaExtRepresentableULiftIso
             ] at comm₁
           set iso := (TypeExpr.app F T'
             ).toPshTypeExpr_interp_iso A A
@@ -1646,10 +1646,10 @@ theorem TypeExpr.relInterp_bridges
             TypeExpr.toPshTypeExpr_interp_iso,
             Iso.trans,
             CategoryTheory.Functor.mapIso,
-            yonedaExtRepresentableULiftIso,
-            yonedaExt, yonedaExtMap,
-            yonedaExtSigmaMapNat,
-            yonedaExtCounitULift,
+            leftYonedaExtRepresentableULiftIso,
+            leftYonedaExt, leftYonedaExtMap,
+            leftYonedaExtSigmaMapNat,
+            leftYonedaExtCounitULift,
             Quot.map] at comm₁'
           exact comm₁'
         · change (F.map g ≫ F.map
@@ -1664,7 +1664,7 @@ theorem TypeExpr.relInterp_bridges
             TypeExpr.toInterpSection,
             sectionMap, yonedaULiftSection,
             TypeExpr.fullRelInterpPshRep,
-            yonedaExtRepresentableULiftIso
+            leftYonedaExtRepresentableULiftIso
             ] at comm₂
           set iso₂ := (TypeExpr.app F T'
             ).toPshTypeExpr_interp_iso B B
@@ -1680,10 +1680,10 @@ theorem TypeExpr.relInterp_bridges
             TypeExpr.toPshTypeExpr_interp_iso,
             Iso.trans,
             CategoryTheory.Functor.mapIso,
-            yonedaExtRepresentableULiftIso,
-            yonedaExt, yonedaExtMap,
-            yonedaExtSigmaMapNat,
-            yonedaExtCounitULift,
+            leftYonedaExtRepresentableULiftIso,
+            leftYonedaExt, leftYonedaExtMap,
+            leftYonedaExtSigmaMapNat,
+            leftYonedaExtCounitULift,
             Quot.map] at comm₂'
           exact comm₂'⟩
   | arrow T₁ T₂ ih₁ ih₂ =>
