@@ -810,6 +810,40 @@ contingent on additional mathlib infrastructure
   typeclass chain is registered, unlocking
   mathlib's `unitIsoSelf`, `ihom.adjunction`,
   and global-element correspondence.
+  Explicit instantiations:
+  `pshRelEdgeInternalHom`,
+  `pshRelEdgeInternalHomFunctor`,
+  `pshRelEdgeIhomAdjunction`,
+  `pshRelEdgeUnitIsoSelf`,
+  `pshRelEdgeGlobalElementEquiv`,
+  `pshRelEdgeMathCurry`,
+  `pshRelEdgeMathUncurry`,
+  `pshRelEdgeInternalize`.
+
+- [~] **Yoneda extension full faithfulness.**
+  `whiskerRightULiftFullyFaithful` (post-
+  composition with uliftFunctor is fully
+  faithful) and `yonedaLargeFullyFaithful`
+  (`yonedaLarge` is fully faithful) proven.
+  `yonedaExtRepresentableNatIso`:
+  natural iso `F ⋙ yonedaLarge ≅
+  yonedaLarge ⋙ yonedaExt F` (proven).
+  `yonedaExtPreimageApp` extracts
+  `F.obj X ⟶ G.obj X` from
+  `α : yonedaExt F ⟶ yonedaExt G` by
+  restricting to representables via the
+  representable iso and reflecting through
+  `yoneda` + `uliftFunctor` full faithfulness
+  (proven).
+  `yonedaExtPreimageULift_naturality` proves
+  naturality at the ulift-yoneda level.
+  `yonedaExtPreimageApp_naturality` lifts to
+  `C`-morphism level via `preimage_comp` +
+  `map_injective`.
+  `yonedaExtFunctorPreimage` assembles into
+  `F ⟶ G`; fully proven, no sorries.
+  Roundtrip proofs remain for the complete
+  `FullyFaithful` instance.
 
 ### Structural results
 
