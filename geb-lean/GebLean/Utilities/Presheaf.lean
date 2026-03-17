@@ -1961,6 +1961,85 @@ def rightYonedaExt (F : C ⥤ D) :
     rfl
 
 
+/-- The action of a natural transformation
+`α : F ⟶ G` on a right Yoneda extension
+family: precomposes each index morphism
+`t : G.obj S ⟶ T.unop` with `α.app S` to
+get `F.obj S ⟶ T.unop`, then evaluates the
+original family. -/
+def rightYonedaExtFamilyAlpha
+    {F G : C ⥤ D} (α : F ⟶ G)
+    (P : Cᵒᵖ ⥤ Type (max u v))
+    (T : Dᵒᵖ)
+    (x : RightYonedaExtFamily F P T) :
+    RightYonedaExtFamily G P T where
+  family S t := x.family S (α.app S ≫ t)
+  naturality {S₁ S₂} g t := by
+    rw [x.naturality g (α.app S₁ ≫ t)]
+    congr 1
+    simp only [← Category.assoc,
+      α.naturality]
+
+/-- The action of `α : F ⟶ G` on families
+preserves transport along `k`: precomposing
+with `α` commutes with transport. -/
+theorem rightYonedaExtFamilyAlpha_map
+    {F G : C ⥤ D} (α : F ⟶ G)
+    (P : Cᵒᵖ ⥤ Type (max u v))
+    {T₁ T₂ : Dᵒᵖ} (k : T₁ ⟶ T₂)
+    (x : RightYonedaExtFamily F P T₁) :
+    rightYonedaExtFamilyAlpha α P T₂
+      (rightYonedaExtFamilyMap F P k x) =
+    rightYonedaExtFamilyMap G P k
+      (rightYonedaExtFamilyAlpha α P T₁ x) :=
+  by
+  apply RightYonedaExtFamily.ext'
+  intro S t
+  dsimp [rightYonedaExtFamilyAlpha,
+    rightYonedaExtFamilyMap]
+  congr 1
+  exact Category.assoc
+    (α.app S) t k.unop
+
+/-- The right Yoneda extension functor:
+given a functor `F : C ⥤ D`, produces a
+functor between presheaf categories via
+right Kan extension. On objects, this is
+`rightYonedaExt`. On morphisms, a natural
+transformation `α : F ⟶ G` induces a map
+by precomposing each family's index
+morphism with `α`. -/
+def rightYonedaExtFunctor :
+    (C ⥤ D) ⥤
+      ((Cᵒᵖ ⥤ Type (max u v)) ⥤
+        (Dᵒᵖ ⥤ Type (max u v))) where
+  obj := rightYonedaExt
+  map {F G} α :=
+    { app := fun P =>
+        { app := fun T =>
+            rightYonedaExtFamilyAlpha α P T
+          naturality := fun T₁ T₂ k => by
+            funext x
+            exact rightYonedaExtFamilyAlpha_map
+              α P k x }
+      naturality := fun P Q β => by
+        ext T x
+        apply RightYonedaExtFamily.ext'
+        intro S t
+        rfl }
+  map_id F := by
+    ext P T x
+    apply RightYonedaExtFamily.ext'
+    intro S t
+    dsimp [rightYonedaExtFamilyAlpha]
+    simp only [Category.id_comp]
+  map_comp {F G H} α β := by
+    ext P T x
+    apply RightYonedaExtFamily.ext'
+    intro S t
+    dsimp [rightYonedaExtFamilyAlpha]
+    simp only [Category.assoc]
+
 /-- The counit of the right Yoneda extension at
 a fixed presheaf `P`:
 `F.op ⋙ (rightYonedaExt F).obj P ⟶ P`.
