@@ -820,39 +820,35 @@ contingent on additional mathlib infrastructure
   `pshRelEdgeMathUncurry`,
   `pshRelEdgeInternalize`.
 
-- [~] **Yoneda extension full faithfulness.**
-  `whiskerRightULiftFullyFaithful` (post-
-  composition with uliftFunctor is fully
-  faithful) and `yonedaLargeFullyFaithful`
-  (`yonedaLarge` is fully faithful) proven.
-  `yonedaExtRepresentableNatIso`:
-  natural iso `F ⋙ yonedaLarge ≅
-  yonedaLarge ⋙ yonedaExt F` (proven).
-  `yonedaExtPreimageApp` extracts
-  `F.obj X ⟶ G.obj X` from
-  `α : yonedaExt F ⟶ yonedaExt G` by
-  restricting to representables via the
-  representable iso and reflecting through
-  `yoneda` + `uliftFunctor` full faithfulness
-  (proven).
-  `yonedaExtPreimageULift_naturality` proves
-  naturality at the ulift-yoneda level.
-  `yonedaExtPreimageApp_naturality` lifts to
-  `C`-morphism level via `preimage_comp` +
-  `map_injective`.
-  `yonedaExtFunctorPreimage` assembles into
-  `F ⟶ G`; fully proven, no sorries.
-  `yonedaExtFunctorFullyFaithful`:
-  the `FullyFaithful` instance, fully
-  proven. All three fields complete.
-  Sub-lemmas:
-  `yonedaExtFunctor_map_preimage_id`
-  (base case via η_g and α.naturality),
-  `yonedaExtFunctor_map_preimage_triple`
-  (per-element chain via decompose +
-  naturality + base case),
-  `yonedaExtFunctor_map_preimage`
-  (pointwise via Quot.inductionOn).
+- [x] **Yoneda extension full faithfulness.**
+  Both left and right Yoneda extension
+  functors are fully faithful as functors
+  `(C ⥤ C) ⥤ (PSh(C) ⥤ PSh(C))`.
+  **Left extension** (`leftYonedaExtFunctor`):
+  proven via the representable iso
+  `leftYonedaExtRepresentableULiftIso`,
+  which identifies `leftYonedaExt(F)(y(X))`
+  with `y(F(X))` using the quotient's
+  canonical element. Preimage extracted at
+  representables, naturality via η_g and
+  α.naturality, map-preimage roundtrip via
+  `Quot.inductionOn`.
+  **Right extension** (`rightYonedaExtFunctor`):
+  proven via the Hom-presheaf technique.
+  The representable-iso approach fails
+  because `rightYonedaExt(F)(y(X))` does
+  NOT simplify to `y(F(X))` without F
+  being fully faithful. Instead, the
+  preimage is extracted using the
+  tautological canonical family at
+  `P = F.op ⋙ yonedaULift(G.obj X)`.
+  Naturality via P-naturality of α
+  (at a postcomposition morphism),
+  stage-naturality, and G-family
+  naturality. Map-preimage roundtrip via
+  P-naturality at β (a presheaf morphism
+  encoding x and t) and stage-naturality
+  of α.app P.
 
 ### Structural results
 

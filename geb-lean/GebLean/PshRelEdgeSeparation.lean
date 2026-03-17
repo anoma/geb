@@ -1103,4 +1103,297 @@ def leftYonedaExtFunctorFullyFaithful :
 
 end YonedaExtFullFaithfulness
 
+section RightYonedaExtFullFaithfulness
+
+variable (C : Type u) [Category.{v} C]
+
+/-- The tautological family for the right Yoneda
+extension at the Hom-presheaf
+`F.op ⋙ yonedaULift (G.obj X)` and stage
+`op (G.obj X)`. The family sends
+`(S, t : F.obj S ⟶ G.obj X)` to `ULift.up t`.
+-/
+def rightYonedaExtCanonicalFamily
+    {F G : C ⥤ C} (X : C) :
+    RightYonedaExtFamily F
+      (F.op ⋙ yonedaULift (G.obj X))
+      (Opposite.op (G.obj X)) where
+  family S (t : F.obj S ⟶ G.obj X) :=
+    ULift.up t
+  naturality {S₁ S₂} (g : S₂ ⟶ S₁)
+      (t : F.obj S₁ ⟶ G.obj X) := by
+    rfl
+
+/-- The preimage morphism component: given
+`α : rightYonedaExt F ⟶ rightYonedaExt G`,
+extract `σ.app X : F.obj X ⟶ G.obj X` by
+evaluating `α` at the Hom-presheaf
+`F.op ⋙ yonedaULift (G.obj X)` on the
+canonical family, then reading off the
+`(X, 𝟙)` component. -/
+def rightYonedaExtFunctorPreimageApp
+    {F G : C ⥤ C}
+    (α : rightYonedaExt F ⟶ rightYonedaExt G)
+    (X : C) : F.obj X ⟶ G.obj X :=
+  ((α.app (F.op ⋙ yonedaULift (G.obj X))).app
+    (Opposite.op (G.obj X))
+    (rightYonedaExtCanonicalFamily C X)).family
+    X (𝟙 (G.obj X)) |>.down
+
+/-- The preimage extraction applied to
+`rightYonedaExtFunctor.map σ` recovers
+`σ.app X`. -/
+theorem rightYonedaExtFunctor_preimage_app
+    {F G : C ⥤ C} (σ : F ⟶ G) (X : C) :
+    rightYonedaExtFunctorPreimageApp C
+      (rightYonedaExtFunctor.map σ) X =
+    σ.app X := by
+  dsimp [rightYonedaExtFunctorPreimageApp,
+    rightYonedaExtFunctor,
+    rightYonedaExtFamilyAlpha,
+    rightYonedaExtCanonicalFamily]
+  simp
+
+/-- Naturality of the preimage: for `f : X ⟶ Y`,
+`F.map f ≫ σ.app Y = σ.app X ≫ G.map f`.
+Proved by combining:
+(1) α's naturality in the presheaf argument
+(at a postcomposition morphism P_X ⟶ P_Y),
+(2) stage naturality of α.app(P_Y), and
+(3) G-family naturality of the output at Y.
+-/
+theorem rightYonedaExtFunctorPreimageApp_nat
+    {F G : C ⥤ C}
+    (α : rightYonedaExt F ⟶ rightYonedaExt G)
+    {X Y : C} (f : X ⟶ Y) :
+    F.map f ≫
+      rightYonedaExtFunctorPreimageApp C α Y =
+    rightYonedaExtFunctorPreimageApp C α X ≫
+      G.map f := by
+  -- Step 1: Set up notation.
+  set P_X := F.op ⋙ yonedaULift (C := C)
+    (G.obj X)
+  set P_Y := F.op ⋙ yonedaULift (C := C)
+    (G.obj Y)
+  set y_X := (α.app P_X).app
+    (Opposite.op (G.obj X))
+    (rightYonedaExtCanonicalFamily C X)
+  set y_Y := (α.app P_Y).app
+    (Opposite.op (G.obj Y))
+    (rightYonedaExtCanonicalFamily C Y)
+  -- The goal reduces to showing two morphisms
+  -- are equal: use intermediate
+  -- y_Y.family X (G.map f).
+  -- Step 2: Define γ : P_X ⟶ P_Y
+  -- (postcomposition with G.map f).
+  let γ : P_X ⟶ P_Y :=
+    { app := fun c (x : P_X.obj c) =>
+        (show P_Y.obj c from
+          ULift.up (x.down ≫ G.map f))
+      naturality := fun {c d} k => by
+        funext ⟨h⟩
+        change ULift.up
+          ((P_X.map k (ULift.up h)).down ≫
+            G.map f) =
+          P_Y.map k (ULift.up (h ≫ G.map f))
+        change ULift.up _ = ULift.up _
+        congr 1
+        exact Category.assoc _ _ _ }
+  -- Step 3: P-naturality of α at γ.
+  have hα := congr_fun (congr_app
+    (α.naturality γ)
+    (Opposite.op (G.obj X)))
+    (rightYonedaExtCanonicalFamily C X)
+  simp only [NatTrans.comp_app,
+    types_comp_apply] at hα
+  -- Step 4: Stage-naturality of α.app P_Y.
+  have hstage := congr_fun
+    ((α.app P_Y).naturality (G.map f).op)
+    (rightYonedaExtCanonicalFamily C Y)
+  simp only [types_comp_apply] at hstage
+  -- Step 5: The two F-inputs coincide.
+  have heq_z :
+      ((rightYonedaExt F).obj P_Y).map
+        (G.map f).op
+        (rightYonedaExtCanonicalFamily C Y) =
+      ((rightYonedaExt F).map γ).app
+        (Opposite.op (G.obj X))
+        (rightYonedaExtCanonicalFamily
+          C X) := by
+    apply RightYonedaExtFamily.ext'
+    intro S t
+    dsimp [rightYonedaExt, rightYonedaExtObj,
+      rightYonedaExtFamilyMap,
+      rightYonedaExtMap,
+      rightYonedaExtFamilyMapNat,
+      rightYonedaExtCanonicalFamily]
+  rw [heq_z] at hstage
+  rw [hα] at hstage
+  -- hstage : γ-transport(y_X) =
+  --   stage-transport(y_Y)
+  -- Step 6: Extract .family X (𝟙).down.
+  have comm :
+      ((((rightYonedaExt G).map γ).app
+        (Opposite.op (G.obj X)) y_X).family
+        X (𝟙 (G.obj X))).down =
+      ((((rightYonedaExt G).obj P_Y).map
+        (G.map f).op y_Y).family
+        X (𝟙 (G.obj X))).down :=
+    congrArg
+      (fun z => (z.family X
+        (𝟙 (G.obj X))).down)
+      hstage
+  -- Step 7: Simplify comm to explicit form.
+  dsimp [rightYonedaExt, rightYonedaExtObj,
+    rightYonedaExtFamilyMap,
+    rightYonedaExtMap,
+    rightYonedaExtFamilyMapNat] at comm
+  simp only [Category.id_comp] at comm
+  -- comm :
+  -- (y_X.family X 𝟙).down ≫ G.map f
+  --   = (y_Y.family X (G.map f)).down
+  -- Step 8: G-family naturality of y_Y.
+  have nat_y_Y :=
+    congrArg ULift.down
+      (y_Y.naturality f (𝟙 (G.obj Y)))
+  simp only [Category.comp_id] at nat_y_Y
+  dsimp [yonedaULift] at nat_y_Y
+  -- nat_y_Y :
+  -- F.map f ≫ (y_Y.family Y 𝟙).down
+  --   = (y_Y.family X (G.map f)).down
+  -- Step 9: Combine.
+  change F.map f ≫
+    (y_Y.family Y (𝟙 (G.obj Y))).down =
+    (y_X.family X (𝟙 (G.obj X))).down ≫
+      G.map f
+  exact nat_y_Y.trans comm.symm
+
+/-- The preimage as a natural transformation:
+given `α : rightYonedaExt F ⟶ rightYonedaExt G`,
+produce `F ⟶ G`. -/
+def rightYonedaExtFunctorPreimage
+    {F G : C ⥤ C}
+    (α : rightYonedaExt F ⟶ rightYonedaExt G) :
+    F ⟶ G where
+  app X :=
+    rightYonedaExtFunctorPreimageApp C α X
+  naturality _ _ f :=
+    rightYonedaExtFunctorPreimageApp_nat C α f
+
+/-- `preimage(rightYonedaExtFunctor.map σ) = σ`:
+the preimage-map roundtrip. -/
+theorem rightYonedaExtFunctor_preimage_map
+    {F G : C ⥤ C} (σ : F ⟶ G) :
+    rightYonedaExtFunctorPreimage C
+      (rightYonedaExtFunctor.map σ) = σ := by
+  ext X
+  exact rightYonedaExtFunctor_preimage_app
+    C σ X
+
+/-- `rightYonedaExtFunctor.map(preimage α) = α`:
+the map-preimage roundtrip. For each P, T, x,
+S, t, uses α's P-naturality and stage-naturality
+to reduce to the canonical family. -/
+theorem rightYonedaExtFunctor_map_preimage
+    {F G : C ⥤ C}
+    (α : rightYonedaExt F ⟶ rightYonedaExt G) :
+    rightYonedaExtFunctor.map
+      (rightYonedaExtFunctorPreimage C α) =
+    α := by
+  ext P T x
+  apply RightYonedaExtFamily.ext'
+  intro S t
+  -- Goal: x.family S (σ.app S ≫ t) =
+  --   (α.app P).app T x .family S t
+  set σ := rightYonedaExtFunctorPreimage C α
+  set P_S := F.op ⋙ yonedaULift (C := C)
+    (G.obj S)
+  -- β : P_S ⟶ P sends
+  -- ULift.up(h : F.obj S' ⟶ G.obj S) to
+  -- x.family S' (h ≫ t).
+  let β : P_S ⟶ P :=
+    { app := fun c (z : P_S.obj c) =>
+        x.family c.unop (z.down ≫ t)
+      naturality := fun {c d} k => by
+        funext ⟨h⟩
+        dsimp [yonedaULift]
+        exact ((congrArg (x.family d.unop)
+            (Category.assoc _ _ _)).trans
+          (x.naturality k.unop
+            (h ≫ t)).symm) }
+  -- P-naturality of α at β, evaluated at
+  -- op(G.obj S) on the canonical family.
+  have hα := congr_fun (congr_app
+    (α.naturality β)
+    (Opposite.op (G.obj S)))
+    (rightYonedaExtCanonicalFamily C S)
+  simp only [NatTrans.comp_app,
+    types_comp_apply] at hα
+  -- Stage-naturality of α.app P at t.op,
+  -- applied to x.
+  have hstage := congr_fun
+    ((α.app P).naturality t.op) x
+  simp only [types_comp_apply] at hstage
+  -- hstage :
+  -- (α P)(op GS)(F-transport(t.op)(x))
+  --   = G-transport(t.op)((α P)(T)(x))
+  -- The F-transport of x from T to
+  -- op(G.obj S) equals the β-transport of
+  -- the canonical family.
+  have heq_x :
+      ((rightYonedaExt F).obj P).map t.op x =
+      ((rightYonedaExt F).map β).app
+        (Opposite.op (G.obj S))
+        (rightYonedaExtCanonicalFamily
+          C S) := by
+    apply RightYonedaExtFamily.ext'
+    intro S' t'
+    dsimp [rightYonedaExt, rightYonedaExtObj,
+      rightYonedaExtFamilyMap,
+      rightYonedaExtMap,
+      rightYonedaExtFamilyMapNat,
+      rightYonedaExtCanonicalFamily, β]
+  rw [heq_x] at hstage
+  rw [hα] at hstage
+  -- hstage :
+  -- G-β-transport(y_S) =
+  --   G-stage-transport((α P)(T)(x))
+  -- Extract .family S (𝟙) from both sides.
+  have from_hstage :=
+    congrArg
+      (fun z => z.family S (𝟙 (G.obj S)))
+      hstage
+  dsimp [rightYonedaExt, rightYonedaExtObj,
+    rightYonedaExtFamilyMap, rightYonedaExtMap,
+    rightYonedaExtFamilyMapNat, β]
+    at from_hstage
+  simp only [Category.id_comp] at from_hstage
+  -- from_hstage :
+  -- x.family S (σ.app S ≫ t) =
+  --   (α P)(T)(x).family S t
+  dsimp [rightYonedaExtFunctor,
+    rightYonedaExtFamilyAlpha]
+  exact from_hstage
+
+/-- `rightYonedaExtFunctor` is fully faithful:
+natural transformations between endofunctors
+`F ⟶ G` biject with natural transformations
+between their right Yoneda extensions
+`rightYonedaExt F ⟶ rightYonedaExt G`. -/
+def rightYonedaExtFunctorFullyFaithful :
+    Functor.FullyFaithful
+      (rightYonedaExtFunctor :
+        (C ⥤ C) ⥤
+        ((Cᵒᵖ ⥤ Type (max u v)) ⥤
+          (Cᵒᵖ ⥤ Type (max u v)))) where
+  preimage α :=
+    rightYonedaExtFunctorPreimage C α
+  map_preimage α :=
+    @rightYonedaExtFunctor_map_preimage
+      C _ _ _ α
+  preimage_map σ :=
+    rightYonedaExtFunctor_preimage_map C σ
+
+end RightYonedaExtFullFaithfulness
+
 end GebLean
