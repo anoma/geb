@@ -842,8 +842,17 @@ contingent on additional mathlib infrastructure
   `map_injective`.
   `yonedaExtFunctorPreimage` assembles into
   `F ⟶ G`; fully proven, no sorries.
-  Roundtrip proofs remain for the complete
-  `FullyFaithful` instance.
+  `yonedaExtFunctorFullyFaithful`:
+  the `FullyFaithful` instance, fully
+  proven. All three fields complete.
+  Sub-lemmas:
+  `yonedaExtFunctor_map_preimage_id`
+  (base case via η_g and α.naturality),
+  `yonedaExtFunctor_map_preimage_triple`
+  (per-element chain via decompose +
+  naturality + base case),
+  `yonedaExtFunctor_map_preimage`
+  (pointwise via Quot.inductionOn).
 
 ### Structural results
 

@@ -818,6 +818,289 @@ def yonedaExtFunctorPreimage
     yonedaExtPreimageApp_naturality C α f
 
 
+/-- Every element `Quot.mk ⟨S, g, t⟩` of
+`(yonedaExt F).obj P` at stage `T` equals
+`((yonedaExt F).obj P).map t.op
+(Quot.mk ⟨S, g, 𝟙⟩)`: the element at the
+representable stage `op(F.obj S)` transported
+along `t`. -/
+theorem yonedaExtElement_decompose
+    {F : C ⥤ C}
+    (P : Cᵒᵖ ⥤ Type (max u v))
+    (T : Cᵒᵖ) (S : C)
+    (g : P.obj (Opposite.op S))
+    (t : T.unop ⟶ F.obj S) :
+    Quot.mk (YonedaExtStep F P T)
+      ⟨S, g, t⟩ =
+    ((yonedaExt F).obj P).map t.op
+      (Quot.mk
+        (YonedaExtStep F P
+          (Opposite.op (F.obj S)))
+        ⟨S, g, 𝟙 (F.obj S)⟩) := by
+  change _ = Quot.mk _
+    (yonedaExtSigmaMap F P t.op _)
+  dsimp [yonedaExtSigmaMap]
+  simp
+
+/-- At the representable stage (where
+`t = 𝟙`), `yonedaExtFunctor.map(preimage α)`
+agrees with `α` for any presheaf `P`. -/
+theorem yonedaExtFunctor_map_preimage_id
+    {F G : C ⥤ C}
+    (α : yonedaExt F ⟶ yonedaExt G)
+    (P : Cᵒᵖ ⥤ Type (max u v))
+    (S : C) (g : P.obj (Opposite.op S)) :
+    (NatTrans.app
+      (yonedaExtFunctor.map
+        (yonedaExtFunctorPreimage (C := C) α))
+      P).app (Opposite.op (F.obj S))
+      (Quot.mk _
+        ⟨S, g, 𝟙 (F.obj S)⟩) =
+    (α.app P).app (Opposite.op (F.obj S))
+      (Quot.mk _
+        ⟨S, g, 𝟙 (F.obj S)⟩) := by
+  -- LHS: Quot.mk(G-step)(yonedaExtSigmaAlpha
+  --   (preimage α) P (op(F.obj S))
+  --   ⟨S, g, 𝟙⟩)
+  -- = Quot.mk(G-step)
+  --   ⟨S, g, 𝟙 ≫ preimage(α).app S⟩
+  -- = Quot.mk(G-step)
+  --   ⟨S, g, preimage(α).app S⟩
+  -- RHS: α.app P . app (op(F.obj S))
+  --   (Quot.mk(F-step) ⟨S, g, 𝟙⟩)
+  -- Use naturality of α at the presheaf
+  -- morphism P → yonedaULift S induced by g.
+  -- Factor: first rewrite LHS via
+  -- yonedaExtSigmaAlpha unfolding.
+  change Quot.mk _ _ = _
+  dsimp [yonedaExtFunctor,
+    yonedaExtFunctorPreimage,
+    yonedaExtPreimageApp,
+    yonedaExtPreimageULift,
+    whiskerRightULiftFullyFaithful,
+    yonedaExtRepresentableULiftIso,
+    yonedaExtCounitULift,
+    yonedaExtUnitULift,
+    yonedaExtSigmaAlpha,
+    Yoneda.fullyFaithful]
+  simp only [Category.id_comp]
+  -- Now: Quot.mk(G-step)
+  --   ⟨S, g, Quot.lift(...)(α(yUL S)(op(F.obj S))
+  --     (Quot.mk ⟨S, ⟨𝟙, 𝟙⟩⟩)).down⟩
+  -- = α.app P . app (op(F.obj S))
+  --   (Quot.mk ⟨S, g, 𝟙⟩)
+  -- Step 1: write ⟨S, g, 𝟙⟩ as
+  -- (yonedaExtPresheafUnit F P).app(op S)(g).
+  -- Step 2: use naturality of α at
+  -- yonedaExtPresheafUnit F P to factor
+  -- through the representable.
+  -- Step 3: at the representable, both sides
+  -- reduce to the preimage construction.
+  --
+  -- Direct: use the presheaf unit to connect
+  -- P-level elements to representable-level
+  -- elements, then α's naturality at the unit.
+  -- Define η_g : yonedaULift S ⟶ P.
+  let η_g : yonedaULift (C := C) S ⟶ P :=
+    { app := fun T x =>
+        P.map (Quiver.Hom.op x.down) g
+      naturality := fun {T₁ T₂} k => by
+        ext ⟨f⟩
+        simp only [types_comp_apply,
+          yonedaULift]
+        exact congr_fun (P.map_comp _ _) g }
+  -- Use α.naturality at η_g.
+  have natα := congr_fun (congr_app
+    (α.naturality η_g)
+    (Opposite.op (F.obj S)))
+    (Quot.mk _
+      ⟨S, (ULift.up (𝟙 S),
+        𝟙 (F.obj S))⟩)
+  -- natα has form:
+  -- (yonedaExt(F).map(η_g) ≫ α.app(P))(...)(q₀)
+  -- = (α.app(yUL S) ≫ yonedaExt(G).map(η_g))(...)(q₀)
+  -- Unfold the ≫ to get function application.
+  simp only [NatTrans.comp_app,
+    types_comp_apply] at natα
+  -- Now natα is pointwise.
+  -- RHS of goal = α(P)(...)(⟨S,g,𝟙⟩)
+  -- = α(P)(...)(yonedaExt(F).map(η_g)(q₀))
+  -- [because yonedaExt(F).map(η_g)(q₀) = ⟨S,g,𝟙⟩]
+  -- = natα LHS
+  -- = natα RHS
+  -- = yonedaExt(G).map(η_g)(α(yUL S)(q₀))
+  -- = LHS of goal
+  -- [because yonedaExt(G).map(η_g) sends
+  -- the ULift component to g via η_g]
+  -- Step A: RHS = α(P)(...)(yonedaExt(F).map(η_g)(q₀))
+  conv_rhs =>
+    rw [show Quot.mk
+        (YonedaExtStep F P
+          (Opposite.op (F.obj S)))
+        ⟨S, (g, 𝟙 (F.obj S))⟩ =
+      ((yonedaExt F).map η_g).app
+        (Opposite.op (F.obj S))
+        (Quot.mk _
+          ⟨S, (ULift.up (𝟙 S),
+            𝟙 (F.obj S))⟩)
+      from by
+        change Quot.mk _ _ = Quot.mk _ _
+        congr 1
+        dsimp [yonedaExtSigmaMapNat, η_g]
+        simp only [P.map_id,
+          types_id_apply]]
+  -- Use natα to rewrite RHS. After step A,
+  -- RHS = natα LHS. Rewrite to natα RHS.
+  rw [natα]
+  -- Now both sides involve
+  -- (yonedaExt G).map(η_g)(α(yUL S)(q₀)).
+  -- LHS = Quot.mk ⟨S, g, Quot.lift(...)(αq).down⟩
+  -- RHS = (yonedaExt G).map(η_g)(αq)
+  -- These agree by Quot.inductionOn on αq.
+  set αq := (α.app (yonedaULift S)).app
+    (Opposite.op (F.obj S))
+    (Quot.mk _
+      ⟨S, (ULift.up (𝟙 S),
+        𝟙 (F.obj S))⟩)
+  induction αq using Quot.inductionOn with
+  | h x =>
+    obtain ⟨W, ⟨h_w⟩, t⟩ := x
+    -- RHS = Quot.mk ⟨W, (P.map(h_w.op)(g), t)⟩
+    -- LHS = Quot.mk ⟨S, (g, t ≫ G.map h_w)⟩
+    -- Related by quotient step h_w.
+    -- Unfold the RHS directly.
+    -- RHS = Quot.mk ⟨W, (P.map(h_w.op)(g), t)⟩
+    -- (after unfolding yonedaExt.map(η_g)).
+    -- LHS = Quot.mk ⟨S, (g, t ≫ G.map h_w)⟩
+    -- These are related by step h_w:
+    -- ⟨S, (g, t ≫ G.map h_w)⟩ ~
+    -- ⟨W, (P.map(h_w.op)(g), t)⟩.
+    conv_rhs =>
+      dsimp [yonedaExt, yonedaExtObj,
+        yonedaExtMap, yonedaExtSigmaMap, η_g]
+    apply Quot.sound
+    exact ⟨h_w,
+      by dsimp [yonedaExtSigmaMapNat],
+      by dsimp [yonedaExtSigmaMapNat]⟩
+
+/-- The map-preimage roundtrip for a single
+quotient representative `⟨S, g, t⟩`. -/
+theorem yonedaExtFunctor_map_preimage_triple
+    {F G : C ⥤ C}
+    (α : yonedaExt F ⟶ yonedaExt G)
+    (P : Cᵒᵖ ⥤ Type (max u v))
+    (T : Cᵒᵖ)
+    (S : C)
+    (g : P.obj (Opposite.op S))
+    (t : T.unop ⟶ F.obj S) :
+    (NatTrans.app
+      (yonedaExtFunctor.map
+        (yonedaExtFunctorPreimage (C := C) α))
+      P).app T
+      (Quot.mk _ ⟨S, g, t⟩) =
+    (α.app P).app T
+      (Quot.mk _ ⟨S, g, t⟩) := by
+  -- Both LHS and RHS are nat trans apps.
+  -- Decompose and chain.
+  let lhs := NatTrans.app
+    (yonedaExtFunctor.map
+      (yonedaExtFunctorPreimage (C := C) α)) P
+  let rhs := α.app P
+  -- Decompose on both sides.
+  -- yonedaExtFunctor.obj F = yonedaExt F
+  -- definitionally.
+  change lhs.app T (Quot.mk _ ⟨S, g, t⟩) =
+    rhs.app T (Quot.mk _ ⟨S, g, t⟩)
+  conv_lhs =>
+    rw [yonedaExtElement_decompose (C := C) P T S g t]
+  conv_rhs =>
+    rw [yonedaExtElement_decompose (C := C) P T S g t]
+  -- Both sides apply nat trans (lhs/rhs) to
+  -- the SAME element: map(t.op)(q₀).
+  -- Use congrArg to reduce to the id lemma.
+  have base := yonedaExtFunctor_map_preimage_id
+    C α P S g
+  -- base : lhs.app(op(F.obj S))(q₀) =
+  --   rhs.app(op(F.obj S))(q₀)
+  -- Apply ((yonedaExt G).obj P).map(t.op).
+  -- lhs.app T (F.map(t.op) q₀)
+  -- = G.map(t.op) (lhs.app(op(F.obj S)) q₀)
+  -- by naturality of lhs.
+  have nat_lhs := congr_fun
+    (lhs.naturality t.op)
+    (Quot.mk _ ⟨S, g, 𝟙 (F.obj S)⟩)
+  -- rhs.app T (F.map(t.op) q₀)
+  -- = G.map(t.op) (rhs.app(op(F.obj S)) q₀)
+  -- by naturality of rhs.
+  have nat_rhs := congr_fun
+    (rhs.naturality t.op)
+    (Quot.mk _ ⟨S, g, 𝟙 (F.obj S)⟩)
+  simp only [types_comp_apply,
+    Opposite.op_unop] at nat_lhs nat_rhs
+  -- nat_lhs uses yonedaExtFunctor.obj F =
+  -- yonedaExt F (definitionally equal).
+  exact nat_lhs.trans
+    (congrArg _ base |>.trans nat_rhs.symm)
+
+/-- `yonedaExtFunctor.map(preimage α) = α`:
+the map-preimage roundtrip. -/
+theorem yonedaExtFunctor_map_preimage
+    {F G : C ⥤ C}
+    (α : yonedaExt F ⟶ yonedaExt G) :
+    yonedaExtFunctor.map
+      (yonedaExtFunctorPreimage (C := C) α) =
+    α := by
+  ext P T x
+  induction x using Quot.inductionOn with
+  | h x =>
+    obtain ⟨S, g, t⟩ := x
+    exact yonedaExtFunctor_map_preimage_triple
+      (C := C) α P T S g t
+
+/-- `yonedaExtFunctor` is fully faithful:
+natural transformations between endofunctors
+`F ⟶ G` biject with natural transformations
+between their Yoneda extensions
+`yonedaExt F ⟶ yonedaExt G`. -/
+def yonedaExtFunctorFullyFaithful :
+    Functor.FullyFaithful
+      (yonedaExtFunctor :
+        (C ⥤ C) ⥤
+        ((Cᵒᵖ ⥤ Type (max u v)) ⥤
+          (Cᵒᵖ ⥤ Type (max u v)))) where
+  preimage {F G} α :=
+    yonedaExtFunctorPreimage (C := C) α
+  map_preimage {F G} α :=
+    @yonedaExtFunctor_map_preimage
+      C _ _ _ α
+  preimage_map {F G} σ := by
+    ext X
+    -- preimage(yonedaExtFunctor.map σ).app X
+    -- = yFF.preimage(wFF.preimage(
+    --   iso_X.inv ≫ (yonedaExt σ).app(yUL X)
+    --   ≫ iso_X.hom))
+    -- The iso conjugation with yonedaExt σ
+    -- gives yoneda.map(σ.app X) ⋙ ulift.
+    -- Reflecting through wFF gives
+    -- yoneda.map(σ.app X), then through yFF
+    -- gives σ.app X.
+    dsimp [yonedaExtFunctorPreimage,
+      yonedaExtPreimageApp,
+      yonedaExtPreimageULift,
+      whiskerRightULiftFullyFaithful,
+      yonedaExtRepresentableULiftIso,
+      yonedaExtCounitULift,
+      yonedaExtUnitULift,
+      yonedaExtFunctor,
+      yonedaExt, yonedaExtObj,
+      yonedaExtSigmaAlpha,
+      yonedaExtSigmaMapNat,
+      Yoneda.fullyFaithful]
+    change (𝟙 (F.obj X) ≫ σ.app X) ≫
+      G.map (𝟙 X) = σ.app X
+    simp only [G.map_id, Category.id_comp,
+      Category.comp_id]
+
 end YonedaExtFullFaithfulness
 
 end GebLean
