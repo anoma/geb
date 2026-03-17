@@ -23,6 +23,7 @@ import GebLean.Utilities.Slice
 import GebLean.Utilities.SpanFamily
 import GebLean.Utilities.TwArrPresheaf
 import GebLean.Utilities.TwistedArrow
+import GebLean.Utilities.WSubfunctor
 
 /-!
 # Utilities Index
