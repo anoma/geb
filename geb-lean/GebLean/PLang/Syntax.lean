@@ -349,28 +349,18 @@ operation receives two carrier fiber elements and
 produces a result in the same fiber. -/
 def polyProdAlgStr (A : Over X)
     (op : ∀ {x : X},
-      { a : A.left // A.hom a = x } →
-      { a : A.left // A.hom a = x } →
-      { a : A.left // A.hom a = x }) :
+      Over.Fiber A x →
+      Over.Fiber A x →
+      Over.Fiber A x) :
     (polyEndoFunctor X (polyProd X)).obj A ⟶ A :=
   Over.homMk
-    (fun ⟨x, ⟨_, f⟩⟩ =>
-      (op
-        ⟨f.left (Sum.inl PUnit.unit),
-          congrFun (Over.w f)
-            (Sum.inl PUnit.unit)⟩
-        ⟨f.left (Sum.inr PUnit.unit),
-          congrFun (Over.w f)
-            (Sum.inr PUnit.unit)⟩).val)
+    (fun ⟨x, eval⟩ =>
+      let pair := polyProdEvalToPair A eval
+      (op pair.1 pair.2).val)
     (by
-      funext ⟨x, ⟨_, f⟩⟩
-      exact (op
-        ⟨f.left (Sum.inl PUnit.unit),
-          congrFun (Over.w f)
-            (Sum.inl PUnit.unit)⟩
-        ⟨f.left (Sum.inr PUnit.unit),
-          congrFun (Over.w f)
-            (Sum.inr PUnit.unit)⟩).property)
+      funext ⟨x, eval⟩
+      let pair := polyProdEvalToPair A eval
+      exact (op pair.1 pair.2).property)
 
 end PolyProdFreeM
 
