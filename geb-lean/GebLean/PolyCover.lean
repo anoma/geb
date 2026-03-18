@@ -73,7 +73,8 @@ each element to the underlying object of `C`.
 def presheafCoverObj :
     FreeCoprodCompletionCat.{u, v, max u w v} C :=
   fcObjMk (fun j : P.ElementsPre =>
-    j.unop.1.unop)
+    ((CategoryOfElements.π P).obj
+      j.unop).unop)
 
 /--
 The projective cover of a presheaf `P`, defined as
@@ -205,7 +206,7 @@ with family sending each element `(c, x)` to `c`.
 -/
 def copresheafCoverObj :
     CoprodCovarRepCat.{u, v, max u w v} C :=
-  ccrObjMk (fun j : F.Elements => j.1)
+  ccrObjMk (CategoryOfElements.π F).obj
 
 /--
 The projective cover of a copresheaf `F`, defined as
