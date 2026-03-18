@@ -1894,9 +1894,11 @@ def pshRelEdgeRepresentable
 /-- The powered internal hom component:
 at representable index `(i₀, c₀)` and edge
 `E`, this is the edge
-`[F(y(i₀,c₀)), G(y(i₀,c₀))]^{E(i₀,c₀)}`
-where `y` is the representable edge and
-`E(i₀,c₀)` is the span evaluation. -/
+`[F(y(i₀,c₀)), G(y(i₀,c₀))]^{Hom(E,y(i₀,c₀))}`
+where `y` is the representable edge and the
+power is indexed by the hom set from `E`
+to the representable (covariant in `E`
+via precomposition). -/
 def endoIhomComponent
     (F G :
       PshRelEdge.{u, v, max u v} C ⥤
@@ -1905,7 +1907,7 @@ def endoIhomComponent
     (i₀ : WalkingSpan) (c₀ : Cᵒᵖ) :
     PshRelEdge.{u, v, max u v} C :=
   pshRelEdgePower
-    (pshRelEdgeSpanEval E c₀ i₀)
+    (E ⟶ pshRelEdgeRepresentable i₀ c₀)
     (pshRelEdgeExp
       (F.obj (pshRelEdgeRepresentable i₀ c₀))
       (G.obj (pshRelEdgeRepresentable i₀ c₀)))
@@ -1962,13 +1964,16 @@ def pshRelEdgeDependentProduct
 
 /-- The endofunctor internal hom object at
 edge `E`: the dependent product
-`∏_{(i,c,e)} [F(y(i,c)), G(y(i,c))]`
-indexed by triples `(i, c, e)` where
+`∏_{(i,c,α)} [F(y(i,c)), G(y(i,c))]`
+indexed by triples `(i, c, α)` where
 `i : WalkingSpan`, `c : Cᵒᵖ`, and
-`e : E(c, i)` (an element of the span
-evaluation). This is the product part of
-the powered end; the full end additionally
-requires naturality conditions. -/
+`α : E ⟶ y(i,c)` (a morphism to the
+representable). The power is indexed by
+the hom set, making the construction
+covariant in `E`. This is the product
+part of the powered end; the full end
+additionally requires dinatural
+conditions. -/
 def endoIhomProd
     (F G :
       PshRelEdge.{u, v, max u v} C ⥤
@@ -1976,14 +1981,15 @@ def endoIhomProd
     (E : PshRelEdge.{u, v, max u v} C) :
     PshRelEdge.{u, v, max u v} C :=
   pshRelEdgeDependentProduct
-    (fun (ice : Σ (i : WalkingSpan),
+    (fun (ica : Σ (i : WalkingSpan),
         Σ (c : Cᵒᵖ),
-          pshRelEdgeSpanEval E c i) =>
+          (E ⟶ pshRelEdgeRepresentable
+            i c)) =>
       pshRelEdgeExp
         (F.obj (pshRelEdgeRepresentable
-          ice.1 ice.2.1))
+          ica.1 ica.2.1))
         (G.obj (pshRelEdgeRepresentable
-          ice.1 ice.2.1)))
+          ica.1 ica.2.1)))
 
 /-- Contravariant functoriality of the
 representable in the WalkingSpan direction:
@@ -2087,6 +2093,389 @@ def endoDinatContra
   (pshRelEdgeIhom
     (F.obj (pshRelEdgeRepresentable
       i₁ c₁))).map (G.map α)
+
+/-- The edge family for the endofunctor
+internal hom product. This is the function
+from the index type to edges, extracted
+as a standalone definition so that Lean's
+elaborator can see through it. -/
+abbrev endoIhomFamily
+    (F G :
+      PshRelEdge.{u, v, max u v} C ⥤
+        PshRelEdge.{u, v, max u v} C)
+    (E : PshRelEdge.{u, v, max u v} C)
+    (ica : Σ (i : WalkingSpan),
+      Σ (c : Cᵒᵖ),
+        (E ⟶ pshRelEdgeRepresentable
+          i c)) :
+    PshRelEdge.{u, v, max u v} C :=
+  pshRelEdgeExp
+    (F.obj (pshRelEdgeRepresentable
+      ica.1 ica.2.1))
+    (G.obj (pshRelEdgeRepresentable
+      ica.1 ica.2.1))
+
+/-- Extract a component of the dependent
+product at a specific index. This helper
+makes type coercions explicit. -/
+abbrev endoIhomProdComponent
+    (F G :
+      PshRelEdge.{u, v, max u v} C ⥤
+        PshRelEdge.{u, v, max u v} C)
+    (E : PshRelEdge.{u, v, max u v} C)
+    (d : Cᵒᵖ)
+    (h : (endoIhomProd F G E).src.obj d)
+    (i : WalkingSpan) (c : Cᵒᵖ)
+    (α : E ⟶ pshRelEdgeRepresentable i c) :
+    (endoIhomFamily F G E ⟨i, c, α⟩).src.obj
+      d :=
+  h ⟨i, c, α⟩
+
+/-- The dinatural condition for the
+WalkingSpan direction. For a morphism
+`φ : i₁ ⟶ i₀` and `α₀ : E ⟶ y(i₀, c)`,
+the covariant map at the composed index
+`α₀ ≫ β : E ⟶ y(i₁, c)` equals the
+contravariant map at `α₀`. -/
+def endoDinatSpanCond
+    (F G :
+      PshRelEdge.{u, v, max u v} C ⥤
+        PshRelEdge.{u, v, max u v} C)
+    (E : PshRelEdge.{u, v, max u v} C)
+    (d : Cᵒᵖ)
+    (h : (endoIhomProd F G E).src.obj d)
+    : Prop :=
+  ∀ (i₀ i₁ : WalkingSpan)
+    (φ : i₁ ⟶ i₀) (c : Cᵒᵖ)
+    (α₀ : E ⟶
+      pshRelEdgeRepresentable i₀ c),
+    let β := (pshRelEdgeSepFunctor C).map
+      (spanRepresentableMapSpan c φ)
+    let α₁ : E ⟶
+        pshRelEdgeRepresentable i₁ c :=
+      α₀ ≫ β
+    (endoDinatCovar F G β).srcMap.app d
+      (endoIhomProdComponent F G E d h
+        i₁ c α₁) =
+    (endoDinatContra F G β).srcMap.app d
+      (endoIhomProdComponent F G E d h
+        i₀ c α₀)
+
+/-- The dinatural condition for the Cᵒᵖ
+direction. For a morphism `f : c₁ ⟶ c₀`
+and `α₀ : E ⟶ y(i, c₀)`, the covariant
+map at `α₀ ≫ β : E ⟶ y(i, c₁)` equals
+the contravariant map at `α₀`. -/
+def endoDinatPshCond
+    (F G :
+      PshRelEdge.{u, v, max u v} C ⥤
+        PshRelEdge.{u, v, max u v} C)
+    (E : PshRelEdge.{u, v, max u v} C)
+    (d : Cᵒᵖ)
+    (h : (endoIhomProd F G E).src.obj d)
+    : Prop :=
+  ∀ (i : WalkingSpan) (c₀ c₁ : Cᵒᵖ)
+    (f : c₁ ⟶ c₀)
+    (α₀ : E ⟶
+      pshRelEdgeRepresentable i c₀),
+    let β := (pshRelEdgeSepFunctor C).map
+      (spanRepresentableMapPsh i f)
+    let α₁ : E ⟶
+        pshRelEdgeRepresentable i c₁ :=
+      α₀ ≫ β
+    (endoDinatCovar F G β).srcMap.app d
+      (endoIhomProdComponent F G E d h
+        i c₁ α₁) =
+    (endoDinatContra F G β).srcMap.app d
+      (endoIhomProdComponent F G E d h
+        i c₀ α₀)
+
+/-- The dinatural condition for the target
+presheaf (same pattern as source). -/
+def endoDinatSpanCondTgt
+    (F G :
+      PshRelEdge.{u, v, max u v} C ⥤
+        PshRelEdge.{u, v, max u v} C)
+    (E : PshRelEdge.{u, v, max u v} C)
+    (d : Cᵒᵖ)
+    (h : (endoIhomProd F G E).tgt.obj d)
+    : Prop :=
+  ∀ (i₀ i₁ : WalkingSpan)
+    (φ : i₁ ⟶ i₀) (c : Cᵒᵖ)
+    (α₀ : E ⟶
+      pshRelEdgeRepresentable i₀ c),
+    let β := (pshRelEdgeSepFunctor C).map
+      (spanRepresentableMapSpan c φ)
+    let α₁ : E ⟶
+        pshRelEdgeRepresentable i₁ c :=
+      α₀ ≫ β
+    (endoDinatCovar F G β).tgtMap.app d
+      (h ⟨i₁, c, α₁⟩) =
+    (endoDinatContra F G β).tgtMap.app d
+      (h ⟨i₀, c, α₀⟩)
+
+def endoDinatPshCondTgt
+    (F G :
+      PshRelEdge.{u, v, max u v} C ⥤
+        PshRelEdge.{u, v, max u v} C)
+    (E : PshRelEdge.{u, v, max u v} C)
+    (d : Cᵒᵖ)
+    (h : (endoIhomProd F G E).tgt.obj d)
+    : Prop :=
+  ∀ (i : WalkingSpan) (c₀ c₁ : Cᵒᵖ)
+    (f : c₁ ⟶ c₀)
+    (α₀ : E ⟶
+      pshRelEdgeRepresentable i c₀),
+    let β := (pshRelEdgeSepFunctor C).map
+      (spanRepresentableMapPsh i f)
+    let α₁ : E ⟶
+        pshRelEdgeRepresentable i c₁ :=
+      α₀ ≫ β
+    (endoDinatCovar F G β).tgtMap.app d
+      (h ⟨i, c₁, α₁⟩) =
+    (endoDinatContra F G β).tgtMap.app d
+      (h ⟨i, c₀, α₀⟩)
+
+/-- The source presheaf of the endofunctor
+internal hom: the subpresheaf of
+`(endoIhomProd F G E).src` satisfying the
+dinatural conditions. -/
+def endoIhomSrc
+    (F G :
+      PshRelEdge.{u, v, max u v} C ⥤
+        PshRelEdge.{u, v, max u v} C)
+    (E : PshRelEdge.{u, v, max u v} C) :
+    Cᵒᵖ ⥤ Type (max u v) where
+  obj d :=
+    { h : (endoIhomProd F G E).src.obj d //
+      endoDinatSpanCond F G E d h ∧
+      endoDinatPshCond F G E d h }
+  map {d₁ d₂} f x := by
+    refine ⟨(endoIhomProd F G E).src.map f
+      x.1, ?_, ?_⟩
+    · intro i₀ i₁ φ c α₀
+      let β := (pshRelEdgeSepFunctor C).map
+        (spanRepresentableMapSpan c φ)
+      dsimp [endoDinatSpanCond, endoIhomProd,
+        pshRelEdgeDependentProduct,
+        pshDependentProduct,
+        endoIhomProdComponent]
+      have natC := congr_fun
+        (NatTrans.naturality
+          (VertEdgeHom.srcMap
+            (endoDinatCovar F G β)) f)
+        (x.1 ⟨i₁, c, α₀ ≫ β⟩)
+      have natCo := congr_fun
+        (NatTrans.naturality
+          (VertEdgeHom.srcMap
+            (endoDinatContra F G β)) f)
+        (x.1 ⟨i₀, c, α₀⟩)
+      simp only [types_comp_apply] at natC natCo
+      rw [natC, natCo]
+      exact congrArg _
+        (x.2.1 i₀ i₁ φ c α₀)
+    · intro i c₀ c₁ g α₀
+      let β := (pshRelEdgeSepFunctor C).map
+        (spanRepresentableMapPsh i g)
+      dsimp [endoDinatPshCond, endoIhomProd,
+        pshRelEdgeDependentProduct,
+        pshDependentProduct,
+        endoIhomProdComponent]
+      have natC := congr_fun
+        (NatTrans.naturality
+          (VertEdgeHom.srcMap
+            (endoDinatCovar F G β)) f)
+        (x.1 ⟨i, c₁, α₀ ≫ β⟩)
+      have natCo := congr_fun
+        (NatTrans.naturality
+          (VertEdgeHom.srcMap
+            (endoDinatContra F G β)) f)
+        (x.1 ⟨i, c₀, α₀⟩)
+      simp only [types_comp_apply] at natC natCo
+      rw [natC, natCo]
+      exact congrArg _
+        (x.2.2 i c₀ c₁ g α₀)
+  map_id d := by
+    funext ⟨h, _⟩
+    exact Subtype.ext (congr_fun
+      ((endoIhomProd F G E).src.map_id d) h)
+  map_comp f g := by
+    funext ⟨h, _⟩
+    exact Subtype.ext (congr_fun
+      ((endoIhomProd F G E).src.map_comp
+        f g) h)
+
+/-- The target presheaf of the endofunctor
+internal hom. -/
+def endoIhomTgt
+    (F G :
+      PshRelEdge.{u, v, max u v} C ⥤
+        PshRelEdge.{u, v, max u v} C)
+    (E : PshRelEdge.{u, v, max u v} C) :
+    Cᵒᵖ ⥤ Type (max u v) where
+  obj d :=
+    { h : (endoIhomProd F G E).tgt.obj d //
+      endoDinatSpanCondTgt F G E d h ∧
+      endoDinatPshCondTgt F G E d h }
+  map {d₁ d₂} f x := by
+    refine ⟨(endoIhomProd F G E).tgt.map f
+      x.1, ?_, ?_⟩
+    · intro i₀ i₁ φ c α₀
+      let β := (pshRelEdgeSepFunctor C).map
+        (spanRepresentableMapSpan c φ)
+      dsimp [endoDinatSpanCondTgt,
+        endoIhomProd,
+        pshRelEdgeDependentProduct,
+        pshDependentProduct,
+        endoIhomProdComponent]
+      have natC := congr_fun
+        (NatTrans.naturality
+          (VertEdgeHom.tgtMap
+            (endoDinatCovar F G β)) f)
+        (x.1 ⟨i₁, c, α₀ ≫ β⟩)
+      have natCo := congr_fun
+        (NatTrans.naturality
+          (VertEdgeHom.tgtMap
+            (endoDinatContra F G β)) f)
+        (x.1 ⟨i₀, c, α₀⟩)
+      simp only [types_comp_apply] at natC natCo
+      rw [natC, natCo]
+      exact congrArg _
+        (x.2.1 i₀ i₁ φ c α₀)
+    · intro i c₀ c₁ g α₀
+      let β := (pshRelEdgeSepFunctor C).map
+        (spanRepresentableMapPsh i g)
+      dsimp [endoDinatPshCondTgt,
+        endoIhomProd,
+        pshRelEdgeDependentProduct,
+        pshDependentProduct,
+        endoIhomProdComponent]
+      have natC := congr_fun
+        (NatTrans.naturality
+          (VertEdgeHom.tgtMap
+            (endoDinatCovar F G β)) f)
+        (x.1 ⟨i, c₁, α₀ ≫ β⟩)
+      have natCo := congr_fun
+        (NatTrans.naturality
+          (VertEdgeHom.tgtMap
+            (endoDinatContra F G β)) f)
+        (x.1 ⟨i, c₀, α₀⟩)
+      simp only [types_comp_apply] at natC natCo
+      rw [natC, natCo]
+      exact congrArg _
+        (x.2.2 i c₀ c₁ g α₀)
+  map_id d := by
+    funext ⟨h, _⟩
+    exact Subtype.ext (congr_fun
+      ((endoIhomProd F G E).tgt.map_id d) h)
+  map_comp f g := by
+    funext ⟨h, _⟩
+    exact Subtype.ext (congr_fun
+      ((endoIhomProd F G E).tgt.map_comp
+        f g) h)
+
+/-- The relation for the endofunctor internal
+hom: a pair `(s, t)` of dinatural families is
+related when their underlying product elements
+are related componentwise in the product
+relation. -/
+def endoIhomRel
+    (F G :
+      PshRelEdge.{u, v, max u v} C ⥤
+        PshRelEdge.{u, v, max u v} C)
+    (E : PshRelEdge.{u, v, max u v} C) :
+    PshRel (endoIhomSrc F G E)
+      (endoIhomTgt F G E) where
+  obj d stpair :=
+    (endoIhomProd F G E).edge.obj d
+      (stpair.1.1, stpair.2.1)
+  map f := by
+    rintro ⟨s, t⟩ h
+    exact (endoIhomProd F G E).edge.map f h
+
+/-- The endofunctor internal hom edge:
+`[F, G](E)` as an object of `PshRelEdge C`.
+Combines the source/target presheaves (with
+dinatural conditions) and the restricted
+product relation. -/
+def endoIhomObj
+    (F G :
+      PshRelEdge.{u, v, max u v} C ⥤
+        PshRelEdge.{u, v, max u v} C)
+    (E : PshRelEdge.{u, v, max u v} C) :
+    PshRelEdge.{u, v, max u v} C :=
+  { src := endoIhomSrc F G E
+    tgt := endoIhomTgt F G E
+    edge := endoIhomRel F G E }
+
+/-- Functoriality of the endofunctor internal
+hom in `E`: a morphism `g : E₁ ⟶ E₂`
+induces `[F, G](E₁) ⟶ [F, G](E₂)` by
+precomposition on the hom-set index.
+For `h ∈ [F,G](E₁)` (a dinatural family
+indexed by `Hom(E₁, y(i,c))`), the image
+at index `α₂ : E₂ ⟶ y(i,c)` is
+`h(g ≫ α₂)`. -/
+def endoIhomMap
+    (F G :
+      PshRelEdge.{u, v, max u v} C ⥤
+        PshRelEdge.{u, v, max u v} C)
+    {E₁ E₂ : PshRelEdge.{u, v, max u v} C}
+    (g : E₁ ⟶ E₂) :
+    endoIhomObj F G E₁ ⟶
+      endoIhomObj F G E₂ where
+  srcMap :=
+    { app := fun d h =>
+        ⟨fun ⟨i, c, α₂⟩ =>
+          h.1 ⟨i, c, g ≫ α₂⟩,
+        ⟨fun i₀ i₁ φ c α₀ =>
+          h.2.1 i₀ i₁ φ c (g ≫ α₀),
+        fun i c₀ c₁ f α₀ =>
+          h.2.2 i c₀ c₁ f (g ≫ α₀)⟩⟩
+      naturality := fun {d₁ d₂} f => by
+        funext ⟨h, hcond⟩
+        apply Subtype.ext
+        funext ⟨i, c, α₂⟩
+        rfl }
+  tgtMap :=
+    { app := fun d h =>
+        ⟨fun ⟨i, c, α₂⟩ =>
+          h.1 ⟨i, c, g ≫ α₂⟩,
+        ⟨fun i₀ i₁ φ c α₀ =>
+          h.2.1 i₀ i₁ φ c (g ≫ α₀),
+        fun i c₀ c₁ f α₀ =>
+          h.2.2 i c₀ c₁ f (g ≫ α₀)⟩⟩
+      naturality := fun {d₁ d₂} f => by
+        funext ⟨h, hcond⟩
+        apply Subtype.ext
+        funext ⟨i, c, α₂⟩
+        rfl }
+  sq d s t h j := h ⟨j.1, j.2.1, g ≫ j.2.2⟩
+
+/-- The endofunctor internal hom
+`[F, G] : PshRelEdge C ⥤ PshRelEdge C`,
+sending `E` to the powered end
+`∫_{(i,c)} [F(y), G(y)]^{Hom(E, y)}`.
+Covariant in `E` via precomposition on
+the hom-set power index. -/
+def endoIhom
+    (F G :
+      PshRelEdge.{u, v, max u v} C ⥤
+        PshRelEdge.{u, v, max u v} C) :
+    PshRelEdge.{u, v, max u v} C ⥤
+      PshRelEdge.{u, v, max u v} C where
+  obj E := endoIhomObj F G E
+  map g := endoIhomMap F G g
+  map_id E := by
+    apply VertEdgeHom.ext <;>
+    · apply NatTrans.ext; funext d
+      funext ⟨h, hc⟩
+      exact Subtype.ext rfl
+  map_comp {E₁ E₂ E₃} g₁ g₂ := by
+    apply VertEdgeHom.ext <;>
+    · apply NatTrans.ext; funext d
+      funext ⟨h, hc⟩
+      exact Subtype.ext rfl
 
 end EndoIhom
 
