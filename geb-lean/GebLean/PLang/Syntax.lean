@@ -56,6 +56,31 @@ lemma polyProd_family (x : X)
         (fun _ : PUnit.{u + 1} ⊕ PUnit.{u + 1} =>
           x) := rfl
 
+/-- Construct a `polyProd` evaluation family element from
+a pair of fiber elements. -/
+def polyProdEvalOfPair {X : Type u}
+    (A : Over X) {x : X}
+    (l r : Over.Fiber A x) :
+    polyBetweenEvalFamily X X (polyProd X) A x :=
+  ⟨PUnit.unit, Over.homMk
+    (fun s => match s with
+      | Sum.inl _ => l.val
+      | Sum.inr _ => r.val)
+    (by aesop_cat)⟩
+
+/-- Extract a pair of fiber elements from a `polyProd`
+evaluation family element. -/
+def polyProdEvalToPair {X : Type u}
+    (A : Over X) {x : X}
+    (eval : polyBetweenEvalFamily X X
+      (polyProd X) A x) :
+    Over.Fiber A x × Over.Fiber A x :=
+  let mor := eval.2
+  (⟨mor.left (Sum.inl PUnit.unit),
+    congrFun (Over.w mor) (Sum.inl PUnit.unit)⟩,
+   ⟨mor.left (Sum.inr PUnit.unit),
+    congrFun (Over.w mor) (Sum.inr PUnit.unit)⟩)
+
 end PolyProd
 
 /-! ## Equivalence between polynomial evaluation and
@@ -74,7 +99,8 @@ variable {X : Type u}
 Fiber-level equivalence: at each `x : X`, the polynomial
 evaluation family is equivalent to the product of fibers.
 -/
-def polyProd_eval_fiberEquiv (A : Over X) (x : X) :
+private def polyProd_eval_fiberEquiv
+    (A : Over X) (x : X) :
     polyBetweenEvalFamily X X (polyProd X) A x ≃
       ({ a : A.left // A.hom a = x } ×
        { a : A.left // A.hom a = x }) where
@@ -316,6 +342,35 @@ def polyProdFreeMFoldAt
     (polyProd X) leafMap x t
   (polyFreeCounitFoldAt (polyProd X) alg
     x mapped).val.2
+
+/-- Construct a `polyProd` algebra structure map from a
+fiber-level binary operation on the carrier.  The
+operation receives two carrier fiber elements and
+produces a result in the same fiber. -/
+def polyProdAlgStr (A : Over X)
+    (op : ∀ {x : X},
+      { a : A.left // A.hom a = x } →
+      { a : A.left // A.hom a = x } →
+      { a : A.left // A.hom a = x }) :
+    (polyEndoFunctor X (polyProd X)).obj A ⟶ A :=
+  Over.homMk
+    (fun ⟨x, ⟨_, f⟩⟩ =>
+      (op
+        ⟨f.left (Sum.inl PUnit.unit),
+          congrFun (Over.w f)
+            (Sum.inl PUnit.unit)⟩
+        ⟨f.left (Sum.inr PUnit.unit),
+          congrFun (Over.w f)
+            (Sum.inr PUnit.unit)⟩).val)
+    (by
+      funext ⟨x, ⟨_, f⟩⟩
+      exact (op
+        ⟨f.left (Sum.inl PUnit.unit),
+          congrFun (Over.w f)
+            (Sum.inl PUnit.unit)⟩
+        ⟨f.left (Sum.inr PUnit.unit),
+          congrFun (Over.w f)
+            (Sum.inr PUnit.unit)⟩).property)
 
 end PolyProdFreeM
 
