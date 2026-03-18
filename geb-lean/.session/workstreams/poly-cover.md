@@ -2,7 +2,10 @@
 
 ## Status
 
-Active — scaffolding complete, implementation not started.
+Active — Phases 1-4 complete (both presheaf and
+copresheaf `EnoughProjectives` instances).  Phase 5
+(connection to `FreeCoprodCompletionCat` /
+`CoprodCovarRepCat`) not yet started.
 
 ## Goal
 
