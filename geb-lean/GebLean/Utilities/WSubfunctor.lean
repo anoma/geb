@@ -207,50 +207,64 @@ def NatMono {U X : C ⥤ Type w}
     (m : NatTrans U X) : Prop :=
   ∀ c, Function.Injective (m.app c)
 
-/-- Choice-free pullback condition for
-`Type`-valued presheaves. Unlike mathlib's
-`IsPullback` (which is `Prop`-valued and
-wraps the lift in `Nonempty`), this structure
-carries the lift as constructive data. -/
-structure WIsPullback
-    {U X Ω₀ Ω : C ⥤ Type w}
+/-- A constructive cone for the classifier
+pullback: for each element `w` of the cone
+vertex, a preimage of `s₁.app c w` under
+`m`, carried as data. -/
+structure WCone
+    {U X : C ⥤ Type w}
     (m : NatTrans U X)
-    (χ₀ : NatTrans U Ω₀)
-    (χ : NatTrans X Ω)
-    (truth : NatTrans Ω₀ Ω) where
-  w : ntComp m χ = ntComp χ₀ truth
+    (W : C ⥤ Type w)
+    (s₁ : NatTrans W X) where
+  /-- The preimage: for each stage `c` and
+  element `w`, the fiber element witnessing
+  that `s₁.app c w` is in the range of `m`.
+  -/
+  preimage :
+    ∀ (c : C) (w : W.obj c),
+      WSubfunctor.fiber
+        (WSubfunctor.range m) c
+        (s₁.app c w)
+
+/-- Choice-free pullback condition for the
+subobject classifier. The cone carries
+constructive preimage data (via `WCone`),
+so the lift extracts the preimage directly
+without `Classical.choice`. -/
+structure WIsPullback
+    {U X : C ⥤ Type w}
+    (m : NatTrans U X) where
+  /-- The lift from any constructive cone. -/
   lift :
     ∀ {W : C ⥤ Type w}
       (s₁ : NatTrans W X)
-      (s₂ : NatTrans W Ω₀)
-      (_ : ntComp s₁ χ = ntComp s₂ truth),
+      (_ : WCone m W s₁),
     NatTrans W U
+  /-- The lift composes with `m` to give
+  `s₁`. -/
   fac :
     ∀ {W : C ⥤ Type w}
       (s₁ : NatTrans W X)
-      (s₂ : NatTrans W Ω₀)
-      (hw : ntComp s₁ χ =
-        ntComp s₂ truth),
-    ntComp (lift s₁ s₂ hw) m = s₁
+      (cone : WCone m W s₁),
+    ntComp (lift s₁ cone) m = s₁
+  /-- The lift is unique. -/
   uniq :
     ∀ {W : C ⥤ Type w}
       (s₁ : NatTrans W X)
-      (s₂ : NatTrans W Ω₀)
-      (hw : ntComp s₁ χ =
-        ntComp s₂ truth)
-      (l : NatTrans W U)
-      (_ : ntComp l m = s₁),
-    l = lift s₁ s₂ hw
+      (cone : WCone m W s₁)
+      (l : NatTrans W U),
+    ntComp l m = s₁ →
+    l = lift s₁ cone
 
 /-- Choice-free subobject classifier for
-`Type`-valued presheaf categories. All
-morphisms are `NatTrans` (not `⟶`), the
-pullback condition carries constructive
-lift data, and mono is pointwise
-injectivity. -/
+`Type`-valued presheaf categories. The
+pullback uses `WCone` (constructive preimage
+data) for the lift, and sieve-based
+propositional uniqueness for the classifying
+map. -/
 structure WClassifier
     (C : Type u) [Category.{v} C] where
-  /-- The classifier object. -/
+  /-- The classifier presheaf. -/
   Ω : Cᵒᵖ ⥤ Type (max u v)
   /-- The terminal presheaf. -/
   Ω₀ : Cᵒᵖ ⥤ Type (max u v)
@@ -264,19 +278,12 @@ structure WClassifier
   χ : ∀ {U X : Cᵒᵖ ⥤ Type (max u v)}
     (m : NatTrans U X) (_ : NatMono m),
     NatTrans X Ω
-  /-- The pullback condition. -/
+  /-- The constructive pullback: any cone
+  with preimage data lifts through `m`. -/
   isPullback :
     ∀ {U X : Cᵒᵖ ⥤ Type (max u v)}
-      (m : NatTrans U X) (hm : NatMono m),
-    WIsPullback m (terminal U) (χ m hm) truth
-  /-- Uniqueness of the classifying map. -/
-  unique :
-    ∀ {U X : Cᵒᵖ ⥤ Type (max u v)}
-      (m : NatTrans U X) (hm : NatMono m)
-      (χ' : NatTrans X Ω)
-      (_ : WIsPullback m (terminal U)
-        χ' truth),
-    χ' = χ m hm
+      (m : NatTrans U X) (_ : NatMono m),
+    WIsPullback m
 
 end ChoiceFreeNatTrans
 
@@ -520,6 +527,188 @@ def wPshHasClassifier
     HasClassifier
       (Cᵒᵖ ⥤ Type (max u v)) :=
   ⟨⟨wPshClassifierData C⟩⟩
+
+/-- The choice-free classifying map via
+`WSubfunctor.sieveOfSection`. Uses `NatTrans`
+directly (not `⟶`). -/
+def wClassifierCharMap
+    (C : Type u) [Category.{v} C]
+    {U X : Cᵒᵖ ⥤ Type (max u v)}
+    (m : NatTrans U X) :
+    NatTrans X (pshSieveFunctor C) where
+  app c x :=
+    (WSubfunctor.range m).sieveOfSection x
+  naturality {c₁ c₂} g := by
+    funext x
+    apply Sieve.ext
+    intro V f
+    dsimp [sieveOfSection, range, fiber,
+      pshSieveFunctor]
+    constructor
+    · rintro ⟨⟨a, ha⟩⟩
+      exact ⟨⟨a, by
+        rw [ha]; symm
+        exact congr_fun
+          (X.map_comp g f.op) x⟩⟩
+    · rintro ⟨⟨a, ha⟩⟩
+      exact ⟨⟨a, by
+        rw [ha]
+        exact congr_fun
+          (X.map_comp g f.op) x⟩⟩
+
+/-- Choice-free terminal presheaf: the
+constant `PUnit` presheaf, hand-rolled to
+avoid `Functor.const` (which carries
+`Classical.choice` from the functor
+category instance). -/
+def wTerminalPresheaf
+    (C : Type u) [Category.{v} C] :
+    Cᵒᵖ ⥤ Type (max u v) where
+  obj _ := PUnit
+  map _ := id
+  map_id _ := rfl
+  map_comp _ _ := rfl
+
+/-- The choice-free terminal map. -/
+def wTerminalMap
+    (C : Type u) [Category.{v} C]
+    (U : Cᵒᵖ ⥤ Type (max u v)) :
+    NatTrans U (wTerminalPresheaf C) where
+  app _ _ := PUnit.unit
+  naturality {c d} f := by
+    dsimp [wTerminalPresheaf]
+    exact funext fun _ => rfl
+
+/-- Choice-free top sieve: hand-rolled to
+avoid the `CompleteLattice` instance on
+`Sieve`, which carries `Classical.choice`. -/
+def wTopSieve {C : Type u} [Category.{v} C]
+    (X : C) : Sieve X where
+  arrows _ _ := True
+  downward_closed _ _ := trivial
+
+theorem wTopSieve_pullback
+    {C : Type u} [Category.{v} C]
+    {X Y : C} (f : X ⟶ Y) :
+    (wTopSieve Y).pullback f = wTopSieve X := by
+  ext V g
+  dsimp [wTopSieve, Sieve.pullback]
+  exact iff_of_true trivial trivial
+
+/-- The choice-free truth map: sends each
+element to the top sieve. -/
+def wTruthMap
+    (C : Type u) [Category.{v} C] :
+    NatTrans (wTerminalPresheaf C)
+      (pshSieveFunctor C) where
+  app c _ := wTopSieve c.unop
+  naturality {c d} f := by
+    funext _
+    exact (wTopSieve_pullback f.unop).symm
+
+/-- The classifier square commutes
+(choice-free version). -/
+theorem wClassifierComm
+    (C : Type u) [Category.{v} C]
+    {U X : Cᵒᵖ ⥤ Type (max u v)}
+    (m : NatTrans U X) :
+    ntComp m (wClassifierCharMap C m) =
+      ntComp (wTerminalMap C U)
+        (wTruthMap C) := by
+  ext c u
+  apply Sieve.ext
+  intro V f
+  dsimp [ntComp, wClassifierCharMap,
+    sieveOfSection, range, fiber,
+    wTerminalMap, wTerminalPresheaf,
+    wTruthMap, wTopSieve,
+    pshSieveFunctor]
+  refine iff_of_true ⟨⟨U.map f.op u, ?_⟩⟩
+    trivial
+  have := congr_fun (m.naturality f.op) u
+  dsimp at this
+  exact this
+
+/-- The constructive pullback for a mono
+`m`: the lift extracts the preimage
+directly from the `WCone` data. -/
+def wPshIsPullback
+    {C : Type u} [Category.{v} C]
+    {U X : Cᵒᵖ ⥤ Type (max u v)}
+    (m : NatTrans U X)
+    (hm : NatMono m) :
+    WIsPullback m where
+  lift {W} s₁ cone :=
+    { app := fun c w => (cone.preimage c w).1
+      naturality {c d} f := by
+        ext w
+        apply hm d
+        have h1 := (cone.preimage d
+          (W.map f w)).2
+        have h2 := (cone.preimage c w).2
+        have nat_m := congr_fun
+          (m.naturality f)
+          ((cone.preimage c w).1)
+        have nat_s := congr_fun
+          (s₁.naturality f) w
+        dsimp [ntComp] at h1 h2 nat_m nat_s ⊢
+        rw [h1, nat_m, h2]
+        exact nat_s }
+  fac s₁ cone := by
+    ext c w
+    exact (cone.preimage c w).2
+  uniq s₁ cone l hl := by
+    ext c w
+    apply hm c
+    have := congr_fun (congr_app hl c) w
+    dsimp [ntComp] at this
+    rw [this]
+    exact (cone.preimage c w).2.symm
+
+/-- The choice-free `WClassifier` instance
+for presheaf categories. The classifying map
+uses sieves (for propositional uniqueness);
+the pullback uses `WCone` (for constructive
+lifts). -/
+def wPshClassifier
+    (C : Type u) [Category.{v} C] :
+    WClassifier C where
+  Ω := pshSieveFunctor C
+  Ω₀ := wTerminalPresheaf C
+  truth := wTruthMap C
+  terminal := wTerminalMap C
+  χ m _ := wClassifierCharMap C m
+  isPullback m hm := wPshIsPullback m hm
+
+/-- Uniqueness of the classifying map
+(propositional, may use Classical.choice
+via mathlib's IsPullback). Separate from
+`WClassifier` to keep the structure
+choice-free. -/
+theorem wPshClassifierUnique
+    (C : Type u) [Category.{v} C]
+    {U X : Cᵒᵖ ⥤ Type (max u v)}
+    (m : NatTrans U X) (hm : NatMono m)
+    (χ' : NatTrans X (pshSieveFunctor C))
+    (hpb : IsPullback
+      (show U ⟶ X from m)
+      ((pshTerminalIsTerminal C).from U)
+      (show X ⟶ _ from χ')
+      (pshSieveTruth C)) :
+    χ' = wClassifierCharMap C m := by
+  rw [show wClassifierCharMap C m =
+    pshSieveCharMap C m from by
+      ext c x
+      exact sieveOfSection_eq_toSubfunctor
+        (WSubfunctor.range m) x]
+  have : Mono (show U ⟶ X from m) := by
+    rw [NatTrans.mono_iff_mono_app]
+    intro c
+    exact (mono_iff_injective _).mpr (hm c)
+  exact pshSieveCharMap_uniq
+    (show U ⟶ X from m)
+    (show X ⟶ _ from χ')
+    hpb
 
 end WSubfunctor
 
