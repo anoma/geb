@@ -123,6 +123,23 @@ open CategoryTheory
 universe u v w
 
 variable (C : Type u) [Category.{v, u} C]
+
+instance pshCatInst :
+  Category.{max u v w, max u (v + 1) (w + 1)} (Cᵒᵖ ⥤ Type max v w) :=
+    inferInstance
+
+instance pshCatTypeInst :
+  Category.{max (u + 1) v, max (u + 1) (v + 1)} (Type u ⥤ Type v) :=
+    inferInstance
+
+instance pshCatEndoTypeInst :
+  SmallCategory.{u + 1} (Type u ⥤ Type u) :=
+    inferInstance
+
+def pshCatObj :
+  Cat.{max u v w, max u (v + 1) (w + 1)} :=
+    Cat.of (Cᵒᵖ ⥤ Type max v w)
+
 variable (P : Cᵒᵖ ⥤ Type max v w)
 
 def ElementsPreCat : Cat.{v, max u v w} := Cat.of P.ElementsPre
