@@ -3017,6 +3017,42 @@ def endoIhomCurrySrcApp
         (η.app y)
     (H.map α ≫ curried).srcMap.app d h
 
+/-- Projection from the endofunctor internal hom
+at a representable edge `y(i, c)` to the
+object-level internal hom `[F(y), G(y)]`.
+Uses the identity morphism `𝟙 y` as the
+index in the powered end. -/
+def endoIhomProj
+    (F G :
+      PshRelEdge.{u, v, max u v} C ⥤
+        PshRelEdge.{u, v, max u v} C)
+    (i : WalkingSpan) (c : Cᵒᵖ) :
+    endoIhomObj F G
+      (pshRelEdgeRepresentable i c) ⟶
+    pshRelEdgeExp
+      (F.obj (pshRelEdgeRepresentable i c))
+      (G.obj
+        (pshRelEdgeRepresentable i c)) where
+  srcMap :=
+    { app := fun d h =>
+        h.1 ⟨i, c, 𝟙 _⟩
+      naturality := fun {d₁ d₂} f => by
+        funext ⟨h, hc⟩
+        dsimp [endoIhomSrc, endoIhomProd,
+          pshRelEdgeDependentProduct,
+          pshDependentProduct]
+        rfl }
+  tgtMap :=
+    { app := fun d h =>
+        h.1 ⟨i, c, 𝟙 _⟩
+      naturality := fun {d₁ d₂} f => by
+        funext ⟨h, hc⟩
+        dsimp [endoIhomTgt, endoIhomProd,
+          pshRelEdgeDependentProduct,
+          pshDependentProduct]
+        rfl }
+  sq d s t h := h ⟨i, c, 𝟙 _⟩
+
 end EndoIhom
 
 end GebLean
