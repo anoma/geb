@@ -2525,7 +2525,7 @@ lemma endoDinatSpanCond_ihomMap
           i₀ c))).map
         (η.app (pshRelEdgeRepresentable
           i₀ c))).srcMap.app d x) := by
-    have key :
+    have comm :
         (pshRelEdgeIhom (F.obj
           (pshRelEdgeRepresentable i₀ c))).map
           (G₁.map β) ≫
@@ -2549,7 +2549,7 @@ lemma endoDinatSpanCond_ihomMap
     intro x
     exact congr_fun
       (congrArg
-        (fun f => f.srcMap.app d) key) x
+        (fun f => f.srcMap.app d) comm) x
   calc
     (endoDinatCovar F G₂ β).srcMap.app d
       (((pshRelEdgeIhom (F.obj
@@ -2620,7 +2620,7 @@ lemma endoDinatPshCond_ihomMap
           i c₀))).map
         (η.app (pshRelEdgeRepresentable
           i c₀))).srcMap.app d x) := by
-    have key :
+    have comm :
         (pshRelEdgeIhom (F.obj
           (pshRelEdgeRepresentable i c₀))).map
           (G₁.map β) ≫
@@ -2644,7 +2644,7 @@ lemma endoDinatPshCond_ihomMap
     intro x
     exact congr_fun
       (congrArg
-        (fun f => f.srcMap.app d) key) x
+        (fun f => f.srcMap.app d) comm) x
   calc
     (endoDinatCovar F G₂ β).srcMap.app d
       (((pshRelEdgeIhom (F.obj
@@ -2714,7 +2714,7 @@ lemma endoDinatSpanCondTgt_ihomMap
           i₀ c))).map
         (η.app (pshRelEdgeRepresentable
           i₀ c))).tgtMap.app d x) := by
-    have key :
+    have comm :
         (pshRelEdgeIhom (F.obj
           (pshRelEdgeRepresentable i₀ c))).map
           (G₁.map β) ≫
@@ -2738,7 +2738,7 @@ lemma endoDinatSpanCondTgt_ihomMap
     intro x
     exact congr_fun
       (congrArg
-        (fun f => f.tgtMap.app d) key) x
+        (fun f => f.tgtMap.app d) comm) x
   calc
     (endoDinatCovar F G₂ β).tgtMap.app d
       (((pshRelEdgeIhom (F.obj
@@ -2808,7 +2808,7 @@ lemma endoDinatPshCondTgt_ihomMap
           i c₀))).map
         (η.app (pshRelEdgeRepresentable
           i c₀))).tgtMap.app d x) := by
-    have key :
+    have comm :
         (pshRelEdgeIhom (F.obj
           (pshRelEdgeRepresentable i c₀))).map
           (G₁.map β) ≫
@@ -2832,7 +2832,7 @@ lemma endoDinatPshCondTgt_ihomMap
     intro x
     exact congr_fun
       (congrArg
-        (fun f => f.tgtMap.app d) key) x
+        (fun f => f.tgtMap.app d) comm) x
   calc
     (endoDinatCovar F G₂ β).tgtMap.app d
       (((pshRelEdgeIhom (F.obj
