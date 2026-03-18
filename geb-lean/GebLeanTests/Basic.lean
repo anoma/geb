@@ -1,4 +1,5 @@
 import GebLean
+import GebLean.Utilities.Elements
 import Mathlib.CategoryTheory.Category.Cat
 import Mathlib.CategoryTheory.Limits.Presheaf
 import Counterexamples.Girard
@@ -124,7 +125,7 @@ universe u v w
 variable (C : Type u) [Category.{v, u} C]
 variable (P : Cᵒᵖ ⥤ Type max v w)
 
-def funcToRep : P.Elementsᵒᵖ ⥤ Cᵒᵖ ⥤ Type (max v w) :=
+def funcToRep : P.ElementsPre ⥤ Cᵒᵖ ⥤ Type (max v w) :=
   Presheaf.functorToRepresentables.{w, v, u} (C := C) P
 
 def coconeOfRep :
