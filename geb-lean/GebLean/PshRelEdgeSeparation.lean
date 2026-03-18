@@ -1654,6 +1654,156 @@ instance pshRelEdgeHasPowers :
   fac f s := pshRelEdgePowerFac f s
   uniq f g h := pshRelEdgePowerUniq f g h
 
+/-- The `S`-copowered presheaf: given
+`S : Type w` and a presheaf `P`, produce
+the presheaf `S × P` (tagged elements at
+each stage, with restriction on the second
+component). -/
+def pshCopower
+    (S : Type (max u v))
+    (P : Cᵒᵖ ⥤ Type (max u v)) :
+    Cᵒᵖ ⥤ Type (max u v) where
+  obj c := S × P.obj c
+  map f sp := (sp.1, P.map f sp.2)
+  map_id c := by
+    ext ⟨s, p⟩ : 1
+    simp only [types_id_apply]
+    exact Prod.ext rfl (congr_fun
+      (P.map_id c) p)
+  map_comp f₁ f₂ := by
+    ext ⟨s, p⟩ : 1
+    simp only [types_comp_apply]
+    exact Prod.ext rfl (congr_fun
+      (P.map_comp f₁ f₂) p)
+
+/-- The `S`-copowered relation: a pair
+`((s₁, p), (s₂, q))` is related when
+`s₁ = s₂` and `(p, q) ∈ R`. -/
+def pshCopowerRel
+    {P Q : Cᵒᵖ ⥤ Type (max u v)}
+    (S : Type (max u v))
+    (R : PshRel P Q) :
+    PshRel (pshCopower S P)
+      (pshCopower S Q) where
+  obj c spq :=
+    spq.1.1 = spq.2.1 ∧
+      R.obj c (spq.1.2, spq.2.2)
+  map {c d} f := by
+    rintro ⟨⟨s₁, p⟩, ⟨s₂, q⟩⟩ ⟨heq, hr⟩
+    exact ⟨heq, R.map f hr⟩
+
+/-- The copower (tensor with a type) in
+`PshRelEdge C`: given `S : Type (max u v)`
+and `A : PshRelEdge C`, the `S`-indexed
+copower `S ·. A`. Elements at stage `c` are
+pairs `(s, a)` with `s : S` and
+`a : A.src.obj c`, related when the tags
+agree and the payloads are related. -/
+def pshRelEdgeCopower
+    (S : Type (max u v))
+    (A : PshRelEdge.{u, v, max u v} C) :
+    PshRelEdge.{u, v, max u v} C :=
+  { src := pshCopower S A.src
+    tgt := pshCopower S A.tgt
+    edge := pshCopowerRel S A.edge }
+
+/-- The injection into the copower at index
+`s : S`. Tags the element with `s`. -/
+def pshRelEdgeCopowerInj
+    (S : Type (max u v))
+    (A : PshRelEdge.{u, v, max u v} C)
+    (s : S) :
+    A ⟶ pshRelEdgeCopower S A where
+  srcMap :=
+    { app := fun _ a => (s, a)
+      naturality := fun {_ _} _ =>
+        funext fun _ => rfl }
+  tgtMap :=
+    { app := fun _ a => (s, a)
+      naturality := fun {_ _} _ =>
+        funext fun _ => rfl }
+  sq _ _ _ h := ⟨rfl, h⟩
+
+/-- The copower descent: given a family
+`f : S → (A ⟶ Y)`, produce a morphism
+`S ·. A ⟶ Y` by dispatching on the tag. -/
+def pshRelEdgeCopowerDesc
+    {S : Type (max u v)}
+    {A Y : PshRelEdge.{u, v, max u v} C}
+    (f : S → (A ⟶ Y)) :
+    pshRelEdgeCopower S A ⟶ Y where
+  srcMap :=
+    { app := fun c sa =>
+        (f sa.1).srcMap.app c sa.2
+      naturality := fun {c d} g => by
+        ext ⟨s, a⟩
+        exact congr_fun
+          ((f s).srcMap.naturality g) a }
+  tgtMap :=
+    { app := fun c sa =>
+        (f sa.1).tgtMap.app c sa.2
+      naturality := fun {c d} g => by
+        ext ⟨s, a⟩
+        exact congr_fun
+          ((f s).tgtMap.naturality g) a }
+  sq c sp₁ sp₂ h := by
+    dsimp [pshRelEdgeCopower, pshCopowerRel]
+      at h
+    have heq : sp₁.1 = sp₂.1 := h.1
+    have hr := h.2
+    cases sp₁; cases sp₂
+    dsimp at heq hr ⊢
+    subst heq
+    exact (f _).sq c _ _ hr
+
+/-- The injection factorization: injection at
+`s` composed with descent equals `f s`. -/
+theorem pshRelEdgeCopowerFac
+    {S : Type (max u v)}
+    {A Y : PshRelEdge.{u, v, max u v} C}
+    (f : S → (A ⟶ Y)) (s : S) :
+    pshRelEdgeCopowerInj S A s ≫
+      pshRelEdgeCopowerDesc f = f s :=
+  VertEdgeHom.ext rfl rfl
+
+/-- Uniqueness of the copower descent: any
+morphism from the copower that agrees with
+`f` on all injections equals the descent. -/
+theorem pshRelEdgeCopowerUniq
+    {S : Type (max u v)}
+    {A Y : PshRelEdge.{u, v, max u v} C}
+    (f : S → (A ⟶ Y))
+    (g : pshRelEdgeCopower S A ⟶ Y)
+    (h : ∀ s, pshRelEdgeCopowerInj S A s ≫ g =
+      f s) :
+    g = pshRelEdgeCopowerDesc f := by
+  have hsrc : ∀ s, (pshRelEdgeCopowerInj
+      S A s).srcMap ≫ g.srcMap =
+      (f s).srcMap :=
+    fun s => congrArg VertEdgeHom.srcMap (h s)
+  have htgt : ∀ s, (pshRelEdgeCopowerInj
+      S A s).tgtMap ≫ g.tgtMap =
+      (f s).tgtMap :=
+    fun s => congrArg VertEdgeHom.tgtMap (h s)
+  apply VertEdgeHom.ext
+  · ext c ⟨s, a⟩
+    exact congr_fun (congr_app (hsrc s) c) a
+  · ext c ⟨s, a⟩
+    exact congr_fun (congr_app (htgt s) c) a
+
+/-- `PshRelEdge C` has copowers (tensors
+with types): the copower `S ·. A` is the
+tagged-element edge `pshRelEdgeCopower S A`.
+-/
+instance pshRelEdgeHasCopowers :
+    HasCopowers
+      (PshRelEdge.{u, v, max u v} C) where
+  copower S A := pshRelEdgeCopower S A
+  inj S A s := pshRelEdgeCopowerInj S A s
+  desc f := pshRelEdgeCopowerDesc f
+  fac f s := pshRelEdgeCopowerFac f s
+  uniq f g h := pshRelEdgeCopowerUniq f g h
+
 end Power
 
 end GebLean
