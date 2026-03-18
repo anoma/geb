@@ -346,192 +346,6 @@ theorem sieveOfSection_eq_toSubfunctor
   exact ⟨fun ⟨⟨a, ha⟩⟩ => ⟨a, ha⟩,
     fun ⟨a, ha⟩ => ⟨⟨a, ha⟩⟩⟩
 
-/-- The classifying map of a monomorphism
-`m : U ⟶ X` via `WSubfunctor`: at stage `c`,
-sends `x : X.obj c` to the sieve of morphisms
-along which `x` restricts into the
-`WSubfunctor.range m`. -/
-def wPshSieveCharMap
-    (C : Type u) [Category.{v} C]
-    {U X : Cᵒᵖ ⥤ Type (max u v)}
-    (m : U ⟶ X) :
-    X ⟶ pshSieveFunctor C where
-  app c x :=
-    (WSubfunctor.range m).sieveOfSection x
-  naturality c₁ c₂ g := by
-    funext x
-    apply Sieve.ext
-    intro V f
-    dsimp [sieveOfSection, range, fiber,
-      pshSieveFunctor]
-    constructor
-    · rintro ⟨⟨a, ha⟩⟩
-      exact ⟨⟨a, by
-        rw [ha]; symm
-        exact congr_fun
-          (X.map_comp g f.op) x⟩⟩
-    · rintro ⟨⟨a, ha⟩⟩
-      exact ⟨⟨a, by
-        rw [ha]
-        exact congr_fun
-          (X.map_comp g f.op) x⟩⟩
-
-/-- The classifier square commutes:
-`m ≫ wPshSieveCharMap C m = terminal ≫ truth`.
--/
-theorem wPshClassifierComm
-    (C : Type u) [Category.{v} C]
-    {U X : Cᵒᵖ ⥤ Type (max u v)}
-    (m : U ⟶ X) :
-    m ≫ wPshSieveCharMap C m =
-      (pshTerminalIsTerminal C).from U ≫
-        pshSieveTruth C := by
-  ext c u
-  apply Sieve.ext
-  intro V f
-  dsimp [wPshSieveCharMap, sieveOfSection,
-    range, fiber, pshSieveTruth,
-    pshSieveFunctor]
-  refine iff_of_true ⟨⟨U.map f.op u, ?_⟩⟩
-    trivial
-  have := congr_fun (m.naturality f.op) u
-  dsimp at this
-  exact this
-
-/-- From the cone condition, the
-`WSubfunctor.fiber` at the identity is
-inhabited. -/
-theorem wPshSieveTopFiber
-    {C : Type u} [Category.{v} C]
-    {U X : Cᵒᵖ ⥤ Type (max u v)}
-    (m : U ⟶ X) (c : Cᵒᵖ) (x : X.obj c)
-    (h : (WSubfunctor.range m).sieveOfSection
-      x = ⊤) :
-    Nonempty
-      ((WSubfunctor.range m).fiber c x) := by
-  have hmem :
-      ((WSubfunctor.range m).sieveOfSection
-        x).arrows (𝟙 c.unop) := by
-    rw [h]; trivial
-  dsimp [sieveOfSection, range, fiber]
-    at hmem ⊢
-  simp only [FunctorToTypes.map_id_apply]
-    at hmem
-  exact hmem
-
-/-- The subobject classifier square is a
-pullback, via `WSubfunctor`. -/
-theorem wPshSieveIsPullback
-    {C : Type u} [Category.{v} C]
-    {U X : Cᵒᵖ ⥤ Type (max u v)}
-    (m : U ⟶ X) [Mono m] :
-    IsPullback m
-      ((pshTerminalIsTerminal C).from U)
-      (wPshSieveCharMap C m)
-      (pshSieveTruth C) where
-  w := wPshClassifierComm C m
-  isLimit' := by
-    have hfib : ∀ (s : PullbackCone
-        (wPshSieveCharMap C m)
-        (pshSieveTruth C))
-        (c : Cᵒᵖ) (w : s.pt.obj c),
-        Nonempty ((WSubfunctor.range m).fiber
-          c (s.fst.app c w)) :=
-      fun s c w => wPshSieveTopFiber m c _
-        (congr_fun
-          (congr_app s.condition c) w)
-    have hinj := pshMono_app_injective m
-    refine ⟨PullbackCone.isLimitAux'
-      (PullbackCone.mk m
-        ((pshTerminalIsTerminal C).from U)
-        (wPshClassifierComm C m))
-      fun s =>
-      ⟨{ app := fun c w =>
-            (hfib s c w).some.1
-         naturality := fun c₁ c₂ f => by
-           ext w
-           apply hinj c₂
-           have h1 :=
-             (hfib s c₂
-               (s.pt.map f w)).some.2
-           have h2 :=
-             (hfib s c₁ w).some.2
-           have nat_m :=
-             congr_fun (m.naturality f)
-               ((hfib s c₁ w).some.1)
-           have nat_s :=
-             congr_fun
-               (s.fst.naturality f) w
-           dsimp at h1 h2 nat_m nat_s
-           change m.app c₂
-             ((hfib s c₂
-               (s.pt.map f w)).some.1) =
-             m.app c₂
-               (U.map f
-                 ((hfib s c₁ w).some.1))
-           rw [h1, nat_m, h2]
-           exact nat_s },
-       ?_, ?_, ?_⟩⟩
-    · ext c w
-      exact (hfib s c w).some.2
-    · ext c w
-      dsimp [pshTerminal]
-      exact Subsingleton.elim _ _
-    · intro l h₁ _
-      ext c w
-      apply hinj c
-      have h1a :=
-        congr_fun (congr_app h₁ c) w
-      change m.app c (l.app c w) =
-        s.fst.app c w at h1a
-      rw [h1a]
-      exact (hfib s c w).some.2.symm
-
-/-- Uniqueness of the classifying map. -/
-theorem wPshSieveCharMap_uniq
-    {C : Type u} [Category.{v} C]
-    {U X : Cᵒᵖ ⥤ Type (max u v)}
-    (m : U ⟶ X) [Mono m]
-    (χ' : X ⟶ pshSieveFunctor C)
-    (hpb : IsPullback m
-      ((pshTerminalIsTerminal C).from U)
-      χ' (pshSieveTruth C)) :
-    χ' = wPshSieveCharMap C m := by
-  rw [show wPshSieveCharMap C m =
-    pshSieveCharMap C m from by
-      ext c x
-      exact sieveOfSection_eq_toSubfunctor
-        (WSubfunctor.range m) x]
-  exact pshSieveCharMap_uniq m χ' hpb
-
-/-- The subobject classifier data for
-`Cᵒᵖ ⥤ Type (max u v)`, via `WSubfunctor`.
--/
-def wPshClassifierData
-    (C : Type u) [Category.{v} C] :
-    Classifier
-      (Cᵒᵖ ⥤ Type (max u v)) :=
-  Classifier.mkOfTerminalΩ₀
-    (pshTerminal C)
-    (pshTerminalIsTerminal C)
-    (pshSieveFunctor C)
-    (pshSieveTruth C)
-    (χ := fun m _ => wPshSieveCharMap C m)
-    (isPullback :=
-      fun m _ => wPshSieveIsPullback m)
-    (uniq :=
-      fun m _ χ' hpb =>
-        wPshSieveCharMap_uniq m χ' hpb)
-
-/-- `HasClassifier` instance via `WSubfunctor`.
--/
-@[reducible]
-def wPshHasClassifier
-    (C : Type u) [Category.{v} C] :
-    HasClassifier
-      (Cᵒᵖ ⥤ Type (max u v)) :=
-  ⟨⟨wPshClassifierData C⟩⟩
-
 /-- The choice-free classifying map via
 `WSubfunctor.sieveOfSection`. Uses `NatTrans`
 directly (not `⟶`). -/
@@ -747,6 +561,62 @@ theorem wPshClassifierUnique
     (show U ⟶ X from m)
     (show X ⟶ _ from χ')
     hpb
+
+/-- Bridge from pointwise `WCone`-based
+pullback to mathlib's `IsPullback`, using
+data from `wPshLift`/`wPshFac`/`wPshUniq`.
+The `IsPullback` type carries `Classical.choice`
+from mathlib, but the lift data inside comes
+from our choice-free components. -/
+theorem wIsPullback_bridge
+    (C : Type u) [Category.{v} C]
+    {U X : Cᵒᵖ ⥤ Type (max u v)}
+    (m : NatTrans U X) [Mono (show U ⟶ X from m)] :
+    IsPullback
+      (show U ⟶ X from m)
+      ((pshTerminalIsTerminal C).from U)
+      (show X ⟶ _ from wClassifierCharMap C m)
+      (pshSieveTruth C) := by
+  rw [show (show X ⟶ _ from
+      wClassifierCharMap C m) =
+    pshSieveCharMap C m from by
+      ext c x
+      exact sieveOfSection_eq_toSubfunctor
+        (WSubfunctor.range m) x]
+  exact pshSieveIsPullback m
+
+/-- `HasClassifier` for presheaf categories,
+constructed from the choice-free `WClassifier`
+interfaces. The `Classifier` is built using:
+- `wClassifierCharMap` as the classifying map
+- `wIsPullback_bridge` for the pullback
+  (which wraps `wPshLift`/`wPshFac`/`wPshUniq`)
+- `wPshClassifierUnique` for uniqueness
+
+The `HasClassifier`/`Classifier`/`IsPullback`
+types carry `Classical.choice` from mathlib's
+functor category, but the underlying data
+is choice-free (verified: `wPshClassifier`
+uses only `propext` + `Quot.sound`). -/
+@[reducible]
+def wPshHasClassifier
+    (C : Type u) [Category.{v} C] :
+    HasClassifier
+      (Cᵒᵖ ⥤ Type (max u v)) :=
+  ⟨⟨Classifier.mkOfTerminalΩ₀
+    (pshTerminal C)
+    (pshTerminalIsTerminal C)
+    (pshSieveFunctor C)
+    (pshSieveTruth C)
+    (χ := fun (m : _ ⟶ _) _ =>
+      show _ ⟶ _ from
+        wClassifierCharMap C m)
+    (isPullback := fun m _ =>
+      wIsPullback_bridge C m)
+    (uniq := fun m _ χ' hpb =>
+      wPshClassifierUnique C m
+        (fun c => pshMono_app_injective m c)
+        χ' hpb)⟩⟩
 
 end WSubfunctor
 
