@@ -2939,6 +2939,57 @@ def endoIhomMapG
       (t.1 ⟨i, c, α⟩)
       (h ⟨i, c, α⟩)
 
+/-- The right adjoint functor for the
+endofunctor CCC: sends `G` to `[F, G]`
+and natural transformations `η : G₁ ⟶ G₂`
+to the induced map `[F, G₁] ⟶ [F, G₂]`
+by postcomposition with `η` at each
+representable, pointwise in `E`. -/
+def endoIhomFunctor
+    (F :
+      PshRelEdge.{u, v, max u v} C ⥤
+        PshRelEdge.{u, v, max u v} C) :
+    (PshRelEdge.{u, v, max u v} C ⥤
+      PshRelEdge.{u, v, max u v} C) ⥤
+    (PshRelEdge.{u, v, max u v} C ⥤
+      PshRelEdge.{u, v, max u v} C) where
+  obj G := endoIhom F G
+  map {G₁ G₂} η :=
+    { app := fun E => endoIhomMapG F η E
+      naturality := fun {E₁ E₂} g => by
+        apply VertEdgeHom.ext <;>
+        · apply NatTrans.ext; funext d
+          funext ⟨h, hc⟩
+          apply Subtype.ext
+          funext ⟨i, c, α⟩
+          rfl }
+  map_id G := by
+    ext E : 2
+    apply VertEdgeHom.ext <;>
+    · apply NatTrans.ext; funext d
+      funext ⟨h, hc⟩
+      apply Subtype.ext
+      funext ⟨i, c, α⟩
+      dsimp only [endoIhomMapG,
+        endoIhom, endoIhomObj,
+        endoIhomSrc, endoIhomTgt]
+      rw [NatTrans.id_app,
+        (pshRelEdgeIhom _).map_id]
+      rfl
+  map_comp {G₁ G₂ G₃} η₁ η₂ := by
+    ext E : 2
+    apply VertEdgeHom.ext <;>
+    · apply NatTrans.ext; funext d
+      funext ⟨h, hc⟩
+      apply Subtype.ext
+      funext ⟨i, c, α⟩
+      dsimp only [endoIhomMapG,
+        endoIhom, endoIhomObj,
+        endoIhomSrc, endoIhomTgt]
+      rw [NatTrans.comp_app,
+        (pshRelEdgeIhom _).map_comp]
+      rfl
+
 end EndoIhom
 
 end GebLean
