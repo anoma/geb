@@ -46,6 +46,7 @@ import GebLean.PolyPresentationEquiv
 import GebLean.PolyTwCoprType
 import GebLean.PolyUMorph
 import GebLean.Polynomial
+import GebLean.PolyCover
 import GebLean.ProfAlg
 import GebLean.PshInternalCat
 import GebLean.PshRelDouble
