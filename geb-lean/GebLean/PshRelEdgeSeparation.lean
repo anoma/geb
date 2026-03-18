@@ -1891,6 +1891,100 @@ def pshRelEdgeRepresentable
   pshRelEdgeSepObj
     (spanRepresentable (C := C) i₀ c₀)
 
+/-- The powered internal hom component:
+at representable index `(i₀, c₀)` and edge
+`E`, this is the edge
+`[F(y(i₀,c₀)), G(y(i₀,c₀))]^{E(i₀,c₀)}`
+where `y` is the representable edge and
+`E(i₀,c₀)` is the span evaluation. -/
+def endoIhomComponent
+    (F G :
+      PshRelEdge.{u, v, max u v} C ⥤
+        PshRelEdge.{u, v, max u v} C)
+    (E : PshRelEdge.{u, v, max u v} C)
+    (i₀ : WalkingSpan) (c₀ : Cᵒᵖ) :
+    PshRelEdge.{u, v, max u v} C :=
+  pshRelEdgePower
+    (pshRelEdgeSpanEval E c₀ i₀)
+    (pshRelEdgeExp
+      (F.obj (pshRelEdgeRepresentable i₀ c₀))
+      (G.obj (pshRelEdgeRepresentable i₀ c₀)))
+
+/-- The dependent product presheaf: given a
+family `P : J → (Cᵒᵖ ⥤ Type w)` indexed by
+a type `J`, produce the presheaf of dependent
+functions `∀ j, P(j).obj c` at each stage.
+This generalizes `pshPower` from constant to
+dependent families. -/
+def pshDependentProduct
+    {J : Type (max u v)}
+    (P : J → (Cᵒᵖ ⥤ Type (max u v))) :
+    Cᵒᵖ ⥤ Type (max u v) where
+  obj c := ∀ j : J, (P j).obj c
+  map f g j := (P j).map f (g j)
+  map_id c := by
+    ext g j
+    exact congr_fun ((P j).map_id c) (g j)
+  map_comp f₁ f₂ := by
+    ext g j
+    exact congr_fun
+      ((P j).map_comp f₁ f₂) (g j)
+
+/-- The dependent product relation: a pair
+of dependent functions is related when each
+component is related. -/
+def pshDependentProductRel
+    {J : Type (max u v)}
+    {P Q : J → (Cᵒᵖ ⥤ Type (max u v))}
+    (R : ∀ j, PshRel (P j) (Q j)) :
+    PshRel (pshDependentProduct P)
+      (pshDependentProduct Q) where
+  obj c fpq :=
+    ∀ j, (R j).obj c (fpq.1 j, fpq.2 j)
+  map {c d} f := by
+    rintro ⟨fp, fq⟩ h j
+    exact (R j).map f (h j)
+
+/-- The dependent product edge: given a
+family of edges indexed by `J`, produce
+the edge of dependent functions with
+pointwise relatedness. -/
+def pshRelEdgeDependentProduct
+    {J : Type (max u v)}
+    (A : J → PshRelEdge.{u, v, max u v} C) :
+    PshRelEdge.{u, v, max u v} C :=
+  { src := pshDependentProduct (fun j =>
+      (A j).src)
+    tgt := pshDependentProduct (fun j =>
+      (A j).tgt)
+    edge := pshDependentProductRel (fun j =>
+      (A j).edge) }
+
+/-- The endofunctor internal hom object at
+edge `E`: the dependent product
+`∏_{(i,c,e)} [F(y(i,c)), G(y(i,c))]`
+indexed by triples `(i, c, e)` where
+`i : WalkingSpan`, `c : Cᵒᵖ`, and
+`e : E(c, i)` (an element of the span
+evaluation). This is the product part of
+the powered end; the full end additionally
+requires naturality conditions. -/
+def endoIhomProd
+    (F G :
+      PshRelEdge.{u, v, max u v} C ⥤
+        PshRelEdge.{u, v, max u v} C)
+    (E : PshRelEdge.{u, v, max u v} C) :
+    PshRelEdge.{u, v, max u v} C :=
+  pshRelEdgeDependentProduct
+    (fun (ice : Σ (i : WalkingSpan),
+        Σ (c : Cᵒᵖ),
+          pshRelEdgeSpanEval E c i) =>
+      pshRelEdgeExp
+        (F.obj (pshRelEdgeRepresentable
+          ice.1 ice.2.1))
+        (G.obj (pshRelEdgeRepresentable
+          ice.1 ice.2.1)))
+
 end EndoIhom
 
 end GebLean
