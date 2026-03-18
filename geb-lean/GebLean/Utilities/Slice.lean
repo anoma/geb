@@ -80,6 +80,26 @@ section OverTypeHelpers
 
 variable {X : Type u}
 
+/-! #### Fibers of `Over X` objects -/
+
+/-- The fiber of `A : Over X` at `x : X`: the subtype
+of `A.left` elements that project to `x`. -/
+abbrev Over.Fiber (A : Over X) (x : X) : Type u :=
+  { a : A.left // A.hom a = x }
+
+/-- Construct a fiber element from a value and proof. -/
+abbrev Over.Fiber.mk {A : Over X} {x : X}
+    (a : A.left) (h : A.hom a = x) :
+    Over.Fiber A x :=
+  ⟨a, h⟩
+
+/-- Map a fiber element along a morphism in `Over X`. -/
+def Over.Fiber.map {A B : Over X} (f : A ⟶ B)
+    {x : X} (p : Over.Fiber A x) :
+    Over.Fiber B x :=
+  ⟨f.left p.val,
+    (congrFun (Over.w f) p.val).trans p.property⟩
+
 /--
 Extract the underlying function from an `Over X` morphism.
 For `f : A ⟶ B` in `Over X`, this gives `f.left : A.left → B.left`.
