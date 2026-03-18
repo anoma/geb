@@ -56,8 +56,14 @@ The type of binary trees is the free monad of the product
 polynomial (`polyProdFreeM`), evaluated at the terminal
 object.  This gives the initial algebra of `X ↦ 1 + X × X`.
 
-Constructors and the catamorphism are thin wrappers around
-the `PolyFix` structure from `PolyAlg`.
+Constructors and the catamorphism use universal morphisms
+from `PolyAlg`:
+- `polyFreeMPure` for leaf injection
+- `polyFreeMStrFamily` for node injection
+- `polyFreeCounitFoldAt` for the catamorphism (counit of
+  the free-forgetful adjunction)
+- `polyProd_eval_fiberEquiv` for the pair interface on
+  `polyProd` directions
 -/
 
 /-- Binary trees as the free monad of the product
@@ -68,41 +74,76 @@ abbrev BT : Type u :=
     polyProdType
     PUnit.unit
 
-/-- The leaf tree (the unit `z : 1 → T` of the BTO). -/
+/-- The leaf tree (the unit `z : 1 → T` of the BTO).
+Constructed via `polyFreeMPure` (the unit of the free
+monad). -/
 def BT.leaf : BT.{u} :=
-  PolyFix.mk PUnit.unit
-    (Sum.inl ⟨PUnit.unit, rfl⟩)
-    (fun e => PEmpty.elim e)
+  polyFreeMPure
+    (overTerminal PUnit.{u + 1})
+    polyProdType
+    ⟨PUnit.unit, rfl⟩
 
 /-- A branching tree from two subtrees
-(the operation `s : T × T → T` of the BTO). -/
+(the operation `s : T × T → T` of the BTO).
+Constructed via `polyFreeMStrFamily` (the structure map
+of the free algebra) with `polyProd_eval_fiberEquiv` to
+present the two children as a pair. -/
 def BT.node (l r : BT.{u}) : BT.{u} :=
-  PolyFix.mk PUnit.unit
-    (Sum.inr PUnit.unit)
-    (fun e => match e with
-      | Sum.inl _ => l
-      | Sum.inr _ => r)
+  let carrier :=
+    polyFreeMCarrier
+      (overTerminal PUnit.{u + 1}) polyProdType
+  polyFreeMStrFamily
+    (overTerminal PUnit.{u + 1})
+    polyProdType
+    PUnit.unit
+    ((polyProd_eval_fiberEquiv carrier
+        PUnit.unit).invFun
+      (⟨⟨PUnit.unit, l⟩, rfl⟩,
+       ⟨⟨PUnit.unit, r⟩, rfl⟩))
 
-private def btFoldAux {α : Type u}
-    (b : α) (s : α → α → α)
-    {x : PUnit.{u + 1}}
-    (t : PolyFix
-      (polyTranslate
-        (overTerminal PUnit.{u + 1})
-        polyProdType) x) : α :=
-  match t with
-  | .mk _ (Sum.inl _) _ => b
-  | .mk _ (Sum.inr _) ch =>
-    s (btFoldAux b s (ch (Sum.inl PUnit.unit)))
-      (btFoldAux b s (ch (Sum.inr PUnit.unit)))
+/-- Carrier for the fold target: an `Over PUnit` object
+with left component `α`. -/
+private def btFoldCarrier (α : Type u) :
+    Over PUnit.{u + 1} :=
+  Over.mk (fun (_ : α) => PUnit.unit)
+
+/-- The `polyProdType`-algebra whose structure map applies
+a binary operation to the pair of recursive results,
+extracted via `polyProd_eval_fiberEquiv`. -/
+private def btFoldAlg {α : Type u}
+    (s : α → α → α) :
+    PolyAlg polyProdType where
+  a := btFoldCarrier α
+  str := Over.homMk
+    (fun ⟨_, eval⟩ =>
+      let pair :=
+        (polyProd_eval_fiberEquiv
+          (btFoldCarrier α) _).toFun eval
+      s pair.1.val pair.2.val)
+    (by funext ⟨⟨⟩, _⟩; rfl)
 
 /-- Catamorphism (fold) for binary trees (the universal
 morphism `φ : A × T → X` of the parameterized BTO).
 Given `b` for leaves and `s` for branches, folds a tree
-to produce a result. -/
+to produce a result.
+
+Constructed by mapping leaves via `polyFreeMapAt` (to
+embed the base value `b` at each leaf), then applying the
+counit fold `polyFreeCounitFoldAt` (the counit of the
+free-forgetful adjunction on `polyProdType`-algebras). -/
 def BT.fold {α : Type u} (b : α) (s : α → α → α)
     (t : BT.{u}) : α :=
-  btFoldAux b s t
+  let alg := btFoldAlg s
+  let leafMap : overTerminal PUnit.{u + 1} ⟶
+      btFoldCarrier α :=
+    Over.homMk (fun _ => b) rfl
+  let mapped :=
+    polyFreeMapAt
+      (overTerminal PUnit.{u + 1})
+      (btFoldCarrier α)
+      polyProdType leafMap PUnit.unit t
+  (polyFreeCounitFoldAt polyProdType alg
+    PUnit.unit mapped).val
 
 /-! ## Morphisms of the Lawvere theory
 
@@ -245,9 +286,9 @@ def extendCtx {n : ℕ} (ctx : Fin n → BT.{u})
 def BTMor1.interp {n : ℕ} :
     BTMor1 n → (Fin n → BT.{u}) → BT.{u}
   | .proj i, ctx => ctx i
-  | .leaf, _ => .leaf
+  | .leaf, _ => BT.leaf
   | .branch t₁ t₂, ctx =>
-    .node (t₁.interp ctx) (t₂.interp ctx)
+    BT.node (t₁.interp ctx) (t₂.interp ctx)
   | .fold base step tree, ctx =>
     (tree.interp ctx).fold
       (base.interp ctx)
