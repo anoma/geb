@@ -1501,14 +1501,70 @@ instance
 -- is synthesized automatically from
 -- `exponentialIdeal_of_preservesBinaryProducts`
 -- and `pshRelEdgeSepPreservesFiniteProducts`.
---
--- The endofunctor CCC
--- `MonoidalClosed (PshRelEdge C ⥤ PshRelEdge C)`
--- requires the Yoneda reduction via the
--- reflective embedding into PshSpanCat.
--- See `.session/workstreams/endofunctor-ccc-plan.md`
--- for the detailed implementation plan.
 
 end EndofunctorCCC
+
+section Power
+
+/-! ### Power (cotensor) in PshRelEdge
+
+The `S`-indexed power `A^S` of an edge `A`
+by a type `S` has:
+- Source/target: the function presheaf
+  `S → A.src/tgt` at each stage
+- Relation: pointwise relatedness — a pair
+  `(f, g)` is related when `(f s, g s) ∈ R`
+  for all `s : S`
+-/
+
+variable {C : Type u} [Category.{v} C]
+
+/-- The `S`-powered presheaf: given
+`S : Type w` and a presheaf `P`, produce
+the presheaf `S → P` (function type at
+each stage, with restriction by
+precomposition). -/
+def pshPower
+    (S : Type (max u v))
+    (P : Cᵒᵖ ⥤ Type (max u v)) :
+    Cᵒᵖ ⥤ Type (max u v) where
+  obj c := S → P.obj c
+  map f g s := P.map f (g s)
+  map_id c := by
+    ext g s
+    exact congr_fun (P.map_id c) (g s)
+  map_comp f₁ f₂ := by
+    ext g s
+    exact congr_fun (P.map_comp f₁ f₂) (g s)
+
+/-- The `S`-powered relation: a pair of
+functions `(f, g)` where `f : S → P.obj c`
+and `g : S → Q.obj c` is related when
+`(f s, g s) ∈ R` for all `s : S`. -/
+def pshPowerRel
+    {P Q : Cᵒᵖ ⥤ Type (max u v)}
+    (S : Type (max u v))
+    (R : PshRel P Q) :
+    PshRel (pshPower S P) (pshPower S Q) where
+  obj c fpq :=
+    ∀ s : S, R.obj c (fpq.1 s, fpq.2 s)
+  map {c d} f {fpq} h s := by
+    have := R.map f (h s)
+    dsimp [pshPower, pshProdPresheaf] at this ⊢
+    exact this
+
+/-- The power (cotensor) in `PshRelEdge C`:
+given `S : Type (max u v)` and
+`A : PshRelEdge C`, the `S`-indexed power
+`A^S`. -/
+def pshRelEdgePower
+    (S : Type (max u v))
+    (A : PshRelEdge.{u, v, max u v} C) :
+    PshRelEdge.{u, v, max u v} C :=
+  { src := pshPower S A.src
+    tgt := pshPower S A.tgt
+    edge := pshPowerRel S A.edge }
+
+end Power
 
 end GebLean
