@@ -13,6 +13,7 @@ import Mathlib.CategoryTheory.Monoidal.Cartesian.FunctorCategory
 import Mathlib.CategoryTheory.Adjunction.Whiskering
 import Mathlib.CategoryTheory.Adjunction.Unique
 import Mathlib.CategoryTheory.Adjunction.Opposites
+import Mathlib.CategoryTheory.Adjunction.Limits
 import Mathlib.CategoryTheory.Adjunction.FullyFaithful
 
 /-!
@@ -3119,6 +3120,35 @@ theorem rightYonedaExtAdj_counit_isIso
   haveI :=
     (rightYonedaExtFullyFaithful hF).faithful
   inferInstance
+
+/-- The right Yoneda extension preserves all
+limits (as a right adjoint of `precompOp F`).
+This is the categorical foundation for
+universal types: `rightYonedaExt F` applied
+to a limit diagram in `PSh(C)` produces the
+limit in `PSh(D)`. -/
+instance rightYonedaExt_preservesLimits
+    (F : C ⥤ D) :
+    Limits.PreservesLimitsOfSize.{v, u}
+      (rightYonedaExt F :
+        (Cᵒᵖ ⥤ Type (max u v)) ⥤
+          (Dᵒᵖ ⥤ Type (max u v))) :=
+  (rightYonedaExtAdj F).rightAdjoint_preservesLimits
+
+/-- Dually, the left Yoneda extension preserves
+all colimits (as a left adjoint of
+`precompOp F`). This is the categorical
+foundation for existential types:
+`leftYonedaExt F` applied to a colimit
+diagram in `PSh(C)` produces the colimit in
+`PSh(D)`. -/
+instance leftYonedaExt_preservesColimits
+    (F : C ⥤ D) :
+    Limits.PreservesColimitsOfSize.{v, u}
+      (leftYonedaExt F :
+        (Cᵒᵖ ⥤ Type (max u v)) ⥤
+          (Dᵒᵖ ⥤ Type (max u v))) :=
+  (leftYonedaExtAdj F).leftAdjoint_preservesColimits
 
 end PresheafAdjunctionProperties
 
