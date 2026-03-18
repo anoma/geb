@@ -2,6 +2,7 @@ import GebLean.PshRelEdgeInclusion
 import GebLean.PshRelEdgeExp
 import Mathlib.CategoryTheory.Monoidal.Cartesian.Basic
 import Mathlib.CategoryTheory.Adjunction.Reflective
+import Mathlib.CategoryTheory.Monoidal.Closed.FunctorCategory.Basic
 
 /-!
 # PshRelEdge C as separated presheaves
@@ -498,8 +499,9 @@ edge `A` is isomorphic to `A` itself.
 Yoneda means `[⊤, A] ≅ A`. -/
 abbrev pshRelEdgeUnitIsoSelf
     (A : PshRelEdge.{u, v, max u v} C) :
-    ((𝟙_ (PshRelEdge.{u, v, max u v} C))
-      ⟶[PshRelEdge.{u, v, max u v} C] A) ≅
+    (ihom
+      (𝟙_ (PshRelEdge.{u, v, max u v} C))
+      |>.obj A) ≅
     A :=
   unitIsoSelf (X := A)
 
@@ -1463,5 +1465,50 @@ theorem edgeSepSpan_roundtrip
   exact pshRelEdgeSepObj_inclusion E
 
 end SeparatedSpanEquivalence
+
+section EndofunctorCCC
+
+/-! ### CCC structure on the endofunctor category
+
+The endofunctor category
+`PshRelEdge C ⥤ PshRelEdge C` inherits CCC
+structure from `PshRelEdge C` being CCC and
+complete. The internal hom `[F, G]` of two
+endofunctors is the enriched hom (end)
+`∫_X [F(X), G(X)]`, computed using the
+internal hom in `PshRelEdge C`.
+
+Mathlib provides this via
+`MonoidalClosed` on functor categories,
+given `MonoidalClosed C` and
+`HasEnrichedHom C F₁ F₂` for all pairs.
+-/
+
+variable (C : Type u) [Category.{v} C]
+
+/-- The endofunctor category of
+`PshRelEdge C` inherits the cartesian
+monoidal structure (pointwise products). -/
+instance
+    pshRelEdgeEndoCartesian :
+    CartesianMonoidalCategory
+      (PshRelEdge.{u, v, max u v} C ⥤
+        PshRelEdge.{u, v, max u v} C) :=
+  inferInstance
+
+-- The exponential ideal instance
+-- `ExponentialIdeal (pshRelEdgeInclusionFunctor C)`
+-- is synthesized automatically from
+-- `exponentialIdeal_of_preservesBinaryProducts`
+-- and `pshRelEdgeSepPreservesFiniteProducts`.
+--
+-- The endofunctor CCC
+-- `MonoidalClosed (PshRelEdge C ⥤ PshRelEdge C)`
+-- requires the Yoneda reduction via the
+-- reflective embedding into PshSpanCat.
+-- See `.session/workstreams/endofunctor-ccc-plan.md`
+-- for the detailed implementation plan.
+
+end EndofunctorCCC
 
 end GebLean
