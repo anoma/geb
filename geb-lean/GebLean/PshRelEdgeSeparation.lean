@@ -2029,6 +2029,65 @@ def spanRepresentableMapPsh
     apply NatTrans.ext
     funext c; funext ⟨h, ⟨k⟩⟩; rfl
 
+/-- Covariant dinatural map: for a morphism
+`α : y(j') ⟶ y(j)` of representable edges
+(note the reversed direction — the
+representable is contravariant in the
+index), the map
+`[F(y(j)), G(y(j))] → [F(y(j')), G(y(j))]`
+by precomposition with `F.map α`. -/
+def endoDinatCovar
+    (F G :
+      PshRelEdge.{u, v, max u v} C ⥤
+        PshRelEdge.{u, v, max u v} C)
+    {i₀ i₁ : WalkingSpan}
+    {c₀ c₁ : Cᵒᵖ}
+    (α : pshRelEdgeRepresentable (C := C)
+      i₁ c₁ ⟶
+      pshRelEdgeRepresentable i₀ c₀) :
+    pshRelEdgeExp
+      (F.obj (pshRelEdgeRepresentable i₀ c₀))
+      (G.obj (pshRelEdgeRepresentable i₀ c₀))
+      ⟶
+    pshRelEdgeExp
+      (F.obj (pshRelEdgeRepresentable i₁ c₁))
+      (G.obj (pshRelEdgeRepresentable i₀ c₀))
+      :=
+  -- Precompose with F(α) : F(y₁) → F(y₀).
+  -- curry(eval ∘ (id ⊗ F(α)))
+  pshRelEdgeCurry
+    (MonoidalCategory.tensorHom (𝟙 _)
+      (F.map α) ≫
+      pshRelEdgeUncurry (𝟙 _))
+
+/-- Contravariant dinatural map: for a
+morphism `α : y(j') ⟶ y(j)` (reversed),
+the map
+`[F(y(j')), G(y(j'))] → [F(y(j')), G(y(j))]`
+by postcomposition with `G.map α`. -/
+def endoDinatContra
+    (F G :
+      PshRelEdge.{u, v, max u v} C ⥤
+        PshRelEdge.{u, v, max u v} C)
+    {i₀ i₁ : WalkingSpan}
+    {c₀ c₁ : Cᵒᵖ}
+    (α : pshRelEdgeRepresentable (C := C)
+      i₁ c₁ ⟶
+      pshRelEdgeRepresentable i₀ c₀) :
+    pshRelEdgeExp
+      (F.obj (pshRelEdgeRepresentable i₁ c₁))
+      (G.obj (pshRelEdgeRepresentable i₁ c₁))
+      ⟶
+    pshRelEdgeExp
+      (F.obj (pshRelEdgeRepresentable i₁ c₁))
+      (G.obj (pshRelEdgeRepresentable i₀ c₀))
+      :=
+  -- Postcompose with G(α) : G(y₁) → G(y₀).
+  -- ihom(F(y₁)).map(G(α))
+  (pshRelEdgeIhom
+    (F.obj (pshRelEdgeRepresentable
+      i₁ c₁))).map (G.map α)
+
 end EndoIhom
 
 end GebLean
