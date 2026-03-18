@@ -65,43 +65,37 @@ open Presheaf Opposite
 variable (P : Cᵒᵖ ⥤ Type (max v w))
 
 /--
-The coproduct-of-representables presheaf covering `P`.
-The input `P` lands in `Type (max w v)`; the cover
-lands in `Type (max u w v)`, absorbing `u` from the
-sum over objects of `C`.
+The `FreeCoprodCompletionCat C` object whose evaluation
+is the projective cover of `P`.  Indexed by the
+contravariant elements of `P`, with family sending
+each element to the underlying object of `C`.
 -/
-@[simp]
-def presheafCover :
-    Cᵒᵖ ⥤ Type (max u w v) where
-  obj Y :=
-    Σ (j : P.ElementsPre),
-      (uliftYoneda.{max u w}.obj
-        j.unop.1.unop).obj Y
-  map {Y Z} f := fun ⟨j, g⟩ ↦
-    ⟨j,
-      (uliftYoneda.{max u w}.obj
-        j.unop.1.unop).map f g⟩
-  map_id Y := by
-    funext ⟨j, ⟨g⟩⟩
-    simp [uliftYoneda]
-  map_comp f g := by
-    funext ⟨j, ⟨h⟩⟩
-    simp [uliftYoneda]
+def presheafCoverObj :
+    FreeCoprodCompletionCat.{u, v, max u w v} C :=
+  fcObjMk (fun j : P.ElementsPre =>
+    j.unop.1.unop)
 
 /--
-The canonical map from `presheafCover P` to `P` lifted
-into the larger universe.  Sends `(j, f)` — where
-`j = (c, x)` is an element of `P` and
-`f : Y.unop ⟶ c.unop` — to `ULift.up (P.map f.op x)`.
+The projective cover of a presheaf `P`, defined as
+the evaluation of `presheafCoverObj P`.
+-/
+def presheafCover :
+    Cᵒᵖ ⥤ Type (max u w v) :=
+  fcToFunctor (presheafCoverObj P)
+
+/--
+The canonical map from `presheafCover P` to `P`
+lifted into the larger universe.
 -/
 def presheafCoverMap :
     presheafCover.{w, v, u} P ⟶
       P ⋙ uliftFunctor.{u, max w v} where
-  app Y := fun ⟨j, ⟨f⟩⟩ ↦
+  app Y := fun ⟨j, f⟩ ↦
     ULift.up (P.map f.op j.unop.2)
   naturality {Y Z} g := by
-    ext ⟨j, ⟨f⟩⟩
-    simp [presheafCover, uliftFunctor]
+    ext ⟨j, f⟩
+    simp [presheafCover, fcToFunctor,
+      fcEvalMap, uliftFunctor]
 
 instance presheafCoverMap_epi :
     Epi (presheafCoverMap.{w, v, u} P) := by
@@ -110,13 +104,16 @@ instance presheafCoverMap_epi :
   rw [epi_iff_surjective]
   intro ⟨y⟩
   exact ⟨⟨op (Functor.elementsMk P Y y),
-    ⟨𝟙 Y.unop⟩⟩,
-    by simp [presheafCoverMap]⟩
+    𝟙 Y.unop⟩, by
+    simp only [presheafCoverMap]
+    exact congrArg ULift.up
+      (congr_fun (P.map_id Y) y)⟩
 
 def presheafCoverIncl (j : P.ElementsPre) :
-    uliftYoneda.{max u w}.obj j.unop.1.unop ⟶
+    uliftYoneda.{max u w}.obj
+      j.unop.1.unop ⟶
       presheafCover.{w, v, u} P where
-  app _ g := ⟨j, g⟩
+  app _ g := ⟨j, g.down⟩
   naturality _ _ _ := rfl
 
 private lemma presheafCover_factors_aux
@@ -131,21 +128,24 @@ private lemma presheafCover_factors_aux
     (presheafCoverIncl P j ≫ f) e
 
 instance presheafCover_projective :
-    Projective (presheafCover.{w, v, u} P) where
+    Projective
+      (presheafCover.{w, v, u} P) where
   factors {E F} f e := by
     intro
     have h := fun j ↦
       presheafCover_factors_aux P f e j
     choose g hg using h
     refine ⟨⟨fun Y ⟨j, x⟩ ↦
-      (g j).app Y x,
+      (g j).app Y (ULift.up x),
         fun {Y Z} fYZ ↦ ?_⟩, ?_⟩
     · ext ⟨j, x⟩
       exact congr_fun
-        ((g j).naturality fYZ) x
+        ((g j).naturality fYZ)
+        (ULift.up x)
     · ext Y ⟨j, x⟩
       exact congr_fun
-        (NatTrans.congr_app (hg j) Y) x
+        (NatTrans.congr_app (hg j) Y)
+        (ULift.up x)
 
 def presheafProjectivePresentation :
     ProjectivePresentation
@@ -198,31 +198,36 @@ open Opposite
 
 variable (F : C ⥤ Type (max v w))
 
-def copresheafCover :
-    C ⥤ Type (max u w v) where
-  obj Y :=
-    Σ (j : F.Elements),
-      (uliftCoyoneda.{max u w}.obj
-        (op j.1)).obj Y
-  map {Y Z} f := fun ⟨j, g⟩ ↦
-    ⟨j,
-      (uliftCoyoneda.{max u w}.obj
-        (op j.1)).map f g⟩
-  map_id Y := by
-    funext ⟨j, ⟨g⟩⟩
-    simp [uliftCoyoneda, uliftYoneda]
-  map_comp f g := by
-    funext ⟨j, ⟨h⟩⟩
-    simp [uliftCoyoneda, uliftYoneda]
+/--
+The `CoprodCovarRepCat C` object whose evaluation is the
+projective cover of `F`.  Indexed by elements of `F`,
+with family sending each element `(c, x)` to `c`.
+-/
+def copresheafCoverObj :
+    CoprodCovarRepCat.{u, v, max u w v} C :=
+  ccrObjMk (fun j : F.Elements => j.1)
 
+/--
+The projective cover of a copresheaf `F`, defined as
+the evaluation of `copresheafCoverObj F`.
+-/
+def copresheafCover :
+    C ⥤ Type (max u w v) :=
+  ccrToFunctor (copresheafCoverObj F)
+
+/--
+The canonical map from `copresheafCover F` to `F`
+lifted into the larger universe.
+-/
 def copresheafCoverMap :
     copresheafCover.{w, v, u} F ⟶
       F ⋙ uliftFunctor.{u, max w v} where
-  app Y := fun ⟨j, ⟨f⟩⟩ ↦
+  app Y := fun ⟨j, f⟩ ↦
     ULift.up (F.map f j.2)
   naturality {Y Z} g := by
-    ext ⟨j, ⟨f⟩⟩
-    simp [copresheafCover, uliftFunctor]
+    ext ⟨j, f⟩
+    simp [copresheafCover, ccrToFunctor,
+      ccrEvalMap, uliftFunctor]
 
 instance copresheafCoverMap_epi :
     Epi (copresheafCoverMap.{w, v, u} F) := by
@@ -231,13 +236,15 @@ instance copresheafCoverMap_epi :
   rw [epi_iff_surjective]
   intro ⟨y⟩
   exact ⟨⟨Functor.elementsMk F Y y,
-    ⟨𝟙 Y⟩⟩,
-    by simp [copresheafCoverMap]⟩
+    𝟙 Y⟩, by
+    simp only [copresheafCoverMap]
+    exact congrArg ULift.up
+      (congr_fun (F.map_id Y) y)⟩
 
 def copresheafCoverIncl (j : F.Elements) :
     uliftCoyoneda.{max u w}.obj (op j.1) ⟶
       copresheafCover.{w, v, u} F where
-  app _ g := ⟨j, g⟩
+  app _ g := ⟨j, g.down⟩
   naturality _ _ _ := rfl
 
 private lemma copresheafCover_factors_aux
@@ -247,7 +254,8 @@ private lemma copresheafCover_factors_aux
     (j : F.Elements) :
     ∃ g : uliftCoyoneda.{max u w}.obj
         (op j.1) ⟶ E,
-      g ≫ e = copresheafCoverIncl F j ≫ f :=
+      g ≫ e =
+        copresheafCoverIncl F j ≫ f :=
   Projective.factors
     (copresheafCoverIncl F j ≫ f) e
 
@@ -260,14 +268,15 @@ instance copresheafCover_projective :
       copresheafCover_factors_aux F f e j
     choose g hg using h
     refine ⟨⟨fun Y ⟨j, x⟩ ↦
-      (g j).app Y x,
+      (g j).app Y (ULift.up x),
         fun {Y Z} fYZ ↦ ?_⟩, ?_⟩
     · ext ⟨j, x⟩
       exact congr_fun
-        ((g j).naturality fYZ) x
+        ((g j).naturality fYZ) (ULift.up x)
     · ext Y ⟨j, x⟩
       exact congr_fun
-        (NatTrans.congr_app (hg j) Y) x
+        (NatTrans.congr_app (hg j) Y)
+        (ULift.up x)
 
 def copresheafProjectivePresentation :
     ProjectivePresentation
