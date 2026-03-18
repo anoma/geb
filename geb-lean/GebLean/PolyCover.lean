@@ -1,4 +1,5 @@
 import GebLean.Polynomial
+import GebLean.Utilities.Elements
 import GebLean.Utilities.Presheaf
 import Mathlib.CategoryTheory.Preadditive.Projective.Basic
 import Mathlib.CategoryTheory.Limits.Presheaf
@@ -73,7 +74,7 @@ sum over objects of `C`.
 def presheafCover :
     Cᵒᵖ ⥤ Type (max u w v) where
   obj Y :=
-    Σ (j : P.Elementsᵒᵖ),
+    Σ (j : P.ElementsPre),
       (uliftYoneda.{max u w}.obj
         j.unop.1.unop).obj Y
   map {Y Z} f := fun ⟨j, g⟩ ↦
@@ -112,7 +113,7 @@ instance presheafCoverMap_epi :
     ⟨𝟙 Y.unop⟩⟩,
     by simp [presheafCoverMap]⟩
 
-def presheafCoverIncl (j : P.Elementsᵒᵖ) :
+def presheafCoverIncl (j : P.ElementsPre) :
     uliftYoneda.{max u w}.obj j.unop.1.unop ⟶
       presheafCover.{w, v, u} P where
   app _ g := ⟨j, g⟩
@@ -122,7 +123,7 @@ private lemma presheafCover_factors_aux
     {E F : Cᵒᵖ ⥤ Type (max u w v)}
     (f : presheafCover.{w, v, u} P ⟶ F)
     (e : E ⟶ F) [Epi e]
-    (j : P.Elementsᵒᵖ) :
+    (j : P.ElementsPre) :
     ∃ g : uliftYoneda.{max u w}.obj
         j.unop.1.unop ⟶ E,
       g ≫ e = presheafCoverIncl P j ≫ f :=
