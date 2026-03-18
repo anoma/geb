@@ -4,6 +4,7 @@ import GebLean.Utilities.PowersAndCopowers
 import Mathlib.CategoryTheory.Monoidal.Cartesian.Basic
 import Mathlib.CategoryTheory.Adjunction.Reflective
 import Mathlib.CategoryTheory.Monoidal.Closed.FunctorCategory.Basic
+import Mathlib.CategoryTheory.Functor.Currying
 
 /-!
 # PshRelEdge C as separated presheaves
@@ -1805,5 +1806,91 @@ instance pshRelEdgeHasCopowers :
   uniq f g h := pshRelEdgeCopowerUniq f g h
 
 end Power
+
+section EndoIhom
+
+/-! ### Endofunctor internal hom via powered ends
+
+The internal hom `[F, G]` of two endofunctors
+on `PshRelEdge C` is defined via the powered
+end formula (Yoneda reduction):
+
+`[F, G](E) = ∫_{(c,i)} [F(y(c,i)), G(y(c,i))]^{E(c,i)}`
+
+where `(c, i)` ranges over `Cᵒᵖ × WalkingSpan`
+(small), `y(c,i)` is the representable edge
+(separation of the representable span), and
+`E(c,i)` is the evaluation of the included
+span at index `(c, i)`.
+-/
+
+variable {C : Type u} [Category.{v} C]
+
+/-- The evaluation of an edge at a span-
+presheaf index `(c, i)`: the type
+`(pshRelEdgeSpan E).obj(i).obj(c)`. -/
+abbrev pshRelEdgeSpanEval
+    (E : PshRelEdge.{u, v, max u v} C)
+    (c : Cᵒᵖ) (i : WalkingSpan) :
+    Type (max u v) :=
+  ((pshRelEdgeInclusionFunctor (C := C)).obj
+    E).obj i |>.obj c
+
+/-- The representable presheaf in the curried
+span-presheaf category
+`WalkingSpan ⥤ PSh(C)` at index
+`(i₀, c₀) : WalkingSpan × Cᵒᵖ`.
+At span node `i` and stage `c`, this is
+`Hom_{WalkingSpan}(i₀, i) ×
+ ULift(Hom_{C}(c.unop, c₀.unop))`,
+using the coyoneda `Hom(i₀, -)` for the
+covariant WalkingSpan direction and
+the Yoneda `Hom(-, c₀.unop)` (ULift'd)
+for the contravariant Cᵒᵖ direction. -/
+def spanRepresentable
+    (i₀ : WalkingSpan) (c₀ : Cᵒᵖ) :
+    WalkingSpan ⥤ (Cᵒᵖ ⥤ Type (max u v)) where
+  obj i :=
+    { obj := fun c =>
+        (i₀ ⟶ i) × ULift.{max u v}
+          (c₀ ⟶ c)
+      map := fun {c d} f sp =>
+        (sp.1, ⟨sp.2.down ≫ f⟩)
+      map_id _ := by
+        funext ⟨_, ⟨_⟩⟩
+        exact Prod.ext rfl
+          (congrArg ULift.up
+            (Category.comp_id _))
+      map_comp _ _ := by
+        funext ⟨_, ⟨_⟩⟩
+        exact Prod.ext rfl
+          (congrArg ULift.up
+            (Category.assoc _ _ _).symm) }
+  map {i j} φ :=
+    { app := fun c sp => (sp.1 ≫ φ, sp.2)
+      naturality := fun {c d} f => by
+        funext ⟨_, ⟨_⟩⟩; rfl }
+  map_id i := by
+    apply NatTrans.ext; funext c
+    funext ⟨h, ⟨g⟩⟩
+    exact Prod.ext (Category.comp_id _) rfl
+  map_comp φ ψ := by
+    apply NatTrans.ext; funext c
+    funext ⟨h, ⟨g⟩⟩
+    exact Prod.ext
+      (Category.assoc _ _ _).symm rfl
+
+/-- The representable edge: the separation
+of the representable span at `ic`. This is
+the Yoneda embedding of the span-presheaf
+base category `WalkingSpan × Cᵒᵖ` into
+`PshRelEdge C`. -/
+def pshRelEdgeRepresentable
+    (i₀ : WalkingSpan) (c₀ : Cᵒᵖ) :
+    PshRelEdge.{u, v, max u v} C :=
+  pshRelEdgeSepObj
+    (spanRepresentable (C := C) i₀ c₀)
+
+end EndoIhom
 
 end GebLean
