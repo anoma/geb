@@ -1,5 +1,6 @@
 import GebLean.PshRelEdgeInclusion
 import GebLean.PshRelEdgeExp
+import GebLean.Utilities.PowersAndCopowers
 import Mathlib.CategoryTheory.Monoidal.Cartesian.Basic
 import Mathlib.CategoryTheory.Adjunction.Reflective
 import Mathlib.CategoryTheory.Monoidal.Closed.FunctorCategory.Basic
@@ -1564,6 +1565,94 @@ def pshRelEdgePower
   { src := pshPower S A.src
     tgt := pshPower S A.tgt
     edge := pshPowerRel S A.edge }
+
+/-- The projection from the power `A^S` to
+`A` at index `s : S`. Evaluates the function
+at `s` for both source and target. -/
+def pshRelEdgePowerProj
+    (S : Type (max u v))
+    (A : PshRelEdge.{u, v, max u v} C)
+    (s : S) :
+    pshRelEdgePower S A ⟶ A where
+  srcMap :=
+    { app := fun _ f => f s
+      naturality := fun {_ _} _ =>
+        funext fun _ => rfl }
+  tgtMap :=
+    { app := fun _ f => f s
+      naturality := fun {_ _} _ =>
+        funext fun _ => rfl }
+  sq _ _ _ h := h s
+
+/-- The lift into the power: given a family
+of morphisms `f : S → (Y ⟶ A)`, produce a
+morphism `Y ⟶ A^S` by collecting values. -/
+def pshRelEdgePowerLift
+    {S : Type (max u v)}
+    {A Y : PshRelEdge.{u, v, max u v} C}
+    (f : S → (Y ⟶ A)) :
+    Y ⟶ pshRelEdgePower S A where
+  srcMap :=
+    { app := fun c y s => (f s).srcMap.app c y
+      naturality := fun {c d} g => by
+        ext y; funext s
+        exact congr_fun
+          ((f s).srcMap.naturality g) y }
+  tgtMap :=
+    { app := fun c y s => (f s).tgtMap.app c y
+      naturality := fun {c d} g => by
+        ext y; funext s
+        exact congr_fun
+          ((f s).tgtMap.naturality g) y }
+  sq c y₁ y₂ h s := (f s).sq c y₁ y₂ h
+
+/-- The projection factorization: the lift
+composed with projection at `s` equals the
+original morphism `f s`. -/
+theorem pshRelEdgePowerFac
+    {S : Type (max u v)}
+    {A Y : PshRelEdge.{u, v, max u v} C}
+    (f : S → (Y ⟶ A)) (s : S) :
+    pshRelEdgePowerLift f ≫
+      pshRelEdgePowerProj S A s = f s :=
+  VertEdgeHom.ext rfl rfl
+
+/-- Uniqueness of the power lift: any
+morphism into the power that agrees with `f`
+on all projections equals the lift. -/
+theorem pshRelEdgePowerUniq
+    {S : Type (max u v)}
+    {A Y : PshRelEdge.{u, v, max u v} C}
+    (f : S → (Y ⟶ A))
+    (g : Y ⟶ pshRelEdgePower S A)
+    (h : ∀ s, g ≫ pshRelEdgePowerProj S A s =
+      f s) :
+    g = pshRelEdgePowerLift f := by
+  have hsrc : ∀ s, g.srcMap ≫
+      (pshRelEdgePowerProj S A s).srcMap =
+      (f s).srcMap :=
+    fun s => congrArg VertEdgeHom.srcMap (h s)
+  have htgt : ∀ s, g.tgtMap ≫
+      (pshRelEdgePowerProj S A s).tgtMap =
+      (f s).tgtMap :=
+    fun s => congrArg VertEdgeHom.tgtMap (h s)
+  apply VertEdgeHom.ext
+  · ext c y; funext s
+    exact congr_fun (congr_app (hsrc s) c) y
+  · ext c y; funext s
+    exact congr_fun (congr_app (htgt s) c) y
+
+/-- `PshRelEdge C` has powers (cotensors):
+the power `A ^. S` is the pointwise function
+edge `pshRelEdgePower S A`. -/
+instance pshRelEdgeHasPowers :
+    HasPowers
+      (PshRelEdge.{u, v, max u v} C) where
+  power A S := pshRelEdgePower S A
+  proj A S s := pshRelEdgePowerProj S A s
+  lift f := pshRelEdgePowerLift f
+  fac f s := pshRelEdgePowerFac f s
+  uniq f g h := pshRelEdgePowerUniq f g h
 
 end Power
 
