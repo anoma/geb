@@ -2477,6 +2477,106 @@ def endoIhom
       funext ⟨h, hc⟩
       exact Subtype.ext rfl
 
+/-- The ihom postcomposition map preserves
+the span dinatural condition. -/
+lemma endoDinatSpanCond_ihomMap
+    (F :
+      PshRelEdge.{u, v, max u v} C ⥤
+        PshRelEdge.{u, v, max u v} C)
+    {G₁ G₂ :
+      PshRelEdge.{u, v, max u v} C ⥤
+        PshRelEdge.{u, v, max u v} C}
+    (η : G₁ ⟶ G₂)
+    (E : PshRelEdge.{u, v, max u v} C)
+    (d : Cᵒᵖ)
+    (h : (endoIhomProd F G₁ E).src.obj d)
+    (hcond : endoDinatSpanCond F G₁ E d h) :
+    endoDinatSpanCond F G₂ E d
+      (fun ⟨i, c, α⟩ =>
+        ((pshRelEdgeIhom
+          (F.obj (pshRelEdgeRepresentable
+            i c))).map
+          (η.app (pshRelEdgeRepresentable
+            i c))).srcMap.app d
+          (h ⟨i, c, α⟩)) := by
+  intro i₀ i₁ φ c α₀
+  dsimp [endoDinatSpanCond,
+    endoIhomProdComponent]
+  have orig := hcond i₀ i₁ φ c α₀
+  dsimp [endoDinatSpanCond,
+    endoIhomProdComponent] at orig
+  let β := (pshRelEdgeSepFunctor C).map
+    (spanRepresentableMapSpan c φ)
+  -- Abbreviations for readability
+  let Ψ_off := ((pshRelEdgeIhom (F.obj
+    (pshRelEdgeRepresentable i₀ c))).map
+    (η.app (pshRelEdgeRepresentable
+      i₁ c))).srcMap.app d
+  -- contra commutation via η.naturality:
+  -- G₁.map(β) ≫ η(y₁) = η(y₀) ≫ G₂.map(β)
+  -- lifts through ihom.map to give the
+  -- commutation at the srcMap level.
+  have hcontra : ∀ x,
+    Ψ_off ((endoDinatContra F G₁
+      β).srcMap.app d x) =
+    (endoDinatContra F G₂ β).srcMap.app d
+      (((pshRelEdgeIhom (F.obj
+        (pshRelEdgeRepresentable
+          i₀ c))).map
+        (η.app (pshRelEdgeRepresentable
+          i₀ c))).srcMap.app d x) := by
+    have key :
+        (pshRelEdgeIhom (F.obj
+          (pshRelEdgeRepresentable i₀ c))).map
+          (G₁.map β) ≫
+        (pshRelEdgeIhom (F.obj
+          (pshRelEdgeRepresentable i₀ c))).map
+          (η.app (pshRelEdgeRepresentable
+            i₁ c)) =
+        (pshRelEdgeIhom (F.obj
+          (pshRelEdgeRepresentable i₀ c))).map
+          (η.app (pshRelEdgeRepresentable
+            i₀ c)) ≫
+        (pshRelEdgeIhom (F.obj
+          (pshRelEdgeRepresentable i₀ c))).map
+          (G₂.map β) := by
+      rw [← Functor.map_comp,
+        ← Functor.map_comp]
+      exact congrArg
+        (pshRelEdgeIhom (F.obj
+          (pshRelEdgeRepresentable i₀ c))).map
+        (η.naturality β)
+    intro x
+    exact congr_fun
+      (congrArg
+        (fun f => f.srcMap.app d) key) x
+  calc
+    (endoDinatCovar F G₂ β).srcMap.app d
+      (((pshRelEdgeIhom (F.obj
+        (pshRelEdgeRepresentable i₁ c))).map
+        (η.app (pshRelEdgeRepresentable
+          i₁ c))).srcMap.app d
+        (h ⟨i₁, c, α₀ ≫ β⟩))
+    -- covar bifunctoriality (rfl)
+    _ = Ψ_off ((endoDinatCovar F G₁
+        β).srcMap.app d
+        (h ⟨i₁, c, α₀ ≫ β⟩)) := rfl
+    -- by orig
+    _ = Ψ_off ((endoDinatContra F G₁
+        β).srcMap.app d
+        (h ⟨i₀, c, α₀⟩)) :=
+      congrArg Ψ_off orig
+    -- contra commutation via η.naturality
+    _ = (endoDinatContra F G₂
+        β).srcMap.app d
+        (((pshRelEdgeIhom (F.obj
+          (pshRelEdgeRepresentable
+            i₀ c))).map
+          (η.app (pshRelEdgeRepresentable
+            i₀ c))).srcMap.app d
+          (h ⟨i₀, c, α₀⟩)) :=
+      hcontra _
+
 end EndoIhom
 
 end GebLean
