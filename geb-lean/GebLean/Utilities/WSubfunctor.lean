@@ -241,20 +241,24 @@ structure WIsPullback
       (_ : WCone m W s₁),
     NatTrans W U
   /-- The lift composes with `m` to give
-  `s₁`. -/
+  `s₁`, pointwise. -/
   fac :
     ∀ {W : C ⥤ Type w}
       (s₁ : NatTrans W X)
-      (cone : WCone m W s₁),
-    ntComp (lift s₁ cone) m = s₁
-  /-- The lift is unique. -/
+      (cone : WCone m W s₁)
+      (c : C) (w : W.obj c),
+    m.app c ((lift s₁ cone).app c w) =
+      s₁.app c w
+  /-- The lift is unique, pointwise. -/
   uniq :
     ∀ {W : C ⥤ Type w}
       (s₁ : NatTrans W X)
       (cone : WCone m W s₁)
       (l : NatTrans W U),
-    ntComp l m = s₁ →
-    l = lift s₁ cone
+    (∀ c (w : W.obj c),
+      m.app c (l.app c w) = s₁.app c w) →
+    ∀ c (w : W.obj c),
+      l.app c w = (lift s₁ cone).app c w
 
 /-- Choice-free subobject classifier for
 `Type`-valued presheaf categories. The
@@ -629,6 +633,62 @@ theorem wClassifierComm
   dsimp at this
   exact this
 
+/-- The lift component of the pullback. -/
+def wPshLift
+    {C : Type u} [Category.{v} C]
+    {U X W : Cᵒᵖ ⥤ Type (max u v)}
+    (m : NatTrans U X)
+    (hm : NatMono m)
+    (s₁ : NatTrans W X)
+    (cone : WCone m W s₁) :
+    NatTrans W U where
+  app c w := (cone.preimage c w).1
+  naturality {c d} f := by
+    funext w
+    apply hm d
+    have h1 := (cone.preimage d
+      (W.map f w)).2
+    have h2 := (cone.preimage c w).2
+    have nat_m := congr_fun
+      (m.naturality f)
+      ((cone.preimage c w).1)
+    have nat_s := congr_fun
+      (s₁.naturality f) w
+    dsimp [ntComp] at h1 h2 nat_m nat_s ⊢
+    rw [h1, nat_m, h2]
+    exact nat_s
+
+/-- The fac component (pointwise). -/
+theorem wPshFac
+    {C : Type u} [Category.{v} C]
+    {U X W : Cᵒᵖ ⥤ Type (max u v)}
+    (m : NatTrans U X)
+    (hm : NatMono m)
+    (s₁ : NatTrans W X)
+    (cone : WCone m W s₁)
+    (c : Cᵒᵖ)
+    (w : W.obj c) :
+    m.app c ((wPshLift m hm s₁ cone).app c w) =
+      s₁.app c w :=
+  (cone.preimage c w).2
+
+/-- The uniq component (pointwise). -/
+theorem wPshUniq
+    {C : Type u} [Category.{v} C]
+    {U X W : Cᵒᵖ ⥤ Type (max u v)}
+    (m : NatTrans U X)
+    (hm : NatMono m)
+    (s₁ : NatTrans W X)
+    (cone : WCone m W s₁)
+    (l : NatTrans W U)
+    (hl : ∀ c (w : W.obj c),
+      m.app c (l.app c w) = s₁.app c w)
+    (c : Cᵒᵖ) (w : W.obj c) :
+    l.app c w =
+      (wPshLift m hm s₁ cone).app c w :=
+  hm c ((hl c w).trans
+    (cone.preimage c w).2.symm)
+
 /-- The constructive pullback for a mono
 `m`: the lift extracts the preimage
 directly from the `WCone` data. -/
@@ -638,32 +698,10 @@ def wPshIsPullback
     (m : NatTrans U X)
     (hm : NatMono m) :
     WIsPullback m where
-  lift {W} s₁ cone :=
-    { app := fun c w => (cone.preimage c w).1
-      naturality {c d} f := by
-        ext w
-        apply hm d
-        have h1 := (cone.preimage d
-          (W.map f w)).2
-        have h2 := (cone.preimage c w).2
-        have nat_m := congr_fun
-          (m.naturality f)
-          ((cone.preimage c w).1)
-        have nat_s := congr_fun
-          (s₁.naturality f) w
-        dsimp [ntComp] at h1 h2 nat_m nat_s ⊢
-        rw [h1, nat_m, h2]
-        exact nat_s }
-  fac s₁ cone := by
-    ext c w
-    exact (cone.preimage c w).2
-  uniq s₁ cone l hl := by
-    ext c w
-    apply hm c
-    have := congr_fun (congr_app hl c) w
-    dsimp [ntComp] at this
-    rw [this]
-    exact (cone.preimage c w).2.symm
+  lift s₁ cone := wPshLift m hm s₁ cone
+  fac s₁ cone c w := wPshFac m hm s₁ cone c w
+  uniq s₁ cone l hl c w :=
+    wPshUniq m hm s₁ cone l hl c w
 
 /-- The choice-free `WClassifier` instance
 for presheaf categories. The classifying map
