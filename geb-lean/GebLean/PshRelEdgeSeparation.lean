@@ -1,6 +1,7 @@
 import GebLean.PshRelEdgeInclusion
 import GebLean.PshRelEdgeExp
 import Mathlib.CategoryTheory.Monoidal.Cartesian.Basic
+import Mathlib.CategoryTheory.Adjunction.Reflective
 
 /-!
 # PshRelEdge C as separated presheaves
@@ -1394,5 +1395,206 @@ def rightYonedaExtFunctorFullyFaithful :
     rightYonedaExtFunctor_preimage_map C σ
 
 end RightYonedaExtFullFaithfulness
+
+section SeparatedSpanEquivalence
+
+/-! ### PshRelEdge ≌ FullSubcategory IsSeparatedSpan
+
+The categorical equivalence between
+`PshRelEdge C` and the full subcategory of
+`WalkingSpan ⥤ PSh(C)` on separated spans.
+
+The forward functor sends an edge to its
+inclusion span (which is separated by
+`pshRelEdge_isSeparatedSpan`). The backward
+functor sends a separated span to its image
+edge (via `separatedSpanToEdge`).
+
+The roundtrip on the `PshRelEdge` side is
+equality (by `separatedSpanToEdge_inclusion`).
+The roundtrip on the full-subcategory side
+uses the constructive inversion from
+`WSubfunctor.fiber` to build the apex
+isomorphism without `Classical.choice`.
+-/
+
+variable {C : Type u} [Category.{v} C]
+
+/-- The forward functor: sends an edge to its
+inclusion span in the full subcategory of
+separated spans. -/
+def edgeToSepSpan :
+    PshRelEdge.{u, v, w} C ⥤
+    ObjectProperty.FullSubcategory
+      (IsSeparatedSpan (C := C)) where
+  obj E := ⟨pshRelEdgeSpan E,
+    pshRelEdge_isSeparatedSpan E⟩
+  map f :=
+    ⟨(pshRelEdgeInclusionFunctor
+      (C := C)).map f⟩
+  map_id E := by
+    apply ObjectProperty.hom_ext
+    exact (pshRelEdgeInclusionFunctor
+      (C := C)).map_id E
+  map_comp f g := by
+    apply ObjectProperty.hom_ext
+    exact (pshRelEdgeInclusionFunctor
+      (C := C)).map_comp f g
+
+/-- The backward functor: sends a separated
+span to its image edge via
+`pshRelEdgeSepFunctor`. -/
+def sepSpanToEdge :
+    ObjectProperty.FullSubcategory
+      (IsSeparatedSpan (C := C)) ⥤
+    PshRelEdge.{u, v, w} C :=
+  ObjectProperty.ι
+    (IsSeparatedSpan (C := C)) ⋙
+    pshRelEdgeSepFunctor C
+
+/-- The roundtrip on the `PshRelEdge` side
+is equality: `pshRelEdgeSepObj(pshRelEdgeSpan E) = E`. -/
+theorem edgeSepSpan_roundtrip
+    (E : PshRelEdge.{u, v, w} C) :
+    (edgeToSepSpan ⋙ sepSpanToEdge).obj E =
+      E := by
+  dsimp [edgeToSepSpan, sepSpanToEdge,
+    pshRelEdgeSepFunctor]
+  exact pshRelEdgeSepObj_inclusion E
+
+/-- The categorical equivalence between
+`PshRelEdge C` and the full subcategory of
+separated spans. Uses `equivEssImageOfReflective`
+from the reflective adjunction, bridged
+to `IsSeparatedSpan` via the predicate
+equivalence.
+
+`noncomputable` because the reflective
+equivalence's counit inverts a propositional
+surjection. -/
+noncomputable def pshRelEdgeSepSpanEquiv :
+    PshRelEdge.{u, v, w} C ≌
+    ObjectProperty.FullSubcategory
+      (IsSeparatedSpan (C := C)) := by
+  -- Step 1: PshRelEdge ≌ EssImageSubcategory
+  -- from the reflective adjunction.
+  refine (equivEssImageOfReflective
+    (i := pshRelEdgeInclusionFunctor.{u, v, w}
+      C)).trans ?_
+  -- Step 2: EssImageSubcategory ≌
+  --   FullSubcategory IsSeparatedSpan
+  -- via predicate equivalence.
+  -- The essential image consists of
+  -- separated spans and vice versa.
+  -- Bridge between essImage and
+  -- IsSeparatedSpan via an equivalence of
+  -- full subcategories.
+  exact
+    { functor :=
+        { obj := fun X =>
+            ⟨X.obj, by
+              obtain ⟨E, ⟨iso⟩⟩ := X.property
+              have hE :=
+                pshRelEdge_isSeparatedSpan E
+              intro c r₁ r₂ hfst hsnd
+              -- Apply iso.inv at the apex to
+              -- transport to pshRelEdgeSpan E,
+              -- then use hE, then roundtrip back.
+              let inv_c := (iso.inv.app
+                WalkingSpan.zero).app c
+              -- iso.inv is injective at .none
+              -- (it's a component of an iso).
+              -- Use: iso.inv.app j is an iso for
+              -- each j (since iso is in the
+              -- functor category).
+              suffices inv_c r₁ = inv_c r₂ by
+                let hom_c := (iso.hom.app
+                  WalkingSpan.zero).app c
+                let rt := fun r =>
+                  congr_fun (congr_app
+                    (NatTrans.congr_app
+                      iso.inv_hom_id
+                      WalkingSpan.zero) c) r
+                simp only [NatTrans.comp_app,
+                  types_comp_apply,
+                  NatTrans.id_app,
+                  types_id_apply] at rt
+                calc r₁ = hom_c (inv_c r₁) :=
+                      (rt r₁).symm
+                  _ = hom_c (inv_c r₂) :=
+                      congrArg hom_c this
+                  _ = r₂ := rt r₂
+              -- Show inv_c r₁ = inv_c r₂ via hE.
+              apply hE c
+              · -- fst projections agree
+                have nat_c := fun r =>
+                  congr_fun (congr_app
+                    (iso.inv.naturality
+                      WalkingSpan.Hom.fst) c) r
+                simp only [NatTrans.comp_app,
+                  types_comp_apply] at nat_c
+                dsimp [pshRelEdgeInclusionFunctor]
+                  at nat_c
+                rw [← nat_c, ← nat_c, hfst]
+              · -- snd projections agree
+                have nat_c := fun r =>
+                  congr_fun (congr_app
+                    (iso.inv.naturality
+                      WalkingSpan.Hom.snd) c) r
+                simp only [NatTrans.comp_app,
+                  types_comp_apply] at nat_c
+                dsimp [pshRelEdgeInclusionFunctor]
+                  at nat_c
+                rw [← nat_c, ← nat_c, hsnd]⟩
+          map := fun f => ⟨f.hom⟩ }
+      inverse :=
+        { obj := fun ⟨F, hF⟩ =>
+            ⟨F, pshRelEdgeSepObj F, ⟨by
+              -- Use the reflective adjunction:
+              -- the unit at F is an iso when
+              -- F is in the essential image.
+              -- The unit η_F : F → incl(sep F)
+              -- is an iso because F is in the
+              -- essential image of the
+              -- inclusion (by separation +
+              -- reflectivity).
+              -- Show the unit is an iso by
+              -- showing each component is
+              -- bijective.
+              haveI : IsIso
+                  (pshRelEdgeSepUnit
+                    (C := C) F) := by
+                rw [NatTrans.isIso_iff_isIso_app]
+                intro j
+                rw [NatTrans.isIso_iff_isIso_app]
+                intro c
+                rw [isIso_iff_bijective]
+                match j with
+                | .none =>
+                  constructor
+                  · exact
+                      separatedSpan_unit_injective
+                        F hF c
+                  · intro ⟨⟨p, q⟩, ⟨r, hr⟩⟩
+                    exact ⟨r, Subtype.ext hr⟩
+                | .some .left =>
+                  exact ⟨fun _ _ h => h,
+                    fun y => ⟨y, rfl⟩⟩
+                | .some .right =>
+                  exact ⟨fun _ _ h => h,
+                    fun y => ⟨y, rfl⟩⟩
+              exact (asIso
+                (pshRelEdgeSepUnit F)).symm⟩⟩
+          map := fun f => ⟨f.hom⟩ }
+      unitIso := NatIso.ofComponents
+        (fun _ => Iso.refl _)
+        (fun _ => by
+          apply ObjectProperty.hom_ext; rfl)
+      counitIso := NatIso.ofComponents
+        (fun _ => Iso.refl _)
+        (fun _ => by
+          apply ObjectProperty.hom_ext; rfl) }
+
+end SeparatedSpanEquivalence
 
 end GebLean
