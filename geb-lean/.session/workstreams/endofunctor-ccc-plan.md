@@ -2,7 +2,7 @@
 
 ## Status
 
-Planning — detailed implementation plan.
+Planning — revised after discovering mathlib gap.
 
 ## Goal
 
@@ -12,254 +12,215 @@ closed. The internal hom `[F, G]` of two endofunctors
 should be the endofunctor sending `E` to the end
 `∫_X [F(X), G(X)]`.
 
-## Universe Obstruction
+## Mathlib Gap (discovered 2026-03-18)
 
-Mathlib's `MonoidalClosed (J ⥤ C)` instance (from
+Mathlib does NOT provide `MonoidalClosed` for ANY
+endofunctor category — not even `[Set, Set]` or
+`[PSh(C), PSh(C)]`. The generic
+`MonoidalClosed (J ⥤ C)` instance (from
 `Monoidal/Closed/FunctorCategory/Basic.lean`) requires
-`HasEnrichedHom C F₁ F₂` for all pairs of functors,
-which is `HasEnd (diagram C F₁ F₂)`. The end is a limit
-over the `Under j` category for each `j : J ⥤ C`.
+`HasEnrichedHom C F₁ F₂` for all functor pairs. This
+is `HasEnd (diagram C F₁ F₂)`, which requires a limit
+indexed over the `Under j` category for each `j`.
 
-For `J = C = PshRelEdge.{u, v, max u v} C`:
+For endofunctors, `J = C`, so the end is indexed over
+`Under j` for `j : C ⥤ C`. This category has objects
+at the same universe level as `C`'s objects (bundling
+`(k : C, f : k ⟶ j)`), making it as large as `C`
+itself. The standard `HasLimitsOfSize` instances are
+one universe level too small to cover this.
 
-- Objects of `PshRelEdge C` are at `Type (max u v + 1)`
-- `Under j` objects include `PshRelEdge C` objects, so
-  they're at `Type (max u v + 1)`
-- The end requires `HasLimitsOfSize.{max u v + 1, ...}`
-- We only have `HasLimitsOfSize.{max u v, max u v}`
+**Verified**: `MonoidalClosed ((Cᵒᵖ ⥤ Type v) ⥤
+(Cᵒᵖ ⥤ Type v))` fails to synthesize even for small
+presheaf categories.
 
-This is a genuine universe-level gap: the end over
-`PshRelEdge C` is a large limit that our limit instances
-don't cover.
+The mathematical result IS true — endofunctor
+categories of CCCs with sufficient limits are CCC.
+The proof uses the Yoneda reduction to compute the
+enriched hom end over the small base category. Mathlib's
+enriched category machinery does not perform this
+reduction automatically.
 
-## Solution: Yoneda Reduction via Reflective Embedding
+## Revised Plan: Direct Construction
 
-### Observation
+Since mathlib cannot provide this, we construct the
+endofunctor CCC directly for `PshRelEdge C`, using
+the Yoneda reduction via the reflective embedding.
 
-`PshRelEdge C` is a reflective subcategory of the
-presheaf topos `PSh(C × I^op)` where `I = WalkingPair`.
-The presheaf topos has:
-
-1. `MonoidalClosed (PSh(C × I^op))` — from mathlib
-2. The Yoneda reduction: enriched homs in presheaf
-   categories compute as ends over `C × I^op` (small),
-   NOT over `PSh(C × I^op)` (large)
-3. `ExponentialIdeal (pshRelEdgeInclusionFunctor C)` —
-   the reflector preserves binary products, so by
-   mathlib's `exponentialIdeal_of_preservesBinaryProducts`
-
-### Architecture
-
-The plan has four layers, each building on the previous:
+### Architecture (revised)
 
 ```text
-Layer 1: Presheaf topos endofunctor CCC
-  MonoidalClosed (PSh(C × I^op) ⥤ PSh(C × I^op))
+Layer 1: Enriched hom via Yoneda reduction
+  [F, G](E) = ∫_{c : C, i : I} [F(y(c,i))(E),
+  G(y(c,i))(E)] where y is the Yoneda embedding
+  into PshRelEdge C via pshRelIdentFunctor.
 
-Layer 2: Barr lift embedding
-  PshRelEdge-endofunctors → PSh(C × I^op)-endofunctors
-  via sep ⋙ F ⋙ incl (reflect, apply, include)
+Layer 2: Functoriality in E
+  Show the end is natural in E, making [F, G] an
+  endofunctor.
 
-Layer 3: Exponential in PSh(C × I^op) endofunctors
-  [sep ⋙ F ⋙ incl, sep ⋙ G ⋙ incl] computed by
-  the enriched hom (end over C × I^op)
-
-Layer 4: Restriction to PshRelEdge endofunctors
-  Apply the reflector to bring the exponential back
-  to PshRelEdge C, using the exponential ideal property
+Layer 3: Adjunction
+  Show tensorLeft F ⊣ [F, -], making the
+  endofunctor category monoidal closed.
 ```
 
-## Detailed Implementation Plan
-
-### Step 1: Establish PshSpanCat = PSh(C × I^op)
-
-**File**: `GebLean/Utilities/Presheaf.lean` or new file
-
-- Define `PshSpanCat C := WalkingSpan ⥤ (Cᵒᵖ ⥤ Type w)`
-  as an abbreviation
-- Verify `MonoidalClosed (PshSpanCat C)` from mathlib's
-  `MonoidalClosed` for functor categories into `Type`
-- Verify `HasLimitsOfSize (PshSpanCat C)`
-
-**Estimated effort**: Low (type aliases and instance
-verification)
-
-### Step 2: PshSpanCat endofunctor CCC
-
-**File**: `GebLean/PshRelEdgeSeparation.lean` or new file
-
-- Verify `MonoidalClosed (PshSpanCat C ⥤ PshSpanCat C)`
-  This SHOULD work from mathlib because:
-  - `PshSpanCat C` is a functor category into `Type`
-  - The enriched hom end is over `WalkingSpan × C^op`
-    (small)
-  - `HasLimitsOfSize` on `PshSpanCat C` covers this
-
-  If this doesn't work due to universe constraints with
-  the double functor category, we may need to establish
-  it through the uncurried presheaf category
-  `(WalkingSpan × C^op)^op ⥤ Type w` and its
-  equivalence with `WalkingSpan ⥤ (C^op ⥤ Type w)`.
-
-- Also establish `CartesianMonoidalCategory` on the
-  endofunctor category
-
-**Estimated effort**: Medium (universe wrangling)
-
-### Step 3: Embedding PshRelEdge endofunctors
+### Step 1: Small end formula for the enriched hom
 
 **File**: New section in `PshRelEdgeSeparation.lean`
 
-Define the embedding functor:
+Define the enriched hom of two endofunctors `F, G` on
+`PshRelEdge C` at an edge `E`:
 
 ```lean
-embed : (PshRelEdge C ⥤ PshRelEdge C) ⥤
-          (PshSpanCat C ⥤ PshSpanCat C)
+def endoIhomObj (F G :
+    PshRelEdge C ⥤ PshRelEdge C)
+    (E : PshRelEdge C) : PshRelEdge C :=
+  -- The end ∫_{X : PshRelEdge C} [F(X), G(X)]
+  -- reduced to ∫_{(c,i) : C × I^op} via Yoneda.
+  -- Concretely: the limit of the diagram
+  -- (c, i) ↦ [F(y(c,i))(E), G(y(c,i))(E)]
+  -- where y = pshRelEdgeInclusionFunctor ⋙
+  --   yoneda-embedding of PshSpanCat into
+  --   PshRelEdge
 ```
 
-sending `F` to `sep ⋙ F ⋙ incl` (separate, apply F,
-include back).
+The end over `C × WalkingSpan^op` is a small limit
+(indexed by `C × WalkingSpan`, which is at universe
+`max u v`). Our `HasLimitsOfSize.{max u v, max u v}`
+covers this.
 
-Properties to prove:
+Factor into:
 
-- `embed` is fully faithful (from the reflective
-  adjunction: `incl` is fully faithful, `sep ⋙ incl`
-  is naturally isomorphic to the identity on
-  `PshRelEdge C`)
-- `embed` preserves finite products (products of
-  endofunctors are pointwise; `sep` preserves
-  finite products)
+- `endoIhomDiagram F G E` : the diagram
+  `(C × WalkingSpan)^op ⥤ PshRelEdge C` sending
+  `(c, i)` to `[F(y(c,i))(E), G(y(c,i))(E)]`
+- `endoIhomObj F G E` : the limit of this diagram
+- Helper: `pshRelEdgeRepresentable (c : C) (i : WalkingSpan)
+  : PshRelEdge C` — the representable edge at `(c, i)`
 
-Each property should be a separate definition/theorem.
+**Estimated effort**: Medium
 
-**Estimated effort**: High (precise use of the
-reflective adjunction; factor into many small lemmas)
-
-### Step 4: Essential image and exponential ideal
+### Step 2: Functoriality of the enriched hom
 
 **File**: Same section
 
-Show that the essential image of `embed` is an
-exponential ideal in `PshSpanCat C ⥤ PshSpanCat C`:
-
-- This follows from `ExponentialIdeal
-  (pshRelEdgeInclusionFunctor C)` (which we have)
-  lifted to the endofunctor level
-- The argument: if `G` is in the image of `embed`
-  (i.e., `G = sep ⋙ G₀ ⋙ incl` for some
-  `G₀ : PshRelEdge C ⥤ PshRelEdge C`), and `F` is
-  arbitrary, then `[F, G]` applied to any separated
-  presheaf gives a separated presheaf (because
-  `[-, B]` preserves separation when `B` is separated)
-
-Factor this into:
-
-- Lemma: `[A, B]` is separated when `B` is separated
-  (exponential ideal at the object level — we have this)
-- Lemma: `[F, G](E)` is separated when `G(E)` is
-  separated for all `E` in `PshRelEdge C`
-- Theorem: the endofunctor embedding is an exponential
-  ideal
-
-**Estimated effort**: High (multiple layers of
-universal properties)
-
-### Step 5: MonoidalClosed on PshRelEdge endofunctors
-
-**File**: Same section
-
-Apply `cartesianClosedOfReflective` from mathlib to
-the embedding `embed`:
+Show `endoIhomObj F G` is functorial in `E`:
 
 ```lean
-instance :
-    MonoidalClosed
-      (PshRelEdge C ⥤ PshRelEdge C) :=
-  cartesianClosedOfReflective embed
+def endoIhom (F G :
+    PshRelEdge C ⥤ PshRelEdge C) :
+    PshRelEdge C ⥤ PshRelEdge C
 ```
 
-This requires:
+The functoriality follows from the limit being
+preserved by the diagram's naturality in `E`. Each
+`[F(y(c,i))(E), G(y(c,i))(E)]` is functorial in `E`
+via the bifunctoriality of the internal hom (F acts
+on the representable, not on E directly — the
+representable is FIXED, so there's no contravariance
+in E).
 
-- `Reflective embed` (from step 3: fully faithful +
-  left adjoint)
-- `ExponentialIdeal embed` (from step 4)
-- `CartesianMonoidalCategory
-    (PshRelEdge C ⥤ PshRelEdge C)` (step 2)
-- `MonoidalClosed
-    (PshSpanCat C ⥤ PshSpanCat C)` (step 2)
+Note: this needs refinement. `F(y(c,i))` is a FIXED
+edge (independent of `E`), and `G(y(c,i))` is also
+fixed. So `[F(y(c,i)), G(y(c,i))]` is a fixed edge
+too. The "end" `∫_{(c,i)} [F(y(c,i)), G(y(c,i))]`
+is a fixed edge, NOT a functor of `E`!
 
-**Estimated effort**: Low (if steps 2-4 are done)
+**Correction**: The enriched hom `[F, G]` as an
+endofunctor does NOT have the form
+`E ↦ ∫ [F(y)(E), G(y)(E)]`. The correct formula
+involves the END of the diagram that DOES depend on E:
 
-### Step 6: Allow dialgebra tasks
+`[F, G](E) = end_{X} Hom_C(E ⊗ F(X), G(X))`
 
-With `MonoidalClosed (PshRelEdge C ⥤ PshRelEdge C)`:
+or equivalently using the internal hom:
 
-- Task #156: Define `dialEdgeFunctor F G` using the
-  endofunctor internal hom
-  `ihom (Barr(F)) |>.obj (Barr(G))`
-- Task #157: Connect to parametricity via
-  `ParametricCone`
+`[F, G](E) = end_{X} [F(X), [E, G(X)]]`
+
+Correction: this isn't right either. For the enriched hom
+in a CCC, the standard formula for functor categories
+is:
+
+`enrichedHom(F, G) = end_{X : C} [F(X), G(X)]`
+
+This is a FIXED object of C (the enriched hom object),
+NOT an endofunctor. To get an endofunctor, we need
+the INTERNAL ihom in the endofunctor category, which
+sends an endofunctor `H` to `[H, -]` or `[-, H]`.
+
+### Reassessment
+
+The endofunctor category CCC has:
+
+- Products: pointwise `(F × G)(X) = F(X) × G(X)` ✓
+- Terminal: constant functor at terminal object ✓
+- Exponential: `[F, G]` where
+  `[F, G](X) = ∫_Y [F(Y), G(Y)]^{Hom(X,Y)}`
+  — this IS a functor of X, using the copower/hom
+  formula
+
+The formula `[F, G](X) = ∫_Y [F(Y), G(Y)]^{Hom(X,Y)}`
+involves a weighted limit (powered end). This IS
+functorial in X because `Hom(X, Y)` is
+contravariantly functorial in X.
+
+For presheaf categories, the Yoneda reduction gives:
+`[F, G](X) = ∫_c [F(y(c)), G(y(c))]^{X(c)}`
+
+where `c` ranges over the small base category and
+`X(c) = Hom(y(c), X)` by Yoneda. This IS a small
+end (over `c`), functorial in `X`.
+
+### Revised Step 2: Powered end formula
+
+Define:
+
+```lean
+def endoIhomObj (F G :
+    PshRelEdge C ⥤ PshRelEdge C)
+    (E : PshRelEdge C) : PshRelEdge C :=
+  -- ∫_{(c,i)} [F(y(c,i)), G(y(c,i))]^{E(c,i)}
+  -- where E(c,i) = (incl E).obj (c,i) : Type w
+  -- and [-,-]^S is the S-indexed power
+  -- (product of S copies of [-,-])
+```
+
+This uses the POWER `A^S` where `S : Type w` and
+`A : PshRelEdge C`. The power `A^S` is the product
+of `S` copies of `A`, which exists when `PshRelEdge C`
+has products indexed by `S`.
+
+Factor into:
+
+- `pshRelEdgePower (S : Type w) (A : PshRelEdge C)` :
+  the S-indexed power `A^S = ∏_{s : S} A`
+- `endoIhomDiagram F G E` : the diagram sending
+  `(c, i)` to `[F(y(c,i)), G(y(c,i))]^{E(c,i)}`
+- `endoIhomObj F G E` : the end (limit) of this diagram
+- Show functoriality in `E`
+
+**Estimated effort**: High
 
 ## Dependencies
 
 ```text
-Step 1 ← Step 2 ← Step 5
-                ↗
-Step 3 ← Step 4 ← Step 5 → Task #156 → Task #157
+Power → Diagram → End → Functoriality → MonoidalClosed
+                                              ↓
+                                        Task #156 → Task #157
 ```
 
-## Risks
+## Open Questions (updated)
 
-1. **Universe levels in Step 2**: The double functor
-   category `(PshSpanCat C ⥤ PshSpanCat C)` may have
-   universe constraints similar to the PshRelEdge case.
-   We need to verify that `PshSpanCat C`'s enriched hom
-   end is over `WalkingSpan × C^op` (small), not over
-   `PshSpanCat C` itself (large). This depends on
-   mathlib's `MonoidalClosed` instance for functor
-   categories into `Type` using the Yoneda reduction.
+1. Does the powered end formula work for `PshRelEdge C`
+   specifically, or do we need to go through the
+   reflective embedding for the powers?
 
-2. **Reflective embedding in Step 3**: The functor
-   `sep ⋙ F ⋙ incl` may not be the right embedding.
-   An alternative: use the adjunction to define
-   `embed(F) = incl ⋙ F ⋙ sep` (include, apply,
-   separate) which goes the other direction. Need to
-   check which direction gives a reflective embedding
-   of endofunctor categories.
+2. Can we use the reflective embedding more directly:
+   compute `[F, G]` in `PSh(C × I^op)` endofunctors
+   (where the Yoneda reduction gives a small end),
+   then reflect?
 
-3. **Exponential ideal at endofunctor level (Step 4)**:
-   Lifting the object-level exponential ideal to the
-   endofunctor level may require showing that the
-   endofunctor exponential preserves separation
-   pointwise. This is the most mathematically
-   substantive step.
-
-## Factoring Principles
-
-Following CLAUDE.md's factoring-out-lemmas technique:
-
-- Every intermediate result should be its own named
-  `def`/`theorem`
-- No proof should have more than ~20 lines of tactics
-- Break compositions into helper lemmas
-- Use `_` (underscore) frequently to check intermediate
-  goal states
-- Build one definition at a time, running `lake build`
-  after each
-
-## Open Questions
-
-1. Does mathlib's `MonoidalClosed (C ⥤ Type w)`
-   use the Yoneda reduction, or does it compute the
-   end over `C ⥤ Type w` directly? If the latter,
-   Step 2 may have the same universe constraint.
-
-2. Is there a construction that avoids the reflective
-   embedding entirely? E.g., defining
-   `[F, G](E) = ∫_{c, i} [F(y(c,i))(E), G(y(c,i))(E)]`
-   directly as an end over `C × I^op` (small).
-
-3. For the specific dialgebra application, do we need
-   the full endofunctor CCC, or just the exponential
-   of Barr-lifted endofunctors? The latter might be
-   more direct to construct.
+3. For the dialgebra application, `F` and `G` are
+   Barr lifts of `PSh(C)` endofunctors. Can we exploit
+   this structure to define the enriched hom more
+   directly?
