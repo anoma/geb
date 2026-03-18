@@ -201,13 +201,13 @@ variable (F : C ⥤ Type (max v w))
 def copresheafCover :
     C ⥤ Type (max u w v) where
   obj Y :=
-    Σ (j : F.Elementsᵒᵖ),
+    Σ (j : F.Elements),
       (uliftCoyoneda.{max u w}.obj
-        (op j.unop.1)).obj Y
+        (op j.1)).obj Y
   map {Y Z} f := fun ⟨j, g⟩ ↦
     ⟨j,
       (uliftCoyoneda.{max u w}.obj
-        (op j.unop.1)).map f g⟩
+        (op j.1)).map f g⟩
   map_id Y := by
     funext ⟨j, ⟨g⟩⟩
     simp [uliftCoyoneda, uliftYoneda]
@@ -219,7 +219,7 @@ def copresheafCoverMap :
     copresheafCover.{w, v, u} F ⟶
       F ⋙ uliftFunctor.{u, max w v} where
   app Y := fun ⟨j, ⟨f⟩⟩ ↦
-    ULift.up (F.map f j.unop.2)
+    ULift.up (F.map f j.2)
   naturality {Y Z} g := by
     ext ⟨j, ⟨f⟩⟩
     simp [copresheafCover, uliftFunctor]
@@ -230,13 +230,12 @@ instance copresheafCoverMap_epi :
   intro Y
   rw [epi_iff_surjective]
   intro ⟨y⟩
-  exact ⟨⟨op (Functor.elementsMk F Y y),
+  exact ⟨⟨Functor.elementsMk F Y y,
     ⟨𝟙 Y⟩⟩,
     by simp [copresheafCoverMap]⟩
 
-def copresheafCoverIncl (j : F.Elementsᵒᵖ) :
-    uliftCoyoneda.{max u w}.obj
-      (op j.unop.1) ⟶
+def copresheafCoverIncl (j : F.Elements) :
+    uliftCoyoneda.{max u w}.obj (op j.1) ⟶
       copresheafCover.{w, v, u} F where
   app _ g := ⟨j, g⟩
   naturality _ _ _ := rfl
@@ -245,9 +244,9 @@ private lemma copresheafCover_factors_aux
     {E G : C ⥤ Type (max u w v)}
     (f : copresheafCover.{w, v, u} F ⟶ G)
     (e : E ⟶ G) [Epi e]
-    (j : F.Elementsᵒᵖ) :
+    (j : F.Elements) :
     ∃ g : uliftCoyoneda.{max u w}.obj
-        (op j.unop.1) ⟶ E,
+        (op j.1) ⟶ E,
       g ≫ e = copresheafCoverIncl F j ≫ f :=
   Projective.factors
     (copresheafCoverIncl F j ≫ f) e
