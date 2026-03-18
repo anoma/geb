@@ -2502,6 +2502,27 @@ def polyBetweenConstMap {a b : Over X} (f : a ⟶ b) :
     (fun _ => Over.homMk PEmpty.elim
       (funext (fun x => x.elim)))
 
+/-- The covariant representable polynomial functor with
+one position at each target fiber and a fiber-dependent
+representing object.  At fiber `y`, the single position
+has directions given by `F y : Over X`.
+
+This generalizes `polyBetweenId` (where `F x` has one
+direction mapping to `x`) and encompasses cases like
+`polyProd` (where `F x` has two directions) and
+fiber-shifted identities. -/
+def polyBetweenRepr {X : Type u} {Y : Type u}
+    (F : Y → Over X) :
+    PolyFunctorBetweenCat X Y :=
+  fun y => ccrObjMk
+    (fun _ : PUnit.{u + 1} => F y)
+
+/-- `polyBetweenRepr` specialized to endofunctors. -/
+abbrev polyEndoRepr {X : Type u}
+    (F : X → Over X) :
+    PolyFunctorBetweenCat X X :=
+  polyBetweenRepr F
+
 /--
 The two-component family for `polyBetweenFlipEither`:
 left component is `polyBetweenId`, right is
