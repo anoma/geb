@@ -393,20 +393,29 @@ def DepPolyFunctor.evalDirichlet (P : DepPolyFunctor) {Y : Type}
     (idx : P.OuterIdx Y) (A : Over Y) : Type _ :=
   Σ pos : P.DirichletPos idx, (A ⟶ P.dirichletRepr pos)
 
-/-- The inner Dirichlet functor as an object of `CoprodCovarRepCat (Over Y)`.
+/-- The inner Dirichlet functor as an object of
+`FreeCoprodCompletionCat (Over Y)`.
 
-Given an outer index, this packages the `(DirichletPos, dirichletRepr)` pair
-as a coproduct of covariant representables, which can then be evaluated
-using the general `ccrDirichletEval`. -/
-def DepPolyFunctor.innerDirichlet (P : DepPolyFunctor) {Y : Type}
-    (idx : P.OuterIdx Y) : CoprodCovarRepCat (Over Y) :=
-  ccrObjMk (fun pos : P.DirichletPos idx => P.dirichletRepr pos)
+Given an outer index, this packages the
+`(DirichletPos, dirichletRepr)` pair as a coproduct
+of contravariant representables, which can then be
+evaluated using `fcEval`. -/
+def DepPolyFunctor.innerDirichlet
+    (P : DepPolyFunctor) {Y : Type}
+    (idx : P.OuterIdx Y) :
+    FreeCoprodCompletionCat (Over Y) :=
+  fcObjMk (fun pos : P.DirichletPos idx =>
+    P.dirichletRepr pos)
 
-/-- `evalDirichlet` is definitionally equal to `ccrDirichletEval` of the
-inner Dirichlet functor. -/
-lemma DepPolyFunctor.evalDirichlet_eq_ccrDirichletEval (P : DepPolyFunctor)
-    {Y : Type} (idx : P.OuterIdx Y) (A : Over Y) :
-    P.evalDirichlet idx A = ccrDirichletEval (P.innerDirichlet idx) A := rfl
+/-- `evalDirichlet` is definitionally equal to
+`fcEval` of the inner Dirichlet functor. -/
+lemma DepPolyFunctor.evalDirichlet_eq_fcEval
+    (P : DepPolyFunctor)
+    {Y : Type} (idx : P.OuterIdx Y)
+    (A : Over Y) :
+    P.evalDirichlet idx A =
+      fcEval (P.innerDirichlet idx) A :=
+  rfl
 
 /-- Evaluation of the inner Dirichlet functor at an outer index.
 

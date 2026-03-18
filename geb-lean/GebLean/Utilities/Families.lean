@@ -1320,127 +1320,135 @@ lemma ccrComp_mk {x y z : CoprodCovarRepCat.{u, v, w} C}
   funext i
   exact ccrComp_fiberMor f g i
 
-/-! ### Dirichlet Evaluation (Coproduct of Contravariant Representables)
+/-! ### Evaluation of Free Coproduct Completion (Presheaf)
 
-A Dirichlet functor is a coproduct of contravariant representables (presheaf).
-Given `P = (I, F : I → C)` and `A : C`, the Dirichlet evaluation is:
+An object of `FreeCoprodCompletionCat C` is a coproduct
+of contravariant representables.  Given `P = (I, F : I → C)`
+and `A : C`, the evaluation is:
   `P(A) = Σ i : I, Hom_C(A, F(i))`
 
-This is contravariant in `A`: a morphism `f : A → B` induces a map
-`P(B) → P(A)` by precomposition.
+This is contravariant in `A`: a morphism `f : A → B`
+induces a map `P(B) → P(A)` by precomposition.
 -/
 
-/--
-Dirichlet evaluation of a coproduct of contravariant representables at an
-object of `C`.
+def fcEval
+    (P : FreeCoprodCompletionCat.{u, v, w} C)
+    (A : C) : Type _ :=
+  Σ i : fcIndex P, (A ⟶ fcFamily P i)
 
-Given `P = (I, F)` where `F : I → C` and `A : C`, returns `Σ i, (A ⟶ F(i))`.
-This is the contravariant dual of `ccrEval` which computes `Σ i, (F(i) ⟶ A)`.
--/
-def ccrDirichletEval (P : CoprodCovarRepCat.{u, v, w} C) (A : C) : Type _ :=
-  Σ i : ccrIndex P, (A ⟶ ccrFamily P i)
-
-/--
-Extract the index from an element of a Dirichlet evaluation.
--/
-def ccrDirichletEvalIndex {P : CoprodCovarRepCat.{u, v, w} C} {A : C}
-    (x : ccrDirichletEval P A) : ccrIndex P :=
+def fcEvalIndex
+    {P : FreeCoprodCompletionCat.{u, v, w} C}
+    {A : C} (x : fcEval P A) : fcIndex P :=
   x.1
 
-/--
-Extract the morphism from an element of a Dirichlet evaluation.
--/
-def ccrDirichletEvalMor {P : CoprodCovarRepCat.{u, v, w} C} {A : C}
-    (x : ccrDirichletEval P A) : A ⟶ ccrFamily P (ccrDirichletEvalIndex x) :=
+def fcEvalMor
+    {P : FreeCoprodCompletionCat.{u, v, w} C}
+    {A : C}
+    (x : fcEval P A) :
+    A ⟶ fcFamily P (fcEvalIndex x) :=
   x.2
 
-/--
-Construct an element of a Dirichlet evaluation from an index and morphism.
--/
-def ccrDirichletEvalMk {P : CoprodCovarRepCat.{u, v, w} C} {A : C}
-    (i : ccrIndex P) (f : A ⟶ ccrFamily P i) : ccrDirichletEval P A :=
+def fcEvalMk
+    {P : FreeCoprodCompletionCat.{u, v, w} C}
+    {A : C}
+    (i : fcIndex P)
+    (f : A ⟶ fcFamily P i) : fcEval P A :=
   ⟨i, f⟩
 
 @[simp]
-lemma ccrDirichletEvalMk_index {P : CoprodCovarRepCat.{u, v, w} C} {A : C}
-    (i : ccrIndex P) (f : A ⟶ ccrFamily P i) :
-    ccrDirichletEvalIndex (ccrDirichletEvalMk i f) = i := rfl
+lemma fcEvalMk_index
+    {P : FreeCoprodCompletionCat.{u, v, w} C}
+    {A : C}
+    (i : fcIndex P)
+    (f : A ⟶ fcFamily P i) :
+    fcEvalIndex (fcEvalMk i f) = i := rfl
 
 @[simp]
-lemma ccrDirichletEvalMk_mor {P : CoprodCovarRepCat.{u, v, w} C} {A : C}
-    (i : ccrIndex P) (f : A ⟶ ccrFamily P i) :
-    ccrDirichletEvalMor (ccrDirichletEvalMk i f) = f := rfl
+lemma fcEvalMk_mor
+    {P : FreeCoprodCompletionCat.{u, v, w} C}
+    {A : C}
+    (i : fcIndex P)
+    (f : A ⟶ fcFamily P i) :
+    fcEvalMor (fcEvalMk i f) = f := rfl
 
-/--
-Extensionality for Dirichlet evaluation: two elements are equal iff their
-indices and morphisms are equal.
--/
-lemma ccrDirichletEval_ext {P : CoprodCovarRepCat.{u, v, w} C} {A : C}
-    (x y : ccrDirichletEval P A)
-    (hIdx : ccrDirichletEvalIndex x = ccrDirichletEvalIndex y)
-    (hMor : ccrDirichletEvalMor x = hIdx ▸ ccrDirichletEvalMor y) :
+lemma fcEval_ext
+    {P : FreeCoprodCompletionCat.{u, v, w} C}
+    {A : C}
+    (x y : fcEval P A)
+    (hIdx : fcEvalIndex x = fcEvalIndex y)
+    (hMor : fcEvalMor x =
+      hIdx ▸ fcEvalMor y) :
     x = y := by
   obtain ⟨i, f⟩ := x
   obtain ⟨j, g⟩ := y
-  simp only [ccrDirichletEvalIndex, ccrDirichletEvalMor] at hIdx hMor
+  simp only [fcEvalIndex, fcEvalMor]
+    at hIdx hMor
   cases hIdx
-  suffices hMor' : f = g by subst hMor'; rfl
+  suffices hMor' : f = g by
+    subst hMor'; rfl
   exact hMor
 
-/--
-Eta rule for Dirichlet evaluation.
--/
 @[simp]
-lemma ccrDirichletEvalMk_eta {P : CoprodCovarRepCat.{u, v, w} C} {A : C}
-    (x : ccrDirichletEval P A) :
-    ccrDirichletEvalMk (ccrDirichletEvalIndex x) (ccrDirichletEvalMor x) = x :=
+lemma fcEvalMk_eta
+    {P : FreeCoprodCompletionCat.{u, v, w} C}
+    {A : C} (x : fcEval P A) :
+    fcEvalMk (fcEvalIndex x)
+      (fcEvalMor x) = x :=
   rfl
 
-/--
-Contravariant functorial action on Dirichlet evaluation.
-
-Given `f : A ⟶ B`, we get a map `ccrDirichletEval P B → ccrDirichletEval P A`
-by precomposition. This makes `ccrDirichletEval P` a presheaf on `C`.
--/
-def ccrDirichletEvalMap {P : CoprodCovarRepCat.{u, v, w} C} {A B : C} (f : A ⟶ B) :
-    ccrDirichletEval P B → ccrDirichletEval P A :=
+def fcEvalMap
+    {P : FreeCoprodCompletionCat.{u, v, w} C}
+    {A B : C} (f : A ⟶ B) :
+    fcEval P B → fcEval P A :=
   fun ⟨i, g⟩ => ⟨i, f ≫ g⟩
 
 @[simp]
-lemma ccrDirichletEvalMap_index {P : CoprodCovarRepCat.{u, v, w} C} {A B : C}
-    (f : A ⟶ B) (x : ccrDirichletEval P B) :
-    ccrDirichletEvalIndex (ccrDirichletEvalMap f x) = ccrDirichletEvalIndex x :=
+lemma fcEvalMap_index
+    {P : FreeCoprodCompletionCat.{u, v, w} C}
+    {A B : C} (f : A ⟶ B)
+    (x : fcEval P B) :
+    fcEvalIndex (fcEvalMap f x) =
+      fcEvalIndex x :=
   rfl
 
 @[simp]
-lemma ccrDirichletEvalMap_mor {P : CoprodCovarRepCat.{u, v, w} C} {A B : C}
-    (f : A ⟶ B) (x : ccrDirichletEval P B) :
-    ccrDirichletEvalMor (ccrDirichletEvalMap f x) =
-      f ≫ ccrDirichletEvalMor x :=
+lemma fcEvalMap_mor
+    {P : FreeCoprodCompletionCat.{u, v, w} C}
+    {A B : C} (f : A ⟶ B)
+    (x : fcEval P B) :
+    fcEvalMor (fcEvalMap f x) =
+      f ≫ fcEvalMor x :=
   rfl
 
 @[simp]
-lemma ccrDirichletEvalMap_id {P : CoprodCovarRepCat.{u, v, w} C} {A : C} :
-    ccrDirichletEvalMap (𝟙 A) = id (α := ccrDirichletEval P A) := by
+lemma fcEvalMap_id
+    {P : FreeCoprodCompletionCat.{u, v, w} C}
+    {A : C} :
+    fcEvalMap (𝟙 A) =
+      id (α := fcEval P A) := by
   funext ⟨i, f⟩
-  simp only [ccrDirichletEvalMap, Category.id_comp, id_eq]
+  simp only [fcEvalMap, Category.id_comp,
+    id_eq]
 
 @[simp]
-lemma ccrDirichletEvalMap_comp (P : CoprodCovarRepCat.{u, v, w} C) {A B C' : C}
-    (f : A ⟶ B) (g : B ⟶ C') :
-    ccrDirichletEvalMap (P := P) f ∘ ccrDirichletEvalMap (P := P) g =
-      ccrDirichletEvalMap (P := P) (f ≫ g) := by
+lemma fcEvalMap_comp
+    (P : FreeCoprodCompletionCat.{u, v, w} C)
+    {A B C' : C} (f : A ⟶ B) (g : B ⟶ C') :
+    fcEvalMap (P := P) f ∘
+      fcEvalMap (P := P) g =
+      fcEvalMap (P := P) (f ≫ g) := by
   funext ⟨i, h⟩
-  simp only [Function.comp_apply, ccrDirichletEvalMap, Category.assoc]
+  simp only [Function.comp_apply,
+    fcEvalMap, Category.assoc]
 
-/--
-A Dirichlet functor `P : CoprodCovarRepCat C` gives a presheaf `Cᵒᵖ ⥤ Type`.
--/
-def ccrDirichletToFunctor (P : CoprodCovarRepCat.{u, v, w} C) : Cᵒᵖ ⥤ Type _ where
-  obj A := ccrDirichletEval P A.unop
-  map {_ _} f := ccrDirichletEvalMap f.unop
-  map_id _ := ccrDirichletEvalMap_id
-  map_comp {_ _ _} f g := (ccrDirichletEvalMap_comp P g.unop f.unop).symm
+def fcToFunctor
+    (P : FreeCoprodCompletionCat.{u, v, w} C) :
+    Cᵒᵖ ⥤ Type _ where
+  obj A := fcEval P A.unop
+  map {_ _} f := fcEvalMap f.unop
+  map_id _ := fcEvalMap_id
+  map_comp {_ _ _} f g :=
+    (fcEvalMap_comp P g.unop f.unop).symm
 
 end CoprodCovarRepHelpers
 
