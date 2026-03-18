@@ -39,7 +39,7 @@ open CategoryTheory Limits
 
 universe w v u
 
-variable {C : Type u} [Category.{v} C]
+variable {C : Type u} [Category.{v, u} C]
 
 open Presheaf in
 instance uliftYoneda_projective (X : C) :
@@ -61,7 +61,7 @@ section PresheafCover
 
 open Presheaf Opposite
 
-variable (P : Cᵒᵖ ⥤ Type (max w v))
+variable (P : Cᵒᵖ ⥤ Type (max v w))
 
 /--
 The coproduct-of-representables presheaf covering `P`.
@@ -195,7 +195,7 @@ section CopresheafCover
 
 open Opposite
 
-variable (F : C ⥤ Type (max w v))
+variable (F : C ⥤ Type (max v w))
 
 def copresheafCover :
     C ⥤ Type (max u w v) where
