@@ -85,65 +85,21 @@ def BT.leaf : BT.{u} :=
 
 /-- A branching tree from two subtrees
 (the operation `s : T × T → T` of the BTO).
-Constructed via `polyFreeMStrFamily` (the structure map
-of the free algebra) with `polyProd_eval_fiberEquiv` to
-present the two children as a pair. -/
+Constructed via `polyProdFreeMNode`. -/
 def BT.node (l r : BT.{u}) : BT.{u} :=
-  let carrier :=
-    polyFreeMCarrier
-      (overTerminal PUnit.{u + 1}) polyProdType
-  polyFreeMStrFamily
-    (overTerminal PUnit.{u + 1})
-    polyProdType
-    PUnit.unit
-    ((polyProd_eval_fiberEquiv carrier
-        PUnit.unit).invFun
-      (⟨⟨PUnit.unit, l⟩, rfl⟩,
-       ⟨⟨PUnit.unit, r⟩, rfl⟩))
-
-/-- Carrier for the fold target: an `Over PUnit` object
-with left component `α`. -/
-private def btFoldCarrier (α : Type u) :
-    Over PUnit.{u + 1} :=
-  Over.mk (fun (_ : α) => PUnit.unit)
-
-/-- The `polyProdType`-algebra whose structure map applies
-a binary operation to the pair of recursive results,
-extracted via `polyProd_eval_fiberEquiv`. -/
-private def btFoldAlg {α : Type u}
-    (s : α → α → α) :
-    PolyAlg polyProdType where
-  a := btFoldCarrier α
-  str := Over.homMk
-    (fun ⟨_, eval⟩ =>
-      let pair :=
-        (polyProd_eval_fiberEquiv
-          (btFoldCarrier α) _).toFun eval
-      s pair.1.val pair.2.val)
-    (by funext ⟨⟨⟩, _⟩; rfl)
+  polyProdFreeMNode
+    (overTerminal PUnit.{u + 1}) l r
 
 /-- Catamorphism (fold) for binary trees (the universal
 morphism `φ : A × T → X` of the parameterized BTO).
 Given `b` for leaves and `s` for branches, folds a tree
 to produce a result.
-
-Constructed by mapping leaves via `polyFreeMapAt` (to
-embed the base value `b` at each leaf), then applying the
-counit fold `polyFreeCounitFoldAt` (the counit of the
-free-forgetful adjunction on `polyProdType`-algebras). -/
+Constructed via `polyProdFreeMFoldAt`. -/
 def BT.fold {α : Type u} (b : α) (s : α → α → α)
     (t : BT.{u}) : α :=
-  let alg := btFoldAlg s
-  let leafMap : overTerminal PUnit.{u + 1} ⟶
-      btFoldCarrier α :=
-    Over.homMk (fun _ => b) rfl
-  let mapped :=
-    polyFreeMapAt
-      (overTerminal PUnit.{u + 1})
-      (btFoldCarrier α)
-      polyProdType leafMap PUnit.unit t
-  (polyFreeCounitFoldAt polyProdType alg
-    PUnit.unit mapped).val
+  polyProdFreeMFoldAt
+    (overTerminal PUnit.{u + 1})
+    (fun _ => b) s t
 
 /-! ## Morphisms of the Lawvere theory
 

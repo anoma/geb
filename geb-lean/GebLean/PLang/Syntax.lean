@@ -241,4 +241,67 @@ abbrev polyProdType : PolyEndo PUnit.{u + 1} :=
 
 end PUnitSpecialization
 
+/-! ## Convenience constructors and fold for `polyProd`
+free monad trees
+
+These provide a pair-based interface for constructing
+and eliminating binary-branching free monad trees,
+without requiring clients to work with
+`polyProd_eval_fiberEquiv` or the internal direction
+representation.
+-/
+
+section PolyProdFreeM
+
+variable {X : Type u}
+
+/-- Construct a binary-branching node in the free monad
+of `polyProd`.  Given left and right subtrees, produces
+the corresponding node via the free algebra structure
+map (`polyFreeMStrFamily`). -/
+def polyProdFreeMNode (A : Over X) {x : X}
+    (l r : PolyFreeM A (polyProd X) x) :
+    PolyFreeM A (polyProd X) x :=
+  polyFreeMStrFamily A (polyProd X) x
+    ⟨PUnit.unit, Over.homMk
+      (fun s => match s with
+        | Sum.inl _ => ⟨x, l⟩
+        | Sum.inr _ => ⟨x, r⟩)
+      (by funext s; cases s <;> rfl)⟩
+
+private def polyProdFreeMFoldAux
+    {A : Over X} {α : Type u}
+    (onLeaf :
+      {x : X} →
+        { v : A.left // A.hom v = x } → α)
+    (onNode : α → α → α)
+    {x : X}
+    (t : PolyFix
+      (polyTranslate A (polyProd X)) x) :
+    α :=
+  match t with
+  | .mk _ (Sum.inl a) _ => onLeaf a
+  | .mk _ (Sum.inr _) ch =>
+    onNode
+      (polyProdFreeMFoldAux onLeaf onNode
+        (ch (Sum.inl PUnit.unit)))
+      (polyProdFreeMFoldAux onLeaf onNode
+        (ch (Sum.inr PUnit.unit)))
+
+/-- Fold a `polyProd` free monad tree.  At each leaf,
+applies `onLeaf` to the label; at each node, applies
+`onNode` to the two recursive results.  This is the
+universal morphism of the `polyProd` algebra
+structure. -/
+def polyProdFreeMFoldAt
+    (A : Over X) {α : Type u} {x : X}
+    (onLeaf :
+      {x : X} →
+        { v : A.left // A.hom v = x } → α)
+    (onNode : α → α → α)
+    (t : PolyFreeM A (polyProd X) x) : α :=
+  polyProdFreeMFoldAux onLeaf onNode t
+
+end PolyProdFreeM
+
 end GebLean
