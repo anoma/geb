@@ -1985,6 +1985,50 @@ def endoIhomProd
         (G.obj (pshRelEdgeRepresentable
           ice.1 ice.2.1)))
 
+/-- Contravariant functoriality of the
+representable in the WalkingSpan direction:
+a morphism `φ : i₁ ⟶ i₀` induces a span
+morphism `y(i₀, c₀) ⟶ y(i₁, c₀)` by
+precomposition of the span hom. -/
+def spanRepresentableMapSpan
+    {i₀ i₁ : WalkingSpan}
+    (c₀ : Cᵒᵖ)
+    (φ : i₁ ⟶ i₀) :
+    spanRepresentable (C := C) i₀ c₀ ⟶
+      spanRepresentable i₁ c₀ where
+  app j :=
+    { app := fun c sp =>
+        (φ ≫ sp.1, sp.2)
+      naturality := fun {_ _} _ => rfl }
+  naturality {j₁ j₂} ψ := by
+    apply NatTrans.ext
+    funext c; funext ⟨h, ⟨k⟩⟩
+    simp only [spanRepresentable,
+      NatTrans.comp_app, types_comp_apply,
+      Category.assoc]
+
+/-- Contravariant functoriality of the
+representable in the Cᵒᵖ direction:
+a morphism `f : c₁ ⟶ c₀` in Cᵒᵖ induces a
+span morphism `y(i₀, c₀) ⟶ y(i₀, c₁)` by
+precomposition of the presheaf hom. -/
+def spanRepresentableMapPsh
+    (i₀ : WalkingSpan)
+    {c₀ c₁ : Cᵒᵖ}
+    (f : c₁ ⟶ c₀) :
+    spanRepresentable (C := C) i₀ c₀ ⟶
+      spanRepresentable i₀ c₁ where
+  app j :=
+    { app := fun c sp =>
+        (sp.1, ⟨f ≫ sp.2.down⟩)
+      naturality := fun {c d} g =>
+        funext fun ⟨h, ⟨k⟩⟩ =>
+          Prod.ext rfl (congrArg ULift.up
+            (Category.assoc _ _ _).symm) }
+  naturality {j₁ j₂} ψ := by
+    apply NatTrans.ext
+    funext c; funext ⟨h, ⟨k⟩⟩; rfl
+
 end EndoIhom
 
 end GebLean
