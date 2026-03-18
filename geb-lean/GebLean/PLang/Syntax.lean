@@ -269,30 +269,39 @@ def polyProdFreeMNode (A : Over X) {x : X}
         | Sum.inr _ => ⟨x, r⟩)
       (by funext s; cases s <;> rfl)⟩
 
-private def polyProdFreeMFoldAux
-    {A : Over X} {α : Type u}
-    (onLeaf :
-      {x : X} →
-        { v : A.left // A.hom v = x } → α)
-    (onNode : α → α → α)
-    {x : X}
-    (t : PolyFix
-      (polyTranslate A (polyProd X)) x) :
-    α :=
-  match t with
-  | .mk _ (Sum.inl a) _ => onLeaf a
-  | .mk _ (Sum.inr _) ch =>
-    onNode
-      (polyProdFreeMFoldAux onLeaf onNode
-        (ch (Sum.inl PUnit.unit)))
-      (polyProdFreeMFoldAux onLeaf onNode
-        (ch (Sum.inr PUnit.unit)))
+/-- The `Over X` carrier for folding a `polyProd` free
+monad tree into values of type `α`, with fiber
+projection constantly `x`. -/
+private def polyProdFoldCarrier
+    (α : Type u) (X : Type u) :
+    Over X :=
+  Over.mk (fun (p : X × α) => p.1)
+
+/-- The `polyProd`-algebra on `polyProdFoldCarrier`
+whose structure map extracts the pair of recursive
+results via `polyProd_eval_fiberEquiv` and applies
+`onNode`. -/
+private def polyProdFoldAlg {α : Type u}
+    (onNode : α → α → α) :
+    PolyAlg (polyProd X) where
+  a := polyProdFoldCarrier α X
+  str := Over.homMk
+    (fun ⟨x, eval⟩ =>
+      let pair :=
+        (polyProd_eval_fiberEquiv
+          (polyProdFoldCarrier α X) x).toFun
+          eval
+      ⟨x, onNode pair.1.val.2 pair.2.val.2⟩)
+    (by funext ⟨_, _⟩; rfl)
 
 /-- Fold a `polyProd` free monad tree.  At each leaf,
 applies `onLeaf` to the label; at each node, applies
-`onNode` to the two recursive results.  This is the
-universal morphism of the `polyProd` algebra
-structure. -/
+`onNode` to the two recursive results.
+
+Implemented via the counit of the free-forgetful
+adjunction (`polyFreeCounitFoldAt`) on the
+`polyProd`-algebra defined by `onNode`, after mapping
+leaf labels into the algebra carrier via `onLeaf`. -/
 def polyProdFreeMFoldAt
     (A : Over X) {α : Type u} {x : X}
     (onLeaf :
@@ -300,7 +309,13 @@ def polyProdFreeMFoldAt
         { v : A.left // A.hom v = x } → α)
     (onNode : α → α → α)
     (t : PolyFreeM A (polyProd X) x) : α :=
-  polyProdFreeMFoldAux onLeaf onNode t
+  let alg := polyProdFoldAlg (X := X) onNode
+  let leafMap : A ⟶ alg.a := Over.homMk
+    (fun a => ⟨A.hom a, onLeaf ⟨a, rfl⟩⟩) rfl
+  let mapped := polyFreeMapAt A alg.a
+    (polyProd X) leafMap x t
+  (polyFreeCounitFoldAt (polyProd X) alg
+    x mapped).val.2
 
 end PolyProdFreeM
 
