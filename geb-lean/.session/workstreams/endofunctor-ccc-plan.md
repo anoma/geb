@@ -2,60 +2,77 @@
 
 ## Status
 
-In progress -- endoIhomFunctor complete, adjunction
-curry component started.
-
-## Corrected Formula
-
-```text
-[F, G](E) = end_{(i,c)} [F(y), G(y)]^{Hom(E, y)}
-```
-
-Power indexed by `Hom(E, y(i,c))` (covariant in E).
+All building blocks complete. Adjunction needs density.
 
 ## Completed Definitions
 
-All in `PshRelEdgeSeparation.lean`, section `EndoIhom`.
+All in `PshRelEdgeSeparation.lean`, section `EndoIhom`:
 
-- `endoIhomComponent`, `endoIhomFamily`, `endoIhomProd`
-- `endoDinatCovar/Contra` (dinatural maps)
-- Dinatural conditions: `SpanCond`, `PshCond` (src/tgt)
-- `endoIhomSrc/Tgt/Rel/Obj` (presheaves + edge)
-- `endoIhomMap` (functoriality in E)
-- `endoIhom F G` (the complete endofunctor)
-- `endoDinatSpanCond_ihomMap` + three variants
-  (bifunctoriality: covar by rfl, contra by
-  eta.naturality via Functor.map_comp)
-- `endoIhomMapG` (functoriality in G)
-- `endoIhomFunctor F` (right adjoint G -> [F, G])
-- `endoIhomCurrySrcApp` (curry product component
-  using object-level Closed.adj.homEquiv)
+- `endoIhom F G : PshRelEdge C ==> PshRelEdge C`
+- `endoIhomFunctor F` : G |-> [F, G] (right adjoint)
+- `endoIhomMapG` + 4 bifunctoriality lemmas
+- `endoIhomCurrySrcApp` : curry product component
 
-## Remaining Steps
+## Adjunction Plan
 
-### Step 1: Curry dinatural conditions
+### Mathlib infrastructure to use
 
-Show `endoIhomCurrySrcApp` satisfies `endoDinatSpanCond`
-and `endoDinatPshCond`. Uses naturality of `eta` at `beta`
-lifted through the base CCC adjunction.
+1. `colimitOfRepresentable` (Limits/Presheaf.lean):
+   every presheaf is a colimit of representables
 
-### Step 2: Full curry map
+2. `uliftYonedaAdjunction` (Limits/Presheaf.lean):
+   left Kan extension along Yoneda is left adjoint
+   to `restrictedULiftYoneda`
 
-Assemble curry as `H -> [F, G]` (natural transformation
-of endofunctors). Show naturality in E.
+3. `coyonedaEquiv` (Yoneda.lean):
+   `Nat(Hom(X,-), F) ~= F(X)` for covariant F
 
-### Step 3: Uncurry map
+4. `Functor.IsDense` (KanExtension/Dense.lean):
+   abstract density, char. by restricted Yoneda
+   being fully faithful
 
-Given `mu : H -> [F, G]`, produce `eta : F x H -> G`.
-At representable `y(i,c)`, evaluate `mu.app(y)(h)(id)`
-then uncurry. At general `E`, use naturality of `mu`
-and the density property: every element of `F(E)` is
-determined by its behavior at representables.
+### Step 1: Density of pshRelEdgeRepresentable
 
-### Step 4: Adjunction
+The representable embedding is CONTRAVARIANT:
+`(WalkingSpan x C^op)^op -> PshRelEdge C`.
+It factors as: Yoneda into PSh(SpanCat) composed
+with the separation functor.
 
-Show curry and uncurry are inverse. Use `mkOfHomEquiv`.
+To show density, use:
+- `colimitOfRepresentable` for PSh(SpanCat)
+  (Yoneda into PSh is dense)
+- Separation is a left adjoint (preserves colimits)
+- So the composed embedding is dense
 
-### Step 5: MonoidalClosed instance
+### Step 2: Evaluation counit via density
 
-Package as `Closed F` with `rightAdj = endoIhomFunctor F`.
+Given density, for any endofunctor G and edge E:
+1. Write G0(Y) = G(Y).src.obj d as a covariant
+   functor PshRelEdge C -> Type
+2. The dinatural family gives a natural
+   transformation Hom(E, iota(-)) -> G0(iota(-))
+   restricted to representables
+3. By density (fully faithful restricted Yoneda),
+   this extends uniquely to Hom(E, -) -> G0
+4. By coyonedaEquiv, get element of G0(E)
+
+### Step 3: Build Adjunction
+
+Use `Adjunction.mkOfHomEquiv`:
+- homEquiv: curry uses Closed.adj.homEquiv at
+  representables + H.map(alpha)
+- inverse uses density evaluation from Step 2
+- naturality conditions from functoriality
+
+### Alternative: Direct use of uliftYonedaAdjunction
+
+The pattern from mathlib:
+1. Define `restrictedULiftYoneda A : E ==> PSh`
+   sending E |-> (A(-) -> E)
+2. Left Kan extension `L` along uliftYoneda
+3. `uliftYonedaAdjunction` gives `L adj restrictedULiftYoneda A`
+4. The counit gives the evaluation map
+
+Apply with A = pshRelEdgeRepresentableFunctor
+to get the density adjunction, then derive the
+endofunctor CCC adjunction from it.
