@@ -2,88 +2,60 @@
 
 ## Status
 
-In progress -- `endoIhom F G` functor complete; need
-functoriality in `G` for the adjunction.
+In progress -- endoIhomFunctor complete, adjunction
+curry component started.
 
 ## Corrected Formula
 
-The internal hom `[F, G]` of two endofunctors is the
-endofunctor sending `E` to the powered end:
-
 ```text
-[F, G](E) = end_{(i,c)} [F(y(i,c)), G(y(i,c))]^{Hom(E, y(i,c))}
+[F, G](E) = end_{(i,c)} [F(y), G(y)]^{Hom(E, y)}
 ```
 
-where `y(i,c) = pshRelEdgeRepresentable i c` and the
-power is indexed by the external hom SET
-`Hom(E, y(i,c))`. This gives covariance in `E` via
-double contravariance (hom contra in E, power contra
-in S).
+Power indexed by `Hom(E, y(i,c))` (covariant in E).
 
 ## Completed Definitions
 
 All in `PshRelEdgeSeparation.lean`, section `EndoIhom`.
 
-- `endoIhomComponent F G E i c` -- powered hom
-  `[F(y), G(y)]^{Hom(E, y)}` at one index
-- `endoIhomFamily` -- edge family indexed by
-  `(i, c, alpha : E -> y(i,c))`
-- `endoIhomProd` -- dependent product of the family
-- `endoDinatCovar/Contra` -- dinatural maps
-- `endoDinatSpanCond/PshCond` -- dinatural conditions
-  (source and target versions)
-- `endoIhomSrc/Tgt F G E` -- presheaves with
-  dinatural conditions (functorial in presheaf stage)
-- `endoIhomRel F G E` -- restricted relation
-- `endoIhomObj F G E : PshRelEdge C` -- full edge
-- `endoIhomMap F G g` -- functoriality map for
-  `g : E1 -> E2` (precomposition on hom-set index)
-- `endoIhom F G : PshRelEdge C ==> PshRelEdge C` --
-  the complete endofunctor
+- `endoIhomComponent`, `endoIhomFamily`, `endoIhomProd`
+- `endoDinatCovar/Contra` (dinatural maps)
+- Dinatural conditions: `SpanCond`, `PshCond` (src/tgt)
+- `endoIhomSrc/Tgt/Rel/Obj` (presheaves + edge)
+- `endoIhomMap` (functoriality in E)
+- `endoIhom F G` (the complete endofunctor)
+- `endoDinatSpanCond_ihomMap` + three variants
+  (bifunctoriality: covar by rfl, contra by
+  eta.naturality via Functor.map_comp)
+- `endoIhomMapG` (functoriality in G)
+- `endoIhomFunctor F` (right adjoint G -> [F, G])
+- `endoIhomCurrySrcApp` (curry product component
+  using object-level Closed.adj.homEquiv)
 
 ## Remaining Steps
 
-### Step 1: Bifunctoriality lemma
+### Step 1: Curry dinatural conditions
 
-The internal hom `[A, B]` in `PshRelEdge C` satisfies:
-for `f : A' -> A` and `g : B -> B'`,
-`ihom.map(g) comp pre(f) = pre(f) comp ihom.map(g)`
-(pre and post composition commute). This should be
-added to `PshRelEdgeExp.lean` or `Utilities/`.
+Show `endoIhomCurrySrcApp` satisfies `endoDinatSpanCond`
+and `endoDinatPshCond`. Uses naturality of `eta` at `beta`
+lifted through the base CCC adjunction.
 
-### Step 2: Functoriality in G
+### Step 2: Full curry map
 
-`endoIhomMapG F eta E : endoIhomObj F G1 E -> endoIhomObj F G2 E`
-for `eta : G1 -> G2`. Maps by postcomposition with eta
-at each representable. The dinatural condition
-preservation uses the bifunctoriality lemma (covar) and
-the naturality of eta (contra).
+Assemble curry as `H -> [F, G]` (natural transformation
+of endofunctors). Show naturality in E.
 
-### Step 3: Assemble right adjoint functor
+### Step 3: Uncurry map
 
-`endoIhomFunctor F :
-    (PshRelEdge C ==> PshRelEdge C) ==>
-    (PshRelEdge C ==> PshRelEdge C)`
-sending `G |-> endoIhom F G`, functorial in G.
+Given `mu : H -> [F, G]`, produce `eta : F x H -> G`.
+At representable `y(i,c)`, evaluate `mu.app(y)(h)(id)`
+then uncurry. At general `E`, use naturality of `mu`
+and the density property: every element of `F(E)` is
+determined by its behavior at representables.
 
 ### Step 4: Adjunction
 
-`tensorLeft F adj endoIhomFunctor F`
-
-The curry direction: `eta : H x F -> G` gives
-`mu : H -> [F, G]` where
-`mu_E(h)(alpha) = curry(eta_{y(i,c)})(H.map(alpha)(h))`.
-
-The uncurry uses the density theorem: every element
-of `F(E)` factors through representables.
+Show curry and uncurry are inverse. Use `mkOfHomEquiv`.
 
 ### Step 5: MonoidalClosed instance
 
-Package `Closed F` with `rightAdj = endoIhomFunctor F`
-and `adj` from step 4.
-
-## Dependencies
-
-```text
-Bifunctoriality -> MapG -> Functor -> Adjunction -> MonoidalClosed
-```
+Package as `Closed F` with `rightAdj = endoIhomFunctor F`.

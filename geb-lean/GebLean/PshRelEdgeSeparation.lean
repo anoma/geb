@@ -2990,6 +2990,33 @@ def endoIhomFunctor
         (pshRelEdgeIhom _).map_comp]
       rfl
 
+/-- The curry direction of the endofunctor CCC
+adjunction: given `η : F ⊗ H ⟹ G` (a natural
+transformation of endofunctors), produce
+the product component at edge `E`. At index
+`α : E ⟶ y(i,c)`, the value is obtained by
+currying `η_{y(i,c)}` in the base CCC (using
+the object-level adjunction) and composing
+with `H.map(α)`. -/
+def endoIhomCurrySrcApp
+    (F H G :
+      PshRelEdge.{u, v, max u v} C ⥤
+        PshRelEdge.{u, v, max u v} C)
+    (η : (MonoidalCategory.tensorLeft F).obj
+      H ⟶ G)
+    (E : PshRelEdge.{u, v, max u v} C)
+    (d : Cᵒᵖ)
+    (h : H.obj E |>.src.obj d) :
+    (endoIhomProd F G E).src.obj d :=
+  fun ⟨i, c, α⟩ =>
+    let y := pshRelEdgeRepresentable i c
+    let curried :=
+      (Closed.adj
+        (X := F.obj y)).homEquiv
+        (H.obj y) (G.obj y)
+        (η.app y)
+    (H.map α ≫ curried).srcMap.app d h
+
 end EndoIhom
 
 end GebLean
