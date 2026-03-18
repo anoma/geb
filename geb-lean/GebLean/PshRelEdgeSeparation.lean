@@ -2577,6 +2577,368 @@ lemma endoDinatSpanCond_ihomMap
           (h ⟨i₀, c, α₀⟩)) :=
       hcontra _
 
+/-- The ihom postcomposition map preserves
+the presheaf dinatural condition. -/
+lemma endoDinatPshCond_ihomMap
+    (F :
+      PshRelEdge.{u, v, max u v} C ⥤
+        PshRelEdge.{u, v, max u v} C)
+    {G₁ G₂ :
+      PshRelEdge.{u, v, max u v} C ⥤
+        PshRelEdge.{u, v, max u v} C}
+    (η : G₁ ⟶ G₂)
+    (E : PshRelEdge.{u, v, max u v} C)
+    (d : Cᵒᵖ)
+    (h : (endoIhomProd F G₁ E).src.obj d)
+    (hcond : endoDinatPshCond F G₁ E d h) :
+    endoDinatPshCond F G₂ E d
+      (fun ⟨i, c, α⟩ =>
+        ((pshRelEdgeIhom
+          (F.obj (pshRelEdgeRepresentable
+            i c))).map
+          (η.app (pshRelEdgeRepresentable
+            i c))).srcMap.app d
+          (h ⟨i, c, α⟩)) := by
+  intro i c₀ c₁ f α₀
+  dsimp [endoDinatPshCond,
+    endoIhomProdComponent]
+  have orig := hcond i c₀ c₁ f α₀
+  dsimp [endoDinatPshCond,
+    endoIhomProdComponent] at orig
+  let β := (pshRelEdgeSepFunctor C).map
+    (spanRepresentableMapPsh i f)
+  let Ψ_off := ((pshRelEdgeIhom (F.obj
+    (pshRelEdgeRepresentable i c₀))).map
+    (η.app (pshRelEdgeRepresentable
+      i c₁))).srcMap.app d
+  have hcontra : ∀ x,
+    Ψ_off ((endoDinatContra F G₁
+      β).srcMap.app d x) =
+    (endoDinatContra F G₂ β).srcMap.app d
+      (((pshRelEdgeIhom (F.obj
+        (pshRelEdgeRepresentable
+          i c₀))).map
+        (η.app (pshRelEdgeRepresentable
+          i c₀))).srcMap.app d x) := by
+    have key :
+        (pshRelEdgeIhom (F.obj
+          (pshRelEdgeRepresentable i c₀))).map
+          (G₁.map β) ≫
+        (pshRelEdgeIhom (F.obj
+          (pshRelEdgeRepresentable i c₀))).map
+          (η.app (pshRelEdgeRepresentable
+            i c₁)) =
+        (pshRelEdgeIhom (F.obj
+          (pshRelEdgeRepresentable i c₀))).map
+          (η.app (pshRelEdgeRepresentable
+            i c₀)) ≫
+        (pshRelEdgeIhom (F.obj
+          (pshRelEdgeRepresentable i c₀))).map
+          (G₂.map β) := by
+      rw [← Functor.map_comp,
+        ← Functor.map_comp]
+      exact congrArg
+        (pshRelEdgeIhom (F.obj
+          (pshRelEdgeRepresentable i c₀))).map
+        (η.naturality β)
+    intro x
+    exact congr_fun
+      (congrArg
+        (fun f => f.srcMap.app d) key) x
+  calc
+    (endoDinatCovar F G₂ β).srcMap.app d
+      (((pshRelEdgeIhom (F.obj
+        (pshRelEdgeRepresentable i c₁))).map
+        (η.app (pshRelEdgeRepresentable
+          i c₁))).srcMap.app d
+        (h ⟨i, c₁, α₀ ≫ β⟩))
+    _ = Ψ_off ((endoDinatCovar F G₁
+        β).srcMap.app d
+        (h ⟨i, c₁, α₀ ≫ β⟩)) := rfl
+    _ = Ψ_off ((endoDinatContra F G₁
+        β).srcMap.app d
+        (h ⟨i, c₀, α₀⟩)) :=
+      congrArg Ψ_off orig
+    _ = (endoDinatContra F G₂
+        β).srcMap.app d
+        (((pshRelEdgeIhom (F.obj
+          (pshRelEdgeRepresentable
+            i c₀))).map
+          (η.app (pshRelEdgeRepresentable
+            i c₀))).srcMap.app d
+          (h ⟨i, c₀, α₀⟩)) :=
+      hcontra _
+
+/-- The ihom postcomposition map preserves
+the span dinatural condition for the target
+presheaf. -/
+lemma endoDinatSpanCondTgt_ihomMap
+    (F :
+      PshRelEdge.{u, v, max u v} C ⥤
+        PshRelEdge.{u, v, max u v} C)
+    {G₁ G₂ :
+      PshRelEdge.{u, v, max u v} C ⥤
+        PshRelEdge.{u, v, max u v} C}
+    (η : G₁ ⟶ G₂)
+    (E : PshRelEdge.{u, v, max u v} C)
+    (d : Cᵒᵖ)
+    (h : (endoIhomProd F G₁ E).tgt.obj d)
+    (hcond :
+      endoDinatSpanCondTgt F G₁ E d h) :
+    endoDinatSpanCondTgt F G₂ E d
+      (fun ⟨i, c, α⟩ =>
+        ((pshRelEdgeIhom
+          (F.obj (pshRelEdgeRepresentable
+            i c))).map
+          (η.app (pshRelEdgeRepresentable
+            i c))).tgtMap.app d
+          (h ⟨i, c, α⟩)) := by
+  intro i₀ i₁ φ c α₀
+  dsimp [endoDinatSpanCondTgt,
+    endoIhomProdComponent]
+  have orig := hcond i₀ i₁ φ c α₀
+  dsimp [endoDinatSpanCondTgt,
+    endoIhomProdComponent] at orig
+  let β := (pshRelEdgeSepFunctor C).map
+    (spanRepresentableMapSpan c φ)
+  let Ψ_off := ((pshRelEdgeIhom (F.obj
+    (pshRelEdgeRepresentable i₀ c))).map
+    (η.app (pshRelEdgeRepresentable
+      i₁ c))).tgtMap.app d
+  have hcontra : ∀ x,
+    Ψ_off ((endoDinatContra F G₁
+      β).tgtMap.app d x) =
+    (endoDinatContra F G₂ β).tgtMap.app d
+      (((pshRelEdgeIhom (F.obj
+        (pshRelEdgeRepresentable
+          i₀ c))).map
+        (η.app (pshRelEdgeRepresentable
+          i₀ c))).tgtMap.app d x) := by
+    have key :
+        (pshRelEdgeIhom (F.obj
+          (pshRelEdgeRepresentable i₀ c))).map
+          (G₁.map β) ≫
+        (pshRelEdgeIhom (F.obj
+          (pshRelEdgeRepresentable i₀ c))).map
+          (η.app (pshRelEdgeRepresentable
+            i₁ c)) =
+        (pshRelEdgeIhom (F.obj
+          (pshRelEdgeRepresentable i₀ c))).map
+          (η.app (pshRelEdgeRepresentable
+            i₀ c)) ≫
+        (pshRelEdgeIhom (F.obj
+          (pshRelEdgeRepresentable i₀ c))).map
+          (G₂.map β) := by
+      rw [← Functor.map_comp,
+        ← Functor.map_comp]
+      exact congrArg
+        (pshRelEdgeIhom (F.obj
+          (pshRelEdgeRepresentable i₀ c))).map
+        (η.naturality β)
+    intro x
+    exact congr_fun
+      (congrArg
+        (fun f => f.tgtMap.app d) key) x
+  calc
+    (endoDinatCovar F G₂ β).tgtMap.app d
+      (((pshRelEdgeIhom (F.obj
+        (pshRelEdgeRepresentable i₁ c))).map
+        (η.app (pshRelEdgeRepresentable
+          i₁ c))).tgtMap.app d
+        (h ⟨i₁, c, α₀ ≫ β⟩))
+    _ = Ψ_off ((endoDinatCovar F G₁
+        β).tgtMap.app d
+        (h ⟨i₁, c, α₀ ≫ β⟩)) := rfl
+    _ = Ψ_off ((endoDinatContra F G₁
+        β).tgtMap.app d
+        (h ⟨i₀, c, α₀⟩)) :=
+      congrArg Ψ_off orig
+    _ = (endoDinatContra F G₂
+        β).tgtMap.app d
+        (((pshRelEdgeIhom (F.obj
+          (pshRelEdgeRepresentable
+            i₀ c))).map
+          (η.app (pshRelEdgeRepresentable
+            i₀ c))).tgtMap.app d
+          (h ⟨i₀, c, α₀⟩)) :=
+      hcontra _
+
+/-- The ihom postcomposition map preserves
+the presheaf dinatural condition for the
+target presheaf. -/
+lemma endoDinatPshCondTgt_ihomMap
+    (F :
+      PshRelEdge.{u, v, max u v} C ⥤
+        PshRelEdge.{u, v, max u v} C)
+    {G₁ G₂ :
+      PshRelEdge.{u, v, max u v} C ⥤
+        PshRelEdge.{u, v, max u v} C}
+    (η : G₁ ⟶ G₂)
+    (E : PshRelEdge.{u, v, max u v} C)
+    (d : Cᵒᵖ)
+    (h : (endoIhomProd F G₁ E).tgt.obj d)
+    (hcond :
+      endoDinatPshCondTgt F G₁ E d h) :
+    endoDinatPshCondTgt F G₂ E d
+      (fun ⟨i, c, α⟩ =>
+        ((pshRelEdgeIhom
+          (F.obj (pshRelEdgeRepresentable
+            i c))).map
+          (η.app (pshRelEdgeRepresentable
+            i c))).tgtMap.app d
+          (h ⟨i, c, α⟩)) := by
+  intro i c₀ c₁ f α₀
+  dsimp [endoDinatPshCondTgt,
+    endoIhomProdComponent]
+  have orig := hcond i c₀ c₁ f α₀
+  dsimp [endoDinatPshCondTgt,
+    endoIhomProdComponent] at orig
+  let β := (pshRelEdgeSepFunctor C).map
+    (spanRepresentableMapPsh i f)
+  let Ψ_off := ((pshRelEdgeIhom (F.obj
+    (pshRelEdgeRepresentable i c₀))).map
+    (η.app (pshRelEdgeRepresentable
+      i c₁))).tgtMap.app d
+  have hcontra : ∀ x,
+    Ψ_off ((endoDinatContra F G₁
+      β).tgtMap.app d x) =
+    (endoDinatContra F G₂ β).tgtMap.app d
+      (((pshRelEdgeIhom (F.obj
+        (pshRelEdgeRepresentable
+          i c₀))).map
+        (η.app (pshRelEdgeRepresentable
+          i c₀))).tgtMap.app d x) := by
+    have key :
+        (pshRelEdgeIhom (F.obj
+          (pshRelEdgeRepresentable i c₀))).map
+          (G₁.map β) ≫
+        (pshRelEdgeIhom (F.obj
+          (pshRelEdgeRepresentable i c₀))).map
+          (η.app (pshRelEdgeRepresentable
+            i c₁)) =
+        (pshRelEdgeIhom (F.obj
+          (pshRelEdgeRepresentable i c₀))).map
+          (η.app (pshRelEdgeRepresentable
+            i c₀)) ≫
+        (pshRelEdgeIhom (F.obj
+          (pshRelEdgeRepresentable i c₀))).map
+          (G₂.map β) := by
+      rw [← Functor.map_comp,
+        ← Functor.map_comp]
+      exact congrArg
+        (pshRelEdgeIhom (F.obj
+          (pshRelEdgeRepresentable i c₀))).map
+        (η.naturality β)
+    intro x
+    exact congr_fun
+      (congrArg
+        (fun f => f.tgtMap.app d) key) x
+  calc
+    (endoDinatCovar F G₂ β).tgtMap.app d
+      (((pshRelEdgeIhom (F.obj
+        (pshRelEdgeRepresentable i c₁))).map
+        (η.app (pshRelEdgeRepresentable
+          i c₁))).tgtMap.app d
+        (h ⟨i, c₁, α₀ ≫ β⟩))
+    _ = Ψ_off ((endoDinatCovar F G₁
+        β).tgtMap.app d
+        (h ⟨i, c₁, α₀ ≫ β⟩)) := rfl
+    _ = Ψ_off ((endoDinatContra F G₁
+        β).tgtMap.app d
+        (h ⟨i, c₀, α₀⟩)) :=
+      congrArg Ψ_off orig
+    _ = (endoDinatContra F G₂
+        β).tgtMap.app d
+        (((pshRelEdgeIhom (F.obj
+          (pshRelEdgeRepresentable
+            i c₀))).map
+          (η.app (pshRelEdgeRepresentable
+            i c₀))).tgtMap.app d
+          (h ⟨i, c₀, α₀⟩)) :=
+      hcontra _
+
+/-- Functoriality of the endofunctor
+internal hom in `G`: a natural transformation
+`η : G₁ ⟶ G₂` induces
+`[F, G₁](E) ⟶ [F, G₂](E)` by
+postcomposition on the hom-set values. -/
+def endoIhomMapG
+    (F :
+      PshRelEdge.{u, v, max u v} C ⥤
+        PshRelEdge.{u, v, max u v} C)
+    {G₁ G₂ :
+      PshRelEdge.{u, v, max u v} C ⥤
+        PshRelEdge.{u, v, max u v} C}
+    (η : G₁ ⟶ G₂)
+    (E : PshRelEdge.{u, v, max u v} C) :
+    endoIhomObj F G₁ E ⟶
+      endoIhomObj F G₂ E where
+  srcMap :=
+    { app := fun d x =>
+        ⟨fun ⟨i, c, α⟩ =>
+          ((pshRelEdgeIhom
+            (F.obj (pshRelEdgeRepresentable
+              i c))).map
+            (η.app (pshRelEdgeRepresentable
+              i c))).srcMap.app d
+            (x.1 ⟨i, c, α⟩),
+        endoDinatSpanCond_ihomMap F η E d
+          x.1 x.2.1,
+        endoDinatPshCond_ihomMap F η E d
+          x.1 x.2.2⟩
+      naturality := fun {d₁ d₂} f => by
+        funext ⟨x, _⟩
+        apply Subtype.ext
+        funext ⟨i, c, α⟩
+        exact congr_fun
+          (NatTrans.naturality
+            ((pshRelEdgeIhom
+              (F.obj
+                (pshRelEdgeRepresentable
+                  i c))).map
+              (η.app
+                (pshRelEdgeRepresentable
+                  i c))).srcMap
+            f)
+          (x ⟨i, c, α⟩) }
+  tgtMap :=
+    { app := fun d x =>
+        ⟨fun ⟨i, c, α⟩ =>
+          ((pshRelEdgeIhom
+            (F.obj (pshRelEdgeRepresentable
+              i c))).map
+            (η.app (pshRelEdgeRepresentable
+              i c))).tgtMap.app d
+            (x.1 ⟨i, c, α⟩),
+        endoDinatSpanCondTgt_ihomMap F η E d
+          x.1 x.2.1,
+        endoDinatPshCondTgt_ihomMap F η E d
+          x.1 x.2.2⟩
+      naturality := fun {d₁ d₂} f => by
+        funext ⟨x, _⟩
+        apply Subtype.ext
+        funext ⟨i, c, α⟩
+        exact congr_fun
+          (NatTrans.naturality
+            ((pshRelEdgeIhom
+              (F.obj
+                (pshRelEdgeRepresentable
+                  i c))).map
+              (η.app
+                (pshRelEdgeRepresentable
+                  i c))).tgtMap
+            f)
+          (x ⟨i, c, α⟩) }
+  sq := fun d s t h ⟨i, c, α⟩ =>
+    ((pshRelEdgeIhom
+      (F.obj (pshRelEdgeRepresentable
+        i c))).map
+      (η.app (pshRelEdgeRepresentable
+        i c))).sq d
+      (s.1 ⟨i, c, α⟩)
+      (t.1 ⟨i, c, α⟩)
+      (h ⟨i, c, α⟩)
+
 end EndoIhom
 
 end GebLean
