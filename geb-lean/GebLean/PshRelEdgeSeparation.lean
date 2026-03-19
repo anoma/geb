@@ -3358,6 +3358,604 @@ lemma endoDinatSpanCond_currySrcApp
     F H G η c φ d
     ((H.map α₀).srcMap.app d h)
 
+/-- The presheaf dinatural condition for the
+curry source application follows from
+naturality of η. -/
+private lemma currySrcApp_dinat_pshMap_key
+    (F H G :
+      PshRelEdge.{u, v, max u v} C ⥤
+        PshRelEdge.{u, v, max u v} C)
+    (η : (MonoidalCategory.tensorLeft F).obj
+      H ⟶ G)
+    (i : WalkingSpan) (c₀ c₁ : Cᵒᵖ)
+    (f : c₁ ⟶ c₀)
+    (d' : Cᵒᵖ)
+    (h_A : (H.obj
+      (pshRelEdgeRepresentable (C := C)
+        i c₀)).src.obj d') :
+    let β :=
+      (pshRelEdgeSepFunctor C).map
+        (spanRepresentableMapPsh i f)
+    let A := pshRelEdgeRepresentable (C := C)
+      i c₀
+    let B := pshRelEdgeRepresentable (C := C)
+      i c₁
+    (H.map β ≫
+      (Closed.adj (X := F.obj B)).homEquiv
+        (H.obj B) (G.obj B)
+        (η.app B) ≫
+      endoDinatCovar F G β).srcMap.app d' h_A =
+    ((Closed.adj (X := F.obj A)).homEquiv
+      (H.obj A) (G.obj A)
+      (η.app A) ≫
+      endoDinatContra F G β).srcMap.app d' h_A
+    := by
+  intro β A B
+  suffices hmor :
+      H.map β ≫
+        (Closed.adj (X := F.obj B)).homEquiv
+          (H.obj B) (G.obj B)
+          (η.app B) ≫
+        endoDinatCovar F G β =
+      (Closed.adj (X := F.obj A)).homEquiv
+        (H.obj A) (G.obj A)
+        (η.app A) ≫
+        endoDinatContra F G β by
+    exact congr_fun
+      (NatTrans.congr_app
+        (congrArg VertEdgeHom.srcMap hmor) d')
+      h_A
+  have inj : ∀ {X : PshRelEdge.{u, v, max u v} C}
+      {Y Z : PshRelEdge.{u, v, max u v} C}
+      (a b : X ⟶ pshRelEdgeExp Y Z),
+      pshRelEdgeUncurry a =
+        pshRelEdgeUncurry b → a = b :=
+    fun a b h =>
+      (pshRelEdgeCurry_uncurry a).symm.trans
+        (congrArg pshRelEdgeCurry h |>.trans
+          (pshRelEdgeCurry_uncurry b))
+  apply inj
+  rw [pshRelEdge_closedAdj_homEquiv,
+    pshRelEdge_closedAdj_homEquiv]
+  simp only [endoDinatCovar, endoDinatContra,
+    pshRelEdgeIhom]
+  rw [pshRelEdgeUncurry_curry_comp]
+  rw [pshRelEdgeUncurry_precomp,
+    pshRelEdgeUncurry_precomp,
+    pshRelEdgeUncurry_curry]
+  simp only [pshRelEdge_tensorHom_eq,
+    Category.comp_id]
+  apply VertEdgeHom.ext
+  · ext d'' ⟨h_X, f_X⟩
+    dsimp [pshRelEdge_comp_srcMap,
+      pshRelEdge_id_srcMap,
+      pshRelEdgePair, pshProdLift,
+      pshRelEdgeProdFst, pshRelEdgeProdSnd,
+      pshRelEdgeCurry, pshRelEdgeCurrySrcMap,
+      pshRelEdgeCurrySrcHomObj,
+      pshRelEdgeUncurry, pshRelEdgeUncurrySrcMap,
+      pshRelEdgeEval, Functor.functorHomEquiv,
+      FunctorToTypes.prod,
+      NatTrans.id_app', types_id_apply]
+    simp only [pshRelEdge_braiding_hom_eq,
+      FunctorToTypes.map_id_apply]
+    dsimp [pshRelEdgePair, pshProdLift,
+      pshRelEdgeProdFst, pshRelEdgeProdSnd,
+      FunctorToTypes.prod]
+    have hnat := congr_fun
+      (NatTrans.congr_app
+        (congrArg VertEdgeHom.srcMap
+          (η.naturality β)) d'')
+      (f_X, h_X)
+    simp only [pshRelEdge_tensorLeft_obj_map,
+      pshRelEdge_tensorHom_eq,
+      pshRelEdge_comp_srcMap,
+      NatTrans.comp_app] at hnat
+    dsimp [pshRelEdgePair, pshProdLift,
+      pshRelEdgeProdFst, pshRelEdgeProdSnd,
+      FunctorToTypes.prod,
+      types_comp_apply,
+      FunctorToTypes.prod.fst_app,
+      FunctorToTypes.prod.snd_app] at hnat
+    exact hnat
+  · ext d'' ⟨h_X', f_X'⟩
+    dsimp [pshRelEdge_comp_tgtMap,
+      pshRelEdge_id_tgtMap,
+      pshRelEdgePair, pshProdLift,
+      pshRelEdgeProdFst, pshRelEdgeProdSnd,
+      pshRelEdgeCurry, pshRelEdgeCurryTgtMap,
+      pshRelEdgeCurryTgtHomObj,
+      pshRelEdgeUncurry, pshRelEdgeUncurryTgtMap,
+      pshRelEdgeEval, Functor.functorHomEquiv,
+      FunctorToTypes.prod,
+      NatTrans.id_app', types_id_apply]
+    simp only [pshRelEdge_braiding_hom_eq,
+      FunctorToTypes.map_id_apply]
+    dsimp [pshRelEdgePair, pshProdLift,
+      pshRelEdgeProdFst, pshRelEdgeProdSnd,
+      FunctorToTypes.prod]
+    have hnat' := congr_fun
+      (NatTrans.congr_app
+        (congrArg VertEdgeHom.tgtMap
+          (η.naturality β)) d'')
+      (f_X', h_X')
+    simp only [pshRelEdge_tensorLeft_obj_map,
+      pshRelEdge_tensorHom_eq,
+      pshRelEdge_comp_tgtMap,
+      NatTrans.comp_app] at hnat'
+    dsimp [pshRelEdgePair, pshProdLift,
+      pshRelEdgeProdFst, pshRelEdgeProdSnd,
+      FunctorToTypes.prod,
+      types_comp_apply,
+      FunctorToTypes.prod.fst_app,
+      FunctorToTypes.prod.snd_app] at hnat'
+    exact hnat'
+
+/-- The curry source application satisfies
+the presheaf dinatural condition. -/
+lemma endoDinatPshCond_currySrcApp
+    (F H G :
+      PshRelEdge.{u, v, max u v} C ⥤
+        PshRelEdge.{u, v, max u v} C)
+    (η : (MonoidalCategory.tensorLeft F).obj
+      H ⟶ G)
+    (E : PshRelEdge.{u, v, max u v} C)
+    (d : Cᵒᵖ)
+    (h : H.obj E |>.src.obj d) :
+    endoDinatPshCond F G E d
+      (endoIhomCurrySrcApp F H G η E d h) := by
+  intro i c₀ c₁ f α₀
+  simp only [endoIhomCurrySrcApp,
+    endoIhomProdComponent,
+    Functor.map_comp]
+  exact currySrcApp_dinat_pshMap_key
+    F H G η i c₀ c₁ f d
+    ((H.map α₀).srcMap.app d h)
+
+/-- The target component of the curry:
+given `η : F ⊗ H ⟹ G` and an element of
+`H.obj E |>.tgt.obj d`, produces the
+target component of the powering at `E`. -/
+def endoIhomCurryTgtApp
+    (F H G :
+      PshRelEdge.{u, v, max u v} C ⥤
+        PshRelEdge.{u, v, max u v} C)
+    (η : (MonoidalCategory.tensorLeft F).obj
+      H ⟶ G)
+    (E : PshRelEdge.{u, v, max u v} C)
+    (d : Cᵒᵖ)
+    (h : H.obj E |>.tgt.obj d) :
+    (endoIhomProd F G E).tgt.obj d :=
+  fun ⟨i, c, α⟩ =>
+    let y := pshRelEdgeRepresentable i c
+    let curried :=
+      (Closed.adj
+        (X := F.obj y)).homEquiv
+        (H.obj y) (G.obj y)
+        (η.app y)
+    (H.map α ≫ curried).tgtMap.app d h
+
+/-- The span dinatural condition for the curry
+target application follows from naturality
+of η. -/
+private lemma curryTgtApp_dinat_spanMap_key
+    (F H G :
+      PshRelEdge.{u, v, max u v} C ⥤
+        PshRelEdge.{u, v, max u v} C)
+    (η : (MonoidalCategory.tensorLeft F).obj
+      H ⟶ G)
+    {i₀ i₁ : WalkingSpan} (c : Cᵒᵖ)
+    (φ : i₁ ⟶ i₀)
+    (d' : Cᵒᵖ)
+    (h_A : (H.obj
+      (pshRelEdgeRepresentable (C := C)
+        i₀ c)).tgt.obj d') :
+    let β :=
+      (pshRelEdgeSepFunctor C).map
+        (spanRepresentableMapSpan c φ)
+    let A := pshRelEdgeRepresentable (C := C)
+      i₀ c
+    let B := pshRelEdgeRepresentable (C := C)
+      i₁ c
+    (H.map β ≫
+      (Closed.adj (X := F.obj B)).homEquiv
+        (H.obj B) (G.obj B)
+        (η.app B) ≫
+      endoDinatCovar F G β).tgtMap.app d' h_A =
+    ((Closed.adj (X := F.obj A)).homEquiv
+      (H.obj A) (G.obj A)
+      (η.app A) ≫
+      endoDinatContra F G β).tgtMap.app d' h_A
+    := by
+  intro β A B
+  suffices hmor :
+      H.map β ≫
+        (Closed.adj (X := F.obj B)).homEquiv
+          (H.obj B) (G.obj B)
+          (η.app B) ≫
+        endoDinatCovar F G β =
+      (Closed.adj (X := F.obj A)).homEquiv
+        (H.obj A) (G.obj A)
+        (η.app A) ≫
+        endoDinatContra F G β by
+    exact congr_fun
+      (NatTrans.congr_app
+        (congrArg VertEdgeHom.tgtMap hmor) d')
+      h_A
+  have inj : ∀ {X : PshRelEdge.{u, v, max u v} C}
+      {Y Z : PshRelEdge.{u, v, max u v} C}
+      (a b : X ⟶ pshRelEdgeExp Y Z),
+      pshRelEdgeUncurry a =
+        pshRelEdgeUncurry b → a = b :=
+    fun a b h =>
+      (pshRelEdgeCurry_uncurry a).symm.trans
+        (congrArg pshRelEdgeCurry h |>.trans
+          (pshRelEdgeCurry_uncurry b))
+  apply inj
+  rw [pshRelEdge_closedAdj_homEquiv,
+    pshRelEdge_closedAdj_homEquiv]
+  simp only [endoDinatCovar, endoDinatContra,
+    pshRelEdgeIhom]
+  rw [pshRelEdgeUncurry_curry_comp]
+  rw [pshRelEdgeUncurry_precomp,
+    pshRelEdgeUncurry_precomp,
+    pshRelEdgeUncurry_curry]
+  simp only [pshRelEdge_tensorHom_eq,
+    Category.comp_id]
+  apply VertEdgeHom.ext
+  · ext d'' ⟨h_X, f_X⟩
+    dsimp [pshRelEdge_comp_srcMap,
+      pshRelEdge_id_srcMap,
+      pshRelEdgePair, pshProdLift,
+      pshRelEdgeProdFst, pshRelEdgeProdSnd,
+      pshRelEdgeCurry, pshRelEdgeCurrySrcMap,
+      pshRelEdgeCurrySrcHomObj,
+      pshRelEdgeUncurry, pshRelEdgeUncurrySrcMap,
+      pshRelEdgeEval, Functor.functorHomEquiv,
+      FunctorToTypes.prod,
+      NatTrans.id_app', types_id_apply]
+    simp only [pshRelEdge_braiding_hom_eq,
+      FunctorToTypes.map_id_apply]
+    dsimp [pshRelEdgePair, pshProdLift,
+      pshRelEdgeProdFst, pshRelEdgeProdSnd,
+      FunctorToTypes.prod]
+    have hnat := congr_fun
+      (NatTrans.congr_app
+        (congrArg VertEdgeHom.srcMap
+          (η.naturality β)) d'')
+      (f_X, h_X)
+    simp only [pshRelEdge_tensorLeft_obj_map,
+      pshRelEdge_tensorHom_eq,
+      pshRelEdge_comp_srcMap,
+      NatTrans.comp_app] at hnat
+    dsimp [pshRelEdgePair, pshProdLift,
+      pshRelEdgeProdFst, pshRelEdgeProdSnd,
+      FunctorToTypes.prod,
+      types_comp_apply,
+      FunctorToTypes.prod.fst_app,
+      FunctorToTypes.prod.snd_app] at hnat
+    exact hnat
+  · ext d'' ⟨h_X', f_X'⟩
+    dsimp [pshRelEdge_comp_tgtMap,
+      pshRelEdge_id_tgtMap,
+      pshRelEdgePair, pshProdLift,
+      pshRelEdgeProdFst, pshRelEdgeProdSnd,
+      pshRelEdgeCurry, pshRelEdgeCurryTgtMap,
+      pshRelEdgeCurryTgtHomObj,
+      pshRelEdgeUncurry, pshRelEdgeUncurryTgtMap,
+      pshRelEdgeEval, Functor.functorHomEquiv,
+      FunctorToTypes.prod,
+      NatTrans.id_app', types_id_apply]
+    simp only [pshRelEdge_braiding_hom_eq,
+      FunctorToTypes.map_id_apply]
+    dsimp [pshRelEdgePair, pshProdLift,
+      pshRelEdgeProdFst, pshRelEdgeProdSnd,
+      FunctorToTypes.prod]
+    have hnat' := congr_fun
+      (NatTrans.congr_app
+        (congrArg VertEdgeHom.tgtMap
+          (η.naturality β)) d'')
+      (f_X', h_X')
+    simp only [pshRelEdge_tensorLeft_obj_map,
+      pshRelEdge_tensorHom_eq,
+      pshRelEdge_comp_tgtMap,
+      NatTrans.comp_app] at hnat'
+    dsimp [pshRelEdgePair, pshProdLift,
+      pshRelEdgeProdFst, pshRelEdgeProdSnd,
+      FunctorToTypes.prod,
+      types_comp_apply,
+      FunctorToTypes.prod.fst_app,
+      FunctorToTypes.prod.snd_app] at hnat'
+    exact hnat'
+
+/-- The presheaf dinatural condition for the
+curry target application follows from
+naturality of η. -/
+private lemma curryTgtApp_dinat_pshMap_key
+    (F H G :
+      PshRelEdge.{u, v, max u v} C ⥤
+        PshRelEdge.{u, v, max u v} C)
+    (η : (MonoidalCategory.tensorLeft F).obj
+      H ⟶ G)
+    (i : WalkingSpan) (c₀ c₁ : Cᵒᵖ)
+    (f : c₁ ⟶ c₀)
+    (d' : Cᵒᵖ)
+    (h_A : (H.obj
+      (pshRelEdgeRepresentable (C := C)
+        i c₀)).tgt.obj d') :
+    let β :=
+      (pshRelEdgeSepFunctor C).map
+        (spanRepresentableMapPsh i f)
+    let A := pshRelEdgeRepresentable (C := C)
+      i c₀
+    let B := pshRelEdgeRepresentable (C := C)
+      i c₁
+    (H.map β ≫
+      (Closed.adj (X := F.obj B)).homEquiv
+        (H.obj B) (G.obj B)
+        (η.app B) ≫
+      endoDinatCovar F G β).tgtMap.app d' h_A =
+    ((Closed.adj (X := F.obj A)).homEquiv
+      (H.obj A) (G.obj A)
+      (η.app A) ≫
+      endoDinatContra F G β).tgtMap.app d' h_A
+    := by
+  intro β A B
+  suffices hmor :
+      H.map β ≫
+        (Closed.adj (X := F.obj B)).homEquiv
+          (H.obj B) (G.obj B)
+          (η.app B) ≫
+        endoDinatCovar F G β =
+      (Closed.adj (X := F.obj A)).homEquiv
+        (H.obj A) (G.obj A)
+        (η.app A) ≫
+        endoDinatContra F G β by
+    exact congr_fun
+      (NatTrans.congr_app
+        (congrArg VertEdgeHom.tgtMap hmor) d')
+      h_A
+  have inj : ∀ {X : PshRelEdge.{u, v, max u v} C}
+      {Y Z : PshRelEdge.{u, v, max u v} C}
+      (a b : X ⟶ pshRelEdgeExp Y Z),
+      pshRelEdgeUncurry a =
+        pshRelEdgeUncurry b → a = b :=
+    fun a b h =>
+      (pshRelEdgeCurry_uncurry a).symm.trans
+        (congrArg pshRelEdgeCurry h |>.trans
+          (pshRelEdgeCurry_uncurry b))
+  apply inj
+  rw [pshRelEdge_closedAdj_homEquiv,
+    pshRelEdge_closedAdj_homEquiv]
+  simp only [endoDinatCovar, endoDinatContra,
+    pshRelEdgeIhom]
+  rw [pshRelEdgeUncurry_curry_comp]
+  rw [pshRelEdgeUncurry_precomp,
+    pshRelEdgeUncurry_precomp,
+    pshRelEdgeUncurry_curry]
+  simp only [pshRelEdge_tensorHom_eq,
+    Category.comp_id]
+  apply VertEdgeHom.ext
+  · ext d'' ⟨h_X, f_X⟩
+    dsimp [pshRelEdge_comp_srcMap,
+      pshRelEdge_id_srcMap,
+      pshRelEdgePair, pshProdLift,
+      pshRelEdgeProdFst, pshRelEdgeProdSnd,
+      pshRelEdgeCurry, pshRelEdgeCurrySrcMap,
+      pshRelEdgeCurrySrcHomObj,
+      pshRelEdgeUncurry, pshRelEdgeUncurrySrcMap,
+      pshRelEdgeEval, Functor.functorHomEquiv,
+      FunctorToTypes.prod,
+      NatTrans.id_app', types_id_apply]
+    simp only [pshRelEdge_braiding_hom_eq,
+      FunctorToTypes.map_id_apply]
+    dsimp [pshRelEdgePair, pshProdLift,
+      pshRelEdgeProdFst, pshRelEdgeProdSnd,
+      FunctorToTypes.prod]
+    have hnat := congr_fun
+      (NatTrans.congr_app
+        (congrArg VertEdgeHom.srcMap
+          (η.naturality β)) d'')
+      (f_X, h_X)
+    simp only [pshRelEdge_tensorLeft_obj_map,
+      pshRelEdge_tensorHom_eq,
+      pshRelEdge_comp_srcMap,
+      NatTrans.comp_app] at hnat
+    dsimp [pshRelEdgePair, pshProdLift,
+      pshRelEdgeProdFst, pshRelEdgeProdSnd,
+      FunctorToTypes.prod,
+      types_comp_apply,
+      FunctorToTypes.prod.fst_app,
+      FunctorToTypes.prod.snd_app] at hnat
+    exact hnat
+  · ext d'' ⟨h_X', f_X'⟩
+    dsimp [pshRelEdge_comp_tgtMap,
+      pshRelEdge_id_tgtMap,
+      pshRelEdgePair, pshProdLift,
+      pshRelEdgeProdFst, pshRelEdgeProdSnd,
+      pshRelEdgeCurry, pshRelEdgeCurryTgtMap,
+      pshRelEdgeCurryTgtHomObj,
+      pshRelEdgeUncurry, pshRelEdgeUncurryTgtMap,
+      pshRelEdgeEval, Functor.functorHomEquiv,
+      FunctorToTypes.prod,
+      NatTrans.id_app', types_id_apply]
+    simp only [pshRelEdge_braiding_hom_eq,
+      FunctorToTypes.map_id_apply]
+    dsimp [pshRelEdgePair, pshProdLift,
+      pshRelEdgeProdFst, pshRelEdgeProdSnd,
+      FunctorToTypes.prod]
+    have hnat' := congr_fun
+      (NatTrans.congr_app
+        (congrArg VertEdgeHom.tgtMap
+          (η.naturality β)) d'')
+      (f_X', h_X')
+    simp only [pshRelEdge_tensorLeft_obj_map,
+      pshRelEdge_tensorHom_eq,
+      pshRelEdge_comp_tgtMap,
+      NatTrans.comp_app] at hnat'
+    dsimp [pshRelEdgePair, pshProdLift,
+      pshRelEdgeProdFst, pshRelEdgeProdSnd,
+      FunctorToTypes.prod,
+      types_comp_apply,
+      FunctorToTypes.prod.fst_app,
+      FunctorToTypes.prod.snd_app] at hnat'
+    exact hnat'
+
+/-- The curry target application satisfies
+the span dinatural condition. -/
+lemma endoDinatSpanCondTgt_curryTgtApp
+    (F H G :
+      PshRelEdge.{u, v, max u v} C ⥤
+        PshRelEdge.{u, v, max u v} C)
+    (η : (MonoidalCategory.tensorLeft F).obj
+      H ⟶ G)
+    (E : PshRelEdge.{u, v, max u v} C)
+    (d : Cᵒᵖ)
+    (h : H.obj E |>.tgt.obj d) :
+    endoDinatSpanCondTgt F G E d
+      (endoIhomCurryTgtApp F H G η E d h) := by
+  intro i₀ i₁ φ c α₀
+  simp only [endoIhomCurryTgtApp,
+    Functor.map_comp]
+  exact curryTgtApp_dinat_spanMap_key
+    F H G η c φ d
+    ((H.map α₀).tgtMap.app d h)
+
+/-- The curry target application satisfies
+the presheaf dinatural condition. -/
+lemma endoDinatPshCondTgt_curryTgtApp
+    (F H G :
+      PshRelEdge.{u, v, max u v} C ⥤
+        PshRelEdge.{u, v, max u v} C)
+    (η : (MonoidalCategory.tensorLeft F).obj
+      H ⟶ G)
+    (E : PshRelEdge.{u, v, max u v} C)
+    (d : Cᵒᵖ)
+    (h : H.obj E |>.tgt.obj d) :
+    endoDinatPshCondTgt F G E d
+      (endoIhomCurryTgtApp F H G η E d h) := by
+  intro i c₀ c₁ f α₀
+  simp only [endoIhomCurryTgtApp,
+    Functor.map_comp]
+  exact curryTgtApp_dinat_pshMap_key
+    F H G η i c₀ c₁ f d
+    ((H.map α₀).tgtMap.app d h)
+
+/-- The curry morphism at a single edge `E`:
+given `η : F ⊗ H ⟹ G`, produces a morphism
+`H.obj E ⟶ endoIhomObj F G E`. At index
+`α : E ⟶ y(i,c)`, the value is obtained by
+currying `η_{y(i,c)}` and composing with
+`H.map α`. -/
+def endoIhomCurryAtE
+    (F H G :
+      PshRelEdge.{u, v, max u v} C ⥤
+        PshRelEdge.{u, v, max u v} C)
+    (η : (MonoidalCategory.tensorLeft F).obj
+      H ⟶ G)
+    (E : PshRelEdge.{u, v, max u v} C) :
+    H.obj E ⟶ endoIhomObj F G E where
+  srcMap :=
+    { app := fun d h =>
+        ⟨endoIhomCurrySrcApp F H G η E d h,
+          endoDinatSpanCond_currySrcApp
+            F H G η E d h,
+          endoDinatPshCond_currySrcApp
+            F H G η E d h⟩
+      naturality := fun {d₁ d₂} f => by
+        funext h
+        apply Subtype.ext
+        funext ⟨i, c, α⟩
+        simp only [endoIhomCurrySrcApp,
+          types_comp_apply]
+        exact congr_fun
+          (NatTrans.naturality
+            (H.map α ≫
+              (Closed.adj (X := F.obj
+                (pshRelEdgeRepresentable
+                  i c))).homEquiv
+              (H.obj
+                (pshRelEdgeRepresentable i c))
+              (G.obj
+                (pshRelEdgeRepresentable i c))
+              (η.app
+                (pshRelEdgeRepresentable
+                  i c))).srcMap
+            f)
+          h }
+  tgtMap :=
+    { app := fun d h =>
+        ⟨endoIhomCurryTgtApp F H G η E d h,
+          endoDinatSpanCondTgt_curryTgtApp
+            F H G η E d h,
+          endoDinatPshCondTgt_curryTgtApp
+            F H G η E d h⟩
+      naturality := fun {d₁ d₂} f => by
+        funext h
+        apply Subtype.ext
+        funext ⟨i, c, α⟩
+        simp only [endoIhomCurryTgtApp,
+          types_comp_apply]
+        exact congr_fun
+          (NatTrans.naturality
+            (H.map α ≫
+              (Closed.adj (X := F.obj
+                (pshRelEdgeRepresentable
+                  i c))).homEquiv
+              (H.obj
+                (pshRelEdgeRepresentable i c))
+              (G.obj
+                (pshRelEdgeRepresentable i c))
+              (η.app
+                (pshRelEdgeRepresentable
+                  i c))).tgtMap
+            f)
+          h }
+  sq := fun d p p' hrel ⟨i, c, α⟩ =>
+    let y := pshRelEdgeRepresentable i c
+    let curried :=
+      (Closed.adj (X := F.obj y)).homEquiv
+        (H.obj y) (G.obj y)
+        (η.app y)
+    (H.map α ≫ curried).sq d p p' hrel
+
+/-- The curry direction of the endofunctor
+CCC adjunction: given a natural transformation
+`η : F ⊗ H ⟹ G` of endofunctors, produce
+`H ⟶ [F, G]` in the endofunctor category. -/
+def endoIhomCurry
+    (F H G :
+      PshRelEdge.{u, v, max u v} C ⥤
+        PshRelEdge.{u, v, max u v} C)
+    (η : (MonoidalCategory.tensorLeft F).obj
+      H ⟶ G) :
+    H ⟶ (endoIhomFunctor F).obj G where
+  app E := endoIhomCurryAtE F H G η E
+  naturality {E₁ E₂} g := by
+    apply VertEdgeHom.ext
+    · apply NatTrans.ext; funext d
+      funext h
+      apply Subtype.ext
+      funext ⟨i, c, α⟩
+      simp only [NatTrans.comp_app,
+        pshRelEdge_comp_srcMap,
+        endoIhomCurryAtE,
+        endoIhomCurrySrcApp,
+        endoIhomFunctor,
+        endoIhom, endoIhomMap,
+        types_comp_apply, H.map_comp]
+    · apply NatTrans.ext; funext d
+      funext h
+      apply Subtype.ext
+      funext ⟨i, c, α⟩
+      simp only [NatTrans.comp_app,
+        pshRelEdge_comp_tgtMap,
+        endoIhomCurryAtE,
+        endoIhomCurryTgtApp,
+        endoIhomFunctor,
+        endoIhom, endoIhomMap,
+        types_comp_apply, H.map_comp]
+
 end EndoIhom
 
 end GebLean
