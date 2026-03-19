@@ -2990,6 +2990,18 @@ def endoIhomFunctor
         (pshRelEdgeIhom _).map_comp]
       rfl
 
+open MonoidalCategory in
+/-- The `Closed` adjunction hom-equivalence
+for `PshRelEdge C` equals the explicit
+`pshRelEdgeCurry` with the braiding. -/
+private lemma pshRelEdge_closedAdj_homEquiv
+    (A B D : PshRelEdge.{u, v, max u v} C)
+    (f : A ⊗ B ⟶ D) :
+    (Closed.adj (X := A)).homEquiv B D f =
+    pshRelEdgeCurry ((β_ B A).hom ≫ f) := by
+  simp only [Closed.adj, Adjunction.mkOfHomEquiv_homEquiv]
+  rfl
+
 /-- The curry direction of the endofunctor CCC
 adjunction: given `η : F ⊗ H ⟹ G` (a natural
 transformation of endofunctors), produce
@@ -3052,6 +3064,299 @@ def endoIhomProj
           pshDependentProduct]
         rfl }
   sq d s t h := h ⟨i, c, 𝟙 _⟩
+
+private lemma pshRelEdge_id_srcMap
+    (E : PshRelEdge.{u, v, max u v} C) :
+    VertEdgeHom.srcMap (𝟙 E) = 𝟙 E.src := rfl
+
+private lemma pshRelEdge_id_tgtMap
+    (E : PshRelEdge.{u, v, max u v} C) :
+    VertEdgeHom.tgtMap (𝟙 E) = 𝟙 E.tgt := rfl
+
+private lemma pshRelEdge_comp_srcMap
+    {E₁ E₂ E₃ : PshRelEdge.{u, v, max u v} C}
+    (f : E₁ ⟶ E₂) (g : E₂ ⟶ E₃) :
+    VertEdgeHom.srcMap (f ≫ g) =
+    f.srcMap ≫ g.srcMap := rfl
+
+private lemma pshRelEdge_comp_tgtMap
+    {E₁ E₂ E₃ : PshRelEdge.{u, v, max u v} C}
+    (f : E₁ ⟶ E₂) (g : E₂ ⟶ E₃) :
+    VertEdgeHom.tgtMap (f ≫ g) =
+    f.tgtMap ≫ g.tgtMap := rfl
+
+private lemma pshRelEdgeProdLimitCone_isLimit_lift
+    {E₁ E₂ T : PshRelEdge.{u, v, max u v} C}
+    (f : T ⟶ E₁) (g : T ⟶ E₂) :
+    (pshRelEdgeProdLimitCone E₁ E₂).isLimit.lift
+      (BinaryFan.mk f g) =
+    pshRelEdgePair f g := rfl
+
+private lemma pshRelEdgeProdLimitCone_cone_fst
+    (E₁ E₂ : PshRelEdge.{u, v, max u v} C) :
+    (pshRelEdgeProdLimitCone E₁ E₂).cone.π.app
+      ⟨WalkingPair.left⟩ =
+    pshRelEdgeProdFst E₁ E₂ := rfl
+
+private lemma pshRelEdgeProdLimitCone_cone_snd
+    (E₁ E₂ : PshRelEdge.{u, v, max u v} C) :
+    (pshRelEdgeProdLimitCone E₁ E₂).cone.π.app
+      ⟨WalkingPair.right⟩ =
+    pshRelEdgeProdSnd E₁ E₂ := rfl
+
+open MonoidalCategory in
+private lemma pshRelEdge_tensorHom_eq
+    {X₁ X₂ Y₁ Y₂ : PshRelEdge.{u, v, max u v} C}
+    (f : X₁ ⟶ Y₁) (g : X₂ ⟶ Y₂) :
+    f ⊗ₘ g =
+    pshRelEdgePair
+      (pshRelEdgeProdFst X₁ X₂ ≫ f)
+      (pshRelEdgeProdSnd X₁ X₂ ≫ g) := rfl
+
+open MonoidalCategory in
+private lemma pshRelEdge_tensorLeft_obj_map
+    (F H : PshRelEdge.{u, v, max u v} C ⥤
+      PshRelEdge.{u, v, max u v} C)
+    {A B : PshRelEdge.{u, v, max u v} C}
+    (β : A ⟶ B) :
+    ((tensorLeft F).obj H).map β =
+    F.map β ⊗ₘ H.map β := rfl
+
+open MonoidalCategory in
+private lemma pshRelEdge_braiding_hom_eq
+    (X Y : PshRelEdge.{u, v, max u v} C) :
+    (β_ X Y).hom =
+    pshRelEdgePair
+      (pshRelEdgeProdSnd X Y)
+      (pshRelEdgeProdFst X Y) := by
+  apply CartesianMonoidalCategory.hom_ext
+  · trans pshRelEdgeProdSnd X Y
+    · exact CartesianMonoidalCategory.braiding_hom_fst
+        X Y
+    · exact ((pshRelEdgeProdIsLimit Y X).fac
+        (BinaryFan.mk
+          (pshRelEdgeProdSnd X Y)
+          (pshRelEdgeProdFst X Y))
+        ⟨.left⟩).symm
+  · trans pshRelEdgeProdFst X Y
+    · exact CartesianMonoidalCategory.braiding_hom_snd
+        X Y
+    · exact ((pshRelEdgeProdIsLimit Y X).fac
+        (BinaryFan.mk
+          (pshRelEdgeProdSnd X Y)
+          (pshRelEdgeProdFst X Y))
+        ⟨.right⟩).symm
+
+private lemma pshRelEdgePair_comp_pair_fst
+    {E A B₁ B₂ : PshRelEdge.{u, v, max u v} C}
+    (f : E ⟶ B₁) (g : E ⟶ A) (α : B₁ ⟶ B₂) :
+    pshRelEdgePair f g ≫
+      pshRelEdgePair
+        (pshRelEdgeProdFst B₁ A ≫ α)
+        (pshRelEdgeProdSnd B₁ A) =
+    pshRelEdgePair (f ≫ α) g := by
+  apply VertEdgeHom.ext <;> · ext c p; rfl
+
+private lemma pshRelEdgePair_comp_pair_snd
+    {E A B₁ B₂ : PshRelEdge.{u, v, max u v} C}
+    (f : E ⟶ A) (g : E ⟶ B₁) (α : B₁ ⟶ B₂) :
+    pshRelEdgePair f g ≫
+      pshRelEdgePair
+        (pshRelEdgeProdFst A B₁)
+        (pshRelEdgeProdSnd A B₁ ≫ α) =
+    pshRelEdgePair f (g ≫ α) := by
+  apply VertEdgeHom.ext <;> · ext c p; rfl
+
+private lemma pshRelEdgePair_precomp_curry_eval_gen
+    {E A B₁ B₂ : PshRelEdge.{u, v, max u v} C}
+    (f : E ⟶ B₁) (g : E ⟶ A)
+    (h : pshRelEdgeProd B₁ A ⟶ B₂) :
+    pshRelEdgePair
+      (f ≫ pshRelEdgeCurry h)
+      g ≫
+    pshRelEdgeEval A B₂ =
+    pshRelEdgePair f g ≫ h := by
+  -- pair(f ≫ curry h, g) = pair(f, g) ≫ pair(fst ≫ curry h, snd)
+  -- by pshRelEdgePair_comp_pair_fst (rfl), then apply
+  -- pshRelEdgePair_curry_eval.
+  have : pshRelEdgePair (f ≫ pshRelEdgeCurry h) g =
+      pshRelEdgePair f g ≫
+        pshRelEdgePair
+          (pshRelEdgeProdFst B₁ A ≫ pshRelEdgeCurry h)
+          (pshRelEdgeProdSnd B₁ A) :=
+    (pshRelEdgePair_comp_pair_fst f g (pshRelEdgeCurry h)).symm
+  rw [this, Category.assoc,
+    pshRelEdgePair_curry_eval]
+
+/-- The span dinatural condition for the curry
+source application follows from naturality of η. -/
+private lemma currySrcApp_dinat_srcMap_key
+    (F H G :
+      PshRelEdge.{u, v, max u v} C ⥤
+        PshRelEdge.{u, v, max u v} C)
+    (η : (MonoidalCategory.tensorLeft F).obj
+      H ⟶ G)
+    {i₀ i₁ : WalkingSpan} (c : Cᵒᵖ)
+    (φ : i₁ ⟶ i₀)
+    (d' : Cᵒᵖ)
+    (h_A : (H.obj
+      (pshRelEdgeRepresentable (C := C) i₀ c)).src.obj d') :
+    let β :=
+      (pshRelEdgeSepFunctor C).map
+        (spanRepresentableMapSpan c φ)
+    let A := pshRelEdgeRepresentable (C := C) i₀ c
+    let B := pshRelEdgeRepresentable (C := C) i₁ c
+    (H.map β ≫
+      (Closed.adj (X := F.obj B)).homEquiv
+        (H.obj B) (G.obj B)
+        (η.app B) ≫
+      endoDinatCovar F G β).srcMap.app d' h_A =
+    ((Closed.adj (X := F.obj A)).homEquiv
+      (H.obj A) (G.obj A)
+      (η.app A) ≫
+      endoDinatContra F G β).srcMap.app d' h_A := by
+  intro β A B
+  -- Prove morphism equality, then extract element
+  -- equality from it.
+  suffices hmor :
+      H.map β ≫
+        (Closed.adj (X := F.obj B)).homEquiv
+          (H.obj B) (G.obj B)
+          (η.app B) ≫
+        endoDinatCovar F G β =
+      (Closed.adj (X := F.obj A)).homEquiv
+        (H.obj A) (G.obj A)
+        (η.app A) ≫
+        endoDinatContra F G β by
+    exact congr_fun
+      (NatTrans.congr_app
+        (congrArg VertEdgeHom.srcMap hmor) d')
+      h_A
+  -- Prove morphism equality via uncurry
+  -- injectivity.
+  have inj : ∀ {X : PshRelEdge.{u, v, max u v} C}
+      {Y Z : PshRelEdge.{u, v, max u v} C}
+      (a b : X ⟶ pshRelEdgeExp Y Z),
+      pshRelEdgeUncurry a =
+        pshRelEdgeUncurry b → a = b :=
+    fun a b h =>
+      (pshRelEdgeCurry_uncurry a).symm.trans
+        (congrArg pshRelEdgeCurry h |>.trans
+          (pshRelEdgeCurry_uncurry b))
+  apply inj
+  -- Goal: uncurry(LHS) = uncurry(RHS).
+  -- Unfold curry wrappers via
+  -- pshRelEdge_closedAdj_homEquiv.
+  rw [pshRelEdge_closedAdj_homEquiv,
+    pshRelEdge_closedAdj_homEquiv]
+  simp only [endoDinatCovar, endoDinatContra,
+    pshRelEdgeIhom]
+  -- RHS: uncurry(curry(braid_A ≫ η_A) ≫
+  --   curry(eval ≫ G.map β)) = braid_A ≫ η_A ≫ G.map β
+  rw [pshRelEdgeUncurry_curry_comp]
+  -- LHS: uncurry of triple composition.
+  rw [pshRelEdgeUncurry_precomp,
+    pshRelEdgeUncurry_precomp,
+    pshRelEdgeUncurry_curry]
+  -- Collapse the three-pair chain using pair
+  -- composition and curry-eval identities, then
+  -- conclude via braiding naturality and η.
+  simp only [pshRelEdge_tensorHom_eq,
+    Category.comp_id]
+  apply VertEdgeHom.ext
+  · ext d'' ⟨h_X, f_X⟩
+    -- Unfold all PshRelEdge morphism components,
+    -- including composition and identity, together
+    -- with pair, curry, uncurry, and eval.
+    dsimp [pshRelEdge_comp_srcMap,
+      pshRelEdge_id_srcMap,
+      pshRelEdgePair, pshProdLift,
+      pshRelEdgeProdFst, pshRelEdgeProdSnd,
+      pshRelEdgeCurry, pshRelEdgeCurrySrcMap,
+      pshRelEdgeCurrySrcHomObj,
+      pshRelEdgeUncurry, pshRelEdgeUncurrySrcMap,
+      pshRelEdgeEval, Functor.functorHomEquiv,
+      FunctorToTypes.prod,
+      NatTrans.id_app', types_id_apply]
+    -- Reduce braiding and functor identity.
+    simp only [pshRelEdge_braiding_hom_eq,
+      FunctorToTypes.map_id_apply]
+    dsimp [pshRelEdgePair, pshProdLift,
+      pshRelEdgeProdFst, pshRelEdgeProdSnd,
+      FunctorToTypes.prod]
+    -- Apply η.naturality at the correct element.
+    have hnat := congr_fun
+      (NatTrans.congr_app
+        (congrArg VertEdgeHom.srcMap
+          (η.naturality β)) d'')
+      (f_X, h_X)
+    simp only [pshRelEdge_tensorLeft_obj_map,
+      pshRelEdge_tensorHom_eq,
+      pshRelEdge_comp_srcMap,
+      NatTrans.comp_app] at hnat
+    dsimp [pshRelEdgePair, pshProdLift,
+      pshRelEdgeProdFst, pshRelEdgeProdSnd,
+      FunctorToTypes.prod,
+      types_comp_apply,
+      FunctorToTypes.prod.fst_app,
+      FunctorToTypes.prod.snd_app] at hnat
+    exact hnat
+  · ext d'' ⟨h_X', f_X'⟩
+    dsimp [pshRelEdge_comp_tgtMap,
+      pshRelEdge_id_tgtMap,
+      pshRelEdgePair, pshProdLift,
+      pshRelEdgeProdFst, pshRelEdgeProdSnd,
+      pshRelEdgeCurry, pshRelEdgeCurryTgtMap,
+      pshRelEdgeCurryTgtHomObj,
+      pshRelEdgeUncurry, pshRelEdgeUncurryTgtMap,
+      pshRelEdgeEval, Functor.functorHomEquiv,
+      FunctorToTypes.prod,
+      NatTrans.id_app', types_id_apply]
+    simp only [pshRelEdge_braiding_hom_eq,
+      FunctorToTypes.map_id_apply]
+    dsimp [pshRelEdgePair, pshProdLift,
+      pshRelEdgeProdFst, pshRelEdgeProdSnd,
+      FunctorToTypes.prod]
+    have hnat' := congr_fun
+      (NatTrans.congr_app
+        (congrArg VertEdgeHom.tgtMap
+          (η.naturality β)) d'')
+      (f_X', h_X')
+    simp only [pshRelEdge_tensorLeft_obj_map,
+      pshRelEdge_tensorHom_eq,
+      pshRelEdge_comp_tgtMap,
+      NatTrans.comp_app] at hnat'
+    dsimp [pshRelEdgePair, pshProdLift,
+      pshRelEdgeProdFst, pshRelEdgeProdSnd,
+      FunctorToTypes.prod,
+      types_comp_apply,
+      FunctorToTypes.prod.fst_app,
+      FunctorToTypes.prod.snd_app] at hnat'
+    exact hnat'
+
+/-- The curry source application satisfies
+the span dinatural condition. -/
+lemma endoDinatSpanCond_currySrcApp
+    (F H G :
+      PshRelEdge.{u, v, max u v} C ⥤
+        PshRelEdge.{u, v, max u v} C)
+    (η : (MonoidalCategory.tensorLeft F).obj
+      H ⟶ G)
+    (E : PshRelEdge.{u, v, max u v} C)
+    (d : Cᵒᵖ)
+    (h : H.obj E |>.src.obj d) :
+    endoDinatSpanCond F G E d
+      (endoIhomCurrySrcApp F H G η E d h) := by
+  intro i₀ i₁ φ c α₀
+  simp only [endoIhomCurrySrcApp,
+    endoIhomProdComponent,
+    Functor.map_comp]
+  -- Both sides are (H.map α₀ ≫ key_morph).srcMap.app d h
+  -- where key_morph is shown equal by
+  -- currySrcApp_dinat_srcMap_key.
+  exact currySrcApp_dinat_srcMap_key
+    F H G η c φ d
+    ((H.map α₀).srcMap.app d h)
 
 end EndoIhom
 
