@@ -1,5 +1,78 @@
 # Cotriple Bar Resolution Implementation Plan
 
+## Current Status
+
+Tasks 1-2 complete; Task 3 in progress (face-face
+identity done, four identities remaining).  Tasks 4-9
+not started.
+
+### What exists in `GebLean/BarResolution.lean`
+
+- `Comonad.iterateObj G X n` — `G^n(X)`, with
+  `iterateObj G X 0 = X`
+- `Comonad.iterateMap G f n` — functoriality in `X`
+- `Comonad.barFace G X n i` — face map applying `ε`
+  at depth `i` in `G^{n+2}(X) ⟶ G^{n+1}(X)`
+- `Comonad.barDegen G X n i` — degeneracy map
+  applying `δ` at depth `i`
+- Equation lemmas: `barFace_zero`, `barFace_succ`,
+  `barDegen_zero`, `barDegen_succ` (all `rfl`)
+- `barFace_comp_barFace` — the face-face simplicial
+  identity (proved)
+
+### Proof technique for simplicial identities
+
+The `Fin` proof term issue requires care:
+
+1. Use `erw` (not `rw`) with `barFace_succ` /
+   `barFace_zero` to unfold `barFace` — `erw`
+   handles the `Fin` proof irrelevance that `rw`
+   does not.
+2. For the `i = 0` base case: use
+   `@Comonad.counit_naturality C _ G X Y f`
+   with **all arguments explicit** — implicit
+   resolution fails otherwise.
+3. For the `i > 0, j > 0` inductive case: use
+   `G.toFunctor.map_comp` to factor out `G.map`,
+   then `congr 1` + the induction hypothesis.
+4. The `n = 0` case needs both `i = 0` (ε-naturality)
+   and specific small cases (e.g., `i = 1, j = 1`)
+   handled by `subst_vars` + the same technique.
+
+### Remaining simplicial identities (Task 3)
+
+The four remaining families, following the same
+proof pattern as `barFace_comp_barFace`:
+
+1. `barDegen_comp_barDegen` — uses
+   `Comonad.delta_naturality` (δ-naturality)
+2. `barFace_comp_barDegen_lt` — for `i < j`, uses
+   `Comonad.counit_naturality` and
+   `Comonad.delta_naturality`
+3. `barFace_comp_barDegen_eq` — for `i = j` or
+   `i = j + 1`, uses the left/right counit laws
+   (`Comonad.left_counit`, `Comonad.right_counit`)
+4. `barFace_comp_barDegen_gt` — for `i > j + 1`,
+   similar to case 2
+
+### After Task 3
+
+Task 4 assembles `Comonad.barResolution` as a
+`SimplicialObject C` = `SimplexCategoryᵒᵖ ⥤ C`.
+This requires defining `map` for arbitrary
+`SimplexCategory` morphisms.  The Čech nerve in
+mathlib (`Arrow.cechNerve`) provides a model: it
+defines `map g` directly using `g.unop.toOrderHom`
+to reindex, without decomposing into generators.
+For the bar resolution, a similar direct definition
+using the order-preserving map structure should be
+possible, or alternatively, the identities proved in
+Task 3 can be used to verify the functor laws after
+defining `map` via generator factorization.
+
+Tasks 5-9 build the copresheaf cover comonad and
+apply the generic bar resolution.
+
 > **For agentic workers:** Use
 > superpowers:executing-plans to implement this plan
 > task-by-task.  Steps use checkbox (`- [ ]`) syntax
