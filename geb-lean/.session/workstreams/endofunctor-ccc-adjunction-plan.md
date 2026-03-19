@@ -44,6 +44,7 @@ GebLean project infrastructure.
 embedding as a proper Lean functor.
 
 **Files:**
+
 - Create: `GebLean/Utilities/RepresentableDensity.lean`
 - Modify: `GebLean/Utilities.lean` (add import)
 
@@ -51,7 +52,7 @@ embedding as a proper Lean functor.
 
 The representable embedding sends `(i, c)` to
 `pshRelEdgeRepresentable i c`. It is
-CONTRAVARIANT: a morphism `(i₁, c₁) ⟶ (i₂, c₂)`
+contravariant: a morphism `(i₁, c₁) ⟶ (i₂, c₂)`
 in `WalkingSpan × Cᵒᵖ` induces a morphism
 `rep(i₂, c₂) ⟶ rep(i₁, c₁)` by precomposition.
 So the functor source is `(WalkingSpan × Cᵒᵖ)ᵒᵖ`.
@@ -71,70 +72,22 @@ def spanRepresentableFunctor :
 
 Source: `(WalkingSpan × Cᵒᵖ)ᵒᵖ`.
 `obj (op (i, c)) := spanRepresentable i c`.
-`map f` for `f : op (i₂,c₂) ⟶ op (i₁,c₁)`
-(i.e., `f.unop : (i₁,c₁) ⟶ (i₂,c₂)`) sends
-`spanRep(i₁,c₁) ⟶ spanRep(i₂,c₂)` by
-precomposition with `f.unop.1` and `f.unop.2`.
+For a morphism in the op category from
+`op(i₀, c₀)` to `op(i₁, c₁)`, the unop is
+`(φ : i₁ ⟶ i₀, g : c₁ ⟶ c₀)`.
 
-The inner NatTrans at span node `j` and
-stage `c'` sends `(h : i₁ ⟶ j, ⟨k : c₁ ⟶ c'⟩)`
-to `(f.unop.1 ≫ h, ⟨f.unop.2 ≫ k⟩)`.
-
-Wait — `f.unop.1 : i₁ ⟶ i₂` but we need a map
-FROM `spanRep(i₁, c₁)` TO `spanRep(i₂, c₂)`.
-At node j: `(i₁ ⟶ j) × ULift(c₁ ⟶ c')` to
-`(i₂ ⟶ j) × ULift(c₂ ⟶ c')`. But `f.unop.1 :
-i₁ ⟶ i₂` goes the wrong way for the span hom!
-
-CORRECTION: For the CONTRAVARIANT direction,
-`spanRepresentableMapSpan c φ` for `φ : i₁ ⟶ i₀`
-gives `spanRep(i₀, c) ⟶ spanRep(i₁, c)` by
-PRECOMPOSITION: `(h : i₀ ⟶ j) ↦ (φ ≫ h : i₁ ⟶ j)`.
-
-So for `f.unop = (φ, g) : (i₁, c₁) ⟶ (i₂, c₂)`:
-- `φ : i₁ ⟶ i₂` in WalkingSpan
-- `g : c₁ ⟶ c₂` in Cᵒᵖ
-The map `spanRep(i₁,c₁) ⟶ spanRep(i₂,c₂)`
-sends `(h : i₁ ⟶ j, ⟨k : c₁ ⟶ c'⟩)` to
-`(φ ≫ h : i₂ ⟶ j, ⟨g ≫ k : c₂ ⟶ c'⟩)`.
-
-Wait, that's not right either. `φ : i₁ ⟶ i₂`
-and `h : i₁ ⟶ j`. Then `φ ≫ h` needs
-`i₂ = source of h$... no, `h` starts at `i₁`.
-We need `i₂ ⟶ j` but we only have `i₁ ⟶ j`
-and `i₁ ⟶ i₂`. We can't compose these to get
-`i₂ ⟶ j`.
-
-FINAL CORRECTION: The representable `Hom(i₀, -)$
-is COVARIANT in $j$. For a morphism
-$\phi : i_1 \to i_0$ (note direction), the
-induced map is precomposition:
-$Hom(i_0, j) \to Hom(i_1, j)$ by $h \mapsto
-\phi \circ h$. This gives a map
-$spanRep(i_0) \to spanRep(i_1)$.
-
-So `spanRepresentableMapSpan c φ` for
-$\phi : i_1 \to i_0$ gives
+The representable `Hom(i₀, -)` is covariant
+in `j`. For `φ : i₁ ⟶ i₀`, precomposition
+gives `Hom(i₀, j) → Hom(i₁, j)` via
+`h ↦ φ ≫ h`, yielding
 `spanRep(i₀, c) ⟶ spanRep(i₁, c)`.
 
-For the op category: a morphism in
-$(WalkingSpan \times C^{op})^{op}$ from
-$op(i_0, c_0)$ to $op(i_1, c_1)$ is a morphism
-$(i_1, c_1) \to (i_0, c_0)$ in
-$WalkingSpan \times C^{op}$. This is
-$(\phi : i_1 \to i_0, g : c_1 \to c_0)$.
-
-The map on representables:
-`spanRepresentableMapSpan c₀ φ` gives
-`spanRep(i₀, c₀) ⟶ spanRep(i₁, c₀)`.
+So `spanRepresentableMapSpan c₀ φ` gives
+`spanRep(i₀, c₀) ⟶ spanRep(i₁, c₀)`, and
 `spanRepresentableMapPsh i₁ g` gives
 `spanRep(i₁, c₀) ⟶ spanRep(i₁, c₁)`.
-Composition gives
-`spanRep(i₀, c₀) ⟶ spanRep(i₁, c₁)`. Correct!
-
-Implementation: use the composition of the two
-existing maps `spanRepresentableMapSpan` and
-`spanRepresentableMapPsh`.
+Their composition gives the map
+`spanRep(i₀, c₀) ⟶ spanRep(i₁, c₁)`.
 
 Proof obligations: `map_id` and `map_comp`.
 `map_id`: both components are identity.
@@ -168,7 +121,7 @@ Expected: PASS
 ```bash
 git add GebLean/Utilities/RepresentableDensity.lean
 git add GebLean/Utilities.lean
-git commit -m "Representable embedding functor for PshRelEdge"
+git commit -m "Representable embedding functor"
 ```
 
 ---
@@ -179,9 +132,10 @@ git commit -m "Representable embedding functor for PshRelEdge"
 dense in `PshRelEdge C`.
 
 **Files:**
+
 - Modify: `GebLean/Utilities/RepresentableDensity.lean`
 
-### Strategy
+### Approach
 
 Use `isDense_iff_fullyFaithful_restrictedULiftYoneda`
 from mathlib: a full functor `F` is dense iff
@@ -190,6 +144,7 @@ from mathlib: a full functor `F` is dense iff
 Alternatively, show density directly by proving
 every edge is a colimit of representable edges,
 using:
+
 1. `colimitOfRepresentable` for the span presheaf
    category (every span presheaf = colimit of
    representable span presheaves)
@@ -205,7 +160,7 @@ Try both approaches:
 (a) `colimitOfRepresentable` + reflective subcategory
 (b) `isDense_iff_fullyFaithful_restrictedULiftYoneda`
 
-Pick whichever has fewer universe issues.
+Pick whichever has fewer universe constraints.
 
 - [ ] **Step 2.2: Prove IsDense instance**
 
@@ -214,7 +169,8 @@ instance pshRelEdgeRepresentableIsDense :
     pshRelEdgeRepresentableFunctor.IsDense
 ```
 
-This is the hardest step. The proof should:
+The proof should:
+
 - Show that for every `E : PshRelEdge C`, `E` is
   a colimit of representable edges
 - Use `colimitOfRepresentable` for the underlying
@@ -227,7 +183,7 @@ Expected: PASS (no sorry, no warnings)
 
 ```bash
 git add GebLean/Utilities/RepresentableDensity.lean
-git commit -m "Density of representable embedding in PshRelEdge"
+git commit -m "Density of representable embedding"
 ```
 
 ---
@@ -239,6 +195,7 @@ endofunctor internal hom end to the object-level
 internal hom at representable edges.
 
 **Files:**
+
 - Modify: `GebLean/PshRelEdgeSeparation.lean`
 
 - [ ] **Step 3.1: Define endoIhomProj**
@@ -260,10 +217,9 @@ def endoIhomProj
 ```
 
 srcMap sends a dinatural family `h` to
-`h.1 ⟨i, c, 𝟙 (rep i c)⟩`. The subtype proof
-is trivially satisfied. Similarly for tgtMap.
-The sq condition follows from the product
-relation at the identity component.
+`h.1 ⟨i, c, 𝟙 (rep i c)⟩`. Similarly for
+tgtMap. The sq condition follows from the
+product relation at the identity component.
 
 Run: `lake build`
 Expected: PASS
@@ -283,6 +239,7 @@ git commit -m "End projection at representables"
 `Nat(F ⊗ H, G) → Nat(H, [F, G])`.
 
 **Files:**
+
 - Modify: `GebLean/PshRelEdgeSeparation.lean`
 
 ### Subtasks
@@ -350,11 +307,13 @@ git commit -m "Complete curry for endofunctor CCC"
 `Nat(H, [F, G]) → Nat(F ⊗ H, G)`.
 
 **Files:**
+
 - Modify: `GebLean/PshRelEdgeSeparation.lean`
 
-### Strategy
+### Uncurry construction
 
 At representable `y(i,c)`:
+
 1. `μ.app(y) : H(y) ⟶ [F,G](y)`
 2. `endoIhomProj : [F,G](y) ⟶ [F(y), G(y)]`
 3. Compose: `μ.app(y) ≫ endoIhomProj :
@@ -407,7 +366,7 @@ Expected: PASS
 
 ```bash
 git add GebLean/PshRelEdgeSeparation.lean
-git commit -m "Uncurry via density for endofunctor CCC"
+git commit -m "Uncurry via density"
 ```
 
 ---
@@ -418,9 +377,10 @@ git commit -m "Uncurry via density for endofunctor CCC"
 build the adjunction and MonoidalClosed instance.
 
 **Files:**
+
 - Modify: `GebLean/PshRelEdgeSeparation.lean`
 
-- [ ] **Step 6.1: Left inverse (curry ∘ uncurry = id)**
+- [ ] **Step 6.1: Left inverse (curry then uncurry = id)**
 
 Show `endoIhomCurry(endoIhomUncurry(μ)) = μ`
 for all `μ : H ⟶ [F, G]`.
@@ -430,7 +390,7 @@ same component at `id_y`, by the object-level
 curry-uncurry round-trip. For general E: by
 naturality and density uniqueness.
 
-- [ ] **Step 6.2: Right inverse (uncurry ∘ curry = id)**
+- [ ] **Step 6.2: Right inverse (uncurry then curry = id)**
 
 Show `endoIhomUncurry(endoIhomCurry(η)) = η`
 for all `η : F ⊗ H ⟶ G`.
@@ -475,14 +435,14 @@ Expected: PASS
 
 ```bash
 git add GebLean/PshRelEdgeSeparation.lean
-git commit -m "MonoidalClosed for endofunctor category of PshRelEdge"
+git commit -m "MonoidalClosed for PshRelEdge endofunctors"
 ```
 
 ---
 
 ## Dependency Graph
 
-```
+```text
 Task 1 (repr functor) ──→ Task 2 (density)
                                  ↓
 Task 3 (proj at reps) ──→ Task 5 (uncurry)
@@ -491,10 +451,10 @@ Task 4 (curry) ─────────→ Task 6 (assembly)
 ```
 
 Tasks 1, 3, 4 can be developed in parallel.
-Task 2 is the critical path.
+Task 2 is on the critical path.
 Tasks 5 and 6 depend on Task 2.
 
-## Key Mathlib References
+## Mathlib References
 
 - `Presheaf.colimitOfRepresentable` —
   Mathlib/CategoryTheory/Limits/Presheaf.lean

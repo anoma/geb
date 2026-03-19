@@ -3,6 +3,8 @@
 ## Status
 
 All building blocks complete. Adjunction needs density.
+See `endofunctor-ccc-adjunction-plan.md` for the
+detailed implementation plan.
 
 ## Completed Definitions
 
@@ -12,6 +14,8 @@ All in `PshRelEdgeSeparation.lean`, section `EndoIhom`:
 - `endoIhomFunctor F` : G |-> [F, G] (right adjoint)
 - `endoIhomMapG` + 4 bifunctoriality lemmas
 - `endoIhomCurrySrcApp` : curry product component
+- `endoDinatSpanCond_currySrcApp` : span dinatural
+  condition for the curried family
 
 ## Adjunction Plan
 
@@ -33,12 +37,13 @@ All in `PshRelEdgeSeparation.lean`, section `EndoIhom`:
 
 ### Step 1: Density of pshRelEdgeRepresentable
 
-The representable embedding is CONTRAVARIANT:
+The representable embedding is contravariant:
 `(WalkingSpan x C^op)^op -> PshRelEdge C`.
 It factors as: Yoneda into PSh(SpanCat) composed
 with the separation functor.
 
 To show density, use:
+
 - `colimitOfRepresentable` for PSh(SpanCat)
   (Yoneda into PSh is dense)
 - Separation is a left adjoint (preserves colimits)
@@ -47,6 +52,7 @@ To show density, use:
 ### Step 2: Evaluation counit via density
 
 Given density, for any endofunctor G and edge E:
+
 1. Write G0(Y) = G(Y).src.obj d as a covariant
    functor PshRelEdge C -> Type
 2. The dinatural family gives a natural
@@ -59,6 +65,7 @@ Given density, for any endofunctor G and edge E:
 ### Step 3: Build Adjunction
 
 Use `Adjunction.mkOfHomEquiv`:
+
 - homEquiv: curry uses Closed.adj.homEquiv at
   representables + H.map(alpha)
 - inverse uses density evaluation from Step 2
@@ -67,10 +74,12 @@ Use `Adjunction.mkOfHomEquiv`:
 ### Alternative: Direct use of uliftYonedaAdjunction
 
 The pattern from mathlib:
+
 1. Define `restrictedULiftYoneda A : E ==> PSh`
    sending E |-> (A(-) -> E)
 2. Left Kan extension `L` along uliftYoneda
-3. `uliftYonedaAdjunction` gives `L adj restrictedULiftYoneda A`
+3. `uliftYonedaAdjunction` gives
+   `L adj restrictedULiftYoneda A`
 4. The counit gives the evaluation map
 
 Apply with A = pshRelEdgeRepresentableFunctor
