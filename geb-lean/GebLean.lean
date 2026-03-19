@@ -1,6 +1,7 @@
 import GebLean.AcyclicCat
 import GebLean.AcyclicPresentation
 import GebLean.AcyclicQuiver
+import GebLean.BarResolution
 import GebLean.CatJudgmentAdjunction
 import GebLean.CatValuedFunctor
 import GebLean.CategoryJudgments
