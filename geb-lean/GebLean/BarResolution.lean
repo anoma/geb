@@ -183,6 +183,177 @@ lemma barFace_comp_barFace (n : ℕ)
         exact ih i j (by omega)
           (by omega) (by omega)
 
+lemma barDegen_comp_barDegen (n : ℕ)
+    (i j : ℕ) (hij : i ≤ j)
+    (hi : i < n + 1) (hj : j < n + 1) :
+    barDegen G X n ⟨i, hi⟩ ≫
+      barDegen G X (n + 1) ⟨j + 1, by omega⟩ =
+    barDegen G X n ⟨j, hj⟩ ≫
+      barDegen G X (n + 1) ⟨i, by omega⟩ := by
+  induction n generalizing i j with
+  | zero =>
+    have : i = 0 := by omega
+    have : j = 0 := by omega
+    subst_vars
+    erw [barDegen_zero, barDegen_zero,
+      barDegen_succ, barDegen_zero]
+    exact G.coassoc (iterateObj G X 0)
+  | succ n ih =>
+    cases i with
+    | zero =>
+      cases j with
+      | zero =>
+        erw [barDegen_zero, barDegen_zero,
+          barDegen_succ, barDegen_zero]
+        exact G.coassoc (iterateObj G X (n + 1))
+      | succ j =>
+        erw [barDegen_zero, barDegen_succ,
+          barDegen_succ, barDegen_zero]
+        exact (@Comonad.delta_naturality C _ G
+          (iterateObj G X (n + 1))
+          (iterateObj G X (n + 2))
+          (barDegen G X n
+            ⟨j, by omega⟩)).symm
+    | succ i =>
+      cases j with
+      | zero => omega
+      | succ j =>
+        erw [barDegen_succ, barDegen_succ,
+          barDegen_succ, barDegen_succ,
+          ← G.toFunctor.map_comp,
+          ← G.toFunctor.map_comp]
+        congr 1
+        exact ih i j (by omega)
+          (by omega) (by omega)
+
+lemma barDegen_comp_barFace_self (n : ℕ)
+    (j : ℕ) (hj : j < n + 1) :
+    barDegen G X n ⟨j, hj⟩ ≫
+      barFace G X n ⟨j, by omega⟩ =
+    𝟙 (iterateObj G X (n + 1)) := by
+  induction n generalizing j with
+  | zero =>
+    have : j = 0 := by omega
+    subst_vars
+    erw [barDegen_zero, barFace_zero]
+    exact G.left_counit (iterateObj G X 0)
+  | succ n ih =>
+    cases j with
+    | zero =>
+      erw [barDegen_zero, barFace_zero]
+      exact G.left_counit (iterateObj G X (n + 1))
+    | succ j =>
+      erw [barDegen_succ, barFace_succ,
+        ← G.toFunctor.map_comp]
+      rw [ih j (by omega)]
+      exact G.toFunctor.map_id _
+
+lemma barDegen_comp_barFace_succ (n : ℕ)
+    (j : ℕ) (hj : j < n + 1) :
+    barDegen G X n ⟨j, hj⟩ ≫
+      barFace G X n ⟨j + 1, by omega⟩ =
+    𝟙 (iterateObj G X (n + 1)) := by
+  induction n generalizing j with
+  | zero =>
+    have : j = 0 := by omega
+    subst_vars
+    exact G.right_counit (iterateObj G X 0)
+  | succ n ih =>
+    cases j with
+    | zero =>
+      erw [barDegen_zero, barFace_succ,
+        barFace_zero]
+      exact G.right_counit
+        (iterateObj G X (n + 1))
+    | succ j =>
+      erw [barDegen_succ, barFace_succ,
+        ← G.toFunctor.map_comp]
+      rw [ih j (by omega)]
+      exact G.toFunctor.map_id _
+
+lemma barFace_comp_barDegen_lt (n : ℕ)
+    (i j : ℕ) (hij : i ≤ j)
+    (hi : i < n + 2) (hj : j < n + 1) :
+    barDegen G X (n + 1) ⟨j + 1, by omega⟩ ≫
+      barFace G X (n + 1) ⟨i, by omega⟩ =
+    barFace G X n ⟨i, hi⟩ ≫
+      barDegen G X n ⟨j, hj⟩ := by
+  induction n generalizing i j with
+  | zero =>
+    have : i = 0 := by omega
+    have : j = 0 := by omega
+    subst_vars
+    erw [barDegen_succ, barFace_zero,
+      barFace_zero]
+    exact @Comonad.counit_naturality C _ G
+      (iterateObj G X 1)
+      (iterateObj G X 2)
+      (barDegen G X 0
+        ⟨0, by omega⟩)
+  | succ n ih =>
+    cases i with
+    | zero =>
+      erw [barDegen_succ, barFace_zero,
+        barFace_zero]
+      exact @Comonad.counit_naturality C _ G
+        (iterateObj G X (n + 2))
+        (iterateObj G X (n + 3))
+        (barDegen G X (n + 1)
+          ⟨j, by omega⟩)
+    | succ i =>
+      cases j with
+      | zero => omega
+      | succ j =>
+        erw [barDegen_succ, barFace_succ,
+          barFace_succ, barDegen_succ,
+          ← G.toFunctor.map_comp,
+          ← G.toFunctor.map_comp]
+        congr 1
+        exact ih i j (by omega)
+          (by omega) (by omega)
+
+lemma barFace_comp_barDegen_gt (n : ℕ)
+    (i j : ℕ) (hij : j < i)
+    (hi : i < n + 2) (hj : j < n + 1) :
+    barDegen G X (n + 1) ⟨j, by omega⟩ ≫
+      barFace G X (n + 1) ⟨i + 1, by omega⟩ =
+    barFace G X n ⟨i, hi⟩ ≫
+      barDegen G X n ⟨j, hj⟩ := by
+  induction n generalizing i j with
+  | zero =>
+    have : j = 0 := by omega
+    have : i = 1 := by omega
+    subst_vars
+    erw [barDegen_zero, barFace_succ,
+      barDegen_zero]
+    exact (@Comonad.delta_naturality C _ G
+      (iterateObj G X 1)
+      (iterateObj G X 0)
+      (G.ε.app (iterateObj G X 0))).symm
+  | succ n ih =>
+    cases j with
+    | zero =>
+      cases i with
+      | zero => omega
+      | succ i =>
+        erw [barDegen_zero, barFace_succ,
+          barFace_succ, barDegen_zero]
+        exact (@Comonad.delta_naturality C _ G
+          (iterateObj G X (n + 2))
+          (iterateObj G X (n + 1))
+          (barFace G X n
+            ⟨i, by omega⟩)).symm
+    | succ j =>
+      cases i with
+      | zero => omega
+      | succ i =>
+        erw [barDegen_succ, barFace_succ,
+          ← G.toFunctor.map_comp,
+          ih i j (by omega)
+            (by omega) (by omega),
+          G.toFunctor.map_comp,
+          barFace_succ, barDegen_succ]
+
 end Comonad
 
 end CategoryTheory
