@@ -1,6 +1,7 @@
 import GebLean.AcyclicCat
 import GebLean.AcyclicPresentation
 import GebLean.AcyclicQuiver
+import GebLean.BarResolution
 import GebLean.CatJudgmentAdjunction
 import GebLean.CatValuedFunctor
 import GebLean.CategoryJudgments
@@ -47,6 +48,7 @@ import GebLean.PolyPresentationEquiv
 import GebLean.PolyTwCoprType
 import GebLean.PolyUMorph
 import GebLean.Polynomial
+import GebLean.PolyCover
 import GebLean.ProfAlg
 import GebLean.PshInternalCat
 import GebLean.PshRelDouble
