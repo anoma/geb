@@ -11,9 +11,6 @@ factors through the span presheaf category via the
 separation functor.
 -/
 
-set_option autoImplicit false
-set_option relaxedAutoImplicit false
-
 namespace GebLean
 
 open CategoryTheory Category Limits Opposite
