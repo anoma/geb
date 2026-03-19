@@ -1,4 +1,5 @@
 import GebLean.PLang.Syntax
+import GebLean.PolyAlgUMorph
 import Mathlib.Data.Fin.Basic
 
 /-!
@@ -62,8 +63,8 @@ from `PolyAlg`:
 - `polyFreeMStrFamily` for node injection
 - `polyFreeCounitFoldAt` for the catamorphism (counit of
   the free-forgetful adjunction)
-- `polyProd_eval_fiberEquiv` for the pair interface on
-  `polyProd` directions
+- `polyProdEvalOfPair` / `polyProdEvalToPair` for the
+  pair interface on `polyProd` directions
 -/
 
 /-- Binary trees as the free monad of the product
@@ -101,108 +102,281 @@ def BT.fold {α : Type u} (b : α) (s : α → α → α)
     (overTerminal PUnit.{u + 1})
     (fun _ => b) s t
 
+/-! ## Morphism polynomial: components
+
+The morphism type `BTMor1 n` is the initial algebra of a
+polynomial endofunctor on `Over ℕ`.  The polynomial is a
+four-way coproduct, one summand per constructor:
+
+- `btMorProjPoly`: projection (positions = `Fin n`, no
+  children)
+- `btMorLeafPoly`: leaf constant (one position, no
+  children)
+- `btMorBranchPoly`: binary branching (one position, two
+  children at the same fiber) — this is `polyProd ℕ`
+- `btMorFoldPoly`: fold (one position, three children at
+  fibers `n`, `n + 2`, `n`)
+
+The coproduct `btMorPoly` of these four is a "data types
+a la carte" decomposition: each summand can be equipped
+with algebras independently, and the coproduct algebra
+combines them.
+-/
+
+/-- The polynomial for a fiber-shifted single child.
+At fiber `n`, has one position and one direction mapping
+to `n + k`.  Defined via `polyEndoRepr`. -/
+def polyShift (k : ℕ) : PolyEndo ℕ :=
+  polyEndoRepr
+    (fun n => Over.mk (fun _ : PUnit.{1} => n + k))
+
+/-- Projection component: at fiber `n`, positions are
+`Fin n` with no children.  Uses `polyBetweenConst` with
+`Over.mk Fin.val`. -/
+def btMorProjPoly : PolyEndo ℕ :=
+  polyBetweenConst
+    (Over.mk (fun (p : Σ n, Fin n) => p.1))
+
+/-- Leaf component: one position, no children.  Uses
+`polyBetweenConst` with the terminal object. -/
+def btMorLeafPoly : PolyEndo ℕ :=
+  polyBetweenConst (overTerminal ℕ)
+
+/-- Branch component: one position, two children at the
+same fiber.  This is `polyProd ℕ`. -/
+abbrev btMorBranchPoly : PolyEndo ℕ := polyProd ℕ
+
+/-- Fold component: one position, three children at
+fibers `n` (base), `n + 2` (step), `n` (tree).
+Expressed as a product of three single-child polynomials
+via `polyBetweenProd`. -/
+def btMorFoldPoly : PolyEndo ℕ :=
+  polyBetweenProd (Fin 3)
+    (fun i => match i with
+      | 0 => polyBetweenId ℕ
+      | 1 => polyShift 2
+      | 2 => polyBetweenId ℕ)
+
+/-! ## Morphism polynomial: coproduct -/
+
+/-- The four summands of the morphism polynomial,
+indexed by `Fin 4`. -/
+def btMorComponents : Fin 4 → PolyEndo ℕ :=
+  fun i => match i with
+    | 0 => btMorProjPoly
+    | 1 => btMorLeafPoly
+    | 2 => btMorBranchPoly
+    | 3 => btMorFoldPoly
+
+/-- The polynomial endofunctor on `Over ℕ` whose initial
+algebra gives the morphism type of the Lawvere theory.
+A four-way coproduct of projection, leaf, branch, and
+fold components. -/
+def btMorPoly : PolyEndo ℕ :=
+  polyBetweenCoprod (Fin 4) btMorComponents
+
 /-! ## Morphisms of the Lawvere theory
 
-A morphism `n → 1` is a term with `n` free variables,
-built from variable references, the leaf constant, binary
-branching, and fold (tree catamorphism with parameters).
+A morphism `n → 1` is the initial algebra of `btMorPoly`
+at fiber `n`.  The four constructors correspond to the
+four summands of the coproduct polynomial, injected via
+`polyBetweenInj` and the initial algebra structure map.
 
 Variables use de Bruijn indices: `proj i` refers to the
 `i`-th input (where `i : Fin n`).
 
-In the `fold` constructor:
-- `base : BTMor1 n` gives the value at leaves, using the
-  `n` context variables.
-- `step : BTMor1 (n + 2)` gives the value at branches;
-  variables `0` through `n - 1` are the same context,
-  variable `n` is the left recursive result, and variable
-  `n + 1` is the right recursive result.
-- `tree : BTMor1 n` is the tree to fold over.
+In the `fold` case:
+- The base child is at fiber `n` (the context variables).
+- The step child is at fiber `n + 2` (context plus two
+  recursive-result variables).
+- The tree child is at fiber `n` (the tree to fold over).
 -/
 
 /-- A morphism from the `n`-fold product of the generating
 object to the generating object in the Lawvere theory of
-binary trees. -/
-inductive BTMor1 : ℕ → Type where
-  /-- Projection: select the `i`-th input. -/
-  | proj : {n : ℕ} → Fin n → BTMor1 n
-  /-- Leaf constant. -/
-  | leaf : {n : ℕ} → BTMor1 n
-  /-- Branch: combine two subtree-valued expressions. -/
-  | branch : {n : ℕ} →
-    BTMor1 n → BTMor1 n → BTMor1 n
-  /-- Fold (catamorphism) with parameters. -/
-  | fold : {n : ℕ} →
-    BTMor1 n →
-    BTMor1 (n + 2) →
-    BTMor1 n →
-    BTMor1 n
+binary trees.  Defined as `PolyFix btMorPoly n`. -/
+abbrev BTMor1 (n : ℕ) : Type :=
+  PolyFix btMorPoly n
 
-/-! ## Renaming (variable permutation) -/
+/-! ## Morphism constructors
 
-/-- Lift a variable renaming past two bound variables
-(the recursive-result variables in a fold step).
-Variables below `n` are renamed by `f`; variables `n`
-and `n + 1` map to `m` and `m + 1`. -/
-def liftRename {n m : ℕ}
-    (f : Fin n → Fin m) :
-    Fin (n + 2) → Fin (m + 2) :=
+Each constructor injects component evaluation data into
+the coproduct polynomial via `polyBetweenInj` and applies
+the initial algebra structure map `polyFixStrFamily`.
+-/
+
+private abbrev btMorCarrier :=
+  polyFixCarrier btMorPoly
+
+private def btMorInject (j : Fin 4) {n : ℕ}
+    (eval : polyBetweenEvalFamily ℕ ℕ
+      (btMorComponents j) btMorCarrier n) :
+    BTMor1 n :=
+  polyFixStrFamily btMorPoly n
+    (polyEndoMorphEvalAt
+      (polyBetweenInj (Fin 4) btMorComponents j)
+      btMorCarrier n eval)
+
+/-- Projection: select the `i`-th input. -/
+def BTMor1.proj {n : ℕ} (i : Fin n) :
+    BTMor1 n :=
+  btMorInject 0
+    ⟨⟨⟨n, i⟩, rfl⟩,
+      (overInitial_isInitial ℕ).to btMorCarrier⟩
+
+/-- Leaf constant. -/
+def BTMor1.leaf {n : ℕ} : BTMor1 n :=
+  btMorInject 1
+    ⟨⟨n, rfl⟩,
+      (overInitial_isInitial ℕ).to btMorCarrier⟩
+
+/-- Branch: combine two subtree-valued expressions. -/
+def BTMor1.branch {n : ℕ}
+    (l r : BTMor1 n) : BTMor1 n :=
+  btMorInject 2
+    (polyProdEvalOfPair btMorCarrier
+      (⟨Sigma.mk n l, rfl⟩ :
+        Over.Fiber btMorCarrier n)
+      (⟨Sigma.mk n r, rfl⟩ :
+        Over.Fiber btMorCarrier n))
+
+/-- Fold (catamorphism) with parameters. -/
+def BTMor1.fold {n : ℕ}
+    (base : BTMor1 n)
+    (step : BTMor1 (n + 2))
+    (tree : BTMor1 n) : BTMor1 n :=
+  btMorInject 3
+    ⟨(fun i => match i with
+        | (0 : Fin 3) => PUnit.unit
+        | 1 => PUnit.unit
+        | 2 => PUnit.unit),
+      Over.homMk
+        (fun ⟨i, _⟩ => match i with
+          | (0 : Fin 3) => ⟨n, base⟩
+          | 1 => ⟨n + 2, step⟩
+          | 2 => ⟨n, tree⟩)
+        (by aesop_cat)⟩
+
+/-! ## Interpretation via `polyFixFold`
+
+The interpretation maps `BTMor1 n` to a function
+`(Fin n → BT) → BT` using the universal fold
+(`polyFixFoldAtWithProof`) with a `btMorPoly`-algebra
+assembled via `algCoprodDesc` from four component
+structure maps, one per constructor.
+-/
+
+/-- Extend a context of size `n` with two extra values
+(for the recursive results in a fold step). -/
+def extendCtx {n : ℕ} (ctx : Fin n → BT.{0})
+    (r₁ r₂ : BT.{0}) :
+    Fin (n + 2) → BT.{0} :=
   fun i =>
-    if h : i.val < n then
-      ⟨(f ⟨i.val, h⟩).val, by omega⟩
-    else
-      ⟨m + (i.val - n), by omega⟩
+    if h : i.val < n then ctx ⟨i.val, h⟩
+    else if i.val = n then r₁
+    else r₂
 
-/-- Apply a variable renaming to a morphism term. -/
-def BTMor1.rename {n m : ℕ}
-    (f : Fin n → Fin m) :
-    BTMor1 n → BTMor1 m
-  | .proj i => .proj (f i)
-  | .leaf => .leaf
-  | .branch t₁ t₂ =>
-    .branch (t₁.rename f) (t₂.rename f)
-  | .fold base step tree =>
-    .fold (base.rename f)
-      (step.rename (liftRename f))
-      (tree.rename f)
+/-- The carrier for the interpretation algebra.  Uses
+`(ℕ → BT) → BT` uniformly at all fibers, avoiding
+fiber-dependent type transport.  The restriction to
+`Fin n` occurs at the public API. -/
+private def interpCarrier : Over ℕ :=
+  Over.mk
+    (fun (p : ℕ × ((ℕ → BT.{0}) → BT.{0})) =>
+      p.1)
 
-/-! ## Shift and substitution -/
-
-/-- Shift all variable indices up by `k`, embedding a
-term from a context of size `n` into one of size
-`n + k`. -/
-def BTMor1.shift {n : ℕ} (k : ℕ) :
-    BTMor1 n → BTMor1 (n + k) :=
-  BTMor1.rename (fun i => ⟨i.val, by omega⟩)
-
-/-- Lift a substitution past two bound variables.
-Context variables (indices below `n`) are substituted
-and shifted; the two recursive-result variables map to
-fresh projections. -/
-def liftSubst {n m : ℕ}
-    (σ : Fin n → BTMor1 m) :
-    Fin (n + 2) → BTMor1 (m + 2) :=
+/-- Extend a full context by placing `r₁` and `r₂` at
+positions `n` and `n + 1`. -/
+private def extendFullCtx
+    (k : ℕ) (ctx : ℕ → BT.{0})
+    (r₁ r₂ : BT.{0}) : ℕ → BT.{0} :=
   fun i =>
-    if h : i.val < n then
-      (σ ⟨i.val, h⟩).shift 2
-    else if _ : i.val = n then
-      .proj ⟨m, by omega⟩
-    else
-      .proj ⟨m + 1, by omega⟩
+    if i = k then r₁
+    else if i = k + 1 then r₂
+    else ctx i
 
-/-- Simultaneous substitution: replace each free variable
-in a term with a term from the substitution.  This is the
-composition operation of the Lawvere theory. -/
-def BTMor1.subst {n m : ℕ} :
-    BTMor1 n → (Fin n → BTMor1 m) → BTMor1 m
-  | .proj i, σ => σ i
-  | .leaf, _ => .leaf
-  | .branch t₁ t₂, σ =>
-    .branch (t₁.subst σ) (t₂.subst σ)
-  | .fold base step tree, σ =>
-    .fold (base.subst σ)
-      (step.subst (liftSubst σ))
-      (tree.subst σ)
+/-- Projection structure map: look up index `i`. -/
+private def interpProjStr :
+    (polyEndoFunctor ℕ btMorProjPoly).obj
+      interpCarrier ⟶ interpCarrier :=
+  Over.homMk
+    (fun ⟨n, ⟨⟨⟨_, i⟩, rfl⟩, _⟩⟩ =>
+      (n, fun ctx => ctx i.val))
+    (by aesop_cat)
+
+/-- Leaf structure map: return `BT.leaf`. -/
+private def interpLeafStr :
+    (polyEndoFunctor ℕ btMorLeafPoly).obj
+      interpCarrier ⟶ interpCarrier :=
+  Over.homMk
+    (fun ⟨n, _⟩ => (n, fun _ => BT.leaf))
+    (by aesop_cat)
+
+/-- Branch structure map: apply `BT.node` to the two
+recursive results.  Uses `polyProdAlgStr`. -/
+private def interpBranchStr :
+    (polyEndoFunctor ℕ btMorBranchPoly).obj
+      interpCarrier ⟶ interpCarrier :=
+  polyProdAlgStr interpCarrier
+    (fun a₁ a₂ =>
+      ⟨(a₁.val.1, fun ctx =>
+        BT.node (a₁.val.2 ctx) (a₂.val.2 ctx)),
+        a₁.property⟩)
+
+/-- Fold structure map: combine base, step, tree. -/
+private def interpFoldStr :
+    (polyEndoFunctor ℕ btMorFoldPoly).obj
+      interpCarrier ⟶ interpCarrier :=
+  Over.homMk
+    (fun ⟨n, ⟨_, childMor⟩⟩ =>
+      let base :=
+        (childMor.left
+          ⟨(0 : Fin 3), PUnit.unit⟩).2
+      let step :=
+        (childMor.left
+          ⟨(1 : Fin 3), PUnit.unit⟩).2
+      let tree :=
+        (childMor.left
+          ⟨(2 : Fin 3), PUnit.unit⟩).2
+      (n, fun ctx =>
+        (tree ctx).fold
+          (base ctx)
+          (fun r₁ r₂ =>
+            step (extendFullCtx n ctx r₁ r₂))))
+    (by aesop_cat)
+
+/-- The four component structure maps. -/
+private def interpComponentStrs :
+    ∀ (i : Fin 4),
+      (polyEndoFunctor ℕ (btMorComponents i)).obj
+        interpCarrier ⟶ interpCarrier :=
+  fun i => match i with
+    | 0 => interpProjStr
+    | 1 => interpLeafStr
+    | 2 => interpBranchStr
+    | 3 => interpFoldStr
+
+/-- The `btMorPoly`-algebra for interpretation,
+assembled via `algCoprodDesc`. -/
+private def interpAlg : PolyAlg btMorPoly :=
+  algCoprodDesc interpCarrier interpComponentStrs
+
+/-- Interpret a morphism `n → 1` as a function from
+`n`-tuples of binary trees to a binary tree.
+
+Defined via `polyFixFoldAtWithProof` with the
+interpretation algebra.  The carrier uses
+`(ℕ → BT) → BT` uniformly; the restriction to
+`Fin n` occurs here. -/
+def BTMor1.interp {n : ℕ}
+    (t : BTMor1 n)
+    (ctx : Fin n → BT.{0}) : BT.{0} :=
+  let fullCtx : ℕ → BT.{0} :=
+    fun i =>
+      if h : i < n then ctx ⟨i, h⟩
+      else BT.leaf
+  (polyFixFoldAtWithProof btMorPoly interpAlg
+    n t).val.2 fullCtx
 
 /-! ## Morphisms n → m -/
 
@@ -214,49 +388,14 @@ def BTMorN (n m : ℕ) : Type :=
 
 /-- The identity morphism: the tuple of projections. -/
 def BTMorN.id (n : ℕ) : BTMorN n n :=
-  fun i => .proj i
-
-/-- Composition of morphisms via substitution. -/
-def BTMorN.comp {n m k : ℕ}
-    (g : BTMorN m k) (f : BTMorN n m) :
-    BTMorN n k :=
-  fun j => (g j).subst f
-
-/-! ## Interpretation in `Type`
-
-The generating object `1` maps to `BT`, and object `n`
-maps to `Fin n → BT`. -/
-
-/-- Extend a context of size `n` with two extra values
-(for the recursive results in a fold step). -/
-def extendCtx {n : ℕ} (ctx : Fin n → BT.{u})
-    (r₁ r₂ : BT.{u}) :
-    Fin (n + 2) → BT.{u} :=
-  fun i =>
-    if h : i.val < n then ctx ⟨i.val, h⟩
-    else if i.val = n then r₁
-    else r₂
-
-/-- Interpret a morphism `n → 1` as a function from
-`n`-tuples of binary trees to a binary tree. -/
-def BTMor1.interp {n : ℕ} :
-    BTMor1 n → (Fin n → BT.{u}) → BT.{u}
-  | .proj i, ctx => ctx i
-  | .leaf, _ => BT.leaf
-  | .branch t₁ t₂, ctx =>
-    BT.node (t₁.interp ctx) (t₂.interp ctx)
-  | .fold base step tree, ctx =>
-    (tree.interp ctx).fold
-      (base.interp ctx)
-      (fun r₁ r₂ =>
-        step.interp (extendCtx ctx r₁ r₂))
+  fun i => BTMor1.proj i
 
 /-- Interpret a morphism `n → m` as a function from
 `n`-tuples to `m`-tuples of binary trees. -/
 def BTMorN.interp {n m : ℕ}
     (f : BTMorN n m)
-    (ctx : Fin n → BT.{u}) :
-    Fin m → BT.{u} :=
+    (ctx : Fin n → BT.{0}) :
+    Fin m → BT.{0} :=
   fun j => (f j).interp ctx
 
 /-! ## Finite-product structure
@@ -272,11 +411,11 @@ def BTMorN.terminal (n : ℕ) : BTMorN n 0 :=
 
 /-- First projection from the product `n + m`. -/
 def BTMorN.fst {n m : ℕ} : BTMorN (n + m) n :=
-  fun i => .proj ⟨i.val, by omega⟩
+  fun i => BTMor1.proj ⟨i.val, by omega⟩
 
 /-- Second projection from the product `n + m`. -/
 def BTMorN.snd {n m : ℕ} : BTMorN (n + m) m :=
-  fun i => .proj ⟨n + i.val, by omega⟩
+  fun i => BTMor1.proj ⟨n + i.val, by omega⟩
 
 /-- Pairing: given morphisms to `n` and `m`, produce a
 morphism to `n + m`. -/
@@ -296,48 +435,286 @@ https://ncatlab.org/nlab/show/natural+numbers+object#withparams
 adapted to binary trees.
 -/
 
-/-- Leaf constructor: `0 → 1`.  The nullary operation
-`z : 1 → T` producing the leaf tree (analogous to the
-zero morphism of a parameterized NNO). -/
+/-- Leaf constructor: `0 → 1`. -/
 def btLeaf : BTMorN 0 1 :=
-  fun _ => .leaf
+  fun _ => BTMor1.leaf
 
-/-- Branch constructor: `2 → 1`.  The binary operation
-`s : T × T → T` combining two subtrees (analogous to
-the successor morphism `s : N → N` of a parameterized
-NNO, but binary rather than unary). -/
+/-- Branch constructor: `2 → 1`. -/
 def btBranch : BTMorN 2 1 :=
-  fun _ => .branch (.proj 0) (.proj 1)
+  fun _ =>
+    BTMor1.branch (BTMor1.proj 0) (BTMor1.proj 1)
+
+/-! ## Rename via `polyFixFold`
+
+`rename` changes the fiber (from `n` to `m`), so the
+fold carrier stores `(ℕ → ℕ) → Σ m, BTMor1 m`: a
+function from a "total renaming" to a renamed term with
+its output fiber.  The total renaming derived from
+`f : Fin n → Fin m` is
+`fun i => if i < n then (f i).val else m + (i - n)`,
+which works uniformly at all fibers (including nested
+fold step children at `n + 2`, `n + 4`, ...).
+-/
+
+private abbrev renameCarrier : Over ℕ :=
+  Over.mk
+    (fun (p : ℕ ×
+      ((ℕ → ℕ) → Σ k, BTMor1 k)) => p.1)
+
+private def renameProjStr :
+    (polyEndoFunctor ℕ btMorProjPoly).obj
+      renameCarrier ⟶ renameCarrier :=
+  Over.homMk
+    (fun ⟨k, ⟨⟨⟨_, i⟩, rfl⟩, _⟩⟩ =>
+      (k, fun ren =>
+        let tgt := ren k
+        if h : ren i.val < tgt then
+          ⟨tgt, BTMor1.proj ⟨ren i.val, h⟩⟩
+        else ⟨tgt, BTMor1.leaf⟩))
+    (by aesop_cat)
+
+private def renameLeafStr :
+    (polyEndoFunctor ℕ btMorLeafPoly).obj
+      renameCarrier ⟶ renameCarrier :=
+  Over.homMk
+    (fun ⟨k, _⟩ =>
+      (k, fun ren => ⟨ren k, BTMor1.leaf⟩))
+    (by aesop_cat)
+
+private def renameBranchStr :
+    (polyEndoFunctor ℕ btMorBranchPoly).obj
+      renameCarrier ⟶ renameCarrier :=
+  polyProdAlgStr renameCarrier
+    (fun a₁ a₂ =>
+      ⟨(a₁.val.1, fun ren =>
+        let ⟨m₁, t₁⟩ := a₁.val.2 ren
+        let ⟨m₂, t₂⟩ := a₂.val.2 ren
+        if h : m₂ = m₁ then
+          ⟨m₁, BTMor1.branch t₁ (h ▸ t₂)⟩
+        else ⟨m₁, t₁⟩), a₁.property⟩)
+
+private def renameFoldStr :
+    (polyEndoFunctor ℕ btMorFoldPoly).obj
+      renameCarrier ⟶ renameCarrier :=
+  Over.homMk
+    (fun ⟨k, ⟨_, childMor⟩⟩ =>
+      let gBase :=
+        (childMor.left
+          ⟨(0 : Fin 3), PUnit.unit⟩).2
+      let gStep :=
+        (childMor.left
+          ⟨(1 : Fin 3), PUnit.unit⟩).2
+      let gTree :=
+        (childMor.left
+          ⟨(2 : Fin 3), PUnit.unit⟩).2
+      (k, fun ren =>
+        let ⟨mB, base⟩ := gBase ren
+        let ⟨mS, step⟩ := gStep ren
+        let ⟨mT, tree⟩ := gTree ren
+        if hS : mS = mB + 2 then
+          if hT : mT = mB then
+            ⟨mB, BTMor1.fold
+              base (hS ▸ step) (hT ▸ tree)⟩
+          else ⟨mB, base⟩
+        else ⟨mB, base⟩))
+    (by aesop_cat)
+
+private def renameComponentStrs :
+    ∀ (i : Fin 4),
+      (polyEndoFunctor ℕ (btMorComponents i)).obj
+        renameCarrier ⟶ renameCarrier :=
+  fun i => match i with
+    | 0 => renameProjStr
+    | 1 => renameLeafStr
+    | 2 => renameBranchStr
+    | 3 => renameFoldStr
+
+private def renameAlg : PolyAlg btMorPoly :=
+  algCoprodDesc renameCarrier renameComponentStrs
+
+/-- The total renaming derived from `f : Fin n → Fin m`.
+Maps context variables via `f` and shifts additional
+variables (recursive-result positions) by `m - n`. -/
+def totalRenaming {n m : ℕ}
+    (f : Fin n → Fin m) : ℕ → ℕ :=
+  fun i =>
+    if h : i < n then (f ⟨i, h⟩).val
+    else m + (i - n)
+
+/-- Apply a variable renaming to a morphism term.
+Defined via `polyFixFoldAtWithProof` with the rename
+algebra. -/
+def BTMor1.rename {n m : ℕ}
+    (f : Fin n → Fin m)
+    (t : BTMor1 n) : BTMor1 m :=
+  let result :=
+    (polyFixFoldAtWithProof btMorPoly
+      renameAlg n t).val.2 (totalRenaming f)
+  if h : result.1 = m then h ▸ result.2
+  else BTMor1.leaf
+
+/-- Shift all variable indices up by `k`. -/
+def BTMor1.shift {n : ℕ} (k : ℕ)
+    (t : BTMor1 n) : BTMor1 (n + k) :=
+  BTMor1.rename
+    (fun i => ⟨i.val, by omega⟩) t
+
+/-! ## Substitution via `polyFixFold` -/
+
+/-- Lift a variable renaming past two bound variables
+(the recursive-result variables in a fold step). -/
+def liftRename {n m : ℕ}
+    (f : Fin n → Fin m) :
+    Fin (n + 2) → Fin (m + 2) :=
+  fun i =>
+    if h : i.val < n then
+      ⟨(f ⟨i.val, h⟩).val, by omega⟩
+    else
+      ⟨m + (i.val - n), by omega⟩
+
+/-- Lift a substitution past two bound variables. -/
+def liftSubst {n m : ℕ}
+    (σ : Fin n → BTMor1 m) :
+    Fin (n + 2) → BTMor1 (m + 2) :=
+  fun i =>
+    if h : i.val < n then
+      (σ ⟨i.val, h⟩).shift 2
+    else if _ : i.val = n then
+      BTMor1.proj ⟨m, by omega⟩
+    else
+      BTMor1.proj ⟨m + 1, by omega⟩
+
+private abbrev substCarrier : Over ℕ :=
+  Over.mk
+    (fun (p : ℕ ×
+      ((ℕ → Σ k, BTMor1 k) →
+        Σ k, BTMor1 k)) => p.1)
+
+private def substProjStr :
+    (polyEndoFunctor ℕ btMorProjPoly).obj
+      substCarrier ⟶ substCarrier :=
+  Over.homMk
+    (fun ⟨k, ⟨⟨⟨_, i⟩, rfl⟩, _⟩⟩ =>
+      (k, fun σ => σ i.val))
+    (by aesop_cat)
+
+private def substLeafStr :
+    (polyEndoFunctor ℕ btMorLeafPoly).obj
+      substCarrier ⟶ substCarrier :=
+  Over.homMk
+    (fun ⟨k, _⟩ =>
+      (k, fun _ => ⟨k, BTMor1.leaf⟩))
+    (by aesop_cat)
+
+private def substBranchStr :
+    (polyEndoFunctor ℕ btMorBranchPoly).obj
+      substCarrier ⟶ substCarrier :=
+  polyProdAlgStr substCarrier
+    (fun a₁ a₂ =>
+      ⟨(a₁.val.1, fun σ =>
+        let ⟨m₁, t₁⟩ := a₁.val.2 σ
+        let ⟨m₂, t₂⟩ := a₂.val.2 σ
+        if h : m₂ = m₁ then
+          ⟨m₁, BTMor1.branch t₁ (h ▸ t₂)⟩
+        else ⟨m₁, t₁⟩), a₁.property⟩)
+
+private def substFoldStr :
+    (polyEndoFunctor ℕ btMorFoldPoly).obj
+      substCarrier ⟶ substCarrier :=
+  Over.homMk
+    (fun ⟨k, ⟨_, childMor⟩⟩ =>
+      let gBase :=
+        (childMor.left
+          ⟨(0 : Fin 3), PUnit.unit⟩).2
+      let gStep :=
+        (childMor.left
+          ⟨(1 : Fin 3), PUnit.unit⟩).2
+      let gTree :=
+        (childMor.left
+          ⟨(2 : Fin 3), PUnit.unit⟩).2
+      (k, fun σ =>
+        let ⟨mB, base⟩ := gBase σ
+        let liftedσ : ℕ → Σ j, BTMor1 j :=
+          fun i =>
+            if i < k then
+              let ⟨m', t⟩ := σ i
+              ⟨m' + 2, t.shift 2⟩
+            else if i = k then
+              ⟨mB + 2,
+                BTMor1.proj ⟨mB, by omega⟩⟩
+            else if i = k + 1 then
+              ⟨mB + 2,
+                BTMor1.proj
+                  ⟨mB + 1, by omega⟩⟩
+            else σ i
+        let ⟨mS, step⟩ := gStep liftedσ
+        let ⟨mT, tree⟩ := gTree σ
+        if hS : mS = mB + 2 then
+          if hT : mT = mB then
+            ⟨mB, BTMor1.fold
+              base (hS ▸ step) (hT ▸ tree)⟩
+          else ⟨mB, base⟩
+        else ⟨mB, base⟩))
+    (by aesop_cat)
+
+private def substComponentStrs :
+    ∀ (i : Fin 4),
+      (polyEndoFunctor ℕ (btMorComponents i)).obj
+        substCarrier ⟶ substCarrier :=
+  fun i => match i with
+    | 0 => substProjStr
+    | 1 => substLeafStr
+    | 2 => substBranchStr
+    | 3 => substFoldStr
+
+private def substAlg : PolyAlg btMorPoly :=
+  algCoprodDesc substCarrier substComponentStrs
+
+/-- The total substitution derived from
+`σ : Fin n → BTMor1 m`. -/
+def totalSubst {n m : ℕ}
+    (σ : Fin n → BTMor1 m) :
+    ℕ → Σ k, BTMor1 k :=
+  fun i =>
+    if h : i < n then ⟨m, σ ⟨i, h⟩⟩
+    else if hm : 0 < m then
+      ⟨m + (i - n),
+        BTMor1.proj ⟨i - n, by omega⟩⟩
+    else ⟨i - n, BTMor1.leaf⟩
+
+/-- Simultaneous substitution: replace each free
+variable in a term with a term from the substitution.
+Defined via `polyFixFoldAtWithProof` with the
+substitution algebra. -/
+def BTMor1.subst {n m : ℕ}
+    (t : BTMor1 n)
+    (σ : Fin n → BTMor1 m) : BTMor1 m :=
+  let result :=
+    (polyFixFoldAtWithProof btMorPoly
+      substAlg n t).val.2 (totalSubst σ)
+  if h : result.1 = m then h ▸ result.2
+  else BTMor1.leaf
+
+/-! ## Morphism operations -/
+
+/-- Composition of morphisms via substitution. -/
+def BTMorN.comp {n m k : ℕ}
+    (g : BTMorN m k) (f : BTMorN n m) :
+    BTMorN n k :=
+  fun j => (g j).subst f
 
 /-- Fold (universal property of the parameterized BTO):
-given `base : n → 1` (the morphism `f : A → X`)
-and `step : (n + 2) → 1` (the morphism
-`g : A × X × X → X`, where variables `n` and `n + 1`
-are the recursive results), produces
-`rec : (n + 1) → 1` (the unique `φ : A × T → X`).
-
-The last input variable of `rec` is the tree to fold
-over.
-
-The base is lifted from arity `n` to `n + 1` (the tree
-variable is unused).  The step is renamed from arity
-`n + 2` to `n + 3` by shifting the recursive-result
-variables past the tree variable. -/
+given `base : n → 1` and `step : (n + 2) → 1`, produces
+`rec : (n + 1) → 1`. -/
 def btFold {n : ℕ}
     (base : BTMorN n 1)
     (step : BTMorN (n + 2) 1) :
     BTMorN (n + 1) 1 :=
   fun _ =>
-    let baseLifted : BTMor1 (n + 1) :=
-      (base ⟨0, by omega⟩).shift 1
-    let stepLifted : BTMor1 (n + 3) :=
-      (step ⟨0, by omega⟩).rename
-        (fun i =>
-          if h : i.val < n then
-            ⟨i.val, by omega⟩
-          else
-            ⟨i.val + 1, by omega⟩)
-    .fold baseLifted stepLifted
-      (.proj ⟨n, by omega⟩)
+    BTMor1.fold
+      ((base ⟨0, by omega⟩).shift 1)
+      ((step ⟨0, by omega⟩).rename
+        (liftRename (fun i => ⟨i.val, by omega⟩)))
+      (BTMor1.proj ⟨n, by omega⟩)
 
 end GebLean
