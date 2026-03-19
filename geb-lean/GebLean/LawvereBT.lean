@@ -49,7 +49,133 @@ namespace GebLean
 
 open CategoryTheory
 
-universe u
+universe u v
+
+/-! ## Parameterized natural numbers object
+
+Transcription of the parameterized NNO from
+https://ncatlab.org/nlab/show/natural+numbers+object#withparams
+(the original, non-enhanced version).
+
+In a category with finite products, a parameterized NNO
+consists of `N` with `z : 𝟙_ C ⟶ N` and `s : N ⟶ N`
+such that for any `A`, `X`, `f : A ⟶ X`, `g : X ⟶ X`,
+there exists a unique `φ : A ⨯ N ⟶ X` satisfying
+`φ ∘ ⟨id_A, z ∘ !_A⟩ = f` and
+`φ ∘ (id_A ⨯ s) = g ∘ φ`.
+-/
+
+/-- A parameterized natural numbers object in a category
+with chosen finite products.  Adapted from
+https://ncatlab.org/nlab/show/natural+numbers+object#withparams. -/
+class HasNNO (C : Type u) [Category.{v} C]
+    [Limits.HasFiniteProducts C] where
+  /-- The natural numbers object. -/
+  N : C
+  /-- Zero: the initial element. -/
+  z : ⊤_ C ⟶ N
+  /-- Successor. -/
+  s : N ⟶ N
+  /-- The unique morphism given by the universal
+  property: for `f : A ⟶ X` and `g : X ⟶ X`, the
+  parameterized iterator `φ : A ⨯ N ⟶ X`. -/
+  elim : ∀ {A X : C},
+    (A ⟶ X) → (X ⟶ X) → (A ⨯ N ⟶ X)
+  /-- Base case: `φ(a, z) = f(a)`. -/
+  elim_z : ∀ {A X : C}
+    (f : A ⟶ X) (g : X ⟶ X),
+    Limits.prod.lift (𝟙 A)
+      (Limits.terminal.from A ≫ z) ≫
+      elim f g = f
+  /-- Step case: `φ(a, s(n)) = g(φ(a, n))`. -/
+  elim_s : ∀ {A X : C}
+    (f : A ⟶ X) (g : X ⟶ X),
+    (Limits.prod.map (𝟙 A) s) ≫ elim f g =
+      elim f g ≫ g
+  /-- Uniqueness. -/
+  elim_uniq : ∀ {A X : C}
+    (f : A ⟶ X) (g : X ⟶ X)
+    (φ : A ⨯ N ⟶ X),
+    Limits.prod.lift (𝟙 A)
+      (Limits.terminal.from A ≫ z) ≫ φ = f →
+    (Limits.prod.map (𝟙 A) s) ≫ φ =
+      φ ≫ g →
+    φ = elim f g
+
+/-! ## Parameterized binary tree object
+
+The binary-tree analogue of the parameterized NNO.  An
+object `T` with `ℓ : 𝟙_ C ⟶ T` (leaf) and
+`β : T ⨯ T ⟶ T` (branch), such that for any `A`, `X`,
+`f : A ⟶ X`, `g : X ⨯ X ⟶ X`, there exists a unique
+`φ : A ⨯ T ⟶ X` satisfying
+`φ ∘ ⟨id_A, ℓ ∘ !_A⟩ = f` and
+`φ ∘ (id_A ⨯ β) = g ∘ (φ ⨯_A φ)`.
+
+This is the direct adaptation of the parameterized NNO
+(https://ncatlab.org/nlab/show/natural+numbers+object#withparams)
+with the unary successor `s : N ⟶ N` replaced by the
+binary branching `β : T ⨯ T ⟶ T`, and the step
+morphism `g : X ⟶ X` replaced by `g : X ⨯ X ⟶ X`.
+-/
+
+/-- A parameterized binary tree object in a category
+with chosen finite products. -/
+class HasPBTO (C : Type u) [Category.{v} C]
+    [Limits.HasFiniteProducts C] where
+  /-- The binary tree object. -/
+  T : C
+  /-- Leaf: the initial element. -/
+  ℓ : ⊤_ C ⟶ T
+  /-- Branch: combines two subtrees. -/
+  β : T ⨯ T ⟶ T
+  /-- The unique morphism given by the universal
+  property: for `f : A ⟶ X` and `g : X ⨯ X ⟶ X`,
+  the parameterized catamorphism `φ : A ⨯ T ⟶ X`. -/
+  elim : ∀ {A X : C},
+    (A ⟶ X) → (X ⨯ X ⟶ X) → (A ⨯ T ⟶ X)
+  /-- Base case: `φ(a, ℓ) = f(a)`. -/
+  elim_ℓ : ∀ {A X : C}
+    (f : A ⟶ X) (g : X ⨯ X ⟶ X),
+    Limits.prod.lift (𝟙 A)
+      (Limits.terminal.from A ≫ ℓ) ≫
+      elim f g = f
+  /-- Step case:
+  `φ(a, β(t₁, t₂)) = g(φ(a, t₁), φ(a, t₂))`.
+  The RHS extracts `(a, t₁)` and `(a, t₂)` from
+  `A ⨯ (T ⨯ T)`, applies `φ` to each, pairs the
+  results, and applies `g`. -/
+  elim_β : ∀ {A X : C}
+    (f : A ⟶ X) (g : X ⨯ X ⟶ X),
+    Limits.prod.map (𝟙 A) β ≫ elim f g =
+      Limits.prod.lift
+        (Limits.prod.lift
+          Limits.prod.fst
+          (Limits.prod.snd ≫
+            Limits.prod.fst) ≫
+          elim f g)
+        (Limits.prod.lift
+          Limits.prod.fst
+          (Limits.prod.snd ≫
+            Limits.prod.snd) ≫
+          elim f g) ≫ g
+  /-- Uniqueness. -/
+  elim_uniq : ∀ {A X : C}
+    (f : A ⟶ X) (g : X ⨯ X ⟶ X)
+    (φ : A ⨯ T ⟶ X),
+    Limits.prod.lift (𝟙 A)
+      (Limits.terminal.from A ≫ ℓ) ≫ φ = f →
+    Limits.prod.map (𝟙 A) β ≫ φ =
+      Limits.prod.lift
+        (Limits.prod.lift
+          Limits.prod.fst
+          (Limits.prod.snd ≫
+            Limits.prod.fst) ≫ φ)
+        (Limits.prod.lift
+          Limits.prod.fst
+          (Limits.prod.snd ≫
+            Limits.prod.snd) ≫ φ) ≫ g →
+    φ = elim f g
 
 /-! ## Binary tree object via polynomial machinery
 
