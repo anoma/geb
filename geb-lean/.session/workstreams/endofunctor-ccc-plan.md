@@ -2,7 +2,7 @@
 
 ## Status
 
-All building blocks complete. Adjunction needs density.
+All infrastructure complete. Adjunction needs density.
 See `endofunctor-ccc-adjunction-plan.md` for the
 detailed implementation plan.
 
