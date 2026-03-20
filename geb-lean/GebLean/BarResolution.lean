@@ -1,5 +1,6 @@
 import Mathlib.CategoryTheory.Monad.Basic
 import Mathlib.AlgebraicTopology.SimplicialObject.Basic
+import Mathlib.AlgebraicTopology.SimplexCategory.Basic
 
 /-!
 # Comonad Bar Resolution
@@ -15,6 +16,88 @@ simplicial identities follow from the comonad laws.
 namespace CategoryTheory
 
 universe v u
+
+namespace SimplexCategory
+
+/--
+For an order-preserving map with a strictly smaller
+domain, there is an element in the codomain not in
+the range.
+-/
+theorem exists_not_mem_range_of_lt
+    {m n : ℕ}
+    (f : SimplexCategory.mk m ⟶ SimplexCategory.mk n)
+    (h : m < n) :
+    ∃ j : Fin (n + 1),
+      ∀ i : Fin (m + 1),
+        f.toOrderHom i ≠ j := by
+  by_contra hall
+  push_neg at hall
+  have hsurj : Function.Surjective f.toOrderHom :=
+    fun j =>
+      ⟨(hall j).choose, (hall j).choose_spec⟩
+  have := Fintype.card_le_of_surjective _ hsurj
+  simp at this
+  omega
+
+/--
+For an order-preserving map with a strictly larger
+domain, there exists a "flat spot": consecutive
+elements with equal values.
+-/
+theorem exists_flatSpot_of_gt
+    {m n : ℕ}
+    (f : SimplexCategory.mk m ⟶ SimplexCategory.mk n)
+    (h : n < m) :
+    ∃ i : Fin m,
+      f.toOrderHom i.castSucc =
+        f.toOrderHom i.succ := by
+  by_contra hall
+  push_neg at hall
+  have hstrictMono : StrictMono f.toOrderHom :=
+    Fin.strictMono_iff_lt_succ.mpr (fun i =>
+      lt_of_le_of_ne
+        (f.toOrderHom.monotone
+          (Fin.castSucc_le_succ i))
+        (hall i))
+  have hinj : Function.Injective f.toOrderHom :=
+    hstrictMono.injective
+  have := Fintype.card_le_of_injective _ hinj
+  simp at this
+  omega
+
+/--
+Given `f : [m] → [n+1]` and `j` not in the range of
+`f`, produce `[m] → [n]` by composing with the
+degeneracy that collapses `j`.  Satisfies
+`skipValue f j hj ≫ δ j = f`.
+-/
+noncomputable def skipValue
+    {m n : ℕ}
+    (f : SimplexCategory.mk m ⟶
+      SimplexCategory.mk (n + 1))
+    (j : Fin (n + 2))
+    (_ : ∀ i : Fin (m + 1),
+      f.toOrderHom i ≠ j) :
+    SimplexCategory.mk m ⟶ SimplexCategory.mk n :=
+  SimplexCategory.factor_δ f j
+
+/--
+Given `f : [m+1] → [n]` and a flat spot `i` (where
+`f(i) = f(i+1)`), produce `[m] → [n]` by merging
+the consecutive equal values.
+-/
+noncomputable def mergeFlat
+    {m n : ℕ}
+    (f : SimplexCategory.mk (m + 1) ⟶
+      SimplexCategory.mk n)
+    (i : Fin (m + 1))
+    (_ : f.toOrderHom i.castSucc =
+      f.toOrderHom i.succ) :
+    SimplexCategory.mk m ⟶ SimplexCategory.mk n :=
+  SimplexCategory.δ i.succ ≫ f
+
+end SimplexCategory
 
 variable {C : Type u} [Category.{v} C]
 
@@ -353,6 +436,62 @@ lemma barFace_comp_barDegen_gt (n : ℕ)
             (by omega) (by omega),
           G.toFunctor.map_comp,
           barFace_succ, barDegen_succ]
+
+/-! ### Bar resolution map for arbitrary morphisms -/
+
+/--
+The bar resolution map for a SimplexCategory morphism.
+Given `f : [m] → [n]`, produces
+`iterateObj G X (n + 1) ⟶ iterateObj G X (m + 1)`.
+
+Defined by well-founded recursion on `m + n`:
+- If `m = n`, `f` is the identity; return `𝟙`.
+- If `m < n`, `f` is not surjective; apply a face map
+  and recurse with a smaller codomain.
+- If `m > n`, `f` is not injective; apply a degeneracy
+  map and recurse with a smaller domain.
+-/
+noncomputable def barSimplexMap
+    {a b : SimplexCategory}
+    (f : a ⟶ b) :
+    iterateObj G X (b.len + 1) ⟶
+      iterateObj G X (a.len + 1) :=
+  if heq : a.len = b.len then
+    heq ▸ 𝟙 _
+  else if hlt : a.len < b.len then
+    have hbn : b.len ≥ 1 := by omega
+    let f' : SimplexCategory.mk a.len ⟶
+        SimplexCategory.mk ((b.len - 1) + 1) :=
+      (by omega : b.len = (b.len - 1) + 1) ▸ f
+    let hmiss :=
+      SimplexCategory.exists_not_mem_range_of_lt
+        f' (by omega)
+    let j := hmiss.choose
+    let hj := hmiss.choose_spec
+    (by omega : b.len = (b.len - 1) + 1) ▸
+      (barFace G X (b.len - 1) j ≫
+        barSimplexMap
+          (SimplexCategory.skipValue f' j hj))
+  else
+    have hgt : b.len < a.len := by omega
+    have ham : a.len ≥ 1 := by omega
+    let f' : SimplexCategory.mk
+        ((a.len - 1) + 1) ⟶
+        SimplexCategory.mk b.len :=
+      (by omega : a.len = (a.len - 1) + 1) ▸ f
+    let hflat :=
+      SimplexCategory.exists_flatSpot_of_gt
+        f' (by omega)
+    let i := hflat.choose
+    let hi := hflat.choose_spec
+    (by omega : a.len = (a.len - 1) + 1) ▸
+      (barSimplexMap
+        (SimplexCategory.mergeFlat f' i hi) ≫
+        barDegen G X (a.len - 1) i)
+termination_by a.len + b.len
+decreasing_by
+  all_goals simp_all only [SimplexCategory.len_mk]
+  all_goals omega
 
 end Comonad
 
