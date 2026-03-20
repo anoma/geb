@@ -2,6 +2,8 @@ import Mathlib.CategoryTheory.Limits.HasLimits
 import Mathlib.CategoryTheory.Limits.Shapes.FiniteProducts
 import Mathlib.CategoryTheory.Limits.Shapes.BinaryProducts
 import Mathlib.CategoryTheory.Limits.Shapes.Terminal
+-- 81 chars (external mathlib path)
+import Mathlib.CategoryTheory.Limits.Constructions.FiniteProductsOfBinaryProducts
 
 /-!
 # Computable limits and colimits
@@ -149,5 +151,61 @@ def cfpAssocSnd (A B D : C) :
       cfpSnd B D)
 
 end Aliases
+
+/-! ## Deriving mathlib's `Prop`-valued classes
+
+Each computable class implies its mathlib counterpart,
+confirming that our definitions are correctly
+structured. -/
+
+section Derivations
+
+variable {C : Type u} [Category.{v} C]
+
+/-- A `ChosenTerminal` gives `IsTerminal`. -/
+def chosenTerminalIsTerminal
+    [h : HasChosenFiniteProducts C] :
+    Limits.IsTerminal h.terminal.obj :=
+  Limits.IsTerminal.ofUniqueHom
+    (fun A => h.terminal.from_ A)
+    (fun _ f => h.terminal.uniq f)
+
+/-- A `ChosenTerminal` gives `HasTerminal`. -/
+instance chosenTerminalToHasTerminal
+    [h : HasChosenFiniteProducts C] :
+    Limits.HasTerminal C :=
+  chosenTerminalIsTerminal.hasTerminal
+
+/-- A `ChosenBinaryProduct` gives `HasLimit` for
+the binary pair diagram. -/
+instance chosenBinaryProductToHasLimit
+    [h : HasChosenFiniteProducts C]
+    (A B : C) :
+    Limits.HasLimit (Limits.pair A B) :=
+  let p := h.product A B
+  ⟨⟨Limits.BinaryFan.mk p.fst p.snd,
+    Limits.BinaryFan.isLimitMk
+      (fun s =>
+        p.lift (s.fst) (s.snd))
+      (fun s => p.lift_fst s.fst s.snd)
+      (fun s => p.lift_snd s.fst s.snd)
+      (fun s m hf hs =>
+        p.lift_uniq s.fst s.snd m hf hs)⟩⟩
+
+/-- `HasChosenFiniteProducts` gives
+`HasBinaryProducts`. -/
+instance chosenToHasBinaryProducts
+    [h : HasChosenFiniteProducts C] :
+    Limits.HasBinaryProducts C :=
+  Limits.hasBinaryProducts_of_hasLimit_pair C
+
+/-- `HasChosenFiniteProducts` gives
+`HasFiniteProducts`. -/
+instance chosenToHasFiniteProducts
+    [h : HasChosenFiniteProducts C] :
+    Limits.HasFiniteProducts C :=
+  hasFiniteProducts_of_has_binary_and_terminal
+
+end Derivations
 
 end GebLean
