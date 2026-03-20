@@ -2,10 +2,15 @@
 
 ## Current Status
 
-Tasks 1-3 complete.  Task 4 in progress: barSimplexMap
-defined by well-founded recursion; map_id proved;
-map_comp needs restructuring via canonical epi-mono
-factorization.  Tasks 5-9 not started.
+Tasks 1-3 complete.  Task 4 nearly complete:
+barSimplexMap defined (computable via Fin.find),
+map_id proved, barResolution structure laid out.
+Remaining: barSimplexMap_comp (functoriality of
+barSimplexMap w.r.t. composition).  This is equivalent
+to the presentation theorem for SimplexCategory by
+generators and relations — a substantial standalone
+result.  Tasks 5-9 not started but do not depend on
+barSimplexMap_comp.
 
 ### What exists in `GebLean/BarResolution.lean`
 

@@ -512,25 +512,54 @@ termination_by m - n
 
 /--
 The bar resolution map for an arbitrary SimplexCategory
-morphism, defined via the epi-mono factorization:
-`f = factorThruImage f ≫ image.ι f`.
+morphism `f : [m] → [n]`, producing a morphism
+`G^{n+1}(X) → G^{m+1}(X)`.
+
+Defined by well-founded recursion on `m + n`:
+- `m = n`: return `eqToHom` (identity transport)
+- `m < n`: peel off a face map at the smallest
+  missing value, then recurse
+- `m > n`: peel off a degeneracy map at the smallest
+  flat spot, then recurse
 -/
-noncomputable def barSimplexMap
-    {a b : SimplexCategory}
-    (f : a ⟶ b) :
-    iterateObj G X (b.len + 1) ⟶
-      iterateObj G X (a.len + 1) :=
-  let img := Limits.image f
-  let ι : img ⟶ b := Limits.image.ι f
-  let e : a ⟶ img := Limits.factorThruImage f
-  barMapMono G X
-    (show SimplexCategory.mk img.len ⟶
-        SimplexCategory.mk b.len from ι)
-    (SimplexCategory.len_le_of_mono ι) ≫
-    barMapEpi G X
-      (show SimplexCategory.mk a.len ⟶
-          SimplexCategory.mk img.len from e)
-      (SimplexCategory.le_of_epi e)
+def barSimplexMap
+    {m n : ℕ}
+    (f : SimplexCategory.mk m ⟶
+      SimplexCategory.mk n) :
+    iterateObj G X (n + 1) ⟶
+      iterateObj G X (m + 1) :=
+  if heq : m = n then
+    eqToHom (by rw [heq])
+  else if hlt : m < n then
+    match n, f with
+    | n' + 1, f =>
+      let hmiss :=
+        SimplexCategory.exists_not_mem_range_of_lt
+          f hlt
+      let j := Fin.find
+        (fun j => ∀ i, f.toOrderHom i ≠ j) hmiss
+      have hj := Fin.find_spec hmiss
+      barFace G X n' j ≫
+        barSimplexMap
+          (SimplexCategory.skipValue f j hj)
+  else
+    have hgt : n < m := by omega
+    match m, f with
+    | m' + 1, f =>
+      let hflat :=
+        SimplexCategory.exists_flatSpot_of_gt
+          f hgt
+      let i := Fin.find
+        (fun i => f.toOrderHom i.castSucc =
+          f.toOrderHom i.succ) hflat
+      have hi := Fin.find_spec hflat
+      barSimplexMap
+        (SimplexCategory.mergeFlat f i hi) ≫
+        barDegen G X m' i
+termination_by m + n
+decreasing_by
+  all_goals simp_all only [SimplexCategory.len_mk]
+  all_goals omega
 
 lemma barMapMono_eq_eqToHom
     {m n : ℕ}
@@ -554,27 +583,34 @@ lemma barMapEpi_eq_eqToHom
   unfold barMapEpi
   simp [heq]
 
-lemma barSimplexMap_id (a : SimplexCategory) :
-    barSimplexMap G X (𝟙 a) =
-      𝟙 (iterateObj G X (a.len + 1)) := by
-  simp only [barSimplexMap]
-  have hle : (Limits.image (𝟙 a)).len ≤ a.len :=
-    SimplexCategory.len_le_of_mono
-      (Limits.image.ι (𝟙 a))
-  haveI : Epi (Limits.image.ι (𝟙 a)) := by
-    haveI : Epi (Limits.factorThruImage (𝟙 a) ≫
-        Limits.image.ι (𝟙 a)) := by
-      rw [Limits.image.fac]; infer_instance
-    exact epi_of_epi
-      (Limits.factorThruImage (𝟙 a)) _
-  have hge : a.len ≤ (Limits.image (𝟙 a)).len :=
-    SimplexCategory.len_le_of_epi
-      (Limits.image.ι (𝟙 a))
-  have h1 : (Limits.image (𝟙 a)).len = a.len :=
-    by omega
-  rw [barMapMono_eq_eqToHom G X _ _ h1,
-    barMapEpi_eq_eqToHom G X _ _ h1.symm,
-    eqToHom_trans, eqToHom_refl]
+lemma barSimplexMap_id (n : ℕ) :
+    barSimplexMap G X
+      (𝟙 (SimplexCategory.mk n)) =
+      𝟙 (iterateObj G X (n + 1)) := by
+  unfold barSimplexMap
+  simp
+
+/-
+The remaining piece for `barResolution` is
+`barSimplexMap_comp`: the proof that `barSimplexMap`
+preserves composition (contravariantly). This is
+equivalent to showing that the simplicial identities
+suffice to determine the functor on all morphisms of
+SimplexCategory — the same result being formalized in
+mathlib's `SimplexCategory.GeneratorsRelations`.
+
+With `barSimplexMap_comp` proved, `barResolution` is
+assembled as:
+
+  noncomputable def barResolution :
+      SimplicialObject C where
+    obj n := iterateObj G X (n.unop.len + 1)
+    map f := barSimplexMap G X f.unop
+    map_id a := barSimplexMap_id G X a.unop.len
+    map_comp f g :=
+      @barSimplexMap_comp C _ G X _ _ _
+        g.unop f.unop
+-/
 
 end Comonad
 
