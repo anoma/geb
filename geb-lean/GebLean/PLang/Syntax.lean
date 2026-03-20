@@ -66,7 +66,9 @@ def polyProdEvalOfPair {X : Type u}
     (fun s => match s with
       | Sum.inl _ => l.val
       | Sum.inr _ => r.val)
-    (by aesop_cat)⟩
+    (funext (fun s => match s with
+      | Sum.inl _ => l.property
+      | Sum.inr _ => r.property))⟩
 
 /-- Extract a pair of fiber elements from a `polyProd`
 evaluation family element. -/
