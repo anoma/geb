@@ -254,4 +254,52 @@ instance pshRelEdgeRepresentableIsDense :
 
 end Density
 
+section EndoFunctorClosed
+
+open MonoidalCategory MonoidalClosed
+
+/-- The uncurry at a representable edge: given
+`μ : H ⟶ [F, G]`, compose `μ.app(y) ≫ proj`
+to get `H(y) → [F(y), G(y)]`, then apply the
+object-level uncurry to get
+`F(y) ⊗ H(y) → G(y)`. -/
+def endoIhomUncurryAtRep
+    {C : Type u} [Category.{v} C]
+    (F H G :
+      PshRelEdge.{u, v, max u v} C ⥤
+        PshRelEdge.{u, v, max u v} C)
+    (μ : H ⟶ (endoIhomFunctor F).obj G)
+    (i : WalkingSpan) (c : Cᵒᵖ) :
+    ((tensorLeft F).obj H).obj
+      (pshRelEdgeRepresentable i c) ⟶
+    G.obj (pshRelEdgeRepresentable i c) :=
+  (Closed.adj
+    (X := F.obj
+      (pshRelEdgeRepresentable i c))
+    |>.homEquiv _ _).symm
+    (μ.app (pshRelEdgeRepresentable i c) ≫
+      endoIhomProj F G i c)
+
+-- The adjunction `tensorLeft F ⊣ endoIhomFunctor F`
+-- requires extending the uncurry from representables
+-- to all edges via the density colimit (using
+-- `Functor.denseAt` / `IsColimit.desc`). These
+-- mathlib definitions are `noncomputable`. The
+-- proof should be stated as a `Prop`-valued theorem
+-- (`Nonempty (Closed F)`) using our density instance
+-- `pshRelEdgeRepresentableIsDense` and the
+-- computable `endoIhomCurry` + `endoIhomUncurryAtRep`.
+--
+-- Note: mathlib's generic
+-- `MonoidalClosed.FunctorCategory.closed` cannot be
+-- used here due to a universe gap: it requires ends
+-- over `Under j` for `j` an endofunctor, whose
+-- objects are at `Type (max (u+1) (v+1))`, while
+-- `pshRelEdgeHasLimitsOfSize` provides limits at
+-- `{max u v, max u v}`. Our `endoIhomFunctor`
+-- avoids this gap via the Yoneda reduction over the
+-- small index `WalkingSpan × Cᵒᵖ`.
+
+end EndoFunctorClosed
+
 end GebLean
