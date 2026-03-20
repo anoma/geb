@@ -146,19 +146,15 @@ class HasPBTO (C : Type u) [Category.{v} C]
   elim_β : ∀ {A X : C}
     (f : A ⟶ X) (g : cfpProd X X ⟶ X),
     cfpMap (𝟙 A) β ≫ elim f g =
-      cfpLift
-        (cfpAssocFst A T T ≫ elim f g)
-        (cfpAssocSnd A T T ≫ elim f g) ≫
-        g
+      cfpLiftAssoc
+        (elim f g) (elim f g) ≫ g
   /-- Uniqueness. -/
   elim_uniq : ∀ {A X : C}
     (f : A ⟶ X) (g : cfpProd X X ⟶ X)
     (φ : cfpProd A T ⟶ X),
     cfpInsertSnd ℓ A ≫ φ = f →
     cfpMap (𝟙 A) β ≫ φ =
-      cfpLift
-        (cfpAssocFst A T T ≫ φ)
-        (cfpAssocSnd A T T ≫ φ) ≫ g →
+      cfpLiftAssoc φ φ ≫ g →
     φ = elim f g
 
 /-! ## Binary tree object via polynomial machinery

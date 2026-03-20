@@ -150,6 +150,20 @@ def cfpAssocSnd (A B D : C) :
     (cfpSnd A (cfpProd B D) ≫
       cfpSnd B D)
 
+/-- From `A × (B × D)`, pair the results of applying
+`f` to `(a, b)` and `g` to `(a, d)`.  Commonly used
+for the step case of parameterized binary tree
+objects, where `f` and `g` process the two
+subtrees. -/
+def cfpLiftAssoc {A B D E : C}
+    (f : cfpProd A B ⟶ E)
+    (g : cfpProd A D ⟶ E) :
+    cfpProd A (cfpProd B D) ⟶
+      cfpProd E E :=
+  cfpLift
+    (cfpAssocFst A B D ≫ f)
+    (cfpAssocSnd A B D ≫ g)
+
 end Aliases
 
 /-! ## Deriving mathlib's `Prop`-valued classes
