@@ -229,9 +229,17 @@ with algebras independently, and the coproduct algebra
 combines them.
 -/
 
-/-- The polynomial for a fiber-shifted single child.
-At fiber `n`, has one position and one direction mapping
-to `n + k`.  Defined via `polyEndoRepr`. -/
+/-- A polynomial endofunctor on `Over ℕ` representing a
+single child whose fiber is shifted by `k` relative to
+the parent.  At fiber `n`, there is one position and one
+direction, and that direction maps to fiber `n + k`.
+
+Evaluating at `Y : Over ℕ` gives `Y(n + k)` at each
+fiber `n`: the child lives `k` fibers above the parent.
+
+Used in `btMorFoldPoly` to represent the step child of
+the fold constructor, which lives at fiber `n + 2` (the
+context extended by two recursive-result variables). -/
 def polyShift (k : ℕ) : PolyEndo ℕ :=
   polyEndoRepr
     (fun n => Over.mk (fun _ : PUnit.{1} => n + k))
