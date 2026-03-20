@@ -120,7 +120,7 @@ private instance uliftYonedaOpIsDense :
 private instance uliftCoyonedaIsDense :
     (uliftCoyoneda.{max u v}
         (C := WalkingSpan × Cᵒᵖ)).IsDense := by
-  have key : (uliftYoneda.{max u v}
+  have comm : (uliftYoneda.{max u v}
       (C := (WalkingSpan × Cᵒᵖ)ᵒᵖ) ⋙
       (Functor.whiskeringLeft _ _ _).obj
         (opOp (WalkingSpan × Cᵒᵖ))).IsDense :=
@@ -145,7 +145,7 @@ private instance uliftCoyonedaIsDense :
         funext ⟨a⟩
         simp [opEquiv, uliftYoneda, uliftCoyoneda,
           Functor.whiskeringLeft, opOp])
-  exact Functor.IsDense.iff_of_iso iso |>.mp key
+  exact Functor.IsDense.iff_of_iso iso |>.mp comm
 
 private instance spanRepresentableFunctorIsDense :
     (spanRepresentableFunctor (C := C)).IsDense := by
@@ -225,13 +225,13 @@ instance pshRelEdgeRepresentableIsDense :
         ((Functor.LeftExtension.mk (𝟭 _)
             spanRepresentableFunctor.rightUnitor.inv).coconeAt
           ((pshRelEdgeInclusionFunctor C).obj E))) := by
-      have key := (pshRelEdgeSepAdjunction C).leftAdjoint_preservesColimits
+      have comm := (pshRelEdgeSepAdjunction C).leftAdjoint_preservesColimits
       haveI : PreservesColimit
           (CostructuredArrow.proj spanRepresentableFunctor
             ((pshRelEdgeInclusionFunctor C).obj E) ⋙
             spanRepresentableFunctor)
           (pshRelEdgeSepFunctor C) :=
-        key.preservesColimitsOfShape.preservesColimit
+        comm.preservesColimitsOfShape.preservesColimit
       exact isColimitOfPreserves (pshRelEdgeSepFunctor C) h₁
     let counitIso : (pshRelEdgeSepFunctor C).obj
           ((pshRelEdgeInclusionFunctor C).obj E) ≅ E :=
@@ -284,7 +284,7 @@ def endoIhomUncurryAtRep
 -- requires extending the uncurry from representables
 -- to all edges via the density colimit (using
 -- `Functor.denseAt` / `IsColimit.desc`). These
--- mathlib definitions are `noncomputable`. The
+-- mathlib definitions are not computable. The
 -- proof should be stated as a `Prop`-valued theorem
 -- (`Nonempty (Closed F)`) using our density instance
 -- `pshRelEdgeRepresentableIsDense` and the
