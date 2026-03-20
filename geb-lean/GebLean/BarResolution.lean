@@ -72,7 +72,7 @@ Given `f : [m] → [n+1]` and `j` not in the range of
 degeneracy that collapses `j`.  Satisfies
 `skipValue f j hj ≫ δ j = f`.
 -/
-noncomputable def skipValue
+def skipValue
     {m n : ℕ}
     (f : SimplexCategory.mk m ⟶
       SimplexCategory.mk (n + 1))
@@ -87,7 +87,7 @@ Given `f : [m+1] → [n]` and a flat spot `i` (where
 `f(i) = f(i+1)`), produce `[m] → [n]` by merging
 the consecutive equal values.
 -/
-noncomputable def mergeFlat
+def mergeFlat
     {m n : ℕ}
     (f : SimplexCategory.mk (m + 1) ⟶
       SimplexCategory.mk n)
@@ -452,7 +452,7 @@ spots.
 Bar resolution map for a morphism with `m ≤ n`:
 composes face maps for missing codomain values.
 -/
-noncomputable def barMapMono
+def barMapMono
     {m n : ℕ}
     (f : SimplexCategory.mk m ⟶
       SimplexCategory.mk n)
@@ -468,8 +468,10 @@ noncomputable def barMapMono
       let hmiss :=
         SimplexCategory.exists_not_mem_range_of_lt
           f hlt
-      let j := hmiss.choose
-      let hj := hmiss.choose_spec
+      let j := Fin.find
+        (fun j => ∀ i, f.toOrderHom i ≠ j) hmiss
+      have hj : ∀ i, f.toOrderHom i ≠ j :=
+        Fin.find_spec hmiss
       barFace G X n' j ≫
         barMapMono
           (SimplexCategory.skipValue f j hj)
@@ -480,7 +482,7 @@ termination_by n - m
 Bar resolution map for a morphism with `m ≥ n`:
 composes degeneracy maps for flat spots.
 -/
-noncomputable def barMapEpi
+def barMapEpi
     {m n : ℕ}
     (f : SimplexCategory.mk m ⟶
       SimplexCategory.mk n)
@@ -496,8 +498,12 @@ noncomputable def barMapEpi
       let hflat :=
         SimplexCategory.exists_flatSpot_of_gt
           f hgt
-      let i := hflat.choose
-      let hi := hflat.choose_spec
+      let i := Fin.find
+        (fun i => f.toOrderHom i.castSucc =
+          f.toOrderHom i.succ) hflat
+      have hi : f.toOrderHom i.castSucc =
+          f.toOrderHom i.succ :=
+        Fin.find_spec hflat
       barMapEpi
         (SimplexCategory.mergeFlat f i hi)
         (by omega) ≫
