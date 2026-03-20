@@ -1,5 +1,6 @@
 import GebLean.PLang.Syntax
 import GebLean.PolyAlgUMorph
+import GebLean.Utilities.ComputableLimits
 import Mathlib.Data.Fin.Basic
 
 /-!
@@ -35,8 +36,8 @@ and `g : X × X → X`, there exists a unique
 `φ(a, β(t₁, t₂)) = g(φ(a, t₁), φ(a, t₂))`.
 
 In the Lawvere theory, `A`, `X`, `T` are all powers of
-the generating object.  With `A = n`, `T = 1`, `X = 1`:
-`f : n → 1`, `g : 2 → 1`, `φ : (n+1) → 1`.
+the generating object.  With `A = n`, `T = 1`, `X = m`:
+`f : n → m`, `g : (m + m) → m`, `φ : (n + 1) → m`.
 
 ## References
 
@@ -70,37 +71,34 @@ there exists a unique `φ : A ⨯ N ⟶ X` satisfying
 with chosen finite products.  Adapted from
 https://ncatlab.org/nlab/show/natural+numbers+object#withparams. -/
 class HasNNO (C : Type u) [Category.{v} C]
-    [Limits.HasFiniteProducts C] where
+    [HasChosenFiniteProducts C] where
   /-- The natural numbers object. -/
   N : C
   /-- Zero: the initial element. -/
-  z : ⊤_ C ⟶ N
+  z : cfpTerminal ⟶ N
   /-- Successor. -/
   s : N ⟶ N
   /-- The unique morphism given by the universal
   property: for `f : A ⟶ X` and `g : X ⟶ X`, the
-  parameterized iterator `φ : A ⨯ N ⟶ X`. -/
+  parameterized iterator `φ : A × N ⟶ X`. -/
   elim : ∀ {A X : C},
-    (A ⟶ X) → (X ⟶ X) → (A ⨯ N ⟶ X)
+    (A ⟶ X) → (X ⟶ X) →
+    (cfpProd A N ⟶ X)
   /-- Base case: `φ(a, z) = f(a)`. -/
   elim_z : ∀ {A X : C}
     (f : A ⟶ X) (g : X ⟶ X),
-    Limits.prod.lift (𝟙 A)
-      (Limits.terminal.from A ≫ z) ≫
-      elim f g = f
+    cfpInsertSnd z A ≫ elim f g = f
   /-- Step case: `φ(a, s(n)) = g(φ(a, n))`. -/
   elim_s : ∀ {A X : C}
     (f : A ⟶ X) (g : X ⟶ X),
-    (Limits.prod.map (𝟙 A) s) ≫ elim f g =
+    cfpMap (𝟙 A) s ≫ elim f g =
       elim f g ≫ g
   /-- Uniqueness. -/
   elim_uniq : ∀ {A X : C}
     (f : A ⟶ X) (g : X ⟶ X)
-    (φ : A ⨯ N ⟶ X),
-    Limits.prod.lift (𝟙 A)
-      (Limits.terminal.from A ≫ z) ≫ φ = f →
-    (Limits.prod.map (𝟙 A) s) ≫ φ =
-      φ ≫ g →
+    (φ : cfpProd A N ⟶ X),
+    cfpInsertSnd z A ≫ φ = f →
+    cfpMap (𝟙 A) s ≫ φ = φ ≫ g →
     φ = elim f g
 
 /-! ## Parameterized binary tree object
@@ -114,7 +112,6 @@ object `T` with `ℓ : 𝟙_ C ⟶ T` (leaf) and
 `φ ∘ (id_A ⨯ β) = g ∘ (φ ⨯_A φ)`.
 
 This is the direct adaptation of the parameterized NNO
-(https://ncatlab.org/nlab/show/natural+numbers+object#withparams)
 with the unary successor `s : N ⟶ N` replaced by the
 binary branching `β : T ⨯ T ⟶ T`, and the step
 morphism `g : X ⟶ X` replaced by `g : X ⨯ X ⟶ X`.
@@ -123,59 +120,45 @@ morphism `g : X ⟶ X` replaced by `g : X ⨯ X ⟶ X`.
 /-- A parameterized binary tree object in a category
 with chosen finite products. -/
 class HasPBTO (C : Type u) [Category.{v} C]
-    [Limits.HasFiniteProducts C] where
+    [HasChosenFiniteProducts C] where
   /-- The binary tree object. -/
   T : C
   /-- Leaf: the initial element. -/
-  ℓ : ⊤_ C ⟶ T
+  ℓ : cfpTerminal ⟶ T
   /-- Branch: combines two subtrees. -/
-  β : T ⨯ T ⟶ T
+  β : cfpProd T T ⟶ T
   /-- The unique morphism given by the universal
-  property: for `f : A ⟶ X` and `g : X ⨯ X ⟶ X`,
-  the parameterized catamorphism `φ : A ⨯ T ⟶ X`. -/
+  property: for `f : A ⟶ X` and `g : X × X ⟶ X`,
+  the parameterized catamorphism
+  `φ : A × T ⟶ X`. -/
   elim : ∀ {A X : C},
-    (A ⟶ X) → (X ⨯ X ⟶ X) → (A ⨯ T ⟶ X)
+    (A ⟶ X) → (cfpProd X X ⟶ X) →
+    (cfpProd A T ⟶ X)
   /-- Base case: `φ(a, ℓ) = f(a)`. -/
   elim_ℓ : ∀ {A X : C}
-    (f : A ⟶ X) (g : X ⨯ X ⟶ X),
-    Limits.prod.lift (𝟙 A)
-      (Limits.terminal.from A ≫ ℓ) ≫
-      elim f g = f
+    (f : A ⟶ X) (g : cfpProd X X ⟶ X),
+    cfpInsertSnd ℓ A ≫ elim f g = f
   /-- Step case:
   `φ(a, β(t₁, t₂)) = g(φ(a, t₁), φ(a, t₂))`.
-  The RHS extracts `(a, t₁)` and `(a, t₂)` from
-  `A ⨯ (T ⨯ T)`, applies `φ` to each, pairs the
-  results, and applies `g`. -/
+  From `A × (T × T)`, pairs `(a, t₁)` and
+  `(a, t₂)` are extracted, `φ` is applied to each,
+  and `g` combines the results. -/
   elim_β : ∀ {A X : C}
-    (f : A ⟶ X) (g : X ⨯ X ⟶ X),
-    Limits.prod.map (𝟙 A) β ≫ elim f g =
-      Limits.prod.lift
-        (Limits.prod.lift
-          Limits.prod.fst
-          (Limits.prod.snd ≫
-            Limits.prod.fst) ≫
-          elim f g)
-        (Limits.prod.lift
-          Limits.prod.fst
-          (Limits.prod.snd ≫
-            Limits.prod.snd) ≫
-          elim f g) ≫ g
+    (f : A ⟶ X) (g : cfpProd X X ⟶ X),
+    cfpMap (𝟙 A) β ≫ elim f g =
+      cfpLift
+        (cfpAssocFst A T T ≫ elim f g)
+        (cfpAssocSnd A T T ≫ elim f g) ≫
+        g
   /-- Uniqueness. -/
   elim_uniq : ∀ {A X : C}
-    (f : A ⟶ X) (g : X ⨯ X ⟶ X)
-    (φ : A ⨯ T ⟶ X),
-    Limits.prod.lift (𝟙 A)
-      (Limits.terminal.from A ≫ ℓ) ≫ φ = f →
-    Limits.prod.map (𝟙 A) β ≫ φ =
-      Limits.prod.lift
-        (Limits.prod.lift
-          Limits.prod.fst
-          (Limits.prod.snd ≫
-            Limits.prod.fst) ≫ φ)
-        (Limits.prod.lift
-          Limits.prod.fst
-          (Limits.prod.snd ≫
-            Limits.prod.snd) ≫ φ) ≫ g →
+    (f : A ⟶ X) (g : cfpProd X X ⟶ X)
+    (φ : cfpProd A T ⟶ X),
+    cfpInsertSnd ℓ A ≫ φ = f →
+    cfpMap (𝟙 A) β ≫ φ =
+      cfpLift
+        (cfpAssocFst A T T ≫ φ)
+        (cfpAssocSnd A T T ≫ φ) ≫ g →
     φ = elim f g
 
 /-! ## Binary tree object via polynomial machinery
@@ -557,9 +540,7 @@ def BTMorN.pair {k n m : ℕ}
 
 The parameterized BTO consists of the algebra structure
 (`btLeaf`, `btBranch`) and the universal property
-(`btFold`), following `HasPBTO` with the simple
-(non-enhanced) universal property:
-`f : n → 1`, `g : 2 → 1`, `φ : (n + 1) → 1`.
+(`btFoldFull`), following `HasPBTO`.
 -/
 
 /-- Leaf constructor: `0 → 1`. -/
@@ -830,19 +811,72 @@ def BTMorN.comp {n m k : ℕ}
     BTMorN n k :=
   fun j => (g j).subst f
 
-/-- Fold (the simple universal property of the
-parameterized BTO, as in `HasPBTO`):
-given `f : n → 1` and `g : 2 → 1`, produces
-`φ : (n + 1) → 1`.
+/-! ## Full fold (universal property of the
+parameterized BTO)
 
-This corresponds to `HasPBTO.elim` with `A = n`,
-`T = 1`, `X = 1` in the Lawvere theory (where object
-`k` is `T^k`).  The last variable of `φ` is the tree
-being folded.
+The full universal property of the parameterized
+binary tree object with arbitrary target dimension:
+given `f : n → m` and `g : (m + m) → m`, produce
+`φ : (n + 1) → m`.
 
-The base case `f` gives the value at leaves (using the
-`n` context variables).  The step case `g` combines
-two recursive results (no access to the context). -/
+The fold uses `BT.fold` with carrier `Fin m → BT`
+so that all `m` output components are computed
+simultaneously in a single pass over the tree.
+At each leaf, the `m` outputs are computed by `f`
+applied to the `n` context variables.  At each
+branch, the `m` outputs are computed by `g` applied
+to the concatenation of the `m` left results and `m`
+right results.
+
+The `BTMor1.fold` constructor's step child has two
+recursive-result variables, which suffices for
+`m = 1` but not for coupled mutual recursion with
+`m > 1`.  The definition `btFoldFull` works for all
+`m` by folding BT values directly with carrier
+`Fin m → BT.{0}`.  The syntactic version `btFold`
+(for `m = 1`) constructs a `BTMor1.fold` term.
+-/
+
+/-- Concatenate two `Fin`-indexed tuples into a
+single tuple indexed by `Fin (a + b)`. -/
+def finAppend {a b : ℕ} {α : Type}
+    (l : Fin a → α) (r : Fin b → α) :
+    Fin (a + b) → α :=
+  fun i =>
+    if h : i.val < a then l ⟨i.val, h⟩
+    else r ⟨i.val - a, by omega⟩
+
+/-- The full universal property of the parameterized
+BTO: given `f : n → m` (base) and `g : (m + m) → m`
+(step), produce a morphism `(n + 1) → m` as a
+function on BT contexts.
+
+The last element of the `(n + 1)`-tuple is the tree
+being folded.  Uses `BT.fold` with carrier
+`Fin m → BT.{0}` to compute all `m` outputs in a
+single pass. -/
+def btFoldFull {n m : ℕ}
+    (f : BTMorN n m) (g : BTMorN (m + m) m)
+    (ctx : Fin (n + 1) → BT.{0}) :
+    Fin m → BT.{0} :=
+  let baseCtx : Fin n → BT.{0} :=
+    fun i => ctx ⟨i.val, by omega⟩
+  let tree : BT.{0} := ctx ⟨n, by omega⟩
+  tree.fold
+    (f.interp baseCtx)
+    (fun leftAll rightAll =>
+      g.interp (finAppend leftAll rightAll))
+
+/-- Fold (the simple universal property with
+`X = 1`): given `f : n → 1` and `g : 2 → 1`,
+produces `φ : (n + 1) → 1` as a syntactic
+`BTMor1.fold` term.
+
+The last variable of `φ` is the tree being folded.
+The base case `f` gives the value at leaves (using
+the `n` context variables).  The step case `g`
+combines two recursive results (no access to the
+context). -/
 def btFold {n : ℕ}
     (f : BTMorN n 1) (g : BTMorN 2 1) :
     BTMorN (n + 1) 1 :=
@@ -853,5 +887,96 @@ def btFold {n : ℕ}
         (fun i =>
           ⟨n + 1 + i.val, by omega⟩))
       (BTMor1.proj ⟨n, by omega⟩)
+
+/-- The enhanced universal property of the
+parameterized BTO: given `f : n → m` (base) and
+`g : (n + m + m) → m` (step with context access),
+produce `φ : (n + 1) → m` as a function on BT
+contexts.
+
+Derived from `btFoldFull` by folding into the
+product `A × X` (with `A = n`, `X = m`), so
+`btFoldFull` operates on `(n + m)`-tuples.
+
+The construction follows the nLab derivation of the
+enhanced parameterized NNO from the original one:
+define `f' : n → (n + m)` and
+`g' : (n + m + n + m) → (n + m)` that thread the
+context through the fold, then extract the last `m`
+components. -/
+def btFoldEnhanced {n m : ℕ}
+    (f : BTMorN n m)
+    (g : BTMorN (n + m + m) m)
+    (ctx : Fin (n + 1) → BT.{0}) :
+    Fin m → BT.{0} :=
+  let f' : BTMorN n (n + m) :=
+    BTMorN.pair (BTMorN.id n) f
+  let g' : BTMorN ((n + m) + (n + m)) (n + m) :=
+    BTMorN.pair
+      (fun j => BTMor1.proj ⟨j.val, by omega⟩)
+      (fun j => (g j).rename (fun i =>
+        if h₁ : i.val < n then
+          ⟨i.val, by omega⟩
+        else if h₂ : i.val < n + m then
+          ⟨i.val, by omega⟩
+        else
+          ⟨(n + m) + n + (i.val - n - m),
+            by omega⟩))
+  let result := btFoldFull f' g' ctx
+  fun j => result ⟨n + j.val, by omega⟩
+
+/-! ## Proof schemes for BTMor1
+
+Proof principles for `BTMor1 = PolyFix btMorPoly`
+that mirror the computation schemes.  Just as
+`polyFixFold` provides elimination without explicit
+recursion, these provide induction and uniqueness
+without explicit recursion on the polynomial
+structure.
+-/
+
+/-- Induction principle for `BTMor1`.  To prove
+`P n t` for all `t : BTMor1 n`, provide:
+- `hProj`: `P` holds for `proj i`
+- `hLeaf`: `P` holds for `leaf`
+- `hBranch`: `P` holds for `branch l r` given
+  `P` for `l` and `r`
+- `hFold`: `P` holds for `fold base step tree`
+  given `P` for `base`, `step`, and `tree` -/
+def BTMor1.ind
+    (P : ∀ {n : ℕ}, BTMor1 n → Prop)
+    (hProj : ∀ {n : ℕ} (i : Fin n),
+      P (BTMor1.proj i))
+    (hLeaf : ∀ {n : ℕ},
+      P (BTMor1.leaf (n := n)))
+    (hBranch : ∀ {n : ℕ}
+      (l r : BTMor1 n),
+      P l → P r → P (BTMor1.branch l r))
+    (hFold : ∀ {n : ℕ}
+      (base : BTMor1 n)
+      (step : BTMor1 (n + 2))
+      (tree : BTMor1 n),
+      P base → P step → P tree →
+      P (BTMor1.fold base step tree))
+    {n : ℕ} (t : BTMor1 n) : P t := by
+  exact _
+
+/-- The identity substitution: substituting
+projections into a term returns the original term. -/
+theorem BTMor1.subst_id {n : ℕ}
+    (t : BTMor1 n) :
+    t.subst (fun i => BTMor1.proj i) = t := by
+  exact _
+
+/-- Substitution composition: substituting twice
+equals substituting with the composed
+substitution. -/
+theorem BTMor1.subst_comp {n m k : ℕ}
+    (t : BTMor1 n)
+    (σ : Fin n → BTMor1 m)
+    (τ : Fin m → BTMor1 k) :
+    (t.subst σ).subst τ =
+      t.subst (fun i => (σ i).subst τ) := by
+  exact _
 
 end GebLean
