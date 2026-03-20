@@ -460,7 +460,7 @@ def barMapMono
     iterateObj G X (n + 1) ⟶
       iterateObj G X (m + 1) :=
   if heq : m = n then
-    heq ▸ 𝟙 _
+    eqToHom (by rw [heq])
   else
     have hlt : m < n := by omega
     match n, f with
@@ -490,7 +490,7 @@ def barMapEpi
     iterateObj G X (n + 1) ⟶
       iterateObj G X (m + 1) :=
   if heq : m = n then
-    heq ▸ 𝟙 _
+    eqToHom (by rw [heq])
   else
     have hgt : n < m := by omega
     match m, f with
@@ -531,6 +531,50 @@ noncomputable def barSimplexMap
       (show SimplexCategory.mk a.len ⟶
           SimplexCategory.mk img.len from e)
       (SimplexCategory.le_of_epi e)
+
+lemma barMapMono_eq_eqToHom
+    {m n : ℕ}
+    (f : SimplexCategory.mk m ⟶
+      SimplexCategory.mk n)
+    (hle : m ≤ n)
+    (heq : m = n) :
+    barMapMono G X f hle =
+      eqToHom (by rw [heq]) := by
+  unfold barMapMono
+  simp [heq]
+
+lemma barMapEpi_eq_eqToHom
+    {m n : ℕ}
+    (f : SimplexCategory.mk m ⟶
+      SimplexCategory.mk n)
+    (hge : m ≥ n)
+    (heq : m = n) :
+    barMapEpi G X f hge =
+      eqToHom (by rw [heq]) := by
+  unfold barMapEpi
+  simp [heq]
+
+lemma barSimplexMap_id (a : SimplexCategory) :
+    barSimplexMap G X (𝟙 a) =
+      𝟙 (iterateObj G X (a.len + 1)) := by
+  simp only [barSimplexMap]
+  have hle : (Limits.image (𝟙 a)).len ≤ a.len :=
+    SimplexCategory.len_le_of_mono
+      (Limits.image.ι (𝟙 a))
+  haveI : Epi (Limits.image.ι (𝟙 a)) := by
+    haveI : Epi (Limits.factorThruImage (𝟙 a) ≫
+        Limits.image.ι (𝟙 a)) := by
+      rw [Limits.image.fac]; infer_instance
+    exact epi_of_epi
+      (Limits.factorThruImage (𝟙 a)) _
+  have hge : a.len ≤ (Limits.image (𝟙 a)).len :=
+    SimplexCategory.len_le_of_epi
+      (Limits.image.ι (𝟙 a))
+  have h1 : (Limits.image (𝟙 a)).len = a.len :=
+    by omega
+  rw [barMapMono_eq_eqToHom G X _ _ h1,
+    barMapEpi_eq_eqToHom G X _ _ h1.symm,
+    eqToHom_trans, eqToHom_refl]
 
 end Comonad
 
