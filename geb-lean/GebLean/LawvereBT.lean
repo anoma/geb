@@ -811,7 +811,7 @@ def BTMor1.subst {n m : ℕ}
 
 /-- Composition of morphisms via substitution. -/
 def BTMorN.comp {n m k : ℕ}
-    (g : BTMorN m k) (f : BTMorN n m) :
+    (f : BTMorN n m) (g : BTMorN m k) :
     BTMorN n k :=
   fun j => (g j).subst f
 
