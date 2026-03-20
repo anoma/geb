@@ -2,9 +2,10 @@
 
 ## Current Status
 
-Tasks 1-2 complete; Task 3 in progress (face-face
-identity done, four identities remaining).  Tasks 4-9
-not started.
+Tasks 1-3 complete.  Task 4 in progress: barSimplexMap
+defined by well-founded recursion; map_id proved;
+map_comp needs restructuring via canonical epi-mono
+factorization.  Tasks 5-9 not started.
 
 ### What exists in `GebLean/BarResolution.lean`
 
@@ -17,8 +18,18 @@ not started.
   applying `δ` at depth `i`
 - Equation lemmas: `barFace_zero`, `barFace_succ`,
   `barDegen_zero`, `barDegen_succ` (all `rfl`)
-- `barFace_comp_barFace` — the face-face simplicial
-  identity (proved)
+- All five simplicial identity families proved:
+  `barFace_comp_barFace`, `barDegen_comp_barDegen`,
+  `barDegen_comp_barFace_self`,
+  `barDegen_comp_barFace_succ`,
+  `barFace_comp_barDegen_lt`,
+  `barFace_comp_barDegen_gt`
+- SimplexCategory helpers:
+  `exists_not_mem_range_of_lt`,
+  `exists_flatSpot_of_gt`, `skipValue`, `mergeFlat`
+- `barSimplexMap` — maps arbitrary SimplexCategory
+  morphisms to bar resolution morphisms (well-founded
+  recursion on `a.len + b.len`)
 
 ### Proof technique for simplicial identities
 

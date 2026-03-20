@@ -437,61 +437,94 @@ lemma barFace_comp_barDegen_gt (n : ℕ)
           G.toFunctor.map_comp,
           barFace_succ, barDegen_succ]
 
-/-! ### Bar resolution map for arbitrary morphisms -/
+/-! ### Bar resolution map for arbitrary morphisms
+
+The bar resolution map for a SimplexCategory morphism
+is defined via the epi-mono factorization:
+every morphism `f` factors uniquely as
+`factorThruImage f ≫ image.ι f` (epi then mono).
+The mono part composes face maps for missing codomain
+values; the epi part composes degeneracy maps for flat
+spots.
+-/
 
 /--
-The bar resolution map for a SimplexCategory morphism.
-Given `f : [m] → [n]`, produces
-`iterateObj G X (n + 1) ⟶ iterateObj G X (m + 1)`.
+Bar resolution map for a morphism with `m ≤ n`:
+composes face maps for missing codomain values.
+-/
+noncomputable def barMapMono
+    {m n : ℕ}
+    (f : SimplexCategory.mk m ⟶
+      SimplexCategory.mk n)
+    (hle : m ≤ n) :
+    iterateObj G X (n + 1) ⟶
+      iterateObj G X (m + 1) :=
+  if heq : m = n then
+    heq ▸ 𝟙 _
+  else
+    have hlt : m < n := by omega
+    match n, f with
+    | n' + 1, f =>
+      let hmiss :=
+        SimplexCategory.exists_not_mem_range_of_lt
+          f hlt
+      let j := hmiss.choose
+      let hj := hmiss.choose_spec
+      barFace G X n' j ≫
+        barMapMono
+          (SimplexCategory.skipValue f j hj)
+          (by omega)
+termination_by n - m
 
-Defined by well-founded recursion on `m + n`:
-- If `m = n`, `f` is the identity; return `𝟙`.
-- If `m < n`, `f` is not surjective; apply a face map
-  and recurse with a smaller codomain.
-- If `m > n`, `f` is not injective; apply a degeneracy
-  map and recurse with a smaller domain.
+/--
+Bar resolution map for a morphism with `m ≥ n`:
+composes degeneracy maps for flat spots.
+-/
+noncomputable def barMapEpi
+    {m n : ℕ}
+    (f : SimplexCategory.mk m ⟶
+      SimplexCategory.mk n)
+    (hge : m ≥ n) :
+    iterateObj G X (n + 1) ⟶
+      iterateObj G X (m + 1) :=
+  if heq : m = n then
+    heq ▸ 𝟙 _
+  else
+    have hgt : n < m := by omega
+    match m, f with
+    | m' + 1, f =>
+      let hflat :=
+        SimplexCategory.exists_flatSpot_of_gt
+          f hgt
+      let i := hflat.choose
+      let hi := hflat.choose_spec
+      barMapEpi
+        (SimplexCategory.mergeFlat f i hi)
+        (by omega) ≫
+        barDegen G X m' i
+termination_by m - n
+
+/--
+The bar resolution map for an arbitrary SimplexCategory
+morphism, defined via the epi-mono factorization:
+`f = factorThruImage f ≫ image.ι f`.
 -/
 noncomputable def barSimplexMap
     {a b : SimplexCategory}
     (f : a ⟶ b) :
     iterateObj G X (b.len + 1) ⟶
       iterateObj G X (a.len + 1) :=
-  if heq : a.len = b.len then
-    heq ▸ 𝟙 _
-  else if hlt : a.len < b.len then
-    have hbn : b.len ≥ 1 := by omega
-    let f' : SimplexCategory.mk a.len ⟶
-        SimplexCategory.mk ((b.len - 1) + 1) :=
-      (by omega : b.len = (b.len - 1) + 1) ▸ f
-    let hmiss :=
-      SimplexCategory.exists_not_mem_range_of_lt
-        f' (by omega)
-    let j := hmiss.choose
-    let hj := hmiss.choose_spec
-    (by omega : b.len = (b.len - 1) + 1) ▸
-      (barFace G X (b.len - 1) j ≫
-        barSimplexMap
-          (SimplexCategory.skipValue f' j hj))
-  else
-    have hgt : b.len < a.len := by omega
-    have ham : a.len ≥ 1 := by omega
-    let f' : SimplexCategory.mk
-        ((a.len - 1) + 1) ⟶
-        SimplexCategory.mk b.len :=
-      (by omega : a.len = (a.len - 1) + 1) ▸ f
-    let hflat :=
-      SimplexCategory.exists_flatSpot_of_gt
-        f' (by omega)
-    let i := hflat.choose
-    let hi := hflat.choose_spec
-    (by omega : a.len = (a.len - 1) + 1) ▸
-      (barSimplexMap
-        (SimplexCategory.mergeFlat f' i hi) ≫
-        barDegen G X (a.len - 1) i)
-termination_by a.len + b.len
-decreasing_by
-  all_goals simp_all only [SimplexCategory.len_mk]
-  all_goals omega
+  let img := Limits.image f
+  let ι : img ⟶ b := Limits.image.ι f
+  let e : a ⟶ img := Limits.factorThruImage f
+  barMapMono G X
+    (show SimplexCategory.mk img.len ⟶
+        SimplexCategory.mk b.len from ι)
+    (SimplexCategory.len_le_of_mono ι) ≫
+    barMapEpi G X
+      (show SimplexCategory.mk a.len ⟶
+          SimplexCategory.mk img.len from e)
+      (SimplexCategory.le_of_epi e)
 
 end Comonad
 
