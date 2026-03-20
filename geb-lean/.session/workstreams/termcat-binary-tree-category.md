@@ -86,6 +86,60 @@ All of these are in the existing codebase:
 
 ## Tasks
 
+### Phase 0.5: Lawvere Theory of Binary Trees
+
+Implementation plan:
+`docs/superpowers/plans/2026-03-19-lawvere-bt-universal-properties.md`
+
+Primary file: `GebLean/LawvereBT.lean`
+Supporting: `GebLean/PLang/Syntax.lean`,
+`GebLean/PolyUMorph.lean`,
+`GebLean/Utilities/Slice.lean`
+
+Completed (2026-03-19):
+
+- [x] HasNNO and HasPBTO classes (simple universal
+  property, transcribed from nLab)
+- [x] BT type via PolyFreeM with convenience wrappers
+  (polyProdFreeMNode, polyProdFreeMFoldAt)
+- [x] BTMor1 = PolyFix btMorPoly (polynomial type)
+  with four-component coproduct (proj, leaf, branch,
+  fold)
+- [x] Constructors via polyFixStrFamily + polyBetweenInj
+- [x] interp via polyFixFoldAtWithProof + algCoprodDesc
+- [x] rename, subst via polyFixFoldAtWithProof
+- [x] btFold (simple, X = 1)
+- [x] Infrastructure: Over.Fiber, polyBetweenRepr,
+  polyProdAlgStr, polyProdEvalOfPair/ToPair
+
+In progress:
+
+- [x] btFoldFull (full simple universal property,
+  arbitrary X = m) — defined as a semantic function
+  `(Fin (n+1) → BT) → (Fin m → BT)` using BT.fold
+  with carrier `Fin m → BT`.  The BTMor1.fold
+  constructor's step child has only 2 recursive-result
+  variables, which is insufficient for coupled mutual
+  recursion with m > 1 components.  The semantic
+  definition avoids this limitation.  btFold (m = 1)
+  remains syntactic.
+- [x] btFoldEnhanced (enhanced version, g with context
+  access, derived from btFoldFull)
+- [ ] Category instance for LawvereBTCat
+  - Proof schemes (induction principles) for BTMor1
+  - subst identity and composition laws
+  - Category laws from subst laws
+- [ ] HasFiniteProducts instance
+- [ ] HasPBTO instance
+  - Computation rules
+  - Uniqueness via polyFixFoldUnique
+
+Future:
+
+- [ ] PolyEndoFinitary btMorPoly instance
+- [ ] polyBetweenRepr used to refactor btMorFoldPoly
+  and polyShift
+
 ### Phase 1: Kleisli Category and Isomorphism
 
 - [ ] Define `treeFoldAlg` — convenience wrapper: leaf
