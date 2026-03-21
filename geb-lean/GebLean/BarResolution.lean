@@ -1,6 +1,7 @@
 import Mathlib.CategoryTheory.Monad.Basic
 import Mathlib.AlgebraicTopology.SimplicialObject.Basic
 import Mathlib.AlgebraicTopology.SimplexCategory.Basic
+import Mathlib.AlgebraicTopology.SimplexCategory.GeneratorsRelations.Basic
 
 /-!
 # Comonad Bar Resolution
@@ -590,27 +591,103 @@ lemma barSimplexMap_id (n : ℕ) :
   unfold barSimplexMap
   simp
 
-/-
-The remaining piece for `barResolution` is
-`barSimplexMap_comp`: the proof that `barSimplexMap`
-preserves composition (contravariantly). This is
-equivalent to showing that the simplicial identities
-suffice to determine the functor on all morphisms of
-SimplexCategory — the same result being formalized in
-mathlib's `SimplexCategory.GeneratorsRelations`.
+/-! ### Bar resolution via generators and relations
 
-With `barSimplexMap_comp` proved, `barResolution` is
-assembled as:
-
-  noncomputable def barResolution :
-      SimplicialObject C where
-    obj n := iterateObj G X (n.unop.len + 1)
-    map f := barSimplexMap G X f.unop
-    map_id a := barSimplexMap_id G X a.unop.len
-    map_comp f g :=
-      @barSimplexMap_comp C _ G X _ _ _
-        g.unop f.unop
+The bar resolution is assembled as a functor from
+`SimplexCategoryGenRelᵒᵖ` using `Quotient.lift`.
+The face and degeneracy generators map to `barFace`
+and `barDegen` (in `Cᵒᵖ`), and the simplicial
+identities guarantee well-definedness on the quotient.
+Functoriality (`map_comp`) is automatic.
 -/
+
+/--
+Prefunctor from `FreeSimplexQuiver` to `Cᵒᵖ`
+mapping `δ i` to `(barFace G X n i).op` and
+`σ j` to `(barDegen G X n j).op`.
+-/
+def barQuiverMap :
+    FreeSimplexQuiver ⥤q Cᵒᵖ where
+  obj n :=
+    Opposite.op (iterateObj G X (n.len + 1))
+  map f := match f with
+    | .δ i => (barFace G X _ i).op
+    | .σ j => (barDegen G X _ j).op
+
+/--
+The bar resolution as a functor from
+`SimplexCategoryGenRelᵒᵖ` to `C`, constructed
+via `Quotient.lift`.  Functoriality (`map_comp`)
+is guaranteed by the quotient construction; the
+simplicial identities verify the quotient condition.
+-/
+def barResolution :
+    SimplexCategoryGenRelᵒᵖ ⥤ C :=
+  (Quotient.lift _
+    (Paths.lift (barQuiverMap G X))
+    (fun _ _ _ _ h => by
+      set F := Paths.lift (barQuiverMap G X)
+      match h with
+      | FreeSimplexQuiver.homRel.δ_comp_δ H =>
+        rw [F.map_comp, F.map_comp]
+        dsimp [F]
+        simp only [Paths.lift_toPath, barQuiverMap]
+        rw [← op_comp, ← op_comp]
+        exact congrArg Quiver.Hom.op
+          (barFace_comp_barFace G X _ _ _
+            (by exact H) (by exact Fin.is_lt _)
+            (by exact Fin.is_lt _))
+      | FreeSimplexQuiver.homRel.σ_comp_σ H =>
+        rw [F.map_comp, F.map_comp]
+        dsimp [F]
+        simp only [Paths.lift_toPath,
+          barQuiverMap]
+        rw [← op_comp, ← op_comp]
+        exact congrArg Quiver.Hom.op
+          (barDegen_comp_barDegen G X _ _ _
+            (by exact H) (by exact Fin.is_lt _)
+            (by exact Fin.is_lt _)).symm
+      | FreeSimplexQuiver.homRel.δ_comp_σ_self =>
+        rw [F.map_comp, F.map_id]
+        dsimp [F]
+        simp only [Paths.lift_toPath,
+          barQuiverMap]
+        rw [← op_comp]
+        exact congrArg Quiver.Hom.op
+          (barDegen_comp_barFace_self G X _ _
+            (by exact Fin.is_lt _))
+      | FreeSimplexQuiver.homRel.δ_comp_σ_succ =>
+        rw [F.map_comp, F.map_id]
+        dsimp [F]
+        simp only [Paths.lift_toPath,
+          barQuiverMap]
+        rw [← op_comp]
+        exact congrArg Quiver.Hom.op
+          (barDegen_comp_barFace_succ G X _ _
+            (by exact Fin.is_lt _))
+      | FreeSimplexQuiver.homRel.δ_comp_σ_of_le
+            H =>
+        rw [F.map_comp, F.map_comp]
+        dsimp [F]
+        simp only [Paths.lift_toPath,
+          barQuiverMap]
+        rw [← op_comp, ← op_comp]
+        exact congrArg Quiver.Hom.op
+          (barFace_comp_barDegen_lt G X _ _ _
+            (by exact H) (by exact Fin.is_lt _)
+            (by exact Fin.is_lt _))
+      | FreeSimplexQuiver.homRel.δ_comp_σ_of_gt
+            H =>
+        rw [F.map_comp, F.map_comp]
+        dsimp [F]
+        simp only [Paths.lift_toPath,
+          barQuiverMap]
+        rw [← op_comp, ← op_comp]
+        exact congrArg Quiver.Hom.op
+          (barFace_comp_barDegen_gt G X _ _ _
+            (by exact H) (by exact Fin.is_lt _)
+            (by exact Fin.is_lt _))
+      )).leftOp
 
 end Comonad
 
