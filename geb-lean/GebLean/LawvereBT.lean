@@ -260,16 +260,26 @@ def btMorLeafPoly : PolyEndo ℕ :=
 same fiber.  This is `polyProd ℕ`. -/
 abbrev btMorBranchPoly : PolyEndo ℕ := polyProd ℕ
 
-/-- Fold component: one position, three children at
-fibers `n` (base), `n + 2` (step), `n` (tree).
-Expressed as a product of three single-child polynomials
-via `polyBetweenProd`. -/
+/-- Fold component: the full parameterized fold with
+output dimension `m` and projection index `j : Fin m`.
+
+At fiber `n`, positions are `(m : ℕ) × Fin m`, and
+directions are `Fin (m + m + 1)` with fiber map:
+- first `m` directions → fiber `n` (base children)
+- next `m` directions → fiber `m + m` (step children)
+- last direction → fiber `n` (tree child)
+
+The semantics: `fold(m, j, f₀..f_{m-1}, g₀..g_{m-1},
+tree)` evaluates to the `j`-th component of the mutual
+fold of `tree` using base `f` and step `g`. -/
 def btMorFoldPoly : PolyEndo ℕ :=
-  polyBetweenProd (Fin 3)
-    (fun i => match i with
-      | 0 => polyBetweenId ℕ
-      | 1 => polyShift 2
-      | 2 => polyBetweenId ℕ)
+  fun n => ccrObjMk
+    (fun (pos : Σ m, Fin m) =>
+      let m := pos.1
+      Over.mk (fun (d : Fin (m + m + 1)) =>
+        if d.val < m then n
+        else if d.val < m + m then m + m
+        else n))
 
 /-! ## Morphism polynomial: coproduct -/
 
@@ -354,22 +364,35 @@ def BTMor1.branch {n : ℕ}
       (⟨Sigma.mk n r, rfl⟩ :
         Over.Fiber btMorCarrier n))
 
-/-- Fold (catamorphism) with parameters. -/
+/-- Fold: the full parameterized catamorphism.
+Given output dimension `m`, base components
+`f : Fin m → BTMor1 n`, step components
+`g : Fin m → BTMor1 (m + m)`, tree `t : BTMor1 n`,
+and projection index `j : Fin m`, produces a
+`BTMor1 n` that evaluates to the `j`-th component
+of the mutual fold of `t` using `f` and `g`. -/
 def BTMor1.fold {n : ℕ}
-    (base : BTMor1 n)
-    (step : BTMor1 (n + 2))
-    (tree : BTMor1 n) : BTMor1 n :=
+    (m : ℕ) (f : Fin m → BTMor1 n)
+    (g : Fin m → BTMor1 (m + m))
+    (tree : BTMor1 n) (j : Fin m) :
+    BTMor1 n :=
   btMorInject 3
-    ⟨(fun i => match i with
-        | (0 : Fin 3) => PUnit.unit
-        | 1 => PUnit.unit
-        | 2 => PUnit.unit),
-      Over.homMk
-        (fun ⟨i, _⟩ => match i with
-          | (0 : Fin 3) => ⟨n, base⟩
-          | 1 => ⟨n + 2, step⟩
-          | 2 => ⟨n, tree⟩)
-        (by aesop_cat)⟩
+    ⟨⟨m, j⟩, Over.homMk
+      (fun (d : Fin (m + m + 1)) =>
+        if hb : d.val < m then
+          ⟨n, f ⟨d.val, hb⟩⟩
+        else if hs : d.val < m + m then
+          ⟨m + m, g ⟨d.val - m, by omega⟩⟩
+        else
+          ⟨n, tree⟩)
+      (by funext d
+          dsimp [btMorCarrier, btMorComponents,
+            btMorFoldPoly, polyFixCarrier,
+            familySliceForward,
+            familySliceForwardObj,
+            ccrObjMk, ccrFamily,
+            types_comp_apply]
+          split_ifs <;> rfl)⟩
 
 /-! ## Interpretation via `polyFixFold`
 
@@ -437,26 +460,42 @@ private def interpBranchStr :
         BT.node (a₁.val.2 ctx) (a₂.val.2 ctx)),
         a₁.property⟩)
 
-/-- Fold structure map: combine base, step, tree. -/
+/-- Fold structure map: combine base, step, tree.
+Extracts `m` base children, `m` step children, and
+one tree child.  Folds the tree with carrier
+`Fin m → BT`, then extracts the `j`-th component. -/
 private def interpFoldStr :
     (polyEndoFunctor ℕ btMorFoldPoly).obj
       interpCarrier ⟶ interpCarrier :=
   Over.homMk
-    (fun ⟨n, ⟨_, childMor⟩⟩ =>
-      let base :=
+    (fun ⟨n, ⟨pos, childMor⟩⟩ =>
+      let pm := pos.1
+      let pj := pos.2
+      let treeChild :=
         (childMor.left
-          ⟨(0 : Fin 3), PUnit.unit⟩).2
-      let step :=
-        (childMor.left
-          ⟨(1 : Fin 3), PUnit.unit⟩).2
-      let tree :=
-        (childMor.left
-          ⟨(2 : Fin 3), PUnit.unit⟩).2
+          ⟨pm + pm, by omega⟩).2
       (n, fun ctx =>
-        (tree ctx).fold
-          (base ctx)
-          (fun r₁ r₂ =>
-            step (extendFullCtx n ctx r₁ r₂))))
+        let baseVals : Fin pm → BT.{0} :=
+          fun i =>
+            (childMor.left
+              ⟨i.val, by omega⟩).2 ctx
+        (treeChild ctx).fold
+          baseVals
+          (fun leftAll rightAll =>
+            fun j =>
+              let stepCtx : ℕ → BT.{0} :=
+                fun i =>
+                  if h : i < pm then
+                    leftAll ⟨i, h⟩
+                  else if h2 :
+                      i - pm < pm then
+                    rightAll
+                      ⟨i - pm, h2⟩
+                  else BT.leaf
+              (childMor.left
+                ⟨pm + j.val, by omega⟩).2
+                  stepCtx)
+          pj))
     (by aesop_cat)
 
 /-- The four component structure maps. -/
@@ -609,26 +648,52 @@ private def renameFoldStr :
     (polyEndoFunctor ℕ btMorFoldPoly).obj
       renameCarrier ⟶ renameCarrier :=
   Over.homMk
-    (fun ⟨k, ⟨_, childMor⟩⟩ =>
-      let gBase :=
-        (childMor.left
-          ⟨(0 : Fin 3), PUnit.unit⟩).2
-      let gStep :=
-        (childMor.left
-          ⟨(1 : Fin 3), PUnit.unit⟩).2
-      let gTree :=
-        (childMor.left
-          ⟨(2 : Fin 3), PUnit.unit⟩).2
+    (fun ⟨k, ⟨pos, childMor⟩⟩ =>
+      let pm := pos.1
+      let pj := pos.2
+      have hpm : 0 < pm :=
+        Nat.lt_of_le_of_lt
+          (Nat.zero_le _) pj.isLt
       (k, fun ren =>
-        let ⟨mB, base⟩ := gBase ren
-        let ⟨mS, step⟩ := gStep ren
-        let ⟨mT, tree⟩ := gTree ren
-        if hS : mS = mB + 2 then
+        let bases :
+            Fin pm → Σ j, BTMor1 j :=
+          fun i =>
+            (childMor.left
+              ⟨i.val, by omega⟩).2 ren
+        let steps :
+            Fin pm → Σ j, BTMor1 j :=
+          fun i =>
+            (childMor.left
+              ⟨pm + i.val, by omega⟩).2
+                ren
+        let treeR :=
+          (childMor.left
+            ⟨pm + pm, by omega⟩).2 ren
+        let mB := (bases ⟨0, hpm⟩).1
+        let allBasesOk :=
+          ∀ i, (bases i).1 = mB
+        if hOk : allBasesOk then
+          let baseFns :
+              Fin pm → BTMor1 mB :=
+            fun i =>
+              let h := hOk i
+              h ▸ (bases i).2
+          let stepFns :
+              Fin pm → BTMor1 (pm + pm) :=
+            fun i =>
+              let ⟨ms, s⟩ := steps i
+              if hs : ms = pm + pm then
+                hs ▸ s
+              else BTMor1.leaf
+          let ⟨mT, tree⟩ := treeR
           if hT : mT = mB then
-            ⟨mB, BTMor1.fold
-              base (hS ▸ step) (hT ▸ tree)⟩
-          else ⟨mB, base⟩
-        else ⟨mB, base⟩))
+            ⟨mB, BTMor1.fold pm
+              baseFns stepFns
+              (hT ▸ tree) pj⟩
+          else ⟨mB, (baseFns pj)⟩
+        else
+          ⟨(bases ⟨0, hpm⟩).1,
+            (bases ⟨0, hpm⟩).2⟩))
     (by aesop_cat)
 
 private def renameComponentStrs :
@@ -734,39 +799,52 @@ private def substFoldStr :
     (polyEndoFunctor ℕ btMorFoldPoly).obj
       substCarrier ⟶ substCarrier :=
   Over.homMk
-    (fun ⟨k, ⟨_, childMor⟩⟩ =>
-      let gBase :=
-        (childMor.left
-          ⟨(0 : Fin 3), PUnit.unit⟩).2
-      let gStep :=
-        (childMor.left
-          ⟨(1 : Fin 3), PUnit.unit⟩).2
-      let gTree :=
-        (childMor.left
-          ⟨(2 : Fin 3), PUnit.unit⟩).2
+    (fun ⟨k, ⟨pos, childMor⟩⟩ =>
+      let pm := pos.1
+      let pj := pos.2
+      have hpm : 0 < pm :=
+        Nat.lt_of_le_of_lt
+          (Nat.zero_le _) pj.isLt
       (k, fun σ =>
-        let ⟨mB, base⟩ := gBase σ
-        let liftedσ : ℕ → Σ j, BTMor1 j :=
+        let bases :
+            Fin pm → Σ j, BTMor1 j :=
           fun i =>
-            if i < k then
-              let ⟨m', t⟩ := σ i
-              ⟨m' + 2, t.shift 2⟩
-            else if i = k then
-              ⟨mB + 2,
-                BTMor1.proj ⟨mB, by omega⟩⟩
-            else if i = k + 1 then
-              ⟨mB + 2,
-                BTMor1.proj
-                  ⟨mB + 1, by omega⟩⟩
-            else σ i
-        let ⟨mS, step⟩ := gStep liftedσ
-        let ⟨mT, tree⟩ := gTree σ
-        if hS : mS = mB + 2 then
+            (childMor.left
+              ⟨i.val, by omega⟩).2 σ
+        let steps :
+            Fin pm → Σ j, BTMor1 j :=
+          fun i =>
+            (childMor.left
+              ⟨pm + i.val, by omega⟩).2
+                σ
+        let treeR :=
+          (childMor.left
+            ⟨pm + pm, by omega⟩).2 σ
+        let mB := (bases ⟨0, hpm⟩).1
+        let allBasesOk :=
+          ∀ i, (bases i).1 = mB
+        if hOk : allBasesOk then
+          let baseFns :
+              Fin pm → BTMor1 mB :=
+            fun i =>
+              let h := hOk i
+              h ▸ (bases i).2
+          let stepFns :
+              Fin pm → BTMor1 (pm + pm) :=
+            fun i =>
+              let ⟨ms, s⟩ := steps i
+              if hs : ms = pm + pm then
+                hs ▸ s
+              else BTMor1.leaf
+          let ⟨mT, tree⟩ := treeR
           if hT : mT = mB then
-            ⟨mB, BTMor1.fold
-              base (hS ▸ step) (hT ▸ tree)⟩
-          else ⟨mB, base⟩
-        else ⟨mB, base⟩))
+            ⟨mB, BTMor1.fold pm
+              baseFns stepFns
+              (hT ▸ tree) pj⟩
+          else ⟨mB, (baseFns pj)⟩
+        else
+          ⟨(bases ⟨0, hpm⟩).1,
+            (bases ⟨0, hpm⟩).2⟩))
     (by aesop_cat)
 
 private def substComponentStrs :
@@ -885,12 +963,12 @@ def btFold {n : ℕ}
     (f : BTMorN n 1) (g : BTMorN 2 1) :
     BTMorN (n + 1) 1 :=
   fun _ =>
-    BTMor1.fold
-      ((f ⟨0, by omega⟩).shift 1)
-      ((g ⟨0, by omega⟩).rename
-        (fun i =>
-          ⟨n + 1 + i.val, by omega⟩))
+    BTMor1.fold 1
+      (fun _ =>
+        (f ⟨0, by omega⟩).shift 1)
+      (fun _ => g ⟨0, by omega⟩)
       (BTMor1.proj ⟨n, by omega⟩)
+      ⟨0, by omega⟩
 
 /-- The enhanced universal property of the
 parameterized BTO: given `f : n → m` (base) and
@@ -945,8 +1023,9 @@ structure.
 - `hLeaf`: `P` holds for `leaf`
 - `hBranch`: `P` holds for `branch l r` given
   `P` for `l` and `r`
-- `hFold`: `P` holds for `fold base step tree`
-  given `P` for `base`, `step`, and `tree` -/
+- `hFold`: `P` holds for `fold m f g tree j`
+  given `P` for each `f i`, each `g i`, and
+  `tree` -/
 def BTMor1.ind
     (P : ∀ {n : ℕ}, BTMor1 n → Prop)
     (hProj : ∀ {n : ℕ} (i : Fin n),
@@ -956,12 +1035,14 @@ def BTMor1.ind
     (hBranch : ∀ {n : ℕ}
       (l r : BTMor1 n),
       P l → P r → P (BTMor1.branch l r))
-    (hFold : ∀ {n : ℕ}
-      (base : BTMor1 n)
-      (step : BTMor1 (n + 2))
-      (tree : BTMor1 n),
-      P base → P step → P tree →
-      P (BTMor1.fold base step tree))
+    (hFold : ∀ {n : ℕ} (m : ℕ)
+      (f : Fin m → BTMor1 n)
+      (g : Fin m → BTMor1 (m + m))
+      (tree : BTMor1 n) (j : Fin m),
+      (∀ i, P (f i)) →
+      (∀ i, P (g i)) →
+      P tree →
+      P (BTMor1.fold m f g tree j))
     {n : ℕ} (t : BTMor1 n) : P t := by
   exact _
 
