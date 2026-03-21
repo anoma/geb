@@ -8,6 +8,7 @@ import GebLean.CategoryJudgments
 import GebLean.CategoryPresentation
 import GebLean.CofreeCategory
 import GebLean.ComprehensiveFactorization
+import GebLean.CopresheafCoverComonad
 import GebLean.ComprehensiveWeighted
 import GebLean.DepCategoryAdjunction
 import GebLean.DepCategoryCat
