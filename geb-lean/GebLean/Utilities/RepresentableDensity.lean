@@ -281,24 +281,24 @@ def endoIhomUncurryAtRep
       endoIhomProj F G i c)
 
 -- The adjunction `tensorLeft F ⊣ endoIhomFunctor F`
--- requires extending the uncurry from representables
--- to all edges via the density colimit (using
--- `Functor.denseAt` / `IsColimit.desc`). These
--- mathlib definitions are not computable. The
--- proof should be stated as a `Prop`-valued theorem
--- (`Nonempty (Closed F)`) using our density instance
--- `pshRelEdgeRepresentableIsDense` and the
--- computable `endoIhomCurry` + `endoIhomUncurryAtRep`.
+-- for ALL endofunctors F has a universe gap:
+-- mathlib's `FunctorCategory.monoidalClosed`
+-- requires ends over `Under j` at universe
+-- `max (u+1) (v+1)`, while `PshRelEdge C` has
+-- limits at `max u v`. The density-based
+-- extension from representables also fails for
+-- arbitrary endofunctors (requires F to preserve
+-- the density colimit).
 --
--- Note: mathlib's generic
--- `MonoidalClosed.FunctorCategory.closed` cannot be
--- used here due to a universe gap: it requires ends
--- over `Under j` for `j` an endofunctor, whose
--- objects are at `Type (max (u+1) (v+1))`, while
--- `pshRelEdgeHasLimitsOfSize` provides limits at
--- `{max u v, max u v}`. Our `endoIhomFunctor`
--- avoids this gap via the Yoneda reduction over the
--- small index `WalkingSpan × Cᵒᵖ`.
+-- The resolution: restrict to POLYNOMIAL
+-- endofunctors. The category `Poly(E)` on a LCCC
+-- `E` is cartesian closed (computed via
+-- dependent products). See workstream
+-- `poly-presheaf-ccc.md` for the development
+-- plan, which generalizes the existing
+-- `PolyFunctorBetweenCat` CCC (PolyUMorph.lean
+-- line 4262) from slice categories to presheaf
+-- categories via parametric right adjoints.
 
 end EndoFunctorClosed
 
