@@ -1,4 +1,5 @@
 import GebLean.PolyCover
+import GebLean.BarResolution
 import Mathlib.CategoryTheory.Monad.Basic
 
 /-!
@@ -161,5 +162,27 @@ def copresheafCoverComonad :
     rfl
 
 end CopresheafCoverComonadInstance
+
+section CopresheafBarResolution
+
+open CategoryTheory
+
+variable (C)
+
+/--
+The bar resolution of the copresheaf cover comonad
+applied to a copresheaf `F`.  This is a functor
+`SimplexCategoryGenRelᵒᵖ ⥤ (C ⥤ Type (max u w v))`
+whose level `n` is the `(n+1)`-fold iterated
+copresheaf cover of `F`.
+-/
+def copresheafBarResolution
+    (F : C ⥤ Type (max u w v)) :
+    SimplexCategoryGenRelᵒᵖ ⥤
+      (C ⥤ Type (max u w v)) :=
+  Comonad.barResolution
+    (copresheafCoverComonad.{w, v, u} C) F
+
+end CopresheafBarResolution
 
 end GebLean
