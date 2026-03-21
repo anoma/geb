@@ -2,15 +2,13 @@
 
 ## Current Status
 
-Tasks 1-3 complete.  Task 4 nearly complete:
-barSimplexMap defined (computable via Fin.find),
-map_id proved, barResolution structure laid out.
-Remaining: barSimplexMap_comp (functoriality of
-barSimplexMap w.r.t. composition).  This is equivalent
-to the presentation theorem for SimplexCategory by
-generators and relations — a substantial standalone
-result.  Tasks 5-9 not started but do not depend on
-barSimplexMap_comp.
+All tasks 1-9 complete.  The bar resolution is
+assembled via Quotient.lift on
+SimplexCategoryGenRel (the category presented by
+generators and relations), avoiding the need for
+barSimplexMap_comp entirely.  The copresheaf cover
+comonad and its bar resolution instantiation are
+also complete.
 
 ### What exists in `GebLean/BarResolution.lean`
 
