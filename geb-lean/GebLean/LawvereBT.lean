@@ -348,6 +348,21 @@ instance btMorPolyFinitary :
     let inst := btMorComponentsFinitary i
     inst.data.familyFintype n p⟩
 
+/-- The free monad of the binary tree polynomial
+(`polyProdFreeM`) is finitary. -/
+instance polyProdFreeMFinitary :
+    PolyBetweenFinitary PUnit.{u + 1}
+      PUnit.{u + 1}
+      (polyProdFreeM PUnit.{u + 1}) :=
+  polyFreeMPolyFinitary polyProdType
+
+/-- The free monad of the morphism polynomial
+(`polyFreeMPoly btMorPoly`) is finitary. -/
+instance btMorFreeMFinitary :
+    PolyBetweenFinitary ℕ ℕ
+      (polyFreeMPoly btMorPoly) :=
+  polyFreeMPolyFinitary btMorPoly
+
 /-! ## Morphisms of the Lawvere theory
 
 A morphism `n → 1` is the initial algebra of `btMorPoly`
