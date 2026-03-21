@@ -299,6 +299,55 @@ fold components. -/
 def btMorPoly : PolyEndo ℕ :=
   polyBetweenCoprod (Fin 4) btMorComponents
 
+/-! ## Finitarity instances
+
+Each component polynomial is finitary (finite
+direction types), and finitarity is preserved by
+coproducts.  The free monad inherits finitarity
+via `polyFreeMPolyFinitary`. -/
+
+/-- `PUnit.{u+1} ⊕ PUnit.{u+1}` is finite. -/
+@[reducible] private def punitSumFintype :
+    Fintype (PUnit.{u + 1} ⊕ PUnit.{u + 1}) :=
+  ⟨{Sum.inl PUnit.unit, Sum.inr PUnit.unit},
+    fun x => by cases x <;> simp⟩
+
+instance polyProdTypeFinitary :
+    PolyBetweenFinitary PUnit.{u + 1}
+      PUnit.{u + 1} polyProdType where
+  data := ⟨fun _ _ => punitSumFintype⟩
+
+instance btMorProjPolyFinitary :
+    PolyBetweenFinitary ℕ ℕ btMorProjPoly where
+  data := ⟨fun _ _ => ⟨∅, fun x => x.elim⟩⟩
+
+instance btMorLeafPolyFinitary :
+    PolyBetweenFinitary ℕ ℕ btMorLeafPoly where
+  data := ⟨fun _ _ => ⟨∅, fun x => x.elim⟩⟩
+
+instance btMorBranchPolyFinitary :
+    PolyBetweenFinitary ℕ ℕ btMorBranchPoly where
+  data := ⟨fun _ _ => punitSumFintype⟩
+
+instance btMorFoldPolyFinitary :
+    PolyBetweenFinitary ℕ ℕ btMorFoldPoly where
+  data := ⟨fun _ _ => Fin.fintype _⟩
+
+instance btMorComponentsFinitary (i : Fin 4) :
+    PolyBetweenFinitary ℕ ℕ
+      (btMorComponents i) :=
+  match i with
+  | 0 => btMorProjPolyFinitary
+  | 1 => btMorLeafPolyFinitary
+  | 2 => btMorBranchPolyFinitary
+  | 3 => btMorFoldPolyFinitary
+
+instance btMorPolyFinitary :
+    PolyBetweenFinitary ℕ ℕ btMorPoly where
+  data := ⟨fun n ⟨i, p⟩ =>
+    let inst := btMorComponentsFinitary i
+    inst.data.familyFintype n p⟩
+
 /-! ## Morphisms of the Lawvere theory
 
 A morphism `n → 1` is the initial algebra of `btMorPoly`
