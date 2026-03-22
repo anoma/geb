@@ -309,6 +309,25 @@ Three candidate base categories:
   primitive recursion and full tree calculus? (multiply
   recursive, System T, System F, bar recursion)
 
+## External References (discovered 2026-03-21)
+
+- Andrej Bauer's PCA formalization in Lean 4 with mathlib:
+  `https://github.com/andrejbauer/partial-combinatory-algebras`
+  Reference for Phase 2 PCA structure.
+- Metatheory library (arthuraa/metatheory): SK combinatory
+  logic in Lean 4 (~285 lines) with confluence via diamond
+  property. Template for reduction/confluence proofs.
+- lambada-llc/tree-calculus: reference implementations in
+  8 languages. OCaml uses `Leaf | Stem of t | Fork of t * t`.
+- No existing Lean 4 tree calculus formalization exists.
+- Mathlib has no PCA, combinatory logic, or abstract
+  rewriting systems.
+
+## Parallel Work
+
+Phase 0.5 + Phase 1 are being developed in a separate
+thread. Phase 2 planning proceeds independently.
+
 ## Notes
 
 - Work in `Over X` throughout; specialize to `Type` (via
