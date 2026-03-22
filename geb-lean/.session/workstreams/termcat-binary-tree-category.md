@@ -136,31 +136,31 @@ Completed (2026-03-19):
 
 In progress:
 
-- [x] btFoldFull (full simple universal property,
-  arbitrary X = m) — defined as a semantic function
-  `(Fin (n+1) → BT) → (Fin m → BT)` using BT.fold
-  with carrier `Fin m → BT`.  The BTMor1.fold
-  constructor's step child has only 2 recursive-result
-  variables, which is insufficient for coupled mutual
-  recursion with m > 1 components.  The semantic
-  definition avoids this limitation.  btFold (m = 1)
-  remains syntactic.
-- [x] btFoldEnhanced (enhanced version, g with context
-  access, derived from btFoldFull)
+- [x] btFoldFull (full universal property, X = m)
+- [x] btFoldEnhanced (enhanced, g with context)
+- [x] PolyFix.ind (general, in PolyAlg.lean)
+- [x] PolyFixCoprod.ind (coproducts, PolyAlgUMorph)
+- [x] BTMor1.ind (raw interface via PolyFixCoprod.ind)
+- [x] PolyEndoFinitary instances (all components,
+  coproduct, free monads)
+- [x] HasChosenFiniteProducts (computable limits)
+- [x] BTMor1.rename via BTMor1.ind
+- [x] BTMor1.subst via BTMor1.ind
+- [x] BTMor1.proj/leaf/branch as direct PolyFix.mk
+- [ ] BTMor1.fold round-trip lemma (btMorInject =
+  PolyFix.mk for fold component)
+- [ ] subst_id proof (3/4 cases work; fold blocked
+  on round-trip)
+- [ ] subst_comp proof (same status)
 - [ ] Category instance for LawvereBTCat
-  - Proof schemes (induction principles) for BTMor1
-  - subst identity and composition laws
-  - Category laws from subst laws
 - [ ] HasFiniteProducts instance
 - [ ] HasPBTO instance
-  - Computation rules
-  - Uniqueness via polyFixFoldUnique
 
 Future:
 
-- [ ] PolyEndoFinitary btMorPoly instance
+- [ ] Named-constructor BTMor1.ind convenience
+  (hProj/hLeaf/hBranch/hFold interface)
 - [ ] polyBetweenRepr used to refactor btMorFoldPoly
-  and polyShift
 
 ### Phase 1: Kleisli Category and Isomorphism
 

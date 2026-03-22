@@ -398,27 +398,56 @@ private abbrev btMorCarrier :=
 
 private def btMorInject (j : Fin 4) {n : ℕ}
     (eval : polyBetweenEvalFamily ℕ ℕ
-      (btMorComponents j) btMorCarrier n) :
+      (btMorComponents j)
+      btMorCarrier n) :
     BTMor1 n :=
   polyFixStrFamily btMorPoly n
     (polyEndoMorphEvalAt
-      (polyBetweenInj (Fin 4) btMorComponents j)
+      (polyBetweenInj (Fin 4)
+        btMorComponents j)
       btMorCarrier n eval)
+
+/-- The round-trip for `btMorInject`: it produces
+a `PolyFix.mk` with the tagged coproduct position
+and `polyFixChildAt`-wrapped children. -/
+lemma btMorInject_eq (j : Fin 4) {n : ℕ}
+    (eval : polyBetweenEvalFamily ℕ ℕ
+      (btMorComponents j)
+      btMorCarrier n) :
+    btMorInject j eval =
+    PolyFix.mk n
+      (show polyBetweenIndex ℕ ℕ
+        btMorPoly n from
+        ⟨j, pbefIndex eval⟩)
+      (polyFixChildAt
+        (show polyBetweenIndex ℕ ℕ
+          btMorPoly n from
+          ⟨j, pbefIndex eval⟩)
+        (ccrFiberMor
+          (polyBetweenInj (Fin 4)
+            btMorComponents j n)
+          (pbefIndex eval) ≫
+          pbefMor eval)) := by
+  unfold btMorInject
+  exact polyFixCoprodStr_inj j eval
 
 /-- Projection: select the `i`-th input. -/
 def BTMor1.proj {n : ℕ} (i : Fin n) :
     BTMor1 n :=
   btMorInject 0
     ⟨⟨⟨n, i⟩, rfl⟩,
-      (overInitial_isInitial ℕ).to btMorCarrier⟩
+      (overInitial_isInitial ℕ).to
+        btMorCarrier⟩
 
 /-- Leaf constant. -/
 def BTMor1.leaf {n : ℕ} : BTMor1 n :=
   btMorInject 1
     ⟨⟨n, rfl⟩,
-      (overInitial_isInitial ℕ).to btMorCarrier⟩
+      (overInitial_isInitial ℕ).to
+        btMorCarrier⟩
 
-/-- Branch: combine two subtree-valued expressions. -/
+/-- Branch: combine two subtree-valued
+expressions. -/
 def BTMor1.branch {n : ℕ}
     (l r : BTMor1 n) : BTMor1 n :=
   btMorInject 2
@@ -429,6 +458,7 @@ def BTMor1.branch {n : ℕ}
         Over.Fiber btMorCarrier n))
 
 /-- Fold: the full parameterized catamorphism.
+Component 3 (fold).
 Given output dimension `m`, base components
 `f : Fin m → BTMor1 n`, step components
 `g : Fin m → BTMor1 (m + m)`, tree `t : BTMor1 n`,
@@ -446,12 +476,15 @@ def BTMor1.fold {n : ℕ}
         if hb : d.val < m then
           ⟨n, f ⟨d.val, hb⟩⟩
         else if hs : d.val < m + m then
-          ⟨m + m, g ⟨d.val - m, by omega⟩⟩
+          ⟨m + m, g ⟨d.val - m,
+            by omega⟩⟩
         else
           ⟨n, tree⟩)
       (by funext d
-          dsimp [btMorCarrier, btMorComponents,
-            btMorFoldPoly, polyFixCarrier,
+          dsimp [btMorCarrier,
+            btMorComponents,
+            btMorFoldPoly,
+            polyFixCarrier,
             familySliceForward,
             familySliceForwardObj,
             ccrObjMk, ccrFamily,
@@ -659,140 +692,158 @@ def btBranch : BTMorN 2 1 :=
   fun _ =>
     BTMor1.branch (BTMor1.proj 0) (BTMor1.proj 1)
 
-/-! ## Rename via `polyFixFold`
+/-! ## Induction principle for BTMor1
 
-`rename` changes the fiber (from `n` to `m`), so the
-fold carrier stores `(ℕ → ℕ) → Σ m, BTMor1 m`: a
-function from a "total renaming" to a renamed term with
-its output fiber.  The total renaming derived from
-`f : Fin n → Fin m` is
-`fun i => if i < n then (f i).val else m + (i - n)`,
-which works uniformly at all fibers (including nested
-fold step children at `n + 2`, `n + 4`, ...).
+Built on `PolyFixCoprod.ind`, with one step per
+coproduct component of `btMorPoly`. -/
+
+/-- Induction/recursion principle for `BTMor1`.
+Each step receives a component index `i : Fin 4`,
+the component's position, children, and induction
+hypotheses.  Match on `i` to handle the four
+constructors (proj, leaf, branch, fold). -/
+def BTMor1.ind
+    {motive : ∀ {n : ℕ},
+      BTMor1 n → Sort _}
+    (step : ∀ (i : Fin 4) {n : ℕ}
+      (p : polyBetweenIndex ℕ ℕ
+        (btMorComponents i) n)
+      (children :
+        ∀ e : (polyBetweenFamily ℕ ℕ
+          (btMorComponents i) n p).left,
+          BTMor1
+            ((polyBetweenFamily ℕ ℕ
+              (btMorComponents i) n
+                p).hom e))
+      (_ :
+        ∀ e : (polyBetweenFamily ℕ ℕ
+          (btMorComponents i) n p).left,
+          motive (children e)),
+      motive (PolyFix.mk n
+        (show polyBetweenIndex ℕ ℕ
+          (polyBetweenCoprod (Fin 4)
+            btMorComponents) n from
+          ⟨i, p⟩) children))
+    {n : ℕ} (t : BTMor1 n) : motive t :=
+  PolyFixCoprod.ind
+    (motive := motive)
+    (steps := step)
+    t
+
+/-! ## Rename and substitution via `BTMor1.ind`
+
+Defined by structural recursion via the polynomial
+induction principle.  The motive carries a
+parameterized renaming/substitution, so the fold
+case can apply the identity to step children
+(which are fold-bound) and the actual
+renaming/substitution to base and tree children.
 -/
 
-private abbrev renameCarrier : Over ℕ :=
-  Over.mk
-    (fun (p : ℕ ×
-      ((ℕ → ℕ) → Σ k, BTMor1 k)) => p.1)
+/-- Transport a `BTMor1` along a fiber equality. -/
+private def fiberCast {a b : ℕ}
+    (h : a = b) (t : BTMor1 a) :
+    BTMor1 b :=
+  h ▸ t
 
-private def renameProjStr :
-    (polyEndoFunctor ℕ btMorProjPoly).obj
-      renameCarrier ⟶ renameCarrier :=
-  Over.homMk
-    (fun ⟨k, ⟨⟨⟨_, i⟩, rfl⟩, _⟩⟩ =>
-      (k, fun ren =>
-        let tgt := ren k
-        if h : ren i.val < tgt then
-          ⟨tgt, BTMor1.proj ⟨ren i.val, h⟩⟩
-        else ⟨tgt, BTMor1.leaf⟩))
-    (by aesop_cat)
-
-private def renameLeafStr :
-    (polyEndoFunctor ℕ btMorLeafPoly).obj
-      renameCarrier ⟶ renameCarrier :=
-  Over.homMk
-    (fun ⟨k, _⟩ =>
-      (k, fun ren => ⟨ren k, BTMor1.leaf⟩))
-    (by aesop_cat)
-
-private def renameBranchStr :
-    (polyEndoFunctor ℕ btMorBranchPoly).obj
-      renameCarrier ⟶ renameCarrier :=
-  polyProdAlgStr renameCarrier
-    (fun a₁ a₂ =>
-      ⟨(a₁.val.1, fun ren =>
-        let ⟨m₁, t₁⟩ := a₁.val.2 ren
-        let ⟨m₂, t₂⟩ := a₂.val.2 ren
-        if h : m₂ = m₁ then
-          ⟨m₁, BTMor1.branch t₁ (h ▸ t₂)⟩
-        else ⟨m₁, t₁⟩), a₁.property⟩)
-
-private def renameFoldStr :
-    (polyEndoFunctor ℕ btMorFoldPoly).obj
-      renameCarrier ⟶ renameCarrier :=
-  Over.homMk
-    (fun ⟨k, ⟨pos, childMor⟩⟩ =>
-      let pm := pos.1
-      let pj := pos.2
-      have hpm : 0 < pm :=
-        Nat.lt_of_le_of_lt
-          (Nat.zero_le _) pj.isLt
-      (k, fun ren =>
-        let bases :
-            Fin pm → Σ j, BTMor1 j :=
-          fun i =>
-            (childMor.left
-              ⟨i.val, by omega⟩).2 ren
-        let steps :
-            Fin pm → Σ j, BTMor1 j :=
-          fun i =>
-            (childMor.left
-              ⟨pm + i.val, by omega⟩).2
-                ren
-        let treeR :=
-          (childMor.left
-            ⟨pm + pm, by omega⟩).2 ren
-        let mB := (bases ⟨0, hpm⟩).1
-        let allBasesOk :=
-          ∀ i, (bases i).1 = mB
-        if hOk : allBasesOk then
-          let baseFns :
-              Fin pm → BTMor1 mB :=
-            fun i =>
-              let h := hOk i
-              h ▸ (bases i).2
-          let stepFns :
-              Fin pm → BTMor1 (pm + pm) :=
-            fun i =>
-              let ⟨ms, s⟩ := steps i
-              if hs : ms = pm + pm then
-                hs ▸ s
-              else BTMor1.leaf
-          let ⟨mT, tree⟩ := treeR
-          if hT : mT = mB then
-            ⟨mB, BTMor1.fold pm
-              baseFns stepFns
-              (hT ▸ tree) pj⟩
-          else ⟨mB, (baseFns pj)⟩
-        else
-          ⟨(bases ⟨0, hpm⟩).1,
-            (bases ⟨0, hpm⟩).2⟩))
-    (by aesop_cat)
-
-private def renameComponentStrs :
-    ∀ (i : Fin 4),
-      (polyEndoFunctor ℕ (btMorComponents i)).obj
-        renameCarrier ⟶ renameCarrier :=
-  fun i => match i with
-    | 0 => renameProjStr
-    | 1 => renameLeafStr
-    | 2 => renameBranchStr
-    | 3 => renameFoldStr
-
-private def renameAlg : PolyAlg btMorPoly :=
-  algCoprodDesc renameCarrier renameComponentStrs
-
-/-- The total renaming derived from `f : Fin n → Fin m`.
-Maps context variables via `f` and shifts additional
-variables (recursive-result positions) by `m - n`. -/
-def totalRenaming {n m : ℕ}
-    (f : Fin n → Fin m) : ℕ → ℕ :=
-  fun i =>
-    if h : i < n then (f ⟨i, h⟩).val
-    else m + (i - n)
+/-- Transport a `Fin` along a bound equality. -/
+private def finCast {a b : ℕ}
+    (h : a = b) (v : Fin a) : Fin b :=
+  h ▸ v
 
 /-- Apply a variable renaming to a morphism term.
-Defined via `polyFixFoldAtWithProof` with the rename
-algebra. -/
+Defined via `BTMor1.ind` with motive
+`fun {k} _ => ∀ m, (Fin k → Fin m) → BTMor1 m`. -/
 def BTMor1.rename {n m : ℕ}
     (f : Fin n → Fin m)
     (t : BTMor1 n) : BTMor1 m :=
-  let result :=
-    (polyFixFoldAtWithProof btMorPoly
-      renameAlg n t).val.2 (totalRenaming f)
-  if h : result.1 = m then h ▸ result.2
-  else BTMor1.leaf
+  (BTMor1.ind
+    (motive := fun {k} _ =>
+      ∀ (m' : ℕ), (Fin k → Fin m') →
+        BTMor1 m')
+    (step := fun i => match i with
+      | ⟨0, _⟩ => fun p _ _ m' ren =>
+        BTMor1.proj
+          (ren (p.property ▸ p.val.2))
+      | ⟨1, _⟩ => fun _ _ _ _ _ =>
+        BTMor1.leaf
+      | ⟨2, _⟩ => fun _ _ ih m' ren =>
+        BTMor1.branch
+          (ih (Sum.inl PUnit.unit)
+            m' ren)
+          (ih (Sum.inr PUnit.unit)
+            m' ren)
+      | ⟨3, _⟩ =>
+        fun pos children ih m' ren =>
+        let pm := pos.1
+        let pj := pos.2
+        have hlb (i : Fin pm) :
+            i.val < pm + pm + 1 :=
+          Nat.lt_of_lt_of_le i.isLt
+            (Nat.le_add_right
+              pm (pm + 1))
+        have hls (i : Fin pm) :
+            pm + i.val <
+              pm + pm + 1 := by
+          have := i.isLt; omega
+        have hlt :
+            pm + pm < pm + pm + 1 :=
+          Nat.lt_succ_self _
+        -- Fiber proofs: the fold polynomial's
+        -- fiber map uses if/else on directions.
+        -- Base (d < pm) → fiber n_inner.
+        -- Step (pm ≤ d < pm+pm) → pm+pm.
+        -- Tree (d = pm+pm) → n_inner.
+        -- Use `simp` with full unfolding.
+        -- After matching component 3, the
+        -- family is btMorFoldPoly's family at
+        -- pos.  Its .hom is the if/else fiber
+        -- map which reduces via split_ifs.
+        have hbf (i : Fin pm) :
+            (polyBetweenFamily ℕ ℕ
+              (btMorComponents ⟨3, by omega⟩)
+              _ pos).hom
+              ⟨i.val, hlb i⟩ = _ := by
+          unfold btMorComponents
+            btMorFoldPoly polyBetweenFamily
+            polyToOverFamily ccrObjMk
+            ccrFamily; dsimp
+          split_ifs <;> omega
+        have hsf (i : Fin pm) :
+            (polyBetweenFamily ℕ ℕ
+              (btMorComponents ⟨3, by omega⟩)
+              _ pos).hom
+              ⟨pm + i.val, hls i⟩ =
+                pm + pm := by
+          unfold btMorComponents
+            btMorFoldPoly polyBetweenFamily
+            polyToOverFamily ccrObjMk
+            ccrFamily; dsimp
+          split_ifs <;> omega
+        have htf :
+            (polyBetweenFamily ℕ ℕ
+              (btMorComponents ⟨3, by omega⟩)
+              _ pos).hom
+              ⟨pm + pm, hlt⟩ = _ := by
+          unfold btMorComponents
+            btMorFoldPoly polyBetweenFamily
+            polyToOverFamily ccrObjMk
+            ccrFamily; dsimp
+          split_ifs <;> omega
+        BTMor1.fold pm
+          (fun i =>
+            ih ⟨i, hlb i⟩ m'
+              (fun v => ren
+                (finCast (hbf i) v)))
+          (fun i =>
+            fiberCast (hsf i)
+              (children
+                ⟨pm + i, hls i⟩))
+          (ih ⟨pm + pm, hlt⟩ m'
+            (fun v => ren
+              (finCast htf v)))
+          pj)
+    t) m f
 
 /-- Shift all variable indices up by `k`. -/
 def BTMor1.shift {n : ℕ} (k : ℕ)
@@ -800,154 +851,96 @@ def BTMor1.shift {n : ℕ} (k : ℕ)
   BTMor1.rename
     (fun i => ⟨i.val, by omega⟩) t
 
-/-! ## Substitution via `polyFixFold` -/
-
-/-- Lift a variable renaming past two bound variables
-(the recursive-result variables in a fold step). -/
-def liftRename {n m : ℕ}
-    (f : Fin n → Fin m) :
-    Fin (n + 2) → Fin (m + 2) :=
-  fun i =>
-    if h : i.val < n then
-      ⟨(f ⟨i.val, h⟩).val, by omega⟩
-    else
-      ⟨m + (i.val - n), by omega⟩
-
-/-- Lift a substitution past two bound variables. -/
-def liftSubst {n m : ℕ}
-    (σ : Fin n → BTMor1 m) :
-    Fin (n + 2) → BTMor1 (m + 2) :=
-  fun i =>
-    if h : i.val < n then
-      (σ ⟨i.val, h⟩).shift 2
-    else if _ : i.val = n then
-      BTMor1.proj ⟨m, by omega⟩
-    else
-      BTMor1.proj ⟨m + 1, by omega⟩
-
-private abbrev substCarrier : Over ℕ :=
-  Over.mk
-    (fun (p : ℕ ×
-      ((ℕ → Σ k, BTMor1 k) →
-        Σ k, BTMor1 k)) => p.1)
-
-private def substProjStr :
-    (polyEndoFunctor ℕ btMorProjPoly).obj
-      substCarrier ⟶ substCarrier :=
-  Over.homMk
-    (fun ⟨k, ⟨⟨⟨_, i⟩, rfl⟩, _⟩⟩ =>
-      (k, fun σ => σ i.val))
-    (by aesop_cat)
-
-private def substLeafStr :
-    (polyEndoFunctor ℕ btMorLeafPoly).obj
-      substCarrier ⟶ substCarrier :=
-  Over.homMk
-    (fun ⟨k, _⟩ =>
-      (k, fun _ => ⟨k, BTMor1.leaf⟩))
-    (by aesop_cat)
-
-private def substBranchStr :
-    (polyEndoFunctor ℕ btMorBranchPoly).obj
-      substCarrier ⟶ substCarrier :=
-  polyProdAlgStr substCarrier
-    (fun a₁ a₂ =>
-      ⟨(a₁.val.1, fun σ =>
-        let ⟨m₁, t₁⟩ := a₁.val.2 σ
-        let ⟨m₂, t₂⟩ := a₂.val.2 σ
-        if h : m₂ = m₁ then
-          ⟨m₁, BTMor1.branch t₁ (h ▸ t₂)⟩
-        else ⟨m₁, t₁⟩), a₁.property⟩)
-
-private def substFoldStr :
-    (polyEndoFunctor ℕ btMorFoldPoly).obj
-      substCarrier ⟶ substCarrier :=
-  Over.homMk
-    (fun ⟨k, ⟨pos, childMor⟩⟩ =>
-      let pm := pos.1
-      let pj := pos.2
-      have hpm : 0 < pm :=
-        Nat.lt_of_le_of_lt
-          (Nat.zero_le _) pj.isLt
-      (k, fun σ =>
-        let bases :
-            Fin pm → Σ j, BTMor1 j :=
-          fun i =>
-            (childMor.left
-              ⟨i.val, by omega⟩).2 σ
-        let steps :
-            Fin pm → Σ j, BTMor1 j :=
-          fun i =>
-            (childMor.left
-              ⟨pm + i.val, by omega⟩).2
-                σ
-        let treeR :=
-          (childMor.left
-            ⟨pm + pm, by omega⟩).2 σ
-        let mB := (bases ⟨0, hpm⟩).1
-        let allBasesOk :=
-          ∀ i, (bases i).1 = mB
-        if hOk : allBasesOk then
-          let baseFns :
-              Fin pm → BTMor1 mB :=
-            fun i =>
-              let h := hOk i
-              h ▸ (bases i).2
-          let stepFns :
-              Fin pm → BTMor1 (pm + pm) :=
-            fun i =>
-              let ⟨ms, s⟩ := steps i
-              if hs : ms = pm + pm then
-                hs ▸ s
-              else BTMor1.leaf
-          let ⟨mT, tree⟩ := treeR
-          if hT : mT = mB then
-            ⟨mB, BTMor1.fold pm
-              baseFns stepFns
-              (hT ▸ tree) pj⟩
-          else ⟨mB, (baseFns pj)⟩
-        else
-          ⟨(bases ⟨0, hpm⟩).1,
-            (bases ⟨0, hpm⟩).2⟩))
-    (by aesop_cat)
-
-private def substComponentStrs :
-    ∀ (i : Fin 4),
-      (polyEndoFunctor ℕ (btMorComponents i)).obj
-        substCarrier ⟶ substCarrier :=
-  fun i => match i with
-    | 0 => substProjStr
-    | 1 => substLeafStr
-    | 2 => substBranchStr
-    | 3 => substFoldStr
-
-private def substAlg : PolyAlg btMorPoly :=
-  algCoprodDesc substCarrier substComponentStrs
-
-/-- The total substitution derived from
-`σ : Fin n → BTMor1 m`. -/
-def totalSubst {n m : ℕ}
-    (σ : Fin n → BTMor1 m) :
-    ℕ → Σ k, BTMor1 k :=
-  fun i =>
-    if h : i < n then ⟨m, σ ⟨i, h⟩⟩
-    else if hm : 0 < m then
-      ⟨m + (i - n),
-        BTMor1.proj ⟨i - n, by omega⟩⟩
-    else ⟨i - n, BTMor1.leaf⟩
-
 /-- Simultaneous substitution: replace each free
-variable in a term with a term from the substitution.
-Defined via `polyFixFoldAtWithProof` with the
-substitution algebra. -/
+variable in a term with a term from the
+substitution.  Defined via `BTMor1.ind` with motive
+`fun {k} _ => ∀ m, (Fin k → BTMor1 m) →
+  BTMor1 m`. -/
 def BTMor1.subst {n m : ℕ}
     (t : BTMor1 n)
     (σ : Fin n → BTMor1 m) : BTMor1 m :=
-  let result :=
-    (polyFixFoldAtWithProof btMorPoly
-      substAlg n t).val.2 (totalSubst σ)
-  if h : result.1 = m then h ▸ result.2
-  else BTMor1.leaf
+  (BTMor1.ind
+    (motive := fun {k} _ =>
+      ∀ (m' : ℕ), (Fin k → BTMor1 m') →
+        BTMor1 m')
+    (step := fun i => match i with
+      | ⟨0, _⟩ => fun p _ _ _ σ' =>
+        σ' (p.property ▸ p.val.2)
+      | ⟨1, _⟩ => fun _ _ _ _ _ =>
+        BTMor1.leaf
+      | ⟨2, _⟩ => fun _ _ ih m' σ' =>
+        BTMor1.branch
+          (ih (Sum.inl PUnit.unit)
+            m' σ')
+          (ih (Sum.inr PUnit.unit)
+            m' σ')
+      | ⟨3, _⟩ =>
+        fun pos children ih m' σ' =>
+        let pm := pos.1
+        let pj := pos.2
+        have hlb (i : Fin pm) :
+            i.val < pm + pm + 1 :=
+          Nat.lt_of_lt_of_le i.isLt
+            (Nat.le_add_right
+              pm (pm + 1))
+        have hls (i : Fin pm) :
+            pm + i.val <
+              pm + pm + 1 := by
+          have := i.isLt; omega
+        have hlt :
+            pm + pm < pm + pm + 1 :=
+          Nat.lt_succ_self _
+        have hbf (i : Fin pm) :
+            (polyBetweenFamily ℕ ℕ
+              (btMorComponents
+                ⟨3, by omega⟩)
+              _ pos).hom
+              ⟨i.val, hlb i⟩ = _ := by
+          unfold btMorComponents
+            btMorFoldPoly
+            polyBetweenFamily
+            polyToOverFamily ccrObjMk
+            ccrFamily; dsimp
+          split_ifs <;> omega
+        have hsf (i : Fin pm) :
+            (polyBetweenFamily ℕ ℕ
+              (btMorComponents
+                ⟨3, by omega⟩)
+              _ pos).hom
+              ⟨pm + i.val, hls i⟩ =
+                pm + pm := by
+          unfold btMorComponents
+            btMorFoldPoly
+            polyBetweenFamily
+            polyToOverFamily ccrObjMk
+            ccrFamily; dsimp
+          split_ifs <;> omega
+        have htf :
+            (polyBetweenFamily ℕ ℕ
+              (btMorComponents
+                ⟨3, by omega⟩)
+              _ pos).hom
+              ⟨pm + pm, hlt⟩ = _ := by
+          unfold btMorComponents
+            btMorFoldPoly
+            polyBetweenFamily
+            polyToOverFamily ccrObjMk
+            ccrFamily; dsimp
+          split_ifs <;> omega
+        BTMor1.fold pm
+          (fun i =>
+            ih ⟨i, hlb i⟩ m'
+              (fun v => σ'
+                (finCast (hbf i) v)))
+          (fun i =>
+            fiberCast (hsf i)
+              (children
+                ⟨pm + i, hls i⟩))
+          (ih ⟨pm + pm, hlt⟩ m'
+            (fun v => σ'
+              (finCast htf v)))
+          pj)
+    t) m σ
 
 /-! ## Morphism operations -/
 
@@ -1071,51 +1064,159 @@ def btFoldEnhanced {n m : ℕ}
   let result := btFoldFull f' g' ctx
   fun j => result ⟨n + j.val, by omega⟩
 
-/-! ## Proof schemes for BTMor1
+/-! ## Fiber map lemmas for btMorFoldPoly -/
 
-Proof principles for `BTMor1 = PolyFix btMorPoly`
-that mirror the computation schemes.  Just as
-`polyFixFold` provides elimination without explicit
-recursion, these provide induction and uniqueness
-without explicit recursion on the polynomial
-structure.
--/
+private lemma btMorFoldFiber
+    {n : ℕ}
+    (isLt : 3 < 4)
+    (pos : polyBetweenIndex ℕ ℕ
+      (btMorComponents ⟨3, isLt⟩) n)
+    (d : (polyBetweenFamily ℕ ℕ btMorPoly n
+      ⟨⟨3, isLt⟩, pos⟩).left)
+    (hd : d.val < pos.1) :
+    (polyBetweenFamily ℕ ℕ btMorPoly n
+      ⟨⟨3, isLt⟩, pos⟩).hom d = n := by
+  change (if d.val < pos.1 then n
+    else if d.val < pos.1 + pos.1
+      then pos.1 + pos.1 else n) = n
+  simp only [if_pos hd]
 
-/-- Induction principle for `BTMor1`.  To prove
-`P n t` for all `t : BTMor1 n`, provide:
-- `hProj`: `P` holds for `proj i`
-- `hLeaf`: `P` holds for `leaf`
-- `hBranch`: `P` holds for `branch l r` given
-  `P` for `l` and `r`
-- `hFold`: `P` holds for `fold m f g tree j`
-  given `P` for each `f i`, each `g i`, and
-  `tree` -/
-def BTMor1.ind
-    (P : ∀ {n : ℕ}, BTMor1 n → Prop)
-    (hProj : ∀ {n : ℕ} (i : Fin n),
-      P (BTMor1.proj i))
-    (hLeaf : ∀ {n : ℕ},
-      P (BTMor1.leaf (n := n)))
-    (hBranch : ∀ {n : ℕ}
-      (l r : BTMor1 n),
-      P l → P r → P (BTMor1.branch l r))
-    (hFold : ∀ {n : ℕ} (m : ℕ)
-      (f : Fin m → BTMor1 n)
-      (g : Fin m → BTMor1 (m + m))
-      (tree : BTMor1 n) (j : Fin m),
-      (∀ i, P (f i)) →
-      (∀ i, P (g i)) →
-      P tree →
-      P (BTMor1.fold m f g tree j))
-    {n : ℕ} (t : BTMor1 n) : P t := by
-  exact _
+private lemma btMorFoldFiber_step
+    {n : ℕ}
+    (isLt : 3 < 4)
+    (pos : polyBetweenIndex ℕ ℕ
+      (btMorComponents ⟨3, isLt⟩) n)
+    (d : (polyBetweenFamily ℕ ℕ btMorPoly n
+      ⟨⟨3, isLt⟩, pos⟩).left)
+    (hge : ¬ d.val < pos.1)
+    (hlt : d.val < pos.1 + pos.1) :
+    (polyBetweenFamily ℕ ℕ btMorPoly n
+      ⟨⟨3, isLt⟩, pos⟩).hom d =
+        pos.1 + pos.1 := by
+  change (if d.val < pos.1 then n
+    else if d.val < pos.1 + pos.1
+      then pos.1 + pos.1 else n) =
+        pos.1 + pos.1
+  simp only [if_neg hge, if_pos hlt]
+
+private lemma btMorFoldFiber_tree
+    {n : ℕ}
+    (isLt : 3 < 4)
+    (pos : polyBetweenIndex ℕ ℕ
+      (btMorComponents ⟨3, isLt⟩) n)
+    (d : (polyBetweenFamily ℕ ℕ btMorPoly n
+      ⟨⟨3, isLt⟩, pos⟩).left)
+    (hge1 : ¬ d.val < pos.1)
+    (hge2 : ¬ d.val < pos.1 + pos.1) :
+    (polyBetweenFamily ℕ ℕ btMorPoly n
+      ⟨⟨3, isLt⟩, pos⟩).hom d = n := by
+  change (if d.val < pos.1 then n
+    else if d.val < pos.1 + pos.1
+      then pos.1 + pos.1 else n) = n
+  simp only [if_neg hge1, if_neg hge2]
 
 /-- The identity substitution: substituting
 projections into a term returns the original term. -/
 theorem BTMor1.subst_id {n : ℕ}
     (t : BTMor1 n) :
     t.subst (fun i => BTMor1.proj i) = t := by
-  exact _
+  suffices gen : ∀ (m : ℕ) (h : n = m),
+      t.subst
+        (fun v => BTMor1.proj (finCast h v)) =
+        fiberCast h t from by
+    have := gen n rfl
+    simp only [finCast, fiberCast] at this
+    exact this
+  exact BTMor1.ind
+    (motive := fun {k} (t : BTMor1 k) =>
+      ∀ (m : ℕ) (h : k = m),
+        t.subst
+          (fun v =>
+            BTMor1.proj (finCast h v)) =
+          fiberCast h t)
+    (step := fun i => match i with
+      | ⟨0, _⟩ => fun p children ih m h => by
+          subst h
+          unfold BTMor1.subst
+          simp only [BTMor1.ind,
+            PolyFixCoprod.ind, PolyFix.ind]
+          simp only [fiberCast]
+          unfold BTMor1.proj btMorInject
+          simp only [btMorPoly, btMorCarrier]
+          rw [polyFixCoprodStr_inj]
+          congr 1
+          · simp only [pbefIndex,
+              ptoefIndex, ccrEvalIndex]
+            obtain ⟨⟨n', i'⟩, hp⟩ := p
+            subst hp
+            rfl
+          · funext e; exact e.elim
+      | ⟨1, _⟩ => fun p children ih m h => by
+          subst h
+          unfold BTMor1.subst
+          simp only [BTMor1.ind,
+            PolyFixCoprod.ind, PolyFix.ind]
+          simp only [fiberCast]
+          unfold BTMor1.leaf btMorInject
+          simp only [btMorPoly, btMorCarrier]
+          rw [polyFixCoprodStr_inj]
+          congr 1
+          · simp only [pbefIndex,
+              ptoefIndex, ccrEvalIndex]
+            obtain ⟨n', hp⟩ := p
+            subst hp
+            rfl
+          · funext e; exact e.elim
+      | ⟨2, _⟩ => fun p children ih m h => by
+          subst h
+          unfold BTMor1.subst
+          simp only [BTMor1.ind,
+            PolyFixCoprod.ind, PolyFix.ind]
+          simp only [finCast, fiberCast]
+          conv_lhs =>
+            arg 1
+            change BTMor1.subst
+              (children (Sum.inl PUnit.unit))
+              (fun i => BTMor1.proj i)
+          conv_lhs =>
+            arg 2
+            change BTMor1.subst
+              (children (Sum.inr PUnit.unit))
+              (fun i => BTMor1.proj i)
+          have ihl :=
+            ih (Sum.inl PUnit.unit) _ rfl
+          have ihr :=
+            ih (Sum.inr PUnit.unit) _ rfl
+          simp only [finCast, fiberCast]
+            at ihl ihr
+          rw [ihl, ihr]
+          unfold BTMor1.branch btMorInject
+          simp only [btMorPoly, btMorCarrier]
+          rw [polyFixCoprodStr_inj]
+          congr 1
+          · simp only [pbefIndex,
+              ptoefIndex, ccrEvalIndex,
+              polyProdEvalOfPair]
+            funext e
+            simp only [polyFixChildAt,
+              ccrFiberMor,
+              polyBetweenInj,
+              polyBetweenInjReindex,
+              ccrHomMk,
+              pbefMor, ptoefMor,
+              ccrEvalMor,
+              polyBetweenInjFiber]
+            unfold polyBetweenCoprodDir
+            match e with
+            | Sum.inl _ => rfl
+            | Sum.inr _ => rfl
+      | ⟨3, _⟩ =>
+        fun p children ih m h => by
+          subst h
+          exact _
+          · rfl
+          · exact ih ⟨d.val, by omega⟩ _ rfl)
+    t
 
 /-- Substitution composition: substituting twice
 equals substituting with the composed

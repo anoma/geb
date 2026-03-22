@@ -194,6 +194,39 @@ def PolyFix.getChildren {P : PolyEndo X} {x : X} (t : PolyFix P x) :
   match t with
   | mk _ _ f => f
 
+/--
+General induction/recursion principle for `PolyFix`.
+Given a motive in an arbitrary `Sort v` and a step
+that produces the motive at `PolyFix.mk x i children`
+from the motive at each child, produces the motive
+for any `t : PolyFix P x`.
+
+This subsumes both induction (motive into `Prop`) and
+dependent recursion (motive into `Type`). -/
+def PolyFix.ind {X : Type u}
+    {P : PolyEndo X}
+    {motive : ∀ {x : X},
+      PolyFix P x → Sort _}
+    (step : ∀ {x : X}
+      (i : polyBetweenIndex X X P x)
+      (children :
+        ∀ e : (polyBetweenFamily X X P x
+          i).left,
+          PolyFix P
+            ((polyBetweenFamily X X P x
+              i).hom e))
+      (_ :
+        ∀ e : (polyBetweenFamily X X P x
+          i).left,
+          motive (children e)),
+      motive (PolyFix.mk x i children))
+    {x : X} (t : PolyFix P x) :
+    motive t :=
+  match t with
+  | .mk _ i children =>
+    step i children
+      (fun e => PolyFix.ind step (children e))
+
 end PolyFix
 
 /-! ## PolyFix as an Algebra
@@ -224,6 +257,23 @@ def polyFixChildAt {P : PolyEndo X} {x : X} (i : polyBetweenIndex X X P x)
   have heq : result.1 = (polyBetweenFamily X X P x i).hom e :=
     congrFun (Over.w h) e
   heq ▸ result.2
+
+/--
+`polyFixChildAt` applied to an `Over.homMk`-
+constructed morphism extracts `(f e).2` with
+the commutativity transport applied.
+-/
+lemma polyFixChildAt_homMk
+    {P : PolyEndo X} {x : X}
+    (i : polyBetweenIndex X X P x)
+    (f : (polyBetweenFamily X X P x i).left
+      → (polyFixCarrier P).left)
+    (w : f ≫ (polyFixCarrier P).hom =
+      (polyBetweenFamily X X P x i).hom)
+    (e : (polyBetweenFamily X X P x
+      i).left) :
+    polyFixChildAt i (Over.homMk f w) e =
+      (congrFun w e) ▸ (f e).2 := rfl
 
 /--
 The family-level structure map: given an index and children, produce a tree.
@@ -395,6 +445,27 @@ lemma polyFixChildAt_rfl {P : PolyEndo X} {x : X} (i : polyBetweenIndex X X P x)
     polyFixChildAt i
       (Over.homMk (fun e => ⟨(polyBetweenFamily X X P x i).hom e, children e⟩) rfl) e =
     children e := rfl
+
+/--
+Round-trip: constructing a tree via `polyFixStrFamily`
+from the canonical children morphism recovers the
+original `PolyFix.mk`.
+-/
+lemma polyFixStrFamily_mk
+    {P : PolyEndo X} {x : X}
+    (i : polyBetweenIndex X X P x)
+    (children :
+      ∀ e : (polyBetweenFamily X X P x i).left,
+        PolyFix P
+          ((polyBetweenFamily X X P x i).hom
+            e)) :
+    polyFixStrFamily P x
+      ⟨i, Over.homMk
+        (fun e =>
+          ⟨(polyBetweenFamily X X P x i).hom
+            e, children e⟩) rfl⟩ =
+    PolyFix.mk x i children := by
+  unfold polyFixStrFamily; dsimp; congr
 
 /--
 Helper: any algebra homomorphism applied to a tree equals the fold.

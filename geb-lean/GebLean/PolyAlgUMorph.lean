@@ -63,6 +63,57 @@ namespace GebLean
 
 open CategoryTheory
 
+/-! ## Induction for coproduct fixed points -/
+
+section CoprodInd
+
+universe w
+variable {X : Type w}
+  {I : Type w}
+  {F : I → PolyEndo X}
+
+/--
+Induction/recursion for `PolyFix` of a coproduct
+polynomial, with one step per component.  At each
+node, the coproduct position `⟨i, p⟩` selects
+component `i` and delegates to `steps i`.
+
+The children and induction hypotheses at component
+`i` have the component's family type
+(`polyBetweenFamily X X (F i) x p`), not the
+coproduct's — so each step function sees only its
+own component's structure. -/
+def PolyFixCoprod.ind
+    {motive : ∀ {x : X},
+      PolyFix (polyBetweenCoprod I F) x →
+        Sort _}
+    (steps : ∀ (i : I) {x : X}
+      (p : polyBetweenIndex X X (F i) x)
+      (children :
+        ∀ e : (polyBetweenFamily X X
+          (F i) x p).left,
+          PolyFix (polyBetweenCoprod I F)
+            ((polyBetweenFamily X X
+              (F i) x p).hom e))
+      (_ :
+        ∀ e : (polyBetweenFamily X X
+          (F i) x p).left,
+          motive (children e)),
+      motive (PolyFix.mk x
+        (show polyBetweenIndex X X
+          (polyBetweenCoprod I F) x from
+          ⟨i, p⟩) children))
+    {x : X}
+    (t : PolyFix (polyBetweenCoprod I F) x) :
+    motive t :=
+  PolyFix.ind
+    (motive := motive)
+    (step := fun pos children ih =>
+      steps pos.1 pos.2 children ih)
+    t
+
+end CoprodInd
+
 universe u
 
 section PolyEndoMorphEval
@@ -101,6 +152,87 @@ theorem polyEndoMorphEval_natural
   polyBetweenMorphEval_natural X X α f
 
 end PolyEndoMorphEval
+
+/-! ### Round-trip for coproduct fixed points -/
+
+section CoprodRoundTrip
+
+variable {X : Type u}
+
+/-- Injecting component `j` evaluation data into the
+coproduct and applying the initial algebra structure
+map gives back `PolyFix.mk` with the tagged position
+`⟨j, p⟩` and `polyFixChildAt`-wrapped children. -/
+theorem polyFixCoprodStr_inj
+    {I : Type u}
+    {F : I → PolyEndo X}
+    {x : X} (j : I)
+    (eval : polyBetweenEvalFamily X X
+      (F j) (polyFixCarrier
+        (polyBetweenCoprod I F)) x) :
+    polyFixStrFamily
+      (polyBetweenCoprod I F) x
+      (polyEndoMorphEvalAt
+        (polyBetweenInj I F j)
+        (polyFixCarrier
+          (polyBetweenCoprod I F))
+        x eval) =
+    PolyFix.mk x
+      (show polyBetweenIndex X X
+        (polyBetweenCoprod I F) x from
+        ⟨j, pbefIndex eval⟩)
+      (polyFixChildAt
+        (show polyBetweenIndex X X
+          (polyBetweenCoprod I F) x from
+          ⟨j, pbefIndex eval⟩)
+        (ccrFiberMor
+          (polyBetweenInj I F j x)
+          (pbefIndex eval) ≫
+          pbefMor eval)) := by
+  unfold polyFixStrFamily
+    polyEndoMorphEvalAt
+    polyBetweenMorphEvalAt
+  simp only [ptoefMk, ptoefIndex,
+    ccrReindex, ccrEvalMk,
+    polyBetweenInj,
+    polyBetweenInjReindex,
+    ccrHomMk, ccrEvalIndex]
+  rfl
+
+/-- `polyFixStrFamily` composed with
+`polyEndoMorphEvalAt (polyBetweenInj ...)` produces
+a `PolyFix.mk` whose `polyFixChildAt`-wrapped
+children equal the original component morphism's
+children.  This combines the structure-map
+round-trip with the injection round-trip. -/
+theorem polyFixCoprodStr_inj_child
+    {I : Type u}
+    {F : I → PolyEndo X}
+    {x : X} (j : I)
+    (p : polyBetweenIndex X X (F j) x)
+    (mor : polyBetweenFamily X X (F j) x
+      p ⟶ polyFixCarrier
+        (polyBetweenCoprod I F))
+    (e : (polyBetweenFamily X X (F j) x
+      p).left) :
+    polyFixChildAt
+      (show polyBetweenIndex X X
+        (polyBetweenCoprod I F) x from
+        ⟨j, p⟩)
+      (ccrFiberMor
+        (polyBetweenInj I F j x) p ≫
+        mor) e =
+    (congrFun (Over.w mor) e) ▸
+      (mor.left e).2 := by
+  unfold polyFixChildAt
+  simp only [Over.comp_left,
+    types_comp_apply,
+    polyBetweenInj,
+    polyBetweenInjFiber,
+    ccrFiberMor, ccrHomMk]
+  rfl
+
+end CoprodRoundTrip
 
 section AlgPullback
 
