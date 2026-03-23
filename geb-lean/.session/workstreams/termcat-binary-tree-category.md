@@ -170,14 +170,32 @@ Completed:
 
 In progress:
 
-- [ ] subst_id fold case.  Technique: use the
-  factoring-out-lemmas approach from CLAUDE.md.
-  Write each intermediate equality step as a named
-  `have` or lemma, each provable by `rfl` or a
-  single named lemma application.  Never let the
-  elaborator see anything bigger than one step.
-  The existing round-trip lemmas provide the pieces;
-  the task is composing them step by step.
+- [ ] subst_id fold case.
+  Architecture (2026-03-23):
+    - subst_id_fold_case lemma factored out
+      (LawvereBT.lean): type-checks, called
+      from the fold case of subst_id.
+    - Proof steps completed:
+      (a) set/unfold/dsimp to reveal fold
+          structure after BTMor1.subst
+      (b) conv + change to identify base/tree
+          children as subst calls
+      (c) simp only [ih] to apply IH
+      (d) unfold BTMor1.fold btMorInject;
+          simp only [btMorPoly, btMorCarrier,
+          sigma_fiberCast_eq] normalizes the
+          fold's Over.homMk sigma pairs.
+    - Remaining: the if-then-else function body
+      has non-canonical Fin reindexing (e.g.
+      ⟨p.fst + (↑d - p.fst), _⟩ instead of d).
+      Need to collapse this to the canonical form
+      fun e => ⟨fiber e, children e⟩ so that
+      polyFixCoprodRoundTrip (PolyAlgUMorph.lean,
+      already proved) can close the goal.
+    - Supporting: polyFixCoprodRoundTrip added
+      to PolyAlgUMorph.lean (compiles).
+    - Supporting: sigma_fiberCast_eq added to
+      LawvereBT.lean (compiles).
 - [ ] subst_comp (same technique once subst_id done)
 - [ ] Category instance for LawvereBTCat
 - [ ] HasFiniteProducts instance

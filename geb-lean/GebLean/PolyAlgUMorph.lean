@@ -232,6 +232,48 @@ theorem polyFixCoprodStr_inj_child
     ccrFiberMor, ccrHomMk]
   rfl
 
+/-- Full coproduct injection round-trip: constructing
+a `PolyFix` node via `polyFixStrFamily` with the
+coproduct injection of component-level canonical
+children recovers the original `PolyFix.mk` with
+the original children. -/
+theorem polyFixCoprodRoundTrip
+    {I : Type u}
+    {F : I → PolyEndo X}
+    {x : X} (j : I)
+    (p : polyBetweenIndex X X (F j) x)
+    (children :
+      ∀ e : (polyBetweenFamily X X (F j) x
+        p).left,
+        PolyFix (polyBetweenCoprod I F)
+          ((polyBetweenFamily X X (F j) x
+            p).hom e)) :
+    polyFixStrFamily
+      (polyBetweenCoprod I F) x
+      (polyEndoMorphEvalAt
+        (polyBetweenInj I F j)
+        (polyFixCarrier
+          (polyBetweenCoprod I F)) x
+        ⟨p, Over.homMk
+          (fun e =>
+            ⟨(polyBetweenFamily X X (F j) x
+              p).hom e, children e⟩)
+          rfl⟩) =
+    PolyFix.mk x
+      (show polyBetweenIndex X X
+        (polyBetweenCoprod I F) x from
+        ⟨j, p⟩)
+      children := by
+  unfold polyFixStrFamily
+    polyEndoMorphEvalAt
+    polyBetweenMorphEvalAt
+  simp only [ptoefMk, ptoefIndex,
+    ccrReindex, ccrEvalMk,
+    polyBetweenInj,
+    polyBetweenInjReindex,
+    ccrHomMk, ccrEvalIndex]
+  congr
+
 end CoprodRoundTrip
 
 section AlgPullback

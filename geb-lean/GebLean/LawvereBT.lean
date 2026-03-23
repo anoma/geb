@@ -1115,6 +1115,80 @@ private lemma btMorFoldFiber_tree
       then pos.1 + pos.1 else n) = n
   simp only [if_neg hge1, if_neg hge2]
 
+private lemma sigma_fiberCast_eq
+    {a b : ℕ} (h : a = b)
+    (x : BTMor1 a) :
+    (⟨b, fiberCast h x⟩ :
+      Σ k, BTMor1 k) =
+    ⟨a, x⟩ := by
+  subst h; rfl
+
+private lemma subst_id_fold_case
+    {n : ℕ}
+    (isLt : 3 < 4)
+    (p : polyBetweenIndex ℕ ℕ
+      (btMorComponents ⟨3, isLt⟩) n)
+    (children :
+      ∀ e : (polyBetweenFamily ℕ ℕ
+        (btMorComponents ⟨3, isLt⟩) n
+          p).left,
+        BTMor1
+          ((polyBetweenFamily ℕ ℕ
+            (btMorComponents ⟨3, isLt⟩) n
+              p).hom e))
+    (ih :
+      ∀ e : (polyBetweenFamily ℕ ℕ
+        (btMorComponents ⟨3, isLt⟩) n
+          p).left,
+        ∀ (m : ℕ)
+          (h : (polyBetweenFamily ℕ ℕ
+            (btMorComponents ⟨3, isLt⟩) n
+              p).hom e = m),
+          (children e).subst
+            (fun v => BTMor1.proj
+              (finCast h v)) =
+            fiberCast h (children e)) :
+    BTMor1.subst
+      (PolyFix.mk n
+        (show polyBetweenIndex ℕ ℕ
+          btMorPoly n from
+          ⟨⟨3, isLt⟩, p⟩)
+        children)
+      (fun v => BTMor1.proj v) =
+    PolyFix.mk n
+      (show polyBetweenIndex ℕ ℕ
+        btMorPoly n from
+        ⟨⟨3, isLt⟩, p⟩)
+      children := by
+  set lhs := BTMor1.subst _ _ with hlhs
+  unfold BTMor1.subst at hlhs
+  unfold BTMor1.ind
+    PolyFixCoprod.ind at hlhs
+  unfold PolyFix.ind at hlhs
+  dsimp only at hlhs
+  rw [hlhs]
+  conv_lhs =>
+    arg 2; ext i
+    change (children ⟨↑i, _⟩).subst
+      (fun v => BTMor1.proj (finCast _ v))
+  conv_lhs =>
+    arg 4
+    change (children ⟨p.fst + p.fst,
+      _⟩).subst
+      (fun v => BTMor1.proj (finCast _ v))
+  simp only [ih]
+  unfold BTMor1.fold btMorInject
+  simp only [btMorPoly, btMorCarrier,
+    sigma_fiberCast_eq]
+  -- Goal: polyFixStrFamily with if-then-else
+  -- (canonical sigma pairs, non-canonical Fin
+  -- indices) = PolyFix.mk with original children.
+  -- The Fin reindexing (e.g. ⟨↑d, _⟩ vs d,
+  -- ⟨p.fst + (↑d - p.fst), _⟩ vs d) needs
+  -- collapsing before polyFixCoprodRoundTrip
+  -- applies.
+  _
+
 /-- The identity substitution: substituting
 projections into a term returns the original term. -/
 theorem BTMor1.subst_id {n : ℕ}
@@ -1210,12 +1284,13 @@ theorem BTMor1.subst_id {n : ℕ}
             match e with
             | Sum.inl _ => rfl
             | Sum.inr _ => rfl
-      | ⟨3, _⟩ =>
+      | ⟨3, isLt3⟩ =>
         fun p children ih m h => by
           subst h
-          exact _
-          · rfl
-          · exact ih ⟨d.val, by omega⟩ _ rfl)
+          simp only [finCast, fiberCast]
+          exact subst_id_fold_case
+            isLt3 p children
+            (fun e => ih e))
     t
 
 /-- Substitution composition: substituting twice
