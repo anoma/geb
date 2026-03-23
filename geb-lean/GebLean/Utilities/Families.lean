@@ -124,42 +124,42 @@ postcomposition: an `X`-indexed family of objects in `C` is sent to an
 `X`-indexed family of objects in `D`.
 -/
 @[simp]
-def familyPostcomp (F : C ⥤ D) (X : Type u) : (∀ _ : X, C) ⥤ (∀ _ : X, D) where
+def familyPostcomp' (F : C ⥤ D) (X : Type u) : (∀ _ : X, C) ⥤ (∀ _ : X, D) where
   obj G x := F.obj (G x)
   map φ x := F.map (φ x)
   map_id G := by funext x; simp
   map_comp φ ψ := by funext x; simp
 
 /--
-`familyPostcomp` respects the identity functor.
+`familyPostcomp'` respects the identity functor.
 -/
 @[simp]
-theorem familyPostcomp_id (X : Type u) :
-    familyPostcomp (𝟭 C) X = 𝟭 (∀ _ : X, C) := rfl
+theorem familyPostcomp_id' (X : Type u) :
+    familyPostcomp' (𝟭 C) X = 𝟭 (∀ _ : X, C) := rfl
 
 /--
-`familyPostcomp` respects functor composition.
+`familyPostcomp'` respects functor composition.
 -/
 @[simp]
-theorem familyPostcomp_comp {E : Type u} [Category E] (F : C ⥤ D) (G : D ⥤ E)
-    (X : Type u) : familyPostcomp (F ⋙ G) X = familyPostcomp F X ⋙ familyPostcomp G X := rfl
+theorem familyPostcomp_comp' {E : Type u} [Category E] (F : C ⥤ D) (G : D ⥤ E)
+    (X : Type u) : familyPostcomp' (F ⋙ G) X = familyPostcomp' F X ⋙ familyPostcomp' G X := rfl
 
 /--
-`familyPostcomp` is natural in the indexing type: for any function `f : X → Y`,
+`familyPostcomp'` is natural in the indexing type: for any function `f : X → Y`,
 the following square commutes:
 ```
-  FamilyCat C Y --familyPostcomp F Y--> FamilyCat D Y
+  FamilyCat C Y --familyPostcomp' F Y--> FamilyCat D Y
        |                                     |
   familyMap' f                           familyMap' f
        |                                     |
        v                                     v
-  FamilyCat C X --familyPostcomp F X--> FamilyCat D X
+  FamilyCat C X --familyPostcomp' F X--> FamilyCat D X
 ```
 -/
 @[simp]
-theorem familyPostcomp_natural (F : C ⥤ D) {X Y : Type u} (f : X ⟶ Y) :
-    familyMap' (C' := C) f ⋙ familyPostcomp F X =
-    familyPostcomp F Y ⋙ familyMap' (C' := D) f := rfl
+theorem familyPostcomp_natural' (F : C ⥤ D) {X Y : Type u} (f : X ⟶ Y) :
+    familyMap' (C' := C) f ⋙ familyPostcomp' F X =
+    familyPostcomp' F Y ⋙ familyMap' (C' := D) f := rfl
 
 end FunctorialityInCategory
 
@@ -169,13 +169,13 @@ section FamilyBifunctor
 
 /--
 A functor `F : C ⥤ D` induces a natural transformation from `familyFunctor' C`
-to `familyFunctor' D`, with components given by `familyPostcomp F X`.
+to `familyFunctor' D`, with components given by `familyPostcomp' F X`.
 -/
 @[simp]
 def familyNatTrans' {C D : Type u} [Category.{v} C] [Category.{v} D] (F : C ⥤ D) :
     familyFunctor' C ⟶ familyFunctor' D where
-  app X := (familyPostcomp F X).toCatHom
-  naturality _ _ f := Cat.Hom.ext (familyPostcomp_natural F f).symm
+  app X := (familyPostcomp' F X).toCatHom
+  naturality _ _ f := Cat.Hom.ext (familyPostcomp_natural' F f).symm
 
 theorem familyNatTrans_id' (C : Type u) [Category.{v} C] :
     familyNatTrans' (𝟭 C) = 𝟙 (familyFunctor' C) := by
