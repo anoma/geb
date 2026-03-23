@@ -118,48 +118,110 @@ Supporting: `GebLean/PLang/Syntax.lean`,
 `GebLean/PolyUMorph.lean`,
 `GebLean/Utilities/Slice.lean`
 
-Completed (2026-03-19):
+Completed:
 
 - [x] HasNNO and HasPBTO classes (simple universal
-  property, transcribed from nLab)
+  property, transcribed from nLab; uses
+  HasChosenFiniteProducts for computable products)
 - [x] BT type via PolyFreeM with convenience wrappers
-  (polyProdFreeMNode, polyProdFreeMFoldAt)
+  (polyProdFreeMNode, polyProdFreeMFoldAt,
+  polyProdAlgStr)
 - [x] BTMor1 = PolyFix btMorPoly (polynomial type)
   with four-component coproduct (proj, leaf, branch,
-  fold)
-- [x] Constructors via polyFixStrFamily + polyBetweenInj
+  fold).  Fold constructor supports full mutual
+  recursion with output dimension m and projection
+  index j : Fin m.
+- [x] Constructors: proj/leaf/branch via btMorInject
+  (polyFixStrFamily + polyBetweenInj); fold via
+  btMorInject with Over.homMk if/else children
 - [x] interp via polyFixFoldAtWithProof + algCoprodDesc
-- [x] rename, subst via polyFixFoldAtWithProof
-- [x] btFold (simple, X = 1)
-- [x] Infrastructure: Over.Fiber, polyBetweenRepr,
-  polyProdAlgStr, polyProdEvalOfPair/ToPair
+  (non-dependent carrier (ℕ → BT) → BT)
+- [x] rename via BTMor1.ind (motive parameterized by
+  renaming; step children get identity)
+- [x] subst via BTMor1.ind (same pattern as rename)
+- [x] btFold (simple, X = 1), btFoldFull (X = m,
+  semantic), btFoldEnhanced (g with context access,
+  derived from btFoldFull via nLab construction)
+- [x] Infrastructure: Over.Fiber (Slice.lean),
+  polyBetweenRepr/polyEndoRepr (PolyUMorph.lean),
+  polyProdEvalOfPair/ToPair, polyProdAlgStr,
+  HasChosenFiniteProducts + derivation to mathlib
+  (ComputableLimits.lean), cfpLiftAssoc
+- [x] PolyFix.ind (general, Sort-valued, PolyAlg.lean)
+- [x] PolyFixCoprod.ind (one step per component,
+  PolyAlgUMorph.lean)
+- [x] BTMor1.ind (raw coproduct interface via
+  PolyFixCoprod.ind)
+- [x] PolyEndoFinitary instances (all components,
+  coproduct btMorPoly, free monads polyProdFreeM
+  and btMorFreeM)
+- [x] Round-trip lemmas:
+  - polyFixStrFamily_mk (PolyAlg.lean): structure
+    map of canonical children = PolyFix.mk
+  - polyFixChildAt_homMk (PolyAlg.lean): child
+    extraction from Over.homMk = rfl
+  - polyFixCoprodStr_inj (PolyAlgUMorph.lean):
+    structure map composed with coproduct injection
+  - polyFixCoprodStr_inj_child (PolyAlgUMorph.lean):
+    child extraction through coproduct injection
+  - btMorInject_eq (LawvereBT.lean): btMorInject
+    round-trip via polyFixCoprodStr_inj
+- [x] subst_id: 3/4 cases proved (proj, leaf, branch)
 
 In progress:
 
-- [x] btFoldFull (full universal property, X = m)
-- [x] btFoldEnhanced (enhanced, g with context)
-- [x] PolyFix.ind (general, in PolyAlg.lean)
-- [x] PolyFixCoprod.ind (coproducts, PolyAlgUMorph)
-- [x] BTMor1.ind (raw interface via PolyFixCoprod.ind)
-- [x] PolyEndoFinitary instances (all components,
-  coproduct, free monads)
-- [x] HasChosenFiniteProducts (computable limits)
-- [x] BTMor1.rename via BTMor1.ind
-- [x] BTMor1.subst via BTMor1.ind
-- [x] BTMor1.proj/leaf/branch as direct PolyFix.mk
-- [ ] BTMor1.fold round-trip lemma (btMorInject =
-  PolyFix.mk for fold component)
-- [ ] subst_id proof (3/4 cases work; fold blocked
-  on round-trip)
-- [ ] subst_comp proof (same status)
+- [ ] subst_id fold case.  Technique: use the
+  factoring-out-lemmas approach from CLAUDE.md.
+  Write each intermediate equality step as a named
+  `have` or lemma, each provable by `rfl` or a
+  single named lemma application.  Never let the
+  elaborator see anything bigger than one step.
+  The existing round-trip lemmas provide the pieces;
+  the task is composing them step by step.
+- [ ] subst_comp (same technique once subst_id done)
 - [ ] Category instance for LawvereBTCat
 - [ ] HasFiniteProducts instance
 - [ ] HasPBTO instance
 
+Design notes (2026-03-23):
+
+Layered architecture for polynomial abstractions:
+
+  Layer 1: PolyFix + polyFixChildAt (PolyAlg.lean)
+    Provides: polyFixStrFamily_mk,
+    polyFixChildAt_rfl, polyFixChildAt_homMk,
+    PolyFix.ind.  Code at this layer knows about
+    PolyFix.mk, Over.w, congrFun, transports.
+
+  Layer 2: polyBetweenCoprod + polyBetweenInj
+    (PolyAlgUMorph.lean)
+    Provides: PolyFixCoprod.ind,
+    polyFixCoprodStr_inj,
+    polyFixCoprodStr_inj_child.
+    Code at this layer ONLY uses Layer 1's interface.
+
+  Layer 3: btMorPoly + BTMor1 (LawvereBT.lean)
+    Provides: BTMor1.ind, btMorInject_eq,
+    constructors, rename, subst.
+    Code at this layer ONLY uses Layer 2's interface.
+
+Each layer should have enough lemmas that code
+built on top never needs to know about layers
+below.  If a goal gets long and hard to read, back
+up to where it's clear and factor out a lemma.
+
+Proof technique for substitution laws: use the
+factoring-out-lemmas technique — calculate every
+step manually using named intermediate equalities,
+each provable by `rfl`.  Do not rely on tactics
+to reduce large terms.  The round-trip lemmas at
+each layer provide the building blocks.
+
 Future:
 
 - [ ] Named-constructor BTMor1.ind convenience
-  (hProj/hLeaf/hBranch/hFold interface)
+  (hProj/hLeaf/hBranch/hFold interface, once
+  btMorInject_eq provides the round-trip)
 - [ ] polyBetweenRepr used to refactor btMorFoldPoly
 
 ### Phase 1: Kleisli Category and Isomorphism
