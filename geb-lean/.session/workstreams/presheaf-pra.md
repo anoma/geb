@@ -10,6 +10,65 @@ Define polynomial functors between presheaf categories
 (parametric right adjoints) in Lean, building on the existing
 `CoprodCovarRepCat` and `PolyFunctorBetweenCat` infrastructure.
 
+## Design Principles
+
+### One step at a time
+
+Every definition and proof should take exactly one step
+beyond the definitions it depends on. Factor out intermediate
+definitions so that each one is expressed in terms of the
+layer directly below it, not multiple layers down. This
+ensures that goals and contexts remain readable, that
+tactics can operate at a single level of abstraction, and
+that each definition has a clear, testable meaning.
+
+Use `def`, not `abbrev`, for named intermediate
+constructions. `abbrev` causes automatic expansion, which
+defeats the purpose of factoring: goals appear in terms
+of internals rather than the next layer down.
+
+### Everything is functorial
+
+Every operation must be expressed as a functor (or natural
+transformation, or other higher-order categorical
+construction) to the greatest degree possible. This makes
+operations composable, allows reuse of existing results
+about functor categories, and ensures that naturality
+conditions are handled structurally rather than by ad-hoc
+proofs.
+
+When decomposing a construction, each intermediate step
+should itself be a functor. The final construction is then
+a composition of functors, and its properties follow from
+the properties of the components.
+
+### Worked example: decomposing PresheafPRACat
+
+The original definition was:
+
+```lean
+abbrev PresheafPRACat I J : Cat :=
+  Cat.of
+    (Jᵒᵖ ⥤ CoprodCovarRepCat (Iᵒᵖ ⥤ Type w_I))
+```
+
+This is decomposed into:
+
+1. `catContraHomFunctor (Type w_I) : Catᵒᵖ ⥤ Cat`
+   — the contravariant hom-functor, sending `C` to
+   `C ⥤ Type w_I` via precomposition
+2. Composition with `Cat.opFunctor : Cat ⥤ Cat`
+   (via the op involution `Cat ≅ Catᵒᵖ`) gives a
+   functor `Catᵒᵖ ⥤ Cat` sending `I` to
+   `Iᵒᵖ ⥤ Type w_I`
+3. `CoprodCovarRepCat` applied functorially gives
+   another `Cat`-level operation
+4. The outer `Jᵒᵖ ⥤ ...` functor category is another
+   contravariant hom application
+
+Each step is a `def` with its own type signature, and
+`PresheafPRACat` is defined by composing them.
+
 ## Design Decisions
 
 ### Representation
@@ -50,9 +109,13 @@ secondary result for later.
 
 ### Phase 1: Core Definitions (PresheafPRA.lean)
 
-1. Define `PresheafPRACat I J` as
-   `Cat.of (Jᵒᵖ ⥤ CoprodCovarRepCat (Iᵒᵖ ⥤ Type w_I))`
-2. Accessor functions: `praPositions`, `praDirectionsAt`
+1. Define `catContraHomFunctor D : Catᵒᵖ ⥤ Cat`
+   (contravariant hom-functor)
+2. Define presheaf-category functor
+   `I ↦ Iᵒᵖ ⥤ Type w_I` as a composite
+3. Define `PresheafPRACat I J` using the factored
+   operations (as `def`, not `abbrev`)
+4. Accessor functions: `praPositions`, `praDirectionsAt`
 3. Pointwise evaluation `praEvalAt P Z j` via `ccrEval`
 4. Restriction map construction using `ccrReindex` and
    `ccrFiberMor` from the functor action

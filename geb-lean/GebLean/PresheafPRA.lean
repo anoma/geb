@@ -50,7 +50,7 @@ At each `j : Jᵒᵖ`, this gives a polynomial
 action on morphisms in `Jᵒᵖ` provides reindexing on
 positions and precomposition maps on directions.
 -/
-abbrev PresheafPRACat : Cat :=
+def PresheafPRACat : Cat :=
   Cat.of
     (Jᵒᵖ ⥤
       CoprodCovarRepCat.{max v_I u_I (w_I + 1),
