@@ -218,6 +218,128 @@ def familyBifunctorOp' : Cat.{v, u} ⥤ (Type uᵒᵖ' ⥤ Cat.{max u v, u}) :=
 
 end FamilyBifunctorOp
 
+/-! ## Family functor and bifunctor (using mathlib `op`)
+
+The following definitions parallel the primed (`'`) versions
+above but use mathlib's `Opposite` (`ᵒᵖ`) instead of
+`CategoryOp'` (`ᵒᵖ'`).  The index type universe `w` is
+independent of the category universe `u`, generalizing
+`familyBifunctor'` which forces `w = u`.
+-/
+
+section FamilyOp
+
+universe w
+
+/--
+For a morphism `f : X ⟶ Y` in `(Type w)ᵒᵖ` (wrapping a
+function `Y.unop → X.unop`), the induced functor
+precomposes an `X.unop`-indexed family with `f.unop`.
+-/
+@[simp]
+def familyMap {C : Type u} [Category.{v} C]
+    {X Y : (Type w)ᵒᵖ}
+    (f : X ⟶ Y) :
+    FamilyCat C X.unop ⥤ FamilyCat C Y.unop where
+  obj F y := F (f.unop y)
+  map φ y := φ (f.unop y)
+
+theorem familyMap_id {C : Type u} [Category.{v} C]
+    (X : (Type w)ᵒᵖ) :
+    familyMap (C := C) (𝟙 X) =
+      𝟭 (X.unop → C) := rfl
+
+@[simp]
+theorem familyMap_comp {C : Type u} [Category.{v} C]
+    {X Y Z : (Type w)ᵒᵖ}
+    (f : X ⟶ Y) (g : Y ⟶ Z) :
+    familyMap (C := C) (f ≫ g) =
+      familyMap f ⋙ familyMap g := rfl
+
+/--
+The family functor `familyFunctor C : (Type w)ᵒᵖ ⥤ Cat`
+sends a type `X` to the product category `X → C`.  Uses
+mathlib's `ᵒᵖ`; the index type universe `w` is
+independent of the category universe `u`.
+-/
+@[simp]
+def familyFunctor (C : Type u) [Category.{v} C] :
+    (Type w)ᵒᵖ ⥤ Cat.{max w v, max u w} where
+  obj X := FamilyCat C X.unop
+  map f := (familyMap (C := C) f).toCatHom
+  map_id X := Cat.Hom.ext (familyMap_id X)
+  map_comp _ _ := Cat.Hom.ext rfl
+
+/--
+Postcomposition of families with a functor `F : C ⥤ D`.
+The index type `X` can live in any universe `w`,
+independent of the category universes.
+-/
+@[simp]
+def familyPostcomp {C : Type u} [Category.{v} C]
+    {D : Type u} [Category.{v} D]
+    (F : C ⥤ D) (X : Type w) :
+    (X → C) ⥤ (X → D) where
+  obj G x := F.obj (G x)
+  map φ x := F.map (φ x)
+  map_id G := by ext x; exact F.map_id (G x)
+  map_comp φ ψ := by ext x; exact F.map_comp _ _
+
+lemma familyPostcomp_natural
+    {C D : Type u} [Category.{v} C] [Category.{v} D]
+    (F : C ⥤ D) {X Y : (Type w)ᵒᵖ} (f : X ⟶ Y) :
+    familyMap f ⋙ familyPostcomp F Y.unop =
+      familyPostcomp F X.unop ⋙ familyMap f := rfl
+
+/--
+A functor `F : C ⥤ D` induces a natural transformation
+`familyFunctor C ⟶ familyFunctor D` via postcomposition.
+-/
+@[simp]
+def familyNatTrans
+    {C D : Type u} [Category.{v} C] [Category.{v} D]
+    (F : C ⥤ D) :
+    familyFunctor.{u, v, w} C ⟶
+      familyFunctor.{u, v, w} D where
+  app X := (familyPostcomp F X.unop).toCatHom
+  naturality _ _ f := Cat.Hom.ext
+    (familyPostcomp_natural F f).symm
+
+theorem familyNatTrans_id
+    (C : Type u) [Category.{v} C] :
+    familyNatTrans.{u, v, w} (𝟭 C) =
+      𝟙 (familyFunctor C) := by
+  ext X : 2
+  exact Cat.Hom.ext rfl
+
+theorem familyNatTrans_comp
+    {C D E : Type u} [Category.{v} C]
+    [Category.{v} D] [Category.{v} E]
+    (F : C ⥤ D) (G : D ⥤ E) :
+    familyNatTrans.{u, v, w} (F ⋙ G) =
+      familyNatTrans F ≫ familyNatTrans G := by
+  ext X : 2
+  exact Cat.Hom.ext rfl
+
+/--
+The family bifunctor `familyBifunctor : Cat ⥤ ((Type w)ᵒᵖ ⥤ Cat)`.
+Sends a category `C` to `familyFunctor C` and a functor
+`F` to `familyNatTrans F`.  Uses mathlib's `ᵒᵖ`; the
+index type universe `w` is independent of the category
+universe.
+-/
+@[simp]
+def familyBifunctor :
+    Cat.{v, u} ⥤
+      ((Type w)ᵒᵖ ⥤ Cat.{max w v, max u w}) where
+  obj C := familyFunctor C
+  map F := familyNatTrans F.toFunctor
+  map_id C := familyNatTrans_id C
+  map_comp F G :=
+    familyNatTrans_comp F.toFunctor G.toFunctor
+
+end FamilyOp
+
 /-! ## Grothendieck completions -/
 
 section GrothendieckCompletions
