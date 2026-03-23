@@ -10,34 +10,34 @@ import GebLean.Utilities.Grothendieck
 /-!
 # The family functor and completions
 
-Given a category `C`, the family functor `familyFunctor C : Typeᵒᵖ' ⥤ Cat` sends
+Given a category `C`, the family functor `familyFunctor' C : Typeᵒᵖ' ⥤ Cat` sends
 a type `X` to the product category `∀ x : X, C`, which is the category of
 `X`-indexed families of objects from `C`.
 
 By applying the Grothendieck construction (covariant or contravariant) to
-`familyFunctor` or `familyFunctor ⋙ opFunctor'` (which post-composes with
+`familyFunctor'` or `familyFunctor' ⋙ opFunctor'` (which post-composes with
 oppositization), we obtain four different completions of a category:
 
 1. **Free coproduct completion** (`FreeCoprodCompletionCat`): The contravariant
-   Grothendieck construction on `familyFunctor`. Objects are pairs `(X, F)`
+   Grothendieck construction on `familyFunctor'`. Objects are pairs `(X, F)`
    where `X` is a type and `F : X → C`. Morphisms `(X, F) → (Y, G)` consist of
    `f : X → Y` and `F(x) → G(f(x))`. This freely adjoins coproducts to `C`.
    This category may also be viewed as the category of coproducts of
    contravariant representables (sometimes called "Dirichlet functors").
 
 2. **Free product completion** (`FreeProdCompletionCat`): The covariant
-   Grothendieck construction on `familyFunctor`. Morphisms go in the opposite
+   Grothendieck construction on `familyFunctor'`. Morphisms go in the opposite
    direction for the fiber component. This freely adjoins products to `C`.
 
 3. **Coproducts of covariant representables** (`CoprodCovarRepCat`): The
-   contravariant Grothendieck construction on `familyFunctor ⋙ opFunctor'`.
+   contravariant Grothendieck construction on `familyFunctor' ⋙ opFunctor'`.
    Objects are `X`-indexed families of objects from `Cᵒᵖ'`. This produces
    the category coproducts of covariant representables, which are a form
    of polynomial functors (for some categories, including `Type`, these
    comprise _all_ polynomial functors).
 
 4. **Products of contravariant representables** (`ProdContravarRepCat`): The
-   covariant Grothendieck construction on `familyFunctor ⋙ opFunctor'`.
+   covariant Grothendieck construction on `familyFunctor' ⋙ opFunctor'`.
 
 ## References
 
@@ -78,22 +78,22 @@ For a function `f : X → Y`, the induced functor between family categories
 sends a `Y`-indexed family to an `X`-indexed family by precomposition.
 -/
 @[simp]
-def familyMap.{u', v', w'} {C' : Type u'} [Category.{v'} C'] {X Y : Type w'}
+def familyMap'.{u', v', w'} {C' : Type u'} [Category.{v'} C'] {X Y : Type w'}
     (f : X ⟶ Y) : FamilyCat C' Y ⥤ FamilyCat C' X where
   obj F x := F (f x)
   map φ x := φ (f x)
 
-theorem familyMap_id.{u', v', w'} {C' : Type u'} [Category.{v'} C'] (X : Type w') :
-    familyMap (C' := C') (𝟙 X) = 𝟭 (X → C') := rfl
+theorem familyMap_id'.{u', v', w'} {C' : Type u'} [Category.{v'} C'] (X : Type w') :
+    familyMap' (C' := C') (𝟙 X) = 𝟭 (X → C') := rfl
 
 @[simp]
-theorem familyMap_comp.{u', v', w'} {C' : Type u'} [Category.{v'} C']
+theorem familyMap_comp'.{u', v', w'} {C' : Type u'} [Category.{v'} C']
     {X Y Z : Type w'} (f : X ⟶ Y) (g : Y ⟶ Z) :
-    familyMap (C' := C') (f ≫ g) = familyMap (C' := C') g ⋙ familyMap (C' := C') f :=
+    familyMap' (C' := C') (f ≫ g) = familyMap' (C' := C') g ⋙ familyMap' (C' := C') f :=
   rfl
 
 /--
-The family functor `familyFunctor C : Typeᵒᵖ' ⥤ Cat` sends a type `X` to the
+The family functor `familyFunctor' C : Typeᵒᵖ' ⥤ Cat` sends a type `X` to the
 product category of `C` indexed by `X`. This is the functor whose Grothendieck
 construction yields the free coproduct completion of `C`.
 
@@ -102,11 +102,11 @@ induced functor is given by precomposition: a `Y`-indexed family is sent to
 an `X`-indexed family by `(G : Y → C) ↦ (G ∘ f : X → C)`.
 -/
 @[simp]
-def familyFunctor.{u', v', w'} (C' : Type u') [Category.{v'} C'] :
+def familyFunctor'.{u', v', w'} (C' : Type u') [Category.{v'} C'] :
     Type w'ᵒᵖ' ⥤ Cat.{max w' v', max u' w'} where
   obj X := FamilyCat C' X
-  map f := (familyMap (C' := C') f).toCatHom
-  map_id X := Cat.Hom.ext (familyMap_id X)
+  map f := (familyMap' (C' := C') f).toCatHom
+  map_id X := Cat.Hom.ext (familyMap_id' X)
   map_comp _ _ := Cat.Hom.ext rfl
 
 end FunctorialityInIndex
@@ -150,7 +150,7 @@ the following square commutes:
 ```
   FamilyCat C Y --familyPostcomp F Y--> FamilyCat D Y
        |                                     |
-  familyMap f                           familyMap f
+  familyMap' f                           familyMap' f
        |                                     |
        v                                     v
   FamilyCat C X --familyPostcomp F X--> FamilyCat D X
@@ -158,8 +158,8 @@ the following square commutes:
 -/
 @[simp]
 theorem familyPostcomp_natural (F : C ⥤ D) {X Y : Type u} (f : X ⟶ Y) :
-    familyMap (C' := C) f ⋙ familyPostcomp F X =
-    familyPostcomp F Y ⋙ familyMap (C' := D) f := rfl
+    familyMap' (C' := C) f ⋙ familyPostcomp F X =
+    familyPostcomp F Y ⋙ familyMap' (C' := D) f := rfl
 
 end FunctorialityInCategory
 
@@ -168,37 +168,37 @@ end FunctorialityInCategory
 section FamilyBifunctor
 
 /--
-A functor `F : C ⥤ D` induces a natural transformation from `familyFunctor C`
-to `familyFunctor D`, with components given by `familyPostcomp F X`.
+A functor `F : C ⥤ D` induces a natural transformation from `familyFunctor' C`
+to `familyFunctor' D`, with components given by `familyPostcomp F X`.
 -/
 @[simp]
-def familyNatTrans {C D : Type u} [Category.{v} C] [Category.{v} D] (F : C ⥤ D) :
-    familyFunctor C ⟶ familyFunctor D where
+def familyNatTrans' {C D : Type u} [Category.{v} C] [Category.{v} D] (F : C ⥤ D) :
+    familyFunctor' C ⟶ familyFunctor' D where
   app X := (familyPostcomp F X).toCatHom
   naturality _ _ f := Cat.Hom.ext (familyPostcomp_natural F f).symm
 
-theorem familyNatTrans_id (C : Type u) [Category.{v} C] :
-    familyNatTrans (𝟭 C) = 𝟙 (familyFunctor C) := by
+theorem familyNatTrans_id' (C : Type u) [Category.{v} C] :
+    familyNatTrans' (𝟭 C) = 𝟙 (familyFunctor' C) := by
   ext X : 2
   exact Cat.Hom.ext rfl
 
-theorem familyNatTrans_comp {C D E : Type u} [Category.{v} C] [Category.{v} D]
+theorem familyNatTrans_comp' {C D E : Type u} [Category.{v} C] [Category.{v} D]
     [Category.{v} E] (F : C ⥤ D) (G : D ⥤ E) :
-    familyNatTrans (F ⋙ G) = familyNatTrans F ≫ familyNatTrans G := by
+    familyNatTrans' (F ⋙ G) = familyNatTrans' F ≫ familyNatTrans' G := by
   ext X : 2
   exact Cat.Hom.ext rfl
 
 /--
-The family bifunctor `familyBifunctor : Cat ⥤ (Type uᵒᵖ' ⥤ Cat)` sends a
-category `C` to the family functor `familyFunctor C`, and a functor `F : C ⥤ D`
-to the natural transformation `familyNatTrans F`.
+The family bifunctor `familyBifunctor' : Cat ⥤ (Type uᵒᵖ' ⥤ Cat)` sends a
+category `C` to the family functor `familyFunctor' C`, and a functor `F : C ⥤ D`
+to the natural transformation `familyNatTrans' F`.
 -/
 @[simp]
-def familyBifunctor : Cat.{v, u} ⥤ (Type uᵒᵖ' ⥤ Cat.{max u v, u}) where
-  obj C := familyFunctor C
-  map F := familyNatTrans F.toFunctor
-  map_id C := familyNatTrans_id C
-  map_comp F G := familyNatTrans_comp F.toFunctor G.toFunctor
+def familyBifunctor' : Cat.{v, u} ⥤ (Type uᵒᵖ' ⥤ Cat.{max u v, u}) where
+  obj C := familyFunctor' C
+  map F := familyNatTrans' F.toFunctor
+  map_id C := familyNatTrans_id' C
+  map_comp F G := familyNatTrans_comp' F.toFunctor G.toFunctor
 
 end FamilyBifunctor
 
@@ -207,14 +207,14 @@ end FamilyBifunctor
 section FamilyBifunctorOp
 
 /--
-The opposite family bifunctor `familyBifunctorOp : Cat ⥤ (Type uᵒᵖ' ⥤ Cat)` is
-`familyBifunctor` post-composed with the oppositization functor `opFunctor'`.
+The opposite family bifunctor `familyBifunctorOp' : Cat ⥤ (Type uᵒᵖ' ⥤ Cat)` is
+`familyBifunctor'` post-composed with the oppositization functor `opFunctor'`.
 It sends a category `C` to the functor that maps a type `X` to the opposite
 of the family category `(∀ _ : X, C)ᵒᵖ'`.
 -/
 @[simp]
-def familyBifunctorOp : Cat.{v, u} ⥤ (Type uᵒᵖ' ⥤ Cat.{max u v, u}) :=
-  familyBifunctor ⋙ (Functor.whiskeringRight _ _ _).obj Cat.opFunctor'
+def familyBifunctorOp' : Cat.{v, u} ⥤ (Type uᵒᵖ' ⥤ Cat.{max u v, u}) :=
+  familyBifunctor' ⋙ (Functor.whiskeringRight _ _ _).obj Cat.opFunctor'
 
 end FamilyBifunctorOp
 
@@ -232,43 +232,43 @@ The free coproduct completion of a category `C` with index types in universe
 `X`-indexed family of objects from `C`. Morphisms `(X, F) → (Y, G)` consist of
 a function `f : X → Y` and a family of morphisms `F(x) → G(f(x))`.
 
-This is the contravariant Grothendieck construction applied to `familyFunctor`.
+This is the contravariant Grothendieck construction applied to `familyFunctor'`.
 -/
 @[simp]
 def FreeCoprodCompletionCat.{u', v', w'} (C' : Type u') [Category.{v'} C'] :
     Cat.{max w' v', max (w' + 1) u' w'} :=
   Cat.of (GrothendieckContra'.{w' + 1, w', max u' w', max w' v'}
-    (familyFunctor.{u', v', w'} C'))
+    (familyFunctor'.{u', v', w'} C'))
 
 /--
 The free product completion of a category `C`. Objects are pairs `(X, F)`
 where `X : Type (u+1)` and `F : X → C`. Morphisms `(X, F) → (Y, G)` consist
 of a function `f : X → Y` and a family of morphisms `G(f(x)) → F(x)`.
 
-This is the covariant Grothendieck construction applied to `familyFunctor`.
+This is the covariant Grothendieck construction applied to `familyFunctor'`.
 -/
 @[simp]
 def FreeProdCompletionCat.{u', v', w'} (C' : Type u') [Category.{v'} C'] :
     Cat.{max w' v', max (w' + 1) u' w'} :=
   Cat.of (Grothendieck.{w' + 1, w', max u' w', max w' v'}
-    (familyFunctor.{u', v', w'} C'))
+    (familyFunctor'.{u', v', w'} C'))
 
 /--
 The family functor post-composed with oppositization. This functor
-`familyFunctorOp C : Type^op ⥤ Cat` sends a type `X` to the opposite of
+`familyFunctorOp' C : Type^op ⥤ Cat` sends a type `X` to the opposite of
 the product category `(X → C)^op`.
 
 This is the functor whose contravariant Grothendieck construction yields
 `CoprodCovarRepCat C` and whose covariant Grothendieck construction yields
 `ProdContravarRepCat C`.
 -/
-def familyFunctorOp.{u', v', w'} (C' : Type u') [Category.{v'} C'] :
+def familyFunctorOp'.{u', v', w'} (C' : Type u') [Category.{v'} C'] :
     Type w'ᵒᵖ' ⥤ Cat.{max w' v', max u' w'} :=
-  familyFunctor.{u', v', w'} C' ⋙ Cat.opFunctor'
+  familyFunctor'.{u', v', w'} C' ⋙ Cat.opFunctor'
 
 @[simp]
 lemma familyFunctorOp_eq.{u', v', w'} (C' : Type u') [Category.{v'} C'] :
-    familyFunctorOp.{u', v', w'} C' = familyFunctor.{u', v', w'} C' ⋙ Cat.opFunctor' :=
+    familyFunctorOp'.{u', v', w'} C' = familyFunctor'.{u', v', w'} C' ⋙ Cat.opFunctor' :=
   rfl
 
 /--
@@ -276,25 +276,25 @@ The category of coproducts of covariant representables for `C`. Objects are
 pairs `(X, F)` where `X : Type (u+1)` and `F : X → Cᵒᵖ'` is an `X`-indexed
 family of objects from the opposite category.
 
-This is the contravariant Grothendieck construction applied to `familyFunctor`
-post-composed with oppositization (i.e., `familyFunctorOp`).
+This is the contravariant Grothendieck construction applied to `familyFunctor'`
+post-composed with oppositization (i.e., `familyFunctorOp'`).
 -/
 @[simp]
 def CoprodCovarRepCat.{u', v', w'} (C' : Type u') [Category.{v'} C'] :
     Cat.{max w' v', max (w' + 1) u' w'} :=
   Cat.of (GrothendieckContra'.{w' + 1, w', max u' w', max w' v'}
-    (familyFunctor.{u', v', w'} C' ⋙ Cat.opFunctor'))
+    (familyFunctor'.{u', v', w'} C' ⋙ Cat.opFunctor'))
 
 /--
 The category of products of contravariant representables for `C`. This is the
-covariant Grothendieck construction applied to `familyFunctor` post-composed
-with oppositization (i.e., `familyFunctorOp`).
+covariant Grothendieck construction applied to `familyFunctor'` post-composed
+with oppositization (i.e., `familyFunctorOp'`).
 -/
 @[simp]
 def ProdContravarRepCat.{u', v', w'} (C' : Type u') [Category.{v'} C'] :
     Cat.{max w' v', max (w' + 1) u' w'} :=
   Cat.of (Grothendieck.{w' + 1, w', max u' w', max w' v'}
-    (familyFunctor.{u', v', w'} C' ⋙ Cat.opFunctor'))
+    (familyFunctor'.{u', v', w'} C' ⋙ Cat.opFunctor'))
 
 end GrothendieckCompletions
 
@@ -703,7 +703,7 @@ lemma fcCoprodι_desc {I : Type w} {F : I → FreeCoprodCompletionCat.{u, v, w} 
     change (GrothendieckContra'.comp (fcCoprodι F i) (fcCoprodDesc f)).fiber x = (f i).fiber x
     unfold GrothendieckContra'.comp
     simp only [fcCoprodι, fcCoprodDesc, fcHomMk, eqToHom_refl, Category.comp_id]
-    dsimp only [familyFunctor, familyMap, fcFiberMor]
+    dsimp only [familyFunctor', familyMap', fcFiberMor]
     change (𝟙 (fcFamily (F i) x) ≫ (f i).fiber x) = (f i).fiber x
     simp only [Category.id_comp]
 
@@ -717,7 +717,7 @@ private lemma fcCoprodι_comp_fiber_eq {I : Type w}
   change (GrothendieckContra'.comp (fcCoprodι F i) g).fiber x = _
   unfold GrothendieckContra'.comp
   simp only [fcCoprodι, fcHomMk, eqToHom_refl, Category.comp_id]
-  dsimp only [familyFunctor, familyMap]
+  dsimp only [familyFunctor', familyMap']
   -- The goal should now be: 𝟙 _ ≫ g.fiber ⟨i, x⟩ = g.fiber ⟨i, x⟩
   change (𝟙 (fcFamily (F i) x) ≫ g.fiber ⟨i, x⟩) = g.fiber ⟨i, x⟩
   simp only [Category.id_comp]
@@ -989,7 +989,7 @@ lemma distToRhs_toRhs (A : FreeCoprodCompletionCat.{u, v, w} C)
       (GrothendieckContra'.id (distLhsObj A F)).fiber p
     unfold GrothendieckContra'.comp GrothendieckContra'.id
     simp only [distToRhs, distToLhs, fcHomMk, eqToHom_refl, Category.comp_id]
-    dsimp only [familyFunctor, familyMap]
+    dsimp only [familyFunctor', familyMap']
     change (𝟙 (fcFamily (distLhsObj A F) p) ≫
       𝟙 (fcFamily (distRhsObj A F) (distIndexToRhs p))) = _
     simp only [Category.id_comp]
@@ -1010,7 +1010,7 @@ lemma distToLhs_toLhs (A : FreeCoprodCompletionCat.{u, v, w} C)
       (GrothendieckContra'.id (distRhsObj A F)).fiber p
     unfold GrothendieckContra'.comp GrothendieckContra'.id
     simp only [distToRhs, distToLhs, fcHomMk, eqToHom_refl, Category.comp_id]
-    dsimp only [familyFunctor, familyMap]
+    dsimp only [familyFunctor', familyMap']
     change (𝟙 (fcFamily (distRhsObj A F) p) ≫
       𝟙 (fcFamily (distLhsObj A F) (distIndexToLhs p))) = _
     simp only [Category.id_comp]
@@ -2372,7 +2372,7 @@ private lemma fpProdπ_comp_fiber_eq {I : Type w}
   change (Grothendieck.comp g (fpProdπ F i)).fiber x = g.fiber ⟨i, x⟩
   unfold Grothendieck.comp
   simp only [fpProdπ, fpHomMk, eqToHom_refl, Category.id_comp]
-  dsimp only [familyFunctor, familyMap]
+  dsimp only [familyFunctor', familyMap']
   -- Goal: ((fun x ↦ g.fiber ⟨i, x⟩) ≫ fun x ↦ 𝟙 _) x = g.fiber ⟨i, x⟩
   -- Pi category composition: (α ≫ β) x = α x ≫ β x
   change (g.fiber ⟨i, x⟩ ≫ 𝟙 _) = g.fiber ⟨i, x⟩

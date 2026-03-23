@@ -512,7 +512,7 @@ theorem densityMap_snd_comm (α : F ⟶ G) :
     simp only [densitySrcMap, densitySnd, densityTgtMap, ccrHomMk,
       densityMorphismIndexMap, eqToHom_refl, Category.comp_id]
     rw [piOp'_comp_at_idx, piOp'_comp_at_idx]
-    dsimp only [Functor.comp_map, familyFunctor, familyMap, Cat.opFunctor',
+    dsimp only [Functor.comp_map, familyFunctor', familyMap', Cat.opFunctor',
       Functor.op', functorOp'Obj, ccrFamily, DensityMorphismIndex.hom,
       densityMorphismIndexMap, densityTgt, densitySrc, densityElementsObj,
       DensityMorphismIndex.src, ccrObjMk, DensityMorphismIndex.tgt]
@@ -589,7 +589,7 @@ theorem densityPresentationMap_comp {H : D ⥤ Type (max u w v)} (α : F ⟶ G) 
       unfold GrothendieckContra'.comp
       simp only [densitySrcMap, ccrHomMk, eqToHom_refl, Category.comp_id]
       rw [piOp'_comp_at_idx]
-      dsimp only [Functor.comp_map, familyFunctor, familyMap, Cat.opFunctor',
+      dsimp only [Functor.comp_map, familyFunctor', familyMap', Cat.opFunctor',
         Functor.op', functorOp'Obj, ccrFamily, densityMorphismIndexMap,
         densitySrc, ccrObjMk, DensityMorphismIndex.src, DensityMorphismIndex.tgt,
         densityElementsObj]
@@ -606,7 +606,7 @@ theorem densityPresentationMap_comp {H : D ⥤ Type (max u w v)} (α : F ⟶ G) 
       unfold GrothendieckContra'.comp
       simp only [densityTgtMap, ccrHomMk, eqToHom_refl, Category.comp_id]
       rw [piOp'_comp_at_idx]
-      dsimp only [Functor.comp_map, familyFunctor, familyMap, Cat.opFunctor',
+      dsimp only [Functor.comp_map, familyFunctor', familyMap', Cat.opFunctor',
         Functor.op', functorOp'Obj, ccrFamily, densityElementsObj,
         densityTgt, ccrObjMk]
       exact (Category.id_comp _).symm

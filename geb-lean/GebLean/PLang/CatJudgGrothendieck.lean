@@ -44,13 +44,13 @@ namespace Groth
 
 open CategoryTheory
 
-/-! ## Layer 1: Quiver Functor via familyFunctor
+/-! ## Layer 1: Quiver Functor via familyFunctor'
 
 For each type `X : Type uObj`, a quiver over `X` consists of:
 - For each pair `(x, y) : X × X`, a type `Mor(x, y) : Type uMor` of morphisms
 
 This is `FamilyCat (Type uMor) (X × X)` = the category of `(X × X)`-indexed
-type families. The functor `familyFunctor (Type uMor)` composes with the
+type families. The functor `familyFunctor' (Type uMor)` composes with the
 squaring functor to give us quiver structures.
 -/
 
@@ -86,7 +86,7 @@ theorem sqFunctorOp'_map_comp.{u} {X Y Z : (Type u)ᵒᵖ'} (f : X ⟶ Y) (g : Y
     Objects of `quiverFunctor.obj X` are functions `X × X → Type uMor`, i.e.,
     for each pair of objects, a type of morphisms between them. -/
 def quiverFunctor.{uObj, uMor} : (Type uObj)ᵒᵖ' ⥤ Cat.{max uObj uMor, max uObj (uMor + 1)} :=
-  sqFunctorOp'.{uObj} ⋙ familyFunctor.{uMor + 1, uMor, uObj} (Type uMor)
+  sqFunctorOp'.{uObj} ⋙ familyFunctor'.{uMor + 1, uMor, uObj} (Type uMor)
 
 /-! ## Layer 1 Grothendieck Construction -/
 

@@ -51,10 +51,10 @@ For a polynomial `P = (I, F)` where `I : Type` and `F : I → C`, this functor
 returns `I`. For a morphism, it returns the reindexing function.
 
 This is an alias for `GrothendieckContra'.forget` specialized to
-`familyFunctor C ⋙ Cat.opFunctor'`.
+`familyFunctor' C ⋙ Cat.opFunctor'`.
 -/
 def ccrPosFunctor : CoprodCovarRepCat.{u, v, w} C ⥤ Type w :=
-  GrothendieckContra'.forget (familyFunctor.{u, v, w} C ⋙ Cat.opFunctor')
+  GrothendieckContra'.forget (familyFunctor'.{u, v, w} C ⋙ Cat.opFunctor')
 
 @[simp]
 lemma ccrPosFunctor_obj (P : CoprodCovarRepCat.{u, v, w} C) :
