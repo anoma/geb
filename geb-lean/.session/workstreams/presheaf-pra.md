@@ -116,16 +116,19 @@ secondary result for later.
 3. Define `PresheafPRACat I J` using the factored
    operations (as `def`, not `abbrev`)
 4. Accessor functions: `praPositions`, `praDirectionsAt`
-3. Pointwise evaluation `praEvalAt P Z j` via `ccrEval`
-4. Restriction map construction using `ccrReindex` and
+5. Pointwise evaluation `praEvalAt P Z j` via `ccrEval`
+6. Restriction map construction using `ccrReindex` and
    `ccrFiberMor` from the functor action
-5. Full evaluation `praEvalObj P Z : Jᵒᵖ ⥤ Type _`
-6. Functorial action `praEvalMap` on presheaf morphisms
-7. Evaluation functor `praEvalFunctor P : (Iᵒᵖ ⥤ Type w_I) ⥤ (Jᵒᵖ ⥤ Type _)`
-8. Morphism evaluation `praMorphEvalAt`, `praMorphEval`
-9. Functor lifting `praEvalCatFunctor :
-   PresheafPRACat I J ⥤ ((Iᵒᵖ ⥤ Type w_I) ⥤ (Jᵒᵖ ⥤ Type _))`
-10. Register in `GebLean.lean`
+7. Full evaluation `praEvalObj P Z : Jᵒᵖ ⥤ Type _`
+8. Functorial action `praEvalMap` on presheaf morphisms
+9. Evaluation functor `praEvalFunctor P :
+   (Iᵒᵖ ⥤ Type w_I) ⥤ (Jᵒᵖ ⥤ Type _)`
+10. Morphism evaluation `praMorphEvalAt`,
+    `praMorphEval`
+11. Functor lifting `praEvalCatFunctor :
+    PresheafPRACat I J ⥤
+    ((Iᵒᵖ ⥤ Type w_I) ⥤ (Jᵒᵖ ⥤ Type _))`
+12. Register in `GebLean.lean`
 
 ### Phase 2: Discrete-Category Connection
 
