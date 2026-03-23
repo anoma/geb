@@ -2731,7 +2731,20 @@ def catContraHomFunctor (D : Cat.{v₂, u₂}) :
 
 end GebLean
 
-/-! ### Relation to Cat's Cartesian Closed Structure -/
+/-! ### Relation to Cat's Cartesian Closed Structure
+
+The following lemmas relate `catHomProfunctor` to
+`internalHom` from `Cat`'s cartesian closed structure,
+organized by level:
+
+- Level 0: object-level agreement (`Cat.ihom_obj`)
+- Level 1: covariant map agreement (`Cat.ihom_map`)
+- Level 2: contravariant map agreement
+  (`Cat.pre_app_eq_whiskeringLeft`)
+- Level 3: per-C functor equality
+- Level 4: profunctor map equality
+- Level 5: full profunctor equality
+-/
 
 namespace GebLean
 
@@ -2739,28 +2752,122 @@ open CategoryTheory
 
 universe u_eq
 
+/-! #### Level 2: Cat.pre equals whiskeringLeft -/
+
+/--
+`pre(f).app D` equals `curry(whiskerRight f ≫ ev)`.
+Follows from `curry_pre_app` and the counit triangle
+identity.
+-/
+lemma Cat.pre_app_eq_curry
+    {A B D : Cat.{u_eq, u_eq}} (f : A ⟶ B) :
+    (MonoidalClosed.pre (C := Cat) f).app D =
+    MonoidalClosed.curry
+      (MonoidalCategoryStruct.whiskerRight f
+        ((ihom B).obj D) ≫
+        (ihom.ev B).app D) := by
+  rw [← Category.id_comp
+    ((MonoidalClosed.pre f).app D)]
+  conv_lhs => rw [← MonoidalClosed.curry_uncurry
+    (𝟙 ((ihom B).obj D)),
+    MonoidalClosed.uncurry_id_eq_ev]
+  exact MonoidalClosed.curry_pre_app f
+    ((ihom.ev B).app D)
+
+/--
+`whiskeringLeft f` equals `curry(whiskerRight f ≫ ev)`.
+This is a direct computation about Cat's adjunction:
+currying the composite "precompose with f, then
+evaluate" yields precomposition.
+-/
+lemma Cat.whiskeringLeft_eq_curry
+    {A B D : Cat.{u_eq, u_eq}} (f : A ⟶ B) :
+    ((Functor.whiskeringLeft ↑A ↑B ↑D).obj
+      f.toFunctor).toCatHom =
+    MonoidalClosed.curry
+      (MonoidalCategoryStruct.whiskerRight f
+        ((ihom B).obj D) ≫
+        (ihom.ev B).app D) := by
+  suffices h : MonoidalClosed.uncurry
+      (((Functor.whiskeringLeft ↑A ↑B ↑D).obj
+        f.toFunctor).toCatHom) =
+      MonoidalCategoryStruct.whiskerRight f
+        ((ihom B).obj D) ≫
+        (ihom.ev B).app D by
+    rw [← h, MonoidalClosed.curry_uncurry]
+  apply Cat.Hom.ext
+  apply CategoryTheory.Functor.hext
+  · intro ⟨_, _⟩; rfl
+  · intro ⟨_, _⟩ ⟨_, _⟩ ⟨_, _⟩; rfl
+
+/--
+For `Cat`, the CCC contravariant action `pre f` at `D`
+equals precomposition with `f` via `whiskeringLeft`.
+-/
+lemma Cat.pre_app_eq_whiskeringLeft
+    {A B : Cat.{u_eq, u_eq}} (f : A ⟶ B)
+    (D : Cat.{u_eq, u_eq}) :
+    (MonoidalClosed.pre (C := Cat) f).app D =
+    ((Functor.whiskeringLeft ↑A ↑B ↑D).obj
+      f.toFunctor).toCatHom :=
+  (Cat.pre_app_eq_curry f).trans
+    (Cat.whiskeringLeft_eq_curry f).symm
+
+/-! #### Level 3: Per-C functor equality -/
+
+/--
+For each `C`, the covariant hom-functor
+`catCovarHomFunctor C` equals `ihom C` (as a functor
+`Cat ⥤ Cat`).  Objects agree by `Cat.ihom_obj` and maps
+agree by `Cat.ihom_map`.
+-/
+lemma catCovarHomFunctor_eq_ihom
+    (C : Cat.{u_eq, u_eq}) :
+    catCovarHomFunctor.{u_eq, u_eq, u_eq, u_eq} C =
+      ihom C :=
+  CategoryTheory.Functor.hext
+    (fun _ => Cat.ihom_obj ↑C _)
+    (fun _ _ _ => by
+      simp [catCovarHomFunctor]; rfl)
+
+/-! #### Level 4: Profunctor map equality -/
+
+/--
+The profunctor maps agree: `catHomProfunctor.map f`
+equals `internalHom.map f` (as natural transformations
+between covariant hom-functors).  Uses
+`Cat.pre_app_eq_whiskeringLeft` for the contravariant
+direction.
+-/
+lemma catHomProfunctor_map_eq_internalHom_map
+    {C₁ C₂ : Cat.{u_eq, u_eq}ᵒᵖ} (f : C₁ ⟶ C₂) :
+    catHomProfunctor.{u_eq, u_eq, u_eq, u_eq}.map f =
+    eqToHom (catCovarHomFunctor_eq_ihom C₁.unop) ≫
+    (MonoidalClosed.internalHom
+      (C := Cat.{u_eq, u_eq})).map f ≫
+    eqToHom (catCovarHomFunctor_eq_ihom
+      C₂.unop).symm := by
+  ext D : 2
+  simp only [catHomProfunctor, catHomProfunctorMap,
+    eqToHom_refl, Category.id_comp, Category.comp_id,
+    MonoidalClosed.internalHom]
+  exact (Cat.pre_app_eq_whiskeringLeft
+    f.unop D).symm
+
+/-! #### Level 5: Full profunctor equality -/
+
 /--
 When all universe levels coincide, `catHomProfunctor`
-agrees with `internalHom` from `Cat`'s cartesian closed
-structure on objects: both send `(C, D)` to
-`Cat.of (C ⥤ D)`.
-
-The covariant (D-) component agrees definitionally
-(both use `whiskeringRight`, via `Cat.ihom_map`).  The
-contravariant (C-) component agrees propositionally but
-not definitionally: `catHomProfunctor` uses
-`whiskeringLeft` directly, while `internalHom` uses the
-general CCC `pre` construction.  Relating these at the
-morphism level is an open TODO in mathlib's
-`Cat.CartesianClosed` module.
+equals `internalHom` from `Cat`'s cartesian closed
+structure.
 -/
-lemma catHomProfunctor_obj_eq_internalHom_obj
-    (C : Cat.{u_eq, u_eq}ᵒᵖ)
-    (D : Cat.{u_eq, u_eq}) :
-    (catHomProfunctor.{u_eq, u_eq, u_eq, u_eq}.obj
-      C).obj D =
-    ((MonoidalClosed.internalHom
-        (C := Cat.{u_eq, u_eq})).obj C).obj D :=
-  Cat.ihom_obj ↑(Opposite.unop C) ↑D
+lemma catHomProfunctor_eq_internalHom :
+    catHomProfunctor.{u_eq, u_eq, u_eq, u_eq} =
+      (MonoidalClosed.internalHom
+        (C := Cat.{u_eq, u_eq})) :=
+  CategoryTheory.Functor.ext
+    (fun C => catCovarHomFunctor_eq_ihom C.unop)
+    (fun _ _ f => by
+      simp [catHomProfunctor_map_eq_internalHom_map])
 
 end GebLean
