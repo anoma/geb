@@ -1180,14 +1180,29 @@ private lemma subst_id_fold_case
   unfold BTMor1.fold btMorInject
   simp only [btMorPoly, btMorCarrier,
     sigma_fiberCast_eq]
-  -- Goal: polyFixStrFamily with if-then-else
-  -- (canonical sigma pairs, non-canonical Fin
-  -- indices) = PolyFix.mk with original children.
-  -- The Fin reindexing (e.g. ⟨↑d, _⟩ vs d,
-  -- ⟨p.fst + (↑d - p.fst), _⟩ vs d) needs
-  -- collapsing before polyFixCoprodRoundTrip
-  -- applies.
-  _
+  convert polyFixCoprodRoundTrip
+    ⟨3, isLt⟩ p children using 4
+  · apply Over.OverMorphism.ext
+    funext d
+    simp only [Over.homMk_left]
+    split_ifs with hb hs
+    · rfl
+    · exact congrArg
+        (fun x =>
+          (⟨(polyBetweenFamily ℕ ℕ
+            (btMorComponents ⟨3, isLt⟩)
+              n p).hom x,
+            children x⟩ :
+            (polyFixCarrier btMorPoly).left))
+        (Fin.ext (by dsimp; omega))
+    · exact congrArg
+        (fun x =>
+          (⟨(polyBetweenFamily ℕ ℕ
+            (btMorComponents ⟨3, isLt⟩)
+              n p).hom x,
+            children x⟩ :
+            (polyFixCarrier btMorPoly).left))
+        (Fin.ext (by dsimp; omega))
 
 /-- The identity substitution: substituting
 projections into a term returns the original term. -/
