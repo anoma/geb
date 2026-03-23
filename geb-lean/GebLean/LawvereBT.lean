@@ -1308,6 +1308,61 @@ theorem BTMor1.subst_id {n : ℕ}
             (fun e => ih e))
     t
 
+private lemma subst_comp_fold_case
+    {n m k : ℕ}
+    (isLt : 3 < 4)
+    (p : polyBetweenIndex ℕ ℕ
+      (btMorComponents ⟨3, isLt⟩) n)
+    (children :
+      ∀ e : (polyBetweenFamily ℕ ℕ
+        (btMorComponents ⟨3, isLt⟩) n
+          p).left,
+        BTMor1
+          ((polyBetweenFamily ℕ ℕ
+            (btMorComponents ⟨3, isLt⟩) n
+              p).hom e))
+    (σ : Fin n → BTMor1 m)
+    (τ : Fin m → BTMor1 k)
+    (ih :
+      ∀ e : (polyBetweenFamily ℕ ℕ
+        (btMorComponents ⟨3, isLt⟩) n
+          p).left,
+        ∀ (m' : ℕ)
+          (h : (polyBetweenFamily ℕ ℕ
+            (btMorComponents ⟨3, isLt⟩) n
+              p).hom e = m')
+          (σ' : Fin m' → BTMor1 m),
+          ((children e).subst
+            (fun v =>
+              σ' (finCast h v))).subst τ =
+            (children e).subst
+              (fun v =>
+                (σ' (finCast h v)).subst
+                  τ)) :
+    (BTMor1.subst
+      (PolyFix.mk n
+        (show polyBetweenIndex ℕ ℕ
+          btMorPoly n from
+          ⟨⟨3, isLt⟩, p⟩)
+        children)
+      (fun v => σ v)).subst τ =
+    BTMor1.subst
+      (PolyFix.mk n
+        (show polyBetweenIndex ℕ ℕ
+          btMorPoly n from
+          ⟨⟨3, isLt⟩, p⟩)
+        children)
+      (fun v => (σ v).subst τ) := by
+  -- LHS: ((fold-node).subst σ).subst τ
+  -- RHS: (fold-node).subst (fun v => (σ v).subst τ)
+  -- Both reduce to BTMor1.fold with children
+  -- processed by double/composed substitution.
+  -- The IH equates these, and the fold
+  -- reconstruction follows by the same
+  -- convert + polyFixCoprodRoundTrip technique
+  -- as in subst_id_fold_case.
+  _
+
 /-- Substitution composition: substituting twice
 equals substituting with the composed
 substitution. -/
@@ -1317,6 +1372,64 @@ theorem BTMor1.subst_comp {n m k : ℕ}
     (τ : Fin m → BTMor1 k) :
     (t.subst σ).subst τ =
       t.subst (fun i => (σ i).subst τ) := by
-  exact _
+  suffices gen : ∀ (m' : ℕ) (h : n = m')
+      (σ' : Fin m' → BTMor1 m),
+      (t.subst
+        (fun v => σ' (finCast h v))).subst
+          τ =
+        t.subst
+          (fun v =>
+            (σ' (finCast h v)).subst τ)
+    from by
+    have := gen n rfl σ
+    simp only [finCast] at this
+    exact this
+  exact BTMor1.ind
+    (motive := fun {n'} (t : BTMor1 n') =>
+      ∀ (m' : ℕ) (h : n' = m')
+        (σ' : Fin m' → BTMor1 m),
+        (t.subst
+          (fun v =>
+            σ' (finCast h v))).subst τ =
+          t.subst
+            (fun v =>
+              (σ' (finCast h v)).subst τ))
+    (step := fun i => match i with
+      | ⟨0, _⟩ =>
+        fun p _ _ m' h σ' => by
+          subst h; simp only [finCast]; rfl
+      | ⟨1, _⟩ =>
+        fun _ _ _ m' h σ' => by
+          subst h; simp only [finCast]; rfl
+      | ⟨2, _⟩ =>
+        fun _ children ih m' h σ' => by
+          subst h; simp only [finCast]
+          change BTMor1.branch
+            (((children
+              (Sum.inl PUnit.unit)).subst
+                σ').subst τ)
+            (((children
+              (Sum.inr PUnit.unit)).subst
+                σ').subst τ) =
+            BTMor1.branch
+              ((children
+                (Sum.inl PUnit.unit)).subst
+                  (fun v => (σ' v).subst τ))
+              ((children
+                (Sum.inr PUnit.unit)).subst
+                  (fun v => (σ' v).subst τ))
+          have ihl :=
+            ih (Sum.inl PUnit.unit) _ rfl σ'
+          have ihr :=
+            ih (Sum.inr PUnit.unit) _ rfl σ'
+          simp only [finCast] at ihl ihr
+          rw [ihl, ihr]
+      | ⟨3, isLt3⟩ =>
+        fun p children ih m' h σ' => by
+          subst h; simp only [finCast]
+          exact subst_comp_fold_case
+            isLt3 p children σ' τ
+            (fun e => ih e))
+    t
 
 end GebLean
