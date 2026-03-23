@@ -46,6 +46,17 @@ def presheafCat : Cat :=
     (Opposite.op (Cat.of Iᵒᵖ))).obj
     (Cat.of (Type w_I))
 
+/-! ## CoprodCovarRepCat of the Presheaf Category -/
+
+/--
+The category of coproducts of covariant representables on
+the presheaf category of `I`, as an object of `Cat`.
+-/
+def ccrPresheafCat : Cat :=
+  CoprodCovarRepCat.{max v_I u_I (w_I + 1),
+    max u_I w_I, w'}
+    (↑(presheafCat.{u_I, v_I, w_I} I))
+
 /-! ## The Category of Presheaf PRAs -/
 
 section PresheafPRADef
@@ -61,13 +72,16 @@ At each `j : Jᵒᵖ`, this gives a polynomial
 `(A(j), E_j : A(j) → (Iᵒᵖ ⥤ Type w_I))`.  The functor
 action on morphisms in `Jᵒᵖ` provides reindexing on
 positions and precomposition maps on directions.
+
+Defined as `catHomProfunctor` applied at
+`(Jᵒᵖ, ccrPresheafCat I)`.
 -/
 def PresheafPRACat : Cat :=
-  Cat.of
-    (Jᵒᵖ ⥤
-      CoprodCovarRepCat.{max v_I u_I (w_I + 1),
-        max u_I w_I, w'}
-        (↑(presheafCat.{u_I, v_I, w_I} I)))
+  (catHomProfunctor.{v_J, u_J,
+      max w' (max u_I w_I),
+      max (w' + 1) (max v_I u_I (w_I + 1)) w'}.obj
+    (Opposite.op (Cat.of Jᵒᵖ))).obj
+    (ccrPresheafCat.{u_I, v_I, w_I, w'} I)
 
 end PresheafPRADef
 
