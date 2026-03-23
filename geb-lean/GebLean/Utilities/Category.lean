@@ -1,9 +1,11 @@
 import Mathlib.CategoryTheory.Category.Cat
+import Mathlib.CategoryTheory.Category.Cat.CartesianClosed
 import Mathlib.CategoryTheory.Category.Cat.Op
 import Mathlib.CategoryTheory.Comma.Arrow
 import Mathlib.CategoryTheory.Comma.Over.Basic
 import Mathlib.CategoryTheory.Equivalence
 import Mathlib.CategoryTheory.Limits.Shapes.IsTerminal
+import Mathlib.CategoryTheory.Monoidal.Closed.Cartesian
 import Mathlib.CategoryTheory.Whiskering
 import Mathlib.Combinatorics.Quiver.ReflQuiver
 
@@ -2636,88 +2638,129 @@ open CategoryTheory
 universe v₁ u₁ v₂ u₂
 
 /--
-The contravariant hom-functor of `D` in `Cat`.  Sends a
-category `C` to the functor category `C ⥤ D`, with the
-action on morphisms given by precomposition
-(`Functor.whiskeringLeft`).
-
-This is the object map of `catHomProfunctor` in the `D`
-argument.
+The covariant hom-functor of `C` in `Cat`.  Sends a
+category `D` to the functor category `C ⥤ D`, with the
+action on morphisms given by postcomposition
+(`Functor.whiskeringRight`).
 -/
-def catContraHomFunctor (D : Cat.{v₂, u₂}) :
-    Cat.{v₁, u₁}ᵒᵖ ⥤
+def catCovarHomFunctor (C : Cat.{v₁, u₁}) :
+    Cat.{v₂, u₂} ⥤
       Cat.{max u₁ v₂, max v₁ v₂ u₁ u₂} where
-  obj C := Cat.of (C.unop ⥤ ↑D)
-  map f := ((Functor.whiskeringLeft _ _ ↑D).obj
-    f.unop.toFunctor).toCatHom
-  map_id C := by
+  obj D := Cat.of (↑C ⥤ ↑D)
+  map G := ((Functor.whiskeringRight _ _ _).obj
+    G.toFunctor).toCatHom
+  map_id D := by
     apply Cat.Hom.ext
-    simp only [Cat.of_α, unop_id,
-      Cat.Hom.id_toFunctor,
+    simp only [Cat.of_α, Cat.Hom.id_toFunctor,
+      Functor.toCatHom_toFunctor]
+    exact (Functor.whiskeringRight_obj_id
+      (C := ↑D) (E := ↑C)).symm
+  map_comp G H := by
+    apply Cat.Hom.ext
+    simp only [Cat.of_α, Cat.Hom.comp_toFunctor,
+      Functor.toCatHom_toFunctor]
+    exact (Functor.whiskeringRight_obj_comp
+      (E := ↑C) G.toFunctor H.toFunctor).symm
+
+/--
+The contravariant action of a morphism `f : C ⟶ C'` in
+`Catᵒᵖ` on the hom-profunctor.  Produces a natural
+transformation
+`catCovarHomFunctor C ⟶ catCovarHomFunctor C'`
+whose components are precomposition with
+`f.unop.toFunctor` (`Functor.whiskeringLeft`).
+-/
+def catHomProfunctorMap
+    {C C' : Cat.{v₁, u₁}ᵒᵖ} (f : C ⟶ C') :
+    catCovarHomFunctor.{v₁, u₁, v₂, u₂} C.unop ⟶
+      catCovarHomFunctor.{v₁, u₁, v₂, u₂}
+        C'.unop where
+  app D :=
+    ((Functor.whiskeringLeft _ _ ↑D).obj
+      f.unop.toFunctor).toCatHom
+  naturality D₁ D₂ G := by
+    apply Cat.Hom.ext
+    simp only [Cat.of_α, catCovarHomFunctor,
+      Cat.Hom.comp_toFunctor,
+      Functor.toCatHom_toFunctor]
+    apply CategoryTheory.Functor.ext (fun _ => rfl)
+
+/--
+The `Cat`-enriched hom profunctor, in curried form
+matching the standard profunctor convention
+`Catᵒᵖ ⥤ (Cat ⥤ Cat)`.  Sends `C : Catᵒᵖ` to the
+covariant functor `catCovarHomFunctor C : Cat ⥤ Cat`,
+which maps `D` to `C ⥤ D`.
+
+On morphisms in `Catᵒᵖ`: a functor `f : C' ⥤ C` acts by
+precomposition, producing a natural transformation
+`catCovarHomFunctor C ⟶ catCovarHomFunctor C'`.
+-/
+def catHomProfunctor :
+    Cat.{v₁, u₁}ᵒᵖ ⥤
+      (Cat.{v₂, u₂} ⥤
+        Cat.{max u₁ v₂, max v₁ v₂ u₁ u₂}) where
+  obj C := catCovarHomFunctor C.unop
+  map f := catHomProfunctorMap f
+  map_id C := by
+    ext D : 2
+    apply Cat.Hom.ext
+    simp only [catHomProfunctorMap, unop_id,
+      NatTrans.id_app, Cat.Hom.id_toFunctor,
       Functor.toCatHom_toFunctor]
     exact Functor.whiskeringLeft_obj_id
   map_comp f g := by
+    ext D : 2
     apply Cat.Hom.ext
-    simp only [Cat.of_α, unop_comp,
-      Cat.Hom.comp_toFunctor,
+    simp only [catHomProfunctorMap, unop_comp,
+      NatTrans.comp_app, Cat.Hom.comp_toFunctor,
       Functor.toCatHom_toFunctor]
     exact Functor.whiskeringLeft_obj_comp
       g.unop.toFunctor f.unop.toFunctor
 
 /--
-The covariant action of a morphism `G : D ⟶ D'` in `Cat` on
-the hom-profunctor.  Given `G`, this produces a natural
-transformation
-`catContraHomFunctor D ⟶ catContraHomFunctor D'`
-whose components are postcomposition with `G.toFunctor`
-(`Functor.whiskeringRight`).
+The contravariant hom-functor of `D` in `Cat`.  Sends a
+category `C` to the functor category `C ⥤ D` via
+precomposition.  Defined as the flip of `catHomProfunctor`
+applied to `D`.
 -/
-def catHomProfunctorMap
-    {D D' : Cat.{v₂, u₂}} (G : D ⟶ D') :
-    catContraHomFunctor.{v₁, u₁} D ⟶
-      catContraHomFunctor.{v₁, u₁} D' where
-  app C :=
-    ((Functor.whiskeringRight _ _ ↑D').obj
-      G.toFunctor).toCatHom
-  naturality C₁ C₂ f := by
-    apply Cat.Hom.ext
-    simp only [Cat.of_α, catContraHomFunctor,
-      Cat.Hom.comp_toFunctor,
-      Functor.toCatHom_toFunctor]
-    apply Functor.ext (fun _ => rfl)
+def catContraHomFunctor (D : Cat.{v₂, u₂}) :
+    Cat.{v₁, u₁}ᵒᵖ ⥤
+      Cat.{max u₁ v₂, max v₁ v₂ u₁ u₂} :=
+  catHomProfunctor.flip.obj D
+
+end GebLean
+
+/-! ### Relation to Cat's Cartesian Closed Structure -/
+
+namespace GebLean
+
+open CategoryTheory
+
+universe u_eq
 
 /--
-The `Cat`-enriched hom profunctor, in curried form.  Sends
-`D : Cat` to the contravariant functor
-`catContraHomFunctor D : Catᵒᵖ ⥤ Cat`, which maps `C` to
-`C ⥤ D`.
+When all universe levels coincide, `catHomProfunctor`
+agrees with `internalHom` from `Cat`'s cartesian closed
+structure on objects: both send `(C, D)` to
+`Cat.of (C ⥤ D)`.
 
-On morphisms: a functor `G : D ⥤ D'` acts by
-postcomposition, producing a natural transformation
-`catContraHomFunctor D ⟶ catContraHomFunctor D'`.
+The covariant (D-) component agrees definitionally
+(both use `whiskeringRight`, via `Cat.ihom_map`).  The
+contravariant (C-) component agrees propositionally but
+not definitionally: `catHomProfunctor` uses
+`whiskeringLeft` directly, while `internalHom` uses the
+general CCC `pre` construction.  Relating these at the
+morphism level is an open TODO in mathlib's
+`Cat.CartesianClosed` module.
 -/
-def catHomProfunctor :
-    Cat.{v₂, u₂} ⥤
-      (Cat.{v₁, u₁}ᵒᵖ ⥤
-        Cat.{max u₁ v₂, max v₁ v₂ u₁ u₂}) where
-  obj D := catContraHomFunctor D
-  map G := catHomProfunctorMap G
-  map_id D := by
-    ext C : 2
-    apply Cat.Hom.ext
-    simp only [catHomProfunctorMap,
-      NatTrans.id_app, Cat.Hom.id_toFunctor,
-      Functor.toCatHom_toFunctor]
-    exact (Functor.whiskeringRight_obj_id
-      (C := ↑D) (E := ↑C.unop)).symm
-  map_comp G H := by
-    ext C : 2
-    apply Cat.Hom.ext
-    simp only [catHomProfunctorMap,
-      NatTrans.comp_app, Cat.Hom.comp_toFunctor,
-      Functor.toCatHom_toFunctor]
-    exact (Functor.whiskeringRight_obj_comp
-      (E := ↑C.unop)
-      G.toFunctor H.toFunctor).symm
+lemma catHomProfunctor_obj_eq_internalHom_obj
+    (C : Cat.{u_eq, u_eq}ᵒᵖ)
+    (D : Cat.{u_eq, u_eq}) :
+    (catHomProfunctor.{u_eq, u_eq, u_eq, u_eq}.obj
+      C).obj D =
+    ((MonoidalClosed.internalHom
+        (C := Cat.{u_eq, u_eq})).obj C).obj D :=
+  Cat.ihom_obj ↑(Opposite.unop C) ↑D
 
 end GebLean
