@@ -442,55 +442,86 @@ def CompValue.cases {α : Type u}
       (children (Sum.inl PUnit.unit))
       (children (Sum.inr PUnit.unit))
 
-/-- Auxiliary recursive conversion from `CompValue`
-to `Value`, following the pattern of
-`polyFixFoldAtWithProof` to enable structural
-recursion on `PolyFix`. -/
-def compValueToValueAux :
-    (x : CompFiber.{u}) →
-    PolyFix polyComputation x →
-    Value.{u}
-  | _, PolyFix.mk (Sum.inl _) i children =>
-    match i with
-    | ⟨⟨0, _⟩, _⟩ =>
-      Value.leaf
-    | ⟨⟨1, _⟩, _⟩ =>
-      Value.stem
-        (compValueToValueAux _
-          (children PUnit.unit))
-    | ⟨⟨2, _⟩, _⟩ =>
-      Value.fork
-        (compValueToValueAux _
-          (children
-            (Sum.inl PUnit.unit)))
-        (compValueToValueAux _
-          (children
-            (Sum.inr PUnit.unit)))
-  | _, PolyFix.mk (Sum.inr _)
-      (Sum.inl _) children =>
-    compValueToValueAux _
-      (children PUnit.unit)
-  | _, PolyFix.mk (Sum.inr _)
-      (Sum.inr _) _ =>
-    Value.leaf
+/-- Extract the inner `Value` from either
+summand. -/
+def compValueSumGet :
+    Value.{u} ⊕ Value.{u} → Value.{u}
+  | Sum.inl v => v
+  | Sum.inr v => v
 
-/-- Catamorphism on `CompValue`: recursively replaces
-leaf with `onLeaf`, stem with `onStem`, and fork
-with `onFork`. -/
+/-- Carrier for the `polyComputation`-algebra
+used by `compValueToValue`.  Elements are
+`Value ⊕ Value`, with `Sum.inl` at the value
+fiber and `Sum.inr` at the computation fiber. -/
+def compValueAlgCarrier :
+    Over CompFiber.{u} :=
+  Over.mk
+    (fun (p : Value.{u} ⊕ Value.{u}) =>
+      match p with
+      | Sum.inl _ => CompFiber.val
+      | Sum.inr _ => CompFiber.comp)
+
+/-- The `.left` component of the structure map
+for the `compValueToValue` algebra. -/
+def compValueAlgStrLeft :
+    (Σ x : CompFiber.{u},
+      polyBetweenEvalFamily
+        CompFiber CompFiber
+        polyComputation
+        compValueAlgCarrier x) →
+    Value.{u} ⊕ Value.{u}
+  | ⟨Sum.inl _, ⟨⟨⟨0, _⟩, _⟩, _⟩⟩ =>
+    Sum.inl Value.leaf
+  | ⟨Sum.inl _, ⟨⟨⟨1, _⟩, _⟩, mor⟩⟩ =>
+    Sum.inl
+      (Value.stem
+        (compValueSumGet (mor.left PUnit.unit)))
+  | ⟨Sum.inl _, ⟨⟨⟨2, _⟩, _⟩, mor⟩⟩ =>
+    Sum.inl
+      (Value.fork
+        (compValueSumGet
+          (mor.left (Sum.inl PUnit.unit)))
+        (compValueSumGet
+          (mor.left (Sum.inr PUnit.unit))))
+  | ⟨Sum.inr _, ⟨Sum.inl _, mor⟩⟩ =>
+    Sum.inr
+      (compValueSumGet (mor.left PUnit.unit))
+  | ⟨Sum.inr _, ⟨Sum.inr _, _⟩⟩ =>
+    Sum.inr Value.leaf
+
+/-- The `polyComputation`-algebra mapping to
+`Value` at both fibers. -/
+def compValueAlg :
+    PolyAlg polyComputation.{u} := {
+  a := compValueAlgCarrier
+  str := Over.homMk compValueAlgStrLeft
+    (by funext ⟨x, e⟩; match x, e with
+     | Sum.inl _, ⟨⟨⟨0, _⟩, _⟩, _⟩ => rfl
+     | Sum.inl _, ⟨⟨⟨1, _⟩, _⟩, _⟩ => rfl
+     | Sum.inl _, ⟨⟨⟨2, _⟩, _⟩, _⟩ => rfl
+     | Sum.inr _, ⟨Sum.inl _, _⟩ => rfl
+     | Sum.inr _, ⟨Sum.inr _, _⟩ => rfl)
+}
+
+/-- Converts a `CompValue` to the corresponding
+`Value` via catamorphism. -/
+def compValueToValue (v : CompValue.{u}) :
+    Value.{u} :=
+  compValueSumGet
+    (polyFixFoldAtWithProof
+      polyComputation compValueAlg
+      CompFiber.val v).val
+
+/-- Catamorphism on `CompValue`: recursively
+replaces leaf with `onLeaf`, stem with `onStem`,
+and fork with `onFork`. -/
 def CompValue.fold {α : Type u}
     (onLeaf : α)
     (onStem : α → α)
     (onFork : α → α → α) :
     CompValue.{u} → α :=
-  fun v => compValueToValueAux
-    CompFiber.val v |>.fold
-      onLeaf onStem onFork
-
-/-- Converts a `CompValue` to the corresponding
-`Value`. -/
-def compValueToValue :
-    CompValue.{u} → Value.{u} :=
-  compValueToValueAux CompFiber.val
+  fun v => (compValueToValue v).fold
+    onLeaf onStem onFork
 
 /-- Embeds a `Value` directly into a `CompTree`
 by first converting to `CompValue` and then
