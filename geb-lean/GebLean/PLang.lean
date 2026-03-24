@@ -9,6 +9,7 @@ import GebLean.PLang.IndexedEAT
 import GebLean.PLang.JudgmentUniverse
 import GebLean.PLang.TreeCalcPoly
 import GebLean.PLang.TreeCalcReduction
+import GebLean.PLang.TreeCalcPrograms
 
 /-!
 # PLang Index

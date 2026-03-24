@@ -64,6 +64,10 @@ Principles".
   function, evaluation anamorphism (340 lines)
 - `GebLeanTests/TestTreeCalcReduction.lean` —
   Task 5 tests (16 #guard assertions)
+- `GebLean/PLang/TreeCalcPrograms.lean` — Task 6:
+  derived combinators, abstraction, fixpoints
+- `GebLeanTests/TestTreeCalcPrograms.lean` —
+  Task 6 tests (25 #guard assertions)
 - `GebLean/PLang.lean` — index (imports
   TreeCalcPoly, TreeCalcReduction)
 - `GebLean/Utilities.lean` — index (imports
@@ -388,12 +392,28 @@ constructors/labels is a coproduct extension.
   - Round-trip proofs
   - Also being developed in Phase 1 thread
 
-- [ ] Task 6: Derived combinators
-  (`TreeCalcPrograms.lean`)
-  - K, I, D, S, triage as Value terms
-  - Booleans, naturals, queries (isLeaf, isStem, etc.)
-  - Bracket and star abstraction
-  - Fixpoint combinators: self_apply, Z, swap, Y_2
+- [x] Task 6: Derived combinators
+  (`GebLean/PLang/TreeCalcPrograms.lean`)
+  - `Value.K` = `stem(leaf)`, `Value.S f g` =
+    `fork(stem(f), g)`, `Value.I` = `S K K`
+  - `Value.triage w x y` = `fork(fork(w, x), y)`
+  - `Value.true` = K, `Value.false` = K I
+  - `Value.applyK v` = `fork(leaf, v)` (K applied)
+  - `Value.isLeaf`, `Value.isStem`, `Value.isFork`
+    via triage
+  - `Value.appArgs` — left-associated application
+  - `Value.contains` — subtree containment check
+    (catamorphism via fold with reconstruction)
+  - `Value.bracket` — bracket abstraction
+    (catamorphism via fold with reconstruction)
+  - `Value.star` — optimized star abstraction
+    (catamorphism with S/K optimization)
+  - `Value.selfApply` = `S I I`,
+    `Value.omega2` = `fork(selfApply, selfApply)`,
+    `Value.Y2 f` = `fork(d, d)` where `d = S f I`
+  - Tests: K (2), I (2), S (1), triage (2),
+    booleans (2), queries (4), appArgs (3),
+    contains (6), bracket (2), Y2 (1)
 
 - [ ] Task 7: PCA structure (`TreeCalcMeta.lean`)
   - Partial application via reduction coalgebra
