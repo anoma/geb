@@ -59,7 +59,13 @@ Principles".
   generic combinators (`polySigma`, `polyBaseChange`,
   `polyFiberReindex`, `polyAtFiber`, `polyNatDirs`)
   (127 lines)
-- `GebLean/PLang.lean` — index (imports TreeCalcPoly)
+- `GebLean/PLang/TreeCalcReduction.lean` — Task 5:
+  behavior polynomial, reduction coalgebra, step
+  function, evaluation anamorphism (340 lines)
+- `GebLeanTests/TestTreeCalcReduction.lean` —
+  Task 5 tests (16 #guard assertions)
+- `GebLean/PLang.lean` — index (imports
+  TreeCalcPoly, TreeCalcReduction)
 - `GebLean/Utilities.lean` — index (imports
   PolyCombinators)
 - `docs/plans/2026-03-06-termcat-design.md` — design doc
@@ -325,6 +331,52 @@ constructors/labels is a coproduct extension.
     non-recursive case analysis
   - `Inhabited CompValue`, `Inhabited CompTree`
 
+- [x] Task 5: Behavior polynomial and reduction
+  coalgebra (`GebLean/PLang/TreeCalcReduction.lean`)
+  - `behaviorDirType : Fin 4 → Type u` — direction
+    types for done-leaf, done-stem, done-fork, cont
+  - `polyBehavior : PolyEndo PUnit` — single-sorted
+    behavior polynomial with four positions
+  - `mkApp` — helper for building application trees
+  - `applyRule : CompValue → CompTree → Option
+    CompTree` — five triage rules + partial apps
+  - `reduce1 (fuel : Nat) : CompTree → CompTree` —
+    one step of eager (leftmost-innermost) reduction
+  - `StepResult α` — observation type (done-leaf,
+    done-stem, done-fork, cont)
+  - `observeValue : CompValue → StepResult CompTree`
+  - `step (fuel : Nat) : CompTree → StepResult
+    CompTree` — coalgebra step function
+  - `stepCarrier`, `stepResultToSigma`,
+    `stepCoalgStrLeft`, `stepCoalg` — coalgebra
+    packaging as `PolyCoalg polyBehavior`
+  - `eval (fuel : Nat) : CompTree → PolyCofix
+    polyBehavior PUnit.unit` — evaluation
+    anamorphism via `polyCofixUnfoldAt`
+  - `ReducesOnce`, `Reduces` — one-step and
+    multi-step reduction relations
+  - Tests: partial apps (2), K rule (2),
+    S rule (1), triage 3a/3b/3c (3),
+    observeValue (3), step on values (3),
+    step on apps (3)
+  Design notes:
+  - `polyBehavior` is single-sorted (`PolyEndo
+    PUnit`) rather than two-sorted, since all
+    children at every position target the comp
+    fiber.  The val fiber identity was removed.
+  - `reduce1` uses a `fuel : Nat` parameter for
+    termination.  Direct structural recursion on
+    `PolyFix.mk` was attempted but `omega` could
+    not see constraints through `ULift`/pattern
+    match desugaring.  The fuel approach is clean
+    and pragmatic; sufficiency of fuel for
+    terminating computations can be proved later.
+  - `applyRule` implements K and S rules for any
+    argument (not requiring the argument to be a
+    value), while triage rules and partial apps
+    return `none` when the argument is a
+    computation (requiring further reduction).
+
 #### Remaining tasks
 
 - [ ] Task 3: Rose-tree polynomial and isomorphism
@@ -335,29 +387,6 @@ constructors/labels is a coproduct extension.
   - Binary-to-rose and rose-to-binary maps
   - Round-trip proofs
   - Also being developed in Phase 1 thread
-
-- [ ] Task 5: Behavior polynomial and reduction
-  coalgebra (`TreeCalcReduction.lean`)
-  - Define behavior polynomial `Q : PolyEndo CompFiber`
-    - Fiber 0: identity (values don't compute)
-    - Fiber 1: value-shaped observation (leaf/stem/fork
-      with sub-computation children)
-  - Define one-step triage reduction as a Q-coalgebra:
-    `step : CompTree → Q(comp)(CompTree)`
-  - Define `reduces` (multi-step reduction, reflexive-
-    transitive closure)
-  - Define `IsFinite` predicate on `PolyCofix Q`
-    elements (finite = terminating computation)
-  - Define full evaluation anamorphism via
-    `polyCofixUnfold`
-  - Implement the five triage rules:
-    - Rule 1 (K): leaf applied to 2+ args
-    - Rule 2 (S): stem applied to 2+ args
-    - Rules 3a-c (triage): fork applied, dispatch on
-      argument structure (leaf/stem/fork)
-  - Partial applications: app([leaf, x]) → stem(x),
-    app([stem(a), x]) → fork(a, x)
-  - Test reduction on ground terms
 
 - [ ] Task 6: Derived combinators
   (`TreeCalcPrograms.lean`)

@@ -8,6 +8,7 @@ import GebLean.PLang.CatJudgCoprAdjunction
 import GebLean.PLang.IndexedEAT
 import GebLean.PLang.JudgmentUniverse
 import GebLean.PLang.TreeCalcPoly
+import GebLean.PLang.TreeCalcReduction
 
 /-!
 # PLang Index
