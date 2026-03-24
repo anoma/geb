@@ -43,33 +43,11 @@ private def isAppOfLength
     (fun ts => ts.length == n)
     t
 
-/-- Check if a StepResult is doneLeaf. -/
-private def isDoneLeaf
-    (r : StepResult CompTree.{0}) : Bool :=
-  match r with
-  | .doneLeaf => true
-  | _ => false
-
-/-- Check if a StepResult is doneStem. -/
-private def isDoneStem
-    (r : StepResult CompTree.{0}) : Bool :=
-  match r with
-  | .doneStem _ => true
-  | _ => false
-
-/-- Check if a StepResult is doneFork. -/
-private def isDoneFork
-    (r : StepResult CompTree.{0}) : Bool :=
-  match r with
-  | .doneFork _ _ => true
-  | _ => false
-
-/-- Check if a StepResult is cont. -/
-private def isCont
-    (r : StepResult CompTree.{0}) : Bool :=
-  match r with
-  | .cont _ => true
-  | _ => false
+/-- Check observation position (Fin 4 index). -/
+private def obsTag
+    (obs : BehaviorObs stepCarrier.{0}) :
+    Fin 4 :=
+  BehaviorObs.tag obs
 
 /-! ## Partial application tests -/
 
@@ -129,29 +107,29 @@ fork(stem(a), b) x --> app(a, x, app(b, x)) -/
 
 /-! ## observeValue tests -/
 
-#guard isDoneLeaf (observeValue VL)
-#guard isDoneStem (observeValue (VS VL))
-#guard isDoneFork (observeValue (VF VL VL))
+#guard obsTag (observeValue VL) == 0
+#guard obsTag (observeValue (VS VL)) == 1
+#guard obsTag (observeValue (VF VL VL)) == 2
 
 /-! ## step on values -/
 
-#guard isDoneLeaf (step 10 (EV VL))
-#guard isDoneStem (step 10 (EV (VS VL)))
-#guard isDoneFork (step 10 (EV (VF VL VL)))
+#guard obsTag (step 10 (EV VL)) == 0
+#guard obsTag (step 10 (EV (VS VL))) == 1
+#guard obsTag (step 10 (EV (VF VL VL))) == 2
 
 /-! ## step on simple applications -/
 
--- app([]) -> doneLeaf
-#guard isDoneLeaf (step 10 (APP []))
+-- app([]) -> doneLeaf (tag 0)
+#guard obsTag (step 10 (APP [])) == 0
 
--- app([t]) -> cont(t)
-#guard isCont (step 10 (APP [EV VL]))
+-- app([t]) -> cont (tag 3)
+#guard obsTag (step 10 (APP [EV VL])) == 3
 
 -- K rule through step: should reduce and
 -- observe the result
 -- fork(leaf, leaf) applied to leaf: K -> leaf
 -- reduce1 produces embed(leaf), step observes
--- it as doneLeaf
-#guard isDoneLeaf
+-- it as doneLeaf (tag 0)
+#guard obsTag
   (step 10
-    (APP [EV (VF VL VL), EV VL]))
+    (APP [EV (VF VL VL), EV VL])) == 0

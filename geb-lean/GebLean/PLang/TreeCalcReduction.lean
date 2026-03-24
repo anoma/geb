@@ -54,6 +54,76 @@ def polyBehavior : PolyEndo PUnit.{u + 1} :=
         (fun (_ : behaviorDirType.{u} p.1) =>
           PUnit.unit))
 
+/-! ## Observation Type
+
+`BehaviorObs A` is the type of observations
+produced by the behavior polynomial at a
+carrier `A : Over PUnit`.  It is defined as the
+polynomial evaluation family of `polyBehavior`
+at `A`, not as a separate inductive.
+-/
+
+/-- Carrier for the reduction coalgebra:
+`CompTree` over `PUnit`. -/
+def stepCarrier : Over PUnit.{u + 1} :=
+  Over.mk (fun (_ : CompTree.{u}) => PUnit.unit)
+
+/-- Observation type: the behavior polynomial
+evaluated at carrier `A`.  Elements are pairs
+of a position index and a morphism from the
+direction object at that position to `A`. -/
+abbrev BehaviorObs (A : Over PUnit.{u + 1}) :=
+  polyBetweenEvalFamily PUnit PUnit
+    polyBehavior.{u} A PUnit.unit
+
+/-- Extract the position index (Fin 4) from
+an observation. -/
+def BehaviorObs.tag
+    (obs : BehaviorObs stepCarrier.{u}) :
+    Fin 4 :=
+  obs.1.1
+
+/-- Done-leaf observation: computation terminated
+as a leaf with no sub-computations. -/
+def BehaviorObs.doneLeaf :
+    BehaviorObs stepCarrier.{u} :=
+  ⟨⟨(0 : Fin 4), PUnit.unit⟩,
+   Over.homMk (fun e => PEmpty.elim e)
+     (by funext e; exact PEmpty.elim e)⟩
+
+/-- Done-stem observation: computation terminated
+as a stem; `child` is the sub-computation. -/
+def BehaviorObs.doneStem
+    (child : CompTree.{u}) :
+    BehaviorObs stepCarrier.{u} :=
+  ⟨⟨(1 : Fin 4), PUnit.unit⟩,
+   Over.homMk (fun _ => child)
+     (by funext _; rfl)⟩
+
+/-- Done-fork observation: computation terminated
+as a fork; `l` and `r` are the
+sub-computations. -/
+def BehaviorObs.doneFork
+    (l r : CompTree.{u}) :
+    BehaviorObs stepCarrier.{u} :=
+  ⟨⟨(2 : Fin 4), PUnit.unit⟩,
+   Over.homMk
+     (fun e => match e with
+       | Sum.inl _ => l
+       | Sum.inr _ => r)
+     (by funext e; match e with
+       | Sum.inl _ => rfl
+       | Sum.inr _ => rfl)⟩
+
+/-- Continuation observation: computation not
+yet terminated; `next` is the next state. -/
+def BehaviorObs.cont
+    (next : CompTree.{u}) :
+    BehaviorObs stepCarrier.{u} :=
+  ⟨⟨(3 : Fin 4), PUnit.unit⟩,
+   Over.homMk (fun _ => next)
+     (by funext _; rfl)⟩
+
 /-! ## Rule Application
 
 `applyRule v x` attempts to apply value `v` to
@@ -132,10 +202,7 @@ def applyRule :
 /-! ## One-Step Reduction
 
 `reduce1` performs one step of eager (leftmost
-innermost) reduction on a `CompTree`.  It
-pattern-matches on the `PolyFix` constructor to
-enable structural recursion: recursive calls are
-always on direct children of the current node.
+innermost) reduction on a `CompTree`.
 -/
 
 /-- One step of eager (leftmost-innermost)
@@ -179,35 +246,22 @@ def reduce1 (fuel : Nat) :
 
 The `step` function is the coalgebra structure
 map: given a `CompTree`, it produces an
-observation.  Values are observed immediately
-(done-leaf, done-stem, done-fork).  Computations
-are reduced by one step and returned as
-continuations.
-
-`StepResult α` is the type of observations,
-isomorphic to `polyBehavior PUnit.unit` applied
-to the constant carrier `α`.
+observation in `BehaviorObs stepCarrier` (the
+behavior polynomial evaluated at the carrier).
+Values are observed immediately (done-leaf,
+done-stem, done-fork).  Computations are reduced
+by one step and returned as continuations.
 -/
 
-/-- Result of one step of the behavior
-coalgebra.  Isomorphic to applying the behavior
-polynomial at the sole fiber. -/
-inductive StepResult (α : Type u) : Type u where
-  | doneLeaf : StepResult α
-  | doneStem : α → StepResult α
-  | doneFork : α → α → StepResult α
-  | cont : α → StepResult α
-  deriving Inhabited
-
 /-- Observe a `CompValue`: report its top-level
-structure as a `StepResult`. -/
+structure as a `BehaviorObs`. -/
 def observeValue (v : CompValue.{u}) :
-    StepResult CompTree.{u} :=
+    BehaviorObs stepCarrier.{u} :=
   CompValue.cases
-    StepResult.doneLeaf
-    (fun x => StepResult.doneStem
-      (CompTree.embed x))
-    (fun l r => StepResult.doneFork
+    BehaviorObs.doneLeaf
+    (fun child => BehaviorObs.doneStem
+      (CompTree.embed child))
+    (fun l r => BehaviorObs.doneFork
       (CompTree.embed l) (CompTree.embed r))
     v
 
@@ -216,18 +270,18 @@ or reduce and continue.  The `fuel` parameter
 bounds the depth of sub-term reduction within
 a single step. -/
 def step (fuel : Nat) (t : CompTree.{u}) :
-    StepResult CompTree.{u} :=
+    BehaviorObs stepCarrier.{u} :=
   CompTree.cases
     (fun v => observeValue v)
     (fun ts =>
       match ts with
-      | [] => StepResult.doneLeaf
-      | [s] => StepResult.cont s
+      | [] => BehaviorObs.doneLeaf
+      | [s] => BehaviorObs.cont s
       | _ =>
         let t' := reduce1 fuel t
         CompTree.cases
           (fun v => observeValue v)
-          (fun _ => StepResult.cont t')
+          (fun _ => BehaviorObs.cont t')
           t')
     t
 
@@ -236,53 +290,18 @@ def step (fuel : Nat) (t : CompTree.{u}) :
 The `step` function is packaged as a
 `PolyCoalg polyBehavior` with carrier
 `CompTree` (viewed as an object of
-`Over PUnit`).
+`Over PUnit`).  No conversion is needed: `step`
+already produces elements of the polynomial
+evaluation family.
 -/
-
-/-- Carrier for the reduction coalgebra:
-`CompTree` over `PUnit`. -/
-def stepCarrier : Over PUnit.{u + 1} :=
-  Over.mk (fun (_ : CompTree.{u}) => PUnit.unit)
-
-/-- Convert a `StepResult CompTree` to the
-sigma type used by `polyBetweenEvalFamily`. -/
-def stepResultToSigma
-    (r : StepResult CompTree.{u}) :
-    polyBetweenEvalFamily PUnit PUnit
-      polyBehavior.{u} stepCarrier
-      PUnit.unit :=
-  match r with
-  | .doneLeaf =>
-    ⟨⟨(0 : Fin 4), PUnit.unit⟩,
-     Over.homMk (fun e => PEmpty.elim e)
-       (by funext e; exact PEmpty.elim e)⟩
-  | .doneStem child =>
-    ⟨⟨(1 : Fin 4), PUnit.unit⟩,
-     Over.homMk (fun _ => child)
-       (by funext _; rfl)⟩
-  | .doneFork l r =>
-    ⟨⟨(2 : Fin 4), PUnit.unit⟩,
-     Over.homMk
-       (fun e => match e with
-         | Sum.inl _ => l
-         | Sum.inr _ => r)
-       (by funext e; match e with
-         | Sum.inl _ => rfl
-         | Sum.inr _ => rfl)⟩
-  | .cont child =>
-    ⟨⟨(3 : Fin 4), PUnit.unit⟩,
-     Over.homMk (fun _ => child)
-       (by funext _; rfl)⟩
 
 /-- The `.left` component of the reduction
 coalgebra structure map. -/
 def stepCoalgStrLeft (fuel : Nat) :
     CompTree.{u} →
-    (Σ x : PUnit.{u + 1},
-      polyBetweenEvalFamily PUnit PUnit
-        polyBehavior.{u} stepCarrier x) :=
-  fun t => ⟨PUnit.unit,
-    stepResultToSigma (step fuel t)⟩
+    (Σ _ : PUnit.{u + 1},
+      BehaviorObs stepCarrier.{u}) :=
+  fun t => ⟨PUnit.unit, step fuel t⟩
 
 /-- The reduction coalgebra: `CompTree` equipped
 with the `step` structure map. -/
@@ -310,8 +329,10 @@ def eval (fuel : Nat) (t : CompTree.{u}) :
 
 /-! ## Multi-Step Reduction
 
-`Reduces` is the reflexive-transitive closure
-of one-step reduction.
+`Reduces` is defined via iteration of `reduce1`,
+not as a separate inductive: `t1` reduces to
+`t2` when some number of `reduce1` iterations
+transforms `t1` into `t2`.
 -/
 
 /-- One-step reduction relation: `t1` reduces to
@@ -320,15 +341,42 @@ def ReducesOnce (fuel : Nat)
     (t1 t2 : CompTree.{u}) : Prop :=
   reduce1 fuel t1 = t2
 
-/-- Multi-step reduction: reflexive-transitive
-closure of `ReducesOnce`. -/
-inductive Reduces (fuel : Nat) :
-    CompTree.{u} → CompTree.{u} → Prop where
-  | refl {t : CompTree.{u}} :
-    Reduces fuel t t
-  | step {t1 t2 t3 : CompTree.{u}} :
+/-- Multi-step reduction: `t1` reduces to `t2`
+in `n` steps of `reduce1` for some `n`. -/
+def Reduces (fuel : Nat)
+    (t1 t2 : CompTree.{u}) : Prop :=
+  ∃ n : Nat, (reduce1 fuel)^[n] t1 = t2
+
+/-- `Reduces` is reflexive. -/
+lemma Reduces.refl
+    {fuel : Nat} {t : CompTree.{u}} :
+    Reduces fuel t t :=
+  ⟨0, rfl⟩
+
+/-- `Reduces` is transitive. -/
+lemma Reduces.trans
+    {fuel : Nat}
+    {t1 t2 t3 : CompTree.{u}} :
+    Reduces fuel t1 t2 →
+    Reduces fuel t2 t3 →
+    Reduces fuel t1 t3 := by
+  intro ⟨m, hm⟩ ⟨n, hn⟩
+  exact ⟨m + n, by
+    rw [show m + n = n + m from Nat.add_comm m n,
+        Function.iterate_add,
+        Function.comp_apply, hm, hn]⟩
+
+/-- One step extends a reduction sequence. -/
+lemma Reduces.step
+    {fuel : Nat}
+    {t1 t2 t3 : CompTree.{u}} :
     ReducesOnce fuel t1 t2 →
     Reduces fuel t2 t3 →
-    Reduces fuel t1 t3
+    Reduces fuel t1 t3 := by
+  intro h1 ⟨n, hn⟩
+  exact ⟨n + 1, by
+    simp only [Function.iterate_succ,
+      Function.comp]
+    rw [h1, hn]⟩
 
 end GebLean
