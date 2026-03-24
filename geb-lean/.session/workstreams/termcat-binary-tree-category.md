@@ -49,19 +49,27 @@ Principles".
 
 ## Files
 
-- `GebLean/PLang/TermCat.lean` — primary implementation
-  (skeleton created, imports `Syntax.lean`)
-- `GebLean/PLang.lean` — index (already imports
-  `TermCat`)
+- `GebLean/PLang/TermCat.lean` — skeleton (Phase 1)
+- `GebLean/PLang/TreeCalcPoly.lean` — Phase 2:
+  value polynomial (`polyValue`), computation
+  polynomial (`polyComputation`), Value/CompValue/
+  CompTree types, constructors, fold, cases,
+  conversions (522 lines)
+- `GebLean/Utilities/PolyCombinators.lean` — Phase 2:
+  generic combinators (`polySigma`, `polyBaseChange`,
+  `polyFiberReindex`, `polyAtFiber`, `polyNatDirs`)
+  (127 lines)
+- `GebLean/PLang.lean` — index (imports TreeCalcPoly)
+- `GebLean/Utilities.lean` — index (imports
+  PolyCombinators)
 - `docs/plans/2026-03-06-termcat-design.md` — design doc
 - `docs/tree-calculus.md` — tree calculus reference
-  (syntax, reduction rules, PCA structure,
-  self-reflection, type system (detailed), external
-  references)
 - `docs/polynomial-algebra-coalgebra-categories.md` —
-  reference document on universal properties of P-Alg
-  and P-Coalg, base category requirements, and
-  candidate base categories (Sections 10-11)
+  reference document on P-Alg and P-Coalg
+- `docs/superpowers/specs/2026-03-22-tree-calculus-phase2-design.md`
+  — Phase 2 spec (gitignored)
+- `docs/superpowers/plans/2026-03-22-tree-calculus-phase2.md`
+  — Phase 2 plan (gitignored)
 
 ## Dependencies
 
@@ -216,27 +224,194 @@ Three candidate base categories:
 
 ### Phase 2: Tree Calculus Reduction and Bootstrapping
 
-- [ ] Choose the behavior polynomial `Q` for triage
-  calculus (see design doc section "GSOS Infrastructure
-  and Triage Reduction")
-- [ ] Use finite-branching isomorphism to define
-  leaf/stem/fork case analysis (child count 0, 1, 2)
-- [ ] Define the 5 triage reduction rules as a GSOS rule
-  `rho : PolyGSOSRule (polyProd X) Q`
-- [ ] Verify that the GSOS fold on ground terms
-  reproduces the triage reduction rules
-- [ ] Show confluence (non-overlapping rules)
-- [ ] Define PCA structure (K and S from rules 1-2)
-- [ ] Define the primitive-recursive syntactic fragment:
-  terms computing only via `polyFixFold` into algebras,
-  excluding general fixed-point combinators
-- [ ] Prove in Lean that all terms in the syntactic
-  fragment terminate
-- [ ] Implement the self-recognizer: a tree-calculus
-  program, itself in the primitive-recursive fragment,
-  that decides membership in the fragment
-- [ ] Prove in Lean that the self-recognizer is correct
-  (sound and complete) and terminates
+Spec: `docs/superpowers/specs/2026-03-22-tree-calculus-phase2-design.md`
+Plan: `docs/superpowers/plans/2026-03-22-tree-calculus-phase2.md`
+(Both in `docs/superpowers/` which is gitignored.)
+
+#### Design decisions (settled 2026-03-22)
+
+**Two-sorted slice polynomial.** Tree calculus values
+and computations are separated into two sorts using
+`PolyEndo CompFiber` where
+`CompFiber = PUnit ⊕ PUnit` (universe-polymorphic
+two-element type). Sort 0 (val) = values
+(leaf/stem/fork), Sort 1 (comp) = computations
+(embed value | app of list of computations). The sort
+determines child types: value nodes have value
+children, application nodes have computation children.
+
+**Coalgebraic evaluation.** Tree calculus is
+Turing-complete; evaluation is partial. Computation
+is represented as an element of the terminal coalgebra
+(cofree comonad) of a behavior polynomial Q. Finite
+elements = terminating computations; infinite elements
+= diverging. `polyCofixUnfold` gives the anamorphism.
+
+**Combinator library via universal properties.** All
+combinators in `PolyCombinators.lean` reuse existing
+universal constructions (`polyBetweenLKanObj`,
+`polyBetweenComp`, `polyBetweenCoprod`). The two
+fundamental polynomial operations for a function
+`f : X → Y` are `polySigma f` (dependent sum, Sigma_f)
+and `polyBaseChange f` (pullback, f*), forming the
+adjoint triple `Sigma_f -| f* -| Pi_f` (Gambino-Kock
+decomposition). `polyFiberReindex f P` =
+`polySigma f` composed with `LKan_{polySigma f}(P)`.
+
+**No explicit recursion.** All folds go through
+`polyFixFoldAtWithProof` (the catamorphism / counit
+of the initial algebra). This gives computation rules
+and uniqueness for free. Non-recursive case analysis
+via single-level match on `PolyFix.mk` (inverting the
+structure map isomorphism) is acceptable.
+
+**Extensible via coproducts.** The polynomial
+representation is "data types a la carte" — adding
+constructors/labels is a coproduct extension.
+
+#### Completed tasks
+
+- [x] Task 1: Polynomial combinator library
+  (`GebLean/Utilities/PolyCombinators.lean`)
+  - `polyBaseChange f` — f* as `PolyBetween Y X`
+  - `polySigma f` — Sigma_f as `PolyBetween X Y`
+  - `polyFiberReindex f P` — derived from Sigma_f +
+    LKan + composition
+  - `polyAtFiber j P` — single-fiber restriction
+  - `polyNatDirs target` — Nat-indexed positions
+    with Fin n directions
+
+- [x] Task 2: Value polynomial and Value type
+  (`GebLean/PLang/TreeCalcPoly.lean`, lines 1-287)
+  - `valueDirType : Fin 3 → Type u`
+  - `polyValue : PolyEndo PUnit` — three-summand
+    coproduct (leaf/stem/fork) defined directly via
+    `ccrObjMk` with `Fin 3 × PUnit` positions
+  - `Value = PolyFix polyValue PUnit.unit`
+  - Constructors: `Value.leaf`, `Value.stem`,
+    `Value.fork`
+  - `Value.fold` via `polyFixFoldAtWithProof` with
+    `@[simp]` computation rules (universe-restricted
+    to `Type 0`)
+  - `Value.cases` — non-recursive case analysis
+  - `Value.tag` — constructor tag extraction
+  - Injection lemmas (`stem_injective`,
+    `fork_left_injective`, `fork_right_injective`)
+  - Discrimination lemmas (`leaf_ne_stem`,
+    `leaf_ne_fork`, `stem_ne_fork`)
+  - `Value.size` via fold
+  - `ValueAux` bridge for `Repr` and `BEq` instances
+  - `Inhabited Value`
+
+- [x] Task 4: Two-sorted computation polynomial
+  (`GebLean/PLang/TreeCalcPoly.lean`, lines 288-end)
+  - `CompFiber = PUnit ⊕ PUnit` — universe-polymorphic
+    fiber type (`CompFiber.val`, `CompFiber.comp`)
+  - `compPosType`, `compDirType`, `compDirFiber` —
+    position/direction/fiber-map definitions
+  - `polyComputation : PolyEndo CompFiber`
+  - `CompValue = PolyFix polyComputation CompFiber.val`
+  - `CompTree = PolyFix polyComputation CompFiber.comp`
+  - Constructors: `CompTree.embed`, `CompTree.app`,
+    `CompValue.leaf`, `CompValue.stem`, `CompValue.fork`
+  - `valueToCompValue` via `Value.fold`
+  - `compValueToValue` via `polyFixFoldAtWithProof`
+    with `compValueAlg : PolyAlg polyComputation`
+    (carrier `Value ⊕ Value` at both fibers)
+  - `CompValue.fold` via `compValueToValue` then
+    `Value.fold` (two catamorphisms composed)
+  - `CompTree.embedValue` — `Value → CompTree`
+  - `CompValue.cases`, `CompTree.cases` —
+    non-recursive case analysis
+  - `Inhabited CompValue`, `Inhabited CompTree`
+
+#### Remaining tasks
+
+- [ ] Task 3: Rose-tree polynomial and isomorphism
+  (NOT on dependency path for Tasks 5-12; can be
+  deferred or done in parallel)
+  - `polyRoseTree A : PolyEndo X` — positions
+    `(label, Nat)`, directions `Fin n`
+  - Binary-to-rose and rose-to-binary maps
+  - Round-trip proofs
+  - Also being developed in Phase 1 thread
+
+- [ ] Task 5: Behavior polynomial and reduction
+  coalgebra (`TreeCalcReduction.lean`)
+  - Define behavior polynomial `Q : PolyEndo CompFiber`
+    - Fiber 0: identity (values don't compute)
+    - Fiber 1: value-shaped observation (leaf/stem/fork
+      with sub-computation children)
+  - Define one-step triage reduction as a Q-coalgebra:
+    `step : CompTree → Q(comp)(CompTree)`
+  - Define `reduces` (multi-step reduction, reflexive-
+    transitive closure)
+  - Define `IsFinite` predicate on `PolyCofix Q`
+    elements (finite = terminating computation)
+  - Define full evaluation anamorphism via
+    `polyCofixUnfold`
+  - Implement the five triage rules:
+    - Rule 1 (K): leaf applied to 2+ args
+    - Rule 2 (S): stem applied to 2+ args
+    - Rules 3a-c (triage): fork applied, dispatch on
+      argument structure (leaf/stem/fork)
+  - Partial applications: app([leaf, x]) → stem(x),
+    app([stem(a), x]) → fork(a, x)
+  - Test reduction on ground terms
+
+- [ ] Task 6: Derived combinators
+  (`TreeCalcPrograms.lean`)
+  - K, I, D, S, triage as Value terms
+  - Booleans, naturals, queries (isLeaf, isStem, etc.)
+  - Bracket and star abstraction
+  - Fixpoint combinators: self_apply, Z, swap, Y_2
+
+- [ ] Task 7: PCA structure (`TreeCalcMeta.lean`)
+  - Partial application via reduction coalgebra
+  - PCA structure definition (reference: Bauer's
+    Lean 4 PCA formalization)
+  - K and S axiom proofs
+
+- [ ] Task 8: Confluence (`TreeCalcMeta.lean`)
+  - Parallel reduction relation
+  - Complete development function
+  - Diamond property via complete development
+  - Confluence theorem
+  - Use `Sigma`/product (not `Exists`/`And`) for
+    constructive witnesses
+
+- [ ] Task 9: GSOS rule and distributive law
+  (`TreeCalcReduction.lean`)
+  - Contingent on whether GSOS format accommodates
+    two-level triage observation (Open Question 1)
+  - If so: `triageGSOS : PolyGSOSRule polyComputation Q`
+  - Verify agreement with direct reduction
+  - Extract distributive law via
+    `polyGSOSDistributiveLaw`
+  - Extract operational monad via
+    `polyGSOSOperationalMonad`
+  - Import `GebLean.PolyGSOS` in TreeCalcReduction
+
+- [ ] Task 10: Primitive-recursive fragment
+  (`TreeCalcMeta.lean`)
+  - `isPrimRec : Value → Bool` — syntactic criterion
+    (absence of fixpoint combinator patterns)
+  - `PrimRecValue` subtype
+  - Recursion measure and decrease proof
+  - Termination proof: fragment terms produce finite
+    elements of `PolyCofix Q`
+
+- [ ] Task 11: Self-recognizer (`TreeCalcMeta.lean`)
+  - `recognizer : Value` — itself in the fragment
+  - Prove `isPrimRec recognizer = true`
+  - Soundness and completeness proofs
+  - Termination proof (from Task 10)
+
+- [ ] Task 12: Final integration and tests
+  - Comprehensive test suite in
+    `GebLeanTests/TestTreeCalc.lean`
+  - Full build verification
+  - Update this workstream
 
 ### Phase 3: Lambda-Bialgebra and Topos
 
@@ -330,6 +505,28 @@ thread. Phase 2 planning proceeds independently.
 
 ## Notes
 
+- All polynomial operations use universal properties:
+  `polyFixFoldAtWithProof` for catamorphisms,
+  `polyCofixUnfold` for anamorphisms,
+  `polyBetweenCoprod` for coproducts, etc.
+  No explicit recursion on `PolyFix.mk`.
+- `CompFiber = PUnit ⊕ PUnit` (not `Fin 2`) for
+  universe polymorphism: `Fin 2 : Type 0` is
+  monomorphic, while `PUnit.{u+1} ⊕ PUnit.{u+1}`
+  is universe-polymorphic.
+- `polyValue` uses `Fin 3 × PUnit` positions (not
+  `polyBetweenCoprod`) for better definitional behavior:
+  constructors and fold reduce by `rfl`.
+- `polyComputation` uses `compPosType`/`compDirType`/
+  `compDirFiber` helper definitions to keep the
+  polynomial readable.
+- The `ValueAux` bridge pattern provides `Repr`/`BEq`
+  by defining a standard inductive mirroring `Value`,
+  converting via fold, and transporting instances.
+- `Value.fold` simp lemmas are restricted to `Type 0`
+  (universe 0) because `polyFixFoldAtWithProof`
+  reduction depends on definitional computation that
+  may not fire at higher universes.
 - Work in `Over X` throughout; specialize to `Type` (via
   `X = PUnit`) only when useful
 - Interact with binary trees only through universal
