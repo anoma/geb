@@ -1308,6 +1308,25 @@ theorem BTMor1.subst_id {n : ℕ}
             (fun e => ih e))
     t
 
+/-- Substitution distributes over fold:
+applying `.subst σ` to a `BTMor1.fold` is the
+same as substituting each base and tree child
+individually, leaving step children unchanged. -/
+private lemma fold_subst_eq {n m : ℕ}
+    (pm : ℕ)
+    (f : Fin pm → BTMor1 n)
+    (g : Fin pm → BTMor1 (pm + pm))
+    (tree : BTMor1 n)
+    (pj : Fin pm)
+    (σ : Fin n → BTMor1 m) :
+    (BTMor1.fold pm f g tree pj).subst σ =
+    BTMor1.fold pm
+      (fun i => (f i).subst σ)
+      g
+      (tree.subst σ)
+      pj := by
+  _
+
 private lemma subst_comp_fold_case
     {n m k : ℕ}
     (isLt : 3 < 4)
@@ -1353,18 +1372,6 @@ private lemma subst_comp_fold_case
           ⟨⟨3, isLt⟩, p⟩)
         children)
       (fun v => (σ v).subst τ) := by
-  -- Both sides unfold to BTMor1.fold with the
-  -- same pm/pj. After IH, the base/tree children
-  -- match and the step children are unchanged.
-  -- Use subst_id_fold_case technique for both
-  -- sides, then IH closes the gap.
-  --
-  -- The RHS (single composed subst) unfolds to
-  -- a fold whose base/tree = children.subst(σ∘τ).
-  -- The LHS (double subst) unfolds to a fold at
-  -- fiber m, then subst τ gives another fold
-  -- whose base/tree = (children.subst σ).subst τ.
-  -- By IH these are equal.
   _
 
 /-- Substitution composition: substituting twice
