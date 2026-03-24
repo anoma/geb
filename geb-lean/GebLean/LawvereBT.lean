@@ -1372,7 +1372,85 @@ private lemma subst_comp_fold_case
           ⟨⟨3, isLt⟩, p⟩)
         children)
       (fun v => (σ v).subst τ) := by
-  _
+  -- Step 1: Unfold the inner subst on the LHS.
+  have hInner : BTMor1.subst
+      (PolyFix.mk n
+        (show polyBetweenIndex ℕ ℕ
+          btMorPoly n from
+          ⟨⟨3, isLt⟩, p⟩)
+        children) σ =
+      BTMor1.subst
+        (PolyFix.mk n
+          (show polyBetweenIndex ℕ ℕ
+            btMorPoly n from
+            ⟨⟨3, isLt⟩, p⟩)
+          children) σ := rfl
+  set innerV := BTMor1.subst
+    (PolyFix.mk n
+      (show polyBetweenIndex ℕ ℕ
+        btMorPoly n from
+        ⟨⟨3, isLt⟩, p⟩)
+      children) σ with hIV
+  unfold BTMor1.subst at hIV
+  unfold BTMor1.ind
+    PolyFixCoprod.ind at hIV
+  unfold PolyFix.ind at hIV
+  dsimp only at hIV
+  -- Step 2: Use congrArg to lift to the
+  -- double subst, then apply fold_subst_eq.
+  rw [hIV]
+  conv_lhs =>
+    arg 1; arg 2; ext i
+    change (children ⟨↑i, _⟩).subst
+      (fun v => σ (finCast _ v))
+  conv_lhs =>
+    arg 1; arg 4
+    change (children
+      ⟨p.fst + p.fst, _⟩).subst
+      (fun v => σ (finCast _ v))
+  rw [fold_subst_eq]
+  -- Step 3: Swap sides so the composed subst
+  -- (simpler) is the LHS.
+  symm
+  -- Step 4: Unfold the composed subst.
+  set lhsC := BTMor1.subst _ _ with hLC
+  unfold BTMor1.subst at hLC
+  unfold BTMor1.ind
+    PolyFixCoprod.ind at hLC
+  unfold PolyFix.ind at hLC
+  dsimp only at hLC
+  rw [hLC]
+  conv_lhs =>
+    arg 2; ext i
+    change (children ⟨↑i, _⟩).subst
+      (fun v =>
+        (σ (finCast _ v)).subst τ)
+  conv_lhs =>
+    arg 4
+    change (children
+      ⟨p.fst + p.fst, _⟩).subst
+      (fun v =>
+        (σ (finCast _ v)).subst τ)
+  -- Step 5: Rewrite base/tree using ← IH
+  -- to convert composed subst to double subst.
+  simp only [show ∀ (i : Fin p.fst),
+      (children ⟨↑i, _⟩).subst
+        (fun v =>
+          (σ (finCast _ v)).subst τ) =
+      ((children ⟨↑i, _⟩).subst
+        (fun v => σ (finCast _ v))).subst
+          τ
+      from fun i =>
+        (ih ⟨↑i, _⟩ _ _ σ).symm]
+  simp only [show
+      (children ⟨p.fst + p.fst, _⟩).subst
+        (fun v =>
+          (σ (finCast _ v)).subst τ) =
+      ((children ⟨p.fst + p.fst, _⟩).subst
+        (fun v => σ (finCast _ v))).subst
+          τ
+      from (ih ⟨p.fst + p.fst, _⟩
+        _ _ σ).symm]
 
 /-- Substitution composition: substituting twice
 equals substituting with the composed
