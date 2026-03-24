@@ -172,17 +172,20 @@ In progress:
 
 - [x] subst_id (all four cases proved)
 - [ ] subst_comp fold case (proj/leaf/branch done).
-  The fold case requires a fold computation rule:
-  `BTMor1.subst (BTMor1.fold pm f g tree pj) σ
-  = BTMor1.fold pm (f.subst σ) g (tree.subst σ) pj`.
-  With this rule, `subst_comp` on fold nodes
-  follows by applying it twice (for LHS) and
-  once (for RHS), then using the IH.
-  The computation rule proof follows the same
-  architecture as `subst_id_fold_case`:
-  set/unfold/dsimp, conv+change, simp [ih],
-  then convert polyFixCoprodRoundTrip with
-  Fin.ext + omega.
+  Factored into two lemmas with clean underscores:
+  - `fold_subst_eq`: the fold computation rule,
+    with explicit type signature:
+    `(BTMor1.fold pm f g tree pj).subst σ =
+    BTMor1.fold pm (f.subst σ) g (tree.subst σ) pj`
+    Proof: same technique as `subst_id_fold_case`
+    applied to the `BTMor1.fold`-constructed
+    `PolyFix.mk` node. Requires the
+    set/unfold/dsimp + conv/change chain, then
+    fold reconstruction via convert +
+    polyFixCoprodRoundTrip + Fin.ext + omega.
+  - `subst_comp_fold_case`: uses `fold_subst_eq`
+    to unfold both sides to `BTMor1.fold`, then
+    applies the IH to compose children.
 - [ ] Category instance for LawvereBTCat
 - [ ] HasFiniteProducts instance
 - [ ] HasPBTO instance
