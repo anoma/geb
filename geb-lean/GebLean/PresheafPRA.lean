@@ -34,17 +34,27 @@ universe u_I v_I u_J v_J w_I w'
 variable (I : Type u_I) [Category.{v_I} I]
 variable (J : Type u_J) [Category.{v_J} J]
 
-/-! ## Presheaf Category as Profunctor Application -/
+/-! ## Presheaf Category Functor -/
+
+/--
+The functor `Catᵒᵖ ⥤ Cat` sending `C` to the presheaf
+category `C ⥤ Type w_I`.  Obtained by flipping
+`catHomProfunctor` and applying `Cat.of (Type w_I)`.
+-/
+def presheafCatFunctor :
+    Cat.{v_I, u_I}ᵒᵖ ⥤
+      Cat.{max u_I w_I, max v_I (w_I + 1) u_I} :=
+  catContraHomFunctor.{v_I, u_I, w_I, w_I + 1}
+    (Cat.of (Type w_I))
 
 /--
 The presheaf category `Iᵒᵖ ⥤ Type w_I` as an object of
-`Cat`, obtained by applying `catHomProfunctor` at
-`(Iᵒᵖ, Type w_I)`.
+`Cat`, obtained by applying `presheafCatFunctor` at
+`Iᵒᵖ`.
 -/
 def presheafCat : Cat :=
-  (catHomProfunctor.{v_I, u_I, w_I, w_I + 1}.obj
-    (Opposite.op (Cat.of Iᵒᵖ))).obj
-    (Cat.of (Type w_I))
+  presheafCatFunctor.{u_I, v_I, w_I}.obj
+    (Opposite.op (Cat.of Iᵒᵖ))
 
 /-! ## CoprodCovarRepCat' of the Presheaf Category -/
 
