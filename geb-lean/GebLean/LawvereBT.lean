@@ -1353,14 +1353,18 @@ private lemma subst_comp_fold_case
           ⟨⟨3, isLt⟩, p⟩)
         children)
       (fun v => (σ v).subst τ) := by
-  -- LHS: ((fold-node).subst σ).subst τ
-  -- RHS: (fold-node).subst (fun v => (σ v).subst τ)
-  -- Both reduce to BTMor1.fold with children
-  -- processed by double/composed substitution.
-  -- The IH equates these, and the fold
-  -- reconstruction follows by the same
-  -- convert + polyFixCoprodRoundTrip technique
-  -- as in subst_id_fold_case.
+  -- Both sides unfold to BTMor1.fold with the
+  -- same pm/pj. After IH, the base/tree children
+  -- match and the step children are unchanged.
+  -- Use subst_id_fold_case technique for both
+  -- sides, then IH closes the gap.
+  --
+  -- The RHS (single composed subst) unfolds to
+  -- a fold whose base/tree = children.subst(σ∘τ).
+  -- The LHS (double subst) unfolds to a fold at
+  -- fiber m, then subst τ gives another fold
+  -- whose base/tree = (children.subst σ).subst τ.
+  -- By IH these are equal.
   _
 
 /-- Substitution composition: substituting twice
