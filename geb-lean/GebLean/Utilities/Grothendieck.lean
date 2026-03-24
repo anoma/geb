@@ -6934,4 +6934,32 @@ for the single-layer construction.
 
 end DoubleGrothendieck
 
+/-! ## Grothendieck Construction as a Functor -/
+
+section GrothendieckFunctor
+
+universe v₃ u₃ v₄ u₄
+
+/--
+The Grothendieck construction as a functor: sends a functor
+`F : C ⥤ Cat` to `Grothendieck F`, and a natural
+transformation `α : F ⟶ G` to `Grothendieck.map α`.
+-/
+def grothendieckFunctor
+    (C : Type u₄) [Category.{v₄} C] :
+    (C ⥤ Cat.{v₃, u₃}) ⥤
+      Cat.{max v₄ v₃, max u₄ u₃} where
+  obj F := Cat.of (Grothendieck F)
+  map α := (Grothendieck.map α).toCatHom
+  map_id F := by
+    apply Cat.Hom.ext
+    exact Grothendieck.map_id_eq
+  map_comp α β := by
+    apply Cat.Hom.ext
+    simp only [Cat.Hom.comp_toFunctor,
+      Functor.toCatHom_toFunctor]
+    exact Grothendieck.map_comp_eq α β
+
+end GrothendieckFunctor
+
 end GebLean
