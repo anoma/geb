@@ -3208,7 +3208,7 @@ def polyTranslateFamily (A : Over X) (P : PolyEndo X) (x : X)
 The translate polynomial at a specific fiber.
 -/
 def polyTranslateAt (A : Over X) (P : PolyEndo X) (x : X) :
-    CoprodCovarRepCat (Over X) :=
+    CoprodCovarRepCat' (Over X) :=
   ccrObjMk (polyTranslateFamily A P x)
 
 /--
@@ -3246,7 +3246,7 @@ def polyScaleFamily (A : Over X) (P : PolyEndo X) (x : X)
 The scale polynomial at a specific fiber.
 -/
 def polyScaleAt (A : Over X) (P : PolyEndo X) (x : X) :
-    CoprodCovarRepCat (Over X) :=
+    CoprodCovarRepCat' (Over X) :=
   ccrObjMk (polyScaleFamily A P x)
 
 /--

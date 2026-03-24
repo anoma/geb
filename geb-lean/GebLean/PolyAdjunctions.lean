@@ -36,7 +36,7 @@ The position functor extracts the "position" (index type) from a polynomial
 functor. For a polynomial `P = (I, F)` where `I : Type` and `F : I → C`,
 the position is `I`.
 
-This is the forgetful functor from `CoprodCovarRepCat C` to `Type`, which
+This is the forgetful functor from `CoprodCovarRepCat' C` to `Type`, which
 arises from the Grothendieck construction structure.
 -/
 
@@ -45,7 +45,7 @@ section PositionFunctor
 variable (C : Type u) [Category.{v} C]
 
 /--
-The position functor from `CoprodCovarRepCat C` to `Type`.
+The position functor from `CoprodCovarRepCat' C` to `Type`.
 
 For a polynomial `P = (I, F)` where `I : Type` and `F : I → C`, this functor
 returns `I`. For a morphism, it returns the reindexing function.
@@ -53,16 +53,16 @@ returns `I`. For a morphism, it returns the reindexing function.
 This is an alias for `GrothendieckContra'.forget` specialized to
 `familyFunctor' C ⋙ Cat.opFunctor'`.
 -/
-def ccrPosFunctor : CoprodCovarRepCat.{u, v, w} C ⥤ Type w :=
+def ccrPosFunctor : CoprodCovarRepCat'.{u, v, w} C ⥤ Type w :=
   GrothendieckContra'.forget (familyFunctor'.{u, v, w} C ⋙ Cat.opFunctor')
 
 @[simp]
-lemma ccrPosFunctor_obj (P : CoprodCovarRepCat.{u, v, w} C) :
+lemma ccrPosFunctor_obj (P : CoprodCovarRepCat'.{u, v, w} C) :
     (ccrPosFunctor C).obj P = ccrIndex P :=
   rfl
 
 @[simp]
-lemma ccrPosFunctor_map {P Q : CoprodCovarRepCat.{u, v, w} C} (f : P ⟶ Q) :
+lemma ccrPosFunctor_map {P Q : CoprodCovarRepCat'.{u, v, w} C} (f : P ⟶ Q) :
     (ccrPosFunctor C).map f = ccrReindex f :=
   rfl
 
@@ -83,7 +83,7 @@ variable {C : Type u} [Category.{v} C]
 The object map of the monomial functor: sends `A : Type` to the polynomial
 `(A, fun _ => c)`.
 -/
-def ccrMonomialObj (c : C) (A : Type w) : CoprodCovarRepCat.{u, v, w} C :=
+def ccrMonomialObj (c : C) (A : Type w) : CoprodCovarRepCat'.{u, v, w} C :=
   ccrObjMk (fun _ : A => c)
 
 /--
@@ -118,10 +118,10 @@ lemma ccrMonomialMap_comp (c : C) {A B D : Type w} (f : A → B) (g : B → D) :
   exact (Category.id_comp (𝟙 c)).symm
 
 /--
-The monomial functor from `Type` to `CoprodCovarRepCat C` at a fixed object
+The monomial functor from `Type` to `CoprodCovarRepCat' C` at a fixed object
 `c : C`. Sends `A` to the polynomial `(A, fun _ => c)` representing `A · y^c`.
 -/
-def ccrMonomialFunctor (c : C) : Type w ⥤ CoprodCovarRepCat.{u, v, w} C where
+def ccrMonomialFunctor (c : C) : Type w ⥤ CoprodCovarRepCat'.{u, v, w} C where
   obj := ccrMonomialObj c
   map := ccrMonomialMap c
   map_id A := ccrMonomialMap_id c A
@@ -141,7 +141,7 @@ end MonomialFunctor
 
 /-! ## Evaluation Functor
 
-The evaluation functor sends a polynomial `P : CoprodCovarRepCat D` to its
+The evaluation functor sends a polynomial `P : CoprodCovarRepCat' D` to its
 evaluation functor `ccrToFunctor P : D ⥤ Type`. This exhibits `ccrToFunctor`
 as itself being functorial in `P`.
 
@@ -157,19 +157,19 @@ variable {D : Type u} [Category.{v} D]
 The component of the natural transformation induced by `f : P ⟶ Q` at object
 `A : D`. Maps `⟨i, h⟩ : ccrEval P A` to `⟨ccrReindex f i, ccrFiberMor f i ≫ h⟩`.
 -/
-def ccrToFunctorMapApp {P Q : CoprodCovarRepCat.{u, v, w} D} (f : P ⟶ Q)
+def ccrToFunctorMapApp {P Q : CoprodCovarRepCat'.{u, v, w} D} (f : P ⟶ Q)
     (A : D) : ccrEval P A → ccrEval Q A :=
   fun x => ccrEvalMk (ccrReindex f (ccrEvalIndex x))
     (ccrFiberMor f (ccrEvalIndex x) ≫ ccrEvalMor x)
 
 @[simp]
-lemma ccrToFunctorMapApp_index {P Q : CoprodCovarRepCat.{u, v, w} D}
+lemma ccrToFunctorMapApp_index {P Q : CoprodCovarRepCat'.{u, v, w} D}
     (f : P ⟶ Q) (A : D) (x : ccrEval P A) :
     ccrEvalIndex (ccrToFunctorMapApp f A x) = ccrReindex f (ccrEvalIndex x) :=
   rfl
 
 @[simp]
-lemma ccrToFunctorMapApp_mor {P Q : CoprodCovarRepCat.{u, v, w} D}
+lemma ccrToFunctorMapApp_mor {P Q : CoprodCovarRepCat'.{u, v, w} D}
     (f : P ⟶ Q) (A : D) (x : ccrEval P A) :
     ccrEvalMor (ccrToFunctorMapApp f A x) =
       ccrFiberMor f (ccrEvalIndex x) ≫ ccrEvalMor x :=
@@ -179,7 +179,7 @@ lemma ccrToFunctorMapApp_mor {P Q : CoprodCovarRepCat.{u, v, w} D}
 Naturality of `ccrToFunctorMapApp` in `A`: for morphisms `g : A ⟶ B` in `D`,
 the square commutes.
 -/
-lemma ccrToFunctorMapApp_natural {P Q : CoprodCovarRepCat.{u, v, w} D}
+lemma ccrToFunctorMapApp_natural {P Q : CoprodCovarRepCat'.{u, v, w} D}
     (f : P ⟶ Q) {A B : D} (g : A ⟶ B) :
     (ccrToFunctor P).map g ≫ ccrToFunctorMapApp f B =
       ccrToFunctorMapApp f A ≫ (ccrToFunctor Q).map g := by
@@ -191,13 +191,13 @@ lemma ccrToFunctorMapApp_natural {P Q : CoprodCovarRepCat.{u, v, w} D}
 The natural transformation from `ccrToFunctor P` to `ccrToFunctor Q` induced
 by a morphism `f : P ⟶ Q`.
 -/
-def ccrToFunctorMap {P Q : CoprodCovarRepCat.{u, v, w} D} (f : P ⟶ Q) :
+def ccrToFunctorMap {P Q : CoprodCovarRepCat'.{u, v, w} D} (f : P ⟶ Q) :
     ccrToFunctor P ⟶ ccrToFunctor Q where
   app := ccrToFunctorMapApp f
   naturality := fun _ _ g => ccrToFunctorMapApp_natural f g
 
 @[simp]
-lemma ccrToFunctorMap_app {P Q : CoprodCovarRepCat.{u, v, w} D}
+lemma ccrToFunctorMap_app {P Q : CoprodCovarRepCat'.{u, v, w} D}
     (f : P ⟶ Q) (A : D) :
     (ccrToFunctorMap f).app A = ccrToFunctorMapApp f A :=
   rfl
@@ -206,7 +206,7 @@ lemma ccrToFunctorMap_app {P Q : CoprodCovarRepCat.{u, v, w} D}
 The identity morphism on `P` induces the identity natural transformation
 on `ccrToFunctor P`.
 -/
-lemma ccrToFunctorMap_id (P : CoprodCovarRepCat.{u, v, w} D) :
+lemma ccrToFunctorMap_id (P : CoprodCovarRepCat'.{u, v, w} D) :
     ccrToFunctorMap (𝟙 P) = 𝟙 (ccrToFunctor P) := by
   ext A ⟨i, h⟩
   simp only [ccrToFunctorMap_app, ccrToFunctorMapApp, NatTrans.id_app,
@@ -216,7 +216,7 @@ lemma ccrToFunctorMap_id (P : CoprodCovarRepCat.{u, v, w} D) :
 /--
 Composition of morphisms induces composition of natural transformations.
 -/
-lemma ccrToFunctorMap_comp {P Q R : CoprodCovarRepCat.{u, v, w} D}
+lemma ccrToFunctorMap_comp {P Q R : CoprodCovarRepCat'.{u, v, w} D}
     (f : P ⟶ Q) (g : Q ⟶ R) :
     ccrToFunctorMap (f ≫ g) = ccrToFunctorMap f ≫ ccrToFunctorMap g := by
   ext A ⟨i, h⟩
@@ -225,37 +225,37 @@ lemma ccrToFunctorMap_comp {P Q R : CoprodCovarRepCat.{u, v, w} D}
     ccrComp_reindex, ccrComp_fiberMor, Category.assoc]
 
 /--
-The evaluation functor from `CoprodCovarRepCat D` to the functor category
+The evaluation functor from `CoprodCovarRepCat' D` to the functor category
 `D ⥤ Type`.
 
 This functor sends a polynomial `P` to its evaluation functor `ccrToFunctor P`,
 and a morphism `f : P ⟶ Q` to the natural transformation `ccrToFunctorMap f`.
 -/
-def ccrEvalFunctor : CoprodCovarRepCat.{u, v, w} D ⥤ (D ⥤ Type (max w v)) where
+def ccrEvalFunctor : CoprodCovarRepCat'.{u, v, w} D ⥤ (D ⥤ Type (max w v)) where
   obj := ccrToFunctor
   map := ccrToFunctorMap
   map_id := ccrToFunctorMap_id
   map_comp := fun f g => ccrToFunctorMap_comp f g
 
-lemma ccrEvalFunctor_obj (P : CoprodCovarRepCat.{u, v, w} D) :
+lemma ccrEvalFunctor_obj (P : CoprodCovarRepCat'.{u, v, w} D) :
     ccrEvalFunctor.obj P = ccrToFunctor P :=
   rfl
 
-lemma ccrEvalFunctor_map {P Q : CoprodCovarRepCat.{u, v, w} D} (f : P ⟶ Q) :
+lemma ccrEvalFunctor_map {P Q : CoprodCovarRepCat'.{u, v, w} D} (f : P ⟶ Q) :
     ccrEvalFunctor.map f = ccrToFunctorMap f :=
   rfl
 
 /-! ### Faithfulness
 
-The evaluation functor is faithful: distinct morphisms in `CoprodCovarRepCat D`
+The evaluation functor is faithful: distinct morphisms in `CoprodCovarRepCat' D`
 induce distinct natural transformations.
 -/
 
 /--
-If two morphisms `f g : P ⟶ Q` in `CoprodCovarRepCat` induce the same natural
+If two morphisms `f g : P ⟶ Q` in `CoprodCovarRepCat'` induce the same natural
 transformation, then they have equal base components.
 -/
-lemma ccrToFunctorMap_injective_base {P Q : CoprodCovarRepCat.{u, v, w} D}
+lemma ccrToFunctorMap_injective_base {P Q : CoprodCovarRepCat'.{u, v, w} D}
     {f g : P ⟶ Q} (h : ccrToFunctorMap f = ccrToFunctorMap g) : f.base = g.base := by
   funext i
   have h_at : ccrToFunctorMapApp f (ccrFamily P i) (ccrEvalMk i (𝟙 _)) =
@@ -265,11 +265,11 @@ lemma ccrToFunctorMap_injective_base {P Q : CoprodCovarRepCat.{u, v, w} D}
   exact congrArg Sigma.fst h_at
 
 /--
-If two morphisms `f g : P ⟶ Q` in `CoprodCovarRepCat` induce the same natural
+If two morphisms `f g : P ⟶ Q` in `CoprodCovarRepCat'` induce the same natural
 transformation and have equal base components, then their fiber components
 are equal after composing with `eqToHom`.
 -/
-lemma ccrToFunctorMap_injective_fiber {P Q : CoprodCovarRepCat.{u, v, w} D}
+lemma ccrToFunctorMap_injective_fiber {P Q : CoprodCovarRepCat'.{u, v, w} D}
     {f g : P ⟶ Q} (h : ccrToFunctorMap f = ccrToFunctorMap g)
     (hbase : f.base = g.base) :
     f.fiber ≫ eqToHom (by rw [hbase]) = g.fiber := by
@@ -289,7 +289,7 @@ lemma ccrToFunctorMap_injective_fiber {P Q : CoprodCovarRepCat.{u, v, w} D}
 A morphism `f : P ⟶ Q` can be recovered from the natural transformation
 `ccrToFunctorMap f` by evaluating at the "universal elements" `⟨i, 𝟙⟩`.
 -/
-lemma ccrToFunctorMap_injective {P Q : CoprodCovarRepCat.{u, v, w} D}
+lemma ccrToFunctorMap_injective {P Q : CoprodCovarRepCat'.{u, v, w} D}
     {f g : P ⟶ Q} (h : ccrToFunctorMap f = ccrToFunctorMap g) : f = g :=
   GrothendieckContra'.ext _ _ (ccrToFunctorMap_injective_base h)
     (ccrToFunctorMap_injective_fiber h (ccrToFunctorMap_injective_base h))
@@ -300,7 +300,7 @@ instance : Functor.Faithful (ccrEvalFunctor (D := D)) where
 /-! ### Fullness
 
 The evaluation functor is full: every natural transformation between evaluation
-functors arises from a morphism in `CoprodCovarRepCat D`.
+functors arises from a morphism in `CoprodCovarRepCat' D`.
 
 The preimage is constructed by evaluating the natural transformation at the
 "universal elements" `⟨i, 𝟙⟩`.
@@ -310,7 +310,7 @@ The preimage is constructed by evaluating the natural transformation at the
 The base component of the preimage: for a natural transformation `η`, the
 reindexing function sends `i` to the index of `η (ccrFamily P i) ⟨i, 𝟙⟩`.
 -/
-def ccrToFunctorPreimageBase {P Q : CoprodCovarRepCat.{u, v, w} D}
+def ccrToFunctorPreimageBase {P Q : CoprodCovarRepCat'.{u, v, w} D}
     (η : ccrToFunctor P ⟶ ccrToFunctor Q) : ccrIndex P → ccrIndex Q :=
   fun i => ccrEvalIndex (η.app (ccrFamily P i) (ccrEvalMk i (𝟙 _)))
 
@@ -318,7 +318,7 @@ def ccrToFunctorPreimageBase {P Q : CoprodCovarRepCat.{u, v, w} D}
 The fiber component of the preimage: for a natural transformation `η`, the
 fiber morphism at `i` is the morphism component of `η (ccrFamily P i) ⟨i, 𝟙⟩`.
 -/
-def ccrToFunctorPreimageFiber {P Q : CoprodCovarRepCat.{u, v, w} D}
+def ccrToFunctorPreimageFiber {P Q : CoprodCovarRepCat'.{u, v, w} D}
     (η : ccrToFunctor P ⟶ ccrToFunctor Q) :
     ∀ i, ccrFamily Q (ccrToFunctorPreimageBase η i) ⟶ ccrFamily P i :=
   fun i => ccrEvalMor (η.app (ccrFamily P i) (ccrEvalMk i (𝟙 _)))
@@ -326,18 +326,18 @@ def ccrToFunctorPreimageFiber {P Q : CoprodCovarRepCat.{u, v, w} D}
 /--
 The full preimage morphism constructed from a natural transformation.
 -/
-def ccrToFunctorPreimage {P Q : CoprodCovarRepCat.{u, v, w} D}
+def ccrToFunctorPreimage {P Q : CoprodCovarRepCat'.{u, v, w} D}
     (η : ccrToFunctor P ⟶ ccrToFunctor Q) : P ⟶ Q :=
   ccrHomMk (ccrToFunctorPreimageBase η) (ccrToFunctorPreimageFiber η)
 
 @[simp]
-lemma ccrToFunctorPreimage_reindex {P Q : CoprodCovarRepCat.{u, v, w} D}
+lemma ccrToFunctorPreimage_reindex {P Q : CoprodCovarRepCat'.{u, v, w} D}
     (η : ccrToFunctor P ⟶ ccrToFunctor Q) :
     ccrReindex (ccrToFunctorPreimage η) = ccrToFunctorPreimageBase η :=
   rfl
 
 @[simp]
-lemma ccrToFunctorPreimage_fiberMor {P Q : CoprodCovarRepCat.{u, v, w} D}
+lemma ccrToFunctorPreimage_fiberMor {P Q : CoprodCovarRepCat'.{u, v, w} D}
     (η : ccrToFunctor P ⟶ ccrToFunctor Q) (i : ccrIndex P) :
     ccrFiberMor (ccrToFunctorPreimage η) i = ccrToFunctorPreimageFiber η i :=
   rfl
@@ -345,7 +345,7 @@ lemma ccrToFunctorPreimage_fiberMor {P Q : CoprodCovarRepCat.{u, v, w} D}
 /--
 The preimage morphism maps to the given natural transformation.
 -/
-lemma ccrToFunctorMap_preimage {P Q : CoprodCovarRepCat.{u, v, w} D}
+lemma ccrToFunctorMap_preimage {P Q : CoprodCovarRepCat'.{u, v, w} D}
     (η : ccrToFunctor P ⟶ ccrToFunctor Q) :
     ccrToFunctorMap (ccrToFunctorPreimage η) = η := by
   ext A ⟨i, h⟩
@@ -361,7 +361,7 @@ lemma ccrToFunctorMap_preimage {P Q : CoprodCovarRepCat.{u, v, w} D}
 /--
 The evaluation functor is surjective on morphisms.
 -/
-lemma ccrToFunctorMap_surjective {P Q : CoprodCovarRepCat.{u, v, w} D} :
+lemma ccrToFunctorMap_surjective {P Q : CoprodCovarRepCat'.{u, v, w} D} :
     Function.Surjective (ccrToFunctorMap (P := P) (Q := Q)) :=
   fun η => ⟨ccrToFunctorPreimage η, ccrToFunctorMap_preimage η⟩
 

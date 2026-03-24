@@ -99,7 +99,7 @@ variable {X : Type u}
 
 set_option linter.unusedFintypeInType false in
 private def wrpUpdateMor
-    {P : CoprodCovarRepCat (Over (X : Type u))}
+    {P : CoprodCovarRepCat' (Over (X : Type u))}
     {K : WalkingReflexivePair ⥤ Over X}
     (i : ccrIndex P)
     [DecidableEq (ccrFamily P i).left]
@@ -119,7 +119,7 @@ private def wrpUpdateMor
         · exact congr_fun (Over.w g) b')
 
 private lemma wrpCcrNatApp
-    {P : CoprodCovarRepCat (Over (X : Type u))}
+    {P : CoprodCovarRepCat' (Over (X : Type u))}
     {K : WalkingReflexivePair ⥤ Over X}
     (s : Cocone (K ⋙ ccrToFunctor P))
     (i : ccrIndex P)
@@ -135,7 +135,7 @@ private lemma wrpCcrNatApp
   exact this.symm
 
 private lemma wrpCcrCoequalize
-    {P : CoprodCovarRepCat (Over (X : Type u))}
+    {P : CoprodCovarRepCat' (Over (X : Type u))}
     {K : WalkingReflexivePair ⥤ Over X}
     (s : Cocone (K ⋙ ccrToFunctor P))
     (i : ccrIndex P)
@@ -169,7 +169,7 @@ private lemma wrpReflRight
 
 set_option linter.unusedFintypeInType false in
 private lemma wrpCcrOneStep
-    {P : CoprodCovarRepCat (Over (X : Type u))}
+    {P : CoprodCovarRepCat' (Over (X : Type u))}
     {K : WalkingReflexivePair ⥤ Over X}
     {c : Cocone K} (hc : IsColimit c)
     (s : Cocone (K ⋙ ccrToFunctor P))
@@ -365,7 +365,7 @@ private lemma wrpCcrOneStep
 
 set_option linter.unusedFintypeInType false in
 private lemma wrpCcrWellDefined
-    {P : CoprodCovarRepCat (Over (X : Type u))}
+    {P : CoprodCovarRepCat' (Over (X : Type u))}
     {K : WalkingReflexivePair ⥤ Over X}
     {c : Cocone K} (hc : IsColimit c)
     (s : Cocone (K ⋙ ccrToFunctor P))
@@ -445,7 +445,7 @@ private lemma wrpCcrWellDefined
 
 set_option linter.unusedFintypeInType false in
 instance ccrPreservesReflexiveColimits
-    (P : CoprodCovarRepCat (Over (X : Type u)))
+    (P : CoprodCovarRepCat' (Over (X : Type u)))
     (hfin : ∀ i, Fintype (ccrFamily P i).left) :
     PreservesColimitsOfShape WalkingReflexivePair
       (ccrToFunctor P) where

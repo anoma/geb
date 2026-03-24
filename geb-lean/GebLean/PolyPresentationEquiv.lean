@@ -96,7 +96,7 @@ This represents ∐_{(d,x) ∈ ∫F} D(d, -).
 The target polynomial of the density presentation.
 Indexed by elements of F, with family mapping (d, x) to d.
 -/
-def densityTgt : CoprodCovarRepCat.{u, v, max u w v} D :=
+def densityTgt : CoprodCovarRepCat'.{u, v, max u w v} D :=
   ccrObjMk (fun (p : F.Elements) => p.fst)
 
 @[simp]
@@ -118,7 +118,7 @@ This represents ∐_{f ∈ mor(∫F)ᵒᵖ} D(tgt(f), -).
 The source polynomial of the density presentation.
 Indexed by morphisms (q → p) in F.Elements, with family mapping to p.fst.
 -/
-def densitySrc : CoprodCovarRepCat.{u, v, max u w v} D :=
+def densitySrc : CoprodCovarRepCat'.{u, v, max u w v} D :=
   ccrObjMk (fun (m : DensityMorphismIndex F) => m.tgt.fst)
 
 @[simp]
@@ -1116,7 +1116,7 @@ The target polynomial of the setoid density presentation.
 Indexed by pre-quotient elements, with family mapping (A, x) to A.
 -/
 def setoidDensityTgt (F : D ⥤ SetoidBundle.{max u v}) :
-    CoprodCovarRepCat.{u, v, max u v} D :=
+    CoprodCovarRepCat'.{u, v, max u v} D :=
   ccrObjMk (fun (p : SetoidElements F) => p.obj)
 
 @[simp]
@@ -1135,7 +1135,7 @@ The source polynomial of the setoid density presentation.
 Indexed by morphisms in the pre-quotient category of elements.
 -/
 def setoidDensitySrc (F : D ⥤ SetoidBundle.{max u v}) :
-    CoprodCovarRepCat.{u, v, max u v} D :=
+    CoprodCovarRepCat'.{u, v, max u v} D :=
   ccrObjMk (fun (m : SetoidMorphismIndex F) => m.tgt.obj)
 
 @[simp]

@@ -36,7 +36,7 @@ lemma ptoef_fst_eqRec
 @[simp]
 lemma ccrEvalMap_fst
     {D : Type*} [Category D]
-    {P : CoprodCovarRepCat D}
+    {P : CoprodCovarRepCat' D}
     {A B : D} (f : A ⟶ B)
     (y : ccrEval P A) :
     (ccrEvalMap f y).fst = y.fst :=
@@ -1284,7 +1284,7 @@ private lemma mor_to_pbe_fiber_index_postcomp
 
 private lemma ccrEvalMap_eqRec
     {Y : Type u}
-    {F : Y → ↑(CoprodCovarRepCat (Over X))}
+    {F : Y → ↑(CoprodCovarRepCat' (Over X))}
     {A B : Over X} (h : A ⟶ B) {y₁ y₂ : Y}
     (p : y₁ = y₂) (v : ccrEval (F y₁) A) :
     ccrEvalMap h (p ▸ v) = p ▸ ccrEvalMap h v := by
@@ -1353,7 +1353,7 @@ private lemma polyBetweenComp_eval_invFun_natural
 
 private lemma ccrEvalMap_comp_apply
     {D : Type u} [Category D]
-    {P : CoprodCovarRepCat D} {A B C : D}
+    {P : CoprodCovarRepCat' D} {A B C : D}
     (f : A ⟶ B) (g : B ⟶ C)
     (x : ccrEval P A) :
     ccrEvalMap g (ccrEvalMap f x) =

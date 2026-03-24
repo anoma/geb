@@ -233,7 +233,7 @@ variable {J : Type u} [Category.{u} J] [IsFiltered J]
 
 omit [IsFiltered J] in
 private lemma ccrFilteredNatApp
-    {P : CoprodCovarRepCat (Over (X : Type u))}
+    {P : CoprodCovarRepCat' (Over (X : Type u))}
     {K : J ⥤ Over X}
     (s : Cocone (K ⋙ ccrToFunctor P))
     (i : ccrIndex P) {j₁ j₂ : J}
@@ -247,7 +247,7 @@ private lemma ccrFilteredNatApp
   exact this.symm
 
 private lemma ccrFilteredCoconeConsistent
-    {P : CoprodCovarRepCat (Over (X : Type u))}
+    {P : CoprodCovarRepCat' (Over (X : Type u))}
     (hfin : ∀ i, Finite (ccrFamily P i).left)
     {K : J ⥤ Over X} {c : Cocone K}
     (hc : IsColimit c)
@@ -300,7 +300,7 @@ private lemma ccrFilteredCoconeConsistent
         (ccrFilteredNatApp s i g₂ h₂).symm
 
 instance ccrPreservesFilteredColimits
-    (P : CoprodCovarRepCat (Over (X : Type u)))
+    (P : CoprodCovarRepCat' (Over (X : Type u)))
     (hfin : ∀ i, Finite (ccrFamily P i).left) :
     PreservesColimitsOfShape J
       (ccrToFunctor P) where

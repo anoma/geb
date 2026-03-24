@@ -29,7 +29,7 @@ oppositization), we obtain four different completions of a category:
    Grothendieck construction on `familyFunctor'`. Morphisms go in the opposite
    direction for the fiber component. This freely adjoins products to `C`.
 
-3. **Coproducts of covariant representables** (`CoprodCovarRepCat`): The
+3. **Coproducts of covariant representables** (`CoprodCovarRepCat'`): The
    contravariant Grothendieck construction on `familyFunctor' ⋙ opFunctor'`.
    Objects are `X`-indexed families of objects from `Cᵒᵖ'`. This produces
    the category coproducts of covariant representables, which are a form
@@ -362,7 +362,7 @@ on directions).
 Defined as the opposite of `FreeProdCompletion C` via
 `Cat.opFunctor`.
 -/
-def CoprodCovarRepCatOp
+def CoprodCovarRepCat
     (C : Type u) [Category.{v} C] :
     Cat.{max w v, max (w + 1) u} :=
   Cat.opFunctor.obj
@@ -411,7 +411,7 @@ The family functor post-composed with oppositization. This functor
 the product category `(X → C)^op`.
 
 This is the functor whose contravariant Grothendieck construction yields
-`CoprodCovarRepCat C` and whose covariant Grothendieck construction yields
+`CoprodCovarRepCat' C` and whose covariant Grothendieck construction yields
 `ProdContravarRepCat C`.
 -/
 def familyFunctorOp'.{u', v', w'} (C' : Type u') [Category.{v'} C'] :
@@ -432,7 +432,7 @@ This is the contravariant Grothendieck construction applied to `familyFunctor'`
 post-composed with oppositization (i.e., `familyFunctorOp'`).
 -/
 @[simp]
-def CoprodCovarRepCat.{u', v', w'} (C' : Type u') [Category.{v'} C'] :
+def CoprodCovarRepCat'.{u', v', w'} (C' : Type u') [Category.{v'} C'] :
     Cat.{max w' v', max (w' + 1) u' w'} :=
   Cat.of (GrothendieckContra'.{w' + 1, w', max u' w', max w' v'}
     (familyFunctor'.{u', v', w'} C' ⋙ Cat.opFunctor'))
@@ -1181,10 +1181,10 @@ def distIso (A : FreeCoprodCompletionCat.{u, v, w} C)
 
 end Distributivity
 
-/-! ## Products in CoprodCovarRepCat (distributed over coproducts)
+/-! ## Products in CoprodCovarRepCat' (distributed over coproducts)
 
-Since `CoprodCovarRepCat C = FreeCoprodCompletionCat (C^op')`, products in
-`CoprodCovarRepCat` follow when `C^op'` has `ProdData`.
+Since `CoprodCovarRepCat' C = FreeCoprodCompletionCat (C^op')`, products in
+`CoprodCovarRepCat'` follow when `C^op'` has `ProdData`.
 -/
 
 section CoprodCovarRepProducts
@@ -1194,9 +1194,9 @@ universe w
 variable {C : Type u} [Category.{v} C] [ProdData.{w} Cᵒᵖ']
 
 /--
-`ProdData` instance for `CoprodCovarRepCat C` when `C^op'` has `ProdData`.
+`ProdData` instance for `CoprodCovarRepCat' C` when `C^op'` has `ProdData`.
 -/
-instance ccrProdData : ProdData.{w} (CoprodCovarRepCat.{u, v, w} C) where
+instance ccrProdData : ProdData.{w} (CoprodCovarRepCat'.{u, v, w} C) where
   prod F := fcProdObj (C := Cᵒᵖ') F
   π F j := fcProdπ (C := Cᵒᵖ') F j
 
@@ -1334,23 +1334,23 @@ universe w
 variable {C : Type u} [Category.{v} C]
 
 /--
-Construct an object of `CoprodCovarRepCat C` from an index type and
+Construct an object of `CoprodCovarRepCat' C` from an index type and
 a family of objects from `C`. Internally, objects are stored as families
 in `Cᵒᵖ'`, but this helper hides that detail.
 -/
-def ccrObjMk {X : Type w} (F : X → C) : CoprodCovarRepCat.{u, v, w} C :=
+def ccrObjMk {X : Type w} (F : X → C) : CoprodCovarRepCat'.{u, v, w} C :=
   ⟨X, F⟩
 
 /--
-Extract the index type from an object of `CoprodCovarRepCat C`.
+Extract the index type from an object of `CoprodCovarRepCat' C`.
 -/
-def ccrIndex (x : CoprodCovarRepCat.{u, v, w} C) : Type w := x.base
+def ccrIndex (x : CoprodCovarRepCat'.{u, v, w} C) : Type w := x.base
 
 /--
-Extract the family of objects from an object of `CoprodCovarRepCat C`.
+Extract the family of objects from an object of `CoprodCovarRepCat' C`.
 Returns objects in `C` (not `Cᵒᵖ'`).
 -/
-def ccrFamily (x : CoprodCovarRepCat.{u, v, w} C) : ccrIndex x → C := x.fiber
+def ccrFamily (x : CoprodCovarRepCat'.{u, v, w} C) : ccrIndex x → C := x.fiber
 
 @[simp]
 lemma ccrObjMk_index {X : Type w} (F : X → C) :
@@ -1361,7 +1361,7 @@ lemma ccrObjMk_family {X : Type w} (F : X → C) :
     ccrFamily (ccrObjMk F) = F := rfl
 
 /--
-Construct a morphism in `CoprodCovarRepCat C` from a reindexing function
+Construct a morphism in `CoprodCovarRepCat' C` from a reindexing function
 and a family of fiber morphisms.
 
 A morphism `(X, F) → (Y, G)` consists of:
@@ -1371,76 +1371,76 @@ A morphism `(X, F) → (Y, G)` consists of:
 Note: The fiber morphisms go from target to source, which is opposite to
 `FreeCoprodCompletionCat`.
 -/
-def ccrHomMk {x y : CoprodCovarRepCat.{u, v, w} C}
+def ccrHomMk {x y : CoprodCovarRepCat'.{u, v, w} C}
     (reindex : ccrIndex x ⟶ ccrIndex y)
     (fiberMor : ∀ i : ccrIndex x, ccrFamily y (reindex i) ⟶ ccrFamily x i) :
     x ⟶ y :=
   ⟨reindex, fiberMor⟩
 
 /--
-Extract the reindexing function from a morphism in `CoprodCovarRepCat C`.
+Extract the reindexing function from a morphism in `CoprodCovarRepCat' C`.
 -/
-def ccrReindex {x y : CoprodCovarRepCat.{u, v, w} C} (f : x ⟶ y) :
+def ccrReindex {x y : CoprodCovarRepCat'.{u, v, w} C} (f : x ⟶ y) :
     ccrIndex x ⟶ ccrIndex y :=
   f.base
 
 /--
 Extract the fiber morphism at index `i` from a morphism in
-`CoprodCovarRepCat C`. For a morphism `f : (X, F) → (Y, G)`, this returns
+`CoprodCovarRepCat' C`. For a morphism `f : (X, F) → (Y, G)`, this returns
 `G(reindex i) ⟶ F(i)` in `C`.
 -/
-def ccrFiberMor {x y : CoprodCovarRepCat.{u, v, w} C} (f : x ⟶ y)
+def ccrFiberMor {x y : CoprodCovarRepCat'.{u, v, w} C} (f : x ⟶ y)
     (i : ccrIndex x) : ccrFamily y (ccrReindex f i) ⟶ ccrFamily x i :=
   f.fiber i
 
 @[simp]
-lemma ccrHomMk_reindex {x y : CoprodCovarRepCat.{u, v, w} C}
+lemma ccrHomMk_reindex {x y : CoprodCovarRepCat'.{u, v, w} C}
     (reindex : ccrIndex x ⟶ ccrIndex y)
     (fiberMor : ∀ i : ccrIndex x, ccrFamily y (reindex i) ⟶ ccrFamily x i) :
     ccrReindex (ccrHomMk reindex fiberMor) = reindex := rfl
 
 @[simp]
-lemma ccrHomMk_fiberMor {x y : CoprodCovarRepCat.{u, v, w} C}
+lemma ccrHomMk_fiberMor {x y : CoprodCovarRepCat'.{u, v, w} C}
     (reindex : ccrIndex x ⟶ ccrIndex y)
     (fiberMor : ∀ i : ccrIndex x, ccrFamily y (reindex i) ⟶ ccrFamily x i)
     (i : ccrIndex x) :
     ccrFiberMor (ccrHomMk reindex fiberMor) i = fiberMor i := rfl
 
 @[ext (iff := false)]
-lemma ccrHom_ext {x y : CoprodCovarRepCat.{u, v, w} C} (f g : x ⟶ y)
+lemma ccrHom_ext {x y : CoprodCovarRepCat'.{u, v, w} C} (f g : x ⟶ y)
     (hbase : f.base = g.base)
     (hfiber : f.fiber ≫ eqToHom (by rw [hbase]) = g.fiber) : f = g :=
   GrothendieckContra'.ext f g hbase hfiber
 
 /--
-The identity morphism in `CoprodCovarRepCat C` has identity reindexing.
+The identity morphism in `CoprodCovarRepCat' C` has identity reindexing.
 -/
 @[simp]
-lemma ccrId_reindex (x : CoprodCovarRepCat.{u, v, w} C) :
+lemma ccrId_reindex (x : CoprodCovarRepCat'.{u, v, w} C) :
     ccrReindex (𝟙 x) = 𝟙 (ccrIndex x) := rfl
 
 /--
-The identity morphism in `CoprodCovarRepCat C` has identity fiber morphisms.
+The identity morphism in `CoprodCovarRepCat' C` has identity fiber morphisms.
 -/
 @[simp]
-lemma ccrId_fiberMor (x : CoprodCovarRepCat.{u, v, w} C) (i : ccrIndex x) :
+lemma ccrId_fiberMor (x : CoprodCovarRepCat'.{u, v, w} C) (i : ccrIndex x) :
     ccrFiberMor (𝟙 x) i = 𝟙 (ccrFamily x i) := rfl
 
 /--
-Composition in `CoprodCovarRepCat C`: the reindexing composes covariantly.
+Composition in `CoprodCovarRepCat' C`: the reindexing composes covariantly.
 -/
 @[simp]
-lemma ccrComp_reindex {x y z : CoprodCovarRepCat.{u, v, w} C}
+lemma ccrComp_reindex {x y z : CoprodCovarRepCat'.{u, v, w} C}
     (f : x ⟶ y) (g : y ⟶ z) :
     ccrReindex (f ≫ g) = ccrReindex f ≫ ccrReindex g := rfl
 
 /--
-Composition in `CoprodCovarRepCat C`: the fiber morphisms compose
+Composition in `CoprodCovarRepCat' C`: the fiber morphisms compose
 contravariantly. For `f : x ⟶ y` and `g : y ⟶ z`, the fiber morphism at
 index `i` is `ccrFiberMor g (ccrReindex f i) ≫ ccrFiberMor f i`.
 -/
 @[simp]
-lemma ccrComp_fiberMor {x y z : CoprodCovarRepCat.{u, v, w} C}
+lemma ccrComp_fiberMor {x y z : CoprodCovarRepCat'.{u, v, w} C}
     (f : x ⟶ y) (g : y ⟶ z) (i : ccrIndex x) :
     ccrFiberMor (f ≫ g) i = ccrFiberMor g (ccrReindex f i) ≫ ccrFiberMor f i := by
   unfold ccrFiberMor ccrReindex
@@ -1450,20 +1450,20 @@ lemma ccrComp_fiberMor {x y z : CoprodCovarRepCat.{u, v, w} C}
   rfl
 
 /--
-The identity morphism in `CoprodCovarRepCat C` expressed purely in terms of
+The identity morphism in `CoprodCovarRepCat' C` expressed purely in terms of
 the underlying category. The reindexing is `id` and each fiber morphism is `𝟙`.
 -/
 @[simp]
-lemma ccrId_mk (x : CoprodCovarRepCat.{u, v, w} C) :
+lemma ccrId_mk (x : CoprodCovarRepCat'.{u, v, w} C) :
     𝟙 x = ccrHomMk id (fun i => 𝟙 (ccrFamily x i)) := rfl
 
 /--
-Composition in `CoprodCovarRepCat C` expressed purely in terms of the
+Composition in `CoprodCovarRepCat' C` expressed purely in terms of the
 underlying category. The reindexing is function composition `g ∘ f`, and
 the fiber morphism at index `i` is `g.fiber (f.reindex i) ≫ f.fiber i`.
 -/
 @[simp]
-lemma ccrComp_mk {x y z : CoprodCovarRepCat.{u, v, w} C}
+lemma ccrComp_mk {x y z : CoprodCovarRepCat'.{u, v, w} C}
     (f : x ⟶ y) (g : y ⟶ z) :
     f ≫ g = ccrHomMk (ccrReindex g ∘ ccrReindex f)
       (fun i => ccrFiberMor g (ccrReindex f i) ≫ ccrFiberMor f i) := by
@@ -1604,9 +1604,9 @@ def fcToFunctor
 
 end CoprodCovarRepHelpers
 
-/-! ## Equivalence between CoprodCovarRepCat and FreeCoprodCompletionCat
+/-! ## Equivalence between CoprodCovarRepCat' and FreeCoprodCompletionCat
 
-`CoprodCovarRepCat C` is equivalent to `FreeCoprodCompletionCat (C^op')`.
+`CoprodCovarRepCat' C` is equivalent to `FreeCoprodCompletionCat (C^op')`.
 This follows from the isomorphism `FamilyCat (C^op') X ≅ (FamilyCat C X)^op'`.
 -/
 
@@ -1617,27 +1617,27 @@ universe w
 variable {C : Type u} [Category.{v} C]
 
 def ccrFcOpEq :
-  CoprodCovarRepCat.{u, v, w} C = FreeCoprodCompletionCat.{u, v, w} Cᵒᵖ' :=
+  CoprodCovarRepCat'.{u, v, w} C = FreeCoprodCompletionCat.{u, v, w} Cᵒᵖ' :=
     rfl
 
 open CategoryTheory.Limits CategoryTheory.Adjunction in
 instance hasCoproducts_CoprodCovarRepCat :
-  HasCoproducts.{w} (CoprodCovarRepCat.{u, v, w} C) :=
+  HasCoproducts.{w} (CoprodCovarRepCat'.{u, v, w} C) :=
     hasCoproducts_of_colimit_cofans
       (fcCofan (C := Cᵒᵖ'))
       (fcIsColimitCofan (C := Cᵒᵖ'))
 
 /--
-`CoprodData` instance for `CoprodCovarRepCat C`, inherited from
+`CoprodData` instance for `CoprodCovarRepCat' C`, inherited from
 `FreeCoprodCompletionCat (C^op')`.
 -/
-instance ccrCoprodData : CoprodData.{w} (CoprodCovarRepCat.{u, v, w} C) where
+instance ccrCoprodData : CoprodData.{w} (CoprodCovarRepCat'.{u, v, w} C) where
   coprod F := fcCoprodObj (C := Cᵒᵖ') F
   ι F i := fcCoprodι (C := Cᵒᵖ') F i
 
-/-! ### Isomorphism between CoprodCovarRepCat (Cᵒᵖ) and FreeCoprodCompletionCat C
+/-! ### Isomorphism between CoprodCovarRepCat' (Cᵒᵖ) and FreeCoprodCompletionCat C
 
-We establish that `CoprodCovarRepCat (Cᵒᵖ) ≅Cat FreeCoprodCompletionCat C`.
+We establish that `CoprodCovarRepCat' (Cᵒᵖ) ≅Cat FreeCoprodCompletionCat C`.
 
 This allows working with polynomial functors on C by instead working with
 `FreeCoprodCompletionCat Cᵒᵖ` (contravariant Grothendieck construction on
@@ -1645,12 +1645,12 @@ presheaves), which integrates with mathlib's presheaf machinery.
 -/
 
 /--
-Functor from `CoprodCovarRepCat (Cᵒᵖ)` to `FreeCoprodCompletionCat C`.
+Functor from `CoprodCovarRepCat' (Cᵒᵖ)` to `FreeCoprodCompletionCat C`.
 
 Objects: `(X, F : X → Cᵒᵖ)` maps to `(X, fun x => (F x).unop : X → C)`.
 Morphisms: The fiber morphisms transpose via unop.
 -/
-def ccrOpToFc : CoprodCovarRepCat.{u, v, w} Cᵒᵖ ⥤ FreeCoprodCompletionCat.{u, v, w} C where
+def ccrOpToFc : CoprodCovarRepCat'.{u, v, w} Cᵒᵖ ⥤ FreeCoprodCompletionCat.{u, v, w} C where
   obj P := fcObjMk (fun x => (ccrFamily P x).unop)
   map {P Q} f := fcHomMk (ccrReindex f)
     (fun i => (ccrFiberMor f i).unop)
@@ -1668,12 +1668,12 @@ def ccrOpToFc : CoprodCovarRepCat.{u, v, w} Cᵒᵖ ⥤ FreeCoprodCompletionCat.
     simp only [ccrComp_fiberMor, unop_comp]
 
 /--
-Functor from `FreeCoprodCompletionCat C` to `CoprodCovarRepCat (Cᵒᵖ)`.
+Functor from `FreeCoprodCompletionCat C` to `CoprodCovarRepCat' (Cᵒᵖ)`.
 
 Objects: `(X, G : X → C)` maps to `(X, fun x => op (G x) : X → Cᵒᵖ)`.
 Morphisms: The fiber morphisms transpose via op.
 -/
-def fcToCcrOp : FreeCoprodCompletionCat.{u, v, w} C ⥤ CoprodCovarRepCat.{u, v, w} Cᵒᵖ where
+def fcToCcrOp : FreeCoprodCompletionCat.{u, v, w} C ⥤ CoprodCovarRepCat'.{u, v, w} Cᵒᵖ where
   obj P := ccrObjMk (fun x => Opposite.op (fcFamily P x))
   map {P Q} f := ccrHomMk (fcReindex f)
     (fun i => (fcFiberMor f i).op)
@@ -1691,7 +1691,7 @@ def fcToCcrOp : FreeCoprodCompletionCat.{u, v, w} C ⥤ CoprodCovarRepCat.{u, v,
     simp only [fcComp_fiberMor, op_comp]
 
 @[simp]
-lemma ccrOpToFc_fcToCcrOp : ccrOpToFc ⋙ fcToCcrOp = 𝟭 (CoprodCovarRepCat.{u, v, w} Cᵒᵖ) := by
+lemma ccrOpToFc_fcToCcrOp : ccrOpToFc ⋙ fcToCcrOp = 𝟭 (CoprodCovarRepCat'.{u, v, w} Cᵒᵖ) := by
   fapply _root_.CategoryTheory.Functor.ext
   · intro P
     simp only [Functor.comp_obj, Functor.id_obj, ccrOpToFc, fcToCcrOp]
@@ -1730,23 +1730,23 @@ lemma fcToCcrOp_ccrOpToFc : fcToCcrOp ⋙ ccrOpToFc = 𝟭 (FreeCoprodCompletion
     simp only [Quiver.Hom.unop_op]
 
 /--
-Categorical isomorphism between `CoprodCovarRepCat (Cᵒᵖ)` and `FreeCoprodCompletionCat C`.
+Categorical isomorphism between `CoprodCovarRepCat' (Cᵒᵖ)` and `FreeCoprodCompletionCat C`.
 
 This isomorphism allows polynomial functor constructions on C to be transported
 to/from the free coproduct completion, which has direct access to mathlib's
 presheaf machinery via the contravariant Grothendieck construction.
 -/
-def ccrOpIsoCat : CoprodCovarRepCat.{u, v, w} Cᵒᵖ ≅Cat FreeCoprodCompletionCat.{u, v, w} C where
+def ccrOpIsoCat : CoprodCovarRepCat'.{u, v, w} Cᵒᵖ ≅Cat FreeCoprodCompletionCat.{u, v, w} C where
   hom := ccrOpToFc.toCatHom
   inv := fcToCcrOp.toCatHom
   hom_inv_id := Cat.Hom.ext ccrOpToFc_fcToCcrOp
   inv_hom_id := Cat.Hom.ext fcToCcrOp_ccrOpToFc
 
 /--
-Categorical equivalence between `CoprodCovarRepCat (Cᵒᵖ)` and `FreeCoprodCompletionCat C`,
+Categorical equivalence between `CoprodCovarRepCat' (Cᵒᵖ)` and `FreeCoprodCompletionCat C`,
 derived from the categorical isomorphism.
 -/
-def ccrOpEquivFc : CoprodCovarRepCat.{u, v, w} Cᵒᵖ ≌ FreeCoprodCompletionCat.{u, v, w} C :=
+def ccrOpEquivFc : CoprodCovarRepCat'.{u, v, w} Cᵒᵖ ≌ FreeCoprodCompletionCat.{u, v, w} C :=
   Cat.equivOfIso ccrOpIsoCat
 
 end CoprodCovarRepEquiv
@@ -1939,8 +1939,8 @@ This has the same morphism structure as `FreeCoprodProdCat`.
 -/
 @[simp]
 def CoprodCovarRepSquaredCat.{u', v', w₁', w₂'} (C' : Type u') [Category.{v'} C'] : Cat :=
-  CoprodCovarRepCat.{max (w₂' + 1) u' w₂', max w₂' v', w₁'}
-    (CoprodCovarRepCat.{u', v', w₂'} C')
+  CoprodCovarRepCat'.{max (w₂' + 1) u' w₂', max w₂' v', w₁'}
+    (CoprodCovarRepCat'.{u', v', w₂'} C')
 
 end LayeredConstructions
 
@@ -2665,8 +2665,8 @@ end FreeCoprodProdDataMatching
 
 /-! ## CoprodData and ProdData for CoprodCovarRepSquaredCat
 
-`CoprodCovarRepSquaredCat C = CoprodCovarRepCat (CoprodCovarRepCat C)` has:
-- `CoprodData` from the outer `CoprodCovarRepCat` (at any universe `w₁`)
+`CoprodCovarRepSquaredCat C = CoprodCovarRepCat' (CoprodCovarRepCat' C)` has:
+- `CoprodData` from the outer `CoprodCovarRepCat'` (at any universe `w₁`)
 - `ProdData` when universes match (via the equivalence with `FreeCoprodProdCat`)
 -/
 

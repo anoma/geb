@@ -31,7 +31,7 @@ contravariant representables `uliftYoneda.obj c`,
 corresponding to objects of `FreeCoprodCompletionCat C`.
 For copresheaves, the projective objects are coproducts
 of covariant representables, corresponding to objects of
-`CoprodCovarRepCat C`.
+`CoprodCovarRepCat' C`.
 -/
 
 namespace GebLean
@@ -200,12 +200,12 @@ open Opposite
 variable (F : C ⥤ Type (max v w))
 
 /--
-The `CoprodCovarRepCat C` object whose evaluation is the
+The `CoprodCovarRepCat' C` object whose evaluation is the
 projective cover of `F`.  Indexed by elements of `F`,
 with family sending each element `(c, x)` to `c`.
 -/
 def copresheafCoverObj :
-    CoprodCovarRepCat.{u, v, max u w v} C :=
+    CoprodCovarRepCat'.{u, v, max u w v} C :=
   ccrObjMk (CategoryOfElements.π F).obj
 
 /--

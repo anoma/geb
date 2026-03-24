@@ -215,7 +215,7 @@ theorem polyBetweenProdLift_proj (I : Type u)
 
 lemma ccrHom_ext_subst
     {C' : Type*} [Category C']
-    {x y : CoprodCovarRepCat C'}
+    {x y : CoprodCovarRepCat' C'}
     (f g : x ⟶ y)
     (hbase : f.base = g.base)
     (hfiber : ∀ i,
@@ -232,7 +232,7 @@ lemma ccrHom_ext_subst
 
 lemma ccrFiberMor_congr
     {C' : Type*} [Category C']
-    {x y : CoprodCovarRepCat C'}
+    {x y : CoprodCovarRepCat' C'}
     {f g : x ⟶ y} (h : f = g) (q : ccrIndex x) :
     ccrFiberMor f q =
       eqToHom (congrArg (ccrFamily y)
@@ -1917,7 +1917,7 @@ lemma polyBetweenWhiskerRight_comp
             q alpha beta y) i) ⟨e, d⟩
       rw [htf]
       simp only [FamilyCat.eq_1,
-        CoprodCovarRepCat.eq_1,
+        CoprodCovarRepCat'.eq_1,
         CategoryOp'.eq_1,
         familyFunctor'.eq_1, Cat.of_α,
         familyMap'.eq_1,
@@ -1933,7 +1933,7 @@ lemma polyBetweenWhiskerRight_comp
           (polyBetweenWhiskerRightReindex_comp
             q alpha beta y) i) ⟨e, d⟩
       simp only [FamilyCat.eq_1,
-        CoprodCovarRepCat.eq_1,
+        CoprodCovarRepCat'.eq_1,
         CategoryOp'.eq_1,
         familyFunctor'.eq_1, Cat.of_α,
         familyMap'.eq_1,
@@ -2436,12 +2436,12 @@ section HomObjects
 variable {X Y : Type u}
 
 /--
-The terminal object in `CoprodCovarRepCat (Over X)`.
+The terminal object in `CoprodCovarRepCat' (Over X)`.
 One position (`PUnit`) with initial family
 (`Over.mk PEmpty.elim`).
 -/
 def ccrTerminalObj (X : Type u) :
-    CoprodCovarRepCat (Over X) :=
+    CoprodCovarRepCat' (Over X) :=
   ccrObjMk (fun _ : PUnit.{u + 1} =>
     Over.mk (PEmpty.elim : PEmpty.{u + 1} → X))
 
@@ -2450,7 +2450,7 @@ The unique morphism from any CCR object to the
 terminal object.
 -/
 def ccrTerminalFrom
-    (c : CoprodCovarRepCat (Over X)) :
+    (c : CoprodCovarRepCat' (Over X)) :
     c ⟶ ccrTerminalObj X :=
   ccrHomMk
     (fun _ => PUnit.unit)
@@ -2462,7 +2462,7 @@ Any morphism to the terminal CCR object equals
 `ccrTerminalFrom`.
 -/
 theorem ccrTerminalFrom_unique
-    (c : CoprodCovarRepCat (Over X))
+    (c : CoprodCovarRepCat' (Over X))
     (f : c ⟶ ccrTerminalObj X) :
     f = ccrTerminalFrom c := by
   refine ccrHom_ext_subst _ _ ?_ ?_
@@ -2568,15 +2568,15 @@ def polyBetweenFlipEitherInr (a : Over X) :
     (Sum.inr PUnit.unit)
 
 /--
-The representable hom-object in `CoprodCovarRepCat (Over X)`.
-Given `a : Over X` and `r : CoprodCovarRepCat (Over X)`,
+The representable hom-object in `CoprodCovarRepCat' (Over X)`.
+Given `a : Over X` and `r : CoprodCovarRepCat' (Over X)`,
 `ccrRepHomObj a r = r . flipEither(a)`, i.e., the
 composition of `r` (viewed as a constant PFB to `PUnit`)
 with `polyBetweenFlipEither a`.
 -/
 def ccrRepHomObj (a : Over X)
-    (r : CoprodCovarRepCat (Over X)) :
-    CoprodCovarRepCat (Over X) :=
+    (r : CoprodCovarRepCat' (Over X)) :
+    CoprodCovarRepCat' (Over X) :=
   polyBetweenComp
     (fun _ : PUnit.{u + 1} => r)
     (polyBetweenFlipEither a)
@@ -2587,7 +2587,7 @@ def ccrRepHomObj (a : Over X)
 applied to the constant PFB at `r`.
 -/
 theorem ccrRepHomObj_eq_precomp (a : Over X)
-    (r : CoprodCovarRepCat (Over X)) :
+    (r : CoprodCovarRepCat' (Over X)) :
     ccrRepHomObj a r =
     (polyBetweenPrecompFunctor
       (polyBetweenFlipEither a)).obj
@@ -2595,21 +2595,21 @@ theorem ccrRepHomObj_eq_precomp (a : Over X)
   rfl
 
 def ccrRepHomMap (a : Over X)
-    {r s : CoprodCovarRepCat (Over X)} (f : r ⟶ s) :
+    {r s : CoprodCovarRepCat' (Over X)} (f : r ⟶ s) :
     ccrRepHomObj a r ⟶ ccrRepHomObj a s :=
   polyBetweenWhiskerRight
     (polyBetweenFlipEither a)
     (fun _ : PUnit.{u + 1} => f) PUnit.unit
 
 def ccrCoprHomObj
-    (q r : CoprodCovarRepCat (Over X)) :
-    CoprodCovarRepCat (Over X) :=
+    (q r : CoprodCovarRepCat' (Over X)) :
+    CoprodCovarRepCat' (Over X) :=
   ∏' (fun i : ccrIndex q =>
     ccrRepHomObj (ccrFamily q i) r)
 
 def ccrCoprHomMap
-    (q : CoprodCovarRepCat (Over X))
-    {r s : CoprodCovarRepCat (Over X)} (f : r ⟶ s) :
+    (q : CoprodCovarRepCat' (Over X))
+    {r s : CoprodCovarRepCat' (Over X)} (f : r ⟶ s) :
     ccrCoprHomObj q r ⟶ ccrCoprHomObj q s :=
   ccrHomMk
     (fun p iq => ccrReindex (ccrRepHomMap
@@ -2620,8 +2620,8 @@ def ccrCoprHomMap
 
 @[simp]
 lemma ccrCoprHomMap_reindex
-    (q : CoprodCovarRepCat (Over X))
-    {r s : CoprodCovarRepCat (Over X)}
+    (q : CoprodCovarRepCat' (Over X))
+    {r s : CoprodCovarRepCat' (Over X)}
     (f : r ⟶ s) (p : ccrIndex (ccrCoprHomObj q r))
     (iq : ccrIndex q) :
     ccrReindex (ccrCoprHomMap q f) p iq =
@@ -2630,8 +2630,8 @@ lemma ccrCoprHomMap_reindex
 
 @[simp]
 lemma ccrCoprHomMap_fiberMor
-    (q : CoprodCovarRepCat (Over X))
-    {r s : CoprodCovarRepCat (Over X)}
+    (q : CoprodCovarRepCat' (Over X))
+    {r s : CoprodCovarRepCat' (Over X)}
     (f : r ⟶ s) (p : ccrIndex (ccrCoprHomObj q r)) :
     ccrFiberMor (ccrCoprHomMap q f) p =
       overCoprodMap (fun iq =>
@@ -2652,7 +2652,7 @@ def polyBetweenHomMap
 
 @[simp]
 lemma ccrRepHomMap_id (a : Over X)
-    (r : CoprodCovarRepCat (Over X)) :
+    (r : CoprodCovarRepCat' (Over X)) :
     ccrRepHomMap a (𝟙 r) =
       𝟙 (ccrRepHomObj a r) :=
   congrFun
@@ -2663,7 +2663,7 @@ lemma ccrRepHomMap_id (a : Over X)
 
 @[simp]
 lemma ccrRepHomMap_comp (a : Over X)
-    {r s t : CoprodCovarRepCat (Over X)}
+    {r s t : CoprodCovarRepCat' (Over X)}
     (f : r ⟶ s) (g : s ⟶ t) :
     ccrRepHomMap a (f ≫ g) =
       ccrRepHomMap a f ≫ ccrRepHomMap a g :=
@@ -2676,7 +2676,7 @@ lemma ccrRepHomMap_comp (a : Over X)
 
 @[simp]
 lemma ccrCoprHomMap_id
-    (q r : CoprodCovarRepCat (Over X)) :
+    (q r : CoprodCovarRepCat' (Over X)) :
     ccrCoprHomMap q (𝟙 r) =
       𝟙 (ccrCoprHomObj q r) := by
   refine ccrHom_ext_subst _ _
@@ -2690,9 +2690,9 @@ lemma ccrCoprHomMap_id
   congr 1
 
 private def ccrCoprHomMapAux
-    {q : CoprodCovarRepCat (Over X)}
+    {q : CoprodCovarRepCat' (Over X)}
     {F G : ccrIndex q →
-      CoprodCovarRepCat (Over X)}
+      CoprodCovarRepCat' (Over X)}
     (morphs : ∀ iq, F iq ⟶ G iq) :
     (∏' F) ⟶ (∏' G) :=
   ccrHomMk
@@ -2702,9 +2702,9 @@ private def ccrCoprHomMapAux
       ccrFiberMor (morphs iq) (p iq)))
 
 private lemma ccrCoprHomMapAux_comp
-    {q : CoprodCovarRepCat (Over X)}
+    {q : CoprodCovarRepCat' (Over X)}
     {F G H : ccrIndex q →
-      CoprodCovarRepCat (Over X)}
+      CoprodCovarRepCat' (Over X)}
     (morphs₁ : ∀ iq, F iq ⟶ G iq)
     (morphs₂ : ∀ iq, G iq ⟶ H iq) :
     ccrCoprHomMapAux
@@ -2720,8 +2720,8 @@ private lemma ccrCoprHomMapAux_comp
 
 @[simp]
 lemma ccrCoprHomMap_comp
-    (q : CoprodCovarRepCat (Over X))
-    {r s t : CoprodCovarRepCat (Over X)}
+    (q : CoprodCovarRepCat' (Over X))
+    {r s t : CoprodCovarRepCat' (Over X)}
     (f : r ⟶ s) (g : s ⟶ t) :
     ccrCoprHomMap q (f ≫ g) =
       ccrCoprHomMap q f ≫ ccrCoprHomMap q g :=
@@ -2790,7 +2790,7 @@ section CurryingAdjunction
 variable {X Y : Type u}
 
 def ccrYoneda (a : Over X) :
-    CoprodCovarRepCat (Over X) :=
+    CoprodCovarRepCat' (Over X) :=
   ccrObjMk (fun _ : PUnit.{u + 1} => a)
 
 private abbrev pbProdPos

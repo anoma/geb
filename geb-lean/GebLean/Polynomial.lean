@@ -19,7 +19,7 @@ For a locally Cartesian closed category like `Type`, polynomial functors can be
 characterized in multiple equivalent ways:
 
 1. **Via coproducts of covariant representables**: A polynomial functor
-   `Over X → Type` is an object of `CoprodCovarRepCat (Over X)`.
+   `Over X → Type` is an object of `CoprodCovarRepCat' (Over X)`.
 
 2. **Via W-type diagrams**: A polynomial functor `Over X → Over Y` is given by
    a diagram `X ← E → B → Y` (pullback, dependent product, dependent sum).
@@ -247,7 +247,7 @@ end FamilySliceEquivalence
 /-! ## General Polynomial Functors
 
 A polynomial functor from an arbitrary category `D` to `Type` is given by an
-object of `CoprodCovarRepCat D`. An object `(I, F)` where `I : Type` and
+object of `CoprodCovarRepCat' D`. An object `(I, F)` where `I : Type` and
 `F : I → D` represents the polynomial functor:
 
 ```
@@ -269,44 +269,44 @@ Evaluation of a polynomial functor at an object of `D`.
 Given a polynomial `P = (I, F)` where `F : I → D` and an object `A : D`,
 the evaluation `P(A) = Σ_{i : I} Hom_D(F(i), A)` is a type.
 -/
-def ccrEval (P : CoprodCovarRepCat.{u', u, u''} D) (A : D) :=
+def ccrEval (P : CoprodCovarRepCat'.{u', u, u''} D) (A : D) :=
   Σ i : ccrIndex P, (ccrFamily P i ⟶ A)
 
 /--
 Extract the index from an element of a polynomial evaluation.
 -/
-def ccrEvalIndex {P : CoprodCovarRepCat.{u', u, u''} D} {A : D} (x : ccrEval P A) :
+def ccrEvalIndex {P : CoprodCovarRepCat'.{u', u, u''} D} {A : D} (x : ccrEval P A) :
     ccrIndex P :=
   x.1
 
 /--
 Extract the morphism from an element of a polynomial evaluation.
 -/
-def ccrEvalMor {P : CoprodCovarRepCat.{u', u, u''} D} {A : D} (x : ccrEval P A) :
+def ccrEvalMor {P : CoprodCovarRepCat'.{u', u, u''} D} {A : D} (x : ccrEval P A) :
     ccrFamily P (ccrEvalIndex x) ⟶ A :=
   x.2
 
 /--
 Construct an element of a polynomial evaluation from an index and a morphism.
 -/
-def ccrEvalMk {P : CoprodCovarRepCat.{u', u, u''} D} {A : D}
+def ccrEvalMk {P : CoprodCovarRepCat'.{u', u, u''} D} {A : D}
     (i : ccrIndex P) (f : ccrFamily P i ⟶ A) : ccrEval P A :=
   ⟨i, f⟩
 
 @[simp]
-lemma ccrEvalMk_index {P : CoprodCovarRepCat.{u', u, u''} D} {A : D}
+lemma ccrEvalMk_index {P : CoprodCovarRepCat'.{u', u, u''} D} {A : D}
     (i : ccrIndex P) (f : ccrFamily P i ⟶ A) :
     ccrEvalIndex (ccrEvalMk i f) = i := rfl
 
 @[simp]
-lemma ccrEvalMk_mor {P : CoprodCovarRepCat.{u', u, u''} D} {A : D}
+lemma ccrEvalMk_mor {P : CoprodCovarRepCat'.{u', u, u''} D} {A : D}
     (i : ccrIndex P) (f : ccrFamily P i ⟶ A) :
     ccrEvalMor (ccrEvalMk i f) = f := rfl
 
 /--
 Extensionality for polynomial evaluations.
 -/
-lemma ccrEval_ext {P : CoprodCovarRepCat.{u', u, u''} D} {A : D} (x y : ccrEval P A)
+lemma ccrEval_ext {P : CoprodCovarRepCat'.{u', u, u''} D} {A : D} (x y : ccrEval P A)
     (hi : ccrEvalIndex x = ccrEvalIndex y)
     (hm : ccrEvalMor x ≍ ccrEvalMor y) : x = y := by
   obtain ⟨ix, mx⟩ := x
@@ -318,41 +318,41 @@ lemma ccrEval_ext {P : CoprodCovarRepCat.{u', u, u''} D} {A : D} (x y : ccrEval 
   rfl
 
 @[simp]
-lemma ccrEvalMk_eta {P : CoprodCovarRepCat.{u', u, u''} D} {A : D} (x : ccrEval P A) :
+lemma ccrEvalMk_eta {P : CoprodCovarRepCat'.{u', u, u''} D} {A : D} (x : ccrEval P A) :
     ccrEvalMk (ccrEvalIndex x) (ccrEvalMor x) = x := rfl
 
 /--
 The action of a polynomial functor on morphisms.
 Given `f : A ⟶ B`, maps `⟨i, h⟩ : ccrEval P A` to `⟨i, h ≫ f⟩ : ccrEval P B`.
 -/
-def ccrEvalMap {P : CoprodCovarRepCat.{u', u, u''} D} {A B : D} (f : A ⟶ B) :
+def ccrEvalMap {P : CoprodCovarRepCat'.{u', u, u''} D} {A B : D} (f : A ⟶ B) :
     ccrEval P A → ccrEval P B :=
   fun ⟨i, h⟩ => ⟨i, h ≫ f⟩
 
 @[simp]
-lemma ccrEvalMap_index {P : CoprodCovarRepCat.{u', u, u''} D} {A B : D} (f : A ⟶ B)
+lemma ccrEvalMap_index {P : CoprodCovarRepCat'.{u', u, u''} D} {A B : D} (f : A ⟶ B)
     (x : ccrEval P A) : ccrEvalIndex (ccrEvalMap f x) = ccrEvalIndex x := rfl
 
 @[simp]
-lemma ccrEvalMap_mor {P : CoprodCovarRepCat.{u', u, u''} D} {A B : D} (f : A ⟶ B)
+lemma ccrEvalMap_mor {P : CoprodCovarRepCat'.{u', u, u''} D} {A B : D} (f : A ⟶ B)
     (x : ccrEval P A) : ccrEvalMor (ccrEvalMap f x) = ccrEvalMor x ≫ f := rfl
 
 @[simp]
-lemma ccrEvalMap_id {P : CoprodCovarRepCat.{u', u, u''} D} {A : D} :
+lemma ccrEvalMap_id {P : CoprodCovarRepCat'.{u', u, u''} D} {A : D} :
     ccrEvalMap (𝟙 A) = (id : ccrEval P A → ccrEval P A) := by
   funext ⟨i, h⟩
   simp only [ccrEvalMap, Category.comp_id, id_eq]
 
 @[simp]
-lemma ccrEvalMap_comp {P : CoprodCovarRepCat.{u', u, u''} D} {A B C : D} (f : A ⟶ B) (g : B ⟶ C) :
+lemma ccrEvalMap_comp {P : CoprodCovarRepCat'.{u', u, u''} D} {A B C : D} (f : A ⟶ B) (g : B ⟶ C) :
     ccrEvalMap (f ≫ g) = ccrEvalMap g ∘ ccrEvalMap (P := P) f := by
   funext ⟨i, h⟩
   simp only [ccrEvalMap, Category.assoc, Function.comp_apply]
 
 /--
-A polynomial functor `P : CoprodCovarRepCat D` gives a functor `D ⥤ Type`.
+A polynomial functor `P : CoprodCovarRepCat' D` gives a functor `D ⥤ Type`.
 -/
-def ccrToFunctor (P : CoprodCovarRepCat.{u', u, u''} D) : D ⥤ Type _ where
+def ccrToFunctor (P : CoprodCovarRepCat'.{u', u, u''} D) : D ⥤ Type _ where
   obj := ccrEval P
   map := ccrEvalMap
   map_id := fun _ => ccrEvalMap_id
@@ -371,33 +371,33 @@ that `ccrEvalMap h ⟨i, f⟩ = ⟨j, g⟩`, which means `i = j` and `f ≫ h = 
 -/
 
 /-- The category of elements of a polynomial functor. -/
-abbrev ccrElements (P : CoprodCovarRepCat.{u', u, u''} D) : Type _ := (ccrToFunctor P).Elements
+abbrev ccrElements (P : CoprodCovarRepCat'.{u', u, u''} D) : Type _ := (ccrToFunctor P).Elements
 
 /-- Objects of the category of elements: pairs `(A, x)` where `x : ccrEval P A`. -/
-abbrev ccrElementsObj (P : CoprodCovarRepCat.{u', u, u''} D) : Type _ := (ccrToFunctor P).Elements
+abbrev ccrElementsObj (P : CoprodCovarRepCat'.{u', u, u''} D) : Type _ := (ccrToFunctor P).Elements
 
-instance ccrElementsCategory (P : CoprodCovarRepCat.{u', u, u''} D) :
+instance ccrElementsCategory (P : CoprodCovarRepCat'.{u', u, u''} D) :
     Category (ccrElements P) :=
   inferInstance
 
 /-- Morphisms in the category of elements. -/
-abbrev ccrElementsMor {P : CoprodCovarRepCat.{u', u, u''} D} (X Y : ccrElements P) : Type _ :=
+abbrev ccrElementsMor {P : CoprodCovarRepCat'.{u', u, u''} D} (X Y : ccrElements P) : Type _ :=
   X ⟶ Y
 
 /-- The base object of an element in the category of elements. -/
-def ccrElementsBase {P : CoprodCovarRepCat.{u', u, u''} D} (e : ccrElements P) : D := e.fst
+def ccrElementsBase {P : CoprodCovarRepCat'.{u', u, u''} D} (e : ccrElements P) : D := e.fst
 
 /-- The fiber (the element of `ccrEval P A`) of an element in the category of
 elements. -/
-def ccrElementsFiber {P : CoprodCovarRepCat.{u', u, u''} D} (e : ccrElements P) :
+def ccrElementsFiber {P : CoprodCovarRepCat'.{u', u, u''} D} (e : ccrElements P) :
     ccrEval P (ccrElementsBase e) := e.snd
 
 /-- The position component of an element in the category of elements. -/
-def ccrElementsPos {P : CoprodCovarRepCat.{u', u, u''} D} (e : ccrElements P) : ccrIndex P :=
+def ccrElementsPos {P : CoprodCovarRepCat'.{u', u, u''} D} (e : ccrElements P) : ccrIndex P :=
   (ccrElementsFiber e).1
 
 /-- The morphism component of an element in the category of elements. -/
-def ccrElementsHom {P : CoprodCovarRepCat.{u', u, u''} D} (e : ccrElements P) :
+def ccrElementsHom {P : CoprodCovarRepCat'.{u', u, u''} D} (e : ccrElements P) :
     ccrFamily P (ccrElementsPos e) ⟶ ccrElementsBase e :=
   (ccrElementsFiber e).2
 
@@ -407,11 +407,11 @@ end GeneralPolynomialFunctors
 
 A polynomial functor from an arbitrary category `D` to `Over Y` is a
 `Y`-indexed family of polynomial functors `D → Type`. Since each
-`D → Type` polynomial functor is an object of `CoprodCovarRepCat D`,
+`D → Type` polynomial functor is an object of `CoprodCovarRepCat' D`,
 a polynomial functor `D → Over Y` is an object of
-`FamilyCat (CoprodCovarRepCat D) Y`.
+`FamilyCat (CoprodCovarRepCat' D) Y`.
 
-Evaluation: For `P : FamilyCat (CoprodCovarRepCat D) Y` and `A : D`,
+Evaluation: For `P : FamilyCat (CoprodCovarRepCat' D) Y` and `A : D`,
 we compute the family `y ↦ ccrEval (P y) A` and use `familySliceForward`
 to convert to `Over Y`.
 -/
@@ -426,15 +426,15 @@ The category of polynomial functors `D → Over Y`.
 
 Objects are `Y`-indexed families of polynomial functors `D → Type`.
 For each `y : Y`, we have a polynomial functor `P(y) : D → Type`, which
-is an object of `CoprodCovarRepCat D`, i.e., a pair `(I_y, F_y)` where
+is an object of `CoprodCovarRepCat' D`, i.e., a pair `(I_y, F_y)` where
 `I_y` is a type of positions and `F_y : I_y → D` gives the representables.
 -/
-abbrev PolyToOverCat : Cat := FamilyCat (CoprodCovarRepCat D) Y
+abbrev PolyToOverCat : Cat := FamilyCat (CoprodCovarRepCat' D) Y
 
 /--
 Extract the polynomial functor at a specific codomain point.
 -/
-def polyToOverAt (P : PolyToOverCat (D := D) Y) (y : Y) : CoprodCovarRepCat D :=
+def polyToOverAt (P : PolyToOverCat (D := D) Y) (y : Y) : CoprodCovarRepCat' D :=
   P y
 
 /--
@@ -791,7 +791,7 @@ end GeneralizedComposition
 /-! ## Polynomial Functors Over X → Type
 
 A polynomial functor `Over X → Type` is given by an object of
-`CoprodCovarRepCat (Over X)`. An object `(I, F)` where `I : Type` and
+`CoprodCovarRepCat' (Over X)`. An object `(I, F)` where `I : Type` and
 `F : I → Over X` represents the polynomial functor:
 
 ```
@@ -816,7 +816,7 @@ Morphisms `(I, F) → (J, G)` consist of:
 - `r : I → J` (a reindexing function)
 - `φ : ∀ i, G(r(i)) ⟶ F(i)` (a family of morphisms in `Over X`)
 -/
-abbrev PolyFunctorCat : Cat := CoprodCovarRepCat (Over X)
+abbrev PolyFunctorCat : Cat := CoprodCovarRepCat' (Over X)
 
 /--
 Evaluation of a polynomial functor at an object of `Over X`.
@@ -917,7 +917,7 @@ def polyEvalFunctor (P : PolyFunctorCat X) : Over X ⥤ Type u :=
 /--
 The composition `.fiber ≫ eqToHom` at index equals composition in Over.
 -/
-private lemma fiber_comp_eqToHom_at_idx {x y : CoprodCovarRepCat (Over X)}
+private lemma fiber_comp_eqToHom_at_idx {x y : CoprodCovarRepCat' (Over X)}
     (f : x ⟶ y) {h : f.base = f.base} :
     (f.fiber ≫ eqToHom (by rw [h])) = f.fiber := by
   simp only [eqToHom_refl, Category.comp_id]
@@ -932,7 +932,7 @@ polynomial functor is an object of `PolyFunctorCat X`, a polynomial functor
 `Over X → Over Y` is an object of `FamilyCat (PolyFunctorCat X) Y`.
 
 This reuses our existing infrastructure for:
-- `PolyFunctorCat X = CoprodCovarRepCat (Over X)` - polynomial functors to Type
+- `PolyFunctorCat X = CoprodCovarRepCat' (Over X)` - polynomial functors to Type
 - `FamilyCat C Y` - `Y`-indexed families of objects from category `C`
 -/
 
@@ -947,7 +947,7 @@ An object is a `Y`-indexed family of polynomial functors `Over X → Type`.
 This is the specialization of `PolyToOverCat` to `D = Over X`.
 
 For each `y : Y`, we have a polynomial functor `P(y) : Over X → Type`, which
-is an object of `CoprodCovarRepCat (Over X)`, i.e., a pair `(I_y, F_y)` where
+is an object of `CoprodCovarRepCat' (Over X)`, i.e., a pair `(I_y, F_y)` where
 `I_y` is a type of positions and `F_y : I_y → Over X` gives the representables.
 -/
 abbrev PolyFunctorBetweenCat : Cat :=
@@ -1882,7 +1882,7 @@ lemma polyIdLeft_inv_hom
 /--
 Pointwise isomorphism for left identity at `y`: the composition
 `polyBetweenComp (polyBetweenId Y) f` evaluated at `y` is
-isomorphic to `f y` in `CoprodCovarRepCat (Over X)`.
+isomorphic to `f y` in `CoprodCovarRepCat' (Over X)`.
 -/
 def polyIdLeftIsoAt
     (f : PolyFunctorBetweenCat X Y) (y : Y) :
@@ -2168,7 +2168,7 @@ The `.left` component of a composed fiber morphism
 equals the composition of the `.left` components.
 -/
 lemma ccrComp_fiberMor_left
-    {P Q R : CoprodCovarRepCat (Over Y)}
+    {P Q R : CoprodCovarRepCat' (Over Y)}
     (φ : P ⟶ Q) (ψ : Q ⟶ R)
     (i : ccrIndex P)
     (e : (ccrFamily R
@@ -2182,8 +2182,8 @@ lemma ccrComp_fiberMor_left
 
 def polyCompGObj
     (f : PolyFunctorBetweenCat X Y)
-    (G : CoprodCovarRepCat (Over Y)) :
-    CoprodCovarRepCat (Over X) :=
+    (G : CoprodCovarRepCat' (Over Y)) :
+    CoprodCovarRepCat' (Over X) :=
   ccrObjMk
     (fun (p : Σ (ig : ccrIndex G),
       ∀ (e : (ccrFamily G ig).left),
@@ -2200,7 +2200,7 @@ def polyCompGObj
 
 def polyCompGMap
     (f : PolyFunctorBetweenCat X Y)
-    {G₁ G₂ : CoprodCovarRepCat (Over Y)}
+    {G₁ G₂ : CoprodCovarRepCat' (Over Y)}
     (φ : G₁ ⟶ G₂) :
     polyCompGObj f G₁ ⟶ polyCompGObj f G₂ :=
   ccrHomMk
@@ -2227,7 +2227,7 @@ def polyCompGMap
 
 lemma polyCompGMap_id
     (f : PolyFunctorBetweenCat X Y)
-    (G : CoprodCovarRepCat (Over Y)) :
+    (G : CoprodCovarRepCat' (Over Y)) :
     polyCompGMap f (𝟙 G) =
       𝟙 (polyCompGObj f G) := rfl
 
@@ -2283,7 +2283,7 @@ private lemma dep_fun_transport_eq
 
 private lemma polyCompGMap_comp_base_inner
     (f : PolyFunctorBetweenCat X Y)
-    {G₁ G₂ G₃ : CoprodCovarRepCat (Over Y)}
+    {G₁ G₂ G₃ : CoprodCovarRepCat' (Over Y)}
     (φ : G₁ ⟶ G₂) (ψ : G₂ ⟶ G₃)
     (ig : ccrIndex G₁)
     (pf : ∀ e : (ccrFamily G₁ ig).left,
@@ -2303,7 +2303,7 @@ private lemma polyCompGMap_comp_base_inner
 
 lemma polyCompGMap_comp_base
     (f : PolyFunctorBetweenCat X Y)
-    {G₁ G₂ G₃ : CoprodCovarRepCat (Over Y)}
+    {G₁ G₂ G₃ : CoprodCovarRepCat' (Over Y)}
     (φ : G₁ ⟶ G₂) (ψ : G₂ ⟶ G₃) :
     (polyCompGMap f (φ ≫ ψ)).base =
     (polyCompGMap f φ ≫
@@ -2347,7 +2347,7 @@ index `⟨ig, pf⟩`.
 -/
 private abbrev compBaseAt
     (f : PolyFunctorBetweenCat X Y)
-    {G₁ G₂ G₃ : CoprodCovarRepCat (Over Y)}
+    {G₁ G₂ G₃ : CoprodCovarRepCat' (Over Y)}
     (φ : G₁ ⟶ G₂) (ψ : G₂ ⟶ G₃)
     (ig : ccrIndex G₁)
     (pf : ∀ e : (ccrFamily G₁ ig).left,
@@ -2363,7 +2363,7 @@ The base value of the sequential composition
 -/
 private abbrev seqBaseAt
     (f : PolyFunctorBetweenCat X Y)
-    {G₁ G₂ G₃ : CoprodCovarRepCat (Over Y)}
+    {G₁ G₂ G₃ : CoprodCovarRepCat' (Over Y)}
     (φ : G₁ ⟶ G₂) (ψ : G₂ ⟶ G₃)
     (ig : ccrIndex G₁)
     (pf : ∀ e : (ccrFamily G₁ ig).left,
@@ -2378,7 +2378,7 @@ The pointwise base equality at `⟨ig, pf⟩`.
 -/
 private lemma baseAtEq
     (f : PolyFunctorBetweenCat X Y)
-    {G₁ G₂ G₃ : CoprodCovarRepCat (Over Y)}
+    {G₁ G₂ G₃ : CoprodCovarRepCat' (Over Y)}
     (φ : G₁ ⟶ G₂) (ψ : G₂ ⟶ G₃)
     (ig : ccrIndex G₁)
     (pf : ∀ e : (ccrFamily G₁ ig).left,
@@ -2392,14 +2392,14 @@ private lemma baseAtEq
 
 private abbrev fiberLeftAt
     (f : PolyFunctorBetweenCat X Y)
-    (G₃ : CoprodCovarRepCat (Over Y))
+    (G₃ : CoprodCovarRepCat' (Over Y))
     (p : ccrIndex (polyCompGObj f G₃)) :
     Type u :=
   (ccrFamily (polyCompGObj f G₃) p).left
 
 private lemma fiberLeftCastEq
     (f : PolyFunctorBetweenCat X Y)
-    {G₁ G₂ G₃ : CoprodCovarRepCat (Over Y)}
+    {G₁ G₂ G₃ : CoprodCovarRepCat' (Over Y)}
     (φ : G₁ ⟶ G₂) (ψ : G₂ ⟶ G₃)
     (ig : ccrIndex G₁)
     (pf : ∀ e : (ccrFamily G₁ ig).left,
@@ -2418,7 +2418,7 @@ sigma at a given base index.
 -/
 private abbrev fiberOuterAt
     (f : PolyFunctorBetweenCat X Y)
-    (G₃ : CoprodCovarRepCat (Over Y))
+    (G₃ : CoprodCovarRepCat' (Over Y))
     (p : ccrIndex (polyCompGObj f G₃)) :
     Type u :=
   (ccrFamily G₃ p.fst).left
@@ -2429,7 +2429,7 @@ sigma at a given outer element.
 -/
 private abbrev fiberInnerAt
     (f : PolyFunctorBetweenCat X Y)
-    (G₃ : CoprodCovarRepCat (Over Y))
+    (G₃ : CoprodCovarRepCat' (Over Y))
     (p : ccrIndex (polyCompGObj f G₃))
     (eg : fiberOuterAt f G₃ p) :
     Type u :=
@@ -2442,7 +2442,7 @@ The result element type (in the domain fiber).
 -/
 private abbrev domFiberLeftAt
     (f : PolyFunctorBetweenCat X Y)
-    (G₁ : CoprodCovarRepCat (Over Y))
+    (G₁ : CoprodCovarRepCat' (Over Y))
     (ig : ccrIndex G₁)
     (pf : ∀ e : (ccrFamily G₁ ig).left,
       ccrIndex
@@ -2458,7 +2458,7 @@ composed fiber morphism produces.
 -/
 private abbrev compFiberResult
     (f : PolyFunctorBetweenCat X Y)
-    {G₁ G₂ G₃ : CoprodCovarRepCat (Over Y)}
+    {G₁ G₂ G₃ : CoprodCovarRepCat' (Over Y)}
     (φ : G₁ ⟶ G₂) (ψ : G₂ ⟶ G₃)
     (ig : ccrIndex G₁)
     (pf : ∀ e : (ccrFamily G₁ ig).left,
@@ -2488,7 +2488,7 @@ The RHS sigma element: apply sequential
 -/
 private abbrev seqFiberResult
     (f : PolyFunctorBetweenCat X Y)
-    {G₁ G₂ G₃ : CoprodCovarRepCat (Over Y)}
+    {G₁ G₂ G₃ : CoprodCovarRepCat' (Over Y)}
     (φ : G₁ ⟶ G₂) (ψ : G₂ ⟶ G₃)
     (ig : ccrIndex G₁)
     (pf : ∀ e : (ccrFamily G₁ ig).left,
@@ -2507,7 +2507,7 @@ private abbrev seqFiberResult
 
 private lemma polyCompGMap_comp_cast_elim
     (f : PolyFunctorBetweenCat X Y)
-    {G₁ G₂ G₃ : CoprodCovarRepCat (Over Y)}
+    {G₁ G₂ G₃ : CoprodCovarRepCat' (Over Y)}
     (φ : G₁ ⟶ G₂) (ψ : G₂ ⟶ G₃)
     (ig : ccrIndex G₁)
     (pf : ∀ e : (ccrFamily G₁ ig).left,
@@ -2579,7 +2579,7 @@ private lemma polyCompGMap_comp_cast_elim
 
 private lemma polyCompGMap_comp_cast_step
     (f : PolyFunctorBetweenCat X Y)
-    {G₁ G₂ G₃ : CoprodCovarRepCat (Over Y)}
+    {G₁ G₂ G₃ : CoprodCovarRepCat' (Over Y)}
     (φ : G₁ ⟶ G₂) (ψ : G₂ ⟶ G₃)
     (ig : ccrIndex G₁)
     (pf : ∀ e : (ccrFamily G₁ ig).left,
@@ -2609,7 +2609,7 @@ private lemma polyCompGMap_comp_cast_step
 
 private lemma polyCompGMap_comp_fiber_at_elem
     (f : PolyFunctorBetweenCat X Y)
-    {G₁ G₂ G₃ : CoprodCovarRepCat (Over Y)}
+    {G₁ G₂ G₃ : CoprodCovarRepCat' (Over Y)}
     (φ : G₁ ⟶ G₂) (ψ : G₂ ⟶ G₃)
     (ig : ccrIndex G₁)
     (pf : ∀ e : (ccrFamily G₁ ig).left,
@@ -2650,7 +2650,7 @@ private lemma polyCompGMap_comp_fiber_at_elem
 
 private lemma polyCompGMap_comp_fiber_at
     (f : PolyFunctorBetweenCat X Y)
-    {G₁ G₂ G₃ : CoprodCovarRepCat (Over Y)}
+    {G₁ G₂ G₃ : CoprodCovarRepCat' (Over Y)}
     (φ : G₁ ⟶ G₂) (ψ : G₂ ⟶ G₃)
     (ig : ccrIndex G₁)
     (pf : ∀ e : (ccrFamily G₁ ig).left,
@@ -2679,7 +2679,7 @@ private lemma polyCompGMap_comp_fiber_at
 
 lemma polyCompGMap_comp
     (f : PolyFunctorBetweenCat X Y)
-    {G₁ G₂ G₃ : CoprodCovarRepCat (Over Y)}
+    {G₁ G₂ G₃ : CoprodCovarRepCat' (Over Y)}
     (φ : G₁ ⟶ G₂) (ψ : G₂ ⟶ G₃) :
     polyCompGMap f (φ ≫ ψ) =
     polyCompGMap f φ ≫
@@ -2698,8 +2698,8 @@ functor in the outer polynomial `G`.
 -/
 def polyCompGFunctor
     (f : PolyFunctorBetweenCat X Y) :
-    CoprodCovarRepCat (Over Y) ⥤
-      CoprodCovarRepCat (Over X) where
+    CoprodCovarRepCat' (Over Y) ⥤
+      CoprodCovarRepCat' (Over X) where
   obj := polyCompGObj f
   map := polyCompGMap f
   map_id := polyCompGMap_id f
@@ -2713,7 +2713,7 @@ apply `αf.hom` to reindex and transport.
 private def polyCompGObj_isoHom
     {f₁ f₂ : PolyFunctorBetweenCat X Y}
     (αf : f₁ ≅ f₂)
-    (G : CoprodCovarRepCat (Over Y)) :
+    (G : CoprodCovarRepCat' (Over Y)) :
     polyCompGObj f₁ G ⟶ polyCompGObj f₂ G :=
   ccrHomMk
     (fun ⟨ig, pf⟩ =>
@@ -2742,7 +2742,7 @@ apply `αf.inv` to reindex and transport.
 private def polyCompGObj_isoInv
     {f₁ f₂ : PolyFunctorBetweenCat X Y}
     (αf : f₁ ≅ f₂)
-    (G : CoprodCovarRepCat (Over Y)) :
+    (G : CoprodCovarRepCat' (Over Y)) :
     polyCompGObj f₂ G ⟶ polyCompGObj f₁ G :=
   ccrHomMk
     (fun ⟨ig, pf⟩ =>
@@ -2873,7 +2873,7 @@ equals `eqToHom` (no leading transport).
 private lemma polyComp_homMk_inv_hom
     {f₁ f₂ : PolyFunctorBetweenCat X Y}
     (αf : f₁ ≅ f₂)
-    (G : CoprodCovarRepCat (Over Y))
+    (G : CoprodCovarRepCat' (Over Y))
     (ig : ccrIndex G)
     (pf : (e : (ccrFamily G ig).left) →
       ccrIndex
@@ -2927,7 +2927,7 @@ the composed base map is the identity base map.
 private lemma polyCompGObj_iso_hom_inv_base
     {f₁ f₂ : PolyFunctorBetweenCat X Y}
     (αf : f₁ ≅ f₂)
-    (G : CoprodCovarRepCat (Over Y)) :
+    (G : CoprodCovarRepCat' (Over Y)) :
     (polyCompGObj_isoHom αf G ≫
       polyCompGObj_isoInv αf G).base =
     (GrothendieckContra'.id (polyCompGObj f₁ G)).base := by
@@ -2945,7 +2945,7 @@ transport equals the identity fiber morphism.
 private lemma polyComp_hom_inv_at_idx
     {f₁ f₂ : PolyFunctorBetweenCat X Y}
     (αf : f₁ ≅ f₂)
-    (G : CoprodCovarRepCat (Over Y))
+    (G : CoprodCovarRepCat' (Over Y))
     (idx : ccrIndex (polyCompGObj f₁ G)) :
     ∀ (h : _ = _),
     eqToHom h ≫
@@ -2974,7 +2974,7 @@ equals `eqToHom` (no leading transport).
 private lemma polyComp_homMk_hom_inv
     {f₁ f₂ : PolyFunctorBetweenCat X Y}
     (αf : f₁ ≅ f₂)
-    (G : CoprodCovarRepCat (Over Y))
+    (G : CoprodCovarRepCat' (Over Y))
     (ig : ccrIndex G)
     (pf : (e : (ccrFamily G ig).left) →
       ccrIndex
@@ -3029,7 +3029,7 @@ the composed base map is the identity base map.
 private lemma polyCompGObj_iso_inv_hom_base
     {f₁ f₂ : PolyFunctorBetweenCat X Y}
     (αf : f₁ ≅ f₂)
-    (G : CoprodCovarRepCat (Over Y)) :
+    (G : CoprodCovarRepCat' (Over Y)) :
     (polyCompGObj_isoInv αf G ≫
       polyCompGObj_isoHom αf G).base =
     (GrothendieckContra'.id
@@ -3049,7 +3049,7 @@ Per-index fiber equality for the `inv ≫ hom` roundtrip.
 private lemma polyComp_inv_hom_at_idx
     {f₁ f₂ : PolyFunctorBetweenCat X Y}
     (αf : f₁ ≅ f₂)
-    (G : CoprodCovarRepCat (Over Y))
+    (G : CoprodCovarRepCat' (Over Y))
     (idx : ccrIndex (polyCompGObj f₂ G)) :
     ∀ (h : _ = _),
     eqToHom h ≫
@@ -3078,7 +3078,7 @@ the identity fiber.
 private lemma polyCompGObj_iso_hom_inv_fiber_cond
     {f₁ f₂ : PolyFunctorBetweenCat X Y}
     (αf : f₁ ≅ f₂)
-    (G : CoprodCovarRepCat (Over Y)) :
+    (G : CoprodCovarRepCat' (Over Y)) :
     (polyCompGObj_isoHom αf G ≫
       polyCompGObj_isoInv αf G).fiber ≫
     eqToHom (congrArg
@@ -3098,7 +3098,7 @@ private lemma polyCompGObj_iso_hom_inv_fiber_cond
     Functor.comp_map,
     Functor.toCatHom_toFunctor,
     GrothendieckContra'.id_base,
-    types_id_apply, CoprodCovarRepCat.eq_1,
+    types_id_apply, CoprodCovarRepCat'.eq_1,
     GrothendieckContra'.cat_comp_base,
     types_comp_apply,
     GrothendieckContra'.cat_comp_fiber,
@@ -3126,7 +3126,7 @@ the composed fiber NatTrans is HEq to the identity fiber NatTrans.
 private lemma polyCompGObj_iso_hom_inv_fiber
     {f₁ f₂ : PolyFunctorBetweenCat X Y}
     (αf : f₁ ≅ f₂)
-    (G : CoprodCovarRepCat (Over Y)) :
+    (G : CoprodCovarRepCat' (Over Y)) :
     HEq (polyCompGObj_isoHom αf G ≫
            polyCompGObj_isoInv αf G).fiber
          (GrothendieckContra'.id
@@ -3146,7 +3146,7 @@ the identity fiber.
 private lemma polyCompGObj_iso_inv_hom_fiber_cond
     {f₁ f₂ : PolyFunctorBetweenCat X Y}
     (αf : f₁ ≅ f₂)
-    (G : CoprodCovarRepCat (Over Y)) :
+    (G : CoprodCovarRepCat' (Over Y)) :
     (polyCompGObj_isoInv αf G ≫
       polyCompGObj_isoHom αf G).fiber ≫
     eqToHom (congrArg
@@ -3166,7 +3166,7 @@ private lemma polyCompGObj_iso_inv_hom_fiber_cond
     Functor.comp_map,
     Functor.toCatHom_toFunctor,
     GrothendieckContra'.id_base,
-    types_id_apply, CoprodCovarRepCat.eq_1,
+    types_id_apply, CoprodCovarRepCat'.eq_1,
     GrothendieckContra'.cat_comp_base,
     types_comp_apply,
     GrothendieckContra'.cat_comp_fiber,
@@ -3194,7 +3194,7 @@ the composed fiber NatTrans is HEq to the identity fiber NatTrans.
 private lemma polyCompGObj_iso_inv_hom_fiber
     {f₁ f₂ : PolyFunctorBetweenCat X Y}
     (αf : f₁ ≅ f₂)
-    (G : CoprodCovarRepCat (Over Y)) :
+    (G : CoprodCovarRepCat' (Over Y)) :
     HEq (polyCompGObj_isoInv αf G ≫
            polyCompGObj_isoHom αf G).fiber
          (GrothendieckContra'.id
@@ -3209,7 +3209,7 @@ The forward-then-backward roundtrip is the identity.
 private lemma polyCompGObj_iso_hom_inv
     {f₁ f₂ : PolyFunctorBetweenCat X Y}
     (αf : f₁ ≅ f₂)
-    (G : CoprodCovarRepCat (Over Y)) :
+    (G : CoprodCovarRepCat' (Over Y)) :
     polyCompGObj_isoHom αf G ≫
       polyCompGObj_isoInv αf G =
     𝟙 (polyCompGObj f₁ G) :=
@@ -3223,7 +3223,7 @@ The backward-then-forward roundtrip is the identity.
 private lemma polyCompGObj_iso_inv_hom
     {f₁ f₂ : PolyFunctorBetweenCat X Y}
     (αf : f₁ ≅ f₂)
-    (G : CoprodCovarRepCat (Over Y)) :
+    (G : CoprodCovarRepCat' (Over Y)) :
     polyCompGObj_isoInv αf G ≫
       polyCompGObj_isoHom αf G =
     𝟙 (polyCompGObj f₂ G) :=
@@ -3391,7 +3391,7 @@ def WTypeDiagram.fiberOver (W : WTypeDiagram X Y) (b : W.B) : Over X :=
 
 /--
 Convert a W-type diagram to a polynomial functor (as an object of
-`CoprodCovarRepCat (Over X)`).
+`CoprodCovarRepCat' (Over X)`).
 -/
 def WTypeDiagram.toPolyFunctor (W : WTypeDiagram X Y) : PolyFunctorCat X :=
   ccrObjMk W.fiberOver
@@ -4768,7 +4768,7 @@ def counitFiberMor (P : PolyFunctorBetweenCat X Y) (y : Y)
   exact Over.homMk (counitFiberMap P y' i) (counitFiberMap_comm P y' i)
 
 /--
-The counit morphism component at y: F(G(P))(y) -> P(y) in CoprodCovarRepCat.
+The counit morphism component at y: F(G(P))(y) -> P(y) in CoprodCovarRepCat'.
 -/
 def counitHom_component (P : PolyFunctorBetweenCat X Y) (y : Y) :
     wTypeToPolyBetween.obj (polyBetweenToWType.obj P) y ⟶ P y :=
@@ -4813,7 +4813,7 @@ def counitInvFiberMor (P : PolyFunctorBetweenCat X Y) (y : Y)
   Over.homMk (counitInvFiberMap P y i) (counitInvFiberMap_comm P y i)
 
 /--
-The counit inverse morphism component at y: P(y) -> F(G(P))(y) in CoprodCovarRepCat.
+The counit inverse morphism component at y: P(y) -> F(G(P))(y) in CoprodCovarRepCat'.
 -/
 def counitInv_component (P : PolyFunctorBetweenCat X Y) (y : Y) :
     P y ⟶ wTypeToPolyBetween.obj (polyBetweenToWType.obj P) y :=
@@ -4991,7 +4991,7 @@ private lemma counitHom_counitInv_comp_at_y (P : PolyFunctorBetweenCat X Y) (y' 
 /--
 The `.fiber` field of a morphism equals `ccrFiberMor` applied pointwise.
 -/
-private lemma fiber_eq_ccrFiberMor {x y : CoprodCovarRepCat (Over X)}
+private lemma fiber_eq_ccrFiberMor {x y : CoprodCovarRepCat' (Over X)}
     (f : x ⟶ y) (i : ccrIndex x) :
     f.fiber i = ccrFiberMor f i := rfl
 

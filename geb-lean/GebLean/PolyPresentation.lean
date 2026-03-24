@@ -13,7 +13,7 @@ are pairs that make both squares commute.
 
 ## Main Definitions
 
-* `PolyPresentation D` - A parallel pair (P, Q, α, β) in CoprodCovarRepCat D
+* `PolyPresentation D` - A parallel pair (P, Q, α, β) in CoprodCovarRepCat' D
 * `PolyPresentationHom` - Morphisms between presentations (commuting squares)
 * `PolyPresentationCat D` - The category of polynomial presentations
 
@@ -47,9 +47,9 @@ The presentation represents the copresheaf coeq(eval(α), eval(β)).
 -/
 structure PolyPresentation where
   /-- The source polynomial functor -/
-  src : CoprodCovarRepCat.{u, v, w} D
+  src : CoprodCovarRepCat'.{u, v, w} D
   /-- The target polynomial functor -/
-  tgt : CoprodCovarRepCat.{u, v, w} D
+  tgt : CoprodCovarRepCat'.{u, v, w} D
   /-- The first parallel morphism -/
   fst : src ⟶ tgt
   /-- The second parallel morphism -/
@@ -158,7 +158,7 @@ end PolyPresentation
 /--
 The category of polynomial presentations over D.
 
-Objects are parallel pairs (P, Q, α, β) where P, Q : CoprodCovarRepCat D
+Objects are parallel pairs (P, Q, α, β) where P, Q : CoprodCovarRepCat' D
 and α, β : P ⟶ Q are parallel morphisms.
 
 Morphisms are pairs (f, g) making both squares commute.
@@ -661,7 +661,7 @@ variable {D}
 Convert a polynomial presentation to a functor from WalkingParallelPair.
 -/
 def PolyPresentation.toParallelPair (X : PolyPresentation.{u, v, w} D) :
-    WalkingParallelPair ⥤ CoprodCovarRepCat.{u, v, w} D :=
+    WalkingParallelPair ⥤ CoprodCovarRepCat'.{u, v, w} D :=
   parallelPair X.fst X.snd
 
 @[simp]
@@ -684,7 +684,7 @@ theorem PolyPresentation.toParallelPair_map_right (X : PolyPresentation.{u, v, w
 Convert a functor from WalkingParallelPair to a polynomial presentation.
 -/
 def PolyPresentation.ofParallelPair
-    (F : WalkingParallelPair ⥤ CoprodCovarRepCat.{u, v, w} D) :
+    (F : WalkingParallelPair ⥤ CoprodCovarRepCat'.{u, v, w} D) :
     PolyPresentation.{u, v, w} D where
   src := F.obj zero
   tgt := F.obj one
@@ -693,29 +693,29 @@ def PolyPresentation.ofParallelPair
 
 @[simp]
 theorem PolyPresentation.ofParallelPair_src
-    (F : WalkingParallelPair ⥤ CoprodCovarRepCat.{u, v, w} D) :
+    (F : WalkingParallelPair ⥤ CoprodCovarRepCat'.{u, v, w} D) :
     (ofParallelPair F).src = F.obj zero := rfl
 
 @[simp]
 theorem PolyPresentation.ofParallelPair_tgt
-    (F : WalkingParallelPair ⥤ CoprodCovarRepCat.{u, v, w} D) :
+    (F : WalkingParallelPair ⥤ CoprodCovarRepCat'.{u, v, w} D) :
     (ofParallelPair F).tgt = F.obj one := rfl
 
 @[simp]
 theorem PolyPresentation.ofParallelPair_fst
-    (F : WalkingParallelPair ⥤ CoprodCovarRepCat.{u, v, w} D) :
+    (F : WalkingParallelPair ⥤ CoprodCovarRepCat'.{u, v, w} D) :
     (ofParallelPair F).fst = F.map left := rfl
 
 @[simp]
 theorem PolyPresentation.ofParallelPair_snd
-    (F : WalkingParallelPair ⥤ CoprodCovarRepCat.{u, v, w} D) :
+    (F : WalkingParallelPair ⥤ CoprodCovarRepCat'.{u, v, w} D) :
     (ofParallelPair F).snd = F.map right := rfl
 
 /--
 Round-trip: toParallelPair ∘ ofParallelPair = id on functors.
 -/
 theorem PolyPresentation.toParallelPair_ofParallelPair_eq
-    (F : WalkingParallelPair ⥤ CoprodCovarRepCat.{u, v, w} D) :
+    (F : WalkingParallelPair ⥤ CoprodCovarRepCat'.{u, v, w} D) :
     (ofParallelPair F).toParallelPair = F := by
   have hobj : ∀ j, (ofParallelPair F).toParallelPair.obj j = F.obj j := by
     intro j; cases j <;> rfl
@@ -755,7 +755,7 @@ Convert a natural transformation between parallel pair functors to a morphism
 of polynomial presentations.
 -/
 def PolyPresentation.Hom.ofNatTrans
-    {F G : WalkingParallelPair ⥤ CoprodCovarRepCat.{u, v, w} D}
+    {F G : WalkingParallelPair ⥤ CoprodCovarRepCat'.{u, v, w} D}
     (η : F ⟶ G) : ofParallelPair F ⟶ ofParallelPair G where
   srcHom := η.app zero
   tgtHom := η.app one
@@ -764,12 +764,12 @@ def PolyPresentation.Hom.ofNatTrans
 
 @[simp]
 theorem PolyPresentation.Hom.ofNatTrans_srcHom
-    {F G : WalkingParallelPair ⥤ CoprodCovarRepCat.{u, v, w} D}
+    {F G : WalkingParallelPair ⥤ CoprodCovarRepCat'.{u, v, w} D}
     (η : F ⟶ G) : (Hom.ofNatTrans η).srcHom = η.app zero := rfl
 
 @[simp]
 theorem PolyPresentation.Hom.ofNatTrans_tgtHom
-    {F G : WalkingParallelPair ⥤ CoprodCovarRepCat.{u, v, w} D}
+    {F G : WalkingParallelPair ⥤ CoprodCovarRepCat'.{u, v, w} D}
     (η : F ⟶ G) : (Hom.ofNatTrans η).tgtHom = η.app one := rfl
 
 /--
@@ -787,7 +787,7 @@ The functor from PolyPresentation to the functor category.
 @[simps]
 def polyPresentationToFunctorCat :
     PolyPresentation.{u, v, w} D ⥤
-    (WalkingParallelPair ⥤ CoprodCovarRepCat.{u, v, w} D) where
+    (WalkingParallelPair ⥤ CoprodCovarRepCat'.{u, v, w} D) where
   obj := PolyPresentation.toParallelPair
   map := PolyPresentation.Hom.toNatTrans
   map_id X := by
@@ -808,7 +808,7 @@ The functor from the functor category to PolyPresentation.
 -/
 @[simps]
 def functorCatToPolyPresentation :
-    (WalkingParallelPair ⥤ CoprodCovarRepCat.{u, v, w} D) ⥤
+    (WalkingParallelPair ⥤ CoprodCovarRepCat'.{u, v, w} D) ⥤
     PolyPresentation.{u, v, w} D where
   obj := PolyPresentation.ofParallelPair
   map := PolyPresentation.Hom.ofNatTrans
@@ -819,7 +819,7 @@ def functorCatToPolyPresentation :
 The unit of the equivalence: Id ≅ functorCatToPolyPresentation ⋙ polyPresentationToFunctorCat.
 -/
 def polyPresentationEquivUnit :
-    𝟭 (WalkingParallelPair ⥤ CoprodCovarRepCat.{u, v, w} D) ≅
+    𝟭 (WalkingParallelPair ⥤ CoprodCovarRepCat'.{u, v, w} D) ≅
     functorCatToPolyPresentation ⋙ polyPresentationToFunctorCat :=
   NatIso.ofComponents
     (fun F => eqToIso (PolyPresentation.toParallelPair_ofParallelPair_eq F).symm)
@@ -859,7 +859,7 @@ The equivalence between polynomial presentations and the functor category.
 -/
 def polyPresentationFunctorCatEquiv :
     PolyPresentation.{u, v, w} D ≌
-    (WalkingParallelPair ⥤ CoprodCovarRepCat.{u, v, w} D) where
+    (WalkingParallelPair ⥤ CoprodCovarRepCat'.{u, v, w} D) where
   functor := polyPresentationToFunctorCat
   inverse := functorCatToPolyPresentation
   unitIso := polyPresentationEquivCounit.symm

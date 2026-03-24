@@ -40,7 +40,7 @@ variable {D : Type (u + 1)} [Category.{u} D]
 section CcrInhabitedConnectedLimits
 
 variable {J : Type u} [Category.{u} J] [IsPreconnected J]
-variable {P : CoprodCovarRepCat D}
+variable {P : CoprodCovarRepCat' D}
 
 /--
 On a preconnected index category, the index component
@@ -173,7 +173,7 @@ connected limits (constructive version).  Given
 itself a limit.
 -/
 def ccrIsLimitOfIsLimit
-    [Inhabited J] (P : CoprodCovarRepCat D)
+    [Inhabited J] (P : CoprodCovarRepCat' D)
     {K : J ⥤ D} {c : Cone K} (hc : IsLimit c) :
     IsLimit ((ccrToFunctor P).mapCone c) where
   lift s x :=
@@ -223,7 +223,7 @@ Coproducts of covariant representables preserve
 connected limits.
 -/
 instance ccrPreservesConnectedLimits
-    (P : CoprodCovarRepCat D) :
+    (P : CoprodCovarRepCat' D) :
     PreservesLimitsOfShape J (ccrToFunctor P) where
   preservesLimit {K} := {
     preserves := fun {c} hc => by

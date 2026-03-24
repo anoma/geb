@@ -45,21 +45,21 @@ The extra `Unit` direction at each position corresponds to the `id` factor.
 Given a polynomial with positions `I` and directions `D : I → C`, produces
 a polynomial with the same positions and directions `fun i => D i ⊕ Unit`.
 This corresponds to the product of the polynomial functor with the identity. -/
-def ccrProdId {C : Type*} [Category C] (P : CoprodCovarRepCat C) :
-    CoprodCovarRepCat (C × Type) :=
+def ccrProdId {C : Type*} [Category C] (P : CoprodCovarRepCat' C) :
+    CoprodCovarRepCat' (C × Type) :=
   ccrObjMk (fun i => (ccrFamily P i, Unit))
 
 /-- The `× id` operation on polynomials over `Type`.
 
 This is the special case where the base category is `Type`, producing a new
 polynomial over `Type` with directions extended by `Unit`. -/
-def ccrProdIdType (P : CoprodCovarRepCat Type) : CoprodCovarRepCat Type :=
+def ccrProdIdType (P : CoprodCovarRepCat' Type) : CoprodCovarRepCat' Type :=
   ccrObjMk (fun i => ccrFamily P i ⊕ Unit)
 
 /-- A dependent polynomial functor.
 
 The structure consists of:
-- An outer polynomial J, represented as an object of `CoprodCovarRepCat Type`
+- An outer polynomial J, represented as an object of `CoprodCovarRepCat' Type`
 - A coproduct of representables on ∫(J × id), specified by:
   - An index type `innerIdx`
   - For each index i, a representing object of ∫(J × id):
@@ -70,7 +70,7 @@ The structure consists of:
 -/
 structure DepPolyFunctor where
   /-- The outer polynomial J as a coproduct of covariant representables -/
-  outerPoly : CoprodCovarRepCat Type
+  outerPoly : CoprodCovarRepCat' Type
   /-- Index type for the inner coproduct of representables -/
   innerIdx : Type
   /-- Base type for each representing object -/
@@ -97,7 +97,7 @@ def outerDir (j : P.outerPos) : Type := ccrFamily P.outerPoly j
 This is the polynomial with the same positions as `outerPoly` but with
 directions extended by `Unit` at each position. The directions at position
 `j` become `outerDir j ⊕ Unit`. -/
-def outerPolyProdId : CoprodCovarRepCat Type := ccrProdIdType P.outerPoly
+def outerPolyProdId : CoprodCovarRepCat' Type := ccrProdIdType P.outerPoly
 
 /-- Positions of outerPolyProdId (same as outerPos). -/
 def outerPolyProdIdPos : Type := ccrIndex P.outerPolyProdId
