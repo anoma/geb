@@ -170,33 +170,19 @@ Completed:
 
 In progress:
 
-- [ ] subst_id fold case.
-  Architecture (2026-03-23):
-  - subst_id_fold_case lemma factored out
-    (LawvereBT.lean): type-checks, called
-    from the fold case of subst_id.
-  - Proof steps completed:
-    (a) set/unfold/dsimp to reveal fold
-    structure after BTMor1.subst
-    (b) conv + change to identify base/tree
-    children as subst calls
-    (c) simp only [ih] to apply IH
-    (d) unfold BTMor1.fold btMorInject;
-    simp only [btMorPoly, btMorCarrier,
-    sigma_fiberCast_eq] normalizes the
-    fold's Over.homMk sigma pairs.
-  - Remaining: the if-then-else function body
-    has non-canonical Fin reindexing (e.g.
-    ⟨p.fst + (↑d - p.fst), _⟩ instead of d).
-    Need to collapse this to the canonical form
-    fun e => ⟨fiber e, children e⟩ so that
-    polyFixCoprodRoundTrip (PolyAlgUMorph.lean,
-    already proved) can close the goal.
-  - Supporting: polyFixCoprodRoundTrip added
-    to PolyAlgUMorph.lean (compiles).
-  - Supporting: sigma_fiberCast_eq added to
-    LawvereBT.lean (compiles).
-- [ ] subst_comp (same technique once subst_id done)
+- [x] subst_id (all four cases proved)
+- [ ] subst_comp fold case (proj/leaf/branch done).
+  The fold case requires a fold computation rule:
+  `BTMor1.subst (BTMor1.fold pm f g tree pj) σ
+  = BTMor1.fold pm (f.subst σ) g (tree.subst σ) pj`.
+  With this rule, `subst_comp` on fold nodes
+  follows by applying it twice (for LHS) and
+  once (for RHS), then using the IH.
+  The computation rule proof follows the same
+  architecture as `subst_id_fold_case`:
+  set/unfold/dsimp, conv+change, simp [ih],
+  then convert polyFixCoprodRoundTrip with
+  Fin.ext + omega.
 - [ ] Category instance for LawvereBTCat
 - [ ] HasFiniteProducts instance
 - [ ] HasPBTO instance
