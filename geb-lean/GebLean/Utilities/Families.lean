@@ -4,6 +4,7 @@ import Mathlib.CategoryTheory.Pi.Basic
 import Mathlib.CategoryTheory.Grothendieck
 import Mathlib.CategoryTheory.Whiskering
 import Mathlib.CategoryTheory.Limits.Shapes.Products
+import GebLean.Utilities.Category
 import GebLean.Utilities.Opposites
 import GebLean.Utilities.Grothendieck
 
@@ -339,34 +340,52 @@ def familyBifunctor :
     familyNatTrans_comp F.toFunctor G.toFunctor
 
 /--
+The free product completion as a functor `Cat ⥤ Cat`.
+Sends a category `C` to `Grothendieck (familyFunctor C)`.
+Defined as `familyBifunctor ⋙ grothendieckFunctor`.
+-/
+def freeProdCompletionFunctor :
+    Cat.{v, u} ⥤ Cat.{max w v, max (w + 1) u} :=
+  let G : ((Type w)ᵒᵖ ⥤ Cat.{max w v, max u w}) ⥤
+      Cat.{max w v, max (w + 1) u} :=
+    grothendieckFunctor ((Type w)ᵒᵖ)
+  familyBifunctor ⋙ G
+
+/--
 The free product completion of `C` with index types in
-universe `w`, using mathlib's `ᵒᵖ` and `Grothendieck`.
-Objects are pairs `(op X, F)` where `X : Type w` and
-`F : X → C`.  Morphisms go forward on both positions
-and directions.
+universe `w`.  Objects are pairs `(op X, F)` where
+`X : Type w` and `F : X → C`.  Morphisms go forward on
+both positions and directions.
 -/
 def FreeProdCompletion (C : Type u) [Category.{v} C] :
     Cat.{max w v, max (w + 1) u} :=
-  Cat.of (Grothendieck.{w + 1, w, max u w, max w v}
-    (familyFunctor.{u, v, w} C))
+  freeProdCompletionFunctor.{u, v, w}.obj (Cat.of C)
+
+/--
+The coproduct-of-covariant-representables functor
+`Cat ⥤ Cat`.  Defined as `freeProdCompletionFunctor`
+post-composed with `Cat.opFunctor`.
+-/
+def coprodCovarRepFunctor :
+    Cat.{v, u} ⥤ Cat.{max w v, max (w + 1) u} :=
+  freeProdCompletionFunctor.{u, v, w} ⋙
+    Cat.opFunctor
 
 /--
 The category of coproducts of covariant representables
-for `C`, using mathlib's `ᵒᵖ` and `Grothendieck`.
+for `C`.
 
 A morphism from `(X₁, F₁)` to `(X₂, F₂)` consists of
 a reindexing `r : X₁ → X₂` (forward on positions) and
 fiber morphisms `∀ x₁, F₂(r(x₁)) ⟶ F₁(x₁)` (backward
 on directions).
 
-Defined as the opposite of `FreeProdCompletion C` via
-`Cat.opFunctor`.
+Defined as `coprodCovarRepFunctor` applied to `C`.
 -/
 def CoprodCovarRepCat
     (C : Type u) [Category.{v} C] :
     Cat.{max w v, max (w + 1) u} :=
-  Cat.opFunctor.obj
-    (FreeProdCompletion.{u, v, w} C)
+  coprodCovarRepFunctor.{u, v, w}.obj (Cat.of C)
 
 end FamilyOp
 

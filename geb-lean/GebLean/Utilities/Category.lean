@@ -2729,6 +2729,26 @@ def catContraHomFunctor (D : Cat.{v₂, u₂}) :
       Cat.{max u₁ v₂, max v₁ v₂ u₁ u₂} :=
   catHomProfunctor.flip.obj D
 
+/--
+The Grothendieck construction as a functor: sends a functor
+`F : C ⥤ Cat` to `Grothendieck F`, and a natural
+transformation `α : F ⟶ G` to `Grothendieck.map α`.
+-/
+def grothendieckFunctor
+    (C : Type u₂) [Category.{v₂} C] :
+    (C ⥤ Cat.{v₁, u₁}) ⥤
+      Cat.{max v₂ v₁, max u₂ u₁} where
+  obj F := Cat.of (Grothendieck F)
+  map α := (Grothendieck.map α).toCatHom
+  map_id F := by
+    apply Cat.Hom.ext
+    exact Grothendieck.map_id_eq
+  map_comp α β := by
+    apply Cat.Hom.ext
+    simp only [Cat.Hom.comp_toFunctor,
+      Functor.toCatHom_toFunctor]
+    exact Grothendieck.map_comp_eq α β
+
 end GebLean
 
 /-! ### Relation to Cat's Cartesian Closed Structure
