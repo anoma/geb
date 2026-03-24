@@ -285,4 +285,238 @@ instance : Repr Value.{0} where
 instance : BEq Value.{0} where
   beq v₁ v₂ := v₁.toAux == v₂.toAux
 
+/--
+Universe-polymorphic two-element fiber index for the
+two-sorted computation polynomial.  `Sum.inl _`
+represents the value fiber and `Sum.inr _`
+represents the computation fiber.
+-/
+abbrev CompFiber :=
+  PUnit.{u + 1} ⊕ PUnit.{u + 1}
+
+/-- The value fiber. -/
+abbrev CompFiber.val : CompFiber.{u} :=
+  Sum.inl PUnit.unit
+
+/-- The computation fiber. -/
+abbrev CompFiber.comp : CompFiber.{u} :=
+  Sum.inr PUnit.unit
+
+/--
+The position type for the two-sorted computation
+polynomial at each fiber.  The value fiber has the
+same three constructors as `polyValue`.  The
+computation fiber has `embed` (one position) or
+`app n` (one position per natural number `n`).
+-/
+def compPosType :
+    CompFiber.{u} → Type u
+  | Sum.inl _ =>
+    Σ _ : Fin 3, PUnit.{u + 1}
+  | Sum.inr _ =>
+    PUnit.{u + 1} ⊕ ULift.{u} Nat
+
+/--
+The direction type for the two-sorted computation
+polynomial at each fiber and position.  The value
+fiber reuses `valueDirType`.  At the computation
+fiber, `embed` has one direction and `app n` has
+`n` directions.
+-/
+def compDirType :
+    (x : CompFiber.{u}) →
+    compPosType x → Type u
+  | Sum.inl _, ⟨i, _⟩ =>
+    valueDirType.{u} i
+  | Sum.inr _, Sum.inl _ =>
+    PUnit.{u + 1}
+  | Sum.inr _, Sum.inr n =>
+    ULift.{u} (Fin n.down)
+
+/--
+Maps each direction to the fiber it targets.
+All value directions target the value fiber; the
+`embed` direction targets the value fiber; all
+`app` directions target the computation fiber.
+-/
+def compDirFiber :
+    (x : CompFiber.{u}) →
+    (p : compPosType x) →
+    compDirType x p → CompFiber.{u}
+  | Sum.inl _, _, _ =>
+    CompFiber.val
+  | Sum.inr _, Sum.inl _, _ =>
+    CompFiber.val
+  | Sum.inr _, Sum.inr _, _ =>
+    CompFiber.comp
+
+/--
+The two-sorted computation polynomial endofunctor on
+`CompFiber`.  The value fiber encodes values
+(leaf/stem/fork); the computation fiber encodes
+computations (embed value | app of list of
+computations).
+-/
+def polyComputation :
+    PolyEndo CompFiber.{u} :=
+  fun x => ccrObjMk
+    (fun (p : compPosType.{u} x) =>
+      Over.mk
+        (fun (d : compDirType.{u} x p) =>
+          compDirFiber.{u} x p d))
+
+/-- Values in the two-sorted system: the initial
+algebra of `polyComputation` at the value fiber. -/
+abbrev CompValue : Type u :=
+  PolyFix polyComputation CompFiber.val
+
+/-- Computation trees: the initial algebra of
+`polyComputation` at the computation fiber. -/
+abbrev CompTree : Type u :=
+  PolyFix polyComputation CompFiber.comp
+
+/-- Embeds a `CompValue` into a `CompTree`. -/
+def CompTree.embed (v : CompValue.{u}) :
+    CompTree.{u} :=
+  PolyFix.mk CompFiber.comp
+    (Sum.inl PUnit.unit)
+    (fun _ => v)
+
+/-- Constructs a computation tree from a list of
+computation subtrees. -/
+def CompTree.app
+    (children : List CompTree.{u}) :
+    CompTree.{u} :=
+  PolyFix.mk CompFiber.comp
+    (Sum.inr ⟨children.length⟩)
+    (fun ⟨i⟩ => children[i])
+
+/-- The leaf constructor for `CompValue`. -/
+def CompValue.leaf : CompValue.{u} :=
+  PolyFix.mk CompFiber.val
+    ⟨(0 : Fin 3), PUnit.unit⟩
+    (fun e => PEmpty.elim e)
+
+/-- The stem constructor for `CompValue`. -/
+def CompValue.stem (x : CompValue.{u}) :
+    CompValue.{u} :=
+  PolyFix.mk CompFiber.val
+    ⟨(1 : Fin 3), PUnit.unit⟩
+    (fun _ => x)
+
+/-- The fork constructor for `CompValue`. -/
+def CompValue.fork
+    (l r : CompValue.{u}) :
+    CompValue.{u} :=
+  PolyFix.mk CompFiber.val
+    ⟨(2 : Fin 3), PUnit.unit⟩
+    (fun e => match e with
+      | Sum.inl _ => l
+      | Sum.inr _ => r)
+
+/-- Converts a `Value` to the corresponding
+`CompValue` (value fiber of the two-sorted
+polynomial). -/
+def valueToCompValue :
+    Value.{u} → CompValue.{u} :=
+  Value.fold
+    CompValue.leaf
+    CompValue.stem
+    CompValue.fork
+
+/-- Non-recursive case analysis on `CompValue`.
+Passes raw child values to the callbacks rather
+than recursing. -/
+def CompValue.cases {α : Type u}
+    (onLeaf : α)
+    (onStem : CompValue.{u} → α)
+    (onFork :
+      CompValue.{u} → CompValue.{u} → α)
+    (v : CompValue.{u}) : α :=
+  match v with
+  | PolyFix.mk _ ⟨⟨0, _⟩, _⟩ _ => onLeaf
+  | PolyFix.mk _ ⟨⟨1, _⟩, _⟩ children =>
+    onStem (children PUnit.unit)
+  | PolyFix.mk _ ⟨⟨2, _⟩, _⟩ children =>
+    onFork
+      (children (Sum.inl PUnit.unit))
+      (children (Sum.inr PUnit.unit))
+
+/-- Auxiliary recursive conversion from `CompValue`
+to `Value`, following the pattern of
+`polyFixFoldAtWithProof` to enable structural
+recursion on `PolyFix`. -/
+def compValueToValueAux :
+    (x : CompFiber.{u}) →
+    PolyFix polyComputation x →
+    Value.{u}
+  | _, PolyFix.mk (Sum.inl _) i children =>
+    match i with
+    | ⟨⟨0, _⟩, _⟩ =>
+      Value.leaf
+    | ⟨⟨1, _⟩, _⟩ =>
+      Value.stem
+        (compValueToValueAux _
+          (children PUnit.unit))
+    | ⟨⟨2, _⟩, _⟩ =>
+      Value.fork
+        (compValueToValueAux _
+          (children
+            (Sum.inl PUnit.unit)))
+        (compValueToValueAux _
+          (children
+            (Sum.inr PUnit.unit)))
+  | _, PolyFix.mk (Sum.inr _)
+      (Sum.inl _) children =>
+    compValueToValueAux _
+      (children PUnit.unit)
+  | _, PolyFix.mk (Sum.inr _)
+      (Sum.inr _) _ =>
+    Value.leaf
+
+/-- Catamorphism on `CompValue`: recursively replaces
+leaf with `onLeaf`, stem with `onStem`, and fork
+with `onFork`. -/
+def CompValue.fold {α : Type u}
+    (onLeaf : α)
+    (onStem : α → α)
+    (onFork : α → α → α) :
+    CompValue.{u} → α :=
+  fun v => compValueToValueAux
+    CompFiber.val v |>.fold
+      onLeaf onStem onFork
+
+/-- Converts a `CompValue` to the corresponding
+`Value`. -/
+def compValueToValue :
+    CompValue.{u} → Value.{u} :=
+  compValueToValueAux CompFiber.val
+
+/-- Embeds a `Value` directly into a `CompTree`
+by first converting to `CompValue` and then
+embedding. -/
+def CompTree.embedValue (v : Value.{u}) :
+    CompTree.{u} :=
+  CompTree.embed (valueToCompValue v)
+
+/-- Non-recursive case analysis on `CompTree`.
+Passes the embedded `CompValue` or the list of
+children to the appropriate callback. -/
+def CompTree.cases {α : Type u}
+    (onEmbed : CompValue.{u} → α)
+    (onApp : List CompTree.{u} → α)
+    (t : CompTree.{u}) : α :=
+  match t with
+  | PolyFix.mk _ (Sum.inl _) children =>
+    onEmbed (children PUnit.unit)
+  | PolyFix.mk _ (Sum.inr ⟨_⟩) children =>
+    onApp (List.ofFn
+      (fun i => children ⟨i⟩))
+
+instance : Inhabited CompValue.{u} :=
+  ⟨CompValue.leaf⟩
+
+instance : Inhabited CompTree.{u} :=
+  ⟨CompTree.embed CompValue.leaf⟩
+
 end GebLean
