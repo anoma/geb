@@ -1115,6 +1115,28 @@ private lemma btMorFoldFiber_tree
       then pos.1 + pos.1 else n) = n
   simp only [if_neg hge1, if_neg hge2]
 
+/-- `fiberCast` commutes with `subst`:
+substituting into a fiber-cast term is the same
+as substituting with the cast pushed into the
+substitution's domain via `finCast`. -/
+private lemma fiberCast_subst_eq
+    {a b m : ℕ} (h : a = b)
+    (x : BTMor1 a)
+    (σ : Fin b → BTMor1 m) :
+    (fiberCast h x).subst σ =
+    x.subst (fun v => σ (finCast h v)) := by
+  subst h; rfl
+
+private lemma sigma_fiberCast_subst_eq
+    {a b m : ℕ} (h : a = b)
+    (x : BTMor1 a)
+    (σ : Fin b → BTMor1 m) :
+    (⟨m, (fiberCast h x).subst σ⟩ :
+      Σ k, BTMor1 k) =
+    ⟨m, x.subst
+      (fun v => σ (finCast h v))⟩ := by
+  subst h; rfl
+
 private lemma sigma_fiberCast_eq
     {a b : ℕ} (h : a = b)
     (x : BTMor1 a) :
