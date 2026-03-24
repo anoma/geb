@@ -126,8 +126,8 @@ def BehaviorObs.cont
 
 /-! ## Rule Application
 
-`applyRule v x` attempts to apply value `v` to
-argument `x`, returning `some result` when a rule
+`applyRule v x` searches for a rule by which to apply value
+`v` to argument `x`, returning `some result` when a rule
 fires and `none` when the argument must be reduced
 further before the rule can apply.
 
