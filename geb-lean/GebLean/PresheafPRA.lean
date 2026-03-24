@@ -15,9 +15,9 @@ P(Z)(j) = ∐_{a ∈ A(j)} Hom_{PSh(I)}(E_j(a), Z)
 ```
 
 A presheaf PRA `PSh(I) → PSh(J)` is represented as a functor
-`Jᵒᵖ ⥤ CoprodCovarRepCat' (Iᵒᵖ ⥤ Type w_I)`.  At each
+`Jᵒᵖ ⥤ CoprodCovarRepCat (Iᵒᵖ ⥤ Type w_I)`.  At each
 `j : J`, this gives a polynomial `(A(j), E_j)` from
-`CoprodCovarRepCat'`, and the functor action provides the
+`CoprodCovarRepCat`, and the functor action provides the
 restriction maps that make the evaluation a presheaf on `J`.
 
 ## References
@@ -56,7 +56,7 @@ def presheafCat : Cat :=
   presheafCatFunctor.{u_I, v_I, w_I}.obj
     (Opposite.op (Cat.of Iᵒᵖ))
 
-/-! ## CoprodCovarRepCat' of the Presheaf Category -/
+/-! ## CoprodCovarRepCat of the Presheaf Category -/
 
 /--
 The category of coproducts of covariant representables on
@@ -72,12 +72,12 @@ def ccrPresheafCat : Cat :=
 section PresheafPRADef
 
 /--
-The category of presheaf polynomial functors (parametric right
-adjoints) from `Iᵒᵖ ⥤ Type w_I` to a presheaf category on
-`J`.
+The category of presheaf polynomial functors (parametric
+right adjoints) from `Iᵒᵖ ⥤ Type w_I` to a presheaf
+category on `J`.
 
 An object is a functor
-`Jᵒᵖ ⥤ CoprodCovarRepCat' (Iᵒᵖ ⥤ Type w_I)`.
+`Jᵒᵖ ⥤ CoprodCovarRepCat (Iᵒᵖ ⥤ Type w_I)`.
 At each `j : Jᵒᵖ`, this gives a polynomial
 `(A(j), E_j : A(j) → (Iᵒᵖ ⥤ Type w_I))`.  The functor
 action on morphisms in `Jᵒᵖ` provides reindexing on
@@ -161,13 +161,13 @@ def praEvalAt_mk (j : Jᵒᵖ)
 
 end PresheafPRAEvalAt
 
-/-! ## Evaluation of CoprodCovarRepCat' Morphisms
+/-! ## Evaluation of CoprodCovarRepCat Morphisms
 
-Given a morphism `f : P ⟶ Q` in `CoprodCovarRepCat' D`, the
+Given a morphism `f : P ⟶ Q` in `CoprodCovarRepCat D`, the
 induced map on evaluations sends `⟨i, η⟩ : ccrEval P Z` to
 `⟨ccrReindex f i, ccrFiberMor f i ≫ η⟩ : ccrEval Q Z`.
 This is the contravariant functorial action of `ccrEval _ Z`
-on morphisms of `CoprodCovarRepCat' D`.
+on morphisms of `CoprodCovarRepCat D`.
 -/
 
 section CcrMorphEval
@@ -177,7 +177,7 @@ universe u_D v_D w_D
 variable {D : Type u_D} [Category.{v_D} D]
 
 /--
-Evaluate a morphism `f : P ⟶ Q` in `CoprodCovarRepCat' D` on
+Evaluate a morphism `f : P ⟶ Q` in `CoprodCovarRepCat D` on
 a `ccrEval P Z` element, producing a `ccrEval Q Z` element.
 -/
 def ccrMorphEval
@@ -342,7 +342,7 @@ Given a morphism `α : P ⟶ Q` in `PresheafPRACat I J`
 produce a natural transformation
 `praEvalObj P Z ⟶ praEvalObj Q Z`.
 At each `j`, the component `α.app j` is a morphism in
-`CoprodCovarRepCat'`, and `ccrMorphEval` applies it to
+`CoprodCovarRepCat`, and `ccrMorphEval` applies it to
 each evaluation element.
 -/
 def praMorphEval
