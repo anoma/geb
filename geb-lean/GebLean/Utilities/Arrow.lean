@@ -1,5 +1,6 @@
 import Mathlib.CategoryTheory.Comma.Arrow
 import Mathlib.CategoryTheory.Adjunction.Reflective
+import Mathlib.CategoryTheory.Adjunction.Triple
 
 namespace GebLean
 
@@ -101,5 +102,14 @@ def Arrow.idInclusionAdjLeftFunc :
 instance : Coreflective (Arrow.idInclusion C) where
   R := Arrow.leftFunc
   adj := Arrow.idInclusionAdjLeftFunc
+
+/-- The adjoint triple `rightFunc ⊣ idInclusion ⊣ leftFunc`. -/
+def Arrow.idInclusionTriple :
+    Adjunction.Triple
+      (Arrow.rightFunc : Arrow C ⥤ C)
+      (Arrow.idInclusion C)
+      (Arrow.leftFunc : Arrow C ⥤ C) where
+  adj₁ := Arrow.rightFuncAdjIdInclusion
+  adj₂ := Arrow.idInclusionAdjLeftFunc
 
 end GebLean
