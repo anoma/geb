@@ -508,7 +508,6 @@ private lemma ccrNewFiberMor_eqToHom_comp
   subst h
   simp
 
-set_option pp.proofs true in
 /--
 The family (directions) extraction as a functor from
 the category of elements of `ccrNewIndexFunctor C` to
@@ -542,7 +541,7 @@ def ccrNewFamilyFunctor
     simp only [CategoryOfElements.comp_val]
     rw [ccrNewFiberMor_comp]
     simp only [Category.assoc]
-    have key := ccrNewFiberMor_eqToHom_comp g.val
+    have comm := ccrNewFiberMor_eqToHom_comp g.val
       hfp hcomp hgp
     rw [show (f ≫ g).property = hcomp from
       rfl, show g.property = hgp from rfl,
@@ -551,7 +550,7 @@ def ccrNewFamilyFunctor
       rw [← Category.assoc (eqToHom _)
         (ccrNewFiberMor g.val _)
         (ccrNewFiberMor f.val _)]
-      rw [key]
+      rw [comm]
     simp only [Category.assoc]
 
 /--
@@ -585,6 +584,43 @@ lemma ccrNewMorphEval_comp
     (heq_of_eq (by
       simp [ccrNewMorphEval, ccrNewFiberMor_comp,
         Category.assoc]))
+
+/--
+Evaluation of a fixed polynomial `P` as a functor
+`C ⥤ Type _`.  Sends `A` to `ccrNewEval P A` and a
+morphism `f` to `ccrNewEvalMap f`.
+-/
+def ccrNewEvalFunctor
+    (P : CoprodCovarRepCat.{u, v, w} C) :
+    C ⥤ Type (max w v) where
+  obj A := ccrNewEval P A
+  map f := ccrNewEvalMap f
+  map_id _ := ccrNewEvalMap_id
+  map_comp f g := ccrNewEvalMap_comp f g
+
+/--
+The evaluation functor varying `P`: sends a polynomial
+`P : CoprodCovarRepCat C` to its evaluation functor
+`ccrNewEvalFunctor P`, and a morphism `f : P ⟶ Q` to
+the natural transformation induced by `ccrNewMorphEval`.
+-/
+def ccrNewEvalCatFunctor
+    (C : Type u) [Category.{v} C] :
+    CoprodCovarRepCat.{u, v, w} C ⥤
+      (C ⥤ Type (max w v)) where
+  obj P := ccrNewEvalFunctor P
+  map f :=
+    { app := fun A => ccrNewMorphEval f A
+      naturality := fun A B g => by
+        ext ⟨i, η⟩
+        simp [ccrNewEvalFunctor, ccrNewMorphEval,
+          ccrNewEvalMap, Category.assoc] }
+  map_id P := by
+    ext A ⟨i, η⟩
+    simp [ccrNewEvalFunctor, ccrNewMorphEval_id]
+  map_comp f g := by
+    ext A ⟨i, η⟩
+    simp [ccrNewEvalFunctor, ccrNewMorphEval_comp]
 
 end FamilyOp
 

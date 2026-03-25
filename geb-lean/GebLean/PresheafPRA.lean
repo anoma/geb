@@ -176,11 +176,26 @@ def praPositions (j : Jᵒᵖ) : Type w' :=
   (praPositionsFunctor I J).obj P |>.obj j
 
 /--
+The directions functor: for a fixed PRA `P`, sends an
+element `(j, a)` of the positions presheaf to
+`op (praDirectionsAt P j a)`.  Defined as
+`ccrNewFamilyFunctor` composed with the induced map
+on Elements categories.
+-/
+def praDirectionsAtFunctor :
+    ((praPositionsFunctor I J).obj P).Elements ⥤
+      (Iᵒᵖ ⥤ Type w_I)ᵒᵖ :=
+  elementsPrecomp P ⋙
+    ccrNewFamilyFunctor.{max v_I u_I (w_I + 1),
+      max u_I w_I, w'}
+      (↑(presheafCat.{u_I, v_I, w_I} I))
+
+/--
 The directions presheaf at position `a` at stage `j`.
 -/
 def praDirectionsAt (j : Jᵒᵖ)
     (a : praPositions I J P j) : Iᵒᵖ ⥤ Type w_I :=
-  ccrNewFamily (P.obj j) a
+  ((praDirectionsAtFunctor I J P).obj ⟨j, a⟩).unop
 
 end PresheafPRAAccessors
 

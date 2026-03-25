@@ -1308,4 +1308,26 @@ def elementsEquivOfNatIso (α : F ≅ G) :
 
 end ElementsEquivOfNatIso
 
+/-! ## Elements precomposition -/
+
+section ElementsPrecomp
+
+universe w₃ v₃ u₃ v₄ u₄
+
+/--
+For `G : D ⥤ C` and `F : C ⥤ Type w`, the induced
+functor `(G ⋙ F).Elements ⥤ F.Elements` sending
+`(d, x)` to `(G.obj d, x)`.  This is the
+`Elements`-level analogue of `Grothendieck.pre`.
+-/
+def elementsPrecomp
+    {C : Type u₃} [Category.{v₃} C]
+    {D : Type u₄} [Category.{v₄} D]
+    {F : C ⥤ Type w₃} (G : D ⥤ C) :
+    (G ⋙ F).Elements ⥤ F.Elements where
+  obj e := ⟨G.obj e.fst, e.snd⟩
+  map f := ⟨G.map f.val, f.property⟩
+
+end ElementsPrecomp
+
 end CategoryTheory
