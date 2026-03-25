@@ -3,6 +3,8 @@ import GebLean.Utilities.Presheaf
 import GebLean.Utilities.Elements
 import GebLean.Utilities.Families
 import Mathlib.CategoryTheory.Opposites
+import Mathlib.CategoryTheory.Functor.FullyFaithful
+import Mathlib.CategoryTheory.Functor.Currying
 
 /-!
 # Polynomial Functors Between Presheaf Categories
@@ -185,7 +187,7 @@ on Elements categories.
 def praDirectionsAtFunctorOp :
     ((praPositionsFunctor I J).obj P).Elements ⥤
       (Iᵒᵖ ⥤ Type w_I)ᵒᵖ :=
-  elementsPrecomp P ⋙
+  CategoryTheory.elementsPrecomp P ⋙
     ccrNewFamilyFunctor.{max v_I u_I (w_I + 1),
       max u_I w_I, w'}
       (↑(presheafCat.{u_I, v_I, w_I} I))
@@ -243,6 +245,32 @@ def praEvalAtFunctor :
     (Iᵒᵖ ⥤ Type w_I) ⥤ (Jᵒᵖ ⥤ Type (max w' u_I w_I)) :=
   praEvalAtProfunctor I J ⋙
     Functor.flipping.functor
+
+/--
+`praEvalAtProfunctor` is fully faithful: every natural
+transformation between evaluation profunctors arises
+from a unique PRA morphism.  Follows from
+`ccrNewEvalCatFullyFaithful` via `whiskeringRight`.
+-/
+def praEvalAtProfunctorFullyFaithful :
+    (praEvalAtProfunctor I J).FullyFaithful :=
+  Functor.FullyFaithful.whiskeringRight
+    (ccrNewEvalCatFullyFaithful.{max v_I u_I (w_I + 1),
+      max u_I w_I, w'}
+      (↑(presheafCat.{u_I, v_I, w_I} I)))
+    Jᵒᵖ
+
+/--
+`praEvalAtFunctor` is fully faithful: every natural
+transformation between PRA evaluation functors
+`PSh(I) ⥤ PSh(J)` arises from a unique PRA morphism.
+Follows from `praEvalAtProfunctorFullyFaithful`
+composed with `Functor.flipping`.
+-/
+def praEvalAtFunctorFullyFaithful :
+    (praEvalAtFunctor I J).FullyFaithful :=
+  (praEvalAtProfunctorFullyFaithful I J).comp
+    Functor.flipping.fullyFaithfulFunctor
 
 variable (P : PresheafPRACat.{u_I, v_I, u_J, v_J, w_I, w'} I J)
 variable (Z : Iᵒᵖ ⥤ Type w_I)
