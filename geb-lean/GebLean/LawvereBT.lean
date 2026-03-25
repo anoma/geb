@@ -1200,6 +1200,39 @@ private lemma subst_push_transport
         (h.trans hfib) v)) := by
   subst h; rfl
 
+/-- Combined sigma-evaluate and fiber-resolve:
+given a dite equality `y = z`, an Over.w
+transport `h : y.1 = β`, and a fiber proof
+`hfib : β = γ`, the subst through the
+transport equals `z.2.subst` with composed
+transport in the substitution. All three
+equalities are substituted inside the proof
+where all variables are free. -/
+private lemma subst_child_eval
+    {γ m : ℕ}
+    {y z : (polyFixCarrier btMorPoly).left}
+    {β : ℕ}
+    (heq : y = z) (h : y.1 = β)
+    (hfib : β = γ) (hfib' : z.1 = γ)
+    (σ : Fin γ → BTMor1 m) :
+    BTMor1.subst (h ▸ y.2)
+      (fun v => σ (finCast hfib v)) =
+    BTMor1.subst (hfib' ▸ z.2) σ := by
+  subst hfib'; subst heq; subst h; rfl
+
+/-- `fiberCast` variant of `subst_child_eval`:
+evaluates the dite and resolves the fiber for
+a `fiberCast`-wrapped child. -/
+private lemma fiberCast_child_eval
+    {γ : ℕ}
+    {y z : (polyFixCarrier btMorPoly).left}
+    {β : ℕ}
+    (heq : y = z) (h : y.1 = β)
+    (hsf : β = γ) (hsf' : z.1 = γ) :
+    fiberCast hsf (h ▸ y.2) =
+    hsf' ▸ z.2 := by
+  subst hsf'; subst heq; subst h; rfl
+
 private lemma subst_id_fold_case
     {n : ℕ}
     (isLt : 3 < 4)
@@ -1386,6 +1419,9 @@ theorem BTMor1.subst_id {n : ℕ}
     t
 
 set_option maxHeartbeats 6400000 in
+-- The set/unfold chain for PolyFix.ind and
+-- the polyEndoMorphEvalAt resolution require
+-- extended reduction.
 /-- Substitution distributes over fold:
 applying `.subst σ` to a `BTMor1.fold` is the
 same as substituting each base and tree child
@@ -1414,7 +1450,7 @@ private lemma fold_subst_eq {n m : ℕ}
       polyFixStrFamily
   set lhs := BTMor1.subst
     (PolyFix.mk _ _ _) σ with hl
-  show lhs = _
+  change lhs = _
   unfold BTMor1.subst at hl
   unfold BTMor1.ind
     PolyFixCoprod.ind at hl
@@ -1442,24 +1478,34 @@ private lemma fold_subst_eq {n m : ℕ}
   · -- Base children:
     funext i
     change BTMor1.subst _ _ = _
-    erw [subst_sigma_eval (dif_pos i.isLt)]
-    simp only [Fin.eta]; rfl
+    erw [subst_child_eval
+      (dif_pos i.isLt) _ _ rfl]
   · -- Step children:
     funext i
     split_ifs with hb
     · exact absurd hb (by omega)
-    · exact congrArg
-        (fun j => fiberCast _ (g j))
+    · erw [fiberCast_child_eval
+        (show dite _ _ _ = ⟨pm + pm,
+          g ⟨pm + ↑i - pm,
+            by omega⟩⟩ from by
+          simp only [dif_neg hb,
+            dif_pos (show pm + ↑i <
+              pm + pm from by
+              have := i.isLt; omega)])
+        _ _ rfl]
+      exact congrArg g
         (Fin.ext (by dsimp; omega))
   · -- Tree child:
     change BTMor1.subst _ _ = _
-    erw [subst_sigma_eval
+    erw [subst_child_eval
       (show dite _ _ _ = ⟨n, tree⟩ from by
-        simp [dif_neg (show ¬ (pm + pm) <
-            pm from by omega),
-          dif_neg (show ¬ (pm + pm) <
-            pm + pm from by omega)])]
-    rfl
+        simp only [dif_neg
+          (show ¬ (pm + pm) < pm
+            from by omega),
+          dif_neg
+            (show ¬ (pm + pm) < pm + pm
+              from by omega)])
+      _ _ rfl]
 private lemma subst_comp_fold_case
     {n m k : ℕ}
     (isLt : 3 < 4)
