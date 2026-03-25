@@ -85,11 +85,27 @@ def ccrPresheafCat :
 section PresheafPRADef
 
 /--
+Precomposition with `ccrPresheafCatFunctor`: turns a
+functor `Cat ⥤ Cat` into a functor `Catᵒᵖ ⥤ Cat` by
+precomposing with the `I ↦ CoprodCovarRepCat(Iᵒᵖ ⥤ Type w_I)`
+construction.
+-/
+def ccrPresheafWhiskerLeft :
+    (Cat.{max w' u_I w_I,
+        max (w' + 1) (w_I + 1) v_I u_I} ⥤
+      Cat.{max u_I u_J w_I w',
+        max u_I u_J v_I v_J (w_I + 1) (w' + 1)}) ⥤
+    (Cat.{v_I, u_I}ᵒᵖ ⥤
+      Cat.{max u_I u_J w_I w',
+        max u_I u_J v_I v_J (w_I + 1) (w' + 1)}) :=
+  (Functor.whiskeringLeft _ _ _).obj
+    ccrPresheafCatFunctor.{u_I, v_I, w_I, w'}
+
+/--
 The profunctor sending `(J, I)` to the presheaf PRA
 category `Jᵒᵖ ⥤ CoprodCovarRepCat (Iᵒᵖ ⥤ Type w_I)`.
-Defined as `catHomProfunctor` post-composed with
-`ccrPresheafCatFunctor` in the covariant variable.
-No free category parameters.
+Defined as `catHomProfunctor` composed with
+`ccrPresheafWhiskerLeft`.  No free category parameters.
 -/
 def presheafPRACatProfunctor :
     Cat.{v_J, u_J}ᵒᵖ ⥤
@@ -99,8 +115,7 @@ def presheafPRACatProfunctor :
   catHomProfunctor.{v_J, u_J,
       max w' u_I w_I,
       max (w' + 1) (w_I + 1) v_I u_I} ⋙
-    (Functor.whiskeringLeft _ _ _).obj
-      ccrPresheafCatFunctor.{u_I, v_I, w_I, w'}
+    ccrPresheafWhiskerLeft.{u_I, v_I, u_J, v_J, w_I, w'}
 
 /--
 The functor `Catᵒᵖ ⥤ Cat` sending `I` to the category
