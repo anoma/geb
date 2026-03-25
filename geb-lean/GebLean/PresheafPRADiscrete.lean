@@ -227,4 +227,37 @@ def ccrOverDiscreteEquiv (X : Type u) :
   (ccrMapEquiv (overDiscretePresheafEquiv X)).trans
     (ccrOp'OpEquiv ((Discrete X)ᵒᵖ ⥤ Type u))
 
+section PolyPresheafEquiv
+
+variable (X Y : Type u)
+
+/--
+The equivalence between `PolyFunctorBetweenCat X Y`
+and `PresheafPRACat (Discrete X) (Discrete Y)`.
+
+Composes three categorical equivalences:
+1. `piEquivalenceFunctorDiscrete Y` converts
+   `Y`-indexed families to functors out of
+   `Discrete Y`.
+2. `(Discrete.opposite Y).symm.congrLeft` converts
+   functors out of `Discrete Y` to functors out
+   of `(Discrete Y)^op`.
+3. `(ccrOverDiscreteEquiv X).congrRight` applies
+   the inner equivalence
+   `CoprodCovarRepCat' (Over X) ≌
+     CoprodCovarRepCat ((Discrete X)^op ⥤ Type u)`
+   pointwise.
+-/
+def polyBetweenPresheafPRAEquiv :
+    PolyFunctorBetweenCat.{u} X Y ≌
+      PresheafPRACat.{u, u, u, u, u, u}
+        (Discrete X) (Discrete Y) :=
+  (piEquivalenceFunctorDiscrete Y
+    (↑(CoprodCovarRepCat'.{u + 1, u, u}
+      (Over X)))).trans
+    (((Discrete.opposite Y).symm.congrLeft).trans
+      ((ccrOverDiscreteEquiv X).congrRight))
+
+end PolyPresheafEquiv
+
 end GebLean
