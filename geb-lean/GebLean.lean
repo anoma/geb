@@ -64,6 +64,7 @@ import GebLean.PshRelEdgeInclusion
 import GebLean.PshRelEdgeSeparation
 import GebLean.PshRelEdgeOverOmega
 import GebLean.PshRelEdgeGraphRestriction
+import GebLean.PshRelEdgeReflectiveChain
 import GebLean.PshRelEdgeSOClassifier
 import GebLean.PshRelSpanDiagram
 import GebLean.PshTypeExpr
