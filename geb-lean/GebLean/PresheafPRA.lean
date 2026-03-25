@@ -225,8 +225,7 @@ each `j` evaluates the polynomial `P(j)`.  Defined as
 postcomposition of `P` with `ccrNewEvalCatFunctor`.
 -/
 def praEvalAtFunctor :
-    PresheafPRACat.{u_I, v_I, u_J, v_J, w_I, w'}
-      I J ⥤
+    PresheafPRACat.{u_I, v_I, u_J, v_J, w_I, w'} I J ⥤
     Jᵒᵖ ⥤ (Iᵒᵖ ⥤ Type w_I) ⥤ Type (max w' u_I w_I) :=
   (Functor.whiskeringRight Jᵒᵖ _ _).obj
     (ccrNewEvalCatFunctor.{max v_I u_I (w_I + 1),
