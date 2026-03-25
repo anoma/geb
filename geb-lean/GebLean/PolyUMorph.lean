@@ -426,11 +426,31 @@ def polyBetweenCoprod (I : Type u)
 The injection's action on positions: tags a position of `F j`
 with the index `j`.
 -/
-def polyBetweenInjReindex (I : Type u)
-    (F : I → PolyFunctorBetweenCat X Y) (j : I) (y : Y)
+@[reducible] def polyBetweenInjReindex
+    (I : Type u)
+    (F : I → PolyFunctorBetweenCat X Y)
+    (j : I) (y : Y)
     (p : polyBetweenIndex X Y (F j) y) :
     polyBetweenCoprodPos I F y :=
   ⟨j, p⟩
+
+@[simp]
+lemma polyBetweenInjReindex_fst
+    (I : Type u)
+    (F : I → PolyFunctorBetweenCat X Y)
+    (j : I) (y : Y)
+    (p : polyBetweenIndex X Y (F j) y) :
+    (polyBetweenInjReindex I F j y p).fst =
+      j := rfl
+
+@[simp]
+lemma polyBetweenInjReindex_snd
+    (I : Type u)
+    (F : I → PolyFunctorBetweenCat X Y)
+    (j : I) (y : Y)
+    (p : polyBetweenIndex X Y (F j) y) :
+    (polyBetweenInjReindex I F j y p).snd =
+      p := rfl
 
 /--
 The injection's action on directions: the identity morphism,
@@ -448,7 +468,7 @@ def polyBetweenInjFiber (I : Type u)
 /--
 The injection morphism from the `j`-th factor into the coproduct.
 -/
-def polyBetweenInj (I : Type u)
+@[reducible] def polyBetweenInj (I : Type u)
     (F : I → PolyFunctorBetweenCat X Y) (j : I) :
     F j ⟶ polyBetweenCoprod I F :=
   fun y => ccrHomMk
@@ -3703,7 +3723,7 @@ private lemma pbCurry_uncurry_fiber
           (polyBetweenHomObj Q S y) f).left)
         hbase)
         ⟨iq, ⟨eg, d⟩⟩) := by
-  simp only [ccrHomMk, ccrFiberMor,
+  simp only [ccrFiberMor,
     pbCurryFiberMor, Over.homMk_left,
     pbCurryFiberLeft]
   revert d

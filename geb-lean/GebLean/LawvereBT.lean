@@ -741,13 +741,14 @@ renaming/substitution to base and tree children.
 -/
 
 /-- Transport a `BTMor1` along a fiber equality. -/
-private def fiberCast {a b : ℕ}
+@[reducible] private def fiberCast
+    {a b : ℕ}
     (h : a = b) (t : BTMor1 a) :
     BTMor1 b :=
   h ▸ t
 
 /-- Transport a `Fin` along a bound equality. -/
-private def finCast {a b : ℕ}
+@[reducible] private def finCast {a b : ℕ}
     (h : a = b) (v : Fin a) : Fin b :=
   h ▸ v
 
@@ -1342,6 +1343,7 @@ theorem BTMor1.subst_id {n : ℕ}
             (fun e => ih e))
     t
 
+set_option maxHeartbeats 1600000 in
 /-- Substitution distributes over fold:
 applying `.subst σ` to a `BTMor1.fold` is the
 same as substituting each base and tree child
@@ -1359,7 +1361,71 @@ private lemma fold_subst_eq {n m : ℕ}
       g
       (tree.subst σ)
       pj := by
-  _
+  show BTMor1.subst
+    (BTMor1.fold pm f g tree pj) σ =
+    BTMor1.fold pm
+      (fun i => (f i).subst σ) g
+      (tree.subst σ) pj
+  conv_lhs =>
+    arg 1
+    unfold BTMor1.fold btMorInject
+      polyFixStrFamily
+  set lhs := BTMor1.subst
+    (PolyFix.mk _ _ _) σ with hl
+  show lhs = _
+  unfold BTMor1.subst at hl
+  unfold BTMor1.ind
+    PolyFixCoprod.ind at hl
+  unfold PolyFix.ind at hl
+  dsimp only at hl
+  rw [hl]
+  -- Reduce the match scrutinee through
+  -- the polyEndoMorphEvalAt chain so that
+  -- the component-3 branch fires.
+  unfold polyEndoMorphEvalAt
+    polyBetweenMorphEvalAt
+  dsimp only [ptoefMk, ccrEvalMk,
+    ccrReindex, ptoefIndex, ccrEvalIndex,
+    ptoefMor, ccrEvalMor]
+  -- Both sides are now BTMor1.fold pm ... pj.
+  -- Unfold polyFixChildAt + identity morphism
+  -- to expose dite, then cancel transports.
+  simp only [polyFixChildAt,
+    Over.comp_left, types_comp_apply,
+    Over.homMk_left,
+    ccrFiberMor,
+    polyBetweenInjFiber,
+    polyBetweenCoprodDir,
+    CategoryStruct.id]
+  dsimp only [id]
+  congr 1
+  · -- Base children:
+    funext i
+    split_ifs with hb
+    · have hfib := @btMorFoldFiber n
+        (by omega) ⟨pm, pj⟩
+        ⟨↑i, Nat.lt_of_lt_of_le
+          i.isLt (Nat.le_add_right
+            pm (pm + 1))⟩ i.isLt
+      simp only [Fin.eta,
+        fiberCast_subst_eq, finCast, hfib]
+    · exact absurd i.isLt hb
+  · -- Step children:
+    funext i
+    split_ifs with hb
+    · exact absurd hb (by omega)
+    · exact congrArg
+        (fun j => fiberCast _ (g j))
+        (Fin.ext (by dsimp; omega))
+  · -- Tree child:
+    split_ifs with hb
+    · exact absurd hb (by omega)
+    · have hfib := @btMorFoldFiber_tree n
+        (by omega) ⟨pm, pj⟩
+        ⟨pm + pm, Nat.lt_succ_self _⟩
+        (by omega) (by omega)
+      simp only [fiberCast_subst_eq,
+        finCast, hfib]
 private lemma subst_comp_fold_case
     {n m k : ℕ}
     (isLt : 3 < 4)

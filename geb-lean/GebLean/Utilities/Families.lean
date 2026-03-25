@@ -1625,9 +1625,12 @@ A morphism `(X, F) → (Y, G)` consists of:
 Note: The fiber morphisms go from target to source, which is opposite to
 `FreeCoprodCompletionCat`.
 -/
-def ccrHomMk {x y : CoprodCovarRepCat'.{u, v, w} C}
+@[reducible] def ccrHomMk
+    {x y : CoprodCovarRepCat'.{u, v, w} C}
     (reindex : ccrIndex x ⟶ ccrIndex y)
-    (fiberMor : ∀ i : ccrIndex x, ccrFamily y (reindex i) ⟶ ccrFamily x i) :
+    (fiberMor : ∀ i : ccrIndex x,
+      ccrFamily y (reindex i) ⟶
+        ccrFamily x i) :
     x ⟶ y :=
   ⟨reindex, fiberMor⟩
 
@@ -1935,7 +1938,7 @@ def fcToCcrOp : FreeCoprodCompletionCat.{u, v, w} C ⥤ CoprodCovarRepCat'.{u, v
     refine ccrHom_ext _ _ rfl ?_
     simp only [eqToHom_refl, Category.comp_id]
     funext i
-    simp only [ccrHomMk, fcId_fiberMor]
+    simp only [fcId_fiberMor]
     rfl
   map_comp {P Q R} f g := by
     simp only [ccrComp_mk]

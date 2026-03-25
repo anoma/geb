@@ -2651,7 +2651,7 @@ theorem setoidToTypeDensityQ_toInducedMap :
     functorToDensityApp, setoidToTypeDensityQ, setoidToTypeDensityTgtHom,
     setoidToTypeDensityTgtReindex]
   -- Simplify setoidToTypeDensityTgtReindex to match setoidDensityPresentation forms
-  simp only [ccrHomMk, setoidToTypeDensityTgtReindex, SetoidElements.obj]
+  simp only [SetoidElements.obj]
   -- Both are in the density coequalizer; show they're equal via naturality
   apply densityCoeq_eq_of_toFunctor_eq
   simp only [densityToFunctorApp, ccrEvalMk, ccrEvalIndex, ccrEvalMor, densityTgt_family]
