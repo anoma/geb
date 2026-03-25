@@ -2,56 +2,74 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use
 > superpowers:subagent-driven-development (recommended) or
-> superpowers:executing-plans to implement this plan task-by-task.
-> Steps use checkbox (`- [ ]`) syntax for tracking.
+> superpowers:executing-plans to implement this plan
+> task-by-task. Steps use checkbox (`- [ ]`) syntax
+> for tracking.
 
-**Goal:** Generalize the presheaf-specific functionalization
-adjunction `Arrow(PSh(C)) ⊣ PshRelEdge(C)` to an
-`Arrow(C) ⊣ (WalkingSpan ⥤ C)` adjunction for any category
-`C` with constructive pushouts, then refactor the
-presheaf-specific code to use the general construction.
+**Goal:** Generalize the presheaf-specific
+functionalization adjunction
+`Arrow(PSh(C)) ⊣ PshRelEdge(C)` to an
+`Arrow(C) ⊣ (WalkingSpan ⥤ C)` adjunction for any
+category `C` with constructive pushouts, then
+refactor the presheaf-specific code to use the
+general construction.
 
-**Architecture:** The construction uses a single pushout per
-span diagram. We pass the pushout cocone choice as an
-explicit parameter `(pushouts : (S : WalkingSpan ⥤ C) →
-ColimitCocone S)`, avoiding both mathlib's `Prop`-valued
-`HasColimit` (which requires `Classical.choice`) and
-typeclass synthesis issues (the project sets
-`maxSynthPendingDepth = 3`). The arrow-span inclusion
-sends `f : P ⟶ Q` to `span (𝟙 P) f`; the reflector sends
-a span to `Arrow.mk pushout.inl`. The presheaf
-instantiation provides `ColimitCocone` via pointwise
-`Quot` in `Type`, refactoring the existing `Quot`-based
-code from `PshRelEdgeFunctionalize.lean` into
+**Architecture:** The construction uses a single
+pushout per span diagram. We pass the pushout cocone
+choice as an explicit parameter
+`(pushouts : (S : WalkingSpan ⥤ C) →
+ColimitCocone S)`, avoiding both mathlib's
+`Prop`-valued `HasColimit` (which requires
+`Classical.choice`) and typeclass synthesis issues
+(the project sets `maxSynthPendingDepth = 3`). The
+arrow-span inclusion sends `f : P ⟶ Q` to
+`span (𝟙 P) f`; the reflector sends a span to
+`Arrow.mk pushout.inl`. The presheaf instantiation
+provides `ColimitCocone` via pointwise `Quot` in
+`Type`, refactoring the existing `Quot`-based code
+from `PshRelEdgeFunctionalize.lean` into
 `ColimitCocone` form.
 
-**Tech Stack:** Lean 4, mathlib (`Cocone`, `IsColimit`,
-`ColimitCocone`, `PushoutCocone`, `WalkingSpan`, `span`,
-`spanHomMk`), project utilities (`Arrow.lean`,
+**Tech Stack:** Lean 4, mathlib (`Cocone`,
+`IsColimit`, `ColimitCocone`, `PushoutCocone`,
+`WalkingSpan`, `span`, `spanHomMk`), project
+utilities (`Arrow.lean`,
 `PshRelEdgeFunctionalize.lean`,
 `PshRelEdgeReflectiveChain.lean`)
 
 **Note on vertex names:** WalkingSpan vertices use
-mathlib's abbreviations: `.zero` (apex), `.left` (left
-foot), `.right` (right foot). Morphisms: `Hom.fst` and
-`Hom.snd`.
+mathlib's abbreviations: `.zero` (apex), `.left`
+(left foot), `.right` (right foot). Morphisms:
+`Hom.fst` and `Hom.snd`.
 
 ---
 
 ## File Structure
 
-| File | Role |
-|------|------|
-| `GebLean/Utilities/ArrowSpanAdjunction.lean` (create) | General adjunction parameterized on explicit pushout cocone data; presheaf instantiation |
-| `GebLean/PshRelEdgeFunctionalize.lean` (modify) | Redefine `pshRelEdgeFunctionalizeFunctor` as `pshRelEdgeInclusionFunctor ⋙ spanArrowReflector`; rebuild the `PshRelEdge ↔ Arrow` adjunction directly (not via `Adjunction.comp`, since the two inclusion functors `arrowSpanInclusion` and `pshRelEdgeGraphFunctor ⋙ pshRelEdgeInclusionFunctor` are naturally isomorphic but not definitionally equal) |
-| `GebLean/PshRelEdgeReflectiveChain.lean` (modify) | Update reflective chain to include `Arrow ↔ Span` step |
-| `GebLean.lean` (modify) | Add import for new file |
+- `GebLean/Utilities/ArrowSpanAdjunction.lean`
+  (create): General adjunction parameterized on
+  explicit pushout cocone data; presheaf
+  instantiation.
+- `GebLean/PshRelEdgeFunctionalize.lean` (modify):
+  Redefine `pshRelEdgeFunctionalizeFunctor` as
+  `pshRelEdgeInclusionFunctor ⋙ spanArrowReflector`;
+  rebuild the `PshRelEdge ↔ Arrow` adjunction
+  directly (not via `Adjunction.comp`, since the
+  two inclusion functors `arrowSpanInclusion` and
+  `pshRelEdgeGraphFunctor ⋙
+  pshRelEdgeInclusionFunctor` are naturally
+  isomorphic but not definitionally equal).
+- `GebLean/PshRelEdgeReflectiveChain.lean` (modify):
+  Update reflective chain to include
+  `Arrow ↔ Span` step.
+- `GebLean.lean` (modify): Add import for new file.
 
 ---
 
 ### Task 1: Arrow-Span Inclusion and Pushout Parameter
 
 **Files:**
+
 - Create: `GebLean/Utilities/ArrowSpanAdjunction.lean`
 - Modify: `GebLean.lean` (add import)
 
@@ -70,10 +88,6 @@ pushout cocone parameter type.
   open CategoryTheory Limits
 
   namespace GebLean
-
-  universe v u
-
-  variable {C : Type u} [Category.{v} C]
   ```
 
   Define `arrowSpanInclusion (C : Type u)
@@ -116,11 +130,12 @@ pushout cocone parameter type.
 
 - [ ] **Step 4: Build and verify**
 
-  Run: `lake build GebLean.Utilities.ArrowSpanAdjunction`
+  Run:
+  `lake build GebLean.Utilities.ArrowSpanAdjunction`
 
 - [ ] **Step 5: Commit**
 
-  ```
+  ```text
   Define arrow-span inclusion functor
   ```
 
@@ -129,6 +144,7 @@ pushout cocone parameter type.
 ### Task 2: Span-Arrow Reflector Functor
 
 **Files:**
+
 - Modify: `GebLean/Utilities/ArrowSpanAdjunction.lean`
 
 Define the left adjoint functor
@@ -138,6 +154,7 @@ an explicit pushout cocone assignment.
 - [ ] **Step 1: Define the functor on objects**
 
   The functor is parameterized:
+
   ```lean
   variable (pushouts :
     (S : WalkingSpan ⥤ C) → ColimitCocone S)
@@ -146,24 +163,27 @@ an explicit pushout cocone assignment.
   Given `S : WalkingSpan ⥤ C`, the pushout cocone
   is `(pushouts S).cocone` with point
   `(pushouts S).cocone.pt`. The arrow is:
-  ```
+
+  ```lean
   Arrow.mk ((pushouts S).cocone.ι.app .left)
   ```
+
   Source = `S.obj .left`, target = pushout point.
 
 - [ ] **Step 2: Define the functor on morphisms**
 
   Given `α : S₁ ⟶ S₂`, the arrow morphism has:
+
   - Left: `α.app .left`
   - Right: `(pushouts S₁).isColimit.desc` applied
     to the cocone over `S₁` with point =
     `(pushouts S₂).cocone.pt` and legs =
-    `α.app .left ≫ (pushouts S₂).cocone.ι.app .left`
-    and
-    `α.app .right ≫ (pushouts S₂).cocone.ι.app .right`.
+    `α.app .left ≫ cocone₂.ι.app .left`
+    and `α.app .right ≫ cocone₂.ι.app .right`.
 
   The cocone over `S₁` is formed by precomposing
   `α` with the `S₂` cocone. Explicitly, define:
+
   ```lean
   Cocone.mk (pushouts S₂).cocone.pt
     (α ≫ (pushouts S₂).cocone.ι)
@@ -191,11 +211,12 @@ an explicit pushout cocone assignment.
 
 - [ ] **Step 4: Build and verify**
 
-  Run: `lake build GebLean.Utilities.ArrowSpanAdjunction`
+  Run:
+  `lake build GebLean.Utilities.ArrowSpanAdjunction`
 
 - [ ] **Step 5: Commit**
 
-  ```
+  ```text
   Define span-arrow reflector functor
   ```
 
@@ -204,6 +225,7 @@ an explicit pushout cocone assignment.
 ### Task 3: Arrow-Span Adjunction
 
 **Files:**
+
 - Modify: `GebLean/Utilities/ArrowSpanAdjunction.lean`
 
 Construct `spanArrowReflector pushouts ⊣
@@ -220,17 +242,19 @@ arrowSpanInclusion C` via
   ((pushouts S).cocone.ι.app .left)`.
 
   Span morphism via `spanHomMk`:
+
   - `.zero`: `S.map Hom.fst` (the left leg)
   - `.left`: `𝟙 (S.obj .left)`
   - `.right`: `(pushouts S).cocone.ι.app .right`
 
   Naturality at `Hom.fst`:
-  `S.map fst ≫ 𝟙 _ = S.map fst` (by comp_id) ✓
+  `S.map fst ≫ 𝟙 _ = S.map fst` (by comp\_id)
 
   Naturality at `Hom.snd`:
-  `S.map fst ≫ ι.app .left = S.map snd ≫ ι.app .right`
+  `S.map fst ≫ ι.app .left =
+  S.map snd ≫ ι.app .right`
   — this is the pushout/cocone condition
-  (`Cocone.w` or direct from cocone naturality) ✓
+  (`Cocone.w` or direct from cocone naturality)
 
   Prove naturality as a natural transformation.
 
@@ -240,14 +264,16 @@ arrowSpanInclusion C` via
   `(spanArrowReflector pushouts).obj
   ((arrowSpanInclusion C).obj f) ⟶ f`.
 
-  The source is the pushout of `span (𝟙 f.left) f.hom`.
+  The source is the pushout of
+  `span (𝟙 f.left) f.hom`.
 
   Arrow morphism:
+
   - Left: `𝟙 f.left`
   - Right: `(pushouts (span (𝟙 f.left) f.hom))
     .isColimit.desc` applied to the cocone
     `(f.right, f.hom, 𝟙 f.right)`.
-    Condition: `𝟙 ≫ f.hom = f.hom ≫ 𝟙` ✓
+    Condition: `𝟙 ≫ f.hom = f.hom ≫ 𝟙`
 
   Commutativity: by `IsColimit.fac` at `.left`.
 
@@ -260,7 +286,8 @@ arrowSpanInclusion C` via
   counit.app (reflector.obj S) = 𝟙`
 
   Use `CommaMorphism.ext`:
-  - Left: `𝟙 ≫ 𝟙 = 𝟙` ✓
+
+  - Left: `𝟙 ≫ 𝟙 = 𝟙`
   - Right: composition is a map
     `pushout → pushout` satisfying
     `ι.app j ≫ comp = ι.app j` for all `j`.
@@ -277,12 +304,13 @@ arrowSpanInclusion C` via
 
   This is a span morphism equality. Check at
   each WalkingSpan vertex:
+
   - `.zero`: `𝟙 ≫ 𝟙 = 𝟙`
   - `.left`: `𝟙 ≫ 𝟙 = 𝟙`
   - `.right`: `ι.app .right ≫ desc = 𝟙`
     where `desc` maps to `(f.right, f.hom, 𝟙)`.
     By `IsColimit.fac` at `.right`,
-    `ι.app .right ≫ desc = 𝟙 f.right` ✓
+    `ι.app .right ≫ desc = 𝟙 f.right`
 
 - [ ] **Step 5: Assemble the adjunction and
   reflective instance**
@@ -292,7 +320,8 @@ arrowSpanInclusion C` via
       spanArrowReflector pushouts ⊣
         arrowSpanInclusion C := ...
 
-  instance arrowSpanReflective (pushouts : ...) :
+  instance arrowSpanReflective
+      (pushouts : ...) :
       Reflective (arrowSpanInclusion C) where
     L := spanArrowReflector pushouts
     adj := arrowSpanAdj pushouts
@@ -303,11 +332,12 @@ arrowSpanInclusion C` via
 
 - [ ] **Step 6: Build and verify**
 
-  Run: `lake build GebLean.Utilities.ArrowSpanAdjunction`
+  Run:
+  `lake build GebLean.Utilities.ArrowSpanAdjunction`
 
 - [ ] **Step 7: Commit**
 
-  ```
+  ```text
   Prove arrow-span reflective adjunction
   ```
 
@@ -316,6 +346,7 @@ arrowSpanInclusion C` via
 ### Task 4: Presheaf Pushout Instantiation
 
 **Files:**
+
 - Modify: `GebLean/Utilities/ArrowSpanAdjunction.lean`
 
 Provide `ColimitCocone` for presheaf span diagrams
@@ -330,12 +361,14 @@ form.
   Given `f : X → Y` and `g : X → Z` in `Type w`:
 
   Raw relation on `Y ⊕ Z`:
+
   ```lean
   fun a b => ∃ x, a = .inl (f x) ∧
     b = .inr (g x)
   ```
 
   Pushout object: `Quot rel`
+
   - `inl : Y → Quot rel` via `Quot.mk _ ∘ .inl`
   - `inr : Z → Quot rel` via `Quot.mk _ ∘ .inr`
   - Condition: `Quot.sound`
@@ -351,6 +384,7 @@ form.
   For `f g : X ⟶ Y, X ⟶ Z` in `Cᵒᵖ ⥤ Type w`:
 
   The pushout presheaf has:
+
   - `obj c = Quot (rel c)` (pointwise quotient)
   - `map h = Quot.lift (Quot.mk _ ∘ Sum.map ...)
     (by Quot.sound + subfunctor map)`
@@ -372,11 +406,12 @@ form.
 
 - [ ] **Step 3: Build and verify**
 
-  Run: `lake build GebLean.Utilities.ArrowSpanAdjunction`
+  Run:
+  `lake build GebLean.Utilities.ArrowSpanAdjunction`
 
 - [ ] **Step 4: Commit**
 
-  ```
+  ```text
   Instantiate constructive pushouts for presheaves
   ```
 
@@ -385,6 +420,7 @@ form.
 ### Task 5: Refactor PshRelEdgeFunctionalize
 
 **Files:**
+
 - Modify: `GebLean/PshRelEdgeFunctionalize.lean`
 
 Replace the `Quot`-based presheaf functionalization
@@ -394,26 +430,30 @@ The `PshRelEdge ↔ Arrow` adjunction CANNOT be
 obtained by `Adjunction.comp` from the
 `Span ↔ Arrow` and `PshRelEdge ↔ Span` adjunctions,
 because `arrowSpanInclusion` and
-`pshRelEdgeGraphFunctor ⋙ pshRelEdgeInclusionFunctor`
-are naturally isomorphic but not definitionally equal
-(the former uses apex = domain with `span (𝟙 P) f`,
-the latter uses apex = graph subfunctor with
-`span π₁ π₂`). Instead, we define
-`pshRelEdgeFunctionalizeFunctor` as the composition
+`pshRelEdgeGraphFunctor ⋙
+pshRelEdgeInclusionFunctor` are naturally isomorphic
+but not definitionally equal (the former uses
+apex = domain with `span (𝟙 P) f`, the latter uses
+apex = graph subfunctor with `span π₁ π₂`). Instead,
+we define `pshRelEdgeFunctionalizeFunctor` as the
+composition
 `pshRelEdgeInclusionFunctor ⋙ spanArrowReflector`
-and build its adjunction with `pshRelEdgeGraphFunctor`
-directly.
+and build its adjunction with
+`pshRelEdgeGraphFunctor` directly.
 
 - [ ] **Step 1: Update imports**
 
   Add `import GebLean.Utilities.ArrowSpanAdjunction`
   to `PshRelEdgeFunctionalize.lean`.
 
-- [ ] **Step 2: Remove the `Quot`-based definitions**
+- [ ] **Step 2: Remove the `Quot`-based
+  definitions**
 
   Remove: `pshRelFunctionalizeRel`,
-  `pshRelFunctionalizeMap`, `pshRelFunctionalizeMap_mk`,
-  `pshRelFunctionalize`, `pshRelFunctionalizeHom`,
+  `pshRelFunctionalizeMap`,
+  `pshRelFunctionalizeMap_mk`,
+  `pshRelFunctionalize`,
+  `pshRelFunctionalizeHom`,
   `pshRelFunctionalizeQuotMapApp`,
   `pshRelFunctionalizeQuotMapApp_mk`,
   `pshRelFunctionalizeQuotMap`,
@@ -445,19 +485,10 @@ directly.
   pshRelEdgeGraphFunctor` via
   `Adjunction.mkOfUnitCounit`, using:
 
-  - Unit: compose `pshRelEdgeSepUnit` (edge → span)
-    with the general unit (span → graph-span), then
-    use the natural isomorphism between
-    `arrowSpanInclusion` and `graph ⋙ inclusion`
-    to land in the graph functor's image.
-
-  - Alternatively (and more directly): define the
-    unit from scratch as before — `srcMap = 𝟙`,
+  - Unit: define from scratch —
+    `srcMap = 𝟙`,
     `tgtMap = ι.app .right` (the pushout's right
-    injection), `sq` by `Quot.sound` / cocone
-    condition. The proofs are the same shape as
-    the current ones but reference the pushout
-    cocone instead of raw `Quot`.
+    injection), `sq` by cocone condition.
 
   - Counit: define from scratch using
     `IsColimit.desc` on the graph's pushout.
@@ -470,7 +501,13 @@ directly.
 - [ ] **Step 5: Check for downstream references**
 
   ```bash
-  grep -rn "pshRelFunctionalizeRel\|pshRelFunctionalize[^A-Z]\|pshRelFunctionalizeMap\|pshRelFunctionalizeHom\|pshRelFunctionalizeQuotMap" GebLean/
+  grep -rn \
+    "pshRelFunctionalizeRel\
+  \|pshRelFunctionalize[^A-Z]\
+  \|pshRelFunctionalizeMap\
+  \|pshRelFunctionalizeHom\
+  \|pshRelFunctionalizeQuotMap" \
+    GebLean/
   ```
 
   Fix any references found (likely in
@@ -482,7 +519,7 @@ directly.
 
 - [ ] **Step 7: Commit**
 
-  ```
+  ```text
   Refactor PshRelEdge functionalization to use
   general arrow-span adjunction
   ```
@@ -492,6 +529,7 @@ directly.
 ### Task 6: Update Reflective Chain
 
 **Files:**
+
 - Modify: `GebLean/PshRelEdgeReflectiveChain.lean`
 
 The reflective chain now includes the `Arrow ↔ Span`
@@ -502,6 +540,7 @@ composed adjunctions.
 - [ ] **Step 1: Add the `Arrow ↔ Span` step**
 
   Import `ArrowSpanAdjunction` and add:
+
   ```lean
   abbrev pshArrowSpanInclusion :=
     arrowSpanInclusion (Cᵒᵖ ⥤ Type w)
@@ -517,9 +556,11 @@ composed adjunctions.
 - [ ] **Step 2: Update composed adjunctions**
 
   The chain is now:
-  ```
+
+  ```text
   PSh(C) ↪ Arrow(PSh(C)) ↪ Span(PSh(C))
   ```
+
   with `PshRelEdge(C) ↪ Span(PSh(C))` as a
   separate reflective inclusion.
 
@@ -542,7 +583,7 @@ composed adjunctions.
 
 - [ ] **Step 4: Commit**
 
-  ```
+  ```text
   Update reflective chain with Arrow-Span step
   ```
 
@@ -551,6 +592,7 @@ composed adjunctions.
 ### Task 7: Final Verification
 
 **Files:**
+
 - All modified files
 
 - [ ] **Step 1: Full build and test**
@@ -560,11 +602,13 @@ composed adjunctions.
 - [ ] **Step 2: Verify axiom hygiene**
 
   ```bash
-  grep -n "Classical\|noncomputable\|axiom\|sorry" \
+  grep -n \
+    "Classical\|noncomputable\|axiom\|sorry" \
     GebLean/Utilities/ArrowSpanAdjunction.lean \
     GebLean/PshRelEdgeFunctionalize.lean \
     GebLean/PshRelEdgeReflectiveChain.lean
   ```
+
   Expected: no matches.
 
 - [ ] **Step 3: Verify no unused universe variables
@@ -575,7 +619,7 @@ composed adjunctions.
 
 - [ ] **Step 4: Commit**
 
-  ```
+  ```text
   Final verification of arrow-span adjunction
   generalization
   ```
