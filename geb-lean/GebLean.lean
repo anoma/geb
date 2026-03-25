@@ -74,6 +74,7 @@ import GebLean.RelSpanDiagram
 import GebLean.RestrictedCoendAsColimit
 import GebLean.Semicategory
 import GebLean.Utilities
+import GebLean.Utilities.ArrowSpanAdjunction
 import GebLean.Utilities.Category
 import GebLean.Utilities.ConnectedComponents
 import GebLean.Utilities.ConnectedGrothendieck
