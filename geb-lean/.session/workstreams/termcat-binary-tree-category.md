@@ -177,15 +177,62 @@ In progress:
     with explicit type signature:
     `(BTMor1.fold pm f g tree pj).subst σ =
     BTMor1.fold pm (f.subst σ) g (tree.subst σ) pj`
-    Proof: same technique as `subst_id_fold_case`
-    applied to the `BTMor1.fold`-constructed
-    `PolyFix.mk` node. Requires the
-    set/unfold/dsimp + conv/change chain, then
-    fold reconstruction via convert +
-    polyFixCoprodRoundTrip + Fin.ext + omega.
-  - `subst_comp_fold_case`: uses `fold_subst_eq`
-    to unfold both sides to `BTMor1.fold`, then
-    applies the IH to compose children.
+    The set/unfold chain correctly computes the
+    subst result (in hypothesis `hl`), and the
+    RHS fold unfolds cleanly via `unfold
+    BTMor1.fold btMorInject; simp [sigma_fiberCast
+    _subst_eq, sigma_fiberCast_eq]`. The blocker
+    is the fold reconstruction: showing the
+    `polyFixStrFamily` from the LHS unfolding
+    equals the `PolyFix.mk` from the RHS
+    unfolding. `polyFixCoprodRoundTrip` handles
+    the LHS → canonical `PolyFix.mk`, but the
+    RHS `PolyFix.mk` has `polyFixChildAt`-wrapped
+    children from the `PolyFix.ind` recursion,
+    which don't match the canonical form.
+  - `subst_comp_fold_case`: DONE modulo
+    `fold_subst_eq`. Uses `fold_subst_eq` +
+    `symm` + `set/unfold` + `conv/change` +
+    `simp [show ... from (ih ...).symm]`.
+  - **Blocker**: need a general fold
+    reconstruction lemma in PolyAlgUMorph.lean
+    (or PolyAlg.lean) that directly relates the
+    `polyFixStrFamily` form to its `PolyFix.mk`
+    form when the children come from
+    `polyFixChildAt` of a coproduct injection.
+    Specifically: a lemma showing that for any
+    `Over.homMk` morphism `mor`, `polyFixStrFamily
+    (polyBetweenCoprod I F) x (polyEndoMorphEvalAt
+    (polyBetweenInj I F j) carrier x ⟨p, mor⟩) =
+    PolyFix.mk x ⟨j, p⟩ (polyFixChildAt ⟨j, p⟩
+    (ccrFiberMor ... ≫ mor))`. This IS
+    `polyFixCoprodStr_inj`, but the gap is that
+    after `rw [hl]; symm`, the RHS has this form
+    with `polyFixChildAt`-wrapped children from
+    the subst recursion, while the LHS (after
+    `unfold BTMor1.fold btMorInject; simp`) has
+    the same `polyFixStrFamily` form with the
+    CLEAN if-then-else children (with `(f i).subst
+    σ`, `g i`, `tree.subst σ`). The two
+    `polyFixStrFamily` calls differ only in their
+    `Over.homMk` function body. Proving these
+    equal requires showing the if-then-else with
+    `polyFixChildAt`-subst'd children equals the
+    if-then-else with direct `(f i).subst σ`
+    children — which is the `sigma_fiberCast
+    _subst_eq + sigma_fiberCast_eq` transport
+    cancellation, applied pointwise via
+    `Over.OverMorphism.ext + funext + split_ifs`.
+    The approach that works: `congr 1` on the
+    `polyFixStrFamily` calls, then `Sigma.ext` on
+    the eval data, then `Over.OverMorphism.ext`,
+    `funext`, `split_ifs`,
+    `sigma_fiberCast_subst_eq`,
+    `sigma_fiberCast_eq`, `congrArg`, `Fin.ext`,
+    `dsimp`, `omega`. This is the same technique
+    as `subst_id_fold_case` steps 5-7 but applied
+    at fiber `m` with `(polyFixChildAt ...).subst`
+    children instead of `fiberCast` children.
 - [ ] Category instance for LawvereBTCat
 - [ ] HasFiniteProducts instance
 - [ ] HasPBTO instance

@@ -1348,7 +1348,6 @@ private lemma fold_subst_eq {n m : ℕ}
       (tree.subst σ)
       pj := by
   _
-
 private lemma subst_comp_fold_case
     {n m k : ℕ}
     (isLt : 3 < 4)
