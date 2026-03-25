@@ -278,4 +278,43 @@ def BTMorEq.foldBranch {n : ℕ}
         (fun (e : PEmpty) => e.elim)
         (by funext e; exact e.elim)⟩
 
+/-! ## Induction principle for BTMorEq
+
+Built on `PolyFixCoprod.ind`, with one step per
+coproduct component of `btMorEqPoly`. -/
+
+/-- Induction/recursion principle for `BTMorEq`.
+Each step receives a component index `i : Fin 7`,
+the component's position, children, and induction
+hypotheses.  Match on `i` to handle the seven
+constructors (refl, symm, trans, congBranch,
+congFold, foldLeaf, foldBranch). -/
+def BTMorEq.ind
+    {motive : ∀ {n : ℕ},
+      BTMorEq n → Sort _}
+    (step : ∀ (i : Fin 7) {n : ℕ}
+      (p : polyBetweenIndex ℕ ℕ
+        (btMorEqComponents i) n)
+      (children :
+        ∀ e : (polyBetweenFamily ℕ ℕ
+          (btMorEqComponents i) n p).left,
+          BTMorEq
+            ((polyBetweenFamily ℕ ℕ
+              (btMorEqComponents i) n
+                p).hom e))
+      (_ :
+        ∀ e : (polyBetweenFamily ℕ ℕ
+          (btMorEqComponents i) n p).left,
+          motive (children e)),
+      motive (PolyFix.mk n
+        (show polyBetweenIndex ℕ ℕ
+          (polyBetweenCoprod (Fin 7)
+            btMorEqComponents) n from
+          ⟨i, p⟩) children))
+    {n : ℕ} (t : BTMorEq n) : motive t :=
+  PolyFixCoprod.ind
+    (motive := motive)
+    (steps := step)
+    t
+
 end GebLean
