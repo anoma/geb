@@ -260,4 +260,163 @@ def polyBetweenPresheafPRAEquiv :
 
 end PolyPresheafEquiv
 
+/-! ## Evaluation Compatibility
+
+The equivalence `polyBetweenPresheafPRAEquiv` is compatible
+with evaluation: the polynomial evaluation
+`polyBetweenEvalFunctor` on `Over X ⥤ Over Y` corresponds
+to the presheaf PRA evaluation `praEvalAtFunctor` on
+`PSh(Discrete X) ⥤ PSh(Discrete Y)`, conjugated by the
+presheaf equivalences `overDiscretePresheafEquiv` on domain
+and codomain.
+
+We state this compatibility at the level of individual
+fibers:  for each `P : PolyFunctorBetweenCat X Y`,
+`A : Over X`, and `y : Y`, the type
+`polyBetweenEvalFamily X Y P A y` (the fiber of the
+polynomial evaluation at `y`) is equivalent to the
+corresponding presheaf PRA evaluation fiber.
+-/
+
+section EvalCompat
+
+variable (X Y : Type u)
+
+/--
+The presheaf PRA obtained from a polynomial
+`P : PolyFunctorBetweenCat X Y` under the equivalence
+`polyBetweenPresheafPRAEquiv`.
+-/
+abbrev polyToPRA (P : PolyFunctorBetweenCat.{u} X Y) :
+    PresheafPRACat.{u, u, u, u, u, u}
+      (Discrete X) (Discrete Y) :=
+  (polyBetweenPresheafPRAEquiv X Y).functor.obj P
+
+/--
+The presheaf obtained from `A : Over X` under the
+equivalence `overDiscretePresheafEquiv`.
+-/
+abbrev overToPSh (A : Over X) :
+    (Discrete X)ᵒᵖ ⥤ Type u :=
+  (overDiscretePresheafEquiv X).functor.obj A
+
+variable (P : PolyFunctorBetweenCat.{u} X Y)
+  (A : Over X) (y : Y)
+
+/--
+The fiber of the polynomial evaluation at `y` maps
+to the corresponding presheaf PRA evaluation fiber
+via the equivalences.  This is the forward direction
+of the fiber-level compatibility between
+`polyBetweenEvalFamily` and `praEvalAt`.
+
+The polynomial evaluation fiber is
+`Σ i : ccrIndex (P y), (ccrFamily (P y) i ⟶ A)`.
+The presheaf PRA evaluation fiber is
+`Σ i : ccrNewIndex Q, (ccrNewFamily Q i ⟶ Z)`
+where `Q` is the translated polynomial at `y` and
+`Z` is the translated presheaf.
+-/
+def evalCompatFwd :
+    polyBetweenEvalFamily X Y P A y →
+    praEvalAt (Discrete X) (Discrete Y)
+      (polyToPRA X Y P) (overToPSh X A)
+      (Opposite.op (Discrete.mk y)) := by
+  intro ⟨i, f⟩
+  exact ⟨i, (overDiscretePresheafEquiv X).functor.map
+    f⟩
+
+/--
+The presheaf PRA evaluation fiber at `y` is in
+bijection with the polynomial evaluation fiber at
+`y`.  The bijection maps index components by the
+identity and morphism components via the functor
+`(overDiscretePresheafEquiv X).functor`.
+-/
+def evalCompatEquiv :
+    polyBetweenEvalFamily X Y P A y ≃
+    praEvalAt (Discrete X) (Discrete Y)
+      (polyToPRA X Y P) (overToPSh X A)
+      (Opposite.op (Discrete.mk y)) where
+  toFun := evalCompatFwd X Y P A y
+  invFun := fun ⟨i, f⟩ =>
+    let ff := Equivalence.fullyFaithfulFunctor
+      (overDiscretePresheafEquiv X)
+    ⟨i, ff.preimage f⟩
+  left_inv := by
+    intro ⟨i, f⟩
+    simp only [evalCompatFwd]
+    congr 1
+  right_inv := by
+    intro ⟨i, f⟩
+    simp only [evalCompatFwd]
+    congr 1
+    exact Functor.FullyFaithful.map_preimage
+      (Equivalence.fullyFaithfulFunctor
+        (overDiscretePresheafEquiv X)) f
+
+/--
+Naturality of `evalCompatFwd` in `A`: for a morphism
+`f : A ⟶ B` in `Over X`, the square
+
+```
+  polyBetweenEvalFamily P A y --evalCompatFwd-> praEvalAt ... A y
+           |                                       |
+  polyBetweenEvalFamilyMap    praEvalAt ... (map f)
+           |                                       |
+           v                                       v
+  polyBetweenEvalFamily P B y --evalCompatFwd-> praEvalAt ... B y
+```
+
+commutes.
+-/
+lemma evalCompatFwd_natural
+    {A B : Over X} (f : A ⟶ B)
+    (x : polyBetweenEvalFamily X Y P A y) :
+    evalCompatFwd X Y P B y
+      (polyBetweenEvalFamilyMap X Y P f y x) =
+    ccrNewEvalMap
+      ((overDiscretePresheafEquiv X).functor.map
+        f)
+      (evalCompatFwd X Y P A y x) := by
+  obtain ⟨i, g⟩ := x
+  simp only [evalCompatFwd,
+    polyBetweenEvalFamilyMap,
+    polyToOverEvalFamilyMap, ccrEvalMap,
+    ccrNewEvalMap]
+  congr 1
+
+/--
+The `Y`-indexed family of presheaf PRA evaluation
+fibers, obtained by evaluating the translated
+polynomial `polyToPRA X Y P` at the translated
+presheaf `overToPSh X A` for each `y : Y`.
+-/
+def praEvalFamily :
+    Y → Type u :=
+  fun y => praEvalAt (Discrete X) (Discrete Y)
+    (polyToPRA X Y P) (overToPSh X A)
+    (Opposite.op (Discrete.mk y))
+
+/--
+Object-level compatibility: the polynomial evaluation
+`polyBetweenEval X Y P A : Over Y` is isomorphic (in
+`Over Y`) to the object obtained from the presheaf PRA
+evaluation fibers via `familySliceForward`.
+
+The isomorphism is induced by the fiberwise
+equivalence `evalCompatEquiv`.
+-/
+def evalCompatOverIso :
+    polyBetweenEval X Y P A ≅
+    (familySliceForward Y).obj
+      (praEvalFamily X Y P A) := by
+  unfold polyBetweenEval polyToOverEval
+    praEvalFamily
+  exact (familySliceForward Y).mapIso
+    (Pi.isoMk (fun y =>
+      (evalCompatEquiv X Y P A y).toIso))
+
+end EvalCompat
+
 end GebLean
