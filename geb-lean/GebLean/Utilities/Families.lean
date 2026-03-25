@@ -2089,6 +2089,136 @@ derived from the categorical isomorphism.
 def ccrOpEquivFc : CoprodCovarRepCat'.{u, v, w} Cᵒᵖ ≌ FreeCoprodCompletionCat.{u, v, w} C :=
   Cat.equivOfIso ccrOpIsoCat
 
+/-! ### Equivalence between CoprodCovarRepCat' and
+CoprodCovarRepCat
+
+`CoprodCovarRepCat' C` (using `op'` and
+`GrothendieckContra'`) and `CoprodCovarRepCat C`
+(using `op` and `Grothendieck`) represent the same
+category of coproducts of covariant representables.
+We construct an equivalence between them.
+-/
+
+/--
+Object map for the functor from `CoprodCovarRepCat'`
+to `CoprodCovarRepCat`. Sends `⟨X, F⟩` to
+`op ⟨op X, F⟩`.
+-/
+def ccrOp'OpObj
+    (P : CoprodCovarRepCat'.{u, v, w} C) :
+    CoprodCovarRepCat.{u, v, w} C :=
+  Opposite.op ⟨Opposite.op (ccrIndex P),
+    ccrFamily P⟩
+
+/--
+Morphism map for the functor from
+`CoprodCovarRepCat'` to `CoprodCovarRepCat`.
+-/
+def ccrOp'OpMap
+    {P Q : CoprodCovarRepCat'.{u, v, w} C}
+    (f : P ⟶ Q) :
+    ccrOp'OpObj P ⟶ ccrOp'OpObj Q :=
+  Quiver.Hom.op
+    { base := (ccrReindex f).op
+      fiber := ccrFiberMor f }
+
+/--
+Object map for the functor from `CoprodCovarRepCat`
+to `CoprodCovarRepCat'`. Sends `op ⟨op X, F⟩` to
+`⟨X, F⟩`.
+-/
+def ccrOpOp'Obj
+    (P : CoprodCovarRepCat.{u, v, w} C) :
+    CoprodCovarRepCat'.{u, v, w} C :=
+  ccrObjMk (ccrNewFamily P)
+
+/--
+Morphism map for the functor from
+`CoprodCovarRepCat` to `CoprodCovarRepCat'`.
+-/
+def ccrOpOp'Map
+    {P Q : CoprodCovarRepCat.{u, v, w} C}
+    (f : P ⟶ Q) :
+    ccrOpOp'Obj P ⟶ ccrOpOp'Obj Q :=
+  ccrHomMk (ccrNewReindex f) (ccrNewFiberMor f)
+
+/--
+Functor from `CoprodCovarRepCat' C` to
+`CoprodCovarRepCat C`.
+-/
+def ccrOp'OpFunctor :
+    CoprodCovarRepCat'.{u, v, w} C ⥤
+      CoprodCovarRepCat.{u, v, w} C where
+  obj := ccrOp'OpObj
+  map := ccrOp'OpMap
+  map_id P := by
+    simp only [ccrOp'OpMap]
+    apply Quiver.Hom.unop_inj
+    refine Grothendieck.ext _ _ rfl ?_
+    simp only [eqToHom_refl, Category.id_comp]
+    funext i
+    rfl
+  map_comp {P Q R} f g := by
+    -- Use the existing proof strategy from
+    -- ccrNewFiberMor_comp:
+    -- convert both sides to raw
+    -- Grothendieck morphisms
+    dsimp only [ccrOp'OpMap, ccrOp'OpObj]
+    -- Both sides are in (Grothendieck ...)ᵒᵖ
+    -- Suffices to show their unops agree
+    apply Quiver.Hom.unop_inj
+    simp only [Quiver.Hom.unop_op]
+    -- RHS: unop of composition in ᵒᵖ
+    -- = reversed composition in Grothendieck
+    -- We prove base and fiber separately
+    have h_unop : ∀ {X Y Z : (Grothendieck
+        (familyFunctor.{u, v, w} C))ᵒᵖ}
+        (a : X ⟶ Y) (b : Y ⟶ Z),
+        (a ≫ b).unop = b.unop ≫ a.unop :=
+      fun _ _ => rfl
+    rw [h_unop]
+    refine Grothendieck.ext _ _ rfl ?_
+    rw [Grothendieck.comp_fiber]
+    simp only [eqToHom_refl,
+      Category.id_comp]
+    simp only [familyFunctor, familyMap]
+    simp only [Quiver.Hom.unop_op]
+    simp only [familyBifunctor, familyFunctor,
+      familyMap]
+    funext i
+    dsimp
+    exact ccrComp_fiberMor f g i
+
+/--
+Functor from `CoprodCovarRepCat C` to
+`CoprodCovarRepCat' C`.
+-/
+def ccrOpOp'Functor :
+    CoprodCovarRepCat.{u, v, w} C ⥤
+      CoprodCovarRepCat'.{u, v, w} C where
+  obj := ccrOpOp'Obj
+  map := ccrOpOp'Map
+  map_id P := by
+    simp only [ccrOpOp'Map, ccrOpOp'Obj]
+    refine ccrHom_ext _ _ rfl ?_
+    simp only [eqToHom_refl, Category.comp_id]
+    funext i
+    simp only [ccrHomMk, ccrNewFiberMor,
+      ccrNewReindex, ccrNewFamily]
+    rfl
+  map_comp {P Q R} f g := by
+    simp only [ccrOpOp'Map, ccrOpOp'Obj]
+    -- Rewrite the composition in
+    -- CoprodCovarRepCat' using ccrComp_mk
+    rw [ccrComp_mk]
+    simp only [ccrHomMk_reindex,
+      ccrHomMk_fiberMor]
+    -- Now both sides are ccrHomMk
+    refine ccrHom_ext _ _ rfl ?_
+    simp only [eqToHom_refl, Category.comp_id]
+    funext i
+    exact ccrNewFiberMor_comp f g i
+
 end CoprodCovarRepEquiv
 
 /-! ## Product of contravariant representables helpers -/

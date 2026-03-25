@@ -52,6 +52,7 @@ import GebLean.PolyUMorph
 import GebLean.Polynomial
 import GebLean.PolyCover
 import GebLean.PresheafPRA
+import GebLean.PresheafPRADiscrete
 import GebLean.ProfAlg
 import GebLean.PshInternalCat
 import GebLean.PshRelDouble
