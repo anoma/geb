@@ -85,19 +85,34 @@ def ccrPresheafCat :
 section PresheafPRADef
 
 /--
+The profunctor sending `(J, I)` to the presheaf PRA
+category `Jᵒᵖ ⥤ CoprodCovarRepCat (Iᵒᵖ ⥤ Type w_I)`.
+Defined as `catHomProfunctor` post-composed with
+`ccrPresheafCatFunctor` in the covariant variable.
+No free category parameters.
+-/
+def presheafPRACatProfunctor :
+    Cat.{v_J, u_J}ᵒᵖ ⥤
+      (Cat.{v_I, u_I}ᵒᵖ ⥤
+        Cat.{max u_I u_J w_I w',
+          max u_I u_J v_I v_J (w_I + 1) (w' + 1)}) :=
+  catHomProfunctor.{v_J, u_J,
+      max w' u_I w_I,
+      max (w' + 1) (w_I + 1) v_I u_I} ⋙
+    (Functor.whiskeringLeft _ _ _).obj
+      ccrPresheafCatFunctor.{u_I, v_I, w_I, w'}
+
+/--
 The functor `Catᵒᵖ ⥤ Cat` sending `I` to the category
 of presheaf PRAs from `Iᵒᵖ ⥤ Type w_I` to a presheaf
-category on `J`.  Defined as `ccrPresheafCatFunctor`
-composed with `catCovarHomFunctor (Cat.of Jᵒᵖ)`.
+category on `J`.  Defined as `presheafPRACatProfunctor`
+applied at `Jᵒᵖ`.
 -/
 def presheafPRACatFunctor :
     Cat.{v_I, u_I}ᵒᵖ ⥤
     Cat.{max u_I u_J w_I w', max u_I u_J v_I v_J (w_I + 1) (w' + 1)} :=
-  ccrPresheafCatFunctor.{u_I, v_I, w_I, w'} ⋙
-    catCovarHomFunctor.{v_J, u_J,
-      max w' u_I w_I,
-      max (w' + 1) (w_I + 1) v_I u_I}
-      (Cat.of Jᵒᵖ)
+  (presheafPRACatProfunctor.{u_I, v_I, u_J, v_J, w_I, w'}).obj
+    (Opposite.op (Cat.of Jᵒᵖ))
 
 /--
 The category of presheaf polynomial functors (parametric
