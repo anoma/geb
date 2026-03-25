@@ -857,7 +857,7 @@ variable in a term with a term from the
 substitution.  Defined via `BTMor1.ind` with motive
 `fun {k} _ => ∀ m, (Fin k → BTMor1 m) →
   BTMor1 m`. -/
-def BTMor1.subst {n m : ℕ}
+@[reducible] def BTMor1.subst {n m : ℕ}
     (t : BTMor1 n)
     (σ : Fin n → BTMor1 m) : BTMor1 m :=
   (BTMor1.ind
@@ -1390,42 +1390,61 @@ private lemma fold_subst_eq {n m : ℕ}
   -- Both sides are now BTMor1.fold pm ... pj.
   -- Unfold polyFixChildAt + identity morphism
   -- to expose dite, then cancel transports.
-  simp only [polyFixChildAt,
-    Over.comp_left, types_comp_apply,
-    Over.homMk_left,
-    ccrFiberMor,
-    polyBetweenInjFiber,
-    polyBetweenCoprodDir,
-    CategoryStruct.id]
-  dsimp only [id]
   congr 1
   · -- Base children:
     funext i
+    simp only [polyFixChildAt,
+      Over.comp_left, types_comp_apply,
+      Over.homMk_left,
+      ccrFiberMor, polyBetweenInjFiber,
+      polyBetweenCoprodDir,
+      CategoryStruct.id]
+    dsimp only [id]
+    refine (subst_fiberCast_cancel
+      _ _ _ σ).trans ?_
+    show BTMor1.subst _ σ = _
     split_ifs with hb
-    · have hfib := @btMorFoldFiber n
-        (by omega) ⟨pm, pj⟩
-        ⟨↑i, Nat.lt_of_lt_of_le
-          i.isLt (Nat.le_add_right
-            pm (pm + 1))⟩ i.isLt
-      simp only [Fin.eta,
-        fiberCast_subst_eq, finCast, hfib]
+    · exact congrArg
+        (fun j => BTMor1.subst (f j) σ)
+        (Fin.eta i hb)
     · exact absurd i.isLt hb
   · -- Step children:
     funext i
+    simp only [polyFixChildAt,
+      Over.comp_left, types_comp_apply,
+      Over.homMk_left,
+      ccrFiberMor, polyBetweenInjFiber,
+      polyBetweenCoprodDir,
+      CategoryStruct.id]
+    dsimp only [id]
     split_ifs with hb
     · exact absurd hb (by omega)
     · exact congrArg
         (fun j => fiberCast _ (g j))
         (Fin.ext (by dsimp; omega))
   · -- Tree child:
-    split_ifs with hb
-    · exact absurd hb (by omega)
-    · have hfib := @btMorFoldFiber_tree n
-        (by omega) ⟨pm, pj⟩
-        ⟨pm + pm, Nat.lt_succ_self _⟩
-        (by omega) (by omega)
-      simp only [fiberCast_subst_eq,
-        finCast, hfib]
+    · simp only [polyFixChildAt,
+        Over.comp_left, types_comp_apply,
+        Over.homMk_left,
+        ccrFiberMor, polyBetweenInjFiber,
+        polyBetweenCoprodDir,
+        CategoryStruct.id]
+      dsimp only [id]
+      simp only [polyFixChildAt,
+        Over.comp_left, types_comp_apply,
+        Over.homMk_left,
+        ccrFiberMor, polyBetweenInjFiber,
+        polyBetweenCoprodDir,
+        CategoryStruct.id]
+      dsimp only [id]
+      simp only [btMorFoldFiber_tree
+        (isLt := by omega)
+        (hge1 := by omega)
+        (hge2 := by omega)]
+      split_ifs with hb hs
+      · exact absurd hb (by omega)
+      · exact absurd hs (by omega)
+      · rfl
 private lemma subst_comp_fold_case
     {n m k : ℕ}
     (isLt : 3 < 4)
