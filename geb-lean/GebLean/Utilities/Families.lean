@@ -2219,6 +2219,77 @@ def ccrOpOp'Functor :
     funext i
     exact ccrNewFiberMor_comp f g i
 
+@[simp]
+lemma ccrOp'Op_OpOp'_eq :
+    ccrOp'OpFunctor (C := C) ⋙
+      ccrOpOp'Functor =
+      𝟭 (CoprodCovarRepCat'.{u, v, w} C) := by
+  fapply _root_.CategoryTheory.Functor.ext
+  · intro P
+    simp only [Functor.comp_obj, Functor.id_obj,
+      ccrOpOp'Functor, ccrOpOp'Obj, ccrObjMk,
+      ccrNewFamily, ccrNewIndex]
+    cases P
+    rfl
+  · intro P Q f
+    cases P
+    cases Q
+    simp only [Functor.comp_map, Functor.id_map,
+      eqToHom_refl, Category.id_comp,
+      Category.comp_id]
+    refine ccrHom_ext _ _ rfl ?_
+    simp only [eqToHom_refl, Category.comp_id]
+    funext i
+    rfl
+
+@[simp]
+lemma ccrOpOp'_Op'Op_eq :
+    ccrOpOp'Functor (C := C) ⋙
+      ccrOp'OpFunctor =
+      𝟭 (CoprodCovarRepCat.{u, v, w} C) := by
+  fapply _root_.CategoryTheory.Functor.ext
+  · intro P
+    simp only [Functor.comp_obj, Functor.id_obj]
+    obtain ⟨⟨base, fiber⟩⟩ := P
+    rfl
+  · intro P Q f
+    obtain ⟨⟨Pb, Pf⟩⟩ := P
+    obtain ⟨⟨Qb, Qf⟩⟩ := Q
+    simp only [Functor.comp_map, Functor.id_map,
+      eqToHom_refl, Category.id_comp,
+      Category.comp_id]
+    apply Quiver.Hom.unop_inj
+    refine Grothendieck.ext _ _ rfl ?_
+    simp only [eqToHom_refl, Category.id_comp]
+    funext i
+    rfl
+
+/--
+Categorical isomorphism between
+`CoprodCovarRepCat' C` (using `op'` and
+`GrothendieckContra'`) and `CoprodCovarRepCat C`
+(using `op` and `Grothendieck`).
+-/
+def ccrOp'OpIsoCat :
+    CoprodCovarRepCat'.{u, v, w} C ≅Cat
+      CoprodCovarRepCat.{u, v, w} C where
+  hom := ccrOp'OpFunctor.toCatHom
+  inv := ccrOpOp'Functor.toCatHom
+  hom_inv_id := Cat.Hom.ext ccrOp'Op_OpOp'_eq
+  inv_hom_id := Cat.Hom.ext ccrOpOp'_Op'Op_eq
+
+/--
+Equivalence between `CoprodCovarRepCat' C`
+(using `op'` and `GrothendieckContra'`) and
+`CoprodCovarRepCat C` (using `op` and
+`Grothendieck`), derived from the categorical
+isomorphism.
+-/
+def ccrOp'OpEquiv (C : Type u) [Category.{v} C] :
+    CoprodCovarRepCat'.{u, v, w} C ≌
+      CoprodCovarRepCat.{u, v, w} C :=
+  Cat.equivOfIso ccrOp'OpIsoCat
+
 end CoprodCovarRepEquiv
 
 /-! ## Product of contravariant representables helpers -/
