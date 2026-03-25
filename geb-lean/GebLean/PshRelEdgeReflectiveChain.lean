@@ -4,25 +4,27 @@ import GebLean.PshRelEdgeInclusion
 
 /-!
 # Reflective Chain: PSh(C) ↪ Arrow(PSh(C)) ↪
-#   PshRelEdge(C) ↪ WalkingSpan ⥤ PSh(C)
+#   WalkingSpan ⥤ PSh(C)
 
 The presheaf category `PSh(C)` embeds into the
 span presheaf category `WalkingSpan ⥤ PSh(C)`
-through a chain of three reflective inclusions:
+through a chain of two reflective inclusions:
 
 1. `Arrow.idInclusion`: sends `P` to the identity
    arrow `𝟙 P`. Reflector: codomain functor
    `Arrow.rightFunc`.
 
-2. `pshRelEdgeGraphFunctor`: sends an arrow
-   `f : P ⟶ Q` to the graph edge
-   `(P, Q, graph(f))`. Reflector:
-   `pshRelEdgeFunctionalizeFunctor`.
+2. `arrowSpanInclusion`: sends an arrow
+   `f : P ⟶ Q` to the span
+   `P ←[𝟙]─ P ─[f]→ Q`. Reflector:
+   `spanArrowReflector`, using constructive
+   presheaf pushouts.
 
-3. `pshRelEdgeInclusionFunctor`: sends an edge
-   `(P, Q, R)` to the span
-   `P ←─ R.toFunctor ─→ Q`. Reflector:
-   `pshRelEdgeSepFunctor`.
+The edge category `PshRelEdge(C)` embeds into
+`WalkingSpan ⥤ PSh(C)` via a separate reflective
+inclusion through `pshRelEdgeInclusionFunctor`,
+and into `Arrow(PSh(C))` via
+`pshRelEdgeGraphFunctor`.
 
 Each step is reflective, and `Reflective.comp`
 provides the composed reflective instances.
@@ -47,15 +49,13 @@ abbrev pshRelEdgeFromPshInclusion :
   Arrow.idInclusion (Cᵒᵖ ⥤ Type w) ⋙
     pshRelEdgeGraphFunctor
 
-/-- The composed inclusion
-`Arrow(PSh(C)) ↪ WalkingSpan ⥤ PSh(C)`, sending
-`f : P ⟶ Q` to the span
-`P ←─ graph(f).toFunctor ─→ Q`. -/
+/-- The inclusion `Arrow(PSh(C)) ↪
+WalkingSpan ⥤ PSh(C)`, sending `f : P ⟶ Q`
+to the span `P ←[𝟙]─ P ─[f]→ Q`. -/
 abbrev pshSpanFromArrowInclusion :
     Arrow (Cᵒᵖ ⥤ Type w) ⥤
     (WalkingSpan ⥤ (Cᵒᵖ ⥤ Type w)) :=
-  pshRelEdgeGraphFunctor ⋙
-    pshRelEdgeInclusionFunctor C
+  arrowSpanInclusion (Cᵒᵖ ⥤ Type w)
 
 /-- The full composed inclusion
 `PSh(C) ↪ WalkingSpan ⥤ PSh(C)`. -/
@@ -78,18 +78,17 @@ abbrev pshRelEdgeFromPshReflector :
   pshRelEdgeFunctionalizeFunctor C ⋙
     Arrow.rightFunc
 
-/-- The composed reflector
+/-- The reflector
 `WalkingSpan ⥤ PSh(C) → Arrow(PSh(C))`:
-separate the span then functionalize. -/
+take the pushout of each span. -/
 abbrev pshSpanFromArrowReflector :
     (WalkingSpan ⥤ (Cᵒᵖ ⥤ Type w)) ⥤
     Arrow (Cᵒᵖ ⥤ Type w) :=
-  pshRelEdgeSepFunctor C ⋙
-    pshRelEdgeFunctionalizeFunctor C
+  spanArrowReflector (pshSpanPushouts C)
 
 /-- The composed reflector
-`WalkingSpan ⥤ PSh(C) → PSh(C)`: separate,
-functionalize, and take the codomain. -/
+`WalkingSpan ⥤ PSh(C) → PSh(C)`: take
+the pushout then the codomain. -/
 abbrev pshSpanFromPshReflector :
     (WalkingSpan ⥤ (Cᵒᵖ ⥤ Type w)) ⥤
     (Cᵒᵖ ⥤ Type w) :=
@@ -115,20 +114,17 @@ instance : Reflective
     (Arrow.idInclusion (Cᵒᵖ ⥤ Type w))
     pshRelEdgeGraphFunctor
 
-/-- The composed adjunction for
+/-- The adjunction for
 `Arrow(PSh(C)) ↪ WalkingSpan ⥤ PSh(C)`. -/
 def pshSpanFromArrowAdj :
     pshSpanFromArrowReflector.{u, v, w} C ⊣
     pshSpanFromArrowInclusion.{u, v, w} C :=
-  (pshRelEdgeSepAdjunction C).comp
-    (pshRelEdgeFunctionalizeAdj C)
+  arrowSpanAdj (pshSpanPushouts C)
 
 instance : Reflective
     (pshSpanFromArrowInclusion.{u, v, w}
       C) :=
-  Reflective.comp
-    (pshRelEdgeGraphFunctor (C := C))
-    (pshRelEdgeInclusionFunctor C)
+  arrowSpanReflective (pshSpanPushouts C)
 
 /-- The full composed adjunction for
 `PSh(C) ↪ WalkingSpan ⥤ PSh(C)`. -/
