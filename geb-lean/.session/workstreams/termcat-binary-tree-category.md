@@ -262,9 +262,21 @@ In progress:
     as `subst_id_fold_case` steps 5-7 but applied
     at fiber `m` with `(polyFixChildAt ...).subst`
     children instead of `fiberCast` children.
-- [ ] Category instance for LawvereBTCat
-- [ ] HasFiniteProducts instance
-- [ ] HasPBTO instance
+- [x] Category instance for LawvereBTCat
+- [x] HasFiniteProducts instance
+- [x] HasPBTO instance
+- [x] fold_subst_eq and related helpers made public
+  (btMorFoldFiber, btMorFoldFiber_step,
+  btMorFoldFiber_tree, fiberCast_subst_eq,
+  sigma_fiberCast_subst_eq, sigma_fiberCast_eq,
+  subst_fiberCast_cancel, subst_transport_sigma,
+  subst_sigma_eval, subst_push_transport,
+  subst_child_eval, fiberCast_child_eval,
+  fold_subst_eq)
+- [x] BTMor1.subst_leaf, BTMor1.subst_branch
+  theorems added
+- [x] btFoldFullMor defined (syntactic fold
+  morphism for universal property)
 
 Design notes (2026-03-23):
 

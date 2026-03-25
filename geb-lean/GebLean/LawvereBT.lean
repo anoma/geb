@@ -1067,7 +1067,7 @@ def btFoldEnhanced {n m : ℕ}
 
 /-! ## Fiber map lemmas for btMorFoldPoly -/
 
-private lemma btMorFoldFiber
+lemma btMorFoldFiber
     {n : ℕ}
     (isLt : 3 < 4)
     (pos : polyBetweenIndex ℕ ℕ
@@ -1082,7 +1082,7 @@ private lemma btMorFoldFiber
       then pos.1 + pos.1 else n) = n
   simp only [if_pos hd]
 
-private lemma btMorFoldFiber_step
+lemma btMorFoldFiber_step
     {n : ℕ}
     (isLt : 3 < 4)
     (pos : polyBetweenIndex ℕ ℕ
@@ -1100,7 +1100,7 @@ private lemma btMorFoldFiber_step
         pos.1 + pos.1
   simp only [if_neg hge, if_pos hlt]
 
-private lemma btMorFoldFiber_tree
+lemma btMorFoldFiber_tree
     {n : ℕ}
     (isLt : 3 < 4)
     (pos : polyBetweenIndex ℕ ℕ
@@ -1120,7 +1120,7 @@ private lemma btMorFoldFiber_tree
 substituting into a fiber-cast term is the same
 as substituting with the cast pushed into the
 substitution's domain via `finCast`. -/
-private lemma fiberCast_subst_eq
+lemma fiberCast_subst_eq
     {a b m : ℕ} (h : a = b)
     (x : BTMor1 a)
     (σ : Fin b → BTMor1 m) :
@@ -1128,7 +1128,7 @@ private lemma fiberCast_subst_eq
     x.subst (fun v => σ (finCast h v)) := by
   subst h; rfl
 
-private lemma sigma_fiberCast_subst_eq
+lemma sigma_fiberCast_subst_eq
     {a b m : ℕ} (h : a = b)
     (x : BTMor1 a)
     (σ : Fin b → BTMor1 m) :
@@ -1138,7 +1138,7 @@ private lemma sigma_fiberCast_subst_eq
       (fun v => σ (finCast h v))⟩ := by
   subst h; rfl
 
-private lemma sigma_fiberCast_eq
+lemma sigma_fiberCast_eq
     {a b : ℕ} (h : a = b)
     (x : BTMor1 a) :
     (⟨b, fiberCast h x⟩ :
@@ -1149,7 +1149,7 @@ private lemma sigma_fiberCast_eq
 /-- Substituting into a fiber-cast term with
 a matching finCast in the substitution cancels
 both transports. -/
-private lemma subst_fiberCast_cancel
+lemma subst_fiberCast_cancel
     {a b m : ℕ} (h : a = b) (h' : b = a)
     (x : BTMor1 a)
     (σ : Fin a → BTMor1 m) :
@@ -1160,7 +1160,7 @@ private lemma subst_fiberCast_cancel
 
 /-- Transport on a sigma's `.snd` can be
 pushed into the substitution function. -/
-private lemma subst_transport_sigma
+lemma subst_transport_sigma
     {β m : ℕ}
     {y : (polyFixCarrier btMorPoly).left}
     (h : y.1 = β)
@@ -1175,7 +1175,7 @@ child: given `y = z` (evaluating the dite to a
 known value), the subst through the transport
 equals the subst at `z.2` with identity
 substitution. -/
-private lemma subst_sigma_eval
+lemma subst_sigma_eval
     {β m : ℕ}
     {y z : (polyFixCarrier btMorPoly).left}
     (heq : y = z)
@@ -1188,7 +1188,7 @@ private lemma subst_sigma_eval
 
 /-- Push a transport on a BTMor1 value into
 the substitution's finCast. -/
-private lemma subst_push_transport
+lemma subst_push_transport
     {α β γ m : ℕ}
     (h : α = β) (hfib : β = γ)
     (child : PolyFix btMorPoly α)
@@ -1208,7 +1208,7 @@ transport equals `z.2.subst` with composed
 transport in the substitution. All three
 equalities are substituted inside the proof
 where all variables are free. -/
-private lemma subst_child_eval
+lemma subst_child_eval
     {γ m : ℕ}
     {y z : (polyFixCarrier btMorPoly).left}
     {β : ℕ}
@@ -1223,7 +1223,7 @@ private lemma subst_child_eval
 /-- `fiberCast` variant of `subst_child_eval`:
 evaluates the dite and resolves the fiber for
 a `fiberCast`-wrapped child. -/
-private lemma fiberCast_child_eval
+lemma fiberCast_child_eval
     {γ : ℕ}
     {y z : (polyFixCarrier btMorPoly).left}
     {β : ℕ}
@@ -1422,7 +1422,7 @@ theorem BTMor1.subst_id {n : ℕ}
 applying `.subst σ` to a `BTMor1.fold` is the
 same as substituting each base and tree child
 individually, leaving step children unchanged. -/
-private lemma fold_subst_eq {n m : ℕ}
+lemma fold_subst_eq {n m : ℕ}
     (pm : ℕ)
     (f : Fin pm → BTMor1 n)
     (g : Fin pm → BTMor1 (pm + pm))
@@ -1702,6 +1702,18 @@ theorem BTMor1.subst_proj {n m : ℕ}
     (j : Fin n) (σ : Fin n → BTMor1 m) :
     (BTMor1.proj j).subst σ = σ j := rfl
 
+/-- Substitution into a leaf yields a leaf. -/
+theorem BTMor1.subst_leaf {n m : ℕ}
+    (σ : Fin n → BTMor1 m) :
+    (BTMor1.leaf (n := n)).subst σ =
+    BTMor1.leaf := rfl
+
+/-- Substitution distributes over branching. -/
+theorem BTMor1.subst_branch {n m : ℕ}
+    (l r : BTMor1 n) (σ : Fin n → BTMor1 m) :
+    (BTMor1.branch l r).subst σ =
+    BTMor1.branch (l.subst σ) (r.subst σ) := rfl
+
 /-- Left identity: composing with the identity
 substitution (projections) on the left. -/
 theorem BTMorN.id_comp {n m : ℕ}
@@ -1844,5 +1856,18 @@ instance : HasChosenFiniteProducts
     LawvereBTCat where
   terminal := lawvereBTTerminal
   product := lawvereBTProduct
+
+/-- The syntactic fold morphism for the universal
+property: given `f : n → m` and `g : (m + m) → m`,
+produce `φ : (n + 1) → m` as a tuple of
+`BTMor1.fold` terms. -/
+def btFoldFullMor {n m : ℕ}
+    (f : BTMorN n m) (g : BTMorN (m + m) m) :
+    BTMorN (n + 1) m :=
+  fun j => BTMor1.fold m
+    (fun i => (f i).shift 1)
+    g
+    (BTMor1.proj ⟨n, by omega⟩)
+    j
 
 end GebLean
