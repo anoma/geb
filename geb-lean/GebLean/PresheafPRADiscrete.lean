@@ -74,6 +74,44 @@ def ccrMapEquivFwd :
       Functor.map_comp]
     congr 1
 
+/--
+Inverse functor from `CoprodCovarRepCat' D` to
+`CoprodCovarRepCat' C` induced by an equivalence
+`e : C ≌ D`.  Applies `e.inverse` to each element
+of the family.
+-/
+def ccrMapEquivInv :
+    CoprodCovarRepCat'.{u + 1, u, u} D ⥤
+      CoprodCovarRepCat'.{u + 1, u, u} C :=
+  ccrMapEquivFwd e.symm
+
+/--
+Component of the unit natural isomorphism for
+`ccrMapEquiv` at object `P`.
+-/
+def ccrMapEquivUnitApp
+    (P : CoprodCovarRepCat'.{u + 1, u, u} C) :
+    P ≅ (ccrMapEquivFwd e ⋙
+      ccrMapEquivInv e).obj P where
+  hom := ccrHomMk id
+    (fun i => e.unitIso.inv.app (ccrFamily P i))
+  inv := ccrHomMk id
+    (fun i => e.unitIso.hom.app (ccrFamily P i))
+  hom_inv_id := by
+    simp only [ccrComp_mk, ccrHomMk_reindex,
+      ccrHomMk_fiberMor, ccrId_mk,
+      Function.comp_id]
+    congr 1
+    funext i
+    exact e.unitIso.hom_inv_id_app _
+  inv_hom_id := by
+    simp only [ccrComp_mk, ccrHomMk_reindex,
+      ccrHomMk_fiberMor, ccrId_mk,
+      Function.comp_id]
+    congr 1
+    funext i
+    exact e.unitIso.inv_hom_id_app _
+
 end CcrMapEquiv
 
 end GebLean
