@@ -1170,6 +1170,22 @@ private lemma subst_transport_sigma
       (fun v => σ (h ▸ v)) := by
   subst h; rfl
 
+/-- Full transport-push-and-evaluate for a sigma
+child: given `y = z` (evaluating the dite to a
+known value), the subst through the transport
+equals the subst at `z.2` with identity
+substitution. -/
+private lemma subst_sigma_eval
+    {β m : ℕ}
+    {y z : (polyFixCarrier btMorPoly).left}
+    (heq : y = z)
+    (h : y.1 = β)
+    (σ : Fin β → BTMor1 m) :
+    BTMor1.subst (h ▸ y.2) σ =
+    BTMor1.subst z.2
+      (fun v => σ ((heq ▸ h) ▸ v)) := by
+  subst heq; subst h; rfl
+
 private lemma subst_id_fold_case
     {n : ℕ}
     (isLt : 3 < 4)
@@ -1399,36 +1415,24 @@ private lemma fold_subst_eq {n m : ℕ}
   dsimp only [ptoefMk, ccrEvalMk,
     ccrReindex, ptoefIndex, ccrEvalIndex,
     ptoefMor, ccrEvalMor]
-  -- Both sides are now BTMor1.fold pm ... pj.
   -- Unfold polyFixChildAt + identity morphism
   -- to expose dite, then cancel transports.
+  simp only [polyFixChildAt,
+    Over.comp_left, types_comp_apply,
+    Over.homMk_left,
+    ccrFiberMor, polyBetweenInjFiber,
+    polyBetweenCoprodDir,
+    CategoryStruct.id]
+  dsimp only [id]
   congr 1
   · -- Base children:
     funext i
-    simp only [polyFixChildAt,
-      Over.comp_left, types_comp_apply,
-      Over.homMk_left,
-      ccrFiberMor, polyBetweenInjFiber,
-      polyBetweenCoprodDir,
-      CategoryStruct.id]
-    dsimp only [id]
     change BTMor1.subst _ _ = _
-    rw [subst_transport_sigma _ _]
-    split_ifs with hb
-    · simp only [Fin.eta]; congr 1
-      · simp only [dif_pos hb]
-      · simp only [dif_pos hb]
-        exact proof_irrel_heq _ _
-    · exact absurd i.isLt hb
+    rw [subst_sigma_eval (β := n)
+      (dif_pos i.isLt) _ _]
+    simp only [Fin.eta]
   · -- Step children:
     funext i
-    simp only [polyFixChildAt,
-      Over.comp_left, types_comp_apply,
-      Over.homMk_left,
-      ccrFiberMor, polyBetweenInjFiber,
-      polyBetweenCoprodDir,
-      CategoryStruct.id]
-    dsimp only [id]
     split_ifs with hb
     · exact absurd hb (by omega)
     · exact congrArg
@@ -1436,14 +1440,20 @@ private lemma fold_subst_eq {n m : ℕ}
         (Fin.ext (by dsimp; omega))
   · -- Tree child:
     change BTMor1.subst _ _ = _
-    rw [subst_transport_sigma]
-    simp only [
-      dif_neg (show ¬ (pm + pm) < pm
-        from by omega),
-      dif_neg (show ¬ (pm + pm) <
-        pm + pm from by omega)]
-    congr 1
-    funext v; congr 1; exact Fin.ext rfl
+    have h_eq : (dite (pm + pm < pm)
+      (fun hb => (⟨n, f ⟨pm + pm, hb⟩⟩ :
+        (polyFixCarrier btMorPoly).left))
+      (fun hb => dite (pm + pm < pm + pm)
+        (fun hs => ⟨pm + pm,
+          g ⟨pm + pm - pm,
+            by omega⟩⟩)
+        (fun _ => ⟨n, tree⟩))) =
+      ⟨n, tree⟩ := by
+      simp [dif_neg (show ¬ (pm + pm) < pm
+          from by omega),
+        dif_neg (show ¬ (pm + pm) <
+          pm + pm from by omega)]
+    rw [subst_sigma_eval (β := n) h_eq _ _]
 private lemma subst_comp_fold_case
     {n m k : ℕ}
     (isLt : 3 < 4)
