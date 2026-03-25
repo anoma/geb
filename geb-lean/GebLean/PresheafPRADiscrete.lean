@@ -217,4 +217,23 @@ def ccrMapEquiv :
 
 end CcrMapEquiv
 
+/--
+The equivalence between `CoprodCovarRepCat' (Over X)`
+and `CoprodCovarRepCat ((Discrete X)ᵒᵖ ⥤ Type u)`.
+
+Composes three equivalences:
+1. `ccrMapEquiv (overDiscretePresheafEquiv X)`
+   transfers from `Over X` families to presheaf families
+   at the `CoprodCovarRepCat'` level.
+2. `ccrOp'OpEquiv` transfers from the `op'`-based to
+   the `op`-based coproduct-of-covariant-representables
+   category.
+-/
+def ccrOverDiscreteEquiv (X : Type u) :
+    CoprodCovarRepCat'.{u + 1, u, u} (Over X) ≌
+      CoprodCovarRepCat.{u + 1, u, u}
+        ((Discrete X)ᵒᵖ ⥤ Type u) :=
+  (ccrMapEquiv (overDiscretePresheafEquiv X)).trans
+    (ccrOp'OpEquiv ((Discrete X)ᵒᵖ ⥤ Type u))
+
 end GebLean
