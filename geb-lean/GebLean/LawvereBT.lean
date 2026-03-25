@@ -1696,4 +1696,52 @@ theorem BTMor1.subst_comp {n m k : ℕ}
             (fun e => ih e))
     t
 
+/-- Substituting into a projection returns the
+corresponding component of the substitution. -/
+theorem BTMor1.subst_proj {n m : ℕ}
+    (j : Fin n) (σ : Fin n → BTMor1 m) :
+    (BTMor1.proj j).subst σ = σ j := rfl
+
+/-- Left identity: composing with the identity
+substitution (projections) on the left. -/
+theorem BTMorN.id_comp {n m : ℕ}
+    (f : BTMorN n m) :
+    BTMorN.comp (BTMorN.id n) f = f := by
+  funext j
+  exact BTMor1.subst_id (f j)
+
+/-- Right identity: composing with the identity
+substitution (projections) on the right. -/
+theorem BTMorN.comp_id {n m : ℕ}
+    (f : BTMorN n m) :
+    BTMorN.comp f (BTMorN.id m) = f := by
+  funext j
+  exact BTMor1.subst_proj j f
+
+/-- Associativity of composition. -/
+theorem BTMorN.comp_assoc {n m k l : ℕ}
+    (f : BTMorN n m) (g : BTMorN m k)
+    (h : BTMorN k l) :
+    BTMorN.comp (BTMorN.comp f g) h =
+    BTMorN.comp f (BTMorN.comp g h) := by
+  funext j
+  exact (BTMor1.subst_comp
+    (h j) g f).symm
+
+/-- The Lawvere theory of binary trees, as a
+category.  Objects are natural numbers, representing
+powers of the generating object `T^n`.  Morphisms
+`n → m` are `m`-tuples of `BTMor1 n`. -/
+def LawvereBTCat := ℕ
+
+instance : CategoryStruct LawvereBTCat where
+  Hom := BTMorN
+  id n := BTMorN.id n
+  comp f g := BTMorN.comp f g
+
+instance : Category LawvereBTCat where
+  id_comp := BTMorN.id_comp
+  comp_id := BTMorN.comp_id
+  assoc := BTMorN.comp_assoc
+
 end GebLean
