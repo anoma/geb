@@ -40,8 +40,6 @@ def overDiscretePresheafEquiv (X : Type u) :
     |>.trans
     ((Discrete.opposite X).symm.congrLeft)
 
-universe v w
-
 section CcrMapEquiv
 
 variable {C : Type (u + 1)} [Category.{u} C]
@@ -201,13 +199,6 @@ def ccrMapEquiv :
     funext i
     simp only [ccrHomMk, id]
     let x := ccrFamily P i
-    -- The triangle identity for `e`:
-    --   e.functor.map (unit.hom x) ≫
-    --     counit.hom (e.functor.obj x) = 𝟙
-    -- We need the "inverse triangle":
-    --   counit.inv ≫ e.functor.map (unit.inv) = 𝟙
-    -- This holds because (A ≫ B = 𝟙) implies
-    -- (B⁻¹ ≫ A⁻¹ = 𝟙) for isomorphisms.
     have h := e.functor_unitIso_comp x
     rw [← cancel_mono
       (e.functor.map (e.unitIso.hom.app x) ≫
