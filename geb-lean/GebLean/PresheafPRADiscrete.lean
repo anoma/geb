@@ -40,4 +40,40 @@ def overDiscretePresheafEquiv (X : Type u) :
     |>.trans
     ((Discrete.opposite X).symm.congrLeft)
 
+universe v w
+
+section CcrMapEquiv
+
+variable {C : Type (u + 1)} [Category.{u} C]
+  {D : Type (u + 1)} [Category.{u} D]
+  (e : C ≌ D)
+
+/--
+Forward functor from `CoprodCovarRepCat' C` to
+`CoprodCovarRepCat' D` induced by an equivalence
+`e : C ≌ D`.  Applies `e.functor` to each element
+of the family.
+-/
+def ccrMapEquivFwd :
+    CoprodCovarRepCat'.{u + 1, u, u} C ⥤
+      CoprodCovarRepCat'.{u + 1, u, u} D where
+  obj P := ccrObjMk (e.functor.obj ∘ ccrFamily P)
+  map {P Q} f :=
+    ccrHomMk (f.base) (fun i =>
+      e.functor.map (ccrFiberMor f i))
+  map_id P := by
+    simp only [ccrId_mk, ccrHomMk, ccrFiberMor,
+      ccrObjMk_family, Function.comp]
+    congr 1
+    funext i
+    exact e.functor.map_id _
+  map_comp {P Q R} f g := by
+    simp only [ccrComp_mk,
+      ccrHomMk_reindex, ccrHomMk_fiberMor,
+      ccrComp_fiberMor, ccrReindex,
+      Functor.map_comp]
+    congr 1
+
+end CcrMapEquiv
+
 end GebLean
