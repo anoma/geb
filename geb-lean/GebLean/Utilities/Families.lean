@@ -490,6 +490,70 @@ lemma ccrNewFiberMor_comp
   rw [Grothendieck.comp_fiber]
   simp [familyFunctor, familyMap]
 
+private lemma ccrNewFiberMor_eqToHom_comp
+    {Q R : CoprodCovarRepCat.{u, v, w} C}
+    (g : Q ⟶ R) {i j : ccrNewIndex Q}
+    (h : i = j)
+    {k : ccrNewIndex R}
+    (hk1 : ccrNewReindex g i = k)
+    (hk2 : ccrNewReindex g j = k) :
+    eqToHom (congrArg (ccrNewFamily R)
+        hk1.symm) ≫
+      ccrNewFiberMor g i =
+    eqToHom (congrArg (ccrNewFamily R)
+        hk2.symm) ≫
+      ccrNewFiberMor g j ≫
+      eqToHom (congrArg (ccrNewFamily Q)
+        h.symm) := by
+  subst h
+  simp
+
+set_option pp.proofs true in
+/--
+The family (directions) extraction as a functor from
+the category of elements of `ccrNewIndexFunctor C` to
+`Cᵒᵖ`.  Sends `(P, i)` to `Opposite.op (ccrNewFamily P i)`
+and a morphism `(f, proof)` to the opposite of the
+fiber morphism `ccrNewFiberMor f i`.
+-/
+def ccrNewFamilyFunctor
+    (C : Type u) [Category.{v} C] :
+    (ccrNewIndexFunctor.{u, v, w} C).Elements ⥤
+      Cᵒᵖ where
+  obj e := Opposite.op (ccrNewFamily e.fst e.snd)
+  map {e₁ e₂} f :=
+    (eqToHom (congrArg (ccrNewFamily e₂.fst)
+        f.property.symm) ≫
+      ccrNewFiberMor f.val e₁.snd).op
+  map_id e := by
+    apply Quiver.Hom.unop_inj
+    simp [ccrNewFiberMor]
+    rfl
+  map_comp {e₁ e₂ e₃} f g := by
+    apply Quiver.Hom.unop_inj
+    simp only [Quiver.Hom.unop_op, unop_comp]
+    have hfp : ccrNewReindex f.val e₁.snd =
+        e₂.snd := f.property
+    have hgp : ccrNewReindex g.val e₂.snd =
+        e₃.snd := g.property
+    have hcomp : ccrNewReindex g.val
+        (ccrNewReindex f.val e₁.snd) =
+        e₃.snd := by rw [hfp]; exact hgp
+    simp only [CategoryOfElements.comp_val]
+    rw [ccrNewFiberMor_comp]
+    simp only [Category.assoc]
+    have key := ccrNewFiberMor_eqToHom_comp g.val
+      hfp hcomp hgp
+    rw [show (f ≫ g).property = hcomp from
+      rfl, show g.property = hgp from rfl,
+      show f.property = hfp from rfl]
+    conv_lhs =>
+      rw [← Category.assoc (eqToHom _)
+        (ccrNewFiberMor g.val _)
+        (ccrNewFiberMor f.val _)]
+      rw [key]
+    simp only [Category.assoc]
+
 /--
 Evaluate a morphism in `CoprodCovarRepCat C` on an
 evaluation element.
