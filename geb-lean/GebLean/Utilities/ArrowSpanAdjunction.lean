@@ -98,4 +98,58 @@ instance : (arrowSpanInclusion C).Faithful :=
 instance : (arrowSpanInclusion C).Full :=
   arrowSpanInclusion.fullyFaithful.full
 
+/-- The reflector from span diagrams to arrows, sending
+each span to the arrow given by the left injection into
+its pushout. Parameterized by an explicit choice of
+pushout cocone for each span. -/
+def spanArrowReflector
+    (pushouts :
+      (S : WalkingSpan ⥤ C) → ColimitCocone S) :
+    (WalkingSpan ⥤ C) ⥤ Arrow C where
+  obj S :=
+    Arrow.mk
+      ((pushouts S).cocone.ι.app WalkingSpan.left)
+  map {S₁ S₂} α :=
+    Arrow.homMk (α.app WalkingSpan.left)
+      ((pushouts S₁).isColimit.desc
+        (Cocone.mk (pushouts S₂).cocone.pt
+          (α ≫ (pushouts S₂).cocone.ι)))
+      (by
+        have := (pushouts S₁).isColimit.fac
+          (Cocone.mk (pushouts S₂).cocone.pt
+            (α ≫ (pushouts S₂).cocone.ι))
+          WalkingSpan.left
+        dsimp at this
+        exact this.symm)
+  map_id S := by
+    apply Arrow.hom_ext
+    · simp
+    · dsimp
+      symm
+      apply (pushouts S).isColimit.uniq
+        (Cocone.mk (pushouts S).cocone.pt
+          (𝟙 S ≫ (pushouts S).cocone.ι))
+      intro j
+      simp [Category.id_comp]
+  map_comp {S₁ S₂ S₃} α β := by
+    apply Arrow.hom_ext
+    · simp
+    · dsimp
+      symm
+      apply (pushouts S₁).isColimit.uniq
+        (Cocone.mk (pushouts S₃).cocone.pt
+          ((α ≫ β) ≫ (pushouts S₃).cocone.ι))
+      intro j
+      rw [← Category.assoc,
+        (pushouts S₁).isColimit.fac
+          (Cocone.mk (pushouts S₂).cocone.pt
+            (α ≫ (pushouts S₂).cocone.ι)) j]
+      dsimp
+      rw [Category.assoc,
+        (pushouts S₂).isColimit.fac
+          (Cocone.mk (pushouts S₃).cocone.pt
+            (β ≫ (pushouts S₃).cocone.ι)) j]
+      dsimp
+      simp only [← Category.assoc]
+
 end GebLean
