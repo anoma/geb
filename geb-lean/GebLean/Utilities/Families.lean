@@ -2203,8 +2203,7 @@ def ccrOpOp'Functor :
     refine ccrHom_ext _ _ rfl ?_
     simp only [eqToHom_refl, Category.comp_id]
     funext i
-    simp only [ccrHomMk, ccrNewFiberMor,
-      ccrNewReindex, ccrNewFamily]
+    simp only [ccrNewFiberMor, ccrNewReindex, ccrNewFamily]
     rfl
   map_comp {P Q R} f g := by
     simp only [ccrOpOp'Map, ccrOpOp'Obj]
