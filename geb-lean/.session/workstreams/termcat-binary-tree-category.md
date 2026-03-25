@@ -194,17 +194,46 @@ In progress:
     `fold_subst_eq`. Uses `fold_subst_eq` +
     `symm` + `set/unfold` + `conv/change` +
     `simp [show ... from (ih ...).symm]`.
-  - **Blocker**: need a general fold
-    reconstruction lemma in PolyAlgUMorph.lean
-    (or PolyAlg.lean) that directly relates the
-    `polyFixStrFamily` form to its `PolyFix.mk`
-    form when the children come from
-    `polyFixChildAt` of a coproduct injection.
-    Specifically: a lemma showing that for any
-    `Over.homMk` morphism `mor`, `polyFixStrFamily
-    (polyBetweenCoprod I F) x (polyEndoMorphEvalAt
-    (polyBetweenInj I F j) carrier x ⟨p, mor⟩) =
-    PolyFix.mk x ⟨j, p⟩ (polyFixChildAt ⟨j, p⟩
+  - **Blocker analysis (2025-03-25)**:
+    The set/unfold chain works (with
+    `btMorInject_eq` to expose PolyFix.mk),
+    producing a goal where both sides are
+    `BTMor1.fold pm _ _ _ pj` but with
+    `polyFixChildAt`-based children on the LHS
+    vs direct `f/g/tree` children on the RHS.
+    New helper `subst_fiberCast_cancel` handles
+    the transport cancellation.  The remaining
+    difficulty is navigating the deeply nested
+    terms to apply `polyFixChildAt` unfolding +
+    `dif_pos/dif_neg` evaluation at the right
+    subexpression.  Tactic-based `conv` and
+    `simp` cannot efficiently target the
+    `polyFixChildAt` inside `PolyFix.ind`
+    applications.  **Approach**: factor into
+    small lemmas with explicit proof terms
+    (no tactics).  Write per-child lemmas:
+    (a) `fold_child_base_eq`: unfolds
+    `polyFixChildAt` at base index and evaluates
+    `dite` via `dif_pos i.isLt`; (b)
+    `fold_child_step_eq`: same for step index
+    with `dif_neg` + `dif_pos`; (c)
+    `fold_child_tree_eq`: same for tree index
+    with two `dif_neg`.  Each proves
+    `polyFixChildAt ... ⟨idx, _⟩ =
+    fiberCast h (f/g/tree ⟨...⟩)` by unfolding
+    `polyFixChildAt`, `Over.comp_left`,
+    `types_comp_apply`, etc., then
+    `dif_pos/dif_neg`.  Then `fold_subst_eq`
+    combines: base/tree cases use
+    `subst_fiberCast_cancel`, step case uses
+    `fiberCast` cancellation + `Fin.ext` +
+    `omega`.  Original blocker description
+    (preserved for reference): a lemma showing
+    that for any `Over.homMk` morphism `mor`,
+    `polyFixStrFamily (polyBetweenCoprod I F) x
+    (polyEndoMorphEvalAt (polyBetweenInj I F j)
+    carrier x ⟨p, mor⟩) = PolyFix.mk x ⟨j, p⟩
+    (polyFixChildAt ⟨j, p⟩
     (ccrFiberMor ... ≫ mor))`. This IS
     `polyFixCoprodStr_inj`, but the gap is that
     after `rw [hl]; symm`, the RHS has this form

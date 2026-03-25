@@ -1145,6 +1145,18 @@ private lemma sigma_fiberCast_eq
     ⟨a, x⟩ := by
   subst h; rfl
 
+/-- Substituting into a fiber-cast term with
+a matching finCast in the substitution cancels
+both transports. -/
+private lemma subst_fiberCast_cancel
+    {a b m : ℕ} (h : a = b) (h' : b = a)
+    (x : BTMor1 a)
+    (σ : Fin a → BTMor1 m) :
+    (fiberCast h x).subst
+      (fun v => σ (finCast h' v)) =
+    x.subst σ := by
+  subst h; rfl
+
 private lemma subst_id_fold_case
     {n : ℕ}
     (isLt : 3 < 4)
