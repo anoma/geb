@@ -407,4 +407,209 @@ instance arrowSpanReflective
   L := spanArrowReflector pushouts
   adj := arrowSpanAdj pushouts
 
+section PshSpanPushouts
+
+universe w
+
+variable {C : Type*} [Category C]
+
+/-- The raw relation on the coproduct of the
+left and right feet of a presheaf span, at a
+given stage. Identifies `inl (fst x)` with
+`inr (snd x)` for each `x` in the apex. -/
+def pshSpanPushoutRel
+    (S : WalkingSpan ⥤ (Cᵒᵖ ⥤ Type w))
+    (c : Cᵒᵖ) :
+    ((S.obj .left).obj c ⊕
+      (S.obj .right).obj c) →
+    ((S.obj .left).obj c ⊕
+      (S.obj .right).obj c) → Prop :=
+  fun x y => ∃ t : (S.obj .zero).obj c,
+    x = .inl ((S.map WalkingSpan.Hom.fst).app
+      c t) ∧
+    y = .inr ((S.map WalkingSpan.Hom.snd).app
+      c t)
+
+/-- The presheaf action on the pushout quotient:
+maps via `Sum.map` on coproduct components and
+respects the quotient by naturality of the span
+legs. -/
+def pshSpanPushoutMap
+    (S : WalkingSpan ⥤ (Cᵒᵖ ⥤ Type w))
+    {c d : Cᵒᵖ} (f : c ⟶ d) :
+    Quot (pshSpanPushoutRel S c) →
+    Quot (pshSpanPushoutRel S d) :=
+  Quot.lift
+    (fun x => Quot.mk _ (Sum.map
+      ((S.obj .left).map f)
+      ((S.obj .right).map f) x))
+    (by
+      rintro _ _ ⟨t, rfl, rfl⟩
+      exact Quot.sound
+        ⟨(S.obj .zero).map f t,
+         congr_arg Sum.inl (congr_fun
+          ((S.map WalkingSpan.Hom.fst).naturality
+            f) t).symm,
+         congr_arg Sum.inr (congr_fun
+          ((S.map WalkingSpan.Hom.snd).naturality
+            f) t).symm⟩)
+
+@[simp]
+theorem pshSpanPushoutMap_mk
+    (S : WalkingSpan ⥤ (Cᵒᵖ ⥤ Type w))
+    {c d : Cᵒᵖ} (f : c ⟶ d)
+    (a : (S.obj .left).obj c ⊕
+      (S.obj .right).obj c) :
+    pshSpanPushoutMap S f (Quot.mk _ a) =
+    Quot.mk _ (Sum.map
+      ((S.obj .left).map f)
+      ((S.obj .right).map f) a) :=
+  rfl
+
+/-- The pushout presheaf of a span diagram in
+presheaves. At each stage, takes the quotient
+of the coproduct of the feet by identifying
+`inl (fst x)` with `inr (snd x)`. -/
+def pshSpanPushoutObj
+    (S : WalkingSpan ⥤ (Cᵒᵖ ⥤ Type w)) :
+    Cᵒᵖ ⥤ Type w where
+  obj c := Quot (pshSpanPushoutRel S c)
+  map f := pshSpanPushoutMap S f
+  map_id c := funext (Quot.ind fun a => by
+    simp only [pshSpanPushoutMap_mk,
+      (S.obj .left).map_id,
+      (S.obj .right).map_id]
+    cases a <;> rfl)
+  map_comp f g := funext (Quot.ind fun a => by
+    simp only [pshSpanPushoutMap_mk,
+      (S.obj .left).map_comp,
+      (S.obj .right).map_comp]
+    cases a <;> rfl)
+
+/-- The cocone over a presheaf span diagram with
+point given by the pointwise pushout presheaf. -/
+def pshSpanPushoutCocone
+    (S : WalkingSpan ⥤ (Cᵒᵖ ⥤ Type w)) :
+    Cocone S where
+  pt := pshSpanPushoutObj S
+  ι :=
+    { app := fun j => match j with
+        | .zero =>
+          { app := fun c t =>
+              Quot.mk _ (.inl
+                ((S.map WalkingSpan.Hom.fst).app
+                  c t))
+            naturality := fun c d f =>
+              funext fun t => by
+                simp only [types_comp_apply]
+                exact congr_arg (Quot.mk _ ∘
+                  Sum.inl) (congr_fun
+                    ((S.map WalkingSpan.Hom.fst
+                      ).naturality f) t) }
+        | .left =>
+          { app := fun c p =>
+              Quot.mk _ (.inl p)
+            naturality := fun _ _ _ => rfl }
+        | .right =>
+          { app := fun c q =>
+              Quot.mk _ (.inr q)
+            naturality := fun _ _ _ => rfl }
+      naturality := by
+        intro X Y h
+        induction h with
+        | id => simp
+        | init j =>
+          cases j
+          · ext c t; rfl
+          · ext c t; simp only [NatTrans.comp_app,
+              types_comp_apply,
+              Functor.const_obj_map]
+            exact (Quot.sound
+              ⟨t, rfl, rfl⟩).symm }
+
+/-- The pointwise pushout cocone is a colimit.
+`desc` is given by pointwise `Quot.lift`. -/
+def pshSpanPushoutIsColimit
+    (S : WalkingSpan ⥤ (Cᵒᵖ ⥤ Type w)) :
+    IsColimit (pshSpanPushoutCocone S) where
+  desc s :=
+    { app := fun c =>
+        Quot.lift
+          (fun x => match x with
+            | .inl p => (s.ι.app .left).app c p
+            | .inr q =>
+              (s.ι.app .right).app c q)
+          (by
+            rintro _ _ ⟨t, rfl, rfl⟩
+            have hsnd := congr_fun (congr_app
+              (s.w WalkingSpan.Hom.snd) c) t
+            simp only [NatTrans.comp_app,
+              types_comp_apply] at hsnd
+            have hfst := congr_fun (congr_app
+              (s.w WalkingSpan.Hom.fst) c) t
+            simp only [NatTrans.comp_app,
+              types_comp_apply] at hfst
+            dsimp
+            rw [hfst, hsnd])
+      naturality := fun c d f =>
+        funext (Quot.ind fun a => by
+          cases a with
+          | inl p =>
+            simp only [types_comp_apply]
+            exact congr_fun
+              ((s.ι.app .left).naturality f) p
+          | inr q =>
+            simp only [types_comp_apply]
+            exact congr_fun
+              ((s.ι.app .right).naturality f)
+              q) }
+  fac s j := by
+    match j with
+    | .zero =>
+      ext c t
+      simp only [Functor.const_obj_obj,
+        NatTrans.comp_app, types_comp_apply]
+      dsimp [pshSpanPushoutCocone]
+      have := congr_fun (congr_app
+        (s.w WalkingSpan.Hom.fst) c) t
+      simp only [NatTrans.comp_app,
+        types_comp_apply] at this
+      exact this
+    | .left => ext c p; rfl
+    | .right => ext c q; rfl
+  uniq s m h := by
+    apply NatTrans.ext; funext c
+    apply funext; apply Quot.ind; intro a
+    cases a with
+    | inl p =>
+      have := congr_fun
+        (congr_app (h .left) c) p
+      simp only [Functor.const_obj_obj,
+        NatTrans.comp_app,
+        types_comp_apply] at this
+      dsimp [pshSpanPushoutCocone] at this
+      dsimp
+      exact this
+    | inr q =>
+      have := congr_fun
+        (congr_app (h .right) c) q
+      simp only [Functor.const_obj_obj,
+        NatTrans.comp_app,
+        types_comp_apply] at this
+      dsimp [pshSpanPushoutCocone] at this
+      dsimp
+      exact this
+
+/-- Constructive pushouts for presheaf span diagrams
+via pointwise `Quot` in `Type w`. -/
+def pshSpanPushouts
+    (C : Type*) [Category C] :
+    (S : WalkingSpan ⥤ (Cᵒᵖ ⥤ Type w)) →
+    ColimitCocone S :=
+  fun S =>
+    { cocone := pshSpanPushoutCocone S
+      isColimit := pshSpanPushoutIsColimit S }
+
+end PshSpanPushouts
+
 end GebLean
