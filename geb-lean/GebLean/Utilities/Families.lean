@@ -622,6 +622,89 @@ def ccrNewEvalCatFunctor
     ext A ⟨i, η⟩
     simp [ccrNewEvalFunctor, ccrNewMorphEval_comp]
 
+/-! ### Full faithfulness of ccrNewEvalCatFunctor -/
+
+/--
+The Yoneda element for a polynomial `P` at index `i`:
+the pair `⟨i, 𝟙⟩` in `ccrNewEval P (ccrNewFamily P i)`.
+-/
+def ccrNewYonedaElement
+    (P : CoprodCovarRepCat.{u, v, w} C)
+    (i : ccrNewIndex P) :
+    ccrNewEval P (ccrNewFamily P i) :=
+  ⟨i, 𝟙 _⟩
+
+/--
+The preimage map for `ccrNewEvalCatFunctor`: given a
+natural transformation
+`α : ccrNewEvalFunctor P ⟶ ccrNewEvalFunctor Q`,
+construct a morphism `P ⟶ Q` in `CoprodCovarRepCat C`
+by evaluating `α` at each Yoneda element.
+-/
+def ccrNewEvalPreimage
+    {P Q : CoprodCovarRepCat.{u, v, w} C}
+    (α : ccrNewEvalFunctor P ⟶ ccrNewEvalFunctor Q) :
+    P ⟶ Q := by
+  -- A morphism in CoprodCovarRepCat = (Groth ...)ᵒᵖ
+  -- needs reindex and fiber morphisms.
+  -- For each i : ccrNewIndex P, evaluate α at
+  -- ccrNewFamily P i on ⟨i, 𝟙⟩ to get ⟨r(i), φ_i⟩.
+  refine Quiver.Hom.op ?_
+  refine ⟨?base, ?fiber⟩
+  · -- base : Q.unop.base ⟶ P.unop.base in (Type w)ᵒᵖ
+    -- wraps a function ccrNewIndex P → ccrNewIndex Q
+    exact Quiver.Hom.op
+      (fun i => (α.app (ccrNewFamily P i)
+        (ccrNewYonedaElement P i)).1)
+  · -- fiber at each index
+    intro i
+    exact (α.app (ccrNewFamily P i)
+      (ccrNewYonedaElement P i)).2
+
+/--
+`ccrNewEvalCatFunctor` is fully faithful: it exhibits
+`CoprodCovarRepCat C` as a full subcategory of
+`C ⥤ Type (max w v)`.  The inverse map evaluates a
+natural transformation at each Yoneda element
+`⟨i, 𝟙⟩`.
+-/
+def ccrNewEvalCatFullyFaithful
+    (C : Type u) [Category.{v} C] :
+    (ccrNewEvalCatFunctor.{u, v, w} C).FullyFaithful
+      where
+  preimage α := ccrNewEvalPreimage α
+  map_preimage {P Q} α := by
+    ext A ⟨i, η⟩
+    change
+      ⟨(α.app (ccrNewFamily P i)
+          ⟨i, 𝟙 _⟩).1,
+        (α.app (ccrNewFamily P i)
+          ⟨i, 𝟙 _⟩).2 ≫ η⟩ =
+        α.app A ⟨i, η⟩
+    have nat := congrFun (α.naturality η)
+      ⟨i, 𝟙 (ccrNewFamily P i)⟩
+    simp only [types_comp_apply] at nat
+    dsimp [ccrNewEvalCatFunctor,
+      ccrNewEvalFunctor, ccrNewEvalMap] at nat
+    simp only [Category.id_comp] at nat
+    exact nat.symm
+  preimage_map f := by
+    apply Quiver.Hom.unop_inj
+    refine Grothendieck.ext _ _ ?_ ?_
+    · -- base component
+      apply Quiver.Hom.unop_inj
+      ext i
+      simp [ccrNewEvalPreimage, ccrNewYonedaElement,
+        ccrNewEvalCatFunctor, ccrNewMorphEval,
+        ccrNewReindex]
+    · -- fiber component
+      simp only [ccrNewEvalPreimage,
+        ccrNewYonedaElement, ccrNewEvalCatFunctor,
+        ccrNewMorphEval, ccrNewFiberMor,
+        ccrNewReindex, Quiver.Hom.unop_op,
+        Category.comp_id, eqToHom_refl,
+        Category.id_comp]
+
 end FamilyOp
 
 /-! ## Grothendieck completions -/
