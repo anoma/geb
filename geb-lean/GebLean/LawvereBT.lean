@@ -1732,7 +1732,7 @@ theorem BTMorN.comp_assoc {n m k l : ℕ}
 category.  Objects are natural numbers, representing
 powers of the generating object `T^n`.  Morphisms
 `n → m` are `m`-tuples of `BTMor1 n`. -/
-def LawvereBTCat := ℕ
+@[reducible] def LawvereBTCat := ℕ
 
 /-! ## Category structure on LawvereBTCat -/
 
@@ -1797,5 +1797,52 @@ theorem BTMorN.pair_snd {k n m : ℕ}
   rw [dif_neg (by omega)]
   congr 1
   exact Fin.ext (by dsimp; omega)
+
+/-- Uniqueness of pairing: any morphism that
+composes with both projections to give `f` and `g`
+equals `BTMorN.pair f g`. -/
+theorem BTMorN.pair_uniq {k n m : ℕ}
+    (f : BTMorN k n) (g : BTMorN k m)
+    (h : BTMorN k (n + m))
+    (hfst : BTMorN.comp h BTMorN.fst = f)
+    (hsnd : BTMorN.comp h BTMorN.snd = g) :
+    h = BTMorN.pair f g := by
+  funext i
+  unfold BTMorN.pair
+  split_ifs with hlt
+  · have := congr_fun hfst ⟨i.val, hlt⟩
+    change (BTMor1.proj ⟨(⟨i.val, hlt⟩ :
+      Fin n).val, by omega⟩).subst h =
+        f ⟨i.val, hlt⟩ at this
+    rw [BTMor1.subst_proj] at this
+    exact this
+  · have := congr_fun hsnd
+      ⟨i.val - n, by omega⟩
+    change (BTMor1.proj ⟨n + (⟨i.val - n,
+      by omega⟩ : Fin m).val,
+        by omega⟩).subst h =
+      g ⟨i.val - n, by omega⟩ at this
+    rw [BTMor1.subst_proj] at this
+    convert this using 2
+    exact Fin.ext (by dsimp; omega)
+
+/-- Chosen binary product for `LawvereBTCat`:
+the product of `n` and `m` is `n + m`. -/
+def lawvereBTProduct (n m : LawvereBTCat) :
+    ChosenBinaryProduct n m where
+  obj := (n + m : ℕ)
+  fst := BTMorN.fst
+  snd := BTMorN.snd
+  lift f g := BTMorN.pair f g
+  lift_fst := BTMorN.pair_fst
+  lift_snd := BTMorN.pair_snd
+  lift_uniq f g h hf hs :=
+    BTMorN.pair_uniq f g h hf hs
+
+/-- `LawvereBTCat` has chosen finite products. -/
+instance : HasChosenFiniteProducts
+    LawvereBTCat where
+  terminal := lawvereBTTerminal
+  product := lawvereBTProduct
 
 end GebLean
