@@ -1418,10 +1418,6 @@ theorem BTMor1.subst_id {n : ℕ}
             (fun e => ih e))
     t
 
-set_option maxHeartbeats 6400000 in
--- The set/unfold chain for PolyFix.ind and
--- the polyEndoMorphEvalAt resolution require
--- extended reduction.
 /-- Substitution distributes over fold:
 applying `.subst σ` to a `BTMor1.fold` is the
 same as substituting each base and tree child
