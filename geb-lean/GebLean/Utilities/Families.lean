@@ -387,6 +387,129 @@ def CoprodCovarRepCat
     Cat.{max w v, max (w + 1) u} :=
   coprodCovarRepFunctor.{u, v, w}.obj (Cat.of C)
 
+/-! ### Accessors for CoprodCovarRepCat -/
+
+variable {C : Type u} [Category.{v} C]
+
+/--
+The index type (positions) of an object of
+`CoprodCovarRepCat C`.
+-/
+def ccrNewIndex
+    (P : CoprodCovarRepCat.{u, v, w} C) :
+    Type w :=
+  P.unop.base.unop
+
+/--
+The family (directions) of an object of
+`CoprodCovarRepCat C`.
+-/
+def ccrNewFamily
+    (P : CoprodCovarRepCat.{u, v, w} C) :
+    ccrNewIndex P → C :=
+  P.unop.fiber
+
+/--
+Evaluation of a polynomial at an object `A`.
+-/
+def ccrNewEval
+    (P : CoprodCovarRepCat.{u, v, w} C)
+    (A : C) :=
+  Σ i : ccrNewIndex P, (ccrNewFamily P i ⟶ A)
+
+/--
+Functorial action of evaluation on morphisms
+(postcomposition).
+-/
+def ccrNewEvalMap
+    {P : CoprodCovarRepCat.{u, v, w} C}
+    {A B : C} (f : A ⟶ B) :
+    ccrNewEval P A → ccrNewEval P B :=
+  fun ⟨i, h⟩ => ⟨i, h ≫ f⟩
+
+@[simp]
+lemma ccrNewEvalMap_id
+    {P : CoprodCovarRepCat.{u, v, w} C}
+    {A : C} :
+    ccrNewEvalMap (𝟙 A) =
+      (id : ccrNewEval P A → ccrNewEval P A) := by
+  funext ⟨i, h⟩; simp [ccrNewEvalMap]
+
+@[simp]
+lemma ccrNewEvalMap_comp
+    {P : CoprodCovarRepCat.{u, v, w} C}
+    {A B D : C} (f : A ⟶ B) (g : B ⟶ D) :
+    ccrNewEvalMap (f ≫ g) =
+      ccrNewEvalMap g ∘
+        ccrNewEvalMap (P := P) f := by
+  funext ⟨i, h⟩; simp [ccrNewEvalMap, Category.assoc]
+
+/--
+The reindexing function from a morphism in
+`CoprodCovarRepCat C`.
+-/
+def ccrNewReindex
+    {P Q : CoprodCovarRepCat.{u, v, w} C}
+    (f : P ⟶ Q) :
+    ccrNewIndex P → ccrNewIndex Q :=
+  f.unop.base.unop
+
+/--
+The fiber morphism from a morphism in
+`CoprodCovarRepCat C`.
+-/
+def ccrNewFiberMor
+    {P Q : CoprodCovarRepCat.{u, v, w} C}
+    (f : P ⟶ Q) (i : ccrNewIndex P) :
+    ccrNewFamily Q (ccrNewReindex f i) ⟶
+      ccrNewFamily P i :=
+  f.unop.fiber i
+
+@[simp]
+lemma ccrNewFiberMor_comp
+    {P Q R : CoprodCovarRepCat.{u, v, w} C}
+    (f : P ⟶ Q) (g : Q ⟶ R)
+    (i : ccrNewIndex P) :
+    ccrNewFiberMor (f ≫ g) i =
+      ccrNewFiberMor g (ccrNewReindex f i) ≫
+        ccrNewFiberMor f i := by
+  simp only [ccrNewFiberMor, ccrNewReindex]
+  change (g.unop ≫ f.unop).fiber i = _
+  rw [Grothendieck.comp_fiber]
+  simp [familyFunctor, familyMap]
+
+/--
+Evaluate a morphism in `CoprodCovarRepCat C` on an
+evaluation element.
+-/
+def ccrNewMorphEval
+    {P Q : CoprodCovarRepCat.{u, v, w} C}
+    (f : P ⟶ Q) (A : C) :
+    ccrNewEval P A → ccrNewEval Q A :=
+  fun ⟨i, η⟩ =>
+    ⟨ccrNewReindex f i, ccrNewFiberMor f i ≫ η⟩
+
+@[simp]
+lemma ccrNewMorphEval_id
+    (P : CoprodCovarRepCat.{u, v, w} C) (A : C) :
+    ccrNewMorphEval (𝟙 P) A = id := by
+  funext ⟨i, η⟩
+  exact Sigma.ext rfl
+    (heq_of_eq (Category.id_comp η))
+
+@[simp]
+lemma ccrNewMorphEval_comp
+    {P Q R : CoprodCovarRepCat.{u, v, w} C}
+    (f : P ⟶ Q) (g : Q ⟶ R) (A : C) :
+    ccrNewMorphEval (f ≫ g) A =
+      ccrNewMorphEval g A ∘
+        ccrNewMorphEval f A := by
+  funext ⟨i, η⟩
+  exact Sigma.ext rfl
+    (heq_of_eq (by
+      simp [ccrNewMorphEval, ccrNewFiberMor_comp,
+        Category.assoc]))
+
 end FamilyOp
 
 /-! ## Grothendieck completions -/

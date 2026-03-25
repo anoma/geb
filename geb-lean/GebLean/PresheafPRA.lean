@@ -63,7 +63,7 @@ The category of coproducts of covariant representables on
 the presheaf category of `I`, as an object of `Cat`.
 -/
 def ccrPresheafCat : Cat :=
-  CoprodCovarRepCat'.{max v_I u_I (w_I + 1),
+  CoprodCovarRepCat.{max v_I u_I (w_I + 1),
     max u_I w_I, w'}
     (↑(presheafCat.{u_I, v_I, w_I} I))
 
@@ -105,14 +105,14 @@ variable (P : PresheafPRACat.{u_I, v_I, u_J, v_J, w_I, w'} I J)
 The type of positions at stage `j`.
 -/
 def praPositions (j : Jᵒᵖ) : Type w' :=
-  ccrIndex (P.obj j)
+  ccrNewIndex (P.obj j)
 
 /--
 The directions presheaf at position `a` at stage `j`.
 -/
 def praDirectionsAt (j : Jᵒᵖ)
     (a : praPositions I J P j) : Iᵒᵖ ⥤ Type w_I :=
-  ccrFamily (P.obj j) a
+  ccrNewFamily (P.obj j) a
 
 end PresheafPRAAccessors
 
@@ -130,7 +130,7 @@ stage `j`.  The result is
 -/
 def praEvalAt (j : Jᵒᵖ) :
     Type (max w' u_I w_I) :=
-  ccrEval (P.obj j) Z
+  ccrNewEval (P.obj j) Z
 
 /--
 Extract the position index from an evaluation element.
@@ -138,84 +138,29 @@ Extract the position index from an evaluation element.
 def praEvalAt_index {j : Jᵒᵖ}
     (x : praEvalAt I J P Z j) :
     praPositions I J P j :=
-  ccrEvalIndex x
+  x.1
 
 /--
-Extract the natural transformation from an evaluation element.
+Extract the natural transformation from an evaluation
+element.
 -/
 def praEvalAt_mor {j : Jᵒᵖ}
     (x : praEvalAt I J P Z j) :
     praDirectionsAt I J P j
       (praEvalAt_index I J P Z x) ⟶ Z :=
-  ccrEvalMor x
+  x.2
 
 /--
-Construct an evaluation element from a position and a natural
-transformation.
+Construct an evaluation element from a position and a
+natural transformation.
 -/
 def praEvalAt_mk (j : Jᵒᵖ)
     (a : praPositions I J P j)
     (η : praDirectionsAt I J P j a ⟶ Z) :
     praEvalAt I J P Z j :=
-  ccrEvalMk a η
+  ⟨a, η⟩
 
 end PresheafPRAEvalAt
-
-/-! ## Evaluation of CoprodCovarRepCat Morphisms
-
-Given a morphism `f : P ⟶ Q` in `CoprodCovarRepCat D`, the
-induced map on evaluations sends `⟨i, η⟩ : ccrEval P Z` to
-`⟨ccrReindex f i, ccrFiberMor f i ≫ η⟩ : ccrEval Q Z`.
-This is the contravariant functorial action of `ccrEval _ Z`
-on morphisms of `CoprodCovarRepCat D`.
--/
-
-section CcrMorphEval
-
-universe u_D v_D w_D
-
-variable {D : Type u_D} [Category.{v_D} D]
-
-/--
-Evaluate a morphism `f : P ⟶ Q` in `CoprodCovarRepCat D` on
-a `ccrEval P Z` element, producing a `ccrEval Q Z` element.
--/
-def ccrMorphEval
-    {P Q : CoprodCovarRepCat'.{u_D, v_D, w_D} D}
-    (f : P ⟶ Q) (Z : D) :
-    ccrEval P Z → ccrEval Q Z :=
-  fun ⟨i, η⟩ =>
-    ⟨ccrReindex f i, ccrFiberMor f i ≫ η⟩
-
-@[simp]
-lemma ccrMorphEval_id
-    (P : CoprodCovarRepCat'.{u_D, v_D, w_D} D)
-    (Z : D) :
-    ccrMorphEval (𝟙 P) Z = id := by
-  funext ⟨i, η⟩
-  change (⟨ccrReindex (𝟙 P) i,
-    ccrFiberMor (𝟙 P) i ≫ η⟩ : ccrEval P Z) =
-    ⟨i, η⟩
-  exact Sigma.ext rfl
-    (heq_of_eq (Category.id_comp η))
-
-@[simp]
-lemma ccrMorphEval_comp
-    {P Q R : CoprodCovarRepCat'.{u_D, v_D, w_D} D}
-    (f : P ⟶ Q) (g : Q ⟶ R)
-    (Z : D) :
-    ccrMorphEval (f ≫ g) Z =
-      ccrMorphEval g Z ∘ ccrMorphEval f Z := by
-  funext ⟨i, η⟩
-  change (⟨ccrReindex (f ≫ g) i,
-    ccrFiberMor (f ≫ g) i ≫ η⟩ : ccrEval R Z) =
-    ⟨ccrReindex g (ccrReindex f i),
-      ccrFiberMor g (ccrReindex f i) ≫
-        (ccrFiberMor f i ≫ η)⟩
-  refine Sigma.ext rfl (heq_of_eq ?_)
-  rw [ccrComp_fiberMor, Category.assoc]
-
-end CcrMorphEval
 
 /-! ## Restriction Maps -/
 
@@ -227,19 +172,19 @@ variable (Z : Iᵒᵖ ⥤ Type w_I)
 /--
 Restriction map along a morphism `g : j₁ ⟶ j₂` in `Jᵒᵖ`.
 Sends `⟨a, η⟩` to
-`⟨ccrReindex (P.map g) a, ccrFiberMor (P.map g) a ≫ η⟩`.
+`⟨ccrNewReindex (P.map g) a, ccrNewFiberMor (P.map g) a ≫ η⟩`.
 -/
 def praRestrict {j₁ j₂ : Jᵒᵖ}
     (g : j₁ ⟶ j₂) :
     praEvalAt I J P Z j₁ → praEvalAt I J P Z j₂ :=
-  ccrMorphEval (P.map g) Z
+  ccrNewMorphEval (P.map g) Z
 
 @[simp]
 lemma praRestrict_id (j : Jᵒᵖ) :
     praRestrict I J P Z (𝟙 j) =
       id := by
-  change ccrMorphEval (P.map (𝟙 j)) Z = id
-  rw [P.map_id, ccrMorphEval_id]
+  change ccrNewMorphEval (P.map (𝟙 j)) Z = id
+  rw [P.map_id, ccrNewMorphEval_id]
 
 @[simp]
 lemma praRestrict_comp {j₁ j₂ j₃ : Jᵒᵖ}
@@ -247,10 +192,10 @@ lemma praRestrict_comp {j₁ j₂ j₃ : Jᵒᵖ}
     praRestrict I J P Z (g ≫ h) =
       praRestrict I J P Z h ∘
         praRestrict I J P Z g := by
-  change ccrMorphEval (P.map (g ≫ h)) Z =
-    ccrMorphEval (P.map h) Z ∘
-      ccrMorphEval (P.map g) Z
-  rw [P.map_comp, ccrMorphEval_comp]
+  change ccrNewMorphEval (P.map (g ≫ h)) Z =
+    ccrNewMorphEval (P.map h) Z ∘
+      ccrNewMorphEval (P.map g) Z
+  rw [P.map_comp, ccrNewMorphEval_comp]
 
 end PresheafPRARestrict
 
@@ -289,11 +234,11 @@ postcomposes each natural transformation component:
 def praEvalMap {Z₁ Z₂ : Iᵒᵖ ⥤ Type w_I}
     (f : Z₁ ⟶ Z₂) :
     praEvalObj I J P Z₁ ⟶ praEvalObj I J P Z₂ where
-  app j := ccrEvalMap f
+  app j := ccrNewEvalMap f
   naturality j₁ j₂ g := by
     ext ⟨a, η⟩
-    simp [praEvalObj, praRestrict, ccrMorphEval,
-      ccrEvalMap, Category.assoc]
+    simp [praEvalObj, praRestrict, ccrNewMorphEval,
+      ccrNewEvalMap, Category.assoc]
 
 @[simp]
 lemma praEvalMap_id (Z : Iᵒᵖ ⥤ Type w_I) :
@@ -308,7 +253,7 @@ lemma praEvalMap_comp {Z₁ Z₂ Z₃ : Iᵒᵖ ⥤ Type w_I}
     praEvalMap I J P (f ≫ g) =
       praEvalMap I J P f ≫ praEvalMap I J P g := by
   ext j ⟨a, η⟩
-  simp [praEvalMap, ccrEvalMap, Category.assoc]
+  simp [praEvalMap, ccrNewEvalMap, Category.assoc]
 
 end PresheafPRAEvalMap
 
@@ -342,7 +287,7 @@ Given a morphism `α : P ⟶ Q` in `PresheafPRACat I J`
 produce a natural transformation
 `praEvalObj P Z ⟶ praEvalObj Q Z`.
 At each `j`, the component `α.app j` is a morphism in
-`CoprodCovarRepCat`, and `ccrMorphEval` applies it to
+`CoprodCovarRepCat`, and `ccrNewMorphEval` applies it to
 each evaluation element.
 -/
 def praMorphEval
@@ -350,14 +295,14 @@ def praMorphEval
       I J}
     (α : P ⟶ Q) (Z : Iᵒᵖ ⥤ Type w_I) :
     praEvalObj I J P Z ⟶ praEvalObj I J Q Z where
-  app j := ccrMorphEval (α.app j) Z
+  app j := ccrNewMorphEval (α.app j) Z
   naturality j₁ j₂ g := by
-    have h : ccrMorphEval (α.app j₂) Z ∘
-        ccrMorphEval (P.map g) Z =
-      ccrMorphEval (Q.map g) Z ∘
-        ccrMorphEval (α.app j₁) Z := by
-      rw [← ccrMorphEval_comp,
-          ← ccrMorphEval_comp, α.naturality]
+    have h : ccrNewMorphEval (α.app j₂) Z ∘
+        ccrNewMorphEval (P.map g) Z =
+      ccrNewMorphEval (Q.map g) Z ∘
+        ccrNewMorphEval (α.app j₁) Z := by
+      rw [← ccrNewMorphEval_comp,
+          ← ccrNewMorphEval_comp, α.naturality]
     ext x
     exact congrFun h x
 
@@ -369,9 +314,9 @@ lemma praMorphEval_id
     praMorphEval I J (𝟙 P) Z =
       𝟙 (praEvalObj I J P Z) := by
   ext j ⟨a, η⟩
-  change ccrMorphEval (𝟙 (P.obj j)) Z ⟨a, η⟩ =
+  change ccrNewMorphEval (𝟙 (P.obj j)) Z ⟨a, η⟩ =
     ⟨a, η⟩
-  rw [ccrMorphEval_id]; rfl
+  rw [ccrNewMorphEval_id]; rfl
 
 @[simp]
 lemma praMorphEval_comp
@@ -383,10 +328,10 @@ lemma praMorphEval_comp
       praMorphEval I J α Z ≫
         praMorphEval I J β Z := by
   ext j ⟨a, η⟩
-  change ccrMorphEval ((α ≫ β).app j) Z ⟨a, η⟩ =
-    ccrMorphEval (β.app j) Z
-      (ccrMorphEval (α.app j) Z ⟨a, η⟩)
-  rw [NatTrans.comp_app, ccrMorphEval_comp]; rfl
+  change ccrNewMorphEval ((α ≫ β).app j) Z ⟨a, η⟩ =
+    ccrNewMorphEval (β.app j) Z
+      (ccrNewMorphEval (α.app j) Z ⟨a, η⟩)
+  rw [NatTrans.comp_app, ccrNewMorphEval_comp]; rfl
 
 end PresheafPRAMorphEval
 
@@ -410,19 +355,19 @@ def praEvalCatFunctor :
       naturality := fun Z₁ Z₂ f => by
         ext j ⟨a, η⟩
         simp [praMorphEval, praEvalFunctor,
-          praEvalMap, ccrMorphEval, ccrEvalMap,
+          praEvalMap, ccrNewMorphEval, ccrNewEvalMap,
           Category.assoc] }
   map_id P := by
     ext Z j ⟨a, η⟩
-    change ccrMorphEval (NatTrans.app (𝟙 P) j) Z
+    change ccrNewMorphEval (NatTrans.app (𝟙 P) j) Z
       ⟨a, η⟩ = ⟨a, η⟩
-    rw [NatTrans.id_app, ccrMorphEval_id]; rfl
+    rw [NatTrans.id_app, ccrNewMorphEval_id]; rfl
   map_comp α β := by
     ext Z j ⟨a, η⟩
-    change ccrMorphEval ((α ≫ β).app j) Z ⟨a, η⟩ =
-      ccrMorphEval (β.app j) Z
-        (ccrMorphEval (α.app j) Z ⟨a, η⟩)
-    rw [NatTrans.comp_app, ccrMorphEval_comp]; rfl
+    change ccrNewMorphEval ((α ≫ β).app j) Z ⟨a, η⟩ =
+      ccrNewMorphEval (β.app j) Z
+        (ccrNewMorphEval (α.app j) Z ⟨a, η⟩)
+    rw [NatTrans.comp_app, ccrNewMorphEval_comp]; rfl
 
 end PresheafPRAEvalCatFunctor
 
