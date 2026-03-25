@@ -1136,6 +1136,20 @@ def pshRelEdgeGraphFullyFaithful :
   preimage_map _ := by
     apply CommaMorphism.ext <;> rfl
 
+instance pshRelEdgeGraphFull :
+    (pshRelEdgeGraphFunctor :
+      Arrow (Cᵒᵖ ⥤ Type w) ⥤
+        PshRelEdge.{u, v, w} C).Full :=
+  (pshRelEdgeGraphFullyFaithful
+    (C := C)).full
+
+instance pshRelEdgeGraphFaithful :
+    (pshRelEdgeGraphFunctor :
+      Arrow (Cᵒᵖ ⥤ Type w) ⥤
+        PshRelEdge.{u, v, w} C).Faithful :=
+  (pshRelEdgeGraphFullyFaithful
+    (C := C)).faithful
+
 /-- The boundary functor from the edge category
 of presheaf relations to the product category
 of presheaves. Sends each relation to its

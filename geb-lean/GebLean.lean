@@ -57,6 +57,7 @@ import GebLean.PshInternalCat
 import GebLean.PshRelDouble
 import GebLean.PshSpanBicategory
 import GebLean.PshRelEdgeExp
+import GebLean.PshRelEdgeFunctionalize
 import GebLean.PshRelEdgeLimits
 import GebLean.PshRelEdgeIdentPreservation
 import GebLean.PshRelEdgeInclusion
