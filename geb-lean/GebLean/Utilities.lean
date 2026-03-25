@@ -1,3 +1,4 @@
+import GebLean.Utilities.Arrow
 import GebLean.Utilities.Category
 import GebLean.Utilities.ComputableLimits
 import GebLean.Utilities.DaggerCategory
