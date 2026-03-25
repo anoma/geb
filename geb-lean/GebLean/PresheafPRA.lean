@@ -59,13 +59,26 @@ def presheafCat : Cat :=
 /-! ## CoprodCovarRepCat of the Presheaf Category -/
 
 /--
+The functor `Catᵒᵖ ⥤ Cat` sending `C` to
+`CoprodCovarRepCat (C ⥤ Type w_I)`.  Defined as
+`presheafCatFunctor` composed with
+`coprodCovarRepFunctor`.
+-/
+def ccrPresheafCatFunctor :
+    Cat.{v_I, u_I}ᵒᵖ ⥤
+      Cat.{max w' u_I w_I,
+        max (w' + 1) (w_I + 1) v_I u_I} :=
+  presheafCatFunctor.{u_I, v_I, w_I} ⋙
+    coprodCovarRepFunctor.{max v_I (w_I + 1) u_I,
+      max u_I w_I, w'}
+
+/--
 The category of coproducts of covariant representables on
 the presheaf category of `I`, as an object of `Cat`.
 -/
 def ccrPresheafCat : Cat :=
-  CoprodCovarRepCat.{max v_I u_I (w_I + 1),
-    max u_I w_I, w'}
-    (↑(presheafCat.{u_I, v_I, w_I} I))
+  ccrPresheafCatFunctor.{u_I, v_I, w_I, w'}.obj
+    (Opposite.op (Cat.of Iᵒᵖ))
 
 /-! ## The Category of Presheaf PRAs -/
 
