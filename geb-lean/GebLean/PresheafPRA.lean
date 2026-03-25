@@ -52,7 +52,7 @@ The presheaf category `Iᵒᵖ ⥤ Type w_I` as an object of
 `Cat`, obtained by applying `presheafCatFunctor` at
 `Iᵒᵖ`.
 -/
-def presheafCat : Cat :=
+def presheafCat : Cat.{max u_I w_I, max v_I (w_I + 1) u_I} :=
   presheafCatFunctor.{u_I, v_I, w_I}.obj
     (Opposite.op (Cat.of Iᵒᵖ))
 
@@ -66,8 +66,7 @@ The functor `Catᵒᵖ ⥤ Cat` sending `C` to
 -/
 def ccrPresheafCatFunctor :
     Cat.{v_I, u_I}ᵒᵖ ⥤
-      Cat.{max w' u_I w_I,
-        max (w' + 1) (w_I + 1) v_I u_I} :=
+    Cat.{max w' u_I w_I, max (w' + 1) (w_I + 1) v_I u_I} :=
   presheafCatFunctor.{u_I, v_I, w_I} ⋙
     coprodCovarRepFunctor.{max v_I (w_I + 1) u_I,
       max u_I w_I, w'}
@@ -76,13 +75,29 @@ def ccrPresheafCatFunctor :
 The category of coproducts of covariant representables on
 the presheaf category of `I`, as an object of `Cat`.
 -/
-def ccrPresheafCat : Cat :=
+def ccrPresheafCat :
+    Cat.{max w' u_I w_I, max (w' + 1) (w_I + 1) v_I u_I} :=
   ccrPresheafCatFunctor.{u_I, v_I, w_I, w'}.obj
     (Opposite.op (Cat.of Iᵒᵖ))
 
 /-! ## The Category of Presheaf PRAs -/
 
 section PresheafPRADef
+
+/--
+The functor `Catᵒᵖ ⥤ Cat` sending `I` to the category
+of presheaf PRAs from `Iᵒᵖ ⥤ Type w_I` to a presheaf
+category on `J`.  Defined as `ccrPresheafCatFunctor`
+composed with `catCovarHomFunctor (Cat.of Jᵒᵖ)`.
+-/
+def presheafPRACatFunctor :
+    Cat.{v_I, u_I}ᵒᵖ ⥤
+    Cat.{max u_I u_J w_I w', max u_I u_J v_I v_J (w_I + 1) (w' + 1)} :=
+  ccrPresheafCatFunctor.{u_I, v_I, w_I, w'} ⋙
+    catCovarHomFunctor.{v_J, u_J,
+      max w' u_I w_I,
+      max (w' + 1) (w_I + 1) v_I u_I}
+      (Cat.of Jᵒᵖ)
 
 /--
 The category of presheaf polynomial functors (parametric
@@ -96,15 +111,12 @@ At each `j : Jᵒᵖ`, this gives a polynomial
 action on morphisms in `Jᵒᵖ` provides reindexing on
 positions and precomposition maps on directions.
 
-Defined as `catHomProfunctor` applied at
-`(Jᵒᵖ, ccrPresheafCat I)`.
+Defined as `presheafPRACatFunctor` applied at `Iᵒᵖ`.
 -/
-def PresheafPRACat : Cat :=
-  (catHomProfunctor.{v_J, u_J,
-      max w' (max u_I w_I),
-      max (w' + 1) (max v_I u_I (w_I + 1)) w'}.obj
-    (Opposite.op (Cat.of Jᵒᵖ))).obj
-    (ccrPresheafCat.{u_I, v_I, w_I, w'} I)
+def PresheafPRACat :
+    Cat.{max u_I u_J w_I w', max u_I u_J v_I v_J (w_I + 1) (w' + 1)} :=
+  (presheafPRACatFunctor.{u_I, v_I, u_J, v_J, w_I, w'} (J := J)).obj
+    (Opposite.op (Cat.of Iᵒᵖ))
 
 end PresheafPRADef
 
@@ -141,8 +153,7 @@ Pointwise evaluation of a presheaf PRA at a presheaf `Z` and
 stage `j`.  The result is
 `Σ_{a : praPositions P j} (praDirectionsAt P j a ⟶ Z)`.
 -/
-def praEvalAt (j : Jᵒᵖ) :
-    Type (max w' u_I w_I) :=
+def praEvalAt (j : Jᵒᵖ) : Type (max w' u_I w_I) :=
   ccrNewEval (P.obj j) Z
 
 /--
