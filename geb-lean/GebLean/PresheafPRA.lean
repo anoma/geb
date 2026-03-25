@@ -176,13 +176,13 @@ def praPositions (j : Jᵒᵖ) : Type w' :=
   (praPositionsFunctor I J).obj P |>.obj j
 
 /--
-The directions functor: for a fixed PRA `P`, sends an
-element `(j, a)` of the positions presheaf to
-`op (praDirectionsAt P j a)`.  Defined as
+The directions functor into `PSh(I)ᵒᵖ`: for a fixed
+PRA `P`, sends an element `(j, a)` of the positions
+presheaf to `op (E_T(j,a))`.  Defined as
 `ccrNewFamilyFunctor` composed with the induced map
 on Elements categories.
 -/
-def praDirectionsAtFunctor :
+def praDirectionsAtFunctorOp :
     ((praPositionsFunctor I J).obj P).Elements ⥤
       (Iᵒᵖ ⥤ Type w_I)ᵒᵖ :=
   elementsPrecomp P ⋙
@@ -191,11 +191,26 @@ def praDirectionsAtFunctor :
       (↑(presheafCat.{u_I, v_I, w_I} I))
 
 /--
+The directions functor `E_T` from the nLab PRA
+formula: sends an element `(j, a)` of the opposite
+of the positions presheaf to the directions presheaf
+`E_T(j,a) : Iᵒᵖ ⥤ Type w_I`.  Defined as the
+opposite of `praDirectionsAtFunctorOp` composed with
+`unopUnop`.
+-/
+def praDirectionsAtFunctor :
+    ((praPositionsFunctor I J).obj P).ElementsPre ⥤
+      (Iᵒᵖ ⥤ Type w_I) :=
+  (praDirectionsAtFunctorOp I J P).op ⋙
+    unopUnop _
+
+/--
 The directions presheaf at position `a` at stage `j`.
 -/
 def praDirectionsAt (j : Jᵒᵖ)
     (a : praPositions I J P j) : Iᵒᵖ ⥤ Type w_I :=
-  ((praDirectionsAtFunctor I J P).obj ⟨j, a⟩).unop
+  (praDirectionsAtFunctor I J P).obj
+    (Opposite.op ⟨j, a⟩)
 
 end PresheafPRAAccessors
 
