@@ -1186,6 +1186,20 @@ private lemma subst_sigma_eval
       (fun v => σ ((heq ▸ h) ▸ v)) := by
   subst heq; subst h; rfl
 
+/-- Push a transport on a BTMor1 value into
+the substitution's finCast. -/
+private lemma subst_push_transport
+    {α β γ m : ℕ}
+    (h : α = β) (hfib : β = γ)
+    (child : PolyFix btMorPoly α)
+    (σ : Fin γ → BTMor1 m) :
+    BTMor1.subst (h ▸ child)
+      (fun v => σ (finCast hfib v)) =
+    BTMor1.subst child
+      (fun v => σ (finCast
+        (h.trans hfib) v)) := by
+  subst h; rfl
+
 private lemma subst_id_fold_case
     {n : ℕ}
     (isLt : 3 < 4)
@@ -1371,7 +1385,7 @@ theorem BTMor1.subst_id {n : ℕ}
             (fun e => ih e))
     t
 
-set_option maxHeartbeats 1600000 in
+set_option maxHeartbeats 6400000 in
 /-- Substitution distributes over fold:
 applying `.subst σ` to a `BTMor1.fold` is the
 same as substituting each base and tree child
@@ -1428,9 +1442,8 @@ private lemma fold_subst_eq {n m : ℕ}
   · -- Base children:
     funext i
     change BTMor1.subst _ _ = _
-    rw [subst_sigma_eval (β := n)
-      (dif_pos i.isLt) _ _]
-    simp only [Fin.eta]
+    erw [subst_sigma_eval (dif_pos i.isLt)]
+    simp only [Fin.eta]; rfl
   · -- Step children:
     funext i
     split_ifs with hb
@@ -1440,20 +1453,13 @@ private lemma fold_subst_eq {n m : ℕ}
         (Fin.ext (by dsimp; omega))
   · -- Tree child:
     change BTMor1.subst _ _ = _
-    have h_eq : (dite (pm + pm < pm)
-      (fun hb => (⟨n, f ⟨pm + pm, hb⟩⟩ :
-        (polyFixCarrier btMorPoly).left))
-      (fun hb => dite (pm + pm < pm + pm)
-        (fun hs => ⟨pm + pm,
-          g ⟨pm + pm - pm,
-            by omega⟩⟩)
-        (fun _ => ⟨n, tree⟩))) =
-      ⟨n, tree⟩ := by
-      simp [dif_neg (show ¬ (pm + pm) < pm
-          from by omega),
-        dif_neg (show ¬ (pm + pm) <
-          pm + pm from by omega)]
-    rw [subst_sigma_eval (β := n) h_eq _ _]
+    erw [subst_sigma_eval
+      (show dite _ _ _ = ⟨n, tree⟩ from by
+        simp [dif_neg (show ¬ (pm + pm) <
+            pm from by omega),
+          dif_neg (show ¬ (pm + pm) <
+            pm + pm from by omega)])]
+    rfl
 private lemma subst_comp_fold_case
     {n m k : ℕ}
     (isLt : 3 < 4)
