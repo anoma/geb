@@ -121,6 +121,37 @@ naturality condition or `Subtype`.
   slices of presheaf categories to presheaves on categories
   of elements.
 
+## Discrete-Category Equivalence
+
+When `I` and `J` are discrete categories (types `X` and
+`Y`), the presheaf PRA category recovers the
+slice-polynomial category:
+
+```text
+PolyFunctorBetweenCat X Y ≌
+  PresheafPRACat (Discrete X) (Discrete Y)
+```
+
+This equivalence (`polyBetweenPresheafPRAEquiv` in
+`PresheafPRADiscrete.lean`) composes three categorical
+equivalences:
+
+1. `piEquivalenceFunctorDiscrete`: families `Y → C`
+   correspond to functors `Discrete Y ⥤ C`
+2. `Discrete.opposite.symm.congrLeft`: `Discrete Y`
+   is self-dual, converting to `(Discrete Y)ᵒᵖ`
+3. `ccrOverDiscreteEquiv`: `CoprodCovarRepCat'(Over X)`
+   is equivalent to
+   `CoprodCovarRepCat((Discrete X)ᵒᵖ ⥤ Type)` via
+   the slice-presheaf equivalence and the op'/op
+   transfer
+
+The evaluation functors are compatible: the polynomial
+evaluation of `PolyFunctorBetweenCat` agrees with the
+PRA evaluation of `PresheafPRACat` under the equivalence
+(up to the `overDiscretePresheafEquiv` on domain and
+codomain).
+
 ## Mathematical References
 
 - nLab: [parametric right adjoint](https://ncatlab.org/nlab/show/parametric+right+adjoint)
