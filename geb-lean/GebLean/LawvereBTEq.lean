@@ -317,4 +317,367 @@ def BTMorEq.ind
     (steps := step)
     t
 
+/-! ## Endpoint extraction
+
+Given an equality proof tree `BTMorEq n`, extract
+the left and right `BTMor1 n` endpoints. -/
+
+/-- Extract the left endpoint of an equality proof
+tree.  For each constructor, return the left-hand
+side of the equation it witnesses. -/
+def eqLhs {n : ℕ} (proof : BTMorEq n) :
+    BTMor1 n :=
+  BTMorEq.ind
+    (motive := fun {n} _ => BTMor1 n)
+    (step := fun i => match i with
+      | ⟨0, _⟩ => fun p _ _ =>
+        cast (congrArg BTMor1 p.property)
+          p.val.2
+      | ⟨1, _⟩ => fun p _ _ => p.1
+      | ⟨2, _⟩ => fun p _ _ => p.1
+      | ⟨3, _⟩ => fun p _ _ =>
+        BTMor1.branch p.1 p.2.2.1
+      | ⟨4, _⟩ => fun p _ _ =>
+        BTMor1.fold p.1 p.2.2.1
+          p.2.2.2.2.1 p.2.2.2.2.2.2.1
+          p.2.1
+      | ⟨5, _⟩ => fun p _ _ =>
+        BTMor1.fold p.1 p.2.2.1
+          p.2.2.2 BTMor1.leaf p.2.1
+      | ⟨6, _⟩ => fun p _ _ =>
+        BTMor1.fold p.1 p.2.2.1
+          p.2.2.2.1
+          (BTMor1.branch
+            p.2.2.2.2.1 p.2.2.2.2.2)
+          p.2.1)
+    proof
+
+/-- Extract the right endpoint of an equality proof
+tree.  For each constructor, return the right-hand
+side of the equation it witnesses. -/
+def eqRhs {n : ℕ} (proof : BTMorEq n) :
+    BTMor1 n :=
+  BTMorEq.ind
+    (motive := fun {n} _ => BTMor1 n)
+    (step := fun i => match i with
+      | ⟨0, _⟩ => fun p _ _ =>
+        cast (congrArg BTMor1 p.property)
+          p.val.2
+      | ⟨1, _⟩ => fun p _ _ => p.2
+      | ⟨2, _⟩ => fun p _ _ => p.2.2
+      | ⟨3, _⟩ => fun p _ _ =>
+        BTMor1.branch p.2.1 p.2.2.2
+      | ⟨4, _⟩ => fun p _ _ =>
+        BTMor1.fold p.1 p.2.2.2.1
+          p.2.2.2.2.2.1 p.2.2.2.2.2.2.2
+          p.2.1
+      | ⟨5, _⟩ => fun p _ _ =>
+        p.2.2.1 p.2.1
+      | ⟨6, _⟩ => fun p _ _ =>
+        (p.2.2.2.1 p.2.1).subst
+          (fun i =>
+            if h : i.val < p.1
+            then BTMor1.fold p.1
+              p.2.2.1 p.2.2.2.1
+              p.2.2.2.2.1 ⟨i.val, h⟩
+            else BTMor1.fold p.1
+              p.2.2.1 p.2.2.2.1
+              p.2.2.2.2.2
+              ⟨i.val - p.1, by omega⟩))
+    proof
+
+/-! ## Endpoint computation lemmas
+
+Each lemma states that `eqLhs` or `eqRhs` applied to
+a specific constructor returns the expected
+`BTMor1 n` term. -/
+
+/-- Left endpoint of reflexivity:
+`eqLhs (refl t) = t`. -/
+theorem eqLhs_refl {n : ℕ} (t : BTMor1 n) :
+    eqLhs (BTMorEq.refl t) = t := rfl
+
+/-- Right endpoint of reflexivity:
+`eqRhs (refl t) = t`. -/
+theorem eqRhs_refl {n : ℕ} (t : BTMor1 n) :
+    eqRhs (BTMorEq.refl t) = t := rfl
+
+/-- Left endpoint of symmetry:
+`eqLhs (symm t1 t2 c) = t1`. -/
+theorem eqLhs_symm {n : ℕ}
+    (t1 t2 : BTMor1 n) (c : BTMorEq n) :
+    eqLhs (BTMorEq.symm t1 t2 c) = t1 :=
+  rfl
+
+/-- Right endpoint of symmetry:
+`eqRhs (symm t1 t2 c) = t2`. -/
+theorem eqRhs_symm {n : ℕ}
+    (t1 t2 : BTMor1 n) (c : BTMorEq n) :
+    eqRhs (BTMorEq.symm t1 t2 c) = t2 :=
+  rfl
+
+/-- Left endpoint of transitivity:
+`eqLhs (trans t1 t2 t3 c1 c2) = t1`. -/
+theorem eqLhs_trans {n : ℕ}
+    (t1 t2 t3 : BTMor1 n)
+    (c1 c2 : BTMorEq n) :
+    eqLhs (BTMorEq.trans t1 t2 t3 c1 c2) =
+      t1 := rfl
+
+/-- Right endpoint of transitivity:
+`eqRhs (trans t1 t2 t3 c1 c2) = t3`. -/
+theorem eqRhs_trans {n : ℕ}
+    (t1 t2 t3 : BTMor1 n)
+    (c1 c2 : BTMorEq n) :
+    eqRhs (BTMorEq.trans t1 t2 t3 c1 c2) =
+      t3 := rfl
+
+/-- Left endpoint of branch congruence:
+`eqLhs (congBranch l1 l2 r1 r2 c1 c2) =
+  branch l1 r1`. -/
+theorem eqLhs_congBranch {n : ℕ}
+    (l1 l2 r1 r2 : BTMor1 n)
+    (c1 c2 : BTMorEq n) :
+    eqLhs (BTMorEq.congBranch
+      l1 l2 r1 r2 c1 c2) =
+      BTMor1.branch l1 r1 := rfl
+
+/-- Right endpoint of branch congruence:
+`eqRhs (congBranch l1 l2 r1 r2 c1 c2) =
+  branch l2 r2`. -/
+theorem eqRhs_congBranch {n : ℕ}
+    (l1 l2 r1 r2 : BTMor1 n)
+    (c1 c2 : BTMorEq n) :
+    eqRhs (BTMorEq.congBranch
+      l1 l2 r1 r2 c1 c2) =
+      BTMor1.branch l2 r2 := rfl
+
+/-- Left endpoint of fold congruence:
+`eqLhs (congFold m j f f' g g' tree tree'
+  bp sp tp) = fold m f g tree j`. -/
+theorem eqLhs_congFold {n : ℕ}
+    (m : ℕ) (j : Fin m)
+    (f f' : Fin m → BTMor1 n)
+    (g g' : Fin m → BTMor1 (m + m))
+    (tree tree' : BTMor1 n)
+    (bp : Fin m → BTMorEq n)
+    (sp : Fin m → BTMorEq (m + m))
+    (tp : BTMorEq n) :
+    eqLhs (BTMorEq.congFold m j f f'
+      g g' tree tree' bp sp tp) =
+      BTMor1.fold m f g tree j := rfl
+
+/-- Right endpoint of fold congruence:
+`eqRhs (congFold m j f f' g g' tree tree'
+  bp sp tp) = fold m f' g' tree' j`. -/
+theorem eqRhs_congFold {n : ℕ}
+    (m : ℕ) (j : Fin m)
+    (f f' : Fin m → BTMor1 n)
+    (g g' : Fin m → BTMor1 (m + m))
+    (tree tree' : BTMor1 n)
+    (bp : Fin m → BTMorEq n)
+    (sp : Fin m → BTMorEq (m + m))
+    (tp : BTMorEq n) :
+    eqRhs (BTMorEq.congFold m j f f'
+      g g' tree tree' bp sp tp) =
+      BTMor1.fold m f' g' tree' j := rfl
+
+/-- Left endpoint of fold-leaf computation:
+`eqLhs (foldLeaf m j f g) =
+  fold m f g leaf j`. -/
+theorem eqLhs_foldLeaf {n : ℕ}
+    (m : ℕ) (j : Fin m)
+    (f : Fin m → BTMor1 n)
+    (g : Fin m → BTMor1 (m + m)) :
+    eqLhs (BTMorEq.foldLeaf m j f g) =
+      BTMor1.fold m f g BTMor1.leaf j :=
+  rfl
+
+/-- Right endpoint of fold-leaf computation:
+`eqRhs (foldLeaf m j f g) = f j`. -/
+theorem eqRhs_foldLeaf {n : ℕ}
+    (m : ℕ) (j : Fin m)
+    (f : Fin m → BTMor1 n)
+    (g : Fin m → BTMor1 (m + m)) :
+    eqRhs (BTMorEq.foldLeaf m j f g) =
+      f j := rfl
+
+/-- Left endpoint of fold-branch computation:
+`eqLhs (foldBranch m j f g t1 t2) =
+  fold m f g (branch t1 t2) j`. -/
+theorem eqLhs_foldBranch {n : ℕ}
+    (m : ℕ) (j : Fin m)
+    (f : Fin m → BTMor1 n)
+    (g : Fin m → BTMor1 (m + m))
+    (t1 t2 : BTMor1 n) :
+    eqLhs (BTMorEq.foldBranch
+      m j f g t1 t2) =
+      BTMor1.fold m f g
+        (BTMor1.branch t1 t2) j := rfl
+
+/-- Right endpoint of fold-branch computation:
+`eqRhs (foldBranch m j f g t1 t2) =
+  (g j).subst (fun i => ...)`. -/
+theorem eqRhs_foldBranch {n : ℕ}
+    (m : ℕ) (j : Fin m)
+    (f : Fin m → BTMor1 n)
+    (g : Fin m → BTMor1 (m + m))
+    (t1 t2 : BTMor1 n) :
+    eqRhs (BTMorEq.foldBranch
+      m j f g t1 t2) =
+      (g j).subst (fun i =>
+        if h : i.val < m
+        then BTMor1.fold m f g t1
+          ⟨i.val, h⟩
+        else BTMor1.fold m f g t2
+          ⟨i.val - m, by omega⟩) := rfl
+
+/-! ## Equality relation
+
+The equality relation on `BTMor1 n` as an inductive
+proposition, with constructors mirroring those of the
+polynomial proof tree type `BTMorEq`.  Defining the
+relation inductively (rather than as existence of a
+proof tree with matching endpoints) bakes the endpoint
+invariants into the type indices, enabling induction
+on the relation to produce hypotheses with the
+correct endpoint types. -/
+
+/-- Two `BTMor1 n` terms are related when connected
+by the congruence closure of the fold computation
+rules.  Constructors correspond to the seven
+components of `btMorEqPoly`. -/
+inductive btMorRel : (n : ℕ) →
+    BTMor1 n → BTMor1 n → Prop where
+  | refl {n : ℕ} (t : BTMor1 n) :
+      btMorRel n t t
+  | symm {n : ℕ} {t1 t2 : BTMor1 n} :
+      btMorRel n t1 t2 →
+      btMorRel n t2 t1
+  | trans {n : ℕ}
+      {t1 t2 t3 : BTMor1 n} :
+      btMorRel n t1 t2 →
+      btMorRel n t2 t3 →
+      btMorRel n t1 t3
+  | congBranch {n : ℕ}
+      {l1 l2 r1 r2 : BTMor1 n} :
+      btMorRel n l1 l2 →
+      btMorRel n r1 r2 →
+      btMorRel n (BTMor1.branch l1 r1)
+        (BTMor1.branch l2 r2)
+  | congFold {n : ℕ}
+      {m : ℕ} {j : Fin m}
+      {f f' : Fin m → BTMor1 n}
+      {g g' : Fin m → BTMor1 (m + m)}
+      {tree tree' : BTMor1 n} :
+      (∀ i, btMorRel n (f i) (f' i)) →
+      (∀ i,
+        btMorRel (m + m) (g i) (g' i)) →
+      btMorRel n tree tree' →
+      btMorRel n
+        (BTMor1.fold m f g tree j)
+        (BTMor1.fold m f' g' tree' j)
+  | foldLeaf {n : ℕ}
+      (m : ℕ) (j : Fin m)
+      (f : Fin m → BTMor1 n)
+      (g : Fin m → BTMor1 (m + m)) :
+      btMorRel n
+        (BTMor1.fold m f g BTMor1.leaf j)
+        (f j)
+  | foldBranch {n : ℕ}
+      (m : ℕ) (j : Fin m)
+      (f : Fin m → BTMor1 n)
+      (g : Fin m → BTMor1 (m + m))
+      (t1 t2 : BTMor1 n) :
+      btMorRel n
+        (BTMor1.fold m f g
+          (BTMor1.branch t1 t2) j)
+        ((g j).subst (fun i =>
+          if h : i.val < m
+          then BTMor1.fold m f g t1
+            ⟨i.val, h⟩
+          else BTMor1.fold m f g t2
+            ⟨i.val - m, by omega⟩))
+
+/-! ## Setoid -/
+
+/-- The setoid on `BTMor1 n` induced by `btMorRel`.
+-/
+instance btMor1Setoid (n : ℕ) :
+    Setoid (BTMor1 n) where
+  r := btMorRel n
+  iseqv := {
+    refl := btMorRel.refl
+    symm := btMorRel.symm
+    trans := btMorRel.trans
+  }
+
+/-! ## Substitution congruence
+
+Right congruence: substitution preserves the equality
+relation.  The proof proceeds by induction on the
+`btMorRel` derivation. -/
+
+/-- Substitution preserves `btMorRel`: if
+`btMorRel n t1 t2` then
+`btMorRel m (t1.subst σ) (t2.subst σ)`. -/
+theorem subst_cong_right {n m : ℕ}
+    (σ : Fin n → BTMor1 m)
+    {t1 t2 : BTMor1 n}
+    (h : btMorRel n t1 t2) :
+    btMorRel m (t1.subst σ) (t2.subst σ) := by
+  induction h generalizing m with
+  | refl => exact btMorRel.refl _
+  | symm _ ih =>
+    exact btMorRel.symm (ih σ)
+  | trans _ _ ih1 ih2 =>
+    exact btMorRel.trans (ih1 σ) (ih2 σ)
+  | congBranch _ _ ihl ihr =>
+    exact btMorRel.congBranch
+      (ihl σ) (ihr σ)
+  | congFold hf hg ht ihf _ iht =>
+    rw [fold_subst_eq, fold_subst_eq]
+    exact btMorRel.congFold
+      (fun i => ihf i σ)
+      hg
+      (iht σ)
+  | foldLeaf m' j f g =>
+    rw [fold_subst_eq]
+    conv_lhs =>
+      arg 4; rw [BTMor1.subst_leaf]
+    exact btMorRel.foldLeaf m' j
+      (fun i => (f i).subst σ)
+      g
+  | foldBranch m' j f g t1 t2 =>
+    rw [fold_subst_eq]
+    conv_lhs =>
+      arg 4; rw [BTMor1.subst_branch]
+    apply btMorRel.trans
+    · exact btMorRel.foldBranch m' j
+        (fun i => (f i).subst σ) g
+        (t1.subst σ) (t2.subst σ)
+    · rw [BTMor1.subst_comp]
+      have : (fun i : Fin (m' + m') =>
+          (if h : i.val < m'
+          then BTMor1.fold m' f g t1
+            ⟨i.val, h⟩
+          else BTMor1.fold m' f g t2
+            ⟨i.val - m', by omega⟩
+            ).subst σ) =
+          (fun i : Fin (m' + m') =>
+          if h : i.val < m'
+          then BTMor1.fold m'
+            (fun i => (f i).subst σ) g
+            (t1.subst σ) ⟨i.val, h⟩
+          else BTMor1.fold m'
+            (fun i => (f i).subst σ) g
+            (t2.subst σ)
+            ⟨i.val - m', by omega⟩) := by
+        funext i
+        split
+        · rw [fold_subst_eq]
+        · rw [fold_subst_eq]
+      rw [this]
+      exact btMorRel.refl _
+
 end GebLean
