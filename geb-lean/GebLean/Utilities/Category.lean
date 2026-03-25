@@ -1394,6 +1394,22 @@ lemma eqToHom_refl_eq {X Y : C} (p q : Eq.{u + 1} X Y) :
   Eq (eqToHom.{v, u} p) (eqToHom.{v, u} q) := by
     simp
 
+lemma eqToHom_refl_heq_l {X Y X' : C}
+  (p : Eq.{u + 1} X Y) (q : Eq.{u + 1} X' Y) :
+    eqToHom.{v, u} p ≍ eqToHom.{v, u} q := by
+      cases p
+      cases q
+      simp only [eqToHom_refl]
+      simp
+
+lemma eqToHom_refl_heq_r {X Y Y' : C}
+  (p : Eq.{u + 1} X Y) (q : Eq.{u + 1} X Y') :
+    eqToHom.{v, u} p ≍ eqToHom.{v, u} q := by
+      cases p
+      cases q
+      simp only [eqToHom_refl]
+      simp
+
 /--
 Proofs of symmetric equalities produce equal `eqToHom` terms.
 -/
