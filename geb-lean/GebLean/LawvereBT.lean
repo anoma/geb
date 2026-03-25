@@ -1734,6 +1734,8 @@ powers of the generating object `T^n`.  Morphisms
 `n → m` are `m`-tuples of `BTMor1 n`. -/
 def LawvereBTCat := ℕ
 
+/-! ## Category structure on LawvereBTCat -/
+
 instance : CategoryStruct LawvereBTCat where
   Hom := BTMorN
   id n := BTMorN.id n
@@ -1743,5 +1745,57 @@ instance : Category LawvereBTCat where
   id_comp := BTMorN.id_comp
   comp_id := BTMorN.comp_id
   assoc := BTMorN.comp_assoc
+
+/-! ## Finite products on LawvereBTCat
+
+Terminal object is `0`.  Product of `n` and `m` is
+`n + m`. -/
+
+/-- Any morphism to `0` equals `BTMorN.terminal`. -/
+theorem BTMorN.terminal_uniq {n : ℕ}
+    (f : BTMorN n 0) :
+    f = BTMorN.terminal n :=
+  funext fun i => i.elim0
+
+/-- Chosen terminal object for `LawvereBTCat`. -/
+def lawvereBTTerminal :
+    ChosenTerminal LawvereBTCat where
+  obj := (0 : ℕ)
+  from_ n := BTMorN.terminal n
+  uniq f := BTMorN.terminal_uniq f
+
+/-- Composing with the first projection extracts
+the first components of a pairing. -/
+theorem BTMorN.pair_fst {k n m : ℕ}
+    (f : BTMorN k n) (g : BTMorN k m) :
+    BTMorN.comp (BTMorN.pair f g)
+      BTMorN.fst = f := by
+  funext j
+  change (BTMor1.proj ⟨j.val, by omega⟩).subst
+    (BTMorN.pair f g) = f j
+  rw [BTMor1.subst_proj]
+  change (if h : j.val < n
+    then f ⟨j.val, h⟩
+    else g ⟨j.val - n, by omega⟩) = f j
+  rw [dif_pos j.isLt]
+
+/-- Composing with the second projection extracts
+the second components of a pairing. -/
+theorem BTMorN.pair_snd {k n m : ℕ}
+    (f : BTMorN k n) (g : BTMorN k m) :
+    BTMorN.comp (BTMorN.pair f g)
+      BTMorN.snd = g := by
+  funext j
+  change (BTMor1.proj ⟨n + j.val,
+    by omega⟩).subst
+    (BTMorN.pair f g) = g j
+  rw [BTMor1.subst_proj]
+  change (if h : n + j.val < n
+    then f ⟨n + j.val, h⟩
+    else g ⟨n + j.val - n,
+      by omega⟩) = g j
+  rw [dif_neg (by omega)]
+  congr 1
+  exact Fin.ext (by dsimp; omega)
 
 end GebLean
