@@ -154,13 +154,26 @@ end PresheafPRADef
 
 section PresheafPRAAccessors
 
+/--
+The positions functor: sends a PRA `P` to the presheaf
+on `J` of position types.  Defined as postcomposition
+of `P` with `ccrNewIndexFunctor`.
+-/
+def praPositionsFunctor :
+    PresheafPRACat.{u_I, v_I, u_J, v_J, w_I, w'}
+      I J ⥤ (Jᵒᵖ ⥤ Type w') :=
+  (Functor.whiskeringRight Jᵒᵖ _ _).obj
+    (ccrNewIndexFunctor.{max v_I u_I (w_I + 1),
+      max u_I w_I, w'}
+      (↑(presheafCat.{u_I, v_I, w_I} I)))
+
 variable (P : PresheafPRACat.{u_I, v_I, u_J, v_J, w_I, w'} I J)
 
 /--
 The type of positions at stage `j`.
 -/
 def praPositions (j : Jᵒᵖ) : Type w' :=
-  ccrNewIndex (P.obj j)
+  (praPositionsFunctor I J).obj P |>.obj j
 
 /--
 The directions presheaf at position `a` at stage `j`.

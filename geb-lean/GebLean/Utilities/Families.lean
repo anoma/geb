@@ -455,6 +455,18 @@ def ccrNewReindex
   f.unop.base.unop
 
 /--
+The index projection as a functor from
+`CoprodCovarRepCat C` to `Type w`.  Sends an object
+to its index type and a morphism to its reindexing
+function.  Both functor laws hold definitionally.
+-/
+def ccrNewIndexFunctor
+    (C : Type u) [Category.{v} C] :
+    CoprodCovarRepCat.{u, v, w} C ⥤ Type w where
+  obj P := ccrNewIndex P
+  map f := ccrNewReindex f
+
+/--
 The fiber morphism from a morphism in
 `CoprodCovarRepCat C`.
 -/
