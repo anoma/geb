@@ -1158,6 +1158,18 @@ private lemma subst_fiberCast_cancel
     x.subst σ := by
   subst h; rfl
 
+/-- Transport on a sigma's `.snd` can be
+pushed into the substitution function. -/
+private lemma subst_transport_sigma
+    {β m : ℕ}
+    {y : (polyFixCarrier btMorPoly).left}
+    (h : y.1 = β)
+    (σ : Fin β → BTMor1 m) :
+    BTMor1.subst (h ▸ y.2) σ =
+    BTMor1.subst y.2
+      (fun v => σ (h ▸ v)) := by
+  subst h; rfl
+
 private lemma subst_id_fold_case
     {n : ℕ}
     (isLt : 3 < 4)
@@ -1400,13 +1412,13 @@ private lemma fold_subst_eq {n m : ℕ}
       polyBetweenCoprodDir,
       CategoryStruct.id]
     dsimp only [id]
-    refine (subst_fiberCast_cancel
-      _ _ _ σ).trans ?_
-    show BTMor1.subst _ σ = _
+    change BTMor1.subst _ _ = _
+    rw [subst_transport_sigma _ _]
     split_ifs with hb
-    · exact congrArg
-        (fun j => BTMor1.subst (f j) σ)
-        (Fin.eta i hb)
+    · simp only [Fin.eta]; congr
+      all_goals (first
+        | simp only [dif_pos hb]
+        | exact proof_irrel_heq _ _)
     · exact absurd i.isLt hb
   · -- Step children:
     funext i
@@ -1423,28 +1435,15 @@ private lemma fold_subst_eq {n m : ℕ}
         (fun j => fiberCast _ (g j))
         (Fin.ext (by dsimp; omega))
   · -- Tree child:
-    · simp only [polyFixChildAt,
-        Over.comp_left, types_comp_apply,
-        Over.homMk_left,
-        ccrFiberMor, polyBetweenInjFiber,
-        polyBetweenCoprodDir,
-        CategoryStruct.id]
-      dsimp only [id]
-      simp only [polyFixChildAt,
-        Over.comp_left, types_comp_apply,
-        Over.homMk_left,
-        ccrFiberMor, polyBetweenInjFiber,
-        polyBetweenCoprodDir,
-        CategoryStruct.id]
-      dsimp only [id]
-      simp only [btMorFoldFiber_tree
-        (isLt := by omega)
-        (hge1 := by omega)
-        (hge2 := by omega)]
-      split_ifs with hb hs
-      · exact absurd hb (by omega)
-      · exact absurd hs (by omega)
-      · rfl
+    change BTMor1.subst _ _ = _
+    rw [subst_transport_sigma]
+    simp only [
+      dif_neg (show ¬ (pm + pm) < pm
+        from by omega),
+      dif_neg (show ¬ (pm + pm) <
+        pm + pm from by omega)]
+    congr 1
+    funext v; congr 1; exact Fin.ext rfl
 private lemma subst_comp_fold_case
     {n m k : ℕ}
     (isLt : 3 < 4)
