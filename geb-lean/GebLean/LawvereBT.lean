@@ -1415,10 +1415,10 @@ private lemma fold_subst_eq {n m : ℕ}
     change BTMor1.subst _ _ = _
     rw [subst_transport_sigma _ _]
     split_ifs with hb
-    · simp only [Fin.eta]; congr
-      all_goals (first
-        | simp only [dif_pos hb]
-        | exact proof_irrel_heq _ _)
+    · simp only [Fin.eta]; congr 1
+      · simp only [dif_pos hb]
+      · simp only [dif_pos hb]
+        exact proof_irrel_heq _ _
     · exact absurd i.isLt hb
   · -- Step children:
     funext i
