@@ -112,6 +112,109 @@ def ccrMapEquivUnitApp
     funext i
     exact e.unitIso.inv_hom_id_app _
 
+/--
+Component of the counit natural isomorphism for
+`ccrMapEquiv` at object `Q`.
+-/
+def ccrMapEquivCounitApp
+    (Q : CoprodCovarRepCat'.{u + 1, u, u} D) :
+    (ccrMapEquivInv e ⋙
+      ccrMapEquivFwd e).obj Q ≅ Q where
+  hom := ccrHomMk id
+    (fun i => e.counitIso.inv.app (ccrFamily Q i))
+  inv := ccrHomMk id
+    (fun i => e.counitIso.hom.app (ccrFamily Q i))
+  hom_inv_id := by
+    simp only [ccrComp_mk, ccrHomMk_reindex,
+      ccrHomMk_fiberMor, ccrId_mk,
+      Function.comp_id]
+    congr 1
+    funext i
+    exact e.counitIso.hom_inv_id_app _
+  inv_hom_id := by
+    simp only [ccrComp_mk, ccrHomMk_reindex,
+      ccrHomMk_fiberMor, ccrId_mk,
+      Function.comp_id]
+    congr 1
+    funext i
+    exact e.counitIso.inv_hom_id_app _
+
+/--
+The unit natural isomorphism for `ccrMapEquiv`.
+-/
+def ccrMapEquivUnit :
+    𝟭 (CoprodCovarRepCat'.{u + 1, u, u} C) ≅
+      ccrMapEquivFwd e ⋙ ccrMapEquivInv e :=
+  NatIso.ofComponents (ccrMapEquivUnitApp e)
+    (fun {P Q} f => by
+      simp only [ccrComp_mk, Functor.id_map,
+        Functor.comp_map, ccrMapEquivFwd,
+        ccrMapEquivInv, ccrMapEquivFwd,
+        ccrHomMk_reindex, ccrHomMk_fiberMor,
+        ccrMapEquivUnitApp, ccrObjMk_family,
+        Function.comp]
+      congr 1
+      funext i
+      exact (e.unitIso.inv.naturality
+        (ccrFiberMor f i)).symm)
+
+/--
+The counit natural isomorphism for `ccrMapEquiv`.
+-/
+def ccrMapEquivCounit :
+    ccrMapEquivInv e ⋙ ccrMapEquivFwd e ≅
+      𝟭 (CoprodCovarRepCat'.{u + 1, u, u} D) :=
+  NatIso.ofComponents (ccrMapEquivCounitApp e)
+    (fun {P Q} f => by
+      simp only [ccrComp_mk, Functor.id_map,
+        Functor.comp_map, ccrMapEquivFwd,
+        ccrMapEquivInv, ccrMapEquivFwd,
+        ccrHomMk_reindex, ccrHomMk_fiberMor,
+        ccrMapEquivCounitApp, ccrObjMk_family,
+        Function.comp]
+      congr 1
+      funext i
+      exact (e.counitIso.inv.naturality
+        (ccrFiberMor f i)).symm)
+
+/--
+The equivalence `CoprodCovarRepCat' C ≌
+CoprodCovarRepCat' D` induced by `e : C ≌ D`.
+Applies `e.functor` / `e.inverse` pointwise to each
+family element.
+-/
+def ccrMapEquiv :
+    CoprodCovarRepCat'.{u + 1, u, u} C ≌
+      CoprodCovarRepCat'.{u + 1, u, u} D where
+  functor := ccrMapEquivFwd e
+  inverse := ccrMapEquivInv e
+  unitIso := ccrMapEquivUnit e
+  counitIso := ccrMapEquivCounit e
+  functor_unitIso_comp P := by
+    simp only [ccrComp_mk, ccrMapEquivFwd,
+      ccrHomMk_reindex, ccrHomMk_fiberMor,
+      ccrMapEquivUnit, ccrMapEquivUnitApp,
+      ccrMapEquivCounit, ccrMapEquivCounitApp,
+      NatIso.ofComponents, ccrObjMk_family,
+      Function.comp, ccrId_mk]
+    congr 1
+    funext i
+    simp only [ccrHomMk, id]
+    let x := ccrFamily P i
+    -- The triangle identity for `e`:
+    --   e.functor.map (unit.hom x) ≫
+    --     counit.hom (e.functor.obj x) = 𝟙
+    -- We need the "inverse triangle":
+    --   counit.inv ≫ e.functor.map (unit.inv) = 𝟙
+    -- This holds because (A ≫ B = 𝟙) implies
+    -- (B⁻¹ ≫ A⁻¹ = 𝟙) for isomorphisms.
+    have h := e.functor_unitIso_comp x
+    rw [← cancel_mono
+      (e.functor.map (e.unitIso.hom.app x) ≫
+        e.counitIso.hom.app
+          (e.functor.obj x))]
+    simp [h]
+
 end CcrMapEquiv
 
 end GebLean
