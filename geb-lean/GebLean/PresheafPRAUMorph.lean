@@ -1,0 +1,651 @@
+import GebLean.PresheafPRA
+import Mathlib.CategoryTheory.Limits.Opposites
+import Mathlib.CategoryTheory.Limits.FunctorCategory.Basic
+import Mathlib.CategoryTheory.Limits.Pi
+import Mathlib.CategoryTheory.Adjunction.Limits
+
+/-!
+# Limits and Colimits in CoprodCovarRepCat
+
+This module establishes the existence of limits in
+`CoprodCovarRepCat C` under appropriate conditions
+on `C`.
+
+The strategy uses mathlib's `op`-based infrastructure
+directly (no dependence on `op'`):
+
+1. `Grothendieck (familyFunctor C)` has colimits
+   (via `hasColimitsOfShape_grothendieck`)
+
+2. `CoprodCovarRepCat C = (Grothendieck ...)ᵒᵖ` has
+   limits (via `hasLimits_op_of_hasColimits`)
+
+3. Limits of arbitrary shape `J` in
+   `CoprodCovarRepCat C` are computed as: positions
+   are sections of the position diagram, and fibers
+   are colimits of the fiber diagram in `C`.
+-/
+
+namespace GebLean
+
+open CategoryTheory CategoryTheory.Limits
+
+universe u v w
+
+variable {C : Type u} [Category.{v} C]
+
+/-! ## Position functor for diagrams -/
+
+section PositionFunctor
+
+variable {J : Type w} [Category.{w} J]
+variable (D : J ⥤ CoprodCovarRepCat.{u, v, w} C)
+
+/--
+The position functor of a diagram
+`D : J ⥤ CoprodCovarRepCat C`. Sends `j` to the
+index type `ccrNewIndex (D.obj j)` and a morphism
+`f` to the reindexing function `ccrNewReindex`.
+-/
+def ccrDiagPosFunctor :
+    J ⥤ Type w where
+  obj j := ccrNewIndex (D.obj j)
+  map f := ccrNewReindex (D.map f)
+  map_id j := by
+    simp only [ccrNewReindex]
+    have h := D.map_id j
+    change (D.map (𝟙 j)).unop.base.unop = id
+    rw [h]
+    rfl
+  map_comp {j₁ j₂ j₃} f g := by
+    simp only [ccrNewReindex]
+    have h := D.map_comp f g
+    change (D.map (f ≫ g)).unop.base.unop =
+      (D.map g).unop.base.unop ∘
+        (D.map f).unop.base.unop
+    rw [h]
+    rfl
+
+end PositionFunctor
+
+/-! ## Limit construction for CoprodCovarRepCat
+
+The limit of a diagram `D : J ⥤ CoprodCovarRepCat C`
+is constructed as follows:
+
+- Positions: the sections of the position functor
+  `ccrDiagPosFunctor D`, i.e., compatible families
+  `(x_j)_j` where `ccrNewReindex (D.map f) x_{j₁} =
+  x_{j₂}` for all `f : j₁ ⟶ j₂`.
+
+- Directions at `z = (x_j)_j`: the colimit in `C`
+  of the contravariant diagram
+  `j ↦ ccrNewFamily (D.obj j) (x_j)`.
+-/
+
+section LimitConstruction
+
+variable {J : Type w} [Category.{w} J]
+variable (D : J ⥤ CoprodCovarRepCat.{u, v, w} C)
+
+/--
+The type of compatible position families for
+`D`. An element consists of a choice of position
+`x_j : ccrNewIndex (D.obj j)` for each `j`, such
+that `ccrNewReindex (D.map f) x_{j₁} = x_{j₂}`
+for all morphisms `f : j₁ ⟶ j₂`.
+-/
+def ccrLimPosSections :=
+  (ccrDiagPosFunctor D).sections
+
+/--
+The projection of a compatible position family
+to position at `j`.
+-/
+def ccrLimPosProj
+    (z : ccrLimPosSections D) (j : J) :
+    ccrNewIndex (D.obj j) :=
+  z.val j
+
+/--
+Compatibility of position projections with the
+diagram morphisms.
+-/
+lemma ccrLimPosProj_compat
+    (z : ccrLimPosSections D)
+    {j₁ j₂ : J} (f : j₁ ⟶ j₂) :
+    ccrNewReindex (D.map f)
+      (ccrLimPosProj D z j₁) =
+      ccrLimPosProj D z j₂ :=
+  z.property f
+
+/--
+The fiber morphism at a compatible position family,
+adjusted for position compatibility.
+-/
+def ccrLimFiberMap
+    (z : ccrLimPosSections D)
+    {j₁ j₂ : J} (f : j₁ ⟶ j₂) :
+    ccrNewFamily (D.obj j₂)
+      (ccrLimPosProj D z j₂) ⟶
+    ccrNewFamily (D.obj j₁)
+      (ccrLimPosProj D z j₁) :=
+  eqToHom (congrArg
+    (ccrNewFamily (D.obj j₂))
+    (ccrLimPosProj_compat D z f).symm) ≫
+  ccrNewFiberMor (D.map f)
+    (ccrLimPosProj D z j₁)
+
+private lemma ccrLimFiberMap_id_aux
+    {P : CoprodCovarRepCat.{u, v, w} C}
+    {m : P ⟶ P} (hm : m = 𝟙 P)
+    (i : ccrNewIndex P)
+    (h : ccrNewReindex m i = i) :
+    eqToHom (congrArg (ccrNewFamily P) h.symm)
+      ≫ ccrNewFiberMor m i =
+      𝟙 _ := by
+  subst hm
+  simp only [ccrNewFiberMor]
+  -- (𝟙 P).unop.fiber i = eqToHom _ in
+  -- the pi category, which at index i gives
+  -- eqToHom in C.
+  have : (𝟙 P).unop.fiber i =
+      eqToHom (congrArg (ccrNewFamily P)
+        h) := by
+    simp only [ccrNewFamily]
+    rfl
+  rw [this, eqToHom_trans, eqToHom_refl]
+
+lemma ccrLimFiberMap_id
+    (z : ccrLimPosSections D) (j : J) :
+    ccrLimFiberMap D z (𝟙 j) =
+      𝟙 _ := by
+  exact ccrLimFiberMap_id_aux (D.map_id j)
+    (ccrLimPosProj D z j)
+    (ccrLimPosProj_compat D z (𝟙 j))
+
+private lemma ccrLimFiberMap_comp_aux
+    {P Q R : CoprodCovarRepCat.{u, v, w} C}
+    {mf : P ⟶ Q} {mg : Q ⟶ R}
+    {mfg : P ⟶ R}
+    (hcomp : mfg = mf ≫ mg)
+    (iP : ccrNewIndex P) (iQ : ccrNewIndex Q)
+    (iR : ccrNewIndex R)
+    (hf : ccrNewReindex mf iP = iQ)
+    (hg : ccrNewReindex mg iQ = iR)
+    (hfg : ccrNewReindex mfg iP = iR) :
+    eqToHom (congrArg (ccrNewFamily R)
+        hfg.symm) ≫
+      ccrNewFiberMor mfg iP =
+    (eqToHom (congrArg (ccrNewFamily R)
+        hg.symm) ≫
+      ccrNewFiberMor mg iQ) ≫
+    (eqToHom (congrArg (ccrNewFamily Q)
+        hf.symm) ≫
+      ccrNewFiberMor mf iP) := by
+  subst hcomp
+  subst hf
+  simp only [eqToHom_refl, Category.id_comp]
+  rw [ccrNewFiberMor_comp]
+  simp [Category.assoc]
+
+lemma ccrLimFiberMap_comp
+    (z : ccrLimPosSections D)
+    {j₁ j₂ j₃ : J}
+    (f : j₁ ⟶ j₂) (g : j₂ ⟶ j₃) :
+    ccrLimFiberMap D z (f ≫ g) =
+    ccrLimFiberMap D z g ≫
+      ccrLimFiberMap D z f := by
+  exact ccrLimFiberMap_comp_aux
+    (D.map_comp f g)
+    (ccrLimPosProj D z j₁)
+    (ccrLimPosProj D z j₂)
+    (ccrLimPosProj D z j₃)
+    (ccrLimPosProj_compat D z f)
+    (ccrLimPosProj_compat D z g)
+    (ccrLimPosProj_compat D z (f ≫ g))
+
+/--
+The fiber functor at a compatible position family
+`z`. For each `j : Jᵒᵖ`, gives the direction object
+`ccrNewFamily (D.obj j.unop) (π_j z)`. Morphisms
+are the fiber morphisms from `D`, going backward.
+-/
+def ccrDiagFiberFunctor
+    (z : ccrLimPosSections D) :
+    Jᵒᵖ ⥤ C where
+  obj jop :=
+    ccrNewFamily (D.obj jop.unop)
+      (ccrLimPosProj D z jop.unop)
+  map {j₁op j₂op} fop :=
+    ccrLimFiberMap D z fop.unop
+  map_id jop :=
+    ccrLimFiberMap_id D z jop.unop
+  map_comp {j₁op j₂op j₃op} fop gop := by
+    change ccrLimFiberMap D z
+        (gop.unop ≫ fop.unop) =
+      ccrLimFiberMap D z fop.unop ≫
+        ccrLimFiberMap D z gop.unop
+    exact ccrLimFiberMap_comp D z
+      gop.unop fop.unop
+
+/-! ## Type equality for CoprodCovarRepCat -/
+
+/--
+The underlying type of `CoprodCovarRepCat C` is
+definitionally equal to
+`(Grothendieck (familyFunctor C))ᵒᵖ`.
+-/
+lemma ccrNewTypeEq :
+    ↑(CoprodCovarRepCat.{u, v, w} C) =
+    (Grothendieck
+      (familyFunctor.{u, v, w} C))ᵒᵖ :=
+  rfl
+
+end LimitConstruction
+
+/-! ## HasLimitsOfShape for CoprodCovarRepCat
+
+The Grothendieck construction on the family functor
+has colimits of shape `J` when:
+- The base `(Type w)ᵒᵖ` has colimits of shape `J`
+  (equivalently, `Type w` has limits of shape `Jᵒᵖ`)
+- Each fiber `X → C` has colimits of shape `J`
+  (equivalently, `C` has colimits of shape `J`)
+
+Colimits in the Grothendieck construction then give
+limits in the opposite category
+`CoprodCovarRepCat C`.
+-/
+
+section HasLimitsOfShapeCCR
+
+variable {J : Type w} [Category.{w} J]
+variable {C : Type u} [Category.{v} C]
+
+/--
+The Pi category `I → C` has colimits of shape `J`
+when `C` does. Follows from the equivalence
+`(I → C) ≌ (Discrete I ⥤ C)` and the functor
+category colimits instance.
+-/
+theorem piHasColimitsOfShape
+    {I : Type w} [HasColimitsOfShape J C] :
+    HasColimitsOfShape J (I → C) :=
+  Adjunction.hasColimitsOfShape_of_equivalence
+    (piEquivalenceFunctorDiscrete I C).functor
+
+/--
+Each fiber of `familyFunctor C` — the Pi category
+`X.unop → C` — has colimits of shape `J` when `C`
+does.
+-/
+theorem grothendieckFiberHasColimitsOfShape
+    [HasColimitsOfShape J C]
+    (X : (Type w)ᵒᵖ) :
+    HasColimitsOfShape J
+      ↑((familyFunctor.{u, v, w} C).obj X) :=
+  piHasColimitsOfShape
+
+/--
+The base category `(Type w)ᵒᵖ` has colimits of
+shape `J` when `Type w` has limits of shape `Jᵒᵖ`.
+-/
+theorem typeOpHasColimitsOfShape :
+    HasColimitsOfShape J (Type w)ᵒᵖ :=
+  hasColimitsOfShape_op_of_hasLimitsOfShape
+
+end HasLimitsOfShapeCCR
+
+/-! ## Explicit limit construction for CoprodCovarRepCat
+
+We build an explicit `HasLimit` instance for any
+diagram `D : J ⥤ CoprodCovarRepCat C` by
+constructing a `LimitCone`. The vertex has:
+- Positions: the sections of the position diagram
+- Fibers: colimits in `C` of the fiber diagrams
+-/
+
+section ExplicitLimit
+
+variable {J : Type w} [Category.{w} J]
+variable {C : Type u} [Category.{v} C]
+variable [HasColimitsOfShape Jᵒᵖ C]
+variable (D : J ⥤ CoprodCovarRepCat.{u, v, w} C)
+
+private def ccrHasLimit_iotaGr
+    (getCocone :
+      ∀ (z : ccrLimPosSections D),
+        ColimitCocone
+          (ccrDiagFiberFunctor D z))
+    (j : Jᵒᵖ) :
+    D.leftOp.obj j ⟶
+      (⟨Opposite.op (ccrLimPosSections D),
+        fun z =>
+          (getCocone z).cocone.pt⟩ :
+        Grothendieck
+          (familyFunctor.{u, v, w} C)) :=
+  { base := Quiver.Hom.op
+      (fun z : ccrLimPosSections D =>
+        ccrLimPosProj D z j.unop)
+    fiber := fun z =>
+      (getCocone z).cocone.ι.app j }
+
+omit [HasColimitsOfShape Jᵒᵖ C] in
+private lemma ccrHasLimit_cocone_nat
+    (getCocone :
+      ∀ (z : ccrLimPosSections D),
+        ColimitCocone
+          (ccrDiagFiberFunctor D z))
+    (j₁ j₂ : Jᵒᵖ)
+    (f : j₁ ⟶ j₂) :
+    D.leftOp.map f ≫
+      ccrHasLimit_iotaGr D getCocone j₂ =
+      ccrHasLimit_iotaGr D getCocone j₁ := by
+  unfold ccrHasLimit_iotaGr
+  have hbase :
+      (D.leftOp.map f).base ≫
+        Quiver.Hom.op
+          (fun z : ccrLimPosSections D =>
+            ccrLimPosProj D z j₂.unop) =
+        Quiver.Hom.op
+          (fun z : ccrLimPosSections D =>
+            ccrLimPosProj D z j₁.unop) := by
+    apply Quiver.Hom.unop_inj
+    funext z
+    exact ccrLimPosProj_compat D z f.unop
+  apply Grothendieck.ext _ _ hbase
+  -- The fiber goal is at the Pi-category
+  -- level: eqToHom _ ≫ (f ≫ g).fiber = rhs
+  -- Rewrite using Grothendieck comp_fiber.
+  rw [Grothendieck.comp_fiber,
+    ← Category.assoc (eqToHom _)
+      (eqToHom _) _,
+    eqToHom_trans]
+  funext z
+  dsimp only []
+  have hnat :=
+    (getCocone z).cocone.w f
+  simp only [] at hnat
+  rw [← hnat]
+  simp only [ccrDiagFiberFunctor,
+    ccrLimFiberMap, ccrNewFiberMor,
+    Category.assoc]
+  have pi_eqToHom_comp_apply :
+      ∀ {I : Type w} {C' : Type u}
+        [inst : Category.{v} C']
+        {X Y Z : I → C'}
+        (h : X = Y)
+        (f : Y ⟶ Z)
+        (i : I),
+        (eqToHom h ≫ f) i =
+          eqToHom (congrFun h i) ≫ f i := by
+    intro I C' inst X Y Z h f i
+    subst h; rfl
+  rw [pi_eqToHom_comp_apply]
+  congr 1
+
+private def ccrHasLimit_descBase
+    (s : Cocone D.leftOp)
+    (x : s.pt.base.unop) :
+    ccrLimPosSections D :=
+  ⟨fun j =>
+    (s.ι.app
+      (Opposite.op j)).base.unop x,
+    fun {j₁ j₂} f => by
+      have nat := s.w (Quiver.Hom.op f)
+      exact congrFun (congrArg
+        (fun h =>
+          Quiver.Hom.unop h.base)
+        nat) x⟩
+
+omit [HasColimitsOfShape Jᵒᵖ C] in
+private lemma ccrHasLimit_desc_nat
+    (s : Cocone D.leftOp)
+    (x : s.pt.base.unop)
+    (j₁ j₂ : Jᵒᵖ) (f : j₁ ⟶ j₂) :
+    (ccrDiagFiberFunctor D
+      (ccrHasLimit_descBase D s x)).map
+        f ≫
+      (s.ι.app j₂).fiber x =
+    (s.ι.app j₁).fiber x ≫
+      ((Functor.const Jᵒᵖ).obj
+        (s.pt.fiber x)).map f := by
+  -- Remove ≫ Functor.const.map f (= 𝟙).
+  change (ccrDiagFiberFunctor D
+    (ccrHasLimit_descBase D s x)).map
+      f ≫
+    (s.ι.app j₂).fiber x =
+    (s.ι.app j₁).fiber x ≫ 𝟙 _
+  rw [Category.comp_id]
+  -- Unfold ccrDiagFiberFunctor.map f.
+  simp only [ccrDiagFiberFunctor,
+    ccrLimFiberMap, ccrNewFiberMor,
+    Category.assoc]
+  -- Extract from s.w f.
+  have nat : D.leftOp.map f ≫
+      s.ι.app j₂ = s.ι.app j₁ := by
+    rw [← s.w f]
+  -- Extract fiber at x from nat.
+  have hfib := congrFun
+    (Grothendieck.congr nat) x
+  rw [Grothendieck.comp_fiber] at hfib
+  rw [pi_eqToHom_comp_apply,
+    pi_eqToHom_comp_apply] at hfib
+  rw [pi_comp_apply] at hfib
+  -- hfib:
+  --   eqToHom p ≫ familyBif_stuff x
+  --     ≫ ι_j₂ x
+  --   = eqToHom q ≫ ι_j₁ x
+  -- Goal:
+  --   eqToHom r ≫ D_fiber ≫ ι_j₂ x
+  --   = ι_j₁ x
+  -- `familyBif_stuff x` and `D_fiber` are
+  -- (extensionally) the same morphism but
+  -- expressed through different
+  -- compositions. The eqToHom proofs differ.
+  -- Factor out the common part.
+  -- First, left-cancel eqToHom from hfib.
+  rw [eqToHom_comp_iff] at hfib
+  rw [← Category.assoc,
+    eqToHom_trans] at hfib
+  -- hfib: familyBif_stuff x ≫ ι_j₂ x
+  --   = eqToHom _ ≫ ι_j₁ x
+  -- Goal: eqToHom _ ≫ D_fiber ≫ ι_j₂ x
+  --   = ι_j₁ x
+  -- Use eqToHom_comp_iff to also left-cancel
+  -- from goal, getting:
+  -- D_fiber ≫ ι_j₂ x = eqToHom _ ≫ ι_j₁ x
+  rw [eqToHom_comp_iff]
+  -- Goal: D_fiber ≫ ι_j₂ x
+  --   = eqToHom _.symm ≫ ι_j₁ x
+  -- hfib: familyBif_stuff x ≫ ι_j₂ x
+  --   = eqToHom _ ≫ ι_j₁ x
+  -- D_fiber and familyBif_stuff x are
+  -- definitionally equal (both are
+  -- .unop.fiber at the same index).
+  -- Use proof irrelevance on eqToHom.
+  convert hfib using 2
+
+/--
+`HasLimit D` for any diagram
+`D : J ⥤ CoprodCovarRepCat C`, given that `C` has
+colimits of shape `Jᵒᵖ`.
+-/
+theorem ccrHasLimit : HasLimit D := by
+  have getCocone :
+      ∀ (z : ccrLimPosSections D),
+        ColimitCocone
+          (ccrDiagFiberFunctor D z) :=
+    fun z => getColimitCocone _
+  let vtxGr : Grothendieck
+      (familyFunctor.{u, v, w} C) :=
+    ⟨Opposite.op (ccrLimPosSections D),
+      fun z => (getCocone z).cocone.pt⟩
+  let iotaGr :=
+    ccrHasLimit_iotaGr D getCocone
+  -- Build cocone.
+  let cc : Cocone D.leftOp :=
+    { pt := vtxGr
+      ι :=
+        { app := iotaGr
+          naturality := fun {j₁ j₂} f => by
+            change D.leftOp.map f ≫
+              iotaGr j₂ =
+              iotaGr j₁ ≫ 𝟙 _
+            rw [Category.comp_id]
+            exact ccrHasLimit_cocone_nat
+              D getCocone j₁ j₂ f } }
+  -- Build desc: vtxGr ⟶ s.pt for each
+  -- cocone s over D.leftOp.
+  let desc (s : Cocone D.leftOp) :
+      vtxGr ⟶ s.pt :=
+    { base := Quiver.Hom.op
+        (ccrHasLimit_descBase D s)
+      fiber := fun x =>
+        -- x : s.pt.base.unop
+        -- Need: vtxGr.fiber(descBase x)
+        --   ⟶ s.pt.fiber x
+        -- vtxGr.fiber z =
+        --   (getCocone z).cocone.pt
+        -- Use the colimit universal
+        -- property of getCocone.
+        (getCocone
+          (ccrHasLimit_descBase D s
+            x)).isColimit.desc
+          { pt := s.pt.fiber x
+            ι :=
+              { app := fun j =>
+                  (s.ι.app j).fiber x
+                naturality :=
+                  fun {j₁ j₂} f =>
+                    ccrHasLimit_desc_nat
+                      D s x j₁ j₂ f
+              }
+          }
+    }
+  -- Abbreviation for the descent cocone.
+  let descCocone
+      (s : Cocone D.leftOp)
+      (x : s.pt.base.unop) :
+      Cocone (ccrDiagFiberFunctor D
+        (ccrHasLimit_descBase D s x)) :=
+    { pt := s.pt.fiber x
+      ι :=
+        { app := fun j =>
+            (s.ι.app j).fiber x
+          naturality :=
+            fun {j₁ j₂} f =>
+              ccrHasLimit_desc_nat
+                D s x j₁ j₂ f
+        }
+    }
+  -- Build IsColimit for cc.
+  -- The fac proof: iotaGr j ≫ desc s
+  --   = s.ι.app j.
+  -- We prove this by showing both base
+  -- and fiber components are equal.
+  -- Build IsColimit cc.
+  have isColim : IsColimit cc := by
+    refine
+      { desc := desc
+        fac := fun s j => ?fac
+        uniq := fun s m hm => ?uniq }
+    case fac =>
+      exact Grothendieck.ext _ _ rfl (by
+        rw [Grothendieck.comp_fiber]
+        funext x
+        -- Goal is (A ≫ B ≫ C ≫ D) x = E
+        -- Reassociate and apply pointwise.
+        rw [← Category.assoc (eqToHom _)
+          (eqToHom _) _,
+          eqToHom_trans]
+        rw [pi_eqToHom_comp_apply,
+          pi_comp_apply]
+        -- Use colimit fac via convert.
+        have fac :=
+          (getCocone
+            (ccrHasLimit_descBase D s
+              x)).isColimit.fac
+            (descCocone s x) j
+        simp only [] at fac
+        -- fac: ι.app j ≫ desc = leg j
+        -- Goal: eqToHom _ ≫ stuff x
+        --   ≫ desc_fiber x = leg j x
+        -- Chain: eqToHom _ ≫ stuff x
+        --   should equal ι.app j.
+        rw [← Category.assoc]
+        -- Use convert with fac.
+        -- The (desc s).fiber x IS the
+        -- colimit descent.
+        -- The composition should match fac
+        -- up to definitional unfolding.
+        convert fac using 2
+        -- Remaining: eqToHom ≫ stuff = ι.
+        -- The eqToHom maps between fiber
+        -- types at equal indices.
+        -- stuff = familyBifunctor_map at x
+        -- = (cc.ι.app j).fiber
+        --   ((desc s).base.unop x)
+        -- = (getCocone (descBase x))
+        --   .cocone.ι.app j
+        -- (by definition of iotaGr).
+        -- The eqToHom is between the same
+        -- types (the indices are def. equal).
+        simp only [eqToHom_refl,
+          Category.id_comp]
+        rfl)
+    case uniq =>
+      -- Use cases on m to enable subst.
+      obtain ⟨m_base, m_fiber⟩ := m
+      have hbase :
+          m_base = (desc s).base := by
+        apply Quiver.Hom.unop_inj
+        funext x
+        apply Subtype.ext
+        funext j
+        exact congrFun (congrArg
+          Quiver.Hom.unop (congrArg
+            Grothendieck.Hom.base
+            (hm (Opposite.op j)))) x
+      subst hbase
+      -- Now m = ⟨(desc s).base, m_fiber⟩.
+      -- Need: ⟨base, m_fiber⟩ = desc s.
+      -- The base is already equal, so
+      -- ext gives: m_fiber = (desc s).fiber.
+      refine Grothendieck.ext _ _ rfl ?_
+      -- Fiber: eqToHom rfl ≫ m_fiber
+      --   = (desc s).fiber.
+      -- eqToHom rfl = 𝟙.
+      funext x
+      simp only [eqToHom_refl,
+        Category.id_comp]
+      -- m_fiber x = (desc s).fiber x
+      -- Use colimit uniqueness.
+      apply (getCocone
+        (ccrHasLimit_descBase D s
+          x)).isColimit.uniq
+        (descCocone s x)
+      intro j
+      -- Need: ι j ≫ m_fiber x
+      --   = (s.ι.app j).fiber x
+      -- From hm j:
+      -- ⟨(desc s).base, m_fiber⟩ composed
+      -- with iotaGr j = s.ι.app j.
+      have hj := hm j
+      -- Extract fiber at x from hj.
+      have hfibj :=
+        congrFun
+          (Grothendieck.congr hj) x
+      rw [Grothendieck.comp_fiber] at hfibj
+      simp only [eqToHom_refl,
+        Category.id_comp] at hfibj
+      exact hfibj
+  exact HasLimit.mk
+    { cone := coneOfCoconeLeftOp cc
+      isLimit :=
+        isLimitConeOfCoconeLeftOp D isColim }
+
+end ExplicitLimit
+
+end GebLean

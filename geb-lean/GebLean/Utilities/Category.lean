@@ -2632,6 +2632,58 @@ lemma CategoryTheory.types_eqToHom_eq_cast.{w}
       cast h x := by
   subst h; rfl
 
+/-! ### Pi-category eqToHom utilities
+
+In a Pi category `I → C`, compositions and `eqToHom`
+are computed pointwise, but Lean's definitional
+equality checker does not always see through this.
+The following lemmas allow rewriting Pi-category
+operations to their pointwise equivalents.
+-/
+
+section PiCategoryEqToHom
+
+open CategoryTheory
+
+universe w₃ u₃ v₃
+
+variable {I : Type w₃} {C : Type u₃}
+  [CategoryTheory.Category.{v₃} C]
+
+@[simp]
+lemma pi_eqToHom_apply
+    {F G : I → C} (h : F = G) (i : I) :
+    (eqToHom (C := I → C) h) i =
+      eqToHom (congr_fun h i) := by
+  subst h; rfl
+
+@[simp]
+lemma pi_comp_apply
+    {F G H : I → C}
+    (f : F ⟶ G) (g : G ⟶ H) (i : I) :
+    (f ≫ g) i = f i ≫ g i := rfl
+
+@[simp]
+lemma pi_id_apply
+    {F : I → C} (i : I) :
+    (𝟙 F : F ⟶ F) i = 𝟙 (F i) := rfl
+
+lemma pi_eqToHom_comp_apply
+    {F G H : I → C} (p : F = G) (f : G ⟶ H)
+    (i : I) :
+    ((eqToHom p ≫ f : F ⟶ H)) i =
+      eqToHom (congr_fun p i) ≫ f i := by
+  subst p; simp
+
+lemma pi_comp_eqToHom_apply
+    {F G H : I → C} (f : F ⟶ G) (p : G = H)
+    (i : I) :
+    ((f ≫ eqToHom p : F ⟶ H)) i =
+      f i ≫ eqToHom (congr_fun p i) := by
+  subst p; simp
+
+end PiCategoryEqToHom
+
 /-! ## Cat-Enriched Hom Profunctor
 
 The assignment `(C, D) ↦ (C ⥤ D)` is a `Cat`-enriched
