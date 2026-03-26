@@ -111,6 +111,18 @@ Definitions in `Utilities/Elements.lean`:
 - `ccrDiagFiberFunctor D z` — fiber diagram
 - `ccrHasLimit D` — limits exist (when `C` has
   colimits of `Jᵒᵖ`)
+- `ccrHasLimitsOfShape` — typeclass instance
+- `ccrHasLimitsOfSize` — all limits of size
+  `(w, w)` when `C` has all colimits of that size
+- `ccrLimVertexGr` — computable limit vertex
+- `ccrLimIotaGr` — injection morphisms
+- `ccrLimCoconeGr` — colimit cocone (Grothendieck)
+- `ccrLimCoconeGrIsColimit` — universal property
+- `ccrLimitCone` — computable `LimitCone`
+- `ccrLimFunctor` — computable limit functor
+  parameterized by colimit cocone choices
+- `ccrConstLimAdj` — `Functor.const J ⊣
+  ccrLimFunctor chooseColim` adjunction
 
 ## Planned Work
 
@@ -126,8 +138,6 @@ for the full plan.
 
 ### Phase 4 (remaining): Universal Morphisms
 
-- Package `ccrHasLimit` into `HasLimitsOfShape` and
-  `HasLimitsOfSize` instances
 - Prove colimits (needs limits of Grothendieck, or
   direct construction)
 - Derive `PresheafPRACat I J` limits/colimits from

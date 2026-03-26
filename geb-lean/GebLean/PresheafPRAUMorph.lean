@@ -631,4 +631,333 @@ theorem ccrHasLimit : HasLimit D := by
 
 end ExplicitLimit
 
+/-! ## HasLimitsOfShape for CoprodCovarRepCat
+
+Packaging `ccrHasLimit` into typeclass instances
+enables mathlib's limit functor `lim` and the
+adjunction `constLimAdj : Functor.const J ⊣ lim`.
+-/
+
+section LimitInstances
+
+variable {J : Type w} [Category.{w} J]
+variable {C : Type u} [Category.{v} C]
+
+/--
+`CoprodCovarRepCat C` has limits of shape `J` when
+`C` has colimits of shape `Jᵒᵖ`.
+-/
+instance ccrHasLimitsOfShape
+    [HasColimitsOfShape Jᵒᵖ C] :
+    HasLimitsOfShape J
+      (↑(CoprodCovarRepCat.{u, v, w} C)) :=
+  ⟨fun D => ccrHasLimit D⟩
+
+end LimitInstances
+
+section LimitSize
+
+variable {C : Type u} [Category.{v} C]
+
+/--
+`CoprodCovarRepCat C` has all limits of size
+`(w, w)` when `C` has all colimits of that size.
+-/
+instance ccrHasLimitsOfSize
+    [HasColimitsOfSize.{w, w} C] :
+    HasLimitsOfSize.{w, w}
+      (↑(CoprodCovarRepCat.{u, v, w} C)) :=
+  ⟨fun _ _ => inferInstance⟩
+
+end LimitSize
+
+/-! ## Computable Limit Functor
+
+Mathlib's `lim` and `constLimAdj` are
+not computable (they use `choice` to
+select limit cones). To obtain a computable limit
+functor for `CoprodCovarRepCat C` and a computable
+adjunction with the constant functor, we
+parameterize by an explicit choice of colimit
+cocones in `C` (following the pattern of
+`spanArrowReflector` in `ArrowSpanAdjunction`).
+-/
+
+section ComputableLimFunctor
+
+variable {J : Type w} [Category.{w} J]
+variable {C : Type u} [Category.{v} C]
+variable
+  (chooseColim :
+    (F : Jᵒᵖ ⥤ C) → ColimitCocone F)
+
+variable
+  (D : J ⥤ CoprodCovarRepCat.{u, v, w} C)
+
+/--
+The vertex of the limit cone for `D` in the
+Grothendieck construction. Positions are the
+sections of the position diagram; fibers are
+colimits of the fiber diagrams in `C`.
+-/
+def ccrLimVertexGr :
+    Grothendieck
+      (familyFunctor.{u, v, w} C) :=
+  ⟨Opposite.op (ccrLimPosSections D),
+    fun z =>
+      (chooseColim
+        (ccrDiagFiberFunctor D z)).cocone.pt⟩
+
+/--
+The injection morphism from `D.leftOp.obj j` to
+`ccrLimVertexGr` in the Grothendieck construction.
+-/
+def ccrLimIotaGr
+    (j : Jᵒᵖ) :
+    D.leftOp.obj j ⟶
+      ccrLimVertexGr chooseColim D :=
+  { base := Quiver.Hom.op
+      (fun z : ccrLimPosSections D =>
+        ccrLimPosProj D z j.unop)
+    fiber := fun z =>
+      (chooseColim
+        (ccrDiagFiberFunctor D z)).cocone.ι.app
+          j }
+
+/--
+The colimit cocone for `D.leftOp` in the
+Grothendieck construction with vertex
+`ccrLimVertexGr`.
+-/
+def ccrLimCoconeGr :
+    Cocone D.leftOp where
+  pt := ccrLimVertexGr chooseColim D
+  ι :=
+    { app := ccrLimIotaGr chooseColim D
+      naturality := fun {j₁ j₂} f => by
+        change D.leftOp.map f ≫
+          ccrLimIotaGr chooseColim D j₂ =
+          ccrLimIotaGr chooseColim D j₁ ≫ 𝟙 _
+        rw [Category.comp_id]
+        exact ccrHasLimit_cocone_nat
+          D (fun z => chooseColim
+            (ccrDiagFiberFunctor D z))
+          j₁ j₂ f }
+
+/--
+The descent morphism from `ccrLimVertexGr` to
+the vertex of any cocone over `D.leftOp`.
+-/
+def ccrLimDescGr
+    (s : Cocone D.leftOp) :
+    ccrLimVertexGr chooseColim D ⟶ s.pt :=
+  { base := Quiver.Hom.op
+      (ccrHasLimit_descBase D s)
+    fiber := fun x =>
+      (chooseColim
+        (ccrDiagFiberFunctor D
+          (ccrHasLimit_descBase D s
+            x))).isColimit.desc
+        { pt := s.pt.fiber x
+          ι :=
+            { app := fun j =>
+                (s.ι.app j).fiber x
+              naturality :=
+                fun {j₁ j₂} f =>
+                  ccrHasLimit_desc_nat
+                    D s x j₁ j₂ f } } }
+
+private def ccrLimDescCocone
+    (s : Cocone D.leftOp)
+    (x : s.pt.base.unop) :
+    Cocone (ccrDiagFiberFunctor D
+      (ccrHasLimit_descBase D s x)) :=
+  { pt := s.pt.fiber x
+    ι :=
+      { app := fun j =>
+          (s.ι.app j).fiber x
+        naturality :=
+          fun {j₁ j₂} f =>
+            ccrHasLimit_desc_nat
+              D s x j₁ j₂ f } }
+
+/--
+`ccrLimCoconeGr` is a colimit cocone for
+`D.leftOp` in the Grothendieck construction.
+-/
+def ccrLimCoconeGrIsColimit :
+    IsColimit (ccrLimCoconeGr chooseColim D) :=
+  let cc := ccrLimCoconeGr chooseColim D
+  let desc' := ccrLimDescGr chooseColim D
+  let descCocone' := ccrLimDescCocone D
+  { desc := desc'
+    fac := fun s j =>
+      Grothendieck.ext _ _ rfl (by
+        rw [Grothendieck.comp_fiber]
+        funext x
+        rw [← Category.assoc (eqToHom _)
+          (eqToHom _) _,
+          eqToHom_trans]
+        rw [pi_eqToHom_comp_apply,
+          pi_comp_apply]
+        have fac :=
+          (chooseColim
+            (ccrDiagFiberFunctor D
+              (ccrHasLimit_descBase D s
+                x))).isColimit.fac
+            (descCocone' s x) j
+        simp only [] at fac
+        rw [← Category.assoc]
+        convert fac using 2
+        simp only [eqToHom_refl,
+          Category.id_comp]
+        rfl)
+    uniq := fun s m hm => by
+      obtain ⟨m_base, m_fiber⟩ := m
+      have hbase :
+          m_base = (desc' s).base := by
+        apply Quiver.Hom.unop_inj
+        funext x
+        apply Subtype.ext
+        funext j
+        exact congrFun (congrArg
+          Quiver.Hom.unop (congrArg
+            Grothendieck.Hom.base
+            (hm (Opposite.op j)))) x
+      subst hbase
+      refine Grothendieck.ext _ _ rfl ?_
+      funext x
+      simp only [eqToHom_refl,
+        Category.id_comp]
+      apply (chooseColim
+        (ccrDiagFiberFunctor D
+          (ccrHasLimit_descBase D s
+            x))).isColimit.uniq
+        (descCocone' s x)
+      intro j
+      have hj := hm j
+      have hfibj :=
+        congrFun
+          (Grothendieck.congr hj) x
+      rw [Grothendieck.comp_fiber]
+        at hfibj
+      simp only [eqToHom_refl,
+        Category.id_comp] at hfibj
+      exact hfibj }
+
+/--
+An explicit `LimitCone` for any diagram
+`D : J ⥤ CoprodCovarRepCat C`, given a choice
+of colimit cocones in `C`.
+-/
+def ccrLimitCone :
+    LimitCone D where
+  cone :=
+    coneOfCoconeLeftOp
+      (ccrLimCoconeGr chooseColim D)
+  isLimit :=
+    isLimitConeOfCoconeLeftOp D
+      (ccrLimCoconeGrIsColimit chooseColim D)
+
+end ComputableLimFunctor
+
+/-! ## Computable Limit Functor and Adjunction
+
+Given explicit colimit choices in `C`, we build
+a computable limit functor
+`(J ⥤ CCR(C)) ⥤ CCR(C)` and prove it is right
+adjoint to the constant functor.
+-/
+
+section LimFunctorAdj
+
+variable {J : Type w} [Category.{w} J]
+variable {C : Type u} [Category.{v} C]
+variable
+  (chooseColim :
+    (F : Jᵒᵖ ⥤ C) → ColimitCocone F)
+
+private abbrev ccrLC
+    (chooseColim :
+      (F : Jᵒᵖ ⥤ C) → ColimitCocone F)
+    (D : J ⥤
+      ↑(CoprodCovarRepCat.{u, v, w} C)) :
+    LimitCone D :=
+  ccrLimitCone chooseColim D
+
+/--
+The limit functor for `CoprodCovarRepCat C`,
+sending a diagram `D : J ⥤ CCR(C)` to its limit.
+Parameterized by an explicit choice of colimit
+cocones in `C`.
+-/
+def ccrLimFunctor :
+    (J ⥤ ↑(CoprodCovarRepCat.{u, v, w} C)) ⥤
+    ↑(CoprodCovarRepCat.{u, v, w} C) where
+  obj D := (ccrLC chooseColim D).cone.pt
+  map {D₁ D₂} α :=
+    (ccrLC chooseColim D₂).isLimit.lift
+      ((Cone.postcompose α).obj
+        (ccrLC chooseColim D₁).cone)
+  map_id D := by
+    apply (ccrLC chooseColim D).isLimit.hom_ext
+    intro j
+    rw [(ccrLC chooseColim D).isLimit.fac]
+    simp [Cone.postcompose]
+  map_comp {D₁ D₂ D₃} α β := by
+    apply (ccrLC chooseColim D₃).isLimit.hom_ext
+    intro j
+    dsimp only [Cone.postcompose]
+    simp only [Category.assoc, IsLimit.fac,
+      NatTrans.comp_app]
+    conv_rhs => rw [← Category.assoc]
+    rw [IsLimit.fac]
+    simp only [NatTrans.comp_app,
+      Category.assoc]
+
+/--
+The constant-limit adjunction for
+`CoprodCovarRepCat C`: the constant functor
+`Functor.const J` is left adjoint to
+`ccrLimFunctor chooseColim`.
+-/
+def ccrConstLimAdj :
+    (Functor.const J :
+      ↑(CoprodCovarRepCat.{u, v, w} C) ⥤
+      J ⥤ ↑(CoprodCovarRepCat.{u, v, w} C)) ⊣
+    ccrLimFunctor chooseColim :=
+  Adjunction.mkOfHomEquiv {
+    homEquiv := fun X D =>
+      let il := (ccrLC chooseColim D).isLimit
+      let π := (ccrLC chooseColim D).cone.π
+      { toFun := fun f => il.lift ⟨X, f⟩
+        invFun := fun g =>
+          { app := fun j => g ≫ π.app j }
+        left_inv := fun f => by
+          ext j
+          simp only [Functor.const_obj_obj]
+          exact il.fac ⟨X, f⟩ j
+        right_inv := fun g => by
+          apply il.hom_ext
+          intro j
+          exact il.fac ⟨X, _⟩ j }
+    homEquiv_naturality_left_symm :=
+      fun f g => by
+        ext j; simp [Category.assoc]
+    homEquiv_naturality_right :=
+      fun {X D₁ D₂} f α => by
+        let il₂ := (ccrLC chooseColim D₂).isLimit
+        apply il₂.hom_ext
+        intro j
+        simp only [Equiv.coe_fn_mk,
+          Category.assoc]
+        rw [il₂.fac]
+        simp only [ccrLimFunctor,
+          IsLimit.fac]
+        dsimp only [Cone.postcompose]
+        simp only [NatTrans.comp_app,
+          ← Category.assoc, IsLimit.fac] }
+
+end LimFunctorAdj
+
 end GebLean
