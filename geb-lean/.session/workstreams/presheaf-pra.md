@@ -1,180 +1,172 @@
-# Workstream: Presheaf PRA (Polynomial Functors Between Presheaf Categories)
+# Workstream: Presheaf PRA
 
 ## Status
 
-Planning complete. Implementation not started.
+Phase 1 complete. Phase 2 complete. Phases 3-5
+in progress (Phase 4 partially done).
 
 ## Goal
 
 Define polynomial functors between presheaf categories
-(parametric right adjoints) in Lean, building on the existing
-`CoprodCovarRepCat` and `PolyFunctorBetweenCat` infrastructure.
+(parametric right adjoints) in Lean, prove they
+generalize slice-polynomial functors, and develop
+universal morphisms, composition, and algebraic
+structures.
 
 ## Design Principles
 
 ### One step at a time
 
-Every definition and proof should take exactly one step
-beyond the definitions it depends on. Factor out intermediate
-definitions so that each one is expressed in terms of the
-layer directly below it, not multiple layers down. This
-ensures that goals and contexts remain readable, that
-tactics can operate at a single level of abstraction, and
-that each definition has a clear, testable meaning.
-
-Use `def`, not `abbrev`, for named intermediate
-constructions. `abbrev` causes automatic expansion, which
-defeats the purpose of factoring: goals appear in terms
-of internals rather than the next layer down.
+Every definition and proof should take exactly one
+step beyond the definitions it depends on.  Factor
+out intermediate definitions so that each one is
+expressed in terms of the layer directly below it.
+Use `def`, not `abbrev`.
 
 ### Everything is functorial
 
-Every operation must be expressed as a functor (or natural
+Every operation must be expressed as a functor, natural
 transformation, or other higher-order categorical
-construction) to the greatest degree possible. This makes
-operations composable, allows reuse of existing results
-about functor categories, and ensures that naturality
-conditions are handled structurally rather than by ad-hoc
-proofs.
+construction.
 
-When decomposing a construction, each intermediate step
-should itself be a functor. The final construction is then
-a composition of functors, and its properties follow from
-the properties of the components.
+### Use mathlib's `op`, not our `op'`
 
-### Worked example: decomposing PresheafPRACat
+All new constructions use mathlib's `Opposite` (`ᵒᵖ`)
+for interoperability.  No dependence on `op'`-based
+constructions.
 
-The original definition was:
+## Completed Work
 
-```lean
-abbrev PresheafPRACat I J : Cat :=
-  Cat.of
-    (Jᵒᵖ ⥤ CoprodCovarRepCat (Iᵒᵖ ⥤ Type w_I))
-```
+### Phase 1: Core Definitions
 
-This is decomposed into:
+**File:** `GebLean/PresheafPRA.lean`
 
-1. `catContraHomFunctor (Type w_I) : Catᵒᵖ ⥤ Cat`
-   — the contravariant hom-functor, sending `C` to
-   `C ⥤ Type w_I` via precomposition
-2. Composition with `Cat.opFunctor : Cat ⥤ Cat`
-   (via the op involution `Cat ≅ Catᵒᵖ`) gives a
-   functor `Catᵒᵖ ⥤ Cat` sending `I` to
-   `Iᵒᵖ ⥤ Type w_I`
-3. `CoprodCovarRepCat` applied functorially gives
-   another `Cat`-level operation
-4. The outer `Jᵒᵖ ⥤ ...` functor category is another
-   contravariant hom application
+Definitions in `PresheafPRA.lean`:
 
-Each step is a `def` with its own type signature, and
-`PresheafPRACat` is defined by composing them.
+- `catHomProfunctor` — Cat-enriched hom
+- `catCovarHomFunctor` / `catContraHomFunctor`
+- `presheafCatFunctor` — `I ↦ Iᵒᵖ ⥤ Type`
+- `ccrPresheafCatFunctor` — `I ↦ CCR(PSh(I))`
+- `presheafPRACatProfunctor` — no free params
+- `presheafPRACatFunctor` — fix `J`, vary `I`
+- `PresheafPRACat I J` — the PRA category
+- `praPositionsFunctor` — positions as functor
+- `praDirectionsAtFunctor` — nLab's `E_T`
+- `praEvalAtProfunctor` — profunctor form
+- `praEvalAtFunctor` — `PSh(I) ⥤ PSh(J)` form
+- `praEvalAt P Z j` — pointwise evaluation
 
-## Design Decisions
+Definitions in `Utilities/Category.lean`:
 
-### Representation
+- `catHomProfunctor_eq_internalHom` — equals
+  mathlib `internalHom` when universes match
+- `Cat.pre_app_eq_whiskeringLeft` — Cat CCC
+- `grothendieckFunctor` — Grothendieck as functor
+- `pi_eqToHom_apply` etc. — Pi eqToHom utilities
 
-A PRA `Presheaf I -> Presheaf J` is a functor
-`Jᵒᵖ ⥤ CoprodCovarRepCat (Iᵒᵖ ⥤ Type w_I)`.
+Definitions in `Utilities/Families.lean`:
 
-At each `j : J`, this gives a polynomial
-`(A(j), E_j : A(j) -> Presheaf I)`. The functor action
-provides restriction maps, making the evaluation a presheaf on
-`J` without any `Subtype` or separate naturality predicate.
+- `familyFunctor` / `familyBifunctor` — using `op`
+- `FreeProdCompletion` / `freeProdCompletionFunctor`
+- `CoprodCovarRepCat` / `coprodCovarRepFunctor`
+- `ccrNewIndexFunctor` — index projection
+- `ccrNewFamilyFunctor` — family extraction
+- `ccrNewEvalFunctor` / `ccrNewEvalCatFunctor`
+- `ccrNewEvalCatFullyFaithful` — fully faithful
 
-### Universe Polymorphism
+Definitions in `Utilities/Elements.lean`:
 
-Universe parameters are maximally independent:
+- `elementsPrecomp` — precomposition on Elements
 
-- `I : Type u_I` with `Category.{v_I} I`
-- `J : Type u_J` with `Category.{v_J} J`
-- `w_I` — domain presheaf value universe
-- `w'` — position/index type universe
+### Full Faithfulness
 
-No correlation between `I` and `J` universes. The output
-presheaf values live in `Type (max w' u_I w_I)` (determined,
-not a free parameter). Operations such as composition that
-require universe alignment impose constraints only at the
-point of use.
+- `ccrNewEvalCatFullyFaithful` — Yoneda argument
+- `praEvalAtProfunctorFullyFaithful` — via
+  `whiskeringRight`
+- `praEvalAtFunctorFullyFaithful` — via
+  `Functor.flipping`
 
-### Hom Formula vs LCCC Decomposition
+### Phase 2: Discrete-Category Equivalence
 
-The Hom formula
-`P(Z)(j) = coprod_{a in A(j)} Hom(E_j(a), Z)` is the
-primary representation. Neither it nor the LCCC form
-`Sigma_A . Pi_p . B*` involves pushouts or coends — both use
-only limits and discrete coproducts. The LCCC equivalence is a
-secondary result for later.
+**File:** `GebLean/PresheafPRADiscrete.lean`
 
-## Implementation Plan
+- `overDiscretePresheafEquiv` — `Over X ≌ PSh(Disc X)`
+- `ccrMapEquiv` — lift equivalence through CCR'
+- `ccrOverDiscreteEquiv` — inner CCR equivalence
+- `polyBetweenPresheafPRAEquiv` — full equivalence
+  `PolyBetween X Y ≌ PRA(Disc X)(Disc Y)`
+- `evalCompatEquiv` — fiber evaluation compat
+- `evalCompatFwd_natural` — naturality in `A`
+- `evalCompatOverIso` — object-level iso
 
-### Phase 1: Core Definitions (PresheafPRA.lean)
+### Phase 4 (partial): Limits of CoprodCovarRepCat
 
-1. Define `catContraHomFunctor D : Catᵒᵖ ⥤ Cat`
-   (contravariant hom-functor)
-2. Define presheaf-category functor
-   `I ↦ Iᵒᵖ ⥤ Type w_I` as a composite
-3. Define `PresheafPRACat I J` using the factored
-   operations (as `def`, not `abbrev`)
-4. Accessor functions: `praPositions`, `praDirectionsAt`
-5. Pointwise evaluation `praEvalAt P Z j` via `ccrEval`
-6. Restriction map construction using `ccrReindex` and
-   `ccrFiberMor` from the functor action
-7. Full evaluation `praEvalObj P Z : Jᵒᵖ ⥤ Type _`
-8. Functorial action `praEvalMap` on presheaf morphisms
-9. Evaluation functor `praEvalFunctor P :
-   (Iᵒᵖ ⥤ Type w_I) ⥤ (Jᵒᵖ ⥤ Type _)`
-10. Morphism evaluation `praMorphEvalAt`,
-    `praMorphEval`
-11. Functor lifting `praEvalCatFunctor :
-    PresheafPRACat I J ⥤
-    ((Iᵒᵖ ⥤ Type w_I) ⥤ (Jᵒᵖ ⥤ Type _))`
-12. Register in `GebLean.lean`
+**File:** `GebLean/PresheafPRAUMorph.lean`
 
-### Phase 2: Discrete-Category Connection
+- `piHasColimitsOfShape` — Pi categories have colimits
+- `grothendieckFiberHasColimitsOfShape` — fibers ok
+- `typeOpHasColimitsOfShape` — `(Type w)ᵒᵖ` ok
+- `ccrDiagPosFunctor D` — position diagram
+- `ccrLimPosSections D` — compatible families
+- `ccrDiagFiberFunctor D z` — fiber diagram
+- `ccrHasLimit D` — limits exist (when `C` has
+  colimits of `Jᵒᵖ`)
 
-- Equivalence between `PresheafPRACat I J` over discrete
-  categories and `PolyFunctorBetweenCat I J`
-- Compatibility of evaluation functors under this equivalence
+## Planned Work
 
 ### Phase 3: Identity and Composition
 
-- Identity PRA `praId I : PresheafPRACat I I`
-- Composition `praComp : PresheafPRACat J K ->
-  PresheafPRACat I J -> PresheafPRACat I K`
-- Evaluation compatibility: `praEvalFunctor (praComp g f) ≅
-  praEvalFunctor f ⋙ praEvalFunctor g`
+See `.session/workstreams/pra-universal-morphisms.md`
+for the full plan.
 
-### Phase 4: Universal Morphisms (PresheafPRAUMorph.lean)
+- C1: Identity PRA (terminal positions, Yoneda
+  directions)
+- C2: Composition via Beck-Chevalley
+- C3: PRA factorization `π_! ∘ E^*`
 
-- Products, coproducts, equalizers, coequalizers
-- Completeness/cocompleteness of `PresheafPRACat I J`
+### Phase 4 (remaining): Universal Morphisms
 
-### Phase 5: Algebras (PresheafPRAAlg.lean)
+- Package `ccrHasLimit` into `HasLimitsOfShape` and
+  `HasLimitsOfSize` instances
+- Prove colimits (needs limits of Grothendieck, or
+  direct construction)
+- Derive `PresheafPRACat I J` limits/colimits from
+  functor-category structure
+- Cartesian product, internal hom, Dirichlet product
 
-- Algebras and coalgebras of PRA endofunctors
-- Fixed points (initial algebras, terminal coalgebras)
+### Phase 5: Algebras and Coalgebras
 
-## Dependencies
+- Algebra/coalgebra categories for PRA endofunctors
+- Initial algebras (W-types in presheaf categories)
+- Terminal coalgebras (M-types)
+- Free monads, cofree comonads
 
-- `GebLean/Polynomial.lean`: `CoprodCovarRepCat`, `ccrEval`,
-  `ccrEvalMap`, `ccrToFunctor`, `ccrReindex`, `ccrFiberMor`
-- `GebLean/Utilities/Presheaf.lean`: `Presheaf`, `Copresheaf`
-- `GebLean/Utilities/Elements.lean`: `ElementsContra'`,
-  `sliceEquivPresheaf`
-- `GebLean/Utilities/Families.lean`: `FamilyCat`, `ccrIndex`,
-  `ccrFamily`
-- `GebLean/Utilities/Opposites.lean`: `Cᵒᵖ`
+### Phase 6: Double Category
 
-## Relation to Other Workstreams
+- Objects: small categories
+- Vertical: functors
+- Horizontal: PRAs
+- Cells: natural transformations
 
-- `poly-presheaf-ccc.md`: this workstream implements Layers
-  1-2 of that plan. Layer 3 (cartesian closure) and Layer 4
-  (connection to PshRelEdge) remain for later.
+## Files
+
+| File | Contents |
+| ---- | -------- |
+| `GebLean/PresheafPRA.lean` | Core definitions, evaluation |
+| `GebLean/PresheafPRADiscrete.lean` | Discrete equivalence |
+| `GebLean/PresheafPRAUMorph.lean` | Limits (in progress) |
+| `GebLean/Utilities/Category.lean` | Cat profunctor, eqToHom utilities |
+| `GebLean/Utilities/Families.lean` | op-based CCR, functors, full faithfulness |
+| `GebLean/Utilities/Elements.lean` | elementsPrecomp |
+| `GebLean/Utilities/Grothendieck.lean` | grothendieckFunctor |
+| `docs/presheaf-pra.md` | Concept documentation |
 
 ## References
 
-- `docs/presheaf-pra.md` — concept documentation
 - nLab: parametric right adjoint
-- Existing `PolyFunctorBetweenCat` in `Polynomial.lean`
-- Existing `polyBetweenEvalFunctor` pattern in
-  `Polynomial.lean`
+- Gambino-Kock: Polynomial functors and polynomial
+  monads
+- Weber: Polynomials in categories with pullbacks
+- Berger-Mellies-Weber: Monads with arities
+- `.session/workstreams/pra-universal-morphisms.md`
+  (detailed Phase 3-6 plan)
