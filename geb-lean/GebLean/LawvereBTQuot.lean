@@ -740,7 +740,6 @@ private theorem elimβ_rhs_eq {n m : ℕ}
         BTMor1.subst_proj]
       congr 1; exact Fin.ext (by simp)
 
-set_option maxHeartbeats 800000 in
 -- Reduction of `cfpMap`/`cfpLiftAssoc` through
 -- quotient lifts requires extended elaboration.
 /-- Branch computation rule for `elimQ`. -/
@@ -802,5 +801,410 @@ theorem elimQ_β {n m : ℕ}
       rw [hrw]
       exact btMorRel.refl _)
     f g
+
+/-- Embedding substitution: maps `Fin n` into
+`BTMor1 (n + 1)` via projections. -/
+private def embedSubst (n : ℕ) :
+    Fin n → BTMor1 (n + 1) :=
+  fun v => BTMor1.proj ⟨v.val, by omega⟩
+
+/-- `btSubstSnoc embedSubst (proj n)` is the
+identity substitution on `Fin (n + 1)`. -/
+private theorem embedSubst_snoc_proj_id
+    {n : ℕ} (i : Fin (n + 1)) :
+    btSubstSnoc (embedSubst n)
+      (BTMor1.proj ⟨n, by omega⟩) i =
+    BTMor1.proj i := by
+  refine Fin.lastCases ?_ ?_ i
+  · rw [btSubstSnoc_last]; congr 1
+  · intro j; rw [btSubstSnoc_castSucc]
+    unfold embedSubst; congr 1
+
+/-- `insertLeafRaw n` composed with `embedSubst`
+equals `btSubstSnoc (embedSubst n) leaf`. -/
+private theorem insertLeaf_comp_embed
+    {n : ℕ} (i : Fin (n + 1)) :
+    (insertLeafRaw n i).subst
+      (embedSubst n) =
+    btSubstSnoc (embedSubst n)
+      BTMor1.leaf i := by
+  refine Fin.lastCases ?_ ?_ i
+  · rw [btSubstSnoc_last]
+    have h : ¬ (Fin.last n).val < n := by
+      simp
+    rw [insertLeafRaw_last _ h,
+      BTMor1.subst_leaf]
+  · intro j
+    rw [btSubstSnoc_castSucc,
+      insertLeafRaw_lt _ j.isLt,
+      BTMor1.subst_proj]; congr 1
+
+/-- `mapBranchRaw n` composed with the branch
+embedding substitution equals the `btSubstSnoc`
+form for the branch case. -/
+private theorem mapBranch_comp_embed
+    {n : ℕ} (i : Fin (n + 1)) :
+    (mapBranchRaw n i).subst
+      (btSubstSnoc
+        (btSubstSnoc
+          (btSubstEmbed 2 (embedSubst n))
+          (BTMor1.proj ⟨n + 1, by omega⟩))
+        (BTMor1.proj ⟨n + 2, by omega⟩)) =
+    btSubstSnoc
+      (btSubstEmbed 2 (embedSubst n))
+      (BTMor1.branch
+        (BTMor1.proj ⟨n + 1, by omega⟩)
+        (BTMor1.proj ⟨n + 2, by omega⟩))
+      i := by
+  refine Fin.lastCases ?_ ?_ i
+  · rw [btSubstSnoc_last]
+    have hlt : ¬ (Fin.last n).val < n := by
+      simp
+    rw [mapBranchRaw_last _ hlt,
+      BTMor1.subst_branch,
+      BTMor1.subst_proj,
+      BTMor1.subst_proj]
+    have hn : (⟨n, by omega⟩ : Fin (n + 2)) =
+        Fin.castSucc (Fin.last n) := by
+      ext; simp
+    have hn1 : (⟨n + 1, by omega⟩ : Fin (n + 2)) =
+        Fin.last (n + 1) := by
+      ext; simp
+    rw [hn, btSubstSnoc_castSucc,
+      btSubstSnoc_last,
+      hn1, btSubstSnoc_last]
+  · intro j
+    rw [btSubstSnoc_castSucc,
+      mapBranchRaw_lt _ j.isLt,
+      BTMor1.subst_proj]
+    have hjlt : (⟨(Fin.castSucc j).val,
+          by omega⟩ : Fin (n + 2)) =
+        Fin.castSucc (Fin.castSucc j) := by
+      ext; simp
+    rw [hjlt, btSubstSnoc_castSucc,
+      btSubstSnoc_castSucc]
+
+-- The proof involves iterated substitution on
+-- parameterized tree morphisms, requiring extra
+-- elaboration budget.
+/-- Uniqueness of `elimQ`: any quotient morphism
+satisfying the leaf and branch computation rules
+equals `elimQ f g`. -/
+theorem elimQ_uniq {n m : ℕ}
+    (f : BTMorNQuo n m)
+    (g : BTMorNQuo (m + m) m)
+    (φ : BTMorNQuo (n + 1) m)
+    (hleaf :
+      cfpInsertSnd (C := LawvereBTQuotCat)
+        btLeafQ n ≫ φ = f)
+    (hbranch :
+      cfpMap (C := LawvereBTQuotCat)
+        (𝟙 n) btBranchQ ≫ φ =
+      cfpLiftAssoc (C := LawvereBTQuotCat)
+        φ φ ≫ g) :
+    φ = elimQ f g := by
+  revert hleaf hbranch
+  refine Quotient.ind₂
+    (motive := fun f g => ∀ (φ :
+        BTMorNQuo (n + 1) m),
+      cfpInsertSnd (C := LawvereBTQuotCat)
+        btLeafQ n ≫ φ = f →
+      cfpMap (C := LawvereBTQuotCat)
+        (𝟙 n) btBranchQ ≫ φ =
+      cfpLiftAssoc (C := LawvereBTQuotCat)
+        φ φ ≫ g →
+      φ = elimQ f g)
+    ?_ f g φ
+  intro f_raw g_raw
+  refine Quotient.ind
+    (motive := fun φ =>
+      cfpInsertSnd (C := LawvereBTQuotCat)
+        btLeafQ n ≫ φ =
+        Quotient.mk _ f_raw →
+      cfpMap (C := LawvereBTQuotCat)
+        (𝟙 n) btBranchQ ≫ φ =
+      cfpLiftAssoc (C := LawvereBTQuotCat)
+        φ φ ≫ Quotient.mk _ g_raw →
+      φ = elimQ
+        (Quotient.mk _ f_raw)
+        (Quotient.mk _ g_raw))
+    ?_
+  intro φ_raw hℓ_eq hβ_eq
+  apply Quotient.sound
+    (s := btMorNSetoid (n + 1) m)
+  intro j
+  -- Identity subst fact
+  have hsnoc_id :
+      ∀ (t : BTMor1 (n + 1)),
+      t.subst (btSubstSnoc (embedSubst n)
+        (BTMor1.proj ⟨n, by omega⟩)) =
+      t := by
+    intro t
+    conv_rhs => rw [← BTMor1.subst_id t]
+    congr 1; funext i
+    exact embedSubst_snoc_proj_id i
+  rw [← hsnoc_id (φ_raw j)]
+  change btMorRel (n + 1)
+    ((φ_raw j).subst
+      (btSubstSnoc (embedSubst n)
+        (BTMor1.proj ⟨n, by omega⟩)))
+    (btFoldFullMorE f_raw g_raw j)
+  have hfold_eq :
+      btFoldFullMorE f_raw g_raw j =
+      BTMor1.fold m
+        (fun i =>
+          (f_raw i).subst (embedSubst n))
+        g_raw
+        (BTMor1.proj ⟨n, by omega⟩) j := by
+    unfold btFoldFullMorE BTMor1.embed
+      embedSubst; rfl
+  rw [hfold_eq]
+  -- Extract raw hypotheses
+  have hℓ_raw :=
+    Quotient.exact
+      (s := btMorNSetoid n m) hℓ_eq
+  have hβ_raw :=
+    Quotient.exact
+      (s := btMorNSetoid (n + 2) m)
+      hβ_eq
+  -- Reduce leaf hypothesis to insertLeafRaw form
+  have hℓ_il : ∀ j', btMorRel n
+      ((φ_raw j').subst (insertLeafRaw n))
+      (f_raw j') := by
+    intro j'
+    have h := hℓ_raw j'
+    have heq :
+        BTMorN.pair (BTMorN.id n)
+          (BTMorN.comp
+            (BTMorN.terminal n) btLeaf) =
+        insertLeafRaw n := by
+      funext i
+      unfold insertLeafRaw BTMorN.pair
+        BTMorN.id BTMorN.comp btLeaf
+      split_ifs
+      · rfl
+      · exact BTMor1.subst_leaf _
+    rw [heq] at h; exact h
+  -- Lift leaf hypothesis to arity n+1
+  have hℓ_lifted : ∀ j', btMorRel (n + 1)
+      ((φ_raw j').subst
+        (btSubstSnoc (embedSubst n)
+          BTMor1.leaf))
+      ((f_raw j').subst
+        (embedSubst n)) := by
+    intro j'
+    have h := subst_cong_right
+      (embedSubst n) (hℓ_il j')
+    rw [BTMor1.subst_comp] at h
+    rw [show btSubstSnoc (embedSubst n)
+          BTMor1.leaf =
+        fun i => (insertLeafRaw n i).subst
+          (embedSubst n)
+      from (funext insertLeaf_comp_embed).symm]
+    exact h
+  -- Lift branch hypothesis to arity n+3
+  have hβ_lifted : ∀ j', btMorRel (n + 3)
+      ((φ_raw j').subst
+        (btSubstSnoc
+          (btSubstEmbed 2 (embedSubst n))
+          (BTMor1.branch
+            (BTMor1.proj
+              ⟨n + 1, by omega⟩)
+            (BTMor1.proj
+              ⟨n + 2, by omega⟩))))
+      ((g_raw j').subst
+        (btFoldBranchSubstPhi φ_raw
+          (embedSubst n))) := by
+    intro j'
+    let τ : Fin (n + 2) → BTMor1 (n + 3) :=
+      btSubstSnoc
+        (btSubstSnoc
+          (btSubstEmbed 2 (embedSubst n))
+          (BTMor1.proj ⟨n + 1, by omega⟩))
+        (BTMor1.proj ⟨n + 2, by omega⟩)
+    have hraw := hβ_raw j'
+    change btMorRel (n + 2)
+      ((φ_raw j').subst
+        (elimβ_lhs_subst n)) _ at hraw
+    rw [elimβ_lhs_eq] at hraw
+    have h := subst_cong_right τ hraw
+    simp only [BTMorN.comp] at h
+    rw [BTMor1.subst_comp,
+      BTMor1.subst_comp] at h
+    -- Show RHS substitution equals
+    -- btFoldBranchSubstPhi form.
+    have hrhs_eq : (fun i =>
+        (if h : i.val < m
+         then (φ_raw ⟨i.val, h⟩).subst
+           (BTMorN.fst.pair
+             (BTMorN.snd.comp BTMorN.fst))
+         else (φ_raw ⟨i.val - m,
+               Nat.sub_lt_right_of_lt_add
+                 (by omega)
+                 (i.isLt)⟩).subst
+           (BTMorN.fst.pair
+             (BTMorN.snd.comp
+               BTMorN.snd))).subst τ) =
+        btFoldBranchSubstPhi φ_raw
+          (embedSubst n) := by
+      funext i
+      unfold btFoldBranchSubstPhi
+      split_ifs with h_lt
+      · rw [BTMor1.subst_comp]; congr 1
+        funext v
+        refine Fin.lastCases ?_ ?_ v
+        · simp only [btSubstSnoc_last]
+          have heval :
+              (BTMorN.fst (n := n) (m := 2)).pair
+                ((BTMorN.snd (n := n) (m := 2)).comp
+                  (BTMorN.fst (n := 1) (m := 1)))
+                (Fin.last n) =
+              BTMor1.proj
+                (⟨n, by omega⟩ : Fin (n + 2)) := by
+            unfold BTMorN.pair
+            simp only [Fin.val_last]
+            split_ifs with hc
+            · exact absurd hc (lt_irrefl n)
+            · simp only [Nat.sub_self,
+                BTMorN.comp, BTMorN.fst,
+                BTMorN.snd, BTMor1.subst_proj,
+                Nat.add_zero]
+          rw [heval, BTMor1.subst_proj]
+          change btSubstSnoc
+              (btSubstSnoc
+                (btSubstEmbed 2 (embedSubst n))
+                (BTMor1.proj ⟨n + 1, by omega⟩))
+              (BTMor1.proj ⟨n + 2, by omega⟩)
+              (⟨n, by omega⟩ : Fin (n + 2)) =
+            BTMor1.proj ⟨n + 1, by omega⟩
+          have hn :
+              (⟨n, by omega⟩ : Fin (n + 2)) =
+              Fin.castSucc (Fin.last n) := by
+            ext; simp
+          rw [hn, btSubstSnoc_castSucc,
+            btSubstSnoc_last]
+        · intro w
+          simp only [btSubstSnoc_castSucc]
+          have heval :
+              (BTMorN.fst (n := n) (m := 2)).pair
+                ((BTMorN.snd (n := n) (m := 2)).comp
+                  (BTMorN.fst (n := 1) (m := 1)))
+                (Fin.castSucc w) =
+              BTMor1.proj
+                (⟨w.val, by omega⟩ : Fin (n + 2)) := by
+            unfold BTMorN.pair
+            simp only [Fin.val_castSucc, BTMorN.fst]
+            rw [dif_pos w.isLt]
+          rw [heval, BTMor1.subst_proj]
+          change btSubstSnoc
+              (btSubstSnoc
+                (btSubstEmbed 2 (embedSubst n))
+                (BTMor1.proj ⟨n + 1, by omega⟩))
+              (BTMor1.proj ⟨n + 2, by omega⟩)
+              (⟨w.val, by omega⟩ : Fin (n + 2)) =
+            btSubstEmbed 2 (embedSubst n) w
+          have hw :
+              (⟨w.val, by omega⟩ : Fin (n + 2)) =
+              Fin.castSucc (Fin.castSucc w) := by
+            ext; simp
+          rw [hw, btSubstSnoc_castSucc,
+            btSubstSnoc_castSucc]
+      · rw [BTMor1.subst_comp]; congr 1
+        funext v
+        refine Fin.lastCases ?_ ?_ v
+        · simp only [btSubstSnoc_last]
+          have heval :
+              (BTMorN.fst (n := n) (m := 2)).pair
+                ((BTMorN.snd (n := n) (m := 2)).comp
+                  (BTMorN.snd (n := 1) (m := 1)))
+                (Fin.last n) =
+              BTMor1.proj
+                (⟨n + 1, by omega⟩ : Fin (n + 2)) := by
+            unfold BTMorN.pair
+            simp only [Fin.val_last]
+            split_ifs with hc
+            · exact absurd hc (lt_irrefl n)
+            · simp only [Nat.sub_self,
+                BTMorN.comp,
+                BTMorN.snd, BTMor1.subst_proj,
+                Nat.add_zero]
+          rw [heval, BTMor1.subst_proj]
+          change btSubstSnoc
+              (btSubstSnoc
+                (btSubstEmbed 2 (embedSubst n))
+                (BTMor1.proj ⟨n + 1, by omega⟩))
+              (BTMor1.proj ⟨n + 2, by omega⟩)
+              (⟨n + 1, by omega⟩ : Fin (n + 2)) =
+            BTMor1.proj ⟨n + 2, by omega⟩
+          have hn1 :
+              (⟨n + 1, by omega⟩ : Fin (n + 2)) =
+              Fin.last (n + 1) := by
+            ext; simp
+          rw [hn1, btSubstSnoc_last]
+        · intro w
+          simp only [btSubstSnoc_castSucc]
+          have heval :
+              (BTMorN.fst (n := n) (m := 2)).pair
+                ((BTMorN.snd (n := n) (m := 2)).comp
+                  (BTMorN.snd (n := 1) (m := 1)))
+                (Fin.castSucc w) =
+              BTMor1.proj
+                (⟨w.val, by omega⟩ : Fin (n + 2)) := by
+            unfold BTMorN.pair
+            simp only [Fin.val_castSucc, BTMorN.fst]
+            rw [dif_pos w.isLt]
+          rw [heval, BTMor1.subst_proj]
+          change btSubstSnoc
+              (btSubstSnoc
+                (btSubstEmbed 2 (embedSubst n))
+                (BTMor1.proj ⟨n + 1, by omega⟩))
+              (BTMor1.proj ⟨n + 2, by omega⟩)
+              (⟨w.val, by omega⟩ : Fin (n + 2)) =
+            btSubstEmbed 2 (embedSubst n) w
+          have hw :
+              (⟨w.val, by omega⟩ : Fin (n + 2)) =
+              Fin.castSucc (Fin.castSucc w) := by
+            ext; simp
+          rw [hw, btSubstSnoc_castSucc,
+            btSubstSnoc_castSucc]
+    rw [show btSubstSnoc
+          (btSubstEmbed 2 (embedSubst n))
+          (BTMor1.branch
+            (BTMor1.proj ⟨n + 1, by omega⟩)
+            (BTMor1.proj ⟨n + 2, by omega⟩)) =
+        fun i => (mapBranchRaw n i).subst τ
+      from (funext mapBranch_comp_embed).symm]
+    rw [show btFoldBranchSubstPhi φ_raw
+          (embedSubst n) =
+        fun i =>
+          (if h : i.val < m
+           then (φ_raw ⟨i.val, h⟩).subst
+             (BTMorN.fst.pair
+               (BTMorN.snd.comp BTMorN.fst))
+           else (φ_raw ⟨i.val - m,
+                 Nat.sub_lt_right_of_lt_add
+                   (by omega)
+                   (i.isLt)⟩).subst
+             (BTMorN.fst.pair
+               (BTMorN.snd.comp
+                 BTMorN.snd))).subst τ
+      from hrhs_eq.symm]
+    exact h
+  exact btMorRel.foldUniq j φ_raw f_raw g_raw
+    (embedSubst n)
+    (BTMor1.proj ⟨n, by omega⟩)
+    hℓ_lifted hβ_lifted
+
+/-- `LawvereBTQuotCat` has a parameterized binary
+tree object. -/
+instance : HasPBTO LawvereBTQuotCat where
+  T := (1 : ℕ)
+  ℓ := btLeafQ
+  β := btBranchQ
+  elim f g := elimQ f g
+  elim_ℓ f g := elimQ_ℓ f g
+  elim_β f g := elimQ_β f g
+  elim_uniq f g φ hℓ hβ :=
+    elimQ_uniq f g φ hℓ hβ
 
 end GebLean

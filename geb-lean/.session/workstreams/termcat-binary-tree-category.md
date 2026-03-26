@@ -295,21 +295,49 @@ In progress:
   - [x] elimQ (quotient fold via Quotient.lift₂)
   - [x] elimQ_ℓ (leaf computation rule)
   - [x] elimQ_β (branch computation rule)
-  - [ ] elimQ_uniq (uniqueness) -- see below
-  Uniqueness requires showing that the semantic
-  interpretation (BTMor1.interp) is compatible
-  with btMorRel, then using BT structural
-  induction to show any φ satisfying the
-  equations agrees with elimQ.  Approaches:
-  (a) Show interp respects btMorRel, prove
-      interp is injective on the quotient, use
-      btFoldFull semantic uniqueness.
-  (b) Direct induction on BTMor1 terms via
-      BTMor1.ind, showing pointwise btMorRel
-      between φ_raw and elimQ_raw.
-  Both are substantial.  The computation rules
-  (elimQ_ℓ, elimQ_β) provide the base and step
-  of the induction.
+  - [ ] elimQ_uniq (uniqueness) -- in progress
+  Approach: added `foldUniq` constructor to
+  `btMorRel` in `LawvereBTEq.lean`.  This
+  constructor is parameterized by a substitution
+  `σ : Fin n → BTMor1 k` and tree `tree : BTMor1 k`,
+  making it closed under further substitution.
+  The `subst_cong_right` case for `foldUniq` is
+  proved (the IH from the universally-quantified
+  hypotheses composes correctly).
+
+  Infrastructure added to `LawvereBTEq.lean`:
+  - `btSubstSnoc`, `btSubstEmbed`,
+    `btFoldBranchSubst` (substitution combinators)
+  - `btSubstSnoc_castSucc`, `btSubstSnoc_last`,
+    `btSubstSnoc_lt`, `btSubstSnoc_eq`,
+    `btSubstSnoc_comp` (composition lemmas)
+  - `embed_subst_tau`, `branch_subst_tau`,
+    `foldBranchSubst_comp` (composition with the
+    branch embedding substitution)
+
+  Infrastructure added to `LawvereBTQuot.lean`
+  (commented out, pending completion):
+  - `embedSubst`, `embedSubst_snoc_proj_id`,
+    `insertLeaf_comp_embed`,
+    `mapBranch_comp_embed` (helpers for lifting
+    the leaf/branch hypotheses from arity n to
+    the `foldUniq` form at arity n+1/n+3)
+
+  Remaining work for `elimQ_uniq`:
+  - The leaf hypothesis lifting (from arity n to
+    n+1 via `subst_cong_right` + `subst_comp`)
+    is straightforward and the proof compiles.
+  - The branch hypothesis lifting (from arity n+2
+    to n+3) requires showing that
+    `elimβ_rhs_subst f g` composed with
+    `embedSubst (n+2)` equals
+    `btFoldBranchSubst f g (embedSubst n)`.
+    This involves matching up deeply nested fold
+    and substitution compositions.  The structure
+    of the proof is clear but requires careful
+    Fin arithmetic.
+  - Once `elimQ_uniq` compiles, the `HasPBTO`
+    instance is a direct assembly.
 
 Design notes (2026-03-23):
 

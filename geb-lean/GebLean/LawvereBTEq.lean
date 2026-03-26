@@ -89,7 +89,7 @@ the data of a fold applied to a leaf: output dimension
 `f : Fin m → BTMor1 n`, and step children
 `g : Fin m → BTMor1 (m + m)`.
 
-No directions (this is an axiom, not derived from
+No directions (this is axiomatic, not derived from
 sub-proofs). -/
 def btMorEqFoldLeafPoly : PolyEndo ℕ :=
   fun n => ccrObjMk
@@ -107,7 +107,7 @@ children `f : Fin m → BTMor1 n`, step children
 `g : Fin m → BTMor1 (m + m)`, and the two subtrees
 `t1 t2 : BTMor1 n`.
 
-No directions (this is an axiom, not derived from
+No directions (this is axiomatic, not derived from
 sub-proofs). -/
 def btMorEqFoldBranchPoly : PolyEndo ℕ :=
   fun n => ccrObjMk
@@ -532,6 +532,316 @@ theorem eqRhs_foldBranch {n : ℕ}
         else BTMor1.fold m f g t2
           ⟨i.val - m, by omega⟩) := rfl
 
+/-! ## Substitution combinators for fold uniqueness
+
+The fold uniqueness constructor `btMorRel.foldUniq`
+states that any morphism tuple satisfying the leaf and
+branch computation rules equals the fold.  Its
+hypotheses and conclusion involve substitutions built
+from these combinators. -/
+
+/-- Extend a substitution `σ : Fin n → BTMor1 k` to
+`Fin (n + 1) → BTMor1 k` by mapping the last variable
+to `tree`. -/
+def btSubstSnoc {n k : ℕ}
+    (σ : Fin n → BTMor1 k)
+    (tree : BTMor1 k) :
+    Fin (n + 1) → BTMor1 k :=
+  Fin.lastCases tree (fun v => σ v)
+
+/-- Embed a substitution into a larger context:
+`σ v ↦ (σ v).subst (proj ∘ castSucc ∘ castSucc)`,
+i.e., shift all free variables by `d`. -/
+def btSubstEmbed {n k : ℕ} (d : ℕ)
+    (σ : Fin n → BTMor1 k) :
+    Fin n → BTMor1 (k + d) :=
+  fun v => (σ v).subst
+    (fun u => BTMor1.proj ⟨u.val, by omega⟩)
+
+/-- The fold-branch substitution target: for the
+branch computation rule, the step function `g j` is
+substituted with fold terms selecting the left or
+right subtree. -/
+def btFoldBranchSubst {n m k : ℕ}
+    (f : Fin m → BTMor1 n)
+    (g : Fin m → BTMor1 (m + m))
+    (σ : Fin n → BTMor1 k) :
+    Fin (m + m) → BTMor1 (k + 2) :=
+  fun i =>
+    if h : i.val < m
+    then BTMor1.fold m
+      (btSubstEmbed 2 (fun i' => (f i').subst σ))
+      g
+      (BTMor1.proj ⟨k, by omega⟩)
+      ⟨i.val, h⟩
+    else BTMor1.fold m
+      (btSubstEmbed 2 (fun i' => (f i').subst σ))
+      g
+      (BTMor1.proj ⟨k + 1, by omega⟩)
+      ⟨i.val - m, by omega⟩
+
+/-- The fold-branch substitution for the branch
+uniqueness premise, parameterized by `φ` rather
+than `f` and `g`.  For each `i : Fin (m + m)`,
+this selects `φ i` applied to the left subtree
+projection (if `i < m`) or `φ (i - m)` applied to
+the right subtree projection (if `i ≥ m`). -/
+def btFoldBranchSubstPhi {n m k : ℕ}
+    (φ : Fin m → BTMor1 (n + 1))
+    (σ : Fin n → BTMor1 k) :
+    Fin (m + m) → BTMor1 (k + 2) :=
+  fun i =>
+    if h : i.val < m
+    then (φ ⟨i.val, h⟩).subst
+      (btSubstSnoc (btSubstEmbed 2 σ)
+        (BTMor1.proj ⟨k, by omega⟩))
+    else (φ ⟨i.val - m, by omega⟩).subst
+      (btSubstSnoc (btSubstEmbed 2 σ)
+        (BTMor1.proj ⟨k + 1, by omega⟩))
+
+/-- `btSubstSnoc` at `Fin.castSucc i` returns
+`σ i`. -/
+@[simp] theorem btSubstSnoc_castSucc
+    {n k : ℕ}
+    (σ : Fin n → BTMor1 k)
+    (tree : BTMor1 k)
+    (i : Fin n) :
+    btSubstSnoc σ tree (Fin.castSucc i) =
+      σ i := by
+  unfold btSubstSnoc
+  exact Fin.lastCases_castSucc i
+
+/-- `btSubstSnoc` at `Fin.last n` returns
+`tree`. -/
+@[simp] theorem btSubstSnoc_last
+    {n k : ℕ}
+    (σ : Fin n → BTMor1 k)
+    (tree : BTMor1 k) :
+    btSubstSnoc σ tree (Fin.last n) = tree := by
+  unfold btSubstSnoc
+  exact Fin.lastCases_last
+
+/-- `btSubstSnoc` at a raw `Fin` value known to be
+less than `n` returns `σ` applied to the
+corresponding `Fin n` value. -/
+theorem btSubstSnoc_lt {n k : ℕ}
+    (σ : Fin n → BTMor1 k)
+    (tree : BTMor1 k)
+    (i : Fin (n + 1)) (h : i.val < n) :
+    btSubstSnoc σ tree i = σ ⟨i.val, h⟩ := by
+  conv_lhs =>
+    rw [show i = Fin.castSucc ⟨i.val, h⟩ from
+      Fin.ext (by simp)]
+  exact btSubstSnoc_castSucc σ tree ⟨i.val, h⟩
+
+/-- `btSubstSnoc` at a raw `Fin` value equal to `n`
+returns `tree`. -/
+theorem btSubstSnoc_eq {n k : ℕ}
+    (σ : Fin n → BTMor1 k)
+    (tree : BTMor1 k)
+    (i : Fin (n + 1)) (h : i.val = n) :
+    btSubstSnoc σ tree i = tree := by
+  conv_lhs =>
+    rw [show i = Fin.last n from
+      Fin.ext h]
+  exact btSubstSnoc_last σ tree
+
+/-- Composing `btSubstEmbed` with the nested
+`btSubstSnoc` substitution used in the branch
+case. -/
+private theorem embed_subst_tau
+    {n k m : ℕ}
+    (σ_inner : Fin n → BTMor1 k)
+    (σ_outer : Fin k → BTMor1 m)
+    (v : Fin n) :
+    (btSubstEmbed 2 σ_inner v).subst
+      (btSubstSnoc
+        (btSubstSnoc
+          (btSubstEmbed 2 σ_outer)
+          (BTMor1.proj ⟨m, by omega⟩))
+        (BTMor1.proj
+          ⟨m + 1, by omega⟩)) =
+    btSubstEmbed 2
+      (fun v => (σ_inner v).subst σ_outer)
+      v := by
+  unfold btSubstEmbed
+  rw [BTMor1.subst_comp, BTMor1.subst_comp]
+  congr 1; funext u
+  rw [BTMor1.subst_proj]
+  have h1 :
+      (⟨u.val, by omega⟩ : Fin (k + 2)) =
+      Fin.castSucc ⟨u.val, by omega⟩ := by
+    ext; simp
+  have h2 :
+      (⟨u.val, by omega⟩ : Fin (k + 1)) =
+      Fin.castSucc ⟨u.val, u.isLt⟩ := by
+    ext; simp
+  rw [h1, btSubstSnoc_castSucc,
+    h2, btSubstSnoc_castSucc]
+
+/-- Substituting the branch embedding into
+`branch(proj k, proj(k+1))`. -/
+private theorem branch_subst_tau
+    {k m : ℕ}
+    (σ_outer : Fin k → BTMor1 m) :
+    (BTMor1.branch
+      (BTMor1.proj ⟨k, by omega⟩)
+      (BTMor1.proj ⟨k + 1, by omega⟩)
+    ).subst
+      (btSubstSnoc
+        (btSubstSnoc
+          (btSubstEmbed 2 σ_outer)
+          (BTMor1.proj ⟨m, by omega⟩))
+        (BTMor1.proj
+          ⟨m + 1, by omega⟩)) =
+    BTMor1.branch
+      (BTMor1.proj ⟨m, by omega⟩)
+      (BTMor1.proj ⟨m + 1, by omega⟩) := by
+  rw [BTMor1.subst_branch,
+    BTMor1.subst_proj,
+    BTMor1.subst_proj]
+  have h1 :
+      (⟨k + 1, by omega⟩ : Fin (k + 2)) =
+      Fin.last (k + 1) := by ext; simp
+  have h2 :
+      (⟨k, by omega⟩ : Fin (k + 2)) =
+      Fin.castSucc (Fin.last k) := by
+    ext; simp
+  rw [h1, btSubstSnoc_last,
+    h2, btSubstSnoc_castSucc,
+    btSubstSnoc_last]
+
+/-- Composing `btFoldBranchSubst` with the branch
+embedding substitution. -/
+private theorem foldBranchSubst_comp
+    {n m_inner k m : ℕ}
+    (f : Fin m_inner → BTMor1 n)
+    (g : Fin m_inner → BTMor1
+      (m_inner + m_inner))
+    (σ_inner : Fin n → BTMor1 k)
+    (σ_outer : Fin k → BTMor1 m) :
+    (fun i =>
+      (btFoldBranchSubst f g σ_inner i).subst
+        (btSubstSnoc
+          (btSubstSnoc
+            (btSubstEmbed 2 σ_outer)
+            (BTMor1.proj ⟨m, by omega⟩))
+          (BTMor1.proj
+            ⟨m + 1, by omega⟩))) =
+    btFoldBranchSubst f g
+      (fun v => (σ_inner v).subst σ_outer) := by
+  funext i
+  unfold btFoldBranchSubst
+  have hsubst_comp_eq : ∀ v,
+      ((f v).subst σ_inner).subst σ_outer =
+      (f v).subst
+        (fun w => (σ_inner w).subst σ_outer) :=
+    fun v => BTMor1.subst_comp
+      (t := f v) σ_inner σ_outer
+  have hbase : ∀ v,
+      (btSubstEmbed 2
+        (fun i' => (f i').subst σ_inner)
+        v).subst
+        (btSubstSnoc
+          (btSubstSnoc
+            (btSubstEmbed 2 σ_outer)
+            (BTMor1.proj ⟨m, by omega⟩))
+          (BTMor1.proj
+            ⟨m + 1, by omega⟩)) =
+      btSubstEmbed 2
+        (fun i' =>
+          (f i').subst
+            (fun v => (σ_inner v).subst
+              σ_outer)) v := by
+    intro v
+    rw [embed_subst_tau
+      (fun i' => (f i').subst σ_inner)
+      σ_outer v]
+    congr 1; funext w; exact hsubst_comp_eq w
+  split_ifs with h_lt
+  · rw [fold_subst_eq]; congr 1
+    · exact funext hbase
+    · rw [BTMor1.subst_proj]
+      have h1 :
+          (⟨k, by omega⟩ : Fin (k + 2)) =
+          Fin.castSucc (Fin.last k) := by
+        ext; simp
+      rw [h1, btSubstSnoc_castSucc,
+        btSubstSnoc_last]
+  · rw [fold_subst_eq]; congr 1
+    · exact funext hbase
+    · rw [BTMor1.subst_proj]
+      have h1 :
+          (⟨k + 1, by omega⟩ :
+            Fin (k + 2)) =
+          Fin.last (k + 1) := by
+        ext; simp
+      rw [h1, btSubstSnoc_last]
+
+/-- Composing `btFoldBranchSubstPhi` with the
+branch embedding substitution. -/
+private theorem btFoldBranchSubstPhi_comp
+    {n m k l : ℕ}
+    (φ : Fin m → BTMor1 (n + 1))
+    (σ_inner : Fin n → BTMor1 k)
+    (σ_outer : Fin k → BTMor1 l) :
+    (fun i =>
+      (btFoldBranchSubstPhi φ σ_inner i).subst
+        (btSubstSnoc
+          (btSubstSnoc
+            (btSubstEmbed 2 σ_outer)
+            (BTMor1.proj ⟨l, by omega⟩))
+          (BTMor1.proj
+            ⟨l + 1, by omega⟩))) =
+    btFoldBranchSubstPhi φ
+      (fun v => (σ_inner v).subst σ_outer) := by
+  funext i
+  unfold btFoldBranchSubstPhi
+  split_ifs with h_lt
+  · rw [BTMor1.subst_comp]; congr 1
+    funext v
+    refine Fin.lastCases ?_ ?_ v
+    · simp only [btSubstSnoc_last,
+        BTMor1.subst_proj]
+      have h1 :
+          (⟨k, by omega⟩ : Fin (k + 2)) =
+          Fin.castSucc (Fin.last k) := by
+        ext; simp
+      rw [h1, btSubstSnoc_castSucc,
+        btSubstSnoc_last]
+    · intro w
+      simp only [btSubstSnoc_castSucc]
+      exact embed_subst_tau σ_inner σ_outer w
+  · rw [BTMor1.subst_comp]; congr 1
+    funext v
+    refine Fin.lastCases ?_ ?_ v
+    · simp only [btSubstSnoc_last,
+        BTMor1.subst_proj]
+      have h1 :
+          (⟨k + 1, by omega⟩ : Fin (k + 2)) =
+          Fin.last (k + 1) := by
+        ext; simp
+      rw [h1, btSubstSnoc_last]
+    · intro w
+      simp only [btSubstSnoc_castSucc]
+      exact embed_subst_tau σ_inner σ_outer w
+
+/-- Composing `btSubstSnoc` with a further
+substitution distributes to the components. -/
+theorem btSubstSnoc_comp {n k m : ℕ}
+    (σ : Fin n → BTMor1 k)
+    (tree : BTMor1 k)
+    (τ : Fin k → BTMor1 m) :
+    (fun v => (btSubstSnoc σ tree v).subst τ) =
+    btSubstSnoc
+      (fun v => (σ v).subst τ)
+      (tree.subst τ) := by
+  funext v
+  refine Fin.lastCases ?_ ?_ v
+  · simp [btSubstSnoc_last]
+  · intro i
+    simp [btSubstSnoc_castSucc]
+
 /-! ## Equality relation
 
 The equality relation on `BTMor1 n` as an inductive
@@ -598,6 +908,38 @@ inductive btMorRel : (n : ℕ) →
             ⟨i.val, h⟩
           else BTMor1.fold m f g t2
             ⟨i.val - m, by omega⟩))
+  | foldEta {n : ℕ} (t : BTMor1 n) :
+      btMorRel n
+        (BTMor1.fold 1
+          (fun _ => BTMor1.leaf)
+          (fun _ => BTMor1.branch
+            (BTMor1.proj 0) (BTMor1.proj 1))
+          t ⟨0, by omega⟩)
+        t
+  | foldUniq {n m : ℕ} (j : Fin m)
+      (φ : Fin m → BTMor1 (n + 1))
+      (f : Fin m → BTMor1 n)
+      (g : Fin m → BTMor1 (m + m))
+      {k : ℕ} (σ : Fin n → BTMor1 k)
+      (tree : BTMor1 k)
+      (hℓ : ∀ j, btMorRel k
+        ((φ j).subst (btSubstSnoc σ BTMor1.leaf))
+        ((f j).subst σ))
+      (hβ : ∀ j, btMorRel (k + 2)
+        ((φ j).subst
+          (btSubstSnoc
+            (btSubstEmbed 2 σ)
+            (BTMor1.branch
+              (BTMor1.proj ⟨k, by omega⟩)
+              (BTMor1.proj
+                ⟨k + 1, by omega⟩))))
+        ((g j).subst
+          (btFoldBranchSubstPhi φ σ))) :
+      btMorRel k
+        ((φ j).subst (btSubstSnoc σ tree))
+        (BTMor1.fold m
+          (fun i => (f i).subst σ)
+          g tree j)
 
 /-! ## Setoid -/
 
@@ -679,6 +1021,80 @@ theorem subst_cong_right {n m : ℕ}
         · rw [fold_subst_eq]
       rw [this]
       exact btMorRel.refl _
+  | foldEta t =>
+    rw [fold_subst_eq]
+    conv_lhs =>
+      arg 2; ext _; rw [BTMor1.subst_leaf]
+    exact btMorRel.foldEta (t.subst σ)
+  | @foldUniq n_inner m_inner j φ f g k_inner
+      σ_inner tree hℓ hβ ihℓ ihβ =>
+    let σ' : Fin n_inner → BTMor1 m :=
+      fun v => (σ_inner v).subst σ
+    let tree' : BTMor1 m := tree.subst σ
+    rw [BTMor1.subst_comp,
+      btSubstSnoc_comp σ_inner tree σ]
+    rw [fold_subst_eq]
+    conv_rhs => arg 2; ext i; rw [BTMor1.subst_comp]
+    exact btMorRel.foldUniq j φ f g σ' tree'
+      (fun j' => by
+        have h := ihℓ j' σ
+        rw [BTMor1.subst_comp,
+          btSubstSnoc_comp σ_inner
+            BTMor1.leaf σ,
+          BTMor1.subst_leaf] at h
+        rw [BTMor1.subst_comp] at h
+        exact h)
+      (fun j' => by
+        let τ : Fin (k_inner + 2) →
+            BTMor1 (m + 2) :=
+          btSubstSnoc
+            (btSubstSnoc
+              (btSubstEmbed 2 σ)
+              (BTMor1.proj ⟨m, by omega⟩))
+            (BTMor1.proj
+              ⟨m + 1, by omega⟩)
+        have h := ihβ j' τ
+        rw [BTMor1.subst_comp,
+          btSubstSnoc_comp] at h
+        rw [BTMor1.subst_comp] at h
+        have hlhs_embed :
+            (fun v => (btSubstEmbed 2
+              σ_inner v).subst τ) =
+            btSubstEmbed 2 σ' :=
+          funext (fun v =>
+            embed_subst_tau σ_inner σ v)
+        have hlhs_tree :
+            (BTMor1.branch
+              (BTMor1.proj
+                ⟨k_inner, by omega⟩)
+              (BTMor1.proj
+                ⟨k_inner + 1, by omega⟩)
+            ).subst τ =
+            BTMor1.branch
+              (BTMor1.proj ⟨m, by omega⟩)
+              (BTMor1.proj
+                ⟨m + 1, by omega⟩) :=
+          branch_subst_tau σ
+        rw [show btSubstSnoc
+              (fun v => (btSubstEmbed 2
+                σ_inner v).subst τ)
+              ((BTMor1.branch
+                (BTMor1.proj
+                  ⟨k_inner, by omega⟩)
+                (BTMor1.proj
+                  ⟨k_inner + 1, by omega⟩)
+              ).subst τ) =
+            btSubstSnoc
+              (btSubstEmbed 2 σ')
+              (BTMor1.branch
+                (BTMor1.proj ⟨m, by omega⟩)
+                (BTMor1.proj
+                  ⟨m + 1, by omega⟩))
+            from by rw [hlhs_embed,
+              hlhs_tree]] at h
+        rw [btFoldBranchSubstPhi_comp φ
+          σ_inner σ] at h
+        exact h)
 
 /-- Substitution preserves `btMorRel` on the left:
 if `∀ i, btMorRel m (σ i) (σ' i)` then
