@@ -277,6 +277,39 @@ In progress:
   theorems added
 - [x] btFoldFullMor defined (syntactic fold
   morphism for universal property)
+- [x] LawvereBTEq.lean: btMorEqPoly (7-component
+  equality polynomial), BTMorEq type with named
+  constructors, BTMorEq.ind, eqLhs/eqRhs endpoint
+  extraction, btMorRel inductive relation,
+  btMor1Setoid, subst_cong_right/left/full
+- [x] LawvereBTQuot.lean: btMorNSetoid (pointwise
+  btMorRel on tuples), BTMorNQuo quotient type,
+  BTMorNQuo.id/comp/id_comp/comp_id/comp_assoc,
+  LawvereBTQuotCat with Category instance
+- [x] HasChosenFiniteProducts on LawvereBTQuotCat
+- [ ] HasPBTO on LawvereBTQuotCat (partial):
+  - [x] btLeafQ, btBranchQ (quotient constructors)
+  - [x] BTMor1.embed (subst-based shift alternative)
+  - [x] embed_cong (embed preserves btMorRel)
+  - [x] btFoldFullMorE (fold using embed)
+  - [x] elimQ (quotient fold via Quotient.lift₂)
+  - [x] elimQ_ℓ (leaf computation rule)
+  - [x] elimQ_β (branch computation rule)
+  - [ ] elimQ_uniq (uniqueness) -- see below
+  Uniqueness requires showing that the semantic
+  interpretation (BTMor1.interp) is compatible
+  with btMorRel, then using BT structural
+  induction to show any φ satisfying the
+  equations agrees with elimQ.  Approaches:
+  (a) Show interp respects btMorRel, prove
+      interp is injective on the quotient, use
+      btFoldFull semantic uniqueness.
+  (b) Direct induction on BTMor1 terms via
+      BTMor1.ind, showing pointwise btMorRel
+      between φ_raw and elimQ_raw.
+  Both are substantial.  The computation rules
+  (elimQ_ℓ, elimQ_β) provide the base and step
+  of the induction.
 
 Design notes (2026-03-23):
 

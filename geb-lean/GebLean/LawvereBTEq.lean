@@ -680,4 +680,119 @@ theorem subst_cong_right {n m : ℕ}
       rw [this]
       exact btMorRel.refl _
 
+/-- Substitution preserves `btMorRel` on the left:
+if `∀ i, btMorRel m (σ i) (σ' i)` then
+`btMorRel m (t.subst σ) (t.subst σ')`. -/
+theorem subst_cong_left {n m : ℕ}
+    (t : BTMor1 n)
+    {σ σ' : Fin n → BTMor1 m}
+    (hs : ∀ i, btMorRel m (σ i) (σ' i)) :
+    btMorRel m (t.subst σ) (t.subst σ') :=
+  (BTMor1.ind
+    (motive := fun {k} (t : BTMor1 k) =>
+      ∀ (m' : ℕ)
+        (σ σ' : Fin k → BTMor1 m'),
+        (∀ i,
+          btMorRel m' (σ i) (σ' i)) →
+        btMorRel m'
+          (t.subst σ) (t.subst σ'))
+    (step := fun i => match i with
+      | ⟨0, _⟩ =>
+        fun p _ _ m' σ0 σ0' hs0 =>
+          hs0 (p.property ▸ p.val.2)
+      | ⟨1, _⟩ =>
+        fun _ _ _ _ _ _ _ =>
+          btMorRel.refl _
+      | ⟨2, _⟩ =>
+        fun _ _ ih m' σ0 σ0' hs0 =>
+          btMorRel.congBranch
+            (ih (Sum.inl PUnit.unit)
+              m' σ0 σ0' hs0)
+            (ih (Sum.inr PUnit.unit)
+              m' σ0 σ0' hs0)
+      | ⟨3, _⟩ =>
+        fun pos children ih
+          m' σ0 σ0' hs0 => by
+          rename_i ni _
+          let pm := pos.1
+          have hlb (i : Fin pm) :
+              i.val < pm + pm + 1 :=
+            Nat.lt_of_lt_of_le i.isLt
+              (Nat.le_add_right
+                pm (pm + 1))
+          have hlt :
+              pm + pm < pm + pm + 1 :=
+            Nat.lt_succ_self _
+          have hbf (i : Fin pm) :
+              (polyBetweenFamily ℕ ℕ
+                (btMorComponents
+                  ⟨3, by omega⟩)
+                ni pos).hom
+                ⟨i.val, hlb i⟩ = ni := by
+            unfold btMorComponents
+              btMorFoldPoly
+              polyBetweenFamily
+              polyToOverFamily ccrObjMk
+              ccrFamily; dsimp
+            split_ifs <;> omega
+          have htf :
+              (polyBetweenFamily ℕ ℕ
+                (btMorComponents
+                  ⟨3, by omega⟩)
+                ni pos).hom
+                ⟨pm + pm, hlt⟩ = ni := by
+            unfold btMorComponents
+              btMorFoldPoly
+              polyBetweenFamily
+              polyToOverFamily ccrObjMk
+              ccrFamily; dsimp
+            split_ifs <;> omega
+          set lhs := BTMor1.subst _ σ0
+            with hlhs
+          unfold BTMor1.subst BTMor1.ind
+            PolyFixCoprod.ind PolyFix.ind
+            at hlhs
+          dsimp only at hlhs
+          set rhs := BTMor1.subst _ σ0'
+            with hrhs
+          unfold BTMor1.subst BTMor1.ind
+            PolyFixCoprod.ind PolyFix.ind
+            at hrhs
+          dsimp only at hrhs
+          rw [hlhs, hrhs]
+          exact btMorRel.congFold
+            (fun i => ih ⟨i, hlb i⟩
+              m'
+              (fun v => σ0
+                (hbf i ▸ v))
+              (fun v => σ0'
+                (hbf i ▸ v))
+              (fun v => hs0
+                (hbf i ▸ v)))
+            (fun i => btMorRel.refl _)
+            (ih ⟨pm + pm, hlt⟩
+              m'
+              (fun v => σ0
+                (htf ▸ v))
+              (fun v => σ0'
+                (htf ▸ v))
+              (fun v => hs0
+                (htf ▸ v))))
+    t) m σ σ' hs
+
+/-- Full substitution congruence: if
+`btMorRel n t1 t2` and
+`∀ i, btMorRel m (σ i) (σ' i)` then
+`btMorRel m (t1.subst σ) (t2.subst σ')`. -/
+theorem subst_cong {n m : ℕ}
+    {t1 t2 : BTMor1 n}
+    {σ σ' : Fin n → BTMor1 m}
+    (ht : btMorRel n t1 t2)
+    (hs : ∀ i, btMorRel m (σ i) (σ' i)) :
+    btMorRel m
+      (t1.subst σ) (t2.subst σ') :=
+  btMorRel.trans
+    (subst_cong_right σ ht)
+    (subst_cong_left t2 hs)
+
 end GebLean

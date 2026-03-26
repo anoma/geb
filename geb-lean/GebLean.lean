@@ -21,6 +21,7 @@ import GebLean.FreeToposBT
 import GebLean.HexagonCat
 import GebLean.LawvereBT
 import GebLean.LawvereBTEq
+import GebLean.LawvereBTQuot
 import GebLean.LayeredEquivalence
 import GebLean.MendlerLambekEndPower
 import GebLean.MendlerLambekPresheaf
