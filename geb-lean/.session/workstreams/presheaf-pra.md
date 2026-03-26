@@ -138,8 +138,28 @@ for the full plan.
 
 ### Phase 4 (remaining): Universal Morphisms
 
-- Prove colimits (needs limits of Grothendieck, or
-  direct construction)
+- (Co)limits for `PresheafPRACat I J` via
+  underlying presheaf categories, not from
+  `CoprodCovarRepCat` (co)limits (which do not
+  always exist). A PRA decomposes via
+  `FunctorToData` into positions (presheaf on
+  base) and directions (presheaf on category of
+  elements). Both presheaf categories are
+  cocomplete. Pattern from `PolyBetween`:
+  - Products: `∀` on positions, `Σ` on
+    directions
+  - Coproducts: `Σ` on positions, selected
+    direction
+  - Equalizers: subtype on positions,
+    coequalizer on directions
+  - Coequalizers: quotient on positions,
+    product on directions
+  - Principle: positions and directions always
+    get dual constructions
+- Note: `CoprodCovarRepCat C` does have limits
+  (proved in `ccrHasLimit`/`ccrHasLimitsOfShape`)
+  but colimits depend on properties of `C`.
+  `PresheafPRACat` (co)limits bypass this
 - Derive `PresheafPRACat I J` limits/colimits from
   functor-category structure
 - Cartesian product, internal hom, Dirichlet product
