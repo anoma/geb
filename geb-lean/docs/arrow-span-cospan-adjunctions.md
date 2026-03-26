@@ -77,7 +77,7 @@ coreflection.
 The two constructions are formal duals:
 
 | Span / Pushout | Cospan / Pullback |
-|---|---|
+| - | - |
 | Relation: explicit witness `R` | Correspondence: implicit condition in `X` |
 | Reflector: quotient (collapse) | Coreflector: fiber product (restrict) |
 | Counit recovers the arrow | Unit embeds the arrow |
@@ -93,7 +93,7 @@ correspondence.
 In database terms: functionalization corresponds to
 `GROUP BY` (collapsing equivalence classes), while
 tabulation corresponds to `INNER JOIN` (extracting
-matching records from a shared key space).
+matching records from a shared keyspace).
 
 ## Connection to Subobject Classification
 
