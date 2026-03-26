@@ -47,24 +47,7 @@ The position functor of a diagram
 index type `ccrNewIndex (D.obj j)` and a morphism
 `f` to the reindexing function `ccrNewReindex`.
 -/
-def ccrDiagPosFunctor :
-    J ⥤ Type w where
-  obj j := ccrNewIndex (D.obj j)
-  map f := ccrNewReindex (D.map f)
-  map_id j := by
-    simp only [ccrNewReindex]
-    have h := D.map_id j
-    change (D.map (𝟙 j)).unop.base.unop = id
-    rw [h]
-    rfl
-  map_comp {j₁ j₂ j₃} f g := by
-    simp only [ccrNewReindex]
-    have h := D.map_comp f g
-    change (D.map (f ≫ g)).unop.base.unop =
-      (D.map g).unop.base.unop ∘
-        (D.map f).unop.base.unop
-    rw [h]
-    rfl
+def ccrDiagPosFunctor : J ⥤ Type w := D ⋙ ccrNewIndexFunctor C
 
 end PositionFunctor
 
