@@ -168,103 +168,14 @@ Completed:
     round-trip via polyFixCoprodStr_inj
 - [x] subst_id: 3/4 cases proved (proj, leaf, branch)
 
-In progress:
-
 - [x] subst_id (all four cases proved)
-- [ ] subst_comp fold case (proj/leaf/branch done).
-  Factored into two lemmas with clean underscores:
-  - `fold_subst_eq`: the fold computation rule,
-    with explicit type signature:
-    `(BTMor1.fold pm f g tree pj).subst σ =
-    BTMor1.fold pm (f.subst σ) g (tree.subst σ) pj`
-    The set/unfold chain correctly computes the
-    subst result (in hypothesis `hl`), and the
-    RHS fold unfolds cleanly via `unfold
-    BTMor1.fold btMorInject; simp [sigma_fiberCast
-    _subst_eq, sigma_fiberCast_eq]`. The blocker
-    is the fold reconstruction: showing the
-    `polyFixStrFamily` from the LHS unfolding
-    equals the `PolyFix.mk` from the RHS
-    unfolding. `polyFixCoprodRoundTrip` handles
-    the LHS → canonical `PolyFix.mk`, but the
-    RHS `PolyFix.mk` has `polyFixChildAt`-wrapped
-    children from the `PolyFix.ind` recursion,
-    which don't match the canonical form.
-  - `subst_comp_fold_case`: DONE modulo
-    `fold_subst_eq`. Uses `fold_subst_eq` +
-    `symm` + `set/unfold` + `conv/change` +
-    `simp [show ... from (ih ...).symm]`.
-  - **Blocker analysis (2025-03-25)**:
-    The set/unfold chain works (with
-    `btMorInject_eq` to expose PolyFix.mk),
-    producing a goal where both sides are
-    `BTMor1.fold pm _ _ _ pj` but with
-    `polyFixChildAt`-based children on the LHS
-    vs direct `f/g/tree` children on the RHS.
-    New helper `subst_fiberCast_cancel` handles
-    the transport cancellation.  The remaining
-    difficulty is navigating the deeply nested
-    terms to apply `polyFixChildAt` unfolding +
-    `dif_pos/dif_neg` evaluation at the right
-    subexpression.  Tactic-based `conv` and
-    `simp` cannot efficiently target the
-    `polyFixChildAt` inside `PolyFix.ind`
-    applications.  **Approach**: factor into
-    small lemmas with explicit proof terms
-    (no tactics).  Write per-child lemmas:
-    (a) `fold_child_base_eq`: unfolds
-    `polyFixChildAt` at base index and evaluates
-    `dite` via `dif_pos i.isLt`; (b)
-    `fold_child_step_eq`: same for step index
-    with `dif_neg` + `dif_pos`; (c)
-    `fold_child_tree_eq`: same for tree index
-    with two `dif_neg`.  Each proves
-    `polyFixChildAt ... ⟨idx, _⟩ =
-    fiberCast h (f/g/tree ⟨...⟩)` by unfolding
-    `polyFixChildAt`, `Over.comp_left`,
-    `types_comp_apply`, etc., then
-    `dif_pos/dif_neg`.  Then `fold_subst_eq`
-    combines: base/tree cases use
-    `subst_fiberCast_cancel`, step case uses
-    `fiberCast` cancellation + `Fin.ext` +
-    `omega`.  Original blocker description
-    (preserved for reference): a lemma showing
-    that for any `Over.homMk` morphism `mor`,
-    `polyFixStrFamily (polyBetweenCoprod I F) x
-    (polyEndoMorphEvalAt (polyBetweenInj I F j)
-    carrier x ⟨p, mor⟩) = PolyFix.mk x ⟨j, p⟩
-    (polyFixChildAt ⟨j, p⟩
-    (ccrFiberMor ... ≫ mor))`. This IS
-    `polyFixCoprodStr_inj`, but the gap is that
-    after `rw [hl]; symm`, the RHS has this form
-    with `polyFixChildAt`-wrapped children from
-    the subst recursion, while the LHS (after
-    `unfold BTMor1.fold btMorInject; simp`) has
-    the same `polyFixStrFamily` form with the
-    CLEAN if-then-else children (with `(f i).subst
-    σ`, `g i`, `tree.subst σ`). The two
-    `polyFixStrFamily` calls differ only in their
-    `Over.homMk` function body. Proving these
-    equal requires showing the if-then-else with
-    `polyFixChildAt`-subst'd children equals the
-    if-then-else with direct `(f i).subst σ`
-    children — which is the `sigma_fiberCast
-    _subst_eq + sigma_fiberCast_eq` transport
-    cancellation, applied pointwise via
-    `Over.OverMorphism.ext + funext + split_ifs`.
-    The approach that works: `congr 1` on the
-    `polyFixStrFamily` calls, then `Sigma.ext` on
-    the eval data, then `Over.OverMorphism.ext`,
-    `funext`, `split_ifs`,
-    `sigma_fiberCast_subst_eq`,
-    `sigma_fiberCast_eq`, `congrArg`, `Fin.ext`,
-    `dsimp`, `omega`. This is the same technique
-    as `subst_id_fold_case` steps 5-7 but applied
-    at fiber `m` with `(polyFixChildAt ...).subst`
-    children instead of `fiberCast` children.
+- [x] subst_comp (all four cases proved via
+  fold_subst_eq + subst_comp_fold_case)
 - [x] Category instance for LawvereBTCat
-- [x] HasFiniteProducts instance
-- [x] HasPBTO instance
+- [x] HasChosenFiniteProducts on LawvereBTCat
+- [x] subst_proj (rfl), subst_leaf (rfl),
+  subst_branch (rfl)
+- [x] btFoldFullMor (syntactic fold morphism)
 - [x] fold_subst_eq and related helpers made public
   (btMorFoldFiber, btMorFoldFiber_step,
   btMorFoldFiber_tree, fiberCast_subst_eq,
@@ -287,7 +198,7 @@ In progress:
   BTMorNQuo.id/comp/id_comp/comp_id/comp_assoc,
   LawvereBTQuotCat with Category instance
 - [x] HasChosenFiniteProducts on LawvereBTQuotCat
-- [ ] HasPBTO on LawvereBTQuotCat (partial):
+- [x] HasPBTO on LawvereBTQuotCat:
   - [x] btLeafQ, btBranchQ (quotient constructors)
   - [x] BTMor1.embed (subst-based shift alternative)
   - [x] embed_cong (embed preserves btMorRel)
@@ -295,17 +206,21 @@ In progress:
   - [x] elimQ (quotient fold via Quotient.lift₂)
   - [x] elimQ_ℓ (leaf computation rule)
   - [x] elimQ_β (branch computation rule)
-  - [ ] elimQ_uniq (uniqueness) -- in progress
-  Approach: added `foldUniq` constructor to
-  `btMorRel` in `LawvereBTEq.lean`.  This
-  constructor is parameterized by a substitution
-  `σ : Fin n → BTMor1 k` and tree `tree : BTMor1 k`,
-  making it closed under further substitution.
-  The `subst_cong_right` case for `foldUniq` is
-  proved (the IH from the universally-quantified
-  hypotheses composes correctly).
+  - [x] elimQ_uniq (uniqueness via foldUniq)
+  - [x] HasPBTO instance assembled
 
-  Infrastructure added to `LawvereBTEq.lean`:
+  The `btMorRel` relation has 9 constructors:
+  refl, symm, trans, congBranch, congFold,
+  foldLeaf (beta-1), foldBranch (beta-2),
+  foldEta (eta), foldUniq (initiality).
+
+  `foldEta` states that the identity fold (fold
+  with leaf/branch parameters) is the identity.
+  `foldUniq` encodes initiality: any morphism
+  tuple satisfying the leaf and branch computation
+  rules equals the fold.
+
+  Infrastructure in `LawvereBTEq.lean`:
   - `btSubstSnoc`, `btSubstEmbed`,
     `btFoldBranchSubst` (substitution combinators)
   - `btSubstSnoc_castSucc`, `btSubstSnoc_last`,
@@ -315,29 +230,12 @@ In progress:
     `foldBranchSubst_comp` (composition with the
     branch embedding substitution)
 
-  Infrastructure added to `LawvereBTQuot.lean`
-  (commented out, pending completion):
+  Infrastructure in `LawvereBTQuot.lean`:
   - `embedSubst`, `embedSubst_snoc_proj_id`,
     `insertLeaf_comp_embed`,
     `mapBranch_comp_embed` (helpers for lifting
     the leaf/branch hypotheses from arity n to
     the `foldUniq` form at arity n+1/n+3)
-
-  Remaining work for `elimQ_uniq`:
-  - The leaf hypothesis lifting (from arity n to
-    n+1 via `subst_cong_right` + `subst_comp`)
-    is straightforward and the proof compiles.
-  - The branch hypothesis lifting (from arity n+2
-    to n+3) requires showing that
-    `elimβ_rhs_subst f g` composed with
-    `embedSubst (n+2)` equals
-    `btFoldBranchSubst f g (embedSubst n)`.
-    This involves matching up deeply nested fold
-    and substitution compositions.  The structure
-    of the proof is clear but requires careful
-    Fin arithmetic.
-  - Once `elimQ_uniq` compiles, the `HasPBTO`
-    instance is a direct assembly.
 
 Design notes (2026-03-23):
 
