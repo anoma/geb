@@ -1136,6 +1136,38 @@ private lemma praReassembleMapGr_comp
       eqToHom_trans, eqToHom_refl,
       Category.id_comp]
 
+/--
+Reassemble a PRA from position and direction data.
+Given `A : Jᵒᵖ ⥤ Type w'` (positions) and
+`E : A.ElementsPre ⥤ PSh(I)` (directions),
+produces a functor
+`Jᵒᵖ ⥤ CoprodCovarRepCat (PSh(I))`, i.e., an
+object of `PresheafPRACat I J`.
+-/
+def praReassemble :
+    Jᵒᵖ ⥤ ↑(CoprodCovarRepCat.{max v_I u_I
+      (w_I + 1), max u_I w_I, w'}
+      (↑(presheafCat.{u_I, v_I, w_I} I))) where
+  obj j := Opposite.op (praReassembleObjGr A E j)
+  map g :=
+    Quiver.Hom.op (praReassembleMapGr A E g)
+  map_id j := by
+    apply Quiver.Hom.unop_inj
+    exact praReassembleMapGr_id A E j
+  map_comp {j₁ j₂ j₃} f g := by
+    apply Quiver.Hom.unop_inj
+    simp only [Quiver.Hom.unop_op]
+    exact praReassembleMapGr_comp A E f g
+
+/--
+Extracting positions from a reassembled PRA
+recovers the original position presheaf.
+-/
+theorem praReassemble_positions :
+    (praPositionsFunctor I J).obj
+      (praReassemble A E) = A := by
+  rfl
+
 end PRAReassembly
 
 end GebLean
