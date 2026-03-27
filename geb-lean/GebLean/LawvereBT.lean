@@ -1870,4 +1870,352 @@ def btFoldFullMor {n m : ℕ}
     (BTMor1.proj ⟨n, by omega⟩)
     j
 
+/-! ## Universe-polymorphic interpretation
+
+`BTMor1.interpU` interprets morphisms `n → 1`
+as functions `(Fin n → BT.{u}) → BT.{u}` for
+arbitrary universe `u`.  Defined here (rather
+than in `LawvereBTInterp`) to access private
+helpers needed for the fold computation
+lemma. -/
+
+/-- The step function for `interpU`.
+Factored out so it can be named in proofs. -/
+private def interpUStep :
+    ∀ (i : Fin 4) {n : ℕ}
+      (p : polyBetweenIndex ℕ ℕ
+        (btMorComponents i) n)
+      (_ :
+        ∀ e : (polyBetweenFamily ℕ ℕ
+          (btMorComponents i) n p).left,
+          BTMor1
+            ((polyBetweenFamily ℕ ℕ
+              (btMorComponents i) n
+                p).hom e))
+      (_ :
+        ∀ e : (polyBetweenFamily ℕ ℕ
+          (btMorComponents i) n p).left,
+          (Fin ((polyBetweenFamily ℕ ℕ
+            (btMorComponents i) n
+              p).hom e) → BT.{u}) →
+            BT.{u}),
+      (Fin n → BT.{u}) → BT.{u} :=
+  fun i => match i with
+      | ⟨0, _⟩ => fun p _ _ ctx' =>
+        ctx' (p.property ▸ p.val.2)
+      | ⟨1, _⟩ => fun _ _ _ _ =>
+        BT.leaf
+      | ⟨2, _⟩ => fun _ _ ih ctx' =>
+        BT.node
+          (ih (Sum.inl PUnit.unit) ctx')
+          (ih (Sum.inr PUnit.unit) ctx')
+      | ⟨3, _⟩ =>
+        fun pos _ ih ctx' =>
+        let pm := pos.1
+        let pj := pos.2
+        have hlb (i : Fin pm) :
+            i.val < pm + pm + 1 :=
+          Nat.lt_of_lt_of_le i.isLt
+            (Nat.le_add_right
+              pm (pm + 1))
+        have hls (i : Fin pm) :
+            pm + i.val <
+              pm + pm + 1 := by
+          have := i.isLt; omega
+        have hlt :
+            pm + pm < pm + pm + 1 :=
+          Nat.lt_succ_self _
+        have hbf (i : Fin pm) :
+            (polyBetweenFamily ℕ ℕ
+              (btMorComponents
+                ⟨3, by omega⟩)
+              _ pos).hom
+              ⟨i.val, hlb i⟩ = _ := by
+          unfold btMorComponents
+            btMorFoldPoly
+            polyBetweenFamily
+            polyToOverFamily ccrObjMk
+            ccrFamily; dsimp
+          split_ifs <;> omega
+        have hsf (i : Fin pm) :
+            (polyBetweenFamily ℕ ℕ
+              (btMorComponents
+                ⟨3, by omega⟩)
+              _ pos).hom
+              ⟨pm + i.val, hls i⟩ =
+                pm + pm := by
+          unfold btMorComponents
+            btMorFoldPoly
+            polyBetweenFamily
+            polyToOverFamily ccrObjMk
+            ccrFamily; dsimp
+          split_ifs <;> omega
+        have htf :
+            (polyBetweenFamily ℕ ℕ
+              (btMorComponents
+                ⟨3, by omega⟩)
+              _ pos).hom
+              ⟨pm + pm, hlt⟩ = _ := by
+          unfold btMorComponents
+            btMorFoldPoly
+            polyBetweenFamily
+            polyToOverFamily ccrObjMk
+            ccrFamily; dsimp
+          split_ifs <;> omega
+        let baseVals : Fin pm → BT.{u} :=
+          fun i =>
+            ih ⟨i.val, hlb i⟩
+              (fun v => ctx'
+                (finCast (hbf i) v))
+        let treeVal : BT.{u} :=
+          ih ⟨pm + pm, hlt⟩
+            (fun v => ctx'
+              (finCast htf v))
+        (treeVal.fold
+          baseVals
+          (fun leftAll rightAll =>
+            fun j =>
+              ih ⟨pm + j.val, hls j⟩
+                (fun v =>
+                  let idx :=
+                    finCast (hsf j) v
+                  if h : idx.val < pm
+                  then leftAll
+                    ⟨idx.val, h⟩
+                  else rightAll
+                    ⟨idx.val - pm,
+                      by omega⟩))
+          pj)
+
+def BTMor1.interpU {n : ℕ}
+    (t : BTMor1 n)
+    (ctx : Fin n → BT.{u}) : BT.{u} :=
+  (BTMor1.ind
+    (motive := fun {k} _ =>
+      (Fin k → BT.{u}) → BT.{u})
+    (step := interpUStep)
+    t) ctx
+
+/-- `interpU` on a projection returns the
+corresponding context entry. -/
+theorem BTMor1.interpU_proj {n : ℕ}
+    (i : Fin n)
+    (ctx : Fin n → BT.{u}) :
+    (BTMor1.proj i).interpU ctx =
+      ctx i := rfl
+
+/-- `interpU` on a leaf returns `BT.leaf`. -/
+theorem BTMor1.interpU_leaf {n : ℕ}
+    (ctx : Fin n → BT.{u}) :
+    (BTMor1.leaf (n := n)).interpU ctx =
+      BT.leaf := rfl
+
+/-- `interpU` on a branch applies `BT.node`
+to the interpretations of the two
+subtrees. -/
+theorem BTMor1.interpU_branch {n : ℕ}
+    (l r : BTMor1 n)
+    (ctx : Fin n → BT.{u}) :
+    (BTMor1.branch l r).interpU ctx =
+      BT.node (l.interpU ctx)
+        (r.interpU ctx) := rfl
+
+/-- Interpreting a transported term with a
+context equals interpreting the original term
+with the transported context. -/
+theorem BTMor1.interpU_cast {a b : ℕ}
+    (h : a = b) (t : BTMor1 a)
+    (ctx : Fin b → BT.{u}) :
+    (h ▸ t).interpU ctx =
+    t.interpU (fun v => ctx (h ▸ v)) := by
+  subst h; rfl
+
+/-- Transport on `Fin` preserves `.val`. -/
+theorem Fin.val_cast {a b : ℕ}
+    (h : a = b) (v : Fin a) :
+    (h ▸ v).val = v.val := by
+  subst h; rfl
+
+/-- Applying a transported `BTMor1.ind` result
+(with motive `(Fin k → BT) → BT`) to a
+context: the transport moves into the
+context. -/
+private theorem btMorInd_cast_ctx
+    (step : ∀ (i : Fin 4) {n : ℕ}
+      (p : polyBetweenIndex ℕ ℕ
+        (btMorComponents i) n)
+      (_ :
+        ∀ e : (polyBetweenFamily ℕ ℕ
+          (btMorComponents i) n p).left,
+          BTMor1
+            ((polyBetweenFamily ℕ ℕ
+              (btMorComponents i) n
+                p).hom e))
+      (_ :
+        ∀ e : (polyBetweenFamily ℕ ℕ
+          (btMorComponents i) n p).left,
+          (Fin ((polyBetweenFamily ℕ ℕ
+            (btMorComponents i) n
+              p).hom e) → BT.{u}) →
+            BT.{u}),
+      (Fin n → BT.{u}) → BT.{u})
+    {a b : ℕ} (h : a = b)
+    (t : BTMor1 a)
+    (ctx : Fin b → BT.{u}) :
+    (BTMor1.ind
+      (motive := fun {k} _ =>
+        (Fin k → BT.{u}) → BT.{u})
+      (step := step) (h ▸ t)) ctx =
+    (BTMor1.ind
+      (motive := fun {k} _ =>
+        (Fin k → BT.{u}) → BT.{u})
+      (step := step) t)
+      (fun v => ctx (h ▸ v)) := by
+  subst h; rfl
+
+private theorem polyFixInd_cast
+    {step : ∀ {x : ℕ}
+      (i : polyBetweenIndex ℕ ℕ
+        btMorPoly x)
+      (_ :
+        ∀ e : (polyBetweenFamily ℕ ℕ
+          btMorPoly x i).left,
+          BTMor1
+            ((polyBetweenFamily ℕ ℕ
+              btMorPoly x i).hom e))
+      (_ :
+        ∀ e : (polyBetweenFamily ℕ ℕ
+          btMorPoly x i).left,
+          (Fin ((polyBetweenFamily ℕ ℕ
+            btMorPoly x i).hom e) →
+              BT.{u}) → BT.{u}),
+      (Fin x → BT.{u}) → BT.{u}}
+    {a b : ℕ} (h : a = b)
+    (t : BTMor1 a)
+    (ctx : Fin b → BT.{u}) :
+    PolyFix.ind
+      (motive := fun {x} _ =>
+        (Fin x → BT.{u}) → BT.{u})
+      step (h ▸ t) ctx =
+    PolyFix.ind
+      (motive := fun {x} _ =>
+        (Fin x → BT.{u}) → BT.{u})
+      step t (fun v => ctx (h ▸ v)) := by
+  subst h; rfl
+
+/-- `PolyFix.ind` respects equality of the
+child and context arguments. -/
+private theorem polyFixInd_child_ctx
+    {step : ∀ {x : ℕ}
+      (i : polyBetweenIndex ℕ ℕ
+        btMorPoly x)
+      (_ :
+        ∀ e : (polyBetweenFamily ℕ ℕ
+          btMorPoly x i).left,
+          BTMor1
+            ((polyBetweenFamily ℕ ℕ
+              btMorPoly x i).hom e))
+      (_ :
+        ∀ e : (polyBetweenFamily ℕ ℕ
+          btMorPoly x i).left,
+          (Fin ((polyBetweenFamily ℕ ℕ
+            btMorPoly x i).hom e) →
+              BT.{u}) → BT.{u}),
+      (Fin x → BT.{u}) → BT.{u}}
+    {a : ℕ}
+    (t t' : BTMor1 a)
+    (ctx ctx' : Fin a → BT.{u})
+    (ht : t = t')
+    (hctx : ctx = ctx') :
+    PolyFix.ind
+      (motive := fun {x} _ =>
+        (Fin x → BT.{u}) → BT.{u})
+      step t ctx =
+    PolyFix.ind
+      (motive := fun {x} _ =>
+        (Fin x → BT.{u}) → BT.{u})
+      step t' ctx' := by
+  subst ht; subst hctx; rfl
+
+/-- The `PolyFix.ind` / `PolyFixCoprod.ind`
+computation rule for `btMorInject`: applying
+the fold to an injected term gives the step
+function applied to the position, children
+(via `polyFixCoprodStr_inj_child`), and
+recursive IH. -/
+private theorem ind_btMorInject
+    {motive : ∀ {n : ℕ},
+      BTMor1 n → Sort _}
+    (step : ∀ (i : Fin 4) {n : ℕ}
+      (p : polyBetweenIndex ℕ ℕ
+        (btMorComponents i) n)
+      (children :
+        ∀ e : (polyBetweenFamily ℕ ℕ
+          (btMorComponents i) n p).left,
+          BTMor1
+            ((polyBetweenFamily ℕ ℕ
+              (btMorComponents i) n
+                p).hom e))
+      (_ :
+        ∀ e : (polyBetweenFamily ℕ ℕ
+          (btMorComponents i) n p).left,
+          motive (children e)),
+      motive (PolyFix.mk n
+        (show polyBetweenIndex ℕ ℕ
+          (polyBetweenCoprod (Fin 4)
+            btMorComponents) n from
+          ⟨i, p⟩) children))
+    (j : Fin 4) {n : ℕ}
+    (eval : polyBetweenEvalFamily ℕ ℕ
+      (btMorComponents j) btMorCarrier n) :
+    BTMor1.ind (motive := motive)
+      (step := step) (btMorInject j eval) =
+    step j (pbefIndex eval)
+      (fun e =>
+        polyFixChildAt
+          (show polyBetweenIndex ℕ ℕ
+            btMorPoly n from
+            ⟨j, pbefIndex eval⟩)
+          (ccrFiberMor
+            (polyBetweenInj (Fin 4)
+              btMorComponents j n)
+            (pbefIndex eval) ≫
+            pbefMor eval) e)
+      (fun e =>
+        BTMor1.ind (motive := motive)
+          (step := step)
+          (polyFixChildAt
+            (show polyBetweenIndex ℕ ℕ
+              btMorPoly n from
+              ⟨j, pbefIndex eval⟩)
+            (ccrFiberMor
+              (polyBetweenInj (Fin 4)
+                btMorComponents j n)
+              (pbefIndex eval) ≫
+              pbefMor eval) e)) := by
+  unfold BTMor1.ind btMorInject
+    polyFixStrFamily
+  rfl
+
+-- `interpU_fold` is in progress. The proof
+-- structure is:
+--   change ... (step := interpUStep) ...
+--   unfold BTMor1.fold; rw [ind_btMorInject]
+--   simp only [polyFixCoprodStr_inj_child, ...]
+-- After these layers, ▸ transports remain in
+-- the recursive ih calls. btMorInd_cast_ctx
+-- eliminates them but simp_rw can't match
+-- because the BTMor1.ind calls are inside
+-- lambda bodies. A conv-based approach or a
+-- combined step-transport lemma is needed.
+
+/-- Universe-polymorphic interpretation of a
+morphism `n → m`: an `m`-tuple of `BTMor1`
+interpretations. -/
+def BTMorN.interpU {n m : ℕ}
+    (f : BTMorN n m)
+    (ctx : Fin n → BT.{u}) :
+    Fin m → BT.{u} :=
+  fun j => (f j).interpU ctx
+
 end GebLean
