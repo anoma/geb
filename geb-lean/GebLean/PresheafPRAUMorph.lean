@@ -981,9 +981,55 @@ universe u_I v_I u_J v_J w_I w'
 
 variable {I : Type u_I} [Category.{v_I} I]
 variable {J : Type u_J} [Category.{v_J} J]
+
+/-! ### FunctorToData-based reassembly
+
+A PRA `P : PresheafPRACat I J` is definitionally
+`Jᵒᵖ ⥤ CoprodCovarRepCat(PSh(I))` where
+`CoprodCovarRepCat = (Grothendieck F)ᵒᵖ`.  This
+is `(J ⥤ Grothendieck F)ᵒᵖ` via `Functor.op`.
+
+So a PRA is `G.op` for `G : J ⥤ Grothendieck F`,
+and `G` is built from `FunctorToData` with
+`D = J` and `baseFunc = A.op : J ⥤ (Type w')ᵒᵖ`.
+-/
+
 variable
   (A : Jᵒᵖ ⥤ Type w')
   (E : A.ElementsPre ⥤ (Iᵒᵖ ⥤ Type w_I))
+
+/--
+The fiber function for the `FunctorToData`-based
+reassembly.  Sends `j : J` to the function
+`A.obj (op j) → PSh(I)` given by E at each
+element.
+-/
+def praReassembleFib (j : J) :
+    (familyFunctor.{max v_I u_I (w_I + 1),
+      max u_I w_I, w'}
+      (↑(presheafCat.{u_I, v_I, w_I} I))).obj
+        (A.rightOp.obj j) :=
+  fun a => E.obj (Opposite.op ⟨Opposite.op j, a⟩)
+
+/--
+The fiber morphism function for `FunctorToData`.
+For `g : j₁ ⟶ j₂` in J and `a₂ : A.obj (op j₂)`,
+sends the transported fiber to the target fiber
+using `E.map`.
+-/
+def praReassembleHom
+    {j₁ j₂ : J} (g : j₁ ⟶ j₂)
+    (a₂ : A.obj (Opposite.op j₂)) :
+    praReassembleFib A E j₁
+      (A.map g.op a₂) ⟶
+    praReassembleFib A E j₂ a₂ :=
+  E.map
+    (Quiver.Hom.op
+      (CategoryOfElements.homMk (F := A)
+        ⟨Opposite.op j₂, a₂⟩
+        ⟨Opposite.op j₁,
+          A.map g.op a₂⟩
+        g.op rfl))
 
 /--
 The Grothendieck object at `j` for the reassembled
@@ -1167,6 +1213,7 @@ theorem praReassemble_positions :
     (praPositionsFunctor I J).obj
       (praReassemble A E) = A := by
   rfl
+
 
 end PRAReassembly
 
