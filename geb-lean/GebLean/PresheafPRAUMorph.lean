@@ -1183,27 +1183,34 @@ private lemma praReassembleMapGr_comp
       Category.id_comp]
 
 /--
-Reassemble a PRA from position and direction data.
-Given `A : Jᵒᵖ ⥤ Type w'` (positions) and
-`E : A.ElementsPre ⥤ PSh(I)` (directions),
-produces a functor
-`Jᵒᵖ ⥤ CoprodCovarRepCat (PSh(I))`, i.e., an
-object of `PresheafPRACat I J`.
+The covariant functor `J ⥤ Grothendieck
+(familyFunctor ...)` assembling position and
+direction data.  Built from `praReassembleObjGr`
+and `praReassembleMapGr` with reversed indexing
+(`g.op` for each `g : j₁ ⟶ j₂` in J).
+-/
+def praReassembleGr :
+    J ⥤ Grothendieck
+      (familyFunctor.{max v_I u_I (w_I + 1),
+        max u_I w_I, w'}
+        (↑(presheafCat.{u_I, v_I, w_I} I))) where
+  obj j :=
+    praReassembleObjGr A E (Opposite.op j)
+  map g := praReassembleMapGr A E g.op
+  map_id j :=
+    praReassembleMapGr_id A E (Opposite.op j)
+  map_comp f g :=
+    praReassembleMapGr_comp A E g.op f.op
+
+/--
+Reassemble a PRA from position and direction data
+as `praReassembleGr.op : Jᵒᵖ ⥤ CCR(PSh(I))`.
 -/
 def praReassemble :
     Jᵒᵖ ⥤ ↑(CoprodCovarRepCat.{max v_I u_I
       (w_I + 1), max u_I w_I, w'}
-      (↑(presheafCat.{u_I, v_I, w_I} I))) where
-  obj j := Opposite.op (praReassembleObjGr A E j)
-  map g :=
-    Quiver.Hom.op (praReassembleMapGr A E g)
-  map_id j := by
-    apply Quiver.Hom.unop_inj
-    exact praReassembleMapGr_id A E j
-  map_comp {j₁ j₂ j₃} f g := by
-    apply Quiver.Hom.unop_inj
-    simp only [Quiver.Hom.unop_op]
-    exact praReassembleMapGr_comp A E f g
+      (↑(presheafCat.{u_I, v_I, w_I} I))) :=
+  (praReassembleGr A E).op
 
 /--
 Extracting positions from a reassembled PRA
