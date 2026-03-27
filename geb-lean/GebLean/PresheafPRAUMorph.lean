@@ -1221,6 +1221,95 @@ theorem praReassemble_positions :
       (praReassemble A E) = A := by
   rfl
 
+/--
+Extracting directions from a reassembled PRA
+recovers the original direction functor.
+-/
+theorem praReassemble_directions :
+    praDirectionsAtFunctor I J
+      (praReassemble A E) = E := by
+  apply Functor.hext
+  · intro X; rfl
+  · intro X Y f
+    rw [heq_eq_eq]
+    unfold praDirectionsAtFunctor
+      praDirectionsAtFunctorOp
+    dsimp only [praReassemble,
+      Functor.op_obj, Functor.op_map,
+      praReassembleGr,
+      praReassembleObjGr,
+      praReassembleMapGr,
+      elementsPrecomp,
+      ccrNewFamilyFunctor, ccrNewFamily,
+      ccrNewFiberMor,
+      unopUnop, Functor.comp_obj,
+      Functor.comp_map, Functor.op_obj,
+      Functor.op_map,
+      Quiver.Hom.unop_op,
+      Opposite.unop_op]
+    simp only [Opposite.op_unop,
+      Quiver.Hom.op_unop]
+    obtain ⟨⟨j₁, a₁⟩⟩ := X
+    obtain ⟨⟨j₂, a₂⟩⟩ := Y
+    set g : j₂ ⟶ j₁ := f.unop.val
+    have hcompat : A.map g a₂ = a₁ :=
+      show _ from f.unop.property
+    clear_value g
+    revert f hcompat g
+    intro g hcompat f
+    subst f
+    dsimp only [Opposite.unop_op]
+    have key : A.map g.unop.val a₂ =
+      A.map hcompat a₂ :=
+      show _ from g.unop.property
+    generalize A.map hcompat a₂ = b
+      at g key ⊢
+    have peq :
+      (Opposite.op ⟨j₁, b⟩ :
+        A.ElementsPre) =
+      Opposite.op
+        ⟨j₁, A.map g.unop.val a₂⟩ :=
+      congrArg Opposite.op
+        (Sigma.ext rfl
+          (heq_of_eq key.symm))
+    calc eqToHom _ ≫
+        E.map (CategoryOfElements.homMk
+          (F := A) ⟨j₂, a₂⟩
+          ⟨j₁, A.map g.unop.val a₂⟩
+          g.unop.val rfl).op
+      _ = E.map (eqToHom peq) ≫
+          E.map (CategoryOfElements.homMk
+            (F := A) ⟨j₂, a₂⟩
+            ⟨j₁, A.map g.unop.val a₂⟩
+            g.unop.val rfl).op := by
+            congr 1
+            exact (eqToHom_map E peq).symm
+      _ = E.map (eqToHom peq ≫
+          (CategoryOfElements.homMk
+            (F := A) ⟨j₂, a₂⟩
+            ⟨j₁, A.map g.unop.val a₂⟩
+            g.unop.val rfl).op) := by
+            rw [← E.map_comp]
+      _ = E.map g := by
+            congr 1
+            apply Quiver.Hom.unop_inj
+            apply CategoryOfElements.ext
+              (F := A)
+            change ((CategoryOfElements.homMk
+              (F := A) ⟨j₂, a₂⟩
+              ⟨j₁, A.map g.unop.val a₂⟩
+              g.unop.val rfl).op.unop ≫
+              (eqToHom peq).unop).val =
+              g.unop.val
+            simp only [
+              CategoryOfElements.comp_val,
+              eqToHom_unop,
+              CategoryOfElements.eqToHom_val,
+              eqToHom_refl,
+              Category.comp_id,
+              Quiver.Hom.unop_op,
+              CategoryOfElements.homMk]
+
 
 end PRAReassembly
 
