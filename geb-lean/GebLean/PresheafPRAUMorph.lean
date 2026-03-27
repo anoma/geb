@@ -960,4 +960,182 @@ def ccrConstLimAdj :
 
 end LimFunctorAdj
 
+/-! ## PRA Reassembly
+
+Given a positions presheaf `A : Jᵒᵖ ⥤ Type w'` and a
+directions functor
+`E : A.ElementsPre ⥤ (Iᵒᵖ ⥤ Type w_I)`, we reassemble
+a PRA `P : PresheafPRACat I J`.
+
+At each `j : Jᵒᵖ`, the CCR object has:
+- Index type: `A.obj j`
+- Family at `a : A.obj j`: `E.obj (op ⟨j, a⟩)`
+
+The morphism action uses functoriality of `E` on
+morphisms in `A.ElementsPre`.
+-/
+
+section PRAReassembly
+
+universe u_I v_I u_J v_J w_I w'
+
+variable {I : Type u_I} [Category.{v_I} I]
+variable {J : Type u_J} [Category.{v_J} J]
+variable
+  (A : Jᵒᵖ ⥤ Type w')
+  (E : A.ElementsPre ⥤ (Iᵒᵖ ⥤ Type w_I))
+
+/--
+The Grothendieck object at `j` for the reassembled
+PRA. Has base `op (A.obj j)` and fiber
+`fun a => E.obj (op ⟨j, a⟩)`.
+-/
+def praReassembleObjGr (j : Jᵒᵖ) :
+    Grothendieck
+      (familyFunctor.{max v_I u_I (w_I + 1),
+        max u_I w_I, w'}
+        (Iᵒᵖ ⥤ Type w_I)) :=
+  ⟨Opposite.op (A.obj j),
+    fun a => E.obj (Opposite.op ⟨j, a⟩)⟩
+
+/--
+The Grothendieck morphism for a morphism `g : j₁ ⟶ j₂`
+in `Jᵒᵖ`. Goes from `praReassembleObjGr A E j₂` to
+`praReassembleObjGr A E j₁` in
+`Grothendieck (familyFunctor ...)`.
+
+The base is `op (A.map g)` and the fiber at `a₁`
+is `E.map` applied to the canonical morphism
+`op ⟨j₂, A.map g a₁⟩ ⟶ op ⟨j₁, a₁⟩` in
+`A.ElementsPre`.
+-/
+def praReassembleMapGr {j₁ j₂ : Jᵒᵖ} (g : j₁ ⟶ j₂) :
+    praReassembleObjGr A E j₂ ⟶
+      praReassembleObjGr A E j₁ :=
+  { base := Quiver.Hom.op (A.map g)
+    fiber := fun a₁ =>
+      E.map (Quiver.Hom.op
+        (CategoryOfElements.homMk
+          (F := A) ⟨j₁, a₁⟩ ⟨j₂, A.map g a₁⟩
+          g rfl)) }
+
+/--
+For `g : j₁ ⟶ j₂` in `Jᵒᵖ` and `a₁ : A.obj j₁`,
+the canonical morphism in `A.ElementsPre` from
+`op ⟨j₂, A.map g a₁⟩` to `op ⟨j₁, a₁⟩`.
+-/
+def praReassembleElemMor
+    {j₁ j₂ : Jᵒᵖ} (g : j₁ ⟶ j₂)
+    (a₁ : A.obj j₁) :
+    (Opposite.op ⟨j₂, A.map g a₁⟩ :
+      A.ElementsPre) ⟶
+    Opposite.op ⟨j₁, a₁⟩ :=
+  Quiver.Hom.op
+    (CategoryOfElements.homMk (F := A)
+      ⟨j₁, a₁⟩ ⟨j₂, A.map g a₁⟩ g rfl)
+
+private lemma praReassembleElemMor_id
+    (j : Jᵒᵖ) (a : A.obj j) :
+    praReassembleElemMor A (𝟙 j) a =
+    eqToHom (by
+      exact congrArg Opposite.op (Sigma.ext rfl
+        (heq_of_eq
+          (congrFun (A.map_id j) a)))) := by
+  unfold praReassembleElemMor
+  apply Quiver.Hom.unop_inj
+  apply Subtype.ext
+  simp only [Quiver.Hom.unop_op,
+    CategoryOfElements.homMk]
+  rw [eqToHom_unop]
+  simp only [CategoryOfElements.eqToHom_val]
+  rfl
+
+private lemma praReassembleMapGr_id (j : Jᵒᵖ) :
+    praReassembleMapGr A E (𝟙 j) =
+      𝟙 (praReassembleObjGr A E j) := by
+  unfold praReassembleMapGr praReassembleObjGr
+  apply Grothendieck.ext
+  case w_base =>
+    exact congrArg Quiver.Hom.op (A.map_id j)
+  case w_fiber =>
+    funext a
+    simp only [Grothendieck.id_fiber]
+    rw [pi_eqToHom_comp_apply]
+    -- The goal has E.map (...).op which is
+    -- E.map (praReassembleElemMor ...).
+    change eqToHom _ ≫
+      E.map (praReassembleElemMor A (𝟙 j) a) =
+      _
+    rw [praReassembleElemMor_id A j a,
+      eqToHom_map, eqToHom_trans,
+      pi_eqToHom_apply]
+
+private lemma praReassembleElemMor_comp
+    {j₁ j₂ j₃ : Jᵒᵖ}
+    (g : j₁ ⟶ j₂) (h : j₂ ⟶ j₃)
+    (a₁ : A.obj j₁) :
+    praReassembleElemMor A (g ≫ h) a₁ =
+    (@eqToHom A.ElementsPre _
+      (Opposite.op ⟨j₃, A.map (g ≫ h) a₁⟩)
+      (Opposite.op
+        ⟨j₃, A.map h (A.map g a₁)⟩)
+      (congrArg Opposite.op
+        (congrArg (Sigma.mk j₃)
+          (congrFun
+            (A.map_comp g h) a₁)))) ≫
+    praReassembleElemMor A h (A.map g a₁) ≫
+    praReassembleElemMor A g a₁ := by
+  apply Quiver.Hom.unop_inj
+  apply CategoryOfElements.ext (F := A)
+  unfold praReassembleElemMor
+  simp only [Quiver.Hom.unop_op,
+    CategoryOfElements.homMk]
+  erw [CategoryTheory.unop_comp,
+    CategoryTheory.unop_comp]
+  erw [eqToHom_unop,
+    CategoryOfElements.comp_val,
+    CategoryOfElements.comp_val,
+    Quiver.Hom.unop_op,
+    Quiver.Hom.unop_op,
+    CategoryOfElements.eqToHom_val,
+    eqToHom_refl, Category.comp_id]
+
+private lemma praReassembleMapGr_comp
+    {j₁ j₂ j₃ : Jᵒᵖ}
+    (g : j₁ ⟶ j₂) (h : j₂ ⟶ j₃) :
+    praReassembleMapGr A E (g ≫ h) =
+    praReassembleMapGr A E h ≫
+      praReassembleMapGr A E g := by
+  unfold praReassembleMapGr
+  apply Grothendieck.ext
+  case w_base =>
+    exact congrArg Quiver.Hom.op
+      (A.map_comp g h)
+  case w_fiber =>
+    rw [Grothendieck.comp_fiber]
+    funext a₁
+    rw [pi_eqToHom_comp_apply]
+    conv_rhs =>
+      rw [pi_eqToHom_comp_apply,
+        pi_comp_apply]
+    dsimp only [familyFunctor, familyMap,
+      FamilyCat, Cat.Hom.toFunctor,
+      Functor.toCatHom]
+    simp only [← E.map_comp]
+    change eqToHom _ ≫
+      E.map (praReassembleElemMor A (g ≫ h)
+        a₁) =
+      eqToHom _ ≫
+        E.map (praReassembleElemMor A h
+          (A.map g a₁) ≫
+        praReassembleElemMor A g a₁)
+    rw [praReassembleElemMor_comp,
+      E.map_comp, eqToHom_map,
+      ← Category.assoc (eqToHom _)
+        (eqToHom _),
+      eqToHom_trans, eqToHom_refl,
+      Category.id_comp]
+
+end PRAReassembly
+
 end GebLean
