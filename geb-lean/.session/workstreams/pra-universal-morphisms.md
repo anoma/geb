@@ -12,73 +12,90 @@ PRA functors, generalizing the existing polynomial
 functor infrastructure from slice categories to
 presheaf categories.
 
-**Architecture:** Each construction follows the pattern:
-define it for `CoprodCovarRepCat` (the polynomial
-level), then lift to `PresheafPRACat` (the PRA level)
-via the functorial infrastructure already in place
-(`praEvalAtFunctor`, `praPositionsFunctor`, etc.).
-Where possible, constructions are expressed as
-compositions of existing functors.
+**Architecture:** Each PRA decomposes via
+`FunctorToData` into two presheaf-category
+components:
+
+- **Positions:** `praPositionsFunctor.obj P :
+  Jᵒᵖ ⥤ Type w'` — a presheaf on `J`
+- **Directions:** `praDirectionsAtFunctor :
+  (praPositionsFunctor.obj P).ElementsPre ⥤
+  (Iᵒᵖ ⥤ Type w_I)` — a presheaf-valued functor
+  on the category of elements of positions
+
+Both components live in (co)complete categories
+(presheaf categories and Type). Universal
+morphisms in `PresheafPRACat I J` are computed
+from universal morphisms in these components,
+following the position/direction duality pattern
+from `PolyBetweenCat`:
+
+- **Limits:** limits on positions, colimits on
+  directions
+- **Colimits:** colimits on positions, limits on
+  directions
+
+This replaces the previous approach of "define at
+`CoprodCovarRepCat` level, then lift." That
+approach fails because `CoprodCovarRepCat C` does
+not always have colimits (they depend on
+properties of `C`). The presheaf decomposition
+gives unconditional (co)completeness.
+
+The inverse of the decomposition — reassembling a
+PRA from position and direction data — uses
+`functorTo` (from `FunctorToData`) applied to
+`familyFunctor`.
 
 **Tech Stack:** Lean 4, mathlib (category theory,
 presheaf categories, Grothendieck construction,
-W-types), existing GebLean infrastructure (polynomial
-functors, PRA definitions, op/op' transfer).
+category of elements, W-types), existing GebLean
+infrastructure (polynomial functors, PRA
+definitions, `FunctorToData`/`functorToDataIsoCat`,
+`praPositionsFunctor`, `praDirectionsAtFunctor`).
 
 ---
 
-## Existing Polynomial Infrastructure (Reference)
+## Existing Infrastructure (Reference)
 
-The following constructions exist for
-`PolyFunctorBetweenCat X Y` (polynomial functors
-between slice categories `Over X → Over Y`):
+### PRA Decomposition (PresheafPRA.lean)
 
-### Limits and Colimits (PolyUMorph.lean)
+| Definition | Type | Role |
+| ---------- | ---- | ---- |
+| `PresheafPRACat I J` | `Cat` | PRA category |
+| `praPositionsFunctor` | `...⥤ (Jᵒᵖ ⥤ Type w')` | Position presheaf |
+| `praDirectionsAtFunctor` | `Elem(A)ᵒᵖ ⥤ PSh(I)` | Directions |
+| `praEvalAtFunctor` | `...⥤ (PSh(I) ⥤ PSh(J))` | Evaluation |
+
+### Grothendieck Data (Utilities/Grothendieck.lean)
+
+| Definition | Type | Role |
+| ---------- | ---- | ---- |
+| `FunctorToData F` | structure | Decomposed functor |
+| `functorTo F data` | `D ⥤ Groth F` | Reassembly |
+| `ofFunctor F G` | `FunctorToData F` | Decomposition |
+| `functorToDataIsoCat` | `... ≅Cat ...` | Categorical iso |
+| `NatTransToData` | structure | Decomposed nat trans |
+
+### Existing PolyBetween Pattern (PolyUMorph.lean)
 
 | Construction | Positions | Directions |
 | ------------ | --------- | ---------- |
 | Product `∏_k P_k` | `∏_k I_k(y)` | `∐_k F_k(y, p_k)` |
 | Coproduct `∐_k P_k` | `∐_k I_k(y)` | `F_k(y, i_k)` |
-| Equalizer `eq(f,g)` | `{i \| f(i)=g(i)}` | `F(y,i)` |
-| Coequalizer `coeq(f,g)` | quotient | pushout fibers |
+| Equalizer `eq(f,g)` | `{i \| f(i)=g(i)}` | coequalizer |
+| Coequalizer `coeq(f,g)` | quotient | product over component |
 | Terminal | `PUnit` | `∅` |
 | Initial | `∅` | (vacuous) |
 
-### Closed Monoidal Structure (PolyUMorph.lean)
+### Existing CoprodCovarRepCat Limits (PresheafPRAUMorph.lean)
 
-| Construction | Formula |
-| ------------ | ------- |
-| Cartesian product | pointwise product |
-| Internal hom `[P,Q]` | `∏_{i:I_P(y)} Q^{F_P(y,i)}` |
-| Dirichlet product | `(I_P × I_Q, F_P ⊕ F_Q)` |
-| Dirichlet closure | right adjoint of Dirichlet |
-
-### Composition (Polynomial.lean)
-
-| Construction | Formula |
-| ------------ | ------- |
-| Identity | `(PUnit, yo)` at each `y` |
-| Composition `Q ∘ P` | positions: `Σ_b P(F_Q(b))`, directions: dependent |
-| Left Kan extension | adjoint to restriction |
-
-### Algebras (PolyAlg.lean)
-
-| Construction | Description |
-| ------------ | ----------- |
-| Initial algebra (W-type) | Inductive `PolyFix` |
-| Terminal coalgebra (M-type) | Limit `PolyCofix` |
-| Free monad | `polyFreeMonad` |
-| Cofree comonad | `polyCoalgComonadEquiv` |
-| Algebra/monad equivalence | `polyAlgMonadEquiv` |
-
-### Double Category (Polynomial.lean)
-
-| Component | Description |
-| --------- | ----------- |
-| Objects | Types `X : Type u` |
-| Vertical morphisms | Functions `X → Y` |
-| Horizontal morphisms | `PolyFunctorBetweenCat X Y` |
-| Cells | Natural transformations |
+| Definition | Role |
+| ---------- | ---- |
+| `ccrHasLimit` | Limits exist in CCR when C has colimits |
+| `ccrHasLimitsOfShape` | Typeclass instance |
+| `ccrLimFunctor` | Computable limit functor |
+| `ccrConstLimAdj` | Constant-limit adjunction |
 
 ---
 
@@ -86,64 +103,121 @@ between slice categories `Over X → Over Y`):
 
 ### Phase A: Limits and Colimits of PRAs
 
+The strategy for each construction:
+
+1. Define position (co)limit in `Jᵒᵖ ⥤ Type w'`
+2. Identify the category of elements of the
+   resulting position presheaf
+3. Define direction (co)limit on that category
+   of elements (dual to the position construction)
+4. Reassemble into a PRA via `functorTo`
+5. Prove the universal property in
+   `PresheafPRACat`
+
+#### A0: Reassembly Infrastructure
+
+**Goal:** Establish the round-trip between PRA
+objects and (positions, directions) pairs. Given
+`A : Jᵒᵖ ⥤ Type w'` and
+`E : A.ElementsPre ⥤ PSh(I)`, construct a PRA
+`P : PresheafPRACat I J`.
+
+**Implementation:** Use `functorTo` applied to
+`familyFunctor (PSh(I))` with:
+
+- `baseFunc` derived from `A` (mapping `j` to
+  `op (A.obj j)`)
+- `fib` at `j` given by `E` restricted to the
+  fiber at `j`
+- `hom` from functoriality of `E`
+
+**Result:** An equivalence (or at least adjunction)
+between the decomposed form and `PresheafPRACat`.
+
+**File:** `GebLean/PresheafPRAUMorph.lean`
+
 #### A1: Products
 
-**Formula:** For PRAs `P_k` with positions `A_k`
-and directions `E_k`:
+**Formula:** For PRAs `P_k` (`k ∈ K`) with
+positions `A_k` and directions `E_k`:
 
-```text
-(∏_k P_k)(Z)(j) = ∏_k (∐_{a_k ∈ A_k(j)}
-  Hom(E_k(j,a_k), Z))
-```
+- Positions: `A(j) = ∏_k A_k(j)` — pointwise
+  product of position presheaves (limit in
+  `Jᵒᵖ ⥤ Type w'`)
+- Elements of product: `(j, (a_k)_k)` where
+  `a_k ∈ A_k(j)` for each `k`
+- Directions at `(j, (a_k)_k)`:
+  `∐_k E_k(j, a_k)` — coproduct of direction
+  presheaves (colimit in `PSh(I)`)
 
-Positions: `A(j) = ∏_k A_k(j)` (pointwise product
-of presheaves)
+**Implementation:**
 
-Directions at `(j, (a_k)_k)`:
-`E(j, (a_k)) = ∐_k E_k(j, a_k)` (coproduct of
-direction presheaves)
-
-**Implementation:** Define at `CoprodCovarRepCat`
-level (indexed product of CCR objects), then lift.
-The positions are a product in `Type w'` and the
-directions are a coproduct in the presheaf category.
-This generalizes `polyBetweenProd`.
+- [ ] Define `praProductPos` as the product of
+  position presheaves
+- [ ] Identify `Elements(praProductPos)` and
+  define projection functors to each
+  `Elements(A_k)`
+- [ ] Define `praProductDir` as the coproduct of
+  pulled-back direction presheaves
+- [ ] Assemble via `functorTo` into PRA
+- [ ] Define cone morphisms from the product to
+  each `P_k`
+- [ ] Prove universal property (lift + uniqueness)
+- [ ] Package as `HasLimit` instance
 
 **File:** `GebLean/PresheafPRAUMorph.lean`
 
 #### A2: Coproducts
 
-**Formula:** Positions `A(j) = ∐_k A_k(j)`,
-directions `E(j, (k,a_k)) = E_k(j, a_k)`.
+**Formula:** Positions `A(j) = ∐_k A_k(j)` —
+coproduct of position presheaves. Directions at
+`(j, (k, a_k))`: `E_k(j, a_k)` — the selected
+direction presheaf.
 
-**Implementation:** Sigma type on positions, same
-directions. Generalizes `polyBetweenCoprod`.
+**Implementation:** Sigma type on positions,
+unchanged directions at the selected component.
+Generalizes `polyBetweenCoprod`.
 
 #### A3: Equalizers
 
-**Formula:** Positions `A(j) = {a ∈ A_P(j) |
-f(a) = g(a)}`, directions unchanged.
+**Formula:** For `f, g : P → Q`:
 
-**Implementation:** Subtype on positions.
-Generalizes `polyBetweenEq`.
+- Positions: `A(j) = {a ∈ A_P(j) | f_pos(a) =
+  g_pos(a)}` — equalizer of position morphisms
+  (limit/subtype)
+- Directions: coequalizer of the two direction
+  morphisms at positions where they agree
+  (colimit)
+
+**Implementation:** Subtype on positions,
+coequalizer on directions. Generalizes
+`polyBetweenEq`.
 
 #### A4: Coequalizers
 
-**Formula:** Positions `A(j) = A_Q(j) / ~` where
-`~` identifies images of `f` and `g`.  Directions
-are the pushout of fibers along the identification.
+**Formula:**
 
-**Implementation:** Quotient on positions, pushout
-on directions.  Generalizes `polyBetweenCoeq`.
+- Positions: `A(j) = A_Q(j) / ~` where `~`
+  identifies images under `f_pos` and `g_pos` —
+  coequalizer of position morphisms (colimit)
+- Directions: pullback/equalizer of direction
+  morphisms at identified positions (limit)
+
+**Implementation:** Quotient on positions,
+equalizer on directions. Generalizes
+`polyBetweenCoeq`.
 
 #### A5: Completeness and Cocompleteness
 
 **Result:** `PresheafPRACat I J` has all small
-limits and colimits (since `CoprodCovarRepCat` does
-and the functor-category structure preserves them).
+limits and colimits. This follows from A1-A4 (or
+directly from the presheaf decomposition and the
+fact that presheaf categories are (co)complete).
 
 **Implementation:** Derive `HasLimitsOfSize` and
-`HasColimitsOfSize` instances.
+`HasColimitsOfSize` instances. Optionally build
+computable (co)limit functors and adjunctions
+(as done for `ccrLimFunctor`/`ccrConstLimAdj`).
 
 ---
 
@@ -151,40 +225,26 @@ and the functor-category structure preserves them).
 
 #### B1: Cartesian Product
 
-**Formula:** Pointwise product of evaluation
-functors.  Positions are products, directions are
-coproducts (same as products of two PRAs).
-
-**Implementation:** Binary specialization of A1.
+Pointwise product of evaluation functors.
+Binary specialization of A1: positions are
+products, directions are coproducts.
 
 #### B2: Internal Hom (Exponential)
 
-**Formula:** `[P, Q]` is the PRA whose evaluation
-at `Z` and `j` is `NatTrans(P(Z), Q(Z))` restricted
-to `j`.  Concretely:
+`[P, Q]` uses the LCCC structure of presheaf
+categories (dependent products along the
+positions presheaf). The presheaf decomposition
+makes this natural: work directly in the
+presheaf topos.
 
-```text
-[P,Q](Z)(j) = ∏_{a ∈ A_P(j)} ∐_{b ∈ A_Q(j)}
-  Hom(E_Q(j,b), Z)^{Hom(E_P(j,a), Z) → {b}}
-```
-
-This is more involved; it uses the LCCC structure
-of presheaf categories (dependent products along
-the positions presheaf).
-
-**Implementation:** Generalizes `pbCurry`/
-`pbUncurry`.  Requires `Pi` (dependent product) in
-the presheaf topos.  May need to use
+Generalizes `pbCurry`/`pbUncurry`. May need
 `Sigma`/`Pi`/`Delta` adjunctions.
 
 #### B3: Dirichlet Product
 
-**Formula:** Positions `A(j) = A_P(j) × A_Q(j)`,
+Positions `A(j) = A_P(j) × A_Q(j)` (product),
 directions `E(j, (a,b)) = E_P(j,a) ⊕ E_Q(j,b)`
-(coproduct of direction presheaves).
-
-**Implementation:** Product on positions, coproduct
-on directions.  Generalizes `polyBetweenDirichlet`.
+(coproduct). Generalizes `polyBetweenDirichlet`.
 
 #### B4: Dirichlet Closure
 
@@ -197,65 +257,45 @@ Generalizes `polyBetweenDirichletClosure`.
 
 #### C1: Identity PRA
 
-**Formula:** For `PSh(I) → PSh(I)`:
+For `PSh(I) → PSh(I)`:
 
-- Positions: `A = terminal presheaf` (constant `{*}`)
+- Positions: terminal presheaf (constant `{*}`)
 - Directions: `E(i, *) = yo(i)` (Yoneda at `i`)
+- Evaluation: `Id(Z)(i) = Hom(yo(i), Z) = Z(i)`
 
-Evaluation: `Id(Z)(i) = Hom(yo(i), Z) = Z(i)` by
-Yoneda.
-
-**Implementation:** Define using the terminal
-presheaf and Yoneda embedding.
+Implementation uses terminal presheaf and Yoneda
+embedding.
 
 #### C2: Composition of PRAs
 
-**Formula:** For `P : PSh(I) → PSh(J)` with
-`(A_P, E_P)` and `Q : PSh(J) → PSh(K)` with
-`(A_Q, E_Q)`:
+For `P : PSh(I) → PSh(J)` with `(A_P, E_P)` and
+`Q : PSh(J) → PSh(K)` with `(A_Q, E_Q)`:
 
-The composite `Q ∘ P` has positions at `k`:
-
-- `Σ_{b ∈ A_Q(k)} ∏_{(j,e) ∈ el(E_Q(k,b))} A_P(j)`
-
-Actually, the correct formula uses the
-Beck-Chevalley condition.  Factor each PRA as
-`π_! ∘ E^*`:
+Factor each PRA as `π_! ∘ E^*`:
 
 ```text
-P = (π_P)_! ∘ E_P^*  where π_P : el(A_P) → J
-Q = (π_Q)_! ∘ E_Q^*  where π_Q : el(A_Q) → K
+P = (π_P)_! ∘ E_P^*
+Q = (π_Q)_! ∘ E_Q^*
 ```
 
 Then `Q ∘ P = (π_Q)_! ∘ E_Q^* ∘ (π_P)_! ∘ E_P^*`.
-The middle part `E_Q^* ∘ (π_P)_!` is computed via
-Beck-Chevalley for the pullback square.
+The middle part uses Beck-Chevalley.
 
-**Implementation:** This is the deepest
-construction.  Define the pullback category, then
-use the Beck-Chevalley formula.  Generalizes
+Uses `praDirectionsAtFunctor` for `E` and
+`CategoryOfElements.π` for `π`. Generalizes
 `polyBetweenComp`.
 
 #### C3: PRA Factorization
 
-**Formula:** Every PRA `P : PSh(I) → PSh(J)` with
-`(A, E)` factors as:
+Every PRA `P : PSh(I) → PSh(J)` with `(A, E)`
+factors as:
 
 ```text
 PSh(I) --E^*--> PSh(el(A)) --π_!--> PSh(J)
 ```
 
-where:
-
-- `E^* = E ∘ -` is precomposition with
-  `E : el(A)^op → PSh(I)` (a right adjoint)
-- `π_! = Lan_π` is left Kan extension along
-  `π : el(A) → J` (a discrete opfibration part)
-
-**Implementation:** Define `E^*` and `π_!`
-separately, prove their composition equals `P`.
-Uses `praDirectionsAtFunctor` for `E` and
-`CategoryOfElements.π` for `π`.
+Uses `praDirectionsAtFunctor` and the category
+of elements projection.
 
 ---
 
@@ -263,54 +303,32 @@ Uses `praDirectionsAtFunctor` for `E` and
 
 #### D1: Algebra Category
 
-**Definition:** For PRA endofunctor
-`P : PSh(I) → PSh(I)`, an algebra is
-`(A, α : P(A) → A)` where `A : PSh(I)` and
-`α` is a presheaf morphism.
-
-**Implementation:** Use mathlib's
-`Endofunctor.Algebra` applied to
+For PRA endofunctor `P : PSh(I) → PSh(I)`, use
+mathlib's `Endofunctor.Algebra` applied to
 `praEvalAtFunctor.obj P`.
 
 #### D2: Initial Algebra (W-type)
 
-**Construction:** Since `PSh(I)` is a topos (hence
-LCCC), W-types exist.  The initial algebra of a PRA
-endofunctor `P` is computed as the colimit of the
-iteration sequence
-`∅ → P(∅) → P²(∅) → ⋯`.
-
-For the pointwise formula: at each `i : I`, the
-W-type fiber is the set of well-founded trees whose
-nodes are labeled by positions and edges by
-directions, compatible with the presheaf structure.
-
-**Implementation:** Define `praFix P : PSh(I)` as
-the colimit of the iteration chain.  Generalizes
-`PolyFix`.
+Colimit of the iteration sequence
+`∅ → P(∅) → P²(∅) → ⋯`. Exists
+unconditionally since `PSh(I)` is cocomplete
+(Phase A). Generalizes `PolyFix`.
 
 #### D3: Terminal Coalgebra (M-type)
 
-**Construction:** Dual: the limit of
-`1 ← P(1) ← P²(1) ← ⋯`.
-
-**Implementation:** Define `praCofix P : PSh(I)` as
-the limit.  Generalizes `PolyCofix`.
+Limit of `1 ← P(1) ← P²(1) ← ⋯`.
+Generalizes `PolyCofix`.
 
 #### D4: Free Monad
 
-**Construction:** The free monad on `P` is the
-monad whose algebras are exactly the `P`-algebras.
-Its underlying endofunctor sends `A` to the initial
-algebra of `X ↦ A + P(X)`.
-
-**Implementation:** Define using the coproduct PRA
-`A + P(-)` and its initial algebra.  Generalizes
-`polyFreeMonad`.
+Underlying endofunctor sends `A` to the initial
+algebra of `X ↦ A + P(X)`. Uses Phase A
+coproducts and D2. Generalizes `polyFreeMonad`.
 
 #### D5: Cofree Comonad
 
-Dual of D4.  Generalizes `polyCoalgComonadEquiv`.
+Dual of D4. Generalizes
+`polyCoalgComonadEquiv`.
 
 ---
 
@@ -318,21 +336,14 @@ Dual of D4.  Generalizes `polyCoalgComonadEquiv`.
 
 #### E1: Objects and Morphisms
 
-- **Objects:** Small categories `I : Cat`
-- **Vertical morphisms:** Functors `F : I ⥤ J`
-  (or a restricted class: discrete fibrations,
-  discrete opfibrations, or all functors —
-  investigate which gives the right 2-cell
-  structure)
-- **Horizontal morphisms:** PRAs `P : PSh(I) →
-  PSh(J)`, i.e., objects of `PresheafPRACat I J`
-- **Cells:** Natural transformations between
-  appropriate compositions
+- Objects: small categories `I : Cat`
+- Vertical: functors `F : I ⥤ J`
+- Horizontal: PRAs `P : PresheafPRACat I J`
+- Cells: natural transformations
 
 #### E2: Vertical Composition
 
-Composition of functors `F : I ⥤ J` and
-`G : J ⥤ K`.
+Composition of functors.
 
 #### E3: Horizontal Composition
 
@@ -351,23 +362,8 @@ PSh(I₁) --P--> PSh(J₁)
 PSh(I₂) --Q--> PSh(J₂)
 ```
 
-is a natural transformation `G^* ∘ P → Q ∘ F^*`
-(where `F^*` and `G^*` are precomposition
-functors).
-
-**Note on vertical morphisms:** The most natural
-choice for the polynomial/PRA double category is:
-
-- Vertical morphisms are **functors** `I ⥤ J`
-  (general)
-- The restricted version with **discrete
-  opfibrations** gives the PRA factorization
-  (Phase C3)
-
-The existing slice-polynomial double category uses
-**functions** `X → Y` as vertical morphisms, which
-are the discrete-category specialization of
-functors.
+is a natural transformation
+`G^* ∘ P → Q ∘ F^*`.
 
 ---
 
@@ -375,16 +371,17 @@ functors.
 
 ```text
 Phase A (Limits/Colimits)
-├── A1: Products (independent)
-├── A2: Coproducts (independent)
-├── A3: Equalizers (independent)
-├── A4: Coequalizers (independent)
+├── A0: Reassembly infrastructure (first)
+├── A1: Products (depends A0)
+├── A2: Coproducts (depends A0)
+├── A3: Equalizers (depends A0)
+├── A4: Coequalizers (depends A0)
 └── A5: Completeness (depends A1-A4)
 
 Phase B (Closed Monoidal)
 ├── B1: Cartesian product (depends A1)
 ├── B2: Internal hom (depends B1, Phase C)
-├── B3: Dirichlet product (independent)
+├── B3: Dirichlet product (depends A0)
 └── B4: Dirichlet closure (depends B3)
 
 Phase C (Composition)
@@ -408,26 +405,30 @@ Phase E (Double Category)
 
 ## Recommended Starting Order
 
-1. **A1-A4** (limits/colimits) — most mechanical,
-   direct generalization of `PolyUMorph.lean`
-2. **C1** (identity) — needed for everything else
-3. **C3** (PRA factorization) — demonstrates the
-   right-adjoint + discrete-opfibration
-   decomposition
-4. **C2** (composition) — uses C3
-5. **D1** (algebra category) — enables fixed points
-6. **D2-D3** (W-types, M-types)
-7. **B1-B4** (closed monoidal) — uses A1 and C2
-8. **E1-E4** (double category) — capstone
+1. **A0** (reassembly) — establishes the
+   decomposition/recomposition round-trip
+2. **A1-A2** (products, coproducts) — most
+   mechanical, direct PolyBetween generalization
+3. **A3-A4** (equalizers, coequalizers)
+4. **A5** (completeness instances)
+5. **C1** (identity) — needed for composition
+6. **C3** (PRA factorization) — demonstrates
+   `π_! ∘ E^*` decomposition
+7. **C2** (composition) — uses C3
+8. **D1** (algebra category)
+9. **D2-D3** (W-types, M-types)
+10. **B1-B4** (closed monoidal) — uses A1 and C2
+11. **E1-E4** (double category) — capstone
 
 ## File Structure
 
 | File | Contents |
 | ---- | -------- |
-| `GebLean/PresheafPRAUMorph.lean` | Phases A, B |
-| `GebLean/PresheafPRAComp.lean` | Phase C |
-| `GebLean/PresheafPRAAlg.lean` | Phase D |
-| `GebLean/PresheafPRADouble.lean` | Phase E |
+| `GebLean/PresheafPRAUMorph.lean` | Phase A (reassembly + limits/colimits) |
+| `GebLean/PresheafPRAComp.lean` | Phase C (composition, identity) |
+| `GebLean/PresheafPRAAlg.lean` | Phase D (algebras, W/M-types) |
+| `GebLean/PresheafPRADouble.lean` | Phase E (double category) |
+| `GebLean/PresheafPRAMonoidal.lean` | Phase B (closed monoidal) |
 
 ## Key Mathematical References
 
