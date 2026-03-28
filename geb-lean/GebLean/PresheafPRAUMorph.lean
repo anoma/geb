@@ -1384,6 +1384,96 @@ def praProdDirAt (j : Jᵒᵖ)
       (congrFun ((praDirectionsAt I J (P k)
         j (t k)).map_comp f g) e)
 
+/--
+Project a product-element morphism to a
+factor-element morphism.  Given a morphism in
+`praProdPos.ElementsPre` and an index `k`,
+produces the corresponding morphism in
+`((praPositionsFunctor I J).obj (P k)).ElementsPre`.
+-/
+def praProdElemProj
+    {x y : (praProdPos P).ElementsPre}
+    (φ : x ⟶ y) (k : K) :
+    (Opposite.op ⟨x.unop.fst,
+      x.unop.snd k⟩ :
+      ((praPositionsFunctor I J).obj
+        (P k)).ElementsPre) ⟶
+    Opposite.op ⟨y.unop.fst,
+      y.unop.snd k⟩ :=
+  Quiver.Hom.op
+    (CategoryOfElements.homMk (F :=
+      (praPositionsFunctor I J).obj (P k))
+      ⟨y.unop.fst, y.unop.snd k⟩
+      ⟨x.unop.fst, x.unop.snd k⟩
+      φ.unop.val
+      (congrFun φ.unop.property k))
+
+private lemma praProdElemProj_id
+    (x : (praProdPos P).ElementsPre) (k : K) :
+    praProdElemProj P (𝟙 x) k = 𝟙 _ := by
+  apply Quiver.Hom.unop_inj
+  apply CategoryOfElements.ext
+  change (𝟙 x).unop.val = 𝟙 _
+  erw [CategoryTheory.unop_id]
+  rfl
+
+private lemma praProdElemProj_comp
+    {x y z : (praProdPos P).ElementsPre}
+    (φ : x ⟶ y) (ψ : y ⟶ z) (k : K) :
+    praProdElemProj P (φ ≫ ψ) k =
+    praProdElemProj P φ k ≫
+      praProdElemProj P ψ k := by
+  apply Quiver.Hom.unop_inj
+  apply CategoryOfElements.ext
+  change (φ ≫ ψ).unop.val = _
+  rfl
+
+/--
+The product direction functor on
+`praProdPos.ElementsPre`.  Sends each element
+`(j, t)` to the Sigma-type direction presheaf
+`praProdDirAt P j t`, functorially in `(j, t)`.
+-/
+def praProdDir :
+    (praProdPos P).ElementsPre ⥤
+      (Iᵒᵖ ⥤ Type (max w' w_I)) where
+  obj e := praProdDirAt P e.unop.fst e.unop.snd
+  map {x y} φ :=
+    { app := fun i => fun ⟨k, e⟩ =>
+        ⟨k, ((praDirectionsAtFunctor I J
+          (P k)).map
+          (praProdElemProj P φ k)).app i e⟩
+      naturality := fun {i₁ i₂} f => by
+        funext ⟨k, e⟩
+        simp only [types_comp_apply,
+          praProdDirAt]
+        let Ek := praDirectionsAtFunctor I J
+          (P k)
+        let α := Ek.map (praProdElemProj P φ k)
+        exact congrArg (Sigma.mk k)
+          (congrFun (α.naturality f) e) }
+  map_id x := by
+    ext i ⟨k, e⟩
+    simp only [types_id_apply,
+      NatTrans.id_app]
+    let Ek := praDirectionsAtFunctor I J (P k)
+    rw [praProdElemProj_id]
+    exact congrArg (Sigma.mk k)
+      (congrFun (congrFun (congrArg
+        NatTrans.app (Ek.map_id _)) i) e)
+  map_comp {x y z} φ ψ := by
+    ext i ⟨k, e⟩
+    simp only [types_comp_apply,
+      NatTrans.comp_app]
+    let Ek := praDirectionsAtFunctor I J (P k)
+    rw [praProdElemProj_comp]
+    exact congrArg (Sigma.mk k)
+      (congrFun (congrFun (congrArg
+        NatTrans.app
+        (Ek.map_comp
+          (praProdElemProj P φ k)
+          (praProdElemProj P ψ k))) i) e)
+
 end PRAProduct
 
 end GebLean
