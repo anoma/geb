@@ -2,8 +2,8 @@
 
 ## Status
 
-Active — `interpU_fold` complete; next: soundness
-(`btMorRel` implies equal `interpU`)
+Active — soundness complete; next: functor
+construction and faithfulness
 
 ## Goal
 
@@ -14,10 +14,11 @@ into `Type u` for arbitrary universe `u`.
 ## Files
 
 - `GebLean/LawvereBT.lean` — `interpU`, `interpUStep`,
-  computation lemmas, helper lemmas, `interpU_fold`
-  (complete, no sorry)
+  computation lemmas, helper lemmas, `interpU_fold`,
+  `interpU_subst` (all complete, no sorry)
 - `GebLean/LawvereBTInterp.lean` — `BT.fold_leaf`,
-  `BT.fold_node` (both `rfl`)
+  `BT.fold_node`, `fold_eta_*`, `fold_uniq_interp_gen`,
+  `interpU_sound` (all complete, no sorry)
 - `GebLean/LawvereBTQuot.lean` — category instance,
   PBTO instance (unchanged)
 

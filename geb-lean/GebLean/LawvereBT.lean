@@ -2496,4 +2496,201 @@ def BTMorN.interpU {n m : ℕ}
     Fin m → BT.{u} :=
   fun j => (f j).interpU ctx
 
+private lemma interpU_subst_fold_case
+    {n m : ℕ}
+    (isLt : 3 < 4)
+    (p : polyBetweenIndex ℕ ℕ
+      (btMorComponents ⟨3, isLt⟩) n)
+    (children :
+      ∀ e : (polyBetweenFamily ℕ ℕ
+        (btMorComponents ⟨3, isLt⟩) n
+          p).left,
+        BTMor1
+          ((polyBetweenFamily ℕ ℕ
+            (btMorComponents ⟨3, isLt⟩) n
+              p).hom e))
+    (σ : Fin n → BTMor1 m)
+    (ctx : Fin m → BT.{u})
+    (ih :
+      ∀ e : (polyBetweenFamily ℕ ℕ
+        (btMorComponents ⟨3, isLt⟩) n
+          p).left,
+        ∀ (n' : ℕ)
+          (h : (polyBetweenFamily ℕ ℕ
+            (btMorComponents ⟨3, isLt⟩) n
+              p).hom e = n')
+          (σ' : Fin n' → BTMor1 m),
+          ((children e).subst
+            (fun v =>
+              σ' (finCast h v))).interpU
+                ctx =
+            (children e).interpU
+              (fun v =>
+                (σ' (finCast h v)).interpU
+                  ctx)) :
+    (BTMor1.subst
+      (PolyFix.mk n
+        (show polyBetweenIndex ℕ ℕ
+          btMorPoly n from
+          ⟨⟨3, isLt⟩, p⟩)
+        children)
+      (fun v => σ v)).interpU ctx =
+    (BTMor1.interpU
+      (PolyFix.mk n
+        (show polyBetweenIndex ℕ ℕ
+          btMorPoly n from
+          ⟨⟨3, isLt⟩, p⟩)
+        children)
+      (fun v => (σ v).interpU ctx)) := by
+  -- Step 1: Unfold the inner subst on the LHS.
+  set innerV := BTMor1.subst
+    (PolyFix.mk n
+      (show polyBetweenIndex ℕ ℕ
+        btMorPoly n from
+        ⟨⟨3, isLt⟩, p⟩)
+      children) σ with hIV
+  unfold BTMor1.subst at hIV
+  unfold BTMor1.ind
+    PolyFixCoprod.ind at hIV
+  unfold PolyFix.ind at hIV
+  dsimp only at hIV
+  rw [hIV]
+  conv_lhs =>
+    arg 1; arg 2; ext i
+    change (children ⟨↑i, _⟩).subst
+      (fun v => σ (finCast _ v))
+  conv_lhs =>
+    arg 1; arg 4
+    change (children
+      ⟨p.fst + p.fst, _⟩).subst
+      (fun v => σ (finCast _ v))
+  -- Step 2: Apply interpU_fold on LHS.
+  rw [BTMor1.interpU_fold]
+  -- Step 3: Rewrite base and tree using the IH.
+  simp only [show ∀ (i : Fin p.fst),
+      ((children ⟨↑i, _⟩).subst
+        (fun v =>
+          σ (finCast _ v))).interpU ctx =
+      (children ⟨↑i, _⟩).interpU
+        (fun v =>
+          (σ (finCast _ v)).interpU ctx)
+      from fun i =>
+        ih ⟨↑i, _⟩ _ _ σ]
+  simp only [show
+      ((children ⟨p.fst + p.fst, _⟩).subst
+        (fun v =>
+          σ (finCast _ v))).interpU ctx =
+      (children ⟨p.fst + p.fst, _⟩).interpU
+        (fun v =>
+          (σ (finCast _ v)).interpU ctx)
+      from ih ⟨p.fst + p.fst, _⟩ _ _ σ]
+  -- Step 4: Swap sides and unfold RHS interpU.
+  symm
+  set rhsV := BTMor1.interpU
+    (PolyFix.mk n
+      (show polyBetweenIndex ℕ ℕ
+        btMorPoly n from
+        ⟨⟨3, isLt⟩, p⟩)
+      children)
+    (fun v => (σ v).interpU ctx) with hRV
+  unfold BTMor1.interpU at hRV
+  unfold BTMor1.ind
+    PolyFixCoprod.ind at hRV
+  unfold PolyFix.ind at hRV
+  dsimp only at hRV
+  unfold interpUStep at hRV
+  dsimp only at hRV
+  rw [hRV]
+  -- Step 5: Normalize the base component via
+  -- change to interpU.
+  conv_lhs =>
+    arg 1; ext i
+    change (children ⟨↑i, _⟩).interpU
+      (fun v =>
+        (σ (finCast _ v)).interpU ctx)
+  -- Step 6: Both sides are BT.fold applied to
+  -- p.snd. Split into component goals.
+  -- congr solves base and tree by definitional
+  -- equality, leaving only the step.
+  apply congr_fun
+  congr 1
+  -- Step 7: Prove the step components are equal.
+  funext leftAll rightAll j
+  change (children ⟨p.fst + ↑j, _⟩).interpU
+    (fun v =>
+      if h : (finCast _ v).val < p.fst
+      then leftAll
+        ⟨(finCast _ v).val, h⟩
+      else rightAll
+        ⟨(finCast _ v).val - p.fst,
+          _⟩) = _
+  -- Use interpU_cast to move fiberCast into the
+  -- context.
+  rw [BTMor1.interpU_cast]
+  congr 1
+
+/-- Interpreting a substituted term equals
+interpreting the original with the composed
+context. -/
+theorem BTMor1.interpU_subst {n m : ℕ}
+    (t : BTMor1 n) (σ : Fin n → BTMor1 m)
+    (ctx : Fin m → BT.{u}) :
+    (t.subst σ).interpU ctx =
+    t.interpU
+      (fun i => (σ i).interpU ctx) := by
+  suffices gen : ∀ (n' : ℕ) (h : n = n')
+      (σ' : Fin n' → BTMor1 m),
+      (t.subst (fun v =>
+        σ' (finCast h v))).interpU ctx =
+      t.interpU (fun v =>
+        (σ' (finCast h v)).interpU ctx)
+    from by
+    have := gen n rfl σ
+    simp only [finCast] at this
+    exact this
+  exact BTMor1.ind
+    (motive := fun {k} (t : BTMor1 k) =>
+      ∀ (n' : ℕ) (h : k = n')
+        (σ' : Fin n' → BTMor1 m),
+        (t.subst (fun v =>
+          σ' (finCast h v))).interpU ctx =
+        t.interpU (fun v =>
+          (σ' (finCast h v)).interpU ctx))
+    (step := fun i => match i with
+      | ⟨0, _⟩ =>
+        fun p _ _ n' h σ' => by
+          subst h; simp only [finCast]; rfl
+      | ⟨1, _⟩ =>
+        fun _ _ _ n' h σ' => by
+          subst h; simp only [finCast]; rfl
+      | ⟨2, _⟩ =>
+        fun _ children ih n' h σ' => by
+          subst h; simp only [finCast]
+          change (BTMor1.branch
+            ((children (Sum.inl PUnit.unit)).subst
+              σ')
+            ((children (Sum.inr PUnit.unit)).subst
+              σ')).interpU ctx =
+            BT.node
+              ((children
+                (Sum.inl PUnit.unit)).interpU
+                (fun v => (σ' v).interpU ctx))
+              ((children
+                (Sum.inr PUnit.unit)).interpU
+                (fun v => (σ' v).interpU ctx))
+          rw [BTMor1.interpU_branch]
+          have ihl :=
+            ih (Sum.inl PUnit.unit) _ rfl σ'
+          have ihr :=
+            ih (Sum.inr PUnit.unit) _ rfl σ'
+          simp only [finCast] at ihl ihr
+          rw [ihl, ihr]
+      | ⟨3, isLt3⟩ =>
+        fun p children ih n' h σ' => by
+          subst h; simp only [finCast]
+          exact interpU_subst_fold_case
+            isLt3 p children σ' ctx
+            (fun e => ih e))
+    t
+
 end GebLean
