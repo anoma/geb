@@ -979,7 +979,7 @@ recursive-result variables, which suffices for
 
 /-- Concatenate two `Fin`-indexed tuples into a
 single tuple indexed by `Fin (a + b)`. -/
-def finAppend {a b : ℕ} {α : Type}
+def finAppend {a b : ℕ} {α : Type _}
     (l : Fin a → α) (r : Fin b → α) :
     Fin (a + b) → α :=
   fun i =>
@@ -2197,17 +2197,295 @@ private theorem ind_btMorInject
     polyFixStrFamily
   rfl
 
--- `interpU_fold` is in progress. The proof
--- structure is:
---   change ... (step := interpUStep) ...
---   unfold BTMor1.fold; rw [ind_btMorInject]
---   simp only [polyFixCoprodStr_inj_child, ...]
--- After these layers, ▸ transports remain in
--- the recursive ih calls. btMorInd_cast_ctx
--- eliminates them but simp_rw can't match
--- because the BTMor1.ind calls are inside
--- lambda bodies. A conv-based approach or a
--- combined step-transport lemma is needed.
+/-- Transport through a dependent-type sigma
+eliminates when the sigma equality holds. -/
+private theorem subst_sigma_snd
+    {B : ℕ → Sort _}
+    {a : ℕ} {t : B a}
+    (s : Σ k, B k)
+    (hfst : s.1 = a)
+    (hsig : s = ⟨a, t⟩) :
+    (hfst ▸ s.2 : B a) = t := by
+  subst hsig; rfl
+
+/-- When the positive branch of a `dite` produces
+a sigma with known first component `a`, the
+transport by the fiber equality proof gives
+the second component. -/
+private theorem dite_subst_pos
+    {B : ℕ → Sort _}
+    {p : Prop} [Decidable p]
+    {a : ℕ}
+    (hp : p)
+    (fb : p → B a)
+    (fe : ¬p → Σ k, B k)
+    (heq : (dite p
+      (fun h => (⟨a, fb h⟩ : Σ k, B k))
+      fe).1 = a) :
+    (heq ▸ (dite p
+      (fun h => (⟨a, fb h⟩ : Σ k, B k))
+      fe).2 : B a) = fb hp := by
+  apply subst_sigma_snd
+  exact dif_pos hp
+
+private theorem dite_subst_neg_pos
+    {B : ℕ → Sort _}
+    {p q : Prop} [Decidable p] [Decidable q]
+    {a : ℕ}
+    (hnp : ¬p) (hq : q)
+    (fp : p → Σ k, B k)
+    (fq : q → B a)
+    (fe : ¬q → Σ k, B k)
+    (heq : (dite p fp
+      (fun _ => dite q
+        (fun h => (⟨a, fq h⟩ : Σ k, B k))
+        fe)).1 = a) :
+    (heq ▸ (dite p fp
+      (fun _ => dite q
+        (fun h => (⟨a, fq h⟩ : Σ k, B k))
+        fe)).2 : B a) = fq hq := by
+  apply subst_sigma_snd
+  simp only [dif_neg hnp, dif_pos hq]
+
+private theorem dite_subst_neg_neg
+    {B : ℕ → Sort _}
+    {p q : Prop} [Decidable p] [Decidable q]
+    {a : ℕ} {t : B a}
+    (hnp : ¬p) (hnq : ¬q)
+    (fp : p → Σ k, B k)
+    (fq : q → Σ k, B k)
+    (heq : (dite p fp
+      (fun _ => dite q fq
+        (fun _ =>
+          (⟨a, t⟩ : Σ k, B k)))).1 = a) :
+    (heq ▸ (dite p fp
+      (fun _ => dite q fq
+        (fun _ =>
+          (⟨a, t⟩ : Σ k, B k)))).2 :
+      B a) = t := by
+  apply subst_sigma_snd
+  simp only [dif_neg hnp, dif_neg hnq]
+
+/-- Combined resolution: `ind` applied to a
+transported sigma `.snd` with a context
+equals `ind` applied to the resolved child
+with the resolved context. -/
+private theorem ind_subst_sigma {a : ℕ}
+    {s : Σ k, BTMor1 k}
+    (hfst : s.1 = a)
+    (t : BTMor1 a)
+    (hsig : s = ⟨a, t⟩)
+    (ctx : Fin s.1 → BT.{u})
+    (ctx' : Fin a → BT.{u})
+    (hctx : (fun v => ctx (hfst ▸ v)) = ctx') :
+    (BTMor1.ind
+      (motive := fun {n} _ =>
+        (Fin n → BT.{u}) → BT.{u})
+      (step := interpUStep)
+      (hfst ▸ s.2)) ctx =
+    (BTMor1.ind
+      (motive := fun {n} _ =>
+        (Fin n → BT.{u}) → BT.{u})
+      (step := interpUStep) t) ctx' := by
+  subst hsig; subst hctx; rfl
+
+/-- The eval argument constructed by
+`BTMor1.fold` for `btMorInject 3`. -/
+private abbrev foldEval {n : ℕ}
+    (m : ℕ) (f : Fin m → BTMor1 n)
+    (g : Fin m → BTMor1 (m + m))
+    (tree : BTMor1 n) (j : Fin m) :
+    polyBetweenEvalFamily ℕ ℕ
+      (btMorComponents 3)
+      btMorCarrier n :=
+  ⟨⟨m, j⟩, Over.homMk
+    (fun (d : Fin (m + m + 1)) =>
+      if hb : d.val < m then
+        ⟨n, f ⟨d.val, hb⟩⟩
+      else if hs : d.val < m + m then
+        ⟨m + m, g ⟨d.val - m,
+          by omega⟩⟩
+      else
+        ⟨n, tree⟩)
+    (by funext d
+        dsimp [btMorCarrier,
+          btMorComponents,
+          btMorFoldPoly,
+          polyFixCarrier,
+          familySliceForward,
+          familySliceForwardObj,
+          ccrObjMk, ccrFamily,
+          types_comp_apply]
+        split_ifs <;> rfl)⟩
+
+/-- The `(pbefMor eval).left e` sigma for the
+tree child of a fold (index `m + m`). -/
+private theorem foldChildSigma_tree
+    {n : ℕ} (m : ℕ)
+    (f : Fin m → BTMor1 n)
+    (g : Fin m → BTMor1 (m + m))
+    (tree : BTMor1 n) (j : Fin m)
+    (hlt : m + m < m + m + 1 :=
+      Nat.lt_succ_self _) :
+    (pbefMor (foldEval m f g tree j)).left
+      ⟨m + m, hlt⟩ =
+    ⟨n, tree⟩ := by
+  dsimp only [foldEval, pbefMor, ptoefMor,
+    ccrEvalMor, Over.homMk_left]
+  rw [dif_neg (show ¬(m + m < m)
+    from by omega)]
+  rw [dif_neg (show ¬(m + m < m + m)
+    from by omega)]
+
+/-- The `(pbefMor eval).left e` sigma for a
+base child of a fold (index `i` with
+`i.val < m`). -/
+private theorem foldChildSigma_base
+    {n : ℕ} (m : ℕ)
+    (f : Fin m → BTMor1 n)
+    (g : Fin m → BTMor1 (m + m))
+    (tree : BTMor1 n) (j : Fin m)
+    (i : Fin m)
+    (hlb : i.val < m + m + 1 :=
+      Nat.lt_of_lt_of_le i.isLt
+        (Nat.le_add_right m (m + 1))) :
+    (pbefMor (foldEval m f g tree j)).left
+      ⟨i.val, hlb⟩ =
+    ⟨n, f i⟩ := by
+  dsimp only [foldEval, pbefMor, ptoefMor,
+    ccrEvalMor, Over.homMk_left]
+  rw [dif_pos i.isLt]
+
+/-- The `(pbefMor eval).left e` sigma for a
+step child of a fold (index `m + j'` with
+`j'.val < m`). -/
+private theorem foldChildSigma_step
+    {n : ℕ} (m : ℕ)
+    (f : Fin m → BTMor1 n)
+    (g : Fin m → BTMor1 (m + m))
+    (tree : BTMor1 n) (j : Fin m)
+    (j' : Fin m)
+    (hls : m + j'.val < m + m + 1 :=
+      by have := j'.isLt; omega) :
+    (pbefMor (foldEval m f g tree j)).left
+      ⟨m + j'.val, hls⟩ =
+    ⟨m + m, g j'⟩ := by
+  dsimp only [foldEval, pbefMor, ptoefMor,
+    ccrEvalMor, Over.homMk_left]
+  rw [dif_neg (show ¬(m + j'.val < m)
+    from by omega)]
+  rw [dif_pos (show m + j'.val < m + m
+    from by omega)]
+  simp only [Nat.add_sub_cancel_left]
+
+/-- `ind interpUStep` applied to the sigma
+transport `(hfst ▸ s.2)` where `s = ⟨a, t⟩`
+with fiber cast `hba : b = a`:
+resolves both the transport and the context
+adjustment in one step. -/
+private theorem ind_interpUStep_sigma
+    {s : Σ k, BTMor1 k}
+    {a b : ℕ} {t : BTMor1 a}
+    (hsig : s = ⟨a, t⟩)
+    (hfst : s.1 = b)
+    (hba : b = a)
+    (ctx : Fin a → BT.{u}) :
+    (BTMor1.ind
+      (motive := fun {n} _ =>
+        (Fin n → BT.{u}) → BT.{u})
+      (step := interpUStep)
+      (hfst ▸ s.2))
+      (fun v => ctx (finCast hba v)) =
+    t.interpU ctx := by
+  subst hba; subst hsig; cases hfst; rfl
+
+/-- `finCast` undoes a `▸` transport on
+`Fin`, recovering the original value. -/
+private theorem finCast_subst_cancel
+    {a b : ℕ} (h : a = b) (hab : b = a)
+    (v : Fin a) :
+    finCast hab (h ▸ v) = v := by
+  subst h; rfl
+
+/-- Given a sigma `s = ⟨a, t⟩` (via `hsig`)
+with fiber cast proof `hfst : s.1 = a`, the
+`interpU` of `s.snd` with context
+`fun v => ctx (hfst ▸ v)` equals
+`t.interpU ctx`. -/
+private theorem interpU_snd_resolve
+    {s : Σ k, BTMor1 k}
+    {a : ℕ} {t : BTMor1 a}
+    (hsig : s = ⟨a, t⟩)
+    (hfst : s.1 = a)
+    (ctx : Fin a → BT.{u}) :
+    s.snd.interpU
+      (fun v => ctx (hfst ▸ v)) =
+    t.interpU ctx := by
+  subst hsig; rfl
+
+-- Sigma resolution and context matching across
+-- base, step, and tree child cases.
+/-- `interpU` on a fold computes via `BT.fold`
+with tupled carrier `Fin m → BT`. -/
+theorem BTMor1.interpU_fold {n : ℕ}
+    (m : ℕ) (f : Fin m → BTMor1 n)
+    (g : Fin m → BTMor1 (m + m))
+    (tree : BTMor1 n) (j : Fin m)
+    (ctx : Fin n → BT.{u}) :
+    (BTMor1.fold m f g tree j).interpU ctx =
+    BT.fold
+      (fun i => (f i).interpU ctx)
+      (fun leftAll rightAll j' =>
+        (g j').interpU
+          (finAppend leftAll rightAll))
+      (tree.interpU ctx)
+      j := by
+  unfold BTMor1.interpU BTMor1.fold
+  rw [ind_btMorInject]
+  simp only [interpUStep]
+  apply congr_fun; congr 3
+  · funext i
+    rw [polyFixCoprodStr_inj_child]
+    change _ = (f i).interpU ctx
+    apply ind_interpUStep_sigma
+      (foldChildSigma_base m f g tree j i)
+  · funext leftAll rightAll j'
+    rw [polyFixCoprodStr_inj_child]
+    change _ = (g j').interpU
+      (finAppend leftAll rightAll)
+    conv_lhs => rw [show ∀ (x : BTMor1 _)
+      (ctx : Fin _ → BT),
+      (BTMor1.ind
+        (motive := fun {n} _ =>
+          (Fin n → BT) → BT)
+        (step := interpUStep) x) ctx =
+      x.interpU ctx from fun _ _ => rfl]
+    rw [BTMor1.interpU_cast]
+    have hj'lt : j'.val < m := j'.isLt
+    have hls : m + j'.val < m + m + 1 :=
+      by omega
+    change _ = (g ⟨j'.val, hj'lt⟩).interpU
+      (finAppend leftAll rightAll)
+    have hsig := foldChildSigma_step m f g
+      tree j ⟨j'.val, hj'lt⟩ hls
+    have hfst : ((pbefMor
+      (foldEval m f g tree j)).left
+      ⟨m + j'.val, hls⟩).1 = m + m := by
+      rw [hsig]
+    trans (BTMor1.interpU
+      ((pbefMor (foldEval m f g tree j)).left
+        ⟨m + j'.val, hls⟩).snd
+      (fun v => finAppend leftAll rightAll
+        (hfst ▸ v)))
+    · congr 1; funext v
+      dsimp only [finAppend, finCast]
+      simp only [Fin.val_cast]
+    · exact interpU_snd_resolve hsig hfst
+        (finAppend leftAll rightAll)
+  · rw [polyFixCoprodStr_inj_child]
+    change _ = tree.interpU ctx
+    apply ind_interpUStep_sigma
+      (foldChildSigma_tree m f g tree j)
 
 /-- Universe-polymorphic interpretation of a
 morphism `n → m`: an `m`-tuple of `BTMor1`
