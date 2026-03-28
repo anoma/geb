@@ -47,24 +47,7 @@ The position functor of a diagram
 index type `ccrNewIndex (D.obj j)` and a morphism
 `f` to the reindexing function `ccrNewReindex`.
 -/
-def ccrDiagPosFunctor :
-    J ⥤ Type w where
-  obj j := ccrNewIndex (D.obj j)
-  map f := ccrNewReindex (D.map f)
-  map_id j := by
-    simp only [ccrNewReindex]
-    have h := D.map_id j
-    change (D.map (𝟙 j)).unop.base.unop = id
-    rw [h]
-    rfl
-  map_comp {j₁ j₂ j₃} f g := by
-    simp only [ccrNewReindex]
-    have h := D.map_comp f g
-    change (D.map (f ≫ g)).unop.base.unop =
-      (D.map g).unop.base.unop ∘
-        (D.map f).unop.base.unop
-    rw [h]
-    rfl
+def ccrDiagPosFunctor : J ⥤ Type w := D ⋙ ccrNewIndexFunctor C
 
 end PositionFunctor
 
@@ -647,5 +630,687 @@ theorem ccrHasLimit : HasLimit D := by
         isLimitConeOfCoconeLeftOp D isColim }
 
 end ExplicitLimit
+
+/-! ## HasLimitsOfShape for CoprodCovarRepCat
+
+Packaging `ccrHasLimit` into typeclass instances
+enables mathlib's limit functor `lim` and the
+adjunction `constLimAdj : Functor.const J ⊣ lim`.
+-/
+
+section LimitInstances
+
+variable {J : Type w} [Category.{w} J]
+variable {C : Type u} [Category.{v} C]
+
+/--
+`CoprodCovarRepCat C` has limits of shape `J` when
+`C` has colimits of shape `Jᵒᵖ`.
+-/
+instance ccrHasLimitsOfShape
+    [HasColimitsOfShape Jᵒᵖ C] :
+    HasLimitsOfShape J
+      (↑(CoprodCovarRepCat.{u, v, w} C)) :=
+  ⟨fun D => ccrHasLimit D⟩
+
+end LimitInstances
+
+section LimitSize
+
+variable {C : Type u} [Category.{v} C]
+
+/--
+`CoprodCovarRepCat C` has all limits of size
+`(w, w)` when `C` has all colimits of that size.
+-/
+instance ccrHasLimitsOfSize
+    [HasColimitsOfSize.{w, w} C] :
+    HasLimitsOfSize.{w, w}
+      (↑(CoprodCovarRepCat.{u, v, w} C)) :=
+  ⟨fun _ _ => inferInstance⟩
+
+end LimitSize
+
+/-! ## Computable Limit Functor
+
+Mathlib's `lim` and `constLimAdj` are
+not computable (they use `choice` to
+select limit cones). To obtain a computable limit
+functor for `CoprodCovarRepCat C` and a computable
+adjunction with the constant functor, we
+parameterize by an explicit choice of colimit
+cocones in `C` (following the pattern of
+`spanArrowReflector` in `ArrowSpanAdjunction`).
+-/
+
+section ComputableLimFunctor
+
+variable {J : Type w} [Category.{w} J]
+variable {C : Type u} [Category.{v} C]
+variable
+  (chooseColim :
+    (F : Jᵒᵖ ⥤ C) → ColimitCocone F)
+
+variable
+  (D : J ⥤ CoprodCovarRepCat.{u, v, w} C)
+
+/--
+The vertex of the limit cone for `D` in the
+Grothendieck construction. Positions are the
+sections of the position diagram; fibers are
+colimits of the fiber diagrams in `C`.
+-/
+def ccrLimVertexGr :
+    Grothendieck
+      (familyFunctor.{u, v, w} C) :=
+  ⟨Opposite.op (ccrLimPosSections D),
+    fun z =>
+      (chooseColim
+        (ccrDiagFiberFunctor D z)).cocone.pt⟩
+
+/--
+The injection morphism from `D.leftOp.obj j` to
+`ccrLimVertexGr` in the Grothendieck construction.
+-/
+def ccrLimIotaGr
+    (j : Jᵒᵖ) :
+    D.leftOp.obj j ⟶
+      ccrLimVertexGr chooseColim D :=
+  { base := Quiver.Hom.op
+      (fun z : ccrLimPosSections D =>
+        ccrLimPosProj D z j.unop)
+    fiber := fun z =>
+      (chooseColim
+        (ccrDiagFiberFunctor D z)).cocone.ι.app
+          j }
+
+/--
+The colimit cocone for `D.leftOp` in the
+Grothendieck construction with vertex
+`ccrLimVertexGr`.
+-/
+def ccrLimCoconeGr :
+    Cocone D.leftOp where
+  pt := ccrLimVertexGr chooseColim D
+  ι :=
+    { app := ccrLimIotaGr chooseColim D
+      naturality := fun {j₁ j₂} f => by
+        change D.leftOp.map f ≫
+          ccrLimIotaGr chooseColim D j₂ =
+          ccrLimIotaGr chooseColim D j₁ ≫ 𝟙 _
+        rw [Category.comp_id]
+        exact ccrHasLimit_cocone_nat
+          D (fun z => chooseColim
+            (ccrDiagFiberFunctor D z))
+          j₁ j₂ f }
+
+/--
+The descent morphism from `ccrLimVertexGr` to
+the vertex of any cocone over `D.leftOp`.
+-/
+def ccrLimDescGr
+    (s : Cocone D.leftOp) :
+    ccrLimVertexGr chooseColim D ⟶ s.pt :=
+  { base := Quiver.Hom.op
+      (ccrHasLimit_descBase D s)
+    fiber := fun x =>
+      (chooseColim
+        (ccrDiagFiberFunctor D
+          (ccrHasLimit_descBase D s
+            x))).isColimit.desc
+        { pt := s.pt.fiber x
+          ι :=
+            { app := fun j =>
+                (s.ι.app j).fiber x
+              naturality :=
+                fun {j₁ j₂} f =>
+                  ccrHasLimit_desc_nat
+                    D s x j₁ j₂ f } } }
+
+private def ccrLimDescCocone
+    (s : Cocone D.leftOp)
+    (x : s.pt.base.unop) :
+    Cocone (ccrDiagFiberFunctor D
+      (ccrHasLimit_descBase D s x)) :=
+  { pt := s.pt.fiber x
+    ι :=
+      { app := fun j =>
+          (s.ι.app j).fiber x
+        naturality :=
+          fun {j₁ j₂} f =>
+            ccrHasLimit_desc_nat
+              D s x j₁ j₂ f } }
+
+/--
+`ccrLimCoconeGr` is a colimit cocone for
+`D.leftOp` in the Grothendieck construction.
+-/
+def ccrLimCoconeGrIsColimit :
+    IsColimit (ccrLimCoconeGr chooseColim D) :=
+  let cc := ccrLimCoconeGr chooseColim D
+  let desc' := ccrLimDescGr chooseColim D
+  let descCocone' := ccrLimDescCocone D
+  { desc := desc'
+    fac := fun s j =>
+      Grothendieck.ext _ _ rfl (by
+        rw [Grothendieck.comp_fiber]
+        funext x
+        rw [← Category.assoc (eqToHom _)
+          (eqToHom _) _,
+          eqToHom_trans]
+        rw [pi_eqToHom_comp_apply,
+          pi_comp_apply]
+        have fac :=
+          (chooseColim
+            (ccrDiagFiberFunctor D
+              (ccrHasLimit_descBase D s
+                x))).isColimit.fac
+            (descCocone' s x) j
+        simp only [] at fac
+        rw [← Category.assoc]
+        convert fac using 2
+        simp only [eqToHom_refl,
+          Category.id_comp]
+        rfl)
+    uniq := fun s m hm => by
+      obtain ⟨m_base, m_fiber⟩ := m
+      have hbase :
+          m_base = (desc' s).base := by
+        apply Quiver.Hom.unop_inj
+        funext x
+        apply Subtype.ext
+        funext j
+        exact congrFun (congrArg
+          Quiver.Hom.unop (congrArg
+            Grothendieck.Hom.base
+            (hm (Opposite.op j)))) x
+      subst hbase
+      refine Grothendieck.ext _ _ rfl ?_
+      funext x
+      simp only [eqToHom_refl,
+        Category.id_comp]
+      apply (chooseColim
+        (ccrDiagFiberFunctor D
+          (ccrHasLimit_descBase D s
+            x))).isColimit.uniq
+        (descCocone' s x)
+      intro j
+      have hj := hm j
+      have hfibj :=
+        congrFun
+          (Grothendieck.congr hj) x
+      rw [Grothendieck.comp_fiber]
+        at hfibj
+      simp only [eqToHom_refl,
+        Category.id_comp] at hfibj
+      exact hfibj }
+
+/--
+An explicit `LimitCone` for any diagram
+`D : J ⥤ CoprodCovarRepCat C`, given a choice
+of colimit cocones in `C`.
+-/
+def ccrLimitCone :
+    LimitCone D where
+  cone :=
+    coneOfCoconeLeftOp
+      (ccrLimCoconeGr chooseColim D)
+  isLimit :=
+    isLimitConeOfCoconeLeftOp D
+      (ccrLimCoconeGrIsColimit chooseColim D)
+
+end ComputableLimFunctor
+
+/-! ## Computable Limit Functor and Adjunction
+
+Given explicit colimit choices in `C`, we build
+a computable limit functor
+`(J ⥤ CCR(C)) ⥤ CCR(C)` and prove it is right
+adjoint to the constant functor.
+-/
+
+section LimFunctorAdj
+
+variable {J : Type w} [Category.{w} J]
+variable {C : Type u} [Category.{v} C]
+variable
+  (chooseColim :
+    (F : Jᵒᵖ ⥤ C) → ColimitCocone F)
+
+private abbrev ccrLC
+    (chooseColim :
+      (F : Jᵒᵖ ⥤ C) → ColimitCocone F)
+    (D : J ⥤
+      ↑(CoprodCovarRepCat.{u, v, w} C)) :
+    LimitCone D :=
+  ccrLimitCone chooseColim D
+
+/--
+The limit functor for `CoprodCovarRepCat C`,
+sending a diagram `D : J ⥤ CCR(C)` to its limit.
+Parameterized by an explicit choice of colimit
+cocones in `C`.
+-/
+def ccrLimFunctor :
+    (J ⥤ ↑(CoprodCovarRepCat.{u, v, w} C)) ⥤
+    ↑(CoprodCovarRepCat.{u, v, w} C) where
+  obj D := (ccrLC chooseColim D).cone.pt
+  map {D₁ D₂} α :=
+    (ccrLC chooseColim D₂).isLimit.lift
+      ((Cone.postcompose α).obj
+        (ccrLC chooseColim D₁).cone)
+  map_id D := by
+    apply (ccrLC chooseColim D).isLimit.hom_ext
+    intro j
+    rw [(ccrLC chooseColim D).isLimit.fac]
+    simp [Cone.postcompose]
+  map_comp {D₁ D₂ D₃} α β := by
+    apply (ccrLC chooseColim D₃).isLimit.hom_ext
+    intro j
+    dsimp only [Cone.postcompose]
+    simp only [Category.assoc, IsLimit.fac,
+      NatTrans.comp_app]
+    conv_rhs => rw [← Category.assoc]
+    rw [IsLimit.fac]
+    simp only [NatTrans.comp_app,
+      Category.assoc]
+
+/--
+The constant-limit adjunction for
+`CoprodCovarRepCat C`: the constant functor
+`Functor.const J` is left adjoint to
+`ccrLimFunctor chooseColim`.
+-/
+def ccrConstLimAdj :
+    (Functor.const J :
+      ↑(CoprodCovarRepCat.{u, v, w} C) ⥤
+      J ⥤ ↑(CoprodCovarRepCat.{u, v, w} C)) ⊣
+    ccrLimFunctor chooseColim :=
+  Adjunction.mkOfHomEquiv {
+    homEquiv := fun X D =>
+      let il := (ccrLC chooseColim D).isLimit
+      let π := (ccrLC chooseColim D).cone.π
+      { toFun := fun f => il.lift ⟨X, f⟩
+        invFun := fun g =>
+          { app := fun j => g ≫ π.app j }
+        left_inv := fun f => by
+          ext j
+          simp only [Functor.const_obj_obj]
+          exact il.fac ⟨X, f⟩ j
+        right_inv := fun g => by
+          apply il.hom_ext
+          intro j
+          exact il.fac ⟨X, _⟩ j }
+    homEquiv_naturality_left_symm :=
+      fun f g => by
+        ext j; simp [Category.assoc]
+    homEquiv_naturality_right :=
+      fun {X D₁ D₂} f α => by
+        let il₂ := (ccrLC chooseColim D₂).isLimit
+        apply il₂.hom_ext
+        intro j
+        simp only [Equiv.coe_fn_mk,
+          Category.assoc]
+        rw [il₂.fac]
+        simp only [ccrLimFunctor,
+          IsLimit.fac]
+        dsimp only [Cone.postcompose]
+        simp only [NatTrans.comp_app,
+          ← Category.assoc, IsLimit.fac] }
+
+end LimFunctorAdj
+
+/-! ## PRA Reassembly
+
+Given a positions presheaf `A : Jᵒᵖ ⥤ Type w'` and a
+directions functor
+`E : A.ElementsPre ⥤ (Iᵒᵖ ⥤ Type w_I)`, we reassemble
+a PRA `P : PresheafPRACat I J`.
+
+At each `j : Jᵒᵖ`, the CCR object has:
+- Index type: `A.obj j`
+- Family at `a : A.obj j`: `E.obj (op ⟨j, a⟩)`
+
+The morphism action uses functoriality of `E` on
+morphisms in `A.ElementsPre`.
+-/
+
+section PRAReassembly
+
+universe u_I v_I u_J v_J w_I w'
+
+variable {I : Type u_I} [Category.{v_I} I]
+variable {J : Type u_J} [Category.{v_J} J]
+
+/-! ### FunctorToData-based reassembly
+
+A PRA `P : PresheafPRACat I J` is definitionally
+`Jᵒᵖ ⥤ CoprodCovarRepCat(PSh(I))` where
+`CoprodCovarRepCat = (Grothendieck F)ᵒᵖ`.  This
+is `(J ⥤ Grothendieck F)ᵒᵖ` via `Functor.op`.
+
+So a PRA is `G.op` for `G : J ⥤ Grothendieck F`,
+and `G` is built from `FunctorToData` with
+`D = J` and `baseFunc = A.op : J ⥤ (Type w')ᵒᵖ`.
+-/
+
+variable
+  (A : Jᵒᵖ ⥤ Type w')
+  (E : A.ElementsPre ⥤ (Iᵒᵖ ⥤ Type w_I))
+
+/--
+The fiber function for the `FunctorToData`-based
+reassembly.  Sends `j : J` to the function
+`A.obj (op j) → PSh(I)` given by E at each
+element.
+-/
+def praReassembleFib (j : J) :
+    (familyFunctor.{max v_I u_I (w_I + 1),
+      max u_I w_I, w'}
+      (↑(presheafCat.{u_I, v_I, w_I} I))).obj
+        (A.rightOp.obj j) :=
+  fun a => E.obj (Opposite.op ⟨Opposite.op j, a⟩)
+
+/--
+The fiber morphism function for `FunctorToData`.
+For `g : j₁ ⟶ j₂` in J and `a₂ : A.obj (op j₂)`,
+sends the transported fiber to the target fiber
+using `E.map`.
+-/
+def praReassembleHom
+    {j₁ j₂ : J} (g : j₁ ⟶ j₂)
+    (a₂ : A.obj (Opposite.op j₂)) :
+    praReassembleFib A E j₁
+      (A.map g.op a₂) ⟶
+    praReassembleFib A E j₂ a₂ :=
+  E.map
+    (Quiver.Hom.op
+      (CategoryOfElements.homMk (F := A)
+        ⟨Opposite.op j₂, a₂⟩
+        ⟨Opposite.op j₁,
+          A.map g.op a₂⟩
+        g.op rfl))
+
+/--
+The Grothendieck object at `j` for the reassembled
+PRA. Has base `op (A.obj j)` and fiber
+`fun a => E.obj (op ⟨j, a⟩)`.
+-/
+def praReassembleObjGr (j : Jᵒᵖ) :
+    Grothendieck
+      (familyFunctor.{max v_I u_I (w_I + 1),
+        max u_I w_I, w'}
+        (Iᵒᵖ ⥤ Type w_I)) :=
+  ⟨Opposite.op (A.obj j),
+    fun a => E.obj (Opposite.op ⟨j, a⟩)⟩
+
+/--
+The Grothendieck morphism for a morphism `g : j₁ ⟶ j₂`
+in `Jᵒᵖ`. Goes from `praReassembleObjGr A E j₂` to
+`praReassembleObjGr A E j₁` in
+`Grothendieck (familyFunctor ...)`.
+
+The base is `op (A.map g)` and the fiber at `a₁`
+is `E.map` applied to the canonical morphism
+`op ⟨j₂, A.map g a₁⟩ ⟶ op ⟨j₁, a₁⟩` in
+`A.ElementsPre`.
+-/
+def praReassembleMapGr {j₁ j₂ : Jᵒᵖ} (g : j₁ ⟶ j₂) :
+    praReassembleObjGr A E j₂ ⟶
+      praReassembleObjGr A E j₁ :=
+  { base := Quiver.Hom.op (A.map g)
+    fiber := fun a₁ =>
+      E.map (Quiver.Hom.op
+        (CategoryOfElements.homMk
+          (F := A) ⟨j₁, a₁⟩ ⟨j₂, A.map g a₁⟩
+          g rfl)) }
+
+/--
+For `g : j₁ ⟶ j₂` in `Jᵒᵖ` and `a₁ : A.obj j₁`,
+the canonical morphism in `A.ElementsPre` from
+`op ⟨j₂, A.map g a₁⟩` to `op ⟨j₁, a₁⟩`.
+-/
+def praReassembleElemMor
+    {j₁ j₂ : Jᵒᵖ} (g : j₁ ⟶ j₂)
+    (a₁ : A.obj j₁) :
+    (Opposite.op ⟨j₂, A.map g a₁⟩ :
+      A.ElementsPre) ⟶
+    Opposite.op ⟨j₁, a₁⟩ :=
+  Quiver.Hom.op
+    (CategoryOfElements.homMk (F := A)
+      ⟨j₁, a₁⟩ ⟨j₂, A.map g a₁⟩ g rfl)
+
+private lemma praReassembleElemMor_id
+    (j : Jᵒᵖ) (a : A.obj j) :
+    praReassembleElemMor A (𝟙 j) a =
+    eqToHom (by
+      exact congrArg Opposite.op (Sigma.ext rfl
+        (heq_of_eq
+          (congrFun (A.map_id j) a)))) := by
+  unfold praReassembleElemMor
+  apply Quiver.Hom.unop_inj
+  apply Subtype.ext
+  simp only [Quiver.Hom.unop_op,
+    CategoryOfElements.homMk]
+  rw [eqToHom_unop]
+  simp only [CategoryOfElements.eqToHom_val]
+  rfl
+
+private lemma praReassembleMapGr_id (j : Jᵒᵖ) :
+    praReassembleMapGr A E (𝟙 j) =
+      𝟙 (praReassembleObjGr A E j) := by
+  unfold praReassembleMapGr praReassembleObjGr
+  apply Grothendieck.ext
+  case w_base =>
+    exact congrArg Quiver.Hom.op (A.map_id j)
+  case w_fiber =>
+    funext a
+    simp only [Grothendieck.id_fiber]
+    rw [pi_eqToHom_comp_apply]
+    -- The goal has E.map (...).op which is
+    -- E.map (praReassembleElemMor ...).
+    change eqToHom _ ≫
+      E.map (praReassembleElemMor A (𝟙 j) a) =
+      _
+    rw [praReassembleElemMor_id A j a,
+      eqToHom_map, eqToHom_trans,
+      pi_eqToHom_apply]
+
+private lemma praReassembleElemMor_comp
+    {j₁ j₂ j₃ : Jᵒᵖ}
+    (g : j₁ ⟶ j₂) (h : j₂ ⟶ j₃)
+    (a₁ : A.obj j₁) :
+    praReassembleElemMor A (g ≫ h) a₁ =
+    (@eqToHom A.ElementsPre _
+      (Opposite.op ⟨j₃, A.map (g ≫ h) a₁⟩)
+      (Opposite.op
+        ⟨j₃, A.map h (A.map g a₁)⟩)
+      (congrArg Opposite.op
+        (congrArg (Sigma.mk j₃)
+          (congrFun
+            (A.map_comp g h) a₁)))) ≫
+    praReassembleElemMor A h (A.map g a₁) ≫
+    praReassembleElemMor A g a₁ := by
+  apply Quiver.Hom.unop_inj
+  apply CategoryOfElements.ext (F := A)
+  unfold praReassembleElemMor
+  simp only [Quiver.Hom.unop_op,
+    CategoryOfElements.homMk]
+  erw [CategoryTheory.unop_comp,
+    CategoryTheory.unop_comp]
+  erw [eqToHom_unop,
+    CategoryOfElements.comp_val,
+    CategoryOfElements.comp_val,
+    Quiver.Hom.unop_op,
+    Quiver.Hom.unop_op,
+    CategoryOfElements.eqToHom_val,
+    eqToHom_refl, Category.comp_id]
+
+private lemma praReassembleMapGr_comp
+    {j₁ j₂ j₃ : Jᵒᵖ}
+    (g : j₁ ⟶ j₂) (h : j₂ ⟶ j₃) :
+    praReassembleMapGr A E (g ≫ h) =
+    praReassembleMapGr A E h ≫
+      praReassembleMapGr A E g := by
+  unfold praReassembleMapGr
+  apply Grothendieck.ext
+  case w_base =>
+    exact congrArg Quiver.Hom.op
+      (A.map_comp g h)
+  case w_fiber =>
+    rw [Grothendieck.comp_fiber]
+    funext a₁
+    rw [pi_eqToHom_comp_apply]
+    conv_rhs =>
+      rw [pi_eqToHom_comp_apply,
+        pi_comp_apply]
+    dsimp only [familyFunctor, familyMap,
+      FamilyCat, Cat.Hom.toFunctor,
+      Functor.toCatHom]
+    simp only [← E.map_comp]
+    change eqToHom _ ≫
+      E.map (praReassembleElemMor A (g ≫ h)
+        a₁) =
+      eqToHom _ ≫
+        E.map (praReassembleElemMor A h
+          (A.map g a₁) ≫
+        praReassembleElemMor A g a₁)
+    rw [praReassembleElemMor_comp,
+      E.map_comp, eqToHom_map,
+      ← Category.assoc (eqToHom _)
+        (eqToHom _),
+      eqToHom_trans, eqToHom_refl,
+      Category.id_comp]
+
+/--
+The covariant functor `J ⥤ Grothendieck
+(familyFunctor ...)` assembling position and
+direction data.  Built from `praReassembleObjGr`
+and `praReassembleMapGr` with reversed indexing
+(`g.op` for each `g : j₁ ⟶ j₂` in J).
+-/
+def praReassembleGr :
+    J ⥤ Grothendieck
+      (familyFunctor.{max v_I u_I (w_I + 1),
+        max u_I w_I, w'}
+        (↑(presheafCat.{u_I, v_I, w_I} I))) where
+  obj j :=
+    praReassembleObjGr A E (Opposite.op j)
+  map g := praReassembleMapGr A E g.op
+  map_id j :=
+    praReassembleMapGr_id A E (Opposite.op j)
+  map_comp f g :=
+    praReassembleMapGr_comp A E g.op f.op
+
+/--
+Reassemble a PRA from position and direction data
+as `praReassembleGr.op : Jᵒᵖ ⥤ CCR(PSh(I))`.
+-/
+def praReassemble :
+    Jᵒᵖ ⥤ ↑(CoprodCovarRepCat.{max v_I u_I
+      (w_I + 1), max u_I w_I, w'}
+      (↑(presheafCat.{u_I, v_I, w_I} I))) :=
+  (praReassembleGr A E).op
+
+/--
+Extracting positions from a reassembled PRA
+recovers the original position presheaf.
+-/
+theorem praReassemble_positions :
+    (praPositionsFunctor I J).obj
+      (praReassemble A E) = A := by
+  rfl
+
+/--
+Extracting directions from a reassembled PRA
+recovers the original direction functor.
+-/
+theorem praReassemble_directions :
+    praDirectionsAtFunctor I J
+      (praReassemble A E) = E := by
+  apply Functor.hext
+  · intro X; rfl
+  · intro X Y f
+    rw [heq_eq_eq]
+    unfold praDirectionsAtFunctor
+      praDirectionsAtFunctorOp
+    dsimp only [praReassemble,
+      Functor.op_obj, Functor.op_map,
+      praReassembleGr,
+      praReassembleObjGr,
+      praReassembleMapGr,
+      elementsPrecomp,
+      ccrNewFamilyFunctor, ccrNewFamily,
+      ccrNewFiberMor,
+      unopUnop, Functor.comp_obj,
+      Functor.comp_map, Functor.op_obj,
+      Functor.op_map,
+      Quiver.Hom.unop_op,
+      Opposite.unop_op]
+    simp only [Opposite.op_unop,
+      Quiver.Hom.op_unop]
+    obtain ⟨⟨j₁, a₁⟩⟩ := X
+    obtain ⟨⟨j₂, a₂⟩⟩ := Y
+    set g : j₂ ⟶ j₁ := f.unop.val
+    have hcompat : A.map g a₂ = a₁ :=
+      show _ from f.unop.property
+    clear_value g
+    revert f hcompat g
+    intro g hcompat f
+    subst f
+    dsimp only [Opposite.unop_op]
+    have comm : A.map g.unop.val a₂ =
+      A.map hcompat a₂ :=
+      show _ from g.unop.property
+    generalize A.map hcompat a₂ = b
+      at g comm ⊢
+    have peq :
+      (Opposite.op ⟨j₁, b⟩ :
+        A.ElementsPre) =
+      Opposite.op
+        ⟨j₁, A.map g.unop.val a₂⟩ :=
+      congrArg Opposite.op
+        (Sigma.ext rfl
+          (heq_of_eq comm.symm))
+    calc eqToHom _ ≫
+        E.map (CategoryOfElements.homMk
+          (F := A) ⟨j₂, a₂⟩
+          ⟨j₁, A.map g.unop.val a₂⟩
+          g.unop.val rfl).op
+      _ = E.map (eqToHom peq) ≫
+          E.map (CategoryOfElements.homMk
+            (F := A) ⟨j₂, a₂⟩
+            ⟨j₁, A.map g.unop.val a₂⟩
+            g.unop.val rfl).op := by
+            congr 1
+            exact (eqToHom_map E peq).symm
+      _ = E.map (eqToHom peq ≫
+          (CategoryOfElements.homMk
+            (F := A) ⟨j₂, a₂⟩
+            ⟨j₁, A.map g.unop.val a₂⟩
+            g.unop.val rfl).op) := by
+            rw [← E.map_comp]
+      _ = E.map g := by
+            congr 1
+            apply Quiver.Hom.unop_inj
+            apply CategoryOfElements.ext
+              (F := A)
+            change ((CategoryOfElements.homMk
+              (F := A) ⟨j₂, a₂⟩
+              ⟨j₁, A.map g.unop.val a₂⟩
+              g.unop.val rfl).op.unop ≫
+              (eqToHom peq).unop).val =
+              g.unop.val
+            simp only [
+              CategoryOfElements.comp_val,
+              eqToHom_unop,
+              CategoryOfElements.eqToHom_val,
+              eqToHom_refl,
+              Category.comp_id,
+              Quiver.Hom.unop_op,
+              CategoryOfElements.homMk]
+
+
+end PRAReassembly
 
 end GebLean

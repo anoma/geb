@@ -111,6 +111,18 @@ Definitions in `Utilities/Elements.lean`:
 - `ccrDiagFiberFunctor D z` — fiber diagram
 - `ccrHasLimit D` — limits exist (when `C` has
   colimits of `Jᵒᵖ`)
+- `ccrHasLimitsOfShape` — typeclass instance
+- `ccrHasLimitsOfSize` — all limits of size
+  `(w, w)` when `C` has all colimits of that size
+- `ccrLimVertexGr` — computable limit vertex
+- `ccrLimIotaGr` — injection morphisms
+- `ccrLimCoconeGr` — colimit cocone (Grothendieck)
+- `ccrLimCoconeGrIsColimit` — universal property
+- `ccrLimitCone` — computable `LimitCone`
+- `ccrLimFunctor` — computable limit functor
+  parameterized by colimit cocone choices
+- `ccrConstLimAdj` — `Functor.const J ⊣
+  ccrLimFunctor chooseColim` adjunction
 
 ## Planned Work
 
@@ -126,10 +138,28 @@ for the full plan.
 
 ### Phase 4 (remaining): Universal Morphisms
 
-- Package `ccrHasLimit` into `HasLimitsOfShape` and
-  `HasLimitsOfSize` instances
-- Prove colimits (needs limits of Grothendieck, or
-  direct construction)
+- (Co)limits for `PresheafPRACat I J` via
+  underlying presheaf categories, not from
+  `CoprodCovarRepCat` (co)limits (which do not
+  always exist). A PRA decomposes via
+  `FunctorToData` into positions (presheaf on
+  base) and directions (presheaf on category of
+  elements). Both presheaf categories are
+  cocomplete. Pattern from `PolyBetween`:
+  - Products: `∀` on positions, `Σ` on
+    directions
+  - Coproducts: `Σ` on positions, selected
+    direction
+  - Equalizers: subtype on positions,
+    coequalizer on directions
+  - Coequalizers: quotient on positions,
+    product on directions
+  - Principle: positions and directions always
+    get dual constructions
+- Note: `CoprodCovarRepCat C` does have limits
+  (proved in `ccrHasLimit`/`ccrHasLimitsOfShape`)
+  but colimits depend on properties of `C`.
+  `PresheafPRACat` (co)limits bypass this
 - Derive `PresheafPRACat I J` limits/colimits from
   functor-category structure
 - Cartesian product, internal hom, Dirichlet product
