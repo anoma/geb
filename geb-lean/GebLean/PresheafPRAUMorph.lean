@@ -1259,11 +1259,11 @@ theorem praReassemble_directions :
     intro g hcompat f
     subst f
     dsimp only [Opposite.unop_op]
-    have key : A.map g.unop.val a₂ =
+    have comm : A.map g.unop.val a₂ =
       A.map hcompat a₂ :=
       show _ from g.unop.property
     generalize A.map hcompat a₂ = b
-      at g key ⊢
+      at g comm ⊢
     have peq :
       (Opposite.op ⟨j₁, b⟩ :
         A.ElementsPre) =
@@ -1271,7 +1271,7 @@ theorem praReassemble_directions :
         ⟨j₁, A.map g.unop.val a₂⟩ :=
       congrArg Opposite.op
         (Sigma.ext rfl
-          (heq_of_eq key.symm))
+          (heq_of_eq comm.symm))
     calc eqToHom _ ≫
         E.map (CategoryOfElements.homMk
           (F := A) ⟨j₂, a₂⟩
