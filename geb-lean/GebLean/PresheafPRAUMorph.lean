@@ -1327,20 +1327,21 @@ This generalizes `polyBetweenProd` from
 
 section PRAProduct
 
-universe u_I v_I u_J v_J w_I w' u_K
+universe u_I v_I u_J v_J w_I w'
 
 variable {I : Type u_I} [Category.{v_I} I]
 variable {J : Type u_J} [Category.{v_J} J]
-variable {K : Type u_K}
+variable {K : Type w'}
 variable (P : K → ↑(PresheafPRACat.{u_I, v_I,
     u_J, v_J, w_I, w'} I J))
 
 /--
 The product position presheaf: sends `j : Jᵒᵖ` to
 `∀ k, praPositions I J (P k) j`.  Functorial in `j`
-by componentwise reindexing.
+by componentwise reindexing.  With `K : Type w'`,
+the product `∀ k, A_k(j)` stays in `Type w'`.
 -/
-def praProdPos : Jᵒᵖ ⥤ Type (max u_K w') where
+def praProdPos : Jᵒᵖ ⥤ Type w' where
   obj j := ∀ k, praPositions I J (P k) j
   map {j₁ j₂} f t k :=
     ((praPositionsFunctor I J).obj
@@ -1364,7 +1365,7 @@ At each `i : Iᵒᵖ`, gives the Sigma type
 -/
 def praProdDirAt (j : Jᵒᵖ)
     (t : (praProdPos P).obj j) :
-    Iᵒᵖ ⥤ Type (max u_K w_I) where
+    Iᵒᵖ ⥤ Type (max w' w_I) where
   obj i := Σ k,
     (praDirectionsAt I J (P k) j (t k)).obj i
   map {i₁ i₂} f := fun ⟨k, e⟩ =>
