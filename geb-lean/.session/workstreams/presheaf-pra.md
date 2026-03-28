@@ -124,6 +124,55 @@ Definitions in `Utilities/Elements.lean`:
 - `ccrConstLimAdj` — `Functor.const J ⊣
   ccrLimFunctor chooseColim` adjunction
 
+### Phase 4 (partial): PRA Reassembly and Products
+
+**File:** `GebLean/PresheafPRAUMorph.lean`
+
+PRA Reassembly (Task A0 — complete):
+
+- `praReassembleFib` — fiber function for
+  FunctorToData
+- `praReassembleHom` — fiber morphism function
+- `praReassembleObjGr` — Grothendieck object
+- `praReassembleMapGr` — Grothendieck morphism
+- `praReassembleElemMor` — canonical ElementsPre
+  morphism
+- `praReassembleElemMor_id/comp` — coherence
+- `praReassembleMapGr_id/comp` — functor laws
+- `praReassembleGr` — `J ⥤ Grothendieck(...)`,
+  the covariant functor
+- `praReassemble` — `praReassembleGr.op`, the PRA
+- `praReassemble_positions` — round-trip (`rfl`)
+- `praReassemble_directions` — round-trip
+  (`Functor.hext` + `calc` proof)
+
+PRA Products (Task A1 — in progress):
+
+- `praProdPos` — `Jᵒᵖ ⥤ Type w'`, product
+  position presheaf (Pi type)
+- `praProdDirAt` — `Iᵒᵖ ⥤ Type (max w' w_I)`,
+  Sigma-type direction at each element
+- `praProdElemProj` — project product-element
+  morphism to factor-element morphism
+- `praProdElemProj_id/comp` — preserves
+  category structure
+- `praProdDir` — `praProdPos.ElementsPre ⥤
+  (Iᵒᵖ ⥤ Type (max w' w_I))`, functorial
+  direction
+
+Remaining for A1:
+
+- Assemble product PRA via `praReassembleGr.op`
+  (needs `w' ≤ w_I` for universe match)
+- Define cone projections (product → each factor)
+- Prove universal property (lift + uniqueness)
+- Package as `HasLimit` for `Discrete K`-shaped
+  diagrams
+
+Universe constraint: `K : Type w'` and
+`max w' w_I = w_I` (i.e., `w' ≤ w_I`) needed
+for the product PRA to live in `PresheafPRACat`.
+
 ## Planned Work
 
 ### Phase 3: Identity and Composition
