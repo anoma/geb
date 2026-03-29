@@ -2,6 +2,16 @@
 
 ## Status: In Progress (Tasks 1-8 complete, Task 9 partial)
 
+### Task 9 progress
+
+Compiling definitions added:
+
+- `grothBaseMor_comp` -- composition law for base morphisms
+- `inverseFiberMap_comp` -- functoriality of inverse fiber
+- `inverseFiberFunctor` -- the `Cᵒᵖ ⥤ Type w` functor
+- `inverseProj` -- projection natural transformation
+- `grothFiberMor` -- fiber morphism in Grothendieck category
+
 ## Completed
 
 - **Task 1**: Pointwise category extraction (`fiberObj`, `fiberCategory`)
@@ -18,46 +28,31 @@
 - `GebLean/PshInternalPresheaf.lean` (~270 lines)
 - `GebLean/PshInternalGrothendieck.lean` (~570 lines)
 
-## Current blocker: `inverseFiberMap_comp`
+## Current blocker: `grothFiberMor_naturality`
 
-The inverse functor's fiber presheaf needs a composition
-law.  The map `inverseFiberMap X G f` sends `⟨x, e⟩` to
-`⟨restrict(f)(x), G.map (grothBaseMor f x) e⟩`.
+The `inverseAction` naturality proof requires a lemma
+`grothFiberMor_naturality` showing that two paths around
+the naturality square for `grothFiberMor` (with respect to
+base change) agree up to `eqToHom`.
 
-The composition law requires:
+The `Grothendieck.ext` + `fiberHom_ext` approach reduces to
+showing two compositions of fiber morphisms have the same
+underlying `.val`. Each side involves `eqToHom`, identity
+morphisms, and the morphism `X.morPresheaf.map f m`. After
+`simp [Grothendieck.comp_fiber, grothBaseMor, grothFiberMor,
+fiberHom_val_eqToHom_comp, externalize, fiberRestrict]`,
+the remaining goal has compositions of subtypes with
+identity and `eqToHom` terms that need `Category.assoc`,
+`fiberHom_val_comp_eqToHom`, and `Category.id_comp`/
+`Category.comp_id` at the Subtype.val level. The linter
+`unusedSimpArgs` interferes with the `warningAsError` build
+setting, requiring either careful simp set tuning or
+`set_option linter.unusedSimpArgs false`.
 
-```lean
-grothBaseMor (f ≫ g) x ≫ eqToHom _ =
-  grothBaseMor f x ≫ grothBaseMor g (restrict(f)(x))
-```
-
-as morphisms in the Grothendieck category.  After
-`Grothendieck.ext`, the base component is `rfl`, but the
-fiber component involves:
-
-```lean
-eqToHom _ ≫ ((externalize X).map g).toFunctor.map
-  ((eqToHom _).fiber) ≫ (𝟙 _).fiber ≫ eqToHom _
-```
-
-which needs `eqToHom.base = 𝟙` (propositional, not
-definitional) followed by `eqToHom_map` and
-`Functor.map_id` rewrites.
-
-### Approach for `inverseFiberMap_comp`
-
-The established proof pattern from
-`grothBaseMor_id_comp_eqToHom` uses `subst` on the
-eqToHom argument.  For composition, consider:
-
-1. Use `Grothendieck.ext` to reduce to base + fiber
-2. Base: `rfl` (both are `f.base ≫ g.base`)
-3. Fiber: after `eqToHom` rewrites, should reduce to
-   identity on identity composition
-
-Alternative: define `grothBaseMor_comp` directly as a
-term proof showing the two Grothendieck morphisms are
-equal, bypassing `ext`.
+Once `grothFiberMor_naturality` compiles, the
+`inverseAction` naturality proof follows using
+`Sigma.ext` + `heq_of_cast_eq` + `G.map_comp` +
+`eqToHom_trans` + `eqToHom_refl'`.
 
 ## Design decisions
 
@@ -73,9 +68,10 @@ equal, bypassing `ext`.
 ## Remaining tasks
 
 - Task 9: Complete inverse functor and equivalence
-  - `inverseFiberMap_comp`
-  - Assemble `inverseFiberFunctor : Cᵒᵖ ⥤ Type w`
-  - Define `proj`, `action`, axioms
+  - `grothFiberMor_naturality` (blocker)
+  - `inverseAction` (depends on above)
+  - Axioms: `action_tgt`, `action_id`, `action_assoc`
+  - Assemble `inversePresheaf`
   - Build `inverseFunctor` on morphisms
   - Unit/counit isomorphisms
   - `pshInternalGrothendieckEquiv`
