@@ -561,6 +561,121 @@ theorem grothBaseMor_comp_fiber_val
     (congr_fun
       (X.objPresheaf.map_comp f g) x).symm
 
+/-- Composition of `grothBaseMor` equals a single
+`grothBaseMor` at the composite, up to `eqToHom`
+from `fiberRestrict_comp`. -/
+theorem grothBaseMor_comp
+    {c c' c'' : Cᵒᵖ}
+    (f : c ⟶ c') (g : c' ⟶ c'')
+    (x : fiberObj X c) :
+    grothBaseMor X c c' f x ≫
+      grothBaseMor X c' c'' g
+        ((fiberRestrict X f).obj x) =
+    grothBaseMor X c c'' (f ≫ g) x ≫
+      eqToHom (congrArg (Grothendieck.mk c'')
+        (congr_fun (congrArg Functor.obj
+          (fiberRestrict_comp X f g))
+          x)) := by
+  apply Grothendieck.ext
+  case w_base => simp [grothBaseMor]
+  case w_fiber =>
+    apply fiberHom_ext
+    simp [Grothendieck.comp_fiber,
+      grothBaseMor]
+
+/-- `inverseFiberMap` sends a composite morphism
+to the composite of the maps. -/
+theorem inverseFiberMap_comp
+    (G : X.groth ⥤ Type w)
+    {c c' c'' : Cᵒᵖ}
+    (f : c ⟶ c') (g : c' ⟶ c'')
+    (p : inverseFiber X G c) :
+    inverseFiberMap X G (f ≫ g) p =
+      inverseFiberMap X G g
+        (inverseFiberMap X G f p) := by
+  obtain ⟨x, e⟩ := p
+  simp only [inverseFiberMap]
+  have hx :
+      (fiberRestrict X (f ≫ g)).obj x =
+        (fiberRestrict X g).obj
+          ((fiberRestrict X f).obj x) :=
+    congr_fun (congrArg Functor.obj
+      (fiberRestrict_comp X f g)) x
+  have hG :
+      (Grothendieck.mk c''
+        ((fiberRestrict X (f ≫ g)).obj x) :
+        X.groth) =
+      Grothendieck.mk c''
+        ((fiberRestrict X g).obj
+          ((fiberRestrict X f).obj x)) :=
+    congrArg (Grothendieck.mk c'') hx
+  have comm :
+      grothBaseMor X c c' f x ≫
+        grothBaseMor X c' c'' g
+          ((fiberRestrict X f).obj x) =
+      grothBaseMor X c c'' (f ≫ g) x ≫
+        eqToHom hG :=
+    grothBaseMor_comp X f g x
+  have hmapcomp :
+      G.map (grothBaseMor X c c'' (f ≫ g) x) ≫
+        G.map (eqToHom hG) =
+      G.map (grothBaseMor X c c' f x) ≫
+        G.map (grothBaseMor X c' c'' g
+          ((fiberRestrict X f).obj x)) := by
+    rw [← G.map_comp, ← G.map_comp, comm]
+  have hcast :
+      cast (congrArg G.obj hG)
+        (G.map
+          (grothBaseMor X c c'' (f ≫ g) x)
+          e) =
+      G.map (grothBaseMor X c' c'' g
+          ((fiberRestrict X f).obj x))
+        (G.map (grothBaseMor X c c' f x) e)
+      := by
+    have : G.map (eqToHom hG) =
+        cast (congrArg G.obj hG) := by
+      rw [eqToHom_map G hG, eqToHom_eq_cast]
+    rw [← this]
+    exact congr_fun hmapcomp e
+  exact Sigma.ext hx
+    (heq_of_cast_eq (congrArg G.obj hG) hcast)
+
+/-- The inverse fiber functor: sends a presheaf
+`G` on the Grothendieck category to a presheaf
+on `Cᵒᵖ` whose fiber at `c` is
+`Σ (x : fiberObj X c), G.obj ⟨c, x⟩`. -/
+def inverseFiberFunctor
+    (G : X.groth ⥤ Type w) :
+    Cᵒᵖ ⥤ Type w where
+  obj c := inverseFiber X G c
+  map f := inverseFiberMap X G f
+  map_id c := funext (inverseFiberMap_id X G c)
+  map_comp f g :=
+    funext (inverseFiberMap_comp X G f g)
+
+/-- The projection from the inverse fiber to the
+object presheaf: sends `⟨x, e⟩` to `x`. -/
+def inverseProj (G : X.groth ⥤ Type w) :
+    inverseFiberFunctor X G ⟶ X.objPresheaf where
+  app _ := fun ⟨x, _⟩ ↦ x
+  naturality _ _ _ := funext fun ⟨_, _⟩ ↦ rfl
+
+/-- A Grothendieck morphism from `⟨c, x⟩` to
+`⟨c, fiberTgt X c m⟩` with identity base, induced
+by a fiber morphism `m` at stage `c` with a proof
+that `x = fiberSrc X c m`. -/
+def grothFiberMor
+    (c : Cᵒᵖ) (x : fiberObj X c)
+    (m : fiberMor X c)
+    (h : x = fiberSrc X c m) :
+    (⟨c, x⟩ : X.groth) ⟶
+      ⟨c, fiberTgt X c m⟩ :=
+  ⟨𝟙 c,
+    eqToHom ((congr_fun
+      (congrArg Functor.obj
+        (fiberRestrict_id X c)) x).trans h) ≫
+      ⟨m, ⟨rfl, rfl⟩⟩⟩
+
 end Inverse
 
 end GebLean
