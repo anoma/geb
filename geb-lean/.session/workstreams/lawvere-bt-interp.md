@@ -2,8 +2,8 @@
 
 ## Status
 
-Active — soundness complete; next: functor
-construction and faithfulness
+Active — functor constructed; `interpU_complete`
+(completeness) remaining for faithfulness
 
 ## Goal
 
@@ -18,7 +18,9 @@ into `Type u` for arbitrary universe `u`.
   `interpU_subst` (all complete, no sorry)
 - `GebLean/LawvereBTInterp.lean` — `BT.fold_leaf`,
   `BT.fold_node`, `fold_eta_*`, `fold_uniq_interp_gen`,
-  `interpU_sound` (all complete, no sorry)
+  `interpU_sound`, `interpFunctor`,
+  `Faithful` instance (depends on `interpU_complete`,
+  1 underscore)
 - `GebLean/LawvereBTQuot.lean` — category instance,
   PBTO instance (unchanged)
 
@@ -179,15 +181,45 @@ hiding the intermediate complexity. Then
 - `finAppend` in `LawvereBT.lean` was made
   universe-polymorphic (`{α : Type _}`)
 
-## After `interpU_fold`
+## Progress
 
-1. Soundness (`btMorRel` implies equal `interpU`)
-   — by induction on `btMorRel`, using
-   `interpU_fold` for the fold cases
-2. Functor construction (`LawvereBTQuotCat ⥤ Type u`)
-   — lift `interpU` through quotient, prove functor
-   laws
-3. Faithfulness — completeness of the standard
-   model `BT` for the equational theory
-4. (Later) Primitive recursion correspondence,
+1. [done] Soundness (`interpU_sound`): by induction
+   on `btMorRel`, 9 cases, using `interpU_fold`
+   for fold cases and `interpU_subst` for
+   substitution-related cases
+2. [done] `interpU_subst`: naturality of interpU
+   under substitution, proved by `BTMor1.ind`
+3. [done] Functor (`interpFunctor`): lifts
+   `BTMorN.interpU` through quotient via
+   `interpU_sound`; `map_id` by `interpU_proj`,
+   `map_comp` by `interpU_subst`
+4. [in progress] Faithfulness: `Faithful` instance
+   defined, depends on `interpU_complete` (1
+   underscore). This is completeness of BT for
+   the equational theory.
+5. (Later) Primitive recursion correspondence,
    non-fullness
+
+## Remaining: `interpU_complete`
+
+Statement: `∀ ctx, t1.interpU ctx = t2.interpU ctx
+→ btMorRel n t1 t2`
+
+This is the converse of soundness — completeness
+of the standard model `BT` for the equational
+theory `btMorRel`.
+
+Proof approaches considered:
+
+- By joint induction on `(t1, t2)` using BT
+  constructor injectivity to match top-level
+  structure, with fold cases using fold uniqueness
+- Via normalization to a canonical form
+- Via the Yoneda embedding (requires more category
+  theory infrastructure)
+
+The fold case is the hardest: a fold term can
+equal a non-fold term (via foldLeaf, foldBranch,
+foldEta), requiring careful case analysis. The
+foldUniq constructor provides the uniqueness
+needed to identify distinct fold expressions.

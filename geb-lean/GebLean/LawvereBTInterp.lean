@@ -509,4 +509,97 @@ theorem interpU_sound {n : ℕ}
     exact fold_uniq_interp_gen φ f g σ ctx
       hℓ_ih hβ_ih (tree.interpU ctx) j
 
+/-! ## Lifting interpU through the quotient -/
+
+/-- The interpretation of a quotient morphism:
+lifts `BTMorN.interpU` through the quotient. -/
+def BTMorNQuo.interpU {n m : ℕ}
+    (f : BTMorNQuo n m)
+    (ctx : Fin n → BT.{u}) :
+    Fin m → BT.{u} :=
+  Quotient.lift
+    (s := btMorNSetoid n m)
+    (fun f_raw => BTMorN.interpU f_raw ctx)
+    (fun _ _ h =>
+      funext fun j => interpU_sound (h j) ctx)
+    f
+
+/-- `interpU` on the identity quotient morphism
+is the identity function on contexts. -/
+theorem BTMorNQuo.interpU_id (n : ℕ)
+    (ctx : Fin n → BT.{u}) :
+    BTMorNQuo.interpU (BTMorNQuo.id n) ctx =
+    ctx := by
+  funext j
+  exact BTMor1.interpU_proj j ctx
+
+/-- `interpU` on a composition of quotient
+morphisms equals composition of the
+interpretations. -/
+theorem BTMorNQuo.interpU_comp {n m k : ℕ}
+    (f : BTMorNQuo n m) (g : BTMorNQuo m k)
+    (ctx : Fin n → BT.{u}) :
+    BTMorNQuo.interpU
+      (BTMorNQuo.comp f g) ctx =
+    BTMorNQuo.interpU g
+      (BTMorNQuo.interpU f ctx) := by
+  revert f g
+  apply Quotient.ind₂
+  intro f_raw g_raw
+  funext j
+  exact BTMor1.interpU_subst (g_raw j)
+    f_raw ctx
+
+/-! ## The interpretation functor -/
+
+/-- The interpretation functor from the Lawvere
+theory of parameterized binary tree objects
+into `Type u`. Maps object `n` to the type
+`Fin n → BT.{u}` and each morphism class to the
+corresponding function on contexts. -/
+def interpFunctor : LawvereBTQuotCat ⥤
+    Type u where
+  obj n := Fin n → BT.{u}
+  map f := BTMorNQuo.interpU f
+  map_id n := by
+    funext ctx j
+    exact congrFun
+      (BTMorNQuo.interpU_id n ctx) j
+  map_comp f g := by
+    funext ctx j
+    exact congrFun
+      (BTMorNQuo.interpU_comp f g ctx) j
+
+/-! ## Faithfulness
+
+The interpretation functor is faithful: distinct
+morphism classes in `LawvereBTQuotCat` produce
+distinct functions on contexts. Equivalently,
+the standard model `BT` is complete for the
+equational theory `btMorRel`. -/
+
+/-- Completeness: if two terms have equal
+interpretations at all contexts, they are
+`btMorRel`-equivalent.  This is the converse of
+`interpU_sound`. -/
+theorem interpU_complete {n : ℕ}
+    (t1 t2 : BTMor1 n)
+    (h : ∀ (ctx : Fin n → BT.{0}),
+      t1.interpU ctx = t2.interpU ctx) :
+    btMorRel n t1 t2 := _
+
+/-- The interpretation functor is faithful. -/
+instance : interpFunctor.{0}.Faithful where
+  map_injective {n m} {f g} h := by
+    revert f g
+    apply Quotient.ind₂
+    intro f_raw g_raw heq
+    apply Quotient.sound
+      (s := btMorNSetoid n m)
+    intro j
+    apply interpU_complete
+    intro ctx
+    exact congrFun
+      (congrFun heq ctx) j
+
 end GebLean
