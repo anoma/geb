@@ -861,6 +861,422 @@ private theorem leaf_ne_node_interp
     False :=
   absurd h BT.leaf_ne_node
 
+/-- `quoteBT` on `BT.leaf` returns
+`BTMor1.leaf`. -/
+private theorem quoteBT_leaf {n : ℕ} :
+    (quoteBT (n := n) BT.leaf) =
+      BTMor1.leaf := by
+  unfold quoteBT
+  exact BT.fold_leaf BTMor1.leaf BTMor1.branch
+
+/-- `quoteBT` on `BT.node` returns a branch of
+the quoted children. -/
+private theorem quoteBT_node {n : ℕ}
+    (l r : BT.{0}) :
+    (quoteBT (n := n) (BT.node l r)) =
+      BTMor1.branch (quoteBT l)
+        (quoteBT r) := by
+  unfold quoteBT
+  exact BT.fold_node BTMor1.leaf
+    BTMor1.branch l r
+
+/-- Substitution commutes with fiber transport:
+`(h ▸ t).subst σ = t.subst (fun v => σ (h ▸ v))`.
+-/
+private theorem subst_cast {a b m : ℕ}
+    (h : a = b) (t : BTMor1 a)
+    (σ : Fin b → BTMor1 m) :
+    (h ▸ t).subst σ =
+      t.subst (fun v => σ (h ▸ v)) := by
+  cases h; rfl
+
+/-- Fold-quoteBT commutation: applying a
+syntactic fold to quoted arguments and then
+comparing with the quotation of the semantic
+fold.  Uses BT structural induction on the
+tree argument.
+
+The proof has two cases:
+- Leaf: `foldLeaf` + `BT.fold_leaf`.
+- Node: `foldBranch` + `BT.fold_node` +
+  `subst_cong_left` + BT-IH on sub-trees. -/
+private theorem norm0_fold_commute_gen
+    {x : PUnit.{1}}
+    (m : ℕ)
+    (base : Fin m → BT.{0})
+    (g : Fin m → BTMor1 (m + m))
+    (ih_g : ∀ (j : Fin m)
+      (σ : Fin (m + m) → BTMor1 0),
+      (∀ i, btMorRel 0 (σ i)
+        (quoteBT ((σ i).interpU
+          Fin.elim0))) →
+      btMorRel 0 ((g j).subst σ)
+        (quoteBT (((g j).subst σ).interpU
+          Fin.elim0)))
+    (bt : PolyFreeM
+      (overTerminal PUnit.{1})
+      polyProdType x)
+    (j : Fin m) :
+    btMorRel 0
+      (BTMor1.fold m
+        (fun i => quoteBT (base i))
+        g (quoteBT bt) j)
+      (quoteBT
+        (BT.fold
+          base
+          (fun leftAll rightAll j' =>
+            (g j').interpU
+              (finAppend leftAll rightAll))
+          bt j)) := by
+  revert j
+  induction bt with
+  | mk y idx children ih =>
+    match idx with
+    | Sum.inl leafIdx =>
+      intro j
+      have hy : y = PUnit.unit :=
+        PUnit.eq_punit y
+      subst hy
+      have hli :
+          leafIdx = ⟨PUnit.unit, rfl⟩ :=
+        Subtype.ext (PUnit.eq_punit _)
+      subst hli
+      have hmk :
+          PolyFix.mk PUnit.unit
+            (show polyBetweenIndex PUnit PUnit
+              (polyTranslate
+                (overTerminal PUnit.{1})
+                polyProdType)
+              PUnit.unit from
+              Sum.inl ⟨PUnit.unit, rfl⟩)
+            children =
+          BT.leaf := by
+        unfold BT.leaf polyFreeMPure
+        congr 1
+        funext e; exact PEmpty.elim e
+      rw [hmk, BT.fold_leaf, quoteBT_leaf]
+      exact btMorRel.foldLeaf m j
+        (fun i => quoteBT (base i)) g
+    | Sum.inr nodeIdx =>
+      intro j
+      have hy : y = PUnit.unit :=
+        PUnit.eq_punit y
+      subst hy
+      have hni : nodeIdx = PUnit.unit :=
+        PUnit.eq_punit nodeIdx
+      subst hni
+      have hmk :
+          PolyFix.mk PUnit.unit
+            (show polyBetweenIndex PUnit PUnit
+              (polyTranslate
+                (overTerminal PUnit.{1})
+                polyProdType)
+              PUnit.unit from
+              Sum.inr PUnit.unit)
+            children =
+          BT.node
+            (children (Sum.inl PUnit.unit))
+            (children
+              (Sum.inr PUnit.unit)) := by
+        unfold BT.node polyProdFreeMNode
+          polyFreeMStrFamily
+        simp only
+        congr 1
+        funext e
+        match e with
+        | Sum.inl _ => rfl
+        | Sum.inr _ => rfl
+      rw [hmk, BT.fold_node,
+        quoteBT_node]
+      set lc :=
+        children (Sum.inl PUnit.unit)
+      set rc :=
+        children (Sum.inr PUnit.unit)
+      set stepFn :=
+        fun leftAll rightAll
+          (j' : Fin m) =>
+          (g j').interpU
+            (finAppend leftAll rightAll)
+      apply btMorRel.trans
+      · exact btMorRel.foldBranch m j
+          (fun i => quoteBT (base i))
+          g (quoteBT lc) (quoteBT rc)
+      · set σ_fold :=
+          fun (i : Fin (m + m)) =>
+            if h : i.val < m
+            then BTMor1.fold m
+              (fun k => quoteBT (base k))
+              g (quoteBT lc) ⟨i.val, h⟩
+            else BTMor1.fold m
+              (fun k => quoteBT (base k))
+              g (quoteBT rc)
+              ⟨i.val - m, by omega⟩
+        set σ_quote :=
+          fun (i : Fin (m + m)) =>
+            quoteBT
+              (finAppend
+                (BT.fold base stepFn lc)
+                (BT.fold base stepFn rc) i)
+        have hσ_eq :
+            ∀ i, btMorRel 0
+              (σ_fold i) (σ_quote i) := by
+          intro i
+          simp only [σ_fold, σ_quote,
+            finAppend]
+          split
+          · rename_i hlt
+            exact ih (Sum.inl PUnit.unit)
+              ⟨i.val, hlt⟩
+          · rename_i hge
+            exact ih (Sum.inr PUnit.unit)
+              ⟨i.val - m, by omega⟩
+        have hσ_quote_norm :
+            ∀ i, btMorRel 0
+              (σ_quote i)
+              (quoteBT ((σ_quote i).interpU
+                Fin.elim0)) := by
+          intro i
+          simp only [σ_quote]
+          rw [quoteBT_interpU]
+          exact btMorRel.refl _
+        apply btMorRel.trans
+        · exact subst_cong_left (g j) hσ_eq
+        · have h_g :=
+            ih_g j σ_quote hσ_quote_norm
+          have hrw :
+              ((g j).subst σ_quote).interpU
+                Fin.elim0 =
+              (g j).interpU
+                (finAppend
+                  (BT.fold base stepFn lc)
+                  (BT.fold base
+                    stepFn rc)) := by
+            rw [BTMor1.interpU_subst]
+            congr 1; funext i
+            simp only [σ_quote]
+            exact quoteBT_interpU _ _
+          rw [hrw] at h_g
+          exact h_g
+
+private theorem norm0_fold_commute
+    (m : ℕ)
+    (base : Fin m → BT.{0})
+    (g : Fin m → BTMor1 (m + m))
+    (ih_g : ∀ (j : Fin m)
+      (σ : Fin (m + m) → BTMor1 0),
+      (∀ i, btMorRel 0 (σ i)
+        (quoteBT ((σ i).interpU
+          Fin.elim0))) →
+      btMorRel 0 ((g j).subst σ)
+        (quoteBT (((g j).subst σ).interpU
+          Fin.elim0)))
+    (bt : BT.{0})
+    (j : Fin m) :
+    btMorRel 0
+      (BTMor1.fold m
+        (fun i => quoteBT (base i))
+        g (quoteBT bt) j)
+      (quoteBT
+        (BT.fold
+          base
+          (fun leftAll rightAll j' =>
+            (g j').interpU
+              (finAppend leftAll rightAll))
+          bt j)) :=
+  norm0_fold_commute_gen m base g ih_g bt j
+
+/-- Ground normalization: every `BTMor1 k` term,
+when substituted with ground values satisfying
+the normalization property, is `btMorRel 0`
+to the quotation of its ground interpretation.
+
+The motive for `BTMor1.ind` carries the
+hypothesis on σ through all fibers, giving
+interpU_complete for ALL fibers in one pass. -/
+private theorem norm0_gen :
+    ∀ {k : ℕ} (t : BTMor1 k)
+      (σ : Fin k → BTMor1 0),
+      (∀ i, btMorRel 0 (σ i)
+        (quoteBT ((σ i).interpU
+          (Fin.elim0 (α := BT.{0}))))) →
+      btMorRel 0 (t.subst σ)
+        (quoteBT ((t.subst σ).interpU
+          (Fin.elim0 (α := BT.{0})))) :=
+  fun t => BTMor1.ind
+    (motive := fun {k} (t : BTMor1 k) =>
+      ∀ (σ : Fin k → BTMor1 0),
+        (∀ i, btMorRel 0 (σ i)
+          (quoteBT ((σ i).interpU
+            Fin.elim0))) →
+        btMorRel 0 (t.subst σ)
+          (quoteBT ((t.subst σ).interpU
+            Fin.elim0)))
+    (step := fun i => match i with
+      | ⟨0, _⟩ =>
+        -- proj case: result is σ i, use hσ
+        fun p _ _ σ hσ =>
+          hσ (p.property ▸ p.val.2)
+      | ⟨1, _⟩ =>
+        -- leaf case: leaf.subst σ = leaf,
+        -- quoteBT BT.leaf = leaf, so refl
+        fun _ _ _ _ _ =>
+          btMorRel.refl _
+      | ⟨2, _⟩ =>
+        -- branch case: congBranch + IH
+        fun _ children ih σ hσ => by
+          rename_i ni _
+          set lhs := BTMor1.subst _ σ
+            with hlhs
+          unfold BTMor1.subst BTMor1.ind
+            PolyFixCoprod.ind PolyFix.ind
+            at hlhs
+          dsimp only at hlhs
+          set rhs_interpU :=
+            BTMor1.interpU lhs Fin.elim0
+            with hrhs
+          rw [hlhs] at hrhs
+          simp only [BTMor1.interpU_branch]
+            at hrhs
+          rw [hlhs, hrhs, quoteBT_node]
+          exact btMorRel.congBranch
+            (ih (Sum.inl PUnit.unit) σ hσ)
+            (ih (Sum.inr PUnit.unit) σ hσ)
+      | ⟨3, _⟩ =>
+        -- fold case
+        fun pos children ih σ hσ => by
+          rename_i ni _
+          let pm := pos.1
+          let pj := pos.2
+          have hlb (i : Fin pm) :
+              i.val < pm + pm + 1 :=
+            Nat.lt_of_lt_of_le i.isLt
+              (Nat.le_add_right
+                pm (pm + 1))
+          have hls (i : Fin pm) :
+              pm + i.val < pm + pm + 1 :=
+            by omega
+          have hlt :
+              pm + pm < pm + pm + 1 :=
+            Nat.lt_succ_self _
+          have hbf (i : Fin pm) :
+              (polyBetweenFamily ℕ ℕ
+                (btMorComponents
+                  ⟨3, by omega⟩)
+                ni pos).hom
+                ⟨i.val, hlb i⟩ = ni := by
+            unfold btMorComponents
+              btMorFoldPoly
+              polyBetweenFamily
+              polyToOverFamily ccrObjMk
+              ccrFamily; dsimp
+            split_ifs <;> omega
+          have hsf (i : Fin pm) :
+              (polyBetweenFamily ℕ ℕ
+                (btMorComponents
+                  ⟨3, by omega⟩)
+                ni pos).hom
+                ⟨pm + i.val, hls i⟩ =
+                  pm + pm := by
+            unfold btMorComponents
+              btMorFoldPoly
+              polyBetweenFamily
+              polyToOverFamily ccrObjMk
+              ccrFamily; dsimp
+            split_ifs <;> omega
+          have htf :
+              (polyBetweenFamily ℕ ℕ
+                (btMorComponents
+                  ⟨3, by omega⟩)
+                ni pos).hom
+                ⟨pm + pm, hlt⟩ = ni := by
+            unfold btMorComponents
+              btMorFoldPoly
+              polyBetweenFamily
+              polyToOverFamily ccrObjMk
+              ccrFamily; dsimp
+            split_ifs <;> omega
+          -- Unfold subst to expose the fold.
+          set lhs := BTMor1.subst _ σ
+            with hlhs
+          unfold BTMor1.subst BTMor1.ind
+            PolyFixCoprod.ind PolyFix.ind
+            at hlhs
+          dsimp only at hlhs
+          -- Unfold interpU to expose BT.fold.
+          set rhs_interpU :=
+            BTMor1.interpU lhs Fin.elim0
+            with hrhs
+          rw [hlhs] at hrhs
+          rw [BTMor1.interpU_fold] at hrhs
+          -- Now lhs is a fold and rhs_interpU
+          -- is a BT.fold.
+          rw [hlhs, hrhs]
+          -- Goal: btMorRel 0 (fold pm f' g' tree' pj)
+          --   (quoteBT (BT.fold base step bt pj))
+          -- where f' i = (children ⟨i,_⟩).subst σ_i
+          -- Use congFold to reduce to norm on
+          -- base/tree children, then
+          -- norm0_fold_commute.
+          set f' := fun (i : Fin pm) =>
+            (children ⟨i.val, hlb i⟩).subst
+              (fun v => σ (hbf i ▸ v))
+          set g' := fun (i : Fin pm) =>
+            (hsf i ▸ children
+              ⟨pm + i.val, hls i⟩ :
+              BTMor1 (pm + pm))
+          set tree' :=
+            (children ⟨pm + pm, hlt⟩).subst
+              (fun v => σ (htf ▸ v))
+          set base' := fun (i : Fin pm) =>
+            (f' i).interpU Fin.elim0
+          set stepFn :=
+            fun leftAll rightAll
+              (j' : Fin pm) =>
+              (g' j').interpU
+                (finAppend leftAll rightAll)
+          set bt' := tree'.interpU Fin.elim0
+          -- IH on base children:
+          have ih_base (i : Fin pm) :
+              btMorRel 0 (f' i)
+                (quoteBT (base' i)) :=
+            ih ⟨i.val, hlb i⟩
+              (fun v => σ (hbf i ▸ v))
+              (fun v => hσ (hbf i ▸ v))
+          -- IH on tree child:
+          have ih_tree :
+              btMorRel 0 tree'
+                (quoteBT bt') :=
+            ih ⟨pm + pm, hlt⟩
+              (fun v => σ (htf ▸ v))
+              (fun v => hσ (htf ▸ v))
+          -- IH on step children:
+          have ih_step (j' : Fin pm)
+              (σ_g : Fin (pm + pm) →
+                BTMor1 0)
+              (hσ_g : ∀ i, btMorRel 0
+                (σ_g i)
+                (quoteBT ((σ_g i).interpU
+                  Fin.elim0))) :
+              btMorRel 0
+                ((g' j').subst σ_g)
+                (quoteBT
+                  (((g' j').subst
+                    σ_g).interpU
+                    Fin.elim0)) := by
+            simp only [g']
+            rw [subst_cast (hsf j')]
+            exact ih ⟨pm + j'.val, hls j'⟩
+              (fun v => σ_g (hsf j' ▸ v))
+              (fun v => hσ_g (hsf j' ▸ v))
+          apply btMorRel.trans
+          · exact btMorRel.congFold
+              ih_base
+              (fun i => btMorRel.refl _)
+              ih_tree
+          · exact norm0_fold_commute
+              pm base' g' ih_step bt' pj)
+    t
+
 /-- Completeness: if two terms have equal
 interpretations at all contexts, they are
 `btMorRel`-equivalent.  This is the converse of
@@ -870,7 +1286,7 @@ theorem interpU_complete {n : ℕ}
     (h : ∀ (ctx : Fin n → BT.{0}),
       t1.interpU ctx = t2.interpU ctx) :
     btMorRel n t1 t2 := by
-  exact _
+  sorry
 
 /-- If `t : BTMor1 n` interprets to `BT.leaf`
 at every context, then `t` is
