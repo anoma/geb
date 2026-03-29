@@ -60,6 +60,7 @@ import GebLean.PresheafPRAUMorph
 import GebLean.ProfAlg
 import GebLean.PshInternalCat
 import GebLean.PshInternalExternalize
+import GebLean.PshInternalGrothendieck
 import GebLean.PshInternalPresheaf
 import GebLean.PshRelDouble
 import GebLean.PshSpanBicategory
