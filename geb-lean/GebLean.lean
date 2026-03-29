@@ -59,6 +59,7 @@ import GebLean.PresheafPRADiscrete
 import GebLean.PresheafPRAUMorph
 import GebLean.ProfAlg
 import GebLean.PshInternalCat
+import GebLean.PshInternalExternalize
 import GebLean.PshRelDouble
 import GebLean.PshSpanBicategory
 import GebLean.PshRelEdgeExp
