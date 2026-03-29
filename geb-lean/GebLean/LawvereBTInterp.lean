@@ -51,6 +51,33 @@ theorem BT.fold_node {α : Type u}
         (BT.fold b s r) := by
   rfl
 
+/-! ## BT structural lemmas -/
+
+/-- `BT.leaf` and `BT.node` produce different
+`PolyFix` shapes and are therefore distinct. -/
+private theorem bt_leaf_index_eq :
+    (BT.leaf : BT.{u}).index =
+    Sum.inl ⟨PUnit.unit, rfl⟩ := by
+  unfold BT.leaf polyFreeMPure
+  rfl
+
+private theorem bt_node_index_eq
+    (l r : BT.{u}) :
+    (BT.node l r).index =
+    Sum.inr PUnit.unit := by
+  unfold BT.node polyProdFreeMNode
+    polyFreeMStrFamily
+  rfl
+
+theorem BT.leaf_ne_node
+    {l r : BT.{u}} :
+    BT.leaf ≠ BT.node l r := by
+  intro h
+  have hi := congrArg PolyFix.index h
+  rw [bt_leaf_index_eq,
+    bt_node_index_eq] at hi
+  exact absurd hi (fun h => nomatch h)
+
 /-! ## Fold eta lemma
 
 The fold with the identity base/step is the
@@ -213,6 +240,179 @@ private theorem fold_eta_fin1
           (r ⟨0, by omega⟩))
       bt ⟨0, by omega⟩ = bt := by
   rw [fold_eval_at_zero_gen, fold_eta_aux]
+
+/-! ## BT structural lemmas (continued) -/
+
+/-- `BT.node` is injective: equal nodes have
+equal left and right children. -/
+private theorem bt_node_eq_mk
+    (l r : BT.{u}) :
+    BT.node l r =
+    PolyFix.mk PUnit.unit
+      (show polyBetweenIndex PUnit PUnit
+        (polyTranslate
+          (overTerminal PUnit.{u + 1})
+          polyProdType) PUnit.unit from
+        Sum.inr PUnit.unit)
+      (fun e => match e with
+        | Sum.inl _ => l
+        | Sum.inr _ => r) := by
+  unfold BT.node polyProdFreeMNode
+    polyFreeMStrFamily
+  simp only
+  congr 1
+  funext e
+  match e with
+  | Sum.inl _ => rfl
+  | Sum.inr _ => rfl
+
+theorem BT.node_inj
+    {l1 r1 l2 r2 : BT.{u}}
+    (h : BT.node l1 r1 = BT.node l2 r2) :
+    l1 = l2 ∧ r1 = r2 := by
+  rw [bt_node_eq_mk, bt_node_eq_mk] at h
+  have hc := eq_of_heq (PolyFix.mk.inj h).2
+  constructor
+  · exact congrFun hc (Sum.inl PUnit.unit)
+  · exact congrFun hc (Sum.inr PUnit.unit)
+
+/-- Case analysis on BT: every tree is either
+`BT.leaf` or `BT.node l r`. -/
+theorem BT.cases {P : BT.{u} → Prop}
+    (hleaf : P BT.leaf)
+    (hnode : ∀ (l r : BT.{u}),
+      P (BT.node l r))
+    (bt : BT.{u}) : P bt := by
+  match bt with
+  | PolyFix.mk y idx children =>
+    have hy : y = PUnit.unit :=
+      PUnit.eq_punit y
+    subst hy
+    match idx with
+    | Sum.inl leafIdx =>
+      have hli :
+          leafIdx = ⟨PUnit.unit, rfl⟩ :=
+        Subtype.ext (PUnit.eq_punit _)
+      subst hli
+      have hmk :
+          PolyFix.mk PUnit.unit
+            (show polyBetweenIndex PUnit PUnit
+              (polyTranslate
+                (overTerminal PUnit.{u + 1})
+                polyProdType) PUnit.unit from
+              Sum.inl ⟨PUnit.unit, rfl⟩)
+            children =
+          BT.leaf := by
+        unfold BT.leaf polyFreeMPure
+        congr 1
+        funext e; exact PEmpty.elim e
+      rw [hmk]; exact hleaf
+    | Sum.inr nodeIdx =>
+      have hni : nodeIdx = PUnit.unit :=
+        PUnit.eq_punit nodeIdx
+      subst hni
+      have hmk :
+          PolyFix.mk PUnit.unit
+            (show polyBetweenIndex PUnit PUnit
+              (polyTranslate
+                (overTerminal PUnit.{u + 1})
+                polyProdType) PUnit.unit from
+              Sum.inr PUnit.unit)
+            children =
+          BT.node
+            (children (Sum.inl PUnit.unit))
+            (children
+              (Sum.inr PUnit.unit)) := by
+        unfold BT.node polyProdFreeMNode
+          polyFreeMStrFamily
+        simp only
+        congr 1
+        funext e
+        match e with
+        | Sum.inl _ => rfl
+        | Sum.inr _ => rfl
+      rw [hmk]; exact hnode _ _
+
+/-- Quotation: embed a ground `BT` tree as a
+`BTMor1 n` term (leaf → `BTMor1.leaf`,
+node → `BTMor1.branch`). -/
+def quoteBT {n : ℕ} :
+    BT.{0} → BTMor1 n :=
+  BT.fold BTMor1.leaf BTMor1.branch
+
+/-- Interpreting a quoted BT tree recovers the
+original tree. -/
+private theorem quoteBT_interpU_gen {n : ℕ}
+    {x : PUnit.{1}}
+    (bt : PolyFreeM
+      (overTerminal PUnit.{1})
+      polyProdType x)
+    (ctx : Fin n → BT.{0}) :
+    (BT.fold BTMor1.leaf BTMor1.branch
+      bt).interpU ctx = bt := by
+  induction bt with
+  | mk y idx children ih =>
+    match idx with
+    | Sum.inl leafIdx =>
+      have hy : y = PUnit.unit :=
+        PUnit.eq_punit y
+      subst hy
+      have hli :
+          leafIdx = ⟨PUnit.unit, rfl⟩ :=
+        Subtype.ext (PUnit.eq_punit _)
+      subst hli
+      have hmk :
+          PolyFix.mk PUnit.unit
+            (show polyBetweenIndex PUnit PUnit
+              (polyTranslate
+                (overTerminal PUnit.{1})
+                polyProdType) PUnit.unit from
+              Sum.inl ⟨PUnit.unit, rfl⟩)
+            children =
+          BT.leaf := by
+        unfold BT.leaf polyFreeMPure
+        congr 1
+        funext e; exact PEmpty.elim e
+      rw [hmk, BT.fold_leaf,
+        BTMor1.interpU_leaf]
+    | Sum.inr nodeIdx =>
+      have hy : y = PUnit.unit :=
+        PUnit.eq_punit y
+      subst hy
+      have hni : nodeIdx = PUnit.unit :=
+        PUnit.eq_punit nodeIdx
+      subst hni
+      have hmk :
+          PolyFix.mk PUnit.unit
+            (show polyBetweenIndex PUnit PUnit
+              (polyTranslate
+                (overTerminal PUnit.{1})
+                polyProdType) PUnit.unit from
+              Sum.inr PUnit.unit)
+            children =
+          BT.node
+            (children (Sum.inl PUnit.unit))
+            (children
+              (Sum.inr PUnit.unit)) := by
+        unfold BT.node polyProdFreeMNode
+          polyFreeMStrFamily
+        simp only
+        congr 1
+        funext e
+        match e with
+        | Sum.inl _ => rfl
+        | Sum.inr _ => rfl
+      rw [hmk, BT.fold_node,
+        BTMor1.interpU_branch,
+        ih (Sum.inl PUnit.unit),
+        ih (Sum.inr PUnit.unit),
+        ← hmk]
+
+theorem quoteBT_interpU {n : ℕ}
+    (bt : BT.{0})
+    (ctx : Fin n → BT.{0}) :
+    (quoteBT bt).interpU ctx = bt :=
+  quoteBT_interpU_gen bt ctx
 
 /-! ## Fold uniqueness at the interpretation level
 
@@ -578,6 +778,89 @@ distinct functions on contexts. Equivalently,
 the standard model `BT` is complete for the
 equational theory `btMorRel`. -/
 
+/-! ### Completeness: helper lemmas -/
+
+/-- Distinguishing context for `Fin` indices:
+maps `i` to a node and everything else to leaf.
+Used to discriminate between projections. -/
+private def distinguishCtx {n : ℕ}
+    (i : Fin n) : Fin n → BT.{0} :=
+  fun j =>
+    if j = i then BT.node BT.leaf BT.leaf
+    else BT.leaf
+
+private theorem distinguishCtx_self
+    {n : ℕ} (i : Fin n) :
+    distinguishCtx i i =
+      BT.node BT.leaf BT.leaf := by
+  simp [distinguishCtx]
+
+private theorem distinguishCtx_ne
+    {n : ℕ} (i j : Fin n) (h : j ≠ i) :
+    distinguishCtx i j = BT.leaf := by
+  simp [distinguishCtx, h]
+
+/-- `BT.node l r ≠ BT.leaf`. -/
+private theorem BT.node_ne_leaf
+    {l r : BT.{u}} :
+    BT.node l r ≠ BT.leaf :=
+  fun h => BT.leaf_ne_node h.symm
+
+/-- If `∀ ctx, ctx i = ctx j`, then `i = j`. -/
+private theorem fin_eq_of_ctx_eq {n : ℕ}
+    (i j : Fin n)
+    (h : ∀ ctx : Fin n → BT.{0},
+      ctx i = ctx j) :
+    i = j := by
+  by_contra hne
+  have hd := h (distinguishCtx i)
+  simp only [distinguishCtx] at hd
+  simp only [if_true] at hd
+  simp only [show ¬(j = i) from
+    Ne.symm hne, if_false] at hd
+  exact absurd hd BT.node_ne_leaf
+
+/-- A projection cannot be constantly leaf. -/
+private theorem proj_ne_const_leaf
+    {n : ℕ}
+    (i : Fin n)
+    (h : ∀ ctx : Fin n → BT.{0},
+      ctx i = BT.leaf) : False := by
+  have hd := h (distinguishCtx i)
+  simp only [distinguishCtx, if_true] at hd
+  exact absurd hd BT.node_ne_leaf
+
+/-- A projection cannot be constantly a node. -/
+private theorem proj_ne_const_node
+    {n : ℕ}
+    (i : Fin n)
+    {l r : BT.{0}}
+    (h : ∀ ctx : Fin n → BT.{0},
+      ctx i = BT.node l r) :
+    False := by
+  have hd := h (fun _ => BT.leaf)
+  exact absurd hd BT.leaf_ne_node
+
+/-- If a node interpretation equals `BT.leaf`,
+this is a contradiction. -/
+private theorem node_interp_ne_leaf
+    {n : ℕ} (l r : BTMor1 n)
+    (ctx : Fin n → BT.{0})
+    (h : BT.node (l.interpU ctx)
+      (r.interpU ctx) = BT.leaf) :
+    False :=
+  absurd h BT.node_ne_leaf
+
+/-- If `BT.leaf` equals a node interpretation,
+this is a contradiction. -/
+private theorem leaf_ne_node_interp
+    {n : ℕ} (l r : BTMor1 n)
+    (ctx : Fin n → BT.{0})
+    (h : BT.leaf = BT.node (l.interpU ctx)
+      (r.interpU ctx)) :
+    False :=
+  absurd h BT.leaf_ne_node
+
 /-- Completeness: if two terms have equal
 interpretations at all contexts, they are
 `btMorRel`-equivalent.  This is the converse of
@@ -586,7 +869,36 @@ theorem interpU_complete {n : ℕ}
     (t1 t2 : BTMor1 n)
     (h : ∀ (ctx : Fin n → BT.{0}),
       t1.interpU ctx = t2.interpU ctx) :
-    btMorRel n t1 t2 := _
+    btMorRel n t1 t2 := by
+  exact _
+
+/-- If `t : BTMor1 n` interprets to `BT.leaf`
+at every context, then `t` is
+`btMorRel`-equivalent to `BTMor1.leaf`. -/
+private theorem interpU_always_leaf
+    {n : ℕ} (t : BTMor1 n)
+    (h : ∀ ctx : Fin n → BT.{0},
+      t.interpU ctx = BT.leaf) :
+    btMorRel n t BTMor1.leaf :=
+  interpU_complete t BTMor1.leaf
+    (fun ctx => by
+      rw [h ctx, BTMor1.interpU_leaf])
+
+/-- If `t : BTMor1 n` interprets to `BT.node`
+at every context (with decomposable left and
+right interpretations), then `t` is
+`btMorRel`-equivalent to a `BTMor1.branch`. -/
+private theorem interpU_always_node
+    {n : ℕ} (t : BTMor1 n)
+    (hl hr : BTMor1 n)
+    (h : ∀ ctx : Fin n → BT.{0},
+      t.interpU ctx =
+      BT.node (hl.interpU ctx)
+        (hr.interpU ctx)) :
+    btMorRel n t (BTMor1.branch hl hr) :=
+  interpU_complete t (BTMor1.branch hl hr)
+    (fun ctx => by
+      rw [h ctx, BTMor1.interpU_branch])
 
 /-- The interpretation functor is faithful. -/
 instance : interpFunctor.{0}.Faithful where
