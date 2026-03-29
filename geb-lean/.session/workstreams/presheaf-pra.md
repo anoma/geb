@@ -160,18 +160,49 @@ PRA Products (Task A1 — in progress):
   (Iᵒᵖ ⥤ Type (max w' w_I))`, functorial
   direction
 
+- `praProd` — assembled product PRA via
+  `praReassemble`
+- `praProdSigmaInj` — Sigma injection
+  (direction embedding, naturality = rfl)
+- `praProdProjAt` — CCR-level projection
+  at each stage (positions by evaluation,
+  directions by Sigma injection)
+
 Remaining for A1:
 
-- Assemble product PRA via `praReassembleGr.op`
-  (needs `w' ≤ w_I` for universe match)
-- Define cone projections (product → each factor)
-- Prove universal property (lift + uniqueness)
-- Package as `HasLimit` for `Discrete K`-shaped
+- `praProdProj` — natural transformation
+  assembling `praProdProjAt` into full PRA
+  morphism. Base (positions) naturality
+  works via `Quiver.Hom.unop_inj; rfl`. Fiber
+  (directions) naturality needs Grothendieck
+  composition unfolding through `.unop.fiber`
+  (use `erw` / `calc` / `change .val`
+  techniques from the directions round-trip).
+- Universal property (lift + uniqueness) for
+  the product cone
+- `HasLimit` packaging for `Discrete K`-shaped
   diagrams
 
-Universe constraint: `K : Type w'` and
-`max w' w_I = w_I` (i.e., `w' ≤ w_I`) needed
-for the product PRA to live in `PresheafPRACat`.
+Universe: `K : Type` (universe 0) avoids
+`Small`/`ULift`. `max 0 w' = w'` and
+`max 0 w_I = w_I` hold syntactically.
+
+Proof technique notes:
+
+- CCR morphism equality: use
+  `Quiver.Hom.unop_inj` +
+  `Grothendieck.ext` (base + fiber)
+- Grothendieck base in `(Type w')ᵒᵖ`:
+  use `Quiver.Hom.unop_inj` to get Type-level
+  function equality, then `funext` + `rfl`
+- Grothendieck fiber: has `eqToHom` from
+  `Grothendieck.ext`; use `erw` chains with
+  `unop_comp`, `comp_fiber`, `comp_val`,
+  `eqToHom_unop`, `eqToHom_val` and
+  `change .val` to expose `Subtype.val`
+- For naturality of projection: the base
+  direction is Grothendieck.ext's SECOND goal
+  (not first), fiber is FIRST
 
 ## Planned Work
 
