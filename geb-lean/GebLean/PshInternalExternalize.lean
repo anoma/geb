@@ -527,4 +527,95 @@ theorem externalizeNatTrans_comp
   funext c
   exact Cat.Hom.ext (pshIntFiberFunctor_comp F G c)
 
+section DiscreteUnitCompat
+
+universe w'
+
+variable
+    (Y : PshInternalCat.{0, 0, w'}
+      (Discrete Unit))
+
+/-- The object type of `externalize Y` at the
+unique stage equals the object type of the
+`DiscreteUnitEquiv` construction. -/
+theorem fiberObj_eq_icObj :
+    fiberObj Y (Opposite.op ⟨⟨⟩⟩) = icObj Y :=
+  rfl
+
+/-- The hom-type of `fiberCategory` at the unique
+stage equals the hom-type of `icCategory`. -/
+theorem fiberHom_eq_icHom
+    (a b : fiberObj Y (Opposite.op ⟨⟨⟩⟩)) :
+    fiberHom Y (Opposite.op ⟨⟨⟩⟩) a b =
+      icHom Y a b :=
+  rfl
+
+/-- The identity morphism of `fiberCategory` at
+the unique stage equals the identity morphism of
+`icCategory`. -/
+theorem fiberIdHom_eq_icId
+    (a : fiberObj Y (Opposite.op ⟨⟨⟩⟩)) :
+    fiberIdHom Y (Opposite.op ⟨⟨⟩⟩) a =
+      icId Y a :=
+  rfl
+
+/-- Composition in `fiberCategory` at the unique
+stage equals composition in `icCategory`. -/
+theorem fiberCompHom_eq_icComp
+    {a b d : fiberObj Y (Opposite.op ⟨⟨⟩⟩)}
+    (f : fiberHom Y (Opposite.op ⟨⟨⟩⟩) a b)
+    (g : fiberHom Y (Opposite.op ⟨⟨⟩⟩) b d) :
+    fiberCompHom Y (Opposite.op ⟨⟨⟩⟩) f g =
+      icComp Y f g :=
+  rfl
+
+/-- The `fiberCategory` instance at the unique
+stage equals the `icCategory` instance. -/
+theorem fiberCategory_eq_icCategory :
+    (fiberCategory Y (Opposite.op ⟨⟨⟩⟩)) =
+      icCategory Y :=
+  rfl
+
+/-- The `Cat` object produced by `externalize` at
+the unique stage equals `pshInternalCatToCat`. -/
+theorem externalize_unit_obj_eq :
+    (externalize Y).obj (Opposite.op ⟨⟨⟩⟩) =
+      pshInternalCatToCat Y :=
+  rfl
+
+/-- The fiber functor at the unique stage equals
+`pshInternalFunctorToFunctor`: the externalization's
+action on internal functors agrees with the
+`DiscreteUnitEquiv` construction. -/
+theorem pshIntFiberFunctor_eq_pshInternalFunctorToFunctor
+    {Z : PshInternalCat.{0, 0, w'}
+      (Discrete Unit)}
+    (F : PshInternalFunctor Y Z) :
+    pshIntFiberFunctor F (Opposite.op ⟨⟨⟩⟩) =
+      pshInternalFunctorToFunctor F := by
+  refine CategoryTheory.Functor.ext
+    (fun a ↦ rfl) (fun {a b} f ↦ ?_)
+  simp only [eqToHom_refl, Category.id_comp,
+    Category.comp_id]
+  apply Subtype.ext
+  rfl
+
+/-- The `Cat` morphism produced by
+`externalizeNatTrans` at the unique stage
+equals the one produced by
+`pshInternalCatToCatFunctor`. -/
+theorem externalizeNatTrans_unit_eq
+    {Z : PshInternalCat.{0, 0, w'}
+      (Discrete Unit)}
+    (F : PshInternalFunctor Y Z) :
+    (externalizeNatTrans F).app
+      (Opposite.op ⟨⟨⟩⟩) =
+      pshInternalCatToCatFunctor.map F := by
+  apply Cat.Hom.ext
+  exact
+    pshIntFiberFunctor_eq_pshInternalFunctorToFunctor
+      Y F
+
+end DiscreteUnitCompat
+
 end GebLean
