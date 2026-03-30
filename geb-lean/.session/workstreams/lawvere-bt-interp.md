@@ -2,8 +2,8 @@
 
 ## Status
 
-Active — functor constructed; `interpU_complete`
-(completeness) remaining for faithfulness
+Complete — faithful functor constructed and
+faithfulness proved.
 
 ## Goal
 
@@ -203,10 +203,16 @@ hiding the intermediate complexity. Then
    - `quoteBT_interpU`: induction on PolyFreeM
      structure, using `BT.fold_leaf/node` and
      `BTMor1.interpU_leaf/branch`
-5. [in progress] Faithfulness: `Faithful` instance
-   defined, depends on `interpU_complete` (1
-   underscore). This is completeness of BT for
-   the equational theory.
+5. [done] Faithfulness: `Faithful` instance
+   via `interpU_complete`, which uses
+   `btMorRel.substReflect` (the parameterized
+   universal property) + `norm0_gen` (ground
+   normalization).  `substReflect` was added
+   as a new constructor to `btMorRel` to
+   capture the parameterized BTO universal
+   property; soundness proved for all
+   existing proofs (interpU_sound,
+   subst_cong_right).
 6. (Later) Primitive recursion correspondence,
    non-fullness
 
