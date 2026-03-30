@@ -676,6 +676,499 @@ def grothFiberMor
         (fiberRestrict_id X c)) x).trans h) ≫
       ⟨m, ⟨rfl, rfl⟩⟩⟩
 
+/-- Naturality of `grothFiberMor` with respect
+to base change: restricting along `f` then
+acting by the restricted morphism equals acting
+by the original morphism then restricting. -/
+theorem grothFiberMor_naturality
+    {c c' : Cᵒᵖ} (f : c ⟶ c')
+    (m : fiberMor X c) :
+    grothBaseMor X c c' f
+      (fiberSrc X c m) ≫
+      grothFiberMor X c'
+        ((fiberRestrict X f).obj
+          (fiberSrc X c m))
+        (X.morPresheaf.map f m)
+        ((congrArg (X.objPresheaf.map f) rfl).trans
+          (congr_fun
+            (X.src.naturality f) m).symm) =
+    grothFiberMor X c (fiberSrc X c m) m rfl ≫
+      grothBaseMor X c c' f
+        (fiberTgt X c m) ≫
+      eqToHom (congrArg (Grothendieck.mk c')
+        (congr_fun (X.tgt.naturality f)
+          m).symm) := by
+  apply Grothendieck.ext
+  case w_base =>
+    simp [grothBaseMor, grothFiberMor]
+  case w_fiber =>
+    apply fiberHom_ext
+    rw [fiberHom_val_eqToHom_comp]
+    trans (X.morPresheaf.map f m)
+    · rw [congrArg Subtype.val
+        (Grothendieck.comp_fiber
+          (grothBaseMor X c c' f
+            (fiberSrc X c m))
+          (grothFiberMor X c'
+            ((fiberRestrict X f).obj
+              (fiberSrc X c m))
+            (X.morPresheaf.map f m) _))]
+      simp only [grothBaseMor, grothFiberMor,
+        CategoryTheory.Functor.map_id,
+        Category.id_comp]
+      rw [fiberHom_val_eqToHom_comp,
+        fiberHom_val_eqToHom_comp]
+    · symm
+      rw [congrArg Subtype.val
+        (Grothendieck.comp_fiber
+          (grothFiberMor X c
+            (fiberSrc X c m) m rfl)
+          (grothBaseMor X c c' f
+            (fiberTgt X c m) ≫
+            eqToHom _))]
+      simp only [Grothendieck.comp_base,
+        Grothendieck.comp_fiber,
+        Grothendieck.fiber_eqToHom,
+        grothBaseMor, grothFiberMor,
+        CategoryTheory.Functor.map_id,
+        Category.id_comp,
+        eqToHom_trans]
+      rw [fiberHom_val_eqToHom_comp,
+        fiberHom_val_comp_eqToHom]
+      simp only [externalize, fiberRestrict]
+      rw [fiberHom_val_eqToHom_comp,
+        Grothendieck.base_eqToHom]
+      simp only [eqToHom_refl,
+        Category.comp_id]
+
+/-- The action of `grothFiberMor` on elements of
+`G`, as a map from the pullback to the inverse
+fiber.  Given `⟨⟨x, e⟩, m⟩` with `x = src(m)`,
+produces `⟨tgt(m), G.map (grothFiberMor ...) e⟩`.
+-/
+def inverseActionAt
+    (G : X.groth ⥤ Type w)
+    (c : Cᵒᵖ)
+    (p : (presheafPullback
+      (inverseProj X G) X.src).obj c) :
+    inverseFiber X G c :=
+  let em := p.val
+  let x := em.1.1
+  let e := em.1.2
+  let m := em.2
+  let h : x = fiberSrc X c m := p.property
+  ⟨fiberTgt X c m,
+    G.map (grothFiberMor X c x m h) e⟩
+
+/-- Naturality of `inverseActionAt` with respect
+to base change. -/
+theorem inverseActionAt_naturality
+    (G : X.groth ⥤ Type w)
+    {c c' : Cᵒᵖ} (f : c ⟶ c')
+    (p : (presheafPullback
+      (inverseProj X G) X.src).obj c) :
+    inverseFiberMap X G f
+      (inverseActionAt X G c p) =
+      inverseActionAt X G c'
+        ((presheafPullback
+          (inverseProj X G) X.src).map f p) := by
+  obtain ⟨⟨⟨x, e⟩, m⟩, (h : x = fiberSrc X c m)⟩
+    := p
+  simp only [inverseActionAt, inverseFiberMap]
+  set tgtm := fiberTgt X c m
+  set fm := X.morPresheaf.map f m
+  have hx1 :
+      (fiberRestrict X f).obj tgtm =
+        fiberTgt X c' fm :=
+    (congr_fun (X.tgt.naturality f) m).symm
+  have h' : (fiberRestrict X f).obj x =
+      fiberSrc X c' fm := by
+    change X.objPresheaf.map f x =
+      X.src.app c' fm
+    rw [h]
+    exact (congr_fun (X.src.naturality f) m).symm
+  have hobj :
+      (Grothendieck.mk c'
+        ((fiberRestrict X f).obj tgtm) :
+        X.groth) =
+      Grothendieck.mk c'
+        (fiberTgt X c' fm) :=
+    congrArg (Grothendieck.mk c') hx1
+  have hcomm :
+      grothFiberMor X c x m h ≫
+        grothBaseMor X c c' f tgtm ≫
+        eqToHom hobj =
+      grothBaseMor X c c' f x ≫
+        grothFiberMor X c'
+          ((fiberRestrict X f).obj x)
+          fm h' := by
+    subst h
+    exact (grothFiberMor_naturality X f m).symm
+  have hcast :
+      cast (congrArg G.obj hobj)
+        (G.map (grothBaseMor X c c' f tgtm)
+          (G.map (grothFiberMor X c x m h)
+            e)) =
+      G.map (grothFiberMor X c'
+          ((fiberRestrict X f).obj x)
+          fm h')
+        (G.map (grothBaseMor X c c' f x) e)
+      := by
+    have heq : G.map (eqToHom hobj) =
+        cast (congrArg G.obj hobj) := by
+      rw [eqToHom_map G hobj, eqToHom_eq_cast]
+    rw [← heq]
+    have step1 :
+        G.map (grothFiberMor X c x m h) ≫
+          G.map (grothBaseMor X c c' f tgtm) ≫
+          G.map (eqToHom hobj) =
+        G.map (grothBaseMor X c c' f x) ≫
+          G.map (grothFiberMor X c'
+            ((fiberRestrict X f).obj x)
+            fm h') := by
+      simp only [← G.map_comp, hcomm]
+    exact congr_fun step1 e
+  exact Sigma.ext hx1
+    (heq_of_cast_eq (congrArg G.obj hobj) hcast)
+
+/-- The action natural transformation for the
+inverse construction: given a presheaf `G` on the
+Grothendieck category, acts on the pullback of the
+inverse fiber over the morphism presheaf to produce
+a new fiber element. -/
+def inverseAction
+    (G : X.groth ⥤ Type w) :
+    presheafPullback (inverseProj X G) X.src ⟶
+      inverseFiberFunctor X G where
+  app c := inverseActionAt X G c
+  naturality _ _ f := funext fun p ↦
+    (inverseActionAt_naturality X G f p).symm
+
+/-- The action maps to the target of the
+morphism: projection of the acted element
+equals the target. -/
+theorem inverseAction_tgt
+    (G : X.groth ⥤ Type w) :
+    inverseAction X G ≫ inverseProj X G =
+      presheafPullbackSnd
+        (inverseProj X G) X.src ≫ X.tgt := by
+  ext c ⟨⟨⟨_, _⟩, m⟩, (_ : _ = fiberSrc X c m)⟩
+  rfl
+
+/-- The `grothFiberMor` at the identity morphism,
+composed with `eqToHom` from `fiberTgt_id`, gives
+the identity in the Grothendieck category. -/
+theorem grothFiberMor_id
+    (c : Cᵒᵖ) (x : fiberObj X c) :
+    grothFiberMor X c x
+      (fiberId X c x)
+      (fiberSrc_id X c x).symm ≫
+      eqToHom (congrArg (Grothendieck.mk c)
+        (fiberTgt_id X c x)) =
+    𝟙 (Grothendieck.mk c x : X.groth) := by
+  apply Grothendieck.ext
+  case w_base => simp [grothFiberMor]
+  case w_fiber =>
+    apply fiberHom_ext
+    simp [grothFiberMor,
+      Grothendieck.comp_fiber,
+      Grothendieck.fiber_eqToHom,
+      Grothendieck.base_eqToHom,
+      Grothendieck.id_fiber,
+      externalize, fiberRestrict,
+      fiberHom_val_eqToHom_comp,
+      fiberHom_val_comp_eqToHom,
+      fiberHom_eqToHom_val]
+
+/-- Acting by the identity on the inverse fiber
+yields the identity.  Uses the `Sigma.ext` pattern
+with `heq_of_cast_eq` for the dependent second
+component. -/
+theorem inverseAction_id
+    (G : X.groth ⥤ Type w)
+    (c : Cᵒᵖ) (p : inverseFiber X G c) :
+    inverseActionAt X G c
+      ⟨(p, X.idMap.app c p.1),
+        (congr_fun (NatTrans.congr_app
+          (fiberIdMap_src X) c).symm p.1)⟩ =
+      p := by
+  obtain ⟨x, e⟩ := p
+  simp only [inverseActionAt]
+  have hx : fiberTgt X c (fiberId X c x) = x :=
+    fiberTgt_id X c x
+  have hobj :
+      (Grothendieck.mk c
+        (fiberTgt X c (fiberId X c x)) :
+        X.groth) = Grothendieck.mk c x :=
+    congrArg (Grothendieck.mk c) hx
+  have hmapcomp :
+      G.map (grothFiberMor X c x
+          (fiberId X c x)
+          (fiberSrc_id X c x).symm) ≫
+        G.map (eqToHom hobj) = 𝟙 _ := by
+    rw [← G.map_comp,
+      grothFiberMor_id X c x, G.map_id]
+  have hcast :
+      cast (congrArg G.obj hobj)
+        (G.map (grothFiberMor X c x
+            (fiberId X c x)
+            (fiberSrc_id X c x).symm) e) =
+        e := by
+    have : G.map (eqToHom hobj) =
+        cast (congrArg G.obj hobj) := by
+      rw [eqToHom_map G hobj, eqToHom_eq_cast]
+    rw [← this]
+    exact congr_fun hmapcomp e
+  exact Sigma.ext hx
+    (heq_of_cast_eq (congrArg G.obj hobj) hcast)
+
+
+/-- Composition of fiber Grothendieck morphisms:
+acting by `m₁` then by `m₂` equals acting by
+`compMap(m₁, m₂)`, up to `eqToHom`. -/
+theorem grothFiberMor_comp
+    (c : Cᵒᵖ)
+    (m₁ m₂ : fiberMor X c)
+    (h₂ : fiberTgt X c m₁ = fiberSrc X c m₂) :
+    grothFiberMor X c (fiberSrc X c m₁) m₁
+        rfl ≫
+      grothFiberMor X c (fiberTgt X c m₁) m₂
+        h₂ =
+    grothFiberMor X c (fiberSrc X c m₁)
+      (fiberComp X c ⟨(m₁, m₂), h₂⟩)
+      ((fiberSrc_comp X c
+        ⟨(m₁, m₂), h₂⟩).symm) ≫
+      eqToHom (congrArg (Grothendieck.mk c)
+        (fiberTgt_comp X c
+          ⟨(m₁, m₂), h₂⟩)) := by
+  apply Grothendieck.ext
+  case w_base => simp [grothFiberMor]
+  case w_fiber =>
+    apply fiberHom_ext
+    simp only [externalize, fiberRestrict,
+      FunctorToTypes.comp,
+      Functor.const_obj_obj,
+      FunctorToTypes.prod.fst_app,
+      FunctorToTypes.prod.snd_app,
+      Cat.of_α, Functor.id_obj,
+      grothFiberMor,
+      Grothendieck.comp_base,
+      Grothendieck.comp_fiber,
+      fiberHom_val_eqToHom_comp,
+      FunctorToTypes.map_id_apply,
+      eqToHom_trans_assoc,
+      Grothendieck.base_eqToHom,
+      eqToHom_refl,
+      Grothendieck.fiber_eqToHom,
+      fiberHom_val_comp_eqToHom]
+    have hcomp_val :
+        ∀ (a b d : fiberObj X c)
+          (f : a ⟶ b) (g : b ⟶ d),
+          (f ≫ g).val =
+            fiberComp X c
+              (fiberMkCompPair X c f g) :=
+      fun _ _ _ _ _ ↦ rfl
+    rw [hcomp_val]
+    congr 1
+    apply Subtype.ext
+    simp only [fiberMkCompPair]
+    ext
+    · rfl
+    · exact @fiberHom_val_eqToHom_comp
+        _ _ X c _ _ _ _ _
+
+/-- Associativity of the inverse action:
+acting by `m₁` then by `m₂` equals acting
+by the composite `compMap(m₁, m₂)`. -/
+theorem inverseAction_assoc
+    (G : X.groth ⥤ Type w)
+    (c : Cᵒᵖ) (p : inverseFiber X G c)
+    (m₁ m₂ : fiberMor X c)
+    (h₁ : p.1 = fiberSrc X c m₁)
+    (h₂ : fiberTgt X c m₁ =
+      fiberSrc X c m₂) :
+    inverseActionAt X G c
+      ⟨(inverseActionAt X G c
+          ⟨(p, m₁), h₁⟩, m₂), h₂⟩ =
+    inverseActionAt X G c
+      ⟨(p, fiberComp X c ⟨(m₁, m₂), h₂⟩),
+        h₁.trans
+          (fiberSrc_comp X c
+            ⟨(m₁, m₂), h₂⟩).symm⟩ := by
+  obtain ⟨x, e⟩ := p
+  simp only [inverseActionAt]
+  set cp := (⟨(m₁, m₂), h₂⟩ :
+    fiberCompPairs X c)
+  have hx :
+      fiberTgt X c m₂ =
+        fiberTgt X c (fiberComp X c cp) :=
+    (fiberTgt_comp X c cp).symm
+  have hobj :
+      (Grothendieck.mk c
+        (fiberTgt X c m₂) : X.groth) =
+      Grothendieck.mk c
+        (fiberTgt X c (fiberComp X c cp)) :=
+    congrArg (Grothendieck.mk c) hx
+  have h₁' : x = fiberSrc X c m₁ := h₁
+  subst h₁'
+  set gfm₁ := grothFiberMor X c
+    (fiberSrc X c m₁) m₁ rfl
+  set gfm₂ := grothFiberMor X c
+    (fiberTgt X c m₁) m₂ h₂
+  set gfmc := grothFiberMor X c
+    (fiberSrc X c m₁)
+    (fiberComp X c cp)
+    ((fiberSrc_comp X c cp).symm)
+  have hcomm :
+      gfm₁ ≫ gfm₂ =
+        gfmc ≫
+          eqToHom (congrArg (Grothendieck.mk c)
+            (fiberTgt_comp X c cp)) :=
+    grothFiberMor_comp X c m₁ m₂ h₂
+  have hcast :
+      cast (congrArg G.obj hobj)
+        (G.map gfm₂ (G.map gfm₁ e)) =
+      G.map gfmc e := by
+    have heqcast :
+        G.map (eqToHom hobj) =
+          cast (congrArg G.obj hobj) := by
+      rw [eqToHom_map G hobj,
+        eqToHom_eq_cast]
+    rw [← heqcast]
+    have hcancel :
+        eqToHom (congrArg (Grothendieck.mk c)
+          (fiberTgt_comp X c cp)) ≫
+          eqToHom hobj = 𝟙 _ := by
+      simp [eqToHom_trans]
+    have step :
+        gfm₁ ≫ gfm₂ ≫ eqToHom hobj =
+          gfmc := by
+      rw [← Category.assoc, hcomm,
+        Category.assoc, hcancel,
+        Category.comp_id]
+    have step2 :
+        G.map gfm₁ ≫ G.map gfm₂ ≫
+          G.map (eqToHom hobj) =
+        G.map gfmc := by
+      simp only [← G.map_comp, step]
+    exact congr_fun step2 e
+  exact Sigma.ext hx
+    (heq_of_cast_eq
+      (congrArg G.obj hobj) hcast)
+
+/-- The inverse presheaf: given a presheaf `G` on
+the Grothendieck category, assembles the inverse
+fiber functor, projection, and action into an
+internal presheaf on `X`. -/
+def inversePresheaf (G : X.groth ⥤ Type w) :
+    PshInternalPresheaf X where
+  fiber := inverseFiberFunctor X G
+  proj := inverseProj X G
+  action := inverseAction X G
+  action_tgt := inverseAction_tgt X G
+  action_id := fun c p ↦
+    inverseAction_id X G c p
+  action_assoc := fun c e m₁ m₂ h₁ h₂ ↦
+    inverseAction_assoc X G c e m₁ m₂ h₁ h₂
+
+/-- The natural transformation between inverse
+fiber functors induced by a morphism of
+presheaves on the Grothendieck category. -/
+def inverseNatTrans
+    {G G' : X.groth ⥤ Type w}
+    (α : G ⟶ G') :
+    inverseFiberFunctor X G ⟶
+      inverseFiberFunctor X G' where
+  app c := fun ⟨x, e⟩ ↦
+    ⟨x, α.app ⟨c, x⟩ e⟩
+  naturality c c' f := by
+    funext ⟨x, e⟩
+    simp only [types_comp_apply,
+      inverseFiberFunctor,
+      inverseFiberMap]
+    have hnat := congr_fun (α.naturality
+      (grothBaseMor X c c' f x)).symm e
+    simp only [types_comp_apply] at hnat
+    exact Sigma.ext rfl (heq_of_eq hnat.symm)
+
+/-- The morphism of internal presheaves induced
+by a natural transformation between presheaves
+on the Grothendieck category. -/
+def inversePresheafHom
+    {G G' : X.groth ⥤ Type w}
+    (α : G ⟶ G') :
+    PshInternalPresheafHom
+      (inversePresheaf X G)
+      (inversePresheaf X G') where
+  map := inverseNatTrans X α
+  proj_comm := by
+    ext c ⟨x, e⟩; rfl
+  action_comm := by
+    ext c ⟨⟨⟨x, e⟩, m⟩,
+      (h : x = fiberSrc X c m)⟩
+    simp only [NatTrans.comp_app,
+      types_comp_apply,
+      inverseNatTrans,
+      presheafPullbackFst,
+      presheafPullbackSnd,
+      presheafPullbackCone]
+    exact Sigma.ext rfl
+      (heq_of_eq
+        (congr_fun (α.naturality
+          (grothFiberMor X c x m h)).symm
+          e))
+
+/-- The inverse functor: sends a presheaf on the
+Grothendieck category to an internal presheaf
+on `X`, and a natural transformation to a
+morphism of internal presheaves. -/
+def inverseFunctor :
+    (X.groth ⥤ Type w) ⥤
+      PshInternalPresheaf X where
+  obj G := inversePresheaf X G
+  map α := inversePresheafHom X α
+  map_id G := by
+    apply PshInternalPresheafHom.ext
+    apply NatTrans.ext; funext c
+    ext ⟨x, e⟩; rfl
+  map_comp f g := by
+    apply PshInternalPresheafHom.ext
+    apply NatTrans.ext; funext c
+    ext ⟨x, e⟩; rfl
+
+/-- Every Grothendieck morphism decomposes as a
+base morphism followed by a fiber morphism
+followed by an `eqToHom`. -/
+theorem groth_decompose
+    {p q : X.groth}
+    (m : p ⟶ q) :
+    grothBaseMor X p.base q.base m.base
+        p.fiber ≫
+      grothFiberMor X q.base
+        ((fiberRestrict X m.base).obj p.fiber)
+        m.fiber.val
+        m.fiber.prop.1.symm ≫
+      eqToHom (congrArg (Grothendieck.mk q.base)
+        m.fiber.prop.2) = m := by
+  apply Grothendieck.ext
+  case w_base =>
+    simp [grothBaseMor, grothFiberMor]
+  case w_fiber =>
+    apply fiberHom_ext
+    simp only [
+      Grothendieck.comp_fiber,
+      Grothendieck.fiber_eqToHom,
+      grothBaseMor, grothFiberMor,
+      CategoryTheory.Functor.map_id,
+      Category.id_comp,
+      eqToHom_trans_assoc]
+    simp only [externalize, fiberRestrict]
+    simp [fiberHom_val_eqToHom_comp,
+      fiberHom_val_comp_eqToHom,
+      Grothendieck.base_eqToHom,
+      FunctorToTypes.map_id_apply]
+
+
 end Inverse
 
 end GebLean
