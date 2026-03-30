@@ -1662,6 +1662,55 @@ def praProdLift (s : Limits.Fan P) :
   naturality _ _ g :=
     praProdLift_naturality P s g
 
+/--
+The product fan: apex `praProd P` with
+projections `praProdProj P`.
+-/
+def praProdFan : Limits.Fan P :=
+  Limits.Fan.mk (praProd P) (praProdProj P)
+
+private lemma praProdLift_fac
+    (s : Limits.Fan P) (k : K) :
+    praProdLift P s ≫ praProdProj P k =
+    s.proj k := by
+  apply NatTrans.ext; funext j
+  exact praProdLiftAt_fac P s k j
+
+private lemma praProdLift_uniq
+    (s : Limits.Fan P)
+    (m : s.pt ⟶ praProd P)
+    (hm : ∀ k, m ≫ praProdProj P k =
+      s.proj k) :
+    m = praProdLift P s := by
+  apply NatTrans.ext; funext j
+  apply praProdMorphExt
+  intro k
+  rw [show m.app j ≫ praProdProjAt P k j =
+    (s.proj k).app j from
+    congrFun (congrArg NatTrans.app
+      (hm k)) j]
+  exact (praProdLiftAt_fac P s k j).symm
+
+/--
+The product fan is a limit: any compatible
+family of morphisms factors uniquely through
+the product.
+-/
+def praProdIsLimit :
+    Limits.IsLimit (praProdFan P) :=
+  Limits.mkFanLimit _ (praProdLift P)
+    (praProdLift_fac P)
+    (fun s m hm => praProdLift_uniq P s m hm)
+
+/--
+The PRA category has products indexed by any
+`K : Type`.
+-/
+instance praHasProduct :
+    Limits.HasProduct P :=
+  Limits.HasLimit.mk
+    ⟨praProdFan P, praProdIsLimit P⟩
+
 end PRAProduct
 
 end GebLean
