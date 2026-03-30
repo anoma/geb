@@ -167,19 +167,33 @@ PRA Products (Task A1 — in progress):
 - `praProdProjAt` — CCR-level projection
   at each stage (positions by evaluation,
   directions by Sigma injection)
+- `praProdProj` — full projection natural
+  transformation (`erw [unop_comp]` proof)
+- `praProdLiftAt` — CCR-level lift from a
+  cone; base tuples projections, fiber
+  Sigma-eliminates
+- `praProdLiftAt_fac` — factorization:
+  `liftAt ≫ projAt = (s.proj k).app j`
+  (`erw [unop_comp]` proof)
+- `praProdLift` — full lift natural
+  transformation (sorry in fiber naturality)
 
 Remaining for A1:
 
-- `praProdProj` — natural transformation
-  assembling `praProdProjAt` into full PRA
-  morphism. Base (positions) naturality
-  works via `Quiver.Hom.unop_inj; rfl`. Fiber
-  (directions) naturality needs Grothendieck
-  composition unfolding through `.unop.fiber`
-  (use `erw` / `calc` / `change .val`
-  techniques from the directions round-trip).
-- Universal property (lift + uniqueness) for
-  the product cone
+- Fill `sorry` in `praProdLift_naturality`
+  fiber case. The base case is proved. The
+  fiber goal after full reduction is at the
+  element level `(q, i, ⟨k, e⟩)`, with
+  `eqToHom` on a Sigma element on the LHS
+  and concrete `praDirectionsAtFunctor.map`
+  on the RHS. Both equal by the naturality
+  of `s.proj k`. Requires a Sigma-eqToHom
+  decomposition (new `sigma_cast_of_funEq`
+  in `Utilities/Sigma.lean`) plus relating
+  the `.snd` cast to the direction functor
+  map.
+- Universal property (lift_fac + lift_uniq)
+  for the product cone
 - `HasLimit` packaging for `Discrete K`-shaped
   diagrams
 

@@ -1,4 +1,5 @@
 import GebLean.PresheafPRA
+import GebLean.Utilities.Sigma
 import Mathlib.CategoryTheory.Limits.Opposites
 import Mathlib.CategoryTheory.Limits.FunctorCategory.Basic
 import Mathlib.CategoryTheory.Limits.Pi
@@ -1511,11 +1512,155 @@ def praProdProjAt (k : K) (j : Jᵒᵖ) :
       fiber := fun t =>
         praProdSigmaInj P k j t }
 
--- praProdProj (the full natural transformation
--- for the product projection) requires a
--- naturality proof that is in progress.
--- The components `praProdProjAt` are defined
--- above.
+/--
+The product projection: a natural transformation
+`praProd P ⟶ P k` in `Jᵒᵖ ⥤ CCR(PSh(I))`,
+assembling the components `praProdProjAt`.
+-/
+def praProdProj (k : K) :
+    praProd P ⟶ P k where
+  app j := praProdProjAt P k j
+  naturality j₁ j₂ g := by
+    apply Quiver.Hom.unop_inj
+    erw [unop_comp]
+
+/--
+The lift morphism at stage `j`: given a fan
+`s : Fan P` with apex `Q` and projections
+`πₖ : Q ⟶ P k`, construct
+`Q.obj j ⟶ (praProd P).obj j` in CCR.
+Base: `q ↦ (fun k => πₖ_base q)`.
+Fiber: `(k, e) ↦ πₖ_fiber(q)(e)`.
+-/
+def praProdLiftAt
+    (s : Limits.Fan P) (j : Jᵒᵖ) :
+    s.pt.obj j ⟶ (praProd P).obj j :=
+  Quiver.Hom.op
+    { base := Quiver.Hom.op (fun q =>
+        fun k =>
+          ((s.proj k).app j).unop.base.unop q)
+      fiber := fun q =>
+        { app := fun i ⟨k, e⟩ =>
+            ((s.proj k).app j).unop.fiber
+              q |>.app i e
+          naturality := fun {i₁ i₂} f => by
+            funext ⟨k, e⟩
+            exact congrFun
+              (((s.proj k).app j).unop.fiber
+                q |>.naturality f) e } }
+
+/--
+Factorization: the lift composed with the k-th
+projection recovers the cone morphism at stage j.
+-/
+private lemma praProdLiftAt_fac
+    (s : Limits.Fan P) (k : K) (j : Jᵒᵖ) :
+    praProdLiftAt P s j ≫ praProdProjAt P k j =
+    (s.proj k).app j := by
+  apply Quiver.Hom.unop_inj
+  erw [unop_comp]
+
+/--
+Two CCR morphisms into a product are equal if
+they agree on all projections (joint monicity /
+eta rule for the product).
+-/
+private lemma praProdMorphExt
+    {X : ↑(CoprodCovarRepCat.{max v_I u_I
+      (w_I + 1), max u_I w_I, w'}
+      (↑(presheafCat.{u_I, v_I, w_I} I)))}
+    {j : Jᵒᵖ}
+    (f g : X ⟶ (praProd P).obj j)
+    (h : ∀ k, f ≫ praProdProjAt P k j =
+      g ≫ praProdProjAt P k j) :
+    f = g := by
+  -- Destructure the Grothendieck morphisms to
+  -- separate base from fiber, then subst the
+  -- base equality to make fiber types match.
+  apply Quiver.Hom.unop_inj
+  -- First compute base equality
+  have hbase₀ : f.unop.base = g.unop.base := by
+    apply Quiver.Hom.unop_inj; funext q k
+    have := congrArg Quiver.Hom.unop (h k)
+    erw [unop_comp, unop_comp] at this
+    exact congrFun (congrArg
+      Quiver.Hom.unop (congrArg
+        Grothendieck.Hom.base this)) q
+  -- Destructure and subst
+  rcases hf : f.unop with ⟨fb, ff⟩
+  rcases hg : g.unop with ⟨gb, gf⟩
+  have hbase : fb = gb := by
+    have := hbase₀; rw [hf, hg] at this
+    exact this
+  subst hbase
+  -- Fiber types now match; show ff = gf
+  congr 1
+  funext q
+  apply NatTrans.ext; funext i; funext ⟨k, e⟩
+  -- After subst, both f and g have base fb.
+  -- Extract fiber equality from h k via
+  -- Grothendieck.congr (eqToHom is rfl since
+  -- bases match).
+  have hk := congrArg Quiver.Hom.unop (h k)
+  erw [unop_comp, unop_comp] at hk
+  rw [hf, hg] at hk
+  have hk_fib := Grothendieck.congr hk
+  simp only [eqToHom_refl,
+    Category.id_comp] at hk_fib
+  -- hk_fib: composition fibers are equal
+  -- Extract at (q, i, ⟨k, e⟩)
+  have hk_q := congrFun hk_fib q
+  have hk_qi := congrFun
+    (congrArg NatTrans.app hk_q) i
+  exact congrFun hk_qi e
+
+private lemma praProdLift_naturality
+    (s : Limits.Fan P)
+    {j₁ j₂ : Jᵒᵖ} (g : j₁ ⟶ j₂) :
+    s.pt.map g ≫ praProdLiftAt P s j₂ =
+    praProdLiftAt P s j₁ ≫
+      (praProd P).map g := by
+  -- Both sides agree on all projections;
+  -- the proof uses only the interface
+  -- (beta = fac, proj naturality, cone
+  -- naturality) and eta (joint monicity).
+  apply praProdMorphExt
+  intro k
+  calc (s.pt.map g ≫
+        praProdLiftAt P s j₂) ≫
+        praProdProjAt P k j₂
+    _ = s.pt.map g ≫
+        (praProdLiftAt P s j₂ ≫
+          praProdProjAt P k j₂) := by
+        rw [Category.assoc]
+    _ = s.pt.map g ≫
+        (s.proj k).app j₂ := by
+        rw [praProdLiftAt_fac]
+    _ = (s.proj k).app j₁ ≫
+        (P k).map g :=
+        (s.proj k).naturality g
+    _ = (praProdLiftAt P s j₁ ≫
+          praProdProjAt P k j₁) ≫
+        (P k).map g := by
+        rw [praProdLiftAt_fac]
+    _ = praProdLiftAt P s j₁ ≫
+        (praProdProjAt P k j₁ ≫
+          (P k).map g) := by
+        rw [Category.assoc]
+    _ = praProdLiftAt P s j₁ ≫
+        ((praProd P).map g ≫
+          praProdProjAt P k j₂) := by
+        congr 1
+/--
+The lift natural transformation: given a fan
+`s : Fan P`, construct `s.pt ⟶ praProd P` in
+`Jᵒᵖ ⥤ CCR(PSh(I))`.
+-/
+def praProdLift (s : Limits.Fan P) :
+    s.pt ⟶ praProd P where
+  app j := praProdLiftAt P s j
+  naturality _ _ g :=
+    praProdLift_naturality P s g
 
 end PRAProduct
 
