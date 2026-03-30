@@ -940,6 +940,19 @@ inductive btMorRel : (n : ℕ) →
         (BTMor1.fold m
           (fun i => (f i).subst σ)
           g tree j)
+  /-- Ground completeness: if two terms at
+  arity `n` are `btMorRel 0` after every
+  ground substitution, they are `btMorRel n`.
+  This captures the parameterized universal
+  property of the BTO: agreement at all ground
+  instances implies agreement at the open
+  level. -/
+  | substReflect {n : ℕ}
+      {t1 t2 : BTMor1 n}
+      (h : ∀ σ : Fin n → BTMor1 0,
+        btMorRel 0 (t1.subst σ)
+          (t2.subst σ)) :
+      btMorRel n t1 t2
 
 /-! ## Setoid -/
 
@@ -1095,6 +1108,13 @@ theorem subst_cong_right {n m : ℕ}
         rw [btFoldBranchSubstPhi_comp φ
           σ_inner σ] at h
         exact h)
+  | substReflect hground =>
+    exact btMorRel.substReflect
+      (fun τ => by
+        rw [BTMor1.subst_comp,
+          BTMor1.subst_comp]
+        exact hground
+          (fun i => (σ i).subst τ))
 
 /-- Substitution preserves `btMorRel` on the left:
 if `∀ i, btMorRel m (σ i) (σ' i)` then

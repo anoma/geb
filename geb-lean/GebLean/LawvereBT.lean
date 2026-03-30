@@ -491,6 +491,95 @@ def BTMor1.fold {n : ℕ}
             types_comp_apply]
           split_ifs <;> rfl)⟩
 
+/-! ## PolyFix.mk to named constructor conversions
+
+These lemmas convert the raw `PolyFix.mk` form
+(obtained from pattern matching on `BTMor1 n`)
+back to the named constructors. -/
+
+/-- A `PolyFix.mk` node at the leaf constructor
+index (j = 1) equals `BTMor1.leaf`. -/
+lemma polyFixMk_eq_leaf {n : ℕ}
+    (isLt : 1 < 4)
+    (pos2 : polyBetweenIndex ℕ ℕ
+      (btMorComponents ⟨1, isLt⟩) n)
+    (ch2 :
+      (e : (polyBetweenFamily ℕ ℕ btMorPoly n
+        (show polyBetweenIndex ℕ ℕ btMorPoly n
+          from ⟨⟨1, isLt⟩, pos2⟩)).left) →
+        PolyFix btMorPoly
+          ((polyBetweenFamily ℕ ℕ btMorPoly n
+            (show polyBetweenIndex ℕ ℕ
+              btMorPoly n from
+              ⟨⟨1, isLt⟩, pos2⟩)).hom e)) :
+    PolyFix.mk n
+      (show polyBetweenIndex ℕ ℕ btMorPoly n
+        from ⟨⟨1, isLt⟩, pos2⟩) ch2 =
+      BTMor1.leaf := by
+  obtain ⟨m, (hm : m = n)⟩ := pos2
+  subst hm
+  simp only [BTMor1.leaf, btMorInject_eq]
+  congr 1
+  funext e; exact e.elim
+
+/-- A `PolyFix.mk` node at the projection
+constructor index (j = 0) equals
+`BTMor1.proj`. -/
+lemma polyFixMk_eq_proj {n : ℕ}
+    (isLt : 0 < 4)
+    (pos2 : polyBetweenIndex ℕ ℕ
+      (btMorComponents ⟨0, isLt⟩) n)
+    (ch2 :
+      (e : (polyBetweenFamily ℕ ℕ btMorPoly n
+        (show polyBetweenIndex ℕ ℕ btMorPoly n
+          from ⟨⟨0, isLt⟩, pos2⟩)).left) →
+        PolyFix btMorPoly
+          ((polyBetweenFamily ℕ ℕ btMorPoly n
+            (show polyBetweenIndex ℕ ℕ
+              btMorPoly n from
+              ⟨⟨0, isLt⟩, pos2⟩)).hom e)) :
+    PolyFix.mk n
+      (show polyBetweenIndex ℕ ℕ btMorPoly n
+        from ⟨⟨0, isLt⟩, pos2⟩) ch2 =
+      BTMor1.proj
+        (pos2.property ▸ pos2.val.2) := by
+  obtain ⟨⟨m, i⟩, (hm : m = n)⟩ := pos2
+  subst hm
+  simp only [BTMor1.proj, btMorInject_eq]
+  congr 1
+  funext e; exact e.elim
+
+/-- A `PolyFix.mk` node at the branch constructor
+index (j = 2) equals `BTMor1.branch` applied to
+the two children. -/
+lemma polyFixMk_eq_branch {n : ℕ}
+    (isLt : 2 < 4)
+    (pos2 : polyBetweenIndex ℕ ℕ
+      (btMorComponents ⟨2, isLt⟩) n)
+    (ch2 :
+      (e : (polyBetweenFamily ℕ ℕ btMorPoly n
+        (show polyBetweenIndex ℕ ℕ btMorPoly n
+          from ⟨⟨2, isLt⟩, pos2⟩)).left) →
+        PolyFix btMorPoly
+          ((polyBetweenFamily ℕ ℕ btMorPoly n
+            (show polyBetweenIndex ℕ ℕ
+              btMorPoly n from
+              ⟨⟨2, isLt⟩, pos2⟩)).hom e)) :
+    PolyFix.mk n
+      (show polyBetweenIndex ℕ ℕ btMorPoly n
+        from ⟨⟨2, isLt⟩, pos2⟩) ch2 =
+      BTMor1.branch
+        (ch2 (Sum.inl PUnit.unit))
+        (ch2 (Sum.inr PUnit.unit)) := by
+  symm
+  simp only [BTMor1.branch,
+    btMorInject_eq, polyProdEvalOfPair]
+  congr 1
+  funext e
+  match e with
+  | Sum.inl PUnit.unit => rfl
+  | Sum.inr PUnit.unit => rfl
+
 /-! ## Interpretation via `polyFixFold`
 
 The interpretation maps `BTMor1 n` to a function
@@ -1115,6 +1204,166 @@ lemma btMorFoldFiber_tree
     else if d.val < pos.1 + pos.1
       then pos.1 + pos.1 else n) = n
   simp only [if_neg hge1, if_neg hge2]
+
+/-- For sigma types, `⟨b, h ▸ x⟩ = ⟨a, x⟩`
+when `h : a = b`. -/
+private lemma sigma_mk_subst
+    {α : Type u} {P : α → Type v}
+    {a b : α} (h : a = b) (x : P a) :
+    (⟨b, h ▸ x⟩ : Σ y, P y) = ⟨a, x⟩ := by
+  subst h; rfl
+
+/-- The type abbreviation for children of a
+fold-indexed `PolyFix.mk` node. -/
+private abbrev FoldChildren {n : ℕ}
+    (isLt : 3 < 4)
+    (pos2 : polyBetweenIndex ℕ ℕ
+      (btMorComponents ⟨3, isLt⟩) n) :=
+  (e : (polyBetweenFamily ℕ ℕ btMorPoly n
+    (show polyBetweenIndex ℕ ℕ btMorPoly n
+      from ⟨⟨3, isLt⟩, pos2⟩)).left) →
+    PolyFix btMorPoly
+      ((polyBetweenFamily ℕ ℕ btMorPoly n
+        (show polyBetweenIndex ℕ ℕ
+          btMorPoly n from
+          ⟨⟨3, isLt⟩, pos2⟩)).hom e)
+
+/-- The direction type at a fold position is
+`Fin (m + m + 1)` where `m = pos2.1`. -/
+private lemma foldDirType {n : ℕ}
+    (isLt : 3 < 4)
+    (pos2 : polyBetweenIndex ℕ ℕ
+      (btMorComponents ⟨3, isLt⟩) n) :
+    (polyBetweenFamily ℕ ℕ btMorPoly n
+      (show polyBetweenIndex ℕ ℕ btMorPoly n
+        from ⟨⟨3, isLt⟩, pos2⟩)).left =
+      Fin (pos2.1 + pos2.1 + 1) := by
+  rfl
+
+/-- Extract the base children from a fold-indexed
+`PolyFix.mk` node.  Given `ch2` mapping each of
+`Fin (m + m + 1)` directions to a child, the base
+children are at indices `0, ..., m-1` and land in
+fiber `n`. -/
+def foldBaseChild {n : ℕ}
+    (isLt : 3 < 4)
+    (pos2 : polyBetweenIndex ℕ ℕ
+      (btMorComponents ⟨3, isLt⟩) n)
+    (ch2 : FoldChildren isLt pos2)
+    (k : Fin pos2.1) : BTMor1 n :=
+  let d : Fin (pos2.1 + pos2.1 + 1) :=
+    ⟨k.val, by omega⟩
+  btMorFoldFiber isLt pos2 d k.isLt ▸
+    ch2 d
+
+/-- Extract the step children from a fold-indexed
+`PolyFix.mk` node.  The step children are at
+indices `m, ..., 2m-1` and land in fiber
+`m + m`. -/
+def foldStepChild {n : ℕ}
+    (isLt : 3 < 4)
+    (pos2 : polyBetweenIndex ℕ ℕ
+      (btMorComponents ⟨3, isLt⟩) n)
+    (ch2 : FoldChildren isLt pos2)
+    (k : Fin pos2.1) :
+    BTMor1 (pos2.1 + pos2.1) :=
+  let m := pos2.1
+  let dBound : m + k.val < m + m + 1 :=
+    Nat.lt_succ_of_le
+      (Nat.add_le_add_left
+        (Nat.le_of_lt k.isLt) m)
+  let hge : ¬ m + k.val < m :=
+    Nat.not_lt.mpr
+      (Nat.le_add_right m k.val)
+  let hlt : m + k.val < m + m :=
+    Nat.add_lt_add_left k.isLt m
+  btMorFoldFiber_step isLt pos2
+    ⟨m + k.val, dBound⟩ hge hlt ▸
+    ch2 ⟨m + k.val, dBound⟩
+
+/-- Extract the tree child from a fold-indexed
+`PolyFix.mk` node.  The tree child is at
+index `m + m` and lands in fiber `n`. -/
+def foldTreeChild {n : ℕ}
+    (isLt : 3 < 4)
+    (pos2 : polyBetweenIndex ℕ ℕ
+      (btMorComponents ⟨3, isLt⟩) n)
+    (ch2 : FoldChildren isLt pos2) :
+    BTMor1 n :=
+  let m := pos2.1
+  let dBound : m + m < m + m + 1 :=
+    Nat.lt_succ_self _
+  let hge : ¬ m + m < m :=
+    Nat.not_lt.mpr
+      (Nat.le_add_right m m)
+  let hge2 : ¬ m + m < m + m :=
+    Nat.lt_irrefl (m + m)
+  btMorFoldFiber_tree isLt pos2
+    ⟨m + m, dBound⟩ hge hge2 ▸
+    ch2 ⟨m + m, dBound⟩
+
+/-- A `PolyFix.mk` node at the fold constructor
+index (j = 3) equals `BTMor1.fold` applied to
+the extracted base, step, and tree children. -/
+lemma polyFixMk_eq_fold {n : ℕ}
+    (isLt : 3 < 4)
+    (pos2 : polyBetweenIndex ℕ ℕ
+      (btMorComponents ⟨3, isLt⟩) n)
+    (ch2 : FoldChildren isLt pos2) :
+    PolyFix.mk n
+      (show polyBetweenIndex ℕ ℕ btMorPoly n
+        from ⟨⟨3, isLt⟩, pos2⟩) ch2 =
+      BTMor1.fold pos2.1
+        (foldBaseChild isLt pos2 ch2)
+        (foldStepChild isLt pos2 ch2)
+        (foldTreeChild isLt pos2 ch2)
+        pos2.2 := by
+  symm
+  unfold BTMor1.fold btMorInject btMorPoly
+  simp only [btMorCarrier]
+  convert polyFixCoprodRoundTrip
+    ⟨3, isLt⟩ pos2 ch2 using 4
+  · apply Over.OverMorphism.ext
+    funext ⟨d, hd⟩
+    simp only [Over.homMk_left]
+    split_ifs with hb hs
+    · simp only [foldBaseChild]
+      exact sigma_mk_subst _ _
+    · simp only [foldStepChild]
+      rw [sigma_mk_subst]
+      exact congrArg
+        (fun x =>
+          (⟨(polyBetweenFamily ℕ ℕ
+            (btMorComponents ⟨3, isLt⟩)
+              n pos2).hom x,
+            ch2 x⟩ :
+            (polyFixCarrier
+              btMorPoly).left))
+        (Fin.ext (by dsimp; omega))
+    · simp only [foldTreeChild]
+      rw [sigma_mk_subst]
+      have hfin :
+          (⟨pos2.1 + pos2.1,
+            Nat.lt_succ_self _⟩ :
+            Fin (pos2.1 + pos2.1 + 1)) =
+          ⟨d, hd⟩ :=
+        Fin.ext (by
+          change pos2.1 + pos2.1 = d
+          have : ⟨pos2.fst, pos2.snd⟩ =
+            pos2 := rfl
+          have hd' : d < pos2.1 + pos2.1
+              + 1 := by
+            rw [this] at hd; exact hd
+          omega)
+      exact congrArg
+        (fun x =>
+          (⟨(polyBetweenFamily ℕ ℕ
+            (btMorComponents ⟨3, isLt⟩)
+              n pos2).hom x,
+            ch2 x⟩ :
+            (polyFixCarrier
+              btMorPoly).left))
+        hfin
 
 /-- `fiberCast` commutes with `subst`:
 substituting into a fiber-cast term is the same

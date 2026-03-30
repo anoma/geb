@@ -637,6 +637,72 @@ private theorem fold_uniq_interp_gen
             congr 1; funext u
             simp [show u.val < k from u.isLt]
 
+/-! ## Universe-polymorphic surjectivity -/
+
+/-- Every `BT.{u}` value is the interpretation
+of some closed `BTMor1 0` term. -/
+private theorem interpU_surjective
+    {x : PUnit.{u + 1}}
+    (bt : PolyFreeM
+      (overTerminal PUnit.{u + 1})
+      polyProdType x) :
+    ∃ t : BTMor1 0,
+    t.interpU (Fin.elim0 (α := BT.{u})) =
+      bt := by
+  induction bt with
+  | mk y idx children ih =>
+    match idx with
+    | Sum.inl leafIdx =>
+      have hy := PUnit.eq_punit y; subst hy
+      have hli :
+          leafIdx = ⟨PUnit.unit, rfl⟩ :=
+        Subtype.ext (PUnit.eq_punit _)
+      subst hli
+      exact ⟨BTMor1.leaf, by
+        rw [BTMor1.interpU_leaf]
+        unfold BT.leaf polyFreeMPure
+        congr 1; funext e
+        exact PEmpty.elim e⟩
+    | Sum.inr nodeIdx =>
+      have hy := PUnit.eq_punit y; subst hy
+      have hni := PUnit.eq_punit nodeIdx
+      subst hni
+      obtain ⟨tl, hl⟩ :=
+        ih (Sum.inl PUnit.unit)
+      obtain ⟨tr, hr⟩ :=
+        ih (Sum.inr PUnit.unit)
+      exact ⟨BTMor1.branch tl tr, by
+        rw [BTMor1.interpU_branch, hl, hr]
+        unfold BT.node polyProdFreeMNode
+          polyFreeMStrFamily
+        simp only; congr 1; ext e
+        match e with
+        | Sum.inl _ => rfl
+        | Sum.inr _ => rfl⟩
+
+/-- Constructive finite choice: from pointwise
+existence over `Fin n`, extract a function. -/
+private theorem fin_choice {n : ℕ}
+    {α : Type} {P : Fin n → α → Prop}
+    (h : ∀ i, ∃ a, P i a) :
+    ∃ f : Fin n → α, ∀ i, P i (f i) := by
+  induction n with
+  | zero =>
+    exact ⟨Fin.elim0, fun i => i.elim0⟩
+  | succ k ih =>
+    obtain ⟨a_last, h_last⟩ :=
+      h (Fin.last k)
+    obtain ⟨f_rest, h_rest⟩ := ih
+      (fun i => h (Fin.castSucc i))
+    refine ⟨Fin.lastCases a_last f_rest,
+      fun i => ?_⟩
+    refine Fin.lastCases ?_ ?_ i
+    · simp only [Fin.lastCases_last]
+      exact h_last
+    · intro j
+      simp only [Fin.lastCases_castSucc]
+      exact h_rest j
+
 /-! ## Soundness -/
 
 /-- `btMorRel`-equivalent terms have equal
@@ -691,6 +757,24 @@ theorem interpU_sound {n : ℕ}
           (r ⟨0, by omega⟩))
       _ ⟨0, by omega⟩ = _
     exact fold_eta_fin1 _
+  | substReflect hground ih_ground =>
+    -- The IH gives: for each ground σ,
+    -- (t1.subst σ).interpU ctx' =
+    -- (t2.subst σ).interpU ctx'.
+    -- By interpU_surjective (constructive),
+    -- each ctx i is the interpU of some
+    -- closed term.
+    -- By interpU_surjective + fin_choice:
+    -- extract σ with (σ i).interpU = ctx i.
+    obtain ⟨σ, hσ⟩ := fin_choice
+      (fun i => interpU_surjective (ctx i))
+    rw [show ctx = (fun i =>
+        (σ i).interpU Fin.elim0) from
+        (funext hσ).symm,
+      ← BTMor1.interpU_subst,
+      ← BTMor1.interpU_subst]
+    exact ih_ground σ
+      (Fin.elim0 (α := BT.{u}))
   | @foldUniq n_inner m j φ f g k σ tree
       hℓ hβ hℓ_ih hβ_ih =>
     rw [BTMor1.interpU_subst,
@@ -1634,26 +1718,17 @@ interpretations at all contexts, they are
 `btMorRel`-equivalent.  This is the converse of
 `interpU_sound`.
 
-Uses `interpU_complete_zero` for the base case
-and `ground_rel_at_n` for ground normalization.
-The remaining step (variable recovery from
-ground-specialized btMorRel to open btMorRel)
-requires double `BTMor1.ind` on both terms.
-See the session workstream notes for the full
-analysis of proof strategies. -/
+The proof uses `btMorRel.substReflect`
+(ground completeness implies open completeness)
+together with `interpU_ground_rel` (ground
+normalization via `norm0_gen`). -/
 theorem interpU_complete {n : ℕ}
     (t1 t2 : BTMor1 n)
     (h : ∀ (ctx : Fin n → BT.{0}),
       t1.interpU ctx = t2.interpU ctx) :
-    btMorRel n t1 t2 := by
-  -- Ground-level: both terms at every ctx
-  -- normalize to the same quoteBT.
-  have h_quot : ∀ ctx : Fin n → BT.{0},
-      btMorRel n
-        (t1.subst (fun i => quoteBT (ctx i)))
-        (t2.subst (fun i => quoteBT (ctx i))) :=
-    fun ctx => ground_rel_at_n t1 t2 h ctx
-  sorry
+    btMorRel n t1 t2 :=
+  btMorRel.substReflect
+    (interpU_ground_rel t1 t2 h)
 
 /-- If `t : BTMor1 n` interprets to `BT.leaf`
 at every context, then `t` is
