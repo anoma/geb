@@ -359,11 +359,304 @@ ground case (n=0) from the open case, potentially
 simplifying the argument at the cost of needing a
 lifting lemma.
 
+### Session 2026-03-29 analysis
+
+Extensive exploration of proof strategies for the
+`succ k` case of the induction-on-arity approach
+(approach B). Added several compiling helper lemmas:
+
+**New helper lemmas (all compiling):**
+
+- `norm0`: specialized `norm0_gen` at arity 0 with
+  empty substitution; gives `btMorRel 0 t (quoteBT
+  (t.interpU Fin.elim0))` for any `t : BTMor1 0`
+- `interpU_complete_zero`: completeness at arity 0,
+  via `norm0` applied to both terms
+- `quoteBT_subst_elim0_gen` / `quoteBT_subst_elim0`:
+  `(quoteBT bt).subst Fin.elim0 = quoteBT bt` (lift
+  from arity 0 to arity n)
+- `quoteBT_subst_any_gen` / `quoteBT_subst_any`:
+  `(quoteBT bt).subst σ = quoteBT bt` for any σ
+  (quoteBT values are variable-free)
+- `btMorRel_lift_zero`: lift `btMorRel 0` to
+  `btMorRel n` via `subst_cong_right Fin.elim0`
+- `interpU_ground_rel`: for all ground σ,
+  `btMorRel 0 (t1.subst σ) (t2.subst σ)` from
+  semantic equality
+- `ground_rel_at_n`: for all ctx, `btMorRel n
+  (t1.subst (quoteBT ∘ ctx)) (t2.subst (quoteBT
+  ∘ ctx))` from semantic equality (lifts ground
+  btMorRel to arity n)
+
+**Current proof state:**
+The proof is structured by `induction n`:
+
+- Base (n=0): complete via `interpU_complete_zero`.
+- Step (n=k+1): reduces to the **variable recovery**
+  lemma. Uses IH at arity k and `subst_cong_right`
+  to get `btMorRel (k+1) (t1 with last var =
+  quoteBT v) (t2 with last var = quoteBT v)` for
+  all `v : BT`. The remaining sorry is: from this
+  universal ground-at-last-var equivalence, conclude
+  `btMorRel (k+1) t1 t2`.
+
+**Variable recovery analysis:**
+The gap between "for all v : BT, btMorRel (k+1)
+(t.subst lastSubst_v) (t2.subst lastSubst_v)" and
+"btMorRel (k+1) t1 t2" is exactly the **variable
+recovery** problem. Attempted strategies:
+
+1. `subst_cong_left` with σ = lastSubst_v vs
+   σ' = proj: requires `btMorRel (k+1) (quoteBT v)
+   (proj (last k))`, which is false.
+2. `foldUniq` with identity algebra: gives back
+   `foldEta`, which is circular.
+3. `foldUniq` with custom algebra: requires
+   constructing φ satisfying specific computation
+   rules, which amounts to structural analysis of t1
+   and t2.
+4. Direct `subst_id` argument: identity substitution
+   `proj` cannot be expressed as `quoteBT ∘ ctx`
+   for any ctx.
+
+**Conclusion:** The variable recovery step cannot
+be resolved by substitution-based arguments alone.
+It requires structural analysis of at least one of
+the two terms, confirming the session 2026-03-28
+analysis.
+
+### Recommended path forward
+
+**Approach C (Induction on arity + structural
+analysis for recovery):**
+
+Keep the arity-induction structure (base n=0 via
+`norm0`, step via IH at n-1). For the variable
+recovery step, use `BTMor1.ind` on ONE of the two
+terms (say t1). For each constructor of t1:
+
+- **proj i, leaf, branch**: use context
+  discrimination + the `hcomp` hypothesis to
+  determine what `t2` must be (up to btMorRel) via
+  the ground instances. These cases may also require
+  inner `BTMor1.ind` on t2 for the fold sub-case.
+- **fold**: use fold axioms (`foldLeaf`,
+  `foldBranch`, `congFold`) + the outer IH (from
+  BTMor1.ind on t1's children) + inner analysis of
+  t2.
+
+This is a hybrid of approaches A and B. The arity
+induction handles the "variable counting," while the
+structural induction handles the "variable recovery."
+
 ### Infrastructure needed
 
 - For approach A: fiber-generic inner motive with
   `finCast` transport, analogous to `interpU_subst`
 - For approach B: `BT.depth`, well-founded
   interleaving, lifting lemma
-- Both approaches need ~500-1000 lines of Lean code
+- For approach C: BTMor1.ind on t1 within the step
+  case, combined with inner BTMor1.ind on t2 for
+  fold sub-cases; estimated 500-1000 lines
+- All approaches need ~500-1000 lines of Lean code
   for the full proof
+
+### Session 2026-03-29 completeness analysis
+
+Extensive analysis of proof strategies for
+`interpU_complete`.  The proof gap is between
+`h_quot` (btMorRel at quoteBT-substituted terms)
+and `btMorRel n t1 t2` (the open terms).  This
+gap requires structural induction on at least one
+term.
+
+**Approaches attempted:**
+
+1. **Arity induction (n -> n+1):** Substitute
+   `quoteBT v` for the last variable and use IH at
+   arity n.  Produces btMorRel at arity n for
+   substituted terms, but the "variable recovery"
+   step (going from substituted to open) requires
+   structural analysis.  BLOCKED by variable
+   recovery.
+
+2. **Single BTMor1.ind on t2:** Handle proj/leaf/
+   branch of t2 by context discrimination.  For
+   fold case of t2, use inner IH on fold's children.
+   The fold-vs-proj case requires showing
+   `btMorRel n (fold ...) (proj j2)`, which needs
+   `foldUniq` or other fold axioms.
+
+3. **foldUniq with φ = proj ⟨j2,...⟩:**
+   Gives the right conclusion `(proj j2) ~
+   fold m f g tree j`.  Leaf premise requires
+   `btMorRel n (proj j2) (f j)`, which is NOT
+   always true (counterexample: identity fold has
+   f j = leaf, not proj j2).
+
+4. **foldUniq with identity fold target:**
+   Use foldUniq for the identity fold (m=1, f=leaf,
+   g=branch) with φ 0 = fold m f g (proj(last n)) j.
+   Leaf premise: `fold m f g leaf j ~ leaf`, i.e.,
+   `f j ~ leaf`.  Works when f j = leaf (identity
+   fold family), FAILS when f j ≠ leaf (e.g.,
+   fold 1 (proj 0) (proj 0) tree 0).
+
+5. **foldEta + congFold:** Always circular.
+   `congFold` requires `btMorRel n tree1 tree2`
+   which is the original goal or equivalent.
+
+6. **quoteBT-substitution normalization:**
+   `t.subst(quoteBT ∘ ctx) ~ quoteBT(t.interpU ctx)`
+   gives h_quot but NOT btMorRel n t1 t2.
+
+**Concrete counterexample analysis:**
+
+`fold 1 (fun _ => proj 0) (fun _ => proj 0) (proj 0) 0`
+acts as `proj 0`.  Here f 0 = proj 0, and foldUniq
+with φ 0 = proj 0 WORKS (leaf and branch premises
+hold trivially since f = g = proj 0).
+
+`fold 1 (fun _ => leaf) (fun _ => branch(proj 0)
+(proj 1)) (proj 0) 0` acts as `proj 0` (identity
+fold by foldEta).  Here f 0 = leaf, and foldUniq
+with identity fold target WORKS (leaf premise:
+f 0 = leaf ~ leaf).
+
+`fold 2 (fun _ => leaf) (fun _ => ...) (proj 0) 0`
+(m=2 identity fold) acts as `proj 0`.  foldUniq
+with identity fold target WORKS (leaf premise:
+f 0 = leaf ~ leaf; branch premise: foldBranch
+matches).
+
+**Conclusion:** Different folds computing the same
+function require different `foldUniq` applications.
+The proof must analyze the fold's base child `f j`
+to determine whether to use foldUniq with
+φ = proj ⟨j2,...⟩ (when f j ~ proj j2) or with
+the identity fold target (when f j ~ leaf).
+
+**Recommended approach:** Within the BTMor1.ind
+step for the fold case, apply the outer IH on
+`f j` to determine its semantic equivalence class.
+Then branch:
+
+- If `f j ~ leaf`: use foldUniq with identity fold
+- If `f j ~ proj j2`: use foldUniq with φ = proj j2
+- If `f j ~ branch ...`: use foldUniq with a fold
+  whose base matches
+
+This requires the outer IH on `f j` to determine
+which case applies, plus `foldLeaf` to simplify
+the fold at leaf.  The branch premise of foldUniq
+should follow from `foldBranch` in all cases.
+
+**Helper lemmas added (compiling):**
+
+- `branch_ne_proj`: branch interpU matching a
+  projection is contradictory.
+- `branch_ne_leaf`: branch interpU matching
+  BT.leaf is contradictory.
+
+### Session 2026-03-29 implementation progress
+
+**Completed (all compiling, no warnings except
+the remaining holes):**
+
+1. `quoteBT_leaf`, `quoteBT_node` — computation
+   rules for quoteBT on BT.leaf/node.
+2. `subst_cast` — fiber transport commutes with
+   substitution.
+3. `norm0_fold_commute_gen`, `norm0_fold_commute`
+   — BT structural induction lemma for the fold
+   case of norm0_gen.
+4. `norm0_gen` — the full normalization theorem
+   via BTMor1.ind (proj/leaf/branch/fold cases
+   all complete, including the fold case which
+   uses BT structural induction + congFold +
+   subst_cong_left + IH on g children).
+5. `norm0` — specialization of norm0_gen at
+   arity 0.
+6. `interpU_complete_zero` — completeness at
+   arity 0 via norm0.
+7. `quoteBT_subst_elim0_gen/elim0`,
+   `quoteBT_subst_any_gen/any` — quoteBT is
+   substitution-invariant (variable-free).
+8. `btMorRel_lift_zero` — lift btMorRel 0 to
+   btMorRel n for variable-free terms.
+9. `interpU_ground_rel` — ground substitution
+   equivalence from semantic equality.
+10. `ground_rel_at_n` — ground btMorRel at
+    arity n from semantic equality.
+11. `interpU_complete_inner` — inner BTMor1.ind
+    on t2 (proj/leaf cases delegate to
+    vs_proj/vs_leaf; branch/fold cases have
+    holes).
+12. `interpU_complete` — delegates to
+    `interpU_complete_inner`.
+
+**Remaining holes (4 exact _ placeholders):**
+
+1. `interpU_complete_vs_proj` (line ~1628):
+   Given `∀ ctx, t.interpU ctx = ctx j`,
+   show `btMorRel n t (proj j)`.
+2. `interpU_complete_vs_leaf` (line ~1636):
+   Given `∀ ctx, t.interpU ctx = BT.leaf`,
+   show `btMorRel n t leaf`.
+3. Branch case of `interpU_complete_inner`
+   (line ~1677): Given inner IH on l2, r2 and
+   `∀ ctx, t1.interpU ctx = BT.node
+   (l2.interpU ctx) (r2.interpU ctx)`,
+   show `btMorRel n t1 (branch l2 r2)`.
+4. Fold case of `interpU_complete_inner`
+   (line ~1681): Given inner IH on fold
+   sub-terms and semantic equality,
+   show `btMorRel n t1 (fold m f g tree j)`.
+
+**Analysis of remaining holes:**
+
+Holes 1 and 2 require BTMor1.ind on `t` (the
+arbitrary term) to decompose it into
+constructors.  The fold case of each requires
+relating a fold to a non-fold (proj or leaf),
+which needs the fold axioms + the inner IH.
+
+Hole 3 requires decomposing t1 into cases.
+For t1 = branch l1 r1: use BT.node_inj + inner
+IH + congBranch.  For other t1: contradiction
+or fold case.
+
+Hole 4 is the fold-fold case (when t2 is a
+fold), which requires both outer and inner IH.
+
+**PolyFix representation obstacle:**
+
+Inside BTMor1.ind step functions, terms appear
+as `PolyFix.mk n ⟨⟨j, _⟩, pos⟩ children`,
+which is NOT definitionally equal to
+`BTMor1.proj j` / `BTMor1.leaf` /
+`BTMor1.branch l r` / `BTMor1.fold m f g t j`.
+Converting between the two representations
+requires explicit unfolding + rewriting.
+The pattern from `subst_cong_left` is:
+`set lhs := ...; unfold BTMor1.subst
+BTMor1.ind PolyFixCoprod.ind PolyFix.ind
+at lhs; dsimp only at lhs; rw [lhs]`.
+
+Also, `interpU` on raw PolyFix.mk forms
+may not reduce to `interpU_proj`, `interpU_leaf`,
+etc.  Lemmas `raw_proj_interpU` and
+`raw_leaf_interpU` (proved by `rfl`) were added
+to bridge this.
+
+**Recommended next step:**
+
+Fill the 4 holes using nested BTMor1.ind:
+for each hole, apply BTMor1.ind on the unknown
+term (t or t1), handling each of the 4
+constructor cases.  The fold sub-case of each
+uses the IH from the BTMor1.ind + fold axioms.
+This gives a 4×4 = 16 case matrix, of which 9
+are easy (fold-free × fold-free) and 7 require
+fold axiom reasoning.  Estimated: 500-1000
+additional lines of Lean code.

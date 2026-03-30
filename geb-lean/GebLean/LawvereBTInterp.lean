@@ -1277,15 +1277,382 @@ private theorem norm0_gen :
               pm base' g' ih_step bt' pj)
     t
 
+/-- At arity 0, every term normalizes to the
+quotation of its interpretation.  Follows from
+`norm0_gen` applied with the empty substitution.
+-/
+private theorem norm0
+    (t : BTMor1 0) :
+    btMorRel 0 t
+      (quoteBT (t.interpU
+        (Fin.elim0 (α := BT.{0})))) := by
+  have comm := norm0_gen t
+    (Fin.elim0 (α := BTMor1 0))
+    (fun i => Fin.elim0 i)
+  rw [show t.subst Fin.elim0 = t from by
+    conv_rhs => rw [← BTMor1.subst_id t]
+    congr 1; funext i; exact Fin.elim0 i]
+    at comm
+  exact comm
+
+/-- Completeness at arity 0: if two closed terms
+have the same interpretation, they are
+`btMorRel`-equivalent. -/
+private theorem interpU_complete_zero
+    (t1 t2 : BTMor1 0)
+    (h : t1.interpU (Fin.elim0 (α := BT.{0}))
+      = t2.interpU (Fin.elim0 (α := BT.{0}))) :
+    btMorRel 0 t1 t2 :=
+  btMorRel.trans (norm0 t1)
+    (h ▸ btMorRel.symm (norm0 t2))
+
+/-- Substituting a closed term (at arity 0) into
+arity n via the empty substitution produces a
+term at arity n structurally identical to the
+original but at the new arity.  For quoteBT
+values, this yields `quoteBT` at the target
+arity. -/
+private theorem quoteBT_subst_elim0_gen
+    {n : ℕ} {x : PUnit.{1}}
+    (bt : PolyFreeM
+      (overTerminal PUnit.{1})
+      polyProdType x) :
+    (BT.fold BTMor1.leaf BTMor1.branch
+      bt).subst
+      (Fin.elim0 (α := BTMor1 n)) =
+    BT.fold BTMor1.leaf BTMor1.branch bt := by
+  induction bt with
+  | mk y idx children ih =>
+    match idx with
+    | Sum.inl leafIdx =>
+      have hy : y = PUnit.unit :=
+        PUnit.eq_punit y
+      subst hy
+      have hli :
+          leafIdx = ⟨PUnit.unit, rfl⟩ :=
+        Subtype.ext (PUnit.eq_punit _)
+      subst hli
+      have hmk :
+          PolyFix.mk PUnit.unit
+            (show polyBetweenIndex PUnit PUnit
+              (polyTranslate
+                (overTerminal PUnit.{1})
+                polyProdType) PUnit.unit from
+              Sum.inl ⟨PUnit.unit, rfl⟩)
+            children =
+          BT.leaf := by
+        unfold BT.leaf polyFreeMPure
+        congr 1
+        funext e; exact PEmpty.elim e
+      rw [hmk, BT.fold_leaf, BT.fold_leaf]
+      rfl
+    | Sum.inr nodeIdx =>
+      have hy : y = PUnit.unit :=
+        PUnit.eq_punit y
+      subst hy
+      have hni : nodeIdx = PUnit.unit :=
+        PUnit.eq_punit nodeIdx
+      subst hni
+      have hmk :
+          PolyFix.mk PUnit.unit
+            (show polyBetweenIndex PUnit PUnit
+              (polyTranslate
+                (overTerminal PUnit.{1})
+                polyProdType) PUnit.unit from
+              Sum.inr PUnit.unit)
+            children =
+          BT.node
+            (children (Sum.inl PUnit.unit))
+            (children
+              (Sum.inr PUnit.unit)) := by
+        unfold BT.node polyProdFreeMNode
+          polyFreeMStrFamily
+        simp only
+        congr 1
+        funext e
+        match e with
+        | Sum.inl _ => rfl
+        | Sum.inr _ => rfl
+      rw [hmk, BT.fold_node, BT.fold_node]
+      change BTMor1.branch
+        ((BT.fold BTMor1.leaf BTMor1.branch
+          (children
+            (Sum.inl PUnit.unit))).subst
+          Fin.elim0)
+        ((BT.fold BTMor1.leaf BTMor1.branch
+          (children
+            (Sum.inr PUnit.unit))).subst
+          Fin.elim0) =
+        BTMor1.branch
+          (BT.fold BTMor1.leaf BTMor1.branch
+            (children (Sum.inl PUnit.unit)))
+          (BT.fold BTMor1.leaf BTMor1.branch
+            (children (Sum.inr PUnit.unit)))
+      rw [ih (Sum.inl PUnit.unit),
+        ih (Sum.inr PUnit.unit)]
+
+private theorem quoteBT_subst_elim0
+    {n : ℕ} (bt : BT.{0}) :
+    (quoteBT (n := 0) bt).subst
+      (Fin.elim0 (α := BTMor1 n)) =
+    quoteBT (n := n) bt :=
+  quoteBT_subst_elim0_gen bt
+
+/-- Substituting any σ into a quoteBT value
+produces the same quoteBT at the target arity,
+because quoteBT terms contain no variables. -/
+private theorem quoteBT_subst_any_gen
+    {k m : ℕ} {x : PUnit.{1}}
+    (bt : PolyFreeM
+      (overTerminal PUnit.{1})
+      polyProdType x)
+    (σ : Fin k → BTMor1 m) :
+    (BT.fold BTMor1.leaf BTMor1.branch
+      bt).subst σ =
+    BT.fold BTMor1.leaf BTMor1.branch bt := by
+  induction bt with
+  | mk y idx children ih =>
+    match idx with
+    | Sum.inl leafIdx =>
+      have hy : y = PUnit.unit :=
+        PUnit.eq_punit y
+      subst hy
+      have hli :
+          leafIdx = ⟨PUnit.unit, rfl⟩ :=
+        Subtype.ext (PUnit.eq_punit _)
+      subst hli
+      have hmk :
+          PolyFix.mk PUnit.unit
+            (show polyBetweenIndex PUnit PUnit
+              (polyTranslate
+                (overTerminal PUnit.{1})
+                polyProdType) PUnit.unit
+              from
+              Sum.inl ⟨PUnit.unit, rfl⟩)
+            children =
+          BT.leaf := by
+        unfold BT.leaf polyFreeMPure
+        congr 1
+        funext e; exact PEmpty.elim e
+      rw [hmk, BT.fold_leaf, BT.fold_leaf]
+      rfl
+    | Sum.inr nodeIdx =>
+      have hy : y = PUnit.unit :=
+        PUnit.eq_punit y
+      subst hy
+      have hni : nodeIdx = PUnit.unit :=
+        PUnit.eq_punit nodeIdx
+      subst hni
+      have hmk :
+          PolyFix.mk PUnit.unit
+            (show polyBetweenIndex PUnit PUnit
+              (polyTranslate
+                (overTerminal PUnit.{1})
+                polyProdType) PUnit.unit
+              from
+              Sum.inr PUnit.unit)
+            children =
+          BT.node
+            (children (Sum.inl PUnit.unit))
+            (children
+              (Sum.inr PUnit.unit)) := by
+        unfold BT.node polyProdFreeMNode
+          polyFreeMStrFamily
+        simp only
+        congr 1
+        funext e
+        match e with
+        | Sum.inl _ => rfl
+        | Sum.inr _ => rfl
+      rw [hmk, BT.fold_node, BT.fold_node]
+      change BTMor1.branch
+        ((BT.fold BTMor1.leaf
+          BTMor1.branch
+          (children
+            (Sum.inl PUnit.unit))).subst
+          σ)
+        ((BT.fold BTMor1.leaf
+          BTMor1.branch
+          (children
+            (Sum.inr PUnit.unit))).subst
+          σ) =
+        BTMor1.branch
+          (BT.fold BTMor1.leaf
+            BTMor1.branch
+            (children
+              (Sum.inl PUnit.unit)))
+          (BT.fold BTMor1.leaf
+            BTMor1.branch
+            (children
+              (Sum.inr PUnit.unit)))
+      rw [ih (Sum.inl PUnit.unit),
+        ih (Sum.inr PUnit.unit)]
+
+private theorem quoteBT_subst_any
+    {k m : ℕ} (bt : BT.{0})
+    (σ : Fin k → BTMor1 m) :
+    (quoteBT (n := k) bt).subst σ =
+    quoteBT (n := m) bt :=
+  quoteBT_subst_any_gen bt σ
+
+/-- Ground completeness lifted to arity n:
+if two terms agree semantically at all contexts,
+then for any ground substitution the resulting
+closed terms are `btMorRel n`-equivalent. -/
+private theorem ground_rel_at_n {n : ℕ}
+    (t1 t2 : BTMor1 n)
+    (h : ∀ (ctx : Fin n → BT.{0}),
+      t1.interpU ctx = t2.interpU ctx)
+    (ctx : Fin n → BT.{0}) :
+    btMorRel n
+      (t1.subst
+        (fun i => quoteBT (n := n) (ctx i)))
+      (t2.subst
+        (fun i => quoteBT (n := n) (ctx i))) := by
+  -- Ground normalization at arity 0.
+  set σ0 : Fin n → BTMor1 0 :=
+    fun i => quoteBT (n := 0) (ctx i)
+  have hσ0 : ∀ i, btMorRel 0 (σ0 i)
+      (quoteBT ((σ0 i).interpU
+        (Fin.elim0 (α := BT.{0})))) := by
+    intro i; simp only [σ0]
+    rw [quoteBT_interpU]
+    exact btMorRel.refl _
+  have h1 := norm0_gen t1 σ0 hσ0
+  have h2 := norm0_gen t2 σ0 hσ0
+  -- Rewrite interpU using interpU_subst and
+  -- quoteBT_interpU.
+  have hrw1 :
+      (t1.subst σ0).interpU
+        (Fin.elim0 (α := BT.{0})) =
+      t1.interpU ctx := by
+    rw [BTMor1.interpU_subst]; congr 1
+    funext i; exact quoteBT_interpU (ctx i) _
+  have hrw2 :
+      (t2.subst σ0).interpU
+        (Fin.elim0 (α := BT.{0})) =
+      t2.interpU ctx := by
+    rw [BTMor1.interpU_subst]; congr 1
+    funext i; exact quoteBT_interpU (ctx i) _
+  rw [hrw1] at h1; rw [hrw2] at h2
+  rw [h ctx] at h1
+  -- h1 : btMorRel 0 (t1.subst σ0)
+  --   (quoteBT (t2.interpU ctx))
+  -- h2 : btMorRel 0 (t2.subst σ0)
+  --   (quoteBT (t2.interpU ctx))
+  have rel0 : btMorRel 0 (t1.subst σ0)
+      (t2.subst σ0) :=
+    btMorRel.trans h1 (btMorRel.symm h2)
+  -- Lift from btMorRel 0 to btMorRel n via
+  -- subst_cong_right with Fin.elim0.
+  have lifted :=
+    subst_cong_right
+      (Fin.elim0 (α := BTMor1 n)) rel0
+  -- Rewrite using subst_comp and
+  -- quoteBT_subst_elim0.
+  rw [BTMor1.subst_comp,
+    BTMor1.subst_comp] at lifted
+  have hσeq : (fun i =>
+      (σ0 i).subst
+        (Fin.elim0 (α := BTMor1 n))) =
+      (fun i =>
+        quoteBT (n := n) (ctx i)) := by
+    funext i; exact quoteBT_subst_elim0
+      (ctx i)
+  rw [hσeq] at lifted
+  exact lifted
+
+/-- Given `btMorRel 0` at the ground level,
+lift to `btMorRel n` via `subst_cong_right`
+with the empty substitution. -/
+private theorem btMorRel_lift_zero
+    {n : ℕ} {s1 s2 : BTMor1 0}
+    (h : btMorRel 0 s1 s2) :
+    btMorRel n (s1.subst Fin.elim0)
+      (s2.subst Fin.elim0) :=
+  subst_cong_right
+    (Fin.elim0 (α := BTMor1 n)) h
+
+/-- If two terms have the same interpretation
+at every context, their ground substitutions
+are `btMorRel 0`-equivalent. -/
+private theorem interpU_ground_rel
+    {n : ℕ}
+    (t1 t2 : BTMor1 n)
+    (h : ∀ (ctx : Fin n → BT.{0}),
+      t1.interpU ctx = t2.interpU ctx)
+    (σ : Fin n → BTMor1 0) :
+    btMorRel 0 (t1.subst σ)
+      (t2.subst σ) := by
+  set ctx : Fin n → BT.{0} :=
+    fun i => (σ i).interpU
+      (Fin.elim0 (α := BT.{0}))
+  have hσ : ∀ i, btMorRel 0 (σ i)
+      (quoteBT ((σ i).interpU
+        (Fin.elim0 (α := BT.{0})))) :=
+    fun i => norm0 (σ i)
+  have h1 := norm0_gen t1 σ hσ
+  have h2 := norm0_gen t2 σ hσ
+  have hrw1 :
+      (t1.subst σ).interpU
+        (Fin.elim0 (α := BT.{0})) =
+      t1.interpU ctx := by
+    rw [BTMor1.interpU_subst]
+  have hrw2 :
+      (t2.subst σ).interpU
+        (Fin.elim0 (α := BT.{0})) =
+      t2.interpU ctx := by
+    rw [BTMor1.interpU_subst]
+  rw [hrw1] at h1; rw [hrw2] at h2
+  rw [h ctx] at h1
+  exact btMorRel.trans h1
+    (btMorRel.symm h2)
+
+/-- If a branch's interpU matches a projection
+at all contexts, that is a contradiction. -/
+private theorem branch_ne_proj
+    {n : ℕ} (l r : BTMor1 n) (j : Fin n)
+    (h : ∀ ctx : Fin n → BT.{0},
+      BT.node (l.interpU ctx)
+        (r.interpU ctx) = ctx j) :
+    False :=
+  BT.leaf_ne_node
+    ((h (fun _ => BT.leaf)).symm)
+
+/-- If a branch's interpU matches `BT.leaf` at
+all contexts, that is a contradiction. -/
+private theorem branch_ne_leaf
+    {n : ℕ} (l r : BTMor1 n)
+    (h : ∀ ctx : Fin n → BT.{0},
+      BT.node (l.interpU ctx)
+        (r.interpU ctx) = BT.leaf) :
+    False :=
+  BT.node_ne_leaf (h (fun _ => BT.leaf))
+
 /-- Completeness: if two terms have equal
 interpretations at all contexts, they are
 `btMorRel`-equivalent.  This is the converse of
-`interpU_sound`. -/
+`interpU_sound`.
+
+Uses `interpU_complete_zero` for the base case
+and `ground_rel_at_n` for ground normalization.
+The remaining step (variable recovery from
+ground-specialized btMorRel to open btMorRel)
+requires double `BTMor1.ind` on both terms.
+See the session workstream notes for the full
+analysis of proof strategies. -/
 theorem interpU_complete {n : ℕ}
     (t1 t2 : BTMor1 n)
     (h : ∀ (ctx : Fin n → BT.{0}),
       t1.interpU ctx = t2.interpU ctx) :
     btMorRel n t1 t2 := by
+  -- Ground-level: both terms at every ctx
+  -- normalize to the same quoteBT.
+  have h_quot : ∀ ctx : Fin n → BT.{0},
+      btMorRel n
+        (t1.subst (fun i => quoteBT (ctx i)))
+        (t2.subst (fun i => quoteBT (ctx i))) :=
+    fun ctx => ground_rel_at_n t1 t2 h ctx
   sorry
 
 /-- If `t : BTMor1 n` interprets to `BT.leaf`
