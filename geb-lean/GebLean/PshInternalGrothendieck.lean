@@ -1171,4 +1171,664 @@ theorem groth_decompose
 
 end Inverse
 
+section Equivalence
+
+variable (X : PshInternalCat.{u, v, w} C)
+
+/-- The unit component at `G` and Grothendieck
+object `p`: contracts `{ ⟨x', e⟩ | x' = p.fiber }`
+to `G.obj p`. -/
+def grothEquivUnitApp
+    (G : X.groth ⥤ Type w)
+    (p : X.groth) :
+    comparisonFiber X (inversePresheaf X G) p →
+      G.obj p :=
+  fun ⟨⟨_, ge⟩, hx⟩ ↦
+    cast (congrArg G.obj
+      (congrArg (Grothendieck.mk p.base)
+        hx)) ge
+
+/-- The unit inverse component: sends `ge` to
+`⟨⟨p.fiber, ge⟩, rfl⟩`. -/
+def grothEquivUnitInvApp
+    (G : X.groth ⥤ Type w)
+    (p : X.groth) :
+    G.obj p →
+      comparisonFiber X (inversePresheaf X G) p :=
+  fun ge ↦ ⟨⟨p.fiber, ge⟩, rfl⟩
+
+/-- The unit round-trip is the identity. -/
+theorem grothEquivUnitApp_grothEquivUnitInvApp
+    (G : X.groth ⥤ Type w)
+    (p : X.groth) (ge : G.obj p) :
+    grothEquivUnitApp X G p (grothEquivUnitInvApp X G p ge) = ge := by
+  simp [grothEquivUnitApp, grothEquivUnitInvApp]
+
+/-- The unit inverse round-trip is the identity. -/
+theorem grothEquivUnitInvApp_grothEquivUnitApp
+    (G : X.groth ⥤ Type w)
+    (p : X.groth)
+    (z : comparisonFiber X
+      (inversePresheaf X G) p) :
+    grothEquivUnitInvApp X G p (grothEquivUnitApp X G p z) = z := by
+  obtain ⟨⟨x', ge⟩, (hx' : x' = p.fiber)⟩ := z
+  subst hx'
+  simp [grothEquivUnitApp, grothEquivUnitInvApp]
+
+/-- Naturality of `grothEquivUnitApp` with
+respect to Grothendieck morphisms: applying
+the comparison map then contracting equals
+applying `G.map` then contracting. -/
+theorem grothEquivUnitApp_natural
+    (G : X.groth ⥤ Type w)
+    {p q : X.groth} (m : p ⟶ q)
+    (z : comparisonFiber X
+      (inversePresheaf X G) p) :
+    grothEquivUnitApp X G q
+      (comparisonPresheafMap
+        (inversePresheaf X G) m z) =
+    G.map m
+      (grothEquivUnitApp X G p z) := by
+  obtain ⟨⟨x', ge⟩, (hx' : x' = p.fiber)⟩ := z
+  subst hx'
+  simp only [grothEquivUnitApp]
+  set cm := comparisonPresheafMap
+    (inversePresheaf X G) m
+    ⟨⟨p.fiber, ge⟩, rfl⟩
+  change cast _ cm.val.2 = G.map m ge
+  have hdecomp := groth_decompose X m
+  have hmap :
+      G.map m ge =
+      G.map (eqToHom
+          (congrArg (Grothendieck.mk q.base)
+            m.fiber.prop.2))
+        (G.map (grothFiberMor X q.base
+            ((fiberRestrict X m.base).obj
+              p.fiber)
+            m.fiber.val
+            m.fiber.prop.1.symm)
+          (G.map (grothBaseMor X p.base q.base
+              m.base p.fiber)
+            ge)) := by
+    have : G.map (grothBaseMor X p.base q.base
+          m.base p.fiber) ≫
+        G.map (grothFiberMor X q.base
+          ((fiberRestrict X m.base).obj p.fiber)
+          m.fiber.val
+          m.fiber.prop.1.symm) ≫
+        G.map (eqToHom
+          (congrArg (Grothendieck.mk q.base)
+            m.fiber.prop.2)) =
+        G.map m := by
+      simp only [← G.map_comp, hdecomp]
+    exact (congr_fun this ge).symm
+  rw [hmap, eqToHom_map G, eqToHom_eq_cast]
+  congr 1
+
+/-- The unit isomorphism at a fixed `G`:
+`comparisonPresheaf (inversePresheaf X G) ≅ G`
+as an isomorphism of presheaves on the
+Grothendieck category. -/
+def grothEquivUnitIso
+    (G : X.groth ⥤ Type w) :
+    comparisonPresheaf (inversePresheaf X G)
+      ≅ G where
+  hom := {
+    app := fun p ↦ grothEquivUnitApp X G p
+    naturality := fun p q m ↦ funext fun z ↦
+      grothEquivUnitApp_natural X G m z
+  }
+  inv := {
+    app := fun p ↦ grothEquivUnitInvApp X G p
+    naturality := fun p q m ↦ by
+      funext ge
+      simp only [types_comp_apply,
+        comparisonPresheaf]
+      have hfwd :=
+        grothEquivUnitApp_natural X G m
+          (grothEquivUnitInvApp X G p ge)
+      rw [grothEquivUnitApp_grothEquivUnitInvApp]
+        at hfwd
+      set lhs := grothEquivUnitInvApp X G q
+        (G.map m ge)
+      set rhs := comparisonPresheafMap
+        (inversePresheaf X G) m
+        (grothEquivUnitInvApp X G p ge)
+      have hinj :
+          grothEquivUnitApp X G q lhs =
+          grothEquivUnitApp X G q rhs :=
+        (grothEquivUnitApp_grothEquivUnitInvApp
+            X G q _).trans hfwd.symm
+      calc lhs
+          = grothEquivUnitInvApp X G q
+              (grothEquivUnitApp X G q lhs) :=
+            (grothEquivUnitInvApp_grothEquivUnitApp
+              X G q lhs).symm
+        _ = grothEquivUnitInvApp X G q
+              (grothEquivUnitApp X G q rhs) :=
+            congrArg _ hinj
+        _ = rhs :=
+            grothEquivUnitInvApp_grothEquivUnitApp
+              X G q rhs
+  }
+  hom_inv_id := by
+    apply NatTrans.ext; funext p
+    ext z
+    simp only [NatTrans.comp_app,
+      types_comp_apply, NatTrans.id_app,
+      types_id_apply]
+    exact grothEquivUnitInvApp_grothEquivUnitApp
+      X G p z
+  inv_hom_id := by
+    apply NatTrans.ext; funext p
+    ext ge
+    simp only [NatTrans.comp_app,
+      types_comp_apply, NatTrans.id_app,
+      types_id_apply]
+    exact grothEquivUnitApp_grothEquivUnitInvApp
+      X G p ge
+
+/-- The unit natural isomorphism:
+`inverseFunctor X ⋙ comparisonFunctor X ≅ 𝟭 _`.
+At each `G`, contracts the sigma-subtype
+`{ ⟨x', e⟩ | x' = p.fiber }` to `G.obj p`. -/
+def grothEquivUnit :
+    inverseFunctor X ⋙ comparisonFunctor (X := X)
+      ≅ 𝟭 (X.groth ⥤ Type w) :=
+  NatIso.ofComponents
+    (fun G ↦ grothEquivUnitIso X G)
+    (fun {G G'} α ↦ by
+      apply NatTrans.ext; funext p
+      ext ⟨⟨x', ge⟩, (hx' : x' = p.fiber)⟩
+      subst hx'
+      simp only [Functor.comp_map,
+        NatTrans.comp_app, types_comp_apply,
+        Functor.id_map]
+      simp only [comparisonFunctor,
+        inverseFunctor, grothEquivUnitIso,
+        grothEquivUnitApp,
+        comparisonNatTrans,
+        inversePresheafHom, inverseNatTrans]
+      rfl)
+
+/-- The counit forward map at stage `c`:
+extracts the fiber element from the
+sigma-subtype. -/
+def grothEquivCounitFwd
+    (P : PshInternalPresheaf X)
+    (c : Cᵒᵖ) :
+    inverseFiber X (comparisonPresheaf P) c →
+      P.fiberAt c :=
+  fun ⟨_, ⟨e, _⟩⟩ ↦ e
+
+/-- The counit backward map at stage `c`:
+pairs a fiber element with its projection. -/
+def grothEquivCounitInv
+    (P : PshInternalPresheaf X)
+    (c : Cᵒᵖ) :
+    P.fiberAt c →
+      inverseFiber X (comparisonPresheaf P) c :=
+  fun e ↦ ⟨P.projAt c e, ⟨e, rfl⟩⟩
+
+/-- Forward then backward is the identity. -/
+theorem grothEquivCounit_fwd_inv
+    (P : PshInternalPresheaf X)
+    (c : Cᵒᵖ)
+    (e : P.fiberAt c) :
+    grothEquivCounitFwd X P c
+      (grothEquivCounitInv X P c e) = e :=
+  rfl
+
+/-- Backward then forward is the identity. -/
+theorem grothEquivCounit_inv_fwd
+    (P : PshInternalPresheaf X)
+    (c : Cᵒᵖ)
+    (p : inverseFiber X
+      (comparisonPresheaf P) c) :
+    grothEquivCounitInv X P c
+      (grothEquivCounitFwd X P c p) = p := by
+  obtain ⟨x, ⟨e, (he : P.projAt c e = x)⟩⟩ := p
+  simp only [grothEquivCounitFwd,
+    grothEquivCounitInv]
+  have : ∀ (y : fiberObj X c)
+      (h : P.projAt c e = y),
+      (⟨P.projAt c e, ⟨e, rfl⟩⟩ :
+        inverseFiber X (comparisonPresheaf P)
+          c) =
+      ⟨y, ⟨e, h⟩⟩ := by
+    intro y h; cases h; rfl
+  exact this x he
+
+/-- The comparison presheaf map along a
+`grothBaseMor` (which has identity fiber)
+acts as `P.fiber.map f` on the underlying
+element. -/
+theorem comparisonPresheafMap_grothBaseMor
+    (P : PshInternalPresheaf X)
+    {c c' : Cᵒᵖ} (f : c ⟶ c')
+    (x : fiberObj X c)
+    (ex : comparisonFiber X P ⟨c, x⟩) :
+    (comparisonPresheafMap P
+      (grothBaseMor X c c' f x) ex).val =
+    P.fiber.map f ex.val := by
+  obtain ⟨e, (he : P.projAt c e = x)⟩ := ex
+  simp only [comparisonPresheafMap, grothBaseMor]
+  set e₁ := P.fiber.map f e
+  -- The fiber of grothBaseMor is 𝟙, so
+  -- (𝟙 _).val = fiberId
+  have hfibval :
+      (𝟙 ((fiberRestrict X f).obj x) :
+        (fiberRestrict X f).obj x ⟶
+          (fiberRestrict X f).obj x).val =
+      fiberId X c'
+        ((fiberRestrict X f).obj x) :=
+    rfl
+  have hproj :
+      P.projAt c' e₁ =
+        (fiberRestrict X f).obj x :=
+    (P.projAt_naturality f e).trans
+      (congrArg _ he)
+  -- Build the proof that the morphism equals
+  -- fiberId at projAt
+  have hmorpheq :
+      (𝟙 ((fiberRestrict X f).obj x) :
+        (fiberRestrict X f).obj x ⟶
+          (fiberRestrict X f).obj x).val =
+      fiberId X c' (P.projAt c' e₁) :=
+    hfibval.trans
+      (congrArg (fiberId X c') hproj.symm)
+  exact (P.actionAt_congr_m c' e₁ _ _
+    hmorpheq _ _).trans
+    (P.actionAt_id c' e₁)
+
+/-- Naturality of the counit forward map with
+respect to base change: extracting the fiber
+element commutes with restriction. -/
+theorem grothEquivCounitFwd_natural
+    (P : PshInternalPresheaf X)
+    {c c' : Cᵒᵖ} (f : c ⟶ c')
+    (p : inverseFiber X
+      (comparisonPresheaf P) c) :
+    grothEquivCounitFwd X P c'
+      (inverseFiberMap X (comparisonPresheaf P)
+        f p) =
+    P.fiber.map f
+      (grothEquivCounitFwd X P c p) := by
+  obtain ⟨x, ⟨e, (he : P.projAt c e = x)⟩⟩ := p
+  simp only [grothEquivCounitFwd,
+    inverseFiberMap]
+  exact comparisonPresheafMap_grothBaseMor X P f
+    x ⟨e, he⟩
+
+/-- The counit forward natural transformation
+from the inverse-of-comparison fiber to the
+original fiber presheaf. -/
+def grothEquivCounitFwdNat
+    (P : PshInternalPresheaf X) :
+    inverseFiberFunctor X
+      (comparisonPresheaf P) ⟶ P.fiber where
+  app c := grothEquivCounitFwd X P c
+  naturality _ _ f := funext fun p ↦
+    grothEquivCounitFwd_natural X P f p
+
+/-- The counit forward map commutes with
+projection. -/
+theorem grothEquivCounitFwd_proj_comm
+    (P : PshInternalPresheaf X) :
+    grothEquivCounitFwdNat X P ≫ P.proj =
+      inverseProj X (comparisonPresheaf P) := by
+  ext c ⟨x, ⟨e, (he : P.projAt c e = x)⟩⟩
+  simp only [NatTrans.comp_app, types_comp_apply,
+    grothEquivCounitFwdNat, grothEquivCounitFwd,
+    inverseProj]
+  exact he
+
+/-- The comparison presheaf map along a
+`grothFiberMor` (which has identity base)
+agrees with `P.actionAt`. -/
+theorem comparisonPresheafMap_grothFiberMor
+    (P : PshInternalPresheaf X)
+    (c : Cᵒᵖ) (x : fiberObj X c)
+    (m : fiberMor X c)
+    (h : x = fiberSrc X c m)
+    (ex : comparisonFiber X P ⟨c, x⟩) :
+    (comparisonPresheafMap P
+      (grothFiberMor X c x m h) ex).val =
+    P.actionAt c ex.val m
+      (ex.property.trans h) := by
+  obtain ⟨e, (he : P.projAt c e = x)⟩ := ex
+  simp only [comparisonPresheafMap]
+  set gfm := grothFiberMor X c x m h
+  -- Base of gfm is 𝟙
+  have hmap :
+      P.fiber.map gfm.base e = e :=
+    congr_fun (P.fiber.map_id c) e
+  have hfibval : gfm.fiber.val = m := by
+    simp only [gfm, grothFiberMor]
+    exact @fiberHom_val_eqToHom_comp
+      _ _ X c _ _ _ _ _
+  exact congrArg (P.action.app c)
+    (Subtype.ext (Prod.ext hmap hfibval))
+
+/-- The counit forward morphism of internal
+presheaves:
+`inversePresheaf X (comparisonPresheaf P) ⟶ P`.
+-/
+def grothEquivCounitHom
+    (P : PshInternalPresheaf X) :
+    PshInternalPresheafHom
+      (inversePresheaf X
+        (comparisonPresheaf P)) P where
+  map := grothEquivCounitFwdNat X P
+  proj_comm :=
+    grothEquivCounitFwd_proj_comm X P
+  action_comm := by
+    ext c ⟨⟨⟨x, ⟨e, (he : P.projAt c e = x)⟩⟩,
+      m⟩, (h : x = fiberSrc X c m)⟩
+    -- The action_comm equality at this element
+    -- reduces to:
+    -- P.actionAt c e m (he.trans h) =
+    -- (comparisonPresheafMap P
+    --   (grothFiberMor c x m h) ⟨e, he⟩).val
+    -- Factor through `actionAt_comm` helper.
+    -- First, show the LHS lift produces ⟨(e, m)⟩
+    set Q := inversePresheaf X
+      (comparisonPresheaf P)
+    set liftNat := presheafPullbackLift P.proj
+      X.src
+      (presheafPullbackFst Q.proj X.src ≫
+        grothEquivCounitFwdNat X P)
+      (presheafPullbackSnd Q.proj X.src) _
+    set liftElem := liftNat.app c
+      ⟨(⟨x, ⟨e, he⟩⟩, m), h⟩
+    set pbElem : (presheafPullback Q.proj
+        X.src).obj c :=
+      ⟨(⟨x, ⟨e, he⟩⟩, m), h⟩
+    have hfst :
+        (presheafPullbackFst P.proj X.src).app
+          c liftElem = e :=
+      presheafPullbackLift_fst_app
+        P.proj X.src _ _ _ c pbElem
+    have hsnd :
+        (presheafPullbackSnd P.proj X.src).app
+          c liftElem = m :=
+      presheafPullbackLift_snd_app
+        P.proj X.src _ _ _ c pbElem
+    have hval : liftElem.val = (e, m) :=
+      Prod.ext hfst hsnd
+    change P.action.app c liftElem =
+      grothEquivCounitFwd X P c
+        (inverseActionAt X
+          (comparisonPresheaf P) c
+          ⟨(⟨x, ⟨e, he⟩⟩, m), h⟩)
+    simp only [grothEquivCounitFwd,
+      inverseActionAt]
+    rw [show P.action.app c liftElem =
+        P.actionAt c e m (he.trans h) from
+      congrArg (P.action.app c)
+        (Subtype.ext hval)]
+    exact (comparisonPresheafMap_grothFiberMor
+      X P c x m h ⟨e, he⟩).symm
+
+/-- The counit inverse natural transformation:
+pairs a fiber element with its projection. -/
+def grothEquivCounitInvNat
+    (P : PshInternalPresheaf X) :
+    P.fiber ⟶
+      inverseFiberFunctor X
+        (comparisonPresheaf P) where
+  app c := grothEquivCounitInv X P c
+  naturality _ _ f := by
+    funext e
+    simp only [types_comp_apply,
+      grothEquivCounitInv, inverseFiberFunctor,
+      inverseFiberMap]
+    have hnat := P.projAt_naturality f e
+    have hval :=
+      (comparisonPresheafMap_grothBaseMor
+        X P f (P.projAt _ e) ⟨e, rfl⟩).symm
+    -- Need:
+    -- ⟨projAt c' (fiber.map f e),
+    --   ⟨fiber.map f e, rfl⟩⟩ =
+    -- ⟨restrict(f)(projAt c e),
+    --   comparisonPresheafMap grothBaseMor ⟨e, rfl⟩⟩
+    -- First components agree by hnat.
+    -- Second components have same .val by hval.
+    have : ∀ (y : fiberObj X _)
+        (h : P.projAt _ (P.fiber.map f e) = y)
+        (s : comparisonFiber X P ⟨_, y⟩)
+        (_ : s.val = P.fiber.map f e),
+        (⟨P.projAt _ (P.fiber.map f e),
+          ⟨P.fiber.map f e, rfl⟩⟩ :
+          inverseFiber X
+            (comparisonPresheaf P) _) =
+        ⟨y, s⟩ := by
+      intro y h s hs
+      cases h
+      congr 1
+      exact Subtype.ext hs.symm
+    exact this _ hnat _ hval.symm
+
+/-- The counit inverse morphism of internal
+presheaves:
+`P ⟶ inversePresheaf X (comparisonPresheaf P)`.
+-/
+def grothEquivCounitInvHom
+    (P : PshInternalPresheaf X) :
+    PshInternalPresheafHom P
+      (inversePresheaf X
+        (comparisonPresheaf P)) where
+  map := grothEquivCounitInvNat X P
+  proj_comm := by
+    ext c e; rfl
+  action_comm := by
+    ext c ⟨⟨e, m⟩, (h : P.projAt c e =
+      fiberSrc X c m)⟩
+    simp only [NatTrans.comp_app,
+      types_comp_apply]
+    -- LHS: lift then inverse action
+    -- RHS: P action then counitInv
+    -- Both give ⟨fiberTgt m,
+    --   ⟨actionAt e m, projAt_actionAt⟩⟩
+    change inverseActionAt X
+        (comparisonPresheaf P) c _ =
+      grothEquivCounitInv X P c
+        (P.actionAt c e m h)
+    simp only [grothEquivCounitInv]
+    -- RHS = ⟨projAt (actionAt e m),
+    --   ⟨actionAt e m, rfl⟩⟩
+    -- LHS: lift maps ⟨(e,m), h⟩ to
+    -- ⟨(⟨projAt e, ⟨e, rfl⟩⟩, m),
+    --   proj_comm(e,m,h)⟩
+    -- then inverseActionAt gives
+    -- ⟨tgt m, comparisonPresheafMap grothFiberMor
+    --   ⟨e, rfl⟩⟩
+    -- Need: this equals ⟨projAt(actionAt e m),
+    --   ⟨actionAt e m, rfl⟩⟩
+    -- First components: tgt m = projAt(actionAt)
+    --   by projAt_actionAt
+    -- Second: comparisonPresheafMap grothFiberMor
+    --   ⟨e, rfl⟩ = ⟨actionAt e m, ...⟩
+    --   by comparisonPresheafMap_grothFiberMor
+    set Q := inversePresheaf X
+      (comparisonPresheaf P)
+    set pbElem : (presheafPullback Q.proj
+        X.src).obj c :=
+      (presheafPullbackLift Q.proj X.src
+        (presheafPullbackFst P.proj X.src ≫
+          grothEquivCounitInvNat X P)
+        (presheafPullbackSnd P.proj X.src)
+        _).app c ⟨(e, m), h⟩
+    set pbFst :=
+      (presheafPullbackFst Q.proj X.src).app
+        c pbElem
+    set pbSnd :=
+      (presheafPullbackSnd Q.proj X.src).app
+        c pbElem
+    set srcElem : (presheafPullback
+        P.proj X.src).obj c := ⟨(e, m), h⟩
+    have hfst : pbFst =
+        grothEquivCounitInv X P c e :=
+      presheafPullbackLift_fst_app
+        Q.proj X.src _ _ _ c srcElem
+    have hsnd : pbSnd = m :=
+      presheafPullbackLift_snd_app
+        Q.proj X.src _ _ _ c srcElem
+    have hpb : pbElem.val =
+        (grothEquivCounitInv X P c e, m) :=
+      Prod.ext hfst hsnd
+    simp only [inverseActionAt]
+    -- Rewrite pbElem to use concrete values
+    have hpbval : pbElem =
+        ⟨(grothEquivCounitInv X P c e, m),
+          h⟩ :=
+      Subtype.ext (Prod.ext hfst hsnd)
+    rw [hpbval]
+    simp only [grothEquivCounitInv]
+    -- Now goal is about grothFiberMor with
+    -- source = projAt c e
+    have hval :=
+      comparisonPresheafMap_grothFiberMor
+        X P c (P.projAt c e) m h ⟨e, rfl⟩
+    have htgt := P.projAt_actionAt c e m h
+    have hgoal : ∀ (y : fiberObj X c)
+        (hy : y = fiberTgt X c m)
+        (hpy :
+          P.projAt c (P.actionAt c e m h) = y)
+        (s : comparisonFiber X P
+          ⟨c, fiberTgt X c m⟩)
+        (hs : s.val = P.actionAt c e m h),
+        (⟨fiberTgt X c m, s⟩ :
+          inverseFiber X
+            (comparisonPresheaf P) c) =
+        ⟨y, ⟨P.actionAt c e m h, hpy⟩⟩ := by
+      intro y hy hpy s hs
+      cases hy
+      congr 1
+      exact Subtype.ext hs
+    exact hgoal
+      (P.projAt c (P.actionAt c e m h))
+      htgt
+      rfl
+      (comparisonPresheafMap
+        P (grothFiberMor X c
+          (P.projAt c e) m h)
+        ⟨e, rfl⟩)
+      hval
+
+/-- The counit isomorphism at a fixed `P`:
+`inversePresheaf X (comparisonPresheaf P) ≅ P`
+as an isomorphism of internal presheaves. -/
+def grothEquivCounitIso
+    (P : PshInternalPresheaf X) :
+    inversePresheaf X (comparisonPresheaf P)
+      ≅ P where
+  hom := grothEquivCounitHom X P
+  inv := grothEquivCounitInvHom X P
+  hom_inv_id := by
+    apply PshInternalPresheafHom.ext
+    apply NatTrans.ext; funext c
+    ext ⟨x, ⟨e, (he : P.projAt c e = x)⟩⟩
+    simp only [
+      grothEquivCounitHom,
+      grothEquivCounitInvHom,
+      grothEquivCounitFwdNat,
+      grothEquivCounitInvNat]
+    exact grothEquivCounit_inv_fwd X P c
+      ⟨x, ⟨e, he⟩⟩
+  inv_hom_id := by
+    apply PshInternalPresheafHom.ext
+    apply NatTrans.ext; funext c
+    ext e; rfl
+
+/-- The counit natural isomorphism:
+`comparisonFunctor ⋙ inverseFunctor X
+  ≅ 𝟭 (PshInternalPresheaf X)`.
+At each `P`, contracts the sigma-subtype back
+to the original fiber element. -/
+def grothEquivCounit :
+    comparisonFunctor (X := X) ⋙
+      inverseFunctor X ≅
+      𝟭 (PshInternalPresheaf X) :=
+  NatIso.ofComponents
+    (fun P ↦ grothEquivCounitIso X P)
+    (fun {P Q} α ↦ by
+      apply PshInternalPresheafHom.ext
+      apply NatTrans.ext; funext c
+      ext ⟨x, ⟨e, (he : P.projAt c e = x)⟩⟩
+      simp only [Functor.comp_map,
+        Functor.id_map]
+      simp only [comparisonFunctor,
+        inverseFunctor,
+        grothEquivCounitIso,
+        grothEquivCounitHom,
+        grothEquivCounitFwdNat,
+        inversePresheafHom,
+        inverseNatTrans,
+        comparisonNatTrans]
+      rfl)
+
+/-- The equivalence between internal presheaves
+on `X` and presheaves on the Grothendieck
+construction of `externalize X`. -/
+def pshInternalGrothendieckEquiv :
+    PshInternalPresheaf X ≌
+      (X.groth ⥤ Type w) where
+  functor := comparisonFunctor (X := X)
+  inverse := inverseFunctor X
+  unitIso := (grothEquivCounit X).symm
+  counitIso := grothEquivUnit X
+  functor_unitIso_comp P := by
+    -- Need:
+    -- comparisonFunctor.map
+    --   ((grothEquivCounit X).inv.app P) ≫
+    -- (grothEquivUnit X).hom.app
+    --   (comparisonFunctor.obj P)
+    -- = 𝟙 _
+    apply NatTrans.ext; funext p
+    ext ⟨e, (he : P.projAt p.base e = p.fiber)⟩
+    simp only [NatTrans.comp_app,
+      types_comp_apply,
+      NatTrans.id_app, types_id_apply]
+    simp only [comparisonFunctor,
+      grothEquivCounit, grothEquivUnit,
+      NatIso.ofComponents, Iso.symm,
+      grothEquivCounitIso,
+      grothEquivCounitInvHom,
+      grothEquivCounitInvNat,
+      grothEquivCounitInv,
+      grothEquivUnitIso,
+      grothEquivUnitApp,
+      comparisonNatTrans,
+      comparisonPresheaf]
+    -- The cast is between comparisonFiber types
+    -- that differ only in the fiber coordinate.
+    -- Show it preserves .val.
+    -- The goal reduces to showing that the
+    -- grothEquivUnitApp image applied to the
+    -- comparisonNatTrans of the inverse counit
+    -- at ⟨e, he⟩ gives ⟨e, he⟩.
+    -- Both sides have .val = e. Use Subtype.ext
+    -- then show the cast preserves .val.
+    -- Factor: show cast sends ⟨e, rfl⟩ to ⟨e, he⟩
+    -- using the `cases he` trick.
+    have cast_val_eq :
+        ∀ (y : fiberObj X p.base)
+          (hy : P.projAt p.base e = y)
+          (H : ({ e_1 : P.fiberAt p.base //
+                P.projAt p.base e_1 =
+                  P.projAt p.base e } :
+              Type w) =
+            { e_1 : P.fiberAt p.base //
+                P.projAt p.base e_1 = y }),
+          cast H
+            (⟨e, rfl⟩ : { e_1 //
+              P.projAt p.base e_1 =
+                P.projAt p.base e}) =
+            ⟨e, hy⟩ := by
+      intro y hy H; cases hy; rfl
+    exact cast_val_eq p.fiber he _
+
+end Equivalence
+
 end GebLean

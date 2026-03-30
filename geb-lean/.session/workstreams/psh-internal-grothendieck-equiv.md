@@ -1,61 +1,62 @@
 # Workstream: PshInternal-Grothendieck Equivalence
 
-## Status: In Progress (inverse functor done, equivalence pending)
+## Status: Complete
 
-## Inverse Functor (Task 9 -- complete)
+The categorical equivalence
+`PshInternalPresheaf X ≌ (X.groth ⥤ Type w)`
+is fully formalized in
+`GebLean/PshInternalGrothendieck.lean`.
 
-All definitions in `GebLean/PshInternalGrothendieck.lean`:
+## Equivalence Components
 
-- `inverseAction_assoc`: associativity of the inverse action,
-  using `grothFiberMor_comp` and the `Sigma.ext + heq_of_cast_eq`
-  pattern.
-- `inversePresheaf G : PshInternalPresheaf X`: assembles the
-  inverse fiber functor, projection, action, and all axioms.
-- `inverseNatTrans`: the natural transformation between inverse
-  fiber functors induced by a morphism of presheaves on the
-  Grothendieck category.
-- `inversePresheafHom`: the morphism of internal presheaves
-  induced by a natural transformation.
-- `inverseFunctor : (X.groth ⥤ Type w) ⥤ PshInternalPresheaf X`:
-  the full inverse functor, with `map_id` and `map_comp` proved
-  by `rfl`.
-- `groth_decompose`: every Grothendieck morphism decomposes as
-  `grothBaseMor ≫ grothFiberMor ≫ eqToHom`.
+All definitions in section `Equivalence`:
 
-### Remaining for equivalence
+### Unit (counit in forward direction)
 
-- Unit natural isomorphism: `P ≅ inversePresheaf (comparisonPresheaf P)`
-  via `e ↦ ⟨projAt e, ⟨e, rfl⟩⟩`.
-- Counit natural isomorphism:
-  `comparisonPresheaf (inversePresheaf G) ≅ G`
-  via `⟨⟨x', ge⟩, hx'⟩ ↦ cast ... ge`.
-  The counit naturality requires `groth_decompose`.
-  The pointwise bijections (`counitApp`, `counitInvApp`) and
-  their inverse properties are straightforward; the naturality
-  proof involves reducing `counitApp` applied to a match
-  expression, which requires either `native_decide`-style
-  evaluation or careful manual unfolding. The main technical
-  obstacle is that `counitApp` pattern-matches on a subtype
-  and `simp`/`dsimp` cannot reduce the match when the argument
-  is a complex expression.
-- Assembly into `Equivalence` or `CategoryTheory.Equivalence`.
+`inverseFunctor X ⋙ comparisonFunctor ≅ 𝟭 _`
 
-## Completed (Task 8: Comparison Functor)
+- `grothEquivUnitApp`: contracts `{ ⟨x', e⟩ | x' = p.fiber }`
+  to `G.obj p`.
+- `grothEquivUnitInvApp`: inverse.
+- `grothEquivUnitApp_natural`: naturality w.r.t.
+  Grothendieck morphisms, using `groth_decompose`.
+- `grothEquivUnitIso`: pointwise isomorphism at each `G`.
+- `grothEquivUnit`: the full natural isomorphism.
 
-The comparison functor
-`comparisonFunctor : PshInternalPresheaf X ⥤ (X.groth ⥤ Type w)`
-is fully defined and compiles.
+### Counit (unit in forward direction)
 
-### Definitions in `GebLean/PshInternalGrothendieck.lean`
+`comparisonFunctor ⋙ inverseFunctor X ≅ 𝟭 _`
 
-- `comparisonFiber`: the fiber of `P` over a Grothendieck
-  object.
-- `comparisonPresheafMap`: the action of morphisms on
-  comparison fibers.
-- `comparisonPresheafMap_id`, `comparisonPresheafMap_comp`:
-  functoriality.
-- `comparisonPresheaf P`: the presheaf on `X.groth`.
-- `comparisonNatTrans`: naturality for morphisms of internal
-  presheaves.
-- `comparisonFunctor`: the assembled functor.
-- `comparisonFib P c`: the fiber functor at a fixed base.
+- `grothEquivCounitFwd`/`grothEquivCounitInv`: forward/backward
+  maps extracting/pairing fiber elements.
+- `comparisonPresheafMap_grothBaseMor`: the comparison map
+  along a `grothBaseMor` acts as `P.fiber.map f`.
+- `comparisonPresheafMap_grothFiberMor`: the comparison map
+  along a `grothFiberMor` acts as `P.actionAt`.
+- `grothEquivCounitFwd_natural`: naturality of forward map.
+- `grothEquivCounitHom`/`grothEquivCounitInvHom`:
+  `PshInternalPresheafHom` in both directions.
+- `grothEquivCounitIso`: pointwise isomorphism at each `P`.
+- `grothEquivCounit`: the full natural isomorphism.
+
+### Assembly
+
+- `pshInternalGrothendieckEquiv`:
+  `PshInternalPresheaf X ≌ (X.groth ⥤ Type w)`.
+
+## Completed Earlier
+
+### Task 8: Comparison Functor
+
+- `comparisonFiber`, `comparisonPresheafMap`,
+  `comparisonPresheafMap_id`, `comparisonPresheafMap_comp`,
+  `comparisonPresheaf`, `comparisonNatTrans`,
+  `comparisonFunctor`, `comparisonFib`.
+
+### Task 9: Inverse Functor
+
+- `grothBaseMor`, `inverseFiber`, `inverseFiberMap`,
+  `inverseFiberFunctor`, `inverseProj`, `grothFiberMor`,
+  `inverseActionAt`, `inverseAction`, `inversePresheaf`,
+  `inverseNatTrans`, `inversePresheafHom`, `inverseFunctor`,
+  `groth_decompose`.

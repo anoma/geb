@@ -1,32 +1,27 @@
 # Internal Presheaf--Grothendieck Equivalence
 
-## Status: Both functors complete; equivalence proof deferred
+## Status: COMPLETE (equivalence proved)
 
-## Completed
+## Result
 
-- **Task 1**: Pointwise category extraction (`fiberCategory`)
-- **Task 2**: Externalization functor (`externalize`)
-- **Task 3**: Discrete Unit compatibility (all `rfl`)
-- **Task 4**: `PshInternalPresheaf` structure
-- **Task 5**: `PshInternalPresheafHom` and `Category`
-- **Task 7**: Grothendieck via mathlib `Grothendieck`
-- **Task 8**: `comparisonFunctor`
-- **Task 9**: `inverseFunctor` (both directions done)
+```lean
+def pshInternalGrothendieckEquiv :
+    PshInternalPresheaf X ≌
+      (X.groth ⥤ Type w)
+```
+
+where `X.groth = Grothendieck (externalize X)`.
 
 ## Files
 
 - `GebLean/PshInternalExternalize.lean` (~620 lines)
 - `GebLean/PshInternalPresheaf.lean` (~270 lines)
-- `GebLean/PshInternalGrothendieck.lean` (~1174 lines)
+- `GebLean/PshInternalGrothendieck.lean` (~1834 lines)
 
-## Deferred: equivalence proof
+Total: ~2724 lines, all constructive, no sorry.
 
-The counit naturality proof hits a pattern-matching
-reduction obstacle.  `groth_decompose` provides the
-morphism decomposition but connecting it to the
-match-wrapped `counitApp` needs either a refactored
-definition or explicit term manipulation.
+## Remaining from original plan
 
-## Plan document
-
-`docs/superpowers/plans/2026-03-28-internal-presheaf-grothendieck.md`
+- Task 6: Span-bicategory module interpretation
+- Tasks 10-12: FunctorData generalization
+- Task 13: Tests and integration
