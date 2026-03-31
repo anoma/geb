@@ -231,4 +231,213 @@ instance : Primcodable BT.{0} where
       (Primrec.nat_iff.mp
         encodeDecode_primrec)
 
+theorem encodeBT_decodeBT (n : Nat) :
+    encodeBT (decodeBT n) = n := by
+  induction n using Nat.strongRecOn with
+  | _ n ih =>
+    match n with
+    | 0 =>
+      simp only [decodeBT, encodeBT,
+        BT.fold_leaf]
+    | n + 1 =>
+      simp only [decodeBT, encodeBT,
+        BT.fold_node]
+      rw [show BT.fold 0
+        (fun el er => Nat.pair el er + 1) =
+        encodeBT from rfl]
+      rw [ih _ (Nat.lt_succ_of_le
+        (Nat.unpair_left_le n))]
+      rw [ih _ (Nat.lt_succ_of_le
+        (Nat.unpair_right_le n))]
+      rw [Nat.pair_unpair n]
+
+theorem decodeBT_primrec :
+    Primrec (decodeBT : Nat → BT.{0}) := by
+  change Nat.Primrec (fun n =>
+    @Encodable.encode (Option BT.{0}) _
+      (Option.map decodeBT
+        (@Encodable.decode Nat _ n)))
+  have heq : (fun n =>
+    @Encodable.encode (Option BT.{0}) _
+      (Option.map decodeBT
+        (@Encodable.decode Nat _ n))) =
+    (fun n =>
+      @Encodable.encode (Option BT.{0}) _
+        (@Encodable.decode BT.{0} _ n)) := by
+    funext n
+    simp [Encodable.decode,
+      Encodable.encode]
+  rw [heq]
+  exact @Primcodable.prim BT.{0} _
+
+private def btFoldChildren (bt : BT.{0}) :
+    List BT.{0} :=
+  @Nat.casesOn (fun _ => List BT.{0})
+    (encodeBT bt)
+    []
+    (fun n =>
+      [decodeBT (Nat.unpair n).1,
+       decodeBT (Nat.unpair n).2])
+
+private theorem btFoldChildren_primrec :
+    Primrec btFoldChildren := by
+  unfold btFoldChildren
+  apply Primrec.nat_casesOn
+  · exact Primrec.encode
+  · exact Primrec.const []
+  · unfold Primrec₂
+    have hfst :
+        Primrec (fun (p : BT.{0} × Nat) =>
+          decodeBT (Nat.unpair p.2).1) :=
+      decodeBT_primrec.comp
+        (Primrec.fst.comp
+          (Primrec.unpair.comp Primrec.snd))
+    have hsnd :
+        Primrec (fun (p : BT.{0} × Nat) =>
+          decodeBT (Nat.unpair p.2).2) :=
+      decodeBT_primrec.comp
+        (Primrec.snd.comp
+          (Primrec.unpair.comp Primrec.snd))
+    exact Primrec₂.comp Primrec.list_cons
+      hfst
+      (Primrec₂.comp Primrec.list_cons
+        hsnd (Primrec.const []))
+
+private def btFoldRecombine
+    (b : BT.{0}) (s : BT.{0} → BT.{0} → BT.{0})
+    (bt : BT.{0}) (results : List BT.{0}) :
+    Option BT.{0} :=
+  @Nat.casesOn (fun _ => Option BT.{0})
+    (encodeBT bt)
+    (some b)
+    (fun _ => some (s
+      (results.getD 0 BT.leaf)
+      (results.getD 1 BT.leaf)))
+
+private theorem btFoldRecombine_primrec₂
+    {b : BT.{0}}
+    {s : BT.{0} → BT.{0} → BT.{0}}
+    (hs : Primrec₂ s) :
+    Primrec₂ (btFoldRecombine b s) := by
+  unfold Primrec₂ btFoldRecombine
+  apply Primrec.nat_casesOn
+  · exact Primrec.encode.comp Primrec.fst
+  · exact Primrec.const (some b)
+  · unfold Primrec₂
+    exact Primrec.option_some.comp
+      (hs.comp
+        ((Primrec.list_getD BT.leaf).comp
+          (Primrec.snd.comp Primrec.fst)
+          (Primrec.const 0))
+        ((Primrec.list_getD BT.leaf).comp
+          (Primrec.snd.comp Primrec.fst)
+          (Primrec.const 1)))
+
+private theorem btFoldChildren_lt
+    (bt bt' : BT.{0})
+    (hmem : bt' ∈ btFoldChildren bt) :
+    encodeBT bt' < encodeBT bt := by
+  unfold btFoldChildren at hmem
+  generalize h : encodeBT bt = k at hmem
+  match k with
+  | 0 =>
+    change bt' ∈ ([] : List BT.{0}) at hmem
+    exact absurd hmem List.not_mem_nil
+  | n + 1 =>
+    change bt' ∈
+      [decodeBT (Nat.unpair n).1,
+       decodeBT (Nat.unpair n).2] at hmem
+    simp only [List.mem_cons,
+      List.mem_nil_iff, or_false] at hmem
+    rcases hmem with rfl | rfl <;>
+      rw [encodeBT_decodeBT]
+    · exact Nat.lt_succ_of_le
+        (Nat.unpair_left_le n)
+    · exact Nat.lt_succ_of_le
+        (Nat.unpair_right_le n)
+
+private theorem btFoldChildren_leaf :
+    btFoldChildren BT.leaf = [] := by
+  unfold btFoldChildren
+  simp only [encodeBT, BT.fold_leaf]
+  rfl
+
+private theorem btFoldChildren_node
+    (l r : BT.{0}) :
+    btFoldChildren (BT.node l r) = [l, r] := by
+  unfold btFoldChildren
+  simp only [encodeBT, BT.fold_node,
+    Nat.unpair_pair]
+  change [decodeBT (encodeBT l),
+    decodeBT (encodeBT r)] = [l, r]
+  rw [decodeBT_encodeBT, decodeBT_encodeBT]
+
+private theorem btFoldRecombine_leaf
+    (b : BT.{0})
+    (s : BT.{0} → BT.{0} → BT.{0})
+    (results : List BT.{0}) :
+    btFoldRecombine b s BT.leaf results =
+    some b := by
+  unfold btFoldRecombine
+  simp only [encodeBT, BT.fold_leaf]
+  rfl
+
+private theorem btFoldRecombine_node
+    (b : BT.{0})
+    (s : BT.{0} → BT.{0} → BT.{0})
+    (l r : BT.{0}) (results : List BT.{0}) :
+    btFoldRecombine b s (BT.node l r) results =
+    some (s (results.getD 0 BT.leaf)
+            (results.getD 1 BT.leaf)) := by
+  unfold btFoldRecombine
+  simp only [encodeBT, BT.fold_node]
+
+private theorem btFoldFuncEq
+    (b : BT.{0})
+    (s : BT.{0} → BT.{0} → BT.{0})
+    (bt : BT.{0}) :
+    btFoldRecombine b s bt
+      (List.map (BT.fold b s)
+        (btFoldChildren bt)) =
+      some (BT.fold b s bt) := by
+  match h : encodeBT bt with
+  | 0 =>
+    have hbt : bt = BT.leaf :=
+      encodeBT_injective (by
+        rw [h]
+        simp only [encodeBT, BT.fold_leaf])
+    subst hbt
+    rw [btFoldChildren_leaf,
+      btFoldRecombine_leaf]
+    simp only [BT.fold_leaf]
+  | n + 1 =>
+    have hbt : bt = BT.node
+        (decodeBT (Nat.unpair n).1)
+        (decodeBT (Nat.unpair n).2) := by
+      rw [← decodeBT_encodeBT bt, h]
+      simp only [decodeBT]
+    subst hbt
+    rw [btFoldChildren_node,
+      btFoldRecombine_node]
+    simp only [BT.fold_node, List.map,
+      List.getD_cons_zero,
+      List.getD_cons_succ]
+
+theorem bt_fold_primrec
+    {b : BT.{0}}
+    {s : BT.{0} → BT.{0} → BT.{0}}
+    (hs : Primrec₂ s) :
+    Primrec (BT.fold b s) :=
+  Primrec.nat_omega_rec'
+    (BT.fold b s)
+    (m := Encodable.encode)
+    (l := btFoldChildren)
+    (g := btFoldRecombine b s)
+    Primrec.encode
+    btFoldChildren_primrec
+    (btFoldRecombine_primrec₂ hs)
+    (fun bt bt' hmem =>
+      btFoldChildren_lt bt bt' hmem)
+    (fun bt => btFoldFuncEq b s bt)
+
 end GebLean
