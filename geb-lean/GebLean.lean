@@ -22,6 +22,7 @@ import GebLean.HexagonCat
 import GebLean.LawvereBT
 import GebLean.LawvereBTEq
 import GebLean.LawvereBTInterp
+import GebLean.LawvereBTPrimrec
 import GebLean.LawvereBTQuot
 import GebLean.LayeredEquivalence
 import GebLean.MendlerLambekEndPower
