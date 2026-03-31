@@ -181,6 +181,33 @@ PRA Products (Task A1 — in progress):
 Task A1 complete. All definitions compile
 without sorry or warnings.
 
+PRA Coproducts (Task A2 — in progress):
+
+- `praCoprodPos` — `Jᵒᵖ ⥤ Type w'`, Sigma
+  position presheaf
+- `praCoprodDirAt` — direction at `⟨k, a⟩`
+  is just the k-th direction
+- `praCoprodElemFstEq` — Sigma index
+  preservation by morphisms
+- `praCoprodDir` — direction functor
+  (`map_id` done, `map_comp` sorry)
+- `praCoprod` — via `praReassemble`
+- `praCoprodInjAt` / `praCoprodInj` —
+  injection (`erw [unop_comp]`)
+- `praCoprodDescAt` / `praCoprodDesc` —
+  descent
+- `praCoprodDescAt_fac` — beta rule
+  (`erw [unop_comp]`)
+- `praCoprodMorphExt` — eta rule
+  (`rcases; subst; Grothendieck.congr`)
+- `praCoprodDesc_naturality` — via `calc`
+  through interface
+- `praCoprodCofan` / `praCoprodIsColimit` /
+  `praHasCoproduct` — full universal property
+
+Task A2 complete. All definitions compile
+without sorry or warnings.
+
 Universe: `K : Type` (universe 0) avoids
 `Small`/`ULift`. `max 0 w' = w'` and
 `max 0 w_I = w_I` hold syntactically.

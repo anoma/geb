@@ -1,5 +1,6 @@
 import GebLean.PresheafPRA
 import GebLean.Utilities.Sigma
+import GebLean.Paranatural
 import Mathlib.CategoryTheory.Limits.Opposites
 import Mathlib.CategoryTheory.Limits.FunctorCategory.Basic
 import Mathlib.CategoryTheory.Limits.Pi
@@ -1712,5 +1713,540 @@ instance praHasProduct :
     ⟨praProdFan P, praProdIsLimit P⟩
 
 end PRAProduct
+
+/-! ## Coproducts of PRAs
+
+The coproduct of a family of PRAs `P_k` has:
+- Positions: `Σ k, A_k(j)` (coproduct of position
+  presheaves, pointwise Sigma in Type)
+- Directions at `(j, ⟨k, a⟩)`: `E_k(j, a)`
+  (the k-th direction presheaf at that position)
+
+This is dual to `praProd`: positions get Sigma
+(not Pi) and directions are selected (not
+aggregated).
+-/
+
+section PRACoproduct
+
+universe u_I v_I u_J v_J w_I w'
+
+variable {I : Type u_I} [Category.{v_I} I]
+variable {J : Type u_J} [Category.{v_J} J]
+variable {K : Type}
+variable (P : K → ↑(PresheafPRACat.{u_I, v_I,
+    u_J, v_J, w_I, w'} I J))
+
+/--
+The coproduct position presheaf: sends `j : Jᵒᵖ`
+to `Σ k, praPositions I J (P k) j`.  Functorial
+in `j` by componentwise reindexing.
+-/
+def praCoprodPos : Jᵒᵖ ⥤ Type w' where
+  obj j := Σ k, praPositions I J (P k) j
+  map {j₁ j₂} f := fun ⟨k, a⟩ =>
+    ⟨k, ((praPositionsFunctor I J).obj
+      (P k)).map f a⟩
+  map_id j := by
+    funext ⟨k, a⟩
+    exact congrArg (Sigma.mk k)
+      (congrFun
+        (((praPositionsFunctor I J).obj
+          (P k)).map_id j) a)
+  map_comp {j₁ j₂ j₃} f g := by
+    funext ⟨k, a⟩
+    exact congrArg (Sigma.mk k)
+      (congrFun
+        (((praPositionsFunctor I J).obj
+          (P k)).map_comp f g) a)
+
+/--
+The coproduct direction presheaf at an element
+`(j, ⟨k, a⟩)` of the coproduct position presheaf.
+This is just the k-th factor's direction at
+`(j, a)`: no aggregation.
+-/
+def praCoprodDirAt (j : Jᵒᵖ)
+    (t : (praCoprodPos P).obj j) :
+    Iᵒᵖ ⥤ Type w_I :=
+  praDirectionsAt I J (P t.fst) j t.snd
+
+set_option maxHeartbeats 4000000 in
+-- The `convert rfl using 4` decomposition
+-- deterministically takes more than the
+-- default maximum number of heartbeats.
+private lemma praCoprodDir_map_comp
+    {x y z : (praCoprodPos P).ElementsPre}
+    (φ : x ⟶ y) (ψ : y ⟶ z) :
+    eqToHom (congrArg
+      (fun s => praDirectionsAt I J
+        (P s.fst) x.unop.fst s.snd)
+      (φ ≫ ψ).unop.property.symm) ≫
+    (praDirectionsAtFunctor I J
+      (P z.unop.snd.fst)).map
+      (Quiver.Hom.op
+        (CategoryOfElements.homMk (F :=
+          (praPositionsFunctor I J).obj
+            (P z.unop.snd.fst))
+          ⟨z.unop.fst, z.unop.snd.snd⟩
+          ⟨x.unop.fst,
+            ((praCoprodPos P).map
+              (φ ≫ ψ).unop.val
+              z.unop.snd).snd⟩
+          (φ ≫ ψ).unop.val
+          rfl)) =
+    (eqToHom (congrArg
+      (fun s => praDirectionsAt I J
+        (P s.fst) x.unop.fst s.snd)
+      φ.unop.property.symm) ≫
+    (praDirectionsAtFunctor I J
+      (P y.unop.snd.fst)).map
+      (Quiver.Hom.op
+        (CategoryOfElements.homMk (F :=
+          (praPositionsFunctor I J).obj
+            (P y.unop.snd.fst))
+          ⟨y.unop.fst, y.unop.snd.snd⟩
+          ⟨x.unop.fst,
+            ((praCoprodPos P).map
+              φ.unop.val y.unop.snd).snd⟩
+          φ.unop.val
+          rfl))) ≫
+    eqToHom (congrArg
+      (fun s => praDirectionsAt I J
+        (P s.fst) y.unop.fst s.snd)
+      ψ.unop.property.symm) ≫
+    (praDirectionsAtFunctor I J
+      (P z.unop.snd.fst)).map
+      (Quiver.Hom.op
+        (CategoryOfElements.homMk (F :=
+          (praPositionsFunctor I J).obj
+            (P z.unop.snd.fst))
+          ⟨z.unop.fst, z.unop.snd.snd⟩
+          ⟨y.unop.fst,
+            ((praCoprodPos P).map
+              ψ.unop.val z.unop.snd).snd⟩
+          ψ.unop.val
+          rfl)) := by
+  -- Decompose the composite element morphism.
+  -- Let pos_k = (praPositionsFunctor ...).obj (P k),
+  -- F_k = praDirectionsAtFunctor ... (P k).
+  -- The element morphism m_comp has
+  -- .val = f_ψ ≫ f_φ and target position
+  -- pos_k.map (f_ψ ≫ f_φ) a_z.
+  -- This equals eqToHom (from map_comp) ≫
+  -- m_φ.op ≫ m_ψ.op.
+  -- Then F_k.map(m_comp.op) = F_k.map(eqToHom ≫ m_φ ≫ m_ψ)
+  --   = eqToHom' ≫ F_k.map(m_φ) ≫ F_k.map(m_ψ).
+  -- The outer eqToHom composes with eqToHom'
+  -- to give the identity.
+  -- On the RHS, the eqToHom_φ ≫ F_y.map m_φ
+  -- equals eqToHom ≫ F_k.map m_φ by transport.
+  -- The eqToHom_ψ similarly.
+  -- All eqToHom terms cancel by eqToHom_trans.
+  have h_pos_eq :
+      (Opposite.op
+        ⟨x.unop.fst,
+          ((praCoprodPos P).map
+            (φ ≫ ψ).unop.val
+            z.unop.snd).snd⟩ :
+        ((praPositionsFunctor I J).obj
+          (P z.unop.snd.fst)).ElementsPre) =
+      Opposite.op
+        ⟨x.unop.fst,
+          ((praCoprodPos P).map
+            φ.unop.val
+            ((praCoprodPos P).map
+              ψ.unop.val
+              z.unop.snd)).snd⟩ := by
+    congr 1; congr 1
+    exact congrFun
+      (((praPositionsFunctor I J).obj
+        (P z.unop.snd.fst)).map_comp
+        ψ.unop.val φ.unop.val)
+      z.unop.snd.snd
+  have h_elem :
+      (CategoryOfElements.homMk (F :=
+        (praPositionsFunctor I J).obj
+          (P z.unop.snd.fst))
+        ⟨z.unop.fst, z.unop.snd.snd⟩
+        ⟨x.unop.fst,
+          ((praCoprodPos P).map
+            (φ ≫ ψ).unop.val
+            z.unop.snd).snd⟩
+        (φ ≫ ψ).unop.val rfl).op =
+      eqToHom h_pos_eq ≫
+      (CategoryOfElements.homMk (F :=
+        (praPositionsFunctor I J).obj
+          (P z.unop.snd.fst))
+        ⟨y.unop.fst,
+          ((praCoprodPos P).map
+            ψ.unop.val z.unop.snd).snd⟩
+        ⟨x.unop.fst,
+          ((praCoprodPos P).map
+            φ.unop.val
+            ((praCoprodPos P).map
+              ψ.unop.val
+              z.unop.snd)).snd⟩
+        φ.unop.val rfl).op ≫
+      (CategoryOfElements.homMk (F :=
+        (praPositionsFunctor I J).obj
+          (P z.unop.snd.fst))
+        ⟨z.unop.fst, z.unop.snd.snd⟩
+        ⟨y.unop.fst,
+          ((praCoprodPos P).map
+            ψ.unop.val z.unop.snd).snd⟩
+        ψ.unop.val rfl).op := by
+    apply Quiver.Hom.unop_inj
+    exact Subtype.ext (by
+      simp [CategoryOfElements.comp_val,
+        eqToHom_unop,
+        CategoryOfElements.eqToHom_val,
+        eqToHom_refl, Category.comp_id]
+      rfl)
+  rw [h_elem, Functor.map_comp,
+    Functor.map_comp, eqToHom_map]
+  -- The goal now has F_z.map(elem_φ_z) on
+  -- the LHS and F_y.map(elem_φ_y) on the RHS.
+  -- These differ by y.snd vs (map ψ z.snd).
+  -- Use convert + ψ.property closers.
+  have h_ψ := ψ.unop.property.symm
+  simp only [← Category.assoc (eqToHom _)
+    (eqToHom _), eqToHom_trans]
+  simp only [Category.assoc]
+  -- Close by converting and dispatching
+  -- subgoals via congrArg on h_ψ.
+  convert rfl using 4 <;>
+    first
+    | rfl
+    | exact h_ψ
+    | (exact congrArg
+        ((praPositionsFunctor I J).obj ∘ P ∘
+          Sigma.fst) h_ψ)
+    | (exact congrArg Sigma.snd h_ψ |>.eq)
+    | (exact congrArg (fun k =>
+        ((praPositionsFunctor I J).obj
+          (P k)).ElementsPre)
+        (congrArg Sigma.fst h_ψ))
+    | (exact h_ψ ▸ HEq.rfl)
+    | (exact congrArg
+        (fun (s : Σ k,
+            praPositions I J (P k)
+              x.unop.fst) =>
+          praDirectionsAt I J
+            (P s.fst) x.unop.fst s.snd)
+        (congrArg
+          ((praCoprodPos P).map φ.unop.val)
+          h_ψ))
+    | (exact congrArg
+        (fun (s : Σ k,
+            praPositions I J (P k)
+              y.unop.fst) =>
+          praDirectionsAt I J
+            (P s.fst) y.unop.fst s.snd)
+        h_ψ)
+    | (exact congr_arg_heq
+        (fun (s : Σ k,
+            praPositions I J (P k)
+              x.unop.fst) =>
+          @Opposite.op
+            (((praPositionsFunctor I J).obj
+              (P s.fst)).Elements)
+            ⟨x.unop.fst, s.snd⟩)
+        (congrArg
+          ((praCoprodPos P).map φ.unop.val)
+          h_ψ))
+    | (exact congr_arg_heq
+        (fun (s : Σ k,
+            praPositions I J (P k)
+              y.unop.fst) =>
+          @Opposite.op
+            (((praPositionsFunctor I J).obj
+              (P s.fst)).Elements)
+            ⟨y.unop.fst, s.snd⟩)
+        h_ψ)
+    | (exact eqToHom_comp_heq _ _)
+    | (exact congr_arg_heq
+        (fun (s : Σ k,
+            praPositions I J (P k)
+              y.unop.fst) =>
+          (CategoryOfElements.homMk (F :=
+            (praPositionsFunctor I J).obj
+              (P s.fst))
+            ⟨y.unop.fst, s.snd⟩
+            ⟨x.unop.fst,
+              ((praCoprodPos P).map
+                φ.unop.val s).snd⟩
+            φ.unop.val rfl).op)
+        h_ψ)
+
+/--
+A morphism `φ` in `praCoprodPos.ElementsPre`
+preserves the Sigma index. This extracts the
+proof that source and target have the same `k`.
+-/
+private lemma praCoprodElemFstEq
+    {x y : (praCoprodPos P).ElementsPre}
+    (φ : x ⟶ y) :
+    y.unop.snd.fst = x.unop.snd.fst :=
+  congrArg Sigma.fst φ.unop.property
+
+/--
+The coproduct direction functor on
+`praCoprodPos.ElementsPre`.  Sends each element
+`(j, ⟨k, a⟩)` to the k-th factor's direction
+presheaf, functorially by the factor's direction
+functor. A morphism preserves `k`
+(propositionally), handled via `eqToHom`.
+-/
+def praCoprodDir :
+    (praCoprodPos P).ElementsPre ⥤
+      (Iᵒᵖ ⥤ Type w_I) where
+  obj e :=
+    praDirectionsAt I J
+      (P e.unop.snd.fst) e.unop.fst
+      e.unop.snd.snd
+  map {x y} φ :=
+    -- Transport via the full Sigma equality
+    -- from the morphism property, then apply
+    -- the factor direction functor with a
+    -- tautological element morphism.
+    eqToHom (congrArg
+      (fun s => praDirectionsAt I J
+        (P s.fst) x.unop.fst s.snd)
+      φ.unop.property.symm) ≫
+    (praDirectionsAtFunctor I J
+      (P y.unop.snd.fst)).map
+      (Quiver.Hom.op
+        (CategoryOfElements.homMk (F :=
+          (praPositionsFunctor I J).obj
+            (P y.unop.snd.fst))
+          ⟨y.unop.fst, y.unop.snd.snd⟩
+          ⟨x.unop.fst,
+            ((praCoprodPos P).map
+              φ.unop.val
+              y.unop.snd).snd⟩
+          φ.unop.val
+          rfl))
+  map_id x := by
+    -- The element morphism for 𝟙 is eqToHom
+    -- (val = 𝟙, verified by ext).
+    have h_elem :
+        (CategoryOfElements.homMk
+          (F := (praPositionsFunctor I J).obj
+            (P x.unop.snd.fst))
+          ⟨x.unop.fst, x.unop.snd.snd⟩
+          ⟨x.unop.fst,
+            ((praCoprodPos P).map
+              (𝟙 x).unop.val
+              x.unop.snd).snd⟩
+          (𝟙 x).unop.val rfl).op =
+        eqToHom (by
+          congr 1; congr 1
+          exact eq_of_heq
+            (Sigma.ext_iff.mp
+              (𝟙 x).unop.property).2) := by
+      apply Quiver.Hom.unop_inj
+      apply CategoryOfElements.ext
+      simp only [Quiver.Hom.unop_op,
+        CategoryOfElements.homMk,
+        eqToHom_unop,
+        CategoryOfElements.eqToHom_val,
+        eqToHom_refl]
+      erw [CategoryTheory.unop_id]; rfl
+    rw [h_elem, eqToHom_map,
+      eqToHom_trans, eqToHom_refl]
+  map_comp {x y z} φ ψ := by
+    exact praCoprodDir_map_comp P φ ψ
+
+/--
+The coproduct PRA assembled from `praCoprodPos`
+and `praCoprodDir` via `praReassemble`.
+-/
+def praCoprod :
+    ↑(PresheafPRACat.{u_I, v_I,
+      u_J, v_J, w_I, w'} I J) :=
+  praReassemble (praCoprodPos P) (praCoprodDir P)
+
+/--
+The CCR-level injection morphism at stage `j`:
+`(P k).obj j ⟶ (praCoprod P).obj j` in CCR.
+Sends positions by Sigma.mk k and directions
+by identity (the direction at `⟨k, a⟩` IS the
+k-th direction).
+-/
+def praCoprodInjAt (k : K) (j : Jᵒᵖ) :
+    (P k).obj j ⟶ (praCoprod P).obj j :=
+  Quiver.Hom.op
+    { base := Quiver.Hom.op
+        (fun a => (⟨k, a⟩ :
+          (praCoprodPos P).obj j))
+      fiber := fun a =>
+        eqToHom (by rfl) }
+
+/--
+The coproduct injection: a natural transformation
+`P k ⟶ praCoprod P` in `Jᵒᵖ ⥤ CCR(PSh(I))`.
+-/
+def praCoprodInj (k : K) :
+    P k ⟶ praCoprod P where
+  app j := praCoprodInjAt P k j
+  naturality j₁ j₂ g := by
+    apply Quiver.Hom.unop_inj
+    erw [unop_comp]
+
+/--
+The descent morphism at stage `j`: given a
+cofan `s : Cofan P` with apex `Q` and
+injections `ιₖ : P k ⟶ Q`, construct
+`(praCoprod P).obj j ⟶ Q.obj j` in CCR.
+Base: `⟨k, a⟩ ↦ ιₖ_base a`.
+Fiber: `q ↦ ιₖ_fiber(q)` where `k` is
+determined by the coproduct position.
+-/
+def praCoprodDescAt
+    (s : Limits.Cofan P) (j : Jᵒᵖ) :
+    (praCoprod P).obj j ⟶ s.pt.obj j :=
+  Quiver.Hom.op
+    { base := Quiver.Hom.op (fun q =>
+        ((s.inj q.fst).app j).unop.base.unop
+          q.snd)
+      fiber := fun q =>
+        ((s.inj q.fst).app j).unop.fiber
+          q.snd }
+
+/--
+Factorization: the injection composed with
+the descent recovers the cocone morphism.
+-/
+private lemma praCoprodDescAt_fac
+    (s : Limits.Cofan P) (k : K)
+    (j : Jᵒᵖ) :
+    praCoprodInjAt P k j ≫
+      praCoprodDescAt P s j =
+    (s.inj k).app j := by
+  apply Quiver.Hom.unop_inj
+  erw [unop_comp]
+
+/--
+Two CCR morphisms from a coproduct are equal
+if they agree on all injections (joint epicity /
+eta rule).
+-/
+private lemma praCoprodMorphExt
+    {X : ↑(CoprodCovarRepCat.{max v_I u_I
+      (w_I + 1), max u_I w_I, w'}
+      (↑(presheafCat.{u_I, v_I, w_I} I)))}
+    {j : Jᵒᵖ}
+    (f g : (praCoprod P).obj j ⟶ X)
+    (h : ∀ k, praCoprodInjAt P k j ≫ f =
+      praCoprodInjAt P k j ≫ g) :
+    f = g := by
+  apply Quiver.Hom.unop_inj
+  have hbase₀ : f.unop.base = g.unop.base := by
+    apply Quiver.Hom.unop_inj; funext ⟨k, a⟩
+    have := congrArg Quiver.Hom.unop (h k)
+    erw [unop_comp, unop_comp] at this
+    exact congrFun (congrArg
+      Quiver.Hom.unop (congrArg
+        Grothendieck.Hom.base this))
+      a
+  rcases hf : f.unop with ⟨fb, ff⟩
+  rcases hg : g.unop with ⟨gb, gf⟩
+  have hbase : fb = gb := by
+    have := hbase₀; rw [hf, hg] at this
+    exact this
+  subst hbase
+  congr 1
+  funext ⟨k, a⟩
+  have hk := congrArg Quiver.Hom.unop (h k)
+  erw [unop_comp, unop_comp] at hk
+  rw [hf, hg] at hk
+  have hk_fib := Grothendieck.congr hk
+  simp only [eqToHom_refl,
+    Category.id_comp] at hk_fib
+  exact congrFun hk_fib a
+
+private lemma praCoprodDesc_naturality
+    (s : Limits.Cofan P)
+    {j₁ j₂ : Jᵒᵖ} (g : j₁ ⟶ j₂) :
+    (praCoprod P).map g ≫
+      praCoprodDescAt P s j₂ =
+    praCoprodDescAt P s j₁ ≫
+      s.pt.map g := by
+  apply praCoprodMorphExt
+  intro k
+  calc praCoprodInjAt P k j₁ ≫
+        ((praCoprod P).map g ≫
+          praCoprodDescAt P s j₂)
+    _ = (praCoprodInjAt P k j₁ ≫
+          (praCoprod P).map g) ≫
+          praCoprodDescAt P s j₂ := by
+        rw [← Category.assoc]
+    _ = ((P k).map g ≫
+          praCoprodInjAt P k j₂) ≫
+          praCoprodDescAt P s j₂ := by
+        congr 1
+    _ = (P k).map g ≫
+        (s.inj k).app j₂ := by
+        rw [Category.assoc,
+          praCoprodDescAt_fac]
+    _ = (s.inj k).app j₁ ≫
+        s.pt.map g :=
+        (s.inj k).naturality g
+    _ = (praCoprodInjAt P k j₁ ≫
+          praCoprodDescAt P s j₁) ≫
+          s.pt.map g := by
+        rw [praCoprodDescAt_fac]
+    _ = praCoprodInjAt P k j₁ ≫
+        (praCoprodDescAt P s j₁ ≫
+          s.pt.map g) := by
+        rw [Category.assoc]
+
+def praCoprodDesc (s : Limits.Cofan P) :
+    praCoprod P ⟶ s.pt where
+  app j := praCoprodDescAt P s j
+  naturality _ _ g :=
+    praCoprodDesc_naturality P s g
+
+def praCoprodCofan : Limits.Cofan P :=
+  Limits.Cofan.mk (praCoprod P)
+    (praCoprodInj P)
+
+private lemma praCoprodDesc_fac
+    (s : Limits.Cofan P) (k : K) :
+    praCoprodInj P k ≫ praCoprodDesc P s =
+    s.inj k := by
+  apply NatTrans.ext; funext j
+  exact praCoprodDescAt_fac P s k j
+
+private lemma praCoprodDesc_uniq
+    (s : Limits.Cofan P)
+    (m : praCoprod P ⟶ s.pt)
+    (hm : ∀ k, praCoprodInj P k ≫ m =
+      s.inj k) :
+    m = praCoprodDesc P s := by
+  apply NatTrans.ext; funext j
+  apply praCoprodMorphExt
+  intro k
+  rw [show praCoprodInjAt P k j ≫ m.app j =
+    (s.inj k).app j from
+    congrFun (congrArg NatTrans.app
+      (hm k)) j]
+  exact (praCoprodDescAt_fac P s k j).symm
+
+def praCoprodIsColimit :
+    Limits.IsColimit (praCoprodCofan P) :=
+  Limits.mkCofanColimit _
+    (praCoprodDesc P)
+    (praCoprodDesc_fac P)
+    (fun s m hm =>
+      praCoprodDesc_uniq P s m hm)
+
+instance praHasCoproduct :
+    Limits.HasCoproduct P :=
+  Limits.HasColimit.mk
+    ⟨praCoprodCofan P, praCoprodIsColimit P⟩
+
+end PRACoproduct
 
 end GebLean
