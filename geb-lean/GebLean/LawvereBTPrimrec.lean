@@ -914,4 +914,78 @@ theorem interpU_unary_primrec
     (fun bt _ => bt)
     (fun _ => Primrec.id)
 
+/-- The Ackermann function transported to
+binary trees via the Goedel encoding. -/
+def ackOnBT : BT.{0} → BT.{0} :=
+  fun bt => decodeBT
+    (ack (encodeBT bt) (encodeBT bt))
+
+theorem ackOnBT_not_primrec :
+    ¬ Primrec ackOnBT := by
+  intro h
+  have heq : (fun n : Nat => ack n n) =
+      (fun n => encodeBT
+        (ackOnBT (decodeBT n))) := by
+    funext n
+    simp only [ackOnBT, encodeBT_decodeBT]
+  have : Primrec (fun n : Nat =>
+      ack n n) := by
+    rw [heq]
+    exact Primrec.encode.comp
+      (h.comp decodeBT_primrec)
+  exact not_nat_primrec_ack_self
+    (Primrec.nat_iff.mp this)
+
+/-- The interpretation functor from the Lawvere
+theory of parameterized binary tree objects into
+`Type` is not full.  The Ackermann function
+(transported to binary trees) is a computable
+function `BT -> BT` that is not in the image of
+any morphism in the Lawvere theory, since
+all such morphisms compute primitive recursive
+functions. -/
+theorem interpFunctor_not_full :
+    ¬ interpFunctor.{0}.Full := by
+  intro hfull
+  have hsurj := Functor.map_surjective
+    (F := interpFunctor.{0}) (X := (1 : ℕ))
+    (Y := (1 : ℕ))
+  have hmor := hsurj
+    (fun (ctx : Fin 1 → BT.{0}) =>
+      (fun (_ : Fin 1) =>
+        ackOnBT (ctx 0)))
+  obtain ⟨f, hf⟩ := hmor
+  have hprim : Primrec ackOnBT := by
+    obtain ⟨f_raw, hfr⟩ :=
+      Quotient.exists_rep
+        (s := btMorNSetoid 1 1) f
+    have hinterp : ∀ (ctx : Fin 1 → BT.{0}),
+        BTMorN.interpU f_raw ctx =
+        (fun (_ : Fin 1) =>
+          ackOnBT (ctx 0)) := by
+      intro ctx
+      have hmap : interpFunctor.{0}.map f =
+          BTMorNQuo.interpU f := rfl
+      rw [hmap] at hf
+      rw [← hfr] at hf
+      have := congrFun hf ctx
+      simp only [BTMorNQuo.interpU,
+        Quotient.lift_mk] at this
+      exact this
+    have hcomp :
+        (fun bt : BT.{0} =>
+          (f_raw ⟨0, by omega⟩).interpU
+            (fun _ => bt)) =
+        ackOnBT := by
+      funext bt
+      have h0 := congrFun
+        (hinterp (fun _ => bt))
+        ⟨0, by omega⟩
+      simp only [BTMorN.interpU] at h0
+      exact h0
+    rw [← hcomp]
+    exact interpU_unary_primrec
+      (f_raw ⟨0, by omega⟩)
+  exact ackOnBT_not_primrec hprim
+
 end GebLean
