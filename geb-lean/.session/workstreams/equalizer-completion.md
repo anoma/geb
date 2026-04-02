@@ -3,9 +3,14 @@
 ## Status
 
 Implementation substantially complete. PBTO preservation
-(Task 8) deferred -- requires showing the fold universal
-property extends from embedded objects to arbitrary
-coreflexive pairs.
+(Task 8) partially complete: generic premorphism lemmas
+for the fold have been proved in
+`EqualizerCompletionPBTO.lean`, including the result
+`elim_isPremorphism_of_oneStep_step` which proves the
+premorphism condition for `p.elim f g` when the step
+function `g` has a one-step premorphism witness.
+The general case with `EqvGen` step-function premorphism
+condition remains open (see "Remaining" section).
 
 ## Goal
 
@@ -64,28 +69,82 @@ The construction, from Bunge & Carboni "The Symmetric Topos"
 - [x] Task 5: Pointwise finite products
 - [x] Task 6: Equalizer construction + HasFiniteLimits
 - [x] Task 7: LawvereBTLexCat definition + instances
-- [ ] Task 8: PBTO preservation (deferred)
+- [~] Task 8: PBTO preservation (partial -- see below)
 - [x] Task 9: Interpretation functor extension
 - [x] Task 10: Tests
 - [x] Task 11: Module registration (done incrementally)
 
 ## Remaining: PBTO Preservation (Task 8)
 
-The PBTO in `LawvereBTQuotCat` has `T = 1`,
-`ℓ = btLeafQ`, `β = btBranchQ`. Under the embedding,
-these become morphisms between trivially-embedded objects.
-The universal property `elim` must be extended to work
-for arbitrary coreflexive pairs A and X (not just
-embedded ones). This requires:
+### What has been proved
 
-1. Defining `elim` on the src-components using the
-   existing `elimQ` from `LawvereBTQuot.lean`
-2. Showing the result is a premorphism in the completion
-3. Proving computation rules hold modulo the coreflexive
-   equivalence relation
-4. Proving uniqueness modulo the equivalence relation
+In `GebLean/EqualizerCompletionPBTO.lean`:
 
-The main difficulty is that `elimQ` operates on raw
-quotient morphisms in `LawvereBTQuotCat`, and the
-coreflexive equivalence adds another layer of quotient
-that the fold axioms must respect.
+- `elim_naturality`: naturality of `p.elim` in the
+  base parameter
+- `elim_algebra_morphism`: algebra morphism property
+  of `p.elim`
+- `elim_base_relStep` / `elim_base_eqvGen`: changing
+  the base of a fold preserves the coreflexive
+  equivalence (Lemma A)
+- `elim_isPremorphism_oneStep`: one-step premorphism
+  condition given one-step witnesses for both `f` and
+  `g`
+- `cpReflWitness` and related lemmas: reflexivity
+  witnesses `cfpMap X.retract X.retract ≫ g ≫ q`
+  for sections `q` of `X`
+- `elim_left_via_refl` / `elim_right_via_refl`:
+  `p.elim f g ≫ X.left = p.elim (f ≫ X.left) wL`
+  and similarly for `X.right`
+- `elim_refl_retract`: the fold via a reflexivity
+  witness retracts to the original fold
+- `elim_cross_retract`: the fold via one reflexivity
+  witness, post-composed with `X.retract ≫ q₂`,
+  equals the fold via the reflexivity witness for `q₂`
+- `elim_isPremorphism_of_oneStep_step`: the
+  premorphism condition for `p.elim f g` when `g` has
+  a one-step premorphism witness (a single `w_g`
+  satisfying both `cfpMap X.left X.left ≫ w_g =
+  g ≫ X.left` and `cfpMap X.right X.right ≫ w_g =
+  g ≫ X.right`)
+- `elim_isPremorphism_of_relStep_step`: wrapper
+  extracting the one-step witness from a
+  `CoreflexiveRelStep`
+
+### What remains
+
+The general premorphism condition
+`elim_isPremorphism` with `IsCPPremorphism` (i.e.,
+`EqvGen`-based) on BOTH `f` and `g` is not yet
+proved. The `elim_isPremorphism_of_oneStep_step`
+theorem handles the case where `g`'s premorphism
+condition is one-step. The gap is the "step-function
+change": showing that changing the step function
+between the two reflexivity witnesses
+`cpReflWitness X g X.left` and
+`cpReflWitness X g X.right` preserves the
+coreflexive equivalence of the fold output.
+
+The step-function change reduces to:
+`CoreflexiveEqv (cpProd A (cpEmbed p.T))
+  (p.elim (f ≫ X.right) (cpReflWitness X g X.left))
+  (p.elim (f ≫ X.right) (cpReflWitness X g X.right))`
+
+The two step functions differ by post-composition of
+`cfpMap X.retract X.retract ≫ g` with `X.left` vs
+`X.right`. Both retract to the same fold
+`p.elim f g`, but the coreflexive equivalence in
+`cpProd A (cpEmbed p.T)` relates things through the
+`A`-side structure, while the step-function change is
+an `X`-side phenomenon. This mismatch makes the
+pre-quotient proof non-trivial.
+
+Possible approaches for the remaining gap:
+
+1. Prove at the quotient-category level where the
+   universal property directly gives the result
+2. Show that in the application to `LawvereBTQuotCat`,
+   the `g` premorphism condition is always one-step
+   (which may follow from the construction)
+3. Prove a structural result about `EqvGen` and folds
+   that handles the step-function change

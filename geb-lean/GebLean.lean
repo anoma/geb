@@ -16,6 +16,7 @@ import GebLean.DepCategoryJudgments
 import GebLean.DinaturalNumbers
 import GebLean.EqualizerCompletion
 import GebLean.EqualizerCompletionLimits
+import GebLean.EqualizerCompletionPBTO
 import GebLean.Factorization
 import GebLean.FiniteQuiver
 import GebLean.FreeCoequalizerCompletion
