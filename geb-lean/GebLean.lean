@@ -14,6 +14,8 @@ import GebLean.DepCategoryAdjunction
 import GebLean.DepCategoryCat
 import GebLean.DepCategoryJudgments
 import GebLean.DinaturalNumbers
+import GebLean.EqualizerCompletion
+import GebLean.EqualizerCompletionLimits
 import GebLean.Factorization
 import GebLean.FiniteQuiver
 import GebLean.FreeCoequalizerCompletion
@@ -21,6 +23,7 @@ import GebLean.FreeToposBT
 import GebLean.HexagonCat
 import GebLean.LawvereBT
 import GebLean.LawvereBTEq
+import GebLean.LawvereBTEqCompletion
 import GebLean.LawvereBTInterp
 import GebLean.LawvereBTPrimrec
 import GebLean.LawvereBTQuot

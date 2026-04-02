@@ -2,7 +2,10 @@
 
 ## Status
 
-Planning complete; implementation not started.
+Implementation substantially complete. PBTO preservation
+(Task 8) deferred -- requires showing the fold universal
+property extends from embedded objects to arbitrary
+coreflexive pairs.
 
 ## Goal
 
@@ -30,11 +33,13 @@ The construction, from Bunge & Carboni "The Symmetric Topos"
 - `docs/superpowers/plans/2026-04-01-equalizer-completion.md`
   -- implementation plan (complete)
 - `GebLean/EqualizerCompletion.lean` -- generic construction
-  (not started)
+  (complete: 671 lines)
 - `GebLean/EqualizerCompletionLimits.lean` -- limits
-  (not started)
+  (complete: 894 lines)
 - `GebLean/LawvereBTEqCompletion.lean` -- application
-  (not started)
+  (complete except PBTO)
+- `GebLeanTests/TestEqualizerCompletion.lean` -- tests
+  (complete)
 
 ## Dependencies
 
@@ -52,14 +57,35 @@ The construction, from Bunge & Carboni "The Symmetric Topos"
 - [x] Transcribe Bunge/Carboni construction to docs/
 - [x] Research mathlib for existing constructions
 - [x] Write implementation plan
-- [ ] Task 1: CoreflexivePairObj structure
-- [ ] Task 2: Equivalence relation and premorphisms
-- [ ] Task 3: Quotient category instance
-- [ ] Task 4: Embedding functor
-- [ ] Task 5: Pointwise finite products
-- [ ] Task 6: Equalizer construction
-- [ ] Task 7: Application to LawvereBTQuotCat
-- [ ] Task 8: PBTO preservation
-- [ ] Task 9: Interpretation functor extension
-- [ ] Task 10: Tests
-- [ ] Task 11: Module registration
+- [x] Task 1: CoreflexivePairObj structure
+- [x] Task 2: Equivalence relation and premorphisms
+- [x] Task 3: Quotient category instance
+- [x] Task 4: Embedding functor (full and faithful)
+- [x] Task 5: Pointwise finite products
+- [x] Task 6: Equalizer construction + HasFiniteLimits
+- [x] Task 7: LawvereBTLexCat definition + instances
+- [ ] Task 8: PBTO preservation (deferred)
+- [x] Task 9: Interpretation functor extension
+- [x] Task 10: Tests
+- [x] Task 11: Module registration (done incrementally)
+
+## Remaining: PBTO Preservation (Task 8)
+
+The PBTO in `LawvereBTQuotCat` has `T = 1`,
+`ℓ = btLeafQ`, `β = btBranchQ`. Under the embedding,
+these become morphisms between trivially-embedded objects.
+The universal property `elim` must be extended to work
+for arbitrary coreflexive pairs A and X (not just
+embedded ones). This requires:
+
+1. Defining `elim` on the src-components using the
+   existing `elimQ` from `LawvereBTQuot.lean`
+2. Showing the result is a premorphism in the completion
+3. Proving computation rules hold modulo the coreflexive
+   equivalence relation
+4. Proving uniqueness modulo the equivalence relation
+
+The main difficulty is that `elimQ` operates on raw
+quotient morphisms in `LawvereBTQuotCat`, and the
+coreflexive equivalence adds another layer of quotient
+that the fold axioms must respect.

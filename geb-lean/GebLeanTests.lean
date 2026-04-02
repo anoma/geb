@@ -1,6 +1,7 @@
 import GebLeanTests.AcyclicCat
 import GebLeanTests.Basic
 import GebLeanTests.LayeredEquivalence
+import GebLeanTests.TestEqualizerCompletion
 import GebLeanTests.TestTreeCalcMeta
 import GebLeanTests.TestTreeCalcPrograms
 import GebLeanTests.TestTreeCalcReduction
