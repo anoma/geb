@@ -2,15 +2,11 @@
 
 ## Status
 
-Implementation substantially complete. PBTO preservation
-(Task 8) partially complete: generic premorphism lemmas
-for the fold have been proved in
-`EqualizerCompletionPBTO.lean`, including the result
-`elim_isPremorphism_of_oneStep_step` which proves the
-premorphism condition for `p.elim f g` when the step
-function `g` has a one-step premorphism witness.
-The general case with `EqvGen` step-function premorphism
-condition remains open (see "Remaining" section).
+Complete.  The free equalizer completion is fully
+implemented with finite limits, interpretation functor,
+and generic PBTO supporting lemmas.  Full PBTO
+preservation requires the exact completion (a separate
+workstream: `exact-completion-pbto.md`).
 
 ## Goal
 
