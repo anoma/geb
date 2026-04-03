@@ -1,4 +1,5 @@
 import GebLean.LawvereBTQuot
+import Mathlib.CategoryTheory.Generator.Basic
 
 /-!
 # Interpretation of the Lawvere Theory into Type
@@ -1771,5 +1772,56 @@ instance : interpFunctor.{0}.Faithful where
     intro ctx
     exact congrFun
       (congrFun heq ctx) j
+
+/-! ## Separator
+
+The terminal object `0` is a separator in
+`LawvereBTQuotCat`: morphisms are determined by
+their values on global elements (morphisms from
+the terminal object).  This follows from the
+completeness theorem (`interpU_complete`), which
+states that agreement of interpretations at all
+ground contexts implies equivalence under
+`btMorRel`. -/
+
+/-- The terminal object `0` is a separator in
+`LawvereBTQuotCat`.  For any two morphisms
+`f g : n ⟶ m`, if `h ≫ f = h ≫ g` for every
+global element `h : 0 ⟶ n`, then `f = g`. -/
+theorem lawvereBTQuotCat_isSeparator :
+    IsSeparator (0 : LawvereBTQuotCat) := by
+  rw [isSeparator_def]
+  intro n m f g hyp
+  revert f g
+  apply Quotient.ind₂
+  intro f_raw g_raw hyp'
+  apply Quotient.sound
+    (s := btMorNSetoid n m)
+  intro j
+  apply interpU_complete
+  intro ctx
+  let h_raw : BTMorN 0 n :=
+    fun i => quoteBT (ctx i)
+  let h : (0 : LawvereBTQuotCat) ⟶ n :=
+    Quotient.mk (btMorNSetoid 0 n) h_raw
+  have heq := hyp' h
+  have heq_interp :
+      BTMorNQuo.interpU
+        (BTMorNQuo.comp h ⟦f_raw⟧)
+        (Fin.elim0 (α := BT.{0})) =
+      BTMorNQuo.interpU
+        (BTMorNQuo.comp h ⟦g_raw⟧)
+        (Fin.elim0 (α := BT.{0})) :=
+    congrArg (BTMorNQuo.interpU ·
+      (Fin.elim0 (α := BT.{0}))) heq
+  rw [BTMorNQuo.interpU_comp,
+      BTMorNQuo.interpU_comp] at heq_interp
+  have h_interp_eq :
+      BTMorNQuo.interpU h
+        (Fin.elim0 (α := BT.{0})) = ctx := by
+    funext i
+    exact quoteBT_interpU (ctx i) Fin.elim0
+  rw [h_interp_eq] at heq_interp
+  exact congrFun heq_interp j
 
 end GebLean
