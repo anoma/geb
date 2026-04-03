@@ -1,4 +1,5 @@
 import GebLean.TreeLogic
+import Mathlib.CategoryTheory.Generator.Basic
 
 /-!
 # PER Objects and Category on Binary Trees
@@ -10,7 +11,8 @@ and the category instance.
 
 A PER on T is a morphism `rel : T × T → T` satisfying
 symmetry and transitivity, where leaf encodes true and
-non-leaf encodes false.
+non-leaf encodes false.  The relation is required to
+output Boolean values (`rel ≫ isLeafEndo = rel`).
 
 Morphisms between PERs are equivalence classes of
 relation-preserving maps, where two maps are equivalent
@@ -55,7 +57,105 @@ def t3z :
   cfpSnd p.T (cfpProd p.T p.T) ≫
     cfpSnd p.T p.T
 
-/-! ## Leaf-constantness predicate -/
+/-! ## Transitivity predicates -/
+
+/-- Equational transitivity of a relation
+`rel : T × T → T` using `boolAnd`: the equation
+`boolAnd(boolAnd(rel(x,z), rel(z,y)), rel(x,y))
+  = boolAnd(rel(x,z), rel(z,y))`
+holds on `T × (T × T)`.  This encodes
+"rel(x,z) ∧ rel(z,y) implies rel(x,y)" as a
+single morphism equation. -/
+def EqTransitive
+    (rel : cfpProd p.T p.T ⟶ p.T) : Prop :=
+  cfpLift
+    (cfpLift
+      (cfpLift t3x t3z ≫ rel)
+      (cfpLift t3z t3y ≫ rel) ≫
+      boolAnd)
+    (cfpLift t3x t3y ≫ rel) ≫
+    boolAnd =
+  cfpLift
+    (cfpLift t3x t3z ≫ rel)
+    (cfpLift t3z t3y ≫ rel) ≫
+    boolAnd
+
+/-- Quantified transitivity of a relation
+`rel : T × T → T`: for any generalized element
+`e : D ⟶ T × (T × T)`, if `e ≫ rel(x,z)` and
+`e ≫ rel(z,y)` are leaf-constant, then
+`e ≫ rel(x,y)` is also leaf-constant. -/
+def QuantTransitive
+    (rel : cfpProd p.T p.T ⟶ p.T) : Prop :=
+  {D : C} →
+  (e : D ⟶ cfpProd p.T (cfpProd p.T p.T)) →
+  IsLeafConst
+    (e ≫ cfpLift t3x t3z ≫ rel) →
+  IsLeafConst
+    (e ≫ cfpLift t3z t3y ≫ rel) →
+  IsLeafConst
+    (e ≫ cfpLift t3x t3y ≫ rel)
+
+/-- `EqTransitive` implies `QuantTransitive`:
+the equational form of transitivity implies the
+quantified form.  The proof uses
+`boolAnd_implies_IsLeafConst`, which bridges from
+the `boolAnd`-implication equation to the
+`IsLeafConst` chain. -/
+theorem eqTransitive_implies_quant
+    {rel : cfpProd p.T p.T ⟶ p.T}
+    (rel_bool : rel ≫ isLeafEndo = rel)
+    (ht : EqTransitive rel) :
+    QuantTransitive rel := by
+  intro D e h1 h2
+  unfold EqTransitive at ht
+  -- The hypothesis ht says
+  -- boolAnd(boolAnd(rel(x,z), rel(z,y)),
+  --   rel(x,y)) =
+  -- boolAnd(rel(x,z), rel(z,y)).
+  -- Set A := boolAnd(rel(x,z), rel(z,y)),
+  --      B := rel(x,y).
+  -- Then boolAnd(A, B) = A.
+  -- By boolAnd_implies_IsLeafConst (with
+  -- B ≫ isLeafEndo = B from rel_bool):
+  -- for any e, IsLeafConst(e ≫ A) implies
+  -- IsLeafConst(e ≫ B).
+  -- We have IsLeafConst(e ≫ rel(x,z)) and
+  -- IsLeafConst(e ≫ rel(z,y)), so
+  -- IsLeafConst(e ≫ boolAnd(rel(x,z), rel(z,y)))
+  -- follows from boolAnd_ℓ_ℓ.
+  -- Then IsLeafConst(e ≫ B) =
+  -- IsLeafConst(e ≫ rel(x,y)).
+  set A := cfpLift
+    (cfpLift t3x t3z ≫ rel)
+    (cfpLift t3z t3y ≫ rel) ≫ boolAnd
+  set B := cfpLift t3x t3y ≫ rel
+  -- B is Boolean-valued.
+  have hB : B ≫ isLeafEndo = B := by
+    change (cfpLift t3x t3y ≫ rel) ≫
+      isLeafEndo = cfpLift t3x t3y ≫ rel
+    rw [Category.assoc, rel_bool]
+  -- IsLeafConst(e ≫ A) from h1 and h2.
+  have h1' : IsLeafConst
+      (e ≫ (cfpLift t3x t3z ≫ rel)) := by
+    unfold IsLeafConst at h1 ⊢
+    exact h1
+  have h2' : IsLeafConst
+      (e ≫ (cfpLift t3z t3y ≫ rel)) := by
+    unfold IsLeafConst at h2 ⊢
+    exact h2
+  have hA : IsLeafConst (e ≫ A) := by
+    change IsLeafConst (e ≫
+      (cfpLift
+        (cfpLift t3x t3z ≫ rel)
+        (cfpLift t3z t3y ≫ rel) ≫ boolAnd))
+    unfold IsLeafConst
+    rw [← Category.assoc, cfpLift_precomp,
+      h1', h2',
+      ← cfpLift_precomp (cfpTerminalFrom D)
+        p.ℓ p.ℓ,
+      Category.assoc, boolAnd_ℓ_ℓ]
+  exact boolAnd_implies_IsLeafConst ht hB e hA
 
 /-! ## PER objects -/
 
@@ -66,40 +166,24 @@ tree type T.
 A PER consists of a morphism `rel : T × T → T`
 (encoding a T-valued relation where leaf = true)
 satisfying:
+- Boolean-valued output: `rel ≫ isLeafEndo = rel`
 - Symmetry: `rel(x, y) = rel(y, x)`
-- Transitivity: `propAnd(rel(x,z), rel(z,y))`
-  implies `rel(x,y)`, encoded as a morphism
-  equation on `T × (T × T)`
+- Transitivity (equational): the `boolAnd`-based
+  implication equation on `T × (T × T)`
 -/
 structure TreePERObj where
   /-- The relation morphism `T × T → T`. -/
   rel : cfpProd p.T p.T ⟶ p.T
+  /-- Boolean-valued output. -/
+  rel_bool : rel ≫ isLeafEndo = rel
   /-- Symmetry: swapping inputs preserves the
   relation. -/
   rel_symm :
     cfpSwap p.T p.T ≫ rel = rel
-  /-- Transitivity: `propAnd(rel(x,z), rel(z,y))`
-  implies `rel(x,y)`, i.e.,
-  `propAnd(propAnd(rel(x,z), rel(z,y)), rel(x,y))
-   = propAnd(rel(x,z), rel(z,y))`. -/
-  rel_trans :
-    cfpLift
-      (cfpLift
-        (cfpLift t3x t3z ≫ rel)
-        (cfpLift t3z t3y ≫ rel) ≫
-        propAnd)
-      (cfpLift t3x t3y ≫ rel) ≫
-      propAnd =
-    cfpLift
-      (cfpLift t3x t3z ≫ rel)
-      (cfpLift t3z t3y ≫ rel) ≫
-      propAnd
+  /-- Equational transitivity. -/
+  rel_trans : EqTransitive rel
 
-/-- Derive the Prop-valued transitivity from the
-equational form: for any `e : D ⟶ T × (T × T)`,
-if `e ≫ rel(x,z)` and `e ≫ rel(z,y)` are
-leaf-constant, then `e ≫ rel(x,y)` is also
-leaf-constant. -/
+/-- Derive `QuantTransitive` from `TreePERObj`. -/
 theorem TreePERObj.rel_trans_prop
     (X : @TreePERObj C _ h p)
     {D : C}
@@ -109,83 +193,30 @@ theorem TreePERObj.rel_trans_prop
     (h2 : IsLeafConst
       (e ≫ cfpLift t3z t3y ≫ X.rel)) :
     IsLeafConst
-      (e ≫ cfpLift t3x t3y ≫ X.rel) := by
-  unfold IsLeafConst at h1 h2 ⊢
-  -- Auxiliary: cfpLift leaf leaf ≫ propAnd = leaf
-  have lift_ℓℓ_eq :
-      cfpLift p.ℓ p.ℓ =
-      p.ℓ ≫ cfpLift (𝟙 p.T) (𝟙 p.T) := by
-    rw [cfpLift_precomp]
-    simp only [Category.comp_id]
-  have leaf_leaf_propAnd :
-      cfpLift p.ℓ p.ℓ ≫ propAnd = p.ℓ := by
-    rw [lift_ℓℓ_eq, Category.assoc,
-      propAnd_idem, Category.comp_id]
-  have leaf_idem :
-      cfpLift (cfpTerminalFrom D ≫ p.ℓ)
-        (cfpTerminalFrom D ≫ p.ℓ) ≫
-        propAnd =
-      cfpTerminalFrom D ≫ p.ℓ := by
-    rw [← cfpLift_precomp
-      (cfpTerminalFrom D) p.ℓ p.ℓ,
-      Category.assoc, leaf_leaf_propAnd]
-  -- Auxiliary: propAnd(leaf, X) = X
-  have leaf_elim :
-      ∀ (B : D ⟶ p.T),
-      cfpLift (cfpTerminalFrom D ≫ p.ℓ) B ≫
-        propAnd = B := by
-    intro B
-    have : cfpLift (cfpTerminalFrom D ≫ p.ℓ)
-        B = cfpLift (cfpTerminalFrom D) B ≫
-          cfpMap p.ℓ (𝟙 p.T) := by
-      rw [cfpLift_cfpMap, Category.comp_id]
-    rw [this, Category.assoc,
-      propAnd_leaf_left, cfpLift_snd]
-  -- Pre-compose rel_trans with e.
-  have eq : e ≫ (cfpLift
-      (cfpLift
-        (cfpLift t3x t3z ≫ X.rel)
-        (cfpLift t3z t3y ≫ X.rel) ≫
-        propAnd)
-      (cfpLift t3x t3y ≫ X.rel) ≫
-      propAnd) = e ≫ (cfpLift
-      (cfpLift t3x t3z ≫ X.rel)
-      (cfpLift t3z t3y ≫ X.rel) ≫
-      propAnd) :=
-    congr_arg (e ≫ ·) X.rel_trans
-  -- Distribute e into cfpLift via
-  -- propAnd_precomp (outer, then inner).
-  rw [propAnd_precomp e,
-    propAnd_precomp e] at eq
-  -- Substitute h1, h2 to simplify.
-  rw [h1, h2, leaf_idem] at eq
-  rw [leaf_elim] at eq
-  exact eq
+      (e ≫ cfpLift t3x t3y ≫ X.rel) :=
+  eqTransitive_implies_quant
+    X.rel_bool X.rel_trans e h1 h2
 
 /-! ## Pre-morphisms -/
 
 /--
 A pre-morphism between PER objects: a morphism
-`map : T → T` that preserves the relation in the
-forward direction.
-
-The preservation condition is Prop-valued over
-generalized elements: for any `e : D ⟶ T × T`,
-if `X.rel` is leaf-constant on `e`, then `Y.rel`
-is leaf-constant on `(map × map) ∘ e`.
+`map : T → T` satisfying the equational
+relation-preservation condition
+`boolAnd(X.rel, Y.rel(map × map)) = X.rel`
+on `T × T`.
 -/
 structure TreePERPreMor
     (X Y : @TreePERObj C _ h p) where
   /-- The underlying morphism `T → T`. -/
   map : p.T ⟶ p.T
-  /-- Forward relation preservation: if the
-  source PER holds, the target PER holds on the
-  mapped inputs. -/
+  /-- Equational forward relation preservation:
+  `boolAnd(X.rel, (map × map) ≫ Y.rel)
+    = X.rel`. -/
   map_rel :
-    {D : C} →
-    (e : D ⟶ cfpProd p.T p.T) →
-    IsLeafConst (e ≫ X.rel) →
-    IsLeafConst (e ≫ cfpMap map map ≫ Y.rel)
+    cfpLift X.rel
+      (cfpMap map map ≫ Y.rel) ≫ boolAnd =
+    X.rel
 
 /-- The identity pre-morphism. -/
 def treePERPreMorId
@@ -193,8 +224,14 @@ def treePERPreMorId
     TreePERPreMor X X where
   map := 𝟙 p.T
   map_rel := by
-    intro D e hX
-    rwa [cfpMap_id, Category.id_comp]
+    rw [cfpMap_id, Category.id_comp]
+    -- Goal: cfpLift X.rel X.rel ≫ boolAnd = X.rel
+    have : cfpLift X.rel X.rel =
+        X.rel ≫ cfpLift (𝟙 p.T) (𝟙 p.T) := by
+      rw [cfpLift_precomp]
+      simp only [Category.comp_id]
+    rw [this, Category.assoc, boolAnd_idem,
+      X.rel_bool]
 
 /-- Composition of pre-morphisms. -/
 def treePERPreMorComp
@@ -204,22 +241,36 @@ def treePERPreMorComp
     TreePERPreMor X Z where
   map := f.map ≫ g.map
   map_rel := by
-    intro D e hX
-    have step1 := f.map_rel e hX
-    unfold IsLeafConst at step1 ⊢
-    have step1a :
-        (e ≫ cfpMap f.map f.map) ≫ Y.rel =
-          cfpTerminalFrom D ≫ p.ℓ := by
-      rw [Category.assoc]; exact step1
-    have step2 :=
-      g.map_rel
-        (e ≫ cfpMap f.map f.map) step1a
-    unfold IsLeafConst at step2
-    rw [Category.assoc] at step2
-    rw [← cfpMap_comp
-      f.map f.map g.map g.map,
-      Category.assoc]
-    exact step2
+    -- Goal: boolAnd(X.rel, ((f≫g)×(f≫g)) ≫ Z.rel)
+    --   = X.rel.
+    -- Set B := (f×f) ≫ Y.rel,
+    --      A := ((f≫g)×(f≫g)) ≫ Z.rel.
+    -- From f.map_rel: boolAnd(X.rel, B) = X.rel.
+    -- From g.map_rel precomposed with (f×f):
+    --   boolAnd(B, A) = B.
+    -- By boolAnd_implies_trans: done.
+    rw [← cfpMap_comp f.map f.map g.map g.map]
+    -- Goal: cfpLift X.rel
+    --   (cfpMap f.map f.map ≫ cfpMap g.map g.map
+    --     ≫ Z.rel) ≫ boolAnd = X.rel
+    -- Rewrite (cfpMap f.map f.map ≫
+    --   cfpMap g.map g.map ≫ Z.rel) using
+    --   associativity.
+    have step2 :
+        cfpLift
+          (cfpMap f.map f.map ≫ Y.rel)
+          ((cfpMap f.map f.map ≫
+            cfpMap g.map g.map) ≫ Z.rel) ≫
+          boolAnd =
+        cfpMap f.map f.map ≫ Y.rel := by
+      rw [Category.assoc
+        (cfpMap f.map f.map)
+        (cfpMap g.map g.map) Z.rel]
+      rw [← cfpLift_precomp
+        (cfpMap f.map f.map)]
+      rw [Category.assoc]
+      rw [g.map_rel]
+    exact boolAnd_implies_trans f.map_rel step2
 
 /-! ## Morphism equivalence -/
 
@@ -259,11 +310,18 @@ theorem treePERMorEqv_refl
       (e ≫ cfpLift (𝟙 p.T) (𝟙 p.T)) ≫
         X.rel = cfpTerminalFrom D ≫ p.ℓ := by
     rw [Category.assoc]; exact hdom
-  have := f.map_rel
-    (e ≫ cfpLift (𝟙 p.T) (𝟙 p.T)) hdom'
-  unfold IsLeafConst at this
-  rw [Category.assoc] at this
-  exact this
+  have hBool :
+      (cfpMap f.map f.map ≫ Y.rel) ≫
+        isLeafEndo =
+      cfpMap f.map f.map ≫ Y.rel := by
+    rw [Category.assoc, Y.rel_bool]
+  have step :=
+    boolAnd_implies_IsLeafConst f.map_rel
+      hBool (e ≫ cfpLift (𝟙 p.T) (𝟙 p.T))
+      hdom'
+  unfold IsLeafConst at step
+  rw [Category.assoc] at step
+  exact step
 
 /-- Morphism equivalence is symmetric. -/
 theorem treePERMorEqv_symm
@@ -436,18 +494,32 @@ theorem treePERComp_left_resp
   change IsLeafConst
     (e ≫ cfpLift (f₁.map ≫ g.map)
       (f₂.map ≫ g.map) ≫ Z.rel)
+  -- Factor: cfpLift (f₁≫g) (f₂≫g) =
+  --   cfpLift f₁ f₂ ≫ cfpMap g g.
   have h1 := hf e hdom
   unfold IsLeafConst at h1 ⊢
   rw [← cfpLift_cfpMap]
   simp only [Category.assoc]
+  -- Need: IsLeafConst of
+  --   (e ≫ cfpLift f₁ f₂ ≫ cfpMap g g ≫ Z.rel).
+  -- From g.map_rel:
+  --   boolAnd(Y.rel, (g×g) ≫ Z.rel) = Y.rel.
+  -- By boolAnd_implies_IsLeafConst:
+  --   IsLeafConst(e' ≫ Y.rel) →
+  --   IsLeafConst(e' ≫ (g×g) ≫ Z.rel).
+  have hBool :
+      (cfpMap g.map g.map ≫ Z.rel) ≫
+        isLeafEndo =
+      cfpMap g.map g.map ≫ Z.rel := by
+    rw [Category.assoc, Z.rel_bool]
   have h1' :
       (e ≫ cfpLift f₁.map f₂.map) ≫
         Y.rel =
       cfpTerminalFrom D ≫ p.ℓ := by
     rw [Category.assoc]; exact h1
   have step :=
-    g.map_rel
-      (e ≫ cfpLift f₁.map f₂.map) h1'
+    boolAnd_implies_IsLeafConst g.map_rel
+      hBool (e ≫ cfpLift f₁.map f₂.map) h1'
   unfold IsLeafConst at step
   rw [Category.assoc] at step
   exact step
