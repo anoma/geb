@@ -97,13 +97,9 @@ structure TreePERObj where
 
 /-- Derive the Prop-valued transitivity from the
 equational form: for any `e : D ⟶ T × (T × T)`,
-if `rel(x,z)` and `rel(z,y)` are leaf-constant,
-then `rel(x,y)` is leaf-constant.
-
-The proof pre-composes the equational `rel_trans`
-with `e`, substitutes the leaf-constant hypotheses
-into both sides, then uses `propAnd_leaf_left` to
-extract the conclusion. -/
+if `e ≫ rel(x,z)` and `e ≫ rel(z,y)` are
+leaf-constant, then `e ≫ rel(x,y)` is also
+leaf-constant. -/
 theorem TreePERObj.rel_trans_prop
     (X : @TreePERObj C _ h p)
     {D : C}
