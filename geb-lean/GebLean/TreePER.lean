@@ -57,13 +57,6 @@ def t3z :
 
 /-! ## Leaf-constantness predicate -/
 
-/-- A morphism `f : D ⟶ T` is "leaf-constant" when
-it equals the constant leaf morphism.  We use this
-as our Prop-valued encoding of "for all inputs, the
-result is leaf (true)." -/
-def IsLeafConst {D : C} (f : D ⟶ p.T) : Prop :=
-  f = cfpTerminalFrom D ≫ p.ℓ
-
 /-! ## PER objects -/
 
 /--
