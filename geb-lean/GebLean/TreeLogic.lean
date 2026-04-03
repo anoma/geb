@@ -2363,4 +2363,153 @@ theorem boolAnd_implies_IsLeafConst
   rw [Category.assoc, hB] at h1
   exact h1
 
+/-- Idempotence of `boolAnd` along the diagonal:
+`boolAnd(a, a) = isLeafEndo(a)`. -/
+theorem boolAnd_idem :
+    cfpLift (𝟙 p.T) (𝟙 p.T) ≫ boolAnd =
+      (isLeafEndo : p.T ⟶ p.T) := by
+  -- Lift to cfpProd cfpTerminal T → T, show
+  -- both sides equal isLeaf, then project back.
+  -- Abbreviations.
+  let snd : cfpProd cfpTerminal p.T ⟶ p.T :=
+    cfpSnd cfpTerminal p.T
+  let step : cfpProd p.T p.T ⟶ p.T :=
+    cfpTerminalFrom (cfpProd p.T p.T) ≫ treeFalse
+  let D' : C :=
+    cfpProd cfpTerminal (cfpProd p.T p.T)
+  let snd' : D' ⟶ p.T :=
+    cfpSnd cfpTerminal (cfpProd p.T p.T) ≫ p.β
+  -- ℓ equation for cfpLift snd snd ≫ boolAnd.
+  have snd_ℓ :
+      cfpInsertSnd p.ℓ cfpTerminal ≫ snd =
+      p.ℓ := by
+    change cfpInsertSnd p.ℓ cfpTerminal ≫
+      cfpSnd cfpTerminal p.T = p.ℓ
+    unfold cfpInsertSnd
+    rw [cfpLift_snd, cfpTerminalFrom_terminal,
+      Category.id_comp]
+  have ℓ_eq :
+      cfpInsertSnd p.ℓ cfpTerminal ≫
+        (cfpLift snd snd ≫ boolAnd) = p.ℓ := by
+    rw [← Category.assoc, cfpLift_precomp,
+      snd_ℓ, boolAnd_ℓ_ℓ]
+  -- β equation for cfpLift snd snd ≫ boolAnd.
+  have snd_β :
+      cfpMap (𝟙 cfpTerminal) p.β ≫ snd =
+      cfpSnd cfpTerminal (cfpProd p.T p.T) ≫
+        p.β := by
+    change cfpMap (𝟙 cfpTerminal) p.β ≫
+      cfpSnd cfpTerminal p.T =
+      cfpSnd cfpTerminal (cfpProd p.T p.T) ≫
+        p.β
+    exact cfpMap_snd (𝟙 cfpTerminal) p.β
+  have β_lhs :
+      cfpMap (𝟙 cfpTerminal) p.β ≫
+        (cfpLift snd snd ≫ boolAnd) =
+      cfpLift snd' snd' ≫ boolAnd := by
+    change cfpMap (𝟙 cfpTerminal) p.β ≫
+      (cfpLift snd snd ≫ boolAnd) =
+      cfpLift
+        (cfpSnd cfpTerminal
+          (cfpProd p.T p.T) ≫ p.β)
+        (cfpSnd cfpTerminal
+          (cfpProd p.T p.T) ≫ p.β) ≫
+        boolAnd
+    rw [← Category.assoc, cfpLift_precomp, snd_β]
+  have snd'_isLeafEndo :
+      snd' ≫ isLeafEndo =
+      cfpTerminalFrom D' ≫ treeFalse := by
+    change (cfpSnd cfpTerminal
+      (cfpProd p.T p.T) ≫ p.β) ≫
+      isLeafEndo =
+      cfpTerminalFrom D' ≫ treeFalse
+    rw [Category.assoc, isLeafEndo_β,
+      ← Category.assoc]
+    congr 1
+    exact h.terminal.uniq _
+  have β_boolAnd :
+      cfpLift snd' snd' ≫ boolAnd =
+      cfpTerminalFrom D' ≫ treeFalse := by
+    change cfpLift
+        (cfpSnd cfpTerminal
+          (cfpProd p.T p.T) ≫ p.β)
+        (cfpSnd cfpTerminal
+          (cfpProd p.T p.T) ≫ p.β) ≫
+        boolAnd =
+      cfpTerminalFrom D' ≫ treeFalse
+    rw [boolAnd_treeIte_form,
+      snd'_isLeafEndo, treeIte_equal_branches]
+  have β_rhs :
+      cfpLiftAssoc
+        (cfpLift snd snd ≫ boolAnd)
+        (cfpLift snd snd ≫ boolAnd) ≫ step =
+      cfpTerminalFrom D' ≫ treeFalse := by
+    change cfpLiftAssoc
+        (cfpLift snd snd ≫ boolAnd)
+        (cfpLift snd snd ≫ boolAnd) ≫
+      (cfpTerminalFrom (cfpProd p.T p.T) ≫
+        treeFalse) =
+      cfpTerminalFrom D' ≫ treeFalse
+    rw [← Category.assoc]
+    congr 1
+    exact h.terminal.uniq _
+  have β_eq :
+      cfpMap (𝟙 cfpTerminal) p.β ≫
+        (cfpLift snd snd ≫ boolAnd) =
+      cfpLiftAssoc
+        (cfpLift snd snd ≫ boolAnd)
+        (cfpLift snd snd ≫ boolAnd) ≫ step := by
+    rw [β_lhs, β_boolAnd, β_rhs]
+  -- By p.elim_uniq.
+  have is_isLeaf :
+      cfpLift snd snd ≫ boolAnd =
+      p.elim p.ℓ step := by
+    exact p.elim_uniq p.ℓ step _ ℓ_eq β_eq
+  -- isLeaf = p.elim ℓ step.
+  have isLeaf_def :
+      (isLeaf :
+        cfpProd cfpTerminal p.T ⟶ p.T) =
+      p.elim p.ℓ step := by
+    change isLeaf = p.elim p.ℓ
+      (cfpTerminalFrom (cfpProd p.T p.T) ≫
+        treeFalse)
+    rfl
+  -- Project back via sect.
+  let sect : p.T ⟶ cfpProd cfpTerminal p.T :=
+    cfpLift (cfpTerminalFrom p.T) (𝟙 p.T)
+  have sect_snd :
+      sect ≫ snd = 𝟙 p.T := by
+    change
+      cfpLift (cfpTerminalFrom p.T) (𝟙 p.T) ≫
+        cfpSnd cfpTerminal p.T = 𝟙 p.T
+    exact cfpLift_snd _ _
+  have sect_lift_snd :
+      sect ≫ cfpLift snd snd =
+      cfpLift (𝟙 p.T) (𝟙 p.T) := by
+    change
+      cfpLift (cfpTerminalFrom p.T) (𝟙 p.T) ≫
+        cfpLift (cfpSnd cfpTerminal p.T)
+          (cfpSnd cfpTerminal p.T) =
+      cfpLift (𝟙 p.T) (𝟙 p.T)
+    rw [cfpLift_precomp,
+      cfpLift_snd (cfpTerminalFrom p.T) (𝟙 p.T)]
+  -- isLeafEndo = sect ≫ isLeaf.
+  have isLeafEndo_eq :
+      (isLeafEndo : p.T ⟶ p.T) =
+      sect ≫ isLeaf := by
+    change isLeafEndo =
+      cfpLift (cfpTerminalFrom p.T) (𝟙 p.T) ≫
+        isLeaf
+    rfl
+  -- Conclude.
+  calc cfpLift (𝟙 p.T) (𝟙 p.T) ≫ boolAnd
+      = (sect ≫ cfpLift snd snd) ≫ boolAnd := by
+        rw [sect_lift_snd]
+    _ = sect ≫ (cfpLift snd snd ≫ boolAnd) :=
+        Category.assoc _ _ _
+    _ = sect ≫ p.elim p.ℓ step := by
+        rw [is_isLeaf]
+    _ = sect ≫ isLeaf := by rw [isLeaf_def]
+    _ = isLeafEndo := isLeafEndo_eq.symm
+
 end GebLean
