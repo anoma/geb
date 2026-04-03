@@ -2,7 +2,15 @@
 
 ## Status
 
-Planning complete.  Implementation plan written.
+Task 2 (TreePER.lean) complete.  The PER category is
+fully defined with quotient morphisms and a Category
+instance.  The transitivity condition on TreePERObj
+uses separate hypotheses (two leaf-constant conditions)
+rather than a conjunction via treeAnd, which avoids
+the need for a treeAnd transitivity lemma.  Morphism
+equivalence (reflexivity, symmetry, transitivity),
+composition well-definedness, and all category laws
+are proved.
 
 ## Goal
 
