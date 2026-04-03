@@ -1,4 +1,5 @@
 import GebLean.EqualizerCompletionPBTO
+import Mathlib.CategoryTheory.Generator.Basic
 
 /-!
 # Boolean Logic on Binary Trees
@@ -1156,6 +1157,1210 @@ theorem propAnd_implies_IsLeafConst
   rw [factor, Category.assoc,
     propAnd_leaf_left] at h1
   rw [cfpLift_snd] at h1
+  exact h1
+
+/-- Leaf detection as an endomorphism on T:
+returns `leaf` when the input is leaf, `treeFalse`
+when the input is non-leaf. -/
+def isLeafEndo : p.T ⟶ p.T :=
+  cfpLift (cfpTerminalFrom p.T) (𝟙 p.T) ≫
+    isLeaf
+
+/-- `ℓ ≫ isLeafEndo = ℓ`:
+leaf is a fixed point of `isLeafEndo`. -/
+theorem isLeafEndo_ℓ :
+    p.ℓ ≫ isLeafEndo = p.ℓ := by
+  unfold isLeafEndo
+  rw [← Category.assoc, cfpLift_precomp,
+    Category.comp_id]
+  have h1 : p.ℓ ≫ cfpTerminalFrom p.T =
+      cfpTerminalFrom cfpTerminal :=
+    h.terminal.uniq _
+  rw [h1]
+  have h2 : cfpLift
+      (cfpTerminalFrom cfpTerminal) p.ℓ =
+      cfpInsertSnd p.ℓ cfpTerminal := by
+    unfold cfpInsertSnd
+    congr 1
+    · exact cfpTerminalFrom_terminal
+    · rw [cfpTerminalFrom_terminal,
+        Category.id_comp]
+  rw [h2]
+  exact isLeaf_ℓ
+
+/-- `treeFalse ≫ isLeafEndo = treeFalse`:
+`treeFalse` is a fixed point of `isLeafEndo`. -/
+theorem isLeafEndo_treeFalse :
+    treeFalse ≫ isLeafEndo =
+      (treeFalse : cfpTerminal (C := C) ⟶ _) := by
+  unfold isLeafEndo treeFalse
+  rw [Category.assoc]
+  have step1 : p.β ≫
+      cfpLift (cfpTerminalFrom p.T) (𝟙 p.T) =
+      cfpLift
+        (cfpTerminalFrom (cfpProd p.T p.T))
+        p.β := by
+    rw [cfpLift_precomp, Category.comp_id]
+    congr 1
+    exact h.terminal.uniq _
+  rw [← Category.assoc p.β _ isLeaf, step1]
+  rw [← Category.assoc, cfpLift_precomp]
+  have h2 : cfpLift p.ℓ p.ℓ ≫
+      cfpTerminalFrom (cfpProd p.T p.T) =
+      cfpTerminalFrom cfpTerminal :=
+    h.terminal.uniq _
+  rw [h2]
+  change
+    cfpLift (cfpTerminalFrom cfpTerminal)
+      treeFalse ≫ isLeaf =
+    treeFalse
+  have step2 :
+      cfpLift (cfpTerminalFrom cfpTerminal)
+        treeFalse =
+      cfpLift (cfpTerminalFrom cfpTerminal)
+        (cfpLift p.ℓ p.ℓ) ≫
+        cfpMap (𝟙 cfpTerminal) p.β := by
+    unfold treeFalse cfpMap
+    rw [cfpLift_precomp]
+    congr 1
+    · rw [← Category.assoc, cfpLift_fst,
+        Category.comp_id]
+    · rw [← Category.assoc, cfpLift_snd]
+  rw [step2, Category.assoc, isLeaf_β]
+  have step3 :
+      (cfpLift (cfpTerminalFrom cfpTerminal)
+        (cfpLift p.ℓ p.ℓ) ≫
+        cfpLiftAssoc isLeaf isLeaf) ≫
+        cfpTerminalFrom (cfpProd p.T p.T) =
+      cfpTerminalFrom cfpTerminal :=
+    h.terminal.uniq _
+  rw [← Category.assoc, ← Category.assoc,
+    step3, cfpTerminalFrom_terminal,
+    Category.id_comp]
+
+/-- Branch computation rule for `isLeafEndo`:
+any branch node maps to `treeFalse`. -/
+theorem isLeafEndo_β :
+    p.β ≫ isLeafEndo =
+      cfpTerminalFrom (cfpProd p.T p.T) ≫
+        treeFalse := by
+  unfold isLeafEndo
+  rw [← Category.assoc, cfpLift_precomp,
+    Category.comp_id]
+  have h1 : p.β ≫ cfpTerminalFrom p.T =
+      cfpTerminalFrom (cfpProd p.T p.T) :=
+    h.terminal.uniq _
+  rw [h1]
+  have factor :
+      cfpLift
+        (cfpTerminalFrom (cfpProd p.T p.T))
+        p.β =
+      cfpLift
+        (cfpTerminalFrom (cfpProd p.T p.T))
+        (𝟙 (cfpProd p.T p.T)) ≫
+        cfpMap (𝟙 cfpTerminal) p.β := by
+    unfold cfpMap
+    rw [cfpLift_precomp]
+    congr 1
+    · rw [← Category.assoc, cfpLift_fst,
+        Category.comp_id]
+    · rw [← Category.assoc, cfpLift_snd,
+        Category.id_comp]
+  rw [factor, Category.assoc, isLeaf_β,
+    ← Category.assoc, ← Category.assoc]
+  congr 1
+  exact h.terminal.uniq _
+
+/-- Applying `isLeaf` after `isLeafEndo` equals
+`isLeaf`: the output of `isLeaf` is always either
+leaf or treeFalse, both of which are fixed points
+of `isLeafEndo`. -/
+theorem isLeaf_isLeafEndo :
+    isLeaf ≫ isLeafEndo =
+      (isLeaf :
+        cfpProd cfpTerminal p.T ⟶ p.T) := by
+  set step :=
+    cfpTerminalFrom (cfpProd p.T p.T) ≫ treeFalse
+    with hstep
+  have alg : cfpMap isLeafEndo isLeafEndo ≫
+      step = step ≫ isLeafEndo := by
+    have h1 :
+        cfpMap isLeafEndo isLeafEndo ≫ step =
+        cfpTerminalFrom (cfpProd p.T p.T) ≫
+          treeFalse := by
+      rw [← Category.assoc]
+      congr 1
+      exact h.terminal.uniq _
+    have h2 : step ≫ isLeafEndo =
+        cfpTerminalFrom (cfpProd p.T p.T) ≫
+          treeFalse := by
+      rw [hstep, Category.assoc,
+        isLeafEndo_treeFalse]
+    rw [h1, h2]
+  have main :=
+    elim_algebra_morphism p.ℓ step isLeafEndo
+      step alg
+  rw [isLeafEndo_ℓ] at main
+  unfold isLeaf
+  exact main
+
+/-- `isLeafEndo` is idempotent:
+`isLeafEndo ≫ isLeafEndo = isLeafEndo`. -/
+theorem isLeafEndo_idem :
+    isLeafEndo ≫ isLeafEndo =
+      (isLeafEndo : p.T ⟶ p.T) := by
+  have : isLeafEndo ≫ isLeafEndo =
+      cfpLift (cfpTerminalFrom p.T) (𝟙 p.T) ≫
+        (isLeaf ≫ isLeafEndo) := by
+    unfold isLeafEndo
+    simp only [Category.assoc]
+  rw [this, isLeaf_isLeafEndo]; rfl
+
+/-- Boolean conjunction: returns `leaf` when both
+inputs are leaf, and `treeFalse` otherwise.
+Defined as `boolAnd(a, b) =
+  treeIte((isLeafEndo(b), treeFalse), a)`:
+a case split on whether `a` is leaf (returning
+`isLeafEndo(b)`) or non-leaf (returning
+`treeFalse`). -/
+def boolAnd :
+    cfpProd p.T p.T ⟶ p.T :=
+  cfpLift
+    (cfpLift
+      (cfpSnd p.T p.T ≫ isLeafEndo)
+      (cfpFst p.T p.T ≫
+        cfpTerminalFrom p.T ≫ treeFalse))
+    (cfpFst p.T p.T) ≫
+    treeIte
+
+/-- Boolean disjunction:
+`boolOr(a, b) = treeIte((leaf_const,
+  isLeafEndo(b)), a)`.
+Returns `leaf` when either input is leaf, and
+`treeFalse` otherwise. -/
+def boolOr :
+    cfpProd p.T p.T ⟶ p.T :=
+  cfpLift
+    (cfpLift
+      (cfpFst p.T p.T ≫
+        cfpTerminalFrom p.T ≫ p.ℓ)
+      (cfpSnd p.T p.T ≫ isLeafEndo))
+    (cfpFst p.T p.T) ≫
+    treeIte
+
+/-- Boolean implication:
+`boolImplies(a, b) = treeIte((isLeafEndo(b),
+  leaf_const), a)`.
+Returns `treeFalse` only when the first input is
+leaf and the second is non-leaf; returns `leaf`
+otherwise. -/
+def boolImplies :
+    cfpProd p.T p.T ⟶ p.T :=
+  cfpLift
+    (cfpLift
+      (cfpSnd p.T p.T ≫ isLeafEndo)
+      (cfpFst p.T p.T ≫
+        cfpTerminalFrom p.T ≫ p.ℓ))
+    (cfpFst p.T p.T) ≫
+    treeIte
+
+/-- `boolAnd(leaf, b) = isLeafEndo(b)`:
+when the first argument is leaf, the result
+is the Boolean normalization of the second. -/
+theorem boolAnd_leaf_left :
+    cfpMap p.ℓ (𝟙 p.T) ≫ boolAnd =
+      cfpSnd cfpTerminal p.T ≫
+        isLeafEndo := by
+  unfold boolAnd
+  rw [← Category.assoc, cfpLift_precomp]
+  have h1 :
+      cfpMap p.ℓ (𝟙 p.T) ≫
+        cfpLift
+          (cfpSnd p.T p.T ≫ isLeafEndo)
+          (cfpFst p.T p.T ≫
+            cfpTerminalFrom p.T ≫ treeFalse) =
+      cfpLift
+        (cfpSnd cfpTerminal p.T ≫ isLeafEndo)
+        (cfpTerminalFrom
+          (cfpProd cfpTerminal p.T) ≫
+          treeFalse) := by
+    rw [cfpLift_precomp]
+    congr 1
+    · rw [← Category.assoc, cfpMap_snd,
+        Category.comp_id]
+    · have :
+          (cfpFst cfpTerminal p.T ≫ p.ℓ) ≫
+            cfpTerminalFrom p.T ≫ treeFalse =
+          cfpTerminalFrom
+            (cfpProd cfpTerminal p.T) ≫
+            treeFalse := by
+        rw [← Category.assoc]
+        congr 1
+        exact h.terminal.uniq _
+      rw [← Category.assoc, cfpMap_fst]
+      exact this
+  have h2 :
+      cfpMap p.ℓ (𝟙 p.T) ≫
+        cfpFst p.T p.T =
+      cfpFst cfpTerminal p.T ≫ p.ℓ := by
+    rw [cfpMap_fst]
+  rw [h1, h2]
+  have hterm :
+      cfpFst cfpTerminal p.T =
+      cfpTerminalFrom
+        (cfpProd cfpTerminal p.T) :=
+    h.terminal.uniq _
+  rw [hterm]
+  set P := cfpLift
+    (cfpSnd cfpTerminal p.T ≫ isLeafEndo)
+    (cfpTerminalFrom (cfpProd cfpTerminal p.T)
+      ≫ treeFalse)
+    with hP
+  set c := cfpTerminalFrom
+    (cfpProd cfpTerminal p.T) ≫ p.ℓ
+    with hc
+  have factor : cfpLift P c =
+      P ≫ cfpInsertSnd p.ℓ
+        (cfpProd p.T p.T) := by
+    unfold cfpInsertSnd
+    rw [cfpLift_precomp, Category.comp_id]
+    congr 1
+    have hPterm :
+        P ≫ cfpTerminalFrom
+          (cfpProd p.T p.T) =
+        cfpTerminalFrom
+          (cfpProd cfpTerminal p.T) :=
+      h.terminal.uniq _
+    rw [← Category.assoc, hPterm]
+  rw [factor, Category.assoc, treeIte_ℓ,
+    cfpLift_fst]
+
+/-- Evaluating `treeIte` at `treeFalse` (a branch
+node) as the condition returns the second ("else")
+component of the parameter pair. -/
+theorem treeIte_treeFalse :
+    cfpInsertSnd treeFalse (cfpProd p.T p.T) ≫
+      treeIte = cfpSnd p.T p.T := by
+  have factor :
+      cfpInsertSnd treeFalse
+        (cfpProd p.T p.T) =
+      cfpInsertSnd (cfpLift p.ℓ p.ℓ)
+        (cfpProd p.T p.T) ≫
+        cfpMap (𝟙 (cfpProd p.T p.T)) p.β := by
+    unfold cfpInsertSnd
+    rw [cfpLift_cfpMap, Category.id_comp]
+    unfold treeFalse
+    rw [Category.assoc]
+  rw [factor, Category.assoc, treeIte_β,
+    ← Category.assoc, ← Category.assoc]
+  have h1 :
+      cfpInsertSnd (cfpLift p.ℓ p.ℓ)
+        (cfpProd p.T p.T) ≫
+        cfpLiftAssoc iteFold iteFold =
+      cfpLift
+        (cfpInsertSnd (cfpLift p.ℓ p.ℓ)
+          (cfpProd p.T p.T) ≫
+          cfpAssocFst (cfpProd p.T p.T)
+            p.T p.T ≫
+          iteFold)
+        (cfpInsertSnd (cfpLift p.ℓ p.ℓ)
+          (cfpProd p.T p.T) ≫
+          cfpAssocSnd (cfpProd p.T p.T)
+            p.T p.T ≫
+          iteFold) := by
+    unfold cfpLiftAssoc
+    rw [cfpLift_precomp]
+  have assocFst_eq :
+      cfpInsertSnd (cfpLift p.ℓ p.ℓ)
+        (cfpProd p.T p.T) ≫
+        cfpAssocFst (cfpProd p.T p.T)
+          p.T p.T =
+      cfpInsertSnd p.ℓ (cfpProd p.T p.T) := by
+    unfold cfpAssocFst
+    unfold cfpInsertSnd
+    rw [cfpLift_precomp, cfpLift_fst]
+    congr 1
+    rw [← Category.assoc, cfpLift_snd,
+      Category.assoc, cfpLift_fst]
+  have assocSnd_eq :
+      cfpInsertSnd (cfpLift p.ℓ p.ℓ)
+        (cfpProd p.T p.T) ≫
+        cfpAssocSnd (cfpProd p.T p.T)
+          p.T p.T =
+      cfpInsertSnd p.ℓ (cfpProd p.T p.T) := by
+    unfold cfpAssocSnd
+    unfold cfpInsertSnd
+    rw [cfpLift_precomp, cfpLift_fst]
+    congr 1
+    rw [← Category.assoc, cfpLift_snd,
+      Category.assoc, cfpLift_snd]
+  have fst_simp :
+      cfpInsertSnd (cfpLift p.ℓ p.ℓ)
+        (cfpProd p.T p.T) ≫
+        cfpAssocFst (cfpProd p.T p.T)
+          p.T p.T ≫
+        iteFold =
+      𝟙 (cfpProd p.T p.T) := by
+    rw [← Category.assoc, assocFst_eq,
+      iteFold_ℓ]
+  have snd_simp :
+      cfpInsertSnd (cfpLift p.ℓ p.ℓ)
+        (cfpProd p.T p.T) ≫
+        cfpAssocSnd (cfpProd p.T p.T)
+          p.T p.T ≫
+        iteFold =
+      𝟙 (cfpProd p.T p.T) := by
+    rw [← Category.assoc, assocSnd_eq,
+      iteFold_ℓ]
+  rw [h1, fst_simp, snd_simp,
+    cfpLift_fst, Category.id_comp]
+
+/-- When both branches of a `treeIte` are fixed
+points of `isLeafEndo`, the output of `treeIte`
+is also a fixed point, so post-composing with
+`isLeafEndo` has no effect. -/
+theorem treeIte_isLeafEndo_stable
+    {D : C}
+    (f g : D ⟶ p.T)
+    (c : D ⟶ p.T)
+    (hf : f ≫ isLeafEndo = f)
+    (hg : g ≫ isLeafEndo = g) :
+    cfpLift (cfpLift f g) c ≫
+      treeIte ≫ isLeafEndo =
+    cfpLift (cfpLift f g) c ≫ treeIte := by
+  -- Factor the pre-composition through cfpMap.
+  have factor :
+      cfpLift (cfpLift f g) c =
+      cfpLift (𝟙 D) c ≫
+        cfpMap (cfpLift f g) (𝟙 p.T) := by
+    rw [cfpLift_cfpMap, Category.id_comp,
+      Category.comp_id]
+  -- Reduce to showing the fold output
+  -- is isLeafEndo-stable.
+  rw [factor]
+  unfold treeIte iteFold
+  simp only [Category.assoc]
+  set step :=
+    cfpLift
+      (cfpFst (cfpProd p.T p.T)
+        (cfpProd p.T p.T) ≫
+        cfpSnd p.T p.T)
+      (cfpFst (cfpProd p.T p.T)
+        (cfpProd p.T p.T) ≫
+        cfpSnd p.T p.T)
+    with hstep
+  -- Absorb cfpMap into the fold base case
+  -- on both sides using elim_naturality.
+  have nat :
+      cfpMap (cfpLift f g) (𝟙 p.T) ≫
+        p.elim (𝟙 (cfpProd p.T p.T)) step =
+      p.elim (cfpLift f g) step := by
+    rw [elim_naturality, Category.comp_id]
+  rw [← Category.assoc
+    (cfpMap (cfpLift f g) (𝟙 p.T))
+    (p.elim (𝟙 (cfpProd p.T p.T)) step)
+    (cfpFst p.T p.T ≫ isLeafEndo),
+    nat,
+    ← Category.assoc
+    (cfpMap (cfpLift f g) (𝟙 p.T))
+    (p.elim (𝟙 (cfpProd p.T p.T)) step)
+    (cfpFst p.T p.T),
+    nat]
+  -- Rewrite cfpFst ≫ isLeafEndo to
+  -- cfpMap isLeafEndo isLeafEndo ≫ cfpFst.
+  rw [← cfpMap_fst
+    (isLeafEndo : p.T ⟶ p.T)
+    (isLeafEndo : p.T ⟶ p.T)]
+  -- The algebra morphism condition.
+  have alg :
+      cfpMap (cfpMap isLeafEndo isLeafEndo)
+        (cfpMap isLeafEndo isLeafEndo) ≫
+        step = step ≫
+        cfpMap isLeafEndo isLeafEndo := by
+    rw [hstep]
+    rw [cfpLift_precomp, cfpLift_cfpMap]
+    congr 1 <;> (
+      rw [← Category.assoc,
+        cfpMap_fst, Category.assoc,
+        cfpMap_snd]
+      simp only [Category.assoc])
+  rw [← Category.assoc
+    (p.elim (cfpLift f g) step)
+    (cfpMap isLeafEndo isLeafEndo)
+    (cfpFst p.T p.T),
+    elim_algebra_morphism (cfpLift f g)
+      step (cfpMap isLeafEndo isLeafEndo)
+      step alg,
+    cfpLift_cfpMap, hf, hg]
+
+/-- `boolAnd(leaf, leaf) = leaf`. -/
+theorem boolAnd_ℓ_ℓ :
+    cfpLift p.ℓ p.ℓ ≫ boolAnd = p.ℓ := by
+  have factor :
+      cfpLift p.ℓ p.ℓ =
+      cfpLift (cfpTerminalFrom cfpTerminal) p.ℓ
+        ≫ cfpMap p.ℓ (𝟙 p.T) := by
+    rw [cfpLift_cfpMap, Category.comp_id,
+      cfpTerminalFrom_terminal,
+      Category.id_comp]
+  rw [factor, Category.assoc,
+    boolAnd_leaf_left, ← Category.assoc,
+    cfpLift_snd, isLeafEndo_ℓ]
+
+/-- The output of `boolAnd` is always Boolean:
+`boolAnd ≫ isLeafEndo = boolAnd`. -/
+theorem boolAnd_output_boolean :
+    boolAnd ≫ isLeafEndo =
+      (boolAnd : cfpProd p.T p.T ⟶ p.T) := by
+  unfold boolAnd
+  rw [Category.assoc, treeIte_isLeafEndo_stable]
+  · rw [Category.assoc,
+      @isLeafEndo_idem C _ h p]
+  · rw [Category.assoc, Category.assoc,
+      isLeafEndo_treeFalse]
+
+/-- From `boolAnd(A, B) = A`, derive that `A`
+is Boolean: `A ≫ isLeafEndo = A`. -/
+theorem boolAnd_hyp_boolean
+    {D : C}
+    {A B : D ⟶ p.T}
+    (hAB : cfpLift A B ≫ boolAnd = A) :
+    A ≫ isLeafEndo = A := by
+  calc A ≫ isLeafEndo
+      = cfpLift A B ≫ boolAnd ≫ isLeafEndo := by
+        rw [← Category.assoc, hAB]
+    _ = cfpLift A B ≫ boolAnd := by
+        rw [boolAnd_output_boolean]
+    _ = A := hAB
+
+/-- Rewrite of `boolAnd` applied to specific
+morphisms in terms of `treeIte`: the condition
+is the first argument, the "then" branch is
+`isLeafEndo` of the second, and the "else" branch
+is the constant `treeFalse`. -/
+theorem boolAnd_treeIte_form
+    {D : C}
+    (A B : D ⟶ p.T) :
+    cfpLift A B ≫ boolAnd =
+    cfpLift
+      (cfpLift (B ≫ isLeafEndo)
+        (cfpTerminalFrom D ≫ treeFalse))
+      A ≫ treeIte := by
+  unfold boolAnd
+  rw [← Category.assoc, cfpLift_precomp]
+  have inner :
+      cfpLift A B ≫
+        cfpLift
+          (cfpSnd p.T p.T ≫ isLeafEndo)
+          (cfpFst p.T p.T ≫
+            cfpTerminalFrom p.T ≫
+            treeFalse) =
+      cfpLift (B ≫ isLeafEndo)
+        (A ≫ cfpTerminalFrom p.T ≫
+          treeFalse) := by
+    rw [cfpLift_precomp]
+    congr 1
+    · rw [← Category.assoc, cfpLift_snd]
+    · rw [← Category.assoc, cfpLift_fst]
+  have hfst :
+      cfpLift A B ≫ cfpFst p.T p.T = A :=
+    cfpLift_fst A B
+  have hterm :
+      A ≫ cfpTerminalFrom p.T =
+      cfpTerminalFrom D :=
+    h.terminal.uniq _
+  rw [inner, hfst]
+  congr 2
+  rw [← Category.assoc, hterm]
+
+/-- Evaluating `treeIte` with `treeFalse` as the
+condition and specific morphisms as branches:
+`treeIte((X, Y), treeFalse) = Y`. -/
+theorem treeIte_treeFalse_applied
+    {D : C}
+    (X Y : D ⟶ p.T) :
+    cfpLift (cfpLift X Y)
+      (cfpTerminalFrom D ≫ treeFalse) ≫
+      treeIte = Y := by
+  have factor :
+      cfpLift (cfpLift X Y)
+        (cfpTerminalFrom D ≫ treeFalse) =
+      cfpLift X Y ≫
+        cfpInsertSnd treeFalse
+          (cfpProd p.T p.T) := by
+    unfold cfpInsertSnd
+    rw [cfpLift_precomp, Category.comp_id]
+    congr 1
+    rw [← Category.assoc]
+    congr 1
+    exact (h.terminal.uniq _).symm
+  rw [factor, Category.assoc,
+    treeIte_treeFalse, cfpLift_snd]
+
+/-- `iteFold ≫ cfpSnd T T` equals the constant
+"else" projection: folding any tree returns the
+second component (the "else" branch) as its own
+second component. -/
+theorem iteFold_snd :
+    (iteFold :
+      cfpProd (cfpProd p.T p.T) p.T ⟶
+        cfpProd p.T p.T) ≫
+      cfpSnd p.T p.T =
+    cfpFst (cfpProd p.T p.T) p.T ≫
+      cfpSnd p.T p.T := by
+  have lhs :
+      iteFold ≫ cfpSnd p.T p.T =
+      p.elim (cfpSnd p.T p.T)
+        (cfpFst p.T p.T) :=
+    p.elim_uniq (cfpSnd p.T p.T)
+      (cfpFst p.T p.T)
+      (iteFold ≫ cfpSnd p.T p.T)
+      (by
+        rw [← Category.assoc, iteFold_ℓ,
+          Category.id_comp])
+      (by
+        rw [← Category.assoc, iteFold_β,
+          Category.assoc, cfpLift_snd]
+        rw [← cfpMap_fst
+          (cfpSnd p.T p.T)
+          (cfpSnd p.T p.T)]
+        rw [← Category.assoc,
+          ← cfpLiftAssoc_postcomp])
+  have rhs :
+      cfpFst (cfpProd p.T p.T) p.T ≫
+        cfpSnd p.T p.T =
+      p.elim (cfpSnd p.T p.T)
+        (cfpFst p.T p.T) :=
+    p.elim_uniq (cfpSnd p.T p.T)
+      (cfpFst p.T p.T)
+      (cfpFst (cfpProd p.T p.T) p.T ≫
+        cfpSnd p.T p.T)
+      (by
+        rw [← Category.assoc]
+        unfold cfpInsertSnd
+        rw [cfpLift_fst, Category.id_comp])
+      (by
+        rw [← Category.assoc,
+          cfpMap_fst (𝟙 _) p.β,
+          Category.comp_id]
+        symm
+        unfold cfpLiftAssoc
+        rw [cfpLift_fst,
+          ← Category.assoc]
+        unfold cfpAssocFst
+        rw [cfpLift_fst])
+  rw [lhs, ← rhs]
+
+/-- At `treeFalse`, `iteFold` returns the pair
+`(cfpSnd, cfpSnd)`, duplicating the "else" value.
+-/
+theorem iteFold_treeFalse :
+    cfpInsertSnd treeFalse (cfpProd p.T p.T) ≫
+      iteFold =
+    cfpLift (cfpSnd p.T p.T)
+      (cfpSnd p.T p.T) := by
+  apply cfpLift_uniq
+  · -- cfpFst projection: treeIte at treeFalse
+    have h1 := @treeIte_treeFalse C _ h p
+    unfold treeIte at h1
+    simp only [Category.assoc] at h1 ⊢
+    exact h1
+  · -- cfpSnd projection: by iteFold_snd
+    rw [Category.assoc, iteFold_snd,
+      ← Category.assoc]
+    unfold cfpInsertSnd
+    rw [cfpLift_fst, Category.id_comp]
+
+/-- Pre-composing the condition of `iteFold`
+with `isLeafEndo` has no effect:
+`cfpMap (𝟙 (T×T)) isLeafEndo ≫ iteFold
+  = iteFold`. -/
+theorem iteFold_isLeafEndo :
+    cfpMap (𝟙 (cfpProd p.T p.T)) isLeafEndo ≫
+      iteFold =
+    (iteFold :
+      cfpProd (cfpProd p.T p.T) p.T ⟶
+        cfpProd p.T p.T) := by
+  set A := cfpProd p.T p.T with hA
+  set step :=
+    cfpLift
+      (cfpFst A A ≫ cfpSnd p.T p.T)
+      (cfpFst A A ≫ cfpSnd p.T p.T)
+    with hstep
+  exact p.elim_uniq (𝟙 A) step
+    (cfpMap (𝟙 A) isLeafEndo ≫ iteFold)
+    (by
+      rw [← Category.assoc]
+      have : cfpInsertSnd p.ℓ A ≫
+          cfpMap (𝟙 A) isLeafEndo =
+          cfpInsertSnd (p.ℓ ≫ isLeafEndo) A := by
+        unfold cfpInsertSnd
+        rw [cfpLift_cfpMap, Category.id_comp,
+          Category.assoc]
+      rw [this, isLeafEndo_ℓ, iteFold_ℓ])
+    (by
+      -- LHS: cfpMap (𝟙 A) β ≫
+      --   cfpMap (𝟙 A) isLeafEndo ≫ iteFold
+      -- = cfpMap (𝟙 A)
+      --     (β ≫ isLeafEndo) ≫ iteFold
+      -- = cfpMap (𝟙 A)
+      --     (cfpTerminalFrom (T×T) ≫ treeFalse)
+      --   ≫ iteFold
+      rw [← Category.assoc, cfpMap_comp,
+        Category.id_comp,
+        @isLeafEndo_β C _ h p]
+      -- Show cfpMap (𝟙 A)
+      --   (cfpTerminalFrom (T×T) ≫ treeFalse)
+      --   ≫ iteFold
+      -- = cfpLiftAssoc (...) (...) ≫ step
+      -- Both sides equal cfpLift
+      --   (cfpFst A (T×T) ≫ cfpSnd T T)
+      --   (cfpFst A (T×T) ≫ cfpSnd T T)
+      -- LHS: factor through cfpFst ≫ iteFold_treeFalse
+      have lhs_eq :
+          cfpMap (𝟙 A)
+            (cfpTerminalFrom (cfpProd p.T p.T)
+              ≫ treeFalse) ≫
+            iteFold =
+          cfpLift (cfpFst A (cfpProd p.T p.T) ≫
+              cfpSnd p.T p.T)
+            (cfpFst A (cfpProd p.T p.T) ≫
+              cfpSnd p.T p.T) := by
+        have factor :
+            cfpMap (𝟙 A)
+              (cfpTerminalFrom
+                (cfpProd p.T p.T) ≫
+                treeFalse) =
+            cfpFst A (cfpProd p.T p.T) ≫
+              cfpInsertSnd treeFalse A := by
+          unfold cfpMap cfpInsertSnd
+          rw [cfpLift_precomp,
+            Category.comp_id]
+          congr 1
+          rw [← Category.assoc,
+            ← Category.assoc]
+          congr 1
+          have h1 : cfpSnd A
+              (cfpProd p.T p.T) ≫
+              cfpTerminalFrom
+                (cfpProd p.T p.T) =
+            cfpTerminalFrom
+              (cfpProd A
+                (cfpProd p.T p.T)) :=
+            h.terminal.uniq _
+          have h2 : cfpFst A
+              (cfpProd p.T p.T) ≫
+              cfpTerminalFrom A =
+            cfpTerminalFrom
+              (cfpProd A
+                (cfpProd p.T p.T)) :=
+            h.terminal.uniq _
+          rw [h1, h2]
+        rw [factor, Category.assoc,
+          iteFold_treeFalse, cfpLift_precomp]
+      -- RHS: unfold cfpLiftAssoc and step
+      have rhs_eq :
+          cfpLiftAssoc
+            (cfpMap (𝟙 A) isLeafEndo ≫
+              iteFold)
+            (cfpMap (𝟙 A) isLeafEndo ≫
+              iteFold) ≫ step =
+          cfpLift (cfpFst A (cfpProd p.T p.T) ≫
+              cfpSnd p.T p.T)
+            (cfpFst A (cfpProd p.T p.T) ≫
+              cfpSnd p.T p.T) := by
+        rw [hstep, cfpLift_precomp]
+        unfold cfpLiftAssoc
+        have simplify :
+            cfpAssocFst A p.T p.T ≫
+              cfpMap (𝟙 A) isLeafEndo ≫
+              cfpFst A p.T ≫
+              cfpSnd p.T p.T =
+            cfpFst A (cfpProd p.T p.T) ≫
+              cfpSnd p.T p.T := by
+          calc cfpAssocFst A p.T p.T ≫
+                cfpMap (𝟙 A) isLeafEndo ≫
+                cfpFst A p.T ≫
+                cfpSnd p.T p.T
+              = cfpAssocFst A p.T p.T ≫
+                  (cfpMap (𝟙 A) isLeafEndo ≫
+                    cfpFst A p.T) ≫
+                  cfpSnd p.T p.T := by
+                simp only [Category.assoc]
+            _ = cfpAssocFst A p.T p.T ≫
+                  cfpFst A p.T ≫
+                  cfpSnd p.T p.T := by
+                rw [cfpMap_fst,
+                  Category.comp_id]
+            _ = (cfpAssocFst A p.T p.T ≫
+                  cfpFst A p.T) ≫
+                  cfpSnd p.T p.T := by
+                rw [Category.assoc]
+            _ = cfpFst A (cfpProd p.T p.T) ≫
+                  cfpSnd p.T p.T := by
+                unfold cfpAssocFst
+                rw [cfpLift_fst]
+        congr 1 <;> (
+          rw [← Category.assoc, cfpLift_fst,
+            Category.assoc, Category.assoc,
+            iteFold_snd]
+          exact simplify)
+      rw [lhs_eq, rhs_eq])
+
+/-- Pre-composing the condition of `treeIte`
+with `isLeafEndo` has no effect:
+`treeIte((X, Y), isLeafEndo(c))
+  = treeIte((X, Y), c)`. -/
+theorem treeIte_condition_isLeafEndo
+    {D : C}
+    (X Y c : D ⟶ p.T) :
+    cfpLift (cfpLift X Y) (c ≫ isLeafEndo) ≫
+      treeIte =
+    cfpLift (cfpLift X Y) c ≫ treeIte := by
+  -- Factor cfpLift through cfpMap
+  have factor : ∀ (z : D ⟶ p.T),
+      cfpLift (cfpLift X Y) z ≫ treeIte =
+      cfpLift (𝟙 D) z ≫
+        (cfpMap (cfpLift X Y) (𝟙 p.T) ≫
+          treeIte) := by
+    intro z
+    rw [← Category.assoc,
+      cfpLift_cfpMap, Category.id_comp,
+      Category.comp_id]
+  rw [factor, factor]
+  -- Factor cfpLift (𝟙 D) (c ≫ isLeafEndo)
+  -- through cfpMap (𝟙 D) isLeafEndo
+  have h1 :
+      cfpLift (𝟙 D) (c ≫ isLeafEndo) =
+      cfpLift (𝟙 D) c ≫
+        cfpMap (𝟙 D) isLeafEndo := by
+    rw [cfpLift_cfpMap, Category.id_comp]
+  rw [h1, Category.assoc]
+  -- Absorb cfpMap isLeafEndo into treeIte
+  congr 1
+  unfold treeIte
+  rw [← Category.assoc, ← Category.assoc,
+    cfpMap_comp, Category.id_comp,
+    Category.comp_id]
+  have split :
+      cfpMap (cfpLift X Y) isLeafEndo =
+      cfpMap (cfpLift X Y) (𝟙 p.T) ≫
+        cfpMap (𝟙 (cfpProd p.T p.T))
+          isLeafEndo := by
+    rw [cfpMap_comp, Category.comp_id,
+      Category.id_comp]
+  rw [split, Category.assoc,
+    Category.assoc,
+    ← Category.assoc
+      (cfpMap (𝟙 (cfpProd p.T p.T))
+        isLeafEndo)
+      iteFold
+      (cfpFst p.T p.T),
+    iteFold_isLeafEndo]
+
+/-- At a branch condition, `treeIte` returns
+the "else" branch: for any `f g r : D ⟶ T`,
+`treeIte((f, g), β ∘ r) = g`. -/
+theorem treeIte_β_applied
+    {D : C}
+    (f g : D ⟶ p.T)
+    (r : D ⟶ cfpProd p.T p.T) :
+    cfpLift (cfpLift f g) (r ≫ p.β) ≫
+      treeIte = g := by
+  have factor :
+      cfpLift (cfpLift f g) (r ≫ p.β) =
+      cfpLift (cfpLift f g) r ≫
+        cfpMap (𝟙 (cfpProd p.T p.T)) p.β := by
+    symm
+    rw [cfpLift_cfpMap, Category.comp_id]
+  rw [factor, Category.assoc, treeIte_β,
+    ← Category.assoc, ← Category.assoc]
+  unfold cfpLiftAssoc
+  rw [cfpLift_precomp, cfpLift_fst,
+    Category.assoc, Category.assoc,
+    iteFold_snd]
+  unfold cfpAssocFst
+  rw [← Category.assoc (cfpLift _ _)
+    (cfpFst _ _) (cfpSnd _ _),
+    cfpLift_fst, ← Category.assoc,
+    cfpLift_fst, cfpLift_snd]
+
+/-- At `cfpMap k β ≫ treeIte` with `k = cfpLift A B`,
+the branch condition β gives the "else" value B. -/
+theorem cfpMap_β_treeIte
+    {D : C}
+    (A B : D ⟶ p.T) :
+    cfpMap (cfpLift A B) p.β ≫ treeIte =
+    cfpFst D (cfpProd p.T p.T) ≫ B := by
+  have expand :
+      cfpMap (cfpLift A B) p.β =
+      cfpLift
+        (cfpLift
+          (cfpFst D (cfpProd p.T p.T) ≫ A)
+          (cfpFst D (cfpProd p.T p.T) ≫ B))
+        (cfpSnd D (cfpProd p.T p.T) ≫ p.β) := by
+    unfold cfpMap
+    congr 1
+    rw [cfpLift_precomp]
+  rw [expand, treeIte_β_applied]
+
+/-- At `cfpInsertSnd ℓ ≫ cfpMap k (𝟙 T) ≫ treeIte`
+with `k = cfpLift A B`, the leaf condition gives
+the "then" value A. -/
+theorem cfpInsertSnd_cfpMap_treeIte
+    {D : C}
+    (A B : D ⟶ p.T) :
+    cfpInsertSnd p.ℓ D ≫
+      cfpMap (cfpLift A B) (𝟙 p.T) ≫ treeIte =
+    A := by
+  rw [← Category.assoc]
+  unfold cfpInsertSnd
+  rw [cfpLift_cfpMap, Category.comp_id,
+    Category.id_comp]
+  have : cfpLift (cfpLift A B)
+      (cfpTerminalFrom D ≫ p.ℓ) =
+      cfpLift A B ≫ cfpInsertSnd p.ℓ
+        (cfpProd p.T p.T) := by
+    unfold cfpInsertSnd
+    rw [cfpLift_precomp, Category.comp_id]
+    congr 1
+    rw [← Category.assoc]
+    congr 1
+    exact (h.terminal.uniq _).symm
+  rw [this, Category.assoc, treeIte_ℓ,
+    cfpLift_fst]
+
+/-- At a branch condition, the inner treeIte
+gives the "else" value, composed with the
+parameter projection. -/
+theorem cfpMap_β_inner_treeIte
+    {D : C}
+    (A B : D ⟶ p.T) :
+    cfpMap (𝟙 D) p.β ≫
+      cfpMap (cfpLift A B) (𝟙 p.T) ≫ treeIte =
+    cfpFst D (cfpProd p.T p.T) ≫ B := by
+  rw [← Category.assoc, cfpMap_comp,
+    Category.id_comp, Category.comp_id,
+    cfpMap_β_treeIte]
+
+/-- Composition of `treeIte`: nesting an inner
+`treeIte` as the condition of an outer `treeIte`
+distributes the outer branches into the inner
+branches.
+
+`treeIte((X, Y), treeIte((A, B), c))
+  = treeIte((treeIte((X,Y), A),
+             treeIte((X,Y), B)), c)` -/
+theorem treeIte_compose
+    {D : C}
+    (X Y A B c : D ⟶ p.T) :
+    cfpLift (cfpLift X Y)
+      (cfpLift (cfpLift A B) c ≫ treeIte) ≫
+      treeIte =
+    cfpLift
+      (cfpLift
+        (cfpLift (cfpLift X Y) A ≫ treeIte)
+        (cfpLift (cfpLift X Y) B ≫ treeIte))
+      c ≫ treeIte := by
+  -- Factor cfpLift (cfpLift A B) c.
+  have factor (z : D ⟶ p.T) :
+      cfpLift (cfpLift A B) z =
+      cfpLift (𝟙 D) z ≫
+        cfpMap (cfpLift A B) (𝟙 p.T) := by
+    symm; rw [cfpLift_cfpMap,
+      Category.id_comp, Category.comp_id]
+  -- Factor both sides through cfpLift (𝟙 D) c.
+  have lhs_eq :
+      cfpLift (cfpLift X Y)
+        (cfpLift (cfpLift A B) c ≫
+          treeIte) ≫ treeIte =
+      cfpLift (𝟙 D) c ≫
+        (cfpLift (cfpFst D p.T ≫ cfpLift X Y)
+          (cfpMap (cfpLift A B) (𝟙 p.T) ≫
+            treeIte) ≫
+          treeIte) := by
+    have h1 :
+        cfpLift (cfpLift A B) c ≫ treeIte =
+        cfpLift (𝟙 D) c ≫
+          (cfpMap (cfpLift A B) (𝟙 p.T) ≫
+            treeIte) := by
+      rw [← Category.assoc, factor c]
+    rw [← Category.assoc, h1,
+      ← Category.assoc
+        (cfpLift (𝟙 D) c) _ treeIte,
+      cfpLift_precomp, ← Category.assoc,
+      cfpLift_fst, Category.id_comp,
+      Category.assoc]
+  have rhs_eq :
+      cfpLift
+        (cfpLift
+          (cfpLift (cfpLift X Y) A ≫ treeIte)
+          (cfpLift (cfpLift X Y) B ≫
+            treeIte))
+        c ≫ treeIte =
+      cfpLift (𝟙 D) c ≫
+        (cfpMap
+          (cfpLift
+            (cfpLift (cfpLift X Y) A ≫
+              treeIte)
+            (cfpLift (cfpLift X Y) B ≫
+              treeIte))
+          (𝟙 p.T) ≫
+          treeIte) := by
+    rw [← Category.assoc]
+    congr 1; symm
+    rw [cfpLift_cfpMap, Category.id_comp,
+      Category.comp_id]
+  rw [lhs_eq, rhs_eq]
+  congr 1
+  -- Reduce to elim_uniq.
+  have rhs_elim :
+      cfpMap
+        (cfpLift
+          (cfpLift (cfpLift X Y) A ≫ treeIte)
+          (cfpLift (cfpLift X Y) B ≫
+            treeIte))
+        (𝟙 p.T) ≫ treeIte =
+      p.elim
+        (cfpLift
+          (cfpLift (cfpLift X Y) A ≫ treeIte)
+          (cfpLift (cfpLift X Y) B ≫
+            treeIte))
+        (cfpLift
+          (cfpFst (cfpProd p.T p.T)
+            (cfpProd p.T p.T) ≫
+            cfpSnd p.T p.T)
+          (cfpFst (cfpProd p.T p.T)
+            (cfpProd p.T p.T) ≫
+            cfpSnd p.T p.T)) ≫
+        cfpFst p.T p.T := by
+    unfold treeIte iteFold
+    rw [← Category.assoc, elim_naturality,
+      Category.comp_id]
+  rw [rhs_elim]
+  -- Witness for elim_uniq.
+  have w :=
+    p.elim_uniq
+      (cfpLift
+        (cfpLift (cfpLift X Y) A ≫ treeIte)
+        (cfpLift (cfpLift X Y) B ≫ treeIte))
+      (cfpLift
+        (cfpFst (cfpProd p.T p.T)
+          (cfpProd p.T p.T) ≫
+          cfpSnd p.T p.T)
+        (cfpFst (cfpProd p.T p.T)
+          (cfpProd p.T p.T) ≫
+          cfpSnd p.T p.T))
+      (cfpLift
+        (cfpLift
+          (cfpFst D p.T ≫ cfpLift X Y)
+          (cfpMap (cfpLift A B)
+            (𝟙 p.T) ≫ treeIte) ≫
+          treeIte)
+        (cfpFst D p.T ≫
+          cfpLift (cfpLift X Y) B ≫
+          treeIte))
+      -- Base
+      (by
+        unfold cfpInsertSnd
+        rw [cfpLift_precomp]
+        congr 1
+        · rw [← Category.assoc, cfpLift_precomp,
+            ← Category.assoc _ (cfpFst _ _)
+              (cfpLift X Y),
+            cfpLift_fst, Category.id_comp]
+          change cfpLift (cfpLift X Y)
+            (cfpInsertSnd p.ℓ D ≫
+              cfpMap (cfpLift A B)
+                (𝟙 p.T) ≫ treeIte) ≫
+            treeIte = _
+          rw [cfpInsertSnd_cfpMap_treeIte]
+        · rw [← Category.assoc, cfpLift_fst,
+            Category.id_comp])
+      -- Branch
+      (by
+        rw [cfpLift_precomp]
+        -- LHS fst
+        have h1 :
+            cfpMap (𝟙 D) p.β ≫
+              (cfpLift
+                (cfpFst D p.T ≫ cfpLift X Y)
+                (cfpMap (cfpLift A B)
+                  (𝟙 p.T) ≫ treeIte) ≫
+                treeIte) =
+            cfpFst D (cfpProd p.T p.T) ≫
+              cfpLift (cfpLift X Y) B ≫
+              treeIte := by
+          rw [← Category.assoc, cfpLift_precomp]
+          have : cfpMap (𝟙 D) p.β ≫
+              cfpFst D p.T ≫ cfpLift X Y =
+              cfpFst D (cfpProd p.T p.T) ≫
+                cfpLift X Y := by
+            rw [← Category.assoc,
+              cfpMap_fst, Category.comp_id]
+          rw [this, cfpMap_β_inner_treeIte,
+            ← cfpLift_precomp, Category.assoc]
+        -- LHS snd
+        have h2 :
+            cfpMap (𝟙 D) p.β ≫
+              (cfpFst D p.T ≫
+                cfpLift (cfpLift X Y) B ≫
+                treeIte) =
+            cfpFst D (cfpProd p.T p.T) ≫
+              cfpLift (cfpLift X Y) B ≫
+              treeIte := by
+          rw [← Category.assoc (cfpMap _ _)
+            (cfpFst _ _), cfpMap_fst,
+            Category.comp_id]
+        rw [h1, h2]
+        -- Show cfpLiftAssoc Ψ' Ψ' ≫ step
+        -- = cfpLift (cfpFst ≫ EL) (cfpFst ≫ EL).
+        have rhs_proj (proj :
+            cfpProd p.T p.T ⟶ p.T)
+            (hp : (cfpLift
+              (cfpFst (cfpProd p.T p.T)
+                (cfpProd p.T p.T) ≫
+                cfpSnd p.T p.T)
+              (cfpFst (cfpProd p.T p.T)
+                (cfpProd p.T p.T) ≫
+                cfpSnd p.T p.T)) ≫ proj =
+              cfpFst (cfpProd p.T p.T)
+                (cfpProd p.T p.T) ≫
+                cfpSnd p.T p.T) :
+            cfpLiftAssoc
+              (cfpLift
+                (cfpLift
+                  (cfpFst D p.T ≫
+                    cfpLift X Y)
+                  (cfpMap (cfpLift A B)
+                    (𝟙 p.T) ≫ treeIte) ≫
+                  treeIte)
+                (cfpFst D p.T ≫
+                  cfpLift (cfpLift X Y) B ≫
+                  treeIte))
+              (cfpLift
+                (cfpLift
+                  (cfpFst D p.T ≫
+                    cfpLift X Y)
+                  (cfpMap (cfpLift A B)
+                    (𝟙 p.T) ≫ treeIte) ≫
+                  treeIte)
+                (cfpFst D p.T ≫
+                  cfpLift (cfpLift X Y) B ≫
+                  treeIte)) ≫
+              (cfpLift
+                (cfpFst (cfpProd p.T p.T)
+                  (cfpProd p.T p.T) ≫
+                  cfpSnd p.T p.T)
+                (cfpFst (cfpProd p.T p.T)
+                  (cfpProd p.T p.T) ≫
+                  cfpSnd p.T p.T)) ≫ proj =
+            cfpFst D (cfpProd p.T p.T) ≫
+              cfpLift (cfpLift X Y) B ≫
+              treeIte := by
+          rw [hp]
+          unfold cfpLiftAssoc
+          rw [← Category.assoc,
+            cfpLift_fst, Category.assoc,
+            cfpLift_snd]
+          unfold cfpAssocFst
+          rw [← Category.assoc, cfpLift_fst]
+        symm
+        apply cfpLift_uniq
+        · rw [Category.assoc,
+            rhs_proj _ (cfpLift_fst _ _)]
+        · rw [Category.assoc,
+            rhs_proj _ (cfpLift_snd _ _)])
+  rw [← w, cfpLift_fst]
+
+/-- Associativity of `boolAnd`. -/
+theorem boolAnd_assoc
+    {D : C}
+    (A B E : D ⟶ p.T) :
+    cfpLift (cfpLift A B ≫ boolAnd) E ≫
+      boolAnd =
+    cfpLift A (cfpLift B E ≫ boolAnd) ≫
+      boolAnd := by
+  -- Expand via boolAnd_treeIte_form.
+  rw [boolAnd_treeIte_form]
+  rw [boolAnd_treeIte_form]
+  rw [boolAnd_treeIte_form]
+  rw [boolAnd_treeIte_form]
+  -- LHS: nested treeIte. Apply treeIte_compose.
+  rw [treeIte_compose]
+  -- Simplify the inner treeIte applications.
+  congr 1
+  apply cfpLift_uniq
+  · -- cfpFst: treeIte_condition_isLeafEndo +
+    -- treeIte_isLeafEndo_stable.
+    rw [cfpLift_fst]
+    congr 1
+    · rw [treeIte_condition_isLeafEndo]
+      symm
+      rw [Category.assoc]
+      exact treeIte_isLeafEndo_stable
+        (E ≫ isLeafEndo)
+        (cfpTerminalFrom D ≫ treeFalse) B
+        (by rw [Category.assoc,
+          @isLeafEndo_idem C _ h p])
+        (by rw [Category.assoc,
+          isLeafEndo_treeFalse])
+    · rw [treeIte_treeFalse_applied]
+  · rw [cfpLift_snd]
+
+/-- Transitivity of `boolAnd`-implication:
+if `boolAnd(A, B) = A` and `boolAnd(B, E) = B`,
+then `boolAnd(A, E) = A`. -/
+theorem boolAnd_implies_trans
+    {D : C}
+    {A B E : D ⟶ p.T}
+    (hAB : cfpLift A B ≫ boolAnd = A)
+    (hBE : cfpLift B E ≫ boolAnd = B) :
+    cfpLift A E ≫ boolAnd = A := by
+  calc cfpLift A E ≫ boolAnd
+      = cfpLift (cfpLift A B ≫ boolAnd) E ≫
+          boolAnd := by
+        rw [hAB]
+    _ = cfpLift A (cfpLift B E ≫ boolAnd) ≫
+          boolAnd := boolAnd_assoc A B E
+    _ = cfpLift A B ≫ boolAnd := by
+        rw [hBE]
+    _ = A := hAB
+
+
+/-- Bridge from `boolAnd`-implication to
+`IsLeafConst`: if `boolAnd(A, B) = A` and
+`B` is Boolean-valued (`B ≫ isLeafEndo = B`),
+then for any `e` with `e ≫ A = leaf`,
+also `e ≫ B = leaf`. -/
+theorem boolAnd_implies_IsLeafConst
+    {D : C}
+    {A B : D ⟶ p.T}
+    (h : cfpLift A B ≫ boolAnd = A)
+    (hB : B ≫ isLeafEndo = B)
+    {E : C}
+    (e : E ⟶ D)
+    (hA : IsLeafConst (e ≫ A)) :
+    IsLeafConst (e ≫ B) := by
+  unfold IsLeafConst at hA ⊢
+  have h1 : cfpLift (e ≫ A) (e ≫ B) ≫
+      boolAnd = e ≫ A := by
+    rw [← cfpLift_precomp, Category.assoc, h]
+  rw [hA] at h1
+  have factor :
+      cfpLift (cfpTerminalFrom E ≫ p.ℓ)
+        (e ≫ B) =
+      cfpLift (cfpTerminalFrom E)
+        (e ≫ B) ≫
+        cfpMap p.ℓ (𝟙 p.T) := by
+    rw [cfpLift_cfpMap, Category.comp_id]
+  rw [factor, Category.assoc,
+    boolAnd_leaf_left] at h1
+  -- h1 : cfpLift (cfpTerminalFrom E) (e ≫ B)
+  --   ≫ cfpSnd ≫ isLeafEndo = leaf
+  rw [← Category.assoc, cfpLift_snd] at h1
+  -- h1 : (e ≫ B) ≫ isLeafEndo = leaf
+  rw [Category.assoc, hB] at h1
   exact h1
 
 end GebLean
