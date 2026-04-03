@@ -197,6 +197,40 @@ def BT.node (l r : BT.{u}) : BT.{u} :=
   polyProdFreeMNode
     (overTerminal PUnit.{u + 1}) l r
 
+/-- Every `BT` tree is either `BT.leaf` or
+`BT.node l r` for some `l r`. -/
+theorem BT.leaf_or_node
+    {x : PUnit.{u + 1}}
+    (t : PolyFreeM
+      (overTerminal PUnit.{u + 1})
+      polyProdType x) :
+    t = BT.leaf ∨
+    ∃ l r : BT.{u}, t = BT.node l r := by
+  match t with
+  | PolyFix.mk y idx children =>
+    have hy := PUnit.eq_punit y; subst hy
+    match idx with
+    | Sum.inl leafIdx =>
+      have hli :
+          leafIdx = ⟨PUnit.unit, rfl⟩ :=
+        Subtype.ext (PUnit.eq_punit _)
+      subst hli
+      left
+      unfold BT.leaf polyFreeMPure
+      congr 1; funext e; exact PEmpty.elim e
+    | Sum.inr nodeIdx =>
+      have hni := PUnit.eq_punit nodeIdx
+      subst hni
+      right
+      exact ⟨children (Sum.inl PUnit.unit),
+        children (Sum.inr PUnit.unit), by
+        unfold BT.node polyProdFreeMNode
+          polyFreeMStrFamily
+        simp only; congr 1; ext e
+        match e with
+        | Sum.inl _ => rfl
+        | Sum.inr _ => rfl⟩
+
 /-- Catamorphism (fold) for binary trees (the universal
 morphism `φ : A × T → X` of the parameterized BTO).
 Given `b` for leaves and `s` for branches, folds a tree

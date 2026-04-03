@@ -21,44 +21,6 @@ namespace GebLean
 
 open CategoryTheory
 
-universe v u
-
-/-! ## BT case analysis -/
-
-/-- Every `BT` tree is either `BT.leaf` or
-`BT.node l r` for some `l r`. -/
-theorem BT.leaf_or_node
-    {x : PUnit.{u + 1}}
-    (t : PolyFreeM
-      (overTerminal PUnit.{u + 1})
-      polyProdType x) :
-    t = BT.leaf ∨
-    ∃ l r : BT.{u}, t = BT.node l r := by
-  match t with
-  | PolyFix.mk y idx children =>
-    have hy := PUnit.eq_punit y; subst hy
-    match idx with
-    | Sum.inl leafIdx =>
-      have hli :
-          leafIdx = ⟨PUnit.unit, rfl⟩ :=
-        Subtype.ext (PUnit.eq_punit _)
-      subst hli
-      left
-      unfold BT.leaf polyFreeMPure
-      congr 1; funext e; exact PEmpty.elim e
-    | Sum.inr nodeIdx =>
-      have hni := PUnit.eq_punit nodeIdx
-      subst hni
-      right
-      exact ⟨children (Sum.inl PUnit.unit),
-        children (Sum.inr PUnit.unit), by
-        unfold BT.node polyProdFreeMNode
-          polyFreeMStrFamily
-        simp only; congr 1; ext e
-        match e with
-        | Sum.inl _ => rfl
-        | Sum.inr _ => rfl⟩
-
 /-! ## Global element case split in
 LawvereBTQuotCat -/
 
@@ -199,24 +161,6 @@ theorem lawvereBT_bool_dichotomy
       _ = cfpTerminalFrom 0 ≫ treeFalse := by
           rw [hterm]
       _ = treeFalse := rfl
-
-/-! ## boolAnd with treeFalse -/
-
-variable {C : Type u} [Category.{v} C]
-  [h : HasChosenFiniteProducts C]
-  [p : HasPBTO C]
-
-/-- `boolAnd(treeFalse, B) = treeFalse` for any
-`B : D ⟶ T`.  Follows from the `treeIte` form of
-`boolAnd` and `treeIte_treeFalse_applied`. -/
-theorem boolAnd_treeFalse_left
-    {D : C}
-    (B : D ⟶ p.T) :
-    cfpLift (cfpTerminalFrom D ≫ treeFalse) B ≫
-      boolAnd =
-    cfpTerminalFrom D ≫ treeFalse := by
-  rw [boolAnd_treeIte_form]
-  exact treeIte_treeFalse_applied _ _
 
 /-! ## Main theorem -/
 

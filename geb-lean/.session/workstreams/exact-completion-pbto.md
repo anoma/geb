@@ -4,6 +4,7 @@
 
 Task 2 (TreePER.lean) complete.  The PER category uses
 `boolAnd` for all equational conditions:
+
 - `EqTransitive` states `boolAnd(boolAnd(rel(x,z),
   rel(z,y)), rel(x,y)) = boolAnd(rel(x,z), rel(z,y))`
 - `TreePERObj` requires `rel_bool : rel ≫ isLeafEndo = rel`

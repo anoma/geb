@@ -2512,4 +2512,17 @@ theorem boolAnd_idem :
     _ = sect ≫ isLeaf := by rw [isLeaf_def]
     _ = isLeafEndo := isLeafEndo_eq.symm
 
+/-- `boolAnd(treeFalse, B) = treeFalse` for any
+`B : D ⟶ T`.  The first argument is non-leaf, so
+`treeIte` returns the "else" branch
+(`treeFalse`). -/
+theorem boolAnd_treeFalse_left
+    {D : C}
+    (B : D ⟶ p.T) :
+    cfpLift (cfpTerminalFrom D ≫ treeFalse) B ≫
+      boolAnd =
+    cfpTerminalFrom D ≫ treeFalse := by
+  rw [boolAnd_treeIte_form]
+  exact treeIte_treeFalse_applied _ _
+
 end GebLean
