@@ -24,6 +24,7 @@ import GebLean.FreeToposBT
 import GebLean.HexagonCat
 import GebLean.TreeLogic
 import GebLean.TreePER
+import GebLean.TreePERLawvereBT
 import GebLean.LawvereBT
 import GebLean.LawvereBTEq
 import GebLean.LawvereBTEqCompletion
