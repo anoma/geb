@@ -2,15 +2,22 @@
 
 ## Status
 
-Task 2 (TreePER.lean) complete.  The PER category is
-fully defined with quotient morphisms and a Category
-instance.  The transitivity condition on TreePERObj
-uses separate hypotheses (two leaf-constant conditions)
-rather than a conjunction via treeAnd, which avoids
-the need for a treeAnd transitivity lemma.  Morphism
-equivalence (reflexivity, symmetry, transitivity),
-composition well-definedness, and all category laws
-are proved.
+Task 2 (TreePER.lean) complete.  The PER category uses
+`boolAnd` for all equational conditions:
+- `EqTransitive` states `boolAnd(boolAnd(rel(x,z),
+  rel(z,y)), rel(x,y)) = boolAnd(rel(x,z), rel(z,y))`
+- `TreePERObj` requires `rel_bool : rel ≫ isLeafEndo = rel`
+  (Boolean-valued output)
+- `TreePERPreMor.map_rel` is equational:
+  `cfpLift X.rel (cfpMap map map ≫ Y.rel) ≫ boolAnd = X.rel`
+- Identity uses `boolAnd_idem` (proved via `p.elim_uniq`)
+- Composition uses `boolAnd_implies_trans`
+- `eqTransitive_implies_quant` uses `boolAnd_implies_IsLeafConst`
+The bridge from equational to Prop-valued `IsLeafConst`
+conditions is one-directional; the converse
+(`quantTransitive_implies_eq`) requires case-splitting on
+Boolean global elements, which is not available in the
+abstract categorical setting.
 
 ## Goal
 
