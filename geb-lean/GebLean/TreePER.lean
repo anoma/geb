@@ -67,15 +67,9 @@ A PER consists of a morphism `rel : T × T → T`
 (encoding a T-valued relation where leaf = true)
 satisfying:
 - Symmetry: `rel(x, y) = rel(y, x)`
-- Transitivity: for all x, y, z,
-  if `rel(x, z) = leaf` and `rel(z, y) = leaf`
-  then `rel(x, y) = leaf`
-
-The transitivity condition is stated via
-generalized elements: for any morphism
-`e : D ⟶ T × (T × T)` such that both
-`rel(x, z)` and `rel(z, y)` are leaf-constant,
-`rel(x, y)` is also leaf-constant.
+- Transitivity: `propAnd(rel(x,z), rel(z,y))`
+  implies `rel(x,y)`, encoded as a morphism
+  equation on `T × (T × T)`
 -/
 structure TreePERObj where
   /-- The relation morphism `T × T → T`. -/
@@ -84,18 +78,93 @@ structure TreePERObj where
   relation. -/
   rel_symm :
     cfpSwap p.T p.T ≫ rel = rel
-  /-- Transitivity: if `rel(x, z)` and `rel(z, y)`
-  are both leaf-constant over a test morphism `e`,
-  then `rel(x, y)` is also leaf-constant. -/
+  /-- Transitivity: `propAnd(rel(x,z), rel(z,y))`
+  implies `rel(x,y)`, i.e.,
+  `propAnd(propAnd(rel(x,z), rel(z,y)), rel(x,y))
+   = propAnd(rel(x,z), rel(z,y))`. -/
   rel_trans :
-    {D : C} →
-    (e : D ⟶ cfpProd p.T (cfpProd p.T p.T)) →
+    cfpLift
+      (cfpLift
+        (cfpLift t3x t3z ≫ rel)
+        (cfpLift t3z t3y ≫ rel) ≫
+        propAnd)
+      (cfpLift t3x t3y ≫ rel) ≫
+      propAnd =
+    cfpLift
+      (cfpLift t3x t3z ≫ rel)
+      (cfpLift t3z t3y ≫ rel) ≫
+      propAnd
+
+/-- Derive the Prop-valued transitivity from the
+equational form: for any `e : D ⟶ T × (T × T)`,
+if `rel(x,z)` and `rel(z,y)` are leaf-constant,
+then `rel(x,y)` is leaf-constant.
+
+The proof pre-composes the equational `rel_trans`
+with `e`, substitutes the leaf-constant hypotheses
+into both sides, then uses `propAnd_leaf_left` to
+extract the conclusion. -/
+theorem TreePERObj.rel_trans_prop
+    (X : @TreePERObj C _ h p)
+    {D : C}
+    (e : D ⟶ cfpProd p.T (cfpProd p.T p.T))
+    (h1 : IsLeafConst
+      (e ≫ cfpLift t3x t3z ≫ X.rel))
+    (h2 : IsLeafConst
+      (e ≫ cfpLift t3z t3y ≫ X.rel)) :
     IsLeafConst
-      (e ≫ cfpLift t3x t3z ≫ rel) →
-    IsLeafConst
-      (e ≫ cfpLift t3z t3y ≫ rel) →
-    IsLeafConst
-      (e ≫ cfpLift t3x t3y ≫ rel)
+      (e ≫ cfpLift t3x t3y ≫ X.rel) := by
+  unfold IsLeafConst at h1 h2 ⊢
+  -- Auxiliary: cfpLift leaf leaf ≫ propAnd = leaf
+  have lift_ℓℓ_eq :
+      cfpLift p.ℓ p.ℓ =
+      p.ℓ ≫ cfpLift (𝟙 p.T) (𝟙 p.T) := by
+    rw [cfpLift_precomp]
+    simp only [Category.comp_id]
+  have leaf_leaf_propAnd :
+      cfpLift p.ℓ p.ℓ ≫ propAnd = p.ℓ := by
+    rw [lift_ℓℓ_eq, Category.assoc,
+      propAnd_idem, Category.comp_id]
+  have leaf_idem :
+      cfpLift (cfpTerminalFrom D ≫ p.ℓ)
+        (cfpTerminalFrom D ≫ p.ℓ) ≫
+        propAnd =
+      cfpTerminalFrom D ≫ p.ℓ := by
+    rw [← cfpLift_precomp
+      (cfpTerminalFrom D) p.ℓ p.ℓ,
+      Category.assoc, leaf_leaf_propAnd]
+  -- Auxiliary: propAnd(leaf, X) = X
+  have leaf_elim :
+      ∀ (B : D ⟶ p.T),
+      cfpLift (cfpTerminalFrom D ≫ p.ℓ) B ≫
+        propAnd = B := by
+    intro B
+    have : cfpLift (cfpTerminalFrom D ≫ p.ℓ)
+        B = cfpLift (cfpTerminalFrom D) B ≫
+          cfpMap p.ℓ (𝟙 p.T) := by
+      rw [cfpLift_cfpMap, Category.comp_id]
+    rw [this, Category.assoc,
+      propAnd_leaf_left, cfpLift_snd]
+  -- Pre-compose rel_trans with e.
+  have eq : e ≫ (cfpLift
+      (cfpLift
+        (cfpLift t3x t3z ≫ X.rel)
+        (cfpLift t3z t3y ≫ X.rel) ≫
+        propAnd)
+      (cfpLift t3x t3y ≫ X.rel) ≫
+      propAnd) = e ≫ (cfpLift
+      (cfpLift t3x t3z ≫ X.rel)
+      (cfpLift t3z t3y ≫ X.rel) ≫
+      propAnd) :=
+    congr_arg (e ≫ ·) X.rel_trans
+  -- Distribute e into cfpLift via
+  -- propAnd_precomp (outer, then inner).
+  rw [propAnd_precomp e,
+    propAnd_precomp e] at eq
+  -- Substitute h1, h2 to simplify.
+  rw [h1, h2, leaf_idem] at eq
+  rw [leaf_elim] at eq
+  exact eq
 
 /-! ## Pre-morphisms -/
 
@@ -294,7 +363,7 @@ theorem treePERMorEqv_trans
     have := hgk e hdom
     unfold IsLeafConst at this
     exact this
-  have concl := Y.rel_trans test hyp1 hyp2
+  have concl := Y.rel_trans_prop test hyp1 hyp2
   unfold IsLeafConst at concl ⊢
   rw [← Category.assoc, proj_xy,
     Category.assoc] at concl
