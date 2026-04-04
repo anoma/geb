@@ -18,83 +18,58 @@ relations (PERs) on the binary tree type T.
 - Terminal uniqueness (`terminalPERPreMor_unique`,
   `terminalPERMor_unique`): any two morphisms to terminal are
   equivalent.
-- Added `boolAnd_snd_const_ℓ` and `boolAnd_const_leaf_right` to
-  `TreeLogic.lean` (right-identity for boolAnd with constant leaf).
-- Product PER definition (`prodPERRel`): `boolAnd(leftRelCheck,
-  rightRelCheck)` without `isBranch` check (avoids needing `boolAnd`
-  commutativity).
-- Product PER Boolean-valued and symmetry proved.
-- Helper: `cfpSwap_cfpMap_diag`, `treeLeftEndo`, `treeRightEndo`.
-- `boolAnd_fst_IsLeafConst` and `boolAnd_snd_IsLeafConst` in
-  `TreeLogic.lean`: purely equational extraction of `IsLeafConst`
-  from a conjunction.  Uses `boolAnd_const_leaf_right` /
-  `boolAnd_leaf_left` + `boolAnd_assoc` + `boolAnd_idem` without
-  needing `boolAnd` commutativity or `IsSeparator`.
-- `HasBoolDichotomy` definition in `TreeLogic.lean`: predicate that
-  every Boolean global element is either `ℓ` or `treeFalse`.
-- `isLeafConst_terminal_eq_ℓ` and `quantTransitive_implies_eq` in
-  `TreePER.lean`: generic conversion from `QuantTransitive` to
-  `EqTransitive` under `IsSeparator` + `HasBoolDichotomy`.
-- `prodPERRel_quantTransitive` in `TreePERLimits.lean`: quantified
-  transitivity for the product PER, proved purely equationally using
-  `boolAnd_fst_IsLeafConst`, `boolAnd_snd_IsLeafConst`, and
-  component `rel_trans_prop`.
-- Helper definitions: `t3Left`, `t3Right` (triple-to-triple maps),
-  `factor_l`, `factor_r` (relating leftRelCheck/rightRelCheck to
-  X.rel/Y.rel via t3Left/t3Right), various projection lemmas.
-- `boolAnd_ℓ_treeFalse` in `TreeLogic.lean`: `boolAnd(ℓ, treeFalse)
-  = treeFalse`.
-- `boolAnd_fst_proj` and `boolAnd_snd_proj` in `TreeLogic.lean`:
-  absorption lemmas `boolAnd(boolAnd(A,B), A) = boolAnd(A,B)` and
-  `boolAnd(boolAnd(A,B), B) = boolAnd(A,B)`, using `IsSeparator` +
-  `HasBoolDichotomy` + case split.
-- `prodPERRel_eqTransitive`: equational transitivity via
-  `quantTransitive_implies_eq`.
-- `prodPERObj`: product PER object assembly.
-- `prodPERFstPreMor`, `prodPERSndPreMor`: projection pre-morphisms
-  with `map_rel` proved using `boolAnd_fst_proj`/`boolAnd_snd_proj`.
-- `prodPERFst`, `prodPERSnd`: lifted projection morphisms.
-- Beta-reduction lemmas:
-  - `destructFold_cfpFst`: first projection of `destructFold` is the
-    identity, proved by `elim_uniq`.
-  - `destructFoldR_cfpFst`: analogous for `destructFoldR`.
-  - `β_treeLeftEndo`: `β ≫ treeLeftEndo = cfpFst T T`.
-  - `β_treeRightEndo`: `β ≫ treeRightEndo = cfpSnd T T`.
-- `cfpMap_comp_comp`: `cfpMap (f ≫ g) (f' ≫ g') = cfpMap f f' ≫
-  cfpMap g g'`.
-- `prodPERPairPreMor`: pairing pre-morphism with `map_rel` proved
-  using `boolAnd_assoc` + `f.map_rel` + `g.map_rel` +
-  beta-reduction.
-- `prodPERPair`: pairing morphism lifted to the quotient, with
-  well-definedness proved using beta-reduction and `boolAnd_ℓ_ℓ`.
+- `terminalPERObj_isTerminal`: uses `Limits.IsTerminal.ofUniqueHom`.
+- `treePER_hasTerminal`: `Limits.HasTerminal` instance.
+- Product PER definition (`prodPERRel`), all axioms, projections,
+  pairing, beta laws, eta/uniqueness law.
+- `prodPERFst_comp_pair`, `prodPERSnd_comp_pair`: beta laws in
+  the quotient category.
+- `prodPER_pair_unique`: uniqueness of pairing in the quotient.
+- `prodPERFan`, `prodPERFan_isLimit`: `BinaryFan` and `IsLimit`.
+- `treePER_hasLimitPair`, `treePER_hasBinaryProducts`:
+  `HasBinaryProducts` (parameterized by `hSep`, `hBD`).
+- `boolAnd_comm_bool`: commutativity of `boolAnd` for
+  Boolean-valued arguments, using separator + dichotomy.
+- Equalizer PER definition (`eqPERRel`):
+  `boolAnd(X.rel(x,y), boolAnd(eqCheck(x), eqCheck(y)))` where
+  `eqCheck(x) = Y.rel(f(x), g(x))`.  Manifestly symmetric up to
+  boolAnd commutativity on Boolean arguments.
+- `eqPERRel_bool`, `eqPERRel_symm` (using `boolAnd_comm_bool`).
+- `eqPERRel_quantTransitive`, `eqPERRel_eqTransitive`.
+- `eqPERObj`: equalizer PER object assembly.
+- `eqPERInclPreMor`, `eqPERIncl`: inclusion pre-morphism and
+  quotient morphism from `eqPERObj` to `X`.
+- `eqPER_equalizes`, `eqPER_equalizes_quot`: equalizing
+  condition `incl ≫ f = incl ≫ g` in both pre-morphism
+  equivalence and quotient equality.
 
 ## Tasks
 
-- [ ] Product beta laws: `prodPERFst ∘ pair f g = f`,
-  `prodPERSnd ∘ pair f g = g`
-- [ ] Product eta law: `pair (fst ∘ h) (snd ∘ h) = h`
-- [ ] Equalizer PER definition and universal property
+- [ ] Equalizer lift pre-morphism (`eqPERLiftPreMor`): map = `m.map`,
+  `map_rel` proof needs `boolAnd_assoc`, `boolAnd_idem`, and the
+  equalizing condition to show
+  `boolAnd(Z.rel, cfpMap m m ≫ eqPERRel) = Z.rel`.
+  After reducing via `boolAnd_assoc` and `m.map_rel`, the remaining
+  goal is `boolAnd(Z.rel, m ≫ eqCheck) = Z.rel`, which follows from
+  the equalizing condition.  The equational form requires separator +
+  dichotomy or a direct `boolAnd_implies_trans`-style argument.
+- [ ] Equalizer lift quotient morphism.
+- [ ] Equalizer factorization: `lift ≫ incl = m`.
+- [ ] Equalizer uniqueness: if `k ≫ incl = m`, then `k = lift`.
+- [ ] Fork and IsLimit assembly.
+- [ ] `HasEqualizers` instance.
+- [ ] `HasFiniteLimits` via
+  `hasFiniteLimits_of_hasEqualizers_and_finite_products`.
 
 ## Notes
 
-The `boolAnd` commutativity issue was resolved without needing
-commutativity: the extraction lemmas `boolAnd_fst_IsLeafConst` and
-`boolAnd_snd_IsLeafConst` use the equational chain
-`a = boolAnd(a, ℓ) = boolAnd(a, boolAnd(a, b)) =
-boolAnd(boolAnd(a, a), b) = boolAnd(a, b) = ℓ`, which requires only
-`boolAnd_const_leaf_right`, `boolAnd_assoc`, and `boolAnd_idem`.
+The `eqPERRel` definition uses `boolAnd(X.rel, boolAnd(eqCheck(fst),
+eqCheck(snd)))` rather than `boolAnd(X.rel, Y.rel(f, g))` to achieve
+equational symmetry.  The symmetry proof uses `boolAnd_comm_bool`
+(commutativity for Boolean-valued arguments) to swap the two
+`eqCheck` terms.
 
-The product transitivity is proved at the quantified (`QuantTransitive`)
-level.  Converting to `EqTransitive` requires `IsSeparator cfpTerminal`
-and `HasBoolDichotomy C` as hypotheses (proved for `LawvereBTQuotCat`
-via `lawvereBTQuotCat_isSeparator` and `lawvereBT_bool_dichotomy`).
-
-The projection absorption lemmas (`boolAnd_fst_proj`, `boolAnd_snd_proj`)
-and all product PER constructions that use them require `IsSeparator` +
-`HasBoolDichotomy`.
-
-The beta-reduction lemmas `β_treeLeftEndo` and `β_treeRightEndo`
-are proved via `destructFold_cfpFst` / `destructFoldR_cfpFst`
-(which use `elim_uniq` to show the first projection of the
-destructuring fold is the identity) composed with `treeLeft_β` /
-`treeRight_β`.
+The `include hSep hBD in` directive is needed before theorems whose
+types don't mention the separator/dichotomy but whose proofs use them,
+since Lean 4 only auto-includes section variables that appear in the
+type signature.
