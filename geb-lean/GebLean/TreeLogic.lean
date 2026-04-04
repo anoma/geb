@@ -3443,4 +3443,711 @@ theorem iterNat_β (f : p.T ⟶ p.T) :
   unfold iterNat
   exact p.elim_β (𝟙 p.T) _
 
+/-- If-then-else helper combining three morphisms
+with a common domain into a single conditional
+morphism.  `iteBranches thn els cnd` returns `thn`
+when `cnd` evaluates to leaf and `els` when `cnd`
+evaluates to a branch. -/
+def iteBranches {D : C}
+    (thn els cnd : D ⟶ p.T) : D ⟶ p.T :=
+  cfpLift (cfpLift thn els) cnd ≫ treeIte
+
+/-- Branch-case computation rule for `iteBranches`:
+if the condition factors through `p.β`, the result
+is the else branch. -/
+theorem iteBranches_β {D : C}
+    (thn els : D ⟶ p.T)
+    (r : D ⟶ cfpProd p.T p.T) :
+    iteBranches thn els (r ≫ p.β) = els := by
+  unfold iteBranches
+  exact treeIte_β_applied thn els r
+
+/-- Leaf-case computation rule for `iteBranches`:
+if the condition factors through `p.ℓ` via the
+terminal morphism, the result is the then branch. -/
+theorem iteBranches_ℓ {D : C}
+    (thn els : D ⟶ p.T) :
+    iteBranches thn els
+      (cfpTerminalFrom D ≫ p.ℓ) = thn := by
+  unfold iteBranches
+  have factor :
+      cfpLift (cfpLift thn els)
+        (cfpTerminalFrom D ≫ p.ℓ) =
+      cfpLift thn els ≫
+        cfpInsertSnd p.ℓ (cfpProd p.T p.T) := by
+    unfold cfpInsertSnd
+    rw [cfpLift_precomp, Category.comp_id]
+    congr 1
+    rw [← Category.assoc]
+    congr 1
+    exact (h.terminal.uniq _).symm
+  rw [factor, Category.assoc, treeIte_ℓ,
+    cfpLift_fst]
+
+/-- Pre-composition distributes through
+`iteBranches`. -/
+theorem iteBranches_precomp {D E : C}
+    (s : E ⟶ D)
+    (thn els cnd : D ⟶ p.T) :
+    s ≫ iteBranches thn els cnd =
+    iteBranches (s ≫ thn) (s ≫ els)
+      (s ≫ cnd) := by
+  unfold iteBranches
+  rw [← Category.assoc, cfpLift_precomp,
+    cfpLift_precomp]
+
+/-- Constructor helper: given two morphisms into
+`p.T`, produces the branch pair as a single
+morphism into `p.T`.  Encodes `branch(f, g)`. -/
+def mkBranch {D : C} (f g : D ⟶ p.T) : D ⟶ p.T :=
+  cfpLift f g ≫ p.β
+
+/-- The leaf constant as a morphism from any
+object, obtained by composing with the unique
+morphism to the terminal object. -/
+def leafConst (D : C) : D ⟶ p.T :=
+  cfpTerminalFrom D ≫ p.ℓ
+
+/-- The `treeFalse` constant as a morphism from
+any object. -/
+def treeFalseConst (D : C) : D ⟶ p.T :=
+  cfpTerminalFrom D ≫ treeFalse
+
+/-- One step of the tree-equality comparison
+procedure.  The input is an encoded state of the
+form `branch(result, worklist)`, where `result` is
+either `leaf` (still equal so far) or `treeFalse`
+(mismatch detected), and `worklist` is a
+right-spine list of pairs yet to compare.  The
+output is the next state.
+
+The step:
+- If the worklist is empty (leaf), the state is
+  unchanged.
+- Otherwise, the head pair is `(a, b)` and the
+  rest of the worklist follows.  If either of
+  `a`, `b` is a leaf and the other is a branch,
+  a mismatch is recorded and the worklist is
+  cleared.  If both are leaves, the pair is
+  consumed without changing `result`.  If both
+  are branches, the pair is expanded into two
+  child-pair comparisons that are prepended to
+  the worklist. -/
+def compareStep : p.T ⟶ p.T :=
+  let state : p.T ⟶ p.T := 𝟙 p.T
+  let result := treeLeftEndo
+  let worklist := treeRightEndo
+  let head := worklist ≫ treeLeftEndo
+  let rest := worklist ≫ treeRightEndo
+  let a := head ≫ treeLeftEndo
+  let b := head ≫ treeRightEndo
+  let al := a ≫ treeLeftEndo
+  let ar := a ≫ treeRightEndo
+  let bl := b ≫ treeLeftEndo
+  let br := b ≫ treeRightEndo
+  let matchOut := mkBranch result rest
+  let mismatchOut :=
+    mkBranch (treeFalseConst p.T)
+      (leafConst p.T)
+  let expandOut :=
+    mkBranch result
+      (mkBranch
+        (mkBranch al bl)
+        (mkBranch
+          (mkBranch ar br)
+          rest))
+  let aIsLeafCase := iteBranches matchOut mismatchOut b
+  let aIsBranchCase :=
+    iteBranches mismatchOut expandOut b
+  let workNonEmpty :=
+    iteBranches aIsLeafCase aIsBranchCase a
+  iteBranches state workNonEmpty worklist
+
+/-- `β ≫ treeLeftEndo = cfpFst p.T p.T`:
+left destructor applied to a branch pair. -/
+theorem mkBranch_treeLeftEndo {D : C}
+    (f g : D ⟶ p.T) :
+    mkBranch f g ≫ treeLeftEndo = f := by
+  unfold mkBranch
+  rw [Category.assoc, β_treeLeftEndo,
+    cfpLift_fst]
+
+/-- `β ≫ treeRightEndo = cfpSnd p.T p.T`:
+right destructor applied to a branch pair. -/
+theorem mkBranch_treeRightEndo {D : C}
+    (f g : D ⟶ p.T) :
+    mkBranch f g ≫ treeRightEndo = g := by
+  unfold mkBranch
+  rw [Category.assoc, β_treeRightEndo,
+    cfpLift_snd]
+
+/-- Worklist-empty computation rule for
+`compareStep`: if the state is encoded with an
+empty worklist, the step acts as the identity. -/
+theorem compareStep_leaf_wl {D : C}
+    (r : D ⟶ p.T) :
+    mkBranch r (leafConst D) ≫ compareStep =
+    mkBranch r (leafConst D) := by
+  unfold compareStep
+  simp only
+  rw [iteBranches_precomp]
+  have h_wl :
+      mkBranch r (leafConst D) ≫
+        treeRightEndo = leafConst D := by
+    rw [mkBranch_treeRightEndo]
+  rw [h_wl]
+  rw [Category.comp_id]
+  exact iteBranches_ℓ _ _
+
+/-- Precomposition of `leafConst`: for any
+`s : E ⟶ D`, we have `s ≫ leafConst D =
+leafConst E`. -/
+theorem leafConst_precomp {D E : C}
+    (s : E ⟶ D) :
+    s ≫ leafConst D = leafConst E := by
+  unfold leafConst
+  rw [← Category.assoc]
+  congr 1
+  exact h.terminal.uniq _
+
+/-- Precomposition of `treeFalseConst`: for any
+`s : E ⟶ D`, we have `s ≫ treeFalseConst D =
+treeFalseConst E`. -/
+theorem treeFalseConst_precomp {D E : C}
+    (s : E ⟶ D) :
+    s ≫ treeFalseConst D = treeFalseConst E := by
+  unfold treeFalseConst
+  rw [← Category.assoc]
+  congr 1
+  exact h.terminal.uniq _
+
+/-- Precomposition of `mkBranch`: for any
+`s : E ⟶ D`, `s ≫ mkBranch f g =
+mkBranch (s ≫ f) (s ≫ g)`. -/
+theorem mkBranch_precomp {D E : C}
+    (s : E ⟶ D) (f g : D ⟶ p.T) :
+    s ≫ mkBranch f g =
+    mkBranch (s ≫ f) (s ≫ g) := by
+  unfold mkBranch
+  rw [← Category.assoc, cfpLift_precomp]
+
+/-- `ℓ ≫ treeLeftEndo = ℓ`: leaf is a fixed
+point of `treeLeftEndo`. -/
+theorem ℓ_treeLeftEndo :
+    p.ℓ ≫ treeLeftEndo =
+    (p.ℓ : cfpTerminal (C := C) ⟶ p.T) := by
+  unfold treeLeftEndo
+  rw [← Category.assoc, cfpLift_precomp,
+    Category.comp_id]
+  have h1 : p.ℓ ≫ cfpTerminalFrom p.T =
+      cfpTerminalFrom cfpTerminal :=
+    h.terminal.uniq _
+  rw [h1]
+  have h2 : cfpLift
+      (cfpTerminalFrom cfpTerminal) p.ℓ =
+      cfpInsertSnd p.ℓ cfpTerminal := by
+    unfold cfpInsertSnd
+    congr 1
+    · exact cfpTerminalFrom_terminal
+    · rw [cfpTerminalFrom_terminal,
+        Category.id_comp]
+  rw [h2]
+  exact treeLeft_ℓ
+
+/-- `ℓ ≫ treeRightEndo = ℓ`: leaf is a fixed
+point of `treeRightEndo`. -/
+theorem ℓ_treeRightEndo :
+    p.ℓ ≫ treeRightEndo =
+    (p.ℓ : cfpTerminal (C := C) ⟶ p.T) := by
+  unfold treeRightEndo
+  rw [← Category.assoc, cfpLift_precomp,
+    Category.comp_id]
+  have h1 : p.ℓ ≫ cfpTerminalFrom p.T =
+      cfpTerminalFrom cfpTerminal :=
+    h.terminal.uniq _
+  rw [h1]
+  have h2 : cfpLift
+      (cfpTerminalFrom cfpTerminal) p.ℓ =
+      cfpInsertSnd p.ℓ cfpTerminal := by
+    unfold cfpInsertSnd
+    congr 1
+    · exact cfpTerminalFrom_terminal
+    · rw [cfpTerminalFrom_terminal,
+        Category.id_comp]
+  rw [h2]
+  exact treeRight_ℓ
+
+/-- `leafConst D ≫ treeLeftEndo = leafConst D`:
+the left destructor of a leaf is a leaf. -/
+theorem leafConst_treeLeftEndo (D : C) :
+    leafConst D ≫ treeLeftEndo = leafConst D := by
+  unfold leafConst
+  rw [Category.assoc, ℓ_treeLeftEndo]
+
+/-- `leafConst D ≫ treeRightEndo = leafConst D`:
+the right destructor of a leaf is a leaf. -/
+theorem leafConst_treeRightEndo (D : C) :
+    leafConst D ≫ treeRightEndo = leafConst D
+    := by
+  unfold leafConst
+  rw [Category.assoc, ℓ_treeRightEndo]
+
+/-- Match computation rule for `compareStep`:
+if the head pair is `(leaf, leaf)`, the result
+component is unchanged and the worklist becomes
+the rest of the worklist. -/
+theorem compareStep_match {D : C}
+    (r rest : D ⟶ p.T) :
+    mkBranch r
+        (mkBranch
+          (mkBranch (leafConst D) (leafConst D))
+          rest)
+      ≫ compareStep =
+    mkBranch r rest := by
+  unfold compareStep
+  simp only
+  rw [iteBranches_precomp]
+  -- First reduce: state ≫ treeRightEndo = head::rest
+  have h_wl :
+      mkBranch r
+          (mkBranch
+            (mkBranch (leafConst D) (leafConst D))
+            rest) ≫
+        treeRightEndo =
+      mkBranch
+        (mkBranch (leafConst D) (leafConst D))
+        rest := mkBranch_treeRightEndo _ _
+  rw [h_wl]
+  -- The worklist is a branch: apply the β rule.
+  change iteBranches _ _
+      (mkBranch
+        (mkBranch (leafConst D) (leafConst D))
+        rest) = _
+  unfold mkBranch at *
+  rw [iteBranches_β]
+  simp only [iteBranches_precomp]
+  -- Now compute each projection composed with
+  -- the state morphism.
+  set state := cfpLift r
+    (cfpLift
+      (cfpLift (leafConst D) (leafConst D) ≫
+        p.β) rest ≫ p.β) ≫ p.β with hstate
+  have h_wlR :
+      state ≫ treeRightEndo =
+      cfpLift
+        (cfpLift (leafConst D) (leafConst D) ≫
+          p.β) rest ≫ p.β := by
+    rw [hstate, Category.assoc, β_treeRightEndo,
+      cfpLift_snd]
+  have h_head :
+      state ≫ treeRightEndo ≫ treeLeftEndo =
+      cfpLift (leafConst D) (leafConst D) ≫
+        p.β := by
+    rw [← Category.assoc, h_wlR,
+      Category.assoc, β_treeLeftEndo,
+      cfpLift_fst]
+  have h_a :
+      state ≫ (treeRightEndo ≫ treeLeftEndo) ≫
+        treeLeftEndo = leafConst D := by
+    rw [← Category.assoc, h_head,
+      Category.assoc, β_treeLeftEndo,
+      cfpLift_fst]
+  have h_b :
+      state ≫ (treeRightEndo ≫ treeLeftEndo) ≫
+        treeRightEndo = leafConst D := by
+    rw [← Category.assoc, h_head,
+      Category.assoc, β_treeRightEndo,
+      cfpLift_snd]
+  rw [h_a, h_b]
+  unfold leafConst
+  rw [iteBranches_ℓ, iteBranches_ℓ]
+  -- Now the goal uses the then-branch: matchOut.
+  -- Simplify state ≫ cfpLift treeLeftEndo
+  -- (treeRightEndo ≫ treeRightEndo) ≫ p.β.
+  rw [← Category.assoc, cfpLift_precomp]
+  have h_l :
+      state ≫ treeLeftEndo = r := by
+    rw [hstate, Category.assoc, β_treeLeftEndo,
+      cfpLift_fst]
+  have h_rr :
+      state ≫ treeRightEndo ≫ treeRightEndo =
+      rest := by
+    rw [← Category.assoc, h_wlR,
+      Category.assoc, β_treeRightEndo,
+      cfpLift_snd]
+  rw [h_l, h_rr]
+
+/-- Mismatch-left computation rule for
+`compareStep`: if the head pair is
+`(leaf, branch(l, r))`, the result becomes
+`treeFalse` and the worklist is cleared. -/
+theorem compareStep_mismatch_left {D : C}
+    (r : D ⟶ p.T) (bl br rest : D ⟶ p.T) :
+    mkBranch r
+        (mkBranch
+          (mkBranch (leafConst D) (mkBranch bl br))
+          rest)
+      ≫ compareStep =
+    mkBranch (treeFalseConst D) (leafConst D)
+    := by
+  unfold compareStep
+  simp only
+  rw [iteBranches_precomp]
+  have h_wl :
+      mkBranch r
+          (mkBranch
+            (mkBranch (leafConst D)
+              (mkBranch bl br))
+            rest) ≫
+        treeRightEndo =
+      mkBranch
+        (mkBranch (leafConst D) (mkBranch bl br))
+        rest := mkBranch_treeRightEndo _ _
+  rw [h_wl]
+  change iteBranches _ _
+      (mkBranch
+        (mkBranch (leafConst D) (mkBranch bl br))
+        rest) = _
+  unfold mkBranch at *
+  rw [iteBranches_β]
+  simp only [iteBranches_precomp]
+  set state := cfpLift r
+    (cfpLift
+      (cfpLift (leafConst D)
+        (cfpLift bl br ≫ p.β) ≫ p.β) rest ≫ p.β)
+    ≫ p.β with hstate
+  have h_wlR :
+      state ≫ treeRightEndo =
+      cfpLift
+        (cfpLift (leafConst D)
+          (cfpLift bl br ≫ p.β) ≫ p.β) rest ≫
+        p.β := by
+    rw [hstate, Category.assoc, β_treeRightEndo,
+      cfpLift_snd]
+  have h_head :
+      state ≫ treeRightEndo ≫ treeLeftEndo =
+      cfpLift (leafConst D)
+        (cfpLift bl br ≫ p.β) ≫ p.β := by
+    rw [← Category.assoc, h_wlR,
+      Category.assoc, β_treeLeftEndo,
+      cfpLift_fst]
+  have h_a :
+      state ≫ (treeRightEndo ≫ treeLeftEndo) ≫
+        treeLeftEndo = leafConst D := by
+    rw [← Category.assoc, h_head,
+      Category.assoc, β_treeLeftEndo,
+      cfpLift_fst]
+  have h_b :
+      state ≫ (treeRightEndo ≫ treeLeftEndo) ≫
+        treeRightEndo =
+      cfpLift bl br ≫ p.β := by
+    rw [← Category.assoc, h_head,
+      Category.assoc, β_treeRightEndo,
+      cfpLift_snd]
+  rw [h_a, h_b]
+  unfold leafConst
+  rw [iteBranches_ℓ]
+  rw [iteBranches_β]
+  rw [← Category.assoc, cfpLift_precomp,
+    treeFalseConst_precomp,
+    ← Category.assoc]
+  have hstate_term :
+      state ≫ cfpTerminalFrom p.T =
+      cfpTerminalFrom D :=
+    h.terminal.uniq _
+  rw [hstate_term]
+
+/-- Mismatch-right computation rule for
+`compareStep`: if the head pair is
+`(branch(l, r), leaf)`, the result becomes
+`treeFalse` and the worklist is cleared. -/
+theorem compareStep_mismatch_right {D : C}
+    (r : D ⟶ p.T) (al ar rest : D ⟶ p.T) :
+    mkBranch r
+        (mkBranch
+          (mkBranch (mkBranch al ar)
+            (leafConst D))
+          rest)
+      ≫ compareStep =
+    mkBranch (treeFalseConst D) (leafConst D)
+    := by
+  unfold compareStep
+  simp only
+  rw [iteBranches_precomp]
+  have h_wl :
+      mkBranch r
+          (mkBranch
+            (mkBranch (mkBranch al ar)
+              (leafConst D))
+            rest) ≫
+        treeRightEndo =
+      mkBranch
+        (mkBranch (mkBranch al ar)
+          (leafConst D))
+        rest := mkBranch_treeRightEndo _ _
+  rw [h_wl]
+  change iteBranches _ _
+      (mkBranch
+        (mkBranch (mkBranch al ar)
+          (leafConst D))
+        rest) = _
+  unfold mkBranch at *
+  rw [iteBranches_β]
+  simp only [iteBranches_precomp]
+  set state := cfpLift r
+    (cfpLift
+      (cfpLift (cfpLift al ar ≫ p.β)
+        (leafConst D) ≫ p.β) rest ≫ p.β)
+    ≫ p.β with hstate
+  have h_wlR :
+      state ≫ treeRightEndo =
+      cfpLift
+        (cfpLift (cfpLift al ar ≫ p.β)
+          (leafConst D) ≫ p.β) rest ≫
+        p.β := by
+    rw [hstate, Category.assoc, β_treeRightEndo,
+      cfpLift_snd]
+  have h_head :
+      state ≫ treeRightEndo ≫ treeLeftEndo =
+      cfpLift (cfpLift al ar ≫ p.β)
+        (leafConst D) ≫ p.β := by
+    rw [← Category.assoc, h_wlR,
+      Category.assoc, β_treeLeftEndo,
+      cfpLift_fst]
+  have h_a :
+      state ≫ (treeRightEndo ≫ treeLeftEndo) ≫
+        treeLeftEndo = cfpLift al ar ≫ p.β := by
+    rw [← Category.assoc, h_head,
+      Category.assoc, β_treeLeftEndo,
+      cfpLift_fst]
+  have h_b :
+      state ≫ (treeRightEndo ≫ treeLeftEndo) ≫
+        treeRightEndo = leafConst D := by
+    rw [← Category.assoc, h_head,
+      Category.assoc, β_treeRightEndo,
+      cfpLift_snd]
+  rw [h_a, h_b]
+  unfold leafConst
+  rw [iteBranches_β]
+  rw [iteBranches_ℓ]
+  rw [← Category.assoc, cfpLift_precomp,
+    treeFalseConst_precomp,
+    ← Category.assoc]
+  have hstate_term :
+      state ≫ cfpTerminalFrom p.T =
+      cfpTerminalFrom D :=
+    h.terminal.uniq _
+  rw [hstate_term]
+
+/-- Expand computation rule for `compareStep`:
+if the head pair is
+`(branch(al, ar), branch(bl, br))`, the result
+component is unchanged and the worklist has the
+two child pairs `(al, bl)` and `(ar, br)`
+prepended. -/
+theorem compareStep_expand {D : C}
+    (r al ar bl br rest : D ⟶ p.T) :
+    mkBranch r
+        (mkBranch
+          (mkBranch (mkBranch al ar)
+            (mkBranch bl br))
+          rest)
+      ≫ compareStep =
+    mkBranch r
+      (mkBranch
+        (mkBranch al bl)
+        (mkBranch
+          (mkBranch ar br)
+          rest)) := by
+  unfold compareStep
+  simp only
+  rw [iteBranches_precomp]
+  have h_wl :
+      mkBranch r
+          (mkBranch
+            (mkBranch (mkBranch al ar)
+              (mkBranch bl br))
+            rest) ≫
+        treeRightEndo =
+      mkBranch
+        (mkBranch (mkBranch al ar)
+          (mkBranch bl br))
+        rest := mkBranch_treeRightEndo _ _
+  rw [h_wl]
+  change iteBranches _ _
+      (mkBranch
+        (mkBranch (mkBranch al ar)
+          (mkBranch bl br))
+        rest) = _
+  unfold mkBranch at *
+  rw [iteBranches_β]
+  simp only [iteBranches_precomp]
+  set state := cfpLift r
+    (cfpLift
+      (cfpLift (cfpLift al ar ≫ p.β)
+        (cfpLift bl br ≫ p.β) ≫ p.β) rest ≫ p.β)
+    ≫ p.β with hstate
+  have h_wlR :
+      state ≫ treeRightEndo =
+      cfpLift
+        (cfpLift (cfpLift al ar ≫ p.β)
+          (cfpLift bl br ≫ p.β) ≫ p.β) rest ≫
+        p.β := by
+    rw [hstate, Category.assoc, β_treeRightEndo,
+      cfpLift_snd]
+  have h_head :
+      state ≫ treeRightEndo ≫ treeLeftEndo =
+      cfpLift (cfpLift al ar ≫ p.β)
+        (cfpLift bl br ≫ p.β) ≫ p.β := by
+    rw [← Category.assoc, h_wlR,
+      Category.assoc, β_treeLeftEndo,
+      cfpLift_fst]
+  have h_a :
+      state ≫ (treeRightEndo ≫ treeLeftEndo) ≫
+        treeLeftEndo =
+      cfpLift al ar ≫ p.β := by
+    rw [← Category.assoc, h_head,
+      Category.assoc, β_treeLeftEndo,
+      cfpLift_fst]
+  have h_b :
+      state ≫ (treeRightEndo ≫ treeLeftEndo) ≫
+        treeRightEndo =
+      cfpLift bl br ≫ p.β := by
+    rw [← Category.assoc, h_head,
+      Category.assoc, β_treeRightEndo,
+      cfpLift_snd]
+  rw [h_a, h_b]
+  rw [iteBranches_β, iteBranches_β]
+  -- Now compute all state-precomposed values in
+  -- right-associated form (matching simp output).
+  simp only [Category.assoc] at h_a h_b
+  have h_l :
+      state ≫ treeLeftEndo = r := by
+    rw [hstate, Category.assoc, β_treeLeftEndo,
+      cfpLift_fst]
+  have h_rr :
+      state ≫ treeRightEndo ≫ treeRightEndo =
+      rest := by
+    rw [← Category.assoc, h_wlR,
+      Category.assoc, β_treeRightEndo,
+      cfpLift_snd]
+  have h_al :
+      state ≫ treeRightEndo ≫ treeLeftEndo ≫
+        treeLeftEndo ≫ treeLeftEndo = al := by
+    rw [show state ≫ treeRightEndo ≫
+      treeLeftEndo ≫ treeLeftEndo ≫ treeLeftEndo
+      = (state ≫ treeRightEndo ≫ treeLeftEndo ≫
+        treeLeftEndo) ≫ treeLeftEndo by
+        simp only [Category.assoc],
+      h_a, Category.assoc, β_treeLeftEndo,
+      cfpLift_fst]
+  have h_ar :
+      state ≫ treeRightEndo ≫ treeLeftEndo ≫
+        treeLeftEndo ≫ treeRightEndo = ar := by
+    rw [show state ≫ treeRightEndo ≫
+      treeLeftEndo ≫ treeLeftEndo ≫
+      treeRightEndo = (state ≫ treeRightEndo ≫
+      treeLeftEndo ≫ treeLeftEndo) ≫
+      treeRightEndo by
+        simp only [Category.assoc],
+      h_a, Category.assoc, β_treeRightEndo,
+      cfpLift_snd]
+  have h_bl :
+      state ≫ treeRightEndo ≫ treeLeftEndo ≫
+        treeRightEndo ≫ treeLeftEndo = bl := by
+    rw [show state ≫ treeRightEndo ≫
+      treeLeftEndo ≫ treeRightEndo ≫
+      treeLeftEndo = (state ≫ treeRightEndo ≫
+      treeLeftEndo ≫ treeRightEndo) ≫
+      treeLeftEndo by
+        simp only [Category.assoc],
+      h_b, Category.assoc, β_treeLeftEndo,
+      cfpLift_fst]
+  have h_br :
+      state ≫ treeRightEndo ≫ treeLeftEndo ≫
+        treeRightEndo ≫ treeRightEndo = br := by
+    rw [show state ≫ treeRightEndo ≫
+      treeLeftEndo ≫ treeRightEndo ≫
+      treeRightEndo = (state ≫ treeRightEndo ≫
+      treeLeftEndo ≫ treeRightEndo) ≫
+      treeRightEndo by
+        simp only [Category.assoc],
+      h_b, Category.assoc, β_treeRightEndo,
+      cfpLift_snd]
+  -- The expandOut expression precomposed with
+  -- state reduces to the desired output.
+  simp only [← Category.assoc, cfpLift_precomp]
+  simp only [Category.assoc]
+  rw [h_l, h_al, h_ar, h_bl, h_br, h_rr]
+
+/-- Tree equality as a morphism on pairs of
+trees.  The construction:
+- Forms the initial comparison state
+  `branch(leaf, branch(branch(x, y), leaf))`
+  encoding `result = leaf` (still-equal) and a
+  singleton worklist containing the pair `(x, y)`.
+- Uses the size of `branch(x, y)` as an iteration
+  bound sufficient to exhaust the worklist.
+- Applies `compareStep` repeatedly via
+  `iterNat compareStep`.
+- Extracts the result component of the final
+  state and normalizes via `isLeafEndo` to yield
+  a Boolean-valued tree (`leaf` for equal,
+  `treeFalse` for unequal). -/
+def treeEq : cfpProd p.T p.T ⟶ p.T :=
+  let initState :
+      cfpProd p.T p.T ⟶ p.T :=
+    mkBranch
+      (leafConst (cfpProd p.T p.T))
+      (mkBranch p.β
+        (leafConst (cfpProd p.T p.T)))
+  let iterCount :
+      cfpProd p.T p.T ⟶ p.T :=
+    p.β ≫ treeSize
+  cfpLift initState iterCount ≫
+    iterNat compareStep ≫
+    treeLeftEndo ≫
+    isLeafEndo
+
+/-- `natPlus(leaf, leaf) = leaf`: adding the unary
+zero to itself gives zero. -/
+theorem natPlus_ℓℓ :
+    cfpLift p.ℓ p.ℓ ≫ natPlus =
+    (p.ℓ : cfpTerminal (C := C) ⟶ p.T) := by
+  have factor :
+      cfpLift p.ℓ p.ℓ =
+      p.ℓ ≫ cfpInsertSnd p.ℓ p.T := by
+    unfold cfpInsertSnd
+    rw [cfpLift_precomp, Category.comp_id]
+    congr 1
+    rw [← Category.assoc]
+    have hterm :
+        p.ℓ ≫ cfpTerminalFrom p.T =
+        cfpTerminalFrom cfpTerminal :=
+      h.terminal.uniq _
+    rw [hterm, cfpTerminalFrom_terminal,
+      Category.id_comp]
+  rw [factor, Category.assoc, natPlus_ℓ,
+    Category.comp_id]
+
+/-- `natSucc(leaf) = treeFalse`: applying the
+unary successor to zero gives the unary one,
+which in the tree encoding is `branch(leaf, leaf)
+= treeFalse`. -/
+theorem natSucc_ℓ :
+    p.ℓ ≫ natSucc =
+    (treeFalse : cfpTerminal (C := C) ⟶ p.T)
+    := by
+  unfold natSucc treeFalse
+  rw [← Category.assoc, cfpLift_precomp,
+    Category.comp_id]
+  rw [← Category.assoc p.ℓ
+    (cfpTerminalFrom p.T) p.ℓ]
+  have h1 : p.ℓ ≫ cfpTerminalFrom p.T =
+      cfpTerminalFrom cfpTerminal :=
+    h.terminal.uniq _
+  rw [h1]
+  rw [cfpTerminalFrom_terminal,
+    Category.id_comp]
+
 end GebLean
