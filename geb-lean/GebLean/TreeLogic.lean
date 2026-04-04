@@ -4413,4 +4413,357 @@ theorem treeEq_bool :
   unfold treeEq
   simp only [Category.assoc, isLeafEndo_idem]
 
+/-- One additional iteration rule for `iterNat`:
+applying `iterNat f` to `(init, count ≫ natSucc)`
+equals applying `iterNat f` to `(init, count)` and
+then post-composing with `f`. -/
+theorem iterNat_cfpLift_succ {D : C}
+    (f : p.T ⟶ p.T)
+    (init count : D ⟶ p.T) :
+    cfpLift init (count ≫ natSucc) ≫ iterNat f =
+    (cfpLift init count ≫ iterNat f) ≫ f := by
+  unfold natSucc
+  -- Unfold natSucc and push through cfpLift.
+  have rewrite_lift :
+      cfpLift init
+          (count ≫
+            cfpLift (cfpTerminalFrom p.T ≫ p.ℓ)
+              (𝟙 p.T) ≫ p.β) =
+      cfpLift init
+          (count ≫
+            cfpLift (cfpTerminalFrom p.T ≫ p.ℓ)
+              (𝟙 p.T)) ≫
+        cfpMap (𝟙 p.T) p.β := by
+    rw [cfpLift_cfpMap, Category.comp_id,
+      Category.assoc]
+  rw [rewrite_lift, Category.assoc, iterNat_β]
+  -- Normalize associativity rightward.
+  simp only [Category.assoc]
+  -- Simplify cfpLiftAssoc ≫ cfpSnd.
+  have h1 :
+      cfpLiftAssoc (iterNat f) (iterNat f) ≫
+        (cfpSnd p.T p.T ≫ f) =
+      cfpAssocSnd p.T p.T p.T ≫ iterNat f ≫ f := by
+    unfold cfpLiftAssoc
+    rw [← Category.assoc, cfpLift_snd,
+      Category.assoc]
+  rw [h1]
+  -- Simplify cfpLift init (count ≫ cfpLift _ _) ≫
+  -- cfpAssocSnd T T T.
+  have h2 :
+      cfpLift init
+          (count ≫
+            cfpLift (cfpTerminalFrom p.T ≫ p.ℓ)
+              (𝟙 p.T)) ≫
+        cfpAssocSnd p.T p.T p.T =
+      cfpLift init count := by
+    unfold cfpAssocSnd
+    rw [cfpLift_precomp]
+    congr 1
+    · rw [cfpLift_fst]
+    · rw [← Category.assoc, cfpLift_snd,
+        Category.assoc, cfpLift_snd,
+        Category.comp_id]
+  rw [← Category.assoc, h2]
+
+/-- Iteration additivity for `iterNat`.  Viewing
+`cfpProd (cfpProd p.T p.T) p.T` as holding
+`((init, n), m)`, iterating `f` a total of
+`natPlus(n, m)` steps starting at `init` equals
+iterating `f` for `m` steps starting from the
+result of iterating `f` for `n` steps starting at
+`init`. -/
+theorem iterNat_plus (f : p.T ⟶ p.T) :
+    cfpLift
+        (cfpFst (cfpProd p.T p.T) p.T ≫
+          cfpFst p.T p.T)
+        (cfpLift
+          (cfpFst (cfpProd p.T p.T) p.T ≫
+            cfpSnd p.T p.T)
+          (cfpSnd (cfpProd p.T p.T) p.T) ≫
+          natPlus) ≫
+      iterNat f =
+    cfpLift
+        (cfpFst (cfpProd p.T p.T) p.T ≫ iterNat f)
+        (cfpSnd (cfpProd p.T p.T) p.T) ≫
+      iterNat f := by
+  set A := cfpProd p.T p.T with hA_def
+  -- Both sides will be shown equal to
+  -- `p.elim (iterNat f) (cfpSnd p.T p.T ≫ f)`.
+  set base : A ⟶ p.T := iterNat f with hbase
+  set step : cfpProd p.T p.T ⟶ p.T :=
+    cfpSnd p.T p.T ≫ f with hstep
+  -- The RHS is `cfpMap (iterNat f) (𝟙 p.T) ≫
+  -- iterNat f`, which by `elim_naturality` equals
+  -- `p.elim (iterNat f) step`.
+  have hRHS :
+      cfpLift
+          (cfpFst A p.T ≫ iterNat f)
+          (cfpSnd A p.T) ≫
+        iterNat f =
+      p.elim base step := by
+    have rewrite_cfpMap :
+        cfpLift
+            (cfpFst A p.T ≫ iterNat f)
+            (cfpSnd A p.T) =
+        cfpMap (iterNat f) (𝟙 p.T) := by
+      unfold cfpMap
+      rw [Category.comp_id]
+    rw [rewrite_cfpMap]
+    rw [hbase, hstep]
+    unfold iterNat
+    rw [elim_naturality, Category.comp_id]
+  -- The LHS also equals `p.elim base step`, which
+  -- we show by `elim_uniq`.
+  suffices hLHS :
+      cfpLift
+          (cfpFst A p.T ≫ cfpFst p.T p.T)
+          (cfpLift
+            (cfpFst A p.T ≫ cfpSnd p.T p.T)
+            (cfpSnd A p.T) ≫
+            natPlus) ≫
+        iterNat f =
+      p.elim base step by
+    rw [hLHS, ← hRHS]
+  -- Introduce a name for the LHS morphism.
+  set φ : cfpProd A p.T ⟶ p.T :=
+    cfpLift
+        (cfpFst A p.T ≫ cfpFst p.T p.T)
+        (cfpLift
+          (cfpFst A p.T ≫ cfpSnd p.T p.T)
+          (cfpSnd A p.T) ≫
+          natPlus) ≫
+      iterNat f with hφ
+  -- Base case equation for φ.
+  have φ_base :
+      cfpInsertSnd p.ℓ A ≫ φ = base := by
+    rw [hφ, ← Category.assoc, cfpLift_precomp]
+    have h_fst :
+        cfpInsertSnd p.ℓ A ≫
+          (cfpFst A p.T ≫ cfpFst p.T p.T) =
+        cfpFst p.T p.T := by
+      unfold cfpInsertSnd
+      rw [← Category.assoc, cfpLift_fst,
+        Category.id_comp]
+    have h_snd :
+        cfpInsertSnd p.ℓ A ≫
+          (cfpLift
+            (cfpFst A p.T ≫ cfpSnd p.T p.T)
+            (cfpSnd A p.T) ≫
+            natPlus) =
+        cfpSnd p.T p.T := by
+      rw [← Category.assoc, cfpLift_precomp]
+      have h1 :
+          cfpInsertSnd p.ℓ A ≫
+            (cfpFst A p.T ≫ cfpSnd p.T p.T) =
+          cfpSnd p.T p.T := by
+        unfold cfpInsertSnd
+        rw [← Category.assoc, cfpLift_fst,
+          Category.id_comp]
+      have h2 :
+          cfpInsertSnd p.ℓ A ≫ cfpSnd A p.T =
+          cfpTerminalFrom A ≫ p.ℓ := by
+        unfold cfpInsertSnd
+        rw [cfpLift_snd]
+      rw [h1, h2]
+      -- Goal:
+      -- cfpLift (cfpSnd T T)
+      --   (cfpTerminalFrom A ≫ p.ℓ) ≫ natPlus
+      -- = cfpSnd T T.
+      -- Rewrite as cfpSnd T T ≫ cfpInsertSnd p.ℓ p.T.
+      have rew :
+          cfpLift (cfpSnd p.T p.T)
+              (cfpTerminalFrom A ≫ p.ℓ) =
+          cfpSnd p.T p.T ≫
+            cfpInsertSnd p.ℓ p.T := by
+        unfold cfpInsertSnd
+        rw [cfpLift_precomp, Category.comp_id]
+        congr 1
+        rw [← Category.assoc]
+        congr 1
+        exact (h.terminal.uniq _).symm
+      rw [rew, Category.assoc, natPlus_ℓ,
+        Category.comp_id]
+    rw [h_fst, h_snd]
+    -- Goal:
+    -- cfpLift (cfpFst T T) (cfpSnd T T) ≫
+    --   iterNat f = base.
+    have h_id :
+        cfpLift (cfpFst p.T p.T) (cfpSnd p.T p.T) =
+        𝟙 (cfpProd p.T p.T) :=
+      (cfpLift_uniq _ _ _
+        (Category.id_comp _)
+        (Category.id_comp _)).symm
+    rw [h_id, Category.id_comp]
+  -- Step case equation for φ.
+  have φ_step :
+      cfpMap (𝟙 A) p.β ≫ φ =
+      cfpLiftAssoc φ φ ≫ step := by
+    -- Name the "init projection" and the "count"
+    -- morphism capturing natPlus(n, r).
+    set init_part : cfpProd A (cfpProd p.T p.T) ⟶
+        p.T :=
+      cfpFst A (cfpProd p.T p.T) ≫ cfpFst p.T p.T
+      with hinit_part
+    set count : cfpProd A (cfpProd p.T p.T) ⟶
+        p.T :=
+      cfpLift
+        (cfpFst A (cfpProd p.T p.T) ≫
+          cfpSnd p.T p.T)
+        (cfpSnd A (cfpProd p.T p.T) ≫
+          cfpSnd p.T p.T) ≫ natPlus
+      with hcount
+    -- Reshape LHS to apply iterNat_cfpLift_succ.
+    have φ_reshape :
+        cfpMap (𝟙 A) p.β ≫ φ =
+        cfpLift init_part (count ≫ natSucc) ≫
+          iterNat f := by
+      rw [hφ, ← Category.assoc, cfpLift_precomp]
+      -- Goal shape:
+      -- cfpLift (cfpMap ≫ init_piece)
+      --         (cfpMap ≫ snd_piece) ≫ iterNat f =
+      -- cfpLift init_part (count ≫ natSucc) ≫
+      --   iterNat f.
+      -- Show the two inner cfpLifts are equal.
+      have inner_eq :
+          cfpLift
+              (cfpMap (𝟙 A) p.β ≫
+                (cfpFst A p.T ≫ cfpFst p.T p.T))
+              (cfpMap (𝟙 A) p.β ≫
+                (cfpLift
+                  (cfpFst A p.T ≫ cfpSnd p.T p.T)
+                  (cfpSnd A p.T) ≫ natPlus)) =
+          cfpLift init_part (count ≫ natSucc) := by
+        apply cfpLift_uniq
+        · unfold cfpMap
+          rw [cfpLift_fst, ← Category.assoc,
+            cfpLift_fst, Category.assoc,
+            Category.id_comp, hinit_part]
+        · rw [cfpLift_snd, hcount, Category.assoc]
+          have h_inner :
+              cfpMap (𝟙 A) p.β ≫
+                cfpLift
+                  (cfpFst A p.T ≫ cfpSnd p.T p.T)
+                  (cfpSnd A p.T) =
+              cfpLift
+                  (cfpFst A (cfpProd p.T p.T) ≫
+                    cfpSnd p.T p.T)
+                  (cfpSnd A (cfpProd p.T p.T)) ≫
+                cfpMap (𝟙 p.T) p.β := by
+            unfold cfpMap
+            rw [cfpLift_precomp, cfpLift_precomp]
+            apply cfpLift_uniq
+            · rw [cfpLift_fst, ← Category.assoc,
+                cfpLift_fst, Category.assoc,
+                Category.id_comp, ← Category.assoc,
+                cfpLift_fst, Category.assoc,
+                Category.comp_id]
+            · rw [cfpLift_snd, cfpLift_snd,
+                ← Category.assoc, cfpLift_snd]
+          rw [← Category.assoc, h_inner,
+            Category.assoc, natPlus_β]
+          -- Goal:
+          --   cfpLift Y1 Y2 ≫ cfpLiftAssoc natPlus
+          --     natPlus ≫ cfpSnd T T ≫ natSucc
+          -- = cfpLift Z1 Z2 ≫ natPlus ≫ natSucc
+          -- Re-associate to group cfpLiftAssoc with
+          -- cfpSnd T T.
+          rw [show
+            cfpLiftAssoc natPlus natPlus ≫
+              cfpSnd p.T p.T ≫ natSucc =
+            (cfpLiftAssoc natPlus natPlus ≫
+              cfpSnd p.T p.T) ≫ natSucc from
+            (Category.assoc _ _ _).symm]
+          -- Reduce cfpLiftAssoc ≫ cfpSnd.
+          have hLA_snd :
+              cfpLiftAssoc natPlus natPlus ≫
+                cfpSnd p.T p.T =
+              cfpAssocSnd p.T p.T p.T ≫ natPlus := by
+            unfold cfpLiftAssoc
+            rw [cfpLift_snd]
+          rw [hLA_snd]
+          -- Goal: cfpLift Y1 Y2 ≫
+          --   (cfpAssocSnd T T T ≫ natPlus) ≫ natSucc
+          -- = cfpLift Z1 Z2 ≫ natPlus ≫ natSucc.
+          rw [show
+            (cfpAssocSnd p.T p.T p.T ≫ natPlus) ≫
+              natSucc =
+            cfpAssocSnd p.T p.T p.T ≫
+              natPlus ≫ natSucc from
+            Category.assoc _ _ _]
+          rw [show
+            cfpLift
+                (cfpFst A (cfpProd p.T p.T) ≫
+                  cfpSnd p.T p.T)
+                (cfpSnd A (cfpProd p.T p.T)) ≫
+              cfpAssocSnd p.T p.T p.T ≫
+                natPlus ≫ natSucc =
+            (cfpLift
+                (cfpFst A (cfpProd p.T p.T) ≫
+                  cfpSnd p.T p.T)
+                (cfpSnd A (cfpProd p.T p.T)) ≫
+              cfpAssocSnd p.T p.T p.T) ≫
+                natPlus ≫ natSucc from
+            (Category.assoc _ _ _).symm]
+          -- Now reduce cfpLift Y1 Y2 ≫ cfpAssocSnd.
+          have hLY_assoc :
+              cfpLift
+                  (cfpFst A (cfpProd p.T p.T) ≫
+                    cfpSnd p.T p.T)
+                  (cfpSnd A (cfpProd p.T p.T)) ≫
+                cfpAssocSnd p.T p.T p.T =
+              cfpLift
+                  (cfpFst A (cfpProd p.T p.T) ≫
+                    cfpSnd p.T p.T)
+                  (cfpSnd A (cfpProd p.T p.T) ≫
+                    cfpSnd p.T p.T) := by
+            unfold cfpAssocSnd
+            rw [cfpLift_precomp]
+            apply cfpLift_uniq
+            · rw [cfpLift_fst, cfpLift_fst]
+            · rw [cfpLift_snd, ← Category.assoc,
+                cfpLift_snd]
+          rw [hLY_assoc]
+      rw [inner_eq]
+    rw [φ_reshape, iterNat_cfpLift_succ]
+    -- Show cfpLift init_part count ≫ iterNat f =
+    -- cfpAssocSnd A T T ≫ φ.
+    have h_assoc :
+        cfpLift init_part count ≫ iterNat f =
+        cfpAssocSnd A p.T p.T ≫ φ := by
+      rw [hφ, ← Category.assoc]
+      congr 1
+      rw [cfpLift_precomp]
+      apply cfpLift_uniq
+      · rw [cfpLift_fst, hinit_part]
+        unfold cfpAssocSnd
+        rw [← Category.assoc, cfpLift_fst]
+      · rw [cfpLift_snd, hcount,
+          ← Category.assoc]
+        congr 1
+        unfold cfpAssocSnd
+        rw [cfpLift_precomp]
+        apply cfpLift_uniq
+        · rw [cfpLift_fst, ← Category.assoc,
+            cfpLift_fst]
+        · rw [cfpLift_snd, cfpLift_snd]
+    rw [h_assoc, Category.assoc]
+    -- Goal: cfpAssocSnd A T T ≫ φ ≫ f =
+    --       cfpLiftAssoc φ φ ≫ step
+    rw [hstep]
+    -- Reshape RHS: cfpLiftAssoc φ φ ≫ (cfpSnd ≫ f) =
+    -- (cfpLiftAssoc φ φ ≫ cfpSnd) ≫ f.
+    rw [show
+      cfpLiftAssoc φ φ ≫ cfpSnd p.T p.T ≫ f =
+      (cfpLiftAssoc φ φ ≫ cfpSnd p.T p.T) ≫ f from
+      (Category.assoc _ _ _).symm]
+    have hLA_snd_φ :
+        cfpLiftAssoc φ φ ≫ cfpSnd p.T p.T =
+        cfpAssocSnd A p.T p.T ≫ φ := by
+      unfold cfpLiftAssoc
+      rw [cfpLift_snd]
+    rw [hLA_snd_φ, hφ]
+    simp only [Category.assoc]
+  exact p.elim_uniq base step φ φ_base φ_step
+
 end GebLean
