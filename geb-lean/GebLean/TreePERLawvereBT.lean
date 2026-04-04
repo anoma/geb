@@ -162,6 +162,13 @@ theorem lawvereBT_bool_dichotomy
           rw [hterm]
       _ = treeFalse := rfl
 
+/-- `LawvereBTQuotCat` satisfies `HasBoolDichotomy`:
+every Boolean global element is `ℓ` or
+`treeFalse`. -/
+theorem lawvereBTQuotCat_hasBoolDichotomy :
+    HasBoolDichotomy LawvereBTQuotCat :=
+  lawvereBT_bool_dichotomy
+
 /-! ## Main theorem -/
 
 /-- In LawvereBTQuotCat, `cfpTerminalFrom 0` is
