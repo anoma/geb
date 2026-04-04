@@ -169,6 +169,104 @@ theorem lawvereBTQuotCat_hasBoolDichotomy :
     HasBoolDichotomy LawvereBTQuotCat :=
   lawvereBT_bool_dichotomy
 
+/-- Every global element of `T` in
+`LawvereBTQuotCat` is either `HasPBTO.ℓ` or a
+branch `cfpLift el er ≫ HasPBTO.β`.  The proof
+extracts the underlying `BT` value via
+`BTMorNQuo.interpU` and applies `BT.leaf_or_node`;
+in the node case, the quoted children supply the
+existential witnesses. -/
+theorem lawvereBT_tree_dichotomy
+    (e : (0 : LawvereBTQuotCat) ⟶
+      HasPBTO.T (C := LawvereBTQuotCat)) :
+    e = HasPBTO.ℓ ∨
+    ∃ (el er : (0 : LawvereBTQuotCat) ⟶
+      HasPBTO.T (C := LawvereBTQuotCat)),
+      e = cfpLift el er ≫ HasPBTO.β := by
+  let ctx₀ : Fin 0 → BT.{0} := Fin.elim0
+  let j₀ : Fin 1 := ⟨0, Nat.zero_lt_one⟩
+  let a : BT.{0} :=
+    BTMorNQuo.interpU e ctx₀ j₀
+  have mor_eq_of_bt_eq :
+      ∀ (f g : (0 : LawvereBTQuotCat) ⟶ 1),
+      BTMorNQuo.interpU f ctx₀ j₀ =
+        BTMorNQuo.interpU g ctx₀ j₀ →
+      f = g := by
+    intro f g hfg
+    have hinj :=
+      @Functor.Faithful.map_injective
+        _ _ _ _
+        interpFunctor.{0} _ 0 1 f g
+    apply hinj
+    funext ctx j
+    have hctx : ctx = ctx₀ :=
+      funext (fun i => Fin.elim0 i)
+    subst hctx
+    have hj : j = j₀ :=
+      Fin.ext (Nat.lt_one_iff.mp j.isLt)
+    subst hj
+    exact hfg
+  rcases BT.leaf_or_node a with ha | ⟨l, r, ha⟩
+  · left
+    apply mor_eq_of_bt_eq
+    change a = _
+    rw [ha]
+    change BT.leaf = BTMorNQuo.interpU
+      btLeafQ ctx₀ j₀
+    unfold btLeafQ BTMorNQuo.interpU
+    simp only [Quotient.lift_mk]
+    unfold BTMorN.interpU btLeaf
+    exact (BTMor1.interpU_leaf ctx₀).symm
+  · right
+    let e₁ : (0 : LawvereBTQuotCat) ⟶ 1 :=
+      Quotient.mk (btMorNSetoid 0 1)
+        (fun (_ : Fin 1) => quoteBT l)
+    let e₂ : (0 : LawvereBTQuotCat) ⟶ 1 :=
+      Quotient.mk (btMorNSetoid 0 1)
+        (fun (_ : Fin 1) => quoteBT r)
+    refine ⟨e₁, e₂, ?_⟩
+    have he₁_interp :
+        BTMorNQuo.interpU e₁ ctx₀ j₀ = l := by
+      change (quoteBT l).interpU Fin.elim0 = l
+      exact quoteBT_interpU l Fin.elim0
+    have he₂_interp :
+        BTMorNQuo.interpU e₂ ctx₀ j₀ = r := by
+      change (quoteBT r).interpU Fin.elim0 = r
+      exact quoteBT_interpU r Fin.elim0
+    apply mor_eq_of_bt_eq
+    change a = _
+    rw [ha]
+    change BT.node l r =
+      BTMorNQuo.interpU
+        (BTMorNQuo.comp
+          (BTMorNQuo.pair e₁ e₂)
+          btBranchQ) ctx₀ j₀
+    rw [BTMorNQuo.interpU_comp]
+    have h0 : BTMorNQuo.interpU
+        (BTMorNQuo.pair e₁ e₂) ctx₀
+        ⟨0, by omega⟩ = l := by
+      have hc := BTMorNQuo.interpU_comp
+        (BTMorNQuo.pair e₁ e₂)
+        BTMorNQuo.fst ctx₀
+      rw [BTMorNQuo.pair_fst] at hc
+      exact congrFun hc j₀ ▸ he₁_interp
+    have h1 : BTMorNQuo.interpU
+        (BTMorNQuo.pair e₁ e₂) ctx₀
+        ⟨1, by omega⟩ = r := by
+      have hc := BTMorNQuo.interpU_comp
+        (BTMorNQuo.pair e₁ e₂)
+        BTMorNQuo.snd ctx₀
+      rw [BTMorNQuo.pair_snd] at hc
+      exact congrFun hc j₀ ▸ he₂_interp
+    change BT.node l r = _
+    unfold btBranchQ BTMorNQuo.interpU
+    simp only [Quotient.lift_mk]
+    unfold BTMorN.interpU btBranch
+    rw [BTMor1.interpU_branch,
+      BTMor1.interpU_proj,
+      BTMor1.interpU_proj]
+    exact congrArg₂ BT.node h0.symm h1.symm
+
 /-! ## Main theorem -/
 
 /-- In LawvereBTQuotCat, `cfpTerminalFrom 0` is
