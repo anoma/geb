@@ -1,5 +1,5 @@
 import GebLean.LawvereBTInterp
-import GebLean.TreePER
+import GebLean.TreePERLimits
 
 /-!
 # Converse transitivity for LawvereBTQuotCat
@@ -308,5 +308,15 @@ theorem quantTransitive_implies_eq_lawvereBT
     rw [hA_eq_tf,
       treeFalse_eq_terminal_treeFalse,
       boolAnd_treeFalse_left]
+
+/-- The PER category over `LawvereBTQuotCat` has
+all finite limits. -/
+theorem
+    lawvereBTQuotCat_treePER_hasFiniteLimits :
+    Limits.HasFiniteLimits
+      (@TreePERObj LawvereBTQuotCat _ _ _) :=
+  treePER_hasFiniteLimits
+    lawvereBTQuotCat_isSeparator
+    lawvereBTQuotCat_hasBoolDichotomy
 
 end GebLean

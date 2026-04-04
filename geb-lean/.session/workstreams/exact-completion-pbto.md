@@ -84,8 +84,18 @@ the image factorization, making regularity straightforward.
 
 See `docs/superpowers/plans/2026-04-02-exact-completion-pbto.md`
 
+## Upcoming Task: Faithful Functor Preserves Limits
+
+Prove that the faithful inclusion functor from
+`LawvereBTQuotCat` to `Type w` preserves limits.
+This will also need to be extended to show that
+the functor preserves colimits.  The functor in
+question is `interpFunctor`.
+
 ## Dependencies
 
 - `GebLean/LawvereBT.lean` (HasPBTO, elim)
 - `GebLean/LawvereBTQuot.lean` (LawvereBTQuotCat)
 - `GebLean/Utilities/ComputableLimits.lean` (cfpProd, etc.)
+- `GebLean/TreePERLimits.lean` (finite limits for PER category)
+- `GebLean/TreePERLawvereBT.lean` (LawvereBT instances)

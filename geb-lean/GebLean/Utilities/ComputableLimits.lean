@@ -164,6 +164,12 @@ def cfpLiftAssoc {A B D E : C}
     (cfpAssocFst A B D ≫ f)
     (cfpAssocSnd A B D ≫ g)
 
+/-- Swap the components of a binary product:
+`cfpSwap A B : A × B ⟶ B × A`. -/
+def cfpSwap (A B : C) :
+    cfpProd A B ⟶ cfpProd B A :=
+  cfpLift (cfpSnd A B) (cfpFst A B)
+
 end Aliases
 
 /-! ## Deriving mathlib's `Prop`-valued classes

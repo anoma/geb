@@ -30,13 +30,6 @@ variable {C : Type u} [Category.{v} C]
   [h : HasChosenFiniteProducts C]
   [p : HasPBTO C]
 
-/-! ## Product utilities -/
-
-/-- Swap the two components of a binary product. -/
-def cfpSwap (A B : C) :
-    cfpProd A B ⟶ cfpProd B A :=
-  cfpLift (cfpSnd A B) (cfpFst A B)
-
 /-! ## Triple-product projections -/
 
 /-- We represent `T³` as `T × (T × T)`.
