@@ -73,3 +73,49 @@ The `include hSep hBD in` directive is needed before theorems whose
 types don't mention the separator/dichotomy but whose proofs use them,
 since Lean 4 only auto-includes section variables that appear in the
 type signature.
+
+## `HasTreeEq LawvereBTQuotCat` construction
+
+Status: not started, requires new infrastructure.
+
+The `HasTreeEq` structure in `GebLean/TreePER.lean` asks for a morphism
+`treeEq : cfpProd T T ⟶ T` satisfying Boolean-valued output, reflexivity,
+symmetry, equational transitivity, and the four computation rules
+(`ℓℓ`, `ℓβ`, `βℓ`, `ββ`).  The recursive `ββ` rule
+`treeEq(β(a₁, a₂), β(b₁, b₂)) = boolAnd(treeEq(a₁, b₁), treeEq(a₂, b₂))`
+is simultaneous (double) structural recursion on two trees.
+
+The `TypePBTO.treeEqBT` construction for `Type u` uses a `BT.fold` with
+carrier type `BT → BT` (function type), applied at the end to the second
+argument.  This works in any cartesian closed category.  `LawvereBTQuotCat`
+is cartesian monoidal only (its objects are the finite products `n : ℕ`
+of the generator), so this approach does not transfer directly.
+
+A single `BTMor1.fold` or `HasPBTO.elim` application cannot express
+`treeEq`.  The step function `g : Fin m → BTMor1 (m + m)` only sees the
+recursive results from the left and right children, not the original
+parameter context.  Even with an enhanced variant that exposes the
+context (e.g. a syntactic analogue of `btFoldEnhanced`), the recursive
+results compare each sub-tree of the folded argument against the FULL
+other argument, not against the corresponding sub-tree.  Multi-output
+and state-tracking variants do not help because all recursive calls
+receive the same parameter context.
+
+Viable routes (all require new infrastructure):
+
+- Build a constructive primitive-recursive completeness theorem for
+  `LawvereBTQuotCat` (inverse of `interpU_primrec_of_ctx` in
+  `LawvereBTPrimrec.lean`).  Every primitive recursive `BT × BT → BT`
+  function would then lift to a `BTMor1 2` term, including the
+  semantically-defined `TypePBTO.treeEqBT`.
+- Simulate a Goedel encoding `BT ↔ Nat` within the Lawvere theory,
+  implement natural-number equality as a `BTMor1`, and compose.  Nat
+  equality on a unary encoding has the same double-recursion obstacle,
+  so this likely reduces to the same problem.
+- Add a primitive to `HasPBTO` or a new typeclass supporting double
+  structural recursion directly (equivalent to exponentials or a
+  case-analysis primitive combined with recursion).
+
+The `HasTreeEq LawvereBTQuotCat` instance is a prerequisite for
+downstream `LawvereBTPER`-specific results that depend on decidable
+tree equality.  Work is blocked pending one of the routes above.

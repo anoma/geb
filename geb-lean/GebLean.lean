@@ -24,6 +24,7 @@ import GebLean.FreeToposBT
 import GebLean.HexagonCat
 import GebLean.TreeLogic
 import GebLean.TreePER
+import GebLean.TypePBTO
 import GebLean.TreePERLawvereBT
 import GebLean.TreePERLimits
 import GebLean.LawvereBT

@@ -288,6 +288,66 @@ theorem quantTransitive_implies_eq
     rw [hA_eq_tf, treeFalse_eq,
       boolAnd_treeFalse_left]
 
+/-! ## Structural tree equality -/
+
+/-- A category with a parameterized binary tree object
+has decidable structural tree equality when there is a
+morphism `treeEq : T × T → T` that holds iff two trees
+are structurally equal, with the expected Boolean-valued
+behaviour.
+
+The abstract PBTO axioms describe recursive structure
+(fold) but not simultaneous case analysis on two
+arguments.  `treeEq` requires simultaneous recursion on
+two trees, which doesn't follow from `elim` alone.
+This structure asserts the existence of such a
+relation with the expected computation rules, to be
+proved for specific models (e.g., `LawvereBTQuotCat`,
+`Type`) using model-level tree induction. -/
+structure HasTreeEq (C : Type u) [Category.{v} C]
+    [HasChosenFiniteProducts C]
+    [p : HasPBTO C] where
+  /-- The tree equality relation. -/
+  treeEq : cfpProd p.T p.T ⟶ p.T
+  /-- `treeEq` is Boolean-valued. -/
+  treeEq_bool : treeEq ≫ isLeafEndo = treeEq
+  /-- `treeEq(t, t) = ℓ`: reflexivity. -/
+  treeEq_refl :
+    cfpLift (𝟙 p.T) (𝟙 p.T) ≫ treeEq =
+    cfpTerminalFrom p.T ≫ p.ℓ
+  /-- `treeEq(x, y) = treeEq(y, x)`: symmetry. -/
+  treeEq_symm :
+    cfpSwap p.T p.T ≫ treeEq = treeEq
+  /-- Transitivity (equational via `boolAnd`). -/
+  treeEq_trans : EqTransitive treeEq
+  /-- Computation: `treeEq(ℓ, ℓ) = ℓ`. -/
+  treeEq_ℓℓ :
+    cfpLift p.ℓ p.ℓ ≫ treeEq = p.ℓ
+  /-- Computation: `treeEq(ℓ, β(a, b)) = treeFalse`.
+  Leaf is not equal to any branch. -/
+  treeEq_ℓβ :
+    cfpMap p.ℓ p.β ≫ treeEq =
+    cfpTerminalFrom _ ≫ treeFalse
+  /-- Computation: `treeEq(β(a, b), ℓ) = treeFalse`.
+  Symmetric to `treeEq_ℓβ`. -/
+  treeEq_βℓ :
+    cfpMap p.β p.ℓ ≫ treeEq =
+    cfpTerminalFrom _ ≫ treeFalse
+  /-- Computation: `treeEq(β(a₁, a₂), β(b₁, b₂))
+  = boolAnd(treeEq(a₁, b₁), treeEq(a₂, b₂))`.
+  Branches are equal iff their left and right
+  subtrees are respectively equal. -/
+  treeEq_ββ :
+    cfpMap p.β p.β ≫ treeEq =
+    cfpLift
+      (cfpLift
+        (cfpFst _ _ ≫ cfpFst p.T p.T)
+        (cfpSnd _ _ ≫ cfpFst p.T p.T) ≫ treeEq)
+      (cfpLift
+        (cfpFst _ _ ≫ cfpSnd p.T p.T)
+        (cfpSnd _ _ ≫ cfpSnd p.T p.T) ≫ treeEq)
+    ≫ boolAnd
+
 /-! ## PER objects -/
 
 /--
