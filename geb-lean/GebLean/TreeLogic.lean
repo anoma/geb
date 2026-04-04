@@ -3333,4 +3333,114 @@ theorem β_treeRightEndo :
     Category.assoc, destructFoldR_cfpFst,
     cfpLift_snd]
 
+/-- Unary zero as a morphism: the leaf.  A unary
+natural number `n` is represented as the tree
+`branch(leaf, branch(leaf, ... branch(leaf, leaf)))`
+with `n` outer branches; the number `0` is just
+`leaf`. -/
+def natZero :
+    cfpTerminal (C := C) ⟶ p.T := p.ℓ
+
+/-- Unary successor as an endomorphism: sends a
+tree `n` to `branch(leaf, n)`.  Composed with the
+unary-nat encoding, this maps the representation of
+`n` to the representation of `n + 1`. -/
+def natSucc : p.T ⟶ p.T :=
+  cfpLift (cfpTerminalFrom p.T ≫ p.ℓ) (𝟙 p.T) ≫
+    p.β
+
+/-- Unary addition on the tree type.  The second
+component is folded as a unary natural number; the
+first component serves as the accumulator.  The
+recursion is:
+`natPlus(m, leaf) = m` and
+`natPlus(m, branch(_, n')) = natSucc(natPlus(m, n'))`
+-- correct under the unary encoding because then the
+step ignores the recursive result corresponding to
+the always-leaf left subtree. -/
+def natPlus : cfpProd p.T p.T ⟶ p.T :=
+  p.elim (𝟙 p.T) (cfpSnd p.T p.T ≫ natSucc)
+
+/-- Leaf computation rule for `natPlus`:
+`natPlus(m, leaf) = m`. -/
+theorem natPlus_ℓ :
+    cfpInsertSnd p.ℓ p.T ≫ natPlus = 𝟙 p.T := by
+  unfold natPlus
+  exact p.elim_ℓ (𝟙 p.T) _
+
+/-- Branch computation rule for `natPlus`:
+`natPlus(m, branch(l, r)) = natSucc(natPlus(m, r))`
+under the unary encoding (where `l = leaf`). -/
+theorem natPlus_β :
+    cfpMap (𝟙 p.T) p.β ≫ natPlus =
+    cfpLiftAssoc natPlus natPlus ≫
+      (cfpSnd p.T p.T ≫ natSucc) := by
+  unfold natPlus
+  exact p.elim_β (𝟙 p.T) _
+
+/-- Parameterized tree-size morphism.  Folds a tree
+into its size (as a unary natural number): leaves
+become `natZero`, and a branch with recursive sizes
+`(sl, sr)` becomes `natSucc(natPlus(sl, sr))`. -/
+def treeSizeParam :
+    cfpProd cfpTerminal p.T ⟶ p.T :=
+  p.elim p.ℓ (natPlus ≫ natSucc)
+
+/-- Tree size as an endomorphism on `T`.  Computes
+the number of branches in the tree, represented as a
+unary natural number (also a tree). -/
+def treeSize : p.T ⟶ p.T :=
+  cfpLift (cfpTerminalFrom p.T) (𝟙 p.T) ≫
+    treeSizeParam
+
+/-- Leaf computation rule for `treeSizeParam`:
+`treeSizeParam(*, leaf) = natZero`. -/
+theorem treeSizeParam_ℓ :
+    cfpInsertSnd p.ℓ cfpTerminal ≫
+      treeSizeParam = p.ℓ := by
+  unfold treeSizeParam
+  exact p.elim_ℓ p.ℓ _
+
+/-- Branch computation rule for `treeSizeParam`:
+`treeSizeParam(*, branch(l, r)) =
+ natSucc(natPlus(treeSizeParam(*, l),
+                 treeSizeParam(*, r)))`. -/
+theorem treeSizeParam_β :
+    cfpMap (𝟙 cfpTerminal) p.β ≫
+      treeSizeParam =
+    cfpLiftAssoc treeSizeParam treeSizeParam ≫
+      (natPlus ≫ natSucc) := by
+  unfold treeSizeParam
+  exact p.elim_β p.ℓ _
+
+/-- Iterate a morphism `f : T ⟶ T` a unary-nat
+number of times.  `iterNat f` takes the pair
+`(init, n)` and returns `f^n(init)`, where the
+second component `n` is interpreted as a unary
+natural number.  The recursion is:
+`iterNat f (init, leaf) = init` (zero iterations)
+and `iterNat f (init, branch(_, n')) =
+  f (iterNat f (init, n'))` (one more iteration). -/
+def iterNat (f : p.T ⟶ p.T) :
+    cfpProd p.T p.T ⟶ p.T :=
+  p.elim (𝟙 p.T) (cfpSnd p.T p.T ≫ f)
+
+/-- Zero-iteration rule for `iterNat`:
+`iterNat f (init, leaf) = init`. -/
+theorem iterNat_ℓ (f : p.T ⟶ p.T) :
+    cfpInsertSnd p.ℓ p.T ≫ iterNat f = 𝟙 p.T := by
+  unfold iterNat
+  exact p.elim_ℓ (𝟙 p.T) _
+
+/-- Successor-iteration rule for `iterNat`:
+`iterNat f (init, branch(l, r)) =
+  f (iterNat f (init, r))` under the unary encoding
+(where `l = leaf`). -/
+theorem iterNat_β (f : p.T ⟶ p.T) :
+    cfpMap (𝟙 p.T) p.β ≫ iterNat f =
+    cfpLiftAssoc (iterNat f) (iterNat f) ≫
+      (cfpSnd p.T p.T ≫ f) := by
+  unfold iterNat
+  exact p.elim_β (𝟙 p.T) _
+
 end GebLean
