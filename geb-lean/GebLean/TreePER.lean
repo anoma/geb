@@ -157,6 +157,144 @@ theorem eqTransitive_implies_quant
       Category.assoc, boolAnd_ℓ_ℓ]
   exact boolAnd_implies_IsLeafConst ht hB e hA
 
+/-- `IsLeafConst f` for `f : cfpTerminal ⟶ T`
+simplifies to `f = ℓ` when the terminal morphism
+from cfpTerminal is the identity. -/
+theorem isLeafConst_terminal_eq_ℓ
+    {f : cfpTerminal (C := C) ⟶ p.T} :
+    IsLeafConst f ↔ f = p.ℓ := by
+  unfold IsLeafConst
+  constructor
+  · intro hf
+    rw [cfpTerminalFrom_terminal,
+      Category.id_comp] at hf
+    exact hf
+  · intro hf
+    rw [cfpTerminalFrom_terminal,
+      Category.id_comp]
+    exact hf
+
+/-- Quantified transitivity implies equational
+transitivity when the terminal object is a separator
+and the PBTO satisfies Boolean dichotomy.
+
+The proof reduces the morphism equation to global
+elements via `IsSeparator`, performs a case split
+on Boolean-valued global elements (each is `ℓ` or
+`treeFalse`), and uses the quantified transitivity
+to close the `ℓ` case. -/
+theorem quantTransitive_implies_eq
+    (hSep :
+      IsSeparator (cfpTerminal (C := C)))
+    (hDich : HasBoolDichotomy C)
+    {rel : cfpProd p.T p.T ⟶ p.T}
+    (rel_bool : rel ≫ isLeafEndo = rel)
+    (ht : QuantTransitive rel) :
+    EqTransitive rel := by
+  unfold EqTransitive
+  apply hSep.def
+  intro e
+  set A := e ≫ (cfpLift
+    (cfpLift t3x t3z ≫ rel)
+    (cfpLift t3z t3y ≫ rel) ≫ boolAnd)
+  set B := e ≫ (cfpLift t3x t3y ≫ rel)
+  have goal_eq : e ≫
+      cfpLift
+        (cfpLift (cfpLift t3x t3z ≫ rel)
+          (cfpLift t3z t3y ≫ rel) ≫ boolAnd)
+        (cfpLift t3x t3y ≫ rel) ≫ boolAnd =
+      cfpLift A B ≫ boolAnd := by
+    rw [← Category.assoc, cfpLift_precomp e]
+  rw [goal_eq]
+  have hA_bool : A ≫ isLeafEndo = A := by
+    change (e ≫ (cfpLift
+      (cfpLift t3x t3z ≫ rel)
+      (cfpLift t3z t3y ≫ rel) ≫ boolAnd)) ≫
+      isLeafEndo = _
+    rw [Category.assoc, Category.assoc,
+      boolAnd_output_boolean]
+  set rxz := e ≫ cfpLift t3x t3z ≫ rel
+  set rzy := e ≫ cfpLift t3z t3y ≫ rel
+  have hA_eq :
+      A = cfpLift rxz rzy ≫ boolAnd := by
+    change e ≫ cfpLift
+      (cfpLift t3x t3z ≫ rel)
+      (cfpLift t3z t3y ≫ rel) ≫ boolAnd =
+      cfpLift rxz rzy ≫ boolAnd
+    rw [← Category.assoc, cfpLift_precomp e]
+  have hrxz_bool :
+      rxz ≫ isLeafEndo = rxz := by
+    change (e ≫ cfpLift t3x t3z ≫ rel) ≫
+      isLeafEndo = _
+    rw [Category.assoc, Category.assoc,
+      rel_bool]
+  have hrzy_bool :
+      rzy ≫ isLeafEndo = rzy := by
+    change (e ≫ cfpLift t3z t3y ≫ rel) ≫
+      isLeafEndo = _
+    rw [Category.assoc, Category.assoc,
+      rel_bool]
+  rcases hDich rxz hrxz_bool with
+    hrxz | hrxz
+  · rcases hDich rzy hrzy_bool with
+      hrzy | hrzy
+    · -- rxz = ℓ, rzy = ℓ.
+      have hA_eq_ℓ : A = p.ℓ := by
+        rw [hA_eq, hrxz, hrzy, boolAnd_ℓ_ℓ]
+      have hB_lc : IsLeafConst B := by
+        have h1 : IsLeafConst rxz :=
+          isLeafConst_terminal_eq_ℓ.mpr hrxz
+        have h2 : IsLeafConst rzy :=
+          isLeafConst_terminal_eq_ℓ.mpr hrzy
+        exact ht e h1 h2
+      have hB_eq_ℓ : B = p.ℓ :=
+        isLeafConst_terminal_eq_ℓ.mp hB_lc
+      rw [hA_eq_ℓ, hB_eq_ℓ, boolAnd_ℓ_ℓ]
+    · -- rxz = ℓ, rzy = treeFalse.
+      have boolAnd_ℓ_tf :
+          cfpLift p.ℓ
+            (treeFalse (C := C)) ≫
+            boolAnd = treeFalse := by
+        rw [boolAnd_treeIte_form,
+          @isLeafEndo_treeFalse C _ h p]
+        have : cfpTerminalFrom
+            (cfpTerminal (C := C)) ≫
+            treeFalse = treeFalse := by
+          rw [cfpTerminalFrom_terminal,
+            Category.id_comp]
+        rw [this]
+        exact treeIte_equal_branches
+          treeFalse p.ℓ
+      have hA_eq_tf : A = treeFalse := by
+        rw [hA_eq, hrxz, hrzy, boolAnd_ℓ_tf]
+      have treeFalse_eq :
+          treeFalse (C := C) =
+          cfpTerminalFrom cfpTerminal ≫
+            treeFalse := by
+        rw [cfpTerminalFrom_terminal,
+          Category.id_comp]
+      rw [hA_eq_tf, treeFalse_eq,
+        boolAnd_treeFalse_left]
+  · -- rxz = treeFalse.
+    have hA_eq_tf : A = treeFalse := by
+      rw [hA_eq, hrxz]
+      have treeFalse_eq :
+          treeFalse (C := C) =
+          cfpTerminalFrom cfpTerminal ≫
+            treeFalse := by
+        rw [cfpTerminalFrom_terminal,
+          Category.id_comp]
+      rw [treeFalse_eq,
+        boolAnd_treeFalse_left]
+    have treeFalse_eq :
+        treeFalse (C := C) =
+        cfpTerminalFrom cfpTerminal ≫
+          treeFalse := by
+      rw [cfpTerminalFrom_terminal,
+        Category.id_comp]
+    rw [hA_eq_tf, treeFalse_eq,
+      boolAnd_treeFalse_left]
+
 /-! ## PER objects -/
 
 /--

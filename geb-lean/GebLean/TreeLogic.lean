@@ -2512,6 +2512,217 @@ theorem boolAnd_idem :
     _ = sect ≫ isLeaf := by rw [isLeaf_def]
     _ = isLeafEndo := isLeafEndo_eq.symm
 
+/-- Right-identity for `boolAnd` with constant
+leaf second argument, on `cfpProd cfpTerminal T`:
+`boolAnd(snd, const_ℓ) = isLeaf`.
+
+The proof parallels `boolAnd_idem`: both sides
+satisfy the same ℓ and β computation rules
+(yielding `ℓ` at leaf and `treeFalse` at branch),
+so they are equal by `elim_uniq`. -/
+theorem boolAnd_snd_const_ℓ :
+    cfpLift
+      (cfpSnd cfpTerminal p.T)
+      (cfpTerminalFrom (cfpProd cfpTerminal p.T) ≫
+        p.ℓ) ≫
+      boolAnd =
+    (isLeaf :
+      cfpProd cfpTerminal p.T ⟶ p.T) := by
+  set snd := cfpSnd cfpTerminal p.T
+  set c := cfpTerminalFrom
+    (cfpProd cfpTerminal p.T) ≫ p.ℓ
+  set step : cfpProd p.T p.T ⟶ p.T :=
+    cfpTerminalFrom (cfpProd p.T p.T) ≫ treeFalse
+  set D' := cfpProd cfpTerminal (cfpProd p.T p.T)
+  -- ℓ computation rule.
+  have snd_ℓ :
+      cfpInsertSnd p.ℓ cfpTerminal ≫ snd =
+      p.ℓ := by
+    change cfpInsertSnd p.ℓ cfpTerminal ≫
+      cfpSnd cfpTerminal p.T = p.ℓ
+    unfold cfpInsertSnd
+    rw [cfpLift_snd, cfpTerminalFrom_terminal,
+      Category.id_comp]
+  have c_at_ℓ :
+      cfpInsertSnd p.ℓ cfpTerminal ≫ c = p.ℓ := by
+    change cfpInsertSnd p.ℓ cfpTerminal ≫
+      cfpTerminalFrom
+        (cfpProd cfpTerminal p.T) ≫ p.ℓ = p.ℓ
+    rw [← Category.assoc,
+      show cfpInsertSnd p.ℓ cfpTerminal ≫
+        cfpTerminalFrom
+          (cfpProd cfpTerminal p.T) =
+        cfpTerminalFrom cfpTerminal from
+        h.terminal.uniq _,
+      cfpTerminalFrom_terminal,
+      Category.id_comp]
+  have ℓ_eq :
+      cfpInsertSnd p.ℓ cfpTerminal ≫
+        (cfpLift snd c ≫ boolAnd) = p.ℓ := by
+    rw [← Category.assoc, cfpLift_precomp,
+      snd_ℓ, c_at_ℓ, boolAnd_ℓ_ℓ]
+  -- β computation rule.
+  have snd_β :
+      cfpMap (𝟙 cfpTerminal) p.β ≫ snd =
+      cfpSnd cfpTerminal (cfpProd p.T p.T) ≫
+        p.β :=
+    cfpMap_snd (𝟙 cfpTerminal) p.β
+  have c_at_β :
+      cfpMap (𝟙 cfpTerminal) p.β ≫ c =
+      cfpTerminalFrom D' ≫ p.ℓ := by
+    change cfpMap (𝟙 cfpTerminal) p.β ≫
+      cfpTerminalFrom
+        (cfpProd cfpTerminal p.T) ≫ p.ℓ =
+      cfpTerminalFrom D' ≫ p.ℓ
+    rw [← Category.assoc]
+    congr 1
+    exact h.terminal.uniq _
+  have β_lhs :
+      cfpMap (𝟙 cfpTerminal) p.β ≫
+        (cfpLift snd c ≫ boolAnd) =
+      cfpLift
+        (cfpSnd cfpTerminal (cfpProd p.T p.T) ≫
+          p.β)
+        (cfpTerminalFrom D' ≫ p.ℓ) ≫
+        boolAnd := by
+    rw [← Category.assoc, cfpLift_precomp,
+      snd_β, c_at_β]
+  -- β is non-leaf, so boolAnd(β, const_ℓ) =
+  -- treeFalse.
+  have snd'_isLeafEndo :
+      (cfpSnd cfpTerminal (cfpProd p.T p.T) ≫
+        p.β) ≫ isLeafEndo =
+      cfpTerminalFrom D' ≫ treeFalse := by
+    rw [Category.assoc, isLeafEndo_β,
+      ← Category.assoc]
+    congr 1
+    exact h.terminal.uniq _
+  have β_boolAnd_val :
+      cfpLift
+        (cfpSnd cfpTerminal (cfpProd p.T p.T) ≫
+          p.β)
+        (cfpTerminalFrom D' ≫ p.ℓ) ≫ boolAnd =
+      cfpTerminalFrom D' ≫ treeFalse := by
+    rw [boolAnd_treeIte_form]
+    have h1 : (cfpTerminalFrom D' ≫ p.ℓ) ≫
+        isLeafEndo =
+        cfpTerminalFrom D' ≫ p.ℓ := by
+      rw [Category.assoc, isLeafEndo_ℓ]
+    rw [h1]
+    -- Goal: treeIte((const_ℓ, const_treeFalse),
+    --   snd ≫ β) = const_treeFalse.
+    -- snd ≫ β is a branch node, so treeIte
+    -- returns the else branch.
+    exact treeIte_β_applied
+      (cfpTerminalFrom D' ≫ p.ℓ)
+      (cfpTerminalFrom D' ≫ treeFalse)
+      (cfpSnd cfpTerminal (cfpProd p.T p.T))
+  have β_rhs :
+      cfpLiftAssoc
+        (cfpLift snd c ≫ boolAnd)
+        (cfpLift snd c ≫ boolAnd) ≫ step =
+      cfpTerminalFrom D' ≫ treeFalse := by
+    change cfpLiftAssoc
+        (cfpLift snd c ≫ boolAnd)
+        (cfpLift snd c ≫ boolAnd) ≫
+      (cfpTerminalFrom (cfpProd p.T p.T) ≫
+        treeFalse) =
+      cfpTerminalFrom D' ≫ treeFalse
+    rw [← Category.assoc]
+    congr 1
+    exact h.terminal.uniq _
+  have β_eq :
+      cfpMap (𝟙 cfpTerminal) p.β ≫
+        (cfpLift snd c ≫ boolAnd) =
+      cfpLiftAssoc
+        (cfpLift snd c ≫ boolAnd)
+        (cfpLift snd c ≫ boolAnd) ≫ step := by
+    rw [β_lhs, β_boolAnd_val, β_rhs]
+  -- By elim_uniq.
+  have is_isLeaf :
+      cfpLift snd c ≫ boolAnd =
+      p.elim p.ℓ step :=
+    p.elim_uniq p.ℓ step _ ℓ_eq β_eq
+  have isLeaf_def :
+      (isLeaf :
+        cfpProd cfpTerminal p.T ⟶ p.T) =
+      p.elim p.ℓ step := rfl
+  rw [is_isLeaf, ← isLeaf_def]
+
+/-- `boolAnd(A, const_leaf) = A` for Boolean
+`A` (satisfying `A ≫ isLeafEndo = A`).
+The constant leaf acts as a right identity for
+`boolAnd` on Boolean-valued morphisms.
+
+Proof: Factor through `boolAnd_snd_const_ℓ`
+which establishes the identity on
+`cfpProd cfpTerminal T`, then project via the
+section `cfpLift (cfpTerminalFrom T) (𝟙 T)`. -/
+theorem boolAnd_const_leaf_right
+    {D : C}
+    {A : D ⟶ p.T}
+    (hA : A ≫ isLeafEndo = A) :
+    cfpLift A (cfpTerminalFrom D ≫ p.ℓ) ≫
+      boolAnd = A := by
+  have factor :
+      cfpLift A (cfpTerminalFrom D ≫ p.ℓ) =
+      A ≫ cfpLift (𝟙 p.T)
+        (cfpTerminalFrom p.T ≫ p.ℓ) := by
+    rw [cfpLift_precomp, Category.comp_id]
+    congr 1
+    rw [← Category.assoc]
+    congr 1
+    exact (h.terminal.uniq _).symm
+  rw [factor, Category.assoc]
+  suffices hsuff :
+      cfpLift (𝟙 p.T)
+        (cfpTerminalFrom p.T ≫ p.ℓ) ≫
+        boolAnd = isLeafEndo by
+    rw [hsuff, hA]
+  -- isLeafEndo = sect ≫ isLeaf where
+  -- sect = cfpLift (cfpTerminalFrom T) (𝟙 T).
+  let sect : p.T ⟶ cfpProd cfpTerminal p.T :=
+    cfpLift (cfpTerminalFrom p.T) (𝟙 p.T)
+  -- sect ≫ cfpLift snd (const_ℓ) =
+  --   cfpLift (𝟙 T) (const_ℓ).
+  have sect_comp :
+      sect ≫ cfpLift
+        (cfpSnd cfpTerminal p.T)
+        (cfpTerminalFrom
+          (cfpProd cfpTerminal p.T) ≫ p.ℓ) =
+      cfpLift (𝟙 p.T)
+        (cfpTerminalFrom p.T ≫ p.ℓ) := by
+    change cfpLift (cfpTerminalFrom p.T) (𝟙 p.T) ≫
+      cfpLift
+        (cfpSnd cfpTerminal p.T)
+        (cfpTerminalFrom
+          (cfpProd cfpTerminal p.T) ≫ p.ℓ) =
+      cfpLift (𝟙 p.T)
+        (cfpTerminalFrom p.T ≫ p.ℓ)
+    rw [cfpLift_precomp,
+      cfpLift_snd (cfpTerminalFrom p.T) (𝟙 p.T)]
+    congr 1
+    rw [← Category.assoc]
+    congr 1
+    exact h.terminal.uniq _
+  calc cfpLift (𝟙 p.T)
+        (cfpTerminalFrom p.T ≫ p.ℓ) ≫ boolAnd
+      = (sect ≫ cfpLift
+          (cfpSnd cfpTerminal p.T)
+          (cfpTerminalFrom
+            (cfpProd cfpTerminal p.T) ≫
+            p.ℓ)) ≫ boolAnd := by
+        rw [sect_comp]
+    _ = sect ≫ (cfpLift
+          (cfpSnd cfpTerminal p.T)
+          (cfpTerminalFrom
+            (cfpProd cfpTerminal p.T) ≫
+            p.ℓ) ≫ boolAnd) :=
+        Category.assoc _ _ _
+    _ = sect ≫ isLeaf :=
+        by rw [boolAnd_snd_const_ℓ]
+    _ = isLeafEndo := rfl
+
 /-- `boolAnd(treeFalse, B) = treeFalse` for any
 `B : D ⟶ T`.  The first argument is non-leaf, so
 `treeIte` returns the "else" branch
@@ -2524,5 +2735,309 @@ theorem boolAnd_treeFalse_left
     cfpTerminalFrom D ≫ treeFalse := by
   rw [boolAnd_treeIte_form]
   exact treeIte_treeFalse_applied _ _
+
+/-- From `IsLeafConst(e ≫ cfpLift A B ≫ boolAnd)`
+and `A ≫ isLeafEndo = A`, derive
+`IsLeafConst(e ≫ A)`.
+
+The proof is purely equational.  Starting from
+`boolAnd_const_leaf_right` applied to `e ≫ A`
+(which is Boolean by `hA`), substituting the
+hypothesis, and applying `boolAnd_assoc` together
+with `boolAnd_idem` yields `e ≫ A` equal to the
+hypothesis. -/
+theorem boolAnd_fst_IsLeafConst
+    {D : C}
+    {A B : D ⟶ p.T}
+    (hA : A ≫ isLeafEndo = A)
+    {E : C} (e : E ⟶ D)
+    (hAB : IsLeafConst
+      (e ≫ cfpLift A B ≫ boolAnd)) :
+    IsLeafConst (e ≫ A) := by
+  unfold IsLeafConst at hAB ⊢
+  -- hAB : e ≫ cfpLift A B ≫ boolAnd =
+  --   cfpTerminalFrom E ≫ p.ℓ
+  set a := e ≫ A
+  set b := e ≫ B
+  -- a is Boolean.
+  have ha : a ≫ isLeafEndo = a := by
+    change (e ≫ A) ≫ isLeafEndo = e ≫ A
+    rw [Category.assoc, hA]
+  -- boolAnd(a, ℓ) = a (by boolAnd_const_leaf_right).
+  have step1 :
+      cfpLift a (cfpTerminalFrom E ≫ p.ℓ) ≫
+        boolAnd = a :=
+    boolAnd_const_leaf_right ha
+  -- Substitute hypothesis backwards:
+  -- boolAnd(a, ℓ) = boolAnd(a, boolAnd(a, b)).
+  have hab_eq :
+      e ≫ cfpLift A B ≫ boolAnd =
+      cfpLift a b ≫ boolAnd := by
+    rw [← Category.assoc, cfpLift_precomp]
+  -- boolAnd(a, boolAnd(a, b)) =
+  --   boolAnd(boolAnd(a, a), b)
+  --   by boolAnd_assoc.
+  have step2 :
+      cfpLift a (cfpLift a b ≫ boolAnd) ≫
+        boolAnd =
+      cfpLift (cfpLift a a ≫ boolAnd) b ≫
+        boolAnd :=
+    (boolAnd_assoc a a b).symm
+  -- boolAnd(a, a) = isLeafEndo(a) = a.
+  have step3 :
+      cfpLift a a ≫ boolAnd = a := by
+    have : cfpLift a a =
+        a ≫ cfpLift (𝟙 p.T) (𝟙 p.T) := by
+      rw [cfpLift_precomp]
+      simp only [Category.comp_id]
+    rw [this, Category.assoc, boolAnd_idem, ha]
+  -- Chain: a = boolAnd(a, ℓ)
+  --          = boolAnd(a, boolAnd(a, b))
+  --          = boolAnd(boolAnd(a, a), b)
+  --          = boolAnd(a, b)
+  --          = ℓ.
+  calc a
+      = cfpLift a (cfpTerminalFrom E ≫ p.ℓ) ≫
+          boolAnd := step1.symm
+    _ = cfpLift a
+          (e ≫ cfpLift A B ≫ boolAnd) ≫
+          boolAnd := by
+        rw [hAB]
+    _ = cfpLift a
+          (cfpLift a b ≫ boolAnd) ≫
+          boolAnd := by
+        rw [hab_eq]
+    _ = cfpLift (cfpLift a a ≫ boolAnd) b ≫
+          boolAnd := step2
+    _ = cfpLift a b ≫ boolAnd := by
+        rw [step3]
+    _ = e ≫ cfpLift A B ≫ boolAnd := by
+        rw [← hab_eq]
+    _ = cfpTerminalFrom E ≫ p.ℓ := hAB
+
+/-- From `IsLeafConst(e ≫ cfpLift A B ≫ boolAnd)`
+and `B ≫ isLeafEndo = B`, derive
+`IsLeafConst(e ≫ B)`.
+
+The proof is purely equational.  Starting from
+`boolAnd_leaf_left` applied to `e ≫ B`, substituting
+the hypothesis, and applying `boolAnd_assoc` together
+with `boolAnd_idem` yields `e ≫ B` equal to the
+hypothesis. -/
+theorem boolAnd_snd_IsLeafConst
+    {D : C}
+    {A B : D ⟶ p.T}
+    (hB : B ≫ isLeafEndo = B)
+    {E : C} (e : E ⟶ D)
+    (hAB : IsLeafConst
+      (e ≫ cfpLift A B ≫ boolAnd)) :
+    IsLeafConst (e ≫ B) := by
+  unfold IsLeafConst at hAB ⊢
+  set a := e ≫ A
+  set b := e ≫ B
+  -- b is Boolean.
+  have hb : b ≫ isLeafEndo = b := by
+    change (e ≫ B) ≫ isLeafEndo = e ≫ B
+    rw [Category.assoc, hB]
+  -- boolAnd(ℓ, b) = isLeafEndo(b) = b.
+  have step1 :
+      cfpLift (cfpTerminalFrom E ≫ p.ℓ) b ≫
+        boolAnd = b := by
+    have factor :
+        cfpLift (cfpTerminalFrom E ≫ p.ℓ) b =
+        cfpLift (cfpTerminalFrom E) b ≫
+          cfpMap p.ℓ (𝟙 p.T) := by
+      rw [cfpLift_cfpMap, Category.comp_id]
+    rw [factor, Category.assoc,
+      boolAnd_leaf_left, ← Category.assoc,
+      cfpLift_snd, hb]
+  have hab_eq :
+      e ≫ cfpLift A B ≫ boolAnd =
+      cfpLift a b ≫ boolAnd := by
+    rw [← Category.assoc, cfpLift_precomp]
+  -- boolAnd(boolAnd(a, b), b) =
+  --   boolAnd(a, boolAnd(b, b))
+  --   by boolAnd_assoc.
+  have step2 :
+      cfpLift (cfpLift a b ≫ boolAnd) b ≫
+        boolAnd =
+      cfpLift a (cfpLift b b ≫ boolAnd) ≫
+        boolAnd :=
+    boolAnd_assoc a b b
+  -- boolAnd(b, b) = isLeafEndo(b) = b.
+  have step3 :
+      cfpLift b b ≫ boolAnd = b := by
+    have : cfpLift b b =
+        b ≫ cfpLift (𝟙 p.T) (𝟙 p.T) := by
+      rw [cfpLift_precomp]
+      simp only [Category.comp_id]
+    rw [this, Category.assoc, boolAnd_idem, hb]
+  -- Chain: b = boolAnd(ℓ, b)
+  --          = boolAnd(boolAnd(a, b), b)
+  --          = boolAnd(a, boolAnd(b, b))
+  --          = boolAnd(a, b)
+  --          = ℓ.
+  calc b
+      = cfpLift (cfpTerminalFrom E ≫ p.ℓ) b ≫
+          boolAnd := step1.symm
+    _ = cfpLift
+          (e ≫ cfpLift A B ≫ boolAnd) b ≫
+          boolAnd := by
+        rw [hAB]
+    _ = cfpLift
+          (cfpLift a b ≫ boolAnd) b ≫
+          boolAnd := by
+        rw [hab_eq]
+    _ = cfpLift a (cfpLift b b ≫ boolAnd) ≫
+          boolAnd := step2
+    _ = cfpLift a b ≫ boolAnd := by
+        rw [step3]
+    _ = e ≫ cfpLift A B ≫ boolAnd := by
+        rw [← hab_eq]
+    _ = cfpTerminalFrom E ≫ p.ℓ := hAB
+
+/-- A PBTO has Boolean dichotomy when every
+Boolean-valued global element of T (fixed by
+`isLeafEndo`) is either `ℓ` or `treeFalse`. -/
+def HasBoolDichotomy
+    (C : Type u) [Category.{v} C]
+    [HasChosenFiniteProducts C]
+    [p : HasPBTO C] : Prop :=
+  ∀ (e : cfpTerminal (C := C) ⟶ p.T),
+    e ≫ isLeafEndo = e →
+    e = p.ℓ ∨ e = treeFalse
+
+/-- `boolAnd(ℓ, treeFalse) = treeFalse`: the
+conjunction of leaf (true) and treeFalse (false)
+is treeFalse. -/
+theorem boolAnd_ℓ_treeFalse :
+    cfpLift p.ℓ
+      (treeFalse (C := C)) ≫
+      boolAnd = treeFalse := by
+  rw [boolAnd_treeIte_form,
+    @isLeafEndo_treeFalse C _ h p]
+  have : cfpTerminalFrom
+      (cfpTerminal (C := C)) ≫
+      treeFalse = treeFalse := by
+    rw [cfpTerminalFrom_terminal,
+      Category.id_comp]
+  rw [this]
+  exact treeIte_equal_branches
+    treeFalse p.ℓ
+
+/-- First projection absorption for `boolAnd`:
+`boolAnd(boolAnd(A, B), A) = boolAnd(A, B)`
+when `A` and `B` are Boolean-valued.
+
+The proof applies `IsSeparator` to reduce to
+global elements and performs a case split via
+`HasBoolDichotomy`. -/
+theorem boolAnd_fst_proj
+    (hSep :
+      IsSeparator (cfpTerminal (C := C)))
+    (hDich : HasBoolDichotomy C)
+    {D : C} (A B : D ⟶ p.T)
+    (hA : A ≫ isLeafEndo = A)
+    (hB : B ≫ isLeafEndo = B) :
+    cfpLift (cfpLift A B ≫ boolAnd) A ≫
+      boolAnd =
+    cfpLift A B ≫ boolAnd := by
+  apply hSep.def
+  intro e
+  -- Push e through cfpLift on both sides.
+  simp only [← Category.assoc]
+  rw [cfpLift_precomp e, cfpLift_precomp e]
+  set a := e ≫ A
+  set b := e ≫ B
+  have ha : a ≫ isLeafEndo = a := by
+    change (e ≫ A) ≫ isLeafEndo = e ≫ A
+    rw [Category.assoc, hA]
+  have hb : b ≫ isLeafEndo = b := by
+    change (e ≫ B) ≫ isLeafEndo = e ≫ B
+    rw [Category.assoc, hB]
+  -- Push e through the inner boolAnd.
+  have inner_eq :
+      e ≫ cfpLift A B ≫ boolAnd =
+      cfpLift a b ≫ boolAnd := by
+    rw [← Category.assoc, cfpLift_precomp e]
+  rw [inner_eq]
+  -- Auxiliary: rewrite treeFalse at cfpTerminal
+  -- to the form required by boolAnd_treeFalse_left.
+  have tf_eq :
+      treeFalse (C := C) =
+      cfpTerminalFrom cfpTerminal ≫
+        treeFalse := by
+    rw [cfpTerminalFrom_terminal,
+      Category.id_comp]
+  -- Case split on a and b.
+  rcases hDich a ha with ha_val | ha_val <;>
+    rcases hDich b hb with hb_val | hb_val <;>
+    rw [ha_val, hb_val]
+  · -- a = ℓ, b = ℓ
+    rw [boolAnd_ℓ_ℓ, boolAnd_ℓ_ℓ]
+  · -- a = ℓ, b = treeFalse
+    rw [boolAnd_ℓ_treeFalse, tf_eq,
+      boolAnd_treeFalse_left]
+  · -- a = treeFalse, b = ℓ
+    rw [tf_eq, boolAnd_treeFalse_left,
+      boolAnd_treeFalse_left]
+  · -- a = treeFalse, b = treeFalse
+    rw [tf_eq, boolAnd_treeFalse_left,
+      boolAnd_treeFalse_left]
+
+/-- Second projection absorption for `boolAnd`:
+`boolAnd(boolAnd(A, B), B) = boolAnd(A, B)`
+when `A` and `B` are Boolean-valued.
+
+The proof applies `IsSeparator` to reduce to
+global elements and performs a case split via
+`HasBoolDichotomy`. -/
+theorem boolAnd_snd_proj
+    (hSep :
+      IsSeparator (cfpTerminal (C := C)))
+    (hDich : HasBoolDichotomy C)
+    {D : C} (A B : D ⟶ p.T)
+    (hA : A ≫ isLeafEndo = A)
+    (hB : B ≫ isLeafEndo = B) :
+    cfpLift (cfpLift A B ≫ boolAnd) B ≫
+      boolAnd =
+    cfpLift A B ≫ boolAnd := by
+  apply hSep.def
+  intro e
+  simp only [← Category.assoc]
+  rw [cfpLift_precomp e, cfpLift_precomp e]
+  set a := e ≫ A
+  set b := e ≫ B
+  have ha : a ≫ isLeafEndo = a := by
+    change (e ≫ A) ≫ isLeafEndo = e ≫ A
+    rw [Category.assoc, hA]
+  have hb : b ≫ isLeafEndo = b := by
+    change (e ≫ B) ≫ isLeafEndo = e ≫ B
+    rw [Category.assoc, hB]
+  have inner_eq :
+      e ≫ cfpLift A B ≫ boolAnd =
+      cfpLift a b ≫ boolAnd := by
+    rw [← Category.assoc, cfpLift_precomp e]
+  rw [inner_eq]
+  have tf_eq :
+      treeFalse (C := C) =
+      cfpTerminalFrom cfpTerminal ≫
+        treeFalse := by
+    rw [cfpTerminalFrom_terminal,
+      Category.id_comp]
+  rcases hDich a ha with ha_val | ha_val <;>
+    rcases hDich b hb with hb_val | hb_val <;>
+    rw [ha_val, hb_val]
+  · -- a = ℓ, b = ℓ
+    rw [boolAnd_ℓ_ℓ, boolAnd_ℓ_ℓ]
+  · -- a = ℓ, b = treeFalse
+    rw [boolAnd_ℓ_treeFalse, tf_eq,
+      boolAnd_treeFalse_left]
+  · -- a = treeFalse, b = ℓ
+    rw [tf_eq, boolAnd_treeFalse_left,
+      boolAnd_treeFalse_left]
+  · -- a = treeFalse, b = treeFalse
+    rw [tf_eq, boolAnd_treeFalse_left,
+      boolAnd_treeFalse_left]
 
 end GebLean
