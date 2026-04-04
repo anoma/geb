@@ -4403,4 +4403,14 @@ theorem treeEq_ℓℓ :
   rw [Category.assoc, isLeafEndo_ℓ,
     cfpTerminalFrom_terminal, Category.id_comp]
 
+/-- `treeEq` is Boolean-valued: postcomposing with
+`isLeafEndo` leaves it unchanged.  The final stage
+of `treeEq` is already `isLeafEndo`, so this
+follows from the idempotence of `isLeafEndo`. -/
+theorem treeEq_bool :
+    treeEq ≫ isLeafEndo =
+    (treeEq : cfpProd p.T p.T ⟶ p.T) := by
+  unfold treeEq
+  simp only [Category.assoc, isLeafEndo_idem]
+
 end GebLean

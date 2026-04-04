@@ -119,3 +119,82 @@ Viable routes (all require new infrastructure):
 The `HasTreeEq LawvereBTQuotCat` instance is a prerequisite for
 downstream `LawvereBTPER`-specific results that depend on decidable
 tree equality.  Work is blocked pending one of the routes above.
+
+## Generic `treeEq` via bounded iteration (Phase 3a status)
+
+A generic `treeEq : cfpProd p.T p.T ⟶ p.T` has been defined in
+`GebLean/TreeLogic.lean` for any `HasPBTO C`, using a worklist-based
+algorithm:
+
+- State encoding: `branch(result, worklist)`.
+- `compareStep` processes one worklist item: match (leaf, leaf) pops,
+  mismatch sets result to `treeFalse`, expand (branch, branch) pushes
+  children pairs.
+- `treeEq := cfpLift initState (β ≫ treeSize) ≫ iterNat compareStep ≫
+  treeLeftEndo ≫ isLeafEndo`.
+
+The computation rules for `compareStep` are all proved
+(`compareStep_leaf_wl`, `compareStep_match`, `compareStep_mismatch_left`,
+`compareStep_mismatch_right`, `compareStep_expand`), as is the sanity
+check `treeEq_ℓℓ`.
+
+Proved in Phase 3a:
+
+- `treeEq_bool : treeEq ≫ isLeafEndo = treeEq`.  One-liner via
+  `Category.assoc` and `isLeafEndo_idem`.
+
+Blocked in Phase 3a:
+
+- `treeEq_refl : cfpLift (𝟙 p.T) (𝟙 p.T) ≫ treeEq =
+  cfpTerminalFrom p.T ≫ p.ℓ`.
+
+Obstacle analysis for `treeEq_refl`:
+
+The natural strategy is `elim_uniq` on the morphism
+`Φ := cfpLift (𝟙 p.T) (𝟙 p.T) ≫ treeEq`, showing it equals
+`reflLeaf := p.elim p.ℓ (cfpTerminalFrom _ ≫ p.ℓ)` (the constant-leaf
+morphism via `elim`).  By `elim_uniq` this reduces to two equations:
+
+1. `p.ℓ ≫ Φ = p.ℓ` — immediate from `treeEq_ℓℓ`.
+2. `p.β ≫ Φ = cfpMap Φ Φ ≫ (cfpTerminalFrom _ ≫ p.ℓ)`, which
+   simplifies to `cfpLift p.β p.β ≫ treeEq =
+   cfpTerminalFrom (cfpProd p.T p.T) ≫ p.ℓ`.
+
+Equation (2) is "reflexivity on branches": `treeEq(branch(a,b),
+branch(a,b)) = leaf` as a morphism equation.  Unfolding `treeEq` and
+applying `compareStep_expand` once reduces the state to `(ℓ,
+[(a,a), (b,b)])` with one fewer iteration, but the remaining
+convergence requires reflexivity on the sub-pairs — the same
+problem recursively.
+
+The obstacle is that `treeEq`'s iteration count is bounded by
+`treeSize`, and the correctness of this bound requires a tree-shape-
+dependent invariant that cannot be verified by pointwise
+computation rules alone.  Proving it would require:
+
+- A general invariant lemma about `iterNat compareStep` converging
+  from a "reflexive worklist" state, stated parametrically over
+  `f : D ⟶ p.T` and with a suitable iteration count.
+- Induction on the shape of `f` via `elim_uniq`, which in turn
+  requires expressing the "converged state" as an output of a
+  fold over `f`.
+
+This machinery is a substantial standalone development.  An
+alternative that would make `treeEq_refl` a direct `elim_uniq`
+argument: define `treeEq` via a nested `p.elim` that takes the
+recursive `treeEq` results as input at the branch case (the
+double-recursion pattern described above for `LawvereBTQuotCat`).
+This runs into the same obstacle that single-fold `elim` cannot
+express double structural recursion without CCC/exponentials.
+
+Next steps (to be decided):
+
+- Attempt the full convergence invariant lemma for
+  `iterNat compareStep` (estimated: a new sub-module worth of
+  work).
+- Or: restrict `HasTreeEq` instances to categories with additional
+  structure (e.g. cartesian closed) where `treeEq` can be defined
+  via a fold returning a function.
+- Or: add `treeEq` to the axiomatic interface (`HasPBTO` or a
+  sibling class), treating it as primitive in categories that lack
+  CCC structure.
