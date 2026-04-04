@@ -3527,12 +3527,19 @@ The step:
 - Otherwise, the head pair is `(a, b)` and the
   rest of the worklist follows.  If either of
   `a`, `b` is a leaf and the other is a branch,
-  a mismatch is recorded and the worklist is
-  cleared.  If both are leaves, the pair is
-  consumed without changing `result`.  If both
-  are branches, the pair is expanded into two
-  child-pair comparisons that are prepended to
-  the worklist. -/
+  the result component is set to `treeFalse` and
+  the rest of the worklist is preserved.  If
+  both are leaves, the pair is consumed without
+  changing `result`.  If both are branches, the
+  pair is expanded into two child-pair
+  comparisons that are prepended to the
+  worklist.
+
+A mismatch recorded in the result component is
+absorbing under the final Boolean reduction, so
+continuing to process the remaining worklist
+after a mismatch does not affect the final
+Boolean answer. -/
 def compareStep : p.T ⟶ p.T :=
   let state : p.T ⟶ p.T := 𝟙 p.T
   let result := treeLeftEndo
@@ -3547,8 +3554,7 @@ def compareStep : p.T ⟶ p.T :=
   let br := b ≫ treeRightEndo
   let matchOut := mkBranch result rest
   let mismatchOut :=
-    mkBranch (treeFalseConst p.T)
-      (leafConst p.T)
+    mkBranch (treeFalseConst p.T) rest
   let expandOut :=
     mkBranch result
       (mkBranch
@@ -3779,8 +3785,12 @@ theorem compareStep_match {D : C}
 
 /-- Mismatch-left computation rule for
 `compareStep`: if the head pair is
-`(leaf, branch(l, r))`, the result becomes
-`treeFalse` and the worklist is cleared. -/
+`(leaf, branch(l, r))`, the result component
+becomes `treeFalse` and the rest of the worklist
+is preserved.  A `treeFalse` result is absorbing
+under the final Boolean reduction, so subsequent
+processing of the remaining worklist does not
+affect the final Boolean answer. -/
 theorem compareStep_mismatch_left {D : C}
     (r : D ⟶ p.T) (bl br rest : D ⟶ p.T) :
     mkBranch r
@@ -3788,7 +3798,7 @@ theorem compareStep_mismatch_left {D : C}
           (mkBranch (leafConst D) (mkBranch bl br))
           rest)
       ≫ compareStep =
-    mkBranch (treeFalseConst D) (leafConst D)
+    mkBranch (treeFalseConst D) rest
     := by
   unfold compareStep
   simp only
@@ -3849,18 +3859,23 @@ theorem compareStep_mismatch_left {D : C}
   rw [iteBranches_ℓ]
   rw [iteBranches_β]
   rw [← Category.assoc, cfpLift_precomp,
-    treeFalseConst_precomp,
-    ← Category.assoc]
-  have hstate_term :
-      state ≫ cfpTerminalFrom p.T =
-      cfpTerminalFrom D :=
-    h.terminal.uniq _
-  rw [hstate_term]
+    treeFalseConst_precomp]
+  have h_rest :
+      state ≫ treeRightEndo ≫ treeRightEndo =
+      rest := by
+    rw [← Category.assoc, h_wlR,
+      Category.assoc, β_treeRightEndo,
+      cfpLift_snd]
+  rw [h_rest]
 
 /-- Mismatch-right computation rule for
 `compareStep`: if the head pair is
-`(branch(l, r), leaf)`, the result becomes
-`treeFalse` and the worklist is cleared. -/
+`(branch(l, r), leaf)`, the result component
+becomes `treeFalse` and the rest of the worklist
+is preserved.  A `treeFalse` result is absorbing
+under the final Boolean reduction, so subsequent
+processing of the remaining worklist does not
+affect the final Boolean answer. -/
 theorem compareStep_mismatch_right {D : C}
     (r : D ⟶ p.T) (al ar rest : D ⟶ p.T) :
     mkBranch r
@@ -3869,7 +3884,7 @@ theorem compareStep_mismatch_right {D : C}
             (leafConst D))
           rest)
       ≫ compareStep =
-    mkBranch (treeFalseConst D) (leafConst D)
+    mkBranch (treeFalseConst D) rest
     := by
   unfold compareStep
   simp only
@@ -3931,13 +3946,14 @@ theorem compareStep_mismatch_right {D : C}
   rw [iteBranches_β]
   rw [iteBranches_ℓ]
   rw [← Category.assoc, cfpLift_precomp,
-    treeFalseConst_precomp,
-    ← Category.assoc]
-  have hstate_term :
-      state ≫ cfpTerminalFrom p.T =
-      cfpTerminalFrom D :=
-    h.terminal.uniq _
-  rw [hstate_term]
+    treeFalseConst_precomp]
+  have h_rest :
+      state ≫ treeRightEndo ≫ treeRightEndo =
+      rest := by
+    rw [← Category.assoc, h_wlR,
+      Category.assoc, β_treeRightEndo,
+      cfpLift_snd]
+  rw [h_rest]
 
 /-- Expand computation rule for `compareStep`:
 if the head pair is

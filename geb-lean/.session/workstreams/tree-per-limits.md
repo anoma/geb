@@ -198,3 +198,61 @@ Next steps (to be decided):
 - Or: add `treeEq` to the axiomatic interface (`HasPBTO` or a
   sibling class), treating it as primitive in categories that lack
   CCC structure.
+
+## `treeEq_ββ` obstacle analysis (Phase 3b)
+
+Phase 3a established the iteration-infrastructure lemmas
+`iterNat_cfpLift_succ` (one more iteration) and `iterNat_plus`
+(iteration additivity).  With those available, an attempt was
+made to prove `treeEq_ββ`:
+
+```lean
+cfpMap p.β p.β ≫ treeEq =
+  cfpLift
+    (cfpLift (cfpFst _ _ ≫ cfpFst p.T p.T)
+             (cfpSnd _ _ ≫ cfpFst p.T p.T) ≫ treeEq)
+    (cfpLift (cfpFst _ _ ≫ cfpSnd p.T p.T)
+             (cfpSnd _ _ ≫ cfpSnd p.T p.T) ≫ treeEq)
+  ≫ boolAnd
+```
+
+Strategy attempted: prove a "single-pair processing" lemma of the
+form "iterating `compareStep` for `treeSize(branch(x, y))` steps on
+state `(result, (x, y) :: rest)` gives state `(pairCmp, rest)` for
+some `pairCmp` computed from `result`, `x`, `y`", then use
+`iterNat_plus` to decompose the full iteration of `treeEq_ββ` into
+an initial expand step plus two single-pair-processing phases.
+
+Obstacle: the lemma as naturally stated is FALSE.  The
+`compareStep_mismatch_left` and `compareStep_mismatch_right`
+computation rules, when applied to a head pair with an
+unmatched leaf/branch combination, set the result to `treeFalse`
+AND clear the entire worklist (setting it to `leafConst`),
+discarding the `rest` part.  A lemma claiming "process one pair,
+leave `rest` intact" cannot be true in all cases.
+
+Semantic correctness of `treeEq_ββ` is preserved because
+`boolAnd(treeFalse, _) = treeFalse`, so losing the second pair
+during a mismatch on the first still gives the correct final
+boolean value.  But encoding this case analysis at the level of
+morphism equations requires either:
+
+- A parametric invariant `inv : (result, worklist) ↦ T` that is
+  preserved by `compareStep` in all four cases.  Defining `inv`
+  as a morphism requires recursive structure over the worklist,
+  which is itself an instance of the double-recursion obstacle
+  (since worklist items are pairs of trees).
+- A case-analysis formulation: define `inv` only for specific
+  worklist shapes arising in `treeEq_ββ` (worklists of length
+  0, 1, or 2).  Each variant needs to be proven preserved under
+  `compareStep`.  This route is open but requires substantial
+  ad-hoc proof work.
+- Extend the ambient structure with a conditional/case primitive
+  sufficient to express "apply treeEq to worklist contents
+  depending on branch/leaf shape of result component".
+
+As with `treeEq_refl`, a full proof appears to require a new
+standalone sub-module developing either the invariant framework
+or an equivalent direct trace for the `treeEq_ββ` case.  The
+`iterNat_plus` infrastructure remains useful but is not
+sufficient on its own.
