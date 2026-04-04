@@ -4150,4 +4150,257 @@ theorem natSucc_ℓ :
   rw [cfpTerminalFrom_terminal,
     Category.id_comp]
 
+/-- `treeSizeParam(*, leaf)` with the unique
+constant map, composed appropriately, equals
+`p.ℓ`.  This is a specialization of
+`treeSizeParam_ℓ` to a pair built via `cfpLift`
+from the terminal morphism. -/
+theorem treeSizeParam_cfpLift_ℓ :
+    cfpLift
+        (cfpTerminalFrom (cfpTerminal (C := C)))
+        p.ℓ ≫ treeSizeParam = p.ℓ := by
+  have rewrite_insertSnd :
+      cfpLift
+          (cfpTerminalFrom (cfpTerminal (C := C)))
+          p.ℓ =
+      cfpInsertSnd p.ℓ cfpTerminal := by
+    unfold cfpInsertSnd
+    congr 1
+    · exact cfpTerminalFrom_terminal
+    · rw [cfpTerminalFrom_terminal,
+        Category.id_comp]
+  rw [rewrite_insertSnd]
+  exact treeSizeParam_ℓ
+
+/-- `treeSize(branch(ℓ, ℓ)) = treeFalse`: the
+size of a two-leaf tree is the unary one,
+represented in the tree encoding as
+`branch(leaf, leaf)`. -/
+theorem treeSize_treeFalse :
+    treeFalse ≫ treeSize =
+    (treeFalse : cfpTerminal (C := C) ⟶ p.T)
+    := by
+  unfold treeSize
+  rw [← Category.assoc, cfpLift_precomp,
+    Category.comp_id]
+  have h_term :
+      treeFalse ≫
+        cfpTerminalFrom (p.T : C) =
+      cfpTerminalFrom cfpTerminal :=
+    h.terminal.uniq _
+  rw [h_term]
+  -- The goal is now
+  -- cfpLift (cfpTerminalFrom cfpTerminal)
+  --   treeFalse ≫ treeSizeParam = treeFalse.
+  unfold treeFalse
+  have factor :
+      cfpLift (cfpTerminalFrom cfpTerminal)
+        (cfpLift p.ℓ p.ℓ ≫ p.β) =
+      cfpLift (cfpTerminalFrom cfpTerminal)
+        (cfpLift p.ℓ p.ℓ) ≫
+        cfpMap (𝟙 cfpTerminal) p.β := by
+    unfold cfpMap
+    rw [cfpLift_precomp]
+    congr 1
+    · rw [← Category.assoc, cfpLift_fst,
+        Category.comp_id]
+    · rw [← Category.assoc, cfpLift_snd]
+  rw [factor, Category.assoc, treeSizeParam_β]
+  unfold cfpLiftAssoc
+  rw [← Category.assoc, cfpLift_precomp]
+  -- Compute the two branches; both should give
+  -- p.ℓ via treeSizeParam_cfpLift_ℓ.
+  have h_fst :
+      cfpLift (cfpTerminalFrom cfpTerminal)
+        (cfpLift p.ℓ p.ℓ) ≫
+        (cfpAssocFst cfpTerminal p.T p.T ≫
+          treeSizeParam) = p.ℓ := by
+    rw [← Category.assoc]
+    unfold cfpAssocFst
+    rw [cfpLift_precomp]
+    rw [cfpLift_fst, ← Category.assoc,
+      cfpLift_snd, cfpLift_fst]
+    exact treeSizeParam_cfpLift_ℓ
+  have h_snd :
+      cfpLift (cfpTerminalFrom cfpTerminal)
+        (cfpLift p.ℓ p.ℓ) ≫
+        (cfpAssocSnd cfpTerminal p.T p.T ≫
+          treeSizeParam) = p.ℓ := by
+    rw [← Category.assoc]
+    unfold cfpAssocSnd
+    rw [cfpLift_precomp]
+    rw [cfpLift_fst, ← Category.assoc,
+      cfpLift_snd, cfpLift_snd]
+    exact treeSizeParam_cfpLift_ℓ
+  rw [h_fst, h_snd, ← Category.assoc,
+    natPlus_ℓℓ, natSucc_ℓ]
+  rfl
+
+/-- Zero-iteration rule applied: for any
+`init : D ⟶ p.T`, precomposing `init` with the
+zero-count version of `iterNat` gives back
+`init`. -/
+theorem iterNat_cfpLift_ℓ {D : C}
+    (f : p.T ⟶ p.T) (init : D ⟶ p.T) :
+    cfpLift init (cfpTerminalFrom D ≫ p.ℓ)
+      ≫ iterNat f = init := by
+  have factor :
+      cfpLift init
+          (cfpTerminalFrom D ≫ p.ℓ) =
+      init ≫ cfpInsertSnd p.ℓ p.T := by
+    unfold cfpInsertSnd
+    rw [cfpLift_precomp, Category.comp_id]
+    congr 1
+    rw [← Category.assoc]
+    have : init ≫ cfpTerminalFrom p.T =
+        cfpTerminalFrom D :=
+      h.terminal.uniq _
+    rw [this]
+  rw [factor, Category.assoc, iterNat_ℓ,
+    Category.comp_id]
+
+/-- One-iteration rule for `iterNat` with the
+count `treeFalse = branch(leaf, leaf)`: applying
+`iterNat f` once gives `init ≫ f`. -/
+theorem iterNat_cfpLift_treeFalse {D : C}
+    (f : p.T ⟶ p.T)
+    (init : D ⟶ p.T) :
+    cfpLift init (cfpTerminalFrom D ≫ treeFalse)
+      ≫ iterNat f = init ≫ f := by
+  unfold treeFalse
+  have factor :
+      cfpLift init
+          (cfpTerminalFrom D ≫
+            cfpLift p.ℓ p.ℓ ≫ p.β) =
+      cfpLift init
+          (cfpTerminalFrom D ≫
+            cfpLift p.ℓ p.ℓ) ≫
+        cfpMap (𝟙 p.T) p.β := by
+    unfold cfpMap
+    rw [cfpLift_precomp]
+    simp only [← Category.assoc,
+      cfpLift_fst, cfpLift_snd,
+      Category.comp_id]
+  rw [factor, Category.assoc, iterNat_β]
+  unfold cfpLiftAssoc
+  rw [← Category.assoc, cfpLift_precomp]
+  have h_pair :
+      cfpLift init
+        (cfpTerminalFrom D ≫ cfpLift p.ℓ p.ℓ) =
+      cfpLift init
+        (cfpLift
+          (cfpTerminalFrom D ≫ p.ℓ)
+          (cfpTerminalFrom D ≫ p.ℓ)) := by
+    congr 1
+    rw [cfpLift_precomp]
+  rw [h_pair]
+  -- Compute both components via
+  -- iterNat_cfpLift_ℓ.
+  have h_fst_step :
+      cfpLift init
+          (cfpLift
+            (cfpTerminalFrom D ≫ p.ℓ)
+            (cfpTerminalFrom D ≫ p.ℓ)) ≫
+        (cfpAssocFst p.T p.T p.T ≫ iterNat f) =
+      init := by
+    rw [← Category.assoc]
+    unfold cfpAssocFst
+    rw [cfpLift_precomp]
+    rw [cfpLift_fst, ← Category.assoc,
+      cfpLift_snd, cfpLift_fst]
+    exact iterNat_cfpLift_ℓ f init
+  have h_snd_step :
+      cfpLift init
+          (cfpLift
+            (cfpTerminalFrom D ≫ p.ℓ)
+            (cfpTerminalFrom D ≫ p.ℓ)) ≫
+        (cfpAssocSnd p.T p.T p.T ≫ iterNat f) =
+      init := by
+    rw [← Category.assoc]
+    unfold cfpAssocSnd
+    rw [cfpLift_precomp]
+    rw [cfpLift_fst, ← Category.assoc,
+      cfpLift_snd, cfpLift_snd]
+    exact iterNat_cfpLift_ℓ f init
+  rw [h_fst_step, h_snd_step, ← Category.assoc,
+    cfpLift_snd]
+
+/-- Sanity-check computation rule for `treeEq`:
+comparing two leaves yields `p.ℓ` (interpreted as
+"true"). -/
+theorem treeEq_ℓℓ :
+    cfpLift p.ℓ p.ℓ ≫ treeEq = p.ℓ := by
+  unfold treeEq
+  simp only
+  -- Distribute cfpLift p.ℓ p.ℓ through the
+  -- initial cfpLift to build init state and
+  -- iteration count.
+  rw [← Category.assoc, cfpLift_precomp]
+  -- First: compute initState applied to
+  -- cfpLift p.ℓ p.ℓ.
+  have h_init :
+      cfpLift p.ℓ p.ℓ ≫
+        mkBranch
+          (leafConst (cfpProd p.T p.T))
+          (mkBranch p.β
+            (leafConst (cfpProd p.T p.T))) =
+      mkBranch (leafConst cfpTerminal)
+        (mkBranch treeFalse
+          (leafConst cfpTerminal)) := by
+    rw [mkBranch_precomp, leafConst_precomp,
+      mkBranch_precomp, leafConst_precomp]
+    rfl
+  -- Second: compute iterCount.
+  have h_count :
+      cfpLift p.ℓ p.ℓ ≫ (p.β ≫ treeSize) =
+      (treeFalse : cfpTerminal (C := C) ⟶ p.T)
+      ≫ treeSize := by
+    rw [← Category.assoc]
+    rfl
+  rw [h_init, h_count, treeSize_treeFalse]
+  -- Apply the one-iteration rule specialized
+  -- to D = cfpTerminal.
+  have apply_iter :
+      ∀ (init :
+          cfpTerminal (C := C) ⟶ p.T),
+      cfpLift init
+          (treeFalse :
+            cfpTerminal (C := C) ⟶ p.T)
+        ≫ iterNat compareStep =
+      init ≫ compareStep := by
+    intro init
+    have h_tf :
+        (treeFalse :
+          cfpTerminal (C := C) ⟶ p.T) =
+        cfpTerminalFrom
+          (cfpTerminal (C := C)) ≫
+          treeFalse := by
+      rw [cfpTerminalFrom_terminal,
+        Category.id_comp]
+    rw [h_tf]
+    exact iterNat_cfpLift_treeFalse
+      (D := cfpTerminal (C := C))
+      compareStep init
+  rw [← Category.assoc (cfpLift _ _) _
+    (treeLeftEndo ≫ isLeafEndo),
+    apply_iter]
+  -- Rewrite treeFalse (which appears as the
+  -- worklist head) to mkBranch of leaf consts.
+  have h_tf_mkBranch :
+      (treeFalse : cfpTerminal (C := C) ⟶ p.T) =
+      mkBranch (leafConst cfpTerminal)
+        (leafConst cfpTerminal) := by
+    unfold mkBranch leafConst treeFalse
+    rw [cfpTerminalFrom_terminal,
+      Category.id_comp]
+  rw [h_tf_mkBranch]
+  -- Now apply compareStep_match with
+  -- r = leafConst, rest = leafConst.
+  rw [compareStep_match]
+  -- Now compute treeLeftEndo and isLeafEndo.
+  rw [← Category.assoc, mkBranch_treeLeftEndo]
+  unfold leafConst
+  rw [Category.assoc, isLeafEndo_ℓ,
+    cfpTerminalFrom_terminal, Category.id_comp]
+
 end GebLean
