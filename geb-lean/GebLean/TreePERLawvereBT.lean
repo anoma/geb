@@ -309,12 +309,22 @@ theorem quantTransitive_implies_eq_lawvereBT
       treeFalse_eq_terminal_treeFalse,
       boolAnd_treeFalse_left]
 
+/-! ## The Lawvere BT PER category -/
+
+/-- Objects of the PER category over
+`LawvereBTQuotCat`: partial equivalence relations on
+the binary tree object `T` with Boolean-valued output.
+This is the "decidable layer" of the PER completion,
+interpreted as the category of types with primitive
+recursively decidable equality. -/
+abbrev LawvereBTPER :=
+  @TreePERObj LawvereBTQuotCat _ _ _
+
 /-- The PER category over `LawvereBTQuotCat` has
 all finite limits. -/
 theorem
-    lawvereBTQuotCat_treePER_hasFiniteLimits :
-    Limits.HasFiniteLimits
-      (@TreePERObj LawvereBTQuotCat _ _ _) :=
+    lawvereBTPER_hasFiniteLimits :
+    Limits.HasFiniteLimits LawvereBTPER :=
   treePER_hasFiniteLimits
     lawvereBTQuotCat_isSeparator
     lawvereBTQuotCat_hasBoolDichotomy
