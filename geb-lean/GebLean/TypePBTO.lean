@@ -2,6 +2,7 @@ import GebLean.LawvereBTInterp
 import GebLean.TreeLogic
 import GebLean.TreePER
 import Mathlib.CategoryTheory.Types.Basic
+import Mathlib.CategoryTheory.Generator.Type
 
 /-!
 # `Type` as a PBTO Category
@@ -167,6 +168,28 @@ private theorem type_isLeafEndo_node
     (BT.node l r) =
     BT.node BT.leaf BT.leaf
   rw [BT.fold_node]
+
+theorem hasBoolDichotomy_type :
+    HasBoolDichotomy (Type u) := by
+  intro e he
+  have heval :
+      (isLeafEndo (C := Type u)) (e PUnit.unit) =
+      e PUnit.unit := congrFun he PUnit.unit
+  rcases BT.leaf_or_node (e PUnit.unit) with
+    hleaf | ⟨l, r, hnode⟩
+  · left
+    funext x
+    have hx : e x = e PUnit.unit := by
+      congr 1
+    rw [hx, hleaf]
+    rfl
+  · right
+    funext x
+    have hx : e x = e PUnit.unit := by
+      congr 1
+    rw [hnode, type_isLeafEndo_node l r] at heval
+    rw [hx, hnode, ← heval]
+    rfl
 
 /-- Tree `false`: `BT.node BT.leaf BT.leaf`. -/
 def treeFalseBT : BT.{u} := BT.node BT.leaf BT.leaf
@@ -651,26 +674,259 @@ theorem treeEqBT_trans (s t u : BT.{u})
     treeEqBT s u = BT.leaf :=
   treeEqBT_trans_gen s t u hst htu
 
-theorem hasBoolDichotomy_type :
-    HasBoolDichotomy (Type u) := by
-  intro e he
-  have heval :
-      (isLeafEndo (C := Type u)) (e PUnit.unit) =
-      e PUnit.unit := congrFun he PUnit.unit
-  rcases BT.leaf_or_node (e PUnit.unit) with
-    hleaf | ⟨l, r, hnode⟩
-  · left
-    funext x
-    have hx : e x = e PUnit.unit := by
-      congr 1
-    rw [hx, hleaf]
-    rfl
-  · right
-    funext x
-    have hx : e x = e PUnit.unit := by
-      congr 1
-    rw [hnode, type_isLeafEndo_node l r] at heval
-    rw [hx, hnode, ← heval]
-    rfl
+/-! ## `HasTreeEq` instance for `Type u` -/
+
+/-- `cfpTerminal` in `Type u` is `PUnit.{u+1}` and
+is a separator. -/
+theorem type_cfpTerminal_isSeparator :
+    IsSeparator (cfpTerminal (C := Type u)) :=
+  CategoryTheory.Types.isSeparator_punit
+
+/-- The categorical tree equality morphism in
+`Type u`: applies `treeEqBT` pointwise. -/
+def typeTreeEq : cfpProd (C := Type u) BT.{u} BT.{u} ⟶
+    BT.{u} :=
+  fun p => treeEqBT p.1 p.2
+
+theorem typeTreeEq_bool :
+    (typeTreeEq ≫ isLeafEndo :
+      cfpProd BT.{u} BT.{u} ⟶ BT.{u}) =
+      typeTreeEq := by
+  funext p
+  change (isLeafEndo (C := Type u))
+    (treeEqBT p.1 p.2) = treeEqBT p.1 p.2
+  rcases treeEqBT_is_bool p.1 p.2 with hL | hR
+  · rw [hL]; exact type_isLeafEndo_leaf
+  · rw [hR]
+    exact type_isLeafEndo_node BT.leaf BT.leaf
+
+theorem typeTreeEq_refl :
+    cfpLift (𝟙 (BT.{u})) (𝟙 BT.{u}) ≫ typeTreeEq =
+    cfpTerminalFrom BT.{u} ≫
+      (HasPBTO.ℓ : cfpTerminal ⟶ BT.{u}) := by
+  funext t
+  change treeEqBT t t = BT.leaf
+  exact treeEqBT_refl t
+
+theorem typeTreeEq_symm :
+    cfpSwap BT.{u} BT.{u} ≫ typeTreeEq = typeTreeEq := by
+  funext p
+  change treeEqBT p.2 p.1 = treeEqBT p.1 p.2
+  exact (treeEqBT_symm p.1 p.2).symm
+
+private theorem typeTreeEq_quantTransitive :
+    QuantTransitive typeTreeEq := by
+  intro D e h1 h2
+  unfold IsLeafConst at h1 h2 ⊢
+  funext d
+  have h1d := congrFun h1 d
+  have h2d := congrFun h2 d
+  change treeEqBT (e d).1 (e d).2.2 = BT.leaf at h1d
+  change treeEqBT (e d).2.2 (e d).2.1 = BT.leaf at h2d
+  change treeEqBT (e d).1 (e d).2.1 = BT.leaf
+  exact treeEqBT_trans _ _ _ h1d h2d
+
+theorem typeTreeEq_trans : EqTransitive typeTreeEq :=
+  quantTransitive_implies_eq
+    type_cfpTerminal_isSeparator
+    hasBoolDichotomy_type
+    typeTreeEq_bool
+    typeTreeEq_quantTransitive
+
+theorem typeTreeEq_ℓℓ :
+    cfpLift
+      (HasPBTO.ℓ : cfpTerminal ⟶ BT.{u})
+      HasPBTO.ℓ ≫
+      typeTreeEq =
+    HasPBTO.ℓ := by
+  funext _
+  change treeEqBT BT.leaf BT.leaf = BT.leaf
+  rw [treeEqBT_leaf]
+  exact isLeafBT_leaf
+
+theorem typeTreeEq_ℓβ :
+    cfpMap
+      (HasPBTO.ℓ : cfpTerminal ⟶ BT.{u})
+      (HasPBTO.β : cfpProd BT BT ⟶ BT) ≫
+      typeTreeEq =
+    cfpTerminalFrom _ ≫ treeFalse := by
+  funext p
+  change treeEqBT BT.leaf (BT.node p.2.1 p.2.2) =
+    BT.node BT.leaf BT.leaf
+  rw [treeEqBT_leaf]
+  exact isLeafBT_node p.2.1 p.2.2
+
+theorem typeTreeEq_βℓ :
+    cfpMap
+      (HasPBTO.β : cfpProd BT BT ⟶ BT)
+      (HasPBTO.ℓ : cfpTerminal ⟶ BT.{u}) ≫
+      typeTreeEq =
+    cfpTerminalFrom _ ≫ treeFalse := by
+  funext p
+  change treeEqBT (BT.node p.1.1 p.1.2) BT.leaf =
+    BT.node BT.leaf BT.leaf
+  exact treeEqBT_node_leaf p.1.1 p.1.2
+
+/-- Applying the categorical `boolAnd` in `Type u`
+to a Boolean-valued pair where both components are
+`BT.leaf` returns `BT.leaf`. -/
+private theorem boolAnd_leaf_leaf_eval :
+    ((boolAnd (C := Type u)) : BT × BT → BT)
+      (BT.leaf, BT.leaf) = BT.leaf := by
+  have h := boolAnd_ℓ_ℓ (C := Type u)
+  have := congrFun h PUnit.unit
+  exact this
+
+/-- `cfpMap HasPBTO.ℓ (𝟙 HasPBTO.T)` in `Type u`
+acts by sending `(_, y)` to `(BT.leaf, y)`. -/
+private theorem cfpMap_ℓ_id_eval (y : BT.{u}) :
+    ((cfpMap HasPBTO.ℓ (𝟙 HasPBTO.T) :
+      cfpProd cfpTerminal HasPBTO.T ⟶
+        cfpProd BT.{u} BT.{u}) :
+      cfpTerminal × BT.{u} → BT × BT)
+      (PUnit.unit, y) = (BT.leaf, y) := by
+  unfold cfpMap cfpLift cfpFst cfpSnd
+  rfl
+
+/-- The categorical composition `A ≫ B` in `Type u`
+is function composition. -/
+private theorem type_comp_apply
+    {X Y Z : Type u} (f : X ⟶ Y) (g : Y ⟶ Z)
+    (x : X) : (f ≫ g) x = g (f x) := rfl
+
+/-- Applying the categorical `boolAnd` in `Type u`
+to `(leaf, treeFalseBT)` returns `treeFalseBT`. -/
+private theorem boolAnd_leaf_treeFalseBT_eval :
+    ((boolAnd (C := Type u)) : BT × BT → BT)
+      (BT.leaf, treeFalseBT) = treeFalseBT := by
+  have h := boolAnd_leaf_left (C := Type u)
+  have heval := congrFun h
+    ((PUnit.unit, treeFalseBT) :
+      cfpTerminal × BT.{u})
+  rw [type_comp_apply, type_comp_apply] at heval
+  rw [cfpMap_ℓ_id_eval treeFalseBT] at heval
+  change ((boolAnd (C := Type u)) : BT × BT → BT)
+    (BT.leaf, treeFalseBT) =
+    (isLeafEndo (C := Type u)) treeFalseBT at heval
+  rw [heval]
+  exact type_isLeafEndo_node BT.leaf BT.leaf
+
+/-- `cfpLift (cfpTerminalFrom _ ≫ treeFalse)
+(cfpSnd _ _)` in `Type u` sends `(x, y)` to
+`(treeFalseBT, y)`. -/
+private theorem cfpLift_tf_snd_eval
+    (x y : BT.{u}) :
+    ((cfpLift (cfpTerminalFrom (cfpProd BT BT) ≫
+        treeFalse)
+      (cfpSnd BT.{u} BT.{u}) :
+      cfpProd BT.{u} BT.{u} ⟶
+        cfpProd BT.{u} BT.{u}) :
+      BT × BT → BT × BT)
+      (x, y) = (treeFalseBT, y) := by
+  unfold cfpLift
+  rfl
+
+/-- `cfpTerminalFrom _ ≫ treeFalse` in `Type u`
+sends any input to `treeFalseBT`. -/
+private theorem cfpTerminalFrom_treeFalse_eval
+    (x : BT.{u} × BT.{u}) :
+    ((cfpTerminalFrom (cfpProd BT.{u} BT.{u}) ≫
+      treeFalse :
+      cfpProd BT BT ⟶ BT) :
+      BT × BT → BT)
+      x = treeFalseBT := by
+  unfold cfpTerminalFrom treeFalse cfpLift
+  rfl
+
+/-- Applying the categorical `boolAnd` in `Type u`
+to `(treeFalseBT, y)` for any `y` returns
+`treeFalseBT`. -/
+private theorem boolAnd_treeFalseBT_any_eval
+    (y : BT.{u}) :
+    ((boolAnd (C := Type u)) : BT × BT → BT)
+      (treeFalseBT, y) = treeFalseBT := by
+  have h := boolAnd_treeFalse_left
+    (C := Type u) (cfpSnd BT.{u} BT.{u})
+  have heval := congrFun h
+    ((treeFalseBT, y) : BT.{u} × BT.{u})
+  rw [type_comp_apply] at heval
+  rw [cfpLift_tf_snd_eval treeFalseBT y] at heval
+  rw [cfpTerminalFrom_treeFalse_eval
+    ((treeFalseBT, y) : BT.{u} × BT.{u})] at heval
+  exact heval
+
+theorem boolAndBT_leaf_treeFalseBT :
+    boolAndBT (BT.leaf : BT.{u}) treeFalseBT =
+      treeFalseBT := by
+  unfold treeFalseBT
+  exact boolAndBT_leaf_node BT.leaf BT.leaf
+
+theorem boolAndBT_treeFalseBT_any (y : BT.{u}) :
+    boolAndBT treeFalseBT y = treeFalseBT := by
+  unfold treeFalseBT
+  exact boolAndBT_node_any BT.leaf BT.leaf y
+
+/-- The categorical `boolAnd` on `Type u`, applied to
+a pair of Boolean-valued (i.e., `BT.leaf` or
+`treeFalseBT`) inputs, produces the same result as
+`boolAndBT`. -/
+private theorem boolAnd_on_bool_values
+    (a b : BT.{u})
+    (ha : a = BT.leaf ∨ a = treeFalseBT)
+    (hb : b = BT.leaf ∨ b = treeFalseBT) :
+    ((boolAnd (C := Type u)) : BT × BT → BT)
+      (a, b) = boolAndBT a b := by
+  rcases ha with ha | ha <;>
+  rcases hb with hb | hb <;>
+  subst ha <;> subst hb
+  · rw [boolAndBT_leaf_leaf, boolAnd_leaf_leaf_eval]
+  · rw [boolAndBT_leaf_treeFalseBT,
+      boolAnd_leaf_treeFalseBT_eval]
+  · rw [boolAndBT_treeFalseBT_any,
+      boolAnd_treeFalseBT_any_eval]
+  · rw [boolAndBT_treeFalseBT_any,
+      boolAnd_treeFalseBT_any_eval]
+
+theorem typeTreeEq_ββ :
+    cfpMap
+      (HasPBTO.β : cfpProd BT.{u} BT.{u} ⟶ BT.{u})
+      (HasPBTO.β : cfpProd BT.{u} BT.{u} ⟶ BT.{u}) ≫
+      typeTreeEq =
+    cfpLift
+      (cfpLift
+        (cfpFst (cfpProd BT.{u} BT.{u})
+          (cfpProd BT.{u} BT.{u}) ≫
+          cfpFst BT.{u} BT.{u})
+        (cfpSnd (cfpProd BT.{u} BT.{u})
+          (cfpProd BT.{u} BT.{u}) ≫
+          cfpFst BT.{u} BT.{u}) ≫ typeTreeEq)
+      (cfpLift
+        (cfpFst (cfpProd BT.{u} BT.{u})
+          (cfpProd BT.{u} BT.{u}) ≫
+          cfpSnd BT.{u} BT.{u})
+        (cfpSnd (cfpProd BT.{u} BT.{u})
+          (cfpProd BT.{u} BT.{u}) ≫
+          cfpSnd BT.{u} BT.{u}) ≫ typeTreeEq)
+    ≫ boolAnd := by
+  funext ⟨⟨a, b⟩, c, d⟩
+  change treeEqBT (BT.node a b) (BT.node c d) =
+    ((boolAnd (C := Type u)) : BT × BT → BT)
+      (treeEqBT a c, treeEqBT b d)
+  rw [treeEqBT_node_node]
+  rw [boolAnd_on_bool_values _ _
+    (treeEqBT_is_bool a c)
+    (treeEqBT_is_bool b d)]
+
+/-- `Type u` has structural tree equality. -/
+def hasTreeEq_type : HasTreeEq (Type u) where
+  treeEq := typeTreeEq
+  treeEq_bool := typeTreeEq_bool
+  treeEq_refl := typeTreeEq_refl
+  treeEq_symm := typeTreeEq_symm
+  treeEq_trans := typeTreeEq_trans
+  treeEq_ℓℓ := typeTreeEq_ℓℓ
+  treeEq_ℓβ := typeTreeEq_ℓβ
+  treeEq_βℓ := typeTreeEq_βℓ
+  treeEq_ββ := typeTreeEq_ββ
 
 end GebLean
