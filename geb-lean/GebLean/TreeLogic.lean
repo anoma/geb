@@ -161,6 +161,196 @@ private theorem paraElim_param_inv {A X : C}
     unfold cfpAssocFst
     rw [cfpLift_fst]
 
+/-- Tree invariant: the `T` component of the internal
+elim carries the input tree through unchanged.  Proof
+via `elim_algebra_morphism` with the projection
+`cfpSnd A (cfpProd T X) ≫ cfpFst T X` and the
+branching step `p.β`. -/
+private theorem paraElim_tree_inv {A X : C}
+    (f : A ⟶ X)
+    (g : cfpProd A
+        (cfpProd (cfpProd p.T p.T) (cfpProd X X)) ⟶
+      X) :
+    p.elim (paraBase (p := p) f)
+        (paraStep (p := p) g) ≫
+      cfpSnd A (cfpProd p.T X) ≫ cfpFst p.T X =
+      cfpSnd A p.T := by
+  have step_q :
+      cfpMap (cfpSnd A (cfpProd p.T X) ≫
+            cfpFst p.T X)
+          (cfpSnd A (cfpProd p.T X) ≫
+            cfpFst p.T X) ≫ p.β =
+      paraStep (p := p) g ≫
+        cfpSnd A (cfpProd p.T X) ≫ cfpFst p.T X := by
+    unfold paraStep
+    simp only
+    unfold paraCarrier
+    rw [← Category.assoc, cfpLift_snd,
+      cfpLift_fst]
+    congr 1
+  rw [elim_algebra_morphism
+      (paraBase (p := p) f) (paraStep (p := p) g)
+      (cfpSnd A (cfpProd p.T X) ≫ cfpFst p.T X)
+      p.β step_q]
+  have hbase_proj :
+      paraBase (p := p) f ≫
+        cfpSnd A (cfpProd p.T X) ≫ cfpFst p.T X =
+      cfpTerminalFrom A ≫ p.ℓ := by
+    unfold paraBase
+    rw [← Category.assoc, cfpLift_snd,
+      cfpLift_fst]
+  rw [hbase_proj]
+  -- Goal: p.elim (cfpTerminalFrom A ≫ p.ℓ) p.β =
+  -- cfpSnd A p.T.
+  symm
+  apply p.elim_uniq (cfpTerminalFrom A ≫ p.ℓ) p.β
+    (cfpSnd A p.T)
+  · unfold cfpInsertSnd
+    rw [cfpLift_snd]
+  · rw [cfpMap_snd]
+    -- Goal: cfpSnd A (cfpProd T T) ≫ p.β =
+    -- cfpLiftAssoc (cfpSnd A p.T) (cfpSnd A p.T) ≫ p.β
+    congr 1
+    unfold cfpLiftAssoc cfpAssocFst cfpAssocSnd
+    rw [cfpLift_snd, cfpLift_snd]
+    exact cfpLift_uniq
+      (cfpSnd A (cfpProd p.T p.T) ≫ cfpFst p.T p.T)
+      (cfpSnd A (cfpProd p.T p.T) ≫ cfpSnd p.T p.T)
+      (cfpSnd A (cfpProd p.T p.T)) rfl rfl
+
+/-- Step-case equation for `paraElim`: at a branch
+`β(l, r)` with parameter `a`, the result is `g`
+applied to the tuple
+`(a, ((l, r), (paraElim f g (a, l), paraElim f g (a,
+r))))`. -/
+theorem paraElim_β {A X : C} (f : A ⟶ X)
+    (g : cfpProd A
+        (cfpProd (cfpProd p.T p.T) (cfpProd X X)) ⟶
+      X) :
+    cfpMap (𝟙 A) p.β ≫ paraElim f g =
+    cfpLift
+        (cfpFst A (cfpProd p.T p.T))
+        (cfpLift
+          (cfpSnd A (cfpProd p.T p.T))
+          (cfpLiftAssoc (paraElim f g)
+            (paraElim f g))) ≫
+      g := by
+  -- Expand paraElim and apply elim_β.
+  unfold paraElim
+  rw [← Category.assoc, ← Category.assoc,
+    p.elim_β]
+  -- Goal:
+  -- cfpLiftAssoc E E ≫ step' ≫ cfpSnd A _ ≫
+  --   cfpSnd T X = ... ≫ g
+  -- where E = p.elim base' step'.
+  -- Reduce step' ≫ cfpSnd A _ ≫ cfpSnd T X to the
+  -- gArg ≫ g piece.
+  have hstep_proj :
+      paraStep (p := p) g ≫
+        cfpSnd A (cfpProd p.T X) ≫
+          cfpSnd p.T X =
+      (cfpLift
+        (cfpFst
+          (paraCarrier (p := p) A X)
+          (paraCarrier (p := p) A X) ≫
+          cfpFst A (cfpProd p.T X))
+        (cfpLift
+          (cfpLift
+            (cfpFst
+              (paraCarrier (p := p) A X)
+              (paraCarrier (p := p) A X) ≫
+              cfpSnd A (cfpProd p.T X) ≫
+              cfpFst p.T X)
+            (cfpSnd
+              (paraCarrier (p := p) A X)
+              (paraCarrier (p := p) A X) ≫
+              cfpSnd A (cfpProd p.T X) ≫
+              cfpFst p.T X))
+          (cfpLift
+            (cfpFst
+              (paraCarrier (p := p) A X)
+              (paraCarrier (p := p) A X) ≫
+              cfpSnd A (cfpProd p.T X) ≫
+              cfpSnd p.T X)
+            (cfpSnd
+              (paraCarrier (p := p) A X)
+              (paraCarrier (p := p) A X) ≫
+              cfpSnd A (cfpProd p.T X) ≫
+              cfpSnd p.T X)))) ≫ g := by
+    unfold paraStep
+    simp only
+    rw [← Category.assoc, cfpLift_snd,
+      cfpLift_snd]
+  rw [Category.assoc, Category.assoc, hstep_proj]
+  -- Goal: cfpLiftAssoc E E ≫ (big cfpLift) ≫ g =
+  -- RHS ≫ g.  Reduce the left outer composition
+  -- component by component.
+  rw [← Category.assoc]
+  congr 1
+  -- Goal: cfpLiftAssoc E E ≫ gArg = RHS of paraElim_β
+  -- (the big cfpLift without ≫ g).
+  set E := p.elim (paraBase (p := p) f)
+      (paraStep (p := p) g) with hE
+  apply cfpLift_uniq
+  · -- First component.
+    rw [Category.assoc, cfpLift_fst]
+    unfold cfpLiftAssoc
+    rw [← Category.assoc, cfpLift_fst]
+    have hparam := paraElim_param_inv f g
+    rw [← hE] at hparam
+    rw [Category.assoc, hparam]
+    unfold cfpAssocFst
+    rw [cfpLift_fst]
+  · -- Second component.
+    rw [Category.assoc, cfpLift_snd]
+    apply cfpLift_uniq
+    · -- Second.first: tree pair equals cfpSnd A (T×T)
+      rw [Category.assoc, cfpLift_fst,
+        cfpLift_precomp]
+      -- Goal:
+      -- cfpLift (cfpLiftAssoc E E ≫ tlComp)
+      --   (cfpLiftAssoc E E ≫ trComp) =
+      --   cfpSnd A (cfpProd T T)
+      have htree := paraElim_tree_inv f g
+      rw [← hE] at htree
+      have htlr_red :
+          cfpLift
+              (cfpLiftAssoc E E ≫
+                (cfpFst (paraCarrier (p := p) A X)
+                    (paraCarrier (p := p) A X) ≫
+                  cfpSnd A (cfpProd p.T X) ≫
+                  cfpFst p.T X))
+              (cfpLiftAssoc E E ≫
+                (cfpSnd (paraCarrier (p := p) A X)
+                    (paraCarrier (p := p) A X) ≫
+                  cfpSnd A (cfpProd p.T X) ≫
+                  cfpFst p.T X)) =
+          cfpSnd A (cfpProd p.T p.T) := by
+        symm
+        apply cfpLift_uniq
+        · rw [← Category.assoc]
+          unfold cfpLiftAssoc
+          rw [cfpLift_fst, Category.assoc, htree]
+          unfold cfpAssocFst
+          rw [cfpLift_snd]
+        · rw [← Category.assoc]
+          unfold cfpLiftAssoc
+          rw [cfpLift_snd, Category.assoc, htree]
+          unfold cfpAssocSnd
+          rw [cfpLift_snd]
+      exact htlr_red
+    · -- Second.second: recursive-results pair equals
+      -- cfpLiftAssoc (paraElim f g) (paraElim f g).
+      rw [Category.assoc, cfpLift_snd]
+      unfold cfpLiftAssoc
+      apply cfpLift_uniq
+      · rw [Category.assoc, cfpLift_fst,
+          ← Category.assoc, cfpLift_fst,
+          Category.assoc, hE]
+      · rw [Category.assoc, cfpLift_snd,
+          ← Category.assoc, cfpLift_snd,
+          Category.assoc, hE]
+
 /-- The "false" element of T: `branch(leaf, leaf)`,
 as a morphism from the terminal object. -/
 def treeFalse :
@@ -5399,196 +5589,6 @@ theorem treeEq_βℓ {D : C} (f1 f2 : D ⟶ p.T) :
   -- cfpTerminalFrom D ≫ treeFalse.
   unfold treeFalseConst
   rw [Category.assoc, isLeafEndo_treeFalse]
-
-/-- Tree invariant: the `T` component of the internal
-elim carries the input tree through unchanged.  Proof
-via `elim_algebra_morphism` with the projection
-`cfpSnd A (cfpProd T X) ≫ cfpFst T X` and the
-branching step `p.β`. -/
-private theorem paraElim_tree_inv {A X : C}
-    (f : A ⟶ X)
-    (g : cfpProd A
-        (cfpProd (cfpProd p.T p.T) (cfpProd X X)) ⟶
-      X) :
-    p.elim (paraBase (p := p) f)
-        (paraStep (p := p) g) ≫
-      cfpSnd A (cfpProd p.T X) ≫ cfpFst p.T X =
-      cfpSnd A p.T := by
-  have step_q :
-      cfpMap (cfpSnd A (cfpProd p.T X) ≫
-            cfpFst p.T X)
-          (cfpSnd A (cfpProd p.T X) ≫
-            cfpFst p.T X) ≫ p.β =
-      paraStep (p := p) g ≫
-        cfpSnd A (cfpProd p.T X) ≫ cfpFst p.T X := by
-    unfold paraStep
-    simp only
-    unfold paraCarrier
-    rw [← Category.assoc, cfpLift_snd,
-      cfpLift_fst]
-    congr 1
-  rw [elim_algebra_morphism
-      (paraBase (p := p) f) (paraStep (p := p) g)
-      (cfpSnd A (cfpProd p.T X) ≫ cfpFst p.T X)
-      p.β step_q]
-  have hbase_proj :
-      paraBase (p := p) f ≫
-        cfpSnd A (cfpProd p.T X) ≫ cfpFst p.T X =
-      cfpTerminalFrom A ≫ p.ℓ := by
-    unfold paraBase
-    rw [← Category.assoc, cfpLift_snd,
-      cfpLift_fst]
-  rw [hbase_proj]
-  -- Goal: p.elim (cfpTerminalFrom A ≫ p.ℓ) p.β =
-  -- cfpSnd A p.T.
-  symm
-  apply p.elim_uniq (cfpTerminalFrom A ≫ p.ℓ) p.β
-    (cfpSnd A p.T)
-  · unfold cfpInsertSnd
-    rw [cfpLift_snd]
-  · rw [cfpMap_snd]
-    -- Goal: cfpSnd A (cfpProd T T) ≫ p.β =
-    -- cfpLiftAssoc (cfpSnd A p.T) (cfpSnd A p.T) ≫ p.β
-    congr 1
-    unfold cfpLiftAssoc cfpAssocFst cfpAssocSnd
-    rw [cfpLift_snd, cfpLift_snd]
-    exact cfpLift_uniq
-      (cfpSnd A (cfpProd p.T p.T) ≫ cfpFst p.T p.T)
-      (cfpSnd A (cfpProd p.T p.T) ≫ cfpSnd p.T p.T)
-      (cfpSnd A (cfpProd p.T p.T)) rfl rfl
-
-/-- Step-case equation for `paraElim`: at a branch
-`β(l, r)` with parameter `a`, the result is `g`
-applied to the tuple
-`(a, ((l, r), (paraElim f g (a, l), paraElim f g (a,
-r))))`. -/
-theorem paraElim_β {A X : C} (f : A ⟶ X)
-    (g : cfpProd A
-        (cfpProd (cfpProd p.T p.T) (cfpProd X X)) ⟶
-      X) :
-    cfpMap (𝟙 A) p.β ≫ paraElim f g =
-    cfpLift
-        (cfpFst A (cfpProd p.T p.T))
-        (cfpLift
-          (cfpSnd A (cfpProd p.T p.T))
-          (cfpLiftAssoc (paraElim f g)
-            (paraElim f g))) ≫
-      g := by
-  -- Expand paraElim and apply elim_β.
-  unfold paraElim
-  rw [← Category.assoc, ← Category.assoc,
-    p.elim_β]
-  -- Goal:
-  -- cfpLiftAssoc E E ≫ step' ≫ cfpSnd A _ ≫
-  --   cfpSnd T X = ... ≫ g
-  -- where E = p.elim base' step'.
-  -- Reduce step' ≫ cfpSnd A _ ≫ cfpSnd T X to the
-  -- gArg ≫ g piece.
-  have hstep_proj :
-      paraStep (p := p) g ≫
-        cfpSnd A (cfpProd p.T X) ≫
-          cfpSnd p.T X =
-      (cfpLift
-        (cfpFst
-          (paraCarrier (p := p) A X)
-          (paraCarrier (p := p) A X) ≫
-          cfpFst A (cfpProd p.T X))
-        (cfpLift
-          (cfpLift
-            (cfpFst
-              (paraCarrier (p := p) A X)
-              (paraCarrier (p := p) A X) ≫
-              cfpSnd A (cfpProd p.T X) ≫
-              cfpFst p.T X)
-            (cfpSnd
-              (paraCarrier (p := p) A X)
-              (paraCarrier (p := p) A X) ≫
-              cfpSnd A (cfpProd p.T X) ≫
-              cfpFst p.T X))
-          (cfpLift
-            (cfpFst
-              (paraCarrier (p := p) A X)
-              (paraCarrier (p := p) A X) ≫
-              cfpSnd A (cfpProd p.T X) ≫
-              cfpSnd p.T X)
-            (cfpSnd
-              (paraCarrier (p := p) A X)
-              (paraCarrier (p := p) A X) ≫
-              cfpSnd A (cfpProd p.T X) ≫
-              cfpSnd p.T X)))) ≫ g := by
-    unfold paraStep
-    simp only
-    rw [← Category.assoc, cfpLift_snd,
-      cfpLift_snd]
-  rw [Category.assoc, Category.assoc, hstep_proj]
-  -- Goal: cfpLiftAssoc E E ≫ (big cfpLift) ≫ g =
-  -- RHS ≫ g.  Reduce the left outer composition
-  -- component by component.
-  rw [← Category.assoc]
-  congr 1
-  -- Goal: cfpLiftAssoc E E ≫ gArg = RHS of paraElim_β
-  -- (the big cfpLift without ≫ g).
-  set E := p.elim (paraBase (p := p) f)
-      (paraStep (p := p) g) with hE
-  apply cfpLift_uniq
-  · -- First component.
-    rw [Category.assoc, cfpLift_fst]
-    unfold cfpLiftAssoc
-    rw [← Category.assoc, cfpLift_fst]
-    have hparam := paraElim_param_inv f g
-    rw [← hE] at hparam
-    rw [Category.assoc, hparam]
-    unfold cfpAssocFst
-    rw [cfpLift_fst]
-  · -- Second component.
-    rw [Category.assoc, cfpLift_snd]
-    apply cfpLift_uniq
-    · -- Second.first: tree pair equals cfpSnd A (T×T)
-      rw [Category.assoc, cfpLift_fst,
-        cfpLift_precomp]
-      -- Goal:
-      -- cfpLift (cfpLiftAssoc E E ≫ tlComp)
-      --   (cfpLiftAssoc E E ≫ trComp) =
-      --   cfpSnd A (cfpProd T T)
-      have htree := paraElim_tree_inv f g
-      rw [← hE] at htree
-      have htlr_red :
-          cfpLift
-              (cfpLiftAssoc E E ≫
-                (cfpFst (paraCarrier (p := p) A X)
-                    (paraCarrier (p := p) A X) ≫
-                  cfpSnd A (cfpProd p.T X) ≫
-                  cfpFst p.T X))
-              (cfpLiftAssoc E E ≫
-                (cfpSnd (paraCarrier (p := p) A X)
-                    (paraCarrier (p := p) A X) ≫
-                  cfpSnd A (cfpProd p.T X) ≫
-                  cfpFst p.T X)) =
-          cfpSnd A (cfpProd p.T p.T) := by
-        symm
-        apply cfpLift_uniq
-        · rw [← Category.assoc]
-          unfold cfpLiftAssoc
-          rw [cfpLift_fst, Category.assoc, htree]
-          unfold cfpAssocFst
-          rw [cfpLift_snd]
-        · rw [← Category.assoc]
-          unfold cfpLiftAssoc
-          rw [cfpLift_snd, Category.assoc, htree]
-          unfold cfpAssocSnd
-          rw [cfpLift_snd]
-      exact htlr_red
-    · -- Second.second: recursive-results pair equals
-      -- cfpLiftAssoc (paraElim f g) (paraElim f g).
-      rw [Category.assoc, cfpLift_snd]
-      unfold cfpLiftAssoc
-      apply cfpLift_uniq
-      · rw [Category.assoc, cfpLift_fst,
-          ← Category.assoc, cfpLift_fst,
-          Category.assoc, hE]
-      · rw [Category.assoc, cfpLift_snd,
-          ← Category.assoc, cfpLift_snd,
-          Category.assoc, hE]
 
 /-- Uniqueness for `paraElim`: any morphism `φ`
 satisfying the paramorphism's base and step
