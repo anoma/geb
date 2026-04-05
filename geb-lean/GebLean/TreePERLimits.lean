@@ -644,7 +644,6 @@ def prodPERFstPreMor
     unfold prodPERRel
     exact boolAnd_fst_proj hSep hBD
       (leftRelCheck X) (rightRelCheck Y)
-      (leftRelCheck_bool X) (rightRelCheck_bool Y)
 
 /-- The right projection pre-morphism from the
 product PER to Y: the underlying map is
@@ -661,9 +660,8 @@ def prodPERSndPreMor
       (rightRelCheck Y) ≫ boolAnd =
       prodPERRel X Y
     unfold prodPERRel
-    exact boolAnd_snd_proj hSep hBD
+    exact boolAnd_snd_proj
       (leftRelCheck X) (rightRelCheck Y)
-      (leftRelCheck_bool X) (rightRelCheck_bool Y)
 
 /-- The left projection morphism in the PER
 category. -/
@@ -1242,7 +1240,7 @@ theorem eqPERRel_symm
   -- cfpFst/cfpSnd, so
   -- eqCheck(snd) and eqCheck(fst) get swapped.
   -- For the second component, swap exchanges
-  -- fst and snd, then boolAnd_comm_bool applies.
+  -- fst and snd, then boolAnd_comm applies.
   set ec := eqCheck f g
   have swap_lift :
       cfpSwap p.T p.T ≫
@@ -1273,16 +1271,7 @@ theorem eqPERRel_symm
         (cfpSnd p.T p.T ≫ ec) ≫
         boolAnd := by
     rw [← Category.assoc, swap_lift]
-    have snd_ec_bool :
-        (cfpSnd p.T p.T ≫ ec) ≫ isLeafEndo =
-        cfpSnd p.T p.T ≫ ec := by
-      rw [Category.assoc, eqCheck_bool]
-    have fst_ec_bool :
-        (cfpFst p.T p.T ≫ ec) ≫ isLeafEndo =
-        cfpFst p.T p.T ≫ ec := by
-      rw [Category.assoc, eqCheck_bool]
-    exact boolAnd_comm_bool hSep hBD _ _
-      snd_ec_bool fst_ec_bool
+    exact boolAnd_comm hSep hBD _ _
   rw [h1, h2]
 
 /-- Quantified transitivity for the equalizer PER
@@ -1476,9 +1465,6 @@ def eqPERInclPreMor
         (cfpFst p.T p.T ≫ eqCheck f g)
         (cfpSnd p.T p.T ≫ eqCheck f g) ≫
         boolAnd)
-      X.rel_bool
-      (by rw [Category.assoc,
-        boolAnd_output_boolean])
 
 /-- The inclusion morphism in the PER category. -/
 def eqPERIncl

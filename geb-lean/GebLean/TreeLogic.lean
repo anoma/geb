@@ -2587,6 +2587,26 @@ theorem treeIte_condition_isLeafEndo
       (cfpFst p.T p.T),
     iteFold_isLeafEndo]
 
+/-- `boolAnd(isLeafEndo A, B) = boolAnd(A, B)`:
+`boolAnd`'s first argument only matters up to
+`isLeafEndo`. -/
+theorem boolAnd_first_isLeafEndo
+    {D : C} (A B : D ⟶ p.T) :
+    cfpLift (A ≫ isLeafEndo) B ≫ boolAnd =
+    cfpLift A B ≫ boolAnd := by
+  rw [boolAnd_treeIte_form, boolAnd_treeIte_form,
+    treeIte_condition_isLeafEndo]
+
+/-- `boolAnd(A, isLeafEndo B) = boolAnd(A, B)`:
+`boolAnd`'s second argument only matters up to
+`isLeafEndo`. -/
+theorem boolAnd_second_isLeafEndo
+    {D : C} (A B : D ⟶ p.T) :
+    cfpLift A (B ≫ isLeafEndo) ≫ boolAnd =
+    cfpLift A B ≫ boolAnd := by
+  rw [boolAnd_treeIte_form, boolAnd_treeIte_form,
+    Category.assoc, @isLeafEndo_idem C _ h p]
+
 /-- At a branch condition, `treeIte` returns
 the "else" branch: for any `f g r : D ⟶ T`,
 `treeIte((f, g), β ∘ r) = g`. -/
@@ -3555,41 +3575,71 @@ theorem boolAnd_ℓ_treeFalse :
     treeFalse p.ℓ
 
 /-- First projection absorption for `boolAnd`:
-`boolAnd(boolAnd(A, B), A) = boolAnd(A, B)`
-when `A` and `B` are Boolean-valued.
+`boolAnd(boolAnd(A, B), A) = boolAnd(A, B)`.
 
 The proof applies `IsSeparator` to reduce to
 global elements and performs a case split via
-`HasBoolDichotomy`. -/
+`HasBoolDichotomy` on the `isLeafEndo`-normalized
+values of `e ≫ A` and `e ≫ B`. -/
 theorem boolAnd_fst_proj
     (hSep :
       IsSeparator (cfpTerminal (C := C)))
     (hDich : HasBoolDichotomy C)
-    {D : C} (A B : D ⟶ p.T)
-    (hA : A ≫ isLeafEndo = A)
-    (hB : B ≫ isLeafEndo = B) :
+    {D : C} (A B : D ⟶ p.T) :
     cfpLift (cfpLift A B ≫ boolAnd) A ≫
       boolAnd =
     cfpLift A B ≫ boolAnd := by
   apply hSep.def
   intro e
   -- Push e through cfpLift on both sides.
-  simp only [← Category.assoc]
-  rw [cfpLift_precomp e, cfpLift_precomp e]
-  set a := e ≫ A
-  set b := e ≫ B
-  have ha : a ≫ isLeafEndo = a := by
-    change (e ≫ A) ≫ isLeafEndo = e ≫ A
-    rw [Category.assoc, hA]
-  have hb : b ≫ isLeafEndo = b := by
-    change (e ≫ B) ≫ isLeafEndo = e ≫ B
-    rw [Category.assoc, hB]
-  -- Push e through the inner boolAnd.
-  have inner_eq :
+  have lhs_push :
+      e ≫ cfpLift (cfpLift A B ≫ boolAnd) A ≫
+        boolAnd =
+      cfpLift (cfpLift (e ≫ A) (e ≫ B) ≫ boolAnd)
+        (e ≫ A) ≫ boolAnd :=
+    calc e ≫ cfpLift (cfpLift A B ≫ boolAnd) A ≫
+            boolAnd
+        = (e ≫ cfpLift (cfpLift A B ≫ boolAnd) A)
+            ≫ boolAnd := by
+          rw [Category.assoc]
+      _ = cfpLift (e ≫ (cfpLift A B ≫ boolAnd))
+            (e ≫ A) ≫ boolAnd := by
+          rw [cfpLift_precomp]
+      _ = cfpLift ((e ≫ cfpLift A B) ≫ boolAnd)
+            (e ≫ A) ≫ boolAnd := by
+          rw [Category.assoc]
+      _ = cfpLift
+            (cfpLift (e ≫ A) (e ≫ B) ≫ boolAnd)
+            (e ≫ A) ≫ boolAnd := by
+          rw [cfpLift_precomp]
+  have rhs_push :
       e ≫ cfpLift A B ≫ boolAnd =
-      cfpLift a b ≫ boolAnd := by
-    rw [← Category.assoc, cfpLift_precomp e]
-  rw [inner_eq]
+      cfpLift (e ≫ A) (e ≫ B) ≫ boolAnd := by
+    rw [← Category.assoc, cfpLift_precomp]
+  rw [lhs_push, rhs_push]
+  -- Normalize both sides to use isLeafEndo-
+  -- composed versions of e ≫ A and e ≫ B.
+  set a := (e ≫ A) ≫ isLeafEndo with ha_def
+  set b := (e ≫ B) ≫ isLeafEndo with hb_def
+  have ha : a ≫ isLeafEndo = a := by
+    rw [ha_def, Category.assoc,
+      @isLeafEndo_idem C _ h p]
+  have hb : b ≫ isLeafEndo = b := by
+    rw [hb_def, Category.assoc,
+      @isLeafEndo_idem C _ h p]
+  -- Normalize the inner cfpLift via both helpers,
+  -- then normalize the outer cfpLift.
+  rw [show cfpLift (e ≫ A) (e ≫ B) ≫ boolAnd =
+      cfpLift a b ≫ boolAnd from by
+    rw [ha_def, hb_def,
+      boolAnd_first_isLeafEndo,
+      boolAnd_second_isLeafEndo]]
+  rw [show cfpLift (cfpLift a b ≫ boolAnd)
+        (e ≫ A) ≫ boolAnd =
+      cfpLift (cfpLift a b ≫ boolAnd) a ≫
+        boolAnd from by
+    rw [← boolAnd_second_isLeafEndo
+      (cfpLift a b ≫ boolAnd) (e ≫ A)]]
   -- Auxiliary: rewrite treeFalse at cfpTerminal
   -- to the form required by boolAnd_treeFalse_left.
   have tf_eq :
@@ -3602,99 +3652,41 @@ theorem boolAnd_fst_proj
   rcases hDich a ha with ha_val | ha_val <;>
     rcases hDich b hb with hb_val | hb_val <;>
     rw [ha_val, hb_val]
-  · -- a = ℓ, b = ℓ
-    rw [boolAnd_ℓ_ℓ, boolAnd_ℓ_ℓ]
-  · -- a = ℓ, b = treeFalse
-    rw [boolAnd_ℓ_treeFalse, tf_eq,
+  · rw [boolAnd_ℓ_ℓ, boolAnd_ℓ_ℓ]
+  · rw [boolAnd_ℓ_treeFalse, tf_eq,
       boolAnd_treeFalse_left]
-  · -- a = treeFalse, b = ℓ
-    rw [tf_eq, boolAnd_treeFalse_left,
+  · rw [tf_eq, boolAnd_treeFalse_left,
       boolAnd_treeFalse_left]
-  · -- a = treeFalse, b = treeFalse
-    rw [tf_eq, boolAnd_treeFalse_left,
+  · rw [tf_eq, boolAnd_treeFalse_left,
       boolAnd_treeFalse_left]
 
 /-- Second projection absorption for `boolAnd`:
-`boolAnd(boolAnd(A, B), B) = boolAnd(A, B)`
-when `B` is Boolean-valued.  The hypothesis on
-`A` is not required.
+`boolAnd(boolAnd(A, B), B) = boolAnd(A, B)`.
 
 Proof: combine `boolAnd_assoc` with
-`boolAnd(B, B) = B` (from `boolAnd_idem` and
-the Boolean hypothesis on `B`). -/
-theorem boolAnd_snd_proj_structural
-    {D : C} (A B : D ⟶ p.T)
-    (hB : B ≫ isLeafEndo = B) :
+`boolAnd(B, B) = isLeafEndo B` (from
+`boolAnd_idem`) and `boolAnd_second_isLeafEndo`
+to collapse `isLeafEndo B` back to `B`. -/
+theorem boolAnd_snd_proj
+    {D : C} (A B : D ⟶ p.T) :
     cfpLift (cfpLift A B ≫ boolAnd) B ≫
       boolAnd =
     cfpLift A B ≫ boolAnd := by
-  have hBB : cfpLift B B ≫ boolAnd = B := by
+  have hBB :
+      cfpLift B B ≫ boolAnd = B ≫ isLeafEndo := by
     have hrw :
         cfpLift B B =
         B ≫ cfpLift (𝟙 p.T) (𝟙 p.T) := by
       rw [cfpLift_precomp]
       simp only [Category.comp_id]
-    rw [hrw, Category.assoc, boolAnd_idem, hB]
+    rw [hrw, Category.assoc, boolAnd_idem]
   calc cfpLift (cfpLift A B ≫ boolAnd) B ≫ boolAnd
       = cfpLift A (cfpLift B B ≫ boolAnd) ≫
           boolAnd := boolAnd_assoc A B B
-    _ = cfpLift A B ≫ boolAnd := by rw [hBB]
-
-
-/-- Second projection absorption for `boolAnd`:
-`boolAnd(boolAnd(A, B), B) = boolAnd(A, B)`
-when `A` and `B` are Boolean-valued.
-
-The proof applies `IsSeparator` to reduce to
-global elements and performs a case split via
-`HasBoolDichotomy`. -/
-theorem boolAnd_snd_proj
-    (hSep :
-      IsSeparator (cfpTerminal (C := C)))
-    (hDich : HasBoolDichotomy C)
-    {D : C} (A B : D ⟶ p.T)
-    (hA : A ≫ isLeafEndo = A)
-    (hB : B ≫ isLeafEndo = B) :
-    cfpLift (cfpLift A B ≫ boolAnd) B ≫
-      boolAnd =
-    cfpLift A B ≫ boolAnd := by
-  apply hSep.def
-  intro e
-  simp only [← Category.assoc]
-  rw [cfpLift_precomp e, cfpLift_precomp e]
-  set a := e ≫ A
-  set b := e ≫ B
-  have ha : a ≫ isLeafEndo = a := by
-    change (e ≫ A) ≫ isLeafEndo = e ≫ A
-    rw [Category.assoc, hA]
-  have hb : b ≫ isLeafEndo = b := by
-    change (e ≫ B) ≫ isLeafEndo = e ≫ B
-    rw [Category.assoc, hB]
-  have inner_eq :
-      e ≫ cfpLift A B ≫ boolAnd =
-      cfpLift a b ≫ boolAnd := by
-    rw [← Category.assoc, cfpLift_precomp e]
-  rw [inner_eq]
-  have tf_eq :
-      treeFalse (C := C) =
-      cfpTerminalFrom cfpTerminal ≫
-        treeFalse := by
-    rw [cfpTerminalFrom_terminal,
-      Category.id_comp]
-  rcases hDich a ha with ha_val | ha_val <;>
-    rcases hDich b hb with hb_val | hb_val <;>
-    rw [ha_val, hb_val]
-  · -- a = ℓ, b = ℓ
-    rw [boolAnd_ℓ_ℓ, boolAnd_ℓ_ℓ]
-  · -- a = ℓ, b = treeFalse
-    rw [boolAnd_ℓ_treeFalse, tf_eq,
-      boolAnd_treeFalse_left]
-  · -- a = treeFalse, b = ℓ
-    rw [tf_eq, boolAnd_treeFalse_left,
-      boolAnd_treeFalse_left]
-  · -- a = treeFalse, b = treeFalse
-    rw [tf_eq, boolAnd_treeFalse_left,
-      boolAnd_treeFalse_left]
+    _ = cfpLift A (B ≫ isLeafEndo) ≫ boolAnd := by
+        rw [hBB]
+    _ = cfpLift A B ≫ boolAnd :=
+        boolAnd_second_isLeafEndo A B
 
 omit h p in
 /-- Swapping commutes with diagonal `cfpMap`:
@@ -3748,35 +3740,52 @@ def treeRightEndo : p.T ⟶ p.T :=
   cfpLift (cfpTerminalFrom p.T) (𝟙 p.T) ≫
     treeRight
 
-/-- Commutativity of `boolAnd` for Boolean-valued
-arguments: if `A` and `B` are Boolean-valued
-(i.e., `A ≫ isLeafEndo = A` and similarly for
-`B`), then `cfpLift A B ≫ boolAnd =
-cfpLift B A ≫ boolAnd`. -/
-theorem boolAnd_comm_bool
+/-- Commutativity of `boolAnd`:
+`cfpLift A B ≫ boolAnd = cfpLift B A ≫ boolAnd`.
+
+The proof applies `IsSeparator` to reduce to
+global elements and performs a case split via
+`HasBoolDichotomy` on the `isLeafEndo`-normalized
+values of `e ≫ A` and `e ≫ B`. -/
+theorem boolAnd_comm
     (hSep :
       IsSeparator (cfpTerminal (C := C)))
     (hBD : HasBoolDichotomy C)
     {D : C}
-    (A B : D ⟶ p.T)
-    (hA : A ≫ isLeafEndo = A)
-    (hB : B ≫ isLeafEndo = B) :
+    (A B : D ⟶ p.T) :
     cfpLift A B ≫ boolAnd =
       cfpLift B A ≫
         (boolAnd :
           cfpProd p.T p.T ⟶ p.T) := by
   apply hSep.def
   intro e
-  have eA_bool :
-      (e ≫ A) ≫ isLeafEndo = e ≫ A := by
-    rw [Category.assoc, hA]
-  have eB_bool :
-      (e ≫ B) ≫ isLeafEndo = e ≫ B := by
-    rw [Category.assoc, hB]
-  simp only [← Category.assoc,
-    cfpLift_precomp e]
-  rcases hBD (e ≫ A) eA_bool with ha | ha <;>
-    rcases hBD (e ≫ B) eB_bool with hb | hb
+  -- Push e through cfpLift on both sides and
+  -- normalize (e ≫ A) and (e ≫ B) via isLeafEndo.
+  have push_lhs :
+      e ≫ cfpLift A B ≫ boolAnd =
+      cfpLift ((e ≫ A) ≫ isLeafEndo)
+        ((e ≫ B) ≫ isLeafEndo) ≫ boolAnd := by
+    rw [← Category.assoc, cfpLift_precomp,
+      boolAnd_first_isLeafEndo,
+      boolAnd_second_isLeafEndo]
+  have push_rhs :
+      e ≫ cfpLift B A ≫ boolAnd =
+      cfpLift ((e ≫ B) ≫ isLeafEndo)
+        ((e ≫ A) ≫ isLeafEndo) ≫ boolAnd := by
+    rw [← Category.assoc, cfpLift_precomp,
+      boolAnd_first_isLeafEndo,
+      boolAnd_second_isLeafEndo]
+  rw [push_lhs, push_rhs]
+  set a := (e ≫ A) ≫ isLeafEndo with ha_def
+  set b := (e ≫ B) ≫ isLeafEndo with hb_def
+  have ha_bool : a ≫ isLeafEndo = a := by
+    rw [ha_def, Category.assoc,
+      @isLeafEndo_idem C _ h p]
+  have hb_bool : b ≫ isLeafEndo = b := by
+    rw [hb_def, Category.assoc,
+      @isLeafEndo_idem C _ h p]
+  rcases hBD a ha_bool with ha | ha <;>
+    rcases hBD b hb_bool with hb | hb
   · rw [ha, hb]
   · rw [ha, hb, boolAnd_ℓ_treeFalse]
     have :
