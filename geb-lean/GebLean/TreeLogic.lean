@@ -5409,191 +5409,6 @@ theorem treeEq_ℓβ {D : C} (g1 g2 : D ⟶ p.T) :
   unfold treeFalseConst
   rw [Category.assoc, isLeafEndo_treeFalse]
 
-/-- Sanity-check computation rule for `treeEq`:
-comparing a branch on the left against a leaf on the
-right yields `treeFalse` (interpreted as "unequal").
-The proof peels off one `compareStep` using the
-successor structure of `treeSize(branch(*, *))`,
-observes that the first `compareStep` detects the
-branch/leaf mismatch and yields the absorbing state
-`mkBranch (treeFalseConst D) (leafConst D)`, then
-invokes `iterNat_cfpLift_fixed` to handle all
-remaining iterations. -/
-theorem treeEq_βℓ {D : C} (f1 f2 : D ⟶ p.T) :
-    cfpLift (cfpLift f1 f2 ≫ p.β)
-        (cfpTerminalFrom D ≫ p.ℓ) ≫ treeEq =
-    cfpTerminalFrom D ≫ treeFalse := by
-  set x : D ⟶ p.T := cfpLift f1 f2 ≫ p.β with hx
-  set y : D ⟶ p.T := cfpTerminalFrom D ≫ p.ℓ
-    with hy
-  unfold treeEq
-  simp only
-  -- Distribute cfpLift x y through the outer cfpLift.
-  rw [← Category.assoc, cfpLift_precomp]
-  -- Compute the initial state image of cfpLift x y.
-  have h_init :
-      cfpLift x y ≫
-        mkBranch
-          (leafConst (cfpProd p.T p.T))
-          (mkBranch p.β
-            (leafConst (cfpProd p.T p.T))) =
-      mkBranch (leafConst D)
-        (mkBranch
-          (mkBranch (mkBranch f1 f2)
-            (leafConst D))
-          (leafConst D)) := by
-    rw [mkBranch_precomp, leafConst_precomp,
-      mkBranch_precomp, leafConst_precomp]
-    -- Goal: mkBranch (leafConst D)
-    --   (mkBranch (cfpLift x y ≫ p.β)
-    --     (leafConst D)) = ...
-    -- Show cfpLift x y ≫ p.β =
-    --   mkBranch (mkBranch f1 f2) (leafConst D).
-    have h_xy :
-        cfpLift x y ≫ p.β =
-        mkBranch (mkBranch f1 f2) (leafConst D) := by
-      unfold mkBranch leafConst
-      rw [hx, hy]
-    rw [h_xy]
-  -- Compute the count image of cfpLift x y.
-  have h_count :
-      cfpLift x y ≫ p.β ≫ treeSize =
-      cfpLift (cfpTerminalFrom D)
-          (cfpLift x y) ≫
-        cfpLiftAssoc treeSizeParam treeSizeParam ≫
-        natPlus ≫ natSucc := by
-    rw [← Category.assoc]
-    change mkBranch x y ≫ treeSize = _
-    unfold treeSize
-    rw [← Category.assoc, cfpLift_precomp,
-      Category.comp_id]
-    have h_left :
-        mkBranch x y ≫ cfpTerminalFrom p.T =
-        cfpTerminalFrom D :=
-      h.terminal.uniq _
-    rw [h_left]
-    -- Goal: cfpLift (cfpTerminalFrom D)
-    --   (mkBranch x y) ≫ treeSizeParam = ...
-    have factor :
-        cfpLift (cfpTerminalFrom D)
-            (mkBranch x y) =
-        cfpLift (cfpTerminalFrom D)
-            (cfpLift x y) ≫
-          cfpMap (𝟙 cfpTerminal) p.β := by
-      unfold mkBranch
-      rw [cfpLift_cfpMap, Category.comp_id]
-    rw [factor, Category.assoc, treeSizeParam_β]
-  rw [h_init, h_count]
-  -- Name the inner count morphism.
-  set inner_count : D ⟶ p.T :=
-    cfpLift (cfpTerminalFrom D) (cfpLift x y) ≫
-      cfpLiftAssoc treeSizeParam treeSizeParam ≫
-      natPlus with h_inner
-  -- The count factors as `inner_count ≫ natSucc`.
-  have h_count_succ :
-      cfpLift (cfpTerminalFrom D) (cfpLift x y) ≫
-        cfpLiftAssoc treeSizeParam treeSizeParam ≫
-        natPlus ≫ natSucc =
-      inner_count ≫ natSucc := by
-    rw [h_inner]
-    simp only [Category.assoc]
-  rw [h_count_succ]
-  -- Name the initial state.
-  set s0 : D ⟶ p.T :=
-    mkBranch (leafConst D)
-      (mkBranch
-        (mkBranch (mkBranch f1 f2)
-          (leafConst D))
-        (leafConst D)) with hs0
-  -- Name the mismatch fixed point.
-  set M : D ⟶ p.T :=
-    mkBranch (treeFalseConst D) (leafConst D)
-    with hM
-  -- Fact 1: one compareStep on s0 yields M.
-  have h_step1 : s0 ≫ compareStep = M := by
-    rw [hs0, hM]
-    exact compareStep_mismatch_right
-      (leafConst D) f1 f2 (leafConst D)
-  -- Fact 2: compareStep fixes M.
-  have h_fix : M ≫ compareStep = M := by
-    rw [hM]
-    exact compareStep_leaf_wl (treeFalseConst D)
-  -- Peel off one iteration via iterNat_cfpLift_succ.
-  rw [show
-      cfpLift s0 (inner_count ≫ natSucc) ≫
-          iterNat compareStep ≫
-            treeLeftEndo ≫ isLeafEndo =
-      (cfpLift s0 (inner_count ≫ natSucc) ≫
-        iterNat compareStep) ≫
-          treeLeftEndo ≫ isLeafEndo from
-      (Category.assoc _ _ _).symm]
-  rw [iterNat_cfpLift_succ]
-  -- Rewrite the inner iteration via the shift
-  -- lemma: `cfpLift init c ≫ iterNat f ≫ f =
-  -- cfpLift (init ≫ f) c ≫ iterNat f` follows
-  -- from `elim_algebra_morphism`.
-  have h_shift :
-      (cfpLift s0 inner_count ≫
-          iterNat compareStep) ≫ compareStep =
-      cfpLift (s0 ≫ compareStep) inner_count ≫
-        iterNat compareStep := by
-    have factor_lhs :
-        cfpLift s0 inner_count =
-        cfpLift (𝟙 D) inner_count ≫
-          cfpMap s0 (𝟙 p.T) := by
-      rw [cfpLift_cfpMap, Category.id_comp,
-        Category.comp_id]
-    have factor_rhs :
-        cfpLift (s0 ≫ compareStep) inner_count =
-        cfpLift (𝟙 D) inner_count ≫
-          cfpMap (s0 ≫ compareStep)
-            (𝟙 p.T) := by
-      rw [cfpLift_cfpMap, Category.id_comp,
-        Category.comp_id]
-    rw [factor_lhs, factor_rhs]
-    unfold iterNat
-    -- Helper: pull cfpMap through p.elim on both
-    -- sides via elim_naturality.
-    have elim_nat_s0 :
-        cfpMap s0 (𝟙 p.T) ≫
-          p.elim (𝟙 p.T)
-            (cfpSnd p.T p.T ≫ compareStep) =
-        p.elim s0
-          (cfpSnd p.T p.T ≫ compareStep) := by
-      rw [elim_naturality, Category.comp_id]
-    have elim_nat_s0f :
-        cfpMap (s0 ≫ compareStep) (𝟙 p.T) ≫
-          p.elim (𝟙 p.T)
-            (cfpSnd p.T p.T ≫ compareStep) =
-        p.elim (s0 ≫ compareStep)
-          (cfpSnd p.T p.T ≫ compareStep) := by
-      rw [elim_naturality, Category.comp_id]
-    simp only [Category.assoc, elim_nat_s0,
-      elim_nat_s0f]
-    congr 1
-    rw [elim_algebra_morphism s0
-      (cfpSnd p.T p.T ≫ compareStep)
-      compareStep (cfpSnd p.T p.T ≫ compareStep)]
-    -- Remaining goal: cfpMap compareStep compareStep
-    -- ≫ (cfpSnd ≫ compareStep) =
-    -- (cfpSnd ≫ compareStep) ≫ compareStep
-    rw [← Category.assoc, cfpMap_snd,
-      Category.assoc]
-  rw [h_shift, h_step1]
-  -- Now apply Task 1's stability lemma with
-  -- init := M.
-  rw [iterNat_cfpLift_fixed compareStep M
-    inner_count h_fix]
-  -- Remaining goal:
-  -- M ≫ treeLeftEndo ≫ isLeafEndo =
-  -- cfpTerminalFrom D ≫ treeFalse.
-  rw [hM, ← Category.assoc,
-    mkBranch_treeLeftEndo]
-  -- Goal: treeFalseConst D ≫ isLeafEndo =
-  -- cfpTerminalFrom D ≫ treeFalse.
-  unfold treeFalseConst
-  rw [Category.assoc, isLeafEndo_treeFalse]
-
 /-- Uniqueness for `paraElim`: any morphism `φ`
 satisfying the paramorphism's base and step
 equations equals `paraElim f g`.  The proof lifts
@@ -5891,5 +5706,190 @@ theorem paraElim_uniq {A X : C} (f : A ⟶ X)
       cfpLift_snd]
   unfold paraElim
   rw [← hlift_eq, hproj]
+
+/-- Sanity-check computation rule for `treeEq`:
+comparing a branch on the left against a leaf on the
+right yields `treeFalse` (interpreted as "unequal").
+The proof peels off one `compareStep` using the
+successor structure of `treeSize(branch(*, *))`,
+observes that the first `compareStep` detects the
+branch/leaf mismatch and yields the absorbing state
+`mkBranch (treeFalseConst D) (leafConst D)`, then
+invokes `iterNat_cfpLift_fixed` to handle all
+remaining iterations. -/
+theorem treeEq_βℓ {D : C} (f1 f2 : D ⟶ p.T) :
+    cfpLift (cfpLift f1 f2 ≫ p.β)
+        (cfpTerminalFrom D ≫ p.ℓ) ≫ treeEq =
+    cfpTerminalFrom D ≫ treeFalse := by
+  set x : D ⟶ p.T := cfpLift f1 f2 ≫ p.β with hx
+  set y : D ⟶ p.T := cfpTerminalFrom D ≫ p.ℓ
+    with hy
+  unfold treeEq
+  simp only
+  -- Distribute cfpLift x y through the outer cfpLift.
+  rw [← Category.assoc, cfpLift_precomp]
+  -- Compute the initial state image of cfpLift x y.
+  have h_init :
+      cfpLift x y ≫
+        mkBranch
+          (leafConst (cfpProd p.T p.T))
+          (mkBranch p.β
+            (leafConst (cfpProd p.T p.T))) =
+      mkBranch (leafConst D)
+        (mkBranch
+          (mkBranch (mkBranch f1 f2)
+            (leafConst D))
+          (leafConst D)) := by
+    rw [mkBranch_precomp, leafConst_precomp,
+      mkBranch_precomp, leafConst_precomp]
+    -- Goal: mkBranch (leafConst D)
+    --   (mkBranch (cfpLift x y ≫ p.β)
+    --     (leafConst D)) = ...
+    -- Show cfpLift x y ≫ p.β =
+    --   mkBranch (mkBranch f1 f2) (leafConst D).
+    have h_xy :
+        cfpLift x y ≫ p.β =
+        mkBranch (mkBranch f1 f2) (leafConst D) := by
+      unfold mkBranch leafConst
+      rw [hx, hy]
+    rw [h_xy]
+  -- Compute the count image of cfpLift x y.
+  have h_count :
+      cfpLift x y ≫ p.β ≫ treeSize =
+      cfpLift (cfpTerminalFrom D)
+          (cfpLift x y) ≫
+        cfpLiftAssoc treeSizeParam treeSizeParam ≫
+        natPlus ≫ natSucc := by
+    rw [← Category.assoc]
+    change mkBranch x y ≫ treeSize = _
+    unfold treeSize
+    rw [← Category.assoc, cfpLift_precomp,
+      Category.comp_id]
+    have h_left :
+        mkBranch x y ≫ cfpTerminalFrom p.T =
+        cfpTerminalFrom D :=
+      h.terminal.uniq _
+    rw [h_left]
+    -- Goal: cfpLift (cfpTerminalFrom D)
+    --   (mkBranch x y) ≫ treeSizeParam = ...
+    have factor :
+        cfpLift (cfpTerminalFrom D)
+            (mkBranch x y) =
+        cfpLift (cfpTerminalFrom D)
+            (cfpLift x y) ≫
+          cfpMap (𝟙 cfpTerminal) p.β := by
+      unfold mkBranch
+      rw [cfpLift_cfpMap, Category.comp_id]
+    rw [factor, Category.assoc, treeSizeParam_β]
+  rw [h_init, h_count]
+  -- Name the inner count morphism.
+  set inner_count : D ⟶ p.T :=
+    cfpLift (cfpTerminalFrom D) (cfpLift x y) ≫
+      cfpLiftAssoc treeSizeParam treeSizeParam ≫
+      natPlus with h_inner
+  -- The count factors as `inner_count ≫ natSucc`.
+  have h_count_succ :
+      cfpLift (cfpTerminalFrom D) (cfpLift x y) ≫
+        cfpLiftAssoc treeSizeParam treeSizeParam ≫
+        natPlus ≫ natSucc =
+      inner_count ≫ natSucc := by
+    rw [h_inner]
+    simp only [Category.assoc]
+  rw [h_count_succ]
+  -- Name the initial state.
+  set s0 : D ⟶ p.T :=
+    mkBranch (leafConst D)
+      (mkBranch
+        (mkBranch (mkBranch f1 f2)
+          (leafConst D))
+        (leafConst D)) with hs0
+  -- Name the mismatch fixed point.
+  set M : D ⟶ p.T :=
+    mkBranch (treeFalseConst D) (leafConst D)
+    with hM
+  -- Fact 1: one compareStep on s0 yields M.
+  have h_step1 : s0 ≫ compareStep = M := by
+    rw [hs0, hM]
+    exact compareStep_mismatch_right
+      (leafConst D) f1 f2 (leafConst D)
+  -- Fact 2: compareStep fixes M.
+  have h_fix : M ≫ compareStep = M := by
+    rw [hM]
+    exact compareStep_leaf_wl (treeFalseConst D)
+  -- Peel off one iteration via iterNat_cfpLift_succ.
+  rw [show
+      cfpLift s0 (inner_count ≫ natSucc) ≫
+          iterNat compareStep ≫
+            treeLeftEndo ≫ isLeafEndo =
+      (cfpLift s0 (inner_count ≫ natSucc) ≫
+        iterNat compareStep) ≫
+          treeLeftEndo ≫ isLeafEndo from
+      (Category.assoc _ _ _).symm]
+  rw [iterNat_cfpLift_succ]
+  -- Rewrite the inner iteration via the shift
+  -- lemma: `cfpLift init c ≫ iterNat f ≫ f =
+  -- cfpLift (init ≫ f) c ≫ iterNat f` follows
+  -- from `elim_algebra_morphism`.
+  have h_shift :
+      (cfpLift s0 inner_count ≫
+          iterNat compareStep) ≫ compareStep =
+      cfpLift (s0 ≫ compareStep) inner_count ≫
+        iterNat compareStep := by
+    have factor_lhs :
+        cfpLift s0 inner_count =
+        cfpLift (𝟙 D) inner_count ≫
+          cfpMap s0 (𝟙 p.T) := by
+      rw [cfpLift_cfpMap, Category.id_comp,
+        Category.comp_id]
+    have factor_rhs :
+        cfpLift (s0 ≫ compareStep) inner_count =
+        cfpLift (𝟙 D) inner_count ≫
+          cfpMap (s0 ≫ compareStep)
+            (𝟙 p.T) := by
+      rw [cfpLift_cfpMap, Category.id_comp,
+        Category.comp_id]
+    rw [factor_lhs, factor_rhs]
+    unfold iterNat
+    -- Helper: pull cfpMap through p.elim on both
+    -- sides via elim_naturality.
+    have elim_nat_s0 :
+        cfpMap s0 (𝟙 p.T) ≫
+          p.elim (𝟙 p.T)
+            (cfpSnd p.T p.T ≫ compareStep) =
+        p.elim s0
+          (cfpSnd p.T p.T ≫ compareStep) := by
+      rw [elim_naturality, Category.comp_id]
+    have elim_nat_s0f :
+        cfpMap (s0 ≫ compareStep) (𝟙 p.T) ≫
+          p.elim (𝟙 p.T)
+            (cfpSnd p.T p.T ≫ compareStep) =
+        p.elim (s0 ≫ compareStep)
+          (cfpSnd p.T p.T ≫ compareStep) := by
+      rw [elim_naturality, Category.comp_id]
+    simp only [Category.assoc, elim_nat_s0,
+      elim_nat_s0f]
+    congr 1
+    rw [elim_algebra_morphism s0
+      (cfpSnd p.T p.T ≫ compareStep)
+      compareStep (cfpSnd p.T p.T ≫ compareStep)]
+    -- Remaining goal: cfpMap compareStep compareStep
+    -- ≫ (cfpSnd ≫ compareStep) =
+    -- (cfpSnd ≫ compareStep) ≫ compareStep
+    rw [← Category.assoc, cfpMap_snd,
+      Category.assoc]
+  rw [h_shift, h_step1]
+  -- Now apply Task 1's stability lemma with
+  -- init := M.
+  rw [iterNat_cfpLift_fixed compareStep M
+    inner_count h_fix]
+  -- Remaining goal:
+  -- M ≫ treeLeftEndo ≫ isLeafEndo =
+  -- cfpTerminalFrom D ≫ treeFalse.
+  rw [hM, ← Category.assoc,
+    mkBranch_treeLeftEndo]
+  -- Goal: treeFalseConst D ≫ isLeafEndo =
+  -- cfpTerminalFrom D ≫ treeFalse.
+  unfold treeFalseConst
+  rw [Category.assoc, isLeafEndo_treeFalse]
 
 end GebLean
