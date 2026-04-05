@@ -28,13 +28,20 @@ relations (PERs) on the binary tree type T.
 - `prodPERFan`, `prodPERFan_isLimit`: `BinaryFan` and `IsLimit`.
 - `treePER_hasLimitPair`, `treePER_hasBinaryProducts`:
   `HasBinaryProducts` (parameterized by `hSep`, `hBD`).
-- `boolAnd_comm_bool`: commutativity of `boolAnd` for
-  Boolean-valued arguments, using separator + dichotomy.
+- `boolAnd_comm`: unconditional commutativity of `boolAnd`,
+  proved via `boolAnd_eq_elim` and `boolAnd_swap_eq_elim`
+  showing both sides equal the same `p.elim` catamorphism.
+- `boolAnd_fst_proj`: first-projection absorption
+  `boolAnd(boolAnd(A, B), A) = boolAnd(A, B)`, proved via
+  `boolAnd_swap_eq_elim` by factoring both sides through
+  `cfpLift B A` and reducing to an elim_uniq argument.
+  These simplifications removed the `IsSeparator` +
+  `HasBoolDichotomy` hypotheses from both theorems.
 - Equalizer PER definition (`eqPERRel`):
   `boolAnd(X.rel(x,y), boolAnd(eqCheck(x), eqCheck(y)))` where
-  `eqCheck(x) = Y.rel(f(x), g(x))`.  Manifestly symmetric up to
-  boolAnd commutativity on Boolean arguments.
-- `eqPERRel_bool`, `eqPERRel_symm` (using `boolAnd_comm_bool`).
+  `eqCheck(x) = Y.rel(f(x), g(x))`.
+- `eqPERRel_bool`, `eqPERRel_symm` (using `boolAnd_comm`,
+  no separator/dichotomy assumption).
 - `eqPERRel_quantTransitive`, `eqPERRel_eqTransitive`.
 - `eqPERObj`: equalizer PER object assembly.
 - `eqPERInclPreMor`, `eqPERIncl`: inclusion pre-morphism and

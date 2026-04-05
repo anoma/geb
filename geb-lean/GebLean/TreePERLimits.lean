@@ -642,7 +642,7 @@ def prodPERFstPreMor
       (leftRelCheck X) ≫ boolAnd =
       prodPERRel X Y
     unfold prodPERRel
-    exact boolAnd_fst_proj hSep hBD
+    exact boolAnd_fst_proj
       (leftRelCheck X) (rightRelCheck Y)
 
 /-- The right projection pre-morphism from the
@@ -1218,12 +1218,10 @@ theorem eqCheck_bool
   simp only [Category.assoc]
   rw [Y.rel_bool]
 
-include hSep hBD in
 /-- The equalizer PER relation is symmetric:
 `cfpSwap ≫ eqPERRel f g = eqPERRel f g`.
 This follows from X.rel's symmetry and
-commutativity of boolAnd on Boolean-valued
-arguments. -/
+commutativity of boolAnd. -/
 theorem eqPERRel_symm
     {X Y : @TreePERObj C _ h p}
     (f g : TreePERPreMor X Y) :
@@ -1271,7 +1269,7 @@ theorem eqPERRel_symm
         (cfpSnd p.T p.T ≫ ec) ≫
         boolAnd := by
     rw [← Category.assoc, swap_lift]
-    exact boolAnd_comm hSep hBD _ _
+    exact boolAnd_comm _ _
   rw [h1, h2]
 
 /-- Quantified transitivity for the equalizer PER
@@ -1435,7 +1433,7 @@ def eqPERObj
     @TreePERObj C _ h p where
   rel := eqPERRel f g
   rel_bool := eqPERRel_bool f g
-  rel_symm := eqPERRel_symm hSep hBD f g
+  rel_symm := eqPERRel_symm f g
   rel_trans :=
     eqPERRel_eqTransitive hSep hBD f g
 
@@ -1459,7 +1457,7 @@ def eqPERInclPreMor
     -- eqPERRel = boolAnd(X.rel, ...).
     -- cfpLift (boolAnd(X.rel, B)) X.rel ≫ boolAnd
     -- = boolAnd(X.rel, B) by boolAnd_fst_proj.
-    exact boolAnd_fst_proj hSep hBD
+    exact boolAnd_fst_proj
       X.rel
       (cfpLift
         (cfpFst p.T p.T ≫ eqCheck f g)
