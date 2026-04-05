@@ -24,6 +24,73 @@ variable {C : Type u} [Category.{v} C]
   [h : HasChosenFiniteProducts C]
   [p : HasPBTO C]
 
+/-! ## Paramorphism
+
+An enhanced catamorphism whose step function also has
+access to the subtrees themselves (not just the
+recursive results).  While `p.elim` gives the step a
+pair of recursive results `(X × X)`, the paramorphism
+`paraElim` gives the step a pair `(A, ((T × T), (X ×
+X)))`: the parameter, the two subtrees, and the two
+recursive results.
+
+The construction reuses `p.elim` on the carrier
+`cfpProd A (cfpProd T X)`, threading the parameter
+and the current subtree alongside the recursive
+result.
+-/
+
+/-- Carrier for the paramorphism: the triple
+`(A, (T, X))`. -/
+private def paraCarrier (A X : C) : C :=
+  cfpProd A (cfpProd p.T X)
+
+/-- Base morphism for `paraElim`: sends `a : A` to
+`(a, (ℓ, f a))`. -/
+private def paraBase {A X : C} (f : A ⟶ X) :
+    A ⟶ paraCarrier (p := p) A X :=
+  cfpLift (𝟙 A)
+    (cfpLift (cfpTerminalFrom A ≫ p.ℓ) f)
+
+/-- Step morphism for `paraElim`: given two triples
+`(al, (tl, xl))` and `(ar, (tr, xr))`, produces
+`(al, (β(tl, tr), g(al, ((tl, tr), (xl, xr)))))`.
+Uses the first triple's `A` component; correctness
+relies on the invariant that both components equal
+the original parameter. -/
+private def paraStep {A X : C}
+    (g : cfpProd A
+        (cfpProd (cfpProd p.T p.T) (cfpProd X X)) ⟶
+      X) :
+    cfpProd (paraCarrier (p := p) A X)
+        (paraCarrier (p := p) A X) ⟶
+      paraCarrier (p := p) A X :=
+  let X' : C := paraCarrier (p := p) A X
+  let aComp : cfpProd X' X' ⟶ A :=
+    cfpFst X' X' ≫ cfpFst A (cfpProd p.T X)
+  let tlComp : cfpProd X' X' ⟶ p.T :=
+    cfpFst X' X' ≫ cfpSnd A (cfpProd p.T X) ≫
+      cfpFst p.T X
+  let trComp : cfpProd X' X' ⟶ p.T :=
+    cfpSnd X' X' ≫ cfpSnd A (cfpProd p.T X) ≫
+      cfpFst p.T X
+  let xlComp : cfpProd X' X' ⟶ X :=
+    cfpFst X' X' ≫ cfpSnd A (cfpProd p.T X) ≫
+      cfpSnd p.T X
+  let xrComp : cfpProd X' X' ⟶ X :=
+    cfpSnd X' X' ≫ cfpSnd A (cfpProd p.T X) ≫
+      cfpSnd p.T X
+  let tPair : cfpProd X' X' ⟶ cfpProd p.T p.T :=
+    cfpLift tlComp trComp
+  let xPair : cfpProd X' X' ⟶ cfpProd X X :=
+    cfpLift xlComp xrComp
+  let gArg : cfpProd X' X' ⟶
+      cfpProd A
+        (cfpProd (cfpProd p.T p.T) (cfpProd X X)) :=
+    cfpLift aComp (cfpLift tPair xPair)
+  cfpLift aComp
+    (cfpLift (tPair ≫ p.β) (gArg ≫ g))
+
 /-- The "false" element of T: `branch(leaf, leaf)`,
 as a morphism from the terminal object. -/
 def treeFalse :
@@ -5262,73 +5329,6 @@ theorem treeEq_βℓ {D : C} (f1 f2 : D ⟶ p.T) :
   -- cfpTerminalFrom D ≫ treeFalse.
   unfold treeFalseConst
   rw [Category.assoc, isLeafEndo_treeFalse]
-
-/-! ## Paramorphism
-
-An enhanced catamorphism whose step function also has
-access to the subtrees themselves (not just the
-recursive results).  While `p.elim` gives the step a
-pair of recursive results `(X × X)`, the paramorphism
-`paraElim` gives the step a pair `(A, ((T × T), (X ×
-X)))`: the parameter, the two subtrees, and the two
-recursive results.
-
-The construction reuses `p.elim` on the carrier
-`cfpProd A (cfpProd T X)`, threading the parameter
-and the current subtree alongside the recursive
-result.
--/
-
-/-- Carrier for the paramorphism: the triple
-`(A, (T, X))`. -/
-private def paraCarrier (A X : C) : C :=
-  cfpProd A (cfpProd p.T X)
-
-/-- Base morphism for `paraElim`: sends `a : A` to
-`(a, (ℓ, f a))`. -/
-private def paraBase {A X : C} (f : A ⟶ X) :
-    A ⟶ paraCarrier (p := p) A X :=
-  cfpLift (𝟙 A)
-    (cfpLift (cfpTerminalFrom A ≫ p.ℓ) f)
-
-/-- Step morphism for `paraElim`: given two triples
-`(al, (tl, xl))` and `(ar, (tr, xr))`, produces
-`(al, (β(tl, tr), g(al, ((tl, tr), (xl, xr)))))`.
-Uses the first triple's `A` component; correctness
-relies on the invariant that both components equal
-the original parameter. -/
-private def paraStep {A X : C}
-    (g : cfpProd A
-        (cfpProd (cfpProd p.T p.T) (cfpProd X X)) ⟶
-      X) :
-    cfpProd (paraCarrier (p := p) A X)
-        (paraCarrier (p := p) A X) ⟶
-      paraCarrier (p := p) A X :=
-  let X' : C := paraCarrier (p := p) A X
-  let aComp : cfpProd X' X' ⟶ A :=
-    cfpFst X' X' ≫ cfpFst A (cfpProd p.T X)
-  let tlComp : cfpProd X' X' ⟶ p.T :=
-    cfpFst X' X' ≫ cfpSnd A (cfpProd p.T X) ≫
-      cfpFst p.T X
-  let trComp : cfpProd X' X' ⟶ p.T :=
-    cfpSnd X' X' ≫ cfpSnd A (cfpProd p.T X) ≫
-      cfpFst p.T X
-  let xlComp : cfpProd X' X' ⟶ X :=
-    cfpFst X' X' ≫ cfpSnd A (cfpProd p.T X) ≫
-      cfpSnd p.T X
-  let xrComp : cfpProd X' X' ⟶ X :=
-    cfpSnd X' X' ≫ cfpSnd A (cfpProd p.T X) ≫
-      cfpSnd p.T X
-  let tPair : cfpProd X' X' ⟶ cfpProd p.T p.T :=
-    cfpLift tlComp trComp
-  let xPair : cfpProd X' X' ⟶ cfpProd X X :=
-    cfpLift xlComp xrComp
-  let gArg : cfpProd X' X' ⟶
-      cfpProd A
-        (cfpProd (cfpProd p.T p.T) (cfpProd X X)) :=
-    cfpLift aComp (cfpLift tPair xPair)
-  cfpLift aComp
-    (cfpLift (tPair ≫ p.β) (gArg ≫ g))
 
 /-- The paramorphism: a catamorphism whose step sees
 the parameter, the two subtrees, and the two
