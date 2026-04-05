@@ -91,6 +91,76 @@ private def paraStep {A X : C}
   cfpLift aComp
     (cfpLift (tPair ≫ p.β) (gArg ≫ g))
 
+/-- The paramorphism: a catamorphism whose step sees
+the parameter, the two subtrees, and the two
+recursive results. -/
+def paraElim {A X : C} (f : A ⟶ X)
+    (g : cfpProd A
+        (cfpProd (cfpProd p.T p.T) (cfpProd X X)) ⟶
+      X) :
+    cfpProd A p.T ⟶ X :=
+  p.elim (paraBase (p := p) f) (paraStep (p := p) g) ≫
+    cfpSnd A (cfpProd p.T X) ≫ cfpSnd p.T X
+
+/-- Base-case equation for `paraElim`: at a leaf, the
+result is `f` applied to the parameter. -/
+theorem paraElim_ℓ {A X : C} (f : A ⟶ X)
+    (g : cfpProd A
+        (cfpProd (cfpProd p.T p.T) (cfpProd X X)) ⟶
+      X) :
+    cfpInsertSnd p.ℓ A ≫ paraElim f g = f := by
+  unfold paraElim
+  rw [← Category.assoc, ← Category.assoc,
+    p.elim_ℓ]
+  unfold paraBase
+  rw [cfpLift_snd, cfpLift_snd]
+
+/-- Parameter invariant: the `A` component of the
+internal elim carries the input parameter through
+unchanged.  Proof via `elim_algebra_morphism` with
+the projection `cfpFst A (cfpProd T X)` and the
+first-projection step `cfpFst A A`. -/
+private theorem paraElim_param_inv {A X : C}
+    (f : A ⟶ X)
+    (g : cfpProd A
+        (cfpProd (cfpProd p.T p.T) (cfpProd X X)) ⟶
+      X) :
+    p.elim (paraBase (p := p) f)
+        (paraStep (p := p) g) ≫
+      cfpFst A (cfpProd p.T X) =
+      cfpFst A p.T := by
+  have step_q :
+      cfpMap (cfpFst A (cfpProd p.T X))
+          (cfpFst A (cfpProd p.T X)) ≫
+        cfpFst A A =
+      paraStep (p := p) g ≫
+        cfpFst A (cfpProd p.T X) := by
+    rw [cfpMap_fst]
+    unfold paraStep
+    simp only
+    unfold paraCarrier
+    rw [cfpLift_fst]
+  rw [elim_algebra_morphism
+      (paraBase (p := p) f) (paraStep (p := p) g)
+      (cfpFst A (cfpProd p.T X))
+      (cfpFst A A) step_q]
+  have hbase_proj :
+      paraBase (p := p) f ≫
+        cfpFst A (cfpProd p.T X) = 𝟙 A := by
+    unfold paraBase
+    rw [cfpLift_fst]
+  rw [hbase_proj]
+  symm
+  apply p.elim_uniq (𝟙 A) (cfpFst A A)
+    (cfpFst A p.T)
+  · unfold cfpInsertSnd
+    rw [cfpLift_fst]
+  · rw [cfpMap_fst, Category.comp_id]
+    unfold cfpLiftAssoc
+    rw [cfpLift_fst]
+    unfold cfpAssocFst
+    rw [cfpLift_fst]
+
 /-- The "false" element of T: `branch(leaf, leaf)`,
 as a morphism from the terminal object. -/
 def treeFalse :
@@ -5329,76 +5399,6 @@ theorem treeEq_βℓ {D : C} (f1 f2 : D ⟶ p.T) :
   -- cfpTerminalFrom D ≫ treeFalse.
   unfold treeFalseConst
   rw [Category.assoc, isLeafEndo_treeFalse]
-
-/-- The paramorphism: a catamorphism whose step sees
-the parameter, the two subtrees, and the two
-recursive results. -/
-def paraElim {A X : C} (f : A ⟶ X)
-    (g : cfpProd A
-        (cfpProd (cfpProd p.T p.T) (cfpProd X X)) ⟶
-      X) :
-    cfpProd A p.T ⟶ X :=
-  p.elim (paraBase (p := p) f) (paraStep (p := p) g) ≫
-    cfpSnd A (cfpProd p.T X) ≫ cfpSnd p.T X
-
-/-- Base-case equation for `paraElim`: at a leaf, the
-result is `f` applied to the parameter. -/
-theorem paraElim_ℓ {A X : C} (f : A ⟶ X)
-    (g : cfpProd A
-        (cfpProd (cfpProd p.T p.T) (cfpProd X X)) ⟶
-      X) :
-    cfpInsertSnd p.ℓ A ≫ paraElim f g = f := by
-  unfold paraElim
-  rw [← Category.assoc, ← Category.assoc,
-    p.elim_ℓ]
-  unfold paraBase
-  rw [cfpLift_snd, cfpLift_snd]
-
-/-- Parameter invariant: the `A` component of the
-internal elim carries the input parameter through
-unchanged.  Proof via `elim_algebra_morphism` with
-the projection `cfpFst A (cfpProd T X)` and the
-first-projection step `cfpFst A A`. -/
-private theorem paraElim_param_inv {A X : C}
-    (f : A ⟶ X)
-    (g : cfpProd A
-        (cfpProd (cfpProd p.T p.T) (cfpProd X X)) ⟶
-      X) :
-    p.elim (paraBase (p := p) f)
-        (paraStep (p := p) g) ≫
-      cfpFst A (cfpProd p.T X) =
-      cfpFst A p.T := by
-  have step_q :
-      cfpMap (cfpFst A (cfpProd p.T X))
-          (cfpFst A (cfpProd p.T X)) ≫
-        cfpFst A A =
-      paraStep (p := p) g ≫
-        cfpFst A (cfpProd p.T X) := by
-    rw [cfpMap_fst]
-    unfold paraStep
-    simp only
-    unfold paraCarrier
-    rw [cfpLift_fst]
-  rw [elim_algebra_morphism
-      (paraBase (p := p) f) (paraStep (p := p) g)
-      (cfpFst A (cfpProd p.T X))
-      (cfpFst A A) step_q]
-  have hbase_proj :
-      paraBase (p := p) f ≫
-        cfpFst A (cfpProd p.T X) = 𝟙 A := by
-    unfold paraBase
-    rw [cfpLift_fst]
-  rw [hbase_proj]
-  symm
-  apply p.elim_uniq (𝟙 A) (cfpFst A A)
-    (cfpFst A p.T)
-  · unfold cfpInsertSnd
-    rw [cfpLift_fst]
-  · rw [cfpMap_fst, Category.comp_id]
-    unfold cfpLiftAssoc
-    rw [cfpLift_fst]
-    unfold cfpAssocFst
-    rw [cfpLift_fst]
 
 /-- Tree invariant: the `T` component of the internal
 elim carries the input tree through unchanged.  Proof
