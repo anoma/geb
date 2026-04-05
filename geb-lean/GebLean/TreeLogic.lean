@@ -2987,6 +2987,33 @@ theorem boolAnd_fst_proj
 
 /-- Second projection absorption for `boolAnd`:
 `boolAnd(boolAnd(A, B), B) = boolAnd(A, B)`
+when `B` is Boolean-valued.  The hypothesis on
+`A` is not required.
+
+Proof: combine `boolAnd_assoc` with
+`boolAnd(B, B) = B` (from `boolAnd_idem` and
+the Boolean hypothesis on `B`). -/
+theorem boolAnd_snd_proj_structural
+    {D : C} (A B : D ⟶ p.T)
+    (hB : B ≫ isLeafEndo = B) :
+    cfpLift (cfpLift A B ≫ boolAnd) B ≫
+      boolAnd =
+    cfpLift A B ≫ boolAnd := by
+  have hBB : cfpLift B B ≫ boolAnd = B := by
+    have hrw :
+        cfpLift B B =
+        B ≫ cfpLift (𝟙 p.T) (𝟙 p.T) := by
+      rw [cfpLift_precomp]
+      simp only [Category.comp_id]
+    rw [hrw, Category.assoc, boolAnd_idem, hB]
+  calc cfpLift (cfpLift A B ≫ boolAnd) B ≫ boolAnd
+      = cfpLift A (cfpLift B B ≫ boolAnd) ≫
+          boolAnd := boolAnd_assoc A B B
+    _ = cfpLift A B ≫ boolAnd := by rw [hBB]
+
+
+/-- Second projection absorption for `boolAnd`:
+`boolAnd(boolAnd(A, B), B) = boolAnd(A, B)`
 when `A` and `B` are Boolean-valued.
 
 The proof applies `IsSeparator` to reduce to
