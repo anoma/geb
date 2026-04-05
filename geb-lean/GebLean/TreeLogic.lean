@@ -24,6 +24,8 @@ variable {C : Type u} [Category.{v} C]
   [h : HasChosenFiniteProducts C]
   [p : HasPBTO C]
 
+section Paramorphism
+
 /-! ## Paramorphism
 
 An enhanced catamorphism whose step function also has
@@ -350,6 +352,8 @@ theorem paraElim_β {A X : C} (f : A ⟶ X)
       · rw [Category.assoc, cfpLift_snd,
           ← Category.assoc, cfpLift_snd,
           Category.assoc, hE]
+
+end Paramorphism
 
 /-- The "false" element of T: `branch(leaf, leaf)`,
 as a morphism from the terminal object. -/
