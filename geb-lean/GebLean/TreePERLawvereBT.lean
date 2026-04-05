@@ -1,5 +1,6 @@
 import GebLean.LawvereBTInterp
 import GebLean.TreePERLimits
+import GebLean.TreePERColimits
 
 /-!
 # Converse transitivity for LawvereBTQuotCat
@@ -424,6 +425,15 @@ theorem
     lawvereBTPER_hasFiniteLimits :
     Limits.HasFiniteLimits LawvereBTPER :=
   treePER_hasFiniteLimits
+    lawvereBTQuotCat_isSeparator
+    lawvereBTQuotCat_hasBoolDichotomy
+
+/-- The PER category over `LawvereBTQuotCat` has
+all finite coproducts. -/
+theorem
+    lawvereBTPER_hasFiniteCoproducts :
+    Limits.HasFiniteCoproducts LawvereBTPER :=
+  treePER_hasFiniteCoproducts
     lawvereBTQuotCat_isSeparator
     lawvereBTQuotCat_hasBoolDichotomy
 
