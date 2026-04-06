@@ -2355,4 +2355,235 @@ theorem natPlus_cancel_left_rsn {D : C}
     natPlus_comm_rsn b c hb hc,
     natPlus_cancel_right a b c]
 
+/-- `natPlus` preserves right-spine normalization
+in its first argument: if `a` is rsn, then
+`cfpLift a b ≫ natPlus` is rsn (for any `b`). -/
+theorem natPlus_isRSpineNatNorm {D : C}
+    (a b : D ⟶ p.T)
+    (ha : IsRSpineNatNorm a) :
+    IsRSpineNatNorm
+      (cfpLift a b ≫ natPlus) := by
+  unfold IsRSpineNatNorm
+  rw [Category.assoc,
+    ← natPlus_toRSpineNat_first,
+    ← Category.assoc,
+    cfpLift_cfpMap, Category.comp_id, ha]
+
+private theorem β_toRSpineNat_eq :
+    p.β ≫ toRSpineNat =
+    cfpSnd p.T p.T ≫ toRSpineNat ≫
+      (natSucc : p.T ⟶ p.T) := by
+  rw [toRSpineNat_β]
+  unfold natSucc
+  simp only [← Category.assoc]
+  congr 1
+  rw [cfpLift_precomp, Category.comp_id]
+  congr 1
+  rw [← Category.assoc]; congr 1
+  exact (h.terminal.uniq _).symm
+
+/-- `natPlus` is insensitive to normalization of
+its second argument: the fold walks only the
+right spine.
+`cfpMap (𝟙 T) toRSpineNat ≫ natPlus = natPlus`.
+-/
+theorem natPlus_toRSpineNat_second :
+    cfpMap (𝟙 p.T) toRSpineNat ≫ natPlus =
+    (natPlus : cfpProd p.T p.T ⟶ p.T) := by
+  change _ = p.elim (𝟙 p.T)
+    (cfpSnd p.T p.T ≫ natSucc)
+  apply p.elim_uniq (𝟙 p.T)
+    (cfpSnd p.T p.T ≫ natSucc)
+  · rw [← Category.assoc]
+    have : cfpInsertSnd p.ℓ p.T ≫
+        cfpMap (𝟙 p.T) toRSpineNat =
+      cfpInsertSnd p.ℓ p.T := by
+      unfold cfpInsertSnd
+      rw [cfpLift_cfpMap, Category.id_comp,
+        Category.assoc, toRSpineNat_ℓ]
+    rw [this, natPlus_ℓ]
+  · rw [← Category.assoc
+      (cfpMap (𝟙 p.T) p.β),
+      cfpMap_comp, Category.id_comp,
+      β_toRSpineNat_eq]
+    unfold cfpMap
+    rw [show cfpSnd p.T
+        (cfpProd p.T p.T) ≫
+        cfpSnd p.T p.T ≫
+        toRSpineNat ≫ natSucc =
+      (cfpSnd p.T (cfpProd p.T p.T) ≫
+        cfpSnd p.T p.T ≫
+        toRSpineNat) ≫ natSucc from
+      by simp only [Category.assoc]]
+    rw [natPlus_succ,
+      ← Category.assoc (cfpLiftAssoc _ _)]
+    congr 1
+    have lhs_eq :
+        cfpLift
+          (cfpFst p.T
+            (cfpProd p.T p.T))
+          (cfpSnd p.T
+            (cfpProd p.T p.T) ≫
+            cfpSnd p.T p.T ≫
+            toRSpineNat) ≫ natPlus =
+        cfpAssocSnd p.T p.T p.T ≫
+          cfpMap (𝟙 p.T) toRSpineNat ≫
+          natPlus := by
+      symm
+      unfold cfpAssocSnd
+      rw [← Category.assoc,
+        cfpLift_cfpMap,
+        Category.comp_id]
+      simp only [Category.assoc]
+    have rhs_eq :
+        cfpLiftAssoc
+          (cfpMap (𝟙 p.T) toRSpineNat ≫
+            natPlus)
+          (cfpMap (𝟙 p.T) toRSpineNat ≫
+            natPlus) ≫
+          cfpSnd p.T p.T =
+        cfpAssocSnd p.T p.T p.T ≫
+          cfpMap (𝟙 p.T) toRSpineNat ≫
+          natPlus := by
+      unfold cfpLiftAssoc
+      rw [cfpLift_snd]
+    simp only [Category.comp_id]
+    rw [lhs_eq]
+    unfold cfpLiftAssoc cfpMap
+    simp only [Category.comp_id]
+    unfold cfpAssocSnd
+    rw [cfpLift_snd]
+
+/-- `natTriStepSingle` commutes with
+`cfpMap toRSpineNat toRSpineNat`. -/
+private theorem
+    natTriStepSingle_toRSpineNat_comm :
+    cfpMap (toRSpineNat : p.T ⟶ p.T)
+        toRSpineNat ≫ natTriStepSingle =
+    natTriStepSingle ≫
+      cfpMap (toRSpineNat : p.T ⟶ p.T)
+        toRSpineNat := by
+  set S := natTriStepSingle (C := C) (p := p)
+  set N := cfpMap (toRSpineNat : p.T ⟶ p.T)
+    toRSpineNat
+  -- cfpFst projection.
+  have S_fst : S ≫ cfpFst p.T p.T =
+      cfpFst p.T p.T ≫ natSucc := by
+    simp only [S]; unfold natTriStepSingle
+    exact cfpLift_fst _ _
+  have S_snd : S ≫ cfpSnd p.T p.T =
+      cfpLift (cfpFst p.T p.T ≫ natSucc)
+        (cfpSnd p.T p.T) ≫ natPlus := by
+    simp only [S]; unfold natTriStepSingle
+    exact cfpLift_snd _ _
+  have hfst :
+      (N ≫ S) ≫ cfpFst p.T p.T =
+      (S ≫ N) ≫ cfpFst p.T p.T := by
+    -- LHS: N ≫ S ≫ cfpFst = N ≫ cfpFst ≫
+    -- natSucc.
+    rw [Category.assoc, S_fst]
+    -- RHS: S ≫ N ≫ cfpFst.
+    rw [Category.assoc]; simp only [N]
+    rw [cfpMap_fst, ← Category.assoc (S),
+      S_fst]
+    rw [← Category.assoc
+      (cfpMap toRSpineNat toRSpineNat),
+      cfpMap_fst, Category.assoc,
+      ← natSucc_toRSpineNat_comm]
+    simp only [Category.assoc]
+  -- cfpSnd projection.
+  have hsnd :
+      (N ≫ S) ≫ cfpSnd p.T p.T =
+      (S ≫ N) ≫ cfpSnd p.T p.T := by
+    -- LHS: N ≫ S ≫ cfpSnd = N ≫ (cfpLift ≫
+    -- natPlus).
+    rw [Category.assoc, S_snd]
+    -- RHS: S ≫ N ≫ cfpSnd = S ≫ cfpSnd ≫
+    -- toRSN = (cfpLift ≫ natPlus) ≫ toRSN.
+    rw [Category.assoc]; simp only [N]
+    rw [cfpMap_snd]
+    rw [← Category.assoc (S), S_snd,
+      Category.assoc]
+    -- LHS: cfpMap toRSN toRSN ≫ cfpLift
+    --   (cfpFst ≫ natSucc) cfpSnd ≫ natPlus.
+    -- RHS: cfpLift (cfpFst ≫ natSucc) cfpSnd
+    --   ≫ natPlus ≫ toRSN.
+    -- RHS = cfpLift ≫ cfpMap toRSN (𝟙)
+    --   ≫ natPlus.
+    rw [← natPlus_toRSpineNat_first]
+    -- LHS: cfpMap toRSN toRSN ≫ cfpLift ≫
+    -- natPlus.
+    -- RHS: cfpLift ≫ cfpMap toRSN (𝟙) ≫
+    -- natPlus.
+    -- Both sides suffice to show the cfpLift
+    -- parts agree after absorbing toRSN on
+    -- second component.
+    -- Reduce both sides via natPlus_
+    -- toRSpineNat_second on second arg.
+    -- LHS: push cfpMap through cfpLift.
+    rw [← Category.assoc
+      (cfpMap toRSpineNat toRSpineNat),
+      cfpLift_precomp]
+    simp only [← Category.assoc]
+    rw [cfpMap_fst, cfpMap_snd]
+    simp only [Category.assoc]
+    -- LHS: cfpLift (cfpFst ≫ toRSN ≫ natSucc)
+    -- (cfpSnd ≫ toRSN) ≫ natPlus.
+    -- RHS: factor cfpLift ≫ cfpMap.
+    rw [← Category.assoc
+      (cfpLift _ _) (cfpMap _ _),
+      cfpLift_cfpMap, Category.comp_id]
+    -- LHS first comp: cfpFst ≫ toRSN ≫ natSucc.
+    -- RHS first comp: (cfpFst ≫ natSucc) ≫ toRSN.
+    -- LHS second comp: cfpSnd ≫ toRSN.
+    -- RHS second comp: cfpSnd.
+    -- Rewrite RHS first comp.
+    conv_rhs =>
+      rw [Category.assoc,
+        natSucc_toRSpineNat_comm]
+    -- Absorb toRSN on LHS second comp.
+    conv_lhs =>
+      rw [show cfpLift
+          (cfpFst p.T p.T ≫ toRSpineNat ≫
+            natSucc)
+          (cfpSnd p.T p.T ≫ toRSpineNat) =
+        cfpLift
+          (cfpFst p.T p.T ≫ toRSpineNat ≫
+            natSucc)
+          (cfpSnd p.T p.T) ≫
+          cfpMap (𝟙 p.T) toRSpineNat from by
+        rw [cfpLift_cfpMap, Category.comp_id]]
+      rw [Category.assoc,
+        natPlus_toRSpineNat_second]
+  -- Combine projections.
+  have lhs_eta : N ≫ S =
+      cfpLift ((N ≫ S) ≫ cfpFst p.T p.T)
+        ((N ≫ S) ≫ cfpSnd p.T p.T) :=
+    cfpLift_uniq _ _ (N ≫ S) rfl rfl
+  have rhs_eta : S ≫ N =
+      cfpLift ((S ≫ N) ≫ cfpFst p.T p.T)
+        ((S ≫ N) ≫ cfpSnd p.T p.T) :=
+    cfpLift_uniq _ _ (S ≫ N) rfl rfl
+  rw [lhs_eta, rhs_eta]
+  exact congrArg₂ cfpLift hfst hsnd
+
+/-- `natTriStep` commutes with
+`cfpMap (cfpMap toRSpineNat toRSpineNat)
+  (cfpMap toRSpineNat toRSpineNat)`. -/
+private theorem natTriStep_toRSpineNat_comm :
+    cfpMap
+      (cfpMap (toRSpineNat : p.T ⟶ p.T)
+        toRSpineNat)
+      (cfpMap toRSpineNat toRSpineNat) ≫
+      natTriStep =
+    natTriStep ≫
+      cfpMap (toRSpineNat : p.T ⟶ p.T)
+        toRSpineNat := by
+  rw [natTriStep_factor]
+  simp only [← Category.assoc]
+  rw [cfpMap_snd]
+  simp only [Category.assoc]
+  congr 1
+  exact natTriStepSingle_toRSpineNat_comm
+
 end GebLean

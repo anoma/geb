@@ -43,41 +43,64 @@ In `GebLean/NatArith.lean`:
   `natEq(c + a, c + b) = natEq(a, b)`.
   Follows from `natPlus_comm_rsn` + `natPlus_cancel_right`.
 
+- `natPlus_isRSpineNatNorm`: if `a` is rsn, then
+  `cfpLift a b ≫ natPlus` is rsn (for any `b`).
+  Uses `natPlus_toRSpineNat_first`.
+- `β_toRSpineNat_eq`: `β ≫ toRSpineNat =
+  cfpSnd ≫ toRSpineNat ≫ natSucc`. The normalization
+  of β(l, r) is natSucc(toRSpineNat(r)).
+- `natPlus_toRSpineNat_second`:
+  `cfpMap (𝟙 T) toRSpineNat ≫ natPlus = natPlus`.
+  The fold walks only the right spine, so normalizing the
+  second argument has no effect. Proved via `p.elim_uniq`;
+  the step uses `β_toRSpineNat_eq`, `natPlus_succ`, and
+  `cfpLift_snd` to reduce both sides to
+  `cfpAssocSnd ≫ cfpMap (𝟙) toRSN ≫ natPlus`.
+
 ## Remaining
 
-### `iterNat_toRSpineNat`
+### `natTriHelper_cfpFst_rsn`
 
-Statement: `cfpMap (𝟙 T) toRSpineNat ≫ iterNat f = iterNat f`.
-The fold ignores left subtrees, so normalizing the fold variable
-does not change the result.
+Statement: `natTriHelper ≫ cfpFst ≫ toRSN =
+natTriHelper ≫ cfpFst`. The first component of the
+triangular number helper is already right-spine normalized.
 
-Proof outline: by `elim_uniq`. Base case: `cfpInsertSnd ℓ T ≫
-cfpMap (𝟙 T) toRSpineNat = cfpInsertSnd ℓ T` (since `ℓ ≫
-toRSpineNat = ℓ`). Step case: reduces to `M_assocSnd`, i.e.,
-`cfpMap (𝟙 T) (cfpLift K (cfpSnd ≫ toRSN)) ≫ cfpAssocSnd =
-cfpAssocSnd ≫ cfpMap (𝟙 T) toRSN`.
+Proof: by `elim_algebra_morphism`. The first component is
+`p.elim ℓ (cfpSnd ≫ natSucc)` (by `natTriHelper_cfpFst`).
+The algebra morphism condition reduces to
+`natSucc_toRSpineNat_comm` via `cfpMap_snd`.
+
+### `natTri_isRSpineNatNorm`
+
+Statement: `natTri ≫ toRSN = natTri`.
+
+Requires `natTriHelper_cfpFst_rsn` and
+`natPlus_toRSpineNat_second` (already proved). The proof
+shows `natTriHelper ≫ cfpSnd ≫ toRSN = natTriHelper ≫
+cfpSnd` by a paired `elim_uniq` argument: the second
+component step `natPlus(natSucc(idx), sum)` normalizes to
+itself because `natSucc(idx)` is rsn (from
+`natTriHelper_cfpFst_rsn`) and `natPlus_isRSpineNatNorm`
+depends only on the first argument.
 
 ### `treeToNat_isRSpineNatNorm`
 
-Requires `iterNat_toRSpineNat` plus
-`cantorPair ≫ natSucc ≫ toRSpineNat =
-cfpMap toRSpineNat toRSpineNat ≫ cantorPair ≫ natSucc`.
+Statement: `treeToNat ≫ toRSN = treeToNat`.
 
-### `NatEqCantorPair`
+Via `elim_algebra_morphism` on `treeToNatParam`. Requires
+`cfpMap toRSN toRSN ≫ cantorPair ≫ natSucc =
+cantorPair ≫ natSucc ≫ toRSN`, which requires
+`cfpMap toRSN toRSN ≫ cantorPair = cantorPair ≫ toRSN`.
+That in turn requires `natTri_isRSpineNatNorm` plus
+`natPlus_toRSpineNat_first` and
+`natPlus_toRSpineNat_second`.
 
-Cantor pairing injectivity under `natEq`. The standard
-proof uses the fact that `natTri(s+1) = natTri(s) + s + 1`
-to show `cantorPair` is injective, decomposing via
-order properties:
+### `NatEqCantorPair` / unconditional `treeEqG_ββ`
 
-- If `m + n = m' + n'` (same diagonal), then
-  `natPlus_cancel_left_rsn` cancels the common `natTri`
-  term, reducing to `natEq(m, m')`.
-- If `m + n ≠ m' + n'`, the natTri gap exceeds the
-  m-offset, so the cantor pair values differ.
-
-This proof requires `treeToNat_isRSpineNatNorm` plus
-order-theoretic properties of `natTri` and `natPlus`.
+Cantor pairing injectivity under `natEq`. Requires
+`treeToNat_isRSpineNatNorm` plus order-theoretic properties
+of `natTri` and `natPlus`, or a direct compositional
+argument using rsn cancellation lemmas.
 
 ### `treeEqG_trans`
 
