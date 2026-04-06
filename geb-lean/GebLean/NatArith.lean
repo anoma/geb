@@ -507,4 +507,298 @@ theorem natEq_bool :
   rw [Category.assoc, Category.assoc,
     isLeafEndo_idem]
 
+/-- Step morphism for the triangular-number
+catamorphism.  From the pair of recursive results
+`((iL, sL), (iR, sR))`, extracts the right child's
+result `(iR, sR)`, increments the index to
+`natSucc(iR)`, and adds the new index to the running
+sum to produce `(natSucc(iR), natPlus(natSucc(iR),
+sR))`. -/
+def natTriStep :
+    cfpProd (cfpProd p.T p.T)
+      (cfpProd p.T p.T) ⟶
+      cfpProd p.T p.T :=
+  cfpLift
+    (cfpSnd (cfpProd p.T p.T)
+      (cfpProd p.T p.T) ≫
+      cfpFst p.T p.T ≫ natSucc)
+    (cfpLift
+      (cfpSnd (cfpProd p.T p.T)
+        (cfpProd p.T p.T) ≫
+        cfpFst p.T p.T ≫ natSucc)
+      (cfpSnd (cfpProd p.T p.T)
+        (cfpProd p.T p.T) ≫
+        cfpSnd p.T p.T) ≫
+      natPlus)
+
+/-- Parameterized catamorphism computing the pair
+`(currentIndex, runningSum)` for the triangular
+number.  At `n = leaf` (zero), the pair is
+`(leaf, leaf) = (0, 0)`.  At each successor step,
+the index is incremented and added to the running
+sum. -/
+def natTriHelper :
+    cfpProd cfpTerminal p.T ⟶
+      cfpProd p.T p.T :=
+  p.elim (cfpLift p.ℓ p.ℓ) natTriStep
+
+/-- Triangular number `tri(n) = n*(n+1)/2` on
+right-spine naturals.  Computed by pairing the
+terminal morphism with the identity (to form the
+parameter), applying `natTriHelper`, and projecting
+the second component (the running sum). -/
+def natTri : p.T ⟶ p.T :=
+  cfpLift (cfpTerminalFrom p.T) (𝟙 p.T) ≫
+    natTriHelper ≫ cfpSnd p.T p.T
+
+/-- Base case for `natTriHelper`:
+`natTriHelper(*, leaf) = (leaf, leaf)`. -/
+theorem natTriHelper_ℓ :
+    cfpInsertSnd p.ℓ cfpTerminal ≫
+      natTriHelper =
+    cfpLift p.ℓ p.ℓ := by
+  unfold natTriHelper
+  exact p.elim_ℓ (cfpLift p.ℓ p.ℓ) _
+
+/-- Step case for `natTriHelper`:
+`natTriHelper(*, branch(l, r)) =
+  natTriStep(natTriHelper(*, l),
+    natTriHelper(*, r))`. -/
+theorem natTriHelper_β :
+    cfpMap (𝟙 cfpTerminal) p.β ≫
+      natTriHelper =
+    cfpLiftAssoc natTriHelper natTriHelper ≫
+      natTriStep := by
+  unfold natTriHelper
+  exact p.elim_β (cfpLift p.ℓ p.ℓ) _
+
+/-- Leaf computation rule for `natTri`:
+`tri(0) = 0`, i.e. `p.ℓ ≫ natTri = p.ℓ`. -/
+theorem natTri_ℓ :
+    p.ℓ ≫ natTri =
+    (p.ℓ : cfpTerminal (C := C) ⟶ p.T) := by
+  unfold natTri
+  rw [← Category.assoc, ← Category.assoc]
+  have factor :
+      p.ℓ ≫ cfpLift (cfpTerminalFrom p.T)
+        (𝟙 p.T) =
+      cfpInsertSnd p.ℓ cfpTerminal := by
+    unfold cfpInsertSnd
+    rw [cfpLift_precomp, Category.comp_id]
+    have hterm :
+        p.ℓ ≫ cfpTerminalFrom p.T =
+        cfpTerminalFrom cfpTerminal :=
+      h.terminal.uniq _
+    rw [hterm, cfpTerminalFrom_terminal,
+      Category.id_comp]
+  rw [factor, natTriHelper_ℓ, cfpLift_snd]
+
+/-- Cantor pairing on right-spine naturals:
+`cantorPair(m, n) = natPlus(natTri(natPlus(m, n)),
+m)`. -/
+def cantorPair : cfpProd p.T p.T ⟶ p.T :=
+  cfpLift
+    (natPlus ≫ natTri)
+    (cfpFst p.T p.T) ≫
+    natPlus
+
+/-- Truncated subtraction cancels successor on both
+arguments:
+`natTruncSub(succ(m), succ(n)) = natTruncSub(m, n)`.
+Proof: applying `natTruncSub` to `(succ(m), succ(n))`
+peels off one successor from the second argument (by
+the step rule), producing
+`natPred(natTruncSub(succ(m), n))`, then the peeling
+lemma (`natSucc_natTruncSub_natPred`) cancels the
+`natSucc`/`natPred` pair. -/
+theorem natTruncSub_succ_succ {D : C}
+    (a b : D ⟶ p.T) :
+    cfpLift (a ≫ natSucc) (b ≫ natSucc) ≫
+      natTruncSub =
+    cfpLift a b ≫
+      (natTruncSub : cfpProd p.T p.T ⟶ p.T)
+    := by
+  -- Step 1: peel one succ from the second arg.
+  have step1 :
+      cfpLift (a ≫ natSucc) (b ≫ natSucc) ≫
+        natTruncSub =
+      (cfpLift (a ≫ natSucc) b ≫
+        natTruncSub) ≫ natPred := by
+    unfold natTruncSub
+    exact iterNat_cfpLift_succ natPred
+      (a ≫ natSucc) b
+  -- Step 2: factor the first argument.
+  have factor :
+      cfpLift (a ≫ natSucc) b =
+      cfpLift a b ≫
+        cfpMap natSucc (𝟙 p.T) := by
+    symm
+    apply cfpLift_uniq
+    · rw [Category.assoc, cfpMap_fst,
+        ← Category.assoc, cfpLift_fst]
+    · rw [Category.assoc, cfpMap_snd,
+        ← Category.assoc, cfpLift_snd,
+        Category.comp_id]
+  rw [step1, factor, Category.assoc,
+    Category.assoc,
+    natSucc_natTruncSub_natPred]
+
+/-- Successor cancellation for `natEq`:
+`natEq(succ(m), succ(n)) = natEq(m, n)`. -/
+theorem natEq_succ_cancel {D : C}
+    (a b : D ⟶ p.T) :
+    cfpLift (a ≫ natSucc) (b ≫ natSucc) ≫
+      natEq =
+    cfpLift a b ≫
+      (natEq : cfpProd p.T p.T ⟶ p.T)
+    := by
+  unfold natEq
+  -- Both sides have the form
+  -- cfpLift X (cfpSwap ≫ X) ≫ natPlus ≫ isLeafEndo
+  -- where X = natTruncSub precomposed differently.
+  -- Reduce the truncated subtraction components.
+  have h1 :
+      cfpLift (a ≫ natSucc) (b ≫ natSucc) ≫
+        natTruncSub =
+      cfpLift a b ≫ natTruncSub :=
+    natTruncSub_succ_succ a b
+  have hswap :
+      cfpLift (a ≫ natSucc) (b ≫ natSucc) ≫
+        cfpSwap p.T p.T =
+      cfpLift (b ≫ natSucc) (a ≫ natSucc) := by
+    unfold cfpSwap
+    rw [cfpLift_precomp, cfpLift_fst,
+      cfpLift_snd]
+  have hswap2 :
+      cfpLift a b ≫ cfpSwap p.T p.T =
+      cfpLift b a := by
+    unfold cfpSwap
+    rw [cfpLift_precomp, cfpLift_fst,
+      cfpLift_snd]
+  have h2 :
+      cfpLift (a ≫ natSucc) (b ≫ natSucc) ≫
+        cfpSwap p.T p.T ≫ natTruncSub =
+      cfpLift a b ≫
+        cfpSwap p.T p.T ≫ natTruncSub := by
+    rw [← Category.assoc, hswap,
+      natTruncSub_succ_succ,
+      ← Category.assoc, ← hswap2,
+      Category.assoc]
+  -- Rewrite both sides to:
+  -- cfpLift (cfpLift a b ≫ natTruncSub)
+  --   (cfpLift a b ≫ cfpSwap ≫ natTruncSub) ≫
+  --   natPlus ≫ isLeafEndo.
+  -- LHS: unfold natEq and distribute the outer lift.
+  have lhs :
+      cfpLift (a ≫ natSucc) (b ≫ natSucc) ≫
+        cfpLift natTruncSub
+          (cfpSwap p.T p.T ≫ natTruncSub) ≫
+          natPlus ≫ isLeafEndo =
+      (cfpLift
+        (cfpLift (a ≫ natSucc) (b ≫ natSucc) ≫
+          natTruncSub)
+        (cfpLift (a ≫ natSucc) (b ≫ natSucc) ≫
+          cfpSwap p.T p.T ≫ natTruncSub) ≫
+        natPlus) ≫ isLeafEndo := by
+    rw [← Category.assoc
+      (cfpLift (a ≫ natSucc) (b ≫ natSucc))
+      (cfpLift natTruncSub
+        (cfpSwap p.T p.T ≫ natTruncSub))
+      (natPlus ≫ isLeafEndo),
+      cfpLift_precomp,
+      Category.assoc]
+  have rhs :
+      cfpLift a b ≫
+        cfpLift natTruncSub
+          (cfpSwap p.T p.T ≫ natTruncSub) ≫
+          natPlus ≫ isLeafEndo =
+      (cfpLift
+        (cfpLift a b ≫ natTruncSub)
+        (cfpLift a b ≫
+          cfpSwap p.T p.T ≫ natTruncSub) ≫
+        natPlus) ≫ isLeafEndo := by
+    rw [← Category.assoc
+      (cfpLift a b)
+      (cfpLift natTruncSub
+        (cfpSwap p.T p.T ≫ natTruncSub))
+      (natPlus ≫ isLeafEndo),
+      cfpLift_precomp,
+      Category.assoc]
+  rw [lhs, rhs, h1, h2]
+
+/-- Adding a successor in the second argument:
+`natPlus(m, succ(n)) = succ(natPlus(m, n))`. -/
+theorem natPlus_succ {D : C}
+    (a b : D ⟶ p.T) :
+    cfpLift a (b ≫ natSucc) ≫ natPlus =
+    (cfpLift a b ≫ natPlus) ≫
+      (natSucc : p.T ⟶ p.T) := by
+  unfold natPlus
+  exact iterNat_cfpLift_succ natSucc a b
+
+/-- Adding zero in the second argument:
+`natPlus(m, 0) = m`. -/
+theorem natPlus_zero {D : C}
+    (a : D ⟶ p.T) :
+    cfpLift a (cfpTerminalFrom D ≫ p.ℓ) ≫
+      natPlus = a := by
+  unfold natPlus
+  exact iterNat_cfpLift_ℓ natSucc a
+
+/-- The `natSucc` step morphism commutes with
+itself in the sense required by
+`elim_algebra_morphism`. -/
+private theorem natSucc_step_comm :
+    cfpMap natSucc natSucc ≫
+      (cfpSnd p.T p.T ≫ natSucc) =
+    (cfpSnd p.T p.T ≫ natSucc) ≫
+      (natSucc : p.T ⟶ p.T) := by
+  rw [← Category.assoc
+    (cfpMap natSucc natSucc),
+    cfpMap_snd, Category.assoc]
+
+/-- Post-composing `natPlus` with `natSucc` yields
+the catamorphism with `natSucc` as base:
+`natPlus ≫ natSucc =
+  p.elim natSucc (cfpSnd T T ≫ natSucc)`. -/
+theorem natPlus_natSucc :
+    natPlus ≫ natSucc =
+    p.elim (natSucc : p.T ⟶ p.T)
+      (cfpSnd p.T p.T ≫ natSucc) := by
+  unfold natPlus
+  rw [elim_algebra_morphism
+    (𝟙 p.T) (cfpSnd p.T p.T ≫ natSucc)
+    natSucc (cfpSnd p.T p.T ≫ natSucc)
+    natSucc_step_comm, Category.id_comp]
+
+/-- Adding a successor in the first argument:
+`natPlus(succ(m), n) = succ(natPlus(m, n))`. -/
+theorem natPlus_succ_left {D : C}
+    (a b : D ⟶ p.T) :
+    cfpLift (a ≫ natSucc) b ≫ natPlus =
+    (cfpLift a b ≫ natPlus) ≫
+      (natSucc : p.T ⟶ p.T) := by
+  have factor :
+      cfpLift (a ≫ natSucc) b =
+      cfpLift a b ≫
+        cfpMap natSucc (𝟙 p.T) := by
+    symm
+    apply cfpLift_uniq
+    · rw [Category.assoc, cfpMap_fst,
+        ← Category.assoc, cfpLift_fst]
+    · rw [Category.assoc, cfpMap_snd,
+        ← Category.assoc, cfpLift_snd,
+        Category.comp_id]
+  rw [factor, Category.assoc]
+  -- cfpMap natSucc (𝟙 T) ≫ natPlus =
+  -- natPlus ≫ natSucc
+  -- by elim_naturality + natPlus_natSucc.
+  unfold natPlus
+  rw [elim_naturality natSucc (𝟙 p.T)
+    (cfpSnd p.T p.T ≫ natSucc),
+    Category.comp_id,
+    ← natPlus_natSucc]
+  unfold natPlus
+  rw [Category.assoc]
+
 end GebLean
