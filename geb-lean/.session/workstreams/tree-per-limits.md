@@ -283,48 +283,63 @@ on the rest of the worklist still gives the same result as
 The documented path via `IsSeparator` + `HasBoolDichotomy`
 remains the recommended approach for `treeEq_ββ`.
 
-## `natTri_natSucc` progress
+## `natTri_natSucc` (proved)
 
-Intermediate results proved in `NatArith.lean`:
+The triangular number recurrence `natTri_natSucc` is proved in
+`NatArith.lean`. The proof uses:
 
-- `natTriStepSingle`: single-pair step `(i, s) ↦
-  (natSucc(i), natPlus(natSucc(i), s))`.
-- `natTriStep_factor`: `natTriStep = cfpSnd ≫
-  natTriStepSingle`.
-- `natTriHelper_β_factor`: step of `natTriHelper`
-  depends only on the right child:
-  `cfpMap (𝟙) p.β ≫ natTriHelper = cfpAssocSnd ≫
-  natTriHelper ≫ natTriStepSingle`.
-- `natTriStepSingle_natPlus`: `natTriStepSingle ≫
-  natPlus = cfpLift cfpFst natPlus ≫ natPlus ≫
-  natSucc ≫ natSucc`.
-- `natTriPlusStepSingle`, `natTriPlusCombinedStep`:
-  step morphisms for the combined state
-  `((index, tri), natPlus(index, tri))`.
-- `natTriPlus1_base`: base case for combined state.
-- `natTriPlus1_elim`: `cfpLift natTriHelper
-  (natTriHelper ≫ natPlus) = p.elim (cfpLift
-  (cfpLift p.ℓ p.ℓ) p.ℓ)
-  natTriPlusCombinedStep`.
+- `natTriStep_cfpFst`, `natTriStep_cfpFst_comm`:
+  step morphism composed with first projection.
+- `natTriHelper_cfpFst`: first projection of
+  `natTriHelper` equals `p.elim p.ℓ (cfpSnd ≫ natSucc)`,
+  via `elim_algebra_morphism`.
+- `natTriStepSingle_cfpSnd`: second projection of
+  `natTriStepSingle`.
+- `natTriHelper_natSucc`: evaluating `natTriHelper` at
+  `(*, succ(n))` equals evaluating at `(*, n)` then
+  applying `natTriStepSingle`. Factors through
+  `cfpMap (𝟙) p.β` and uses `natTriHelper_β_factor`
+  plus a cancellation lemma.
+- `natTri_natSucc` itself: derives from
+  `natTriHelper_natSucc` and `natTriStepSingle_cfpSnd`.
 
-Remaining for `natTri_natSucc`:
+The statement:
+`natSucc ≫ natTri = cfpLift
+  (cfpLift (cfpTerminalFrom T) (𝟙 T) ≫
+    natTriHelper ≫ cfpFst ≫ natSucc)
+  natTri ≫ natPlus`
 
-- [ ] `natTriPlus2_elim`: show that
-  `cfpLift natTriHelper (cfpLift (natTriHelper ≫
-  cfpSnd) cfpSnd ≫ natPlus)` equals the same
-  `p.elim`. Base case is straightforward. Step case
-  has the same structure as `natTriPlus1_elim` but
-  requires expanding `natPlus(X, p.β(...))` via
-  `natPlus_succ` and `natPlus_succ_left`.
-- [ ] Derive `natTriHelper ≫ natPlus = cfpLift
-  (natTriHelper ≫ cfpSnd) cfpSnd ≫ natPlus` by
-  projecting the snd component of
-  `natTriPlus1_elim.trans natTriPlus2_elim.symm`.
-- [ ] Derive `natTri_natSucc` from the above by
-  algebraic manipulation (factor `natSucc ≫ natTri`
-  through `cfpLift (cfpTerminalFrom T) natSucc ≫
-  natTriHelper ≫ cfpSnd`, apply
-  `natTriHelper_β_factor` and
-  `natTriStepSingle_natPlus`, use the
-  commutativity identity, and cancel `natSucc`
-  (which is mono by `natPred_natSucc`)).
+This says `tri(succ(n)) = natPlus(natSucc(index_n), tri(n))`
+where `index_n` is the first projection of `natTriHelper` at
+`(*, n)`.
+
+## `cantorPair_injective` and `treeEqG_ββ` (not yet proved)
+
+`cantorPair_injective` states:
+`natEq(cantorPair(a,b), cantorPair(c,d)) =
+  boolAnd(natEq(a,c), natEq(b,d))`
+
+This requires a full number-theoretic argument about
+the triangular number function:
+
+1. `cantorPair(m,n) = tri(m+n) + m`. Equal pairs
+   implies equal diagonals (`m+n = c+d`) by the gap
+   property of triangular numbers.
+2. Equal diagonals plus equal Cantor values implies
+   `m = c` (by `natPlus_cancel_right`).
+3. `m = c` and `m+n = c+d` implies `n = d`.
+
+Step 1 requires proving that `natTri` is "injective
+enough": if `tri(s) + a = tri(t) + c` with `a ≤ s`
+and `c ≤ t`, then `s = t`. The standard argument uses
+`tri(k+1) - tri(k) = k+1 > k ≥ a`, which in the
+categorical setting requires:
+
+- Order/comparison on right-spine naturals
+- Properties of truncated subtraction with `natTri`
+- Case analysis (possibly via `IsSeparator` +
+  `HasBoolDichotomy`)
+
+`treeEqG_ββ` depends on `cantorPair_injective`.
+The existing `treeEqG_ββ_reduce` already reduces the
+LHS to comparing Cantor-paired values via `natEq`.

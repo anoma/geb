@@ -1469,4 +1469,199 @@ private theorem natTriPlus2_base :
       Category.id_comp]
   rw [hfst, hsnd, natPlus_ℓℓ]
 
+/-- The step morphism `natTriStep` composed with
+`cfpFst` extracts the right child's first component
+and applies `natSucc`. -/
+private theorem natTriStep_cfpFst :
+    natTriStep ≫ cfpFst p.T p.T =
+    cfpSnd (cfpProd p.T p.T)
+      (cfpProd p.T p.T) ≫
+      cfpFst p.T p.T ≫ natSucc := by
+  unfold natTriStep
+  rw [cfpLift_fst]
+
+/-- The commutativity condition for projecting the
+first component of `natTriHelper` via
+`elim_algebra_morphism`. -/
+private theorem natTriStep_cfpFst_comm :
+    cfpMap (cfpFst p.T p.T)
+        (cfpFst p.T p.T) ≫
+      (cfpSnd p.T p.T ≫ natSucc) =
+    natTriStep ≫ cfpFst p.T p.T := by
+  rw [natTriStep_cfpFst,
+    ← Category.assoc, cfpMap_snd,
+    Category.assoc]
+
+/-- The first projection of `natTriHelper` is the
+parameterized identity catamorphism:
+`natTriHelper ≫ cfpFst =
+  p.elim p.ℓ (cfpSnd ≫ natSucc)`. -/
+private theorem natTriHelper_cfpFst :
+    natTriHelper ≫ cfpFst p.T p.T =
+    p.elim p.ℓ
+      (cfpSnd p.T p.T ≫ natSucc) := by
+  unfold natTriHelper
+  rw [elim_algebra_morphism
+    (cfpLift p.ℓ p.ℓ)
+    natTriStep
+    (cfpFst p.T p.T)
+    (cfpSnd p.T p.T ≫ natSucc)
+    natTriStep_cfpFst_comm,
+    cfpLift_fst]
+
+/-- The second projection of `natTriStepSingle`
+yields `natPlus(natSucc(fst), snd)`:
+`natTriStepSingle ≫ cfpSnd =
+  cfpLift (cfpFst ≫ natSucc) cfpSnd ≫ natPlus`.
+-/
+private theorem natTriStepSingle_cfpSnd :
+    natTriStepSingle ≫ cfpSnd p.T p.T =
+    cfpLift
+      (cfpFst p.T p.T ≫ natSucc)
+      (cfpSnd p.T p.T) ≫
+      natPlus := by
+  unfold natTriStepSingle
+  rw [cfpLift_snd]
+
+/-- Evaluating `natTriHelper` at a successor
+input:
+`cfpLift (cfpTerminalFrom T) natSucc ≫
+  natTriHelper =
+  cfpLift (cfpTerminalFrom T) (𝟙 T) ≫
+  natTriHelper ≫ natTriStepSingle`. -/
+private theorem natTriHelper_natSucc :
+    cfpLift (cfpTerminalFrom p.T)
+      (natSucc : p.T ⟶ p.T) ≫
+      natTriHelper =
+    cfpLift (cfpTerminalFrom p.T) (𝟙 p.T) ≫
+      natTriHelper ≫
+      (natTriStepSingle :
+        cfpProd p.T p.T ⟶
+          cfpProd p.T p.T) := by
+  -- Factor through cfpMap (𝟙) p.β then use
+  -- natTriHelper_β_factor.
+  have factor1 :
+      cfpLift (cfpTerminalFrom p.T)
+        (natSucc : p.T ⟶ p.T) =
+      cfpLift (cfpTerminalFrom p.T) (𝟙 p.T) ≫
+        cfpMap (𝟙 cfpTerminal) natSucc := by
+    symm
+    apply cfpLift_uniq
+    · rw [Category.assoc, cfpMap_fst,
+        Category.comp_id, cfpLift_fst]
+    · rw [Category.assoc, cfpMap_snd,
+        ← Category.assoc, cfpLift_snd,
+        Category.id_comp]
+  set rhs2 :=
+    cfpMap (𝟙 cfpTerminal)
+      (cfpLift (cfpTerminalFrom p.T ≫ p.ℓ)
+        (𝟙 p.T)) ≫
+      cfpMap (𝟙 cfpTerminal) p.β
+  have factor2_fst :
+      cfpMap (𝟙 cfpTerminal)
+        (natSucc : p.T ⟶ p.T) ≫
+        cfpFst cfpTerminal p.T =
+      rhs2 ≫ cfpFst cfpTerminal p.T := by
+    simp only [rhs2]
+    rw [cfpMap_fst, Category.comp_id,
+      Category.assoc, cfpMap_fst,
+      Category.comp_id, cfpMap_fst,
+      Category.comp_id]
+  have factor2_snd :
+      cfpMap (𝟙 cfpTerminal)
+        (natSucc : p.T ⟶ p.T) ≫
+        cfpSnd cfpTerminal p.T =
+      rhs2 ≫ cfpSnd cfpTerminal p.T := by
+    simp only [rhs2]
+    rw [cfpMap_snd,
+      Category.assoc, cfpMap_snd,
+      ← Category.assoc, cfpMap_snd]
+    unfold natSucc
+    simp only [Category.assoc]
+  have factor2 :
+      cfpMap (𝟙 cfpTerminal)
+        (natSucc : p.T ⟶ p.T) = rhs2 :=
+    (cfpLift_uniq _ _ _
+      factor2_fst factor2_snd).trans
+      (cfpLift_uniq _ _ _
+        (by rfl) (by rfl)).symm
+  have factor3 :
+      cfpMap (𝟙 cfpTerminal)
+        (cfpLift
+          (cfpTerminalFrom p.T ≫ p.ℓ)
+          (𝟙 p.T)) ≫
+        cfpAssocSnd cfpTerminal p.T p.T =
+      𝟙 (cfpProd cfpTerminal p.T) := by
+    set m3 :=
+      cfpMap (𝟙 cfpTerminal)
+        (cfpLift
+          (cfpTerminalFrom p.T ≫ p.ℓ)
+          (𝟙 p.T)) ≫
+        cfpAssocSnd cfpTerminal p.T p.T
+    have hfst :
+        m3 ≫ cfpFst cfpTerminal p.T =
+        cfpFst cfpTerminal p.T := by
+      simp only [m3]
+      unfold cfpAssocSnd
+      simp only [Category.assoc]
+      rw [cfpLift_fst, cfpMap_fst,
+        Category.comp_id]
+    have hsnd :
+        m3 ≫ cfpSnd cfpTerminal p.T =
+        cfpSnd cfpTerminal p.T := by
+      simp only [m3]
+      unfold cfpAssocSnd
+      simp only [Category.assoc]
+      rw [cfpLift_snd, ← Category.assoc,
+        cfpMap_snd, Category.assoc,
+        cfpLift_snd, Category.comp_id]
+    exact (cfpLift_uniq _ _ _ hfst hsnd).trans
+      (cfpLift_uniq _ _ (𝟙 _)
+        (Category.id_comp _)
+        (Category.id_comp _)).symm
+  rw [factor1, Category.assoc, factor2]
+  simp only [rhs2, Category.assoc]
+  rw [natTriHelper_β_factor]
+  -- Goal: ... ≫ cfpMap ≫ cfpAssocSnd ≫
+  --   natTriHelper ≫ natTriStepSingle = ...
+  congr 1
+  rw [← Category.assoc, ← Category.assoc,
+    factor3, Category.id_comp]
+
+/-- Triangular number recurrence:
+`tri(succ(n)) =
+  natPlus(natSucc(natTriHelper_fst(n)), tri(n))`.
+Expressed via the full `natTriHelper` state:
+`natSucc ≫ natTri =
+  cfpLift
+    (cfpLift (cfpTerminalFrom T) (𝟙 T) ≫
+      natTriHelper ≫ cfpFst ≫ natSucc)
+    natTri ≫ natPlus`. -/
+theorem natTri_natSucc :
+    natSucc ≫ natTri =
+    cfpLift
+      (cfpLift (cfpTerminalFrom p.T) (𝟙 p.T) ≫
+        natTriHelper ≫
+        cfpFst p.T p.T ≫ natSucc)
+      (natTri : p.T ⟶ p.T) ≫
+      natPlus := by
+  have step1 :
+      natSucc ≫
+        cfpLift (cfpTerminalFrom p.T)
+          (𝟙 p.T) =
+      cfpLift (cfpTerminalFrom p.T)
+        natSucc := by
+    rw [cfpLift_precomp, Category.comp_id]
+    congr 1
+    exact h.terminal.uniq _
+  unfold natTri
+  rw [← Category.assoc, ← Category.assoc,
+    step1, natTriHelper_natSucc]
+  simp only [Category.assoc]
+  rw [natTriStepSingle_cfpSnd]
+  simp only [← Category.assoc]
+  congr 1
+  simp only [Category.assoc]
+  rw [cfpLift_precomp, cfpLift_precomp]
+
 end GebLean
