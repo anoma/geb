@@ -1664,4 +1664,57 @@ theorem natTri_natSucc :
   simp only [Category.assoc]
   rw [cfpLift_precomp, cfpLift_precomp]
 
+/-- Normalization to right-spine form: replaces all
+left children with leaf, keeping only the right
+spine.
+`toRSpineNat(leaf) = leaf`,
+`toRSpineNat(branch(l, r)) =
+  branch(leaf, toRSpineNat(r))`. -/
+def toRSpineNat : p.T ⟶ p.T :=
+  cfpLift (cfpTerminalFrom p.T) (𝟙 p.T) ≫
+    p.elim p.ℓ
+      (cfpLift (cfpTerminalFrom (cfpProd p.T p.T) ≫
+          p.ℓ)
+        (cfpSnd p.T p.T) ≫ p.β)
+
+/-- Leaf computation rule for `toRSpineNat`:
+`toRSpineNat(leaf) = leaf`. -/
+theorem toRSpineNat_ℓ :
+    p.ℓ ≫ toRSpineNat =
+    (p.ℓ : cfpTerminal (C := C) ⟶ p.T) := by
+  unfold toRSpineNat
+  rw [← Category.assoc, cfpLift_precomp,
+    Category.comp_id]
+  have h1 : p.ℓ ≫ cfpTerminalFrom p.T =
+      cfpTerminalFrom cfpTerminal :=
+    h.terminal.uniq _
+  rw [h1]
+  have h2 :
+      cfpLift (cfpTerminalFrom cfpTerminal) p.ℓ =
+      cfpInsertSnd p.ℓ cfpTerminal := by
+    unfold cfpInsertSnd
+    congr 1
+    · exact cfpTerminalFrom_terminal
+    · rw [cfpTerminalFrom_terminal,
+        Category.id_comp]
+  rw [h2, p.elim_ℓ]
+
+/-- `p.β ≫ cfpLift (cfpTerminalFrom T) (𝟙 T)`
+factors through `cfpMap (𝟙 cfpTerminal) p.β`. -/
+private theorem β_embed_factor :
+    p.β ≫
+      cfpLift (cfpTerminalFrom p.T) (𝟙 p.T) =
+    cfpLift (cfpTerminalFrom (cfpProd p.T p.T))
+        (𝟙 (cfpProd p.T p.T)) ≫
+      cfpMap (𝟙 cfpTerminal) p.β := by
+  rw [cfpLift_precomp, Category.comp_id]
+  unfold cfpMap
+  rw [cfpLift_precomp]
+  congr 1
+  · rw [← Category.assoc, cfpLift_fst,
+      Category.comp_id]
+    exact h.terminal.uniq _
+  · rw [← Category.assoc, cfpLift_snd,
+      Category.id_comp]
+
 end GebLean
