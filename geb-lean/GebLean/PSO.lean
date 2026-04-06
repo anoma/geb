@@ -277,4 +277,47 @@ instance (priority := 100) pstoToHasPSO
     [p : HasPSTO C] : HasPSO C p.T where
   L := p.T
 
+section PBTO_to_PSTO
+
+variable [p : HasPBTO C]
+
+/-- Base morphism for the PBTO-to-PSTO enriched
+catamorphism: `a ↦ (ℓ, f(a))`. -/
+private def pstoBase {A X : C} (f : A ⟶ X) :
+    A ⟶ cfpProd p.T X :=
+  cfpLift (cfpTerminalFrom A ≫ p.ℓ) f
+
+/-- Step morphism for the PBTO-to-PSTO enriched
+catamorphism: `((t₁, x₁), (t₂, x₂)) ↦
+(β(t₁, t₂), g(x₁, t₂))`.  The left pair
+provides the recursive result `x₁` on the
+accumulated snoclist, and the right pair provides
+the element `t₂` as data. -/
+private def pstoStep {X : C}
+    (g : cfpProd X p.T ⟶ X) :
+    cfpProd (cfpProd p.T X) (cfpProd p.T X) ⟶
+      cfpProd p.T X :=
+  let TX := cfpProd p.T X
+  let t1 : cfpProd TX TX ⟶ p.T :=
+    cfpFst TX TX ≫ cfpFst p.T X
+  let x1 : cfpProd TX TX ⟶ X :=
+    cfpFst TX TX ≫ cfpSnd p.T X
+  let t2 : cfpProd TX TX ⟶ p.T :=
+    cfpSnd TX TX ≫ cfpFst p.T X
+  cfpLift
+    (cfpLift t1 t2 ≫ p.β)
+    (cfpLift x1 t2 ≫ g)
+
+/-- PSO elimination derived from the PBTO
+catamorphism on the enriched carrier `T × X`:
+the second projection of
+`p.elim (pstoBase f) (pstoStep g)`. -/
+private def pstoElim {A X : C}
+    (f : A ⟶ X) (g : cfpProd X p.T ⟶ X) :
+    cfpProd A p.T ⟶ X :=
+  p.elim (pstoBase f) (pstoStep g) ≫
+    cfpSnd p.T X
+
+end PBTO_to_PSTO
+
 end GebLean
