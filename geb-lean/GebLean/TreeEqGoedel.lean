@@ -116,4 +116,47 @@ theorem treeEqG_ℓβ :
   rw [step, reassoc]
   exact natEq_ℓ_succ _
 
+/-- Branch-leaf computation rule for `treeEqG`:
+`treeEqG(β(a, b), ℓ) = treeFalse`. -/
+theorem treeEqG_βℓ :
+    cfpMap p.β p.ℓ ≫ treeEqG =
+    cfpTerminalFrom _ ≫
+      (treeFalse : cfpTerminal (C := C) ⟶ p.T)
+      := by
+  unfold treeEqG
+  rw [← Category.assoc, cfpMap_comp,
+    treeToNat_β, treeToNat_ℓ]
+  -- Rewrite cfpMap form to cfpLift for
+  -- natEq_succ_ℓ.
+  -- cfpMap f g ≫ natEq where f = ... ≫ natSucc
+  -- and g = p.ℓ.
+  -- Use cfpLift_cfpMap in reverse: factor through
+  -- cfpFst/cfpSnd, then apply natEq_succ_ℓ.
+  -- cfpMap f p.ℓ = cfpLift (cfpFst ≫ f)
+  --   (cfpSnd ≫ p.ℓ).
+  -- cfpSnd _ cfpTerminal = cfpTerminalFrom _ (by
+  -- terminal uniqueness), so cfpSnd ≫ p.ℓ =
+  -- cfpTerminalFrom _ ≫ p.ℓ.
+  have step :
+      cfpMap
+        (cfpMap treeToNat treeToNat ≫
+          cantorPair ≫ natSucc)
+        (p.ℓ : cfpTerminal (C := C) ⟶ p.T) ≫
+        natEq =
+      cfpLift
+        ((cfpFst (cfpProd p.T p.T)
+          cfpTerminal ≫
+          cfpMap treeToNat treeToNat ≫
+          cantorPair) ≫ natSucc)
+        (cfpTerminalFrom _ ≫ p.ℓ) ≫ natEq := by
+    congr 1
+    unfold cfpMap
+    apply cfpLift_uniq
+    · rw [cfpLift_fst]
+      simp only [Category.assoc]
+    · rw [cfpLift_snd]
+      congr 1; exact h.terminal.uniq _
+  rw [step]
+  exact natEq_succ_ℓ _
+
 end GebLean
