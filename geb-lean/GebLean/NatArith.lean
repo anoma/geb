@@ -1717,4 +1717,252 @@ private theorem β_embed_factor :
   · rw [← Category.assoc, cfpLift_snd,
       Category.id_comp]
 
+/-- Branch computation rule for `toRSpineNat`:
+`toRSpineNat(branch(l, r)) =
+  branch(leaf, toRSpineNat(r))`. -/
+theorem toRSpineNat_β :
+    p.β ≫ toRSpineNat =
+    cfpLift
+      (cfpTerminalFrom (cfpProd p.T p.T) ≫ p.ℓ)
+      (cfpSnd p.T p.T ≫ toRSpineNat) ≫
+      p.β := by
+  unfold toRSpineNat
+  rw [← Category.assoc, β_embed_factor]
+  simp only [Category.assoc]
+  rw [p.elim_β]
+  -- Both sides end with ≫ β; suffices to show the
+  -- pairs agree.
+  rw [← Category.assoc, ← Category.assoc]
+  congr 1
+  apply cfpLift_uniq
+  · -- First component: ≫ cfpFst = cfpTerminalFrom ≫ ℓ.
+    rw [Category.assoc, cfpLift_fst,
+      ← Category.assoc]
+    congr 1
+    exact h.terminal.uniq _
+  · -- Second component.
+    rw [Category.assoc, cfpLift_snd,
+      Category.assoc]
+    unfold cfpLiftAssoc
+    rw [cfpLift_snd]
+    unfold cfpAssocSnd
+    -- Goal: L ≫ cfpLift (cfpFst) (cfpSnd ≫ cfpSnd)
+    --   ≫ E = cfpSnd ≫ embed ≫ E.
+    rw [← Category.assoc, ← Category.assoc]
+    congr 1
+    -- Prove both sides equal
+    -- cfpLift (cfpTerminalFrom _) (cfpSnd T T).
+    have lhs_eq :
+        cfpLift
+            (cfpTerminalFrom (cfpProd p.T p.T))
+            (𝟙 (cfpProd p.T p.T)) ≫
+          cfpLift
+            (cfpFst cfpTerminal
+              (cfpProd p.T p.T))
+            (cfpSnd cfpTerminal
+                (cfpProd p.T p.T) ≫
+              cfpSnd p.T p.T) =
+        cfpLift
+          (cfpTerminalFrom (cfpProd p.T p.T))
+          (cfpSnd p.T p.T) := by
+      rw [cfpLift_precomp]
+      apply cfpLift_uniq
+      · simp only [cfpLift_fst,
+          ← Category.assoc, cfpLift_snd,
+          Category.id_comp]
+      · rw [← Category.assoc]
+        simp only [cfpLift_snd]
+        rw [Category.id_comp]
+    have rhs_eq :
+        cfpSnd p.T p.T ≫
+          cfpLift (cfpTerminalFrom p.T)
+            (𝟙 p.T) =
+        cfpLift
+          (cfpTerminalFrom (cfpProd p.T p.T))
+          (cfpSnd p.T p.T) := by
+      rw [cfpLift_precomp, Category.comp_id]
+      congr 1
+      exact h.terminal.uniq _
+    rw [lhs_eq, rhs_eq]
+
+/-- The step function for the `isRSpineNat`
+paramorphism.  Given `(*, ((l, r), (res_l, res_r)))`,
+returns `boolAnd(isLeafEndo(l), res_r)`. -/
+private def isRSpineNatStep :
+    cfpProd cfpTerminal
+      (cfpProd (cfpProd p.T p.T)
+        (cfpProd p.T p.T)) ⟶ p.T :=
+  cfpLift
+    (cfpSnd cfpTerminal _ ≫
+      cfpFst (cfpProd p.T p.T) (cfpProd p.T p.T) ≫
+      cfpFst p.T p.T ≫ isLeafEndo)
+    (cfpSnd cfpTerminal _ ≫
+      cfpSnd (cfpProd p.T p.T) (cfpProd p.T p.T) ≫
+      cfpSnd p.T p.T) ≫
+    boolAnd
+
+/-- Boolean predicate: returns `p.ℓ` (leaf = true)
+when the input is a right-spine natural number,
+`treeFalse` otherwise.  Defined as a paramorphism
+so the step can inspect the left subtree directly. -/
+def isRSpineNat : p.T ⟶ p.T :=
+  cfpLift (cfpTerminalFrom p.T) (𝟙 p.T) ≫
+    paraElim p.ℓ isRSpineNatStep
+
+/-- Leaf computation rule for `isRSpineNat`:
+`isRSpineNat(leaf) = leaf`. -/
+theorem isRSpineNat_ℓ :
+    p.ℓ ≫ isRSpineNat =
+    (p.ℓ : cfpTerminal (C := C) ⟶ p.T) := by
+  unfold isRSpineNat
+  rw [← Category.assoc, cfpLift_precomp,
+    Category.comp_id]
+  have h1 : p.ℓ ≫ cfpTerminalFrom p.T =
+      cfpTerminalFrom cfpTerminal :=
+    h.terminal.uniq _
+  rw [h1]
+  have h2 :
+      cfpLift (cfpTerminalFrom cfpTerminal) p.ℓ =
+      cfpInsertSnd p.ℓ cfpTerminal := by
+    unfold cfpInsertSnd
+    congr 1
+    · exact cfpTerminalFrom_terminal
+    · rw [cfpTerminalFrom_terminal,
+        Category.id_comp]
+  rw [h2, paraElim_ℓ]
+
+def IsRSpineNatValued {D : C} (m : D ⟶ p.T) :
+    Prop :=
+  m ≫ isRSpineNat = cfpTerminalFrom D ≫ p.ℓ
+
+def IsRSpineNatNorm {D : C} (m : D ⟶ p.T) :
+    Prop :=
+  m ≫ toRSpineNat = m
+
+/-- Leaf is right-spine-nat-valued. -/
+theorem ℓ_isRSpineNatValued :
+    IsRSpineNatValued
+    (p.ℓ : cfpTerminal (C := C) ⟶ p.T) := by
+  unfold IsRSpineNatValued
+  rw [isRSpineNat_ℓ, cfpTerminalFrom_terminal,
+    Category.id_comp]
+
+/-- Leaf is right-spine-nat-normalized. -/
+theorem ℓ_isRSpineNatNorm :
+    IsRSpineNatNorm
+    (p.ℓ : cfpTerminal (C := C) ⟶ p.T) := by
+  unfold IsRSpineNatNorm
+  exact toRSpineNat_ℓ
+
+/-- `toRSpineNat` is idempotent. -/
+theorem toRSpineNat_idem :
+    toRSpineNat ≫ toRSpineNat =
+    (toRSpineNat : p.T ⟶ p.T) := by
+  have embed_snd :
+      cfpLift (cfpTerminalFrom p.T) (𝟙 p.T) ≫
+        cfpSnd cfpTerminal p.T = 𝟙 p.T :=
+    cfpLift_snd _ _
+  -- Auxiliary: cfpSnd ≫ toRSN and
+  -- cfpSnd ≫ toRSN ≫ toRSN both equal
+  -- p.elim ℓ step.
+  -- Shared step lemma: for any φ : T ⟶ T with
+  -- ℓ ≫ φ = ℓ and β ≫ φ = cfpLift ... (cfpSnd ≫ φ) ≫ β,
+  -- show cfpSnd ≫ φ = p.elim ℓ step.
+  have snd_elim :
+      ∀ (φ : p.T ⟶ p.T),
+      p.ℓ ≫ φ = p.ℓ →
+      (p.β ≫ φ =
+        cfpLift
+          (cfpTerminalFrom
+            (cfpProd p.T p.T) ≫ p.ℓ)
+          (cfpSnd p.T p.T ≫ φ) ≫ p.β) →
+      cfpSnd cfpTerminal p.T ≫ φ =
+        p.elim p.ℓ
+          (cfpLift
+            (cfpTerminalFrom
+              (cfpProd p.T p.T) ≫ p.ℓ)
+            (cfpSnd p.T p.T) ≫ p.β) := by
+    intro φ hℓ hβ
+    apply p.elim_uniq
+    · unfold cfpInsertSnd
+      rw [← Category.assoc, cfpLift_snd,
+        Category.assoc,
+        @cfpTerminalFrom_terminal C _ h,
+        Category.id_comp, hℓ]
+    · rw [← Category.assoc, cfpMap_snd,
+        Category.assoc, hβ,
+        ← Category.assoc, ← Category.assoc]
+      congr 1
+      -- Both sides : cfpProd 1 (T×T) ⟶ T×T.
+      -- Show projections agree.
+      -- LHS = cfpSnd ≫ cfpLift F (cfpSnd ≫ φ)
+      --   = cfpLift (cfpSnd ≫ F) (cfpSnd ≫ cfpSnd ≫ φ)
+      -- RHS = cfpLiftAssoc (cfpSnd ≫ φ)
+      --   (cfpSnd ≫ φ) ≫ cfpLift F (cfpSnd)
+      -- After expanding cfpLiftAssoc, both have fst =
+      -- cfpTerminalFrom ≫ ℓ and snd = cfpSnd ≫ cfpSnd ≫ φ.
+      -- Prove by showing projections agree.
+      rw [cfpLift_precomp]
+      symm
+      apply cfpLift_uniq
+      · rw [Category.assoc, cfpLift_fst,
+          ← Category.assoc, ← Category.assoc]
+        have hlhs : cfpLiftAssoc
+            (cfpSnd cfpTerminal p.T ≫ φ)
+            (cfpSnd cfpTerminal p.T ≫ φ) ≫
+            cfpTerminalFrom
+              (cfpProd p.T p.T) =
+          cfpTerminalFrom _ :=
+          h.terminal.uniq _
+        have hrhs : cfpSnd cfpTerminal
+            (cfpProd p.T p.T) ≫
+            cfpTerminalFrom
+              (cfpProd p.T p.T) =
+          cfpTerminalFrom _ :=
+          h.terminal.uniq _
+        rw [hlhs, hrhs]
+      · rw [Category.assoc, cfpLift_snd]
+        unfold cfpLiftAssoc
+        rw [← Category.assoc, cfpLift_snd]
+        unfold cfpAssocSnd
+        rw [← Category.assoc, cfpLift_snd,
+          Category.assoc]
+  have snd_toRSN :=
+    snd_elim toRSpineNat toRSpineNat_ℓ
+      toRSpineNat_β
+  have snd_toRSN2 :=
+    snd_elim (toRSpineNat ≫ toRSpineNat)
+      (by rw [← Category.assoc,
+          toRSpineNat_ℓ, toRSpineNat_ℓ])
+      (by
+        rw [← Category.assoc, toRSpineNat_β,
+          Category.assoc, toRSpineNat_β,
+          ← Category.assoc]
+        congr 1
+        rw [cfpLift_precomp]
+        apply cfpLift_uniq
+        · rw [cfpLift_fst, ← Category.assoc]
+          congr 1
+          exact h.terminal.uniq _
+        · rw [cfpLift_snd,
+            ← Category.assoc, cfpLift_snd,
+            Category.assoc])
+  calc toRSpineNat ≫ toRSpineNat
+      = cfpLift (cfpTerminalFrom p.T)
+          (𝟙 p.T) ≫
+        cfpSnd cfpTerminal p.T ≫
+        toRSpineNat ≫ toRSpineNat := by
+        rw [← Category.assoc
+          (cfpLift _ _) (cfpSnd _ _),
+          embed_snd, Category.id_comp]
+    _ = cfpLift (cfpTerminalFrom p.T)
+          (𝟙 p.T) ≫
+        cfpSnd cfpTerminal p.T ≫
+        toRSpineNat := by
+        congr 1
+        exact snd_toRSN2.trans snd_toRSN.symm
+    _ = toRSpineNat := by
+        rw [← Category.assoc, embed_snd,
+          Category.id_comp]
+
 end GebLean
