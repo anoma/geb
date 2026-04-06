@@ -70,4 +70,50 @@ theorem treeEqG_ℓℓ :
     treeToNat_ℓ]
   exact natEq_refl_ℓ
 
+/-- Leaf-branch computation rule for `treeEqG`:
+`treeEqG(ℓ, β(a, b)) = treeFalse`. -/
+theorem treeEqG_ℓβ :
+    cfpMap p.ℓ p.β ≫ treeEqG =
+    cfpTerminalFrom _ ≫
+      (treeFalse : cfpTerminal (C := C) ⟶ p.T)
+      := by
+  unfold treeEqG
+  rw [← Category.assoc, cfpMap_comp,
+    treeToNat_ℓ, treeToNat_β]
+  -- Goal: cfpMap p.ℓ
+  --   (cfpMap treeToNat treeToNat ≫ cantorPair ≫
+  --     natSucc) ≫ natEq
+  --   = cfpTerminalFrom _ ≫ treeFalse
+  -- Convert cfpMap into cfpLift form to apply
+  -- natEq_ℓ_succ.
+  -- Convert cfpMap form to cfpLift form.
+  have step :
+      cfpMap (p.ℓ : cfpTerminal (C := C) ⟶ p.T)
+        (cfpMap treeToNat treeToNat ≫
+          cantorPair ≫ natSucc) =
+      cfpLift
+        (cfpTerminalFrom
+          (cfpProd cfpTerminal
+            (cfpProd p.T p.T)) ≫ p.ℓ)
+        (cfpSnd cfpTerminal (cfpProd p.T p.T) ≫
+          cfpMap treeToNat treeToNat ≫
+          cantorPair ≫ natSucc) := by
+    unfold cfpMap
+    apply cfpLift_uniq
+    · rw [cfpLift_fst]
+      congr 1; exact h.terminal.uniq _
+    · rw [cfpLift_snd]
+  -- Reassociate second component so natSucc is
+  -- the outermost composition.
+  have reassoc :
+      cfpSnd cfpTerminal (cfpProd p.T p.T) ≫
+        cfpMap treeToNat treeToNat ≫
+        cantorPair ≫ natSucc =
+      (cfpSnd cfpTerminal (cfpProd p.T p.T) ≫
+        cfpMap treeToNat treeToNat ≫
+        cantorPair) ≫ natSucc := by
+    simp only [Category.assoc]
+  rw [step, reassoc]
+  exact natEq_ℓ_succ _
+
 end GebLean
