@@ -33,10 +33,10 @@ for the implementation plan.
 
 ### Phase 1: PSO and PSTO
 
-- [ ] Define `cfpLiftRecElem` helper in `PSO.lean`
-- [ ] Define `IsPSO B L` class
-- [ ] Define `HasPSO B`, `IsPSTO T`, `HasPSTO`
-- [ ] Show PSO(1) corresponds to PNNO
+- [x] Define `cfpLiftRecElem` helper in `PSO.lean`
+- [x] Define `IsPSO B L` class
+- [x] Define `HasPSO B`, `IsPSTO T`, `HasPSTO`
+- [x] Show PSO(1) corresponds to PNNO
 
 ### Phase 2: PBTO <-> PSTO
 

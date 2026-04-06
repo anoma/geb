@@ -1,3 +1,4 @@
+import GebLean.EqualizerCompletionLimits
 import GebLean.LawvereBT
 
 /-!
@@ -116,6 +117,158 @@ class HasPSTO (C : Type u) [Category.{v} C]
   [isPSTO : IsPSTO C T]
 
 attribute [reducible, instance] HasPSTO.isPSTO
+
+section PSO_Terminal_NNO
+
+variable [nno : HasNNO C]
+
+omit nno in
+private theorem cfpMap_id_fst_eq_assocFst
+    (A B D : C) :
+    cfpMap (𝟙 A) (cfpFst B D) =
+      cfpAssocFst A B D := by
+  unfold cfpMap cfpAssocFst
+  congr 1
+  exact Category.comp_id
+    (cfpFst A (cfpProd B D))
+
+omit nno in
+private theorem cfpMap_id_fst_comp
+    {A B D B' : C} (f : B ⟶ B') :
+    cfpMap (𝟙 A) (cfpFst B D ≫ f) =
+      cfpAssocFst A B D ≫
+        cfpMap (𝟙 A) f := by
+  symm
+  apply cfpLift_uniq
+  · rw [Category.assoc, cfpMap_fst,
+      ← Category.assoc,
+      show cfpAssocFst A B D ≫
+          cfpFst A B =
+        cfpFst A (cfpProd B D) from
+        cfpLift_fst _ _]
+  · rw [Category.assoc, cfpMap_snd,
+      ← Category.assoc,
+      show cfpAssocFst A B D ≫
+          cfpSnd A B =
+        cfpSnd A (cfpProd B D) ≫
+          cfpFst B D from
+        cfpLift_snd _ _,
+      Category.assoc]
+
+private theorem nnoToIsPSO_elim_uniq_step
+    {A X : C} (φ : cfpProd A nno.N ⟶ X)
+    (g : cfpProd X cfpTerminal ⟶ X)
+    (hsnoc :
+      cfpMap (𝟙 A)
+        (cfpFst nno.N cfpTerminal ≫ nno.s) ≫
+        φ =
+      cfpLiftRecElem φ ≫ g) :
+    cfpMap (𝟙 A) nno.s ≫ φ =
+      φ ≫ (cfpLift (𝟙 X)
+        (cfpTerminalFrom X) ≫ g) := by
+  set ι := cfpMap (𝟙 A)
+    (cfpInsertSnd (𝟙 cfpTerminal) nno.N)
+  -- Step 1: ι ≫ LHS of hsnoc = cfpMap (𝟙 A) s ≫ φ
+  have hlhs : ι ≫
+      cfpMap (𝟙 A)
+        (cfpFst nno.N cfpTerminal ≫ nno.s) ≫
+        φ =
+      cfpMap (𝟙 A) nno.s ≫ φ := by
+    rw [← Category.assoc]
+    congr 1
+    -- Goal: ι ≫ cfpMap (𝟙 A) (fst ≫ s)
+    --   = cfpMap (𝟙 A) s
+    simp only [ι]
+    rw [cfpMap_comp, Category.id_comp]
+    congr 1
+    unfold cfpInsertSnd
+    rw [← Category.assoc, cfpLift_fst,
+      Category.id_comp]
+  -- Step 2: ι ≫ RHS of hsnoc
+  --   = φ ≫ cfpLift (𝟙 X) (cfpTerminalFrom X) ≫ g
+  have hrhs : ι ≫ cfpLiftRecElem φ ≫ g =
+      φ ≫ (cfpLift (𝟙 X)
+        (cfpTerminalFrom X) ≫ g) := by
+    rw [← Category.assoc, ← Category.assoc]
+    congr 1
+    -- Goal: ι ≫ cfpLiftRecElem φ
+    --   = φ ≫ cfpLift (𝟙 X) (cfpTerminalFrom X)
+    -- Rewrite RHS using cfpLift_precomp
+    rw [cfpLift_precomp, Category.comp_id]
+    -- RHS is now cfpLift φ (φ ≫ cfpTerminalFrom X)
+    -- Rewrite LHS
+    unfold cfpLiftRecElem
+    rw [cfpLift_precomp]
+    -- Now both sides are cfpLift
+    congr 1
+    · -- fst component:
+      --   ι ≫ cfpAssocFst A N 1 ≫ φ = φ
+      rw [← Category.assoc,
+        ← cfpMap_id_fst_eq_assocFst]
+      simp only [ι]
+      rw [cfpMap_comp, Category.id_comp]
+      unfold cfpInsertSnd
+      rw [cfpLift_fst, cfpMap_id,
+        Category.id_comp]
+    · -- snd component: both to cfpTerminal
+      rw [h.terminal.uniq
+        (ι ≫ (cfpSnd A (cfpProd nno.N
+          cfpTerminal) ≫
+          cfpSnd nno.N cfpTerminal)),
+        h.terminal.uniq
+          (φ ≫ cfpTerminalFrom X)]
+  rw [← hlhs, hsnoc, hrhs]
+
+instance nnoToIsPSO :
+    IsPSO C (cfpTerminal (h := h)) nno.N where
+  nil := nno.z
+  snoc := cfpFst nno.N cfpTerminal ≫ nno.s
+  elim := fun {A X} f g =>
+    nno.elim f
+      (cfpLift (𝟙 X) (cfpTerminalFrom X) ≫ g)
+  elim_nil := fun f g => nno.elim_z f _
+  elim_snoc := fun {A X} f g => by
+    set g' := cfpLift (𝟙 X)
+      (cfpTerminalFrom X) ≫ g
+    set φ := nno.elim f g'
+    -- Rewrite cfpMap (𝟙 A) (fst ≫ s) using
+    -- cfpMap_id_fst_comp
+    rw [cfpMap_id_fst_comp nno.s,
+      Category.assoc,
+      nno.elim_s f g']
+    -- Goal: cfpAssocFst ≫ φ ≫ g'
+    --   = cfpLiftRecElem φ ≫ g
+    -- where g' = cfpLift (𝟙 X) (term X) ≫ g
+    simp only [g']
+    rw [← Category.assoc φ
+      (cfpLift (𝟙 X) (cfpTerminalFrom X)) g,
+      ← Category.assoc
+      (cfpAssocFst A nno.N cfpTerminal)
+      (φ ≫ cfpLift (𝟙 X)
+        (cfpTerminalFrom X)) g]
+    congr 1
+    -- Goal: cfpAssocFst ≫ φ ≫
+    --   cfpLift (𝟙 X) (cfpTerminalFrom X)
+    --   = cfpLiftRecElem φ
+    rw [cfpLift_precomp, cfpLift_precomp]
+    unfold cfpLiftRecElem
+    congr 1
+    · rw [Category.comp_id]
+    · rw [h.terminal.uniq
+        (cfpAssocFst A nno.N cfpTerminal ≫
+          φ ≫ cfpTerminalFrom X),
+        h.terminal.uniq
+        (cfpSnd A (cfpProd nno.N cfpTerminal)
+          ≫ cfpSnd nno.N cfpTerminal)]
+  elim_uniq := fun {A X} f g φ hnil hsnoc => by
+    set g' := cfpLift (𝟙 X)
+      (cfpTerminalFrom X) ≫ g
+    -- Use nno.elim_uniq, proving both conditions.
+    apply nno.elim_uniq f g' φ hnil
+    -- Goal: cfpMap (𝟙 A) s ≫ φ = φ ≫ g'
+    exact nnoToIsPSO_elim_uniq_step φ g hsnoc
+
+end PSO_Terminal_NNO
 
 /-- A PSTO is in particular a PSO with `B = T`. -/
 instance (priority := 100) pstoToHasPSO
