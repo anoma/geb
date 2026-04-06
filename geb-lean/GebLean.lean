@@ -22,6 +22,7 @@ import GebLean.FiniteQuiver
 import GebLean.FreeCoequalizerCompletion
 import GebLean.FreeToposBT
 import GebLean.HexagonCat
+import GebLean.NatArith
 import GebLean.TreeLogic
 import GebLean.TreePER
 import GebLean.TypePBTO
