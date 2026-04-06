@@ -1,4 +1,5 @@
 import GebLean.EqualizerCompletionLimits
+import GebLean.EqualizerCompletionPBTO
 import GebLean.LawvereBT
 
 /-!
@@ -317,6 +318,340 @@ private def pstoElim {A X : C}
     cfpProd A p.T ⟶ X :=
   p.elim (pstoBase f) (pstoStep g) ≫
     cfpSnd p.T X
+
+private theorem pstoBase_fst {A X : C}
+    (f : A ⟶ X) :
+    pstoBase f ≫ cfpFst p.T X =
+      cfpTerminalFrom A ≫ p.ℓ :=
+  cfpLift_fst _ _
+
+private theorem pstoBase_snd {A X : C}
+    (f : A ⟶ X) :
+    pstoBase f ≫ cfpSnd p.T X = f :=
+  cfpLift_snd _ _
+
+private theorem pstoStep_fst {X : C}
+    (g : cfpProd X p.T ⟶ X) :
+    pstoStep g ≫ cfpFst p.T X =
+      cfpLift
+        (cfpFst (cfpProd p.T X)
+          (cfpProd p.T X) ≫ cfpFst p.T X)
+        (cfpSnd (cfpProd p.T X)
+          (cfpProd p.T X) ≫ cfpFst p.T X) ≫
+      p.β :=
+  cfpLift_fst _ _
+
+private theorem pstoStep_snd {X : C}
+    (g : cfpProd X p.T ⟶ X) :
+    pstoStep g ≫ cfpSnd p.T X =
+      cfpLift
+        (cfpFst (cfpProd p.T X)
+          (cfpProd p.T X) ≫ cfpSnd p.T X)
+        (cfpSnd (cfpProd p.T X)
+          (cfpProd p.T X) ≫ cfpFst p.T X) ≫
+      g :=
+  cfpLift_snd _ _
+
+private theorem pstoStep_fst_eq {X : C}
+    (g : cfpProd X p.T ⟶ X) :
+    cfpMap (cfpFst p.T X) (cfpFst p.T X) ≫
+      p.β =
+    pstoStep g ≫ cfpFst p.T X := by
+  rw [pstoStep_fst]
+  unfold cfpMap
+  rfl
+
+/-- The first projection of the enriched
+catamorphism `p.elim (pstoBase f) (pstoStep g)`
+equals the tree projection `cfpSnd A p.T`. -/
+private theorem pstoElim_fst {A X : C}
+    (f : A ⟶ X) (g : cfpProd X p.T ⟶ X) :
+    p.elim (pstoBase f) (pstoStep g) ≫
+      cfpFst p.T X =
+    cfpSnd A p.T := by
+  rw [elim_algebra_morphism
+    (pstoBase f) (pstoStep g)
+    (cfpFst p.T X) p.β
+    (pstoStep_fst_eq g),
+    pstoBase_fst]
+  symm
+  apply p.elim_uniq
+  · -- base: cfpInsertSnd ℓ A ≫ cfpSnd A T
+    --   = cfpTerminalFrom A ≫ ℓ
+    unfold cfpInsertSnd
+    exact cfpLift_snd _ _
+  · -- step: cfpMap (𝟙 A) β ≫ cfpSnd A T
+    --   = cfpLiftAssoc (cfpSnd A T)
+    --     (cfpSnd A T) ≫ β
+    rw [cfpMap_snd]
+    congr 1
+    unfold cfpLiftAssoc
+    apply cfpLift_uniq
+    · unfold cfpAssocFst
+      exact (cfpLift_snd _ _).symm
+    · unfold cfpAssocSnd
+      exact (cfpLift_snd _ _).symm
+
+private theorem pstoElim_nil {A X : C}
+    (f : A ⟶ X) (g : cfpProd X p.T ⟶ X) :
+    cfpInsertSnd p.ℓ A ≫ pstoElim f g = f := by
+  unfold pstoElim
+  rw [← Category.assoc, p.elim_ℓ,
+    pstoBase_snd]
+
+/-- The second projection of `cfpLiftAssoc θ θ`
+followed by the tree projection agrees with
+`cfpAssocSnd` followed by the tree
+projection. -/
+private theorem pstoElim_snoc_t2 {A X : C}
+    (f : A ⟶ X) (g : cfpProd X p.T ⟶ X) :
+    let TX := cfpProd p.T X
+    let θ := p.elim (pstoBase f) (pstoStep g)
+    cfpLiftAssoc θ θ ≫
+      (cfpSnd TX TX ≫ cfpFst p.T X) =
+    cfpSnd A (cfpProd p.T p.T) ≫
+      cfpSnd p.T p.T := by
+  intro TX θ
+  rw [← Category.assoc,
+    show cfpLiftAssoc θ θ ≫ cfpSnd TX TX =
+      cfpAssocSnd A p.T p.T ≫ θ from
+      cfpLift_snd _ _,
+    Category.assoc,
+    pstoElim_fst f g]
+  unfold cfpAssocSnd
+  exact cfpLift_snd _ _
+
+private theorem pstoElim_snoc {A X : C}
+    (f : A ⟶ X) (g : cfpProd X p.T ⟶ X) :
+    cfpMap (𝟙 A) p.β ≫ pstoElim f g =
+      cfpLiftRecElem (pstoElim f g) ≫ g := by
+  set TX := cfpProd p.T X
+  set θ := p.elim (pstoBase f) (pstoStep g)
+  unfold pstoElim
+  -- LHS: rewrite using elim_β
+  rw [← Category.assoc, p.elim_β,
+    Category.assoc, pstoStep_snd,
+    ← Category.assoc]
+  -- Goal: cfpLiftAssoc θ θ ≫ cfpLift x1 t2 ≫ g
+  --   = cfpLiftRecElem (θ ≫ cfpSnd) ≫ g
+  congr 1
+  -- Show the morphisms before g agree.
+  rw [cfpLift_precomp]
+  unfold cfpLiftRecElem
+  congr 1
+  · -- fst component:
+    -- cfpLiftAssoc θ θ ≫ fst TX TX ≫ snd T X
+    -- = cfpAssocFst A T T ≫ θ ≫ snd T X
+    rw [← Category.assoc,
+      show cfpLiftAssoc θ θ ≫ cfpFst TX TX =
+        cfpAssocFst A p.T p.T ≫ θ from
+        cfpLift_fst _ _,
+      Category.assoc]
+  · -- snd component:
+    exact pstoElim_snoc_t2 f g
+
+private theorem pstoElim_uniq_base {A X : C}
+    (f : A ⟶ X)
+    (ψ : cfpProd A p.T ⟶ X)
+    (hnil : cfpInsertSnd p.ℓ A ≫ ψ = f) :
+    cfpInsertSnd p.ℓ A ≫
+      cfpLift (cfpSnd A p.T) ψ =
+    pstoBase f := by
+  rw [cfpLift_precomp]
+  unfold pstoBase
+  congr 1
+  · unfold cfpInsertSnd
+    exact cfpLift_snd _ _
+
+omit p in
+private theorem cfpProd_ext {A B D : C}
+    (m₁ m₂ : D ⟶ cfpProd A B)
+    (hf : m₁ ≫ cfpFst A B = m₂ ≫ cfpFst A B)
+    (hs : m₁ ≫ cfpSnd A B = m₂ ≫ cfpSnd A B) :
+    m₁ = m₂ := by
+  have h2 := cfpLift_uniq
+    (m₂ ≫ cfpFst A B) (m₂ ≫ cfpSnd A B)
+    m₂ rfl rfl
+  rw [h2]
+  exact cfpLift_uniq _ _ m₁ hf hs
+
+/-- The first-projection component of the enriched
+step case for uniqueness. -/
+private theorem pstoElim_uniq_step_fst {A X : C}
+    (g : cfpProd X p.T ⟶ X)
+    (ψ : cfpProd A p.T ⟶ X) :
+    let θ' := cfpLift (cfpSnd A p.T) ψ
+    (cfpMap (𝟙 A) p.β ≫ θ') ≫
+      cfpFst p.T X =
+    (cfpLiftAssoc θ' θ' ≫
+      pstoStep g) ≫ cfpFst p.T X := by
+  intro θ'
+  -- LHS = cfpSnd A (T×T) ≫ β
+  have lhs_eq :
+      (cfpMap (𝟙 A) p.β ≫ θ') ≫
+        cfpFst p.T X =
+      cfpSnd A (cfpProd p.T p.T) ≫ p.β := by
+    rw [Category.assoc,
+      show θ' ≫ cfpFst p.T X =
+        cfpSnd A p.T from cfpLift_fst _ _,
+      cfpMap_snd]
+  -- RHS = cfpSnd A (T×T) ≫ β
+  have rhs_eq :
+      (cfpLiftAssoc θ' θ' ≫
+        pstoStep g) ≫ cfpFst p.T X =
+      cfpSnd A (cfpProd p.T p.T) ≫ p.β := by
+    rw [Category.assoc, pstoStep_fst,
+      ← Category.assoc]
+    congr 1
+    have θ'_fst : θ' ≫ cfpFst p.T X =
+        cfpSnd A p.T := cfpLift_fst _ _
+    have la_fst :
+        cfpLiftAssoc θ' θ' ≫
+          cfpFst (cfpProd p.T X)
+            (cfpProd p.T X) =
+        cfpAssocFst A p.T p.T ≫ θ' :=
+      cfpLift_fst _ _
+    have la_snd :
+        cfpLiftAssoc θ' θ' ≫
+          cfpSnd (cfpProd p.T X)
+            (cfpProd p.T X) =
+        cfpAssocSnd A p.T p.T ≫ θ' :=
+      cfpLift_snd _ _
+    have hfst :
+        cfpLiftAssoc θ' θ' ≫
+          (cfpFst (cfpProd p.T X)
+            (cfpProd p.T X) ≫
+          cfpFst p.T X) =
+        cfpAssocFst A p.T p.T ≫
+          cfpSnd A p.T := by
+      rw [← Category.assoc, la_fst,
+        Category.assoc, θ'_fst]
+    have hsnd :
+        cfpLiftAssoc θ' θ' ≫
+          (cfpSnd (cfpProd p.T X)
+            (cfpProd p.T X) ≫
+          cfpFst p.T X) =
+        cfpAssocSnd A p.T p.T ≫
+          cfpSnd A p.T := by
+      rw [← Category.assoc, la_snd,
+        Category.assoc, θ'_fst]
+    rw [cfpLift_precomp, hfst, hsnd]
+    symm
+    apply cfpLift_uniq
+    · unfold cfpAssocFst
+      exact (cfpLift_snd _ _).symm
+    · unfold cfpAssocSnd
+      exact (cfpLift_snd _ _).symm
+  rw [lhs_eq, rhs_eq]
+
+/-- The second-projection component of the enriched
+step case for uniqueness. -/
+private theorem pstoElim_uniq_step_snd {A X : C}
+    (g : cfpProd X p.T ⟶ X)
+    (ψ : cfpProd A p.T ⟶ X)
+    (hsnoc :
+      cfpMap (𝟙 A) p.β ≫ ψ =
+        cfpLiftRecElem ψ ≫ g) :
+    let θ' := cfpLift (cfpSnd A p.T) ψ
+    (cfpMap (𝟙 A) p.β ≫ θ') ≫
+      cfpSnd p.T X =
+    (cfpLiftAssoc θ' θ' ≫
+      pstoStep g) ≫ cfpSnd p.T X := by
+  intro θ'
+  rw [Category.assoc,
+    show θ' ≫ cfpSnd p.T X = ψ from
+      cfpLift_snd _ _,
+    hsnoc,
+    Category.assoc, pstoStep_snd,
+    ← Category.assoc, cfpLift_precomp]
+  -- Goal: cfpLift (...) (...) ≫ g
+  --   = cfpLiftRecElem ψ ≫ g
+  -- Suffices to show the morphisms before g agree.
+  congr 1
+  -- Both sides are cfpLift into X × T.
+  -- Use cfpLift_uniq.
+  unfold cfpLiftRecElem
+  apply cfpLift_uniq
+  · -- X component:
+    -- cfpLiftAssoc θ' θ' ≫ fst TX TX ≫ snd T X
+    -- = cfpAssocFst A T T ≫ ψ
+    rw [cfpLift_fst,
+      ← Category.assoc,
+      show cfpLiftAssoc θ' θ' ≫
+        cfpFst (cfpProd p.T X)
+          (cfpProd p.T X) =
+      cfpAssocFst A p.T p.T ≫ θ' from
+        cfpLift_fst _ _,
+      Category.assoc,
+      show θ' ≫ cfpSnd p.T X = ψ from
+        cfpLift_snd _ _]
+  · rw [cfpLift_snd,
+      ← Category.assoc,
+      show cfpLiftAssoc θ' θ' ≫
+        cfpSnd (cfpProd p.T X)
+          (cfpProd p.T X) =
+      cfpAssocSnd A p.T p.T ≫ θ' from
+        cfpLift_snd _ _,
+      Category.assoc,
+      show θ' ≫ cfpFst p.T X =
+        cfpSnd A p.T from cfpLift_fst _ _]
+    exact (cfpLift_snd
+      (cfpFst A (cfpProd p.T p.T))
+      (cfpSnd A (cfpProd p.T p.T) ≫
+        cfpSnd p.T p.T)).symm
+
+/-- The enriched step case for uniqueness: the
+candidate `θ' = cfpLift (cfpSnd A T) ψ` satisfies
+the PBTO step equation for `pstoStep g`. -/
+private theorem pstoElim_uniq_step {A X : C}
+    (g : cfpProd X p.T ⟶ X)
+    (ψ : cfpProd A p.T ⟶ X)
+    (hsnoc :
+      cfpMap (𝟙 A) p.β ≫ ψ =
+        cfpLiftRecElem ψ ≫ g) :
+    cfpMap (𝟙 A) p.β ≫
+      cfpLift (cfpSnd A p.T) ψ =
+    cfpLiftAssoc
+      (cfpLift (cfpSnd A p.T) ψ)
+      (cfpLift (cfpSnd A p.T) ψ) ≫
+      pstoStep g := by
+  exact cfpProd_ext _ _
+    (pstoElim_uniq_step_fst g ψ)
+    (pstoElim_uniq_step_snd g ψ hsnoc)
+
+private theorem pstoElim_uniq {A X : C}
+    (f : A ⟶ X) (g : cfpProd X p.T ⟶ X)
+    (ψ : cfpProd A p.T ⟶ X)
+    (hnil : cfpInsertSnd p.ℓ A ≫ ψ = f)
+    (hsnoc :
+      cfpMap (𝟙 A) p.β ≫ ψ =
+        cfpLiftRecElem ψ ≫ g) :
+    ψ = pstoElim f g := by
+  set θ' := cfpLift (cfpSnd A p.T) ψ
+  -- θ' satisfies the PBTO equations.
+  have hθ' : θ' =
+      p.elim (pstoBase f) (pstoStep g) :=
+    p.elim_uniq (pstoBase f) (pstoStep g) θ'
+      (pstoElim_uniq_base f ψ hnil)
+      (pstoElim_uniq_step g ψ hsnoc)
+  -- Recover ψ from θ' via snd projection.
+  have : ψ = θ' ≫ cfpSnd p.T X :=
+    (cfpLift_snd _ _).symm
+  rw [this, hθ']
+  rfl
+
+instance pbtoToIsPSTO :
+    IsPSTO C p.T where
+  nil := p.ℓ
+  snoc := p.β
+  elim := fun f g => pstoElim f g
+  elim_nil := fun f g => pstoElim_nil f g
+  elim_snoc := fun f g => pstoElim_snoc f g
+  elim_uniq := fun f g ψ hnil hsnoc =>
+    pstoElim_uniq f g ψ hnil hsnoc
+
+instance pbtoToHasPSTO : HasPSTO C where
+  T := p.T
 
 end PBTO_to_PSTO
 
