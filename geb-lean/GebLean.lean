@@ -50,6 +50,7 @@ import GebLean.PLang.IndexedEAT
 import GebLean.PLang.JudgmentUniverse
 import GebLean.PLang.Syntax
 import GebLean.PLang.TreeCalcPoly
+import GebLean.PLO
 import GebLean.ParamPoly
 import GebLean.ParanatAlg
 import GebLean.Paranatural
