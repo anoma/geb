@@ -122,6 +122,166 @@ instance (priority := 100) pltoToHasPLO
     [p : HasPLTO C] : HasPLO C p.T where
   L := p.T
 
+section PLO_Paramorphism
+
+variable {B L : C} [s : IsPLO C B L]
+
+/-- Carrier for the PLO paramorphism: the triple
+`(A, (L, X))`. -/
+private def ploParaCarrier (A X : C) : C :=
+  cfpProd A (cfpProd L X)
+
+/-- Base morphism for `ploParaElim`: sends `a : A` to
+`(a, (nil, f(a)))`. -/
+private def ploParaBase {A X : C} (f : A ⟶ X) :
+    A ⟶ ploParaCarrier (L := L) A X :=
+  cfpLift (𝟙 A)
+    (cfpLift (cfpTerminalFrom A ≫ s.nil) f)
+
+/-- Step morphism for `ploParaElim`: given
+`(b, (a, (l, x)))` from `B × (A × (L × X))`, produces
+`(a, (cons(b, l), g(a, b, l, x)))`.  The parameter `a`
+is carried through unchanged; the list component is
+extended by consing `b` onto the raw tail `l`; the
+result component is `g` applied to the parameter,
+element, raw tail, and recursive result. -/
+private def ploParaStep {A X : C}
+    (g : cfpProd A
+        (cfpProd B (cfpProd L X)) ⟶ X) :
+    cfpProd B (ploParaCarrier (L := L) A X) ⟶
+      ploParaCarrier (L := L) A X :=
+  let BX' := cfpProd B
+    (ploParaCarrier (L := L) A X)
+  let b : BX' ⟶ B := cfpFst B _
+  let a : BX' ⟶ A :=
+    cfpSnd B _ ≫ cfpFst A (cfpProd L X)
+  let l : BX' ⟶ L :=
+    cfpSnd B _ ≫ cfpSnd A (cfpProd L X) ≫
+      cfpFst L X
+  let x : BX' ⟶ X :=
+    cfpSnd B _ ≫ cfpSnd A (cfpProd L X) ≫
+      cfpSnd L X
+  let bl : BX' ⟶ cfpProd B L :=
+    cfpLift b l
+  let gArg : BX' ⟶
+      cfpProd A (cfpProd B (cfpProd L X)) :=
+    cfpLift a (cfpLift b (cfpLift l x))
+  cfpLift a
+    (cfpLift (bl ≫ s.cons) (gArg ≫ g))
+
+/-- PLO paramorphism: an enhanced fold whose step
+function sees the parameter, the element, the raw
+tail, and the recursive result on the tail.
+The step `g` has type
+`A × (B × (L × X)) ⟶ X`. -/
+def ploParaElim {A X : C} (f : A ⟶ X)
+    (g : cfpProd A
+        (cfpProd B (cfpProd L X)) ⟶ X) :
+    cfpProd A L ⟶ X :=
+  let base := ploParaBase (s := s) f
+  let step := ploParaStep (s := s) g
+  @IsPLO.elim C _ h B L s A
+    (ploParaCarrier (L := L) A X)
+    base step ≫
+    cfpSnd A (cfpProd L X) ≫ cfpSnd L X
+
+/-- Base-case equation for `ploParaElim`: at nil,
+the result is `f` applied to the parameter. -/
+theorem ploParaElim_nil {A X : C} (f : A ⟶ X)
+    (g : cfpProd A
+        (cfpProd B (cfpProd L X)) ⟶ X) :
+    cfpInsertSnd s.nil A ≫
+      ploParaElim (s := s) f g = f := by
+  unfold ploParaElim
+  simp only
+  rw [← Category.assoc, ← Category.assoc,
+    s.elim_nil]
+  unfold ploParaBase
+  rw [cfpLift_snd, cfpLift_snd]
+
+end PLO_Paramorphism
+
+section PSO_Paramorphism
+
+variable {B L : C} [s : IsPSO C B L]
+
+/-- Carrier for the PSO paramorphism: the triple
+`(A, (L, X))`. -/
+private def psoParaCarrier (A X : C) : C :=
+  cfpProd A (cfpProd L X)
+
+/-- Base morphism for `psoParaElim`: sends `a : A` to
+`(a, (nil, f(a)))`. -/
+private def psoParaBase {A X : C} (f : A ⟶ X) :
+    A ⟶ psoParaCarrier (L := L) A X :=
+  cfpLift (𝟙 A)
+    (cfpLift (cfpTerminalFrom A ≫ s.nil) f)
+
+/-- Step morphism for `psoParaElim`: given
+`((a, (l, x)), b)` from
+`(A × (L × X)) × B`, produces
+`(a, (snoc(l, b), g(a, l, b, x)))`.
+The parameter `a` is carried through unchanged;
+the list component is extended by snocing `b` onto
+the raw init `l`; the result component is `g`
+applied to the parameter, raw init, element, and
+recursive result. -/
+private def psoParaStep {A X : C}
+    (g : cfpProd A
+        (cfpProd L (cfpProd B X)) ⟶ X) :
+    cfpProd (psoParaCarrier (L := L) A X) B ⟶
+      psoParaCarrier (L := L) A X :=
+  let X'B := cfpProd
+    (psoParaCarrier (L := L) A X) B
+  let a : X'B ⟶ A :=
+    cfpFst _ B ≫ cfpFst A (cfpProd L X)
+  let l : X'B ⟶ L :=
+    cfpFst _ B ≫ cfpSnd A (cfpProd L X) ≫
+      cfpFst L X
+  let x : X'B ⟶ X :=
+    cfpFst _ B ≫ cfpSnd A (cfpProd L X) ≫
+      cfpSnd L X
+  let b : X'B ⟶ B := cfpSnd _ B
+  let lb : X'B ⟶ cfpProd L B :=
+    cfpLift l b
+  let gArg : X'B ⟶
+      cfpProd A (cfpProd L (cfpProd B X)) :=
+    cfpLift a (cfpLift l (cfpLift b x))
+  cfpLift a
+    (cfpLift (lb ≫ s.snoc) (gArg ≫ g))
+
+/-- PSO paramorphism: an enhanced fold whose step
+function sees the parameter, the raw init, the
+element, and the recursive result on the init.
+The step `g` has type
+`A × (L × (B × X)) ⟶ X`. -/
+def psoParaElim {A X : C} (f : A ⟶ X)
+    (g : cfpProd A
+        (cfpProd L (cfpProd B X)) ⟶ X) :
+    cfpProd A L ⟶ X :=
+  let base := psoParaBase (s := s) f
+  let step := psoParaStep (s := s) g
+  @IsPSO.elim C _ h B L s A
+    (psoParaCarrier (L := L) A X)
+    base step ≫
+    cfpSnd A (cfpProd L X) ≫ cfpSnd L X
+
+/-- Base-case equation for `psoParaElim`: at nil,
+the result is `f` applied to the parameter. -/
+theorem psoParaElim_nil {A X : C} (f : A ⟶ X)
+    (g : cfpProd A
+        (cfpProd L (cfpProd B X)) ⟶ X) :
+    cfpInsertSnd s.nil A ≫
+      psoParaElim (s := s) f g = f := by
+  unfold psoParaElim
+  simp only
+  rw [← Category.assoc, ← Category.assoc,
+    s.elim_nil]
+  unfold psoParaBase
+  rw [cfpLift_snd, cfpLift_snd]
+
+end PSO_Paramorphism
+
 section PSTO_PLTO
 
 variable {T : C}

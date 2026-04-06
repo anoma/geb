@@ -40,23 +40,34 @@ for the implementation plan.
 
 ### Phase 2: PBTO <-> PSTO
 
-- [ ] PBTO -> PSTO: enriched-carrier components
-- [ ] PBTO -> PSTO: projection lemma
-- [ ] PBTO -> PSTO: main instance (`HasPBTO -> HasPSTO`)
+- [x] PBTO -> PSTO: enriched-carrier components
+- [x] PBTO -> PSTO: projection lemma
+- [x] PBTO -> PSTO: main instance (`HasPBTO -> HasPSTO`)
 - [ ] Investigate PSTO -> PBTO direction
 
 ### Phase 3: PLO and PLTO
 
-- [ ] Define `cfpLiftElemRec` helper in `PLO.lean`
-- [ ] Define `IsPLO B L` class
-- [ ] Define `HasPLO B`, `IsPLTO T`, `HasPLTO`
+- [x] Define `cfpLiftElemRec` helper in `PLO.lean`
+- [x] Define `IsPLO B L` class
+- [x] Define `HasPLO B`, `IsPLTO T`, `HasPLTO`
 - [ ] Show PLO(1) corresponds to PNNO
 
 ### Phase 4: PSTO <-> PLTO
 
-- [ ] Define `rev` using PSO elimination
-- [ ] Show PSTO -> PLTO (via reversal)
-- [ ] Show PLTO -> PSTO (via reversal)
+- [x] Show PSTO -> PLTO (via argument swap)
+- [x] Show PLTO -> PSTO (via argument swap)
+- [x] `HasPSTO.toHasPLTO`, `HasPLTO.toHasPSTO`
+
+### Phase 4.5: Paramorphisms
+
+- [x] PLO paramorphism: carrier, base, step, elimination
+- [x] PLO paramorphism base equation (`ploParaElim_nil`)
+- [ ] PLO paramorphism step equation (`ploParaElim_cons`)
+- [ ] PLO paramorphism uniqueness
+- [x] PSO paramorphism: carrier, base, step, elimination
+- [x] PSO paramorphism base equation (`psoParaElim_nil`)
+- [ ] PSO paramorphism step equation (`psoParaElim_snoc`)
+- [ ] PSO paramorphism uniqueness
 
 ### Phase 5: Register and test
 
@@ -100,12 +111,45 @@ Approaches (in priority order):
    PNNO iteration to process the right subtree.
    Existing `iterNat` infrastructure may help.
 
-### PSTO <-> PLTO strategy
+### PLO/PSO paramorphisms
 
-Snoclist and cons-list are related by reversal.  For
-snoclist-of-trees / list-of-trees (B = L), reversal operates
-recursively at every level, since elements are themselves
-trees.
+The paramorphisms follow the same pattern as the PBTO
+paramorphism in TreeLogic.lean.  The carrier is
+`A x (L x X)`, threading the parameter, the current
+raw list, and the recursive result.
 
-The `rev` operation can be defined using the PSO (or PLO)
-elimination, requiring no additional assumptions.
+For PLO: the step function `g` sees
+`(a, b, l, phi(a,l))` where `b` is the element and
+`l` is the raw tail.  The carrier step takes
+`(b, (a, (l, x)))` and produces
+`(a, (cons(b,l), g(a,b,l,x)))`.
+
+For PSO: the step function `g` sees
+`(a, l, b, phi(a,l))` where `l` is the raw init and
+`b` is the element.  The carrier step takes
+`((a, (l, x)), b)` and produces
+`(a, (snoc(l,b), g(a,l,b,x)))`.
+
+The base equations follow by applying `elim_nil`,
+then projecting out the X component via two
+applications of `cfpLift_snd`.
+
+The step equations and uniqueness proofs are deferred
+as of 2026-04-06.
+
+### PSTO <-> PLTO via argument swap
+
+Since PSTO has `snoc : T x T -> T` and PLTO has
+`cons : T x T -> T` (same object for both components),
+the conversion uses `cons = cfpSwap T T >> snoc` (and
+vice versa).  The elimination is converted by swapping
+the step morphism's argument order:
+PLO `elim f g` = PSO `elim f (cfpSwap X T >> g)`.
+
+Proving the step equations requires the swap lemmas
+`swap_liftRecElem_swap` and `swap_liftElemRec_swap`,
+which show that swapping input components, applying
+cfpLiftRecElem/cfpLiftElemRec, then swapping the output,
+yields the dual helper.  Uniqueness is derived by
+precomposing with the involution `cfpMap id (cfpSwap T T)`
+to cancel `cfpSwap T T >> cfpSwap T T = id`.
