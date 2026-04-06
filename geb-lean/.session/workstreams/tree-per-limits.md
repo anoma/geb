@@ -313,6 +313,32 @@ This says `tri(succ(n)) = natPlus(natSucc(index_n), tri(n))`
 where `index_n` is the first projection of `natTriHelper` at
 `(*, n)`.
 
+## `treeEqG` PER properties
+
+`treeEqG_refl` and `treeEqG_symm` are proved unconditionally
+in `GebLean/TreeEqGoedel.lean`.
+
+Helper lemmas proved:
+
+- `natPlus_isLeafEndo_eq_boolAnd`: `natPlus ≫ isLeafEndo = boolAnd`.
+  Proved via `elim_uniq`, showing both have the same base
+  (`isLeafEndo`) and step (`cfpTerminalFrom _ ≫ treeFalse`).
+- `natEq_symm`: `cfpSwap ≫ natEq = natEq`. Uses
+  `natPlus_isLeafEndo_eq_boolAnd` and `boolAnd_comm`.
+- `natTruncSub_ℓ_first`: `natTruncSub(ℓ, a) = ℓ`.
+  Uses `elim_naturality` and `elim_uniq`.
+
+`treeEqG_trans` requires `IsSeparator` + `HasBoolDichotomy`.
+The approach: prove `QuantTransitive treeEqG`, then apply
+`quantTransitive_implies_eq`.  The `QuantTransitive` proof
+reduces to `QuantTransitive natEq`, which requires
+truncated-subtraction transitivity: `IsLeafConst(natTruncSub(x,z))`
+and `IsLeafConst(natTruncSub(z,y))` implies
+`IsLeafConst(natTruncSub(x,y))`.  This in turn requires a fold
+composition identity `natTruncSub(natTruncSub(x,z), d) =
+natTruncSub(x, natPlus(z, d))` combined with
+`natTruncSub_ℓ_first`.
+
 ## `treeEqG_ββ` (proved modulo `NatEqCantorPair`)
 
 `treeEqG_ββ` is proved in `GebLean/TreeEqGoedel.lean`,

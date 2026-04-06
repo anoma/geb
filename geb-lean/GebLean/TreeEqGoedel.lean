@@ -1,4 +1,5 @@
 import GebLean.TreeGoedel
+import GebLean.TreePER
 
 /-!
 # Tree Equality via Goedel Encoding
@@ -76,14 +77,16 @@ theorem treeEqG_ℓβ :
   rw [← Category.assoc, cfpMap_comp,
     treeToNat_ℓ, treeToNat_β]
   have step :
-      cfpMap (p.ℓ : cfpTerminal (C := C) ⟶ p.T)
+      cfpMap
+        (p.ℓ : cfpTerminal (C := C) ⟶ p.T)
         (cfpMap treeToNat treeToNat ≫
           cantorPair ≫ natSucc) =
       cfpLift
         (cfpTerminalFrom
           (cfpProd cfpTerminal
             (cfpProd p.T p.T)) ≫ p.ℓ)
-        (cfpSnd cfpTerminal (cfpProd p.T p.T) ≫
+        (cfpSnd cfpTerminal
+          (cfpProd p.T p.T) ≫
           cfpMap treeToNat treeToNat ≫
           cantorPair ≫ natSucc) := by
     unfold cfpMap
@@ -92,10 +95,12 @@ theorem treeEqG_ℓβ :
       congr 1; exact h.terminal.uniq _
     · rw [cfpLift_snd]
   have reassoc :
-      cfpSnd cfpTerminal (cfpProd p.T p.T) ≫
+      cfpSnd cfpTerminal
+        (cfpProd p.T p.T) ≫
         cfpMap treeToNat treeToNat ≫
         cantorPair ≫ natSucc =
-      (cfpSnd cfpTerminal (cfpProd p.T p.T) ≫
+      (cfpSnd cfpTerminal
+        (cfpProd p.T p.T) ≫
         cfpMap treeToNat treeToNat ≫
         cantorPair) ≫ natSucc := by
     simp only [Category.assoc]
@@ -107,8 +112,8 @@ theorem treeEqG_ℓβ :
 theorem treeEqG_βℓ :
     cfpMap p.β p.ℓ ≫ treeEqG =
     cfpTerminalFrom _ ≫
-      (treeFalse : cfpTerminal (C := C) ⟶ p.T)
-      := by
+      (treeFalse :
+        cfpTerminal (C := C) ⟶ p.T) := by
   unfold treeEqG
   rw [← Category.assoc, cfpMap_comp,
     treeToNat_β, treeToNat_ℓ]
@@ -116,14 +121,16 @@ theorem treeEqG_βℓ :
       cfpMap
         (cfpMap treeToNat treeToNat ≫
           cantorPair ≫ natSucc)
-        (p.ℓ : cfpTerminal (C := C) ⟶ p.T) ≫
+        (p.ℓ :
+          cfpTerminal (C := C) ⟶ p.T) ≫
         natEq =
       cfpLift
         ((cfpFst (cfpProd p.T p.T)
           cfpTerminal ≫
           cfpMap treeToNat treeToNat ≫
           cantorPair) ≫ natSucc)
-        (cfpTerminalFrom _ ≫ p.ℓ) ≫ natEq := by
+        (cfpTerminalFrom _ ≫ p.ℓ) ≫
+        natEq := by
     congr 1
     unfold cfpMap
     apply cfpLift_uniq
@@ -136,13 +143,12 @@ theorem treeEqG_βℓ :
 
 /-- Composing `cfpMap p.β p.β` with
 `cfpMap treeToNat treeToNat` and canceling
-`natSucc` via `natEq_succ_cancel`.
-Reduces `treeEqG_ββ` to comparing
-`cantorPair`-encoded values via `natEq`. -/
+`natSucc` via `natEq_succ_cancel`. -/
 private theorem treeEqG_ββ_reduce :
     cfpMap p.β p.β ≫ treeEqG =
     cfpMap
-      (cfpMap treeToNat treeToNat ≫ cantorPair)
+      (cfpMap treeToNat treeToNat ≫
+        cantorPair)
       (cfpMap treeToNat treeToNat ≫
         cantorPair) ≫
     (natEq : cfpProd p.T p.T ⟶ p.T) := by
@@ -153,13 +159,14 @@ private theorem treeEqG_ββ_reduce :
     (cfpMap treeToNat treeToNat) _
     (cfpMap treeToNat treeToNat) _,
     cfpMap_comp_comp
-      (cantorPair : cfpProd p.T p.T ⟶ p.T) _
+      (cantorPair :
+        cfpProd p.T p.T ⟶ p.T) _
       cantorPair _,
     Category.assoc, Category.assoc]
   rw [← cfpMap_comp]
   have natSucc_cancel :
-      cfpMap (natSucc : p.T ⟶ p.T) natSucc ≫
-        natEq =
+      cfpMap (natSucc : p.T ⟶ p.T)
+        natSucc ≫ natEq =
       (natEq : cfpProd p.T p.T ⟶ p.T) := by
     unfold cfpMap
     rw [natEq_succ_cancel,
@@ -172,11 +179,7 @@ private theorem treeEqG_ββ_reduce :
       Category.id_comp]
   simp only [Category.assoc, natSucc_cancel]
 
-/-- Cantor pairing injectivity under `natEq`:
-`natEq(cantorPair(a,b), cantorPair(c,d)) =
-  boolAnd(natEq(a,c), natEq(b,d))`.
-This is the equational form of the statement that
-`cantorPair` reflects equality via `natEq`. -/
+/-- Cantor pairing injectivity under `natEq`. -/
 def NatEqCantorPair
     (C : Type u) [Category.{v} C]
     [HasChosenFiniteProducts C]
@@ -201,9 +204,7 @@ def NatEqCantorPair
       natEq) ≫
     (boolAnd : cfpProd p.T p.T ⟶ p.T)
 
-/-- Branch-branch computation rule for `treeEqG`:
-`treeEqG(β(a₁,a₂), β(b₁,b₂)) =
-  boolAnd(treeEqG(a₁,b₁), treeEqG(a₂,b₂))`.
+/-- Branch-branch computation rule for `treeEqG`.
 Depends on `NatEqCantorPair C`. -/
 theorem treeEqG_ββ
     (hCP : NatEqCantorPair (p := p) C) :
@@ -228,8 +229,10 @@ theorem treeEqG_ββ
       boolAnd := by
   rw [treeEqG_ββ_reduce,
     show cfpMap
-      (cfpMap treeToNat treeToNat ≫ cantorPair)
-      (cfpMap treeToNat treeToNat ≫ cantorPair) =
+      (cfpMap treeToNat treeToNat ≫
+        cantorPair)
+      (cfpMap treeToNat treeToNat ≫
+        cantorPair) =
     cfpMap
       (cfpMap treeToNat treeToNat)
       (cfpMap treeToNat treeToNat) ≫
@@ -238,12 +241,12 @@ theorem treeEqG_ββ
         (cfpMap treeToNat treeToNat)
         (cfpMap treeToNat treeToNat)
         cantorPair cantorPair).symm,
-    Category.assoc, hCP,
-    ← Category.assoc]
+    Category.assoc, hCP, ← Category.assoc]
   congr 1
   have precomp_lift :
       cfpMap
-        (cfpMap (C := C) treeToNat treeToNat)
+        (cfpMap (C := C) treeToNat
+          treeToNat)
         (cfpMap treeToNat treeToNat) ≫
       cfpLift
         (cfpLift
@@ -351,9 +354,7 @@ theorem treeEqG_ββ
         (cfpMap_snd treeToNat treeToNat)
   exact precomp_lift
 
-/-- Reflexivity of `treeEqG`:
-`cfpLift (𝟙 T) (𝟙 T) ≫ treeEqG
-  = cfpTerminalFrom T ≫ p.ℓ`. -/
+/-- Reflexivity of `treeEqG`. -/
 theorem treeEqG_refl :
     cfpLift (𝟙 p.T) (𝟙 p.T) ≫ treeEqG =
     cfpTerminalFrom p.T ≫
@@ -373,10 +374,9 @@ theorem treeEqG_refl :
   congr 1
   exact h.terminal.uniq _
 
-/-- `natPlus ≫ isLeafEndo = boolAnd`: the
-zero-test of a sum equals the conjunction of the
-zero-tests of the summands. -/
-private theorem natPlus_isLeafEndo_eq_boolAnd :
+/-- `natPlus ≫ isLeafEndo = boolAnd`. -/
+private theorem
+    natPlus_isLeafEndo_eq_boolAnd :
     natPlus ≫ isLeafEndo =
     (boolAnd : cfpProd p.T p.T ⟶ p.T) := by
   rw [boolAnd_eq_elim]
@@ -399,15 +399,15 @@ private theorem natPlus_isLeafEndo_eq_boolAnd :
     have lhs :
         cfpLiftAssoc natPlus natPlus ≫
           cfpSnd p.T p.T ≫
-          cfpTerminalFrom p.T ≫ treeFalse =
+          cfpTerminalFrom p.T ≫
+          treeFalse =
         cfpTerminalFrom _ ≫ treeFalse := by
       rw [← Category.assoc
         (cfpLiftAssoc natPlus natPlus),
         ← Category.assoc
           (cfpLiftAssoc natPlus natPlus ≫
             cfpSnd p.T p.T)]
-      congr 1
-      exact h.terminal.uniq _
+      congr 1; exact h.terminal.uniq _
     have rhs :
         cfpLiftAssoc
           (natPlus ≫ isLeafEndo)
@@ -417,8 +417,7 @@ private theorem natPlus_isLeafEndo_eq_boolAnd :
           treeFalse =
         cfpTerminalFrom _ ≫ treeFalse := by
       rw [← Category.assoc]
-      congr 1
-      exact h.terminal.uniq _
+      congr 1; exact h.terminal.uniq _
     rw [lhs, rhs]
   exact p.elim_uniq isLeafEndo
     (cfpTerminalFrom (cfpProd p.T p.T) ≫
@@ -426,8 +425,7 @@ private theorem natPlus_isLeafEndo_eq_boolAnd :
     (natPlus ≫ isLeafEndo)
     base step
 
-/-- Symmetry of `natEq`:
-`cfpSwap T T ≫ natEq = natEq`. -/
+/-- Symmetry of `natEq`. -/
 private theorem natEq_symm :
     cfpSwap p.T p.T ≫ natEq =
     (natEq : cfpProd p.T p.T ⟶ p.T) := by
@@ -442,7 +440,8 @@ private theorem natEq_symm :
       cfpFst p.T p.T := by
     unfold cfpSwap; exact cfpLift_snd _ _
   have cfpSwap_invol :
-      cfpSwap p.T p.T ≫ cfpSwap p.T p.T =
+      cfpSwap p.T p.T ≫
+        cfpSwap p.T p.T =
       𝟙 (cfpProd p.T p.T) := by
     have eta : 𝟙 (cfpProd p.T p.T) =
         cfpLift (cfpFst p.T p.T)
@@ -450,15 +449,18 @@ private theorem natEq_symm :
       cfpLift_uniq _ _ _
         (Category.id_comp _)
         (Category.id_comp _)
-    rw [eta]
-    apply cfpLift_uniq
-    · rw [Category.assoc, swap_fst, swap_snd]
-    · rw [Category.assoc, swap_snd, swap_fst]
+    rw [eta]; apply cfpLift_uniq
+    · rw [Category.assoc, swap_fst,
+        swap_snd]
+    · rw [Category.assoc, swap_snd,
+        swap_fst]
   have swap_lift :
       cfpSwap p.T p.T ≫
         cfpLift natTruncSub
-          (cfpSwap p.T p.T ≫ natTruncSub) =
-      cfpLift (cfpSwap p.T p.T ≫ natTruncSub)
+          (cfpSwap p.T p.T ≫
+            natTruncSub) =
+      cfpLift
+        (cfpSwap p.T p.T ≫ natTruncSub)
         natTruncSub := by
     rw [cfpLift_precomp]
     congr 1
@@ -479,8 +481,94 @@ private theorem natEq_symm :
       natTruncSub
   rw [comm]
 
-/-- Symmetry of `treeEqG`:
-`cfpSwap T T ≫ treeEqG = treeEqG`. -/
+/-- `natTruncSub(ℓ, a) = ℓ` for any `a`. -/
+private theorem natTruncSub_ℓ_first
+    {D : C} (a : D ⟶ p.T) :
+    cfpLift (cfpTerminalFrom D ≫ p.ℓ) a ≫
+      natTruncSub =
+    cfpTerminalFrom D ≫
+      (p.ℓ : cfpTerminal (C := C) ⟶ p.T)
+      := by
+  have factor :
+      cfpLift (cfpTerminalFrom D ≫ p.ℓ)
+        a =
+      cfpLift (cfpTerminalFrom D) a ≫
+        cfpMap p.ℓ (𝟙 p.T) := by
+    rw [cfpLift_cfpMap, Category.comp_id]
+  rw [factor, Category.assoc]
+  change cfpLift (cfpTerminalFrom D) a ≫
+    cfpMap p.ℓ (𝟙 p.T) ≫
+    p.elim (𝟙 p.T)
+      (cfpSnd p.T p.T ≫ natPred) = _
+  rw [elim_naturality p.ℓ (𝟙 p.T)
+    (cfpSnd p.T p.T ≫ natPred),
+    show p.ℓ ≫ (𝟙 p.T) = p.ℓ from
+      Category.comp_id _]
+  have const_ℓ :
+      p.elim p.ℓ
+        (cfpSnd p.T p.T ≫ natPred) =
+      cfpTerminalFrom
+        (cfpProd cfpTerminal p.T) ≫
+        p.ℓ := by
+    apply (p.elim_uniq p.ℓ
+      (cfpSnd p.T p.T ≫ natPred)
+      (cfpTerminalFrom
+        (cfpProd cfpTerminal p.T) ≫ p.ℓ)
+      _ _).symm
+    · rw [← Category.assoc]
+      have hterm :
+          cfpInsertSnd p.ℓ
+            cfpTerminal ≫
+            cfpTerminalFrom
+            (cfpProd cfpTerminal p.T) =
+          cfpTerminalFrom cfpTerminal :=
+        h.terminal.uniq _
+      rw [hterm, cfpTerminalFrom_terminal,
+        Category.id_comp]
+    · have lhs :
+          cfpMap (𝟙 cfpTerminal) p.β ≫
+            cfpTerminalFrom
+              (cfpProd cfpTerminal p.T) ≫
+            p.ℓ =
+          cfpTerminalFrom _ ≫ p.ℓ := by
+        rw [← Category.assoc]; congr 1
+        exact h.terminal.uniq _
+      set src := cfpProd cfpTerminal
+        (cfpProd p.T p.T)
+      have rhs :
+          cfpLiftAssoc
+            (cfpTerminalFrom
+              (cfpProd cfpTerminal p.T) ≫
+              p.ℓ)
+            (cfpTerminalFrom
+              (cfpProd cfpTerminal p.T) ≫
+              p.ℓ) ≫
+            cfpSnd p.T p.T ≫ natPred =
+          cfpTerminalFrom src ≫ p.ℓ := by
+        have snd_eq :
+            cfpLiftAssoc
+              (cfpTerminalFrom
+                (cfpProd cfpTerminal
+                  p.T) ≫ p.ℓ)
+              (cfpTerminalFrom
+                (cfpProd cfpTerminal
+                  p.T) ≫ p.ℓ) ≫
+              cfpSnd p.T p.T =
+            cfpTerminalFrom src ≫
+              p.ℓ := by
+          change cfpLift _ _ ≫
+            cfpSnd p.T p.T = _
+          rw [cfpLift_snd,
+            ← Category.assoc]
+          congr 1
+          exact h.terminal.uniq _
+        rw [← Category.assoc, snd_eq,
+          Category.assoc, natPred_ℓ]
+      rw [lhs, rhs]
+  rw [const_ℓ, ← Category.assoc]
+  congr 1; exact h.terminal.uniq _
+
+/-- Symmetry of `treeEqG`. -/
 theorem treeEqG_symm :
     cfpSwap p.T p.T ≫ treeEqG =
     (treeEqG : cfpProd p.T p.T ⟶ p.T) := by
@@ -488,5 +576,40 @@ theorem treeEqG_symm :
   rw [← Category.assoc,
     cfpSwap_cfpMap_diag treeToNat,
     Category.assoc, natEq_symm]
+
+/-- Fold composition for `natTruncSub` via
+`iterNat_plus natPred`. -/
+private theorem natTruncSub_fold_comp :
+    cfpLift
+      (cfpFst (cfpProd p.T p.T) p.T ≫
+        natTruncSub)
+      (cfpSnd (cfpProd p.T p.T) p.T) ≫
+      natTruncSub =
+    cfpLift
+      (cfpFst (cfpProd p.T p.T) p.T ≫
+        cfpFst p.T p.T)
+      (cfpLift
+        (cfpFst (cfpProd p.T p.T) p.T ≫
+          cfpSnd p.T p.T)
+        (cfpSnd (cfpProd p.T p.T) p.T) ≫
+        natPlus) ≫
+      (natTruncSub :
+        cfpProd p.T p.T ⟶ p.T) := by
+  change cfpLift
+      (cfpFst (cfpProd p.T p.T) p.T ≫
+        iterNat natPred)
+      (cfpSnd (cfpProd p.T p.T) p.T) ≫
+      iterNat natPred =
+    cfpLift
+      (cfpFst (cfpProd p.T p.T) p.T ≫
+        cfpFst p.T p.T)
+      (cfpLift
+        (cfpFst (cfpProd p.T p.T) p.T ≫
+          cfpSnd p.T p.T)
+        (cfpSnd (cfpProd p.T p.T) p.T) ≫
+        natPlus) ≫
+      iterNat natPred
+  exact (iterNat_plus natPred).symm
+
 
 end GebLean
