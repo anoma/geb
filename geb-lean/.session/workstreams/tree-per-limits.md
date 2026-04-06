@@ -244,3 +244,41 @@ The path forward: parameterize the harder theorems
 assumptions.  They follow for `LawvereBTQuotCat`
 (`lawvereBTQuotCat_isSeparator` + `lawvereBTQuotCat_hasBoolDichotomy`)
 and for `Type u`, which covers both existing downstream uses.
+
+## `treeEq_leaf_left` and `paraElim` experiment
+
+`treeEq_leaf_left` (line ~6059 of `TreeLogic.lean`) characterizes
+`treeEq` with a leaf first argument as `isLeafEndo`.  The proof
+lifts to `cfpProd cfpTerminal p.T` and uses `p.elim_uniq` with
+the leaf case from `treeEq_ℓℓ` and the branch case from
+`treeEq_ℓβ`.
+
+An attempt to characterize `treeEq` as a `paraElim` and derive
+`treeEq_ββ` from `paraElim_β` was explored.  The analysis
+confirms that `paraElim_uniq` does not bypass the `treeEq_ββ`
+obstacle: the step verification for `paraElim_uniq` IS
+`treeEq_branch_left` (Theorem 2 in the experiment), which itself
+requires `treeEq_ββ` in its branch-case.  The circularity is
+inherent to the approach.
+
+Direct iteration tracing for `treeEq_ββ` reaches the state
+after one `compareStep_expand`:
+
+```lean
+mkBranch (leafConst D)
+  (mkBranch (mkBranch f1 g1)
+    (mkBranch (mkBranch f2 g2) (leafConst D)))
+```
+
+with remaining count `inner_count`.  Decomposing this two-pair
+worklist iteration into two sequential single-pair iterations
+requires `iterNat_plus` combined with a proof that
+`inner_count` equals a `natPlus` of the two individual counts.
+This in turn requires commutativity and associativity of
+`natPlus`, which are not yet proved, plus a worklist-carries
+lemma showing that processing pair `(f1, g1)` with extra pairs
+on the rest of the worklist still gives the same result as
+`treeEq(f1, g1)`.
+
+The documented path via `IsSeparator` + `HasBoolDichotomy`
+remains the recommended approach for `treeEq_ββ`.

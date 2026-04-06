@@ -929,4 +929,429 @@ def hasTreeEq_type : HasTreeEq (Type u) where
   treeEq_βℓ := typeTreeEq_βℓ
   treeEq_ββ := typeTreeEq_ββ
 
+/-! ## Function-free tree equality
+
+The existing `treeEqBT` uses `BT.fold` with carrier
+`α := BT → BT`, which relies on function objects.
+The definitions below implement tree equality using
+only tree-valued carriers (products of `BT`), `BT.fold`,
+and `BT.caseOn`.
+
+The strategy is Goedel encoding: encode each tree as a
+right-spine natural number (via Cantor pairing), then
+compare the two natural numbers using truncated
+subtraction (which can be defined via a single fold
+with tree-valued carrier).
+-/
+
+section FunctionFreeTreeEq
+
+/-! ### Right-spine natural number operations
+
+A right-spine natural number is a `BT` of the form
+`BT.node BT.leaf (BT.node BT.leaf (... BT.leaf))`,
+i.e. `succ^k(leaf)` where `succ x = BT.node BT.leaf x`
+and `leaf` represents zero.
+-/
+
+/-- Successor on right-spine naturals. -/
+def natSuccBT (n : BT.{u}) : BT.{u} :=
+  BT.node BT.leaf n
+
+/-- Predecessor on right-spine naturals (zero maps
+to zero). -/
+def natPredBT (n : BT.{u}) : BT.{u} :=
+  BT.caseOn n BT.leaf (fun _l r => r)
+
+/-- Addition on right-spine naturals:
+`natAddBT m n = m + n`.  Fold on `m`, adding
+successors to `n`. -/
+def natAddBT (m n : BT.{u}) : BT.{u} :=
+  BT.fold n
+    (fun _rL rR => natSuccBT rR) m
+
+/-- Triangular number `tri(n) = n*(n+1)/2` on
+right-spine naturals.  Uses a paramorphism (fold with
+carrier `BT × BT` tracking the subtree and the running
+sum). -/
+def natTriBT (n : BT.{u}) : BT.{u} :=
+  (BT.fold
+    (α := BT.{u} × BT.{u})
+    (BT.leaf, BT.leaf)
+    (fun _rL rR =>
+      (natSuccBT rR.1,
+       natAddBT (natSuccBT rR.1) rR.2))
+    n).2
+
+/-- Cantor pairing on right-spine naturals:
+`cantorPairBT m n = tri(m + n) + m`. -/
+def cantorPairBT (m n : BT.{u}) : BT.{u} :=
+  natAddBT (natTriBT (natAddBT m n)) m
+
+/-- Goedel encoding of `BT` as a right-spine natural:
+`treeToNatBT leaf = 0`,
+`treeToNatBT (node l r) =
+  succ(cantorPairBT(treeToNatBT l, treeToNatBT r))`.
+Uses `BT.fold` with carrier `BT`. -/
+def treeToNatBT (t : BT.{u}) : BT.{u} :=
+  BT.fold BT.leaf
+    (fun rL rR => natSuccBT (cantorPairBT rL rR)) t
+
+/-- Truncated subtraction `m - n` on right-spine
+naturals.  Fold on `m`, applying `natPredBT` to
+the accumulator (which starts at `n`).
+
+Since `BT.fold` processes both children of a node,
+and right-spine nats have `leaf` as left child, the
+left-child fold always returns the base `n`.  The
+right-child fold on `m'` (where `m = succ m'`)
+returns the correct truncated subtraction `n - m'`.
+The step then applies `natPredBT` to get `n - m`. -/
+def natTruncSubBT (n m : BT.{u}) : BT.{u} :=
+  BT.fold n
+    (fun _rL rR => natPredBT rR) m
+
+/-- Equality on right-spine naturals:
+`natEqBT m n = leaf` iff `m = n`, otherwise
+`treeFalseBT`.
+
+Computed as `isLeafBT(|m - n|)` where
+`|m - n| = (m ∸ n) + (n ∸ m)` and `∸` is
+truncated subtraction. If `m = n` then both
+truncated subtractions are zero, so the sum is zero
+(leaf), and `isLeafBT leaf = leaf`.  If `m ≠ n`
+then one truncated subtraction is nonzero, making
+the sum nonzero, and `isLeafBT` of a nonzero nat
+is `treeFalseBT`. -/
+def natEqFlatBT (m n : BT.{u}) : BT.{u} :=
+  isLeafBT
+    (natAddBT (natTruncSubBT m n)
+      (natTruncSubBT n m))
+
+/-- Function-free tree equality: encode both trees
+as right-spine naturals via Goedel encoding, then
+compare the naturals. -/
+def treeEqFlatBT (s t : BT.{u}) : BT.{u} :=
+  natEqFlatBT (treeToNatBT s) (treeToNatBT t)
+
+/-! ### Computation rules for nat operations -/
+
+theorem natSuccBT_def (n : BT.{u}) :
+    natSuccBT n = BT.node BT.leaf n := rfl
+
+theorem natPredBT_zero :
+    natPredBT (BT.leaf : BT.{u}) = BT.leaf :=
+  BT.caseOn_leaf BT.leaf _
+
+theorem natPredBT_succ (n : BT.{u}) :
+    natPredBT (natSuccBT n) = n := by
+  unfold natPredBT natSuccBT
+  rw [BT.caseOn_node]
+
+theorem natAddBT_zero (n : BT.{u}) :
+    natAddBT BT.leaf n = n := by
+  unfold natAddBT; rw [BT.fold_leaf]
+
+theorem natAddBT_succ (m n : BT.{u}) :
+    natAddBT (natSuccBT m) n =
+      natSuccBT (natAddBT m n) := by
+  unfold natAddBT natSuccBT
+  rw [BT.fold_node]
+
+/-! ### treeToNatBT computation rules -/
+
+theorem treeToNatBT_leaf :
+    treeToNatBT (BT.leaf : BT.{u}) = BT.leaf := by
+  unfold treeToNatBT; rw [BT.fold_leaf]
+
+theorem treeToNatBT_node (l r : BT.{u}) :
+    treeToNatBT (BT.node l r) =
+      natSuccBT
+        (cantorPairBT
+          (treeToNatBT l)
+          (treeToNatBT r)) := by
+  unfold treeToNatBT; rw [BT.fold_node]
+
+/-! ### natTruncSubBT computation rules -/
+
+theorem natTruncSubBT_zero (n : BT.{u}) :
+    natTruncSubBT n BT.leaf = n := by
+  unfold natTruncSubBT; rw [BT.fold_leaf]
+
+theorem natTruncSubBT_node (n l r : BT.{u}) :
+    natTruncSubBT n (BT.node l r) =
+      natPredBT (natTruncSubBT n r) := by
+  unfold natTruncSubBT
+  rw [BT.fold_node]
+
+theorem natTruncSubBT_succ (n m : BT.{u}) :
+    natTruncSubBT n (natSuccBT m) =
+      natPredBT (natTruncSubBT n m) := by
+  unfold natSuccBT
+  exact natTruncSubBT_node n BT.leaf m
+
+/-- Truncated subtraction from zero is always zero,
+since `natPredBT BT.leaf = BT.leaf`. -/
+private theorem natTruncSubBT_leaf_gen
+    {y : PUnit.{u + 1}}
+    (t : PolyFreeM (overTerminal PUnit.{u + 1})
+      polyProdType y) :
+    natTruncSubBT (BT.leaf : BT.{u}) t =
+      BT.leaf := by
+  induction t with
+  | mk y idx children ih =>
+    have hy : y = PUnit.unit := PUnit.eq_punit y
+    subst hy
+    match idx with
+    | Sum.inl leafIdx =>
+      have hli :
+          leafIdx = ⟨PUnit.unit, rfl⟩ :=
+        Subtype.ext (PUnit.eq_punit _)
+      subst hli
+      have hmk :
+          PolyFix.mk PUnit.unit
+            (show polyBetweenIndex PUnit PUnit
+              (polyTranslate
+                (overTerminal PUnit.{u + 1})
+                polyProdType) PUnit.unit from
+              Sum.inl ⟨PUnit.unit, rfl⟩)
+            children =
+          BT.leaf := by
+        unfold BT.leaf polyFreeMPure
+        congr 1
+        funext e
+        exact PEmpty.elim e
+      rw [hmk, natTruncSubBT_zero]
+    | Sum.inr nodeIdx =>
+      have hni : nodeIdx = PUnit.unit :=
+        PUnit.eq_punit nodeIdx
+      subst hni
+      set l : BT.{u} :=
+        children (Sum.inl PUnit.unit)
+      set r : BT.{u} :=
+        children (Sum.inr PUnit.unit)
+      have hmk :
+          PolyFix.mk PUnit.unit
+            (show polyBetweenIndex PUnit PUnit
+              (polyTranslate
+                (overTerminal PUnit.{u + 1})
+                polyProdType) PUnit.unit from
+              Sum.inr PUnit.unit)
+            children =
+          BT.node l r := by
+        unfold BT.node polyProdFreeMNode
+          polyFreeMStrFamily
+        simp only
+        congr 1
+        funext e
+        match e with
+        | Sum.inl _ => rfl
+        | Sum.inr _ => rfl
+      rw [hmk, natTruncSubBT_node,
+        ih (Sum.inr PUnit.unit),
+        natPredBT_zero]
+
+theorem natTruncSubBT_leaf (t : BT.{u}) :
+    natTruncSubBT BT.leaf t = BT.leaf :=
+  natTruncSubBT_leaf_gen t
+
+/-! ### Self-subtraction
+
+`natTruncSubBT t t = BT.leaf` for any tree `t`.
+The fold on the second argument applies `natPredBT`
+once per right-spine node; starting from `t` itself,
+each application strips one right-spine layer,
+yielding `BT.leaf` after all layers are consumed.
+
+We prove this via a generalized lemma:
+`natPredBT (natTruncSubBT (BT.node x t) t) =
+  natTruncSubBT t t`
+for any `x, t`, which allows us to "peel off" one
+layer of the first argument at each inductive step. -/
+
+/-- Peeling lemma: applying `natPredBT` after
+`natTruncSubBT` with a `node` first argument peels
+off the outer node layer, reducing to a fold
+starting from the right child. -/
+private theorem natTruncSubBT_peel_gen
+    {y : PUnit.{u + 1}}
+    (a x : BT.{u})
+    (t : PolyFreeM (overTerminal PUnit.{u + 1})
+      polyProdType y) :
+    natPredBT (natTruncSubBT (BT.node a x) t) =
+      natTruncSubBT x t := by
+  induction t with
+  | mk y idx children ih =>
+    have hy : y = PUnit.unit := PUnit.eq_punit y
+    subst hy
+    match idx with
+    | Sum.inl leafIdx =>
+      have hli :
+          leafIdx = ⟨PUnit.unit, rfl⟩ :=
+        Subtype.ext (PUnit.eq_punit _)
+      subst hli
+      have hmk :
+          PolyFix.mk PUnit.unit
+            (show polyBetweenIndex PUnit PUnit
+              (polyTranslate
+                (overTerminal PUnit.{u + 1})
+                polyProdType) PUnit.unit from
+              Sum.inl ⟨PUnit.unit, rfl⟩)
+            children =
+          BT.leaf := by
+        unfold BT.leaf polyFreeMPure
+        congr 1
+        funext e
+        exact PEmpty.elim e
+      rw [hmk, natTruncSubBT_zero,
+        natTruncSubBT_zero]
+      unfold natPredBT
+      rw [BT.caseOn_node]
+    | Sum.inr nodeIdx =>
+      have hni : nodeIdx = PUnit.unit :=
+        PUnit.eq_punit nodeIdx
+      subst hni
+      set l : BT.{u} :=
+        children (Sum.inl PUnit.unit)
+      set r : BT.{u} :=
+        children (Sum.inr PUnit.unit)
+      have hmk :
+          PolyFix.mk PUnit.unit
+            (show polyBetweenIndex PUnit PUnit
+              (polyTranslate
+                (overTerminal PUnit.{u + 1})
+                polyProdType) PUnit.unit from
+              Sum.inr PUnit.unit)
+            children =
+          BT.node l r := by
+        unfold BT.node polyProdFreeMNode
+          polyFreeMStrFamily
+        simp only
+        congr 1
+        funext e
+        match e with
+        | Sum.inl _ => rfl
+        | Sum.inr _ => rfl
+      rw [hmk, natTruncSubBT_node,
+        natTruncSubBT_node,
+        ih (Sum.inr PUnit.unit)]
+
+private theorem natTruncSubBT_self_gen
+    {y : PUnit.{u + 1}}
+    (t : PolyFreeM (overTerminal PUnit.{u + 1})
+      polyProdType y) :
+    natTruncSubBT t t = BT.leaf := by
+  induction t with
+  | mk y idx children ih =>
+    have hy : y = PUnit.unit := PUnit.eq_punit y
+    subst hy
+    match idx with
+    | Sum.inl leafIdx =>
+      have hli :
+          leafIdx = ⟨PUnit.unit, rfl⟩ :=
+        Subtype.ext (PUnit.eq_punit _)
+      subst hli
+      have hmk :
+          PolyFix.mk PUnit.unit
+            (show polyBetweenIndex PUnit PUnit
+              (polyTranslate
+                (overTerminal PUnit.{u + 1})
+                polyProdType) PUnit.unit from
+              Sum.inl ⟨PUnit.unit, rfl⟩)
+            children =
+          BT.leaf := by
+        unfold BT.leaf polyFreeMPure
+        congr 1
+        funext e
+        exact PEmpty.elim e
+      rw [hmk, natTruncSubBT_zero]
+    | Sum.inr nodeIdx =>
+      have hni : nodeIdx = PUnit.unit :=
+        PUnit.eq_punit nodeIdx
+      subst hni
+      set l : BT.{u} :=
+        children (Sum.inl PUnit.unit)
+      set r : BT.{u} :=
+        children (Sum.inr PUnit.unit)
+      have hmk :
+          PolyFix.mk PUnit.unit
+            (show polyBetweenIndex PUnit PUnit
+              (polyTranslate
+                (overTerminal PUnit.{u + 1})
+                polyProdType) PUnit.unit from
+              Sum.inr PUnit.unit)
+            children =
+          BT.node l r := by
+        unfold BT.node polyProdFreeMNode
+          polyFreeMStrFamily
+        simp only
+        congr 1
+        funext e
+        match e with
+        | Sum.inl _ => rfl
+        | Sum.inr _ => rfl
+      rw [hmk, natTruncSubBT_node,
+        natTruncSubBT_peel_gen l r r]
+      exact ih (Sum.inr PUnit.unit)
+
+theorem natTruncSubBT_self (t : BT.{u}) :
+    natTruncSubBT t t = BT.leaf :=
+  natTruncSubBT_self_gen t
+
+/-! ### Reflexivity of treeEqFlatBT -/
+
+theorem treeEqFlatBT_refl (t : BT.{u}) :
+    treeEqFlatBT t t = BT.leaf := by
+  unfold treeEqFlatBT natEqFlatBT
+  rw [natTruncSubBT_self, natAddBT_zero]
+  exact isLeafBT_leaf
+
+/-! ### Equivalence with treeEqBT
+
+The full equivalence `treeEqFlatBT s t = treeEqBT s t`
+for all `s t : BT.{u}` reduces to showing that
+`treeToNatBT` is injective (since `natEqFlatBT` is
+correct for equal/unequal right-spine naturals, and
+`treeToNatBT` produces right-spine naturals).
+
+Injectivity of `treeToNatBT` follows from injectivity
+of the Cantor pairing `cantorPairBT` on right-spine
+naturals. A full proof requires establishing that
+`cantorPairBT` on `Nat.toRSpine` inputs agrees with
+the standard Cantor pairing on `ℕ`, which is a known
+bijection.
+
+Below we verify the base cases. -/
+
+theorem treeEqFlatBT_leaf_leaf :
+    treeEqFlatBT (BT.leaf : BT.{u}) BT.leaf =
+      BT.leaf :=
+  treeEqFlatBT_refl BT.leaf
+
+theorem treeEqFlatBT_leaf_node
+    (l r : BT.{u}) :
+    treeEqFlatBT BT.leaf (BT.node l r) =
+      treeFalseBT := by
+  unfold treeEqFlatBT natEqFlatBT
+  rw [treeToNatBT_leaf, treeToNatBT_node,
+    natTruncSubBT_leaf,
+    natTruncSubBT_zero,
+    natAddBT_zero]
+  unfold natSuccBT
+  exact isLeafBT_node _ _
+
+theorem treeEqFlatBT_node_leaf
+    (a b : BT.{u}) :
+    treeEqFlatBT (BT.node a b) BT.leaf =
+      treeFalseBT := by
+  unfold treeEqFlatBT natEqFlatBT
+  rw [treeToNatBT_node, treeToNatBT_leaf,
+    natTruncSubBT_zero,
+    natTruncSubBT_leaf,
+    natAddBT_succ]
+  unfold natSuccBT
+  exact isLeafBT_node _ _
+
+end FunctionFreeTreeEq
+
 end GebLean
