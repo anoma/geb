@@ -25,6 +25,23 @@ In `GebLean/NatArith.lean`:
   toRSpineNat(t)` for all `t`.
 - `natPlus_ℓ_left_rsn`: `natPlus(ℓ, m) = m` for right-spine
   normalized `m`.
+- `natPlus_toRSpineNat_first`: `cfpMap toRSpineNat (𝟙 T) ≫
+  natPlus = natPlus ≫ toRSpineNat`. Post-composing natPlus
+  with toRSpineNat equals pre-composing toRSpineNat on the
+  first argument.
+- `natPlus_rsn_comm_aux`: auxiliary lemma showing
+  `cfpLift (cfpSnd ≫ toRSpineNat) (cfpFst ≫ a) ≫ natPlus
+  = cfpMap a (𝟙 T) ≫ natPlus` for rsn `a`. Proved via
+  `p.elim_uniq`, using `natPlus_ℓ_left_rsn` for the base
+  and `toRSpineNat_β` + `natPlus_succ_left` for the step.
+- `natPlus_comm_rsn`: commutativity of `natPlus` for
+  right-spine normalized inputs:
+  `cfpLift c a ≫ natPlus = cfpLift a c ≫ natPlus`
+  for rsn `a`, `c`. Uses `natPlus_rsn_comm_aux`.
+- `natPlus_cancel_left_rsn`: left cancellation of `natPlus`
+  under `natEq` for rsn inputs:
+  `natEq(c + a, c + b) = natEq(a, b)`.
+  Follows from `natPlus_comm_rsn` + `natPlus_cancel_right`.
 
 ## Remaining
 
@@ -48,7 +65,19 @@ cfpMap toRSpineNat toRSpineNat ≫ cantorPair ≫ natSucc`.
 
 ### `NatEqCantorPair`
 
-Cantor pairing injectivity under `natEq`.
+Cantor pairing injectivity under `natEq`. The standard
+proof uses the fact that `natTri(s+1) = natTri(s) + s + 1`
+to show `cantorPair` is injective, decomposing via
+order properties:
+
+- If `m + n = m' + n'` (same diagonal), then
+  `natPlus_cancel_left_rsn` cancels the common `natTri`
+  term, reducing to `natEq(m, m')`.
+- If `m + n ≠ m' + n'`, the natTri gap exceeds the
+  m-offset, so the cantor pair values differ.
+
+This proof requires `treeToNat_isRSpineNatNorm` plus
+order-theoretic properties of `natTri` and `natPlus`.
 
 ### `treeEqG_trans`
 
