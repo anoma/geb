@@ -1854,6 +1854,139 @@ theorem ℓ_isRSpineNatNorm :
   unfold IsRSpineNatNorm
   exact toRSpineNat_ℓ
 
+/-- `natSucc` preserves right-spine normalization. -/
+theorem natSucc_isRSpineNatNorm {D : C}
+    (m : D ⟶ p.T) (hm : IsRSpineNatNorm m) :
+    IsRSpineNatNorm (m ≫ natSucc) := by
+  unfold IsRSpineNatNorm
+  unfold natSucc
+  rw [Category.assoc, Category.assoc,
+    toRSpineNat_β]
+  simp only [← Category.assoc]
+  congr 1
+  simp only [Category.assoc]
+  have inner :
+      cfpLift (cfpTerminalFrom p.T ≫ p.ℓ)
+        (𝟙 p.T) ≫
+      cfpLift
+        (cfpTerminalFrom
+          (cfpProd p.T p.T) ≫ p.ℓ)
+        (cfpSnd p.T p.T ≫ toRSpineNat) =
+      cfpLift (cfpTerminalFrom p.T ≫ p.ℓ)
+        toRSpineNat := by
+    rw [cfpLift_precomp]
+    congr 1
+    · rw [← Category.assoc]; congr 1
+      exact h.terminal.uniq _
+    · rw [← Category.assoc, cfpLift_snd,
+        Category.id_comp]
+  rw [inner, cfpLift_precomp, hm,
+    cfpLift_precomp, Category.comp_id]
+
+/-- The step morphism of `toRSpineNat`
+equals the step morphism of `natPlus` composed
+with `natSucc`. -/
+private theorem toRSpineNat_step_eq_natSucc :
+    cfpLift
+      (cfpTerminalFrom
+        (cfpProd p.T p.T) ≫ p.ℓ)
+      (cfpSnd p.T p.T) ≫ p.β =
+    cfpSnd p.T p.T ≫
+      (natSucc : p.T ⟶ p.T) := by
+  have expand :
+      cfpSnd p.T p.T ≫ natSucc =
+      cfpSnd p.T p.T ≫
+        cfpLift (cfpTerminalFrom p.T ≫ p.ℓ)
+          (𝟙 p.T) ≫ p.β := rfl
+  rw [expand, ← Category.assoc,
+    cfpLift_precomp]
+  congr 2
+  · rw [← Category.assoc]; congr 1
+    exact (h.terminal.uniq
+      (cfpSnd p.T p.T ≫
+        cfpTerminalFrom p.T)).symm
+  · exact (Category.comp_id _).symm
+
+/-- `natSucc` commutes with `toRSpineNat`. -/
+theorem natSucc_toRSpineNat_comm :
+    natSucc ≫ toRSpineNat =
+    toRSpineNat ≫
+      (natSucc : p.T ⟶ p.T) := by
+  unfold natSucc
+  rw [Category.assoc, toRSpineNat_β,
+    ← Category.assoc, ← Category.assoc]
+  congr 1
+  rw [cfpLift_precomp]
+  have hfst :
+      cfpLift (cfpTerminalFrom p.T ≫ p.ℓ)
+        (𝟙 p.T) ≫
+        cfpTerminalFrom (cfpProd p.T p.T) ≫
+        p.ℓ =
+      cfpTerminalFrom p.T ≫ p.ℓ := by
+    rw [← Category.assoc]; congr 1
+    exact h.terminal.uniq _
+  have hsnd :
+      cfpLift (cfpTerminalFrom p.T ≫ p.ℓ)
+        (𝟙 p.T) ≫
+        cfpSnd p.T p.T ≫ toRSpineNat =
+      toRSpineNat := by
+    rw [← Category.assoc, cfpLift_snd,
+      Category.id_comp]
+  rw [hfst, hsnd]
+  rw [cfpLift_precomp, Category.comp_id]
+  congr 1
+  rw [← Category.assoc]; congr 1
+  exact (h.terminal.uniq
+    (toRSpineNat ≫
+      cfpTerminalFrom p.T)).symm
+
+
+/-- Adding zero on the left under right-spine
+encoding equals `toRSpineNat`. -/
+theorem natPlus_ℓ_left_eq_toRSpineNat :
+    cfpLift (cfpTerminalFrom p.T ≫ p.ℓ)
+      (𝟙 p.T) ≫ natPlus =
+    (toRSpineNat : p.T ⟶ p.T) := by
+  have factor :
+      cfpLift (cfpTerminalFrom p.T ≫ p.ℓ)
+        (𝟙 p.T) =
+      cfpLift (cfpTerminalFrom p.T) (𝟙 p.T) ≫
+        cfpMap p.ℓ (𝟙 p.T) := by
+    rw [cfpLift_cfpMap, Category.comp_id]
+  rw [factor, Category.assoc]
+  unfold natPlus
+  rw [elim_naturality p.ℓ (𝟙 p.T)
+    (cfpSnd p.T p.T ≫ natSucc),
+    Category.comp_id]
+  change cfpLift (cfpTerminalFrom p.T)
+    (𝟙 p.T) ≫
+    p.elim p.ℓ (cfpSnd p.T p.T ≫ natSucc) =
+    toRSpineNat
+  congr 1
+  exact congrArg (p.elim p.ℓ)
+    toRSpineNat_step_eq_natSucc.symm
+
+/-- Adding zero on the left for right-spine
+normalized inputs. -/
+theorem natPlus_ℓ_left_rsn {D : C}
+    (m : D ⟶ p.T)
+    (hm : IsRSpineNatNorm m) :
+    cfpLift
+      (cfpTerminalFrom D ≫ p.ℓ) m ≫
+      natPlus = m := by
+  have factor :
+      cfpLift (cfpTerminalFrom D ≫ p.ℓ) m =
+      m ≫ cfpLift (cfpTerminalFrom p.T ≫ p.ℓ)
+        (𝟙 p.T) := by
+    rw [cfpLift_precomp, Category.comp_id]
+    rw [← Category.assoc,
+      show cfpTerminalFrom D =
+        m ≫ cfpTerminalFrom p.T from
+        (h.terminal.uniq
+          (m ≫ cfpTerminalFrom p.T)).symm]
+  rw [factor, Category.assoc,
+    natPlus_ℓ_left_eq_toRSpineNat, hm]
+
 /-- `toRSpineNat` is idempotent. -/
 theorem toRSpineNat_idem :
     toRSpineNat ≫ toRSpineNat =
