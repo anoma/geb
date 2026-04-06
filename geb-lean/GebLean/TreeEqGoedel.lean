@@ -35,8 +35,7 @@ theorem treeEqG_bool :
   unfold treeEqG
   rw [Category.assoc, natEq_bool]
 
-/-- Leaf-leaf computation rule for `treeEqG`:
-`treeEqG(ℓ, ℓ) = ℓ`. -/
+/-- `natEq` at `(ℓ, ℓ)` yields `ℓ`. -/
 private theorem natEq_refl_ℓ :
     cfpLift (p.ℓ : cfpTerminal (C := C) ⟶ p.T)
       p.ℓ ≫ natEq =
@@ -80,13 +79,8 @@ theorem treeEqG_ℓβ :
   unfold treeEqG
   rw [← Category.assoc, cfpMap_comp,
     treeToNat_ℓ, treeToNat_β]
-  -- Goal: cfpMap p.ℓ
-  --   (cfpMap treeToNat treeToNat ≫ cantorPair ≫
-  --     natSucc) ≫ natEq
-  --   = cfpTerminalFrom _ ≫ treeFalse
-  -- Convert cfpMap into cfpLift form to apply
+  -- Convert cfpMap form to cfpLift form to apply
   -- natEq_ℓ_succ.
-  -- Convert cfpMap form to cfpLift form.
   have step :
       cfpMap (p.ℓ : cfpTerminal (C := C) ⟶ p.T)
         (cfpMap treeToNat treeToNat ≫
@@ -158,5 +152,51 @@ theorem treeEqG_βℓ :
       congr 1; exact h.terminal.uniq _
   rw [step]
   exact natEq_succ_ℓ _
+
+/-- Composing `cfpMap p.β p.β` with
+`cfpMap treeToNat treeToNat` and canceling
+`natSucc` via `natEq_succ_cancel`.
+Reduces `treeEqG_ββ` to comparing
+`cantorPair`-encoded values via `natEq`. -/
+private theorem treeEqG_ββ_reduce :
+    cfpMap p.β p.β ≫ treeEqG =
+    cfpMap
+      (cfpMap treeToNat treeToNat ≫ cantorPair)
+      (cfpMap treeToNat treeToNat ≫
+        cantorPair) ≫
+    (natEq : cfpProd p.T p.T ⟶ p.T) := by
+  unfold treeEqG
+  rw [← Category.assoc, cfpMap_comp,
+    treeToNat_β]
+  -- The goal has (cfpMap treeToNat treeToNat ≫
+  -- cantorPair ≫ natSucc), which is right-associated.
+  -- Use cfpMap_comp_comp to factor out natSucc.
+  rw [cfpMap_comp_comp
+    (cfpMap treeToNat treeToNat) _
+    (cfpMap treeToNat treeToNat) _,
+    cfpMap_comp_comp
+      (cantorPair : cfpProd p.T p.T ⟶ p.T) _
+      cantorPair _,
+    Category.assoc, Category.assoc]
+  -- Collapse cfpMap ... ≫ cfpMap cantorPair ...
+  rw [← cfpMap_comp]
+  -- Goal: cfpMap (... ≫ cantorPair) ... ≫
+  --   cfpMap natSucc natSucc ≫ natEq
+  --   = cfpMap (... ≫ cantorPair) ... ≫ natEq
+  -- Suffices: cfpMap natSucc natSucc ≫ natEq = natEq
+  have natSucc_cancel :
+      cfpMap (natSucc : p.T ⟶ p.T) natSucc ≫
+        natEq =
+      (natEq : cfpProd p.T p.T ⟶ p.T) := by
+    unfold cfpMap
+    rw [natEq_succ_cancel,
+      show cfpLift (cfpFst p.T p.T)
+        (cfpSnd p.T p.T) =
+        𝟙 (cfpProd p.T p.T) from
+        (cfpLift_uniq _ _ _
+          (Category.id_comp _)
+          (Category.id_comp _)).symm,
+      Category.id_comp]
+  simp only [Category.assoc, natSucc_cancel]
 
 end GebLean
