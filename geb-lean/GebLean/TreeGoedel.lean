@@ -254,6 +254,39 @@ theorem treeToNat_β_natEq :
     (cfpMap treeToNat treeToNat ≫ cantorPair)
     (cfpMap treeToNat treeToNat ≫ cantorPair)
 
+/-- `treeToNatParam ≫ toRSpineNat =
+treeToNatParam`. -/
+private theorem treeToNatParam_rsn :
+    treeToNatParam ≫ toRSpineNat =
+    (treeToNatParam :
+      cfpProd cfpTerminal p.T ⟶ p.T) := by
+  unfold treeToNatParam
+  have hw :
+      cfpMap toRSpineNat toRSpineNat ≫
+        ((cantorPair :
+          cfpProd p.T p.T ⟶ p.T) ≫
+          natSucc) =
+      (cantorPair ≫ natSucc) ≫
+        toRSpineNat := by
+    rw [← Category.assoc,
+      cantorPair_toRSpineNat_comm,
+      Category.assoc, Category.assoc,
+      natSucc_toRSpineNat_comm]
+  rw [elim_algebra_morphism p.ℓ
+    (cantorPair ≫ natSucc)
+    toRSpineNat
+    (cantorPair ≫ natSucc)
+    hw,
+    toRSpineNat_ℓ]
+
+/-- `treeToNat` is right-spine normalized. -/
+theorem treeToNat_isRSpineNatNorm :
+    IsRSpineNatNorm
+      (treeToNat : p.T ⟶ p.T) := by
+  unfold IsRSpineNatNorm treeToNat
+  rw [Category.assoc,
+    treeToNatParam_rsn]
+
 variable {D : C}
 
 /-- Truncated subtraction with zero as first

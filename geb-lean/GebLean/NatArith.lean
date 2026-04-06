@@ -2586,4 +2586,304 @@ private theorem natTriStep_toRSpineNat_comm :
   congr 1
   exact natTriStepSingle_toRSpineNat_comm
 
+/-- Both components of `natTriHelper` are
+right-spine normalized:
+`natTriHelper ≫ cfpMap toRSpineNat toRSpineNat
+  = natTriHelper`. -/
+theorem natTriHelper_isRSpineNatNorm :
+    natTriHelper ≫
+      cfpMap (toRSpineNat : p.T ⟶ p.T)
+        toRSpineNat =
+    (natTriHelper :
+      cfpProd cfpTerminal p.T ⟶
+        cfpProd p.T p.T) := by
+  change p.elim (cfpLift p.ℓ p.ℓ) natTriStep ≫
+    cfpMap toRSpineNat toRSpineNat =
+    p.elim (cfpLift p.ℓ p.ℓ) natTriStep
+  rw [elim_algebra_morphism
+    (cfpLift p.ℓ p.ℓ) natTriStep
+    (cfpMap toRSpineNat toRSpineNat)
+    natTriStep
+    natTriStep_toRSpineNat_comm,
+    cfpLift_cfpMap,
+    toRSpineNat_ℓ]
+
+/-- `natTri` is right-spine normalized:
+`natTri ≫ toRSpineNat = natTri`. -/
+theorem natTri_isRSpineNatNorm :
+    IsRSpineNatNorm
+      (natTri : p.T ⟶ p.T) := by
+  unfold IsRSpineNatNorm
+  unfold natTri
+  rw [Category.assoc, Category.assoc,
+    show cfpSnd p.T p.T ≫ toRSpineNat =
+      cfpMap toRSpineNat toRSpineNat ≫
+        cfpSnd p.T p.T from
+      (cfpMap_snd toRSpineNat
+        toRSpineNat).symm,
+    ← Category.assoc
+      (natTriHelper)
+      (cfpMap _ _),
+    natTriHelper_isRSpineNatNorm]
+
+omit p in
+/-- `cfpMap` with identity first component
+distributes over composition in the second
+component. -/
+theorem cfpMap_id_comp'
+    {A B B' B'' : C}
+    (f : B ⟶ B') (g : B' ⟶ B'') :
+    cfpMap (𝟙 A) (f ≫ g) =
+    cfpMap (𝟙 A) f ≫
+      cfpMap (𝟙 A) g := by
+  conv_lhs =>
+    rw [show (𝟙 A : A ⟶ A) =
+      𝟙 A ≫ 𝟙 A from
+      (Category.id_comp (𝟙 A)).symm]
+  rw [← cfpMap_comp]
+
+omit p in
+/-- `cfpMap (𝟙 A) (cfpSnd B D)` equals
+`cfpAssocSnd A B D`. -/
+private theorem
+    cfpMap_id_cfpSnd_eq_cfpAssocSnd
+    {A B D : C} :
+    cfpMap (𝟙 A) (cfpSnd B D) =
+    cfpAssocSnd A B D := by
+  unfold cfpMap cfpAssocSnd
+  congr 1
+  exact Category.comp_id _
+
+omit p in
+/-- `cfpMap (𝟙 A) (cfpLift f (𝟙 D)) ≫
+cfpAssocSnd A B D = 𝟙`. -/
+private theorem
+    cfpMap_id_cfpLift_cfpAssocSnd
+    {A B D : C} (f : D ⟶ B) :
+    cfpMap (𝟙 A) (cfpLift f (𝟙 D)) ≫
+      cfpAssocSnd A B D =
+    𝟙 (cfpProd A D) := by
+  have hfst :
+      (cfpMap (𝟙 A)
+        (cfpLift f (𝟙 D)) ≫
+        cfpAssocSnd A B D) ≫
+        cfpFst A D =
+      cfpFst A D := by
+    unfold cfpAssocSnd
+    rw [Category.assoc, cfpLift_fst,
+      cfpMap_fst, Category.comp_id]
+  have hsnd :
+      (cfpMap (𝟙 A)
+        (cfpLift f (𝟙 D)) ≫
+        cfpAssocSnd A B D) ≫
+        cfpSnd A D =
+      cfpSnd A D := by
+    unfold cfpAssocSnd
+    rw [Category.assoc, cfpLift_snd,
+      ← Category.assoc, cfpMap_snd,
+      Category.assoc, cfpLift_snd,
+      Category.comp_id]
+  exact (cfpLift_uniq _ _
+    (cfpMap (𝟙 A)
+      (cfpLift f (𝟙 D)) ≫
+      cfpAssocSnd A B D)
+    hfst hsnd).trans
+    (cfpLift_uniq _ _ _
+      (Category.id_comp _)
+      (Category.id_comp _)).symm
+
+/-- Applying `natSucc` to the tree input of
+`natTriHelper` equals post-composing with
+`natTriStepSingle`. -/
+private theorem natSucc_natTriHelper :
+    cfpMap (𝟙 cfpTerminal) natSucc ≫
+      natTriHelper =
+    natTriHelper ≫
+      (natTriStepSingle :
+        cfpProd p.T p.T ⟶
+          cfpProd p.T p.T) := by
+  unfold natSucc
+  rw [cfpMap_id_comp', Category.assoc,
+    natTriHelper_β_factor]
+  have comm :
+      cfpMap (𝟙 cfpTerminal)
+        (cfpLift
+          (cfpTerminalFrom p.T ≫ p.ℓ)
+          (𝟙 p.T)) ≫
+      cfpAssocSnd cfpTerminal p.T p.T =
+    𝟙 (cfpProd cfpTerminal p.T) :=
+    cfpMap_id_cfpLift_cfpAssocSnd _
+  simp only [← Category.assoc]
+  rw [comm, Category.id_comp]
+
+/-- Normalizing the tree input of `natTriHelper`
+does not change the result:
+`cfpMap (𝟙 cfpTerminal) toRSpineNat ≫
+  natTriHelper = natTriHelper`. -/
+private theorem toRSpineNat_natTriHelper :
+    cfpMap (𝟙 cfpTerminal) toRSpineNat ≫
+      natTriHelper =
+    (natTriHelper :
+      cfpProd cfpTerminal p.T ⟶
+        cfpProd p.T p.T) := by
+  apply p.elim_uniq (cfpLift p.ℓ p.ℓ)
+    natTriStep
+    (cfpMap (𝟙 cfpTerminal) toRSpineNat ≫
+      natTriHelper)
+  · -- Base case.
+    rw [← Category.assoc]
+    have : cfpInsertSnd p.ℓ cfpTerminal ≫
+        cfpMap (𝟙 cfpTerminal) toRSpineNat =
+      cfpInsertSnd p.ℓ cfpTerminal := by
+      unfold cfpInsertSnd
+      rw [cfpLift_cfpMap, Category.comp_id,
+        Category.assoc, toRSpineNat_ℓ]
+    rw [this, natTriHelper_ℓ]
+  · -- Step case.
+    rw [← Category.assoc
+      (cfpMap (𝟙 cfpTerminal) p.β),
+      show cfpMap (𝟙 cfpTerminal) p.β ≫
+        cfpMap (𝟙 cfpTerminal)
+          toRSpineNat =
+        cfpMap (𝟙 cfpTerminal)
+          (p.β ≫ toRSpineNat) from
+        (cfpMap_id_comp' p.β
+          toRSpineNat).symm,
+      β_toRSpineNat_eq,
+      cfpMap_id_comp',
+      cfpMap_id_cfpSnd_eq_cfpAssocSnd,
+      cfpMap_id_comp',
+      Category.assoc, Category.assoc,
+      natSucc_natTriHelper,
+      natTriStep_factor]
+    simp only [← Category.assoc]
+    congr 1
+    unfold cfpLiftAssoc
+    rw [cfpLift_snd]
+    exact Category.assoc _ _ _
+
+/-- Pre-normalizing `natTri`'s input does not
+change its output. -/
+theorem toRSpineNat_natTri :
+    toRSpineNat ≫ natTri =
+    (natTri : p.T ⟶ p.T) := by
+  unfold natTri
+  rw [← Category.assoc, ← Category.assoc,
+    cfpLift_precomp, Category.comp_id]
+  have hterm :
+      toRSpineNat ≫ cfpTerminalFrom p.T =
+      cfpTerminalFrom p.T :=
+    h.terminal.uniq _
+  rw [hterm]
+  have embed_factor :
+      cfpLift (cfpTerminalFrom p.T)
+        toRSpineNat =
+      cfpLift (cfpTerminalFrom p.T)
+        (𝟙 p.T) ≫
+        cfpMap (𝟙 cfpTerminal)
+          toRSpineNat := by
+    rw [cfpLift_cfpMap, Category.comp_id,
+      Category.id_comp]
+  rw [embed_factor]
+  simp only [Category.assoc]
+  rw [← Category.assoc
+    (cfpMap (𝟙 cfpTerminal) toRSpineNat),
+    toRSpineNat_natTriHelper]
+
+/-- `cantorPair` commutes with `toRSpineNat`:
+normalizing both inputs then pairing equals
+pairing then normalizing. -/
+private theorem natPlus_toRSpineNat_both :
+    cfpMap toRSpineNat toRSpineNat ≫
+      (natPlus : cfpProd p.T p.T ⟶ p.T) =
+    natPlus ≫ toRSpineNat := by
+  have split :
+      cfpMap toRSpineNat toRSpineNat =
+      cfpMap (𝟙 p.T) toRSpineNat ≫
+        cfpMap toRSpineNat
+          (𝟙 p.T) := by
+    symm; rw [cfpMap_comp,
+      Category.id_comp,
+      Category.comp_id]
+  rw [split, Category.assoc,
+    natPlus_toRSpineNat_first,
+    ← Category.assoc,
+    natPlus_toRSpineNat_second]
+
+/-- `cantorPair` commutes with `toRSpineNat`:
+normalizing both inputs then pairing equals
+pairing then normalizing. -/
+theorem cantorPair_toRSpineNat_comm :
+    cfpMap toRSpineNat toRSpineNat ≫
+      cantorPair =
+    cantorPair ≫
+      (toRSpineNat : p.T ⟶ p.T) := by
+  have lhs :
+      cfpMap toRSpineNat toRSpineNat ≫
+        cantorPair =
+      (cantorPair :
+        cfpProd p.T p.T ⟶ p.T) := by
+    unfold cantorPair
+    rw [← Category.assoc, cfpLift_precomp,
+      show cfpMap toRSpineNat
+          toRSpineNat ≫
+        natPlus ≫ natTri =
+        natPlus ≫ natTri from by
+        rw [← Category.assoc,
+          natPlus_toRSpineNat_both,
+          Category.assoc,
+          toRSpineNat_natTri],
+      cfpMap_fst toRSpineNat
+        toRSpineNat,
+      show cfpLift (natPlus ≫ natTri)
+          (cfpFst p.T p.T ≫
+            toRSpineNat) =
+        cfpLift (natPlus ≫ natTri)
+          (cfpFst p.T p.T) ≫
+          cfpMap (𝟙 p.T)
+            toRSpineNat from by
+        rw [cfpLift_cfpMap,
+          Category.comp_id],
+      Category.assoc,
+      natPlus_toRSpineNat_second]
+  have rhs :
+      cantorPair ≫ toRSpineNat =
+      (cantorPair :
+        cfpProd p.T p.T ⟶ p.T) := by
+    unfold cantorPair
+    rw [Category.assoc,
+      ← natPlus_toRSpineNat_first,
+      ← Category.assoc,
+      cfpLift_cfpMap,
+      Category.comp_id,
+      Category.assoc,
+      show natTri ≫ toRSpineNat =
+        natTri from
+        natTri_isRSpineNatNorm]
+  rw [lhs, rhs]
+
+end GebLean
+
+namespace GebLean
+
+open CategoryTheory
+
+universe v' u'
+
+variable {C' : Type u'} [Category.{v'} C']
+  [h' : HasChosenFiniteProducts C']
+
+/-- `cfpMap` with identity first component distributes
+over composition in the second component. -/
+theorem cfpMap_id_comp
+    {A B B' B'' : C'}
+    (f : B ⟶ B') (g : B' ⟶ B'') :
+    cfpMap (𝟙 A) (f ≫ g) =
+    cfpMap (𝟙 A) f ≫
+      cfpMap (𝟙 A) g := by
+  conv_lhs =>
+    rw [show (𝟙 A : A ⟶ A) = 𝟙 A ≫ 𝟙 A from
+      (Category.id_comp (𝟙 A)).symm]
+  rw [← cfpMap_comp]
+
 end GebLean
