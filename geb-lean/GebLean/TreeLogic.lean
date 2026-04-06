@@ -6049,4 +6049,163 @@ theorem treeEq_βℓ {D : C} (f1 f2 : D ⟶ p.T) :
   unfold treeFalseConst
   rw [Category.assoc, isLeafEndo_treeFalse]
 
+/-- `treeEq` with a leaf as first argument equals
+`isLeafEndo`: for all `t₂`,
+`treeEq(leaf, t₂) = isLeafEndo(t₂)`.
+
+The proof lifts to `cfpProd cfpTerminal p.T` and
+applies `p.elim_uniq`, checking both computation
+rules via `treeEq_ℓℓ` and `treeEq_ℓβ`. -/
+theorem treeEq_leaf_left :
+    cfpLift (cfpTerminalFrom p.T ≫ p.ℓ)
+        (𝟙 p.T) ≫ treeEq =
+    (isLeafEndo : p.T ⟶ p.T) := by
+  -- Express both sides as sections applied to
+  -- cfpProd cfpTerminal p.T ⟶ p.T morphisms.
+  -- isLeafEndo = section ≫ isLeaf where
+  -- isLeaf = p.elim p.ℓ (cfpTerminalFrom _ ≫ treeFalse).
+  -- Define φ' : cfpProd cfpTerminal p.T ⟶ p.T.
+  set section_ : p.T ⟶ cfpProd cfpTerminal p.T :=
+    cfpLift (cfpTerminalFrom p.T)
+      (𝟙 p.T) with hsec
+  set φ' : cfpProd cfpTerminal p.T ⟶ p.T :=
+    cfpLift
+      (cfpTerminalFrom
+        (cfpProd cfpTerminal p.T) ≫ p.ℓ)
+      (cfpSnd cfpTerminal p.T) ≫
+    treeEq with hφ'
+  -- Show LHS = section_ ≫ φ'.
+  have hlhs :
+      cfpLift (cfpTerminalFrom p.T ≫ p.ℓ)
+          (𝟙 p.T) ≫ treeEq =
+      section_ ≫ φ' := by
+    rw [hsec, hφ', ← Category.assoc,
+      cfpLift_precomp]
+    have h_first :
+        cfpLift (cfpTerminalFrom p.T) (𝟙 p.T) ≫
+          (cfpTerminalFrom
+            (cfpProd cfpTerminal p.T) ≫ p.ℓ) =
+        cfpTerminalFrom p.T ≫ p.ℓ := by
+      rw [← Category.assoc]
+      congr 1
+      exact h.terminal.uniq _
+    have h_second :
+        cfpLift (cfpTerminalFrom p.T) (𝟙 p.T) ≫
+          cfpSnd cfpTerminal p.T =
+        𝟙 p.T :=
+      cfpLift_snd _ _
+    rw [h_first, h_second]
+  rw [hlhs]
+  -- Show RHS = section_ ≫ isLeaf.
+  have hrhs :
+      (isLeafEndo : p.T ⟶ p.T) =
+      section_ ≫ isLeaf := by
+    rw [hsec]; rfl
+  rw [hrhs]
+  -- It suffices to show φ' = isLeaf.
+  congr 1
+  -- Show φ' = isLeaf by p.elim_uniq.
+  apply p.elim_uniq p.ℓ
+    (cfpTerminalFrom (cfpProd p.T p.T) ≫
+      treeFalse)
+  · -- Leaf case: cfpInsertSnd p.ℓ cfpTerminal ≫ φ'
+    -- = p.ℓ.
+    rw [hφ', ← Category.assoc, cfpLift_precomp]
+    have h_fst :
+        cfpInsertSnd p.ℓ cfpTerminal ≫
+          (cfpTerminalFrom
+            (cfpProd cfpTerminal p.T) ≫ p.ℓ) =
+        cfpTerminalFrom cfpTerminal ≫ p.ℓ := by
+      rw [← Category.assoc]
+      congr 1
+      exact h.terminal.uniq _
+    have h_snd :
+        cfpInsertSnd p.ℓ cfpTerminal ≫
+          cfpSnd cfpTerminal p.T =
+        cfpTerminalFrom cfpTerminal ≫ p.ℓ := by
+      unfold cfpInsertSnd
+      rw [cfpLift_snd]
+    rw [h_fst, h_snd, cfpTerminalFrom_terminal,
+      Category.id_comp]
+    exact treeEq_ℓℓ
+  · -- Branch case: cfpMap (𝟙 cfpTerminal) p.β ≫ φ'
+    -- = cfpLiftAssoc φ' φ' ≫
+    --   (cfpTerminalFrom _ ≫ treeFalse).
+    -- RHS passes through terminal.
+    have hrhs_step :
+        cfpLiftAssoc φ' φ' ≫
+          (cfpTerminalFrom (cfpProd p.T p.T) ≫
+            treeFalse) =
+        cfpTerminalFrom
+            (cfpProd cfpTerminal
+              (cfpProd p.T p.T)) ≫
+          treeFalse := by
+      rw [← Category.assoc]
+      congr 1
+      exact h.terminal.uniq _
+    rw [hrhs_step]
+    -- LHS: cfpMap (𝟙 cfpTerminal) p.β ≫ φ'.
+    rw [hφ', ← Category.assoc, cfpLift_precomp]
+    have h_fst_β :
+        cfpMap (𝟙 cfpTerminal) p.β ≫
+          (cfpTerminalFrom
+            (cfpProd cfpTerminal p.T) ≫ p.ℓ) =
+        cfpTerminalFrom
+            (cfpProd cfpTerminal
+              (cfpProd p.T p.T)) ≫ p.ℓ := by
+      rw [← Category.assoc]
+      congr 1
+      exact h.terminal.uniq _
+    have h_snd_β :
+        cfpMap (𝟙 cfpTerminal) p.β ≫
+          cfpSnd cfpTerminal p.T =
+        cfpSnd cfpTerminal (cfpProd p.T p.T) ≫
+          p.β := by
+      rw [cfpMap_snd]
+    rw [h_fst_β, h_snd_β]
+    -- Goal: cfpLift
+    --   (cfpTerminalFrom _ ≫ p.ℓ)
+    --   (cfpSnd _ _ ≫ p.β) ≫ treeEq =
+    -- cfpTerminalFrom _ ≫ treeFalse.
+    -- This is treeEq(ℓ, β(g1, g2)) for generic
+    -- g1, g2 extracted from cfpSnd.
+    -- Factor cfpSnd ≫ p.β through cfpLift.
+    have h_factor :
+        cfpLift
+          (cfpTerminalFrom
+            (cfpProd cfpTerminal
+              (cfpProd p.T p.T)) ≫ p.ℓ)
+          (cfpSnd cfpTerminal
+            (cfpProd p.T p.T) ≫ p.β) ≫
+        treeEq =
+        cfpTerminalFrom
+            (cfpProd cfpTerminal
+              (cfpProd p.T p.T)) ≫
+          treeFalse := by
+      -- Extract the two components of cfpSnd.
+      set g1 : cfpProd cfpTerminal
+          (cfpProd p.T p.T) ⟶ p.T :=
+        cfpSnd cfpTerminal (cfpProd p.T p.T) ≫
+          cfpFst p.T p.T with hg1
+      set g2 : cfpProd cfpTerminal
+          (cfpProd p.T p.T) ⟶ p.T :=
+        cfpSnd cfpTerminal (cfpProd p.T p.T) ≫
+          cfpSnd p.T p.T with hg2
+      have h_snd_pair :
+          cfpSnd cfpTerminal
+            (cfpProd p.T p.T) ≫ p.β =
+          cfpLift g1 g2 ≫ p.β := by
+        rw [hg1, hg2]
+        congr 1
+        exact cfpLift_uniq
+          (cfpSnd cfpTerminal (cfpProd p.T p.T) ≫
+            cfpFst p.T p.T)
+          (cfpSnd cfpTerminal (cfpProd p.T p.T) ≫
+            cfpSnd p.T p.T)
+          (cfpSnd cfpTerminal (cfpProd p.T p.T))
+          rfl rfl
+      rw [h_snd_pair]
+      exact treeEq_ℓβ g1 g2
+    exact h_factor
+
 end GebLean
