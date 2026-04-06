@@ -1079,4 +1079,53 @@ theorem natPlus_cancel_right {D : C}
       constNatEq_base
       constNatEq_step).symm
 
+/-- The parameterized morphism computing
+`natPlus(natPlus(a, b), c)` from
+`((a, b), c) : cfpProd (cfpProd T T) T`. -/
+private def natPlusAssocLeft :
+    cfpProd (cfpProd p.T p.T) p.T ⟶ p.T :=
+  cfpLift
+    (cfpFst (cfpProd p.T p.T) p.T ≫ natPlus)
+    (cfpSnd (cfpProd p.T p.T) p.T) ≫ natPlus
+
+/-- The parameterized morphism computing
+`natPlus(a, natPlus(b, c))` from
+`((a, b), c) : cfpProd (cfpProd T T) T`. -/
+private def natPlusAssocRight :
+    cfpProd (cfpProd p.T p.T) p.T ⟶ p.T :=
+  cfpLift
+    (cfpFst (cfpProd p.T p.T) p.T ≫
+      cfpFst p.T p.T)
+    (cfpLift
+      (cfpFst (cfpProd p.T p.T) p.T ≫
+        cfpSnd p.T p.T)
+      (cfpSnd (cfpProd p.T p.T) p.T) ≫
+      natPlus) ≫ natPlus
+
+/-- Base case for `natPlusAssocLeft`:
+`natPlusAssocLeft((a,b), leaf) = natPlus(a,b)`.
+-/
+private theorem natPlusAssocLeft_base :
+    cfpInsertSnd p.ℓ (cfpProd p.T p.T) ≫
+      natPlusAssocLeft =
+    natPlus := by
+  unfold natPlusAssocLeft
+  rw [← Category.assoc, cfpLift_precomp]
+  have hfst :
+      cfpInsertSnd p.ℓ (cfpProd p.T p.T) ≫
+        cfpFst (cfpProd p.T p.T) p.T ≫
+        natPlus =
+      natPlus := by
+    unfold cfpInsertSnd
+    rw [← Category.assoc, cfpLift_fst,
+      Category.id_comp]
+  have hsnd :
+      cfpInsertSnd p.ℓ (cfpProd p.T p.T) ≫
+        cfpSnd (cfpProd p.T p.T) p.T =
+      cfpTerminalFrom (cfpProd p.T p.T) ≫
+        p.ℓ := by
+    unfold cfpInsertSnd; rw [cfpLift_snd]
+  rw [hfst, hsnd]
+  exact natPlus_zero natPlus
+
 end GebLean
