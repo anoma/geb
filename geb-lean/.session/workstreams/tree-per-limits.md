@@ -313,33 +313,27 @@ This says `tri(succ(n)) = natPlus(natSucc(index_n), tri(n))`
 where `index_n` is the first projection of `natTriHelper` at
 `(*, n)`.
 
-## `cantorPair_injective` and `treeEqG_ββ` (not yet proved)
+## `treeEqG_ββ` (proved modulo `NatEqCantorPair`)
 
-`cantorPair_injective` states:
-`natEq(cantorPair(a,b), cantorPair(c,d)) =
-  boolAnd(natEq(a,c), natEq(b,d))`
+`treeEqG_ββ` is proved in `GebLean/TreeEqGoedel.lean`,
+parameterized by `NatEqCantorPair C` (Cantor pairing
+injectivity under `natEq`).
 
-This requires a full number-theoretic argument about
-the triangular number function:
+`NatEqCantorPair C` states:
+`cfpMap cantorPair cantorPair ≫ natEq =
+  cfpLift (...fst components... ≫ natEq)
+          (...snd components... ≫ natEq) ≫ boolAnd`
 
-1. `cantorPair(m,n) = tri(m+n) + m`. Equal pairs
-   implies equal diagonals (`m+n = c+d`) by the gap
-   property of triangular numbers.
-2. Equal diagonals plus equal Cantor values implies
-   `m = c` (by `natPlus_cancel_right`).
-3. `m = c` and `m+n = c+d` implies `n = d`.
+The proof of `treeEqG_ββ` uses `treeEqG_ββ_reduce`
+to cancel `natSucc` via `natEq_succ_cancel`, then
+factors through `cfpMap_comp` and applies the
+`NatEqCantorPair` hypothesis, then uses naturality
+of `cfpMap` (`cfpMap_fst`, `cfpMap_snd`,
+`cfpLift_cfpMap`, `cfpLift_precomp`) to show the
+resulting composition equals the desired RHS.
 
-Step 1 requires proving that `natTri` is "injective
-enough": if `tri(s) + a = tri(t) + c` with `a ≤ s`
-and `c ≤ t`, then `s = t`. The standard argument uses
-`tri(k+1) - tri(k) = k+1 > k ≥ a`, which in the
-categorical setting requires:
-
-- Order/comparison on right-spine naturals
-- Properties of truncated subtraction with `natTri`
-- Case analysis (possibly via `IsSeparator` +
-  `HasBoolDichotomy`)
-
-`treeEqG_ββ` depends on `cantorPair_injective`.
-The existing `treeEqG_ββ_reduce` already reduces the
-LHS to comparing Cantor-paired values via `natEq`.
+Proving `NatEqCantorPair C` for specific categories
+(`LawvereBTQuotCat`, `Type u`) requires number-theoretic
+reasoning about the triangular number function and
+Cantor pairing injectivity.  See the previous analysis
+of `cantorPair_injective` for the required steps.
