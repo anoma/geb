@@ -2098,4 +2098,261 @@ theorem toRSpineNat_idem :
         rw [← Category.assoc, embed_snd,
           Category.id_comp]
 
+theorem natPlus_toRSpineNat_first :
+    cfpMap (toRSpineNat : p.T ⟶ p.T) (𝟙 p.T) ≫
+      natPlus =
+    natPlus ≫ toRSpineNat := by
+  have rhs :
+      natPlus ≫ toRSpineNat =
+      p.elim (toRSpineNat : p.T ⟶ p.T)
+        (cfpSnd p.T p.T ≫ natSucc) := by
+    have comm :
+        cfpMap toRSpineNat toRSpineNat ≫
+          (cfpSnd p.T p.T ≫ natSucc) =
+        (cfpSnd p.T p.T ≫ natSucc) ≫
+          toRSpineNat := by
+      simp only [← Category.assoc]
+      rw [cfpMap_snd]
+      simp only [Category.assoc]
+      rw [← natSucc_toRSpineNat_comm]
+    change p.elim (𝟙 p.T)
+        (cfpSnd p.T p.T ≫ natSucc) ≫
+      toRSpineNat = _
+    rw [elim_algebra_morphism
+      (𝟙 p.T) (cfpSnd p.T p.T ≫ natSucc)
+      toRSpineNat
+      (cfpSnd p.T p.T ≫ natSucc)
+      comm, Category.id_comp]
+  have lhs :
+      cfpMap toRSpineNat (𝟙 p.T) ≫ natPlus =
+      p.elim (toRSpineNat : p.T ⟶ p.T)
+        (cfpSnd p.T p.T ≫ natSucc) := by
+    unfold natPlus
+    rw [elim_naturality toRSpineNat (𝟙 p.T)
+      (cfpSnd p.T p.T ≫ natSucc),
+      Category.comp_id]
+  rw [lhs, rhs]
+
+private theorem natPlus_rsn_comm_aux
+    {D : C} (a : D ⟶ p.T)
+    (ha : IsRSpineNatNorm a) :
+    cfpLift
+      (cfpSnd D p.T ≫ toRSpineNat)
+      (cfpFst D p.T ≫ a) ≫ natPlus =
+    cfpMap a (𝟙 p.T) ≫
+      (natPlus : cfpProd p.T p.T ⟶ p.T) := by
+  have lhs_eq :
+      cfpMap a (𝟙 p.T) ≫ natPlus =
+      p.elim a
+        (cfpSnd p.T p.T ≫ natSucc) := by
+    unfold natPlus
+    rw [elim_naturality a (𝟙 p.T)
+      (cfpSnd p.T p.T ≫ natSucc),
+      Category.comp_id]
+  rw [lhs_eq, show
+    p.elim a (cfpSnd p.T p.T ≫ natSucc) =
+    cfpLift (cfpSnd D p.T ≫ toRSpineNat)
+      (cfpFst D p.T ≫ a) ≫ natPlus from
+    (p.elim_uniq a
+      (cfpSnd p.T p.T ≫ natSucc)
+      (cfpLift (cfpSnd D p.T ≫ toRSpineNat)
+        (cfpFst D p.T ≫ a) ≫ natPlus)
+      _ _).symm]
+  · -- Base: cfpInsertSnd ℓ D ≫ Ψ = a.
+    rw [← Category.assoc, cfpLift_precomp]
+    have hsnd :
+        cfpInsertSnd p.ℓ D ≫
+          (cfpSnd D p.T ≫ toRSpineNat) =
+        cfpTerminalFrom D ≫
+          (p.ℓ ≫ toRSpineNat) := by
+      rw [← Category.assoc]
+      unfold cfpInsertSnd
+      rw [cfpLift_snd]
+      simp only [Category.assoc]
+    have hfst :
+        cfpInsertSnd p.ℓ D ≫
+          (cfpFst D p.T ≫ a) = a := by
+      rw [← Category.assoc]
+      unfold cfpInsertSnd
+      rw [cfpLift_fst, Category.id_comp]
+    rw [hsnd, toRSpineNat_ℓ, hfst]
+    exact natPlus_ℓ_left_rsn a ha
+  · -- Step.
+    set P := cfpProd p.T p.T
+    set Ψ :=
+      cfpLift (cfpSnd D p.T ≫ toRSpineNat)
+        (cfpFst D p.T ≫ a) ≫ natPlus
+    -- LHS: factor through cfpLift_precomp.
+    have β_toRSN_eq :
+        p.β ≫ toRSpineNat =
+        cfpSnd p.T p.T ≫ toRSpineNat ≫
+          (natSucc : p.T ⟶ p.T) := by
+      rw [toRSpineNat_β]
+      -- Goal: cfpLift (F ≫ ℓ)
+      -- (cfpSnd ≫ toRSN) ≫ β
+      -- = cfpSnd ≫ toRSN ≫ natSucc.
+      -- Rewrite RHS: natSucc =
+      -- cfpLift (cfpTerminalFrom ≫ ℓ) (𝟙) ≫ β.
+      -- cfpSnd ≫ toRSN ≫ cfpLift F' (𝟙) ≫ β
+      -- = (cfpSnd ≫ cfpLift F' toRSN) ≫ β
+      -- = cfpLift (cfpSnd ≫ F') (cfpSnd ≫ toRSN)
+      --   ≫ β.
+      -- cfpSnd ≫ F' = cfpTerminalFrom ≫ ℓ
+      -- (terminal uniqueness), and the second
+      -- components match.
+      -- LHS: cfpLift (F ≫ ℓ) (cfpSnd ≫ toRSN)
+      --   ≫ β.
+      -- RHS: cfpSnd ≫ toRSN ≫ natSucc
+      -- = cfpSnd ≫ toRSN ≫
+      --   cfpLift (F' ≫ ℓ) (𝟙) ≫ β.
+      -- Factor cfpSnd ≫ toRSN through cfpLift.
+      unfold natSucc
+      simp only [← Category.assoc]
+      congr 1
+      rw [cfpLift_precomp, Category.comp_id]
+      have htermℓ :
+          cfpTerminalFrom
+            (cfpProd p.T p.T) ≫ p.ℓ =
+          (cfpSnd p.T p.T ≫ toRSpineNat) ≫
+            cfpTerminalFrom p.T ≫ p.ℓ := by
+        rw [← Category.assoc]; congr 1
+        exact (h.terminal.uniq _).symm
+      rw [htermℓ]
+    have lhs_eq :
+        cfpMap (𝟙 D) p.β ≫ Ψ =
+        cfpLift
+          (cfpSnd D P ≫ cfpSnd p.T p.T ≫
+            toRSpineNat ≫ natSucc)
+          (cfpFst D P ≫ a) ≫ natPlus := by
+      simp only [Ψ]
+      rw [← Category.assoc, cfpLift_precomp,
+        show cfpMap (𝟙 D) p.β ≫
+            cfpSnd D p.T ≫ toRSpineNat =
+          cfpSnd D P ≫ cfpSnd p.T p.T ≫
+            toRSpineNat ≫ natSucc from by
+          rw [← Category.assoc, cfpMap_snd,
+            Category.assoc, β_toRSN_eq],
+        show cfpMap (𝟙 D) p.β ≫
+            cfpFst D p.T ≫ a =
+          cfpFst D P ≫ a from by
+          rw [← Category.assoc, cfpMap_fst,
+            Category.comp_id]]
+    -- natPlus_succ_left.
+    have lhs_succ :
+        cfpLift
+          (cfpSnd D P ≫ cfpSnd p.T p.T ≫
+            toRSpineNat ≫ natSucc)
+          (cfpFst D P ≫ a) ≫ natPlus =
+        (cfpLift
+          (cfpSnd D P ≫ cfpSnd p.T p.T ≫
+            toRSpineNat)
+          (cfpFst D P ≫ a) ≫ natPlus) ≫
+          natSucc := by
+      rw [← natPlus_succ_left
+        (cfpSnd D P ≫ cfpSnd p.T p.T ≫
+          toRSpineNat)
+        (cfpFst D P ≫ a)]
+      simp only [Category.assoc]
+    -- RHS: reduce cfpLiftAssoc ≫ cfpSnd.
+    have rhs_eq :
+        cfpLiftAssoc Ψ Ψ ≫
+          cfpSnd p.T p.T ≫ natSucc =
+        (cfpAssocSnd D p.T p.T ≫ Ψ) ≫
+          natSucc := by
+      rw [← Category.assoc (cfpLiftAssoc _ _)]
+      unfold cfpLiftAssoc
+      rw [cfpLift_snd]
+    -- cfpAssocSnd ≫ Ψ reduces to the same
+    -- inner form.
+    have assocSnd_Ψ :
+        cfpAssocSnd D p.T p.T ≫ Ψ =
+        cfpLift
+          (cfpSnd D P ≫ cfpSnd p.T p.T ≫
+            toRSpineNat)
+          (cfpFst D P ≫ a) ≫ natPlus := by
+      simp only [Ψ]
+      rw [← Category.assoc, cfpLift_precomp]
+      have h1 :
+          cfpAssocSnd D p.T p.T ≫
+            (cfpSnd D p.T ≫ toRSpineNat) =
+          cfpSnd D P ≫ cfpSnd p.T p.T ≫
+            toRSpineNat := by
+        unfold cfpAssocSnd
+        rw [← Category.assoc, cfpLift_snd,
+          Category.assoc]
+      have h2 :
+          cfpAssocSnd D p.T p.T ≫
+            (cfpFst D p.T ≫ a) =
+          cfpFst D P ≫ a := by
+        unfold cfpAssocSnd
+        rw [← Category.assoc, cfpLift_fst]
+      rw [h1, h2]
+    rw [lhs_eq, lhs_succ, rhs_eq, assocSnd_Ψ]
+
+theorem natPlus_comm_rsn {D : C}
+    (a c : D ⟶ p.T)
+    (ha : IsRSpineNatNorm a)
+    (hc : IsRSpineNatNorm c) :
+    cfpLift c a ≫ natPlus =
+    cfpLift a c ≫ natPlus := by
+  -- cfpLift c a ≫ natPlus
+  -- = cfpLift (𝟙 D) c ≫
+  --   cfpLift (cfpSnd ≫ toRSN) (cfpFst ≫ a)
+  --   ≫ natPlus
+  -- (for rsn c: toRSN(c) = c).
+  -- By natPlus_rsn_comm_aux, the inner morphism
+  -- equals cfpMap a (𝟙 T) ≫ natPlus.
+  -- cfpLift (𝟙 D) c ≫ cfpMap a (𝟙 T) ≫ natPlus
+  -- = cfpLift a c ≫ natPlus.
+  have step1 :
+      cfpLift c a ≫ natPlus =
+      cfpLift (𝟙 D) c ≫
+        cfpLift
+          (cfpSnd D p.T ≫ toRSpineNat)
+          (cfpFst D p.T ≫ a) ≫
+        natPlus := by
+    rw [← Category.assoc, cfpLift_precomp]
+    have h1 :
+        cfpLift (𝟙 D) c ≫
+          (cfpSnd D p.T ≫ toRSpineNat) =
+        c ≫ toRSpineNat := by
+      rw [← Category.assoc, cfpLift_snd]
+    have h2 :
+        cfpLift (𝟙 D) c ≫
+          (cfpFst D p.T ≫ a) =
+        a := by
+      rw [← Category.assoc, cfpLift_fst,
+        Category.id_comp]
+    rw [h1, hc, h2]
+  have step2 :
+      cfpLift (𝟙 D) c ≫
+        cfpLift
+          (cfpSnd D p.T ≫ toRSpineNat)
+          (cfpFst D p.T ≫ a) ≫
+        natPlus =
+      cfpLift (𝟙 D) c ≫
+        cfpMap a (𝟙 p.T) ≫ natPlus := by
+    congr 1
+    exact natPlus_rsn_comm_aux a ha
+  have step3 :
+      cfpLift (𝟙 D) c ≫
+        cfpMap a (𝟙 p.T) ≫ natPlus =
+      cfpLift a c ≫ natPlus := by
+    rw [← Category.assoc,
+      cfpLift_cfpMap, Category.id_comp,
+      Category.comp_id]
+  rw [step1, step2, step3]
+
+theorem natPlus_cancel_left_rsn {D : C}
+    (a b c : D ⟶ p.T)
+    (ha : IsRSpineNatNorm a)
+    (hb : IsRSpineNatNorm b)
+    (hc : IsRSpineNatNorm c) :
+    cfpLift (cfpLift c a ≫ natPlus)
+        (cfpLift c b ≫ natPlus) ≫ natEq =
+    cfpLift a b ≫ natEq := by
+  rw [natPlus_comm_rsn a c ha hc,
+    natPlus_comm_rsn b c hb hc,
+    natPlus_cancel_right a b c]
+
 end GebLean
