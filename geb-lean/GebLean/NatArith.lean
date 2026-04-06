@@ -801,4 +801,282 @@ theorem natPlus_succ_left {D : C}
   unfold natPlus
   rw [Category.assoc]
 
+/-- The morphism `(T × T) × T ⟶ T` computing
+`natEq(natPlus(fst(fst), snd),
+  natPlus(snd(fst), snd))`.
+From the triple `((a, b), c)`, computes
+`natEq(a + c, b + c)`. -/
+private def natEqPlusCommon :
+    cfpProd (cfpProd p.T p.T) p.T ⟶ p.T :=
+  cfpLift
+    (cfpLift
+      (cfpFst (cfpProd p.T p.T) p.T ≫
+        cfpFst p.T p.T)
+      (cfpSnd (cfpProd p.T p.T) p.T) ≫
+      natPlus)
+    (cfpLift
+      (cfpFst (cfpProd p.T p.T) p.T ≫
+        cfpSnd p.T p.T)
+      (cfpSnd (cfpProd p.T p.T) p.T) ≫
+      natPlus) ≫
+    natEq
+
+/-- Base case for `natEqPlusCommon`:
+`natEqPlusCommon((a, b), leaf) = natEq(a, b)`. -/
+private theorem natEqPlusCommon_base :
+    cfpInsertSnd p.ℓ (cfpProd p.T p.T) ≫
+      natEqPlusCommon =
+    natEq := by
+  unfold natEqPlusCommon
+  rw [← Category.assoc, cfpLift_precomp]
+  -- Each component simplifies via natPlus_zero.
+  have h_fst :
+      cfpInsertSnd p.ℓ (cfpProd p.T p.T) ≫
+        cfpLift
+          (cfpFst (cfpProd p.T p.T) p.T ≫
+            cfpFst p.T p.T)
+          (cfpSnd (cfpProd p.T p.T) p.T) ≫
+        natPlus =
+      cfpFst p.T p.T := by
+    rw [← Category.assoc, cfpLift_precomp]
+    unfold cfpInsertSnd
+    rw [← Category.assoc
+      (cfpLift (𝟙 _) _)
+      (cfpFst _ _) (cfpFst _ _),
+      cfpLift_fst, Category.id_comp,
+      cfpLift_snd]
+    exact natPlus_zero (cfpFst p.T p.T)
+  have h_snd :
+      cfpInsertSnd p.ℓ (cfpProd p.T p.T) ≫
+        cfpLift
+          (cfpFst (cfpProd p.T p.T) p.T ≫
+            cfpSnd p.T p.T)
+          (cfpSnd (cfpProd p.T p.T) p.T) ≫
+        natPlus =
+      cfpSnd p.T p.T := by
+    rw [← Category.assoc, cfpLift_precomp]
+    unfold cfpInsertSnd
+    rw [← Category.assoc
+      (cfpLift (𝟙 _) _)
+      (cfpFst _ _) (cfpSnd _ _),
+      cfpLift_fst, Category.id_comp,
+      cfpLift_snd]
+    exact natPlus_zero (cfpSnd p.T p.T)
+  rw [h_fst, h_snd]
+  have eta :
+      𝟙 (cfpProd p.T p.T) =
+      cfpLift (cfpFst p.T p.T)
+        (cfpSnd p.T p.T) :=
+    cfpLift_uniq _ _
+      (𝟙 _)
+      (Category.id_comp _)
+      (Category.id_comp _)
+  rw [← eta, Category.id_comp]
+
+/-- Step case for `natEqPlusCommon`:
+`natEqPlusCommon((a,b), β(l,r)) =
+  natEqPlusCommon((a,b), r)`.
+In `p.elim` form, the step algebra is
+`cfpSnd T T` (project the right child's result). -/
+private theorem natEqPlusCommon_step :
+    cfpMap (𝟙 (cfpProd p.T p.T)) p.β ≫
+      natEqPlusCommon =
+    cfpLiftAssoc natEqPlusCommon
+      natEqPlusCommon ≫ cfpSnd p.T p.T := by
+  -- Both sides equal cfpLift (cfpLift (fst≫fst)
+  -- (snd≫snd) ≫ natPlus) (cfpLift (fst≫snd)
+  -- (snd≫snd) ≫ natPlus) ≫ natEq, where fst/snd
+  -- project from (T×T)×(T×T).
+  -- We prove both sides equal this common form.
+  -- Abbreviate P = cfpProd T T.
+  -- Common target.
+  set P := cfpProd p.T p.T
+  -- The common form (from P×P):
+  let target :
+      cfpProd P P ⟶ p.T :=
+    cfpLift
+      (cfpLift (cfpFst P P ≫ cfpFst p.T p.T)
+        (cfpSnd P P ≫ cfpSnd p.T p.T) ≫
+        natPlus)
+      (cfpLift (cfpFst P P ≫ cfpSnd p.T p.T)
+        (cfpSnd P P ≫ cfpSnd p.T p.T) ≫
+        natPlus) ≫ natEq
+  -- LHS = target.
+  -- Helper: cfpAssocSnd pushes through natPlus
+  -- components.
+  have assocSnd_comp (proj : P ⟶ p.T) :
+      cfpAssocSnd P p.T p.T ≫
+        cfpLift (cfpFst P p.T ≫ proj)
+          (cfpSnd P p.T) ≫ natPlus =
+      cfpLift (cfpFst P P ≫ proj)
+        (cfpSnd P P ≫ cfpSnd p.T p.T) ≫
+        natPlus := by
+    rw [← Category.assoc, cfpLift_precomp]
+    unfold cfpAssocSnd
+    rw [← Category.assoc, cfpLift_fst,
+      cfpLift_snd]
+  -- Prove RHS = target.
+  have rhs_eq :
+      cfpLiftAssoc natEqPlusCommon
+        natEqPlusCommon ≫ cfpSnd p.T p.T =
+      target := by
+    unfold cfpLiftAssoc
+    rw [cfpLift_snd]
+    unfold natEqPlusCommon
+    rw [← Category.assoc, cfpLift_precomp,
+      assocSnd_comp (cfpFst p.T p.T),
+      assocSnd_comp (cfpSnd p.T p.T)]
+  -- Prove LHS = target.
+  suffices lhs_eq :
+      cfpMap (𝟙 P) p.β ≫ natEqPlusCommon =
+      target from
+    lhs_eq.trans rhs_eq.symm
+  -- Prove LHS = target.
+  unfold natEqPlusCommon
+  rw [← Category.assoc, cfpLift_precomp]
+  -- Each natPlus component: cfpMap ≫ cfpLift ≫
+  -- natPlus = ... ≫ natPlus ≫ natSucc.
+  have cfpMap_comp_natPlus (proj : P ⟶ p.T) :
+      cfpMap (𝟙 P) p.β ≫
+        (cfpLift (cfpFst P p.T ≫ proj)
+          (cfpSnd P p.T) ≫ natPlus) =
+      (cfpLift (cfpFst P P ≫ proj)
+        (cfpSnd P P ≫ cfpSnd p.T p.T) ≫
+        natPlus) ≫ natSucc := by
+    rw [← Category.assoc, cfpLift_precomp,
+      ← Category.assoc, cfpMap_fst,
+      Category.assoc, Category.id_comp,
+      cfpMap_snd]
+    -- cfpLift (fst(P,P) ≫ proj) (snd(P,P) ≫ β)
+    -- ≫ natPlus = (...) ≫ natPlus ≫ natSucc.
+    -- Factor snd(P,P) ≫ β through cfpMap (𝟙 T) β.
+    have factor :
+        cfpLift (cfpFst P P ≫ proj)
+          (cfpSnd P P ≫ p.β) =
+        cfpLift (cfpFst P P ≫ proj)
+          (cfpSnd P P) ≫
+          cfpMap (𝟙 p.T) p.β := by
+      symm; apply cfpLift_uniq
+      · rw [Category.assoc, cfpMap_fst,
+          ← Category.assoc, cfpLift_fst,
+          Category.comp_id]
+      · rw [Category.assoc, cfpMap_snd,
+          ← Category.assoc, cfpLift_snd]
+    rw [factor, Category.assoc, natPlus_β]
+    -- cfpLiftAssoc ≫ cfpSnd ≫ natSucc projects
+    -- the right child's natPlus result.
+    unfold cfpLiftAssoc
+    rw [← Category.assoc, ← Category.assoc,
+      cfpLift_precomp, cfpLift_snd,
+      Category.assoc, ← Category.assoc,
+      ← Category.assoc]
+    congr 1; congr 1
+    unfold cfpAssocSnd
+    rw [cfpLift_precomp, cfpLift_fst,
+      ← Category.assoc, cfpLift_snd]
+  rw [cfpMap_comp_natPlus (cfpFst p.T p.T),
+    cfpMap_comp_natPlus (cfpSnd p.T p.T),
+    natEq_succ_cancel]
+
+/-- The constant-natEq morphism on
+`cfpProd (cfpProd T T) T` satisfies the base
+equation. -/
+private theorem constNatEq_base :
+    cfpInsertSnd p.ℓ (cfpProd p.T p.T) ≫
+      (cfpFst (cfpProd p.T p.T) p.T ≫ natEq) =
+    natEq := by
+  rw [← Category.assoc]
+  unfold cfpInsertSnd
+  rw [cfpLift_fst, Category.id_comp]
+
+/-- The constant-natEq morphism on
+`cfpProd (cfpProd T T) T` satisfies the step
+equation with step `cfpSnd T T`. -/
+private theorem constNatEq_step :
+    cfpMap (𝟙 (cfpProd p.T p.T)) p.β ≫
+      (cfpFst (cfpProd p.T p.T) p.T ≫ natEq) =
+    cfpLiftAssoc
+      (cfpFst (cfpProd p.T p.T) p.T ≫ natEq)
+      (cfpFst (cfpProd p.T p.T) p.T ≫ natEq) ≫
+      cfpSnd p.T p.T := by
+  rw [← Category.assoc, cfpMap_fst,
+    Category.comp_id]
+  unfold cfpLiftAssoc
+  rw [cfpLift_snd]
+  unfold cfpAssocSnd
+  rw [← Category.assoc, cfpLift_fst]
+
+/-- Right cancellation for `natPlus` under `natEq`:
+`natEq(a + c, b + c) = natEq(a, b)` for all
+`a, b, c`.  Both `natEqPlusCommon` and the constant
+morphism `cfpFst ≫ natEq` satisfy the same
+`p.elim` equations (base = `natEq`, step =
+`cfpSnd T T`), hence they are equal by
+`p.elim_uniq`. -/
+theorem natPlus_cancel_right {D : C}
+    (a b c : D ⟶ p.T) :
+    cfpLift (cfpLift a c ≫ natPlus)
+      (cfpLift b c ≫ natPlus) ≫ natEq =
+    cfpLift a b ≫
+      (natEq : cfpProd p.T p.T ⟶ p.T) := by
+  -- Factor through cfpProd (cfpProd T T) T.
+  -- Helper: projections simplify.
+  have proj_helper (proj : cfpProd p.T p.T ⟶ p.T) :
+      cfpLift (cfpLift a b) c ≫
+        cfpLift
+          (cfpFst (cfpProd p.T p.T) p.T ≫
+            proj)
+          (cfpSnd (cfpProd p.T p.T) p.T) =
+      cfpLift (cfpLift a b ≫ proj) c := by
+    rw [cfpLift_precomp, ← Category.assoc,
+      cfpLift_fst, cfpLift_snd]
+  have factor :
+      cfpLift (cfpLift a c ≫ natPlus)
+        (cfpLift b c ≫ natPlus) ≫ natEq =
+      cfpLift (cfpLift a b) c ≫
+        natEqPlusCommon := by
+    unfold natEqPlusCommon
+    rw [← Category.assoc, cfpLift_precomp]
+    -- Simplify each component.
+    have h1 :
+        cfpLift (cfpLift a b) c ≫
+          cfpLift
+            (cfpFst (cfpProd p.T p.T) p.T ≫
+              cfpFst p.T p.T)
+            (cfpSnd (cfpProd p.T p.T) p.T) ≫
+          natPlus =
+        cfpLift a c ≫ natPlus := by
+      rw [← Category.assoc,
+        proj_helper (cfpFst p.T p.T),
+        cfpLift_fst]
+    have h2 :
+        cfpLift (cfpLift a b) c ≫
+          cfpLift
+            (cfpFst (cfpProd p.T p.T) p.T ≫
+              cfpSnd p.T p.T)
+            (cfpSnd (cfpProd p.T p.T) p.T) ≫
+          natPlus =
+        cfpLift b c ≫ natPlus := by
+      rw [← Category.assoc,
+        proj_helper (cfpSnd p.T p.T),
+        cfpLift_snd]
+    rw [h1, h2]
+  have factor2 :
+      cfpLift a b ≫ natEq =
+      cfpLift (cfpLift a b) c ≫
+        (cfpFst (cfpProd p.T p.T) p.T ≫
+          natEq) := by
+    rw [← Category.assoc, cfpLift_fst]
+  rw [factor, factor2]
+  -- By p.elim_uniq, natEqPlusCommon = cfpFst ≫ natEq.
+  congr 1
+  exact (p.elim_uniq natEq (cfpSnd p.T p.T)
+    natEqPlusCommon
+    natEqPlusCommon_base
+    natEqPlusCommon_step).trans
+    (p.elim_uniq natEq (cfpSnd p.T p.T)
+      (cfpFst (cfpProd p.T p.T) p.T ≫ natEq)
+      constNatEq_base
+      constNatEq_step).symm
+
 end GebLean
