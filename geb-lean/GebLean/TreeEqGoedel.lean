@@ -48,10 +48,6 @@ private theorem natEq_refl_ℓ :
     rw [cfpLift_precomp, Category.comp_id]
   rw [factor, Category.assoc, natEq_refl,
     ← Category.assoc]
-  -- Goal: (p.ℓ ≫ cfpTerminalFrom T) ≫ p.ℓ = p.ℓ
-  -- p.ℓ ≫ cfpTerminalFrom T : cfpTerminal ⟶
-  -- cfpTerminal.
-  -- Use transitivity to avoid rw issues.
   exact (congrArg (· ≫ p.ℓ)
     (h.terminal.uniq _)).trans
     ((congrArg (· ≫ p.ℓ)
@@ -79,8 +75,6 @@ theorem treeEqG_ℓβ :
   unfold treeEqG
   rw [← Category.assoc, cfpMap_comp,
     treeToNat_ℓ, treeToNat_β]
-  -- Convert cfpMap form to cfpLift form to apply
-  -- natEq_ℓ_succ.
   have step :
       cfpMap (p.ℓ : cfpTerminal (C := C) ⟶ p.T)
         (cfpMap treeToNat treeToNat ≫
@@ -97,8 +91,6 @@ theorem treeEqG_ℓβ :
     · rw [cfpLift_fst]
       congr 1; exact h.terminal.uniq _
     · rw [cfpLift_snd]
-  -- Reassociate second component so natSucc is
-  -- the outermost composition.
   have reassoc :
       cfpSnd cfpTerminal (cfpProd p.T p.T) ≫
         cfpMap treeToNat treeToNat ≫
@@ -120,17 +112,6 @@ theorem treeEqG_βℓ :
   unfold treeEqG
   rw [← Category.assoc, cfpMap_comp,
     treeToNat_β, treeToNat_ℓ]
-  -- Rewrite cfpMap form to cfpLift for
-  -- natEq_succ_ℓ.
-  -- cfpMap f g ≫ natEq where f = ... ≫ natSucc
-  -- and g = p.ℓ.
-  -- Use cfpLift_cfpMap in reverse: factor through
-  -- cfpFst/cfpSnd, then apply natEq_succ_ℓ.
-  -- cfpMap f p.ℓ = cfpLift (cfpFst ≫ f)
-  --   (cfpSnd ≫ p.ℓ).
-  -- cfpSnd _ cfpTerminal = cfpTerminalFrom _ (by
-  -- terminal uniqueness), so cfpSnd ≫ p.ℓ =
-  -- cfpTerminalFrom _ ≫ p.ℓ.
   have step :
       cfpMap
         (cfpMap treeToNat treeToNat ≫
@@ -168,9 +149,6 @@ private theorem treeEqG_ββ_reduce :
   unfold treeEqG
   rw [← Category.assoc, cfpMap_comp,
     treeToNat_β]
-  -- The goal has (cfpMap treeToNat treeToNat ≫
-  -- cantorPair ≫ natSucc), which is right-associated.
-  -- Use cfpMap_comp_comp to factor out natSucc.
   rw [cfpMap_comp_comp
     (cfpMap treeToNat treeToNat) _
     (cfpMap treeToNat treeToNat) _,
@@ -178,12 +156,7 @@ private theorem treeEqG_ββ_reduce :
       (cantorPair : cfpProd p.T p.T ⟶ p.T) _
       cantorPair _,
     Category.assoc, Category.assoc]
-  -- Collapse cfpMap ... ≫ cfpMap cantorPair ...
   rw [← cfpMap_comp]
-  -- Goal: cfpMap (... ≫ cantorPair) ... ≫
-  --   cfpMap natSucc natSucc ≫ natEq
-  --   = cfpMap (... ≫ cantorPair) ... ≫ natEq
-  -- Suffices: cfpMap natSucc natSucc ≫ natEq = natEq
   have natSucc_cancel :
       cfpMap (natSucc : p.T ⟶ p.T) natSucc ≫
         natEq =

@@ -282,3 +282,49 @@ on the rest of the worklist still gives the same result as
 
 The documented path via `IsSeparator` + `HasBoolDichotomy`
 remains the recommended approach for `treeEq_ββ`.
+
+## `natTri_natSucc` progress
+
+Intermediate results proved in `NatArith.lean`:
+
+- `natTriStepSingle`: single-pair step `(i, s) ↦
+  (natSucc(i), natPlus(natSucc(i), s))`.
+- `natTriStep_factor`: `natTriStep = cfpSnd ≫
+  natTriStepSingle`.
+- `natTriHelper_β_factor`: step of `natTriHelper`
+  depends only on the right child:
+  `cfpMap (𝟙) p.β ≫ natTriHelper = cfpAssocSnd ≫
+  natTriHelper ≫ natTriStepSingle`.
+- `natTriStepSingle_natPlus`: `natTriStepSingle ≫
+  natPlus = cfpLift cfpFst natPlus ≫ natPlus ≫
+  natSucc ≫ natSucc`.
+- `natTriPlusStepSingle`, `natTriPlusCombinedStep`:
+  step morphisms for the combined state
+  `((index, tri), natPlus(index, tri))`.
+- `natTriPlus1_base`: base case for combined state.
+- `natTriPlus1_elim`: `cfpLift natTriHelper
+  (natTriHelper ≫ natPlus) = p.elim (cfpLift
+  (cfpLift p.ℓ p.ℓ) p.ℓ)
+  natTriPlusCombinedStep`.
+
+Remaining for `natTri_natSucc`:
+
+- [ ] `natTriPlus2_elim`: show that
+  `cfpLift natTriHelper (cfpLift (natTriHelper ≫
+  cfpSnd) cfpSnd ≫ natPlus)` equals the same
+  `p.elim`. Base case is straightforward. Step case
+  has the same structure as `natTriPlus1_elim` but
+  requires expanding `natPlus(X, p.β(...))` via
+  `natPlus_succ` and `natPlus_succ_left`.
+- [ ] Derive `natTriHelper ≫ natPlus = cfpLift
+  (natTriHelper ≫ cfpSnd) cfpSnd ≫ natPlus` by
+  projecting the snd component of
+  `natTriPlus1_elim.trans natTriPlus2_elim.symm`.
+- [ ] Derive `natTri_natSucc` from the above by
+  algebraic manipulation (factor `natSucc ≫ natTri`
+  through `cfpLift (cfpTerminalFrom T) natSucc ≫
+  natTriHelper ≫ cfpSnd`, apply
+  `natTriHelper_β_factor` and
+  `natTriStepSingle_natPlus`, use the
+  commutativity identity, and cancel `natSucc`
+  (which is mono by `natPred_natSucc`)).

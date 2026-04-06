@@ -264,8 +264,6 @@ theorem natTruncSub_ℓ_left
     cfpLift (cfpTerminalFrom D ≫ p.ℓ) a ≫
       natTruncSub =
     cfpTerminalFrom D ≫ p.ℓ := by
-  -- Factor via elim_naturality: change the
-  -- parameter (first component) from D to T.
   have factor :
       cfpLift (cfpTerminalFrom D ≫ p.ℓ) a =
       cfpLift (𝟙 D) a ≫
@@ -280,20 +278,12 @@ theorem natTruncSub_ℓ_left
         ← Category.assoc, cfpLift_snd,
         Category.comp_id]
   rw [factor, Category.assoc]
-  -- Apply elim_naturality to replace cfpMap ≫
-  -- natTruncSub with a catamorphism whose base
-  -- is (cfpTerminalFrom D ≫ ℓ).
   unfold natTruncSub
   rw [elim_naturality
     (cfpTerminalFrom D ≫ p.ℓ)
     (𝟙 p.T)
     (cfpSnd p.T p.T ≫ natPred)]
   simp only [Category.comp_id]
-  -- Show the catamorphism
-  -- p.elim (cfpTerminalFrom D ≫ ℓ)
-  --   (cfpSnd T T ≫ natPred) equals
-  -- cfpTerminalFrom (cfpProd D T) ≫ ℓ
-  -- (constant ℓ) via elim_uniq.
   have const_eq :
       cfpTerminalFrom (cfpProd D p.T) ≫ p.ℓ =
       p.elim (cfpTerminalFrom D ≫ p.ℓ)
@@ -313,8 +303,6 @@ theorem natTruncSub_ℓ_left
         rw [← Category.assoc]
         congr 1
         exact h.terminal.uniq _
-      -- Simplify both sides using terminal
-      -- uniqueness.
       rw [lhs_eq]
       unfold cfpLiftAssoc
       rw [← Category.assoc
@@ -355,18 +343,13 @@ theorem natEq_ℓ_succ (a : D ⟶ p.T) :
         (a ≫ natSucc) ≫ natEq =
     cfpTerminalFrom D ≫ treeFalse := by
   unfold natEq
-  -- Distribute the outer lift through the natEq
-  -- components.
   rw [← Category.assoc, ← Category.assoc,
     cfpLift_precomp]
-  -- Component 1: natTruncSub(ℓ, succ(a)) = ℓ.
   have comp1 :
       cfpLift (cfpTerminalFrom D ≫ p.ℓ)
         (a ≫ natSucc) ≫ natTruncSub =
       cfpTerminalFrom D ≫ p.ℓ :=
     natTruncSub_ℓ_left (a ≫ natSucc)
-  -- Component 2: natTruncSub(succ(a), ℓ) =
-  -- succ(a).
   have hswap :
       cfpLift (cfpTerminalFrom D ≫ p.ℓ)
         (a ≫ natSucc) ≫
@@ -398,11 +381,7 @@ theorem natEq_ℓ_succ (a : D ⟶ p.T) :
     rw [← Category.assoc, hswap,
       comp2_factor, Category.assoc,
       natTruncSub_ℓ, Category.comp_id]
-  -- Combine: natPlus(ℓ, succ(a)) ≫ isLeafEndo
   rw [comp1, comp2]
-  -- Goal: cfpLift (cfpTerminalFrom D ≫ ℓ)
-  --   (a ≫ natSucc) ≫ natPlus ≫ isLeafEndo
-  --   = cfpTerminalFrom D ≫ treeFalse
   rw [natPlus_succ, Category.assoc,
     natSucc_isLeafEndo, ← Category.assoc]
   congr 1
@@ -418,8 +397,6 @@ theorem natEq_succ_ℓ (a : D ⟶ p.T) :
   unfold natEq
   rw [← Category.assoc, ← Category.assoc,
     cfpLift_precomp]
-  -- Component 1: natTruncSub(succ(a), ℓ) =
-  -- succ(a).
   have comp1_factor :
       cfpLift (a ≫ natSucc)
         (cfpTerminalFrom D ≫ p.ℓ) =
@@ -441,7 +418,6 @@ theorem natEq_succ_ℓ (a : D ⟶ p.T) :
       a ≫ natSucc := by
     rw [comp1_factor, Category.assoc,
       natTruncSub_ℓ, Category.comp_id]
-  -- Component 2: natTruncSub(ℓ, succ(a)) = ℓ.
   have hswap :
       cfpLift (a ≫ natSucc)
         (cfpTerminalFrom D ≫ p.ℓ) ≫
@@ -458,11 +434,7 @@ theorem natEq_succ_ℓ (a : D ⟶ p.T) :
       cfpTerminalFrom D ≫ p.ℓ := by
     rw [← Category.assoc, hswap,
       natTruncSub_ℓ_left]
-  -- Combine: natPlus(succ(a), ℓ) ≫ isLeafEndo
   rw [comp1, comp2]
-  -- Goal: cfpLift (a ≫ natSucc)
-  --   (cfpTerminalFrom D ≫ ℓ) ≫ natPlus
-  --   ≫ isLeafEndo = cfpTerminalFrom D ≫ treeFalse
   rw [natPlus_zero, Category.assoc,
     natSucc_isLeafEndo, ← Category.assoc]
   congr 1
