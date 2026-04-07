@@ -150,41 +150,61 @@ In `GebLean/NatArith.lean` (new definitions and lemmas):
 
 ## Remaining
 
+### `cantorPair_cantorNextPair` (the key lemma)
+
+`cantorNextPair ≫ cantorPair = cantorPair ≫ natSucc`.
+
+Completed so far:
+
+- `cantorNextPair_ℓ`: computation rule for
+  `cantorNextPair` when `b = ℓ`, yielding `(ℓ, succ(a))`.
+- `cantorNextPair_β`: computation rule for
+  `cantorNextPair` when `b = β(l, r)`, yielding
+  `(succ(a), r)`.
+- `cantorPair_natSucc_eq_β`:
+  `cantorPair(a, natSucc(r)) = cantorPair(a, β(l, r))`.
+  The left child of the second argument is irrelevant
+  to `cantorPair` because `natPlus` only walks the
+  right spine.
+- `cantorPair_cantorNextPair_β`: the β case of the
+  key lemma. Uses `cantorPair_succ_fst` and
+  `cantorPair_natSucc_eq_β`.
+
+Remaining for the key lemma:
+
+- `cantorPair_cantorNextPair_ℓ`: the ℓ case. Needs
+  `cantorPair(ℓ, succ(a)) = succ(cantorPair(a, ℓ))`,
+  which reduces to the triangular number recurrence
+  `tri(succ(a)) = succ(tri(a) + a)`. Derivation:
+  LHS = `natTri(succ(toRSpineNat(a)))` (using
+  `natPlus_ℓ_left_eq_toRSpineNat` and `natPlus_zero`).
+  RHS = `succ(natPlus(natTri(a), a))` (using
+  `natPlus_zero`). The equation follows from
+  `natTri_natSucc` combined with
+  `toRSpineNat_natTri` and
+  `natSucc_toRSpineNat_comm`.
+- Combine the ℓ and β cases via `p.elim_uniq`. Note:
+  `p.elim_uniq` requires the step to have catamorphism
+  form `cfpLiftAssoc φ φ ≫ g`. Since `cantorPair` is
+  NOT a catamorphism in the second argument, an
+  alternative combining strategy may be needed (e.g.,
+  proving the equation on right-spine normalized
+  inputs first, then lifting via
+  `cantorPair_toRSpineNat_comm`).
+
 ### `NatEqCantorPair` / unconditional `treeEqG_ββ`
 
-Proving `NatEqCantorPair C` for all C with `HasPBTO`.
-The approach requires establishing the rsn-invariance
-chain:
-
-1. `natPred_toRSpineNat_comm`: `toRSpineNat ≫ natPred =
-   natPred ≫ toRSpineNat`. Needed because natTruncSub
-   iterates natPred.
-2. `natTruncSub_toRSpineNat_comm`:
-   `cfpMap toRSpineNat toRSpineNat ≫ natTruncSub =
-   natTruncSub ≫ toRSpineNat`. Follows from (1) via
-   `elim_algebra_morphism`.
-3. `natEq_toRSpineNat_inv`:
-   `cfpMap toRSpineNat toRSpineNat ≫ natEq = natEq`.
-   Follows from (2), `natPlus_toRSpineNat_both`, and
-   `isLeafEndo` invariance under rsn.
-4. Both sides of `NatEqCantorPair` are rsn-invariant
-   (using (3), `cantorPair_toRSpineNat_comm`, and
-   `boolAnd` rsn-invariance).
-5. For rsn inputs, prove the equation using
-   `natPlus_cancel_left_rsn`, `natPlus_comm_rsn`,
-   and induction via `p.elim_uniq` on the diagonal
-   sum.
-
-Alternative approach: prove the right-inverse
-`cantorUnpairHelper ≫ cantorPair = cfpSnd cfpTerminal T`
-modulo rsn normalization, then derive
-`NatEqCantorPair` from the left-inverse property via
-the `boolAnd` toolkit (`boolAnd_fst_proj`,
-`boolAnd_snd_proj`, `boolAnd_comm`).
-
-The `cantorPair_succ_fst` recurrence is the enabler
-for both approaches: it relates consecutive diagonal
-entries.
+After `cantorPair_cantorNextPair` is proved, the
+left-inverse approach via `cantorUnpairHelper` becomes
+viable. The chain:
+1. `cantorPair_cantorNextPair` shows `cantorPair` is
+   an algebra morphism from `cantorNextPair` to
+   `natSucc`.
+2. By `elim_algebra_morphism`, `cantorUnpairHelper ≫
+   cantorPair = cfpSnd cfpTerminal T` (right-inverse
+   modulo rsn).
+3. Derive `NatEqCantorPair` from the right-inverse
+   property.
 
 ### `treeEqG_trans`
 

@@ -3245,6 +3245,293 @@ theorem cantorNextPair_β :
     exact iteBranches_β _ _
       (cfpTerminalFrom D ≫ cfpLift p.ℓ p.ℓ)
 
+/-- `cantorPair(a, natSucc(b)) =
+cantorPair(a, β(l, b))`: the left child of the
+second argument is irrelevant to cantorPair,
+so natSucc in the second argument agrees with
+any β in the second argument. -/
+private theorem cantorPair_natSucc_eq_β
+    {D : C}
+    (a l r : D ⟶ p.T) :
+    cfpLift a (r ≫ natSucc) ≫ cantorPair =
+    cfpLift a (cfpLift l r ≫ p.β) ≫
+      cantorPair := by
+  have sum_succ :
+      cfpLift a (r ≫ natSucc) ≫ natPlus =
+      (cfpLift a r ≫ natPlus) ≫ natSucc :=
+    natPlus_succ a r
+  have sum_β :
+      cfpLift a (cfpLift l r ≫ p.β) ≫
+        natPlus =
+      (cfpLift a r ≫ natPlus) ≫ natSucc := by
+    have factor :
+        cfpLift a (cfpLift l r ≫ p.β) =
+        cfpLift a (cfpLift l r) ≫
+          cfpMap (𝟙 p.T) p.β := by
+      rw [cfpLift_cfpMap, Category.comp_id]
+    rw [factor, Category.assoc, natPlus_β]
+    simp only [← Category.assoc]
+    have step :
+        cfpLift a (cfpLift l r) ≫
+          cfpLiftAssoc natPlus natPlus ≫
+          cfpSnd p.T p.T =
+        cfpLift a r ≫ natPlus := by
+      have h1 :
+          cfpLiftAssoc natPlus natPlus ≫
+            cfpSnd p.T p.T =
+          cfpAssocSnd p.T p.T p.T ≫
+            natPlus := by
+        unfold cfpLiftAssoc
+        exact cfpLift_snd _ _
+      rw [h1]
+      unfold cfpAssocSnd
+      rw [← Category.assoc, cfpLift_precomp,
+        cfpLift_fst,
+        ← Category.assoc, cfpLift_snd,
+        cfpLift_snd]
+    congr 1
+    rw [Category.assoc]; exact step
+  have sum_eq :
+      cfpLift a (r ≫ natSucc) ≫ natPlus =
+      cfpLift a (cfpLift l r ≫ p.β) ≫
+        natPlus := by
+    rw [sum_succ, sum_β]
+  unfold cantorPair
+  rw [← Category.assoc
+    (cfpLift a (r ≫ natSucc)),
+    cfpLift_precomp,
+    ← Category.assoc
+      (cfpLift a (cfpLift l r ≫ p.β)),
+    cfpLift_precomp,
+    cfpLift_fst, cfpLift_fst]
+  congr 1; congr 1
+  rw [← Category.assoc, ← Category.assoc,
+    sum_eq]
+
+/-- β case of the key lemma:
+`cantorNextPair ≫ cantorPair =
+  cantorPair ≫ natSucc`
+precomposed with `cfpMap (𝟙 T) p.β`. -/
+private theorem
+    cantorPair_cantorNextPair_β :
+    cfpMap (𝟙 p.T) p.β ≫
+      cantorNextPair ≫ cantorPair =
+    cfpMap (𝟙 p.T) p.β ≫
+      cantorPair ≫ natSucc := by
+  rw [← Category.assoc
+    (cfpMap (𝟙 p.T) p.β) cantorNextPair,
+    cantorNextPair_β]
+  -- LHS: cfpLift (cfpFst ≫ natSucc) (cfpSnd ≫
+  --   cfpSnd) ≫ cantorPair
+  -- RHS: cfpMap (𝟙 T) β ≫ cantorPair ≫ natSucc
+  have snd_eta :
+      cfpLift
+        (cfpSnd p.T (cfpProd p.T p.T) ≫
+          cfpFst p.T p.T)
+        (cfpSnd p.T (cfpProd p.T p.T) ≫
+          cfpSnd p.T p.T) =
+      cfpSnd p.T (cfpProd p.T p.T) :=
+    (cfpLift_uniq _ _ _ rfl rfl).symm
+  have cfpMap_eq :
+      cfpLift
+        (cfpFst p.T (cfpProd p.T p.T))
+        (cfpSnd p.T (cfpProd p.T p.T) ≫
+          p.β) =
+      cfpMap (𝟙 p.T) p.β := by
+    unfold cfpMap; congr 1
+    exact (Category.comp_id
+      (cfpFst p.T (cfpProd p.T p.T))).symm
+  rw [cantorPair_succ_fst
+    (cfpFst p.T (cfpProd p.T p.T))
+    (cfpSnd p.T (cfpProd p.T p.T) ≫
+      cfpSnd p.T p.T),
+    cantorPair_natSucc_eq_β
+      (cfpFst p.T (cfpProd p.T p.T))
+      (cfpSnd p.T (cfpProd p.T p.T) ≫
+        cfpFst p.T p.T)
+      (cfpSnd p.T (cfpProd p.T p.T) ≫
+        cfpSnd p.T p.T),
+    snd_eta, cfpMap_eq]
+  simp only [Category.assoc]
+
+/-- The first component of `natTriHelper`,
+applied at the terminal section, equals
+`toRSpineNat`:
+`cfpLift (cfpTerminalFrom T) (𝟙 T) ≫
+  natTriHelper ≫ cfpFst =
+  toRSpineNat`. -/
+private theorem embed_natTriHelper_cfpFst :
+    cfpLift (cfpTerminalFrom p.T)
+      (𝟙 p.T) ≫
+      natTriHelper ≫ cfpFst p.T p.T =
+    (toRSpineNat : p.T ⟶ p.T) := by
+  rw [natTriHelper_cfpFst,
+    congrArg (p.elim p.ℓ)
+      toRSpineNat_step_eq_natSucc.symm]
+  rfl
+
+/-- ℓ case of the main lemma:
+`cantorNextPair ≫ cantorPair =
+  cantorPair ≫ natSucc`
+precomposed with `cfpInsertSnd p.ℓ p.T`. -/
+private theorem
+    cantorPair_cantorNextPair_ℓ :
+    cfpInsertSnd p.ℓ p.T ≫
+      cantorNextPair ≫ cantorPair =
+    cfpInsertSnd p.ℓ p.T ≫
+      cantorPair ≫ natSucc := by
+  -- Reduce LHS via cantorNextPair_ℓ.
+  rw [← Category.assoc
+    (cfpInsertSnd p.ℓ p.T) cantorNextPair,
+    cantorNextPair_ℓ]
+  -- LHS = cfpLift (cfpTerminalFrom T ≫ ℓ)
+  --   natSucc ≫ cantorPair
+  -- RHS = cfpInsertSnd ℓ T ≫ cantorPair
+  --   ≫ natSucc
+  -- Reduce both sides to natSucc ≫ natTri
+  -- and succ(natPlus(natTri(a), a)).
+  -- Step A: LHS = natSucc ≫ natTri.
+  have sum_eq :
+      cfpLift (cfpTerminalFrom p.T ≫ p.ℓ)
+        (natSucc : p.T ⟶ p.T) ≫ natPlus =
+      natSucc ≫ toRSpineNat := by
+    have precomp :
+        cfpLift (cfpTerminalFrom p.T ≫ p.ℓ)
+          (natSucc : p.T ⟶ p.T) ≫
+          natPlus =
+        (cfpLift
+          (cfpTerminalFrom p.T ≫ p.ℓ)
+          (𝟙 p.T) ≫ natPlus) ≫
+          natSucc := by
+      rw [← natPlus_succ
+        (cfpTerminalFrom p.T ≫ p.ℓ)
+        (𝟙 p.T)]
+      congr 1; congr 1
+      exact (Category.id_comp natSucc).symm
+    rw [precomp,
+      natPlus_ℓ_left_eq_toRSpineNat]
+    exact natSucc_toRSpineNat_comm.symm
+  have lhs_eq :
+      cfpLift (cfpTerminalFrom p.T ≫ p.ℓ)
+        (natSucc : p.T ⟶ p.T) ≫
+        cantorPair =
+      natSucc ≫ natTri := by
+    unfold cantorPair
+    have outer :
+        cfpLift (cfpTerminalFrom p.T ≫ p.ℓ)
+          (natSucc : p.T ⟶ p.T) ≫
+          cfpLift (natPlus ≫ natTri)
+            (cfpFst p.T p.T) =
+        cfpLift (natSucc ≫ natTri)
+          (cfpTerminalFrom p.T ≫ p.ℓ) := by
+      rw [cfpLift_precomp, cfpLift_fst]
+      congr 1
+      rw [← Category.assoc, sum_eq,
+        Category.assoc, toRSpineNat_natTri]
+    rw [← Category.assoc, outer,
+      natPlus_zero]
+  -- Step B: RHS base =
+  --   natPlus(natTri(a), a).
+  have rhs_eq :
+      cfpInsertSnd p.ℓ p.T ≫ cantorPair =
+      cfpLift natTri (𝟙 p.T) ≫
+        natPlus := by
+    unfold cantorPair cfpInsertSnd
+    have outer :
+        cfpLift (𝟙 p.T)
+          (cfpTerminalFrom p.T ≫ p.ℓ) ≫
+          cfpLift (natPlus ≫ natTri)
+            (cfpFst p.T p.T) =
+        cfpLift natTri (𝟙 p.T) := by
+      rw [cfpLift_precomp, cfpLift_fst,
+        ← Category.assoc,
+        natPlus_zero, Category.id_comp]
+    rw [← Category.assoc, outer]
+  rw [lhs_eq, ← Category.assoc, rhs_eq,
+    Category.assoc]
+  -- Goal: natSucc ≫ natTri =
+  --   cfpLift natTri (𝟙 T) ≫ natPlus
+  --   ≫ natSucc
+  rw [natTri_natSucc]
+  -- The first argument of cfpLift contains
+  -- `... ≫ natTriHelper ≫ cfpFst ≫ natSucc`,
+  -- which equals `toRSpineNat ≫ natSucc`.
+  have reassoc :
+      cfpLift (cfpTerminalFrom p.T)
+        (𝟙 p.T) ≫
+        natTriHelper ≫
+        cfpFst p.T p.T ≫ natSucc =
+      toRSpineNat ≫ natSucc := by
+    have h :
+        cfpLift (cfpTerminalFrom p.T)
+          (𝟙 p.T) ≫
+          natTriHelper ≫ cfpFst p.T p.T =
+        (toRSpineNat : p.T ⟶ p.T) :=
+      embed_natTriHelper_cfpFst
+    rw [show cfpLift (cfpTerminalFrom p.T)
+        (𝟙 p.T) ≫ natTriHelper ≫
+        cfpFst p.T p.T ≫ natSucc =
+      (cfpLift (cfpTerminalFrom p.T)
+        (𝟙 p.T) ≫ natTriHelper ≫
+        cfpFst p.T p.T) ≫ natSucc from by
+        simp only [Category.assoc],
+      h]
+  rw [reassoc,
+    natPlus_succ_left toRSpineNat natTri]
+  -- Goal:
+  -- (cfpLift toRSpineNat natTri ≫ natPlus)
+  --   ≫ natSucc =
+  -- cfpLift natTri (𝟙 T) ≫ natPlus
+  --   ≫ natSucc
+  simp only [Category.assoc]
+  -- Now both sides are right-associated.
+  -- Peel off the common natSucc suffix.
+  have inner :
+      cfpLift toRSpineNat natTri ≫ natPlus =
+      cfpLift natTri (𝟙 p.T) ≫
+        natPlus := by
+    rw [(natPlus_comm_rsn toRSpineNat natTri
+      toRSpineNat_idem
+      natTri_isRSpineNatNorm).symm]
+    -- Goal: cfpLift natTri toRSpineNat ≫
+    --   natPlus = cfpLift natTri (𝟙 T) ≫
+    --   natPlus
+    have factor :
+        cfpLift natTri
+          (toRSpineNat : p.T ⟶ p.T) =
+        cfpLift natTri (𝟙 p.T) ≫
+          cfpMap (𝟙 p.T) toRSpineNat := by
+      rw [cfpLift_cfpMap, Category.id_comp,
+        Category.comp_id]
+    rw [factor, Category.assoc,
+      natPlus_toRSpineNat_second]
+  simp only [← Category.assoc]
+  rw [inner]
+
+/-- `cantorPair` absorbs `toRSpineNat` on its
+second argument:
+`cfpMap (𝟙 T) toRSpineNat ≫ cantorPair =
+  cantorPair`. -/
+private theorem cantorPair_toRSN_second :
+    cfpMap (𝟙 p.T) toRSpineNat ≫
+      cantorPair =
+    (cantorPair :
+      cfpProd p.T p.T ⟶ p.T) := by
+  unfold cantorPair
+  rw [← Category.assoc, cfpLift_precomp]
+  have h_fst :
+      cfpMap (𝟙 p.T) toRSpineNat ≫
+        natPlus ≫ natTri =
+      natPlus ≫ natTri := by
+    rw [← Category.assoc,
+      natPlus_toRSpineNat_second]
+  have h_snd :
+      cfpMap (𝟙 p.T) toRSpineNat ≫
+        cfpFst p.T p.T =
+      cfpFst p.T p.T := by
+    rw [cfpMap_fst, Category.comp_id]
+  rw [h_fst, h_snd]
+
 end GebLean
 
 namespace GebLean
