@@ -262,4 +262,217 @@ def cantorUnpair : p.T ⟶ cfpProd p.T p.T :=
   cfpLift (cfpTerminalFrom p.T) (𝟙 p.T) ≫
     cantorUnpairHelper
 
+/-- `cantorPair` absorbs `toRSpineNat`:
+normalizing both inputs then pairing equals
+just pairing. -/
+private theorem cantorPair_absorbs_rsn :
+    cfpMap toRSpineNat toRSpineNat ≫
+      cantorPair =
+    (cantorPair :
+      cfpProd p.T p.T ⟶ p.T) := by
+  rw [cantorPair_toRSpineNat_comm]
+  unfold cantorPair
+  rw [Category.assoc,
+    ← natPlus_toRSpineNat_first,
+    ← Category.assoc,
+    cfpLift_cfpMap,
+    Category.comp_id,
+    Category.assoc,
+    show natTri ≫ toRSpineNat =
+      natTri from
+      natTri_isRSpineNatNorm]
+
+/-- `cantorPair` absorbs `toRSpineNat` on its
+first argument. -/
+private theorem cantorPair_absorbs_rsn_fst :
+    cfpMap toRSpineNat (𝟙 p.T) ≫
+      cantorPair =
+    (cantorPair :
+      cfpProd p.T p.T ⟶ p.T) := by
+  have step1 :
+      cfpMap toRSpineNat (𝟙 p.T) ≫
+        cantorPair =
+      cfpMap toRSpineNat (𝟙 p.T) ≫
+        cfpMap toRSpineNat toRSpineNat ≫
+        cantorPair := by
+    rw [cantorPair_absorbs_rsn]
+  have step2 :
+      cfpMap toRSpineNat (𝟙 p.T) ≫
+        cfpMap (toRSpineNat : p.T ⟶ p.T)
+          toRSpineNat =
+      cfpMap toRSpineNat toRSpineNat := by
+    rw [cfpMap_comp, toRSpineNat_idem,
+      Category.id_comp]
+  rw [step1, ← Category.assoc, step2,
+    cantorPair_absorbs_rsn]
+
+/-- `cantorPair(ℓ, b) = natTri(toRSN(b))`. -/
+private theorem cantorPair_ℓ_snd :
+    cfpLift (cfpTerminalFrom p.T ≫ p.ℓ)
+      (𝟙 p.T) ≫ cantorPair =
+    toRSpineNat ≫ (natTri : p.T ⟶ p.T) := by
+  unfold cantorPair
+  rw [← Category.assoc, cfpLift_precomp,
+    cfpLift_fst,
+    show cfpLift (cfpTerminalFrom p.T ≫ p.ℓ)
+      (𝟙 p.T) ≫ natPlus ≫ natTri =
+      toRSpineNat ≫ natTri from by
+      rw [← Category.assoc,
+        natPlus_ℓ_left_eq_toRSpineNat]]
+  -- cfpLift (toRSN ≫ natTri) (term ≫ ℓ) ≫ natPlus
+  --   = toRSN ≫ natTri
+  -- because the second component is ℓ,
+  -- and natPlus(x, ℓ) = x.
+  have h_fst :
+      cfpLift (toRSpineNat ≫ natTri)
+        (cfpTerminalFrom p.T ≫ p.ℓ) ≫
+        cfpFst p.T p.T = toRSpineNat ≫ natTri :=
+    cfpLift_fst _ _
+  have h_snd :
+      cfpLift (toRSpineNat ≫ natTri)
+        (cfpTerminalFrom p.T ≫ p.ℓ) ≫
+        cfpSnd p.T p.T =
+      cfpTerminalFrom p.T ≫ p.ℓ :=
+    cfpLift_snd _ _
+  have cfpInsertSnd_form :
+      cfpLift (toRSpineNat ≫ natTri)
+        (cfpTerminalFrom p.T ≫ p.ℓ) =
+      (toRSpineNat ≫ natTri) ≫
+        cfpInsertSnd p.ℓ p.T := by
+    unfold cfpInsertSnd
+    rw [cfpLift_precomp, Category.comp_id]
+    congr 1
+    have term_absorb :
+        (toRSpineNat ≫ (natTri : p.T ⟶ p.T)) ≫
+          cfpTerminalFrom p.T =
+        cfpTerminalFrom p.T :=
+      h.terminal.uniq _
+    simp only [← Category.assoc] at *
+    rw [term_absorb]
+  rw [cfpInsertSnd_form, Category.assoc,
+    natPlus_ℓ, Category.comp_id]
+
+/-- `cantorUnpair(ℓ) = (ℓ, ℓ)`. -/
+private theorem cantorUnpair_ℓ :
+    p.ℓ ≫ cantorUnpair =
+    cfpLift p.ℓ p.ℓ := by
+  unfold cantorUnpair
+  rw [← Category.assoc, cfpLift_precomp,
+    Category.comp_id]
+  have term_eq :
+      p.ℓ ≫ cfpTerminalFrom p.T =
+      cfpTerminalFrom cfpTerminal :=
+    h.terminal.uniq _
+  rw [term_eq]
+  have embed_eq :
+      cfpLift (cfpTerminalFrom cfpTerminal) p.ℓ =
+      cfpInsertSnd p.ℓ cfpTerminal := by
+    unfold cfpInsertSnd
+    congr 1
+    · exact (h.terminal.uniq _).symm
+    · rw [show cfpTerminalFrom cfpTerminal =
+        𝟙 cfpTerminal from
+        (h.terminal.uniq _).symm,
+        Category.id_comp]
+  rw [embed_eq, cantorUnpairHelper_ℓ]
+
+/-- `cantorUnpair(natSucc(n)) =
+cantorNextPair(cantorUnpair(n))`. -/
+private theorem cantorUnpair_natSucc :
+    natSucc ≫ cantorUnpair =
+    cantorUnpair ≫
+      (cantorNextPair :
+        cfpProd p.T p.T ⟶ cfpProd p.T p.T) := by
+  unfold cantorUnpair
+  -- LHS: natSucc ≫ embed ≫ UH
+  -- RHS: embed ≫ UH ≫ cantorNextPair
+  -- Step 1: compute natSucc ≫ embed
+  have embed_succ :
+      natSucc ≫
+        cfpLift (cfpTerminalFrom p.T)
+          (𝟙 p.T) =
+      cfpLift (cfpTerminalFrom p.T)
+        (natSucc : p.T ⟶ p.T) := by
+    rw [cfpLift_precomp, Category.comp_id]
+    congr 1
+    exact h.terminal.uniq _
+  -- Step 2: factor cfpLift (term) natSucc
+  --   = embed ≫ cfpMap (𝟙 1) natSucc
+  have succ_factor :
+      cfpLift (cfpTerminalFrom p.T)
+        (natSucc : p.T ⟶ p.T) =
+      cfpLift (cfpTerminalFrom p.T) (𝟙 p.T) ≫
+        cfpMap (𝟙 cfpTerminal) natSucc := by
+    rw [cfpLift_cfpMap, Category.comp_id,
+      Category.id_comp]
+  -- Step 3: natSucc = cfpLift ... ≫ β
+  have natSucc_as_β :
+      cfpMap (𝟙 cfpTerminal)
+        (natSucc : p.T ⟶ p.T) =
+      cfpMap (𝟙 cfpTerminal)
+        (cfpLift (cfpTerminalFrom p.T ≫ p.ℓ)
+          (𝟙 p.T)) ≫
+        cfpMap (𝟙 cfpTerminal) p.β := by
+    unfold natSucc
+    rw [cfpMap_id_comp']
+  -- Step 4: cfpLiftAssoc UH UH ≫ cfpSnd
+  --   = cfpAssocSnd ≫ UH
+  have liftAssoc_snd :
+      cfpLiftAssoc
+        (cantorUnpairHelper :
+          cfpProd cfpTerminal p.T ⟶
+            cfpProd p.T p.T)
+        cantorUnpairHelper ≫
+        cfpSnd (cfpProd p.T p.T)
+          (cfpProd p.T p.T) =
+      cfpAssocSnd cfpTerminal p.T p.T ≫
+        cantorUnpairHelper := by
+    unfold cfpLiftAssoc
+    rw [cfpLift_snd]
+  -- Step 5: cfpMap (𝟙 1) (cfpLift ...) ≫
+  --   cfpAssocSnd = 𝟙
+  have cancel :
+      cfpMap (𝟙 cfpTerminal)
+        (cfpLift (cfpTerminalFrom p.T ≫ p.ℓ)
+          (𝟙 p.T)) ≫
+        cfpAssocSnd cfpTerminal p.T p.T =
+      𝟙 (cfpProd cfpTerminal p.T) := by
+    rw [← cfpMap_id cfpTerminal p.T]
+    unfold cfpAssocSnd
+    apply cfpLift_uniq
+    · rw [Category.assoc, cfpLift_fst,
+        cfpMap_fst, Category.comp_id]
+    · rw [Category.assoc, cfpLift_snd,
+        ← Category.assoc, cfpMap_snd,
+        Category.assoc, cfpLift_snd]
+  rw [← Category.assoc
+    (natSucc : p.T ⟶ p.T), embed_succ,
+    succ_factor]
+  simp only [Category.assoc]
+  rw [natSucc_as_β]
+  simp only [Category.assoc]
+  rw [cantorUnpairHelper_β]
+  unfold cantorUnpairStep
+  -- Goal has: ... ≫ cfpLiftAssoc UH UH ≫
+  --   cfpSnd ≫ cantorNextPair
+  -- Use liftAssoc_snd to replace
+  --   cfpLiftAssoc UH UH ≫ cfpSnd
+  --   with cfpAssocSnd ≫ UH
+  rw [show cfpLiftAssoc
+      cantorUnpairHelper cantorUnpairHelper ≫
+      cfpSnd (cfpProd p.T p.T)
+        (cfpProd p.T p.T) ≫
+      cantorNextPair =
+    cfpAssocSnd cfpTerminal p.T p.T ≫
+      cantorUnpairHelper ≫
+      cantorNextPair from by
+    simp only [← Category.assoc]
+    rw [liftAssoc_snd]]
+  -- Goal: embed ≫ cfpMap ... ≫
+  --   cfpAssocSnd ≫ UH ≫ cantorNextPair
+  --   = embed ≫ UH ≫ cantorNextPair
+  simp only [← Category.assoc
+    (cfpMap _ _) (cfpAssocSnd _ _ _)]
+  rw [cancel, Category.id_comp]
+
 end GebLean
