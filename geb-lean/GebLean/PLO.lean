@@ -1454,7 +1454,7 @@ private theorem pstoToIsPLTO_elim_cons
       (s.elim f (cfpSwap X T ≫ g)) ≫ g := by
   set φ := s.elim f (cfpSwap X T ≫ g)
   set g' := cfpSwap X T ≫ g
-  have key : cfpMap (𝟙 A) (cfpSwap T T) ≫
+  have comm : cfpMap (𝟙 A) (cfpSwap T T) ≫
       cfpLiftRecElem φ ≫ cfpSwap X T ≫ g =
       cfpLiftElemRec φ ≫ g := by
     rw [← Category.assoc (cfpLiftRecElem φ)
@@ -1468,7 +1468,7 @@ private theorem pstoToIsPLTO_elim_cons
     s.elim_snoc f g']
   -- Goal: cfpMap swap ≫ cfpLiftRecElem φ ≫ g'
   --   = cfpLiftElemRec φ ≫ g
-  exact key
+  exact comm
 
 /-- `cfpMap (𝟙 A) (cfpSwap B D) ≫
 cfpMap (𝟙 A) (cfpSwap D B) = 𝟙 _`. -/
@@ -1597,7 +1597,7 @@ private theorem pltoToIsPSTO_elim_snoc
       (c.elim f (cfpSwap T X ≫ g)) ≫ g := by
   set φ := c.elim f (cfpSwap T X ≫ g)
   set g' := cfpSwap T X ≫ g
-  have key : cfpMap (𝟙 A) (cfpSwap T T) ≫
+  have comm : cfpMap (𝟙 A) (cfpSwap T T) ≫
       cfpLiftElemRec φ ≫ cfpSwap T X ≫ g =
       cfpLiftRecElem φ ≫ g := by
     rw [← Category.assoc (cfpLiftElemRec φ)
@@ -1609,7 +1609,7 @@ private theorem pltoToIsPSTO_elim_snoc
   rw [cfpMap_id_comp_eq (cfpSwap T T) c.cons,
     Category.assoc,
     c.elim_cons f g']
-  exact key
+  exact comm
 
 private theorem pltoToIsPSTO_step_convert
     (c : IsPLTO C T) {A X : C}
