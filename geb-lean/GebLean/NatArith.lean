@@ -3308,7 +3308,7 @@ private theorem cantorPair_natSucc_eq_β
   rw [← Category.assoc, ← Category.assoc,
     sum_eq]
 
-/-- β case of the key lemma:
+/-- β case of the lemma:
 `cantorNextPair ≫ cantorPair =
   cantorPair ≫ natSucc`
 precomposed with `cfpMap (𝟙 T) p.β`. -/
@@ -4037,7 +4037,7 @@ theorem natTruncSub_toRSpineNat_second :
       unfold cfpLiftAssoc; rw [cfpLift_snd]]
     simp only [← Category.assoc
       (cfpAssocSnd _ _ _)]
-    have key :
+    have comm :
         cfpMap (𝟙 p.T)
           (cfpLift
             (cfpTerminalFrom
@@ -4072,7 +4072,7 @@ theorem natTruncSub_toRSpineNat_second :
         cfpAssocSnd p.T p.T p.T) ≫
           natTruncSub ≫ natPred from by
       simp only [Category.assoc]]
-    rw [key]
+    rw [comm]
     simp only [Category.assoc]
 
 /-- Normalizing both arguments of `natEq` via
