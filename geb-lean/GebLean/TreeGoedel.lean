@@ -473,4 +473,31 @@ theorem natEq_succ_ℓ (a : D ⟶ p.T) :
   congr 1
   exact h.terminal.uniq _
 
+/-- `natEq(a, ℓ) = isLeafEndo(a)`. -/
+theorem natEq_ℓ_right :
+    cfpInsertSnd p.ℓ p.T ≫ natEq =
+    (isLeafEndo : p.T ⟶ p.T) := by
+  unfold natEq
+  rw [← Category.assoc, ← Category.assoc,
+    cfpLift_precomp]
+  have h1 :
+      cfpInsertSnd p.ℓ p.T ≫ natTruncSub =
+      𝟙 p.T := natTruncSub_ℓ
+  have hswap :
+      cfpInsertSnd p.ℓ p.T ≫
+        cfpSwap p.T p.T =
+      cfpLift (cfpTerminalFrom p.T ≫ p.ℓ)
+        (𝟙 p.T) := by
+    unfold cfpInsertSnd cfpSwap
+    rw [cfpLift_precomp, cfpLift_fst,
+      cfpLift_snd]
+  have h2 :
+      cfpInsertSnd p.ℓ p.T ≫
+        cfpSwap p.T p.T ≫ natTruncSub =
+      cfpTerminalFrom p.T ≫ p.ℓ := by
+    rw [← Category.assoc, hswap]
+    exact natTruncSub_ℓ_left (𝟙 p.T)
+  rw [h1, h2, natPlus_zero, Category.id_comp]
+
+
 end GebLean

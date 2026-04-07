@@ -2862,6 +2862,269 @@ theorem cantorPair_toRSpineNat_comm :
         natTri_isRSpineNatNorm]
   rw [lhs, rhs]
 
+/-- `natTruncSub(β(l,r), β(l',r')) =
+natTruncSub(r, r')`:  the left children are
+irrelevant to `natTruncSub` because the fold
+only walks right spines. -/
+theorem natTruncSub_β_β :
+    cfpMap p.β p.β ≫ natTruncSub =
+    cfpMap (cfpSnd p.T p.T)
+      (cfpSnd p.T p.T) ≫
+      (natTruncSub :
+        cfpProd p.T p.T ⟶ p.T) := by
+  have factor :
+      cfpMap p.β p.β =
+      cfpMap p.β
+        (𝟙 (cfpProd p.T p.T)) ≫
+        cfpMap (𝟙 p.T) p.β := by
+    rw [cfpMap_comp, Category.comp_id,
+      Category.id_comp]
+  rw [factor, Category.assoc, natTruncSub_β]
+  have liftAssoc_snd :
+      cfpLiftAssoc natTruncSub natTruncSub ≫
+        cfpSnd p.T p.T =
+      cfpAssocSnd p.T p.T p.T ≫
+        natTruncSub := by
+    unfold cfpLiftAssoc
+    exact cfpLift_snd _ _
+  rw [← Category.assoc
+    (cfpLiftAssoc natTruncSub natTruncSub),
+    liftAssoc_snd, Category.assoc]
+  have assocSnd_eq :
+      cfpMap p.β
+        (𝟙 (cfpProd p.T p.T)) ≫
+        cfpAssocSnd p.T p.T p.T =
+      cfpMap p.β (cfpSnd p.T p.T) := by
+    set LHS :=
+      cfpMap p.β
+        (𝟙 (cfpProd p.T p.T)) ≫
+        cfpAssocSnd p.T p.T p.T
+    set RHS :=
+      cfpMap p.β (cfpSnd p.T p.T)
+    have fst_eq :
+        LHS ≫ cfpFst p.T p.T =
+        cfpFst (cfpProd p.T p.T)
+          (cfpProd p.T p.T) ≫ p.β := by
+      simp only [LHS]
+      unfold cfpAssocSnd
+      rw [Category.assoc, cfpLift_fst,
+        cfpMap_fst]
+    have snd_eq :
+        LHS ≫ cfpSnd p.T p.T =
+        cfpSnd (cfpProd p.T p.T)
+          (cfpProd p.T p.T) ≫
+          cfpSnd p.T p.T := by
+      simp only [LHS]
+      unfold cfpAssocSnd
+      rw [Category.assoc, cfpLift_snd,
+        ← Category.assoc,
+        cfpMap_snd, Category.comp_id]
+    have fst_eq' :
+        RHS ≫ cfpFst p.T p.T =
+        cfpFst (cfpProd p.T p.T)
+          (cfpProd p.T p.T) ≫ p.β := by
+      simp only [RHS]; exact cfpMap_fst _ _
+    have snd_eq' :
+        RHS ≫ cfpSnd p.T p.T =
+        cfpSnd (cfpProd p.T p.T)
+          (cfpProd p.T p.T) ≫
+          cfpSnd p.T p.T := by
+      simp only [RHS]; exact cfpMap_snd _ _
+    exact (cfpLift_uniq _ _ LHS
+      fst_eq snd_eq).trans
+      (cfpLift_uniq _ _ RHS
+        fst_eq' snd_eq').symm
+  have cfpMap_β_snd :
+      cfpMap p.β (cfpSnd p.T p.T) =
+      cfpMap (𝟙 (cfpProd p.T p.T))
+        (cfpSnd p.T p.T) ≫
+        cfpMap p.β (𝟙 p.T) := by
+    rw [cfpMap_comp,
+      Category.id_comp,
+      Category.comp_id]
+  rw [← Category.assoc
+    (cfpMap p.β
+      (𝟙 (cfpProd p.T p.T))),
+    assocSnd_eq, cfpMap_β_snd,
+    Category.assoc,
+    β_natTruncSub_natPred,
+    ← Category.assoc, cfpMap_comp,
+    Category.id_comp, Category.comp_id]
+
+/-- `natEq(β(l,r), β(l',r')) = natEq(r, r')`:
+the left children are irrelevant to `natEq`
+because `natTruncSub` only walks right spines. -/
+theorem natEq_β_β :
+    cfpMap p.β p.β ≫ natEq =
+    cfpMap (cfpSnd p.T p.T)
+      (cfpSnd p.T p.T) ≫
+      (natEq : cfpProd p.T p.T ⟶ p.T) := by
+  unfold natEq
+  rw [← Category.assoc, ← Category.assoc,
+    cfpLift_precomp]
+  have h_sub :
+      cfpMap p.β p.β ≫ natTruncSub =
+      cfpMap (cfpSnd p.T p.T)
+        (cfpSnd p.T p.T) ≫
+        natTruncSub :=
+    natTruncSub_β_β
+  have h_swap_sub :
+      cfpMap p.β p.β ≫
+        cfpSwap p.T p.T ≫ natTruncSub =
+      cfpMap (cfpSnd p.T p.T)
+        (cfpSnd p.T p.T) ≫
+        cfpSwap p.T p.T ≫ natTruncSub := by
+    have step1 :
+        cfpMap p.β p.β ≫
+          cfpSwap p.T p.T ≫ natTruncSub =
+        cfpSwap (cfpProd p.T p.T)
+          (cfpProd p.T p.T) ≫
+          cfpMap p.β p.β ≫ natTruncSub := by
+      rw [← Category.assoc,
+        ← cfpSwap_cfpMap_diag p.β,
+        Category.assoc]
+    rw [step1, natTruncSub_β_β,
+      ← Category.assoc,
+      cfpSwap_cfpMap_diag
+        (cfpSnd p.T p.T),
+      Category.assoc]
+  rw [h_sub, h_swap_sub,
+    ← cfpLift_precomp]
+  simp only [Category.assoc]
+
+/-- The step of the Cantor unpairing catamorphism.
+Given a pair `(a, b) : cfpProd T T`, produces the
+next pair in the Cantor enumeration order:
+  - if `b = 0` (leaf): return `(0, succ(a))`
+  - if `b > 0` (branch): return `(succ(a), pred(b))`
+-/
+def cantorNextPair :
+    cfpProd p.T p.T ⟶ cfpProd p.T p.T :=
+  cfpLift
+    (iteBranches
+      (cfpTerminalFrom (cfpProd p.T p.T) ≫ p.ℓ)
+      (cfpFst p.T p.T ≫ natSucc)
+      (cfpSnd p.T p.T ≫ isLeafEndo))
+    (iteBranches
+      (cfpFst p.T p.T ≫ natSucc)
+      (cfpSnd p.T p.T ≫ natPred)
+      (cfpSnd p.T p.T ≫ isLeafEndo))
+
+/-- The step morphism for the Cantor unpairing
+catamorphism.  From the pair of recursive results
+`(result_l, result_r)`, extracts the right child's
+result and applies `cantorNextPair`. -/
+def cantorUnpairStep :
+    cfpProd (cfpProd p.T p.T)
+      (cfpProd p.T p.T) ⟶
+      cfpProd p.T p.T :=
+  cfpSnd (cfpProd p.T p.T)
+    (cfpProd p.T p.T) ≫ cantorNextPair
+
+/-- Parameterized catamorphism computing the Cantor
+unpairing.  At `n = 0`, the pair is `(0, 0)`.  At
+each successor step, `cantorNextPair` advances the
+pair. -/
+def cantorUnpairHelper :
+    cfpProd cfpTerminal p.T ⟶
+      cfpProd p.T p.T :=
+  p.elim (cfpLift p.ℓ p.ℓ) cantorUnpairStep
+
+/-- First component of the Cantor unpairing. -/
+def cantorUnpairFst : p.T ⟶ p.T :=
+  cfpLift (cfpTerminalFrom p.T) (𝟙 p.T) ≫
+    cantorUnpairHelper ≫ cfpFst p.T p.T
+
+/-- Second component of the Cantor unpairing. -/
+def cantorUnpairSnd : p.T ⟶ p.T :=
+  cfpLift (cfpTerminalFrom p.T) (𝟙 p.T) ≫
+    cantorUnpairHelper ≫ cfpSnd p.T p.T
+
+/-- Base case for `cantorUnpairHelper`:
+`cantorUnpairHelper(*, 0) = (0, 0)`. -/
+theorem cantorUnpairHelper_ℓ :
+    cfpInsertSnd p.ℓ cfpTerminal ≫
+      cantorUnpairHelper =
+    cfpLift p.ℓ p.ℓ := by
+  unfold cantorUnpairHelper
+  exact p.elim_ℓ (cfpLift p.ℓ p.ℓ) _
+
+/-- Step case for `cantorUnpairHelper`:
+`cantorUnpairHelper(*, β(l, r)) =
+  cantorNextPair(cantorUnpairHelper(*, r))`. -/
+theorem cantorUnpairHelper_β :
+    cfpMap (𝟙 cfpTerminal) p.β ≫
+      cantorUnpairHelper =
+    cfpLiftAssoc cantorUnpairHelper
+      cantorUnpairHelper ≫
+      cantorUnpairStep := by
+  unfold cantorUnpairHelper
+  exact p.elim_β (cfpLift p.ℓ p.ℓ) _
+
+/-- Successor rule for the Cantor pairing:
+`cantorPair(succ(a), b) =
+  succ(cantorPair(a, succ(b)))`. -/
+theorem cantorPair_succ_fst {D : C}
+    (a b : D ⟶ p.T) :
+    cfpLift (a ≫ natSucc) b ≫ cantorPair =
+    (cfpLift a (b ≫ natSucc) ≫ cantorPair) ≫
+      natSucc := by
+  unfold cantorPair
+  have sum_l :
+      cfpLift (a ≫ natSucc) b ≫ natPlus =
+      (cfpLift a b ≫ natPlus) ≫ natSucc :=
+    natPlus_succ_left a b
+  have sum_r :
+      cfpLift a (b ≫ natSucc) ≫ natPlus =
+      (cfpLift a b ≫ natPlus) ≫ natSucc :=
+    natPlus_succ a b
+  have lhs_step :
+      cfpLift (a ≫ natSucc) b ≫
+        cfpLift (natPlus ≫ natTri)
+          (cfpFst p.T p.T) =
+      cfpLift
+        (cfpLift a b ≫ natPlus ≫
+          natSucc ≫ natTri)
+        (a ≫ natSucc) := by
+    rw [cfpLift_precomp, cfpLift_fst]
+    congr 1
+    rw [← Category.assoc, sum_l]
+    simp only [Category.assoc]
+  have rhs_step :
+      cfpLift a (b ≫ natSucc) ≫
+        cfpLift (natPlus ≫ natTri)
+          (cfpFst p.T p.T) =
+      cfpLift
+        (cfpLift a b ≫ natPlus ≫
+          natSucc ≫ natTri)
+        a := by
+    rw [cfpLift_precomp, cfpLift_fst]
+    congr 1
+    rw [← Category.assoc, sum_r]
+    simp only [Category.assoc]
+  have lhs_eq :
+      cfpLift (a ≫ natSucc) b ≫
+        cfpLift (natPlus ≫ natTri)
+          (cfpFst p.T p.T) ≫ natPlus =
+      cfpLift
+        (cfpLift a b ≫ natPlus ≫
+          natSucc ≫ natTri)
+        (a ≫ natSucc) ≫ natPlus := by
+    rw [← Category.assoc, lhs_step]
+  have rhs_eq :
+      (cfpLift a (b ≫ natSucc) ≫
+        cfpLift (natPlus ≫ natTri)
+          (cfpFst p.T p.T) ≫ natPlus) ≫
+        natSucc =
+      (cfpLift
+        (cfpLift a b ≫ natPlus ≫
+          natSucc ≫ natTri)
+        a ≫ natPlus) ≫ natSucc := by
+    congr 1
+    rw [← Category.assoc, rhs_step]
+  rw [lhs_eq, rhs_eq]
+  exact natPlus_succ _ a
+
 end GebLean
 
 namespace GebLean

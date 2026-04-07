@@ -102,17 +102,43 @@ In `GebLean/TreeGoedel.lean`:
 - `treeToNat_isRSpineNatNorm`:
   `treeToNat ≫ toRSpineNat = treeToNat`.
 
+In `GebLean/TreeGoedel.lean`:
+
+- `natEq_ℓ_right`: `natEq(a, ℓ) = isLeafEndo(a)`.
+  Proved by expanding natEq definition and using
+  `natTruncSub_ℓ`, `natTruncSub_ℓ_left`, and
+  `natPlus_zero`.
+
+In `GebLean/NatArith.lean`:
+
+- `natTruncSub_β_β`:
+  `cfpMap p.β p.β ≫ natTruncSub =
+  cfpMap (cfpSnd T T) (cfpSnd T T) ≫ natTruncSub`.
+  The left children are irrelevant to `natTruncSub`.
+  Proof factors `cfpMap p.β p.β` via `cfpMap_comp`,
+  applies `natTruncSub_β` to peel the second-argument
+  β, then `β_natTruncSub_natPred` to peel the
+  first-argument β.
+- `natEq_β_β`:
+  `cfpMap p.β p.β ≫ natEq =
+  cfpMap (cfpSnd T T) (cfpSnd T T) ≫ natEq`.
+  The left children are irrelevant to `natEq`.
+  Proof unfolds `natEq`, applies `natTruncSub_β_β`
+  to both the direct and swapped `natTruncSub`
+  components (the swapped case uses
+  `cfpSwap_cfpMap_diag`), then recombines via
+  `cfpLift_precomp`.
+
 ## Remaining
 
 ### `NatEqCantorPair` / unconditional `treeEqG_ββ`
 
-Cantor pairing injectivity under `natEq`. Requires
-order-theoretic properties of `natTri` and `natPlus`
-(the triangular-number gap property) or a direct
-compositional argument using rsn cancellation lemmas.
-The gap property states that `natTri(n+1) > n + natTri(n)`,
-which ensures unique decomposition of
-`cantorPair(m,n) = natPlus(natTri(natPlus(m,n)), m)`.
+Cantor pairing injectivity under `natEq`. With
+`natEq_β_β` proved, use it with `p.elim_uniq` to show
+both sides of `NatEqCantorPair` satisfy the same double
+fold (simultaneous fold on both pairs `(a,c)` and
+`(b,d)` via the β structure). Then remove the
+`NatEqCantorPair C` hypothesis from `treeEqG_ββ`.
 
 ### `treeEqG_trans`
 
