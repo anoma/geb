@@ -129,16 +129,62 @@ In `GebLean/NatArith.lean`:
   `cfpSwap_cfpMap_diag`), then recombines via
   `cfpLift_precomp`.
 
+In `GebLean/NatArith.lean` (new definitions and lemmas):
+
+- `cantorNextPair`: the step of the Cantor unpairing
+  zig-zag walk. From `(a, b)`: if `b = 0` then `(0, succ(a))`,
+  else `(succ(a), pred(b))`.
+- `cantorUnpairStep`: `cfpSnd ≫ cantorNextPair`, the
+  step morphism for the unpairing catamorphism.
+- `cantorUnpairHelper`: parameterized catamorphism computing
+  the Cantor unpairing via `p.elim (cfpLift ℓ ℓ)
+  cantorUnpairStep`.
+- `cantorUnpairFst`, `cantorUnpairSnd`: first and second
+  components of the Cantor unpairing.
+- `cantorUnpairHelper_ℓ`: base case.
+- `cantorUnpairHelper_β`: step case.
+- `cantorPair_succ_fst`: `cantorPair(succ(a), b) =
+  succ(cantorPair(a, succ(b)))`. Proved using
+  `natPlus_succ_left`, `natPlus_succ`.
+- `cantorPair_ℓℓ`: `cantorPair(ℓ, ℓ) = ℓ`.
+
 ## Remaining
 
 ### `NatEqCantorPair` / unconditional `treeEqG_ββ`
 
-Cantor pairing injectivity under `natEq`. With
-`natEq_β_β` proved, use it with `p.elim_uniq` to show
-both sides of `NatEqCantorPair` satisfy the same double
-fold (simultaneous fold on both pairs `(a,c)` and
-`(b,d)` via the β structure). Then remove the
-`NatEqCantorPair C` hypothesis from `treeEqG_ββ`.
+Proving `NatEqCantorPair C` for all C with `HasPBTO`.
+The approach requires establishing the rsn-invariance
+chain:
+
+1. `natPred_toRSpineNat_comm`: `toRSpineNat ≫ natPred =
+   natPred ≫ toRSpineNat`. Needed because natTruncSub
+   iterates natPred.
+2. `natTruncSub_toRSpineNat_comm`:
+   `cfpMap toRSpineNat toRSpineNat ≫ natTruncSub =
+   natTruncSub ≫ toRSpineNat`. Follows from (1) via
+   `elim_algebra_morphism`.
+3. `natEq_toRSpineNat_inv`:
+   `cfpMap toRSpineNat toRSpineNat ≫ natEq = natEq`.
+   Follows from (2), `natPlus_toRSpineNat_both`, and
+   `isLeafEndo` invariance under rsn.
+4. Both sides of `NatEqCantorPair` are rsn-invariant
+   (using (3), `cantorPair_toRSpineNat_comm`, and
+   `boolAnd` rsn-invariance).
+5. For rsn inputs, prove the equation using
+   `natPlus_cancel_left_rsn`, `natPlus_comm_rsn`,
+   and induction via `p.elim_uniq` on the diagonal
+   sum.
+
+Alternative approach: prove the right-inverse
+`cantorUnpairHelper ≫ cantorPair = cfpSnd cfpTerminal T`
+modulo rsn normalization, then derive
+`NatEqCantorPair` from the left-inverse property via
+the `boolAnd` toolkit (`boolAnd_fst_proj`,
+`boolAnd_snd_proj`, `boolAnd_comm`).
+
+The `cantorPair_succ_fst` recurrence is the enabler
+for both approaches: it relates consecutive diagonal
+entries.
 
 ### `treeEqG_trans`
 

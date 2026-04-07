@@ -3140,6 +3140,111 @@ theorem cantorPair_ℓℓ :
   rw [← Category.assoc, hsum,
     natTri_ℓ, hsum]
 
+/-- When `b = ℓ`:
+`cantorNextPair(a, ℓ) = (ℓ, succ(a))`. -/
+theorem cantorNextPair_ℓ :
+    cfpInsertSnd p.ℓ p.T ≫ cantorNextPair =
+    cfpLift
+      (cfpTerminalFrom p.T ≫ p.ℓ)
+      (natSucc : p.T ⟶ p.T) := by
+  unfold cantorNextPair
+  rw [cfpLift_precomp]
+  have cond :
+      cfpInsertSnd p.ℓ p.T ≫
+        cfpSnd p.T p.T ≫ isLeafEndo =
+      cfpTerminalFrom p.T ≫ p.ℓ := by
+    unfold cfpInsertSnd
+    rw [← Category.assoc, cfpLift_snd,
+      Category.assoc, isLeafEndo_ℓ]
+  congr 1
+  · rw [iteBranches_precomp, cond]
+    rw [show cfpInsertSnd p.ℓ p.T ≫
+        cfpTerminalFrom (cfpProd p.T p.T) ≫
+          p.ℓ =
+      cfpTerminalFrom p.T ≫ p.ℓ from by
+        rw [← Category.assoc]; congr 1
+        exact h.terminal.uniq _]
+    exact iteBranches_ℓ _ _
+  · rw [iteBranches_precomp, cond]
+    rw [show cfpInsertSnd p.ℓ p.T ≫
+        cfpFst p.T p.T ≫ natSucc =
+      natSucc from by
+        unfold cfpInsertSnd
+        rw [← Category.assoc, cfpLift_fst,
+          Category.id_comp]]
+    exact iteBranches_ℓ _ _
+
+/-- When `b = β(l, r)`:
+`cantorNextPair(a, β(l,r)) = (succ(a), r)`. -/
+theorem cantorNextPair_β :
+    cfpMap (𝟙 p.T) p.β ≫ cantorNextPair =
+    cfpLift
+      (cfpFst p.T (cfpProd p.T p.T) ≫ natSucc)
+      (cfpSnd p.T (cfpProd p.T p.T) ≫
+        cfpSnd p.T p.T) := by
+  unfold cantorNextPair
+  rw [cfpLift_precomp]
+  have cond :
+      cfpMap (𝟙 p.T) p.β ≫
+        cfpSnd p.T p.T ≫ isLeafEndo =
+      cfpSnd p.T (cfpProd p.T p.T) ≫
+        p.β ≫ isLeafEndo := by
+    rw [← Category.assoc, cfpMap_snd,
+      Category.assoc]
+  have cond' :
+      cfpSnd p.T (cfpProd p.T p.T) ≫
+        p.β ≫ isLeafEndo =
+      cfpSnd p.T (cfpProd p.T p.T) ≫
+        (cfpTerminalFrom (cfpProd p.T p.T) ≫
+          treeFalse) := by
+    rw [isLeafEndo_β]
+  set D := cfpProd p.T (cfpProd p.T p.T)
+  have fst_simp :
+      cfpMap (𝟙 p.T) p.β ≫
+        cfpFst p.T p.T ≫ natSucc =
+      cfpFst p.T (cfpProd p.T p.T) ≫
+        natSucc := by
+    rw [← Category.assoc, cfpMap_fst,
+      Category.assoc, Category.id_comp]
+  have snd_pred :
+      cfpMap (𝟙 p.T) p.β ≫
+        cfpSnd p.T p.T ≫ natPred =
+      cfpSnd p.T (cfpProd p.T p.T) ≫
+        cfpSnd p.T p.T := by
+    rw [← Category.assoc, cfpMap_snd,
+      Category.assoc, β_natPred]
+  have term_simp :
+      cfpMap (𝟙 p.T) p.β ≫
+        cfpTerminalFrom (cfpProd p.T p.T) ≫
+          p.ℓ =
+      cfpTerminalFrom D ≫ p.ℓ := by
+    rw [← Category.assoc]; congr 1
+    exact h.terminal.uniq _
+  have cond_β :
+      cfpSnd p.T (cfpProd p.T p.T) ≫
+        (cfpTerminalFrom (cfpProd p.T p.T) ≫
+          treeFalse) =
+      (cfpTerminalFrom D ≫
+        cfpLift p.ℓ p.ℓ) ≫ p.β := by
+    unfold treeFalse
+    rw [← Category.assoc
+      (cfpSnd p.T (cfpProd p.T p.T))
+      (cfpTerminalFrom _)]
+    rw [show cfpSnd p.T (cfpProd p.T p.T) ≫
+        cfpTerminalFrom (cfpProd p.T p.T) =
+      cfpTerminalFrom D from
+        h.terminal.uniq _]
+    simp only [Category.assoc]
+  congr 1
+  · rw [iteBranches_precomp, cond, cond',
+      cond_β, term_simp, fst_simp]
+    exact iteBranches_β _ _
+      (cfpTerminalFrom D ≫ cfpLift p.ℓ p.ℓ)
+  · rw [iteBranches_precomp, cond, cond',
+      cond_β, fst_simp, snd_pred]
+    exact iteBranches_β _ _
+      (cfpTerminalFrom D ≫ cfpLift p.ℓ p.ℓ)
+
 end GebLean
 
 namespace GebLean
