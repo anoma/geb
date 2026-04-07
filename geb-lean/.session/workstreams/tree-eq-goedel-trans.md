@@ -533,6 +533,106 @@ To prove it, one approach is:
   or by a double fold using an explicit counter
   for the remaining steps within the diagonal.
 
+#### Progress (session 2026-04-06d)
+
+New definitions and lemmas in `GebLean/NatNNO.lean`:
+
+- `simpleTriRootStep`: the offset-incrementing step
+  morphism `(s, r) ↦ (s, natSucc(r))`, which always
+  increments the second component without checking
+  the diagonal boundary.
+- `simpleDiagWalk`: the NNO fold with base
+  `(s, ℓ)` and step `simpleTriRootStep`.
+- `simpleDiagWalk_ℓ`: base case.
+- `simpleDiagWalk_s`: step case.
+- `simpleDiagWalk_eq`:
+  `simpleDiagWalk = cfpLift cfpFst (cfpSnd ≫ toRSN)`.
+  The simple walk preserves the first component and
+  normalizes the second.  Proved via `nnoElim_uniq`.
+
+#### Updated analysis (session 2026-04-06d)
+
+The `cantorPair_succ_fst` recurrence gives:
+`cfpMap natSucc (𝟙 T) ≫ cantorPair ≫ triRootState
+= cfpMap (𝟙 T) natSucc ≫ cantorPair ≫ triRootState
+  ≫ triRootStep`.
+Both the target `cfpLift (natPlus ≫ toRSN)
+(cfpFst ≫ toRSN)` and `cantorPair ≫ triRootState`
+satisfy this recurrence, verified by
+`triRootStep_within` (using `natTruncSub` of
+`natSucc(toRSN(a+b))` and `toRSN(a)` being
+positive since `a+b+1 > a`).
+
+The recurrence has the form
+`X(succ(a), b) = triRootStep(X(a, succ(b)))`,
+which couples the fold variable (first arg) with
+a shift in the parameter (second arg).  This is
+NOT a standard `nnoElim_uniq` pattern (where the
+parameter stays fixed).
+
+To break the circularity between Phase 1 and
+Stage A, the combined fold step for Stage A at
+`succ(n)` requires `triRootState(CP(n, 1))`,
+which equals `nnoElim triRootState triRootStep`
+at `(CP(n, 0), succ(n))`.  Computing this
+involves `succ(n)` triRootSteps from
+`triRootState(CP(n, 0))`, expressible as a
+fixed morphism `nnoElim triRootState triRootStep`
+evaluated at `(CP(n, 0), succ(n))`.
+
+A viable approach: define a combined
+`nnoElim` on `n` with enriched state tracking
+`(triRootState(natTri(n)), CP(n, 0),
+triRootState(CP(n, 0)), triRootState(CP(n, 1)))`,
+where the step function uses
+`nnoElim triRootState triRootStep` as a
+fixed morphism to compute the inner walk,
+applied to the tracked `CP(n, 0)` and `succ(n)`
+(available via a paramorphism).
+
+The `cantorPair_succ_fst` recurrence directly
+gives a "shifted step" equation that both
+`cantorPair ≫ triRootState` and the target
+`cfpLift (natPlus ≫ toRSN) (cfpFst ≫ toRSN)`
+satisfy.  A "shifted step uniqueness" theorem
+(`shiftedNnoElim_uniq`) would establish that
+any `φ` satisfying the shifted step
+`φ(succ(a), b) = g(φ(a, succ(b)))` with a
+given base `f = φ(ℓ, ·)` equals
+`cfpLift natPlus cfpFst ≫ nnoElim f g`.
+
+The key insight: the change of variables
+`Θ(s, a) = φ(a, s - a)` where `s = a + b`
+transforms the shifted step into a standard
+NNO step `Θ(s, succ(a)) = g(Θ(s, a))`.
+This gives `Θ = nnoElim f g`, so
+`φ(a, b) = nnoElim f g (a + b, a)`.
+
+The proof of `shiftedNnoElim_uniq` can use
+`nnoElim_uniq` on the swapped morphism
+`cfpSwap ≫ φ`, showing it equals
+`cfpSwap ≫ cfpLift natPlus cfpFst ≫
+nnoElim f g`.  The β-step for
+`p.elim_uniq` on the first argument of `φ`
+uses only the right child (since
+`toRSN(β(l, r)) = succ(toRSN(r))`).
+
+With `shiftedNnoElim_uniq`, Stage B reduces to:
+1. Verify the shifted step for both sides.
+2. Verify the base: `natTri ≫ triRootState =
+   cfpLift toRSN (cfpTerminalFrom T ≫ ℓ)`.
+
+The base (Phase 1) itself follows from Stage B
+at `a = ℓ` (`CP(ℓ, b) = natTri(b)` since
+`natPlus(natTri(b), ℓ) = natTri(b)`).
+So once `shiftedNnoElim_uniq` is proved,
+`cantorPair_triRootState` follows immediately.
+
+Estimated effort for `shiftedNnoElim_uniq`:
+150-250 lines (change of variables,
+nnoElim_uniq application, normalization
+conditions).
+
 ### `treeEqG_trans`
 
 Transitivity of `treeEqG`, using `natTruncSub_fold_comp`

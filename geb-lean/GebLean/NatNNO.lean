@@ -1299,4 +1299,116 @@ theorem natTri_ℓ_triRootOffset :
   rw [← Category.assoc, natTri_ℓ,
     triRootOffset_ℓ]
 
+/-- The offset-incrementing step morphism:
+`(s, r) ↦ (s, natSucc(r))`. Unlike `triRootStep`,
+this step always increments the second component
+without checking the diagonal boundary. -/
+def simpleTriRootStep :
+    cfpProd p.T p.T ⟶ cfpProd p.T p.T :=
+  cfpLift (cfpFst p.T p.T)
+    (cfpSnd p.T p.T ≫ natSucc)
+
+/-- Walking with `simpleTriRootStep` from `(s, ℓ)`
+for `k` steps gives `(s, toRSN(k))`.  This is the
+"simple diagonal walk" that unconditionally
+increments the offset. -/
+def simpleDiagWalk :
+    cfpProd p.T p.T ⟶ cfpProd p.T p.T :=
+  nnoElim
+    (cfpLift (𝟙 p.T) (cfpTerminalFrom p.T ≫ p.ℓ))
+    simpleTriRootStep
+
+/-- Base case: `simpleDiagWalk(s, ℓ) = (s, ℓ)`. -/
+theorem simpleDiagWalk_ℓ :
+    cfpInsertSnd p.ℓ p.T ≫ simpleDiagWalk =
+    cfpLift (𝟙 p.T)
+      (cfpTerminalFrom p.T ≫ p.ℓ) := by
+  unfold simpleDiagWalk
+  rw [nnoElim_ℓ]
+
+/-- Step case: `simpleDiagWalk(s, natSucc(k)) =
+simpleTriRootStep(simpleDiagWalk(s, k))`. -/
+theorem simpleDiagWalk_s :
+    cfpMap (𝟙 p.T) natSucc ≫ simpleDiagWalk =
+    simpleDiagWalk ≫
+      (simpleTriRootStep :
+        cfpProd p.T p.T ⟶
+          cfpProd p.T p.T) := by
+  unfold simpleDiagWalk
+  rw [nnoElim_s]
+
+/-- `simpleDiagWalk(s, k) = (s, toRSN(k))`:
+the simple walk preserves the first component
+and normalizes the second. -/
+theorem simpleDiagWalk_eq :
+    simpleDiagWalk =
+    cfpLift (cfpFst p.T p.T)
+      (cfpSnd p.T p.T ≫ toRSpineNat) := by
+  symm
+  unfold simpleDiagWalk
+  apply nnoElim_uniq
+  · -- Base: cfpInsertSnd ℓ T ≫ cfpLift fst
+    -- (snd ≫ toRSN) = cfpLift (𝟙) (term ≫ ℓ)
+    unfold cfpInsertSnd
+    rw [cfpLift_precomp, cfpLift_fst]
+    congr 1
+    rw [show cfpLift (𝟙 p.T)
+        (cfpTerminalFrom p.T ≫ p.ℓ) ≫
+        cfpSnd p.T p.T ≫ toRSpineNat =
+      (cfpLift (𝟙 p.T)
+          (cfpTerminalFrom p.T ≫ p.ℓ) ≫
+        cfpSnd p.T p.T) ≫ toRSpineNat from
+        by simp only [Category.assoc],
+      cfpLift_snd]
+    simp only [Category.assoc]
+    rw [toRSpineNat_ℓ]
+  · -- Step: both sides equal
+    --   cfpLift fst (snd ≫ toRSN ≫ natSucc)
+    have h_lhs :
+        cfpMap (𝟙 p.T) natSucc ≫
+          cfpLift (cfpFst p.T p.T)
+            (cfpSnd p.T p.T ≫ toRSpineNat) =
+        cfpLift (cfpFst p.T p.T)
+          (cfpSnd p.T p.T ≫ toRSpineNat ≫
+            natSucc) := by
+      rw [cfpLift_precomp,
+        cfpMap_fst, Category.comp_id]
+      congr 1
+      rw [show cfpMap (𝟙 p.T)
+          (natSucc : p.T ⟶ p.T) ≫
+        cfpSnd p.T p.T ≫ toRSpineNat =
+        (cfpMap (𝟙 p.T) natSucc ≫
+          cfpSnd p.T p.T) ≫ toRSpineNat from
+          by simp only [Category.assoc],
+        cfpMap_snd, Category.assoc,
+        natSucc_toRSpineNat_comm]
+    have h_rhs :
+        cfpLift (cfpFst p.T p.T)
+          (cfpSnd p.T p.T ≫ toRSpineNat) ≫
+        simpleTriRootStep =
+        cfpLift (cfpFst p.T p.T)
+          (cfpSnd p.T p.T ≫ toRSpineNat ≫
+            natSucc) := by
+      unfold simpleTriRootStep
+      rw [cfpLift_precomp, cfpLift_fst]
+      congr 1
+      simp only [← Category.assoc]
+      rw [cfpLift_snd]
+    rw [h_lhs, h_rhs]
+  · -- Norm
+    rw [cfpLift_precomp]
+    have hf :
+        cfpMap (𝟙 p.T) toRSpineNat ≫
+          cfpFst p.T p.T =
+        cfpFst p.T p.T := by
+      rw [cfpMap_fst, Category.comp_id]
+    have hg :
+        cfpMap (𝟙 p.T) toRSpineNat ≫
+          (cfpSnd p.T p.T ≫ toRSpineNat) =
+        cfpSnd p.T p.T ≫ toRSpineNat := by
+      rw [← Category.assoc, cfpMap_snd,
+        Category.assoc, toRSpineNat_idem]
+    rw [hf, hg]
+
+
 end GebLean
