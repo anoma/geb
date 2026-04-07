@@ -170,33 +170,69 @@ Completed so far:
   key lemma. Uses `cantorPair_succ_fst` and
   `cantorPair_natSucc_eq_β`.
 
+Completed for the key lemma:
+
+- `embed_natTriHelper_cfpFst`:
+  `cfpLift (cfpTerminalFrom T) (𝟙 T) ≫
+  natTriHelper ≫ cfpFst = toRSpineNat`.
+  Proved by `natTriHelper_cfpFst` and
+  `toRSpineNat_step_eq_natSucc`.
+- `cantorPair_cantorNextPair_ℓ`: the ℓ case.
+  `cantorPair(ℓ, succ(a)) = succ(cantorPair(a, ℓ))`.
+  Proof chain: LHS simplifies to `natTri(succ(a))`
+  via `natPlus_ℓ_left_eq_toRSpineNat`,
+  `toRSpineNat_natTri`, and `natPlus_zero`.
+  RHS simplifies to `succ(natPlus(natTri(a), a))`.
+  Equality follows from `natTri_natSucc`,
+  `embed_natTriHelper_cfpFst`,
+  `natPlus_succ_left`, `natPlus_comm_rsn`,
+  and `natPlus_toRSpineNat_second`.
+- `cantorPair_toRSN_second`:
+  `cfpMap (𝟙 T) toRSpineNat ≫ cantorPair =
+  cantorPair`. Second-argument normalization
+  is absorbed by `cantorPair`.
+
 Remaining for the key lemma:
 
-- `cantorPair_cantorNextPair_ℓ`: the ℓ case. Needs
-  `cantorPair(ℓ, succ(a)) = succ(cantorPair(a, ℓ))`,
-  which reduces to the triangular number recurrence
-  `tri(succ(a)) = succ(tri(a) + a)`. Derivation:
-  LHS = `natTri(succ(toRSpineNat(a)))` (using
-  `natPlus_ℓ_left_eq_toRSpineNat` and `natPlus_zero`).
-  RHS = `succ(natPlus(natTri(a), a))` (using
-  `natPlus_zero`). The equation follows from
-  `natTri_natSucc` combined with
-  `toRSpineNat_natTri` and
-  `natSucc_toRSpineNat_comm`.
-- Combine the ℓ and β cases via `p.elim_uniq`. Note:
-  `p.elim_uniq` requires the step to have catamorphism
-  form `cfpLiftAssoc φ φ ≫ g`. Since `cantorPair` is
-  NOT a catamorphism in the second argument, an
-  alternative combining strategy may be needed (e.g.,
-  proving the equation on right-spine normalized
-  inputs first, then lifting via
-  `cantorPair_toRSpineNat_comm`).
+- Combine the ℓ and β cases. The standard
+  `p.elim_uniq` approach does not apply because
+  `cantorPair ≫ natSucc` is not a PBTO
+  catamorphism in the second argument (the β
+  step equation involves `natTri` applied to a
+  sum, not factoring through
+  `cfpLiftAssoc φ φ ≫ g`). Alternative
+  strategies:
+  (a) Prove `iteBranches f g cnd ≫ h =
+      iteBranches (f ≫ h) (g ≫ h) cnd`
+      (post-composition distributes through
+      `iteBranches`). This would let both sides
+      be expressed via `iteBranches` with matching
+      branches. The proof requires showing
+      `treeIte ≫ h` satisfies the same fold
+      equations as `treeIte` with modified
+      parameters, using `iteFold_snd` and
+      `p.elim_uniq`.
+  (b) Factor both sides through `(a, natPlus(a,b))`
+      and show the resulting functions agree. Both
+      `cantorNextPair ≫ cantorPair` and
+      `cantorPair ≫ natSucc` depend on `b` only
+      through `natPlus(a, b)` (modulo
+      normalization), so this reduces to a
+      one-variable equation.
+  (c) Prove
+      `cfpMap (𝟙 T) toRSN ≫ cantorNextPair ≫
+      cantorPair = cantorNextPair ≫ cantorPair`
+      (LHS absorbs second-argument normalization).
+      Combined with `cantorPair_toRSN_second`
+      this reduces the equation to rsn inputs,
+      where NNO-style induction applies.
 
 ### `NatEqCantorPair` / unconditional `treeEqG_ββ`
 
 After `cantorPair_cantorNextPair` is proved, the
 left-inverse approach via `cantorUnpairHelper` becomes
 viable. The chain:
+
 1. `cantorPair_cantorNextPair` shows `cantorPair` is
    an algebra morphism from `cantorNextPair` to
    `natSucc`.
