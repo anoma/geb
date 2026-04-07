@@ -50,7 +50,6 @@ for the implementation plan.
 - [x] Define `cfpLiftElemRec` helper in `PLO.lean`
 - [x] Define `IsPLO B L` class
 - [x] Define `HasPLO B`, `IsPLTO T`, `HasPLTO`
-- [ ] Show PLO(1) corresponds to PNNO
 
 ### Phase 4: PSTO <-> PLTO
 
@@ -60,18 +59,23 @@ for the implementation plan.
 
 ### Phase 4.5: Paramorphisms
 
-- [x] PLO paramorphism: carrier, base, step, elimination
+- [x] PLO paramorphism (carrier, base, step, elimination)
 - [x] PLO paramorphism base equation (`ploParaElim_nil`)
-- [ ] PLO paramorphism step equation (`ploParaElim_cons`)
-- [ ] PLO paramorphism uniqueness
-- [x] PSO paramorphism: carrier, base, step, elimination
+- [x] PLO paramorphism step equation (`ploParaElim_cons`)
+- [x] PLO paramorphism uniqueness (`ploParaElim_uniq`)
+- [x] PSO paramorphism (carrier, base, step, elimination)
 - [x] PSO paramorphism base equation (`psoParaElim_nil`)
-- [ ] PSO paramorphism step equation (`psoParaElim_snoc`)
-- [ ] PSO paramorphism uniqueness
+- [x] PSO paramorphism step equation (`psoParaElim_snoc`)
+- [x] PSO paramorphism uniqueness (`psoParaElim_uniq`)
 
 ### Phase 5: Register and test
 
-- [ ] Register modules in root imports, full build
+- [x] Register modules in root imports, full build
+
+### Phase 6: PSTO -> PBTO
+
+- [ ] Investigate direct construction approaches
+- [ ] Document findings
 
 ## Notes
 
@@ -89,67 +93,47 @@ Uniqueness: given any `psi` satisfying PSO equations, the pair
 on `T x X`, so by PBTO uniqueness it equals the enriched
 catamorphism.
 
-### PSTO -> PBTO approaches
+### PSTO -> PBTO investigation
 
 The PSO fold recurses only on the left subtree (the accumulated
 snoclist), passing the right subtree (the latest element) as
 data.  To simulate the PBTO catamorphism, we also need the
 recursive result on the right subtree.
 
-Approaches (in priority order):
+The PSO paramorphism (now fully proved with step equation and
+uniqueness) gives the step function access to:
+`(a : A, l : T, b : T, phi(a, l) : X)`.
 
-1. Direct enriched carrier using T itself as a stack.
-   Since T is a snoclist of T's, use carrier `X x T`
-   where the T component accumulates pending right
-   subtrees.  Process the accumulated stack with a
-   second PSO fold.  Try this first.
-2. Bauer's mutual-recursion trick
-   (<https://cs.stackexchange.com/a/144184>): use the
-   parameter as a "slice" to encode mutual recursion
-   as a single parameterized fold.
-3. Via PNNO: PSTO implies PSO(1) implies PNNO; use
-   PNNO iteration to process the right subtree.
-   Existing `iterNat` infrastructure may help.
+Both `l` and `b` are of type `T` (since B = T in PSTO). The
+paramorphism provides `phi(a, l)` (recursive result on tail)
+but NOT `phi(a, b)` (recursive result on element).
 
-### PLO/PSO paramorphisms
+The question is whether the B = T identification provides
+enough structure to derive the PBTO catamorphism. The Idris
+code at `.claude/docs/TreeCalculus.idr` shows the mutual
+recursion pattern:
 
-The paramorphisms follow the same pattern as the PBTO
-paramorphism in TreeLogic.lean.  The carrier is
-`A x (L x X)`, threading the parameter, the current
-raw list, and the recursive result.
+```text
+f(nil) = nil
+f(snoc(rest, elem)) = snoc(f(rest), f(elem))
+```
 
-For PLO: the step function `g` sees
-`(a, b, l, phi(a,l))` where `b` is the element and
-`l` is the raw tail.  The carrier step takes
-`(b, (a, (l, x)))` and produces
-`(a, (cons(b,l), g(a,b,l,x)))`.
+This recurses on both `rest` and `elem`, which Idris accepts
+because both are strict sub-expressions and both have type T.
+The recursion principle this uses IS the PBTO catamorphism.
+The question is whether it can be derived from the PSO fold.
 
-For PSO: the step function `g` sees
-`(a, l, b, phi(a,l))` where `l` is the raw init and
-`b` is the element.  The carrier step takes
-`((a, (l, x)), b)` and produces
-`(a, (snoc(l,b), g(a,l,b,x)))`.
+The fixed-point equation: if we set
+`h(x, b) = g(x, PSO.elim z h (a, b))`, then
+`psi = PSO.elim z h` satisfies the PBTO equations.
+This requires finding `h` such that `h = Phi(h)`.
 
-The base equations follow by applying `elim_nil`,
-then projecting out the X component via two
-applications of `cfpLift_snd`.
+Approaches still to try:
 
-The step equations and uniqueness proofs are deferred
-as of 2026-04-06.
-
-### PSTO <-> PLTO via argument swap
-
-Since PSTO has `snoc : T x T -> T` and PLTO has
-`cons : T x T -> T` (same object for both components),
-the conversion uses `cons = cfpSwap T T >> snoc` (and
-vice versa).  The elimination is converted by swapping
-the step morphism's argument order:
-PLO `elim f g` = PSO `elim f (cfpSwap X T >> g)`.
-
-Proving the step equations requires the swap lemmas
-`swap_liftRecElem_swap` and `swap_liftElemRec_swap`,
-which show that swapping input components, applying
-cfpLiftRecElem/cfpLiftElemRec, then swapping the output,
-yields the dual helper.  Uniqueness is derived by
-precomposing with the involution `cfpMap id (cfpSwap T T)`
-to cancel `cfpSwap T T >> cfpSwap T T = id`.
+1. PSO fold with A = T (diagonal: fold a tree with
+   itself as parameter)
+2. Paramorphism with enriched carrier
+3. Composition of multiple PSO folds
+4. Via PNNO iteration of the Phi operator
+5. Direct proof that the fixed-point equation has
+   a solution using the PSTO structure
