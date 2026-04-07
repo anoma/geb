@@ -3532,6 +3532,128 @@ private theorem cantorPair_toRSN_second :
     rw [cfpMap_fst, Category.comp_id]
   rw [h_fst, h_snd]
 
+/-- The paramorphism step for `cantorPair_cantorNextPair`:
+given `(a, ((l,r), (res_l, res_r)))`, returns
+`cantorPair(succ(a), r)`.  The sub-results are
+ignored. -/
+private def cantorPairParaStep :
+    cfpProd p.T
+      (cfpProd (cfpProd p.T p.T)
+        (cfpProd p.T p.T)) ⟶ p.T :=
+  cfpLift
+    (cfpFst p.T
+      (cfpProd (cfpProd p.T p.T)
+        (cfpProd p.T p.T)) ≫
+      natSucc)
+    (cfpSnd p.T
+      (cfpProd (cfpProd p.T p.T)
+        (cfpProd p.T p.T)) ≫
+      cfpFst (cfpProd p.T p.T)
+        (cfpProd p.T p.T) ≫
+      cfpSnd p.T p.T) ≫
+  cantorPair
+
+/-- The paramorphism pre-composition map composed
+with `cantorPairParaStep` simplifies: the sub-results
+are discarded. -/
+private theorem cantorPairParaStep_precomp
+    (φ : cfpProd p.T p.T ⟶ p.T) :
+    cfpLift
+      (cfpFst p.T (cfpProd p.T p.T))
+      (cfpLift
+        (cfpSnd p.T (cfpProd p.T p.T))
+        (cfpLiftAssoc φ φ)) ≫
+      cantorPairParaStep =
+    cfpLift
+      (cfpFst p.T (cfpProd p.T p.T) ≫
+        natSucc)
+      (cfpSnd p.T (cfpProd p.T p.T) ≫
+        cfpSnd p.T p.T) ≫
+    cantorPair := by
+  unfold cantorPairParaStep
+  rw [← Category.assoc, cfpLift_precomp]
+  congr 1
+  set P :=
+    cfpLift
+      (cfpFst p.T (cfpProd p.T p.T))
+      (cfpLift
+        (cfpSnd p.T (cfpProd p.T p.T))
+        (cfpLiftAssoc φ φ))
+  have h_fst :
+      P ≫
+        cfpFst p.T
+          (cfpProd (cfpProd p.T p.T)
+            (cfpProd p.T p.T)) ≫
+        natSucc =
+      cfpFst p.T (cfpProd p.T p.T) ≫
+        natSucc := by
+    rw [← Category.assoc, cfpLift_fst]
+  have h_snd :
+      P ≫
+        cfpSnd p.T
+          (cfpProd (cfpProd p.T p.T)
+            (cfpProd p.T p.T)) ≫
+        cfpFst (cfpProd p.T p.T)
+          (cfpProd p.T p.T) ≫
+        cfpSnd p.T p.T =
+      cfpSnd p.T (cfpProd p.T p.T) ≫
+        cfpSnd p.T p.T := by
+    rw [← Category.assoc P
+      (cfpSnd _ _),
+      cfpLift_snd,
+      ← Category.assoc, cfpLift_fst]
+  rw [h_fst, h_snd]
+
+/-- Both `cantorNextPair ≫ cantorPair` and
+`cantorPair ≫ natSucc` satisfy the same paramorphism
+β-step equation: at `(a, β(l, r))`, both produce
+`cantorPair(succ(a), r)`. -/
+private theorem
+    cantorPair_cantorNextPair_β_form :
+    cfpMap (𝟙 p.T) p.β ≫
+      cantorNextPair ≫ cantorPair =
+    cfpLift
+      (cfpFst p.T (cfpProd p.T p.T) ≫
+        natSucc)
+      (cfpSnd p.T (cfpProd p.T p.T) ≫
+        cfpSnd p.T p.T) ≫
+    cantorPair := by
+  rw [← Category.assoc
+    (cfpMap (𝟙 p.T) p.β) cantorNextPair,
+    cantorNextPair_β]
+
+/-- `cantorNextPair ≫ cantorPair =
+cantorPair ≫ natSucc`. -/
+theorem cantorPair_cantorNextPair :
+    cantorNextPair ≫ cantorPair =
+    cantorPair ≫
+      (natSucc : p.T ⟶ p.T) := by
+  set base :=
+    cfpInsertSnd p.ℓ p.T ≫
+      cantorPair ≫ natSucc
+  set g :=
+    (cantorPairParaStep :
+      cfpProd p.T
+        (cfpProd (cfpProd p.T p.T)
+          (cfpProd p.T p.T)) ⟶ p.T)
+  have lhs_eq :
+      cantorNextPair ≫ cantorPair =
+      paraElim base g := by
+    apply paraElim_uniq (C := C)
+    · exact cantorPair_cantorNextPair_ℓ
+    · rw [cantorPairParaStep_precomp,
+        cantorPair_cantorNextPair_β_form]
+  have rhs_eq :
+      cantorPair ≫ natSucc =
+      paraElim base g := by
+    apply paraElim_uniq
+    · rfl
+    · rw [cantorPairParaStep_precomp]
+      exact
+        cantorPair_cantorNextPair_β.symm.trans
+          cantorPair_cantorNextPair_β_form
+  rw [lhs_eq, rhs_eq]
+
 end GebLean
 
 namespace GebLean
