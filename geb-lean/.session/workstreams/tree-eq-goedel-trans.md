@@ -618,6 +618,7 @@ uses only the right child (since
 `toRSN(β(l, r)) = succ(toRSN(r))`).
 
 With `shiftedNnoElim_uniq`, Stage B reduces to:
+
 1. Verify the shifted step for both sides.
 2. Verify the base: `natTri ≫ triRootState =
    cfpLift toRSN (cfpTerminalFrom T ≫ ℓ)`.
@@ -632,6 +633,106 @@ Estimated effort for `shiftedNnoElim_uniq`:
 150-250 lines (change of variables,
 nnoElim_uniq application, normalization
 conditions).
+
+#### Progress (session 2026-04-06e)
+
+New lemma in `GebLean/NatNNO.lean`:
+
+- `natEq_ℓ_left`:
+  `cfpLift (cfpTerminalFrom T ≫ ℓ) (𝟙 T) ≫ natEq
+  = isLeafEndo`.
+  States `natEq(ℓ, z) = isLeafEndo(z)`.
+  The symmetric counterpart of `natEq_ℓ_right`
+  (which states `natEq(z, ℓ) = isLeafEndo(z)`).
+  Proved by unfolding `natEq` and using
+  `natTruncSub_ℓ_left`, `natTruncSub_ℓ`,
+  `natPlus_ℓ_left_eq_toRSpineNat`, and
+  `toRSpineNat_isLeafEndo`.
+
+#### Updated analysis (session 2026-04-06e)
+
+Thorough analysis of the approaches to
+`NatEqCantorPair` reveals three independent
+obstacles:
+
+**Obstacle 1: The shifted NNO step.** The
+change-of-variables approach `Θ(s, a) =
+φ(a, natTruncSub(s, a))` does NOT give a
+global NNO step. When `a ≥ s` (past the diagonal
+boundary), `succ(natPred(0)) ≠ 0`, so the step
+equation `Θ(s, succ(a)) = triRootStep(Θ(s, a))`
+fails. Moreover, the TARGET also fails past the
+boundary: `(toRSN(s), toRSN(succ(a))) ≠
+triRootStep(toRSN(s), toRSN(a))` when `a = s`
+(diagonal step vs within-diagonal step). So the
+band property cannot be proved via a global
+change of variables + `nnoElim_uniq`.
+
+**Obstacle 2: natEq transitivity.** Needed for
+the congruence direction of `NatEqCantorPair`
+and for natTri cancellation. Statement:
+`boolAnd(natEq(x,y), natEq(y,z))` implies
+`natEq(x,z)`. Proof by induction on `y`
+(`nnoElim_uniq`): base case (y=ℓ) reduces to
+`boolAnd(isLeafEndo(x), isLeafEndo(z)) implies
+natEq(x,z)` (which is `boolAnd_isLeafEndo_natEq`).
+Step case (y → succ(y)) reduces via
+`natEq_succ_cancel` to the IH at predecessor
+values of `x` and `z`. But expressing the step
+categorically requires extracting predecessors
+(using `natPred`, `iteBranches`, `isLeafEndo`)
+which makes the proof quite involved. Estimated
+150-250 lines.
+
+**Obstacle 3: natTri cancellation.** Statement:
+`cfpMap natTri natTri ≫ natEq = natEq`. The step
+case involves `natTri(succ(n)) =
+succ(cantorPair(n, 0))` (by
+`natTri_succ_eq_succ_cantorPairAt0`), so
+`natEq(natTri(succ(a)), natTri(succ(b))) =
+natEq(cantorPair(a,0), cantorPair(b,0))`.
+By the IH `natEq(natTri(a), natTri(b)) =
+natEq(a,b)`, but we need `natEq(CP(a,0), CP(b,0))
+= natEq(a,b)`, which is a SPECIAL CASE of
+`NatEqCantorPair` at `b1 = b2 = 0`. So natTri
+cancellation is CIRCULAR with `NatEqCantorPair`.
+
+**Proposed path forward:**
+
+The `boolAnd` antisymmetry approach: show
+`LHS = RHS` where `LHS = cfpMap CP CP ≫ natEq`
+and `RHS = cfpLift (fsts ≫ natEq) (snds ≫ natEq)
+≫ boolAnd` by proving both
+`boolAnd(LHS, RHS) = LHS` and
+`boolAnd(RHS, LHS) = RHS`, then using
+`boolAnd_comm` to derive `LHS = RHS`.
+
+For the congruence direction (`boolAnd(RHS, LHS) =
+RHS`), need: natEq transitivity, then:
+
+- `natPlus_cancel_right` gives
+  `natEq(a1+b1, a2+b1) = natEq(a1, a2)`.
+- `natPlus_cancel_left` gives
+  `natEq(a2+b1, a2+b2) = natEq(b1, b2)`.
+- natEq transitivity chains these to get
+  `natEq(a1+b1, a2+b2)` from `natEq(a1,a2)` and
+  `natEq(b1,b2)`.
+- Applying `natTri` (a function) to equal inputs
+  gives equal outputs.
+- Final `natPlus_cancel_right` gives the result.
+Each of these congruence-of-function steps
+requires proving
+`boolAnd(natEq(x,y), natEq(f(x), f(y))) =
+natEq(x,y)` for each morphism `f`, which is itself
+a fold proof.
+
+For the injectivity direction (`boolAnd(LHS, RHS) =
+LHS`): needs the section property or a direct
+induction that avoids the circularity.
+
+Estimated total for `NatEqCantorPair`: 500-800
+lines, with natEq transitivity as the primary
+intermediate goal.
 
 ### `treeEqG_trans`
 

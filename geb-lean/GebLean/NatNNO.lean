@@ -1410,5 +1410,36 @@ theorem simpleDiagWalk_eq :
         Category.assoc, toRSpineNat_idem]
     rw [hf, hg]
 
+/-- `natEq(ℓ, z) = isLeafEndo(z)`. -/
+theorem natEq_ℓ_left :
+    cfpLift (cfpTerminalFrom p.T ≫ p.ℓ)
+      (𝟙 p.T) ≫ natEq =
+    (isLeafEndo : p.T ⟶ p.T) := by
+  unfold natEq
+  rw [← Category.assoc, ← Category.assoc,
+    cfpLift_precomp]
+  have h1 :
+      cfpLift (cfpTerminalFrom p.T ≫ p.ℓ)
+        (𝟙 p.T) ≫ natTruncSub =
+      cfpTerminalFrom p.T ≫ p.ℓ :=
+    natTruncSub_ℓ_left (𝟙 p.T)
+  have hswap :
+      cfpLift (cfpTerminalFrom p.T ≫ p.ℓ)
+        (𝟙 p.T) ≫ cfpSwap p.T p.T =
+      cfpLift (𝟙 p.T)
+        (cfpTerminalFrom p.T ≫ p.ℓ) := by
+    unfold cfpSwap
+    rw [cfpLift_precomp, cfpLift_fst,
+      cfpLift_snd]
+  have h2 :
+      cfpLift (cfpTerminalFrom p.T ≫ p.ℓ)
+        (𝟙 p.T) ≫ cfpSwap p.T p.T ≫
+        natTruncSub =
+      𝟙 p.T := by
+    rw [← Category.assoc, hswap]
+    exact natTruncSub_ℓ
+  rw [h1, h2,
+    natPlus_ℓ_left_eq_toRSpineNat,
+    toRSpineNat_isLeafEndo]
 
 end GebLean
