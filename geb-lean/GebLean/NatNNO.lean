@@ -1141,6 +1141,149 @@ theorem triRootOffset_toRSpineNat :
   rw [← Category.assoc,
     triRootState_toRSpineNat]
 
+/-- Adding `k` to a number and computing
+`triRootState` equals iterating `triRootStep` `k`
+times on the `triRootState` of the original:
+`natPlus ≫ triRootState =
+  nnoElim triRootState triRootStep`. -/
+theorem natPlus_triRootState :
+    natPlus ≫ triRootState =
+    nnoElim (triRootState : p.T ⟶ cfpProd p.T p.T)
+      triRootStep := by
+  apply nnoElim_uniq
+    (triRootState : p.T ⟶ cfpProd p.T p.T)
+    triRootStep
+    (natPlus ≫ triRootState)
+  · -- Base: cfpInsertSnd ℓ T ≫ natPlus ≫
+    -- triRootState = triRootState
+    rw [← Category.assoc, natPlus_ℓ,
+      Category.id_comp]
+  · -- Step: cfpMap (𝟙) natSucc ≫ natPlus ≫
+    -- triRootState = natPlus ≫ triRootState ≫
+    -- triRootStep
+    have succ_natPlus :
+        cfpMap (𝟙 p.T) natSucc ≫ natPlus =
+        natPlus ≫ (natSucc : p.T ⟶ p.T) := by
+      have eq1 :
+          cfpMap (𝟙 p.T)
+            (natSucc : p.T ⟶ p.T) =
+          cfpLift (cfpFst p.T p.T)
+            (cfpSnd p.T p.T ≫ natSucc) := by
+        unfold cfpMap
+        congr 1
+        rw [Category.comp_id]
+      rw [eq1,
+        natPlus_succ (cfpFst p.T p.T)
+          (cfpSnd p.T p.T)]
+      have eta :
+          cfpLift (cfpFst p.T p.T)
+            (cfpSnd p.T p.T) =
+          𝟙 (cfpProd p.T p.T) :=
+        (cfpLift_uniq
+          (cfpFst p.T p.T) (cfpSnd p.T p.T)
+          (𝟙 (cfpProd p.T p.T))
+          (Category.id_comp _)
+          (Category.id_comp _)).symm
+      rw [eta, Category.id_comp]
+    rw [← Category.assoc, succ_natPlus]
+    simp only [Category.assoc]
+    rw [triRootState_s]
+  · -- Norm: cfpMap (𝟙) toRSN ≫ natPlus ≫
+    -- triRootState = natPlus ≫ triRootState
+    rw [← Category.assoc,
+      natPlus_toRSpineNat_second]
+
+/-- `natTri(succ(n)) = succ(cantorPair(n, 0))`:
+the successor triangular number is one past the
+last point of diagonal n (which is
+`cantorPair(n, 0)`). -/
+private theorem natTri_succ_eq_succ_cantorPairAt0 :
+    natSucc ≫ natTri =
+    (cfpLift (𝟙 p.T)
+      (cfpTerminalFrom p.T ≫ p.ℓ) ≫
+      cantorPair) ≫
+    (natSucc : p.T ⟶ p.T) := by
+  -- RHS: cantorPair(n, 0) ≫ natSucc.
+  -- cantorPair(n, 0) = natPlus(natTri(n), n).
+  -- So RHS = succ(natPlus(natTri(n), n)).
+  -- LHS: natTri(succ(n))
+  --   = natPlus(succ(toRSN(n)), natTri(n))
+  --   = succ(natPlus(toRSN(n), natTri(n)))
+  --   = succ(natPlus(natTri(n), toRSN(n)))
+  --   = succ(natPlus(natTri(n), n))
+  -- by commutativity and absorption.
+  -- First, simplify the RHS.
+  -- Simplify cantorPair(n, 0).
+  -- cfpLift (𝟙 T) (term ≫ ℓ) ≫ cantorPair
+  -- = cfpLift (𝟙 T) (term ≫ ℓ) ≫
+  --   cfpLift (natPlus ≫ natTri) cfpFst ≫ natPlus
+  -- = cfpLift (natPlus(n, 0) ≫ natTri) (𝟙) ≫
+  --   natPlus
+  -- = cfpLift natTri (𝟙) ≫ natPlus.
+  have cantorPairAt0 :
+      cfpLift (𝟙 p.T)
+        (cfpTerminalFrom p.T ≫ p.ℓ) ≫
+        cantorPair =
+      cfpLift natTri (𝟙 p.T) ≫
+        natPlus := by
+    unfold cantorPair
+    rw [← Category.assoc, cfpLift_precomp]
+    have fst_eq :
+        cfpLift (𝟙 p.T)
+          (cfpTerminalFrom p.T ≫ p.ℓ) ≫
+          natPlus ≫ natTri =
+        (natTri : p.T ⟶ p.T) := by
+      rw [← Category.assoc,
+        natPlus_zero (𝟙 p.T),
+        Category.id_comp]
+    have snd_eq :
+        cfpLift (𝟙 p.T)
+          (cfpTerminalFrom p.T ≫ p.ℓ) ≫
+          cfpFst p.T p.T =
+        (𝟙 p.T : p.T ⟶ p.T) := by
+      rw [cfpLift_fst]
+    rw [fst_eq, snd_eq]
+  rw [cantorPairAt0]
+  -- RHS = cfpLift natTri (𝟙 T) ≫ natPlus ≫
+  --   natSucc
+  -- LHS = natSucc ≫ natTri.
+  rw [natTri_natSucc]
+  -- LHS has embed ≫ natTriHelper ≫ cfpFst ≫
+  -- natSucc; simplify using toRSpineNat.
+  have embed_fst :
+      cfpLift (cfpTerminalFrom p.T) (𝟙 p.T) ≫
+        natTriHelper ≫ cfpFst p.T p.T =
+      (toRSpineNat : p.T ⟶ p.T) :=
+    embed_natTriHelper_cfpFst
+  rw [show cfpLift (cfpTerminalFrom p.T)
+      (𝟙 p.T) ≫ natTriHelper ≫
+      cfpFst p.T p.T ≫ natSucc =
+    (cfpLift (cfpTerminalFrom p.T) (𝟙 p.T) ≫
+      natTriHelper ≫ cfpFst p.T p.T) ≫
+    natSucc from by
+      simp only [Category.assoc],
+    embed_fst]
+  rw [natPlus_succ_left toRSpineNat natTri]
+  -- Both sides = ... ≫ natSucc.
+  congr 1
+  -- cfpLift toRSN natTri ≫ natPlus =
+  -- cfpLift natTri (𝟙 T) ≫ natPlus
+  -- by commutativity (both args rsn) and
+  -- absorption.
+  rw [(natPlus_comm_rsn toRSpineNat natTri
+    toRSpineNat_idem
+    natTri_isRSpineNatNorm).symm]
+  -- cfpLift natTri toRSN ≫ natPlus =
+  -- cfpLift natTri (𝟙 T) ≫ natPlus
+  have : cfpLift natTri
+      (toRSpineNat : p.T ⟶ p.T) =
+    cfpLift natTri (𝟙 p.T) ≫
+      cfpMap (𝟙 p.T) toRSpineNat := by
+    rw [cfpLift_cfpMap, Category.comp_id,
+      Category.id_comp]
+  rw [this, Category.assoc,
+    natPlus_toRSpineNat_second]
+
 /-- `natTri(ℓ) ≫ triRoot = ℓ`:
 the triangle root of `T(0) = 0` is `0`. -/
 theorem natTri_ℓ_triRoot :

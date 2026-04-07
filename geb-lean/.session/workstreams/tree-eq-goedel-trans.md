@@ -444,15 +444,94 @@ The import was changed from `GebLean.NatArith` to
 `GebLean.TreeGoedel` to access
 `natSucc_isLeafEndo` and `natEq_ℓ_right`.
 
-Remaining for the band property:
+#### Progress (session 2026-04-06c)
 
-- Prove `natTri ≫ triRootState =
-  cfpLift toRSN (cfpTerminalFrom T ≫ ℓ)`
-  (requires induction on the natTri argument).
-- Prove the full band property
-  `cantorPair ≫ triRootState =
-  cfpLift (natPlus ≫ toRSN) (cfpFst ≫ toRSN)`.
-- Derive `NatEqCantorPair` from the band property.
+Additional lemmas proved in `GebLean/NatNNO.lean`:
+
+- `natPlus_triRootState`:
+  `natPlus ≫ triRootState =
+  nnoElim triRootState triRootStep`.
+  Adding `k` to a number and computing
+  `triRootState` equals iterating `triRootStep`
+  `k` times on the `triRootState` of the original.
+  Proved by `nnoElim_uniq`.
+
+- `natTri_succ_eq_succ_cantorPairAt0`:
+  `natSucc ≫ natTri =
+  (cfpLift (𝟙) (cfpTerminalFrom ≫ ℓ) ≫
+  cantorPair) ≫ natSucc`.
+  The successor triangular number is one past the
+  last point of diagonal n.  Uses
+  `natTri_natSucc`, `embed_natTriHelper_cfpFst`,
+  `natPlus_succ_left`, `natPlus_comm_rsn`, and
+  `natPlus_toRSpineNat_second`.
+
+Made `embed_natTriHelper_cfpFst` non-private in
+NatArith.lean so NatNNO.lean can reference it.
+
+#### Analysis of remaining obstacle
+
+The natTri band property
+`natTri ≫ triRootState =
+cfpLift toRSN (cfpTerminalFrom T ≫ ℓ)`
+and the full band property
+`cantorPair ≫ triRootState =
+cfpLift (natPlus ≫ toRSN) (cfpFst ≫ toRSN)`
+are mutually dependent:
+
+- The natTri band step at `succ(n)` requires
+  `triRootState(cantorPair(n, 0)) =
+  (toRSN(n), toRSN(n))` (the "diagWalkEnd"
+  lemma), which is the full band at `(n, 0)`.
+
+- The full band base case at `a = ℓ` requires
+  the natTri band for all `b`.
+
+Both require an inner "walk within diagonal"
+iteration: starting from
+`(toRSN(n), ℓ)` and applying `triRootStep` `n`
+times to reach `(toRSN(n), toRSN(n))`.
+This inner walk depends on
+`triRootStep_natPlus_succ` (proved), but it
+cannot be expressed as a simple single fold
+because the number of steps equals the diagonal
+number (a dependent quantity).
+
+Attempted strategies that did not close:
+
+1. `nnoElim_uniq` on natTri argument: step
+   requires diagWalkEnd, which is circular.
+2. `nnoElim_uniq` on the first arg of cantorPair
+   (swapped): base requires natTri band.
+3. Combined fold `natTriBandTarget` tracking both
+   `(triRootState(natTri(n)),
+   triRootState(cantorPair(n, 0)))`: the step for
+   the second component involves
+   `cantorPair(n, 1)` (not `cantorPair(n, 0)`),
+   so it is not a simple function of the state.
+4. PBTO fold approach: `natTriStep ≫ cfpSnd ≫
+   triRootState` involves `natPlus ≫ triRootState`
+   which again requires the inner walk.
+
+Remaining path forward:
+
+The walk within diagonal n (from offset 0 to
+offset n) is an inherently nested iteration.
+To prove it, one approach is:
+
+- Define a `pairElim` (F x F algebra fold) that
+  tracks `(natTriHelper state,
+  triRootState of the second component)`
+  simultaneously through the PBTO tree structure.
+  The PBTO fold naturally handles the right-spine
+  walk (which counts the diagonal), while
+  `triRootStep` handles the within-diagonal walk.
+
+- Alternatively, prove a "diagonal walk" lemma
+  by strong induction on the natural number value
+  (if a strong induction principle is available),
+  or by a double fold using an explicit counter
+  for the remaining steps within the diagonal.
 
 ### `treeEqG_trans`
 
