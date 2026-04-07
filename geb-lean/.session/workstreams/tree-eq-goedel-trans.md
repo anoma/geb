@@ -819,6 +819,49 @@ through `boolAnd`.  Then derive transitivity of
 `natTruncSub_fold_comp`, and combine with symmetry
 to get full `natEq_trans`.  Estimated 200-300 lines.
 
+#### Progress (session 2026-04-06g)
+
+New lemmas in `GebLean/NatNNO.lean`:
+
+- `isLeafEndo_natPred_mono` (private):
+  `cfpLift isLeafEndo (natPred ≫ isLeafEndo)
+  ≫ boolAnd = isLeafEndo`.
+  States `boolAnd(isLeafEndo(v),
+  isLeafEndo(natPred(v))) = isLeafEndo(v)`:
+  `isLeafEndo(v)` implies `isLeafEndo(natPred(v))`.
+  Proved by embedding into `cfpProd cfpTerminal T`
+  and using `p.elim_uniq` on `v`: at leaf, both
+  sides give leaf (since `natPred(ℓ) = ℓ`); at
+  branch, both give treeFalse (since
+  `isLeafEndo(β) = treeFalse`).
+
+- `swap_isLeafEndo_boolAnd_elim` (private):
+  For any `f : cfpProd T T → T` with the base
+  condition `cfpLift (term ≫ ℓ) (𝟙 T) ≫
+  cfpLift (cfpFst ≫ isLeafEndo) f ≫ boolAnd
+  = term ≫ ℓ`, the swapped composition
+  `cfpSwap ≫ cfpLift (cfpFst ≫ isLeafEndo)
+  f ≫ boolAnd` equals the catamorphism
+  `p.elim (term ≫ ℓ) (term ≫ treeFalse)`.
+  Proved by `p.elim_uniq`: the base is given by
+  hypothesis; the step uses `isLeafEndo_β` and
+  `boolAnd_treeFalse_left`.
+
+The `isLeafEndo_natTruncSub_mono` lemma is still
+in progress. The step case of the `nnoElim_uniq`
+proof requires showing that
+`cfpLift (cfpFst ≫ isLeafEndo) (natTruncSub
+≫ natPred ≫ isLeafEndo) ≫ boolAnd` equals
+`cfpLift (cfpFst ≫ isLeafEndo) (natTruncSub
+≫ isLeafEndo) ≫ boolAnd`.  This is handled by
+`swap_isLeafEndo_boolAnd_elim` applied to both
+sides (using the base conditions proved in the
+step) together with `cfpSwap_inv` (involution of
+swap). The base, norm, and RHS conditions are
+straightforward. Assembly of the step requires
+`cfpSwap_inv` from `GebLean/PLO.lean` and
+careful associativity management.
+
 ### `treeEqG_trans`
 
 Transitivity of `treeEqG`, using `natTruncSub_fold_comp`

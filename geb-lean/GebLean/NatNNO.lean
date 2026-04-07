@@ -1602,4 +1602,521 @@ private theorem boolAnd_implies_natEq :
     congr 1
     exact (h.terminal.uniq _).symm
 
+/-- The NNO step rule for `natTruncSub` on
+its second argument:
+`natTruncSub(x, natSucc(y))
+  = natPred(natTruncSub(x, y))`. -/
+private theorem natTruncSub_natSucc_second :
+    cfpMap (𝟙 p.T) natSucc ≫ natTruncSub =
+    natTruncSub ≫ (natPred : p.T ⟶ p.T) := by
+  have factor_succ :
+      cfpMap (𝟙 p.T) natSucc =
+      cfpMap (𝟙 p.T)
+        (cfpLift (cfpTerminalFrom p.T ≫ p.ℓ)
+          (𝟙 p.T)) ≫
+        cfpMap (𝟙 p.T) p.β := by
+    rw [← cfpMap_id_comp']
+    rfl
+  rw [factor_succ, Category.assoc,
+    natTruncSub_β]
+  have la_snd :
+      cfpLiftAssoc natTruncSub natTruncSub ≫
+        cfpSnd p.T p.T =
+      cfpAssocSnd p.T p.T p.T ≫
+        natTruncSub := by
+    unfold cfpLiftAssoc; rw [cfpLift_snd]
+  rw [← Category.assoc
+    (cfpLiftAssoc natTruncSub natTruncSub),
+    la_snd, Category.assoc]
+  have cancel :
+      cfpMap (𝟙 p.T)
+        (cfpLift (cfpTerminalFrom p.T ≫ p.ℓ)
+          (𝟙 p.T)) ≫
+        cfpAssocSnd p.T p.T p.T =
+      𝟙 (cfpProd p.T p.T) := by
+    rw [← cfpMap_id p.T p.T]
+    unfold cfpAssocSnd
+    apply cfpLift_uniq
+    · rw [Category.assoc, cfpLift_fst,
+        cfpMap_fst, Category.comp_id]
+    · rw [Category.assoc, cfpLift_snd,
+        ← Category.assoc, cfpMap_snd,
+        Category.assoc, cfpLift_snd]
+  rw [← Category.assoc, cancel,
+    Category.id_comp]
+
+/-- Associativity of truncated subtraction with
+addition:
+`natTruncSub(natTruncSub(x, y), z)
+  = natTruncSub(x, natPlus(y, z))`. -/
+private theorem natTruncSub_assoc :
+    cfpLift
+      (cfpFst (cfpProd p.T p.T) p.T ≫
+        natTruncSub)
+      (cfpSnd (cfpProd p.T p.T) p.T) ≫
+      natTruncSub =
+    cfpLift
+      (cfpFst (cfpProd p.T p.T) p.T ≫
+        cfpFst p.T p.T)
+      (cfpLift
+        (cfpFst (cfpProd p.T p.T) p.T ≫
+          cfpSnd p.T p.T)
+        (cfpSnd (cfpProd p.T p.T) p.T) ≫
+        natPlus) ≫
+      (natTruncSub :
+        cfpProd p.T p.T ⟶ p.T) := by
+  set A := cfpProd p.T p.T
+  set ψ_L : cfpProd A p.T ⟶ p.T :=
+    cfpLift (cfpFst A p.T ≫ natTruncSub)
+      (cfpSnd A p.T) ≫ natTruncSub
+  set ψ_R : cfpProd A p.T ⟶ p.T :=
+    cfpLift (cfpFst A p.T ≫ cfpFst p.T p.T)
+      (cfpLift (cfpFst A p.T ≫ cfpSnd p.T p.T)
+        (cfpSnd A p.T) ≫ natPlus) ≫
+      natTruncSub
+  change ψ_L = ψ_R
+  -- Show ψ_L = ψ_R by nnoElim_uniq.
+  have ψ_L_eq : ψ_L = nnoElim natTruncSub
+      natPred := by
+    apply nnoElim_uniq natTruncSub natPred ψ_L
+    · -- Base
+      simp only [ψ_L, ← Category.assoc]
+      rw [cfpLift_precomp]
+      have hfst :
+          cfpInsertSnd p.ℓ A ≫ cfpFst A p.T ≫
+            natTruncSub =
+          natTruncSub := by
+        rw [← Category.assoc]
+        unfold cfpInsertSnd
+        rw [cfpLift_fst, Category.id_comp]
+      have hsnd :
+          cfpInsertSnd p.ℓ A ≫
+            cfpSnd A p.T =
+          cfpTerminalFrom A ≫ p.ℓ := by
+        unfold cfpInsertSnd; rw [cfpLift_snd]
+      rw [hfst, hsnd]
+      have factor :
+          cfpLift natTruncSub
+            (cfpTerminalFrom A ≫ p.ℓ) =
+          natTruncSub ≫
+            cfpInsertSnd p.ℓ p.T := by
+        unfold cfpInsertSnd
+        rw [cfpLift_precomp, Category.comp_id]
+        congr 1
+        rw [← Category.assoc]; congr 1
+        exact (h.terminal.uniq _).symm
+      rw [factor, Category.assoc,
+        natTruncSub_ℓ, Category.comp_id]
+    · -- Step
+      simp only [ψ_L, ← Category.assoc]
+      rw [cfpLift_precomp]
+      rw [show cfpMap (𝟙 A) natSucc ≫
+          cfpFst A p.T ≫ natTruncSub =
+        cfpFst A p.T ≫ natTruncSub from by
+          rw [← Category.assoc, cfpMap_fst,
+            Category.comp_id],
+        show cfpMap (𝟙 A) natSucc ≫
+          cfpSnd A p.T =
+        cfpSnd A p.T ≫ natSucc from
+          cfpMap_snd _ _]
+      rw [show cfpLift
+          (cfpFst A p.T ≫ natTruncSub)
+          (cfpSnd A p.T ≫ natSucc) =
+        cfpLift (cfpFst A p.T ≫ natTruncSub)
+          (cfpSnd A p.T) ≫
+          cfpMap (𝟙 p.T) natSucc from by
+          rw [cfpLift_cfpMap,
+            Category.comp_id],
+        Category.assoc,
+        natTruncSub_natSucc_second]
+      simp only [Category.assoc]
+    · -- Norm
+      simp only [ψ_L, ← Category.assoc]
+      rw [cfpLift_precomp]
+      rw [show cfpMap (𝟙 A) toRSpineNat ≫
+          cfpFst A p.T ≫ natTruncSub =
+        cfpFst A p.T ≫ natTruncSub from by
+          rw [← Category.assoc, cfpMap_fst,
+            Category.comp_id],
+        show cfpMap (𝟙 A) toRSpineNat ≫
+          cfpSnd A p.T =
+        cfpSnd A p.T ≫ toRSpineNat from
+          cfpMap_snd _ _]
+      rw [show cfpLift
+          (cfpFst A p.T ≫ natTruncSub)
+          (cfpSnd A p.T ≫ toRSpineNat) =
+        cfpLift (cfpFst A p.T ≫ natTruncSub)
+          (cfpSnd A p.T) ≫
+          cfpMap (𝟙 p.T) toRSpineNat from by
+          rw [cfpLift_cfpMap,
+            Category.comp_id],
+        Category.assoc,
+        natTruncSub_toRSpineNat_second]
+  have ψ_R_eq : ψ_R = nnoElim natTruncSub
+      natPred := by
+    apply nnoElim_uniq natTruncSub natPred ψ_R
+    · -- Base
+      simp only [ψ_R, ← Category.assoc]
+      rw [cfpLift_precomp]
+      rw [show cfpInsertSnd p.ℓ A ≫
+          cfpFst A p.T ≫ cfpFst p.T p.T =
+        cfpFst p.T p.T from by
+          rw [← Category.assoc]
+          unfold cfpInsertSnd
+          rw [cfpLift_fst, Category.id_comp]]
+      -- Simplify the natPlus argument.
+      have hsnd_lift :
+          cfpInsertSnd p.ℓ A ≫
+            cfpLift (cfpFst A p.T ≫
+              cfpSnd p.T p.T)
+              (cfpSnd A p.T) ≫ natPlus =
+          cfpSnd p.T p.T := by
+        rw [← Category.assoc, cfpLift_precomp]
+        rw [show cfpInsertSnd p.ℓ A ≫
+            cfpFst A p.T ≫ cfpSnd p.T p.T =
+          cfpSnd p.T p.T from by
+            rw [← Category.assoc]
+            unfold cfpInsertSnd
+            rw [cfpLift_fst, Category.id_comp],
+          show cfpInsertSnd p.ℓ A ≫
+            cfpSnd A p.T =
+          cfpTerminalFrom A ≫ p.ℓ from by
+            unfold cfpInsertSnd
+            exact cfpLift_snd _ _]
+        have factor :
+            cfpLift (cfpSnd p.T p.T)
+              (cfpTerminalFrom A ≫ p.ℓ) =
+            cfpSnd p.T p.T ≫
+              cfpInsertSnd p.ℓ p.T := by
+          unfold cfpInsertSnd
+          rw [cfpLift_precomp, Category.comp_id]
+          congr 1; rw [← Category.assoc]
+          congr 1
+          exact (h.terminal.uniq _).symm
+        rw [factor, Category.assoc, natPlus_ℓ,
+          Category.comp_id]
+      rw [hsnd_lift]
+      rw [show cfpLift (cfpFst p.T p.T)
+          (cfpSnd p.T p.T) = 𝟙 A from
+        (cfpLift_uniq _ _ _
+          (Category.id_comp _)
+          (Category.id_comp _)).symm,
+        Category.id_comp]
+    · -- Step
+      simp only [ψ_R, ← Category.assoc]
+      rw [cfpLift_precomp]
+      rw [show cfpMap (𝟙 A) natSucc ≫
+          cfpFst A p.T ≫ cfpFst p.T p.T =
+        cfpFst A p.T ≫ cfpFst p.T p.T from by
+          rw [← Category.assoc, cfpMap_fst,
+            Category.comp_id]]
+      have hsnd_step :
+          cfpMap (𝟙 A) natSucc ≫
+            cfpLift (cfpFst A p.T ≫
+              cfpSnd p.T p.T)
+              (cfpSnd A p.T) ≫ natPlus =
+          (cfpLift (cfpFst A p.T ≫
+              cfpSnd p.T p.T)
+            (cfpSnd A p.T) ≫ natPlus) ≫
+            natSucc := by
+        rw [← Category.assoc, cfpLift_precomp]
+        rw [show cfpMap (𝟙 A) natSucc ≫
+            cfpFst A p.T ≫ cfpSnd p.T p.T =
+          cfpFst A p.T ≫ cfpSnd p.T p.T from by
+            rw [← Category.assoc, cfpMap_fst,
+              Category.comp_id],
+          show cfpMap (𝟙 A) natSucc ≫
+            cfpSnd A p.T =
+          cfpSnd A p.T ≫ natSucc from
+            cfpMap_snd _ _,
+          natPlus_succ]
+      rw [hsnd_step]
+      rw [show cfpLift
+          (cfpFst A p.T ≫ cfpFst p.T p.T)
+          ((cfpLift (cfpFst A p.T ≫
+              cfpSnd p.T p.T)
+            (cfpSnd A p.T) ≫ natPlus) ≫
+              natSucc) =
+        cfpLift (cfpFst A p.T ≫
+            cfpFst p.T p.T)
+          (cfpLift (cfpFst A p.T ≫
+              cfpSnd p.T p.T)
+            (cfpSnd A p.T) ≫ natPlus) ≫
+          cfpMap (𝟙 p.T) natSucc from by
+          rw [cfpLift_cfpMap,
+            Category.comp_id],
+        Category.assoc,
+        natTruncSub_natSucc_second]
+      simp only [Category.assoc]
+    · -- Norm
+      simp only [ψ_R, ← Category.assoc]
+      rw [cfpLift_precomp]
+      rw [show cfpMap (𝟙 A) toRSpineNat ≫
+          cfpFst A p.T ≫ cfpFst p.T p.T =
+        cfpFst A p.T ≫ cfpFst p.T p.T from by
+          rw [← Category.assoc, cfpMap_fst,
+            Category.comp_id]]
+      have hsnd_norm :
+          cfpMap (𝟙 A) toRSpineNat ≫
+            cfpLift (cfpFst A p.T ≫
+              cfpSnd p.T p.T)
+              (cfpSnd A p.T) ≫ natPlus =
+          cfpLift (cfpFst A p.T ≫
+              cfpSnd p.T p.T)
+            (cfpSnd A p.T) ≫ natPlus := by
+        rw [← Category.assoc, cfpLift_precomp]
+        rw [show cfpMap (𝟙 A) toRSpineNat ≫
+            cfpFst A p.T ≫ cfpSnd p.T p.T =
+          cfpFst A p.T ≫ cfpSnd p.T p.T from by
+            rw [← Category.assoc, cfpMap_fst,
+              Category.comp_id],
+          show cfpMap (𝟙 A) toRSpineNat ≫
+            cfpSnd A p.T =
+          cfpSnd A p.T ≫ toRSpineNat from
+            cfpMap_snd _ _]
+        rw [show cfpLift (cfpFst A p.T ≫
+              cfpSnd p.T p.T)
+            (cfpSnd A p.T ≫ toRSpineNat) =
+          cfpLift (cfpFst A p.T ≫
+              cfpSnd p.T p.T)
+            (cfpSnd A p.T) ≫
+            cfpMap (𝟙 p.T) toRSpineNat from by
+            rw [cfpLift_cfpMap,
+              Category.comp_id],
+          Category.assoc,
+          natPlus_toRSpineNat_second]
+      rw [hsnd_norm]
+  rw [ψ_L_eq, ψ_R_eq]
+
+/-- `isLeafEndo(v)` implies `isLeafEndo(natPred(v))`:
+`boolAnd(isLeafEndo(v), isLeafEndo(natPred(v)))
+  = isLeafEndo(v)`. -/
+private theorem isLeafEndo_natPred_mono :
+    cfpLift isLeafEndo
+      (natPred ≫ isLeafEndo) ≫ boolAnd =
+    (isLeafEndo : p.T ⟶ p.T) := by
+  -- Lift to cfpProd cfpTerminal T ⟶ T and
+  -- show both sides equal the same catamorphism.
+  set sect : p.T ⟶ cfpProd cfpTerminal p.T :=
+    cfpLift (cfpTerminalFrom p.T) (𝟙 p.T)
+  set snd : cfpProd cfpTerminal p.T ⟶ p.T :=
+    cfpSnd cfpTerminal p.T
+  have sect_snd : sect ≫ snd = 𝟙 p.T :=
+    cfpLift_snd _ _
+  -- Lift LHS.
+  set φ : cfpProd cfpTerminal p.T ⟶ p.T :=
+    cfpLift (snd ≫ isLeafEndo)
+      (snd ≫ natPred ≫ isLeafEndo) ≫ boolAnd
+  have sect_φ :
+      sect ≫ φ =
+      cfpLift isLeafEndo
+        (natPred ≫ isLeafEndo) ≫ boolAnd := by
+    change sect ≫ cfpLift (snd ≫ isLeafEndo)
+        (snd ≫ natPred ≫ isLeafEndo) ≫
+      boolAnd = _
+    rw [← Category.assoc, cfpLift_precomp]
+    simp only [← Category.assoc, sect_snd,
+      Category.id_comp]
+  -- Lift RHS.
+  have sect_isLeafEndo :
+      sect ≫ (snd ≫ isLeafEndo) =
+      isLeafEndo := by
+    rw [← Category.assoc, sect_snd,
+      Category.id_comp]
+  -- Show φ = snd ≫ isLeafEndo by p.elim_uniq.
+  -- Base: cfpInsertSnd ℓ 1 ≫ φ = ℓ.
+  have φ_base :
+      cfpInsertSnd p.ℓ cfpTerminal ≫ φ = p.ℓ := by
+    change cfpInsertSnd p.ℓ cfpTerminal ≫
+      cfpLift (snd ≫ isLeafEndo)
+        (snd ≫ natPred ≫ isLeafEndo) ≫
+      boolAnd = p.ℓ
+    have hsnd : cfpInsertSnd p.ℓ cfpTerminal ≫
+        snd = p.ℓ := by
+      unfold cfpInsertSnd
+      rw [cfpLift_snd, cfpTerminalFrom_terminal,
+        Category.id_comp]
+    rw [← Category.assoc, cfpLift_precomp]
+    simp only [← Category.assoc, hsnd]
+    rw [isLeafEndo_ℓ, natPred_ℓ,
+      isLeafEndo_ℓ, boolAnd_ℓ_ℓ]
+  -- Step: cfpMap (𝟙 1) β ≫ φ =
+  --   cfpLiftAssoc φ φ ≫ (term ≫ treeFalse).
+  have φ_step :
+      cfpMap (𝟙 cfpTerminal) p.β ≫ φ =
+      cfpLiftAssoc φ φ ≫
+        (cfpTerminalFrom (cfpProd p.T p.T) ≫
+          treeFalse) := by
+    change cfpMap (𝟙 cfpTerminal) p.β ≫
+      cfpLift (snd ≫ isLeafEndo)
+        (snd ≫ natPred ≫ isLeafEndo) ≫
+      boolAnd =
+      cfpLiftAssoc φ φ ≫
+        (cfpTerminalFrom (cfpProd p.T p.T) ≫
+          treeFalse)
+    rw [← Category.assoc, cfpLift_precomp]
+    have hsnd_β :
+        cfpMap (𝟙 cfpTerminal) p.β ≫ snd =
+        cfpSnd cfpTerminal (cfpProd p.T p.T) ≫
+          p.β := by
+      rw [cfpMap_snd]
+    rw [show cfpMap (𝟙 cfpTerminal) p.β ≫
+        snd ≫ isLeafEndo =
+      cfpSnd cfpTerminal (cfpProd p.T p.T) ≫
+        p.β ≫ isLeafEndo from by
+        rw [← Category.assoc, ← Category.assoc,
+          hsnd_β],
+      isLeafEndo_β]
+    -- First component: cfpSnd ≫ term ≫ treeFalse
+    --   = term ≫ treeFalse.
+    set D :=
+      cfpProd cfpTerminal (cfpProd p.T p.T)
+    have hterm :
+        cfpSnd cfpTerminal (cfpProd p.T p.T) ≫
+          cfpTerminalFrom (cfpProd p.T p.T) =
+        cfpTerminalFrom D :=
+      h.terminal.uniq _
+    rw [show cfpLift
+        (cfpSnd cfpTerminal (cfpProd p.T p.T) ≫
+          cfpTerminalFrom (cfpProd p.T p.T) ≫
+          treeFalse)
+        (cfpMap (𝟙 cfpTerminal) p.β ≫
+          snd ≫ natPred ≫ isLeafEndo) ≫
+        boolAnd =
+      cfpLift (cfpTerminalFrom D ≫ treeFalse)
+        (cfpMap (𝟙 cfpTerminal) p.β ≫
+          snd ≫ natPred ≫ isLeafEndo) ≫
+        boolAnd from by
+        congr 2
+        rw [← Category.assoc, hterm],
+      boolAnd_treeFalse_left]
+    rw [← Category.assoc]
+    congr 1
+    exact (h.terminal.uniq _).symm
+  -- RHS satisfies the same conditions.
+  have rhs_base :
+      cfpInsertSnd p.ℓ cfpTerminal ≫
+        (snd ≫ isLeafEndo) = p.ℓ := by
+    rw [← Category.assoc]
+    have : cfpInsertSnd p.ℓ cfpTerminal ≫
+        snd = p.ℓ := by
+      unfold cfpInsertSnd
+      rw [cfpLift_snd, cfpTerminalFrom_terminal,
+        Category.id_comp]
+    rw [this, isLeafEndo_ℓ]
+  have rhs_step :
+      cfpMap (𝟙 cfpTerminal) p.β ≫
+        (snd ≫ isLeafEndo) =
+      cfpLiftAssoc (snd ≫ isLeafEndo)
+        (snd ≫ isLeafEndo) ≫
+        (cfpTerminalFrom (cfpProd p.T p.T) ≫
+          treeFalse) := by
+    set D := cfpProd cfpTerminal (cfpProd p.T p.T)
+    rw [← Category.assoc, cfpMap_snd,
+      Category.assoc, isLeafEndo_β]
+    have lhs_term :
+        cfpSnd cfpTerminal (cfpProd p.T p.T) ≫
+          cfpTerminalFrom (cfpProd p.T p.T) =
+        (cfpTerminalFrom D : D ⟶ cfpTerminal) :=
+      h.terminal.uniq _
+    have rhs_term :
+        cfpLiftAssoc (snd ≫ isLeafEndo)
+          (snd ≫ isLeafEndo) ≫
+          cfpTerminalFrom (cfpProd p.T p.T) =
+        (cfpTerminalFrom D : D ⟶ cfpTerminal) :=
+      h.terminal.uniq _
+    simp only [← Category.assoc]
+    rw [lhs_term, rhs_term]
+  have rhs_eq :
+      snd ≫ isLeafEndo =
+      p.elim p.ℓ (cfpTerminalFrom
+        (cfpProd p.T p.T) ≫ treeFalse) :=
+    p.elim_uniq p.ℓ
+      (cfpTerminalFrom (cfpProd p.T p.T) ≫
+        treeFalse)
+      (snd ≫ isLeafEndo)
+      rhs_base rhs_step
+  -- Conclude.
+  have φ_eq :
+      φ = snd ≫ isLeafEndo := by
+    rw [rhs_eq]
+    exact p.elim_uniq p.ℓ
+      (cfpTerminalFrom (cfpProd p.T p.T) ≫
+        treeFalse)
+      φ φ_base φ_step
+  calc cfpLift (isLeafEndo : p.T ⟶ p.T)
+        (natPred ≫ isLeafEndo) ≫ boolAnd
+      = sect ≫ φ := sect_φ.symm
+    _ = sect ≫ (snd ≫ isLeafEndo) := by
+        rw [φ_eq]
+    _ = isLeafEndo := sect_isLeafEndo
+
+/-- For any `f : cfpProd T T ⟶ T` satisfying the
+base condition `boolAnd(isLeafEndo(ℓ), f(ℓ, c))
+= ℓ`, the swapped composition
+`cfpSwap ≫ cfpLift (cfpFst ≫ isLeafEndo) f
+≫ boolAnd` equals the catamorphism
+`p.elim (cfpTerminalFrom T ≫ ℓ)
+(cfpTerminalFrom _ ≫ treeFalse)`. -/
+private theorem swap_isLeafEndo_boolAnd_elim
+    (f : cfpProd p.T p.T ⟶ p.T)
+    (hbase :
+      cfpLift (cfpTerminalFrom p.T ≫ p.ℓ)
+        (𝟙 p.T) ≫
+        cfpLift (cfpFst p.T p.T ≫ isLeafEndo)
+          f ≫ boolAnd =
+      cfpTerminalFrom p.T ≫ p.ℓ) :
+    cfpSwap p.T p.T ≫
+      cfpLift (cfpFst p.T p.T ≫ isLeafEndo)
+        f ≫ boolAnd =
+    p.elim (cfpTerminalFrom p.T ≫ p.ℓ)
+      (cfpTerminalFrom (cfpProd p.T p.T) ≫
+        treeFalse) := by
+  apply p.elim_uniq
+    (cfpTerminalFrom p.T ≫ p.ℓ)
+    (cfpTerminalFrom (cfpProd p.T p.T) ≫
+      treeFalse)
+  · -- Base (w = ℓ).
+    simp only [← Category.assoc]
+    have : cfpInsertSnd p.ℓ p.T ≫
+        cfpSwap p.T p.T =
+      cfpLift (cfpTerminalFrom p.T ≫ p.ℓ)
+        (𝟙 p.T) := by
+      unfold cfpInsertSnd cfpSwap
+      rw [cfpLift_precomp, cfpLift_fst,
+        cfpLift_snd]
+    rw [this]; simp only [Category.assoc]
+    exact hbase
+  · -- Step (w = β): isLeafEndo(β) = treeFalse,
+    -- so boolAnd(treeFalse, _) = treeFalse.
+    -- LHS: cfpMap (𝟙 T) β ≫ swap ≫ cfpLift
+    --   (fst ≫ ile) f ≫ boolAnd.
+    -- After swap, fst picks up β(l,r), so
+    -- isLeafEndo gives treeFalse, making
+    -- boolAnd(treeFalse, _) = treeFalse.
+    rw [← Category.assoc (cfpSwap p.T p.T),
+      cfpLift_precomp]
+    simp only [← Category.assoc]
+    have swap_fst :
+        cfpSwap p.T p.T ≫ cfpFst p.T p.T =
+        cfpSnd p.T p.T := by
+      unfold cfpSwap; exact cfpLift_fst _ _
+    rw [show (cfpSwap p.T p.T ≫
+        cfpFst p.T p.T) ≫ isLeafEndo =
+      cfpSnd p.T p.T ≫ isLeafEndo from by
+        rw [swap_fst]]
+    rw [cfpLift_precomp]
+    simp only [← Category.assoc]
+    rw [cfpMap_snd, Category.assoc, Category.assoc,
+      isLeafEndo_β, ← Category.assoc,
+      show cfpSnd p.T (cfpProd p.T p.T) ≫
+        cfpTerminalFrom (cfpProd p.T p.T) =
+      cfpTerminalFrom
+        (cfpProd p.T (cfpProd p.T p.T)) from
+        h.terminal.uniq _,
+      Category.assoc, boolAnd_treeFalse_left]
+    simp only [← Category.assoc]
+    congr 1
+    exact (h.terminal.uniq _).symm
+
 end GebLean
