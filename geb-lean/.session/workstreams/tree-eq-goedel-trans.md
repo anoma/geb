@@ -397,6 +397,63 @@ lemma about triangular number spacing.
 
 Estimated total: 400-600 lines of lemmas.
 
+#### Progress (session 2026-04-06b)
+
+In `GebLean/NatNNO.lean`, defined and proved:
+
+- `triRootStep`: step morphism for the diagonal walk,
+  using `iteBranches` on the condition
+  `natTruncSub ≫ isLeafEndo`.
+- `triRootState`: NNO fold tracking
+  `(diagonal, offset)` via `nnoElim` with base
+  `(ℓ, ℓ)` and step `triRootStep`.
+- `triRoot`, `triRootOffset`: projections of
+  `triRootState` to diagonal index and offset.
+- `triRootState_ℓ`: base case `(ℓ, ℓ)`.
+- `triRootState_s`: step case
+  `natSucc ≫ triRootState =
+  triRootState ≫ triRootStep`.
+- `triRoot_ℓ`, `triRootOffset_ℓ`: base cases
+  for projections.
+- `triRootStep_diag`: when `s = rem`,
+  `triRootStep(s, s) = (s+1, ℓ)`.
+- `triRootStep_within`: when
+  `natTruncSub(s, rem) = r ≫ β`,
+  `triRootStep(s, rem) = (s, rem+1)`.
+- `natTruncSub_diag`: `natTruncSub(s, s) =
+  cfpTerminalFrom ≫ ℓ` at a general domain.
+- `natTruncSub_natPlus_cancel'`:
+  `natTruncSub(natPlus(x, a), a) = x` at a
+  general domain.
+- `triRootStep_natPlus_succ`: when the pair is
+  `(natPlus(succ(b), a), a)`, the step stays
+  within the diagonal:
+  `(natPlus(succ(b), a), succ(a))`.
+- `triRootState_toRSpineNat`:
+  `toRSpineNat ≫ triRootState = triRootState`.
+- `triRoot_toRSpineNat`:
+  `toRSpineNat ≫ triRoot = triRoot`.
+- `triRootOffset_toRSpineNat`:
+  `toRSpineNat ≫ triRootOffset = triRootOffset`.
+- `natTri_ℓ_triRoot`:
+  `ℓ ≫ natTri ≫ triRoot = ℓ`.
+- `natTri_ℓ_triRootOffset`:
+  `ℓ ≫ natTri ≫ triRootOffset = ℓ`.
+
+The import was changed from `GebLean.NatArith` to
+`GebLean.TreeGoedel` to access
+`natSucc_isLeafEndo` and `natEq_ℓ_right`.
+
+Remaining for the band property:
+
+- Prove `natTri ≫ triRootState =
+  cfpLift toRSN (cfpTerminalFrom T ≫ ℓ)`
+  (requires induction on the natTri argument).
+- Prove the full band property
+  `cantorPair ≫ triRootState =
+  cfpLift (natPlus ≫ toRSN) (cfpFst ≫ toRSN)`.
+- Derive `NatEqCantorPair` from the band property.
+
 ### `treeEqG_trans`
 
 Transitivity of `treeEqG`, using `natTruncSub_fold_comp`

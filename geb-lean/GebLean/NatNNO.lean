@@ -1,4 +1,4 @@
-import GebLean.NatArith
+import GebLean.TreeGoedel
 
 /-!
 # NNO Recursion from PBTO
@@ -788,5 +788,372 @@ theorem natTruncSub_natPlus_cancel :
             (cfpSnd p.T p.T) ≫
           natTruncSub := by
         rw [Category.assoc]
+
+/-- Step morphism for `triRootState`.  Given the
+pair `(s, rem)` representing diagonal index and
+offset within the diagonal:
+- When `s - rem = 0` (diagonal complete): advance
+  to `(s + 1, 0)`.
+- When `s - rem > 0` (still within diagonal):
+  stay at `(s, rem + 1)`. -/
+def triRootStep :
+    cfpProd p.T p.T ⟶ cfpProd p.T p.T :=
+  cfpLift
+    (iteBranches
+      (cfpFst p.T p.T ≫ natSucc)
+      (cfpFst p.T p.T)
+      (natTruncSub ≫ isLeafEndo))
+    (iteBranches
+      (cfpTerminalFrom (cfpProd p.T p.T) ≫ p.ℓ)
+      (cfpSnd p.T p.T ≫ natSucc)
+      (natTruncSub ≫ isLeafEndo))
+
+/-- Fold computing the `(diagonal, offset)` pair
+by walking through natural numbers in order.
+At `ℓ` (zero), the state is `(0, 0)`.
+At each successor, applies `triRootStep`. -/
+def triRootState : p.T ⟶ cfpProd p.T p.T :=
+  cfpLift (cfpTerminalFrom p.T) (𝟙 p.T) ≫
+    nnoElim
+      (cfpLift
+        (cfpTerminalFrom cfpTerminal ≫ p.ℓ)
+        (cfpTerminalFrom cfpTerminal ≫ p.ℓ))
+      triRootStep
+
+/-- Base case: `triRootState(ℓ) = (ℓ, ℓ)`. -/
+theorem triRootState_ℓ :
+    p.ℓ ≫ triRootState =
+    cfpLift p.ℓ
+      (p.ℓ : cfpTerminal (C := C) ⟶ p.T) := by
+  unfold triRootState
+  rw [← Category.assoc, cfpLift_precomp,
+    Category.comp_id]
+  have term_eq :
+      p.ℓ ≫ cfpTerminalFrom p.T =
+      cfpTerminalFrom cfpTerminal :=
+    h.terminal.uniq _
+  rw [term_eq]
+  have embed_eq :
+      cfpLift (cfpTerminalFrom cfpTerminal) p.ℓ =
+      cfpInsertSnd p.ℓ cfpTerminal := by
+    unfold cfpInsertSnd
+    congr 1
+    · exact (h.terminal.uniq _).symm
+    · rw [show cfpTerminalFrom cfpTerminal =
+        𝟙 cfpTerminal from
+        (h.terminal.uniq _).symm,
+        Category.id_comp]
+  rw [embed_eq, nnoElim_ℓ]
+  congr 1 <;>
+  · rw [show cfpTerminalFrom cfpTerminal =
+      (𝟙 cfpTerminal : cfpTerminal (C := C) ⟶ _)
+      from (h.terminal.uniq _).symm,
+      Category.id_comp]
+
+/-- Step case: `triRootState(natSucc(n)) =
+triRootStep(triRootState(n))`. -/
+theorem triRootState_s :
+    natSucc ≫ triRootState =
+    triRootState ≫
+      (triRootStep :
+        cfpProd p.T p.T ⟶
+          cfpProd p.T p.T) := by
+  unfold triRootState
+  rw [← Category.assoc, cfpLift_precomp,
+    Category.comp_id]
+  have term_eq :
+      natSucc ≫ cfpTerminalFrom p.T =
+      cfpTerminalFrom p.T :=
+    h.terminal.uniq _
+  rw [term_eq]
+  have factor :
+      cfpLift (cfpTerminalFrom p.T) natSucc =
+      cfpLift (cfpTerminalFrom p.T) (𝟙 p.T) ≫
+        cfpMap (𝟙 cfpTerminal) natSucc := by
+    rw [cfpLift_cfpMap, Category.comp_id,
+      Category.id_comp]
+  rw [factor, Category.assoc, nnoElim_s]
+  simp only [← Category.assoc]
+
+/-- Integer triangle root: extracts the diagonal
+index from the `triRootState` fold. -/
+def triRoot : p.T ⟶ p.T :=
+  triRootState ≫ cfpFst p.T p.T
+
+/-- Offset within the diagonal: extracts the
+offset component from the `triRootState` fold. -/
+def triRootOffset : p.T ⟶ p.T :=
+  triRootState ≫ cfpSnd p.T p.T
+
+/-- Base case: `triRoot(ℓ) = ℓ`. -/
+theorem triRoot_ℓ :
+    p.ℓ ≫ triRoot =
+    (p.ℓ : cfpTerminal (C := C) ⟶ p.T) := by
+  unfold triRoot
+  rw [← Category.assoc, triRootState_ℓ,
+    cfpLift_fst]
+
+/-- Base case: `triRootOffset(ℓ) = ℓ`. -/
+theorem triRootOffset_ℓ :
+    p.ℓ ≫ triRootOffset =
+    (p.ℓ : cfpTerminal (C := C) ⟶ p.T) := by
+  unfold triRootOffset
+  rw [← Category.assoc, triRootState_ℓ,
+    cfpLift_snd]
+
+/-- When `s = rem`, the truncated subtraction
+gives `ℓ` (leaf), so `triRootStep` advances to
+the next diagonal:
+`triRootStep(s, s) = (s + 1, ℓ)`. -/
+private theorem natTruncSub_diag {D : C}
+    (s : D ⟶ p.T) :
+    cfpLift s s ≫ natTruncSub =
+    cfpTerminalFrom D ≫ p.ℓ := by
+  have factor :
+      cfpLift s s ≫ natTruncSub =
+      s ≫ (cfpLift (𝟙 p.T) (𝟙 p.T) ≫
+        natTruncSub) := by
+    rw [← Category.assoc]
+    congr 1
+    rw [cfpLift_precomp]
+    simp only [Category.comp_id]
+  rw [factor, natTruncSub_self, ← Category.assoc]
+  congr 1
+  exact h.terminal.uniq _
+
+theorem triRootStep_diag {D : C}
+    (s : D ⟶ p.T) :
+    cfpLift s s ≫ triRootStep =
+    cfpLift (s ≫ natSucc)
+      (cfpTerminalFrom D ≫ p.ℓ) := by
+  have cond_eq :
+      cfpLift s s ≫ natTruncSub ≫ isLeafEndo =
+      cfpTerminalFrom D ≫ p.ℓ := by
+    rw [← Category.assoc, natTruncSub_diag,
+      Category.assoc, isLeafEndo_ℓ]
+  unfold triRootStep
+  apply cfpLift_uniq
+  · -- First component: show fst = s ≫ natSucc
+    simp only [Category.assoc]
+    rw [cfpLift_fst,
+      iteBranches_precomp,
+      ← Category.assoc, cfpLift_fst,
+      cond_eq, iteBranches_ℓ]
+  · -- Second component: show snd = term ≫ ℓ
+    simp only [Category.assoc]
+    rw [cfpLift_snd,
+      iteBranches_precomp]
+    -- Simplify the thn argument
+    have thn_eq :
+        cfpLift s s ≫
+          cfpTerminalFrom
+            (cfpProd p.T p.T) ≫ p.ℓ =
+        cfpTerminalFrom D ≫ p.ℓ := by
+      rw [← Category.assoc]
+      congr 1
+      exact h.terminal.uniq _
+    -- Simplify the els argument
+    have els_eq :
+        cfpLift s s ≫
+          cfpSnd p.T p.T ≫ natSucc =
+        s ≫ natSucc := by
+      rw [← Category.assoc, cfpLift_snd]
+    rw [thn_eq, els_eq, cond_eq,
+      iteBranches_ℓ]
+
+/-- When `s > rem` (the truncated subtraction
+factors through `β`), `triRootStep` stays on
+the same diagonal and increments the offset:
+`triRootStep(s, rem) = (s, rem + 1)`. -/
+theorem triRootStep_within {D : C}
+    (s rem : D ⟶ p.T)
+    (r : D ⟶ cfpProd p.T p.T)
+    (hr : cfpLift s rem ≫ natTruncSub =
+      r ≫ p.β) :
+    cfpLift s rem ≫ triRootStep =
+    cfpLift s (rem ≫ natSucc) := by
+  have cond_eq :
+      cfpLift s rem ≫
+        natTruncSub ≫ isLeafEndo =
+      cfpTerminalFrom D ≫ treeFalse := by
+    rw [← Category.assoc, hr,
+      Category.assoc, isLeafEndo_β]
+    rw [← Category.assoc]
+    congr 1
+    exact h.terminal.uniq _
+  set r' := cfpTerminalFrom D ≫
+    cfpLift p.ℓ p.ℓ with hr'_def
+  have cond_β :
+      cfpLift s rem ≫
+        natTruncSub ≫ isLeafEndo =
+      r' ≫ p.β := by
+    rw [← Category.assoc, hr,
+      Category.assoc, isLeafEndo_β,
+      ← Category.assoc]
+    have rterm :
+        r ≫ cfpTerminalFrom
+          (cfpProd p.T p.T) =
+        cfpTerminalFrom D :=
+      h.terminal.uniq _
+    rw [rterm]
+    unfold treeFalse
+    rw [Category.assoc]
+  unfold triRootStep
+  apply cfpLift_uniq
+  · -- First component
+    simp only [Category.assoc]
+    rw [cfpLift_fst,
+      iteBranches_precomp]
+    have fst_eq :
+        cfpLift s rem ≫ cfpFst p.T p.T = s :=
+      cfpLift_fst _ _
+    rw [show cfpLift s rem ≫
+        cfpFst p.T p.T ≫ natSucc =
+      s ≫ natSucc from by
+        rw [← Category.assoc, fst_eq],
+      fst_eq, cond_β]
+    exact iteBranches_β _ _ _
+  · -- Second component
+    simp only [Category.assoc]
+    rw [cfpLift_snd,
+      iteBranches_precomp]
+    have thn_eq :
+        cfpLift s rem ≫
+          cfpTerminalFrom
+            (cfpProd p.T p.T) ≫ p.ℓ =
+        cfpTerminalFrom D ≫ p.ℓ := by
+      rw [← Category.assoc]
+      congr 1
+      exact h.terminal.uniq _
+    have els_eq :
+        cfpLift s rem ≫
+          cfpSnd p.T p.T ≫ natSucc =
+        rem ≫ natSucc := by
+      rw [← Category.assoc, cfpLift_snd]
+    rw [thn_eq, els_eq, cond_β]
+    exact iteBranches_β _ _ _
+
+/-- Cancellation: `natTruncSub(natPlus(x, a), a) =
+x`, at a general domain. -/
+private theorem natTruncSub_natPlus_cancel'
+    {D : C} (x a : D ⟶ p.T) :
+    cfpLift (cfpLift x a ≫ natPlus) a ≫
+      natTruncSub = x := by
+  have factor :
+      cfpLift (cfpLift x a ≫ natPlus) a =
+      cfpLift x a ≫
+        cfpLift natPlus
+          (cfpSnd p.T p.T) := by
+    symm
+    apply cfpLift_uniq
+    · rw [Category.assoc, cfpLift_fst]
+    · rw [Category.assoc, cfpLift_snd,
+        cfpLift_snd]
+  rw [factor, Category.assoc,
+    natTruncSub_natPlus_cancel,
+    cfpLift_fst]
+
+/-- When the first component is
+`natPlus(succ(b), a)` and the second is `a`,
+the offset `a` is below the diagonal index,
+so `triRootStep` stays within the diagonal and
+increments the offset. -/
+theorem triRootStep_natPlus_succ {D : C}
+    (a b : D ⟶ p.T) :
+    cfpLift
+      (cfpLift (b ≫ natSucc) a ≫ natPlus)
+      a ≫ triRootStep =
+    cfpLift
+      (cfpLift (b ≫ natSucc) a ≫ natPlus)
+      (a ≫ natSucc) := by
+  apply triRootStep_within _ _
+    (b ≫ cfpLift
+      (cfpTerminalFrom p.T ≫ p.ℓ) (𝟙 p.T))
+  rw [natTruncSub_natPlus_cancel']
+  unfold natSucc
+  simp only [Category.assoc]
+
+/-- `triRootState` absorbs `toRSpineNat`. -/
+theorem triRootState_toRSpineNat :
+    toRSpineNat ≫ triRootState =
+    (triRootState : p.T ⟶ cfpProd p.T p.T) :=
+  by
+  unfold triRootState
+  -- LHS: toRSN ≫ embed ≫ nnoElim(base, step).
+  -- embed = cfpLift(term, 𝟙).
+  -- toRSN ≫ embed = cfpLift(term, toRSN).
+  -- RHS: embed ≫ nnoElim(base, step).
+  -- nnoElim = cfpMap(𝟙, toRSN) ≫ elim(...).
+  -- embed ≫ cfpMap(𝟙, toRSN)
+  --   = cfpLift(term, toRSN).
+  -- So both sides = cfpLift(term, toRSN) ≫
+  --   elim(...).
+  have lhs_embed :
+      toRSpineNat ≫
+        cfpLift (cfpTerminalFrom p.T)
+          (𝟙 p.T) =
+      cfpLift (cfpTerminalFrom p.T)
+        toRSpineNat := by
+    rw [cfpLift_precomp, Category.comp_id]
+    congr 1
+    exact h.terminal.uniq _
+  have rhs_embed :
+      cfpLift (cfpTerminalFrom p.T)
+        (𝟙 p.T) ≫
+        cfpMap (𝟙 cfpTerminal) toRSpineNat =
+      cfpLift (cfpTerminalFrom p.T)
+        toRSpineNat := by
+    rw [cfpLift_cfpMap, Category.comp_id,
+      Category.id_comp]
+  have rsn_idem :
+      cfpLift (cfpTerminalFrom p.T)
+        toRSpineNat ≫
+        cfpMap (𝟙 cfpTerminal) toRSpineNat =
+      cfpLift (cfpTerminalFrom p.T)
+        toRSpineNat := by
+    rw [cfpLift_cfpMap,
+      show cfpTerminalFrom p.T ≫
+        (𝟙 cfpTerminal :
+          cfpTerminal (C := C) ⟶ cfpTerminal) =
+        cfpTerminalFrom p.T from
+        Category.comp_id _,
+      toRSpineNat_idem]
+  unfold nnoElim
+  simp only [← Category.assoc]
+  rw [lhs_embed, rsn_idem, rhs_embed]
+
+/-- `triRoot` absorbs `toRSpineNat`:
+`toRSpineNat ≫ triRoot = triRoot`. -/
+theorem triRoot_toRSpineNat :
+    toRSpineNat ≫ triRoot =
+    (triRoot : p.T ⟶ p.T) := by
+  unfold triRoot
+  rw [← Category.assoc,
+    triRootState_toRSpineNat]
+
+/-- `triRootOffset` absorbs `toRSpineNat`:
+`toRSpineNat ≫ triRootOffset = triRootOffset`.
+-/
+theorem triRootOffset_toRSpineNat :
+    toRSpineNat ≫ triRootOffset =
+    (triRootOffset : p.T ⟶ p.T) := by
+  unfold triRootOffset
+  rw [← Category.assoc,
+    triRootState_toRSpineNat]
+
+/-- `natTri(ℓ) ≫ triRoot = ℓ`:
+the triangle root of `T(0) = 0` is `0`. -/
+theorem natTri_ℓ_triRoot :
+    p.ℓ ≫ natTri ≫ triRoot =
+    (p.ℓ : cfpTerminal (C := C) ⟶ p.T) := by
+  rw [← Category.assoc, natTri_ℓ, triRoot_ℓ]
+
+/-- `natTri(ℓ) ≫ triRootOffset = ℓ`:
+the offset of `T(0) = 0` is `0`. -/
+theorem natTri_ℓ_triRootOffset :
+    p.ℓ ≫ natTri ≫ triRootOffset =
+    (p.ℓ : cfpTerminal (C := C) ⟶ p.T) := by
+  rw [← Category.assoc, natTri_ℓ,
+    triRootOffset_ℓ]
 
 end GebLean
