@@ -518,4 +518,275 @@ theorem cantorUnpair_cantorPair :
       Category.comp_id],
     natPlus_ℓ_left_eq_toRSpineNat]
 
+/-- `cfpFst T T` equals the fold
+`p.elim (𝟙 T) (cfpSnd T T)`: the first projection
+ignores the tree argument entirely, returning the
+parameter unchanged. -/
+private theorem cfpFst_eq_elim :
+    cfpFst p.T p.T =
+    p.elim (𝟙 p.T)
+      (cfpSnd p.T p.T) :=
+  p.elim_uniq (𝟙 p.T) (cfpSnd p.T p.T)
+    (cfpFst p.T p.T)
+    (by unfold cfpInsertSnd
+        rw [cfpLift_fst])
+    (by rw [cfpMap_fst, Category.comp_id]
+        unfold cfpLiftAssoc
+        rw [cfpLift_snd]
+        unfold cfpAssocSnd
+        rw [cfpLift_fst])
+
+/-- Subtracting the second addend from a sum
+recovers the first:
+`natTruncSub(natPlus(x, c), c) = x`. -/
+theorem natTruncSub_natPlus_cancel :
+    cfpLift (natPlus : cfpProd p.T p.T ⟶ p.T)
+      (cfpSnd p.T p.T) ≫ natTruncSub =
+    cfpFst p.T p.T := by
+  rw [cfpFst_eq_elim]
+  apply p.elim_uniq (𝟙 p.T) (cfpSnd p.T p.T)
+  · rw [← Category.assoc]
+    have : cfpInsertSnd p.ℓ p.T ≫
+        cfpLift natPlus (cfpSnd p.T p.T) =
+      cfpInsertSnd p.ℓ p.T := by
+      apply cfpLift_uniq
+      · rw [Category.assoc, cfpLift_fst,
+          natPlus_ℓ]
+      · rw [Category.assoc, cfpLift_snd]
+        unfold cfpInsertSnd
+        rw [cfpLift_snd]
+    rw [this]
+    unfold natTruncSub
+    rw [p.elim_ℓ]
+  · -- Both sides equal cfpAssocSnd ≫ ψ where
+    -- ψ = cfpLift natPlus (cfpSnd T T) ≫
+    --   natTruncSub.
+    -- Step A: Simplify the RHS.
+    have h_rhs :
+        cfpLiftAssoc
+          (cfpLift natPlus
+            (cfpSnd p.T p.T) ≫ natTruncSub)
+          (cfpLift natPlus
+            (cfpSnd p.T p.T) ≫ natTruncSub) ≫
+          cfpSnd p.T p.T =
+        cfpAssocSnd p.T p.T p.T ≫
+          (cfpLift natPlus
+            (cfpSnd p.T p.T) ≫
+            natTruncSub) := by
+      unfold cfpLiftAssoc
+      rw [cfpLift_snd]
+    rw [h_rhs]; clear h_rhs
+    -- Step B: Factor cfpMap (𝟙 T) β through
+    -- cfpLift natPlus (cfpSnd T T) to get
+    -- cfpLift (... ≫ natSucc) (... ≫ β).
+    have h_factor :
+        cfpMap (𝟙 p.T) p.β ≫
+          cfpLift natPlus (cfpSnd p.T p.T) =
+        cfpLift
+          (cfpLiftAssoc natPlus natPlus ≫
+            cfpSnd p.T p.T ≫ natSucc)
+          (cfpSnd p.T (cfpProd p.T p.T) ≫
+            p.β) := by
+      rw [cfpLift_precomp, natPlus_β,
+        cfpMap_snd]
+    -- Step C: Extract cfpMap (𝟙 T) β from the
+    -- cfpLift pairing using cfpLift_cfpMap.
+    have h_extract :
+        cfpLift
+          (cfpLiftAssoc natPlus natPlus ≫
+            cfpSnd p.T p.T ≫ natSucc)
+          (cfpSnd p.T (cfpProd p.T p.T) ≫
+            p.β) =
+        cfpLift
+          (cfpLiftAssoc natPlus natPlus ≫
+            cfpSnd p.T p.T ≫ natSucc)
+          (cfpSnd p.T (cfpProd p.T p.T)) ≫
+          cfpMap (𝟙 p.T) p.β := by
+      rw [cfpLift_cfpMap, Category.comp_id]
+    -- Step D: Combine to get
+    -- LHS = cfpLift (...) (...) ≫
+    --   cfpMap (𝟙 T) β ≫ natTruncSub.
+    -- Then apply natTruncSub_β.
+    have h_tsβ :
+        cfpMap (𝟙 p.T) p.β ≫ natTruncSub =
+        cfpLiftAssoc natTruncSub natTruncSub ≫
+          (cfpSnd p.T p.T ≫ natPred) :=
+      natTruncSub_β
+    -- Step E: cfpLiftAssoc natTruncSub
+    -- natTruncSub ≫ cfpSnd = cfpAssocSnd ≫
+    -- natTruncSub.
+    have h_la_snd :
+        cfpLiftAssoc
+          (natTruncSub :
+            cfpProd p.T p.T ⟶ p.T)
+          natTruncSub ≫
+          cfpSnd p.T p.T =
+        cfpAssocSnd p.T p.T p.T ≫
+          natTruncSub := by
+      unfold cfpLiftAssoc; rw [cfpLift_snd]
+    -- Step F: cfpLift ≫ cfpAssocSnd
+    -- = cfpLift (fst) (snd ≫ cfpSnd).
+    have h_lift_assocSnd :
+        cfpLift
+          (cfpLiftAssoc natPlus natPlus ≫
+            cfpSnd p.T p.T ≫ natSucc)
+          (cfpSnd p.T (cfpProd p.T p.T)) ≫
+          cfpAssocSnd p.T p.T p.T =
+        cfpLift
+          (cfpLiftAssoc natPlus natPlus ≫
+            cfpSnd p.T p.T ≫ natSucc)
+          (cfpSnd p.T (cfpProd p.T p.T) ≫
+            cfpSnd p.T p.T) := by
+      unfold cfpAssocSnd
+      rw [cfpLift_precomp]
+      apply cfpLift_uniq
+      · rw [cfpLift_fst, ← Category.assoc,
+          cfpLift_fst]
+      · rw [cfpLift_snd, ← Category.assoc,
+          cfpLift_snd]
+    -- Step G: Factor out cfpMap natSucc (𝟙 T)
+    -- from the first component.
+    have h_factor_succ :
+        cfpLift
+          (cfpLiftAssoc natPlus natPlus ≫
+            cfpSnd p.T p.T ≫ natSucc)
+          (cfpSnd p.T (cfpProd p.T p.T) ≫
+            cfpSnd p.T p.T) =
+        cfpLift
+          (cfpLiftAssoc natPlus natPlus ≫
+            cfpSnd p.T p.T)
+          (cfpSnd p.T (cfpProd p.T p.T) ≫
+            cfpSnd p.T p.T) ≫
+          cfpMap natSucc (𝟙 p.T) := by
+      rw [cfpLift_cfpMap]
+      congr 1
+      · rw [Category.assoc]
+      · rw [Category.comp_id]
+    -- Step H: cfpLiftAssoc natPlus natPlus ≫
+    -- cfpSnd = cfpAssocSnd ≫ natPlus.
+    have h_la_natPlus_snd :
+        cfpLiftAssoc
+          (natPlus : cfpProd p.T p.T ⟶ p.T)
+          natPlus ≫
+          cfpSnd p.T p.T =
+        cfpAssocSnd p.T p.T p.T ≫
+          natPlus := by
+      unfold cfpLiftAssoc; rw [cfpLift_snd]
+    -- Step I: The resulting cfpLift equals
+    -- cfpAssocSnd ≫ cfpLift natPlus (cfpSnd T T).
+    have h_lift_eq :
+        cfpLift
+          (cfpAssocSnd p.T p.T p.T ≫ natPlus)
+          (cfpSnd p.T (cfpProd p.T p.T) ≫
+            cfpSnd p.T p.T) =
+        cfpAssocSnd p.T p.T p.T ≫
+          cfpLift natPlus
+            (cfpSnd p.T p.T) := by
+      rw [cfpLift_precomp]
+      congr 1
+      unfold cfpAssocSnd
+      rw [cfpLift_snd]
+    -- Assemble the chain using calc.
+    calc cfpMap (𝟙 p.T) p.β ≫
+          cfpLift natPlus (cfpSnd p.T p.T) ≫
+          natTruncSub
+      _ = (cfpMap (𝟙 p.T) p.β ≫
+            cfpLift natPlus
+              (cfpSnd p.T p.T)) ≫
+          natTruncSub := by
+        rw [Category.assoc]
+      _ = (cfpLift
+            (cfpLiftAssoc natPlus natPlus ≫
+              cfpSnd p.T p.T ≫ natSucc)
+            (cfpSnd p.T (cfpProd p.T p.T)) ≫
+            cfpMap (𝟙 p.T) p.β) ≫
+          natTruncSub := by
+        rw [h_factor, h_extract]
+      _ = cfpLift
+            (cfpLiftAssoc natPlus natPlus ≫
+              cfpSnd p.T p.T ≫ natSucc)
+            (cfpSnd p.T (cfpProd p.T p.T)) ≫
+          cfpMap (𝟙 p.T) p.β ≫
+          natTruncSub := by
+        rw [Category.assoc]
+      _ = cfpLift
+            (cfpLiftAssoc natPlus natPlus ≫
+              cfpSnd p.T p.T ≫ natSucc)
+            (cfpSnd p.T (cfpProd p.T p.T)) ≫
+          cfpLiftAssoc natTruncSub
+            natTruncSub ≫
+          cfpSnd p.T p.T ≫ natPred := by
+        rw [h_tsβ]
+      _ = (cfpLift
+            (cfpLiftAssoc natPlus natPlus ≫
+              cfpSnd p.T p.T ≫ natSucc)
+            (cfpSnd p.T (cfpProd p.T p.T)) ≫
+          cfpAssocSnd p.T p.T p.T) ≫
+          natTruncSub ≫ natPred := by
+        rw [show cfpLift
+              (cfpLiftAssoc natPlus natPlus ≫
+                cfpSnd p.T p.T ≫ natSucc)
+              (cfpSnd p.T (cfpProd p.T p.T)) ≫
+            cfpLiftAssoc natTruncSub
+              natTruncSub ≫
+            cfpSnd p.T p.T ≫ natPred =
+          cfpLift
+              (cfpLiftAssoc natPlus natPlus ≫
+                cfpSnd p.T p.T ≫ natSucc)
+              (cfpSnd p.T (cfpProd p.T p.T)) ≫
+            (cfpLiftAssoc natTruncSub
+                natTruncSub ≫
+              cfpSnd p.T p.T) ≫ natPred
+          from by
+            simp only [Category.assoc]]
+        rw [h_la_snd]
+        simp only [Category.assoc]
+      _ = cfpLift
+            (cfpLiftAssoc natPlus natPlus ≫
+              cfpSnd p.T p.T ≫ natSucc)
+            (cfpSnd p.T (cfpProd p.T p.T) ≫
+              cfpSnd p.T p.T) ≫
+          natTruncSub ≫ natPred := by
+        rw [h_lift_assocSnd]
+      _ = (cfpLift
+            (cfpLiftAssoc natPlus natPlus ≫
+              cfpSnd p.T p.T)
+            (cfpSnd p.T (cfpProd p.T p.T) ≫
+              cfpSnd p.T p.T) ≫
+          cfpMap natSucc (𝟙 p.T)) ≫
+          natTruncSub ≫ natPred := by
+        rw [h_factor_succ]
+      _ = cfpLift
+            (cfpLiftAssoc natPlus natPlus ≫
+              cfpSnd p.T p.T)
+            (cfpSnd p.T (cfpProd p.T p.T) ≫
+              cfpSnd p.T p.T) ≫
+          cfpMap natSucc (𝟙 p.T) ≫
+          (natTruncSub ≫ natPred) := by
+        simp only [Category.assoc]
+      _ = cfpLift
+            (cfpLiftAssoc natPlus natPlus ≫
+              cfpSnd p.T p.T)
+            (cfpSnd p.T (cfpProd p.T p.T) ≫
+              cfpSnd p.T p.T) ≫
+          natTruncSub := by
+        rw [natSucc_natTruncSub_natPred]
+      _ = cfpLift
+            (cfpAssocSnd p.T p.T p.T ≫
+              natPlus)
+            (cfpSnd p.T (cfpProd p.T p.T) ≫
+              cfpSnd p.T p.T) ≫
+          natTruncSub := by
+        rw [h_la_natPlus_snd]
+      _ = (cfpAssocSnd p.T p.T p.T ≫
+            cfpLift natPlus
+              (cfpSnd p.T p.T)) ≫
+          natTruncSub := by
+        rw [h_lift_eq]
+      _ = cfpAssocSnd p.T p.T p.T ≫
+          cfpLift natPlus
+            (cfpSnd p.T p.T) ≫
+          natTruncSub := by
+        rw [Category.assoc]
+
 end GebLean
