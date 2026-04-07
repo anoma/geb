@@ -3125,6 +3125,21 @@ theorem cantorPair_succ_fst {D : C}
   rw [lhs_eq, rhs_eq]
   exact natPlus_succ _ a
 
+/-- Cantor pairing at `(0, 0)`:
+`cantorPair(ℓ, ℓ) = ℓ`. -/
+theorem cantorPair_ℓℓ :
+    cfpLift p.ℓ p.ℓ ≫ cantorPair =
+    (p.ℓ : cfpTerminal (C := C) ⟶ p.T) := by
+  unfold cantorPair
+  rw [← Category.assoc, cfpLift_precomp,
+    cfpLift_fst]
+  have hsum :
+      cfpLift p.ℓ p.ℓ ≫ natPlus =
+      (p.ℓ : cfpTerminal (C := C) ⟶ p.T) :=
+    natPlus_ℓℓ
+  rw [← Category.assoc, hsum,
+    natTri_ℓ, hsum]
+
 end GebLean
 
 namespace GebLean
