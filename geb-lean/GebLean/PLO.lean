@@ -126,6 +126,40 @@ section PLO_Paramorphism
 
 variable {B L : C} [s : IsPLO C B L]
 
+/-- Post-composing `cfpLiftElemRec φ` with
+`cfpMap (𝟙 B) q` yields `cfpLiftElemRec (φ ≫ q)`. -/
+private theorem cfpLiftElemRec_postcomp
+    {A B' L' X X' : C}
+    (φ : cfpProd A L' ⟶ X)
+    (q : X ⟶ X') :
+    cfpLiftElemRec φ ≫ cfpMap (𝟙 B') q =
+    cfpLiftElemRec (φ ≫ q) := by
+  unfold cfpLiftElemRec
+  rw [cfpLift_cfpMap]
+  congr 1
+  · rw [Category.assoc, Category.comp_id]
+  · rw [Category.assoc]
+
+/-- Algebra morphism lemma for PLO: if `q : X ⟶ X'`
+intertwines the step algebras via
+`cfpMap (𝟙 B) q ≫ w = g ≫ q`, then
+`elim f g ≫ q = elim (f ≫ q) w`. -/
+private theorem ploElim_algebra_morphism
+    {A X X' : C}
+    (f : A ⟶ X) (g : cfpProd B X ⟶ X)
+    (q : X ⟶ X')
+    (w : cfpProd B X' ⟶ X')
+    (hw : cfpMap (𝟙 B) q ≫ w = g ≫ q) :
+    s.elim f g ≫ q = s.elim (f ≫ q) w := by
+  exact s.elim_uniq (f ≫ q) w
+    (s.elim f g ≫ q)
+    (by rw [← Category.assoc, s.elim_nil])
+    (by
+      rw [← Category.assoc, s.elim_cons,
+        Category.assoc, ← hw,
+        ← Category.assoc,
+        cfpLiftElemRec_postcomp])
+
 /-- Carrier for the PLO paramorphism: the triple
 `(A, (L, X))`. -/
 private def ploParaCarrier (A X : C) : C :=
@@ -198,6 +232,483 @@ theorem ploParaElim_nil {A X : C} (f : A ⟶ X)
     s.elim_nil]
   unfold ploParaBase
   rw [cfpLift_snd, cfpLift_snd]
+
+/-- Parameter invariant: the `A` component of the
+enriched catamorphism carries the input parameter
+through unchanged. -/
+private theorem ploParaElim_param_inv {A X : C}
+    (f : A ⟶ X)
+    (g : cfpProd A
+        (cfpProd B (cfpProd L X)) ⟶ X) :
+    @IsPLO.elim C _ h B L s A
+        (cfpProd A (cfpProd L X))
+        (ploParaBase (s := s) f)
+        (ploParaStep (s := s) g) ≫
+      cfpFst A (cfpProd L X) =
+    cfpFst A L := by
+  have step_q :
+      cfpMap (𝟙 B)
+          (cfpFst A (cfpProd L X)) ≫
+        cfpSnd B A =
+      ploParaStep (s := s) g ≫
+        cfpFst A (cfpProd L X) := by
+    rw [cfpMap_snd]
+    unfold ploParaStep ploParaCarrier
+    simp only
+    rw [cfpLift_fst]
+  rw [ploElim_algebra_morphism
+      (ploParaBase (s := s) f)
+      (ploParaStep (s := s) g)
+      (cfpFst A (cfpProd L X))
+      (cfpSnd B A) step_q]
+  have hbase_proj :
+      ploParaBase (s := s) f ≫
+        cfpFst A (cfpProd L X) = 𝟙 A := by
+    unfold ploParaBase
+    rw [cfpLift_fst]
+  rw [hbase_proj]
+  symm
+  apply s.elim_uniq (𝟙 A) (cfpSnd B A)
+    (cfpFst A L)
+  · unfold cfpInsertSnd
+    rw [cfpLift_fst]
+  · rw [cfpMap_fst, Category.comp_id]
+    unfold cfpLiftElemRec
+    rw [cfpLift_snd]
+    unfold cfpAssocSnd
+    rw [cfpLift_fst]
+
+/-- Tail invariant: the `L` component of the enriched
+catamorphism carries the input list through
+unchanged. -/
+private theorem ploParaElim_tail_inv {A X : C}
+    (f : A ⟶ X)
+    (g : cfpProd A
+        (cfpProd B (cfpProd L X)) ⟶ X) :
+    @IsPLO.elim C _ h B L s A
+        (cfpProd A (cfpProd L X))
+        (ploParaBase (s := s) f)
+        (ploParaStep (s := s) g) ≫
+      cfpSnd A (cfpProd L X) ≫ cfpFst L X =
+    cfpSnd A L := by
+  have step_q :
+      cfpMap (𝟙 B)
+        (cfpSnd A (cfpProd L X) ≫
+          cfpFst L X) ≫ s.cons =
+      ploParaStep (s := s) g ≫
+        cfpSnd A (cfpProd L X) ≫
+          cfpFst L X := by
+    unfold ploParaStep ploParaCarrier
+    simp only
+    rw [← Category.assoc, cfpLift_snd,
+      cfpLift_fst]
+    -- Goal: cfpMap ... ≫ s.cons = cfpLift b l ≫ cons
+    -- The LHS cfpMap sends (b, (a, (l, x))) to
+    -- (b, l), same as cfpLift b l.
+    congr 1
+    symm
+    apply cfpLift_uniq
+    · rw [cfpLift_fst, Category.comp_id]
+    · rw [cfpLift_snd]
+  rw [ploElim_algebra_morphism
+      (ploParaBase (s := s) f)
+      (ploParaStep (s := s) g)
+      (cfpSnd A (cfpProd L X) ≫ cfpFst L X)
+      s.cons step_q]
+  have hbase_proj :
+      ploParaBase (s := s) f ≫
+        cfpSnd A (cfpProd L X) ≫
+          cfpFst L X =
+      cfpTerminalFrom A ≫ s.nil := by
+    unfold ploParaBase
+    rw [← Category.assoc, cfpLift_snd,
+      cfpLift_fst]
+  rw [hbase_proj]
+  symm
+  apply s.elim_uniq
+    (cfpTerminalFrom A ≫ s.nil) s.cons
+    (cfpSnd A L)
+  · unfold cfpInsertSnd
+    rw [cfpLift_snd]
+  · rw [cfpMap_snd]
+    congr 1
+    unfold cfpLiftElemRec
+    have h_assocSnd_snd :
+        cfpAssocSnd A B L ≫ cfpSnd A L =
+        cfpSnd A (cfpProd B L) ≫
+          cfpSnd B L := by
+      unfold cfpAssocSnd
+      rw [cfpLift_snd]
+    rw [h_assocSnd_snd]
+    exact cfpLift_uniq _ _
+      (cfpSnd A (cfpProd B L)) rfl rfl
+
+/-- Step-case equation for `ploParaElim`: at
+`cons(b, l)` with parameter `a`, the result is `g`
+applied to `(a, (b, (l, ploParaElim(a, l))))`. -/
+theorem ploParaElim_cons {A X : C} (f : A ⟶ X)
+    (g : cfpProd A
+        (cfpProd B (cfpProd L X)) ⟶ X) :
+    cfpMap (𝟙 A) s.cons ≫
+      ploParaElim (s := s) f g =
+    cfpLift
+        (cfpFst A (cfpProd B L))
+        (cfpLift
+          (cfpSnd A (cfpProd B L) ≫ cfpFst B L)
+          (cfpLift
+            (cfpSnd A (cfpProd B L) ≫ cfpSnd B L)
+            (cfpAssocSnd A B L ≫
+              ploParaElim (s := s) f g))) ≫
+      g := by
+  -- Expand ploParaElim and apply elim_cons.
+  unfold ploParaElim
+  rw [← Category.assoc, ← Category.assoc,
+    s.elim_cons]
+  -- Goal: cfpLiftElemRec E ≫ step ≫ snd_A ≫ snd_L
+  --       = RHS ≫ g
+  -- where E = elim base step.
+  -- Extract what step ≫ snd_A ≫ snd_L does.
+  set E := s.elim (ploParaBase (s := s) f)
+      (ploParaStep (s := s) g) with hE
+  have hstep_proj :
+      ploParaStep (s := s) g ≫
+        cfpSnd A (cfpProd L X) ≫ cfpSnd L X =
+      cfpLift
+        (cfpSnd B (ploParaCarrier (L := L) A X) ≫
+          cfpFst A (cfpProd L X))
+        (cfpLift
+          (cfpFst B
+            (ploParaCarrier (L := L) A X))
+          (cfpLift
+            (cfpSnd B
+                (ploParaCarrier (L := L) A X) ≫
+              cfpSnd A (cfpProd L X) ≫
+              cfpFst L X)
+            (cfpSnd B
+                (ploParaCarrier (L := L) A X) ≫
+              cfpSnd A (cfpProd L X) ≫
+              cfpSnd L X))) ≫
+        g := by
+    unfold ploParaStep ploParaCarrier
+    simp only
+    rw [← Category.assoc, cfpLift_snd,
+      cfpLift_snd]
+  rw [Category.assoc, Category.assoc, hstep_proj]
+  -- Goal: cfpLiftElemRec E ≫ (big cfpLift) ≫ g =
+  --       RHS ≫ g.
+  rw [← Category.assoc]
+  congr 1
+  -- Goal: cfpLiftElemRec E ≫ gArg = RHS.
+  -- Distribute over the inner cfpLift.
+  rw [cfpLift_precomp]
+  apply cfpLift_uniq
+  · -- First component (a): via param invariant.
+    rw [cfpLift_fst]
+    unfold cfpLiftElemRec
+    rw [← Category.assoc, cfpLift_snd,
+      Category.assoc,
+      ploParaElim_param_inv f g]
+    unfold cfpAssocSnd
+    rw [cfpLift_fst]
+  · -- Second component: (b, (l, x)).
+    rw [cfpLift_snd, cfpLift_precomp]
+    apply cfpLift_uniq
+    · -- b component: direct from cfpLift projection.
+      unfold cfpLiftElemRec
+      rw [cfpLift_fst, cfpLift_fst]
+    · -- (l, x) pair.
+      rw [cfpLift_snd, cfpLift_precomp]
+      apply cfpLift_uniq
+      · -- l component: via tail invariant.
+        rw [cfpLift_fst]
+        unfold cfpLiftElemRec
+        rw [← Category.assoc, cfpLift_snd,
+          Category.assoc,
+          ploParaElim_tail_inv f g]
+        unfold cfpAssocSnd
+        rw [cfpLift_snd]
+      · -- x component: ploParaElim.
+        rw [cfpLift_snd]
+        unfold cfpLiftElemRec
+        rw [← Category.assoc, cfpLift_snd,
+          Category.assoc, hE]
+
+/-- Uniqueness for `ploParaElim`: any morphism `ψ`
+satisfying the base and step equations of the PLO
+paramorphism equals `ploParaElim f g`. -/
+theorem ploParaElim_uniq {A X : C} (f : A ⟶ X)
+    (g : cfpProd A
+        (cfpProd B (cfpProd L X)) ⟶ X)
+    (ψ : cfpProd A L ⟶ X)
+    (hnil : cfpInsertSnd s.nil A ≫ ψ = f)
+    (hcons : cfpMap (𝟙 A) s.cons ≫ ψ =
+      cfpLift
+          (cfpFst A (cfpProd B L))
+          (cfpLift
+            (cfpSnd A (cfpProd B L) ≫ cfpFst B L)
+            (cfpLift
+              (cfpSnd A (cfpProd B L) ≫ cfpSnd B L)
+              (cfpAssocSnd A B L ≫ ψ))) ≫
+        g) :
+    ψ = ploParaElim (s := s) f g := by
+  -- Lift ψ to the enriched carrier.
+  set ψLift : cfpProd A L ⟶
+      ploParaCarrier (L := L) A X :=
+    cfpLift (cfpFst A L)
+      (cfpLift (cfpSnd A L) ψ)
+    with hψLift
+  -- Show ψLift satisfies the enriched equations.
+  have hlift_eq :
+      ψLift =
+      s.elim (ploParaBase (s := s) f)
+        (ploParaStep (s := s) g) := by
+    apply s.elim_uniq
+      (ploParaBase (s := s) f)
+      (ploParaStep (s := s) g)
+      ψLift
+    · -- Base: cfpInsertSnd s.nil A ≫ ψLift =
+      -- ploParaBase f.
+      rw [hψLift]
+      unfold ploParaBase
+      rw [cfpLift_precomp]
+      apply cfpLift_uniq
+      · rw [cfpLift_fst]
+        unfold cfpInsertSnd
+        rw [cfpLift_fst]
+      · rw [cfpLift_snd, cfpLift_precomp]
+        apply cfpLift_uniq
+        · rw [cfpLift_fst]
+          unfold cfpInsertSnd
+          rw [cfpLift_snd]
+        · rw [cfpLift_snd, hnil]
+    · -- Step: cfpMap (𝟙 A) s.cons ≫ ψLift =
+      -- cfpLiftElemRec ψLift ≫ ploParaStep g.
+      rw [hψLift]
+      set ψ' := cfpLift (cfpFst A L)
+        (cfpLift (cfpSnd A L) ψ)
+      -- Helper: projections of ψ'.
+      have hψ'_fst : ψ' ≫ cfpFst A
+          (cfpProd L X) = cfpFst A L :=
+        cfpLift_fst _ _
+      have hψ'_snd_fst :
+          ψ' ≫ cfpSnd A (cfpProd L X) ≫
+            cfpFst L X =
+          cfpSnd A L := by
+        rw [← Category.assoc, cfpLift_snd,
+          cfpLift_fst]
+      have hψ'_snd_snd :
+          ψ' ≫ cfpSnd A (cfpProd L X) ≫
+            cfpSnd L X = ψ := by
+        rw [← Category.assoc, cfpLift_snd,
+          cfpLift_snd]
+      -- Use product ext: show both sides
+      -- project the same on fst and snd.
+      -- LHS: cfpMap (𝟙 A) cons ≫ ψ'.
+      -- RHS: cfpLiftElemRec ψ' ≫ ploParaStep g.
+      -- First, compute fst of RHS.
+      have hRHS_fst :
+          cfpLiftElemRec ψ' ≫
+            ploParaStep (s := s) g ≫
+              cfpFst A (cfpProd L X) =
+          cfpFst A (cfpProd B L) := by
+        unfold ploParaStep ploParaCarrier
+        simp only
+        rw [cfpLift_fst]
+        unfold cfpLiftElemRec
+        rw [← Category.assoc, cfpLift_snd,
+          Category.assoc, hψ'_fst]
+        unfold cfpAssocSnd
+        rw [cfpLift_fst]
+      -- Next, compute fst of LHS.
+      have hLHS_fst :
+          cfpMap (𝟙 A) s.cons ≫ ψ' ≫
+            cfpFst A (cfpProd L X) =
+          cfpFst A (cfpProd B L) := by
+        rw [hψ'_fst,
+          cfpMap_fst, Category.comp_id]
+      -- Compute snd ≫ fst of RHS (cons(b,l)).
+      -- Compute snd ≫ fst of RHS (cons(b,l)).
+      have hRHS_snd_fst :
+          cfpLiftElemRec ψ' ≫
+            ploParaStep (s := s) g ≫
+              cfpSnd A (cfpProd L X) ≫
+                cfpFst L X =
+          cfpSnd A (cfpProd B L) ≫
+            s.cons := by
+        -- Reduce ploParaStep ≫ snd ≫ fst to
+        -- cfpLift b l ≫ cons (from ploParaStep).
+        unfold ploParaStep ploParaCarrier
+        simp only
+        rw [← Category.assoc
+          (cfpLift _ _)
+          (cfpSnd A (cfpProd L X))
+          (cfpFst L X),
+          cfpLift_snd, cfpLift_fst,
+          ← Category.assoc]
+        -- Goal: cfpLiftElemRec ψ' ≫
+        --   cfpLift b l ≫ cons
+        --   = cfpSnd A (B×L) ≫ cons
+        congr 1
+        -- Goal: cfpLiftElemRec ψ' ≫ cfpLift b l
+        -- = cfpSnd A (B×L)
+        -- where b = cfpFst B _ and
+        -- l = cfpSnd B _ ≫ snd A _ ≫ fst L X.
+        -- cfpLiftElemRec ψ' (a,(b,l)) =
+        -- (b, ψ'(a,l)). Composing with
+        -- cfpLift fst_B (snd_B ≫ snd_A ≫ fst_L)
+        -- gives (b, l). And cfpSnd A (B×L)
+        -- also gives (b, l) from (a,(b,l)).
+        unfold cfpLiftElemRec
+        rw [cfpLift_precomp]
+        symm
+        apply cfpLift_uniq
+          (cfpLift
+            (cfpSnd A (cfpProd B L) ≫
+              cfpFst B L)
+            (cfpAssocSnd A B L ≫ ψ') ≫
+            cfpFst B
+              (cfpProd A (cfpProd L X)))
+          (cfpLift
+            (cfpSnd A (cfpProd B L) ≫
+              cfpFst B L)
+            (cfpAssocSnd A B L ≫ ψ') ≫
+            cfpSnd B
+              (cfpProd A (cfpProd L X)) ≫
+            cfpSnd A (cfpProd L X) ≫
+            cfpFst L X)
+        · rw [cfpLift_fst]
+        · rw [← Category.assoc
+            (cfpLift _ _)
+            (cfpSnd B
+              (cfpProd A (cfpProd L X)))
+            (cfpSnd A (cfpProd L X) ≫
+              cfpFst L X),
+            cfpLift_snd, Category.assoc,
+            hψ'_snd_fst]
+          unfold cfpAssocSnd
+          rw [cfpLift_snd]
+      -- Compute snd ≫ fst of LHS.
+      have hLHS_snd_fst :
+          cfpMap (𝟙 A) s.cons ≫ ψ' ≫
+            cfpSnd A (cfpProd L X) ≫
+              cfpFst L X =
+          cfpSnd A (cfpProd B L) ≫
+            s.cons := by
+        rw [hψ'_snd_fst, cfpMap_snd]
+      -- Compute snd ≫ snd of RHS.
+      have hRHS_snd_snd :
+          cfpLiftElemRec ψ' ≫
+            ploParaStep (s := s) g ≫
+              cfpSnd A (cfpProd L X) ≫
+                cfpSnd L X =
+          cfpMap (𝟙 A) s.cons ≫ ψ := by
+        unfold ploParaStep ploParaCarrier
+        simp only
+        rw [← Category.assoc
+          (cfpLift _ _)
+          (cfpSnd A (cfpProd L X))
+          (cfpSnd L X),
+          cfpLift_snd, cfpLift_snd,
+          hcons, ← Category.assoc]
+        congr 1
+        -- cfpLiftElemRec ψ' ≫ gArg =
+        -- cfpLift (fst) (cfpLift (snd ≫ fst)
+        --   (cfpLift (snd ≫ snd)
+        --     (cfpAssocSnd ≫ ψ)))
+        unfold cfpLiftElemRec
+        rw [cfpLift_precomp]
+        apply cfpLift_uniq
+        · rw [cfpLift_fst,
+            ← Category.assoc
+              (cfpLift _ _)
+              (cfpSnd B _)
+              (cfpFst A _),
+            cfpLift_snd, Category.assoc,
+            hψ'_fst]
+          unfold cfpAssocSnd
+          rw [cfpLift_fst]
+        · rw [cfpLift_snd, cfpLift_precomp]
+          apply cfpLift_uniq
+          · rw [cfpLift_fst, cfpLift_fst]
+          · rw [cfpLift_snd, cfpLift_precomp]
+            apply cfpLift_uniq
+            · rw [cfpLift_fst,
+                ← Category.assoc
+                  (cfpLift _ _)
+                  (cfpSnd B _)
+                  (cfpSnd A _ ≫ cfpFst L X),
+                cfpLift_snd, Category.assoc,
+                hψ'_snd_fst]
+              unfold cfpAssocSnd
+              rw [cfpLift_snd]
+            · rw [cfpLift_snd,
+                ← Category.assoc
+                  (cfpLift _ _)
+                  (cfpSnd B _)
+                  (cfpSnd A _ ≫ cfpSnd L X),
+                cfpLift_snd, Category.assoc,
+                hψ'_snd_snd]
+      -- Compute snd ≫ snd of LHS.
+      have hLHS_snd_snd :
+          cfpMap (𝟙 A) s.cons ≫ ψ' ≫
+            cfpSnd A (cfpProd L X) ≫
+              cfpSnd L X =
+          cfpMap (𝟙 A) s.cons ≫ ψ := by
+        rw [hψ'_snd_snd]
+      -- Now combine both sides.
+      have hLHS_snd :
+          cfpMap (𝟙 A) s.cons ≫ ψ' ≫
+            cfpSnd A (cfpProd L X) =
+          cfpLift
+            (cfpSnd A (cfpProd B L) ≫ s.cons)
+            (cfpMap (𝟙 A) s.cons ≫ ψ) := by
+        apply cfpLift_uniq
+        · simp only [Category.assoc]
+          exact hLHS_snd_fst
+        · simp only [Category.assoc]
+          exact hLHS_snd_snd
+      have hRHS_snd :
+          cfpLiftElemRec ψ' ≫
+            ploParaStep (s := s) g ≫
+              cfpSnd A (cfpProd L X) =
+          cfpLift
+            (cfpSnd A (cfpProd B L) ≫ s.cons)
+            (cfpMap (𝟙 A) s.cons ≫ ψ) := by
+        apply cfpLift_uniq
+        · simp only [Category.assoc]
+          exact hRHS_snd_fst
+        · simp only [Category.assoc]
+          exact hRHS_snd_snd
+      have h_lhs : cfpMap (𝟙 A) s.cons ≫ ψ' =
+          cfpLift
+            (cfpFst A (cfpProd B L))
+            (cfpLift
+              (cfpSnd A (cfpProd B L) ≫ s.cons)
+              (cfpMap (𝟙 A) s.cons ≫ ψ)) :=
+        cfpLift_uniq _ _ _
+          (by rw [Category.assoc]; exact hLHS_fst)
+          (by rw [Category.assoc]; exact hLHS_snd)
+      have h_rhs : cfpLiftElemRec ψ' ≫
+          ploParaStep (s := s) g =
+          cfpLift
+            (cfpFst A (cfpProd B L))
+            (cfpLift
+              (cfpSnd A (cfpProd B L) ≫ s.cons)
+              (cfpMap (𝟙 A) s.cons ≫ ψ)) :=
+        cfpLift_uniq _ _ _
+          (by rw [Category.assoc]; exact hRHS_fst)
+          (by rw [Category.assoc]; exact hRHS_snd)
+      rw [h_lhs, h_rhs]
+  -- Project out ψ from ψLift.
+  have hproj :
+      ψLift ≫ cfpSnd A (cfpProd L X) ≫
+        cfpSnd L X = ψ := by
+    rw [hψLift, ← Category.assoc, cfpLift_snd,
+      cfpLift_snd]
+  change ψ = ploParaElim (s := s) f g
+  unfold ploParaElim
+  simp only
+  rw [← hlift_eq, hproj]
 
 end PLO_Paramorphism
 
@@ -279,6 +790,432 @@ theorem psoParaElim_nil {A X : C} (f : A ⟶ X)
     s.elim_nil]
   unfold psoParaBase
   rw [cfpLift_snd, cfpLift_snd]
+
+/-- Post-composing `cfpLiftRecElem φ` with
+`cfpMap q (𝟙 B)` yields `cfpLiftRecElem (φ ≫ q)`. -/
+private theorem cfpLiftRecElem_postcomp
+    {A L' B' X X' : C}
+    (φ : cfpProd A L' ⟶ X)
+    (q : X ⟶ X') :
+    cfpLiftRecElem φ ≫ cfpMap q (𝟙 B') =
+    cfpLiftRecElem (φ ≫ q) := by
+  unfold cfpLiftRecElem
+  rw [cfpLift_cfpMap]
+  congr 1
+  · rw [Category.assoc]
+  · rw [Category.comp_id]
+
+/-- Algebra morphism lemma for PSO. -/
+private theorem psoElim_algebra_morphism
+    {A X X' : C}
+    (f : A ⟶ X) (g : cfpProd X B ⟶ X)
+    (q : X ⟶ X')
+    (w : cfpProd X' B ⟶ X')
+    (hw : cfpMap q (𝟙 B) ≫ w = g ≫ q) :
+    s.elim f g ≫ q = s.elim (f ≫ q) w := by
+  exact s.elim_uniq (f ≫ q) w
+    (s.elim f g ≫ q)
+    (by rw [← Category.assoc, s.elim_nil])
+    (by
+      rw [← Category.assoc, s.elim_snoc,
+        Category.assoc, ← hw,
+        ← Category.assoc,
+        cfpLiftRecElem_postcomp])
+
+/-- Parameter invariant for PSO. -/
+private theorem psoParaElim_param_inv {A X : C}
+    (f : A ⟶ X)
+    (g : cfpProd A
+        (cfpProd L (cfpProd B X)) ⟶ X) :
+    @IsPSO.elim C _ h B L s A
+        (cfpProd A (cfpProd L X))
+        (psoParaBase (s := s) f)
+        (psoParaStep (s := s) g) ≫
+      cfpFst A (cfpProd L X) =
+    cfpFst A L := by
+  have step_q :
+      cfpMap
+          (cfpFst A (cfpProd L X))
+          (𝟙 B) ≫
+        cfpFst A B =
+      psoParaStep (s := s) g ≫
+        cfpFst A (cfpProd L X) := by
+    rw [cfpMap_fst]
+    unfold psoParaStep psoParaCarrier
+    simp only
+    rw [cfpLift_fst]
+  rw [psoElim_algebra_morphism
+      (psoParaBase (s := s) f)
+      (psoParaStep (s := s) g)
+      (cfpFst A (cfpProd L X))
+      (cfpFst A B) step_q]
+  have hbase_proj :
+      psoParaBase (s := s) f ≫
+        cfpFst A (cfpProd L X) = 𝟙 A := by
+    unfold psoParaBase
+    rw [cfpLift_fst]
+  rw [hbase_proj]
+  symm
+  apply s.elim_uniq (𝟙 A) (cfpFst A B)
+    (cfpFst A L)
+  · unfold cfpInsertSnd
+    rw [cfpLift_fst]
+  · rw [cfpMap_fst, Category.comp_id]
+    unfold cfpLiftRecElem cfpAssocFst
+    rw [cfpLift_fst, cfpLift_fst]
+
+/-- Tail invariant for PSO. -/
+private theorem psoParaElim_tail_inv {A X : C}
+    (f : A ⟶ X)
+    (g : cfpProd A
+        (cfpProd L (cfpProd B X)) ⟶ X) :
+    @IsPSO.elim C _ h B L s A
+        (cfpProd A (cfpProd L X))
+        (psoParaBase (s := s) f)
+        (psoParaStep (s := s) g) ≫
+      cfpSnd A (cfpProd L X) ≫ cfpFst L X =
+    cfpSnd A L := by
+  have step_q :
+      cfpMap
+        (cfpSnd A (cfpProd L X) ≫
+          cfpFst L X)
+        (𝟙 B) ≫ s.snoc =
+      psoParaStep (s := s) g ≫
+        cfpSnd A (cfpProd L X) ≫
+          cfpFst L X := by
+    unfold psoParaStep psoParaCarrier
+    simp only
+    rw [← Category.assoc, cfpLift_snd,
+      cfpLift_fst]
+    congr 1
+    apply cfpLift_uniq <;> simp [cfpMap_fst,
+      cfpMap_snd, Category.comp_id]
+  rw [psoElim_algebra_morphism
+      (psoParaBase (s := s) f)
+      (psoParaStep (s := s) g)
+      (cfpSnd A (cfpProd L X) ≫ cfpFst L X)
+      s.snoc step_q]
+  have hbase_proj :
+      psoParaBase (s := s) f ≫
+        cfpSnd A (cfpProd L X) ≫
+          cfpFst L X =
+      cfpTerminalFrom A ≫ s.nil := by
+    unfold psoParaBase
+    rw [← Category.assoc, cfpLift_snd,
+      cfpLift_fst]
+  rw [hbase_proj]
+  symm
+  apply s.elim_uniq
+    (cfpTerminalFrom A ≫ s.nil) s.snoc
+    (cfpSnd A L)
+  · unfold cfpInsertSnd
+    rw [cfpLift_snd]
+  · rw [cfpMap_snd]
+    congr 1
+    unfold cfpLiftRecElem
+    have h_assocFst_fst :
+        cfpAssocFst A L B ≫ cfpSnd A L =
+        cfpSnd A (cfpProd L B) ≫
+          cfpFst L B := by
+      unfold cfpAssocFst
+      rw [cfpLift_snd]
+    rw [h_assocFst_fst]
+    exact cfpLift_uniq _ _
+      (cfpSnd A (cfpProd L B)) rfl rfl
+
+/-- Step-case equation for `psoParaElim`. -/
+theorem psoParaElim_snoc {A X : C} (f : A ⟶ X)
+    (g : cfpProd A
+        (cfpProd L (cfpProd B X)) ⟶ X) :
+    cfpMap (𝟙 A) s.snoc ≫
+      psoParaElim (s := s) f g =
+    cfpLift
+        (cfpFst A (cfpProd L B))
+        (cfpLift
+          (cfpSnd A (cfpProd L B) ≫ cfpFst L B)
+          (cfpLift
+            (cfpSnd A (cfpProd L B) ≫ cfpSnd L B)
+            (cfpAssocFst A L B ≫
+              psoParaElim (s := s) f g))) ≫
+      g := by
+  -- Expand psoParaElim and apply elim_snoc.
+  unfold psoParaElim
+  rw [← Category.assoc, ← Category.assoc,
+    s.elim_snoc]
+  set E := s.elim (psoParaBase (s := s) f)
+      (psoParaStep (s := s) g) with hE
+  have hstep_proj :
+      psoParaStep (s := s) g ≫
+        cfpSnd A (cfpProd L X) ≫ cfpSnd L X =
+      cfpLift
+        (cfpFst
+          (psoParaCarrier (L := L) A X) B ≫
+          cfpFst A (cfpProd L X))
+        (cfpLift
+          (cfpFst
+            (psoParaCarrier (L := L) A X) B ≫
+            cfpSnd A (cfpProd L X) ≫
+            cfpFst L X)
+          (cfpLift
+            (cfpSnd
+              (psoParaCarrier (L := L) A X) B)
+            (cfpFst
+              (psoParaCarrier (L := L) A X) B ≫
+              cfpSnd A (cfpProd L X) ≫
+              cfpSnd L X))) ≫
+        g := by
+    unfold psoParaStep psoParaCarrier
+    simp only
+    rw [← Category.assoc, cfpLift_snd,
+      cfpLift_snd]
+  rw [Category.assoc, Category.assoc, hstep_proj]
+  rw [← Category.assoc]
+  congr 1
+  -- cfpLiftRecElem E ≫ gArg = RHS.
+  rw [cfpLift_precomp]
+  apply cfpLift_uniq
+  · -- a component: via param invariant.
+    rw [cfpLift_fst]
+    unfold cfpLiftRecElem
+    rw [← Category.assoc, cfpLift_fst,
+      Category.assoc,
+      psoParaElim_param_inv f g]
+    unfold cfpAssocFst
+    rw [cfpLift_fst]
+  · -- (l, (b, x)) component.
+    rw [cfpLift_snd, cfpLift_precomp]
+    apply cfpLift_uniq
+    · -- l component: via tail invariant.
+      rw [cfpLift_fst]
+      unfold cfpLiftRecElem
+      rw [← Category.assoc, cfpLift_fst,
+        Category.assoc,
+        psoParaElim_tail_inv f g]
+      unfold cfpAssocFst
+      rw [cfpLift_snd]
+    · -- (b, x) pair.
+      rw [cfpLift_snd, cfpLift_precomp]
+      apply cfpLift_uniq
+      · -- b component.
+        rw [cfpLift_fst]
+        unfold cfpLiftRecElem
+        rw [cfpLift_snd]
+      · -- x component: psoParaElim.
+        rw [cfpLift_snd]
+        unfold cfpLiftRecElem
+        rw [← Category.assoc, cfpLift_fst,
+          Category.assoc, hE]
+
+/-- Uniqueness for `psoParaElim`. -/
+theorem psoParaElim_uniq {A X : C} (f : A ⟶ X)
+    (g : cfpProd A
+        (cfpProd L (cfpProd B X)) ⟶ X)
+    (ψ : cfpProd A L ⟶ X)
+    (hnil : cfpInsertSnd s.nil A ≫ ψ = f)
+    (hsnoc : cfpMap (𝟙 A) s.snoc ≫ ψ =
+      cfpLift
+          (cfpFst A (cfpProd L B))
+          (cfpLift
+            (cfpSnd A (cfpProd L B) ≫ cfpFst L B)
+            (cfpLift
+              (cfpSnd A (cfpProd L B) ≫ cfpSnd L B)
+              (cfpAssocFst A L B ≫ ψ))) ≫
+        g) :
+    ψ = psoParaElim (s := s) f g := by
+  set ψLift : cfpProd A L ⟶
+      psoParaCarrier (L := L) A X :=
+    cfpLift (cfpFst A L)
+      (cfpLift (cfpSnd A L) ψ)
+    with hψLift
+  have hψ'_fst : ψLift ≫ cfpFst A
+      (cfpProd L X) = cfpFst A L :=
+    cfpLift_fst _ _
+  have hψ'_snd_fst :
+      ψLift ≫ cfpSnd A (cfpProd L X) ≫
+        cfpFst L X =
+      cfpSnd A L := by
+    rw [← Category.assoc, cfpLift_snd,
+      cfpLift_fst]
+  have hψ'_snd_snd :
+      ψLift ≫ cfpSnd A (cfpProd L X) ≫
+        cfpSnd L X = ψ := by
+    rw [← Category.assoc, cfpLift_snd,
+      cfpLift_snd]
+  have hlift_eq :
+      ψLift =
+      s.elim (psoParaBase (s := s) f)
+        (psoParaStep (s := s) g) := by
+    apply s.elim_uniq
+      (psoParaBase (s := s) f)
+      (psoParaStep (s := s) g)
+      ψLift
+    · rw [hψLift]
+      unfold psoParaBase
+      rw [cfpLift_precomp]
+      apply cfpLift_uniq
+      · rw [cfpLift_fst]
+        unfold cfpInsertSnd
+        rw [cfpLift_fst]
+      · rw [cfpLift_snd, cfpLift_precomp]
+        apply cfpLift_uniq
+        · rw [cfpLift_fst]
+          unfold cfpInsertSnd
+          rw [cfpLift_snd]
+        · rw [cfpLift_snd, hnil]
+    · -- Step condition.
+      rw [hψLift]
+      set ψ' := cfpLift (cfpFst A L)
+        (cfpLift (cfpSnd A L) ψ)
+      -- Product ext on A × (L × X).
+      have hRHS_fst :
+          cfpLiftRecElem ψ' ≫
+            psoParaStep (s := s) g ≫
+              cfpFst A (cfpProd L X) =
+          cfpFst A (cfpProd L B) := by
+        unfold psoParaStep psoParaCarrier
+        simp only
+        rw [cfpLift_fst]
+        unfold cfpLiftRecElem
+        rw [← Category.assoc, cfpLift_fst,
+          Category.assoc, hψ'_fst]
+        unfold cfpAssocFst
+        rw [cfpLift_fst]
+      have hLHS_fst :
+          cfpMap (𝟙 A) s.snoc ≫ ψ' ≫
+            cfpFst A (cfpProd L X) =
+          cfpFst A (cfpProd L B) := by
+        rw [hψ'_fst,
+          cfpMap_fst, Category.comp_id]
+      have hRHS_snd_fst :
+          cfpLiftRecElem ψ' ≫
+            psoParaStep (s := s) g ≫
+              cfpSnd A (cfpProd L X) ≫
+                cfpFst L X =
+          cfpSnd A (cfpProd L B) ≫
+            s.snoc := by
+        unfold psoParaStep psoParaCarrier
+        simp only
+        rw [← Category.assoc
+          (cfpLift _ _)
+          (cfpSnd A (cfpProd L X))
+          (cfpFst L X),
+          cfpLift_snd, cfpLift_fst,
+          ← Category.assoc]
+        congr 1
+        unfold cfpLiftRecElem
+        rw [cfpLift_precomp]
+        symm
+        apply cfpLift_uniq
+        · rw [← Category.assoc
+              (cfpLift _ _)
+              (cfpFst _ B)
+              (cfpSnd A _ ≫ cfpFst L X),
+            cfpLift_fst, Category.assoc,
+            hψ'_snd_fst]
+          unfold cfpAssocFst
+          rw [cfpLift_snd]
+        · rw [cfpLift_snd]
+      have hLHS_snd_fst :
+          cfpMap (𝟙 A) s.snoc ≫ ψ' ≫
+            cfpSnd A (cfpProd L X) ≫
+              cfpFst L X =
+          cfpSnd A (cfpProd L B) ≫
+            s.snoc := by
+        rw [hψ'_snd_fst, cfpMap_snd]
+      have hRHS_snd_snd :
+          cfpLiftRecElem ψ' ≫
+            psoParaStep (s := s) g ≫
+              cfpSnd A (cfpProd L X) ≫
+                cfpSnd L X =
+          cfpMap (𝟙 A) s.snoc ≫ ψ := by
+        unfold psoParaStep psoParaCarrier
+        simp only
+        rw [← Category.assoc
+          (cfpLift _ _)
+          (cfpSnd A (cfpProd L X))
+          (cfpSnd L X),
+          cfpLift_snd, cfpLift_snd,
+          hsnoc, ← Category.assoc]
+        congr 1
+        unfold cfpLiftRecElem
+        rw [cfpLift_precomp]
+        apply cfpLift_uniq
+        · rw [cfpLift_fst,
+            ← Category.assoc, cfpLift_fst,
+            Category.assoc, hψ'_fst]
+          unfold cfpAssocFst
+          rw [cfpLift_fst]
+        · rw [cfpLift_snd, cfpLift_precomp]
+          apply cfpLift_uniq
+          · rw [cfpLift_fst,
+              ← Category.assoc, cfpLift_fst,
+              Category.assoc, hψ'_snd_fst]
+            unfold cfpAssocFst
+            rw [cfpLift_snd]
+          · rw [cfpLift_snd, cfpLift_precomp]
+            apply cfpLift_uniq
+            · rw [cfpLift_fst, cfpLift_snd]
+            · rw [cfpLift_snd,
+                ← Category.assoc, cfpLift_fst,
+                Category.assoc, hψ'_snd_snd]
+      have hLHS_snd_snd :
+          cfpMap (𝟙 A) s.snoc ≫ ψ' ≫
+            cfpSnd A (cfpProd L X) ≫
+              cfpSnd L X =
+          cfpMap (𝟙 A) s.snoc ≫ ψ := by
+        rw [hψ'_snd_snd]
+      have hLHS_snd :
+          cfpMap (𝟙 A) s.snoc ≫ ψ' ≫
+            cfpSnd A (cfpProd L X) =
+          cfpLift
+            (cfpSnd A (cfpProd L B) ≫ s.snoc)
+            (cfpMap (𝟙 A) s.snoc ≫ ψ) := by
+        apply cfpLift_uniq
+        · simp only [Category.assoc]
+          exact hLHS_snd_fst
+        · simp only [Category.assoc]
+          exact hLHS_snd_snd
+      have hRHS_snd :
+          cfpLiftRecElem ψ' ≫
+            psoParaStep (s := s) g ≫
+              cfpSnd A (cfpProd L X) =
+          cfpLift
+            (cfpSnd A (cfpProd L B) ≫ s.snoc)
+            (cfpMap (𝟙 A) s.snoc ≫ ψ) := by
+        apply cfpLift_uniq
+        · simp only [Category.assoc]
+          exact hRHS_snd_fst
+        · simp only [Category.assoc]
+          exact hRHS_snd_snd
+      have h_lhs : cfpMap (𝟙 A) s.snoc ≫ ψ' =
+          cfpLift
+            (cfpFst A (cfpProd L B))
+            (cfpLift
+              (cfpSnd A (cfpProd L B) ≫ s.snoc)
+              (cfpMap (𝟙 A) s.snoc ≫ ψ)) :=
+        cfpLift_uniq _ _ _
+          (by rw [Category.assoc]; exact hLHS_fst)
+          (by rw [Category.assoc]; exact hLHS_snd)
+      have h_rhs : cfpLiftRecElem ψ' ≫
+          psoParaStep (s := s) g =
+          cfpLift
+            (cfpFst A (cfpProd L B))
+            (cfpLift
+              (cfpSnd A (cfpProd L B) ≫ s.snoc)
+              (cfpMap (𝟙 A) s.snoc ≫ ψ)) :=
+        cfpLift_uniq _ _ _
+          (by rw [Category.assoc]; exact hRHS_fst)
+          (by rw [Category.assoc]; exact hRHS_snd)
+      rw [h_lhs, h_rhs]
+  have hproj :
+      ψLift ≫ cfpSnd A (cfpProd L X) ≫
+        cfpSnd L X = ψ := by
+    rw [hψLift, ← Category.assoc, cfpLift_snd,
+      cfpLift_snd]
+  change ψ = psoParaElim (s := s) f g
+  unfold psoParaElim
+  simp only
+  rw [← hlift_eq, hproj]
 
 end PSO_Paramorphism
 
