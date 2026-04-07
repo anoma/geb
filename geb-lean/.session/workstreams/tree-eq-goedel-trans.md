@@ -734,6 +734,91 @@ Estimated total for `NatEqCantorPair`: 500-800
 lines, with natEq transitivity as the primary
 intermediate goal.
 
+#### Progress (session 2026-04-06f)
+
+New lemmas in `GebLean/NatNNO.lean`:
+
+- `natPlus_isLeafEndo_eq_boolAnd` (private):
+  `natPlus ≫ isLeafEndo = boolAnd`.
+  Re-proved in NatNNO (also exists as private in
+  TreeEqGoedel).  Proved via `p.elim_uniq`
+  with base `isLeafEndo` and step
+  `cfpTerminalFrom ≫ treeFalse`.
+
+- `natEq_eq_boolAnd_natTruncSub` (private):
+  `natEq = cfpLift natTruncSub
+    (cfpSwap ≫ natTruncSub) ≫ boolAnd`.
+  States that `natEq(x, y) = boolAnd(x - y, y - x)`.
+  Immediate from the definition of `natEq` and
+  `natPlus_isLeafEndo_eq_boolAnd`.
+
+- `natEq_symm`:
+  `cfpSwap ≫ natEq = natEq`.
+  Symmetry of natEq.  Proved by decomposing
+  natEq via `natEq_eq_boolAnd_natTruncSub`,
+  noting that swapping the two natTruncSub
+  components is `boolAnd_comm` (since swap is
+  an involution).
+
+- `boolAnd_implies_natEq` (private):
+  `cfpLift boolAnd natEq ≫ boolAnd = boolAnd`.
+  States `boolAnd(boolAnd(x, z), natEq(x, z))
+  = boolAnd(x, z)`, i.e., leaf conjunction of
+  x and z implies their natEq equality.
+  Proved via `p.elim_uniq` on the second argument
+  of the outer boolAnd: base uses `boolAnd_ℓ_right`,
+  `natEq_ℓ_right`, `boolAnd_idem`, and
+  `isLeafEndo_idem`; step uses `boolAnd_β_right`
+  and `boolAnd_treeFalse_left` (since the first
+  arg becomes treeFalse at a branch).
+
+#### Updated analysis (session 2026-04-06f)
+
+`boolAnd_implies_natEq` provides the base case
+(y = ℓ) of the natEq transitivity proof.  Several
+approaches were analyzed for the step case:
+
+**Approach 1: PBTO fold on y.** Both `natEq(x, y)`
+and `natEq(y, z)` involve `natTruncSub` components
+that fold on different arguments; in particular,
+`natTruncSub(y, x)` and `natTruncSub(y, z)` have y
+as the first argument, which is NOT the fold position
+of natTruncSub.  So neither the conjunction nor the
+goal is a clean fold on y.
+
+**Approach 2: Algebraic via `natTruncSub_fold_comp`.**
+`natTruncSub(natTruncSub(a, b), c) = natTruncSub(a,
+natPlus(b, c))`.  From `natTruncSub(x, y) = ℓ` we
+get `natTruncSub(x, natPlus(y, c)) = ℓ` for all c.
+To conclude `natTruncSub(x, z) = ℓ` requires
+`z ≤ natPlus(y, natTruncSub(z, y))`, which holds
+(since `natTruncSub(z, natPlus(y, natTruncSub(z, y)))
+= natTruncSub(natTruncSub(z, y), natTruncSub(z, y))
+= ℓ` by `natTruncSub_self`), but we also need
+`natTruncSub(x, z) = natTruncSub(x,
+natPlus(y, natTruncSub(z, y)))`.  By
+`natTruncSub_toRSpineNat_second`, this reduces to
+`toRSN(z) = toRSN(natPlus(y, natTruncSub(z, y)))`,
+which is the addition-subtraction identity.
+
+**Approach 3: Addition-subtraction identity.**
+Prove `natEq(z, natPlus(y, natTruncSub(z, y))) = ℓ`
+when `natTruncSub(y, z) = ℓ` (y ≤ z).  The base
+case (y = ℓ) gives
+`natEq(z, natPlus(ℓ, natTruncSub(z, ℓ)))
+= natEq(z, toRSN(z)) = ℓ`.  The step case
+(y → succ(y)) requires tracking the hypothesis
+`y ≤ z` through the fold, which creates a
+conditional step function.
+
+**Recommended path forward:** Prove the
+addition-subtraction identity as a `nnoElim_uniq`
+on y with explicit carry of the `y ≤ z` condition
+through `boolAnd`.  Then derive transitivity of
+`isLeafEndo ∘ natTruncSub` using
+`natTruncSub_fold_comp`, and combine with symmetry
+to get full `natEq_trans`.  Estimated 200-300 lines.
+
 ### `treeEqG_trans`
 
 Transitivity of `treeEqG`, using `natTruncSub_fold_comp`

@@ -1442,4 +1442,164 @@ theorem natEq_ℓ_left :
     natPlus_ℓ_left_eq_toRSpineNat,
     toRSpineNat_isLeafEndo]
 
+/-- `natPlus ≫ isLeafEndo = boolAnd`:
+applying `isLeafEndo` to a sum yields the
+conjunction of `isLeafEndo` on the summands. -/
+private theorem natPlus_isLeafEndo_eq_boolAnd :
+    natPlus ≫ isLeafEndo =
+    (boolAnd : cfpProd p.T p.T ⟶ p.T) := by
+  rw [boolAnd_eq_elim]
+  have base :
+      cfpInsertSnd p.ℓ p.T ≫
+        (natPlus ≫ isLeafEndo) =
+      isLeafEndo := by
+    rw [← Category.assoc, natPlus_ℓ,
+      Category.id_comp]
+  have step :
+      cfpMap (𝟙 p.T) p.β ≫
+        (natPlus ≫ isLeafEndo) =
+      cfpLiftAssoc (natPlus ≫ isLeafEndo)
+        (natPlus ≫ isLeafEndo) ≫
+        (cfpTerminalFrom (cfpProd p.T p.T) ≫
+          treeFalse) := by
+    rw [← Category.assoc, natPlus_β,
+      Category.assoc, Category.assoc,
+      natSucc_isLeafEndo]
+    have lhs :
+        cfpLiftAssoc natPlus natPlus ≫
+          cfpSnd p.T p.T ≫
+          cfpTerminalFrom p.T ≫
+          treeFalse =
+        cfpTerminalFrom _ ≫ treeFalse := by
+      rw [← Category.assoc
+        (cfpLiftAssoc natPlus natPlus),
+        ← Category.assoc
+          (cfpLiftAssoc natPlus natPlus ≫
+            cfpSnd p.T p.T)]
+      congr 1; exact h.terminal.uniq _
+    have rhs :
+        cfpLiftAssoc
+          (natPlus ≫ isLeafEndo)
+          (natPlus ≫ isLeafEndo) ≫
+          cfpTerminalFrom
+            (cfpProd p.T p.T) ≫
+          treeFalse =
+        cfpTerminalFrom _ ≫ treeFalse := by
+      rw [← Category.assoc]
+      congr 1; exact h.terminal.uniq _
+    rw [lhs, rhs]
+  exact p.elim_uniq isLeafEndo
+    (cfpTerminalFrom (cfpProd p.T p.T) ≫
+      treeFalse)
+    (natPlus ≫ isLeafEndo)
+    base step
+
+/-- `natEq` decomposes as `boolAnd` of the two
+truncated subtractions:
+`natEq(x, y) = boolAnd(x - y, y - x)`. -/
+private theorem natEq_eq_boolAnd_natTruncSub :
+    (natEq : cfpProd p.T p.T ⟶ p.T) =
+    cfpLift natTruncSub
+      (cfpSwap p.T p.T ≫ natTruncSub) ≫
+      boolAnd := by
+  have h_unfold : natEq =
+      cfpLift natTruncSub
+        (cfpSwap p.T p.T ≫ natTruncSub) ≫
+        natPlus ≫
+        (isLeafEndo : p.T ⟶ p.T) := rfl
+  rw [h_unfold, ← natPlus_isLeafEndo_eq_boolAnd]
+
+/-- Symmetry of `natEq`:
+`natEq(y, x) = natEq(x, y)`. -/
+theorem natEq_symm :
+    cfpSwap p.T p.T ≫ natEq =
+    (natEq : cfpProd p.T p.T ⟶ p.T) := by
+  rw [natEq_eq_boolAnd_natTruncSub,
+    ← Category.assoc, cfpLift_precomp]
+  have swap_fst :
+      cfpSwap p.T p.T ≫ cfpFst p.T p.T =
+      cfpSnd p.T p.T := by
+    unfold cfpSwap; exact cfpLift_fst _ _
+  have swap_snd :
+      cfpSwap p.T p.T ≫ cfpSnd p.T p.T =
+      cfpFst p.T p.T := by
+    unfold cfpSwap; exact cfpLift_snd _ _
+  have cfpSwap_invol :
+      cfpSwap p.T p.T ≫
+        cfpSwap p.T p.T =
+      𝟙 (cfpProd p.T p.T) := by
+    rw [show 𝟙 (cfpProd p.T p.T) =
+        cfpLift (cfpFst p.T p.T)
+          (cfpSnd p.T p.T) from
+      cfpLift_uniq _ _ _
+        (Category.id_comp _)
+        (Category.id_comp _)]
+    apply cfpLift_uniq
+    · rw [Category.assoc, swap_fst, swap_snd]
+    · rw [Category.assoc, swap_snd, swap_fst]
+  have h_swap_swap :
+      cfpSwap p.T p.T ≫
+        cfpSwap p.T p.T ≫ natTruncSub =
+      natTruncSub := by
+    rw [← Category.assoc, cfpSwap_invol,
+      Category.id_comp]
+  rw [h_swap_swap]
+  -- Goal should be:
+  -- cfpLift (swap ≫ nts) nts ≫ boolAnd
+  -- = cfpLift nts (swap ≫ nts) ≫ boolAnd
+  exact boolAnd_comm
+    (cfpSwap p.T p.T ≫ natTruncSub)
+    natTruncSub
+
+/-- `boolAnd(boolAnd(x, z), natEq(x, z))
+  = boolAnd(x, z)`:
+conjunction implies equality. -/
+private theorem boolAnd_implies_natEq :
+    cfpLift boolAnd natEq ≫ boolAnd =
+    (boolAnd : cfpProd p.T p.T ⟶ p.T) := by
+  conv_rhs => rw [boolAnd_eq_elim]
+  apply p.elim_uniq isLeafEndo
+    (cfpTerminalFrom (cfpProd p.T p.T) ≫
+      treeFalse)
+  · -- Base: cfpInsertSnd ℓ T ≫ LHS = isLeafEndo.
+    rw [← Category.assoc]
+    have base_lift :
+        cfpInsertSnd p.ℓ p.T ≫
+          cfpLift boolAnd natEq =
+        cfpLift isLeafEndo isLeafEndo := by
+      rw [cfpLift_precomp]
+      congr 1
+      · exact boolAnd_ℓ_right
+      · exact natEq_ℓ_right
+    rw [base_lift]
+    have diag :
+        cfpLift (isLeafEndo : p.T ⟶ p.T)
+          isLeafEndo =
+        isLeafEndo ≫
+          cfpLift (𝟙 p.T) (𝟙 p.T) := by
+      rw [cfpLift_precomp]
+      simp only [Category.comp_id]
+    rw [diag, Category.assoc, boolAnd_idem,
+      isLeafEndo_idem]
+  · -- Step: cfpMap (𝟙 T) β ≫ LHS
+    --   = cfpLiftAssoc LHS LHS ≫ term ≫ treeFalse.
+    rw [← Category.assoc]
+    have step_lift :
+        cfpMap (𝟙 p.T) p.β ≫
+          cfpLift boolAnd natEq =
+        cfpLift
+          (cfpTerminalFrom
+            (cfpProd p.T (cfpProd p.T p.T)) ≫
+            treeFalse)
+          (cfpMap (𝟙 p.T) p.β ≫ natEq) := by
+      rw [cfpLift_precomp]
+      congr 1
+      exact boolAnd_β_right
+    rw [step_lift, boolAnd_treeFalse_left]
+    -- RHS: cfpLiftAssoc ... ≫ term ≫ treeFalse
+    --   = term ≫ treeFalse.
+    rw [← Category.assoc]
+    congr 1
+    exact (h.terminal.uniq _).symm
+
 end GebLean
