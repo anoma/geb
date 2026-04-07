@@ -51,6 +51,7 @@ import GebLean.PLang.IndexedEAT
 import GebLean.PLang.JudgmentUniverse
 import GebLean.PLang.Syntax
 import GebLean.PLang.TreeCalcPoly
+import GebLean.PLO
 import GebLean.ParamPoly
 import GebLean.ParanatAlg
 import GebLean.Paranatural
@@ -72,6 +73,7 @@ import GebLean.PolyCover
 import GebLean.PresheafPRA
 import GebLean.PresheafPRADiscrete
 import GebLean.PresheafPRAUMorph
+import GebLean.PSO
 import GebLean.ProfAlg
 import GebLean.PshInternalCat
 import GebLean.PshInternalExternalize
