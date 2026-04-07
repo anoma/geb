@@ -23,6 +23,7 @@ import GebLean.FreeCoequalizerCompletion
 import GebLean.FreeToposBT
 import GebLean.HexagonCat
 import GebLean.NatArith
+import GebLean.NatNNO
 import GebLean.TreeEqGoedel
 import GebLean.TreeGoedel
 import GebLean.TreeLogic
