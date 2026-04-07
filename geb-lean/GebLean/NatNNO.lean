@@ -475,4 +475,47 @@ private theorem cantorUnpair_natSucc :
     (cfpMap _ _) (cfpAssocSnd _ _ _)]
   rw [cancel, Category.id_comp]
 
+/-- The retraction property:
+`cantorUnpair ≫ cantorPair = toRSpineNat`. -/
+theorem cantorUnpair_cantorPair :
+    cantorUnpair ≫ cantorPair =
+    (toRSpineNat : p.T ⟶ p.T) := by
+  unfold cantorUnpair
+  rw [Category.assoc,
+    cantorUnpairHelper_cantorPair]
+  -- LHS = embed ≫ p.elim ℓ (cfpSnd ≫ natSucc)
+  -- = toRSN, which is embed ≫ p.elim ℓ step
+  -- where step = cfpSnd ≫ natSucc
+  -- (after toRSpineNat_step_eq_natSucc).
+  -- Use natPlus_ℓ_left_eq_toRSpineNat:
+  -- cfpLift (term ≫ ℓ) (𝟙 T) ≫ natPlus = toRSN.
+  -- natPlus = p.elim (𝟙 T) (cfpSnd ≫ natSucc).
+  -- By elim_naturality:
+  -- embed ≫ cfpMap ℓ (𝟙 T) ≫ natPlus
+  -- = embed ≫ p.elim ℓ (cfpSnd ≫ natSucc).
+  -- Then toRSN = embed' ≫ natPlus
+  -- = embed ≫ cfpMap ℓ (𝟙 T) ≫ natPlus
+  -- = embed ≫ p.elim ℓ (cfpSnd ≫ natSucc).
+  rw [show cfpLift (cfpTerminalFrom p.T)
+      (𝟙 p.T) ≫
+      p.elim p.ℓ
+        (cfpSnd p.T p.T ≫ natSucc) =
+    cfpLift (cfpTerminalFrom p.T ≫ p.ℓ)
+      (𝟙 p.T) ≫ natPlus from by
+    have factor :
+        cfpLift
+          (cfpTerminalFrom p.T ≫ p.ℓ)
+          (𝟙 p.T) =
+        cfpLift (cfpTerminalFrom p.T)
+          (𝟙 p.T) ≫
+          cfpMap (p.ℓ : cfpTerminal ⟶ p.T)
+            (𝟙 p.T) := by
+      rw [cfpLift_cfpMap, Category.comp_id]
+    rw [factor, Category.assoc]
+    unfold natPlus
+    rw [elim_naturality p.ℓ (𝟙 p.T)
+      (cfpSnd p.T p.T ≫ natSucc),
+      Category.comp_id],
+    natPlus_ℓ_left_eq_toRSpineNat]
+
 end GebLean
