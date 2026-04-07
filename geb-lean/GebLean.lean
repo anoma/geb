@@ -75,6 +75,7 @@ import GebLean.PresheafPRADiscrete
 import GebLean.PresheafPRAUMorph
 import GebLean.PSO
 import GebLean.PSTONat
+import GebLean.PSTOtoPBTO
 import GebLean.ProfAlg
 import GebLean.PshInternalCat
 import GebLean.PshInternalExternalize

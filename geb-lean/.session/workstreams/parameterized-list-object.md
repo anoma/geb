@@ -74,8 +74,8 @@ for the implementation plan.
 
 ### Phase 6: PSTO -> PBTO
 
-- [ ] Investigate direct construction approaches
-- [ ] Document findings
+- [x] Investigate direct construction approaches
+- [x] Document findings in `GebLean/PSTOtoPBTO.lean`
 
 ## Notes
 
@@ -128,12 +128,25 @@ The fixed-point equation: if we set
 `psi = PSO.elim z h` satisfies the PBTO equations.
 This requires finding `h` such that `h = Phi(h)`.
 
-Approaches still to try:
+All five approaches attempted in `GebLean/PSTOtoPBTO.lean`
+fail for the same structural reason: the PSO/PSTO fold
+processes a snoclist by recursing on the accumulated
+prefix and passing each element as raw data.  The PBTO
+catamorphism requires recursion into both components.
 
-1. PSO fold with A = T (diagonal: fold a tree with
-   itself as parameter)
-2. Paramorphism with enriched carrier
-3. Composition of multiple PSO folds
-4. Via PNNO iteration of the Phi operator
-5. Direct proof that the fixed-point equation has
-   a solution using the PSTO structure
+1. Direct enriched carrier `T x X`: cannot fill the
+   second argument of `g` (needs recursive result on
+   the element, which is unavailable).
+2. PSO paramorphism: provides `(a, l, b, phi(a,l))` but
+   not `phi(a, b)`.  Same structural gap.
+3. Fixed-point equation: self-referential definition
+   rejected by Lean (no termination argument in the
+   abstract categorical setting).
+4. Double PSO fold (nested folds): inner fold faces the
+   same problem recursively ad infinitum.
+5. Product carrier `X x X`: no choice of second
+   component resolves the gap.
+
+A direct PSTO -> PBTO construction likely requires
+additional structure (internal fixed-point operator,
+parameterized NNO, or exponential objects).
