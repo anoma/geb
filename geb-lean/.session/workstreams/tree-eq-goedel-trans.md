@@ -324,6 +324,79 @@ The injectivity direction is harder.  Approaches:
 Both approaches require substantial work (many
 intermediate lemmas, each 10-50 lines).
 
+#### Detailed analysis (session 2026-04-06)
+
+The proof has three main parts:
+
+**Part A: Step case (`a1 = succ, a2 = succ`).**
+Using `cantorPair_succ_fst`:
+`CP(succ(a1), b1) = succ(CP(a1, succ(b1)))`.
+Combined with `natEq_succ_cancel`:
+`natEq(succ(CP(a1,s(b1))), succ(CP(a2,s(b2))))
+= natEq(CP(a1,s(b1)), CP(a2,s(b2)))`.
+By IH (with shifted b1, b2):
+`= boolAnd(natEq(a1,a2), natEq(s(b1),s(b2)))
+= boolAnd(natEq(a1,a2), natEq(b1,b2))`.
+This step works cleanly.
+
+**Part B: Base case (`a1 = ℓ, a2 = ℓ`).**
+`natEq(CP(ℓ,b1), CP(ℓ,b2))
+= natEq(natTri(b1), natTri(b2))`.
+Needs `natTri` cancellation:
+`cfpMap natTri natTri ≫ natEq = natEq`.
+Base of natTri cancellation works via
+`natTri_ℓ`, `natTri_isLeafEndo`, `natEq_ℓ_right`.
+Step is problematic: the recurrence
+`natTri(s(n)) = natPlus(s(toRSN(n)), natTri(n))`
+couples the IH with `natPlus`, and the
+`natPlus` components differ between LHS and RHS,
+preventing direct cancellation.
+
+**Part C: Cross cases (`a1 = ℓ, a2 = succ` or
+vice versa).**
+Need: `natEq(natTri(b1),
+succ(CP(a2', succ(b2)))) = treeFalse`.
+Equivalently: no triangular number equals
+`succ(CP(a,succ(b)))` for any `a, b`.
+Since `CP(a,s(b))` lies strictly inside
+diagonal `a+s(b)`, `succ(CP(a,s(b)))` lies
+between consecutive triangular numbers
+`natTri(a+s(b))` and `natTri(a+s(b)+1)`.
+Proving this categorically requires a "gap"
+lemma about triangular number spacing.
+
+**Viable strategies:**
+
+1. **Section property approach**: prove
+   `cantorPair ≫ cantorUnpair =
+   cfpMap toRSN toRSN` (section), then use it
+   to decompose `natEq(CP(x), CP(y))` through
+   `cantorUnpair`.  This avoids natTri
+   cancellation entirely.  The section property
+   requires: (a) base case
+   `CU(natTri(n)) = (ℓ, toRSN(n))` by fold
+   on `n` via `cantorNextPair`, and (b)
+   step case using `cantorPair_succ_fst` +
+   `cantorUnpair_natSucc`.
+
+2. **triRoot approach**: define `triRootState`
+   as a 1D fold tracking `(diagonal, offset)`,
+   prove band property
+   `CP ≫ triRootState = cfpLift
+   (natPlus ≫ toRSN) (cfpFst ≫ toRSN)`,
+   then derive injectivity.  Essentially
+   equivalent to the section property but
+   with a different state representation.
+
+3. **Cancellation lemma approach**: prove
+   `natTruncSub(natPlus(c, a), c) = toRSN(a)`
+   by fold on `c` using `natTruncSub_succ_succ`
+   and `natPlus_succ_left`.  Then use this to
+   derive natTri cancellation and the gap
+   property.
+
+Estimated total: 400-600 lines of lemmas.
+
 ### `treeEqG_trans`
 
 Transitivity of `treeEqG`, using `natTruncSub_fold_comp`
