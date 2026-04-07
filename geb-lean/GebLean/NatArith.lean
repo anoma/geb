@@ -3654,6 +3654,714 @@ theorem cantorPair_cantorNextPair :
           cantorPair_cantorNextPair_β_form
   rw [lhs_eq, rhs_eq]
 
+/-- The right-inverse for Cantor pairing:
+`cantorUnpairHelper ≫ cantorPair` equals the
+terminal-parameterized fold that counts
+right-spine depth (a form of `toRSpineNat`). -/
+theorem cantorUnpairHelper_cantorPair :
+    cantorUnpairHelper ≫ cantorPair =
+    p.elim p.ℓ
+      (cfpSnd p.T p.T ≫ natSucc) := by
+  have hw :
+      cfpMap cantorPair cantorPair ≫
+        cfpSnd p.T p.T ≫ natSucc =
+      cantorUnpairStep ≫ cantorPair := by
+    unfold cantorUnpairStep
+    rw [← Category.assoc
+      (cfpMap cantorPair cantorPair),
+      cfpMap_snd]
+    simp only [Category.assoc]
+    congr 1
+    exact cantorPair_cantorNextPair.symm
+  rw [show cantorUnpairHelper =
+      p.elim (cfpLift p.ℓ p.ℓ)
+        cantorUnpairStep from rfl,
+    elim_algebra_morphism
+      (cfpLift p.ℓ p.ℓ) cantorUnpairStep
+      cantorPair
+      (cfpSnd p.T p.T ≫ natSucc)
+      hw,
+    cantorPair_ℓℓ]
+
+/-- `toRSpineNat ≫ isLeafEndo = isLeafEndo`:
+right-spine normalization preserves
+leaf/branch classification. -/
+theorem toRSpineNat_isLeafEndo :
+    toRSpineNat ≫ isLeafEndo =
+    (isLeafEndo : p.T ⟶ p.T) := by
+  set F :=
+    cfpTerminalFrom (cfpProd p.T p.T) ≫
+      treeFalse
+  set base :=
+    (p.ℓ : cfpTerminal (C := C) ⟶ p.T)
+  have lhs_embed :
+      cfpSnd cfpTerminal p.T ≫
+        toRSpineNat ≫ isLeafEndo =
+      p.elim base F := by
+    set φ := cfpSnd cfpTerminal p.T ≫
+      toRSpineNat ≫ isLeafEndo
+    apply p.elim_uniq base F φ
+    · change cfpInsertSnd p.ℓ cfpTerminal ≫
+        (cfpSnd cfpTerminal p.T ≫
+          toRSpineNat ≫ isLeafEndo) = p.ℓ
+      unfold cfpInsertSnd
+      simp only [← Category.assoc]
+      rw [cfpLift_snd, Category.assoc,
+        Category.assoc,
+        ← Category.assoc p.ℓ toRSpineNat,
+        toRSpineNat_ℓ, isLeafEndo_ℓ,
+        cfpTerminalFrom_terminal,
+        Category.id_comp]
+    · simp only [φ]
+      have β_toRSN_isLeaf :
+          p.β ≫ toRSpineNat ≫ isLeafEndo =
+          cfpTerminalFrom
+            (cfpProd p.T p.T) ≫
+            treeFalse := by
+        rw [← Category.assoc, toRSpineNat_β,
+          Category.assoc, isLeafEndo_β,
+          ← Category.assoc]; congr 1
+        exact h.terminal.uniq _
+      have lhs_eq :
+          cfpMap (𝟙 cfpTerminal) p.β ≫
+            (cfpSnd cfpTerminal p.T ≫
+              toRSpineNat ≫ isLeafEndo) =
+          cfpTerminalFrom _ ≫ treeFalse := by
+        have h1 :
+            cfpMap (𝟙 cfpTerminal) p.β ≫
+              cfpSnd cfpTerminal p.T =
+            cfpSnd cfpTerminal
+              (cfpProd p.T p.T) ≫ p.β :=
+          cfpMap_snd _ _
+        rw [← Category.assoc, ← Category.assoc,
+          h1, Category.assoc,
+          Category.assoc,
+          β_toRSN_isLeaf, ← Category.assoc]
+        congr 1; exact h.terminal.uniq _
+      have rhs_eq :
+          cfpLiftAssoc
+            (cfpSnd cfpTerminal p.T ≫
+              toRSpineNat ≫ isLeafEndo)
+            (cfpSnd cfpTerminal p.T ≫
+              toRSpineNat ≫ isLeafEndo) ≫
+            F =
+          cfpTerminalFrom _ ≫ treeFalse := by
+        rw [← Category.assoc]; congr 1
+        exact h.terminal.uniq _
+      rw [lhs_eq, rhs_eq]
+  have rhs_embed :
+      cfpSnd cfpTerminal p.T ≫ isLeafEndo =
+      p.elim base F := by
+    set ψ := cfpSnd cfpTerminal p.T ≫
+      isLeafEndo
+    apply p.elim_uniq base F ψ
+    · simp only [ψ, base]
+      rw [show cfpInsertSnd p.ℓ cfpTerminal ≫
+          (cfpSnd cfpTerminal p.T ≫
+            isLeafEndo) =
+        p.ℓ ≫ isLeafEndo from by
+          rw [← Category.assoc]; congr 1
+          unfold cfpInsertSnd
+          rw [cfpLift_snd,
+            cfpTerminalFrom_terminal,
+            Category.id_comp],
+        isLeafEndo_ℓ]
+    · simp only [ψ]
+      have lhs_eq :
+          cfpMap (𝟙 cfpTerminal) p.β ≫
+            (cfpSnd cfpTerminal p.T ≫
+              isLeafEndo) =
+          cfpTerminalFrom _ ≫ treeFalse := by
+        have h1 :
+            cfpMap (𝟙 cfpTerminal) p.β ≫
+              cfpSnd cfpTerminal p.T =
+            cfpSnd cfpTerminal
+              (cfpProd p.T p.T) ≫ p.β :=
+          cfpMap_snd _ _
+        rw [← Category.assoc, h1,
+          Category.assoc, isLeafEndo_β,
+          ← Category.assoc]
+        congr 1; exact h.terminal.uniq _
+      have rhs_eq :
+          cfpLiftAssoc
+            (cfpSnd cfpTerminal p.T ≫
+              isLeafEndo)
+            (cfpSnd cfpTerminal p.T ≫
+              isLeafEndo) ≫
+            F =
+          cfpTerminalFrom _ ≫ treeFalse := by
+        rw [← Category.assoc]; congr 1
+        exact h.terminal.uniq _
+      rw [lhs_eq, rhs_eq]
+  have h_embed :
+      cfpSnd cfpTerminal p.T ≫
+        toRSpineNat ≫ isLeafEndo =
+      cfpSnd cfpTerminal p.T ≫ isLeafEndo :=
+    lhs_embed.trans rhs_embed.symm
+  calc toRSpineNat ≫ isLeafEndo
+      = cfpLift (cfpTerminalFrom p.T)
+          (𝟙 p.T) ≫
+        cfpSnd cfpTerminal p.T ≫
+        toRSpineNat ≫ isLeafEndo := by
+        rw [← Category.assoc
+          (cfpLift _ _) (cfpSnd _ _),
+          cfpLift_snd, Category.id_comp]
+    _ = cfpLift (cfpTerminalFrom p.T)
+          (𝟙 p.T) ≫
+        cfpSnd cfpTerminal p.T ≫
+        isLeafEndo := by
+        rw [h_embed]
+    _ = isLeafEndo := by
+        rw [← Category.assoc, cfpLift_snd,
+          Category.id_comp]
+
+/-- `toRSpineNat` commutes with `natPred`:
+`toRSpineNat ≫ natPred = natPred ≫ toRSpineNat`.
+Both sides map `ℓ` to `ℓ` and `β(l, r)` to
+`toRSpineNat(r)`. The proof uses `paraElim_uniq`
+to show both embedded morphisms satisfy the same
+paramorphism equations. -/
+theorem natPred_toRSpineNat_comm :
+    toRSpineNat ≫ natPred =
+    natPred ≫ (toRSpineNat : p.T ⟶ p.T) := by
+  set g : cfpProd cfpTerminal
+      (cfpProd (cfpProd p.T p.T)
+        (cfpProd p.T p.T)) ⟶ p.T :=
+    cfpSnd cfpTerminal _ ≫
+      cfpFst (cfpProd p.T p.T)
+        (cfpProd p.T p.T) ≫
+      cfpSnd p.T p.T ≫ toRSpineNat
+  have both_base (φ : p.T ⟶ p.T)
+      (hℓ : p.ℓ ≫ φ = p.ℓ)
+      (_hβ : p.β ≫ φ =
+        cfpSnd p.T p.T ≫ toRSpineNat) :
+      cfpInsertSnd p.ℓ cfpTerminal ≫
+        (cfpSnd cfpTerminal p.T ≫ φ) =
+      p.ℓ := by
+    unfold cfpInsertSnd
+    rw [← Category.assoc, cfpLift_snd,
+      Category.assoc,
+      @cfpTerminalFrom_terminal C _ h,
+      Category.id_comp, hℓ]
+  have both_step (φ : p.T ⟶ p.T)
+      (hβ : p.β ≫ φ =
+        cfpSnd p.T p.T ≫ toRSpineNat) :
+      cfpMap (𝟙 cfpTerminal) p.β ≫
+        (cfpSnd cfpTerminal p.T ≫ φ) =
+      cfpLift
+          (cfpFst cfpTerminal
+            (cfpProd p.T p.T))
+          (cfpLift
+            (cfpSnd cfpTerminal
+              (cfpProd p.T p.T))
+            (cfpLiftAssoc
+              (cfpSnd cfpTerminal p.T ≫ φ)
+              (cfpSnd cfpTerminal p.T ≫
+                φ))) ≫ g := by
+    have lhs_eq :
+        cfpMap (𝟙 cfpTerminal) p.β ≫
+          (cfpSnd cfpTerminal p.T ≫ φ) =
+        cfpSnd cfpTerminal
+          (cfpProd p.T p.T) ≫
+          cfpSnd p.T p.T ≫
+          toRSpineNat := by
+      rw [← Category.assoc, cfpMap_snd,
+        Category.assoc, hβ]
+    have rhs_eq :
+        cfpLift
+          (cfpFst cfpTerminal
+            (cfpProd p.T p.T))
+          (cfpLift
+            (cfpSnd cfpTerminal
+              (cfpProd p.T p.T))
+            (cfpLiftAssoc
+              (cfpSnd cfpTerminal p.T ≫ φ)
+              (cfpSnd cfpTerminal p.T ≫
+                φ))) ≫ g =
+        cfpSnd cfpTerminal
+          (cfpProd p.T p.T) ≫
+          cfpSnd p.T p.T ≫
+          toRSpineNat := by
+      simp only [g]
+      simp only [← Category.assoc]
+      rw [cfpLift_snd, cfpLift_fst]
+    rw [lhs_eq, rhs_eq]
+  have toRSN_natPred_β :
+      p.β ≫ toRSpineNat ≫ natPred =
+      cfpSnd p.T p.T ≫ toRSpineNat := by
+    rw [← Category.assoc, toRSpineNat_β,
+      Category.assoc, β_natPred,
+      cfpLift_snd]
+  have natPred_toRSN_β :
+      p.β ≫ natPred ≫ toRSpineNat =
+      cfpSnd p.T p.T ≫ toRSpineNat := by
+    rw [← Category.assoc, β_natPred]
+  have lhs_para :
+      cfpSnd cfpTerminal p.T ≫
+        toRSpineNat ≫ natPred =
+      paraElim p.ℓ g := by
+    exact paraElim_uniq p.ℓ g
+      (cfpSnd cfpTerminal p.T ≫
+        toRSpineNat ≫ natPred)
+      (both_base (toRSpineNat ≫ natPred)
+        (by rw [← Category.assoc,
+            toRSpineNat_ℓ, natPred_ℓ])
+        toRSN_natPred_β)
+      (both_step (toRSpineNat ≫ natPred)
+        toRSN_natPred_β)
+  have rhs_para :
+      cfpSnd cfpTerminal p.T ≫
+        natPred ≫ toRSpineNat =
+      paraElim p.ℓ g := by
+    exact paraElim_uniq p.ℓ g
+      (cfpSnd cfpTerminal p.T ≫
+        natPred ≫ toRSpineNat)
+      (both_base (natPred ≫ toRSpineNat)
+        (by rw [← Category.assoc,
+            natPred_ℓ, toRSpineNat_ℓ])
+        natPred_toRSN_β)
+      (both_step (natPred ≫ toRSpineNat)
+        natPred_toRSN_β)
+  calc toRSpineNat ≫ natPred
+      = cfpLift (cfpTerminalFrom p.T)
+          (𝟙 p.T) ≫
+        cfpSnd cfpTerminal p.T ≫
+        toRSpineNat ≫ natPred := by
+        rw [← Category.assoc
+          (cfpLift _ _) (cfpSnd _ _),
+          cfpLift_snd, Category.id_comp]
+    _ = cfpLift (cfpTerminalFrom p.T)
+          (𝟙 p.T) ≫
+        cfpSnd cfpTerminal p.T ≫
+        natPred ≫ toRSpineNat := by
+        congr 1
+        exact lhs_para.trans rhs_para.symm
+    _ = natPred ≫ toRSpineNat := by
+        rw [← Category.assoc
+          (cfpLift _ _) (cfpSnd _ _),
+          cfpLift_snd, Category.id_comp]
+
+/-- Normalizing the first argument of `natTruncSub`
+via `toRSpineNat` is absorbed into the output:
+`cfpMap toRSpineNat (𝟙 T) ≫ natTruncSub
+  = natTruncSub ≫ toRSpineNat`. -/
+theorem natTruncSub_toRSpineNat_first :
+    cfpMap (toRSpineNat : p.T ⟶ p.T)
+      (𝟙 p.T) ≫ natTruncSub =
+    natTruncSub ≫ toRSpineNat := by
+  have comm :
+      cfpMap toRSpineNat toRSpineNat ≫
+        (cfpSnd p.T p.T ≫ natPred) =
+      (cfpSnd p.T p.T ≫ natPred) ≫
+        (toRSpineNat : p.T ⟶ p.T) := by
+    simp only [← Category.assoc]
+    rw [cfpMap_snd]
+    simp only [Category.assoc]
+    rw [natPred_toRSpineNat_comm]
+  have rhs :
+      natTruncSub ≫ toRSpineNat =
+      p.elim (toRSpineNat : p.T ⟶ p.T)
+        (cfpSnd p.T p.T ≫ natPred) := by
+    change p.elim (𝟙 p.T)
+        (cfpSnd p.T p.T ≫ natPred) ≫
+      toRSpineNat = _
+    rw [elim_algebra_morphism
+      (𝟙 p.T) (cfpSnd p.T p.T ≫ natPred)
+      toRSpineNat
+      (cfpSnd p.T p.T ≫ natPred)
+      comm, Category.id_comp]
+  have lhs :
+      cfpMap toRSpineNat (𝟙 p.T) ≫
+        natTruncSub =
+      p.elim (toRSpineNat : p.T ⟶ p.T)
+        (cfpSnd p.T p.T ≫ natPred) := by
+    unfold natTruncSub
+    rw [elim_naturality toRSpineNat (𝟙 p.T)
+      (cfpSnd p.T p.T ≫ natPred),
+      Category.comp_id]
+  rw [lhs, rhs]
+
+/-- `natTruncSub` is insensitive to normalization
+of its second argument:
+`cfpMap (𝟙 T) toRSpineNat ≫ natTruncSub
+  = natTruncSub`. -/
+theorem natTruncSub_toRSpineNat_second :
+    cfpMap (𝟙 p.T) toRSpineNat ≫ natTruncSub =
+    (natTruncSub : cfpProd p.T p.T ⟶ p.T) := by
+  change _ = p.elim (𝟙 p.T)
+    (cfpSnd p.T p.T ≫ natPred)
+  apply p.elim_uniq (𝟙 p.T)
+    (cfpSnd p.T p.T ≫ natPred)
+  · rw [← Category.assoc]
+    have : cfpInsertSnd p.ℓ p.T ≫
+        cfpMap (𝟙 p.T) toRSpineNat =
+      cfpInsertSnd p.ℓ p.T := by
+      unfold cfpInsertSnd
+      rw [cfpLift_cfpMap, Category.id_comp,
+        Category.assoc, toRSpineNat_ℓ]
+    rw [this, natTruncSub_ℓ]
+  · rw [← Category.assoc
+      (cfpMap (𝟙 p.T) p.β),
+      cfpMap_comp, Category.id_comp,
+      toRSpineNat_β,
+      cfpMap_id_comp'
+        (cfpLift
+          (cfpTerminalFrom
+            (cfpProd p.T p.T) ≫ p.ℓ)
+          (cfpSnd p.T p.T ≫ toRSpineNat))
+        p.β,
+      Category.assoc,
+      show cfpMap (𝟙 p.T) p.β ≫
+        natTruncSub =
+      cfpLiftAssoc natTruncSub
+        natTruncSub ≫
+        cfpSnd p.T p.T ≫ natPred from
+        p.elim_β (𝟙 p.T)
+          (cfpSnd p.T p.T ≫ natPred)]
+    simp only [← Category.assoc
+      (cfpLiftAssoc _ _)]
+    rw [show cfpLiftAssoc natTruncSub
+        natTruncSub ≫ cfpSnd p.T p.T =
+      cfpAssocSnd p.T p.T p.T ≫
+        natTruncSub from by
+      unfold cfpLiftAssoc; rw [cfpLift_snd]]
+    rw [show cfpLiftAssoc
+        (cfpMap (𝟙 p.T) toRSpineNat ≫
+          natTruncSub)
+        (cfpMap (𝟙 p.T) toRSpineNat ≫
+          natTruncSub) ≫
+        cfpSnd p.T p.T =
+      cfpAssocSnd p.T p.T p.T ≫
+        cfpMap (𝟙 p.T) toRSpineNat ≫
+          natTruncSub from by
+      unfold cfpLiftAssoc; rw [cfpLift_snd]]
+    simp only [← Category.assoc
+      (cfpAssocSnd _ _ _)]
+    have key :
+        cfpMap (𝟙 p.T)
+          (cfpLift
+            (cfpTerminalFrom
+              (cfpProd p.T p.T) ≫ p.ℓ)
+            (cfpSnd p.T p.T ≫
+              toRSpineNat)) ≫
+          cfpAssocSnd p.T p.T p.T =
+        cfpAssocSnd p.T p.T p.T ≫
+          cfpMap (𝟙 p.T) toRSpineNat := by
+      unfold cfpAssocSnd
+      rw [cfpLift_precomp,
+        cfpLift_cfpMap]
+      congr 1
+      · rw [cfpMap_fst]
+      · rw [← Category.assoc, cfpMap_snd,
+          Category.assoc, cfpLift_snd,
+          Category.assoc]
+    rw [show cfpMap (𝟙 p.T)
+        (cfpLift
+          (cfpTerminalFrom
+            (cfpProd p.T p.T) ≫ p.ℓ)
+          (cfpSnd p.T p.T ≫
+            toRSpineNat)) ≫
+        (cfpAssocSnd p.T p.T p.T ≫
+          natTruncSub) ≫ natPred =
+      (cfpMap (𝟙 p.T)
+          (cfpLift
+            (cfpTerminalFrom
+              (cfpProd p.T p.T) ≫ p.ℓ)
+            (cfpSnd p.T p.T ≫
+              toRSpineNat)) ≫
+        cfpAssocSnd p.T p.T p.T) ≫
+          natTruncSub ≫ natPred from by
+      simp only [Category.assoc]]
+    rw [key]
+    simp only [Category.assoc]
+
+/-- Normalizing both arguments of `natEq` via
+`toRSpineNat` doesn't change the result:
+`cfpMap toRSpineNat toRSpineNat ≫ natEq = natEq`.
+-/
+theorem natEq_toRSpineNat :
+    cfpMap toRSpineNat toRSpineNat ≫ natEq =
+    (natEq : cfpProd p.T p.T ⟶ p.T) := by
+  unfold natEq
+  rw [← Category.assoc, ← Category.assoc,
+    cfpLift_precomp]
+  have factor :
+      cfpMap toRSpineNat toRSpineNat =
+      cfpMap (𝟙 p.T) toRSpineNat ≫
+        cfpMap toRSpineNat (𝟙 p.T) := by
+    rw [cfpMap_comp, Category.comp_id,
+      Category.id_comp]
+  have sub_both :
+      cfpMap toRSpineNat toRSpineNat ≫
+        natTruncSub =
+      natTruncSub ≫
+        (toRSpineNat : p.T ⟶ p.T) := by
+    rw [factor, Category.assoc,
+      natTruncSub_toRSpineNat_first
+        (C := C) (p := p),
+      ← Category.assoc,
+      natTruncSub_toRSpineNat_second
+        (C := C) (p := p)]
+  have swap_sub_both :
+      cfpMap toRSpineNat toRSpineNat ≫
+        cfpSwap p.T p.T ≫ natTruncSub =
+      cfpSwap p.T p.T ≫
+        natTruncSub ≫ toRSpineNat := by
+    rw [← Category.assoc,
+      ← cfpSwap_cfpMap_diag toRSpineNat,
+      Category.assoc, sub_both]
+  rw [sub_both, swap_sub_both]
+  have inner :
+      cfpLift (natTruncSub ≫ toRSpineNat)
+        (cfpSwap p.T p.T ≫
+          natTruncSub ≫ toRSpineNat) ≫
+        natPlus ≫ isLeafEndo =
+      cfpLift natTruncSub
+        (cfpSwap p.T p.T ≫
+          natTruncSub) ≫
+        natPlus ≫ isLeafEndo := by
+    have rsn_factor :
+        cfpLift (natTruncSub ≫ toRSpineNat)
+          (cfpSwap p.T p.T ≫
+            natTruncSub ≫ toRSpineNat) =
+        cfpLift natTruncSub
+          (cfpSwap p.T p.T ≫
+            natTruncSub) ≫
+          cfpMap toRSpineNat toRSpineNat := by
+      rw [cfpLift_cfpMap]
+      simp only [Category.assoc]
+    have plus_rsn :
+        cfpMap (toRSpineNat : p.T ⟶ p.T)
+          toRSpineNat ≫ natPlus =
+        natPlus ≫ toRSpineNat := by
+      rw [factor, Category.assoc,
+        natPlus_toRSpineNat_first
+          (C := C) (p := p),
+        ← Category.assoc,
+        natPlus_toRSpineNat_second
+          (C := C) (p := p)]
+    rw [rsn_factor]
+    simp only [Category.assoc]
+    simp only [← Category.assoc
+      (cfpMap _ _) natPlus]
+    rw [plus_rsn, Category.assoc,
+      toRSpineNat_isLeafEndo
+        (C := C) (p := p)]
+  rw [Category.assoc, inner]
+
+/-- The successor of any right-spine natural is
+not a leaf. -/
+private theorem natSucc_isLeafEndo' :
+    natSucc ≫ isLeafEndo =
+    cfpTerminalFrom p.T ≫
+      (treeFalse :
+        cfpTerminal (C := C) ⟶ p.T) := by
+  unfold natSucc
+  rw [Category.assoc, isLeafEndo_β,
+    ← Category.assoc]
+  congr 1
+  exact h.terminal.uniq _
+
+/-- `natTri` preserves leaf/branch classification:
+`natTri ≫ isLeafEndo = isLeafEndo`. -/
+theorem natTri_isLeafEndo :
+    natTri ≫ isLeafEndo =
+    (isLeafEndo : p.T ⟶ p.T) := by
+  -- Prove the parameterized version:
+  -- natTriHelper ≫ cfpSnd ≫ isLeafEndo
+  --   = cfpSnd 1 T ≫ isLeafEndo
+  -- via p.elim_uniq.
+  set g :=
+    cfpTerminalFrom (cfpProd p.T p.T) ≫
+      treeFalse
+  have base_lhs :
+      cfpInsertSnd p.ℓ cfpTerminal ≫
+        (natTriHelper ≫ cfpSnd p.T p.T ≫
+          isLeafEndo) =
+      p.ℓ := by
+    rw [← Category.assoc, ← Category.assoc,
+      natTriHelper_ℓ, cfpLift_snd,
+      isLeafEndo_ℓ]
+  have base_rhs :
+      cfpInsertSnd p.ℓ cfpTerminal ≫
+        (cfpSnd cfpTerminal p.T ≫
+          isLeafEndo) =
+      p.ℓ := by
+    unfold cfpInsertSnd
+    rw [← Category.assoc, cfpLift_snd,
+      cfpTerminalFrom_terminal,
+      Category.id_comp, isLeafEndo_ℓ]
+  have natTriStep_cfpSnd' :
+      (natTriStep :
+        cfpProd (cfpProd p.T p.T)
+          (cfpProd p.T p.T) ⟶
+          cfpProd p.T p.T) ≫
+        cfpSnd p.T p.T =
+      cfpLift
+        ((cfpSnd (cfpProd p.T p.T)
+          (cfpProd p.T p.T) ≫
+          cfpFst p.T p.T) ≫ natSucc)
+        (cfpSnd (cfpProd p.T p.T)
+          (cfpProd p.T p.T) ≫
+          cfpSnd p.T p.T) ≫
+        natPlus := by
+    unfold natTriStep
+    rw [cfpLift_snd]
+    congr 1
+    exact cfpLift_uniq _ _ _
+      (by rw [cfpLift_fst]; simp [Category.assoc])
+      (by rw [cfpLift_snd])
+  have triStep_snd_isLeaf :
+      natTriStep ≫ cfpSnd p.T p.T ≫
+        isLeafEndo =
+      cfpTerminalFrom
+        (cfpProd (cfpProd p.T p.T)
+          (cfpProd p.T p.T)) ≫
+        treeFalse := by
+    rw [← Category.assoc, natTriStep_cfpSnd',
+      Category.assoc, ← Category.assoc
+        (cfpLift _ _),
+      natPlus_succ_left _ _]
+    simp only [Category.assoc]
+    rw [natSucc_isLeafEndo']
+    simp only [← Category.assoc]
+    congr 1; exact h.terminal.uniq _
+  have step_lhs :
+      cfpMap (𝟙 cfpTerminal) p.β ≫
+        (natTriHelper ≫ cfpSnd p.T p.T ≫
+          isLeafEndo) =
+      cfpLiftAssoc
+        (natTriHelper ≫ cfpSnd p.T p.T ≫
+          isLeafEndo)
+        (natTriHelper ≫ cfpSnd p.T p.T ≫
+          isLeafEndo) ≫ g := by
+    rw [← Category.assoc, ← Category.assoc,
+      natTriHelper_β]
+    simp only [Category.assoc]
+    rw [triStep_snd_isLeaf]
+    rw [show cfpLiftAssoc
+        (natTriHelper ≫ cfpSnd p.T p.T ≫
+          isLeafEndo)
+        (natTriHelper ≫ cfpSnd p.T p.T ≫
+          isLeafEndo) ≫ g =
+      cfpTerminalFrom _ ≫ treeFalse from by
+      rw [← Category.assoc]; congr 1
+      exact h.terminal.uniq _]
+    rw [← Category.assoc]; congr 1
+    exact h.terminal.uniq _
+  have step_rhs :
+      cfpMap (𝟙 cfpTerminal) p.β ≫
+        (cfpSnd cfpTerminal p.T ≫
+          isLeafEndo) =
+      cfpLiftAssoc
+        (cfpSnd cfpTerminal p.T ≫ isLeafEndo)
+        (cfpSnd cfpTerminal p.T ≫ isLeafEndo)
+          ≫ g := by
+    rw [← Category.assoc, cfpMap_snd,
+      Category.assoc, isLeafEndo_β]
+    rw [show cfpLiftAssoc
+        (cfpSnd cfpTerminal p.T ≫ isLeafEndo)
+        (cfpSnd cfpTerminal p.T ≫ isLeafEndo)
+          ≫ g =
+      cfpTerminalFrom _ ≫ treeFalse from by
+      rw [← Category.assoc]; congr 1
+      exact h.terminal.uniq _]
+    rw [← Category.assoc]; congr 1
+    exact h.terminal.uniq _
+  have param_eq :
+      natTriHelper ≫ cfpSnd p.T p.T ≫
+        isLeafEndo =
+      cfpSnd cfpTerminal p.T ≫ isLeafEndo :=
+    (p.elim_uniq p.ℓ g
+      (natTriHelper ≫ cfpSnd p.T p.T ≫
+        isLeafEndo)
+      base_lhs step_lhs).trans
+    (p.elim_uniq p.ℓ g
+      (cfpSnd cfpTerminal p.T ≫ isLeafEndo)
+      base_rhs step_rhs).symm
+  unfold natTri
+  simp only [Category.assoc]
+  change cfpLift (cfpTerminalFrom p.T)
+    (𝟙 p.T) ≫
+    natTriHelper ≫ cfpSnd p.T p.T ≫
+    isLeafEndo = isLeafEndo
+  rw [param_eq, ← Category.assoc,
+    cfpLift_snd, Category.id_comp]
+
+/-- Left cancellation for `natPlus` under `natEq`
+(unrestricted):
+`natEq(c + a, c + b) = natEq(a, b)` for all
+`a, b, c` without normalization hypotheses. -/
+theorem natPlus_cancel_left {A : C}
+    (a b c : A ⟶ p.T) :
+    cfpLift (cfpLift c a ≫ natPlus)
+        (cfpLift c b ≫ natPlus) ≫ natEq =
+    cfpLift a b ≫
+      (natEq : cfpProd p.T p.T ⟶ p.T) := by
+  -- Normalize all arguments via toRSpineNat.
+  -- Step 1: natEq absorbs toRSN on both sides.
+  have rsn_absorb :
+      ∀ (f g : A ⟶ p.T),
+        cfpLift f g ≫ natEq =
+        cfpLift (f ≫ toRSpineNat)
+          (g ≫ toRSpineNat) ≫
+          (natEq :
+            cfpProd p.T p.T ⟶ p.T) := by
+    intro f g
+    rw [show cfpLift (f ≫ toRSpineNat)
+        (g ≫ toRSpineNat) =
+      cfpLift f g ≫
+        cfpMap toRSpineNat toRSpineNat from
+      (cfpLift_cfpMap f g
+        toRSpineNat toRSpineNat).symm,
+      Category.assoc, natEq_toRSpineNat]
+  -- Step 2: toRSN(natPlus(c, a))
+  --   = natPlus(toRSN(c), a).
+  have plus_rsn_first (x y : A ⟶ p.T) :
+      cfpLift x y ≫ natPlus ≫ toRSpineNat =
+      cfpLift (x ≫ toRSpineNat) y ≫
+        (natPlus :
+          cfpProd p.T p.T ⟶ p.T) := by
+    rw [← natPlus_toRSpineNat_first,
+      ← Category.assoc,
+      cfpLift_cfpMap, Category.comp_id]
+  -- Step 3: natPlus(toRSN(c), a)
+  --   = natPlus(toRSN(c), toRSN(a)).
+  have plus_rsn_second (x y : A ⟶ p.T) :
+      cfpLift x y ≫ natPlus =
+      cfpLift x (y ≫ toRSpineNat) ≫
+        (natPlus :
+          cfpProd p.T p.T ⟶ p.T) := by
+    rw [show cfpLift x (y ≫ toRSpineNat) =
+      cfpLift x y ≫
+        cfpMap (𝟙 p.T) toRSpineNat from by
+        rw [cfpLift_cfpMap, Category.comp_id]
+      , Category.assoc,
+      natPlus_toRSpineNat_second]
+  -- Combine: LHS uses rsn_absorb + plus_rsn.
+  rw [rsn_absorb]
+  simp only [Category.assoc]
+  rw [plus_rsn_first c a, plus_rsn_first c b,
+    plus_rsn_second (c ≫ toRSpineNat) a,
+    plus_rsn_second (c ≫ toRSpineNat) b]
+  -- Now all three arguments are rsn.
+  have hc : IsRSpineNatNorm
+      (c ≫ toRSpineNat) := by
+    unfold IsRSpineNatNorm
+    rw [Category.assoc, toRSpineNat_idem]
+  have ha : IsRSpineNatNorm
+      (a ≫ toRSpineNat) := by
+    unfold IsRSpineNatNorm
+    rw [Category.assoc, toRSpineNat_idem]
+  have hb : IsRSpineNatNorm
+      (b ≫ toRSpineNat) := by
+    unfold IsRSpineNatNorm
+    rw [Category.assoc, toRSpineNat_idem]
+  rw [natPlus_cancel_left_rsn
+    (a ≫ toRSpineNat) (b ≫ toRSpineNat)
+    (c ≫ toRSpineNat) ha hb hc,
+    ← rsn_absorb]
+
 end GebLean
 
 namespace GebLean

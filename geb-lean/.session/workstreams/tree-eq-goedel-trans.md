@@ -150,97 +150,132 @@ In `GebLean/NatArith.lean` (new definitions and lemmas):
 
 ## Remaining
 
-### `cantorPair_cantorNextPair` (the key lemma)
+### `cantorPair_cantorNextPair` -- PROVED
 
 `cantorNextPair ≫ cantorPair = cantorPair ≫ natSucc`.
 
-Completed so far:
+Proved via `paraElim_uniq`.  Both sides satisfy the
+same paramorphism base and step equations.  The step
+`cantorPairParaStep` extracts `succ(a)` and `r` from
+the paramorphism data (ignoring sub-results) and
+applies `cantorPair`.  `cantorPairParaStep_precomp`
+shows the step pre-composition simplifies.
 
-- `cantorNextPair_ℓ`: computation rule for
-  `cantorNextPair` when `b = ℓ`, yielding `(ℓ, succ(a))`.
-- `cantorNextPair_β`: computation rule for
-  `cantorNextPair` when `b = β(l, r)`, yielding
-  `(succ(a), r)`.
-- `cantorPair_natSucc_eq_β`:
-  `cantorPair(a, natSucc(r)) = cantorPair(a, β(l, r))`.
-  The left child of the second argument is irrelevant
-  to `cantorPair` because `natPlus` only walks the
-  right spine.
-- `cantorPair_cantorNextPair_β`: the β case of the
-  key lemma. Uses `cantorPair_succ_fst` and
-  `cantorPair_natSucc_eq_β`.
+### `cantorUnpairHelper_cantorPair` -- PROVED
 
-Completed for the key lemma:
+`cantorUnpairHelper ≫ cantorPair =
+  p.elim ℓ (cfpSnd T T ≫ natSucc)`.
 
-- `embed_natTriHelper_cfpFst`:
-  `cfpLift (cfpTerminalFrom T) (𝟙 T) ≫
-  natTriHelper ≫ cfpFst = toRSpineNat`.
-  Proved by `natTriHelper_cfpFst` and
-  `toRSpineNat_step_eq_natSucc`.
-- `cantorPair_cantorNextPair_ℓ`: the ℓ case.
-  `cantorPair(ℓ, succ(a)) = succ(cantorPair(a, ℓ))`.
-  Proof chain: LHS simplifies to `natTri(succ(a))`
-  via `natPlus_ℓ_left_eq_toRSpineNat`,
-  `toRSpineNat_natTri`, and `natPlus_zero`.
-  RHS simplifies to `succ(natPlus(natTri(a), a))`.
-  Equality follows from `natTri_natSucc`,
-  `embed_natTriHelper_cfpFst`,
-  `natPlus_succ_left`, `natPlus_comm_rsn`,
-  and `natPlus_toRSpineNat_second`.
-- `cantorPair_toRSN_second`:
-  `cfpMap (𝟙 T) toRSpineNat ≫ cantorPair =
-  cantorPair`. Second-argument normalization
-  is absorbed by `cantorPair`.
-
-Remaining for the key lemma:
-
-- Combine the ℓ and β cases. The standard
-  `p.elim_uniq` approach does not apply because
-  `cantorPair ≫ natSucc` is not a PBTO
-  catamorphism in the second argument (the β
-  step equation involves `natTri` applied to a
-  sum, not factoring through
-  `cfpLiftAssoc φ φ ≫ g`). Alternative
-  strategies:
-  (a) Prove `iteBranches f g cnd ≫ h =
-      iteBranches (f ≫ h) (g ≫ h) cnd`
-      (post-composition distributes through
-      `iteBranches`). This would let both sides
-      be expressed via `iteBranches` with matching
-      branches. The proof requires showing
-      `treeIte ≫ h` satisfies the same fold
-      equations as `treeIte` with modified
-      parameters, using `iteFold_snd` and
-      `p.elim_uniq`.
-  (b) Factor both sides through `(a, natPlus(a,b))`
-      and show the resulting functions agree. Both
-      `cantorNextPair ≫ cantorPair` and
-      `cantorPair ≫ natSucc` depend on `b` only
-      through `natPlus(a, b)` (modulo
-      normalization), so this reduces to a
-      one-variable equation.
-  (c) Prove
-      `cfpMap (𝟙 T) toRSN ≫ cantorNextPair ≫
-      cantorPair = cantorNextPair ≫ cantorPair`
-      (LHS absorbs second-argument normalization).
-      Combined with `cantorPair_toRSN_second`
-      this reduces the equation to rsn inputs,
-      where NNO-style induction applies.
+Proved via `elim_algebra_morphism` using
+`cantorPair_cantorNextPair` to verify the algebra
+morphism condition.
 
 ### `NatEqCantorPair` / unconditional `treeEqG_ββ`
 
-After `cantorPair_cantorNextPair` is proved, the
-left-inverse approach via `cantorUnpairHelper` becomes
-viable. The chain:
+`NatEqCantorPair` remains unproved.
 
-1. `cantorPair_cantorNextPair` shows `cantorPair` is
-   an algebra morphism from `cantorNextPair` to
-   `natSucc`.
-2. By `elim_algebra_morphism`, `cantorUnpairHelper ≫
-   cantorPair = cfpSnd cfpTerminal T` (right-inverse
-   modulo rsn).
-3. Derive `NatEqCantorPair` from the right-inverse
-   property.
+#### Proved lemmas
+
+- `natPlus_cancel_left` (unrestricted):
+  `natEq(c + a, c + b) = natEq(a, b)` for all
+  `a, b, c` without normalization hypotheses.
+  Proof: normalize all three arguments via
+  `toRSpineNat`, then apply
+  `natPlus_cancel_left_rsn`.  Uses
+  `natEq_toRSpineNat`,
+  `natPlus_toRSpineNat_first`,
+  `natPlus_toRSpineNat_second`, and
+  `toRSpineNat_idem`.
+
+- `natTri_isLeafEndo`:
+  `natTri ≫ isLeafEndo = isLeafEndo`.
+  `natTri` preserves leaf/branch classification.
+  Proof via `p.elim_uniq`: both
+  `natTriHelper ≫ cfpSnd ≫ isLeafEndo` and
+  `cfpSnd ≫ isLeafEndo` have the same base (ℓ)
+  and step (`cfpTerminalFrom ≫ treeFalse`).
+  The step for the LHS uses `natTriStep_cfpSnd`
+  (which has `natPlus(succ(...), ...)` in the
+  second component) and `natPlus_succ_left` +
+  `natSucc_isLeafEndo` to show the step yields
+  `treeFalse`.
+
+- `natSucc_isLeafEndo'` (private, in NatArith):
+  `natSucc ≫ isLeafEndo = cfpTerminalFrom T ≫
+  treeFalse`.  Duplicates the lemma from
+  TreeGoedel for use in NatArith.
+
+- `toRSpineNat_isLeafEndo`:
+  `toRSpineNat ≫ isLeafEndo = isLeafEndo`.
+  (Proved in a previous session.)
+
+#### Proof analysis
+
+The equation `NatEqCantorPair` states:
+`natEq(CP(a,b), CP(c,d)) =
+  boolAnd(natEq(a,c), natEq(b,d))`
+where `CP(a,b) = natPlus(natTri(a+b), a)`.
+
+By `boolAnd_comm`, it suffices to show BOTH:
+
+- `boolAnd(LHS, RHS) = LHS` (injectivity)
+- `boolAnd(RHS, LHS) = RHS` (congruence)
+
+**Congruence direction** (RHS to LHS):
+If `natEq(a,c) = ℓ` and `natEq(b,d) = ℓ`, then
+`natEq(CP(a,b), CP(c,d)) = ℓ`.  The chain:
+
+1. `natEq(a+b, c+b) = natEq(a, c) = ℓ`
+   (by `natPlus_cancel_right`).
+2. `natEq(c+b, c+d) = natEq(b, d) = ℓ`
+   (by `natPlus_cancel_left`).
+3. By transitivity: `natEq(a+b, c+d) = ℓ`.
+4. `natTri` preserves natEq equality (since it
+   only walks right spines).
+5. `natPlus` right-cancellation: equal sums and
+   equal left addends give equal totals.
+
+**Injectivity direction** (LHS to RHS):
+If `natEq(CP(a,b), CP(c,d)) = ℓ`, then
+`natEq(a,c) = ℓ` and `natEq(b,d) = ℓ`.
+
+The congruence direction can be expressed as
+categorical morphism equalities using
+`boolAnd_implies_trans` and related lemmas.
+It requires intermediate lemmas:
+
+- `natEq_natPlus_compat`: compatibility of
+  `natPlus` with `natEq` -- if `boolAnd(natEq(a1,
+  a2), natEq(b1, b2)) = boolAnd(...)`, then
+  `natEq(a1+b1, a2+b2)` follows.
+- `natEq_natTri_compat`: compatibility of `natTri`
+  with `natEq` -- `natEq(natTri(x), natTri(y)) =
+  natEq(x, y)`.
+
+The injectivity direction is harder.  Approaches:
+
+- Prove the section property:
+  `cantorPair ≫ unpair = cfpMap toRSN toRSN`
+  where `unpair = cfpLift (cfpTerminalFrom T)
+  (𝟙 T) ≫ cantorUnpairHelper`.
+  Then `natEq(CP(a,b), CP(c,d))` decomposes via
+  the unpair section.
+
+- Alternatively, prove
+  `natEq(natTri(x), natTri(y)) = natEq(x, y)`
+  (natTri cancellation) which handles the base
+  case of induction on `a`, and then use
+  `cantorPair_succ_fst` + `natEq_succ_cancel`
+  for the step case.  The `natTri` cancellation
+  itself requires a joint induction on
+  `natEq(f(a), f(b)) = natEq(a, b)` and
+  `natEq(f(a)+a, f(b)+b) = natEq(a, b)` where
+  `f = natTri`, using the triangular number
+  recurrence `natTri(succ(a)) =
+  succ(natPlus(a, natTri(a)))`.
+
+Both approaches require substantial work (many
+intermediate lemmas, each 10-50 lines).
 
 ### `treeEqG_trans`
 
