@@ -170,6 +170,53 @@ Proved via `elim_algebra_morphism` using
 `cantorPair_cantorNextPair` to verify the algebra
 morphism condition.
 
+### `cantorUnpair_cantorPair` -- PROVED
+
+In `GebLean/NatNNO.lean`:
+
+- `cantorUnpair`: `T ⟶ T × T`, defined as
+  `cfpLift (cfpTerminalFrom T) (𝟙 T) ≫
+  cantorUnpairHelper`.
+- `cantorUnpair_cantorPair`:
+  `cantorUnpair ≫ cantorPair = toRSpineNat`
+  (retraction property).
+- `cantorUnpair_ℓ`:
+  `ℓ ≫ cantorUnpair = cfpLift ℓ ℓ`.
+- `cantorUnpair_natSucc`:
+  `natSucc ≫ cantorUnpair =
+  cantorUnpair ≫ cantorNextPair`.
+- `cantorPair_absorbs_rsn`:
+  `cfpMap toRSN toRSN ≫ cantorPair = cantorPair`.
+- `cantorPair_absorbs_rsn_fst`:
+  `cfpMap toRSN (𝟙 T) ≫ cantorPair = cantorPair`.
+- `cantorPair_ℓ_snd`:
+  `cfpLift (term ≫ ℓ) (𝟙 T) ≫ cantorPair =
+  toRSN ≫ natTri`.
+
+### `cantorPair_cantorUnpair` -- NOT YET PROVED
+
+`cantorPair ≫ cantorUnpair =
+cfpMap toRSpineNat toRSpineNat`
+(section property).
+
+The proof requires double induction (outer on first
+argument `a`, inner on second argument `b` for the
+base case).  The step condition for `nnoElim_uniq`
+on the second argument is hard because
+`cantorPair(a, succ(b))` relates to
+`cantorPair(succ(a), b)` via `cantorPair_succ_fst`
+rather than to `cantorPair(a, b)` directly.
+Approaches attempted:
+
+- Direct `nnoElim_uniq` on second argument: step
+  condition is circular.
+- `nnoElim_uniq` on first argument via `cfpSwap`:
+  requires base case `cantorUnpair(natTri(toRSN(b)))
+  = (ℓ, toRSN(b))` which needs inner induction.
+- Absorption lemma
+  `cfpMap (𝟙 1) toRSN ≫ cantorUnpairHelper =
+  cantorUnpairHelper`: in progress.
+
 ### `NatEqCantorPair` / unconditional `treeEqG_ββ`
 
 `NatEqCantorPair` remains unproved.
