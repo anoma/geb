@@ -291,4 +291,190 @@ theorem isqrtState_s :
   rw [factor, Category.assoc, nnoElim_s,
     ← Category.assoc]
 
+/-- Fold composition for `isqrtState`:
+`isqrtState(m + n) = isqrtStep^n(isqrtState(m))`.
+Proved by `nnoElim_uniq` showing the LHS satisfies
+the NNO recurrence with base `isqrtState` and step
+`isqrtStep`. -/
+theorem isqrtState_natPlus :
+    natPlus ≫ isqrtState =
+    nnoElim isqrtState
+      (isqrtStep :
+        cfpProd p.T p.T ⟶ cfpProd p.T p.T) := by
+  apply nnoElim_uniq
+  · -- Base: natPlus(m, ℓ) = m, then isqrtState(m)
+    rw [← Category.assoc, natPlus_ℓ, Category.id_comp]
+  · -- Step: natPlus(m, n+1) = natPlus(m, n) + 1
+    have natPlus_natSucc_snd :
+        cfpMap (𝟙 p.T) natSucc ≫ natPlus =
+        natPlus ≫ (natSucc : p.T ⟶ p.T) := by
+      have h1 : cfpMap (𝟙 p.T)
+          (natSucc : p.T ⟶ p.T) =
+          cfpLift (cfpFst p.T p.T)
+            (cfpSnd p.T p.T ≫ natSucc) := by
+        unfold cfpMap; congr 1
+        exact Category.comp_id _
+      have h2 : cfpLift (cfpFst p.T p.T)
+          (cfpSnd p.T p.T) = 𝟙 _ :=
+        (cfpLift_uniq _ _ _
+          (Category.id_comp _)
+          (Category.id_comp _)).symm
+      rw [h1, natPlus_succ, h2, Category.id_comp]
+    rw [← Category.assoc, natPlus_natSucc_snd,
+      Category.assoc, isqrtState_s,
+      ← Category.assoc]
+  · -- Norm: natPlus absorbs toRSN on second arg
+    rw [← Category.assoc,
+      natPlus_toRSpineNat_second]
+
+/-- The first component of `isqrtStep` is an
+`iteBranches` on the remaining counter:
+`fst(isqrtStep(s, r)) = s+1` when `r = ℓ`,
+`fst(isqrtStep(s, r)) = s` when `r > 0`. -/
+theorem isqrtStep_fst :
+    isqrtStep ≫ cfpFst p.T p.T =
+    iteBranches
+      (cfpFst p.T p.T ≫ natSucc)
+      (cfpFst p.T p.T)
+      (cfpSnd p.T p.T ≫ isLeafEndo) := by
+  unfold isqrtStep
+  exact cfpLift_fst _ _
+
+/-- The second component of `isqrtStep` is an
+`iteBranches` on the remaining counter:
+when `r = ℓ`, resets to `s + (s + 2)`;
+when `r > 0`, decrements to `r - 1`. -/
+theorem isqrtStep_snd :
+    isqrtStep ≫ cfpSnd p.T p.T =
+    iteBranches
+      (cfpLift (cfpFst p.T p.T)
+        (cfpLift (cfpFst p.T p.T)
+          (cfpTerminalFrom (cfpProd p.T p.T) ≫
+            p.ℓ ≫ natSucc ≫ natSucc) ≫
+          natPlus) ≫ natPlus)
+      (cfpSnd p.T p.T ≫ natPred)
+      (cfpSnd p.T p.T ≫ isLeafEndo) := by
+  unfold isqrtStep
+  exact cfpLift_snd _ _
+
+/-- Step function for the isqrt level state:
+maps `(s, r) ↦ (s+1, r+2)`.  Iterating from
+`(ℓ, ℓ)` gives `(toRSN(k), 2·toRSN(k))` at
+step `k`. -/
+def isqrtLevelStep :
+    cfpProd p.T p.T ⟶ cfpProd p.T p.T :=
+  cfpLift (cfpFst p.T p.T ≫ natSucc)
+    (cfpSnd p.T p.T ≫ natSucc ≫ natSucc)
+
+/-- The isqrt state at perfect squares:
+`isqrtLevelState(k) = (toRSN(k), 2·toRSN(k))`.
+Defined as an NNO fold of `isqrtLevelStep` from
+`(ℓ, ℓ)`. -/
+def isqrtLevelState : p.T ⟶ cfpProd p.T p.T :=
+  cfpLift (cfpTerminalFrom p.T) (𝟙 p.T) ≫
+    nnoElim
+      (cfpLift
+        (cfpTerminalFrom cfpTerminal ≫ p.ℓ)
+        (cfpTerminalFrom cfpTerminal ≫ p.ℓ))
+      isqrtLevelStep
+
+/-- Base case: `isqrtLevelState(ℓ) = (ℓ, ℓ)`. -/
+theorem isqrtLevelState_ℓ :
+    p.ℓ ≫ isqrtLevelState =
+    cfpLift p.ℓ p.ℓ := by
+  unfold isqrtLevelState
+  rw [← Category.assoc, cfpLift_precomp,
+    Category.comp_id]
+  have term_eq : p.ℓ ≫ cfpTerminalFrom p.T =
+      cfpTerminalFrom cfpTerminal :=
+    h.terminal.uniq _
+  rw [term_eq]
+  have ins :
+      cfpLift (cfpTerminalFrom cfpTerminal)
+        p.ℓ =
+      cfpInsertSnd p.ℓ cfpTerminal := by
+    unfold cfpInsertSnd
+    congr 1
+    · exact cfpTerminalFrom_terminal
+    · rw [cfpTerminalFrom_terminal,
+        Category.id_comp]
+  rw [ins, nnoElim_ℓ]
+  congr 1 <;>
+    rw [cfpTerminalFrom_terminal,
+      Category.id_comp]
+
+/-- Step rule: `isqrtLevelState(natSucc(k))
+= isqrtLevelStep(isqrtLevelState(k))`. -/
+theorem isqrtLevelState_s :
+    natSucc ≫ isqrtLevelState =
+    isqrtLevelState ≫
+      (isqrtLevelStep :
+        cfpProd p.T p.T ⟶
+          cfpProd p.T p.T) := by
+  unfold isqrtLevelState
+  rw [← Category.assoc, cfpLift_precomp,
+    Category.comp_id]
+  have term_eq :
+      natSucc ≫ cfpTerminalFrom p.T =
+      cfpTerminalFrom p.T :=
+    h.terminal.uniq _
+  rw [term_eq]
+  have factor :
+      cfpLift (cfpTerminalFrom p.T)
+        (natSucc : p.T ⟶ p.T) =
+      cfpLift (cfpTerminalFrom p.T) (𝟙 p.T) ≫
+        cfpMap (𝟙 cfpTerminal)
+          (natSucc : p.T ⟶ p.T) := by
+    rw [cfpLift_cfpMap, Category.comp_id,
+      Category.id_comp]
+  rw [factor, Category.assoc, nnoElim_s,
+    ← Category.assoc]
+
+/-- At the level boundary, when remaining = ℓ,
+`isqrtStep` increments the root and resets the
+remaining to `2·root + 2`:
+`isqrtStep(s, ℓ) = (s+1, s + (s + 2))`. -/
+theorem isqrtStep_at_ℓ :
+    cfpLift (𝟙 p.T) (cfpTerminalFrom p.T ≫ p.ℓ) ≫
+      isqrtStep =
+    cfpLift (natSucc : p.T ⟶ p.T)
+      (cfpLift (𝟙 p.T)
+        (cfpLift (𝟙 p.T)
+          (cfpTerminalFrom p.T ≫
+            p.ℓ ≫ natSucc ≫ natSucc) ≫
+          natPlus) ≫ natPlus) := by
+  set embed := cfpLift (𝟙 p.T)
+    (cfpTerminalFrom p.T ≫ p.ℓ) with hembed
+  have h_fst : embed ≫
+      cfpFst p.T p.T = 𝟙 p.T :=
+    cfpLift_fst _ _
+  have h_term : embed ≫
+      cfpTerminalFrom (cfpProd p.T p.T) =
+      cfpTerminalFrom p.T :=
+    h.terminal.uniq _
+  have h_cnd : embed ≫ cfpSnd p.T p.T ≫
+      isLeafEndo =
+      cfpTerminalFrom p.T ≫ p.ℓ := by
+    rw [← Category.assoc, cfpLift_snd,
+      Category.assoc, isLeafEndo_ℓ]
+  apply cfpLift_uniq
+  · -- First component: root increments.
+    rw [Category.assoc, isqrtStep_fst,
+      iteBranches_precomp, h_cnd,
+      iteBranches_ℓ,
+      ← Category.assoc, h_fst,
+      Category.id_comp]
+  · -- Second component: remaining resets.
+    rw [Category.assoc, isqrtStep_snd,
+      iteBranches_precomp, h_cnd,
+      iteBranches_ℓ]
+    -- Simplify the reset expression.
+    rw [← Category.assoc embed,
+      cfpLift_precomp, h_fst,
+      ← Category.assoc embed,
+      cfpLift_precomp, h_fst,
+      ← Category.assoc embed
+        (cfpTerminalFrom (cfpProd p.T p.T)),
+      h_term]
+
 end GebLean

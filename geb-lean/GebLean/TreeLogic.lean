@@ -4309,6 +4309,96 @@ theorem iteBranches_precomp {D E : C}
   rw [← Category.assoc, cfpLift_precomp,
     cfpLift_precomp]
 
+/-- `iteFold` commutes with `cfpMap g g`:
+post-composing with `cfpMap g g` (applying `g` to
+both result components) equals pre-composing with
+`cfpMap (cfpMap g g) (𝟙 T)` (applying `g` to both
+parameter components).  This is the algebra
+morphism property of `cfpMap g g` for the
+`iteFold` algebra. -/
+private theorem iteFold_cfpMap_comm
+    (g : p.T ⟶ p.T) :
+    iteFold ≫ cfpMap g g =
+    cfpMap (cfpMap g g) (𝟙 p.T) ≫
+      (iteFold :
+        cfpProd (cfpProd p.T p.T) p.T ⟶
+          cfpProd p.T p.T) := by
+  have step_comm :
+      cfpMap (cfpMap g g) (cfpMap g g) ≫
+        cfpLift
+          (cfpFst (cfpProd p.T p.T)
+            (cfpProd p.T p.T) ≫
+            cfpSnd p.T p.T)
+          (cfpFst (cfpProd p.T p.T)
+            (cfpProd p.T p.T) ≫
+            cfpSnd p.T p.T) =
+      cfpLift
+        (cfpFst (cfpProd p.T p.T)
+          (cfpProd p.T p.T) ≫
+          cfpSnd p.T p.T)
+        (cfpFst (cfpProd p.T p.T)
+          (cfpProd p.T p.T) ≫
+          cfpSnd p.T p.T) ≫
+        cfpMap g g := by
+    rw [cfpLift_precomp, cfpLift_cfpMap]
+    congr 1 <;> (
+      rw [← Category.assoc, cfpMap_fst,
+        Category.assoc, cfpMap_snd,
+        ← Category.assoc])
+  unfold iteFold
+  rw [elim_algebra_morphism
+    (𝟙 (cfpProd p.T p.T))
+    (cfpLift
+      (cfpFst (cfpProd p.T p.T)
+        (cfpProd p.T p.T) ≫
+        cfpSnd p.T p.T)
+      (cfpFst (cfpProd p.T p.T)
+        (cfpProd p.T p.T) ≫
+        cfpSnd p.T p.T))
+    (cfpMap g g)
+    (cfpLift
+      (cfpFst (cfpProd p.T p.T)
+        (cfpProd p.T p.T) ≫
+        cfpSnd p.T p.T)
+      (cfpFst (cfpProd p.T p.T)
+        (cfpProd p.T p.T) ≫
+        cfpSnd p.T p.T))
+    step_comm,
+    Category.id_comp]
+  conv_rhs =>
+    rw [elim_naturality (cfpMap g g),
+      Category.comp_id]
+
+private theorem treeIte_postcomp
+    (g : p.T ⟶ p.T) :
+    treeIte ≫ g =
+    cfpMap (cfpMap g g) (𝟙 p.T) ≫
+      (treeIte :
+        cfpProd (cfpProd p.T p.T) p.T ⟶
+          p.T) := by
+  unfold treeIte
+  simp only [Category.assoc]
+  conv_lhs =>
+    rw [show cfpFst p.T p.T ≫ g =
+      cfpMap g g ≫ cfpFst p.T p.T from
+      (cfpMap_fst g g).symm]
+  rw [← Category.assoc iteFold (cfpMap g g),
+    iteFold_cfpMap_comm, Category.assoc]
+
+/-- Post-composition distributes through
+`iteBranches`: applying `g` after a conditional
+equals conditioning on `g`-composed branches. -/
+theorem iteBranches_postcomp {D : C}
+    (thn els cnd : D ⟶ p.T)
+    (g : p.T ⟶ p.T) :
+    iteBranches thn els cnd ≫ g =
+    iteBranches (thn ≫ g) (els ≫ g) cnd := by
+  unfold iteBranches
+  rw [Category.assoc, treeIte_postcomp,
+    ← Category.assoc,
+    cfpLift_cfpMap, Category.comp_id,
+    cfpLift_cfpMap]
+
 /-- Constructor helper: given two morphisms into
 `p.T`, produces the branch pair as a single
 morphism into `p.T`.  Encodes `branch(f, g)`. -/

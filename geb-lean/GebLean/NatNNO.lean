@@ -2294,4 +2294,53 @@ theorem isLeafEndo_natTruncSub_mono :
     _ = cfpFst p.T p.T ≫ isLeafEndo := by
         rw [swap_invol, Category.id_comp]
 
+/-- Fold composition: iterating `g` a total of
+`m + n` times decomposes as `n` iterations after
+`m` iterations.  That is,
+`g^n(nnoElim f g (a, m)) = nnoElim f g (a, m+n)`,
+expressed as:
+`cfpMap (nnoElim f g) (𝟙 T) ≫ nnoElim (𝟙 X) g
+  = nnoElim (nnoElim f g) g`. -/
+private theorem cfpMap_comm_snd
+    {B X : C} (f : B ⟶ X) (k : p.T ⟶ p.T) :
+    cfpMap (𝟙 B) k ≫ cfpMap f (𝟙 p.T) =
+    cfpMap f (𝟙 p.T) ≫ cfpMap (𝟙 X) k := by
+  rw [cfpMap_comp, cfpMap_comp]
+  simp only [Category.id_comp, Category.comp_id]
+
+private theorem nnoElim_absorbs_toRSN
+    {X : C} (g : X ⟶ X) :
+    cfpMap (𝟙 X) toRSpineNat ≫
+      nnoElim (𝟙 X) g =
+    nnoElim (𝟙 X) g := by
+  unfold nnoElim
+  rw [← Category.assoc]
+  congr 1
+  rw [cfpMap_comp, Category.id_comp,
+    toRSpineNat_idem]
+
+theorem nnoElim_fold_compose
+    {A X : C} (f : A ⟶ X) (g : X ⟶ X) :
+    cfpMap (nnoElim f g) (𝟙 p.T) ≫
+      nnoElim (𝟙 X) g =
+    nnoElim (nnoElim f g) g := by
+  apply nnoElim_uniq
+  · -- Base: cfpInsertSnd ℓ ≫ φ = nnoElim f g
+    rw [← Category.assoc,
+      cfpInsertSnd_cfpMap,
+      Category.assoc, nnoElim_ℓ,
+      Category.comp_id]
+  · -- Step: cfpMap (𝟙 _) natSucc ≫ φ = φ ≫ g
+    rw [Category.assoc, ← Category.assoc
+      (cfpMap (𝟙 _) natSucc)
+      (cfpMap (nnoElim f g) (𝟙 p.T)),
+      cfpMap_comm_snd,
+      Category.assoc, nnoElim_s]
+  · -- Norm: cfpMap (𝟙 _) toRSN ≫ φ = φ
+    rw [← Category.assoc
+      (cfpMap (𝟙 _) toRSpineNat)
+      (cfpMap (nnoElim f g) (𝟙 p.T)),
+      cfpMap_comm_snd,
+      Category.assoc, nnoElim_absorbs_toRSN]
+
 end GebLean
