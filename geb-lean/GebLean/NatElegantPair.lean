@@ -477,4 +477,85 @@ theorem isqrtStep_at_ℓ :
         (cfpTerminalFrom (cfpProd p.T p.T)),
       h_term]
 
+/-- When the remaining counter is nonzero
+(factors through `β`), `isqrtStep` preserves the
+root and decrements the remaining:
+`isqrtStep(s, r) = (s, natPred(r))`. -/
+theorem isqrtStep_at_β {D : C}
+    (f : D ⟶ cfpProd p.T p.T)
+    (r : D ⟶ cfpProd p.T p.T)
+    (hcnd : f ≫ cfpSnd p.T p.T ≫ isLeafEndo =
+      r ≫ p.β) :
+    f ≫ isqrtStep =
+    cfpLift (f ≫ cfpFst p.T p.T)
+      (f ≫ cfpSnd p.T p.T ≫ natPred) := by
+  apply cfpLift_uniq
+  · rw [Category.assoc, isqrtStep_fst,
+      iteBranches_precomp, hcnd,
+      iteBranches_β]
+  · rw [Category.assoc, isqrtStep_snd,
+      iteBranches_precomp, hcnd,
+      iteBranches_β]
+
+/-- Root stability under one `isqrtStep` when the
+remaining counter is nonzero:
+`fst(isqrtStep(s, r)) = fst(s, r)` when
+`isLeafEndo(r)` factors through `β`. -/
+theorem isqrtStep_fst_stable {D : C}
+    (f : D ⟶ cfpProd p.T p.T)
+    (r : D ⟶ cfpProd p.T p.T)
+    (hcnd : f ≫ cfpSnd p.T p.T ≫ isLeafEndo =
+      r ≫ p.β) :
+    f ≫ isqrtStep ≫ cfpFst p.T p.T =
+    f ≫ cfpFst p.T p.T := by
+  rw [← Category.assoc,
+    isqrtStep_at_β f r hcnd, cfpLift_fst]
+
+/-- Countdown step: preserves root, decrements
+remaining.  `countdown(s, r) = (s, natPred(r))`. -/
+def isqrtCountdown :
+    cfpProd p.T p.T ⟶ cfpProd p.T p.T :=
+  cfpLift (cfpFst p.T p.T)
+    (cfpSnd p.T p.T ≫ natPred)
+
+/-- `countdown ≫ cfpFst = cfpFst`:
+the countdown step preserves the root. -/
+private theorem isqrtCountdown_fst :
+    isqrtCountdown ≫ cfpFst p.T p.T =
+    cfpFst p.T p.T := by
+  unfold isqrtCountdown; exact cfpLift_fst _ _
+
+/-- The countdown fold unconditionally preserves
+the root (first component of the state):
+`fst(countdown^j(s, r)) = s`. -/
+theorem nnoElim_countdown_fst :
+    nnoElim (𝟙 (cfpProd p.T p.T))
+      (isqrtCountdown :
+        cfpProd p.T p.T ⟶ cfpProd p.T p.T) ≫
+      cfpFst p.T p.T =
+    nnoElim (cfpFst p.T p.T) (𝟙 p.T) := by
+  apply nnoElim_uniq
+  · -- Base: fold at ℓ gives cfpFst
+    rw [← Category.assoc, nnoElim_ℓ,
+      Category.id_comp]
+  · -- Step: fold ≫ countdown ≫ fst = fold ≫ fst
+    rw [← Category.assoc, nnoElim_s,
+      Category.assoc, isqrtCountdown_fst,
+      Category.comp_id]
+  · -- Norm: absorption of toRSN
+    rw [← Category.assoc]
+    congr 1
+    unfold nnoElim
+    rw [← Category.assoc, cfpMap_comp,
+      Category.id_comp, toRSpineNat_idem]
+
+/-- The number of `isqrtStep` applications at
+each level: `natSquareGap(k) = 2k + 1`, defined
+as `natPlus(k, natPlus(k, natSucc(ℓ)))`. -/
+def natSquareGap : p.T ⟶ p.T :=
+  cfpLift (𝟙 p.T)
+    (cfpLift (𝟙 p.T)
+      (cfpTerminalFrom p.T ≫ p.ℓ ≫ natSucc) ≫
+      natPlus) ≫ natPlus
+
 end GebLean
