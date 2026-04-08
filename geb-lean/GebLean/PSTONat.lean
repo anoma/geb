@@ -559,32 +559,6 @@ private theorem φ_snoc_step
     cfpMap (𝟙 A) s.snoc ≫ φ =
     cfpLiftRecElem φ ≫
       (cfpFst X T ≫ g) := by
-  -- cfpMap snoc ≫ φ
-  -- = cfpMap snoc ≫ cfpMap rsn ≫ φ (by hnorm)
-  -- = cfpMap (snoc ≫ rsn) ≫ φ
-  -- = cfpMap (cfpMap rsn (𝟙 T) ≫ fst ≫ natS)
-  --   ≫ φ (by pstoToRSpineNat_snoc)
-  -- We need to show this equals
-  --   cfpLiftRecElem φ ≫ fst X T ≫ g.
-  -- cfpLiftRecElem φ ≫ fst X T
-  --   = cfpAssocFst A T T ≫ φ.
-  -- So RHS = cfpAssocFst ≫ φ ≫ g.
-  -- For LHS: cfpMap (cfpMap rsn (𝟙 T) ≫
-  --   fst ≫ natS) ≫ φ.
-  -- Show this = cfpAssocFst ≫ cfpMap natS ≫ φ
-  -- = cfpAssocFst ≫ φ ≫ g (by hs).
-  -- The key is showing cfpMap (𝟙 A)
-  --   (cfpMap rsn (𝟙 T) ≫ fst T T ≫ natS)
-  -- = cfpAssocFst ≫ cfpMap (𝟙 A) rsn ≫
-  --   cfpMap (𝟙 A) natS.
-  -- Factor: cfpMap (𝟙 A) (fst ≫ f)
-  --   = cfpAssocFst A T T ≫ cfpMap (𝟙 A) f.
-  -- And: cfpMap (𝟙 A) (cfpMap rsn (𝟙 T)) ≫
-  --   cfpAssocFst A T T
-  --   = cfpAssocFst A T T ≫ cfpMap (𝟙 A) rsn.
-  -- Let's proceed step by step.
-  -- Step 1: cfpMap (𝟙 A) snoc ≫ φ
-  --   = cfpMap (𝟙 A) (snoc ≫ rsn) ≫ φ
   have step1 :
       cfpMap (𝟙 A) s.snoc ≫ φ =
       cfpMap (𝟙 A)
@@ -601,10 +575,6 @@ private theorem φ_snoc_step
         rw [← cfpMap_comp],
       Category.assoc, hnorm]
   rw [step1, pstoToRSpineNat_snoc]
-  -- Goal: cfpMap (𝟙 A) (cfpMap rsn (𝟙 T)
-  --   ≫ fst ≫ natS) ≫ φ
-  -- = cfpLiftRecElem φ ≫ fst X T ≫ g
-  -- RHS simplification.
   have rhs_simp :
       cfpLiftRecElem φ ≫ cfpFst X T ≫ g =
       cfpAssocFst A T T ≫ φ ≫ g := by
@@ -612,17 +582,6 @@ private theorem φ_snoc_step
     unfold cfpLiftRecElem
     rw [cfpLift_fst, Category.assoc]
   rw [rhs_simp]
-  -- LHS: cfpMap (𝟙 A) (cfpMap rsn (𝟙 T)
-  --   ≫ fst ≫ natS) ≫ φ
-  -- = cfpAssocFst ≫ cfpMap rsn ≫
-  --   cfpMap natS ≫ φ
-  -- = cfpAssocFst ≫ cfpMap rsn ≫ φ ≫ g
-  --   (by hs)
-  -- = cfpAssocFst ≫ φ ≫ g (by hnorm)
-  -- Factor LHS.
-  -- cfpMap (𝟙 A) (cfpMap rsn (𝟙 T) ≫ fst ≫ natS)
-  -- = cfpMap (𝟙 A) (cfpMap rsn (𝟙 T)) ≫
-  --   cfpMap (𝟙 A) (fst ≫ natS)
   have factor1 :
       cfpMap (𝟙 A)
         (cfpMap pstoToRSpineNat (𝟙 T) ≫
