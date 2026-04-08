@@ -2119,4 +2119,179 @@ private theorem swap_isLeafEndo_boolAnd_elim
     congr 1
     exact (h.terminal.uniq _).symm
 
+/-- `natTruncSub(natPred(a), b)
+  = natPred(natTruncSub(a, b))`:
+`natTruncSub` commutes with `natPred`
+on its first argument. -/
+theorem natTruncSub_natPred_first :
+    cfpMap natPred (𝟙 p.T) ≫ natTruncSub =
+    natTruncSub ≫ (natPred : p.T ⟶ p.T) := by
+  rw [natTruncSub_natPred]
+  unfold natTruncSub
+  rw [elim_naturality natPred (𝟙 p.T)
+    (cfpSnd p.T p.T ≫ natPred),
+    Category.comp_id]
+
+
+/-- Monotonicity of `isLeafEndo` under truncated
+subtraction: `boolAnd(isLeafEndo(w),
+isLeafEndo(natTruncSub(w, c))) = isLeafEndo(w)`.
+Proved by folding on the first argument `w`. -/
+theorem isLeafEndo_natTruncSub_mono :
+    cfpLift (cfpFst p.T p.T ≫ isLeafEndo)
+      (natTruncSub ≫ isLeafEndo) ≫ boolAnd =
+    cfpFst p.T p.T ≫ isLeafEndo := by
+  have swap_fst :
+      cfpSwap p.T p.T ≫ cfpFst p.T p.T =
+      cfpSnd p.T p.T := by
+    unfold cfpSwap; exact cfpLift_fst _ _
+  have swap_snd :
+      cfpSwap p.T p.T ≫ cfpSnd p.T p.T =
+      cfpFst p.T p.T := by
+    unfold cfpSwap; exact cfpLift_snd _ _
+  have swap_invol :
+      cfpSwap p.T p.T ≫ cfpSwap p.T p.T =
+      𝟙 (cfpProd p.T p.T) := by
+    rw [show 𝟙 (cfpProd p.T p.T) =
+        cfpLift (cfpFst p.T p.T)
+          (cfpSnd p.T p.T) from
+      cfpLift_uniq _ _ _
+        (Category.id_comp _)
+        (Category.id_comp _)]
+    apply cfpLift_uniq
+    · rw [Category.assoc, swap_fst, swap_snd]
+    · rw [Category.assoc, swap_snd, swap_fst]
+  -- Show cfpSwap ≫ LHS = catam.
+  have swap_lhs :
+      cfpSwap p.T p.T ≫
+        (cfpLift (cfpFst p.T p.T ≫ isLeafEndo)
+          (natTruncSub ≫ isLeafEndo) ≫
+          boolAnd) =
+      p.elim (cfpTerminalFrom p.T ≫ p.ℓ)
+        (cfpTerminalFrom (cfpProd p.T p.T) ≫
+          treeFalse) := by
+    have h := swap_isLeafEndo_boolAnd_elim
+      (natTruncSub ≫ isLeafEndo) (by
+        have inner :
+            cfpLift (cfpTerminalFrom p.T ≫ p.ℓ)
+              (𝟙 p.T) ≫
+              cfpLift
+                (cfpFst p.T p.T ≫ isLeafEndo)
+                (natTruncSub ≫ isLeafEndo) =
+            cfpLift (cfpTerminalFrom p.T ≫ p.ℓ)
+              (cfpTerminalFrom p.T ≫ p.ℓ) := by
+          apply cfpLift_uniq
+          · rw [Category.assoc, cfpLift_fst,
+              ← Category.assoc, cfpLift_fst,
+              Category.assoc, isLeafEndo_ℓ]
+          · rw [Category.assoc, cfpLift_snd,
+              ← Category.assoc,
+              natTruncSub_ℓ_left (𝟙 p.T),
+              Category.assoc, isLeafEndo_ℓ]
+        calc cfpLift
+                (cfpTerminalFrom p.T ≫ p.ℓ)
+                (𝟙 p.T) ≫
+              cfpLift
+                (cfpFst p.T p.T ≫ isLeafEndo)
+                (natTruncSub ≫ isLeafEndo) ≫
+              (boolAnd : cfpProd p.T p.T ⟶ p.T)
+            = (cfpLift
+                (cfpTerminalFrom p.T ≫ p.ℓ)
+                (𝟙 p.T) ≫
+              cfpLift
+                (cfpFst p.T p.T ≫ isLeafEndo)
+                (natTruncSub ≫ isLeafEndo)) ≫
+                boolAnd :=
+              (Category.assoc _ _ _).symm
+          _ = cfpLift
+                (cfpTerminalFrom p.T ≫ p.ℓ)
+                (cfpTerminalFrom p.T ≫ p.ℓ) ≫
+                boolAnd := by
+              rw [inner]
+          _ = (cfpTerminalFrom p.T ≫
+                cfpLift p.ℓ p.ℓ) ≫
+                boolAnd := by
+              rw [(cfpLift_precomp
+                (cfpTerminalFrom p.T)
+                p.ℓ p.ℓ).symm]
+          _ = cfpTerminalFrom p.T ≫
+                (cfpLift p.ℓ p.ℓ ≫ boolAnd) :=
+              Category.assoc _ _ _
+          _ = cfpTerminalFrom p.T ≫ p.ℓ := by
+              rw [boolAnd_ℓ_ℓ])
+    exact h
+  -- Show cfpSwap ≫ RHS = same catamorphism.
+  have swap_rhs :
+      cfpSwap p.T p.T ≫
+        (cfpFst p.T p.T ≫ isLeafEndo) =
+      p.elim (cfpTerminalFrom p.T ≫ p.ℓ)
+        (cfpTerminalFrom (cfpProd p.T p.T) ≫
+          treeFalse) := by
+    rw [← Category.assoc, swap_fst]
+    apply p.elim_uniq
+      (cfpTerminalFrom p.T ≫ p.ℓ)
+      (cfpTerminalFrom (cfpProd p.T p.T) ≫
+        treeFalse)
+    · rw [← Category.assoc]
+      unfold cfpInsertSnd
+      rw [cfpLift_snd, Category.assoc,
+        isLeafEndo_ℓ]
+    · rw [← Category.assoc, cfpMap_snd,
+        Category.assoc, isLeafEndo_β,
+        ← Category.assoc,
+        show cfpSnd p.T (cfpProd p.T p.T) ≫
+          cfpTerminalFrom (cfpProd p.T p.T) =
+        cfpTerminalFrom
+          (cfpProd p.T (cfpProd p.T p.T)) from
+          h.terminal.uniq _,
+        ← show cfpLiftAssoc
+            (cfpSnd p.T p.T ≫ isLeafEndo)
+            (cfpSnd p.T p.T ≫ isLeafEndo) ≫
+          cfpTerminalFrom (cfpProd p.T p.T) =
+        cfpTerminalFrom
+          (cfpProd p.T (cfpProd p.T p.T)) from
+          h.terminal.uniq _,
+        Category.assoc]
+  -- Cancel swap.
+  have h_eq :
+      cfpSwap p.T p.T ≫
+        (cfpLift (cfpFst p.T p.T ≫ isLeafEndo)
+          (natTruncSub ≫ isLeafEndo) ≫
+          boolAnd) =
+      cfpSwap p.T p.T ≫
+        (cfpFst p.T p.T ≫ isLeafEndo) := by
+    rw [swap_lhs, swap_rhs]
+  calc cfpLift (cfpFst p.T p.T ≫ isLeafEndo)
+          (natTruncSub ≫ isLeafEndo) ≫ boolAnd
+      = 𝟙 _ ≫ (cfpLift
+          (cfpFst p.T p.T ≫ isLeafEndo)
+          (natTruncSub ≫ isLeafEndo) ≫
+          boolAnd) :=
+        (Category.id_comp _).symm
+    _ = (cfpSwap p.T p.T ≫
+          cfpSwap p.T p.T) ≫
+          (cfpLift
+            (cfpFst p.T p.T ≫ isLeafEndo)
+            (natTruncSub ≫ isLeafEndo) ≫
+            boolAnd) := by
+        rw [swap_invol]
+    _ = cfpSwap p.T p.T ≫
+          (cfpSwap p.T p.T ≫
+            (cfpLift
+              (cfpFst p.T p.T ≫ isLeafEndo)
+              (natTruncSub ≫ isLeafEndo) ≫
+              boolAnd)) := by
+        rw [Category.assoc]
+    _ = cfpSwap p.T p.T ≫
+          (cfpSwap p.T p.T ≫
+            (cfpFst p.T p.T ≫
+              isLeafEndo)) := by
+        rw [h_eq]
+    _ = (cfpSwap p.T p.T ≫
+          cfpSwap p.T p.T) ≫
+          (cfpFst p.T p.T ≫ isLeafEndo) := by
+        rw [Category.assoc]
+    _ = cfpFst p.T p.T ≫ isLeafEndo := by
+        rw [swap_invol, Category.id_comp]
+
 end GebLean
