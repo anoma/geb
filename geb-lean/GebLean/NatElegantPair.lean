@@ -54,20 +54,22 @@ def natSquare : p.T ⟶ p.T :=
     cfpSnd p.T p.T
 
 /-- Szudzik's elegant pairing function.
-`EP(x, y) = y² + x` when `x ≤ y` (column phase),
-`EP(x, y) = x² + x + y` when `x > y` (row phase).
-The condition is `isLeafEndo(natTruncSub(x, y))`:
-leaf when `x ≤ y`, `treeFalse` when `x > y`. -/
+`EP(x, y) = x² + x + y` when `x ≥ y` (row phase),
+`EP(x, y) = y² + x` when `x < y` (column phase).
+The condition is
+`isLeafEndo(natTruncSub(y, x))`:
+leaf when `y ≤ x` (row), `treeFalse` when
+`y > x` (column). -/
 def elegantPair :
     cfpProd p.T p.T ⟶ p.T :=
   iteBranches
-    (cfpLift (cfpSnd p.T p.T ≫ natSquare)
-      (cfpFst p.T p.T) ≫ natPlus)
     (cfpLift
       (cfpLift (cfpFst p.T p.T ≫ natSquare)
         (cfpFst p.T p.T) ≫ natPlus)
       (cfpSnd p.T p.T) ≫ natPlus)
-    (natTruncSub ≫ isLeafEndo)
+    (cfpLift (cfpSnd p.T p.T ≫ natSquare)
+      (cfpFst p.T p.T) ≫ natPlus)
+    (cfpSwap p.T p.T ≫ natTruncSub ≫ isLeafEndo)
 
 /-- `natSquare(ℓ) = ℓ`: zero squared is zero. -/
 theorem natSquare_ℓ :
@@ -129,39 +131,38 @@ private theorem natSquareState_s :
     ← Category.assoc]
 
 
-/-- Column-phase computation rule: when `x ≤ y`
-(i.e., `natTruncSub(x,y)` is a leaf),
-`elegantPair(x, y) = natPlus(natSquare(y), x)`. -/
-theorem elegantPair_column {D : C}
-    (f : D ⟶ cfpProd p.T p.T)
-    (hcnd :
-      f ≫ natTruncSub ≫ isLeafEndo =
-      cfpTerminalFrom D ≫ p.ℓ) :
-    f ≫ elegantPair =
-    f ≫ cfpLift (cfpSnd p.T p.T ≫ natSquare)
-      (cfpFst p.T p.T) ≫ natPlus := by
-  unfold elegantPair
-  rw [iteBranches_precomp, hcnd,
-    iteBranches_ℓ]
-
-/-- Row-phase computation rule: when `x > y`
-(i.e., `natTruncSub(x,y)` factors through `β`),
-`elegantPair(x, y) =
-  natPlus(natPlus(natSquare(x), x), y)`. -/
+/-- Row-phase computation rule: when `y ≤ x`
+(i.e., `natTruncSub(y, x)` is a leaf),
+`elegantPair(x, y) = x² + x + y`. -/
 theorem elegantPair_row {D : C}
     (f : D ⟶ cfpProd p.T p.T)
-    (r : D ⟶ cfpProd p.T p.T)
     (hcnd :
-      f ≫ natTruncSub ≫ isLeafEndo =
-      r ≫ p.β) :
+      f ≫ cfpSwap p.T p.T ≫
+        natTruncSub ≫ isLeafEndo =
+      cfpTerminalFrom D ≫ p.ℓ) :
     f ≫ elegantPair =
     f ≫ cfpLift
       (cfpLift (cfpFst p.T p.T ≫ natSquare)
         (cfpFst p.T p.T) ≫ natPlus)
       (cfpSnd p.T p.T) ≫ natPlus := by
   unfold elegantPair
-  rw [iteBranches_precomp, hcnd,
-    iteBranches_β]
+  rw [iteBranches_precomp, hcnd, iteBranches_ℓ]
+
+/-- Column-phase computation rule: when `y > x`
+(i.e., `natTruncSub(y, x)` factors through `β`),
+`elegantPair(x, y) = y² + x`. -/
+theorem elegantPair_column {D : C}
+    (f : D ⟶ cfpProd p.T p.T)
+    (r : D ⟶ cfpProd p.T p.T)
+    (hcnd :
+      f ≫ cfpSwap p.T p.T ≫
+        natTruncSub ≫ isLeafEndo =
+      r ≫ p.β) :
+    f ≫ elegantPair =
+    f ≫ cfpLift (cfpSnd p.T p.T ≫ natSquare)
+      (cfpFst p.T p.T) ≫ natPlus := by
+  unfold elegantPair
+  rw [iteBranches_precomp, hcnd, iteBranches_β]
 
 /-- Step function for the integer square root.
 Maintains a state `(s, remaining)` where `s` is the
@@ -210,20 +211,23 @@ def elegantUnpairRemainder : p.T ⟶ p.T :=
 
 /-- Szudzik's elegant unpairing function.  Given
 `z`, compute `s = isqrt(z)` and `r = z - s²`.
-If `r < s` (column phase): return `(r, s)`.
-If `r ≥ s` (row phase): return `(s, r - s)`. -/
+The condition `isLeafEndo(natTruncSub(s, r))`
+dispatches:
+- ℓ (s ≤ r, row phase): return `(s, r - s)`.
+- treeFalse (s > r, column phase): return
+  `(r, s)`. -/
 def elegantUnpair :
     p.T ⟶ cfpProd p.T p.T :=
   cfpLift
     (iteBranches
-      elegantUnpairRemainder
       isqrt
+      elegantUnpairRemainder
       (cfpLift isqrt elegantUnpairRemainder ≫
         natTruncSub ≫ isLeafEndo))
     (iteBranches
-      isqrt
       (cfpLift elegantUnpairRemainder isqrt ≫
         natTruncSub)
+      isqrt
       (cfpLift isqrt elegantUnpairRemainder ≫
         natTruncSub ≫ isLeafEndo))
 
