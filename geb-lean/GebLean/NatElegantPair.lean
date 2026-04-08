@@ -91,6 +91,44 @@ theorem natSquare_ℓ :
   rw [ins, nnoElim_ℓ, cfpLift_snd,
     cfpTerminalFrom_terminal, Category.id_comp]
 
+/-- Step rule for the `natSquare` state:
+the internal state `(n, n²)` steps to
+`natSquareStep(n, n²) = (n+1, (n+1)²)`. -/
+private theorem natSquareState_s :
+    natSucc ≫
+      (cfpLift (cfpTerminalFrom p.T) (𝟙 p.T) ≫
+        nnoElim
+          (cfpLift
+            (cfpTerminalFrom cfpTerminal ≫ p.ℓ)
+            (cfpTerminalFrom cfpTerminal ≫ p.ℓ))
+          natSquareStep) =
+    cfpLift (cfpTerminalFrom p.T) (𝟙 p.T) ≫
+      nnoElim
+        (cfpLift
+          (cfpTerminalFrom cfpTerminal ≫ p.ℓ)
+          (cfpTerminalFrom cfpTerminal ≫ p.ℓ))
+        natSquareStep ≫
+      (natSquareStep :
+        cfpProd p.T p.T ⟶ cfpProd p.T p.T) := by
+  rw [← Category.assoc, cfpLift_precomp,
+    Category.comp_id]
+  have term_eq :
+      natSucc ≫ cfpTerminalFrom p.T =
+      cfpTerminalFrom p.T :=
+    h.terminal.uniq _
+  rw [term_eq]
+  have factor :
+      cfpLift (cfpTerminalFrom p.T)
+        (natSucc : p.T ⟶ p.T) =
+      cfpLift (cfpTerminalFrom p.T) (𝟙 p.T) ≫
+        cfpMap (𝟙 cfpTerminal)
+          (natSucc : p.T ⟶ p.T) := by
+    rw [cfpLift_cfpMap, Category.comp_id,
+      Category.id_comp]
+  rw [factor, Category.assoc, nnoElim_s,
+    ← Category.assoc]
+
+
 /-- Column-phase computation rule: when `x ≤ y`
 (i.e., `natTruncSub(x,y)` is a leaf),
 `elegantPair(x, y) = natPlus(natSquare(y), x)`. -/
@@ -188,5 +226,65 @@ def elegantUnpair :
         natTruncSub)
       (cfpLift isqrt elegantUnpairRemainder ≫
         natTruncSub ≫ isLeafEndo))
+
+/-- Base case for `isqrtState`:
+`isqrtState(ℓ) = (ℓ, ℓ)`. -/
+theorem isqrtState_ℓ :
+    p.ℓ ≫ isqrtState =
+    cfpLift p.ℓ p.ℓ := by
+  unfold isqrtState
+  rw [← Category.assoc, cfpLift_precomp,
+    Category.comp_id]
+  have term_eq : p.ℓ ≫ cfpTerminalFrom p.T =
+      cfpTerminalFrom cfpTerminal :=
+    h.terminal.uniq _
+  rw [term_eq]
+  have ins :
+      cfpLift (cfpTerminalFrom cfpTerminal)
+        p.ℓ =
+      cfpInsertSnd p.ℓ cfpTerminal := by
+    unfold cfpInsertSnd
+    congr 1
+    · exact cfpTerminalFrom_terminal
+    · rw [cfpTerminalFrom_terminal,
+        Category.id_comp]
+  rw [ins, nnoElim_ℓ]
+  congr 1 <;>
+    rw [cfpTerminalFrom_terminal,
+      Category.id_comp]
+
+/-- Base case for `isqrt`: `isqrt(ℓ) = ℓ`. -/
+theorem isqrt_ℓ :
+    p.ℓ ≫ isqrt = p.ℓ := by
+  unfold isqrt
+  rw [← Category.assoc, isqrtState_ℓ,
+    cfpLift_fst]
+
+/-- Step rule for `isqrtState`:
+`isqrtState(natSucc(n))
+  = isqrtStep(isqrtState(n))`. -/
+theorem isqrtState_s :
+    natSucc ≫ isqrtState =
+    isqrtState ≫
+      (isqrtStep : cfpProd p.T p.T ⟶
+        cfpProd p.T p.T) := by
+  unfold isqrtState
+  rw [← Category.assoc, cfpLift_precomp,
+    Category.comp_id]
+  have term_eq :
+      natSucc ≫ cfpTerminalFrom p.T =
+      cfpTerminalFrom p.T :=
+    h.terminal.uniq _
+  rw [term_eq]
+  have factor :
+      cfpLift (cfpTerminalFrom p.T)
+        (natSucc : p.T ⟶ p.T) =
+      cfpLift (cfpTerminalFrom p.T) (𝟙 p.T) ≫
+        cfpMap (𝟙 cfpTerminal)
+          (natSucc : p.T ⟶ p.T) := by
+    rw [cfpLift_cfpMap, Category.comp_id,
+      Category.id_comp]
+  rw [factor, Category.assoc, nnoElim_s,
+    ← Category.assoc]
 
 end GebLean
