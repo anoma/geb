@@ -397,6 +397,471 @@ lemma about triangular number spacing.
 
 Estimated total: 400-600 lines of lemmas.
 
+#### Progress (session 2026-04-06b)
+
+In `GebLean/NatNNO.lean`, defined and proved:
+
+- `triRootStep`: step morphism for the diagonal walk,
+  using `iteBranches` on the condition
+  `natTruncSub ≫ isLeafEndo`.
+- `triRootState`: NNO fold tracking
+  `(diagonal, offset)` via `nnoElim` with base
+  `(ℓ, ℓ)` and step `triRootStep`.
+- `triRoot`, `triRootOffset`: projections of
+  `triRootState` to diagonal index and offset.
+- `triRootState_ℓ`: base case `(ℓ, ℓ)`.
+- `triRootState_s`: step case
+  `natSucc ≫ triRootState =
+  triRootState ≫ triRootStep`.
+- `triRoot_ℓ`, `triRootOffset_ℓ`: base cases
+  for projections.
+- `triRootStep_diag`: when `s = rem`,
+  `triRootStep(s, s) = (s+1, ℓ)`.
+- `triRootStep_within`: when
+  `natTruncSub(s, rem) = r ≫ β`,
+  `triRootStep(s, rem) = (s, rem+1)`.
+- `natTruncSub_diag`: `natTruncSub(s, s) =
+  cfpTerminalFrom ≫ ℓ` at a general domain.
+- `natTruncSub_natPlus_cancel'`:
+  `natTruncSub(natPlus(x, a), a) = x` at a
+  general domain.
+- `triRootStep_natPlus_succ`: when the pair is
+  `(natPlus(succ(b), a), a)`, the step stays
+  within the diagonal:
+  `(natPlus(succ(b), a), succ(a))`.
+- `triRootState_toRSpineNat`:
+  `toRSpineNat ≫ triRootState = triRootState`.
+- `triRoot_toRSpineNat`:
+  `toRSpineNat ≫ triRoot = triRoot`.
+- `triRootOffset_toRSpineNat`:
+  `toRSpineNat ≫ triRootOffset = triRootOffset`.
+- `natTri_ℓ_triRoot`:
+  `ℓ ≫ natTri ≫ triRoot = ℓ`.
+- `natTri_ℓ_triRootOffset`:
+  `ℓ ≫ natTri ≫ triRootOffset = ℓ`.
+
+The import was changed from `GebLean.NatArith` to
+`GebLean.TreeGoedel` to access
+`natSucc_isLeafEndo` and `natEq_ℓ_right`.
+
+#### Progress (session 2026-04-06c)
+
+Additional lemmas proved in `GebLean/NatNNO.lean`:
+
+- `natPlus_triRootState`:
+  `natPlus ≫ triRootState =
+  nnoElim triRootState triRootStep`.
+  Adding `k` to a number and computing
+  `triRootState` equals iterating `triRootStep`
+  `k` times on the `triRootState` of the original.
+  Proved by `nnoElim_uniq`.
+
+- `natTri_succ_eq_succ_cantorPairAt0`:
+  `natSucc ≫ natTri =
+  (cfpLift (𝟙) (cfpTerminalFrom ≫ ℓ) ≫
+  cantorPair) ≫ natSucc`.
+  The successor triangular number is one past the
+  last point of diagonal n.  Uses
+  `natTri_natSucc`, `embed_natTriHelper_cfpFst`,
+  `natPlus_succ_left`, `natPlus_comm_rsn`, and
+  `natPlus_toRSpineNat_second`.
+
+Made `embed_natTriHelper_cfpFst` non-private in
+NatArith.lean so NatNNO.lean can reference it.
+
+#### Analysis of remaining obstacle
+
+The natTri band property
+`natTri ≫ triRootState =
+cfpLift toRSN (cfpTerminalFrom T ≫ ℓ)`
+and the full band property
+`cantorPair ≫ triRootState =
+cfpLift (natPlus ≫ toRSN) (cfpFst ≫ toRSN)`
+are mutually dependent:
+
+- The natTri band step at `succ(n)` requires
+  `triRootState(cantorPair(n, 0)) =
+  (toRSN(n), toRSN(n))` (the "diagWalkEnd"
+  lemma), which is the full band at `(n, 0)`.
+
+- The full band base case at `a = ℓ` requires
+  the natTri band for all `b`.
+
+Both require an inner "walk within diagonal"
+iteration: starting from
+`(toRSN(n), ℓ)` and applying `triRootStep` `n`
+times to reach `(toRSN(n), toRSN(n))`.
+This inner walk depends on
+`triRootStep_natPlus_succ` (proved), but it
+cannot be expressed as a simple single fold
+because the number of steps equals the diagonal
+number (a dependent quantity).
+
+Attempted strategies that did not close:
+
+1. `nnoElim_uniq` on natTri argument: step
+   requires diagWalkEnd, which is circular.
+2. `nnoElim_uniq` on the first arg of cantorPair
+   (swapped): base requires natTri band.
+3. Combined fold `natTriBandTarget` tracking both
+   `(triRootState(natTri(n)),
+   triRootState(cantorPair(n, 0)))`: the step for
+   the second component involves
+   `cantorPair(n, 1)` (not `cantorPair(n, 0)`),
+   so it is not a simple function of the state.
+4. PBTO fold approach: `natTriStep ≫ cfpSnd ≫
+   triRootState` involves `natPlus ≫ triRootState`
+   which again requires the inner walk.
+
+Remaining path forward:
+
+The walk within diagonal n (from offset 0 to
+offset n) is an inherently nested iteration.
+To prove it, one approach is:
+
+- Define a `pairElim` (F x F algebra fold) that
+  tracks `(natTriHelper state,
+  triRootState of the second component)`
+  simultaneously through the PBTO tree structure.
+  The PBTO fold naturally handles the right-spine
+  walk (which counts the diagonal), while
+  `triRootStep` handles the within-diagonal walk.
+
+- Alternatively, prove a "diagonal walk" lemma
+  by strong induction on the natural number value
+  (if a strong induction principle is available),
+  or by a double fold using an explicit counter
+  for the remaining steps within the diagonal.
+
+#### Progress (session 2026-04-06d)
+
+New definitions and lemmas in `GebLean/NatNNO.lean`:
+
+- `simpleTriRootStep`: the offset-incrementing step
+  morphism `(s, r) ↦ (s, natSucc(r))`, which always
+  increments the second component without checking
+  the diagonal boundary.
+- `simpleDiagWalk`: the NNO fold with base
+  `(s, ℓ)` and step `simpleTriRootStep`.
+- `simpleDiagWalk_ℓ`: base case.
+- `simpleDiagWalk_s`: step case.
+- `simpleDiagWalk_eq`:
+  `simpleDiagWalk = cfpLift cfpFst (cfpSnd ≫ toRSN)`.
+  The simple walk preserves the first component and
+  normalizes the second.  Proved via `nnoElim_uniq`.
+
+#### Updated analysis (session 2026-04-06d)
+
+The `cantorPair_succ_fst` recurrence gives:
+`cfpMap natSucc (𝟙 T) ≫ cantorPair ≫ triRootState
+= cfpMap (𝟙 T) natSucc ≫ cantorPair ≫ triRootState
+  ≫ triRootStep`.
+Both the target `cfpLift (natPlus ≫ toRSN)
+(cfpFst ≫ toRSN)` and `cantorPair ≫ triRootState`
+satisfy this recurrence, verified by
+`triRootStep_within` (using `natTruncSub` of
+`natSucc(toRSN(a+b))` and `toRSN(a)` being
+positive since `a+b+1 > a`).
+
+The recurrence has the form
+`X(succ(a), b) = triRootStep(X(a, succ(b)))`,
+which couples the fold variable (first arg) with
+a shift in the parameter (second arg).  This is
+NOT a standard `nnoElim_uniq` pattern (where the
+parameter stays fixed).
+
+To break the circularity between Phase 1 and
+Stage A, the combined fold step for Stage A at
+`succ(n)` requires `triRootState(CP(n, 1))`,
+which equals `nnoElim triRootState triRootStep`
+at `(CP(n, 0), succ(n))`.  Computing this
+involves `succ(n)` triRootSteps from
+`triRootState(CP(n, 0))`, expressible as a
+fixed morphism `nnoElim triRootState triRootStep`
+evaluated at `(CP(n, 0), succ(n))`.
+
+A viable approach: define a combined
+`nnoElim` on `n` with enriched state tracking
+`(triRootState(natTri(n)), CP(n, 0),
+triRootState(CP(n, 0)), triRootState(CP(n, 1)))`,
+where the step function uses
+`nnoElim triRootState triRootStep` as a
+fixed morphism to compute the inner walk,
+applied to the tracked `CP(n, 0)` and `succ(n)`
+(available via a paramorphism).
+
+The `cantorPair_succ_fst` recurrence directly
+gives a "shifted step" equation that both
+`cantorPair ≫ triRootState` and the target
+`cfpLift (natPlus ≫ toRSN) (cfpFst ≫ toRSN)`
+satisfy.  A "shifted step uniqueness" theorem
+(`shiftedNnoElim_uniq`) would establish that
+any `φ` satisfying the shifted step
+`φ(succ(a), b) = g(φ(a, succ(b)))` with a
+given base `f = φ(ℓ, ·)` equals
+`cfpLift natPlus cfpFst ≫ nnoElim f g`.
+
+The key insight: the change of variables
+`Θ(s, a) = φ(a, s - a)` where `s = a + b`
+transforms the shifted step into a standard
+NNO step `Θ(s, succ(a)) = g(Θ(s, a))`.
+This gives `Θ = nnoElim f g`, so
+`φ(a, b) = nnoElim f g (a + b, a)`.
+
+The proof of `shiftedNnoElim_uniq` can use
+`nnoElim_uniq` on the swapped morphism
+`cfpSwap ≫ φ`, showing it equals
+`cfpSwap ≫ cfpLift natPlus cfpFst ≫
+nnoElim f g`.  The β-step for
+`p.elim_uniq` on the first argument of `φ`
+uses only the right child (since
+`toRSN(β(l, r)) = succ(toRSN(r))`).
+
+With `shiftedNnoElim_uniq`, Stage B reduces to:
+
+1. Verify the shifted step for both sides.
+2. Verify the base: `natTri ≫ triRootState =
+   cfpLift toRSN (cfpTerminalFrom T ≫ ℓ)`.
+
+The base (Phase 1) itself follows from Stage B
+at `a = ℓ` (`CP(ℓ, b) = natTri(b)` since
+`natPlus(natTri(b), ℓ) = natTri(b)`).
+So once `shiftedNnoElim_uniq` is proved,
+`cantorPair_triRootState` follows immediately.
+
+Estimated effort for `shiftedNnoElim_uniq`:
+150-250 lines (change of variables,
+nnoElim_uniq application, normalization
+conditions).
+
+#### Progress (session 2026-04-06e)
+
+New lemma in `GebLean/NatNNO.lean`:
+
+- `natEq_ℓ_left`:
+  `cfpLift (cfpTerminalFrom T ≫ ℓ) (𝟙 T) ≫ natEq
+  = isLeafEndo`.
+  States `natEq(ℓ, z) = isLeafEndo(z)`.
+  The symmetric counterpart of `natEq_ℓ_right`
+  (which states `natEq(z, ℓ) = isLeafEndo(z)`).
+  Proved by unfolding `natEq` and using
+  `natTruncSub_ℓ_left`, `natTruncSub_ℓ`,
+  `natPlus_ℓ_left_eq_toRSpineNat`, and
+  `toRSpineNat_isLeafEndo`.
+
+#### Updated analysis (session 2026-04-06e)
+
+Thorough analysis of the approaches to
+`NatEqCantorPair` reveals three independent
+obstacles:
+
+**Obstacle 1: The shifted NNO step.** The
+change-of-variables approach `Θ(s, a) =
+φ(a, natTruncSub(s, a))` does NOT give a
+global NNO step. When `a ≥ s` (past the diagonal
+boundary), `succ(natPred(0)) ≠ 0`, so the step
+equation `Θ(s, succ(a)) = triRootStep(Θ(s, a))`
+fails. Moreover, the TARGET also fails past the
+boundary: `(toRSN(s), toRSN(succ(a))) ≠
+triRootStep(toRSN(s), toRSN(a))` when `a = s`
+(diagonal step vs within-diagonal step). So the
+band property cannot be proved via a global
+change of variables + `nnoElim_uniq`.
+
+**Obstacle 2: natEq transitivity.** Needed for
+the congruence direction of `NatEqCantorPair`
+and for natTri cancellation. Statement:
+`boolAnd(natEq(x,y), natEq(y,z))` implies
+`natEq(x,z)`. Proof by induction on `y`
+(`nnoElim_uniq`): base case (y=ℓ) reduces to
+`boolAnd(isLeafEndo(x), isLeafEndo(z)) implies
+natEq(x,z)` (which is `boolAnd_isLeafEndo_natEq`).
+Step case (y → succ(y)) reduces via
+`natEq_succ_cancel` to the IH at predecessor
+values of `x` and `z`. But expressing the step
+categorically requires extracting predecessors
+(using `natPred`, `iteBranches`, `isLeafEndo`)
+which makes the proof quite involved. Estimated
+150-250 lines.
+
+**Obstacle 3: natTri cancellation.** Statement:
+`cfpMap natTri natTri ≫ natEq = natEq`. The step
+case involves `natTri(succ(n)) =
+succ(cantorPair(n, 0))` (by
+`natTri_succ_eq_succ_cantorPairAt0`), so
+`natEq(natTri(succ(a)), natTri(succ(b))) =
+natEq(cantorPair(a,0), cantorPair(b,0))`.
+By the IH `natEq(natTri(a), natTri(b)) =
+natEq(a,b)`, but we need `natEq(CP(a,0), CP(b,0))
+= natEq(a,b)`, which is a SPECIAL CASE of
+`NatEqCantorPair` at `b1 = b2 = 0`. So natTri
+cancellation is CIRCULAR with `NatEqCantorPair`.
+
+**Proposed path forward:**
+
+The `boolAnd` antisymmetry approach: show
+`LHS = RHS` where `LHS = cfpMap CP CP ≫ natEq`
+and `RHS = cfpLift (fsts ≫ natEq) (snds ≫ natEq)
+≫ boolAnd` by proving both
+`boolAnd(LHS, RHS) = LHS` and
+`boolAnd(RHS, LHS) = RHS`, then using
+`boolAnd_comm` to derive `LHS = RHS`.
+
+For the congruence direction (`boolAnd(RHS, LHS) =
+RHS`), need: natEq transitivity, then:
+
+- `natPlus_cancel_right` gives
+  `natEq(a1+b1, a2+b1) = natEq(a1, a2)`.
+- `natPlus_cancel_left` gives
+  `natEq(a2+b1, a2+b2) = natEq(b1, b2)`.
+- natEq transitivity chains these to get
+  `natEq(a1+b1, a2+b2)` from `natEq(a1,a2)` and
+  `natEq(b1,b2)`.
+- Applying `natTri` (a function) to equal inputs
+  gives equal outputs.
+- Final `natPlus_cancel_right` gives the result.
+Each of these congruence-of-function steps
+requires proving
+`boolAnd(natEq(x,y), natEq(f(x), f(y))) =
+natEq(x,y)` for each morphism `f`, which is itself
+a fold proof.
+
+For the injectivity direction (`boolAnd(LHS, RHS) =
+LHS`): needs the section property or a direct
+induction that avoids the circularity.
+
+Estimated total for `NatEqCantorPair`: 500-800
+lines, with natEq transitivity as the primary
+intermediate goal.
+
+#### Progress (session 2026-04-06f)
+
+New lemmas in `GebLean/NatNNO.lean`:
+
+- `natPlus_isLeafEndo_eq_boolAnd` (private):
+  `natPlus ≫ isLeafEndo = boolAnd`.
+  Re-proved in NatNNO (also exists as private in
+  TreeEqGoedel).  Proved via `p.elim_uniq`
+  with base `isLeafEndo` and step
+  `cfpTerminalFrom ≫ treeFalse`.
+
+- `natEq_eq_boolAnd_natTruncSub` (private):
+  `natEq = cfpLift natTruncSub
+    (cfpSwap ≫ natTruncSub) ≫ boolAnd`.
+  States that `natEq(x, y) = boolAnd(x - y, y - x)`.
+  Immediate from the definition of `natEq` and
+  `natPlus_isLeafEndo_eq_boolAnd`.
+
+- `natEq_symm`:
+  `cfpSwap ≫ natEq = natEq`.
+  Symmetry of natEq.  Proved by decomposing
+  natEq via `natEq_eq_boolAnd_natTruncSub`,
+  noting that swapping the two natTruncSub
+  components is `boolAnd_comm` (since swap is
+  an involution).
+
+- `boolAnd_implies_natEq` (private):
+  `cfpLift boolAnd natEq ≫ boolAnd = boolAnd`.
+  States `boolAnd(boolAnd(x, z), natEq(x, z))
+  = boolAnd(x, z)`, i.e., leaf conjunction of
+  x and z implies their natEq equality.
+  Proved via `p.elim_uniq` on the second argument
+  of the outer boolAnd: base uses `boolAnd_ℓ_right`,
+  `natEq_ℓ_right`, `boolAnd_idem`, and
+  `isLeafEndo_idem`; step uses `boolAnd_β_right`
+  and `boolAnd_treeFalse_left` (since the first
+  arg becomes treeFalse at a branch).
+
+#### Updated analysis (session 2026-04-06f)
+
+`boolAnd_implies_natEq` provides the base case
+(y = ℓ) of the natEq transitivity proof.  Several
+approaches were analyzed for the step case:
+
+**Approach 1: PBTO fold on y.** Both `natEq(x, y)`
+and `natEq(y, z)` involve `natTruncSub` components
+that fold on different arguments; in particular,
+`natTruncSub(y, x)` and `natTruncSub(y, z)` have y
+as the first argument, which is NOT the fold position
+of natTruncSub.  So neither the conjunction nor the
+goal is a clean fold on y.
+
+**Approach 2: Algebraic via `natTruncSub_fold_comp`.**
+`natTruncSub(natTruncSub(a, b), c) = natTruncSub(a,
+natPlus(b, c))`.  From `natTruncSub(x, y) = ℓ` we
+get `natTruncSub(x, natPlus(y, c)) = ℓ` for all c.
+To conclude `natTruncSub(x, z) = ℓ` requires
+`z ≤ natPlus(y, natTruncSub(z, y))`, which holds
+(since `natTruncSub(z, natPlus(y, natTruncSub(z, y)))
+= natTruncSub(natTruncSub(z, y), natTruncSub(z, y))
+= ℓ` by `natTruncSub_self`), but we also need
+`natTruncSub(x, z) = natTruncSub(x,
+natPlus(y, natTruncSub(z, y)))`.  By
+`natTruncSub_toRSpineNat_second`, this reduces to
+`toRSN(z) = toRSN(natPlus(y, natTruncSub(z, y)))`,
+which is the addition-subtraction identity.
+
+**Approach 3: Addition-subtraction identity.**
+Prove `natEq(z, natPlus(y, natTruncSub(z, y))) = ℓ`
+when `natTruncSub(y, z) = ℓ` (y ≤ z).  The base
+case (y = ℓ) gives
+`natEq(z, natPlus(ℓ, natTruncSub(z, ℓ)))
+= natEq(z, toRSN(z)) = ℓ`.  The step case
+(y → succ(y)) requires tracking the hypothesis
+`y ≤ z` through the fold, which creates a
+conditional step function.
+
+**Recommended path forward:** Prove the
+addition-subtraction identity as a `nnoElim_uniq`
+on y with explicit carry of the `y ≤ z` condition
+through `boolAnd`.  Then derive transitivity of
+`isLeafEndo ∘ natTruncSub` using
+`natTruncSub_fold_comp`, and combine with symmetry
+to get full `natEq_trans`.  Estimated 200-300 lines.
+
+#### Progress (session 2026-04-06g)
+
+New lemmas in `GebLean/NatNNO.lean`:
+
+- `isLeafEndo_natPred_mono` (private):
+  `cfpLift isLeafEndo (natPred ≫ isLeafEndo)
+  ≫ boolAnd = isLeafEndo`.
+  States `boolAnd(isLeafEndo(v),
+  isLeafEndo(natPred(v))) = isLeafEndo(v)`:
+  `isLeafEndo(v)` implies `isLeafEndo(natPred(v))`.
+  Proved by embedding into `cfpProd cfpTerminal T`
+  and using `p.elim_uniq` on `v`: at leaf, both
+  sides give leaf (since `natPred(ℓ) = ℓ`); at
+  branch, both give treeFalse (since
+  `isLeafEndo(β) = treeFalse`).
+
+- `swap_isLeafEndo_boolAnd_elim` (private):
+  For any `f : cfpProd T T → T` with the base
+  condition `cfpLift (term ≫ ℓ) (𝟙 T) ≫
+  cfpLift (cfpFst ≫ isLeafEndo) f ≫ boolAnd
+  = term ≫ ℓ`, the swapped composition
+  `cfpSwap ≫ cfpLift (cfpFst ≫ isLeafEndo)
+  f ≫ boolAnd` equals the catamorphism
+  `p.elim (term ≫ ℓ) (term ≫ treeFalse)`.
+  Proved by `p.elim_uniq`: the base is given by
+  hypothesis; the step uses `isLeafEndo_β` and
+  `boolAnd_treeFalse_left`.
+
+The `isLeafEndo_natTruncSub_mono` lemma is still
+in progress. The step case of the `nnoElim_uniq`
+proof requires showing that
+`cfpLift (cfpFst ≫ isLeafEndo) (natTruncSub
+≫ natPred ≫ isLeafEndo) ≫ boolAnd` equals
+`cfpLift (cfpFst ≫ isLeafEndo) (natTruncSub
+≫ isLeafEndo) ≫ boolAnd`.  This is handled by
+`swap_isLeafEndo_boolAnd_elim` applied to both
+sides (using the base conditions proved in the
+step) together with `cfpSwap_inv` (involution of
+swap). The base, norm, and RHS conditions are
+straightforward. Assembly of the step requires
+`cfpSwap_inv` from `GebLean/PLO.lean` and
+careful associativity management.
+
 ### `treeEqG_trans`
 
 Transitivity of `treeEqG`, using `natTruncSub_fold_comp`

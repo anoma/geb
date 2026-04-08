@@ -3360,7 +3360,7 @@ applied at the terminal section, equals
 `cfpLift (cfpTerminalFrom T) (𝟙 T) ≫
   natTriHelper ≫ cfpFst =
   toRSpineNat`. -/
-private theorem embed_natTriHelper_cfpFst :
+theorem embed_natTriHelper_cfpFst :
     cfpLift (cfpTerminalFrom p.T)
       (𝟙 p.T) ≫
       natTriHelper ≫ cfpFst p.T p.T =
