@@ -40,8 +40,7 @@ variable (J : Type u_J) [Category.{v_J} J]
 
 /--
 The functor `Catᵒᵖ ⥤ Cat` sending `C` to the presheaf
-category `C ⥤ Type w_I`.  Obtained by flipping
-`catHomProfunctor` and applying `Cat.of (Type w_I)`.
+category `C ⥤ Type w_I`.
 -/
 def presheafCatFunctor :
     Cat.{v_I, u_I}ᵒᵖ ⥤
@@ -50,9 +49,7 @@ def presheafCatFunctor :
     (Cat.of (Type w_I))
 
 /--
-The presheaf category `Iᵒᵖ ⥤ Type w_I` as an object of
-`Cat`, obtained by applying `presheafCatFunctor` at
-`Iᵒᵖ`.
+The presheaf category `Iᵒᵖ ⥤ Type w_I` as an object of `Cat`.
 -/
 def presheafCat : Cat.{max u_I w_I, max v_I (w_I + 1) u_I} :=
   presheafCatFunctor.{u_I, v_I, w_I}.obj
@@ -62,9 +59,7 @@ def presheafCat : Cat.{max u_I w_I, max v_I (w_I + 1) u_I} :=
 
 /--
 The functor `Catᵒᵖ ⥤ Cat` sending `C` to
-`CoprodCovarRepCat (C ⥤ Type w_I)`.  Defined as
-`presheafCatFunctor` composed with
-`coprodCovarRepFunctor`.
+`CoprodCovarRepCat (C ⥤ Type w_I)`.
 -/
 def ccrPresheafCatFunctor :
     Cat.{v_I, u_I}ᵒᵖ ⥤
@@ -88,9 +83,7 @@ section PresheafPRADef
 
 /--
 Precomposition with `ccrPresheafCatFunctor`: turns a
-functor `Cat ⥤ Cat` into a functor `Catᵒᵖ ⥤ Cat` by
-precomposing with the `I ↦ CoprodCovarRepCat(Iᵒᵖ ⥤ Type w_I)`
-construction.
+functor `Cat ⥤ Cat` into a functor `Catᵒᵖ ⥤ Cat`.
 -/
 def ccrPresheafWhiskerLeft :
     (Cat.{max w' u_I w_I,
@@ -106,8 +99,6 @@ def ccrPresheafWhiskerLeft :
 /--
 The profunctor sending `(J, I)` to the presheaf PRA
 category `Jᵒᵖ ⥤ CoprodCovarRepCat (Iᵒᵖ ⥤ Type w_I)`.
-Defined as `catHomProfunctor` composed with
-`ccrPresheafWhiskerLeft`.  No free category parameters.
 -/
 def presheafPRACatProfunctor :
     Cat.{v_J, u_J}ᵒᵖ ⥤
@@ -122,8 +113,7 @@ def presheafPRACatProfunctor :
 /--
 The functor `Catᵒᵖ ⥤ Cat` sending `I` to the category
 of presheaf PRAs from `Iᵒᵖ ⥤ Type w_I` to a presheaf
-category on `J`.  Defined as `presheafPRACatProfunctor`
-applied at `Jᵒᵖ`.
+category on `J`.
 -/
 def presheafPRACatFunctor :
     Cat.{v_I, u_I}ᵒᵖ ⥤
@@ -142,8 +132,6 @@ At each `j : Jᵒᵖ`, this gives a polynomial
 `(A(j), E_j : A(j) → (Iᵒᵖ ⥤ Type w_I))`.  The functor
 action on morphisms in `Jᵒᵖ` provides reindexing on
 positions and precomposition maps on directions.
-
-Defined as `presheafPRACatFunctor` applied at `Iᵒᵖ`.
 -/
 def PresheafPRACat :
     Cat.{max u_I u_J w_I w', max u_I u_J v_I v_J (w_I + 1) (w' + 1)} :=
@@ -158,8 +146,7 @@ section PresheafPRAAccessors
 
 /--
 The positions functor: sends a PRA `P` to the presheaf
-on `J` of position types.  Defined as postcomposition
-of `P` with `ccrNewIndexFunctor`.
+on `J` of position types.
 -/
 def praPositionsFunctor :
     PresheafPRACat.{u_I, v_I, u_J, v_J, w_I, w'}
@@ -180,9 +167,7 @@ def praPositions (j : Jᵒᵖ) : Type w' :=
 /--
 The directions functor into `PSh(I)ᵒᵖ`: for a fixed
 PRA `P`, sends an element `(j, a)` of the positions
-presheaf to `op (E_T(j,a))`.  Defined as
-`ccrNewFamilyFunctor` composed with the induced map
-on Elements categories.
+presheaf to `op (E_T(j,a))`.
 -/
 def praDirectionsAtFunctorOp :
     ((praPositionsFunctor I J).obj P).Elements ⥤
@@ -196,9 +181,7 @@ def praDirectionsAtFunctorOp :
 The directions functor `E_T` from the nLab PRA
 formula: sends an element `(j, a)` of the opposite
 of the positions presheaf to the directions presheaf
-`E_T(j,a) : Iᵒᵖ ⥤ Type w_I`.  Defined as the
-opposite of `praDirectionsAtFunctorOp` composed with
-`unopUnop`.
+`E_T(j,a) : Iᵒᵖ ⥤ Type w_I`.
 -/
 def praDirectionsAtFunctor :
     ((praPositionsFunctor I J).obj P).ElementsPre ⥤
@@ -223,8 +206,7 @@ section PresheafPRAEvalAt
 /--
 The evaluation profunctor: sends a PRA `P` to the
 functor `Jᵒᵖ ⥤ (PSh(I) ⥤ Type _)` that at each `j`
-evaluates the polynomial `P(j)`.  Defined as
-postcomposition of `P` with `ccrNewEvalCatFunctor`.
+evaluates the polynomial `P(j)`.
 -/
 def praEvalAtProfunctor :
     PresheafPRACat.{u_I, v_I, u_J, v_J, w_I, w'} I J ⥤
@@ -237,8 +219,7 @@ def praEvalAtProfunctor :
 /--
 The evaluation functor: sends a PRA `P` to the functor
 `PSh(I) ⥤ PSh(J)` (in the `Type _` form
-`(Iᵒᵖ ⥤ Type w_I) ⥤ (Jᵒᵖ ⥤ Type _)`).  Defined as
-`praEvalAtProfunctor` composed with `Functor.flipping`.
+`(Iᵒᵖ ⥤ Type w_I) ⥤ (Jᵒᵖ ⥤ Type _)`).
 -/
 def praEvalAtFunctor :
     PresheafPRACat.{u_I, v_I, u_J, v_J, w_I, w'} I J ⥤
@@ -249,8 +230,7 @@ def praEvalAtFunctor :
 /--
 `praEvalAtProfunctor` is fully faithful: every natural
 transformation between evaluation profunctors arises
-from a unique PRA morphism.  Follows from
-`ccrNewEvalCatFullyFaithful` via `whiskeringRight`.
+from a unique PRA morphism.
 -/
 def praEvalAtProfunctorFullyFaithful :
     (praEvalAtProfunctor I J).FullyFaithful :=
@@ -264,8 +244,6 @@ def praEvalAtProfunctorFullyFaithful :
 `praEvalAtFunctor` is fully faithful: every natural
 transformation between PRA evaluation functors
 `PSh(I) ⥤ PSh(J)` arises from a unique PRA morphism.
-Follows from `praEvalAtProfunctorFullyFaithful`
-composed with `Functor.flipping`.
 -/
 def praEvalAtFunctorFullyFaithful :
     (praEvalAtFunctor I J).FullyFaithful :=
