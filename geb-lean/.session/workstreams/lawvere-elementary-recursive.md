@@ -2,9 +2,12 @@
 
 ## Status
 
-Phase 0 design complete.  No Lean modules created yet.
-Implementation unblocked at Phase 1 (inductive term type
-for elementary recursive functions).
+Phase 0 design complete.  Phase 1 complete: see
+`GebLean/LawvereER.lean` for the inductive term type,
+interpretation, computation lemmas, `ERMorN` tuple type,
+and identity/composition, plus `GebLeanTests/LawvereER.lean`
+for the `#guard` sanity tests.  Implementation unblocked at
+Phase 2 (extensional-equality setoid quotient).
 
 ## Goal
 
@@ -195,7 +198,7 @@ expanded as each phase becomes ready to implement.
 
 * [x] Resolve open design questions 1-5.
 * [x] Decide on module-naming convention (`LawvereER*`).
-* [ ] Phase 1: inductive term type for ER functions.
+* [x] Phase 1: inductive term type for ER functions.
 * [ ] Phase 2: extensional-equality quotient.
 * [ ] Phase 3: Lawvere theory and interpretation functor.
 * [ ] Phase 4: definable-subobject finite-limit category.
