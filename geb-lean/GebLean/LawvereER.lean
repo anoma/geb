@@ -146,4 +146,33 @@ def ERMorN.interp {n m : ℕ} (f : ERMorN n m)
     (ctx : Fin n → ℕ) : Fin m → ℕ :=
   fun i => (f i).interp ctx
 
+/-- The identity morphism at arity `n`: the tuple
+of `n` projections. -/
+def ERMorN.id (n : ℕ) : ERMorN n n :=
+  fun i => ERMor1.proj i
+
+/-- Composition of `ERMorN` tuples: each output
+component of `g : ERMorN m k` is substituted with
+`f : ERMorN n m` via `ERMor1.comp`. -/
+def ERMorN.comp {n m k : ℕ}
+    (f : ERMorN n m) (g : ERMorN m k) :
+    ERMorN n k :=
+  fun i => ERMor1.comp (g i) f
+
+/-- The identity tuple interprets as the identity
+function on contexts. -/
+@[simp] theorem ERMorN.interp_id
+    {n : ℕ} (ctx : Fin n → ℕ) :
+    (ERMorN.id n).interp ctx = ctx :=
+  rfl
+
+/-- Composition of tuples interprets as function
+composition of their interpretations. -/
+@[simp] theorem ERMorN.interp_comp
+    {n m k : ℕ} (f : ERMorN n m) (g : ERMorN m k)
+    (ctx : Fin n → ℕ) :
+    (f.comp g).interp ctx =
+      g.interp (f.interp ctx) :=
+  rfl
+
 end GebLean
