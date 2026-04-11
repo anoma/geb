@@ -84,4 +84,54 @@ def ERMor1.interp : {n : ℕ} → ERMor1 n →
       natBProd (ctx 0) (fun i =>
         f.interp (Fin.cons i (Fin.tail ctx)))
 
+/-- Interpretation of `zero`. -/
+@[simp] theorem ERMor1.interp_zero
+    (ctx : Fin 0 → ℕ) :
+    ERMor1.zero.interp ctx = 0 :=
+  rfl
+
+/-- Interpretation of `succ`. -/
+@[simp] theorem ERMor1.interp_succ
+    (ctx : Fin 1 → ℕ) :
+    ERMor1.succ.interp ctx = (ctx 0).succ :=
+  rfl
+
+/-- Interpretation of `proj`. -/
+@[simp] theorem ERMor1.interp_proj
+    {k : ℕ} (i : Fin k) (ctx : Fin k → ℕ) :
+    (ERMor1.proj i).interp ctx = ctx i :=
+  rfl
+
+/-- Interpretation of `sub`. -/
+@[simp] theorem ERMor1.interp_sub
+    (ctx : Fin 2 → ℕ) :
+    ERMor1.sub.interp ctx = (ctx 0) - (ctx 1) :=
+  rfl
+
+/-- Interpretation of `comp`. -/
+@[simp] theorem ERMor1.interp_comp
+    {k n : ℕ} (f : ERMor1 k)
+    (g : Fin k → ERMor1 n) (ctx : Fin n → ℕ) :
+    (ERMor1.comp f g).interp ctx =
+      f.interp (fun i => (g i).interp ctx) :=
+  rfl
+
+/-- Interpretation of `bsum`. -/
+@[simp] theorem ERMor1.interp_bsum
+    {k : ℕ} (f : ERMor1 (k + 1))
+    (ctx : Fin (k + 1) → ℕ) :
+    (ERMor1.bsum f).interp ctx =
+      natBSum (ctx 0) (fun i =>
+        f.interp (Fin.cons i (Fin.tail ctx))) :=
+  rfl
+
+/-- Interpretation of `bprod`. -/
+@[simp] theorem ERMor1.interp_bprod
+    {k : ℕ} (f : ERMor1 (k + 1))
+    (ctx : Fin (k + 1) → ℕ) :
+    (ERMor1.bprod f).interp ctx =
+      natBProd (ctx 0) (fun i =>
+        f.interp (Fin.cons i (Fin.tail ctx))) :=
+  rfl
+
 end GebLean
