@@ -39,6 +39,7 @@ import GebLean.LawvereBTEqCompletion
 import GebLean.LawvereBTInterp
 import GebLean.LawvereBTPrimrec
 import GebLean.LawvereBTQuot
+import GebLean.LawvereER
 import GebLean.LayeredEquivalence
 import GebLean.MendlerLambekEndPower
 import GebLean.MendlerLambekPresheaf
