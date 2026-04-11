@@ -56,4 +56,15 @@ inductive ERMor1 : ℕ → Type where
   | bprod {k : ℕ} (f : ERMor1 (k + 1)) :
       ERMor1 (k + 1)
 
+/-- Bounded summation helper: iterates `f` from
+`0` to `bound - 1` and sums the results. -/
+def natBSum (bound : ℕ) (f : ℕ → ℕ) : ℕ :=
+  Nat.rec 0 (fun i acc => acc + f i) bound
+
+/-- Bounded product helper: iterates `f` from `0`
+to `bound - 1` and multiplies the results, with
+an empty product of `1`. -/
+def natBProd (bound : ℕ) (f : ℕ → ℕ) : ℕ :=
+  Nat.rec 1 (fun i acc => acc * f i) bound
+
 end GebLean
