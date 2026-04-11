@@ -1,4 +1,4 @@
-import Mathlib.Data.Fin.Basic
+import Mathlib.Data.Fin.Tuple.Basic
 
 /-!
 # Lawvere Theory of Elementary Recursive Functions
@@ -66,5 +66,22 @@ to `bound - 1` and multiplies the results, with
 an empty product of `1`. -/
 def natBProd (bound : ℕ) (f : ℕ → ℕ) : ℕ :=
   Nat.rec 1 (fun i acc => acc * f i) bound
+
+/-- Standard interpretation of an `n`-ary term as
+a function `(Fin n → ℕ) → ℕ`. -/
+def ERMor1.interp : {n : ℕ} → ERMor1 n →
+    (Fin n → ℕ) → ℕ
+  | _, ERMor1.zero, _ => 0
+  | _, ERMor1.succ, ctx => (ctx 0).succ
+  | _, ERMor1.proj i, ctx => ctx i
+  | _, ERMor1.sub, ctx => (ctx 0) - (ctx 1)
+  | _, ERMor1.comp f g, ctx =>
+      f.interp (fun i => (g i).interp ctx)
+  | _, ERMor1.bsum f, ctx =>
+      natBSum (ctx 0) (fun i =>
+        f.interp (Fin.cons i (Fin.tail ctx)))
+  | _, ERMor1.bprod f, ctx =>
+      natBProd (ctx 0) (fun i =>
+        f.interp (Fin.cons i (Fin.tail ctx)))
 
 end GebLean
