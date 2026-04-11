@@ -63,3 +63,32 @@ private def ctx2 (x y : ℕ) : Fin 2 → ℕ :=
 #guard (ERMor1.bsum
   (ERMor1.proj (1 : Fin 2))).interp
   (ctx2 0 5) == 0
+
+-- An ERMorN 2 1 tuple of one binary term: sub.
+private def subTuple : ERMorN 2 1 :=
+  fun _ => ERMor1.sub
+
+-- An ERMorN 2 2 tuple swapping two inputs.
+private def swapTuple : ERMorN 2 2 :=
+  fun i => match i with
+    | ⟨0, _⟩ => ERMor1.proj (1 : Fin 2)
+    | ⟨1, _⟩ => ERMor1.proj (0 : Fin 2)
+
+-- subTuple at (7, 3) computes sub once.
+#guard (subTuple.interp (ctx2 7 3)) 0 == 4
+
+-- swapTuple at (7, 3) swaps to (3, 7).
+#guard (swapTuple.interp (ctx2 7 3)) 0 == 3
+#guard (swapTuple.interp (ctx2 7 3)) 1 == 7
+
+-- Composition of ERMorN.id with subTuple is
+-- subTuple (verified pointwise on one context).
+#guard
+  (((ERMorN.id 2).comp subTuple).interp
+    (ctx2 7 3)) 0 == 4
+
+-- Composition of swap followed by sub computes
+-- (3, 7) → 3 - 7 = 0 (cut-off).
+#guard
+  ((swapTuple.comp subTuple).interp
+    (ctx2 7 3)) 0 == 0
