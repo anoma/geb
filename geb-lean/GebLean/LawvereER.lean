@@ -134,4 +134,16 @@ def ERMor1.interp : {n : ℕ} → ERMor1 n →
         f.interp (Fin.cons i (Fin.tail ctx))) :=
   rfl
 
+/-- Tuple of `m` `n`-ary elementary recursive
+terms, viewed as a single morphism from an
+`n`-fold context to an `m`-fold context in the
+Lawvere theory. -/
+def ERMorN (n m : ℕ) : Type := Fin m → ERMor1 n
+
+/-- Standard interpretation of an `ERMorN n m`
+tuple as a function `(Fin n → ℕ) → (Fin m → ℕ)`. -/
+def ERMorN.interp {n m : ℕ} (f : ERMorN n m)
+    (ctx : Fin n → ℕ) : Fin m → ℕ :=
+  fun i => (f i).interp ctx
+
 end GebLean
