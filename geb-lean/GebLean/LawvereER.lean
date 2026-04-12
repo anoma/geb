@@ -175,4 +175,67 @@ composition of their interpretations. -/
       g.interp (f.interp ctx) :=
   rfl
 
+/-- Terminal morphism: the unique morphism to arity
+0 (the empty tuple). -/
+def ERMorN.terminal (n : ℕ) : ERMorN n 0 :=
+  fun i => i.elim0
+
+/-- First projection from the product arity
+`n + m`. -/
+def ERMorN.fst {n m : ℕ} : ERMorN (n + m) n :=
+  fun i => ERMor1.proj ⟨i.val, by omega⟩
+
+/-- Second projection from the product arity
+`n + m`. -/
+def ERMorN.snd {n m : ℕ} : ERMorN (n + m) m :=
+  fun i => ERMor1.proj ⟨n + i.val, by omega⟩
+
+/-- Pairing: given morphisms to arity `n` and arity
+`m`, produce a morphism to arity `n + m`. -/
+def ERMorN.pair {k n m : ℕ}
+    (f : ERMorN k n) (g : ERMorN k m) :
+    ERMorN k (n + m) :=
+  fun i =>
+    if h : i.val < n then f ⟨i.val, h⟩
+    else g ⟨i.val - n, by omega⟩
+
+/-- Interpretation of `terminal`: the unique
+function to the empty context. -/
+@[simp] theorem ERMorN.interp_terminal
+    {n : ℕ} (ctx : Fin n → ℕ) :
+    (ERMorN.terminal n).interp ctx =
+      Fin.elim0 :=
+  funext (fun i => i.elim0)
+
+/-- Interpretation of `fst`: selects the first
+`n` components of a context of arity `n + m`. -/
+@[simp] theorem ERMorN.interp_fst
+    {n m : ℕ} (ctx : Fin (n + m) → ℕ) :
+    (ERMorN.fst (n := n) (m := m)).interp ctx =
+      fun i => ctx ⟨i.val, by omega⟩ :=
+  rfl
+
+/-- Interpretation of `snd`: selects the last
+`m` components of a context of arity `n + m`. -/
+@[simp] theorem ERMorN.interp_snd
+    {n m : ℕ} (ctx : Fin (n + m) → ℕ) :
+    (ERMorN.snd (n := n) (m := m)).interp ctx =
+      fun i => ctx ⟨n + i.val, by omega⟩ :=
+  rfl
+
+/-- Interpretation of `pair`: concatenates the
+results of interpreting `f` and `g`. -/
+@[simp] theorem ERMorN.interp_pair
+    {k n m : ℕ} (f : ERMorN k n)
+    (g : ERMorN k m) (ctx : Fin k → ℕ) :
+    (ERMorN.pair f g).interp ctx =
+      fun i =>
+        if h : i.val < n
+        then (f ⟨i.val, h⟩).interp ctx
+        else (g ⟨i.val - n, by omega⟩).interp
+          ctx := by
+  funext i
+  simp only [ERMorN.interp, ERMorN.pair]
+  split <;> rfl
+
 end GebLean
