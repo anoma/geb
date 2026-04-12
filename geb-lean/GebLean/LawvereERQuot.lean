@@ -30,8 +30,9 @@ def erMorNSetoid (n m : ℕ) :
       (h1 ctx).trans (h2 ctx)
   }
 
-/-- Quotient morphism type: equivalence classes of
-`ERMorN n m` tuples under extensional equality. -/
+/-- Quotient morphism type for the Lawvere theory of
+elementary recursive functions: equivalence classes
+of `ERMorN n m` tuples under extensional equality. -/
 def ERMorNQuo (n m : ℕ) : Type :=
   Quotient (erMorNSetoid n m)
 
