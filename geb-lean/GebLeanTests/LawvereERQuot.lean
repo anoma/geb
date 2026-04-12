@@ -34,3 +34,14 @@ example : (𝟙 (2 : LawvereERCat)) ≫
     (𝟙 (2 : LawvereERCat)) =
     𝟙 (2 : LawvereERCat) := by
   rw [Category.id_comp]
+
+-- Terminal uniqueness: any morphism to 0 equals
+-- the terminal morphism.
+example (f : (3 : LawvereERCat) ⟶
+    (0 : LawvereERCat)) :
+    f = ERMorNQuo.terminal 3 :=
+  ERMorNQuo.terminal_uniq f
+
+-- HasChosenFiniteProducts is available.
+example : HasChosenFiniteProducts
+    LawvereERCat := inferInstance

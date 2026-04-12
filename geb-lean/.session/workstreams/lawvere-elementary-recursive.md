@@ -11,9 +11,14 @@ for the `#guard` sanity tests.  Phase 2 complete: see
 setoid, quotient type `ERMorNQuo`, lifted identity and
 composition, category laws, and the `Category` instance on
 `LawvereERCat`, plus `GebLeanTests/LawvereERQuot.lean` for
-sanity tests.  Implementation unblocked at Phase 3
-(Lawvere theory with finite products and faithful
-interpretation functor).
+sanity tests.  Phase 3 complete: see
+`GebLean/LawvereERQuot.lean` for the
+`HasChosenFiniteProducts` instance (terminal,
+projections, pairing, product laws) and
+`GebLean/LawvereERInterp.lean` for
+`erInterpFunctor` and its `Faithful` instance.
+Implementation unblocked at Phase 4
+(definable-subobject finite-limit category).
 
 ## Goal
 
@@ -206,7 +211,7 @@ expanded as each phase becomes ready to implement.
 * [x] Decide on module-naming convention (`LawvereER*`).
 * [x] Phase 1: inductive term type for ER functions.
 * [x] Phase 2: extensional-equality quotient.
-* [ ] Phase 3: Lawvere theory and interpretation functor.
+* [x] Phase 3: Lawvere theory and interpretation functor.
 * [ ] Phase 4: definable-subobject finite-limit category.
 * [ ] Phase 5: stage (b) internal term type, then stage (c)
   internal-category structure.
