@@ -6,8 +6,14 @@ Phase 0 design complete.  Phase 1 complete: see
 `GebLean/LawvereER.lean` for the inductive term type,
 interpretation, computation lemmas, `ERMorN` tuple type,
 and identity/composition, plus `GebLeanTests/LawvereER.lean`
-for the `#guard` sanity tests.  Implementation unblocked at
-Phase 2 (extensional-equality setoid quotient).
+for the `#guard` sanity tests.  Phase 2 complete: see
+`GebLean/LawvereERQuot.lean` for the extensional-equality
+setoid, quotient type `ERMorNQuo`, lifted identity and
+composition, category laws, and the `Category` instance on
+`LawvereERCat`, plus `GebLeanTests/LawvereERQuot.lean` for
+sanity tests.  Implementation unblocked at Phase 3
+(Lawvere theory with finite products and faithful
+interpretation functor).
 
 ## Goal
 
@@ -199,7 +205,7 @@ expanded as each phase becomes ready to implement.
 * [x] Resolve open design questions 1-5.
 * [x] Decide on module-naming convention (`LawvereER*`).
 * [x] Phase 1: inductive term type for ER functions.
-* [ ] Phase 2: extensional-equality quotient.
+* [x] Phase 2: extensional-equality quotient.
 * [ ] Phase 3: Lawvere theory and interpretation functor.
 * [ ] Phase 4: definable-subobject finite-limit category.
 * [ ] Phase 5: stage (b) internal term type, then stage (c)
