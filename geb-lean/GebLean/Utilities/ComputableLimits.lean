@@ -273,4 +273,36 @@ class HasChosenFiniteLimits
     HasChosenFiniteProducts C,
     HasChosenEqualizers C
 
+/-! ## Mathlib derivations for equalizers and
+finite limits
+
+`HasChosenEqualizers` and `HasChosenFiniteLimits`
+imply Mathlib's `Limits.HasEqualizers` and
+`Limits.HasFiniteLimits`, validating that the
+chosen versions correctly present the standard
+categorical notions. -/
+
+section EqualizerDerivations
+
+variable {C : Type u} [Category.{v} C]
+
+/-- A `ChosenEqualizer` for `f, g : A ⟶ B` gives
+a Mathlib `Limits.IsLimit` for the corresponding
+parallel-pair fork. -/
+def chosenEqualizerIsLimit
+    [HasChosenEqualizers C]
+    {A B : C} (f g : A ⟶ B) :
+    Limits.IsLimit
+      (Limits.Fork.ofι
+        (HasChosenEqualizers.equalizer f g).ι
+        (HasChosenEqualizers.equalizer f g).ι_eq) :=
+  let e := HasChosenEqualizers.equalizer f g
+  Limits.Fork.IsLimit.mk _
+    (fun s => e.lift s.ι s.condition)
+    (fun s => e.lift_ι s.ι s.condition)
+    (fun s m hm =>
+      e.lift_uniq s.ι s.condition m hm)
+
+end EqualizerDerivations
+
 end GebLean
