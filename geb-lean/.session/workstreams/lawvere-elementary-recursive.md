@@ -63,6 +63,16 @@ universal-property theorems.
 `GebLean/Utilities/ComputableLimits.lean` extended
 with `ChosenEqualizer`, `HasChosenEqualizers`, and
 `HasChosenFiniteLimits` classes.
+Phase 4d.3 complete: see
+`GebLean/Utilities/ComputableLimits.lean` further
+extended with `chosenEqualizerIsLimit`,
+`chosenEqualizerToHasLimit`,
+`chosenToHasEqualizers`, and
+`chosenToHasFiniteLimits`.  These derive Mathlib's
+`Limits.HasEqualizers` and `Limits.HasFiniteLimits`
+from our `Type`-valued chosen versions, validating
+that the chosen-finite-limit definitions correctly
+present the standard categorical notions.
 The remaining sub-phase (4e: full-and-faithful
 embedding Δ) remains open.
 
@@ -266,6 +276,8 @@ expanded as each phase becomes ready to implement.
     universal property).
   * [x] 4d.2: ERBoolPredE quotient + chosen
     equalizers + HasChosenFiniteLimits.
+  * [x] 4d.3: Mathlib HasEqualizers and
+    HasFiniteLimits derivations.
   * [ ] 4e: Full-and-faithful embedding Δ.
 * [ ] Phase 5: stage (b) internal term type, then stage (c)
   internal-category structure.
