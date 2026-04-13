@@ -303,6 +303,21 @@ def chosenEqualizerIsLimit
     (fun s m hm =>
       e.lift_uniq s.ι s.condition m hm)
 
+/-- A `ChosenEqualizer` gives `HasLimit` for the
+parallel-pair diagram. -/
+instance chosenEqualizerToHasLimit
+    [HasChosenEqualizers C]
+    {A B : C} (f g : A ⟶ B) :
+    Limits.HasLimit (Limits.parallelPair f g) :=
+  ⟨⟨_, chosenEqualizerIsLimit f g⟩⟩
+
+/-- `HasChosenEqualizers` gives Mathlib's
+`HasEqualizers`. -/
+instance chosenToHasEqualizers
+    [HasChosenEqualizers C] :
+    Limits.HasEqualizers C :=
+  Limits.hasEqualizers_of_hasLimit_parallelPair C
+
 end EqualizerDerivations
 
 end GebLean
