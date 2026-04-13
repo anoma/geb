@@ -495,4 +495,99 @@ theorem ERLexMorNQuo.pair_pi2 {z a b : LexObj}
           rfl))
     f g
 
+/-- Uniqueness of pairing: any morphism `h : z →
+a × b` whose compositions with the projections yield
+`f` and `g` equals `pair f g`. -/
+theorem ERLexMorNQuo.pair_uniq {z a b : LexObj}
+    (f : ERLexMorNQuo z a)
+    (g : ERLexMorNQuo z b)
+    (h : ERLexMorNQuo z (LexObj.prod a b))
+    (hf : ERLexMorNQuo.comp h
+      (ERLexMorNQuo.pi1 a b) = f)
+    (hg : ERLexMorNQuo.comp h
+      (ERLexMorNQuo.pi2 a b) = g) :
+    h = ERLexMorNQuo.pair f g :=
+  Quotient.ind
+    (motive := fun h =>
+      ∀ (f : ERLexMorNQuo z a)
+        (g : ERLexMorNQuo z b),
+        ERLexMorNQuo.comp h
+          (ERLexMorNQuo.pi1 a b) = f →
+        ERLexMorNQuo.comp h
+          (ERLexMorNQuo.pi2 a b) = g →
+        h = ERLexMorNQuo.pair f g)
+    (fun h_raw =>
+      Quotient.ind
+        (motive := fun f =>
+          ∀ (g : ERLexMorNQuo z b),
+            ERLexMorNQuo.comp
+              (Quotient.mk _ h_raw)
+              (ERLexMorNQuo.pi1 a b) = f →
+            ERLexMorNQuo.comp
+              (Quotient.mk _ h_raw)
+              (ERLexMorNQuo.pi2 a b) = g →
+            Quotient.mk _ h_raw =
+              ERLexMorNQuo.pair f g)
+        (fun f_raw =>
+          Quotient.ind
+            (motive := fun g =>
+              ERLexMorNQuo.comp
+                (Quotient.mk _ h_raw)
+                (ERLexMorNQuo.pi1 a b) =
+                Quotient.mk _ f_raw →
+              ERLexMorNQuo.comp
+                (Quotient.mk _ h_raw)
+                (ERLexMorNQuo.pi2 a b) = g →
+              Quotient.mk _ h_raw =
+                ERLexMorNQuo.pair
+                  (Quotient.mk _ f_raw) g)
+            (fun g_raw hf_eq hg_eq => by
+              have hf_rel :=
+                Quotient.exact
+                  (s := erLexMorNSetoid z a)
+                  hf_eq
+              have hg_rel :=
+                Quotient.exact
+                  (s := erLexMorNSetoid z b)
+                  hg_eq
+              apply Quotient.sound
+                (s := erLexMorNSetoid z
+                  (LexObj.prod a b))
+              intro ctx hctx
+              change h_raw.val.interp ctx =
+                (ERMorN.pair f_raw.val
+                  g_raw.val).interp ctx
+              funext i
+              simp only [ERMorN.interp_pair]
+              split_ifs with hlt
+              · have hstep := congrFun
+                  (hf_rel ctx hctx)
+                  ⟨i.val, hlt⟩
+                simp only [ERLexMorN.comp,
+                  ERLexMorN.pi1,
+                  ERMorN.interp_comp,
+                  ERMorN.interp_fst] at hstep
+                exact hstep
+              · have hstep := congrFun
+                  (hg_rel ctx hctx)
+                  ⟨i.val - a.arity, by omega⟩
+                simp only [ERLexMorN.comp,
+                  ERLexMorN.pi2,
+                  ERMorN.interp_comp,
+                  ERMorN.interp_snd] at hstep
+                have idx_eq :
+                    (⟨a.arity +
+                        (i.val - a.arity),
+                      by omega⟩ :
+                    Fin (a.arity + b.arity)) =
+                    i := by
+                  apply Fin.ext
+                  change
+                    a.arity +
+                      (i.val - a.arity) = i.val
+                  omega
+                rw [idx_eq] at hstep
+                exact hstep)))
+    h f g hf hg
+
 end GebLean
