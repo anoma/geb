@@ -211,4 +211,22 @@ theorem ERLexMorNQuo.comp_assoc
                     ERMorN.interp_comp]))))
     f g h
 
+/-- The finite-limit category of decidable
+ER-subobjects.  Objects are `LexObj`s; morphisms are
+equivalence classes of `ERLexMorN` tuples.  Finite
+products, equalizers, and the embedding from
+`LawvereERCat` are developed in subsequent
+modules. -/
+@[reducible] def LawvereERLexCat := LexObj
+
+instance : CategoryStruct LawvereERLexCat where
+  Hom := ERLexMorNQuo
+  id obj := ERLexMorNQuo.id obj
+  comp f g := ERLexMorNQuo.comp f g
+
+instance : Category LawvereERLexCat where
+  id_comp := ERLexMorNQuo.id_comp
+  comp_id := ERLexMorNQuo.comp_id
+  assoc := ERLexMorNQuo.comp_assoc
+
 end GebLean
