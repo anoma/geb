@@ -76,4 +76,65 @@ def erDeltaFunctor :
   map_id := erDelta.map_id
   map_comp := erDelta.map_comp
 
+/-- Δ is faithful: distinct ER morphism classes give
+distinct `LawvereERLexCat` morphism classes.
+Immediate because the source-restricted setoid on
+the always-true predicate `⊤` reduces to full
+extensional equality. -/
+instance : erDeltaFunctor.Faithful where
+  map_injective {n m} {f g} h := by
+    induction f using Quotient.ind with
+    | _ f_raw =>
+      induction g using Quotient.ind with
+      | _ g_raw =>
+        apply Quotient.sound
+          (s := erMorNSetoid n m)
+        intro ctx
+        have hrel := Quotient.exact
+          (s := erLexMorNSetoid (erDelta.obj n)
+            (erDelta.obj m)) h
+        exact hrel ctx rfl
+
+/-- Preimage of a `LawvereERLexCat` morphism between
+trivially-cut-out objects.  Lifts through the
+quotient by extracting the underlying `ERMorN` tuple;
+well-defined because source-restricted equivalence
+under `⊤` reduces to full extensional equality. -/
+def erDelta.preimage {n m : ℕ}
+    (h : ERLexMorNQuo (erDelta.obj n)
+      (erDelta.obj m)) :
+    ERMorNQuo n m :=
+  Quotient.lift
+    (s := erLexMorNSetoid (erDelta.obj n)
+      (erDelta.obj m))
+    (fun h_raw =>
+      Quotient.mk (erMorNSetoid n m) h_raw.val)
+    (fun _ _ hrel =>
+      Quotient.sound
+        (s := erMorNSetoid n m)
+        (fun ctx => hrel ctx rfl))
+    h
+
+/-- The preimage is a section of `Δ.map`: applying
+Δ to the preimage of `h` recovers `h`. -/
+theorem erDelta.map_preimage {n m : ℕ}
+    (h : ERLexMorNQuo (erDelta.obj n)
+      (erDelta.obj m)) :
+    erDelta.map (erDelta.preimage h) = h := by
+  induction h using Quotient.ind with
+  | _ h_raw =>
+    apply Quotient.sound
+      (s := erLexMorNSetoid (erDelta.obj n)
+        (erDelta.obj m))
+    intro ctx _
+    rfl
+
+/-- Δ is full: every `LawvereERLexCat` morphism
+between trivially-cut-out objects comes from a
+unique `LawvereERCat` morphism (uniqueness via
+faithfulness; existence via `erDelta.preimage`). -/
+instance : erDeltaFunctor.Full where
+  map_surjective h :=
+    ⟨erDelta.preimage h, erDelta.map_preimage h⟩
+
 end GebLean
