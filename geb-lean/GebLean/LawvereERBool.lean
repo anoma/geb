@@ -68,4 +68,30 @@ theorem ERMor1.boolAnd_le_one_of_le_one
       _ ≤ 1 * 1 := Nat.mul_le_mul_left _ h1
       _ = 1 := Nat.one_mul 1
 
+/-- Cut-off subtraction with arguments swapped:
+returns `ctx 1 - ctx 0`.  Used as a building block
+for `boolEqNat`. -/
+def ERMor1.subSwap : ERMor1 2 :=
+  ERMor1.comp ERMor1.sub fun i => match i with
+    | ⟨0, _⟩ => ERMor1.proj 1
+    | ⟨1, _⟩ => ERMor1.proj 0
+
+/-- Interpretation of `subSwap`. -/
+@[simp] theorem ERMor1.interp_subSwap
+    (ctx : Fin 2 → ℕ) :
+    ERMor1.subSwap.interp ctx = ctx 1 - ctx 0 :=
+  rfl
+
+/-- Boolean equality on `Nat`.  Returns `1` if
+`ctx 0 = ctx 1`, else `0`.  Definable as
+`(1 ⊖ (x ⊖ y)) · (1 ⊖ (y ⊖ x))`. -/
+def ERMor1.boolEqNat : ERMor1 2 :=
+  ERMor1.comp ERMor1.boolAnd fun i => match i with
+    | ⟨0, _⟩ =>
+        ERMor1.comp ERMor1.boolNot
+          (fun (_ : Fin 1) => ERMor1.sub)
+    | ⟨1, _⟩ =>
+        ERMor1.comp ERMor1.boolNot
+          (fun (_ : Fin 1) => ERMor1.subSwap)
+
 end GebLean
