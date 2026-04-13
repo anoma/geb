@@ -6962,4 +6962,33 @@ def grothendieckFunctor
 
 end GrothendieckFunctor
 
+/-! ## Grothendieck Pre as a Natural Transformation -/
+
+section GrothendieckPre
+
+universe v₅ u₅ v₆ u₆
+
+/--
+Given a functor `G : D ⥤ C` (with `C` and `D` in the same
+universes), `Grothendieck.pre` at each `F : C ⥤ Cat` assembles
+into a natural transformation from the composite
+`(Functor.whiskeringLeft D C Cat).obj G ⋙ grothendieckFunctor D`
+to `grothendieckFunctor C`.
+-/
+def grothendieckPre
+    {C : Type u₅} [Category.{v₅} C]
+    {D : Type u₅} [Category.{v₅} D]
+    (G : D ⥤ C) :
+    (Functor.whiskeringLeft D C Cat.{v₆, u₆}).obj G ⋙
+      grothendieckFunctor D ⟶
+      grothendieckFunctor C where
+  app F := (Grothendieck.pre F G).toCatHom
+  naturality F H α := by
+    apply Cat.Hom.ext
+    simp only [Functor.comp_map,
+      Cat.Hom.comp_toFunctor]
+    exact (Grothendieck.pre_comp_map G α).symm
+
+end GrothendieckPre
+
 end GebLean
