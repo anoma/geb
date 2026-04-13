@@ -2,8 +2,11 @@ import Mathlib.CategoryTheory.Limits.HasLimits
 import Mathlib.CategoryTheory.Limits.Shapes.FiniteProducts
 import Mathlib.CategoryTheory.Limits.Shapes.BinaryProducts
 import Mathlib.CategoryTheory.Limits.Shapes.Terminal
+import Mathlib.CategoryTheory.Limits.Shapes.Equalizers
 -- 81 chars (external mathlib path)
 import Mathlib.CategoryTheory.Limits.Constructions.FiniteProductsOfBinaryProducts
+-- 91 chars (external mathlib path)
+import Mathlib.CategoryTheory.Limits.Constructions.LimitsOfProductsAndEqualizers
 
 /-!
 # Computable limits and colimits
