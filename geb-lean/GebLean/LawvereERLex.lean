@@ -312,4 +312,39 @@ def LexObj.prod (a b : LexObj) : LexObj where
   arity := a.arity + b.arity
   pred := ERBoolPred.and a.pred b.pred
 
+/-- First projection from the product `a × b` to `a`.
+Underlying tuple: `ERMorN.fst`.  Membership
+preservation: from `(a.pred ⊓ b.pred)(ctx) = 1`,
+deduce `a.pred(first n of ctx) = 1` via
+`Nat.mul_eq_one`. -/
+def ERLexMorN.pi1 (a b : LexObj) :
+    ERLexMorN (LexObj.prod a b) a :=
+  ⟨ERMorN.fst, fun ctx hctx => by
+    change (ERBoolPred.and a.pred b.pred).pred.interp
+      ctx = 1 at hctx
+    rw [ERBoolPred.and_interp] at hctx
+    exact (mul_eq_one.mp hctx).1⟩
+
+/-- Second projection from the product `a × b` to
+`b`. -/
+def ERLexMorN.pi2 (a b : LexObj) :
+    ERLexMorN (LexObj.prod a b) b :=
+  ⟨ERMorN.snd, fun ctx hctx => by
+    change (ERBoolPred.and a.pred b.pred).pred.interp
+      ctx = 1 at hctx
+    rw [ERBoolPred.and_interp] at hctx
+    exact (mul_eq_one.mp hctx).2⟩
+
+/-- First projection in the quotient category. -/
+def ERLexMorNQuo.pi1 (a b : LexObj) :
+    ERLexMorNQuo (LexObj.prod a b) a :=
+  Quotient.mk (erLexMorNSetoid (LexObj.prod a b) a)
+    (ERLexMorN.pi1 a b)
+
+/-- Second projection in the quotient category. -/
+def ERLexMorNQuo.pi2 (a b : LexObj) :
+    ERLexMorNQuo (LexObj.prod a b) b :=
+  Quotient.mk (erLexMorNSetoid (LexObj.prod a b) b)
+    (ERLexMorN.pi2 a b)
+
 end GebLean
