@@ -6962,6 +6962,68 @@ def grothendieckFunctor
 
 end GrothendieckFunctor
 
+/-! ## Slice-Refined Grothendieck Functor -/
+
+section GrothendieckFunctorOver
+
+universe v₁₀ u₁₀
+
+/--
+The slice-refined version of `grothendieckFunctor`, landing in the
+`Over` category of `Cat` over `E`.  Each functor `F : E ⥤ Cat` is
+sent to `(Grothendieck F, Grothendieck.forget F)` as an object of
+`Over E`; morphisms use `grothendieckFunctor.map` together with the
+commutativity `Grothendieck.map α ⋙ Grothendieck.forget _
+= Grothendieck.forget _`.
+
+When the universe levels match, this is definitionally equal to
+mathlib's `Grothendieck.functor`.  The point of this factoring is
+to make explicit that mathlib's slice-refined construction
+`Grothendieck.functor` decomposes into two orthogonal pieces:
+
+1. Our `grothendieckFunctor`, which is universe-polymorphic in four
+   levels (base and fibre `Cat` may live at independent universes).
+2. `Grothendieck.forget` + the slice packaging, which requires the
+   base and fibre to live at the same `Cat` level.
+
+Thus the universe restriction in mathlib's `Grothendieck.functor`
+can be attributed to the slice packaging alone, not to the
+Grothendieck construction itself.
+-/
+def grothendieckFunctorOver {E : Cat.{v₁₀, u₁₀}} :
+    (E ⥤ Cat.{v₁₀, u₁₀}) ⥤ Over (T := Cat.{v₁₀, u₁₀}) E where
+  obj F := Over.mk (Grothendieck.forget F).toCatHom
+  map {_ _} α := Over.homMk ((grothendieckFunctor E).map α)
+    congr($(Grothendieck.functor_comp_forget).toCatHom)
+  map_id F := by
+    ext
+    exact Grothendieck.map_id_eq (F := F)
+  map_comp α β := by
+    ext
+    exact Grothendieck.map_comp_eq α β
+
+/--
+`grothendieckFunctorOver` equals mathlib's `Grothendieck.functor`
+definitionally.  This confirms the factoring: mathlib's
+`Grothendieck.functor` is `grothendieckFunctor` plus the slice
+packaging, with no hidden data.
+-/
+theorem grothendieckFunctorOver_eq_functor {E : Cat.{v₁₀, u₁₀}} :
+    (grothendieckFunctorOver : (E ⥤ Cat.{v₁₀, u₁₀}) ⥤ _) =
+      Grothendieck.functor := rfl
+
+/--
+Forgetting the slice recovers `grothendieckFunctor`.  Together with
+`grothendieckFunctorOver_eq_functor`, this expresses the identity
+`grothendieckFunctor = Grothendieck.functor ⋙ Over.forget _` at
+matched universes.
+-/
+theorem grothendieckFunctorOver_comp_forget {E : Cat.{v₁₀, u₁₀}} :
+    grothendieckFunctorOver (E := E) ⋙ Over.forget _ =
+      grothendieckFunctor E := rfl
+
+end GrothendieckFunctorOver
+
 /-! ## Grothendieck Pre as a Natural Transformation -/
 
 section GrothendieckPre
