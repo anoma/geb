@@ -304,4 +304,12 @@ theorem ERLexMorNQuo.toTerminal_uniq
       (fun _ _ => funext (fun i => i.elim0)))
     f
 
+/-- Binary product object in `LawvereERLexCat`: the
+product of `(n, p)` and `(m, q)` is `(n + m, p ⊓ q)`
+where `⊓` is the conjunction of predicates extended
+along the projections. -/
+def LexObj.prod (a b : LexObj) : LexObj where
+  arity := a.arity + b.arity
+  pred := ERBoolPred.and a.pred b.pred
+
 end GebLean
