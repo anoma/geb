@@ -120,4 +120,60 @@ theorem ERMor1.boolEqNat_le_one (ctx : Fin 2 → ℕ) :
       _ ≤ 1 * 1 := Nat.mul_le_mul_left _ h2
       _ = 1 := Nat.one_mul 1
 
+/-- Boolean equality of two arity-`n` ER terms:
+returns `1` iff `x.interp ctx = y.interp ctx`.
+Definable as `boolEqNat` composed with the pair
+`(x, y)`. -/
+def ERMor1.boolEqAt {n : ℕ} (x y : ERMor1 n) :
+    ERMor1 n :=
+  ERMor1.comp ERMor1.boolEqNat fun i =>
+    match i with
+    | ⟨0, _⟩ => x
+    | ⟨1, _⟩ => y
+
+/-- Interpretation of `boolEqAt`: the Boolean
+equality of the two interpretations. -/
+@[simp] theorem ERMor1.interp_boolEqAt
+    {n : ℕ} (x y : ERMor1 n)
+    (ctx : Fin n → ℕ) :
+    (ERMor1.boolEqAt x y).interp ctx =
+      (1 - (x.interp ctx - y.interp ctx)) *
+      (1 - (y.interp ctx - x.interp ctx)) := by
+  change ERMor1.boolEqNat.interp _ = _
+  rw [ERMor1.interp_boolEqNat]
+
+/-- `boolEqAt` always returns a Boolean value. -/
+theorem ERMor1.boolEqAt_le_one {n : ℕ}
+    (x y : ERMor1 n) (ctx : Fin n → ℕ) :
+    (ERMor1.boolEqAt x y).interp ctx ≤ 1 := by
+  change ERMor1.boolEqNat.interp _ ≤ 1
+  exact ERMor1.boolEqNat_le_one _
+
+/-- `boolEqAt x y = 1` iff `x.interp ctx =
+y.interp ctx`. -/
+theorem ERMor1.boolEqAt_eq_one_iff {n : ℕ}
+    (x y : ERMor1 n) (ctx : Fin n → ℕ) :
+    (ERMor1.boolEqAt x y).interp ctx = 1 ↔
+      x.interp ctx = y.interp ctx := by
+  rw [ERMor1.interp_boolEqAt]
+  constructor
+  · intro h
+    by_contra hneq
+    rcases Nat.lt_or_gt_of_ne hneq with h1 | h1
+    · have hsub : y.interp ctx - x.interp ctx ≥ 1 :=
+        Nat.sub_pos_of_lt h1
+      have hzero : 1 - (y.interp ctx - x.interp ctx)
+          = 0 := by omega
+      rw [hzero] at h
+      simp at h
+    · have hsub : x.interp ctx - y.interp ctx ≥ 1 :=
+        Nat.sub_pos_of_lt h1
+      have hzero : 1 - (x.interp ctx - y.interp ctx)
+          = 0 := by omega
+      rw [hzero] at h
+      simp at h
+  · intro h
+    rw [h]
+    simp
+
 end GebLean
