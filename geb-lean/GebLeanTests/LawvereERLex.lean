@@ -67,3 +67,17 @@ example (a b : LawvereERLexCat)
     (f g : ERLexMorN a b) :
     (LexObj.equalizer f g).arity = a.arity :=
   rfl
+
+-- Chosen equalizers instance is available.
+example : HasChosenEqualizers LawvereERLexCat :=
+  inferInstance
+
+-- Chosen finite limits instance is available.
+example : HasChosenFiniteLimits LawvereERLexCat :=
+  inferInstance
+
+-- Chosen equalizer of identity with itself
+-- produces a well-typed object.
+example (a b : LawvereERLexCat)
+    (f : a ⟶ b) : LawvereERLexCat :=
+  (HasChosenEqualizers.equalizer f f).obj
