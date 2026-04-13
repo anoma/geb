@@ -94,4 +94,30 @@ def ERMor1.boolEqNat : ERMor1 2 :=
         ERMor1.comp ERMor1.boolNot
           (fun (_ : Fin 1) => ERMor1.subSwap)
 
+/-- Interpretation of `boolEqNat`: explicit arithmetic
+form. -/
+@[simp] theorem ERMor1.interp_boolEqNat
+    (ctx : Fin 2 → ℕ) :
+    ERMor1.boolEqNat.interp ctx =
+      (1 - (ctx 0 - ctx 1)) *
+      (1 - (ctx 1 - ctx 0)) := by
+  change ERMor1.boolAnd.interp _ = _
+  rw [ERMor1.interp_boolAnd]
+  rfl
+
+/-- `boolEqNat` always returns a Boolean value. -/
+theorem ERMor1.boolEqNat_le_one (ctx : Fin 2 → ℕ) :
+    ERMor1.boolEqNat.interp ctx ≤ 1 := by
+  rw [ERMor1.interp_boolEqNat]
+  have h1 : 1 - (ctx 0 - ctx 1) ≤ 1 :=
+    Nat.sub_le 1 _
+  have h2 : 1 - (ctx 1 - ctx 0) ≤ 1 :=
+    Nat.sub_le 1 _
+  calc (1 - (ctx 0 - ctx 1)) *
+       (1 - (ctx 1 - ctx 0))
+      _ ≤ 1 * (1 - (ctx 1 - ctx 0)) :=
+        Nat.mul_le_mul_right _ h1
+      _ ≤ 1 * 1 := Nat.mul_le_mul_left _ h2
+      _ = 1 := Nat.one_mul 1
+
 end GebLean
