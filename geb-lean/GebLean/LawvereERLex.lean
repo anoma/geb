@@ -590,4 +590,32 @@ theorem ERLexMorNQuo.pair_uniq {z a b : LexObj}
                 exact hstep)))
     h f g hf hg
 
+/-- Chosen binary product structure for
+`LawvereERLexCat`: the product of `a` and `b` is
+`LexObj.prod a b`. -/
+def lawvereERLexProduct
+    (a b : LawvereERLexCat) :
+    ChosenBinaryProduct a b where
+  obj := LexObj.prod a b
+  fst := ERLexMorNQuo.pi1 a b
+  snd := ERLexMorNQuo.pi2 a b
+  lift f g := ERLexMorNQuo.pair f g
+  lift_fst := ERLexMorNQuo.pair_pi1
+  lift_snd := ERLexMorNQuo.pair_pi2
+  lift_uniq f g h hf hs :=
+    ERLexMorNQuo.pair_uniq f g h hf hs
+
+/-- Chosen terminal object for `LawvereERLexCat`. -/
+def lawvereERLexTerminal :
+    ChosenTerminal LawvereERLexCat where
+  obj := LexObj.terminal
+  from_ obj := ERLexMorNQuo.toTerminal obj
+  uniq f := ERLexMorNQuo.toTerminal_uniq f
+
+/-- `LawvereERLexCat` has chosen finite products. -/
+instance : HasChosenFiniteProducts
+    LawvereERLexCat where
+  terminal := lawvereERLexTerminal
+  product := lawvereERLexProduct
+
 end GebLean
