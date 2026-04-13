@@ -238,4 +238,27 @@ results of interpreting `f` and `g`. -/
   simp only [ERMorN.interp, ERMorN.pair]
   split <;> rfl
 
+/-- Constant `0` at arity `n`: composes `ERMor1.zero`
+with the empty input function. -/
+def ERMor1.zeroN (n : ℕ) : ERMor1 n :=
+  ERMor1.comp ERMor1.zero (Fin.elim0 (α := ERMor1 n))
+
+/-- Interpretation of `zeroN`: always returns `0`. -/
+@[simp] theorem ERMor1.interp_zeroN
+    {n : ℕ} (ctx : Fin n → ℕ) :
+    (ERMor1.zeroN n).interp ctx = 0 :=
+  rfl
+
+/-- Constant `1` at arity `n`: applies `ERMor1.succ`
+to `zeroN`. -/
+def ERMor1.oneN (n : ℕ) : ERMor1 n :=
+  ERMor1.comp ERMor1.succ
+    (fun (_ : Fin 1) => ERMor1.zeroN n)
+
+/-- Interpretation of `oneN`: always returns `1`. -/
+@[simp] theorem ERMor1.interp_oneN
+    {n : ℕ} (ctx : Fin n → ℕ) :
+    (ERMor1.oneN n).interp ctx = 1 :=
+  rfl
+
 end GebLean
