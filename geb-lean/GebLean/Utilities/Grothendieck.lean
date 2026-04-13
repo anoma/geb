@@ -7133,10 +7133,7 @@ This is the 1-categorical strict unstraightening, realizing each
 `(E, G)` as its total category and each base-change + natural
 transformation pair as a functor between the corresponding totals.
 -/
-def unstraighten :
-    (grothendieckContraFunctor Cat.{v₉, u₉}).obj
-      (catContraHomFunctor (Cat.of Cat.{v₉, u₉})) ⥤
-      Cat.{v₉, u₉} where
+def unstraighten : catOverCat.{v₉, u₉} ⥤ Cat.{v₉, u₉} where
   obj T := (grothendieckFunctor
       (GrothendieckContraFunctor.objBase
         (C := Cat.{v₉, u₉}) T)).obj
