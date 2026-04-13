@@ -17,8 +17,14 @@ sanity tests.  Phase 3 complete: see
 projections, pairing, product laws) and
 `GebLean/LawvereERInterp.lean` for
 `erInterpFunctor` and its `Faithful` instance.
-Implementation unblocked at Phase 4
-(definable-subobject finite-limit category).
+Phase 4a complete: see `GebLean/LawvereERLex.lean`
+for `ERBoolPred`, `LexObj`, the subtype-plus-quotient
+morphism construction, category laws, and the
+`Category` instance on `LawvereERLexCat`.  Subsequent
+sub-phases (4b: Boolean operations on ER terms;
+4c: finite products; 4d: equalizers and finite
+limits; 4e: full-and-faithful embedding Δ) remain
+open.
 
 ## Goal
 
@@ -213,6 +219,11 @@ expanded as each phase becomes ready to implement.
 * [x] Phase 2: extensional-equality quotient.
 * [x] Phase 3: Lawvere theory and interpretation functor.
 * [ ] Phase 4: definable-subobject finite-limit category.
+  * [x] 4a: Objects, morphisms, category structure.
+  * [ ] 4b: Boolean operations on ER terms.
+  * [ ] 4c: Finite products.
+  * [ ] 4d: Equalizers and finite limits.
+  * [ ] 4e: Full-and-faithful embedding Δ.
 * [ ] Phase 5: stage (b) internal term type, then stage (c)
   internal-category structure.
 * [ ] Non-fullness: prove `erInterpFunctor` is not full
