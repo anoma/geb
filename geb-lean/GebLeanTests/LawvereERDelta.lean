@@ -11,10 +11,17 @@ products instances.
 open GebLean
 open CategoryTheory
 
--- Faithful instance is available.
+-- The constructive FullyFaithful data is
+-- available.
+example : erDeltaFunctor.FullyFaithful :=
+  erDeltaFunctor.fullyFaithful
+
+-- Faithful instance is available (derived from
+-- fullyFaithful).
 example : erDeltaFunctor.Faithful := inferInstance
 
--- Full instance is available.
+-- Full instance is available (derived from
+-- fullyFaithful).
 example : erDeltaFunctor.Full := inferInstance
 
 -- PreservesFiniteProducts instance is available.

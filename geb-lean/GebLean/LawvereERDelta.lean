@@ -84,25 +84,6 @@ def erDeltaFunctor :
   map_id := erDelta.map_id
   map_comp := erDelta.map_comp
 
-/-- Δ is faithful: distinct ER morphism classes give
-distinct `LawvereERLexCat` morphism classes.
-Immediate because the source-restricted setoid on
-the always-true predicate `⊤` reduces to full
-extensional equality. -/
-instance : erDeltaFunctor.Faithful where
-  map_injective {n m} {f g} h := by
-    induction f using Quotient.ind with
-    | _ f_raw =>
-      induction g using Quotient.ind with
-      | _ g_raw =>
-        apply Quotient.sound
-          (s := erMorNSetoid n m)
-        intro ctx
-        have hrel := Quotient.exact
-          (s := erLexMorNSetoid (erDelta.obj n)
-            (erDelta.obj m)) h
-        exact hrel ctx rfl
-
 /-- Preimage of a `LawvereERLexCat` morphism between
 trivially-cut-out objects.  Lifts through the
 quotient by extracting the underlying `ERMorN` tuple;
@@ -137,13 +118,34 @@ theorem erDelta.map_preimage {n m : ℕ}
     intro ctx _
     rfl
 
-/-- Δ is full: every `LawvereERLexCat` morphism
-between trivially-cut-out objects comes from a
-unique `LawvereERCat` morphism (uniqueness via
-faithfulness; existence via `erDelta.preimage`). -/
-instance : erDeltaFunctor.Full where
-  map_surjective h :=
-    ⟨erDelta.preimage h, erDelta.map_preimage h⟩
+/-- The preimage is also a retraction of `Δ.map`:
+taking the preimage of `Δ.map f` recovers `f`. -/
+theorem erDelta.preimage_map {n m : ℕ}
+    (f : ERMorNQuo n m) :
+    erDelta.preimage (erDelta.map f) = f := by
+  induction f using Quotient.ind with
+  | _ f_raw => rfl
+
+/-- Δ is fully faithful, given as the constructive
+`Functor.FullyFaithful` data structure (the
+`preimage` field is honest data, not extracted via
+choice).  The `Faithful` and `Full` instances below
+are derived from this. -/
+def erDeltaFunctor.fullyFaithful :
+    erDeltaFunctor.FullyFaithful where
+  preimage h := erDelta.preimage h
+  map_preimage h := erDelta.map_preimage h
+  preimage_map f := erDelta.preimage_map f
+
+/-- Δ is faithful, derived from the constructive
+`fullyFaithful` data. -/
+instance : erDeltaFunctor.Faithful :=
+  erDeltaFunctor.fullyFaithful.faithful
+
+/-- Δ is full, derived from the constructive
+`fullyFaithful` data. -/
+instance : erDeltaFunctor.Full :=
+  erDeltaFunctor.fullyFaithful.full
 
 /-! ## Preservation of finite products
 
