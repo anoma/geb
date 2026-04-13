@@ -39,4 +39,14 @@ structure LexObj where
   /-- The Boolean predicate. -/
   pred : ERBoolPred arity
 
+/-- Raw morphism in `LawvereERLexCat`: an `ERMorN`
+tuple that respects membership, that is, maps inputs
+satisfying the source predicate to outputs satisfying
+the target predicate. -/
+def ERLexMorN (src tgt : LexObj) : Type :=
+  { f : ERMorN src.arity tgt.arity //
+      ∀ ctx : Fin src.arity → ℕ,
+        src.pred.pred.interp ctx = 1 →
+        tgt.pred.pred.interp (f.interp ctx) = 1 }
+
 end GebLean
