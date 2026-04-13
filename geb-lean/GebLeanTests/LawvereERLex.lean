@@ -81,3 +81,13 @@ example : HasChosenFiniteLimits LawvereERLexCat :=
 example (a b : LawvereERLexCat)
     (f : a ⟶ b) : LawvereERLexCat :=
   (HasChosenEqualizers.equalizer f f).obj
+
+-- Mathlib's HasEqualizers is now derived
+-- automatically.
+example : Limits.HasEqualizers LawvereERLexCat :=
+  inferInstance
+
+-- Mathlib's HasFiniteLimits is now derived
+-- automatically.
+example : Limits.HasFiniteLimits LawvereERLexCat :=
+  inferInstance
