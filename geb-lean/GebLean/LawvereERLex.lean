@@ -739,6 +739,34 @@ def ERLexMorNQuo.equalizerMap {a b : LexObj}
     (erLexMorNSetoid (LexObj.equalizer f g) a)
     (ERLexMorN.equalizerMap f g)
 
+/-- The equalizer morphism equalizes `f` and `g`
+at the quotient level: composing
+`equalizerMap f g` with `[f]` equals composing with
+`[g]`. -/
+theorem ERLexMorNQuo.equalizerMap_eq
+    {a b : LexObj} (f g : ERLexMorN a b) :
+    ERLexMorNQuo.comp
+      (ERLexMorNQuo.equalizerMap f g)
+      (Quotient.mk (erLexMorNSetoid a b) f) =
+    ERLexMorNQuo.comp
+      (ERLexMorNQuo.equalizerMap f g)
+      (Quotient.mk (erLexMorNSetoid a b) g) :=
+  Quotient.sound
+    (s := erLexMorNSetoid
+      (LexObj.equalizer f g) b)
+    (fun ctx hctx => by
+      simp only [ERLexMorN.comp,
+        ERLexMorN.equalizerMap]
+      change f.val.interp ctx = g.val.interp ctx
+      change (ERBoolPred.andSameArity a.pred
+          (ERBoolPred.allEq f.val g.val)).pred.interp
+          ctx = 1 at hctx
+      rw [ERBoolPred.andSameArity_interp] at hctx
+      have h_allEq :=
+        (mul_eq_one.mp hctx).2
+      exact ERBoolPred.allEq_eq_one_imp
+        f.val g.val ctx h_allEq)
+
 /-- Chosen binary product structure for
 `LawvereERLexCat`: the product of `a` and `b` is
 `LexObj.prod a b`. -/
