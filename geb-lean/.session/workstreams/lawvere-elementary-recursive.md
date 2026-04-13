@@ -41,10 +41,28 @@ equalization theorem, and the raw/quotient lift
 constructions with the universal-property
 theorems `equalizerLift_map` and
 `equalizerLift_uniq`; `GebLean/LawvereERBool.lean`
-extended with `ERMor1.boolEqAt`.  A
-`HasChosenEqualizers` / `HasFiniteLimits` instance
-is deferred to a subsequent plan because chosen-
-equalizer objects depend on representative choice.
+extended with `ERMor1.boolEqAt`.
+Phase 4d.2 complete: refactored `LexObj.pred` to
+use the quotient `ERBoolPredE` (extensionally
+equal predicates yield equal objects) and built
+`HasChosenEqualizers` and `HasChosenFiniteLimits`
+instances on `LawvereERLexCat` without
+`Quotient.out` or `Classical.choice`.  Key
+ingredients in `LawvereERLex.lean`: `ERBoolPredE`
+quotient with `eval`/`eval_le_one`/`eval_injective`
+(extensionality); `ERBoolPredE.alwaysTrue`/
+`andSameArity`/`and`/`allEq` quotient combinators;
+`equalizerPred_wd` showing the combined
+`a.pred ⊓ allEq f g` is well-defined modulo
+morphism representatives; `LexObj.equalizerQ`
+(chosen equalizer object via `Quotient.liftOn₂`
+on quotient morphisms); `equalizerQMap`,
+`equalizerQLiftQuo` (using `Quotient.hrecOn` for
+the dependent `heq` parameter), and the
+universal-property theorems.
+`GebLean/Utilities/ComputableLimits.lean` extended
+with `ChosenEqualizer`, `HasChosenEqualizers`, and
+`HasChosenFiniteLimits` classes.
 The remaining sub-phase (4e: full-and-faithful
 embedding Δ) remains open.
 
@@ -245,7 +263,9 @@ expanded as each phase becomes ready to implement.
   * [x] 4b: Boolean operations on ER terms.
   * [x] 4c: Finite products.
   * [x] 4d: Equalizers (raw construction and
-    universal property).  HasFiniteLimits deferred.
+    universal property).
+  * [x] 4d.2: ERBoolPredE quotient + chosen
+    equalizers + HasChosenFiniteLimits.
   * [ ] 4e: Full-and-faithful embedding Δ.
 * [ ] Phase 5: stage (b) internal term type, then stage (c)
   internal-category structure.
