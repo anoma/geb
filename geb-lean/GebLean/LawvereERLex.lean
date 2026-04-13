@@ -126,4 +126,42 @@ def ERLexMorNQuo.comp
           exact hg _ (ga.property ctx hctx)))
     f g
 
+/-- Left identity: `comp (id src) f = f`. -/
+theorem ERLexMorNQuo.id_comp
+    {src tgt : LexObj}
+    (f : ERLexMorNQuo src tgt) :
+    ERLexMorNQuo.comp (ERLexMorNQuo.id src) f = f :=
+  Quotient.ind
+    (motive := fun f =>
+      ERLexMorNQuo.comp
+        (ERLexMorNQuo.id src) f = f)
+    (fun f_raw =>
+      Quotient.sound
+        (s := erLexMorNSetoid src tgt)
+        (fun ctx _ => by
+          simp only [ERLexMorN.comp,
+            ERLexMorN.id,
+            ERMorN.interp_comp,
+            ERMorN.interp_id]))
+    f
+
+/-- Right identity: `comp f (id tgt) = f`. -/
+theorem ERLexMorNQuo.comp_id
+    {src tgt : LexObj}
+    (f : ERLexMorNQuo src tgt) :
+    ERLexMorNQuo.comp f (ERLexMorNQuo.id tgt) = f :=
+  Quotient.ind
+    (motive := fun f =>
+      ERLexMorNQuo.comp
+        f (ERLexMorNQuo.id tgt) = f)
+    (fun f_raw =>
+      Quotient.sound
+        (s := erLexMorNSetoid src tgt)
+        (fun ctx _ => by
+          simp only [ERLexMorN.comp,
+            ERLexMorN.id,
+            ERMorN.interp_comp,
+            ERMorN.interp_id]))
+    f
+
 end GebLean
