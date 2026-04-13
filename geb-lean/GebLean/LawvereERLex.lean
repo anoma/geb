@@ -1253,6 +1253,75 @@ theorem ERLexMorNQuo.equalizerQLift_map
       rw [ERMorN.interp_comp]
       rfl)
 
+/-- Auxiliary: bridge from a quotient-level
+equalization hypothesis to a raw-level one.
+Given `heq : comp ⟦h_raw⟧ f = comp ⟦h_raw⟧ g`,
+extract the raw fact that `f` and `g` evaluated at
+`h_raw.val.interp ctx` agree on `z.pred = 1`
+contexts.  Stated for any quotient
+representatives `f', g'`. -/
+private theorem
+    ERLexMorNQuo.equalizerQLift_raw_heq
+    {z a b : LexObj} {h_raw : ERLexMorN z a}
+    {f g : ERLexMorNQuo a b}
+    (heq : ERLexMorNQuo.comp
+        (Quotient.mk _ h_raw) f =
+      ERLexMorNQuo.comp
+        (Quotient.mk _ h_raw) g)
+    (ctx : Fin z.arity → ℕ)
+    (hctx : z.pred.eval ctx = 1) :
+    ∀ (f' g' : ERLexMorN a b),
+      Quotient.mk _ f' = f →
+      Quotient.mk _ g' = g →
+      f'.val.interp (h_raw.val.interp ctx) =
+        g'.val.interp (h_raw.val.interp ctx) := by
+  intros f' g' hf hg
+  subst hf
+  subst hg
+  have hcomp := Quotient.exact
+    (s := erLexMorNSetoid z b) heq
+  have step := hcomp ctx hctx
+  simp only [ERLexMorN.comp,
+    ERMorN.interp_comp] at step
+  exact step
+
+/-- The chosen equalizer lift, taking a quotient
+morphism `h` and a quotient-level equalization
+hypothesis. -/
+def ERLexMorNQuo.equalizerQLiftQuo {z a b : LexObj}
+    (f g : ERLexMorNQuo a b)
+    (h : ERLexMorNQuo z a)
+    (heq : ERLexMorNQuo.comp h f =
+           ERLexMorNQuo.comp h g) :
+    ERLexMorNQuo z (LexObj.equalizerQ f g) :=
+  h.hrecOn
+    (motive := fun h' =>
+      ERLexMorNQuo.comp h' f =
+          ERLexMorNQuo.comp h' g →
+        ERLexMorNQuo z (LexObj.equalizerQ f g))
+    (fun h_raw heq_specialized =>
+      ERLexMorNQuo.equalizerQLift f g h_raw
+        (fun _ _ => heq_specialized))
+    (fun {h₁ h₂} hrel => by
+      apply Function.hfunext
+      · -- type-equality: the two heq types are equal
+        have heq_quo : (Quotient.mk
+            (erLexMorNSetoid z a) h₁ :
+            ERLexMorNQuo z a) =
+            Quotient.mk _ h₂ :=
+          Quotient.sound hrel
+        rw [heq_quo]
+      · -- value-equality: the two function bodies
+        -- agree (as HEq, then Eq via heq_of_eq)
+        intro heq₁ heq₂ _
+        apply heq_of_eq
+        apply Quotient.sound
+          (s := erLexMorNSetoid z
+            (LexObj.equalizerQ f g))
+        intro ctx hctx
+        exact hrel ctx hctx)
+    heq
+
 /-- Uniqueness: the chosen equalizer lift is unique
 among morphisms whose composition with the
 equalizer inclusion equals `h`. -/

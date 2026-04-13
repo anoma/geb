@@ -228,4 +228,46 @@ instance chosenToHasFiniteProducts
 
 end Derivations
 
+/-! ## Computable equalizers and finite limits -/
+
+/-- Chosen computable equalizer data for parallel
+morphisms `f, g : A ⟶ B`. -/
+structure ChosenEqualizer
+    {C : Type u} [Category.{v} C]
+    {A B : C} (f g : A ⟶ B) where
+  /-- The equalizer object. -/
+  obj : C
+  /-- The equalizer inclusion morphism. -/
+  ι : obj ⟶ A
+  /-- The inclusion equalizes `f` and `g`. -/
+  ι_eq : ι ≫ f = ι ≫ g
+  /-- Universal lift through the equalizer. -/
+  lift : ∀ {Z : C} (h : Z ⟶ A),
+    h ≫ f = h ≫ g → (Z ⟶ obj)
+  /-- Composition of the lift with the inclusion
+  recovers `h`. -/
+  lift_ι : ∀ {Z : C} (h : Z ⟶ A)
+    (heq : h ≫ f = h ≫ g),
+    lift h heq ≫ ι = h
+  /-- Uniqueness of the universal lift. -/
+  lift_uniq : ∀ {Z : C} (h : Z ⟶ A)
+    (heq : h ≫ f = h ≫ g) (h' : Z ⟶ obj),
+    h' ≫ ι = h → h' = lift h heq
+
+/-- A category with chosen computable equalizers
+for every parallel pair. -/
+class HasChosenEqualizers
+    (C : Type u) [Category.{v} C] where
+  /-- Chosen equalizer for each parallel pair. -/
+  equalizer : ∀ {A B : C} (f g : A ⟶ B),
+    ChosenEqualizer f g
+
+/-- A category with chosen computable finite
+limits: chosen finite products and chosen
+equalizers. -/
+class HasChosenFiniteLimits
+    (C : Type u) [Category.{v} C] extends
+    HasChosenFiniteProducts C,
+    HasChosenEqualizers C
+
 end GebLean
