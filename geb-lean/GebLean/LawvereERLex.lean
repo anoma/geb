@@ -164,4 +164,51 @@ theorem ERLexMorNQuo.comp_id
             ERMorN.interp_id]))
     f
 
+/-- Associativity of composition. -/
+theorem ERLexMorNQuo.comp_assoc
+    {a b c d : LexObj}
+    (f : ERLexMorNQuo a b)
+    (g : ERLexMorNQuo b c)
+    (h : ERLexMorNQuo c d) :
+    ERLexMorNQuo.comp
+      (ERLexMorNQuo.comp f g) h =
+    ERLexMorNQuo.comp f
+      (ERLexMorNQuo.comp g h) :=
+  Quotient.ind
+    (motive := fun f =>
+      ∀ (g : ERLexMorNQuo b c)
+        (h : ERLexMorNQuo c d),
+        ERLexMorNQuo.comp
+          (ERLexMorNQuo.comp f g) h =
+        ERLexMorNQuo.comp f
+          (ERLexMorNQuo.comp g h))
+    (fun f_raw =>
+      Quotient.ind
+        (motive := fun g =>
+          ∀ (h : ERLexMorNQuo c d),
+            ERLexMorNQuo.comp
+              (ERLexMorNQuo.comp
+                (Quotient.mk _ f_raw) g) h =
+            ERLexMorNQuo.comp
+              (Quotient.mk _ f_raw)
+              (ERLexMorNQuo.comp g h))
+        (fun g_raw =>
+          Quotient.ind
+            (motive := fun h =>
+              ERLexMorNQuo.comp
+                (ERLexMorNQuo.comp
+                  (Quotient.mk _ f_raw)
+                  (Quotient.mk _ g_raw)) h =
+              ERLexMorNQuo.comp
+                (Quotient.mk _ f_raw)
+                (ERLexMorNQuo.comp
+                  (Quotient.mk _ g_raw) h))
+            (fun h_raw =>
+              Quotient.sound
+                (s := erLexMorNSetoid a d)
+                (fun ctx _ => by
+                  simp only [ERLexMorN.comp,
+                    ERMorN.interp_comp]))))
+    f g h
+
 end GebLean
