@@ -267,4 +267,41 @@ instance : Category LawvereERLexCat where
   comp_id := ERLexMorNQuo.comp_id
   assoc := ERLexMorNQuo.comp_assoc
 
+/-- Terminal object of `LawvereERLexCat`: arity `0`
+with the constant-`1` predicate. -/
+def LexObj.terminal : LexObj where
+  arity := 0
+  pred :=
+    { pred := ERMor1.oneN 0
+      bool := fun _ => Nat.le_refl 1 }
+
+/-- The raw terminal morphism from any object to
+`LexObj.terminal`: underlying tuple is the empty
+tuple; membership is trivially preserved because
+the target predicate is always `1`. -/
+def ERLexMorN.toTerminal (obj : LexObj) :
+    ERLexMorN obj LexObj.terminal :=
+  ⟨ERMorN.terminal obj.arity, fun _ _ => rfl⟩
+
+/-- The terminal morphism in the quotient category. -/
+def ERLexMorNQuo.toTerminal (obj : LexObj) :
+    ERLexMorNQuo obj LexObj.terminal :=
+  Quotient.mk (erLexMorNSetoid obj LexObj.terminal)
+    (ERLexMorN.toTerminal obj)
+
+/-- Uniqueness of the terminal morphism: any quotient
+morphism to `LexObj.terminal` equals
+`ERLexMorNQuo.toTerminal`. -/
+theorem ERLexMorNQuo.toTerminal_uniq
+    {obj : LexObj}
+    (f : ERLexMorNQuo obj LexObj.terminal) :
+    f = ERLexMorNQuo.toTerminal obj :=
+  Quotient.ind
+    (motive := fun f =>
+      f = ERLexMorNQuo.toTerminal obj)
+    (fun _ => Quotient.sound
+      (s := erLexMorNSetoid obj LexObj.terminal)
+      (fun _ _ => funext (fun i => i.elim0)))
+    f
+
 end GebLean
