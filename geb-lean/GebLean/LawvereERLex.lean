@@ -1,4 +1,6 @@
 import GebLean.LawvereER
+import GebLean.LawvereERBool
+import GebLean.Utilities.ComputableLimits
 import Mathlib.CategoryTheory.Category.Basic
 
 /-!
