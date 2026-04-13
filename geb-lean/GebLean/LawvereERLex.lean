@@ -85,6 +85,21 @@ representative reduces to the underlying
       p.pred.interp ctx :=
   rfl
 
+/-- Two quotient predicates are equal iff their
+evaluations agree on every context.  This is the
+extensionality principle for `ERBoolPredE`. -/
+theorem ERBoolPredE.eval_injective
+    {n : ℕ} (p q : ERBoolPredE n)
+    (h : ∀ ctx : Fin n → ℕ,
+      p.eval ctx = q.eval ctx) :
+    p = q := by
+  induction p using Quotient.ind with
+  | _ p_raw =>
+    induction q using Quotient.ind with
+    | _ q_raw =>
+      apply Quotient.sound
+      exact h
+
 /-- The always-true predicate at arity `n`: the
 constant `1` function, trivially Boolean-valued. -/
 def ERBoolPred.alwaysTrueN (n : ℕ) :
@@ -1055,5 +1070,86 @@ instance : HasChosenFiniteProducts
     LawvereERLexCat where
   terminal := lawvereERLexTerminal
   product := lawvereERLexProduct
+
+/-! ## Chosen equalizers via ERBoolPredE quotient
+
+The combined equalizer predicate `a.pred ⊓ allEq f g`
+is well-defined modulo morphism representatives,
+because off-`a.pred=1` contexts the conjunction is
+zero regardless of the `allEq` term, and
+on-`a.pred=1` contexts the source-restricted
+extensional equality of `f` and `g` representatives
+forces `allEq` agreement. -/
+
+/-- The combined equalizer predicate is well-
+defined modulo morphism representatives. -/
+theorem ERBoolPredE.equalizerPred_wd
+    {a b : LexObj} {f₁ f₂ g₁ g₂ : ERLexMorN a b}
+    (hf : (erLexMorNSetoid a b).r f₁ f₂)
+    (hg : (erLexMorNSetoid a b).r g₁ g₂) :
+    ERBoolPredE.andSameArity a.pred
+        (ERBoolPredE.allEq f₁.val g₁.val) =
+      ERBoolPredE.andSameArity a.pred
+        (ERBoolPredE.allEq f₂.val g₂.val) := by
+  apply ERBoolPredE.eval_injective
+  intro ctx
+  simp only [ERBoolPredE.andSameArity_eval,
+    ERBoolPredE.allEq_eval]
+  by_cases h0 : a.pred.eval ctx = 0
+  · rw [h0]; simp
+  · have h1 : a.pred.eval ctx = 1 := by
+      have := ERBoolPredE.eval_le_one a.pred ctx
+      omega
+    rw [h1]
+    have hf_at : f₁.val.interp ctx =
+        f₂.val.interp ctx := hf ctx h1
+    have hg_at : g₁.val.interp ctx =
+        g₂.val.interp ctx := hg ctx h1
+    have eq1 : (ERBoolPred.allEq f₁.val
+        g₁.val).pred.interp ctx =
+      (ERBoolPred.allEq f₂.val
+        g₂.val).pred.interp ctx := by
+      by_cases heq : f₁.val.interp ctx =
+          g₁.val.interp ctx
+      · have heq2 : f₂.val.interp ctx =
+            g₂.val.interp ctx := by
+          rw [← hf_at, ← hg_at]; exact heq
+        rw [ERBoolPred.allEq_of_eq _ _ _ heq,
+            ERBoolPred.allEq_of_eq _ _ _ heq2]
+      · have heq2 : f₂.val.interp ctx ≠
+            g₂.val.interp ctx := by
+          rw [← hf_at, ← hg_at]; exact heq
+        have hne1 : (ERBoolPred.allEq f₁.val
+            g₁.val).pred.interp ctx ≠ 1 :=
+          fun h => heq
+            (ERBoolPred.allEq_eq_one_imp _ _ _ h)
+        have hne2 : (ERBoolPred.allEq f₂.val
+            g₂.val).pred.interp ctx ≠ 1 :=
+          fun h => heq2
+            (ERBoolPred.allEq_eq_one_imp _ _ _ h)
+        have hle1 : (ERBoolPred.allEq f₁.val
+            g₁.val).pred.interp ctx ≤ 1 :=
+          (ERBoolPred.allEq f₁.val g₁.val).bool _
+        have hle2 : (ERBoolPred.allEq f₂.val
+            g₂.val).pred.interp ctx ≤ 1 :=
+          (ERBoolPred.allEq f₂.val g₂.val).bool _
+        omega
+    rw [eq1]
+
+/-- Chosen equalizer object for parallel quotient
+morphisms `f, g : a ⟶ b`.  Well-defined modulo
+representatives by `equalizerPred_wd`. -/
+def LexObj.equalizerQ {a b : LexObj}
+    (f g : ERLexMorNQuo a b) : LexObj where
+  arity := a.arity
+  pred := Quotient.liftOn₂
+    (s₁ := erLexMorNSetoid a b)
+    (s₂ := erLexMorNSetoid a b)
+    f g
+    (fun f' g' =>
+      ERBoolPredE.andSameArity a.pred
+        (ERBoolPredE.allEq f'.val g'.val))
+    (fun _ _ _ _ hf hg =>
+      ERBoolPredE.equalizerPred_wd hf hg)
 
 end GebLean
