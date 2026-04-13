@@ -347,4 +347,88 @@ def ERLexMorNQuo.pi2 (a b : LexObj) :
   Quotient.mk (erLexMorNSetoid (LexObj.prod a b) b)
     (ERLexMorN.pi2 a b)
 
+/-- Pairing in `LawvereERLexCat`: given `f : z → a`
+and `g : z → b`, produces the universal arrow
+`z → a × b`.  Underlying tuple: `ERMorN.pair f.val
+g.val`.  Membership preservation: when `z.pred(ctx)
+= 1`, both `a.pred(f.val.interp ctx) = 1` and
+`b.pred(g.val.interp ctx) = 1`, so their product is
+`1`. -/
+def ERLexMorN.pair {z a b : LexObj}
+    (f : ERLexMorN z a) (g : ERLexMorN z b) :
+    ERLexMorN z (LexObj.prod a b) :=
+  ⟨ERMorN.pair f.val g.val, fun ctx hctx => by
+    change (ERBoolPred.and a.pred b.pred).pred.interp
+      _ = 1
+    rw [ERBoolPred.and_interp]
+    have hf : a.pred.pred.interp
+        (ERMorN.fst.interp
+          ((ERMorN.pair f.val g.val).interp ctx)) =
+        1 := by
+      have step : ERMorN.fst.interp
+          ((ERMorN.pair f.val g.val).interp ctx) =
+          f.val.interp ctx := by
+        funext i
+        simp only [ERMorN.interp_fst,
+          ERMorN.interp_pair]
+        rw [dif_pos i.isLt]
+        rfl
+      rw [step]
+      exact f.property ctx hctx
+    have hg : b.pred.pred.interp
+        (ERMorN.snd.interp
+          ((ERMorN.pair f.val g.val).interp ctx)) =
+        1 := by
+      have step : ERMorN.snd.interp
+          ((ERMorN.pair f.val g.val).interp ctx) =
+          g.val.interp ctx := by
+        funext i
+        simp only [ERMorN.interp_snd,
+          ERMorN.interp_pair]
+        have h : ¬ (a.arity + i.val) < a.arity := by
+          omega
+        rw [dif_neg h]
+        have idx_eq :
+            (⟨a.arity + i.val - a.arity, by omega⟩
+              : Fin b.arity) = i := by
+          apply Fin.ext
+          change a.arity + i.val - a.arity = i.val
+          omega
+        rw [idx_eq]
+        rfl
+      rw [step]
+      exact g.property ctx hctx
+    rw [hf, hg]⟩
+
+/-- Pairing of quotient morphisms, lifted from
+`ERLexMorN.pair` via `Quotient.lift₂`.
+Well-definedness follows from source-restricted
+extensional equality of components. -/
+def ERLexMorNQuo.pair {z a b : LexObj}
+    (f : ERLexMorNQuo z a)
+    (g : ERLexMorNQuo z b) :
+    ERLexMorNQuo z (LexObj.prod a b) :=
+  Quotient.lift₂
+    (s₁ := erLexMorNSetoid z a)
+    (s₂ := erLexMorNSetoid z b)
+    (fun f' g' =>
+      Quotient.mk
+        (erLexMorNSetoid z (LexObj.prod a b))
+        (ERLexMorN.pair f' g'))
+    (fun fa fb ga gb hf hg =>
+      Quotient.sound
+        (s := erLexMorNSetoid z (LexObj.prod a b))
+        (fun ctx hctx => by
+          change (ERMorN.pair fa.val fb.val).interp
+            ctx = (ERMorN.pair ga.val gb.val).interp
+            ctx
+          funext i
+          simp only [ERMorN.interp_pair]
+          split_ifs with h
+          · exact congrFun (hf ctx hctx)
+              ⟨i.val, h⟩
+          · exact congrFun (hg ctx hctx)
+              ⟨i.val - a.arity, by omega⟩))
+    f g
+
 end GebLean
