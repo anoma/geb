@@ -6969,19 +6969,19 @@ section GrothendieckPre
 universe v₅ u₅ v₆ u₆
 
 /--
-Given a functor `G : D ⥤ C` (with `C` and `D` in the same
-universes), `Grothendieck.pre` at each `F : C ⥤ Cat` assembles
+Given a functor `G : C ⥤ D` (with `C` and `D` in the same
+universes), `Grothendieck.pre` at each `F : D ⥤ Cat` assembles
 into a natural transformation from the composite
-`(Functor.whiskeringLeft D C Cat).obj G ⋙ grothendieckFunctor D`
-to `grothendieckFunctor C`.
+`(Functor.whiskeringLeft C D Cat).obj G ⋙ grothendieckFunctor C`
+to `grothendieckFunctor D`.
 -/
 def grothendieckPre
     {C : Type u₅} [Category.{v₅} C]
     {D : Type u₅} [Category.{v₅} D]
-    (G : D ⥤ C) :
-    (Functor.whiskeringLeft D C Cat.{v₆, u₆}).obj G ⋙
-      grothendieckFunctor D ⟶
-      grothendieckFunctor C where
+    (G : C ⥤ D) :
+    (Functor.whiskeringLeft C D Cat.{v₆, u₆}).obj G ⋙
+      grothendieckFunctor C ⟶
+      grothendieckFunctor D where
   app F := (Grothendieck.pre F G).toCatHom
   naturality F H α := by
     apply Cat.Hom.ext
