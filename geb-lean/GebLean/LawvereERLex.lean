@@ -71,4 +71,19 @@ source-restricted extensional equality. -/
 def ERLexMorNQuo (src tgt : LexObj) : Type :=
   Quotient (erLexMorNSetoid src tgt)
 
+/-- The raw identity morphism at `obj`: the
+underlying tuple is `ERMorN.id obj.arity`, with
+membership preserved because the identity function
+on contexts fixes everything. -/
+def ERLexMorN.id (obj : LexObj) : ERLexMorN obj obj :=
+  ⟨ERMorN.id obj.arity, fun ctx hctx => by
+    rw [ERMorN.interp_id]
+    exact hctx⟩
+
+/-- The identity morphism in the quotient category. -/
+def ERLexMorNQuo.id (obj : LexObj) :
+    ERLexMorNQuo obj obj :=
+  Quotient.mk (erLexMorNSetoid obj obj)
+    (ERLexMorN.id obj)
+
 end GebLean
