@@ -19,16 +19,10 @@ private def oneZero : ERMor1 0 :=
 -- oneZero evaluates to 1 at the empty context.
 example : oneZero.interp Fin.elim0 = 1 := rfl
 
--- As a Boolean predicate at arity 0.
-private def truePred0 : ERBoolPred 0 :=
-  { pred := oneZero
-    bool := fun _ => by
-      show oneZero.interp _ ≤ 1
-      rfl }
-
--- Construct an object.
+-- Construct an object using the always-true
+-- quotient predicate.
 private def trueObj0 : LexObj :=
-  { arity := 0, pred := truePred0 }
+  { arity := 0, pred := ERBoolPredE.alwaysTrue 0 }
 
 -- Category instance is inferred.
 example : Category LawvereERLexCat := inferInstance

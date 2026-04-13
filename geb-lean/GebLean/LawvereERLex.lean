@@ -341,32 +341,36 @@ def ERBoolPredE.allEq {n m : ℕ}
   rfl
 
 /-- Object of `LawvereERLexCat`: an arity together with
-a Boolean-valued predicate cutting out a decidable
-subobject of `Fin arity -> ℕ`. -/
+a Boolean-valued *quotient* predicate cutting out a
+decidable subobject of `Fin arity -> ℕ`.  Using the
+quotient `ERBoolPredE` (rather than raw `ERBoolPred`)
+means semantically equal predicates yield literally
+equal objects. -/
 structure LexObj where
   /-- The arity (number of free variables). -/
   arity : ℕ
-  /-- The Boolean predicate. -/
-  pred : ERBoolPred arity
+  /-- The Boolean predicate (quotient class). -/
+  pred : ERBoolPredE arity
 
 /-- Raw morphism in `LawvereERLexCat`: an `ERMorN`
 tuple that respects membership, that is, maps inputs
 satisfying the source predicate to outputs satisfying
-the target predicate. -/
+the target predicate.  Membership is checked via the
+quotient-lifted `eval`. -/
 def ERLexMorN (src tgt : LexObj) : Type :=
   { f : ERMorN src.arity tgt.arity //
       ∀ ctx : Fin src.arity → ℕ,
-        src.pred.pred.interp ctx = 1 →
-        tgt.pred.pred.interp (f.interp ctx) = 1 }
+        src.pred.eval ctx = 1 →
+        tgt.pred.eval (f.interp ctx) = 1 }
 
-/-- The setoid on `ERLexMorN src tgt`: two raw
-morphisms are related when their interpretations agree
-on every context satisfying the source predicate. -/
+/-- The setoid on `ERLexMorN src tgt`: source-
+restricted extensional equality, with membership
+checked via `eval`. -/
 def erLexMorNSetoid (src tgt : LexObj) :
     Setoid (ERLexMorN src tgt) where
   r f g :=
     ∀ ctx : Fin src.arity → ℕ,
-      src.pred.pred.interp ctx = 1 →
+      src.pred.eval ctx = 1 →
       f.val.interp ctx = g.val.interp ctx
   iseqv := {
     refl := fun _ _ _ => rfl
@@ -543,7 +547,7 @@ instance : Category LawvereERLexCat where
 with the constant-`1` predicate. -/
 def LexObj.terminal : LexObj where
   arity := 0
-  pred := ERBoolPred.alwaysTrueN 0
+  pred := ERBoolPredE.alwaysTrue 0
 
 /-- The raw terminal morphism from any object to
 `LexObj.terminal`: underlying tuple is the empty
@@ -580,7 +584,7 @@ where `⊓` is the conjunction of predicates extended
 along the projections. -/
 def LexObj.prod (a b : LexObj) : LexObj where
   arity := a.arity + b.arity
-  pred := ERBoolPred.and a.pred b.pred
+  pred := ERBoolPredE.and a.pred b.pred
 
 /-- First projection from the product `a × b` to `a`.
 Underlying tuple: `ERMorN.fst`.  Membership
@@ -590,9 +594,9 @@ deduce `a.pred(first n of ctx) = 1` via
 def ERLexMorN.pi1 (a b : LexObj) :
     ERLexMorN (LexObj.prod a b) a :=
   ⟨ERMorN.fst, fun ctx hctx => by
-    change (ERBoolPred.and a.pred b.pred).pred.interp
+    change (ERBoolPredE.and a.pred b.pred).eval
       ctx = 1 at hctx
-    rw [ERBoolPred.and_interp] at hctx
+    rw [ERBoolPredE.and_eval] at hctx
     exact (mul_eq_one.mp hctx).1⟩
 
 /-- Second projection from the product `a × b` to
@@ -600,9 +604,9 @@ def ERLexMorN.pi1 (a b : LexObj) :
 def ERLexMorN.pi2 (a b : LexObj) :
     ERLexMorN (LexObj.prod a b) b :=
   ⟨ERMorN.snd, fun ctx hctx => by
-    change (ERBoolPred.and a.pred b.pred).pred.interp
+    change (ERBoolPredE.and a.pred b.pred).eval
       ctx = 1 at hctx
-    rw [ERBoolPred.and_interp] at hctx
+    rw [ERBoolPredE.and_eval] at hctx
     exact (mul_eq_one.mp hctx).2⟩
 
 /-- First projection in the quotient category. -/
@@ -628,10 +632,10 @@ def ERLexMorN.pair {z a b : LexObj}
     (f : ERLexMorN z a) (g : ERLexMorN z b) :
     ERLexMorN z (LexObj.prod a b) :=
   ⟨ERMorN.pair f.val g.val, fun ctx hctx => by
-    change (ERBoolPred.and a.pred b.pred).pred.interp
+    change (ERBoolPredE.and a.pred b.pred).eval
       _ = 1
-    rw [ERBoolPred.and_interp]
-    have hf : a.pred.pred.interp
+    rw [ERBoolPredE.and_eval]
+    have hf : a.pred.eval
         (ERMorN.fst.interp
           ((ERMorN.pair f.val g.val).interp ctx)) =
         1 := by
@@ -645,7 +649,7 @@ def ERLexMorN.pair {z a b : LexObj}
         rfl
       rw [step]
       exact f.property ctx hctx
-    have hg : b.pred.pred.interp
+    have hg : b.pred.eval
         (ERMorN.snd.interp
           ((ERMorN.pair f.val g.val).interp ctx)) =
         1 := by
@@ -868,8 +872,8 @@ def LexObj.equalizer {a b : LexObj}
     (f g : ERLexMorN a b) : LexObj where
   arity := a.arity
   pred :=
-    ERBoolPred.andSameArity a.pred
-      (ERBoolPred.allEq f.val g.val)
+    ERBoolPredE.andSameArity a.pred
+      (ERBoolPredE.allEq f.val g.val)
 
 /-- The equalizer inclusion morphism: underlying
 tuple is the identity, with respect proof
@@ -879,11 +883,11 @@ def ERLexMorN.equalizerMap {a b : LexObj}
     (f g : ERLexMorN a b) :
     ERLexMorN (LexObj.equalizer f g) a :=
   ⟨ERMorN.id a.arity, fun ctx hctx => by
-    change (ERBoolPred.andSameArity a.pred
-        (ERBoolPred.allEq f.val g.val)).pred.interp
+    change (ERBoolPredE.andSameArity a.pred
+        (ERBoolPredE.allEq f.val g.val)).eval
         ctx = 1 at hctx
-    rw [ERBoolPred.andSameArity_interp] at hctx
-    change a.pred.pred.interp ctx = 1
+    rw [ERBoolPredE.andSameArity_eval] at hctx
+    change a.pred.eval ctx = 1
     exact (mul_eq_one.mp hctx).1⟩
 
 /-- The equalizer inclusion morphism in the
@@ -904,19 +908,19 @@ tuple. -/
 def ERLexMorN.equalizerLift {z a b : LexObj}
     {f g : ERLexMorN a b} (h : ERLexMorN z a)
     (heq : ∀ ctx : Fin z.arity → ℕ,
-      z.pred.pred.interp ctx = 1 →
+      z.pred.eval ctx = 1 →
       f.val.interp (h.val.interp ctx) =
         g.val.interp (h.val.interp ctx)) :
     ERLexMorN z (LexObj.equalizer f g) :=
   ⟨h.val, fun ctx hctx => by
-    change (ERBoolPred.andSameArity a.pred
-        (ERBoolPred.allEq f.val g.val)).pred.interp
+    change (ERBoolPredE.andSameArity a.pred
+        (ERBoolPredE.allEq f.val g.val)).eval
         _ = 1
-    rw [ERBoolPred.andSameArity_interp]
-    have h1 : a.pred.pred.interp (h.val.interp
-        ctx) = 1 := h.property ctx hctx
-    have h2 : (ERBoolPred.allEq f.val
-        g.val).pred.interp (h.val.interp ctx) = 1 :=
+    rw [ERBoolPredE.andSameArity_eval]
+    have h1 : a.pred.eval (h.val.interp ctx) = 1 :=
+      h.property ctx hctx
+    have h2 : (ERBoolPredE.allEq f.val
+        g.val).eval (h.val.interp ctx) = 1 :=
       ERBoolPred.allEq_of_eq _ _ _ (heq ctx hctx)
     rw [h1, h2]⟩
 
@@ -927,7 +931,7 @@ raw lift. -/
 def ERLexMorNQuo.equalizerLift {z a b : LexObj}
     {f g : ERLexMorN a b} (h : ERLexMorN z a)
     (heq : ∀ ctx : Fin z.arity → ℕ,
-      z.pred.pred.interp ctx = 1 →
+      z.pred.eval ctx = 1 →
       f.val.interp (h.val.interp ctx) =
         g.val.interp (h.val.interp ctx)) :
     ERLexMorNQuo z (LexObj.equalizer f g) :=
@@ -942,7 +946,7 @@ theorem ERLexMorNQuo.equalizerLift_map
     {z a b : LexObj} {f g : ERLexMorN a b}
     (h : ERLexMorN z a)
     (heq : ∀ ctx : Fin z.arity → ℕ,
-      z.pred.pred.interp ctx = 1 →
+      z.pred.eval ctx = 1 →
       f.val.interp (h.val.interp ctx) =
         g.val.interp (h.val.interp ctx)) :
     ERLexMorNQuo.comp
@@ -965,7 +969,7 @@ theorem ERLexMorNQuo.equalizerLift_uniq
     {z a b : LexObj} {f g : ERLexMorN a b}
     (h : ERLexMorN z a)
     (heq : ∀ ctx : Fin z.arity → ℕ,
-      z.pred.pred.interp ctx = 1 →
+      z.pred.eval ctx = 1 →
       f.val.interp (h.val.interp ctx) =
         g.val.interp (h.val.interp ctx))
     (h' : ERLexMorNQuo z (LexObj.equalizer f g))
@@ -1015,10 +1019,10 @@ theorem ERLexMorNQuo.equalizerMap_eq
       simp only [ERLexMorN.comp,
         ERLexMorN.equalizerMap]
       change f.val.interp ctx = g.val.interp ctx
-      change (ERBoolPred.andSameArity a.pred
-          (ERBoolPred.allEq f.val g.val)).pred.interp
+      change (ERBoolPredE.andSameArity a.pred
+          (ERBoolPredE.allEq f.val g.val)).eval
           ctx = 1 at hctx
-      rw [ERBoolPred.andSameArity_interp] at hctx
+      rw [ERBoolPredE.andSameArity_eval] at hctx
       have h_allEq :=
         (mul_eq_one.mp hctx).2
       exact ERBoolPred.allEq_eq_one_imp
