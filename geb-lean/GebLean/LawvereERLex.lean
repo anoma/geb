@@ -32,6 +32,42 @@ structure ERBoolPred (n : ℕ) where
   /-- Proof that the predicate is Boolean-valued. -/
   bool : ∀ ctx : Fin n → ℕ, pred.interp ctx ≤ 1
 
+/-- Conjunction of two Boolean predicates at arities
+`n` and `m`: yields a Boolean predicate at arity
+`n + m` that holds when `p` holds on the first `n`
+coordinates and `q` holds on the last `m`. -/
+def ERBoolPred.and {n m : ℕ}
+    (p : ERBoolPred n) (q : ERBoolPred m) :
+    ERBoolPred (n + m) where
+  pred :=
+    ERMor1.comp ERMor1.boolAnd fun i =>
+      match i with
+      | ⟨0, _⟩ =>
+          ERMor1.comp p.pred ERMorN.fst
+      | ⟨1, _⟩ =>
+          ERMor1.comp q.pred ERMorN.snd
+  bool := fun ctx => by
+    change ERMor1.boolAnd.interp _ ≤ 1
+    rw [ERMor1.interp_boolAnd]
+    exact
+      (Nat.mul_le_mul
+        (p.bool _) (q.bool _)).trans
+        (Nat.le_refl 1)
+
+/-- Interpretation of `ERBoolPred.and`: product of
+the two predicates evaluated on the respective
+coordinate slices. -/
+@[simp] theorem ERBoolPred.and_interp
+    {n m : ℕ} (p : ERBoolPred n)
+    (q : ERBoolPred m)
+    (ctx : Fin (n + m) → ℕ) :
+    (ERBoolPred.and p q).pred.interp ctx =
+      p.pred.interp (ERMorN.fst.interp ctx) *
+      q.pred.interp (ERMorN.snd.interp ctx) := by
+  change ERMor1.boolAnd.interp _ = _
+  rw [ERMor1.interp_boolAnd]
+  rfl
+
 /-- Object of `LawvereERLexCat`: an arity together with
 a Boolean-valued predicate cutting out a decidable
 subobject of `Fin arity -> ℕ`. -/
