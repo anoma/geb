@@ -7112,16 +7112,45 @@ section CatOverCat
 universe v₉ u₉
 
 /--
+The functor sending a category `D` to the category of small
+categories equipped with a functor into `D`.  That is, on objects
+`D ↦ {(E : Cat, G : E ⥤ D)}`, on morphisms `α : D ⥤ D'` by
+post-composing `G` with `α`.
+
+Defined as the unstraightening over `Cat` of the `Cat`-valued
+hom profunctor (`catHomProfunctor.flip`).
+-/
+abbrev catOverCatFunctor :=
+  catHomProfunctor.{v₉, u₉, max v₉ u₉, max (v₉+1) (u₉+1)}.flip ⋙
+    grothendieckContraFunctor Cat.{v₉, u₉}
+
+/--
 The total category of all (small) categories equipped with a
 functor into `Cat`.  Objects are pairs `(E : Cat, G : E ⥤ Cat)`;
 morphisms `(E, G) ⟶ (E', G')` are pairs `(f : E ⥤ E', φ : G ⟶ f ⋙ G')`.
 
-Defined by applying the contravariant Grothendieck construction to
-the Cat-valued contravariant hom functor at `Cat`.
+Recovered as the fibre of `catOverCatFunctor` at `Cat`.
 -/
 abbrev catOverCat :=
-  (grothendieckContraFunctor Cat.{v₉, u₉}).obj
-    (catContraHomFunctor (Cat.of Cat.{v₉, u₉}))
+  catOverCatFunctor.{v₉, u₉}.obj (Cat.of Cat.{v₉, u₉})
+
+/--
+The total category obtained by applying the covariant Grothendieck
+construction to `catOverCatFunctor`.  Objects are triples
+`(D : Cat, E : Cat, G : E ⥤ D)`; morphisms
+`(D, E, G) ⟶ (D', E', G')` are triples
+`(α : D ⥤ D', k : E ⥤ E', φ : G ⋙ α ⟶ k ⋙ G')` — commutative
+squares of functors that commute up to a (not necessarily
+invertible) natural transformation.
+
+The previously-defined `catOverCat` is the fibre of this total
+category over the object `Cat.of Cat`; i.e. when we restrict `D`
+to be `Cat` itself.
+-/
+abbrev catOverCatTotal :=
+  (grothendieckFunctor
+    Cat.{max v₉ u₉, max (v₉+1) (u₉+1)}).obj
+    catOverCatFunctor.{v₉, u₉}
 
 /--
 The unstraightening functor from `catOverCat` to `Cat`, sending
@@ -7230,7 +7259,7 @@ def unstraighten : catOverCat.{v₉, u₉} ⥤ Cat.{v₉, u₉} where
             (GrothendieckContraFunctor.homFiber
               (C := Cat.{v₉, u₉}) n))) ⋙
         Grothendieck.pre
-            (((catContraHomFunctor
+            (((catHomProfunctor.flip.obj
                   (Cat.of Cat.{v₉, u₉})).map
               (GrothendieckContraFunctor.homBase
                 (C := Cat.{v₉, u₉}) n).op).toFunctor.obj
