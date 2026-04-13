@@ -431,4 +431,68 @@ def ERLexMorNQuo.pair {z a b : LexObj}
               ⟨i.val - a.arity, by omega⟩))
     f g
 
+/-- Composing pairing with the first projection
+recovers the first component. -/
+theorem ERLexMorNQuo.pair_pi1 {z a b : LexObj}
+    (f : ERLexMorNQuo z a)
+    (g : ERLexMorNQuo z b) :
+    ERLexMorNQuo.comp (ERLexMorNQuo.pair f g)
+      (ERLexMorNQuo.pi1 a b) = f :=
+  Quotient.ind₂
+    (motive := fun f g =>
+      ERLexMorNQuo.comp (ERLexMorNQuo.pair f g)
+        (ERLexMorNQuo.pi1 a b) = f)
+    (fun f_raw g_raw =>
+      Quotient.sound
+        (s := erLexMorNSetoid z a)
+        (fun ctx _ => by
+          change (ERMorN.comp
+              (ERMorN.pair f_raw.val g_raw.val)
+              ERMorN.fst).interp ctx =
+              f_raw.val.interp ctx
+          funext i
+          simp only [ERMorN.interp_comp,
+            ERMorN.interp_fst,
+            ERMorN.interp_pair]
+          rw [dif_pos i.isLt]
+          rfl))
+    f g
+
+/-- Composing pairing with the second projection
+recovers the second component. -/
+theorem ERLexMorNQuo.pair_pi2 {z a b : LexObj}
+    (f : ERLexMorNQuo z a)
+    (g : ERLexMorNQuo z b) :
+    ERLexMorNQuo.comp (ERLexMorNQuo.pair f g)
+      (ERLexMorNQuo.pi2 a b) = g :=
+  Quotient.ind₂
+    (motive := fun f g =>
+      ERLexMorNQuo.comp (ERLexMorNQuo.pair f g)
+        (ERLexMorNQuo.pi2 a b) = g)
+    (fun f_raw g_raw =>
+      Quotient.sound
+        (s := erLexMorNSetoid z b)
+        (fun ctx _ => by
+          change (ERMorN.comp
+              (ERMorN.pair f_raw.val g_raw.val)
+              ERMorN.snd).interp ctx =
+              g_raw.val.interp ctx
+          funext i
+          simp only [ERMorN.interp_comp,
+            ERMorN.interp_snd,
+            ERMorN.interp_pair]
+          have h : ¬ (a.arity + i.val) < a.arity :=
+            by omega
+          rw [dif_neg h]
+          have idx_eq :
+              (⟨a.arity + i.val - a.arity,
+                by omega⟩ : Fin b.arity) = i := by
+            apply Fin.ext
+            change a.arity + i.val - a.arity =
+              i.val
+            omega
+          rw [idx_eq]
+          rfl))
+    f g
+
 end GebLean
