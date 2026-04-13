@@ -6991,4 +6991,40 @@ def grothendieckPre
 
 end GrothendieckPre
 
+/-! ## Contravariant Grothendieck Construction as a Functor -/
+
+section GrothendieckContraFunctor
+
+universe v₇ u₇ v₈ u₈
+
+/--
+The contravariant Grothendieck construction as a functor.
+Sends `F : Cᵒᵖ ⥤ Cat` to the category with objects
+`(c : C, x : F.obj c.op)` and morphisms `(c, x) ⟶ (c', x')`
+given by `(f : c ⟶ c', φ : x ⟶ (F.map f.op).obj x')`.
+
+Defined as the composite of three steps:
+1. Post-compose `F` with `Cat.opFunctor`, replacing each fibre
+   category with its opposite.
+2. Apply the covariant `grothendieckFunctor`.
+3. Post-compose with `Cat.opFunctor`, taking the opposite of the
+   resulting total category.
+
+This realizes the strict 1-categorical straightening of a presheaf of
+categories into its associated fibration; the resulting total category
+admits a canonical forgetful functor to `C` whose fibres over `c : C`
+are the categories `F.obj c.op`.  See
+https://ncatlab.org/nlab/show/Grothendieck+construction
+for a description.
+-/
+def grothendieckContraFunctor
+    (C : Type u₈) [Category.{v₈} C] :
+    (Cᵒᵖ ⥤ Cat.{v₇, u₇}) ⥤
+      Cat.{max v₈ v₇, max u₈ u₇} :=
+  (Functor.whiskeringRight _ _ _).obj Cat.opFunctor.{v₇, u₇} ⋙
+    grothendieckFunctor Cᵒᵖ ⋙
+    Cat.opFunctor.{max v₈ v₇, max u₈ u₇}
+
+end GrothendieckContraFunctor
+
 end GebLean
