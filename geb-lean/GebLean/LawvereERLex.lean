@@ -704,6 +704,41 @@ theorem ERLexMorNQuo.pair_uniq {z a b : LexObj}
                 exact hstep)))
     h f g hf hg
 
+/-- Equalizer object for parallel morphisms
+`f, g : a → b` (at the raw `ERLexMorN` level):
+the same arity as `a`, with predicate augmented
+by componentwise equality of `f` and `g`. -/
+def LexObj.equalizer {a b : LexObj}
+    (f g : ERLexMorN a b) : LexObj where
+  arity := a.arity
+  pred :=
+    ERBoolPred.andSameArity a.pred
+      (ERBoolPred.allEq f.val g.val)
+
+/-- The equalizer inclusion morphism: underlying
+tuple is the identity, with respect proof
+extracting `a.pred = 1` from the equalizer
+predicate. -/
+def ERLexMorN.equalizerMap {a b : LexObj}
+    (f g : ERLexMorN a b) :
+    ERLexMorN (LexObj.equalizer f g) a :=
+  ⟨ERMorN.id a.arity, fun ctx hctx => by
+    change (ERBoolPred.andSameArity a.pred
+        (ERBoolPred.allEq f.val g.val)).pred.interp
+        ctx = 1 at hctx
+    rw [ERBoolPred.andSameArity_interp] at hctx
+    change a.pred.pred.interp ctx = 1
+    exact (mul_eq_one.mp hctx).1⟩
+
+/-- The equalizer inclusion morphism in the
+quotient category. -/
+def ERLexMorNQuo.equalizerMap {a b : LexObj}
+    (f g : ERLexMorN a b) :
+    ERLexMorNQuo (LexObj.equalizer f g) a :=
+  Quotient.mk
+    (erLexMorNSetoid (LexObj.equalizer f g) a)
+    (ERLexMorN.equalizerMap f g)
+
 /-- Chosen binary product structure for
 `LawvereERLexCat`: the product of `a` and `b` is
 `LexObj.prod a b`. -/
