@@ -73,8 +73,17 @@ extended with `chosenEqualizerIsLimit`,
 from our `Type`-valued chosen versions, validating
 that the chosen-finite-limit definitions correctly
 present the standard categorical notions.
-The remaining sub-phase (4e: full-and-faithful
-embedding Δ) remains open.
+Phase 4e complete: see `GebLean/LawvereERDelta.lean`
+for the embedding `erDeltaFunctor : LawvereERCat ⥤
+LawvereERLexCat` (sending arity `n` to the
+trivially-cut-out object `(n, ⊤)`), with `Faithful`
+and `Full` instances and a `PreservesFiniteProducts`
+instance derived from preservation of binary
+products and the terminal.  Object preservation is
+on the nose: `Δ.obj 0 = LexObj.terminal` (rfl) and
+`Δ.obj (n + m) = LexObj.prod (Δ.obj n) (Δ.obj m)`
+(via `ERBoolPredE.eval_injective` from Phase 4d.2).
+All of Phase 4 is now complete.
 
 ## Goal
 
@@ -268,7 +277,7 @@ expanded as each phase becomes ready to implement.
 * [x] Phase 1: inductive term type for ER functions.
 * [x] Phase 2: extensional-equality quotient.
 * [x] Phase 3: Lawvere theory and interpretation functor.
-* [ ] Phase 4: definable-subobject finite-limit category.
+* [x] Phase 4: definable-subobject finite-limit category.
   * [x] 4a: Objects, morphisms, category structure.
   * [x] 4b: Boolean operations on ER terms.
   * [x] 4c: Finite products.
@@ -278,7 +287,8 @@ expanded as each phase becomes ready to implement.
     equalizers + HasChosenFiniteLimits.
   * [x] 4d.3: Mathlib HasEqualizers and
     HasFiniteLimits derivations.
-  * [ ] 4e: Full-and-faithful embedding Δ.
+  * [x] 4e: Full-and-faithful embedding Δ
+    (with PreservesFiniteProducts).
 * [ ] Phase 5: stage (b) internal term type, then stage (c)
   internal-category structure.
 * [ ] Non-fullness: prove `erInterpFunctor` is not full
