@@ -739,6 +739,46 @@ def ERLexMorNQuo.equalizerMap {a b : LexObj}
     (erLexMorNSetoid (LexObj.equalizer f g) a)
     (ERLexMorN.equalizerMap f g)
 
+/-- Lift of an equalizing morphism through the
+equalizer (raw level).  Given `h : z → a` whose
+compositions with `f` and `g` agree on
+source-satisfying contexts, produces the morphism
+into the equalizer with the same underlying
+tuple. -/
+def ERLexMorN.equalizerLift {z a b : LexObj}
+    {f g : ERLexMorN a b} (h : ERLexMorN z a)
+    (heq : ∀ ctx : Fin z.arity → ℕ,
+      z.pred.pred.interp ctx = 1 →
+      f.val.interp (h.val.interp ctx) =
+        g.val.interp (h.val.interp ctx)) :
+    ERLexMorN z (LexObj.equalizer f g) :=
+  ⟨h.val, fun ctx hctx => by
+    change (ERBoolPred.andSameArity a.pred
+        (ERBoolPred.allEq f.val g.val)).pred.interp
+        _ = 1
+    rw [ERBoolPred.andSameArity_interp]
+    have h1 : a.pred.pred.interp (h.val.interp
+        ctx) = 1 := h.property ctx hctx
+    have h2 : (ERBoolPred.allEq f.val
+        g.val).pred.interp (h.val.interp ctx) = 1 :=
+      ERBoolPred.allEq_of_eq _ _ _ (heq ctx hctx)
+    rw [h1, h2]⟩
+
+/-- Quotient-level lift from a raw equalizing
+morphism: takes a raw `h` with the raw equalization
+hypothesis and produces the quotient class of the
+raw lift. -/
+def ERLexMorNQuo.equalizerLift {z a b : LexObj}
+    {f g : ERLexMorN a b} (h : ERLexMorN z a)
+    (heq : ∀ ctx : Fin z.arity → ℕ,
+      z.pred.pred.interp ctx = 1 →
+      f.val.interp (h.val.interp ctx) =
+        g.val.interp (h.val.interp ctx)) :
+    ERLexMorNQuo z (LexObj.equalizer f g) :=
+  Quotient.mk
+    (erLexMorNSetoid z (LexObj.equalizer f g))
+    (ERLexMorN.equalizerLift h heq)
+
 /-- The equalizer morphism equalizes `f` and `g`
 at the quotient level: composing
 `equalizerMap f g` with `[f]` equals composing with
