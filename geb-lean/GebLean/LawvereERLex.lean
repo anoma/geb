@@ -32,6 +32,49 @@ structure ERBoolPred (n : ℕ) where
   /-- Proof that the predicate is Boolean-valued. -/
   bool : ∀ ctx : Fin n → ℕ, pred.interp ctx ≤ 1
 
+/-- The always-true predicate at arity `n`: the
+constant `1` function, trivially Boolean-valued. -/
+def ERBoolPred.alwaysTrueN (n : ℕ) :
+    ERBoolPred n where
+  pred := ERMor1.oneN n
+  bool := fun _ => Nat.le_refl 1
+
+/-- Interpretation of `alwaysTrueN`: always `1`. -/
+@[simp] theorem ERBoolPred.alwaysTrueN_interp
+    (n : ℕ) (ctx : Fin n → ℕ) :
+    (ERBoolPred.alwaysTrueN n).pred.interp ctx =
+      1 :=
+  rfl
+
+/-- Conjunction of two Boolean predicates at the
+same arity: composes `boolAnd` with the two
+predicates as its inputs. -/
+def ERBoolPred.andSameArity {n : ℕ}
+    (p q : ERBoolPred n) : ERBoolPred n where
+  pred :=
+    ERMor1.comp ERMor1.boolAnd fun i =>
+      match i with
+      | ⟨0, _⟩ => p.pred
+      | ⟨1, _⟩ => q.pred
+  bool := fun ctx => by
+    change ERMor1.boolAnd.interp _ ≤ 1
+    rw [ERMor1.interp_boolAnd]
+    exact
+      (Nat.mul_le_mul
+        (p.bool _) (q.bool _)).trans
+        (Nat.le_refl 1)
+
+/-- Interpretation of `andSameArity`: product of
+the two predicate interpretations. -/
+@[simp] theorem ERBoolPred.andSameArity_interp
+    {n : ℕ} (p q : ERBoolPred n)
+    (ctx : Fin n → ℕ) :
+    (ERBoolPred.andSameArity p q).pred.interp
+        ctx =
+      p.pred.interp ctx * q.pred.interp ctx := by
+  change ERMor1.boolAnd.interp _ = _
+  rw [ERMor1.interp_boolAnd]
+
 /-- Conjunction of two Boolean predicates at arities
 `n` and `m`: yields a Boolean predicate at arity
 `n + m` that holds when `p` holds on the first `n`
@@ -271,9 +314,7 @@ instance : Category LawvereERLexCat where
 with the constant-`1` predicate. -/
 def LexObj.terminal : LexObj where
   arity := 0
-  pred :=
-    { pred := ERMor1.oneN 0
-      bool := fun _ => Nat.le_refl 1 }
+  pred := ERBoolPred.alwaysTrueN 0
 
 /-- The raw terminal morphism from any object to
 `LexObj.terminal`: underlying tuple is the empty
