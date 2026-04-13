@@ -32,9 +32,21 @@ with `ERBoolPred.and`, `LexObj.terminal`,
 `LexObj.prod`, projections `pi1`/`pi2`, pairing,
 universal-property theorems, and the
 `HasChosenFiniteProducts LawvereERLexCat` instance.
-Subsequent sub-phases (4d: equalizers and finite
-limits; 4e: full-and-faithful embedding Δ) remain
-open.
+Phase 4d complete: see `GebLean/LawvereERLex.lean`
+extended with `ERBoolPred.alwaysTrueN`,
+`ERBoolPred.andSameArity`, `ERBoolPred.allEq`
+(componentwise equality predicate),
+`LexObj.equalizer`, equalizer inclusion morphism,
+equalization theorem, and the raw/quotient lift
+constructions with the universal-property
+theorems `equalizerLift_map` and
+`equalizerLift_uniq`; `GebLean/LawvereERBool.lean`
+extended with `ERMor1.boolEqAt`.  A
+`HasChosenEqualizers` / `HasFiniteLimits` instance
+is deferred to a subsequent plan because chosen-
+equalizer objects depend on representative choice.
+The remaining sub-phase (4e: full-and-faithful
+embedding Δ) remains open.
 
 ## Goal
 
@@ -232,7 +244,8 @@ expanded as each phase becomes ready to implement.
   * [x] 4a: Objects, morphisms, category structure.
   * [x] 4b: Boolean operations on ER terms.
   * [x] 4c: Finite products.
-  * [ ] 4d: Equalizers and finite limits.
+  * [x] 4d: Equalizers (raw construction and
+    universal property).  HasFiniteLimits deferred.
   * [ ] 4e: Full-and-faithful embedding Δ.
 * [ ] Phase 5: stage (b) internal term type, then stage (c)
   internal-category structure.
