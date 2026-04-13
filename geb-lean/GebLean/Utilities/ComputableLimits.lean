@@ -318,6 +318,16 @@ instance chosenToHasEqualizers
     Limits.HasEqualizers C :=
   Limits.hasEqualizers_of_hasLimit_parallelPair C
 
+/-- `HasChosenFiniteLimits` gives Mathlib's
+`HasFiniteLimits`.  This combines the existing
+finite-products derivation with the new
+equalizers derivation via Mathlib's
+`hasFiniteLimits_of_hasEqualizers_and_finite_products`. -/
+instance chosenToHasFiniteLimits
+    [HasChosenFiniteLimits C] :
+    Limits.HasFiniteLimits C :=
+  Limits.hasFiniteLimits_of_hasEqualizers_and_finite_products
+
 end EqualizerDerivations
 
 end GebLean
