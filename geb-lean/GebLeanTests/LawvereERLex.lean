@@ -38,3 +38,20 @@ example :
     (𝟙 trueObj0 : trueObj0 ⟶ trueObj0) ≫
     (𝟙 trueObj0) = 𝟙 trueObj0 := by
   rw [Category.id_comp]
+
+-- Terminal uniqueness: any morphism to terminal
+-- equals the terminal morphism.
+example (obj : LexObj)
+    (f : obj ⟶ (LexObj.terminal :
+        LawvereERLexCat)) :
+    f = ERLexMorNQuo.toTerminal obj :=
+  ERLexMorNQuo.toTerminal_uniq f
+
+-- HasChosenFiniteProducts is available for
+-- LawvereERLexCat.
+example : HasChosenFiniteProducts LawvereERLexCat :=
+  inferInstance
+
+-- Product of the terminal with itself has arity 0.
+example : (LexObj.prod LexObj.terminal
+    LexObj.terminal).arity = 0 := rfl
