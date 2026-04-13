@@ -40,6 +40,7 @@ import GebLean.LawvereBTInterp
 import GebLean.LawvereBTPrimrec
 import GebLean.LawvereBTQuot
 import GebLean.LawvereER
+import GebLean.LawvereERBool
 import GebLean.LawvereERInterp
 import GebLean.LawvereERLex
 import GebLean.LawvereERQuot
