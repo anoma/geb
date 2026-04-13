@@ -20,11 +20,16 @@ projections, pairing, product laws) and
 Phase 4a complete: see `GebLean/LawvereERLex.lean`
 for `ERBoolPred`, `LexObj`, the subtype-plus-quotient
 morphism construction, category laws, and the
-`Category` instance on `LawvereERLexCat`.  Subsequent
-sub-phases (4b: Boolean operations on ER terms;
-4c: finite products; 4d: equalizers and finite
-limits; 4e: full-and-faithful embedding Δ) remain
-open.
+`Category` instance on `LawvereERLexCat`.
+Phase 4b complete: see `GebLean/LawvereERBool.lean`
+for `boolNot`, `boolAnd`, `subSwap`, and `boolEqNat`
+ER terms with `@[simp]` interpretation lemmas and
+Boolean closure properties; `GebLean/LawvereER.lean`
+extended with `zeroN`, `oneN` constants and the
+`natBSum_const` arithmetic helper.  Subsequent
+sub-phases (4c: finite products; 4d: equalizers and
+finite limits; 4e: full-and-faithful embedding Δ)
+remain open.
 
 ## Goal
 
@@ -220,7 +225,7 @@ expanded as each phase becomes ready to implement.
 * [x] Phase 3: Lawvere theory and interpretation functor.
 * [ ] Phase 4: definable-subobject finite-limit category.
   * [x] 4a: Objects, morphisms, category structure.
-  * [ ] 4b: Boolean operations on ER terms.
+  * [x] 4b: Boolean operations on ER terms.
   * [ ] 4c: Finite products.
   * [ ] 4d: Equalizers and finite limits.
   * [ ] 4e: Full-and-faithful embedding Δ.
