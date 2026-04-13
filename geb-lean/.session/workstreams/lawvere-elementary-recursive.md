@@ -215,6 +215,25 @@ expanded as each phase becomes ready to implement.
 * [ ] Phase 4: definable-subobject finite-limit category.
 * [ ] Phase 5: stage (b) internal term type, then stage (c)
   internal-category structure.
+* [ ] Non-fullness: prove `erInterpFunctor` is not full
+  (the Type interpretation admits functions that are not
+  elementary recursive — tetration being the canonical
+  example, Ackermann a stronger witness since it is not
+  primitive recursive either).  Parallels
+  `interpFunctor_not_full` in `LawvereBTInterp.lean`.
+* [ ] Factorisation through `LawvereBTQuotCat`: construct
+  a functor `LawvereERCat -> LawvereBTQuotCat` (via the
+  Goedel encodings `encodeBT`/`decodeBT` from
+  `LawvereBTPrimrec.lean`, both of which are elementary
+  recursive) and show that it is faithful but not full,
+  with its image strictly contained in the primitive
+  recursive subtheory.  Prove that composition with the
+  `Type`-valued interpretation of `LawvereBTQuotCat`
+  recovers `erInterpFunctor`.  Tetration is primitive
+  recursive but not elementary recursive, so it
+  witnesses the non-fullness of this functor and hence
+  precisely locates `LawvereERCat` within the Grzegorczyk
+  and Axt hierarchies as genuinely elementary.
 
 ## Notes
 
