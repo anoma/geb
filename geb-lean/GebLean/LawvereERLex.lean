@@ -1152,4 +1152,145 @@ def LexObj.equalizerQ {a b : LexObj}
     (fun _ _ _ _ hf hg =>
       ERBoolPredE.equalizerPred_wd hf hg)
 
+/-- The chosen equalizer inclusion morphism, taking
+quotient morphisms as parameters.  The underlying
+tuple is always `ERMorN.id a.arity`; the respect
+proof unwraps `f, g` via `Quotient.ind₂` to reduce
+to the raw equalizer's respect proof. -/
+def ERLexMorNQuo.equalizerQMap {a b : LexObj}
+    (f g : ERLexMorNQuo a b) :
+    ERLexMorNQuo (LexObj.equalizerQ f g) a :=
+  Quotient.mk
+    (erLexMorNSetoid (LexObj.equalizerQ f g) a)
+    ⟨ERMorN.id a.arity, fun ctx hctx => by
+      revert hctx
+      refine Quotient.ind₂ ?_ f g
+      intro f' g' hctx
+      change (ERBoolPredE.andSameArity a.pred
+          (ERBoolPredE.allEq f'.val
+            g'.val)).eval ctx = 1 at hctx
+      rw [ERBoolPredE.andSameArity_eval] at hctx
+      change a.pred.eval ((ERMorN.id a.arity).interp
+        ctx) = 1
+      rw [ERMorN.interp_id]
+      exact (mul_eq_one.mp hctx).1⟩
+
+/-- The chosen equalizer morphism equalizes `f`
+and `g`. -/
+theorem ERLexMorNQuo.equalizerQMap_eq
+    {a b : LexObj} (f g : ERLexMorNQuo a b) :
+    ERLexMorNQuo.comp
+      (ERLexMorNQuo.equalizerQMap f g) f =
+    ERLexMorNQuo.comp
+      (ERLexMorNQuo.equalizerQMap f g) g := by
+  refine Quotient.ind₂ ?_ f g
+  intro f' g'
+  -- After unwrapping, this is the raw equalizer's
+  -- equalization theorem, which is exactly Phase
+  -- 4d's equalizerMap_eq.
+  exact ERLexMorNQuo.equalizerMap_eq f' g'
+
+/-- Chosen equalizer lift: given `h : z → a` whose
+compositions with the quotient morphisms `f`, `g`
+agree, produces a lift to `equalizerQ f g`.  The
+lift takes a raw `h` and a raw equalization
+hypothesis. -/
+def ERLexMorNQuo.equalizerQLift {z a b : LexObj}
+    (f g : ERLexMorNQuo a b)
+    (h : ERLexMorN z a)
+    (heq : ∀ ctx : Fin z.arity → ℕ,
+      z.pred.eval ctx = 1 →
+      ERLexMorNQuo.comp
+          (Quotient.mk _ h) f =
+        ERLexMorNQuo.comp
+          (Quotient.mk _ h) g) :
+    ERLexMorNQuo z (LexObj.equalizerQ f g) :=
+  Quotient.mk
+    (erLexMorNSetoid z (LexObj.equalizerQ f g))
+    ⟨h.val, fun ctx hctx => by
+      revert heq
+      refine Quotient.ind₂ ?_ f g
+      intro f' g' heq
+      change (ERBoolPredE.andSameArity a.pred
+          (ERBoolPredE.allEq f'.val
+            g'.val)).eval _ = 1
+      rw [ERBoolPredE.andSameArity_eval]
+      have h1 : a.pred.eval (h.val.interp ctx) =
+          1 := h.property ctx hctx
+      have hcomp := Quotient.exact
+        (s := erLexMorNSetoid z b) (heq ctx hctx)
+      have step := hcomp ctx hctx
+      simp only [ERLexMorN.comp,
+        ERMorN.interp_comp] at step
+      have h2 : (ERBoolPredE.allEq f'.val
+          g'.val).eval (h.val.interp ctx) = 1 := by
+        change (ERBoolPred.allEq f'.val
+          g'.val).pred.interp _ = 1
+        exact ERBoolPred.allEq_of_eq _ _ _ step
+      rw [h1, h2]⟩
+
+/-- The chosen equalizer lift, composed with the
+chosen equalizer inclusion, recovers `h`. -/
+theorem ERLexMorNQuo.equalizerQLift_map
+    {z a b : LexObj} (f g : ERLexMorNQuo a b)
+    (h : ERLexMorN z a)
+    (heq : ∀ ctx : Fin z.arity → ℕ,
+      z.pred.eval ctx = 1 →
+      ERLexMorNQuo.comp
+          (Quotient.mk _ h) f =
+        ERLexMorNQuo.comp
+          (Quotient.mk _ h) g) :
+    ERLexMorNQuo.comp
+      (ERLexMorNQuo.equalizerQLift f g h heq)
+      (ERLexMorNQuo.equalizerQMap f g) =
+    Quotient.mk (erLexMorNSetoid z a) h :=
+  Quotient.sound
+    (s := erLexMorNSetoid z a)
+    (fun ctx _ => by
+      change (ERMorN.comp h.val
+          (ERMorN.id a.arity)).interp ctx =
+        h.val.interp ctx
+      rw [ERMorN.interp_comp]
+      rfl)
+
+/-- Uniqueness: the chosen equalizer lift is unique
+among morphisms whose composition with the
+equalizer inclusion equals `h`. -/
+theorem ERLexMorNQuo.equalizerQLift_uniq
+    {z a b : LexObj} (f g : ERLexMorNQuo a b)
+    (h : ERLexMorN z a)
+    (heq : ∀ ctx : Fin z.arity → ℕ,
+      z.pred.eval ctx = 1 →
+      ERLexMorNQuo.comp
+          (Quotient.mk _ h) f =
+        ERLexMorNQuo.comp
+          (Quotient.mk _ h) g)
+    (h' : ERLexMorNQuo z (LexObj.equalizerQ f g))
+    (hmap :
+      ERLexMorNQuo.comp h'
+        (ERLexMorNQuo.equalizerQMap f g) =
+      Quotient.mk (erLexMorNSetoid z a) h) :
+    h' = ERLexMorNQuo.equalizerQLift f g h heq :=
+  Quotient.ind
+    (motive := fun h' =>
+      ERLexMorNQuo.comp h'
+        (ERLexMorNQuo.equalizerQMap f g) =
+      Quotient.mk (erLexMorNSetoid z a) h →
+      h' = ERLexMorNQuo.equalizerQLift f g h heq)
+    (fun h'_raw hmap_eq => by
+      have hrel := Quotient.exact
+        (s := erLexMorNSetoid z a) hmap_eq
+      apply Quotient.sound
+        (s := erLexMorNSetoid z
+          (LexObj.equalizerQ f g))
+      intro ctx hctx
+      have step := hrel ctx hctx
+      change (ERMorN.comp h'_raw.val
+          (ERMorN.id a.arity)).interp ctx =
+        h.val.interp ctx at step
+      simp only [ERMorN.interp_comp] at step
+      change h'_raw.val.interp ctx = h.val.interp ctx
+      exact step)
+    h' hmap
+
 end GebLean
