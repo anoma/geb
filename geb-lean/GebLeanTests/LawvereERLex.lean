@@ -55,3 +55,21 @@ example : HasChosenFiniteProducts LawvereERLexCat :=
 -- Product of the terminal with itself has arity 0.
 example : (LexObj.prod LexObj.terminal
     LexObj.terminal).arity = 0 := rfl
+
+-- Equalizer of a morphism with itself is a
+-- well-typed object.
+example (a b : LawvereERLexCat)
+    (f : ERLexMorN a b) : LawvereERLexCat :=
+  LexObj.equalizer f f
+
+-- Equalizer morphism types correctly.
+example (a b : LawvereERLexCat)
+    (f g : ERLexMorN a b) :
+    ERLexMorNQuo (LexObj.equalizer f g) a :=
+  ERLexMorNQuo.equalizerMap f g
+
+-- Equalizer arity matches the source arity.
+example (a b : LawvereERLexCat)
+    (f g : ERLexMorN a b) :
+    (LexObj.equalizer f g).arity = a.arity :=
+  rfl
