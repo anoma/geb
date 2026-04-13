@@ -67,6 +67,16 @@ an empty product of `1`. -/
 def natBProd (bound : ℕ) (f : ℕ → ℕ) : ℕ :=
   Nat.rec 1 (fun i acc => acc * f i) bound
 
+/-- Sum of a constant function: summing `k` over
+`bound` iterations equals `bound * k`. -/
+theorem natBSum_const (bound k : ℕ) :
+    natBSum bound (fun _ => k) = bound * k := by
+  induction bound with
+  | zero => exact (Nat.zero_mul k).symm
+  | succ b ih =>
+    change natBSum b (fun _ => k) + k = (b + 1) * k
+    rw [ih, Nat.succ_mul]
+
 /-- Standard interpretation of an `n`-ary term as
 a function `(Fin n → ℕ) → ℕ`. -/
 def ERMor1.interp : {n : ℕ} → ERMor1 n →
