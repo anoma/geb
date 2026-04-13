@@ -7167,6 +7167,79 @@ end GrothendieckContraFunctor
 
 end GrothendieckContraFunctor
 
+/-! ## Slice-Refined Contravariant Grothendieck Functor -/
+
+section GrothendieckContraFunctorOver
+
+universe v₁₁ u₁₁
+
+/--
+Slice-level left-oppotization on `Cat`: given `X : Cat`, the functor
+`Over (Cat.opFunctor.obj X) ⥤ Over X` sending `(Y, f : Y ⟶ Xᵒᵖ)` to
+`(Cat.opFunctor.obj Y, f.toFunctor.leftOp.toCatHom)`.
+
+This is the natural slice-level version of `Functor.leftOp`: it acts
+on the underlying Cat by `Cat.opFunctor` and on the over-projection
+by `Functor.leftOp`, reinterpreting a slice over `Xᵒᵖ` as a slice
+over `X`.
+-/
+def Cat.Over.leftOp {X : Cat.{v₁₁, u₁₁}} :
+    Over (T := Cat.{v₁₁, u₁₁}) (Cat.opFunctor.obj X) ⥤
+      Over (T := Cat.{v₁₁, u₁₁}) X where
+  obj Y := Over.mk Y.hom.toFunctor.leftOp.toCatHom
+  map {Y Y'} f := Over.homMk (Cat.opFunctor.map f.left) (by
+    apply Cat.Hom.ext
+    simp only [Cat.Hom.comp_toFunctor, Cat.opFunctor_map,
+      Functor.toCatHom_toFunctor]
+    have hw : f.left.toFunctor ⋙ Y'.hom.toFunctor = Y.hom.toFunctor := by
+      rw [← Cat.Hom.comp_toFunctor]; exact congrArg _ (Over.w f)
+    calc f.left.toFunctor.op ⋙ Y'.hom.toFunctor.leftOp
+        = (f.left.toFunctor ⋙ Y'.hom.toFunctor).leftOp := rfl
+      _ = Y.hom.toFunctor.leftOp := by rw [hw])
+  map_id Y := by
+    ext
+    simp; rfl
+  map_comp f g := by
+    ext
+    simp; rfl
+
+/--
+The slice-refined version of `grothendieckContraFunctor`, landing
+in the `Over` category of `Cat` over `E`.  Each `F : Eᵒᵖ ⥤ Cat` is
+sent to its contravariant Grothendieck total paired with the
+canonical forgetful to `E`.
+
+Constructed compositionally as:
+1. Post-compose with `Cat.opFunctor` on fibres (`whiskeringRight`).
+2. Apply the slice-refined covariant Grothendieck construction
+   (mathlib's `Grothendieck.functor`) at base `Eᵒᵖ`, landing in
+   `Over Eᵒᵖ`.
+3. Apply slice-level left-oppotization `Cat.Over.leftOp`, landing
+   in `Over E`.
+
+When universe levels match, composition with `Over.forget` recovers
+our `grothendieckContraFunctor` — demonstrating that the slice
+restriction (same universe for base and fibres) comes entirely from
+step 3's `Over` packaging, not from the underlying Grothendieck
+construction.
+-/
+def grothendieckContraFunctorOver {E : Cat.{v₁₁, u₁₁}} :
+    (Eᵒᵖ ⥤ Cat.{v₁₁, u₁₁}) ⥤ Over (T := Cat.{v₁₁, u₁₁}) E :=
+  (Functor.whiskeringRight _ _ _).obj Cat.opFunctor.{v₁₁, u₁₁} ⋙
+    @Grothendieck.functor (Cat.opFunctor.obj E) ⋙
+    Cat.Over.leftOp
+
+/--
+Forgetting the slice recovers `grothendieckContraFunctor` (at
+matched universes).  Analogue of `grothendieckFunctorOver_comp_forget`.
+-/
+theorem grothendieckContraFunctorOver_comp_forget
+    {E : Cat.{v₁₁, u₁₁}} :
+    grothendieckContraFunctorOver (E := E) ⋙ Over.forget _ =
+      grothendieckContraFunctor E := rfl
+
+end GrothendieckContraFunctorOver
+
 /-! ## Total Category of Functors into `Cat` -/
 
 section CatOverCat
