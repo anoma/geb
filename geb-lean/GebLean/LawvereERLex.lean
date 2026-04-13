@@ -49,4 +49,26 @@ def ERLexMorN (src tgt : LexObj) : Type :=
         src.pred.pred.interp ctx = 1 →
         tgt.pred.pred.interp (f.interp ctx) = 1 }
 
+/-- The setoid on `ERLexMorN src tgt`: two raw
+morphisms are related when their interpretations agree
+on every context satisfying the source predicate. -/
+def erLexMorNSetoid (src tgt : LexObj) :
+    Setoid (ERLexMorN src tgt) where
+  r f g :=
+    ∀ ctx : Fin src.arity → ℕ,
+      src.pred.pred.interp ctx = 1 →
+      f.val.interp ctx = g.val.interp ctx
+  iseqv := {
+    refl := fun _ _ _ => rfl
+    symm := fun h ctx hctx => (h ctx hctx).symm
+    trans := fun h1 h2 ctx hctx =>
+      (h1 ctx hctx).trans (h2 ctx hctx)
+  }
+
+/-- Quotient morphism type for `LawvereERLexCat`:
+equivalence classes of `ERLexMorN` tuples under
+source-restricted extensional equality. -/
+def ERLexMorNQuo (src tgt : LexObj) : Type :=
+  Quotient (erLexMorNSetoid src tgt)
+
 end GebLean
