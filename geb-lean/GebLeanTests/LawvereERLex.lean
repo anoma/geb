@@ -1,0 +1,40 @@
+import GebLean.LawvereERLex
+
+/-!
+# Tests for LawvereERLex
+
+Sanity tests for the decidable ER-subobject category.
+-/
+
+open GebLean
+open CategoryTheory
+
+-- The always-one predicate at arity 0: the constant
+-- successor applied to zero at the empty context.
+private def oneZero : ERMor1 0 :=
+  ERMor1.comp ERMor1.succ
+    (fun (_ : Fin 1) =>
+      ERMor1.comp ERMor1.zero Fin.elim0)
+
+-- oneZero evaluates to 1 at the empty context.
+example : oneZero.interp Fin.elim0 = 1 := rfl
+
+-- As a Boolean predicate at arity 0.
+private def truePred0 : ERBoolPred 0 :=
+  { pred := oneZero
+    bool := fun _ => by
+      show oneZero.interp _ ≤ 1
+      rfl }
+
+-- Construct an object.
+private def trueObj0 : LexObj :=
+  { arity := 0, pred := truePred0 }
+
+-- Category instance is inferred.
+example : Category LawvereERLexCat := inferInstance
+
+-- Identity composed with itself yields identity.
+example :
+    (𝟙 trueObj0 : trueObj0 ⟶ trueObj0) ≫
+    (𝟙 trueObj0) = 𝟙 trueObj0 := by
+  rw [Category.id_comp]

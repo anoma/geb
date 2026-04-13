@@ -2,6 +2,7 @@ import GebLeanTests.AcyclicCat
 import GebLeanTests.Basic
 import GebLeanTests.LawvereER
 import GebLeanTests.LawvereERInterp
+import GebLeanTests.LawvereERLex
 import GebLeanTests.LawvereERQuot
 import GebLeanTests.LayeredEquivalence
 import GebLeanTests.TestEqualizerCompletion
