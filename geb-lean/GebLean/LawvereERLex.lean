@@ -779,6 +779,67 @@ def ERLexMorNQuo.equalizerLift {z a b : LexObj}
     (erLexMorNSetoid z (LexObj.equalizer f g))
     (ERLexMorN.equalizerLift h heq)
 
+/-- The equalizer lift, composed with the
+equalizer inclusion, recovers the original
+morphism (at the quotient level). -/
+theorem ERLexMorNQuo.equalizerLift_map
+    {z a b : LexObj} {f g : ERLexMorN a b}
+    (h : ERLexMorN z a)
+    (heq : ∀ ctx : Fin z.arity → ℕ,
+      z.pred.pred.interp ctx = 1 →
+      f.val.interp (h.val.interp ctx) =
+        g.val.interp (h.val.interp ctx)) :
+    ERLexMorNQuo.comp
+      (ERLexMorNQuo.equalizerLift h heq)
+      (ERLexMorNQuo.equalizerMap f g) =
+    Quotient.mk (erLexMorNSetoid z a) h :=
+  Quotient.sound
+    (s := erLexMorNSetoid z a)
+    (fun ctx _ => by
+      simp only [ERLexMorN.comp,
+        ERLexMorN.equalizerMap,
+        ERLexMorN.equalizerLift]
+      change h.val.interp ctx = h.val.interp ctx
+      rfl)
+
+/-- Uniqueness: any quotient morphism `h'` whose
+composition with the equalizer inclusion equals
+`[h]` must equal the equalizer lift. -/
+theorem ERLexMorNQuo.equalizerLift_uniq
+    {z a b : LexObj} {f g : ERLexMorN a b}
+    (h : ERLexMorN z a)
+    (heq : ∀ ctx : Fin z.arity → ℕ,
+      z.pred.pred.interp ctx = 1 →
+      f.val.interp (h.val.interp ctx) =
+        g.val.interp (h.val.interp ctx))
+    (h' : ERLexMorNQuo z (LexObj.equalizer f g))
+    (hmap :
+      ERLexMorNQuo.comp h'
+        (ERLexMorNQuo.equalizerMap f g) =
+      Quotient.mk (erLexMorNSetoid z a) h) :
+    h' = ERLexMorNQuo.equalizerLift h heq :=
+  Quotient.ind
+    (motive := fun h' =>
+      ERLexMorNQuo.comp h'
+        (ERLexMorNQuo.equalizerMap f g) =
+      Quotient.mk (erLexMorNSetoid z a) h →
+      h' = ERLexMorNQuo.equalizerLift h heq)
+    (fun h'_raw hmap_eq => by
+      have hrel := Quotient.exact
+        (s := erLexMorNSetoid z a) hmap_eq
+      apply Quotient.sound
+        (s := erLexMorNSetoid z
+          (LexObj.equalizer f g))
+      intro ctx hctx
+      have step := hrel ctx hctx
+      change (ERMorN.comp h'_raw.val
+          (ERMorN.id a.arity)).interp ctx =
+        h.val.interp ctx at step
+      simp only [ERMorN.interp_comp] at step
+      change h'_raw.val.interp ctx = h.val.interp ctx
+      exact step)
+    h' hmap
+
 /-- The equalizer morphism equalizes `f` and `g`
 at the quotient level: composing
 `equalizerMap f g` with `[f]` equals composing with
