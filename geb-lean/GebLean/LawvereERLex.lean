@@ -86,4 +86,44 @@ def ERLexMorNQuo.id (obj : LexObj) :
   Quotient.mk (erLexMorNSetoid obj obj)
     (ERLexMorN.id obj)
 
+/-- Raw composition of `ERLexMorN` morphisms: the
+underlying tuple is the `ERMorN.comp` of the two
+underlying tuples; membership follows by chaining the
+respective respect proofs through the interpretation
+of the composite. -/
+def ERLexMorN.comp
+    {src mid tgt : LexObj}
+    (f : ERLexMorN src mid)
+    (g : ERLexMorN mid tgt) :
+    ERLexMorN src tgt :=
+  ⟨ERMorN.comp f.val g.val, fun ctx hctx => by
+    rw [ERMorN.interp_comp]
+    exact g.property _ (f.property ctx hctx)⟩
+
+/-- Composition of quotient morphisms, lifted from
+`ERLexMorN.comp` via `Quotient.lift₂`.
+Well-definedness: given `f ~ f'` and `g ~ g'` under
+the source-restricted setoid, the composites agree on
+every context satisfying the source predicate. -/
+def ERLexMorNQuo.comp
+    {src mid tgt : LexObj}
+    (f : ERLexMorNQuo src mid)
+    (g : ERLexMorNQuo mid tgt) :
+    ERLexMorNQuo src tgt :=
+  Quotient.lift₂
+    (s₁ := erLexMorNSetoid src mid)
+    (s₂ := erLexMorNSetoid mid tgt)
+    (fun f' g' =>
+      Quotient.mk (erLexMorNSetoid src tgt)
+        (ERLexMorN.comp f' g'))
+    (fun fa fb ga gb hf hg =>
+      Quotient.sound
+        (s := erLexMorNSetoid src tgt)
+        (fun ctx hctx => by
+          simp only [ERLexMorN.comp,
+            ERMorN.interp_comp]
+          rw [hf ctx hctx]
+          exact hg _ (ga.property ctx hctx)))
+    f g
+
 end GebLean
