@@ -75,6 +75,79 @@ the two predicate interpretations. -/
   change ERMor1.boolAnd.interp _ = _
   rw [ERMor1.interp_boolAnd]
 
+/-- Componentwise Boolean equality of two `ERMorN`
+tuples at arity `n`: returns a Boolean predicate
+at arity `n` that holds iff the two tuples have
+equal interpretations. -/
+def ERBoolPred.allEq {n : ℕ} :
+    ∀ {m : ℕ}, ERMorN n m → ERMorN n m →
+      ERBoolPred n
+  | 0, _, _ => ERBoolPred.alwaysTrueN n
+  | k + 1, f, g =>
+      ERBoolPred.andSameArity
+        { pred := ERMor1.boolEqAt (f 0) (g 0)
+          bool := ERMor1.boolEqAt_le_one _ _ }
+        (ERBoolPred.allEq
+          (fun i : Fin k => f i.succ)
+          (fun i : Fin k => g i.succ))
+
+/-- Forward direction: if `allEq f g` evaluates to
+`1` on a context, then `f` and `g` interpret to the
+same function at that context. -/
+theorem ERBoolPred.allEq_eq_one_imp
+    {n : ℕ} : ∀ {m : ℕ} (f g : ERMorN n m)
+      (ctx : Fin n → ℕ),
+      (ERBoolPred.allEq f g).pred.interp ctx = 1 →
+        f.interp ctx = g.interp ctx
+  | 0, _, _, _, _ => funext (fun i => i.elim0)
+  | k + 1, f, g, ctx, h => by
+      simp only [ERBoolPred.allEq,
+        ERBoolPred.andSameArity_interp] at h
+      have h_split := mul_eq_one.mp h
+      have h_head := h_split.1
+      have h_tail := h_split.2
+      have eq_head :
+          (f 0).interp ctx = (g 0).interp ctx :=
+        (ERMor1.boolEqAt_eq_one_iff _ _ _).mp
+          h_head
+      have eq_tail :
+          ERMorN.interp
+            (fun i : Fin k => f i.succ) ctx =
+          ERMorN.interp
+            (fun i : Fin k => g i.succ) ctx :=
+        ERBoolPred.allEq_eq_one_imp _ _ _ h_tail
+      funext i
+      induction i using Fin.cases with
+      | zero => exact eq_head
+      | succ j =>
+        exact congrFun eq_tail j
+
+/-- Backward direction: if `f` and `g` interpret to
+the same function at a context, then `allEq f g`
+evaluates to `1` there. -/
+theorem ERBoolPred.allEq_of_eq
+    {n : ℕ} : ∀ {m : ℕ} (f g : ERMorN n m)
+      (ctx : Fin n → ℕ),
+      f.interp ctx = g.interp ctx →
+        (ERBoolPred.allEq f g).pred.interp ctx = 1
+  | 0, _, _, _, _ => by
+      simp [ERBoolPred.allEq]
+  | k + 1, f, g, ctx, h => by
+      simp only [ERBoolPred.allEq,
+        ERBoolPred.andSameArity_interp]
+      have eq0 : (f 0).interp ctx =
+          (g 0).interp ctx := congrFun h 0
+      have eq_tail :
+          ERMorN.interp
+            (fun i : Fin k => f i.succ) ctx =
+          ERMorN.interp
+            (fun i : Fin k => g i.succ) ctx := by
+        funext j
+        exact congrFun h j.succ
+      rw [(ERMor1.boolEqAt_eq_one_iff _ _ _).mpr
+          eq0]
+      rw [ERBoolPred.allEq_of_eq _ _ _ eq_tail]
+
 /-- Conjunction of two Boolean predicates at arities
 `n` and `m`: yields a Boolean predicate at arity
 `n + m` that holds when `p` holds on the first `n`
