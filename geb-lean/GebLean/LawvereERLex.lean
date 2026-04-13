@@ -32,6 +32,59 @@ structure ERBoolPred (n : ℕ) where
   /-- Proof that the predicate is Boolean-valued. -/
   bool : ∀ ctx : Fin n → ℕ, pred.interp ctx ≤ 1
 
+/-- Extensional equality on `ERBoolPred n`: two
+predicates are related when their underlying
+interpretations agree on every context.  This is
+the relation we quotient by to obtain a predicate
+type whose equality matches the categorical notion
+of "same subobject". -/
+def ERBoolPred.ExtEq (n : ℕ) :
+    Setoid (ERBoolPred n) where
+  r p q := ∀ ctx : Fin n → ℕ,
+    p.pred.interp ctx = q.pred.interp ctx
+  iseqv := {
+    refl := fun _ _ => rfl
+    symm := fun h ctx => (h ctx).symm
+    trans := fun h1 h2 ctx =>
+      (h1 ctx).trans (h2 ctx)
+  }
+
+/-- Quotient of `ERBoolPred n` by extensional
+equality.  Used as the predicate type of `LexObj`
+so that semantically equal predicates yield equal
+objects. -/
+@[reducible] def ERBoolPredE (n : ℕ) : Type :=
+  Quotient (ERBoolPred.ExtEq n)
+
+/-- Lift the interpretation through the quotient:
+evaluate a `ERBoolPredE` predicate on a context.
+Well-defined because the setoid identifies
+predicates with equal interpretations. -/
+def ERBoolPredE.eval {n : ℕ}
+    (p : ERBoolPredE n) (ctx : Fin n → ℕ) : ℕ :=
+  Quotient.liftOn p
+    (fun p' => p'.pred.interp ctx)
+    (fun _ _ h => h ctx)
+
+/-- The eval of a `ERBoolPredE` is bounded by `1`:
+this is the lifted Boolean property. -/
+theorem ERBoolPredE.eval_le_one {n : ℕ}
+    (p : ERBoolPredE n) (ctx : Fin n → ℕ) :
+    p.eval ctx ≤ 1 := by
+  induction p using Quotient.ind with
+  | _ p_raw => exact p_raw.bool ctx
+
+/-- Computation lemma: `eval` on a concrete
+representative reduces to the underlying
+`ERBoolPred.pred.interp`. -/
+@[simp] theorem ERBoolPredE.eval_mk
+    {n : ℕ} (p : ERBoolPred n)
+    (ctx : Fin n → ℕ) :
+    ERBoolPredE.eval
+        (Quotient.mk (ERBoolPred.ExtEq n) p) ctx =
+      p.pred.interp ctx :=
+  rfl
+
 /-- The always-true predicate at arity `n`: the
 constant `1` function, trivially Boolean-valued. -/
 def ERBoolPred.alwaysTrueN (n : ℕ) :
