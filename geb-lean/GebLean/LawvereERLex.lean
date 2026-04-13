@@ -237,6 +237,109 @@ coordinate slices. -/
   rw [ERMor1.interp_boolAnd]
   rfl
 
+/-- The always-true predicate at arity `n` in the
+quotient form. -/
+def ERBoolPredE.alwaysTrue (n : ℕ) :
+    ERBoolPredE n :=
+  Quotient.mk (ERBoolPred.ExtEq n)
+    (ERBoolPred.alwaysTrueN n)
+
+/-- Eval of `alwaysTrue` is always `1`. -/
+@[simp] theorem ERBoolPredE.alwaysTrue_eval
+    (n : ℕ) (ctx : Fin n → ℕ) :
+    (ERBoolPredE.alwaysTrue n).eval ctx = 1 :=
+  rfl
+
+/-- Conjunction of two same-arity quotient
+predicates, lifted from the raw `andSameArity` via
+`Quotient.lift₂`. -/
+def ERBoolPredE.andSameArity {n : ℕ}
+    (p q : ERBoolPredE n) : ERBoolPredE n :=
+  Quotient.lift₂
+    (s₁ := ERBoolPred.ExtEq n)
+    (s₂ := ERBoolPred.ExtEq n)
+    (fun p' q' =>
+      Quotient.mk (ERBoolPred.ExtEq n)
+        (ERBoolPred.andSameArity p' q'))
+    (fun pa pb qa qb hp hq =>
+      Quotient.sound
+        (s := ERBoolPred.ExtEq n)
+        (fun ctx => by
+          simp only
+            [ERBoolPred.andSameArity_interp]
+          rw [hp ctx, hq ctx]))
+    p q
+
+/-- Eval of `andSameArity` is the product of the
+two evals. -/
+@[simp] theorem ERBoolPredE.andSameArity_eval
+    {n : ℕ} (p q : ERBoolPredE n)
+    (ctx : Fin n → ℕ) :
+    (ERBoolPredE.andSameArity p q).eval ctx =
+      p.eval ctx * q.eval ctx := by
+  induction p using Quotient.ind with
+  | _ p_raw =>
+    induction q using Quotient.ind with
+    | _ q_raw =>
+      change (ERBoolPred.andSameArity p_raw
+          q_raw).pred.interp ctx = _
+      rw [ERBoolPred.andSameArity_interp]
+      rfl
+
+/-- Conjunction of two different-arity quotient
+predicates, yielding a quotient predicate at arity
+`n + m`. -/
+def ERBoolPredE.and {n m : ℕ}
+    (p : ERBoolPredE n) (q : ERBoolPredE m) :
+    ERBoolPredE (n + m) :=
+  Quotient.lift₂
+    (s₁ := ERBoolPred.ExtEq n)
+    (s₂ := ERBoolPred.ExtEq m)
+    (fun p' q' =>
+      Quotient.mk (ERBoolPred.ExtEq (n + m))
+        (ERBoolPred.and p' q'))
+    (fun pa pb qa qb hp hq =>
+      Quotient.sound
+        (s := ERBoolPred.ExtEq (n + m))
+        (fun ctx => by
+          simp only [ERBoolPred.and_interp]
+          rw [hp _, hq _]))
+    p q
+
+/-- Eval of `and`: product of the two evals at the
+respective coordinate slices. -/
+@[simp] theorem ERBoolPredE.and_eval
+    {n m : ℕ} (p : ERBoolPredE n)
+    (q : ERBoolPredE m)
+    (ctx : Fin (n + m) → ℕ) :
+    (ERBoolPredE.and p q).eval ctx =
+      p.eval (ERMorN.fst.interp ctx) *
+      q.eval (ERMorN.snd.interp ctx) := by
+  induction p using Quotient.ind with
+  | _ p_raw =>
+    induction q using Quotient.ind with
+    | _ q_raw =>
+      change (ERBoolPred.and p_raw
+          q_raw).pred.interp ctx = _
+      rw [ERBoolPred.and_interp]
+      rfl
+
+/-- Componentwise equality of two raw `ERMorN`
+tuples, packaged as a quotient predicate. -/
+def ERBoolPredE.allEq {n m : ℕ}
+    (f g : ERMorN n m) : ERBoolPredE n :=
+  Quotient.mk (ERBoolPred.ExtEq n)
+    (ERBoolPred.allEq f g)
+
+/-- Eval of `allEq` matches the underlying
+`ERBoolPred.allEq` interpretation. -/
+@[simp] theorem ERBoolPredE.allEq_eval
+    {n m : ℕ} (f g : ERMorN n m)
+    (ctx : Fin n → ℕ) :
+    (ERBoolPredE.allEq f g).eval ctx =
+      (ERBoolPred.allEq f g).pred.interp ctx :=
+  rfl
+
 /-- Object of `LawvereERLexCat`: an arity together with
 a Boolean-valued predicate cutting out a decidable
 subobject of `Fin arity -> ℕ`. -/
