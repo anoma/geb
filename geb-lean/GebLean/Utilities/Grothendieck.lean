@@ -7025,6 +7025,234 @@ def grothendieckContraFunctor
     grothendieckFunctor Cᵒᵖ ⋙
     Cat.opFunctor.{max v₈ v₇, max u₈ u₇}
 
+namespace GrothendieckContraFunctor
+
+variable {C : Type u₈} [Category.{v₈} C] {F : Cᵒᵖ ⥤ Cat.{v₇, u₇}}
+
+/--
+Construct an object of `(grothendieckContraFunctor C).obj F`
+from a base `c : C` and a fibre `x : F.obj (op c)`.
+-/
+def mkObj (c : C) (x : F.obj (Opposite.op c)) :
+    (grothendieckContraFunctor C).obj F :=
+  Opposite.op (⟨Opposite.op c, Opposite.op x⟩ :
+    Grothendieck (F ⋙ Cat.opFunctor.{v₇, u₇}))
+
+/--
+The base of an object of `(grothendieckContraFunctor C).obj F`.
+-/
+def objBase (X : (grothendieckContraFunctor C).obj F) : C :=
+  X.unop.base.unop
+
+/--
+The fibre of an object of `(grothendieckContraFunctor C).obj F`.
+-/
+def objFiber (X : (grothendieckContraFunctor C).obj F) :
+    F.obj (Opposite.op (objBase X)) :=
+  X.unop.fiber.unop
+
+@[simp]
+theorem objBase_mkObj (c : C) (x : F.obj (Opposite.op c)) :
+    objBase (mkObj c x) = c := rfl
+
+@[simp]
+theorem objFiber_mkObj (c : C) (x : F.obj (Opposite.op c)) :
+    objFiber (mkObj c x) = x := rfl
+
+/--
+Construct a morphism in `(grothendieckContraFunctor C).obj F`
+from a base morphism `h : objBase X ⟶ objBase Y` and a fibre
+morphism `ψ : objFiber X ⟶ (F.map h.op).toFunctor.obj (objFiber Y)`.
+-/
+def mkHom
+    {X Y : (grothendieckContraFunctor C).obj F}
+    (h : objBase X ⟶ objBase Y)
+    (ψ : objFiber X ⟶ (F.map h.op).toFunctor.obj (objFiber Y)) :
+    X ⟶ Y :=
+  Quiver.Hom.op
+    (⟨h.op, ψ.op⟩ : Grothendieck.Hom Y.unop X.unop)
+
+/--
+The base of a morphism in `(grothendieckContraFunctor C).obj F`.
+-/
+def homBase {X Y : (grothendieckContraFunctor C).obj F}
+    (f : X ⟶ Y) : objBase X ⟶ objBase Y :=
+  f.unop.base.unop
+
+/--
+The fibre of a morphism in `(grothendieckContraFunctor C).obj F`.
+-/
+def homFiber
+    {X Y : (grothendieckContraFunctor C).obj F} (f : X ⟶ Y) :
+    objFiber X ⟶ (F.map (homBase f).op).toFunctor.obj (objFiber Y) :=
+  f.unop.fiber.unop
+
+@[simp]
+theorem homBase_mkHom
+    {X Y : (grothendieckContraFunctor C).obj F}
+    (h : objBase X ⟶ objBase Y)
+    (ψ : objFiber X ⟶ (F.map h.op).toFunctor.obj (objFiber Y)) :
+    homBase (mkHom h ψ) = h := rfl
+
+@[simp]
+theorem homFiber_mkHom
+    {X Y : (grothendieckContraFunctor C).obj F}
+    (h : objBase X ⟶ objBase Y)
+    (ψ : objFiber X ⟶ (F.map h.op).toFunctor.obj (objFiber Y)) :
+    homFiber (mkHom h ψ) = ψ := rfl
+
 end GrothendieckContraFunctor
+
+end GrothendieckContraFunctor
+
+/-! ## Total Category of Functors into `Cat` -/
+
+section CatOverCat
+
+universe v₉ u₉
+
+/--
+The total category of all (small) categories equipped with a
+functor into `Cat`.  Objects are pairs `(E : Cat, G : E ⥤ Cat)`;
+morphisms `(E, G) ⟶ (E', G')` are pairs `(f : E ⥤ E', φ : G ⟶ f ⋙ G')`.
+
+Defined by applying the contravariant Grothendieck construction to
+the Cat-valued contravariant hom functor at `Cat`.
+-/
+abbrev catOverCat :=
+  (grothendieckContraFunctor Cat.{v₉, u₉}).obj
+    (catContraHomFunctor (Cat.of Cat.{v₉, u₉}))
+
+/--
+The unstraightening functor from `catOverCat` to `Cat`, sending
+each pair `(E : Cat, G : E ⥤ Cat)` to `Grothendieck G`, and a
+morphism `(f : E ⥤ E', φ : G ⟶ f ⋙ G')` to the composite
+`Grothendieck.map φ ⋙ (grothendieckPre f).app G'`.
+
+This is the 1-categorical strict unstraightening, realizing each
+`(E, G)` as its total category and each base-change + natural
+transformation pair as a functor between the corresponding totals.
+-/
+def unstraighten :
+    (grothendieckContraFunctor Cat.{v₉, u₉}).obj
+      (catContraHomFunctor (Cat.of Cat.{v₉, u₉})) ⥤
+      Cat.{v₉, u₉} where
+  obj T := (grothendieckFunctor
+      (GrothendieckContraFunctor.objBase
+        (C := Cat.{v₉, u₉}) T)).obj
+    (GrothendieckContraFunctor.objFiber
+      (C := Cat.{v₉, u₉}) T)
+  map {T T'} m :=
+    (Grothendieck.map
+      (GrothendieckContraFunctor.homFiber
+        (C := Cat.{v₉, u₉}) m)).toCatHom ≫
+    (grothendieckPre
+      (GrothendieckContraFunctor.homBase
+        (C := Cat.{v₉, u₉}) m).toFunctor).app
+      (GrothendieckContraFunctor.objFiber
+        (C := Cat.{v₉, u₉}) T')
+  map_id T := by
+    apply Cat.Hom.ext
+    simp only [Cat.Hom.comp_toFunctor,
+      Functor.toCatHom_toFunctor,
+      Cat.Hom.id_toFunctor]
+    change Grothendieck.map
+        (GrothendieckContraFunctor.homFiber
+          (C := Cat.{v₉, u₉}) (𝟙 T)) ⋙
+        ((grothendieckPre
+            (Functor.id (GrothendieckContraFunctor.objBase
+              (C := Cat.{v₉, u₉}) T))).app
+          (GrothendieckContraFunctor.objFiber
+            (C := Cat.{v₉, u₉}) T)).toFunctor = Functor.id _
+    have hPre :
+        ((grothendieckPre
+            (Functor.id (GrothendieckContraFunctor.objBase
+              (C := Cat.{v₉, u₉}) T))).app
+          (GrothendieckContraFunctor.objFiber
+            (C := Cat.{v₉, u₉}) T)).toFunctor =
+          Functor.id _ :=
+      Grothendieck.pre_id _
+    rw [hPre]
+    change Grothendieck.map
+        (GrothendieckContraFunctor.homFiber
+          (C := Cat.{v₉, u₉}) (𝟙 T)) ⋙ Functor.id _ =
+          Functor.id _
+    rw [Functor.comp_id]
+    exact Grothendieck.map_id_eq
+  map_comp {T T' T''} m n := by
+    apply Cat.Hom.ext
+    simp only [Cat.Hom.comp_toFunctor,
+      Functor.toCatHom_toFunctor]
+    change Grothendieck.map
+        (GrothendieckContraFunctor.homFiber
+          (C := Cat.{v₉, u₉}) m ≫
+          (GrothendieckContraFunctor.homBase
+              (C := Cat.{v₉, u₉}) m).toFunctor.whiskerLeft
+            (GrothendieckContraFunctor.homFiber
+              (C := Cat.{v₉, u₉}) n)) ⋙
+        Grothendieck.pre
+          (GrothendieckContraFunctor.objFiber
+            (C := Cat.{v₉, u₉}) T'')
+          ((GrothendieckContraFunctor.homBase
+              (C := Cat.{v₉, u₉}) m).toFunctor ⋙
+            (GrothendieckContraFunctor.homBase
+              (C := Cat.{v₉, u₉}) n).toFunctor) =
+      (Grothendieck.map
+          (GrothendieckContraFunctor.homFiber
+            (C := Cat.{v₉, u₉}) m) ⋙
+          Grothendieck.pre
+            (GrothendieckContraFunctor.objFiber
+              (C := Cat.{v₉, u₉}) T')
+            (GrothendieckContraFunctor.homBase
+              (C := Cat.{v₉, u₉}) m).toFunctor) ⋙
+        Grothendieck.map
+            (GrothendieckContraFunctor.homFiber
+              (C := Cat.{v₉, u₉}) n) ⋙
+          Grothendieck.pre
+            (GrothendieckContraFunctor.objFiber
+              (C := Cat.{v₉, u₉}) T'')
+            (GrothendieckContraFunctor.homBase
+              (C := Cat.{v₉, u₉}) n).toFunctor
+    rw [Grothendieck.map_comp_eq,
+      Grothendieck.pre_comp
+        (GrothendieckContraFunctor.objFiber
+          (C := Cat.{v₉, u₉}) T'')
+        (GrothendieckContraFunctor.homBase
+          (C := Cat.{v₉, u₉}) n).toFunctor
+        (GrothendieckContraFunctor.homBase
+          (C := Cat.{v₉, u₉}) m).toFunctor]
+    rw [Functor.assoc (Grothendieck.map
+        (GrothendieckContraFunctor.homFiber
+          (C := Cat.{v₉, u₉}) m))]
+    change Grothendieck.map
+        (GrothendieckContraFunctor.homFiber
+          (C := Cat.{v₉, u₉}) m) ⋙
+        (Grothendieck.map
+          ((GrothendieckContraFunctor.homBase
+              (C := Cat.{v₉, u₉}) m).toFunctor.whiskerLeft
+            (GrothendieckContraFunctor.homFiber
+              (C := Cat.{v₉, u₉}) n))) ⋙
+        Grothendieck.pre
+            (((catContraHomFunctor
+                  (Cat.of Cat.{v₉, u₉})).map
+              (GrothendieckContraFunctor.homBase
+                (C := Cat.{v₉, u₉}) n).op).toFunctor.obj
+              (GrothendieckContraFunctor.objFiber
+                (C := Cat.{v₉, u₉}) T''))
+            (GrothendieckContraFunctor.homBase
+              (C := Cat.{v₉, u₉}) m).toFunctor ⋙
+          Grothendieck.pre
+            (GrothendieckContraFunctor.objFiber
+              (C := Cat.{v₉, u₉}) T'')
+            (GrothendieckContraFunctor.homBase
+              (C := Cat.{v₉, u₉}) n).toFunctor = _
+    rw [← Grothendieck.pre_comp_map_assoc
+        (GrothendieckContraFunctor.homBase
+          (C := Cat.{v₉, u₉}) m).toFunctor
+        (GrothendieckContraFunctor.homFiber
+          (C := Cat.{v₉, u₉}) n)]
+    rw [Functor.assoc]
+
+end CatOverCat
 
 end GebLean
