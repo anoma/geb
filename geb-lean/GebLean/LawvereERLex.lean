@@ -1362,4 +1362,88 @@ theorem ERLexMorNQuo.equalizerQLift_uniq
       exact step)
     h' hmap
 
+/-- The chosen equalizer lift composed with the
+inclusion recovers `h`, stated for
+`equalizerQLiftQuo`. -/
+theorem ERLexMorNQuo.equalizerQLiftQuo_map
+    {z a b : LexObj} (f g : ERLexMorNQuo a b)
+    (h : ERLexMorNQuo z a)
+    (heq : ERLexMorNQuo.comp h f =
+           ERLexMorNQuo.comp h g) :
+    ERLexMorNQuo.comp
+      (ERLexMorNQuo.equalizerQLiftQuo f g h heq)
+      (ERLexMorNQuo.equalizerQMap f g) = h := by
+  refine Quotient.ind
+    (motive := fun h' =>
+      ∀ heq' : ERLexMorNQuo.comp h' f =
+          ERLexMorNQuo.comp h' g,
+      ERLexMorNQuo.comp
+        (ERLexMorNQuo.equalizerQLiftQuo f g h'
+          heq')
+        (ERLexMorNQuo.equalizerQMap f g) = h')
+    ?_ h heq
+  intro h_raw heq'
+  change ERLexMorNQuo.comp
+    (ERLexMorNQuo.equalizerQLift f g h_raw
+      (fun _ _ => heq'))
+    (ERLexMorNQuo.equalizerQMap f g) =
+    Quotient.mk _ h_raw
+  exact ERLexMorNQuo.equalizerQLift_map f g h_raw _
+
+/-- Uniqueness for `equalizerQLiftQuo`: any
+morphism whose composition with the chosen
+equalizer inclusion equals `h` must equal the
+lift. -/
+theorem ERLexMorNQuo.equalizerQLiftQuo_uniq
+    {z a b : LexObj} (f g : ERLexMorNQuo a b)
+    (h : ERLexMorNQuo z a)
+    (heq : ERLexMorNQuo.comp h f =
+           ERLexMorNQuo.comp h g)
+    (h' : ERLexMorNQuo z (LexObj.equalizerQ f g))
+    (hmap :
+      ERLexMorNQuo.comp h'
+        (ERLexMorNQuo.equalizerQMap f g) = h) :
+    h' = ERLexMorNQuo.equalizerQLiftQuo f g h heq := by
+  refine Quotient.ind
+    (motive := fun h' =>
+      ∀ (heq' : ERLexMorNQuo.comp h' f =
+          ERLexMorNQuo.comp h' g)
+        (h'' : ERLexMorNQuo z
+          (LexObj.equalizerQ f g)),
+      ERLexMorNQuo.comp h''
+          (ERLexMorNQuo.equalizerQMap f g) = h' →
+      h'' = ERLexMorNQuo.equalizerQLiftQuo f g
+        h' heq')
+    ?_ h heq h' hmap
+  intro h_raw heq' h'' hmap'
+  change h'' = ERLexMorNQuo.equalizerQLift f g h_raw
+    (fun _ _ => heq')
+  exact ERLexMorNQuo.equalizerQLift_uniq f g h_raw _
+    h'' hmap'
+
+/-- Chosen equalizer for parallel morphisms in
+`LawvereERLexCat`. -/
+def lawvereERLexEqualizer
+    {a b : LawvereERLexCat}
+    (f g : a ⟶ b) :
+    ChosenEqualizer f g where
+  obj := LexObj.equalizerQ f g
+  ι := ERLexMorNQuo.equalizerQMap f g
+  ι_eq := ERLexMorNQuo.equalizerQMap_eq f g
+  lift h heq :=
+    ERLexMorNQuo.equalizerQLiftQuo f g h heq
+  lift_ι h heq :=
+    ERLexMorNQuo.equalizerQLiftQuo_map f g h heq
+  lift_uniq h heq h' hmap :=
+    ERLexMorNQuo.equalizerQLiftQuo_uniq f g h heq
+      h' hmap
+
+/-- `LawvereERLexCat` has chosen equalizers. -/
+instance : HasChosenEqualizers LawvereERLexCat where
+  equalizer f g := lawvereERLexEqualizer f g
+
+/-- `LawvereERLexCat` has chosen finite limits. -/
+instance : HasChosenFiniteLimits
+    LawvereERLexCat where
+
 end GebLean
