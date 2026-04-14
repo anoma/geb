@@ -6,6 +6,7 @@ import GebLeanTests.LawvereERBool
 import GebLeanTests.LawvereERDelta
 import GebLeanTests.LawvereERInterp
 import GebLeanTests.LawvereERLex
+import GebLeanTests.LawvereERPrimrec
 import GebLeanTests.LawvereERQuot
 import GebLeanTests.LayeredEquivalence
 import GebLeanTests.TestEqualizerCompletion
