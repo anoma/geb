@@ -7415,6 +7415,146 @@ def sliceContraFunctor :
     rw [Functor.whiskerRight_comp]
     simp
 
+/--
+The `D`-direction projection of the slice-preserving covariant
+Grothendieck construction.  Given `F : C ⥤ Over D`, maps the total
+category of the covariant Grothendieck of `F ⋙ Over.forget` to `D`
+by applying each fibre's slice projection `(F.obj c).hom` at the
+appropriate object.
+-/
+def sliceCovFunctor.projD
+    (F : C ⥤ Over (T := Cat.{v_sp, u_sp}) D) :
+    ((grothendieckFunctor C).obj (F ⋙ Over.forget _)).α ⥤
+      (D : Cat.{v_sp, u_sp}) where
+  obj g := (F.obj g.base).hom.toFunctor.obj g.fiber
+  map {g₁ g₂} f := by
+    refine eqToHom ?_ ≫ (F.obj g₂.base).hom.toFunctor.map f.fiber
+    have hw : (F.map f.base).left.toFunctor ⋙
+        (F.obj g₂.base).hom.toFunctor =
+        (F.obj g₁.base).hom.toFunctor := by
+      rw [← Cat.Hom.comp_toFunctor]
+      exact congrArg _ (Over.w (F.map f.base))
+    exact congrArg (fun F => F.obj g₁.fiber) hw.symm
+  map_id g := by
+    rw [Grothendieck.id_fiber]
+    simp
+  map_comp {X Y _Z} f g := by
+    have hw : (F.map g.base).left.toFunctor ⋙
+        (F.obj _Z.base).hom.toFunctor =
+        (F.obj Y.base).hom.toFunctor := by
+      rw [← Cat.Hom.comp_toFunctor]
+      exact congrArg _ (Over.w (F.map g.base))
+    rw [Grothendieck.comp_fiber]
+    change eqToHom _ ≫ (F.obj _Z.base).hom.toFunctor.map
+        (eqToHom _ ≫
+          (F.map g.base).left.toFunctor.map f.fiber ≫
+            g.fiber) = _
+    simp only [Functor.map_comp, eqToHom_map, Category.assoc]
+    rw [show (F.obj _Z.base).hom.toFunctor.map
+        ((F.map g.base).left.toFunctor.map f.fiber)
+        = ((F.map g.base).left.toFunctor ⋙
+          (F.obj _Z.base).hom.toFunctor).map f.fiber
+          from rfl,
+      Functor.congr_hom hw f.fiber]
+    simp [Category.assoc]
+
+/--
+Naturality of `sliceCovFunctor.projD` along a morphism
+`ν : F ⟶ F'` in `C ⥤ Over D`:  the covariant-Grothendieck map
+along the forgetful whiskering of `ν` composes with the slice
+projection of `F'` to give the slice projection of `F`.
+-/
+theorem sliceCovFunctor.projD_naturality
+    {F F' : C ⥤ Over (T := Cat.{v_sp, u_sp}) D}
+    (ν : F ⟶ F') :
+    ((grothendieckFunctor C).map
+        (Functor.whiskerRight ν (Over.forget _))).toFunctor ⋙
+      sliceCovFunctor.projD F' =
+      sliceCovFunctor.projD F := by
+  fapply CategoryTheory.Functor.ext
+  · intro g
+    change (F'.obj g.base).hom.toFunctor.obj
+        ((ν.app g.base).left.toFunctor.obj g.fiber) =
+        (F.obj g.base).hom.toFunctor.obj g.fiber
+    have hw : (ν.app g.base).left.toFunctor ⋙
+        (F'.obj g.base).hom.toFunctor =
+        (F.obj g.base).hom.toFunctor := by
+      rw [← Cat.Hom.comp_toFunctor]
+      exact congrArg _ (Over.w (ν.app g.base))
+    exact congrArg (fun F => F.obj g.fiber) hw
+  · intro g g' f
+    simp only [Functor.comp_map]
+    dsimp only [grothendieckFunctor, projD,
+      Functor.toCatHom_toFunctor, Cat.Hom.comp_toFunctor]
+    rw [Grothendieck.map_map]
+    have hw : (ν.app g'.base).left.toFunctor ⋙
+        (F'.obj g'.base).hom.toFunctor =
+        (F.obj g'.base).hom.toFunctor := by
+      rw [← Cat.Hom.comp_toFunctor]
+      exact congrArg _ (Over.w (ν.app g'.base))
+    simp only [Functor.whiskerRight_app, Over.forget_map,
+      Grothendieck.map_obj_base]
+    rw [Functor.map_comp]
+    rw [show (F'.obj g'.base).hom.toFunctor.map
+        ((ν.app g'.base).left.toFunctor.map f.fiber)
+        = ((ν.app g'.base).left.toFunctor ⋙
+          (F'.obj g'.base).hom.toFunctor).map f.fiber
+          from rfl,
+      Functor.congr_hom hw f.fiber]
+    simp
+
+/--
+The slice-preserving covariant Grothendieck construction.
+Given `F : C ⥤ Over D`, produces an `Over (Cat.of (C × D))` object
+whose underlying category is the covariant Grothendieck of
+`F ⋙ Over.forget` and whose projection is the pair of the standard
+covariant-Grothendieck forgetful (to `C`) and
+`sliceCovFunctor.projD` (to `D`).
+-/
+def sliceCovFunctor :
+    (C ⥤ Over (T := Cat.{v_sp, u_sp}) D) ⥤
+      Over (T := Cat.{v_sp, u_sp}) (Cat.of (C × D)) where
+  obj F :=
+    Over.mk (T := Cat.{v_sp, u_sp})
+      (((grothendieckFunctorOver (E := C)).obj
+          (F ⋙ Over.forget _)).hom.toFunctor.prod'
+        (sliceCovFunctor.projD F)).toCatHom
+  map {F F'} ν :=
+    Over.homMk
+      ((grothendieckFunctor C).map
+        (Functor.whiskerRight ν (Over.forget _)))
+      (by
+        apply Cat.Hom.ext
+        change ((grothendieckFunctor C).map
+              (Functor.whiskerRight ν
+                (Over.forget _))).toFunctor ⋙
+            ((grothendieckFunctorOver (E := C)).obj
+                (F' ⋙ Over.forget _)).hom.toFunctor.prod'
+              (sliceCovFunctor.projD F') =
+            ((grothendieckFunctorOver (E := C)).obj
+                (F ⋙ Over.forget _)).hom.toFunctor.prod'
+              (sliceCovFunctor.projD F)
+        rw [show ∀ {A B K : Cat.{v_sp, u_sp}}
+              (F : A ⥤ B) (G : A ⥤ K)
+              {A' : Cat.{v_sp, u_sp}} (H : A' ⥤ A),
+              H ⋙ F.prod' G = (H ⋙ F).prod' (H ⋙ G)
+            from fun _ _ _ _ => rfl]
+        congr 1
+        exact sliceCovFunctor.projD_naturality ν)
+  map_id F := by
+    apply Over.OverMorphism.ext
+    change (grothendieckFunctor C).map
+        (Functor.whiskerRight (𝟙 F) (Over.forget _)) = _
+    rw [Functor.whiskerRight_id']
+    simp
+    rfl
+  map_comp {F F' F''} ν₁ ν₂ := by
+    apply Over.OverMorphism.ext
+    change (grothendieckFunctor C).map
+        (Functor.whiskerRight (ν₁ ≫ ν₂) (Over.forget _)) = _
+    rw [Functor.whiskerRight_comp]
+    simp
+
 end StrictTwoSidedGrothendieck
 
 /-! ## Total Category of Functors into `Cat` -/
