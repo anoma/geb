@@ -7262,62 +7262,119 @@ universe v_sp u_sp
 variable {C D : Cat.{v_sp, u_sp}}
 
 /--
+Projection from the covariant Grothendieck of a constant-`Cat`-valued
+functor `(Functor.const D).obj X` to the fibre `X`.  On objects, sends
+`⟨d, x⟩ ↦ x`; on morphisms, sends `⟨f, φ⟩ ↦ φ`.
+
+This is the "second projection" in the canonical equivalence
+`Grothendieck ((Functor.const D).obj X) ≃ D × X`.
+-/
+def grothOfConstProj
+    (D : Cat.{v_sp, u_sp}) (X : Cat.{v_sp, u_sp}) :
+    (Cat.of (Grothendieck ((Functor.const D).obj X))) ⥤
+      (X : Cat.{v_sp, u_sp}) where
+  obj g := g.fiber
+  map {g₁ _} f :=
+    eqToHom (rfl : g₁.fiber =
+      (((Functor.const D).obj X).map f.base).toFunctor.obj g₁.fiber)
+      ≫ f.fiber
+  map_id g := by
+    rw [Grothendieck.id_fiber]
+    simp
+  map_comp {_ _ _} f g := by
+    rw [Grothendieck.comp_fiber]
+    simp
+
+/--
+Projection from the contravariant Grothendieck of a constant-
+`Cat`-valued functor `(Functor.const Dᵒᵖ).obj X` to the fibre `X`.
+Dual of `grothOfConstProj`.
+-/
+def grothContraOfConstProj
+    (D : Cat.{v_sp, u_sp}) (X : Cat.{v_sp, u_sp}) :
+    ((grothendieckContraFunctor D).obj
+        ((Functor.const Dᵒᵖ).obj X)).α ⥤
+      (X : Cat.{v_sp, u_sp}) where
+  obj opg := opg.unop.fiber.unop
+  map {_ _} f := f.unop.fiber.unop
+  map_id opg := by
+    change (𝟙 opg).unop.fiber.unop = _
+    rw [show (𝟙 opg).unop = 𝟙 opg.unop from rfl,
+      Grothendieck.id_fiber]
+    simp
+  map_comp {_ _ _} f g := by
+    rw [show (f ≫ g) =
+        Quiver.Hom.op (g.unop ≫ f.unop) from rfl]
+    dsimp only [Quiver.Hom.unop_op]
+    rw [Grothendieck.comp_fiber]
+    simp
+
+/--
+Given `G : Dᵒᵖ ⥤ Over C`, the natural transformation from
+`G ⋙ Over.forget _` to the constant functor at `C` whose component
+at each `d : Dᵒᵖ` is the slice projection `(G.obj d).hom`.
+-/
+def sliceCoverNatTrans
+    (G : Dᵒᵖ ⥤ Over (T := Cat.{v_sp, u_sp}) C) :
+    G ⋙ Over.forget _ ⟶ (Functor.const Dᵒᵖ).obj C where
+  app d := (G.obj d).hom
+  naturality {d₁ d₂} f := by
+    apply Cat.Hom.ext
+    simp only [Cat.Hom.comp_toFunctor, Functor.comp_map,
+      Over.forget_map]
+    change (G.map f).left.toFunctor ⋙ (G.obj d₂).hom.toFunctor =
+        (G.obj d₁).hom.toFunctor ⋙ 𝟭 _
+    rw [Functor.comp_id, ← Cat.Hom.comp_toFunctor]
+    exact congrArg _ (Over.w (G.map f))
+
+/--
+Given `F : C ⥤ Over D`, the natural transformation from
+`F ⋙ Over.forget _` to the constant functor at `D` whose component
+at each `c : C` is the slice projection `(F.obj c).hom`.  Dual of
+`sliceCoverNatTrans`.
+-/
+def sliceUnderNatTrans
+    (F : C ⥤ Over (T := Cat.{v_sp, u_sp}) D) :
+    F ⋙ Over.forget _ ⟶ (Functor.const C).obj D where
+  app c := (F.obj c).hom
+  naturality {c₁ c₂} f := by
+    apply Cat.Hom.ext
+    simp only [Cat.Hom.comp_toFunctor, Functor.comp_map,
+      Over.forget_map]
+    change (F.map f).left.toFunctor ⋙ (F.obj c₂).hom.toFunctor =
+        (F.obj c₁).hom.toFunctor ⋙ 𝟭 _
+    rw [Functor.comp_id, ← Cat.Hom.comp_toFunctor]
+    exact congrArg _ (Over.w (F.map f))
+
+/--
 The `C`-direction projection of the slice-preserving contravariant
 Grothendieck construction.  Given `G : Dᵒᵖ ⥤ Over C`, maps the
 total category of the contravariant Grothendieck of
 `G ⋙ Over.forget` to `C` by applying each fibre's slice
 projection `(G.obj (op d)).hom` at the appropriate object.
+
+Expressed as the composition of the contravariant-Grothendieck map
+along `sliceCoverNatTrans G` (assembling the fibrewise slice
+projections into a natural transformation to the constant functor
+at `C`) with `grothContraOfConstProj`.
 -/
 def sliceContraFunctor.projC
     (G : Dᵒᵖ ⥤ Over (T := Cat.{v_sp, u_sp}) C) :
     ((grothendieckContraFunctor D).obj (G ⋙ Over.forget _)).α ⥤
-      (C : Cat.{v_sp, u_sp}) where
-  obj opg :=
-    (G.obj opg.unop.base).hom.toFunctor.obj opg.unop.fiber.unop
-  map {opg₁ opg₂} f := by
-    refine (G.obj opg₁.unop.base).hom.toFunctor.map
-      f.unop.fiber.unop ≫ eqToHom ?_
-    have hw : (G.map f.unop.base).left.toFunctor ⋙
-        (G.obj opg₁.unop.base).hom.toFunctor =
-        (G.obj opg₂.unop.base).hom.toFunctor := by
-      rw [← Cat.Hom.comp_toFunctor]
-      exact congrArg _ (Over.w (G.map f.unop.base))
-    exact congrArg (fun F => F.obj opg₂.unop.fiber.unop) hw
-  map_id opg := by
-    conv_lhs => rw [show (𝟙 opg).unop = 𝟙 opg.unop from rfl,
-      Grothendieck.id_fiber]
-    simp
-  map_comp {X Y _Z} f g := by
-    have hw : (G.map f.unop.base).left.toFunctor ⋙
-        (G.obj X.unop.base).hom.toFunctor =
-        (G.obj Y.unop.base).hom.toFunctor := by
-      rw [← Cat.Hom.comp_toFunctor]
-      exact congrArg _ (Over.w (G.map f.unop.base))
-    rw [show (f ≫ g) =
-        Quiver.Hom.op (g.unop ≫ f.unop) from rfl]
-    dsimp only [Quiver.Hom.unop_op]
-    rw [Grothendieck.comp_fiber]
-    change (G.obj X.unop.base).hom.toFunctor.map
-        (eqToHom _ ≫
-          Quiver.Hom.op
-            ((G.map f.unop.base).left.toFunctor.map
-              g.unop.fiber.unop) ≫
-            f.unop.fiber).unop ≫ eqToHom _ = _
-    simp only [unop_comp, Quiver.Hom.unop_op, eqToHom_unop,
-      Functor.map_comp, Category.assoc]
-    rw [show ((G.obj X.unop.base).hom.toFunctor.map
-        ((G.map f.unop.base).left.toFunctor.map g.unop.fiber.unop))
-        = ((G.map f.unop.base).left.toFunctor ⋙
-          (G.obj X.unop.base).hom.toFunctor).map g.unop.fiber.unop
-          from rfl,
-      Functor.congr_hom hw g.unop.fiber.unop]
-    simp [Category.assoc]
+      (C : Cat.{v_sp, u_sp}) :=
+  ((grothendieckContraFunctor D).map (sliceCoverNatTrans G)).toFunctor
+    ⋙ grothContraOfConstProj D C
 
 /--
 Naturality of `sliceContraFunctor.projC` along a morphism
 `ν : G ⟶ G'` in `Dᵒᵖ ⥤ Over C`:  the contravariant-Grothendieck
 map along the forgetful whiskering of `ν` composes with the
 slice projection of `G'` to give the slice projection of `G`.
+
+Derives from functoriality of `grothendieckContraFunctor D` together
+with the factoring identity
+`whiskerRight ν (Over.forget _) ≫ sliceCoverNatTrans G'
+  = sliceCoverNatTrans G`.
 -/
 theorem sliceContraFunctor.projC_naturality
     {G G' : Dᵒᵖ ⥤ Over (T := Cat.{v_sp, u_sp}) C}
@@ -7326,43 +7383,13 @@ theorem sliceContraFunctor.projC_naturality
         (Functor.whiskerRight ν (Over.forget _))).toFunctor ⋙
       sliceContraFunctor.projC G' =
       sliceContraFunctor.projC G := by
-  fapply CategoryTheory.Functor.ext
-  · intro opg
-    change (G'.obj opg.unop.base).hom.toFunctor.obj
-        ((ν.app opg.unop.base).left.toFunctor.obj
-          opg.unop.fiber.unop) =
-        (G.obj opg.unop.base).hom.toFunctor.obj
-          opg.unop.fiber.unop
-    have hw : (ν.app opg.unop.base).left.toFunctor ⋙
-        (G'.obj opg.unop.base).hom.toFunctor =
-        (G.obj opg.unop.base).hom.toFunctor := by
-      rw [← Cat.Hom.comp_toFunctor]
-      exact congrArg _ (Over.w (ν.app opg.unop.base))
-    exact congrArg (fun F => F.obj opg.unop.fiber.unop) hw
-  · intro opg opg' f
-    simp only [Functor.comp_map]
-    dsimp only [grothendieckContraFunctor, Cat.opFunctor,
-      Functor.comp_map, Functor.whiskeringRight_obj_map,
-      projC, grothendieckFunctor, Functor.op_map,
-      Functor.toCatHom_toFunctor, Cat.Hom.comp_toFunctor]
-    simp only [Functor.op_obj, Grothendieck.map_obj_base,
-      Quiver.Hom.unop_op]
-    rw [Grothendieck.map_map]
-    have hw : (ν.app opg.unop.base).left.toFunctor ⋙
-        (G'.obj opg.unop.base).hom.toFunctor =
-        (G.obj opg.unop.base).hom.toFunctor := by
-      rw [← Cat.Hom.comp_toFunctor]
-      exact congrArg _ (Over.w (ν.app opg.unop.base))
-    simp only [Functor.whiskerRight_app, Functor.toCatHom_toFunctor,
-      Over.forget_map, Functor.op_map]
-    rw [unop_comp, Quiver.Hom.unop_op, Functor.map_comp]
-    rw [show (G'.obj opg.unop.base).hom.toFunctor.map
-        ((ν.app opg.unop.base).left.toFunctor.map f.unop.fiber.unop)
-        = ((ν.app opg.unop.base).left.toFunctor ⋙
-          (G'.obj opg.unop.base).hom.toFunctor).map f.unop.fiber.unop
-          from rfl,
-      Functor.congr_hom hw f.unop.fiber.unop]
-    simp
+  unfold sliceContraFunctor.projC
+  rw [← Functor.assoc, ← Cat.Hom.comp_toFunctor,
+    ← (grothendieckContraFunctor D).map_comp]
+  congr 3
+  apply NatTrans.ext
+  funext d
+  exact Over.w (ν.app d)
 
 /--
 The slice-preserving contravariant Grothendieck construction.
@@ -7425,44 +7452,20 @@ appropriate object.
 def sliceCovFunctor.projD
     (F : C ⥤ Over (T := Cat.{v_sp, u_sp}) D) :
     ((grothendieckFunctor C).obj (F ⋙ Over.forget _)).α ⥤
-      (D : Cat.{v_sp, u_sp}) where
-  obj g := (F.obj g.base).hom.toFunctor.obj g.fiber
-  map {g₁ g₂} f := by
-    refine eqToHom ?_ ≫ (F.obj g₂.base).hom.toFunctor.map f.fiber
-    have hw : (F.map f.base).left.toFunctor ⋙
-        (F.obj g₂.base).hom.toFunctor =
-        (F.obj g₁.base).hom.toFunctor := by
-      rw [← Cat.Hom.comp_toFunctor]
-      exact congrArg _ (Over.w (F.map f.base))
-    exact congrArg (fun F => F.obj g₁.fiber) hw.symm
-  map_id g := by
-    rw [Grothendieck.id_fiber]
-    simp
-  map_comp {X Y _Z} f g := by
-    have hw : (F.map g.base).left.toFunctor ⋙
-        (F.obj _Z.base).hom.toFunctor =
-        (F.obj Y.base).hom.toFunctor := by
-      rw [← Cat.Hom.comp_toFunctor]
-      exact congrArg _ (Over.w (F.map g.base))
-    rw [Grothendieck.comp_fiber]
-    change eqToHom _ ≫ (F.obj _Z.base).hom.toFunctor.map
-        (eqToHom _ ≫
-          (F.map g.base).left.toFunctor.map f.fiber ≫
-            g.fiber) = _
-    simp only [Functor.map_comp, eqToHom_map, Category.assoc]
-    rw [show (F.obj _Z.base).hom.toFunctor.map
-        ((F.map g.base).left.toFunctor.map f.fiber)
-        = ((F.map g.base).left.toFunctor ⋙
-          (F.obj _Z.base).hom.toFunctor).map f.fiber
-          from rfl,
-      Functor.congr_hom hw f.fiber]
-    simp [Category.assoc]
+      (D : Cat.{v_sp, u_sp}) :=
+  ((grothendieckFunctor C).map (sliceUnderNatTrans F)).toFunctor
+    ⋙ grothOfConstProj C D
 
 /--
 Naturality of `sliceCovFunctor.projD` along a morphism
 `ν : F ⟶ F'` in `C ⥤ Over D`:  the covariant-Grothendieck map
 along the forgetful whiskering of `ν` composes with the slice
 projection of `F'` to give the slice projection of `F`.
+
+Derives from functoriality of `grothendieckFunctor C` together
+with the factoring identity
+`whiskerRight ν (Over.forget _) ≫ sliceUnderNatTrans F'
+  = sliceUnderNatTrans F`.
 -/
 theorem sliceCovFunctor.projD_naturality
     {F F' : C ⥤ Over (T := Cat.{v_sp, u_sp}) D}
@@ -7471,37 +7474,13 @@ theorem sliceCovFunctor.projD_naturality
         (Functor.whiskerRight ν (Over.forget _))).toFunctor ⋙
       sliceCovFunctor.projD F' =
       sliceCovFunctor.projD F := by
-  fapply CategoryTheory.Functor.ext
-  · intro g
-    change (F'.obj g.base).hom.toFunctor.obj
-        ((ν.app g.base).left.toFunctor.obj g.fiber) =
-        (F.obj g.base).hom.toFunctor.obj g.fiber
-    have hw : (ν.app g.base).left.toFunctor ⋙
-        (F'.obj g.base).hom.toFunctor =
-        (F.obj g.base).hom.toFunctor := by
-      rw [← Cat.Hom.comp_toFunctor]
-      exact congrArg _ (Over.w (ν.app g.base))
-    exact congrArg (fun F => F.obj g.fiber) hw
-  · intro g g' f
-    simp only [Functor.comp_map]
-    dsimp only [grothendieckFunctor, projD,
-      Functor.toCatHom_toFunctor, Cat.Hom.comp_toFunctor]
-    rw [Grothendieck.map_map]
-    have hw : (ν.app g'.base).left.toFunctor ⋙
-        (F'.obj g'.base).hom.toFunctor =
-        (F.obj g'.base).hom.toFunctor := by
-      rw [← Cat.Hom.comp_toFunctor]
-      exact congrArg _ (Over.w (ν.app g'.base))
-    simp only [Functor.whiskerRight_app, Over.forget_map,
-      Grothendieck.map_obj_base]
-    rw [Functor.map_comp]
-    rw [show (F'.obj g'.base).hom.toFunctor.map
-        ((ν.app g'.base).left.toFunctor.map f.fiber)
-        = ((ν.app g'.base).left.toFunctor ⋙
-          (F'.obj g'.base).hom.toFunctor).map f.fiber
-          from rfl,
-      Functor.congr_hom hw f.fiber]
-    simp
+  unfold sliceCovFunctor.projD
+  rw [← Functor.assoc, ← Cat.Hom.comp_toFunctor,
+    ← (grothendieckFunctor C).map_comp]
+  congr 3
+  apply NatTrans.ext
+  funext c
+  exact Over.w (ν.app c)
 
 /--
 The slice-preserving covariant Grothendieck construction.
