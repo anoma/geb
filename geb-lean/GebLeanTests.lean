@@ -8,8 +8,10 @@ import GebLeanTests.LawvereERInterp
 import GebLeanTests.LawvereERLex
 import GebLeanTests.LawvereERPrimrec
 import GebLeanTests.LawvereERQuot
+import GebLeanTests.LawvereERTetration
 import GebLeanTests.LayeredEquivalence
 import GebLeanTests.TestEqualizerCompletion
 import GebLeanTests.TestTreeCalcMeta
 import GebLeanTests.TestTreeCalcPrograms
 import GebLeanTests.TestTreeCalcReduction
+import GebLeanTests.Utilities.Tower
