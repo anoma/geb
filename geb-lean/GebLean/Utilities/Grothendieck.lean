@@ -7589,6 +7589,48 @@ def twoSidedGrothendieckContraCov :
     (Functor.whiskeringRight _ _ _).obj grothendieckContraFunctorOver ⋙
     sliceCovFunctor
 
+/--
+Forward object map of the pointwise two-sided Grothendieck object
+equivalence.  Reassociates the nested `Opposite`-wrapped triple
+`(d, c, y)` from the covariant-then-contravariant presentation to
+the contravariant-then-covariant presentation.
+-/
+def twoSidedGrothendieckObjEquiv.toFun
+    (H : Dᵒᵖ ⥤ C ⥤ Cat.{v_sp, u_sp})
+    (x : ((twoSidedGrothendieckCovContra.obj H).left : Type _)) :
+    ((twoSidedGrothendieckContraCov.obj H).left : Type _) :=
+  ⟨x.unop.fiber.unop.base,
+    Opposite.op ⟨x.unop.base, Opposite.op x.unop.fiber.unop.fiber⟩⟩
+
+/--
+Backward object map of the pointwise two-sided Grothendieck object
+equivalence.  Inverse of `twoSidedGrothendieckObjEquiv.toFun`.
+-/
+def twoSidedGrothendieckObjEquiv.invFun
+    (H : Dᵒᵖ ⥤ C ⥤ Cat.{v_sp, u_sp})
+    (y : ((twoSidedGrothendieckContraCov.obj H).left : Type _)) :
+    ((twoSidedGrothendieckCovContra.obj H).left : Type _) :=
+  Opposite.op
+    ⟨y.fiber.unop.base,
+      Opposite.op ⟨y.base, y.fiber.unop.fiber.unop⟩⟩
+
+/--
+Pointwise type equivalence between the object types underlying the
+two orderings of the strict two-sided Grothendieck construction.
+Both orderings encode the same triple data `(d, c, y)` (with
+`d : D`, `c : C`, and `y : (H.obj (op d)).obj c`), differing only in
+the nested `Opposite` presentation.  A full equivalence of
+categories is not provided here.
+-/
+def twoSidedGrothendieckObjEquiv
+    (H : Dᵒᵖ ⥤ C ⥤ Cat.{v_sp, u_sp}) :
+    ((twoSidedGrothendieckCovContra.obj H).left : Type _) ≃
+      ((twoSidedGrothendieckContraCov.obj H).left : Type _) where
+  toFun := twoSidedGrothendieckObjEquiv.toFun H
+  invFun := twoSidedGrothendieckObjEquiv.invFun H
+  left_inv _ := rfl
+  right_inv _ := rfl
+
 end StrictTwoSidedGrothendieck
 
 /-! ## Total Category of Functors into `Cat` -/
