@@ -57,4 +57,56 @@ theorem tower_comp (j k x : ℕ) :
     change 2 ^ tower j (tower k x) = 2 ^ tower (j + k) x
     rw [ih]
 
+/-- `n ≤ 2 ^ n` for all `n`. -/
+theorem le_two_pow_self (n : ℕ) : n ≤ 2 ^ n :=
+  Nat.le_of_lt Nat.lt_two_pow_self
+
+/-- `2 * n ≤ 2 ^ n` for `n ≥ 2`. -/
+theorem two_mul_le_two_pow {n : ℕ} (hn : 2 ≤ n) : 2 * n ≤ 2 ^ n := by
+  induction n, hn using Nat.le_induction with
+  | base => decide
+  | succ n hn ih =>
+    have h1 : 2 ≤ 2 ^ n := by
+      calc 2 = 2 ^ 1 := by decide
+        _ ≤ 2 ^ n := Nat.pow_le_pow_right (by omega) (by omega)
+    have hstep : 2 ^ n + 2 ^ n = 2 ^ (n + 1) := by
+      rw [Nat.pow_succ]; omega
+    calc 2 * (n + 1)
+        = 2 * n + 2 := by omega
+      _ ≤ 2 ^ n + 2 ^ n := by omega
+      _ = 2 ^ (n + 1) := hstep
+
+/-- Multiplicative bound: `m * tower k m ≤ tower (k + 2) m` for `m ≥ 2`. -/
+theorem mul_tower_le_tower_add_two {k m : ℕ} (hm : 2 ≤ m) :
+    m * tower k m ≤ tower (k + 2) m := by
+  have h_self : m ≤ tower k m := self_le_tower k m
+  have h_tower_ge : 2 ≤ tower k m := le_trans hm h_self
+  change m * tower k m ≤ 2 ^ (2 ^ tower k m)
+  calc m * tower k m
+      ≤ 2 ^ m * tower k m :=
+        Nat.mul_le_mul_right _ (le_two_pow_self m)
+    _ ≤ 2 ^ m * 2 ^ tower k m :=
+        Nat.mul_le_mul_left _ (le_two_pow_self (tower k m))
+    _ = 2 ^ (m + tower k m) := by rw [← Nat.pow_add]
+    _ ≤ 2 ^ (2 * tower k m) := by
+        apply Nat.pow_le_pow_right (by omega)
+        omega
+    _ ≤ 2 ^ (2 ^ tower k m) :=
+        Nat.pow_le_pow_right (by omega) (two_mul_le_two_pow h_tower_ge)
+
+/-- Power bound: `tower k m ^ m ≤ tower (k + 3) m` for `m ≥ 2`. -/
+theorem tower_pow_le_tower_add_three {k m : ℕ} (hm : 2 ≤ m) :
+    tower k m ^ m ≤ tower (k + 3) m := by
+  have h_pow : tower k m ≤ 2 ^ tower k m := le_two_pow_self _
+  have h_mul_bound : m * tower k m ≤ tower (k + 2) m :=
+    mul_tower_le_tower_add_two hm
+  change tower k m ^ m ≤ 2 ^ (tower (k + 2) m)
+  calc tower k m ^ m
+      ≤ (2 ^ tower k m) ^ m :=
+        Nat.pow_le_pow_left h_pow _
+    _ = 2 ^ (tower k m * m) := by rw [← Nat.pow_mul]
+    _ = 2 ^ (m * tower k m) := by rw [Nat.mul_comm]
+    _ ≤ 2 ^ (tower (k + 2) m) :=
+        Nat.pow_le_pow_right (by omega) h_mul_bound
+
 end GebLean
