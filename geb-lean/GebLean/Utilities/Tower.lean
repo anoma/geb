@@ -23,4 +23,27 @@ def tower : ℕ → ℕ → ℕ
 @[simp] theorem tower_succ (k x : ℕ) :
     tower (k + 1) x = 2 ^ tower k x := rfl
 
+/-- `x ≤ tower k x` for all `k`, `x`. -/
+theorem self_le_tower (k x : ℕ) : x ≤ tower k x := by
+  induction k with
+  | zero => exact Nat.le_refl _
+  | succ k ih =>
+    calc x ≤ tower k x := ih
+      _ ≤ 2 ^ tower k x := by
+        have h : tower k x < 2 ^ tower k x :=
+          Nat.lt_two_pow_self
+        exact le_of_lt h
+
+/-- `1 ≤ tower k x` whenever `1 ≤ x`. -/
+theorem one_le_tower_of_one_le (k x : ℕ) (hx : 1 ≤ x) :
+    1 ≤ tower k x := le_trans hx (self_le_tower k x)
+
+/-- `tower k` is monotone in its second argument. -/
+theorem tower_mono_right (k : ℕ) {x y : ℕ} (h : x ≤ y) :
+    tower k x ≤ tower k y := by
+  induction k with
+  | zero => exact h
+  | succ k ih =>
+    exact Nat.pow_le_pow_right (by omega) ih
+
 end GebLean
