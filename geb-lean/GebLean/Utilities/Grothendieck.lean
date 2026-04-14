@@ -7240,6 +7240,80 @@ theorem grothendieckContraFunctorOver_comp_forget
 
 end GrothendieckContraFunctorOver
 
+/-! ## Strict Two-Sided Grothendieck Construction
+
+This section implements the strict two-sided Grothendieck
+construction for bifunctors `H : Dᵒᵖ ⥤ C ⥤ Cat` (Lucyshyn-Wright
+Def. 7.1 / Stefanich arXiv:2011.03027), landing in
+`Over (Cat.of (C × D))` so that the commutativity conditions of
+the two-sided construction are encoded by slice morphisms.
+
+Built from two reusable slice-preserving Grothendieck primitives:
+`sliceContraFunctor` (contravariant outer) and `sliceCovFunctor`
+(covariant outer).  The two-sided construction is then realized
+compositionally in two equivalent orderings, related by a natural
+isomorphism.
+-/
+
+section StrictTwoSidedGrothendieck
+
+universe v_sp u_sp
+
+variable {C D : Cat.{v_sp, u_sp}}
+
+/--
+The `C`-direction projection of the slice-preserving contravariant
+Grothendieck construction.  Given `G : Dᵒᵖ ⥤ Over C`, maps the
+total category of the contravariant Grothendieck of
+`G ⋙ Over.forget` to `C` by applying each fibre's slice
+projection `(G.obj (op d)).hom` at the appropriate object.
+-/
+def sliceContraFunctor.projC
+    (G : Dᵒᵖ ⥤ Over (T := Cat.{v_sp, u_sp}) C) :
+    ((grothendieckContraFunctor D).obj (G ⋙ Over.forget _)).α ⥤
+      (C : Cat.{v_sp, u_sp}) where
+  obj opg :=
+    (G.obj opg.unop.base).hom.toFunctor.obj opg.unop.fiber.unop
+  map {opg₁ opg₂} f := by
+    refine (G.obj opg₁.unop.base).hom.toFunctor.map
+      f.unop.fiber.unop ≫ eqToHom ?_
+    have hw : (G.map f.unop.base).left.toFunctor ⋙
+        (G.obj opg₁.unop.base).hom.toFunctor =
+        (G.obj opg₂.unop.base).hom.toFunctor := by
+      rw [← Cat.Hom.comp_toFunctor]
+      exact congrArg _ (Over.w (G.map f.unop.base))
+    exact congrArg (fun F => F.obj opg₂.unop.fiber.unop) hw
+  map_id opg := by
+    conv_lhs => rw [show (𝟙 opg).unop = 𝟙 opg.unop from rfl,
+      Grothendieck.id_fiber]
+    simp
+  map_comp {X Y _Z} f g := by
+    have hw : (G.map f.unop.base).left.toFunctor ⋙
+        (G.obj X.unop.base).hom.toFunctor =
+        (G.obj Y.unop.base).hom.toFunctor := by
+      rw [← Cat.Hom.comp_toFunctor]
+      exact congrArg _ (Over.w (G.map f.unop.base))
+    rw [show (f ≫ g) =
+        Quiver.Hom.op (g.unop ≫ f.unop) from rfl]
+    dsimp only [Quiver.Hom.unop_op]
+    rw [Grothendieck.comp_fiber]
+    change (G.obj X.unop.base).hom.toFunctor.map
+        (eqToHom _ ≫
+          Quiver.Hom.op
+            ((G.map f.unop.base).left.toFunctor.map
+              g.unop.fiber.unop) ≫
+            f.unop.fiber).unop ≫ eqToHom _ = _
+    simp only [unop_comp, Quiver.Hom.unop_op, eqToHom_unop,
+      Functor.map_comp, Category.assoc]
+    rw [show ((G.obj X.unop.base).hom.toFunctor.map
+        ((G.map f.unop.base).left.toFunctor.map g.unop.fiber.unop))
+        = ((G.map f.unop.base).left.toFunctor ⋙
+          (G.obj X.unop.base).hom.toFunctor).map g.unop.fiber.unop
+          from rfl,
+      Functor.congr_hom hw g.unop.fiber.unop]
+    simp [Category.assoc]
+
+end StrictTwoSidedGrothendieck
 
 /-! ## Total Category of Functors into `Cat` -/
 
