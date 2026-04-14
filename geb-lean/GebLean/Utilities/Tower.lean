@@ -61,6 +61,14 @@ theorem tower_comp (j k x : ℕ) :
 theorem le_two_pow_self (n : ℕ) : n ≤ 2 ^ n :=
   Nat.le_of_lt Nat.lt_two_pow_self
 
+/-- `tower` is monotone in its first argument. -/
+theorem tower_mono_left {k₁ k₂ : ℕ} (h : k₁ ≤ k₂) (x : ℕ) :
+    tower k₁ x ≤ tower k₂ x := by
+  induction h with
+  | refl => exact Nat.le_refl _
+  | step _ ih =>
+    exact le_trans ih (le_two_pow_self _)
+
 /-- `2 * n ≤ 2 ^ n` for `n ≥ 2`. -/
 theorem two_mul_le_two_pow {n : ℕ} (hn : 2 ≤ n) : 2 * n ≤ 2 ^ n := by
   induction n, hn using Nat.le_induction with
