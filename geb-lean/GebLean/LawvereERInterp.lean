@@ -87,13 +87,18 @@ instance : erInterpFunctor.Faithful where
       (fun ctx => congrFun heq ctx)
 
 /-- Ackermann at arity `2 → 1` as a function
-`(Fin 2 → ℕ) → (Fin 1 → ℕ)`. -/
+`(Fin 2 → ℕ) → (Fin 1 → ℕ)`.  Since `Nat.ack` is
+not primitive recursive, `ackHom` is not in the
+image of any `ERMorNQuo 2 1` under
+`erInterpFunctor`: see `erInterpFunctor_not_full`. -/
 def ackHom : (Fin 2 → ℕ) → (Fin 1 → ℕ) :=
   fun ctx _ => ack (ctx 0) (ctx 1)
 
-/-- `erInterpFunctor` is not full: `ackHom`, which is
-a well-defined function at the interpretation level,
-is not the image of any morphism class of ER tuples. -/
+/-- `erInterpFunctor` is not full: `ackHom` is a
+well-defined function at the interpretation level
+but cannot be the image of any morphism of the ER
+Lawvere theory, because every such morphism
+interprets as a primitive recursive function. -/
 theorem erInterpFunctor_not_full :
     ¬ erInterpFunctor.Full := by
   intro hfull
@@ -114,7 +119,7 @@ theorem erInterpFunctor_not_full :
     simp only [ERMorNQuo.interp, Quotient.lift_mk]
       at hctx
     exact hctx
-  set t : ERMor1 2 := f_raw 0 with ht
+  set t : ERMor1 2 := f_raw 0
   have hcomp : ∀ ctx : Fin 2 → ℕ,
       t.interp ctx = ack (ctx 0) (ctx 1) := by
     intro ctx
