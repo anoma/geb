@@ -7555,6 +7555,40 @@ def sliceCovFunctor :
     rw [Functor.whiskerRight_comp]
     simp
 
+/--
+Strict two-sided Grothendieck construction, covariant-then-
+contravariant order.  For `H : Dᵒᵖ ⥤ C ⥤ Cat`, first apply
+mathlib's slice-refined `Grothendieck.functor` pointwise in `D` to
+get `Dᵒᵖ ⥤ Over C`, then apply `sliceContraFunctor` to land in
+`Over (Cat.of (C × D))`.
+
+Objects are triples `(c, d, x : H(d, c))` with a strict
+commutativity condition on morphisms expressed by the slice
+structure over `C × D`.
+-/
+def twoSidedGrothendieckCovContra :
+    (Dᵒᵖ ⥤ C ⥤ Cat.{v_sp, u_sp}) ⥤
+      Over (T := Cat.{v_sp, u_sp}) (Cat.of (C × D)) :=
+  (Functor.whiskeringRight _ _ _).obj Grothendieck.functor ⋙
+    sliceContraFunctor
+
+/--
+Strict two-sided Grothendieck construction, contravariant-then-
+covariant order.  For `H : Dᵒᵖ ⥤ C ⥤ Cat`, first flip to
+`C ⥤ Dᵒᵖ ⥤ Cat`, then apply `grothendieckContraFunctorOver`
+pointwise in `C` to get `C ⥤ Over D`, then apply `sliceCovFunctor`
+to land in `Over (Cat.of (C × D))`.
+
+Equal — up to a natural isomorphism proven in
+`twoSidedGrothendieckIso` — to `twoSidedGrothendieckCovContra`.
+-/
+def twoSidedGrothendieckContraCov :
+    (Dᵒᵖ ⥤ C ⥤ Cat.{v_sp, u_sp}) ⥤
+      Over (T := Cat.{v_sp, u_sp}) (Cat.of (C × D)) :=
+  flipFunctor Dᵒᵖ C Cat.{v_sp, u_sp} ⋙
+    (Functor.whiskeringRight _ _ _).obj grothendieckContraFunctorOver ⋙
+    sliceCovFunctor
+
 end StrictTwoSidedGrothendieck
 
 /-! ## Total Category of Functors into `Cat` -/
