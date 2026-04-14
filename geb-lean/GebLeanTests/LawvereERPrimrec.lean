@@ -32,6 +32,19 @@ example : Nat.Primrec'
   ERMor1.sub.toPrimrec'
 
 example : Nat.Primrec'
+    (fun v : List.Vector ℕ 1 =>
+      (ERMor1.comp ERMor1.succ
+        (fun _ : Fin 1 => ERMor1.proj 0)).interp
+          v.get) :=
+  (ERMor1.comp ERMor1.succ
+    (fun _ : Fin 1 => ERMor1.proj 0)).toPrimrec'
+
+example : Nat.Primrec'
+    (fun v : List.Vector ℕ 1 =>
+      (ERMor1.bsum (ERMor1.proj 1)).interp v.get) :=
+  (ERMor1.bsum (ERMor1.proj 1)).toPrimrec'
+
+example : Nat.Primrec'
     (fun v : List.Vector ℕ 2 =>
       ERMor1.expER.interp v.get) :=
   ERMor1.expER.toPrimrec'
