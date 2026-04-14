@@ -95,6 +95,18 @@ side of the story is recorded in
 `GebLean/LawvereERArith.lean`, which defines
 `ERMor1.expER = bprod (proj 1)` with interpretation
 `y ^ n` and the supporting `natBProd_const` helper.
+Phase 4f.2 complete: see `GebLean/Utilities/Tower.lean` for
+the `tower k x = 2^^k(x)` function with monotonicity,
+composition, and multiplicative / power bounds;
+`GebLean/LawvereERBound.lean` for the structural theorem
+`ERMor1.exists_lt_tower` (every ER term is dominated by
+some fixed-height tower applied to `maxCtx + 2`); and
+`GebLean/LawvereERTetration.lean` for the corollary
+`tetration_not_ER` (no `ERMor1 1` term computes tetration)
+and the derived non-fullness theorem
+`erInterpFunctor_not_full_via_tetration`.  This witnesses
+the primrec / elementary gap, strengthening Phase 4f.1's
+Ackermann-based non-fullness.
 
 ## Goal
 
@@ -304,7 +316,7 @@ expanded as each phase becomes ready to implement.
   internal-category structure.
 * Non-fullness of `erInterpFunctor`:
   * [x] 4f.1: Ackermann non-fullness via Primrec' translation.
-  * [ ] 4f.2: Tetration non-fullness (deferred pending research).
+  * [x] 4f.2: Tetration non-elementary via tower-bounding argument.
 * [ ] Factorisation through `LawvereBTQuotCat`: construct
   a functor `LawvereERCat -> LawvereBTQuotCat` (via the
   Goedel encodings `encodeBT`/`decodeBT` from
