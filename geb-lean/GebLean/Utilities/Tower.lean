@@ -46,4 +46,15 @@ theorem tower_mono_right (k : ℕ) {x y : ℕ} (h : x ≤ y) :
   | succ k ih =>
     exact Nat.pow_le_pow_right (by omega) ih
 
+/-- Composition of towers: applying a height-`j` tower to a
+height-`k` tower of `x` equals applying a height-`j+k` tower to `x`. -/
+theorem tower_comp (j k x : ℕ) :
+    tower j (tower k x) = tower (j + k) x := by
+  induction j with
+  | zero => rw [Nat.zero_add]; rfl
+  | succ j ih =>
+    rw [Nat.succ_add]
+    change 2 ^ tower j (tower k x) = 2 ^ tower (j + k) x
+    rw [ih]
+
 end GebLean
