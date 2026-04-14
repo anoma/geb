@@ -163,7 +163,8 @@ def catToLeft : ComposablePair C → BundledHom C := ComposablePair.left
 def catToRight : ComposablePair C → BundledHom C := ComposablePair.right
 
 /-- Composite morphism projection from composable pairs. -/
-def catToComposite : ComposablePair C → BundledHom C := ComposablePair.composite
+def catToComposite : ComposablePair C → BundledHom C :=
+  ComposablePair.composite
 
 /-- The category judgment object data for a category C.
 
