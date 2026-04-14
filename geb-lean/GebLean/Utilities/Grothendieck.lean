@@ -7313,6 +7313,108 @@ def sliceContraFunctor.projC
       Functor.congr_hom hw g.unop.fiber.unop]
     simp [Category.assoc]
 
+/--
+Naturality of `sliceContraFunctor.projC` along a morphism
+`ν : G ⟶ G'` in `Dᵒᵖ ⥤ Over C`:  the contravariant-Grothendieck
+map along the forgetful whiskering of `ν` composes with the
+slice projection of `G'` to give the slice projection of `G`.
+-/
+theorem sliceContraFunctor.projC_naturality
+    {G G' : Dᵒᵖ ⥤ Over (T := Cat.{v_sp, u_sp}) C}
+    (ν : G ⟶ G') :
+    ((grothendieckContraFunctor D).map
+        (Functor.whiskerRight ν (Over.forget _))).toFunctor ⋙
+      sliceContraFunctor.projC G' =
+      sliceContraFunctor.projC G := by
+  fapply CategoryTheory.Functor.ext
+  · intro opg
+    change (G'.obj opg.unop.base).hom.toFunctor.obj
+        ((ν.app opg.unop.base).left.toFunctor.obj
+          opg.unop.fiber.unop) =
+        (G.obj opg.unop.base).hom.toFunctor.obj
+          opg.unop.fiber.unop
+    have hw : (ν.app opg.unop.base).left.toFunctor ⋙
+        (G'.obj opg.unop.base).hom.toFunctor =
+        (G.obj opg.unop.base).hom.toFunctor := by
+      rw [← Cat.Hom.comp_toFunctor]
+      exact congrArg _ (Over.w (ν.app opg.unop.base))
+    exact congrArg (fun F => F.obj opg.unop.fiber.unop) hw
+  · intro opg opg' f
+    simp only [Functor.comp_map]
+    dsimp only [grothendieckContraFunctor, Cat.opFunctor,
+      Functor.comp_map, Functor.whiskeringRight_obj_map,
+      projC, grothendieckFunctor, Functor.op_map,
+      Functor.toCatHom_toFunctor, Cat.Hom.comp_toFunctor]
+    simp only [Functor.op_obj, Grothendieck.map_obj_base,
+      Quiver.Hom.unop_op]
+    rw [Grothendieck.map_map]
+    have hw : (ν.app opg.unop.base).left.toFunctor ⋙
+        (G'.obj opg.unop.base).hom.toFunctor =
+        (G.obj opg.unop.base).hom.toFunctor := by
+      rw [← Cat.Hom.comp_toFunctor]
+      exact congrArg _ (Over.w (ν.app opg.unop.base))
+    simp only [Functor.whiskerRight_app, Functor.toCatHom_toFunctor,
+      Over.forget_map, Functor.op_map]
+    rw [unop_comp, Quiver.Hom.unop_op, Functor.map_comp]
+    rw [show (G'.obj opg.unop.base).hom.toFunctor.map
+        ((ν.app opg.unop.base).left.toFunctor.map f.unop.fiber.unop)
+        = ((ν.app opg.unop.base).left.toFunctor ⋙
+          (G'.obj opg.unop.base).hom.toFunctor).map f.unop.fiber.unop
+          from rfl,
+      Functor.congr_hom hw f.unop.fiber.unop]
+    simp
+
+/--
+The slice-preserving contravariant Grothendieck construction.
+Given `G : Dᵒᵖ ⥤ Over C`, produces an `Over (Cat.of (C × D))` object
+whose underlying category is the contravariant Grothendieck of
+`G ⋙ Over.forget` and whose projection is the pair of
+`sliceContraFunctor.projC` (to `C`) and the standard contra-
+Grothendieck forgetful (to `D`).
+-/
+def sliceContraFunctor :
+    (Dᵒᵖ ⥤ Over (T := Cat.{v_sp, u_sp}) C) ⥤
+      Over (T := Cat.{v_sp, u_sp}) (Cat.of (C × D)) where
+  obj G :=
+    Over.mk (T := Cat.{v_sp, u_sp})
+      ((sliceContraFunctor.projC G).prod'
+        ((grothendieckContraFunctorOver (E := D)).obj
+          (G ⋙ Over.forget _)).hom.toFunctor).toCatHom
+  map {G G'} ν :=
+    Over.homMk
+      ((grothendieckContraFunctor D).map
+        (Functor.whiskerRight ν (Over.forget _)))
+      (by
+        apply Cat.Hom.ext
+        change ((grothendieckContraFunctor D).map
+              (Functor.whiskerRight ν
+                (Over.forget _))).toFunctor ⋙
+            (sliceContraFunctor.projC G').prod'
+              ((grothendieckContraFunctorOver (E := D)).obj
+                (G' ⋙ Over.forget _)).hom.toFunctor =
+            (sliceContraFunctor.projC G).prod'
+              ((grothendieckContraFunctorOver (E := D)).obj
+                (G ⋙ Over.forget _)).hom.toFunctor
+        rw [show ∀ {A B K : Cat.{v_sp, u_sp}}
+              (F : A ⥤ B) (G : A ⥤ K)
+              {A' : Cat.{v_sp, u_sp}} (H : A' ⥤ A),
+              H ⋙ F.prod' G = (H ⋙ F).prod' (H ⋙ G)
+            from fun _ _ _ _ => rfl]
+        congr 1
+        exact sliceContraFunctor.projC_naturality ν)
+  map_id G := by
+    apply Over.OverMorphism.ext
+    change (grothendieckContraFunctor D).map
+        (Functor.whiskerRight (𝟙 G) (Over.forget _)) = _
+    rw [Functor.whiskerRight_id']
+    simp
+  map_comp {G G' G''} ν₁ ν₂ := by
+    apply Over.OverMorphism.ext
+    change (grothendieckContraFunctor D).map
+        (Functor.whiskerRight (ν₁ ≫ ν₂) (Over.forget _)) = _
+    rw [Functor.whiskerRight_comp]
+    simp
+
 end StrictTwoSidedGrothendieck
 
 /-! ## Total Category of Functors into `Cat` -/
