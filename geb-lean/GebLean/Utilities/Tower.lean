@@ -69,6 +69,20 @@ theorem tower_mono_left {k₁ k₂ : ℕ} (h : k₁ ≤ k₂) (x : ℕ) :
   | step _ ih =>
     exact le_trans ih (le_two_pow_self _)
 
+/-- `2 ^ n ≤ tower n 1`: a height-`n` tower of twos dominates a
+single exponential of `n`. -/
+theorem two_pow_le_tower_one (n : ℕ) : 2 ^ n ≤ tower n 1 := by
+  induction n with
+  | zero => decide
+  | succ n ih =>
+    change 2 ^ (n + 1) ≤ 2 ^ tower n 1
+    have hle : n + 1 ≤ tower n 1 := by
+      calc n + 1 ≤ 2 ^ n := by
+            have h := Nat.lt_two_pow_self (n := n)
+            omega
+        _ ≤ tower n 1 := ih
+    exact Nat.pow_le_pow_right (by omega) hle
+
 /-- `2 * n ≤ 2 ^ n` for `n ≥ 2`. -/
 theorem two_mul_le_two_pow {n : ℕ} (hn : 2 ≤ n) : 2 * n ≤ 2 ^ n := by
   induction n, hn using Nat.le_induction with
