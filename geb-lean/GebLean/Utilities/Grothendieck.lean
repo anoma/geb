@@ -7579,8 +7579,11 @@ covariant order.  For `H : Dᵒᵖ ⥤ C ⥤ Cat`, first flip to
 pointwise in `C` to get `C ⥤ Over D`, then apply `sliceCovFunctor`
 to land in `Over (Cat.of (C × D))`.
 
-Equal — up to a natural isomorphism proven in
-`twoSidedGrothendieckIso` — to `twoSidedGrothendieckCovContra`.
+Agrees with `twoSidedGrothendieckCovContra` at the level of object
+data: `twoSidedGrothendieckObjEquiv` provides a type equivalence
+between their underlying object types at each `H`, confirming both
+orderings encode the same Lucyshyn-Wright triples `(d, c, y)`
+modulo nested `Opposite` presentation.
 -/
 def twoSidedGrothendieckContraCov :
     (Dᵒᵖ ⥤ C ⥤ Cat.{v_sp, u_sp}) ⥤
