@@ -84,6 +84,17 @@ on the nose: `Δ.obj 0 = LexObj.terminal` (rfl) and
 `Δ.obj (n + m) = LexObj.prod (Δ.obj n) (Δ.obj m)`
 (via `ERBoolPredE.eval_injective` from Phase 4d.2).
 All of Phase 4 is now complete.
+Phase 4f.1 complete: see `GebLean/LawvereERPrimrec.lean`
+for the structural-recursion translation
+`ERMor1.toPrimrec'` showing every elementary recursive
+term's interpretation is `Nat.Primrec'`, and
+`GebLean/LawvereERInterp.lean` for
+`erInterpFunctor_not_full` deriving non-fullness
+from Mathlib's `not_primrec₂_ack`.  The positive
+side of the story is recorded in
+`GebLean/LawvereERArith.lean`, which defines
+`ERMor1.expER = bprod (proj 1)` with interpretation
+`y ^ n` and the supporting `natBProd_const` helper.
 
 ## Goal
 
@@ -291,12 +302,9 @@ expanded as each phase becomes ready to implement.
     (with PreservesFiniteProducts).
 * [ ] Phase 5: stage (b) internal term type, then stage (c)
   internal-category structure.
-* [ ] Non-fullness: prove `erInterpFunctor` is not full
-  (the Type interpretation admits functions that are not
-  elementary recursive — tetration being the canonical
-  example, Ackermann a stronger witness since it is not
-  primitive recursive either).  Parallels
-  `interpFunctor_not_full` in `LawvereBTInterp.lean`.
+* Non-fullness of `erInterpFunctor`:
+  * [x] 4f.1: Ackermann non-fullness via Primrec' translation.
+  * [ ] 4f.2: Tetration non-fullness (deferred pending research).
 * [ ] Factorisation through `LawvereBTQuotCat`: construct
   a functor `LawvereERCat -> LawvereBTQuotCat` (via the
   Goedel encodings `encodeBT`/`decodeBT` from
