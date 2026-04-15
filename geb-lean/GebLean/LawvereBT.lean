@@ -2426,7 +2426,7 @@ the fold to an injected term gives the step
 function applied to the position, children
 (via `polyFixCoprodStr_inj_child`), and
 recursive IH. -/
-private theorem ind_btMorInject
+theorem ind_btMorInject
     {motive : ∀ {n : ℕ},
       BTMor1 n → Sort _}
     (step : ∀ (i : Fin 4) {n : ℕ}
@@ -2481,8 +2481,10 @@ private theorem ind_btMorInject
   rfl
 
 /-- Transport through a dependent-type sigma
-eliminates when the sigma equality holds. -/
-private theorem subst_sigma_snd
+eliminates when the sigma equality holds.  Used as a
+computation-rule helper when resolving children of
+`BTMor1.fold` after applying `ind_btMorInject`. -/
+theorem subst_sigma_snd
     {B : ℕ → Sort _}
     {a : ℕ} {t : B a}
     (s : Σ k, B k)
@@ -2573,8 +2575,10 @@ private theorem ind_subst_sigma {a : ℕ}
   subst hsig; subst hctx; rfl
 
 /-- The eval argument constructed by
-`BTMor1.fold` for `btMorInject 3`. -/
-private abbrev foldEval {n : ℕ}
+`BTMor1.fold` for `btMorInject 3`.  Exposed so that
+`BTMor1.ind` computation rules for `BTMor1.fold`
+can refer to its children. -/
+abbrev foldEval {n : ℕ}
     (m : ℕ) (f : Fin m → BTMor1 n)
     (g : Fin m → BTMor1 (m + m))
     (tree : BTMor1 n) (j : Fin m) :
@@ -2602,8 +2606,10 @@ private abbrev foldEval {n : ℕ}
         split_ifs <;> rfl)⟩
 
 /-- The `(pbefMor eval).left e` sigma for the
-tree child of a fold (index `m + m`). -/
-private theorem foldChildSigma_tree
+tree child of a fold (index `m + m`).  Serves as a
+computation rule for `BTMor1.ind` applied to
+`BTMor1.fold`. -/
+theorem foldChildSigma_tree
     {n : ℕ} (m : ℕ)
     (f : Fin m → BTMor1 n)
     (g : Fin m → BTMor1 (m + m))
@@ -2622,8 +2628,9 @@ private theorem foldChildSigma_tree
 
 /-- The `(pbefMor eval).left e` sigma for a
 base child of a fold (index `i` with
-`i.val < m`). -/
-private theorem foldChildSigma_base
+`i.val < m`).  Serves as a computation rule for
+`BTMor1.ind` applied to `BTMor1.fold`. -/
+theorem foldChildSigma_base
     {n : ℕ} (m : ℕ)
     (f : Fin m → BTMor1 n)
     (g : Fin m → BTMor1 (m + m))
@@ -2641,8 +2648,9 @@ private theorem foldChildSigma_base
 
 /-- The `(pbefMor eval).left e` sigma for a
 step child of a fold (index `m + j'` with
-`j'.val < m`). -/
-private theorem foldChildSigma_step
+`j'.val < m`).  Serves as a computation rule for
+`BTMor1.ind` applied to `BTMor1.fold`. -/
+theorem foldChildSigma_step
     {n : ℕ} (m : ℕ)
     (f : Fin m → BTMor1 n)
     (g : Fin m → BTMor1 (m + m))
