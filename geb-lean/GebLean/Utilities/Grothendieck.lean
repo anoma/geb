@@ -7755,6 +7755,28 @@ theorem homFiber_comp
   dsimp only [homFiber]
   rfl
 
+/-- Identity morphisms in the covariant-then-contravariant two-
+sided Grothendieck expressed via `mkHom`. -/
+theorem mkHom_id
+    (x : ((twoSidedGrothendieckCovContra.obj H).left : Cat)) :
+    𝟙 x = mkHom (𝟙 (objD x)) (𝟙 (objC x))
+      (eqToHom (by
+        simp [CategoryTheory.Functor.map_id])) := by
+  rw [show 𝟙 x =
+    mkHom (homD (𝟙 x)) (homC (𝟙 x)) (homFiber (𝟙 x)) from rfl]
+  apply eq_of_heq
+  congr 1
+  · exact homC_id x
+  · have hC : homC (𝟙 x) = 𝟙 (objC x) := homC_id x
+    refine HEq.trans (heq_of_eq (homFiber_id x)) ?_
+    refine HEq.trans (eqToHom_heq_id_dom _ _ ?_) ?_
+    · simp [CategoryTheory.Functor.map_id]
+    · refine HEq.trans ?_
+        (eqToHom_heq_id_dom _ _ (by
+          simp [CategoryTheory.Functor.map_id])).symm
+      congr 1
+      simp [hC]
+
 end TwoSidedGrothendieckCovContra
 
 namespace TwoSidedGrothendieckContraCov
@@ -7938,6 +7960,26 @@ theorem homFiber_comp
       ((f ≫ g).fiber.unop.fiber.unop) := by
   dsimp only [homFiber]
   rfl
+
+/-- Identity morphisms in the contravariant-then-covariant two-
+sided Grothendieck expressed via `mkHom`. -/
+theorem mkHom_id
+    (x : ((twoSidedGrothendieckContraCov.obj H).left : Cat)) :
+    𝟙 x = mkHom (𝟙 (objD x)) (𝟙 (objC x))
+      (eqToHom (by
+        simp [CategoryTheory.Functor.map_id])) := by
+  rw [show 𝟙 x =
+    mkHom (homD (𝟙 x)) (homC (𝟙 x)) (homFiber (𝟙 x)) from rfl]
+  apply eq_of_heq
+  congr 1
+  · exact homD_id x
+  · refine HEq.trans (heq_of_eq (homFiber_id x)) ?_
+    refine HEq.trans (eqToHom_heq_id_dom _ _ ?_) ?_
+    · simp [CategoryTheory.Functor.map_id]
+    · refine HEq.trans ?_
+        (eqToHom_heq_id_dom _ _ (by
+          simp [CategoryTheory.Functor.map_id])).symm
+      congr 1
 
 end TwoSidedGrothendieckContraCov
 
