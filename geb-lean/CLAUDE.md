@@ -119,6 +119,15 @@ When making changes to Lean code:
     out any existing functionality unless explicitly instructed to do so.
     If you think some functionality should be removed, please explain
     your reasoning and wait for approval before making the change.
+15. **Keep in mind available skills**:  In general, use
+    `superpowers:writing-plans` to prepare for each chunk of development
+    work, followed by `superpowers:executing-plans` to carry it out.
+    During both planning and implementation, keep in mind skills including
+    `sequential-thinking` and `ralph-loop`, as well as Lean-specific skills
+    (the ones from the Lean marketplace have many sub-skills which it's
+    useful to check the documentation of to see which ones might be
+    useful -- `sorry-filler` is often capable of working out proofs,
+    for example), code-review skills, and repository-management skills.
 
 ## Code Style
 
