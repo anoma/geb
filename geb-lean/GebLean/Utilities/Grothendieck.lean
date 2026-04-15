@@ -7720,6 +7720,41 @@ theorem homC_comp
   simp [Grothendieck.comp_base, eqToHom_unop, homC,
       Grothendieck.functor]
 
+/--
+The fibre component of the identity morphism is a canonical
+`eqToHom`.  Property of the two-layer nested Grothendieck encoding.
+-/
+@[simp]
+theorem homFiber_id
+    (x : ((twoSidedGrothendieckCovContra.obj H).left : Cat)) :
+    homFiber (𝟙 x) = eqToHom (by
+      simp [homD_id, homC_id,
+        CategoryTheory.Functor.map_id]) := by
+  apply eq_of_heq
+  refine HEq.trans ?_ (eqToHom_heq_id_dom _ _ _).symm
+  dsimp only [homFiber]
+  change HEq
+    (Grothendieck.Hom.fiber (Grothendieck.Hom.fiber
+      ((𝟙 x.unop) : x.unop ⟶ x.unop)).unop) _
+  rw [Grothendieck.id_fiber, eqToHom_unop, Grothendieck.fiber_eqToHom]
+  apply (eqToHom_heq_id_dom _ _ _).trans
+  congr 1
+  simp
+  rfl
+
+/--
+The fibre of a composition is the composition of the fibres in the
+inner Grothendieck structure.  Exposed for later use in constructing
+the two-sided Grothendieck equivalence.
+-/
+theorem homFiber_comp
+    {X Y Z : ((twoSidedGrothendieckCovContra.obj H).left : Cat)}
+    (f : X ⟶ Y) (g : Y ⟶ Z) :
+    HEq (homFiber (f ≫ g))
+      ((g.unop ≫ f.unop).fiber.unop.fiber) := by
+  dsimp only [homFiber]
+  rfl
+
 end TwoSidedGrothendieckCovContra
 
 namespace TwoSidedGrothendieckContraCov
@@ -7869,6 +7904,40 @@ theorem homD_comp
   rw [Grothendieck.comp_fiber]
   simp [Grothendieck.comp_base, homD, Grothendieck.functor,
       grothendieckContraFunctorOver, Cat.Over.leftOp]
+
+/--
+The fibre component of the identity morphism is a canonical
+`eqToHom`.  Property of the two-layer nested Grothendieck encoding
+in the contravariant-covariant ordering.
+-/
+@[simp]
+theorem homFiber_id
+    (x : ((twoSidedGrothendieckContraCov.obj H).left : Cat)) :
+    homFiber (𝟙 x) = eqToHom (by
+      simp [homD_id, homC_id,
+        CategoryTheory.Functor.map_id]) := by
+  apply eq_of_heq
+  refine HEq.trans ?_ (eqToHom_heq_id_dom _ _ _).symm
+  dsimp only [homFiber]
+  change HEq
+    (Grothendieck.Hom.fiber ((𝟙 x : x ⟶ x)).fiber.unop).unop _
+  rw [Grothendieck.id_fiber, eqToHom_unop, Grothendieck.fiber_eqToHom,
+      eqToHom_unop]
+  apply (eqToHom_heq_id_dom _ _ _).trans
+  congr 1
+
+/--
+The fibre of a composition is the composition of the fibres in the
+inner Grothendieck structure.  Exposed for later use in constructing
+the two-sided Grothendieck equivalence.
+-/
+theorem homFiber_comp
+    {X Y Z : ((twoSidedGrothendieckContraCov.obj H).left : Cat)}
+    (f : X ⟶ Y) (g : Y ⟶ Z) :
+    HEq (homFiber (f ≫ g))
+      ((f ≫ g).fiber.unop.fiber.unop) := by
+  dsimp only [homFiber]
+  rfl
 
 end TwoSidedGrothendieckContraCov
 
