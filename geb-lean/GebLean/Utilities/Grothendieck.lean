@@ -7691,6 +7691,35 @@ theorem homFiber_mkHom
           ((H.map β.op).app (objC Y)).toFunctor.obj (objFiber Y)) :
     homFiber (mkHom β α φ) = φ := rfl
 
+@[simp]
+theorem homD_id (x : ((twoSidedGrothendieckCovContra.obj H).left : Cat)) :
+    homD (𝟙 x) = 𝟙 (objD x) := rfl
+
+@[simp]
+theorem homC_id (x : ((twoSidedGrothendieckCovContra.obj H).left : Cat)) :
+    homC (𝟙 x) = 𝟙 (objC x) := by
+  change ((𝟙 x).unop.fiber.unop).base = _
+  rw [show (𝟙 x).unop = 𝟙 x.unop from rfl,
+      Grothendieck.id_fiber, eqToHom_unop, Grothendieck.base_eqToHom]
+  rfl
+
+@[simp]
+theorem homD_comp
+    {X Y Z : ((twoSidedGrothendieckCovContra.obj H).left : Cat)}
+    (f : X ⟶ Y) (g : Y ⟶ Z) :
+    homD (f ≫ g) = homD f ≫ homD g := rfl
+
+@[simp]
+theorem homC_comp
+    {X Y Z : ((twoSidedGrothendieckCovContra.obj H).left : Cat)}
+    (f : X ⟶ Y) (g : Y ⟶ Z) :
+    homC (f ≫ g) = homC f ≫ homC g := by
+  change ((f ≫ g).unop.fiber.unop).base = _
+  rw [show (f ≫ g).unop = g.unop ≫ f.unop from rfl,
+      Grothendieck.comp_fiber]
+  simp [Grothendieck.comp_base, eqToHom_unop, homC,
+      Grothendieck.functor]
+
 end TwoSidedGrothendieckCovContra
 
 namespace TwoSidedGrothendieckContraCov
@@ -7812,6 +7841,34 @@ theorem homFiber_mkHom
             (objFiber X) ⟶
           ((H.map β.op).app (objC Y)).toFunctor.obj (objFiber Y)) :
     homFiber (mkHom β α φ) = φ := rfl
+
+@[simp]
+theorem homC_id (x : ((twoSidedGrothendieckContraCov.obj H).left : Cat)) :
+    homC (𝟙 x) = 𝟙 (objC x) := rfl
+
+@[simp]
+theorem homD_id (x : ((twoSidedGrothendieckContraCov.obj H).left : Cat)) :
+    homD (𝟙 x) = 𝟙 (objD x) := by
+  dsimp only [homD]
+  rw [Grothendieck.id_fiber, eqToHom_unop, Grothendieck.base_eqToHom,
+      eqToHom_unop]
+  rfl
+
+@[simp]
+theorem homC_comp
+    {X Y Z : ((twoSidedGrothendieckContraCov.obj H).left : Cat)}
+    (f : X ⟶ Y) (g : Y ⟶ Z) :
+    homC (f ≫ g) = homC f ≫ homC g := rfl
+
+@[simp]
+theorem homD_comp
+    {X Y Z : ((twoSidedGrothendieckContraCov.obj H).left : Cat)}
+    (f : X ⟶ Y) (g : Y ⟶ Z) :
+    homD (f ≫ g) = homD f ≫ homD g := by
+  change ((f ≫ g).fiber.unop.base.unop) = _
+  rw [Grothendieck.comp_fiber]
+  simp [Grothendieck.comp_base, homD, Grothendieck.functor,
+      grothendieckContraFunctorOver, Cat.Over.leftOp]
 
 end TwoSidedGrothendieckContraCov
 
