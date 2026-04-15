@@ -49,6 +49,7 @@ import GebLean.LawvereERInterp
 import GebLean.LawvereERLex
 import GebLean.LawvereERQuot
 import GebLean.LawvereERTetration
+import GebLean.LawvereTreeER
 import GebLean.LayeredEquivalence
 import GebLean.MendlerLambekEndPower
 import GebLean.MendlerLambekPresheaf
