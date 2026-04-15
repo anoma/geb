@@ -40,10 +40,15 @@ import GebLean.LawvereBTInterp
 import GebLean.LawvereBTPrimrec
 import GebLean.LawvereBTQuot
 import GebLean.LawvereER
+import GebLean.LawvereERArith
+import GebLean.LawvereERPrimrec
 import GebLean.LawvereERBool
+import GebLean.LawvereERBound
+import GebLean.LawvereERDelta
 import GebLean.LawvereERInterp
 import GebLean.LawvereERLex
 import GebLean.LawvereERQuot
+import GebLean.LawvereERTetration
 import GebLean.LayeredEquivalence
 import GebLean.MendlerLambekEndPower
 import GebLean.MendlerLambekPresheaf

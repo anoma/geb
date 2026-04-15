@@ -1,12 +1,17 @@
 import GebLeanTests.AcyclicCat
 import GebLeanTests.Basic
 import GebLeanTests.LawvereER
+import GebLeanTests.LawvereERArith
 import GebLeanTests.LawvereERBool
+import GebLeanTests.LawvereERDelta
 import GebLeanTests.LawvereERInterp
 import GebLeanTests.LawvereERLex
+import GebLeanTests.LawvereERPrimrec
 import GebLeanTests.LawvereERQuot
+import GebLeanTests.LawvereERTetration
 import GebLeanTests.LayeredEquivalence
 import GebLeanTests.TestEqualizerCompletion
 import GebLeanTests.TestTreeCalcMeta
 import GebLeanTests.TestTreeCalcPrograms
 import GebLeanTests.TestTreeCalcReduction
+import GebLeanTests.Utilities.Tower

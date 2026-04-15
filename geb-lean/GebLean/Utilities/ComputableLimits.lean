@@ -2,8 +2,11 @@ import Mathlib.CategoryTheory.Limits.HasLimits
 import Mathlib.CategoryTheory.Limits.Shapes.FiniteProducts
 import Mathlib.CategoryTheory.Limits.Shapes.BinaryProducts
 import Mathlib.CategoryTheory.Limits.Shapes.Terminal
+import Mathlib.CategoryTheory.Limits.Shapes.Equalizers
 -- 81 chars (external mathlib path)
 import Mathlib.CategoryTheory.Limits.Constructions.FiniteProductsOfBinaryProducts
+-- 91 chars (external mathlib path)
+import Mathlib.CategoryTheory.Limits.Constructions.LimitsOfProductsAndEqualizers
 
 /-!
 # Computable limits and colimits
@@ -227,5 +230,104 @@ instance chosenToHasFiniteProducts
   hasFiniteProducts_of_has_binary_and_terminal
 
 end Derivations
+
+/-! ## Computable equalizers and finite limits -/
+
+/-- Chosen computable equalizer data for parallel
+morphisms `f, g : A ⟶ B`. -/
+structure ChosenEqualizer
+    {C : Type u} [Category.{v} C]
+    {A B : C} (f g : A ⟶ B) where
+  /-- The equalizer object. -/
+  obj : C
+  /-- The equalizer inclusion morphism. -/
+  ι : obj ⟶ A
+  /-- The inclusion equalizes `f` and `g`. -/
+  ι_eq : ι ≫ f = ι ≫ g
+  /-- Universal lift through the equalizer. -/
+  lift : ∀ {Z : C} (h : Z ⟶ A),
+    h ≫ f = h ≫ g → (Z ⟶ obj)
+  /-- Composition of the lift with the inclusion
+  recovers `h`. -/
+  lift_ι : ∀ {Z : C} (h : Z ⟶ A)
+    (heq : h ≫ f = h ≫ g),
+    lift h heq ≫ ι = h
+  /-- Uniqueness of the universal lift. -/
+  lift_uniq : ∀ {Z : C} (h : Z ⟶ A)
+    (heq : h ≫ f = h ≫ g) (h' : Z ⟶ obj),
+    h' ≫ ι = h → h' = lift h heq
+
+/-- A category with chosen computable equalizers
+for every parallel pair. -/
+class HasChosenEqualizers
+    (C : Type u) [Category.{v} C] where
+  /-- Chosen equalizer for each parallel pair. -/
+  equalizer : ∀ {A B : C} (f g : A ⟶ B),
+    ChosenEqualizer f g
+
+/-- A category with chosen computable finite
+limits: chosen finite products and chosen
+equalizers. -/
+class HasChosenFiniteLimits
+    (C : Type u) [Category.{v} C] extends
+    HasChosenFiniteProducts C,
+    HasChosenEqualizers C
+
+/-! ## Mathlib derivations for equalizers and
+finite limits
+
+`HasChosenEqualizers` and `HasChosenFiniteLimits`
+imply Mathlib's `Limits.HasEqualizers` and
+`Limits.HasFiniteLimits`, validating that the
+chosen versions correctly present the standard
+categorical notions. -/
+
+section EqualizerDerivations
+
+variable {C : Type u} [Category.{v} C]
+
+/-- A `ChosenEqualizer` for `f, g : A ⟶ B` gives
+a Mathlib `Limits.IsLimit` for the corresponding
+parallel-pair fork. -/
+def chosenEqualizerIsLimit
+    [HasChosenEqualizers C]
+    {A B : C} (f g : A ⟶ B) :
+    Limits.IsLimit
+      (Limits.Fork.ofι
+        (HasChosenEqualizers.equalizer f g).ι
+        (HasChosenEqualizers.equalizer f g).ι_eq) :=
+  let e := HasChosenEqualizers.equalizer f g
+  Limits.Fork.IsLimit.mk _
+    (fun s => e.lift s.ι s.condition)
+    (fun s => e.lift_ι s.ι s.condition)
+    (fun s m hm =>
+      e.lift_uniq s.ι s.condition m hm)
+
+/-- A `ChosenEqualizer` gives `HasLimit` for the
+parallel-pair diagram. -/
+instance chosenEqualizerToHasLimit
+    [HasChosenEqualizers C]
+    {A B : C} (f g : A ⟶ B) :
+    Limits.HasLimit (Limits.parallelPair f g) :=
+  ⟨⟨_, chosenEqualizerIsLimit f g⟩⟩
+
+/-- `HasChosenEqualizers` gives Mathlib's
+`HasEqualizers`. -/
+instance chosenToHasEqualizers
+    [HasChosenEqualizers C] :
+    Limits.HasEqualizers C :=
+  Limits.hasEqualizers_of_hasLimit_parallelPair C
+
+/-- `HasChosenFiniteLimits` gives Mathlib's
+`HasFiniteLimits`.  This combines the existing
+finite-products derivation with the new
+equalizers derivation via Mathlib's
+`hasFiniteLimits_of_hasEqualizers_and_finite_products`. -/
+instance chosenToHasFiniteLimits
+    [HasChosenFiniteLimits C] :
+    Limits.HasFiniteLimits C :=
+  Limits.hasFiniteLimits_of_hasEqualizers_and_finite_products
+
+end EqualizerDerivations
 
 end GebLean

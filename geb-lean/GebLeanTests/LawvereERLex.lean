@@ -19,16 +19,10 @@ private def oneZero : ERMor1 0 :=
 -- oneZero evaluates to 1 at the empty context.
 example : oneZero.interp Fin.elim0 = 1 := rfl
 
--- As a Boolean predicate at arity 0.
-private def truePred0 : ERBoolPred 0 :=
-  { pred := oneZero
-    bool := fun _ => by
-      show oneZero.interp _ ≤ 1
-      rfl }
-
--- Construct an object.
+-- Construct an object using the always-true
+-- quotient predicate.
 private def trueObj0 : LexObj :=
-  { arity := 0, pred := truePred0 }
+  { arity := 0, pred := ERBoolPredE.alwaysTrue 0 }
 
 -- Category instance is inferred.
 example : Category LawvereERLexCat := inferInstance
@@ -55,3 +49,45 @@ example : HasChosenFiniteProducts LawvereERLexCat :=
 -- Product of the terminal with itself has arity 0.
 example : (LexObj.prod LexObj.terminal
     LexObj.terminal).arity = 0 := rfl
+
+-- Equalizer of a morphism with itself is a
+-- well-typed object.
+example (a b : LawvereERLexCat)
+    (f : ERLexMorN a b) : LawvereERLexCat :=
+  LexObj.equalizer f f
+
+-- Equalizer morphism types correctly.
+example (a b : LawvereERLexCat)
+    (f g : ERLexMorN a b) :
+    ERLexMorNQuo (LexObj.equalizer f g) a :=
+  ERLexMorNQuo.equalizerMap f g
+
+-- Equalizer arity matches the source arity.
+example (a b : LawvereERLexCat)
+    (f g : ERLexMorN a b) :
+    (LexObj.equalizer f g).arity = a.arity :=
+  rfl
+
+-- Chosen equalizers instance is available.
+example : HasChosenEqualizers LawvereERLexCat :=
+  inferInstance
+
+-- Chosen finite limits instance is available.
+example : HasChosenFiniteLimits LawvereERLexCat :=
+  inferInstance
+
+-- Chosen equalizer of identity with itself
+-- produces a well-typed object.
+example (a b : LawvereERLexCat)
+    (f : a ⟶ b) : LawvereERLexCat :=
+  (HasChosenEqualizers.equalizer f f).obj
+
+-- Mathlib's HasEqualizers is now derived
+-- automatically.
+example : Limits.HasEqualizers LawvereERLexCat :=
+  inferInstance
+
+-- Mathlib's HasFiniteLimits is now derived
+-- automatically.
+example : Limits.HasFiniteLimits LawvereERLexCat :=
+  inferInstance

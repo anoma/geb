@@ -32,9 +32,81 @@ with `ERBoolPred.and`, `LexObj.terminal`,
 `LexObj.prod`, projections `pi1`/`pi2`, pairing,
 universal-property theorems, and the
 `HasChosenFiniteProducts LawvereERLexCat` instance.
-Subsequent sub-phases (4d: equalizers and finite
-limits; 4e: full-and-faithful embedding Δ) remain
-open.
+Phase 4d complete: see `GebLean/LawvereERLex.lean`
+extended with `ERBoolPred.alwaysTrueN`,
+`ERBoolPred.andSameArity`, `ERBoolPred.allEq`
+(componentwise equality predicate),
+`LexObj.equalizer`, equalizer inclusion morphism,
+equalization theorem, and the raw/quotient lift
+constructions with the universal-property
+theorems `equalizerLift_map` and
+`equalizerLift_uniq`; `GebLean/LawvereERBool.lean`
+extended with `ERMor1.boolEqAt`.
+Phase 4d.2 complete: refactored `LexObj.pred` to
+use the quotient `ERBoolPredE` (extensionally
+equal predicates yield equal objects) and built
+`HasChosenEqualizers` and `HasChosenFiniteLimits`
+instances on `LawvereERLexCat` without
+`Quotient.out` or `Classical.choice`.  Key
+ingredients in `LawvereERLex.lean`: `ERBoolPredE`
+quotient with `eval`/`eval_le_one`/`eval_injective`
+(extensionality); `ERBoolPredE.alwaysTrue`/
+`andSameArity`/`and`/`allEq` quotient combinators;
+`equalizerPred_wd` showing the combined
+`a.pred ⊓ allEq f g` is well-defined modulo
+morphism representatives; `LexObj.equalizerQ`
+(chosen equalizer object via `Quotient.liftOn₂`
+on quotient morphisms); `equalizerQMap`,
+`equalizerQLiftQuo` (using `Quotient.hrecOn` for
+the dependent `heq` parameter), and the
+universal-property theorems.
+`GebLean/Utilities/ComputableLimits.lean` extended
+with `ChosenEqualizer`, `HasChosenEqualizers`, and
+`HasChosenFiniteLimits` classes.
+Phase 4d.3 complete: see
+`GebLean/Utilities/ComputableLimits.lean` further
+extended with `chosenEqualizerIsLimit`,
+`chosenEqualizerToHasLimit`,
+`chosenToHasEqualizers`, and
+`chosenToHasFiniteLimits`.  These derive Mathlib's
+`Limits.HasEqualizers` and `Limits.HasFiniteLimits`
+from our `Type`-valued chosen versions, validating
+that the chosen-finite-limit definitions correctly
+present the standard categorical notions.
+Phase 4e complete: see `GebLean/LawvereERDelta.lean`
+for the embedding `erDeltaFunctor : LawvereERCat ⥤
+LawvereERLexCat` (sending arity `n` to the
+trivially-cut-out object `(n, ⊤)`), with `Faithful`
+and `Full` instances and a `PreservesFiniteProducts`
+instance derived from preservation of binary
+products and the terminal.  Object preservation is
+on the nose: `Δ.obj 0 = LexObj.terminal` (rfl) and
+`Δ.obj (n + m) = LexObj.prod (Δ.obj n) (Δ.obj m)`
+(via `ERBoolPredE.eval_injective` from Phase 4d.2).
+All of Phase 4 is now complete.
+Phase 4f.1 complete: see `GebLean/LawvereERPrimrec.lean`
+for the structural-recursion translation
+`ERMor1.toPrimrec'` showing every elementary recursive
+term's interpretation is `Nat.Primrec'`, and
+`GebLean/LawvereERInterp.lean` for
+`erInterpFunctor_not_full` deriving non-fullness
+from Mathlib's `not_primrec₂_ack`.  The positive
+side of the story is recorded in
+`GebLean/LawvereERArith.lean`, which defines
+`ERMor1.expER = bprod (proj 1)` with interpretation
+`y ^ n` and the supporting `natBProd_const` helper.
+Phase 4f.2 complete: see `GebLean/Utilities/Tower.lean` for
+the `tower k x = 2^^k(x)` function with monotonicity,
+composition, and multiplicative / power bounds;
+`GebLean/LawvereERBound.lean` for the structural theorem
+`ERMor1.exists_lt_tower` (every ER term is dominated by
+some fixed-height tower applied to `maxCtx + 2`); and
+`GebLean/LawvereERTetration.lean` for the corollary
+`tetration_not_ER` (no `ERMor1 1` term computes tetration)
+and the derived non-fullness theorem
+`erInterpFunctor_not_full_via_tetration`.  This witnesses
+the primrec / elementary gap, strengthening Phase 4f.1's
+Ackermann-based non-fullness.
 
 ## Goal
 
@@ -109,9 +181,9 @@ Existing modules whose pattern is being mirrored:
   to `(n, 1)`.
 * No free-equalizer-completion route is developed.
 
-### Phase 5 -- Internalization (stages (b) then (c))
+### Phase 5 -- Internalization (Stages 1 and 2)
 
-Stage (b):
+Stage 1 (internal `BTMor1`-analogue as a decidable subobject):
 
 * Define an internal `BTMor1`-analogue `X` as a decidable
   subobject of some `(ℕ, p)` in `LawvereERLexCat`.
@@ -119,7 +191,7 @@ Stage (b):
   landing in or out of `X`.
 * Define an internal typechecker `X -> (ℕ, 1)`.
 
-Stage (c):
+Stage 2 (internal-category structure on the subobject):
 
 * Reuse `X` verbatim as the `C₁` of an internal category.
 * Define the arity object `C₀`.
@@ -132,7 +204,7 @@ Downstream consequence:
 
 * Establish that for every lex functor
   `I : LawvereERLexCat -> D` into a finite-limit category
-  `D`, the image of the stage-(c) internal category is an
+  `D`, the image of the Stage-2 internal category is an
   internal category in `D`.  (This is a general property
   of lex functors; the statement lives at the workstream
   level rather than as separate Lean code for each `D`.)
@@ -180,13 +252,13 @@ Downstream consequence:
    free equalizer completion is planned.
 
 5. **Phase 5 internalisation: subobject-plus-category in
-   two stages.**  Stage (b) builds an internal
+   two stages.**  Stage 1 builds an internal
    `BTMor1`-analogue as a decidable subobject of
    `(ℕ, p)` with ER constructors, destructors, and
-   typechecker.  Stage (c) upgrades the same subobject in
+   typechecker.  Stage 2 upgrades the same subobject in
    place into an internal category in `LawvereERLexCat`
    by adding `src`, `tgt`, `id`, and `comp` morphisms; the
-   stage-(b) subobject is reused verbatim as `C₁`.  No
+   Stage-1 subobject is reused verbatim as `C₁`.  No
    construction is thrown away between stages.
    Downstream finite-limit categories receive their
    internal `BTMor1`-analogue as the image of the
@@ -228,20 +300,23 @@ expanded as each phase becomes ready to implement.
 * [x] Phase 1: inductive term type for ER functions.
 * [x] Phase 2: extensional-equality quotient.
 * [x] Phase 3: Lawvere theory and interpretation functor.
-* [ ] Phase 4: definable-subobject finite-limit category.
+* [x] Phase 4: definable-subobject finite-limit category.
   * [x] 4a: Objects, morphisms, category structure.
   * [x] 4b: Boolean operations on ER terms.
   * [x] 4c: Finite products.
-  * [ ] 4d: Equalizers and finite limits.
-  * [ ] 4e: Full-and-faithful embedding Δ.
-* [ ] Phase 5: stage (b) internal term type, then stage (c)
+  * [x] 4d: Equalizers (raw construction and
+    universal property).
+  * [x] 4d.2: ERBoolPredE quotient + chosen
+    equalizers + HasChosenFiniteLimits.
+  * [x] 4d.3: Mathlib HasEqualizers and
+    HasFiniteLimits derivations.
+  * [x] 4e: Full-and-faithful embedding Δ
+    (with PreservesFiniteProducts).
+* [ ] Phase 5: Stage 1 internal term type, then Stage 2
   internal-category structure.
-* [ ] Non-fullness: prove `erInterpFunctor` is not full
-  (the Type interpretation admits functions that are not
-  elementary recursive — tetration being the canonical
-  example, Ackermann a stronger witness since it is not
-  primitive recursive either).  Parallels
-  `interpFunctor_not_full` in `LawvereBTInterp.lean`.
+* Non-fullness of `erInterpFunctor`:
+  * [x] 4f.1: Ackermann non-fullness via Primrec' translation.
+  * [x] 4f.2: Tetration non-elementary via tower-bounding argument.
 * [ ] Factorisation through `LawvereBTQuotCat`: construct
   a functor `LawvereERCat -> LawvereBTQuotCat` (via the
   Goedel encodings `encodeBT`/`decodeBT` from
