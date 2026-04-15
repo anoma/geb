@@ -7777,6 +7777,46 @@ theorem mkHom_id
       congr 1
       simp [hC]
 
+/-- Composition of `mkHom`-constructed morphisms in the covariant-
+then-contravariant two-sided Grothendieck.  The fibre component is
+the destructured `homFiber` of the underlying composition; together
+with the simp lemmas `homD_comp`, `homC_comp`, `homD_mkHom`,
+`homC_mkHom`, this exposes the Lucyshyn-Wright composition formula
+`(c ⋅ a, d ⋅ b, a*(y) ⋅ d!(x))` for downstream use. -/
+theorem mkHom_comp
+    {x y z : ((twoSidedGrothendieckCovContra.obj H).left : Cat)}
+    (β₁ : objD x ⟶ objD y) (α₁ : objC x ⟶ objC y)
+    (φ₁ : ((H.obj (Opposite.op (objD x))).map α₁).toFunctor.obj
+            (objFiber x) ⟶
+          ((H.map β₁.op).app (objC y)).toFunctor.obj (objFiber y))
+    (β₂ : objD y ⟶ objD z) (α₂ : objC y ⟶ objC z)
+    (φ₂ : ((H.obj (Opposite.op (objD y))).map α₂).toFunctor.obj
+            (objFiber y) ⟶
+          ((H.map β₂.op).app (objC z)).toFunctor.obj (objFiber z)) :
+    mkHom β₁ α₁ φ₁ ≫ mkHom β₂ α₂ φ₂ =
+      mkHom (β₁ ≫ β₂) (α₁ ≫ α₂)
+        (eqToHom (by
+            simp [homC_comp, homC_mkHom]) ≫
+          homFiber (mkHom β₁ α₁ φ₁ ≫ mkHom β₂ α₂ φ₂) ≫
+          eqToHom (by
+            change ((H.map (homD (mkHom β₁ α₁ φ₁ ≫
+                  mkHom β₂ α₂ φ₂)).op).app (objC z)).toFunctor.obj
+                (objFiber z) =
+              ((H.map (β₁ ≫ β₂).op).app (objC z)).toFunctor.obj
+                (objFiber z)
+            rfl)) := by
+  conv_lhs => rw [show (mkHom β₁ α₁ φ₁ ≫ mkHom β₂ α₂ φ₂ :
+    _ ⟶ _) =
+    mkHom (homD (mkHom β₁ α₁ φ₁ ≫ mkHom β₂ α₂ φ₂))
+      (homC (mkHom β₁ α₁ φ₁ ≫ mkHom β₂ α₂ φ₂))
+      (homFiber (mkHom β₁ α₁ φ₁ ≫ mkHom β₂ α₂ φ₂)) from rfl]
+  congr 1
+  · simp
+  · refine HEq.symm ?_
+    refine (eqToHom_comp_heq _ _).trans ?_
+    refine (comp_eqToHom_heq _ _).trans ?_
+    rfl
+
 end TwoSidedGrothendieckCovContra
 
 namespace TwoSidedGrothendieckContraCov
@@ -7980,6 +8020,42 @@ theorem mkHom_id
         (eqToHom_heq_id_dom _ _ (by
           simp [CategoryTheory.Functor.map_id])).symm
       congr 1
+
+/-- Composition of `mkHom`-constructed morphisms in the contra-
+variant-then-covariant two-sided Grothendieck.  The fibre component
+is the destructured `homFiber` of the underlying composition;
+together with the simp lemmas `homD_comp`, `homC_comp`,
+`homD_mkHom`, `homC_mkHom`, this exposes the Lucyshyn-Wright
+composition formula `(c ⋅ a, d ⋅ b, a*(y) ⋅ d!(x))` for downstream
+use. -/
+theorem mkHom_comp
+    {x y z : ((twoSidedGrothendieckContraCov.obj H).left : Cat)}
+    (β₁ : objD x ⟶ objD y) (α₁ : objC x ⟶ objC y)
+    (φ₁ : ((H.obj (Opposite.op (objD x))).map α₁).toFunctor.obj
+            (objFiber x) ⟶
+          ((H.map β₁.op).app (objC y)).toFunctor.obj (objFiber y))
+    (β₂ : objD y ⟶ objD z) (α₂ : objC y ⟶ objC z)
+    (φ₂ : ((H.obj (Opposite.op (objD y))).map α₂).toFunctor.obj
+            (objFiber y) ⟶
+          ((H.map β₂.op).app (objC z)).toFunctor.obj (objFiber z)) :
+    mkHom β₁ α₁ φ₁ ≫ mkHom β₂ α₂ φ₂ =
+      mkHom (β₁ ≫ β₂) (α₁ ≫ α₂)
+        (eqToHom (by
+            simp [homC_comp, homC_mkHom]) ≫
+          homFiber (mkHom β₁ α₁ φ₁ ≫ mkHom β₂ α₂ φ₂) ≫
+          eqToHom (by
+            simp [homD_comp, homD_mkHom])) := by
+  conv_lhs => rw [show (mkHom β₁ α₁ φ₁ ≫ mkHom β₂ α₂ φ₂ :
+    _ ⟶ _) =
+    mkHom (homD (mkHom β₁ α₁ φ₁ ≫ mkHom β₂ α₂ φ₂))
+      (homC (mkHom β₁ α₁ φ₁ ≫ mkHom β₂ α₂ φ₂))
+      (homFiber (mkHom β₁ α₁ φ₁ ≫ mkHom β₂ α₂ φ₂)) from rfl]
+  congr 1
+  · simp
+  · refine HEq.symm ?_
+    refine (eqToHom_comp_heq _ _).trans ?_
+    refine (comp_eqToHom_heq _ _).trans ?_
+    rfl
 
 end TwoSidedGrothendieckContraCov
 
