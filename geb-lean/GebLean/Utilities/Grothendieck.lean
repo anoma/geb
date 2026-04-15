@@ -6962,6 +6962,68 @@ def grothendieckFunctor
 
 end GrothendieckFunctor
 
+/-! ## Slice-Refined Grothendieck Functor -/
+
+section GrothendieckFunctorOver
+
+universe v₁₀ u₁₀
+
+/--
+The slice-refined version of `grothendieckFunctor`, landing in the
+`Over` category of `Cat` over `E`.  Each functor `F : E ⥤ Cat` is
+sent to `(Grothendieck F, Grothendieck.forget F)` as an object of
+`Over E`; morphisms use `grothendieckFunctor.map` together with the
+commutativity `Grothendieck.map α ⋙ Grothendieck.forget _
+= Grothendieck.forget _`.
+
+When the universe levels match, this is definitionally equal to
+mathlib's `Grothendieck.functor`.  The point of this factoring is
+to make explicit that mathlib's slice-refined construction
+`Grothendieck.functor` decomposes into two orthogonal pieces:
+
+1. Our `grothendieckFunctor`, which is universe-polymorphic in four
+   levels (base and fibre `Cat` may live at independent universes).
+2. `Grothendieck.forget` + the slice packaging, which requires the
+   base and fibre to live at the same `Cat` level.
+
+Thus the universe restriction in mathlib's `Grothendieck.functor`
+can be attributed to the slice packaging alone, not to the
+Grothendieck construction itself.
+-/
+def grothendieckFunctorOver {E : Cat.{v₁₀, u₁₀}} :
+    (E ⥤ Cat.{v₁₀, u₁₀}) ⥤ Over (T := Cat.{v₁₀, u₁₀}) E where
+  obj F := Over.mk (Grothendieck.forget F).toCatHom
+  map {_ _} α := Over.homMk ((grothendieckFunctor E).map α)
+    congr($(Grothendieck.functor_comp_forget).toCatHom)
+  map_id F := by
+    ext
+    exact Grothendieck.map_id_eq (F := F)
+  map_comp α β := by
+    ext
+    exact Grothendieck.map_comp_eq α β
+
+/--
+`grothendieckFunctorOver` equals mathlib's `Grothendieck.functor`
+definitionally.  This confirms the factoring: mathlib's
+`Grothendieck.functor` is `grothendieckFunctor` plus the slice
+packaging, with no hidden data.
+-/
+theorem grothendieckFunctorOver_eq_functor {E : Cat.{v₁₀, u₁₀}} :
+    (grothendieckFunctorOver : (E ⥤ Cat.{v₁₀, u₁₀}) ⥤ _) =
+      Grothendieck.functor := rfl
+
+/--
+Forgetting the slice recovers `grothendieckFunctor`.  Together with
+`grothendieckFunctorOver_eq_functor`, this expresses the identity
+`grothendieckFunctor = Grothendieck.functor ⋙ Over.forget _` at
+matched universes.
+-/
+theorem grothendieckFunctorOver_comp_forget {E : Cat.{v₁₀, u₁₀}} :
+    grothendieckFunctorOver (E := E) ⋙ Over.forget _ =
+      grothendieckFunctor E := rfl
+
+end GrothendieckFunctorOver
+
 /-! ## Grothendieck Pre as a Natural Transformation -/
 
 section GrothendieckPre
@@ -7105,6 +7167,454 @@ end GrothendieckContraFunctor
 
 end GrothendieckContraFunctor
 
+/-! ## Slice-Refined Contravariant Grothendieck Functor -/
+
+section GrothendieckContraFunctorOver
+
+universe v₁₁ u₁₁
+
+/--
+Slice-level left-oppotization on `Cat`: given `X : Cat`, the functor
+`Over (Cat.opFunctor.obj X) ⥤ Over X` sending `(Y, f : Y ⟶ Xᵒᵖ)` to
+`(Cat.opFunctor.obj Y, f.toFunctor.leftOp.toCatHom)`.
+
+This is the natural slice-level version of `Functor.leftOp`: it acts
+on the underlying Cat by `Cat.opFunctor` and on the over-projection
+by `Functor.leftOp`, reinterpreting a slice over `Xᵒᵖ` as a slice
+over `X`.
+-/
+def Cat.Over.leftOp {X : Cat.{v₁₁, u₁₁}} :
+    Over (T := Cat.{v₁₁, u₁₁}) (Cat.opFunctor.obj X) ⥤
+      Over (T := Cat.{v₁₁, u₁₁}) X where
+  obj Y := Over.mk Y.hom.toFunctor.leftOp.toCatHom
+  map {Y Y'} f := Over.homMk (Cat.opFunctor.map f.left) (by
+    apply Cat.Hom.ext
+    simp only [Cat.Hom.comp_toFunctor, Cat.opFunctor_map,
+      Functor.toCatHom_toFunctor]
+    have hw : f.left.toFunctor ⋙ Y'.hom.toFunctor = Y.hom.toFunctor := by
+      rw [← Cat.Hom.comp_toFunctor]; exact congrArg _ (Over.w f)
+    calc f.left.toFunctor.op ⋙ Y'.hom.toFunctor.leftOp
+        = (f.left.toFunctor ⋙ Y'.hom.toFunctor).leftOp := rfl
+      _ = Y.hom.toFunctor.leftOp := by rw [hw])
+  map_id Y := by
+    ext
+    simp; rfl
+  map_comp f g := by
+    ext
+    simp; rfl
+
+/--
+The slice-refined version of `grothendieckContraFunctor`, landing
+in the `Over` category of `Cat` over `E`.  Each `F : Eᵒᵖ ⥤ Cat` is
+sent to its contravariant Grothendieck total paired with the
+canonical forgetful to `E`.
+
+Constructed compositionally as:
+1. Post-compose with `Cat.opFunctor` on fibres (`whiskeringRight`).
+2. Apply the slice-refined covariant Grothendieck construction
+   (mathlib's `Grothendieck.functor`) at base `Eᵒᵖ`, landing in
+   `Over Eᵒᵖ`.
+3. Apply slice-level left-oppotization `Cat.Over.leftOp`, landing
+   in `Over E`.
+
+When universe levels match, composition with `Over.forget` recovers
+our `grothendieckContraFunctor` — demonstrating that the slice
+restriction (same universe for base and fibres) comes entirely from
+step 3's `Over` packaging, not from the underlying Grothendieck
+construction.
+-/
+def grothendieckContraFunctorOver {E : Cat.{v₁₁, u₁₁}} :
+    (Eᵒᵖ ⥤ Cat.{v₁₁, u₁₁}) ⥤ Over (T := Cat.{v₁₁, u₁₁}) E :=
+  (Functor.whiskeringRight _ _ _).obj Cat.opFunctor.{v₁₁, u₁₁} ⋙
+    @Grothendieck.functor (Cat.opFunctor.obj E) ⋙
+    Cat.Over.leftOp
+
+/--
+Forgetting the slice recovers `grothendieckContraFunctor` (at
+matched universes).  Analogue of `grothendieckFunctorOver_comp_forget`.
+-/
+theorem grothendieckContraFunctorOver_comp_forget
+    {E : Cat.{v₁₁, u₁₁}} :
+    grothendieckContraFunctorOver (E := E) ⋙ Over.forget _ =
+      grothendieckContraFunctor E := rfl
+
+end GrothendieckContraFunctorOver
+
+/-! ## Strict Two-Sided Grothendieck Construction
+
+This section implements the strict two-sided Grothendieck
+construction for bifunctors `H : Dᵒᵖ ⥤ C ⥤ Cat` (Lucyshyn-Wright
+Def. 7.1 / Stefanich arXiv:2011.03027), landing in
+`Over (Cat.of (C × D))` so that the commutativity conditions of
+the two-sided construction are encoded by slice morphisms.
+
+Built from two reusable slice-preserving Grothendieck primitives:
+`sliceContraFunctor` (contravariant outer) and `sliceCovFunctor`
+(covariant outer).  The two-sided construction is then realized
+compositionally in two equivalent orderings, related by a natural
+isomorphism.
+-/
+
+section StrictTwoSidedGrothendieck
+
+universe v_sp u_sp
+
+variable {C D : Cat.{v_sp, u_sp}}
+
+/--
+Projection from the covariant Grothendieck of a constant-`Cat`-valued
+functor `(Functor.const D).obj X` to the fibre `X`.  On objects, sends
+`⟨d, x⟩ ↦ x`; on morphisms, sends `⟨f, φ⟩ ↦ φ`.
+
+This is the "second projection" in the canonical equivalence
+`Grothendieck ((Functor.const D).obj X) ≃ D × X`.
+-/
+def grothOfConstProj
+    (D : Cat.{v_sp, u_sp}) (X : Cat.{v_sp, u_sp}) :
+    (Cat.of (Grothendieck ((Functor.const D).obj X))) ⥤
+      (X : Cat.{v_sp, u_sp}) where
+  obj g := g.fiber
+  map {g₁ _} f :=
+    eqToHom (rfl : g₁.fiber =
+      (((Functor.const D).obj X).map f.base).toFunctor.obj g₁.fiber)
+      ≫ f.fiber
+  map_id g := by
+    rw [Grothendieck.id_fiber]
+    simp
+  map_comp {_ _ _} f g := by
+    rw [Grothendieck.comp_fiber]
+    simp
+
+/--
+Projection from the contravariant Grothendieck of a constant-
+`Cat`-valued functor `(Functor.const Dᵒᵖ).obj X` to the fibre `X`.
+Dual of `grothOfConstProj`.
+-/
+def grothContraOfConstProj
+    (D : Cat.{v_sp, u_sp}) (X : Cat.{v_sp, u_sp}) :
+    ((grothendieckContraFunctor D).obj
+        ((Functor.const Dᵒᵖ).obj X)).α ⥤
+      (X : Cat.{v_sp, u_sp}) where
+  obj opg := opg.unop.fiber.unop
+  map {_ _} f := f.unop.fiber.unop
+  map_id opg := by
+    change (𝟙 opg).unop.fiber.unop = _
+    rw [show (𝟙 opg).unop = 𝟙 opg.unop from rfl,
+      Grothendieck.id_fiber]
+    simp
+  map_comp {_ _ _} f g := by
+    rw [show (f ≫ g) =
+        Quiver.Hom.op (g.unop ≫ f.unop) from rfl]
+    dsimp only [Quiver.Hom.unop_op]
+    rw [Grothendieck.comp_fiber]
+    simp
+
+/--
+Given `G : Dᵒᵖ ⥤ Over C`, the natural transformation from
+`G ⋙ Over.forget _` to the constant functor at `C` whose component
+at each `d : Dᵒᵖ` is the slice projection `(G.obj d).hom`.
+-/
+def sliceCoverNatTrans
+    (G : Dᵒᵖ ⥤ Over (T := Cat.{v_sp, u_sp}) C) :
+    G ⋙ Over.forget _ ⟶ (Functor.const Dᵒᵖ).obj C where
+  app d := (G.obj d).hom
+  naturality {d₁ d₂} f := by
+    apply Cat.Hom.ext
+    simp only [Cat.Hom.comp_toFunctor, Functor.comp_map,
+      Over.forget_map]
+    change (G.map f).left.toFunctor ⋙ (G.obj d₂).hom.toFunctor =
+        (G.obj d₁).hom.toFunctor ⋙ 𝟭 _
+    rw [Functor.comp_id, ← Cat.Hom.comp_toFunctor]
+    exact congrArg _ (Over.w (G.map f))
+
+/--
+Given `F : C ⥤ Over D`, the natural transformation from
+`F ⋙ Over.forget _` to the constant functor at `D` whose component
+at each `c : C` is the slice projection `(F.obj c).hom`.  Dual of
+`sliceCoverNatTrans`.
+-/
+def sliceUnderNatTrans
+    (F : C ⥤ Over (T := Cat.{v_sp, u_sp}) D) :
+    F ⋙ Over.forget _ ⟶ (Functor.const C).obj D where
+  app c := (F.obj c).hom
+  naturality {c₁ c₂} f := by
+    apply Cat.Hom.ext
+    simp only [Cat.Hom.comp_toFunctor, Functor.comp_map,
+      Over.forget_map]
+    change (F.map f).left.toFunctor ⋙ (F.obj c₂).hom.toFunctor =
+        (F.obj c₁).hom.toFunctor ⋙ 𝟭 _
+    rw [Functor.comp_id, ← Cat.Hom.comp_toFunctor]
+    exact congrArg _ (Over.w (F.map f))
+
+/--
+The `C`-direction projection of the slice-preserving contravariant
+Grothendieck construction.  Given `G : Dᵒᵖ ⥤ Over C`, maps the
+total category of the contravariant Grothendieck of
+`G ⋙ Over.forget` to `C` by applying each fibre's slice
+projection `(G.obj (op d)).hom` at the appropriate object.
+
+Expressed as the composition of the contravariant-Grothendieck map
+along `sliceCoverNatTrans G` (assembling the fibrewise slice
+projections into a natural transformation to the constant functor
+at `C`) with `grothContraOfConstProj`.
+-/
+def sliceContraFunctor.projC
+    (G : Dᵒᵖ ⥤ Over (T := Cat.{v_sp, u_sp}) C) :
+    ((grothendieckContraFunctor D).obj (G ⋙ Over.forget _)).α ⥤
+      (C : Cat.{v_sp, u_sp}) :=
+  ((grothendieckContraFunctor D).map (sliceCoverNatTrans G)).toFunctor
+    ⋙ grothContraOfConstProj D C
+
+/--
+Naturality of `sliceContraFunctor.projC` along a morphism
+`ν : G ⟶ G'` in `Dᵒᵖ ⥤ Over C`:  the contravariant-Grothendieck
+map along the forgetful whiskering of `ν` composes with the
+slice projection of `G'` to give the slice projection of `G`.
+
+Derives from functoriality of `grothendieckContraFunctor D` together
+with the factoring identity
+`whiskerRight ν (Over.forget _) ≫ sliceCoverNatTrans G'
+  = sliceCoverNatTrans G`.
+-/
+theorem sliceContraFunctor.projC_naturality
+    {G G' : Dᵒᵖ ⥤ Over (T := Cat.{v_sp, u_sp}) C}
+    (ν : G ⟶ G') :
+    ((grothendieckContraFunctor D).map
+        (Functor.whiskerRight ν (Over.forget _))).toFunctor ⋙
+      sliceContraFunctor.projC G' =
+      sliceContraFunctor.projC G := by
+  unfold sliceContraFunctor.projC
+  rw [← Functor.assoc, ← Cat.Hom.comp_toFunctor,
+    ← (grothendieckContraFunctor D).map_comp]
+  congr 3
+  apply NatTrans.ext
+  funext d
+  exact Over.w (ν.app d)
+
+/--
+The slice-preserving contravariant Grothendieck construction.
+Given `G : Dᵒᵖ ⥤ Over C`, produces an `Over (Cat.of (C × D))` object
+whose underlying category is the contravariant Grothendieck of
+`G ⋙ Over.forget` and whose projection is the pair of
+`sliceContraFunctor.projC` (to `C`) and the standard contra-
+Grothendieck forgetful (to `D`).
+-/
+def sliceContraFunctor :
+    (Dᵒᵖ ⥤ Over (T := Cat.{v_sp, u_sp}) C) ⥤
+      Over (T := Cat.{v_sp, u_sp}) (Cat.of (C × D)) where
+  obj G :=
+    Over.mk (T := Cat.{v_sp, u_sp})
+      ((sliceContraFunctor.projC G).prod'
+        ((grothendieckContraFunctorOver (E := D)).obj
+          (G ⋙ Over.forget _)).hom.toFunctor).toCatHom
+  map {G G'} ν :=
+    Over.homMk
+      ((grothendieckContraFunctor D).map
+        (Functor.whiskerRight ν (Over.forget _)))
+      (by
+        apply Cat.Hom.ext
+        change ((grothendieckContraFunctor D).map
+              (Functor.whiskerRight ν
+                (Over.forget _))).toFunctor ⋙
+            (sliceContraFunctor.projC G').prod'
+              ((grothendieckContraFunctorOver (E := D)).obj
+                (G' ⋙ Over.forget _)).hom.toFunctor =
+            (sliceContraFunctor.projC G).prod'
+              ((grothendieckContraFunctorOver (E := D)).obj
+                (G ⋙ Over.forget _)).hom.toFunctor
+        rw [show ∀ {A B K : Cat.{v_sp, u_sp}}
+              (F : A ⥤ B) (G : A ⥤ K)
+              {A' : Cat.{v_sp, u_sp}} (H : A' ⥤ A),
+              H ⋙ F.prod' G = (H ⋙ F).prod' (H ⋙ G)
+            from fun _ _ _ _ => rfl]
+        congr 1
+        exact sliceContraFunctor.projC_naturality ν)
+  map_id G := by
+    apply Over.OverMorphism.ext
+    change (grothendieckContraFunctor D).map
+        (Functor.whiskerRight (𝟙 G) (Over.forget _)) = _
+    rw [Functor.whiskerRight_id']
+    simp
+  map_comp {G G' G''} ν₁ ν₂ := by
+    apply Over.OverMorphism.ext
+    change (grothendieckContraFunctor D).map
+        (Functor.whiskerRight (ν₁ ≫ ν₂) (Over.forget _)) = _
+    rw [Functor.whiskerRight_comp]
+    simp
+
+/--
+The `D`-direction projection of the slice-preserving covariant
+Grothendieck construction.  Given `F : C ⥤ Over D`, maps the total
+category of the covariant Grothendieck of `F ⋙ Over.forget` to `D`
+by applying each fibre's slice projection `(F.obj c).hom` at the
+appropriate object.
+-/
+def sliceCovFunctor.projD
+    (F : C ⥤ Over (T := Cat.{v_sp, u_sp}) D) :
+    ((grothendieckFunctor C).obj (F ⋙ Over.forget _)).α ⥤
+      (D : Cat.{v_sp, u_sp}) :=
+  ((grothendieckFunctor C).map (sliceUnderNatTrans F)).toFunctor
+    ⋙ grothOfConstProj C D
+
+/--
+Naturality of `sliceCovFunctor.projD` along a morphism
+`ν : F ⟶ F'` in `C ⥤ Over D`:  the covariant-Grothendieck map
+along the forgetful whiskering of `ν` composes with the slice
+projection of `F'` to give the slice projection of `F`.
+
+Derives from functoriality of `grothendieckFunctor C` together
+with the factoring identity
+`whiskerRight ν (Over.forget _) ≫ sliceUnderNatTrans F'
+  = sliceUnderNatTrans F`.
+-/
+theorem sliceCovFunctor.projD_naturality
+    {F F' : C ⥤ Over (T := Cat.{v_sp, u_sp}) D}
+    (ν : F ⟶ F') :
+    ((grothendieckFunctor C).map
+        (Functor.whiskerRight ν (Over.forget _))).toFunctor ⋙
+      sliceCovFunctor.projD F' =
+      sliceCovFunctor.projD F := by
+  unfold sliceCovFunctor.projD
+  rw [← Functor.assoc, ← Cat.Hom.comp_toFunctor,
+    ← (grothendieckFunctor C).map_comp]
+  congr 3
+  apply NatTrans.ext
+  funext c
+  exact Over.w (ν.app c)
+
+/--
+The slice-preserving covariant Grothendieck construction.
+Given `F : C ⥤ Over D`, produces an `Over (Cat.of (C × D))` object
+whose underlying category is the covariant Grothendieck of
+`F ⋙ Over.forget` and whose projection is the pair of the standard
+covariant-Grothendieck forgetful (to `C`) and
+`sliceCovFunctor.projD` (to `D`).
+-/
+def sliceCovFunctor :
+    (C ⥤ Over (T := Cat.{v_sp, u_sp}) D) ⥤
+      Over (T := Cat.{v_sp, u_sp}) (Cat.of (C × D)) where
+  obj F :=
+    Over.mk (T := Cat.{v_sp, u_sp})
+      (((grothendieckFunctorOver (E := C)).obj
+          (F ⋙ Over.forget _)).hom.toFunctor.prod'
+        (sliceCovFunctor.projD F)).toCatHom
+  map {F F'} ν :=
+    Over.homMk
+      ((grothendieckFunctor C).map
+        (Functor.whiskerRight ν (Over.forget _)))
+      (by
+        apply Cat.Hom.ext
+        change ((grothendieckFunctor C).map
+              (Functor.whiskerRight ν
+                (Over.forget _))).toFunctor ⋙
+            ((grothendieckFunctorOver (E := C)).obj
+                (F' ⋙ Over.forget _)).hom.toFunctor.prod'
+              (sliceCovFunctor.projD F') =
+            ((grothendieckFunctorOver (E := C)).obj
+                (F ⋙ Over.forget _)).hom.toFunctor.prod'
+              (sliceCovFunctor.projD F)
+        rw [show ∀ {A B K : Cat.{v_sp, u_sp}}
+              (F : A ⥤ B) (G : A ⥤ K)
+              {A' : Cat.{v_sp, u_sp}} (H : A' ⥤ A),
+              H ⋙ F.prod' G = (H ⋙ F).prod' (H ⋙ G)
+            from fun _ _ _ _ => rfl]
+        congr 1
+        exact sliceCovFunctor.projD_naturality ν)
+  map_id F := by
+    apply Over.OverMorphism.ext
+    change (grothendieckFunctor C).map
+        (Functor.whiskerRight (𝟙 F) (Over.forget _)) = _
+    rw [Functor.whiskerRight_id']
+    simp
+    rfl
+  map_comp {F F' F''} ν₁ ν₂ := by
+    apply Over.OverMorphism.ext
+    change (grothendieckFunctor C).map
+        (Functor.whiskerRight (ν₁ ≫ ν₂) (Over.forget _)) = _
+    rw [Functor.whiskerRight_comp]
+    simp
+
+/--
+Strict two-sided Grothendieck construction, covariant-then-
+contravariant order.  For `H : Dᵒᵖ ⥤ C ⥤ Cat`, first apply
+mathlib's slice-refined `Grothendieck.functor` pointwise in `D` to
+get `Dᵒᵖ ⥤ Over C`, then apply `sliceContraFunctor` to land in
+`Over (Cat.of (C × D))`.
+
+Objects are triples `(c, d, x : H(d, c))` with a strict
+commutativity condition on morphisms expressed by the slice
+structure over `C × D`.
+-/
+def twoSidedGrothendieckCovContra :
+    (Dᵒᵖ ⥤ C ⥤ Cat.{v_sp, u_sp}) ⥤
+      Over (T := Cat.{v_sp, u_sp}) (Cat.of (C × D)) :=
+  (Functor.whiskeringRight _ _ _).obj Grothendieck.functor ⋙
+    sliceContraFunctor
+
+/--
+Strict two-sided Grothendieck construction, contravariant-then-
+covariant order.  For `H : Dᵒᵖ ⥤ C ⥤ Cat`, first flip to
+`C ⥤ Dᵒᵖ ⥤ Cat`, then apply `grothendieckContraFunctorOver`
+pointwise in `C` to get `C ⥤ Over D`, then apply `sliceCovFunctor`
+to land in `Over (Cat.of (C × D))`.
+
+Agrees with `twoSidedGrothendieckCovContra` at the level of object
+data: `twoSidedGrothendieckObjEquiv` provides a type equivalence
+between their underlying object types at each `H`, confirming both
+orderings encode the same Lucyshyn-Wright triples `(d, c, y)`
+modulo nested `Opposite` presentation.
+-/
+def twoSidedGrothendieckContraCov :
+    (Dᵒᵖ ⥤ C ⥤ Cat.{v_sp, u_sp}) ⥤
+      Over (T := Cat.{v_sp, u_sp}) (Cat.of (C × D)) :=
+  flipFunctor Dᵒᵖ C Cat.{v_sp, u_sp} ⋙
+    (Functor.whiskeringRight _ _ _).obj grothendieckContraFunctorOver ⋙
+    sliceCovFunctor
+
+/--
+Forward object map of the pointwise two-sided Grothendieck object
+equivalence.  Reassociates the nested `Opposite`-wrapped triple
+`(d, c, y)` from the covariant-then-contravariant presentation to
+the contravariant-then-covariant presentation.
+-/
+def twoSidedGrothendieckObjEquiv.toFun
+    (H : Dᵒᵖ ⥤ C ⥤ Cat.{v_sp, u_sp})
+    (x : ((twoSidedGrothendieckCovContra.obj H).left : Type _)) :
+    ((twoSidedGrothendieckContraCov.obj H).left : Type _) :=
+  ⟨x.unop.fiber.unop.base,
+    Opposite.op ⟨x.unop.base, Opposite.op x.unop.fiber.unop.fiber⟩⟩
+
+/--
+Backward object map of the pointwise two-sided Grothendieck object
+equivalence.  Inverse of `twoSidedGrothendieckObjEquiv.toFun`.
+-/
+def twoSidedGrothendieckObjEquiv.invFun
+    (H : Dᵒᵖ ⥤ C ⥤ Cat.{v_sp, u_sp})
+    (y : ((twoSidedGrothendieckContraCov.obj H).left : Type _)) :
+    ((twoSidedGrothendieckCovContra.obj H).left : Type _) :=
+  Opposite.op
+    ⟨y.fiber.unop.base,
+      Opposite.op ⟨y.base, y.fiber.unop.fiber.unop⟩⟩
+
+/--
+Pointwise type equivalence between the object types underlying the
+two orderings of the strict two-sided Grothendieck construction.
+Both orderings encode the same triple data `(d, c, y)` (with
+`d : D`, `c : C`, and `y : (H.obj (op d)).obj c`), differing only in
+the nested `Opposite` presentation.  A full equivalence of
+categories is not provided here.
+-/
+def twoSidedGrothendieckObjEquiv
+    (H : Dᵒᵖ ⥤ C ⥤ Cat.{v_sp, u_sp}) :
+    ((twoSidedGrothendieckCovContra.obj H).left : Type _) ≃
+      ((twoSidedGrothendieckContraCov.obj H).left : Type _) where
+  toFun := twoSidedGrothendieckObjEquiv.toFun H
+  invFun := twoSidedGrothendieckObjEquiv.invFun H
+  left_inv _ := rfl
+  right_inv _ := rfl
+
+end StrictTwoSidedGrothendieck
+
 /-! ## Total Category of Functors into `Cat` -/
 
 section CatOverCat
@@ -7112,16 +7622,45 @@ section CatOverCat
 universe v₉ u₉
 
 /--
+The functor sending a category `D` to the category of small
+categories equipped with a functor into `D`.  That is, on objects
+`D ↦ {(E : Cat, G : E ⥤ D)}`, on morphisms `α : D ⥤ D'` by
+post-composing `G` with `α`.
+
+Defined as the unstraightening over `Cat` of the `Cat`-valued
+hom profunctor (`catHomProfunctor.flip`).
+-/
+abbrev catOverCatFunctor :=
+  catHomProfunctor.{v₉, u₉, max v₉ u₉, max (v₉+1) (u₉+1)}.flip ⋙
+    grothendieckContraFunctor Cat.{v₉, u₉}
+
+/--
 The total category of all (small) categories equipped with a
 functor into `Cat`.  Objects are pairs `(E : Cat, G : E ⥤ Cat)`;
 morphisms `(E, G) ⟶ (E', G')` are pairs `(f : E ⥤ E', φ : G ⟶ f ⋙ G')`.
 
-Defined by applying the contravariant Grothendieck construction to
-the Cat-valued contravariant hom functor at `Cat`.
+Recovered as the fibre of `catOverCatFunctor` at `Cat`.
 -/
 abbrev catOverCat :=
-  (grothendieckContraFunctor Cat.{v₉, u₉}).obj
-    (catContraHomFunctor (Cat.of Cat.{v₉, u₉}))
+  catOverCatFunctor.{v₉, u₉}.obj (Cat.of Cat.{v₉, u₉})
+
+/--
+The total category obtained by applying the covariant Grothendieck
+construction to `catOverCatFunctor`.  Objects are triples
+`(D : Cat, E : Cat, G : E ⥤ D)`; morphisms
+`(D, E, G) ⟶ (D', E', G')` are triples
+`(α : D ⥤ D', k : E ⥤ E', φ : G ⋙ α ⟶ k ⋙ G')` — commutative
+squares of functors that commute up to a (not necessarily
+invertible) natural transformation.
+
+The previously-defined `catOverCat` is the fibre of this total
+category over the object `Cat.of Cat`; i.e. when we restrict `D`
+to be `Cat` itself.
+-/
+abbrev catOverCatTotal :=
+  (grothendieckFunctor
+    Cat.{max v₉ u₉, max (v₉+1) (u₉+1)}).obj
+    catOverCatFunctor.{v₉, u₉}
 
 /--
 The unstraightening functor from `catOverCat` to `Cat`, sending
@@ -7230,7 +7769,7 @@ def unstraighten : catOverCat.{v₉, u₉} ⥤ Cat.{v₉, u₉} where
             (GrothendieckContraFunctor.homFiber
               (C := Cat.{v₉, u₉}) n))) ⋙
         Grothendieck.pre
-            (((catContraHomFunctor
+            (((catHomProfunctor.flip.obj
                   (Cat.of Cat.{v₉, u₉})).map
               (GrothendieckContraFunctor.homBase
                 (C := Cat.{v₉, u₉}) n).op).toFunctor.obj
