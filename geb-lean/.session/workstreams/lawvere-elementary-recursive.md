@@ -324,31 +324,41 @@ Existing modules whose pattern is being mirrored:
 
 ### Phase 5 -- Internalization (Stages 1 and 2)
 
+Phase 5 is developed primarily inside `LawvereTreeERLexCat`, where
+the internal `BTMor1`-analogue sits as a decidable subobject of `BT`
+itself and constructors/destructors are tree-native.  By the Phase
+4g Lex-level isomorphism `LawvereTreeERLexCat ≅ LawvereERLexCat`,
+the resulting internal-category construction also presents as an
+internal category in `LawvereERLexCat`; no separate development is
+required on the `ℕ`-encoded side.
+
 Stage 1 (internal `BTMor1`-analogue as a decidable subobject):
 
 * Define an internal `BTMor1`-analogue `X` as a decidable
-  subobject of some `(ℕ, p)` in `LawvereERLexCat`.
-* Define ER morphisms for `proj`, `leaf`, `branch`, `fold`
+  subobject of some `(BT, p)` in `LawvereTreeERLexCat`.
+* Define tree-ER morphisms for `proj`, `leaf`, `branch`, `fold`
   landing in or out of `X`.
-* Define an internal typechecker `X -> (ℕ, 1)`.
+* Define an internal typechecker `X -> (ℕ, 1)` (or equivalently
+  to `(BT, 1)`).
 
 Stage 2 (internal-category structure on the subobject):
 
 * Reuse `X` verbatim as the `C₁` of an internal category.
 * Define the arity object `C₀`.
 * Define `src, tgt : X -> C₀`, `id : C₀ -> X`, and
-  `comp : X ×_{C₀} X -> X` as ER morphisms.
+  `comp : X ×_{C₀} X -> X` as tree-ER morphisms.
 * Check the unit and associativity laws as equations of
-  `LawvereERLexCat` morphisms.
+  `LawvereTreeERLexCat` morphisms.
 
 Downstream consequence:
 
 * Establish that for every lex functor
-  `I : LawvereERLexCat -> D` into a finite-limit category
+  `I : LawvereTreeERLexCat -> D` into a finite-limit category
   `D`, the image of the Stage-2 internal category is an
-  internal category in `D`.  (This is a general property
-  of lex functors; the statement lives at the workstream
-  level rather than as separate Lean code for each `D`.)
+  internal category in `D`.  (By the Phase 4g isomorphism,
+  this is equivalent to stating the same property for
+  `I : LawvereERLexCat -> D`; the tree form is more natural
+  for the construction itself.)
 
 ## Decisions So Far
 
@@ -393,19 +403,21 @@ Downstream consequence:
    free equalizer completion is planned.
 
 5. **Phase 5 internalisation: subobject-plus-category in
-   two stages.**  Stage 1 builds an internal
-   `BTMor1`-analogue as a decidable subobject of
-   `(ℕ, p)` with ER constructors, destructors, and
-   typechecker.  Stage 2 upgrades the same subobject in
-   place into an internal category in `LawvereERLexCat`
-   by adding `src`, `tgt`, `id`, and `comp` morphisms; the
-   Stage-1 subobject is reused verbatim as `C₁`.  No
-   construction is thrown away between stages.
-   Downstream finite-limit categories receive their
-   internal `BTMor1`-analogue as the image of the
-   `LawvereERLexCat` version under a lex
-   (elementary-function-preserving) functor, which
-   transports the full internal-category structure in one
+   two stages, in the tree form.**  With Phase 4g in
+   place, Phase 5 is developed inside
+   `LawvereTreeERLexCat`, where tree structure is native.
+   Stage 1 builds an internal `BTMor1`-analogue as a
+   decidable subobject of `(BT, p)` with tree-ER
+   constructors, destructors, and typechecker.  Stage 2
+   upgrades the same subobject in place into an internal
+   category in `LawvereTreeERLexCat` by adding `src`,
+   `tgt`, `id`, and `comp` morphisms; the Stage-1
+   subobject is reused verbatim as `C₁`.  No construction
+   is thrown away between stages.  The Phase 4g
+   Lex-level isomorphism carries the resulting internal
+   category to `LawvereERLexCat` automatically, so
+   downstream lex functors out of either category
+   transport the internal-category structure in one
    functor application.
 
 ### Derivations verified for the chosen basis
