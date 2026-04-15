@@ -108,6 +108,147 @@ and the derived non-fullness theorem
 the primrec / elementary gap, strengthening Phase 4f.1's
 Ackermann-based non-fullness.
 
+## Phase 4g: Tree-Native ER Parallel Development (planned)
+
+Before proceeding to Phase 5, build a tree-native presentation of
+elementary recursive functions (`LawvereTreeERCat` and
+`LawvereTreeERLexCat`), categorically isomorphic to `LawvereERCat`
+and `LawvereERLexCat` respectively.  Tree-ER expresses ER-level
+computations over binary trees natively (via `leaf`, `branch`,
+`proj`, `fold`, `comp`), without arithmetic primitives — arithmetic
+is derived once and reused.  Both presentations remain first-class
+citizens in the project; the isomorphism provides free transport of
+proofs between them.  Phase 5's internal categorical development
+then has a choice of target; current expectation is that it is more
+natural in `LawvereTreeERLexCat`.
+
+### Motivation
+
+* Programmer ergonomics: data-structure-style algorithms (tree
+  calculus, fold/catamorphism, internal term types) read naturally
+  on trees, awkwardly through Gödel encoding.
+* Mathematical validation: the existing literature on elementary
+  recursive functions is almost entirely in `ℕ`-based form.  Proving
+  categorical isomorphism between a tree form and the established
+  `LawvereERCat` gives high confidence that the tree form captures
+  exactly ER — neither strengthened nor weakened by accident.
+* Dual-side reasoning: "applications are usually most convenient in
+  trees; proofs are usually most convenient in natural numbers".
+  The isomorphism transports results across whichever side is
+  easier for each step.
+
+### Design decisions
+
+1. **Primary representations: both.**  `LawvereERCat` (existing,
+   ℕ-based, literature-matched) and `LawvereTreeERCat` (new,
+   tree-native) both receive full Lawvere-theory development
+   including finite-limit completion.  The isomorphism is proved
+   once and used as transport in both directions.
+
+2. **Tree-ER syntax: depth-2 stratified `BTMor1`.**  The term type
+   `TreeERMor1 n` is the fold-nesting-depth-≤-2 fragment of
+   `BTMor1 n`.  This matches the Leivant 1999 / Beckmann-Weiermann
+   2000 characterization of E_3 as the two-tier ramified recursion
+   over free algebras.  Equivalently (our Phase 4f.2 result), it is
+   the tower-bounded fragment of `BTMor1`.
+
+3. **Minimal-core generators.**  Tree-ER's generators are exactly
+   `BTMor1`'s: `leaf`, `branch`, `proj`, `fold`, `comp`.  No
+   arithmetic primitives.  Arithmetic is built as derived
+   definitions (`succ`, `sub`, `bsum`, `bprod`) each as a specific
+   depth-≤-2 tree-ER term.
+
+4. **Gödel encoding: Szudzik's elegant pairing, as written.**  The
+   arithmetic of `encodeBT`/`decodeBT` follows Szudzik's paper
+   (`.claude/docs/ElegantPairing.pdf`) verbatim.  Szudzik's cleaner
+   max-shell property (`max(x, y) = isqrt(pair(x, y))`) makes
+   reduction rules easier to state; the project already has
+   `GebLean/NatElegantPair.lean` infrastructure.  Cantor pairing
+   would be categorically equivalent but less ergonomic.
+
+5. **Categorical isomorphism, not just equivalence.**  Construct
+   functors `J : LawvereERCat → LawvereTreeERCat` and
+   `K : LawvereTreeERCat → LawvereERCat` such that `KJ = 1` and
+   `JK = 1` hold on the nose.  Falling back to equivalence is
+   acceptable only if isomorphism turns out to be provably
+   impossible.
+
+6. **Transport via faithful-inclusion.**  `LawvereTreeERCat` embeds
+   as a sub-Lawvere-theory of `LawvereBTQuotCat` via a faithful
+   inclusion functor.  Prove equations in `LawvereBTQuotCat` (where
+   all BT machinery is available) and lift them to
+   `LawvereTreeERCat` via faithfulness.  Similarly for native-Lean
+   equations: prove in `Lean` on BT directly and lift.
+
+7. **Small arithmetic functions with proven reduction rules.**
+   Every derived arithmetic primitive (`pair`, `unpair`, `succ`,
+   `sub`, `isqrt`, etc.) gets `@[simp]`-marked computation
+   theorems.  Clients should not need to unfold multiple levels to
+   establish their own reduction rules.
+
+### Sub-project structure
+
+* **4g.1 — Tree-ER core Lawvere theory** (new modules
+  `GebLean/LawvereTreeER.lean`, `GebLean/LawvereTreeERQuot.lean`,
+  `GebLean/LawvereTreeERInterp.lean`): term type, quotient,
+  category instance, `HasChosenFiniteProducts`, faithful interp
+  functor to `Type`.
+* **4g.2 — Tree-ER ↔ LawvereER base-level isomorphism** (new
+  modules `GebLean/LawvereTreeERArith.lean` for derived
+  arithmetic, `GebLean/LawvereTreeERLawvereEquiv.lean` for the
+  isomorphism): bidirectional translation, mutual-inverse
+  functoriality, Gödel arithmetic on trees.
+* **4g.3 — Transport of Phase 4f results to Tree-ER** (new
+  modules `GebLean/LawvereTreeERBound.lean`,
+  `GebLean/LawvereTreeERPrimrec.lean`,
+  `GebLean/LawvereTreeERTetration.lean`): tower bound, Primrec'
+  translation, non-fullness via Ackermann, non-elementarity via
+  tetration — mostly corollaries of the iso + existing
+  LawvereER results.
+* **4g.4 — Tree-ERLexCat + Lex-level isomorphism parity** (new
+  modules `GebLean/LawvereTreeERLex.lean`,
+  `GebLean/LawvereTreeERDelta.lean`): decidable-subobject
+  finite-limit closure + Δ embedding, mirroring Phase 4a–4e.
+  Extend the iso to `LawvereTreeERLexCat ≅ LawvereERLexCat`.
+* **4g.5 — Documentation** (`docs/tree-er-correspondence.md`):
+  central reference with full Axt / Grzegorczyk / Meyer-Ritchie /
+  Leivant / Beckmann-Weiermann correspondence map, citations, and
+  links to key theorems.
+
+### Literature references
+
+* Leivant, D. "Ramified recurrence and computational complexity
+  III: Higher-type recurrence and elementary complexity." *Annals
+  of Pure and Applied Logic* 96 (1999), 209–229.  Tree-native
+  characterization of E_n over free algebras via ramified
+  recurrence at depth n−1.
+* Beckmann, A. & Weiermann, A. "Characterizing the elementary
+  recursive functions by a fragment of Gödel's T."  *Archive for
+  Mathematical Logic* 39 (2000), 475–491.  Depth-2 fold over type-0
+  iterators gives exactly E_3.
+* Meyer, A. & Ritchie, D. "The complexity of loop programs."
+  *Proc. ACM 22nd National Conference* (1967).  LOOP program depth
+  stratification.
+* Fachini, E. & Maggiolo-Schettini, A. "A hierarchy of primitive
+  recursive sequence functions."  *ITA* 13 (1979).  Establishes
+  `L_i = E_{i+1}` for `i > 1`.
+* Szudzik, M. "An elegant pairing function."  `.claude/docs/ElegantPairing.pdf`.
+* Péter, R.  *Recursive Functions.*  Academic Press, 1967.
+  Standard reference for reducibility of mutual primitive recursion
+  to non-mutual.
+
+### Phase 5 impact
+
+Phase 5 (internal categorical development) originally targeted
+`LawvereERLexCat`.  With Phase 4g in place, the internal
+`BTMor1`-analogue, arity object, source/target/identity/composition
+morphisms can be defined inside `LawvereTreeERLexCat` instead, where
+the tree structure is native rather than encoded.  The isomorphism
+transports the resulting internal category to
+`LawvereERLexCat` for free, so downstream lex functors out of either
+preserve the internal structure.  The Phase 5 re-plan will occur
+after Phase 4g.1 so the target is nailed down.
+
 ## Goal
 
 Produce a category analogous to `LawvereBTQuotCat` /
@@ -312,8 +453,16 @@ expanded as each phase becomes ready to implement.
     HasFiniteLimits derivations.
   * [x] 4e: Full-and-faithful embedding Δ
     (with PreservesFiniteProducts).
+* [ ] Phase 4g: Tree-Native ER parallel development.
+  * [ ] 4g.1: Tree-ER core Lawvere theory.
+  * [ ] 4g.2: Tree-ER ↔ LawvereER base-level isomorphism
+    (+ Gödel arithmetic on trees).
+  * [ ] 4g.3: Transport of Phase 4f results to Tree-ER.
+  * [ ] 4g.4: Tree-ERLexCat + Lex-level isomorphism parity.
+  * [ ] 4g.5: `docs/tree-er-correspondence.md`.
 * [ ] Phase 5: Stage 1 internal term type, then Stage 2
-  internal-category structure.
+  internal-category structure.  Target category to be
+  decided after Phase 4g.1.
 * Non-fullness of `erInterpFunctor`:
   * [x] 4f.1: Ackermann non-fullness via Primrec' translation.
   * [x] 4f.2: Tetration non-elementary via tower-bounding argument.
