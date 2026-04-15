@@ -181,9 +181,9 @@ Existing modules whose pattern is being mirrored:
   to `(n, 1)`.
 * No free-equalizer-completion route is developed.
 
-### Phase 5 -- Internalization (stages (b) then (c))
+### Phase 5 -- Internalization (Stages 1 and 2)
 
-Stage (b):
+Stage 1 (internal `BTMor1`-analogue as a decidable subobject):
 
 * Define an internal `BTMor1`-analogue `X` as a decidable
   subobject of some `(ℕ, p)` in `LawvereERLexCat`.
@@ -191,7 +191,7 @@ Stage (b):
   landing in or out of `X`.
 * Define an internal typechecker `X -> (ℕ, 1)`.
 
-Stage (c):
+Stage 2 (internal-category structure on the subobject):
 
 * Reuse `X` verbatim as the `C₁` of an internal category.
 * Define the arity object `C₀`.
@@ -204,7 +204,7 @@ Downstream consequence:
 
 * Establish that for every lex functor
   `I : LawvereERLexCat -> D` into a finite-limit category
-  `D`, the image of the stage-(c) internal category is an
+  `D`, the image of the Stage-2 internal category is an
   internal category in `D`.  (This is a general property
   of lex functors; the statement lives at the workstream
   level rather than as separate Lean code for each `D`.)
@@ -252,13 +252,13 @@ Downstream consequence:
    free equalizer completion is planned.
 
 5. **Phase 5 internalisation: subobject-plus-category in
-   two stages.**  Stage (b) builds an internal
+   two stages.**  Stage 1 builds an internal
    `BTMor1`-analogue as a decidable subobject of
    `(ℕ, p)` with ER constructors, destructors, and
-   typechecker.  Stage (c) upgrades the same subobject in
+   typechecker.  Stage 2 upgrades the same subobject in
    place into an internal category in `LawvereERLexCat`
    by adding `src`, `tgt`, `id`, and `comp` morphisms; the
-   stage-(b) subobject is reused verbatim as `C₁`.  No
+   Stage-1 subobject is reused verbatim as `C₁`.  No
    construction is thrown away between stages.
    Downstream finite-limit categories receive their
    internal `BTMor1`-analogue as the image of the
@@ -312,7 +312,7 @@ expanded as each phase becomes ready to implement.
     HasFiniteLimits derivations.
   * [x] 4e: Full-and-faithful embedding Δ
     (with PreservesFiniteProducts).
-* [ ] Phase 5: stage (b) internal term type, then stage (c)
+* [ ] Phase 5: Stage 1 internal term type, then Stage 2
   internal-category structure.
 * Non-fullness of `erInterpFunctor`:
   * [x] 4f.1: Ackermann non-fullness via Primrec' translation.
