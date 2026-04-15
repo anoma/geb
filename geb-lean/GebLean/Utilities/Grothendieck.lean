@@ -7571,6 +7571,128 @@ def twoSidedGrothendieckContraCov :
     (Functor.whiskeringRight _ _ _).obj grothendieckContraFunctorOver ⋙
     sliceCovFunctor
 
+namespace TwoSidedGrothendieckCovContra
+
+variable {H : Dᵒᵖ ⥤ C ⥤ Cat.{v_sp, u_sp}}
+
+/--
+Construct an object of `(twoSidedGrothendieckCovContra.obj H).left`
+from a `D`-base `d`, a `C`-base `c`, and a fibre element
+`y : (H.obj (op d)).obj c`.
+-/
+def mkObj (d : D) (c : C)
+    (y : ((H.obj (Opposite.op d)).obj c).α) :
+    ((twoSidedGrothendieckCovContra.obj H).left : Cat) :=
+  Opposite.op ⟨Opposite.op d, Opposite.op ⟨c, y⟩⟩
+
+/--
+The `D`-coordinate of an object of
+`(twoSidedGrothendieckCovContra.obj H).left`.
+-/
+def objD (x : ((twoSidedGrothendieckCovContra.obj H).left : Cat)) : D :=
+  x.unop.base.unop
+
+/--
+The `C`-coordinate of an object of
+`(twoSidedGrothendieckCovContra.obj H).left`.
+-/
+def objC (x : ((twoSidedGrothendieckCovContra.obj H).left : Cat)) : C :=
+  x.unop.fiber.unop.base
+
+/--
+The fibre element of an object of
+`(twoSidedGrothendieckCovContra.obj H).left`.
+-/
+def objFiber (x : ((twoSidedGrothendieckCovContra.obj H).left : Cat)) :
+    ((H.obj (Opposite.op (objD x))).obj (objC x)).α :=
+  x.unop.fiber.unop.fiber
+
+@[simp]
+theorem objD_mkObj (d : D) (c : C)
+    (y : ((H.obj (Opposite.op d)).obj c).α) :
+    objD (mkObj (H := H) d c y) = d := rfl
+
+@[simp]
+theorem objC_mkObj (d : D) (c : C)
+    (y : ((H.obj (Opposite.op d)).obj c).α) :
+    objC (mkObj (H := H) d c y) = c := rfl
+
+@[simp]
+theorem objFiber_mkObj (d : D) (c : C)
+    (y : ((H.obj (Opposite.op d)).obj c).α) :
+    objFiber (mkObj (H := H) d c y) = y := rfl
+
+/--
+Construct a morphism in `(twoSidedGrothendieckCovContra.obj H).left`
+from a `D`-base morphism `β`, a `C`-base morphism `α`, and a fibre
+morphism `φ` in `(H.obj (op (objD X))).obj (objC Y)`.
+-/
+def mkHom
+    {X Y : ((twoSidedGrothendieckCovContra.obj H).left : Cat)}
+    (β : objD X ⟶ objD Y) (α : objC X ⟶ objC Y)
+    (φ : ((H.obj (Opposite.op (objD X))).map α).toFunctor.obj
+            (objFiber X) ⟶
+          ((H.map β.op).app (objC Y)).toFunctor.obj (objFiber Y)) :
+    X ⟶ Y :=
+  Quiver.Hom.op ⟨β.op, Quiver.Hom.op ⟨α, φ⟩⟩
+
+/--
+The `D`-base of a morphism in
+`(twoSidedGrothendieckCovContra.obj H).left`.
+-/
+def homD {X Y : ((twoSidedGrothendieckCovContra.obj H).left : Cat)}
+    (f : X ⟶ Y) : objD X ⟶ objD Y :=
+  f.unop.base.unop
+
+/--
+The `C`-base of a morphism in
+`(twoSidedGrothendieckCovContra.obj H).left`.
+-/
+def homC {X Y : ((twoSidedGrothendieckCovContra.obj H).left : Cat)}
+    (f : X ⟶ Y) : objC X ⟶ objC Y :=
+  f.unop.fiber.unop.base
+
+/--
+The fibre morphism of a morphism in
+`(twoSidedGrothendieckCovContra.obj H).left`.
+-/
+def homFiber
+    {X Y : ((twoSidedGrothendieckCovContra.obj H).left : Cat)}
+    (f : X ⟶ Y) :
+    ((H.obj (Opposite.op (objD X))).map (homC f)).toFunctor.obj
+        (objFiber X) ⟶
+      ((H.map (homD f).op).app (objC Y)).toFunctor.obj (objFiber Y) :=
+  f.unop.fiber.unop.fiber
+
+@[simp]
+theorem homD_mkHom
+    {X Y : ((twoSidedGrothendieckCovContra.obj H).left : Cat)}
+    (β : objD X ⟶ objD Y) (α : objC X ⟶ objC Y)
+    (φ : ((H.obj (Opposite.op (objD X))).map α).toFunctor.obj
+            (objFiber X) ⟶
+          ((H.map β.op).app (objC Y)).toFunctor.obj (objFiber Y)) :
+    homD (mkHom β α φ) = β := rfl
+
+@[simp]
+theorem homC_mkHom
+    {X Y : ((twoSidedGrothendieckCovContra.obj H).left : Cat)}
+    (β : objD X ⟶ objD Y) (α : objC X ⟶ objC Y)
+    (φ : ((H.obj (Opposite.op (objD X))).map α).toFunctor.obj
+            (objFiber X) ⟶
+          ((H.map β.op).app (objC Y)).toFunctor.obj (objFiber Y)) :
+    homC (mkHom β α φ) = α := rfl
+
+@[simp]
+theorem homFiber_mkHom
+    {X Y : ((twoSidedGrothendieckCovContra.obj H).left : Cat)}
+    (β : objD X ⟶ objD Y) (α : objC X ⟶ objC Y)
+    (φ : ((H.obj (Opposite.op (objD X))).map α).toFunctor.obj
+            (objFiber X) ⟶
+          ((H.map β.op).app (objC Y)).toFunctor.obj (objFiber Y)) :
+    homFiber (mkHom β α φ) = φ := rfl
+
+end TwoSidedGrothendieckCovContra
+
 /--
 Forward object map of the pointwise two-sided Grothendieck object
 equivalence.  Reassociates the nested `Opposite`-wrapped triple
