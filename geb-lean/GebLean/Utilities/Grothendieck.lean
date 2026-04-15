@@ -7914,6 +7914,64 @@ def twoSidedGrothendieckObjEquiv
   left_inv _ := rfl
   right_inv _ := rfl
 
+namespace twoSidedGrothendieckEquiv
+
+variable {H : Dᵒᵖ ⥤ C ⥤ Cat.{v_sp, u_sp}}
+
+/--
+Object map of the forward Cat functor of the two-sided Grothendieck
+equivalence.
+-/
+def forwardObj
+    (X : ((twoSidedGrothendieckCovContra.obj H).left : Cat)) :
+    ((twoSidedGrothendieckContraCov.obj H).left : Cat) :=
+  TwoSidedGrothendieckContraCov.mkObj
+    (TwoSidedGrothendieckCovContra.objD X)
+    (TwoSidedGrothendieckCovContra.objC X)
+    (TwoSidedGrothendieckCovContra.objFiber X)
+
+/--
+Morphism map of the forward Cat functor of the two-sided Grothendieck
+equivalence.
+-/
+def forwardMap
+    {X Y : ((twoSidedGrothendieckCovContra.obj H).left : Cat)}
+    (f : X ⟶ Y) :
+    forwardObj (H := H) X ⟶ forwardObj (H := H) Y :=
+  TwoSidedGrothendieckContraCov.mkHom
+    (X := forwardObj X) (Y := forwardObj Y)
+    (TwoSidedGrothendieckCovContra.homD (X := X) (Y := Y) f)
+    (TwoSidedGrothendieckCovContra.homC (X := X) (Y := Y) f)
+    (TwoSidedGrothendieckCovContra.homFiber (X := X) (Y := Y) f)
+
+/--
+Object map of the backward Cat functor of the two-sided Grothendieck
+equivalence.
+-/
+def backwardObj
+    (Y : ((twoSidedGrothendieckContraCov.obj H).left : Cat)) :
+    ((twoSidedGrothendieckCovContra.obj H).left : Cat) :=
+  TwoSidedGrothendieckCovContra.mkObj
+    (TwoSidedGrothendieckContraCov.objD Y)
+    (TwoSidedGrothendieckContraCov.objC Y)
+    (TwoSidedGrothendieckContraCov.objFiber Y)
+
+/--
+Morphism map of the backward Cat functor of the two-sided Grothendieck
+equivalence.
+-/
+def backwardMap
+    {X Y : ((twoSidedGrothendieckContraCov.obj H).left : Cat)}
+    (f : X ⟶ Y) :
+    backwardObj (H := H) X ⟶ backwardObj (H := H) Y :=
+  TwoSidedGrothendieckCovContra.mkHom
+    (X := backwardObj X) (Y := backwardObj Y)
+    (TwoSidedGrothendieckContraCov.homD (X := X) (Y := Y) f)
+    (TwoSidedGrothendieckContraCov.homC (X := X) (Y := Y) f)
+    (TwoSidedGrothendieckContraCov.homFiber (X := X) (Y := Y) f)
+
+end twoSidedGrothendieckEquiv
+
 end StrictTwoSidedGrothendieck
 
 /-! ## Total Category of Functors into `Cat` -/
