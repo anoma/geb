@@ -135,13 +135,24 @@ task-by-task plan is at
 `docs/superpowers/plans/2026-04-15-lawvere-treeer-subproject-4g2.md`
 (local, gitignored) and the design spec is at
 `docs/superpowers/specs/2026-04-15-lawvere-treeer-subproject-4g2-design.md`.
-Resume via superpowers:subagent-driven-development at Task 6
-(`TreeERMor1.treeFoldOnCode`), the foundational substrate
-for Stage β.  Stage β was reordered so that
-`TreeERMor1.treeFoldOnCode` (previously Task 10) precedes the
+Phase 4g.2 Stage β Task 6 complete: see
+`GebLean/LawvereTreeERArith.lean` for the substrate primitive
+`TreeERMor1.treeFoldOnCode : TreeERMor1_0 0 → TreeERMor1_0 2
+  → TreeERMor1_1 1` packaging course-of-values recursion on a
+BT input, with the `@[simp]` agreement theorem
+`TreeERMor1.treeFoldOnCode_interp` linking interpretation to
+`Nat.treeFoldOnCode` via `encodeBT` / `decodeBT`.  The
+extracted `BT.ind` structural induction principle lives in
+`GebLean/LawvereBTInterp.lean` (alongside `BT.cases`), along
+with `finAppend_fin1_left` / `finAppend_fin1_right` simp
+lemmas in `GebLean/LawvereBT.lean`.  Stage β was reordered so
+that `treeFoldOnCode` (previously Task 10) precedes the
 arithmetic primitives that depend on it (`succOnCode`,
 `subOnCode`, `szudzikPair`, `szudzikUnpair`, `bsumOnCode`,
-`bprodOnCode`).  See the updated plan for details.
+`bprodOnCode`, now Tasks 7–10 plus Task 11's
+`mutuFoldViaPair`).  Resume via
+superpowers:subagent-driven-development at Task 7
+(`succOnCode` and `subOnCode`).
 
 ## Phase 4g: Tree-Native ER Parallel Development (planned)
 
