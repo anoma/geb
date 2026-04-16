@@ -91,7 +91,7 @@ private theorem BTMor1.foldDepth_snd_resolve
     s.snd.foldDepth = t.foldDepth := by
   subst hsig; rfl
 
-private theorem foldDepth_ind_eq {n : ℕ}
+private theorem BTMor1.foldDepth_ind_eq {n : ℕ}
     (t : BTMor1 n) :
     BTMor1.ind
       (motive := fun {_} _ => ℕ)
@@ -110,7 +110,7 @@ private theorem foldDepth_ind_eq {n : ℕ}
         tree.foldDepth := by
   unfold BTMor1.foldDepth BTMor1.fold
   rw [ind_btMorInject]
-  simp only [foldDepthStep, foldDepth_ind_eq]
+  simp only [foldDepthStep, BTMor1.foldDepth_ind_eq]
   congr 2
   · congr 1
     · apply Finset.sup_congr rfl

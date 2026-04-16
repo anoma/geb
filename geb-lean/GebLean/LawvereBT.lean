@@ -2481,10 +2481,8 @@ theorem ind_btMorInject
   rfl
 
 /-- Transport through a dependent-type sigma
-eliminates when the sigma equality holds.  Used as a
-computation-rule helper when resolving children of
-`BTMor1.fold` after applying `ind_btMorInject`. -/
-theorem subst_sigma_snd
+eliminates when the sigma equality holds. -/
+private theorem subst_sigma_snd
     {B : ℕ → Sort _}
     {a : ℕ} {t : B a}
     (s : Σ k, B k)
