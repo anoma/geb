@@ -149,4 +149,149 @@ private theorem BTMor1.foldDepth_ind_eq {n : ℕ}
     rw [BTMor1.foldDepth_cast]
     exact BTMor1.foldDepth_snd_resolve hsig hfst
 
+/-- Tree morphism with explicit composition: a
+5-constructor inductive paralleling `BTMor1` but with
+a `comp` constructor whose fold-nesting depth is the
+max (not additive) of its arguments.  The depth-bounded
+subtype `TreeERMor1` characterizes the elementary
+recursive fragment (Leivant 1999). -/
+inductive TreeMor1 : ℕ → Type
+  | leaf {n : ℕ} : TreeMor1 n
+  | branch {n : ℕ}
+      (l r : TreeMor1 n) : TreeMor1 n
+  | proj {n : ℕ} (i : Fin n) : TreeMor1 n
+  | comp {n k : ℕ} (f : TreeMor1 k)
+      (g : Fin k → TreeMor1 n) : TreeMor1 n
+  | fold {n : ℕ} (m : ℕ)
+      (f : Fin m → TreeMor1 n)
+      (g : Fin m → TreeMor1 (m + m))
+      (tree : TreeMor1 n)
+      (j : Fin m) : TreeMor1 n
+
+/-- Maximum nesting depth of `fold` constructors
+in a `TreeMor1` term. -/
+def TreeMor1.foldDepth :
+    {n : ℕ} → TreeMor1 n → ℕ
+  | _, .leaf => 0
+  | _, .branch l r =>
+      max l.foldDepth r.foldDepth
+  | _, .proj _ => 0
+  | _, .comp f g =>
+      max f.foldDepth
+        ((Finset.univ : Finset (Fin _)).sup
+          (fun i => (g i).foldDepth))
+  | _, .fold _ f g tree _ =>
+      1 + max (max
+        ((Finset.univ : Finset (Fin _)).sup
+          (fun i => (f i).foldDepth))
+        ((Finset.univ : Finset (Fin _)).sup
+          (fun i => (g i).foldDepth)))
+        tree.foldDepth
+
+@[simp] theorem TreeMor1.foldDepth_leaf
+    {n : ℕ} :
+    (@TreeMor1.leaf n).foldDepth = 0 := rfl
+
+@[simp] theorem TreeMor1.foldDepth_branch
+    {n : ℕ} (l r : TreeMor1 n) :
+    (TreeMor1.branch l r).foldDepth =
+      max l.foldDepth r.foldDepth := rfl
+
+@[simp] theorem TreeMor1.foldDepth_proj
+    {n : ℕ} (i : Fin n) :
+    (TreeMor1.proj i).foldDepth = 0 := rfl
+
+@[simp] theorem TreeMor1.foldDepth_comp
+    {n k : ℕ} (f : TreeMor1 k)
+    (g : Fin k → TreeMor1 n) :
+    (TreeMor1.comp f g).foldDepth =
+      max f.foldDepth
+        ((Finset.univ : Finset (Fin k)).sup
+          (fun i => (g i).foldDepth)) := rfl
+
+@[simp] theorem TreeMor1.foldDepth_fold
+    {n : ℕ} (m : ℕ)
+    (f : Fin m → TreeMor1 n)
+    (g : Fin m → TreeMor1 (m + m))
+    (tree : TreeMor1 n) (j : Fin m) :
+    (TreeMor1.fold m f g tree j).foldDepth =
+      1 + max (max
+        ((Finset.univ : Finset (Fin m)).sup
+          (fun i => (f i).foldDepth))
+        ((Finset.univ : Finset (Fin m)).sup
+          (fun i => (g i).foldDepth)))
+        tree.foldDepth := rfl
+
+/-- Map a `TreeMor1` to the corresponding `BTMor1`,
+translating `comp` to `BTMor1.subst`. -/
+def TreeMor1.toBTMor1 :
+    {n : ℕ} → TreeMor1 n → BTMor1 n
+  | _, .leaf => BTMor1.leaf
+  | _, .branch l r =>
+      BTMor1.branch l.toBTMor1 r.toBTMor1
+  | _, .proj i => BTMor1.proj i
+  | _, .comp f g =>
+      f.toBTMor1.subst (fun i => (g i).toBTMor1)
+  | _, .fold m f g tree j =>
+      BTMor1.fold m
+        (fun i => (f i).toBTMor1)
+        (fun i => (g i).toBTMor1)
+        tree.toBTMor1 j
+
+/-- Interpret a `TreeMor1` in `BT` via its
+translation to `BTMor1`. -/
+def TreeMor1.interp.{u} {n : ℕ}
+    (t : TreeMor1 n)
+    (ctx : Fin n → BT.{u}) : BT.{u} :=
+  t.toBTMor1.interpU ctx
+
+@[simp] theorem TreeMor1.interp_leaf.{u}
+    {n : ℕ} (ctx : Fin n → BT.{u}) :
+    TreeMor1.leaf.interp ctx = BT.leaf := by
+  simp only [TreeMor1.interp,
+    TreeMor1.toBTMor1, BTMor1.interpU_leaf]
+
+@[simp] theorem TreeMor1.interp_branch.{u}
+    {n : ℕ} (l r : TreeMor1 n)
+    (ctx : Fin n → BT.{u}) :
+    (TreeMor1.branch l r).interp ctx =
+      BT.node (l.interp ctx)
+        (r.interp ctx) := by
+  simp only [TreeMor1.interp,
+    TreeMor1.toBTMor1, BTMor1.interpU_branch]
+
+@[simp] theorem TreeMor1.interp_proj.{u}
+    {n : ℕ} (i : Fin n)
+    (ctx : Fin n → BT.{u}) :
+    (TreeMor1.proj i).interp ctx = ctx i := by
+  simp only [TreeMor1.interp,
+    TreeMor1.toBTMor1, BTMor1.interpU_proj]
+
+@[simp] theorem TreeMor1.interp_comp.{u}
+    {n k : ℕ} (f : TreeMor1 k)
+    (g : Fin k → TreeMor1 n)
+    (ctx : Fin n → BT.{u}) :
+    (TreeMor1.comp f g).interp ctx =
+      f.interp
+        (fun i => (g i).interp ctx) := by
+  simp only [TreeMor1.interp, TreeMor1.toBTMor1,
+    BTMor1.interpU_subst]
+
+@[simp] theorem TreeMor1.interp_fold.{u}
+    {n : ℕ} (m : ℕ)
+    (f : Fin m → TreeMor1 n)
+    (g : Fin m → TreeMor1 (m + m))
+    (tree : TreeMor1 n) (j : Fin m)
+    (ctx : Fin n → BT.{u}) :
+    (TreeMor1.fold m f g tree j).interp ctx =
+      BT.fold
+        (fun i => (f i).interp ctx)
+        (fun leftAll rightAll j' =>
+          (g j').interp
+            (finAppend leftAll rightAll))
+        (tree.interp ctx)
+        j := by
+  simp only [TreeMor1.interp, TreeMor1.toBTMor1,
+    BTMor1.interpU_fold]
+
 end GebLean
