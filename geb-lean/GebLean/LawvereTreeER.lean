@@ -294,4 +294,225 @@ def TreeMor1.interp.{u} {n : ℕ}
   simp only [TreeMor1.interp, TreeMor1.toBTMor1,
     BTMor1.interpU_fold]
 
+/-- Depth-0 fragment: no fold constructors. -/
+def TreeERMor1_0 (n : ℕ) : Type :=
+  { t : TreeMor1 n // t.foldDepth = 0 }
+
+/-- Depth-at-most-1 fragment: at most one fold layer. -/
+def TreeERMor1_1 (n : ℕ) : Type :=
+  { t : TreeMor1 n // t.foldDepth ≤ 1 }
+
+/-- Depth-at-most-2 fragment: at most two fold layers.
+Corresponds to the elementary recursive fragment of
+tree morphisms (Leivant 1999). -/
+def TreeERMor1 (n : ℕ) : Type :=
+  { t : TreeMor1 n // t.foldDepth ≤ 2 }
+
+def TreeERMor1_0.toDepth1 {n : ℕ}
+    (t : TreeERMor1_0 n) : TreeERMor1_1 n :=
+  ⟨t.val, by have := t.property; omega⟩
+
+def TreeERMor1_1.toDepth2 {n : ℕ}
+    (t : TreeERMor1_1 n) : TreeERMor1 n :=
+  ⟨t.val, by have := t.property; omega⟩
+
+def TreeERMor1_0.toDepth2 {n : ℕ}
+    (t : TreeERMor1_0 n) : TreeERMor1 n :=
+  t.toDepth1.toDepth2
+
+def TreeERMor1_0.leaf {n : ℕ} : TreeERMor1_0 n :=
+  ⟨.leaf, rfl⟩
+
+def TreeERMor1_0.proj {n : ℕ} (i : Fin n) :
+    TreeERMor1_0 n :=
+  ⟨.proj i, rfl⟩
+
+def TreeERMor1_0.branch {n : ℕ}
+    (l r : TreeERMor1_0 n) : TreeERMor1_0 n :=
+  ⟨.branch l.val r.val, by
+    simp only [TreeMor1.foldDepth_branch,
+      Nat.max_eq_zero_iff]
+    exact ⟨l.property, r.property⟩⟩
+
+def TreeERMor1_0.comp {n k : ℕ}
+    (f : TreeERMor1_0 k)
+    (g : Fin k → TreeERMor1_0 n) :
+    TreeERMor1_0 n :=
+  ⟨.comp f.val (fun i => (g i).val), by
+    simp only [TreeMor1.foldDepth_comp,
+      Nat.max_eq_zero_iff]
+    exact ⟨f.property, le_antisymm
+      (Finset.sup_le
+        (fun i _ => le_of_eq (g i).property))
+      (Nat.zero_le _)⟩⟩
+
+def TreeERMor1_1.leaf {n : ℕ} : TreeERMor1_1 n :=
+  TreeERMor1_0.leaf.toDepth1
+
+def TreeERMor1_1.proj {n : ℕ} (i : Fin n) :
+    TreeERMor1_1 n :=
+  (TreeERMor1_0.proj i).toDepth1
+
+def TreeERMor1_1.branch {n : ℕ}
+    (l r : TreeERMor1_1 n) : TreeERMor1_1 n :=
+  ⟨.branch l.val r.val, by
+    simp only [TreeMor1.foldDepth_branch]
+    exact Nat.max_le.mpr ⟨l.property, r.property⟩⟩
+
+def TreeERMor1_1.comp {n k : ℕ}
+    (f : TreeERMor1_1 k)
+    (g : Fin k → TreeERMor1_1 n) :
+    TreeERMor1_1 n :=
+  ⟨.comp f.val (fun i => (g i).val), by
+    simp only [TreeMor1.foldDepth_comp]
+    exact Nat.max_le.mpr ⟨f.property,
+      Finset.sup_le
+        (fun i _ => (g i).property)⟩⟩
+
+def TreeERMor1_1.fold {n m : ℕ}
+    (f : Fin m → TreeERMor1_0 n)
+    (g : Fin m → TreeERMor1_0 (m + m))
+    (tree : TreeERMor1_0 n) (j : Fin m) :
+    TreeERMor1_1 n :=
+  ⟨.fold m (fun i => (f i).val)
+    (fun i => (g i).val) tree.val j, by
+    simp only [TreeMor1.foldDepth_fold]
+    have hf : (Finset.univ.sup
+        (fun i => (f i).val.foldDepth)) = 0 :=
+      le_antisymm (Finset.sup_le
+        (fun i _ => le_of_eq (f i).property))
+        (Nat.zero_le _)
+    have hg : (Finset.univ.sup
+        (fun i => (g i).val.foldDepth)) = 0 :=
+      le_antisymm (Finset.sup_le
+        (fun i _ => le_of_eq (g i).property))
+        (Nat.zero_le _)
+    rw [hf, hg, tree.property]; decide⟩
+
+def TreeERMor1.leaf {n : ℕ} : TreeERMor1 n :=
+  TreeERMor1_0.leaf.toDepth2
+
+def TreeERMor1.proj {n : ℕ} (i : Fin n) :
+    TreeERMor1 n :=
+  (TreeERMor1_0.proj i).toDepth2
+
+def TreeERMor1.branch {n : ℕ}
+    (l r : TreeERMor1 n) : TreeERMor1 n :=
+  ⟨.branch l.val r.val, by
+    simp only [TreeMor1.foldDepth_branch]
+    exact Nat.max_le.mpr
+      ⟨l.property, r.property⟩⟩
+
+def TreeERMor1.comp {n k : ℕ}
+    (f : TreeERMor1 k)
+    (g : Fin k → TreeERMor1 n) :
+    TreeERMor1 n :=
+  ⟨.comp f.val (fun i => (g i).val), by
+    simp only [TreeMor1.foldDepth_comp]
+    exact Nat.max_le.mpr ⟨f.property,
+      Finset.sup_le
+        (fun i _ => (g i).property)⟩⟩
+
+def TreeERMor1.fold {n m : ℕ}
+    (f : Fin m → TreeERMor1_1 n)
+    (g : Fin m → TreeERMor1_1 (m + m))
+    (tree : TreeERMor1_1 n) (j : Fin m) :
+    TreeERMor1 n :=
+  ⟨.fold m (fun i => (f i).val)
+    (fun i => (g i).val) tree.val j, by
+    simp only [TreeMor1.foldDepth_fold]
+    have hf : (Finset.univ.sup
+        (fun i => (f i).val.foldDepth)) ≤ 1 :=
+      Finset.sup_le
+        (fun i _ => (f i).property)
+    have hg : (Finset.univ.sup
+        (fun i => (g i).val.foldDepth)) ≤ 1 :=
+      Finset.sup_le
+        (fun i _ => (g i).property)
+    have ht := tree.property
+    omega⟩
+
+def TreeERMorN_1 (n m : ℕ) : Type :=
+  Fin m → TreeERMor1_1 n
+
+def TreeERMorN (n m : ℕ) : Type :=
+  Fin m → TreeERMor1 n
+
+def TreeERMor1_1.fold1 {n : ℕ}
+    (base : TreeERMor1_0 n)
+    (step : TreeERMor1_0 (1 + 1))
+    (tree : TreeERMor1_0 n) : TreeERMor1_1 n :=
+  TreeERMor1_1.fold
+    (fun _ => base) (fun _ => step) tree 0
+
+def TreeERMor1.fold1 {n : ℕ}
+    (base : TreeERMor1_1 n)
+    (step : TreeERMor1_1 (1 + 1))
+    (tree : TreeERMor1_1 n) : TreeERMor1 n :=
+  TreeERMor1.fold
+    (fun _ => base) (fun _ => step) tree 0
+
+def TreeERMor1_1.mutuFold {n m : ℕ}
+    (f : Fin m → TreeERMor1_0 n)
+    (g : Fin m → TreeERMor1_0 (m + m))
+    (tree : TreeERMor1_0 n) :
+    TreeERMorN_1 n m :=
+  fun j => TreeERMor1_1.fold f g tree j
+
+def TreeERMor1.mutuFold {n m : ℕ}
+    (f : Fin m → TreeERMor1_1 n)
+    (g : Fin m → TreeERMor1_1 (m + m))
+    (tree : TreeERMor1_1 n) : TreeERMorN n m :=
+  fun j => TreeERMor1.fold f g tree j
+
+def TreeERMor1_0.interp.{u} {n : ℕ}
+    (t : TreeERMor1_0 n)
+    (ctx : Fin n → BT.{u}) : BT.{u} :=
+  t.val.interp ctx
+
+def TreeERMor1_1.interp.{u} {n : ℕ}
+    (t : TreeERMor1_1 n)
+    (ctx : Fin n → BT.{u}) : BT.{u} :=
+  t.val.interp ctx
+
+def TreeERMor1.interp.{u} {n : ℕ}
+    (t : TreeERMor1 n)
+    (ctx : Fin n → BT.{u}) : BT.{u} :=
+  t.val.interp ctx
+
+def TreeERMorN.interp.{u} {n m : ℕ}
+    (f : TreeERMorN n m)
+    (ctx : Fin n → BT.{u}) : Fin m → BT.{u} :=
+  fun i => (f i).interp ctx
+
+def TreeERMorN.id (n : ℕ) : TreeERMorN n n :=
+  fun i => TreeERMor1.proj i
+
+def TreeERMorN.comp {n m k : ℕ}
+    (f : TreeERMorN n m) (g : TreeERMorN m k) :
+    TreeERMorN n k :=
+  fun i => TreeERMor1.comp (g i) f
+
+@[simp] theorem TreeERMorN.interp_id
+    {n : ℕ} (ctx : Fin n → BT.{0}) :
+    (TreeERMorN.id n).interp ctx = ctx := by
+  funext i
+  simp only [TreeERMorN.interp, TreeERMorN.id,
+    TreeERMor1.interp, TreeERMor1.proj,
+    TreeERMor1_0.proj, TreeERMor1_0.toDepth2,
+    TreeERMor1_0.toDepth1, TreeERMor1_1.toDepth2,
+    TreeMor1.interp_proj]
+
+@[simp] theorem TreeERMorN.interp_comp
+    {n m k : ℕ} (f : TreeERMorN n m)
+    (g : TreeERMorN m k)
+    (ctx : Fin n → BT.{0}) :
+    (f.comp g).interp ctx =
+      g.interp (f.interp ctx) := by
+  funext i
+  simp only [TreeERMorN.interp, TreeERMorN.comp,
+    TreeERMor1.interp, TreeERMor1.comp,
+    TreeMor1.interp_comp]
+  rfl
+
 end GebLean
