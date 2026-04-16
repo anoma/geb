@@ -8157,6 +8157,41 @@ def backwardMap
     (TwoSidedGrothendieckContraCov.homC (X := X) (Y := Y) f)
     (TwoSidedGrothendieckContraCov.homFiber (X := X) (Y := Y) f)
 
+/--
+Hom-set bijection between the covariant-then-contravariant and
+contravariant-then-covariant orderings of the strict two-sided
+Grothendieck, at fixed objects `X` and `Y` of the covariant-then-
+contravariant side.
+
+This is weaker than a full `CategoryTheory.Equivalence` (which would
+require preservation of identities and composition), but captures the
+correspondence between the two orderings at the level of morphism data.
+-/
+def homEquivForward
+    (X Y : ((twoSidedGrothendieckCovContra.obj H).left : Cat)) :
+    (X ⟶ Y) ≃
+      ((forwardObj (H := H) X : ((twoSidedGrothendieckContraCov.obj H).left
+          : Cat)) ⟶ forwardObj (H := H) Y) where
+  toFun := forwardMap (H := H) (X := X) (Y := Y)
+  invFun := backwardMap (H := H) (X := forwardObj X) (Y := forwardObj Y)
+  left_inv _ := rfl
+  right_inv _ := rfl
+
+/--
+Hom-set bijection between the two orderings, at fixed objects `X` and
+`Y` of the contravariant-then-covariant side.  Symmetric counterpart
+of `homEquivForward`.
+-/
+def homEquivBackward
+    (X Y : ((twoSidedGrothendieckContraCov.obj H).left : Cat)) :
+    (X ⟶ Y) ≃
+      ((backwardObj (H := H) X : ((twoSidedGrothendieckCovContra.obj H).left
+          : Cat)) ⟶ backwardObj (H := H) Y) where
+  toFun := backwardMap (H := H) (X := X) (Y := Y)
+  invFun := forwardMap (H := H) (X := backwardObj X) (Y := backwardObj Y)
+  left_inv _ := rfl
+  right_inv _ := rfl
+
 end twoSidedGrothendieckEquiv
 
 end StrictTwoSidedGrothendieck

@@ -59,6 +59,11 @@ motive errors under `Grothendieck.ext`.
   `twoSidedGrothendieckEquiv.backwardObj`,
   `twoSidedGrothendieckEquiv.backwardMap` — primitive, not yet
   wrapped as Cat functors.
+- `twoSidedGrothendieckEquiv.homEquivForward` and
+  `.homEquivBackward` — pointwise hom-set `Equiv`s between the
+  two orderings.  Both roundtrips close by `rfl` (η-expansion on
+  `mkHom` with `homD`/`homC`/`homFiber` destructors is
+  definitional).
 
 ## What remains
 
