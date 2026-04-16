@@ -1109,6 +1109,19 @@ def finAppend {a b : ℕ} {α : Type _}
     if h : i.val < a then l ⟨i.val, h⟩
     else r ⟨i.val - a, by omega⟩
 
+@[simp] theorem finAppend_fin1_left {α : Type _}
+    (l r : Fin 1 → α) :
+    finAppend l r 0 = l 0 := by
+  simp only [finAppend, Fin.val_zero,
+    Nat.zero_lt_succ, dite_true]
+  rfl
+
+@[simp] theorem finAppend_fin1_right {α : Type _}
+    (l r : Fin 1 → α) :
+    finAppend l r 1 = r 0 := by
+  simp only [finAppend]
+  rfl
+
 /-- The full universal property of the parameterized
 BTO: given `f : n → m` (base) and `g : (m + m) → m`
 (step), produce a morphism `(n + 1) → m` as a

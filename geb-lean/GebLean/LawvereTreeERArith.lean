@@ -27,73 +27,6 @@ def TreeERMor1.treeFoldOnCode
     step
     (TreeERMor1_0.proj 0)
 
-private theorem treeFoldOnCode_fold_agreement_gen
-    {x : PUnit.{1}}
-    (baseB : BT.{0}) (stepB : BT.{0} → BT.{0} → BT.{0})
-    (t : PolyFreeM
-      (overTerminal PUnit.{1})
-      polyProdType x) :
-    BT.fold baseB stepB t =
-      decodeBT (BT.fold
-        (encodeBT baseB)
-        (fun l r => encodeBT
-          (stepB (decodeBT l) (decodeBT r)))
-        t) := by
-  induction t with
-  | mk y idx children ih =>
-    match idx with
-    | Sum.inl leafIdx =>
-      have hy : y = PUnit.unit :=
-        PUnit.eq_punit y
-      subst hy
-      have hli :
-          leafIdx = ⟨PUnit.unit, rfl⟩ :=
-        Subtype.ext (PUnit.eq_punit _)
-      subst hli
-      have hleaf :
-          PolyFix.mk PUnit.unit
-            (show polyBetweenIndex PUnit PUnit
-              (polyTranslate
-                (overTerminal PUnit.{1})
-                polyProdType) PUnit.unit from
-              Sum.inl ⟨PUnit.unit, rfl⟩)
-            children =
-          BT.leaf := by
-        unfold BT.leaf polyFreeMPure
-        congr 1
-        funext e; exact PEmpty.elim e
-      rw [hleaf, BT.fold_leaf, BT.fold_leaf,
-          decodeBT_encodeBT]
-    | Sum.inr nodeIdx =>
-      have hy : y = PUnit.unit :=
-        PUnit.eq_punit y
-      subst hy
-      have hni : nodeIdx = PUnit.unit :=
-        PUnit.eq_punit nodeIdx
-      subst hni
-      have hmk :
-          PolyFix.mk PUnit.unit
-            (show polyBetweenIndex PUnit PUnit
-              (polyTranslate
-                (overTerminal PUnit.{1})
-                polyProdType) PUnit.unit from
-              Sum.inr PUnit.unit)
-            children =
-          BT.node
-            (children (Sum.inl PUnit.unit))
-            (children (Sum.inr PUnit.unit)) := by
-        unfold BT.node polyProdFreeMNode
-          polyFreeMStrFamily
-        congr 1
-        funext e
-        match e with
-        | Sum.inl _ => rfl
-        | Sum.inr _ => rfl
-      rw [hmk, BT.fold_node, BT.fold_node,
-          decodeBT_encodeBT,
-          ih (Sum.inl PUnit.unit),
-          ih (Sum.inr PUnit.unit)]
-
 /-- Auxiliary fold identity: `BT.fold` over a BT carrier
 produces the same result as decoding the `Nat`-coded fold.
 The step function wraps BT values as codes before the user's
@@ -109,74 +42,19 @@ private theorem treeFoldOnCode_fold_agreement
           (stepB (decodeBT l) (decodeBT r)))
         (encodeBT t)) := by
   rw [GebLean.treeFoldOnCode_encodeBT]
-  exact treeFoldOnCode_fold_agreement_gen baseB stepB t
-
-private theorem fold_fin1_eq_scalar_fold_gen
-    {x : PUnit.{1}}
-    (baseB : BT.{0})
-    (stepB : BT.{0} → BT.{0} → BT.{0})
-    (t : PolyFreeM
-      (overTerminal PUnit.{1})
-      polyProdType x) :
+  refine BT.ind (motive := fun t =>
     BT.fold baseB stepB t =
-      BT.fold
-        (α := Fin 1 → BT.{0})
-        (fun _ => baseB)
-        (fun leftAll rightAll _ =>
-          stepB (leftAll 0) (rightAll 0))
-        t 0 := by
-  induction t with
-  | mk y idx children ih =>
-    match idx with
-    | Sum.inl leafIdx =>
-      have hy : y = PUnit.unit :=
-        PUnit.eq_punit y
-      subst hy
-      have hli :
-          leafIdx = ⟨PUnit.unit, rfl⟩ :=
-        Subtype.ext (PUnit.eq_punit _)
-      subst hli
-      have hleaf :
-          PolyFix.mk PUnit.unit
-            (show polyBetweenIndex PUnit PUnit
-              (polyTranslate
-                (overTerminal PUnit.{1})
-                polyProdType) PUnit.unit from
-              Sum.inl ⟨PUnit.unit, rfl⟩)
-            children =
-          BT.leaf := by
-        unfold BT.leaf polyFreeMPure
-        congr 1
-        funext e; exact PEmpty.elim e
-      rw [hleaf, BT.fold_leaf, BT.fold_leaf]
-    | Sum.inr nodeIdx =>
-      have hy : y = PUnit.unit :=
-        PUnit.eq_punit y
-      subst hy
-      have hni : nodeIdx = PUnit.unit :=
-        PUnit.eq_punit nodeIdx
-      subst hni
-      have hmk :
-          PolyFix.mk PUnit.unit
-            (show polyBetweenIndex PUnit PUnit
-              (polyTranslate
-                (overTerminal PUnit.{1})
-                polyProdType) PUnit.unit from
-              Sum.inr PUnit.unit)
-            children =
-          BT.node
-            (children (Sum.inl PUnit.unit))
-            (children (Sum.inr PUnit.unit)) := by
-        unfold BT.node polyProdFreeMNode
-          polyFreeMStrFamily
-        congr 1
-        funext e
-        match e with
-        | Sum.inl _ => rfl
-        | Sum.inr _ => rfl
-      rw [hmk, BT.fold_node, BT.fold_node,
-          ih (Sum.inl PUnit.unit),
-          ih (Sum.inr PUnit.unit)]
+      decodeBT (BT.fold
+        (encodeBT baseB)
+        (fun l r => encodeBT
+          (stepB (decodeBT l) (decodeBT r)))
+        t)) ?_ ?_ t
+  · change BT.fold baseB stepB BT.leaf = _
+    rw [BT.fold_leaf, BT.fold_leaf, decodeBT_encodeBT]
+  · intro l r hl hr
+    change BT.fold baseB stepB (BT.node l r) = _
+    rw [BT.fold_node, BT.fold_node, decodeBT_encodeBT,
+        hl, hr]
 
 /-- A single-slot BT-valued fold equals the `Fin 1 →
 BT`-valued fold of its constantly-extended parameters,
@@ -191,10 +69,20 @@ private theorem fold_fin1_eq_scalar_fold
       BT.fold
         (α := Fin 1 → BT.{0})
         (fun _ => baseB)
-        (fun leftAll rightAll _ =>
-          stepB (leftAll 0) (rightAll 0))
-        t 0 :=
-  fold_fin1_eq_scalar_fold_gen baseB stepB t
+        (fun l r _ => stepB (l 0) (r 0))
+        t 0 := by
+  refine BT.ind (motive := fun t =>
+    BT.fold baseB stepB t =
+      BT.fold
+        (α := Fin 1 → BT.{0})
+        (fun _ => baseB)
+        (fun l r _ => stepB (l 0) (r 0))
+        t 0) ?_ ?_ t
+  · change BT.fold baseB stepB BT.leaf = _
+    rw [BT.fold_leaf, BT.fold_leaf]
+  · intro l r hl hr
+    change BT.fold baseB stepB (BT.node l r) = _
+    rw [BT.fold_node, BT.fold_node, hl, hr]
 
 @[simp] theorem TreeERMor1.treeFoldOnCode_interp
     (base : TreeERMor1_0 0) (step : TreeERMor1_0 2)
@@ -204,8 +92,8 @@ private theorem fold_fin1_eq_scalar_fold
         (encodeBT (base.interp Fin.elim0))
         (fun l r => encodeBT
           (step.interp
-            (fun i => Fin.cases (decodeBT l)
-              (fun _ => decodeBT r) i)))
+            (Fin.cases (decodeBT l)
+              (fun _ => decodeBT r))))
         (encodeBT (ctx 0))) := by
   unfold TreeERMor1.treeFoldOnCode
   simp only [TreeERMor1_1.interp, TreeERMor1_1.fold1,
@@ -213,13 +101,10 @@ private theorem fold_fin1_eq_scalar_fold
     TreeERMor1_0.interp, TreeERMor1_0.proj,
     TreeMor1.interp_proj, TreeERMor1_0.comp,
     TreeMor1.interp_comp]
-  set baseB : BT.{0} := base.val.interp Fin.elim0
-    with hbaseB
-  set stepB : BT.{0} → BT.{0} → BT.{0} :=
+  let baseB : BT.{0} := base.val.interp Fin.elim0
+  let stepB : BT.{0} → BT.{0} → BT.{0} :=
     fun L R =>
-      step.val.interp
-        (fun i => Fin.cases L (fun _ => R) i)
-    with hstepB
+      step.val.interp (Fin.cases L (fun _ => R))
   rw [← treeFoldOnCode_fold_agreement baseB stepB (ctx 0),
       fold_fin1_eq_scalar_fold baseB stepB (ctx 0)]
   have hbase_eq :
@@ -230,32 +115,24 @@ private theorem fold_fin1_eq_scalar_fold
               ctx)) =
         (fun (_ : Fin 1) => baseB) := by
     funext _
-    simp only [hbaseB]
     congr 1
     funext j
     exact j.elim0
   have hstep_eq :
-      (fun (leftAll rightAll : Fin 1 → BT.{0})
-          (_ : Fin 1) =>
-        step.val.interp (finAppend leftAll rightAll)) =
-        (fun (leftAll rightAll : Fin 1 → BT.{0})
-            (_ : Fin 1) =>
-          stepB (leftAll 0) (rightAll 0)) := by
-    funext leftAll rightAll _
-    simp only [hstepB]
+      (fun (l r : Fin 1 → BT.{0}) (_ : Fin 1) =>
+        step.val.interp (finAppend l r)) =
+        (fun (l r : Fin 1 → BT.{0}) (_ : Fin 1) =>
+          stepB (l 0) (r 0)) := by
+    funext l r _
     congr 1
     funext i
     refine Fin.cases ?_ ?_ i
-    · change finAppend leftAll rightAll 0 = leftAll 0
-      simp only [finAppend, Fin.val_zero,
-        Nat.zero_lt_succ, dite_true]
-      congr
+    · simp
     · intro k
       have hk : k = 0 := Fin.eq_zero k
       subst hk
-      change finAppend leftAll rightAll 1 = rightAll 0
-      simp only [finAppend]
-      rfl
+      rw [Fin.cases_succ]
+      simp
   rw [hbase_eq, hstep_eq]
 
 end GebLean

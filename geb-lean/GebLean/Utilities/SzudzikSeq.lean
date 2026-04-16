@@ -123,82 +123,23 @@ end Nat
 
 namespace GebLean
 
-private theorem treeFoldOnCode_encodeBT_gen
-    {α : Type}
-    {x : PUnit.{1}}
-    (bt : PolyFreeM
-      (overTerminal PUnit.{1})
-      polyProdType x)
-    (h₀ : α) (h₁ : α → α → α) :
-    Nat.treeFoldOnCode h₀ h₁ (encodeBT bt) =
-      BT.fold h₀ h₁ bt := by
-  induction bt with
-  | mk y idx children ih =>
-    match idx with
-    | Sum.inl leafIdx =>
-      have hy : y = PUnit.unit :=
-        PUnit.eq_punit y
-      subst hy
-      have hli :
-          leafIdx = ⟨PUnit.unit, rfl⟩ :=
-        Subtype.ext (PUnit.eq_punit _)
-      subst hli
-      have hleaf :
-          PolyFix.mk PUnit.unit
-            (show polyBetweenIndex PUnit PUnit
-              (polyTranslate
-                (overTerminal PUnit.{1})
-                polyProdType) PUnit.unit from
-              Sum.inl ⟨PUnit.unit, rfl⟩)
-            children =
-          BT.leaf := by
-        unfold BT.leaf polyFreeMPure
-        congr 1
-        funext e; exact PEmpty.elim e
-      rw [hleaf, BT.fold_leaf]
-      simp only [encodeBT, BT.fold_leaf]
-      exact Nat.treeFoldOnCode_zero h₀ h₁
-    | Sum.inr nodeIdx =>
-      have hy : y = PUnit.unit :=
-        PUnit.eq_punit y
-      subst hy
-      have hni : nodeIdx = PUnit.unit :=
-        PUnit.eq_punit nodeIdx
-      subst hni
-      have hmk :
-          PolyFix.mk PUnit.unit
-            (show polyBetweenIndex PUnit PUnit
-              (polyTranslate
-                (overTerminal PUnit.{1})
-                polyProdType) PUnit.unit from
-              Sum.inr PUnit.unit)
-            children =
-          BT.node
-            (children (Sum.inl PUnit.unit))
-            (children (Sum.inr PUnit.unit)) := by
-        unfold BT.node polyProdFreeMNode
-          polyFreeMStrFamily
-        congr 1
-        funext e
-        match e with
-        | Sum.inl _ => rfl
-        | Sum.inr _ => rfl
-      rw [hmk, BT.fold_node]
-      simp only [encodeBT, BT.fold_node]
-      rw [show BT.fold 0
-        (fun el er => Nat.pair el er + 1) =
-        encodeBT from rfl]
-      rw [Nat.treeFoldOnCode_succ, Nat.unpair_pair]
-      rw [ih (Sum.inl PUnit.unit),
-          ih (Sum.inr PUnit.unit)]
-
 /-- Correctness of `Nat.treeFoldOnCode` against `BT.fold`:
 running the course-of-values recursion on the Gödel code of
 a tree agrees with the structural fold of that tree. -/
 theorem treeFoldOnCode_encodeBT {α : Type}
     (t : BT.{0}) (h₀ : α) (h₁ : α → α → α) :
     Nat.treeFoldOnCode h₀ h₁ (encodeBT t) =
-      BT.fold h₀ h₁ t :=
-  treeFoldOnCode_encodeBT_gen t h₀ h₁
+      BT.fold h₀ h₁ t := by
+  refine BT.ind (motive := fun t =>
+    Nat.treeFoldOnCode h₀ h₁ (encodeBT t) =
+      BT.fold h₀ h₁ t) ?_ ?_ t
+  · simp only [encodeBT, BT.fold_leaf,
+      Nat.treeFoldOnCode_zero]
+  · intro l r hl hr
+    simp only [encodeBT, BT.fold_node]
+    rw [show BT.fold 0
+      (fun el er => Nat.pair el er + 1) =
+      encodeBT from rfl]
+    rw [Nat.treeFoldOnCode_succ, Nat.unpair_pair, hl, hr]
 
 end GebLean

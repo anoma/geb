@@ -334,6 +334,76 @@ theorem BT.cases {P : BT.{u} → Prop}
         | Sum.inr _ => rfl
       rw [hmk]; exact hnode _ _
 
+private theorem BT.ind_gen
+    {motive : BT.{u} → Prop}
+    (leaf : motive BT.leaf)
+    (node : ∀ (l r : BT.{u}),
+      motive l → motive r → motive (BT.node l r))
+    {x : PUnit.{u + 1}}
+    (t : PolyFreeM
+      (overTerminal PUnit.{u + 1})
+      polyProdType x) : motive t := by
+  induction t with
+  | mk y idx children ih =>
+    have hy : y = PUnit.unit := PUnit.eq_punit y
+    subst hy
+    match idx with
+    | Sum.inl leafIdx =>
+      have hli :
+          leafIdx = ⟨PUnit.unit, rfl⟩ :=
+        Subtype.ext (PUnit.eq_punit _)
+      subst hli
+      have hmk :
+          PolyFix.mk PUnit.unit
+            (show polyBetweenIndex PUnit PUnit
+              (polyTranslate
+                (overTerminal PUnit.{u + 1})
+                polyProdType) PUnit.unit from
+              Sum.inl ⟨PUnit.unit, rfl⟩)
+            children =
+          BT.leaf := by
+        unfold BT.leaf polyFreeMPure
+        congr 1
+        funext e; exact PEmpty.elim e
+      rw [hmk]; exact leaf
+    | Sum.inr nodeIdx =>
+      have hni : nodeIdx = PUnit.unit :=
+        PUnit.eq_punit nodeIdx
+      subst hni
+      have hmk :
+          PolyFix.mk PUnit.unit
+            (show polyBetweenIndex PUnit PUnit
+              (polyTranslate
+                (overTerminal PUnit.{u + 1})
+                polyProdType) PUnit.unit from
+              Sum.inr PUnit.unit)
+            children =
+          BT.node
+            (children (Sum.inl PUnit.unit))
+            (children (Sum.inr PUnit.unit)) := by
+        unfold BT.node polyProdFreeMNode
+          polyFreeMStrFamily
+        congr 1
+        funext e
+        match e with
+        | Sum.inl _ => rfl
+        | Sum.inr _ => rfl
+      rw [hmk]
+      exact node _ _
+        (ih (Sum.inl PUnit.unit))
+        (ih (Sum.inr PUnit.unit))
+
+/-- Structural induction on BT: a predicate holding
+at `BT.leaf` and preserved by `BT.node` given
+inductive hypotheses on both children holds on every
+tree. -/
+theorem BT.ind {motive : BT.{u} → Prop}
+    (leaf : motive BT.leaf)
+    (node : ∀ (l r : BT.{u}),
+      motive l → motive r → motive (BT.node l r))
+    (t : BT.{u}) : motive t :=
+  BT.ind_gen leaf node t
+
 /-- Quotation: embed a ground `BT` tree as a
 `BTMor1 n` term (leaf → `BTMor1.leaf`,
 node → `BTMor1.branch`). -/
