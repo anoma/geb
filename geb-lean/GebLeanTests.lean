@@ -9,6 +9,9 @@ import GebLeanTests.LawvereERLex
 import GebLeanTests.LawvereERPrimrec
 import GebLeanTests.LawvereERQuot
 import GebLeanTests.LawvereERTetration
+import GebLeanTests.LawvereTreeER
+import GebLeanTests.LawvereTreeERInterp
+import GebLeanTests.LawvereTreeERQuot
 import GebLeanTests.LayeredEquivalence
 import GebLeanTests.TestEqualizerCompletion
 import GebLeanTests.TestTreeCalcMeta
