@@ -120,6 +120,24 @@ mutumorphism exposure via `mutuFold`;
 interpretation functor `treeErInterpFunctor` and the faithful
 inclusion `treeErInclusion` into `LawvereBTQuotObj`.
 
+Phase 4g.2 Stage α (Layer 1: generic Lean arithmetic) complete:
+see `GebLean/Utilities/SzudzikSeq.lean` for `Nat.seqPack` /
+`Nat.seqAt` (list-to-ℕ encoding via iterated right-associated
+Szudzik pairing, with round-trip theorem), `Nat.treeFoldOnCode`
+(course-of-values recursion on a Gödel code, proved equal to
+`BT.fold` via the `PolyFreeM` induction pattern), and
+`Nat.tupleRecN` (finite-arity mutumorphism).  `GebLeanTests/
+Utilities/SzudzikSeq.lean` exercises each primitive via
+`#guard`.  Stages β (tree-ER syntactic arithmetic in
+`GebLean/LawvereTreeERArith.lean`) and γ (isomorphism in
+`GebLean/LawvereTreeERLawvereEquiv.lean`) remain; the
+task-by-task plan is at
+`docs/superpowers/plans/2026-04-15-lawvere-treeer-subproject-4g2.md`
+(local, gitignored) and the design spec is at
+`docs/superpowers/specs/2026-04-15-lawvere-treeer-subproject-4g2-design.md`.
+Resume via superpowers:subagent-driven-development at Task 6
+(`TreeERMor1.szudzikPair`).
+
 ## Phase 4g: Tree-Native ER Parallel Development (planned)
 
 Before proceeding to Phase 5, build a tree-native presentation of
