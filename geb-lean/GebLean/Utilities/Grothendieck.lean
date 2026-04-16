@@ -7571,6 +7571,494 @@ def twoSidedGrothendieckContraCov :
     (Functor.whiskeringRight _ _ _).obj grothendieckContraFunctorOver ⋙
     sliceCovFunctor
 
+namespace TwoSidedGrothendieckCovContra
+
+variable {H : Dᵒᵖ ⥤ C ⥤ Cat.{v_sp, u_sp}}
+
+/--
+Construct an object of `(twoSidedGrothendieckCovContra.obj H).left`
+from a `D`-base `d`, a `C`-base `c`, and a fibre element
+`y : (H.obj (op d)).obj c`.
+-/
+def mkObj (d : D) (c : C)
+    (y : ((H.obj (Opposite.op d)).obj c).α) :
+    ((twoSidedGrothendieckCovContra.obj H).left : Cat) :=
+  Opposite.op ⟨Opposite.op d, Opposite.op ⟨c, y⟩⟩
+
+/--
+The `D`-coordinate of an object of
+`(twoSidedGrothendieckCovContra.obj H).left`.
+-/
+def objD (x : ((twoSidedGrothendieckCovContra.obj H).left : Cat)) : D :=
+  x.unop.base.unop
+
+/--
+The `C`-coordinate of an object of
+`(twoSidedGrothendieckCovContra.obj H).left`.
+-/
+def objC (x : ((twoSidedGrothendieckCovContra.obj H).left : Cat)) : C :=
+  x.unop.fiber.unop.base
+
+/--
+The fibre element of an object of
+`(twoSidedGrothendieckCovContra.obj H).left`.
+-/
+def objFiber (x : ((twoSidedGrothendieckCovContra.obj H).left : Cat)) :
+    ((H.obj (Opposite.op (objD x))).obj (objC x)).α :=
+  x.unop.fiber.unop.fiber
+
+@[simp]
+theorem objD_mkObj (d : D) (c : C)
+    (y : ((H.obj (Opposite.op d)).obj c).α) :
+    objD (mkObj (H := H) d c y) = d := rfl
+
+@[simp]
+theorem objC_mkObj (d : D) (c : C)
+    (y : ((H.obj (Opposite.op d)).obj c).α) :
+    objC (mkObj (H := H) d c y) = c := rfl
+
+@[simp]
+theorem objFiber_mkObj (d : D) (c : C)
+    (y : ((H.obj (Opposite.op d)).obj c).α) :
+    objFiber (mkObj (H := H) d c y) = y := rfl
+
+/--
+Construct a morphism in `(twoSidedGrothendieckCovContra.obj H).left`
+from a `D`-base morphism `β`, a `C`-base morphism `α`, and a fibre
+morphism `φ` in `(H.obj (op (objD X))).obj (objC Y)`.
+-/
+def mkHom
+    {X Y : ((twoSidedGrothendieckCovContra.obj H).left : Cat)}
+    (β : objD X ⟶ objD Y) (α : objC X ⟶ objC Y)
+    (φ : ((H.obj (Opposite.op (objD X))).map α).toFunctor.obj
+            (objFiber X) ⟶
+          ((H.map β.op).app (objC Y)).toFunctor.obj (objFiber Y)) :
+    X ⟶ Y :=
+  Quiver.Hom.op ⟨β.op, Quiver.Hom.op ⟨α, φ⟩⟩
+
+/--
+The `D`-base of a morphism in
+`(twoSidedGrothendieckCovContra.obj H).left`.
+-/
+def homD {X Y : ((twoSidedGrothendieckCovContra.obj H).left : Cat)}
+    (f : X ⟶ Y) : objD X ⟶ objD Y :=
+  f.unop.base.unop
+
+/--
+The `C`-base of a morphism in
+`(twoSidedGrothendieckCovContra.obj H).left`.
+-/
+def homC {X Y : ((twoSidedGrothendieckCovContra.obj H).left : Cat)}
+    (f : X ⟶ Y) : objC X ⟶ objC Y :=
+  f.unop.fiber.unop.base
+
+/--
+The fibre morphism of a morphism in
+`(twoSidedGrothendieckCovContra.obj H).left`.
+-/
+def homFiber
+    {X Y : ((twoSidedGrothendieckCovContra.obj H).left : Cat)}
+    (f : X ⟶ Y) :
+    ((H.obj (Opposite.op (objD X))).map (homC f)).toFunctor.obj
+        (objFiber X) ⟶
+      ((H.map (homD f).op).app (objC Y)).toFunctor.obj (objFiber Y) :=
+  f.unop.fiber.unop.fiber
+
+@[simp]
+theorem homD_mkHom
+    {X Y : ((twoSidedGrothendieckCovContra.obj H).left : Cat)}
+    (β : objD X ⟶ objD Y) (α : objC X ⟶ objC Y)
+    (φ : ((H.obj (Opposite.op (objD X))).map α).toFunctor.obj
+            (objFiber X) ⟶
+          ((H.map β.op).app (objC Y)).toFunctor.obj (objFiber Y)) :
+    homD (mkHom β α φ) = β := rfl
+
+@[simp]
+theorem homC_mkHom
+    {X Y : ((twoSidedGrothendieckCovContra.obj H).left : Cat)}
+    (β : objD X ⟶ objD Y) (α : objC X ⟶ objC Y)
+    (φ : ((H.obj (Opposite.op (objD X))).map α).toFunctor.obj
+            (objFiber X) ⟶
+          ((H.map β.op).app (objC Y)).toFunctor.obj (objFiber Y)) :
+    homC (mkHom β α φ) = α := rfl
+
+@[simp]
+theorem homFiber_mkHom
+    {X Y : ((twoSidedGrothendieckCovContra.obj H).left : Cat)}
+    (β : objD X ⟶ objD Y) (α : objC X ⟶ objC Y)
+    (φ : ((H.obj (Opposite.op (objD X))).map α).toFunctor.obj
+            (objFiber X) ⟶
+          ((H.map β.op).app (objC Y)).toFunctor.obj (objFiber Y)) :
+    homFiber (mkHom β α φ) = φ := rfl
+
+@[simp]
+theorem homD_id (x : ((twoSidedGrothendieckCovContra.obj H).left : Cat)) :
+    homD (𝟙 x) = 𝟙 (objD x) := rfl
+
+@[simp]
+theorem homC_id (x : ((twoSidedGrothendieckCovContra.obj H).left : Cat)) :
+    homC (𝟙 x) = 𝟙 (objC x) := by
+  change ((𝟙 x).unop.fiber.unop).base = _
+  rw [show (𝟙 x).unop = 𝟙 x.unop from rfl,
+      Grothendieck.id_fiber, eqToHom_unop, Grothendieck.base_eqToHom]
+  rfl
+
+@[simp]
+theorem homD_comp
+    {X Y Z : ((twoSidedGrothendieckCovContra.obj H).left : Cat)}
+    (f : X ⟶ Y) (g : Y ⟶ Z) :
+    homD (f ≫ g) = homD f ≫ homD g := rfl
+
+@[simp]
+theorem homC_comp
+    {X Y Z : ((twoSidedGrothendieckCovContra.obj H).left : Cat)}
+    (f : X ⟶ Y) (g : Y ⟶ Z) :
+    homC (f ≫ g) = homC f ≫ homC g := by
+  change ((f ≫ g).unop.fiber.unop).base = _
+  rw [show (f ≫ g).unop = g.unop ≫ f.unop from rfl,
+      Grothendieck.comp_fiber]
+  simp [Grothendieck.comp_base, eqToHom_unop, homC,
+      Grothendieck.functor]
+
+/--
+The fibre component of the identity morphism is a canonical
+`eqToHom`.  Property of the two-layer nested Grothendieck encoding.
+-/
+@[simp]
+theorem homFiber_id
+    (x : ((twoSidedGrothendieckCovContra.obj H).left : Cat)) :
+    homFiber (𝟙 x) = eqToHom (by
+      simp [homD_id, homC_id,
+        CategoryTheory.Functor.map_id]) := by
+  apply eq_of_heq
+  refine HEq.trans ?_ (eqToHom_heq_id_dom _ _ _).symm
+  dsimp only [homFiber]
+  change HEq
+    (Grothendieck.Hom.fiber (Grothendieck.Hom.fiber
+      ((𝟙 x.unop) : x.unop ⟶ x.unop)).unop) _
+  rw [Grothendieck.id_fiber, eqToHom_unop, Grothendieck.fiber_eqToHom]
+  apply (eqToHom_heq_id_dom _ _ _).trans
+  congr 1
+  simp
+  rfl
+
+/--
+The fibre of a composition is the composition of the fibres in the
+inner Grothendieck structure.  Exposed for later use in constructing
+the two-sided Grothendieck equivalence.
+-/
+theorem homFiber_comp
+    {X Y Z : ((twoSidedGrothendieckCovContra.obj H).left : Cat)}
+    (f : X ⟶ Y) (g : Y ⟶ Z) :
+    HEq (homFiber (f ≫ g))
+      ((g.unop ≫ f.unop).fiber.unop.fiber) := by
+  dsimp only [homFiber]
+  rfl
+
+/-- Identity morphisms in the covariant-then-contravariant two-
+sided Grothendieck expressed via `mkHom`. -/
+theorem mkHom_id
+    (x : ((twoSidedGrothendieckCovContra.obj H).left : Cat)) :
+    𝟙 x = mkHom (𝟙 (objD x)) (𝟙 (objC x))
+      (eqToHom (by
+        simp [CategoryTheory.Functor.map_id])) := by
+  rw [show 𝟙 x =
+    mkHom (homD (𝟙 x)) (homC (𝟙 x)) (homFiber (𝟙 x)) from rfl]
+  apply eq_of_heq
+  congr 1
+  · exact homC_id x
+  · have hC : homC (𝟙 x) = 𝟙 (objC x) := homC_id x
+    refine HEq.trans (heq_of_eq (homFiber_id x)) ?_
+    refine HEq.trans (eqToHom_heq_id_dom _ _ ?_) ?_
+    · simp [CategoryTheory.Functor.map_id]
+    · refine HEq.trans ?_
+        (eqToHom_heq_id_dom _ _ (by
+          simp [CategoryTheory.Functor.map_id])).symm
+      congr 1
+      simp [hC]
+
+/-- Composition of `mkHom`-constructed morphisms in the covariant-
+then-contravariant two-sided Grothendieck.  The fibre component is
+the destructured `homFiber` of the underlying composition; together
+with the simp lemmas `homD_comp`, `homC_comp`, `homD_mkHom`,
+`homC_mkHom`, this exposes the Lucyshyn-Wright composition formula
+`(c ⋅ a, d ⋅ b, a*(y) ⋅ d!(x))` for downstream use. -/
+theorem mkHom_comp
+    {x y z : ((twoSidedGrothendieckCovContra.obj H).left : Cat)}
+    (β₁ : objD x ⟶ objD y) (α₁ : objC x ⟶ objC y)
+    (φ₁ : ((H.obj (Opposite.op (objD x))).map α₁).toFunctor.obj
+            (objFiber x) ⟶
+          ((H.map β₁.op).app (objC y)).toFunctor.obj (objFiber y))
+    (β₂ : objD y ⟶ objD z) (α₂ : objC y ⟶ objC z)
+    (φ₂ : ((H.obj (Opposite.op (objD y))).map α₂).toFunctor.obj
+            (objFiber y) ⟶
+          ((H.map β₂.op).app (objC z)).toFunctor.obj (objFiber z)) :
+    mkHom β₁ α₁ φ₁ ≫ mkHom β₂ α₂ φ₂ =
+      mkHom (β₁ ≫ β₂) (α₁ ≫ α₂)
+        (eqToHom (by
+            simp [homC_comp, homC_mkHom]) ≫
+          homFiber (mkHom β₁ α₁ φ₁ ≫ mkHom β₂ α₂ φ₂) ≫
+          eqToHom (by
+            change ((H.map (homD (mkHom β₁ α₁ φ₁ ≫
+                  mkHom β₂ α₂ φ₂)).op).app (objC z)).toFunctor.obj
+                (objFiber z) =
+              ((H.map (β₁ ≫ β₂).op).app (objC z)).toFunctor.obj
+                (objFiber z)
+            rfl)) := by
+  conv_lhs => rw [show (mkHom β₁ α₁ φ₁ ≫ mkHom β₂ α₂ φ₂ :
+    _ ⟶ _) =
+    mkHom (homD (mkHom β₁ α₁ φ₁ ≫ mkHom β₂ α₂ φ₂))
+      (homC (mkHom β₁ α₁ φ₁ ≫ mkHom β₂ α₂ φ₂))
+      (homFiber (mkHom β₁ α₁ φ₁ ≫ mkHom β₂ α₂ φ₂)) from rfl]
+  congr 1
+  · simp
+  · refine HEq.symm ?_
+    refine (eqToHom_comp_heq _ _).trans ?_
+    refine (comp_eqToHom_heq _ _).trans ?_
+    rfl
+
+end TwoSidedGrothendieckCovContra
+
+namespace TwoSidedGrothendieckContraCov
+
+variable {H : Dᵒᵖ ⥤ C ⥤ Cat.{v_sp, u_sp}}
+
+/--
+Construct an object of `(twoSidedGrothendieckContraCov.obj H).left`
+from a `D`-base `d`, a `C`-base `c`, and a fibre element
+`y : (H.obj (op d)).obj c`.
+-/
+def mkObj (d : D) (c : C)
+    (y : ((H.obj (Opposite.op d)).obj c).α) :
+    ((twoSidedGrothendieckContraCov.obj H).left : Cat) :=
+  ⟨c, Opposite.op ⟨Opposite.op d, Opposite.op y⟩⟩
+
+/--
+The `D`-coordinate of an object of
+`(twoSidedGrothendieckContraCov.obj H).left`.
+-/
+def objD (x : ((twoSidedGrothendieckContraCov.obj H).left : Cat)) : D :=
+  x.fiber.unop.base.unop
+
+/--
+The `C`-coordinate of an object of
+`(twoSidedGrothendieckContraCov.obj H).left`.
+-/
+def objC (x : ((twoSidedGrothendieckContraCov.obj H).left : Cat)) : C :=
+  x.base
+
+/--
+The fibre element of an object of
+`(twoSidedGrothendieckContraCov.obj H).left`.
+-/
+def objFiber (x : ((twoSidedGrothendieckContraCov.obj H).left : Cat)) :
+    ((H.obj (Opposite.op (objD x))).obj (objC x)).α :=
+  x.fiber.unop.fiber.unop
+
+@[simp]
+theorem objD_mkObj (d : D) (c : C)
+    (y : ((H.obj (Opposite.op d)).obj c).α) :
+    objD (mkObj (H := H) d c y) = d := rfl
+
+@[simp]
+theorem objC_mkObj (d : D) (c : C)
+    (y : ((H.obj (Opposite.op d)).obj c).α) :
+    objC (mkObj (H := H) d c y) = c := rfl
+
+@[simp]
+theorem objFiber_mkObj (d : D) (c : C)
+    (y : ((H.obj (Opposite.op d)).obj c).α) :
+    objFiber (mkObj (H := H) d c y) = y := rfl
+
+/--
+Construct a morphism in `(twoSidedGrothendieckContraCov.obj H).left`
+from a `D`-base morphism `β`, a `C`-base morphism `α`, and a fibre
+morphism `φ` in `(H.obj (op (objD X))).obj (objC Y)`.
+-/
+def mkHom
+    {X Y : ((twoSidedGrothendieckContraCov.obj H).left : Cat)}
+    (β : objD X ⟶ objD Y) (α : objC X ⟶ objC Y)
+    (φ : ((H.obj (Opposite.op (objD X))).map α).toFunctor.obj
+            (objFiber X) ⟶
+          ((H.map β.op).app (objC Y)).toFunctor.obj (objFiber Y)) :
+    X ⟶ Y :=
+  ⟨α, Quiver.Hom.op ⟨β.op, Quiver.Hom.op φ⟩⟩
+
+/--
+The `D`-base of a morphism in
+`(twoSidedGrothendieckContraCov.obj H).left`.
+-/
+def homD {X Y : ((twoSidedGrothendieckContraCov.obj H).left : Cat)}
+    (f : X ⟶ Y) : objD X ⟶ objD Y :=
+  f.fiber.unop.base.unop
+
+/--
+The `C`-base of a morphism in
+`(twoSidedGrothendieckContraCov.obj H).left`.
+-/
+def homC {X Y : ((twoSidedGrothendieckContraCov.obj H).left : Cat)}
+    (f : X ⟶ Y) : objC X ⟶ objC Y :=
+  f.base
+
+/--
+The fibre morphism of a morphism in
+`(twoSidedGrothendieckContraCov.obj H).left`.
+-/
+def homFiber
+    {X Y : ((twoSidedGrothendieckContraCov.obj H).left : Cat)}
+    (f : X ⟶ Y) :
+    ((H.obj (Opposite.op (objD X))).map (homC f)).toFunctor.obj
+        (objFiber X) ⟶
+      ((H.map (homD f).op).app (objC Y)).toFunctor.obj (objFiber Y) :=
+  f.fiber.unop.fiber.unop
+
+@[simp]
+theorem homD_mkHom
+    {X Y : ((twoSidedGrothendieckContraCov.obj H).left : Cat)}
+    (β : objD X ⟶ objD Y) (α : objC X ⟶ objC Y)
+    (φ : ((H.obj (Opposite.op (objD X))).map α).toFunctor.obj
+            (objFiber X) ⟶
+          ((H.map β.op).app (objC Y)).toFunctor.obj (objFiber Y)) :
+    homD (mkHom β α φ) = β := rfl
+
+@[simp]
+theorem homC_mkHom
+    {X Y : ((twoSidedGrothendieckContraCov.obj H).left : Cat)}
+    (β : objD X ⟶ objD Y) (α : objC X ⟶ objC Y)
+    (φ : ((H.obj (Opposite.op (objD X))).map α).toFunctor.obj
+            (objFiber X) ⟶
+          ((H.map β.op).app (objC Y)).toFunctor.obj (objFiber Y)) :
+    homC (mkHom β α φ) = α := rfl
+
+@[simp]
+theorem homFiber_mkHom
+    {X Y : ((twoSidedGrothendieckContraCov.obj H).left : Cat)}
+    (β : objD X ⟶ objD Y) (α : objC X ⟶ objC Y)
+    (φ : ((H.obj (Opposite.op (objD X))).map α).toFunctor.obj
+            (objFiber X) ⟶
+          ((H.map β.op).app (objC Y)).toFunctor.obj (objFiber Y)) :
+    homFiber (mkHom β α φ) = φ := rfl
+
+@[simp]
+theorem homC_id (x : ((twoSidedGrothendieckContraCov.obj H).left : Cat)) :
+    homC (𝟙 x) = 𝟙 (objC x) := rfl
+
+@[simp]
+theorem homD_id (x : ((twoSidedGrothendieckContraCov.obj H).left : Cat)) :
+    homD (𝟙 x) = 𝟙 (objD x) := by
+  dsimp only [homD]
+  rw [Grothendieck.id_fiber, eqToHom_unop, Grothendieck.base_eqToHom,
+      eqToHom_unop]
+  rfl
+
+@[simp]
+theorem homC_comp
+    {X Y Z : ((twoSidedGrothendieckContraCov.obj H).left : Cat)}
+    (f : X ⟶ Y) (g : Y ⟶ Z) :
+    homC (f ≫ g) = homC f ≫ homC g := rfl
+
+@[simp]
+theorem homD_comp
+    {X Y Z : ((twoSidedGrothendieckContraCov.obj H).left : Cat)}
+    (f : X ⟶ Y) (g : Y ⟶ Z) :
+    homD (f ≫ g) = homD f ≫ homD g := by
+  change ((f ≫ g).fiber.unop.base.unop) = _
+  rw [Grothendieck.comp_fiber]
+  simp [Grothendieck.comp_base, homD, Grothendieck.functor,
+      grothendieckContraFunctorOver, Cat.Over.leftOp]
+
+/--
+The fibre component of the identity morphism is a canonical
+`eqToHom`.  Property of the two-layer nested Grothendieck encoding
+in the contravariant-covariant ordering.
+-/
+@[simp]
+theorem homFiber_id
+    (x : ((twoSidedGrothendieckContraCov.obj H).left : Cat)) :
+    homFiber (𝟙 x) = eqToHom (by
+      simp [homD_id, homC_id,
+        CategoryTheory.Functor.map_id]) := by
+  apply eq_of_heq
+  refine HEq.trans ?_ (eqToHom_heq_id_dom _ _ _).symm
+  dsimp only [homFiber]
+  change HEq
+    (Grothendieck.Hom.fiber ((𝟙 x : x ⟶ x)).fiber.unop).unop _
+  rw [Grothendieck.id_fiber, eqToHom_unop, Grothendieck.fiber_eqToHom,
+      eqToHom_unop]
+  apply (eqToHom_heq_id_dom _ _ _).trans
+  congr 1
+
+/--
+The fibre of a composition is the composition of the fibres in the
+inner Grothendieck structure.  Exposed for later use in constructing
+the two-sided Grothendieck equivalence.
+-/
+theorem homFiber_comp
+    {X Y Z : ((twoSidedGrothendieckContraCov.obj H).left : Cat)}
+    (f : X ⟶ Y) (g : Y ⟶ Z) :
+    HEq (homFiber (f ≫ g))
+      ((f ≫ g).fiber.unop.fiber.unop) := by
+  dsimp only [homFiber]
+  rfl
+
+/-- Identity morphisms in the contravariant-then-covariant two-
+sided Grothendieck expressed via `mkHom`. -/
+theorem mkHom_id
+    (x : ((twoSidedGrothendieckContraCov.obj H).left : Cat)) :
+    𝟙 x = mkHom (𝟙 (objD x)) (𝟙 (objC x))
+      (eqToHom (by
+        simp [CategoryTheory.Functor.map_id])) := by
+  rw [show 𝟙 x =
+    mkHom (homD (𝟙 x)) (homC (𝟙 x)) (homFiber (𝟙 x)) from rfl]
+  apply eq_of_heq
+  congr 1
+  · exact homD_id x
+  · refine HEq.trans (heq_of_eq (homFiber_id x)) ?_
+    refine HEq.trans (eqToHom_heq_id_dom _ _ ?_) ?_
+    · simp [CategoryTheory.Functor.map_id]
+    · refine HEq.trans ?_
+        (eqToHom_heq_id_dom _ _ (by
+          simp [CategoryTheory.Functor.map_id])).symm
+      congr 1
+
+/-- Composition of `mkHom`-constructed morphisms in the contra-
+variant-then-covariant two-sided Grothendieck.  The fibre component
+is the destructured `homFiber` of the underlying composition;
+together with the simp lemmas `homD_comp`, `homC_comp`,
+`homD_mkHom`, `homC_mkHom`, this exposes the Lucyshyn-Wright
+composition formula `(c ⋅ a, d ⋅ b, a*(y) ⋅ d!(x))` for downstream
+use. -/
+theorem mkHom_comp
+    {x y z : ((twoSidedGrothendieckContraCov.obj H).left : Cat)}
+    (β₁ : objD x ⟶ objD y) (α₁ : objC x ⟶ objC y)
+    (φ₁ : ((H.obj (Opposite.op (objD x))).map α₁).toFunctor.obj
+            (objFiber x) ⟶
+          ((H.map β₁.op).app (objC y)).toFunctor.obj (objFiber y))
+    (β₂ : objD y ⟶ objD z) (α₂ : objC y ⟶ objC z)
+    (φ₂ : ((H.obj (Opposite.op (objD y))).map α₂).toFunctor.obj
+            (objFiber y) ⟶
+          ((H.map β₂.op).app (objC z)).toFunctor.obj (objFiber z)) :
+    mkHom β₁ α₁ φ₁ ≫ mkHom β₂ α₂ φ₂ =
+      mkHom (β₁ ≫ β₂) (α₁ ≫ α₂)
+        (eqToHom (by
+            simp [homC_comp, homC_mkHom]) ≫
+          homFiber (mkHom β₁ α₁ φ₁ ≫ mkHom β₂ α₂ φ₂) ≫
+          eqToHom (by
+            simp [homD_comp, homD_mkHom])) := by
+  conv_lhs => rw [show (mkHom β₁ α₁ φ₁ ≫ mkHom β₂ α₂ φ₂ :
+    _ ⟶ _) =
+    mkHom (homD (mkHom β₁ α₁ φ₁ ≫ mkHom β₂ α₂ φ₂))
+      (homC (mkHom β₁ α₁ φ₁ ≫ mkHom β₂ α₂ φ₂))
+      (homFiber (mkHom β₁ α₁ φ₁ ≫ mkHom β₂ α₂ φ₂)) from rfl]
+  congr 1
+  · simp
+  · refine HEq.symm ?_
+    refine (eqToHom_comp_heq _ _).trans ?_
+    refine (comp_eqToHom_heq _ _).trans ?_
+    rfl
+
+end TwoSidedGrothendieckContraCov
+
 /--
 Forward object map of the pointwise two-sided Grothendieck object
 equivalence.  Reassociates the nested `Opposite`-wrapped triple
@@ -7612,6 +8100,99 @@ def twoSidedGrothendieckObjEquiv
   invFun := twoSidedGrothendieckObjEquiv.invFun H
   left_inv _ := rfl
   right_inv _ := rfl
+
+namespace twoSidedGrothendieckEquiv
+
+variable {H : Dᵒᵖ ⥤ C ⥤ Cat.{v_sp, u_sp}}
+
+/--
+Object map of the forward Cat functor of the two-sided Grothendieck
+equivalence.
+-/
+def forwardObj
+    (X : ((twoSidedGrothendieckCovContra.obj H).left : Cat)) :
+    ((twoSidedGrothendieckContraCov.obj H).left : Cat) :=
+  TwoSidedGrothendieckContraCov.mkObj
+    (TwoSidedGrothendieckCovContra.objD X)
+    (TwoSidedGrothendieckCovContra.objC X)
+    (TwoSidedGrothendieckCovContra.objFiber X)
+
+/--
+Morphism map of the forward Cat functor of the two-sided Grothendieck
+equivalence.
+-/
+def forwardMap
+    {X Y : ((twoSidedGrothendieckCovContra.obj H).left : Cat)}
+    (f : X ⟶ Y) :
+    forwardObj (H := H) X ⟶ forwardObj (H := H) Y :=
+  TwoSidedGrothendieckContraCov.mkHom
+    (X := forwardObj X) (Y := forwardObj Y)
+    (TwoSidedGrothendieckCovContra.homD (X := X) (Y := Y) f)
+    (TwoSidedGrothendieckCovContra.homC (X := X) (Y := Y) f)
+    (TwoSidedGrothendieckCovContra.homFiber (X := X) (Y := Y) f)
+
+/--
+Object map of the backward Cat functor of the two-sided Grothendieck
+equivalence.
+-/
+def backwardObj
+    (Y : ((twoSidedGrothendieckContraCov.obj H).left : Cat)) :
+    ((twoSidedGrothendieckCovContra.obj H).left : Cat) :=
+  TwoSidedGrothendieckCovContra.mkObj
+    (TwoSidedGrothendieckContraCov.objD Y)
+    (TwoSidedGrothendieckContraCov.objC Y)
+    (TwoSidedGrothendieckContraCov.objFiber Y)
+
+/--
+Morphism map of the backward Cat functor of the two-sided Grothendieck
+equivalence.
+-/
+def backwardMap
+    {X Y : ((twoSidedGrothendieckContraCov.obj H).left : Cat)}
+    (f : X ⟶ Y) :
+    backwardObj (H := H) X ⟶ backwardObj (H := H) Y :=
+  TwoSidedGrothendieckCovContra.mkHom
+    (X := backwardObj X) (Y := backwardObj Y)
+    (TwoSidedGrothendieckContraCov.homD (X := X) (Y := Y) f)
+    (TwoSidedGrothendieckContraCov.homC (X := X) (Y := Y) f)
+    (TwoSidedGrothendieckContraCov.homFiber (X := X) (Y := Y) f)
+
+/--
+Hom-set bijection between the covariant-then-contravariant and
+contravariant-then-covariant orderings of the strict two-sided
+Grothendieck, at fixed objects `X` and `Y` of the covariant-then-
+contravariant side.
+
+This is weaker than a full `CategoryTheory.Equivalence` (which would
+require preservation of identities and composition), but captures the
+correspondence between the two orderings at the level of morphism data.
+-/
+def homEquivForward
+    (X Y : ((twoSidedGrothendieckCovContra.obj H).left : Cat)) :
+    (X ⟶ Y) ≃
+      ((forwardObj (H := H) X : ((twoSidedGrothendieckContraCov.obj H).left
+          : Cat)) ⟶ forwardObj (H := H) Y) where
+  toFun := forwardMap (H := H) (X := X) (Y := Y)
+  invFun := backwardMap (H := H) (X := forwardObj X) (Y := forwardObj Y)
+  left_inv _ := rfl
+  right_inv _ := rfl
+
+/--
+Hom-set bijection between the two orderings, at fixed objects `X` and
+`Y` of the contravariant-then-covariant side.  Symmetric counterpart
+of `homEquivForward`.
+-/
+def homEquivBackward
+    (X Y : ((twoSidedGrothendieckContraCov.obj H).left : Cat)) :
+    (X ⟶ Y) ≃
+      ((backwardObj (H := H) X : ((twoSidedGrothendieckCovContra.obj H).left
+          : Cat)) ⟶ backwardObj (H := H) Y) where
+  toFun := backwardMap (H := H) (X := X) (Y := Y)
+  invFun := forwardMap (H := H) (X := backwardObj X) (Y := backwardObj Y)
+  left_inv _ := rfl
+  right_inv _ := rfl
+
+end twoSidedGrothendieckEquiv
 
 end StrictTwoSidedGrothendieck
 
