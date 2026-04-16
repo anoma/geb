@@ -733,6 +733,7 @@ section TypeWeightedLimits
 
 variable {J : Type u} [Category.{v} J]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The functorial action of the power profunctor in `F`:
 given `α : F ⟶ G`, produces a natural transformation
 `powerProfunctor W F ⟶ powerProfunctor W G` by
@@ -780,6 +781,7 @@ def typeWeightedLimitFunctor (W : J ⥤ Type w) :
     simp only [NatTrans.comp_app,
       HasPowers.mapVal_comp, types_comp_apply]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The functorial action of the copower profunctor in `F`:
 given `α : F ⟶ G`, produces a natural transformation
 `copowerProfunctor W F ⟶ copowerProfunctor W G` by
@@ -945,6 +947,7 @@ def typeWeightedColimit.yonedaEquiv
     simp only [yonedaEquivInv, yonedaEquivFwd]
     exact congrFun (F.map_id j) y
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The contravariant action of the power profunctor in
 the weight `W`: given `α : W ⟶ W'`, produces
 `powerProfunctor W' F ⟶ powerProfunctor W F` by
@@ -1000,6 +1003,7 @@ def typeWeightedLimitFunctorInW (F : J ⥤ Type w) :
       HasPowers.mapIdx, HasPowers.lift,
       HasPowers.proj, types_comp_apply]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The covariant action of the copower profunctor in
 the weight `W`: given `α : W ⟶ W'`, produces
 `copowerProfunctor W F ⟶ copowerProfunctor W' F` by
@@ -1238,6 +1242,7 @@ def typeEndFunctor.ninjaYonedaNatIso :
         (P.obj a) (Q.obj a) (α.app a) w
         (x a.unop)).symm)
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The co-ninja Yoneda lemma: the coend of a profunctor
 `P : Jᵒᵖ ⥤ J ⥤ Type v` equals the weighted colimit of
 `Functor.uncurry.obj P` weighted by the dual

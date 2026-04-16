@@ -636,6 +636,7 @@ def ERLexMorNQuo.pi2 (a b : LexObj) :
   Quotient.mk (erLexMorNSetoid (LexObj.prod a b) b)
     (ERLexMorN.pi2 a b)
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Pairing in `LawvereERLexCat`: given `f : z → a`
 and `g : z → b`, produces the universal arrow
 `z → a × b`.  Underlying tuple: `ERMorN.pair f.val
@@ -784,6 +785,7 @@ theorem ERLexMorNQuo.pair_pi2 {z a b : LexObj}
           rfl))
     f g
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Uniqueness of pairing: any morphism `h : z →
 a × b` whose compositions with the projections yield
 `f` and `g` equals `pair f g`. -/
@@ -914,6 +916,7 @@ def ERLexMorNQuo.equalizerMap {a b : LexObj}
     (erLexMorNSetoid (LexObj.equalizer f g) a)
     (ERLexMorN.equalizerMap f g)
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Lift of an equalizing morphism through the
 equalizer (raw level).  Given `h : z → a` whose
 compositions with `f` and `g` agree on
@@ -1190,6 +1193,7 @@ theorem ERLexMorNQuo.equalizerQMap_eq
   -- 4d's equalizerMap_eq.
   exact ERLexMorNQuo.equalizerMap_eq f' g'
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Chosen equalizer lift: given `h : z → a` whose
 compositions with the quotient morphisms `f`, `g`
 agree, produces a lift to `equalizerQ f g`.  The

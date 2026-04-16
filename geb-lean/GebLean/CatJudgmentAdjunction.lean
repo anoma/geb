@@ -1075,6 +1075,7 @@ def CategoryJudgments.NatTransData.toOverFunctorData
     -- Since hcomp is now definitionally rfl, the transport is trivial.
     rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- FreeMor.mapQuiver with identity OverQuiverMorphism is identity. -/
 theorem FreeMor.mapQuiver_overQuiverId {Q : OverQuiver} {a b : Q.Obj}
     (fm : FreeMor Q a b) :
@@ -1135,6 +1136,7 @@ theorem FreeMor.mapQuiver_cast_overQuiv {Q₁ Q₂ : OverQuiver}
   subst ha hb
   simp only [congrArg₂, cast_eq]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- FreeMor.mapQuiver respects composition of OverQuiverMorphisms. -/
 theorem FreeMor.mapQuiver_quiverComp {Q₁ Q₂ Q₃ : OverQuiver}
     (F : OverQuiverMorphism Q₁ Q₂) (G : OverQuiverMorphism Q₂ Q₃)
@@ -1432,6 +1434,7 @@ theorem counitEval_cast_idx {a b a' b' : Q.Obj}
   subst ha hb
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Helper: counitEval respects the generating relations. -/
 theorem counitEval_respects_gen {a b : Q.Obj}
     {f g : FreeMor Q a b}
@@ -1514,6 +1517,7 @@ theorem counitEval_src {a b : Q.Obj} (m : FreeMor Q a b) :
 theorem counitEval_tgt {a b : Q.Obj} (m : FreeMor Q a b) :
     Q.tgt (counitEval C m) = b := counitEvalAux_tgt C m
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Auxiliary: [var (counitEval m)] ~ m as FreeMor equivalence.
     This is the substance of the round-trip proof. -/
 theorem var_counitEval_equiv {a b : Q.Obj} (fm : FreeMor Q a b) :
@@ -1723,6 +1727,7 @@ def unitAppComp : F.compC → (phiOfL F).compC :=
     F.objC = (phiOfL F).objC since both equal the object type. -/
 def unitAppObj : F.objC ⟶ (phiOfL F).objC := 𝟙 F.objC
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The unit natural transformation η_F : F → Φ(L(F)).
     This embeds F's data into the free category on F then extracts back. -/
 def unitNatTrans : CategoryJudgments.NatTransData F (phiOfL F) where
@@ -1907,6 +1912,7 @@ def counitQuiverMor : OverQuiverMorphism (derivedQuotientData C).quotQuiver Q
     simp only [CategoryQuotientData.quotQuiver, id]
     exact (counitEvalQuot C qm).property.2
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Helper: counitEvalQuot on quotId gives idFn. -/
 theorem counitEvalQuot_quotId (a : Q.Obj) :
     counitEvalQuot C ((derivedQuotientData C).quotId a) =
@@ -1914,6 +1920,7 @@ theorem counitEvalQuot_quotId (a : Q.Obj) :
   simp only [counitEvalQuot, CategoryQuotientData.quotId, CategoryQuotientData.quotMor,
     Quotient.lift_mk, counitEval_id]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Helper: counitEvalQuot on quotComp gives compFn. -/
 theorem counitEvalQuot_quotComp {a b c : Q.Obj}
     (g : (derivedQuotientData C).QuotMor b c)
@@ -2065,6 +2072,7 @@ def inducedQuiverMor :
   src_comm := fun ⟨_, _, _⟩ => rfl
   tgt_comm := fun ⟨_, _, _⟩ => rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The induced functor L(Φ(F)) : L(Φ(C)) → L(Φ(D)). -/
 def inducedQuotFunctor :
     OverFunctorData (derivedQuotientData C).toOverCategoryData
@@ -2411,6 +2419,7 @@ theorem phiLComp_obj_eq (C : BundledOverCategoryData.{uNT, uNT}) :
     (PhiFunctor ⋙ LFunctor).obj C =
     bundleOverCategory (derivedQuotientData C.data).toOverCategoryData := rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Unit naturality: α ≫ η_G = η_F ≫ Φ(L(α)). -/
 theorem unitNT_naturality {F G : CategoryJudgments.FunctorData (Type uNT)}
     (α : CategoryJudgments.NatTransData F G) :
@@ -3164,6 +3173,7 @@ def overBundledCatCounit_inv (C : BundledCategoryData.{u, u}) :
       rfl
   }
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The counit isomorphism for the Over ≌ BundledCat equivalence. -/
 def overBundledCatCounitIso :
     bundledCatToOverFunctor ⋙ overToBundledCatFunctor ≅
@@ -3218,6 +3228,7 @@ def overBundledCatCounitIso :
     simp only [Function.comp_apply, overBundledCatCounit_app, overBundledCatCounit_inv,
       BundledCategoryData.roundtripEquiv, id_eq, Equiv.apply_symm_apply]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The triangle identity for the equivalence: composing the unit with the
     counit gives the identity on the functor side. -/
 theorem overBundledCat_functor_unitIso_comp (X : BundledOverCategoryData.{u, u}) :
@@ -3329,6 +3340,7 @@ def counitQuiverMor_inv : OverQuiverMorphism Q (derivedQuotientData C).quotQuive
   src_comm := fun _ => rfl
   tgt_comm := fun _ => rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The inverse of the counit preserves identity. -/
 theorem counitInv_map_id (a : Q.Obj) :
     (counitQuiverMor_inv C).morFn (C.idFn a) =
@@ -3349,6 +3361,7 @@ theorem counitInv_map_id (a : Q.Obj) :
   simp only [CategoryQuotientData.quotMor, CategoryQuotientData.quotId]
   exact Quotient.sound (CategoryQuotientData.FreeMorEquiv.rel h_equiv)
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The inverse of the counit preserves composition. -/
 theorem counitInv_map_comp (p : Q.ComposablePairsType) :
     (counitQuiverMor_inv C).morFn (C.compFn p) =
@@ -3492,6 +3505,7 @@ def phiPreimage {X Y : BundledOverCategoryData.{uMR, uMR}}
     (f : PhiFunctor.obj X ⟶ PhiFunctor.obj Y) : X ⟶ Y :=
   (counitComponentIso X).inv ≫ LFunctor.map f ≫ (counitComponentIso Y).hom
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The unit of the adjunction at Φ(Z) is an isomorphism.
     This follows from the triangle identity: η_{Φ(Z)} ≫ Φ(ε_Z) = id,
     combined with the fact that ε_Z is an isomorphism. -/
@@ -3512,6 +3526,7 @@ instance adjunctionUnit_app_isIso (Z : BundledOverCategoryData.{uMR, uMR}) :
     (catCopresheafMathlibAdjunction.unit.app (PhiFunctor.obj Z))
     (PhiFunctor.map (catCopresheafMathlibAdjunction.counit.app Z))
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Φ(ε⁻¹) = η: the image of the counit inverse under Φ equals the unit. -/
 theorem phi_map_counit_inv_eq_unit (Z : BundledOverCategoryData.{uMR, uMR}) :
     PhiFunctor.map (counitComponentIso Z).inv =
@@ -3558,6 +3573,7 @@ theorem phi_map_counit_eq_unit_inv (Z : BundledOverCategoryData.{uMR, uMR}) :
     _ = inv (catCopresheafMathlibAdjunction.unit.app (PhiFunctor.obj Z)) := by
           congr 1
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Φ applied to the preimage gives back the original morphism. -/
 theorem phi_map_preimage {X Y : BundledOverCategoryData.{uMR, uMR}}
     (f : PhiFunctor.obj X ⟶ PhiFunctor.obj Y) :
@@ -3584,6 +3600,7 @@ theorem phi_map_preimage {X Y : BundledOverCategoryData.{uMR, uMR}}
           rw [← h_nat]
     _ = f := by simp only [Category.assoc, IsIso.hom_inv_id, Category.comp_id]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The preimage of Φ(g) is g. -/
 theorem phi_preimage_map {X Y : BundledOverCategoryData.{uMR, uMR}}
     (g : X ⟶ Y) : phiPreimage (PhiFunctor.map g) = g := by
@@ -3751,6 +3768,7 @@ theorem sumCompFn_inr_inr' (m₁ m₂ : Q₂.MorType)
     sumCompFn C₁ C₂ ⟨(Sum.inr m₁, Sum.inr m₂), hp⟩ =
     Sum.inr (C₂.compFn ⟨(m₁, m₂), Sum.inr.inj hp⟩) := rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The binary coproduct of two OverCategoryData is their disjoint union. -/
 def OverCategoryData.sum : OverCategoryData (Q₁.sum Q₂) where
   idFn := Sum.elim (Sum.inl ∘ C₁.idFn) (Sum.inr ∘ C₂.idFn)
@@ -4007,6 +4025,7 @@ def phiSumCompIso :
     (FunctorData.sum C₁.toJudgmentFunctorData C₂.toJudgmentFunctorData).compC :=
   sumComposablePairsEquiv (Q₁ := Q₁) (Q₂ := Q₂)
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Φ preserves binary coproducts: Φ(C₁ ⊕ C₂) ≅ Φ(C₁) ⊕ Φ(C₂).
     The isomorphism is the identity on objects, morphisms, and identities,
     and uses the composable pairs equivalence on the compC component. -/
@@ -5158,6 +5177,7 @@ theorem terminal_var_equiv_id_at_idObj (i : terminalQuotData.IdWitness) :
   CategoryQuotientData.FreeMorEquiv.rel
     (CategoryQuotientData.FreeMorEquivGen.id_witness i)
 
+set_option backward.isDefEq.respectTransparency false in
 /-- In the terminal copresheaf, FreeMor.var PUnit.unit is equivalent to
     FreeMor.id PUnit.unit. Since id_src = id_tgt = rfl for terminal,
     the cast is trivial. -/

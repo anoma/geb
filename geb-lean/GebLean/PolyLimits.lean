@@ -120,6 +120,7 @@ def ccrLiftCone
       exact (ccrLiftMor_naturality s x j₀ f).symm
   }
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The factorization property for the lift: the composite
 `ccrEvalMk i₀ (hc.lift (...) ≫ c.π.app j)` equals
@@ -165,6 +166,7 @@ lemma ccrLiftCone_uniq_aux
     ((congr_arg_heq ccrEvalMor hmj).trans
       (eqToHom_comp_heq _ _).symm)
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Coproducts of covariant representables preserve
 connected limits (constructive version).  Given

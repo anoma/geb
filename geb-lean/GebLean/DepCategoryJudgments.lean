@@ -350,6 +350,7 @@ private lemma idT_mor_eq.{u} (data : DepCategoryData.{u + 1}) (o : data.objT)
   simp [extractRoundTrippedMor, functorDataToDep_depToFunctorData_morT,
     depToFunctorData]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Helper lemma: Prove the idMor constraint for the inverse function. -/
 private lemma idT_invFun_constraint.{u} (data : DepCategoryData.{u + 1})
     (o : data.objT)
@@ -362,6 +363,7 @@ private lemma idT_invFun_constraint.{u} (data : DepCategoryData.{u + 1})
   cases hb
   simp [depToFunctorData, functorDataToDep_depToFunctorData_morT]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Round-tripping from DepCategoryData to CopresheafData and back
     gives an equivalent identity type. -/
 def functorDataToDep_depToFunctorData_idT.{u}
@@ -408,6 +410,7 @@ def functorDataToDep_depToFunctorData_idIso.{u}
     funext i
     exact (functorDataToDep_depToFunctorData_idT data o m).right_inv i
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Helper lemma: Extract the composition equality from the witness.
     Proves that the right projection of the reconstructed witness matches
     the original morphism. -/
@@ -428,6 +431,7 @@ private lemma compT_invFun_right.{u} (data : DepCategoryData.{u + 1})
     cases hfb
     simp [depToFunctorData, functorDataToDep_depToFunctorData_morT, cast_eq]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Helper lemma: Extract the composition equality from the witness.
     Proves that the left projection of the reconstructed witness matches
     the original morphism. -/
@@ -448,6 +452,7 @@ private lemma compT_invFun_left.{u} (data : DepCategoryData.{u + 1})
     cases hgb
     simp [depToFunctorData, functorDataToDep_depToFunctorData_morT, cast_eq]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Helper lemma: Extract the composition equality from the witness. -/
 private lemma compT_invFun_composite.{u} (data : DepCategoryData.{u + 1})
     (a b c : data.objT)
@@ -466,6 +471,7 @@ private lemma compT_invFun_composite.{u} (data : DepCategoryData.{u + 1})
     cases hhb
     simp [depToFunctorData, functorDataToDep_depToFunctorData_morT, cast_eq]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Convenience lemma packaging the sigma equality arising from
     `extractRoundTrippedMor`. -/
 private lemma extractRoundTrippedMor_sigma_eq.{u}
@@ -513,6 +519,7 @@ private lemma compT_mor_eq.{u} (data : DepCategoryData.{u + 1}) (a b c : data.ob
   cases hcomp'
   simp [extractRoundTrippedMor, functorDataToDep_depToFunctorData_morT]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Proves that the reconstructed composition witness matches the original
     sigma tuple after applying `extractRoundTrippedMor` to its components. -/
 private lemma compTSigma_eq.{u} (data : DepCategoryData.{u + 1})
@@ -697,6 +704,7 @@ abbrev functorToDataDep_mkCopresheafDep_compEquiv.{u}
     ((sigmaTrivialSubtype b c).invFun g)
     ((sigmaTrivialSubtype a c).invFun h)
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Round-tripping CopresheafData through DepCategoryData gives a
     naturally isomorphic functor. The component equivalences we proved
     show that the functors are the same on objects, morphisms, identities,
@@ -793,6 +801,7 @@ def mkCopresheaf_depToFunctorData_functorDataToDep.{u}
                            congrArg data.cod
                              x.snd.snd.snd.snd.snd.snd.property.2.1.symm)))
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Round-tripping DepCategoryData through CopresheafData gives a
     naturally isomorphic functor. -/
 def mkCopresheafDep_functorDataToDep_depToFunctorData.{u}

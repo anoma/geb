@@ -106,6 +106,7 @@ private def elementsPre_lift
         e.unop ⟶ ⟨Opposite.op b,
           F.map f.op e.unop.snd⟩)⟩
 
+set_option backward.isDefEq.respectTransparency false in
 instance elementsPre_π_isDiscreteFibration
     (F : Cᵒᵖ ⥤ Type w) :
     IsDiscreteFibration (elementsPre_π F) where
@@ -240,6 +241,7 @@ theorem comprehensiveFactorization'_comm :
     simp [comprehensiveE', comprehensiveM',
       eqToHom_refl]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Lift a costructured arrow `τ : CostructuredArrow F d`
 with `⟦τ⟧ = ⟦σ₀⟧` to an element of
 `CostructuredArrow (comprehensiveE' F) ⟨d, ⟦σ₀⟧⟩`.
@@ -291,6 +293,7 @@ private def liftCostArrowHom
     erw [CommaMorphism.w, Functor.const_obj_map]
     exact Category.comp_id _)
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Extract the component membership proof from a
 costructured arrow over `⟨d, ⟦σ₀⟧⟩`: the costructured
 arrow `CostructuredArrow.mk α.hom.val` lies in the
@@ -531,6 +534,7 @@ private def liftStrArrowHom
     exact congrArg Opposite.op
       ((CommaMorphism.w φ).symm.trans (by simp)))
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Extract the component membership proof from a
 structured arrow over `op ⟨op d, ⟦σ₀⟧⟩`: the structured
 arrow `StructuredArrow.mk` of the underlying morphism lies
@@ -851,6 +855,7 @@ private def strToCostArrHomRev
     exact congrArg Opposite.op
       (StructuredArrow.w φ))
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The presheaf comprehensive factorization is a
 pointwise left Kan extension: for each `d : Dᵒᵖ`, the
 cocone `(comprehensivePresheafLeftExt F).coconeAt d` is a

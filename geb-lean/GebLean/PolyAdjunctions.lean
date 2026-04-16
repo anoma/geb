@@ -264,6 +264,7 @@ lemma ccrToFunctorMap_injective_base {P Q : CoprodCovarRepCat'.{u, v, w} D}
       (ccrEvalMk i (𝟙 (ccrFamily P i)))
   exact congrArg Sigma.fst h_at
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 If two morphisms `f g : P ⟶ Q` in `CoprodCovarRepCat'` induce the same natural
 transformation and have equal base components, then their fiber components

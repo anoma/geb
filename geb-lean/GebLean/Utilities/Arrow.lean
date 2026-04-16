@@ -2,8 +2,6 @@ import Mathlib.CategoryTheory.Comma.Arrow
 import Mathlib.CategoryTheory.Adjunction.Reflective
 import Mathlib.CategoryTheory.Adjunction.Triple
 
-set_option backward.isDefEq.respectTransparency true
-
 namespace GebLean
 
 open CategoryTheory

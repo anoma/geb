@@ -912,6 +912,7 @@ def depCategoryCatCounitInv.{u, v, w₃, w₄}
     D.obj ⟶ (catToDepCategoryCat.{u, v, w₃, w₄} (depCategoryCatToCat D)).obj :=
   ObjectProperty.homMk (ObjectProperty.homMk (depCategoryCatCounitInvNatTrans D))
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The composition `inv ≫ hom` is identity for the counit at the `DepNatTransData`
     level. -/
 theorem depCategoryCatCounit_inv_hom_natTrans.{u, v, w₃, w₄}

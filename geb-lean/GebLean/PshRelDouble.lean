@@ -176,6 +176,7 @@ theorem pshProdOverGraph_snd
       pshProdSnd P Q = α :=
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 theorem pshProdOverGraph_snd_assoc
     {P Q : Cᵒᵖ ⥤ Type w} (α : P ⟶ Q)
     {R : Cᵒᵖ ⥤ Type w}
@@ -277,6 +278,7 @@ def pshProdOverToRel
     (R : PshProdOver P Q) : PshRel P Q :=
   Subfunctor.range R.hom
 
+set_option backward.isDefEq.respectTransparency false in
 /-- `pshProdOverComp` respects isomorphisms: given
 isomorphisms `R₁ ≅ R₂` and `S₁ ≅ S₂` in the over
 categories, their compositions are isomorphic. -/
@@ -313,6 +315,7 @@ def pshProdOverComp_iso
     simp only [Functor.mapIso_hom, Over.forget_map,
       ← Category.assoc, hS]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Left identity for `pshProdOverComp`: composing
 with the identity relation on `P` yields an
 isomorphic relation. -/
@@ -334,6 +337,7 @@ def pshProdOverComp_id_left
         exact this.symm
       · rfl)
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Right identity for `pshProdOverComp`: composing
 with the identity relation on `Q` yields an
 isomorphic relation. -/
@@ -373,6 +377,7 @@ def pshProdOverComp_assoc
       simp only [pshProdOverComp, Over.mk_hom]
       apply pshProdPresheaf_hom_ext <;> rfl)
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The composite of two graph relations
 `graph(α) ; graph(β)` is isomorphic to
 `graph(α ≫ β)`. -/
@@ -592,6 +597,7 @@ def pshProdOverDagger
     PshProdOver Q P :=
   Over.mk (R.hom ≫ pshProdSwap P Q)
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The dagger at the `PshProdOver` level is
 involutive. -/
 theorem pshProdOverDagger_dagger
@@ -753,6 +759,7 @@ def PshProdOverRelated
     φ ≫ S.hom =
       R.hom ≫ pshProdMap α β
 
+set_option backward.isDefEq.respectTransparency false in
 /-- `PshProdOverRelated` is invariant under
 isomorphism in both relation arguments. -/
 theorem pshProdOverRelated_iso
@@ -789,6 +796,7 @@ def pshRelRelated
     (p, p') ∈ R.obj c →
       (α.app c p, β.app c p') ∈ S.obj c
 
+set_option backward.isDefEq.respectTransparency false in
 /-- For graph relations, `PshProdOverRelated`
 reduces to commutativity of the naturality square.
 The forward direction extracts the square from the
@@ -1409,6 +1417,7 @@ theorem pshBarrLift_snd
     G.map (R.hom ≫ pshProdSnd P Q) :=
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The Barr extension preserves isomorphisms in the
 Over category: an isomorphism `α : R ≅ S` in
 `PshProdOver P Q` induces an isomorphism
@@ -1453,6 +1462,7 @@ def pshBarrLiftRel
   pshProdOverToRel
     (pshBarrLift G (Over.mk R.ι))
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The range of `pshBarrLift G S` is contained
 in `pshBarrLiftRel G (pshProdOverToRel S)`:
 every element in the image of the Barr lift
@@ -1718,6 +1728,7 @@ theorem pshBarrLiftRel_id
     pshBarrLiftRel_graph, G.map_id,
     pshRelGraph_eq_id]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The Barr extension through the identity
 functor is the identity: `pshBarrLiftRel (𝟭 _)
 R = R`. -/
@@ -1731,6 +1742,7 @@ theorem pshBarrLiftRel_functor_id
     pshProdOverToRel, Over.mk_hom,
     pshProdLift_fst_snd, Subfunctor.range_ι]
 
+set_option backward.isDefEq.respectTransparency false in
 theorem pshBarrLiftRel_mem_of_map
     {P Q : Cᵒᵖ ⥤ Type w}
     (G : (Cᵒᵖ ⥤ Type w) ⥤
@@ -1746,6 +1758,7 @@ theorem pshBarrLiftRel_mem_of_map
     Set.mem_range, Over.mk_hom]
   exact ⟨z, rfl⟩
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The Barr extension preserves relatedness: if
 `α` and `β` are `(R, S)`-related at the `PshProdOver`
 level, then `G.map α` and `G.map β` are
@@ -1853,6 +1866,7 @@ theorem pshBarrLiftRel_related
       (pshRelRelated_toPshProdOverRelated
         h))
 
+set_option backward.isDefEq.respectTransparency false in
 /-- A natural endomorphism of `G` preserves
 relatedness at every Barr-lifted relation.
 Given `σ : G ⟶ G` and `R : PshRel P Q`,
@@ -2293,6 +2307,7 @@ theorem pshContraBarrLiftRel_id
   simp only [op_id, F.map_id,
     pshRelGraph_eq_id, pshRelDagger_id]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The contravariant Barr extension preserves
 relatedness contravariantly: if `α` and `β`
 carry `R`-related pairs to `S`-related pairs,
@@ -3107,6 +3122,7 @@ theorem pshArrowRel_id
                w.property)⟩
     · rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Membership in the arrow relation at graph
 relations: if `(g₁, g₂)` belong to
 `pshArrowRel (pshRelGraph α) (pshRelGraph β)`,
@@ -3145,6 +3161,7 @@ theorem pshArrowRel_graph_apply
   simp only at hfst hsnd
   rw [← hfst, ← hsnd]; exact s.property
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Introduction rule for membership in the arrow
 relation between graph relations: a pair `(g₁, g₂)`
 belongs to `pshArrowRel (pshRelGraph α)
@@ -3176,6 +3193,7 @@ theorem pshArrowRel_graph_intro
   change β.app d (g₁.app d k x) = g₂.app d k y
   rw [h d k x, hxy]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Extraction rule for the arrow relation when
 the codomain is a graph relation: given membership
 in `pshArrowRel R (pshRelGraph β)` and a related
@@ -3214,6 +3232,7 @@ theorem pshArrowRel_graphCod_apply
   simp only at hfst hsnd
   rw [← hfst, ← hsnd]; exact s.property
 
+set_option backward.isDefEq.respectTransparency false in
 theorem pshArrowRel_intro
     {A₁ A₂ B₁ B₂ :
       Dᵒᵖ ⥤ Type (max u₁ v₁)}
@@ -3238,6 +3257,7 @@ theorem pshArrowRel_intro
     h d k w.val.1 w.val.2 w.property⟩,
     rfl⟩
 
+set_option backward.isDefEq.respectTransparency false in
 theorem pshArrowRel_apply
     {A₁ A₂ B₁ B₂ :
       Dᵒᵖ ⥤ Type (max u₁ v₁)}
@@ -3498,6 +3518,7 @@ def pshIhomYonedaInv
     (f.app (Opposite.op (A ⊗ X))
       (Quiver.Hom.op (snd A X)) (fst A X))
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The presheaf
 `(yoneda.obj A).functorHom (yoneda.obj B)` is
 representable by `(ihom A).obj B`. -/
@@ -3609,6 +3630,7 @@ def pshIhomYonedaULiftInv
       (Quiver.Hom.op (snd A X))
       ⟨fst A X⟩).down)⟩
 
+set_option backward.isDefEq.respectTransparency false in
 /-- `pshIhomYonedaULiftInv ≫ pshIhomYonedaULiftFwd`
 is the identity. -/
 theorem pshIhomYonedaULift_left_inv
@@ -3626,6 +3648,7 @@ theorem pshIhomYonedaULift_left_inv
     ← uncurry_eq]
   exact curry_uncurry e.down
 
+set_option backward.isDefEq.respectTransparency false in
 /-- `pshIhomYonedaULiftFwd ≫ pshIhomYonedaULiftInv`
 is the identity. -/
 theorem pshIhomYonedaULift_right_inv
@@ -3787,6 +3810,7 @@ theorem pshBarrLift_comp_le_barrLiftRel_comp
   exact pshProdOverToRel_pshBarrLift_le G
     (pshProdOverComp (Over.mk R.ι) (Over.mk S.ι))
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The Barr lift of the pullback-based composition
 is contained in the relational composition of
 individual Barr lifts.  From a witness
@@ -3884,6 +3908,7 @@ def pullbackToRelCompFunctor
         pshProdOverComp, Over.mk_hom]
       exact le_refl _)
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The composition `pullbackToRelCompFunctor ≫
 (pshRelComp R S).ι` equals the hom of
 `pshProdOverComp`. -/
@@ -3899,6 +3924,7 @@ theorem pullbackToRelCompFunctor_ι
     pshProdOverComp, Over.mk_hom,
     Subfunctor.lift_ι]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- If `G` preserves pullbacks, the relational
 composition of Barr lifts is contained in the Barr
 lift of the relational composition. Together with
@@ -4188,6 +4214,7 @@ theorem pshBarrLiftDF_preservesHComp
       (pshBarrLiftDoubleFunctorOps G) :=
   fun α β => G.map_comp α β
 
+set_option backward.isDefEq.respectTransparency false in
 /-- A natural transformation `σ : F ⟶ G`
 between presheaf endofunctors gives a relatedness
 square between Barr lifts: `(σ.app P, σ.app Q)`
@@ -4232,6 +4259,7 @@ theorem natTrans_barrLiftRel_related
     (nf.symm.trans (congr_arg _ hw₁))
     (ns.symm.trans (congr_arg _ hw₂))
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The Barr extension through a composite
 `F ⋙ G` is contained in the composed Barr
 extensions `pshBarrLiftRel G (pshBarrLiftRel F R)`.
@@ -4555,6 +4583,7 @@ theorem pshBarrLiftRel_ihom_le_arrowRel
     Subfunctor.ι] at hfst hsnd
   exact Prod.ext hfst.symm hsnd.symm
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The arrow relation with identity domain
 is contained in the Barr extension of the
 internal hom: every pair in

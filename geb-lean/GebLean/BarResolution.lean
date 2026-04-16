@@ -20,6 +20,7 @@ universe v u
 
 namespace SimplexCategory
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 For an order-preserving map with a strictly smaller
 domain, there is an element in the codomain not in
@@ -41,6 +42,7 @@ theorem exists_not_mem_range_of_lt
   simp at this
   omega
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 For an order-preserving map with a strictly larger
 domain, there exists a "flat spot": consecutive
@@ -396,6 +398,7 @@ lemma barFace_comp_barDegen_lt (n : ℕ)
         exact ih i j (by omega)
           (by omega) (by omega)
 
+set_option backward.isDefEq.respectTransparency false in
 lemma barFace_comp_barDegen_gt (n : ℕ)
     (i j : ℕ) (hij : j < i)
     (hi : i < n + 2) (hj : j < n + 1) :
@@ -614,6 +617,7 @@ def barQuiverMap :
     | .δ i => (barFace G X _ i).op
     | .σ j => (barDegen G X _ j).op
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The bar resolution as a functor from
 `SimplexCategoryGenRelᵒᵖ` to `C`, constructed

@@ -83,6 +83,7 @@ theorem HomToProf_diag (pt A : C) :
     diagApp (HomToProf pt) A = (A ⟶ pt) := by
   simp only [diagApp, HomToProf_obj_obj]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The map in the first (contravariant) argument: precomposition. -/
 @[simp]
 theorem HomToProf_map_app (pt : C) {A₁ A₂ : Cᵒᵖ} (f : A₁ ⟶ A₂) (B : C)
@@ -113,6 +114,7 @@ theorem HomToProf_rmap (pt : C) {A B : C} (f : A ⟶ B)
     Profunctor.rmap (HomToProf pt) f h = h := by
   simp only [Profunctor.rmap, HomToProf_obj_map]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- `HomToProf pt` equals `IdProf ⇓ pt` (the identity profunctor sliced over pt).
 
 This formalizes the connection to Vene's "Id^i/C" notation: the profunctor
@@ -142,6 +144,7 @@ theorem HomToProf_eq_sliceIdProf (pt : C) : HomToProf pt = IdProf ⇓ pt := by
       sliceProfunctor_map_app, IdProf]
     simp
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Given `f : pt ⟶ pt'`, construct a natural transformation
 `HomToProf pt ⟶ HomToProf pt'` by postcomposition. -/
 def HomToProf.mapPt {pt pt' : C} (f : pt ⟶ pt') : HomToProf pt ⟶ HomToProf pt' where
@@ -169,6 +172,7 @@ theorem HomToProf.mapPt_comp {pt pt' pt'' : C} (f : pt ⟶ pt') (g : pt' ⟶ pt'
   ext A B γ
   simp only [mapPt, NatTrans.comp_app, types_comp_apply, Category.assoc]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- `HomToProf.mapPt f` equals the map from `sliceProfunctorFunctor IdProf`.
 
 Since `HomToProf pt = IdProf ⇓ pt` (by `HomToProf_eq_sliceIdProf`), the functorial
@@ -848,6 +852,7 @@ theorem HomToProf_weight_at_coTw (pt : C) (tw : CoTwistedArrow C) :
     (coTwCod tw ⟶ pt) :=
   profunctorOnOpCoTwistedArrow_at_arrow (HomToProf pt) (coTwArr tw)
 
+set_option backward.isDefEq.respectTransparency false in
 /-- For HomToProf, the weight map along a CoTwistedArrow morphism is
 precomposition by the codomain arrow component. This is because HomToProf
 is constant in its covariant position. -/
@@ -897,6 +902,7 @@ The proof relies on:
 3. The dinaturality of the restricted cowedge
 -/
 
+set_option backward.isDefEq.respectTransparency false in
 /-- For HomToProf, the weight map along a CoTwistedArrow morphism equals
 precomposition by coTwCodArr f. This is a direct computation without casts. -/
 theorem HomToProf_weight_map_eq' (pt : C) {tw tw' : CoTwistedArrow C}
@@ -910,6 +916,7 @@ theorem HomToProf_weight_map_eq' (pt : C) {tw tw' : CoTwistedArrow C}
   simp only [types_comp_apply]
   rw [HomToProf_obj_map, HomToProf_map_app, Quiver.Hom.unop_op]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The extended legs satisfy weighted cocone naturality. -/
 theorem extendMendlerLeg_natural (pt : C) (rc : RestrictedCowedgeOver G (HomToProf pt) pt)
     {tw tw' : CoTwistedArrow C} (f : tw ⟶ tw')
@@ -975,6 +982,7 @@ def extendRestrictedCowedgeFull (pt : C)
     WeightedCowedge (HomToProf pt) G :=
   ⟨pt, extendRestrictedCowedge (G := G) pt rc⟩
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Naturality for the generalized extended leg with separate weight and apex. -/
 theorem extendMendlerLeg'_natural (wpt apt : C)
     (rc : RestrictedCowedgeOver G (HomToProf wpt) apt)
@@ -1023,6 +1031,7 @@ def extendRestrictedCowedgeFull' (wpt : C) (rc : RestrictedCowedge G (HomToProf 
     WeightedCowedge (HomToProf wpt) G :=
   ⟨rc.pt, extendRestrictedCowedge' (G := G) wpt rc.pt rc.toRestrictedCowedgeOver⟩
 
+set_option backward.isDefEq.respectTransparency false in
 /-- At an identity co-twisted arrow, the extended leg reduces to the original
 family (up to canonical casts). -/
 theorem extendMendlerLeg_at_identity (pt : C)
@@ -1052,6 +1061,7 @@ theorem restrict_extend_roundtrip (pt : C)
   rw [extendMendlerLeg_at_identity (G := G)]
   simp only [weightAtIdentityToDiagApp_diagAppToWeightAtIdentity]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Generalized identity lemma with separate weight and apex points. -/
 theorem extendMendlerLeg'_at_identity (wpt apt : C)
     (rc : RestrictedCowedgeOver G (HomToProf wpt) apt) (A : C)
@@ -1174,6 +1184,7 @@ theorem extend_restrict_roundtrip (pt : C)
   simp only [extendRestrictedCowedgeFull, extendRestrictedCowedge]
   exact extendMendlerLeg_eq_original_leg (G := G) pt wc tw.unop γ
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Helper for extend_restrict_roundtrip': proves equality at coTwObjMk. -/
 theorem extendMendlerLeg'_eq_original_leg_at_coTwObjMk (wpt : C)
     (wc : WeightedCowedge (HomToProf wpt) G)
@@ -1345,6 +1356,7 @@ theorem GExtMap_id (pt : C) :
   simp only at step
   exact step
 
+set_option backward.isDefEq.respectTransparency false in
 /-- G^e preserves composition: G^e(g ∘ f) = G^e(g) ∘ G^e(f).
 Uses uniqueness of the universal morphism. -/
 theorem GExtMap_comp (pt₁ pt₂ pt₃ : C) (f : pt₁ ⟶ pt₂) (g : pt₂ ⟶ pt₃) :
@@ -1478,6 +1490,7 @@ theorem ceil_floor (m : MendlerAlgebra G) :
   exact ((restrictedCoendIsInitial G (HomToProf pt)).to
     ⟨pt, ⟨family, isDinat⟩⟩).comm A γ
 
+set_option backward.isDefEq.respectTransparency false in
 /-- floor preserves morphisms (Proposition 5.18 in Vene).
 If h is a Mendler algebra morphism, then h is a conventional G^e-algebra
 morphism between the floor algebras. -/
@@ -1529,6 +1542,7 @@ def floorHom {m₁ m₂ : MendlerAlgebra G} (f : m₁ ⟶ m₂) :
     have huniq := (restrictedCoendIsInitial G (HomToProf m₁.pt)).hom_ext lhsMorph rhsMorph
     exact congrArg RestrictedCowedge.Hom.hom huniq
 
+set_option backward.isDefEq.respectTransparency false in
 /-- ceil preserves morphisms (Proposition 5.17 in Vene).
 If h is a conventional G^e-algebra morphism, then h is a Mendler algebra
 morphism between the ceiling algebras. -/
@@ -1579,6 +1593,7 @@ theorem MendlerAlgebra.eqToHom_hom' {G' : Cᵒᵖ ⥤ C ⥤ C} {m₁ m₂ : Mend
   subst h
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- floor ∘ ceil = id on the conventional algebra category. -/
 theorem floorFunctor_comp_ceilFunctor :
     ceilFunctor G ⋙ floorFunctor G = 𝟭 _ :=
@@ -1594,6 +1609,7 @@ theorem floorFunctor_comp_ceilFunctor :
     rw [ConventionalAlgebra.eqToHom_f, ConventionalAlgebra.eqToHom_f,
         heq1, heq2, eqToHom_refl, eqToHom_refl, Category.id_comp, Category.comp_id])
 
+set_option backward.isDefEq.respectTransparency false in
 /-- ceil ∘ floor = id on the Mendler algebra category. -/
 theorem ceilFunctor_comp_floorFunctor :
     floorFunctor G ⋙ ceilFunctor G = 𝟭 _ :=

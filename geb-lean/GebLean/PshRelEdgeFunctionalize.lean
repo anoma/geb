@@ -95,6 +95,7 @@ private def functionalizeCounitCocone
             simp [pshRelEdgeSpan,
               pshRelEdgeGraphFunctor] }
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The counit component at arrow `f`: the
 morphism `L(graph(f)) ⟶ f` in `Arrow(PSh(C))`.
 The left component is `𝟙`; the right is given
@@ -145,6 +146,7 @@ def pshRelEdgeFunctionalizeAdjCounit
             (congr_app sq.w c) p
         | inr q => rfl)
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The functionalize-graph adjunction:
 `pshRelEdgeFunctionalizeFunctor ⊣
 pshRelEdgeGraphFunctor`. -/

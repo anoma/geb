@@ -293,6 +293,7 @@ theorem erDelta.pairLift'_fst {n m : ℕ}
   rw [dif_pos h]
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Composing `pairLift'` with `Δ.map snd` recovers
 the second component. -/
 theorem erDelta.pairLift'_snd {n m : ℕ}

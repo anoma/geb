@@ -21,6 +21,7 @@ theorem natBSum_rec (b : ℕ) (f : ℕ → ℕ) :
 theorem natBProd_rec (b : ℕ) (f : ℕ → ℕ) :
     natBProd b f = b.rec 1 (fun y IH => IH * f y) := rfl
 
+set_option backward.isDefEq.respectTransparency false in
 theorem fin_tail_get {n : ℕ} (v : List.Vector ℕ (n + 1)) :
     Fin.tail (v.get) = v.tail.get := by
   funext j

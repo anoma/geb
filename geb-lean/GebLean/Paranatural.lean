@@ -145,6 +145,7 @@ def map (η : F ⟶ G) : DiagElem F ⥤ DiagElem G where
   map_id x := Hom.ext rfl
   map_comp f g := Hom.ext rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- `DiagElem.map` sends the identity natural transformation to the identity functor. -/
 @[simp]
 theorem map_id_nat : map (𝟙 F) = 𝟭 (DiagElem F) := by
@@ -155,6 +156,7 @@ theorem map_id_nat : map (𝟙 F) = 𝟭 (DiagElem F) := by
 
 variable {H : Cᵒᵖ ⥤ C ⥤ Type w}
 
+set_option backward.isDefEq.respectTransparency false in
 /-- `DiagElem.map` preserves composition of natural transformations. -/
 @[simp]
 theorem map_comp_nat (η : F ⟶ G) (θ : G ⟶ H) :
@@ -180,6 +182,7 @@ not additional data, so two morphisms with the same base are equal. -/
 instance forget_faithful : (forget F).Faithful where
   map_injective h := Hom.ext h
 
+set_option backward.isDefEq.respectTransparency false in
 /-- `DiagElem.map` commutes with the forgetful functor: the square
 ```
 DiagElem F --map η--> DiagElem G
@@ -357,6 +360,7 @@ def Paranat.toFunctor (α : Paranat F G) : DiagElem F ⥤ DiagElem G where
   map_id _ := DiagElem.Hom.ext rfl
   map_comp _ _ := DiagElem.Hom.ext rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The functor induced by a paranatural transformation commutes with the
 forgetful functors to `C`. -/
 theorem Paranat.toFunctor_forget (α : Paranat F G) :
@@ -446,6 +450,7 @@ theorem Paranat.ofOverHom_toOverHom (α : Paranat F G) :
   ext
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Converting a slice morphism to a paranatural transformation and back
 yields the original slice morphism. -/
 @[simp]
@@ -498,6 +503,7 @@ of `Cat/C`, where the objects are those of the form `(DiagElem F, forget F)`.
 
 variable (C : Type u) [Category.{v} C]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The functor induced by a paranatural identity is the identity functor. -/
 @[simp]
 theorem Paranat.toFunctor_id (F : Cᵒᵖ ⥤ C ⥤ Type u) :
@@ -517,6 +523,7 @@ theorem Paranat.toOverHom_id (F : Cᵒᵖ ⥤ C ⥤ Type u) :
     diagElemSliceFunctor]
   exact Paranat.toFunctor_id C F
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The functor induced by a composition of paranatural transformations is
 the composition of the induced functors. -/
 @[simp]
@@ -1264,6 +1271,7 @@ def elementsToDiagElem : P.Elements ⥤ DiagElem (copresheafToProf P) where
   map_id _ := DiagElem.Hom.ext rfl
   map_comp _ _ := DiagElem.Hom.ext rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The category of diagonal elements of `copresheafToProf P` is isomorphic
 to the (covariant) category of elements `P.Elements`. -/
 def diagElemCopresheafIso : DiagElem (copresheafToProf P) ≅Cat P.Elements where
@@ -1338,6 +1346,7 @@ def elementsPreToDiagElem :
   map_id _ := DiagElem.Hom.ext rfl
   map_comp _ _ := DiagElem.Hom.ext rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The category of diagonal elements of `presheafToProf Q` is isomorphic
 to `Q.ElementsPre`, the standard category of elements for presheaves. -/
 def diagElemPresheafIso : DiagElem (presheafToProf Q) ≅Cat Q.ElementsPre where
@@ -1398,6 +1407,7 @@ def arrToDiagFromSource {arr₁ arr₂ : Arrow C} (φ : arr₁ ⟶ arr₂) :
     (by simp only [arrToTw', arrDiagTw', arrDiag, twObjMk'_arr]
         exact Category.id_comp _)
 
+set_option backward.isDefEq.respectTransparency false in
 /-- From the target twisted arrow `tw(arr₂.hom)` to the diagonal `tw(diag φ)`.
 This uses `φ.left` on domains and `𝟙` on codomains. -/
 def arrToDiagFromTarget {arr₁ arr₂ : Arrow C} (φ : arr₁ ⟶ arr₂) :
@@ -1481,6 +1491,7 @@ def Hom.id (x : TwCoprArrElem F) : Hom F x x where
         twHomMk', CategoryOfElements.homMk]
     rw [h]
 
+set_option backward.isDefEq.respectTransparency false in
 def Hom.comp {x y z : TwCoprArrElem F} (f : Hom F x y) (g : Hom F y z) :
     Hom F x z where
   base := f.base ≫ g.base
@@ -1664,6 +1675,7 @@ and the twisted arrow morphisms `connGrothendieckTwMorphCod/Dom`) correspond
 exactly to our `arrDiagTw'` and `arrToDiagFromSource/Target` constructions.
 -/
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The diagonal from `ConnGrothendieck` matches `arrDiagTw'`. Given an
 Arrow morphism `φ : arr₁ ⟶ arr₂`, both compute `tw(arr₁.hom ≫ φ.right)`. -/
 lemma connGrothendieckDiagCod_eq_arrDiagTw' {arr₁ arr₂ : Arrow C}
@@ -1671,6 +1683,7 @@ lemma connGrothendieckDiagCod_eq_arrDiagTw' {arr₁ arr₂ : Arrow C}
     connGrothendieckDiagCod C (arrToTw' arr₁) φ.right = arrDiagTw' φ := by
   simp only [connGrothendieckDiagCod, arrDiagTw', arrDiag, arrToTw', twObjMk'_arr]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The domain-based diagonal matches `arrDiagTw'` via the arrow square
 commutativity. -/
 lemma connGrothendieckDiagDom_eq_arrDiagTw' {arr₁ arr₂ : Arrow C}
@@ -1814,6 +1827,7 @@ lemma connGrothendieckObj_roundtrip (x : TwCoprArrElem F) :
   simp only [connGrothendieckObjToTwCoprArrElem, twCoprArrElemToConnGrothendieckObj]
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Round-trip from `ConnGrothendieckObj` to `TwCoprArrElem` and back is identity. -/
 @[simp]
 lemma twCoprArrElemObj_roundtrip (x : ConnGrothendieckObj C (typeToCatF F)) :
@@ -1843,6 +1857,7 @@ lemma connGrothendieckDiagCod_eq_arrDiagTw {x y : TwCoprArrElem F}
     connGrothendieckDiagCod C (arrToTw' x.arr) f.base.right = arrDiagTw' f.base := by
   exact connGrothendieckDiagCod_eq_arrDiagTw' f.base
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The TwMorphCod from ConnGrothendieck equals arrToDiagFromSource. -/
 lemma connGrothendieckTwMorphCod_eq_arrToDiagFromSource
     {x y : TwCoprArrElem F} (f : TwCoprArrElem.Hom F x y) :
@@ -1857,6 +1872,7 @@ lemma connGrothendieckTwMorphCod_eq_arrToDiagFromSource
   · simp only [connGrothendieckTwMorphCod, twHomMk'_codArr, arrToDiagFromSource,
       eqToHom_refl', Category.comp_id]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The TwMorphDom from ConnGrothendieck equals arrToDiagFromTarget. -/
 lemma connGrothendieckTwMorphDom_eq_arrToDiagFromTarget
     {x y : TwCoprArrElem F} (f : TwCoprArrElem.Hom F x y) :
@@ -1985,6 +2001,7 @@ def twCoprArrElemFiberMorphTgtTransported {x y : TwCoprArrElem F}
     (typeToCatF F).obj (connGrothendieckDiagCod C (arrToTw' x.arr) f.base.right) :=
   (eqToHom (typeToCatFiberCatEq F f).symm).toFunctor.obj (twCoprArrElemFiberMorphTgt F f)
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The source and transported target of the fiber morphism have equal underlying
 elements. This follows from `TwArrCompat`. -/
 lemma twCoprArrElemFiberMorphEq {x y : TwCoprArrElem F} (f : TwCoprArrElem.Hom F x y) :
@@ -2087,6 +2104,7 @@ def twCoprArrElemToConnGrothendieckContraHom {x y : TwCoprArrElem F}
     twCoprArrElemToConnGrothendieckContraObj F x ⟶ twCoprArrElemToConnGrothendieckContraObj F y :=
   connGrothendieckHomToContraHom C (typeToCatF F) (twCoprArrElemToConnGrothendieckHom F f)
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The forward functor from `TwCoprArrElem F` to `ConnGrothendieck (typeToCatF F)`
 preserves identity morphisms: the converted identity equals the identity in the
 Grothendieck category. -/
@@ -2130,6 +2148,7 @@ theorem twCoprArrElemToConnGrothendieck_map_id (x : TwCoprArrElem F) :
       -- between the same objects are equal
       apply @Subsingleton.elim _ (Discrete.instSubsingletonDiscreteHom _ _)
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The forward functor from `TwCoprArrElem F` to `ConnGrothendieck (typeToCatF F)`
 preserves composition. -/
 theorem twCoprArrElemToConnGrothendieck_map_comp {x y z : TwCoprArrElem F}
@@ -2592,6 +2611,7 @@ def twCoprArrConnGrothCounitIsoApp (x : ConnGrothendieck (typeToCatF F)) :
       ((connGrothendieckToTwCoprArrElem F).obj x) ≅ x :=
   eqToIso (connGroth_twCoprArr_obj_roundtrip F x)
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The unit natural isomorphism for the equivalence. -/
 def twCoprArrConnGrothUnitIso :
     𝟭 (TwCoprArrElem F) ≅
@@ -2608,6 +2628,7 @@ def twCoprArrConnGrothUnitIso :
       simp only [eqToHom_refl, CategoryStruct.id, TwCoprArrElem.Hom.id,
         Category.id_comp, Category.comp_id])
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The counit natural isomorphism for the equivalence. -/
 def twCoprArrConnGrothCounitIso :
     connGrothendieckToTwCoprArrElem F ⋙ twCoprArrElemToConnGrothendieck F ≅
@@ -2666,6 +2687,7 @@ def twCoprArrConnGrothCounitIso :
         case w_fiber =>
           apply @Subsingleton.elim _ (Discrete.instSubsingletonDiscreteHom _ _))
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The triangle identity for the equivalence: functor ∘ unit ∘ counit = id. -/
 lemma twCoprArrConnGroth_functor_unitIso_comp (x : TwCoprArrElem F) :
     (twCoprArrElemToConnGrothendieck F).map ((twCoprArrConnGrothUnitIso F).hom.app x) ≫
@@ -2782,12 +2804,14 @@ def twCoprElemToDiagElem (I : C) (e : (profToTwCopr P).obj (twObjId I)) :
     diagApp P I :=
   cast (profToTwCopr_id_obj P I) e
 
+set_option backward.isDefEq.respectTransparency false in
 @[simp]
 lemma diagElemToTwCoprElem_twCoprElemToDiagElem (I : C)
     (e : (profToTwCopr P).obj (twObjId I)) :
     diagElemToTwCoprElem P I (twCoprElemToDiagElem P I e) = e := by
   simp only [diagElemToTwCoprElem, twCoprElemToDiagElem, cast_eq]
 
+set_option backward.isDefEq.respectTransparency false in
 @[simp]
 lemma twCoprElemToDiagElem_diagElemToTwCoprElem (I : C) (e : diagApp P I) :
     twCoprElemToDiagElem P I (diagElemToTwCoprElem P I e) = e := by
@@ -2853,6 +2877,7 @@ lemma arrToDiagFromTarget_idArrowHom_dom {I₀ I₁ : C} (f : I₀ ⟶ I₁) :
 lemma arrToDiagFromTarget_idArrowHom_cod {I₀ I₁ : C} (f : I₀ ⟶ I₁) :
     twCodArr' (arrToDiagFromTarget (idArrowHom (C := C) f)) = 𝟙 I₁ := rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The `profToTwCopr` map on `arrToDiagFromSource` for identity arrows
 computes to the covariant action `diagPostArr`. -/
 lemma profToTwCopr_map_arrToDiagFromSource_id {I₀ I₁ : C} (f : I₀ ⟶ I₁)
@@ -2871,6 +2896,7 @@ lemma profToTwCopr_map_arrToDiagFromSource_id {I₀ I₁ : C} (f : I₀ ⟶ I₁
   erw [op_id, P.map_id, NatTrans.id_app]
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The `profToTwCopr` map on `arrToDiagFromTarget` for identity arrows
 computes to the contravariant action `diagPreArr`. -/
 lemma profToTwCopr_map_arrToDiagFromTarget_id {I₀ I₁ : C} (f : I₀ ⟶ I₁)
@@ -2889,6 +2915,7 @@ lemma profToTwCopr_map_arrToDiagFromTarget_id {I₀ I₁ : C} (f : I₀ ⟶ I₁
     CategoryTheory.Functor.map_id, Category.comp_id]
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- `DiagCompat` for a morphism `f` is equivalent to `TwArrCompat` for the
 identity arrow morphism `idArrowHom f`. -/
 lemma diagCompat_iff_twArrCompat_idArrowHom {I₀ I₁ : C} (f : I₀ ⟶ I₁)
@@ -3014,6 +3041,7 @@ lemma profunctor_transport_compat_aux {a₁ a₂ b₁ b₂ : C}
   subst ha hb
   exact h
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Convert `TwArrCompat` on identity arrows to `DiagCompat`.
 Uses destructuring to enable substitution. -/
 lemma twArrCompat_isIdentity_to_diagCompat {arr₁ arr₂ : Arrow C}
@@ -3106,6 +3134,7 @@ lemma Arrow.IsIdentity.eq_mk_id {arr : Arrow C} (hid : Arrow.IsIdentity arr) :
   subst hhom
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Round-trip: DiagElem → IdentityTwCoprArrElem → DiagElem gives back the
 original object. -/
 theorem roundTrip_diag_obj (x : DiagElem P) :
@@ -3116,6 +3145,7 @@ theorem roundTrip_diag_obj (x : DiagElem P) :
       diagElemToTwCoprArrElemObj, diagElemToTwCoprElem, cast_eq]
     exact HEq.rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Round-trip on morphisms from DiagElem direction. -/
 theorem roundTrip_diag_map {x y : DiagElem P} (f : x ⟶ y) :
     identityTwCoprToDiagElemHom P (diagElemToIdentityTwCoprHom P f) =
@@ -3131,6 +3161,7 @@ lemma roundTrip_tw_arr (x : IdentityTwCoprArrElem P) :
   simp only [diagElemToTwCoprArrElemObj, identityTwCoprToDiagElemObj]
   exact (x.property.eq_mk_id).symm
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Element equality for round-trip from IdentityTwCoprArrElem direction. -/
 lemma roundTrip_tw_elem (x : IdentityTwCoprArrElem P) :
     (diagElemToTwCoprArrElemObj P (identityTwCoprToDiagElemObj P x)).elem ≍
@@ -3156,6 +3187,7 @@ theorem roundTrip_tw_obj (x : IdentityTwCoprArrElem P) :
   · exact roundTrip_tw_arr P x
   · exact roundTrip_tw_elem P x
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Round-trip on morphisms from IdentityTwCoprArrElem direction. -/
 theorem roundTrip_tw_map {x y : IdentityTwCoprArrElem P} (f : x ⟶ y) :
     diagElemToIdentityTwCoprHom P (identityTwCoprToDiagElemHom P f) =
@@ -3204,6 +3236,7 @@ def diagIdentityTwCoprUnitIso :
         _ = 𝟙 _ ≫ f ≫ eqToHom _ := by rfl
         _ = f ≫ eqToHom _ := by rw [Category.id_comp])
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Counit iso: `identityTwCoprToDiagElem P ⋙ diagElemToIdentityTwCopr P ≅ 𝟭 _`. -/
 def diagIdentityTwCoprCounitIso :
     identityTwCoprToDiagElem P ⋙ diagElemToIdentityTwCopr P ≅ 𝟭 (IdentityTwCoprArrElem P) :=
@@ -3216,6 +3249,7 @@ def diagIdentityTwCoprCounitIso :
       rw [Category.assoc, Category.assoc, eqToHom_trans]
       simp only [eqToHom_refl, Category.comp_id])
 
+set_option backward.isDefEq.respectTransparency false in
 /-- `DiagElem P` is equivalent to `IdentityTwCoprArrElem P`. -/
 def diagElemIdentityTwCoprEquiv : DiagElem P ≌ IdentityTwCoprArrElem P where
   functor := diagElemToIdentityTwCopr P

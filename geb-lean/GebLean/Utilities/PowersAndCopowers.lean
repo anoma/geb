@@ -578,6 +578,7 @@ theorem terminalWeightCov_obj (S : Type v) (j : Discrete PUnit) :
 theorem terminalWeightCov_map (S : Type v) {j₁ j₂ : Discrete PUnit} (f : j₁ ⟶ j₂) :
     (terminalWeightCov S).map f = id := rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The homFromFunctor map for terminalDiagram is postcomposition with identity. -/
 theorem terminalDiagram_homFromFunctor_map (X Y : C)
     {j₁ j₂ : Discrete PUnit} (f : j₁ ⟶ j₂) (g : Y ⟶ X) :
@@ -764,6 +765,7 @@ theorem powerByTypeFunctor_obj [HasPowers C] (S : Type w) (X : C) :
 theorem powerByTypeFunctor_map [HasPowers C] (S : Type w) {X Y : C} (f : X ⟶ Y) :
     (powerByTypeFunctor S).map f = HasPowers.mapVal f := rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The copower-power adjunction: `S ·. _ ⊣ _ ^. S`.
 
 This is the categorical form of the tensor-hom adjunction, expressing that
@@ -846,6 +848,7 @@ theorem copowerProfunctorInner_obj (j : Jᵒᵖ) (j' : J) :
 theorem copowerProfunctorInner_map (j : Jᵒᵖ) {j₁ j₂ : J} (g : j₁ ⟶ j₂) :
     (copowerProfunctorInner W F j).map g = HasCopowers.mapVal (F.map g) := rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The copower profunctor `Jᵒᵖ ⥤ J ⥤ C` whose coend gives weighted colimits.
 
 For weight `W : Jᵒᵖ ⥤ Type v` and diagram `F : J ⥤ C`:
@@ -915,6 +918,7 @@ theorem powerProfunctorInner_obj (j : Jᵒᵖ) (j' : J) :
 theorem powerProfunctorInner_map (j : Jᵒᵖ) {j₁ j₂ : J} (g : j₁ ⟶ j₂) :
     (powerProfunctorInner W F j).map g = HasPowers.mapVal (F.map g) := rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The power profunctor `Jᵒᵖ ⥤ J ⥤ C` whose end gives weighted limits.
 
 For weight `W : J ⥤ Type v` and diagram `F : J ⥤ C`:
@@ -1026,6 +1030,7 @@ def copowerCoconeιApp (c : WeightedCocone W F) (tw : CoTwistedArrow J) :
   HasCopowers.mapIdx (W.map (coTwArr tw).op) ≫
     HasCopowers.desc (c.leg (coTwCod tw))
 
+set_option backward.isDefEq.respectTransparency false in
 /-- At identity co-twisted arrows, the cocone leg is just `desc (c.leg j)`. -/
 @[simp]
 theorem copowerCoconeιApp_at_id (c : WeightedCocone W F) (j : J) :
@@ -1034,6 +1039,7 @@ theorem copowerCoconeιApp_at_id (c : WeightedCocone W F) (j : J) :
   simp only [copowerCoconeιApp, coTwObjMk_arr, coTwObjMk_cod]
   erw [W.map_id, HasCopowers.mapIdx_id, Category.id_comp]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The cocone legs form a natural transformation. -/
 theorem copowerCoconeιApp_naturality (c : WeightedCocone W F)
     {x y : CoTwistedArrow J} (m : x ⟶ y) :
@@ -1079,6 +1085,7 @@ def weightedCoconeToCopowerCocone (c : WeightedCocone W F) :
       exact copowerCoconeιApp_naturality W F c m
   }
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Convert a cocone over the copower profunctor diagram to a weighted cocone.
 
 Given a cocone with legs at each co-twisted arrow, we extract a weighted
@@ -1178,6 +1185,7 @@ theorem copowerCoconeToWeightedCocone_of_weightedCocone (c : WeightedCocone W F)
     -- c.leg (unop j) s = c.toWeightedCoconeOver.app j s by definition of leg
     rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Round-trip from copower cocone to weighted cocone and back yields the
 original. -/
 theorem weightedCoconeToCopowerCocone_of_copowerCocone
@@ -1249,6 +1257,7 @@ def weightedCoconeHomToCopowerCoconeHom {c₁ c₂ : WeightedCocone W F}
     erw [HasCopowers.fac, HasCopowers.fac]
     exact f.w (coTwCod tw) s
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Convert a copower cocone morphism to a weighted cocone morphism. -/
 def copowerCoconeHomToWeightedCoconeHom
     {c₁ c₂ : Cocone (profunctorOnCoTwistedArrow J (copowerProfunctor W F))}
@@ -1447,6 +1456,7 @@ theorem powerConeπApp_at_id (c : WeightedCone W F) (j : J) :
   simp only [powerConeπApp, twObjMk_arr, twObjMk_dom]
   erw [F.map_id, HasPowers.mapVal_id, Category.comp_id]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The cone legs form a natural transformation.
 
 For cones, naturality says: `π.app y = π.app x ≫ D.map m` for `m : x ⟶ y`. -/
@@ -1520,6 +1530,7 @@ def weightedConeToPowerCone (c : WeightedCone W F) :
       exact powerConeπApp_naturality W F c m
   }
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Convert a cone over the power profunctor diagram to a weighted cone.
 
 Given a cone with legs at each twisted arrow, we extract a weighted
@@ -1600,6 +1611,7 @@ theorem powerConeToWeightedCone_of_weightedCone (c : WeightedCone W F) :
     erw [HasPowers.fac]
     rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Round-trip from power cone to weighted cone and back yields the original. -/
 theorem weightedConeToPowerCone_of_powerCone
     (c : Cone (profunctorOnTwistedArrow J (powerProfunctor W F))) :
@@ -1627,6 +1639,7 @@ theorem weightedConeToPowerCone_of_powerCone
   rw [← Category.assoc, ← h]
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Convert a weighted cone morphism to a power cone morphism. -/
 def weightedConeHomToPowerConeHom {c₁ c₂ : WeightedCone W F}
     (f : WeightedCone.Hom c₁ c₂) :

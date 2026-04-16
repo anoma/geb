@@ -137,6 +137,7 @@ def separatedSpanToEdge
     tgt := F.obj (.some .right)
     edge := separatedSpanRel (C := C) F }
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The image relation of the inclusion span
 equals the original relation: the image of a
 subfunctor inclusion `R.ι` is `R` itself. -/
@@ -309,6 +310,7 @@ def pshCoprodRightFunctor
     | Sum.inl _ => rfl
     | Sum.inr _ => rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The Barr lift of the coproduct functor
 `(- + B)` at a relation `R` equals the
 coproduct relation `pshRelCoprod R (pshRelId B)`.
@@ -410,6 +412,7 @@ instance pshRelEdgeSymmetric
       (PshRelEdge.{u, v, w} C) :=
   CartesianMonoidalCategory.toSymmetricCategory
 
+set_option backward.isDefEq.respectTransparency false in
 open MonoidalCategory in
 /-- Each edge `A` in `PshRelEdge C` is closed:
 `tensorLeft A` has `pshRelEdgeIhom A` as
@@ -679,6 +682,7 @@ abbrev leftYonedaExtPreimageULift
     α.app (yonedaULift X) ≫
     (leftYonedaExtRepresentableULiftIso G X).hom
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The ulift-level preimage satisfies
 naturality: `yUL(F.map f) ≫ preimageULift(Y)
 = preimageULift(X) ≫ yUL(G.map f)`.
@@ -849,6 +853,7 @@ theorem leftYonedaExtElement_decompose
   dsimp [leftYonedaExtSigmaMap]
   simp
 
+set_option backward.isDefEq.respectTransparency false in
 /-- At the representable stage (where
 `t = 𝟙`), `leftYonedaExtFunctor.map(preimage α)`
 agrees with `α` for any presheaf `P`. -/
@@ -1162,6 +1167,7 @@ theorem rightYonedaExtFunctor_preimage_app
     rightYonedaExtCanonicalFamily]
   simp
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Naturality of the preimage: for `f : X ⟶ Y`,
 `F.map f ≫ σ.app Y = σ.app X ≫ G.map f`.
 Proved by combining:
@@ -2477,6 +2483,7 @@ def endoIhom
       funext ⟨h, hc⟩
       exact Subtype.ext rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The ihom postcomposition map preserves
 the span dinatural condition. -/
 lemma endoDinatSpanCond_ihomMap
@@ -2577,6 +2584,7 @@ lemma endoDinatSpanCond_ihomMap
           (h ⟨i₀, c, α₀⟩)) :=
       hcontra _
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The ihom postcomposition map preserves
 the presheaf dinatural condition. -/
 lemma endoDinatPshCond_ihomMap
@@ -2669,6 +2677,7 @@ lemma endoDinatPshCond_ihomMap
           (h ⟨i, c₀, α₀⟩)) :=
       hcontra _
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The ihom postcomposition map preserves
 the span dinatural condition for the target
 presheaf. -/
@@ -2763,6 +2772,7 @@ lemma endoDinatSpanCondTgt_ihomMap
           (h ⟨i₀, c, α₀⟩)) :=
       hcontra _
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The ihom postcomposition map preserves
 the presheaf dinatural condition for the
 target presheaf. -/
@@ -3122,6 +3132,7 @@ private lemma pshRelEdge_tensorLeft_obj_map
     ((tensorLeft F).obj H).map β =
     F.map β ⊗ₘ H.map β := rfl
 
+set_option backward.isDefEq.respectTransparency false in
 open MonoidalCategory in
 private lemma pshRelEdge_braiding_hom_eq
     (X Y : PshRelEdge.{u, v, max u v} C) :
@@ -3188,6 +3199,7 @@ private lemma pshRelEdgePair_precomp_curry_eval_gen
   rw [this, Category.assoc,
     pshRelEdgePair_curry_eval]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The span dinatural condition for the curry
 source application follows from naturality of η. -/
 private lemma currySrcApp_dinat_srcMap_key
@@ -3358,6 +3370,7 @@ lemma endoDinatSpanCond_currySrcApp
     F H G η c φ d
     ((H.map α₀).srcMap.app d h)
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The presheaf dinatural condition for the
 curry source application follows from
 naturality of η. -/
@@ -3535,6 +3548,7 @@ def endoIhomCurryTgtApp
         (η.app y)
     (H.map α ≫ curried).tgtMap.app d h
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The span dinatural condition for the curry
 target application follows from naturality
 of η. -/
@@ -3668,6 +3682,7 @@ private lemma curryTgtApp_dinat_spanMap_key
       FunctorToTypes.prod.snd_app] at hnat'
     exact hnat'
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The presheaf dinatural condition for the
 curry target application follows from
 naturality of η. -/

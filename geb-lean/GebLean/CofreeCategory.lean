@@ -54,6 +54,7 @@ structure PolyCofreeCatHom
 
 /-! ## Path Concatenation Lemmas -/
 
+set_option backward.isDefEq.respectTransparency false in
 theorem polyCofreeAnnotPosConcat_id_right
     (P : PolyEndo X) {x : X}
     (s : PolyCofreeShape P x)
@@ -266,6 +267,7 @@ theorem PolyCofreeCatHom.comp_id
   · exact (Sigma.ext_iff.mp comm).2
 
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Associativity of path concatenation, stated as an
 equality of `PolyCofreeAnnotPos` sigma pairs.
@@ -1025,6 +1027,7 @@ lemma coalgCopresheafCastPos1_collapse
   by simp only [coalgCopresheafCastPos]
      exact cast_heq _ _
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The depth-1 target equality: the copresheaf
 target of the child annotation at a shape edge
@@ -1101,6 +1104,7 @@ lemma coalgCopresheafChild_depth1_target
 
 /-! ### Copresheaf Morphism Action -/
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The copresheaf morphism action at a given depth
 and position, defined by induction on depth.
@@ -1147,6 +1151,7 @@ def coalgCopresheafMapByDepth {P : PolyEndo X}
         (by simp only [rest_child, cast_cast,
           cast_eq]; rfl))⟩
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The copresheaf morphism action: given a morphism
 `f : src ⟶ tgt` in the cofree category and an
@@ -1977,6 +1982,7 @@ lemma copresheafCoalgMType_children
   exact copresheafCoalgMType_childApprox
     P F obj elem e n
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Extracting the child annotation from the copresheaf
 M-type at position `e` yields the child copresheaf
@@ -2488,6 +2494,7 @@ lemma coalgCopresheafCastPos1_fst_heq
     (comonadCoalgFiberEq c a).symm
     (coalgCopresheafShapeAt_heq c a) e
 
+set_option backward.isDefEq.respectTransparency false in
 lemma roundtripFBStr_eq
     (P : PolyEndo X) (α : PolyCoalg P)
     (a : α.V.left) :

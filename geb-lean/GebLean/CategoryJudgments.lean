@@ -584,6 +584,7 @@ theorem natTransToData_mkNatTrans {F G : FunctorData C}
   cases α
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Extracting NatTransData from a natural transformation and converting
     back gives the original natural transformation (modulo the required
     eqToHom cast along the functor equality mkFunctor ∘ functorToData = id). -/

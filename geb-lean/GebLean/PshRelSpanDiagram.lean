@@ -531,6 +531,7 @@ theorem relSpanPshRelSpan_unitObj
   | typeNode I => rfl
   | relNode I₀ I₁ R => rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- A presheaf on `(Discrete PUnit)ᵒᵖ` is
 equal to the constant presheaf at its value
 on the single object. -/
@@ -1798,6 +1799,7 @@ theorem pshRelId_ι_fst_eq_snd
   ext c ⟨⟨_, _⟩, (h : _ = _)⟩
   exact h
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The composition `(pshRelId P).ι ≫ pshProdFst`
 is an isomorphism: the diagonal subfunctor is
 isomorphic to `P` via first projection.  The

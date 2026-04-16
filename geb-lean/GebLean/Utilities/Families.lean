@@ -477,6 +477,7 @@ def ccrNewFiberMor
       ccrNewFamily P i :=
   f.unop.fiber i
 
+set_option backward.isDefEq.respectTransparency false in
 @[simp]
 lemma ccrNewFiberMor_comp
     {P Q R : CoprodCovarRepCat.{u, v, w} C}
@@ -508,6 +509,7 @@ private lemma ccrNewFiberMor_eqToHom_comp
   subst h
   simp
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The family (directions) extraction as a functor from
 the category of elements of `ccrNewIndexFunctor C` to
@@ -572,6 +574,7 @@ lemma ccrNewMorphEval_id
   exact Sigma.ext rfl
     (heq_of_eq (Category.id_comp η))
 
+set_option backward.isDefEq.respectTransparency false in
 @[simp]
 lemma ccrNewMorphEval_comp
     {P Q R : CoprodCovarRepCat.{u, v, w} C}
@@ -661,6 +664,7 @@ def ccrNewEvalPreimage
     exact (α.app (ccrNewFamily P i)
       (ccrNewYonedaElement P i)).2
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 `ccrNewEvalCatFunctor` is fully faithful: it exhibits
 `CoprodCovarRepCat C` as a full subcategory of
@@ -890,6 +894,7 @@ lemma fcComp_reindex {x y z : FreeCoprodCompletionCat.{u, v, w} C}
     (f : x ⟶ y) (g : y ⟶ z) :
     fcReindex (f ≫ g) = fcReindex f ≫ fcReindex g := rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Composition in `FreeCoprodCompletionCat C`: the fiber morphisms compose covariantly.
 For `f : x ⟶ y` and `g : y ⟶ z`, the fiber morphism at index `i` is
@@ -913,6 +918,7 @@ of the underlying category. The reindexing is `id` and each fiber morphism is `�
 lemma fcId_mk (x : FreeCoprodCompletionCat.{u, v, w} C) :
     𝟙 x = fcHomMk id (fun i => 𝟙 (fcFamily x i)) := rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Composition in `FreeCoprodCompletionCat C` expressed purely in terms of the
 underlying category. The reindexing is function composition `g ∘ f`, and
@@ -1178,6 +1184,7 @@ def fcCoprodDesc {I : Type w} {F : I → FreeCoprodCompletionCat.{u, v, w} C}
     (fun ⟨i, x⟩ => fcReindex (f i) x)
     (fun ⟨i, x⟩ => fcFiberMor (f i) x)
 
+set_option backward.isDefEq.respectTransparency false in
 @[simp]
 lemma fcCoprodι_desc {I : Type w} {F : I → FreeCoprodCompletionCat.{u, v, w} C}
     {P : FreeCoprodCompletionCat.{u, v, w} C}
@@ -1196,6 +1203,7 @@ lemma fcCoprodι_desc {I : Type w} {F : I → FreeCoprodCompletionCat.{u, v, w} 
     change (𝟙 (fcFamily (F i) x) ≫ (f i).fiber x) = (f i).fiber x
     simp only [Category.id_comp]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- From composition fcCoprodι F i ≫ g, the fiber at x simplifies to g.fiber ⟨i, x⟩. -/
 private lemma fcCoprodι_comp_fiber_eq {I : Type w}
     {F : I → FreeCoprodCompletionCat.{u, v, w} C}
@@ -1211,6 +1219,7 @@ private lemma fcCoprodι_comp_fiber_eq {I : Type w}
   change (𝟙 (fcFamily (F i) x) ≫ g.fiber ⟨i, x⟩) = g.fiber ⟨i, x⟩
   simp only [Category.id_comp]
 
+set_option backward.isDefEq.respectTransparency false in
 lemma fcCoprodDesc_unique {I : Type w} {F : I → FreeCoprodCompletionCat.{u, v, w} C}
     {P : FreeCoprodCompletionCat.{u, v, w} C}
     (f : ∀ i, F i ⟶ P) (g : fcCoprodObj F ⟶ P)
@@ -1463,6 +1472,7 @@ def distToLhs (A : FreeCoprodCompletionCat.{u, v, w} C)
     distRhsObj A F ⟶ distLhsObj A F :=
   fcHomMk distIndexToLhs (fun _ => 𝟙 _)
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The distributivity morphisms compose to the identity (forward then back).
 -/
@@ -1484,6 +1494,7 @@ lemma distToRhs_toRhs (A : FreeCoprodCompletionCat.{u, v, w} C)
     simp only [Category.id_comp]
     rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The distributivity morphisms compose to the identity (back then forward).
 -/
@@ -1645,6 +1656,7 @@ lemma fpComp_reindex {x y z : FreeProdCompletionCat.{u, v, w} C}
     (f : x ⟶ y) (g : y ⟶ z) :
     fpReindex (f ≫ g) = fpReindex g ≫ fpReindex f := rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Composition in `FreeProdCompletionCat C`: the fiber morphisms compose
 covariantly. For `f : x ⟶ y` and `g : y ⟶ z`, the fiber morphism at index
@@ -1774,6 +1786,7 @@ lemma ccrComp_reindex {x y z : CoprodCovarRepCat'.{u, v, w} C}
     (f : x ⟶ y) (g : y ⟶ z) :
     ccrReindex (f ≫ g) = ccrReindex f ≫ ccrReindex g := rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Composition in `CoprodCovarRepCat' C`: the fiber morphisms compose
 contravariantly. For `f : x ⟶ y` and `g : y ⟶ z`, the fiber morphism at
@@ -1797,6 +1810,7 @@ the underlying category. The reindexing is `id` and each fiber morphism is `𝟙
 lemma ccrId_mk (x : CoprodCovarRepCat'.{u, v, w} C) :
     𝟙 x = ccrHomMk id (fun i => 𝟙 (ccrFamily x i)) := rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Composition in `CoprodCovarRepCat' C` expressed purely in terms of the
 underlying category. The reindexing is function composition `g ∘ f`, and
@@ -1984,6 +1998,7 @@ This allows working with polynomial functors on C by instead working with
 presheaves), which integrates with mathlib's presheaf machinery.
 -/
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Functor from `CoprodCovarRepCat' (Cᵒᵖ)` to `FreeCoprodCompletionCat C`.
 
@@ -2007,6 +2022,7 @@ def ccrOpToFc : CoprodCovarRepCat'.{u, v, w} Cᵒᵖ ⥤ FreeCoprodCompletionCat
     dsimp only [fcHomMk, fcFiberMor, fcReindex]
     simp only [ccrComp_fiberMor, unop_comp]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Functor from `FreeCoprodCompletionCat C` to `CoprodCovarRepCat' (Cᵒᵖ)`.
 
@@ -2030,6 +2046,7 @@ def fcToCcrOp : FreeCoprodCompletionCat.{u, v, w} C ⥤ CoprodCovarRepCat'.{u, v
     dsimp only [ccrHomMk, ccrFiberMor, ccrReindex]
     simp only [fcComp_fiberMor, op_comp]
 
+set_option backward.isDefEq.respectTransparency false in
 @[simp]
 lemma ccrOpToFc_fcToCcrOp : ccrOpToFc ⋙ fcToCcrOp = 𝟭 (CoprodCovarRepCat'.{u, v, w} Cᵒᵖ) := by
   fapply _root_.CategoryTheory.Functor.ext
@@ -2050,6 +2067,7 @@ lemma ccrOpToFc_fcToCcrOp : ccrOpToFc ⋙ fcToCcrOp = 𝟭 (CoprodCovarRepCat'.{
     dsimp only [ccrHomMk, ccrFiberMor, ccrReindex, fcHomMk, fcFiberMor, fcReindex]
     simp only [Quiver.Hom.op_unop]
 
+set_option backward.isDefEq.respectTransparency false in
 @[simp]
 lemma fcToCcrOp_ccrOpToFc : fcToCcrOp ⋙ ccrOpToFc = 𝟭 (FreeCoprodCompletionCat.{u, v, w} C) := by
   fapply _root_.CategoryTheory.Functor.ext
@@ -2142,6 +2160,7 @@ def ccrOpOp'Map
     ccrOpOp'Obj P ⟶ ccrOpOp'Obj Q :=
   ccrHomMk (ccrNewReindex f) (ccrNewFiberMor f)
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Functor from `CoprodCovarRepCat' C` to
 `CoprodCovarRepCat C`.
@@ -2189,6 +2208,7 @@ def ccrOp'OpFunctor :
     dsimp
     exact ccrComp_fiberMor f g i
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Functor from `CoprodCovarRepCat C` to
 `CoprodCovarRepCat' C`.
@@ -2218,6 +2238,7 @@ def ccrOpOp'Functor :
     funext i
     exact ccrNewFiberMor_comp f g i
 
+set_option backward.isDefEq.respectTransparency false in
 @[simp]
 lemma ccrOp'Op_OpOp'_eq :
     ccrOp'OpFunctor (C := C) ⋙
@@ -2241,6 +2262,7 @@ lemma ccrOp'Op_OpOp'_eq :
     funext i
     rfl
 
+set_option backward.isDefEq.respectTransparency false in
 @[simp]
 lemma ccrOpOp'_Op'Op_eq :
     ccrOpOp'Functor (C := C) ⋙
@@ -2402,6 +2424,7 @@ lemma pcrComp_reindex {x y z : ProdContravarRepCat.{u, v, w} C}
     (f : x ⟶ y) (g : y ⟶ z) :
     pcrReindex (f ≫ g) = pcrReindex g ≫ pcrReindex f := rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Composition in `ProdContravarRepCat C`: the fiber morphisms compose
 contravariantly. For `f : x ⟶ y` and `g : y ⟶ z`, the fiber morphism at
@@ -2417,6 +2440,7 @@ lemma pcrComp_fiberMor {x y z : ProdContravarRepCat.{u, v, w} C}
   simp only [eqToHom_refl, Category.id_comp]
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Composition in `ProdContravarRepCat C` expressed purely in terms of the
 underlying category. The reindexing is `g.reindex ≫ f.reindex` and the fiber
@@ -2928,6 +2952,7 @@ lemma ccrsToFcpMor_fcpToCcrsMor
     {x y : FreeCoprodProdCat.{u, v, w₁, w₂} C} (f : x ⟶ y) :
     ccrsToFcpMor (fcpToCcrsMor f) = f := rfl
 
+set_option backward.isDefEq.respectTransparency false in
 @[simp]
 lemma ccrsToFcpMor_comp {x y z : CoprodCovarRepSquaredCat.{u, v, w₁, w₂} C}
     (f : x ⟶ y) (g : y ⟶ z) :
@@ -2947,6 +2972,7 @@ lemma ccrsToFcpMor_comp {x y z : CoprodCovarRepSquaredCat.{u, v, w₁, w₂} C}
                  fcpReindexOuter, fcpReindexInner, fcpFiberMor] at *
       rw [h_ccrs, h_fcp]
 
+set_option backward.isDefEq.respectTransparency false in
 @[simp]
 lemma fcpToCcrsMor_comp {x y z : FreeCoprodProdCat.{u, v, w₁, w₂} C}
     (f : x ⟶ y) (g : y ⟶ z) :
@@ -3037,6 +3063,7 @@ def fpProdLift {I : Type w} {F : I → FreeProdCompletionCat.{u, v, w} C}
     (fun ⟨i, x⟩ => fpReindex (f i) x)
     (fun ⟨i, x⟩ => fpFiberMor (f i) x)
 
+set_option backward.isDefEq.respectTransparency false in
 @[simp]
 lemma fpProdLift_π {I : Type w} {F : I → FreeProdCompletionCat.{u, v, w} C}
     {P : FreeProdCompletionCat.{u, v, w} C}
@@ -3055,6 +3082,7 @@ lemma fpProdLift_π {I : Type w} {F : I → FreeProdCompletionCat.{u, v, w} C}
     simp only [Category.comp_id]
     rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- From composition g ≫ fpProdπ F i, the fiber at x simplifies to g.fiber ⟨i, x⟩. -/
 private lemma fpProdπ_comp_fiber_eq {I : Type w}
     {F : I → FreeProdCompletionCat.{u, v, w} C}
@@ -3070,6 +3098,7 @@ private lemma fpProdπ_comp_fiber_eq {I : Type w}
   change (g.fiber ⟨i, x⟩ ≫ 𝟙 _) = g.fiber ⟨i, x⟩
   simp only [Category.comp_id]
 
+set_option backward.isDefEq.respectTransparency false in
 lemma fpProdLift_unique {I : Type w} {F : I → FreeProdCompletionCat.{u, v, w} C}
     {P : FreeProdCompletionCat.{u, v, w} C}
     (f : ∀ i, P ⟶ F i) (g : P ⟶ fpProdObj F)

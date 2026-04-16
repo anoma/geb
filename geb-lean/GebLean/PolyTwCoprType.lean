@@ -216,6 +216,7 @@ def ElemCatMor.dirCompat {X Y : P.ElemCatObj} (m : P.ElemCatMor X Y)
   simp only [ElemCatObj.dirMap, ElemCatObj.dirElemMap, ElemCatObj.pos,
     Function.comp_apply, hsnd]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Elements are compatible for a morphism in ∫(J × id). -/
 def ElemCatMor.elemCompat {X Y : P.ElemCatObj} (m : P.ElemCatMor X Y) :
     ElemCatObj.elem P Y = m.val (ElemCatObj.elem P X) := by
@@ -287,6 +288,7 @@ Given a morphism in ∫(J × id) from X to Y, we get a map Eval X → Eval Y
 by composition.
 -/
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Functorial action: morphisms in ∫(J × id) induce maps on evaluations. -/
 def evalMap {X Y : P.ElemCatObj} (m : P.ElemCatMor X Y) (e : P.Eval X) :
     P.Eval Y where
@@ -616,6 +618,7 @@ We assemble `TwEval` and `twEvalMap` into a proper `CategoryTheory.Functor`
 from the twisted arrow category to `Type`.
 -/
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The evaluation functor from the twisted arrow category to Type.
 
 For a dependent polynomial functor P, this sends each twisted arrow
@@ -725,6 +728,7 @@ theorem innerEval_toY_eq {Y X : Type} {p : X → Y}
   simp only [polyToDepPoly, id_eq] at dirCompat
   exact dirCompat.symm
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Every inner evaluation implies the outer index is valid. -/
 theorem innerEval_valid {Y X : Type} {p : X → Y}
     (idx : (polyToDepPoly D).OuterIdx Y)

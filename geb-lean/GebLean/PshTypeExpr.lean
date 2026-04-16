@@ -222,6 +222,7 @@ def PshTypeExpr.arrowFreeMap
   | .app G T, haf =>
     G.map (T.arrowFreeMap haf α)
 
+set_option backward.isDefEq.respectTransparency false in
 /-- For arrow-free presheaf type expressions,
 the full relational interpretation at a graph
 relation is the graph of the covariant map. -/
@@ -239,6 +240,7 @@ theorem PshTypeExpr.fullRelInterp_eq_pshRelGraph
       T.fullRelInterp_eq_pshRelGraph haf α,
       pshBarrLiftRel_graph]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- `arrowFreeMap` preserves composition. -/
 theorem PshTypeExpr.arrowFreeMap_comp
     (T : PshTypeExpr C)
@@ -670,6 +672,7 @@ theorem TypeExpr.toPshTypeExpr_arrow
 
 open MonoidalClosed
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The interpretation of a `TypeExpr` via
 `toPshTypeExpr` at ULift-Yoneda representables
 recovers the original interpretation via the
@@ -892,6 +895,7 @@ theorem TypeExpr.toInterpSection_var
     toPshTypeExpr_interp_iso]
   exact sectionMap_id _
 
+set_option backward.isDefEq.respectTransparency false in
 /-- `pshRelSectionsRelated (yonedaULiftRel R)` at
 constant sections is equivalent to `R`. -/
 theorem yonedaULiftRel_sectionsRelated_iff
@@ -2194,6 +2198,7 @@ theorem TypeExpr.fullRelInterp_bridge_rev
     T.fullRelInterp R a₀ a₁ :=
   (T.fullRelInterp_bridge R choice a₀ a₁).mpr h
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Backward bridge from presheaf-level to
 type-level parametric families. Given a
 `PshParametricFamily` for `T.toPshTypeExpr`,
@@ -2241,6 +2246,7 @@ def PshParametricFamily.toParametricFamily
       (fun _ => a₀)
       (fun _ => a₁)).mpr hsr PUnit.unit
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Mutual induction for the off-diagonal and
 wedge properties of `relInterp`. The off-diagonal
 component constructs related pairs from
@@ -2851,6 +2857,7 @@ def pshDialgebraParametric_toNatTrans
     exact (pshArrowRel_graph_apply
       hpar c (𝟙 c) x).symm
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Backward direction: a natural transformation
 `η : F ⟶ G` determines a parametric family for
 the dialgebra type expression. -/
@@ -3525,6 +3532,7 @@ theorem homObjIterateN_constSucc_zero
         (ULift.up 0)) = ULift.up (↑n + 1)
     rw [ih, h]
 
+set_option backward.isDefEq.respectTransparency false in
 theorem pshDinaturalParanatToNat_pshNatTo
     [Inhabited C]
     (n : ℕ) :

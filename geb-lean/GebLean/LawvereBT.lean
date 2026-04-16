@@ -1336,6 +1336,7 @@ def foldTreeChild {n : ℕ}
     ⟨m + m, dBound⟩ hge hge2 ▸
     ch2 ⟨m + m, dBound⟩
 
+set_option backward.isDefEq.respectTransparency false in
 /-- A `PolyFix.mk` node at the fold constructor
 index (j = 3) equals `BTMor1.fold` applied to
 the extracted base, step, and tree children. -/
@@ -1516,6 +1517,7 @@ lemma fiberCast_child_eval
     hsf' ▸ z.2 := by
   subst hsf'; subst heq; subst h; rfl
 
+set_option backward.isDefEq.respectTransparency false in
 private lemma subst_id_fold_case
     {n : ℕ}
     (isLt : 3 < 4)
@@ -1597,6 +1599,7 @@ private lemma subst_id_fold_case
             (polyFixCarrier btMorPoly).left))
         (Fin.ext (by dsimp; omega))
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The identity substitution: substituting
 projections into a term returns the original term. -/
 theorem BTMor1.subst_id {n : ℕ}
@@ -2712,6 +2715,7 @@ private theorem interpU_snd_resolve
     t.interpU ctx := by
   subst hsig; rfl
 
+set_option backward.isDefEq.respectTransparency false in
 -- Sigma resolution and context matching across
 -- base, step, and tree child cases.
 /-- `interpU` on a fold computes via `BT.fold`

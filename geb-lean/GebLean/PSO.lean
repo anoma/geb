@@ -156,6 +156,7 @@ private theorem cfpMap_id_fst_comp
         cfpLift_snd _ _,
       Category.assoc]
 
+set_option backward.isDefEq.respectTransparency false in
 private theorem nnoToIsPSO_elim_uniq_step
     {A X : C} (φ : cfpProd A nno.N ⟶ X)
     (g : cfpProd X cfpTerminal ⟶ X)
@@ -220,6 +221,7 @@ private theorem nnoToIsPSO_elim_uniq_step
           (φ ≫ cfpTerminalFrom X)]
   rw [← hlhs, hsnoc, hrhs]
 
+set_option backward.isDefEq.respectTransparency false in
 instance nnoToIsPSO :
     IsPSO C (cfpTerminal (h := h)) nno.N where
   nil := nno.z

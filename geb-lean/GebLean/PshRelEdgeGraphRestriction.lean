@@ -1156,6 +1156,7 @@ def parametricConeSrcSection
         Category.id_comp] at h
       exact h.symm)
 
+set_option backward.isDefEq.respectTransparency false in
 /-- A presheaf section is parametrically related
 at every edge: the source and target components
 are `(pshRelFull, pshBarrLiftRel G R)`-related.
@@ -2187,6 +2188,7 @@ def representableSectionExtend
   presheafSectionOfInitial
     (ρ.app X₀ ≫ G.map i.hom)
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Restrict-then-extend recovers the original
 presheaf section. -/
 theorem representableSectionExtend_restrict
@@ -2232,6 +2234,7 @@ theorem representableSectionExtend_app_X₀
     PresheafSection.mk']
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- When `Y.obj X₀ ≅ ∅` and `G` maps `i.inv`
 followed by `i.hom` to the identity on
 `G(Y.obj X₀)`, the extend-then-restrict round-trip
@@ -2269,6 +2272,7 @@ theorem morphism_from_pshEmpty_unique
     _ = i.hom ≫ pshEmptyMap Q := by
         rw [Category.assoc, h]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Extend-then-restrict recovers the original
 representable section when `X₀` is weakly
 initial (every `X` receives a morphism from
@@ -2461,6 +2465,7 @@ def parametricCoconeInject
     ParametricCocone C G hs :=
   x ≫ s.ι.app e
 
+set_option backward.isDefEq.respectTransparency false in
 open Limits in
 /-- The parametric cocone type is independent of
 the choice of colimit cocone: any two colimit
@@ -2597,6 +2602,7 @@ theorem presheafCosectionInject_terminal
       (x ≫ G.map (pshUnitMap P)) := by
   rw [presheafCosectionInject_naturality]
 
+set_option backward.isDefEq.respectTransparency false in
 open Limits in
 /-- The colimit injection at the terminal
 presheaf is an epimorphism: since every other
@@ -2622,6 +2628,7 @@ theorem presheafCosection_terminal_epi
     (s.w (pshUnitMap P)).symm
   rw [this, Category.assoc, Category.assoc, heq]
 
+set_option backward.isDefEq.respectTransparency false in
 open Limits in
 /-- The edge-level analogue: the colimit
 injection at the terminal edge `⊤` is an

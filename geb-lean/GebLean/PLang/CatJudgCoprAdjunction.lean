@@ -806,6 +806,7 @@ theorem mapQuiver_comp (F : OverQuiverMorphism Q₁ Q₂)
     (g : PFreeMor Q₁ b c) (f : PFreeMor Q₁ a b) :
     mapQuiver F (.comp g f) = .comp (mapQuiver F g) (mapQuiver F f) := rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- mapQuiver with identity OverQuiverMorphism is identity. -/
 theorem mapQuiver_overQuiverId {Q : OverQuiver.{u, u}} {a b : Q.Obj}
     (fm : PFreeMor Q a b) :
@@ -831,6 +832,7 @@ theorem mapQuiver_cast_var_overQuiver {Q₁ Q₂ : OverQuiver.{u, u}}
   subst ha hb
   simp only [congrArg₂, cast_eq, mapQuiver, subst_subst_eq_cast]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- mapQuiver with composed OverQuiverMorphisms equals composition of
     mapQuiver applications. -/
 theorem mapQuiver_quiverMorComp {Q₁ Q₂ Q₃ : OverQuiver.{u, u}}
@@ -1198,6 +1200,7 @@ theorem toPLangQuotientMorphism_id_quiverMor
     OverQuiverMorphism.id (toPLangQuotientData C).quiver := by
   ext <;> rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- mapQuiver with the identity CatJudgNatTrans quiver morphism is identity. -/
 theorem mapQuiver_toPLangQuotientMorphism_id
     (C : Obj.CatJudgCopr.{uL + 1, uL + 1, uL + 1, uL + 1})
@@ -1465,6 +1468,7 @@ theorem unit_left : Mor.CatJudgNaturalityLeft (unitCatJudgMap C) := rfl
     through unit equals the right component of the mapped composable pair. -/
 theorem unit_right : Mor.CatJudgNaturalityRight (unitCatJudgMap C) := rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Composite naturality for the unit: mapping the composite morphism
     through unit equals the composite in the target category.
 
@@ -1730,6 +1734,7 @@ theorem derivedQuotData_right (c : Q.ComposablePairsType) :
 theorem derivedQuotData_composite (c : Q.ComposablePairsType) :
     (derivedQuotData C).composite c = C.compFn c := rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- counitEval respects the generating equivalence relation FreeMorEquivGen.
     This is where the category axioms of C ensure that the free category
     quotient is consistent with evaluation.
@@ -1779,12 +1784,14 @@ def counitEvalQuot {a b : Q.Obj} :
     Quotient ((derivedQuotData C).freeMorSetoid a b) → Q.MorType :=
   Quotient.lift (counitEval C) (fun _ _ h => counitEval_respects C h)
 
+set_option backward.isDefEq.respectTransparency false in
 /-- counitEvalQuot of a quotient identity. -/
 theorem counitEvalQuot_quotId (a : Q.Obj) :
     counitEvalQuot C ((derivedQuotData C).quotId a) = C.idFn a := by
   simp only [counitEvalQuot, PLangQuotientData.quotId, PLangQuotientData.quotMor,
     Quotient.lift_mk, counitEval_id]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- counitEvalQuot of a quotient composition. -/
 theorem counitEvalQuot_quotComp {a b c : Q.Obj}
     (g : Quotient ((derivedQuotData C).freeMorSetoid b c))
@@ -2005,6 +2012,7 @@ theorem unitIdMap_toPLang_eq_id :
     toPLangCatJudgMor, id]
   exact C.id_src i
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The right triangle identity: Φ(ε_C) ∘ η_{Φ(C)} = id_{Φ(C)}.
     This states that applying unit then counit to Φ(C) gives the identity. -/
 theorem rightTriangle :
@@ -2182,6 +2190,7 @@ theorem quotDataPhiLX_compCod {a b c : X.obj}
     (quotDataPhiLX X).compCod
       ⟨(bundleQuotMorLX X qm₁, bundleQuotMorLX X qm₂), rfl⟩ = rfl := rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Embedding the composite of two quotient morphisms equals the composite of
     their embeddings. This is the second main factored lemma, using comp_witness.
 
@@ -3600,6 +3609,7 @@ def LMap {F G : Obj.CatJudgCopr.{uInd, vInd, wInd, xInd}}
       map_id := mapQuotHomND_idFormal α
       map_comp := mapQuotHomND_comp α }
 
+set_option backward.isDefEq.respectTransparency false in
 /-- LMap preserves identity natural transformations.
     The identity CatJudgNatTrans maps to the identity functor. -/
 theorem LMap_id (F : Obj.CatJudgCopr.{uInd, vInd, wInd, xInd}) :
@@ -3623,6 +3633,7 @@ theorem LMap_id (F : Obj.CatJudgCopr.{uInd, vInd, wInd, xInd}) :
       simp only [mapFreeMorND]
       exact (quotDataOf F).comp_respects ih_f ih_g
 
+set_option backward.isDefEq.respectTransparency false in
 /-- LMap preserves composition of natural transformations. -/
 theorem LMap_comp {F G H : Obj.CatJudgCopr.{uInd, vInd, wInd, xInd}}
     (α : Mor.CatJudgNatTrans F G) (β : Mor.CatJudgNatTrans G H) :

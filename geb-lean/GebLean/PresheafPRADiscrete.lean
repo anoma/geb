@@ -46,6 +46,7 @@ variable {C : Type (u + 1)} [Category.{u} C]
   {D : Type (u + 1)} [Category.{u} D]
   (e : C ≌ D)
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Forward functor from `CoprodCovarRepCat' C` to
 `CoprodCovarRepCat' D` induced by an equivalence
@@ -83,6 +84,7 @@ def ccrMapEquivInv :
       CoprodCovarRepCat'.{u + 1, u, u} C :=
   ccrMapEquivFwd e.symm
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Component of the unit natural isomorphism for
 `ccrMapEquiv` at object `P`.
@@ -110,6 +112,7 @@ def ccrMapEquivUnitApp
     funext i
     exact e.unitIso.inv_hom_id_app _
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Component of the counit natural isomorphism for
 `ccrMapEquiv` at object `Q`.
@@ -137,6 +140,7 @@ def ccrMapEquivCounitApp
     funext i
     exact e.counitIso.inv_hom_id_app _
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The unit natural isomorphism for `ccrMapEquiv`.
 -/
@@ -156,6 +160,7 @@ def ccrMapEquivUnit :
       exact (e.unitIso.inv.naturality
         (ccrFiberMor f i)).symm)
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The counit natural isomorphism for `ccrMapEquiv`.
 -/
@@ -175,6 +180,7 @@ def ccrMapEquivCounit :
       exact (e.counitIso.inv.naturality
         (ccrFiberMor f i)).symm)
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The equivalence `CoprodCovarRepCat' C ≌
 CoprodCovarRepCat' D` induced by `e : C ≌ D`.

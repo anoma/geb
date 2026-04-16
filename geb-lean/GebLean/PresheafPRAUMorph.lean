@@ -149,6 +149,7 @@ lemma ccrLimFiberMap_id
     (ccrLimPosProj D z j)
     (ccrLimPosProj_compat D z (𝟙 j))
 
+set_option backward.isDefEq.respectTransparency false in
 private lemma ccrLimFiberMap_comp_aux
     {P Q R : CoprodCovarRepCat.{u, v, w} C}
     {mf : P ⟶ Q} {mg : Q ⟶ R}
@@ -316,6 +317,7 @@ private def ccrHasLimit_iotaGr
     fiber := fun z =>
       (getCocone z).cocone.ι.app j }
 
+set_option backward.isDefEq.respectTransparency false in
 omit [HasColimitsOfShape Jᵒᵖ C] in
 private lemma ccrHasLimit_cocone_nat
     (getCocone :
@@ -384,6 +386,7 @@ private def ccrHasLimit_descBase
           Quiver.Hom.unop h.base)
         nat) x⟩
 
+set_option backward.isDefEq.respectTransparency false in
 omit [HasColimitsOfShape Jᵒᵖ C] in
 private lemma ccrHasLimit_desc_nat
     (s : Cocone D.leftOp)
@@ -452,6 +455,7 @@ private lemma ccrHasLimit_desc_nat
   -- Use proof irrelevance on eqToHom.
   convert hfib using 2
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 `HasLimit D` for any diagram
 `D : J ⥤ CoprodCovarRepCat C`, given that `C` has
@@ -783,6 +787,7 @@ private def ccrLimDescCocone
             ccrHasLimit_desc_nat
               D s x j₁ j₂ f } }
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 `ccrLimCoconeGr` is a colimit cocone for
 `D.leftOp` in the Grothendieck construction.
@@ -887,6 +892,7 @@ private abbrev ccrLC
     LimitCone D :=
   ccrLimitCone chooseColim D
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The limit functor for `CoprodCovarRepCat C`,
 sending a diagram `D : J ⥤ CCR(C)` to its limit.
@@ -917,6 +923,7 @@ def ccrLimFunctor :
     simp only [NatTrans.comp_app,
       Category.assoc]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The constant-limit adjunction for
 `CoprodCovarRepCat C`: the constant functor
@@ -1098,6 +1105,7 @@ private lemma praReassembleElemMor_id
   simp only [CategoryOfElements.eqToHom_val]
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 private lemma praReassembleMapGr_id (j : Jᵒᵖ) :
     praReassembleMapGr A E (𝟙 j) =
       𝟙 (praReassembleObjGr A E j) := by
@@ -1148,6 +1156,7 @@ private lemma praReassembleElemMor_comp
     CategoryOfElements.eqToHom_val,
     eqToHom_refl, Category.comp_id]
 
+set_option backward.isDefEq.respectTransparency false in
 private lemma praReassembleMapGr_comp
     {j₁ j₂ j₃ : Jᵒᵖ}
     (g : j₁ ⟶ j₂) (h : j₂ ⟶ j₃) :
@@ -1223,6 +1232,7 @@ theorem praReassemble_positions :
       (praReassemble A E) = A := by
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Extracting directions from a reassembled PRA
 recovers the original direction functor.
@@ -1561,6 +1571,7 @@ private lemma praProdLiftAt_fac
   apply Quiver.Hom.unop_inj
   erw [unop_comp]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Two CCR morphisms into a product are equal if
 they agree on all projections (joint monicity /
@@ -1677,6 +1688,7 @@ private lemma praProdLift_fac
   apply NatTrans.ext; funext j
   exact praProdLiftAt_fac P s k j
 
+set_option backward.isDefEq.respectTransparency false in
 private lemma praProdLift_uniq
     (s : Limits.Fan P)
     (m : s.pt ⟶ praProd P)
@@ -1771,6 +1783,7 @@ def praCoprodDirAt (j : Jᵒᵖ)
     Iᵒᵖ ⥤ Type w_I :=
   praDirectionsAt I J (P t.fst) j t.snd
 
+set_option backward.isDefEq.respectTransparency false in
 set_option maxHeartbeats 4000000 in
 -- The `convert rfl using 4` decomposition
 -- deterministically takes more than the
@@ -1990,6 +2003,7 @@ private lemma praCoprodElemFstEq
     y.unop.snd.fst = x.unop.snd.fst :=
   congrArg Sigma.fst φ.unop.property
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The coproduct direction functor on
 `praCoprodPos.ElementsPre`.  Sends each element
@@ -2127,6 +2141,7 @@ private lemma praCoprodDescAt_fac
   apply Quiver.Hom.unop_inj
   erw [unop_comp]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Two CCR morphisms from a coproduct are equal
 if they agree on all injections (joint epicity /

@@ -184,6 +184,7 @@ def polyBetweenProdLift (I : Type u)
     (polyBetweenProdLiftReindex I F Q m y)
     (polyBetweenProdLiftFiber I F Q m y)
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The factorization property: composing the lift with a projection
 recovers the original morphism.
@@ -275,6 +276,7 @@ private lemma prodFiber_inj_comp
       (g y ≫ polyBetweenProj I F j y) q := by
   rw [ccrComp_fiberMor]; congr 1
 
+set_option backward.isDefEq.respectTransparency false in
 private lemma polyBetweenProdLift_unique_fiber
     (I : Type u)
     (F : I → PolyFunctorBetweenCat X Y)
@@ -516,6 +518,7 @@ def polyBetweenCoprodDesc (I : Type u)
     (polyBetweenCoprodDescReindex I F Q m y)
     (polyBetweenCoprodDescFiber I F Q m y)
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The factorization property: composing an injection with the
 descent recovers the original morphism.
@@ -543,6 +546,7 @@ theorem polyBetweenCoprodInj_desc (I : Type u)
     polyBetweenCoprodDescFiber]
   exact Category.comp_id _
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Uniqueness of the descent: any morphism
 `h : ∐_i F(i) ⟶ Q` satisfying `ι_j ≫ h = m j` for
@@ -796,6 +800,7 @@ def polyBetweenEqLift
     (polyBetweenEqLiftReindex f g h w y)
     (polyBetweenEqLiftFiber f g h w y)
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Factorization: `polyBetweenEqLift h w ≫ polyBetweenEqIncl f g = h`.
 -/
@@ -822,6 +827,7 @@ theorem polyBetweenEqLift_incl
     polyBetweenEqInclFiber]
   exact overCoeq_fac _ _ _ _
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Naturality of `overCoeqπ` with respect to `eqToHom`
 transport along the equalizer position.
@@ -842,6 +848,7 @@ private theorem overCoeqπ_eqToHom_transport
         (polyBetweenEqFiberβ f g y ip₂) := by
   subst hip; simp
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Uniqueness of the lift into the equalizer.
 -/
@@ -1123,6 +1130,7 @@ theorem polyBetweenCoeqProj_base_eq (y : Y)
       (ccrReindex (t y) i) :=
   Quot.sound ⟨i, rfl, rfl⟩
 
+set_option backward.isDefEq.respectTransparency false in
 private lemma polyBetweenCoeq_transport (y : Y)
     (j : ccrIndex (Q y))
     {c₁ c₂ : polyBetweenCoeqPos s t y}
@@ -1149,6 +1157,7 @@ private lemma polyBetweenCoeq_transport (y : Y)
   subst hc
   simp only [eqToHom_refl, Category.id_comp]
 
+set_option backward.isDefEq.respectTransparency false in
 private lemma polyBetweenCoeq_edge_eq (y : Y)
     (c : polyBetweenCoeqPos s t y)
     (e : polyBetweenCoeqEdge s t y c) :
@@ -1178,6 +1187,7 @@ private lemma polyBetweenCoeq_edge_eq (y : Y)
   simp only [overProd_fac] at h'
   exact h'
 
+set_option backward.isDefEq.respectTransparency false in
 private lemma polyBetweenCoeqProj_fiber_eq
     (y : Y) (i : ccrIndex (P y)) :
     polyBetweenCoeqProjFiber s t y
@@ -1286,6 +1296,7 @@ private lemma overProd_hom_ext
     (overProd_uniq F' _ g'
       (fun i => (h' i).symm)).symm
 
+set_option backward.isDefEq.respectTransparency false in
 private theorem polyBetweenCoeqLiftProd_eq
     {R : PolyFunctorBetweenCat.{u, u} X Y}
     (h : Q ⟶ R) (w : s ≫ h = t ≫ h)
@@ -1336,6 +1347,7 @@ def polyBetweenCoeqLift
     (polyBetweenCoeqLiftReindex s t h w y)
     (polyBetweenCoeqLiftFiber s t h w y)
 
+set_option backward.isDefEq.respectTransparency false in
 theorem polyBetweenCoeqLift_fac
     {R : PolyFunctorBetweenCat.{u, u} X Y}
     (h : Q ⟶ R) (w : s ≫ h = t ≫ h) :
@@ -1407,6 +1419,7 @@ private lemma coeq_fiber_ι_vertex
     eqToHom _ ≫ ccrFiberMor (h y) j
   exact ccrFiberMor_congr (congrFun hm y) j
 
+set_option backward.isDefEq.respectTransparency false in
 private lemma polyBetweenCoeqLift_fiber_unique
     {R : PolyFunctorBetweenCat.{u, u} X Y}
     (h : Q ⟶ R) (w : s ≫ h = t ≫ h)
@@ -1845,6 +1858,7 @@ def polyBetweenWhiskerRight
     (polyBetweenWhiskerRightFiber
       q alpha y)
 
+set_option backward.isDefEq.respectTransparency false in
 @[simp]
 lemma polyBetweenWhiskerRight_id
     (r : PolyFunctorBetweenCat.{u, u} Z Y) :
@@ -1907,6 +1921,7 @@ private lemma eqToHom_compFamily_snd_heq
       ed.snd := by
   subst hp; rfl
 
+set_option backward.isDefEq.respectTransparency false in
 @[simp]
 lemma polyBetweenWhiskerRight_comp
     {r r' r'' : PolyFunctorBetweenCat.{u, u} Z Y}
@@ -2147,6 +2162,7 @@ private lemma lkanRoundtripFiber_left_eq
     (heq_of_eq (Sigma.ext rfl
       (heq_of_eq (Over.OverMorphism.ext rfl))))
 
+set_option backward.isDefEq.respectTransparency false in
 lemma polyBetweenLKanRAdj_LAdj
     (alpha : polyBetweenLKanObj q p ⟶ r) :
     polyBetweenLKanRAdj q
@@ -2255,6 +2271,7 @@ private lemma
   subst hsnd
   exact HEq.rfl
 
+set_option backward.isDefEq.respectTransparency false in
 private lemma lkanLAdj_naturality_right_base_eq
     {r' : PolyFunctorBetweenCat.{u, u} Z Y}
     (alpha : polyBetweenLKanObj q p ⟶ r)
@@ -2374,6 +2391,7 @@ private lemma
         ⟨e, s⟩).trans
         (cast_heq _ s).symm))
 
+set_option backward.isDefEq.respectTransparency false in
 private lemma
     polyBetweenLKanHomEquiv_naturality_right
     {r' : PolyFunctorBetweenCat.{u, u} Z Y}
@@ -2694,6 +2712,7 @@ lemma ccrRepHomMap_comp (a : Over X)
       (fun _ : PUnit.{u + 1} => g))
     PUnit.unit
 
+set_option backward.isDefEq.respectTransparency false in
 @[simp]
 lemma ccrCoprHomMap_id
     (q r : CoprodCovarRepCat' (Over X)) :
@@ -2721,6 +2740,7 @@ private def ccrCoprHomMapAux
     (fun p => overCoprodMap (fun iq =>
       ccrFiberMor (morphs iq) (p iq)))
 
+set_option backward.isDefEq.respectTransparency false in
 private lemma ccrCoprHomMapAux_comp
     {q : CoprodCovarRepCat' (Over X)}
     {F G H : ccrIndex q →
@@ -2738,6 +2758,7 @@ private lemma ccrCoprHomMapAux_comp
     ccrHomMk_fiberMor, ccrHomMk_reindex]
   rw [← overCoprodMap_comp]
 
+set_option backward.isDefEq.respectTransparency false in
 @[simp]
 lemma ccrCoprHomMap_comp
     (q : CoprodCovarRepCat' (Over X))
@@ -3295,6 +3316,7 @@ private lemma pbUncurry_curry_fiber_val
         alpha y ir iq eg _ w
         hd).symm.trans h_fst
 
+set_option backward.isDefEq.respectTransparency false in
 private lemma pbCurry_uncurry_dir
     (Q R S : PolyFunctorBetweenCat.{u, u} X Y)
     (beta : R ⟶ polyBetweenHomObj Q S)
@@ -3370,6 +3392,7 @@ private lemma pbCurry_uncurry_dir
       rw [hef]
   exact comm _ _ rfl
 
+set_option backward.isDefEq.respectTransparency false in
 theorem pbUncurry_curry
     (Q R S : PolyFunctorBetweenCat.{u, u} X Y)
     (alpha : pbBinaryProdObj Q R ⟶ S) :
@@ -3817,6 +3840,7 @@ private lemma cast_flipEither_inr
         (polyBetweenFlipEither a x2)) := by
   subst hx; rfl
 
+set_option backward.isDefEq.respectTransparency false in
 private lemma pbHomEquiv_nat_right_base
     (Q : PolyFunctorBetweenCat.{u, u} X Y)
     {R S S' : PolyFunctorBetweenCat.{u, u} X Y}
@@ -3953,6 +3977,7 @@ private lemma pbCurryDirBundleAux_val_eq
   | ⟨Sum.inl _, _⟩ => exact PEmpty.elim x₁
   | ⟨Sum.inr _, _⟩ => rfl
 
+set_option backward.isDefEq.respectTransparency false in
 private lemma pbUncurry_comp_homMap_fiber_aux
     (Q R S : PolyFunctorBetweenCat.{u, u} X Y)
     {S' : PolyFunctorBetweenCat.{u, u} X Y}
@@ -4126,6 +4151,7 @@ private lemma pbUncurry_comp_homMap_base
     pbUncurryReindex]
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 private lemma pbUncurry_comp_homMap_fiber
     (Q R S : PolyFunctorBetweenCat.{u, u} X Y)
     {S' : PolyFunctorBetweenCat.{u, u} X Y}
@@ -4163,6 +4189,7 @@ private lemma pbUncurry_comp_homMap
     (pbUncurry_comp_homMap_fiber
       Q R S beta g y)
 
+set_option backward.isDefEq.respectTransparency false in
 theorem pbHomEquiv_naturality_right
     (Q : PolyFunctorBetweenCat.{u, u} X Y)
     {R S S' : PolyFunctorBetweenCat.{u, u} X Y}
@@ -4195,6 +4222,7 @@ private lemma tensorLeft_map_eq
   · exact CartesianMonoidalCategory.whiskerLeft_snd
       Q f
 
+set_option backward.isDefEq.respectTransparency false in
 private lemma pbUncurry_comp_lift_fiber
     (Q : PolyFunctorBetweenCat.{u, u} X Y)
     {R' R S : PolyFunctorBetweenCat.{u, u} X Y}
@@ -4242,6 +4270,7 @@ private lemma pbUncurry_comp_lift_fiber
     unfold polyBetweenProdLiftFiberLeft
     rfl
 
+set_option backward.isDefEq.respectTransparency false in
 theorem pbHomEquiv_naturality_left_symm
     (Q : PolyFunctorBetweenCat.{u, u} X Y)
     {R' R S : PolyFunctorBetweenCat.{u, u} X Y}

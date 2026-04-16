@@ -104,6 +104,7 @@ def paraElim {A X : C} (f : A ⟶ X)
   p.elim (paraBase (p := p) f) (paraStep (p := p) g) ≫
     cfpSnd A (cfpProd p.T X) ≫ cfpSnd p.T X
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Base-case equation for `paraElim`: at a leaf, the
 result is `f` applied to the parameter. -/
 theorem paraElim_ℓ {A X : C} (f : A ⟶ X)
@@ -117,6 +118,7 @@ theorem paraElim_ℓ {A X : C} (f : A ⟶ X)
   unfold paraBase
   rw [cfpLift_snd, cfpLift_snd]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Parameter invariant: the `A` component of the
 internal elim carries the input parameter through
 unchanged.  Proof via `elim_algebra_morphism` with
@@ -163,6 +165,7 @@ private theorem paraElim_param_inv {A X : C}
     unfold cfpAssocFst
     rw [cfpLift_fst]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Tree invariant: the `T` component of the internal
 elim carries the input tree through unchanged.  Proof
 via `elim_algebra_morphism` with the projection
@@ -220,6 +223,7 @@ private theorem paraElim_tree_inv {A X : C}
       (cfpSnd A (cfpProd p.T p.T) ≫ cfpSnd p.T p.T)
       (cfpSnd A (cfpProd p.T p.T)) rfl rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Step-case equation for `paraElim`: at a branch
 `β(l, r)` with parameter `a`, the result is `g`
 applied to the tuple
@@ -353,6 +357,7 @@ theorem paraElim_β {A X : C} (f : A ⟶ X)
           ← Category.assoc, cfpLift_snd,
           Category.assoc, hE]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Uniqueness for `paraElim`: any morphism `φ`
 satisfying the paramorphism's base and step
 equations equals `paraElim f g`.  The proof lifts

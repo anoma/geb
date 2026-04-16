@@ -128,6 +128,7 @@ def fiberMkCompPair
     fiberCompPairs X c :=
   ⟨⟨f.val, g.val⟩, f.2.2.trans g.2.1.symm⟩
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The source of a composite equals the source
 of the first morphism. -/
 @[simp]
@@ -149,6 +150,7 @@ theorem fiberCompMap_src :
       X.morSpan.hom ≫ pshProdFst _ _
   simp [pshProdLift]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The target of a composite equals the target
 of the second morphism. -/
 @[simp]
@@ -380,6 +382,7 @@ def externalize :
 
 variable {X}
 
+set_option backward.isDefEq.respectTransparency false in
 /-- An internal functor preserves source:
 `morMap ≫ Y.src = X.src ≫ objMap`. -/
 theorem PshInternalFunctor.morMap_src
@@ -401,6 +404,7 @@ theorem PshInternalFunctor.morMap_src
     _ = X.src ≫ F.objMap := by
         simp
 
+set_option backward.isDefEq.respectTransparency false in
 /-- An internal functor preserves target:
 `morMap ≫ Y.tgt = X.tgt ≫ objMap`. -/
 theorem PshInternalFunctor.morMap_tgt
@@ -451,6 +455,7 @@ def pshIntFiberFunctor
       F.comp_pres c)
       (fiberMkCompPair X c m n)
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The natural transformation between externalized
 categories induced by an internal functor. -/
 def externalizeNatTrans
@@ -583,6 +588,7 @@ theorem externalize_unit_obj_eq :
       pshInternalCatToCat Y :=
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The fiber functor at the unique stage equals
 `pshInternalFunctorToFunctor`: the externalization's
 action on internal functors agrees with the

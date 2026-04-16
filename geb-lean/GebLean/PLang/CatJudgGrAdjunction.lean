@@ -648,6 +648,7 @@ theorem mapFreeMor_id_equiv {X : Groth.CompWitGr.{uObj, uMor, uWit, uCWit}}
   rw [h]
   exact FreeMorEquiv.refl m
 
+set_option backward.isDefEq.respectTransparency false in
 /-- L preserves identity morphisms: L(id_X) = id_{L(X)}. -/
 theorem LMorFunctor_id (X : Groth.CompWitGr.{uObj, uMor, uWit, uCWit}) :
     LMorFunctor (𝟙 X) = Cat.Hom.toFunctor (𝟙 (LObj X)) := by
@@ -683,6 +684,7 @@ theorem mapFreeMor_comp_equiv {X Y Z : Groth.CompWitGr.{uObj, uMor, uWit, uCWit}
   rw [h]
   exact FreeMorEquiv.refl _
 
+set_option backward.isDefEq.respectTransparency false in
 /-- L preserves composition: L(G ∘ F) = L(G) ∘ L(F). -/
 theorem LMorFunctor_comp {X Y Z : Groth.CompWitGr.{uObj, uMor, uWit, uCWit}}
     (F : X ⟶ Y) (G : Y ⟶ Z) :
@@ -1142,6 +1144,7 @@ theorem evalQuotMor_mapFreeMor_unit {a b : X.objType} (m : FreeMor X a b) :
     -- In Category X.objType: f ≫ g = QuotMor.comp g f = ⟦FreeMor.comp g f⟧
     rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The left triangle: L(η_X) ≫ ε_{L(X)} = 𝟙_{L(X)}.
 
 For X : CompWitGr, applying L to the unit at X, then the counit at L(X),
@@ -1205,6 +1208,7 @@ def compWitGrHomMorMap (φ : categoryToCompWitGr C ⟶ categoryToCompWitGr D)
     {a b : C.α} (f : a ⟶ b) : compWitGrHomObjMap φ a ⟶ compWitGrHomObjMap φ b :=
   φ.base.base.fiber ⟨a, b⟩ f
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The IdWitBundle.Hom component witnesses that morphisms preserve identity.
     From this we extract the proof that map respects identity.
 
@@ -1224,6 +1228,7 @@ theorem compWitGrHomMapId (φ : categoryToCompWitGr C ⟶ categoryToCompWitGr D)
   apply HEq.trans hMor.symm
   rw [hObj]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The CompWitBundle.Hom component witnesses that morphisms preserve
     composition. From this we extract the proof that map respects comp.
 
@@ -1316,6 +1321,7 @@ def compWitGrHomToFunctor
   map_id := compWitGrHomMapId φ
   map_comp := compWitGrHomMapComp φ
 
+set_option backward.isDefEq.respectTransparency false in
 /-- PhiFunctor.map followed by compWitGrHomToFunctor is the identity. -/
 theorem preimage_map (F : C ⥤ D) :
     compWitGrHomToFunctor (PhiFunctor.map F.toCatHom) = F := by
@@ -1330,6 +1336,7 @@ theorem preimage_map (F : C ⥤ D) :
     unfold Functor.toCatHom Cat.Hom.toFunctor
     rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- compWitGrHomToFunctor followed by PhiFunctor.map is the identity. -/
 theorem map_preimage (φ : categoryToCompWitGr C ⟶ categoryToCompWitGr D) :
     PhiFunctor.map (compWitGrHomToFunctor φ).toCatHom = φ := by
@@ -1416,6 +1423,7 @@ abbrev LAdjFunctor : AdjGr.{uObj, uMor} ⥤ AdjCat.{uObj, uMor} := LFunctor
 /-- Φ restricted to the adjunction universe levels. -/
 abbrev ΦAdjFunctor : AdjCat.{uObj, uMor} ⥤ AdjGr.{uObj, uMor} := PhiFunctor
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Helper lemma for fiber naturality: the CompWitBundle fiber condition. -/
 lemma compWitFiber_naturality {X Y : AdjCompWitGr.{uObj, uMor}} (f : X ⟶ Y) :
     (Groth.compWitFunctor.map (PhiFunctor.map (LFunctor.map f)).base).toFunctor.map
@@ -1466,6 +1474,7 @@ lemma compWitFiber_naturality {X Y : AdjCompWitGr.{uObj, uMor}} (f : X ⟶ Y) :
     embedAsQuot_heq hMid hTgt (f.fiber.witRight_eq w).symm
   exact prod_mk_heq' hLeft hRight
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Unit naturality: for f : X ⟶ Y in CompWitGr,
     η_X ≫ Φ(L(f)) = f ≫ η_Y.
 
@@ -1540,6 +1549,7 @@ theorem evalFreeMor_naturality (C D : AdjCat.{uObj, uMor}) (f : C ⟶ D)
     simp only [evalFreeMor] at ihg ihf
     exact congrArg₂ (· ≫ ·) ihf ihg
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Counit naturality: for f : C ⥤ D between categories,
     ε_C ⋙ f = L(Φ(f)) ⋙ ε_D.
 

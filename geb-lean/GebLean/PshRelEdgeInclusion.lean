@@ -413,6 +413,7 @@ def pshRelEdgeSepCounit
       rw [← hp, ← hq]
       exact hpq' }
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The unit of the separation-inclusion adjunction
 as a natural transformation. -/
 def pshRelEdgeSepAdjUnit (C : Type u)
@@ -689,6 +690,7 @@ def sepMapSpanProdLift
         (Prod.ext h₁₂ h₂₂)
   }
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The image of the pointwise product cone
 under `sep` is a limit in `PshRelEdge C`. -/
 def sepMapSpanProdIsLimit

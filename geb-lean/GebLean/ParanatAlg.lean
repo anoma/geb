@@ -982,6 +982,7 @@ to sections of mathlib's forgetful functor on algebras.
 
 variable (G : Type v ⥤ Type v)
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The forgetful functor on `DiagElem (AlgProf G)` equals
 the composition of the equivalence functor with mathlib's
 algebra forgetful functor. -/
@@ -1038,6 +1039,7 @@ identifies `DiagElem.forget (CoalgProf G)` with
 
 variable (G : Type v ⥤ Type v)
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The forgetful functor on `DiagElem (CoalgProf G)` equals
 the composition of the equivalence functor with mathlib's
 coalgebra forgetful functor. -/

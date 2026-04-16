@@ -79,6 +79,7 @@ abbrev connGrothendieckDiag (tw : TwistedArrow' C)
     TwistedArrow' C :=
   connGrothendieckDiagCod C tw codArr
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The twisted arrow morphism `(id, codArr) : tw → w` where `w = twArr' tw ≫ codArr`.
 This transports along the codomain direction.
@@ -89,6 +90,7 @@ def connGrothendieckTwMorphCod (tw : TwistedArrow' C)
   twHomMk' (𝟙 _) codArr (by simp only [connGrothendieckDiagCod, twObjMk'_arr,
     Category.id_comp])
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The twisted arrow morphism `(domArr, id) : tw' → w` where `w = domArr ≫ twArr' tw'`.
 This transports along the domain direction.
@@ -216,6 +218,7 @@ lemma connGrothendieckDiagEq_id (x : ConnGrothendieckObj C F) :
     (connGrothendieckDiagDom_id C x.arrow).trans (connGrothendieckDiagCod_id C x.arrow).symm := by
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The identity morphism in the connected Grothendieck construction.
 -/
@@ -259,6 +262,7 @@ def connGrothendieckDiagComp (tw : TwistedArrow' C)
     TwistedArrow' C :=
   connGrothendieckDiagCod C tw (codArr ≫ codArr')
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The twisted arrow morphism from `w₁` to `w₃`.
 `w₁ = f ≫ h` and `w₃ = f ≫ h ≫ h'`, so the morphism is `(id_a, h')`.
@@ -305,6 +309,7 @@ abbrev connGrothendieckW3 {x y z : ConnGrothendieckObj C F}
     TwistedArrow' C :=
   connGrothendieckDiagCod C x.arrow (m.codArr ≫ n.codArr)
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The twisted arrow morphism `w₁ → w₃` given by `(id_a, h')`.
 This is used to transport `m.fiberMorph` from `F(w₁)` to `F(w₃)`.
@@ -340,6 +345,7 @@ def connGrothendieckMorphW2W3 {x y z : ConnGrothendieckObj C F}
   connGrothendieckTwMorphDom C (connGrothendieckW2 C F n) m.domArr ≫
     eqToHom (connGrothendieckW2EqW3 C F m n)
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The source of `connGrothendieckTwMorphCod` composed with `connGrothendieckMorphW1W3`
 equals `connGrothendieckTwMorphCod` for the composed codomain arrows.
@@ -387,6 +393,7 @@ def connGrothendieckTwMorphYW3_right {x y z : ConnGrothendieckObj C F}
   connGrothendieckTwMorphCod C y.arrow n.codArr ≫
     connGrothendieckMorphW2W3 C F m n
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Both paths from `y.arrow` to `w₃` give the same twisted arrow morphism.
 -/
@@ -454,6 +461,7 @@ def connGrothendieckTwMorphZW3_right {x y z : ConnGrothendieckObj C F}
     eqToHom (connGrothendieckDiagEq C F y z n.domArr n.codArr n.square_comm) ≫
     connGrothendieckMorphW2W3 C F m n
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Both paths from `z.arrow` to `w₃` give the same twisted arrow morphism.
 -/
@@ -645,6 +653,7 @@ lemma connGrothendieckW3_id_comp_dom {x y : ConnGrothendieckObj C F}
   simp only [connGrothendieckW3, connGrothendieckId, connGrothendieckDiagCod,
     twObjMk'_dom, Category.id_comp]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 When first morphism is identity, morphW2W3 is eqToHom.
 -/
@@ -795,6 +804,7 @@ lemma Cat.heq_of_eqToHom_map_eq {C D : Cat} (h : C = D)
     at hf
   exact heq_of_eq hf
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The left identity law: composing the identity on the left yields the original
 morphism.
@@ -850,6 +860,7 @@ lemma connGrothendieckDiagCod_assoc (tw : TwistedArrow' C)
     connGrothendieckDiagCod C tw ((a ≫ b) ≫ c) = connGrothendieckDiagCod C tw (a ≫ b ≫ c) := by
   simp only [connGrothendieckDiagCod, Category.assoc]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The twisted arrow morphism `TwMorphCod` for `(a ≫ b) ≫ c` equals the one for `a ≫ b ≫ c`
 composed with eqToHom.
@@ -932,6 +943,7 @@ lemma connGrothendieckW3_comp_right_eq_W4 {w x y z : ConnGrothendieckObj C F}
   simp only [connGrothendieckW3, connGrothendieckW4, connGrothendieckComp,
     connGrothendieckDiagCod]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The transport from W1(f) to W4 can be factored as morphW1W3(f,g) followed by
 the extension to W4. This is the path used in both LHS and RHS for f.fiberMorph.
@@ -943,6 +955,7 @@ def connGrothendieckMorphW1W4 {w x y z : ConnGrothendieckObj C F}
   twHomMk' (𝟙 _) (g.codArr ≫ h.codArr) (by
     simp only [connGrothendieckDiagCod, twObjMk'_arr, Category.id_comp, Category.assoc])
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 morphW1W3(f,g) followed by extension to W4 equals morphW1W4.
 -/
@@ -981,6 +994,7 @@ def connGrothendieckMorphW2W4 {w x y z : ConnGrothendieckObj C F}
         _ = (twArr' w.arrow ≫ f.codArr) ≫ g.codArr ≫ h.codArr := by rw [← f.square_comm]
         _ = twArr' w.arrow ≫ f.codArr ≫ g.codArr ≫ h.codArr := by rw [Category.assoc])
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 morphW1W3(f,g) ≫ morphW1W3((f≫g),h) = morphW1W4(f,g,h).
 This is the coherence for transporting f.fiberMorph in the LHS associativity path.
@@ -1001,6 +1015,7 @@ lemma connGrothendieckMorphW1W3_comp_left {w x y z : ConnGrothendieckObj C F}
       twCodArr'_comp, twHomMk'_codArr, twCodArr'_eqToHom]
     simp only [Category.comp_id, eqToHom_refl, Category.id_comp]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 morphW1W3(f,(g≫h)) ≫ eqToHom = morphW1W4(f,g,h).
 This is the coherence for transporting f.fiberMorph in the RHS associativity path.
@@ -1018,6 +1033,7 @@ lemma connGrothendieckMorphW1W3_comp_right {w x y z : ConnGrothendieckObj C F}
       twCodArr'_comp, twHomMk'_codArr, twCodArr'_eqToHom]
     simp only [Category.comp_id, eqToHom_refl]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 morphW2W3((f≫g),h) ≫ eqToHom = morphW2W4(f,g,h).
 This is the coherence for transporting h.fiberMorph in the LHS associativity path.
@@ -1036,6 +1052,7 @@ lemma connGrothendieckMorphW2W3_comp_left {w x y z : ConnGrothendieckObj C F}
       twCodArr'_comp, twCodArr'_eqToHom, connGrothendieckTwMorphDom,
       Category.comp_id, eqToHom_refl, twHomMk'_codArr]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 morphW2W3(g,h) ≫ morphW2W3(f,(g≫h)) ≫ eqToHom = morphW2W4(f,g,h).
 This is the coherence for transporting h.fiberMorph in the RHS associativity path.
@@ -1056,6 +1073,7 @@ lemma connGrothendieckMorphW2W3_comp_right {w x y z : ConnGrothendieckObj C F}
       twCodArr'_comp, twCodArr'_eqToHom, connGrothendieckTwMorphDom,
       Category.comp_id, eqToHom_refl, twHomMk'_codArr, Category.id_comp]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The middle coherence: morphW2W3(f,g) ≫ morphW1W3((f≫g),h) = morphW1W3(g,h) ≫ morphW2W3(f,(g≫h)).
 Both paths take W1(g) to W4. This is used for g.fiberMorph.
@@ -1095,6 +1113,7 @@ lemma connGrothendieckComp_codArr {x y z : ConnGrothendieckObj C F}
     (m : ConnGrothendieckHom C F x y) (n : ConnGrothendieckHom C F y z) :
     (connGrothendieckComp C F m n).codArr = m.codArr ≫ n.codArr := rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 When two morphisms have the same domArr and codArr, their morphW1W3 morphisms
 to any common third morphism are equal.
@@ -1112,6 +1131,7 @@ lemma connGrothendieckMorphW1W3_irrel_fiberMorph {x y z : ConnGrothendieckObj C 
   · simp only [connGrothendieckMorphW1W3, twCodArr'_comp, twHomMk'_codArr,
       twCodArr'_eqToHom, Category.comp_id, eqToHom_refl, Category.id_comp]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 When two morphisms have the same domArr and codArr, their morphW2W3 morphisms
 from any common first morphism are equal.
@@ -1130,6 +1150,7 @@ lemma connGrothendieckMorphW2W3_irrel_fiberMorph {x y z : ConnGrothendieckObj C 
   · simp only [connGrothendieckMorphW2W3, twCodArr'_comp, twCodArr'_eqToHom,
       connGrothendieckTwMorphDom, twHomMk'_codArr, Category.comp_id, eqToHom_refl]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 DiagCod composed with itself equals DiagCod with composed arrows.
 -/
@@ -1140,6 +1161,7 @@ lemma connGrothendieckDiagCod_comp (tw : TwistedArrow' C)
     connGrothendieckDiagCod C tw (a ≫ b) := by
   simp only [connGrothendieckDiagCod, twObjMk'_arr, Category.assoc]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The composition of two TwMorphCod morphisms equals a single TwMorphCod with composed arrows.
 -/
@@ -1306,6 +1328,7 @@ private lemma connGrothendieckMorphW1W3_comp_tw
       connGrothendieckDiagCod,
       twObjMk'_cod, Category.comp_id, eqToHom_refl]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 W2W3 composition at the TwistedArrow' level:
 W2W3(fg,h) equals W2W3(g,h) composed with W2W3(f,gh)
@@ -1337,6 +1360,7 @@ private lemma connGrothendieckMorphW2W3_comp_tw
       twObjMk'_cod, eqToHom_refl,
       Category.comp_id]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Middle coherence at the TwistedArrow' level:
 W2W3(f,g) composed with W1W3(fg,h) equals W1W3(g,h)
@@ -1371,6 +1395,7 @@ private lemma connGrothendieckMorphMiddle_comp_tw
       twObjMk'_cod, eqToHom_refl, Category.comp_id,
       Category.id_comp]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The fM piecewise HEq for associativity:
 `F.map(W1W3(fg,h)).map(F.map(W1W3(f,g)).map(fM))`
@@ -1420,6 +1445,7 @@ private lemma connGrothendieckAssoc_fM_heq
           Functor.comp_map]
         exact Cat.eqToHom_map_heq _ _)
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The gM piecewise HEq for associativity:
 `F.map(W1W3(fg,h)).map(F.map(W2W3(f,g)).map(gM))`
@@ -1778,6 +1804,7 @@ def fiberFunctorTransitionObj {b d : C} (β : b ⟶ d)
     Grothendieck (restrictToFiber C F d) :=
   ⟨(Over.map β).obj x.base, (fiberTransport C F β x.base).obj x.fiber⟩
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Functor-level naturality: fiber transport composed with restriction mapping
 equals restriction mapping followed by fiber transport.
@@ -1843,6 +1870,7 @@ def fiberFunctorTransitionHomOp {b d : C} (β : b ⟶ d)
   exact eqToHom fiber_eq ≫
         (fiberTransportOp C F β y.base).map f.fiber
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The oppositized transition functor preserves identity morphisms.
 -/
@@ -1860,6 +1888,7 @@ theorem fiberFunctorTransitionHomOp_id {b d : C} (β : b ⟶ d)
                Grothendieck.id_base]
     exact (Over.map β).map_id x.base
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The oppositized transition functor preserves composition.
 -/
@@ -1912,6 +1941,7 @@ def fiberFunctorTransitionHom {b d : C} (β : b ⟶ d)
   exact eqToHom fiber_eq ≫
         (fiberTransport C F β y.base).map f.fiber
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The transition functor between fiber Grothendieck constructions preserves
 identity morphisms.
@@ -1930,6 +1960,7 @@ theorem fiberFunctorTransitionHom_id {b d : C} (β : b ⟶ d)
                Grothendieck.id_base]
     exact (Over.map β).map_id x.base
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The transition functor between fiber Grothendieck constructions preserves
 composition.
@@ -1993,6 +2024,7 @@ lemma fiberTransport_id_cat_eq {b : C} (ov : Over b) :
   congr 1
   exact twObjMk'_comp_id C ov
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 When `β = 𝟙 b`, the fiber transport functor is `eqToHom` in Cat.
 -/
@@ -2069,6 +2101,7 @@ lemma eqToHom_conj_eq' {D : Type*} [Category D] {a₁ a₂ b₁ b₂ : D}
     eqToHom ha₁ ≫ f ≫ eqToHom hb₁ = eqToHom ha₂ ≫ f ≫ eqToHom hb₂ := by
   rw [eqToHom_proof_irrel ha₁ ha₂, eqToHom_proof_irrel hb₁ hb₂]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 When `β = 𝟙 b`, `fiberFunctorTransition C F (𝟙 b)` equals the identity functor.
 -/
@@ -2113,6 +2146,7 @@ lemma fiberTransportOp_id_cat_eq {b : C} (ov : Over b) :
   congr 1
   exact fiberTransport_id_cat_eq C F ov
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 When `β = 𝟙 b`, the oppositized fiber transport functor is `eqToHom` in Cat.
 -/
@@ -2145,6 +2179,7 @@ lemma fiberFunctorTransitionObjOp_id {b : C}
     rw [fiberTransportOp_id]
     exact eqToHom_obj_heq _ _ _ _
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 When `β = 𝟙 b`, `fiberFunctorTransitionOp C F (𝟙 b)` equals the identity functor.
 -/
@@ -2181,6 +2216,7 @@ theorem fiberFunctorTransitionOp_id {b : C} :
       rw [Grothendieck.eqToHom_base', eqToHom_map]
       exact Cat.eqToHom_map_heq _ _
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The fiber transport for `β ≫ γ` equals the composition of fiber transports, up to eqToHom.
 -/
@@ -2207,6 +2243,7 @@ lemma fiberFunctorTransitionObj_comp {b d e : C} (β : b ⟶ d) (γ : d ⟶ e)
   · simp only [fiberTransport_comp, Functor.comp_obj]
     exact eqToHom_obj_heq _ _ _ _
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The transition functor respects composition: transitioning by `β ≫ γ` equals
 composing the transitions by `β` and `γ`.
@@ -2266,6 +2303,7 @@ lemma fiberFunctorTransitionObjOp_comp {b d e : C} (β : b ⟶ d) (γ : d ⟶ e)
   · simp only [fiberTransport_comp, Cat.opFunctor']
     exact eqToHom_obj_heq _ _ _ _
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The oppositized transition functor respects composition.
 -/
@@ -2384,6 +2422,7 @@ theorem innerFiberContraTransitionHom_fiber {b d : C} (β : b ⟶ d)
     (fiberTransport C F β x.base).map f.fiber ≫
       eqToHom (innerFiberContraTransition_fiber_eq C F β f) := rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The transition functor for `innerFiberContra` along a base morphism `β : b ⟶ d`.
 -/
@@ -2440,6 +2479,7 @@ theorem innerFiberContraTransitionObj_id {b : C} (x : innerFiberContra C F b) :
   have h_fiber := innerFiberContraTransitionObj_id_fiber C F x
   exact GrothendieckContra'.obj_ext _ _ h_base h_fiber
 
+set_option backward.isDefEq.respectTransparency false in
 theorem innerFiberContraTransition_id (b : C) :
     innerFiberContraTransition C F (𝟙 b) = 𝟭 (innerFiberContra C F b) := by
   fapply _root_.CategoryTheory.Functor.ext
@@ -2482,6 +2522,7 @@ theorem innerFiberContraTransitionObj_comp {b d e : C} (β : b ⟶ d) (γ : d �
     simp only [innerFiberContraTransitionObj, fiberTransport_comp, Functor.comp_obj]
     exact eqToHom_obj_heq _ _ _ _
 
+set_option backward.isDefEq.respectTransparency false in
 theorem innerFiberContraTransition_comp {b d e : C} (β : b ⟶ d) (γ : d ⟶ e) :
     innerFiberContraTransition C F (β ≫ γ) =
     innerFiberContraTransition C F β ⋙ innerFiberContraTransition C F γ := by
@@ -2774,6 +2815,7 @@ theorem overOpToTwistedArrow_map_source {x y : ConnectedGrothendieckContra C F}
     (overOpToTwistedArrow C y.base).obj y.fiber.base = twObjMk' y.fiber.base.hom :=
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The target object in TwistedArrow for the target of `f.fiber.fiber`.
 -/
@@ -2784,6 +2826,7 @@ theorem overOpToTwistedArrow_map_target {x y : ConnectedGrothendieckContra C F}
     twObjMk' (x.fiber.base.hom ≫ f.base) := by
   simp only [innerFiberContraTransitionObj, Over.map_obj_hom, overOpToTwistedArrow]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The fiberMorph source category.
 -/
@@ -2793,6 +2836,7 @@ theorem connGrothendieckContra_fiberMorph_source_cat {x y : ConnectedGrothendiec
     twObjMk' (x.fiber.base.hom ≫ f.base) := by
   simp only [connGrothendieckDiagCod, twObjMk'_arr]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The fiberMorph target category before eqToHom transport.
 -/
@@ -2802,6 +2846,7 @@ theorem connGrothendieckContra_fiberMorph_target_cat {x y : ConnectedGrothendiec
     twObjMk' (f.fiber.base.left ≫ y.fiber.base.hom) := by
   simp only [connGrothendieckDiagDom, twObjMk'_arr]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The source category of `f.fiber.fiber` equals the diagonal category.
 
@@ -2814,6 +2859,7 @@ theorem connGrothendieckContraFiberMorph_source_cat_eq
     F.obj (connGrothendieckDiagCod C (twObjMk' x.fiber.base.hom) f.base) := by
   simp only [connGrothendieckDiagCod, twObjMk'_arr]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The target category of `f.fiber.fiber` equals the diagonal category.
 
@@ -2847,6 +2893,7 @@ theorem fiberMorph_diag_tw_eq {x y : ConnectedGrothendieckContra C F} (f : x ⟶
   simp only [connGrothendieckDiagDom, connGrothendieckDiagCod, twObjMk'_arr]
   exact congrArg twObjMk' (connGrothendieckContraSquare C F f)
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The target of `overOpToTwistedArrow.map f.fiber.base` equals DiagCod.
 -/
@@ -2884,6 +2931,7 @@ theorem twCod'_diagDom_eq_diagCod {x y : ConnectedGrothendieckContra C F} (f : x
   simp only [connGrothendieckDiagDom, connGrothendieckDiagCod, twObjMk'_arr, twObjMk'_cod]
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The twisted arrow morphism `overOpToTwistedArrow.map f.fiber.base` equals
 `connGrothendieckTwMorphDom ≫ eqToHom`.
@@ -2907,6 +2955,7 @@ theorem overOpToTwistedArrow_map_eq_twMorphDom_comp_eqToHom
       eqToHom_refl, Category.comp_id]
     rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Convert a morphism in `ConnectedGrothendieckContra` to a `ConnGrothendieckHom`.
 -/
@@ -2976,6 +3025,7 @@ theorem connGrothendieckHomToContra_source_eq {x y : ConnGrothendieckObj C F}
     innerFiberContraTransition]
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The target twisted arrow morphism for the reverse conversion.
 
@@ -2996,6 +3046,7 @@ theorem overOpToTwArr_map_innerBase_eq {x y : ConnGrothendieckObj C F}
       overOpToTwistedArrow, connGrothendieckHomToContraInnerBase, id]
     simp only [connGrothendieckDiagDom, twObjMk'_cod, eqToHom_refl, Category.comp_id]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Convert a `ConnGrothendieckHom` to a morphism in `ConnectedGrothendieckContra`.
 -/
@@ -3017,6 +3068,7 @@ def connGrothendieckHomToContraHom {x y : ConnGrothendieckObj C F}
     simp only [Over.mk_hom, twObjMk'_twArr']
     exact f.fiberMorph
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Round-trip: converting a `ConnGrothendieckHom` to `ConnectedGrothendieckContra` morphism
 and back gives the original morphism (up to the object round-trip equality).
@@ -3040,6 +3092,7 @@ theorem connGrothendieckHom_roundtrip {x y : ConnGrothendieckObj C F}
   refine HEq.trans (cast_heq _ _) ?_
   exact cast_heq _ _
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Round-trip: converting a `ConnectedGrothendieckContra` morphism to `ConnGrothendieckHom`
 and back gives the original morphism (up to the object round-trip equality).
@@ -3108,6 +3161,7 @@ def connGrothendieckContraObjToArrow (x : ConnectedGrothendieckContra C F) :
     Arrow C :=
   Arrow.mk x.fiber.base.hom
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 For identity morphisms, the domain arrow component is identity.
 -/
@@ -3156,6 +3210,7 @@ lemma grothendieckContra'_eqToHom_base_left {b : C}
   subst h
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The domain arrow composition: `(f ≫ g).domArr = f.domArr ≫ g.domArr`.
 -/
@@ -3183,6 +3238,7 @@ theorem connGrothendieckContraHomCodArr_comp
         connGrothendieckContraHomCodArr C F g :=
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The projection functor from `ConnectedGrothendieckContra` to the arrow category.
 
@@ -3288,6 +3344,7 @@ theorem restrictToFiberNatTrans_id (b : C) :
     restrictToFiberNatTrans C (𝟙 F) b = 𝟙 (restrictToFiber C F b) := by
   simp only [restrictToFiberNatTrans, Functor.whiskerLeft_id', restrictToFiber]
 
+set_option backward.isDefEq.respectTransparency false in
 @[simp]
 theorem restrictToFiberNatTrans_comp (α : F ⟶ G) (β : G ⟶ H) (b : C) :
     restrictToFiberNatTrans C (α ≫ β) b =
@@ -3310,6 +3367,7 @@ theorem innerFiberContraMap_id (b : C) :
     GrothendieckContra'.map_id_eq, innerFiberContra, Cat.Hom.id_toFunctor]
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 @[simp]
 theorem innerFiberContraMap_comp (α : F ⟶ G) (β : G ⟶ H) (b : C) :
     innerFiberContraMap C (α ≫ β) b =
@@ -3377,6 +3435,7 @@ theorem fiberFunctorContra_map_map_base {b d : C} (β : b ⟶ d)
     (((fiberFunctorContra C F).map β).toFunctor.map f).base = (Over.map β).map f.base :=
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 -- Helper lemma for RHS of fiberFunctorContraNatTrans naturality
 -- Shows that eqToHom compositions don't change the base result
 theorem fiberFunctorContraNatTrans_rhs_base_eq (α : F ⟶ G) {b d : C} (β : b ⟶ d)
@@ -3430,6 +3489,7 @@ theorem eqToHom_functor_app' {A B : Type*} [Category A] [Category B]
   subst h
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Core naturality of `innerFiberContraMap` with respect to transition functors
 at the fiber level.
@@ -3479,6 +3539,7 @@ theorem innerFiberContraMap_naturality_fiber (α : F ⟶ G) {b d : C} (β : b �
   apply HEq.trans (comp_eqToHom_heq _ _)
   exact (comp_eqToHom_heq _ _).symm
 
+set_option backward.isDefEq.respectTransparency false in
 def fiberFunctorContraNatTrans (α : F ⟶ G) :
     fiberFunctorContra C F ⟶ fiberFunctorContra C G where
   app b := (innerFiberContraMap C α b).toCatHom
@@ -3515,6 +3576,7 @@ theorem fiberFunctorContraNatTrans_id :
   simp only [fiberFunctorContraNatTrans, innerFiberContraMap_id, NatTrans.id_app,
     fiberFunctorContra, innerFiberContra, Functor.toCatHom_toFunctor]
 
+set_option backward.isDefEq.respectTransparency false in
 @[simp]
 theorem fiberFunctorContraNatTrans_comp (α : F ⟶ G) (β : G ⟶ H) :
     fiberFunctorContraNatTrans C (α ≫ β) =
@@ -3553,6 +3615,7 @@ theorem eqToHom_functor_app {A B : Type*} [Category A] [Category B]
   subst h
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The map functor preserves the left component of the fiber's base.
 -/
@@ -3572,6 +3635,7 @@ theorem connGrothendieckContraMap_map_fiber_base_left (α : F ⟶ G)
   -- Now: (eqToHom _ ≫ f.fiber.base).left = f.fiber.base.left
   simp only [eqToHom_refl, Category.id_comp]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The map functor commutes with the projection to `Arrow C`.
 -/
@@ -3603,6 +3667,7 @@ theorem connGrothendieckContraMap_id :
   simp only [connGrothendieckContraMap, fiberFunctorContraNatTrans_id,
     Grothendieck.map_id_eq, ConnectedGrothendieckContra]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Composition of natural transformations maps to composition of functors.
 -/
@@ -3767,6 +3832,7 @@ end ConnGrothendieckPresheafHom
 
 attribute [local simp] eqToHom_map CategoryTheory.Functor.map_id
 
+set_option backward.isDefEq.respectTransparency false in
 instance connGrothendieckPresheafCategory :
     Category (ConnGrothendieckPresheafObj C G) where
   Hom := ConnGrothendieckPresheafHom C G
@@ -3990,6 +4056,7 @@ For `α : c ⟶ a` in `C`, we get a functor `Under a ⥤ Under c` by precomposit
 This induces transport between the corresponding Grothendieck categories.
 -/
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The twisted arrow morphism for domain fiber transport.
 Given `α : c ⟶ a` and `un : Under a` (an arrow `f : a ⟶ b`),
@@ -4017,6 +4084,7 @@ def domainFiberTransport {a c : C} (α : c ⟶ a) (un : Under a) :
     F.obj ((underToTwistedArrow C c).obj ((Under.map α).obj un)) :=
   (F.map (domainFiberTransportTwMorph C α un)).toFunctor
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Naturality of domain fiber transport at the twisted arrow level.
 -/
@@ -4065,6 +4133,7 @@ theorem domainFiberTransport_functor_naturality {a c : C} (α : c ⟶ a)
           (F.map ((underToTwistedArrow C c).map ((Under.map α).map β))).toFunctor := by
           rw [Cat.Hom.comp_toFunctor]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 `domainFiberTransportTwMorph C α un` equals `connGrothendieckTwMorphDom C (twObjMk' un.hom) α`.
 
@@ -4079,6 +4148,7 @@ theorem domainFiberTransportTwMorph_eq_connGrothendieckTwMorphDom
     connGrothendieckTwMorphDom C (twObjMk' un.hom) α := by
   simp only [domainFiberTransportTwMorph, connGrothendieckTwMorphDom, connGrothendieckDiagDom]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The target of `(Under.map α).obj un` as a twisted arrow.
 For `α : c ⟶ a` and `un : Under a`, `(Under.map α).obj un` has hom = `α ≫ un.hom`.
@@ -4088,6 +4158,7 @@ theorem underToTwistedArrow_map_obj_eq {a c : C} (α : c ⟶ a) (un : Under a) :
     twObjMk' (α ≫ un.hom) := by
   simp only [underToTwistedArrow, Under.map_obj_hom]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 `underToTwistedArrow.map` relates to `connGrothendieckTwMorphCod` via the square equality.
 
@@ -4175,6 +4246,7 @@ theorem innerFiberAltTransitionHom_fiber {a c : C} (α : c ⟶ a)
     eqToHom (innerFiberAltTransition_fiber_eq C F α f) ≫
       (domainFiberTransport C F α y.base).map f.fiber := rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The transition functor for inner fibers via `α : c ⟶ a`.
 -/
@@ -4216,6 +4288,7 @@ theorem innerFiberAltTransition_map {a c : C} (α : c ⟶ a)
 ### Identity and Composition Laws for `innerFiberAltTransition`
 -/
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The twisted arrow object for `(Under.map (𝟙 a)).obj un` equals that for `un`.
 -/
@@ -4244,6 +4317,7 @@ lemma underToTwArr_map_id_cod_eq {a : C} (un : Under a) :
     twCod' ((underToTwistedArrow C a).obj ((Under.map (𝟙 a)).obj un)) =
     twCod' ((underToTwistedArrow C a).obj un) := rfl
 
+set_option backward.isDefEq.respectTransparency false in
 lemma domainFiberTransportTwMorph_id {a : C} (un : Under a) :
     domainFiberTransportTwMorph C (𝟙 a) un =
     eqToHom (underToTwArr_map_id_obj_eq C un).symm := by
@@ -4253,6 +4327,7 @@ lemma domainFiberTransportTwMorph_id {a : C} (un : Under a) :
   · simp only [domainFiberTransportTwMorph, twHomMk'_codArr, twCodArr'_eqToHom]
     rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 When `α = 𝟙 a`, the domain fiber transport functor is `eqToHom` in Cat.
 -/
@@ -4296,6 +4371,7 @@ lemma innerFiberAltTransition_id_fiber_lhs {a : C}
     (domainFiberTransport C F (𝟙 a) y.base).map f.fiber ≍ f.fiber :=
   Cat.functor_map_heq_of_eq_eqToHom _ _ (domainFiberTransport_id C F y.base) f.fiber
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Identity law for `innerFiberAltTransition`.
 -/
@@ -4322,6 +4398,7 @@ theorem innerFiberAltTransition_id (a : C) :
       exact Grothendieck.conj_eqToHom_fiber_heq
         (F := restrictToDomainFiber C F a) _ _ _
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The twisted arrow object for composition of `Under.map`.
 -/
@@ -4330,6 +4407,7 @@ lemma underToTwArr_mapComp_obj_eq {a c e : C} (α : c ⟶ a) (γ : e ⟶ c) (un 
     (underToTwistedArrow C e).obj ((Under.map γ).obj ((Under.map α).obj un)) := by
   simp only [underToTwistedArrow, Under.map_obj_right, Under.map_obj_hom, Category.assoc]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The twisted arrow morphism for domain fiber transport composes.
 -/
@@ -4401,6 +4479,7 @@ lemma innerFiberAltTransitionObj_comp {a c e : C} (α : c ⟶ a) (γ : e ⟶ c)
   · simp only [domainFiberTransport_comp]
     exact eqToHom_obj_heq _ _ _ _
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The RHS base component in the composition law.
 -/
@@ -4410,6 +4489,7 @@ lemma innerFiberAltTransition_comp_base_rhs_base {a c e : C} (α : c ⟶ a) (γ 
     (Under.map γ).map ((Under.map α).map f.base) := by
   simp only [innerFiberAltTransitionHom_base]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The RHS of the base composition law.
 Shows that the RHS is HEq to `(Under.map γ).map ((Under.map α).map f.base)`.
@@ -4467,6 +4547,7 @@ lemma innerFiberAltTransition_comp_fiber_rhs {a c e : C} (α : c ⟶ a) (γ : e 
   apply HEq.trans (Functor.map_eqToHom_comp_heq _ _ _)
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Composition law for `innerFiberAltTransition`.
 -/
@@ -4549,6 +4630,7 @@ theorem restrictToDomainFiberNatTrans_id (a : C) :
     restrictToDomainFiberNatTrans C (𝟙 F) a = 𝟙 (restrictToDomainFiber C F a) := by
   simp only [restrictToDomainFiberNatTrans, Functor.whiskerLeft_id', restrictToDomainFiber]
 
+set_option backward.isDefEq.respectTransparency false in
 @[simp]
 theorem restrictToDomainFiberNatTrans_comp (α : F ⟶ G) (β : G ⟶ H) (a : C) :
     restrictToDomainFiberNatTrans C (α ≫ β) a =
@@ -4565,6 +4647,7 @@ theorem innerFiberAltMap_id (a : C) :
   simp only [innerFiberAltMap, restrictToDomainFiberNatTrans_id,
     Grothendieck.map_id_eq, innerFiberAlt]
 
+set_option backward.isDefEq.respectTransparency false in
 @[simp]
 theorem innerFiberAltMap_comp (α : F ⟶ G) (β : G ⟶ H) (a : C) :
     innerFiberAltMap C (α ≫ β) a = innerFiberAltMap C α a ⋙ innerFiberAltMap C β a := by
@@ -4620,6 +4703,7 @@ theorem domainFiberFunctor_map_map_base {a c : C} (γ : c ⟶ a)
     (((domainFiberFunctor C F).map γ).toFunctor.map f).base = (Under.map γ).map f.base :=
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 theorem domainFiberFunctorNatTrans_rhs_base_eq (α : F ⟶ G) {a c : C} (γ : c ⟶ a)
     {X Y : innerFiberAlt C F a} (f : X ⟶ Y)
     (hX : (innerFiberAltMap C α c).obj
@@ -4638,6 +4722,7 @@ theorem domainFiberFunctorNatTrans_rhs_base_eq (α : F ⟶ G) {a c : C} (γ : c 
   simp only [innerFiberAltTransition_map_base, innerFiberAltMap_map_base]
   simp only [eqToHom_refl, Category.id_comp, Category.comp_id]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Core naturality of `innerFiberAltMap` with respect to transition functors
 at the fiber level.
@@ -4662,6 +4747,7 @@ theorem innerFiberAltMap_naturality_fiber (α : F ⟶ G) {a c : C} (γ : c ⟶ a
   simp only [functor_map_eqToHom]
   cat_disch
 
+set_option backward.isDefEq.respectTransparency false in
 def domainFiberFunctorNatTrans (α : F ⟶ G) :
     domainFiberFunctor C F ⟶ domainFiberFunctor C G where
   app a := (innerFiberAltMap C α a).toCatHom
@@ -4700,6 +4786,7 @@ theorem domainFiberFunctorNatTrans_id :
     domainFiberFunctor, innerFiberAlt, Functor.toCatHom_toFunctor, Cat.Hom.id_toFunctor]
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 @[simp]
 theorem domainFiberFunctorNatTrans_comp (α : F ⟶ G) (β : G ⟶ H) :
     domainFiberFunctorNatTrans C (α ≫ β) =
@@ -4790,6 +4877,7 @@ def connGrothendieckObjToAltObj (x : ConnGrothendieckObj C F) :
    ⟨Under.mk (twArr' x.arrow),
     (eqToHom (congrArg F.obj (underToTwArr_mk_twArr_eq C x.arrow))).toFunctor.obj x.fiber⟩⟩
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The round-trip from `ConnectedGrothendieckAlt` to `ConnGrothendieckObj` and back.
 -/
@@ -4923,6 +5011,7 @@ theorem connGrothendieckAltHomDomArr_id (x : ConnectedGrothendieckAlt C F) :
   simp only [connGrothendieckAltHomDomArr]
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Identity morphisms preserve the codomain arrow component.
 -/
@@ -4946,6 +5035,7 @@ theorem connGrothendieckAltHomDomArr_comp {x y z : ConnectedGrothendieckAlt C F}
   simp only [connGrothendieckAltHomDomArr]
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Composition preserves the codomain arrow component.
 -/
@@ -4967,6 +5057,7 @@ theorem connGrothendieckAltHomCodArr_comp {x y z : ConnectedGrothendieckAlt C F}
   rw [Grothendieck.base_eqToHom, Under.eqToHom_right]
   simp only [eqToHom_refl, Category.comp_id]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The projection functor from `ConnectedGrothendieckAlt` to the arrow category.
 
@@ -5126,6 +5217,7 @@ def connGrothendieckAltHomFiberTgt {x y : ConnectedGrothendieckAlt C F}
         simp only [connGrothendieckAltObjToObj, underToTwistedArrow, twObjMk'_arr]
         exact h_sq)))).toFunctor.obj y.fiber.fiber
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The source objects are equal after transport via the category equality.
 -/
@@ -5156,6 +5248,7 @@ lemma eqToHom_symm_comp_obj (A B : Cat) (h : A = B) (y : B.α) :
   cases h
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The fiber morphism for `connGrothendieckAltHomToHom`.
 
@@ -5322,6 +5415,7 @@ abbrev connGrothendieckHomToAltFiberMorphTransportedTgt {x y : ConnGrothendieckO
       eqToHom (connGrothendieckDiagEq C F x y m.domArr m.codArr m.square_comm))).toFunctor.obj
         y.fiber)
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The underlying Under morphism map equals `connGrothendieckTwMorphCod` composed with eqToHom.
 -/
@@ -5346,6 +5440,7 @@ theorem connGrothendieckHomToAltFiberBase_twArr_eq {x y : ConnGrothendieckObj C 
       connGrothendieckHomToAltFiberTargetBase, Under.mk_hom]
     rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Source equality for fiber morphism.
 -/
@@ -5361,6 +5456,7 @@ theorem connGrothendieckHomToAltFiberMorphSrc_eq {x y : ConnGrothendieckObj C F}
   simp only [Functor.map_comp, eqToHom_map, Cat.Hom.comp_toFunctor, Functor.comp_obj]
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The fiber transport commutes with functor application up to eqToHom.
 
@@ -5381,6 +5477,7 @@ lemma fiberMorphTgt_functor_eqToHom_comm {x y : ConnGrothendieckObj C F}
     rw [← Functor.comp_obj, ← Cat.Hom.comp_toFunctor]
   simp only [eqToHom_trans, eqToHom_refl, Cat.Hom.id_toFunctor, Functor.id_obj]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Target equality for fiber morphism.
 -/
@@ -5432,6 +5529,7 @@ def connGrothendieckHomToAltHom {x y : ConnGrothendieckObj C F}
     fiber := connGrothendieckHomToAltFiberMorph C F m
   }
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Helper lemma for the fiber morphism roundtrip.
 The composition of eqToHom transports in the roundtrip gives back the original fiber morphism.
@@ -5553,6 +5651,7 @@ theorem connGrothendieckAltMap_id :
   simp only [connGrothendieckAltMap, domainFiberFunctorNatTrans_id,
     GrothendieckContra'.map_id_eq, ConnectedGrothendieckAlt]
 
+set_option backward.isDefEq.respectTransparency false in
 @[simp]
 theorem connGrothendieckAltMap_comp (α : F ⟶ G) (β : G ⟶ H) :
     connGrothendieckAltMap C (α ≫ β) =
@@ -5569,6 +5668,7 @@ theorem connGrothendieckAltMap_obj_fiber_base (α : F ⟶ G)
     ((connGrothendieckAltMap C α).obj x).fiber.base = x.fiber.base := by
   simp only [connGrothendieckAltMap_obj, innerFiberAltMap_obj_base]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The map preserves the right component of the fiber's base in morphisms.
 -/
@@ -5594,6 +5694,7 @@ theorem connGrothendieckAltMap_map_fiber_base (α : F ⟶ G)
   apply Under.UnderMorphism.ext
   exact connGrothendieckAltMap_map_fiber_base_right C α f
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The Alt map functor commutes with the projection to `Arrow C`.
 -/
@@ -5776,6 +5877,7 @@ lemma arrowDiagonal_id (arr : Arrow C) :
   simp only [arrowDiagonal, Arrow.id_right]
   simp
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The diagonal TwistedArrow for identity equals the original.
 -/
@@ -5819,6 +5921,7 @@ section DiagonalComposition
 
 variable {arr₁ arr₂ arr₃ : Arrow C} (f : arr₁ ⟶ arr₂) (g : arr₂ ⟶ arr₃)
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The diagonal of a composition decomposes via the right component.
 -/
@@ -5826,6 +5929,7 @@ lemma arrowDiagonal_comp :
     arrowDiagonal (f ≫ g) = arrowDiagonal f ≫ g.right := by
   simp only [arrowDiagonal, Arrow.comp_right, Category.assoc]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Alternative decomposition of diagonal composition via the left component.
 -/
@@ -6172,6 +6276,7 @@ abbrev functorToConnGrothendieckMapBase {d d' : D} (g : d ⟶ d') :
     (data.arrFun.obj d).left ⟶ (data.arrFun.obj d').left :=
   (data.arrFun.map g).left
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Helper lemma for Under object equality.
 Two Under objects are equal if they have the same right and hom components.
@@ -6187,6 +6292,7 @@ lemma Under.obj_eq' {X : C} (A B : Under X)
   subst h_hom
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Type equality for the source object's fiber base after transport.
 
@@ -6238,6 +6344,7 @@ lemma functorToConnGrothendieckDiagonalFiberEq {d d' : D} (g : d ⟶ d') :
     F.obj (arrowDiagonalTwisted (data.arrFun.map g)) :=
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The functor from source arrow category to diagonal category via the restrict functor.
 The restrict functor map equals the source transport functor.
@@ -6250,6 +6357,7 @@ lemma functorToConnGrothendieckMapEq {d d' : D} (g : d ⟶ d') :
   simp only [restrictToDomainFiber, Functor.comp_map, functorToConnGrothendieckSrcTransport,
     functorToConnGrothendieckInnerUnderTwMorph]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The source object's fiber for the inner Grothendieck morphism equals the
 SrcTransport applied to the original fiber (with the arrowToUnder_fiber_eq transport).
@@ -6297,6 +6405,7 @@ lemma functorToConnGrothendieckDomainTransportTargetTw_id (d : D) :
   rw [functorToConnGrothendieckDomainTransportTargetTw]
   simp only [CategoryTheory.Functor.map_id, arrowDiagonalTwisted_id]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The domain fiber transport twisted arrow morphism equals `twMorphToDiagonalRight`
 (after rewriting the target via the equality lemma; the source is definitionally equal).
@@ -6318,6 +6427,7 @@ lemma functorToConnGrothendieckDomainTransportTwEq {d d' : D} (g : d ⟶ d') :
       arrowDiagonalTwisted, arrowDiagonal, twObjMk'_cod, Functor.id_obj]
     convert (Category.comp_id _).symm using 2
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The domain fiber transport functor equals the target transport functor
 (up to the appropriate eqToHom conversion from the target equality).
@@ -6342,6 +6452,7 @@ to arrows from `arrowToTwisted`.
 
 variable {arr arr' : Arrow C} (arrMor : arr ⟶ arr')
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The diagonal codomain coincides with the diagonal twisted arrow.
 -/
@@ -6415,6 +6526,7 @@ abbrev functorToConnGrothendieckTransportedTgt {d d' : D} (g : d ⟶ d') :
   ((domainFiberFunctor C F).map (functorToConnGrothendieckAltBase data g)).toFunctor.obj
     (functorToConnGrothendieckObjMap data d').fiber
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The hom of the transported Under target equals the diagonal.
 -/
@@ -6447,6 +6559,7 @@ lemma functorToConnGrothendieckInnerBase_comp_tgt_eq {d d' d'' : D}
   exact congrArg (·.obj (arrowToUnder (data.arrFun.obj d'')))
     (Under.mapComp_eq (data.arrFun.map g).left (data.arrFun.map h).left).symm
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The composition property for `functorToConnGrothendieckInnerBase`. The innerBase of a
 composition equals the composition of innerBases, up to eqToHom for Under.map.
@@ -6462,6 +6575,7 @@ lemma functorToConnGrothendieckInnerBase_comp {d d' d'' : D} (g : d ⟶ d') (h :
   simp only [functorToConnGrothendieckInnerBase, Under.homMk_right, Functor.map_comp,
     Arrow.comp_right, eqToHom_refl, Category.comp_id]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The twisted arrow morphism from applying underToTwistedArrow to innerBase equals
 twMorphToDiagonalLeft followed by an eqToHom for the target.
@@ -6478,6 +6592,7 @@ lemma functorToConnGrothendieckInnerBaseTwMorph {d d' : D} (g : d ⟶ d') :
       Under.homMk_right, twCodArr'_comp, twCodArr'_eqToHom, twMorphToDiagonalLeft, id_eq,
       eqToHom_refl, Category.comp_id]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The restrictToDomainFiber map of innerBase equals SrcTransport followed by eqToHom.
 -/
@@ -6493,6 +6608,7 @@ lemma functorToConnGrothendieckInnerBaseMapEq {d d' : D} (g : d ⟶ d') :
   simp only [Functor.map_comp, eqToHom_map, functorToConnGrothendieckSrcTransport]
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The fiber morphism for the `GrothendieckContra'` morphism construction.
 This is a morphism in the inner Grothendieck category from the source fiber to
@@ -6525,6 +6641,7 @@ lemma functorToConnGrothendieckAltFiber_base {d d' : D} (g : d ⟶ d') :
     (functorToConnGrothendieckAltFiber data g).base =
     functorToConnGrothendieckInnerBase data g := rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The fiber of `functorToConnGrothendieckAltFiber` is HEq to `data.hom`.
 This follows because the fiber is `(eqToHom ...).map (data.hom g)`.
@@ -6598,6 +6715,7 @@ lemma functorToConnGrothendieckInnerBase_id (d : D) :
   simp only [Under.eqToHom_right, Under.homMk_right]
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Step 6: The base component of `functorToConnGrothendieckAltFiber data (𝟙 d)` equals
 an eqToHom.
@@ -6702,6 +6820,7 @@ lemma functorToConnGrothendieck_transportedTgt_id_eq (d : D) :
     CategoryTheory.Functor.map_id, Arrow.id_left, GrothendieckContra'.id,
     functorToConnGrothendieckObjMap_base]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The transported target for composition equals the fiber image under composition.
 -/
@@ -6717,6 +6836,7 @@ lemma functorToConnGrothendieck_transportedTgt_comp_eq {d d' d'' : D}
   simp only [functorToConnGrothendieckTransportedTgt, functorToConnGrothendieckAltBase,
     Functor.map_comp, Arrow.comp_left, GrothendieckContra'.comp_base]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The base component of the map_id fiber case: the base of the LHS equals the base of the RHS.
 -/
@@ -6731,6 +6851,7 @@ lemma functorToConnGrothendieck_map_id_fiber_base (d : D) :
   rw [Grothendieck.base_eqToHom]
   rw [eqToHom_trans]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The fiber component of the map_id fiber case (Grothendieck.ext form).
 -/
@@ -6809,6 +6930,7 @@ lemma functorToConnGrothendieck_transportedTgt_comp_base_eq {d d' d'' : D}
   exact congrArg (·.obj (functorToConnGrothendieckObjMap data d'').fiber.base)
     (Under.mapComp_eq (data.arrFun.map g).left (data.arrFun.map h).left)
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The base component of the map_comp fiber case.
 -/

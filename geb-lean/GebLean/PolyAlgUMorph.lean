@@ -365,6 +365,7 @@ def coalgPushforwardFunctor
   map_comp _ _ :=
     Endofunctor.Coalgebra.Hom.ext rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Pulling back algebras commutes with forgetting to
 `Over X`.
@@ -381,6 +382,7 @@ theorem algPullbackFunctor_forget
       PolyAlg.forget,
       Endofunctor.Algebra.forget]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Pushing forward coalgebras commutes with forgetting to
 `Over X`.

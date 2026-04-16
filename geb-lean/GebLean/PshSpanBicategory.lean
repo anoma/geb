@@ -37,6 +37,7 @@ instance pshSpanBicatCategoryStruct
   id P := pshProdOverId P.obj
   comp R S := pshProdOverComp R S
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Left whiskering of a 2-cell by a 1-cell.
 Given a span `R : P → Q` and a 2-cell `η : S₁ ⟶ S₂`
 (both spans `Q → W`), produces a 2-cell
@@ -79,6 +80,7 @@ def pshSpanWhiskerLeft
         rw [← Over.w η]
         simp only [Category.assoc])
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Right whiskering of a 2-cell by a 1-cell.
 Given a 2-cell `η : R₁ ⟶ R₂` (both spans `P → Q`)
 and a span `S : Q → W`, produces a 2-cell
@@ -201,6 +203,7 @@ theorem pshSpanWhiskerExchange
       PullbackCone.IsLimit.lift_snd_assoc,
       Category.assoc]
 
+set_option backward.isDefEq.respectTransparency false in
 theorem pshSpanIdWhiskerLeft
     {P Q : Cᵒᵖ ⥤ Type w}
     {R₁ R₂ : PshProdOver P Q}
@@ -228,6 +231,7 @@ theorem pshSpanIdWhiskerLeft
       PullbackCone.IsLimit.lift_snd,
       Category.comp_id]
 
+set_option backward.isDefEq.respectTransparency false in
 theorem pshSpanWhiskerRightId
     {P Q : Cᵒᵖ ⥤ Type w}
     {R₁ R₂ : PshProdOver P Q}

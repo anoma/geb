@@ -200,6 +200,7 @@ lemma factHomToTwMorph_id
       factToTwMorph tw d := by
   apply twHom_ext <;> rfl
 
+set_option backward.isDefEq.respectTransparency false in
 lemma assemblyMap_id
     (x : DecFactObj F tw) :
     assemblyMap F tw (𝟙 x) =
@@ -1524,6 +1525,7 @@ theorem isDiagDeterminedProf_iff_lanDiagCounit_surj
           Quotient.lift_mk] at hq
         exact hq⟩
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The restriction of the profunctor-on-twisted-arrows
 to the full subcategory of identity twisted arrows, with
 `ULift` to match the universe level of `lanDiagFunctor`.
@@ -1592,6 +1594,7 @@ def lanDiagUnitApp
            (identityTwArr_dom_eq_cod itw).symm)
          d⟩
 
+set_option backward.isDefEq.respectTransparency false in
 theorem lanDiagUnitApp_natural
     (P : Cᵒᵖ ⥤ C ⥤ Type w₁)
     {itw₁ itw₂ : IdentityTwArr C}
@@ -1661,6 +1664,7 @@ def lanDiagLeftExt (P : Cᵒᵖ ⥤ C ⥤ Type w₁) :
   Functor.LeftExtension.mk
     (lanDiagFunctor P) (lanDiagUnit P)
 
+set_option backward.isDefEq.respectTransparency false in
 /-- A factorisation of `twArr tw` through a midpoint
 `c` gives a morphism `twObjMk (𝟙 c) ⟶ tw` in
 `TwistedArrow C`. -/
@@ -1776,6 +1780,7 @@ private theorem coconeApp_eq_of_lanDiagSetoid
   | trans _ _ _ _ _ ih₁ ih₂ =>
     exact ih₁.trans ih₂
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The left Kan extension `lanDiagLeftExt P` is
 pointwise: for each `tw : TwistedArrow C`, the
 cocone `(lanDiagLeftExt P).coconeAt tw` is a
@@ -1879,6 +1884,7 @@ def lanDiag_isPointwiseLan
           simp [Category.comp_id,
             Category.id_comp] }
 
+set_option backward.isDefEq.respectTransparency false in
 /-- At an identity arrow `twObjMk (𝟙 c)`, every
 decorated factorisation `⟨fact, d⟩` is related by a
 single `LanDiagStep` to
@@ -3231,6 +3237,7 @@ theorem TypeExpr.biRelInterp_diag
     simp only [biRelInterp, fullRelInterp,
       ih₁, ih₂]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The graph specialization of `biRelInterp`:
 at `graphRelOp f` and `graphRel g`,
 `biRelInterp` recovers `profMap f g`. The dual
@@ -3401,6 +3408,7 @@ abbrev divFullRel {I₀ I₁ : Type}
     (f : I₀ → I₁) :=
   divTypeExpr.relInterp f
 
+set_option backward.isDefEq.respectTransparency false in
 /-- `divEndoRel` expands to
 `arrowRel (graphRel f) (graphRel f)`. -/
 theorem divEndoRel_expand
@@ -3411,6 +3419,7 @@ theorem divEndoRel_expand
     TypeExpr.relInterp,
     functorRelLift_graphRel, Functor.id_map]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- `divArgRel` expands to
 `arrowRel (arrowRel (graphRel f) (graphRel f))
   (graphRel f)`. -/
@@ -3425,6 +3434,7 @@ theorem divArgRel_expand
     TypeExpr.relInterp,
     functorRelLift_graphRel, Functor.id_map]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- `divFullRel` expands to a nested application
 of `arrowRel` and `graphRel`, with one `arrowRel`
 per `→` and one `graphRel f` per `X` in the type
@@ -4385,6 +4395,7 @@ theorem typeExprWedgeToCone_comp_toWedge
     (fun W =>
       TypeExprCone.toWedge_toCone W)
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The composite functor
 `typeExprConeToWedge ⋙ typeExprWedgeToCone`
 equals the identity on `TypeExprCone T`. -/

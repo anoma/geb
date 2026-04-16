@@ -884,6 +884,7 @@ private theorem mapBranch_comp_embed
     rw [hjlt, btSubstSnoc_castSucc,
       btSubstSnoc_castSucc]
 
+set_option backward.isDefEq.respectTransparency false in
 -- The proof involves iterated substitution on
 -- parameterized tree morphisms, requiring extra
 -- elaboration budget.

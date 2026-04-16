@@ -405,6 +405,7 @@ lemma fold_comp_morphism_eq (P : PolyEndo X) (α : PolyAlg P)
     congrFun (Over.w h) e
   exact (polyFixFoldAtWithProof_transport P α (h.left e).2 heq).symm
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The fold satisfies the algebra homomorphism condition: mapping by fold and then
 applying the target structure equals applying the source structure and then
@@ -467,6 +468,7 @@ lemma polyFixStrFamily_mk
     PolyFix.mk x i children := by
   unfold polyFixStrFamily; dsimp; congr
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Helper: any algebra homomorphism applied to a tree equals the fold.
 Proved by structural recursion on the tree.
@@ -2183,6 +2185,7 @@ lemma polyCofixUnfold_coalg_comm_child_fst_eq (P : PolyEndo X) (α : PolyCoalg P
   rw [step1]
   exact overType_hom_heq hfamilyEq e1 e2 he
 
+set_option backward.isDefEq.respectTransparency false in
 lemma polyCofixUnfold_coalg_comm_mor_heq (P : PolyEndo X) (α : PolyCoalg P)
     (a : α.V.left) :
     HEq ((α.str.left a).2.2 ≫ polyCofixUnfold P α)
@@ -2338,6 +2341,7 @@ lemma polyCofixUnfold_coalg_comm_snd (P : PolyEndo X) (α : PolyCoalg P)
   · exact polyCofixUnfold_coalg_comm_index_heq P α a
   · exact polyCofixUnfold_coalg_comm_mor_heq P α a
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Children of `polyCofixUnfoldAt` are `polyCofixUnfoldAt`
 applied to child elements. This is the coinductive
@@ -2746,6 +2750,7 @@ lemma over_mor_left_heq {X : Type u} {A B C : Over X}
   simp only [heq_eq_eq] at hfg hab
   rw [hfg, hab]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Relate children evaluation through HEq morphisms.
 
@@ -4467,6 +4472,7 @@ def polyFreeM_to_polyFreeMPolyEval (A : Over X) (P : PolyEndo X) {x : X}
    Over.homMk (fun pos => (polyFreeMLeafData A P t pos).val)
      (funext fun pos => (polyFreeMLeafData A P t pos).property)⟩
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Right inverse helper: the sigma pair roundtrip equality for the polynomial
 evaluation type. This is proven by induction on the shape.
@@ -5642,6 +5648,7 @@ def polyCofreePolyEval_to_polyCofreeM (A : Over X) (P : PolyEndo X) {x : X}
 
 /-! ### Roundtrip Proofs -/
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Helper: the shape approximations from the backward direction match the
 original shape approximations.
@@ -5764,6 +5771,7 @@ lemma polyCofreeGetAnnotAtM_val_of_eq (A : Over X) (P : PolyEndo X) {y1 y2 : X}
   subst hm
   exact polyCofreeGetAnnotAtM_val_of_eqRec A P h m2 k pos_at1 pos_at2 hpos
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Succ case helper for polyCofreeGetAnnotAtM_fromShapeAndData.
 Extracts annotation at depth k+1 from reconstructed M-type.
@@ -6336,6 +6344,7 @@ lemma polyCofreeAnnotPosAt_sigma_heq (P : PolyEndo X)
   cases hp
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 lemma polyCofreeGetAnnot_parent_child_eq (A : Over X) (P : PolyEndo X) {x : X}
     (m : PolyCofreeM A P x)
     (a : (polyBetweenFamily X X P x
@@ -6746,6 +6755,7 @@ algebra on A to the free algebra on B by mapping leaves: each A-leaf is
 replaced by the corresponding B-leaf via f.
 -/
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The fiber proof for mapping a leaf: if `a` is in fiber over `y` in A,
 then `f.left a` is in fiber over `y` in B.
@@ -6828,6 +6838,7 @@ lemma polyFreeMapAt_as_bind (A B : Over X) (P : PolyEndo X) (f : A ⟶ B)
   subst hxy
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 lemma polyFreeMapHom_comm (A B : Over X) (P : PolyEndo X) (f : A ⟶ B) :
     (polyEndoFunctor X P).map (polyFreeMap A B P f) ≫ polyFreeMStr B P =
     polyFreeMStr A P ≫ polyFreeMap A B P f := by
@@ -7216,6 +7227,7 @@ coalgebra on A to the cofree coalgebra on B by mapping annotations: each
 A-annotation is transformed to a B-annotation via f.
 -/
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The fiber proof for mapping an annotation: if `a` is in fiber over `y` in A,
 then `f.left a` is in fiber over `y` in B.
@@ -7486,6 +7498,7 @@ lemma polyCofreeMapApprox_childApproxAt_succ_heq (A B : Over X) (P : PolyEndo X)
     convert (hRhsAux.trans (heq_of_eq hRhsSimp)).symm using 2
     exact hMappedApproxEq.symm
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Mapping commutes with children extraction under appropriate HEq conditions.
 -/
@@ -8221,6 +8234,7 @@ lemma polyCoalgUnitAt_child_approx_eq (P : PolyEndo X) (β : PolyCoalg P)
   rw [← hfibEq']
   exact polyCoalgUnitAt_child_approx_aux P β a n e1 hchildFib e2 he1e2 hfib
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Children of polyCoalgUnitAt are polyCoalgUnitAt applied to child elements.
 This is the coinductive unfolding property.
@@ -8256,6 +8270,7 @@ lemma polyCoalgUnitAt_children_heq (P : PolyEndo X) (β : PolyCoalg P)
     simp only [PolyCofix.childApproxAt, PolyCofix.childApproxAt_succ]
     exact polyCoalgUnitAt_child_approx_eq P β a e1 hfibEq n
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 HEq of morphisms for the coalgebra homomorphism proof.
 -/
@@ -8343,6 +8358,7 @@ def polyCoalgUnitHom (P : PolyEndo X) (β : PolyCoalg P) :
   f := polyCoalgUnit P β
   h := polyCoalgUnit_coalg_comm P β
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Naturality for approximations: the mapped unit approx equals the direct unit approx.
 -/
@@ -8530,6 +8546,7 @@ lemma polyFree_left_triangle (P : PolyEndo X) (α : PolyAlg P) :
     types_comp_apply]
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Right triangle identity for Free ⊣ Forget:
 Applying the unit (on the Free side) then the counit is the identity.
@@ -8690,6 +8707,7 @@ lemma polyCofree_right_triangle_approx (P : PolyEndo X) (A : Over X) (x : X)
       rw [← hchildApprox]
       exact h_child
 
+set_option backward.isDefEq.respectTransparency false in
 lemma polyCofree_right_triangle (P : PolyEndo X) (A : Over X) :
     polyCoalgUnitHom P (polyCofreeCoalg A P) ≫
       (polyCofreeFunctor P).map (polyCofreeCounit A P) =
@@ -8816,6 +8834,7 @@ lemma polyCofreeFromShapeAndDataApprox_proof_irrel
     unfold polyCofreeFromShapeAndDataApprox
     congr 1
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Mapping by `g` commutes with building from shape and
 data at the approximation level: re-annotating with
@@ -9327,6 +9346,7 @@ lemma polyFreeMMonadUnit_comm (P : PolyEndo X) (A : Over X) :
     ((polyEndoFunctor X (polyFreeMPoly P)).obj A).hom =
     ((polyEndoFunctor X P).obj A).hom := rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The unit of the free monad monad at a specific polynomial P.
 Maps P(A) → (polyFreeMPoly P)(A) naturally in A.
@@ -9398,6 +9418,7 @@ def polyFreeMJoin (A : Over X) (P : PolyEndo X) {x : X} :
     polyFreeMGraft A P s fun pos =>
       polyFreeMJoin A P (children pos)
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Grafting commutes with bind: the bind distributes through a graft.
 -/
@@ -9437,6 +9458,7 @@ theorem polyFreeMJoin_natural (A B : Over X) (P : PolyEndo X) (f : A ⟶ B) {x :
       funext pos
       exact ih pos
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 polyFreeMFromShape with composed morphism equals polyFreeMapAt applied to the original.
 -/
@@ -9871,6 +9893,7 @@ def polyComonadCoalgToCoalgObj {P : PolyEndo X}
   V := c.A
   str := polyComonadCoalgStr c
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 A comonad coalgebra morphism yields a P-coalgebra
 morphism: `f.f` commutes with the extracted
@@ -10095,6 +10118,7 @@ lemma comonadCoalgCounit_eq
     polyCofreeCounitNat] at h
   exact h
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The cofree map by `c.a` followed by the counit
 equals the identity on M-types.  This is the
@@ -10115,6 +10139,7 @@ lemma comonadCoalgCofreeMap_counit_eq
   rw [comonadCoalgCounit_eq c]
   exact polyCofreeMapAt_id c.A P _
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Self-consistency of the comonad coalgebra:
 `c.a` applied to the root annotation of the
@@ -10325,6 +10350,7 @@ lemma polyComonadCoalgStr_left_eq
     polyCofreeStrFamily,
     polyCofreeChildrenMor]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 At each approximation level, the anamorphism
 from the extracted P-coalgebra at `a` produces
@@ -10808,6 +10834,7 @@ def polyMonadAlgToAlgObj {P : PolyEndo X}
   a := c.A
   str := polyMonadAlgStr c
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 A monad algebra morphism yields a P-algebra
 morphism: `f.f` commutes with the extracted
@@ -10891,6 +10918,7 @@ def polyMonadAlgToAlg (P : PolyEndo X) :
   map_comp := fun _ _ => by
     ext; simp
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Forward roundtrip: K⁻¹(K(α)).str = α.str.
 The extracted P-structure from the comparison
@@ -10951,6 +10979,7 @@ lemma polyAlgMonad_forward_obj
   exact polyAlgMonad_forward_str
     (Endofunctor.Algebra.mk a str)
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Backward roundtrip: the fold of `polyMonadAlgToAlgObj c`
 agrees pointwise with `c.a` on W-type trees.
@@ -11534,6 +11563,7 @@ def overFiberMap {A B : Over X}
       CategoryTheory.types_comp_apply] at h
     rw [h, p.property]⟩
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The connecting morphism of the coiteration chain
 preserves agreement of approximations: if `p` is a
@@ -11942,6 +11972,7 @@ lemma polyIterFiberToFix_transport
       ⟨p.val, p.property.trans h⟩ := by
   subst h; rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The cocone map at level `n` applied to `q` equals
 `⟨hom q, polyIterFiberToFix n (hom q) ⟨q, rfl⟩⟩`.
@@ -12263,6 +12294,7 @@ private lemma polyIterChain_map_le_succ
     from Subsingleton.elim _ _] at this
   exact this
 
+set_option backward.isDefEq.respectTransparency false in
 lemma polyIterChain_map_succ (P : PolyEndo X)
     {m n : ℕ} (h : m ≤ n) :
     (polyIterChain X P).map

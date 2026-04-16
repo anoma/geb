@@ -229,6 +229,7 @@ variable
 
 open HasCopowers HasPowers
 
+set_option backward.isDefEq.respectTransparency false in
 def endCopowerPowerEquiv :
     typeEnd
       (copowerProf (HomToProf pt) G ⇓ Y) ≃
@@ -551,6 +552,7 @@ def MendlerAlgebra.toPowerEnd
       rw [HasPowers.fac, HasPowers.fac]
       exact m.dinaturality f s⟩
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Convert a power-end Mendler algebra to a
 Mendler algebra by projecting from the power. -/
 def PowerEndMendlerAlgebra.toMendler
@@ -702,6 +704,7 @@ theorem comp_powerEnd_hom
     (f : m₁ ⟶ m₂) (g : m₂ ⟶ m₃) :
     (f ≫ g).hom = f.hom ≫ g.hom := rfl
 
+set_option backward.isDefEq.respectTransparency false in
 omit [HasCopowers C] in
 /-- The equivalence between Mendler algebras and
 power-end Mendler algebras. -/
@@ -794,6 +797,7 @@ variable
   (G : Cᵒᵖ ⥤ C ⥤ C)
   [HasAllCopowerProfCoends G]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The copower-coend GExtFunctor: an endofunctor
 `C ⥤ C` whose object map is `CopowerGExtObj G` (the
 copower-profunctor coend carrier). Naturally isomorphic
@@ -817,6 +821,7 @@ def CopowerCoendGExtFunctor : C ⥤ C where
     simp only [← Category.assoc,
       Iso.inv_hom_id, Category.id_comp]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The natural isomorphism between
 `CopowerCoendGExtFunctor` and `GExtFunctor`, with
 components given by `copowerGExtIso`. -/
@@ -1107,6 +1112,7 @@ def ihomPowerProf
     rw [unop_comp, Functor.map_comp,
       MonoidalClosed.pre_map, NatTrans.comp_app]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Given terminal wedges for `F` and `F'` and a natural
 transformation `α : F ⟶ F'`, produce a morphism between
 the end objects by composing each projection with the
@@ -1192,6 +1198,7 @@ theorem HasTerminalWedge.hom_ext
     f = g :=
   Multifork.IsLimit.hom_ext tw.isLimit h
 
+set_option backward.isDefEq.respectTransparency false in
 omit [MonoidalCategory C] [MonoidalClosed C]
   [HasPowers C] in
 theorem HasTerminalWedge.map_id
@@ -1203,6 +1210,7 @@ theorem HasTerminalWedge.map_id
   intro j
   simp
 
+set_option backward.isDefEq.respectTransparency false in
 omit [MonoidalCategory C] [MonoidalClosed C]
   [HasPowers C] in
 theorem HasTerminalWedge.map_comp
@@ -1238,6 +1246,7 @@ theorem HasTerminalWedge.map_comp
         tw''.wedge.ι j := by
         rw [← Category.assoc]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The inner end functor: for each `Y`, takes the end
 of `ihomPowerProf G pt Y` to produce an object of `C`.
 This sends `Y` to `∫_A G(A,A) ⟶[C] power Y (A ⟶ pt)`.
@@ -1354,6 +1363,7 @@ def ihomPowerProfMapPt
       ((G.obj (Opposite.op B)).map g.unop)
       (HasPowers.mapIdx (· ≫ h))
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The `ihomPowerProfMapPt` and `ihomPowerProfMapY`
 natural transformations commute: changing `pt` and
 changing `Y` can be done in either order. At each
@@ -1375,6 +1385,7 @@ theorem ihomPowerProfMapPt_mapY_comm
   rw [← HasPowers.bimap_eq_mapIdx_mapVal,
     HasPowers.bimap_eq_mapVal_mapIdx]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The natural transformation
 `churchProf G pt₁ tw₁ ⟶ churchProf G pt₂ tw₂`
 induced by `h : pt₁ ⟶ pt₂`, given by composing
@@ -1427,6 +1438,7 @@ theorem ihomPowerProfMapPt_id
   rw [HasPowers.mapIdx_id,
     CategoryTheory.Functor.map_id]
 
+set_option backward.isDefEq.respectTransparency false in
 theorem ihomPowerProfMapPt_comp
     (G : Cᵒᵖ ⥤ C ⥤ C)
     {pt₁ pt₂ pt₃ : C}
@@ -1443,6 +1455,7 @@ theorem ihomPowerProfMapPt_comp
   funext s
   exact (Category.assoc s h₁ h₂).symm
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The impredicative GExt endofunctor, defined
 entirely via ends, powers, and internal homs.
 Sends `pt` to `∫_Y (∫_A G(A,A) ⟶[C] Y^(A→pt)) ⟶[C] Y`
@@ -1670,6 +1683,7 @@ def churchComponent
     (ihom.ev GA).app YpowA ≫
     HasPowers.proj Y (A ⟶ pt) s)
 
+set_option backward.isDefEq.respectTransparency false in
 omit [HasCopowers C]
   [HasAllCopowerProfCoends G] in
 theorem churchComponent_wedge
@@ -1724,6 +1738,7 @@ private theorem whisker_braided_eval_pre
   slice_lhs 1 2 => rw [← comp_whiskerRight]
   simp only [Category.assoc]
 
+set_option backward.isDefEq.respectTransparency false in
 omit [HasCopowers C]
   [HasAllCopowerProfCoends G] in
 theorem churchComponent_dinatural
@@ -1778,6 +1793,7 @@ def churchLift
       (fun {_ _} f =>
         churchComponent_wedge G pt twInner A s f))
 
+set_option backward.isDefEq.respectTransparency false in
 omit [HasCopowers C]
   [HasAllCopowerProfCoends G] in
 private theorem churchLiftPowerEndWedge
@@ -1852,6 +1868,7 @@ def copowerGExtToImpredicativeGExt
     fun {_ _} f =>
       churchLiftPowerEndWedge G pt twInner twOuter f⟩
 
+set_option backward.isDefEq.respectTransparency false in
 omit [BraidedCategory C] [HasCopowers C]
   [HasPowers C] [HasAllCopowerProfCoends G] in
 private theorem curry_ihomEvalAt
@@ -1877,6 +1894,7 @@ private theorem curry'_ihomEvalAt
     curry_ihomEvalAt]
   simp [← unitors_equal]
 
+set_option backward.isDefEq.respectTransparency false in
 private theorem churchComponent_ihomEvalAt_eq
     (pt : C)
     (twInner : ∀ Y : C,
@@ -1970,6 +1988,7 @@ private theorem churchComponent_ihomEvalAt_eq
   simp
   congr 1
 
+set_option backward.isDefEq.respectTransparency false in
 omit [MonoidalCategory C] [MonoidalClosed C]
   [BraidedCategory C] [HasPowers C] in
 private theorem copowerGExtHomEndEquiv_val
@@ -2084,6 +2103,7 @@ private theorem inj_comp_forward
   funext s
   simp only [HasPowers.fac]
 
+set_option backward.isDefEq.respectTransparency false in
 theorem copowerGExt_backward_forward
     (pt : C)
     (twInner : ∀ Y : C,
@@ -2212,6 +2232,7 @@ private theorem CopowerGExtInj_comp_cgeChurchLeg
   intro s
   simp only [HasCopowers.fac, HasPowers.fac]
 
+set_option backward.isDefEq.respectTransparency false in
 private theorem inj_inj_cgeChurchLeg_direct
     (pt : C)
     (twInner : ∀ Y : C,
@@ -2225,6 +2246,7 @@ private theorem inj_inj_cgeChurchLeg_direct
   simp only [CopowerGExtInj_comp_cgeChurchLeg,
     HasCopowers.fac]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The church profunctor wedge condition for
 `cgeChurchLeg`, proved directly from the definition
 without requiring an outer terminal wedge. -/
@@ -2250,6 +2272,7 @@ private theorem cgeChurchLeg_wedge_direct
   simp only [← Category.assoc, HasCopowers.fac]
   exact churchComponent_wedge G pt twInner A s f
 
+set_option backward.isDefEq.respectTransparency false in
 private theorem fwd_comp_ι_eq_cgeChurchLeg
     (pt : C)
     (twInner : ∀ Y : C,
@@ -2321,6 +2344,7 @@ private theorem fwd_comp_ι_eq_cgeChurchLeg
   -- = churchComponent Y A s (by HasPowers.fac)
   simp only [HasCopowers.fac, HasPowers.fac]
 
+set_option backward.isDefEq.respectTransparency false in
 private theorem cgeChurchLeg_wedge
     (pt : C)
     (twInner : ∀ Y : C,
@@ -2408,6 +2432,7 @@ private theorem ι_cge_ihomMap_cgeChurchLeg
   exact twOuter.wedge.condition
     (cgeChurchLeg G pt twInner Y)
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The coend injection at `A`, followed by
 the copower injection at `s`, followed by
 `cgeChurchLeg Y`, gives the Church component
@@ -2519,6 +2544,7 @@ private theorem cgeChurchLeg_Z_ihomEvalAt
   exact churchComponent_Z_ihomEvalAt G pt twInner
     twOuter Y A s
 
+set_option backward.isDefEq.respectTransparency false in
 omit [HasCopowers C]
   [HasAllCopowerProfCoends G] in
 private theorem churchComponent_churchProfMapPt
@@ -2548,6 +2574,7 @@ private theorem churchComponent_churchProfMapPt
   simp only [HasPowers.mapIdx_proj]
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 omit [MonoidalCategory C] [MonoidalClosed C]
   [BraidedCategory C] [HasPowers C] in
 private theorem copowerGExtIso_hom_eq_id
@@ -2572,6 +2599,7 @@ private theorem copowerGExtIso_hom_eq_id
   rw [h, Limits.Cowedge.eqToHom_hom]
   simp only [eqToHom_refl, CopowerGExtObj]
 
+set_option backward.isDefEq.respectTransparency false in
 omit [MonoidalCategory C] [MonoidalClosed C]
   [BraidedCategory C] [HasPowers C] in
 private theorem copowerGExtIso_inv_eq_id
@@ -2582,6 +2610,7 @@ private theorem copowerGExtIso_inv_eq_id
   rw [this, Category.id_comp] at hinv
   exact hinv
 
+set_option backward.isDefEq.respectTransparency false in
 omit [MonoidalCategory C] [MonoidalClosed C]
   [BraidedCategory C] [HasPowers C] in
 private theorem CopowerCoendGExtFunctor_map_eq
@@ -2616,6 +2645,7 @@ private theorem GExtInj_eq_inj_comp_copowerGExtInj
     CopowerGExtInj]
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 private theorem cgeChurchLeg_natural_pt
     {pt₁ pt₂ : C} (h : pt₁ ⟶ pt₂)
     (tw₁ : ∀ Y : C,
@@ -2723,6 +2753,7 @@ instance : HasPowers
     (multicospanShapeEnd C).L :=
   show HasPowers C from inferInstance
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The lift from a church profunctor wedge `s` to
 `cge`: evaluate the `Y = cge` leg at the enriched
 identity element `curry'(𝟙 cge)`. -/
@@ -2809,6 +2840,7 @@ theorem inj_comp_powerEndGExtMap
     gExtEndPowerEquiv_proj G pt₂ _
       (𝟙 _) A (s ≫ h), Category.comp_id]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- `powerEndGExtMap` preserves composition:
 `powerEndGExtMap G (h₁ ≫ h₂) =
   powerEndGExtMap G h₁ ≫ powerEndGExtMap G h₂`.
@@ -2858,6 +2890,7 @@ def PowerEndGExtFunctor : C ⥤ C where
   map_id pt := powerEndGExtMap_id G pt
   map_comp h₁ h₂ := powerEndGExtMap_comp G h₁ h₂
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The end-based map `powerEndGExtMap G h` equals
 `(GExtFunctor G).map h`: both are the unique morphism
 from the initial restricted coend at `pt₁` to the
@@ -2904,6 +2937,7 @@ private theorem powerEndGExtMap_eq
   rw [powerEndGExtMap_eq_GExtMap,
     ← CopowerCoendGExtFunctor_map_eq]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Natural isomorphism between
 `PowerEndGExtFunctor G` and
 `CopowerCoendGExtFunctor G`: the component at each
@@ -3007,6 +3041,7 @@ private theorem uncurry'_ihom_comp
   conv_rhs => rw [← curry'_uncurry' g]
   rw [curry'_ihom_map, uncurry'_curry']
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Global sections of the internal end correspond to
 elements of the type-level end: currying components of
 a wedge into `ihomPowerProf` yields the corresponding
@@ -3090,6 +3125,7 @@ def copowerIhomToPowerIhom
         (ihom (HasCopowers.copower S X)).obj Y ≫
         MonoidalClosed.uncurry (𝟙 _)))
 
+set_option backward.isDefEq.respectTransparency false in
 omit [HasAllCopowerProfCoends G] in
 /-- Naturality of the copower-ihom-to-power-ihom
 map: composing with `pre h` and `(ihom X').map
@@ -3201,6 +3237,7 @@ def ihomCoendWedgeProj
       (A ⟶ pt)
       ((G.obj (Opposite.op A)).obj A) Y
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The internal hom from the coend carries a
 wedge structure for `ihomPowerProf G pt Y`. -/
 def ihomCoendWedge
@@ -3317,6 +3354,7 @@ private theorem whisker_braided_eval_pre'
   slice_lhs 1 2 => rw [← comp_whiskerRight]
   simp only [Category.assoc]
 
+set_option backward.isDefEq.respectTransparency false in
 omit [HasCopowers C]
   [HasAllCopowerProfCoends G] in
 /-- Dinaturality of `ihomCoendLiftComponent`: for
@@ -3366,6 +3404,7 @@ def ihomCoendLiftCopowerMap
   HasCopowers.desc
     (ihomCoendLiftComponent G pt Y s A)
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Cowedge for `copowerProf (HomToProf pt) G` with
 apex `(ihom s.pt).obj Y`, assembled from the copower
 maps `ihomCoendLiftCopowerMap`. The cowedge condition
@@ -3413,6 +3452,7 @@ def ihomCoendWedgeLift
     ((β_ (CopowerGExtObj G pt) s.pt).hom ≫
     uncurry (ihomCoendLift G pt Y s))
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The factorization property: the lift composed
 with each wedge projection of `ihomCoendWedge`
 recovers the original wedge projection. -/
@@ -3493,6 +3533,7 @@ private theorem uncurry_copowerIhomToPowerIhom_proj
   rw [comp_copowerIhomToPowerIhom, uncurry_curry,
     HasPowers.fac]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Uniqueness: any morphism to the wedge apex
 that commutes with all wedge projections equals the
 lift produced by `ihomCoendWedgeLift`. -/
@@ -3573,6 +3614,7 @@ def ihomCoendHasTerminalWedge (pt Y : C) :
   ⟨ihomCoendWedge G pt Y,
     ihomCoendWedge_isLimit G pt Y⟩
 
+set_option backward.isDefEq.respectTransparency false in
 omit [SymmetricCategory C] in
 /-- `(ihom X).map f` commutes with the coend wedge
 projections, expressing naturality of
@@ -3601,6 +3643,7 @@ private theorem ihom_map_comp_ihomCoendWedgeProj
   simp only [Category.assoc]
   congr 2
 
+set_option backward.isDefEq.respectTransparency false in
 omit [SymmetricCategory C] in
 /-- When the terminal wedges for `ihomPowerProf`
 come from the coend construction, the internal-end
@@ -4185,6 +4228,7 @@ def impFloor
     (twOuter m.pt).wedge.ι m.pt ≫
     ihomEvalAt (mendlerGlobalSection G m twInner)
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The ceiling translation for the end-based
 equivalence: converts a conventional algebra for
 `ImpredicativeGExtFunctor G` to a Mendler algebra.
@@ -4250,6 +4294,7 @@ def impCeil
         exact (churchComponent_dinatural G alg.a
           (twInner alg.a) Y f s).symm⟩⟩
 
+set_option backward.isDefEq.respectTransparency false in
 omit [HasAllHomToProfEnds G] in
 /-- `impCeil ∘ impFloor = id` on Mendler algebras:
 the family recovered by ceiling the floor is the

@@ -3,8 +3,6 @@ import Mathlib.CategoryTheory.Limits.Shapes.Pullback.Cospan
 import Mathlib.CategoryTheory.Limits.Shapes.Pullback.PullbackCone
 import Mathlib.CategoryTheory.Adjunction.Reflective
 
-set_option backward.isDefEq.respectTransparency true
-
 open CategoryTheory Limits
 
 namespace GebLean

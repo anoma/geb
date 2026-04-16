@@ -71,6 +71,7 @@ def coneToWedgeComponents (P : Cᵒᵖ ⥤ C ⥤ D)
     c.pt ⟶ (P.obj (Opposite.op j)).obj j :=
   c.π.app (twObjMk (𝟙 j))
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 A cone over `profunctorOnTwistedArrow P` is determined by its diagonal
 components `coneToWedgeComponents`.
@@ -206,6 +207,7 @@ toward the categorical equivalence.
 
 variable {D : Type w} [Category.{v} D]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The wedge condition derived from a cone's naturality.
 
@@ -362,6 +364,7 @@ theorem coneToWedge_wedgeToCone (P : Cᵒᵖ ⥤ C ⥤ D)
     simp only [wedgeToConeπApp, coneToWedgeComponents, Wedge.mk_ι]
     exact (cone_determined_by_wedge_components P ⟨pt, π⟩ tw).symm
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Round-trip: converting a wedge to a cone and back yields the original wedge.
 
@@ -426,6 +429,7 @@ def wedgeToConeFunctor (P : Cᵒᵖ ⥤ C ⥤ D) :
   map_id _ := rfl
   map_comp _ _ := rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The functor from cones over the twisted arrow diagram to wedges.
 
@@ -464,6 +468,7 @@ theorem Cone.eqToHom_hom {J' : Type*} [Category J'] {E' : Type*} [Category E']
   subst h
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The composition `coneToWedgeFunctor ⋙ wedgeToConeFunctor` is naturally isomorphic
 to the identity functor on cones.
@@ -479,6 +484,7 @@ def wedgeConeUnitIso (P : Cᵒᵖ ⥤ C ⥤ D) :
         Cone.category_comp_hom, coneToWedgeFunctor, wedgeToConeFunctor,
         Cone.eqToHom_hom, eqToHom_refl, Category.comp_id, Category.id_comp])
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The composition `wedgeToConeFunctor ⋙ coneToWedgeFunctor` is naturally isomorphic
 to the identity functor on wedges.
@@ -493,6 +499,7 @@ def wedgeConeCounitIso (P : Cᵒᵖ ⥤ C ⥤ D) :
         wedgeToConeFunctor, coneToWedgeFunctor, Cone.category_comp_hom,
         Cone.eqToHom_hom, eqToHom_refl, Category.comp_id, Category.id_comp])
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The category of wedges over `P` is equivalent to the category of cones over
 `profunctorOnTwistedArrow C P`.
@@ -555,6 +562,7 @@ theorem cowedgeToCoconeιApp_at_id (P : Cᵒᵖ ⥤ C ⥤ D) (pt : D)
   simp only [cowedgeToCoconeιApp, coTwObjMk_arr, coTwObjMk_cod]
   erw [P.map_id, NatTrans.id_app, Category.id_comp]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The cocone legs constructed from cowedge data form a natural transformation.
 
@@ -601,6 +609,7 @@ def coconeToCowedge (P : Cᵒᵖ ⥤ C ⥤ D)
   Cowedge.mk c.pt (fun j => coconeToCoWedgeComponents P c j)
     (fun {_ _} f => coconeToCoWedge_condition P c f)
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Round-trip: converting a cocone to a cowedge and back yields the original cocone.
 
@@ -653,6 +662,7 @@ theorem cowedgeToCocone_coconeToCowedge (P : Cᵒᵖ ⥤ C ⥤ D) (w : Cowedge P
       erw [P.map_id, NatTrans.id_app, Category.id_comp]
       exact (Multicofork.π_eq_app_right ⟨pt, ι⟩ b).symm
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The functor from cowedges to cocones over the co-twisted arrow diagram.
 
@@ -671,6 +681,7 @@ def cowedgeToCoconeFunctor (P : Cᵒᵖ ⥤ C ⥤ D) :
   map_id _ := rfl
   map_comp _ _ := rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The functor from cocones over the co-twisted arrow diagram to cowedges.
 
@@ -709,6 +720,7 @@ theorem Cocone.eqToHom_hom {J' : Type*} [Category J'] {E' : Type*} [Category E']
   subst h
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The composition `coconeToCowedgeFunctor ⋙ cowedgeToCoconeFunctor` is naturally
 isomorphic to the identity functor on cocones.
@@ -724,6 +736,7 @@ def cowedgeCoconeUnitIso (P : Cᵒᵖ ⥤ C ⥤ D) :
         Cocone.category_comp_hom, coconeToCowedgeFunctor, cowedgeToCoconeFunctor,
         Cocone.eqToHom_hom, eqToHom_refl, Category.comp_id, Category.id_comp])
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The composition `cowedgeToCoconeFunctor ⋙ coconeToCowedgeFunctor` is naturally
 isomorphic to the identity functor on cowedges.
@@ -738,6 +751,7 @@ def cowedgeCoconeCounitIso (P : Cᵒᵖ ⥤ C ⥤ D) :
         cowedgeToCoconeFunctor, coconeToCowedgeFunctor, Cocone.category_comp_hom,
         Cocone.eqToHom_hom, eqToHom_refl, Category.comp_id, Category.id_comp])
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The category of cowedges over `P` is equivalent to the category of cocones over
 `profunctorOnCoTwistedArrow C P`.
@@ -839,6 +853,7 @@ theorem wedgeConstProfToCone_coneToWedge {J : Type*} [Category J]
   simp only [coneToWedgeConstProf, wedgeConstProfToCone]
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Round-trip: wedge to cone to wedge is identity. -/
 @[simp]
 theorem coneToWedgeConstProf_wedgeToCone {J : Type*} [Category J]
@@ -857,6 +872,7 @@ theorem coneToWedgeConstProf_wedgeToCone {J : Type*} [Category J]
     | right b =>
       simp only [← Multifork.app_right_eq_ι_comp_fst]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Functor from cones over F to wedges over the constant-first-arg profunctor. -/
 def coneToWedgeConstProfFunctor {J : Type*} [Category J]
     {D : Type*} [Category D] (F : J ⥤ D) :
@@ -889,6 +905,7 @@ def wedgeConstProfToConeFunctor {J : Type*} [Category J]
       exact h
   }
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The category of wedges over a constant-first-arg profunctor is equivalent
 to the category of cones over the underlying functor. -/
 def wedgeConstProfEquivCone {J : Type*} [Category J]
@@ -1001,6 +1018,7 @@ theorem coconeToCowedgeConstProf_cowedgeToCocone {J : Type*} [Category J]
     | right b =>
       exact (Multicofork.π_eq_app_right ⟨pt, π⟩ b).symm
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Functor from cocones over G to cowedges over the constant-second-arg profunctor. -/
 def coconeToCowedgeConstProfFunctor {J : Type*} [Category J]
     {D : Type*} [Category D] (G : Jᵒᵖ ⥤ D) :
@@ -1043,6 +1061,7 @@ def cowedgeConstProfToCoconeFunctor {J : Type*} [Category J]
       exact h
   }
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The category of cowedges over a constant-second-arg profunctor is equivalent
 to the category of cocones over the underlying functor. -/
 def cowedgeConstProfEquivCocone {J : Type*} [Category J]
@@ -1405,6 +1424,7 @@ def elementsPreToWeightedConeFunctor :
       weightedConeOfElement, WeightedCone.leg] at h ⊢
     exact h
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The composition `toFunctor ⋙ fromFunctor` is the identity on weighted cones. -/
 theorem weightedConeToFrom_eq_id :
     (weightedConeToElementsPreFunctor W D ⋙
@@ -1416,6 +1436,7 @@ theorem weightedConeToFrom_eq_id :
     simp only [Functor.comp_map, eqToHom_refl, Category.comp_id, Category.id_comp]
     rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The composition `fromFunctor ⋙ toFunctor` is the identity on elements. -/
 theorem weightedConeFromTo_eq_id :
     (elementsPreToWeightedConeFunctor W D ⋙
@@ -1625,6 +1646,7 @@ def elementsToWeightedCoconeFunctor :
       weightedCoconeOfElement, WeightedCocone.leg] at h ⊢
     exact h
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The composition `toFunctor ⋙ fromFunctor` is the identity on weighted
 cocones. -/
 theorem weightedCoconeToFrom_eq_id' :
@@ -1637,6 +1659,7 @@ theorem weightedCoconeToFrom_eq_id' :
     simp only [Functor.comp_map, eqToHom_refl, Category.comp_id, Category.id_comp]
     rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The composition `fromFunctor ⋙ toFunctor` is the identity on elements. -/
 theorem weightedCoconeFromTo_eq_id' :
     (elementsToWeightedCoconeFunctor W D ⋙
@@ -1820,6 +1843,7 @@ variable {J : Type u₁} [Category.{v₁, u₁} J]
   {C : Type u} [Category.{v, u} C]
   (W : Jᵒᵖ ⥤ Type v) (D : J ⥤ C)
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Convert a weighted cocone to a weighted cone over the
 opposite diagram, with apex `op c.pt`. -/
 def weightedCoconeOpCone (c : WeightedCocone W D) :
@@ -1840,6 +1864,7 @@ def weightedCoconeOpCone (c : WeightedCocone W D) :
       rw [nat, op_comp, Functor.op_map]
   }
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Convert a weighted cone over the opposite diagram
 to a weighted cocone. -/
 def weightedConeOpCocone
@@ -1876,6 +1901,7 @@ theorem weightedCoconeOpCone_weightedConeOpCocone
       (weightedConeOpCocone W D d) = d :=
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The forward functor from weighted cocones to the
 opposite of weighted cones over the opposite diagram. -/
 def weightedCoconeOpConeFunctor :
@@ -1897,6 +1923,7 @@ def weightedCoconeOpConeFunctor :
     apply Quiver.Hom.unop_inj
     exact WeightedCone.Hom.ext rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The inverse functor from the opposite of weighted
 cones over the opposite diagram to weighted cocones. -/
 def weightedConeOpCoconeFunctor :
@@ -1915,6 +1942,7 @@ def weightedConeOpCoconeFunctor :
   map_id d := WeightedCocone.Hom.ext rfl
   map_comp g h := WeightedCocone.Hom.ext rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The categorical equivalence between weighted cocones
 and the opposite of weighted cones over the opposite
 diagram: morphisms between cocones (covariant in cone
@@ -3188,6 +3216,7 @@ def weightedConeToConeFunctor (D : J ⥤ C) :
   map_id _ := rfl
   map_comp _ _ := rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The unit natural isomorphism for the cone/weighted-cone equivalence.
 
@@ -3277,6 +3306,7 @@ def weightedCoconeToCoconeFunctor (D : J ⥤ C) :
   map_id _ := rfl
   map_comp _ _ := rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The unit natural isomorphism for the cocone/weighted-cocone equivalence.
 -/
@@ -3832,6 +3862,7 @@ def elementsConeToWeightedConeFunctor (W : J ⥤ Type v₁) (D : J ⥤ C) :
   map_id _ := rfl
   map_comp _ _ := rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The unit natural isomorphism: `𝟭 (WeightedCone W D) ≅ ⋯ ⋙ ⋯`.
 -/
@@ -3847,6 +3878,7 @@ def weightedConeElementsUnitIso (W : J ⥤ Type v₁) (D : J ⥤ C) :
         weightedConeToElementsCone, elementsConeToWeightedCone]
       simp only [Category.comp_id, Category.id_comp])
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The counit natural isomorphism: `⋯ ⋙ ⋯ ≅ 𝟭 (Cone ⋯)`.
 -/
@@ -3862,6 +3894,7 @@ def weightedConeElementsCounitIso (W : J ⥤ Type v₁) (D : J ⥤ C) :
         weightedConeToElementsCone, elementsConeToWeightedCone]
       simp only [Category.comp_id, Category.id_comp])
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Weighted cones over `W : J ⥤ Type v` and `D : J ⥤ C` are categorically equivalent
 to ordinary cones over the composite `CategoryOfElements.π W ⋙ D : W.Elements ⥤ C`.
@@ -4123,6 +4156,7 @@ def elementsCoconeToWeightedCoconeFunctor (W : Jᵒᵖ ⥤ Type v₃) (D : J ⥤
   map_id _ := rfl
   map_comp _ _ := rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The unit natural isomorphism: `𝟭 (WeightedCocone W D) ≅ ⋯ ⋙ ⋯`.
 -/
@@ -4137,6 +4171,7 @@ def weightedCoconeElementsUnitIso (W : Jᵒᵖ ⥤ Type v₃) (D : J ⥤ C) :
         weightedCoconeToElementsCocone, elementsCoconeToWeightedCocone,
         eqToIso_refl, Iso.refl_hom, Category.comp_id, Category.id_comp])
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The counit natural isomorphism: `⋯ ⋙ ⋯ ≅ 𝟭 (Cocone ⋯)`.
 -/
@@ -4151,6 +4186,7 @@ def weightedCoconeElementsCounitIso (W : Jᵒᵖ ⥤ Type v₃) (D : J ⥤ C) :
         weightedCoconeToElementsCocone, elementsCoconeToWeightedCocone,
         eqToIso_refl, Iso.refl_hom, Category.comp_id, Category.id_comp])
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Weighted cocones over `W : Jᵒᵖ ⥤ Type v` and `D : J ⥤ C` are categorically equivalent
 to ordinary cocones over the composite
@@ -4552,6 +4588,7 @@ theorem sliceProfunctorPrecomp_natural
     types_comp_apply, sliceProfunctorPrecomp,
     sliceProfunctorFunctor, Category.assoc]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The bifunctor
 `(Cᵒᵖ ⥤ C ⥤ D)ᵒᵖ ⥤ D ⥤ (Cᵒᵖ ⥤ C ⥤ Type v)`
 sending `(G, c)` to the slice profunctor `G ⇓ c`.
@@ -4935,6 +4972,7 @@ theorem cosliceProfunctorPostcomp_natural
     cosliceProfunctorFunctor,
     Category.assoc]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The bifunctor
 `(Cᵒᵖ ⥤ C ⥤ D) ⥤ Dᵒᵖ ⥤ (Cᵒᵖ ⥤ C ⥤ Type v)`
 sending `(G, c)` to `G ⇧ c`.
@@ -4973,6 +5011,7 @@ theorem cosliceProfunctor_diagApp {D : Type w}
       (c ⟶ (G.obj (Opposite.op A)).obj A) := by
   simp only [diagApp, cosliceProfunctor_obj_obj]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- `DiagCompat` for `G ⇧ c` is the equation
 stating that the two paths from `c` to `G(A, B)`
 agree:
@@ -5007,6 +5046,7 @@ section WeightedCoendElimAsEnd
 variable {C : Type u} [Category.{v} C] {D : Type w} [Category.{v} D]
 variable {W : Cᵒᵖ ⥤ C ⥤ Type v} {P : Cᵒᵖ ⥤ C ⥤ D}
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The weighted wedge with apex `c.pt ⟶ Y` constructed from a weighted
 cowedge. The legs are given by postcomposition with the cowedge legs,
 with weight elements transported via the equivalence between
@@ -5135,6 +5175,7 @@ def wedgeToCowedge_app (Y : D) (d : WeightedWedge W (P ⇓ Y))
     simp only [Opposite.op_unop] at h1 h2
     simp only [tw, h1, h2]) (d.π.app tw w x)
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Naturality lemma for `wedgeToCowedge`. -/
 theorem wedgeToCowedge_naturality (Y : D)
     (d : WeightedWedge W (P ⇓ Y))
@@ -5181,6 +5222,7 @@ def wedgeToCowedge (Y : D) (d : WeightedWedge W (P ⇓ Y))
     naturality := fun {_ _} g => wedgeToCowedge_naturality Y d x g
   }
 
+set_option backward.isDefEq.respectTransparency false in
 /-- When `c` is a weighted coend, `homWeightedWedge c Y` is a weighted end.
 
 This is the weighted coend elimination rule expressed as a weighted end:
@@ -6075,6 +6117,7 @@ def RestrictedCowedge.familyAsParanatSig
     ParanatSig H (G ⇓ c.pt) :=
   c.family
 
+set_option backward.isDefEq.respectTransparency false in
 /-- `DiagCompat` for the slice profunctor `G ⇓ c` at morphisms is exactly the
 dinaturality equation. This shows that `m₀ : Hom(G(A,A), c)` and `m₁ : Hom(G(B,B), c)`
 are DiagCompat iff the two paths from `G(B,A)` to `c` agree. -/
@@ -7304,6 +7347,7 @@ def strongRestricted_cowedge_roundtrip
       Cowedge.mk_π, Iso.refl_hom]
     erw [Category.comp_id])
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The functor from strong restricted cowedges to
 cowedges over the pullback profunctor. -/
 def strongRestrictedToCowedgeFunctor
@@ -7345,6 +7389,7 @@ def cowedgeToStrongRestrictedFunctor
       Multicofork.π_comp_hom cw₁ cw₂ g ⟨A, a⟩
   }
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The unit natural isomorphism: the composite
 `strong → cowedge → strong` is naturally isomorphic
 to the identity. The roundtrip preserves `.pt` and
@@ -7569,6 +7614,7 @@ def strongRestricted_wedge_roundtrip
       Wedge.mk_ι, Iso.refl_hom]
     erw [Category.id_comp])
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The functor from strong restricted wedges to
 wedges over the pullback profunctor. -/
 def strongRestrictedToWedgeFunctor
@@ -7611,6 +7657,7 @@ def wedgeToStrongRestrictedFunctor
       Multifork.hom_comp_ι w₁ w₂ g ⟨A, a⟩
   }
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The unit natural isomorphism: the composite
 `strong → wedge → strong` is naturally isomorphic
 to the identity. The roundtrip preserves `.pt` and
@@ -8295,6 +8342,7 @@ def cowedgeOverToHom {D : Type w} [Category.{v} D]
     }
   }
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Map from `c.pt ⟶ Y` to `WeightedCowedgeOver terminalProfunctor P Y`
 by composing each leg with the morphism.
 
@@ -8363,6 +8411,7 @@ theorem cowedgeOver_roundtrip {D : Type w} [Category.{v} D]
   simp only [IsWeightedCoend.descHom] at hfac ⊢
   exact hfac
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The round-trip from hom to cowedge-over and back is the identity. -/
 theorem hom_roundtrip {D : Type w} [Category.{v} D]
     (P : Cᵒᵖ ⥤ C ⥤ D) (Y : D)
@@ -8844,12 +8893,14 @@ def diagAppToWeightAtIdentity (H : Cᵒᵖ ⥤ C ⥤ Type v) (A : C)
     (profunctorOnOpCoTwistedArrow C H).obj (Opposite.op (idCoTwistedArrow A)) :=
   cast (profunctorOnOpCoTwistedArrow_at_identity H A).symm h
 
+set_option backward.isDefEq.respectTransparency false in
 @[simp]
 theorem weightAtIdentityToDiagApp_diagAppToWeightAtIdentity (H : Cᵒᵖ ⥤ C ⥤ Type v)
     (A : C) (h : diagApp H A) :
     weightAtIdentityToDiagApp H A (diagAppToWeightAtIdentity H A h) = h := by
   simp only [weightAtIdentityToDiagApp, diagAppToWeightAtIdentity, cast_eq]
 
+set_option backward.isDefEq.respectTransparency false in
 @[simp]
 theorem diagAppToWeightAtIdentity_weightAtIdentityToDiagApp (H : Cᵒᵖ ⥤ C ⥤ Type v)
     (A : C) (w : (profunctorOnOpCoTwistedArrow C H).obj
@@ -9081,6 +9132,7 @@ theorem equiv_arrow_obj_eq {I₀ I₁ : C} (f : I₀ ⟶ I₁) :
   simp only [coTwObjMk, twObjMk]
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Computing the profunctor map along `coTwToIdentityAtTarget f` on an element
 from the diagonal at I₁. The result is `(H.map f.op).app I₁ y` at the weight
 for `coTwObjMk f`.
@@ -9100,6 +9152,7 @@ theorem profunctor_map_coTwToIdentityAtTarget_diag (H : Cᵒᵖ ⥤ C ⥤ Type v
   change ((H.map f.op).app I₁ ≫ (H.obj (Opposite.op I₀)).map (𝟙 I₁)) y = (H.map f.op).app I₁ y
   simp only [CategoryTheory.Functor.map_id, Category.comp_id]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Computing the profunctor map along `coTwToIdentityAtSource f` on an element
 from the diagonal at I₀. The result is `(H.obj (Opposite.op I₀)).map f y` at
 the weight for `coTwObjMk f`.
@@ -9118,6 +9171,7 @@ theorem profunctor_map_coTwToIdentityAtSource_diag (H : Cᵒᵖ ⥤ C ⥤ Type v
          (H.obj (Opposite.op I₀)).map f y
   simp only [op_id, CategoryTheory.Functor.map_id, NatTrans.id_app, Category.id_comp]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The weight functor map along `coTwToIdentityAtTarget` and `coTwToIdentityAtSource`
 give the same result. This is the weight coherence condition. -/
 theorem weight_map_coTwToIdentity_coherence (H : Cᵒᵖ ⥤ C ⥤ Type v)
@@ -9158,6 +9212,7 @@ theorem weight_map_coTwToIdentity_coherence (H : Cᵒᵖ ⥤ C ⥤ Type v)
 ### Dinaturality of the extracted family
 -/
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The extracted family from a WeightedCowedge satisfies dinaturality. -/
 theorem weightedCowedgeFamilyAtIdentity_dinatural
     (H : Cᵒᵖ ⥤ C ⥤ Type v) (G : Cᵒᵖ ⥤ C ⥤ C)
@@ -9195,6 +9250,7 @@ then shows their images under the family satisfy `DiagCompat` for the slice
 profunctor.
 -/
 
+set_option backward.isDefEq.respectTransparency false in
 /-- For a compatible pair of diagonal elements, the profunctor maps to the
 off-diagonal co-twisted arrow agree. This uses `DiagCompat` to identify the
 images. -/
@@ -9209,6 +9265,7 @@ theorem weight_map_coTwToIdentity_from_diagCompat (H : Cᵒᵖ ⥤ C ⥤ Type v)
   simp only [cast_eq]
   exact hcompat
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The extracted family from a WeightedCowedge satisfies paranaturality.
 This is stronger than dinaturality: it preserves the compatibility condition
 for any pair of diagonal elements that are compatible under the profunctor
@@ -9360,6 +9417,7 @@ instance restrictionFunctor_faithful (H : Cᵒᵖ ⥤ C ⥤ Type v) (G : Cᵒᵖ
       rw [heq]
     exact this
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The restriction functor factors as the strong restriction functor
 followed by the inclusion of strong restricted cowedges into restricted
 cowedges. This demonstrates that weighted cowedges map first into the full
@@ -10033,6 +10091,7 @@ theorem coTwMorLeftToIdOne_codArr :
     coTwCodArr coTwMorLeftToIdOne = WalkingParallelPairHom.left := by
   simp only [coTwMorLeftToIdOne, coTwCodArr_coTwHomMk]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Any morphism from coTwLeft to coTwIdZero equals coTwMorLeftToIdZero.
 The compatibility condition `codArr ≫ (𝟙 zero) ≫ domArr = left` forces:
 - `codArr : zero ⟶ zero` must be `𝟙 zero`
@@ -10053,6 +10112,7 @@ theorem coTwLeft_to_coTwIdZero_unique (f : coTwLeft ⟶ coTwIdZero) :
     simp only [coTwMorLeftToIdZero, coTwCodArr_coTwHomMk]
     exact walkingParallelPair_zero_zero_eq_id (coTwCodArr f)
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Any morphism from coTwLeft to coTwIdOne equals coTwMorLeftToIdOne.
 The compatibility condition `codArr ≫ (𝟙 one) ≫ domArr = left` forces:
 - `domArr : one ⟶ one` must be `𝟙 one`
@@ -10510,6 +10570,7 @@ theorem wppWeightAt_coTwRight :
 def wppWeightRightAtRight : wppWeightAt coTwRight :=
   cast wppWeightAt_coTwRight.symm WalkingParallelPairHom.right
 
+set_option backward.isDefEq.respectTransparency false in
 /-- No morphism exists from coTwRight to coTwLeft.
 A morphism would require codArr ≫ left ≫ domArr = right, but with the
 only possible arrows being identities, this would require left = right. -/
@@ -10524,6 +10585,7 @@ theorem no_mor_coTwRight_to_coTwLeft (φ : coTwRight ⟶ coTwLeft) : False := by
   simp only [coTwObjMk_dom, coTwObjMk_cod, Category.id_comp, Category.comp_id] at harr
   exact walkingParallelPair_left_ne_right harr
 
+set_option backward.isDefEq.respectTransparency false in
 /-- No morphism exists from coTwLeft to coTwRight.
 A morphism would require codArr ≫ right ≫ domArr = left, but with the
 only possible arrows being identities, this would require right = left. -/
@@ -12046,6 +12108,7 @@ def copowerCowedge_roundtrip
     funext ⟨h, g⟩
     erw [Category.comp_id])
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The functor from restricted cowedges to cowedges
 over `copowerProfunctorProfArg G H`. -/
 def restrictedToCopowerCowedgeFunctor
@@ -12088,6 +12151,7 @@ def copowerCowedgeToRestrictedFunctor
       exact congrFun hw ⟨a, x⟩
   }
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The unit natural isomorphism for the
 restricted cowedge / copower cowedge equivalence. -/
 def copowerProfCowedgeEquivUnit
@@ -12245,6 +12309,7 @@ def powerWedge_roundtrip
       Wedge.mk_ι, Iso.refl_hom]
     erw [Category.id_comp])
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The functor from restricted wedges to wedges
 over `powerProfunctorProfArg G H`.
 
@@ -12303,6 +12368,7 @@ def powerWedgeToRestrictedFunctor
       exact congrFun (congrFun hw x) a
   }
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The unit natural isomorphism: the composite
 `restricted → wedge → restricted` is naturally
 isomorphic to the identity.
@@ -12494,6 +12560,7 @@ def weightPullbackFunctor
   map_comp _ _ :=
     StrongRestrictedWedge.Hom.ext rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Pulling back along the identity paranatural
 transformation is the identity functor. -/
 theorem weightPullbackFunctor_id
@@ -12507,6 +12574,7 @@ theorem weightPullbackFunctor_id
 
 variable {H₃ : Cᵒᵖ ⥤ C ⥤ Type v}
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Pulling back along a composition of paranatural
 transformations equals composing the individual
 pullback functors. -/
@@ -12564,6 +12632,7 @@ def weightPullbackCowedgeFunctor
   map_comp _ _ :=
     StrongRestrictedCowedge.Hom.ext rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Pulling back cowedges along the identity
 paranatural transformation is the identity
 functor. -/
@@ -12577,6 +12646,7 @@ theorem weightPullbackCowedgeFunctor_id
       Category.comp_id]
     exact StrongRestrictedCowedge.Hom.ext rfl)
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Pulling back cowedges along a composition of
 paranatural transformations equals composing the
 individual pullback functors. -/
@@ -12680,6 +12750,7 @@ private theorem profPostcompObj_id
       StrongRestrictedWedge.mk']
     simp only [Category.comp_id]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Postcomposition by the identity natural
 transformation gives the identity functor. -/
 theorem profPostcompFunctor_id
@@ -12726,6 +12797,7 @@ private theorem profPostcompObj_comp
       StrongRestrictedWedge.family]
     simp only [Category.assoc]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Postcomposition respects composition of
 natural transformations (covariantly). -/
 theorem profPostcompFunctor_comp
@@ -12840,6 +12912,7 @@ private theorem profPrecompCowedgeObj_id
       StrongRestrictedCowedge.mk']
     simp only [Category.id_comp]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Precomposition by the identity natural
 transformation gives the identity functor. -/
 theorem profPrecompCowedgeFunctor_id
@@ -12886,6 +12959,7 @@ private theorem profPrecompCowedgeObj_comp
       StrongRestrictedCowedge.family]
     simp only [Category.assoc]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Precomposition respects composition of
 natural transformations (contravariantly). -/
 theorem profPrecompCowedgeFunctor_comp
@@ -12950,6 +13024,7 @@ private theorem wedge_interchange_obj
       StrongRestrictedWedge.mk',
       StrongRestrictedWedge.family]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The two functorial actions on strong restricted
 wedges commute: postcomposing the diagram then
 pulling back the weight equals pulling back the
@@ -12986,6 +13061,7 @@ postcomposition functors into a single bifunctor
 
 variable {D : Type w} [Category.{v} D]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The Cat-valued bifunctor sending a pair
 `(G, Hᵒᵖ)` to
 `Cat.of (StrongRestrictedWedge G H)`.
@@ -13076,6 +13152,7 @@ private theorem cowedge_interchange_obj
       StrongRestrictedCowedge.mk',
       StrongRestrictedCowedge.family]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The two functorial actions on strong restricted
 cowedges commute: precomposing the diagram then
 pulling back the weight equals pulling back the
@@ -13114,6 +13191,7 @@ Both `G` and `H` act contravariantly.
 
 variable {D : Type w} [Category.{v} D]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The Cat-valued bifunctor sending a pair
 `op (G, H)` to
 `Cat.of (StrongRestrictedCowedge G H)`.

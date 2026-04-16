@@ -96,6 +96,7 @@ theorem wedgeWeightExtract_canonical (I : C)
       (𝟙 I ≫ 𝟙 I) d) = d
   simp
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The extraction function is invariant under
 morphisms in the costructured arrow category. -/
 theorem wedgeWeightExtract_invariant (I : C)

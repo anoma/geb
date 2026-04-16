@@ -154,6 +154,7 @@ def familySliceUnitComponent (F : FamilyCat (Type u) Y) (y : Y) :
     rfl
   right_inv := fun _ => rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The unit natural isomorphism: `familySliceForward ⋙ familySliceBackward ≅ 𝟭`.
 For each family `F` and each `y`, the isomorphism `fibers of total space at y ≅ F y`.
@@ -557,6 +558,7 @@ lemma polyToOverEvalMap_left (P : PolyToOverCat (D := D) Y) {A B : D}
     (f : A ⟶ B) (x : (polyToOverEval Y P A).left) :
     (polyToOverEvalMap Y P f).left x = ⟨x.fst, ccrEvalMap f x.snd⟩ := rfl
 
+set_option backward.isDefEq.respectTransparency false in
 @[simp]
 lemma polyToOverEvalMap_id (P : PolyToOverCat (D := D) Y) (A : D) :
     polyToOverEvalMap Y P (𝟙 A) = 𝟙 (polyToOverEval Y P A) := by
@@ -564,6 +566,7 @@ lemma polyToOverEvalMap_id (P : PolyToOverCat (D := D) Y) (A : D) :
     CategoryTheory.Functor.map_id]
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 @[simp]
 lemma polyToOverEvalMap_comp (P : PolyToOverCat (D := D) Y)
     {A B C : D} (f : A ⟶ B) (g : B ⟶ C) :
@@ -1370,6 +1373,7 @@ theorem polyBetweenMorphEval_id
     polyBetweenMorphEvalAt
   exact (familySliceForward Y).map_id _
 
+set_option backward.isDefEq.respectTransparency false in
 @[simp]
 theorem polyBetweenMorphEval_comp
     {P Q R : PolyFunctorBetweenCat X Y}
@@ -1846,6 +1850,7 @@ def polyIdLeftInv
     (polyIdLeftInvBase f y)
     (polyIdLeftInvFiber f y)
 
+set_option backward.isDefEq.respectTransparency false in
 lemma polyIdLeft_hom_inv
     (f : PolyFunctorBetweenCat X Y) (y : Y) :
     polyIdLeftFwd f y ≫ polyIdLeftInv f y =
@@ -1950,6 +1955,7 @@ def polyIdRightInv
   ccrHomMk (polyIdRightInvBase g y)
     (polyIdRightInvFiber g y)
 
+set_option backward.isDefEq.respectTransparency false in
 lemma polyIdRight_hom_inv
     (g : PolyFunctorBetweenCat X Y) (y : Y) :
     polyIdRightFwd g y ≫ polyIdRightInv g y =
@@ -2505,6 +2511,7 @@ private abbrev seqFiberResult
       ((polyCompGMap f φ).base
         ⟨ig, pf⟩)).left ⟨e₃, ef⟩)
 
+set_option backward.isDefEq.respectTransparency false in
 private lemma polyCompGMap_comp_cast_elim
     (f : PolyFunctorBetweenCat X Y)
     {G₁ G₂ G₃ : CoprodCovarRepCat' (Over Y)}
@@ -2677,6 +2684,7 @@ private lemma polyCompGMap_comp_fiber_at
   exact polyCompGMap_comp_fiber_at_elem
     f φ ψ ig pf e₃ ef
 
+set_option backward.isDefEq.respectTransparency false in
 lemma polyCompGMap_comp
     (f : PolyFunctorBetweenCat X Y)
     {G₁ G₂ G₃ : CoprodCovarRepCat' (Over Y)}
@@ -2825,6 +2833,7 @@ private lemma ccrFiberMor_inv_hom_cancel
   congr_arg_heq (fun f => ccrFiberMor f i)
     (congrFun αf.inv_hom_id y)
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The composed fiber morphism from the `hom ≫ inv` roundtrip
 equals `eqToHom` of the reindexing roundtrip equality.
@@ -2845,6 +2854,7 @@ private lemma polyComp_fiberMor_roundtrip
       (heq_of_eq (ccrId_fiberMor _ i))
   rw [eq_of_heq_eqToHom heq, Category.comp_id]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The composed fiber morphism from the `inv ≫ hom` roundtrip
 equals `eqToHom` of the reindexing roundtrip equality.
@@ -2937,6 +2947,7 @@ private lemma polyCompGObj_iso_hom_inv_base
   exact Sigma.ext rfl (heq_of_eq
     (funext fun e => ccrReindex_hom_inv_cancel αf _ _))
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Per-index fiber equality for the `hom ≫ inv` roundtrip: at each
 index, the composed fiber morphism preceded by its `eqToHom`
@@ -3043,6 +3054,7 @@ private lemma polyCompGObj_iso_inv_hom_base
     (funext fun e =>
       ccrReindex_inv_hom_cancel αf _ _))
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Per-index fiber equality for the `inv ≫ hom` roundtrip.
 -/
@@ -3070,6 +3082,7 @@ private lemma polyComp_inv_hom_at_idx
     polyCompGObj_isoInv, ccrHomMk,
     ccrReindex_inv_hom_cancel]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Transported fiber equality for the forward-then-backward roundtrip:
 transporting the composed fiber along the base equality gives
@@ -3138,6 +3151,7 @@ private lemma polyCompGObj_iso_hom_inv_fiber
   rw [heq_iff_comp_eqToHom]
   convert h using 1
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Transported fiber equality for the backward-then-forward roundtrip:
 transporting the composed fiber along the base equality gives
@@ -3440,6 +3454,7 @@ lemma WTypeDiagram.evalFamilyMap_id (W : WTypeDiagram X Y) (A : Over X) :
   simp only [evalFamilyMap, Category.comp_id]
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 @[simp]
 lemma WTypeDiagram.evalMap_id (W : WTypeDiagram X Y) (A : Over X) :
     W.evalMap X Y (𝟙 A) = 𝟙 (W.eval X Y A) := by
@@ -3455,6 +3470,7 @@ lemma WTypeDiagram.evalFamilyMap_comp (W : WTypeDiagram X Y)
   simp only [evalFamilyMap]
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 @[simp]
 lemma WTypeDiagram.evalMap_comp (W : WTypeDiagram X Y)
     {A B C : Over X} (f : A ⟶ B) (g : B ⟶ C) :
@@ -4369,6 +4385,7 @@ def polyBetweenToWTypeMap_onDir {P Q : PolyFunctorBetweenCat X Y}
     (polyBetweenToWTypeObj P).E :=
   ⟨y, i', (ccrFiberMor (f y) i').left e⟩
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Convert a PolyFunctorBetweenCat morphism to a WTypeDiagramHom.
 
@@ -4397,6 +4414,7 @@ def polyBetweenToWTypeMap {P Q : PolyFunctorBetweenCat X Y} (f : P ⟶ Q) :
     simp only [ccrFamily, ccrFiberMor, CategoryStruct.comp, Function.comp_apply] at hw ⊢
     exact hw
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The PolyBetween to W-type mapping preserves identity morphisms.
 -/
@@ -4421,6 +4439,7 @@ lemma polyBetweenToWTypeMap_id (P : PolyFunctorBetweenCat X Y) :
   simp only [ccrFiberMor]
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The PolyBetween to W-type mapping preserves composition.
 -/
@@ -4934,6 +4953,7 @@ private lemma counitInv_fiberMor_at_idx (P : PolyFunctorBetweenCat X Y)
     ccrFiberMor (counitInv P y') i = counitInvFiberMor P y' i := by
   simp only [counitInv, counitInv_component, ccrHomMk_fiberMor]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The composed fiber morphism at index `⟨⟨y', i⟩, rfl⟩` decomposes into
 `counitInvFiberMor ≫ counitFiberMor`.
@@ -4962,6 +4982,7 @@ private lemma counitInvFiberMor_left (P : PolyFunctorBetweenCat X Y)
     (counitInvFiberMor P y' i).left = counitInvFiberMap P y' i := by
   simp only [counitInvFiberMor, Over.homMk_left]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The `.left` of the composed fiber morphism equals `counitFiberMap ∘ counitInvFiberMap`.
 The composition order is reversed because `.left` of `f ≫ g` in Over is `g.left ∘ f.left`.
@@ -4973,6 +4994,7 @@ private lemma comp_fiberMor_left_at_idx (P : PolyFunctorBetweenCat X Y)
   rw [comp_fiberMor_at_idx]
   simp only [Over_comp_left, counitInvFiberMor_left, counitFiberMor_left_at_idx]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The `.left` of the composed fiber morphism is the identity function.
 -/
@@ -5038,6 +5060,7 @@ private lemma comp_fiber_at_idx_left_is_id (P : PolyFunctorBetweenCat X Y)
   rw [fiber_eq_ccrFiberMor]
   exact comp_fiberMor_left_is_id P y' i
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 When the source and target at a particular index are definitionally equal,
 the `eqToHom` at that index has `.left = id`.
@@ -5060,6 +5083,7 @@ private lemma eqToHom_at_idx_left_eq_id (P : PolyFunctorBetweenCat X Y)
   rw [eqToHom_catOp_pi_at_idx h idx, h_symm_eq]
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The composed fiber with eqToHom at the specific index has `.left = id`.
 This is because in the opposite of a pi category, the composition is reversed,
@@ -5196,6 +5220,7 @@ private lemma triangle_comp_fiber_left_is_id (W : WTypeDiagram X Y) (b : W.B) :
               Over_comp_left]
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 private lemma triangle_eqToHom_left_is_id (W : WTypeDiagram X Y) (b : W.B)
     (h : ((familyFunctor' (Over X) ⋙ Cat.opFunctor').map
             ((wTypeToPolyBetween.map (unitHom W) ≫
@@ -5211,6 +5236,7 @@ private lemma triangle_eqToHom_left_is_id (W : WTypeDiagram X Y) (b : W.B)
   rw [eqToHom_catOp_pi_at_idx h idx, h_symm_eq]
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 private lemma triangle_comp_fiber_eqToHom_at_idx_left_is_id (W : WTypeDiagram X Y)
     (b : W.B)
     (h : ((familyFunctor' (Over X) ⋙ Cat.opFunctor').map
@@ -5281,6 +5307,7 @@ lemma functor_unitIso_comp (W : WTypeDiagram X Y) :
 Proof that unitHom is natural: for f : W ⟶ W', f ≫ unitHom W' = unitHom W ≫ G(F(f)).
 -/
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The unit morphism is natural.
 -/
@@ -5338,6 +5365,7 @@ lemma unitHom_naturality {W W' : WTypeDiagram X Y} (f : WTypeDiagramHom W W') :
 Proof that counitHom is natural: for g : P ⟶ P', F(G(g)) ≫ counitHom P' = counitHom P ≫ g.
 -/
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The counit morphism is natural.
 -/

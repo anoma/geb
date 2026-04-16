@@ -139,6 +139,7 @@ theorem elim_algebra_morphism
         ← Category.assoc,
         cfpLiftAssoc_postcomp])
 
+set_option backward.isDefEq.respectTransparency false in
 theorem elim_base_relStep
     (A : CoreflexivePairObj C)
     {X : C}
@@ -177,6 +178,7 @@ theorem elim_base_eqvGen
   | trans _ _ _ _ _ ih1 ih2 =>
     exact Relation.EqvGen.trans _ _ _ ih1 ih2
 
+set_option backward.isDefEq.respectTransparency false in
 theorem elim_isPremorphism_oneStep
     (A X : CoreflexivePairObj C)
     {f : A.src ⟶ X.src}
@@ -294,6 +296,7 @@ theorem elim_base_change
       (p.elim (f ≫ X.right) w) :=
   elim_base_eqvGen A w hf
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 If the step function `g` has a one-step premorphism
 witness (a single `w_g` satisfying both projection

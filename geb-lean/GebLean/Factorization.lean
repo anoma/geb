@@ -167,6 +167,7 @@ private theorem factorisation_eqToHom_h
     eqToHom (congrArg Factorisation.mid p) := by
   subst p; rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The `Cat`-valued functor sending each arrow `f : a ⟶ b` in `C`
 (viewed as an object of `TwistedArrow C`) to its factorization
 category `Factorisation f`, and each twisted arrow morphism to the
@@ -344,6 +345,7 @@ lemma opFactorisationRoundTrip_obj
     opFactorisationToFactorisationOp]
   exact factorisationToOp_fromOp f d
 
+set_option backward.isDefEq.respectTransparency false in
 lemma factorisationOpRoundTrip_map
     {d e : (Factorisation f)ᵒᵖ}
     (g : d ⟶ e) :
@@ -367,6 +369,7 @@ lemma opFactorisationRoundTrip_map
     opFactorisationToFactorisationOp]
   exact Quiver.Hom.op_unop g.h
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The equivalence `(Factorisation f)ᵒᵖ ≌ Factorisation (f.op)`. -/
 def factorisationOpEquiv :
     (Factorisation f)ᵒᵖ ≌ Factorisation f.op where
@@ -722,6 +725,7 @@ def grothendieckHomToTotalFactHom
       eqToHom_refl, Category.comp_id] at h
     exact h
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Translates a morphism in the total factorisation
 category to a morphism in the connected Grothendieck
 construction over `factorisationFunctor C`. Packs
@@ -777,6 +781,7 @@ def totalFactHomToGrothendieckHom
           eqToHom_refl, Category.comp_id]
         exact f.π_comm }
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Functor from the total factorisation category to the
 connected Grothendieck construction over
 `factorisationFunctor C`. -/
@@ -837,6 +842,7 @@ def totalFactToGrothendieck :
         totalFactHomToGrothendieckHom]
       rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Functor from the connected Grothendieck construction
 over `factorisationFunctor C` to the total factorisation
 category. -/
@@ -1022,6 +1028,7 @@ private lemma underOverRoundTrip_map
       underOverToFactorisation f).map g = g := by
   apply Factorisation.Hom.ext; rfl
 
+set_option backward.isDefEq.respectTransparency false in
 private lemma overUnderFactRoundTrip_map
     {u v : Under (Over.mk f : Over Y)}
     (g : u ⟶ v) :
@@ -1035,6 +1042,7 @@ private lemma overUnderFactRoundTrip_map
   apply Under.UnderMorphism.ext
   apply Over.OverMorphism.ext; rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The equivalence
 `Factorisation f ≌ Under (Over.mk f : Over Y)`. -/
 def factorisationUnderOverEquiv :
@@ -1126,6 +1134,7 @@ private lemma overUnderRoundTrip_map
       overUnderToFactorisation f).map g = g := by
   apply Factorisation.Hom.ext; rfl
 
+set_option backward.isDefEq.respectTransparency false in
 private lemma factOverUnderRoundTrip_map
     {o p : Over (Under.mk f : Under X)}
     (g : o ⟶ p) :
@@ -1141,6 +1150,7 @@ private lemma factOverUnderRoundTrip_map
   apply Over.OverMorphism.ext
   apply Under.UnderMorphism.ext; rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The equivalence
 `Factorisation f ≌ Over (Under.mk f : Under X)`. -/
 def factorisationOverUnderEquiv :
@@ -1182,6 +1192,7 @@ section FactorisationReflectiveInclusion
 
 variable {X Y : C} (f : X ⟶ Y)
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The structure morphism in `Over (twObjMk f)` for a
 factorization `d` of `f`. This is a twisted arrow morphism
 from `twObjMk d.ι` to `twObjMk f` with domain component
@@ -1195,6 +1206,7 @@ def factorisationToOverTwHom
       rw [d.ι_π]
       exact Category.id_comp f)
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The twisted arrow morphism underlying the functorial map
 of a factorisation morphism `g : d ⟶ e`. This goes from
 `twObjMk d.ι` to `twObjMk e.ι` with domain component
@@ -1256,6 +1268,7 @@ def overTwToFactorisationObj
     rw [Category.assoc]
     exact twHomComm o.hom
 
+set_option backward.isDefEq.respectTransparency false in
 private lemma overTwToFactorisation_ι_h
     {o₁ o₂ : Over (twObjMk f : TwistedArrow C)}
     (g : o₁ ⟶ o₂) :
@@ -1623,6 +1636,7 @@ lemma twObjMkFromIdentity_comp {A B E : C}
     exact (Category.comp_id _).symm
   · rfl
 
+set_option backward.isDefEq.respectTransparency false in
 lemma twObjMkFromIdentityAtCod_comp {A B E : C}
     (g : A ⟶ B) (g' : B ⟶ E) :
     twObjMkFromIdentityAtCod (g ≫ g') =
@@ -1768,6 +1782,7 @@ theorem decFactHom_ext {x y : DecFactObj F tw}
   congr 1
   exact eq_of_heq hFiber
 
+set_option backward.isDefEq.respectTransparency false in
 private lemma twObjMkFromIdentity_eqToHom
     {A B : C} {g g' : A ⟶ B} (p : g = g') :
     twObjMkFromIdentity g ≫
@@ -1775,6 +1790,7 @@ private lemma twObjMkFromIdentity_eqToHom
     twObjMkFromIdentity g' := by
   subst p; simp
 
+set_option backward.isDefEq.respectTransparency false in
 private lemma twObjMkFromIdentityAtCod_eqToHom
     {A B : C} {g g' : A ⟶ B} (p : g = g') :
     twObjMkFromIdentityAtCod g ≫
@@ -1816,6 +1832,7 @@ private lemma eqToHom_obj_twObjMkFromIdentityAtCod
   subst p; simp [eqToHom_refl,
     Cat.Hom.id_toFunctor]
 
+set_option backward.isDefEq.respectTransparency false in
 lemma twExtendCod_comp {A B E D : C}
     (a : A ⟶ B) (b : B ⟶ E) (c : E ⟶ D) :
     twExtendCod a b ≫ twExtendCod (a ≫ b) c =
@@ -1834,6 +1851,7 @@ lemma twExtendCod_comp {A B E D : C}
       eqToHom_refl]
     simp only [twObjMk_cod, Category.comp_id]
 
+set_option backward.isDefEq.respectTransparency false in
 lemma twExtendDom_comp {A B E D : C}
     (a : A ⟶ B) (b : B ⟶ E) (c : E ⟶ D) :
     twExtendDom b c ≫ twExtendDom a (b ≫ c) =
@@ -1852,6 +1870,7 @@ lemma twExtendDom_comp {A B E D : C}
       eqToHom_refl]
     simp only [twObjMk_cod, Category.comp_id]
 
+set_option backward.isDefEq.respectTransparency false in
 lemma twExtend_interchange {A B E D : C}
     (a : A ⟶ B) (b : B ⟶ E) (c : E ⟶ D) :
     twExtendDom a b ≫ twExtendCod (a ≫ b) c =
@@ -1874,6 +1893,7 @@ lemma twExtend_interchange {A B E D : C}
     simp only [twObjMk_cod,
       Category.id_comp, Category.comp_id]
 
+set_option backward.isDefEq.respectTransparency false in
 private lemma twExtendCod_comp_eqToHom
     {A B E D : C}
     (a : A ⟶ B) (b : B ⟶ E) (c : E ⟶ D) :
@@ -1891,6 +1911,7 @@ private lemma twExtendCod_comp_eqToHom
       eqToHom_refl]
     simp only [twObjMk_cod, Category.comp_id]
 
+set_option backward.isDefEq.respectTransparency false in
 private lemma twExtend_interchange_eqToHom
     {A B E D : C}
     (a : A ⟶ B) (b : B ⟶ E) (c : E ⟶ D) :
@@ -2092,6 +2113,7 @@ private theorem decFact_id_comp
     rw [twExtendDom_id_left, eqToHom_map]
     exact Cat.eqToHom_map_heq _ _
 
+set_option backward.isDefEq.respectTransparency false in
 private theorem decFact_comp_id
     {x y : DecFactObj F tw}
     (f : DecFactHom F tw x y) :
@@ -2742,6 +2764,7 @@ private lemma decFactHom_subst_fiberMorph_heq
     HEq (q ▸ φ).fiberMorph φ.fiberMorph := by
   subst q; exact HEq.rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The `Cat`-valued functor sending each twisted arrow `tw`
 to the decorated factorisation category `DecFactObj F tw`,
 and each twisted arrow morphism to the induced functor
@@ -3066,6 +3089,7 @@ private theorem totalDecFact_id_comp
     rw [twExtendDom_id_left, eqToHom_map]
     exact Cat.eqToHom_map_heq _ _
 
+set_option backward.isDefEq.respectTransparency false in
 private theorem totalDecFact_comp_id
     {x y : TotalDecFactObj C F}
     (f : TotalDecFactHom C F x y) :
@@ -3090,6 +3114,7 @@ private theorem totalDecFact_comp_id
     rw [twExtendCod_id_right, eqToHom_map]
     exact Cat.eqToHom_map_heq _ _
 
+set_option backward.isDefEq.respectTransparency false in
 private theorem totalDecFact_comp_assoc
     {w x y z : TotalDecFactObj C F}
     (f : TotalDecFactHom C F w x)
@@ -3293,6 +3318,7 @@ def grothendieckHomToTotalDecFactHom
     exact h
   fiberMorph := m.fiberMorph.fiberMorph
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Translates a morphism in the total decorated
 factorisation category to a morphism in the connected
 Grothendieck construction over `decFactFunctor F`. Packs
@@ -3350,6 +3376,7 @@ def totalDecFactHomToGrothendieckHom
             exact f.π_comm }
       fiberMorph := f.fiberMorph }
 
+set_option backward.isDefEq.respectTransparency false in
 private lemma totalDecFact_map_comp_factHom_eq
     {x y z : TotalDecFactObj C F}
     (f : TotalDecFactHom C F x y)
@@ -3417,6 +3444,7 @@ private lemma
     HEq.rfl HEq.rfl HEq.rfl
     HEq.rfl HEq.rfl HEq.rfl HEq.rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Functor from the total decorated factorisation category
 to the connected Grothendieck construction over
 `decFactFunctor F`. -/
@@ -3478,6 +3506,7 @@ def totalDecFactToGrothendieck :
           totalDecFact_map_comp_fiberMorph_heq
             C F f g
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Functor from the connected Grothendieck construction
 over `decFactFunctor F` to the total decorated
 factorisation category. -/
@@ -3575,6 +3604,7 @@ private theorem totalDecFactRoundTrip :
       (TotalDecFactHom.ext rfl rfl rfl
         (heq_of_eq rfl))
 
+set_option backward.isDefEq.respectTransparency false in
 private lemma decFact_hom_heq
     {X Y : C} {f g : X ⟶ Y}
     {d₁ : DecFactObj F (twObjMk f)}

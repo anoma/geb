@@ -78,6 +78,7 @@ abbrev PshInternalCat.compMap :
 
 variable {X}
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Given maps `F₀` on objects and `F₁` on
 morphisms satisfying source/target compatibility,
 the induced map on composable pairs: applies `F₁`
@@ -139,6 +140,7 @@ structure PshInternalFunctor
       pshInternalCompPairsMap objMap morMap compat
         ≫ Y.compMap
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The composable-pairs map for the identity
 morphism data is itself the identity. -/
 theorem pshInternalCompPairsMap_id
@@ -157,6 +159,7 @@ theorem pshInternalCompPairsMap_id
   · simp [pshInternalCompPairsMap,
       presheafPullbackLift, presheafPullbackSnd]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Composing composable-pairs maps corresponds
 to composing the underlying morphism maps. -/
 theorem pshInternalCompPairsMap_comp
@@ -197,6 +200,7 @@ def PshInternalFunctor.id
       pshInternalCompPairsMap_id,
       Category.id_comp]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Composition of internal functors. -/
 def PshInternalFunctor.comp
     {X Y Z : PshInternalCat.{u, v, w} C}
@@ -384,6 +388,7 @@ def catCompSpanMor (α : Type w')
         presheafPullbackFst,
         presheafPullbackSnd])
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The monoid-object structure on the morphism
 span: identity and composition satisfying the
 category axioms. -/
@@ -621,6 +626,7 @@ abbrev icCompApply (p : icCompPairs X) :
     icAllMor X :=
   X.compMap.app (Opposite.op ⟨⟨⟩⟩) p
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The source of a composite equals the source
 of the first morphism. -/
 theorem icCompMap_src :
@@ -641,6 +647,7 @@ theorem icCompMap_src :
       X.morSpan.hom ≫ pshProdFst _ _
   simp [pshProdLift]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The target of a composite equals the target
 of the second morphism. -/
 theorem icCompMap_tgt :
@@ -820,6 +827,7 @@ abbrev rtObjEquiv (α : Type w')
     icObj (catToPshInternalCat α) = α :=
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Equivalence between the hom-types: morphisms
 in the recovered category correspond to morphisms
 in the original category. -/
@@ -873,6 +881,7 @@ theorem catToPsh_idMap_app (α : Type w')
       (⟨a, a, 𝟙 a⟩ : CatMorSigma α) :=
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- `rtHomEquiv` sends internal composition to
 category composition. -/
 theorem rtHomEquiv_comp (α : Type w')
@@ -1055,6 +1064,7 @@ theorem rtFwIdPres :
   dsimp [rtFwMorMap, rtBkObjMapInv]
   exact icCatMorSigma_val_ext X _ _ rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The inverse morphism map preserves
 composition. -/
 theorem rtFwCompPres :
@@ -1141,6 +1151,7 @@ def rtIso :
   hom_inv_id := rtRoundtrip_fw_bk X
   inv_hom_id := rtRoundtrip_bk_fw X
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The action of `catToPshInternalCat` on
 functors: a functor `F : α ⥤ β` induces an
 internal functor between the corresponding
@@ -1200,6 +1211,7 @@ def catToPshInternalCatFunctor :
     · ext ⟨⟨⟨⟩⟩⟩ a; rfl
     · ext ⟨⟨⟨⟩⟩⟩ ⟨a, b, f⟩; rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Extract a functor from an internal functor
 between internal categories in `Psh(1)`. The
 object map evaluates `F.objMap` at the unique
@@ -1258,6 +1270,7 @@ def pshInternalFunctorToFunctor
     rw [icComp_val]
     rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The backward functor from
 `PshInternalCat (Discrete Unit)` to `Cat`,
 mapping an internal category to its extracted
@@ -1310,6 +1323,7 @@ def catToIcCat (α : Type w')
       presheafPullbackCone]
     simp only [Category.id_comp]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The backward component of the Cat-side unit
 isomorphism: extracts the underlying morphism from
 an `icHom` subtype via `eqToHom` transport. -/
@@ -1333,6 +1347,7 @@ def icCatToCat (α : Type w')
     simp only [Category.assoc,
       eqToHom_trans_assoc]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The Cat-side isomorphism: the original
 category `α` is isomorphic to the extracted
 category `icObj (catToPshInternalCat α)` in
@@ -1365,6 +1380,7 @@ def catIcIso (C : Cat.{w', w'}) :
     simp only [Category.id_comp,
       Category.comp_id]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The unit natural isomorphism: the identity
 functor on `Cat` is naturally isomorphic to the
 composite `catToPshInternalCatFunctor ⋙

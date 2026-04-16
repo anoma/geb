@@ -168,6 +168,7 @@ lemma twCodArr_eqToHom {x y : TwistedArrow C} (h : x = y) :
     twCodArr (eqToHom h) = eqToHom (congrArg twCod h) := by
   cases h; rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Morphism from `twObjMk (𝟙 dom)` to a twisted arrow `tw` where the arrow starts
 at `dom = twDom tw`. This provides a morphism from the identity at the domain.
@@ -193,11 +194,13 @@ def twObjMkFromIdentity {dom cod : C} (f : dom ⟶ cod) :
     twObjMk (𝟙 dom) ⟶ twObjMk f :=
   twFromIdentityAtDom (twObjMk f)
 
+set_option backward.isDefEq.respectTransparency false in
 @[simp]
 lemma twObjMkFromIdentity_domArr {dom cod : C} (f : dom ⟶ cod) :
     twDomArr (twObjMkFromIdentity f) = 𝟙 dom := by
   simp only [twObjMkFromIdentity, twFromIdentityAtDom_domArr, twObjMk_dom]
 
+set_option backward.isDefEq.respectTransparency false in
 @[simp]
 lemma twObjMkFromIdentity_codArr {dom cod : C} (f : dom ⟶ cod) :
     twCodArr (twObjMkFromIdentity f) = f := by
@@ -318,6 +321,7 @@ lemma coTwObjMk_arr {dom cod : C} (arr : cod ⟶ dom) :
   unfold coTwArr coTwObjMk
   simp only [homPreOpObjOut, homPreOpObjIn]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 A co-twisted arrow equals its reconstruction from components.
 This provides a canonical form for any co-twisted arrow.
@@ -454,11 +458,13 @@ def coTwObjMkToIdentity {dom cod : C} (f : cod ⟶ dom) :
     coTwObjMk f ⟶ coTwObjMk (𝟙 cod) :=
   coTwToIdentityAtCod (coTwObjMk f)
 
+set_option backward.isDefEq.respectTransparency false in
 @[simp]
 lemma coTwObjMkToIdentity_domArr {dom cod : C} (f : cod ⟶ dom) :
     coTwDomArr (coTwObjMkToIdentity f) = f := by
   simp only [coTwObjMkToIdentity, coTwToIdentityAtCod_domArr, coTwObjMk_arr]
 
+set_option backward.isDefEq.respectTransparency false in
 @[simp]
 lemma coTwObjMkToIdentity_codArr {dom cod : C} (f : cod ⟶ dom) :
     coTwCodArr (coTwObjMkToIdentity f) = 𝟙 cod := by
@@ -496,6 +502,7 @@ arrow. Combined with the op functor, this gives the equivalence
 
 variable {C : Type u} [Category.{v} C]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Functor from `TwistedArrow C` to `TwistedArrow (Cᵒᵖ)`.
 
@@ -509,6 +516,7 @@ def twistedArrowToTwistedArrowOp : TwistedArrow C ⥤ TwistedArrow (Cᵒᵖ) whe
   map_id := fun tw => by apply twHom_ext <;> rfl
   map_comp := fun {x y z} f g => by apply twHom_ext <;> rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Functor from `TwistedArrow (Cᵒᵖ)` to `TwistedArrow C`.
 
@@ -541,6 +549,7 @@ theorem twistedArrowOpRoundTrip_obj (tw : TwistedArrow (Cᵒᵖ)) :
   simp only [twistedArrowToTwistedArrowOp, twistedArrowOpToTwistedArrow, twObjMk]
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Round-trip preserves morphisms on domain component.
 -/
@@ -551,6 +560,7 @@ theorem twistedArrowRoundTrip_map_domArr {x y : TwistedArrow C} (f : x ⟶ y) :
   simp only [Functor.comp_map, twistedArrowToTwistedArrowOp, twistedArrowOpToTwistedArrow,
     twHomMk_domArr, twHomMk_codArr, Quiver.Hom.unop_op]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Round-trip preserves morphisms on codomain component.
 -/
@@ -561,6 +571,7 @@ theorem twistedArrowRoundTrip_map_codArr {x y : TwistedArrow C} (f : x ⟶ y) :
   simp only [Functor.comp_map, twistedArrowToTwistedArrowOp, twistedArrowOpToTwistedArrow,
     twHomMk_domArr, twHomMk_codArr, Quiver.Hom.unop_op]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Round-trip preserves morphisms on domain component (opposite direction).
 -/
@@ -571,6 +582,7 @@ theorem twistedArrowOpRoundTrip_map_domArr {x y : TwistedArrow (Cᵒᵖ)} (f : x
   simp only [Functor.comp_map, twistedArrowToTwistedArrowOp, twistedArrowOpToTwistedArrow,
     twHomMk_domArr, twHomMk_codArr, Quiver.Hom.op_unop]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Round-trip preserves morphisms on codomain component (opposite direction).
 -/
@@ -581,6 +593,7 @@ theorem twistedArrowOpRoundTrip_map_codArr {x y : TwistedArrow (Cᵒᵖ)} (f : x
   simp only [Functor.comp_map, twistedArrowToTwistedArrowOp, twistedArrowOpToTwistedArrow,
     twHomMk_domArr, twHomMk_codArr, Quiver.Hom.op_unop]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The round-trip `inverse ⋙ functor` is definitionally the identity functor.
 -/
@@ -592,6 +605,7 @@ theorem twistedArrowRoundTrip_map {x y : TwistedArrow C} (f : x ⟶ y) :
   · simp only [Functor.comp_map, twistedArrowToTwistedArrowOp, twistedArrowOpToTwistedArrow,
       twHomMk_domArr, twHomMk_codArr, Quiver.Hom.unop_op]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The round-trip `functor ⋙ inverse` is definitionally the identity functor.
 -/
@@ -603,6 +617,7 @@ theorem twistedArrowOpRoundTrip_map {x y : TwistedArrow (Cᵒᵖ)} (f : x ⟶ y)
   · simp only [Functor.comp_map, twistedArrowToTwistedArrowOp, twistedArrowOpToTwistedArrow,
       twHomMk_domArr, twHomMk_codArr, Quiver.Hom.op_unop]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The twisted arrow category is self-dual: `TwistedArrow C ≌ TwistedArrow (Cᵒᵖ)`.
 -/
@@ -739,6 +754,7 @@ def coTwistedArrowToTwistedArrowOpOp : CoTwistedArrow C ⥤ (TwistedArrow (Cᵒ�
     · simp only [coTwDomArr, twDomArr]; rfl
     · simp only [coTwCodArr, twCodArr]; rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Round-trip on objects: `(TwistedArrow (Cᵒᵖ))ᵒᵖ → CoTwistedArrow C → (TwistedArrow (Cᵒᵖ))ᵒᵖ`
 returns the same object.
@@ -749,6 +765,7 @@ theorem twistedArrowOpOpCoTwRoundTrip_obj (tw : (TwistedArrow (Cᵒᵖ))ᵒᵖ) 
     coTwObjMk_arr, Quiver.Hom.op_unop]
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Round-trip on objects: `CoTwistedArrow C → (TwistedArrow (Cᵒᵖ))ᵒᵖ → CoTwistedArrow C`
 returns the same object.
@@ -759,6 +776,7 @@ theorem coTwTwistedArrowOpOpRoundTrip_obj (tw : CoTwistedArrow C) :
     twObjMk_arr, Quiver.Hom.unop_op]
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The equivalence `(TwistedArrow (Cᵒᵖ))ᵒᵖ ≌ CoTwistedArrow C`.
 -/
@@ -924,6 +942,7 @@ For a morphism `f : tw ⟶ tw'` in CoTwistedArrow C:
   which equals `coTwDom tw' ⟶ coTwDom tw` (matching `coTwDomArr f`)
 -/
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The `twDomArr` component of a morphism under the equivalence equals
 the `coTwCodArr` of the original morphism (modulo the object correspondence).
 The equality holds because `twDom ∘ equiv = coTwCod`. -/
@@ -943,6 +962,7 @@ theorem coTwistedArrowOpEquiv_map_twDomArr {tw tw' : CoTwistedArrow C}
   simp only [twDomArr, coTwCodArr]
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The `twCodArr` component of a morphism under the equivalence equals
 the `coTwDomArr` of the original morphism (modulo the object correspondence).
 The equality holds because `twCod ∘ equiv = coTwDom`. -/
@@ -1186,6 +1206,7 @@ lemma tw'ToTw_twToTw'_obj (tw : TwistedArrow C) :
 lemma twToTw'_tw'ToTw_obj (tw : TwistedArrow' C) :
     twToTw'.obj (tw'ToTw.obj tw) = tw := rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The equivalence `TwistedArrow C ≌ TwistedArrow' C`. -/
 def twEquivTw' : TwistedArrow C ≌ TwistedArrow' C where
   functor := twToTw'
@@ -1809,6 +1830,7 @@ theorem twistedArrowOp'RoundTrip_obj (tw : TwistedArrowOp' C) :
     twObjMk', twOpObjMk', twArr', twOpArr', twOpCod', twOpDom', twCod', twDom']
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 `TwistedArrow' C` is isomorphic to `TwistedArrowOp' C`.
 
@@ -1899,6 +1921,7 @@ theorem coTwistedArrowRoundTrip_obj (tw : CoTwistedArrow' C) :
     opTwObjMk', coTwObjMk', opTwArr', coTwArr', opTwDom', opTwCod', coTwDom', coTwCod']
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 `OpTwistedArrow' C` is isomorphic to `CoTwistedArrow' C`.
 
@@ -1990,6 +2013,7 @@ def twArrToGrothendieckUnderMap {tw tw' : TwistedArrow' C} (m : tw ⟶ tw') :
     twArrToGrothendieckUnderObj tw ⟶ twArrToGrothendieckUnderObj tw' :=
   ⟨(twDomArr' m).op, twArrToGrothendieckUnderFiber m⟩
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Functor from `TwistedArrow' C` to `Grothendieck (Under.mapFunctor C)`.
 -/
@@ -2041,6 +2065,7 @@ def grothendieckUnderToTwArrMap {g g' : Grothendieck (Under.mapFunctor C)}
   rw [← Category.assoc]
   exact h
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Functor from `Grothendieck (Under.mapFunctor C)` to `TwistedArrow' C`.
 -/
@@ -2066,6 +2091,7 @@ def grothendieckUnderToTwArr : Grothendieck (Under.mapFunctor C) ⥤ TwistedArro
       simp only [eqToHom_refl, Category.id_comp]
       congr 1
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The equivalence between `TwistedArrow' C` and `Grothendieck (Under.mapFunctor C)`.
 
@@ -2250,6 +2276,7 @@ Direct Lean implementations would require working around typeclass instance
 differences between `TwistedArrowOp' C` and `TwistedArrow' Cᵒᵖ'`.
 -/
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The fiber inclusion functor from `(Over b)^op` to `TwistedArrow' C`.
 
@@ -2281,6 +2308,7 @@ def overOpToTwistedArrow (C : Type u) [Category C] (b : C) :
     · simp only [twHomMk'_codArr, twCodArr'_comp]
       exact (Category.id_comp (𝟙 b)).symm
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The twisted arrow morphism from `twObjMk' ov.hom` to `twObjMk' (ov.hom ≫ β)`,
 used to transport fiber elements along a base morphism `β : b ⟶ d`.
@@ -2298,6 +2326,7 @@ def fiberTransportTwMorph (C : Type u) [Category C] {b d : C}
       change id (𝟙 ov.left) ≫ ov.hom ≫ id β = ov.hom ≫ β
       simp only [id, Category.id_comp])
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Coherence lemma: the twisted arrow morphism corresponding to `fiberTransport`
 composed with the image of a base morphism under `overOpToTwistedArrow d`
@@ -2357,6 +2386,7 @@ def constTwistedArrowFunctor : C ⥤ Cat.{v, max u v} where
   map_id _ := rfl
   map_comp _ _ := (Category.comp_id _).symm
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Identity coherence for `fiberTransportTwMorph`: when `β = 𝟙 b`, the transport
 morphism is the identity (up to the equality `ov.hom = ov.hom ≫ 𝟙 b`).
@@ -2372,6 +2402,7 @@ lemma fiberTransportTwMorph_id (b : C) (ov : Over b) :
       twObjMk'_cod]
     rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Composition coherence for `fiberTransportTwMorph`: the transport along `β ≫ γ`
 decomposes into transport along `β` followed by transport along `γ`.
@@ -2392,6 +2423,7 @@ lemma fiberTransportTwMorph_comp {b d e : C} (β : b ⟶ d) (γ : d ⟶ e)
       twCodArr'_eqToHom, Over.map_obj_hom, twObjMk'_cod, eqToHom_refl',
       Category.comp_id]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The lax natural transformation from `overOpMapFunctor C` to `constTwistedArrowFunctor C`.
 
@@ -2526,6 +2558,7 @@ theorem arrowOpOp'RoundTrip_obj (arr : ArrowOp' C) :
   cases arr
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Category isomorphism between `Arrow C` and `(ArrowOp' C)ᵒᵖ'`.
 
@@ -2617,6 +2650,7 @@ arrow categories by applying `F` to all components of an arrow.
 variable {C : Type u} [Category.{v} C]
   {D : Type w} [Category.{v} D]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The functor `TwistedArrow C ⥤ TwistedArrow D` induced by
 `F : C ⥤ D`. Maps `(a, b, f : a ⟶ b)` to
@@ -2643,6 +2677,7 @@ def twistedArrowMap (F : C ⥤ D) :
     · simp only [twHomMk_codArr, twCodArr_comp,
         F.map_comp]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The functor `CoTwistedArrow C ⥤ CoTwistedArrow D` induced by
 `F : C ⥤ D`. Maps `(dom, cod, f : cod ⟶ dom)` to
@@ -2688,6 +2723,7 @@ theorem twistedArrowMap_map_codArr (F : C ⥤ D)
     twCodArr ((twistedArrowMap F).map m) =
       F.map (twCodArr m) := rfl
 
+set_option backward.isDefEq.respectTransparency false in
 theorem twistedArrowMap_comp
     {E : Type*} [Category E]
     (F : C ⥤ D) (G : D ⥤ E) :
@@ -2695,6 +2731,7 @@ theorem twistedArrowMap_comp
       twistedArrowMap F ⋙ twistedArrowMap G :=
   _root_.CategoryTheory.Functor.ext (fun _ => rfl)
 
+set_option backward.isDefEq.respectTransparency false in
 theorem twistedArrowMap_id :
     twistedArrowMap (𝟭 C) = 𝟭 _ :=
   _root_.CategoryTheory.Functor.ext (fun _ => rfl)
@@ -2705,6 +2742,7 @@ theorem coTwistedArrowMap_obj (F : C ⥤ D)
     (coTwistedArrowMap F).obj tw =
       coTwObjMk (F.map (coTwArr tw)) := rfl
 
+set_option backward.isDefEq.respectTransparency false in
 theorem coTwistedArrowMap_comp
     {E : Type*} [Category E]
     (F : C ⥤ D) (G : D ⥤ E) :
@@ -2712,6 +2750,7 @@ theorem coTwistedArrowMap_comp
       coTwistedArrowMap F ⋙ coTwistedArrowMap G :=
   _root_.CategoryTheory.Functor.ext (fun _ => rfl)
 
+set_option backward.isDefEq.respectTransparency false in
 theorem coTwistedArrowMap_id :
     coTwistedArrowMap (𝟭 C) = 𝟭 _ :=
   _root_.CategoryTheory.Functor.ext (fun _ => rfl)

@@ -156,6 +156,7 @@ variable
   {T : Monad C} {D : Comonad C}
   (law : DistributiveLaw T D)
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Given a distributive law `law : T∘D ⟹ D∘T`, we can lift
 the comonad `D` to an endofunctor on the Eilenberg-Moore
@@ -185,6 +186,7 @@ def liftComonadObj (alg : T.Algebra) :
     -- Combine T(dist ≫ D(a))
     rw [← T.toFunctor.map_comp_assoc]
 
+set_option backward.isDefEq.respectTransparency false in
 def liftComonadMap
     {alg₁ alg₂ : T.Algebra}
     (f : alg₁ ⟶ alg₂) :
@@ -211,6 +213,7 @@ def liftComonadMap
     simp only [reassoc_of%
       (law.dist.naturality f.f)]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The endofunctor on `T.Algebra` induced by lifting the
 comonad `D` through the distributive law.
@@ -226,6 +229,7 @@ def liftComonad : T.Algebra ⥤ T.Algebra where
     congr 1
     simp
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The counit of the lifted comonad: `ε_A` as a `T`-algebra
 homomorphism from `(DA, λ_A ≫ Da)` to `(A, a)`.
@@ -240,6 +244,7 @@ def liftComonadCounit (alg : T.Algebra) :
     simp only [Functor.id_map]
     rw [← Category.assoc, law.counit]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The comultiplication of the lifted comonad: `δ_A` as a
 `T`-algebra homomorphism from `(DA, λ_A ≫ Da)` to
@@ -265,6 +270,7 @@ def liftComonadComul (alg : T.Algebra) :
     rw [D.toFunctor.map_comp]
     simp only [Category.assoc]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The natural transformation providing the counit of the
 lifted comonad.
@@ -277,6 +283,7 @@ def liftComonadEps :
     simp [liftComonadCounit, liftComonadMap,
       liftComonad, D.ε.naturality]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The natural transformation providing the comultiplication
 of the lifted comonad.
@@ -290,6 +297,7 @@ def liftComonadDelta :
     simp [liftComonadComul, liftComonadMap,
       liftComonad, D.δ.naturality]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The comonad on `T.Algebra` obtained by lifting `D` through
 the distributive law.
@@ -316,6 +324,7 @@ def liftedComonad : Comonad T.Algebra where
       liftComonad, liftComonadMap,
       liftComonadObj]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Given a distributive law `law : T∘D ⟹ D∘T`, we can lift
 the monad `T` to an endofunctor on the co-Eilenberg-Moore
@@ -349,6 +358,7 @@ def liftMonadObj (coalg : D.Coalgebra) :
     rw [← D.toFunctor.map_comp,
       ← Category.assoc]
 
+set_option backward.isDefEq.respectTransparency false in
 def liftMonadMap
     {coalg₁ coalg₂ : D.Coalgebra}
     (f : coalg₁ ⟶ coalg₂) :
@@ -373,6 +383,7 @@ def liftMonadMap
       ← Functor.comp_map,
       law.dist.naturality]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The endofunctor on `D.Coalgebra` induced by lifting the
 monad `T` through the distributive law.
@@ -404,6 +415,7 @@ def liftMonadUnit (coalg : D.Coalgebra) :
     congr 1
     exact (law.unit coalg.A).symm
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The multiplication of the lifted monad: `μ_A` as a
 `D`-coalgebra homomorphism from
@@ -453,6 +465,7 @@ def liftMonadMu :
       liftMonad]
     exact T.μ.naturality f.f
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The monad on `D.Coalgebra` obtained by lifting `T` through
 the distributive law.
@@ -619,6 +632,7 @@ private theorem roundTrip_carrier
         law).obj B)).carrier =
     B.carrier := rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The identity morphism on `B.carrier` viewed as a hom from
 `B` to the round-trip of `B` (unit direction).
@@ -764,6 +778,7 @@ variable
   {T : Monad C} {D : Comonad C}
   (law : DistributiveLaw T D)
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The free lambda-bialgebra on a `D`-coalgebra `(X, k)`.
 The carrier is `TX`, equipped with the free `T`-algebra
@@ -799,6 +814,7 @@ def freeBialgebra (coal : D.Coalgebra) :
       T.μ.app coal.A ≫ T.toFunctor.map coal.a at h
     rw [h, Category.assoc]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The functorial action of the free bialgebra construction
 on `D`-coalgebra morphisms.  The underlying map is `T(f)`.
@@ -825,6 +841,7 @@ def freeBialgebraHom
       D.toFunctor.map (T.toFunctor.map f.f) at h
     rw [h]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The cofree lambda-bialgebra on a `T`-algebra `(X, h)`.
 The carrier is `DX`, equipped with the cofree `D`-coalgebra
@@ -865,6 +882,7 @@ def cofreeBialgebra (alg : T.Algebra) :
       D.toFunctor.map alg.a ≫ D.δ.app alg.A at h
     rw [h]
 
+set_option backward.isDefEq.respectTransparency false in
 def cofreeBialgebraHom
     {a₁ a₂ : T.Algebra} (f : a₁ ⟶ a₂) :
     cofreeBialgebra law a₁ ⟶ cofreeBialgebra law a₂ where
@@ -924,6 +942,7 @@ def initialBialgebra
     LambdaBialgebra law :=
   freeBialgebra law (initialCoalgebra (D := D) hX)
 
+set_option backward.isDefEq.respectTransparency false in
 private def initialBialgebraTo
     {X : C} (hX : IsInitial X)
     (B : LambdaBialgebra law) :
@@ -965,6 +984,7 @@ private def initialBialgebraTo
         (hX.to B.carrier)) at h
     rw [reassoc_of% h]
 
+set_option backward.isDefEq.respectTransparency false in
 def initialBialgebra_isInitial
     {X : C} (hX : IsInitial X) :
     IsInitial (initialBialgebra law hX) :=
@@ -993,6 +1013,7 @@ def finalBialgebra
     LambdaBialgebra law :=
   cofreeBialgebra law (terminalAlgebra (T := T) hX)
 
+set_option backward.isDefEq.respectTransparency false in
 private def finalBialgebraFrom
     {X : C} (hX : IsTerminal X)
     (B : LambdaBialgebra law) :
@@ -1030,6 +1051,7 @@ private def finalBialgebraFrom
         (hX.from B.carrier)) at h
     rw [h, reassoc_of% B.coalgebra_coassoc]
 
+set_option backward.isDefEq.respectTransparency false in
 def finalBialgebra_isTerminal
     {X : C} (hX : IsTerminal X) :
     IsTerminal (finalBialgebra law hX) :=

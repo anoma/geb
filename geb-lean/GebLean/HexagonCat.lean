@@ -269,6 +269,7 @@ def diagElemToHexagonFunctor : DiagElem (ProfDialgebraProf P Q) ⥤ HexagonObj P
   map_id _ := HexagonHom.ext' rfl
   map_comp _ _ := HexagonHom.ext' rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The hexagon category is isomorphic (as a category) to the diagonal elements
 of the profunctor-dialgebra profunctor. -/
 def hexagonDiagElemIsoCat :

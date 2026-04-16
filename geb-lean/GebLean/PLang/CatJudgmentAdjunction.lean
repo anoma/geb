@@ -946,6 +946,7 @@ theorem unitIdEndo (i : s.idType) : s.cod (s.idMor i) = s.dom (s.idMor i) := by
   have h' := congrFun h i
   exact h'.symm
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Identity naturality for the unit.
 
 For any i : s.idType, unitMorMap (s.idMor i) = (unitTarget s).idMor (unitIdMap i).
@@ -1190,6 +1191,7 @@ theorem adjHomSet_transport_quotMor_heq {a b a' : s.obj}
   cases h
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The quotient morphism for composite equals the quotComp of left and right.
 
 This is the essential equality at the quotient level, derived from comp_witness.
@@ -1238,6 +1240,7 @@ theorem unitCompositeQuotMorEq (c : s.compType) :
   apply Quotient.sound
   exact CategoryQuotientData.FreeMorEquiv.rel h_wit
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Composite naturality for the unit.
 
 For any c : s.compType, unitMorMap (s.composite c) =
@@ -1482,12 +1485,14 @@ theorem counitEvalAux_tgt (C : Type (uAdj + 1)) [Category.{uAdj + 1} C]
     (counitEvalAux C m).val.cod = b :=
   (counitEvalAux C m).property.2
 
+set_option backward.isDefEq.respectTransparency false in
 /-- counitEval of a variable is the underlying morphism. -/
 theorem counitEval_var (C : Type (uAdj + 1)) [Category.{uAdj + 1} C]
     (f : BundledHom C) :
     counitEval C (FreeMor.var (Q := counitQuiver C) f) = f.hom := by
   simp only [counitEval, counitEvalAux, eqToHom_refl, Category.id_comp, Category.comp_id]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- counitEval of identity is the identity morphism. -/
 theorem counitEval_id (C : Type (uAdj + 1)) [Category.{uAdj + 1} C] (a : C) :
     counitEval C (FreeMor.id (Q := counitQuiver C) a) = 𝟙 a := by
@@ -1572,6 +1577,7 @@ theorem counitEval_cong_right (C : Type (uAdj + 1)) [Category.{uAdj + 1} C]
   simp only [counitEval_comp]
   rw [heq]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- counitEval respects the generating relation FreeMorEquivGen. -/
 theorem counitEval_resp_gen (C : Type (uAdj + 1)) [Category.{uAdj + 1} C]
     {a b : C} {f g : FreeMor (counitQuiver C) a b}
@@ -1618,6 +1624,7 @@ def counitFunctorMap (C : Type (uAdj + 1)) [Category.{uAdj + 1} C]
     {a b : C} (qm : (counitCQD C).QuotMor a b) : (a ⟶ b) :=
   Quotient.lift (counitEval C) (fun _ _ h => counitEval_resp C h) qm
 
+set_option backward.isDefEq.respectTransparency false in
 /-- counitFunctorMap sends the identity quotient to the identity morphism. -/
 theorem counitFunctorMap_id (C : Type (uAdj + 1)) [Category.{uAdj + 1} C]
     (a : C) : counitFunctorMap C ((counitCQD C).quotId a) = 𝟙 a := by
@@ -1693,6 +1700,7 @@ theorem extractQuotMor_comp (C : Type (uAdj + 1)) [Category.{uAdj + 1} C]
   cases hga
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The counit functor ε_C : L(Phi(C)) ⥤ C.
 
 This evaluates formal morphisms in the quotient category back to actual
@@ -1735,6 +1743,7 @@ abbrev LPhiFunctor {C D : Type (uAdj + 1)} [Category.{uAdj + 1} C]
     Cat.of (LPhiObj C) ⟶ Cat.of (LPhiObj D) :=
   catJudgNatTransToCatMor (functorToCatJudgNatTrans F)
 
+set_option backward.isDefEq.respectTransparency false in
 /-- counitEval commutes with functor application on FreeMor.var. -/
 theorem counitEval_var_functor_map {C D : Type (uAdj + 1)} [Category.{uAdj + 1} C]
     [Category.{uAdj + 1} D] (F : C ⥤ D) (f : BundledHom C) :
@@ -1789,6 +1798,7 @@ abbrev functorToQuiverMor {C D : Type (uAdj + 1)} [Category.{uAdj + 1} C]
     OverQuiverMorphism (counitQuiver C) (counitQuiver D) :=
   catJudgNatTransToOverQuiverMor (functorToCatJudgNatTrans F)
 
+set_option backward.isDefEq.respectTransparency false in
 /-- freeMorMapPhi agrees with FreeMor.mapQuiver for the functor case. -/
 theorem freeMorMapPhi_eq_mapQuiver {C D : Type (uAdj + 1)} [Category.{uAdj + 1} C]
     [Category.{uAdj + 1} D] (F : C ⥤ D) :
@@ -1854,6 +1864,7 @@ abbrev PhiL : CategoryTheory.Cat.{uAdj + 1, uAdj + 1} ⥤
     CategoryTheory.Cat.{uAdj + 1, uAdj + 1} :=
   PhiFunctor_PLang.{uAdj, uAdj} ⋙ LFunctor_PLang.{uAdj, uAdj}
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The counit natural transformation ε : Φ ⋙ L → 𝟭 Cat.
 
 For each category C, the component ε_C : L(Φ(C)) ⥤ C evaluates the free

@@ -61,6 +61,7 @@ private lemma wrpSurjZero
       types_comp_apply] at hw
     exact hw.trans hy
 
+set_option backward.isDefEq.respectTransparency false in
 set_option linter.unusedFintypeInType false in
 private lemma overWrpFactor
     {K : WalkingReflexivePair ⥤ Over X}
@@ -167,6 +168,7 @@ private lemma wrpReflRight
   simp only [Over.comp_left, Over.id_left] at h
   exact congr_fun h y
 
+set_option backward.isDefEq.respectTransparency false in
 set_option linter.unusedFintypeInType false in
 private lemma wrpCcrOneStep
     {P : CoprodCovarRepCat' (Over (X : Type u))}
@@ -443,6 +445,7 @@ private lemma wrpCcrWellDefined
             (Finset.mem_cons.mp hm).elim
               h hb')))
 
+set_option backward.isDefEq.respectTransparency false in
 set_option linter.unusedFintypeInType false in
 instance ccrPreservesReflexiveColimits
     (P : CoprodCovarRepCat' (Over (X : Type u)))
@@ -692,6 +695,7 @@ end AlgInitial
 
 section BeckCoprod
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Monad algebras have binary coproducts when the base
 category does and the algebra category has reflexive
@@ -1141,6 +1145,7 @@ end AlgFiniteCoproducts
 
 section CoprodCoeqTrick
 
+set_option backward.isDefEq.respectTransparency false in
 lemma hasCoequalizer_of_reflexive_and_binary
     {C : Type*} [Category C]
     [HasBinaryCoproducts C]

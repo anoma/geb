@@ -188,6 +188,7 @@ def SpanFamilyHom.toNatTrans
 
 variable (V) (E) (D)
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The functor extracting `SpanFamilyData` from
 `SpanFamily V E D`. -/
 def spanFamilyUnpack :
@@ -210,6 +211,7 @@ def spanFamilyUnpack :
     ext <;> simp [SpanFamilyHom.ofNatTrans,
         SpanFamilyHom.comp]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The functor assembling `SpanFamilyData`
 into `SpanFamily V E D`. -/
 def spanFamilyPack :
@@ -232,6 +234,7 @@ def spanFamilyPack :
       simp [SpanFamilyHom.toNatTrans,
         SpanFamilyHom.comp]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Object-level round-trip:
 `(spanFamilyPack V E D).obj
   ((spanFamilyUnpack V E D).obj F) = F`. -/
@@ -258,6 +261,7 @@ theorem spanFamily_unpack_pack_obj
           SpanFamilyData.ofFunctor,
           spanFamilyUnpack, spanFamilyPack])
 
+set_option backward.isDefEq.respectTransparency false in
 /-- `spanFamilyPack ⋙ spanFamilyUnpack` is
 naturally isomorphic to the identity on
 `SpanFamilyData`. -/
@@ -272,6 +276,7 @@ def spanFamily_pack_unpack_iso :
     simp only [Category.comp_id, Category.id_comp]
     apply SpanFamilyHom.ext <;> (funext; rfl)
 
+set_option backward.isDefEq.respectTransparency false in
 /-- `spanFamilyUnpack ⋙ spanFamilyPack` is
 naturally isomorphic to the identity on
 `SpanFamily V E D`. -/

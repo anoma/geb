@@ -71,6 +71,7 @@ def TwArrCopresheaf.opSliceObj (F : TwArrCopresheaf C) (y : C) (x : C)
     (f : x ⟶ y) : Type v :=
   F.obj (twObjMk' f)
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Contravariant morphism map for the slice presheaf induced by a `TwArrCopresheaf`.
 
@@ -87,6 +88,7 @@ def TwArrCopresheaf.sliceContramap (F : TwArrCopresheaf C) {y : C} {x x' : C}
     simp only [twObjMk'_arr]
     rw [show f ≫ 𝟙 y = f from Category.comp_id f, comm]))
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 For a fixed `y : C`, a `TwArrCopresheaf` induces a presheaf on `Over y`, i.e.,
 a functor from `(Over y)ᵒᵖ'` to `Type v`. Objects `(f : x ⟶ y)` in `Over y`
@@ -125,6 +127,7 @@ def TwArrCopresheaf.sliceGrothendieckObj (F : TwArrCopresheaf C) (y : C) :
   base := y
   fiber := (F.slicePresheaf C y : OverOpPresheaf C y)
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Given a morphism `h : y ⟶ y'` in `C`, we get a natural transformation from
 `F.slicePresheaf y` to `(overOpMapFunctor C).map h ⋙ F.slicePresheaf y'`.
@@ -207,6 +210,7 @@ private lemma twHomMk'_id_id_eq_eqToHom' {dom cod : C} (arr arr' : dom ⟶ cod)
   · simp only [twHomMk'_codArr]
     rfl
 
+set_option backward.isDefEq.respectTransparency false in
 private lemma TwArrCopresheaf.sliceNatTrans_id_app_is_id
     (F : TwArrCopresheaf C) (y : C) (f : Over y) :
     (F.sliceNatTrans C (@CategoryStruct.id C _ y)).app f =
@@ -223,6 +227,7 @@ private lemma TwArrCopresheaf.sliceNatTrans_id_app_is_id
     exact h
   rw [hmor, eqToHom_map]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Identity coherence for sliceGrothendieckHomFiber (contravariant case).
 -/
@@ -239,6 +244,7 @@ lemma TwArrCopresheaf.sliceGrothendieck_hom_id (F : TwArrCopresheaf C) :
   refine Eq.trans h ?_
   congr 1
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Composition coherence for sliceGrothendieckHomFiber (contravariant case).
 -/
@@ -486,6 +492,7 @@ def TwArrPresheaf.sliceObj (F : TwArrPresheaf C) (y : C) (x : C)
     (f : x ⟶ y) : Type v :=
   F.obj (opTwObjMk' f)
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Covariant morphism map for the slice copresheaf induced by a `TwArrPresheaf`.
 
@@ -502,6 +509,7 @@ def TwArrPresheaf.sliceMap (F : TwArrPresheaf C) {y : C} {x x' : C}
     simp only [opTwObjMk'_arr]
     rw [show f' ≫ 𝟙 y = f' from Category.comp_id f', comm]))
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 For a fixed `y : C`, a `TwArrPresheaf` induces a copresheaf on `Over y`, i.e.,
 a functor from `Over y` to `Type v`. Objects `(f : x ⟶ y)` in `Over y` map to
@@ -629,6 +637,7 @@ private lemma opTwHomMk'_id_id_eq_eqToHom {dom cod : C} (arr arr' : dom ⟶ cod)
   · simp only [opTwHomMk'_codArr]
     rfl
 
+set_option backward.isDefEq.respectTransparency false in
 private lemma TwArrPresheaf.sliceNatTrans_id_app_is_id
     (F : TwArrPresheaf C) (y : C) (f : Over y) :
     (F.sliceNatTrans C (@CategoryStruct.id C _ y)).app f =
@@ -645,6 +654,7 @@ private lemma TwArrPresheaf.sliceNatTrans_id_app_is_id
     convert h using 1
   rw [hmor, eqToHom_map]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Identity coherence for sliceGrothendieckHomFiber.
 -/
@@ -661,6 +671,7 @@ lemma TwArrPresheaf.sliceGrothendieck_hom_id (F : TwArrPresheaf C) :
   refine Eq.trans h ?_
   congr 1
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Composition coherence for sliceGrothendieckHomFiber.
 -/
@@ -860,6 +871,7 @@ def TwArrOpCopresheaf.opSliceObj (F : TwArrOpCopresheaf C) (x : C) (y : C)
     (f : y ⟶ x) : Type v :=
   F.obj (twOpObjMk' f)
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Contravariant morphism map for the slice presheaf induced by a
 `TwArrOpCopresheaf`.
@@ -877,6 +889,7 @@ def TwArrOpCopresheaf.sliceContramap (F : TwArrOpCopresheaf C) {x : C} {y y' : C
     simp only [twOpObjMk'_arr]
     rw [show f ≫ 𝟙 x = f from Category.comp_id f, comm]))
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 For a fixed `x : C`, a `TwArrOpCopresheaf` induces a presheaf on `Over x`, i.e.,
 a functor from `(Over x)ᵒᵖ'` to `Type v`. Objects `(f : y ⟶ x)` in `Over x` map
@@ -911,6 +924,7 @@ def TwArrOpCopresheaf.sliceGrothendieckObj (F : TwArrOpCopresheaf C) (x : C) :
   base := x
   fiber := (F.slicePresheaf C x : OverOpPresheaf C x)
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Given a morphism `h : x ⟶ x'` in `C`, we get a natural transformation from
 `F.slicePresheaf x` to `(overOpMapFunctor C).map h ⋙ F.slicePresheaf x'`.
@@ -993,6 +1007,7 @@ private lemma twOpHomMk'_id_id_eq_eqToHom' {dom cod : C} (arr arr' : cod ⟶ dom
   · simp only [twOpHomMk'_codArr]
     rfl
 
+set_option backward.isDefEq.respectTransparency false in
 private lemma TwArrOpCopresheaf.sliceNatTrans_id_app_is_id
     (F : TwArrOpCopresheaf C) (x : C) (f : Over x) :
     (F.sliceNatTrans C (@CategoryStruct.id C _ x)).app f =
@@ -1009,6 +1024,7 @@ private lemma TwArrOpCopresheaf.sliceNatTrans_id_app_is_id
     exact h
   rw [hmor, eqToHom_map]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Identity coherence for sliceGrothendieckHomFiber (contravariant case).
 -/
@@ -1025,6 +1041,7 @@ lemma TwArrOpCopresheaf.sliceGrothendieck_hom_id (F : TwArrOpCopresheaf C) :
   refine Eq.trans h ?_
   congr 1
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Composition coherence for sliceGrothendieckHomFiber (contravariant case).
 -/
@@ -1224,6 +1241,7 @@ def TwArrOpPresheaf.sliceObj (F : TwArrOpPresheaf C) (x : C) (y : C)
     (f : y ⟶ x) : Type v :=
   F.obj (coTwObjMk' f)
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Covariant morphism map for the slice copresheaf induced by a `TwArrOpPresheaf`.
 
@@ -1240,6 +1258,7 @@ def TwArrOpPresheaf.sliceMap (F : TwArrOpPresheaf C) {x : C} {y y' : C}
     simp only [coTwObjMk'_arr]
     rw [show f' ≫ 𝟙 x = f' from Category.comp_id f', comm]))
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 For a fixed `x : C`, a `TwArrOpPresheaf` induces a copresheaf on `Over x`, i.e.,
 a functor from `Over x` to `Type v`. Objects `(f : y ⟶ x)` in `Over x` map to
@@ -1362,6 +1381,7 @@ private lemma coTwHomMk'_id_id_eq_eqToHom {cod dom : C} (arr arr' : cod ⟶ dom)
   · simp only [coTwHomMk'_codArr]
     rfl
 
+set_option backward.isDefEq.respectTransparency false in
 private lemma TwArrOpPresheaf.sliceNatTrans_id_app_is_id
     (F : TwArrOpPresheaf C) (x : C) (f : Over x) :
     (F.sliceNatTrans C (@CategoryStruct.id C _ x)).app f =
@@ -1378,6 +1398,7 @@ private lemma TwArrOpPresheaf.sliceNatTrans_id_app_is_id
     exact h
   rw [hmor, eqToHom_map]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Identity coherence for sliceGrothendieckHomFiber.
 -/
@@ -1394,6 +1415,7 @@ lemma TwArrOpPresheaf.sliceGrothendieck_hom_id (F : TwArrOpPresheaf C) :
   refine Eq.trans h ?_
   congr 1
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Composition coherence for sliceGrothendieckHomFiber.
 -/
@@ -1796,6 +1818,7 @@ theorem profunctorSwapOp_obj_obj
     CategoryTheory.Equivalence.trans,
     CategoryTheory.prodOpEquiv]
 
+set_option backward.isDefEq.respectTransparency false in
 @[simp]
 theorem profunctorSwapOp_obj_map
     (P : Cᵒᵖ ⥤ C ⥤ D)
@@ -1815,6 +1838,7 @@ theorem profunctorSwapOp_obj_map
     CategoryTheory.prodOpEquiv]
   simp
 
+set_option backward.isDefEq.respectTransparency false in
 @[simp]
 theorem profunctorSwapOp_map_app
     (P : Cᵒᵖ ⥤ C ⥤ D)
@@ -1850,6 +1874,7 @@ private theorem profSwapOp_opCoTw_obj_eq
   rw [coTwistedArrowOpEquiv_obj_dom,
     coTwistedArrowOpEquiv_obj_cod]
 
+set_option backward.isDefEq.respectTransparency false in
 private theorem profSwapOp_map_nat_aux
     (P : Cᵒᵖ ⥤ C ⥤ D)
     {tw tw' : CoTwistedArrow C}
@@ -1916,6 +1941,7 @@ private theorem profOpCoTw_opOp_swapOp_obj_eq
   rw [coTwistedArrowOpEquiv_obj_dom,
     coTwistedArrowOpEquiv_obj_cod]
 
+set_option backward.isDefEq.respectTransparency false in
 private theorem profOpCoTw_opOp_swapOp_nat_aux
     (P : Cᵒᵖ ⥤ C ⥤ D)
     {tw tw' : CoTwistedArrow C}

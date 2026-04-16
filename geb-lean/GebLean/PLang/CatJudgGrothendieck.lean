@@ -281,6 +281,7 @@ The covariant functor from QuiverGr to Cat sending each quiver to its
 category of identity witness bundles.
 -/
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The identity witness functor: sends quivers to categories of identity
     witness bundles, with pushforward as the functorial action.
 
@@ -527,6 +528,7 @@ theorem CompWitBundle.pushforward_comp.{uObj, uMor, uWit, uCWit}
 
 /-! ### The Composition Witness Functor -/
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The composition witness functor: sends IdWitGr objects to categories of
     composition witness bundles, with pushforward as the functorial action.
 

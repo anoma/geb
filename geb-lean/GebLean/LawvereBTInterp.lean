@@ -1170,6 +1170,7 @@ private theorem norm0_fold_commute
           bt j)) :=
   norm0_fold_commute_gen m base g ih_g bt j
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Ground normalization: every `BTMor1 k` term,
 when substituted with ground values satisfying
 the normalization property, is `btMorRel 0`

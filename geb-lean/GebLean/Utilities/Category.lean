@@ -2730,6 +2730,7 @@ def catCovarHomFunctor (C : Cat.{v₁, u₁}) :
     exact (Functor.whiskeringRight_obj_comp
       (E := ↑C) G.toFunctor H.toFunctor).symm
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The contravariant action of a morphism `f : C ⟶ C'` in
 `Catᵒᵖ` on the hom-profunctor.  Produces a natural
@@ -2900,6 +2901,7 @@ lemma catCovarHomFunctor_eq_ihom
 
 /-! #### Level 4: Profunctor map equality -/
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The profunctor maps agree: `catHomProfunctor.map f`
 equals `internalHom.map f` (as natural transformations
@@ -2924,6 +2926,7 @@ lemma catHomProfunctor_map_eq_internalHom_map
 
 /-! #### Level 5: Full profunctor equality -/
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 When all universe levels coincide, `catHomProfunctor`
 equals `internalHom` from `Cat`'s cartesian closed

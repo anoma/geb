@@ -1401,6 +1401,7 @@ def eatAdjunctionCounit (T : IndexedEAT X) [EATHasQuotient T] :
     simp only [Functor.comp_obj, Functor.comp_map, Endofunctor.Algebra.forget]
     exact hEqLHS.trans hEqRHS.symm
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The L ⊣ Φ adjunction for EATs with quotient structure.
 L : Over X → EATModel T (the quotient functor)

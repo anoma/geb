@@ -22,6 +22,7 @@ theorem profOnCoTwArr_profPullback
   exact _root_.CategoryTheory.Functor.ext
     (fun tw => rfl)
 
+set_option backward.isDefEq.respectTransparency false in
 theorem profOnTwArr_profPullback
     (G : Cᵒᵖ ⥤ C ⥤ D) (F : E ⥤ C) :
     profunctorOnTwistedArrow E (profPullback G F) =
@@ -37,6 +38,7 @@ section WeightedCoconeDiagramEq
 variable {J : Type u₂} [Category.{v} J]
   {D : Type w} [Category.{v} D]
 
+set_option backward.isDefEq.respectTransparency false in
 theorem weightedCoconeDiagram_eq
     (W : Jᵒᵖ ⥤ Type v) (G : J ⥤ D) :
     weightedCoconeDiagram W G =
@@ -52,6 +54,7 @@ variable {D : Type u₂} [Category.{v} D]
   (F : C ⥤ D)
   {E : Type w} [Category.{v} E]
 
+set_option backward.isDefEq.respectTransparency false in
 private theorem comprehensiveLiftLeg_wd
     (G : D ⥤ E)
     (s : Limits.Cocone (F ⋙ G))
@@ -73,6 +76,7 @@ private theorem comprehensiveLiftLeg_wd
           Category.assoc, ← Functor.comp_map,
           s.w]
 
+set_option backward.isDefEq.respectTransparency false in
 private theorem comprehensiveCoconeForward_nat
     (G : D ⥤ E)
     (s : Limits.Cocone (F ⋙ G))
@@ -215,6 +219,7 @@ def comprehensiveCoconeEquiv
   left_inv := comprehensiveCocone_backward_forward F G
   right_inv := comprehensiveCocone_forward_backward F G
 
+set_option backward.isDefEq.respectTransparency false in
 def comprehensiveCoconeForwardFunctor
     (G : D ⥤ E) :
     Limits.Cocone (F ⋙ G) ⥤
@@ -241,6 +246,7 @@ def comprehensiveCoconeBackwardFunctor
       simp only [comprehensiveCoconeBackward]
       exact g.w ((comprehensiveE F).obj c) }
 
+set_option backward.isDefEq.respectTransparency false in
 def comprehensiveCoconeEquivalence
     (G : D ⥤ E) :
     Limits.Cocone (F ⋙ G) ≌
@@ -291,6 +297,7 @@ variable {D : Type u₂} [Category.{v} D]
   (F : C ⥤ D)
   {E : Type w} [Category.{v} E]
 
+set_option backward.isDefEq.respectTransparency false in
 private theorem comprehensiveLiftLeg_wd'
     (G : D ⥤ E)
     (s : Limits.Cone (F ⋙ G))
@@ -312,6 +319,7 @@ private theorem comprehensiveLiftLeg_wd'
           ← Category.assoc, ← Functor.comp_map,
           s.w]
 
+set_option backward.isDefEq.respectTransparency false in
 private theorem comprehensiveConeForward_nat
     (G : D ⥤ E)
     (s : Limits.Cone (F ⋙ G))
@@ -389,6 +397,7 @@ theorem comprehensiveCone_backward_forward
   dsimp
   simp only [G.map_id, Category.comp_id]
 
+set_option backward.isDefEq.respectTransparency false in
 private theorem comprehensiveCone_fwdbwd_leg
     (G : D ⥤ E)
     {pt : E}
@@ -450,6 +459,7 @@ def comprehensiveConeEquiv
   left_inv := comprehensiveCone_backward_forward F G
   right_inv := comprehensiveCone_forward_backward F G
 
+set_option backward.isDefEq.respectTransparency false in
 def comprehensiveConeForwardFunctor
     (G : D ⥤ E) :
     Limits.Cone (F ⋙ G) ⥤
@@ -477,6 +487,7 @@ def comprehensiveConeBackwardFunctor
       simp only [comprehensiveConeBackward]
       exact g.w ((comprehensiveE' F).obj c) }
 
+set_option backward.isDefEq.respectTransparency false in
 def comprehensiveConeEquivalence
     (G : D ⥤ E) :
     Limits.Cone (F ⋙ G) ≌
@@ -960,6 +971,7 @@ section WedgeWeightFunctoriality
 variable {C : Type v} [Category.{v} C]
   (H G : Cᵒᵖ ⥤ C ⥤ Type v)
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Given `η : H ⟶ G`, the induced functor between
 costructured arrow categories. At each `tw`, this
 sends a costructured arrow over

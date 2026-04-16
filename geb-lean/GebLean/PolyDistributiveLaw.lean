@@ -423,6 +423,7 @@ lemma polyDistLaw_unit_approx
         rw [← hchild]
         exact ih (m.children e)
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Unit coherence:
 `T.eta.app (D.obj A) ≫ dist.app A =
@@ -872,6 +873,7 @@ lemma polyScaleReindex_approx
     funext e
     exact ih _
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Mapping annotations by `f` after unfolding from a
 `polyScale(A, P)`-coalgebra equals unfolding from
@@ -898,6 +900,7 @@ lemma polyScaleReindex
     exact polyScaleReindex_approx
       A B P f α n _
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Naturality of the distributive law:
 `T(D(f)) ≫ lambda_B = lambda_A ≫ D(T(f))`.
@@ -952,6 +955,7 @@ to simplify the root annotation of the LHS, reducing
 to an approximation-level induction.
 -/
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The counit law applied inside `polyFreeMapAt`: mapping
 by the comultiplication then the counit is the identity.
@@ -1423,6 +1427,7 @@ lemma polyDistLaw_comul_approx_leaf
 
 /-! ### Main comultiplication coherence lemma -/
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Approximation-level comultiplication coherence:
 at every depth, the LHS (T.map(δ_A) followed by the
@@ -1462,6 +1467,7 @@ Lift `polyDistLaw_comul_approx` from approximation level
 to a morphism equality via `PolyCofix.ext`.
 -/
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Comultiplication coherence:
 `T.map(D.delta_A) ≫ dist_{DA} ≫ D.map(dist_A) =
@@ -1697,6 +1703,7 @@ lemma polyCofixUnfold_precomp (P : PolyEndo X)
   exact congrArg
     Endofunctor.Coalgebra.Hom.f h
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Naturality of `polyFreeMJoinMor` with respect to
 `polyFreeMapAt`: for any `f : A --> B`,
@@ -1841,6 +1848,7 @@ def polyDistLaw_mul_srcCoalg
       (polyCofreeCarrier A P) P) P
   str := polyDistLaw_mul_srcCoalgStr A P
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Multiplication coherence:
 `T.μ.app (D.obj A) ≫ dist.app A =

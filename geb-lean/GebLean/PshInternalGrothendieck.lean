@@ -116,6 +116,7 @@ theorem fiberHom_eqToHom_val
       fiberId X c a := by
   subst h; rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The comparison presheaf sends the identity
 Grothendieck morphism to the identity. -/
 theorem comparisonPresheafMap_id
@@ -158,6 +159,7 @@ theorem comparisonPresheafMap_id
         _⟩)).trans
     (P.action_id p.base ex.val)
 
+set_option backward.isDefEq.respectTransparency false in
 -- Chains action naturality with associativity
 -- across dependent subtype equalities.
 /-- The comparison presheaf sends a composite
@@ -533,6 +535,7 @@ theorem inverseFiberMap_id
   exact Sigma.ext hx
     (heq_of_cast_eq (congrArg G.obj hg) hcast)
 
+set_option backward.isDefEq.respectTransparency false in
 -- Chains `Grothendieck.comp_fiber`, `fiberHom_val`
 -- lemmas, and `fiberRestrict.map_id`.
 /-- The `.val` of the fiber of a `grothBaseMor`
@@ -561,6 +564,7 @@ theorem grothBaseMor_comp_fiber_val
     (congr_fun
       (X.objPresheaf.map_comp f g) x).symm
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Composition of `grothBaseMor` equals a single
 `grothBaseMor` at the composite, up to `eqToHom`
 from `fiberRestrict_comp`. -/
@@ -676,6 +680,7 @@ def grothFiberMor
         (fiberRestrict_id X c)) x).trans h) ≫
       ⟨m, ⟨rfl, rfl⟩⟩⟩
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Naturality of `grothFiberMor` with respect
 to base change: restricting along `f` then
 acting by the restricted morphism equals acting
@@ -855,6 +860,7 @@ theorem inverseAction_tgt
   ext c ⟨⟨⟨_, _⟩, m⟩, (_ : _ = fiberSrc X c m)⟩
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The `grothFiberMor` at the identity morphism,
 composed with `eqToHom` from `fiberTgt_id`, gives
 the identity in the Grothendieck category. -/
@@ -923,6 +929,7 @@ theorem inverseAction_id
     (heq_of_cast_eq (congrArg G.obj hobj) hcast)
 
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Composition of fiber Grothendieck morphisms:
 acting by `m₁` then by `m₂` equals acting by
 `compMap(m₁, m₂)`, up to `eqToHom`. -/
@@ -1136,6 +1143,7 @@ def inverseFunctor :
     apply NatTrans.ext; funext c
     ext ⟨x, e⟩; rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Every Grothendieck morphism decomposes as a
 base morphism followed by a fiber morphism
 followed by an `eqToHom`. -/
@@ -1197,6 +1205,7 @@ def grothEquivUnitInvApp
       comparisonFiber X (inversePresheaf X G) p :=
   fun ge ↦ ⟨⟨p.fiber, ge⟩, rfl⟩
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The unit round-trip is the identity. -/
 theorem grothEquivUnitApp_grothEquivUnitInvApp
     (G : X.groth ⥤ Type w)
@@ -1204,6 +1213,7 @@ theorem grothEquivUnitApp_grothEquivUnitInvApp
     grothEquivUnitApp X G p (grothEquivUnitInvApp X G p ge) = ge := by
   simp [grothEquivUnitApp, grothEquivUnitInvApp]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The unit inverse round-trip is the identity. -/
 theorem grothEquivUnitInvApp_grothEquivUnitApp
     (G : X.groth ⥤ Type w)
@@ -1609,6 +1619,7 @@ def grothEquivCounitInvNat
       exact Subtype.ext hs.symm
     exact this _ hnat _ hval.symm
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The counit inverse morphism of internal
 presheaves:
 `P ⟶ inversePresheaf X (comparisonPresheaf P)`.

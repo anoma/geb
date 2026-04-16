@@ -361,6 +361,7 @@ theorem graphSpanCollage_inv_hom_obj
   | ⟨.inl ⟨_⟩⟩ => rfl
   | ⟨.inr ⟨_⟩⟩ => rfl
 
+set_option backward.isDefEq.respectTransparency false in
 def graphSpanCollageIso :
     GraphSpanObj V E ≅Cat
     Collage (graphSpanProfunctor V E) where

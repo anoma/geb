@@ -97,6 +97,7 @@ private theorem BTMor1.foldDepth_ind_eq {n : ℕ}
       (motive := fun {_} _ => ℕ)
       (step := foldDepthStep) t = t.foldDepth := rfl
 
+set_option backward.isDefEq.respectTransparency false in
 @[simp] theorem BTMor1.foldDepth_fold {n m : ℕ}
     (f : Fin m → BTMor1 n)
     (g : Fin m → BTMor1 (m + m))

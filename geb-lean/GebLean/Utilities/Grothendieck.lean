@@ -201,6 +201,7 @@ def gcConv.{u, v, u₂, v₂} {C : Type u} [CI : Category.{v, u} C]
     ((Cat.postCompOpFunctor'.obj F').map g.base).toFunctor.obj Y.fiber :=
       eqToHom (by rw [w_base])
 
+set_option backward.isDefEq.respectTransparency false in
 @[ext (iff := false)]
 theorem gcExt.{u, v, u₂, v₂} {C : Type u} [CI : Category.{v, u} C]
   (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}) {X Y : GrothendieckContra (C := C) F'}
@@ -325,6 +326,7 @@ theorem gcf_comp_fiber.{u, v, u₂, v₂} {C : Type u}
     f.fiber
       := rfl
 
+set_option backward.isDefEq.respectTransparency false in
 theorem gcf_congr.{u, v, u₂, v₂} {C : Type u}
     [CI : Category.{v, u} C] (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂})
     {X Y : GrothendieckContra F'} {f g : gcHom F' X Y} (h : f = g) :
@@ -677,6 +679,7 @@ structure SectionData where
 variable {F}
 variable (sec : SectionData F)
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Construct a functor `C ⥤ Grothendieck F` from section data.
 
@@ -855,6 +858,7 @@ structure NatTransToData (dataG dataH : FunctorToData F (D := D)) where
 variable (dataG dataH : FunctorToData F (D := D))
 variable (nat : NatTransToData F dataG dataH)
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Construct a natural transformation between functors into the Grothendieck
 construction from bundled data.
@@ -1085,6 +1089,7 @@ def functorFromData : Grothendieck F ⥤ E :=
 
 variable {F} (H : Grothendieck F ⥤ E)
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Extract bundled data from a functor `Grothendieck F ⥤ E`:
 - `fib c := ι F c ⋙ H` extracts the fiber functors
@@ -1121,6 +1126,7 @@ def ofFunctorFrom : FunctorFromData F (E := E) where
     congr 1
     apply Grothendieck.ext <;> simp
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Round-trip: constructing a functor from extracted data gives back the original functor.
 -/
@@ -1136,6 +1142,7 @@ theorem functorFromData_ofFunctorFrom : functorFromData F (ofFunctorFrom H) = H 
     congr 1
     apply Grothendieck.ext <;> simp
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Round-trip: the fiber functors from extracted data equal the original fiber functors.
 -/
@@ -1155,6 +1162,7 @@ theorem ofFunctorFrom_functorFromData_fib :
     rw [h, Functor.map_comp, ← Category.assoc, eqToHom_map]
     simp
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Round-trip: the natural transformations from extracted data equal the original
 natural transformations at each component.
@@ -1226,6 +1234,7 @@ structure NatTransFromData where
 
 variable (natData : NatTransFromData F dataG dataH)
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Construct a natural transformation between functors from the Grothendieck
 construction from bundled data.
@@ -1252,6 +1261,7 @@ def ofNatTransFromFibNat : NatTransFromFib F dataG dataH := fun c =>
   Functor.whiskerLeft (Grothendieck.ι F c) α ≫
   eqToHom (congrFun (ofFunctorFrom_functorFromData_fib dataH) c)
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Extract `NatTransFromData` from a natural transformation between functors
 from the Grothendieck construction.
@@ -1268,6 +1278,7 @@ def ofNatTransFrom : NatTransFromData F dataG dataH where
     simp only [eqToHom_refl', Category.id_comp, Category.comp_id, Grothendieck.ι_obj]
     exact nat
 
+set_option backward.isDefEq.respectTransparency false in
 variable (dataG dataH) in
 /--
 Converting a natural transformation to data and back gives the original.
@@ -1279,6 +1290,7 @@ theorem natTransFrom_ofNatTransFrom :
     NatTrans.comp_app, Functor.whiskerLeft_app, eqToHom_app]
   simp only [eqToHom_refl', Category.id_comp, Category.comp_id, Grothendieck.ι_obj]
 
+set_option backward.isDefEq.respectTransparency false in
 variable (dataG dataH) in
 /--
 Converting data to a natural transformation and back gives the original.
@@ -1316,6 +1328,7 @@ def NatTransFromData.id : NatTransFromData F data data where
 
 variable (dataK : FunctorFromData F (E := E))
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Composition of `NatTransFromData` values.
 -/
@@ -1343,6 +1356,7 @@ theorem natTransFrom_id :
 variable (natDataGH : NatTransFromData F dataG dataH)
 variable (natDataHK : NatTransFromData F dataH dataK)
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 `natTransFrom` preserves composition.
 -/
@@ -1395,6 +1409,7 @@ lemma eqToHom_comp_natTrans_comp_app {A : Type*} [Category A]
   simp only [← Category.assoc]
   simp only [eqToHom_trans, eqToHom_refl, Category.id_comp]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Functor from the functor category `Grothendieck F ⥤ E` to `FunctorFromData F`.
 Sends `H` to `ofFunctorFrom H` and morphisms via round-trip through `functorFromData`.
@@ -1435,6 +1450,7 @@ def functorFromDataEquivCounitIso :
       simp only [eqToIso.hom, Category.assoc]
       simp only [eqToHom_trans, eqToHom_refl, Category.comp_id])
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Forward morphism for the unit isomorphism: `data ⟶ ofFunctorFrom (functorFromData F data)`.
 Uses the equality `ofFunctorFrom_functorFromData_fib` to build the natural transformation.
@@ -1448,6 +1464,7 @@ def functorFromDataEquivUnitHom (data : FunctorFromData F (E := E)) :
     simp only [ofFunctorFrom_functorFromData_hom_app, eqToHom_refl', Category.id_comp]
     rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Backward morphism for the unit isomorphism: `ofFunctorFrom (functorFromData F data) ⟶ data`.
 -/
@@ -1483,6 +1500,7 @@ def functorFromDataEquivUnitComponent (data : FunctorFromData F (E := E)) :
             simp only [functorFromDataEquivUnitHom, functorFromDataEquivUnitInv,
               NatTransFromData.comp, NatTransFromData.id, eqToHom_trans, eqToHom_refl] }
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Unit isomorphism for the equivalence.
 -/
@@ -1795,6 +1813,7 @@ theorem grothendieckContraIsoHomMapId_fiber_components
     (gcf_id_base_eq F' ⟨base, fiber⟩)
     (id_base_eq ⟨base, fiber⟩).symm
 
+set_option backward.isDefEq.respectTransparency false in
 theorem grothendieckContraIsoHomMapId
     (X : GrothendieckContra F') :
     grothendieckContraIsoHomMap (gcId F' X) = 𝟙 (grothendieckContraIsoHomObj X) := by
@@ -1855,6 +1874,7 @@ theorem grothendieckContraIsoHomMapComp_fiber_components
   rw [gcf_comp_fiber]
   exact grothendieckContraIsoHomMapComp_fiber_eq f g
 
+set_option backward.isDefEq.respectTransparency false in
 theorem grothendieckContraIsoHomMapComp
     {X Y Z : GrothendieckContra F'}
     (f : gcHom F' X Y)
@@ -1899,6 +1919,7 @@ theorem grothendieckContraIsoInvMapId_fiber_components
      cat_id_fiber, gcf_id_fiber]
   exact (Cat.eqToHom_postCompOp_eq F' base _ _).symm
 
+set_option backward.isDefEq.respectTransparency false in
 theorem grothendieckContraIsoInvMapId
     (X : GrothendieckContra' F') :
     grothendieckContraIsoInvMap (𝟙 X) = gcId F' (grothendieckContraIsoInvObj X) := by
@@ -1955,6 +1976,7 @@ theorem grothendieckContraIsoInvMapComp_fiber_components
   simp only []
   exact grothendieckContraIsoInvMapComp_fiber_eq f g
 
+set_option backward.isDefEq.respectTransparency false in
 theorem grothendieckContraIsoInvMapComp
     {X Y Z : GrothendieckContra' F'} (f : X ⟶ Y) (g : Y ⟶ Z) :
     grothendieckContraIsoInvMap (f ≫ g) =
@@ -1972,6 +1994,7 @@ def grothendieckContraIsoInv :
   map_id := grothendieckContraIsoInvMapId
   map_comp := grothendieckContraIsoInvMapComp
 
+set_option backward.isDefEq.respectTransparency false in
 theorem grothendieckContraIsoHomInvId :
     grothendieckContraIsoHom ⋙ grothendieckContraIsoInv = 𝟭 (GrothendieckContraCat F') := by
   fapply _root_.CategoryTheory.Functor.ext
@@ -1983,6 +2006,7 @@ theorem grothendieckContraIsoHomInvId :
     simp
     rfl
 
+set_option backward.isDefEq.respectTransparency false in
 theorem grothendieckContraIsoInvHomId :
     grothendieckContraIsoInv ⋙ grothendieckContraIsoHom = 𝟭 (GrothendieckContra' F') := by
   fapply _root_.CategoryTheory.Functor.ext
@@ -2306,6 +2330,7 @@ private lemma map_inv_hom_eq_id {X Y : GrothendieckContraCat F'} (e₁ : X.base 
     F'.map e₁.inv ≫ F'.map e₁.hom = F'.map (𝟙 Y.base) := by
   rw [← F'.map_comp, e₁.inv_hom_id]
 
+set_option backward.isDefEq.respectTransparency false in
 @[simps!]
 def isoMk_cov {X Y : GrothendieckContraCat F'} (e₁ : X.base ≅ Y.base)
     (e₂ : X.fiber ≅ (F'.map e₁.inv).toFunctor.obj Y.fiber) :
@@ -2439,6 +2464,7 @@ def map (α : F' ⟶ G') : GrothendieckContra' F' ⥤ GrothendieckContra' G' :=
 theorem map_obj (α : F' ⟶ G') (X : GrothendieckContra' F') :
     (map α).obj X = ⟨X.base, (α.app X.base).toFunctor.obj X.fiber⟩ := rfl
 
+set_option backward.isDefEq.respectTransparency false in
 @[simp]
 theorem map_map (α : F' ⟶ G') {X Y : GrothendieckContra' F'} (f : X ⟶ Y) :
     (map α).map f = ⟨f.base, (α.app X.base).toFunctor.map f.fiber ≫
@@ -2468,6 +2494,7 @@ theorem catHom_comp_forget {α : F' ⟶ G'} :
     (GrothendieckContra'.forget F').toCatHom :=
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 @[simp]
 theorem map_id_eq : map (𝟙 F') = 𝟭 (GrothendieckContra' F') := by
   fapply _root_.CategoryTheory.Functor.ext
@@ -2480,6 +2507,7 @@ theorem map_id_eq : map (𝟙 F') = 𝟭 (GrothendieckContra' F') := by
 def mapIdIso : map (𝟙 F') ≅ 𝟭 (GrothendieckContra' F') :=
   eqToIso map_id_eq
 
+set_option backward.isDefEq.respectTransparency false in
 @[simp]
 theorem map_comp_eq (α : F' ⟶ G') (β : G' ⟶ H') :
     map (α ≫ β) = map α ⋙ map β := by
@@ -2578,6 +2606,7 @@ theorem compAsSmallFunctorEquivalenceInverse_obj (X : GrothendieckContra' F') :
       ⟨X.base, AsSmall.up.obj X.fiber⟩ := by
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 theorem compAsSmallFunctorEquivalenceInverse_map
     {X Y : GrothendieckContra' F'} (f : X ⟶ Y) :
     (compAsSmallFunctorEquivalenceInverse (F' := F')).map f =
@@ -2595,6 +2624,7 @@ theorem compAsSmallFunctorEquivalenceInverse_map
   simp only [transferFromCov_map, transferredMap,
     compAsSmallFunctorEquivalenceInverse_cov_map]
 
+set_option backward.isDefEq.respectTransparency false in
 def compAsSmallFunctorEquivalence :
     GrothendieckContra' (F' ⋙ Cat.asSmallFunctor.{w}) ≌
     GrothendieckContra' F' where
@@ -2603,6 +2633,7 @@ def compAsSmallFunctorEquivalence :
   unitIso := Iso.refl _
   counitIso := Iso.refl _
 
+set_option backward.isDefEq.respectTransparency false in
 def mapWhiskerRightAsSmallFunctor (α : F' ⟶ G') :
     map (Functor.whiskerRight α Cat.asSmallFunctor.{w}) ≅
     compAsSmallFunctorEquivalenceFunctor ⋙ map α ⋙
@@ -2637,6 +2668,7 @@ end UniverseScaling
 
 end Functoriality
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The contravariant Grothendieck construction as a functor from the functor
 category `(Cᵒᵖ' ⥤ Cat)` to the over category over the base category.
@@ -2700,6 +2732,7 @@ def discrete_eqToHom_of_eq {X : Type w} {a b : X} (h : a = b) :
   Discrete.eqToHom (by rw [h])
 
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The inverse functor from the contravariant category of elements to the
 contravariant Grothendieck construction.
@@ -2721,6 +2754,7 @@ def grothendieckTypeToCatInverse :
       simp only [Category.comp_id]
       apply Subsingleton.elim
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Equivalence between the contravariant Grothendieck construction on `F' ⋙ typeToCat`
 and the contravariant category of elements of `F'`.
@@ -2812,6 +2846,7 @@ theorem pre_obj (G : D ⥤ C) (X : GrothendieckContra' (functorOp'Obj G ⋙ F'))
   simp only [transferFromCov_obj, transferredObj]
   rw [pre_cov_obj]
 
+set_option backward.isDefEq.respectTransparency false in
 @[simp]
 theorem pre_map (G : D ⥤ C) {X Y : GrothendieckContra' (functorOp'Obj G ⋙ F')} (f : X ⟶ Y) :
     (pre F' G).map f = ⟨G.map f.base, f.fiber⟩ := by
@@ -3069,6 +3104,7 @@ def ι_map_fiber (c : C) {d : F'.obj c} :
     simp only [Cat.id_eq_id, Functor.id_obj] at deq
     exact deq
 
+set_option backward.isDefEq.respectTransparency false in
 def ι_map (c : C) {d d' : F'.obj c} (f : d ⟶ d') :
   (ι c).map f = ⟨𝟙 c, f ≫ eqToHom (ι_map_fiber c (d := d'))⟩ := by
     simp only [Cat.of_α, CategoryOp'.eq_1]
@@ -3095,6 +3131,7 @@ The covariant fiber inclusion functor is faithful.
 abbrev faithful_ι_cov (c : C) : (ι_cov (F' := F') c).Faithful :=
   op'_faithful (Grothendieck.ι (Cat.postCompOpFunctor'.obj F') c)
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The fiber inclusion functor is faithful.
 -/
@@ -3105,6 +3142,7 @@ instance faithful_ι (c : C) : (ι (F' := F') c).Faithful := by
   unfold gcCodFuncToGcContra'
   infer_instance
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Natural transformation induced by a morphism in the base category.
 For f : c ⟶ d in C (viewed as d ⟶ c in Cᵒᵖ'), the natural transformation
@@ -3145,6 +3183,7 @@ variable (hom_comp : ∀ {c d e : C} (f : c ⟶ d) (g : d ⟶ e),
     eqToHom (congrArg (· ⋙ fib c) (congrArg Cat.Hom.toFunctor (F'.map_comp g f))) ≫
     Functor.whiskerLeft (F'.map g).toFunctor (hom f) ≫ hom g)
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Construct a functor from the contravariant Grothendieck construction given
 compatible functors from each fiber.
@@ -3186,6 +3225,7 @@ def functorFrom : GrothendieckContra' F' ⥤ T where
     rw [NatTrans.naturality (hom f.base) g.fiber]
     simp
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The fiber inclusion composed with `functorFrom` recovers the original fiber functor.
 -/
@@ -3204,6 +3244,7 @@ def ιCompFunctorFrom (c : C) :
     )
 
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Interaction between fiber inclusion and `map`.
 -/
@@ -3286,6 +3327,7 @@ structure FunctorFromData where
 
 variable (data : FunctorFromData (F' := F') (T := T))
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Construct a functor from the contravariant Grothendieck construction using bundled data.
 This wraps `GrothendieckContra'.functorFrom`.
@@ -3295,6 +3337,7 @@ def functorFromData : GrothendieckContra' F' ⥤ T :=
 
 variable (H : GrothendieckContra' F' ⥤ T)
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Extract bundled data from a functor `GrothendieckContra' F' ⥤ T`:
 - `fib' c := ι c ⋙ H` extracts the fiber functors
@@ -3335,6 +3378,7 @@ def ofFunctorFrom : FunctorFromData (F' := F') (T := T) where
     · simp [base_eqToHom, Category.id_comp]
     · simp [Category.id_comp, eqToHom_refl]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Round-trip: constructing a functor from extracted data gives back the original functor.
 -/
@@ -3362,6 +3406,7 @@ theorem functorFromData_ofFunctorFrom : functorFromData (ofFunctorFrom H) = H :=
       eqToHom_trans, eqToHom_refl,
       Category.comp_id]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Round-trip: the fiber functors from extracted data equal the original fiber functors.
 -/
@@ -3382,6 +3427,7 @@ theorem ofFunctorFrom_functorFromData_fib :
     simp only [Functor.map_comp, eqToHom_map, eqToHom_trans,
       Category.assoc, Category.id_comp, Category.comp_id, eqToHom_refl']
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Round-trip: the natural transformations from extracted data equal the original
 natural transformations at each component.
@@ -3448,6 +3494,7 @@ structure NatTransFromData where
 
 variable (natData : NatTransFromData (F' := F') dataG dataH)
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Construct a natural transformation between functors from the contravariant
 Grothendieck construction from bundled data.
@@ -3474,6 +3521,7 @@ def ofNatTransFromDataFibNat : NatTransFromDataFib (F' := F') dataG dataH := fun
   Functor.whiskerLeft (ι (F' := F') c) α ≫
   eqToHom (congrFun (ofFunctorFrom_functorFromData_fib dataH) c)
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Extract `NatTransFromData` from a natural transformation between functors
 from the contravariant Grothendieck construction.
@@ -3490,6 +3538,7 @@ def ofNatTransFromData : NatTransFromData (F' := F') dataG dataH where
     simp only [eqToHom_refl', Category.id_comp, Category.comp_id, ι_obj]
     exact nat.symm
 
+set_option backward.isDefEq.respectTransparency false in
 variable (dataG dataH) in
 /--
 Converting a natural transformation to data and back gives the original
@@ -3502,6 +3551,7 @@ theorem natTransFromData_ofNatTransFromData :
     NatTrans.comp_app, Functor.whiskerLeft_app, eqToHom_app]
   simp only [eqToHom_refl', Category.id_comp, Category.comp_id, ι_obj]
 
+set_option backward.isDefEq.respectTransparency false in
 variable (dataG dataH) in
 /--
 Converting data to a natural transformation and back gives the original
@@ -3540,6 +3590,7 @@ def NatTransFromData.id : NatTransFromData (F' := F') data data where
 
 variable (dataK : FunctorFromData (F' := F') (T := T))
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Composition of `NatTransFromData` values (contravariant case).
 -/
@@ -3567,6 +3618,7 @@ theorem natTransFromData_id :
 variable (natDataGH : NatTransFromData (F' := F') dataG dataH)
 variable (natDataHK : NatTransFromData (F' := F') dataH dataK)
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 `natTransFromData` preserves composition (contravariant case).
 -/
@@ -3624,6 +3676,7 @@ lemma eqToHom_comp_natTrans_comp_app' {A : Type*} [Category A]
   simp only [← Category.assoc]
   simp only [eqToHom_trans, eqToHom_refl, Category.id_comp]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Functor from the functor category `GrothendieckContra' F' ⥤ T` to `FunctorFromData F'`.
 Sends `H` to `ofFunctorFrom H` and morphisms via round-trip through `functorFromData`.
@@ -3667,6 +3720,7 @@ def functorFromDataEquivCounitIso :
       simp only [eqToIso.hom, Category.assoc]
       simp only [eqToHom_trans, eqToHom_refl, Category.comp_id])
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Forward morphism for the unit isomorphism:
 `data ⟶ ofFunctorFrom (functorFromData data)` (contravariant case).
@@ -3682,6 +3736,7 @@ def functorFromDataEquivUnitHom (data : FunctorFromData (F' := F') (T := T)) :
       Category.comp_id]
     simp
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Backward morphism for the unit isomorphism:
 `ofFunctorFrom (functorFromData data) ⟶ data` (contravariant case).
@@ -3718,6 +3773,7 @@ def functorFromDataEquivUnitComponent (data : FunctorFromData (F' := F') (T := T
             simp only [functorFromDataEquivUnitHom, functorFromDataEquivUnitInv,
               NatTransFromData.comp, NatTransFromData.id, eqToHom_trans, eqToHom_refl] }
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Unit isomorphism for the equivalence (contravariant case).
 -/
@@ -4146,6 +4202,7 @@ def FunctorToData.toFunctorViaPreContra
     D ⥤ GrothendieckContra' F' :=
   sec.toFunctor ⋙ pre F' baseFunc
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The two ways of constructing a functor from contravariant `FunctorToData` agree.
 
@@ -4246,6 +4303,7 @@ structure NatTransToData (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂})
 variable (dataG dataH : FunctorToData F' (E := E))
 variable (nat : NatTransToData F' dataG dataH)
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Construct a natural transformation between functors into the contravariant
 Grothendieck construction from bundled data.
@@ -4628,6 +4686,7 @@ def functorBetweenInnerHom (c : C) {x y : G.obj c} (φ : x ⟶ y) :
   eqToHom (functorBetweenInnerHom_eq G F data c x) ≫
     (data.fibFib c).map φ
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Identity coherence for the inner FunctorTo. Trivial since the base is constant.
 -/
@@ -4650,6 +4709,7 @@ lemma functor_map_of_eq_id {E : Type*} [Category E] {A : E ⥤ E}
   subst H
   simp
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Composition coherence for the inner FunctorTo.
 -/
@@ -4669,6 +4729,7 @@ theorem functorBetweenInnerHom_comp (c : C) {x y z : G.obj c}
   rw [functor_map_of_eq_id hFid]
   cat_disch
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The proof term from `functorBetweenInnerHom` can be expressed explicitly.
 Since the base functor is constant, `(F.map (𝟙 d)).obj x = x`.
@@ -4682,6 +4743,7 @@ lemma functorBetweenInnerHom_proof (c : C) (x : G.obj c) :
       𝟭 (F.obj (data.baseFib.obj c)) := congrArg Cat.Hom.toFunctor (F.map_id _)
   simp only [hFid, Functor.id_obj]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The `eqToHom` from `functorBetweenInnerHom_eq` is identity on objects after applying `F.map_id`.
 This is because `(F.map (𝟙 d)).obj x = (𝟭 _).obj x = x`.
@@ -4717,6 +4779,7 @@ lemma functorBetweenInnerHom_eq_transport {c : C} (x : G.obj c)
     congrArg Cat.Hom.toFunctor (F.map_id _)
   simp only [h, Functor.id_obj]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Transport of `functorBetweenInnerHom` through `(F.map g).toFunctor.map` relates to
 the underlying `(data.fibFib c).toFunctor.map φ` via `eqToHom`.
@@ -4764,6 +4827,7 @@ def functorBetweenHomNatApp {c c' : C} (f : c ⟶ c') (x : G.obj c) :
     (functorBetweenFibFunc G F data c').obj ((G.map f).toFunctor.obj x) :=
   ⟨data.baseFib.map f, data.fibHomCrossApp f x⟩
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Naturality of `functorBetweenHomNatApp`: for `φ : x ⟶ y` in `G.obj c`,
 the square commutes.
@@ -4802,6 +4866,7 @@ def functorBetweenHomNat {c c' : C} (f : c ⟶ c') :
   app := functorBetweenHomNatApp G F data f
   naturality _ _ φ := functorBetweenHomNat_naturality G F data f φ
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Identity coherence for the outer FunctorFrom construction.
 -/
@@ -5457,6 +5522,7 @@ def LaxNatTransData.id (G : C ⥤ Cat.{vF, uF}) : LaxNatTransData G G where
     simp only [Functor.id_obj, eqToHom_refl, Category.id_comp, CategoryTheory.Functor.map_id,
       eqToHom_trans]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Composition of lax natural transformations.
 
@@ -5510,6 +5576,7 @@ to `whiskerLeft` and `whiskerRight` for ordinary natural transformations.
 
 variable {D : Type uC} [Category.{vC} D]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Left whiskering: precompose a lax natural transformation with a functor.
 
@@ -5594,6 +5661,7 @@ lemma functor_map_heq_of_eq_eqToHom' {C D : Cat} (h : C = D)
   subst hG
   exact eqToHom_map_heq' h f
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 When `G.map (𝟙 c) = 𝟭 (G.obj c)` (via functor identity law and Cat.id_eq_id),
 the `.map` of `G.map (𝟙 c)` is HEq to identity on morphisms.
@@ -5607,6 +5675,7 @@ lemma functor_map_id_heq {C : Type*} [Category C] (G : C ⥤ Cat) (c : C)
   unfold Cat.Hom.toFunctor at hG ⊢
   rw [hG, Functor.id_map]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 When `G.map (f ≫ g) = G.map f ⋙ G.map g` (functor composition law), the `.map`
 of `G.map (f ≫ g)` on a morphism `h` is HEq to composing the maps.
@@ -5681,6 +5750,7 @@ def LaxNatTransData.grothendieckTransitionObj {c c' : C} (f : c ⟶ c')
   ⟨(G.map f).toFunctor.obj X.base,
    (H.map (α.laxAppConst D f X.base)).toFunctor.obj X.fiber⟩
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Fiber coherence equation for the Grothendieck transition morphism.
 
@@ -5713,6 +5783,7 @@ def LaxNatTransData.grothendieckTransitionHom {c c' : C} (f : c ⟶ c')
     eqToHom (α.grothendieckTransition_fiber_eq D H f g) ≫
     (H.map (α.laxAppConst D f Y.base)).toFunctor.map g.fiber
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The transition functor for the Grothendieck construction along `f : c ⟶ c'`.
 -/
@@ -5804,6 +5875,7 @@ def LaxNatTransData.grothendieckTransition {c c' : C} (f : c ⟶ c') :
       -- Simplify eqToHom chains
       simp only [Category.assoc, eqToHom_trans_assoc]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Object equality for `grothendieckFunctor.map_comp`.
 
@@ -5829,6 +5901,7 @@ lemma LaxNatTransData.grothendieckFunctor_map_comp_obj {c c' c'' : C}
     apply heq_of_eq
     rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Morphism mapping equality for `grothendieckFunctor.map_comp`.
 
@@ -5911,6 +5984,7 @@ lemma LaxNatTransData.grothendieckFunctor_map_comp_map {c c' c'' : C}
     -- the eqToHom must be eqToHom rfl, so this is rfl
     rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The Grothendieck functor for a lax natural transformation `α : G ⟹ᵢₐₓ const D`
 composed with a functor `H : D ⥤ Cat`.
@@ -6013,6 +6087,7 @@ theorem LaxNatTransData.comp_assoc {G H K L : C ⥤ Cat.{vC, uC}}
   funext c x
   simp only [Functor.comp_obj, Functor.comp_map, Category.assoc, Functor.map_comp]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Left identity for lax natural transformation composition. -/
 theorem LaxNatTransData.id_comp {G H : C ⥤ Cat.{vC, uC}}
     (α : LaxNatTransData G H) :
@@ -6043,6 +6118,7 @@ instance : Category (LaxFunctorCat C) where
   comp_id := LaxNatTransData.comp_id
   assoc := LaxNatTransData.comp_assoc
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Convert a natural transformation to a lax natural transformation.
 
@@ -6421,6 +6497,7 @@ structure OplaxNatTransData (G' F' : Cᵒᵖ' ⥤ Cat.{vF, uF}) where
   /-- Composition coherence -/
   oplaxComp : OplaxNatTransOplaxComp app oplaxApp
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Identity oplax natural transformation.
 -/
@@ -6434,6 +6511,7 @@ def OplaxNatTransData.id (G' : Cᵒᵖ' ⥤ Cat.{vF, uF}) : OplaxNatTransData G'
   oplaxComp f g x := by
     simp only [CategoryTheory.Functor.map_id, Category.id_comp, eqToHom_trans, eqToHom_refl]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Composition of oplax natural transformations.
 
@@ -6550,6 +6628,7 @@ theorem OplaxNatTransData.toFunctor_map_base (α : OplaxNatTransData G' F')
 
 variable {D : Type uC} [Category.{vC} D]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Left whiskering: precompose an oplax natural transformation with a functor.
 
@@ -6606,6 +6685,7 @@ universe vC' uC'
 variable {C : Type uC'} [Category.{vC'} C] (G' : Cᵒᵖ' ⥤ Cat.{vC', uC'})
 variable {D : Type uC'} [Category.{vC'} D] (F' : Dᵒᵖ' ⥤ Cat.{vC', uC'})
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Convert a `FunctorBetweenContraData` to an `OplaxNatTransData` for the composite
 functor `functorOp'Obj baseFib ⋙ F'`.
@@ -7173,6 +7253,7 @@ section GrothendieckContraFunctorOver
 
 universe v₁₁ u₁₁
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Slice-level left-oppotization on `Cat`: given `X : Cat`, the functor
 `Over (Cat.opFunctor.obj X) ⥤ Over X` sending `(Y, f : Y ⟶ Xᵒᵖ)` to
@@ -7261,6 +7342,7 @@ universe v_sp u_sp
 
 variable {C D : Cat.{v_sp, u_sp}}
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Projection from the covariant Grothendieck of a constant-`Cat`-valued
 functor `(Functor.const D).obj X` to the fibre `X`.  On objects, sends
@@ -7285,6 +7367,7 @@ def grothOfConstProj
     rw [Grothendieck.comp_fiber]
     simp
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Projection from the contravariant Grothendieck of a constant-
 `Cat`-valued functor `(Functor.const Dᵒᵖ).obj X` to the fibre `X`.
@@ -7482,6 +7565,7 @@ theorem sliceCovFunctor.projD_naturality
   funext c
   exact Over.w (ν.app c)
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The slice-preserving covariant Grothendieck construction.
 Given `F : C ⥤ Over D`, produces an `Over (Cat.of (C × D))` object
@@ -7695,6 +7779,7 @@ theorem homFiber_mkHom
 theorem homD_id (x : ((twoSidedGrothendieckCovContra.obj H).left : Cat)) :
     homD (𝟙 x) = 𝟙 (objD x) := rfl
 
+set_option backward.isDefEq.respectTransparency false in
 @[simp]
 theorem homC_id (x : ((twoSidedGrothendieckCovContra.obj H).left : Cat)) :
     homC (𝟙 x) = 𝟙 (objC x) := by
@@ -7709,6 +7794,7 @@ theorem homD_comp
     (f : X ⟶ Y) (g : Y ⟶ Z) :
     homD (f ≫ g) = homD f ≫ homD g := rfl
 
+set_option backward.isDefEq.respectTransparency false in
 @[simp]
 theorem homC_comp
     {X Y Z : ((twoSidedGrothendieckCovContra.obj H).left : Cat)}
@@ -7720,6 +7806,7 @@ theorem homC_comp
   simp [Grothendieck.comp_base, eqToHom_unop, homC,
       Grothendieck.functor]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The fibre component of the identity morphism is a canonical
 `eqToHom`.  Property of the two-layer nested Grothendieck encoding.
@@ -7943,6 +8030,7 @@ theorem homFiber_mkHom
 theorem homC_id (x : ((twoSidedGrothendieckContraCov.obj H).left : Cat)) :
     homC (𝟙 x) = 𝟙 (objC x) := rfl
 
+set_option backward.isDefEq.respectTransparency false in
 @[simp]
 theorem homD_id (x : ((twoSidedGrothendieckContraCov.obj H).left : Cat)) :
     homD (𝟙 x) = 𝟙 (objD x) := by
@@ -7957,6 +8045,7 @@ theorem homC_comp
     (f : X ⟶ Y) (g : Y ⟶ Z) :
     homC (f ≫ g) = homC f ≫ homC g := rfl
 
+set_option backward.isDefEq.respectTransparency false in
 @[simp]
 theorem homD_comp
     {X Y Z : ((twoSidedGrothendieckContraCov.obj H).left : Cat)}
@@ -7967,6 +8056,7 @@ theorem homD_comp
   simp [Grothendieck.comp_base, homD, Grothendieck.functor,
       grothendieckContraFunctorOver, Cat.Over.leftOp]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The fibre component of the identity morphism is a canonical
 `eqToHom`.  Property of the two-layer nested Grothendieck encoding
@@ -8243,6 +8333,7 @@ abbrev catOverCatTotal :=
     Cat.{max v₉ u₉, max (v₉+1) (u₉+1)}).obj
     catOverCatFunctor.{v₉, u₉}
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The unstraightening functor from `catOverCat` to `Cat`, sending
 each pair `(E : Cat, G : E ⥤ Cat)` to `Grothendieck G`, and a

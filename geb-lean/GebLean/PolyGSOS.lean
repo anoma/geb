@@ -704,6 +704,7 @@ lemma polyGSOSDistLaw_unit_approx
         rw [← hchild]
         exact ih (m.children e)
 
+set_option backward.isDefEq.respectTransparency false in
 lemma polyGSOSDistLaw_unit
     (A : Over X) (P Q : PolyEndo X)
     (rho : PolyGSOSRule P Q) :
@@ -797,6 +798,7 @@ def polyGSOSFoldQIndex
   (polyGSOSFoldCataWithFiber
     A P Q rho t).val.val.2.2.1
 
+set_option backward.isDefEq.respectTransparency false in
 lemma polyGSOSFoldQIndex_leaf
     (A : Over X) (P Q : PolyEndo X)
     (rho : PolyGSOSRule P Q) {x : X}
@@ -811,6 +813,7 @@ lemma polyGSOSFoldQIndex_leaf
     polyGSOSFoldCataWithFiber,
     polyGSOSFoldLeafAt]
 
+set_option backward.isDefEq.respectTransparency false in
 lemma polyGSOSFoldQIndex_node_unfold
     (A : Over X) (P Q : PolyEndo X)
     (rho : PolyGSOSRule P Q) {x : X}
@@ -1265,6 +1268,7 @@ private lemma subst_sigma_fst_irrel
     (p₂ ▸ (⟨i, m₂⟩ : Σ j, G a j)).fst := by
   subst p₁; rfl
 
+set_option backward.isDefEq.respectTransparency false in
 private lemma mor_to_pbe_fiber_index_postcomp
     (f : PolyEndo X) (A B : Over X)
     {C : Over X} (hMor : C ⟶ polyBetweenEval X X f A)
@@ -1441,6 +1445,7 @@ private lemma polyFreeMJoinEval_natural
     (polyFreeMCarrier B P)
     P (polyFreeMap A B P g) eval
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 `polyFreeMJoinEval` naturality for the monad
 multiplication `mu = polyFreeCounitFold P
@@ -1479,6 +1484,7 @@ private lemma polyFreeMJoinMor_assoc
   simp only [hmu]
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 private lemma polyFreeMJoinEval_mu_natural
     (A : Over X) (P : PolyEndo X) :
     polyFreeMJoinEval
@@ -1524,6 +1530,7 @@ private lemma polyFreeMJoinEval_mu_natural
         (polyFreeAlg A P))
       eval)
 
+set_option backward.isDefEq.respectTransparency false in
 private lemma polyGSOSFoldNodeAt_snd_natural
     (A B : Over X) (P Q : PolyEndo X)
     (rho : PolyGSOSRule P Q) (f : A ⟶ B)
@@ -1654,6 +1661,7 @@ private lemma polyGSOSFoldNodeAt_snd_natural
       A B P Q rho f (children e)).symm
   · exact ih e
 
+set_option backward.isDefEq.respectTransparency false in
 private lemma polyGSOSFoldNodeAtGen_qeval_natural
     (B1 B2 : Over X) (P Q : PolyEndo X)
     (rho : PolyGSOSRule P Q)
@@ -1962,6 +1970,7 @@ lemma polyGSOSScaleCoalg_morphism_h
                 children))
             he
 
+set_option backward.isDefEq.respectTransparency false in
 lemma polyGSOSDistLaw_naturality
     (A B : Over X) (P Q : PolyEndo X)
     (rho : PolyGSOSRule P Q) (f : A ⟶ B) :
@@ -2035,6 +2044,7 @@ def polyGSOSDistLawNat
   naturality := fun {A B} f =>
     polyGSOSDistLawNat_naturality A B P Q rho f
 
+set_option backward.isDefEq.respectTransparency false in
 private lemma polyGSOSDistLaw_comul_annot_eq
     (A : Over X) (P Q : PolyEndo X) {x : X}
     (t : PolyFreeM
@@ -2148,6 +2158,7 @@ lemma polyCoalgUnit_eq_polyCofixUnfold_approx
     intro e
     exact ih _ _
 
+set_option backward.isDefEq.respectTransparency false in
 lemma polyCoalgUnit_eq_polyCofixUnfold
     (Q : PolyEndo X) (β : PolyCoalg Q) :
     polyCoalgUnit Q β =
@@ -2247,6 +2258,7 @@ def polyGSOSDistLaw_comul_srcCoalg
   str := polyGSOSDistLaw_comul_srcCoalgStr
     A P Q rho
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 `λ_A` is a `polyScale(D_Q(TA), Q)`-coalgebra morphism
 from `srcCoalg` to `polyCoalgToScaleCoalg Q (polyCofreeCoalg TA Q)`.
@@ -2424,6 +2436,7 @@ private lemma polyGSOSFoldFst_natural_delta
         at this
       exact this
 
+set_option backward.isDefEq.respectTransparency false in
 private lemma polyGSOSFoldLeafAt_snd_natural_delta
     (A : Over X) (P Q : PolyEndo X)
     {x : X}
@@ -2514,6 +2527,7 @@ private lemma polyGSOSFoldLeafAt_snd_natural_delta
       convert congrArg mkLeaf hval
         using 1)))
 
+set_option backward.isDefEq.respectTransparency false in
 private lemma polyGSOSFoldNodeAt_snd_natural_delta
     (A : Over X) (P Q : PolyEndo X)
     (rho : PolyGSOSRule P Q)
@@ -3155,6 +3169,7 @@ abbrev polyGSOSDistLaw_mul_rhsCoalg
     (polyGSOSScaleCoalg
       (polyFreeMCarrier A P) P Q rho)
 
+set_option backward.isDefEq.respectTransparency false in
 private lemma polyGSOSDistLaw_mul_mu_hom_leaf
     (A : Over X) (P Q : PolyEndo X)
     (rho : PolyGSOSRule P Q)
@@ -3238,6 +3253,7 @@ private lemma polyGSOSDistLaw_mul_mu_hom_leaf
   conv_rhs => rw [hmu']
   congr 1
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The Q-index produced by `srcQEvalAt` (the source
 coalgebra's Q-evaluation) equals the Q-index from
@@ -3299,6 +3315,7 @@ private lemma polyGSOSDistLaw_mul_srcQEvalAt_fst
           types_comp_apply, Over.homMk_left]
         exact ih eg
 
+set_option backward.isDefEq.respectTransparency false in
 private lemma polyGSOSFoldNodeAtGen_mu_qeval
     (A : Over X) (P Q : PolyEndo X)
     (rho : PolyGSOSRule P Q) {y : X}
@@ -3421,6 +3438,7 @@ private lemma polyGSOSFoldNodeAtGen_mu_qeval
     ccrEvalMk]
   congr 1
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The Q-evaluation from `srcQEvalAt`, post-composed
 with `mu`, equals the Q-evaluation from the fold
@@ -4016,6 +4034,7 @@ private lemma polyGSOSDistLaw_mul_tdist_leaf
     · exact congrArg Sigma.fst h_ch_at
     · exact polyFreeMLeafHEq h_ch_at
 
+set_option backward.isDefEq.respectTransparency false in
 private lemma polyGSOSDistLaw_mul_tdist_node_qidx
     (A : Over X) (P Q : PolyEndo X)
     (rho : PolyGSOSRule P Q) {x : X}
@@ -4133,6 +4152,7 @@ private lemma polyGSOSFoldCast_fst
     rfl
   | PolyFix.mk _ (Sum.inr _) _ => rfl
 
+set_option backward.isDefEq.respectTransparency false in
 private lemma polyGSOSFoldQeval_natural_mul
     (A : Over X) (P Q : PolyEndo X)
     (rho : PolyGSOSRule P Q)
@@ -4423,6 +4443,7 @@ private lemma
       (PolyFix.mk x (Sum.inr p) children))
     (cast_heq _ e)
 
+set_option backward.isDefEq.respectTransparency false in
 private lemma polyGSOSDistLaw_mul_tdist_node
     (A : Over X) (P Q : PolyEndo X)
     (rho : PolyGSOSRule P Q) {x : X}
@@ -4606,6 +4627,7 @@ lemma polyGSOSDistLaw_mul_tdist_hom
       exact polyGSOSDistLaw_mul_tdist_leaf
         A P Q rho t_a
 
+set_option backward.isDefEq.respectTransparency false in
 lemma polyGSOSDistLaw_mul
     (A : Over X) (P Q : PolyEndo X)
     (rho : PolyGSOSRule P Q) :

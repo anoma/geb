@@ -237,6 +237,7 @@ section SliceReflectivity
 
 variable (X : BundledOverCategoryData.{u, u})
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The counit of the slice adjunction at an object of Over X is an isomorphism.
 
     For an object `(A, f : A ⟶ X)` in `Over X`, the counit component is:

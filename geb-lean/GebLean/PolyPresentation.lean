@@ -96,6 +96,7 @@ theorem ext (f g : Hom X Y) (hsrc : f.srcHom = g.srcHom) (htgt : f.tgtHom = g.tg
   simp only [mk.injEq]
   exact ⟨hsrc, htgt⟩
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The identity morphism on a polynomial presentation. -/
 def id (X : PolyPresentation.{u, v, w} D) : Hom X X where
   srcHom := 𝟙 X.src
@@ -128,6 +129,7 @@ theorem comp_tgtHom (f : Hom X Y) (g : Hom Y Z) :
 
 end Hom
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The category structure on polynomial presentations. -/
 instance category : Category (PolyPresentation.{u, v, w} D) where
   Hom := Hom
@@ -485,6 +487,7 @@ of `ccrEvalFunctor`. The induced map on coequalizers is determined by the
 target component `tgtHom` of a presentation morphism.
 -/
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Two presentation morphisms with equal target components induce the same
 map on coequalizers.
@@ -711,6 +714,7 @@ theorem PolyPresentation.ofParallelPair_snd
     (F : WalkingParallelPair ⥤ CoprodCovarRepCat'.{u, v, w} D) :
     (ofParallelPair F).snd = F.map right := rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Round-trip: toParallelPair ∘ ofParallelPair = id on functors.
 -/
@@ -781,6 +785,7 @@ theorem PolyPresentation.Hom.toNatTrans_ofNatTrans
     Hom.ofNatTrans f.toNatTrans = f :=
   Hom.ext _ _ rfl rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The functor from PolyPresentation to the functor category.
 -/
@@ -815,6 +820,7 @@ def functorCatToPolyPresentation :
   map_id _ := PolyPresentation.Hom.ext _ _ rfl rfl
   map_comp _ _ := PolyPresentation.Hom.ext _ _ rfl rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The unit of the equivalence: Id ≅ functorCatToPolyPresentation ⋙ polyPresentationToFunctorCat.
 -/
@@ -854,6 +860,7 @@ def polyPresentationEquivCounit :
       simp only [eqToHom_refl, Category.id_comp, Category.comp_id]
       exact PolyPresentation.Hom.ext _ _ rfl rfl)
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The equivalence between polynomial presentations and the functor category.
 -/
@@ -1064,6 +1071,7 @@ theorem comp_tgtHom (f : PolyPresentationQ.Hom X Y) (g : PolyPresentationQ.Hom Y
 
 end PolyPresentationQ.Hom
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The quotient category structure on polynomial presentations. -/
 instance PolyPresentationQ.category : Category (PolyPresentationQ.{u, v, w} D) where
   Hom := PolyPresentationQ.Hom

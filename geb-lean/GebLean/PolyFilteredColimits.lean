@@ -41,6 +41,7 @@ instance overForgetPreservesColimitsOfSize :
 
 variable {J : Type u} [Category.{u} J] [IsFiltered J]
 
+set_option backward.isDefEq.respectTransparency false in
 set_option linter.unusedFintypeInType false in
 lemma overFilteredFactor
     {K : J ⥤ Over X} {c : Cocone K}
@@ -246,6 +247,7 @@ private lemma ccrFilteredNatApp
     types_comp_apply] at this
   exact this.symm
 
+set_option backward.isDefEq.respectTransparency false in
 private lemma ccrFilteredCoconeConsistent
     {P : CoprodCovarRepCat' (Over (X : Type u))}
     (hfin : ∀ i, Finite (ccrFamily P i).left)

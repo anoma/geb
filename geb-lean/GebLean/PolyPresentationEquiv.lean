@@ -246,6 +246,7 @@ theorem densityToFunctorApp_coequalizes (A : D) :
   simp only [types_comp_apply]
   rw [CategoryOfElements.map_snd m.hom]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The forward natural transformation from the coequalizer to F.
 -/
@@ -278,6 +279,7 @@ def functorToDensityApp (A : D) :
     F.obj A → ccrEval (densityTgt F) A :=
   fun y => ⟨⟨A, y⟩, 𝟙 A⟩
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The inverse natural transformation from F to the coequalizer.
 -/
@@ -320,6 +322,7 @@ theorem densityToFunctor_functorToDensity (A : D) (y : F.obj A) :
   simp only [densityToFunctorApp, functorToDensityApp]
   exact congrFun (F.map_id A) y
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Round-trip: functorToDensity ∘ densityToFunctor = id (up to quotient).
 -/
@@ -360,6 +363,7 @@ theorem functorToDensity_densityToFunctor (A : D)
   rw [heq1, heq2, Category.comp_id] at hcond
   exact hcond.symm
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The density isomorphism: the coequalizer of the density presentation
 is naturally isomorphic to F.
@@ -496,6 +500,7 @@ The induced maps commute with the first parallel morphism.
 theorem densityMap_fst_comm (α : F ⟶ G) :
     densitySrcMap α ≫ densityFst G = densityFst F ≫ densityTgtMap α := rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The induced maps commute with the second parallel morphism.
 -/
@@ -545,6 +550,7 @@ theorem densityPresentationMap_tgtHom (α : F ⟶ G) :
 
 variable (F)
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The identity natural transformation induces the identity morphism.
 -/
@@ -570,6 +576,7 @@ theorem densityPresentationMap_id :
 
 variable {F}
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Composition of natural transformations induces composition of morphisms.
 -/
@@ -750,6 +757,7 @@ theorem densityCoeq_eq_of_toFunctor_eq (F : D ⥤ Type (max u w v)) (A : D)
   rw [h1' x, h1' y, h1, h2]
   exact h
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The comparison morphism respects the coequalizer structure.
 -/
@@ -813,6 +821,7 @@ def comparisonMorphismQ :
   tgtHom := comparisonTgtHom X
   respects := comparisonTgtHom_respects X
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The induced map on coequalizers from the comparison morphism is the
 inverse of the density isomorphism.
@@ -865,6 +874,7 @@ The comparison morphism is natural in X.
 
 variable {X}
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The comparison morphism is natural: for f : X → Y, the square commutes.
 -/
@@ -944,6 +954,7 @@ The density isomorphism is natural with respect to natural transformations,
 making it the counit of the adjunction.
 -/
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The counit of the adjunction: E ∘ S → Id.
 This is just the density isomorphism assembled into a natural isomorphism.
@@ -1290,6 +1301,7 @@ For a Q-morphism, we only need to show that the target polynomial map
 respects the coequalizer relation. We don't need a source polynomial map.
 -/
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The inverse target map respects the setoid coequalizer relation.
 
@@ -1415,6 +1427,7 @@ def setoidForwardApp (A : D) (p : ccrEval X.tgt A) :
     ccrEval (setoidDensityTgt X.toSetoidCopresheaf) A :=
   ⟨⟨A, p⟩, 𝟙 A⟩
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The forward embedding respects X's coequalizer relation.
 If p₁ and p₂ are related by the coequalizer relation, their images are also
@@ -1475,6 +1488,7 @@ def setoidForwardQuotApp (A : D) :
   apply Quot.sound
   exact setoidForwardApp_respects X A p₁ p₂ rel
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The forward embedding is natural.
 -/
@@ -1536,6 +1550,7 @@ def setoidForwardMap :
 
 /-! ### Round-Trip Identities -/
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The composition setoidInverseInducedMap ≫ setoidForwardMap is the identity
 on the setoid density presentation's coequalizer.
@@ -1667,6 +1682,7 @@ theorem setoidComparisonTgtHom_reindex (i : ccrIndex X.tgt) :
 theorem setoidComparisonTgtHom_fiberMor (i : ccrIndex X.tgt) :
     ccrFiberMor (setoidComparisonTgtHom X) i = 𝟙 _ := rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The comparison composed with densityπ, followed by the inverse, equals X.toCopresheafπ.
 This is a helper for the main factorization theorem.
@@ -1762,6 +1778,7 @@ theorem setoidComparisonQ_toInducedMap :
   simp only [setoidComparisonQ, PolyPresentation.toQ, PolyPresentationQ.toPres]
   exact (setoidComparisonTgtHom_factor X).symm
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The composition setoidComparisonQ ≫ setoidInverseQ is equivalent to the identity.
 This means they induce the same map on coequalizers.
@@ -1782,6 +1799,7 @@ theorem setoidComparisonQ_inverseQ_equiv :
           PolyPresentationQ.toPres]
     _ = (PolyPresentationQ.Hom.id X.toQ).toInducedMap := rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The composition setoidInverseQ ≫ setoidComparisonQ is equivalent to the identity.
 This means they induce the same map on coequalizers.
@@ -1984,6 +2002,7 @@ def setoidCounitForward_witness (A : D) (x y : (F.obj A).carrier)
   let mIdx : SetoidMorphismIndex F := ⟨tgtElem, srcElem, homData⟩
   ⟨mIdx, 𝟙 A⟩
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The witness maps to the target (x's image) under fst.
 -/
@@ -2031,6 +2050,7 @@ The inverse function maps the coequalizer relation of the density presentation
 to F's setoid relation.
 -/
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The inverse function preserves the base coequalizer relation (before EqvGen).
 Given a witness w in the source polynomial, the images of fst(w) and snd(w)
@@ -2057,6 +2077,7 @@ theorem setoidCounitInverseRaw_preserves_base (A : D)
   rw [heq] at h
   exact (F.obj A).rel.symm h
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The inverse function preserves the full equivalence relation (EqvGen of base).
 -/
@@ -2081,6 +2102,7 @@ theorem setoidCounitInverseRaw_map_rel (A : D)
 
 /-! ### Round-Trip Identities -/
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Round-trip: inverse ∘ forward = id on F.obj A.
 -/
@@ -2225,6 +2247,7 @@ theorem setoidCounitForwardHom_natural_rel {A B : D} (f : A ⟶ B)
       calc f ≫ 𝟙 B = f := Category.comp_id f
         _ = 𝟙 A ≫ f := (Category.id_comp f).symm
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Naturality of the inverse SetoidHom (exact equality): for f : A ⟶ B,
 F.map f ∘ setoidCounitInverseHom A = setoidCounitInverseHom B ∘ (setoidDensity F).map f
@@ -2371,6 +2394,7 @@ theorem setoidCounitQuotientForward_natural {A B : D} (f : A ⟶ B) :
         calc f ≫ 𝟙 B = f := Category.comp_id f
           _ = 𝟙 A ≫ f := (Category.id_comp f).symm
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The inverse map is natural: for f : A ⟶ B, the diagram commutes.
 -/
@@ -2456,6 +2480,7 @@ The counit shows that E ∘ S ≅ Id, i.e., for any copresheaf F,
 (densityPresentation F).toCopresheaf ≅ F.
 -/
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The counit isomorphism at each copresheaf F.
 This is exactly densityIso F, showing that the density presentation's
@@ -2542,6 +2567,7 @@ theorem setoidToTypeDensityTgtHom_fiberMor
     (p : SetoidElements X.toSetoidCopresheaf) :
     ccrFiberMor (setoidToTypeDensityTgtHom X) p = 𝟙 _ := rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The setoid-to-type morphism respects the coequalization condition.
 -/
@@ -2615,6 +2641,7 @@ def setoidToTypeDensityQ :
   tgtHom := setoidToTypeDensityTgtHom X
   respects := setoidToTypeDensityTgtHom_respects X
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The induced map of the setoid-to-type morphism equals the composition of
 setoidInverseIso.hom with densityIso.inv.
@@ -2666,6 +2693,7 @@ theorem setoidToTypeDensityQ_toInducedMap :
   conv_rhs => rw [show 𝟙 p.fst ≫ g = g from Category.id_comp g]
   convert hnat using 2
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The setoid-to-type morphism's induced map is an isomorphism.
 -/
@@ -2702,6 +2730,7 @@ def typeComparisonQ :
     PolyPresentationQ.Hom X.toQ (densityPresentation X.toCopresheaf).toQ :=
   setoidComparisonQ X ≫ setoidToTypeDensityQ X
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The induced map of typeComparisonQ equals densityIso.inv.
 -/

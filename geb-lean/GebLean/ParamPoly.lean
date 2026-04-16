@@ -696,6 +696,7 @@ theorem functorYPOLiftPred_graph_snd
   rw [← hsnd, ← hfst, Category.assoc, ← F.map_comp]
   simp [yoneda]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- For any `g : T.unop ⟶ F.obj A`, the pair
 `(g, g ≫ F.map f)` satisfies the lifted predicate
 for the graph of `f`, witnessed by
@@ -757,6 +758,7 @@ def functorYPOLift_graphIso
         (functorYPOLiftPred_graph_snd
           F f T p hp).symm)
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The lifted predicate is preserved by Over
 morphisms: if `φ : R₁ ⟶ R₂` and
 `functorYPOLiftPred F R₁ T p`, then
@@ -863,6 +865,7 @@ theorem functorYonedaRelLift_graph
         (functorYPOLift_graphIso F f)),
     pshProdOverToRel_graph]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The lifted predicate for `S` is satisfied by
 `yonedaProdMap (F.map f) (F.map f')` applied to an
 element satisfying the predicate for `R`, given a

@@ -219,6 +219,7 @@ def ploParaElim {A X : C} (f : A ⟶ X)
     base step ≫
     cfpSnd A (cfpProd L X) ≫ cfpSnd L X
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Base-case equation for `ploParaElim`: at nil,
 the result is `f` applied to the parameter. -/
 theorem ploParaElim_nil {A X : C} (f : A ⟶ X)
@@ -233,6 +234,7 @@ theorem ploParaElim_nil {A X : C} (f : A ⟶ X)
   unfold ploParaBase
   rw [cfpLift_snd, cfpLift_snd]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Parameter invariant: the `A` component of the
 enriched catamorphism carries the input parameter
 through unchanged. -/
@@ -278,6 +280,7 @@ private theorem ploParaElim_param_inv {A X : C}
     unfold cfpAssocSnd
     rw [cfpLift_fst]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Tail invariant: the `L` component of the enriched
 catamorphism carries the input list through
 unchanged. -/
@@ -343,6 +346,7 @@ private theorem ploParaElim_tail_inv {A X : C}
     exact cfpLift_uniq _ _
       (cfpSnd A (cfpProd B L)) rfl rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Step-case equation for `ploParaElim`: at
 `cons(b, l)` with parameter `a`, the result is `g`
 applied to `(a, (b, (l, ploParaElim(a, l))))`. -/
@@ -433,6 +437,7 @@ theorem ploParaElim_cons {A X : C} (f : A ⟶ X)
         rw [← Category.assoc, cfpLift_snd,
           Category.assoc, hE]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Uniqueness for `ploParaElim`: any morphism `ψ`
 satisfying the base and step equations of the PLO
 paramorphism equals `ploParaElim f g`. -/
@@ -777,6 +782,7 @@ def psoParaElim {A X : C} (f : A ⟶ X)
     base step ≫
     cfpSnd A (cfpProd L X) ≫ cfpSnd L X
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Base-case equation for `psoParaElim`: at nil,
 the result is `f` applied to the parameter. -/
 theorem psoParaElim_nil {A X : C} (f : A ⟶ X)
@@ -822,6 +828,7 @@ private theorem psoElim_algebra_morphism
         ← Category.assoc,
         cfpLiftRecElem_postcomp])
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Parameter invariant for PSO. -/
 private theorem psoParaElim_param_inv {A X : C}
     (f : A ⟶ X)
@@ -864,6 +871,7 @@ private theorem psoParaElim_param_inv {A X : C}
     unfold cfpLiftRecElem cfpAssocFst
     rw [cfpLift_fst, cfpLift_fst]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Tail invariant for PSO. -/
 private theorem psoParaElim_tail_inv {A X : C}
     (f : A ⟶ X)
@@ -923,6 +931,7 @@ private theorem psoParaElim_tail_inv {A X : C}
     exact cfpLift_uniq _ _
       (cfpSnd A (cfpProd L B)) rfl rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Step-case equation for `psoParaElim`. -/
 theorem psoParaElim_snoc {A X : C} (f : A ⟶ X)
     (g : cfpProd A
@@ -1006,6 +1015,7 @@ theorem psoParaElim_snoc {A X : C} (f : A ⟶ X)
         rw [← Category.assoc, cfpLift_fst,
           Category.assoc, hE]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Uniqueness for `psoParaElim`. -/
 theorem psoParaElim_uniq {A X : C} (f : A ⟶ X)
     (g : cfpProd A

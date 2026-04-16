@@ -277,6 +277,7 @@ private theorem cfpTerminalFrom_zero :
     𝟙 (0 : LawvereBTQuotCat) :=
   cfpTerminalFrom_terminal
 
+set_option backward.isDefEq.respectTransparency false in
 /-- `IsLeafConst f` for `f : 0 ⟶ T` in
 LawvereBTQuotCat simplifies to `f = ℓ`. -/
 private theorem isLeafConst_zero_eq_ℓ
@@ -295,6 +296,7 @@ private theorem isLeafConst_zero_eq_ℓ
     rw [cfpTerminalFrom_zero, Category.id_comp]
     exact h
 
+set_option backward.isDefEq.respectTransparency false in
 /-- `treeFalse` in LawvereBTQuotCat equals
 `cfpTerminalFrom 0 ≫ treeFalse`. -/
 private theorem treeFalse_eq_terminal_treeFalse :
@@ -303,6 +305,7 @@ private theorem treeFalse_eq_terminal_treeFalse :
       treeFalse := by
   rw [cfpTerminalFrom_zero, Category.id_comp]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- In `LawvereBTQuotCat`, quantified transitivity
 implies equational transitivity.  This is the
 converse of `eqTransitive_implies_quant`,

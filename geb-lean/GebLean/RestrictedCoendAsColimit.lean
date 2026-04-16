@@ -249,6 +249,7 @@ theorem cowedgeLeg_dinatural (cwedge : HomToProfCowedge G pt) {x y : Over pt}
     HomToProf_obj_map] at dinat
   exact dinat.symm
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The cowedge leg at x can be expressed using the factorization through y.
 
 When `f : x ⟶ y` in `Over pt`, we have `x.hom = f.left ≫ y.hom`, so:
@@ -572,6 +573,7 @@ open HasCopowers Limits
 
 variable {C : Type u} [Category.{v} C] [HasCopowers C]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The mathlib dinaturality condition for `Cowedge (copowerProf H G)` implies
 `IsCopowerCowedgeDinatural`. -/
 theorem cowedge_dinatural_implies_copowerCowedgeDinatural
@@ -598,6 +600,7 @@ theorem cowedge_dinatural_implies_copowerCowedgeDinatural
         rw [← h]
     _ = (G.map g.op).app A ≫ inj _ _ ((H.map g.op).app A x) ≫ ω A := lhs
 
+set_option backward.isDefEq.respectTransparency false in
 /-- `IsCopowerCowedgeDinatural` implies the mathlib dinaturality condition for
 `Cowedge (copowerProf H G)`. -/
 theorem copowerCowedgeDinatural_implies_cowedge_dinatural
@@ -802,6 +805,7 @@ abbrev HomRestrictedCowedge (G : Cᵒᵖ ⥤ C ⥤ C) (pt : C) :=
 abbrev HomCopowerCowedge (G : Cᵒᵖ ⥤ C ⥤ C) (pt : C) :=
   Cowedge (copowerProf (HomToProf pt) G)
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Convert a morphism of restricted cowedges to a morphism of cowedges. -/
 def restrictedCowedgeToCopowerCowedgeHom (G : Cᵒᵖ ⥤ C ⥤ C) (pt : C)
     {rc₁ rc₂ : HomRestrictedCowedge G pt}
@@ -823,6 +827,7 @@ def restrictedCowedgeToCopowerCowedgeHom (G : Cᵒᵖ ⥤ C ⥤ C) (pt : C)
         copowerCowedge, Cowedge.mk_π, restrictedCowedgeToCopowerFamily]
       exact desc_postcomp_eq (rc₁.family b) (rc₂.family b) f.hom (fun x => f.comm b x)
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Convert a morphism of cowedges to a morphism of restricted cowedges. -/
 def copowerCowedgeToRestrictedCowedgeHom (G : Cᵒᵖ ⥤ C ⥤ C) (pt : C)
     {cw₁ cw₂ : HomCopowerCowedge G pt}
@@ -876,6 +881,7 @@ def copowerToHomRestrictedFunctor (G : Cᵒᵖ ⥤ C ⥤ C) (pt : C) :
     simp only [copowerCowedgeToRestrictedCowedgeHom]
     rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Round-trip from restricted cowedge to copower cowedge and back gives the
 original restricted cowedge. -/
 theorem copowerToRestricted_restrictedToCopower (G : Cᵒᵖ ⥤ C ⥤ C) (pt : C)
@@ -892,6 +898,7 @@ theorem copowerToRestricted_restrictedToCopower (G : Cᵒᵖ ⥤ C ⥤ C) (pt : 
       restrictedCowedgeToCopowerFamily]
     rw [fac]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Round-trip from copower cowedge to restricted cowedge and back gives the
 original copower cowedge. -/
 theorem restrictedToCopower_copowerToRestricted (G : Cᵒᵖ ⥤ C ⥤ C) (pt : C)
@@ -955,6 +962,7 @@ def homRestrictedCopowerCounitIso (G : Cᵒᵖ ⥤ C ⥤ C) (pt : C) :
         copowerCowedgeToRestrictedCowedge_pt, restrictedCowedgeToCopowerCowedge_pt,
         eqToHom_refl, Category.id_comp, Category.comp_id])
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The categorical equivalence between restricted cowedges with weight `HomToProf pt`
 and cowedges over the copower profunctor. -/
 def homRestrictedCopowerEquiv (G : Cᵒᵖ ⥤ C ⥤ C) (pt : C) :
@@ -1018,6 +1026,7 @@ theorem restrictedCowedgeToWeightedCowedge_pt (rc : HomRestrictedCowedge G pt) :
 theorem weightedCowedgeToRestrictedCowedge_pt (wc : HomWeightedCowedge G pt) :
     (restrictWeightedCowedge (HomToProf pt) G wc).pt = wc.pt := rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Convert a morphism of restricted cowedges to a morphism of weighted cowedges. -/
 def restrictedCowedgeToWeightedCowedgeHom
     {rc₁ rc₂ : HomRestrictedCowedge G pt}
@@ -1307,6 +1316,7 @@ abbrev strongToHomRestrictedFunctor :
     HomStrongRestrictedCowedge G pt ⥤ HomRestrictedCowedge G pt :=
   StrongRestrictedCowedge.inclusion G (HomToProf pt)
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The unit isomorphism for the equivalence. -/
 def homRestrictedStrongUnitIso :
     𝟭 (HomRestrictedCowedge G pt) ≅
@@ -1325,6 +1335,7 @@ def homRestrictedStrongUnitIso :
         eqToHom_refl,
         Category.comp_id, Category.id_comp])
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The counit isomorphism for the equivalence. -/
 def homRestrictedStrongCounitIso :
     strongToHomRestrictedFunctor G pt ⋙ homRestrictedToStrongFunctor G pt ≅
@@ -1402,6 +1413,7 @@ For a morphism `φ : pt → pt'` in `C`, the induced functor
 variable {C : Type u} [Category.{v} C]
 variable (G : Cᵒᵖ ⥤ C ⥤ C)
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Reindex a restricted cowedge along a morphism `φ : pt → pt'`.
 Given a cowedge at weight `HomToProf pt'`, produce a cowedge at `HomToProf pt`
 by precomposing the family indexing with `φ`. -/
@@ -1482,6 +1494,7 @@ theorem homRestrictedCowedgeReindex_comp {pt pt' pt'' : C}
     funext A f
     simp only [homRestrictedCowedgeReindex_family, Category.assoc]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The contravariant functor sending `pt` to `HomRestrictedCowedge G pt`.
 
 For `φ : pt → pt'` in `C`, the induced functor goes in the opposite direction:
@@ -1531,6 +1544,7 @@ open HasCopowers Limits
 variable {C : Type u} [Category.{v} C] [HasCopowers C]
 variable (G : Cᵒᵖ ⥤ C ⥤ C)
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The contravariant functor sending `pt` to `HomCopowerCowedge G pt`.
 
 Defined by composing through `HomRestrictedCowedge` using the equivalence. -/
@@ -1573,6 +1587,7 @@ def homCopowerCowedgeFunctor : Cᵒᵖ ⥤ Cat where
         restrictedCowedgeToCopowerCowedge_pt, homRestrictedCowedgeReindex_pt,
         eqToHom_refl, Category.id_comp, Category.comp_id]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The contravariant functor sending `pt` to `HomWeightedCowedge G pt`.
 
 Defined by composing through `HomRestrictedCowedge` using the equivalence. -/
@@ -1615,6 +1630,7 @@ def homWeightedCowedgeFunctor : Cᵒᵖ ⥤ Cat where
         restrictedCowedgeToWeightedCowedge_pt, homRestrictedCowedgeReindex_pt,
         eqToHom_refl, Category.id_comp, Category.comp_id]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The contravariant functor sending `pt` to `HomStrongRestrictedCowedge G pt`.
 
 Defined by composing through `HomRestrictedCowedge` using the equivalence. -/
@@ -1656,6 +1672,7 @@ def homStrongRestrictedCowedgeFunctor : Cᵒᵖ ⥤ Cat where
         StrongRestrictedCowedge_eqToHom_hom, StrongRestrictedCowedge_eqToHom_hom]
       simp only [eqToHom_refl, Category.id_comp, Category.comp_id]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Natural isomorphism between `homRestrictedCowedgeFunctor` and
 `homCopowerCowedgeFunctor`, with components given by the per-object
 categorical isomorphisms `homRestrictedCopowerIso`. -/
@@ -1691,6 +1708,7 @@ def homRestrictedCopowerNatIso :
           copowerCowedgeToRestrictedCowedge_pt, homRestrictedCowedgeReindex_pt,
           eqToHom_refl, Category.id_comp, Category.comp_id])
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Natural isomorphism between `homRestrictedCowedgeFunctor` and
 `homWeightedCowedgeFunctor`, with components given by the per-object
 categorical isomorphisms `homRestrictedWeightedIso`. -/
@@ -1726,6 +1744,7 @@ def homRestrictedWeightedNatIso :
           weightedCowedgeToRestrictedCowedge_pt, homRestrictedCowedgeReindex_pt,
           eqToHom_refl, Category.id_comp, Category.comp_id])
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Natural isomorphism between `homRestrictedCowedgeFunctor` and
 `homStrongRestrictedCowedgeFunctor`, with components given by the per-object
 categorical isomorphisms `homRestrictedStrongIso`. -/
@@ -1817,6 +1836,7 @@ variable {C : Type u} [Category.{v} C]
 theorem constFirstArgProf_diagonal (F : C ⥤ C) (A : C) :
     ((constFirstArgProf F).obj (op A)).obj A = F.obj A := rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- For a covariant functor `F : C ⥤ C`, the restricted cowedge with weight
 `HomToProf pt` and profunctor `constFirstArgProf F` has a canonical structure
 from any morphism `F(pt) → apex`.
@@ -2137,6 +2157,7 @@ def natTransToCoend (P : Cᵒᵖ ⥤ C ⥤ Type w) (coendPt : Type w)
     (τ : CowedgeNatTrans P) : coendPt :=
   τ.app coendPt (coendInjectionCowedge P coendPt ι hι)
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Round-trip: natTransToCoend ∘ coendToNatTrans = id.
 
 Given an element `x` of the coend, converting it to a natural transformation
@@ -2182,6 +2203,7 @@ For `tw = (A, B, f : B ⟶ A)`, there is a canonical morphism to
 def coTwToDomDiag (tw : CoTwistedArrow C) : tw ⟶ diagCoTwArr (coTwDom tw) :=
   coTwHomMk (𝟙 (coTwDom tw)) (coTwArr tw) (by simp [diagCoTwArr])
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Round-trip: coendToNatTrans ∘ natTransToCoend = id.
 
 Given a natural transformation `τ`, converting it to a coend element
@@ -2330,6 +2352,7 @@ def coendInj (P : Cᵒᵖ ⥤ C ⥤ Type w) (c : WeightedCowedge terminalProfunc
     (A : C) : diagApp P A → c.pt :=
   c.ι.app (Opposite.op (diagCoTwArr A)) PUnit.unit
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The dinaturality condition for `coendInj`.
 
 For `f : i ⟶ j` and `x : P(j,i)`, we have:
@@ -2702,6 +2725,7 @@ lemma CowedgeNatTrans.ofExplicitCoendElement_ofCowedgeNatTrans
   -- Goal: τ.app Y (ofWeightedCowedge η).toWeightedCowedge = τ.app Y η
   rw [SimplifiedCowedge.toWeightedCowedge_ofWeightedCowedge]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Round-trip: converting an explicit element to a natural transformation and
 back yields the original explicit element. -/
 lemma ExplicitCoendElement.ofCowedgeNatTrans_ofExplicitCoendElement

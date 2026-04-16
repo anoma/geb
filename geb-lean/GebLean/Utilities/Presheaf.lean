@@ -2041,6 +2041,7 @@ def rightYonedaExtFunctor :
     dsimp [rightYonedaExtFamilyAlpha]
     simp only [Category.assoc]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The counit of the right Yoneda extension at
 a fixed presheaf `P`:
 `F.op ⋙ (rightYonedaExt F).obj P ⟶ P`.
@@ -2062,6 +2063,7 @@ def rightYonedaExtCounit
     simp only [Category.comp_id] at h
     exact h.symm
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Given a natural transformation
 `β : F.op ⋙ G ⟶ P`, construct a natural
 transformation `G ⟶ (rightYonedaExt F).obj P`.
@@ -2345,6 +2347,7 @@ theorem leftYonedaExtPresheafDesc_uniq
     (congr_fun
       (hσ (Opposite.op x.1)) x.2.1)
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The left adjunction of the adjoint triple:
 `leftYonedaExt F ⊣ precompOp F`. The hom-set
 bijection sends `α : P ⟶ F.op ⋙ Q` to the
@@ -2668,6 +2671,7 @@ def rightYonedaExtAdj' {F : C ⥤ D} {G : D ⥤ C}
   ((rightYonedaExtAdj G).ofNatIsoLeft
     (rightYonedaExtIsoPrecompOp adj).symm)
 
+set_option backward.isDefEq.respectTransparency false in
 /-- When `F` is fully faithful, the inverse of
 the unit `leftYonedaExtPresheafUnit` at presheaf `P`
 and stage `c : Cᵒᵖ`. Sends the equivalence class
@@ -2894,6 +2898,7 @@ def leftYonedaExtFullyFaithful
     rw [this]
     simp
 
+set_option backward.isDefEq.respectTransparency false in
 /-- When `F` is fully faithful, the inverse of
 the counit `rightYonedaExtCounit` at presheaf `Q`
 and stage `c : Cᵒᵖ`. Sends `p : Q.obj c` to
@@ -2961,6 +2966,7 @@ theorem rightYonedaExtCounit_counitInvApp
     (𝟙 (F.obj c.unop))]
   simp [hF.map_preimage]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Naturality of `rightYonedaExtCounitInvApp`
 in the stage variable: reflecting and then
 transporting along `F.op.map f` is the same

@@ -637,6 +637,7 @@ theorem bt_fold_primrec_param
   exact hpair.comp
     (Primrec₂.pair.comp Primrec.id htree)
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Every `BTMor1 n` term computes a primitive
 recursive function when the context is built
 from a single input of any Primcodable type

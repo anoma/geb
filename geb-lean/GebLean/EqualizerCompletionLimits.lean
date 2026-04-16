@@ -491,6 +491,7 @@ def cpEqualizerInclusion :
     ⟨𝟙 X.src,
       cpEqualizerInclusion_isPremorphism f g⟩
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The equalizing condition: the inclusion
 composed with `f` equals the inclusion composed
 with `g`, as morphisms in the quotient category.

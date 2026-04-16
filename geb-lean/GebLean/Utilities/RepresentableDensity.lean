@@ -189,6 +189,7 @@ private def costrArrAdjFwd (E : PshRelEdge.{u, v, max u v} C) :
   map_id j := CostructuredArrow.hom_ext _ _ rfl
   map_comp _ _ := CostructuredArrow.hom_ext _ _ rfl
 
+set_option backward.isDefEq.respectTransparency false in
 private def costrArrAdjEquiv (E : PshRelEdge.{u, v, max u v} C) :
     CostructuredArrow pshRelEdgeRepresentableFunctor E ≌
       CostructuredArrow spanRepresentableFunctor
@@ -210,6 +211,7 @@ private def costrArrAdjEquiv (E : PshRelEdge.{u, v, max u v} C) :
         dsimp [pshRelEdgeRepresentableFunctor]
         simp [Equiv.apply_symm_apply])))
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The density instance for
 `pshRelEdgeRepresentableFunctor`:
 every `E : PshRelEdge C` is a canonical colimit
