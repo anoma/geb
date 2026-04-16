@@ -2,6 +2,8 @@ import Mathlib.CategoryTheory.Comma.Arrow
 import Mathlib.CategoryTheory.Adjunction.Reflective
 import Mathlib.CategoryTheory.Adjunction.Triple
 
+set_option backward.isDefEq.respectTransparency true
+
 namespace GebLean
 
 open CategoryTheory
@@ -29,12 +31,8 @@ def Arrow.idInclusion.fullyFaithful :
     · change sq.left = sq.right
       have h : sq.left ≫ 𝟙 Y = 𝟙 X ≫ sq.right :=
         sq.w
-      calc sq.left
-          = sq.left ≫ 𝟙 Y :=
-            (Category.comp_id sq.left).symm
-        _ = 𝟙 X ≫ sq.right := h
-        _ = sq.right :=
-            Category.id_comp sq.right
+      exact (Category.comp_id sq.left).symm.trans
+        (h.trans (Category.id_comp sq.right))
   preimage_map _ := rfl
 
 instance : (Arrow.idInclusion C).Faithful :=
@@ -61,12 +59,14 @@ def Arrow.rightFuncAdjIdInclusion :
         · change f.hom ≫ sq.right = sq.left
           have h : sq.left ≫ 𝟙 c = f.hom ≫ sq.right :=
             sq.w
-          calc f.hom ≫ sq.right
-              = sq.left ≫ 𝟙 c := h.symm
-            _ = sq.left :=
-                Category.comp_id sq.left
+          exact h.symm.trans (Category.comp_id sq.left)
         · rfl
     }
+    homEquiv_naturality_right := by
+      intro X Y Y' f g
+      apply Arrow.hom_ext
+      · exact (Category.assoc X.hom f g).symm
+      · rfl
   }
 
 instance : Reflective (Arrow.idInclusion C) where
@@ -91,12 +91,14 @@ def Arrow.idInclusionAdjLeftFunc :
         · change sq.left ≫ f.hom = sq.right
           have h : sq.left ≫ f.hom = 𝟙 c ≫ sq.right :=
             sq.w
-          calc sq.left ≫ f.hom
-              = 𝟙 c ≫ sq.right := h
-            _ = sq.right :=
-                Category.id_comp sq.right
+          exact h.trans (Category.id_comp sq.right)
       right_inv := fun _ => rfl
     }
+    homEquiv_naturality_left_symm := by
+      intro X' X Y f g
+      apply Arrow.hom_ext
+      · rfl
+      · exact Category.assoc f g Y.hom
   }
 
 instance : Coreflective (Arrow.idInclusion C) where
