@@ -3,6 +3,8 @@ import Mathlib.CategoryTheory.Limits.Shapes.Pullback.Cospan
 import Mathlib.CategoryTheory.Limits.Shapes.Pullback.PullbackCone
 import Mathlib.CategoryTheory.Adjunction.Reflective
 
+set_option backward.isDefEq.respectTransparency true
+
 open CategoryTheory Limits
 
 namespace GebLean
@@ -21,8 +23,10 @@ def arrowSpanInclusion
   obj f := span (𝟙 f.left) f.hom
   map {f g} sq :=
     spanHomMk sq.left sq.left sq.right
-      (by simp)
-      (by simp)
+      (by simp [span_map_fst])
+      (by
+        simp only [span_map_snd]
+        exact sq.w.symm)
   map_id f := by
     apply NatTrans.ext
     funext j
@@ -98,6 +102,7 @@ instance : (arrowSpanInclusion C).Faithful :=
 instance : (arrowSpanInclusion C).Full :=
   arrowSpanInclusion.fullyFaithful.full
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The reflector from span diagrams to arrows, sending
 each span to the arrow given by the left injection into
 its pushout. Parameterized by an explicit choice of
@@ -152,6 +157,7 @@ def spanArrowReflector
       dsimp
       simp only [← Category.assoc]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The unit of the arrow-span adjunction at a span
 `S`. Maps `S` to the inclusion of its reflection
 (the pushout arrow). -/
@@ -173,6 +179,7 @@ def arrowSpanAdjUnitApp
         (pushouts S).cocone.w
         WalkingSpan.Hom.fst])
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The unit of the arrow-span adjunction as a
 natural transformation. -/
 def arrowSpanAdjUnit
@@ -228,6 +235,7 @@ def arrowSpanAdjCounitApp
         (arrowSpanAdjCounitCocone f)
         WalkingSpan.left).symm)
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The counit of the arrow-span adjunction as a
 natural transformation. -/
 def arrowSpanAdjCounit
@@ -294,6 +302,7 @@ private theorem colimit_hom_ext
       dsimp [s]; exact (h j).symm)
   rw [hf, hg]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The left triangle identity:
 `reflector.map (unit S) ≫ counit (reflector S) = 𝟙`.
 -/
@@ -332,6 +341,7 @@ theorem arrowSpanAdj_left_triangle
         Category.id_comp]
     | .right => simp
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The right triangle identity:
 `unit (inclusion f) ≫ inclusion.map (counit f) = 𝟙`.
 -/
@@ -365,6 +375,7 @@ theorem arrowSpanAdj_right_triangle
       (arrowSpanAdjCounitCocone f)
       WalkingSpan.right
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The adjunction
 `spanArrowReflector pushouts ⊣ arrowSpanInclusion C`,
 parameterized by an explicit pushout cocone assignment.
