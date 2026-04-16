@@ -90,6 +90,35 @@ def treeFoldOnCode {α : Type*}
          (treeFoldOnCode h₀ h₁ (unpair n).2) := by
   simp [treeFoldOnCode]
 
+/-- Finite-arity mutumorphism: `k` mutually recursive
+functions folded simultaneously over a natural-number bound.
+
+Each step takes the current index and the full tuple of `k`
+accumulated values from all slots and produces the fresh
+tuple for the next iteration.
+
+This is the ℕ-level mutumorphism primitive; tree-ER's native
+multi-slot fold (`BTMor1.fold`'s `m` parameter) is the
+structural analog, but on ℕ we need this simulation via
+tupling. -/
+def tupleRecN {k : ℕ}
+    (init : Fin k → ℕ)
+    (step : ℕ → (Fin k → ℕ) → (Fin k → ℕ))
+    (n : ℕ) : Fin k → ℕ :=
+  Nat.rec init (fun m acc => step m acc) n
+
+@[simp] theorem tupleRecN_zero {k : ℕ}
+    (init : Fin k → ℕ)
+    (step : ℕ → (Fin k → ℕ) → (Fin k → ℕ)) :
+    tupleRecN init step 0 = init := rfl
+
+@[simp] theorem tupleRecN_succ {k : ℕ}
+    (init : Fin k → ℕ)
+    (step : ℕ → (Fin k → ℕ) → (Fin k → ℕ))
+    (n : ℕ) :
+    tupleRecN init step (n + 1) =
+      step n (tupleRecN init step n) := rfl
+
 end Nat
 
 namespace GebLean
