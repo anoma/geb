@@ -108,6 +108,18 @@ and the derived non-fullness theorem
 the primrec / elementary gap, strengthening Phase 4f.1's
 Ackermann-based non-fullness.
 
+Phase 4g.1 complete: see `GebLean/LawvereTreeER.lean` for the
+`TreeMor1` inductive with 5 constructors (leaf, branch, proj,
+comp, fold), `foldDepth` by structural recursion, `toBTMor1`
+translation, and the depth-tiered subtypes `TreeERMor1_0` /
+`TreeERMor1_1` / `TreeERMor1` with smart constructors and
+mutumorphism exposure via `mutuFold`;
+`GebLean/LawvereTreeERQuot.lean` for the quotient category
+`LawvereTreeERCat` with `HasChosenFiniteProducts`; and
+`GebLean/LawvereTreeERInterp.lean` for the faithful
+interpretation functor `treeErInterpFunctor` and the faithful
+inclusion `treeErInclusion` into `LawvereBTQuotObj`.
+
 ## Phase 4g: Tree-Native ER Parallel Development (planned)
 
 Before proceeding to Phase 5, build a tree-native presentation of
@@ -466,7 +478,7 @@ expanded as each phase becomes ready to implement.
   * [x] 4e: Full-and-faithful embedding Δ
     (with PreservesFiniteProducts).
 * [ ] Phase 4g: Tree-Native ER parallel development.
-  * [ ] 4g.1: Tree-ER core Lawvere theory.
+  * [x] 4g.1: Tree-ER core Lawvere theory.
   * [ ] 4g.2: Tree-ER ↔ LawvereER base-level isomorphism
     (+ Gödel arithmetic on trees).
   * [ ] 4g.3: Transport of Phase 4f results to Tree-ER.
