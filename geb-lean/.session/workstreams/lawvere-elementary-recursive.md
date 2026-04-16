@@ -136,7 +136,12 @@ task-by-task plan is at
 (local, gitignored) and the design spec is at
 `docs/superpowers/specs/2026-04-15-lawvere-treeer-subproject-4g2-design.md`.
 Resume via superpowers:subagent-driven-development at Task 6
-(`TreeERMor1.szudzikPair`).
+(`TreeERMor1.treeFoldOnCode`), the foundational substrate
+for Stage β.  Stage β was reordered so that
+`TreeERMor1.treeFoldOnCode` (previously Task 10) precedes the
+arithmetic primitives that depend on it (`succOnCode`,
+`subOnCode`, `szudzikPair`, `szudzikUnpair`, `bsumOnCode`,
+`bprodOnCode`).  See the updated plan for details.
 
 ## Phase 4g: Tree-Native ER Parallel Development (planned)
 
