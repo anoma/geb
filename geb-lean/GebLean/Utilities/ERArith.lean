@@ -1065,4 +1065,26 @@ theorem ERMor1.boundedSearch_eq_unique {k : ℕ}
   have hm_eq : m = j := hj_unique m hmlt hmP
   omega
 
+/-- ER-derived minimum of two naturals:
+`min.interp ![a, b] = min a b`.  Implemented as
+`a - (a - b)` which equals `min a b` in ℕ. -/
+def ERMor1.minN : ERMor1 2 :=
+  ERMor1.comp ERMor1.sub fun i => match i with
+    | ⟨0, _⟩ => ERMor1.proj 0
+    | ⟨1, _⟩ =>
+        ERMor1.comp ERMor1.sub fun j => match j with
+          | ⟨0, _⟩ => ERMor1.proj 0
+          | ⟨1, _⟩ => ERMor1.proj 1
+
+/-- Interpretation of `minN`: `min (ctx 0) (ctx 1)`. -/
+@[simp] theorem ERMor1.interp_minN (ctx : Fin 2 → ℕ) :
+    ERMor1.minN.interp ctx = min (ctx 0) (ctx 1) := by
+  have heq : ERMor1.minN.interp ctx =
+      ctx 0 - (ctx 0 - ctx 1) := by
+    unfold ERMor1.minN
+    simp only [ERMor1.interp_comp, ERMor1.interp_sub,
+      ERMor1.interp_proj]
+  rw [heq]
+  omega
+
 end GebLean
