@@ -290,12 +290,15 @@ specific transitions.
 -/
 
 /-- Tree-ER realization of a register-machine step, as a
-depth-0 tree function on a single BT-encoded configuration.
+depth-≤-1 tree function on a single BT-encoded configuration.
 Callers supply both the tree-level realization (`realize`) and
 a proof that it agrees with the abstract `step` on codes via a
 chosen `encodeConfig` / `decodeConfig` pair.  The realization
 takes one BT argument (the current config) and returns one BT
-(the next config). -/
+(the next config).  The depth-1 budget permits one `BT.fold`
+layer inside the step — enough to express `case`-analysis on
+the outer constructor of the encoded configuration, following
+the Leivant 1999 §2.1 recurrence schema. -/
 structure RegisterMachineRealization
     (M : GebLean.RegisterMachine.RegisterMachine) where
   /-- Encode a configuration as a single `BT`. -/
@@ -311,10 +314,10 @@ structure RegisterMachineRealization
   decode_encode :
     ∀ c : GebLean.RegisterMachine.Config M,
       decodeConfig (encodeConfig c) = c
-  /-- Depth-0 tree-ER term realizing one transition step on
+  /-- Depth-≤-1 tree-ER term realizing one transition step on
   the encoded configuration.  Arity 1: takes the current
   encoded config and produces the next. -/
-  stepRealize : TreeERMor1_0 1
+  stepRealize : TreeERMor1_1 1
   /-- Correctness of the step realization: interpreting
   `stepRealize` on an encoded configuration equals encoding the
   result of `RegisterMachine.step`. -/
@@ -351,33 +354,33 @@ private def runRightSpine
   unfold runRightSpine; rw [BT.fold_node]
 
 /-- Step ingredient for `simulateRegisterMachine`: lift a
-depth-0 1-ary step function to a depth-0 2-ary fold step that
-applies the 1-ary step to the right-child accumulator.  The
+depth-≤-1 1-ary step function to a depth-≤-1 2-ary fold step
+that applies the 1-ary step to the right-child accumulator.  The
 left-child accumulator is ignored.  The resulting fold iterates
 the step function once per right-descent in the input tree. -/
 private def stepRightAccum
-    (stepTerm : TreeERMor1_0 1) : TreeERMor1_0 (1 + 1) :=
-  TreeERMor1_0.comp stepTerm
-    (fun _ => TreeERMor1_0.proj (1 : Fin 2))
+    (stepTerm : TreeERMor1_1 1) : TreeERMor1_1 (1 + 1) :=
+  TreeERMor1_1.comp stepTerm
+    (fun _ => TreeERMor1_1.proj (1 : Fin 2))
 
 /-- Tree-ER term simulating a register machine.  The
-`initialConfig` is a depth-0 term producing the encoded starting
-configuration.  The `stepTerm` is a depth-0 1-ary term realizing
-one transition step on the encoded configuration.  The
-`timeBound` is a depth-1 term producing a BT whose right-spine
-length determines the iteration count: one `stepTerm`
-application per right-descent in `timeBound.interp ctx`.
-Implemented as a depth-2 fold whose `tree` argument is the
-depth-1 `timeBound`, with depth-0 base and step lifted to
-depth-1 via `toDepth1`. -/
+`initialConfig` is a depth-≤-1 term producing the encoded
+starting configuration.  The `stepTerm` is a depth-≤-1 1-ary
+term realizing one transition step on the encoded
+configuration.  The `timeBound` is a depth-≤-1 term producing a
+BT whose right-spine length determines the iteration count: one
+`stepTerm` application per right-descent in `timeBound.interp
+ctx`.  Implemented as a depth-≤-2 fold whose `tree` argument is
+the depth-1 `timeBound`, with the depth-1 base and step passed
+directly to `TreeERMor1.fold1`. -/
 def TreeERMor1.simulateRM {n : ℕ}
-    (initialConfig : TreeERMor1_0 n)
-    (stepTerm : TreeERMor1_0 1)
+    (initialConfig : TreeERMor1_1 n)
+    (stepTerm : TreeERMor1_1 1)
     (timeBound : TreeERMor1_1 n) :
     TreeERMor1 n :=
   TreeERMor1.fold1
-    (base := initialConfig.toDepth1)
-    (step := (stepRightAccum stepTerm).toDepth1)
+    (base := initialConfig)
+    (step := stepRightAccum stepTerm)
     (tree := timeBound)
 
 /-- Agreement lemma for `simulateRM`: interpreting the
@@ -388,8 +391,8 @@ callers compose with `RegisterMachineRealization.stepRealize_interp`
 and `runRightSpine` to obtain the register-machine semantics. -/
 @[simp] theorem TreeERMor1.simulateRM_interp
     {n : ℕ}
-    (initialConfig : TreeERMor1_0 n)
-    (stepTerm : TreeERMor1_0 1)
+    (initialConfig : TreeERMor1_1 n)
+    (stepTerm : TreeERMor1_1 1)
     (timeBound : TreeERMor1_1 n)
     (ctx : Fin n → BT.{0}) :
     (TreeERMor1.simulateRM initialConfig stepTerm
@@ -399,8 +402,7 @@ and `runRightSpine` to obtain the register-machine semantics. -/
         (timeBound.interp ctx) := by
   unfold TreeERMor1.simulateRM TreeERMor1.fold1
     TreeERMor1.fold
-  simp only [TreeERMor1.interp, TreeMor1.interp_fold,
-    TreeERMor1_0.toDepth1]
+  simp only [TreeERMor1.interp, TreeMor1.interp_fold]
   change
     BT.fold (α := Fin 1 → BT.{0})
       (fun _ => initialConfig.val.interp ctx)
@@ -419,7 +421,8 @@ and `runRightSpine` to obtain the register-machine semantics. -/
         stepTerm.interp (fun _ => r 0)) := by
     funext l r _
     unfold stepRightAccum
-    simp only [TreeERMor1_0.comp, TreeERMor1_0.proj,
+    simp only [TreeERMor1_1.comp, TreeERMor1_1.proj,
+      TreeERMor1_0.proj, TreeERMor1_0.toDepth1,
       TreeMor1.interp_comp, TreeMor1.interp_proj]
     congr 1
   rw [hstep_eq]
@@ -460,7 +463,7 @@ theorem TreeERMor1.simulateRM_interp_rm
     {n : ℕ}
     (M : GebLean.RegisterMachine.RegisterMachine)
     (realization : RegisterMachineRealization M)
-    (initialConfig : TreeERMor1_0 n)
+    (initialConfig : TreeERMor1_1 n)
     (timeBound : TreeERMor1_1 n)
     (ctx : Fin n → BT.{0})
     (initConfig : GebLean.RegisterMachine.Config M)
