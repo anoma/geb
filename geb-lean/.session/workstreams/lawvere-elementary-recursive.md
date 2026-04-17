@@ -249,16 +249,32 @@ gitignored).  25 tasks across three stages:
   * Task 11 (DONE, commit `4f806f6d`): `LawvereNatBT0Cat`
       `FullSubcategory` with restricted
       `HasChosenFiniteProducts`.
-  * Task 12: ER-derived `Nat.pair`/`Nat.unpair` packaged as
-      `ERMor1` terms with `@[simp]` correctness theorems.
-      Goes into new `GebLean/Utilities/ERTreeArith.lean`.
-      Builds on existing `LawvereERArith.lean`,
-      `LawvereERBool.lean` infrastructure.
-  * Task 13: Extend `Utilities/SzudzikSeq.lean` with
-      `Nat.foldBTLOnCode` (labeled-BTL course-of-values
-      fold-on-code, mirroring the existing unlabeled
-      `Nat.treeFoldOnCode`).  Package as `ERMor1.foldBTLOnCode`
-      in `Utilities/ERTreeArith.lean`.
+  * Task 12: originally ER-derived `Nat.pair`/`Nat.unpair` only;
+      now restructured as the "ER-Primrec" mini-phase — a
+      chain of sub-tasks 12a-12f building derived ER
+      primitives culminating in `ERMor1.natRec`, the
+      Wikipedia-literal primitive-recursion combinator built
+      via Gödel β-function and bounded search.  Detailed
+      design:
+      `docs/superpowers/specs/2026-04-17-er-primrec-design.md`
+      (local, gitignored).  The mini-phase renames
+      `Utilities/ERTreeArith.lean` → `Utilities/ERArith.lean`
+      (Task 12a) and adds `ERMor1.div`, `ERMor1.mod` (12b),
+      `ERMor1.beta` + `Nat.beta_exists` (12c),
+      `ERMor1.boundedSearch` (12d), `ERMor1.natRec` + the
+      `Nat.rec` correctness theorem (12e), and showcase
+      applications `ERMor1.natAdd`/`natMul`/`factorial` (12f).
+      Task 12 of the original plan (`natPair`/`natUnpair`/
+      `natSqrt`, already complete at commit `29553fd0`)
+      becomes the landed starting point for this mini-phase.
+  * Task 13: re-creates `Utilities/ERTreeArith.lean` with
+      BTL-specific ER tools on top of `natRec`.  `Nat.
+      foldBTLOnCode` (Task 13 Part 1, already DONE at commit
+      `3eebf595`) remains in `Utilities/SzudzikSeq.lean`.
+      `ERMor1.foldBTLOnCode` (Task 13 Part 2) is defined via
+      `natRec` plus parity-based case analysis on the code.
+      Also provides `ERMor1.btlEncodeLeaf`,
+      `ERMor1.btlEncodeNode` supporting primitives.
   * Task 14: `NatBTMor1.toER` and `NatBTMor1.toER_bt`
       (mutually recursive structural back-translation), with
       extensional correctness.  In new
@@ -336,22 +352,47 @@ Progress so far (as of end of this session):
   `HasChosenFiniteProducts LawvereNatBT0Cat` with
   `lawvereNatBT0Terminal` and `lawvereNatBT0Product`.  Module
   registered in `GebLean.lean`.
+* **Stage β original Task 12 complete** (commit `29553fd0`):
+  `GebLean/Utilities/ERTreeArith.lean` has `ERMor1.natPair`,
+  `ERMor1.natUnpairFst`, `ERMor1.natUnpairSnd`, `ERMor1.natSqrt`
+  plus helpers `mulN`/`addN`/`signN`/`ltN`/`leN`/`condN`.  Each
+  carries `@[simp]`-marked correctness theorems.
+* **Stage β original Task 13 Part 1 complete** (commit
+  `3eebf595`): `GebLean/Utilities/SzudzikSeq.lean` extended
+  with `Nat.foldBTLOnCode` (course-of-values BTL fold on a
+  Gödel code), plus parity reduction lemmas and
+  `Nat.foldBTLOnCode_encode` correctness linking to `BTL.fold`.
+* **Stage β original Task 13 Part 2 blocked → redesigned**:
+  `ERMor1.foldBTLOnCode` requires a primitive-recursion
+  combinator in Wikipedia-literal ER, which does not follow
+  directly from the 7 ER generators.  Redesigned as the
+  "ER-Primrec" mini-phase (Tasks 12a-12f in the new spec
+  `docs/superpowers/specs/2026-04-17-er-primrec-design.md`):
+  derived `ERMor1.natRec` via Gödel β-function and bounded
+  search, plus supporting `div`/`mod`/`beta`/`boundedSearch`
+  primitives.  After the mini-phase, original Task 13 Part 2
+  becomes a routine application of `natRec` (now just "Task
+  13").
 
-Resume via superpowers:subagent-driven-development at Stage β
-Task 12 (ER-derived `Nat.pair`/`Nat.unpair`).  See the plan's
-Task 12 section for the full specification.  Total plan has 25
-tasks under the three-stage factorization; remaining budget is
-Stage β Tasks 12-20 plus Stages γ and finalization.  Natural
-checkpoints: end of Stage β (Task 20), end of Stage γ (Task
-24), completion (Task 25).
+Resume via superpowers:subagent-driven-development at
+Task 12a (rename `Utilities/ERTreeArith.lean` →
+`Utilities/ERArith.lean`), then Tasks 12b-12f and Task 13 per
+the ER-Primrec spec.  The implementation plan for the
+mini-phase will be produced via the superpowers:writing-plans
+skill.
 
-The three-stage factorization replaces what was originally a
-two-step factorization (which itself was a redesign of an
-earlier on-the-nose-iso target).  The current design's
-distinguishing property: every NatBT computation explicitly
-back-translates to an ER computation via Szudzik (Task 14's
-`NatBTMor1.toER`), which makes the equivalence constructive
-without appealing to choice or classical reasoning.
+Natural checkpoints: end of ER-Primrec mini-phase (Task 13
+complete, foldBTLOnCode packaged), end of Stage β (Task 20),
+end of Stage γ (Task 24), completion (Task 25).
+
+The three-stage factorization's distinguishing property:
+every NatBT computation explicitly back-translates to an ER
+computation via Szudzik + primitive-recursion simulation
+(Task 14's `NatBTMor1.toER` invoking `ERMor1.natRec` from the
+ER-Primrec mini-phase), which makes the equivalence
+constructive without appealing to choice or classical
+reasoning, and preserves the `ERMor1` inductive as exactly
+the 7 Wikipedia generators.
 
 ## Phase 4g: Tree-Native ER Parallel Development (planned)
 
