@@ -129,6 +129,7 @@ import GebLean.Utilities.LambdaBialgebra
 import GebLean.Utilities.Elements
 import GebLean.Utilities.EndsAndCoends
 import GebLean.Utilities.Equalities
+import GebLean.Utilities.ERTreeArith
 import GebLean.Utilities.Families
 import GebLean.Utilities.Fintype
 import GebLean.Utilities.Graph
