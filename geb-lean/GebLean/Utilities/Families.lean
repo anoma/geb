@@ -1,4 +1,5 @@
 import Mathlib.CategoryTheory.Category.Cat
+import Mathlib.CategoryTheory.Category.ULift
 import Mathlib.CategoryTheory.Comma.Over.Basic
 import Mathlib.CategoryTheory.Pi.Basic
 import Mathlib.CategoryTheory.Grothendieck
@@ -3245,5 +3246,56 @@ instance ccrsProdDataMatching :
     fcpToCcrsMor (ProdData.proj (ccrsToFcpObj ∘ F) j)
 
 end CoprodCovarRepSquaredDataMatching
+
+/-! ## C-Natural Packaging of ccrNewIndex and ccrNewFamily
+
+This section packages `ccrNewIndexFunctor` and `ccrNewFamilyFunctor`
+as `Cat`-valued natural transformations on `coprodCovarRepFunctor`.
+The existing per-`C` functors remain in place and are not modified.
+-/
+
+section CCRNaturalPackaging
+
+universe w
+
+attribute [local instance] CategoryTheory.uliftCategory
+
+/--
+Universe-widened form of `Cat.of (Type w)` living at
+`Cat.{max w v, max (w+1) u}`.  Used as the constant target of the
+natural transformation `ccrNewIndexNat`.
+-/
+def typeCatLift : Cat.{max w v, max (w + 1) u} :=
+  Cat.of
+    (CategoryTheory.ULiftHom.{max w v}
+      (ULift.{max (w + 1) u, w + 1} (Type w)))
+
+/--
+Universe-widening functor from `Cat.{v, u}` to
+`Cat.{max w v, max (w+1) u}`.  At each `C`, widens `C` via
+`ULift` on objects and `ULiftHom` on morphisms so that the output
+universe matches `coprodCovarRepFunctor.{u, v, w}`.  Used as a
+post-composition with `Cat.opFunctor` to build
+`ccrNewFamilyNatTarget`.
+-/
+def catULiftFunctor :
+    Cat.{v, u} ⥤ Cat.{max w v, max (w + 1) u} where
+  obj C := Cat.of
+    (CategoryTheory.ULiftHom.{max w v}
+      (ULift.{max (w + 1) u, u} C.α))
+  map {C D} F :=
+    (CategoryTheory.ULiftHom.down ⋙
+      CategoryTheory.ULift.downFunctor ⋙
+      F.toFunctor ⋙
+      CategoryTheory.ULift.upFunctor ⋙
+      CategoryTheory.ULiftHom.up).toCatHom
+  map_id C := by
+    apply Cat.Hom.ext
+    rfl
+  map_comp {C D E} F G := by
+    apply Cat.Hom.ext
+    rfl
+
+end CCRNaturalPackaging
 
 end GebLean
