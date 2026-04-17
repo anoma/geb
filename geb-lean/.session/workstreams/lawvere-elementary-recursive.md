@@ -152,7 +152,10 @@ arithmetic primitives that depend on it (`succOnCode`,
 `bprodOnCode`, now Tasks 7–10 plus Task 11's
 `mutuFoldViaPair`).  Resume via
 superpowers:subagent-driven-development at Task 7
-(`succOnCode` and `subOnCode`).
+(`mutuFoldOnCode` — multi-slot mutual recurrence substrate,
+newly inserted after Task 6's single-slot `treeFoldOnCode`
+proved insufficient for Szudzik-encoded arithmetic; see the
+plan's Stage β rationale for details).
 
 ## Phase 4g: Tree-Native ER Parallel Development (planned)
 
