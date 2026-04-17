@@ -162,31 +162,31 @@ Stage β's plan was then restructured and ultimately
 **superseded** after extensive analysis.  The sequence of
 discoveries:
 
-1.  A direct `succOnCode` attempt (original Task 8) confirmed
-    a Szudzik-polynomial barrier at depth 1.  A register-
-    machine simulation blueprint (Task 9) built in commits
-    `a744a036` / `8eb7d38d` extended the substrate but still
-    required a depth-0 Szudzik step that could not be built.
-2.  Bibliography check of Leivant 1999 (at
-    `.claude/docs/ramified-recurrence-computational-complexity-iii.pdf`)
-    revealed that first-order polyadic ramified recurrence
-    (what our `TreeMor1` fragment captures at any depth)
-    equals **polynomial time**, not E₃, per references [4]
-    (Bellantoni-Cook 1992) and [24] (Leivant 1994).  The
-    original design decision D2's attribution of "depth-2
-    fold = E₃" to Beckmann-Weiermann 2000 was incorrect —
-    B-W 2000 is not cited in Leivant's 1999 paper.  Leivant's
-    main result (higher-order ramified = E₃) requires type-
-    level structure not present in our first-order
-    `TreeMor1`.
-3.  Research on B-W 2000 (agent `a7d9d0a2bf23f09f6`) confirmed
-    that their T* fragment requires higher-order types with
-    ground-`N`-applied recursors.  Research on LOOP programs
-    on trees (agent `af63fb16c4bef6c83`) confirmed that
-    existing Meyer-Ritchie Grzegorczyk results transport to
-    trees only under chain / size encodings, and require
-    separate formalization.
-4.  Per the user's direction, a two-sorted design resolves
+1. A direct `succOnCode` attempt (original Task 8) confirmed
+   a Szudzik-polynomial barrier at depth 1.  A register-
+   machine simulation blueprint (Task 9) built in commits
+   `a744a036` / `8eb7d38d` extended the substrate but still
+   required a depth-0 Szudzik step that could not be built.
+2. Bibliography check of Leivant 1999 (at
+   `.claude/docs/ramified-recurrence-computational-complexity-iii.pdf`)
+   revealed that first-order polyadic ramified recurrence
+   (what our `TreeMor1` fragment captures at any depth)
+   equals **polynomial time**, not E₃, per references [4]
+   (Bellantoni-Cook 1992) and [24] (Leivant 1994).  The
+   original design decision D2's attribution of "depth-2
+   fold = E₃" to Beckmann-Weiermann 2000 was incorrect —
+   B-W 2000 is not cited in Leivant's 1999 paper.  Leivant's
+   main result (higher-order ramified = E₃) requires type-
+   level structure not present in our first-order
+   `TreeMor1`.
+3. Research on B-W 2000 (agent `a7d9d0a2bf23f09f6`) confirmed
+   that their T* fragment requires higher-order types with
+   ground-`N`-applied recursors.  Research on LOOP programs
+   on trees (agent `af63fb16c4bef6c83`) confirmed that
+   existing Meyer-Ritchie Grzegorczyk results transport to
+   trees only under chain / size encodings, and require
+   separate formalization.
+4. Per the user's direction, a two-sorted design resolves
     the obstruction: keep ℕ arithmetic on a ℕ sort (using
     `LawvereER`'s E₃-generating set as-is), keep BT
     structural operations on a BT sort (poly-time on tree
@@ -223,44 +223,73 @@ Design spec:
 Implementation plan:
 `docs/superpowers/plans/2026-04-17-lawvere-natbt.md` (local,
 gitignored).  20 tasks across three stages:
-*   **Stage α** (Tasks 1–10): base theory.  `BTL` labeled tree
+
+* **Stage α** (Tasks 1–10): base theory.  `BTL` labeled tree
     type; `NatBTMor1` two-sort term inductive; interpretation;
     `NatBTMorN` tuples; extensional-equality quotient
     `NatBTMorNQuo`; `Category LawvereNatBTCat`;
     `HasChosenFiniteProducts`; interp functor into `Type`;
     Stage α tests.
-*   **Stage β** (Tasks 11–15): full-faithful inclusion
-    `LawvereERCat ↪ LawvereNatBTCat`; essential surjectivity
-    via Szudzik-based component packing; categorical
-    equivalence; transport of Phase 4f.1 Ackermann non-fullness
-    and Phase 4f.2 tetration non-elementarity; Stage β tests.
-*   **Stage γ** (Tasks 16–19): lex completion
+* **Stage β** (Tasks 11–15): two-step factorization
+    `LawvereERCat ≅ LawvereNatBT0Cat ≃ LawvereNatBTCat`.
+    Task 11 builds `LawvereNatBT0Cat` as a `FullSubcategory`
+    of `LawvereNatBTCat` on `m = 0` objects (predicate
+    `isNatBT0`), with restricted `HasChosenFiniteProducts`.
+    Task 12 builds the on-the-nose isomorphism functors
+    `natBTJ : LawvereERCat ⥤ LawvereNatBT0Cat` and
+    `natBTK : LawvereNatBT0Cat ⥤ LawvereERCat`, with
+    `K ∘ J = 𝟙` and `J ∘ K = 𝟙`, packaged as `natBTERIso`.
+    Task 13 proves essential surjectivity of the inclusion
+    `natBT0Inclusion : LawvereNatBT0Cat ↪ LawvereNatBTCat`
+    via Szudzik-based packing `(n, m) ≅ (n + m, 0)`, then
+    composes with `natBTERIso` to obtain
+    `natBTEquivalence : LawvereERCat ≌ LawvereNatBTCat`.
+    Task 14 transports Phase 4f.1 Ackermann non-fullness and
+    Phase 4f.2 tetration non-elementarity across the
+    equivalence.  Task 15 registers Stage β and writes tests.
+    The two-step factorization keeps Szudzik encoding
+    internal to `LawvereNatBTCat` (it never touches
+    `LawvereERCat`) and presents `LawvereNatBT0Cat` as the
+    in-category sub-presentation isomorphic to `LawvereER`.
+* **Stage γ** (Tasks 16–19): lex completion
     `LawvereNatBTLexCat` with decidable subobjects; unlabeled
     and finite-alphabet tree subtypes; faithful embedding
     `LawvereTreeER ↪ LawvereNatBT`; Stage γ tests.
-*   **Finalization** (Task 20): workstream tracker update.
+* **Finalization** (Task 20): workstream tracker update.
 
 Progress so far (as of end of this session):
 
-*   **Task 1 complete** (commits `24f0fd18`, `990b63a4`):
+* **Task 1 complete** (commits `24f0fd18`, `990b63a4`):
     `GebLean/LawvereNatBT.lean` with `BTL` inductive,
     `BTL.fold` catamorphism, `BTL.encode`, `BTL.decode`, and
     round-trip theorems `BTL.decode_encode`,
     `BTL.encode_decode`.  Module registered in `GebLean.lean`.
-*   **Task 2 complete** (commit `104e52b1`): `NatBTSort`
+* **Task 2 complete** (commit `104e52b1`): `NatBTSort`
     discriminator, `NatBTSort.carrier`, and `NatBTMor1`
     two-sort term inductive with all 14 specified
     constructors (zero, succ, natProj, sub, compNat, bsum,
     bprod, leafBT, nodeBT, btProj, compBT, foldBTNat,
     foldBTBT, encodeBT, decodeBT).
+* **Stage α complete** (commits `49359feb..193563a6`,
+    nine commits including the bsum/bprod/foldBTNat
+    signature-fix preamble): `NatBTMor1.interp` plus
+    per-constructor `@[simp]` lemmas (Task 3); `NatBTMorN`
+    tuples with id, comp, and interp lemmas (Task 4);
+    extensional-equality setoid (Task 5); `NatBTMorNQuo`
+    quotient with composition well-definedness and the
+    three category laws (Task 6); `Category LawvereNatBTCat`
+    instance (Task 7); `HasChosenFiniteProducts
+    LawvereNatBTCat` with `terminal`, `fst`, `snd`, `pair`,
+    universal properties (Task 8); `natBTInterpFunctor :
+    LawvereNatBTCat ⥤ Type` with `Faithful` (Task 9); and
+    Stage α tests (Task 10).
 
-Resume via superpowers:subagent-driven-development at Task 3
-(`NatBTMor1.interp` — the interpretation function that sends a
-term plus a domain-arity context to its output-sort carrier
-value).  See the plan's Task 3 section for the full
-specification.  The full plan has 20 tasks; realistic budget
-is multiple sessions, with natural checkpoints at end-of-stage
-(Tasks 10, 15, 19, 20).
+Resume via superpowers:subagent-driven-development at Stage β
+Task 11 (`LawvereNatBT0Cat` via `FullSubcategory`).  See the
+plan's Task 11 section for the full specification.  Total
+plan has 20 tasks; remaining budget is Stages β and γ plus
+finalization.  Natural checkpoints: end of Stage β (Task
+15), end of Stage γ (Task 19), completion (Task 20).
 
 ## Phase 4g: Tree-Native ER Parallel Development (planned)
 
