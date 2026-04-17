@@ -97,10 +97,12 @@ def ccrPresheafWhiskerLeft :
     ccrPresheafCatFunctor.{u_I, v_I, w_I, w'}
 
 /--
-The profunctor sending `(J, I)` to the presheaf PRA
+The bifunctor sending `(J, I)` to the presheaf PRA
 category `Jᵒᵖ ⥤ CoprodCovarRepCat (Iᵒᵖ ⥤ Type w_I)`.
+This can be viewed (when uncurried) as a `Cat`-valued
+presheaf on `Cat x Cat`.
 -/
-def presheafPRACatProfunctor :
+def presheafPRACatBifunctor :
     Cat.{v_J, u_J}ᵒᵖ ⥤
       (Cat.{v_I, u_I}ᵒᵖ ⥤
         Cat.{max u_I u_J w_I w',
@@ -118,7 +120,7 @@ category on `J`.
 def presheafPRACatFunctor :
     Cat.{v_I, u_I}ᵒᵖ ⥤
     Cat.{max u_I u_J w_I w', max u_I u_J v_I v_J (w_I + 1) (w' + 1)} :=
-  (presheafPRACatProfunctor.{u_I, v_I, u_J, v_J, w_I, w'}).obj
+  (presheafPRACatBifunctor.{u_I, v_I, u_J, v_J, w_I, w'}).obj
     (Opposite.op (Cat.of Jᵒᵖ))
 
 /--
