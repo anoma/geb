@@ -167,10 +167,10 @@ inductive NatBTMor1 : (ℕ × ℕ) → NatBTSort → Type where
       NatBTMor1 nm .nat
   | bsum {nm : ℕ × ℕ}
       (f : NatBTMor1 (nm.1 + 1, nm.2) .nat) :
-      NatBTMor1 nm .nat
+      NatBTMor1 (nm.1 + 1, nm.2) .nat
   | bprod {nm : ℕ × ℕ}
       (f : NatBTMor1 (nm.1 + 1, nm.2) .nat) :
-      NatBTMor1 nm .nat
+      NatBTMor1 (nm.1 + 1, nm.2) .nat
   | leafBT {nm : ℕ × ℕ}
       (label : NatBTMor1 nm .nat) :
       NatBTMor1 nm .bt
@@ -185,7 +185,7 @@ inductive NatBTMor1 : (ℕ × ℕ) → NatBTSort → Type where
       NatBTMor1 nm .bt
   | foldBTNat {nm : ℕ × ℕ}
       (baseLeaf : NatBTMor1 (nm.1 + 1, nm.2) .nat)
-      (stepNode : NatBTMor1 (nm.1, nm.2 + 2) .nat)
+      (stepNode : NatBTMor1 (nm.1 + 2, nm.2) .nat)
       (tree : NatBTMor1 nm .bt) :
       NatBTMor1 nm .nat
   | foldBTBT {nm : ℕ × ℕ}
