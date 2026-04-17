@@ -90,6 +90,43 @@ def treeFoldOnCode {α : Type*}
          (treeFoldOnCode h₀ h₁ (unpair n).2) := by
   simp [treeFoldOnCode]
 
+/-- Multi-slot course-of-values recursion on a Gödel
+code.  With `m` slots, given `m` initial values (for
+`n = 0`) and an `m`-ary step combining the `m` slot
+values from each unpair component, compute all slots'
+values at Gödel code `n`.  Generalizes
+`treeFoldOnCode` from single slot to mutual `m`-slot.
+At `n = encodeBT t` agrees with the `m`-slot `BT.fold`
+over `t`. -/
+def mutuTreeFoldOnCode {α : Type*} {m : ℕ}
+    (base : Fin m → α)
+    (step : (Fin m → α) → (Fin m → α) → Fin m → α) :
+    ℕ → Fin m → α
+  | 0     => base
+  | n + 1 => step
+      (mutuTreeFoldOnCode base step (unpair n).1)
+      (mutuTreeFoldOnCode base step (unpair n).2)
+  termination_by n => n
+  decreasing_by
+    · exact Nat.lt_succ_of_le (unpair_left_le n)
+    · exact Nat.lt_succ_of_le (unpair_right_le n)
+
+@[simp] theorem mutuTreeFoldOnCode_zero {α : Type*}
+    {m : ℕ} (base : Fin m → α)
+    (step : (Fin m → α) → (Fin m → α) → Fin m → α) :
+    mutuTreeFoldOnCode base step 0 = base := by
+  simp [mutuTreeFoldOnCode]
+
+@[simp] theorem mutuTreeFoldOnCode_succ {α : Type*}
+    {m : ℕ} (base : Fin m → α)
+    (step : (Fin m → α) → (Fin m → α) → Fin m → α)
+    (n : ℕ) :
+    mutuTreeFoldOnCode base step (n + 1) =
+      step
+        (mutuTreeFoldOnCode base step (unpair n).1)
+        (mutuTreeFoldOnCode base step (unpair n).2) := by
+  simp [mutuTreeFoldOnCode]
+
 /-- Finite-arity mutumorphism: `k` mutually recursive
 functions folded simultaneously over a natural-number bound.
 
@@ -141,5 +178,27 @@ theorem treeFoldOnCode_encodeBT {α : Type}
       (fun el er => Nat.pair el er + 1) =
       encodeBT from rfl]
     rw [Nat.treeFoldOnCode_succ, Nat.unpair_pair, hl, hr]
+
+/-- Correctness of `Nat.mutuTreeFoldOnCode` against the
+`m`-slot `BT.fold`: running the multi-slot
+course-of-values recursion on the Gödel code of a tree
+agrees with the structural multi-slot fold. -/
+theorem mutuTreeFoldOnCode_encodeBT {α : Type} {m : ℕ}
+    (t : BT.{0}) (base : Fin m → α)
+    (step : (Fin m → α) → (Fin m → α) → Fin m → α) :
+    Nat.mutuTreeFoldOnCode base step (encodeBT t) =
+      BT.fold (α := Fin m → α) base step t := by
+  refine BT.ind (motive := fun t =>
+    Nat.mutuTreeFoldOnCode base step (encodeBT t) =
+      BT.fold (α := Fin m → α) base step t) ?_ ?_ t
+  · simp only [encodeBT, BT.fold_leaf,
+      Nat.mutuTreeFoldOnCode_zero]
+  · intro l r hl hr
+    simp only [encodeBT, BT.fold_node]
+    rw [show BT.fold 0
+      (fun el er => Nat.pair el er + 1) =
+      encodeBT from rfl]
+    rw [Nat.mutuTreeFoldOnCode_succ, Nat.unpair_pair,
+        hl, hr]
 
 end GebLean

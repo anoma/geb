@@ -135,4 +135,135 @@ private theorem fold_fin1_eq_scalar_fold
       simp
   rw [hbase_eq, hstep_eq]
 
+/-- Multi-slot course-of-values recursion as a tree-ER
+term.  At the `Nat` level, runs
+`Nat.mutuTreeFoldOnCode` on the Gödel code of the
+input; at the tree level, this is an `m`-slot
+`BT.fold` over the input.  `base` and `step` are
+depth-0 ingredients — `base` has arity 1 (outer-ctx
+access at leaves), `step` has arity `m + m` (the `m`
+slot values from each recursive branch).  The
+resulting term has depth 1, leaving headroom for
+depth-2 compositions. -/
+def TreeERMor1.mutuFoldOnCode {m : ℕ}
+    (base : Fin m → TreeERMor1_0 1)
+    (step : Fin m → TreeERMor1_0 (m + m))
+    (j : Fin m) :
+    TreeERMor1_1 1 :=
+  TreeERMor1_1.fold base step (TreeERMor1_0.proj 0) j
+
+/-- Multi-slot generalization of
+`treeFoldOnCode_fold_agreement`: a multi-slot `BT.fold`
+at carrier `Fin m → BT` agrees with the
+`decodeBT`-wrapped `Nat.mutuTreeFoldOnCode` whose step
+encodes BT values as codes and decodes them back on
+each recursive call.  Stated on the whole
+`Fin m → BT` tuple (not per-slot) so the `BT.node`
+inductive step can rewrite the child tuples directly
+via the inductive hypotheses. -/
+private theorem mutuFoldOnCode_fold_agreement {m : ℕ}
+    (baseB : Fin m → BT.{0})
+    (stepB : (Fin m → BT.{0}) → (Fin m → BT.{0}) →
+      Fin m → BT.{0})
+    (t : BT.{0}) :
+    BT.fold (α := Fin m → BT.{0}) baseB stepB t =
+      (fun j => decodeBT (Nat.mutuTreeFoldOnCode
+        (fun i => encodeBT (baseB i))
+        (fun lAll rAll i => encodeBT
+          (stepB (fun k => decodeBT (lAll k))
+                 (fun k => decodeBT (rAll k)) i))
+        (encodeBT t) j)) := by
+  have hrw :
+      (fun j : Fin m => decodeBT
+        (Nat.mutuTreeFoldOnCode
+          (fun i => encodeBT (baseB i))
+          (fun lAll rAll i => encodeBT
+            (stepB (fun k => decodeBT (lAll k))
+                   (fun k => decodeBT (rAll k)) i))
+          (encodeBT t) j)) =
+      (fun j : Fin m => decodeBT
+        (BT.fold (α := Fin m → ℕ)
+          (fun i => encodeBT (baseB i))
+          (fun lAll rAll i => encodeBT
+            (stepB (fun k => decodeBT (lAll k))
+                   (fun k => decodeBT (rAll k)) i))
+          t j)) := by
+    funext j
+    rw [GebLean.mutuTreeFoldOnCode_encodeBT]
+  rw [hrw]
+  refine BT.ind (motive := fun t =>
+    BT.fold (α := Fin m → BT.{0}) baseB stepB t =
+      (fun j : Fin m => decodeBT
+        (BT.fold (α := Fin m → ℕ)
+          (fun i => encodeBT (baseB i))
+          (fun lAll rAll i => encodeBT
+            (stepB (fun k => decodeBT (lAll k))
+                   (fun k => decodeBT (rAll k)) i))
+          t j))) ?_ ?_ t
+  · change BT.fold (α := Fin m → BT.{0}) baseB stepB
+      BT.leaf = _
+    rw [BT.fold_leaf]
+    funext j
+    rw [BT.fold_leaf, decodeBT_encodeBT]
+  · intro l r hl hr
+    change BT.fold (α := Fin m → BT.{0}) baseB stepB
+      (BT.node l r) = _
+    rw [BT.fold_node]
+    funext j
+    rw [BT.fold_node, decodeBT_encodeBT]
+    have hleft : (fun k : Fin m => decodeBT
+        (BT.fold (α := Fin m → ℕ)
+          (fun i => encodeBT (baseB i))
+          (fun lAll rAll i => encodeBT
+            (stepB (fun k => decodeBT (lAll k))
+                   (fun k => decodeBT (rAll k)) i))
+          l k)) =
+        BT.fold (α := Fin m → BT.{0}) baseB stepB l :=
+      hl.symm
+    have hright : (fun k : Fin m => decodeBT
+        (BT.fold (α := Fin m → ℕ)
+          (fun i => encodeBT (baseB i))
+          (fun lAll rAll i => encodeBT
+            (stepB (fun k => decodeBT (lAll k))
+                   (fun k => decodeBT (rAll k)) i))
+          r k)) =
+        BT.fold (α := Fin m → BT.{0}) baseB stepB r :=
+      hr.symm
+    rw [hleft, hright]
+
+@[simp] theorem TreeERMor1.mutuFoldOnCode_interp
+    {m : ℕ}
+    (base : Fin m → TreeERMor1_0 1)
+    (step : Fin m → TreeERMor1_0 (m + m))
+    (j : Fin m) (ctx : Fin 1 → BT.{0}) :
+    (TreeERMor1.mutuFoldOnCode base step j).interp ctx =
+      decodeBT (Nat.mutuTreeFoldOnCode
+        (fun i => encodeBT ((base i).interp ctx))
+        (fun leftAll rightAll i =>
+          encodeBT ((step i).interp
+            (finAppend
+              (fun k => decodeBT (leftAll k))
+              (fun k => decodeBT (rightAll k)))))
+        (encodeBT (ctx 0)) j) := by
+  unfold TreeERMor1.mutuFoldOnCode
+  simp only [TreeERMor1_1.interp, TreeERMor1_1.fold,
+    TreeMor1.interp_fold, TreeERMor1_0.interp,
+    TreeERMor1_0.proj, TreeMor1.interp_proj]
+  let baseB : Fin m → BT.{0} :=
+    fun i => (base i).val.interp ctx
+  let stepB : (Fin m → BT.{0}) → (Fin m → BT.{0}) →
+      Fin m → BT.{0} :=
+    fun lAll rAll i =>
+      (step i).val.interp (finAppend lAll rAll)
+  have hagree :=
+    mutuFoldOnCode_fold_agreement baseB stepB (ctx 0)
+  have heq : (fun i : Fin m =>
+      (base i).val.interp ctx) = baseB := rfl
+  have hstepeq :
+      (fun (lAll rAll : Fin m → BT.{0}) (j' : Fin m) =>
+        (step j').val.interp (finAppend lAll rAll)) =
+        stepB := rfl
+  rw [heq, hstepeq]
+  rw [hagree]
+
 end GebLean
