@@ -158,20 +158,109 @@ carrier, and `GebLean/LawvereTreeERArith.lean` for
 `TreeERMor1.mutuFoldOnCode : ∀ m, (Fin m →
 TreeERMor1_0 1) → (Fin m → TreeERMor1_0 (m + m)) → Fin m →
 TreeERMor1_1 1` with its `@[simp]` agreement theorem.
-Stage β's plan was then restructured: analysis (with the
-Leivant paper, `.claude/docs/ramified-recurrence-
-computational-complexity-iii.pdf`) confirmed that tree-E₃
-under Szudzik equals Nat-E₃ as function classes, so every
-Nat-elementary function admits a depth-2 tree-ER realization,
-but the naive construction approach hit a
-"Szudzik-polynomial" barrier at depth 1.  The restructured
-Stage β inserts Task 8 (a one-cycle direct `succOnCode`
-attempt, which informs design) and Task 9 (a register-machine
-simulation blueprint as reusable depth-2 infrastructure).
-Original Stage β tasks 8–12 renumber to 10–14, Stage γ tasks
-14–21 renumber to 16–23.  Resume via
-superpowers:subagent-driven-development at Task 8
-(`succOnCode` direct attempt, time-boxed).
+Stage β's plan was then restructured and ultimately
+**superseded** after extensive analysis.  The sequence of
+discoveries:
+
+1.  A direct `succOnCode` attempt (original Task 8) confirmed
+    a Szudzik-polynomial barrier at depth 1.  A register-
+    machine simulation blueprint (Task 9) built in commits
+    `a744a036` / `8eb7d38d` extended the substrate but still
+    required a depth-0 Szudzik step that could not be built.
+2.  Bibliography check of Leivant 1999 (at
+    `.claude/docs/ramified-recurrence-computational-complexity-iii.pdf`)
+    revealed that first-order polyadic ramified recurrence
+    (what our `TreeMor1` fragment captures at any depth)
+    equals **polynomial time**, not E₃, per references [4]
+    (Bellantoni-Cook 1992) and [24] (Leivant 1994).  The
+    original design decision D2's attribution of "depth-2
+    fold = E₃" to Beckmann-Weiermann 2000 was incorrect —
+    B-W 2000 is not cited in Leivant's 1999 paper.  Leivant's
+    main result (higher-order ramified = E₃) requires type-
+    level structure not present in our first-order
+    `TreeMor1`.
+3.  Research on B-W 2000 (agent `a7d9d0a2bf23f09f6`) confirmed
+    that their T* fragment requires higher-order types with
+    ground-`N`-applied recursors.  Research on LOOP programs
+    on trees (agent `af63fb16c4bef6c83`) confirmed that
+    existing Meyer-Ritchie Grzegorczyk results transport to
+    trees only under chain / size encodings, and require
+    separate formalization.
+4.  Per the user's direction, a two-sorted design resolves
+    the obstruction: keep ℕ arithmetic on a ℕ sort (using
+    `LawvereER`'s E₃-generating set as-is), keep BT
+    structural operations on a BT sort (poly-time on tree
+    size, a subset of E₃), bridge them with explicit
+    `encodeBT`/`decodeBT` morphisms.  The combined theory has
+    class E₃ by construction.  The relationship with
+    `LawvereER` is a **categorical equivalence**, not an on-
+    the-nose isomorphism — "same computational strength,
+    different representations" is precisely the content of
+    equivalence.  Labeled trees (with ℕ at leaves) emerge
+    naturally; unlabeled and finite-alphabet trees are
+    decidable subobjects in the lex completion.
+
+Phase 4g.2's pre-supersession artifacts (Tasks 1–7's Layer 1
+infrastructure in `GebLean/Utilities/SzudzikSeq.lean`, Task 6's
+`TreeERMor1.treeFoldOnCode` substrate in
+`GebLean/LawvereTreeERArith.lean`, Task 7's `mutuFoldOnCode`,
+Task 9's register-machine blueprint in
+`GebLean/Utilities/RegisterMachine.lean` and the `simulateRM`
+combinator) remain in the codebase as preserved research
+infrastructure — they are parallel developments to the new
+`LawvereNatBT` sub-project and not directly used by it.  The
+Phase 4g.1 `LawvereTreeERCat` single-sort unlabeled theory
+also remains as a parallel development and embeds into
+`LawvereNatBT` as the "all leaves labeled 0" decidable
+subobject.
+
+### New sub-project: `LawvereNatBT` (supersedes 4g.2)
+
+Design spec:
+`docs/superpowers/specs/2026-04-17-lawvere-natbt-design.md`
+(local, gitignored).
+
+Implementation plan:
+`docs/superpowers/plans/2026-04-17-lawvere-natbt.md` (local,
+gitignored).  20 tasks across three stages:
+*   **Stage α** (Tasks 1–10): base theory.  `BTL` labeled tree
+    type; `NatBTMor1` two-sort term inductive; interpretation;
+    `NatBTMorN` tuples; extensional-equality quotient
+    `NatBTMorNQuo`; `Category LawvereNatBTCat`;
+    `HasChosenFiniteProducts`; interp functor into `Type`;
+    Stage α tests.
+*   **Stage β** (Tasks 11–15): full-faithful inclusion
+    `LawvereERCat ↪ LawvereNatBTCat`; essential surjectivity
+    via Szudzik-based component packing; categorical
+    equivalence; transport of Phase 4f.1 Ackermann non-fullness
+    and Phase 4f.2 tetration non-elementarity; Stage β tests.
+*   **Stage γ** (Tasks 16–19): lex completion
+    `LawvereNatBTLexCat` with decidable subobjects; unlabeled
+    and finite-alphabet tree subtypes; faithful embedding
+    `LawvereTreeER ↪ LawvereNatBT`; Stage γ tests.
+*   **Finalization** (Task 20): workstream tracker update.
+
+Progress so far (as of end of this session):
+
+*   **Task 1 complete** (commits `24f0fd18`, `990b63a4`):
+    `GebLean/LawvereNatBT.lean` with `BTL` inductive,
+    `BTL.fold` catamorphism, `BTL.encode`, `BTL.decode`, and
+    round-trip theorems `BTL.decode_encode`,
+    `BTL.encode_decode`.  Module registered in `GebLean.lean`.
+*   **Task 2 complete** (commit `104e52b1`): `NatBTSort`
+    discriminator, `NatBTSort.carrier`, and `NatBTMor1`
+    two-sort term inductive with all 14 specified
+    constructors (zero, succ, natProj, sub, compNat, bsum,
+    bprod, leafBT, nodeBT, btProj, compBT, foldBTNat,
+    foldBTBT, encodeBT, decodeBT).
+
+Resume via superpowers:subagent-driven-development at Task 3
+(`NatBTMor1.interp` — the interpretation function that sends a
+term plus a domain-arity context to its output-sort carrier
+value).  See the plan's Task 3 section for the full
+specification.  The full plan has 20 tasks; realistic budget
+is multiple sessions, with natural checkpoints at end-of-stage
+(Tasks 10, 15, 19, 20).
 
 ## Phase 4g: Tree-Native ER Parallel Development (planned)
 
