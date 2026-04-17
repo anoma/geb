@@ -49,6 +49,7 @@ import GebLean.LawvereERInterp
 import GebLean.LawvereERLex
 import GebLean.LawvereERQuot
 import GebLean.LawvereERTetration
+import GebLean.LawvereNatBT
 import GebLean.LawvereTreeER
 import GebLean.LawvereTreeERInterp
 import GebLean.LawvereTreeERQuot
