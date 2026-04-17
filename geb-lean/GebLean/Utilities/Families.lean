@@ -3296,6 +3296,19 @@ def catULiftFunctor :
     apply Cat.Hom.ext
     rfl
 
+/--
+Per-`C` widened index functor.  Obtained by post-composing the
+existing `ccrNewIndexFunctor C` with the `ULift`/`ULiftHom` lifts
+that take its `Type w` target into `typeCatLift`.
+-/
+def ccrNewIndexNatFunctor
+    (C : Type u) [Category.{v} C] :
+    CoprodCovarRepCat.{u, v, w} C ⥤
+      typeCatLift.{u, v, w}.α :=
+  ccrNewIndexFunctor.{u, v, w} C ⋙
+    CategoryTheory.ULift.upFunctor ⋙
+    CategoryTheory.ULiftHom.up
+
 end CCRNaturalPackaging
 
 end GebLean
