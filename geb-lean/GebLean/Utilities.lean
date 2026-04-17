@@ -18,6 +18,7 @@ import GebLean.Utilities.OverCategoryEquiv
 import GebLean.Utilities.PolyCombinators
 import GebLean.Utilities.PowersAndCopowers
 import GebLean.Utilities.Presheaf
+import GebLean.Utilities.RegisterMachine
 import GebLean.Utilities.Profunctors
 import GebLean.Utilities.RepresentableDensity
 import GebLean.Utilities.ReflexiveGraph
