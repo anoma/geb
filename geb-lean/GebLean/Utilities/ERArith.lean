@@ -5,15 +5,22 @@ import GebLean.Utilities.SzudzikSeq
 import Mathlib.Data.Nat.Pairing
 
 /-!
-# ER-Derived Szudzik Primitives
+# ER-Derived Arithmetic and Gödel β
 
-`ERMor1`-level versions of `Nat.pair`, `Nat.unpair`, and
-`Nat.sqrt`, packaged as derived `ERMor1` terms.  Each carries
-an `@[simp]`-marked correctness theorem linking the term's
-interpretation to the corresponding `Nat.*` function.
+`ERMor1`-level versions of mathlib's `Nat.pair`/`Nat.unpair`/
+`Nat.sqrt` plus derived `div`/`mod`, the Gödel β-function, a
+bounded search combinator, and the primitive-recursion
+combinator `ERMor1.natRec`.  Each primitive carries an
+`@[simp]`-marked correctness theorem linking its
+interpretation to its mathematical counterpart.
 
-Foundation of Stage β's back-translation
-(`LawvereNatBTBackTrans.lean`).
+Every primitive is a closed-form `ERMor1` term built by
+composition of the 7 Wikipedia generators (`zero`, `succ`,
+`proj`, `sub`, `comp`, `bsum`, `bprod`).  The `ERMor1`
+inductive is not extended.
+
+Part of the ER-Primrec mini-phase; see
+`docs/superpowers/specs/2026-04-17-er-primrec-design.md`.
 -/
 
 namespace GebLean
