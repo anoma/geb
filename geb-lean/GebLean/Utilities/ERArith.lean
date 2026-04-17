@@ -543,4 +543,140 @@ component of `Nat.unpair`. -/
   rw [ERMor1.interp_natPair, ERMor1.interp_natUnpairSnd,
     Nat.unpair_pair]
 
+/-- Body of the `bsum` used to define `div`.  At context
+`![k, a, b]` returns `1` if `(k + 1) * b ≤ a`, else `0`. -/
+def ERMor1.divBody : ERMor1 3 :=
+  ERMor1.comp ERMor1.leN fun i => match i with
+    | ⟨0, _⟩ =>
+        ERMor1.comp ERMor1.mulN fun j => match j with
+          | ⟨0, _⟩ =>
+              ERMor1.comp ERMor1.succ
+                fun (_ : Fin 1) => ERMor1.proj 0
+          | ⟨1, _⟩ => ERMor1.proj 2
+    | ⟨1, _⟩ => ERMor1.proj 1
+
+/-- Interpretation of `divBody`. -/
+@[simp] theorem ERMor1.interp_divBody (ctx : Fin 3 → ℕ) :
+    ERMor1.divBody.interp ctx =
+      if (ctx 0 + 1) * ctx 2 ≤ ctx 1 then 1 else 0 := by
+  have heq : ERMor1.divBody.interp ctx =
+      ERMor1.leN.interp ![(ctx 0 + 1) * ctx 2, ctx 1] := by
+    change ERMor1.leN.interp _ = ERMor1.leN.interp _
+    congr 1
+    funext i
+    match i with
+    | ⟨0, _⟩ =>
+      rw [ERMor1.interp_comp, ERMor1.interp_mulN]
+      rfl
+    | ⟨1, _⟩ => rfl
+  rw [heq, ERMor1.interp_leN]
+  congr 1
+
+/-- Auxiliary: when `b ≥ 1`, counting `k < B` with
+`(k + 1) * b ≤ a` yields `min B (a / b)`.  Proof by
+induction on `B`. -/
+theorem natBSum_divBody_eq_min (a b B : ℕ) (hb : 1 ≤ b) :
+    natBSum B (fun k =>
+      if (k + 1) * b ≤ a then 1 else 0) =
+    min B (a / b) := by
+  induction B with
+  | zero => rfl
+  | succ m ih =>
+    change natBSum m _ + _ = _
+    rw [ih]
+    have hle : ∀ k, (k + 1) * b ≤ a ↔ k + 1 ≤ a / b := by
+      intro k
+      exact (Nat.le_div_iff_mul_le hb).symm
+    by_cases hcond : (m + 1) * b ≤ a
+    · simp only [hcond, if_true]
+      have hkle : m + 1 ≤ a / b := (hle m).mp hcond
+      rw [Nat.min_eq_left (Nat.le_of_succ_le hkle),
+        Nat.min_eq_left hkle]
+    · simp only [hcond, if_false]
+      rw [Nat.add_zero]
+      have hnlt : ¬ (m + 1 ≤ a / b) := fun h =>
+        hcond ((hle m).mpr h)
+      have hge : a / b ≤ m := Nat.lt_succ_iff.mp
+        (Nat.lt_of_not_le hnlt)
+      rw [Nat.min_eq_right hge, Nat.min_eq_right
+        (Nat.le_succ_of_le hge)]
+
+/-- ER-derived integer division `a / b`, matching `Nat.div`
+(in particular `a / 0 = 0`).  Counts `k < a` with
+`(k + 1) * b ≤ a`, then multiplies by the sign of `b` so that
+`b = 0` returns `0`. -/
+def ERMor1.div : ERMor1 2 :=
+  ERMor1.comp ERMor1.mulN fun i => match i with
+    | ⟨0, _⟩ =>
+        ERMor1.comp ERMor1.signN
+          fun (_ : Fin 1) => ERMor1.proj 1
+    | ⟨1, _⟩ =>
+        ERMor1.comp (ERMor1.bsum ERMor1.divBody)
+          fun j => match j with
+            | ⟨0, _⟩ => ERMor1.proj 0
+            | ⟨1, _⟩ => ERMor1.proj 0
+            | ⟨2, _⟩ => ERMor1.proj 1
+
+/-- Interpretation of `div`: agrees with `Nat.div`. -/
+@[simp] theorem ERMor1.interp_div (a b : ℕ) :
+    ERMor1.div.interp ![a, b] = a / b := by
+  have hsign : ERMor1.signN.interp ![b] = 1 - (1 - b) := by
+    rw [ERMor1.interp_signN]
+    rfl
+  have hbsum : (ERMor1.bsum ERMor1.divBody).interp
+      ![a, a, b] =
+      natBSum a (fun k =>
+        if (k + 1) * b ≤ a then 1 else 0) := by
+    rw [ERMor1.interp_bsum]
+    congr 1
+    funext k
+    rw [ERMor1.interp_divBody]
+    rfl
+  have hunf : ERMor1.div.interp ![a, b] =
+      ERMor1.signN.interp ![b] *
+        (ERMor1.bsum ERMor1.divBody).interp ![a, a, b] := by
+    change ERMor1.mulN.interp _ = _
+    rw [ERMor1.interp_mulN]
+    rfl
+  rw [hunf, hsign, hbsum]
+  rcases Nat.eq_zero_or_pos b with hb0 | hbpos
+  · subst hb0
+    simp
+  · have hb : 1 ≤ b := hbpos
+    rw [natBSum_divBody_eq_min a b a hb]
+    have hle : a / b ≤ a := Nat.div_le_self a b
+    rw [Nat.min_eq_right hle]
+    have h1 : 1 - (1 - b) = 1 := by omega
+    rw [h1, Nat.one_mul]
+
+/-- ER-derived integer modulo `a % b`, defined as
+`a - (a / b) * b`.  Matches `Nat.mod` in particular for
+`b = 0`, where `a % 0 = a`. -/
+def ERMor1.mod : ERMor1 2 :=
+  ERMor1.comp ERMor1.sub fun i => match i with
+    | ⟨0, _⟩ => ERMor1.proj 0
+    | ⟨1, _⟩ =>
+        ERMor1.comp ERMor1.mulN fun j => match j with
+          | ⟨0, _⟩ => ERMor1.div
+          | ⟨1, _⟩ => ERMor1.proj 1
+
+/-- Interpretation of `mod`: agrees with `Nat.mod`. -/
+@[simp] theorem ERMor1.interp_mod (a b : ℕ) :
+    ERMor1.mod.interp ![a, b] = a % b := by
+  have hdiv : ERMor1.div.interp ![a, b] = a / b :=
+    ERMor1.interp_div a b
+  have hunf : ERMor1.mod.interp ![a, b] =
+      a - (a / b) * b := by
+    unfold ERMor1.mod
+    rw [ERMor1.interp_comp, ERMor1.interp_sub]
+    change (![a, b] : Fin 2 → ℕ) 0 -
+        ERMor1.mulN.interp _ = _
+    rw [ERMor1.interp_mulN]
+    change a - ERMor1.div.interp _ * _ = _
+    rw [hdiv]
+    rfl
+  rw [hunf]
+  have hadd : a / b * b + a % b = a := Nat.div_add_mod' a b
+  omega
+
 end GebLean
