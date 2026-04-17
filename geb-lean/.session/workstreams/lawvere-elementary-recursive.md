@@ -222,7 +222,7 @@ Design spec:
 
 Implementation plan:
 `docs/superpowers/plans/2026-04-17-lawvere-natbt.md` (local,
-gitignored).  20 tasks across three stages:
+gitignored).  25 tasks across three stages:
 
 * **Stage α** (Tasks 1–10): base theory.  `BTL` labeled tree
     type; `NatBTMor1` two-sort term inductive; interpretation;
@@ -230,32 +230,77 @@ gitignored).  20 tasks across three stages:
     `NatBTMorNQuo`; `Category LawvereNatBTCat`;
     `HasChosenFiniteProducts`; interp functor into `Type`;
     Stage α tests.
-* **Stage β** (Tasks 11–15): two-step factorization
-    `LawvereERCat ≅ LawvereNatBT0Cat ≃ LawvereNatBTCat`.
-    Task 11 builds `LawvereNatBT0Cat` as a `FullSubcategory`
-    of `LawvereNatBTCat` on `m = 0` objects (predicate
-    `isNatBT0`), with restricted `HasChosenFiniteProducts`.
-    Task 12 builds the on-the-nose isomorphism functors
-    `natBTJ : LawvereERCat ⥤ LawvereNatBT0Cat` and
-    `natBTK : LawvereNatBT0Cat ⥤ LawvereERCat`, with
-    `K ∘ J = 𝟙` and `J ∘ K = 𝟙`, packaged as `natBTERIso`.
-    Task 13 proves essential surjectivity of the inclusion
-    `natBT0Inclusion : LawvereNatBT0Cat ↪ LawvereNatBTCat`
-    via Szudzik-based packing `(n, m) ≅ (n + m, 0)`, then
-    composes with `natBTERIso` to obtain
-    `natBTEquivalence : LawvereERCat ≌ LawvereNatBTCat`.
-    Task 14 transports Phase 4f.1 Ackermann non-fullness and
-    Phase 4f.2 tetration non-elementarity across the
-    equivalence.  Task 15 registers Stage β and writes tests.
-    The two-step factorization keeps Szudzik encoding
-    internal to `LawvereNatBTCat` (it never touches
-    `LawvereERCat`) and presents `LawvereNatBT0Cat` as the
-    in-category sub-presentation isomorphic to `LawvereER`.
-* **Stage γ** (Tasks 16–19): lex completion
+* **Stage β** (Tasks 11–20): three-stage factorization
+    `LawvereERCat ≅ LawvereNatBTPureCat ≃ LawvereNatBT0Cat ≃
+    LawvereNatBTCat`.  The four categories (in current
+    code/naming) are:
+  * **`LawvereNatBTCat`** ("TreeER") — the two-sort base.
+  * **`LawvereNatBT0Cat`** ("Tree0ER") — `FullSubcategory` on
+    `m = 0` objects.  Hom-sets inherit from parent and may
+    contain morphism classes whose representatives use
+    `encodeBT`/`foldBTNat` internally.
+  * **`LawvereNatBTPureCat`** ("TreeNatER") — strict-ER
+    fragment: morphism classes containing some representative
+    whose every sub-term is in the strict-ER fragment.  Hom-set
+    carriers are 1-1 with `ERMorNQuo`.
+  * **`LawvereERCat`** ("NatER") — the existing ℕ-only theory.
+  
+    Tasks:
+  * Task 11 (DONE, commit `4f806f6d`): `LawvereNatBT0Cat`
+      `FullSubcategory` with restricted
+      `HasChosenFiniteProducts`.
+  * Task 12: ER-derived `Nat.pair`/`Nat.unpair` packaged as
+      `ERMor1` terms with `@[simp]` correctness theorems.
+      Goes into new `GebLean/Utilities/ERTreeArith.lean`.
+      Builds on existing `LawvereERArith.lean`,
+      `LawvereERBool.lean` infrastructure.
+  * Task 13: Extend `Utilities/SzudzikSeq.lean` with
+      `Nat.foldBTLOnCode` (labeled-BTL course-of-values
+      fold-on-code, mirroring the existing unlabeled
+      `Nat.treeFoldOnCode`).  Package as `ERMor1.foldBTLOnCode`
+      in `Utilities/ERTreeArith.lean`.
+  * Task 14: `NatBTMor1.toER` and `NatBTMor1.toER_bt`
+      (mutually recursive structural back-translation), with
+      extensional correctness.  In new
+      `GebLean/LawvereNatBTBackTrans.lean`.  This is the
+      substrate of Stage 2's equivalence.
+  * Task 15: `LawvereNatBTPureCat` thin wrapper around
+      `LawvereERCat`, with on-the-nose Stage 3 iso
+      `natBTPureEquivalence`.  In new
+      `GebLean/LawvereNatBTPure.lean`.
+  * Task 16: Stage 1 essential surjectivity via Szudzik on
+      objects (`natBTPack`/`natBTUnpack`/`natBTIsoPack`).
+      Packages as `natBTSubInclEquiv : LawvereNatBT0Cat ≌
+      LawvereNatBTCat`.  In new
+      `GebLean/LawvereNatBTEquiv.lean`.
+  * Task 17: Stage 2 equivalence
+      (`natBTPureTree0Equiv : LawvereNatBTPureCat ≌
+      LawvereNatBT0Cat`) via `naturalInclusion`/`backTranslate`
+      pair using Task 14's back-translation.
+  * Task 18: Compose three stages into
+      `natBTEquivalence : LawvereERCat ≌ LawvereNatBTCat`.
+  * Task 19: Transport Phase 4f.1 Ackermann non-fullness and
+      Phase 4f.2 tetration non-elementarity across the
+      equivalence.
+  * Task 20: Register Stage β + tests.
+  
+    The three-stage factorization keeps Szudzik encoding work
+    in two distinct places:
+  * **Stage 1** uses NatBT-internal `encodeBT`/`decodeBT`
+      generators only (no ER-side work).
+  * **Stage 2** uses ER-derived Szudzik primitives (Tasks
+      12-13) plus the back-translation (Task 14) — the
+      substantive new work that Phase 4g.2's preserved
+      `Utilities/SzudzikSeq.lean` infrastructure provides
+      Layer-1 ingredients for.
+  
+    Tasks 12, 13, 14, 17, 18 are flagged proof-heavy.  Tasks 15,
+    16, 19 are moderate.
+* **Stage γ** (Tasks 21–24): lex completion
     `LawvereNatBTLexCat` with decidable subobjects; unlabeled
     and finite-alphabet tree subtypes; faithful embedding
     `LawvereTreeER ↪ LawvereNatBT`; Stage γ tests.
-* **Finalization** (Task 20): workstream tracker update.
+* **Finalization** (Task 25): workstream tracker update.
 
 Progress so far (as of end of this session):
 
@@ -284,12 +329,29 @@ Progress so far (as of end of this session):
     LawvereNatBTCat ⥤ Type` with `Faithful` (Task 9); and
     Stage α tests (Task 10).
 
+* **Stage β Task 11 complete** (commit `4f806f6d`):
+  `GebLean/LawvereNatBT0.lean` defines `isNatBT0`, the
+  `LawvereNatBT0Cat` `FullSubcategory`, the `natBT0Inclusion`
+  functor (with full + faithful auto-instances), and
+  `HasChosenFiniteProducts LawvereNatBT0Cat` with
+  `lawvereNatBT0Terminal` and `lawvereNatBT0Product`.  Module
+  registered in `GebLean.lean`.
+
 Resume via superpowers:subagent-driven-development at Stage β
-Task 11 (`LawvereNatBT0Cat` via `FullSubcategory`).  See the
-plan's Task 11 section for the full specification.  Total
-plan has 20 tasks; remaining budget is Stages β and γ plus
-finalization.  Natural checkpoints: end of Stage β (Task
-15), end of Stage γ (Task 19), completion (Task 20).
+Task 12 (ER-derived `Nat.pair`/`Nat.unpair`).  See the plan's
+Task 12 section for the full specification.  Total plan has 25
+tasks under the three-stage factorization; remaining budget is
+Stage β Tasks 12-20 plus Stages γ and finalization.  Natural
+checkpoints: end of Stage β (Task 20), end of Stage γ (Task
+24), completion (Task 25).
+
+The three-stage factorization replaces what was originally a
+two-step factorization (which itself was a redesign of an
+earlier on-the-nose-iso target).  The current design's
+distinguishing property: every NatBT computation explicitly
+back-translates to an ER computation via Szudzik (Task 14's
+`NatBTMor1.toER`), which makes the equivalence constructive
+without appealing to choice or classical reasoning.
 
 ## Phase 4g: Tree-Native ER Parallel Development (planned)
 
