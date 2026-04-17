@@ -3309,6 +3309,26 @@ def ccrNewIndexNatFunctor
     CategoryTheory.ULift.upFunctor ⋙
     CategoryTheory.ULiftHom.up
 
+/--
+The natural transformation packaging the per-`C` index functors.
+Source: `coprodCovarRepFunctor.{u, v, w}`.  Target: the constant
+functor at `typeCatLift.{u, v, w}`.
+
+The target is constant because `coprodCovarRepFunctor.map F`
+preserves the index type on the nose: `(X, E) ↦ (X, F ∘ E)` leaves
+`X` unchanged, so the naturality square collapses to an identity on
+index types.
+-/
+def ccrNewIndexNat :
+    coprodCovarRepFunctor.{u, v, w} ⟶
+      (Functor.const Cat.{v, u}).obj
+        typeCatLift.{u, v, w} where
+  app C :=
+    (ccrNewIndexNatFunctor.{u, v, w} C.α).toCatHom
+  naturality {C D} F := by
+    apply Cat.Hom.ext
+    rfl
+
 end CCRNaturalPackaging
 
 end GebLean
