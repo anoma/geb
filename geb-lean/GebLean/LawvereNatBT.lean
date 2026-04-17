@@ -135,4 +135,67 @@ theorem BTL.encode_decode (n : ℕ) :
           rw [ihl, ihr, Nat.pair_unpair]
           omega
 
+/-- Discriminator for the output sort of a two-sort morphism.
+`.nat` means the morphism produces a natural number; `.bt` means
+it produces a labeled binary tree. -/
+inductive NatBTSort : Type where
+  | nat
+  | bt
+  deriving DecidableEq, Repr
+
+/-- Target type for a morphism's output sort under the standard
+interpretation. -/
+def NatBTSort.carrier : NatBTSort → Type
+  | .nat => ℕ
+  | .bt  => BTL
+
+/-- Morphism in the two-sort Lawvere theory.  Indexed by a
+domain arity `(n, m) : ℕ × ℕ` and an output sort
+`σ : NatBTSort`.  Constructors partition into ℕ-sort generators
+(mirroring `LawvereER`), BT-sort generators, and bridges. -/
+inductive NatBTMor1 : (ℕ × ℕ) → NatBTSort → Type where
+  | zero {nm : ℕ × ℕ} : NatBTMor1 nm .nat
+  | succ {nm : ℕ × ℕ} (x : NatBTMor1 nm .nat) :
+      NatBTMor1 nm .nat
+  | natProj {nm : ℕ × ℕ} (i : Fin nm.1) : NatBTMor1 nm .nat
+  | sub {nm : ℕ × ℕ} (a b : NatBTMor1 nm .nat) :
+      NatBTMor1 nm .nat
+  | compNat {nm nm' : ℕ × ℕ}
+      (f : NatBTMor1 nm' .nat)
+      (gNat : Fin nm'.1 → NatBTMor1 nm .nat)
+      (gBT  : Fin nm'.2 → NatBTMor1 nm .bt) :
+      NatBTMor1 nm .nat
+  | bsum {nm : ℕ × ℕ}
+      (f : NatBTMor1 (nm.1 + 1, nm.2) .nat) :
+      NatBTMor1 nm .nat
+  | bprod {nm : ℕ × ℕ}
+      (f : NatBTMor1 (nm.1 + 1, nm.2) .nat) :
+      NatBTMor1 nm .nat
+  | leafBT {nm : ℕ × ℕ}
+      (label : NatBTMor1 nm .nat) :
+      NatBTMor1 nm .bt
+  | nodeBT {nm : ℕ × ℕ}
+      (l r : NatBTMor1 nm .bt) :
+      NatBTMor1 nm .bt
+  | btProj {nm : ℕ × ℕ} (i : Fin nm.2) : NatBTMor1 nm .bt
+  | compBT {nm nm' : ℕ × ℕ}
+      (f : NatBTMor1 nm' .bt)
+      (gNat : Fin nm'.1 → NatBTMor1 nm .nat)
+      (gBT  : Fin nm'.2 → NatBTMor1 nm .bt) :
+      NatBTMor1 nm .bt
+  | foldBTNat {nm : ℕ × ℕ}
+      (baseLeaf : NatBTMor1 (nm.1 + 1, nm.2) .nat)
+      (stepNode : NatBTMor1 (nm.1, nm.2 + 2) .nat)
+      (tree : NatBTMor1 nm .bt) :
+      NatBTMor1 nm .nat
+  | foldBTBT {nm : ℕ × ℕ}
+      (baseLeaf : NatBTMor1 (nm.1 + 1, nm.2) .bt)
+      (stepNode : NatBTMor1 (nm.1, nm.2 + 2) .bt)
+      (tree : NatBTMor1 nm .bt) :
+      NatBTMor1 nm .bt
+  | encodeBT {nm : ℕ × ℕ}
+      (t : NatBTMor1 nm .bt) : NatBTMor1 nm .nat
+  | decodeBT {nm : ℕ × ℕ}
+      (k : NatBTMor1 nm .nat) : NatBTMor1 nm .bt
+
 end GebLean
