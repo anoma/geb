@@ -82,4 +82,20 @@ theorem NatBTMorNQuo.assoc
   intro ctxN ctxB
   simp
 
+open CategoryTheory
+
+/-- Carrier type for the two-sort base category: pairs
+`(n, m) : ℕ × ℕ` interpreted as `ℕⁿ × BTᵐ`. -/
+def LawvereNatBTCat : Type := ℕ × ℕ
+
+instance : CategoryStruct LawvereNatBTCat where
+  Hom nm nm' := NatBTMorNQuo nm nm'
+  id := NatBTMorNQuo.id
+  comp := NatBTMorNQuo.comp
+
+instance : Category LawvereNatBTCat where
+  id_comp := NatBTMorNQuo.id_comp
+  comp_id := NatBTMorNQuo.comp_id
+  assoc := fun f g h => NatBTMorNQuo.assoc f g h
+
 end GebLean
