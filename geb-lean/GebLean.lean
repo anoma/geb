@@ -50,6 +50,7 @@ import GebLean.LawvereERLex
 import GebLean.LawvereERQuot
 import GebLean.LawvereERTetration
 import GebLean.LawvereNatBT
+import GebLean.LawvereNatBT0
 import GebLean.LawvereNatBTInterp
 import GebLean.LawvereNatBTQuot
 import GebLean.LawvereTreeER
