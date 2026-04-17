@@ -436,4 +436,78 @@ def NatBTMorN.interp {nm nm' : ℕ × ℕ}
       g.interp ctxN' ctxB' := by
   simp [NatBTMorN.comp, NatBTMorN.interp]
 
+/-- Terminal morphism into arity `(0, 0)`: the empty tuple. -/
+def NatBTMorN.terminal (nm : ℕ × ℕ) : NatBTMorN nm (0, 0) where
+  natComps i := i.elim0
+  btComps i := i.elim0
+
+/-- First projection from the product arity
+`(nm₁.1 + nm₂.1, nm₁.2 + nm₂.2)`. -/
+def NatBTMorN.fst {nm₁ nm₂ : ℕ × ℕ} :
+    NatBTMorN (nm₁.1 + nm₂.1, nm₁.2 + nm₂.2) nm₁ where
+  natComps i := NatBTMor1.natProj (Fin.castAdd nm₂.1 i)
+  btComps i := NatBTMor1.btProj (Fin.castAdd nm₂.2 i)
+
+/-- Second projection from the product arity
+`(nm₁.1 + nm₂.1, nm₁.2 + nm₂.2)`. -/
+def NatBTMorN.snd {nm₁ nm₂ : ℕ × ℕ} :
+    NatBTMorN (nm₁.1 + nm₂.1, nm₁.2 + nm₂.2) nm₂ where
+  natComps i := NatBTMor1.natProj (Fin.natAdd nm₁.1 i)
+  btComps i := NatBTMor1.btProj (Fin.natAdd nm₁.2 i)
+
+/-- Pairing: given morphisms into `nm₁` and `nm₂`, build one into
+`(nm₁.1 + nm₂.1, nm₁.2 + nm₂.2)` via `Fin.addCases`. -/
+def NatBTMorN.pair {nm nm₁ nm₂ : ℕ × ℕ}
+    (f : NatBTMorN nm nm₁) (g : NatBTMorN nm nm₂) :
+    NatBTMorN nm (nm₁.1 + nm₂.1, nm₁.2 + nm₂.2) where
+  natComps := Fin.addCases f.natComps g.natComps
+  btComps := Fin.addCases f.btComps g.btComps
+
+@[simp] theorem NatBTMorN.interp_terminal
+    {nm : ℕ × ℕ} (ctxN : Fin nm.1 → ℕ) (ctxB : Fin nm.2 → BTL) :
+    (NatBTMorN.terminal nm).interp ctxN ctxB =
+      ((fun i => i.elim0), (fun i => i.elim0)) := by
+  apply Prod.ext
+  · exact funext (fun i => i.elim0)
+  · exact funext (fun i => i.elim0)
+
+@[simp] theorem NatBTMorN.interp_fst
+    {nm₁ nm₂ : ℕ × ℕ}
+    (ctxN : Fin (nm₁.1 + nm₂.1) → ℕ)
+    (ctxB : Fin (nm₁.2 + nm₂.2) → BTL) :
+    (NatBTMorN.fst (nm₁ := nm₁) (nm₂ := nm₂)).interp
+        ctxN ctxB =
+      ((fun i => ctxN (Fin.castAdd nm₂.1 i)),
+       (fun i => ctxB (Fin.castAdd nm₂.2 i))) := rfl
+
+@[simp] theorem NatBTMorN.interp_snd
+    {nm₁ nm₂ : ℕ × ℕ}
+    (ctxN : Fin (nm₁.1 + nm₂.1) → ℕ)
+    (ctxB : Fin (nm₁.2 + nm₂.2) → BTL) :
+    (NatBTMorN.snd (nm₁ := nm₁) (nm₂ := nm₂)).interp
+        ctxN ctxB =
+      ((fun i => ctxN (Fin.natAdd nm₁.1 i)),
+       (fun i => ctxB (Fin.natAdd nm₁.2 i))) := rfl
+
+@[simp] theorem NatBTMorN.interp_pair
+    {nm nm₁ nm₂ : ℕ × ℕ}
+    (f : NatBTMorN nm nm₁) (g : NatBTMorN nm nm₂)
+    (ctxN : Fin nm.1 → ℕ) (ctxB : Fin nm.2 → BTL) :
+    (NatBTMorN.pair f g).interp ctxN ctxB =
+      ((fun i => Fin.addCases
+          (fun j => (f.natComps j).interp ctxN ctxB)
+          (fun j => (g.natComps j).interp ctxN ctxB) i),
+       (fun i => Fin.addCases
+          (fun j => (f.btComps j).interp ctxN ctxB)
+          (fun j => (g.btComps j).interp ctxN ctxB) i)) := by
+  apply Prod.ext
+  · funext i
+    refine Fin.addCases (fun j => ?_) (fun j => ?_) i
+    · simp [NatBTMorN.interp, NatBTMorN.pair]
+    · simp [NatBTMorN.interp, NatBTMorN.pair]
+  · funext i
+    refine Fin.addCases (fun j => ?_) (fun j => ?_) i
+    · simp [NatBTMorN.interp, NatBTMorN.pair]
+    · simp [NatBTMorN.interp, NatBTMorN.pair]
+
 end GebLean
