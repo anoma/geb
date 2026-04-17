@@ -741,4 +741,328 @@ theorem Nat.beta_exists {N : ℕ} (s : Fin N → ℕ) :
       (i.val + 1) * n.unpair.2 + 1 := by omega
   rw [hcomm, ← hj, ← hbeta_def, hb, hget]
 
+/-- `consBound bound i` is the term substituted into slot `i`
+when wrapping a `(k + 1)`-ary body into a `k`-ary term: slot
+`0` is replaced by `bound`, slot `i + 1` by the projection
+`proj i`. -/
+def ERMor1.consBound {k : ℕ} (bound : ERMor1 k)
+    (i : Fin (k + 1)) : ERMor1 k :=
+  Fin.cases bound (fun j => ERMor1.proj j) i
+
+/-- Interpretation of `consBound bound` at outer context `ctx`
+equals `Fin.cons (bound.interp ctx) ctx`. -/
+@[simp] theorem ERMor1.interp_consBound {k : ℕ}
+    (bound : ERMor1 k) (ctx : Fin k → ℕ) :
+    (fun i => (ERMor1.consBound bound i).interp ctx) =
+      Fin.cons (bound.interp ctx) ctx := by
+  funext i
+  refine Fin.cases ?_ ?_ i
+  · rfl
+  · intro j
+    rfl
+
+/-- Body of the outer `bsum` used by `boundedSearch`: at
+context `Fin.cons j outer_ctx`, evaluates to
+`(1 - Σ_{m<j} pred m) * pred j * (j + 1)`.  Under the
+assumption that `pred` is `0/1`-valued, this contributes
+`j + 1` exactly at the least `j` with `pred j = 1` and `0`
+everywhere else. -/
+def ERMor1.searchBody {k : ℕ} (pred : ERMor1 (k + 1)) :
+    ERMor1 (k + 1) :=
+  ERMor1.comp ERMor1.mulN (fun i => match i with
+    | ⟨0, _⟩ =>
+      ERMor1.comp ERMor1.mulN (fun j => match j with
+        | ⟨0, _⟩ =>
+          ERMor1.comp ERMor1.boolNot (fun _ =>
+            ERMor1.bsum pred)
+        | ⟨1, _⟩ => pred)
+    | ⟨1, _⟩ =>
+      ERMor1.comp ERMor1.succ (fun _ => ERMor1.proj 0))
+
+/-- Interpretation of `searchBody` at `Fin.cons j ctx`. -/
+@[simp] theorem ERMor1.interp_searchBody {k : ℕ}
+    (pred : ERMor1 (k + 1)) (j : ℕ) (ctx : Fin k → ℕ) :
+    (ERMor1.searchBody pred).interp (Fin.cons j ctx) =
+      (1 - natBSum j (fun m =>
+          pred.interp (Fin.cons m ctx)))
+        * pred.interp (Fin.cons j ctx) * (j + 1) := by
+  have hcum :
+      (ERMor1.bsum pred).interp (Fin.cons j ctx) =
+        natBSum j (fun m => pred.interp (Fin.cons m ctx)) := by
+    rw [ERMor1.interp_bsum]
+    rfl
+  unfold ERMor1.searchBody
+  rw [ERMor1.interp_comp, ERMor1.interp_mulN]
+  change ERMor1.mulN.interp _ * _ = _
+  rw [ERMor1.interp_mulN]
+  change (1 - (ERMor1.bsum pred).interp _) *
+      pred.interp _ *
+      ((Fin.cons j ctx : Fin (k + 1) → ℕ) 0 + 1) = _
+  rw [hcum]
+  rfl
+
+/-- Bounded search: given a bound `bound : ERMor1 k` and a
+predicate `pred : ERMor1 (k + 1)` that is `0/1`-valued, returns
+the least `j < bound.interp ctx` with
+`pred.interp (Fin.cons j ctx) = 1`, or `bound.interp ctx + 1`
+if no such `j` exists. -/
+def ERMor1.boundedSearch {k : ℕ}
+    (bound : ERMor1 k) (pred : ERMor1 (k + 1)) :
+    ERMor1 k :=
+  ERMor1.comp ERMor1.addN (fun i => match i with
+    | ⟨0, _⟩ =>
+      ERMor1.comp ERMor1.sub (fun j => match j with
+        | ⟨0, _⟩ =>
+          ERMor1.comp (ERMor1.bsum (ERMor1.searchBody pred))
+            (ERMor1.consBound bound)
+        | ⟨1, _⟩ =>
+          ERMor1.comp ERMor1.signN (fun _ =>
+            ERMor1.comp (ERMor1.bsum pred)
+              (ERMor1.consBound bound)))
+    | ⟨1, _⟩ =>
+      ERMor1.comp ERMor1.mulN (fun j => match j with
+        | ⟨0, _⟩ =>
+          ERMor1.comp ERMor1.boolNot (fun _ =>
+            ERMor1.comp ERMor1.signN (fun _ =>
+              ERMor1.comp (ERMor1.bsum pred)
+                (ERMor1.consBound bound)))
+        | ⟨1, _⟩ =>
+          ERMor1.comp ERMor1.succ (fun _ => bound)))
+
+/-- Arithmetic unfolding of `boundedSearch`: interprets to
+`(S1 - hasWit) + noWit * (B + 1)`, where `S1` is the
+first-witness-plus-one `bsum`, `hasWit` the sign of the total
+predicate count, and `noWit = 1 - hasWit`. -/
+theorem ERMor1.interp_boundedSearch_raw {k : ℕ}
+    (bound : ERMor1 k) (pred : ERMor1 (k + 1))
+    (ctx : Fin k → ℕ) :
+    (ERMor1.boundedSearch bound pred).interp ctx =
+      (natBSum (bound.interp ctx) (fun j =>
+          (1 - natBSum j (fun m =>
+              pred.interp (Fin.cons m ctx)))
+            * pred.interp (Fin.cons j ctx) * (j + 1))
+        - (1 - (1 - natBSum (bound.interp ctx)
+            (fun m => pred.interp (Fin.cons m ctx)))))
+      + (1 - (1 - (1 - natBSum (bound.interp ctx)
+          (fun m => pred.interp (Fin.cons m ctx)))))
+        * (bound.interp ctx + 1) := by
+  set B := bound.interp ctx
+  have hbsum_at_B :
+      (ERMor1.bsum pred).interp
+          (fun i => (ERMor1.consBound bound i).interp ctx) =
+        natBSum B (fun m => pred.interp (Fin.cons m ctx)) := by
+    rw [ERMor1.interp_consBound]
+    rw [ERMor1.interp_bsum]
+    rfl
+  have hsearch_at_B :
+      (ERMor1.bsum (ERMor1.searchBody pred)).interp
+          (fun i => (ERMor1.consBound bound i).interp ctx) =
+        natBSum B (fun j =>
+          (1 - natBSum j (fun m =>
+              pred.interp (Fin.cons m ctx)))
+            * pred.interp (Fin.cons j ctx) * (j + 1)) := by
+    rw [ERMor1.interp_consBound]
+    rw [ERMor1.interp_bsum]
+    have h0 : (Fin.cons B ctx : Fin (k + 1) → ℕ) 0 = B := rfl
+    rw [h0]
+    congr 1
+    funext j
+    have htail :
+        Fin.tail (Fin.cons B ctx : Fin (k + 1) → ℕ) = ctx := by
+      funext i
+      simp [Fin.tail, Fin.cons_succ]
+    rw [htail, ERMor1.interp_searchBody]
+  have hunf :
+      (ERMor1.boundedSearch bound pred).interp ctx =
+        ((ERMor1.bsum (ERMor1.searchBody pred)).interp
+            (fun i => (ERMor1.consBound bound i).interp ctx)
+          - (1 - (1 - (ERMor1.bsum pred).interp
+              (fun i => (ERMor1.consBound bound i).interp
+                ctx)))) +
+        (1 - (1 - (1 - (ERMor1.bsum pred).interp
+            (fun i => (ERMor1.consBound bound i).interp
+              ctx)))) *
+          ((bound.interp ctx : ℕ).succ) := by
+    unfold ERMor1.boundedSearch
+    simp only [ERMor1.interp_comp, ERMor1.interp_addN,
+      ERMor1.interp_sub, ERMor1.interp_mulN,
+      ERMor1.interp_signN, ERMor1.interp_boolNot,
+      ERMor1.interp_succ]
+  rw [hunf, hbsum_at_B, hsearch_at_B]
+
+/-- If `P` is `0/1`-valued, the total `natBSum` over `[0, B)`
+reports whether at least one witness exists: nonzero iff
+`∃ j < B, P j = 1`. -/
+theorem natBSum_pos_iff_exists (P : ℕ → ℕ) (B : ℕ)
+    (hP : ∀ j, P j ≤ 1) :
+    0 < natBSum B P ↔ ∃ j, j < B ∧ P j = 1 := by
+  induction B with
+  | zero =>
+    refine ⟨fun h => ?_, fun ⟨j, hj, _⟩ => ?_⟩
+    · exact (Nat.lt_irrefl 0 h).elim
+    · exact (Nat.not_lt_zero _ hj).elim
+  | succ b ih =>
+    change 0 < natBSum b P + P b ↔ _
+    refine ⟨fun h => ?_, fun ⟨j, hj, hpj⟩ => ?_⟩
+    · rcases Nat.eq_zero_or_pos (natBSum b P) with h1 | h1
+      · rw [h1, Nat.zero_add] at h
+        have hpb : P b = 1 :=
+          Nat.le_antisymm (hP b) h
+        exact ⟨b, Nat.lt_succ_self b, hpb⟩
+      · rcases (ih.mp h1) with ⟨j, hj, hpj⟩
+        exact ⟨j, Nat.lt_succ_of_lt hj, hpj⟩
+    · rcases Nat.lt_or_ge j b with hjlt | hjge
+      · have hex : ∃ j, j < b ∧ P j = 1 := ⟨j, hjlt, hpj⟩
+        have : 0 < natBSum b P := ih.mpr hex
+        omega
+      · have : j = b := Nat.le_antisymm
+          (Nat.lt_succ_iff.mp hj) hjge
+        subst this
+        rw [hpj]
+        omega
+
+/-- Arithmetic core lemma: when `P` is `0/1`-valued, the
+"first-witness-plus-one" bsum equals `(Nat.find h) + 1` when a
+witness exists, else `0`. -/
+theorem natBSum_firstWitness (P : ℕ → ℕ) (B : ℕ)
+    (hP : ∀ j, P j ≤ 1) :
+    natBSum B (fun j =>
+        (1 - natBSum j P) * P j * (j + 1)) =
+      if h : ∃ j, j < B ∧ P j = 1
+        then Nat.find h + 1
+        else 0 := by
+  induction B with
+  | zero =>
+    have hno : ¬ ∃ j, j < 0 ∧ P j = 1 := by
+      rintro ⟨j, hj, _⟩
+      exact (Nat.not_lt_zero _ hj).elim
+    rw [dif_neg hno]
+    rfl
+  | succ b ih =>
+    change natBSum b (fun j =>
+        (1 - natBSum j P) * P j * (j + 1))
+      + ((1 - natBSum b P) * P b * (b + 1)) = _
+    rw [ih]
+    by_cases hex_old : ∃ j, j < b ∧ P j = 1
+    · have hex_new : ∃ j, j < b + 1 ∧ P j = 1 := by
+        rcases hex_old with ⟨j, hj, hpj⟩
+        exact ⟨j, Nat.lt_succ_of_lt hj, hpj⟩
+      rw [dif_pos hex_old, dif_pos hex_new]
+      have hfind_eq : Nat.find hex_new = Nat.find hex_old := by
+        rw [Nat.find_eq_iff]
+        obtain ⟨hlt, hP1⟩ := Nat.find_spec hex_old
+        refine ⟨⟨Nat.lt_succ_of_lt hlt, hP1⟩, ?_⟩
+        intro m hm ⟨_, hmP⟩
+        have hmltb : m < b := by
+          have : Nat.find hex_old < b := hlt
+          omega
+        exact Nat.find_min hex_old hm ⟨hmltb, hmP⟩
+      rw [hfind_eq]
+      have hsum_pos : 0 < natBSum b P :=
+        (natBSum_pos_iff_exists P b hP).mpr hex_old
+      have hcumb : 1 - natBSum b P = 0 := by omega
+      rw [hcumb]
+      ring
+    · by_cases hpb : P b = 1
+      · have hex_new : ∃ j, j < b + 1 ∧ P j = 1 :=
+          ⟨b, Nat.lt_succ_self b, hpb⟩
+        rw [dif_neg hex_old, dif_pos hex_new]
+        have hfind_b : Nat.find hex_new = b := by
+          rw [Nat.find_eq_iff]
+          refine ⟨⟨Nat.lt_succ_self b, hpb⟩, ?_⟩
+          intro m hm ⟨hmlt, hmP⟩
+          exact hex_old ⟨m, hm, hmP⟩
+        rw [hfind_b]
+        have hsum_zero : natBSum b P = 0 := by
+          rcases Nat.eq_zero_or_pos (natBSum b P) with h0 | h0
+          · exact h0
+          · exact absurd
+              ((natBSum_pos_iff_exists P b hP).mp h0)
+              hex_old
+        rw [hsum_zero, hpb]
+        ring
+      · have hex_new_not : ¬ ∃ j, j < b + 1 ∧ P j = 1 := by
+          rintro ⟨j, hj, hpj⟩
+          rcases Nat.lt_or_ge j b with hjlt | hjge
+          · exact hex_old ⟨j, hjlt, hpj⟩
+          · have hjb : j = b :=
+              Nat.le_antisymm (Nat.lt_succ_iff.mp hj) hjge
+            subst hjb
+            exact hpb hpj
+        rw [dif_neg hex_old, dif_neg hex_new_not]
+        have hpb0 : P b = 0 := by
+          rcases Nat.lt_or_ge (P b) 1 with h | h
+          · exact Nat.lt_one_iff.mp h
+          · exact absurd (Nat.le_antisymm (hP b) h) hpb
+        rw [hpb0]
+        ring
+
+/-- Correctness of `boundedSearch`: when `pred` is `0/1`-valued
+on the relevant fibre, the search returns the least witness
+below `bound` or `bound + 1` if none exists. -/
+theorem ERMor1.interp_boundedSearch {k : ℕ}
+    (bound : ERMor1 k) (pred : ERMor1 (k + 1))
+    (ctx : Fin k → ℕ)
+    (hpred : ∀ j, pred.interp (Fin.cons j ctx) ≤ 1) :
+    (ERMor1.boundedSearch bound pred).interp ctx =
+      if h : ∃ j, j < bound.interp ctx ∧
+          (pred.interp (Fin.cons j ctx) = 1)
+        then Nat.find h
+        else bound.interp ctx + 1 := by
+  set B := bound.interp ctx with hBdef
+  set P : ℕ → ℕ := fun j => pred.interp (Fin.cons j ctx)
+    with hPdef
+  have hP_le : ∀ j, P j ≤ 1 := hpred
+  rw [ERMor1.interp_boundedSearch_raw]
+  change (natBSum B (fun j =>
+            (1 - natBSum j P) * P j * (j + 1))
+          - (1 - (1 - natBSum B P)))
+        + (1 - (1 - (1 - natBSum B P))) * (B + 1) = _
+  rw [natBSum_firstWitness P B hP_le]
+  by_cases hex : ∃ j, j < B ∧ P j = 1
+  · rw [dif_pos hex, dif_pos hex]
+    have hsum_pos : 0 < natBSum B P :=
+      (natBSum_pos_iff_exists P B hP_le).mpr hex
+    have hrw_inner :
+        (1 : ℕ) - (1 - (1 - natBSum B P)) = 0 := by omega
+    rw [hrw_inner]
+    rw [Nat.zero_mul, Nat.add_zero]
+    have hrw_outer :
+        (1 : ℕ) - (1 - natBSum B P) = 1 := by omega
+    rw [hrw_outer]
+    omega
+  · rw [dif_neg hex, dif_neg hex]
+    have hsum_zero : natBSum B P = 0 := by
+      rcases Nat.eq_zero_or_pos (natBSum B P) with h0 | h0
+      · exact h0
+      · exact absurd
+          ((natBSum_pos_iff_exists P B hP_le).mp h0) hex
+    rw [hsum_zero]
+    change 0 - (1 - (1 - 0)) + (1 - (1 - (1 - 0))) * (B + 1) =
+      B + 1
+    omega
+
+/-- If `pred` holds uniquely at `j < bound`, `boundedSearch`
+returns that `j`.  Used by `natRec` at Task 12e. -/
+theorem ERMor1.boundedSearch_eq_unique {k : ℕ}
+    (bound : ERMor1 k) (pred : ERMor1 (k + 1))
+    (ctx : Fin k → ℕ) (j : ℕ)
+    (hpred : ∀ m, pred.interp (Fin.cons m ctx) ≤ 1)
+    (hj_lt : j < bound.interp ctx)
+    (hj_pred : pred.interp (Fin.cons j ctx) = 1)
+    (hj_unique : ∀ j', j' < bound.interp ctx →
+      (pred.interp (Fin.cons j' ctx) = 1) →
+      j' = j) :
+    (ERMor1.boundedSearch bound pred).interp ctx = j := by
+  have hex : ∃ m, m < bound.interp ctx ∧
+      (pred.interp (Fin.cons m ctx) = 1) :=
+    ⟨j, hj_lt, hj_pred⟩
+  rw [ERMor1.interp_boundedSearch bound pred ctx hpred,
+    dif_pos hex]
+  apply Nat.find_eq_iff _ |>.mpr
+  refine ⟨⟨hj_lt, hj_pred⟩, ?_⟩
+  intro m hm ⟨hmlt, hmP⟩
+  have hm_eq : m = j := hj_unique m hmlt hmP
+  omega
+
 end GebLean
