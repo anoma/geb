@@ -163,7 +163,7 @@ inductive NatBTMor1 : (ℕ × ℕ) → NatBTSort → Type where
   | compNat {nm nm' : ℕ × ℕ}
       (f : NatBTMor1 nm' .nat)
       (gNat : Fin nm'.1 → NatBTMor1 nm .nat)
-      (gBT  : Fin nm'.2 → NatBTMor1 nm .bt) :
+      (gBT : Fin nm'.2 → NatBTMor1 nm .bt) :
       NatBTMor1 nm .nat
   | bsum {nm : ℕ × ℕ}
       (f : NatBTMor1 (nm.1 + 1, nm.2) .nat) :
@@ -181,7 +181,7 @@ inductive NatBTMor1 : (ℕ × ℕ) → NatBTSort → Type where
   | compBT {nm nm' : ℕ × ℕ}
       (f : NatBTMor1 nm' .bt)
       (gNat : Fin nm'.1 → NatBTMor1 nm .nat)
-      (gBT  : Fin nm'.2 → NatBTMor1 nm .bt) :
+      (gBT : Fin nm'.2 → NatBTMor1 nm .bt) :
       NatBTMor1 nm .bt
   | foldBTNat {nm : ℕ × ℕ}
       (baseLeaf : NatBTMor1 (nm.1 + 1, nm.2) .nat)
@@ -197,5 +197,195 @@ inductive NatBTMor1 : (ℕ × ℕ) → NatBTSort → Type where
       (t : NatBTMor1 nm .bt) : NatBTMor1 nm .nat
   | decodeBT {nm : ℕ × ℕ}
       (k : NatBTMor1 nm .nat) : NatBTMor1 nm .bt
+
+/-- Standard interpretation of a two-sort morphism: maps a
+domain context `(ctxN, ctxB)` of arities `(nm.1, nm.2)` to an
+element of `σ.carrier`. -/
+def NatBTMor1.interp : {nm : ℕ × ℕ} → {σ : NatBTSort} →
+    NatBTMor1 nm σ → (Fin nm.1 → ℕ) → (Fin nm.2 → BTL) →
+    σ.carrier
+  | _, _, NatBTMor1.zero, _, _ => (0 : ℕ)
+  | _, _, NatBTMor1.succ x, ctxN, ctxB =>
+      Nat.succ (NatBTMor1.interp x ctxN ctxB)
+  | _, _, NatBTMor1.natProj i, ctxN, _ => ctxN i
+  | _, _, NatBTMor1.sub a b, ctxN, ctxB =>
+      Nat.sub (NatBTMor1.interp a ctxN ctxB)
+        (NatBTMor1.interp b ctxN ctxB)
+  | _, _, NatBTMor1.compNat f gNat gBT, ctxN, ctxB =>
+      NatBTMor1.interp f
+        (fun i => NatBTMor1.interp (gNat i) ctxN ctxB)
+        (fun i => NatBTMor1.interp (gBT i) ctxN ctxB)
+  | _, _, NatBTMor1.bsum f, ctxN, ctxB =>
+      natBSum (ctxN 0) (fun i =>
+        NatBTMor1.interp f (Fin.cons i (Fin.tail ctxN)) ctxB)
+  | _, _, NatBTMor1.bprod f, ctxN, ctxB =>
+      natBProd (ctxN 0) (fun i =>
+        NatBTMor1.interp f (Fin.cons i (Fin.tail ctxN)) ctxB)
+  | _, _, NatBTMor1.leafBT label, ctxN, ctxB =>
+      BTL.leaf (NatBTMor1.interp label ctxN ctxB)
+  | _, _, NatBTMor1.nodeBT l r, ctxN, ctxB =>
+      BTL.node (NatBTMor1.interp l ctxN ctxB)
+        (NatBTMor1.interp r ctxN ctxB)
+  | _, _, NatBTMor1.btProj i, _, ctxB => ctxB i
+  | _, _, NatBTMor1.compBT f gNat gBT, ctxN, ctxB =>
+      NatBTMor1.interp f
+        (fun i => NatBTMor1.interp (gNat i) ctxN ctxB)
+        (fun i => NatBTMor1.interp (gBT i) ctxN ctxB)
+  | _, _, NatBTMor1.foldBTNat baseLeaf stepNode tree, ctxN, ctxB =>
+      BTL.fold
+        (fun lbl =>
+          NatBTMor1.interp baseLeaf (Fin.cons lbl ctxN) ctxB)
+        (fun a b =>
+          NatBTMor1.interp stepNode
+            (Fin.cons a (Fin.cons b ctxN)) ctxB)
+        (NatBTMor1.interp tree ctxN ctxB)
+  | _, _, NatBTMor1.foldBTBT baseLeaf stepNode tree, ctxN, ctxB =>
+      BTL.fold
+        (fun lbl =>
+          NatBTMor1.interp baseLeaf (Fin.cons lbl ctxN) ctxB)
+        (fun a b =>
+          NatBTMor1.interp stepNode ctxN
+            (Fin.cons a (Fin.cons b ctxB)))
+        (NatBTMor1.interp tree ctxN ctxB)
+  | _, _, NatBTMor1.encodeBT t, ctxN, ctxB =>
+      BTL.encode (NatBTMor1.interp t ctxN ctxB)
+  | _, _, NatBTMor1.decodeBT k, ctxN, ctxB =>
+      BTL.decode (NatBTMor1.interp k ctxN ctxB)
+
+/-- Interpretation of `zero`. -/
+@[simp] theorem NatBTMor1.interp_zero
+    {nm : ℕ × ℕ} (ctxN : Fin nm.1 → ℕ) (ctxB : Fin nm.2 → BTL) :
+    (NatBTMor1.zero (nm := nm)).interp ctxN ctxB = (0 : ℕ) :=
+  rfl
+
+/-- Interpretation of `succ`. -/
+@[simp] theorem NatBTMor1.interp_succ
+    {nm : ℕ × ℕ} (x : NatBTMor1 nm .nat)
+    (ctxN : Fin nm.1 → ℕ) (ctxB : Fin nm.2 → BTL) :
+    (NatBTMor1.succ x).interp ctxN ctxB =
+      Nat.succ (x.interp ctxN ctxB) := rfl
+
+/-- Interpretation of `natProj`. -/
+@[simp] theorem NatBTMor1.interp_natProj
+    {nm : ℕ × ℕ} (i : Fin nm.1)
+    (ctxN : Fin nm.1 → ℕ) (ctxB : Fin nm.2 → BTL) :
+    (NatBTMor1.natProj (nm := nm) i).interp ctxN ctxB =
+      ctxN i := rfl
+
+/-- Interpretation of `sub`. -/
+@[simp] theorem NatBTMor1.interp_sub
+    {nm : ℕ × ℕ} (a b : NatBTMor1 nm .nat)
+    (ctxN : Fin nm.1 → ℕ) (ctxB : Fin nm.2 → BTL) :
+    (NatBTMor1.sub a b).interp ctxN ctxB =
+      Nat.sub (a.interp ctxN ctxB) (b.interp ctxN ctxB) := rfl
+
+/-- Interpretation of `compNat`. -/
+@[simp] theorem NatBTMor1.interp_compNat
+    {nm nm' : ℕ × ℕ}
+    (f : NatBTMor1 nm' .nat)
+    (gNat : Fin nm'.1 → NatBTMor1 nm .nat)
+    (gBT : Fin nm'.2 → NatBTMor1 nm .bt)
+    (ctxN : Fin nm.1 → ℕ) (ctxB : Fin nm.2 → BTL) :
+    (NatBTMor1.compNat f gNat gBT).interp ctxN ctxB =
+      f.interp
+        (fun i => (gNat i).interp ctxN ctxB)
+        (fun i => (gBT i).interp ctxN ctxB) := rfl
+
+/-- Interpretation of `bsum`. -/
+@[simp] theorem NatBTMor1.interp_bsum
+    {nm : ℕ × ℕ}
+    (f : NatBTMor1 (nm.1 + 1, nm.2) .nat)
+    (ctxN : Fin (nm.1 + 1) → ℕ) (ctxB : Fin nm.2 → BTL) :
+    (NatBTMor1.bsum f).interp ctxN ctxB =
+      natBSum (ctxN 0) (fun i =>
+        f.interp (Fin.cons i (Fin.tail ctxN)) ctxB) := rfl
+
+/-- Interpretation of `bprod`. -/
+@[simp] theorem NatBTMor1.interp_bprod
+    {nm : ℕ × ℕ}
+    (f : NatBTMor1 (nm.1 + 1, nm.2) .nat)
+    (ctxN : Fin (nm.1 + 1) → ℕ) (ctxB : Fin nm.2 → BTL) :
+    (NatBTMor1.bprod f).interp ctxN ctxB =
+      natBProd (ctxN 0) (fun i =>
+        f.interp (Fin.cons i (Fin.tail ctxN)) ctxB) := rfl
+
+/-- Interpretation of `leafBT`. -/
+@[simp] theorem NatBTMor1.interp_leafBT
+    {nm : ℕ × ℕ} (label : NatBTMor1 nm .nat)
+    (ctxN : Fin nm.1 → ℕ) (ctxB : Fin nm.2 → BTL) :
+    (NatBTMor1.leafBT label).interp ctxN ctxB =
+      BTL.leaf (label.interp ctxN ctxB) := rfl
+
+/-- Interpretation of `nodeBT`. -/
+@[simp] theorem NatBTMor1.interp_nodeBT
+    {nm : ℕ × ℕ} (l r : NatBTMor1 nm .bt)
+    (ctxN : Fin nm.1 → ℕ) (ctxB : Fin nm.2 → BTL) :
+    (NatBTMor1.nodeBT l r).interp ctxN ctxB =
+      BTL.node (l.interp ctxN ctxB) (r.interp ctxN ctxB) := rfl
+
+/-- Interpretation of `btProj`. -/
+@[simp] theorem NatBTMor1.interp_btProj
+    {nm : ℕ × ℕ} (i : Fin nm.2)
+    (ctxN : Fin nm.1 → ℕ) (ctxB : Fin nm.2 → BTL) :
+    (NatBTMor1.btProj (nm := nm) i).interp ctxN ctxB =
+      ctxB i := rfl
+
+/-- Interpretation of `compBT`. -/
+@[simp] theorem NatBTMor1.interp_compBT
+    {nm nm' : ℕ × ℕ}
+    (f : NatBTMor1 nm' .bt)
+    (gNat : Fin nm'.1 → NatBTMor1 nm .nat)
+    (gBT : Fin nm'.2 → NatBTMor1 nm .bt)
+    (ctxN : Fin nm.1 → ℕ) (ctxB : Fin nm.2 → BTL) :
+    (NatBTMor1.compBT f gNat gBT).interp ctxN ctxB =
+      f.interp
+        (fun i => (gNat i).interp ctxN ctxB)
+        (fun i => (gBT i).interp ctxN ctxB) := rfl
+
+/-- Interpretation of `foldBTNat`. -/
+@[simp] theorem NatBTMor1.interp_foldBTNat
+    {nm : ℕ × ℕ}
+    (baseLeaf : NatBTMor1 (nm.1 + 1, nm.2) .nat)
+    (stepNode : NatBTMor1 (nm.1 + 2, nm.2) .nat)
+    (tree : NatBTMor1 nm .bt)
+    (ctxN : Fin nm.1 → ℕ) (ctxB : Fin nm.2 → BTL) :
+    (NatBTMor1.foldBTNat baseLeaf stepNode tree).interp
+        ctxN ctxB =
+      BTL.fold
+        (fun lbl => baseLeaf.interp (Fin.cons lbl ctxN) ctxB)
+        (fun a b =>
+          stepNode.interp
+            (Fin.cons a (Fin.cons b ctxN)) ctxB)
+        (tree.interp ctxN ctxB) := rfl
+
+/-- Interpretation of `foldBTBT`. -/
+@[simp] theorem NatBTMor1.interp_foldBTBT
+    {nm : ℕ × ℕ}
+    (baseLeaf : NatBTMor1 (nm.1 + 1, nm.2) .bt)
+    (stepNode : NatBTMor1 (nm.1, nm.2 + 2) .bt)
+    (tree : NatBTMor1 nm .bt)
+    (ctxN : Fin nm.1 → ℕ) (ctxB : Fin nm.2 → BTL) :
+    (NatBTMor1.foldBTBT baseLeaf stepNode tree).interp
+        ctxN ctxB =
+      BTL.fold
+        (fun lbl => baseLeaf.interp (Fin.cons lbl ctxN) ctxB)
+        (fun a b =>
+          stepNode.interp ctxN
+            (Fin.cons a (Fin.cons b ctxB)))
+        (tree.interp ctxN ctxB) := rfl
+
+/-- Interpretation of `encodeBT`. -/
+@[simp] theorem NatBTMor1.interp_encodeBT
+    {nm : ℕ × ℕ} (t : NatBTMor1 nm .bt)
+    (ctxN : Fin nm.1 → ℕ) (ctxB : Fin nm.2 → BTL) :
+    (NatBTMor1.encodeBT t).interp ctxN ctxB =
+      (t.interp ctxN ctxB).encode := rfl
+
+/-- Interpretation of `decodeBT`. -/
+@[simp] theorem NatBTMor1.interp_decodeBT
+    {nm : ℕ × ℕ} (k : NatBTMor1 nm .nat)
+    (ctxN : Fin nm.1 → ℕ) (ctxB : Fin nm.2 → BTL) :
+    (NatBTMor1.decodeBT k).interp ctxN ctxB =
+      BTL.decode (k.interp ctxN ctxB) := rfl
 
 end GebLean
