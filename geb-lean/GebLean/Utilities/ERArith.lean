@@ -3,6 +3,7 @@ import GebLean.LawvereERArith
 import GebLean.LawvereERBool
 import GebLean.Utilities.SzudzikSeq
 import Mathlib.Data.Nat.Pairing
+import Mathlib.Logic.Godel.GodelBetaFunction
 
 /-!
 # ER-Derived Arithmetic and Gödel β
@@ -678,5 +679,66 @@ def ERMor1.mod : ERMor1 2 :=
   rw [hunf]
   have hadd : a / b * b + a % b = a := Nat.div_add_mod' a b
   omega
+
+/-- Gödel's β-function as an `ERMor1 3` term:
+`β(a, b, i) = a mod (1 + (i + 1) * b)`.  Constant-depth
+arithmetic; no iteration.  Used by `natRec` (Task 12e) to
+extract values from a Gödel-encoded trace of a
+primitive-recursion computation. -/
+def ERMor1.beta : ERMor1 3 :=
+  ERMor1.comp ERMor1.mod fun i => match i with
+    | ⟨0, _⟩ => ERMor1.proj 0
+    | ⟨1, _⟩ =>
+        ERMor1.comp ERMor1.succ fun (_ : Fin 1) =>
+          ERMor1.comp ERMor1.mulN fun j => match j with
+            | ⟨0, _⟩ =>
+                ERMor1.comp ERMor1.succ fun (_ : Fin 1) =>
+                  ERMor1.proj 2
+            | ⟨1, _⟩ => ERMor1.proj 1
+
+/-- Interpretation of `beta`: agrees with
+`a mod (1 + (i + 1) * b)`. -/
+@[simp] theorem ERMor1.interp_beta (a b i : ℕ) :
+    (ERMor1.beta).interp ![a, b, i] =
+      a % (1 + (i + 1) * b) := by
+  have hunf : (ERMor1.beta).interp ![a, b, i] =
+      ERMor1.mod.interp ![a, 1 + (i + 1) * b] := by
+    change ERMor1.mod.interp _ = ERMor1.mod.interp _
+    congr 1
+    funext k
+    match k with
+    | ⟨0, _⟩ => rfl
+    | ⟨1, _⟩ =>
+      simp
+      omega
+  rw [hunf, ERMor1.interp_mod]
+
+/-- Meta-level Gödel β-existence: for any finite
+ℕ-sequence there exist parameters `(a, b)` such that
+`a mod (1 + (i + 1) * b) = s i` for every `i < N`.  Derived
+from mathlib's `Nat.beta_unbeta_coe`. -/
+theorem Nat.beta_exists {N : ℕ} (s : Fin N → ℕ) :
+    ∃ a b : ℕ, ∀ i : Fin N,
+      a % (1 + (i.val + 1) * b) = s i := by
+  let l : List ℕ := List.ofFn s
+  have hlen : l.length = N := List.length_ofFn
+  let n : ℕ := Nat.unbeta l
+  refine ⟨n.unpair.1, n.unpair.2, ?_⟩
+  intro i
+  have hi : i.val < l.length := by
+    rw [hlen]; exact i.isLt
+  let j : Fin l.length := ⟨i.val, hi⟩
+  have hb : Nat.beta n ↑j = l[j] :=
+    Nat.beta_unbeta_coe l j
+  have hj : (↑j : ℕ) = i.val := rfl
+  have hget : l[j] = s i := by
+    change (List.ofFn s)[i.val]'(by
+      rw [List.length_ofFn]; exact i.isLt) = s i
+    rw [List.getElem_ofFn]
+  have hbeta_def : Nat.beta n ↑j =
+      n.unpair.1 % ((↑j + 1) * n.unpair.2 + 1) := rfl
+  have hcomm : 1 + (i.val + 1) * n.unpair.2 =
+      (i.val + 1) * n.unpair.2 + 1 := by omega
+  rw [hcomm, ← hj, ← hbeta_def, hb, hget]
 
 end GebLean
