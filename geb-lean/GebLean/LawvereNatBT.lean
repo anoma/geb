@@ -388,4 +388,52 @@ def NatBTMor1.interp : {nm : ℕ × ℕ} → {σ : NatBTSort} →
     (NatBTMor1.decodeBT k).interp ctxN ctxB =
       BTL.decode (k.interp ctxN ctxB) := rfl
 
+/-- A morphism `(n, m) → (n', m')` in the two-sort theory:
+`n'` ℕ-valued components and `m'` BT-valued components, each a
+`NatBTMor1` with domain arity `(n, m)`. -/
+@[ext]
+structure NatBTMorN (nm nm' : ℕ × ℕ) where
+  natComps : Fin nm'.1 → NatBTMor1 nm .nat
+  btComps  : Fin nm'.2 → NatBTMor1 nm .bt
+
+/-- Identity morphism `(n, m) → (n, m)`: tuple of projections at
+each sort. -/
+def NatBTMorN.id (nm : ℕ × ℕ) : NatBTMorN nm nm where
+  natComps i := NatBTMor1.natProj i
+  btComps i := NatBTMor1.btProj i
+
+/-- Composition of two-sort tuples via `compNat` / `compBT` at
+each component. -/
+def NatBTMorN.comp {nm nm' nm'' : ℕ × ℕ}
+    (f : NatBTMorN nm nm') (g : NatBTMorN nm' nm'') :
+    NatBTMorN nm nm'' where
+  natComps i :=
+    NatBTMor1.compNat (g.natComps i) f.natComps f.btComps
+  btComps i :=
+    NatBTMor1.compBT (g.btComps i) f.natComps f.btComps
+
+/-- Tuple interpretation: apply `NatBTMor1.interp` at each
+component. -/
+def NatBTMorN.interp {nm nm' : ℕ × ℕ}
+    (f : NatBTMorN nm nm')
+    (ctxN : Fin nm.1 → ℕ) (ctxB : Fin nm.2 → BTL) :
+    (Fin nm'.1 → ℕ) × (Fin nm'.2 → BTL) :=
+  (fun i => (f.natComps i).interp ctxN ctxB,
+   fun i => (f.btComps i).interp ctxN ctxB)
+
+@[simp] theorem NatBTMorN.interp_id (nm : ℕ × ℕ)
+    (ctxN : Fin nm.1 → ℕ) (ctxB : Fin nm.2 → BTL) :
+    (NatBTMorN.id nm).interp ctxN ctxB = (ctxN, ctxB) := by
+  simp [NatBTMorN.id, NatBTMorN.interp]
+
+@[simp] theorem NatBTMorN.interp_comp
+    {nm nm' nm'' : ℕ × ℕ}
+    (f : NatBTMorN nm nm') (g : NatBTMorN nm' nm'')
+    (ctxN : Fin nm.1 → ℕ) (ctxB : Fin nm.2 → BTL) :
+    (NatBTMorN.comp f g).interp ctxN ctxB =
+      let ctxN' := (f.interp ctxN ctxB).1
+      let ctxB' := (f.interp ctxN ctxB).2
+      g.interp ctxN' ctxB' := by
+  simp [NatBTMorN.comp, NatBTMorN.interp]
+
 end GebLean
