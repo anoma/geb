@@ -150,12 +150,28 @@ that `treeFoldOnCode` (previously Task 10) precedes the
 arithmetic primitives that depend on it (`succOnCode`,
 `subOnCode`, `szudzikPair`, `szudzikUnpair`, `bsumOnCode`,
 `bprodOnCode`, now Tasks 7–10 plus Task 11's
-`mutuFoldViaPair`).  Resume via
-superpowers:subagent-driven-development at Task 7
-(`mutuFoldOnCode` — multi-slot mutual recurrence substrate,
-newly inserted after Task 6's single-slot `treeFoldOnCode`
-proved insufficient for Szudzik-encoded arithmetic; see the
-plan's Stage β rationale for details).
+`mutuFoldViaPair`).  Phase 4g.2 Stage β Task 7 complete: see
+`GebLean/Utilities/SzudzikSeq.lean` for
+`Nat.mutuTreeFoldOnCode` (multi-slot course-of-values on a
+code) with correctness vs `BT.fold` over the `Fin m → α`
+carrier, and `GebLean/LawvereTreeERArith.lean` for
+`TreeERMor1.mutuFoldOnCode : ∀ m, (Fin m →
+TreeERMor1_0 1) → (Fin m → TreeERMor1_0 (m + m)) → Fin m →
+TreeERMor1_1 1` with its `@[simp]` agreement theorem.
+Stage β's plan was then restructured: analysis (with the
+Leivant paper, `.claude/docs/ramified-recurrence-
+computational-complexity-iii.pdf`) confirmed that tree-E₃
+under Szudzik equals Nat-E₃ as function classes, so every
+Nat-elementary function admits a depth-2 tree-ER realization,
+but the naive construction approach hit a
+"Szudzik-polynomial" barrier at depth 1.  The restructured
+Stage β inserts Task 8 (a one-cycle direct `succOnCode`
+attempt, which informs design) and Task 9 (a register-machine
+simulation blueprint as reusable depth-2 infrastructure).
+Original Stage β tasks 8–12 renumber to 10–14, Stage γ tasks
+14–21 renumber to 16–23.  Resume via
+superpowers:subagent-driven-development at Task 8
+(`succOnCode` direct attempt, time-boxed).
 
 ## Phase 4g: Tree-Native ER Parallel Development (planned)
 
