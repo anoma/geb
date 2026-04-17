@@ -29,4 +29,57 @@ instance natBTMorNSetoid (nm nm' : ℕ × ℕ) :
       fun h c d => (h c d).symm,
       fun h₁ h₂ c d => (h₁ c d).trans (h₂ c d) ⟩
 
+/-- `NatBTMorN` tuples modulo extensional equivalence. -/
+def NatBTMorNQuo (nm nm' : ℕ × ℕ) : Type :=
+  Quotient (natBTMorNSetoid nm nm')
+
+/-- Identity class: `NatBTMorN.id` packaged into the quotient. -/
+def NatBTMorNQuo.id (nm : ℕ × ℕ) : NatBTMorNQuo nm nm :=
+  Quotient.mk _ (NatBTMorN.id nm)
+
+/-- Composition lifted through the quotient: extensional
+equivalence is preserved by substitution. -/
+def NatBTMorNQuo.comp {nm nm' nm'' : ℕ × ℕ}
+    (f : NatBTMorNQuo nm nm') (g : NatBTMorNQuo nm' nm'') :
+    NatBTMorNQuo nm nm'' :=
+  Quotient.liftOn₂ f g
+    (fun a b => Quotient.mk _ (NatBTMorN.comp a b))
+    (fun a₁ b₁ a₂ b₂ h₁ h₂ => by
+      apply Quotient.sound
+      intro ctxN ctxB
+      simp only [NatBTMorN.interp_comp]
+      rw [h₁ ctxN ctxB]
+      exact h₂ _ _)
+
+theorem NatBTMorNQuo.id_comp {nm nm' : ℕ × ℕ}
+    (f : NatBTMorNQuo nm nm') :
+    NatBTMorNQuo.comp (NatBTMorNQuo.id nm) f = f := by
+  refine Quotient.inductionOn f ?_
+  intro a
+  apply Quotient.sound
+  intro ctxN ctxB
+  simp
+
+theorem NatBTMorNQuo.comp_id {nm nm' : ℕ × ℕ}
+    (f : NatBTMorNQuo nm nm') :
+    NatBTMorNQuo.comp f (NatBTMorNQuo.id nm') = f := by
+  refine Quotient.inductionOn f ?_
+  intro a
+  apply Quotient.sound
+  intro ctxN ctxB
+  simp
+
+theorem NatBTMorNQuo.assoc
+    {nm nm' nm'' nm''' : ℕ × ℕ}
+    (f : NatBTMorNQuo nm nm')
+    (g : NatBTMorNQuo nm' nm'')
+    (h : NatBTMorNQuo nm'' nm''') :
+    NatBTMorNQuo.comp (NatBTMorNQuo.comp f g) h =
+      NatBTMorNQuo.comp f (NatBTMorNQuo.comp g h) := by
+  refine Quotient.inductionOn₃ f g h ?_
+  intro a b c
+  apply Quotient.sound
+  intro ctxN ctxB
+  simp
+
 end GebLean
