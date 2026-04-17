@@ -80,27 +80,23 @@ theorem BTL.decode_encode (t : BTL) :
   induction t with
   | leaf k =>
       change BTL.decode (2 * k) = BTL.leaf k
-      rcases Nat.eq_zero_or_pos k with hk | hk
-      · subst hk
-        rw [Nat.mul_zero]
-        unfold BTL.decode
-        rfl
-      · set n := 2 * k - 1 with hn
-        have h2k : 2 * k = n + 1 := by omega
-        rw [h2k]
-        have heven : (n + 1) % 2 = 0 := by omega
-        have hdiv : (n + 1) / 2 = k := by omega
-        simp [BTL.decode, heven, hdiv]
+      match h2k : 2 * k with
+      | 0 =>
+          have : k = 0 := by omega
+          subst this
+          unfold BTL.decode
+          rfl
+      | m + 1 =>
+          have heven : (m + 1) % 2 = 0 := by omega
+          have hdiv : (m + 1) / 2 = k := by omega
+          simp [BTL.decode, heven, hdiv]
   | node l r ihl ihr =>
       change BTL.decode (2 * Nat.pair l.encode r.encode + 1) =
         BTL.node l r
       set p := Nat.pair l.encode r.encode with hp
       change BTL.decode (2 * p + 1) = BTL.node l r
-      have hrew : 2 * p + 1 = (2 * p) + 1 := rfl
-      rw [hrew]
       have hodd : (2 * p + 1) % 2 ≠ 0 := by omega
       have hdiv : (2 * p + 1) / 2 = p := by omega
-      rw [show (2 * p) + 1 = 2 * p + 1 from rfl]
       unfold BTL.decode
       simp only [hodd, if_false, hdiv]
       rw [show Nat.unpair p = (l.encode, r.encode) from
@@ -109,7 +105,7 @@ theorem BTL.decode_encode (t : BTL) :
 
 theorem BTL.encode_decode (n : ℕ) :
     (BTL.decode n).encode = n := by
-  induction n using Nat.strong_induction_on with
+  induction n using Nat.strongRecOn with
   | _ n ih =>
     match n, ih with
     | 0, _ =>
