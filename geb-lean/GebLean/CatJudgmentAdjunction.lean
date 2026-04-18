@@ -71,23 +71,27 @@ def OverCategoryData.toJudgmentFunctorData :
   morC := Q.MorType
   idC := Q.Obj
   compC := Q.ComposablePairsType
-  dom := Q.src
-  cod := Q.tgt
-  idMor := C.idFn
-  left := fun p => p.val.2
-  right := fun p => p.val.1
-  composite := fun p => C.compFn p
+  dom := TypeCat.ofHom Q.src
+  cod := TypeCat.ofHom Q.tgt
+  idMor := TypeCat.ofHom C.idFn
+  left := TypeCat.ofHom fun p => p.val.2
+  right := TypeCat.ofHom fun p => p.val.1
+  composite := TypeCat.ofHom fun p => C.compFn p
   h_id_endo := by
-    funext a
+    apply ConcreteCategory.ext_apply
+    intro a
     exact (C.id_src a).trans (C.id_tgt a).symm
   h_comp_match := by
-    funext p
+    apply ConcreteCategory.ext_apply
+    intro p
     exact p.property
   h_comp_dom := by
-    funext p
+    apply ConcreteCategory.ext_apply
+    intro p
     exact C.comp_src p
   h_comp_cod := by
-    funext p
+    apply ConcreteCategory.ext_apply
+    intro p
     exact C.comp_tgt p
 
 end EmbeddingPhi
@@ -510,21 +514,14 @@ def CategoryJudgments.FunctorData.toCategoryQuotientData
   idMor := F.idMor
   id_src := fun _ => rfl
   id_tgt := fun i => by
-    have h := congrFun F.h_id_endo i
-    exact h.symm
+    exact (ConcreteCategory.congr_hom F.h_id_endo i).symm
   CompWitness := F.compC
   compRight := F.right
   compLeft := F.left
   compComposite := F.composite
-  comp_match := fun c => by
-    have h := congrFun F.h_comp_match c
-    exact h
-  comp_dom := fun c => by
-    have h := congrFun F.h_comp_dom c
-    exact h
-  comp_cod := fun c => by
-    have h := congrFun F.h_comp_cod c
-    exact h
+  comp_match := fun c => ConcreteCategory.congr_hom F.h_comp_match c
+  comp_dom := fun c => ConcreteCategory.congr_hom F.h_comp_dom c
+  comp_cod := fun c => ConcreteCategory.congr_hom F.h_comp_cod c
 
 /-- Convert a copresheaf to an OverCategoryData via the quotient of free
     morphisms. -/
@@ -552,20 +549,26 @@ def OverFunctorData.toJudgmentNatTrans (F : OverFunctorData C₁ C₂) :
     CategoryJudgments.NatTransData
       C₁.toJudgmentFunctorData
       C₂.toJudgmentFunctorData where
-  appObj := F.objFn
-  appMor := F.morFn
-  appId := F.objFn
-  appComp := fun p =>
+  appObj := TypeCat.ofHom F.objFn
+  appMor := TypeCat.ofHom F.morFn
+  appId := TypeCat.ofHom F.objFn
+  appComp := TypeCat.ofHom fun p =>
     let composableProof : Q₂.tgt (F.morFn p.val.1) = Q₂.src (F.morFn p.val.2) :=
       (F.tgt_comm p.val.1).trans
         ((congrArg F.objFn p.property).trans (F.src_comm p.val.2).symm)
     ⟨(F.morFn p.val.1, F.morFn p.val.2), composableProof⟩
-  naturality_dom := by funext f; exact (F.src_comm f).symm
-  naturality_cod := by funext f; exact (F.tgt_comm f).symm
-  naturality_idMor := by funext a; exact F.map_id a
-  naturality_left := by funext _; rfl
-  naturality_right := by funext _; rfl
-  naturality_composite := by funext p; exact F.map_comp p
+  naturality_dom := by
+    apply ConcreteCategory.ext_apply; intro f; exact (F.src_comm f).symm
+  naturality_cod := by
+    apply ConcreteCategory.ext_apply; intro f; exact (F.tgt_comm f).symm
+  naturality_idMor := by
+    apply ConcreteCategory.ext_apply; intro a; exact F.map_id a
+  naturality_left := by
+    apply ConcreteCategory.ext_apply; intro _; rfl
+  naturality_right := by
+    apply ConcreteCategory.ext_apply; intro _; rfl
+  naturality_composite := by
+    apply ConcreteCategory.ext_apply; intro p; exact F.map_comp p
 
 end Functoriality
 
@@ -1005,27 +1008,26 @@ def CategoryJudgments.NatTransData.toCategoryQuotientMorphism
   quiverMor := {
     objFn := α.appObj
     morFn := α.appMor
-    src_comm := fun f => by
-      have h := congrFun α.naturality_dom f
-      exact h.symm
-    tgt_comm := fun f => by
-      have h := congrFun α.naturality_cod f
-      exact h.symm
+    src_comm := fun f =>
+      (ConcreteCategory.congr_hom α.naturality_dom f).symm
+    tgt_comm := fun f =>
+      (ConcreteCategory.congr_hom α.naturality_cod f).symm
   }
   idWitMap := α.appId
   compWitMap := α.appComp
   idObj_comm := fun i => by
     simp only [CategoryJudgments.FunctorData.toCategoryQuotientData]
     have h : α.appMor (F.idMor i) = G.idMor (α.appId i) :=
-      congrFun α.naturality_idMor i
+      ConcreteCategory.congr_hom α.naturality_idMor i
     have hdom : α.appObj (F.dom (F.idMor i)) = G.dom (α.appMor (F.idMor i)) :=
-      congrFun α.naturality_dom (F.idMor i)
+      ConcreteCategory.congr_hom α.naturality_dom (F.idMor i)
     calc α.appObj (F.dom (F.idMor i)) = G.dom (α.appMor (F.idMor i)) := hdom
       _ = G.dom (G.idMor (α.appId i)) := congrArg G.dom h
-  idMor_comm := fun i => congrFun α.naturality_idMor i
-  compRight_comm := fun c => congrFun α.naturality_right c
-  compLeft_comm := fun c => congrFun α.naturality_left c
-  compComposite_comm := fun c => congrFun α.naturality_composite c
+  idMor_comm := fun i => ConcreteCategory.congr_hom α.naturality_idMor i
+  compRight_comm := fun c => ConcreteCategory.congr_hom α.naturality_right c
+  compLeft_comm := fun c => ConcreteCategory.congr_hom α.naturality_left c
+  compComposite_comm := fun c =>
+    ConcreteCategory.congr_hom α.naturality_composite c
 
 /-- The quiver morphism on quotient quivers induced by a NatTransData. -/
 def CategoryJudgments.NatTransData.toQuotQuiverMor
@@ -1448,11 +1450,11 @@ theorem counitEval_respects_gen {a b : Q.Obj}
     have htgt : Q.tgt (C.idFn i) = Q.src (C.idFn i) :=
       (C.id_tgt i).trans (C.id_src i).symm
     simp only [CategoryJudgments.FunctorData.toCategoryQuotientData,
-      OverCategoryData.toJudgmentFunctorData,
+      OverCategoryData.toJudgmentFunctorData, TypeCat.ofHom_apply,
       counitEval_var C (C.idFn i) rfl htgt, counitEval_id, C.id_src i]
   | .comp_witness c =>
     simp only [CategoryJudgments.FunctorData.toCategoryQuotientData,
-      OverCategoryData.toJudgmentFunctorData,
+      OverCategoryData.toJudgmentFunctorData, TypeCat.ofHom_apply,
       counitEval_comp, counitEval_var_eq,
       counitEval_var C c.val.2 c.property.symm rfl,
       counitEval_var C (C.compFn c) (C.comp_src c) (C.comp_tgt c)]
@@ -1720,7 +1722,7 @@ def unitAppComp : F.compC → (phiOfL F).compC :=
     -- F.h_comp_match says F.cod (F.right c) = F.dom (F.left c)
     let composable : (phiOfL F).cod fQuot = (phiOfL F).dom gQuot := by
       simp only [OverCategoryData.toJudgmentFunctorData]
-      exact congrFun F.h_comp_match c
+      exact ConcreteCategory.congr_hom F.h_comp_match c
     ⟨(fQuot, gQuot), composable⟩
 
 /-- The object component of the unit: identity on objects.
@@ -1732,32 +1734,35 @@ set_option backward.isDefEq.respectTransparency false in
     This embeds F's data into the free category on F then extracts back. -/
 def unitNatTrans : CategoryJudgments.NatTransData F (phiOfL F) where
   appObj := unitAppObj F
-  appMor := unitAppMor F
-  appId := unitAppId F
-  appComp := unitAppComp F
+  appMor := TypeCat.ofHom (unitAppMor F)
+  appId := TypeCat.ofHom (unitAppId F)
+  appComp := TypeCat.ofHom (unitAppComp F)
   naturality_dom := by
-    ext m
+    apply ConcreteCategory.ext_apply
+    intro m
     simp only [CategoryStruct.comp, unitAppObj]
     rfl
   naturality_cod := by
-    ext m
+    apply ConcreteCategory.ext_apply
+    intro m
     simp only [CategoryStruct.comp, unitAppObj]
     rfl
   naturality_idMor := by
-    ext i
+    apply ConcreteCategory.ext_apply
+    intro i
     change unitAppMor F (F.idMor i) = (phiOfL F).idMor (unitAppId F i)
     simp only [unitAppMor, unitAppId,
       OverCategoryData.toJudgmentFunctorData,
       CategoryJudgments.FunctorData.toOverCategoryData,
       CategoryQuotientData.toOverCategoryData,
       CategoryQuotientData.quotCategoryOps,
-      CategoryQuotientData.quotIdFn,
-      unitComponent, CategoryQuotientData.quotId,
+      unitComponent,
       CategoryJudgments.FunctorData.toCategoryQuotientData]
     -- Goal: ⟨dom, ⟨cod, [var (idMor i)]⟩⟩ = ⟨dom, ⟨dom, [id dom]⟩⟩
     -- h_id_endo gives: dom (idMor i) = cod (idMor i)
     -- So h_id_endo.symm : cod (idMor i) = dom (idMor i)
-    have h_endo : F.dom (F.idMor i) = F.cod (F.idMor i) := congrFun F.h_id_endo i
+    have h_endo : F.dom (F.idMor i) = F.cod (F.idMor i) :=
+      ConcreteCategory.congr_hom F.h_id_endo i
     -- For outer sigma: first components are both dom (idMor i), so rfl
     refine Sigma.ext rfl ?_
     -- Now HEq of inner sigmas, which have the same type Σ b, QuotMor (dom _) b
@@ -1796,15 +1801,18 @@ def unitNatTrans : CategoryJudgments.NatTransData F (phiOfL F) where
     -- Now both sides are quotMor of something, use h_quot_eq
     exact h_quot_eq
   naturality_left := by
-    ext c
+    apply ConcreteCategory.ext_apply
+    intro c
     simp only [CategoryStruct.comp, OverCategoryData.toJudgmentFunctorData]
     rfl
   naturality_right := by
-    ext c
+    apply ConcreteCategory.ext_apply
+    intro c
     simp only [CategoryStruct.comp, OverCategoryData.toJudgmentFunctorData]
     rfl
   naturality_composite := by
-    ext c
+    apply ConcreteCategory.ext_apply
+    intro c
     change unitAppMor F (F.composite c) = F.toOverCategoryData.compFn (unitAppComp F c)
     simp only [unitAppMor, unitAppComp,
       OverCategoryData.toJudgmentFunctorData,
@@ -1823,8 +1831,10 @@ def unitNatTrans : CategoryJudgments.NatTransData F (phiOfL F) where
     -- Need to prove nested sigma equality where indices differ
     -- LHS: ⟨dom composite, ⟨cod composite, quotMor (var composite)⟩⟩
     -- RHS: ⟨dom right, ⟨cod left, quotComp (quotMor left) (cast _ (quotMor right))⟩⟩
-    have h_dom : F.dom (F.composite c) = F.dom (F.right c) := congrFun F.h_comp_dom c
-    have h_cod : F.cod (F.composite c) = F.cod (F.left c) := congrFun F.h_comp_cod c
+    have h_dom : F.dom (F.composite c) = F.dom (F.right c) :=
+      ConcreteCategory.congr_hom F.h_comp_dom c
+    have h_cod : F.cod (F.composite c) = F.cod (F.left c) :=
+      ConcreteCategory.congr_hom F.h_comp_cod c
     -- hquot relates quotients at (dom right, cod left)
     -- Build the equality term directly
     refine Sigma.ext h_dom ?_
@@ -2035,9 +2045,7 @@ def inducedCategoryQuotientMorphism :
     -- Goal: F.objFn (D₁.idObj i) = D₂.idObj (F.objFn i)
     -- D₁.idObj i = Q₁.src (C.idFn i)
     -- D₂.idObj (F.objFn i) = Q₂.src (D.idFn (F.objFn i))
-    simp only [CategoryJudgments.FunctorData.toCategoryQuotientData,
-      OverCategoryData.toJudgmentFunctorData]
-    -- F.objFn (Q₁.src (C.idFn i)) = Q₂.src (D.idFn (F.objFn i))
+    change F.objFn (Q₁.src (C.idFn i)) = Q₂.src (D.idFn (F.objFn i))
     rw [congrArg F.objFn (C.id_src i)]
     rw [D.id_src (F.objFn i)]
   idMor_comm := fun i => F.map_id i
@@ -2132,7 +2140,8 @@ variable {Q : OverQuiver.{u, u}} (C : OverCategoryData Q)
 theorem triangle2_mor (f : Q.MorType) :
     (counitFunctorData C).morFn
       ((unitNatTrans C.toJudgmentFunctorData).appMor f) = f := by
-  simp only [unitNatTrans, unitAppMor, counitFunctorData, counitQuiverMor,
+  change (counitFunctorData C).morFn (unitAppMor C.toJudgmentFunctorData f) = f
+  simp only [unitAppMor, counitFunctorData, counitQuiverMor,
     unitComponent, CategoryQuotientData.quotMor, counitEvalQuot, Quotient.lift_mk,
     counitEval, counitEvalAux]
 
@@ -2144,7 +2153,9 @@ theorem triangle2_id (i : C.toJudgmentFunctorData.idC) :
     (counitFunctorData C).toOverQuiverMorphism.objFn
       ((unitNatTrans C.toJudgmentFunctorData).appId i) =
     i := by
-  simp only [unitNatTrans, unitAppId, counitFunctorData, counitQuiverMor, id,
+  change (counitFunctorData C).toOverQuiverMorphism.objFn
+    (unitAppId C.toJudgmentFunctorData i) = i
+  simp only [unitAppId, counitFunctorData, counitQuiverMor, id,
     OverCategoryData.toJudgmentFunctorData]
   exact C.id_src i
 
@@ -2155,8 +2166,13 @@ theorem triangle2_comp (c : C.toJudgmentFunctorData.compC) :
     Φε.appComp (η.appComp c) =
     c := by
   obtain ⟨⟨f, g⟩, h_comp⟩ := c
-  simp only [unitNatTrans, unitAppComp, counitFunctorData,
-    OverFunctorData.toJudgmentNatTrans, counitQuiverMor,
+  change ((counitFunctorData C).toJudgmentNatTrans).appComp
+      (TypeCat.ofHom (unitAppComp C.toJudgmentFunctorData) ⟨(f, g), h_comp⟩) = _
+  simp only [TypeCat.ofHom_apply]
+  change (counitFunctorData C).toJudgmentNatTrans.appComp
+      (unitAppComp C.toJudgmentFunctorData ⟨(f, g), h_comp⟩) = _
+  simp only [OverFunctorData.toJudgmentNatTrans,
+    unitAppComp, counitFunctorData, counitQuiverMor,
     OverCategoryData.toJudgmentFunctorData, unitAppMor, unitComponent,
     CategoryQuotientData.quotMor]
   -- Goal: ⟨(counitEvalQuot [var f].val, counitEvalQuot [var g].val), _⟩ = ⟨(f, g), h_comp⟩
@@ -2433,11 +2449,13 @@ theorem unitNT_naturality {F G : CategoryJudgments.FunctorData (Type uNT)}
   · -- appMor: the non-trivial case
     simp only [CategoryJudgments.NatTransData.comp, unitNatTrans, unitAppObj,
       Category.id_comp, Category.comp_id]
-    funext f
+    apply ConcreteCategory.ext_apply
+    intro f
     -- LHS: (unitAppMor F ≫ α.toQuotQuiverMor.morFn) f
     -- RHS: (α.appMor ≫ unitAppMor G) f
-    simp only [CategoryStruct.comp,
-      CategoryJudgments.NatTransData.toOverFunctorData,
+    change (α.toOverFunctorData.toJudgmentNatTrans.appMor.hom (unitAppMor F f)) =
+      (unitAppMor G (α.appMor.hom f))
+    simp only [CategoryJudgments.NatTransData.toOverFunctorData,
       OverFunctorData.toJudgmentNatTrans,
       CategoryJudgments.NatTransData.toQuotQuiverMor,
       CategoryJudgments.FunctorData.toCategoryQuotientData,
@@ -2445,14 +2463,13 @@ theorem unitNT_naturality {F G : CategoryJudgments.FunctorData (Type uNT)}
       CategoryJudgments.NatTransData.toCategoryQuotientMorphism,
       CategoryQuotientMorphism.quotMapMor,
       CategoryQuotientData.quotMor,
-      CategoryJudgments.FunctorData.toQuiver]
-    -- Need to show nested sigma equality
-    -- LHS: ⟨α.appObj (F.dom f), α.appObj (F.cod f), quotMapMor (quotMor (var f))⟩
-    -- RHS: ⟨G.dom (α.appMor f), G.cod (α.appMor f), quotMor (var (α.appMor f))⟩
-    simp only [Function.comp_apply, unitAppMor, unitComponent]
+      CategoryJudgments.FunctorData.toQuiver,
+      TypeCat.ofHom_apply, unitAppMor, unitComponent]
     -- Use naturality to establish the two index equalities
-    have h_dom : α.appObj (F.dom f) = G.dom (α.appMor f) := congrFun α.naturality_dom f
-    have h_cod : α.appObj (F.cod f) = G.cod (α.appMor f) := congrFun α.naturality_cod f
+    have h_dom : α.appObj (F.dom f) = G.dom (α.appMor f) :=
+      ConcreteCategory.congr_hom α.naturality_dom f
+    have h_cod : α.appObj (F.cod f) = G.cod (α.appMor f) :=
+      ConcreteCategory.congr_hom α.naturality_cod f
     -- The QuotMor equality after transport
     -- LHS quotMapMor result is at type QuotMor (α.appObj (F.dom f)) (α.appObj (F.cod f))
     -- RHS quotMor result is at type QuotMor (G.dom (α.appMor f)) (G.cod (α.appMor f))
@@ -2488,56 +2505,58 @@ theorem unitNT_naturality {F G : CategoryJudgments.FunctorData (Type uNT)}
   · -- appId: unitAppId ≫ α.appObj = α.appId ≫ unitAppId
     simp only [CategoryJudgments.NatTransData.comp, unitNatTrans, unitAppObj,
       Category.id_comp, Category.comp_id]
-    funext i
+    apply ConcreteCategory.ext_apply
+    intro i
     simp only [CategoryJudgments.NatTransData.toOverFunctorData,
       OverFunctorData.toJudgmentNatTrans,
       CategoryJudgments.NatTransData.toQuotQuiverMor]
     -- Goal: α.appObj (F.idObj i) = G.idObj (α.appId i)
     -- This is the pointwise version of naturality_idObj:
     -- (F.idMor ≫ F.dom) ≫ α.appObj = α.appId ≫ (G.idMor ≫ G.dom)
-    have h := congrFun α.naturality_idObj i
-    simp only [CategoryStruct.comp, Function.comp_apply] at h
+    have h := ConcreteCategory.congr_hom α.naturality_idObj i
+    simp only [ConcreteCategory.comp_apply] at h
     exact h
   · -- appComp: show that transforming via α commutes with unitAppComp
     simp only [CategoryJudgments.NatTransData.comp, unitNatTrans, unitAppObj,
       Category.id_comp, Category.comp_id]
-    funext c
+    apply ConcreteCategory.ext_apply
+    intro c
     -- LHS: apply unitAppComp F to c, then transform via α's toQuotQuiverMor
     -- RHS: apply α.appComp to c, then apply unitAppComp G
     -- Use Subtype.ext to reduce to equality of underlying pairs
+    change (α.toOverFunctorData.toJudgmentNatTrans.appComp.hom (unitAppComp F c)) =
+      (unitAppComp G (α.appComp.hom c))
     apply Subtype.ext
-    -- Unfold the composition and unitAppComp to expose the pair structure
-    simp only [CategoryStruct.comp, Function.comp_apply]
     -- Now need equality of pairs (f₁, g₁) = (f₂, g₂)
     apply Prod.ext
     · -- First component: right morphism
       -- Unfold unitAppComp on both sides to expose the structure
-      simp only [unitAppComp, unitAppMor, unitComponent]
-      simp only [CategoryJudgments.NatTransData.toOverFunctorData,
+      simp only [unitAppComp, unitAppMor, unitComponent,
+        CategoryJudgments.NatTransData.toOverFunctorData,
         OverFunctorData.toJudgmentNatTrans,
         CategoryJudgments.NatTransData.toQuotQuiverMor,
         CategoryJudgments.FunctorData.toCategoryQuotientData,
         CategoryQuotientData.bundleQuotMor,
         CategoryJudgments.NatTransData.toCategoryQuotientMorphism,
-        CategoryQuotientMorphism.quotMapMor]
+        CategoryQuotientMorphism.quotMapMor, TypeCat.ofHom_apply]
       -- Use naturality_right: G.right ∘ α.appComp = α.appMor ∘ F.right
       have h_right : α.appMor (F.right c) = G.right (α.appComp c) :=
-        congrFun α.naturality_right c
+        ConcreteCategory.congr_hom α.naturality_right c
       -- Object equalities combining naturality_dom/cod with h_right
       have h_dom : α.appObj (F.dom (F.right c)) = G.dom (G.right (α.appComp c)) := by
-        have h1 := congrFun α.naturality_dom (F.right c)
-        simp only [CategoryStruct.comp, Function.comp_apply] at h1
+        have h1 := ConcreteCategory.congr_hom α.naturality_dom (F.right c)
+        simp only [ConcreteCategory.comp_apply] at h1
         rw [h1, h_right]
       have h_cod : α.appObj (F.cod (F.right c)) = G.cod (G.right (α.appComp c)) := by
-        have h1 := congrFun α.naturality_cod (F.right c)
-        simp only [CategoryStruct.comp, Function.comp_apply] at h1
+        have h1 := ConcreteCategory.congr_hom α.naturality_cod (F.right c)
+        simp only [ConcreteCategory.comp_apply] at h1
         rw [h1, h_right]
       -- The QuotMor equality
       -- Use naturality to get equalities in terms of α.appMor (F.right c)
       have h_dom' : α.appObj (F.dom (F.right c)) = G.dom (α.appMor (F.right c)) :=
-        congrFun α.naturality_dom (F.right c)
+        ConcreteCategory.congr_hom α.naturality_dom (F.right c)
       have h_cod' : α.appObj (F.cod (F.right c)) = G.cod (α.appMor (F.right c)) :=
-        congrFun α.naturality_cod (F.right c)
+        ConcreteCategory.congr_hom α.naturality_cod (F.right c)
       -- First prove the equality in terms of α.appMor (F.right c)
       have h_qm' : cast (congrArg₂ G.toCategoryQuotientData.QuotMor h_dom' h_cod')
           (α.toCategoryQuotientMorphism.quotMapMor
@@ -2619,32 +2638,32 @@ theorem unitNT_naturality {F G : CategoryJudgments.FunctorData (Type uNT)}
       refine Sigma.ext h_dom ?_
       exact G.toCategoryQuotientData.quotMorSigma_heq h_dom h_cod _ _ h_qm
     · -- Second component: left morphism (same pattern as right)
-      simp only [unitAppComp, unitAppMor, unitComponent]
-      simp only [CategoryJudgments.NatTransData.toOverFunctorData,
+      simp only [unitAppComp, unitAppMor, unitComponent,
+        CategoryJudgments.NatTransData.toOverFunctorData,
         OverFunctorData.toJudgmentNatTrans,
         CategoryJudgments.NatTransData.toQuotQuiverMor,
         CategoryJudgments.FunctorData.toCategoryQuotientData,
         CategoryQuotientData.bundleQuotMor,
         CategoryJudgments.NatTransData.toCategoryQuotientMorphism,
-        CategoryQuotientMorphism.quotMapMor]
+        CategoryQuotientMorphism.quotMapMor, TypeCat.ofHom_apply]
       -- Use naturality_left: G.left ∘ α.appComp = α.appMor ∘ F.left
       have h_left : α.appMor (F.left c) = G.left (α.appComp c) :=
-        congrFun α.naturality_left c
+        ConcreteCategory.congr_hom α.naturality_left c
       -- Object equalities combining naturality_dom/cod with h_left
       have h_dom : α.appObj (F.dom (F.left c)) = G.dom (G.left (α.appComp c)) := by
-        have h1 := congrFun α.naturality_dom (F.left c)
-        simp only [CategoryStruct.comp, Function.comp_apply] at h1
+        have h1 := ConcreteCategory.congr_hom α.naturality_dom (F.left c)
+        simp only [ConcreteCategory.comp_apply] at h1
         rw [h1, h_left]
       have h_cod : α.appObj (F.cod (F.left c)) = G.cod (G.left (α.appComp c)) := by
-        have h1 := congrFun α.naturality_cod (F.left c)
-        simp only [CategoryStruct.comp, Function.comp_apply] at h1
+        have h1 := ConcreteCategory.congr_hom α.naturality_cod (F.left c)
+        simp only [ConcreteCategory.comp_apply] at h1
         rw [h1, h_left]
       -- The QuotMor equality
       -- Use naturality to get equalities in terms of α.appMor (F.left c)
       have h_dom' : α.appObj (F.dom (F.left c)) = G.dom (α.appMor (F.left c)) :=
-        congrFun α.naturality_dom (F.left c)
+        ConcreteCategory.congr_hom α.naturality_dom (F.left c)
       have h_cod' : α.appObj (F.cod (F.left c)) = G.cod (α.appMor (F.left c)) :=
-        congrFun α.naturality_cod (F.left c)
+        ConcreteCategory.congr_hom α.naturality_cod (F.left c)
       -- First prove the equality in terms of α.appMor (F.left c)
       have h_qm' : cast (congrArg₂ G.toCategoryQuotientData.QuotMor h_dom' h_cod')
           (α.toCategoryQuotientMorphism.quotMapMor
@@ -2793,10 +2812,10 @@ def adjunctionCoreUnitCounit :
         -- Now show counitEvalAux (mapQuiver fm) = bundle ⟦fm⟧
         induction fm with
         | var f =>
-          simp only [FreeMor.mapQuiver, counitEvalAux, unitAppMor, unitComponent,
+          simp only [FreeMor.mapQuiver, counitEvalAux,
             CategoryJudgments.FunctorData.toCategoryQuotientData,
-            CategoryJudgments.FunctorData.toQuiver,
-            CategoryQuotientData.quotMor]
+            CategoryJudgments.FunctorData.toQuiver]
+          rfl
         | id x =>
           simp only [FreeMor.mapQuiver, counitEvalAux, unitAppObj,
             CategoryJudgments.FunctorData.toCategoryQuotientData,
@@ -2834,18 +2853,24 @@ def adjunctionCoreUnitCounit :
       simp only [CategoryJudgments.NatTransData.comp, unitNatTrans,
         OverFunctorData.toJudgmentNatTrans, counitFunctorData,
         CategoryStruct.comp]
+      apply TypeCat.Hom.ext
+      apply TypeCat.Fun.ext
       funext f
       exact triangle2_mor C.data f
     · -- appId: use second triangle identity
       simp only [CategoryJudgments.NatTransData.comp, unitNatTrans,
         OverFunctorData.toJudgmentNatTrans, counitFunctorData,
         CategoryStruct.comp]
+      apply TypeCat.Hom.ext
+      apply TypeCat.Fun.ext
       funext i
       exact triangle2_id C.data i
     · -- appComp: use second triangle identity
       simp only [CategoryJudgments.NatTransData.comp, unitNatTrans,
         OverFunctorData.toJudgmentNatTrans, counitFunctorData,
         CategoryStruct.comp]
+      apply TypeCat.Hom.ext
+      apply TypeCat.Fun.ext
       funext c
       exact triangle2_comp C.data c
 
@@ -3975,48 +4000,52 @@ def FunctorData.sum (F₁ F₂ : CategoryJudgments.FunctorData (Type u)) :
   morC := F₁.morC ⊕ F₂.morC
   idC := F₁.idC ⊕ F₂.idC
   compC := F₁.compC ⊕ F₂.compC
-  dom := Sum.map F₁.dom F₂.dom
-  cod := Sum.map F₁.cod F₂.cod
-  idMor := Sum.map F₁.idMor F₂.idMor
-  left := Sum.map F₁.left F₂.left
-  right := Sum.map F₁.right F₂.right
-  composite := Sum.map F₁.composite F₂.composite
+  dom := TypeCat.ofHom (Sum.map F₁.dom F₂.dom)
+  cod := TypeCat.ofHom (Sum.map F₁.cod F₂.cod)
+  idMor := TypeCat.ofHom (Sum.map F₁.idMor F₂.idMor)
+  left := TypeCat.ofHom (Sum.map F₁.left F₂.left)
+  right := TypeCat.ofHom (Sum.map F₁.right F₂.right)
+  composite := TypeCat.ofHom (Sum.map F₁.composite F₂.composite)
   h_id_endo := by
-    funext a
+    apply ConcreteCategory.ext_apply
+    intro a
     cases a with
     | inl a =>
-      simp only [types_comp_apply, Sum.map_inl]
-      exact congrArg Sum.inl (congrFun F₁.h_id_endo a)
+      simp only [ConcreteCategory.comp_apply, TypeCat.ofHom_apply, Sum.map_inl]
+      exact congrArg Sum.inl (ConcreteCategory.congr_hom F₁.h_id_endo a)
     | inr a =>
-      simp only [types_comp_apply, Sum.map_inr]
-      exact congrArg Sum.inr (congrFun F₂.h_id_endo a)
+      simp only [ConcreteCategory.comp_apply, TypeCat.ofHom_apply, Sum.map_inr]
+      exact congrArg Sum.inr (ConcreteCategory.congr_hom F₂.h_id_endo a)
   h_comp_match := by
-    funext p
+    apply ConcreteCategory.ext_apply
+    intro p
     cases p with
     | inl p =>
-      simp only [types_comp_apply, Sum.map_inl]
-      exact congrArg Sum.inl (congrFun F₁.h_comp_match p)
+      simp only [ConcreteCategory.comp_apply, TypeCat.ofHom_apply, Sum.map_inl]
+      exact congrArg Sum.inl (ConcreteCategory.congr_hom F₁.h_comp_match p)
     | inr p =>
-      simp only [types_comp_apply, Sum.map_inr]
-      exact congrArg Sum.inr (congrFun F₂.h_comp_match p)
+      simp only [ConcreteCategory.comp_apply, TypeCat.ofHom_apply, Sum.map_inr]
+      exact congrArg Sum.inr (ConcreteCategory.congr_hom F₂.h_comp_match p)
   h_comp_dom := by
-    funext p
+    apply ConcreteCategory.ext_apply
+    intro p
     cases p with
     | inl p =>
-      simp only [types_comp_apply, Sum.map_inl]
-      exact congrArg Sum.inl (congrFun F₁.h_comp_dom p)
+      simp only [ConcreteCategory.comp_apply, TypeCat.ofHom_apply, Sum.map_inl]
+      exact congrArg Sum.inl (ConcreteCategory.congr_hom F₁.h_comp_dom p)
     | inr p =>
-      simp only [types_comp_apply, Sum.map_inr]
-      exact congrArg Sum.inr (congrFun F₂.h_comp_dom p)
+      simp only [ConcreteCategory.comp_apply, TypeCat.ofHom_apply, Sum.map_inr]
+      exact congrArg Sum.inr (ConcreteCategory.congr_hom F₂.h_comp_dom p)
   h_comp_cod := by
-    funext p
+    apply ConcreteCategory.ext_apply
+    intro p
     cases p with
     | inl p =>
-      simp only [types_comp_apply, Sum.map_inl]
-      exact congrArg Sum.inl (congrFun F₁.h_comp_cod p)
+      simp only [ConcreteCategory.comp_apply, TypeCat.ofHom_apply, Sum.map_inl]
+      exact congrArg Sum.inl (ConcreteCategory.congr_hom F₁.h_comp_cod p)
     | inr p =>
-      simp only [types_comp_apply, Sum.map_inr]
-      exact congrArg Sum.inr (congrFun F₂.h_comp_cod p)
+      simp only [ConcreteCategory.comp_apply, TypeCat.ofHom_apply, Sum.map_inr]
+      exact congrArg Sum.inr (ConcreteCategory.congr_hom F₂.h_comp_cod p)
 
 /-- The isomorphism between Φ(C₁.sum C₂) and Φ(C₁).sum Φ(C₂) on the compC
     component, using the composable pairs equivalence. -/
@@ -4033,18 +4062,22 @@ def phiFunctorPreservesCoproduct :
     CategoryJudgments.NatTransData
       (C₁.sum C₂).toJudgmentFunctorData
       (FunctorData.sum C₁.toJudgmentFunctorData C₂.toJudgmentFunctorData) where
-  appObj := id
-  appMor := id
-  appId := id
-  appComp := phiSumCompIso C₁ C₂
-  naturality_dom := rfl
-  naturality_cod := rfl
+  appObj := TypeCat.ofHom _root_.id
+  appMor := TypeCat.ofHom _root_.id
+  appId := TypeCat.ofHom _root_.id
+  appComp := TypeCat.ofHom (phiSumCompIso C₁ C₂).toFun
+  naturality_dom := by
+    apply ConcreteCategory.ext_apply; intro _; rfl
+  naturality_cod := by
+    apply ConcreteCategory.ext_apply; intro _; rfl
   naturality_idMor := by
-    funext a
+    apply ConcreteCategory.ext_apply
+    intro a
     cases a <;> simp [OverCategoryData.sum, FunctorData.sum,
       OverCategoryData.toJudgmentFunctorData]
   naturality_left := by
-    funext p
+    apply ConcreteCategory.ext_apply
+    intro p
     rcases p with ⟨⟨m₁, m₂⟩, hp⟩
     cases m₁ with
     | inl m₁ =>
@@ -4058,7 +4091,8 @@ def phiFunctorPreservesCoproduct :
       | inr m₂ => simp [phiSumCompIso, sumComposablePairsEquiv,
           OverCategoryData.toJudgmentFunctorData, FunctorData.sum]
   naturality_right := by
-    funext p
+    apply ConcreteCategory.ext_apply
+    intro p
     rcases p with ⟨⟨m₁, m₂⟩, hp⟩
     cases m₁ with
     | inl m₁ =>
@@ -4072,7 +4106,8 @@ def phiFunctorPreservesCoproduct :
       | inr m₂ => simp [phiSumCompIso, sumComposablePairsEquiv,
           OverCategoryData.toJudgmentFunctorData, FunctorData.sum]
   naturality_composite := by
-    funext p
+    apply ConcreteCategory.ext_apply
+    intro p
     rcases p with ⟨⟨m₁, m₂⟩, hp⟩
     cases m₁ with
     | inl m₁ =>
@@ -4089,19 +4124,27 @@ def phiFunctorPreservesCoproductInv :
     CategoryJudgments.NatTransData
       (FunctorData.sum C₁.toJudgmentFunctorData C₂.toJudgmentFunctorData)
       (C₁.sum C₂).toJudgmentFunctorData where
-  appObj := id
-  appMor := id
-  appId := id
-  appComp := (phiSumCompIso C₁ C₂).symm
-  naturality_dom := rfl
-  naturality_cod := rfl
+  appObj := TypeCat.ofHom _root_.id
+  appMor := TypeCat.ofHom _root_.id
+  appId := TypeCat.ofHom _root_.id
+  appComp := TypeCat.ofHom (phiSumCompIso C₁ C₂).symm.toFun
+  naturality_dom := by
+    apply ConcreteCategory.ext_apply; intro _; rfl
+  naturality_cod := by
+    apply ConcreteCategory.ext_apply; intro _; rfl
   naturality_idMor := by
-    funext a
-    cases a <;> simp [OverCategoryData.sum, FunctorData.sum,
-      OverCategoryData.toJudgmentFunctorData]
-  naturality_left := by funext p; cases p <;> rfl
-  naturality_right := by funext p; cases p <;> rfl
-  naturality_composite := by funext p; cases p <;> rfl
+    apply ConcreteCategory.ext_apply
+    intro a
+    simp only [ConcreteCategory.comp_apply, TypeCat.ofHom_apply]
+    change Sum.map C₁.idFn C₂.idFn a =
+      Sum.elim (Sum.inl ∘ C₁.idFn) (Sum.inr ∘ C₂.idFn) a
+    cases a <;> rfl
+  naturality_left := by
+    apply ConcreteCategory.ext_apply; intro p; cases p <;> rfl
+  naturality_right := by
+    apply ConcreteCategory.ext_apply; intro p; cases p <;> rfl
+  naturality_composite := by
+    apply ConcreteCategory.ext_apply; intro p; cases p <;> rfl
 
 /-- The composite of the forward and inverse is the identity. -/
 theorem phiFunctorPreservesCoproduct_comp_inv :
@@ -4126,7 +4169,7 @@ theorem phiFunctorPreservesCoproduct_inv_comp :
   · rename_i a
     simp only [CategoryJudgments.NatTransData.comp,
       CategoryJudgments.NatTransData.id, phiFunctorPreservesCoproduct,
-      phiFunctorPreservesCoproductInv, phiSumCompIso, types_comp_apply]
+      phiFunctorPreservesCoproductInv, phiSumCompIso]
     exact sumComposablePairsEquiv.apply_symm_apply a
 
 end BinaryCoproduct
@@ -4224,28 +4267,36 @@ def FunctorData.prod (F₁ F₂ : CategoryJudgments.FunctorData (Type u)) :
   morC := F₁.morC × F₂.morC
   idC := F₁.idC × F₂.idC
   compC := F₁.compC × F₂.compC
-  dom := Prod.map F₁.dom F₂.dom
-  cod := Prod.map F₁.cod F₂.cod
-  idMor := Prod.map F₁.idMor F₂.idMor
-  left := Prod.map F₁.left F₂.left
-  right := Prod.map F₁.right F₂.right
-  composite := Prod.map F₁.composite F₂.composite
+  dom := TypeCat.ofHom (Prod.map F₁.dom F₂.dom)
+  cod := TypeCat.ofHom (Prod.map F₁.cod F₂.cod)
+  idMor := TypeCat.ofHom (Prod.map F₁.idMor F₂.idMor)
+  left := TypeCat.ofHom (Prod.map F₁.left F₂.left)
+  right := TypeCat.ofHom (Prod.map F₁.right F₂.right)
+  composite := TypeCat.ofHom (Prod.map F₁.composite F₂.composite)
   h_id_endo := by
-    funext ⟨a₁, a₂⟩
-    simp only [types_comp_apply, Prod.map_apply]
-    exact Prod.ext (congrFun F₁.h_id_endo a₁) (congrFun F₂.h_id_endo a₂)
+    apply ConcreteCategory.ext_apply
+    intro ⟨a₁, a₂⟩
+    simp only [ConcreteCategory.comp_apply, TypeCat.ofHom_apply, Prod.map_apply]
+    exact Prod.ext (ConcreteCategory.congr_hom F₁.h_id_endo a₁)
+      (ConcreteCategory.congr_hom F₂.h_id_endo a₂)
   h_comp_match := by
-    funext ⟨c₁, c₂⟩
-    simp only [types_comp_apply, Prod.map_apply]
-    exact Prod.ext (congrFun F₁.h_comp_match c₁) (congrFun F₂.h_comp_match c₂)
+    apply ConcreteCategory.ext_apply
+    intro ⟨c₁, c₂⟩
+    simp only [ConcreteCategory.comp_apply, TypeCat.ofHom_apply, Prod.map_apply]
+    exact Prod.ext (ConcreteCategory.congr_hom F₁.h_comp_match c₁)
+      (ConcreteCategory.congr_hom F₂.h_comp_match c₂)
   h_comp_dom := by
-    funext ⟨c₁, c₂⟩
-    simp only [types_comp_apply, Prod.map_apply]
-    exact Prod.ext (congrFun F₁.h_comp_dom c₁) (congrFun F₂.h_comp_dom c₂)
+    apply ConcreteCategory.ext_apply
+    intro ⟨c₁, c₂⟩
+    simp only [ConcreteCategory.comp_apply, TypeCat.ofHom_apply, Prod.map_apply]
+    exact Prod.ext (ConcreteCategory.congr_hom F₁.h_comp_dom c₁)
+      (ConcreteCategory.congr_hom F₂.h_comp_dom c₂)
   h_comp_cod := by
-    funext ⟨c₁, c₂⟩
-    simp only [types_comp_apply, Prod.map_apply]
-    exact Prod.ext (congrFun F₁.h_comp_cod c₁) (congrFun F₂.h_comp_cod c₂)
+    apply ConcreteCategory.ext_apply
+    intro ⟨c₁, c₂⟩
+    simp only [ConcreteCategory.comp_apply, TypeCat.ofHom_apply, Prod.map_apply]
+    exact Prod.ext (ConcreteCategory.congr_hom F₁.h_comp_cod c₁)
+      (ConcreteCategory.congr_hom F₂.h_comp_cod c₂)
 
 variable (F₁ F₂ : CategoryJudgments.FunctorData (Type uProd))
 
@@ -4303,7 +4354,7 @@ theorem prodQuotData_id_tgt_fst (i₁ : F₁.idC) (i₂ : F₂.idC) :
     (Prod.ext_iff.mp ((prodQuotData F₁ F₂).id_tgt (i₁, i₂))).1 =
     (quotData₁ F₁).id_tgt i₁ := by
   simp only [CategoryJudgments.FunctorData.toCategoryQuotientData,
-    FunctorData.prod, Prod.map_apply]
+    FunctorData.prod]
 
 /-- The product's compLeft projects to the first component's compLeft. -/
 theorem prodQuotData_compLeft_fst (c₁ : F₁.compC) (c₂ : F₂.compC) :
@@ -4323,7 +4374,7 @@ theorem prodQuotData_comp_match_fst (c₁ : F₁.compC) (c₂ : F₂.compC) :
     (Prod.ext_iff.mp ((prodQuotData F₁ F₂).comp_match (c₁, c₂))).1 =
     (quotData₁ F₁).comp_match c₁ := by
   simp only [CategoryJudgments.FunctorData.toCategoryQuotientData,
-    FunctorData.prod, Prod.map_apply]
+    FunctorData.prod]
 
 /-- Project a free morphism in the product quiver to the first component. -/
 def freeMorProj₁ {a b : (prodQuotData F₁ F₂).quiver.Obj}
@@ -5022,12 +5073,12 @@ def FunctorData.terminal : CategoryJudgments.FunctorData (Type uTerm) where
   morC := PUnit.{uTerm + 1}
   idC := PUnit.{uTerm + 1}
   compC := PUnit.{uTerm + 1}
-  dom := fun _ => PUnit.unit
-  cod := fun _ => PUnit.unit
-  idMor := fun _ => PUnit.unit
-  left := fun _ => PUnit.unit
-  right := fun _ => PUnit.unit
-  composite := fun _ => PUnit.unit
+  dom := TypeCat.ofHom fun _ => PUnit.unit
+  cod := TypeCat.ofHom fun _ => PUnit.unit
+  idMor := TypeCat.ofHom fun _ => PUnit.unit
+  left := TypeCat.ofHom fun _ => PUnit.unit
+  right := TypeCat.ofHom fun _ => PUnit.unit
+  composite := TypeCat.ofHom fun _ => PUnit.unit
   h_id_endo := rfl
   h_comp_match := rfl
   h_comp_dom := rfl
@@ -5039,16 +5090,16 @@ def FunctorData.initial : CategoryJudgments.FunctorData (Type uTerm) where
   morC := PEmpty.{uTerm + 1}
   idC := PEmpty.{uTerm + 1}
   compC := PEmpty.{uTerm + 1}
-  dom := PEmpty.elim
-  cod := PEmpty.elim
-  idMor := PEmpty.elim
-  left := PEmpty.elim
-  right := PEmpty.elim
-  composite := PEmpty.elim
-  h_id_endo := funext (fun x => x.elim)
-  h_comp_match := funext (fun x => x.elim)
-  h_comp_dom := funext (fun x => x.elim)
-  h_comp_cod := funext (fun x => x.elim)
+  dom := TypeCat.ofHom PEmpty.elim
+  cod := TypeCat.ofHom PEmpty.elim
+  idMor := TypeCat.ofHom PEmpty.elim
+  left := TypeCat.ofHom PEmpty.elim
+  right := TypeCat.ofHom PEmpty.elim
+  composite := TypeCat.ofHom PEmpty.elim
+  h_id_endo := by apply ConcreteCategory.ext_apply; intro x; exact x.elim
+  h_comp_match := by apply ConcreteCategory.ext_apply; intro x; exact x.elim
+  h_comp_dom := by apply ConcreteCategory.ext_apply; intro x; exact x.elim
+  h_comp_cod := by apply ConcreteCategory.ext_apply; intro x; exact x.elim
 
 /-- Φ applied to the initial category. -/
 def phiOfInitial : CategoryJudgments.FunctorData (Type uTerm) :=
@@ -5066,30 +5117,42 @@ def initialCompCMapInv : PEmpty.{uTerm + 1} → OverQuiver.initial.ComposablePai
     initial object. -/
 def phiFunctorPreservesInitial :
     CategoryJudgments.NatTransData phiOfInitial FunctorData.initial where
-  appObj := id
-  appMor := id
-  appId := id
-  appComp := initialCompCMap
-  naturality_dom := funext (fun x => x.elim)
-  naturality_cod := funext (fun x => x.elim)
-  naturality_idMor := funext (fun x => x.elim)
-  naturality_left := funext (fun ⟨p, _⟩ => p.1.elim)
-  naturality_right := funext (fun ⟨p, _⟩ => p.1.elim)
-  naturality_composite := funext (fun ⟨p, _⟩ => p.1.elim)
+  appObj := TypeCat.ofHom _root_.id
+  appMor := TypeCat.ofHom _root_.id
+  appId := TypeCat.ofHom _root_.id
+  appComp := TypeCat.ofHom initialCompCMap
+  naturality_dom := by
+    apply ConcreteCategory.ext_apply; intro x; exact x.elim
+  naturality_cod := by
+    apply ConcreteCategory.ext_apply; intro x; exact x.elim
+  naturality_idMor := by
+    apply ConcreteCategory.ext_apply; intro x; exact x.elim
+  naturality_left := by
+    apply ConcreteCategory.ext_apply; intro ⟨p, _⟩; exact p.1.elim
+  naturality_right := by
+    apply ConcreteCategory.ext_apply; intro ⟨p, _⟩; exact p.1.elim
+  naturality_composite := by
+    apply ConcreteCategory.ext_apply; intro ⟨p, _⟩; exact p.1.elim
 
 /-- The inverse natural transformation for Φ preserves initial. -/
 def phiFunctorPreservesInitialInv :
     CategoryJudgments.NatTransData FunctorData.initial phiOfInitial where
-  appObj := id
-  appMor := id
-  appId := id
-  appComp := initialCompCMapInv
-  naturality_dom := funext (fun x => x.elim)
-  naturality_cod := funext (fun x => x.elim)
-  naturality_idMor := funext (fun x => x.elim)
-  naturality_left := funext (fun x => x.elim)
-  naturality_right := funext (fun x => x.elim)
-  naturality_composite := funext (fun x => x.elim)
+  appObj := TypeCat.ofHom _root_.id
+  appMor := TypeCat.ofHom _root_.id
+  appId := TypeCat.ofHom _root_.id
+  appComp := TypeCat.ofHom initialCompCMapInv
+  naturality_dom := by
+    apply ConcreteCategory.ext_apply; intro x; exact x.elim
+  naturality_cod := by
+    apply ConcreteCategory.ext_apply; intro x; exact x.elim
+  naturality_idMor := by
+    apply ConcreteCategory.ext_apply; intro x; exact x.elim
+  naturality_left := by
+    apply ConcreteCategory.ext_apply; intro x; exact x.elim
+  naturality_right := by
+    apply ConcreteCategory.ext_apply; intro x; exact x.elim
+  naturality_composite := by
+    apply ConcreteCategory.ext_apply; intro x; exact x.elim
 
 /-- Round-trip identity: forward then backward is identity. -/
 theorem phiFunctorPreservesInitial_comp_inv :

@@ -269,7 +269,7 @@ presheaves over `Discrete Unit` is determined
 by a function between the underlying types. -/
 abbrev constPshMap {α β : Type w'} (f : α → β) :
     constPsh α ⟶ constPsh β :=
-  (const (Discrete Unit)ᵒᵖ).map f
+  (const (Discrete Unit)ᵒᵖ).map (TypeCat.ofHom f)
 
 /-- The type of morphisms of a category, bundled
 with source and target: `Σ (a b : α), (a ⟶ b)`. -/
@@ -346,15 +346,19 @@ def catCompNat (α : Type w') [Category.{w'} α] :
     (pshProdOverComp (catMorSpanOver α)
       (catMorSpanOver α)).left ⟶
       constPsh (CatMorSigma α) where
-  app X p :=
+  app X := TypeCat.ofHom fun p =>
     let m₁ := (presheafPullbackFst
       (catMorTgt α) (catMorSrc α)).app X p
     let m₂ := (presheafPullbackSnd
       (catMorTgt α) (catMorSrc α)).app X p
-    let h := congr_fun
-      (NatTrans.congr_app
-        (presheafPullbackCondition
-          (catMorTgt α) (catMorSrc α)) X) p
+    have h : m₁.2.1 = m₂.1 := by
+      have hh := ConcreteCategory.congr_hom
+        (NatTrans.congr_app
+          (presheafPullbackCondition
+            (catMorTgt α) (catMorSrc α)) X) p
+      simp only [NatTrans.comp_app,
+        ConcreteCategory.comp_apply] at hh
+      exact hh
     ⟨m₁.1, m₂.2.1,
       m₁.2.2 ≫ eqToHom h ≫ m₂.2.2⟩
   naturality := by
@@ -378,15 +382,9 @@ def catCompSpanMor (α : Type w')
       catMorSpanOver, Over.mk_hom]
     apply pshProdPresheaf_hom_ext
     · ext ⟨⟨⟩⟩ p
-      simp [catCompNat,
-        pshProdLift, pshProdFst,
-        presheafPullbackFst,
-        presheafPullbackSnd]
+      rfl
     · ext ⟨⟨⟩⟩ p
-      simp [catCompNat,
-        pshProdLift, pshProdSnd,
-        presheafPullbackFst,
-        presheafPullbackSnd])
+      rfl)
 
 set_option backward.isDefEq.respectTransparency false in
 /-- The monoid-object structure on the morphism
@@ -431,13 +429,9 @@ instance catMonObj (α : Type w')
       pshProdLift, pshProdFst, pshProdSnd]
       at a hab ⊢
     subst hab
-    simp only [catCompNat, FunctorToTypes.prod.lift_snd, FunctorToTypes.prod.lift_fst,
-      presheafPullbackFst, presheafPullbackCone, const_obj_obj, const_map_app,
-      Types.pullbackLimitCone_isLimit, PullbackCone.combine_π_app, PullbackCone.mk_pt,
-      const_obj_map, PullbackCone.mk_π_app, cospan_one, presheafPullbackSnd, FunctorToTypes.comp,
-      presheafPullbackLift, presheafPullbackIsLimit, NatTrans.id_app, types_id_apply, eqToHom_refl,
-      Category.id_comp, Sigma.mk.injEq, heq_eq_eq]
-    exact ⟨rfl, rfl, Category.id_comp f⟩
+    change (⟨_, _, 𝟙 a ≫ eqToHom rfl ≫ f⟩ :
+      CatMorSigma α) = ⟨a, c, f⟩
+    simp only [eqToHom_refl, Category.id_comp]
   mul_one := by
     change pshSpanWhiskerLeft
       (catMorSpanOver α)
@@ -462,13 +456,9 @@ instance catMonObj (α : Type w')
       pshProdLift, pshProdFst, pshProdSnd]
       at c hbc ⊢
     subst hbc
-    simp only [catCompNat, FunctorToTypes.prod.lift_snd, FunctorToTypes.prod.lift_fst,
-      presheafPullbackFst, presheafPullbackCone, const_obj_obj, const_map_app,
-      Types.pullbackLimitCone_isLimit, PullbackCone.combine_π_app, PullbackCone.mk_pt,
-      const_obj_map, PullbackCone.mk_π_app, cospan_one, presheafPullbackSnd, FunctorToTypes.comp,
-      presheafPullbackLift, presheafPullbackIsLimit, NatTrans.id_app, types_id_apply, eqToHom_refl,
-      Category.id_comp, Sigma.mk.injEq, heq_eq_eq]
-    exact ⟨rfl, rfl, Category.comp_id f⟩
+    change (⟨_, _, f ≫ eqToHom rfl ≫ 𝟙 b⟩ :
+      CatMorSigma α) = ⟨a, b, f⟩
+    simp only [eqToHom_refl, Category.comp_id]
   mul_assoc := by
     change pshSpanWhiskerRight
       (catCompSpanMor α)
@@ -592,14 +582,14 @@ theorem icIdMap_tgt :
 object itself. -/
 theorem icSrc_id (a : icObj X) :
     icSrcFn X (icIdFn X a) = a :=
-  congr_fun (NatTrans.congr_app
+  ConcreteCategory.congr_hom (NatTrans.congr_app
     (icIdMap_src X) (Opposite.op ⟨⟨⟩⟩)) a
 
 /-- The target of the identity morphism is the
 object itself. -/
 theorem icTgt_id (a : icObj X) :
     icTgtFn X (icIdFn X a) = a :=
-  congr_fun (NatTrans.congr_app
+  ConcreteCategory.congr_hom (NatTrans.congr_app
     (icIdMap_tgt X) (Opposite.op ⟨⟨⟩⟩)) a
 
 /-- The identity element of `icHom`. -/
@@ -673,7 +663,7 @@ the source of the first morphism. -/
 theorem icSrc_comp (p : icCompPairs X) :
     icSrcFn X (icCompApply X p) =
       icSrcFn X p.val.1 :=
-  congr_fun (NatTrans.congr_app
+  ConcreteCategory.congr_hom (NatTrans.congr_app
     (icCompMap_src X) (Opposite.op ⟨⟨⟩⟩)) p
 
 /-- Pointwise: the target of a composite equals
@@ -681,7 +671,7 @@ the target of the second morphism. -/
 theorem icTgt_comp (p : icCompPairs X) :
     icTgtFn X (icCompApply X p) =
       icTgtFn X p.val.2 :=
-  congr_fun (NatTrans.congr_app
+  ConcreteCategory.congr_hom (NatTrans.congr_app
     (icCompMap_tgt X) (Opposite.op ⟨⟨⟩⟩)) p
 
 /-- Composition of morphisms in the internal
@@ -713,11 +703,15 @@ theorem icComp_id_left {a b : icObj X}
       X.morSpan).left.obj
         (Opposite.op ⟨⟨⟩⟩) :=
     ⟨(a, f.val), f.2.1.symm⟩
-  have h := congr_fun (NatTrans.congr_app
-    (congrArg (·.left)
-      (MonObj.one_mul (X := X.cat.X)))
-    (Opposite.op ⟨⟨⟩⟩)) q
-  dsimp only [] at h
+  have hnt : (MonoidalCategoryStruct.whiskerRight
+      (MonObj.one (X := X.cat.X)) X.cat.X ≫
+      MonObj.mul (X := X.cat.X)).left =
+      (MonoidalCategoryStruct.leftUnitor
+        X.cat.X).hom.left :=
+    congrArg (·.left)
+      (MonObj.one_mul (X := X.cat.X))
+  have h := ConcreteCategory.congr_hom
+    (NatTrans.congr_app hnt (Opposite.op ⟨⟨⟩⟩)) q
   convert h using 1
 
 /-- Right identity: `f ≫ id = f`. Extracted
@@ -731,11 +725,15 @@ theorem icComp_id_right {a b : icObj X}
       (pshProdOverId X.objPresheaf)).left.obj
         (Opposite.op ⟨⟨⟩⟩) :=
     ⟨(f.val, b), f.2.2⟩
-  have h := congr_fun (NatTrans.congr_app
-    (congrArg (·.left)
-      (MonObj.mul_one (X := X.cat.X)))
-    (Opposite.op ⟨⟨⟩⟩)) q
-  dsimp only [] at h
+  have hnt : (MonoidalCategoryStruct.whiskerLeft
+      X.cat.X (MonObj.one (X := X.cat.X)) ≫
+      MonObj.mul (X := X.cat.X)).left =
+      (MonoidalCategoryStruct.rightUnitor
+        X.cat.X).hom.left :=
+    congrArg (·.left)
+      (MonObj.mul_one (X := X.cat.X))
+  have h := ConcreteCategory.congr_hom
+    (NatTrans.congr_app hnt (Opposite.op ⟨⟨⟩⟩)) q
   convert h using 1
 
 /-- Associativity: `(f ≫ g) ≫ h = f ≫ (g ≫ h)`.
@@ -756,11 +754,19 @@ theorem icComp_assoc {a b c d : icObj X}
         (Opposite.op ⟨⟨⟩⟩) :=
     ⟨(pair_fg, h.val),
       g.2.2.trans h.2.1.symm⟩
-  have hax := congr_fun (NatTrans.congr_app
-    (congrArg (·.left)
-      (MonObj.mul_assoc (X := X.cat.X)))
-    (Opposite.op ⟨⟨⟩⟩)) q
-  dsimp only [] at hax
+  have hnt : (MonoidalCategoryStruct.whiskerRight
+      (MonObj.mul (X := X.cat.X)) X.cat.X ≫
+      MonObj.mul (X := X.cat.X)).left =
+      ((MonoidalCategoryStruct.associator
+          X.cat.X X.cat.X X.cat.X).hom ≫
+        MonoidalCategoryStruct.whiskerLeft
+          X.cat.X
+          (MonObj.mul (X := X.cat.X)) ≫
+        MonObj.mul (X := X.cat.X)).left :=
+    congrArg (·.left)
+      (MonObj.mul_assoc (X := X.cat.X))
+  have hax := ConcreteCategory.congr_hom
+    (NatTrans.congr_app hnt (Opposite.op ⟨⟨⟩⟩)) q
   convert hax using 1
 
 /-- The category structure on the objects of
@@ -842,7 +848,6 @@ def rtHomEquiv (α : Type w')
   left_inv m := by
     apply Subtype.ext
     obtain ⟨⟨a', b', f⟩, ha, hb⟩ := m
-    dsimp at ha hb
     subst ha; subst hb
     simp only [eqToHom_refl, Category.id_comp,
       Category.comp_id]
@@ -907,7 +912,7 @@ roundtrip: the identity at the unique object of
 `constPsh (icObj X)` to `X.objPresheaf`. -/
 def rtBkObjMap :
     constPsh (icObj X) ⟶ X.objPresheaf where
-  app := fun ⟨⟨⟨⟩⟩⟩ => id
+  app := fun ⟨⟨⟨⟩⟩⟩ => TypeCat.ofHom _root_.id
   naturality := by
     intro ⟨⟨⟨⟩⟩⟩ ⟨⟨⟨⟩⟩⟩ f
     have hf : f = 𝟙 _ := Subsingleton.elim _ _
@@ -919,7 +924,7 @@ transformation from `X.objPresheaf` to
 `constPsh (icObj X)`. -/
 def rtBkObjMapInv :
     X.objPresheaf ⟶ constPsh (icObj X) where
-  app := fun ⟨⟨⟨⟩⟩⟩ => id
+  app := fun ⟨⟨⟨⟩⟩⟩ => TypeCat.ofHom _root_.id
   naturality := by
     intro ⟨⟨⟨⟩⟩⟩ ⟨⟨⟨⟩⟩⟩ f
     have hf : f = 𝟙 _ := Subsingleton.elim _ _
@@ -932,7 +937,8 @@ roundtrip: sends a bundled morphism `⟨a, b, f⟩` in
 def rtBkMorMap :
     constPsh (CatMorSigma (icObj X)) ⟶
       X.morPresheaf where
-  app := fun ⟨⟨⟨⟩⟩⟩ m => m.2.2.val
+  app := fun ⟨⟨⟨⟩⟩⟩ =>
+    TypeCat.ofHom fun m => m.2.2.val
   naturality := by
     intro ⟨⟨⟨⟩⟩⟩ ⟨⟨⟨⟩⟩⟩ f
     have hf : f = 𝟙 _ := Subsingleton.elim _ _
@@ -985,14 +991,18 @@ theorem rtBkCompPres :
   obtain ⟨c, d, g⟩ := m₂
   change b = c at h
   subst h
-  simp only [FunctorToTypes.comp,
-    catToPsh_compMap_eq]
-  dsimp [catCompNat, rtBkMorMap,
-    presheafPullbackFst, presheafPullbackSnd,
-    presheafPullbackCone,
-    pshInternalCompPairsMap,
-    presheafPullbackLift]
-  simp only [Category.id_comp]
+  simp only [catToPsh_compMap_eq]
+  change (f ≫ eqToHom rfl ≫ g : icHom X a d).val =
+    (X.compMap ≫ 𝟙 _).app _ _
+  rw [Category.comp_id]
+  change (f ≫ 𝟙 b ≫ g : icHom X a d).val =
+    X.compMap.app _ _
+  rw [Category.id_comp]
+  change (icComp X f g).val = _
+  rw [icComp_val]
+  apply congr_arg
+    (X.compMap.app (Opposite.op ⟨⟨⟩⟩))
+  apply Subtype.ext
   rfl
 
 /-- The internal functor from
@@ -1015,7 +1025,7 @@ triple `⟨src m, tgt m, ⟨m, rfl, rfl⟩⟩` in
 def rtFwMorMap :
     X.morPresheaf ⟶
       constPsh (CatMorSigma (icObj X)) where
-  app := fun ⟨⟨⟨⟩⟩⟩ m =>
+  app := fun ⟨⟨⟨⟩⟩⟩ => TypeCat.ofHom fun m =>
     ⟨icSrcFn X m, icTgtFn X m,
       ⟨m, rfl, rfl⟩⟩
   naturality := by
@@ -1032,14 +1042,8 @@ theorem rtFwCompat :
         pshProdMap (rtBkObjMapInv X)
           (rtBkObjMapInv X) := by
   apply pshProdPresheaf_hom_ext
-  · ext ⟨⟨⟨⟩⟩⟩ m
-    dsimp [rtFwMorMap, rtBkObjMapInv,
-      catMorSpanOver, catMorSrcTgtNat,
-      pshProdLift, pshProdFst, constPshMap]
-  · ext ⟨⟨⟨⟩⟩⟩ m
-    dsimp [rtFwMorMap, rtBkObjMapInv,
-      catMorSpanOver, catMorSrcTgtNat,
-      pshProdLift, pshProdSnd, constPshMap]
+  · ext ⟨⟨⟨⟩⟩⟩ m; rfl
+  · ext ⟨⟨⟨⟩⟩⟩ m; rfl
 
 /-- Two elements of `CatMorSigma (icObj X)` are
 equal when they have the same underlying
@@ -1074,10 +1078,8 @@ theorem rtFwCompPres :
         (rtFwCompat X) ≫
         (catToPshInternalCat (icObj X)).compMap := by
   ext ⟨⟨⟨⟩⟩⟩ ⟨⟨m₁, m₂⟩, h⟩
-  simp only [NatTrans.comp_app,
-    catToPsh_compMap_eq]
+  simp only [catToPsh_compMap_eq]
   apply icCatMorSigma_val_ext
-  simp only [FunctorToTypes.comp]
   dsimp [rtFwMorMap, rtBkObjMapInv,
     catCompNat, pshInternalCompPairsMap,
     presheafPullbackFst, presheafPullbackSnd,
@@ -1093,7 +1095,8 @@ theorem rtFwCompPres :
   apply Subtype.ext
   change (m₁, m₂) = (_, _)
   congr 1
-  simp only [icEqToHom_comp_val]
+  rw [icEqToHom_comp_val]
+  rfl
 
 /-- The forward internal functor from `X` to
 `catToPshInternalCat (icObj X)`, sending each
@@ -1172,14 +1175,12 @@ def catToPshInternalCatMap
     · ext ⟨⟨⟨⟩⟩⟩ ⟨a, b, f⟩; rfl
   id_pres := by
     ext ⟨⟨⟨⟩⟩⟩ a
-    simp only [FunctorToTypes.comp,
-      catToPsh_idMap_app]
     dsimp [constPshMap]
-    simp only [CategoryTheory.Functor.map_id]
+    rw [catToPsh_idMap_app, catToPsh_idMap_app]
+    simp
   comp_pres := by
     ext ⟨⟨⟨⟩⟩⟩ ⟨⟨m₁, m₂⟩, h⟩
-    simp only [FunctorToTypes.comp,
-      catToPsh_compMap_eq]
+    simp only [catToPsh_compMap_eq]
     dsimp [constPshMap, catCompNat,
       pshInternalCompPairsMap,
       presheafPullbackFst, presheafPullbackSnd,
@@ -1190,6 +1191,7 @@ def catToPshInternalCatMap
     congr 1; congr 1
     simp only [CategoryTheory.Functor.map_comp,
       eqToHom_map]
+    rfl
 
 /-- The forward functor from `Cat` to
 `PshInternalCat (Discrete Unit)`, mapping a
@@ -1227,39 +1229,38 @@ def pshInternalFunctorToFunctor
   map {a b} f :=
     ⟨F.morMap.app (Opposite.op ⟨⟨⟩⟩) f.val,
       by
-        have hc := congr_fun
-          (congr_app F.compat
+        have hc := ConcreteCategory.congr_hom
+          (NatTrans.congr_app F.compat
             (Opposite.op ⟨⟨⟩⟩)) f.val
+        simp only [NatTrans.comp_app_apply]
+          at hc
         dsimp [pshProdMap, pshProdLift,
           pshProdFst, pshProdSnd] at hc
         have hfst := congr_arg Prod.fst hc
         have hsnd := congr_arg Prod.snd hc
         dsimp at hfst hsnd
-        exact ⟨by
-          change (Y.morSpan.hom.app _ _).1 = _
-          rw [hfst]
-          exact congrArg
-            (F.objMap.app _) f.2.1,
-         by
-          change (Y.morSpan.hom.app _ _).2 = _
-          rw [hsnd]
-          exact congrArg
-            (F.objMap.app _) f.2.2⟩⟩
+        exact ⟨hfst.trans
+            (congrArg (F.objMap.app _) f.2.1),
+          hsnd.trans
+            (congrArg (F.objMap.app _) f.2.2)⟩⟩
   map_id a := by
     apply Subtype.ext
-    have hid := congr_fun
-      (congr_app F.id_pres
+    have hid := ConcreteCategory.congr_hom
+      (NatTrans.congr_app F.id_pres
         (Opposite.op ⟨⟨⟩⟩)) a
-    dsimp [FunctorToTypes.comp] at hid
+    simp only [NatTrans.comp_app_apply] at hid
     exact hid
   map_comp {a b c} f g := by
     apply Subtype.ext
-    have hcomp := congr_fun
-      (congr_app F.comp_pres
+    have hcomp := ConcreteCategory.congr_hom
+      (NatTrans.congr_app F.comp_pres
         (Opposite.op ⟨⟨⟩⟩))
-      ⟨⟨f.val, g.val⟩,
-        f.2.2.trans g.2.1.symm⟩
-    dsimp [FunctorToTypes.comp] at hcomp
+      (⟨⟨f.val, g.val⟩,
+        f.2.2.trans g.2.1.symm⟩ :
+        (pshProdOverComp X.morSpan
+          X.morSpan).left.obj
+            (Opposite.op ⟨⟨⟩⟩))
+    simp only [NatTrans.comp_app_apply] at hcomp
     dsimp only [CategoryStruct.comp,
       icCategory]
     rw [icComp_val]
@@ -1321,7 +1322,10 @@ def catToIcCat (α : Type w')
     dsimp [catCompNat,
       presheafPullbackFst, presheafPullbackSnd,
       presheafPullbackCone]
-    simp only [Category.id_comp]
+    change _ =
+      (⟨_, _, f ≫ eqToHom rfl ≫ g⟩ :
+        CatMorSigma α)
+    simp [eqToHom_refl, Category.id_comp]
 
 set_option backward.isDefEq.respectTransparency false in
 /-- The backward component of the Cat-side unit

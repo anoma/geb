@@ -3,7 +3,7 @@ import Mathlib.CategoryTheory.Subfunctor.Image
 import Mathlib.CategoryTheory.Subfunctor.Sieves
 import GebLean.Utilities.Presheaf
 import Mathlib.CategoryTheory.Limits.Shapes.Pullback.Pasting
-import Mathlib.CategoryTheory.Topos.Classifier
+import Mathlib.CategoryTheory.Subobject.Classifier.Defs
 
 /-!
 # Witnessed subfunctors
@@ -325,12 +325,10 @@ def sieveOfSection (W : WSubfunctor F)
   downward_closed := by
     intro V₁ V₂ f₁ ⟨⟨a, ha⟩⟩ f₂
     refine ⟨⟨W.total.map f₂.op a, ?_⟩⟩
-    have nat := congr_fun
-      (W.incl.naturality f₂.op) a
-    simp only [types_comp_apply] at nat
+    have nat := NatTrans.naturality_apply
+      W.incl f₂.op a
     rw [nat, ha]
-    exact (congr_fun
-      (F.map_comp f₁.op f₂.op) s).symm
+    exact (Functor.map_comp_apply F f₁.op f₂.op s).symm
 
 /-- The `WSubfunctor` sieve agrees with the
 `Subfunctor` sieve via `toSubfunctor`. -/
@@ -354,10 +352,11 @@ def wClassifierCharMap
     {U X : Cᵒᵖ ⥤ Type (max u v)}
     (m : NatTrans U X) :
     NatTrans X (pshSieveFunctor C) where
-  app c x :=
+  app c := TypeCat.ofHom fun x =>
     (WSubfunctor.range m).sieveOfSection x
   naturality {c₁ c₂} g := by
-    funext x
+    apply ConcreteCategory.ext_apply
+    intro x
     apply Sieve.ext
     intro V f
     dsimp [sieveOfSection, range, fiber,
@@ -366,13 +365,11 @@ def wClassifierCharMap
     · rintro ⟨⟨a, ha⟩⟩
       exact ⟨⟨a, by
         rw [ha]; symm
-        exact congr_fun
-          (X.map_comp g f.op) x⟩⟩
+        exact Functor.map_comp_apply X g f.op x⟩⟩
     · rintro ⟨⟨a, ha⟩⟩
       exact ⟨⟨a, by
         rw [ha]
-        exact congr_fun
-          (X.map_comp g f.op) x⟩⟩
+        exact Functor.map_comp_apply X g f.op x⟩⟩
 
 /-- Choice-free terminal presheaf: the
 constant `PUnit` presheaf, hand-rolled to
@@ -383,7 +380,7 @@ def wTerminalPresheaf
     (C : Type u) [Category.{v} C] :
     Cᵒᵖ ⥤ Type (max u v) where
   obj _ := PUnit
-  map _ := id
+  map _ := TypeCat.ofHom _root_.id
   map_id _ := rfl
   map_comp _ _ := rfl
 
@@ -392,10 +389,11 @@ def wTerminalMap
     (C : Type u) [Category.{v} C]
     (U : Cᵒᵖ ⥤ Type (max u v)) :
     NatTrans U (wTerminalPresheaf C) where
-  app _ _ := PUnit.unit
+  app _ := TypeCat.ofHom fun _ => PUnit.unit
   naturality {c d} f := by
-    dsimp [wTerminalPresheaf]
-    exact funext fun _ => rfl
+    apply ConcreteCategory.ext_apply
+    intro _
+    rfl
 
 /-- Choice-free top sieve: hand-rolled to
 avoid the `CompleteLattice` instance on
@@ -419,9 +417,10 @@ def wTruthMap
     (C : Type u) [Category.{v} C] :
     NatTrans (wTerminalPresheaf C)
       (pshSieveFunctor C) where
-  app c _ := wTopSieve c.unop
+  app c := TypeCat.ofHom fun _ => wTopSieve c.unop
   naturality {c d} f := by
-    funext _
+    apply ConcreteCategory.ext_apply
+    intro _
     exact (wTopSieve_pullback f.unop).symm
 
 /-- The classifier square commutes
@@ -441,11 +440,8 @@ theorem wClassifierComm
     wTerminalMap, wTerminalPresheaf,
     wTruthMap, wTopSieve,
     pshSieveFunctor]
-  refine iff_of_true ⟨⟨U.map f.op u, ?_⟩⟩
-    trivial
-  have := congr_fun (m.naturality f.op) u
-  dsimp at this
-  exact this
+  refine iff_of_true ⟨⟨U.map f.op u, ?_⟩⟩ trivial
+  exact NatTrans.naturality_apply m f.op u
 
 /-- The lift component of the pullback. -/
 def wPshLift
@@ -456,21 +452,22 @@ def wPshLift
     (s₁ : NatTrans W X)
     (cone : WCone m W s₁) :
     NatTrans W U where
-  app c w := (cone.preimage c w).1
+  app c := TypeCat.ofHom fun w => (cone.preimage c w).1
   naturality {c d} f := by
-    funext w
+    apply ConcreteCategory.ext_apply
+    intro w
     apply hm d
     have h1 := (cone.preimage d
       (W.map f w)).2
     have h2 := (cone.preimage c w).2
-    have nat_m := congr_fun
-      (m.naturality f)
-      ((cone.preimage c w).1)
-    have nat_s := congr_fun
-      (s₁.naturality f) w
+    have nat_m := NatTrans.naturality_apply
+      m f ((cone.preimage c w).1)
+    have nat_s := NatTrans.naturality_apply
+      s₁ f w
     dsimp [ntComp] at h1 h2 nat_m nat_s ⊢
-    rw [h1, nat_m, h2]
-    exact nat_s
+    exact h1.trans (nat_s.trans
+      ((congrArg (ConcreteCategory.hom (X.map f))
+          h2.symm).trans nat_m.symm))
 
 /-- The fac component (pointwise). -/
 theorem wPshFac
@@ -483,8 +480,8 @@ theorem wPshFac
     (c : Cᵒᵖ)
     (w : W.obj c) :
     m.app c ((wPshLift m hm s₁ cone).app c w) =
-      s₁.app c w :=
-  (cone.preimage c w).2
+      s₁.app c w := by
+  exact (cone.preimage c w).2
 
 /-- The uniq component (pointwise). -/
 theorem wPshUniq
@@ -601,9 +598,9 @@ uses only `propext` + `Quot.sound`). -/
 @[reducible]
 def wPshHasClassifier
     (C : Type u) [Category.{v} C] :
-    HasClassifier
+    HasSubobjectClassifier
       (Cᵒᵖ ⥤ Type (max u v)) :=
-  ⟨⟨Classifier.mkOfTerminalΩ₀
+  ⟨⟨Subobject.Classifier.mkOfTerminalΩ₀
     (pshTerminal C)
     (pshTerminalIsTerminal C)
     (pshSieveFunctor C)

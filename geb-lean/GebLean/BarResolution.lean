@@ -34,7 +34,7 @@ theorem exists_not_mem_range_of_lt
       ∀ i : Fin (m + 1),
         f.toOrderHom i ≠ j := by
   by_contra hall
-  push_neg at hall
+  push Not at hall
   have hsurj : Function.Surjective f.toOrderHom :=
     fun j =>
       ⟨(hall j).choose, (hall j).choose_spec⟩
@@ -56,7 +56,7 @@ theorem exists_flatSpot_of_gt
       f.toOrderHom i.castSucc =
         f.toOrderHom i.succ := by
   by_contra hall
-  push_neg at hall
+  push Not at hall
   have hstrictMono : StrictMono f.toOrderHom :=
     Fin.strictMono_iff_lt_succ.mpr (fun i =>
       lt_of_le_of_ne

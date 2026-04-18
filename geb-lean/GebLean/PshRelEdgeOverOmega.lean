@@ -47,8 +47,7 @@ def pshRelFromSieveMap
     dsimp at heq htop
     refine ⟨congrArg (X.map f) heq, ?_⟩
     change χ.app _ (X.map f a) = (⊤ : Sieve _)
-    have nat := congrFun (χ.naturality f) a
-    dsimp at nat
+    have nat := NatTrans.naturality_apply χ f a
     rw [nat, htop]
     exact Sieve.pullback_top
 
@@ -73,9 +72,8 @@ def pshOverOmegaEdgeFunctor :
         refine ⟨congrArg (f.left.app c) heq, ?_⟩
         change T.hom.app c (f.left.app c p) =
           (⊤ : Sieve c.unop)
-        have w := congr_fun
-          (congrFun (congrArg NatTrans.app
-            (Over.w f)) c) p
+        have w := ConcreteCategory.congr_hom
+          (NatTrans.congr_app (Over.w f) c) p
         dsimp at w
         rw [w, htop] }
   map_id _ := VertEdgeHom.ext rfl rfl

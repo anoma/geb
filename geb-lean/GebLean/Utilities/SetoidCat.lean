@@ -136,7 +136,7 @@ This sends each setoid to its quotient type.
 -/
 def quotientFunctor : SetoidBundle ⥤ Type u where
   obj X := Quotient X.rel
-  map f := Quotient.map' f.toFun f.map_rel
+  map f := TypeCat.ofHom (Quotient.map' f.toFun f.map_rel)
   map_id X := by
     ext ⟨x⟩
     rfl
@@ -150,7 +150,7 @@ This sends each setoid to its carrier type.
 -/
 def forgetful : SetoidBundle ⥤ Type u where
   obj X := X.carrier
-  map f := f.toFun
+  map f := TypeCat.ofHom f.toFun
   map_id _ := rfl
   map_comp _ _ := rfl
 
@@ -158,7 +158,7 @@ def forgetful : SetoidBundle ⥤ Type u where
 The natural transformation from the forgetful functor to the quotient functor.
 -/
 def quotientNat : forgetful ⟶ quotientFunctor :=
-  { app := fun X => Quotient.mk X.rel
+  { app := fun X => TypeCat.ofHom (Quotient.mk X.rel)
     naturality := fun _ _ _ => rfl }
 
 end SetoidBundle

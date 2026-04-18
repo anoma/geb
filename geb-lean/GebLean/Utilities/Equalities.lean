@@ -1182,13 +1182,13 @@ pointwise relationship.
 -/
 lemma overHomMkHEqHomMkComp {X : Type*} {S1 S2 A B : Over X}
     (hS : S1 = S2)
-    {g1 : S1.left → B.left} {h1 : g1 ≫ B.hom = S1.hom}
-    {g2 : S2.left → A.left} {h2 : g2 ≫ A.hom = S2.hom}
+    {g1 : S1.left ⟶ B.left} {h1 : g1 ≫ B.hom = S1.hom}
+    {g2 : S2.left ⟶ A.left} {h2 : g2 ≫ A.hom = S2.hom}
     (f : A ⟶ B)
-    (hg : g1 ≍ (fun x => f.left (g2 (hS ▸ x)))) :
+    (hg : g1 ≍ (g2 ≫ f.left : S2.left ⟶ B.left)) :
     (Over.homMk g1 h1 : S1 ⟶ B) ≍ (Over.homMk g2 h2 : S2 ⟶ A) ≫ f := by
   cases hS
-  have hleft : g1 = fun x => f.left (g2 x) := eq_of_heq hg
+  have hleft : g1 = g2 ≫ f.left := eq_of_heq hg
   have : (Over.homMk g1 h1).left = (Over.homMk g2 h2 ≫ f).left := by
     simp only [Over.homMk_left, Over.comp_left]
     exact hleft

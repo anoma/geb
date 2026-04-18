@@ -2029,8 +2029,7 @@ def twArrToGrothendieckUnder : TwistedArrow' C ⥤ Grothendieck (Under.mapFuncto
       apply CommaMorphism.ext
       · rfl
       · simp only [Under.homMk_right]
-        rw [Under.eqToHom_right, eqToHom_refl]
-        rfl
+        simp
   map_comp {tw tw' tw''} m m' := by
     simp only [twArrToGrothendieckUnderMap, twArrToGrothendieckUnderFiber, twDomArr'_comp,
       twCodArr'_comp]
@@ -2040,9 +2039,7 @@ def twArrToGrothendieckUnder : TwistedArrow' C ⥤ Grothendieck (Under.mapFuncto
       apply CommaMorphism.ext
       · rfl
       · rw [Comma.comp_right, Comma.comp_right, Comma.comp_right]
-        rw [Under.eqToHom_right, Under.eqToHom_right]
-        simp only [Under.homMk_right, eqToHom_refl, Category.id_comp]
-        congr 1
+        simp
 
 /--
 Object map for the functor from `Grothendieck (Under.mapFunctor C)` to
@@ -2086,10 +2083,7 @@ def grothendieckUnderToTwArr : Grothendieck (Under.mapFunctor C) ⥤ TwistedArro
         unop_comp, twDomArr'_comp]
     · simp only [grothendieckUnderToTwArrMap, twHomMk'_codArr, Grothendieck.comp_fiber,
         Under.mapFunctor_map, twCodArr'_comp]
-      rw [Comma.comp_right, Comma.comp_right]
-      rw [Under.eqToHom_right]
-      simp only [eqToHom_refl, Category.id_comp]
-      congr 1
+      simp
 
 set_option backward.isDefEq.respectTransparency false in
 /--
@@ -2418,7 +2412,7 @@ lemma fiberTransportTwMorph_comp {b d e : C} (β : b ⟶ d) (γ : d ⟶ e)
   apply twHom'_ext
   · simp only [twDomArr'_comp, fiberTransportTwMorph, twHomMk'_domArr, id,
       twDomArr'_eqToHom, Over.map_obj_left, twObjMk'_dom, eqToHom_refl',
-      Functor.id_obj, Category.id_comp]
+      Category.id_comp]
   · simp only [twCodArr'_comp, fiberTransportTwMorph, twHomMk'_codArr, id,
       twCodArr'_eqToHom, Over.map_obj_hom, twObjMk'_cod, eqToHom_refl',
       Category.comp_id]

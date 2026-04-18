@@ -51,13 +51,11 @@ def arrowSpanInclusion.fullyFaithful :
       (by
         have hfst :=
           α.naturality WalkingSpan.Hom.fst
-        simp only [Functor.id_obj,
-          arrowSpanInclusion_obj,
+        simp only [arrowSpanInclusion_obj,
           span_map_fst] at hfst
         have hsnd :=
           α.naturality WalkingSpan.Hom.snd
-        simp only [Functor.id_obj,
-          arrowSpanInclusion_obj,
+        simp only [arrowSpanInclusion_obj,
           span_map_snd] at hsnd
         rw [show α.app .left =
             α.app .zero from by
@@ -73,14 +71,13 @@ def arrowSpanInclusion.fullyFaithful :
     match j with
     | .zero =>
       simp only [arrowSpanInclusion_obj,
-        Functor.id_obj, span_zero,
+        span_zero,
         arrowSpanInclusion_map,
         Arrow.homMk_left, Arrow.homMk_right,
         spanHomMk_app]
       have h :=
         α.naturality WalkingSpan.Hom.fst
-      simp only [Functor.id_obj,
-        arrowSpanInclusion_obj,
+      simp only [arrowSpanInclusion_obj,
         span_map_fst] at h
       rw [← Category.id_comp
         (α.app .left),
@@ -454,14 +451,14 @@ def pshSpanPushoutMap
       ((S.obj .right).map f) x))
     (by
       rintro _ _ ⟨t, rfl, rfl⟩
-      exact Quot.sound
-        ⟨(S.obj .zero).map f t,
-         congr_arg Sum.inl (congr_fun
-          ((S.map WalkingSpan.Hom.fst).naturality
-            f) t).symm,
-         congr_arg Sum.inr (congr_fun
-          ((S.map WalkingSpan.Hom.snd).naturality
-            f) t).symm⟩)
+      refine Quot.sound
+        ⟨(S.obj .zero).map f t, ?_, ?_⟩
+      · exact congr_arg Sum.inl
+          (NatTrans.naturality_apply
+            (S.map WalkingSpan.Hom.fst) f t).symm
+      · exact congr_arg Sum.inr
+          (NatTrans.naturality_apply
+            (S.map WalkingSpan.Hom.snd) f t).symm)
 
 @[simp]
 theorem pshSpanPushoutMap_mk
@@ -483,17 +480,30 @@ def pshSpanPushoutObj
     (S : WalkingSpan ⥤ (Cᵒᵖ ⥤ Type w)) :
     Cᵒᵖ ⥤ Type w where
   obj c := Quot (pshSpanPushoutRel S c)
-  map f := pshSpanPushoutMap S f
-  map_id c := funext (Quot.ind fun a => by
-    simp only [pshSpanPushoutMap_mk,
-      (S.obj .left).map_id,
-      (S.obj .right).map_id]
-    cases a <;> rfl)
-  map_comp f g := funext (Quot.ind fun a => by
-    simp only [pshSpanPushoutMap_mk,
-      (S.obj .left).map_comp,
-      (S.obj .right).map_comp]
-    cases a <;> rfl)
+  map f := TypeCat.ofHom (pshSpanPushoutMap S f)
+  map_id c := by
+    apply ConcreteCategory.ext_apply
+    apply Quot.ind; intro a
+    change pshSpanPushoutMap S (𝟙 c) (Quot.mk _ a) =
+      Quot.mk _ a
+    simp only [pshSpanPushoutMap_mk]
+    cases a with
+    | inl x =>
+      simp only [Sum.map_inl, Functor.map_id_apply]
+    | inr x =>
+      simp only [Sum.map_inr, Functor.map_id_apply]
+  map_comp f g := by
+    apply ConcreteCategory.ext_apply
+    apply Quot.ind; intro a
+    change pshSpanPushoutMap S (f ≫ g) (Quot.mk _ a) =
+      pshSpanPushoutMap S g
+        (pshSpanPushoutMap S f (Quot.mk _ a))
+    simp only [pshSpanPushoutMap_mk]
+    cases a with
+    | inl x =>
+      simp only [Sum.map_inl, Functor.map_comp_apply]
+    | inr x =>
+      simp only [Sum.map_inr, Functor.map_comp_apply]
 
 /-- The cocone over a presheaf span diagram with
 point given by the pointwise pushout presheaf. -/
@@ -504,24 +514,23 @@ def pshSpanPushoutCocone
   ι :=
     { app := fun j => match j with
         | .zero =>
-          { app := fun c t =>
-              Quot.mk _ (.inl
+          { app := fun c => TypeCat.ofHom fun t =>
+              Quot.mk _ (Sum.inl
                 ((S.map WalkingSpan.Hom.fst).app
                   c t))
-            naturality := fun c d f =>
-              funext fun t => by
-                simp only [types_comp_apply]
-                exact congr_arg (Quot.mk _ ∘
-                  Sum.inl) (congr_fun
-                    ((S.map WalkingSpan.Hom.fst
-                      ).naturality f) t) }
+            naturality := fun c d f => by
+              apply ConcreteCategory.ext_apply
+              intro t
+              exact congr_arg (Quot.mk _ ∘ Sum.inl)
+                (NatTrans.naturality_apply
+                  (S.map WalkingSpan.Hom.fst) f t) }
         | .left =>
-          { app := fun c p =>
-              Quot.mk _ (.inl p)
+          { app := fun c => TypeCat.ofHom fun p =>
+              Quot.mk _ (Sum.inl p)
             naturality := fun _ _ _ => rfl }
         | .right =>
-          { app := fun c q =>
-              Quot.mk _ (.inr q)
+          { app := fun c => TypeCat.ofHom fun q =>
+              Quot.mk _ (Sum.inr q)
             naturality := fun _ _ _ => rfl }
       naturality := by
         intro X Y h
@@ -530,9 +539,7 @@ def pshSpanPushoutCocone
         | init j =>
           cases j
           · ext c t; rfl
-          · ext c t; simp only [NatTrans.comp_app,
-              types_comp_apply,
-              Functor.const_obj_map]
+          · ext c t
             exact (Quot.sound
               ⟨t, rfl, rfl⟩).symm }
 
@@ -542,69 +549,67 @@ def pshSpanPushoutIsColimit
     (S : WalkingSpan ⥤ (Cᵒᵖ ⥤ Type w)) :
     IsColimit (pshSpanPushoutCocone S) where
   desc s :=
-    { app := fun c =>
+    { app := fun c => TypeCat.ofHom <|
         Quot.lift
           (fun x => match x with
-            | .inl p => (s.ι.app .left).app c p
-            | .inr q =>
+            | Sum.inl p => (s.ι.app .left).app c p
+            | Sum.inr q =>
               (s.ι.app .right).app c q)
           (by
             rintro _ _ ⟨t, rfl, rfl⟩
-            have hsnd := congr_fun (congr_app
-              (s.w WalkingSpan.Hom.snd) c) t
+            have hsnd := ConcreteCategory.congr_hom
+              (NatTrans.congr_app
+                (s.w WalkingSpan.Hom.snd) c) t
+            have hfst := ConcreteCategory.congr_hom
+              (NatTrans.congr_app
+                (s.w WalkingSpan.Hom.fst) c) t
             simp only [NatTrans.comp_app,
-              types_comp_apply] at hsnd
-            have hfst := congr_fun (congr_app
-              (s.w WalkingSpan.Hom.fst) c) t
-            simp only [NatTrans.comp_app,
-              types_comp_apply] at hfst
+              ConcreteCategory.comp_apply] at hsnd hfst
             dsimp
-            rw [hfst, hsnd])
-      naturality := fun c d f =>
-        funext (Quot.ind fun a => by
-          cases a with
-          | inl p =>
-            simp only [types_comp_apply]
-            exact congr_fun
-              ((s.ι.app .left).naturality f) p
-          | inr q =>
-            simp only [types_comp_apply]
-            exact congr_fun
-              ((s.ι.app .right).naturality f)
-              q) }
+            exact hfst.trans hsnd.symm)
+      naturality := fun c d f => by
+        apply ConcreteCategory.ext_apply
+        apply Quot.ind; intro a
+        cases a with
+        | inl p =>
+          exact NatTrans.naturality_apply
+            (s.ι.app .left) f p
+        | inr q =>
+          exact NatTrans.naturality_apply
+            (s.ι.app .right) f q }
   fac s j := by
     match j with
     | .zero =>
       ext c t
-      simp only [Functor.const_obj_obj,
-        NatTrans.comp_app, types_comp_apply]
       dsimp [pshSpanPushoutCocone]
-      have := congr_fun (congr_app
-        (s.w WalkingSpan.Hom.fst) c) t
+      have := ConcreteCategory.congr_hom
+        (NatTrans.congr_app
+          (s.w WalkingSpan.Hom.fst) c) t
       simp only [NatTrans.comp_app,
-        types_comp_apply] at this
+        ConcreteCategory.comp_apply] at this
       exact this
     | .left => ext c p; rfl
     | .right => ext c q; rfl
   uniq s m h := by
     apply NatTrans.ext; funext c
-    apply funext; apply Quot.ind; intro a
+    apply ConcreteCategory.ext_apply
+    apply Quot.ind; intro a
     cases a with
     | inl p =>
-      have := congr_fun
-        (congr_app (h .left) c) p
+      have := ConcreteCategory.congr_hom
+        (NatTrans.congr_app (h .left) c) p
       simp only [Functor.const_obj_obj,
         NatTrans.comp_app,
-        types_comp_apply] at this
+        ConcreteCategory.comp_apply] at this
       dsimp [pshSpanPushoutCocone] at this
       dsimp
       exact this
     | inr q =>
-      have := congr_fun
-        (congr_app (h .right) c) q
+      have := ConcreteCategory.congr_hom
+        (NatTrans.congr_app (h .right) c) q
       simp only [Functor.const_obj_obj,
         NatTrans.comp_app,
-        types_comp_apply] at this
+        ConcreteCategory.comp_apply] at this
       dsimp [pshSpanPushoutCocone] at this
       dsimp
       exact this

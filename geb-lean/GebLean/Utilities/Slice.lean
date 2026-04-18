@@ -98,7 +98,8 @@ def Over.Fiber.map {A B : Over X} (f : A ⟶ B)
     {x : X} (p : Over.Fiber A x) :
     Over.Fiber B x :=
   ⟨f.left p.val,
-    (congrFun (Over.w f) p.val).trans p.property⟩
+    (ConcreteCategory.congr_hom (Over.w f) p.val).trans
+      p.property⟩
 
 /--
 Extract the underlying function from an `Over X` morphism.
@@ -112,22 +113,24 @@ For `f : A ⟶ B` in `Over X` and `a : A.left`, we have `B.hom (f.left a) = A.ho
 -/
 lemma overMor_w {A B : Over X} (f : A ⟶ B) (a : A.left) :
     B.hom (f.left a) = A.hom a :=
-  congrFun (Over.w f) a
+  ConcreteCategory.congr_hom (Over.w f) a
 
 /--
 Round-trip: extracting the function from `Over.homMk` gives the original function.
 -/
 @[simp]
 lemma overMorFn_homMk {A B : Over X} (fn : A.left → B.left)
-    (h : B.hom ∘ fn = A.hom) : overMorFn (Over.homMk fn h) = fn := rfl
+    (h : TypeCat.ofHom fn ≫ B.hom = A.hom) :
+    overMorFn (Over.homMk (TypeCat.ofHom fn) h) = fn := rfl
 
 /--
 Round-trip: the commutativity condition from `Over.homMk` holds pointwise.
 -/
 @[simp]
 lemma overMor_w_homMk {A B : Over X} (fn : A.left → B.left)
-    (h : B.hom ∘ fn = A.hom) (a : A.left) :
-    overMor_w (Over.homMk fn h) a = congrFun h a := rfl
+    (h : TypeCat.ofHom fn ≫ B.hom = A.hom) (a : A.left) :
+    overMor_w (Over.homMk (TypeCat.ofHom fn) h) a =
+      ConcreteCategory.congr_hom h a := rfl
 
 /--
 Identity morphism in `Over X` has identity function.
@@ -148,7 +151,8 @@ underlying functions are equal.
 -/
 lemma overMor_ext {A B : Over X} (f g : A ⟶ B)
     (h : overMorFn f = overMorFn g) : f = g :=
-  Over.OverMorphism.ext h
+  Over.OverMorphism.ext (ConcreteCategory.ext_apply
+    (fun a => congrFun h a))
 
 end OverTypeHelpers
 
@@ -479,8 +483,8 @@ private theorem overCoeqObj_wd (b₁ b₂ : B.left)
     (h : overCoeqRel α β b₁ b₂) :
     B.hom b₁ = B.hom b₂ := by
   obtain ⟨a, rfl, rfl⟩ := h
-  have hα := congrFun (Over.w α) a
-  have hβ := congrFun (Over.w β) a
+  have hα := ConcreteCategory.congr_hom (Over.w α) a
+  have hβ := ConcreteCategory.congr_hom (Over.w β) a
   dsimp at hα hβ; rw [hα, hβ]
 
 /--
@@ -489,22 +493,25 @@ The coequalizer object in `Over X`. The underlying type is
 from `B.hom`.
 -/
 def overCoeqObj : Over X :=
-  Over.mk (Quot.lift B.hom (overCoeqObj_wd α β) :
-    Quot (overCoeqRel α β) → X)
+  Over.mk (TypeCat.ofHom (Quot.lift
+    (ConcreteCategory.hom B.hom)
+    (fun b₁ b₂ h => overCoeqObj_wd α β b₁ b₂ h)))
 
 /--
 The projection morphism `B ⟶ overCoeqObj α β` in `Over X`,
 given by `Quot.mk`.
 -/
 def overCoeqπ : B ⟶ overCoeqObj α β :=
-  Over.homMk (Quot.mk (overCoeqRel α β))
+  Over.homMk (TypeCat.ofHom (Quot.mk (overCoeqRel α β)))
 
 /--
 The coequalizer condition: `α ≫ overCoeqπ α β = β ≫ overCoeqπ α β`.
 -/
 theorem overCoeq_condition :
     α ≫ overCoeqπ α β = β ≫ overCoeqπ α β := by
-  ext a
+  apply Over.OverMorphism.ext
+  apply ConcreteCategory.ext_apply
+  intro a
   exact Quot.sound ⟨a, rfl, rfl⟩
 
 /--
@@ -515,12 +522,16 @@ Universal factorization through the coequalizer. Given
 def overCoeqDesc {T : Over X} (h : B ⟶ T)
     (w : α ≫ h = β ≫ h) : overCoeqObj α β ⟶ T :=
   Over.homMk
-    (Quot.lift h.left (fun b₁ b₂ ⟨a, h₁, h₂⟩ => by
-      rw [← h₁, ← h₂]
-      exact congrFun (congrArg (·.left) w) a))
+    (TypeCat.ofHom (Quot.lift (ConcreteCategory.hom h.left)
+      (fun b₁ b₂ ⟨a, h₁, h₂⟩ => by
+        rw [← h₁, ← h₂]
+        exact ConcreteCategory.congr_hom
+          (congrArg
+            (fun (m : A ⟶ T) => m.left) w) a)))
     (by
-      funext q; revert q; apply Quot.ind; intro b
-      exact congrFun (Over.w h) b)
+      apply ConcreteCategory.ext_apply
+      intro q; revert q; apply Quot.ind; intro b
+      exact ConcreteCategory.congr_hom (Over.w h) b)
 
 /--
 Factorization property: `overCoeqπ ≫ overCoeqDesc = h`.
@@ -528,7 +539,9 @@ Factorization property: `overCoeqπ ≫ overCoeqDesc = h`.
 theorem overCoeq_fac {T : Over X} (h : B ⟶ T)
     (w : α ≫ h = β ≫ h) :
     overCoeqπ α β ≫ overCoeqDesc α β h w = h := by
-  ext b; rfl
+  apply Over.OverMorphism.ext
+  apply ConcreteCategory.ext_apply
+  intro b; rfl
 
 /--
 Uniqueness: any `m : overCoeqObj α β ⟶ T` satisfying
@@ -539,8 +552,11 @@ theorem overCoeq_uniq {T : Over X} (h : B ⟶ T)
     (m : overCoeqObj α β ⟶ T)
     (hm : overCoeqπ α β ≫ m = h) :
     m = overCoeqDesc α β h w := by
-  ext q; revert q; apply Quot.ind; intro b
-  exact congrFun (congrArg (·.left) hm) b
+  apply Over.OverMorphism.ext
+  apply ConcreteCategory.ext_apply
+  intro q; revert q; apply Quot.ind; intro b
+  exact ConcreteCategory.congr_hom
+    (congrArg (fun (m : B ⟶ T) => m.left) hm) b
 
 /--
 The coequalizer projection is an epimorphism: if
@@ -551,8 +567,11 @@ theorem overCoeq_epi {T : Over X}
     (heq : overCoeqπ α β ≫ f₁ =
       overCoeqπ α β ≫ f₂) :
     f₁ = f₂ := by
-  ext q; revert q; apply Quot.ind; intro b
-  exact congrFun (congrArg (·.left) heq) b
+  apply Over.OverMorphism.ext
+  apply ConcreteCategory.ext_apply
+  intro q; revert q; apply Quot.ind; intro b
+  exact ConcreteCategory.congr_hom
+    (congrArg (fun (m : B ⟶ T) => m.left) heq) b
 
 end OverCoequalizer
 
@@ -586,15 +605,17 @@ def overProdType : Type u :=
 The wide product object in `Over X`.
 -/
 def overProdObj : Over X :=
-  Over.mk (Sigma.fst : overProdType F → X)
+  Over.mk (TypeCat.ofHom (Sigma.fst : overProdType F → X))
 
 /--
 The `i`-th projection from the wide product.
 -/
 def overProdπ (i : I) : overProdObj F ⟶ F i :=
   Over.homMk
-    (fun ⟨_, f⟩ => (f i).val)
-    (by funext ⟨_, f⟩; exact (f i).property)
+    (TypeCat.ofHom fun ⟨_, f⟩ => (f i).val)
+    (by
+      apply ConcreteCategory.ext_apply
+      intro ⟨_, f⟩; exact (f i).property)
 
 /--
 Universal lift into the wide product: given a cone
@@ -603,9 +624,9 @@ Universal lift into the wide product: given a cone
 def overProdLift {S : Over X}
     (π : ∀ i, S ⟶ F i) : S ⟶ overProdObj F :=
   Over.homMk
-    (fun s => (⟨S.hom s,
+    (TypeCat.ofHom fun s => (⟨S.hom s,
       fun i => ⟨(π i).left s,
-        congrFun (Over.w (π i)) s⟩⟩ :
+        ConcreteCategory.congr_hom (Over.w (π i)) s⟩⟩ :
       overProdType F))
 
 /--
@@ -615,7 +636,9 @@ recovers the original morphism.
 theorem overProd_fac {S : Over X}
     (π : ∀ i, S ⟶ F i) (i : I) :
     overProdLift F π ≫ overProdπ F i = π i := by
-  ext s; rfl
+  apply Over.OverMorphism.ext
+  apply ConcreteCategory.ext_apply
+  intro s; rfl
 
 /--
 Uniqueness of the lift into the wide product.
@@ -626,13 +649,20 @@ theorem overProd_uniq {S : Over X}
     (hm : ∀ i, m ≫ overProdπ F i = π i) :
     m = overProdLift F π := by
   apply Over.OverMorphism.ext
-  funext s
-  have h_base : (m.left s).1 = S.hom s :=
-    congrFun (Over.w m) s
+  apply ConcreteCategory.ext_apply
+  intro s
+  have h_base : (m.left s).1 = S.hom s := by
+    have := ConcreteCategory.congr_hom (Over.w m) s
+    simpa [overProdObj, ConcreteCategory.comp_apply]
+      using this
   have h_comp : ∀ i,
-      ((m.left s).2 i).val = (π i).left s :=
-    fun i =>
-      congrFun (congrArg (·.left) (hm i)) s
+      ((m.left s).2 i).val = (π i).left s := by
+    intro i
+    have heq := ConcreteCategory.congr_hom
+      (congrArg (fun (μ : S ⟶ F i) => μ.left)
+        (hm i)) s
+    simpa [overProdπ, ConcreteCategory.comp_apply]
+      using heq
   revert h_base h_comp
   generalize m.left s = ms
   intro h_base h_comp
@@ -661,14 +691,15 @@ The equalizer object in `Over X`: the subtype of `A.left`
 on which `f` and `g` agree.
 -/
 def overEqObj : Over X :=
-  Over.mk (A.hom ∘ Subtype.val :
-    { a : A.left // f.left a = g.left a } → X)
+  Over.mk (TypeCat.ofHom
+    (ConcreteCategory.hom A.hom ∘ Subtype.val :
+      { a : A.left // f.left a = g.left a } → X))
 
 /--
 The inclusion morphism from the equalizer into `A`.
 -/
 def overEqι : overEqObj f g ⟶ A :=
-  Over.homMk Subtype.val
+  Over.homMk (TypeCat.ofHom Subtype.val)
 
 /--
 The equalizer condition:
@@ -676,7 +707,9 @@ The equalizer condition:
 -/
 theorem overEq_condition :
     overEqι f g ≫ f = overEqι f g ≫ g := by
-  ext ⟨_, h⟩; exact h
+  apply Over.OverMorphism.ext
+  apply ConcreteCategory.ext_apply
+  rintro ⟨_, h⟩; exact h
 
 /--
 Universal lift into the equalizer: given `h : S ⟶ A`
@@ -685,9 +718,14 @@ with `h ≫ f = h ≫ g`, produce `S ⟶ overEqObj f g`.
 def overEqLift {S : Over X} (h : S ⟶ A)
     (w : h ≫ f = h ≫ g) : S ⟶ overEqObj f g :=
   Over.homMk
-    (fun s => ⟨h.left s,
-      congrFun (congrArg (·.left) w) s⟩)
-    (by funext s; exact congrFun (Over.w h) s)
+    (TypeCat.ofHom fun s => ⟨h.left s,
+      ConcreteCategory.congr_hom
+        (congrArg
+          (fun (μ : S ⟶ B) => μ.left) w) s⟩)
+    (by
+      apply ConcreteCategory.ext_apply
+      intro s; exact ConcreteCategory.congr_hom
+        (Over.w h) s)
 
 /--
 Factorization: composing the lift with the inclusion
@@ -696,7 +734,11 @@ recovers the original morphism.
 theorem overEq_fac {S : Over X} (h : S ⟶ A)
     (w : h ≫ f = h ≫ g) :
     overEqLift f g h w ≫ overEqι f g = h := by
-  ext s; rfl
+  apply Over.OverMorphism.ext
+  apply ConcreteCategory.ext_apply
+  intro s
+  change ((h.left s : A.left) : A.left) = h.left s
+  rfl
 
 /--
 Uniqueness of the lift into the equalizer.
@@ -707,9 +749,13 @@ theorem overEq_uniq {S : Over X} (h : S ⟶ A)
     (hm : m ≫ overEqι f g = h) :
     m = overEqLift f g h w := by
   apply Over.OverMorphism.ext
-  funext s
-  exact Subtype.ext
-    (congrFun (congrArg (·.left) hm) s)
+  apply ConcreteCategory.ext_apply
+  intro s
+  apply Subtype.ext
+  have heq := ConcreteCategory.congr_hom
+    (congrArg (fun (μ : S ⟶ A) => μ.left) hm) s
+  simpa [overEqι, overEqLift,
+    ConcreteCategory.comp_apply] using heq
 
 end OverEqualizer
 
@@ -735,23 +781,25 @@ def overPullbackType (A B : Over X) : Type u :=
 The binary pullback (fiber product) in `Over X`.
 -/
 def overPullback (A B : Over X) : Over X :=
-  Over.mk (fun (p : overPullbackType A B) =>
-    A.hom p.val.1)
+  Over.mk (TypeCat.ofHom fun (p : overPullbackType A B) =>
+    ConcreteCategory.hom A.hom p.val.1)
 
 /--
 First projection from the pullback.
 -/
 def overPullbackFst (A B : Over X) :
     overPullback A B ⟶ A :=
-  Over.homMk (fun p => p.val.1) rfl
+  Over.homMk (TypeCat.ofHom fun p => p.val.1) rfl
 
 /--
 Second projection from the pullback.
 -/
 def overPullbackSnd (A B : Over X) :
     overPullback A B ⟶ B :=
-  Over.homMk (fun p => p.val.2)
-    (by funext p; exact p.property.symm)
+  Over.homMk (TypeCat.ofHom fun p => p.val.2)
+    (by
+      apply ConcreteCategory.ext_apply
+      intro p; exact p.property.symm)
 
 /--
 Functorial action of the pullback on morphisms in
@@ -761,13 +809,19 @@ def overPullbackMap {A A' B B' : Over X}
     (fA : A ⟶ A') (fB : B ⟶ B') :
     overPullback A B ⟶ overPullback A' B' :=
   Over.homMk
-    (fun p =>
+    (TypeCat.ofHom fun p =>
       let a' := fA.left p.val.1
       let b' := fB.left p.val.2
-      let hA := congrFun (Over.w fA) p.val.1
-      let hB := congrFun (Over.w fB) p.val.2
+      let hA := ConcreteCategory.congr_hom
+        (Over.w fA) p.val.1
+      let hB := ConcreteCategory.congr_hom
+        (Over.w fB) p.val.2
       ⟨(a', b'), hA.trans (p.property.trans hB.symm)⟩)
-    (by funext p; exact congrFun (Over.w fA) p.val.1)
+    (by
+      apply ConcreteCategory.ext_apply
+      intro p
+      exact ConcreteCategory.congr_hom
+        (Over.w fA) p.val.1)
 
 end OverPullback
 

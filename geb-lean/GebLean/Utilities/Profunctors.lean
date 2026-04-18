@@ -427,14 +427,15 @@ variable {C : Type u} [Category.{v} C]
 theorem ProjProf_map₁ (F : C ⥤ Type w) {a b c : C} (f : a ⟶ b)
     (x : (ProjProf C F).obj (Opposite.op b, c)) :
     Prof.map₁ (ProjProf C F) f x = x := by
-  simp only [Prof.map₁, ProjProf_map, F.map_id, types_id_apply]
+  simp only [Prof.map₁, ProjProf_map, F.map_id]
+  rfl
 
 /-- The covariant action on `ProjProf C F` is `F.map`. -/
 @[simp]
 theorem ProjProf_map₂ (F : C ⥤ Type w) {a b c : C} (g : b ⟶ c)
     (x : (ProjProf C F).obj (Opposite.op a, b)) :
     Prof.map₂ (ProjProf C F) g x = F.map g x := by
-  simp only [Prof.map₂, ProjProf_map]
+  rfl
 
 end ProjectionProfunctorEndo
 
@@ -516,9 +517,8 @@ abbrev contravProfunctor (F : Cᵒᵖ ⥤ Type v) : Cᵒᵖ ⥤ C ⥤ Type v :=
 theorem contravProfunctor_obj_obj (F : Cᵒᵖ ⥤ Type v) (I : Cᵒᵖ) (J : C) :
     ((contravProfunctor F).obj I).obj J = F.obj I := rfl
 
-@[simp]
 theorem contravProfunctor_obj_map (F : Cᵒᵖ ⥤ Type v) (I : Cᵒᵖ) {J J' : C} (g : J ⟶ J') :
-    ((contravProfunctor F).obj I).map g = id := rfl
+    ((contravProfunctor F).obj I).map g = 𝟙 _ := rfl
 
 @[simp]
 theorem contravProfunctor_map_app (F : Cᵒᵖ ⥤ Type v) {I I' : Cᵒᵖ} (f : I ⟶ I') (J : C) :
@@ -629,10 +629,10 @@ theorem Collage.Hom.id_comp
     exact ULift.ext _ _ (Category.id_comp _)
   | ⟨.inl c⟩, ⟨.inr d⟩, h =>
     apply ULift.ext
-    change P.map
-      (𝟙 (Opposite.op c, d)) h.down =
+    change (ConcreteCategory.hom (P.map
+      (𝟙 (Opposite.op c, d)))) h.down =
       h.down
-    exact congr_fun (P.map_id _) h.down
+    exact ConcreteCategory.congr_hom (P.map_id _) h.down
   | ⟨.inr _⟩, ⟨.inr _⟩, f =>
     exact ULift.ext _ _ (Category.id_comp _)
   | ⟨.inr _⟩, ⟨.inl _⟩, f => exact f.elim
@@ -648,10 +648,10 @@ theorem Collage.Hom.comp_id
     exact ULift.ext _ _ (Category.comp_id _)
   | ⟨.inl c⟩, ⟨.inr d⟩, h =>
     apply ULift.ext
-    change P.map
-      (𝟙 (Opposite.op c, d)) h.down =
+    change (ConcreteCategory.hom (P.map
+      (𝟙 (Opposite.op c, d)))) h.down =
       h.down
-    exact congr_fun (P.map_id _) h.down
+    exact ConcreteCategory.congr_hom (P.map_id _) h.down
   | ⟨.inr _⟩, ⟨.inr _⟩, f =>
     exact ULift.ext _ _ (Category.comp_id _)
   | ⟨.inr _⟩, ⟨.inl _⟩, f => exact f.elim
@@ -675,19 +675,19 @@ theorem Collage.Hom.assoc
     f, g, h =>
     apply ULift.ext
     simp only [Collage.Hom.comp, op_comp,
-      ← FunctorToTypes.map_comp_apply,
+      ← Functor.map_comp_apply,
       prod_comp]; simp
   | ⟨.inl _⟩, ⟨.inl _⟩, ⟨.inr _⟩, ⟨.inr _⟩,
     f, h, g =>
     apply ULift.ext
     simp only [Collage.Hom.comp,
-      ← FunctorToTypes.map_comp_apply,
+      ← Functor.map_comp_apply,
       prod_comp]; simp
   | ⟨.inl _⟩, ⟨.inr _⟩, ⟨.inr _⟩, ⟨.inr _⟩,
     h, g₁, g₂ =>
     apply ULift.ext
     simp only [Collage.Hom.comp,
-      ← FunctorToTypes.map_comp_apply,
+      ← Functor.map_comp_apply,
       prod_comp]; simp
   | ⟨.inr _⟩, ⟨.inr _⟩, ⟨.inr _⟩, ⟨.inr _⟩,
     f, g, h =>

@@ -5,7 +5,7 @@ import Mathlib.CategoryTheory.Limits.FunctorCategory.Shapes.Pullbacks
 import Mathlib.CategoryTheory.Limits.Types.Pullbacks
 import Mathlib.CategoryTheory.Yoneda
 import Mathlib.CategoryTheory.Functor.KanExtension.Basic
-import Mathlib.CategoryTheory.Topos.Classifier
+import Mathlib.CategoryTheory.Subobject.Classifier.Defs
 import Mathlib.CategoryTheory.Subfunctor.Image
 import Mathlib.CategoryTheory.Subfunctor.Sieves
 import Mathlib.CategoryTheory.Monoidal.Closed.FunctorToTypes
@@ -184,37 +184,36 @@ def presheafPullbackIsLimit
     IsLimit (presheafPullbackCone f g) :=
   PullbackCone.isLimitAux _
     (fun s => {
-      app := fun X a =>
+      app := fun X => TypeCat.ofHom fun a =>
         ⟨⟨s.fst.app X a, s.snd.app X a⟩,
-          congr_fun (NatTrans.congr_app
-            s.condition X) a⟩
+          ConcreteCategory.congr_hom
+            (NatTrans.congr_app s.condition X) a⟩
       naturality := by
         intro X Y h
-        ext a
+        apply ConcreteCategory.ext_apply
+        intro a
         apply Subtype.ext
-        let cone := presheafPullbackCone f g
+        simp only [ConcreteCategory.comp_apply]
         exact Prod.ext
-          ((congr_fun (s.fst.naturality h)
-              a).trans
-            (congr_fun (cone.fst.naturality h)
-              ⟨⟨s.fst.app X a,
-                s.snd.app X a⟩, _⟩).symm)
-          ((congr_fun (s.snd.naturality h)
-              a).trans
-            (congr_fun (cone.snd.naturality h)
-              ⟨⟨s.fst.app X a,
-                s.snd.app X a⟩, _⟩).symm)
+          ((NatTrans.naturality_apply s.fst h a).trans
+            (NatTrans.naturality_apply
+              (presheafPullbackCone f g).fst h
+              ⟨⟨s.fst.app X a, s.snd.app X a⟩, _⟩).symm)
+          ((NatTrans.naturality_apply s.snd h a).trans
+            (NatTrans.naturality_apply
+              (presheafPullbackCone f g).snd h
+              ⟨⟨s.fst.app X a, s.snd.app X a⟩, _⟩).symm)
     })
     (fun s => by ext X a; rfl)
     (fun s => by ext X a; rfl)
     (fun s m w => by
       ext X a
       apply Subtype.ext
-      exact Prod.ext
-        (congr_fun (NatTrans.congr_app
-          (w WalkingCospan.left) X) a)
-        (congr_fun (NatTrans.congr_app
-          (w WalkingCospan.right) X) a))
+      refine Prod.ext ?_ ?_
+      · exact ConcreteCategory.congr_hom
+          (NatTrans.congr_app (w WalkingCospan.left) X) a
+      · exact ConcreteCategory.congr_hom
+          (NatTrans.congr_app (w WalkingCospan.right) X) a)
 
 /-- The pullback object of two presheaf morphisms. -/
 abbrev presheafPullback
@@ -285,7 +284,7 @@ theorem presheafPullbackLift_fst_app
       ((presheafPullbackLift f g
         h₁ h₂ w).app X a) =
       h₁.app X a :=
-  congr_fun (NatTrans.congr_app
+  ConcreteCategory.congr_hom (NatTrans.congr_app
     (PullbackCone.IsLimit.lift_fst
       (presheafPullbackIsLimit f g)
       h₁ h₂ w) X) a
@@ -306,7 +305,7 @@ theorem presheafPullbackLift_snd_app
       ((presheafPullbackLift f g
         h₁ h₂ w).app X a) =
       h₂.app X a :=
-  congr_fun (NatTrans.congr_app
+  ConcreteCategory.congr_hom (NatTrans.congr_app
     (PullbackCone.IsLimit.lift_snd
       (presheafPullbackIsLimit f g)
       h₁ h₂ w) X) a
@@ -655,12 +654,14 @@ type of sieves on `c`, with restriction given by sieve
 pullback. -/
 def pshSieveFunctor : Cᵒᵖ ⥤ Type (max u v) where
   obj c := Sieve c.unop
-  map f S := S.pullback f.unop
+  map f := TypeCat.ofHom fun S => S.pullback f.unop
   map_id _ := by
-    funext S
+    apply ConcreteCategory.ext_apply
+    intro S
     exact S.pullback_id
   map_comp f g := by
-    funext S
+    apply ConcreteCategory.ext_apply
+    intro S
     simp only [unop_comp]
     exact S.pullback_comp
 
@@ -673,11 +674,10 @@ instance pshTerminalUnique
     (P : Cᵒᵖ ⥤ Type (max u v)) :
     Unique (P ⟶ pshTerminal C) where
   default :=
-    { app := fun _ _ => PUnit.unit }
+    { app := fun _ => TypeCat.ofHom fun _ => PUnit.unit }
   uniq f := by
     ext T x
-    dsimp [pshTerminal]
-    exact Subsingleton.elim _ _
+    exact @Subsingleton.elim PUnit _ _ _
 
 /-- `pshTerminal C` is a terminal object. -/
 def pshTerminalIsTerminal :
@@ -689,9 +689,10 @@ of the terminal presheaf to the maximal sieve at
 each stage. -/
 def pshSieveTruth :
     pshTerminal C ⟶ pshSieveFunctor C where
-  app c _ := (⊤ : Sieve c.unop)
+  app c := TypeCat.ofHom fun _ => (⊤ : Sieve c.unop)
   naturality _ _ _ := by
-    funext _
+    apply ConcreteCategory.ext_apply
+    intro _
     exact Sieve.pullback_top.symm
 
 /-- The characteristic map of a monomorphism
@@ -702,16 +703,18 @@ def pshSieveCharMap
     {U X : Cᵒᵖ ⥤ Type (max u v)}
     (m : U ⟶ X) :
     X ⟶ pshSieveFunctor C where
-  app c x :=
+  app c := TypeCat.ofHom fun x =>
     (Subfunctor.range m).sieveOfSection x
   naturality c₁ c₂ g := by
-    funext x
+    apply ConcreteCategory.ext_apply
+    intro x
     apply Sieve.ext
     intro V f
     dsimp [Subfunctor.sieveOfSection,
       Subfunctor.range, pshSieveFunctor]
-    simp only [
-      FunctorToTypes.map_comp_apply]
+    change (X.map f.op) (X.map g x) ∈ _ ↔ _
+    rw [← Functor.map_comp_apply]
+    rfl
 
 variable {C}
 
@@ -728,7 +731,7 @@ theorem pshSieveCharMap_of_range
   dsimp [Subfunctor.sieveOfSection,
     Subfunctor.range]
   refine ⟨U.map f.op u, ?_⟩
-  have := congr_fun (m.naturality f.op) u
+  have := ConcreteCategory.congr_hom (m.naturality f.op) u
   dsimp at this
   exact this
 
@@ -747,7 +750,7 @@ theorem pshSieveCharMap_top_mem_range
     trivial
   dsimp [Subfunctor.sieveOfSection,
     Subfunctor.range] at hmem
-  simp only [FunctorToTypes.map_id_apply] at hmem
+  simp only [Functor.map_id_apply] at hmem
   exact hmem
 
 /-- A monomorphism in a presheaf category over `Type`
@@ -772,7 +775,8 @@ theorem pshSieveConeMemRange
     (c : Cᵒᵖ) (w : W.obj c) :
     s_fst.app c w ∈ Set.range (m.app c) := by
   apply pshSieveCharMap_top_mem_range
-  have := congr_fun (congr_app cond c) w
+  have := ConcreteCategory.congr_hom
+    (NatTrans.congr_app cond c) w
   dsimp at this
   exact this
 
@@ -812,18 +816,22 @@ theorem pshSieveIsPullback
         ((pshTerminalIsTerminal C).from U)
         (pshClassifierComm m))
       fun s =>
-      ⟨{ app := fun c w => (hmem s c w).choose
+      ⟨{ app := fun c => TypeCat.ofHom fun w =>
+            (hmem s c w).choose
          naturality := fun c₁ c₂ f => by
-           ext w
+           apply ConcreteCategory.ext_apply
+           intro w
            apply hinj c₂
            have h1 := (hmem s c₂
              (s.pt.map f w)).choose_spec
            have h2 := (hmem s c₁ w).choose_spec
            have nat_m :=
-             congr_fun (m.naturality f)
+             ConcreteCategory.congr_hom
+               (m.naturality f)
                ((hmem s c₁ w).choose)
            have nat_s :=
-             congr_fun (s.fst.naturality f) w
+             ConcreteCategory.congr_hom
+               (s.fst.naturality f) w
            dsimp at h1 h2 nat_m nat_s
            change m.app c₂
              ((hmem s c₂
@@ -837,15 +845,17 @@ theorem pshSieveIsPullback
     · ext c w
       exact (hmem s c w).choose_spec
     · ext c w
-      dsimp [pshTerminal]
-      exact Subsingleton.elim _ _
+      exact @Subsingleton.elim PUnit _ _ _
     · intro l h₁ _
       ext c w
       apply hinj c
       have h1a :=
-        congr_fun (congr_app h₁ c) w
+        ConcreteCategory.congr_hom
+          (NatTrans.congr_app h₁ c) w
       change m.app c (l.app c w) =
         s.fst.app c w at h1a
+      change (ConcreteCategory.hom (m.app c))
+        ((ConcreteCategory.hom (l.app c)) w) = _
       rw [h1a]
       exact (hmem s c w).choose_spec.symm
 
@@ -867,19 +877,20 @@ theorem pshSieveTopImpliesRange
   have hpb_d := hpb.map
     ((evaluation Cᵒᵖ
       (Type (max u v))).obj d)
-  have hcond : (fun _ :
-      (pshTerminal C).obj d => y) ≫
-      χ'.app d =
-    (fun _ => PUnit.unit) ≫
-      (pshSieveTruth C).app d := by
-    ext ⟨⟩
-    dsimp [pshSieveTruth]
+  have hcond :
+      (TypeCat.ofHom fun _ :
+        (pshTerminal C).obj d => y) ≫
+        χ'.app d =
+      (TypeCat.ofHom fun _ => PUnit.unit) ≫
+        (pshSieveTruth C).app d := by
+    apply ConcreteCategory.ext_apply
+    rintro ⟨⟩
     exact htop
   obtain ⟨l, hl, _⟩ := hpb_d.exists_lift
-    (fun _ : (pshTerminal C).obj d => y)
-    (fun _ => PUnit.unit) hcond
+    (TypeCat.ofHom fun _ : (pshTerminal C).obj d => y)
+    (TypeCat.ofHom fun _ => PUnit.unit) hcond
   exact ⟨l PUnit.unit,
-    congr_fun hl PUnit.unit⟩
+    ConcreteCategory.congr_hom hl PUnit.unit⟩
 
 /-- The characteristic map of a pullback square
 for `truth` is uniquely determined: any `χ'` that
@@ -899,8 +910,9 @@ theorem pshSieveCharMap_uniq
   dsimp [pshSieveCharMap, Subfunctor.sieveOfSection,
     Subfunctor.range]
   have hnat :=
-    congr_fun (χ'.naturality f.op) y
-  dsimp [pshSieveFunctor] at hnat
+    ConcreteCategory.congr_hom (χ'.naturality f.op) y
+  simp only [ConcreteCategory.comp_apply] at hnat
+  change _ = Sieve.pullback f _ at hnat
   constructor
   · intro hf
     have htop : (χ'.app d y).pullback f =
@@ -911,9 +923,9 @@ theorem pshSieveCharMap_uniq
       (op V) (X.map f.op y) htop
   · rintro ⟨u, hu⟩
     have hcomm :=
-      congr_fun (congr_app hpb.w (op V)) u
-    dsimp [pshSieveTruth, pshSieveFunctor]
-      at hcomm
+      ConcreteCategory.congr_hom
+        (NatTrans.congr_app hpb.w (op V)) u
+    change _ = (⊤ : Sieve V) at hcomm
     rw [Sieve.mem_iff_pullback_eq_top f]
     rw [← hnat, ← hu]
     exact hcomm
@@ -923,8 +935,8 @@ category `Cᵒᵖ ⥤ Type (max u v)`: the sieve functor
 as `Ω`, the maximal-sieve map as `truth`, and the
 sieve characteristic map as `χ`. -/
 def pshClassifierData :
-    Classifier (Cᵒᵖ ⥤ Type (max u v)) :=
-  Classifier.mkOfTerminalΩ₀
+    Subobject.Classifier (Cᵒᵖ ⥤ Type (max u v)) :=
+  Subobject.Classifier.mkOfTerminalΩ₀
     (pshTerminal C)
     (pshTerminalIsTerminal C)
     (pshSieveFunctor C)
@@ -937,7 +949,7 @@ def pshClassifierData :
         pshSieveCharMap_uniq m χ' hpb)
 
 instance PshClassifier :
-    HasClassifier (Cᵒᵖ ⥤ Type (max u v)) :=
+    HasSubobjectClassifier (Cᵒᵖ ⥤ Type (max u v)) :=
   ⟨⟨pshClassifierData⟩⟩
 
 end PshClassifier
@@ -961,20 +973,20 @@ private abbrev coPshΨ :=
     (Type (max u v))).obj (unopUnop C)
 
 private def coPshClassifierData :
-    Classifier (C ⥤ Type (max u v)) :=
+    Subobject.Classifier (C ⥤ Type (max u v)) :=
   let c := pshClassifierData (C := Cᵒᵖ)
   let Φ := coPshΦ C
   let Ψ := coPshΨ C
-  Classifier.mkOfTerminalΩ₀
+  Subobject.Classifier.mkOfTerminalΩ₀
     (Φ.obj c.Ω₀)
     (@IsTerminal.ofUnique _ _ (Φ.obj c.Ω₀)
       (fun P => {
         default :=
-          { app := fun _ _ => PUnit.unit }
+          { app := fun _ =>
+              TypeCat.ofHom fun _ => PUnit.unit }
         uniq := fun f => by
           ext d x
-          change PUnit.unit = f.app d x
-          exact (PUnit.eq_punit _).symm }))
+          exact @Subsingleton.elim PUnit _ _ _ }))
     (Φ.obj c.Ω)
     (Φ.map c.truth)
     (χ := fun m _ => Φ.map (c.χ (Ψ.map m)))
@@ -991,7 +1003,7 @@ category `C ⥤ Type (max u v)`, transferred from
 `PshClassifier` on `Cᵒᵖ` via precomposition with the
 double-opposite equivalence `opOp C : C ⥤ Cᵒᵖᵒᵖ`. -/
 instance CoPshClassifier :
-    HasClassifier (C ⥤ Type (max u v)) :=
+    HasSubobjectClassifier (C ⥤ Type (max u v)) :=
   ⟨⟨coPshClassifierData C⟩⟩
 
 end CoPshClassifier
@@ -1275,11 +1287,12 @@ def leftYonedaExtObj
     (P : Cᵒᵖ ⥤ Type (max u v)) :
     Dᵒᵖ ⥤ Type (max u v) where
   obj T := Quot (LeftYonedaExtStep F P T)
-  map k := Quot.map
+  map k := TypeCat.ofHom <| Quot.map
     (leftYonedaExtSigmaMap F P k)
     (fun _ _ => leftYonedaExtSigmaMap_step F P k)
   map_id T := by
-    funext q; induction q using Quot.inductionOn
+    apply ConcreteCategory.ext_apply
+    intro q; induction q using Quot.inductionOn
     rename_i x
     change Quot.mk _
         (leftYonedaExtSigmaMap F P (𝟙 T) x)
@@ -1287,7 +1300,8 @@ def leftYonedaExtObj
     congr 1
     simp [leftYonedaExtSigmaMap, Category.id_comp]
   map_comp k₁ k₂ := by
-    funext q; induction q using Quot.inductionOn
+    apply ConcreteCategory.ext_apply
+    intro q; induction q using Quot.inductionOn
     rename_i x
     change Quot.mk _
         (leftYonedaExtSigmaMap F P (k₁ ≫ k₂) x)
@@ -1324,7 +1338,8 @@ theorem leftYonedaExtSigmaMapNat_step
   refine ⟨g, ?_, ht⟩
   dsimp [leftYonedaExtSigmaMapNat]
   rw [← hp]
-  exact (congr_fun (α.naturality g.op) x.2.1).symm
+  exact (ConcreteCategory.congr_hom
+    (α.naturality g.op) x.2.1).symm
 
 /-- The map component of the Yoneda extension
 functor: given `α : P ⟶ Q`, produce a natural
@@ -1336,12 +1351,13 @@ def leftYonedaExtMap
     {P Q : Cᵒᵖ ⥤ Type (max u v)}
     (α : P ⟶ Q) :
     leftYonedaExtObj F P ⟶ leftYonedaExtObj F Q where
-  app T := Quot.map
+  app T := TypeCat.ofHom <| Quot.map
     (leftYonedaExtSigmaMapNat F α T)
     (fun _ _ =>
       leftYonedaExtSigmaMapNat_step F α T)
   naturality T₁ T₂ k := by
-    funext q; induction q using Quot.inductionOn
+    apply ConcreteCategory.ext_apply
+    intro q; induction q using Quot.inductionOn
     rfl
 
 /-- The Yoneda extension functor: given a
@@ -1355,11 +1371,13 @@ def leftYonedaExt (F : C ⥤ D) :
   obj P := leftYonedaExtObj F P
   map α := leftYonedaExtMap F α
   map_id P := by
-    ext T q; induction q using Quot.inductionOn
-    rfl
+    ext T q
+    induction q using Quot.inductionOn with
+    | _ x => rfl
   map_comp α β := by
-    ext T q; induction q using Quot.inductionOn
-    rfl
+    ext T q
+    induction q using Quot.inductionOn with
+    | _ x => rfl
 
 /-- Map a `LeftYonedaExtSigma` triple along a natural
 transformation `α : F ⟶ G` by postcomposing the
@@ -1401,41 +1419,42 @@ def leftYonedaExtFunctor :
   obj := leftYonedaExt
   map {F G} α :=
     { app := fun P =>
-        { app := fun T =>
+        { app := fun T => TypeCat.ofHom <|
             Quot.map
               (leftYonedaExtSigmaAlpha α P T)
               (fun _ _ h =>
                 leftYonedaExtSigmaAlpha_step
                   α P T h)
           naturality := fun T₁ T₂ k => by
-            funext q
-            induction q using Quot.inductionOn
-            rename_i x
-            change Quot.mk _ _ = Quot.mk _ _
-            congr 1
-            dsimp [leftYonedaExtSigmaAlpha,
-              leftYonedaExtSigmaMap]
-            simp only [Category.assoc] }
+            apply ConcreteCategory.ext_apply
+            intro q
+            induction q using Quot.inductionOn with
+            | _ x =>
+              change Quot.mk _ _ = Quot.mk _ _
+              congr 1
+              dsimp [leftYonedaExtSigmaAlpha,
+                leftYonedaExtSigmaMap]
+              simp only [Category.assoc] }
       naturality := fun P Q β => by
         ext T q
-        induction q using Quot.inductionOn
-        rfl }
+        induction q using Quot.inductionOn with
+        | _ x => rfl }
   map_id F := by
     ext P T q
-    induction q using Quot.inductionOn
-    rename_i x
-    change Quot.mk _ _ = Quot.mk _ _
-    congr 1
-    dsimp [leftYonedaExtSigmaAlpha]
-    simp only [Category.comp_id]
+    induction q using Quot.inductionOn with
+    | _ x =>
+      change Quot.mk _ _ = Quot.mk _ _
+      congr 1
+      dsimp [leftYonedaExtSigmaAlpha]
+      simp only [Category.comp_id]
   map_comp {F G H} α β := by
     ext P T q
-    induction q using Quot.inductionOn
-    rename_i x
-    change Quot.mk _ _ = Quot.mk _ _
-    congr 1
-    dsimp [leftYonedaExtSigmaAlpha]
-    simp only [Category.assoc]
+    induction q using Quot.inductionOn with
+    | _ x =>
+      change Quot.mk _ _ = Quot.mk _ _
+      congr 1
+      dsimp [leftYonedaExtSigmaAlpha]
+      simp only [Category.assoc]
 
 /-- The counit of the Yoneda extension at a
 large-Yoneda representable presheaf: maps
@@ -1445,8 +1464,10 @@ large-Yoneda representable presheaf: maps
 def leftYonedaExtCounitULift (F : C ⥤ D) (X : C) :
     (leftYonedaExt F).obj (yonedaULift X) ⟶
       yonedaULift (F.obj X) where
-  app T := Quot.lift
-    (fun x => ⟨x.2.2 ≫ F.map x.2.1.down⟩)
+  app T := TypeCat.ofHom <| Quot.lift
+    (fun (x : LeftYonedaExtSigma F
+      (yonedaULift X) T) =>
+      (⟨x.2.2 ≫ F.map x.2.1.down⟩ : ULift.{u} _))
     (fun x y ⟨g, hp, ht⟩ => by
       have hp' : g ≫ x.2.1.down = y.2.1.down :=
         congrArg ULift.down hp
@@ -1457,9 +1478,11 @@ def leftYonedaExtCounitULift (F : C ⥤ D) (X : C) :
       rw [← ht, Category.assoc,
         ← F.map_comp, hp'])
   naturality T₁ T₂ k := by
-    funext q; induction q using Quot.inductionOn
-    rename_i x
-    exact ULift.ext _ _ (Category.assoc _ _ _)
+    apply ConcreteCategory.ext_apply
+    intro q
+    induction q using Quot.inductionOn with
+    | _ x =>
+      exact ULift.ext _ _ (Category.assoc _ _ _)
 
 /-- The unit of the Yoneda extension at a
 large-Yoneda representable presheaf: embeds
@@ -1470,9 +1493,12 @@ large-Yoneda representable presheaf: embeds
 def leftYonedaExtUnitULift (F : C ⥤ D) (X : C) :
     yonedaULift (F.obj X) ⟶
       (leftYonedaExt F).obj (yonedaULift X) where
-  app T t := Quot.mk _ ⟨X, ⟨𝟙 X⟩, t.down⟩
+  app T := TypeCat.ofHom fun t =>
+    Quot.mk _ (⟨X, ⟨𝟙 X⟩, t.down⟩ :
+      LeftYonedaExtSigma F (yonedaULift X) T)
   naturality T₁ T₂ k := by
-    funext t; rfl
+    apply ConcreteCategory.ext_apply
+    intro t; rfl
 
 /-- `leftYonedaExtUnitULift ≫ leftYonedaExtCounitULift = 𝟙`.
 Each `⟨t⟩` maps to `(X, ⟨𝟙 X⟩, t)` then to
@@ -1496,13 +1522,17 @@ theorem leftYonedaExtCounitULift_unit
     leftYonedaExtCounitULift F X ≫
       leftYonedaExtUnitULift F X =
         𝟙 ((leftYonedaExt F).obj (yonedaULift X)) := by
-  ext T q; induction q using Quot.inductionOn
-  rename_i x
-  change Quot.mk _
-      ⟨X, ⟨𝟙 X⟩, x.2.2 ≫ F.map x.2.1.down⟩
-    = Quot.mk _ x
-  exact Quot.sound ⟨x.2.1.down, by
-    simp [yonedaULift, uliftFunctor], by simp⟩
+  ext T q; induction q using Quot.inductionOn with
+  | _ x =>
+    change Quot.mk _
+        (⟨X, ⟨𝟙 X⟩, x.2.2 ≫ F.map x.2.1.down⟩ :
+          LeftYonedaExtSigma F (yonedaULift X) T)
+      = Quot.mk _ x
+    refine Quot.sound ⟨x.2.1.down, ?_, ?_⟩
+    · apply ULift.ext
+      change x.snd.1.down ≫ 𝟙 X = x.snd.1.down
+      simp
+    · simp
 
 /-- The Yoneda extension at a large-Yoneda
 representable presheaf `yonedaULift X` is
@@ -1533,10 +1563,12 @@ equivalence class of `(X, 𝟙 X, t)`. -/
 def leftYonedaExtUnit (F : C ⥤ D) (X : C) :
     yoneda.obj (F.obj X) ⟶
       (leftYonedaExt F).obj (yoneda.obj X) where
-  app T t :=
-    Quot.mk _ ⟨X, 𝟙 X, t⟩
+  app T := TypeCat.ofHom fun t =>
+    Quot.mk _ (⟨X, 𝟙 X, t⟩ :
+      LeftYonedaExtSigma F (yoneda.obj X) T)
   naturality T₁ T₂ k := by
-    funext t; rfl
+    apply ConcreteCategory.ext_apply
+    intro t; rfl
 
 /-- The counit (inverse) of the Yoneda extension at
 a representable presheaf: maps
@@ -1546,8 +1578,9 @@ a representable presheaf: maps
 def leftYonedaExtCounit (F : C ⥤ D) (X : C) :
     (leftYonedaExt F).obj (yoneda.obj X) ⟶
       yoneda.obj (F.obj X) where
-  app T := Quot.lift
-    (fun x => x.2.2 ≫ F.map x.2.1)
+  app T := TypeCat.ofHom <| Quot.lift
+    (fun (x : LeftYonedaExtSigma F
+        (yoneda.obj X) T) => x.2.2 ≫ F.map x.2.1)
     (fun x y ⟨g, hp, ht⟩ => by
       dsimp
       rw [← ht, Category.assoc]
@@ -1555,11 +1588,12 @@ def leftYonedaExtCounit (F : C ⥤ D) (X : C) :
       rw [← F.map_comp]
       exact congr_arg F.map hp)
   naturality T₁ T₂ k := by
-    funext q; induction q using Quot.inductionOn
-    rename_i x
-    change (k.unop ≫ x.2.2) ≫ F.map x.2.1
-      = k.unop ≫ x.2.2 ≫ F.map x.2.1
-    simp only [Category.assoc]
+    apply ConcreteCategory.ext_apply
+    intro q; induction q using Quot.inductionOn with
+    | _ x =>
+      change (k.unop ≫ x.2.2) ≫ F.map x.2.1
+        = k.unop ≫ x.2.2 ≫ F.map x.2.1
+      simp only [Category.assoc]
 
 /-- The composition `leftYonedaExtUnit ≫ leftYonedaExtCounit`
 is the identity on `yoneda.obj (F.obj X)`. Each
@@ -1570,7 +1604,7 @@ theorem leftYonedaExtUnit_counit
     leftYonedaExtUnit F X ≫ leftYonedaExtCounit F X =
       𝟙 (yoneda.obj (F.obj X)) := by
   ext T t
-  change t ≫ F.map (𝟙 X) = t
+  change (t ≫ F.map (𝟙 X) : _ ⟶ F.obj X) = t
   simp
 
 /-- The composition `leftYonedaExtCounit ≫ leftYonedaExtUnit`
@@ -1583,13 +1617,16 @@ theorem leftYonedaExtCounit_unit
     (F : C ⥤ D) (X : C) :
     leftYonedaExtCounit F X ≫ leftYonedaExtUnit F X =
       𝟙 ((leftYonedaExt F).obj (yoneda.obj X)) := by
-  ext T q; induction q using Quot.inductionOn
-  rename_i x
-  change Quot.mk _
-      ⟨X, 𝟙 X, x.2.2 ≫ F.map x.2.1⟩
-    = Quot.mk _ x
-  exact Quot.sound ⟨x.2.1, by
-    simp [yoneda], by simp⟩
+  ext T q; induction q using Quot.inductionOn with
+  | _ x =>
+    change Quot.mk _
+        (⟨X, 𝟙 X, x.2.2 ≫ F.map x.2.1⟩ :
+          LeftYonedaExtSigma F (yoneda.obj X) T)
+      = Quot.mk _ x
+    refine Quot.sound ⟨x.2.1, ?_, ?_⟩
+    · change x.snd.1 ≫ 𝟙 X = x.snd.1
+      simp
+    · simp
 
 /-- The Yoneda extension at a representable presheaf
 `yoneda.obj X` is isomorphic to
@@ -1651,10 +1688,17 @@ theorem leftYonedaExtDescTriple_step (F : C ⥤ D)
   dsimp [leftYonedaExtDescTriple]
   rw [← ht]
   have nat_β :=
-    congr_fun (congr_app (β.naturality g) T)
+    ConcreteCategory.congr_hom
+      (NatTrans.congr_app (β.naturality g) T)
       y.2.2
-  dsimp [yoneda_map_app] at nat_β
-  rw [nat_β]
+  simp only [NatTrans.comp_app,
+    ConcreteCategory.comp_apply,
+    Functor.comp_map, yoneda_map_app] at nat_β
+  have h1 := congrArg
+    (ConcreteCategory.hom
+      ((G.map (yonedaEquiv.symm x.2.1)).app T))
+    nat_β
+  refine h1.trans ?_
   have hp' : yoneda.map g ≫
       yonedaEquiv.symm x.2.1 =
       yonedaEquiv.symm y.2.1 := by
@@ -1668,6 +1712,7 @@ theorem leftYonedaExtDescTriple_step (F : C ⥤ D)
     G.map (yonedaEquiv.symm x.2.1)).app T)
     ((β.app y.1).app T y.2.2) = _
   rw [← G.map_comp, hp']
+  rfl
 
 /-- The descent map from `leftYonedaExt F` to `G` induced
 by `β : F ⋙ yoneda ⟶ yoneda ⋙ G`. For each presheaf
@@ -1679,44 +1724,47 @@ def leftYonedaExtDesc (F : C ⥤ D)
     (β : F ⋙ yoneda ⟶ yoneda ⋙ G) :
     leftYonedaExt F ⟶ G where
   app P :=
-    { app := fun T =>
+    { app := fun T => TypeCat.ofHom <|
         Quot.lift
           (leftYonedaExtDescTriple F β P T)
           (fun _ _ h =>
             leftYonedaExtDescTriple_step F β P T h)
       naturality := fun T₁ T₂ k => by
-        funext q
-        induction q using Quot.inductionOn
-        rename_i x
-        change leftYonedaExtDescTriple F β P T₂
-            ⟨x.1, x.2.1, k.unop ≫ x.2.2⟩ =
-          (G.obj P).map k
-            (leftYonedaExtDescTriple F β P T₁ x)
-        dsimp only [leftYonedaExtDescTriple]
-        have := congr_fun
-          ((β.app x.1 ≫ G.map
-            (yonedaEquiv.symm x.2.1)
-            ).naturality k) x.2.2
-        dsimp at this ⊢
-        exact this }
+        apply ConcreteCategory.ext_apply
+        intro q
+        induction q using Quot.inductionOn with
+        | _ x =>
+          change leftYonedaExtDescTriple F β P T₂
+              (⟨x.1, x.2.1, k.unop ≫ x.2.2⟩ :
+                LeftYonedaExtSigma F P T₂) =
+            (G.obj P).map k
+              (leftYonedaExtDescTriple F β P T₁ x)
+          dsimp only [leftYonedaExtDescTriple]
+          have := ConcreteCategory.congr_hom
+            ((β.app x.1 ≫ G.map
+              (yonedaEquiv.symm x.2.1)
+              ).naturality k) x.2.2
+          dsimp at this ⊢
+          exact this }
   naturality P Q α := by
     ext T q
-    induction q using Quot.inductionOn
-    rename_i x
-    change leftYonedaExtDescTriple F β Q T
-        ⟨x.1, α.app (Opposite.op x.1)
-          x.2.1, x.2.2⟩ =
-      (G.map α).app T
-        (leftYonedaExtDescTriple F β P T x)
-    dsimp [leftYonedaExtDescTriple]
-    have comm :
-        yonedaEquiv.symm
-          (α.app (Opposite.op x.1) x.2.1)
-        = yonedaEquiv.symm x.2.1 ≫ α := by
-      apply yonedaEquiv.injective
-      simp [yonedaEquiv_comp]
-    rw [comm, G.map_comp]
-    rfl
+    induction q using Quot.inductionOn with
+    | _ x =>
+      change leftYonedaExtDescTriple F β Q T
+          (⟨x.1, α.app (Opposite.op x.1)
+            x.2.1, x.2.2⟩ :
+            LeftYonedaExtSigma F Q T) =
+        (G.map α).app T
+          (leftYonedaExtDescTriple F β P T x)
+      dsimp [leftYonedaExtDescTriple]
+      have comm :
+          yonedaEquiv.symm
+            (α.app (Opposite.op x.1) x.2.1)
+          = yonedaEquiv.symm x.2.1 ≫ α := by
+        apply yonedaEquiv.injective
+        simp [yonedaEquiv_comp]
+      rw [comm, G.map_comp]
+      rfl
 
 /-- The descent map factorizes through the unit:
 `leftYonedaExtUnitNatTrans F ≫ Functor.whiskerLeft
@@ -1729,7 +1777,8 @@ theorem leftYonedaExtDesc_fac (F : C ⥤ D)
         (leftYonedaExtDesc F β) = β := by
   ext X T t
   change leftYonedaExtDescTriple F β
-      (yoneda.obj X) T ⟨X, 𝟙 X, t⟩ =
+      (yoneda.obj X) T (⟨X, 𝟙 X, t⟩ :
+        LeftYonedaExtSigma F (yoneda.obj X) T) =
     (β.app X).app T t
   dsimp only [leftYonedaExtDescTriple]
   have h : (yonedaEquiv (F := yoneda.obj X)
@@ -1750,38 +1799,45 @@ theorem leftYonedaExtDesc_uniq (F : C ⥤ D)
       Functor.whiskerLeft yoneda σ = β) :
     σ = leftYonedaExtDesc F β := by
   ext P T q
-  induction q using Quot.inductionOn
-  rename_i x
-  change (σ.app P).app T (Quot.mk _ x) =
-    leftYonedaExtDescTriple F β P T x
-  dsimp only [leftYonedaExtDescTriple]
-  have himg : Quot.mk (LeftYonedaExtStep F P T) x =
-      ((leftYonedaExt F).map
-        (yonedaEquiv.symm x.2.1)).app T
-        (Quot.mk _ ⟨x.1, 𝟙 x.1, x.2.2⟩) := by
-    change _ = Quot.mk _
-      (⟨x.1, (yonedaEquiv.symm x.2.1).app
-        (Opposite.op x.1) (𝟙 x.1),
-        x.2.2⟩ : LeftYonedaExtSigma F P T)
-    have h : (yonedaEquiv.symm x.2.1).app
-        (Opposite.op x.1) (𝟙 x.1) = x.2.1 :=
-      congr_fun (P.map_id _) x.2.1
-    rw [h]
-  rw [himg]
-  have hnat := congr_fun (congr_app
-      (σ.naturality
-        (yonedaEquiv.symm x.2.1)) T)
-    (Quot.mk _ ⟨x.1, 𝟙 x.1, x.2.2⟩)
-  dsimp at hnat ⊢
-  rw [hnat]
-  have hfac := congr_fun
-    (congr_app (congr_app hσ x.1) T) x.2.2
-  change (σ.app (yoneda.obj x.1)).app T
-    (Quot.mk _ ⟨x.1, 𝟙 x.1, x.2.2⟩) =
-    (β.app x.1).app T x.2.2 at hfac
-  exact congrArg
-    ((G.map (yonedaEquiv.symm x.2.1)).app T)
-    hfac
+  induction q using Quot.inductionOn with
+  | _ x =>
+    change (σ.app P).app T (Quot.mk _ x) =
+      leftYonedaExtDescTriple F β P T x
+    dsimp only [leftYonedaExtDescTriple]
+    have himg : Quot.mk (LeftYonedaExtStep F P T) x =
+        ((leftYonedaExt F).map
+          (yonedaEquiv.symm x.2.1)).app T
+          (Quot.mk _ (⟨x.1, 𝟙 x.1, x.2.2⟩ :
+            LeftYonedaExtSigma F (yoneda.obj x.1) T
+            )) := by
+      change _ = Quot.mk _
+        (⟨x.1, (yonedaEquiv.symm x.2.1).app
+          (Opposite.op x.1) (𝟙 x.1),
+          x.2.2⟩ : LeftYonedaExtSigma F P T)
+      have h : (yonedaEquiv.symm x.2.1).app
+          (Opposite.op x.1) (𝟙 x.1) = x.2.1 :=
+        ConcreteCategory.congr_hom
+          (P.map_id _) x.2.1
+      rw [h]
+    rw [himg]
+    have hnat := ConcreteCategory.congr_hom
+        (NatTrans.congr_app
+          (σ.naturality
+            (yonedaEquiv.symm x.2.1)) T)
+        (Quot.mk _ (⟨x.1, 𝟙 x.1, x.2.2⟩ :
+          LeftYonedaExtSigma F (yoneda.obj x.1) T))
+    dsimp at hnat ⊢
+    rw [hnat]
+    have hfac := ConcreteCategory.congr_hom
+      (NatTrans.congr_app
+        (NatTrans.congr_app hσ x.1) T) x.2.2
+    change (σ.app (yoneda.obj x.1)).app T
+      (Quot.mk _ (⟨x.1, 𝟙 x.1, x.2.2⟩ :
+        LeftYonedaExtSigma F (yoneda.obj x.1) T)) =
+      (β.app x.1).app T x.2.2 at hfac
+    exact congrArg
+      ((G.map (yonedaEquiv.symm x.2.1)).app T)
+      hfac
 
 instance leftYonedaExtLeftExtUnique (F : C ⥤ D)
     (s : Functor.LeftExtension yoneda
@@ -1892,16 +1948,18 @@ def rightYonedaExtObj
     (P : Cᵒᵖ ⥤ Type (max u v)) :
     Dᵒᵖ ⥤ Type (max u v) where
   obj T := RightYonedaExtFamily F P T
-  map k := rightYonedaExtFamilyMap F P k
+  map k := TypeCat.ofHom (rightYonedaExtFamilyMap F P k)
   map_id T := by
-    funext x
+    apply ConcreteCategory.ext_apply
+    intro x
     apply RightYonedaExtFamily.ext'
     intro S t
     dsimp [rightYonedaExtFamilyMap]
     congr 1
     exact Category.comp_id _
   map_comp k₁ k₂ := by
-    funext x
+    apply ConcreteCategory.ext_apply
+    intro x
     apply RightYonedaExtFamily.ext'
     intro S t
     dsimp [rightYonedaExtFamilyMap]
@@ -1920,9 +1978,9 @@ def rightYonedaExtFamilyMapNat
     RightYonedaExtFamily F Q T where
   family S t := α.app (Opposite.op S) (x.family S t)
   naturality g t := by
-    have hα := congr_fun
+    have hα := ConcreteCategory.congr_hom
       (α.naturality g.op) (x.family _ t)
-    simp only [types_comp_apply] at hα
+    simp only [ConcreteCategory.comp_apply] at hα
     rw [← hα, x.naturality g t]
 
 /-- The map component of the right Yoneda
@@ -1937,9 +1995,10 @@ def rightYonedaExtMap
     (α : P ⟶ Q) :
     rightYonedaExtObj F P ⟶
       rightYonedaExtObj F Q where
-  app T := rightYonedaExtFamilyMapNat F α T
+  app T := TypeCat.ofHom (rightYonedaExtFamilyMapNat F α T)
   naturality T₁ T₂ k := by
-    funext x
+    apply ConcreteCategory.ext_apply
+    intro x
     apply RightYonedaExtFamily.ext'
     intro S t
     rfl
@@ -1956,9 +2015,13 @@ def rightYonedaExt (F : C ⥤ D) :
   map α := rightYonedaExtMap F α
   map_id P := by
     ext T x
+    apply RightYonedaExtFamily.ext'
+    intro S t
     rfl
   map_comp α β := by
     ext T x
+    apply RightYonedaExtFamily.ext'
+    intro S t
     rfl
 
 
@@ -2017,10 +2080,11 @@ def rightYonedaExtFunctor :
   obj := rightYonedaExt
   map {F G} α :=
     { app := fun P =>
-        { app := fun T =>
+        { app := fun T => TypeCat.ofHom <|
             rightYonedaExtFamilyAlpha α P T
           naturality := fun T₁ T₂ k => by
-            funext x
+            apply ConcreteCategory.ext_apply
+            intro x
             exact rightYonedaExtFamilyAlpha_map
               α P k x }
       naturality := fun P Q β => by
@@ -2051,10 +2115,11 @@ def rightYonedaExtCounit
     (F : C ⥤ D)
     (P : Cᵒᵖ ⥤ Type (max u v)) :
     F.op ⋙ (rightYonedaExt F).obj P ⟶ P where
-  app c x :=
+  app c := TypeCat.ofHom fun x =>
     x.family c.unop (𝟙 (F.obj c.unop))
   naturality {c d} g := by
-    funext x
+    apply ConcreteCategory.ext_apply
+    intro x
     dsimp [rightYonedaExt, rightYonedaExtObj,
       rightYonedaExtFamilyMap]
     simp only [Category.id_comp]
@@ -2075,27 +2140,29 @@ def rightYonedaExtLift
     {G : Dᵒᵖ ⥤ Type (max u v)}
     (β : F.op ⋙ G ⟶ P) :
     G ⟶ (rightYonedaExt F).obj P where
-  app T q :=
+  app T := TypeCat.ofHom fun q =>
     { family := fun S t =>
         β.app (Opposite.op S) (G.map t.op q)
       naturality := fun g t => by
-        have hβ := congr_fun
+        have hβ := ConcreteCategory.congr_hom
           (β.naturality g.op) (G.map t.op q)
-        simp only [types_comp_apply,
+        simp only [ConcreteCategory.comp_apply,
           Functor.comp_obj, Functor.comp_map]
             at hβ
-        rw [← hβ, ← types_comp_apply
-          (G.map t.op) (G.map (F.op.map g.op)),
-          ← G.map_comp]
-        simp only [op_comp, Functor.op_map,
-          Quiver.Hom.unop_op] }
+        refine hβ.symm.trans ?_
+        congr 1
+        change (ConcreteCategory.hom
+          (G.map t.op ≫ G.map (F.op.map g.op))) q = _
+        rw [← G.map_comp]
+        rfl }
   naturality {T₁ T₂} k := by
-    funext q
+    apply ConcreteCategory.ext_apply
+    intro q
     apply RightYonedaExtFamily.ext'
     intro S t
     dsimp [rightYonedaExt, rightYonedaExtObj,
       rightYonedaExtFamilyMap]
-    rw [← types_comp_apply (G.map k)
+    rw [← ConcreteCategory.comp_apply (G.map k)
       (G.map t.op), ← G.map_comp]
 
 /-- The lift through `rightYonedaExtCounit`
@@ -2112,10 +2179,14 @@ theorem rightYonedaExtLift_fac
       (F.op.obj c) ≫
       (rightYonedaExtCounit F P).app c =
     β.app c := by
-  funext q
+  apply ConcreteCategory.ext_apply
+  intro q
   dsimp [rightYonedaExtLift,
     rightYonedaExtCounit]
-  simp
+  change (ConcreteCategory.hom (β.app c))
+    ((ConcreteCategory.hom (G.map (𝟙 _).op)) q) = _
+  rw [op_id, G.map_id]
+  rfl
 
 /-- The lift is unique: any `σ` satisfying the
 factorization at each component equals the
@@ -2134,22 +2205,34 @@ theorem rightYonedaExtLift_uniq
   ext T q
   apply RightYonedaExtFamily.ext'
   intro S t
-  have h := congr_fun
+  have h := ConcreteCategory.congr_hom
     (hσ (Opposite.op S))
     (G.map t.op q)
-  dsimp [rightYonedaExtCounit,
-    rightYonedaExtLift] at h ⊢
-  rw [← h]
-  have hnat :=
-    congrArg
-      (fun x =>
-        RightYonedaExtFamily.family
-          x S (𝟙 (F.obj S)))
-      (congr_fun (σ.naturality t.op) q)
-  dsimp [rightYonedaExt, rightYonedaExtObj,
-    rightYonedaExtFamilyMap] at hnat
-  simp only [Category.id_comp] at hnat
-  exact hnat.symm
+  simp only [ConcreteCategory.comp_apply,
+    rightYonedaExtCounit] at h
+  refine Eq.trans ?_ h
+  dsimp [rightYonedaExtLift]
+  have hnat0 := ConcreteCategory.congr_hom
+    (σ.naturality t.op) q
+  simp only [ConcreteCategory.comp_apply] at hnat0
+  have hnat :
+      ((ConcreteCategory.hom (σ.app T)) q).family
+        S t =
+      ((ConcreteCategory.hom
+        (((rightYonedaExt F).obj P).map t.op))
+          ((ConcreteCategory.hom (σ.app T)) q)
+        ).family S (𝟙 (F.obj S)) := by
+    change ((ConcreteCategory.hom (σ.app T)) q
+      ).family S t =
+      (rightYonedaExtFamilyMap F P t.op
+        ((ConcreteCategory.hom (σ.app T)) q)
+        ).family S (𝟙 (F.obj S))
+    dsimp [rightYonedaExtFamilyMap]
+    rw [Category.id_comp]
+  refine hnat.trans ?_
+  exact (congrArg
+    (fun x => RightYonedaExtFamily.family
+      x S (𝟙 (F.obj S))) hnat0).symm
 
 /-- Precomposition with `F.op` as a functor
 between presheaf categories. -/
@@ -2179,7 +2262,7 @@ def rightYonedaExtAdj (F : C ⥤ D) :
               rightYonedaExtCounit F Q
           left_inv := fun β => by
             ext c q
-            exact congr_fun
+            exact ConcreteCategory.congr_hom
               (rightYonedaExtLift_fac F Q β c)
               q
           right_inv := fun σ =>
@@ -2202,7 +2285,7 @@ instance rightYonedaExtRightExtUnique
   default := CostructuredArrow.homMk
     (rightYonedaExtLift F P s.hom)
     (by ext c q
-        exact congr_fun
+        exact ConcreteCategory.congr_hom
           (rightYonedaExtLift_fac F P
             s.hom c) q)
   uniq f := by
@@ -2235,13 +2318,16 @@ def leftYonedaExtPresheafUnit
     (F : C ⥤ D)
     (P : Cᵒᵖ ⥤ Type (max u v)) :
     P ⟶ F.op ⋙ (leftYonedaExt F).obj P where
-  app c p :=
-    Quot.mk _ ⟨c.unop, p, 𝟙 (F.obj c.unop)⟩
+  app c := TypeCat.ofHom fun p =>
+    Quot.mk _ (⟨c.unop, p, 𝟙 (F.obj c.unop)⟩ :
+      LeftYonedaExtSigma F P (F.op.obj c))
   naturality {c d} g := by
-    funext p
+    apply ConcreteCategory.ext_apply
+    intro p
     apply (Quot.sound _).symm
     refine ⟨g.unop, ?_, ?_⟩
     · dsimp [leftYonedaExtSigmaMap]
+      rfl
     · dsimp [leftYonedaExtSigmaMap]
       simp only [Category.id_comp,
         Category.comp_id]
@@ -2257,34 +2343,45 @@ def leftYonedaExtPresheafDesc
     {Q : Dᵒᵖ ⥤ Type (max u v)}
     (α : P ⟶ F.op ⋙ Q) :
     (leftYonedaExt F).obj P ⟶ Q where
-  app T := Quot.lift
-    (fun x => Q.map x.2.2.op
-      (α.app (Opposite.op x.1) x.2.1))
+  app T := TypeCat.ofHom <| Quot.lift
+    (fun (x : LeftYonedaExtSigma F P T) =>
+      Q.map x.2.2.op
+        (α.app (Opposite.op x.1) x.2.1))
     (fun x y ⟨g, hp, ht⟩ => by
       dsimp
       rw [← hp]
-      have hα := congr_fun
+      have hα := ConcreteCategory.congr_hom
         (α.naturality g.op) x.2.1
-      simp only [types_comp_apply] at hα
-      rw [hα]
-      dsimp
-      rw [← types_comp_apply
+      simp only [ConcreteCategory.comp_apply]
+        at hα
+      have h1 := congrArg
+        (ConcreteCategory.hom (Q.map y.2.2.op))
+        hα
+      refine Eq.trans ?_ h1.symm
+      change _ = (ConcreteCategory.hom
+        (Q.map y.2.2.op)) ((ConcreteCategory.hom
+          (Q.map (F.map g).op))
+            ((ConcreteCategory.hom
+              (α.app (Opposite.op x.1))) x.2.1))
+      rw [← ConcreteCategory.comp_apply
         (Q.map (F.map g).op)
         (Q.map y.2.2.op),
         ← Q.map_comp,
-        ← op_comp, ht])
+        ← op_comp, ht]
+      rfl)
   naturality {T₁ T₂} k := by
-    funext q
-    induction q using Quot.inductionOn
-    rename_i x
-    change Q.map (k.unop ≫ x.2.2).op
-        (α.app (Opposite.op x.1) x.2.1) =
-      Q.map k (Q.map x.2.2.op
-        (α.app (Opposite.op x.1) x.2.1))
-    rw [← types_comp_apply
-      (Q.map x.2.2.op)
-      (Q.map k), ← Q.map_comp]
-    congr 1
+    apply ConcreteCategory.ext_apply
+    intro q
+    induction q using Quot.inductionOn with
+    | _ x =>
+      change Q.map (k.unop ≫ x.2.2).op
+          (α.app (Opposite.op x.1) x.2.1) =
+        Q.map k (Q.map x.2.2.op
+          (α.app (Opposite.op x.1) x.2.1))
+      rw [← ConcreteCategory.comp_apply
+        (Q.map x.2.2.op)
+        (Q.map k), ← Q.map_comp]
+      congr 1
 
 /-- The presheaf-level descent map factorizes
 through the unit: for each `c : Cᵒᵖ`,
@@ -2301,10 +2398,14 @@ theorem leftYonedaExtPresheafDesc_fac
       (leftYonedaExtPresheafDesc F α).app
         (F.op.obj c) =
     α.app c := by
-  funext p
+  apply ConcreteCategory.ext_apply
+  intro p
   dsimp [leftYonedaExtPresheafUnit,
     leftYonedaExtPresheafDesc]
-  simp
+  change (ConcreteCategory.hom (Q.map (𝟙 _).op))
+    ((ConcreteCategory.hom (α.app c)) p) = _
+  rw [op_id, Q.map_id]
+  rfl
 
 /-- The presheaf-level descent map is unique: any
 `σ` satisfying the factorization at each component
@@ -2320,32 +2421,38 @@ theorem leftYonedaExtPresheafDesc_uniq
         σ.app (F.op.obj c) = α.app c) :
     σ = leftYonedaExtPresheafDesc F α := by
   ext T q
-  induction q using Quot.inductionOn
-  rename_i x
-  change σ.app T (Quot.mk _ x) =
-    Q.map x.2.2.op
-      (α.app (Opposite.op x.1) x.2.1)
-  have himg : Quot.mk
-      (LeftYonedaExtStep F P T) x =
-      ((leftYonedaExt F).obj P).map x.2.2.op
-        (Quot.mk _
-          ⟨x.1, x.2.1,
-            𝟙 (F.obj x.1)⟩) := by
-    change _ = Quot.mk _
-      (leftYonedaExtSigmaMap F P x.2.2.op
-        ⟨x.1, x.2.1, 𝟙 (F.obj x.1)⟩)
-    dsimp [leftYonedaExtSigmaMap]
-    simp
-  rw [himg]
-  have hnat := congr_fun
-    (σ.naturality x.2.2.op)
-    (Quot.mk _ ⟨x.1, x.2.1,
-      𝟙 (F.obj x.1)⟩)
-  simp only [types_comp_apply] at hnat
-  rw [hnat]
-  exact congrArg (Q.map x.2.2.op)
-    (congr_fun
-      (hσ (Opposite.op x.1)) x.2.1)
+  induction q using Quot.inductionOn with
+  | _ x =>
+    change σ.app T (Quot.mk _ x) =
+      Q.map x.2.2.op
+        (α.app (Opposite.op x.1) x.2.1)
+    have himg : Quot.mk
+        (LeftYonedaExtStep F P T) x =
+        ((leftYonedaExt F).obj P).map x.2.2.op
+          (Quot.mk _
+            (⟨x.1, x.2.1,
+              𝟙 (F.obj x.1)⟩ :
+              LeftYonedaExtSigma F P
+                (F.op.obj (Opposite.op x.1)))
+            ) := by
+      change _ = Quot.mk _
+        (leftYonedaExtSigmaMap F P x.2.2.op
+          ⟨x.1, x.2.1, 𝟙 (F.obj x.1)⟩)
+      dsimp [leftYonedaExtSigmaMap]
+      simp
+    rw [himg]
+    have hnat := ConcreteCategory.congr_hom
+      (σ.naturality x.2.2.op)
+      (Quot.mk _ (⟨x.1, x.2.1,
+        𝟙 (F.obj x.1)⟩ :
+        LeftYonedaExtSigma F P
+          (F.op.obj (Opposite.op x.1))))
+    simp only [ConcreteCategory.comp_apply] at hnat
+    refine hnat.trans ?_
+    exact congrArg (ConcreteCategory.hom
+      (Q.map x.2.2.op))
+      (ConcreteCategory.congr_hom
+        (hσ (Opposite.op x.1)) x.2.1)
 
 set_option backward.isDefEq.respectTransparency false in
 /-- The left adjunction of the adjoint triple:
@@ -2372,7 +2479,7 @@ def leftYonedaExtAdj (F : C ⥤ D) :
               σ (fun _ => rfl)).symm
           right_inv := fun α => by
             ext c p
-            exact congr_fun
+            exact ConcreteCategory.congr_hom
               (leftYonedaExtPresheafDesc_fac
                 F α c) p }
       homEquiv_naturality_left_symm :=
@@ -2401,22 +2508,44 @@ def functorHomSectionToNatTrans
     {F G : Cᵒᵖ ⥤ Type (max u v)}
     (s : (F.functorHom G).sections) :
     F ⟶ G where
-  app c x := (s.val c).app c (𝟙 c) x
+  app c := TypeCat.ofHom fun x =>
+    (s.val c).app c (𝟙 c) x
   naturality {c d} f := by
-    ext x
-    simp only [types_comp_apply]
-    have hn := congr_fun
+    apply ConcreteCategory.ext_apply
+    intro x
+    have hn := ConcreteCategory.congr_hom
       ((s.val c).naturality f (𝟙 c)) x
-    simp only [types_comp_apply] at hn
-    rw [← hn]
-    have h : (s.val d).app d (𝟙 d) =
-      ((F.functorHom G).map f (s.val c)).app
-        d (𝟙 d) := by
-      rw [s.property f]
-    rw [h]
-    dsimp [Functor.functorHom,
-      Functor.homObjFunctor]
-    simp
+    simp only [ConcreteCategory.comp_apply] at hn
+    have h := s.property f
+    have hd_eq : (s.val d).app d (𝟙 d) =
+      ((F.functorHom G).map f (s.val c)).app d
+        (𝟙 d) := by rw [h]
+    have hmap_unfold :
+        ((ConcreteCategory.hom
+          ((F.functorHom G).map f)) (s.val c)).app d
+          (𝟙 d) =
+        (s.val c).app d
+          ((ConcreteCategory.hom
+            ((coyoneda.rightOp.obj c).unop.map f))
+              (𝟙 c)) := by
+      dsimp [Functor.functorHom,
+        Functor.homObjFunctor]
+      change (s.val c).app d (f ≫ 𝟙 d) =
+        (s.val c).app d (𝟙 c ≫ f)
+      rw [Category.id_comp, Category.comp_id]
+    have goal_lhs :
+        (ConcreteCategory.hom (F.map f ≫
+          TypeCat.ofHom fun x =>
+            (ConcreteCategory.hom
+              ((s.val d).app d (𝟙 d))) x)) x =
+        (ConcreteCategory.hom ((s.val c).app d
+          ((coyoneda.rightOp.obj c).unop.map f
+            (𝟙 c)))) (F.map f x) := by
+      change (ConcreteCategory.hom
+        ((s.val d).app d (𝟙 d))) (F.map f x) = _
+      rw [hd_eq, hmap_unfold]
+    rw [goal_lhs, hn]
+    rfl
 
 /-- Convert a natural transformation `F ⟶ G` to
 a global section of `F.functorHom G`. Uses
@@ -2432,7 +2561,8 @@ def natTransToFunctorHomSection
     dsimp [Functor.functorHom,
       Functor.homObjFunctor]
     ext ⟨⟩
-    simp [Functor.HomObj.ofNatTrans]⟩
+    simp [Functor.HomObj.ofNatTrans]
+    rfl⟩
 
 theorem functorHomSection_roundTrip_left
     {F G : Cᵒᵖ ⥤ Type (max u v)}
@@ -2456,7 +2586,9 @@ theorem functorHomSection_roundTrip_right
     (fun h => h.app Y (𝟙 Y) x) (s.property f)
   dsimp [Functor.functorHom,
     Functor.homObjFunctor] at hsec
-  simp at hsec
+  change (ConcreteCategory.hom
+    ((s.val c).app Y (f ≫ 𝟙 Y))) x = _ at hsec
+  rw [Category.comp_id] at hsec
   exact hsec.symm
 
 theorem functorHomSection_val_app
@@ -2472,7 +2604,9 @@ theorem functorHomSection_val_app
     (s.property k)
   dsimp [Functor.functorHom,
     Functor.homObjFunctor] at hsec
-  simp only [Category.comp_id] at hsec
+  change (ConcreteCategory.hom
+    ((s.val c).app d (k ≫ 𝟙 d))) x = _ at hsec
+  rw [Category.comp_id] at hsec
   dsimp [functorHomSectionToNatTrans]
   exact hsec
 
@@ -2717,8 +2851,11 @@ theorem leftYonedaExtUnitInvApp_unit
   have : hF.preimage (𝟙 (F.obj c.unop)) =
       𝟙 c.unop :=
     hF.map_injective (by simp)
-  rw [this]
-  simp
+  change (ConcreteCategory.hom
+    (P.map (hF.preimage (𝟙 (F.obj c.unop))).op)) p
+    = p
+  rw [this, op_id, P.map_id]
+  rfl
 
 /-- When `F` is fully faithful, applying the
 inverse and then the unit is the identity. -/
@@ -2792,28 +2929,39 @@ def leftYonedaExtFullyFaithful
         (Cᵒᵖ ⥤ Type (max u v)) ⥤
           (Dᵒᵖ ⥤ Type (max u v))) where
   preimage {P Q} α :=
-    { app := fun c p =>
+    { app := fun c => TypeCat.ofHom fun p =>
         leftYonedaExtUnitInvApp hF Q c
           (α.app (F.op.obj c)
             ((leftYonedaExtPresheafUnit F P).app
               c p))
       naturality := fun {c d} f => by
-        funext p
-        simp only [types_comp_apply]
-        have hunit : (leftYonedaExtPresheafUnit
-            F P).app d (P.map f p) =
+        apply ConcreteCategory.ext_apply
+        intro p
+        have hunit :
+            (leftYonedaExtPresheafUnit F P).app d
+              (P.map f p) =
             ((leftYonedaExt F).obj P).map
               (F.op.map f)
               ((leftYonedaExtPresheafUnit F P).app
                 c p) :=
-          congr_fun ((leftYonedaExtPresheafUnit
-            F P).naturality f) p
+          ConcreteCategory.congr_hom
+            ((leftYonedaExtPresheafUnit F P
+              ).naturality f) p
+        change leftYonedaExtUnitInvApp hF Q d
+          (α.app (F.op.obj d)
+            ((leftYonedaExtPresheafUnit F P).app d
+              (P.map f p))) =
+          (ConcreteCategory.hom (Q.map f))
+            (leftYonedaExtUnitInvApp hF Q c
+              (α.app (F.op.obj c)
+                ((leftYonedaExtPresheafUnit F P).app
+                  c p)))
         rw [hunit]
-        have hα := congr_fun
+        have hα := ConcreteCategory.congr_hom
           (α.naturality (F.op.map f))
-          ((leftYonedaExtPresheafUnit F P).app
-            c p)
-        simp only [types_comp_apply] at hα
+          ((leftYonedaExtPresheafUnit F P).app c p)
+        simp only [ConcreteCategory.comp_apply]
+          at hα
         rw [hα]
         exact leftYonedaExtUnitInvApp_naturality
           hF Q f _ }
@@ -2834,43 +2982,66 @@ def leftYonedaExtFullyFaithful
       dsimp [leftYonedaExtSigmaMap]
       simp
     rw [himg]
-    have hnat_map := congr_fun
-      (((leftYonedaExt F).map
-        { app := fun c p =>
-            leftYonedaExtUnitInvApp hF Q c
-              (α.app (F.op.obj c)
-                ((leftYonedaExtPresheafUnit
-                  F P).app c p))
-          naturality := by
-            intro c d f; funext p
-            simp only [types_comp_apply]
-            have hunit :
-                (leftYonedaExtPresheafUnit
-                  F P).app d (P.map f p) =
-                ((leftYonedaExt F).obj P).map
-                  (F.op.map f)
-                  ((leftYonedaExtPresheafUnit
-                    F P).app c p) :=
-              congr_fun
-                ((leftYonedaExtPresheafUnit
-                  F P).naturality f) p
-            rw [hunit]
-            have hα' := congr_fun
-              (α.naturality (F.op.map f))
+    let preimNat : P ⟶ Q :=
+      { app := fun c => TypeCat.ofHom fun p =>
+          leftYonedaExtUnitInvApp hF Q c
+            (α.app (F.op.obj c)
               ((leftYonedaExtPresheafUnit
-                F P).app c p)
-            simp only [types_comp_apply]
-              at hα'
-            rw [hα']
-            exact
-              leftYonedaExtUnitInvApp_naturality
-                hF Q f _ }
+                F P).app c p))
+        naturality := by
+          intro c d f
+          apply ConcreteCategory.ext_apply
+          intro p
+          have hunit :
+              (leftYonedaExtPresheafUnit F P).app d
+                (P.map f p) =
+              ((leftYonedaExt F).obj P).map
+                (F.op.map f)
+                ((leftYonedaExtPresheafUnit
+                  F P).app c p) :=
+            ConcreteCategory.congr_hom
+              ((leftYonedaExtPresheafUnit
+                F P).naturality f) p
+          change leftYonedaExtUnitInvApp hF Q d
+            (α.app (F.op.obj d)
+              ((leftYonedaExtPresheafUnit F P).app d
+                (P.map f p))) =
+            (ConcreteCategory.hom (Q.map f))
+              (leftYonedaExtUnitInvApp hF Q c
+                (α.app (F.op.obj c)
+                  ((leftYonedaExtPresheafUnit F P
+                    ).app c p)))
+          rw [hunit]
+          have hα' := ConcreteCategory.congr_hom
+            (α.naturality (F.op.map f))
+            ((leftYonedaExtPresheafUnit F P
+              ).app c p)
+          simp only [ConcreteCategory.comp_apply]
+            at hα'
+          rw [hα']
+          exact
+            leftYonedaExtUnitInvApp_naturality
+              hF Q f _ }
+    have hnat_map := ConcreteCategory.congr_hom
+      (((leftYonedaExt F).map preimNat
         ).naturality x.2.2.op) q₀
-    simp only [types_comp_apply] at hnat_map
+    simp only [ConcreteCategory.comp_apply]
+      at hnat_map
+    change (ConcreteCategory.hom
+      (((leftYonedaExt F).map preimNat).app T))
+      ((ConcreteCategory.hom
+        (((leftYonedaExt F).obj P).map x.2.2.op))
+          q₀) = _
     rw [hnat_map]
-    have hnat_α := congr_fun
+    have hnat_α := ConcreteCategory.congr_hom
       (α.naturality x.2.2.op) q₀
-    simp only [types_comp_apply] at hnat_α
+    simp only [ConcreteCategory.comp_apply]
+      at hnat_α
+    change _ =
+      (ConcreteCategory.hom (α.app T))
+        ((ConcreteCategory.hom
+          (((leftYonedaExt F).obj P).map x.2.2.op))
+            q₀)
     rw [hnat_α]
     apply congrArg
     exact leftYonedaExtUnit_unitInvApp hF Q
@@ -2942,8 +3113,10 @@ theorem rightYonedaExtCounitInvApp_counit
   have : hF.preimage (𝟙 (F.obj c.unop)) =
       𝟙 c.unop :=
     hF.map_injective (by simp)
-  rw [this]
-  simp
+  change (ConcreteCategory.hom (Q.map
+    (hF.preimage (𝟙 (F.obj c.unop))).op)) p = p
+  rw [this, op_id, Q.map_id]
+  rfl
 
 /-- When `F` is fully faithful, applying the
 counit and then the counit inverse is the
@@ -2962,6 +3135,10 @@ theorem rightYonedaExtCounit_counitInvApp
   intro S t
   dsimp [rightYonedaExtCounitInvApp,
     rightYonedaExtCounit]
+  change (ConcreteCategory.hom
+    (Q.map (hF.preimage t).op))
+      (x.family c.unop (𝟙 (F.obj c.unop))) =
+    x.family S t
   rw [x.naturality (hF.preimage t)
     (𝟙 (F.obj c.unop))]
   simp [hF.map_preimage]
@@ -3014,47 +3191,64 @@ def rightYonedaExtFullyFaithful
         (Cᵒᵖ ⥤ Type (max u v)) ⥤
           (Dᵒᵖ ⥤ Type (max u v))) where
   preimage {P Q} α :=
-    { app := fun c p =>
+    { app := fun c => TypeCat.ofHom fun p =>
         (rightYonedaExtCounit F Q).app c
           (α.app (F.op.obj c)
             (rightYonedaExtCounitInvApp
               hF P c p))
       naturality := fun {c d} f => by
-        funext p
-        simp only [types_comp_apply]
+        apply ConcreteCategory.ext_apply
+        intro p
+        change (rightYonedaExtCounit F Q).app d
+          (α.app (F.op.obj d)
+            (rightYonedaExtCounitInvApp
+              hF P d (P.map f p))) =
+          Q.map f
+            ((rightYonedaExtCounit F Q).app c
+              (α.app (F.op.obj c)
+                (rightYonedaExtCounitInvApp
+                  hF P c p)))
         rw [← rightYonedaExtCounitInvApp_naturality
           hF P f p]
-        have hα := congr_fun
+        have hα := ConcreteCategory.congr_hom
           (α.naturality (F.op.map f))
           (rightYonedaExtCounitInvApp hF P c p)
-        simp only [types_comp_apply] at hα
+        simp only [ConcreteCategory.comp_apply]
+          at hα
         rw [hα]
-        have hε := congr_fun
+        have hε := ConcreteCategory.congr_hom
           ((rightYonedaExtCounit F Q).naturality
             f)
           (α.app (F.op.obj c)
             (rightYonedaExtCounitInvApp
               hF P c p))
-        simp only [types_comp_apply,
+        simp only [ConcreteCategory.comp_apply,
           Functor.comp_map] at hε
         exact hε }
   preimage_map {P Q} f := by
     ext c p
     dsimp
-    change (rightYonedaExtCounit F Q).app c
-        (((rightYonedaExt F).map f).app
-          (F.op.obj c)
+    change (ConcreteCategory.hom
+      ((rightYonedaExtCounit F Q).app c))
+        ((ConcreteCategory.hom
+          (((rightYonedaExt F).map f).app
+            (F.op.obj c)))
           (rightYonedaExtCounitInvApp
             hF P c p)) =
-      f.app c p
+      (ConcreteCategory.hom (f.app c)) p
     dsimp [rightYonedaExtCounitInvApp,
       rightYonedaExtCounit,
       rightYonedaExt, rightYonedaExtMap,
       rightYonedaExtFamilyMapNat]
-    have : hF.preimage (𝟙 (F.obj c.unop)) =
+    have hpre : hF.preimage (𝟙 (F.obj c.unop)) =
         𝟙 c.unop :=
       hF.map_injective (by simp)
-    rw [this]
+    change (ConcreteCategory.hom
+      (f.app (Opposite.op c.unop)))
+        ((ConcreteCategory.hom
+          (P.map (hF.preimage
+            (𝟙 (F.obj c.unop))).op)) p) = _
+    rw [hpre, op_id, P.map_id]
     simp
   map_preimage {P Q} α := by
     ext T x
@@ -3065,27 +3259,36 @@ def rightYonedaExtFullyFaithful
     have hkey :
         rightYonedaExtCounitInvApp hF P
           (Opposite.op S) (x.family S t) =
-        ((rightYonedaExt F).obj P).map
+        rightYonedaExtFamilyMap F P
           t.op x := by
       apply RightYonedaExtFamily.ext'
       intro S' t'
       dsimp [rightYonedaExtCounitInvApp,
-        rightYonedaExt, rightYonedaExtObj,
         rightYonedaExtFamilyMap]
       rw [x.naturality (hF.preimage t') t,
         hF.map_preimage]
+    change (ConcreteCategory.hom
+      ((rightYonedaExtCounit F Q).app
+        (Opposite.op S)))
+      ((ConcreteCategory.hom
+        (α.app (F.op.obj (Opposite.op S))))
+        (rightYonedaExtCounitInvApp hF P
+          (Opposite.op S) (x.family S t))) =
+      ((ConcreteCategory.hom (α.app T)) x).family S t
     rw [hkey]
-    have hα :=
-      congrArg
-        (fun y =>
-          RightYonedaExtFamily.family y
-            S (𝟙 (F.obj S)))
-        (congr_fun (α.naturality t.op) x)
-    dsimp [rightYonedaExt, rightYonedaExtObj,
-      rightYonedaExtFamilyMap,
-      rightYonedaExtCounit] at hα ⊢
-    simp only [Category.id_comp] at hα
-    exact hα
+    have hα := ConcreteCategory.congr_hom
+      (α.naturality t.op) x
+    simp only [ConcreteCategory.comp_apply] at hα
+    have hcongr := congrArg
+      (ConcreteCategory.hom
+        ((rightYonedaExtCounit F Q).app
+          (Opposite.op S))) hα
+    refine hcongr.trans ?_
+    change (rightYonedaExtFamilyMap F Q t.op
+      ((ConcreteCategory.hom (α.app T)) x)).family
+      S (𝟙 (F.obj S)) = _
+    dsimp [rightYonedaExtFamilyMap]
+    rw [Category.id_comp]
 
 /-- When `F` is fully faithful, the unit of the
 left Kan extension adjunction

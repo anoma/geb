@@ -1657,7 +1657,7 @@ component of `eqToHom p` acts as identity. This follows from proof irrelevance:
 any proof of `A = A` is propositionally equal to `rfl`, and `eqToHom rfl = 𝟙`.
 -/
 lemma eqToHom_reflexive_left_eq_id {X : Type*} {A : Over X} (p : A = A) :
-    (eqToHom p).left = id := by
+    (eqToHom p).left = 𝟙 A.left := by
   have p_is_rfl : p = rfl := Subsingleton.elim _ _
   subst p_is_rfl
   rfl

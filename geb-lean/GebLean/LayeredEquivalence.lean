@@ -358,8 +358,8 @@ instance : Category DepData where
 def depToCopresheafData (data : DepData) : CopresheafData where
   objC := data.objT
   morC := Σ (a b : data.objT), data.morT a b
-  dom := fun m => m.1
-  cod := fun m => m.2.1
+  dom := TypeCat.ofHom fun m => m.1
+  cod := TypeCat.ofHom fun m => m.2.1
 
 def copresheafDataToDep (data : CopresheafData) : DepData where
   objT := data.objC
@@ -367,17 +367,22 @@ def copresheafDataToDep (data : CopresheafData) : DepData where
 
 def depNatTransToNatTransData {F G : DepData} (α : DepNatTrans F G) :
     NatTransData (depToCopresheafData F) (depToCopresheafData G) where
-  appObj := α.appObj
-  appMor := fun ⟨a, b, m⟩ => ⟨α.appObj a, α.appObj b, α.appMor m⟩
-  naturality_dom := by funext ⟨a, b, m⟩; rfl
-  naturality_cod := by funext ⟨a, b, m⟩; rfl
+  appObj := TypeCat.ofHom α.appObj
+  appMor := TypeCat.ofHom
+    fun ⟨a, b, m⟩ => ⟨α.appObj a, α.appObj b, α.appMor m⟩
+  naturality_dom := by
+    apply ConcreteCategory.ext_apply
+    intro ⟨a, b, m⟩; rfl
+  naturality_cod := by
+    apply ConcreteCategory.ext_apply
+    intro ⟨a, b, m⟩; rfl
 
 def natTransDataToDepNatTrans {F G : CopresheafData} (α : NatTransData F G) :
     DepNatTrans (copresheafDataToDep F) (copresheafDataToDep G) where
   appObj := α.appObj
   appMor := fun m =>
-    let hdom := congr_fun α.naturality_dom m.val
-    let hcod := congr_fun α.naturality_cod m.val
+    let hdom := ConcreteCategory.congr_hom α.naturality_dom m.val
+    let hcod := ConcreteCategory.congr_hom α.naturality_cod m.val
     ⟨α.appMor m.val,
      hdom.symm.trans (congr_arg α.appObj m.property.1),
      hcod.symm.trans (congr_arg α.appObj m.property.2)⟩
@@ -385,8 +390,12 @@ def natTransDataToDepNatTrans {F G : CopresheafData} (α : NatTransData F G) :
 def depToCopr : DepData ⥤ CopresheafData where
   obj := depToCopresheafData
   map := depNatTransToNatTransData
-  map_id := by intro F; rfl
-  map_comp := by intros; rfl
+  map_id := by
+    intro F
+    apply NatTransData.ext <;> rfl
+  map_comp := by
+    intros
+    apply NatTransData.ext <;> rfl
 
 def coprToDep : CopresheafData ⥤ DepData where
   obj := copresheafDataToDep
@@ -435,50 +444,55 @@ def counitIso : coprToDep ⋙ depToCopr ≅ 𝟭 CopresheafData :=
   NatIso.ofComponents
     (fun F => {
       hom := {
-        appObj := _root_.id
-        appMor := fun ⟨a, b, m⟩ => m.val
+        appObj := TypeCat.ofHom _root_.id
+        appMor := TypeCat.ofHom fun ⟨_, _, m⟩ => m.val
         naturality_dom := by
-          funext ⟨a, b, m⟩
+          apply ConcreteCategory.ext_apply
+          intro ⟨a, b, m⟩
           cases m with | mk val prop =>
-          simp only [depToCopr, coprToDep, copresheafDataToDep]
           exact prop.1.symm
         naturality_cod := by
-          funext ⟨a, b, m⟩
+          apply ConcreteCategory.ext_apply
+          intro ⟨a, b, m⟩
           cases m with | mk val prop =>
-          simp only [depToCopr, coprToDep, copresheafDataToDep]
           exact prop.2.symm
       }
       inv := {
-        appObj := _root_.id
-        appMor := fun m => ⟨F.dom m, F.cod m, ⟨m, rfl, rfl⟩⟩
-        naturality_dom := rfl
-        naturality_cod := rfl
+        appObj := TypeCat.ofHom _root_.id
+        appMor := TypeCat.ofHom fun m =>
+          ⟨F.dom m, F.cod m, ⟨m, rfl, rfl⟩⟩
+        naturality_dom := by
+          apply ConcreteCategory.ext_apply
+          intro m; rfl
+        naturality_cod := by
+          apply ConcreteCategory.ext_apply
+          intro m; rfl
       }
       hom_inv_id := by
         cases F with | mk objC morC dom cod =>
         apply NatTransData.ext
-        · rfl
-        · funext ⟨a, b, m⟩
+        · apply ConcreteCategory.ext_apply; intro a; rfl
+        · apply ConcreteCategory.ext_apply
+          intro ⟨a, b, m⟩
           cases m with | mk val prop =>
           cases prop with | intro ha hb =>
-          -- Need to show: ⟨dom val, cod val, ⟨val, rfl, rfl⟩⟩ = ⟨a, b, ⟨val, ha, hb⟩⟩
-          -- Since ha : dom val = a and hb : cod val = b
           cases ha
           cases hb
           rfl
       inv_hom_id := by
         cases F with | mk objC morC dom cod =>
         apply NatTransData.ext
-        · rfl
-        · funext m
-          rfl
+        · apply ConcreteCategory.ext_apply; intro a; rfl
+        · apply ConcreteCategory.ext_apply
+          intro m; rfl
     })
     (by
       intro F G α
       cases F; cases G; cases α
       apply NatTransData.ext
-      · rfl
-      · funext ⟨a, b, m⟩
+      · apply ConcreteCategory.ext_apply; intro a; rfl
+      · apply ConcreteCategory.ext_apply
+        intro ⟨a, b, m⟩
         rfl)
 
 /-- The categorical equivalence between dependent types and copresheaves
@@ -491,9 +505,8 @@ def layer1Equivalence : DepData ≌ CopresheafData where
   functor_unitIso_comp := by
     intro F
     apply NatTransData.ext
-    · rfl
-    · funext m
-      rfl
+    · apply ConcreteCategory.ext_apply; intro a; rfl
+    · apply ConcreteCategory.ext_apply; intro m; rfl
 
 end Layer1
 
@@ -533,15 +546,15 @@ def EndoSigma.map {D E : DepData} (α : DepNatTrans D E) :
     Maps each DepData structure to its type of endomorphisms. -/
 def EndoSigmaFunctor : DepData ⥤ Type where
   obj := EndoSigma
-  map := EndoSigma.map
+  map α := TypeCat.ofHom (EndoSigma.map α)
   map_id := by
     intro D
-    funext ⟨o, m⟩
-    rfl
+    apply ConcreteCategory.ext_apply
+    intro ⟨o, m⟩; rfl
   map_comp := by
     intro D E F α β
-    funext ⟨o, m⟩
-    rfl
+    apply ConcreteCategory.ext_apply
+    intro ⟨o, m⟩; rfl
 
 /-! ## Slice Categories -/
 

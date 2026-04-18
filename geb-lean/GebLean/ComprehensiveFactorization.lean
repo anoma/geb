@@ -145,15 +145,17 @@ Functoriality in `d` uses `CostructuredArrow.map`. -/
 @[simps]
 def comprehensiveCopresheaf (F : C ⥤ D) : D ⥤ Type _ where
   obj d := ConnectedComponents (CostructuredArrow F d)
-  map f :=
-    Functor.mapConnectedComponents (CostructuredArrow.map f)
+  map f := TypeCat.ofHom
+    (Functor.mapConnectedComponents (CostructuredArrow.map f))
   map_id d := by
-    ext x
+    apply ConcreteCategory.ext_apply
+    intro x
     exact Quotient.inductionOn x fun σ => by
       simp [Functor.mapConnectedComponents_mk,
         CostructuredArrow.map_id]
   map_comp f g := by
-    ext x
+    apply ConcreteCategory.ext_apply
+    intro x
     exact Quotient.inductionOn x fun σ => by
       simp [Functor.mapConnectedComponents_mk,
         CostructuredArrow.map_comp]
@@ -169,16 +171,18 @@ def comprehensivePresheaf (F : C ⥤ D) :
     Dᵒᵖ ⥤ Type _ where
   obj d :=
     ConnectedComponents (StructuredArrow d.unop F)
-  map f :=
-    Functor.mapConnectedComponents
-      (StructuredArrow.map f.unop)
+  map f := TypeCat.ofHom
+    (Functor.mapConnectedComponents
+      (StructuredArrow.map f.unop))
   map_id d := by
-    ext x
+    apply ConcreteCategory.ext_apply
+    intro x
     exact Quotient.inductionOn x fun σ => by
       simp [Functor.mapConnectedComponents_mk,
         StructuredArrow.map_id]
   map_comp f g := by
-    ext x
+    apply ConcreteCategory.ext_apply
+    intro x
     exact Quotient.inductionOn x fun σ => by
       simp [Functor.mapConnectedComponents_mk,
         StructuredArrow.map_comp]
@@ -200,9 +204,7 @@ def comprehensiveE' :
         (CostructuredArrow.mk (𝟙 (F.obj c)))⟩
   map {c₁ c₂} f :=
     ⟨F.map f, by
-      simp only [comprehensiveCopresheaf_map,
-        Functor.mapConnectedComponents_mk,
-        CostructuredArrow.map_mk, Category.id_comp]
+      simp only [comprehensiveCopresheaf_map]
       exact Quotient.sound
         (Zigzag.of_hom
           (CostructuredArrow.homMk f (by simp)))⟩
@@ -436,9 +438,7 @@ def comprehensiveE :
   map {c₁ c₂} f :=
     Quiver.Hom.op
       ⟨(F.map f).op, by
-        simp only [comprehensivePresheaf_map,
-          Functor.mapConnectedComponents_mk,
-          StructuredArrow.map_mk, Category.comp_id]
+        simp only [comprehensivePresheaf_map]
         exact Quotient.sound
           (Zigzag.of_inv
             (StructuredArrow.homMk f (by simp)))⟩
@@ -502,11 +502,13 @@ private def liftStrArrow
       ⟨σ.hom.op, by
         simp only [comprehensivePresheaf_map]
         dsimp [comprehensiveE]
-        simp only [Category.comp_id]
         rw [← hσ]
-        exact Quotient.sound
-          (Zigzag.of_inv
-            (StructuredArrow.eta σ).hom)⟩)
+        refine Quotient.sound ?_
+        have heq : (StructuredArrow.map σ.hom).obj
+            (StructuredArrow.mk (𝟙 (F.obj σ.right))) =
+            StructuredArrow.mk σ.hom := by simp
+        rw [heq]
+        exact Zigzag.of_inv (StructuredArrow.eta σ).hom⟩)
 
 /-- Lift a morphism `φ : σ₁ ⟶ σ₂` in `StructuredArrow d F`
 to a morphism between the corresponding lifted structured
@@ -676,16 +678,15 @@ in `CostructuredArrow F (F.obj c)`. -/
 def comprehensiveCopresheafUnit :
     constPUnitFunctor.{max u₁ v₂} C ⟶
       F ⋙ comprehensiveCopresheaf F where
-  app c _ :=
+  app c := TypeCat.ofHom fun _ =>
     Quotient.mk _
       (CostructuredArrow.mk (𝟙 (F.obj c)))
   naturality c₁ c₂ f := by
-    ext ⟨⟩
-    simp only [types_comp_apply, constPUnitFunctor,
+    apply ConcreteCategory.ext_apply
+    intro ⟨⟩
+    simp only [constPUnitFunctor,
       Functor.const_obj_map,
-      Functor.comp_map, comprehensiveCopresheaf_map,
-      Functor.mapConnectedComponents_mk,
-      CostructuredArrow.map_mk, Category.id_comp]
+      Functor.comp_map, comprehensiveCopresheaf_map]
     exact Quotient.sound
       (Zigzag.of_inv
         (CostructuredArrow.homMk f (by simp)))
@@ -746,40 +747,56 @@ def comprehensiveCopresheaf_isPointwiseLan :
     Functor.LeftExtension.IsPointwiseLeftKanExtension
       (comprehensiveCopresheafLeftExt F) := by
   intro d
-  exact
-    { desc := fun s =>
-        Quotient.lift (fun g => s.ι.app g PUnit.unit)
-          (fun g₁ g₂ h => by
+  refine
+    { desc := fun s => TypeCat.ofHom <|
+        Quotient.lift
+          (fun g => s.ι.app g PUnit.unit)
+          (fun _ _ h => by
             have := coconeAppEqOfZigzag F s
               (Quotient.exact (Quotient.sound h))
-            exact congrFun this PUnit.unit)
-      fac := fun s g => by
-        ext ⟨⟩
-        simp only [types_comp_apply]
-        change Quotient.lift _ _ _ = _
-        dsimp [Functor.LeftExtension.coconeAt,
-          comprehensiveCopresheafLeftExt,
-          Functor.LeftExtension.mk]
-        rw [Category.id_comp]
-        exact congrFun
-          (coconeAppEqOfHom F s
-            (CostructuredArrow.eta g).hom).symm _
-      uniq := fun s m hm => by
-        funext x
-        exact Quotient.inductionOn x fun g => by
-          rw [Quotient.lift_mk]
-          have h := congrFun (hm g) PUnit.unit
-          simp only [types_comp_apply] at h
-          dsimp [Functor.LeftExtension.coconeAt,
-            comprehensiveCopresheafLeftExt,
-            Functor.LeftExtension.mk] at h
-          rw [Category.id_comp] at h
-          rw [← h]
-          exact congrArg m
-            (Quotient.sound
-              (Zigzag.of_hom
-                (CostructuredArrow.eta g).hom))
-    }
+            exact ConcreteCategory.congr_hom this PUnit.unit)
+      fac := ?_
+      uniq := ?_ }
+  · intro s g
+    apply ConcreteCategory.ext_apply
+    intro u
+    cases u
+    have key : ConcreteCategory.hom
+        (((comprehensiveCopresheafLeftExt F).coconeAt d).ι.app g)
+        PUnit.unit = ⟦CostructuredArrow.mk g.hom⟧ := by
+      change (ConcreteCategory.hom
+        ((comprehensiveCopresheafUnit F).app g.left ≫
+          (comprehensiveCopresheaf F).map g.hom)) PUnit.unit = _
+      rw [ConcreteCategory.comp_apply]
+      change (CostructuredArrow.map g.hom).mapConnectedComponents
+        ⟦CostructuredArrow.mk (𝟙 (F.obj g.left))⟧ = _
+      rw [Functor.mapConnectedComponents_mk,
+        CostructuredArrow.map_mk, Category.id_comp]
+    simp only [ConcreteCategory.comp_apply, key]
+    exact ConcreteCategory.congr_hom
+      (coconeAppEqOfHom F s
+        (CostructuredArrow.eta g).hom).symm PUnit.unit
+  · intro s m hm
+    apply ConcreteCategory.ext_apply
+    intro x
+    refine Quotient.inductionOn x (fun g => ?_)
+    have h := ConcreteCategory.congr_hom (hm g) PUnit.unit
+    have key : ConcreteCategory.hom
+        (((comprehensiveCopresheafLeftExt F).coconeAt d).ι.app g)
+        PUnit.unit = ⟦g⟧ := by
+      change (ConcreteCategory.hom
+        ((comprehensiveCopresheafUnit F).app g.left ≫
+          (comprehensiveCopresheaf F).map g.hom)) PUnit.unit = _
+      rw [ConcreteCategory.comp_apply]
+      change (CostructuredArrow.map g.hom).mapConnectedComponents
+        ⟦CostructuredArrow.mk (𝟙 (F.obj g.left))⟧ = _
+      rw [Functor.mapConnectedComponents_mk,
+        CostructuredArrow.map_mk, Category.id_comp]
+      exact Quotient.sound (Zigzag.of_inv
+        (CostructuredArrow.eta g).hom)
+    simp only [ConcreteCategory.comp_apply, key] at h
+    simp only [TypeCat.hom_ofHom]
+    exact h
 
 /-- The unit of the presheaf left extension. At `c : Cᵒᵖ`,
 sends `PUnit.unit` to the connected component of the
@@ -789,17 +806,16 @@ identity structured arrow `StructuredArrow.mk (𝟙 _)` in
 def comprehensivePresheafUnit :
     constPUnitFunctor.{max u₁ v₂} Cᵒᵖ ⟶
       F.op ⋙ comprehensivePresheaf F where
-  app c _ :=
+  app c := TypeCat.ofHom fun _ =>
     Quotient.mk _
       (StructuredArrow.mk (𝟙 (F.obj c.unop)))
   naturality c₁ c₂ f := by
-    ext ⟨⟩
-    simp only [types_comp_apply, constPUnitFunctor,
+    apply ConcreteCategory.ext_apply
+    intro ⟨⟩
+    simp only [constPUnitFunctor,
       Functor.const_obj_map,
       Functor.comp_map, Functor.op_map,
-      comprehensivePresheaf_map,
-      Functor.mapConnectedComponents_mk,
-      StructuredArrow.map_mk]
+      comprehensivePresheaf_map]
     exact Quotient.sound
       (Zigzag.of_hom
         (StructuredArrow.homMk f.unop (by simp)))
@@ -870,55 +886,91 @@ def comprehensivePresheaf_isPointwiseLan :
     Functor.LeftExtension.IsPointwiseLeftKanExtension
       (comprehensivePresheafLeftExt F) := by
   intro d
-  exact
-    { desc := fun s =>
+  refine
+    { desc := fun s => TypeCat.ofHom <|
         Quotient.lift
           (fun σ =>
             s.ι.app (strToCostArr F σ) PUnit.unit)
           (fun σ₁ σ₂ h => by
-            induction h with
+            have hz : Zigzag σ₁ σ₂ :=
+              Quotient.exact (Quotient.sound h)
+            clear h
+            induction hz with
             | refl => rfl
             | tail _ hbc ih =>
-              exact ih.trans (by
-                rcases hbc with ⟨⟨φ⟩⟩ | ⟨⟨ψ⟩⟩
-                · have hmor :=
-                    strToCostArrHomRev F φ
-                  exact congrFun
-                    (coconeAppEqOfHomPre
-                      F s hmor).symm _
-                · have hmor :=
-                    strToCostArrHomRev F ψ
-                  have h := s.ι.naturality hmor
-                  simp only [Functor.comp_map,
-                    Functor.const_obj_map] at h
-                  exact congrFun h.symm _))
-      fac := fun s g => by
-        ext ⟨⟩
-        simp only [types_comp_apply]
-        change Quotient.lift _ _ _ = _
-        dsimp [Functor.LeftExtension.coconeAt,
-          comprehensivePresheafLeftExt,
-          Functor.LeftExtension.mk]
-        erw [Category.comp_id]
-        exact congrFun
-          (coconeAppEqOfHomPre F s
-            (CostructuredArrow.eta g).hom).symm _
-      uniq := fun s m hm => by
-        funext x
-        exact Quotient.inductionOn x fun σ => by
-          rw [Quotient.lift_mk]
-          have h := congrFun
-            (hm (strToCostArr F σ)) PUnit.unit
-          simp only [types_comp_apply] at h
-          dsimp [Functor.LeftExtension.coconeAt,
-            comprehensivePresheafLeftExt,
-            Functor.LeftExtension.mk] at h
-          erw [Category.comp_id] at h
-          rw [← h]
-          exact congrArg m
-            (Quotient.sound
-              (Zigzag.of_hom
-                (StructuredArrow.eta σ).hom)) }
+              refine Eq.trans ih ?_
+              rcases hbc with ⟨⟨φ⟩⟩ | ⟨⟨ψ⟩⟩
+              · have hmor := strToCostArrHomRev F φ
+                have hh := s.ι.naturality hmor
+                simp only [Functor.comp_map,
+                  Functor.const_obj_map] at hh
+                exact ConcreteCategory.congr_hom hh
+                  PUnit.unit
+              · have hmor := strToCostArrHomRev F ψ
+                have hh := s.ι.naturality hmor
+                simp only [Functor.comp_map,
+                  Functor.const_obj_map] at hh
+                exact (ConcreteCategory.congr_hom hh
+                  PUnit.unit).symm)
+      fac := ?_
+      uniq := ?_ }
+  · intro s g
+    apply ConcreteCategory.ext_apply
+    intro u
+    cases u
+    have key : ConcreteCategory.hom
+        (((comprehensivePresheafLeftExt F).coconeAt d).ι.app g)
+        PUnit.unit = ⟦StructuredArrow.mk (Y := g.left.unop)
+          g.hom.unop⟧ := by
+      change (ConcreteCategory.hom
+        ((comprehensivePresheafUnit F).app g.left ≫
+          (comprehensivePresheaf F).map g.hom)) PUnit.unit = _
+      rw [ConcreteCategory.comp_apply]
+      change (StructuredArrow.map g.hom.unop).mapConnectedComponents
+        ⟦StructuredArrow.mk (𝟙 (F.obj g.left.unop))⟧ = _
+      rw [Functor.mapConnectedComponents_mk,
+        StructuredArrow.map_mk]
+      simp
+    rw [ConcreteCategory.comp_apply, key]
+    change s.ι.app (strToCostArr F
+      (StructuredArrow.mk g.hom.unop)) PUnit.unit = _
+    have hφ : strToCostArr F
+        (StructuredArrow.mk (Y := g.left.unop) g.hom.unop) ⟶ g :=
+      CostructuredArrow.homMk (𝟙 _) (by
+        dsimp [strToCostArr]
+        simp)
+    exact ConcreteCategory.congr_hom
+      (coconeAppEqOfHomPre F s hφ) PUnit.unit
+  · intro s m hm
+    apply ConcreteCategory.ext_apply
+    intro x
+    refine Quotient.inductionOn x (fun σ => ?_)
+    have h := ConcreteCategory.congr_hom
+      (hm (strToCostArr F σ)) PUnit.unit
+    have key : ConcreteCategory.hom
+        (((comprehensivePresheafLeftExt F).coconeAt d).ι.app
+          (strToCostArr F σ))
+        PUnit.unit = ⟦σ⟧ := by
+      change (ConcreteCategory.hom
+        ((comprehensivePresheafUnit F).app
+          (strToCostArr F σ).left ≫
+          (comprehensivePresheaf F).map
+            (strToCostArr F σ).hom)) PUnit.unit = _
+      rw [ConcreteCategory.comp_apply]
+      change (StructuredArrow.map
+        (strToCostArr F σ).hom.unop).mapConnectedComponents
+        ⟦StructuredArrow.mk (𝟙 (F.obj
+          (strToCostArr F σ).left.unop))⟧ = _
+      rw [Functor.mapConnectedComponents_mk,
+        StructuredArrow.map_mk]
+      refine Quotient.sound ?_
+      refine Zigzag.trans (j₂ := StructuredArrow.mk
+        (strToCostArr F σ).hom.unop) ?_ ?_
+      · exact Zigzag.of_hom (StructuredArrow.homMk
+          (𝟙 _) (by simp))
+      · exact Zigzag.of_hom (StructuredArrow.eta σ).hom
+    simp only [ConcreteCategory.comp_apply, key] at h
+    exact h
 
 end ComprehensiveKanExtension
 
@@ -951,20 +1003,18 @@ private theorem strArrToCostArr_zigzag {d : D}
       (strArrToCostArr F σ₂) :=
   h.lift (strArrToCostArr F) fun {a b} hab => by
     rcases hab with ⟨⟨f⟩⟩ | ⟨⟨f⟩⟩
-    · exact Zag.of_inv (CostructuredArrow.homMk
-        f.right.op (by
-          dsimp [strArrToCostArr]
-          rw [← op_comp]
-          congr 1
-          exact (f.w.symm.trans
-            (Category.id_comp _))))
-    · exact Zag.of_hom (CostructuredArrow.homMk
-        f.right.op (by
-          dsimp [strArrToCostArr]
-          rw [← op_comp]
-          congr 1
-          exact (f.w.symm.trans
-            (Category.id_comp _))))
+    · refine Zag.of_inv (CostructuredArrow.homMk
+        f.right.op ?_)
+      dsimp [strArrToCostArr]
+      rw [← op_comp]
+      congr 1
+      exact StructuredArrow.w f
+    · refine Zag.of_hom (CostructuredArrow.homMk
+        f.right.op ?_)
+      dsimp [strArrToCostArr]
+      rw [← op_comp]
+      congr 1
+      exact StructuredArrow.w f
 
 private def costArrToStrArr {d : D}
     (τ : CostructuredArrow F.op (op d)) :
@@ -994,26 +1044,38 @@ def comprehensivePresheafCopresheafIso :
       comprehensiveCopresheaf F.op :=
   NatIso.ofComponents
     (fun d => {
-      hom := Quotient.lift
+      hom := TypeCat.ofHom <| Quotient.lift
         (fun σ => ⟦strArrToCostArr F σ⟧)
         (fun _ _ h =>
-          Quotient.sound (strArrToCostArr_zigzag F h))
-      inv := Quotient.lift
+          Quotient.sound
+            (strArrToCostArr_zigzag F
+              (Quotient.exact (Quotient.sound h))))
+      inv := TypeCat.ofHom <| Quotient.lift
         (fun τ => ⟦costArrToStrArr F τ⟧)
         (fun _ _ h =>
-          Quotient.sound (costArrToStrArr_zigzag F h))
+          Quotient.sound
+            (costArrToStrArr_zigzag F
+              (Quotient.exact (Quotient.sound h))))
       hom_inv_id := by
-        ext ⟨σ⟩
+        apply ConcreteCategory.ext_apply
+        intro x
+        refine Quotient.inductionOn x (fun σ => ?_)
         exact Quotient.sound (Zigzag.of_hom
           (StructuredArrow.homMk (𝟙 _) (by
-            simp [strArrToCostArr, costArrToStrArr])))
+            dsimp [strArrToCostArr, costArrToStrArr]
+            simp)))
       inv_hom_id := by
-        ext ⟨τ⟩
+        apply ConcreteCategory.ext_apply
+        intro x
+        refine Quotient.inductionOn x (fun τ => ?_)
         exact Quotient.sound (Zigzag.of_hom
           (CostructuredArrow.homMk (𝟙 _) (by
-            simp [strArrToCostArr, costArrToStrArr]))) })
-    (fun {d₁ d₂} f => by
-      ext ⟨σ⟩
+            dsimp [strArrToCostArr, costArrToStrArr]
+            simp))) })
+    (fun {_ _} _ => by
+      apply ConcreteCategory.ext_apply
+      intro x
+      refine Quotient.inductionOn x (fun _ => ?_)
       rfl)
 
 end ComprehensivePresheafDuality

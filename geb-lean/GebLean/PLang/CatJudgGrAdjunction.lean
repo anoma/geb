@@ -135,8 +135,8 @@ variable {C D : Cat.{v, u}} (F : C ⥤ D)
 /-- The quiver morphism induced by a functor. -/
 def functorToQuiverHom :
     categoryToQuiver C ⟶ categoryToQuiver D where
-  base := F.obj
-  fiber := fun ⟨_, _⟩ f => F.map f
+  base := TypeCat.ofHom F.obj
+  fiber := fun ⟨_, _⟩ => TypeCat.ofHom fun f => F.map f
 
 /-- The IdWitBundle morphism induced by a functor. -/
 def functorToIdWitBundleHom :
@@ -950,8 +950,8 @@ theorem evalQuotMor_embedAsQuot (C : Cat.{max uObj uMor, uObj})
 /-- The quiver morphism component of the unit: identity on objects,
     embedding on morphisms. -/
 def unitQuiverMor : X.quiver ⟶ categoryToQuiver (LObj X) where
-  base := id
-  fiber := fun _ f => embedAsQuot X f
+  base := TypeCat.ofHom _root_.id
+  fiber := fun _ => TypeCat.ofHom fun f => embedAsQuot X f
 
 /-- The identity witness bundle morphism component of the unit.
     Maps identity witnesses in X to identity witnesses in Φ(L(X)).
@@ -1006,7 +1006,7 @@ def unitCompWitBundleMor :
     rfl
   witComp_eq := fun w => by
     simp only [Groth.CompWitBundle.pushforward, unitIdWitGrMor, unitQuiverMor,
-      categoryCompWitBundle, Groth.CompWitGr.bundle, Groth.sqFunctorOp', id]
+      categoryCompWitBundle, Groth.CompWitGr.bundle, Groth.sqFunctorOp']
     apply heq_of_eq
     apply Quotient.sound
     have h := FreeMorEquiv.rel (FreeMorEquivGen.comp_witness w)
@@ -1348,7 +1348,9 @@ theorem map_preimage (φ : categoryToCompWitGr C ⟶ categoryToCompWitGr D) :
       case w_base => rfl
       case w_fiber =>
         simp only [eqToHom_refl, Category.comp_id]
-        funext ⟨a, b⟩ f; rfl
+        funext ⟨a, b⟩
+        apply ConcreteCategory.ext_apply
+        intro f; rfl
     case w_fiber =>
       simp only [eqToHom_refl, Category.id_comp]
       apply Groth.IdWitBundle.Hom.ext
@@ -1497,9 +1499,11 @@ theorem unitGr_naturality (X Y : AdjCompWitGr.{uObj, uMor}) (f : X ⟶ Y) :
       case w_base =>
         rfl
       case w_fiber =>
-        funext ⟨a, b⟩ g
+        funext ⟨a, b⟩
         -- Both sides embed a generator morphism, then map through f
         simp only [GrothendieckContra'.cat_comp_fiber, eqToHom_refl, Category.comp_id]
+        apply ConcreteCategory.ext_apply
+        intro g
         simp only [embedAsQuot, FreeMor.var]
         rfl
     case _ =>
@@ -1539,6 +1543,7 @@ theorem evalFreeMor_naturality (C D : AdjCat.{uObj, uMor}) (f : C ⟶ D)
     simp only [evalFreeMor, evalFreeMorRaw, mapFreeMorRaw]
     simp only [PhiFunctor, functorToCompWitGrHom, functorToIdWitGrHom,
                functorToQuiverHom]
+    rfl
   | id a' =>
     simp only [evalFreeMor, evalFreeMorRaw, mapFreeMorRaw]
     simp only [PhiFunctor, functorToCompWitGrHom, functorToIdWitGrHom,

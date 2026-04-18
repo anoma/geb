@@ -143,10 +143,13 @@ at `(d, e, a)` is `φ d (e, a)`. -/
 def pshRelEdgeCurrySrcHomObj
     (φ : pshProdPresheaf E.src A.src ⟶ B.src) :
     Functor.HomObj A.src B.src E.src where
-  app d e a := φ.app d (e, a)
+  app d e := TypeCat.ofHom fun a => φ.app d (e, a)
   naturality {d d'} f e := by
-    ext a
-    exact congr_fun (φ.naturality f) (e, a)
+    apply ConcreteCategory.ext_apply
+    intro a
+    exact NatTrans.naturality_apply φ f
+      ((e, a) : (pshProdPresheaf E.src A.src).obj d)
+
 
 /-- The curried source natural transformation:
 given `φ : E × A ⟶ B`, produce the natural
@@ -162,10 +165,12 @@ def pshRelEdgeCurrySrcMap
 def pshRelEdgeCurryTgtHomObj
     (ψ : pshProdPresheaf E.tgt A.tgt ⟶ B.tgt) :
     Functor.HomObj A.tgt B.tgt E.tgt where
-  app d e' a' := ψ.app d (e', a')
+  app d e' := TypeCat.ofHom fun a' => ψ.app d (e', a')
   naturality {d d'} f e' := by
-    ext a'
-    exact congr_fun (ψ.naturality f) (e', a')
+    apply ConcreteCategory.ext_apply
+    intro a'
+    exact NatTrans.naturality_apply ψ f
+      ((e', a') : (pshProdPresheaf E.tgt A.tgt).obj d)
 
 /-- The curried target natural transformation. -/
 def pshRelEdgeCurryTgtMap
@@ -203,25 +208,25 @@ natural transformation
 def pshRelEdgeUncurrySrcMap
     (α : E.src ⟶ A.src.functorHom B.src) :
     pshProdPresheaf E.src A.src ⟶ B.src where
-  app c ea := (α.app c ea.1).app c (𝟙 c) ea.2
+  app c := TypeCat.ofHom fun ea =>
+    (α.app c ea.1).app c (𝟙 c) ea.2
   naturality {c d} f := by
-    ext ⟨e, a⟩
-    simp only [types_comp_apply,
-      FunctorToTypes.prod]
+    apply ConcreteCategory.ext_apply
+    rintro ⟨e, a⟩
+    simp only [FunctorToTypes.prod]
     have hα : α.app d (E.src.map f e) =
       (A.src.functorHom B.src).map f
         (α.app c e) :=
-      congr_fun (α.naturality f) e
+      NatTrans.naturality_apply α f e
     have hmap : ((A.src.functorHom B.src).map
       f (α.app c e)).app d (𝟙 d) =
-      (α.app c e).app d f := by
-      dsimp [Functor.functorHom,
-        Functor.homObjFunctor]
-      simp only [Category.comp_id]
+      (α.app c e).app d f :=
+      congrArg _ (Category.comp_id f)
     have hobj :=
-      congr_fun ((α.app c e).naturality f
-        (𝟙 c)) a
-    simp only [types_comp_apply] at hobj
+      ConcreteCategory.congr_hom
+        ((α.app c e).naturality f (𝟙 c)) a
+    simp only [ConcreteCategory.comp_apply]
+      at hobj
     change (α.app d (E.src.map f e)).app d
       (𝟙 d) (A.src.map f a) =
       B.src.map f
@@ -230,33 +235,31 @@ def pshRelEdgeUncurrySrcMap
         (𝟙 d) = (α.app c e).app d f from
       by rw [hα, hmap]]
     convert hobj using 2
-    dsimp [Functor.functorHom,
-      Functor.homObjFunctor]
-    simp only [Category.id_comp]
+    exact (congrArg _ (Category.id_comp f)).symm
 
 /-- The uncurried target natural transformation. -/
 def pshRelEdgeUncurryTgtMap
     (β : E.tgt ⟶ A.tgt.functorHom B.tgt) :
     pshProdPresheaf E.tgt A.tgt ⟶ B.tgt where
-  app c ea := (β.app c ea.1).app c (𝟙 c) ea.2
+  app c := TypeCat.ofHom fun ea =>
+    (β.app c ea.1).app c (𝟙 c) ea.2
   naturality {c d} f := by
-    ext ⟨e', a'⟩
-    simp only [types_comp_apply,
-      FunctorToTypes.prod]
+    apply ConcreteCategory.ext_apply
+    rintro ⟨e', a'⟩
+    simp only [FunctorToTypes.prod]
     have hβ : β.app d (E.tgt.map f e') =
       (A.tgt.functorHom B.tgt).map f
         (β.app c e') :=
-      congr_fun (β.naturality f) e'
+      NatTrans.naturality_apply β f e'
     have hmap : ((A.tgt.functorHom B.tgt).map
       f (β.app c e')).app d (𝟙 d) =
-      (β.app c e').app d f := by
-      dsimp [Functor.functorHom,
-        Functor.homObjFunctor]
-      simp only [Category.comp_id]
+      (β.app c e').app d f :=
+      congrArg _ (Category.comp_id f)
     have hobj :=
-      congr_fun ((β.app c e').naturality f
-        (𝟙 c)) a'
-    simp only [types_comp_apply] at hobj
+      ConcreteCategory.congr_hom
+        ((β.app c e').naturality f (𝟙 c)) a'
+    simp only [ConcreteCategory.comp_apply]
+      at hobj
     change (β.app d (E.tgt.map f e')).app d
       (𝟙 d) (A.tgt.map f a') =
       B.tgt.map f
@@ -265,9 +268,7 @@ def pshRelEdgeUncurryTgtMap
         (𝟙 d) = (β.app c e').app d f from
       by rw [hβ, hmap]]
     convert hobj using 2
-    dsimp [Functor.functorHom,
-      Functor.homObjFunctor]
-    simp only [Category.id_comp]
+    exact (congrArg _ (Category.id_comp f)).symm
 
 /-- Uncurry a morphism `g : E ⟶ [A, B]` in
 `PshRelEdge C` to a morphism `E × A ⟶ B`. -/
@@ -309,7 +310,10 @@ theorem pshRelEdgeUncurry_curry
       pshRelEdgeCurrySrcMap,
       Functor.functorHomEquiv,
       pshRelEdgeCurrySrcHomObj]
-    simp [FunctorToTypes.map_id_apply]
+    change (ConcreteCategory.hom (f.srcMap.app c))
+      ((ConcreteCategory.hom (E.src.map (𝟙 c))) e, a)
+        = _
+    simp
   · ext c ⟨e', a'⟩
     dsimp [pshRelEdgeUncurry,
       pshRelEdgeUncurryTgtMap,
@@ -317,7 +321,10 @@ theorem pshRelEdgeUncurry_curry
       pshRelEdgeCurryTgtMap,
       Functor.functorHomEquiv,
       pshRelEdgeCurryTgtHomObj]
-    simp [FunctorToTypes.map_id_apply]
+    change (ConcreteCategory.hom (f.tgtMap.app c))
+      ((ConcreteCategory.hom (E.tgt.map (𝟙 c))) e', a')
+        = _
+    simp
 
 /-- Currying the uncurry of `g` recovers `g`. -/
 theorem pshRelEdgeCurry_uncurry_src_app
@@ -335,15 +342,17 @@ theorem pshRelEdgeCurry_uncurry_src_app
   have hα : g.srcMap.app d (E.src.map k e) =
     (A.src.functorHom B.src).map k
       (g.srcMap.app c e) :=
-    congr_fun (g.srcMap.naturality k) e
-  ext a
+    NatTrans.naturality_apply g.srcMap k e
+  apply ConcreteCategory.ext_apply
+  intro a
   change (g.srcMap.app d
     (E.src.map k e)).app d (𝟙 d) a =
     (g.srcMap.app c e).app d k a
   rw [hα]
-  dsimp [Functor.functorHom,
-    Functor.homObjFunctor]
-  simp only [Category.comp_id]
+  exact congrArg (fun x =>
+    (ConcreteCategory.hom
+      (((ConcreteCategory.hom (g.srcMap.app c)) e).app
+        d x)) a) (Category.comp_id k)
 
 theorem pshRelEdgeCurry_uncurry
     (g : E ⟶ pshRelEdgeExp A B) :
@@ -363,15 +372,17 @@ theorem pshRelEdgeCurry_uncurry
     have hβ : g.tgtMap.app d (E.tgt.map k e') =
       (A.tgt.functorHom B.tgt).map k
         (g.tgtMap.app c e') :=
-      congr_fun (g.tgtMap.naturality k) e'
-    ext a'
+      NatTrans.naturality_apply g.tgtMap k e'
+    apply ConcreteCategory.ext_apply
+    intro a'
     change (g.tgtMap.app d
       (E.tgt.map k e')).app d (𝟙 d) a' =
       (g.tgtMap.app c e').app d k a'
     rw [hβ]
-    dsimp [Functor.functorHom,
-      Functor.homObjFunctor]
-    simp only [Category.comp_id]
+    exact congrArg (fun x =>
+      (ConcreteCategory.hom
+        (((ConcreteCategory.hom (g.tgtMap.app c)) e').app
+          d x)) a') (Category.comp_id k)
 
 /-- The evaluation morphism
 `[A, B] × A ⟶ B` in `PshRelEdge C`:

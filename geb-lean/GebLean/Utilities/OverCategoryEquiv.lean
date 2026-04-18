@@ -464,9 +464,6 @@ theorem FunctorData.roundtrip_map_val_eq (fd : FunctorData dataC dataD)
     {a b : U} (f : hsC.toOverQuiver.toHomSet a b) :
     (fd.toOverFunctorData.toFunctorData.map f).val =
       ⟨fd.obj a, fd.obj b, fd.map (hsC.fiber_equiv a b f)⟩ := by
-  simp only [FunctorData.toOverFunctorData, OverFunctorData.toFunctorData,
-    OverFunctorData.toFunctorOps, OverFunctorData.extractMap,
-    FunctorOps.toOverQuiverMorphism, HomSet.fiber_equiv]
   obtain ⟨⟨a', b', g⟩, ⟨ha, hb⟩⟩ := f
   subst ha hb
   rfl
