@@ -383,72 +383,69 @@ Progress so far (as of end of this session):
   `boundedRec_eq_natRec_of_bounded` gives exact `Nat.rec`
   semantics.
 
-* **ER-Primrec mini-phase progress** (as of end of this
-  session):
+* **ER-Primrec mini-phase progress**:
   * **Task 12a complete** (commit `e068f938`): renamed
     `Utilities/ERTreeArith.lean` → `Utilities/ERArith.lean`,
     updated docstring header, updated `GebLean.lean` import.
   * **Task 12b complete** (commit `bd8fcf63`): ER-derived
     `ERMor1.div` and `ERMor1.mod` with `@[simp]`
-    correctness theorems (`interp_div`, `interp_mod` linking
-    to `Nat.div`/`Nat.mod`).  `div` uses bounded search via
-    `bsum` + `signN` clamping for the `b = 0` case.
+    correctness theorems.
   * **Task 12c complete** (commit `7bf90c6b`): `ERMor1.beta`
-    as direct arithmetic (`mod (proj 0) (succ (mulN (succ
-    (proj 2), proj 1)))`) with `@[simp] interp_beta`.
-    `Nat.beta_exists` wraps mathlib's `Nat.unbeta` from
-    `Mathlib.Logic.Godel.GodelBetaFunction` (Path A — mathlib
-    already has β).
+    as direct arithmetic plus `Nat.beta_exists` wrapping
+    mathlib's `Nat.unbeta`.
   * **Task 12d complete** (commit `d2cb3a1a`):
-    `ERMor1.boundedSearch (bound) (pred)` returning least
-    witness below bound, `bound + 1` if none.  Correctness via
-    two helper lemmas (`natBSum_pos_iff_exists`,
-    `natBSum_firstWitness`) and main theorem
-    `interp_boundedSearch` (takes `hpred : ∀ m, pred.interp
-    (cons m ctx) ≤ 1` hypothesis).  Convenience
-    `boundedSearch_eq_unique` for downstream use.
-  * **Task 12e in progress** (commit `c6223f68`):
-    `ERMor1.minN` helper for truncation semantics.  Remaining
-    work for `boundedRec` definition and correctness: ~440
-    lines, ~3 focused sessions.  Detailed breakdown in the
-    plan and the sub-section below.
+    `ERMor1.boundedSearch` with correctness via
+    `natBSum_pos_iff_exists` and `natBSum_firstWitness`.
+  * **Task 12e minN helper** (commit `c6223f68`).
+  * **Task 12e.1** (commit `9cf56b33`):
+    `Nat.bounded_beta_exists` via public
+    `Nat.chineseRemainderOfFinset` with bound
+    `b = (max N M + 1)!` and `a < (N * b + 1)^N`.
+  * **Task 12e.2** (commit `684ceffe`): `ERMor1.factN` via
+    `bprod (succ (proj 0))` and `ERMor1.powN` as `expER` with
+    swapped arguments.
+  * **Task 12e Phase A** (commit `b14a558b`): initial
+    `ERMor1.boundedRec` inline definition plus the
+    unconditional `interp_boundedRec_le_bound`.
+  * **Task 12e Phase B restructure** (commit `e1453b74`):
+    refactored into 10 top-level helpers
+    (`boundedRecRange`, `betaOnCand`, `baseOnCand`,
+    `boundedRecBaseCheck`, `betaOnCandStep`, `stepOnCandStep`,
+    `boundedRecStepBody`, `boundedRecStepCheck`,
+    `boundedRecPred`, `boundedRec`), each with spec lemmas,
+    culminating in `boundedRecPred_eq_one_iff_trace`.
+  * **Task 12e Phase B correctness** (commit `05080b47`):
+    `interp_boundedRec_of_bounded` conditional correctness via
+    the arithmetic envelope `Nat.pair_lt_boundedRecRange`, the
+    trace-match induction helper `boundedRecPred_trace_match`,
+    and the main induction.  Takes two hypotheses: pointwise
+    bound adequacy (`h : ∀ j ≤ n, trace j ≤ bound (cons j
+    ctx)`) and counter monotonicity (`h_mono : ∀ j ≤ n, bound
+    (cons j ctx) ≤ bound (cons n ctx)`).
+  * **Task 12e convenience + tests** (commit `c68f57b7`):
+    `boundedRec_eq_natRec_of_bounded` alias plus sanity
+    examples exercising both correctness theorems.
 
-**Current resume point**: `boundedRec` construction.  Read
-the plan at `docs/superpowers/plans/2026-04-17-er-primrec.md`
-Task 12e (renamed from "natRec" to "boundedRec").  Mathlib's
-internal CRT bound (`Nat.supOfSeq`, `Nat.coprimes`, etc.) is
-`private` in `GodelBetaFunction.lean`, so a custom bounded
-β-existence lemma is required.  The public APIs
-(`Nat.chineseRemainderOfFinset`,
-`chineseRemainderOfFinset_lt_prod`, `Nat.coprime_mul_succ`)
-support the construction: build coprimes `c_i = (i+1)*M!+1`
-explicitly, apply CRT, bound `a < ∏ c_i` via
-`chineseRemainderOfFinset_lt_prod`.
+**Design revision during Phase B** (recorded in
+`docs/superpowers/specs/2026-04-17-er-primrec-design.md`
+D5/D6): the originally-proposed strict `min (Nat.rec ...)
+(bound ...)` correctness statement is not provable with the
+β-witness-search construction — counterexamples exist when an
+intermediate trace value exceeds the bound.  The spec was
+revised to a two-part conditional form:
+`interp_boundedRec_le_bound` (unconditional) and
+`interp_boundedRec_of_bounded` (under pointwise bound
+adequacy plus counter monotonicity).
 
-Remaining 12e sub-work (ordered):
-
-1. **Custom CRT-bounded β-existence** (~80 lines):
-   `Nat.bounded_beta_exists` returning explicit `(a, b)` with
-   bound `≤ elementary expr in max(sequence) + length`.
-2. **ER-derived factorial + dynamic power** (~40 lines):
-   `ERMor1.factN` via `bprod succ`; dynamic `ERMor1.powN`
-   generalizing existing `expER` from `LawvereERArith.lean`.
-3. **`boundedRecSearchRange`, `boundedRecPred`** (~100
-   lines): encode the truncated-trace correctness predicate
-   on packed `(a, b)` via `natPair`/`beta`/`minN`/`leN`.
-4. **`boundedRec` definition** (~20 lines): composes
-   `boundedSearch` + `natPair`/`natUnpair*` + `beta` + `minN`.
-5. **`interp_boundedRec` correctness** (~150 lines):
-   induction on `n`, invoking steps 1-4 at each case.
-6. **`boundedRec_eq_natRec_of_bounded`** (~30 lines):
-   convenience lemma for when the bound dominates.
-7. **Sanity `#guard` / example** (~20 lines).
-
-After Task 12e, Task 12f (showcase: `natAdd`, `natMul`,
-`factorial` derived via `boundedRec`, each supplying its own
-explicit bound) and Task 13 (`ERMor1.foldBTLOnCode` with
-internal bound from the code).  Then Stage β Task 14 onward
-per the LawvereNatBT plan.
+**Current resume point**: Task 12f.  With `boundedRec` now
+available, the showcase applications `natAdd`/`natMul`/
+`factorial` each need a concrete definition via `boundedRec`
+plus correctness via `boundedRec_eq_natRec_of_bounded` with
+explicit polynomial bounds.  See
+`docs/superpowers/plans/2026-04-17-er-primrec.md` Task 12f.
+After Task 12f, Task 13 (`ERMor1.foldBTLOnCode` with internal
+bound from the code).  Then Stage β Task 14 onward per the
+LawvereNatBT plan.
 
 Natural checkpoints: end of ER-Primrec mini-phase
 (Task 13 complete, foldBTLOnCode packaged), end of Stage β
