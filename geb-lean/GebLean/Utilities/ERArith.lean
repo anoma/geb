@@ -1261,20 +1261,54 @@ def ERMor1.powN : ERMor1 2 :=
 
 /-! ### Bounded primitive recursion -/
 
-/-- ER-derived bounded primitive recursion.  At outer arity
-`k + 1` with slot `0` the iteration counter `n` and slots
-`1..k` the parameter context `ctx`, returns
-`min (β(a, b, n)) (bound.interp (cons n ctx))`, where `(a, b)`
-is the Szudzik-paired candidate produced by `boundedSearch`
-over the range `((n + B + 3)!)^((n + B + 3)!) + 1` with
-`B := bound.interp (cons n ctx)` and the predicate checking
-that the β-sequence matches a run of `(base, step)` at every
-index up to `n`.  Composing with `minN` against `bound` makes
-the output unconditionally bounded by `bound.interp
-(cons n ctx)`.  Correctness against `Nat.rec` holds when
-`bound` pointwise dominates the trace. -/
-def ERMor1.boundedRec {k : ℕ}
-    (base : ERMor1 k) (step : ERMor1 (k + 2))
+/-- A bounded product equals `1` exactly when each factor
+equals `1` on the interval of summation. -/
+theorem natBProd_eq_one_iff_all_one (b : ℕ) (f : ℕ → ℕ) :
+    natBProd b f = 1 ↔ ∀ i, i < b → f i = 1 := by
+  induction b with
+  | zero =>
+    refine ⟨fun _ i hi => (Nat.not_lt_zero _ hi).elim,
+      fun _ => rfl⟩
+  | succ n ih =>
+    change natBProd n f * f n = 1 ↔ _
+    constructor
+    · intro hmul
+      have hn_one : f n = 1 :=
+        (Nat.eq_one_of_mul_eq_one_left hmul)
+      have hp_one : natBProd n f = 1 :=
+        (Nat.eq_one_of_mul_eq_one_right hmul)
+      intro i hi
+      rcases Nat.lt_or_ge i n with hilt | hige
+      · exact (ih.mp hp_one) i hilt
+      · have hieq : i = n :=
+          Nat.le_antisymm (Nat.lt_succ_iff.mp hi) hige
+        rw [hieq]; exact hn_one
+    · intro hall
+      have hn_one : f n = 1 := hall n (Nat.lt_succ_self _)
+      have hp_one : natBProd n f = 1 :=
+        (ih.mpr fun i hi => hall i (Nat.lt_succ_of_lt hi))
+      rw [hp_one, hn_one]
+
+/-- Every factor in a `natBProd` of `0/1`-valued terms is
+itself bounded by `1`, so the product is bounded by `1`. -/
+theorem natBProd_le_one_of_body_le_one (b : ℕ) (f : ℕ → ℕ)
+    (hf : ∀ i, f i ≤ 1) : natBProd b f ≤ 1 := by
+  induction b with
+  | zero => exact le_refl _
+  | succ n ih =>
+    change natBProd n f * f n ≤ 1
+    calc natBProd n f * f n
+        _ ≤ 1 * f n := Nat.mul_le_mul_right _ ih
+        _ ≤ 1 * 1 := Nat.mul_le_mul_left _ (hf n)
+        _ = 1 := Nat.one_mul _
+
+/-- Search range for `boundedRec`: at `Fin.cons n ctx`,
+evaluates to `((n + B + 3)!)^((n + B + 3)!) + 1`, where
+`B := bound.interp (Fin.cons n ctx)`.  This dominates every
+Szudzik-paired β-witness `(a, b)` produced by
+`Nat.bounded_beta_exists` on a trace of length `n + 1` whose
+values are bounded by `B`. -/
+def ERMor1.boundedRecRange {k : ℕ}
     (bound : ERMor1 (k + 1)) : ERMor1 (k + 1) :=
   let K : ERMor1 (k + 1) :=
     ERMor1.comp ERMor1.succ (fun (_ : Fin 1) =>
@@ -1285,69 +1319,453 @@ def ERMor1.boundedRec {k : ℕ}
             | ⟨1, _⟩ => bound))))
   let Kfact : ERMor1 (k + 1) :=
     ERMor1.comp ERMor1.factN (fun (_ : Fin 1) => K)
-  let range : ERMor1 (k + 1) :=
-    ERMor1.comp ERMor1.succ (fun (_ : Fin 1) =>
-      ERMor1.comp ERMor1.powN (fun i => match i with
-        | ⟨0, _⟩ => Kfact
-        | ⟨1, _⟩ => Kfact))
-  let aTerm : ERMor1 (k + 3) :=
-    ERMor1.comp ERMor1.natUnpairFst
-      (fun (_ : Fin 1) => ERMor1.proj 1)
-  let bTerm : ERMor1 (k + 3) :=
-    ERMor1.comp ERMor1.natUnpairSnd
-      (fun (_ : Fin 1) => ERMor1.proj 1)
-  let ctxTerm : Fin k → ERMor1 (k + 3) :=
-    fun i => ERMor1.proj ⟨i.val + 3, by omega⟩
-  let ctxTermCand : Fin k → ERMor1 (k + 2) :=
-    fun i => ERMor1.proj ⟨i.val + 2, by omega⟩
-  let aCand : ERMor1 (k + 2) :=
-    ERMor1.comp ERMor1.natUnpairFst
-      (fun (_ : Fin 1) => ERMor1.proj 0)
-  let bCand : ERMor1 (k + 2) :=
-    ERMor1.comp ERMor1.natUnpairSnd
-      (fun (_ : Fin 1) => ERMor1.proj 0)
-  let stepBody : ERMor1 (k + 3) :=
-    ERMor1.comp step (fun i => match i with
-      | ⟨0, _⟩ => ERMor1.proj 0
-      | ⟨1, _⟩ =>
-          ERMor1.comp ERMor1.beta (fun j => match j with
-            | ⟨0, _⟩ => aTerm
-            | ⟨1, _⟩ => bTerm
-            | ⟨2, _⟩ => ERMor1.proj 0)
-      | ⟨j + 2, h⟩ => ctxTerm ⟨j, by omega⟩)
-  let p2Body : ERMor1 (k + 3) :=
-    ERMor1.comp ERMor1.boolEqNat (fun i => match i with
+  ERMor1.comp ERMor1.succ (fun (_ : Fin 1) =>
+    ERMor1.comp ERMor1.powN (fun i => match i with
+      | ⟨0, _⟩ => Kfact
+      | ⟨1, _⟩ => Kfact))
+
+/-- Interpretation of `boundedRecRange`. -/
+@[simp] theorem ERMor1.interp_boundedRecRange {k : ℕ}
+    (bound : ERMor1 (k + 1)) (ctx : Fin (k + 1) → ℕ) :
+    (ERMor1.boundedRecRange bound).interp ctx =
+      ((ctx 0 + bound.interp ctx + 3).factorial) ^
+        ((ctx 0 + bound.interp ctx + 3).factorial) + 1 := by
+  unfold ERMor1.boundedRecRange
+  simp only [ERMor1.interp_comp, ERMor1.interp_succ,
+    ERMor1.interp_powN, ERMor1.interp_factN,
+    ERMor1.interp_addN, ERMor1.interp_proj]
+
+/-- β(cand, i) evaluated as an `ERMor1 (k + 2)` term with slot
+0 the candidate `cand = Nat.pair a b`, slot 1 the trace length
+`n`, and slots 2..k+1 the parameter context.  The inner
+argument `iTerm` supplies the third β argument. -/
+def ERMor1.betaOnCand {k : ℕ}
+    (iTerm : ERMor1 (k + 2)) : ERMor1 (k + 2) :=
+  ERMor1.comp ERMor1.beta (fun j => match j with
+    | ⟨0, _⟩ =>
+        ERMor1.comp ERMor1.natUnpairFst
+          (fun (_ : Fin 1) => ERMor1.proj 0)
+    | ⟨1, _⟩ =>
+        ERMor1.comp ERMor1.natUnpairSnd
+          (fun (_ : Fin 1) => ERMor1.proj 0)
+    | ⟨2, _⟩ => iTerm)
+
+/-- `base` applied to the parameter context at slots 2..k+1
+of a `k + 2`-ary context. -/
+def ERMor1.baseOnCand {k : ℕ} (base : ERMor1 k) :
+    ERMor1 (k + 2) :=
+  ERMor1.comp base
+    (fun i => ERMor1.proj ⟨i.val + 2, by omega⟩)
+
+/-- Base-case check for the β-witness predicate.  At context
+`Fin.cons cand (Fin.cons n ctx)` (with `cand = Nat.pair a b`),
+evaluates to `1` iff `β(a, b, 0) = base.interp ctx`. -/
+def ERMor1.boundedRecBaseCheck {k : ℕ}
+    (base : ERMor1 k) : ERMor1 (k + 2) :=
+  ERMor1.boolEqAt
+    (ERMor1.betaOnCand (ERMor1.zeroN (k + 2)))
+    (ERMor1.baseOnCand base)
+
+/-- β at the iteration index `iTerm` for a `k+3`-ary context
+`(j, cand, n, ctx)` with `cand` in slot 1. -/
+def ERMor1.betaOnCandStep {k : ℕ}
+    (iTerm : ERMor1 (k + 3)) : ERMor1 (k + 3) :=
+  ERMor1.comp ERMor1.beta (fun j => match j with
+    | ⟨0, _⟩ =>
+        ERMor1.comp ERMor1.natUnpairFst
+          (fun (_ : Fin 1) => ERMor1.proj 1)
+    | ⟨1, _⟩ =>
+        ERMor1.comp ERMor1.natUnpairSnd
+          (fun (_ : Fin 1) => ERMor1.proj 1)
+    | ⟨2, _⟩ => iTerm)
+
+/-- Apply `step` at a `k+3`-ary context `(j, cand, n, ctx)`
+with `cand` at slot 1: slot 0 of `step` is `j`, slot 1 is
+`β(a, b, j)` (the recursion accumulator), slots 2..k+1 are
+the parameter context. -/
+def ERMor1.stepOnCandStep {k : ℕ}
+    (step : ERMor1 (k + 2)) : ERMor1 (k + 3) :=
+  ERMor1.comp step (fun i => match i with
+    | ⟨0, _⟩ => ERMor1.proj 0
+    | ⟨1, _⟩ =>
+        ERMor1.betaOnCandStep (ERMor1.proj 0)
+    | ⟨j + 2, h⟩ =>
+        ERMor1.proj ⟨j + 3, by omega⟩)
+
+/-- Step-case check body: an arity-`k+3` term with slot 0 the
+bprod counter `j`, slot 1 the candidate, slot 2 the trace
+length `n`, slots 3..k+2 the parameter context.  Evaluates to
+`1` iff `β(a, b, j + 1) = step.interp (Fin.cons j
+  (Fin.cons (β(a, b, j)) ctx))`. -/
+def ERMor1.boundedRecStepBody {k : ℕ}
+    (step : ERMor1 (k + 2)) : ERMor1 (k + 3) :=
+  ERMor1.boolEqAt
+    (ERMor1.betaOnCandStep
+      (ERMor1.comp ERMor1.succ
+        (fun (_ : Fin 1) => ERMor1.proj 0)))
+    (ERMor1.stepOnCandStep step)
+
+/-- Step-case check: an arity-`k+2` term with slot 0 the
+candidate, slot 1 the trace length `n`, slots 2..k+1 the
+parameter context.  Evaluates to `1` iff the β-sequence
+transitions by `step` at every index `j < n + 1`. -/
+def ERMor1.boundedRecStepCheck {k : ℕ}
+    (step : ERMor1 (k + 2)) : ERMor1 (k + 2) :=
+  ERMor1.comp (ERMor1.bprod (ERMor1.boundedRecStepBody step))
+    (fun (i : Fin (k + 3)) => match i with
       | ⟨0, _⟩ =>
-          ERMor1.comp ERMor1.beta (fun j => match j with
-            | ⟨0, _⟩ => aTerm
-            | ⟨1, _⟩ => bTerm
-            | ⟨2, _⟩ =>
-                ERMor1.comp ERMor1.succ
-                  (fun (_ : Fin 1) => ERMor1.proj 0))
-      | ⟨1, _⟩ => stepBody)
-  let p2Swapped : ERMor1 (k + 2) :=
-    ERMor1.comp (ERMor1.bprod p2Body)
-      (fun (i : Fin (k + 3)) => match i with
-        | ⟨0, _⟩ => ERMor1.proj 1
-        | ⟨1, _⟩ => ERMor1.proj 0
-        | ⟨2, _⟩ => ERMor1.proj 0
-        | ⟨j + 3, h⟩ =>
-            ERMor1.proj ⟨j + 2, by omega⟩)
-  let p1 : ERMor1 (k + 2) :=
-    ERMor1.comp ERMor1.boolEqNat (fun i => match i with
+          ERMor1.comp ERMor1.succ
+            (fun (_ : Fin 1) => ERMor1.proj 1)
+      | ⟨1, _⟩ => ERMor1.proj 0
+      | ⟨2, _⟩ => ERMor1.proj 1
+      | ⟨j + 3, h⟩ =>
+          ERMor1.proj ⟨j + 2, by omega⟩)
+
+/-- Full predicate for the β-witness search: `boolAnd` of the
+base-case check and the step-case check. -/
+def ERMor1.boundedRecPred {k : ℕ}
+    (base : ERMor1 k) (step : ERMor1 (k + 2)) :
+    ERMor1 (k + 2) :=
+  ERMor1.comp ERMor1.boolAnd (fun i => match i with
+    | ⟨0, _⟩ => ERMor1.boundedRecBaseCheck base
+    | ⟨1, _⟩ => ERMor1.boundedRecStepCheck step)
+
+/-- The base-case check evaluates in `{0, 1}`. -/
+theorem ERMor1.boundedRecBaseCheck_le_one {k : ℕ}
+    (base : ERMor1 k) (ctx : Fin (k + 2) → ℕ) :
+    (ERMor1.boundedRecBaseCheck base).interp ctx ≤ 1 :=
+  ERMor1.boolEqAt_le_one _ _ _
+
+/-- Interpretation of `baseOnCand` at `Fin.cons cand
+(Fin.cons n ctx)` reduces to `base.interp ctx`. -/
+theorem ERMor1.interp_baseOnCand {k : ℕ} (base : ERMor1 k)
+    (cand n : ℕ) (ctx : Fin k → ℕ) :
+    (ERMor1.baseOnCand base).interp
+        (Fin.cons cand (Fin.cons n ctx)) = base.interp ctx := by
+  unfold ERMor1.baseOnCand
+  rw [ERMor1.interp_comp]
+  congr 1
+
+/-- Interpretation of `betaOnCand iTerm` at `Fin.cons cand
+(Fin.cons n ctx)` equals `β(cand.unpair.1, cand.unpair.2,
+iTerm.interp (cons cand (cons n ctx)))`. -/
+theorem ERMor1.interp_betaOnCand {k : ℕ}
+    (iTerm : ERMor1 (k + 2)) (cand n : ℕ)
+    (ctx : Fin k → ℕ) :
+    (ERMor1.betaOnCand iTerm).interp
+        (Fin.cons cand (Fin.cons n ctx)) =
+      cand.unpair.1 %
+        (1 + (iTerm.interp
+          (Fin.cons cand (Fin.cons n ctx)) + 1) *
+            cand.unpair.2) := by
+  have hconv : (fun (_ : Fin 1) => cand) = ![cand] := by
+    funext i
+    match i with
+    | ⟨0, _⟩ => rfl
+  set iVal :=
+    iTerm.interp (Fin.cons cand (Fin.cons n ctx)) with hiDef
+  have hrew :
+      (ERMor1.betaOnCand iTerm).interp
+          (Fin.cons cand (Fin.cons n ctx)) =
+        ERMor1.beta.interp
+          ![cand.unpair.1, cand.unpair.2, iVal] := by
+    unfold ERMor1.betaOnCand
+    change ERMor1.beta.interp _ = ERMor1.beta.interp _
+    congr 1
+    funext j
+    match j with
+    | ⟨0, _⟩ =>
+      change ERMor1.natUnpairFst.interp
+          (fun (_ : Fin 1) =>
+            (Fin.cons cand (Fin.cons n ctx) :
+              Fin (k + 2) → ℕ) 0) = _
+      have hcand :
+          (Fin.cons cand (Fin.cons n ctx) :
+            Fin (k + 2) → ℕ) 0 = cand := rfl
+      rw [hcand, hconv, ERMor1.interp_natUnpairFst]
+      rfl
+    | ⟨1, _⟩ =>
+      change ERMor1.natUnpairSnd.interp
+          (fun (_ : Fin 1) =>
+            (Fin.cons cand (Fin.cons n ctx) :
+              Fin (k + 2) → ℕ) 0) = _
+      have hcand :
+          (Fin.cons cand (Fin.cons n ctx) :
+            Fin (k + 2) → ℕ) 0 = cand := rfl
+      rw [hcand, hconv, ERMor1.interp_natUnpairSnd]
+      rfl
+    | ⟨2, _⟩ => rfl
+  rw [hrew, ERMor1.interp_beta]
+
+/-- Base-check evaluates to `1` iff `β(a, b, 0) = base(ctx)`. -/
+theorem ERMor1.boundedRecBaseCheck_eq_one_iff {k : ℕ}
+    (base : ERMor1 k) (cand n : ℕ) (ctx : Fin k → ℕ) :
+    (ERMor1.boundedRecBaseCheck base).interp
+        (Fin.cons cand (Fin.cons n ctx)) = 1 ↔
+      cand.unpair.1 % (1 + 1 * cand.unpair.2) =
+        base.interp ctx := by
+  unfold ERMor1.boundedRecBaseCheck
+  rw [ERMor1.boolEqAt_eq_one_iff,
+    ERMor1.interp_betaOnCand, ERMor1.interp_baseOnCand]
+  have hzero :
+      (ERMor1.zeroN (k + 2)).interp
+        (Fin.cons cand (Fin.cons n ctx)) = 0 := rfl
+  rw [hzero]
+
+/-- The step-body check evaluates in `{0, 1}`. -/
+theorem ERMor1.boundedRecStepBody_le_one {k : ℕ}
+    (step : ERMor1 (k + 2)) (ctx : Fin (k + 3) → ℕ) :
+    (ERMor1.boundedRecStepBody step).interp ctx ≤ 1 :=
+  ERMor1.boolEqAt_le_one _ _ _
+
+/-- Interpretation of `betaOnCandStep iTerm` at
+`Fin.cons j (Fin.cons cand (Fin.cons n ctx))` equals
+`β(cand.unpair.1, cand.unpair.2, iTerm.interp(…))`. -/
+theorem ERMor1.interp_betaOnCandStep {k : ℕ}
+    (iTerm : ERMor1 (k + 3)) (j cand n : ℕ)
+    (ctx : Fin k → ℕ) :
+    (ERMor1.betaOnCandStep iTerm).interp
+        (Fin.cons j (Fin.cons cand (Fin.cons n ctx))) =
+      cand.unpair.1 %
+        (1 + (iTerm.interp
+          (Fin.cons j
+            (Fin.cons cand (Fin.cons n ctx))) + 1) *
+            cand.unpair.2) := by
+  have hconv : (fun (_ : Fin 1) => cand) = ![cand] := by
+    funext i
+    match i with
+    | ⟨0, _⟩ => rfl
+  set iVal :=
+    iTerm.interp
+      (Fin.cons j (Fin.cons cand (Fin.cons n ctx))) with hiDef
+  have hrew :
+      (ERMor1.betaOnCandStep iTerm).interp
+          (Fin.cons j
+            (Fin.cons cand (Fin.cons n ctx))) =
+        ERMor1.beta.interp
+          ![cand.unpair.1, cand.unpair.2, iVal] := by
+    unfold ERMor1.betaOnCandStep
+    change ERMor1.beta.interp _ = ERMor1.beta.interp _
+    congr 1
+    funext p
+    match p with
+    | ⟨0, _⟩ =>
+      change ERMor1.natUnpairFst.interp
+          (fun (_ : Fin 1) =>
+            (Fin.cons j (Fin.cons cand
+              (Fin.cons n ctx)) :
+                Fin (k + 3) → ℕ) 1) = _
+      have hcand :
+          (Fin.cons j (Fin.cons cand (Fin.cons n ctx)) :
+            Fin (k + 3) → ℕ) 1 = cand := rfl
+      rw [hcand, hconv, ERMor1.interp_natUnpairFst]
+      rfl
+    | ⟨1, _⟩ =>
+      change ERMor1.natUnpairSnd.interp
+          (fun (_ : Fin 1) =>
+            (Fin.cons j (Fin.cons cand
+              (Fin.cons n ctx)) :
+                Fin (k + 3) → ℕ) 1) = _
+      have hcand :
+          (Fin.cons j (Fin.cons cand (Fin.cons n ctx)) :
+            Fin (k + 3) → ℕ) 1 = cand := rfl
+      rw [hcand, hconv, ERMor1.interp_natUnpairSnd]
+      rfl
+    | ⟨2, _⟩ => rfl
+  rw [hrew, ERMor1.interp_beta]
+
+/-- Interpretation of `stepOnCandStep step` at
+`Fin.cons j (Fin.cons cand (Fin.cons n ctx))` equals
+`step.interp (Fin.cons j (Fin.cons (β(a, b, j)) ctx))`. -/
+theorem ERMor1.interp_stepOnCandStep {k : ℕ}
+    (step : ERMor1 (k + 2)) (j cand n : ℕ)
+    (ctx : Fin k → ℕ) :
+    (ERMor1.stepOnCandStep step).interp
+        (Fin.cons j (Fin.cons cand (Fin.cons n ctx))) =
+      step.interp
+        (Fin.cons j (Fin.cons
+          (cand.unpair.1 % (1 + (j + 1) * cand.unpair.2))
+          ctx)) := by
+  unfold ERMor1.stepOnCandStep
+  rw [ERMor1.interp_comp]
+  congr 1
+  funext i
+  match i with
+  | ⟨0, _⟩ => rfl
+  | ⟨1, _⟩ =>
+    change (ERMor1.betaOnCandStep (ERMor1.proj 0)).interp
+        (Fin.cons j (Fin.cons cand (Fin.cons n ctx))) = _
+    rw [ERMor1.interp_betaOnCandStep]
+    have hproj :
+        (ERMor1.proj (0 : Fin (k + 3))).interp
+          (Fin.cons j
+            (Fin.cons cand (Fin.cons n ctx))) = j := rfl
+    rw [hproj]
+    rfl
+  | ⟨p + 2, h⟩ =>
+    change (Fin.cons j (Fin.cons cand (Fin.cons n ctx)) :
+        Fin (k + 3) → ℕ) ⟨p + 3, by omega⟩ = _
+    rfl
+
+/-- Step-body evaluates to `1` iff the trace recurrence holds
+at index `j`. -/
+theorem ERMor1.boundedRecStepBody_eq_one_iff {k : ℕ}
+    (step : ERMor1 (k + 2)) (j cand n : ℕ)
+    (ctx : Fin k → ℕ) :
+    (ERMor1.boundedRecStepBody step).interp
+        (Fin.cons j (Fin.cons cand (Fin.cons n ctx))) = 1 ↔
+      cand.unpair.1 %
+        (1 + (j + 1 + 1) * cand.unpair.2) =
+        step.interp (Fin.cons j
+          (Fin.cons
+            (cand.unpair.1 %
+              (1 + (j + 1) * cand.unpair.2))
+            ctx)) := by
+  unfold ERMor1.boundedRecStepBody
+  rw [ERMor1.boolEqAt_eq_one_iff,
+    ERMor1.interp_betaOnCandStep,
+    ERMor1.interp_stepOnCandStep]
+  have hsucc :
+      (ERMor1.comp ERMor1.succ
+        (fun (_ : Fin 1) =>
+          (ERMor1.proj (0 : Fin (k + 3))))).interp
+        (Fin.cons j
+          (Fin.cons cand (Fin.cons n ctx))) = j + 1 := by
+    rfl
+  rw [hsucc]
+
+/-- The step-check evaluates in `{0, 1}`. -/
+theorem ERMor1.boundedRecStepCheck_le_one {k : ℕ}
+    (step : ERMor1 (k + 2)) (ctx : Fin (k + 2) → ℕ) :
+    (ERMor1.boundedRecStepCheck step).interp ctx ≤ 1 := by
+  unfold ERMor1.boundedRecStepCheck
+  rw [ERMor1.interp_comp, ERMor1.interp_bprod]
+  exact natBProd_le_one_of_body_le_one _ _ (fun _ =>
+    ERMor1.boundedRecStepBody_le_one step _)
+
+/-- Interpretation of `boundedRecStepCheck` at
+`Fin.cons cand (Fin.cons n ctx)` equals the bounded product
+of `boundedRecStepBody` values over `j ∈ [0, n + 1)`. -/
+theorem ERMor1.interp_boundedRecStepCheck_as_bprod {k : ℕ}
+    (step : ERMor1 (k + 2)) (cand n : ℕ)
+    (ctx : Fin k → ℕ) :
+    (ERMor1.boundedRecStepCheck step).interp
+        (Fin.cons cand (Fin.cons n ctx)) =
+      natBProd (n + 1) (fun j =>
+        (ERMor1.boundedRecStepBody step).interp
+          (Fin.cons j
+            (Fin.cons cand (Fin.cons n ctx)))) := by
+  unfold ERMor1.boundedRecStepCheck
+  rw [ERMor1.interp_comp]
+  set argFn : Fin (k + 3) → ℕ := fun i =>
+    ((fun i : Fin (k + 3) => match i with
       | ⟨0, _⟩ =>
-          ERMor1.comp ERMor1.beta (fun j => match j with
-            | ⟨0, _⟩ => aCand
-            | ⟨1, _⟩ => bCand
-            | ⟨2, _⟩ => ERMor1.zeroN (k + 2))
-      | ⟨1, _⟩ =>
-          ERMor1.comp base ctxTermCand)
-  let pred : ERMor1 (k + 2) :=
-    ERMor1.comp ERMor1.boolAnd (fun i => match i with
-      | ⟨0, _⟩ => p1
-      | ⟨1, _⟩ => p2Swapped)
+          ERMor1.comp ERMor1.succ
+            (fun (_ : Fin 1) => ERMor1.proj 1)
+      | ⟨1, _⟩ => ERMor1.proj 0
+      | ⟨2, _⟩ => ERMor1.proj 1
+      | ⟨j + 3, h⟩ =>
+          ERMor1.proj (⟨j + 2, by omega⟩ : Fin (k + 2))) i).interp
+      (Fin.cons cand (Fin.cons n ctx))
+  rw [ERMor1.interp_bprod]
+  have h0 : argFn 0 = n + 1 := rfl
+  have htail :
+      Fin.tail argFn = Fin.cons cand (Fin.cons n ctx) := by
+    funext ⟨p, hp⟩
+    change argFn ⟨p + 1, by omega⟩ = _
+    match p with
+    | 0 => rfl
+    | 1 => rfl
+    | q + 2 => rfl
+  rw [h0, htail]
+
+/-- Step-check evaluates to `1` iff the trace recurrence holds
+at every index `j < n + 1`. -/
+theorem ERMor1.boundedRecStepCheck_eq_one_iff {k : ℕ}
+    (step : ERMor1 (k + 2)) (cand n : ℕ)
+    (ctx : Fin k → ℕ) :
+    (ERMor1.boundedRecStepCheck step).interp
+        (Fin.cons cand (Fin.cons n ctx)) = 1 ↔
+      ∀ j, j < n + 1 →
+        cand.unpair.1 %
+          (1 + (j + 1 + 1) * cand.unpair.2) =
+          step.interp (Fin.cons j
+            (Fin.cons
+              (cand.unpair.1 %
+                (1 + (j + 1) * cand.unpair.2))
+              ctx)) := by
+  rw [ERMor1.interp_boundedRecStepCheck_as_bprod,
+    natBProd_eq_one_iff_all_one]
+  constructor
+  · intro h j hj
+    exact (ERMor1.boundedRecStepBody_eq_one_iff step j cand
+      n ctx).mp (h j hj)
+  · intro h j hj
+    exact (ERMor1.boundedRecStepBody_eq_one_iff step j cand
+      n ctx).mpr (h j hj)
+
+/-- The full predicate evaluates in `{0, 1}`. -/
+theorem ERMor1.boundedRecPred_le_one {k : ℕ}
+    (base : ERMor1 k) (step : ERMor1 (k + 2))
+    (ctx : Fin (k + 2) → ℕ) :
+    (ERMor1.boundedRecPred base step).interp ctx ≤ 1 := by
+  unfold ERMor1.boundedRecPred
+  rw [ERMor1.interp_comp, ERMor1.interp_boolAnd]
+  calc _ ≤ 1 * _ := Nat.mul_le_mul_right _
+            (ERMor1.boundedRecBaseCheck_le_one _ _)
+    _ ≤ 1 * 1 := Nat.mul_le_mul_left _
+            (ERMor1.boundedRecStepCheck_le_one _ _)
+    _ = 1 := Nat.one_mul _
+
+/-- Auxiliary: product of two naturals equals `1` iff both
+are `1`. -/
+theorem Nat.mul_eq_one_iff_both
+    {x y : ℕ} : x * y = 1 ↔ x = 1 ∧ y = 1 := by
+  constructor
+  · intro h
+    refine ⟨Nat.eq_one_of_mul_eq_one_right h,
+      Nat.eq_one_of_mul_eq_one_left h⟩
+  · rintro ⟨hx1, hy1⟩
+    rw [hx1, hy1]
+
+/-- Predicate evaluates to `1` iff both the base and step
+traces match at every index up to `n`. -/
+theorem ERMor1.boundedRecPred_eq_one_iff_trace {k : ℕ}
+    (base : ERMor1 k) (step : ERMor1 (k + 2))
+    (cand n : ℕ) (ctx : Fin k → ℕ) :
+    (ERMor1.boundedRecPred base step).interp
+        (Fin.cons cand (Fin.cons n ctx)) = 1 ↔
+      (cand.unpair.1 % (1 + 1 * cand.unpair.2) =
+        base.interp ctx) ∧
+      (∀ j, j < n + 1 →
+        cand.unpair.1 %
+          (1 + (j + 1 + 1) * cand.unpair.2) =
+          step.interp (Fin.cons j
+            (Fin.cons
+              (cand.unpair.1 %
+                (1 + (j + 1) * cand.unpair.2))
+              ctx))) := by
+  unfold ERMor1.boundedRecPred
+  rw [ERMor1.interp_comp, ERMor1.interp_boolAnd,
+    Nat.mul_eq_one_iff_both,
+    ERMor1.boundedRecBaseCheck_eq_one_iff,
+    ERMor1.boundedRecStepCheck_eq_one_iff]
+
+/-- ER-derived bounded primitive recursion.  At outer arity
+`k + 1` with slot `0` the iteration counter `n` and slots
+`1..k` the parameter context `ctx`, returns
+`min (β(a, b, n)) (bound.interp (Fin.cons n ctx))`, where
+`(a, b) = Nat.unpair` of the least `cand < boundedRecRange`
+with `boundedRecPred = 1`.  Composing with `minN` against
+`bound` makes the output unconditionally bounded by
+`bound.interp (Fin.cons n ctx)`.  Correctness against
+`Nat.rec` holds when `bound` pointwise dominates the trace. -/
+def ERMor1.boundedRec {k : ℕ}
+    (base : ERMor1 k) (step : ERMor1 (k + 2))
+    (bound : ERMor1 (k + 1)) : ERMor1 (k + 1) :=
   let search : ERMor1 (k + 1) :=
-    ERMor1.boundedSearch range pred
+    ERMor1.boundedSearch (ERMor1.boundedRecRange bound)
+      (ERMor1.boundedRecPred base step)
   let betaAtN : ERMor1 (k + 1) :=
     ERMor1.comp ERMor1.beta (fun i => match i with
       | ⟨0, _⟩ =>
@@ -1362,7 +1780,7 @@ def ERMor1.boundedRec {k : ℕ}
     | ⟨1, _⟩ => bound)
 
 /-- Unconditional upper bound for `boundedRec`: its
-interpretation is dominated by `bound.interp (cons n ctx)`
+interpretation is dominated by `bound.interp (Fin.cons n ctx)`
 for every counter `n` and every parameter context `ctx`. -/
 theorem ERMor1.interp_boundedRec_le_bound {k : ℕ}
     (base : ERMor1 k) (step : ERMor1 (k + 2))
