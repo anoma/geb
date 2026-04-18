@@ -44,6 +44,7 @@ import GebLean.LawvereERArith
 import GebLean.LawvereERPrimrec
 import GebLean.LawvereERBool
 import GebLean.LawvereERBound
+import GebLean.LawvereERBoundComputable
 import GebLean.LawvereERDelta
 import GebLean.LawvereERInterp
 import GebLean.LawvereERLex
