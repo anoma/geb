@@ -21,5 +21,6 @@ import GebLeanTests.TestTreeCalcMeta
 import GebLeanTests.TestTreeCalcPrograms
 import GebLeanTests.TestTreeCalcReduction
 import GebLeanTests.Utilities.ERArith
+import GebLeanTests.Utilities.ERTreeArith
 import GebLeanTests.Utilities.SzudzikSeq
 import GebLeanTests.Utilities.Tower
