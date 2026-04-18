@@ -3477,6 +3477,23 @@ def ccrNewFamilyNat :
       apply congrArg
       exact ccrNewFamilyFunctor_naturality F f
 
+/--
+Bridge lemma: each `ccrNewFamilyNat.app C`, viewed as an underlying
+functor, equals `ccrNewFamilyFunctor C` post-composed with the
+`ULift`/`ULiftHom` widening used by `ccrNewFamilyNatTarget`.
+
+Not marked `@[simp]` to avoid unfolding cycles; intended to be
+invoked manually by downstream users who want to reach through the
+widening.
+-/
+theorem ccrNewFamilyNat_app_eq_ccrNewFamilyFunctor
+    (C : Type u) [Category.{v} C] :
+    (ccrNewFamilyNat.{u, v, w}.app (Cat.of C)).toFunctor =
+      ccrNewFamilyFunctor.{u, v, w} C ⋙
+        CategoryTheory.ULift.upFunctor ⋙
+        CategoryTheory.ULiftHom.up := by
+  rfl
+
 end CCRNaturalPackaging
 
 end GebLean
