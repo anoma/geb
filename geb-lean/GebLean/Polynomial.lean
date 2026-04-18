@@ -1,5 +1,6 @@
 import Mathlib.CategoryTheory.Comma.Over.Basic
 import Mathlib.CategoryTheory.Category.Cat
+import Mathlib.CategoryTheory.Types.Basic
 import Mathlib.CategoryTheory.Elements
 import Mathlib.CategoryTheory.Pi.Basic
 import Mathlib.CategoryTheory.Limits.Shapes.Products
@@ -49,6 +50,31 @@ open CategoryTheory
 
 universe u u'
 
+/-- Local reduction of `(ConcreteCategory.hom (f ≫ g)).toFun x` in
+`TypeCat`. -/
+@[simp]
+private lemma polynomial_typeCat_comp_toFun
+    {A B C : Type u} (f : A ⟶ B) (g : B ⟶ C) (x : A) :
+    (ConcreteCategory.hom (f ≫ g)).toFun x =
+      (ConcreteCategory.hom g).toFun
+        ((ConcreteCategory.hom f).toFun x) := rfl
+
+/-- Local reduction of `(ConcreteCategory.hom (TypeCat.ofHom f)).toFun
+x` to `f x`. -/
+@[simp]
+private lemma polynomial_typeCat_ofHom_toFun
+    {A B : Type u} (f : A → B) (x : A) :
+    (ConcreteCategory.hom (TypeCat.ofHom f)).toFun x = f x := rfl
+
+/-- Local reduction of `(ConcreteCategory.hom (eqToHom h)).toFun x`
+to `cast h x` in `TypeCat`. -/
+@[simp]
+private lemma polynomial_typeCat_eqToHom_toFun
+    {A B : Type u} (h : A = B) (x : A) :
+    (ConcreteCategory.hom (eqToHom (C := Type u) h)).toFun x =
+      cast h x := by
+  subst h; rfl
+
 /-! ## Family-Slice Equivalence
 
 The fundamental equivalence between `Y`-indexed families of types and the slice
@@ -68,7 +94,7 @@ first projection `π₁ : Σ y, F y → Y`.
 -/
 @[simp]
 def familySliceForwardObj (F : FamilyCat (Type u) Y) : Over Y :=
-  Over.mk (Sigma.fst : (Σ y, F y) → Y)
+  Over.mk (TypeCat.ofHom (Sigma.fst : (Σ y, F y) → Y))
 
 /--
 Forward functor action on morphisms.
@@ -78,7 +104,7 @@ induces a morphism on total spaces.
 @[simp]
 def familySliceForwardMap {F G : FamilyCat (Type u) Y} (φ : F ⟶ G) :
     familySliceForwardObj Y F ⟶ familySliceForwardObj Y G :=
-  Over.homMk (fun ⟨y, x⟩ => ⟨y, φ y x⟩) rfl
+  Over.homMk (TypeCat.ofHom (fun (p : Σ y, F y) => ⟨p.1, φ p.1 p.2⟩)) rfl
 
 /--
 The forward functor from `FamilyCat Type Y` to `Over Y`.
@@ -89,11 +115,13 @@ def familySliceForward : FamilyCat (Type u) Y ⥤ Over Y where
   map := familySliceForwardMap Y
   map_id F := by
     apply Over.OverMorphism.ext
-    funext ⟨y, x⟩
+    apply ConcreteCategory.ext_apply
+    intro ⟨y, x⟩
     rfl
   map_comp φ ψ := by
     apply Over.OverMorphism.ext
-    funext ⟨y, x⟩
+    apply ConcreteCategory.ext_apply
+    intro ⟨y, x⟩
     rfl
 
 /--
@@ -103,7 +131,7 @@ Given an object `(A, f : A → Y)` in `Over Y`, construct the family of fibers
 -/
 @[simp]
 def familySliceBackwardObj (obj : Over Y) : FamilyCat (Type u) Y :=
-  fun y => { a : obj.left // obj.hom a = y }
+  fun y => { a : obj.left // obj.hom.hom a = y }
 
 /--
 Backward functor action on morphisms.
@@ -113,9 +141,9 @@ induces a morphism on fibers.
 @[simp]
 def familySliceBackwardMap {A B : Over Y} (g : A ⟶ B) :
     familySliceBackwardObj Y A ⟶ familySliceBackwardObj Y B :=
-  fun y ⟨a, ha⟩ => ⟨g.left a, by
-    have hw := congrFun (Over.w g) a
-    exact hw.trans ha⟩
+  fun y => TypeCat.ofHom fun p => ⟨g.left.hom p.1, by
+    have hw := ConcreteCategory.congr_hom (Over.w g) p.1
+    exact hw.trans p.2⟩
 
 /--
 The backward functor from `Over Y` to `FamilyCat Type Y`.
@@ -125,11 +153,17 @@ def familySliceBackward : Over Y ⥤ FamilyCat (Type u) Y where
   obj := familySliceBackwardObj Y
   map := familySliceBackwardMap Y
   map_id A := by
-    funext y ⟨a, ha⟩
+    funext y
+    apply ConcreteCategory.ext_apply
+    intro p
+    obtain ⟨a, ha⟩ := p
     simp only [familySliceBackwardMap]
     rfl
   map_comp g h := by
-    funext y ⟨a, ha⟩
+    funext y
+    apply ConcreteCategory.ext_apply
+    intro p
+    obtain ⟨a, ha⟩ := p
     simp only [familySliceBackwardMap]
     rfl
 
@@ -163,10 +197,13 @@ def familySliceUnitIso :
     familySliceForward Y ⋙ familySliceBackward Y ≅ 𝟭 (FamilyCat (Type u) Y) :=
   NatIso.ofComponents
     (fun F => {
-      hom := fun y => (familySliceUnitComponent Y F y).toFun
-      inv := fun y => (familySliceUnitComponent Y F y).invFun })
+      hom := fun y => TypeCat.ofHom (familySliceUnitComponent Y F y).toFun
+      inv := fun y => TypeCat.ofHom (familySliceUnitComponent Y F y).invFun })
     (fun {F G} φ => by
-      funext y ⟨⟨y', x⟩, h⟩
+      funext y
+      apply ConcreteCategory.ext_apply
+      intro p
+      obtain ⟨⟨y', x⟩, h⟩ := p
       cases h
       rfl)
 
@@ -197,8 +234,14 @@ as an object of `Over Y`.
 -/
 def familySliceCounitComponent (obj : Over Y) :
     (familySliceBackward Y ⋙ familySliceForward Y).obj obj ≅ obj :=
-  Over.isoMk (familySliceCounitComponentLeft Y obj).toIso (by
-    funext ⟨y, ⟨a, h⟩⟩
+  Over.isoMk (Iso.mk (TypeCat.ofHom (familySliceCounitComponentLeft Y obj).toFun)
+                     (TypeCat.ofHom (familySliceCounitComponentLeft Y obj).invFun)
+    (by apply ConcreteCategory.ext_apply; intro p; obtain ⟨_, a, h⟩ := p
+        cases h; rfl)
+    (by apply ConcreteCategory.ext_apply; intro a; rfl)) (by
+    apply ConcreteCategory.ext_apply
+    intro p
+    obtain ⟨y, a, h⟩ := p
     exact h)
 
 /--
@@ -210,7 +253,9 @@ def familySliceCounitIso :
     (fun obj => familySliceCounitComponent Y obj)
     (fun {A B} g => by
       apply Over.OverMorphism.ext
-      funext ⟨y, ⟨a, h⟩⟩
+      apply ConcreteCategory.ext_apply
+      intro p
+      obtain ⟨y, a, h⟩ := p
       simp only [Functor.comp_obj, familySliceBackward, familySliceBackwardObj,
                  familySliceForward, familySliceForwardObj, Functor.id_obj]
       simp only [familySliceCounitComponent, familySliceCounitComponentLeft]
@@ -235,7 +280,9 @@ def familySliceEquiv : FamilyCat (Type u) Y ≌ Over Y where
   counitIso := familySliceCounitIso Y
   functor_unitIso_comp F := by
     apply Over.OverMorphism.ext
-    funext ⟨y, x⟩
+    apply ConcreteCategory.ext_apply
+    intro p
+    obtain ⟨y, x⟩ := p
     simp only [Functor.id_obj, familySliceForward, familySliceForwardObj, Functor.comp_obj,
                familySliceBackward, familySliceBackwardObj,
                familySliceForwardMap, familySliceUnitIso, familySliceUnitComponent,
@@ -355,9 +402,17 @@ A polynomial functor `P : CoprodCovarRepCat' D` gives a functor `D ⥤ Type`.
 -/
 def ccrToFunctor (P : CoprodCovarRepCat'.{u', u, u''} D) : D ⥤ Type _ where
   obj := ccrEval P
-  map := ccrEvalMap
-  map_id := fun _ => ccrEvalMap_id
-  map_comp := fun f g => ccrEvalMap_comp f g
+  map f := TypeCat.ofHom (ccrEvalMap f)
+  map_id _ := by
+    apply ConcreteCategory.ext_apply
+    intro x
+    obtain ⟨i, h⟩ := x
+    simp
+  map_comp f g := by
+    apply ConcreteCategory.ext_apply
+    intro x
+    obtain ⟨i, h⟩ := x
+    simp [ccrEvalMap]
 
 /-! ### Category of Elements
 
@@ -516,13 +571,16 @@ Given `f : A ⟶ B`, produces a fiber-wise map.
 -/
 def polyToOverEvalFamilyMap (P : PolyToOverCat (D := D) Y) {A B : D} (f : A ⟶ B) :
     polyToOverEvalFamily Y P A ⟶ polyToOverEvalFamily Y P B :=
-  fun _ => ccrEvalMap f
+  fun _ => TypeCat.ofHom (ccrEvalMap f)
 
 @[simp]
 lemma polyToOverEvalFamilyMap_id (P : PolyToOverCat (D := D) Y) (A : D) :
     polyToOverEvalFamilyMap Y P (𝟙 A) = 𝟙 (polyToOverEvalFamily Y P A) := by
   funext _
-  exact ccrEvalMap_id
+  apply ConcreteCategory.ext_apply
+  intro x
+  obtain ⟨i, h⟩ := x
+  simp [polyToOverEvalFamilyMap]
 
 @[simp]
 lemma polyToOverEvalFamilyMap_comp (P : PolyToOverCat (D := D) Y)
@@ -530,7 +588,10 @@ lemma polyToOverEvalFamilyMap_comp (P : PolyToOverCat (D := D) Y)
     polyToOverEvalFamilyMap Y P (f ≫ g) =
       polyToOverEvalFamilyMap Y P f ≫ polyToOverEvalFamilyMap Y P g := by
   funext _
-  exact ccrEvalMap_comp f g
+  apply ConcreteCategory.ext_apply
+  intro x
+  obtain ⟨i, h⟩ := x
+  simp [polyToOverEvalFamilyMap, ccrEvalMap]
 
 /--
 A polynomial functor `P : PolyToOverCat D Y` gives a functor `D ⥤ FamilyCat (Type) Y`.
@@ -602,7 +663,7 @@ lemma polyToOverEval_left (P : PolyToOverCat (D := D) Y) (A : D) :
 The structure map of `polyToOverEval` is the first projection.
 -/
 lemma polyToOverEval_hom (P : PolyToOverCat (D := D) Y) (A : D) :
-    (polyToOverEval Y P A).hom = Sigma.fst := rfl
+    (polyToOverEval Y P A).hom = TypeCat.ofHom Sigma.fst := rfl
 
 /--
 Extract the Y-coordinate from an element of `(polyToOverEval Y P A).left`.
@@ -663,8 +724,8 @@ the structure map of the source.
 -/
 lemma mor_to_ptoe_y {P : PolyToOverCat (D := D) Y} {A : D}
     {B : Over Y} (h : B ⟶ polyToOverEval Y P A) (b : B.left) :
-    ptoeLeftY Y (h.left b) = B.hom b :=
-  congrFun (Over.w h) b
+    ptoeLeftY Y (h.left.hom b) = B.hom.hom b :=
+  ConcreteCategory.congr_hom (Over.w h) b
 
 /--
 Given a morphism `h : B ⟶ polyToOverEval Y P A` and `b : B.left`, we can
@@ -673,15 +734,15 @@ to transport from `ptoeLeftY (h.left b)` to `B.hom b`.
 -/
 def mor_to_ptoe_fiber {P : PolyToOverCat (D := D) Y} {A : D}
     {B : Over Y} (h : B ⟶ polyToOverEval Y P A) (b : B.left) :
-    polyToOverEvalFamily Y P A (B.hom b) :=
-  (mor_to_ptoe_y Y h b) ▸ ptoeLeftFiber Y (h.left b)
+    polyToOverEvalFamily Y P A (B.hom.hom b) :=
+  (mor_to_ptoe_y Y h b) ▸ ptoeLeftFiber Y (h.left.hom b)
 
 /--
 The fiber element from a morphism: extract the index.
 -/
 def mor_to_ptoe_fiber_index {P : PolyToOverCat (D := D) Y} {A : D}
     {B : Over Y} (h : B ⟶ polyToOverEval Y P A) (b : B.left) :
-    ccrIndex (P (B.hom b)) :=
+    ccrIndex (P (B.hom.hom b)) :=
   ptoefIndex Y (mor_to_ptoe_fiber Y h b)
 
 /--
@@ -689,7 +750,7 @@ The fiber element from a morphism: extract the inner morphism.
 -/
 def mor_to_ptoe_fiber_mor {P : PolyToOverCat (D := D) Y} {A : D}
     {B : Over Y} (h : B ⟶ polyToOverEval Y P A) (b : B.left) :
-    ccrFamily (P (B.hom b)) (mor_to_ptoe_fiber_index Y h b) ⟶ A :=
+    ccrFamily (P (B.hom.hom b)) (mor_to_ptoe_fiber_index Y h b) ⟶ A :=
   ptoefMor Y (mor_to_ptoe_fiber Y h b)
 
 /--
@@ -697,9 +758,9 @@ Heterogeneous equality between `mor_to_ptoe_fiber` and the raw fiber.
 -/
 lemma mor_to_ptoe_fiber_heq_raw {P : PolyToOverCat (D := D) Y} {A : D}
     {B : Over Y} (h : B ⟶ polyToOverEval Y P A) (b : B.left) :
-    mor_to_ptoe_fiber Y h b ≍ ptoeLeftFiber Y (h.left b) := by
+    mor_to_ptoe_fiber Y h b ≍ ptoeLeftFiber Y (h.left.hom b) := by
   simp only [mor_to_ptoe_fiber]
-  exact eqRec_heq (mor_to_ptoe_y Y h b) (ptoeLeftFiber Y (h.left b))
+  exact eqRec_heq (mor_to_ptoe_y Y h b) (ptoeLeftFiber Y (h.left.hom b))
 
 /--
 When the morphism `h` is constructed via `Over.homMk` and the fiber function
@@ -708,11 +769,12 @@ produces elements with the correct Y-coordinate (i.e., `w` is
 -/
 lemma mor_to_ptoe_fiber_index_homMk_rfl {P : PolyToOverCat (D := D) Y} {A : D}
     {B : Over Y}
-    (fn : (b : B.left) → polyToOverEvalFamily Y P A (B.hom b))
+    (fn : (b : B.left) → polyToOverEvalFamily Y P A (B.hom.hom b))
     (b : B.left) :
     mor_to_ptoe_fiber_index Y
-      (Over.homMk (fun b => ptoeLeftMk Y (B.hom b) (fn b))
-        (funext (fun _ => rfl))) b = ptoefIndex Y (fn b) := by
+      (Over.homMk (TypeCat.ofHom (fun b => ptoeLeftMk Y (B.hom.hom b) (fn b)))
+        (by apply ConcreteCategory.ext_apply; intro _; rfl)) b =
+      ptoefIndex Y (fn b) := by
   simp only [mor_to_ptoe_fiber_index, mor_to_ptoe_fiber, ptoefIndex,
              ptoeLeftMk, ptoeLeftFiber]
   rfl
@@ -722,11 +784,12 @@ The analogous lemma for `mor_to_ptoe_fiber_mor`.
 -/
 lemma mor_to_ptoe_fiber_mor_homMk_rfl {P : PolyToOverCat (D := D) Y} {A : D}
     {B : Over Y}
-    (fn : (b : B.left) → polyToOverEvalFamily Y P A (B.hom b))
+    (fn : (b : B.left) → polyToOverEvalFamily Y P A (B.hom.hom b))
     (b : B.left) :
     mor_to_ptoe_fiber_mor Y
-      (Over.homMk (fun b => ptoeLeftMk Y (B.hom b) (fn b))
-        (funext (fun _ => rfl))) b = ptoefMor Y (fn b) := by
+      (Over.homMk (TypeCat.ofHom (fun b => ptoeLeftMk Y (B.hom.hom b) (fn b)))
+        (by apply ConcreteCategory.ext_apply; intro _; rfl)) b =
+      ptoefMor Y (fn b) := by
   simp only [mor_to_ptoe_fiber_mor, mor_to_ptoe_fiber, ptoefMor,
              ptoeLeftMk, ptoeLeftFiber]
   rfl
@@ -1158,7 +1221,7 @@ The structure map of `polyBetweenEval` is the first projection.
 -/
 lemma polyBetweenEval_hom {X Y : Type u} (P : PolyFunctorBetweenCat X Y)
     (A : Over X) :
-    (polyBetweenEval X Y P A).hom = Sigma.fst := rfl
+    (polyBetweenEval X Y P A).hom = TypeCat.ofHom Sigma.fst := rfl
 
 /--
 An element of `(polyBetweenEval P A).left` consists of a `y : Y` and an
@@ -1216,7 +1279,7 @@ The structure map applied to a left element gives the Y-coordinate.
 lemma polyBetweenEval_hom_pbeLeftMk {X Y : Type u}
     {P : PolyFunctorBetweenCat X Y} {A : Over X}
     (y : Y) (x : polyBetweenEvalFamily X Y P A y) :
-    (polyBetweenEval X Y P A).hom (pbeLeftMk y x) = y := rfl
+    (polyBetweenEval X Y P A).hom.hom (pbeLeftMk y x) = y := rfl
 
 /-! #### Morphisms into polyBetweenEval
 
@@ -1232,7 +1295,7 @@ Specialization of `mor_to_ptoe_y`.
 -/
 lemma mor_to_pbe_y {X Y : Type u} {P : PolyFunctorBetweenCat X Y} {A : Over X}
     {B : Over Y} (h : B ⟶ polyBetweenEval X Y P A) (b : B.left) :
-    pbeLeftY (h.left b) = B.hom b :=
+    pbeLeftY (h.left.hom b) = B.hom.hom b :=
   mor_to_ptoe_y Y h b
 
 /--
@@ -1243,7 +1306,7 @@ Specialization of `mor_to_ptoe_fiber`.
 -/
 def mor_to_pbe_fiber {X Y : Type u} {P : PolyFunctorBetweenCat X Y} {A : Over X}
     {B : Over Y} (h : B ⟶ polyBetweenEval X Y P A) (b : B.left) :
-    polyBetweenEvalFamily X Y P A (B.hom b) :=
+    polyBetweenEvalFamily X Y P A (B.hom.hom b) :=
   mor_to_ptoe_fiber Y h b
 
 /--
@@ -1252,7 +1315,7 @@ Specialization of `mor_to_ptoe_fiber_index`.
 -/
 def mor_to_pbe_fiber_index {X Y : Type u} {P : PolyFunctorBetweenCat X Y}
     {A : Over X} {B : Over Y} (h : B ⟶ polyBetweenEval X Y P A) (b : B.left) :
-    ccrIndex (P (B.hom b)) :=
+    ccrIndex (P (B.hom.hom b)) :=
   mor_to_ptoe_fiber_index Y h b
 
 /--
@@ -1261,7 +1324,7 @@ Specialization of `mor_to_ptoe_fiber_mor`.
 -/
 def mor_to_pbe_fiber_mor {X Y : Type u} {P : PolyFunctorBetweenCat X Y}
     {A : Over X} {B : Over Y} (h : B ⟶ polyBetweenEval X Y P A) (b : B.left) :
-    ccrFamily (P (B.hom b)) (mor_to_pbe_fiber_index h b) ⟶ A :=
+    ccrFamily (P (B.hom.hom b)) (mor_to_pbe_fiber_index h b) ⟶ A :=
   mor_to_ptoe_fiber_mor Y h b
 
 /--
@@ -1270,7 +1333,7 @@ Specialization of `mor_to_ptoe_fiber_heq_raw`.
 -/
 lemma mor_to_pbe_fiber_heq_raw {X Y : Type u} {P : PolyFunctorBetweenCat X Y}
     {A : Over X} {B : Over Y} (h : B ⟶ polyBetweenEval X Y P A) (b : B.left) :
-    mor_to_pbe_fiber h b ≍ pbeLeftFiber (h.left b) :=
+    mor_to_pbe_fiber h b ≍ pbeLeftFiber (h.left.hom b) :=
   mor_to_ptoe_fiber_heq_raw Y h b
 
 /--
@@ -1281,11 +1344,12 @@ Specialization of `mor_to_ptoe_fiber_index_homMk_rfl`.
 -/
 lemma mor_to_pbe_fiber_index_homMk_rfl {X Y : Type u} {P : PolyFunctorBetweenCat X Y}
     {A : Over X} {B : Over Y}
-    (fn : (b : B.left) → polyBetweenEvalFamily X Y P A (B.hom b))
+    (fn : (b : B.left) → polyBetweenEvalFamily X Y P A (B.hom.hom b))
     (b : B.left) :
     mor_to_pbe_fiber_index
-      (Over.homMk (fun b => pbeLeftMk (B.hom b) (fn b))
-        (funext (fun _ => rfl))) b = pbefIndex (fn b) :=
+      (Over.homMk (TypeCat.ofHom (fun b => pbeLeftMk (B.hom.hom b) (fn b)))
+        (by apply ConcreteCategory.ext_apply; intro _; rfl)) b =
+      pbefIndex (fn b) :=
   mor_to_ptoe_fiber_index_homMk_rfl Y fn b
 
 /--
@@ -1294,11 +1358,12 @@ Specialization of `mor_to_ptoe_fiber_mor_homMk_rfl`.
 -/
 lemma mor_to_pbe_fiber_mor_homMk_rfl {X Y : Type u} {P : PolyFunctorBetweenCat X Y}
     {A : Over X} {B : Over Y}
-    (fn : (b : B.left) → polyBetweenEvalFamily X Y P A (B.hom b))
+    (fn : (b : B.left) → polyBetweenEvalFamily X Y P A (B.hom.hom b))
     (b : B.left) :
     mor_to_pbe_fiber_mor
-      (Over.homMk (fun b => pbeLeftMk (B.hom b) (fn b))
-        (funext (fun _ => rfl))) b = pbefMor (fn b) :=
+      (Over.homMk (TypeCat.ofHom (fun b => pbeLeftMk (B.hom.hom b) (fn b)))
+        (by apply ConcreteCategory.ext_apply; intro _; rfl)) b =
+      pbefMor (fn b) :=
   mor_to_ptoe_fiber_mor_homMk_rfl Y fn b
 
 /-! #### Morphism evaluation
@@ -1339,7 +1404,7 @@ def polyBetweenMorphEval
     (polyBetweenEvalFunctor X Y Q).obj A :=
   (familySliceForward Y).map
     (fun y =>
-      polyBetweenMorphEvalAt X Y α A y)
+      TypeCat.ofHom (polyBetweenMorphEvalAt X Y α A y))
 
 theorem polyBetweenMorphEval_natural
     {P Q : PolyFunctorBetweenCat X Y}
@@ -1350,7 +1415,9 @@ theorem polyBetweenMorphEval_natural
     (polyBetweenEvalFunctor X Y P).map f ≫
       polyBetweenMorphEval X Y α B := by
   apply Over.OverMorphism.ext
-  funext ⟨y, i, g⟩
+  apply ConcreteCategory.ext_apply
+  intro p
+  obtain ⟨y, i, g⟩ := p
   dsimp [polyBetweenMorphEval,
     polyBetweenMorphEvalAt,
     polyBetweenEvalFunctor,
@@ -1360,7 +1427,7 @@ theorem polyBetweenMorphEval_natural
     ptoefMk, ptoefIndex, ptoefMor,
     ccrEvalMap, ccrEvalMk, ccrEvalIndex,
     ccrEvalMor, Over.comp_left]
-  simp only [Category.assoc]
+  rfl
 
 @[simp]
 theorem polyBetweenMorphEval_id
@@ -1433,7 +1500,8 @@ At each `x : X`, there is one position with the representable being the
 terminal object over `x` (which is `Over.mk (fun _ : PUnit => x)`).
 -/
 def polyBetweenId : PolyFunctorBetweenCat X X :=
-  fun x => ccrObjMk (fun _ : PUnit.{u + 1} => Over.mk (fun _ : PUnit.{u + 1} => x))
+  fun x => ccrObjMk (fun _ : PUnit.{u + 1} =>
+    Over.mk (TypeCat.ofHom (fun _ : PUnit.{u + 1} => x)))
 
 /--
 The identity has one position at each point.
@@ -1484,19 +1552,22 @@ def polyBetweenCompIndexEquiv (g : PolyFunctorBetweenCat Y Z)
     (f : PolyFunctorBetweenCat X Y) (z : Z) :
     polyBetweenCompIndex g f z ≃ ccrEval (g z) (polyBetweenIndexObj X Y f) where
   toFun := fun ⟨ig, pf⟩ =>
-    ⟨ig, Over.homMk (fun e => ⟨(ccrFamily (g z) ig).hom e, pf e⟩) rfl⟩
+    ⟨ig, Over.homMk (TypeCat.ofHom
+      (fun e => ⟨(ccrFamily (g z) ig).hom.hom e, pf e⟩))
+      (by apply ConcreteCategory.ext_apply; intro _; rfl)⟩
   invFun := fun ⟨ig, mor⟩ => ⟨ig, fun e =>
-    have h : (ccrFamily (g z) ig).hom e = (mor.left e).fst :=
-      (congrFun (Over.w mor) e).symm
-    h ▸ (mor.left e).snd⟩
+    have h : (ccrFamily (g z) ig).hom.hom e = (mor.left.hom e).fst :=
+      (ConcreteCategory.congr_hom (Over.w mor) e).symm
+    h ▸ (mor.left.hom e).snd⟩
   left_inv := fun ⟨_, _⟩ => rfl
   right_inv := fun ⟨ig, mor⟩ => by
     simp only [ccrEval]
     congr 1
     apply Over.OverMorphism.ext
-    funext e
-    have h : (ccrFamily (g z) ig).hom e = (mor.left e).fst :=
-      (congrFun (Over.w mor) e).symm
+    apply ConcreteCategory.ext_apply
+    intro e
+    have h : (ccrFamily (g z) ig).hom.hom e = (mor.left.hom e).fst :=
+      (ConcreteCategory.congr_hom (Over.w mor) e).symm
     apply Sigma.ext h
     exact eqRec_heq _ _
 
@@ -1509,9 +1580,10 @@ directions in `f` at the positions selected by `pf`.
 def polyBetweenCompFamily (g : PolyFunctorBetweenCat Y Z)
     (f : PolyFunctorBetweenCat X Y) (z : Z)
     (p : polyBetweenCompIndex g f z) : Over X :=
-  Over.mk (fun (e : Σ (eg : (ccrFamily (g z) p.1).left),
-                      (ccrFamily (f ((ccrFamily (g z) p.1).hom eg)) (p.2 eg)).left) =>
-    (ccrFamily (f ((ccrFamily (g z) p.1).hom e.1)) (p.2 e.1)).hom e.2)
+  Over.mk (TypeCat.ofHom
+    (fun (e : Σ (eg : (ccrFamily (g z) p.1).left),
+                (ccrFamily (f ((ccrFamily (g z) p.1).hom.hom eg)) (p.2 eg)).left) =>
+      (ccrFamily (f ((ccrFamily (g z) p.1).hom.hom e.1)) (p.2 e.1)).hom.hom e.2))
 
 /--
 `polyBetweenCompFamily` provides the computable construction of the composed
@@ -1523,7 +1595,7 @@ lemma polyBetweenCompFamily_is_sigma (g : PolyFunctorBetweenCat Y Z)
     (f : PolyFunctorBetweenCat X Y) (z : Z) (p : polyBetweenCompIndex g f z) :
     (polyBetweenCompFamily g f z p).left =
     Σ (eg : (ccrFamily (g z) p.1).left),
-      (ccrFamily (f ((ccrFamily (g z) p.1).hom eg)) (p.2 eg)).left := rfl
+      (ccrFamily (f ((ccrFamily (g z) p.1).hom.hom eg)) (p.2 eg)).left := rfl
 
 /--
 `polyBetweenCompFamily` is the specialization of `polyToOverCompFamily` to
@@ -1579,11 +1651,11 @@ lemma polyBetweenCompFamily_hom (g : PolyFunctorBetweenCat Y Z)
     (f : PolyFunctorBetweenCat X Y) (z : Z)
     (ig : ccrIndex (g z))
     (pf : ∀ eg : (ccrFamily (g z) ig).left,
-      ccrIndex (f ((ccrFamily (g z) ig).hom eg)))
+      ccrIndex (f ((ccrFamily (g z) ig).hom.hom eg)))
     (eg : (ccrFamily (g z) ig).left)
-    (ef : (ccrFamily (f ((ccrFamily (g z) ig).hom eg)) (pf eg)).left) :
-    (ccrFamily (polyBetweenComp g f z) ⟨ig, pf⟩).hom ⟨eg, ef⟩ =
-    (ccrFamily (f ((ccrFamily (g z) ig).hom eg)) (pf eg)).hom ef := rfl
+    (ef : (ccrFamily (f ((ccrFamily (g z) ig).hom.hom eg)) (pf eg)).left) :
+    (ccrFamily (polyBetweenComp g f z) ⟨ig, pf⟩).hom.hom ⟨eg, ef⟩ =
+    (ccrFamily (f ((ccrFamily (g z) ig).hom.hom eg)) (pf eg)).hom.hom ef := rfl
 
 end PolyBetweenComposition
 
@@ -1605,16 +1677,25 @@ For each `x : X`, the fiber of `polyBetweenEval (polyBetweenId X) A` at `x`
 is equivalent to the fiber of `A` at `x`.
 -/
 def polyBetweenId_eval_fiberEquiv (A : Over X) (x : X) :
-    polyBetweenEvalFamily X X (polyBetweenId X) A x ≃ { a : A.left // A.hom a = x } where
+    polyBetweenEvalFamily X X (polyBetweenId X) A x ≃
+      { a : A.left // A.hom.hom a = x } where
   toFun := fun ⟨_, f⟩ =>
-    let mor := f.left PUnit.unit
-    ⟨mor, congrFun (Over.w f) PUnit.unit⟩
+    let mor := f.left.hom PUnit.unit
+    ⟨mor, ConcreteCategory.congr_hom (Over.w f) PUnit.unit⟩
   invFun := fun ⟨a, ha⟩ =>
-    ⟨PUnit.unit, Over.homMk (fun _ => a) (by funext _; exact ha)⟩
+    ⟨PUnit.unit, Over.homMk (TypeCat.ofHom (fun _ => a))
+      (by apply ConcreteCategory.ext_apply; intro _; exact ha)⟩
   left_inv := fun ⟨i, f⟩ => by
     cases i
     simp only [polyBetweenEvalFamily, polyBetweenId, ccrObjMk, ccrIndex, ccrFamily]
-    apply Sigma.ext <;> rfl
+    apply Sigma.ext
+    · rfl
+    · apply heq_of_eq
+      apply Over.OverMorphism.ext
+      apply ConcreteCategory.ext_apply
+      intro u
+      cases u
+      rfl
   right_inv := fun ⟨a, ha⟩ => rfl
 
 /--
@@ -1623,27 +1704,46 @@ original object.
 -/
 def polyBetweenId_eval_leftEquiv (A : Over X) :
     (polyBetweenEval X X (polyBetweenId X) A).left ≃ A.left where
-  toFun := fun ⟨_, ⟨_, f⟩⟩ => f.left PUnit.unit
-  invFun := fun a => ⟨A.hom a, ⟨PUnit.unit,
-    Over.homMk (fun _ => a) (by funext _; rfl)⟩⟩
-  left_inv := fun ⟨x, ⟨i, f⟩⟩ => by
-    cases i
-    simp only [polyBetweenEval, polyBetweenId, ccrObjMk, ccrIndex, ccrFamily]
-    have hw : A.hom (f.left PUnit.unit) = x := congrFun (Over.w f) PUnit.unit
-    refine Sigma.ext hw ?_
-    simp only
-    congr 1
-    · funext _; simp only [hw]
-    · have hsrc : (Over.mk (Y := PUnit) (fun _ => A.hom (f.left PUnit.unit)) : Over X) =
-                  Over.mk (Y := PUnit) (fun _ => x) := by simp only [hw]
-      have hfl : f.left = fun _ => f.left PUnit.unit := by funext p; cases p; rfl
-      refine heq_of_cast_eq ?_ ?_
-      · exact congrArg (fun s => s ⟶ A) hsrc
-      · apply Over.OverMorphism.ext
-        funext p
-        rw [congrFun hfl p]
-        rw [GebLean.over_cast_left hsrc]
-        simp only [Over.homMk_left]
+  toFun := fun ⟨_, ⟨_, f⟩⟩ => f.left.hom PUnit.unit
+  invFun := fun a => ⟨A.hom.hom a, ⟨PUnit.unit,
+    Over.homMk (TypeCat.ofHom (fun _ => a))
+      (by apply ConcreteCategory.ext_apply; intro _; rfl)⟩⟩
+  left_inv := fun p => by
+    rcases p with ⟨x, ⟨⟨⟩, f⟩⟩
+    dsimp only
+    -- Goal: sigma equality in
+    -- `Σ x, polyBetweenEvalFamily X X (polyBetweenId X) A x`. The
+    -- first components differ by `hx : A.hom.hom (f.left.hom PUnit.unit) = x`;
+    -- we cannot `subst` because `f`'s type depends on `x`. We instead
+    -- establish the equality by generalizing `f` against the motive
+    -- `fun x' => ccrFamily (polyBetweenId X x') PUnit.unit ⟶ A`.
+    have hx :
+        (TypeCat.Hom.hom A.hom) ((TypeCat.Hom.hom f.left) PUnit.unit) = x :=
+      ConcreteCategory.congr_hom (Over.w f) PUnit.unit
+    revert f
+    refine fun f => ?_
+    intro hx
+    -- Reduce to a motive that does not leave `x` free: consume both
+    -- `hx` and `f` under `Eq.rec` with an explicit dependent motive.
+    refine @Eq.ndrec X (A.hom.hom (f.left.hom PUnit.unit))
+      (fun x' =>
+        ∀ (g : ccrFamily (polyBetweenId X x') PUnit.unit ⟶ A),
+          f.left.hom PUnit.unit = g.left.hom PUnit.unit →
+          (⟨A.hom.hom (f.left.hom PUnit.unit),
+              ⟨PUnit.unit,
+                Over.homMk (V := A)
+                  (TypeCat.ofHom (fun _ : PUnit => f.left.hom PUnit.unit))
+                  (by apply ConcreteCategory.ext_apply; intro _; rfl)⟩⟩ :
+              Σ (x : X), polyBetweenEvalFamily X X (polyBetweenId X) A x) =
+            ⟨x', ⟨PUnit.unit, g⟩⟩)
+      ?_ x hx f rfl
+    intro g hfg
+    refine congrArg (Sigma.mk _) ?_
+    refine congrArg (Sigma.mk _) ?_
+    apply Over.OverMorphism.ext
+    apply ConcreteCategory.ext_apply
+    rintro ⟨⟩
+    exact hfg
   right_inv := fun _ => rfl
 
 /--
@@ -1652,9 +1752,19 @@ in the slice category `Over X`.
 -/
 def polyBetweenId_eval_iso (A : Over X) :
     polyBetweenEval X X (polyBetweenId X) A ≅ A :=
-  Over.isoMk (polyBetweenId_eval_leftEquiv X A).toIso (by
-    funext ⟨x, ⟨_, f⟩⟩
-    exact congrFun (Over.w f) PUnit.unit)
+  Over.isoMk (Iso.mk
+    (TypeCat.ofHom (polyBetweenId_eval_leftEquiv X A).toFun)
+    (TypeCat.ofHom (polyBetweenId_eval_leftEquiv X A).invFun)
+    (by apply ConcreteCategory.ext_apply
+        intro p
+        exact (polyBetweenId_eval_leftEquiv X A).left_inv p)
+    (by apply ConcreteCategory.ext_apply
+        intro a
+        exact (polyBetweenId_eval_leftEquiv X A).right_inv a)) (by
+    apply ConcreteCategory.ext_apply
+    intro p
+    obtain ⟨x, _, f⟩ := p
+    exact ConcreteCategory.congr_hom (Over.w f) PUnit.unit)
 
 end IdentityInterpretation
 
@@ -1686,11 +1796,15 @@ def polyBetweenComp_eval_fiberEquiv_toFun (g : PolyFunctorBetweenCat Y Z)
   let pf := x.1.2
   let mor := x.2
   ⟨ig, Over.homMk
-    (fun eg => ⟨(ccrFamily (g z) ig).hom eg, ⟨pf eg,
-      Over.homMk (fun ef => mor.left ⟨eg, ef⟩) (by
-        funext ef
-        exact congrFun (Over.w mor) ⟨eg, ef⟩)⟩⟩)
-    (by funext eg; rfl)⟩
+    (TypeCat.ofHom (fun eg =>
+      ⟨(ccrFamily (g z) ig).hom.hom eg, ⟨pf eg,
+        Over.homMk
+          (TypeCat.ofHom (fun ef => mor.left.hom ⟨eg, ef⟩))
+          (by
+            apply ConcreteCategory.ext_apply
+            intro ef
+            exact ConcreteCategory.congr_hom (Over.w mor) ⟨eg, ef⟩)⟩⟩))
+    (by apply ConcreteCategory.ext_apply; intro _; rfl)⟩
 
 def polyBetweenComp_eval_fiberEquiv_invFun (g : PolyFunctorBetweenCat Y Z)
     (f : PolyFunctorBetweenCat X Y) (A : Over X) (z : Z)
@@ -1699,15 +1813,20 @@ def polyBetweenComp_eval_fiberEquiv_invFun (g : PolyFunctorBetweenCat Y Z)
   let ig := pbefIndex x
   let h := pbefMor x
   let pf' : (eg : (ccrFamily (g z) ig).left) →
-            ccrIndex (f ((ccrFamily (g z) ig).hom eg)) :=
+            ccrIndex (f ((ccrFamily (g z) ig).hom.hom eg)) :=
     fun eg => mor_to_pbe_fiber_index h eg
   ⟨⟨ig, pf'⟩,
    Over.homMk
-     (fun ⟨eg, ef⟩ =>
-       (mor_to_pbe_fiber_mor h eg).left ef)
+     (TypeCat.ofHom (fun (p :
+         Σ (eg : (ccrFamily (g z) ig).left),
+           (ccrFamily (f ((ccrFamily (g z) ig).hom.hom eg))
+             (pf' eg)).left) =>
+       (mor_to_pbe_fiber_mor h p.1).left.hom p.2))
      (by
-       funext ⟨eg, ef⟩
-       exact congrFun (Over.w (mor_to_pbe_fiber_mor h eg)) ef)⟩
+       apply ConcreteCategory.ext_apply
+       rintro ⟨eg, ef⟩
+       exact ConcreteCategory.congr_hom
+         (Over.w (mor_to_pbe_fiber_mor h eg)) ef)⟩
 
 def polyBetweenComp_eval_fiberEquiv (g : PolyFunctorBetweenCat Y Z)
     (f : PolyFunctorBetweenCat X Y) (A : Over X) (z : Z) :
@@ -1720,9 +1839,6 @@ def polyBetweenComp_eval_fiberEquiv (g : PolyFunctorBetweenCat Y Z)
     simp only [polyBetweenComp_eval_fiberEquiv_toFun,
                polyBetweenComp_eval_fiberEquiv_invFun,
                pbefIndex, pbefMor, ptoefIndex, ptoefMor]
-    -- The goal reduces to showing the constructed sigma equals the original
-    -- The inner `mor_to_pbe_fiber_index` on the constructed `Over.homMk` reduces
-    -- because the Y-coordinate proof is `funext (fun _ => rfl)`
     rfl
   right_inv := fun x => by
     obtain ⟨ig, h⟩ := x
@@ -1732,34 +1848,55 @@ def polyBetweenComp_eval_fiberEquiv (g : PolyFunctorBetweenCat Y Z)
                ccrEvalIndex, ccrEvalMor]
     congr 1
     apply Over.OverMorphism.ext
-    funext eg
-    simp only [Over.homMk_left]
+    apply ConcreteCategory.ext_apply
+    intro eg
+    simp only [Over.homMk_left, ConcreteCategory.hom_ofHom]
     apply Sigma.ext
     · exact (mor_to_pbe_y h eg).symm
-    · -- Goal: ⟨mor_to_pbe_fiber_index h eg,
-      --         Over.homMk (fun ef ↦ (mor_to_pbe_fiber_mor h eg).left ef) ⋯⟩
-      --      ≍ (h.left eg).snd
-      -- First show inner_mor = mor_to_pbe_fiber_mor h eg
-      have h_inner_eq : Over.homMk
-          (fun ef => (mor_to_pbe_fiber_mor h eg).left ef)
-          (by funext ef; exact congrFun (Over.w (mor_to_pbe_fiber_mor h eg)) ef) =
-          mor_to_pbe_fiber_mor h eg := by
+    · have h_inner_eq :
+          Over.homMk
+            (TypeCat.ofHom
+              (fun ef => (mor_to_pbe_fiber_mor h eg).left.hom ef))
+            (by
+              apply ConcreteCategory.ext_apply
+              intro ef
+              exact ConcreteCategory.congr_hom
+                (Over.w (mor_to_pbe_fiber_mor h eg)) ef) =
+            mor_to_pbe_fiber_mor h eg := by
         apply Over.OverMorphism.ext
+        apply ConcreteCategory.ext_apply
+        intro ef
         rfl
-      -- Now LHS = ⟨idx, inner⟩ = ⟨idx, mor⟩ = mor_to_pbe_fiber h eg
-      have h_lhs_eq : (⟨mor_to_pbe_fiber_index h eg, mor_to_pbe_fiber_mor h eg⟩ :
-              polyBetweenEvalFamily X Y f A ((ccrFamily (g z) ig).hom eg)) =
+      have h_lhs_eq :
+          (⟨mor_to_pbe_fiber_index h eg, mor_to_pbe_fiber_mor h eg⟩ :
+              polyBetweenEvalFamily X Y f A ((ccrFamily (g z) ig).hom.hom eg)) =
              mor_to_pbe_fiber h eg := rfl
-      -- Use congr_arg to rewrite the inner morphism, then use h_lhs_eq and heq
-      simp only
       have h_lhs_rewrite :
-          (⟨mor_to_pbe_fiber_index h eg, Over.homMk
-              (fun ef => (mor_to_pbe_fiber_mor h eg).left ef)
-              (by funext ef; exact congrFun (Over.w (mor_to_pbe_fiber_mor h eg)) ef)⟩ :
-              polyBetweenEvalFamily X Y f A ((ccrFamily (g z) ig).hom eg)) =
+          (⟨mor_to_pbe_fiber_index h eg,
+              Over.homMk
+                (TypeCat.ofHom
+                  (fun ef => (mor_to_pbe_fiber_mor h eg).left.hom ef))
+                (by
+                  apply ConcreteCategory.ext_apply
+                  intro ef
+                  exact ConcreteCategory.congr_hom
+                    (Over.w (mor_to_pbe_fiber_mor h eg)) ef)⟩ :
+              polyBetweenEvalFamily X Y f A ((ccrFamily (g z) ig).hom.hom eg)) =
           ⟨mor_to_pbe_fiber_index h eg, mor_to_pbe_fiber_mor h eg⟩ := by
         simp only [Sigma.mk.injEq, true_and]
         exact heq_of_eq h_inner_eq
+      change (⟨mor_to_pbe_fiber_index h eg,
+              Over.homMk
+                (TypeCat.ofHom
+                  (fun ef => (mor_to_pbe_fiber_mor h eg).left.hom ef))
+                (by
+                  apply ConcreteCategory.ext_apply
+                  intro ef
+                  exact ConcreteCategory.congr_hom
+                    (Over.w (mor_to_pbe_fiber_mor h eg)) ef)⟩ :
+              polyBetweenEvalFamily X Y f A
+                ((ccrFamily (g z) ig).hom.hom eg)) ≍
+            ((ConcreteCategory.hom h.left) eg).snd
       rw [h_lhs_rewrite, h_lhs_eq]
       exact mor_to_pbe_fiber_heq_raw h eg
 
@@ -1804,7 +1941,7 @@ def polyIdLeftFwdFiber
     ccrFamily (f y) (polyIdLeftFwdBase f y i) ⟶
     ccrFamily
       (polyBetweenComp (polyBetweenId Y) f y) i :=
-  Over.homMk (fun a => ⟨PUnit.unit, a⟩) rfl
+  Over.homMk (TypeCat.ofHom (fun a => ⟨PUnit.unit, a⟩)) rfl
 
 /--
 At each `y : Y`, the backward base map for the left identity iso sends
@@ -1828,7 +1965,7 @@ def polyIdLeftInvFiber
       (polyBetweenComp (polyBetweenId Y) f y)
       (polyIdLeftInvBase f y i) ⟶
     ccrFamily (f y) i :=
-  Over.homMk (fun ⟨_, a⟩ => a) rfl
+  Over.homMk (TypeCat.ofHom (fun p => p.2)) rfl
 
 /--
 Forward morphism for the pointwise left identity iso at `y`.
@@ -1837,7 +1974,7 @@ def polyIdLeftFwd
     (f : PolyFunctorBetweenCat X Y) (y : Y) :
     polyBetweenComp (polyBetweenId Y) f y ⟶ f y :=
   ccrHomMk
-    (polyIdLeftFwdBase f y)
+    (TypeCat.ofHom (polyIdLeftFwdBase f y))
     (polyIdLeftFwdFiber f y)
 
 /--
@@ -1847,7 +1984,7 @@ def polyIdLeftInv
     (f : PolyFunctorBetweenCat X Y) (y : Y) :
     f y ⟶ polyBetweenComp (polyBetweenId Y) f y :=
   ccrHomMk
-    (polyIdLeftInvBase f y)
+    (TypeCat.ofHom (polyIdLeftInvBase f y))
     (polyIdLeftInvFiber f y)
 
 set_option backward.isDefEq.respectTransparency false in
@@ -1856,9 +1993,8 @@ lemma polyIdLeft_hom_inv
     polyIdLeftFwd f y ≫ polyIdLeftInv f y =
       𝟙 (polyBetweenComp (polyBetweenId Y) f y) := by
   ext
-  · -- base (pointwise, after ext did funext)
-    rename_i a
-    obtain ⟨⟨⟩, pf⟩ := a
+  · rename_i x
+    obtain ⟨⟨⟩, pf⟩ := x
     dsimp [polyIdLeftFwd, polyIdLeftInv,
       ccrHomMk, polyIdLeftFwdBase,
       polyIdLeftInvBase,
@@ -1866,8 +2002,7 @@ lemma polyIdLeft_hom_inv
       GrothendieckContra'.id]
     exact Sigma.ext rfl
       (heq_of_eq (funext fun _ => rfl))
-  · -- fiber (with eqToHom transport)
-    dsimp only [polyIdLeftFwd, polyIdLeftInv,
+  · dsimp only [polyIdLeftFwd, polyIdLeftInv,
       ccrHomMk, polyIdLeftFwdFiber,
       polyIdLeftInvFiber,
       GrothendieckContra'.comp,
@@ -1876,13 +2011,25 @@ lemma polyIdLeft_hom_inv
     funext ⟨⟨⟩, pf⟩
     dsimp
     apply Over.OverMorphism.ext
-    funext ⟨⟨⟩, a⟩
+    apply ConcreteCategory.ext_apply
+    rintro ⟨⟨⟩, a⟩
     rfl
 
 lemma polyIdLeft_inv_hom
     (f : PolyFunctorBetweenCat X Y) (y : Y) :
     polyIdLeftInv f y ≫ polyIdLeftFwd f y =
-      𝟙 (f y) := rfl
+      𝟙 (f y) := by
+  refine GrothendieckContra'.ext _ _ rfl ?_
+  dsimp [polyIdLeftFwd, polyIdLeftInv,
+    ccrHomMk, polyIdLeftFwdFiber,
+    polyIdLeftInvFiber,
+    GrothendieckContra'.comp,
+    GrothendieckContra'.id]
+  funext i
+  apply Over.OverMorphism.ext
+  apply ConcreteCategory.ext_apply
+  intro a
+  rfl
 
 /--
 Pointwise isomorphism for left identity at `y`: the composition
@@ -1923,7 +2070,7 @@ def polyIdRightFwdFiber
     ccrFamily (g y) (polyIdRightFwdBase g y i) ⟶
     ccrFamily
       (polyBetweenComp g (polyBetweenId X) y) i :=
-  Over.homMk (fun eg => ⟨eg, PUnit.unit⟩) rfl
+  Over.homMk (TypeCat.ofHom (fun eg => ⟨eg, PUnit.unit⟩)) rfl
 
 def polyIdRightInvBase
     (g : PolyFunctorBetweenCat X Y) (y : Y) :
@@ -1939,20 +2086,20 @@ def polyIdRightInvFiber
       (polyBetweenComp g (polyBetweenId X) y)
       (polyIdRightInvBase g y j) ⟶
     ccrFamily (g y) j :=
-  Over.homMk (fun ⟨eg, _⟩ => eg) rfl
+  Over.homMk (TypeCat.ofHom (fun p => p.1)) rfl
 
 def polyIdRightFwd
     (g : PolyFunctorBetweenCat X Y) (y : Y) :
     polyBetweenComp g (polyBetweenId X) y ⟶
       g y :=
-  ccrHomMk (polyIdRightFwdBase g y)
+  ccrHomMk (TypeCat.ofHom (polyIdRightFwdBase g y))
     (polyIdRightFwdFiber g y)
 
 def polyIdRightInv
     (g : PolyFunctorBetweenCat X Y) (y : Y) :
     g y ⟶
       polyBetweenComp g (polyBetweenId X) y :=
-  ccrHomMk (polyIdRightInvBase g y)
+  ccrHomMk (TypeCat.ofHom (polyIdRightInvBase g y))
     (polyIdRightInvFiber g y)
 
 set_option backward.isDefEq.respectTransparency false in
@@ -1962,8 +2109,8 @@ lemma polyIdRight_hom_inv
       𝟙 (polyBetweenComp g
         (polyBetweenId X) y) := by
   ext
-  · rename_i a
-    obtain ⟨ig, pf⟩ := a
+  · rename_i x
+    obtain ⟨ig, pf⟩ := x
     dsimp [polyIdRightFwd, polyIdRightInv,
       ccrHomMk, polyIdRightFwdBase,
       polyIdRightInvBase,
@@ -1981,13 +2128,25 @@ lemma polyIdRight_hom_inv
     funext ⟨ig, pf⟩
     dsimp
     apply Over.OverMorphism.ext
-    funext ⟨eg, ⟨⟩⟩
+    apply ConcreteCategory.ext_apply
+    rintro ⟨eg, ⟨⟩⟩
     rfl
 
 lemma polyIdRight_inv_hom
     (g : PolyFunctorBetweenCat X Y) (y : Y) :
     polyIdRightInv g y ≫ polyIdRightFwd g y =
-      𝟙 (g y) := rfl
+      𝟙 (g y) := by
+  refine GrothendieckContra'.ext _ _ rfl ?_
+  dsimp [polyIdRightFwd, polyIdRightInv,
+    ccrHomMk, polyIdRightFwdFiber,
+    polyIdRightInvFiber,
+    GrothendieckContra'.comp,
+    GrothendieckContra'.id]
+  funext i
+  apply Over.OverMorphism.ext
+  apply ConcreteCategory.ext_apply
+  intro a
+  rfl
 
 def polyIdRightIsoAt
     (g : PolyFunctorBetweenCat X Y) (y : Y) :
@@ -2049,8 +2208,8 @@ def polyAssocFwdFiber
       (polyAssocFwdBase h g f w i) ⟶
     ccrFamily (polyBetweenComp
       (polyBetweenComp h g) f w) i :=
-  Over.homMk (fun ⟨eh, ⟨eg, ef⟩⟩ =>
-    ⟨⟨eh, eg⟩, ef⟩) rfl
+  Over.homMk (TypeCat.ofHom (fun p =>
+    ⟨⟨p.1, p.2.1⟩, p.2.2⟩)) rfl
 
 def polyAssocInvFiber
     (h : PolyFunctorBetweenCat Z W)
@@ -2063,8 +2222,8 @@ def polyAssocInvFiber
       (polyAssocInvBase h g f w j) ⟶
     ccrFamily (polyBetweenComp
       h (polyBetweenComp g f) w) j :=
-  Over.homMk (fun ⟨⟨eh, eg⟩, ef⟩ =>
-    ⟨eh, ⟨eg, ef⟩⟩) rfl
+  Over.homMk (TypeCat.ofHom (fun p =>
+    ⟨p.1.1, ⟨p.1.2, p.2⟩⟩)) rfl
 
 def polyAssocFwd
     (h : PolyFunctorBetweenCat Z W)
@@ -2072,7 +2231,7 @@ def polyAssocFwd
     (f : PolyFunctorBetweenCat X Y) (w : W) :
     polyBetweenComp (polyBetweenComp h g) f w ⟶
     polyBetweenComp h (polyBetweenComp g f) w :=
-  ccrHomMk (polyAssocFwdBase h g f w)
+  ccrHomMk (TypeCat.ofHom (polyAssocFwdBase h g f w))
     (polyAssocFwdFiber h g f w)
 
 def polyAssocInv
@@ -2081,7 +2240,7 @@ def polyAssocInv
     (f : PolyFunctorBetweenCat X Y) (w : W) :
     polyBetweenComp h (polyBetweenComp g f) w ⟶
     polyBetweenComp (polyBetweenComp h g) f w :=
-  ccrHomMk (polyAssocInvBase h g f w)
+  ccrHomMk (TypeCat.ofHom (polyAssocInvBase h g f w))
     (polyAssocInvFiber h g f w)
 
 lemma polyAssoc_hom_inv
@@ -2091,7 +2250,19 @@ lemma polyAssoc_hom_inv
     polyAssocFwd h g f w ≫
       polyAssocInv h g f w =
     𝟙 (polyBetweenComp
-      (polyBetweenComp h g) f w) := rfl
+      (polyBetweenComp h g) f w) := by
+  refine GrothendieckContra'.ext _ _ ?_ ?_
+  · apply ConcreteCategory.ext_apply
+    rintro ⟨⟨ih, pg⟩, pf⟩
+    rfl
+  · dsimp [polyAssocFwd, polyAssocInv,
+      ccrHomMk, polyAssocFwdFiber, polyAssocInvFiber,
+      GrothendieckContra'.comp, GrothendieckContra'.id]
+    funext ⟨⟨ih, pg⟩, pf⟩
+    apply Over.OverMorphism.ext
+    apply ConcreteCategory.ext_apply
+    rintro ⟨⟨eh, eg⟩, ef⟩
+    rfl
 
 lemma polyAssoc_inv_hom
     (h : PolyFunctorBetweenCat Z W)
@@ -2100,7 +2271,19 @@ lemma polyAssoc_inv_hom
     polyAssocInv h g f w ≫
       polyAssocFwd h g f w =
     𝟙 (polyBetweenComp
-      h (polyBetweenComp g f) w) := rfl
+      h (polyBetweenComp g f) w) := by
+  refine GrothendieckContra'.ext _ _ ?_ ?_
+  · apply ConcreteCategory.ext_apply
+    rintro ⟨ih, pgf⟩
+    rfl
+  · dsimp [polyAssocFwd, polyAssocInv,
+      ccrHomMk, polyAssocFwdFiber, polyAssocInvFiber,
+      GrothendieckContra'.comp, GrothendieckContra'.id]
+    funext ⟨ih, pgf⟩
+    apply Over.OverMorphism.ext
+    apply ConcreteCategory.ext_apply
+    rintro ⟨eh, ⟨eg, ef⟩⟩
+    rfl
 
 def polyAssocIsoAt
     (h : PolyFunctorBetweenCat Z W)
@@ -2194,15 +2377,15 @@ def polyCompGObj
     (fun (p : Σ (ig : ccrIndex G),
       ∀ (e : (ccrFamily G ig).left),
         ccrIndex
-          (f ((ccrFamily G ig).hom e))) =>
-    Over.mk (fun (e : Σ (eg :
+          (f ((ccrFamily G ig).hom.hom e))) =>
+    Over.mk (TypeCat.ofHom (fun (e : Σ (eg :
         (ccrFamily G p.1).left),
       (ccrFamily
-        (f ((ccrFamily G p.1).hom eg))
+        (f ((ccrFamily G p.1).hom.hom eg))
         (p.2 eg)).left) =>
     (ccrFamily
-      (f ((ccrFamily G p.1).hom e.1))
-      (p.2 e.1)).hom e.2))
+      (f ((ccrFamily G p.1).hom.hom e.1))
+      (p.2 e.1)).hom.hom e.2)))
 
 def polyCompGMap
     (f : PolyFunctorBetweenCat X Y)
@@ -2210,32 +2393,51 @@ def polyCompGMap
     (φ : G₁ ⟶ G₂) :
     polyCompGObj f G₁ ⟶ polyCompGObj f G₂ :=
   ccrHomMk
-    (fun ⟨ig, pf⟩ =>
+    (TypeCat.ofHom (fun p =>
+      let ig := p.1
+      let pf := p.2
       let ψ := ccrFiberMor φ ig
       let h := fun e₂ =>
-        congrFun (Over.w ψ) e₂
-      ⟨ccrReindex φ ig,
+        ConcreteCategory.congr_hom (Over.w ψ) e₂
+      ⟨(ccrReindex φ).hom ig,
        fun e₂ => (h e₂).symm ▸
-         pf (ψ.left e₂)⟩)
-    (fun ⟨ig, pf⟩ =>
+         pf (ψ.left.hom e₂)⟩))
+    (fun p =>
+      let ig := p.1
+      let pf := p.2
       let ψ := ccrFiberMor φ ig
       let h := fun e₂ =>
-        congrFun (Over.w ψ) e₂
+        ConcreteCategory.congr_hom (Over.w ψ) e₂
       Over.homMk
-        (fun ⟨e₂, ef⟩ =>
-          ⟨ψ.left e₂,
+        (TypeCat.ofHom (fun q =>
+          let e₂ := q.1
+          let ef := q.2
+          ⟨ψ.left.hom e₂,
            cast (overWTransportLeft f
-             (h e₂) (pf (ψ.left e₂))) ef⟩)
+             (h e₂) (pf (ψ.left.hom e₂))) ef⟩))
         (by
-          funext ⟨e₂, ef⟩
+          apply ConcreteCategory.ext_apply
+          rintro ⟨e₂, ef⟩
           exact (overWTransportHom f (h e₂)
-            (pf (ψ.left e₂)) ef)))
+            (pf (ψ.left.hom e₂)) ef)))
 
 lemma polyCompGMap_id
     (f : PolyFunctorBetweenCat X Y)
     (G : CoprodCovarRepCat' (Over Y)) :
     polyCompGMap f (𝟙 G) =
-      𝟙 (polyCompGObj f G) := rfl
+      𝟙 (polyCompGObj f G) := by
+  refine GrothendieckContra'.ext _ _ ?_ ?_
+  · apply ConcreteCategory.ext_apply
+    rintro ⟨ig, pf⟩
+    rfl
+  · dsimp [polyCompGMap, ccrHomMk, ccrReindex,
+      ccrFiberMor, GrothendieckContra'.comp,
+      GrothendieckContra'.id]
+    funext ⟨ig, pf⟩
+    apply Over.OverMorphism.ext
+    apply ConcreteCategory.ext_apply
+    rintro ⟨e₂, ef⟩
+    rfl
 
 /--
 If two `GrothendieckContra'.Hom` values have equal
@@ -2314,12 +2516,9 @@ lemma polyCompGMap_comp_base
     (polyCompGMap f (φ ≫ ψ)).base =
     (polyCompGMap f φ ≫
       polyCompGMap f ψ).base := by
-  change (polyCompGMap f (φ ≫ ψ)).base =
-    (polyCompGMap f ψ).base ∘
-      (polyCompGMap f φ).base
-  funext ⟨ig, pf⟩
-  dsimp only [Function.comp, polyCompGMap,
-    ccrHomMk]
+  apply ConcreteCategory.ext_apply
+  rintro ⟨ig, pf⟩
+  dsimp only [polyCompGMap, ccrHomMk]
   exact Sigma.ext rfl (heq_of_eq
     (funext fun e₂ =>
       polyCompGMap_comp_base_inner
@@ -2344,7 +2543,7 @@ private lemma over_comp_left_apply
     {X : Type*} {A B C : Over X}
     (f : A ⟶ B) (g : B ⟶ C)
     (x : A.left) :
-    (f ≫ g).left x = g.left (f.left x) :=
+    (f ≫ g).left.hom x = g.left.hom (f.left.hom x) :=
   rfl
 
 /--
@@ -2392,7 +2591,7 @@ private lemma baseAtEq
         (f ((ccrFamily G₁ ig).hom e))) :
     compBaseAt f φ ψ ig pf =
       seqBaseAt f φ ψ ig pf :=
-  congrFun
+  ConcreteCategory.congr_hom
     (polyCompGMap_comp_base f φ ψ)
     ⟨ig, pf⟩
 
@@ -2573,15 +2772,10 @@ private lemma polyCompGMap_comp_cast_elim
   -- LHS and the sequential application on the RHS.
   -- Both produce sigma pairs.
   apply Sigma.ext
-  · -- fst: composition of .left functions
-    rfl
-  · -- snd: cast compositions
-    refine heq_of_eq ?_
-    simp only [Over.homMk_left]
-    -- Goal: cast ⋯ (cast ⋯ ef) = cast ⋯ (cast ⋯ ef)
-    -- Both are double-casts with different proofs.
-    -- Collapse each to a single cast, then they
-    -- are equal by proof irrelevance.
+  · rfl
+  · refine heq_of_eq ?_
+    simp only [Over.homMk_left, TypeCat.hom_ofHom,
+      TypeCat.Fun.coe_mk]
     simp only [cast_cast]
 
 private lemma polyCompGMap_comp_cast_step
@@ -2678,9 +2872,8 @@ private lemma polyCompGMap_comp_fiber_at
       polyCompGMap f ψ) ⟨ig, pf⟩ := by
   rw [ccrComp_fiberMor]
   apply Over.OverMorphism.ext
-  funext ⟨e₃, ef⟩
-  rw [over_comp_left_apply,
-    over_comp_left_apply]
+  apply ConcreteCategory.ext_apply
+  rintro ⟨e₃, ef⟩
   exact polyCompGMap_comp_fiber_at_elem
     f φ ψ ig pf e₃ ef
 
@@ -2724,22 +2917,29 @@ private def polyCompGObj_isoHom
     (G : CoprodCovarRepCat' (Over Y)) :
     polyCompGObj f₁ G ⟶ polyCompGObj f₂ G :=
   ccrHomMk
-    (fun ⟨ig, pf⟩ =>
+    (TypeCat.ofHom (fun p =>
+      let ig := p.1
+      let pf := p.2
       ⟨ig, fun e =>
-        ccrReindex (αf.hom
-          ((ccrFamily G ig).hom e))
-          (pf e)⟩)
-    (fun ⟨ig, pf⟩ =>
+        (ccrReindex (αf.hom
+          ((ccrFamily G ig).hom.hom e))).hom
+          (pf e)⟩))
+    (fun p =>
+      let ig := p.1
+      let pf := p.2
       Over.homMk
-        (fun ⟨e, ef⟩ =>
+        (TypeCat.ofHom (fun q =>
+          let e := q.1
+          let ef := q.2
           ⟨e, (ccrFiberMor (αf.hom
-            ((ccrFamily G ig).hom e))
-            (pf e)).left ef⟩)
+            ((ccrFamily G ig).hom.hom e))
+            (pf e)).left.hom ef⟩))
         (by
-          funext ⟨e, ef⟩
-          exact congrFun (Over.w
+          apply ConcreteCategory.ext_apply
+          rintro ⟨e, ef⟩
+          exact ConcreteCategory.congr_hom (Over.w
             (ccrFiberMor (αf.hom
-              ((ccrFamily G ig).hom e))
+              ((ccrFamily G ig).hom.hom e))
               (pf e))) ef))
 
 /--
@@ -2753,22 +2953,29 @@ private def polyCompGObj_isoInv
     (G : CoprodCovarRepCat' (Over Y)) :
     polyCompGObj f₂ G ⟶ polyCompGObj f₁ G :=
   ccrHomMk
-    (fun ⟨ig, pf⟩ =>
+    (TypeCat.ofHom (fun p =>
+      let ig := p.1
+      let pf := p.2
       ⟨ig, fun e =>
-        ccrReindex (αf.inv
-          ((ccrFamily G ig).hom e))
-          (pf e)⟩)
-    (fun ⟨ig, pf⟩ =>
+        (ccrReindex (αf.inv
+          ((ccrFamily G ig).hom.hom e))).hom
+          (pf e)⟩))
+    (fun p =>
+      let ig := p.1
+      let pf := p.2
       Over.homMk
-        (fun ⟨e, ef⟩ =>
+        (TypeCat.ofHom (fun q =>
+          let e := q.1
+          let ef := q.2
           ⟨e, (ccrFiberMor (αf.inv
-            ((ccrFamily G ig).hom e))
-            (pf e)).left ef⟩)
+            ((ccrFamily G ig).hom.hom e))
+            (pf e)).left.hom ef⟩))
         (by
-          funext ⟨e, ef⟩
-          exact congrFun (Over.w
+          apply ConcreteCategory.ext_apply
+          rintro ⟨e, ef⟩
+          exact ConcreteCategory.congr_hom (Over.w
             (ccrFiberMor (αf.inv
-              ((ccrFamily G ig).hom e))
+              ((ccrFamily G ig).hom.hom e))
               (pf e))) ef))
 
 /--
@@ -2779,13 +2986,12 @@ private lemma ccrReindex_hom_inv_cancel
     {f₁ f₂ : PolyFunctorBetweenCat X Y}
     (αf : f₁ ≅ f₂) (y : Y)
     (i : ccrIndex (f₁ y)) :
-    ccrReindex (αf.inv y)
-      (ccrReindex (αf.hom y) i) = i := by
+    (ccrReindex (αf.inv y)).hom
+      ((ccrReindex (αf.hom y)).hom i) = i := by
   have h : αf.hom y ≫ αf.inv y = 𝟙 (f₁ y) :=
     congrFun αf.hom_inv_id y
-  have := congrFun (show ccrReindex (αf.hom y ≫
-      αf.inv y) = ccrReindex (𝟙 (f₁ y))
-    from congrArg ccrReindex h) i
+  have := ConcreteCategory.congr_hom
+    (congrArg ccrReindex h) i
   rwa [ccrComp_reindex, ccrId_reindex] at this
 
 /--
@@ -2796,13 +3002,12 @@ private lemma ccrReindex_inv_hom_cancel
     {f₁ f₂ : PolyFunctorBetweenCat X Y}
     (αf : f₁ ≅ f₂) (y : Y)
     (i : ccrIndex (f₂ y)) :
-    ccrReindex (αf.hom y)
-      (ccrReindex (αf.inv y) i) = i := by
+    (ccrReindex (αf.hom y)).hom
+      ((ccrReindex (αf.inv y)).hom i) = i := by
   have h : αf.inv y ≫ αf.hom y = 𝟙 (f₂ y) :=
     congrFun αf.inv_hom_id y
-  have := congrFun (show ccrReindex (αf.inv y ≫
-      αf.hom y) = ccrReindex (𝟙 (f₂ y))
-    from congrArg ccrReindex h) i
+  have := ConcreteCategory.congr_hom
+    (congrArg ccrReindex h) i
   rwa [ccrComp_reindex, ccrId_reindex] at this
 
 /--
@@ -2843,7 +3048,7 @@ private lemma polyComp_fiberMor_roundtrip
     (αf : f₁ ≅ f₂) (y : Y)
     (i : ccrIndex (f₁ y)) :
     ccrFiberMor (αf.inv y)
-      (ccrReindex (αf.hom y) i) ≫
+      ((ccrReindex (αf.hom y)).hom i) ≫
     ccrFiberMor (αf.hom y) i =
     eqToHom (congrArg (ccrFamily (f₁ y))
       (ccrReindex_hom_inv_cancel αf y i)) := by
@@ -2855,6 +3060,10 @@ private lemma polyComp_fiberMor_roundtrip
   rw [eq_of_heq_eqToHom heq, Category.comp_id]
 
 set_option backward.isDefEq.respectTransparency false in
+set_option maxHeartbeats 1000000 in
+-- The dependent-type checking around ccrFiberMor / eqToHom
+-- composition requires additional heartbeat budget beyond
+-- the default.
 /--
 The composed fiber morphism from the `inv ≫ hom` roundtrip
 equals `eqToHom` of the reindexing roundtrip equality.
@@ -2864,7 +3073,7 @@ private lemma polyComp_fiberMor_roundtrip_inv
     (αf : f₁ ≅ f₂) (y : Y)
     (i : ccrIndex (f₂ y)) :
     ccrFiberMor (αf.hom y)
-      (ccrReindex (αf.inv y) i) ≫
+      ((ccrReindex (αf.inv y)).hom i) ≫
     ccrFiberMor (αf.inv y) i =
     eqToHom (congrArg (ccrFamily (f₂ y))
       (ccrReindex_inv_hom_cancel αf y i)) := by
@@ -2875,6 +3084,9 @@ private lemma polyComp_fiberMor_roundtrip_inv
       (heq_of_eq (ccrId_fiberMor _ i))
   rw [eq_of_heq_eqToHom heq, Category.comp_id]
 
+set_option maxHeartbeats 1000000 in
+-- The chained polyCompGObj iso elaboration requires additional
+-- heartbeat budget beyond the default.
 /--
 The composition of the two fiber `Over.homMk` morphisms
 from `polyCompGObj_isoInv` and `polyCompGObj_isoHom`
@@ -2887,48 +3099,49 @@ private lemma polyComp_homMk_inv_hom
     (ig : ccrIndex G)
     (pf : (e : (ccrFamily G ig).left) →
       ccrIndex
-        (f₁ ((ccrFamily G ig).hom e))) :
+        (f₁ ((ccrFamily G ig).hom.hom e))) :
     ∀ (h : _ = _),
     (polyCompGObj_isoInv αf G).fiber
-      ((polyCompGObj_isoHom αf G).base
+      ((polyCompGObj_isoHom αf G).base.hom
         ⟨ig, pf⟩) ≫
     (polyCompGObj_isoHom αf G).fiber
       ⟨ig, pf⟩ =
     eqToHom h := by
   intro h
-  dsimp only [polyCompGObj_isoHom,
-    polyCompGObj_isoInv, ccrHomMk]
+  apply Over.OverMorphism.ext
+  rw [Over.comp_left]
   ext ⟨e, ef⟩
-  simp only [Over.comp_left, Over.homMk_left,
-    types_comp_apply]
+  dsimp only [polyCompGObj_isoHom,
+    polyCompGObj_isoInv, ccrHomMk,
+    Over.homMk_left]
   have rt := polyComp_fiberMor_roundtrip αf
-    ((ccrFamily G ig).hom e) (pf e)
-  have rt_left : ((ccrFiberMor
-      (αf.inv ((ccrFamily G ig).hom e))
-      (ccrReindex
-        (αf.hom ((ccrFamily G ig).hom e))
-        (pf e))).left ≫
-    (ccrFiberMor
-      (αf.hom ((ccrFamily G ig).hom e))
-      (pf e)).left) ef =
-    (eqToHom
-      (congrArg
-        (ccrFamily (f₁ ((ccrFamily G ig).hom e)))
-        (ccrReindex_hom_inv_cancel αf
-          ((ccrFamily G ig).hom e)
-          (pf e)))).left ef := by
-    rw [← Over.comp_left, rt]
-  simp only [types_comp_apply] at rt_left
-  rw [rt_left, Over.eqToHom_left,
-    types_eqToHom_eq_cast, Over.eqToHom_left,
-    types_eqToHom_eq_cast]
-  symm
-  exact cast_sigma_eq' _ (funext fun e =>
-    congrArg (fun i =>
-      (ccrFamily
-        (f₁ ((ccrFamily G ig).hom e)) i).left)
-      (ccrReindex_hom_inv_cancel αf
-        ((ccrFamily G ig).hom e) (pf e))) e ef
+    ((ccrFamily G ig).hom.hom e) (pf e)
+  have rt_left :
+      (ccrFiberMor
+          (αf.hom ((ccrFamily G ig).hom.hom e))
+          (pf e)).left.hom
+        ((ccrFiberMor
+          (αf.inv ((ccrFamily G ig).hom.hom e))
+          ((ccrReindex
+            (αf.hom ((ccrFamily G ig).hom.hom e))).hom
+            (pf e))).left.hom ef) =
+      (eqToHom
+        (congrArg
+          (ccrFamily
+            (f₁ ((ccrFamily G ig).hom.hom e)))
+          (ccrReindex_hom_inv_cancel αf
+            ((ccrFamily G ig).hom.hom e)
+            (pf e)))).left.hom ef := by
+    have hcomp :=
+      ConcreteCategory.congr_hom
+        (congrArg Over.Hom.left rt) ef
+    exact hcomp
+  simp only [Over.comp_left, Over.homMk_left]
+  apply Sigma.ext
+  · rfl
+  · refine heq_of_eq ?_
+    rw [rt_left, Over.eqToHom_left,
+      types_eqToHom_eq_cast]
 
 /--
 Base component of the forward-then-backward roundtrip:
@@ -2941,13 +3154,19 @@ private lemma polyCompGObj_iso_hom_inv_base
     (polyCompGObj_isoHom αf G ≫
       polyCompGObj_isoInv αf G).base =
     (GrothendieckContra'.id (polyCompGObj f₁ G)).base := by
-  dsimp [polyCompGObj_isoHom, polyCompGObj_isoInv, ccrHomMk,
-    GrothendieckContra'.comp, GrothendieckContra'.id]
-  funext ⟨ig, pf⟩
+  apply ConcreteCategory.ext_apply
+  rintro ⟨ig, pf⟩
+  dsimp [polyCompGObj_isoHom, polyCompGObj_isoInv,
+    ccrHomMk, GrothendieckContra'.comp,
+    GrothendieckContra'.id]
   exact Sigma.ext rfl (heq_of_eq
     (funext fun e => ccrReindex_hom_inv_cancel αf _ _))
 
 set_option backward.isDefEq.respectTransparency false in
+set_option maxHeartbeats 1000000 in
+-- The dependent-type checking around polyCompGObj iso
+-- compositions requires additional heartbeat budget beyond
+-- the default.
 /--
 Per-index fiber equality for the `hom ≫ inv` roundtrip: at each
 index, the composed fiber morphism preceded by its `eqToHom`
@@ -2977,6 +3196,9 @@ private lemma polyComp_hom_inv_at_idx
     polyCompGObj_isoInv, ccrHomMk,
     ccrReindex_hom_inv_cancel]
 
+set_option maxHeartbeats 1000000 in
+-- The chained polyCompGObj iso elaboration requires additional
+-- heartbeat budget beyond the default.
 /--
 The composition of the two fiber `Over.homMk` morphisms
 from `polyCompGObj_isoHom` and `polyCompGObj_isoInv`
