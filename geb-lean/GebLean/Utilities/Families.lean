@@ -3393,6 +3393,15 @@ def ccrElementsFunctor :
           (coprodCovarRepFunctor.{u, v, w}.map_comp F G)) f.val]
       simp
 
+/--
+Target functor of `ccrNewFamilyNat`.  Sends each `C : Cat` to the
+universe-widened opposite category.  Obtained by composing
+`Cat.opFunctor` with `catULiftFunctor`.
+-/
+def ccrNewFamilyNatTarget :
+    Cat.{v, u} ⥤ Cat.{max w v, max (w + 1) u} :=
+  Cat.opFunctor ⋙ catULiftFunctor
+
 end CCRNaturalPackaging
 
 end GebLean
