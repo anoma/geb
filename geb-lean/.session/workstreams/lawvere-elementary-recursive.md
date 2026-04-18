@@ -425,6 +425,19 @@ Progress so far (as of end of this session):
   * **Task 12e convenience + tests** (commit `c68f57b7`):
     `boundedRec_eq_natRec_of_bounded` alias plus sanity
     examples exercising both correctness theorems.
+  * **Task 12f showcases** (commit `ebcc3cf2`):
+    `ERMor1.natAdd`, `ERMor1.natMul`, `ERMor1.factorial` via
+    `boundedRec`, each with a `@[simp]`-marked correctness
+    theorem proved by `boundedRec_eq_natRec_of_bounded`.
+    `natAdd`/`natMul` use polynomial bounds; `factorial` uses
+    `factN` itself (the function is its own bound since
+    `j! ≤ n!` for `j ≤ n`).  Per-showcase helpers
+    (`*_step_eval`, `*_bound_eval`, `*_trace_direct`) perform
+    the `Nat.rec` iota reduction through `rw [Nat.succ_mul,
+    ← ih] ; exact step_eval _ _ _` since `change`/`show`
+    cannot unify through match-embedded step terms.  Six
+    numerical example tests exercise each showcase at both
+    non-zero and zero inputs.
 
 **Design revision during Phase B** (recorded in
 `docs/superpowers/specs/2026-04-17-er-primrec-design.md`
@@ -437,15 +450,16 @@ revised to a two-part conditional form:
 `interp_boundedRec_of_bounded` (under pointwise bound
 adequacy plus counter monotonicity).
 
-**Current resume point**: Task 12f.  With `boundedRec` now
-available, the showcase applications `natAdd`/`natMul`/
-`factorial` each need a concrete definition via `boundedRec`
-plus correctness via `boundedRec_eq_natRec_of_bounded` with
-explicit polynomial bounds.  See
-`docs/superpowers/plans/2026-04-17-er-primrec.md` Task 12f.
-After Task 12f, Task 13 (`ERMor1.foldBTLOnCode` with internal
-bound from the code).  Then Stage β Task 14 onward per the
-LawvereNatBT plan.
+**Current resume point**: Task 13
+(`ERMor1.foldBTLOnCode`).  The plan calls for creating
+`GebLean/Utilities/ERTreeArith.lean` with an ER-side fold on a
+BTL Gödel code, built on `boundedRec` with an internally-
+supplied bound derived from the code value.  Also adds
+`ERMor1.btlEncodeLeaf` and `ERMor1.btlEncodeNode` supporting
+primitives.  See
+`docs/superpowers/plans/2026-04-17-er-primrec.md` Task 13.
+After Task 13 completes the ER-Primrec mini-phase, Stage β
+Task 14 (`NatBTMor1.toER` back-translation) begins.
 
 Natural checkpoints: end of ER-Primrec mini-phase
 (Task 13 complete, foldBTLOnCode packaged), end of Stage β
