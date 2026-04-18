@@ -33,6 +33,8 @@ open CategoryTheory
 
 universe u_I v_I u_J v_J w_I w'
 
+attribute [local instance] CategoryTheory.uliftCategory
+
 variable (I : Type u_I) [Category.{v_I} I]
 variable (J : Type u_J) [Category.{v_J} J]
 
@@ -165,6 +167,68 @@ def praPositionsNatTarget :
     catULiftFunctor2.{max v_J (w' + 1) u_J, max u_J w',
       max u_I w_I, max u_I v_I (w_I + 1)} ⋙
     Functor.const Cat.{v_I, u_I}ᵒᵖ
+
+/--
+Per-`(J, I)` component of `praPositionsNat`.  Factored out so that
+its universe annotations are visible.  Sends a PRA
+`P : J.unop ⥤ CoprodCovarRepCat (presheafCat I.unop)` to the
+widened presheaf of positions, by whiskering
+`ccrNewIndexFunctor (presheafCat I.unop)` over `J.unop` and then
+post-composing with the `ULift`/`ULiftHom` widening lifts.
+-/
+private def praPositionsNatAppFunctor
+    (J : Cat.{v_J, u_J}ᵒᵖ) (I : Cat.{v_I, u_I}ᵒᵖ) :
+    (↑J.unop ⥤ ↑(ccrPresheafCatFunctor.{u_I, v_I, w_I, w'}.obj I)) ⥤
+      ↑(catULiftFunctor2.{max v_J (w' + 1) u_J, max u_J w',
+          max u_I w_I,
+          max u_I v_I (w_I + 1)}.obj
+        (presheafCatFunctor.{u_J, v_J, w'}.obj J)) :=
+  (Functor.whiskeringRight ↑J.unop _ _).obj
+    (ccrNewIndexFunctor.{max v_I u_I (w_I + 1),
+      max u_I w_I, w'}
+      ↑(presheafCatFunctor.{u_I, v_I, w_I}.obj I)) ⋙
+    CategoryTheory.ULift.upFunctor ⋙
+    CategoryTheory.ULiftHom.up
+
+private def praPositionsNatApp
+    (J : Cat.{v_J, u_J}ᵒᵖ) (I : Cat.{v_I, u_I}ᵒᵖ) :
+    (presheafPRACatBifunctor.{u_I, v_I, u_J, v_J, w_I, w'}.obj
+        J).obj I ⟶
+      (praPositionsNatTarget.{u_I, v_I, u_J, v_J, w_I, w'}.obj
+        J).obj I :=
+  (praPositionsNatAppFunctor.{u_I, v_I, u_J, v_J, w_I, w'}
+    J I).toCatHom
+
+/--
+The natural transformation packaging the positions functors of all
+presheaf PRAs, natural in both `I` and `J`.  Source:
+`presheafPRACatBifunctor`.  Target: `praPositionsNatTarget`.
+
+Each `(praPositionsNat.app J).app I` is the underlying functor
+`PresheafPRACat I J ⥤ (widened Jᵒᵖ ⥤ Type w')` obtained by
+whiskering `ccrNewIndexFunctor (presheafCat I)` with `Jᵒᵖ` and
+post-composing with the universe-widening lifts used by
+`praPositionsNatTarget`.
+
+Naturality in `I` reduces (via `ccrNewIndexNat`) to the
+index-preservation property of `coprodCovarRepFunctor.map`.
+Naturality in `J` follows from `Functor.whiskeringRight`'s
+functoriality; `ccrNewIndexNat` has no `J`-dependence.
+-/
+def praPositionsNat :
+    presheafPRACatBifunctor.{u_I, v_I, u_J, v_J, w_I, w'} ⟶
+      praPositionsNatTarget.{u_I, v_I, u_J, v_J, w_I, w'} where
+  app J :=
+    { app := fun I =>
+        praPositionsNatApp.{u_I, v_I, u_J, v_J, w_I, w'} J I
+      naturality := fun I₁ I₂ F => by
+        apply Cat.Hom.ext
+        rfl }
+  naturality J₁ J₂ G := by
+    apply NatTrans.ext
+    funext I
+    apply Cat.Hom.ext
+    rfl
 
 /--
 Temporary bridge to the non-widened form of the positions presheaf.
