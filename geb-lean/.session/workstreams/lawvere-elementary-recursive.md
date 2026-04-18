@@ -438,6 +438,21 @@ Progress so far (as of end of this session):
     cannot unify through match-embedded step terms.  Six
     numerical example tests exercise each showcase at both
     non-zero and zero inputs.
+  * **Task 13 Phase 1** (commit `b309fbe2`): creates
+    `GebLean/Utilities/ERTreeArith.lean` with `ERMor1.twoN`,
+    `ERMor1.btlEncodeLeaf`, `ERMor1.btlEncodeNode`.
+  * **Task 13 Phase 2** (commit `ad1c0cf2`):
+    `ERMor1.foldBTLOnCode` with the same conditional
+    correctness pattern as `boundedRec` — a user-supplied
+    `bound` parameter plus pointwise-adequacy and counter-
+    monotonicity hypotheses.  Construction: single
+    `boundedSearch` over Szudzik-paired `(a, b)` candidates
+    for a Gödel β-witness satisfying the course-of-values
+    recurrence (leaf case at even `j`, node case at odd `j`),
+    then β-extraction at `code`.  Support helpers mirror the
+    `boundedRec` structure: `foldBTLBody`,
+    `foldBTLPred_eq_one_iff_trace`,
+    `foldBTLPred_trace_match`.
 
 **Design revision during Phase B** (recorded in
 `docs/superpowers/specs/2026-04-17-er-primrec-design.md`
@@ -450,16 +465,30 @@ revised to a two-part conditional form:
 `interp_boundedRec_of_bounded` (under pointwise bound
 adequacy plus counter monotonicity).
 
-**Current resume point**: Task 13
-(`ERMor1.foldBTLOnCode`).  The plan calls for creating
-`GebLean/Utilities/ERTreeArith.lean` with an ER-side fold on a
-BTL Gödel code, built on `boundedRec` with an internally-
-supplied bound derived from the code value.  Also adds
-`ERMor1.btlEncodeLeaf` and `ERMor1.btlEncodeNode` supporting
-primitives.  See
-`docs/superpowers/plans/2026-04-17-er-primrec.md` Task 13.
-After Task 13 completes the ER-Primrec mini-phase, Stage β
-Task 14 (`NatBTMor1.toER` back-translation) begins.
+**Current resume point**: Stage β Task 14
+(`NatBTMor1.toER` back-translation).  The ER-Primrec mini-
+phase is complete.  Task 14 translates `NatBTMor1` morphisms
+to `ERMor1` terms via mutual recursion, using
+`ERMor1.foldBTLOnCode` at BT-sort `foldBT` constructors.
+Each invocation will supply an explicit bound ER term until
+Task 14.5 (below) produces a generic wrapper.
+
+**Task 14.5 (inserted)**: after Task 14 ships, before Task 15,
+research and implement a generic wrapper
+`ERMor1.foldBTLOnCodeSafe` (or similar) that hides the bound
+parameter from client code.  The user's working hypothesis:
+tree recursion should have depth 1 natively, possibly with
+mutuality over (ℕ, BT) simultaneously, matching Leivant's
+two-sort ramified-recurrence characterization of E_3.  Task
+14 will have provided concrete examples of bound-construction
+patterns; examining those informs what the wrapper needs to
+handle and whether the depth-1-mutual-recursion approach is
+feasible in our setting.  Reference literature: Leivant 1999
+(`.claude/docs/ramified-recurrence-computational-complexity-iii.pdf`)
+and Beckmann-Weiermann 2000.
+
+After Task 14 and 14.5, Stage β Task 15 onward per the
+LawvereNatBT plan.
 
 Natural checkpoints: end of ER-Primrec mini-phase
 (Task 13 complete, foldBTLOnCode packaged), end of Stage β
