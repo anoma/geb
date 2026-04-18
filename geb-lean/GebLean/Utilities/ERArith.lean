@@ -1259,4 +1259,118 @@ def ERMor1.powN : ERMor1 2 :=
   simp only [ERMor1.interp_comp, ERMor1.interp_expER,
     ERMor1.interp_proj]
 
+/-! ### Bounded primitive recursion -/
+
+/-- ER-derived bounded primitive recursion.  At outer arity
+`k + 1` with slot `0` the iteration counter `n` and slots
+`1..k` the parameter context `ctx`, returns
+`min (β(a, b, n)) (bound.interp (cons n ctx))`, where `(a, b)`
+is the Szudzik-paired candidate produced by `boundedSearch`
+over the range `((n + B + 3)!)^((n + B + 3)!) + 1` with
+`B := bound.interp (cons n ctx)` and the predicate checking
+that the β-sequence matches a run of `(base, step)` at every
+index up to `n`.  Composing with `minN` against `bound` makes
+the output unconditionally bounded by `bound.interp
+(cons n ctx)`.  Correctness against `Nat.rec` holds when
+`bound` pointwise dominates the trace. -/
+def ERMor1.boundedRec {k : ℕ}
+    (base : ERMor1 k) (step : ERMor1 (k + 2))
+    (bound : ERMor1 (k + 1)) : ERMor1 (k + 1) :=
+  let K : ERMor1 (k + 1) :=
+    ERMor1.comp ERMor1.succ (fun (_ : Fin 1) =>
+      ERMor1.comp ERMor1.succ (fun (_ : Fin 1) =>
+        ERMor1.comp ERMor1.succ (fun (_ : Fin 1) =>
+          ERMor1.comp ERMor1.addN (fun i => match i with
+            | ⟨0, _⟩ => ERMor1.proj 0
+            | ⟨1, _⟩ => bound))))
+  let Kfact : ERMor1 (k + 1) :=
+    ERMor1.comp ERMor1.factN (fun (_ : Fin 1) => K)
+  let range : ERMor1 (k + 1) :=
+    ERMor1.comp ERMor1.succ (fun (_ : Fin 1) =>
+      ERMor1.comp ERMor1.powN (fun i => match i with
+        | ⟨0, _⟩ => Kfact
+        | ⟨1, _⟩ => Kfact))
+  let aTerm : ERMor1 (k + 3) :=
+    ERMor1.comp ERMor1.natUnpairFst
+      (fun (_ : Fin 1) => ERMor1.proj 1)
+  let bTerm : ERMor1 (k + 3) :=
+    ERMor1.comp ERMor1.natUnpairSnd
+      (fun (_ : Fin 1) => ERMor1.proj 1)
+  let ctxTerm : Fin k → ERMor1 (k + 3) :=
+    fun i => ERMor1.proj ⟨i.val + 3, by omega⟩
+  let ctxTermCand : Fin k → ERMor1 (k + 2) :=
+    fun i => ERMor1.proj ⟨i.val + 2, by omega⟩
+  let aCand : ERMor1 (k + 2) :=
+    ERMor1.comp ERMor1.natUnpairFst
+      (fun (_ : Fin 1) => ERMor1.proj 0)
+  let bCand : ERMor1 (k + 2) :=
+    ERMor1.comp ERMor1.natUnpairSnd
+      (fun (_ : Fin 1) => ERMor1.proj 0)
+  let stepBody : ERMor1 (k + 3) :=
+    ERMor1.comp step (fun i => match i with
+      | ⟨0, _⟩ => ERMor1.proj 0
+      | ⟨1, _⟩ =>
+          ERMor1.comp ERMor1.beta (fun j => match j with
+            | ⟨0, _⟩ => aTerm
+            | ⟨1, _⟩ => bTerm
+            | ⟨2, _⟩ => ERMor1.proj 0)
+      | ⟨j + 2, h⟩ => ctxTerm ⟨j, by omega⟩)
+  let p2Body : ERMor1 (k + 3) :=
+    ERMor1.comp ERMor1.boolEqNat (fun i => match i with
+      | ⟨0, _⟩ =>
+          ERMor1.comp ERMor1.beta (fun j => match j with
+            | ⟨0, _⟩ => aTerm
+            | ⟨1, _⟩ => bTerm
+            | ⟨2, _⟩ =>
+                ERMor1.comp ERMor1.succ
+                  (fun (_ : Fin 1) => ERMor1.proj 0))
+      | ⟨1, _⟩ => stepBody)
+  let p2Swapped : ERMor1 (k + 2) :=
+    ERMor1.comp (ERMor1.bprod p2Body)
+      (fun (i : Fin (k + 3)) => match i with
+        | ⟨0, _⟩ => ERMor1.proj 1
+        | ⟨1, _⟩ => ERMor1.proj 0
+        | ⟨2, _⟩ => ERMor1.proj 0
+        | ⟨j + 3, h⟩ =>
+            ERMor1.proj ⟨j + 2, by omega⟩)
+  let p1 : ERMor1 (k + 2) :=
+    ERMor1.comp ERMor1.boolEqNat (fun i => match i with
+      | ⟨0, _⟩ =>
+          ERMor1.comp ERMor1.beta (fun j => match j with
+            | ⟨0, _⟩ => aCand
+            | ⟨1, _⟩ => bCand
+            | ⟨2, _⟩ => ERMor1.zeroN (k + 2))
+      | ⟨1, _⟩ =>
+          ERMor1.comp base ctxTermCand)
+  let pred : ERMor1 (k + 2) :=
+    ERMor1.comp ERMor1.boolAnd (fun i => match i with
+      | ⟨0, _⟩ => p1
+      | ⟨1, _⟩ => p2Swapped)
+  let search : ERMor1 (k + 1) :=
+    ERMor1.boundedSearch range pred
+  let betaAtN : ERMor1 (k + 1) :=
+    ERMor1.comp ERMor1.beta (fun i => match i with
+      | ⟨0, _⟩ =>
+          ERMor1.comp ERMor1.natUnpairFst
+            (fun (_ : Fin 1) => search)
+      | ⟨1, _⟩ =>
+          ERMor1.comp ERMor1.natUnpairSnd
+            (fun (_ : Fin 1) => search)
+      | ⟨2, _⟩ => ERMor1.proj 0)
+  ERMor1.comp ERMor1.minN (fun i => match i with
+    | ⟨0, _⟩ => betaAtN
+    | ⟨1, _⟩ => bound)
+
+/-- Unconditional upper bound for `boundedRec`: its
+interpretation is dominated by `bound.interp (cons n ctx)`
+for every counter `n` and every parameter context `ctx`. -/
+theorem ERMor1.interp_boundedRec_le_bound {k : ℕ}
+    (base : ERMor1 k) (step : ERMor1 (k + 2))
+    (bound : ERMor1 (k + 1)) (ctx : Fin (k + 1) → ℕ) :
+    (ERMor1.boundedRec base step bound).interp ctx ≤
+      bound.interp ctx := by
+  unfold ERMor1.boundedRec
+  rw [ERMor1.interp_comp, ERMor1.interp_minN]
+  exact Nat.min_le_right _ _
+
 end GebLean
