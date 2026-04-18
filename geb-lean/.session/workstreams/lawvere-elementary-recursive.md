@@ -362,34 +362,103 @@ Progress so far (as of end of this session):
   with `Nat.foldBTLOnCode` (course-of-values BTL fold on a
   Gödel code), plus parity reduction lemmas and
   `Nat.foldBTLOnCode_encode` correctness linking to `BTL.fold`.
-* **Stage β original Task 13 Part 2 blocked → redesigned**:
+* **Stage β original Task 13 Part 2 obstructed → redesigned**:
   `ERMor1.foldBTLOnCode` requires a primitive-recursion
   combinator in Wikipedia-literal ER, which does not follow
   directly from the 7 ER generators.  Redesigned as the
-  "ER-Primrec" mini-phase (Tasks 12a-12f in the new spec
-  `docs/superpowers/specs/2026-04-17-er-primrec-design.md`):
-  derived `ERMor1.natRec` via Gödel β-function and bounded
-  search, plus supporting `div`/`mod`/`beta`/`boundedSearch`
-  primitives.  After the mini-phase, original Task 13 Part 2
-  becomes a routine application of `natRec` (now just "Task
-  13").
+  "ER-Primrec" mini-phase (Tasks 12a-12f in the spec
+  `docs/superpowers/specs/2026-04-17-er-primrec-design.md`
+  and the plan
+  `docs/superpowers/plans/2026-04-17-er-primrec.md`).
+  
+  Further refinement within the mini-phase: the originally-
+  proposed generic `ERMor1.natRec` combinator cannot exist in
+  Wikipedia-literal ER (iterating an arbitrary ER step n
+  times escapes E_3, witness tetration per Phase 4f.2).  The
+  correct combinator is bounded primitive recursion:
+  `ERMor1.boundedRec (base) (step) (bound)` with truncation
+  semantics `min (Nat.rec ...) bound.interp`.  This is the
+  Meyer-Ritchie-Kleene characterization of E_3.  When the
+  client proves the bound dominates, a convenience lemma
+  `boundedRec_eq_natRec_of_bounded` gives exact `Nat.rec`
+  semantics.
 
-Resume via superpowers:subagent-driven-development at
-Task 12a (rename `Utilities/ERTreeArith.lean` →
-`Utilities/ERArith.lean`), then Tasks 12b-12f and Task 13 per
-the ER-Primrec spec.  The implementation plan for the
-mini-phase will be produced via the superpowers:writing-plans
-skill.
+* **ER-Primrec mini-phase progress** (as of end of this
+  session):
+  * **Task 12a complete** (commit `e068f938`): renamed
+    `Utilities/ERTreeArith.lean` → `Utilities/ERArith.lean`,
+    updated docstring header, updated `GebLean.lean` import.
+  * **Task 12b complete** (commit `bd8fcf63`): ER-derived
+    `ERMor1.div` and `ERMor1.mod` with `@[simp]`
+    correctness theorems (`interp_div`, `interp_mod` linking
+    to `Nat.div`/`Nat.mod`).  `div` uses bounded search via
+    `bsum` + `signN` clamping for the `b = 0` case.
+  * **Task 12c complete** (commit `7bf90c6b`): `ERMor1.beta`
+    as direct arithmetic (`mod (proj 0) (succ (mulN (succ
+    (proj 2), proj 1)))`) with `@[simp] interp_beta`.
+    `Nat.beta_exists` wraps mathlib's `Nat.unbeta` from
+    `Mathlib.Logic.Godel.GodelBetaFunction` (Path A — mathlib
+    already has β).
+  * **Task 12d complete** (commit `d2cb3a1a`):
+    `ERMor1.boundedSearch (bound) (pred)` returning least
+    witness below bound, `bound + 1` if none.  Correctness via
+    two helper lemmas (`natBSum_pos_iff_exists`,
+    `natBSum_firstWitness`) and main theorem
+    `interp_boundedSearch` (takes `hpred : ∀ m, pred.interp
+    (cons m ctx) ≤ 1` hypothesis).  Convenience
+    `boundedSearch_eq_unique` for downstream use.
+  * **Task 12e in progress** (commit `c6223f68`):
+    `ERMor1.minN` helper for truncation semantics.  Remaining
+    work for `boundedRec` definition and correctness: ~440
+    lines, ~3 focused sessions.  Detailed breakdown in the
+    plan and the sub-section below.
 
-Natural checkpoints: end of ER-Primrec mini-phase (Task 13
-complete, foldBTLOnCode packaged), end of Stage β (Task 20),
-end of Stage γ (Task 24), completion (Task 25).
+**Current resume point**: `boundedRec` construction.  Read
+the plan at `docs/superpowers/plans/2026-04-17-er-primrec.md`
+Task 12e (renamed from "natRec" to "boundedRec").  Mathlib's
+internal CRT bound (`Nat.supOfSeq`, `Nat.coprimes`, etc.) is
+`private` in `GodelBetaFunction.lean`, so a custom bounded
+β-existence lemma is required.  The public APIs
+(`Nat.chineseRemainderOfFinset`,
+`chineseRemainderOfFinset_lt_prod`, `Nat.coprime_mul_succ`)
+support the construction: build coprimes `c_i = (i+1)*M!+1`
+explicitly, apply CRT, bound `a < ∏ c_i` via
+`chineseRemainderOfFinset_lt_prod`.
+
+Remaining 12e sub-work (ordered):
+
+1. **Custom CRT-bounded β-existence** (~80 lines):
+   `Nat.bounded_beta_exists` returning explicit `(a, b)` with
+   bound `≤ elementary expr in max(sequence) + length`.
+2. **ER-derived factorial + dynamic power** (~40 lines):
+   `ERMor1.factN` via `bprod succ`; dynamic `ERMor1.powN`
+   generalizing existing `expER` from `LawvereERArith.lean`.
+3. **`boundedRecSearchRange`, `boundedRecPred`** (~100
+   lines): encode the truncated-trace correctness predicate
+   on packed `(a, b)` via `natPair`/`beta`/`minN`/`leN`.
+4. **`boundedRec` definition** (~20 lines): composes
+   `boundedSearch` + `natPair`/`natUnpair*` + `beta` + `minN`.
+5. **`interp_boundedRec` correctness** (~150 lines):
+   induction on `n`, invoking steps 1-4 at each case.
+6. **`boundedRec_eq_natRec_of_bounded`** (~30 lines):
+   convenience lemma for when the bound dominates.
+7. **Sanity `#guard` / example** (~20 lines).
+
+After Task 12e, Task 12f (showcase: `natAdd`, `natMul`,
+`factorial` derived via `boundedRec`, each supplying its own
+explicit bound) and Task 13 (`ERMor1.foldBTLOnCode` with
+internal bound from the code).  Then Stage β Task 14 onward
+per the LawvereNatBT plan.
+
+Natural checkpoints: end of ER-Primrec mini-phase
+(Task 13 complete, foldBTLOnCode packaged), end of Stage β
+(Task 20), end of Stage γ (Task 24), completion (Task 25).
 
 The three-stage factorization's distinguishing property:
 every NatBT computation explicitly back-translates to an ER
-computation via Szudzik + primitive-recursion simulation
-(Task 14's `NatBTMor1.toER` invoking `ERMor1.natRec` from the
-ER-Primrec mini-phase), which makes the equivalence
+computation via Szudzik + bounded primitive-recursion
+(Task 14's `NatBTMor1.toER` invoking `ERMor1.boundedRec` from
+the ER-Primrec mini-phase), which makes the equivalence
 constructive without appealing to choice or classical
 reasoning, and preserves the `ERMor1` inductive as exactly
 the 7 Wikipedia generators.
