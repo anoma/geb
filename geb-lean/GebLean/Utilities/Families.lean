@@ -3402,6 +3402,81 @@ def ccrNewFamilyNatTarget :
     Cat.{v, u} ⥤ Cat.{max w v, max (w + 1) u} :=
   Cat.opFunctor ⋙ catULiftFunctor
 
+/--
+Naturality of `ccrNewFamilyFunctor` in `C`, stated pre-widening.
+On a morphism `f : e1 ⟶ e2` in `(ccrNewIndexFunctor C).Elements`,
+applying `ccrNewFamilyFunctor D` to the reindexed morphism equals
+applying `F.op` to the result of `ccrNewFamilyFunctor C` on `f`.
+-/
+private lemma ccrNewFamilyFunctor_naturality
+    {C D : Cat.{v, u}} (F : C ⟶ D)
+    {e1 e2 : (ccrNewIndexFunctor.{u, v, w} C.α).Elements}
+    (f : e1 ⟶ e2) :
+    (ccrNewFamilyFunctor.{u, v, w} D.α).map
+        ((ccrElementsFunctor.map.{u, v, w} F).map f) =
+      (Cat.opFunctor.{v, u}.map F).toFunctor.map
+        ((ccrNewFamilyFunctor.{u, v, w} C.α).map f) := by
+  apply Quiver.Hom.unop_inj
+  dsimp only [ccrNewFamilyFunctor, ccrElementsFunctor.map,
+    Cat.opFunctor, Functor.op_map, Quiver.Hom.unop_op,
+    unop_comp]
+  change _ =
+    F.toFunctor.map (eqToHom _ ≫ ccrNewFiberMor f.val e1.snd)
+  rw [F.toFunctor.map_comp, eqToHom_map]
+  congr 1
+  unfold ccrNewFiberMor coprodCovarRepFunctor
+    freeProdCompletionFunctor
+  dsimp only [Functor.comp_map, Cat.opFunctor, Functor.op_map,
+    Quiver.Hom.unop_op, Functor.toCatHom_toFunctor,
+    Cat.Hom.comp_toFunctor, grothendieckFunctor,
+    familyBifunctor, familyNatTrans, familyPostcomp]
+  simp [Grothendieck.map_map_fiber]
+
+/--
+Per-`C` widened family functor.  Obtained by post-composing the
+existing `ccrNewFamilyFunctor C` with the `ULift`/`ULiftHom` lifts
+that take its `Cᵒᵖ` target into the widened opposite category
+used by `ccrNewFamilyNatTarget`.
+-/
+def ccrNewFamilyNatFunctor
+    (C : Type u) [Category.{v} C] :
+    (ccrNewIndexFunctor.{u, v, w} C).Elements ⥤
+      (ccrNewFamilyNatTarget.{u, v, w}.obj (Cat.of C)).α :=
+  ccrNewFamilyFunctor.{u, v, w} C ⋙
+    CategoryTheory.ULift.upFunctor ⋙
+    CategoryTheory.ULiftHom.up
+
+/--
+The natural transformation packaging the per-`C` family functors.
+Source: `ccrElementsFunctor.{u, v, w}`.  Target:
+`ccrNewFamilyNatTarget.{u, v, w}`.
+
+On a morphism `F : C ⟶ D` of `Cat`, the naturality square commutes
+because `coprodCovarRepFunctor.map F` acts on the family component
+of each object by postcomposition with `F`, which matches the
+action of `F.op` on the widened target side.
+-/
+def ccrNewFamilyNat :
+    ccrElementsFunctor.{u, v, w} ⟶
+      ccrNewFamilyNatTarget.{u, v, w} where
+  app C :=
+    (ccrNewFamilyNatFunctor.{u, v, w} C.α).toCatHom
+  naturality {C D} F := by
+    apply Cat.Hom.ext
+    refine CategoryTheory.Functor.ext ?_ ?_
+    · intro _; rfl
+    · intros e1 e2 f
+      simp only [eqToHom_refl, Category.id_comp, Category.comp_id,
+        Cat.Hom.comp_toFunctor, Functor.toCatHom_toFunctor,
+        Functor.comp_map]
+      unfold ccrNewFamilyNatFunctor ccrNewFamilyNatTarget
+        catULiftFunctor
+      dsimp only [Functor.comp_obj, Functor.comp_map,
+        Functor.toCatHom_toFunctor, ULift.upFunctor_map,
+        ULift.downFunctor_map, ULiftHom.down_map]
+      apply congrArg
+      exact ccrNewFamilyFunctor_naturality F f
+
 end CCRNaturalPackaging
 
 end GebLean
