@@ -43,3 +43,41 @@ example :
     PUnit PUnit
 
 end CollapseTest
+
+/-! ## Naturality in I and J, small examples -/
+
+section NaturalityTests
+
+-- The identity functor PUnitᵒᵖ ⥤ PUnitᵒᵖ, packaged as a Cat morphism.
+private def baseIdFunctor :
+    Cat.of (PUnitᵒᵖ : Type 0) ⟶ Cat.of (PUnitᵒᵖ : Type 0) :=
+  (CategoryTheory.Functor.id _).toCatHom
+
+-- Naturality of the inner nat-trans at fixed J = PUnitᵒᵖ,
+-- morphism baseIdFunctor.op in I.
+example :
+    (presheafPRACatBifunctor.{0, 0, 0, 0, 0, 0}.obj
+      (Opposite.op (Cat.of (PUnitᵒᵖ : Type 0)))).map baseIdFunctor.op ≫
+        (praPositionsNat.{0, 0, 0, 0, 0, 0}.app
+          (Opposite.op (Cat.of (PUnitᵒᵖ : Type 0)))).app
+          (Opposite.op (Cat.of (PUnitᵒᵖ : Type 0))) =
+      (praPositionsNat.{0, 0, 0, 0, 0, 0}.app
+        (Opposite.op (Cat.of (PUnitᵒᵖ : Type 0)))).app
+        (Opposite.op (Cat.of (PUnitᵒᵖ : Type 0))) ≫
+        (praPositionsNatTarget.{0, 0, 0, 0, 0, 0}.obj
+          (Opposite.op (Cat.of (PUnitᵒᵖ : Type 0)))).map baseIdFunctor.op :=
+  (praPositionsNat.{0, 0, 0, 0, 0, 0}.app
+    (Opposite.op (Cat.of (PUnitᵒᵖ : Type 0)))).naturality baseIdFunctor.op
+
+-- Naturality of the outer nat-trans in J at baseIdFunctor.op.
+example :
+    presheafPRACatBifunctor.{0, 0, 0, 0, 0, 0}.map baseIdFunctor.op ≫
+      praPositionsNat.{0, 0, 0, 0, 0, 0}.app
+        (Opposite.op (Cat.of (PUnitᵒᵖ : Type 0))) =
+      praPositionsNat.{0, 0, 0, 0, 0, 0}.app
+        (Opposite.op (Cat.of (PUnitᵒᵖ : Type 0))) ≫
+        praPositionsNatTarget.{0, 0, 0, 0, 0, 0}.map
+          baseIdFunctor.op :=
+  praPositionsNat.{0, 0, 0, 0, 0, 0}.naturality baseIdFunctor.op
+
+end NaturalityTests
