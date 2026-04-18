@@ -1408,14 +1408,12 @@ def ERMor1.boundedRecStepBody {k : ℕ}
 /-- Step-case check: an arity-`k+2` term with slot 0 the
 candidate, slot 1 the trace length `n`, slots 2..k+1 the
 parameter context.  Evaluates to `1` iff the β-sequence
-transitions by `step` at every index `j < n + 1`. -/
+transitions by `step` at every index `j < n`. -/
 def ERMor1.boundedRecStepCheck {k : ℕ}
     (step : ERMor1 (k + 2)) : ERMor1 (k + 2) :=
   ERMor1.comp (ERMor1.bprod (ERMor1.boundedRecStepBody step))
     (fun (i : Fin (k + 3)) => match i with
-      | ⟨0, _⟩ =>
-          ERMor1.comp ERMor1.succ
-            (fun (_ : Fin 1) => ERMor1.proj 1)
+      | ⟨0, _⟩ => ERMor1.proj 1
       | ⟨1, _⟩ => ERMor1.proj 0
       | ⟨2, _⟩ => ERMor1.proj 1
       | ⟨j + 3, h⟩ =>
@@ -1645,13 +1643,13 @@ theorem ERMor1.boundedRecStepCheck_le_one {k : ℕ}
 
 /-- Interpretation of `boundedRecStepCheck` at
 `Fin.cons cand (Fin.cons n ctx)` equals the bounded product
-of `boundedRecStepBody` values over `j ∈ [0, n + 1)`. -/
+of `boundedRecStepBody` values over `j ∈ [0, n)`. -/
 theorem ERMor1.interp_boundedRecStepCheck_as_bprod {k : ℕ}
     (step : ERMor1 (k + 2)) (cand n : ℕ)
     (ctx : Fin k → ℕ) :
     (ERMor1.boundedRecStepCheck step).interp
         (Fin.cons cand (Fin.cons n ctx)) =
-      natBProd (n + 1) (fun j =>
+      natBProd n (fun j =>
         (ERMor1.boundedRecStepBody step).interp
           (Fin.cons j
             (Fin.cons cand (Fin.cons n ctx)))) := by
@@ -1659,16 +1657,14 @@ theorem ERMor1.interp_boundedRecStepCheck_as_bprod {k : ℕ}
   rw [ERMor1.interp_comp]
   set argFn : Fin (k + 3) → ℕ := fun i =>
     ((fun i : Fin (k + 3) => match i with
-      | ⟨0, _⟩ =>
-          ERMor1.comp ERMor1.succ
-            (fun (_ : Fin 1) => ERMor1.proj 1)
+      | ⟨0, _⟩ => ERMor1.proj 1
       | ⟨1, _⟩ => ERMor1.proj 0
       | ⟨2, _⟩ => ERMor1.proj 1
       | ⟨j + 3, h⟩ =>
           ERMor1.proj (⟨j + 2, by omega⟩ : Fin (k + 2))) i).interp
       (Fin.cons cand (Fin.cons n ctx))
   rw [ERMor1.interp_bprod]
-  have h0 : argFn 0 = n + 1 := rfl
+  have h0 : argFn 0 = n := rfl
   have htail :
       Fin.tail argFn = Fin.cons cand (Fin.cons n ctx) := by
     funext ⟨p, hp⟩
@@ -1680,13 +1676,13 @@ theorem ERMor1.interp_boundedRecStepCheck_as_bprod {k : ℕ}
   rw [h0, htail]
 
 /-- Step-check evaluates to `1` iff the trace recurrence holds
-at every index `j < n + 1`. -/
+at every index `j < n`. -/
 theorem ERMor1.boundedRecStepCheck_eq_one_iff {k : ℕ}
     (step : ERMor1 (k + 2)) (cand n : ℕ)
     (ctx : Fin k → ℕ) :
     (ERMor1.boundedRecStepCheck step).interp
         (Fin.cons cand (Fin.cons n ctx)) = 1 ↔
-      ∀ j, j < n + 1 →
+      ∀ j, j < n →
         cand.unpair.1 %
           (1 + (j + 1 + 1) * cand.unpair.2) =
           step.interp (Fin.cons j
@@ -1729,7 +1725,7 @@ theorem Nat.mul_eq_one_iff_both
     rw [hx1, hy1]
 
 /-- Predicate evaluates to `1` iff both the base and step
-traces match at every index up to `n`. -/
+traces match at every index up to `n - 1`. -/
 theorem ERMor1.boundedRecPred_eq_one_iff_trace {k : ℕ}
     (base : ERMor1 k) (step : ERMor1 (k + 2))
     (cand n : ℕ) (ctx : Fin k → ℕ) :
@@ -1737,7 +1733,7 @@ theorem ERMor1.boundedRecPred_eq_one_iff_trace {k : ℕ}
         (Fin.cons cand (Fin.cons n ctx)) = 1 ↔
       (cand.unpair.1 % (1 + 1 * cand.unpair.2) =
         base.interp ctx) ∧
-      (∀ j, j < n + 1 →
+      (∀ j, j < n →
         cand.unpair.1 %
           (1 + (j + 1 + 1) * cand.unpair.2) =
           step.interp (Fin.cons j
@@ -1790,5 +1786,381 @@ theorem ERMor1.interp_boundedRec_le_bound {k : ℕ}
   unfold ERMor1.boundedRec
   rw [ERMor1.interp_comp, ERMor1.interp_minN]
   exact Nat.min_le_right _ _
+
+/-- Arithmetic envelope lemma for the bounded-recursion
+search range.  With `N = n + 1`, `b = (max N B + 1)!`, and
+`R = (n + B + 3)!`, any `a` bounded by `(N * b + 1) ^ N`
+Szudzik-pairs with `b` below `R ^ R + 1`. -/
+theorem Nat.pair_lt_boundedRecRange (n B a b : ℕ)
+    (hb_eq : b = (max (n + 1) B + 1).factorial)
+    (ha_lt : a < ((n + 1) * b + 1) ^ (n + 1)) :
+    Nat.pair a b <
+      ((n + B + 3).factorial) ^ ((n + B + 3).factorial) + 1 := by
+  set R : ℕ := (n + B + 3).factorial with hRdef
+  have hR_pos : 0 < R := Nat.factorial_pos _
+  have hR_ge_one : 1 ≤ R := hR_pos
+  have hb_le_R : b ≤ R := by
+    rw [hb_eq, hRdef]
+    apply Nat.factorial_le
+    have hmax : max (n + 1) B ≤ n + B + 2 :=
+      max_le (by omega) (by omega)
+    omega
+  have hb_lt_R : b < R := by
+    rw [hb_eq, hRdef]
+    have hmax_le : max (n + 1) B + 1 ≤ n + B + 2 := by
+      have hmax : max (n + 1) B ≤ n + B + 1 :=
+        max_le (by omega) (by omega)
+      omega
+    have h1 : (max (n + 1) B + 1).factorial ≤
+        (n + B + 2).factorial :=
+      Nat.factorial_le hmax_le
+    have h2 : (n + B + 2).factorial < (n + B + 3).factorial :=
+      Nat.factorial_lt_of_lt (by omega) (by omega)
+    omega
+  have hn1_le_R : n + 1 ≤ R := by
+    rw [hRdef]
+    have h1 : n + 1 ≤ n + B + 3 := by omega
+    exact le_trans h1 (Nat.self_le_factorial _)
+  have hNb_le_R : (n + 1) * b + 1 ≤ R := by
+    have hmax_le : max (n + 1) B + 1 ≤ n + B + 2 := by
+      have hmax : max (n + 1) B ≤ n + B + 1 :=
+        max_le (by omega) (by omega)
+      omega
+    have hb_le : b ≤ (n + B + 2).factorial := by
+      rw [hb_eq]
+      exact Nat.factorial_le hmax_le
+    have h1 : (n + 1) * b ≤ (n + B + 2) * b :=
+      Nat.mul_le_mul_right _ (by omega)
+    have h2 : (n + B + 2) * b ≤
+        (n + B + 2) * (n + B + 2).factorial :=
+      Nat.mul_le_mul_left _ hb_le
+    have hfs : (n + B + 3).factorial =
+        (n + B + 3) * (n + B + 2).factorial :=
+      Nat.factorial_succ (n + B + 2)
+    have h3 : (n + B + 2) * (n + B + 2).factorial +
+        (n + B + 2).factorial ≤
+        (n + B + 3) * (n + B + 2).factorial := by
+      have heq :
+          (n + B + 3) * (n + B + 2).factorial =
+          (n + B + 2) * (n + B + 2).factorial +
+            (n + B + 2).factorial := by ring
+      omega
+    have hR_pos' : 1 ≤ (n + B + 2).factorial :=
+      Nat.factorial_pos _
+    rw [hRdef, hfs]
+    omega
+  have ha_lt_RN : a < R ^ (n + 1) := by
+    have hbase : (n + 1) * b + 1 ≤ R := hNb_le_R
+    have hpow :
+        ((n + 1) * b + 1) ^ (n + 1) ≤ R ^ (n + 1) :=
+      Nat.pow_le_pow_left hbase _
+    exact lt_of_lt_of_le ha_lt hpow
+  have hb_le_RN : b ≤ R ^ (n + 1) := by
+    have h1 : R ≤ R ^ (n + 1) := by
+      have := Nat.le_self_pow (n := n + 1) (by omega) R
+      simpa using this
+    exact le_trans hb_le_R h1
+  have hb_lt_RN : b < R ^ (n + 1) :=
+    lt_of_lt_of_le hb_lt_R (by
+      have := Nat.le_self_pow (n := n + 1) (by omega) R
+      simpa using this)
+  have hpair_lt :
+      Nat.pair a b < (max a b + 1) ^ 2 :=
+    Nat.pair_lt_max_add_one_sq a b
+  have hmax1_le : max a b + 1 ≤ R ^ (n + 1) := by
+    have h1 : a + 1 ≤ R ^ (n + 1) := ha_lt_RN
+    have h2 : b + 1 ≤ R ^ (n + 1) := hb_lt_RN
+    have : max a b + 1 = max (a + 1) (b + 1) := by
+      rcases le_total a b with h | h
+      · rw [max_eq_right h,
+          max_eq_right (by omega : a + 1 ≤ b + 1)]
+      · rw [max_eq_left h,
+          max_eq_left (by omega : b + 1 ≤ a + 1)]
+    rw [this]
+    exact max_le h1 h2
+  have hpow2_le :
+      (max a b + 1) ^ 2 ≤ (R ^ (n + 1)) ^ 2 :=
+    Nat.pow_le_pow_left hmax1_le 2
+  have hpow_combine :
+      (R ^ (n + 1)) ^ 2 = R ^ (2 * (n + 1)) := by
+    rw [← pow_mul]; ring_nf
+  have h2n_le_R : 2 * (n + 1) ≤ R := by
+    rw [hRdef]
+    have hfact_ge : (n + 3).factorial ≤ (n + B + 3).factorial :=
+      Nat.factorial_le (by omega)
+    have hnfact : 2 * (n + 1) ≤ (n + 3).factorial := by
+      have hfact_split : (n + 3).factorial =
+          (n + 3) * ((n + 2) * (n + 1).factorial) := by
+        rw [show (n + 3) = (n + 2) + 1 from rfl,
+          Nat.factorial_succ,
+          show (n + 2) = (n + 1) + 1 from rfl,
+          Nat.factorial_succ]
+      have hfact_pos : 1 ≤ (n + 1).factorial :=
+        Nat.factorial_pos _
+      have h23 : 2 * (n + 1) ≤ (n + 3) * (n + 2) := by
+        have : (n + 3) * (n + 2) = n * n + 5 * n + 6 := by
+          ring
+        omega
+      have : 2 * (n + 1) ≤ (n + 3) * (n + 2) *
+          (n + 1).factorial := by
+        have hmul :
+            (n + 3) * (n + 2) ≤
+              (n + 3) * (n + 2) * (n + 1).factorial := by
+          exact Nat.le_mul_of_pos_right _ hfact_pos
+        omega
+      rw [hfact_split]
+      calc 2 * (n + 1) ≤ (n + 3) * (n + 2) *
+            (n + 1).factorial := this
+        _ = (n + 3) * ((n + 2) * (n + 1).factorial) := by ring
+    exact le_trans hnfact hfact_ge
+  have hpow_le_RR :
+      R ^ (2 * (n + 1)) ≤ R ^ R :=
+    Nat.pow_le_pow_right hR_pos h2n_le_R
+  have : Nat.pair a b < R ^ R + 1 := by
+    have hchain : Nat.pair a b < R ^ R := by
+      calc Nat.pair a b
+          < (max a b + 1) ^ 2 := hpair_lt
+        _ ≤ (R ^ (n + 1)) ^ 2 := hpow2_le
+        _ = R ^ (2 * (n + 1)) := hpow_combine
+        _ ≤ R ^ R := hpow_le_RR
+    omega
+  exact this
+
+/-- Helper for the conditional correctness of `boundedRec`:
+if a candidate satisfies the base and step clauses of
+`boundedRecPred`, then its β-extraction at each index
+`j ≤ n` equals the `Nat.rec` trace at `j`. -/
+theorem ERMor1.boundedRecPred_trace_match {k : ℕ}
+    (base : ERMor1 k) (step : ERMor1 (k + 2))
+    (cand : ℕ) (ctx : Fin k → ℕ)
+    (hbase : cand.unpair.1 % (1 + 1 * cand.unpair.2) =
+      base.interp ctx) (n : ℕ)
+    (hstep : ∀ j, j < n →
+      cand.unpair.1 %
+        (1 + (j + 1 + 1) * cand.unpair.2) =
+        step.interp (Fin.cons j
+          (Fin.cons
+            (cand.unpair.1 %
+              (1 + (j + 1) * cand.unpair.2))
+            ctx))) :
+    ∀ j, j ≤ n →
+      cand.unpair.1 % (1 + (j + 1) * cand.unpair.2) =
+        Nat.rec (base.interp ctx)
+          (fun i prev =>
+            step.interp (Fin.cons i
+              (Fin.cons prev ctx))) j := by
+  intro j hj
+  induction j with
+  | zero =>
+    have hrew :
+        1 + (0 + 1) * cand.unpair.2 =
+          1 + 1 * cand.unpair.2 := by ring
+    rw [hrew, hbase]
+    rfl
+  | succ m ih =>
+    have hm_le : m ≤ n := Nat.le_of_succ_le hj
+    have ih' := ih hm_le
+    have hm_lt : m < n := Nat.lt_of_succ_le hj
+    have hsm := hstep m hm_lt
+    rw [ih'] at hsm
+    exact hsm
+
+set_option maxHeartbeats 800000 in
+-- The multi-stage β-witness extraction in this proof
+-- exceeds the default heartbeat limit.
+/-- Conditional equality with `Nat.rec`: when the client's
+bound is monotone in the counter slot and pointwise dominates
+the trace, the combinator agrees with `Nat.rec`. -/
+theorem ERMor1.interp_boundedRec_of_bounded {k : ℕ}
+    (base : ERMor1 k) (step : ERMor1 (k + 2))
+    (bound : ERMor1 (k + 1))
+    (n : ℕ) (ctx : Fin k → ℕ)
+    (h : ∀ j, j ≤ n →
+      Nat.rec (base.interp ctx)
+        (fun i prev =>
+          step.interp (Fin.cons i (Fin.cons prev ctx)))
+        j ≤
+        bound.interp (Fin.cons j ctx))
+    (h_mono : ∀ j, j ≤ n →
+      bound.interp (Fin.cons j ctx) ≤
+        bound.interp (Fin.cons n ctx)) :
+    (ERMor1.boundedRec base step bound).interp
+        (Fin.cons n ctx) =
+      Nat.rec (base.interp ctx)
+        (fun j prev =>
+          step.interp (Fin.cons j (Fin.cons prev ctx)))
+        n := by
+  set B : ℕ := bound.interp (Fin.cons n ctx) with hBdef
+  let trace : ℕ → ℕ := fun j =>
+    Nat.rec (base.interp ctx)
+      (fun i prev =>
+        step.interp (Fin.cons i (Fin.cons prev ctx)))
+      j
+  let s : Fin (n + 1) → ℕ := fun j => trace j.val
+  have hs_le_B : ∀ j : Fin (n + 1), s j ≤ B := by
+    intro j
+    have hj_le : j.val ≤ n := Nat.le_of_lt_succ j.isLt
+    have h1 : s j ≤ bound.interp (Fin.cons j.val ctx) :=
+      h j.val hj_le
+    have h2 :
+        bound.interp (Fin.cons j.val ctx) ≤ B :=
+      h_mono j.val hj_le
+    exact le_trans h1 h2
+  obtain ⟨a, b, hb_eq, ha_lt, hbeta⟩ :=
+    Nat.bounded_beta_exists s B hs_le_B
+  set cand : ℕ := Nat.pair a b with hcand_def
+  have hcand_unpair_fst : cand.unpair.1 = a := by
+    rw [hcand_def, Nat.unpair_pair]
+  have hcand_unpair_snd : cand.unpair.2 = b := by
+    rw [hcand_def, Nat.unpair_pair]
+  have hrange :
+      (ERMor1.boundedRecRange bound).interp
+        (Fin.cons n ctx) =
+      ((n + B + 3).factorial) ^ ((n + B + 3).factorial) + 1 := by
+    rw [ERMor1.interp_boundedRecRange]
+    have hc0 : (Fin.cons n ctx : Fin (k + 1) → ℕ) 0 = n := by
+      rfl
+    rw [hc0]
+  have hcand_lt_range :
+      cand <
+        (ERMor1.boundedRecRange bound).interp
+          (Fin.cons n ctx) := by
+    rw [hrange]
+    exact Nat.pair_lt_boundedRecRange n B a b hb_eq ha_lt
+  have hpred_hold :
+      (ERMor1.boundedRecPred base step).interp
+          (Fin.cons cand (Fin.cons n ctx)) = 1 := by
+    rw [ERMor1.boundedRecPred_eq_one_iff_trace]
+    refine ⟨?_, ?_⟩
+    · rw [hcand_unpair_fst, hcand_unpair_snd]
+      have hzero_lt : 0 < n + 1 := Nat.succ_pos _
+      have h0 := hbeta ⟨0, hzero_lt⟩
+      have hs0 : s ⟨0, hzero_lt⟩ = base.interp ctx := rfl
+      rw [hs0] at h0
+      have hrew :
+          1 + 1 * b = 1 + (0 + 1) * b := by ring
+      rw [hrew]; exact h0
+    · intro j hj
+      rw [hcand_unpair_fst, hcand_unpair_snd]
+      have hj_lt : j < n + 1 := Nat.lt_succ_of_lt hj
+      have hjsucc_lt : j + 1 < n + 1 :=
+        Nat.succ_lt_succ hj
+      have hbeta_j := hbeta ⟨j, hj_lt⟩
+      have hbeta_js := hbeta ⟨j + 1, hjsucc_lt⟩
+      change a % (1 + (j + 1) * b) = trace j at hbeta_j
+      change a % (1 + (j + 1 + 1) * b) = trace (j + 1) at hbeta_js
+      have hstep_trace :
+          trace (j + 1) = step.interp
+            (Fin.cons j (Fin.cons (trace j) ctx)) := rfl
+      rw [hstep_trace] at hbeta_js
+      rw [← hbeta_j] at hbeta_js
+      exact hbeta_js
+  have hpred_bound :
+      ∀ j, (ERMor1.boundedRecPred base step).interp
+        (Fin.cons j (Fin.cons n ctx)) ≤ 1 := by
+    intro j
+    exact ERMor1.boundedRecPred_le_one base step _
+  set search : ERMor1 (k + 1) :=
+    ERMor1.boundedSearch (ERMor1.boundedRecRange bound)
+      (ERMor1.boundedRecPred base step) with hsearch_def
+  have hex : ∃ j, j <
+      (ERMor1.boundedRecRange bound).interp
+        (Fin.cons n ctx) ∧
+      (ERMor1.boundedRecPred base step).interp
+        (Fin.cons j (Fin.cons n ctx)) = 1 :=
+    ⟨cand, hcand_lt_range, hpred_hold⟩
+  have hsearch_eval :
+      search.interp (Fin.cons n ctx) = Nat.find hex := by
+    rw [hsearch_def,
+      ERMor1.interp_boundedSearch _ _ _ hpred_bound,
+      dif_pos hex]
+  set found : ℕ := Nat.find hex with hfound_def
+  have hfound_lt :
+      found < (ERMor1.boundedRecRange bound).interp
+        (Fin.cons n ctx) :=
+    (Nat.find_spec hex).1
+  have hfound_pred :
+      (ERMor1.boundedRecPred base step).interp
+        (Fin.cons found (Fin.cons n ctx)) = 1 :=
+    (Nat.find_spec hex).2
+  obtain ⟨hfound_base, hfound_step⟩ :=
+    (ERMor1.boundedRecPred_eq_one_iff_trace base step
+      found n ctx).mp hfound_pred
+  have hfound_trace :
+      ∀ j, j ≤ n →
+        found.unpair.1 % (1 + (j + 1) * found.unpair.2) =
+          trace j :=
+    ERMor1.boundedRecPred_trace_match base step found ctx
+      hfound_base n hfound_step
+  unfold ERMor1.boundedRec
+  rw [ERMor1.interp_comp, ERMor1.interp_minN]
+  change min
+      ((ERMor1.comp ERMor1.beta _).interp (Fin.cons n ctx))
+      (bound.interp (Fin.cons n ctx)) = trace n
+  have hbetaN_eval :
+      (ERMor1.comp ERMor1.beta
+        (fun (i : Fin 3) => match i with
+          | ⟨0, _⟩ =>
+              ERMor1.comp ERMor1.natUnpairFst
+                (fun (_ : Fin 1) => search)
+          | ⟨1, _⟩ =>
+              ERMor1.comp ERMor1.natUnpairSnd
+                (fun (_ : Fin 1) => search)
+          | ⟨2, _⟩ =>
+              ERMor1.proj 0)).interp
+        (Fin.cons n ctx) =
+      found.unpair.1 % (1 + (n + 1) * found.unpair.2) := by
+    rw [ERMor1.interp_comp]
+    have harg :
+        (fun (i : Fin 3) =>
+          ((match i with
+            | ⟨0, _⟩ =>
+                ERMor1.comp ERMor1.natUnpairFst
+                  (fun (_ : Fin 1) => search)
+            | ⟨1, _⟩ =>
+                ERMor1.comp ERMor1.natUnpairSnd
+                  (fun (_ : Fin 1) => search)
+            | ⟨2, _⟩ =>
+                ERMor1.proj 0 : ERMor1 (k + 1))).interp
+            (Fin.cons n ctx)) =
+        ![found.unpair.1, found.unpair.2, n] := by
+      funext i
+      match i with
+      | ⟨0, _⟩ =>
+        change ERMor1.natUnpairFst.interp
+            (fun (_ : Fin 1) =>
+              search.interp (Fin.cons n ctx)) = _
+        rw [hsearch_eval]
+        have hfun :
+            (fun (_ : Fin 1) => (found : ℕ)) = ![found] := by
+          funext j
+          match j with
+          | ⟨0, _⟩ => rfl
+        rw [hfun, ERMor1.interp_natUnpairFst]
+        rfl
+      | ⟨1, _⟩ =>
+        change ERMor1.natUnpairSnd.interp
+            (fun (_ : Fin 1) =>
+              search.interp (Fin.cons n ctx)) = _
+        rw [hsearch_eval]
+        have hfun :
+            (fun (_ : Fin 1) => (found : ℕ)) = ![found] := by
+          funext j
+          match j with
+          | ⟨0, _⟩ => rfl
+        rw [hfun, ERMor1.interp_natUnpairSnd]
+        rfl
+      | ⟨2, _⟩ =>
+        change (Fin.cons n ctx : Fin (k + 1) → ℕ) 0 = _
+        rfl
+    rw [harg, ERMor1.interp_beta]
+  rw [hbetaN_eval]
+  have htrace_n := hfound_trace n (le_refl n)
+  rw [htrace_n]
+  have htrace_le : trace n ≤ B := by
+    have := h n (le_refl n)
+    have hmono := h_mono n (le_refl n)
+    exact le_trans this hmono
+  exact min_eq_left htrace_le
 
 end GebLean
