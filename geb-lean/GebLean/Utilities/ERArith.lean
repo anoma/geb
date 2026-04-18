@@ -1202,4 +1202,61 @@ def ERMor1.minN : ERMor1 2 :=
   rw [heq]
   omega
 
+/-- `natBProd n (fun i => i + 1) = n.factorial`. -/
+theorem natBProd_succ_eq_factorial (n : ℕ) :
+    natBProd n (fun i => i + 1) = n.factorial := by
+  induction n with
+  | zero => rfl
+  | succ b ih =>
+    change natBProd b (fun i => i + 1) * (b + 1) =
+        (b + 1).factorial
+    rw [ih, Nat.factorial_succ, Nat.mul_comm]
+
+/-- Factorial as an elementary recursive term:
+`factN` interprets at context `[n]` as `n.factorial`,
+built via bounded product of `succ (proj 0)`. -/
+def ERMor1.factN : ERMor1 1 :=
+  ERMor1.bprod
+    (ERMor1.comp ERMor1.succ
+      (fun (_ : Fin 1) => ERMor1.proj 0))
+
+/-- Interpretation of `factN`:
+`factN.interp ![n] = n.factorial`. -/
+@[simp] theorem ERMor1.interp_factN
+    (ctx : Fin 1 → ℕ) :
+    ERMor1.factN.interp ctx = (ctx 0).factorial := by
+  change natBProd (ctx 0)
+    (fun i =>
+      (ERMor1.comp ERMor1.succ
+        (fun (_ : Fin 1) => ERMor1.proj (k := 1) 0)).interp
+          (Fin.cons i (Fin.tail ctx))) =
+    (ctx 0).factorial
+  have hbody : (fun i : ℕ =>
+      (ERMor1.comp ERMor1.succ
+        (fun (_ : Fin 1) => ERMor1.proj (k := 1) 0)).interp
+          (Fin.cons i (Fin.tail ctx))) =
+      (fun i => i + 1) := by
+    funext i
+    simp only [ERMor1.interp_comp, ERMor1.interp_succ,
+      ERMor1.interp_proj, Fin.cons_zero]
+  rw [hbody, natBProd_succ_eq_factorial]
+
+/-- Power as an elementary recursive term:
+`powN` interprets at context `[base, exp]` as
+`base ^ exp`, built as `expER` with swapped arguments. -/
+def ERMor1.powN : ERMor1 2 :=
+  ERMor1.comp ERMor1.expER
+    (fun i => match i with
+      | ⟨0, _⟩ => ERMor1.proj 1
+      | ⟨1, _⟩ => ERMor1.proj 0)
+
+/-- Interpretation of `powN`:
+`powN.interp ![base, exp] = base ^ exp`. -/
+@[simp] theorem ERMor1.interp_powN
+    (ctx : Fin 2 → ℕ) :
+    ERMor1.powN.interp ctx = (ctx 0) ^ (ctx 1) := by
+  unfold ERMor1.powN
+  simp only [ERMor1.interp_comp, ERMor1.interp_expER,
+    ERMor1.interp_proj]
+
 end GebLean
