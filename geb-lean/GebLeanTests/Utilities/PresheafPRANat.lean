@@ -1,7 +1,7 @@
 import GebLean.PresheafPRA
 
 /-!
-# Tests for (I, J)-Naturality of praPositionsFunctor
+# Tests for (I, J)-Naturality of praPositionsNat
 
 Type-signature sanity checks and small-example tests for
 `praPositionsNat` and friends in `GebLean.PresheafPRA`.

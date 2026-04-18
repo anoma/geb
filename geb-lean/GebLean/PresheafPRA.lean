@@ -255,9 +255,12 @@ theorem praPositionsNat_app_eq_presheafCatFunctor
   rfl
 
 /--
-Temporary bridge to the non-widened form of the positions presheaf.
-Consumed by `praPositions` / `praDirectionsAtFunctor*` until the
-directions section is promoted; will be removed at that time.
+Bridge to the non-widened form of the positions presheaf.
+Equivalent to `(praPositionsNat.app (Opposite.op (Cat.of Jᵒᵖ))).app
+(Opposite.op (Cat.of Iᵒᵖ)) |>.toFunctor.obj P` composed with the
+`ULift`/`ULiftHom`-unwrap that reverses the widening used in
+`praPositionsNatTarget`.  Serves `praDirectionsAtFunctor*` and
+`praDirectionsAt`, which need the underlying `Jᵒᵖ ⥤ Type w'` form.
 -/
 def praPositionsPresheaf
     (I : Type u_I) [Category.{v_I} I]
