@@ -77,3 +77,20 @@ example :
   rw [CategoryTheory.Functor.map_comp]
 
 end NatAndFunctoriality
+
+/-! ## Universe polymorphism -/
+
+section UniversePoly
+
+-- Exercise ccrNewIndexNat at u := 1, v := 0, w := 0
+example : coprodCovarRepFunctor.{1, 0, 0} ⟶
+    (Functor.const Cat.{0, 1}).obj typeCatLift.{1, 0, 0} :=
+  ccrNewIndexNat.{1, 0, 0}
+
+-- Exercise ccrNewFamilyNat at u := 1, v := 0, w := 0
+example :
+    ccrElementsFunctor.{1, 0, 0} ⟶
+      ccrNewFamilyNatTarget.{1, 0, 0} :=
+  ccrNewFamilyNat.{1, 0, 0}
+
+end UniversePoly
