@@ -3256,7 +3256,7 @@ The existing per-`C` functors remain in place and are not modified.
 
 section CCRNaturalPackaging
 
-universe w
+universe w w_v w_u
 
 attribute [local instance] CategoryTheory.uliftCategory
 
@@ -3283,6 +3283,31 @@ def catULiftFunctor :
   obj C := Cat.of
     (CategoryTheory.ULiftHom.{max w v}
       (ULift.{max (w + 1) u, u} C.α))
+  map {C D} F :=
+    (CategoryTheory.ULiftHom.down ⋙
+      CategoryTheory.ULift.downFunctor ⋙
+      F.toFunctor ⋙
+      CategoryTheory.ULift.upFunctor ⋙
+      CategoryTheory.ULiftHom.up).toCatHom
+  map_id C := by
+    apply Cat.Hom.ext
+    rfl
+  map_comp {C D E} F G := by
+    apply Cat.Hom.ext
+    rfl
+
+/--
+Two-parameter universe-widening functor from `Cat.{v, u}` to
+`Cat.{max v w_v, max u w_u}`.  Generalizes `catULiftFunctor` by
+decoupling the hom-universe bump (`w_v`) from the obj-universe bump
+(`w_u`), so the composite can land at any universe pair of the form
+`Cat.{max v x, max u y}`.
+-/
+def catULiftFunctor2 :
+    Cat.{v, u} ⥤ Cat.{max v w_v, max u w_u} where
+  obj C := Cat.of
+    (CategoryTheory.ULiftHom.{max v w_v}
+      (ULift.{max u w_u, u} C.α))
   map {C D} F :=
     (CategoryTheory.ULiftHom.down ⋙
       CategoryTheory.ULift.downFunctor ⋙

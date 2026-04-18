@@ -147,6 +147,26 @@ end PresheafPRADef
 section PresheafPRAAccessors
 
 /--
+Target bifunctor of `praPositionsNat`.  Sends each
+`(J, I) : Cat.{v_J, u_J}ᵒᵖ × Cat.{v_I, u_I}ᵒᵖ` to the
+universe-widened form of `Jᵒᵖ ⥤ Type w'`, constant in `I`.
+
+Constant in `I` because the action of `presheafPRACatBifunctor.map`
+on `I`-morphisms preserves the positions types on the nose — the
+same property of `coprodCovarRepFunctor.map` established in
+`ccrNewIndexNat`.
+-/
+def praPositionsNatTarget :
+    Cat.{v_J, u_J}ᵒᵖ ⥤
+      (Cat.{v_I, u_I}ᵒᵖ ⥤
+        Cat.{max u_I u_J w_I w',
+          max u_I u_J v_I v_J (w_I + 1) (w' + 1)}) :=
+  presheafCatFunctor.{u_J, v_J, w'} ⋙
+    catULiftFunctor2.{max v_J (w' + 1) u_J, max u_J w',
+      max u_I w_I, max u_I v_I (w_I + 1)} ⋙
+    Functor.const Cat.{v_I, u_I}ᵒᵖ
+
+/--
 Temporary bridge to the non-widened form of the positions presheaf.
 Consumed by `praPositions` / `praDirectionsAtFunctor*` until the
 directions section is promoted; will be removed at that time.
