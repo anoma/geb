@@ -25,3 +25,23 @@ example :
     ccrElementsFunctor.{0, 0, 0} ⟶
       ccrNewFamilyNatTarget.{0, 0, 0} :=
   ccrNewFamilyNat.{0, 0, 0}
+
+/-! ## Definitional collapse to existing utilities -/
+
+section CollapseTests
+
+attribute [local instance] CategoryTheory.uliftCategory
+
+example :
+    (ccrNewIndexNat.{0, 0, 0}.app (Cat.of PUnit)).toFunctor =
+      ccrNewIndexNatFunctor.{0, 0, 0} PUnit := by
+  rfl
+
+example :
+    (ccrNewFamilyNat.{0, 0, 0}.app (Cat.of PUnit)).toFunctor =
+      ccrNewFamilyFunctor.{0, 0, 0} PUnit ⋙
+        CategoryTheory.ULift.upFunctor ⋙
+        CategoryTheory.ULiftHom.up :=
+  ccrNewFamilyNat_app_eq_ccrNewFamilyFunctor.{0, 0, 0} PUnit
+
+end CollapseTests
