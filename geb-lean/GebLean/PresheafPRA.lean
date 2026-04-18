@@ -179,7 +179,7 @@ variable (P : PresheafPRACat.{u_I, v_I, u_J, v_J, w_I, w'} I J)
 The type of positions at stage `j`.
 -/
 def praPositions (j : Jᵒᵖ) : Type w' :=
-  (praPositionsFunctor I J).obj P |>.obj j
+  (praPositionsPresheaf I J P).obj j
 
 /--
 The directions functor into `PSh(I)ᵒᵖ`: for a fixed
@@ -187,7 +187,7 @@ PRA `P`, sends an element `(j, a)` of the positions
 presheaf to `op (E_T(j,a))`.
 -/
 def praDirectionsAtFunctorOp :
-    ((praPositionsFunctor I J).obj P).Elements ⥤
+    (praPositionsPresheaf I J P).Elements ⥤
       (Iᵒᵖ ⥤ Type w_I)ᵒᵖ :=
   CategoryTheory.elementsPrecomp P ⋙
     ccrNewFamilyFunctor.{max v_I u_I (w_I + 1),
@@ -201,7 +201,7 @@ of the positions presheaf to the directions presheaf
 `E_T(j,a) : Iᵒᵖ ⥤ Type w_I`.
 -/
 def praDirectionsAtFunctor :
-    ((praPositionsFunctor I J).obj P).ElementsPre ⥤
+    (praPositionsPresheaf I J P).ElementsPre ⥤
       (Iᵒᵖ ⥤ Type w_I) :=
   (praDirectionsAtFunctorOp I J P).op ⋙
     unopUnop _
