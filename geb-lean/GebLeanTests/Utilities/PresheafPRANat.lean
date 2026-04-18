@@ -81,3 +81,16 @@ example :
   praPositionsNat.{0, 0, 0, 0, 0, 0}.naturality baseIdFunctor.op
 
 end NaturalityTests
+
+/-! ## Universe polymorphism -/
+
+section UniversePoly
+
+-- Exercise praPositionsNat at mixed universes
+-- (u_I := 1, v_I := 0, u_J := 0, v_J := 0, w_I := 0, w' := 0).
+example :
+    presheafPRACatBifunctor.{1, 0, 0, 0, 0, 0} ⟶
+      praPositionsNatTarget.{1, 0, 0, 0, 0, 0} :=
+  praPositionsNat.{1, 0, 0, 0, 0, 0}
+
+end UniversePoly
