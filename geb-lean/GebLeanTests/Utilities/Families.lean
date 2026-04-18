@@ -45,3 +45,35 @@ example :
   ccrNewFamilyNat_app_eq_ccrNewFamilyFunctor.{0, 0, 0} PUnit
 
 end CollapseTests
+
+/-! ## Naturality and functoriality, small examples -/
+
+section NatAndFunctoriality
+
+-- A concrete functor between small base categories.
+private def baseFunctor : Cat.of PUnit ⟶ Cat.of PUnit :=
+  (CategoryTheory.Functor.id _).toCatHom
+
+-- Naturality of ccrNewIndexNat at baseFunctor holds by rfl
+-- because coprodCovarRepFunctor.map preserves the index type.
+example :
+    (coprodCovarRepFunctor.{0, 0, 0}.map baseFunctor).toFunctor ⋙
+      (ccrNewIndexNat.{0, 0, 0}.app _).toFunctor =
+    (ccrNewIndexNat.{0, 0, 0}.app _).toFunctor := by
+  rfl
+
+-- Functoriality of ccrElementsFunctor: map_id is rfl-style
+example :
+    ccrElementsFunctor.{0, 0, 0}.map (𝟙 (Cat.of PUnit)) =
+      𝟙 (ccrElementsFunctor.{0, 0, 0}.obj (Cat.of PUnit)) := by
+  rw [CategoryTheory.Functor.map_id]
+
+-- Functoriality of ccrElementsFunctor: map_comp
+example :
+    ccrElementsFunctor.{0, 0, 0}.map
+      (baseFunctor ≫ baseFunctor) =
+    ccrElementsFunctor.{0, 0, 0}.map baseFunctor ≫
+      ccrElementsFunctor.{0, 0, 0}.map baseFunctor := by
+  rw [CategoryTheory.Functor.map_comp]
+
+end NatAndFunctoriality
