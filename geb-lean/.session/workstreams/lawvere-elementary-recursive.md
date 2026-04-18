@@ -465,30 +465,49 @@ revised to a two-part conditional form:
 `interp_boundedRec_of_bounded` (under pointwise bound
 adequacy plus counter monotonicity).
 
-**Current resume point**: Stage β Task 14
-(`NatBTMor1.toER` back-translation).  The ER-Primrec mini-
-phase is complete.  Task 14 translates `NatBTMor1` morphisms
-to `ERMor1` terms via mutual recursion, using
-`ERMor1.foldBTLOnCode` at BT-sort `foldBT` constructors.
-Each invocation will supply an explicit bound ER term until
-Task 14.5 (below) produces a generic wrapper.
+**Task 14 split into 14a (fold-free fragment, DONE) and 14b
+(fold handling, deferred until after Task 14.5 research).**
 
-**Task 14.5 (inserted)**: after Task 14 ships, before Task 15,
-research and implement a generic wrapper
-`ERMor1.foldBTLOnCodeSafe` (or similar) that hides the bound
-parameter from client code.  The user's working hypothesis:
-tree recursion should have depth 1 natively, possibly with
-mutuality over (ℕ, BT) simultaneously, matching Leivant's
-two-sort ramified-recurrence characterization of E_3.  Task
-14 will have provided concrete examples of bound-construction
-patterns; examining those informs what the wrapper needs to
-handle and whether the depth-1-mutual-recursion approach is
-feasible in our setting.  Reference literature: Leivant 1999
+* **Task 14a complete** (commit `8a469dd0`):
+  `GebLean/LawvereNatBTBackTrans.lean` defines
+  `NatBTMor1.isFoldFree` (structural Prop predicate ruling out
+  `foldBTNat`/`foldBTBT` and requiring `nm'.2 = 0` at
+  composition sites), `NatBTSort.encodeValue` (identity on
+  `.nat`, `BTL.encode` on `.bt`), and the sort-uniform
+  `NatBTMor1.toERUniform` with per-sort wrappers `toER` /
+  `toER_bt`.  Correctness via the uniform
+  `toERUniform_interp_aux` theorem under `isFoldFree + nm.2 = 0`
+  hypotheses, with per-sort corollaries and the `NatBTMorN`
+  tuple lift.  Sort-uniform recursion chosen because Lean's
+  mutual structural recursion rejects specialized mutual `def`s
+  when the sort index is pinned rather than a recursion
+  variable.  Fold cases and off-invariant composition sites
+  receive placeholder `ERMor1.zeroN` values (never reached
+  under the invariants).  Tests:
+  `GebLeanTests/LawvereNatBTBackTrans.lean` with `#guard`s on
+  zero/succ/natProj/sub/leafBT/nodeBT/encodeBT.
+
+**Current resume point**: Task 14.5 (wrapper research).
+With Task 14a committed, the fold-free back-translation
+patterns are available as ground truth.  Task 14.5
+investigates a generic ergonomic wrapper for
+`ERMor1.foldBTLOnCode` that hides the bound parameter from
+client code.  Working hypothesis: tree recursion should have
+depth 1 natively, possibly with mutuality over (ℕ, BT)
+simultaneously, matching Leivant's two-sort ramified-
+recurrence characterization of E_3.  Examining Task 14a's
+concrete `toER` patterns informs what the wrapper needs to
+handle.  Reference literature: Leivant 1999
 (`.claude/docs/ramified-recurrence-computational-complexity-iii.pdf`)
 and Beckmann-Weiermann 2000.
 
-After Task 14 and 14.5, Stage β Task 15 onward per the
-LawvereNatBT plan.
+**Task 14b (follow-up)**: after Task 14.5 produces the
+wrapper, extend `toERUniform` to handle `foldBTNat` and
+`foldBTBT` using the wrapper, and extend correctness to the
+full inductive (removing the `isFoldFree` hypothesis).
+
+After Task 14b, Stage β Task 15 onward per the LawvereNatBT
+plan.
 
 Natural checkpoints: end of ER-Primrec mini-phase
 (Task 13 complete, foldBTLOnCode packaged), end of Stage β
