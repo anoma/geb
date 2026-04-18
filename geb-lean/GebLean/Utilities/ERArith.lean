@@ -4,6 +4,7 @@ import GebLean.LawvereERBool
 import GebLean.Utilities.SzudzikSeq
 import Mathlib.Data.Nat.Pairing
 import Mathlib.Logic.Godel.GodelBetaFunction
+import Mathlib.Algebra.Order.BigOperators.Group.Finset
 
 /-!
 # ER-Derived Arithmetic and Gödel β
@@ -740,6 +741,120 @@ theorem Nat.beta_exists {N : ℕ} (s : Fin N → ℕ) :
   have hcomm : 1 + (i.val + 1) * n.unpair.2 =
       (i.val + 1) * n.unpair.2 + 1 := by omega
   rw [hcomm, ← hj, ← hbeta_def, hb, hget]
+
+/-- Meta-level Gödel β-existence with an explicit elementary
+bound on the witness pair.  Given a sequence `s : Fin N → ℕ`
+and any `M` with `s i ≤ M` for all `i`, set
+`K := max N M + 1`, `b := K !`, and
+`P := (N * b + 1) ^ N`.  Then there exist `a < P`, `b = K !`
+such that `a % (1 + (i.val + 1) * b) = s i` for all `i`.
+The bound uses only `Nat.factorial`, multiplication, addition,
+and exponentiation, hence is ER-derivable.  Downstream
+bounded-search combinators use `P` and `b` as search
+ranges when recovering β-witnesses. -/
+theorem Nat.bounded_beta_exists {N : ℕ} (s : Fin N → ℕ)
+    (M : ℕ) (hM : ∀ i : Fin N, s i ≤ M) :
+    ∃ a b : ℕ,
+      b = (max N M + 1).factorial ∧
+      a < (N * b + 1) ^ N ∧
+      ∀ i : Fin N,
+        a % (1 + (i.val + 1) * b) = s i := by
+  set K : ℕ := max N M + 1 with hK_def
+  set b : ℕ := K.factorial with hb_def
+  have hb_pos : 0 < b := Nat.factorial_pos K
+  let c : Fin N → ℕ := fun i => (i.val + 1) * b + 1
+  have hc_ne : ∀ i ∈ (Finset.univ : Finset (Fin N)),
+      c i ≠ 0 := by
+    intro i _
+    have : 0 < c i := Nat.succ_pos _
+    exact Nat.pos_iff_ne_zero.mp this
+  have hK_upper : ∀ i : Fin N, i.val < K := by
+    intro i
+    have hiN : i.val < N := i.isLt
+    have : i.val < max N M + 1 := by
+      have : i.val ≤ max N M :=
+        le_trans (Nat.le_of_lt hiN) (le_max_left _ _)
+      exact Nat.lt_succ_of_le this
+    simpa [hK_def] using this
+  have hsub_dvd_b : ∀ i j : Fin N, i.val < j.val →
+      (j.val + 1) - (i.val + 1) ∣ b := by
+    intro i j hij
+    have hjK : j.val + 1 ≤ K := hK_upper j
+    have hjK' : j.val + 1 - (i.val + 1) ≤ K :=
+      le_trans (Nat.sub_le _ _) hjK
+    have hpos : 0 < j.val + 1 - (i.val + 1) := by
+      have : i.val + 1 < j.val + 1 := Nat.succ_lt_succ hij
+      exact Nat.sub_pos_of_lt this
+    exact Nat.dvd_factorial hpos hjK'
+  have hpairwise :
+      Set.Pairwise
+        ((Finset.univ : Finset (Fin N)) : Set (Fin N))
+        (fun i j => Nat.Coprime (c i) (c j)) := by
+    intro i _ j _ hij
+    rcases lt_or_gt_of_ne hij with hlt | hgt
+    · have hlt' : i.val < j.val := Fin.val_fin_lt.mpr hlt
+      have hd : (j.val + 1) - (i.val + 1) ∣ b :=
+        hsub_dvd_b i j hlt'
+      exact Nat.coprime_mul_succ hd
+    · have hlt' : j.val < i.val := Fin.val_fin_lt.mpr hgt
+      have hd : (i.val + 1) - (j.val + 1) ∣ b :=
+        hsub_dvd_b j i hlt'
+      exact (Nat.coprime_mul_succ hd).symm
+  let cr := Nat.chineseRemainderOfFinset
+      (fun i : Fin N => s i) c Finset.univ hc_ne hpairwise
+  set a : ℕ := (cr : ℕ) with ha_def
+  have hcr_lt : a < ∏ i ∈ Finset.univ, c i := by
+    simpa [ha_def] using
+      Nat.chineseRemainderOfFinset_lt_prod
+        (fun i : Fin N => s i) c hc_ne hpairwise
+  have hc_le : ∀ i ∈ (Finset.univ : Finset (Fin N)),
+      c i ≤ N * b + 1 := by
+    intro i _
+    have hiN : i.val + 1 ≤ N := i.isLt
+    have : (i.val + 1) * b ≤ N * b :=
+      Nat.mul_le_mul_right b hiN
+    exact Nat.add_le_add_right this 1
+  have hprod_le :
+      ∏ i ∈ (Finset.univ : Finset (Fin N)), c i ≤
+        (N * b + 1) ^ N := by
+    have hstep :
+        ∏ i ∈ (Finset.univ : Finset (Fin N)), c i ≤
+          ∏ _i ∈ (Finset.univ : Finset (Fin N)),
+              (N * b + 1) :=
+      Finset.prod_le_prod' hc_le
+    have hconst :
+        ∏ _i ∈ (Finset.univ : Finset (Fin N)),
+            (N * b + 1) = (N * b + 1) ^ N := by
+      rw [Finset.prod_const, Finset.card_univ,
+        Fintype.card_fin]
+    exact le_of_le_of_eq hstep hconst
+  have ha_lt : a < (N * b + 1) ^ N :=
+    lt_of_lt_of_le hcr_lt hprod_le
+  refine ⟨a, b, rfl, ha_lt, ?_⟩
+  intro i
+  have hmem : i ∈ (Finset.univ : Finset (Fin N)) :=
+    Finset.mem_univ i
+  have hmod : a ≡ s i [MOD c i] := cr.prop i hmem
+  have hsi_lt_K : s i < K := by
+    have : s i ≤ max N M :=
+      le_trans (hM i) (le_max_right _ _)
+    exact Nat.lt_succ_of_le this
+  have hsi_lt_b : s i < b := by
+    have hKfact : K ≤ b := by
+      simpa [hb_def] using Nat.self_le_factorial K
+    exact lt_of_lt_of_le hsi_lt_K hKfact
+  have hsi_lt_c : s i < c i := by
+    have hbmul : b ≤ (i.val + 1) * b :=
+      Nat.le_mul_of_pos_left b (Nat.succ_pos _)
+    have : s i < (i.val + 1) * b :=
+      lt_of_lt_of_le hsi_lt_b hbmul
+    exact lt_trans this (Nat.lt_succ_self _)
+  have hmod_eq : a % c i = s i :=
+    Nat.mod_eq_of_modEq hmod hsi_lt_c
+  have hcomm : 1 + (i.val + 1) * b = c i := by
+    change 1 + (i.val + 1) * b = (i.val + 1) * b + 1
+    omega
+  rw [hcomm, hmod_eq]
 
 /-- `consBound bound i` is the term substituted into slot `i`
 when wrapping a `(k + 1)`-ary body into a `k`-ary term: slot
