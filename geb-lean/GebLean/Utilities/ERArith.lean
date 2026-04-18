@@ -2163,4 +2163,30 @@ theorem ERMor1.interp_boundedRec_of_bounded {k : ℕ}
     exact le_trans this hmono
   exact min_eq_left htrace_le
 
+/-- Convenience alias for `interp_boundedRec_of_bounded`.
+When the client supplies pointwise bound-adequacy and
+counter-monotonicity hypotheses, `boundedRec` computes the
+exact `Nat.rec` trace value at position `n`. -/
+theorem ERMor1.boundedRec_eq_natRec_of_bounded {k : ℕ}
+    (base : ERMor1 k) (step : ERMor1 (k + 2))
+    (bound : ERMor1 (k + 1))
+    (n : ℕ) (ctx : Fin k → ℕ)
+    (h : ∀ j, j ≤ n →
+      Nat.rec (base.interp ctx)
+        (fun i prev =>
+          step.interp (Fin.cons i (Fin.cons prev ctx)))
+        j ≤
+        bound.interp (Fin.cons j ctx))
+    (h_mono : ∀ j, j ≤ n →
+      bound.interp (Fin.cons j ctx) ≤
+        bound.interp (Fin.cons n ctx)) :
+    (ERMor1.boundedRec base step bound).interp
+        (Fin.cons n ctx) =
+      Nat.rec (base.interp ctx)
+        (fun j prev =>
+          step.interp (Fin.cons j (Fin.cons prev ctx)))
+        n :=
+  ERMor1.interp_boundedRec_of_bounded base step bound n ctx
+    h h_mono
+
 end GebLean

@@ -46,3 +46,35 @@ example :
   · intro j' hj' hpj'
     change (1 : ℕ) - j' = 1 at hpj'
     omega
+
+/-- `boundedRec` is dominated by the bound for any context. -/
+example (ctx : Fin 1 → ℕ) :
+    (ERMor1.boundedRec ERMor1.zero
+        (ERMor1.comp ERMor1.succ
+          fun (_ : Fin 1) => ERMor1.proj 1)
+        (ERMor1.comp ERMor1.succ
+          fun (_ : Fin 1) => ERMor1.proj 0)).interp
+        ctx ≤
+      ERMor1.succ.interp (Fin.cons (ctx 0) Fin.elim0) :=
+  ERMor1.interp_boundedRec_le_bound _ _ _ _
+
+/-- At `n = 0`, `boundedRec` with base `zero`, step `succ ∘
+proj 1`, and bound `succ ∘ proj 0` returns `0`, confirmed via
+`boundedRec_eq_natRec_of_bounded`. -/
+example :
+    (ERMor1.boundedRec ERMor1.zero
+        (ERMor1.comp ERMor1.succ
+          fun (_ : Fin 1) => ERMor1.proj 1)
+        (ERMor1.comp ERMor1.succ
+          fun (_ : Fin 1) => ERMor1.proj 0)).interp
+        (Fin.cons 0 Fin.elim0) = 0 := by
+  rw [ERMor1.boundedRec_eq_natRec_of_bounded]
+  · rfl
+  · intro j hj
+    have hj0 : j = 0 := Nat.le_zero.mp hj
+    subst hj0
+    simp
+  · intro j hj
+    have hj0 : j = 0 := Nat.le_zero.mp hj
+    subst hj0
+    simp
