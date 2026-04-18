@@ -78,3 +78,22 @@ example :
     have hj0 : j = 0 := Nat.le_zero.mp hj
     subst hj0
     simp
+
+/-- Addition showcase: `natAdd ![3, 5] = 8`. -/
+example : ERMor1.natAdd.interp ![3, 5] = 8 := by simp
+
+/-- Addition showcase at zero: `natAdd ![0, 7] = 7`. -/
+example : ERMor1.natAdd.interp ![0, 7] = 7 := by simp
+
+/-- Multiplication showcase: `natMul ![3, 5] = 15`. -/
+example : ERMor1.natMul.interp ![3, 5] = 15 := by simp
+
+/-- Multiplication showcase at zero: `natMul ![0, 7] = 0`. -/
+example : ERMor1.natMul.interp ![0, 7] = 0 := by simp
+
+/-- Factorial showcase: `factorial ![5] = 120`. -/
+example : ERMor1.factorial.interp ![5] = 120 := by
+  simp [Nat.factorial]
+
+/-- Factorial showcase at zero: `factorial ![0] = 1`. -/
+example : ERMor1.factorial.interp ![0] = 1 := by simp

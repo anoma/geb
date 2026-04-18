@@ -2189,4 +2189,269 @@ theorem ERMor1.boundedRec_eq_natRec_of_bounded {k : ℕ}
   ERMor1.interp_boundedRec_of_bounded base step bound n ctx
     h h_mono
 
+/-! ### Showcase primitives: `natAdd`, `natMul`, `factorial` -/
+
+/-- Addition via bounded recursion: slot 0 is the iteration
+counter `x`, slot 1 is the addend `y`.  The trace satisfies
+`Nat.rec y (fun _ p => p + 1) x = y + x`. -/
+def ERMor1.natAdd : ERMor1 2 :=
+  ERMor1.boundedRec
+    (ERMor1.proj (k := 1) 0)
+    (ERMor1.comp ERMor1.succ
+      (fun (_ : Fin 1) => ERMor1.proj (k := 3) 1))
+    (ERMor1.comp ERMor1.succ
+      (fun (_ : Fin 1) =>
+        ERMor1.comp ERMor1.addN
+          (fun i => match i with
+            | ⟨0, _⟩ => ERMor1.proj (k := 2) 0
+            | ⟨1, _⟩ => ERMor1.proj (k := 2) 1)))
+
+/-- The `natAdd` step term evaluates to `prev + 1`. -/
+private theorem ERMor1.natAdd_step_eval
+    (y j prev : ℕ) :
+    (ERMor1.comp ERMor1.succ
+      (fun (_ : Fin 1) => ERMor1.proj (k := 3) 1)).interp
+      (Fin.cons j (Fin.cons prev (Fin.cons y Fin.elim0))) =
+      prev + 1 := by
+  simp only [ERMor1.interp_comp, ERMor1.interp_succ,
+    ERMor1.interp_proj]
+  rfl
+
+/-- The `natAdd` bound term evaluates to `j + y + 1`. -/
+private theorem ERMor1.natAdd_bound_eval (y j : ℕ) :
+    (ERMor1.comp ERMor1.succ
+      (fun (_ : Fin 1) =>
+        ERMor1.comp ERMor1.addN
+          (fun i => match i with
+            | ⟨0, _⟩ => ERMor1.proj (k := 2) 0
+            | ⟨1, _⟩ => ERMor1.proj (k := 2) 1))).interp
+      (Fin.cons j (Fin.cons y Fin.elim0)) = j + y + 1 := by
+  simp only [ERMor1.interp_comp, ERMor1.interp_succ,
+    ERMor1.interp_addN, ERMor1.interp_proj, Fin.cons_zero]
+  rfl
+
+/-- The `natAdd` raw Nat.rec trace with unevaluated step equals
+the one with simplified arithmetic step. -/
+private theorem ERMor1.natAdd_rec_simp (y n : ℕ) :
+    (Nat.rec y
+      (fun i prev =>
+        (ERMor1.comp ERMor1.succ
+          (fun (_ : Fin 1) =>
+            ERMor1.proj (k := 3) 1)).interp
+          (Fin.cons i (Fin.cons prev
+            (Fin.cons y Fin.elim0)))) n : ℕ) =
+    Nat.rec y (fun (_ : ℕ) (p : ℕ) => p + 1) n := by
+  induction n with
+  | zero => rfl
+  | succ m ih =>
+    change (ERMor1.comp ERMor1.succ
+        (fun (_ : Fin 1) => ERMor1.proj (k := 3) 1)).interp
+        (Fin.cons m (Fin.cons
+          (Nat.rec y (fun (_ : ℕ) (p : ℕ) => p + 1) m)
+          (Fin.cons y Fin.elim0))) =
+        Nat.rec y (fun (_ : ℕ) (p : ℕ) => p + 1) m + 1
+    rw [← ih, ERMor1.natAdd_step_eval]
+
+/-- Sub-lemma: `natAdd` simplified trace at step `j` equals
+`y + j`. -/
+private theorem ERMor1.natAdd_trace_eq (y j : ℕ) :
+    Nat.rec y (fun (_ : ℕ) (p : ℕ) => p + 1) j = y + j := by
+  induction j with
+  | zero => rfl
+  | succ m ih =>
+    change Nat.rec y (fun _ p => p + 1) m + 1 = y + (m + 1)
+    omega
+
+set_option maxHeartbeats 400000 in
+-- `boundedRec_eq_natRec_of_bounded` unification is heavy
+/-- Interpretation of `natAdd`:
+`natAdd.interp ![x, y] = x + y`. -/
+@[simp] theorem ERMor1.interp_natAdd (x y : ℕ) :
+    ERMor1.natAdd.interp ![x, y] = x + y := by
+  change ERMor1.natAdd.interp
+      (Fin.cons x (Fin.cons y Fin.elim0)) = x + y
+  unfold ERMor1.natAdd
+  refine ERMor1.boundedRec_eq_natRec_of_bounded _ _ _ _ _
+      ?_ ?_ |>.trans ?_
+  · intro j _hj
+    simp only [ERMor1.interp_proj, Fin.cons_zero]
+    rw [ERMor1.natAdd_rec_simp, ERMor1.natAdd_bound_eval,
+      ERMor1.natAdd_trace_eq]
+    omega
+  · intro j hj
+    rw [ERMor1.natAdd_bound_eval, ERMor1.natAdd_bound_eval]
+    omega
+  · simp only [ERMor1.interp_proj, Fin.cons_zero]
+    rw [ERMor1.natAdd_rec_simp, ERMor1.natAdd_trace_eq]
+    omega
+
+/-- Multiplication via bounded recursion: slot 0 is the
+iteration counter `x`, slot 1 is the multiplicand `y`.
+The trace satisfies `Nat.rec 0 (fun _ p => p + y) x = x * y`.
+-/
+def ERMor1.natMul : ERMor1 2 :=
+  ERMor1.boundedRec
+    (ERMor1.zeroN 1)
+    (ERMor1.comp ERMor1.addN
+      (fun i => match i with
+        | ⟨0, _⟩ => ERMor1.proj (k := 3) 1
+        | ⟨1, _⟩ => ERMor1.proj (k := 3) 2))
+    (ERMor1.comp ERMor1.succ
+      (fun (_ : Fin 1) =>
+        ERMor1.comp ERMor1.mulN
+          (fun i => match i with
+            | ⟨0, _⟩ =>
+                ERMor1.comp ERMor1.succ
+                  (fun (_ : Fin 1) => ERMor1.proj (k := 2) 0)
+            | ⟨1, _⟩ => ERMor1.proj (k := 2) 1)))
+
+/-- The `natMul` step term evaluates to `prev + y`. -/
+private theorem ERMor1.natMul_step_eval
+    (y j prev : ℕ) :
+    (ERMor1.comp ERMor1.addN
+      (fun i => match i with
+        | ⟨0, _⟩ => ERMor1.proj (k := 3) 1
+        | ⟨1, _⟩ => ERMor1.proj (k := 3) 2)).interp
+      (Fin.cons j (Fin.cons prev (Fin.cons y Fin.elim0))) =
+      prev + y := by
+  simp only [ERMor1.interp_comp, ERMor1.interp_addN,
+    ERMor1.interp_proj]
+  rfl
+
+/-- The `natMul` bound term evaluates to `(j + 1) * y + 1`. -/
+private theorem ERMor1.natMul_bound_eval (y j : ℕ) :
+    (ERMor1.comp ERMor1.succ
+      (fun (_ : Fin 1) =>
+        ERMor1.comp ERMor1.mulN
+          (fun i => match i with
+            | ⟨0, _⟩ =>
+                ERMor1.comp ERMor1.succ
+                  (fun (_ : Fin 1) =>
+                    ERMor1.proj (k := 2) 0)
+            | ⟨1, _⟩ => ERMor1.proj (k := 2) 1))).interp
+      (Fin.cons j (Fin.cons y Fin.elim0)) =
+    (j + 1) * y + 1 := by
+  simp only [ERMor1.interp_comp, ERMor1.interp_succ,
+    ERMor1.interp_mulN, ERMor1.interp_proj, Fin.cons_zero]
+  change ((j + 1) *
+      (Fin.cons j (Fin.cons y Fin.elim0) : Fin 2 → ℕ) 1)
+      + 1 = (j + 1) * y + 1
+  rfl
+
+/-- Direct trace evaluation for `natMul`: the raw `Nat.rec`
+over the ER step term at counter `n` equals `n * y`. -/
+private theorem ERMor1.natMul_trace_direct (y n : ℕ) :
+    (Nat.rec 0
+      (fun i prev =>
+        (ERMor1.comp ERMor1.addN
+          (fun k => match k with
+            | ⟨0, _⟩ => ERMor1.proj (k := 3) 1
+            | ⟨1, _⟩ => ERMor1.proj (k := 3) 2)).interp
+          (Fin.cons i (Fin.cons prev
+            (Fin.cons y Fin.elim0)))) n : ℕ) = n * y := by
+  induction n with
+  | zero => simp
+  | succ m ih =>
+    rw [Nat.succ_mul, ← ih]
+    exact ERMor1.natMul_step_eval y m _
+
+set_option maxHeartbeats 400000 in
+-- `boundedRec_eq_natRec_of_bounded` unification is heavy
+/-- Interpretation of `natMul`:
+`natMul.interp ![x, y] = x * y`. -/
+@[simp] theorem ERMor1.interp_natMul (x y : ℕ) :
+    ERMor1.natMul.interp ![x, y] = x * y := by
+  change ERMor1.natMul.interp
+      (Fin.cons x (Fin.cons y Fin.elim0)) = x * y
+  unfold ERMor1.natMul
+  refine ERMor1.boundedRec_eq_natRec_of_bounded _ _ _ _ _
+      ?_ ?_ |>.trans ?_
+  · intro j _hj
+    simp only [ERMor1.interp_zeroN]
+    rw [ERMor1.natMul_trace_direct, ERMor1.natMul_bound_eval]
+    have : j * y ≤ (j + 1) * y + 1 := by
+      rw [Nat.succ_mul]; omega
+    exact this
+  · intro j hj
+    rw [ERMor1.natMul_bound_eval, ERMor1.natMul_bound_eval]
+    have : (j + 1) * y ≤ (x + 1) * y :=
+      Nat.mul_le_mul_right _ (by omega)
+    omega
+  · simp only [ERMor1.interp_zeroN]
+    rw [ERMor1.natMul_trace_direct]
+
+/-- Factorial via bounded recursion: slot 0 is the iteration
+counter `n`.  The bound is `factN` itself, reflecting that
+`j! ≤ n!` for `j ≤ n`.  The trace satisfies
+`Nat.rec 1 (fun i p => (i + 1) * p) n = n!`. -/
+def ERMor1.factorial : ERMor1 1 :=
+  ERMor1.boundedRec
+    (ERMor1.oneN 0)
+    (ERMor1.comp ERMor1.mulN
+      (fun i => match i with
+        | ⟨0, _⟩ =>
+            ERMor1.comp ERMor1.succ
+              (fun (_ : Fin 1) => ERMor1.proj (k := 2) 0)
+        | ⟨1, _⟩ => ERMor1.proj (k := 2) 1))
+    ERMor1.factN
+
+/-- The `factorial` step term evaluates to `(j + 1) * prev`. -/
+private theorem ERMor1.factorial_step_eval
+    (j prev : ℕ) :
+    (ERMor1.comp ERMor1.mulN
+      (fun i => match i with
+        | ⟨0, _⟩ =>
+            ERMor1.comp ERMor1.succ
+              (fun (_ : Fin 1) => ERMor1.proj (k := 2) 0)
+        | ⟨1, _⟩ => ERMor1.proj (k := 2) 1)).interp
+      (Fin.cons j (Fin.cons prev Fin.elim0)) =
+      (j + 1) * prev := by
+  simp only [ERMor1.interp_comp, ERMor1.interp_mulN,
+    ERMor1.interp_succ, ERMor1.interp_proj, Fin.cons_zero]
+  change (j + 1) *
+      (Fin.cons j (Fin.cons prev Fin.elim0) : Fin 2 → ℕ) 1 =
+      (j + 1) * prev
+  rfl
+
+/-- Direct trace evaluation for `factorial`: the raw `Nat.rec`
+over the ER step term at counter `n` equals `n!`. -/
+private theorem ERMor1.factorial_trace_direct (n : ℕ) :
+    (Nat.rec 1
+      (fun i prev =>
+        (ERMor1.comp ERMor1.mulN
+          (fun k => match k with
+            | ⟨0, _⟩ =>
+                ERMor1.comp ERMor1.succ
+                  (fun (_ : Fin 1) =>
+                    ERMor1.proj (k := 2) 0)
+            | ⟨1, _⟩ => ERMor1.proj (k := 2) 1)).interp
+          (Fin.cons i (Fin.cons prev Fin.elim0))) n : ℕ) =
+    n.factorial := by
+  induction n with
+  | zero => rfl
+  | succ m ih =>
+    rw [Nat.factorial_succ, ← ih]
+    exact ERMor1.factorial_step_eval m _
+
+set_option maxHeartbeats 400000 in
+-- `boundedRec_eq_natRec_of_bounded` unification is heavy
+/-- Interpretation of `factorial`:
+`factorial.interp ![n] = n.factorial`. -/
+@[simp] theorem ERMor1.interp_factorial (n : ℕ) :
+    ERMor1.factorial.interp ![n] = n.factorial := by
+  change ERMor1.factorial.interp (Fin.cons n Fin.elim0) =
+      n.factorial
+  unfold ERMor1.factorial
+  refine ERMor1.boundedRec_eq_natRec_of_bounded _ _ _ _ _
+      ?_ ?_ |>.trans ?_
+  · intro j hj
+    simp only [ERMor1.interp_oneN]
+    rw [ERMor1.factorial_trace_direct, ERMor1.interp_factN,
+      Fin.cons_zero]
+  · intro j hj
+    simp only [ERMor1.interp_factN, Fin.cons_zero]
+    exact Nat.factorial_le hj
+  · simp only [ERMor1.interp_oneN]
+    rw [ERMor1.factorial_trace_direct]
+
 end GebLean
