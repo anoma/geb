@@ -16,10 +16,10 @@ presheaf categories.
 `FunctorToData` into two presheaf-category
 components:
 
-- **Positions:** `praPositionsFunctor.obj P :
+- **Positions:** `praPositionsPresheaf P :
   Jᵒᵖ ⥤ Type w'` — a presheaf on `J`
 - **Directions:** `praDirectionsAtFunctor :
-  (praPositionsFunctor.obj P).ElementsPre ⥤
+  (praPositionsPresheaf P).ElementsPre ⥤
   (Iᵒᵖ ⥤ Type w_I)` — a presheaf-valued functor
   on the category of elements of positions
 
@@ -52,7 +52,7 @@ presheaf categories, Grothendieck construction,
 category of elements, W-types), existing GebLean
 infrastructure (polynomial functors, PRA
 definitions, `FunctorToData`/`functorToDataIsoCat`,
-`praPositionsFunctor`, `praDirectionsAtFunctor`).
+`praPositionsNat`, `praDirectionsAtFunctor`).
 
 ---
 
@@ -63,7 +63,7 @@ definitions, `FunctorToData`/`functorToDataIsoCat`,
 | Definition | Type | Role |
 | ---------- | ---- | ---- |
 | `PresheafPRACat I J` | `Cat` | PRA category |
-| `praPositionsFunctor` | `...⥤ (Jᵒᵖ ⥤ Type w')` | Position presheaf |
+| `praPositionsNat` | `...⥤ (Jᵒᵖ ⥤ Type w')` | Position presheaf |
 | `praDirectionsAtFunctor` | `Elem(A)ᵒᵖ ⥤ PSh(I)` | Directions |
 | `praEvalAtFunctor` | `...⥤ (PSh(I) ⥤ PSh(J))` | Evaluation |
 

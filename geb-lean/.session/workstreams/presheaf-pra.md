@@ -50,7 +50,7 @@ Definitions in `PresheafPRA.lean`:
 - `presheafPRACatProfunctor` — no free params
 - `presheafPRACatFunctor` — fix `J`, vary `I`
 - `PresheafPRACat I J` — the PRA category
-- `praPositionsFunctor` — positions as functor
+- `praPositionsNat` — positions as functor
 - `praDirectionsAtFunctor` — nLab's `E_T`
 - `praEvalAtProfunctor` — profunctor form
 - `praEvalAtFunctor` — `PSh(I) ⥤ PSh(J)` form
