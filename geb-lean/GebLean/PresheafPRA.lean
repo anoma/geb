@@ -161,18 +161,6 @@ def praPositionsPresheaf
       max u_I w_I, w'}
       (↑(presheafCat.{u_I, v_I, w_I} I)))).obj P
 
-/--
-The positions functor: sends a PRA `P` to the presheaf
-on `J` of position types.
--/
-def praPositionsFunctor :
-    PresheafPRACat.{u_I, v_I, u_J, v_J, w_I, w'}
-      I J ⥤ (Jᵒᵖ ⥤ Type w') :=
-  (Functor.whiskeringRight Jᵒᵖ _ _).obj
-    (ccrNewIndexFunctor.{max v_I u_I (w_I + 1),
-      max u_I w_I, w'}
-      (↑(presheafCat.{u_I, v_I, w_I} I)))
-
 variable (P : PresheafPRACat.{u_I, v_I, u_J, v_J, w_I, w'} I J)
 
 /--
