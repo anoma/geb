@@ -3329,6 +3329,70 @@ def ccrNewIndexNat :
     apply Cat.Hom.ext
     rfl
 
+/--
+The functorial action of `ccrElementsFunctor` on a morphism
+`F : C ⟶ D` of `Cat.{v, u}`.  Sends an element `⟨P, i⟩` of
+`(ccrNewIndexFunctor C).Elements` to
+`⟨(coprodCovarRepFunctor.map F).toFunctor.obj P, i⟩`.  The index `i`
+is carried through unchanged because reindexing by `F` preserves the
+index type definitionally (this is the same fact that makes the
+target of `ccrNewIndexNat` constant).
+-/
+def ccrElementsFunctor.map
+    {C D : Cat.{v, u}} (F : C ⟶ D) :
+    (ccrNewIndexFunctor.{u, v, w} C.α).Elements ⥤
+      (ccrNewIndexFunctor.{u, v, w} D.α).Elements where
+  obj e :=
+    ⟨(coprodCovarRepFunctor.{u, v, w}.map F).toFunctor.obj e.fst,
+      e.snd⟩
+  map f :=
+    ⟨(coprodCovarRepFunctor.{u, v, w}.map F).toFunctor.map f.val,
+      f.property⟩
+  map_id _ :=
+    Subtype.ext
+      ((coprodCovarRepFunctor.{u, v, w}.map F).toFunctor.map_id _)
+  map_comp _ _ :=
+    Subtype.ext
+      ((coprodCovarRepFunctor.{u, v, w}.map F).toFunctor.map_comp _ _)
+
+/--
+Per-`C` element categories of `ccrNewIndexFunctor C` packaged as a
+`Cat`-valued functor on `Cat.{v, u}`.  See `ccrElementsFunctor.map`
+for the functorial action.
+-/
+def ccrElementsFunctor :
+    Cat.{v, u} ⥤ Cat.{max w v, max (w + 1) u} where
+  obj C :=
+    Cat.of (ccrNewIndexFunctor.{u, v, w} C.α).Elements
+  map F := (ccrElementsFunctor.map F).toCatHom
+  map_id C := by
+    apply Cat.Hom.ext
+    refine CategoryTheory.Functor.ext ?_ ?_
+    · intro _; rfl
+    · intros _ _ f
+      apply Subtype.ext
+      unfold ccrElementsFunctor.map
+      simp only [Functor.toCatHom_toFunctor, eqToHom_refl,
+        Category.id_comp, Category.comp_id]
+      rw [Functor.congr_hom
+        (congrArg Cat.Hom.toFunctor
+          (coprodCovarRepFunctor.{u, v, w}.map_id C)) f.val]
+      simp
+  map_comp {C D E} F G := by
+    apply Cat.Hom.ext
+    refine CategoryTheory.Functor.ext ?_ ?_
+    · intro _; rfl
+    · intros _ _ f
+      apply Subtype.ext
+      unfold ccrElementsFunctor.map
+      simp only [Functor.toCatHom_toFunctor, eqToHom_refl,
+        Category.id_comp, Category.comp_id,
+        Cat.Hom.comp_toFunctor]
+      rw [Functor.congr_hom
+        (congrArg Cat.Hom.toFunctor
+          (coprodCovarRepFunctor.{u, v, w}.map_comp F G)) f.val]
+      simp
+
 end CCRNaturalPackaging
 
 end GebLean
