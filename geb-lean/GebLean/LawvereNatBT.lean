@@ -204,6 +204,12 @@ inductive NatBTMor1 : (ℕ × ℕ) → NatBTSort → Type where
       (tree : NatBTMor1 nm .bt)
       (bound : NatBTMor1 (nm.1 + 1, nm.2) .nat) :
       NatBTMor1 nm .bt
+  | boundedNatRec {nm : ℕ × ℕ}
+      (base : NatBTMor1 nm .nat)
+      (step : NatBTMor1 (nm.1 + 2, nm.2) .nat)
+      (n : NatBTMor1 nm .nat)
+      (bound : NatBTMor1 (nm.1 + 1, nm.2) .nat) :
+      NatBTMor1 nm .nat
   | encodeBT {nm : ℕ × ℕ}
       (t : NatBTMor1 nm .bt) : NatBTMor1 nm .nat
   | decodeBT {nm : ℕ × ℕ}
@@ -268,6 +274,17 @@ def NatBTMor1.interp : {nm : ℕ × ℕ} → {σ : NatBTSort} →
       let boundVal :=
         NatBTMor1.interp bound (Fin.cons t.encode ctxN) ctxB
       BTL.decode (Nat.min traceVal.encode boundVal)
+  | _, _, NatBTMor1.boundedNatRec base step n bound, ctxN, ctxB =>
+      let nVal := NatBTMor1.interp n ctxN ctxB
+      let boundVal :=
+        NatBTMor1.interp bound (Fin.cons nVal ctxN) ctxB
+      Nat.min
+        (Nat.rec (NatBTMor1.interp base ctxN ctxB)
+          (fun j prev =>
+            NatBTMor1.interp step
+              (Fin.cons j (Fin.cons prev ctxN)) ctxB)
+          nVal)
+        boundVal
   | _, _, NatBTMor1.encodeBT t, ctxN, ctxB =>
       BTL.encode (NatBTMor1.interp t ctxN ctxB)
   | _, _, NatBTMor1.decodeBT k, ctxN, ctxB =>
@@ -402,6 +419,26 @@ def NatBTMor1.interp : {nm : ℕ × ℕ} → {σ : NatBTSort} →
           (tree.interp ctxN ctxB)).encode
         (bound.interp
           (Fin.cons (tree.interp ctxN ctxB).encode ctxN) ctxB))
+  := rfl
+
+/-- Interpretation of `boundedNatRec`. -/
+@[simp] theorem NatBTMor1.interp_boundedNatRec
+    {nm : ℕ × ℕ}
+    (base : NatBTMor1 nm .nat)
+    (step : NatBTMor1 (nm.1 + 2, nm.2) .nat)
+    (n : NatBTMor1 nm .nat)
+    (bound : NatBTMor1 (nm.1 + 1, nm.2) .nat)
+    (ctxN : Fin nm.1 → ℕ) (ctxB : Fin nm.2 → BTL) :
+    (NatBTMor1.boundedNatRec base step n bound).interp
+        ctxN ctxB =
+      Nat.min
+        (Nat.rec (base.interp ctxN ctxB)
+          (fun j prev =>
+            step.interp
+              (Fin.cons j (Fin.cons prev ctxN)) ctxB)
+          (n.interp ctxN ctxB))
+        (bound.interp
+          (Fin.cons (n.interp ctxN ctxB) ctxN) ctxB)
   := rfl
 
 /-- Interpretation of `encodeBT`. -/
