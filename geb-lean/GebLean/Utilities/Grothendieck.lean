@@ -5299,6 +5299,32 @@ abbrev FunctorBetweenCovContraBaseHomComp
         eqToHom
           (functorBetweenCovContraBaseHomEqCompProof G F baseFib fibFib f g x)
 
+/--
+Bundled data for a functor between a covariant source and a contravariant
+target Grothendieck construction,
+`Grothendieck G ⥤ (grothendieckContraFunctor D).obj F`.
+
+Objects map `(c, x) ↦ mkObj (baseFib.obj c) ((fibFib c).obj x)`; morphisms
+compose `fibHomCrossApp f x` with `(fibFib c').map (Grothendieck.Hom.fiber _)`.
+-/
+structure FunctorBetweenCovContraData where
+  /-- The base functor `C ⥤ D`. -/
+  baseFib : FunctorBetweenCovContraBaseFib (C := C) (D := D)
+  /-- Fibre functors: `G.obj c ⥤ F.obj (op (baseFib.obj c))`. -/
+  fibFib : FunctorBetweenCovContraFibFib G F baseFib
+  /-- Cross-fibre morphisms in the contravariant-target direction. -/
+  fibHomCrossApp :
+    FunctorBetweenCovContraFibHomCrossApp G F baseFib fibFib
+  /-- Naturality of cross-fibre morphisms. -/
+  fibHomCrossNat :
+    FunctorBetweenCovContraFibHomCrossNat G F baseFib fibFib fibHomCrossApp
+  /-- Identity coherence. -/
+  baseHomId :
+    FunctorBetweenCovContraBaseHomId G F baseFib fibFib fibHomCrossApp
+  /-- Composition coherence. -/
+  baseHomComp :
+    FunctorBetweenCovContraBaseHomComp G F baseFib fibFib fibHomCrossApp
+
 end FunctorBetweenCovContra
 
 /-!
