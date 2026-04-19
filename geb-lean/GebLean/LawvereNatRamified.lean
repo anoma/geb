@@ -65,11 +65,11 @@ arity `n` and tier `t`.  Constructors:
   triggering `mayRec`.
 * `comp`: composition; tier propagates as `Tier.max`.
 * `natMatch`: one-level pattern match on a `nonRec` argument's
-  zero/succ shape; tier propagates as the max of the two
-  branches.  The `succCase` has arity `n + 2`, binding the
-  predecessor in slot `0` and a placeholder slot `1`; this
-  arity matches the `boundedRec`/`foldMutNat` step signature
-  used in the back-translation to `LawvereERCat`.
+  zero/succ shape.  The `succCase` has arity `n + 1`, binding the
+  predecessor in slot `0`.  Tier propagates as the max of the
+  two branches.  Note: `natMatch` is at tier `nonRec` when both
+  branches are `nonRec`, distinguishing it from `foldMutNat`,
+  which always produces tier `mayRec`.
 * `foldMutNat`: unbounded primitive recursion on ℕ.  The
   `step` argument is constrained to tier `nonRec`; the result
   is tier `mayRec`. -/
@@ -86,7 +86,7 @@ inductive NatRamifiedMor1 : ℕ → Tier → Type
       NatRamifiedMor1 a (Tier.max t1 t2)
   | natMatch {n : ℕ} {t1 t2 : Tier}
       (zeroCase : NatRamifiedMor1 n t1)
-      (succCase : NatRamifiedMor1 (n + 2) t2)
+      (succCase : NatRamifiedMor1 (n + 1) t2)
       (k : NatRamifiedMor1 (n + 1) .nonRec) :
       NatRamifiedMor1 (n + 1) (Tier.max t1 t2)
   | foldMutNat {n : ℕ} {tb : Tier}
