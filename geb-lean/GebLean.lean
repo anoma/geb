@@ -53,6 +53,7 @@ import GebLean.LawvereERTetration
 import GebLean.LawvereNatBT
 import GebLean.LawvereNatBT0
 import GebLean.LawvereNatBTV2
+import GebLean.LawvereNatBTV2Interp
 import GebLean.LawvereNatBTV2Quot
 import GebLean.LawvereNatBTBackTrans
 import GebLean.LawvereNatBTInterp
