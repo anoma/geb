@@ -149,6 +149,19 @@ end PresheafPRADef
 section PresheafPRAAccessors
 
 /--
+The uncurried form of `presheafPRACatBifunctor`, as a functor
+`Catᵒᵖ × Catᵒᵖ ⥤ Cat`.  Used as the base category for the
+`Grothendieck`-indexed natural transformations `praDirectionsNatOp`
+and `praDirectionsNat`.
+-/
+def presheafPRACatBifunctorUncurried :
+    (Cat.{v_J, u_J}ᵒᵖ × Cat.{v_I, u_I}ᵒᵖ) ⥤
+      Cat.{max u_I u_J w_I w',
+        max u_I u_J v_I v_J (w_I + 1) (w' + 1)} :=
+  Functor.uncurry.obj
+    presheafPRACatBifunctor.{u_I, v_I, u_J, v_J, w_I, w'}
+
+/--
 Target bifunctor of `praPositionsNat`.  Sends each
 `(J, I) : Cat.{v_J, u_J}ᵒᵖ × Cat.{v_I, u_I}ᵒᵖ` to the
 universe-widened form of `Jᵒᵖ ⥤ Type w'`, constant in `I`.
