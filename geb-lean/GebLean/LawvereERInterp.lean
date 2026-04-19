@@ -104,7 +104,8 @@ theorem erInterpFunctor_not_full :
   intro hfull
   have hsurj := Functor.map_surjective
     (F := erInterpFunctor)
-    (X := (2 : ℕ)) (Y := (1 : ℕ))
+    (X := (show LawvereERCat from (2 : ℕ)))
+    (Y := (show LawvereERCat from (1 : ℕ)))
   obtain ⟨f, hf⟩ := hsurj ackHom
   obtain ⟨f_raw, hfr⟩ :=
     Quotient.exists_rep (s := erMorNSetoid 2 1) f

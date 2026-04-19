@@ -159,7 +159,7 @@ which gives `PreservesFiniteProducts`. -/
 /-- Δ sends the source terminal `0` literally to
 the target chosen terminal `LexObj.terminal`. -/
 @[simp] theorem erDelta.obj_terminal :
-    erDelta.obj (0 : LawvereERCat) =
+    erDelta.obj (show LawvereERCat from (0 : ℕ)) =
       LexObj.terminal :=
   rfl
 
@@ -193,7 +193,8 @@ instance :
   Limits.preservesLimit_of_preserves_limit_cone
     (chosenTerminalIsTerminal (C := LawvereERCat))
     ((Limits.isLimitMapConeEmptyConeEquiv
-        erDeltaFunctor 0).symm
+        erDeltaFunctor
+        (show LawvereERCat from (0 : ℕ))).symm
       (chosenTerminalIsTerminal
         (C := LawvereERLexCat)))
 
@@ -420,7 +421,7 @@ def erDelta.mapBinaryFanIsLimit (n m : ℕ) :
 
 /-- Δ preserves the source chosen binary product at
 `(n, m)`. -/
-instance (n m : ℕ) :
+instance (n m : LawvereERCat) :
     Limits.PreservesLimit (Limits.pair n m)
       erDeltaFunctor :=
   Limits.preservesLimit_of_preserves_limit_cone

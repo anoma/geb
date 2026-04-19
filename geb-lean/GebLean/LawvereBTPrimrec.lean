@@ -949,8 +949,9 @@ theorem interpFunctor_not_full :
     ¬ interpFunctor.{0}.Full := by
   intro hfull
   have hsurj := Functor.map_surjective
-    (F := interpFunctor.{0}) (X := (1 : ℕ))
-    (Y := (1 : ℕ))
+    (F := interpFunctor.{0})
+    (X := (1 : LawvereBTQuotCat))
+    (Y := (1 : LawvereBTQuotCat))
   have hmor := hsurj
     (fun (ctx : Fin 1 → BT.{0}) =>
       (fun (_ : Fin 1) =>

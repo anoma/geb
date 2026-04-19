@@ -125,10 +125,10 @@ theorem lawvereBT_bool_dichotomy
           BTMorNQuo.snd ctx₀
         rw [BTMorNQuo.pair_snd] at hc
         exact congrFun hc j₀ ▸ he₂_interp
-      change BT.node l r = _
-      unfold btBranchQ BTMorNQuo.interpU
-      simp only [Quotient.lift_mk]
-      unfold BTMorN.interpU btBranch
+      change BT.node l r =
+        (BTMor1.branch (BTMor1.proj 0)
+          (BTMor1.proj 1)).interpU
+          ((BTMorNQuo.pair e₁ e₂).interpU ctx₀)
       rw [BTMor1.interpU_branch,
         BTMor1.interpU_proj,
         BTMor1.interpU_proj]
@@ -259,10 +259,10 @@ theorem lawvereBT_tree_dichotomy
         BTMorNQuo.snd ctx₀
       rw [BTMorNQuo.pair_snd] at hc
       exact congrFun hc j₀ ▸ he₂_interp
-    change BT.node l r = _
-    unfold btBranchQ BTMorNQuo.interpU
-    simp only [Quotient.lift_mk]
-    unfold BTMorN.interpU btBranch
+    change BT.node l r =
+      (BTMor1.branch (BTMor1.proj 0)
+        (BTMor1.proj 1)).interpU
+        ((BTMorNQuo.pair e₁ e₂).interpU ctx₀)
     rw [BTMor1.interpU_branch,
       BTMor1.interpU_proj,
       BTMor1.interpU_proj]

@@ -1860,7 +1860,8 @@ ground contexts implies equivalence under
 `f g : n ⟶ m`, if `h ≫ f = h ≫ g` for every
 global element `h : 0 ⟶ n`, then `f = g`. -/
 theorem lawvereBTQuotCat_isSeparator :
-    IsSeparator (0 : LawvereBTQuotCat) := by
+    IsSeparator
+      (show LawvereBTQuotCat from (0 : ℕ)) := by
   rw [isSeparator_def]
   intro n m f g hyp
   revert f g
@@ -1873,7 +1874,7 @@ theorem lawvereBTQuotCat_isSeparator :
   intro ctx
   let h_raw : BTMorN 0 n :=
     fun i => quoteBT (ctx i)
-  let h : (0 : LawvereBTQuotCat) ⟶ n :=
+  let h : (show LawvereBTQuotCat from (0 : ℕ)) ⟶ n :=
     Quotient.mk (btMorNSetoid 0 n) h_raw
   have heq := hyp' h
   have heq_interp :

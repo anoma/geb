@@ -156,7 +156,15 @@ elementary recursive functions.  Objects are natural
 numbers (arities).  Morphisms are equivalence classes
 of `TreeERMorN` tuples under extensional
 equality. -/
-@[reducible] def LawvereTreeERCat := ℕ
+def LawvereTreeERCat := ℕ
+
+instance (n : ℕ) : OfNat LawvereTreeERCat n :=
+  ⟨(n : ℕ)⟩
+
+instance : BEq LawvereTreeERCat :=
+  inferInstanceAs (BEq ℕ)
+instance : DecidableEq LawvereTreeERCat :=
+  inferInstanceAs (DecidableEq ℕ)
 
 instance : CategoryStruct LawvereTreeERCat where
   Hom := TreeERMorNQuo
@@ -456,7 +464,7 @@ is `n + m`. -/
 def lawvereTreeERProduct
     (n m : LawvereTreeERCat) :
     ChosenBinaryProduct n m where
-  obj := (n + m : ℕ)
+  obj := (Nat.add n m : ℕ)
   fst := TreeERMorNQuo.fst
   snd := TreeERMorNQuo.snd
   lift f g := TreeERMorNQuo.pair f g

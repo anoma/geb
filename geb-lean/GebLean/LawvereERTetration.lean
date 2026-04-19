@@ -93,7 +93,8 @@ theorem erInterpFunctor_not_full_via_tetration :
   intro hfull
   have hsurj := Functor.map_surjective
     (F := erInterpFunctor)
-    (X := (1 : ℕ)) (Y := (1 : ℕ))
+    (X := (1 : LawvereERCat))
+    (Y := (1 : LawvereERCat))
   obtain ⟨f, hf⟩ := hsurj tetrationHom
   obtain ⟨f_raw, hfr⟩ :=
     Quotient.exists_rep (s := erMorNSetoid 1 1) f

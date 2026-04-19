@@ -142,7 +142,14 @@ Objects are natural numbers (powers of the generating
 object).  Morphisms are equivalence classes of
 `BTMorN` tuples under the congruence relation
 `btMorRel`. -/
-@[reducible] def LawvereBTQuotCat := ℕ
+def LawvereBTQuotCat := ℕ
+
+instance (n : ℕ) : OfNat LawvereBTQuotCat n :=
+  ⟨(n : ℕ)⟩
+
+instance : BEq LawvereBTQuotCat := inferInstanceAs (BEq ℕ)
+instance : DecidableEq LawvereBTQuotCat :=
+  inferInstanceAs (DecidableEq ℕ)
 
 instance : CategoryStruct LawvereBTQuotCat where
   Hom := BTMorNQuo
@@ -327,7 +334,7 @@ the product of `n` and `m` is `n + m`. -/
 def lawvereBTQuotProduct
     (n m : LawvereBTQuotCat) :
     ChosenBinaryProduct n m where
-  obj := (n + m : ℕ)
+  obj := (Nat.add n m : ℕ)
   fst := BTMorNQuo.fst
   snd := BTMorNQuo.snd
   lift f g := BTMorNQuo.pair f g
@@ -747,13 +754,13 @@ theorem elimQ_β {n m : ℕ}
     (f : BTMorNQuo n m)
     (g : BTMorNQuo (m + m) m) :
     cfpMap (C := LawvereBTQuotCat)
-      (𝟙 n) btBranchQ ≫ elimQ f g =
+      (BTMorNQuo.id n) btBranchQ ≫ elimQ f g =
     cfpLiftAssoc (C := LawvereBTQuotCat)
       (elimQ f g) (elimQ f g) ≫ g :=
   Quotient.ind₂
     (motive := fun f g =>
       cfpMap (C := LawvereBTQuotCat)
-        (𝟙 n) btBranchQ ≫ elimQ f g =
+        (BTMorNQuo.id n) btBranchQ ≫ elimQ f g =
       cfpLiftAssoc (C := LawvereBTQuotCat)
         (elimQ f g) (elimQ f g) ≫ g)
     (fun f_raw g_raw => by
@@ -900,7 +907,7 @@ theorem elimQ_uniq {n m : ℕ}
         btLeafQ n ≫ φ = f)
     (hbranch :
       cfpMap (C := LawvereBTQuotCat)
-        (𝟙 n) btBranchQ ≫ φ =
+        (BTMorNQuo.id n) btBranchQ ≫ φ =
       cfpLiftAssoc (C := LawvereBTQuotCat)
         φ φ ≫ g) :
     φ = elimQ f g := by
@@ -911,7 +918,7 @@ theorem elimQ_uniq {n m : ℕ}
       cfpInsertSnd (C := LawvereBTQuotCat)
         btLeafQ n ≫ φ = f →
       cfpMap (C := LawvereBTQuotCat)
-        (𝟙 n) btBranchQ ≫ φ =
+        (BTMorNQuo.id n) btBranchQ ≫ φ =
       cfpLiftAssoc (C := LawvereBTQuotCat)
         φ φ ≫ g →
       φ = elimQ f g)
@@ -923,7 +930,7 @@ theorem elimQ_uniq {n m : ℕ}
         btLeafQ n ≫ φ =
         Quotient.mk _ f_raw →
       cfpMap (C := LawvereBTQuotCat)
-        (𝟙 n) btBranchQ ≫ φ =
+        (BTMorNQuo.id n) btBranchQ ≫ φ =
       cfpLiftAssoc (C := LawvereBTQuotCat)
         φ φ ≫ Quotient.mk _ g_raw →
       φ = elimQ

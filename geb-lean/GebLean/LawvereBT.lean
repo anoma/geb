@@ -2043,7 +2043,14 @@ theorem BTMorN.comp_assoc {n m k l : ℕ}
 category.  Objects are natural numbers, representing
 powers of the generating object `T^n`.  Morphisms
 `n → m` are `m`-tuples of `BTMor1 n`. -/
-@[reducible] def LawvereBTCat := ℕ
+def LawvereBTCat := ℕ
+
+instance (n : ℕ) : OfNat LawvereBTCat n :=
+  ⟨(n : ℕ)⟩
+
+instance : BEq LawvereBTCat := inferInstanceAs (BEq ℕ)
+instance : DecidableEq LawvereBTCat :=
+  inferInstanceAs (DecidableEq ℕ)
 
 /-! ## Category structure on LawvereBTCat -/
 
@@ -2141,7 +2148,7 @@ theorem BTMorN.pair_uniq {k n m : ℕ}
 the product of `n` and `m` is `n + m`. -/
 def lawvereBTProduct (n m : LawvereBTCat) :
     ChosenBinaryProduct n m where
-  obj := (n + m : ℕ)
+  obj := (Nat.add n m : ℕ)
   fst := BTMorN.fst
   snd := BTMorN.snd
   lift f g := BTMorN.pair f g

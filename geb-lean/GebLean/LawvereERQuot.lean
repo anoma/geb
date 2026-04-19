@@ -140,7 +140,14 @@ theorem ERMorNQuo.comp_assoc {n m k l : ℕ}
 functions.  Objects are natural numbers (arities).
 Morphisms are equivalence classes of `ERMorN` tuples
 under extensional equality. -/
-@[reducible] def LawvereERCat := ℕ
+def LawvereERCat := ℕ
+
+instance (n : ℕ) : OfNat LawvereERCat n :=
+  ⟨(n : ℕ)⟩
+
+instance : BEq LawvereERCat := inferInstanceAs (BEq ℕ)
+instance : DecidableEq LawvereERCat :=
+  inferInstanceAs (DecidableEq ℕ)
 
 instance : CategoryStruct LawvereERCat where
   Hom := ERMorNQuo
@@ -349,7 +356,7 @@ the product of `n` and `m` is `n + m`. -/
 def lawvereERProduct
     (n m : LawvereERCat) :
     ChosenBinaryProduct n m where
-  obj := (n + m : ℕ)
+  obj := (Nat.add n m : ℕ)
   fst := ERMorNQuo.fst
   snd := ERMorNQuo.snd
   lift f g := ERMorNQuo.pair f g
