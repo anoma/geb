@@ -487,27 +487,71 @@ adequacy plus counter monotonicity).
   `GebLeanTests/LawvereNatBTBackTrans.lean` with `#guard`s on
   zero/succ/natProj/sub/leafBT/nodeBT/encodeBT.
 
-**Current resume point**: Task 14.5 (wrapper research).
-With Task 14a committed, the fold-free back-translation
-patterns are available as ground truth.  Task 14.5
-investigates a generic ergonomic wrapper for
-`ERMor1.foldBTLOnCode` that hides the bound parameter from
-client code.  Working hypothesis: tree recursion should have
-depth 1 natively, possibly with mutuality over (ℕ, BT)
-simultaneously, matching Leivant's two-sort ramified-
-recurrence characterization of E_3.  Examining Task 14a's
-concrete `toER` patterns informs what the wrapper needs to
-handle.  Reference literature: Leivant 1999
-(`.claude/docs/ramified-recurrence-computational-complexity-iii.pdf`)
-and Beckmann-Weiermann 2000.
+**Design pivot (2026-04-18)**: during Task 14.5 research, a
+strength-mismatch obstruction was identified — the current
+`foldBTNat`/`foldBTBT` (non-ramified state-threaded recursion
+over ER step functions) computes tower-of-variable-height values,
+provably escaping E_3.  The proposed `LawvereERCat ≃ LawvereNatBT`
+equivalence therefore cannot hold for the theory as currently
+defined.
 
-**Task 14b (follow-up)**: after Task 14.5 produces the
-wrapper, extend `toERUniform` to handle `foldBTNat` and
-`foldBTBT` using the wrapper, and extend correctness to the
-full inductive (removing the `isFoldFree` hypothesis).
+After extensive brainstorming (documented in this session), the
+single-equivalence plan was replaced with a two-stage chain:
 
-After Task 14b, Stage β Task 15 onward per the LawvereNatBT
-plan.
+```text
+LawvereERCat ≃ LawvereNatBT_bounded ≃ LawvereNatBT_ramified
+```
+
+* `LawvereNatBT_bounded` is the current theory with explicit
+  `bound` parameters on `foldBTNat`/`foldBTBT` and a new
+  `boundedNatRec` constructor.  Provably E_3 by construction.
+  Used as a proof-convenience intermediate.
+* `LawvereNatBT_ramified` is a new theory with a 3-indexed
+  inductive (domain, codomain, tier tag `NonRec`/`MayRec`), a
+  single unified recursive destructor for mutual recursion
+  over ℕ and BT with tier-disciplined non-recursive step, and
+  Leivant-standard non-recursive primitives (`add`, `mul`
+  beyond the Wikipedia-literal ER set).  Programmer-friendly:
+  no bound parameters at client sites.  Corresponds to
+  Leivant's tier-2 ramified recurrence over free algebras
+  (Leivant 1999) = E_3.
+
+Design spec:
+`docs/superpowers/specs/2026-04-18-lawvere-natbt-two-stage-design.md`
+(local, gitignored).
+
+Implementation plan:
+`docs/superpowers/plans/2026-04-18-lawvere-natbt-two-stage.md`
+(local, gitignored).  23 tasks across five sub-stages:
+
+* **Stage β.a** (Tasks 1-5): bounded-theory refactor.  Add
+  bound parameters, `boundedNatRec`, extend Task 14a's
+  `toERUniform` to handle all fold cases.
+* **Stage β.b** (Tasks 6-9): equivalence 1.  Prove
+  `LawvereERCat ≃ LawvereNatBT_bounded`.
+* **Stage δ.a** (Tasks 10-13): ramified-theory definition.
+  New `NatBTMor1Ramified` inductive, interp, interp functor,
+  quotient category.
+* **Stage δ.b-δ.d** (Tasks 14-19): equivalence 2.  Back-
+  translation `F21`, forward `F12`, assemble.
+* **Stage δ.e** (Tasks 20-21): composition and Phase 4f
+  transport.
+* **Finalization** (Tasks 22-23): tests and tracker update.
+
+**Current resume point**: execute the plan via
+`superpowers:subagent-driven-development`.  Starts at Stage
+β.a Task 1 (documenting `LawvereNatBT` files as the bounded
+theory variant).  Use the existing `LawvereNatBT` files
+directly (conservative renaming — no file renames, just
+header-comment updates to note the bounded variant).  Proceed
+directly on branch `terence/syntax` per established project
+workflow.
+
+**Task 14.5-extended (deferred)**: BT-only adequacy research
+— proving that the unlabeled-BT + 0-way-ℕ-product subfragment
+of `LawvereNatBT_ramified` is already equivalent to
+`LawvereERCat`.  Remains deferred until after the full
+equivalence chain ships (end of Task 23 in the new plan).
 
 Natural checkpoints: end of ER-Primrec mini-phase
 (Task 13 complete, foldBTLOnCode packaged), end of Stage β
