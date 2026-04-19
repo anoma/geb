@@ -116,9 +116,9 @@ theorem pshProdPresheaf_hom_ext
       h₂ ≫ pshProdSnd P Q) :
     h₁ = h₂ := by
   ext T x
-  · exact ConcreteCategory.congr_hom
+  · exact congr_fun
       (NatTrans.congr_app hfst T) x
-  · exact ConcreteCategory.congr_hom
+  · exact congr_fun
       (NatTrans.congr_app hsnd T) x
 
 @[simp]
@@ -252,18 +252,14 @@ def pshRelIdIso
     (pshRelId P).toFunctor ≅ P where
   hom := (pshRelId P).ι ≫ pshProdFst P P
   inv :=
-    { app := fun c => TypeCat.ofHom
-        fun a => ⟨(a, a), rfl⟩
+    { app := fun c a => ⟨(a, a), rfl⟩
       naturality := fun c d f => by
-        apply ConcreteCategory.ext_apply
-        intro a; apply Subtype.ext
+        ext a; apply Subtype.ext
         exact Prod.ext rfl rfl }
   hom_inv_id := by
     ext c ⟨⟨x, y⟩, (h : x = y)⟩
     exact Subtype.ext (Prod.ext rfl h)
-  inv_hom_id := by
-    ext c x
-    rfl
+  inv_hom_id := by ext; rfl
 
 /-- The two projections from the diagonal
 relation `pshRelId P` are equal. -/
@@ -483,7 +479,7 @@ def pshRelGraph
     rintro ⟨p, q⟩ (h : α.app c p = q)
     change α.app d (P.map f p) = Q.map f q
     rw [← h]
-    exact NatTrans.naturality_apply α f p
+    exact congr_fun (α.naturality f) p
 
 theorem pshRelGraph_eq_id
     (P : Cᵒᵖ ⥤ Type w) :
@@ -864,8 +860,7 @@ theorem pshRelRelated_graph_iff
   · intro h c p q (hα : α.app c p = q)
     change β.app c (f.app c p) = g.app c q
     rw [← hα]
-    exact ConcreteCategory.congr_hom
-      (NatTrans.congr_app h c) p |>.symm
+    exact congr_fun (congr_app h c) p |>.symm
 
 /-- The preimage relation is related to the
 original: the morphisms `(α, β)` send
@@ -1508,10 +1503,10 @@ theorem pshProdOverToRel_pshBarrLift_le
   refine ⟨(G.map
     (Subfunctor.toRange S.hom)).app c w,
     ?_⟩
-  have step := ConcreteCategory.congr_hom
+  have step := congr_fun
     (NatTrans.congr_app hlift c) w
   simp only [NatTrans.comp_app,
-    ConcreteCategory.comp_apply] at step
+    types_comp_apply] at step
   exact step ▸ hw
 
 /-- `pshBarrLiftRel G` is monotone with respect
@@ -1555,9 +1550,10 @@ theorem pshBarrLiftRel_mono
       exact hsnd
   refine ⟨(G.map
     (Subfunctor.homOfLe h)).app c w, ?_⟩
-  have step := ConcreteCategory.congr_hom
+  have step := congr_fun
     (NatTrans.congr_app hlift c) w
-  simp only [NatTrans.comp_app] at step
+  simp only [NatTrans.comp_app,
+    types_comp_apply] at step
   exact step ▸ hw
 
 /-- The inclusion of a graph subfunctor composed
@@ -1569,22 +1565,22 @@ def pshRelGraph_ι_fst_iso
     (pshRelGraph α).toFunctor ≅ P where
   hom := (pshRelGraph α).ι ≫ pshProdFst P Q
   inv :=
-    { app := fun c => TypeCat.ofHom
-        fun p => ⟨(p, α.app c p), rfl⟩
+    { app := fun c p =>
+        ⟨(p, α.app c p), rfl⟩
       naturality := fun c d f => by
-        apply ConcreteCategory.ext_apply
-        intro p; apply Subtype.ext
+        ext p; apply Subtype.ext
         change (P.map f p,
             α.app d (P.map f p)) =
           (P.map f p,
             Q.map f (α.app c p))
         exact Prod.ext rfl
-          (NatTrans.naturality_apply α f p) }
+          (congr_fun
+            (α.naturality f) p) }
   hom_inv_id := by
     ext c ⟨⟨p, q⟩, (h : α.app c p = q)⟩
     exact Subtype.ext
       (Prod.ext rfl h)
-  inv_hom_id := by ext c p; rfl
+  inv_hom_id := by ext; rfl
 
 /-- A natural transformation `α : P ⟶ Q` is
 recovered from `pshRelGraph α` as the composite
@@ -1645,19 +1641,14 @@ theorem pshProdOverToRel_graph
     Over.mk_hom]
   constructor
   · rintro ⟨r, hr⟩
-    simp only [pshProdLift,
-      FunctorToTypes.prod.lift_app,
-      NatTrans.id_app,
-      ConcreteCategory.id_apply] at hr
-    obtain ⟨h1, h2⟩ := Prod.mk.inj hr
+    have h1 := congr_arg Prod.fst hr
+    have h2 := congr_arg Prod.snd hr
+    dsimp [pshProdLift] at h1 h2
     rw [← h1, ← h2]
   · intro (h : α.app c p = q)
-    refine ⟨p, ?_⟩
-    simp only [pshProdLift,
-      FunctorToTypes.prod.lift_app,
-      NatTrans.id_app,
-      ConcreteCategory.id_apply]
-    exact Prod.ext rfl h
+    exact ⟨p, by
+      dsimp [pshProdLift]
+      exact Prod.ext rfl h⟩
 
 /-- The Barr extension of a graph relation
 `pshRelGraph α` equals `pshRelGraph (G.map α)`.
@@ -1680,14 +1671,13 @@ theorem pshBarrLiftRel_graph
       (by
         ext c ⟨⟨p, q⟩,
           (h : α.app c p = q)⟩
-        all_goals
-          simp only [Over.mk_hom,
-            pshProdOverGraph,
-            pshRelGraph_ι_fst_iso,
-            NatTrans.comp_app,
-            Subfunctor.ι_app]
-        · rfl
-        · exact h)
+        simp only [Over.mk_hom,
+          pshProdOverGraph,
+          pshRelGraph_ι_fst_iso,
+          NatTrans.comp_app,
+          types_comp_apply,
+          Subfunctor.ι_app]
+        exact Prod.ext rfl h)
   have hBarrIso :
     pshBarrLift G (pshProdOverGraph α) ≅
     pshProdOverGraph (G.map α) :=
@@ -1824,20 +1814,18 @@ theorem pshRelRelated_toPshProdOverRelated
     PshProdOverRelated (Over.mk R.ι)
       (Over.mk S.ι) α β := by
   refine ⟨{
-    app := fun c => TypeCat.ofHom
-      fun x => ⟨(α.app c x.val.1,
-        β.app c x.val.2), h c _ _ x.prop⟩
+    app := fun c x => ⟨(α.app c x.val.1,
+      β.app c x.val.2), h c _ _ x.prop⟩
     naturality := fun c d f => by
-      apply TypeCat.Hom.ext
-      apply TypeCat.Fun.ext
-      funext x
-      apply Subtype.ext
-      apply Prod.ext
-      · exact NatTrans.naturality_apply α f x.val.1
-      · exact NatTrans.naturality_apply β f x.val.2 },
+      ext ⟨⟨p, p'⟩, hR⟩
+      exact Subtype.ext
+        (Prod.ext
+          (congr_fun (α.naturality f) p)
+          (congr_fun
+            (β.naturality f) p')) },
     ?_⟩
-  ext c ⟨⟨p, p'⟩, _⟩
-  all_goals rfl
+  ext c ⟨⟨p, p'⟩, hR⟩
+  exact Prod.ext rfl rfl
 
 /-- `PshProdOverRelated` descends to
 `pshRelRelated` on ranges. -/
@@ -1853,10 +1841,10 @@ theorem pshProdOverRelated_topshRelRelated
   obtain ⟨φ, hφ⟩ := h
   intro c p p' ⟨r, hr⟩
   refine ⟨φ.app c r, ?_⟩
-  have := ConcreteCategory.congr_hom
+  have := congr_fun
     (NatTrans.congr_app hφ c) r
   simp only [NatTrans.comp_app,
-    ConcreteCategory.comp_apply] at this
+    types_comp_apply] at this
   rw [this, hr]
   rfl
 
@@ -1904,22 +1892,18 @@ theorem natTrans_pshRelRelated_barrLiftRel
     Set.mem_range, Over.mk_hom] at hmem ⊢
   obtain ⟨w, hw⟩ := hmem
   refine ⟨(σ.app R.toFunctor).app c w, ?_⟩
-  have nf := ConcreteCategory.congr_hom
-    (NatTrans.congr_app
-      (σ.naturality
-        (R.ι ≫ pshProdFst P Q)) c) w
-  have ns := ConcreteCategory.congr_hom
-    (NatTrans.congr_app
-      (σ.naturality
-        (R.ι ≫ pshProdSnd P Q)) c) w
+  have nf := congr_fun (congr_app
+    (σ.naturality
+      (R.ι ≫ pshProdFst P Q)) c) w
+  have ns := congr_fun (congr_app
+    (σ.naturality
+      (R.ι ≫ pshProdSnd P Q)) c) w
   simp only [NatTrans.comp_app,
-    ConcreteCategory.comp_apply] at nf ns
+    types_comp_apply] at nf ns
   have hw₁ := congr_arg Prod.fst hw
   have hw₂ := congr_arg Prod.snd hw
-  simp only [pshProdLift,
-    FunctorToTypes.prod.lift_app,
-    ConcreteCategory.hom_ofHom]
-    at hw₁ hw₂ ⊢
+  dsimp [pshProdLift,
+    FunctorToTypes.prod] at hw₁ hw₂ ⊢
   exact Prod.ext
     (nf.symm.trans (congr_arg _ hw₁))
     (ns.symm.trans (congr_arg _ hw₂))
@@ -1966,7 +1950,7 @@ def pshBarrLiftRelMap
       rw [← heq]
       simp only [pshBarrLift, Over.mk,
         pshProdLift, FunctorToTypes.prod.lift,
-        NatTrans.comp_app,
+        NatTrans.comp_app, types_comp_apply,
         pshBarrLiftRel, pshProdOverToRel,
         Subfunctor.range]
       apply Prod.ext
@@ -1974,23 +1958,23 @@ def pshBarrLiftRelMap
               pshProdFst P Q)).app c
             ((α.app R.toFunctor).app c w) =
           (α.app P).app c pq.1
-        have nat := ConcreteCategory.congr_hom
-          (NatTrans.congr_app
+        have nat := congr_fun
+          (congr_app
             (α.naturality
               (R.ι ≫ pshProdFst P Q)) c) w
         simp only [NatTrans.comp_app,
-          ConcreteCategory.comp_apply] at nat
+          types_comp_apply] at nat
         rw [← nat, hw₁]
       · change (H.map (R.ι ≫
               pshProdSnd P Q)).app c
             ((α.app R.toFunctor).app c w) =
           (α.app Q).app c pq.2
-        have nat := ConcreteCategory.congr_hom
-          (NatTrans.congr_app
+        have nat := congr_fun
+          (congr_app
             (α.naturality
               (R.ι ≫ pshProdSnd P Q)) c) w
         simp only [NatTrans.comp_app,
-          ConcreteCategory.comp_apply] at nat
+          types_comp_apply] at nat
         rw [← nat, hw₂])
 
 @[simp]
@@ -2001,8 +1985,8 @@ theorem pshBarrLiftRelMap_id
     pshBarrLiftRelMap (𝟙 G) R =
       𝟙 (pshBarrLiftRel G R).toFunctor := by
   ext c ⟨x, hx⟩
-  apply Subtype.ext
-  apply Prod.ext <;> rfl
+  simp [pshBarrLiftRelMap, Subfunctor.lift,
+    pshProdLift, FunctorToTypes.prod.lift]
 
 @[simp]
 theorem pshBarrLiftRelMap_ι_fst
@@ -2018,7 +2002,8 @@ theorem pshBarrLiftRelMap_ι_fst
       pshProdFst (G.obj P) (G.obj Q) ≫
       α.app P := by
   ext c ⟨x, hx⟩
-  rfl
+  simp [pshBarrLiftRelMap, Subfunctor.lift,
+    pshProdLift, FunctorToTypes.prod.lift]
 
 @[simp]
 theorem pshBarrLiftRelMap_ι_snd
@@ -2034,7 +2019,8 @@ theorem pshBarrLiftRelMap_ι_snd
       pshProdSnd (G.obj P) (G.obj Q) ≫
       α.app Q := by
   ext c ⟨x, hx⟩
-  rfl
+  simp [pshBarrLiftRelMap, Subfunctor.lift,
+    pshProdLift, FunctorToTypes.prod.lift]
 
 @[simp]
 theorem pshBarrLiftRelMap_comp
@@ -2047,8 +2033,8 @@ theorem pshBarrLiftRelMap_comp
       pshBarrLiftRelMap α R ≫
         pshBarrLiftRelMap β R := by
   ext c ⟨x, hx⟩
-  apply Subtype.ext
-  apply Prod.ext <;> rfl
+  simp [pshBarrLiftRelMap, Subfunctor.lift,
+    pshProdLift, FunctorToTypes.prod.lift]
 
 /-- The Barr extension as an endofunctor on the
 edge category `PshRelEdge C`. Given an endofunctor
@@ -2111,10 +2097,13 @@ def pshContraBarrLiftRel
       (F.map (R.ι ≫
         pshProdSnd P Q).op).app d
         ((F.obj (Opposite.op Q)).map k b)
-    have h1 := NatTrans.naturality_apply
-      (F.map (R.ι ≫ pshProdFst P Q).op) k a
-    have h2 := NatTrans.naturality_apply
-      (F.map (R.ι ≫ pshProdSnd P Q).op) k b
+    have h1 := congr_fun
+      ((F.map (R.ι ≫
+        pshProdFst P Q).op).naturality k) a
+    have h2 := congr_fun
+      ((F.map (R.ι ≫
+        pshProdSnd P Q).op).naturality k) b
+    simp only [types_comp_apply] at h1 h2
     rw [h1, h2, hx]
 
 /-- Transport a `pshContraBarrLiftRel` along
@@ -2133,7 +2122,7 @@ def pshContraBarrLiftRelMap
     (pshContraBarrLiftRel F R).toFunctor ⟶
       (pshContraBarrLiftRel G R).toFunctor
     where
-  app c := TypeCat.ofHom fun x =>
+  app c x :=
     ⟨((α.app (Opposite.op P)).app c x.val.1,
       (α.app (Opposite.op Q)).app c x.val.2),
      by
@@ -2145,29 +2134,28 @@ def pshContraBarrLiftRelMap
           pshProdSnd P Q).op).app c
           ((α.app (Opposite.op Q)).app c
             x.val.2)
-      have nat₁ := ConcreteCategory.congr_hom
-        (NatTrans.congr_app
-          (α.naturality
-            (R.ι ≫ pshProdFst P Q).op) c)
+      have nat₁ := congr_fun (congr_app
+        (α.naturality
+          (R.ι ≫ pshProdFst P Q).op) c)
         x.val.1
-      have nat₂ := ConcreteCategory.congr_hom
-        (NatTrans.congr_app
-          (α.naturality
-            (R.ι ≫ pshProdSnd P Q).op) c)
+      have nat₂ := congr_fun (congr_app
+        (α.naturality
+          (R.ι ≫ pshProdSnd P Q).op) c)
         x.val.2
       simp only [NatTrans.comp_app,
-        ConcreteCategory.comp_apply] at nat₁ nat₂
+        types_comp_apply] at nat₁ nat₂
       rw [← nat₁, ← nat₂, x.property]⟩
   naturality c d k := by
-    apply TypeCat.Hom.ext
-    apply TypeCat.Fun.ext
-    funext ⟨⟨a, b⟩, _⟩
+    ext ⟨⟨a, b⟩, _⟩
+    simp only [types_comp_apply]
     apply Subtype.ext
     apply Prod.ext
-    · exact NatTrans.naturality_apply
-        (α.app (Opposite.op P)) k a
-    · exact NatTrans.naturality_apply
-        (α.app (Opposite.op Q)) k b
+    · exact congr_fun
+        ((α.app (Opposite.op P)).naturality
+          k) a
+    · exact congr_fun
+        ((α.app (Opposite.op Q)).naturality
+          k) b
 
 @[simp]
 theorem pshContraBarrLiftRelMap_ι_fst
@@ -2253,32 +2241,26 @@ theorem pshContraBarrLiftRel_graph
         (F.map fst.op).app c a =
         (F.map fst.op).app c
           ((F.map f.op).app c b) := by
-      have := ConcreteCategory.congr_hom
-        (NatTrans.congr_app hFsnd c) b
+      have := congr_fun
+        (congr_app hFsnd c) b
       simp only [NatTrans.comp_app,
-        ConcreteCategory.comp_apply] at this
+        types_comp_apply] at this
       rw [this] at h; exact h
-    have hinvc : ∀ y,
-        (F.map gIso.inv.op).app c
-          ((F.map fst.op).app c y) = y := by
-      intro y
-      have := ConcreteCategory.congr_hom
-        (NatTrans.congr_app hinv c) y
-      simp only [NatTrans.comp_app,
-        ConcreteCategory.comp_apply,
-        NatTrans.id_app,
-        ConcreteCategory.id_apply] at this
-      exact this
+    have hinvc :=
+      congr_fun (congr_app hinv c)
+    simp only [NatTrans.comp_app,
+      types_comp_apply, NatTrans.id_app,
+      types_id_apply] at hinvc
     change (F.map f.op).app c b = a
     rw [← hinvc a, ← hinvc
       ((F.map f.op).app c b)]
     exact congrArg
       ((F.map gIso.inv.op).app c) h'.symm
   · intro h
-    have := ConcreteCategory.congr_hom
-      (NatTrans.congr_app hFsnd c) b
+    have := congr_fun
+      (congr_app hFsnd c) b
     simp only [NatTrans.comp_app,
-      ConcreteCategory.comp_apply] at this
+      types_comp_apply] at this
     rw [this]
     exact congrArg
       ((F.map fst.op).app c) h.symm
@@ -2302,7 +2284,8 @@ theorem pshContraBarrLiftRel_graph_ι_fst
         F.map f.op := by
   rw [pshContraBarrLiftRel_graph]
   ext c ⟨⟨_, _⟩, hpf⟩
-  simp only [NatTrans.comp_app]
+  simp only [NatTrans.comp_app,
+    types_comp_apply]
   dsimp [pshProdFst, pshProdSnd,
     FunctorToTypes.prod.fst,
     FunctorToTypes.prod.snd]
@@ -2496,23 +2479,29 @@ def pshProfBarrLiftRel
           k b)
     refine ⟨(G.obj (Opposite.op RT,
       RT)).map k w, ?_, ?_⟩
-    · have n1 := NatTrans.naturality_apply
-        (G.map ((𝟙 (Opposite.op RT), fst) :
-          (Opposite.op RT, RT) ⟶
-          (Opposite.op RT, P))) k w
-      have n2 := NatTrans.naturality_apply
-        (G.map ((fst.op, 𝟙 P) :
-          (Opposite.op P, P) ⟶
-          (Opposite.op RT, P))) k a
+    · have n1 := congr_fun
+        ((G.map ((𝟙 (Opposite.op RT), fst) :
+            (Opposite.op RT, RT) ⟶
+            (Opposite.op RT, P))).naturality
+          k) w
+      have n2 := congr_fun
+        ((G.map ((fst.op, 𝟙 P) :
+            (Opposite.op P, P) ⟶
+            (Opposite.op RT, P))).naturality
+          k) a
+      simp only [types_comp_apply] at n1 n2
       rw [n1, n2]; exact congrArg _ hw₁
-    · have n1 := NatTrans.naturality_apply
-        (G.map ((𝟙 (Opposite.op RT), snd) :
-          (Opposite.op RT, RT) ⟶
-          (Opposite.op RT, Q))) k w
-      have n2 := NatTrans.naturality_apply
-        (G.map ((snd.op, 𝟙 Q) :
-          (Opposite.op Q, Q) ⟶
-          (Opposite.op RT, Q))) k b
+    · have n1 := congr_fun
+        ((G.map ((𝟙 (Opposite.op RT), snd) :
+            (Opposite.op RT, RT) ⟶
+            (Opposite.op RT, Q))).naturality
+          k) w
+      have n2 := congr_fun
+        ((G.map ((snd.op, 𝟙 Q) :
+            (Opposite.op Q, Q) ⟶
+            (Opposite.op RT, Q))).naturality
+          k) b
+      simp only [types_comp_apply] at n1 n2
       rw [n1, n2]; exact congrArg _ hw₂
 
 /-- Transport a `pshProfBarrLiftRel` along a
@@ -2531,7 +2520,7 @@ def pshProfBarrLiftRelMap
     (pshProfBarrLiftRel G R).toFunctor ⟶
       (pshProfBarrLiftRel H R).toFunctor
     where
-  app c := TypeCat.ofHom fun x =>
+  app c x :=
     let RT := R.toFunctor
     let fst := R.ι ≫ pshProdFst P Q
     let snd := R.ι ≫ pshProdSnd P Q
@@ -2554,23 +2543,20 @@ def pshProfBarrLiftRelMap
             (Opposite.op RT, P))).app c
             ((β.app (Opposite.op P,
               P)).app c x.val.1)
-        have nat₁ := ConcreteCategory.congr_hom
-          (NatTrans.congr_app
-            (β.naturality
-              ((𝟙 (Opposite.op RT), fst) :
-                (Opposite.op RT, RT) ⟶
-                (Opposite.op RT,
-                  P))).symm c) w
-        have nat₂ := ConcreteCategory.congr_hom
-          (NatTrans.congr_app
-            (β.naturality
-              ((fst.op, 𝟙 P) :
-                (Opposite.op P, P) ⟶
-                (Opposite.op RT,
-                  P))).symm c) x.val.1
+        have nat₁ := congr_fun (congr_app
+          (β.naturality
+            ((𝟙 (Opposite.op RT), fst) :
+              (Opposite.op RT, RT) ⟶
+              (Opposite.op RT,
+                P))).symm c) w
+        have nat₂ := congr_fun (congr_app
+          (β.naturality
+            ((fst.op, 𝟙 P) :
+              (Opposite.op P, P) ⟶
+              (Opposite.op RT,
+                P))).symm c) x.val.1
         simp only [NatTrans.comp_app,
-          ConcreteCategory.comp_apply]
-          at nat₁ nat₂
+          types_comp_apply] at nat₁ nat₂
         rw [nat₁, nat₂]
         exact congrArg _ hw₁
       · change
@@ -2584,35 +2570,33 @@ def pshProfBarrLiftRelMap
             (Opposite.op RT, Q))).app c
             ((β.app (Opposite.op Q,
               Q)).app c x.val.2)
-        have nat₁ := ConcreteCategory.congr_hom
-          (NatTrans.congr_app
-            (β.naturality
-              ((𝟙 (Opposite.op RT), snd) :
-                (Opposite.op RT, RT) ⟶
-                (Opposite.op RT,
-                  Q))).symm c) w
-        have nat₂ := ConcreteCategory.congr_hom
-          (NatTrans.congr_app
-            (β.naturality
-              ((snd.op, 𝟙 Q) :
-                (Opposite.op Q, Q) ⟶
-                (Opposite.op RT,
-                  Q))).symm c) x.val.2
+        have nat₁ := congr_fun (congr_app
+          (β.naturality
+            ((𝟙 (Opposite.op RT), snd) :
+              (Opposite.op RT, RT) ⟶
+              (Opposite.op RT,
+                Q))).symm c) w
+        have nat₂ := congr_fun (congr_app
+          (β.naturality
+            ((snd.op, 𝟙 Q) :
+              (Opposite.op Q, Q) ⟶
+              (Opposite.op RT,
+                Q))).symm c) x.val.2
         simp only [NatTrans.comp_app,
-          ConcreteCategory.comp_apply]
-          at nat₁ nat₂
+          types_comp_apply] at nat₁ nat₂
         rw [nat₁, nat₂]
         exact congrArg _ hw₂⟩
   naturality c d k := by
-    apply TypeCat.Hom.ext
-    apply TypeCat.Fun.ext
-    funext ⟨⟨a, b⟩, _⟩
+    ext ⟨⟨a, b⟩, _⟩
+    simp only [types_comp_apply]
     apply Subtype.ext
     apply Prod.ext
-    · exact NatTrans.naturality_apply
-        (β.app (Opposite.op P, P)) k a
-    · exact NatTrans.naturality_apply
-        (β.app (Opposite.op Q, Q)) k b
+    · exact congr_fun
+        ((β.app (Opposite.op P, P)).naturality
+          k) a
+    · exact congr_fun
+        ((β.app (Opposite.op Q, Q)).naturality
+          k) b
 
 @[simp]
 theorem pshProfBarrLiftRelMap_ι_fst
@@ -2725,14 +2709,11 @@ theorem pshProfBarrLiftRel_id
     obtain ⟨w, hw₁, hw₂⟩ := hmem
     rw [← pshRelId_fst_eq_snd P] at hw₂
     have heq := hw₁.symm.trans hw₂
-    have ha := ConcreteCategory.congr_hom
-      (NatTrans.congr_app hret c) a
-    have hb := ConcreteCategory.congr_hom
-      (NatTrans.congr_app hret c) b
+    have ha := congr_fun (congr_app hret c) a
+    have hb := congr_fun (congr_app hret c) b
     simp only [NatTrans.comp_app,
-      NatTrans.id_app,
-      ConcreteCategory.comp_apply,
-      ConcreteCategory.id_apply] at ha hb
+      NatTrans.id_app, types_comp_apply,
+      types_id_apply] at ha hb
     rw [← ha, ← hb]
     exact congrArg _ heq
   · intro hmem
@@ -2787,84 +2768,82 @@ theorem pshProfBarrLiftRel_id
             (pshRelId P).toFunctor))).app
         c a,
       ?_, ?_⟩
-    · have step := ConcreteCategory.congr_hom
-        (NatTrans.congr_app
-          (show G.map
-              ((((pshRelId P).ι ≫
-                  pshProdFst P P).op,
-                (pshRelIdIso P).inv) :
-                (Opposite.op P, P) ⟶
-                (Opposite.op
-                  (pshRelId P).toFunctor,
-                  (pshRelId P).toFunctor)) ≫
-            G.map
-              ((𝟙 (Opposite.op
-                  (pshRelId P).toFunctor),
-                (pshRelId P).ι ≫
-                  pshProdFst P P) :
-                (Opposite.op
-                  (pshRelId P).toFunctor,
-                  (pshRelId P).toFunctor) ⟶
-                (Opposite.op
-                  (pshRelId P).toFunctor,
-                  P)) =
-            G.map
-              ((((pshRelId P).ι ≫
-                  pshProdFst P P).op,
-                𝟙 P) :
-                (Opposite.op P, P) ⟶
-                (Opposite.op
-                  (pshRelId P).toFunctor,
-                  P))
-          from by
-            rw [← G.map_comp]; congr 1)
-          c) a
+    · have step := congr_fun (congr_app
+        (show G.map
+            ((((pshRelId P).ι ≫
+                pshProdFst P P).op,
+              (pshRelIdIso P).inv) :
+              (Opposite.op P, P) ⟶
+              (Opposite.op
+                (pshRelId P).toFunctor,
+                (pshRelId P).toFunctor)) ≫
+          G.map
+            ((𝟙 (Opposite.op
+                (pshRelId P).toFunctor),
+              (pshRelId P).ι ≫
+                pshProdFst P P) :
+              (Opposite.op
+                (pshRelId P).toFunctor,
+                (pshRelId P).toFunctor) ⟶
+              (Opposite.op
+                (pshRelId P).toFunctor,
+                P)) =
+          G.map
+            ((((pshRelId P).ι ≫
+                pshProdFst P P).op,
+              𝟙 P) :
+              (Opposite.op P, P) ⟶
+              (Opposite.op
+                (pshRelId P).toFunctor,
+                P))
+        from by
+          rw [← G.map_comp]; congr 1)
+        c) a
       simp only [NatTrans.comp_app,
-        ConcreteCategory.comp_apply] at step
+        types_comp_apply] at step
       exact step
-    · have step := ConcreteCategory.congr_hom
-        (NatTrans.congr_app
-          (show G.map
-              ((((pshRelId P).ι ≫
-                  pshProdFst P P).op,
-                (pshRelIdIso P).inv) :
-                (Opposite.op P, P) ⟶
-                (Opposite.op
-                  (pshRelId P).toFunctor,
-                  (pshRelId P).toFunctor)) ≫
-            G.map
-              ((𝟙 (Opposite.op
-                  (pshRelId P).toFunctor),
-                (pshRelId P).ι ≫
-                  pshProdSnd P P) :
-                (Opposite.op
-                  (pshRelId P).toFunctor,
-                  (pshRelId P).toFunctor) ⟶
-                (Opposite.op
-                  (pshRelId P).toFunctor,
-                  P)) =
-            G.map
-              ((((pshRelId P).ι ≫
-                  pshProdSnd P P).op,
-                𝟙 P) :
-                (Opposite.op P, P) ⟶
-                (Opposite.op
-                  (pshRelId P).toFunctor,
-                  P))
-          from by
-            rw [← G.map_comp]; congr 1
-            change (((pshRelId P).ι ≫
-                pshProdFst P P).op ≫ 𝟙 _,
-              (pshRelIdIso P).inv ≫
-                ((pshRelId P).ι ≫
-                  pshProdSnd P P)) =
-              (((pshRelId P).ι ≫
-                pshProdSnd P P).op, 𝟙 P)
-            rw [Category.comp_id, hσsnd,
-              ← pshRelId_fst_eq_snd])
-          c) a
+    · have step := congr_fun (congr_app
+        (show G.map
+            ((((pshRelId P).ι ≫
+                pshProdFst P P).op,
+              (pshRelIdIso P).inv) :
+              (Opposite.op P, P) ⟶
+              (Opposite.op
+                (pshRelId P).toFunctor,
+                (pshRelId P).toFunctor)) ≫
+          G.map
+            ((𝟙 (Opposite.op
+                (pshRelId P).toFunctor),
+              (pshRelId P).ι ≫
+                pshProdSnd P P) :
+              (Opposite.op
+                (pshRelId P).toFunctor,
+                (pshRelId P).toFunctor) ⟶
+              (Opposite.op
+                (pshRelId P).toFunctor,
+                P)) =
+          G.map
+            ((((pshRelId P).ι ≫
+                pshProdSnd P P).op,
+              𝟙 P) :
+              (Opposite.op P, P) ⟶
+              (Opposite.op
+                (pshRelId P).toFunctor,
+                P))
+        from by
+          rw [← G.map_comp]; congr 1
+          change (((pshRelId P).ι ≫
+              pshProdFst P P).op ≫ 𝟙 _,
+            (pshRelIdIso P).inv ≫
+              ((pshRelId P).ι ≫
+                pshProdSnd P P)) =
+            (((pshRelId P).ι ≫
+              pshProdSnd P P).op, 𝟙 P)
+          rw [Category.comp_id, hσsnd,
+            ← pshRelId_fst_eq_snd])
+        c) a
       simp only [NatTrans.comp_app,
-        ConcreteCategory.comp_apply] at step
+        types_comp_apply] at step
       exact step
 
 end PshProfBarrExtension
@@ -2884,34 +2863,26 @@ def pshIhomProfMap
     {A A' B B' : Dᵒᵖ ⥤ Type (max u₁ v₁)}
     (f : A' ⟶ A) (g : B ⟶ B') :
     A.functorHom B ⟶ A'.functorHom B' where
-  app c := TypeCat.ofHom fun φ =>
-    { app := fun d h => TypeCat.ofHom
-        fun a' =>
-          g.app d (φ.app d h (f.app d a'))
+  app c φ :=
+    { app := fun d h a' =>
+        g.app d (φ.app d h (f.app d a'))
       naturality := fun {d e} k h => by
-        apply ConcreteCategory.ext_apply
-        intro a'
-        change g.app e (φ.app e _
-            (f.app e (A'.map k a'))) =
-          B'.map k (g.app d
-            (φ.app d h (f.app d a')))
-        have hf := NatTrans.naturality_apply
-          f k a'
-        have hφ := ConcreteCategory.congr_hom
+        ext a'
+        simp only [types_comp_apply]
+        have hf := congr_fun
+          (f.naturality k) a'
+        simp only [types_comp_apply] at hf
+        have hφ := congr_fun
           (φ.naturality k h) (f.app d a')
-        simp only [ConcreteCategory.comp_apply]
-          at hφ
-        rw [hf, hφ]
-        exact NatTrans.naturality_apply
-          g k (φ.app d h (f.app d a')) }
+        simp only [types_comp_apply] at hφ
+        rw [← hf] at hφ; rw [hφ]
+        have hg := congr_fun
+          (g.naturality k)
+          (φ.app d h (f.app d a'))
+        simp only [types_comp_apply] at hg
+        exact hg }
   naturality c₁ c₂ k := by
-    apply ConcreteCategory.ext_apply
-    intro φ
-    apply Functor.HomObj.ext
-    funext d h
-    apply ConcreteCategory.ext_apply
-    intro a'
-    rfl
+    ext c φ d h; rfl
 
 /-- Identity law for `pshIhomProfMap`. -/
 @[simp]
@@ -2967,26 +2938,19 @@ def pshArrowRelPresheaf
     { g : (A₁.functorHom B₁).obj c ×
           (A₂.functorHom B₂).obj c //
       pshArrowRelPred R S c g }
-  map k := TypeCat.ofHom fun g =>
+  map k g :=
     ⟨((A₁.functorHom B₁).map k g.val.1,
       (A₂.functorHom B₂).map k g.val.2),
      fun d h' w => g.property d (k ≫ h') w⟩
   map_id c := by
-    apply ConcreteCategory.ext_apply
-    intro g
-    apply Subtype.ext
-    change (_, _) = g.val
-    rw [Functor.map_id_apply,
-      Functor.map_id_apply]
+    funext g; simp only [types_id_apply]
+    apply Subtype.ext; apply Prod.ext <;>
+      simp only [FunctorToTypes.map_id_apply]
   map_comp k₁ k₂ := by
-    apply ConcreteCategory.ext_apply
-    intro g
-    apply Subtype.ext
-    apply Prod.ext
-    · exact Functor.map_comp_apply
-        (A₁.functorHom B₁) k₁ k₂ g.val.1
-    · exact Functor.map_comp_apply
-        (A₂.functorHom B₂) k₁ k₂ g.val.2
+    funext g; simp only [types_comp_apply]
+    apply Subtype.ext; apply Prod.ext <;>
+      simp only
+        [FunctorToTypes.map_comp_apply]
 
 /-- The arrow relation as a `PshProdOver`. Given
 relations `R` on the inputs and `S` on the outputs,
@@ -3001,10 +2965,8 @@ def pshArrowRelFst
     (S : PshProdOver B₁ B₂) :
     pshArrowRelPresheaf R S ⟶ A₁.functorHom B₁
     where
-  app c := TypeCat.ofHom fun g => g.val.1
-  naturality _ _ _ := by
-    apply ConcreteCategory.ext_apply
-    intro; rfl
+  app c g := g.val.1
+  naturality _ _ _ := by funext; rfl
 
 def pshArrowRelSnd
     {A₁ A₂ B₁ B₂ : Dᵒᵖ ⥤ Type (max u₁ v₁)}
@@ -3012,10 +2974,8 @@ def pshArrowRelSnd
     (S : PshProdOver B₁ B₂) :
     pshArrowRelPresheaf R S ⟶ A₂.functorHom B₂
     where
-  app c := TypeCat.ofHom fun g => g.val.2
-  naturality _ _ _ := by
-    apply ConcreteCategory.ext_apply
-    intro; rfl
+  app c g := g.val.2
+  naturality _ _ _ := by funext; rfl
 
 /-- The arrow relation as a `PshProdOver`. Given
 relations `R` on the inputs and `S` on the outputs,
@@ -3050,16 +3010,14 @@ private theorem pshArrowRelPred_transport
   intro d hd w₂
   have hR : R₁.hom.app d (αinv.left.app d w₂)
       = R₂.hom.app d w₂ :=
-    ConcreteCategory.congr_hom
-      (NatTrans.congr_app
-        (Over.w αinv) d) w₂
+    congr_fun (NatTrans.congr_app
+      (Over.w αinv) d) w₂
   obtain ⟨s₁, hs₁⟩ :=
     h d hd (αinv.left.app d w₂)
   have hS : S₂.hom.app d (βhom.left.app d s₁)
       = S₁.hom.app d s₁ :=
-    ConcreteCategory.congr_hom
-      (NatTrans.congr_app
-        (Over.w βhom) d) s₁
+    congr_fun (NatTrans.congr_app
+      (Over.w βhom) d) s₁
   exact ⟨βhom.left.app d s₁,
     by rw [hS, hs₁, hR]⟩
 
@@ -3077,21 +3035,17 @@ private def pshArrowRelPresheafIso
     pshArrowRelPresheaf R₁ S₁ ≅
       pshArrowRelPresheaf R₂ S₂ where
   hom :=
-    { app := fun c => TypeCat.ofHom
-        fun g => ⟨g.val,
-          pshArrowRelPred_transport
-            α.inv β.hom g.property⟩
+    { app := fun c g => ⟨g.val,
+        pshArrowRelPred_transport
+          α.inv β.hom g.property⟩
       naturality := fun _ _ _ => by
-        apply ConcreteCategory.ext_apply
-        intro; exact Subtype.ext rfl }
+        funext; exact Subtype.ext rfl }
   inv :=
-    { app := fun c => TypeCat.ofHom
-        fun g => ⟨g.val,
-          pshArrowRelPred_transport
-            α.hom β.inv g.property⟩
+    { app := fun c g => ⟨g.val,
+        pshArrowRelPred_transport
+          α.hom β.inv g.property⟩
       naturality := fun _ _ _ => by
-        apply ConcreteCategory.ext_apply
-        intro; exact Subtype.ext rfl }
+        funext; exact Subtype.ext rfl }
   hom_inv_id := by
     ext c g; exact Subtype.ext rfl
   inv_hom_id := by
@@ -3107,9 +3061,7 @@ def pshArrowRelOver_iso
     pshArrowRelOver R₁ S₁ ≅
       pshArrowRelOver R₂ S₂ :=
   Over.isoMk (pshArrowRelPresheafIso α β)
-    (by
-      ext c g
-      all_goals rfl)
+    (by ext c g; rfl)
 
 /-- The arrow relation on subfunctor-level
 relations. Given `R : PshRel A₁ A₂` and
@@ -3156,9 +3108,7 @@ theorem pshArrowRel_id
       Subfunctor.ι_app] at hs
     have hfst := congr_arg Prod.fst hs
     have hsnd := congr_arg Prod.snd hs
-    change b₁ = g₁.app d h a at hfst
-    change b₂ = g₂.app d h a at hsnd
-    change g₁.app d h a = g₂.app d h a
+    simp only at hfst hsnd
     rw [← hfst, ← hsnd]; exact hb
   · intro heq
     change f₁ = f₂ at heq; subst heq
@@ -3206,10 +3156,10 @@ theorem pshArrowRel_graph_apply
   obtain ⟨s, hs⟩ := hspec
   simp only [Over.mk_hom,
     Subfunctor.ι_app] at hs
-  have hval : s.val = _ := hs
-  have hprop := s.property
-  rw [hval] at hprop
-  exact hprop
+  have hfst := congr_arg Prod.fst hs
+  have hsnd := congr_arg Prod.snd hs
+  simp only at hfst hsnd
+  rw [← hfst, ← hsnd]; exact s.property
 
 set_option backward.isDefEq.respectTransparency false in
 /-- Introduction rule for membership in the arrow
@@ -3277,10 +3227,10 @@ theorem pshArrowRel_graphCod_apply
   obtain ⟨s, hs⟩ := hspec
   simp only [Over.mk_hom,
     Subfunctor.ι_app] at hs
-  have hval : s.val = _ := hs
-  have hprop := s.property
-  rw [hval] at hprop
-  exact hprop
+  have hfst := congr_arg Prod.fst hs
+  have hsnd := congr_arg Prod.snd hs
+  simp only at hfst hsnd
+  rw [← hfst, ← hsnd]; exact s.property
 
 set_option backward.isDefEq.respectTransparency false in
 theorem pshArrowRel_intro
@@ -3336,10 +3286,11 @@ theorem pshArrowRel_apply
   simp only [Over.mk_hom,
     Subfunctor.ι_app] at hspec
   obtain ⟨s, hs⟩ := hspec
-  have hval : s.val = _ := hs
-  have hprop := s.property
-  rw [hval] at hprop
-  exact hprop
+  have hfst := congr_arg Prod.fst hs
+  have hsnd := congr_arg Prod.snd hs
+  simp only at hfst hsnd
+  rw [← hfst, ← hsnd]
+  exact s.property
 
 /-- The range of `pshArrowRelOver R S` is contained
 in `pshArrowRel (pshProdOverToRel R)
@@ -3437,27 +3388,26 @@ theorem pshArrowRelOver_related
   obtain ⟨φ_α, hα_eq⟩ := hα
   obtain ⟨φ_β, hβ_eq⟩ := hβ
   refine ⟨{
-    app := fun c => TypeCat.ofHom fun g => ⟨
+    app := fun c g => ⟨
       ((pshIhomProfMap α₁ β₁).app c g.val.1,
        (pshIhomProfMap α₂ β₂).app c g.val.2),
-      fun d h w' => by
-        obtain ⟨s, hs⟩ :=
-          g.property d h (φ_α.app d w')
-        refine ⟨φ_β.app d s, ?_⟩
-        have hS := ConcreteCategory.congr_hom
-          (NatTrans.congr_app hβ_eq d) s
-        have hR := ConcreteCategory.congr_hom
-          (NatTrans.congr_app hα_eq d) w'
-        simp only [NatTrans.comp_app,
-          ConcreteCategory.comp_apply]
-          at hS hR
-        rw [hS, hs, hR]
-        rfl⟩
+      fun d h w' => ?_⟩
     naturality := fun c₁ c₂ k => by
-      apply ConcreteCategory.ext_apply
-      intro g; exact Subtype.ext rfl
+      funext g; exact Subtype.ext rfl
   }, ?_⟩
-  apply pshProdPresheaf_hom_ext <;>
+  · obtain ⟨s, hs⟩ :=
+      g.property d h (φ_α.app d w')
+    refine ⟨φ_β.app d s, ?_⟩
+    have hS := congr_fun
+      (NatTrans.congr_app hβ_eq d) s
+    have hR := congr_fun
+      (NatTrans.congr_app hα_eq d) w'
+    simp only [NatTrans.comp_app,
+      types_comp_apply] at hS hR
+    rw [hS, hs, hR]
+    simp [pshProdMap, pshProdLift,
+      pshIhomProfMap]
+  · apply pshProdPresheaf_hom_ext <;>
     (ext c g; rfl)
 
 /-- The arrow relation preserves relatedness
@@ -3542,17 +3492,17 @@ def pshIhomYonedaFwd
     {X : D} (e : X ⟶ (ihom A).obj B) :
     ((yoneda.obj A).functorHom
       (yoneda.obj B)).obj (Opposite.op X) :=
-  { app := fun d h => TypeCat.ofHom
-      fun a => lift a (h.unop ≫ e) ≫
+  { app := fun d h a =>
+      lift a (h.unop ≫ e) ≫
         (ihom.ev A).app B
     naturality := fun {d d'} g h => by
-      apply ConcreteCategory.ext_apply
-      intro a
-      change lift (g.unop ≫ a)
-          ((h ≫ g).unop ≫ e) ≫ _ =
-        g.unop ≫ lift a (h.unop ≫ e) ≫ _
-      rw [unop_comp, Category.assoc,
-        ← comp_lift, Category.assoc] }
+      ext a
+      simp only [types_comp_apply,
+        yoneda_obj_map]
+      rw [← Category.assoc, comp_lift]
+      congr 1
+      dsimp
+      simp only [Category.assoc] }
 
 /-- Backward map: given an element of
 `(yoneda.obj A).functorHom (yoneda.obj B)` at
@@ -3580,7 +3530,8 @@ def pshIhomYonedaRepresentableBy :
     { toFun := pshIhomYonedaFwd A B
       invFun := pshIhomYonedaInv A B
       left_inv := fun e => by
-        change curry (lift (fst A _) _ ≫ _) = e
+        dsimp only [pshIhomYonedaInv,
+          pshIhomYonedaFwd]
         simp only [Quiver.Hom.unop_op]
         rw [← Category.comp_id (fst A _),
           lift_fst_comp_snd_comp,
@@ -3590,37 +3541,21 @@ def pshIhomYonedaRepresentableBy :
       right_inv := fun f => by
         apply Functor.functorHom_ext
         intro d g
-        apply ConcreteCategory.ext_apply
-        intro a
-        change lift a _ ≫ _ = _
+        ext a
+        dsimp only [pshIhomYonedaFwd,
+          pshIhomYonedaInv]
         rw [← lift_whiskerLeft]
-        change (lift a g.unop ≫
-            (A ◁ curry
-              ((ConcreteCategory.hom
-                (f.app (Opposite.op (A ⊗ _))
-                  (Quiver.Hom.op
-                    (snd A _)))) (fst A _))))
-              ≫ (ihom.ev A).app B = _
         rw [Category.assoc, ← uncurry_eq,
           uncurry_curry]
-        have hnat := ConcreteCategory.congr_hom
+        have hnat := congr_fun
           (f.naturality
             (Quiver.Hom.op (lift a g.unop))
             (Quiver.Hom.op (snd A _)))
           (fst A _)
-        simp only [ConcreteCategory.comp_apply]
-          at hnat
-        change _ = lift a g.unop ≫
-          (ConcreteCategory.hom
-            (f.app (Opposite.op (A ⊗ _))
-              (Quiver.Hom.op
-                (snd A _)))) (fst A _) at hnat
-        convert hnat.symm using 4
-        · change g = Quiver.Hom.op
-              (lift a g.unop ≫ snd A _)
-          rw [lift_snd, Quiver.Hom.op_unop]
-        · change a = lift a g.unop ≫ fst A _
-          rw [lift_fst]
+        dsimp at hnat
+        simp only [lift_fst, ← op_comp,
+          lift_snd, Quiver.Hom.op_unop] at hnat
+        exact hnat.symm
     }
   homEquiv_comp := fun f g => by
     apply Functor.functorHom_ext
@@ -3666,18 +3601,19 @@ def pshIhomYonedaULiftFwd
     (e : ULift (X ⟶ (ihom A).obj B)) :
     ((yonedaULift A).functorHom
       (yonedaULift B)).obj (Opposite.op X) :=
-  { app := fun d h => TypeCat.ofHom fun a =>
+  { app := fun d h a =>
       ⟨lift a.down (h.unop ≫ e.down) ≫
         (ihom.ev A).app B⟩
     naturality := fun {d d'} g h => by
-      apply ConcreteCategory.ext_apply
-      rintro ⟨a⟩
+      ext ⟨a⟩
       apply ULift.ext
-      change lift (g.unop ≫ a)
-          ((h ≫ g).unop ≫ e.down) ≫ _ =
-        g.unop ≫ lift a (h.unop ≫ e.down) ≫ _
-      rw [unop_comp, Category.assoc,
-        ← comp_lift, Category.assoc] }
+      simp only [types_comp_apply,
+        yonedaULift, Functor.comp_map,
+        uliftFunctor_map, yoneda_obj_map]
+      rw [← Category.assoc, comp_lift]
+      congr 1
+      dsimp
+      simp only [Category.assoc] }
 
 /-- Backward map for the ULift version: given an
 element of
@@ -3703,7 +3639,8 @@ theorem pshIhomYonedaULift_left_inv
     pshIhomYonedaULiftInv A B
       (pshIhomYonedaULiftFwd A B e) = e := by
   apply ULift.ext
-  change curry (lift (fst A X) _ ≫ _) = e.down
+  dsimp only [pshIhomYonedaULiftInv,
+    pshIhomYonedaULiftFwd]
   simp only [Quiver.Hom.unop_op]
   rw [← Category.comp_id (fst A _),
     lift_fst_comp_snd_comp,
@@ -3722,40 +3659,24 @@ theorem pshIhomYonedaULift_right_inv
       (pshIhomYonedaULiftInv A B f) = f := by
   apply Functor.functorHom_ext
   intro d g
-  apply ConcreteCategory.ext_apply
-  rintro ⟨a⟩
+  ext ⟨a⟩
   apply ULift.ext
-  change lift a _ ≫ _ = _
+  dsimp only [pshIhomYonedaULiftFwd,
+    pshIhomYonedaULiftInv]
   rw [← lift_whiskerLeft]
-  change (lift a g.unop ≫
-      (A ◁ curry
-        ((ConcreteCategory.hom
-          (f.app (Opposite.op (A ⊗ _))
-            (Quiver.Hom.op
-              (snd A _)))) ⟨fst A _⟩).down))
-        ≫ (ihom.ev A).app B = _
   rw [Category.assoc, ← uncurry_eq,
     uncurry_curry]
-  have hnat := ConcreteCategory.congr_hom
+  have hnat := congr_fun
     (f.naturality
       (Quiver.Hom.op (lift a g.unop))
       (Quiver.Hom.op (snd A _)))
     ⟨fst A _⟩
-  simp only [ConcreteCategory.comp_apply]
-    at hnat
+  simp only [types_comp_apply] at hnat
   have hnat' := congrArg ULift.down hnat
-  change _ = lift a g.unop ≫
-    ((ConcreteCategory.hom
-      (f.app (Opposite.op (A ⊗ _))
-        (Quiver.Hom.op
-          (snd A _)))) ⟨fst A _⟩).down at hnat'
-  convert hnat'.symm using 5
-  · change g = Quiver.Hom.op
-      (lift a g.unop ≫ snd A _)
-    rw [lift_snd, Quiver.Hom.op_unop]
-  · change (⟨a⟩ : ULift _) =
-      ⟨lift a g.unop ≫ fst A _⟩
-    rw [lift_fst]
+  simp only [yonedaULift, Functor.comp_map,
+    uliftFunctor_map, yoneda_obj_map] at hnat'
+  convert hnat'.symm using 2
+  simp [← op_comp, lift_snd]
 
 /-- The Yoneda embedding preserves exponentials
 (ULift version):
@@ -3767,27 +3688,22 @@ def pshIhomYonedaULiftIso :
         (yonedaULift B) :=
   NatIso.ofComponents
     (fun X => {
-      hom := TypeCat.ofHom
-        (pshIhomYonedaULiftFwd A B)
-      inv := TypeCat.ofHom
-        (pshIhomYonedaULiftInv A B)
-      hom_inv_id := by
-        apply ConcreteCategory.ext_apply
-        exact pshIhomYonedaULift_left_inv A B
-      inv_hom_id := by
-        apply ConcreteCategory.ext_apply
-        exact pshIhomYonedaULift_right_inv A B })
-    (fun {X Y} f => by
-      apply ConcreteCategory.ext_apply
-      rintro ⟨e⟩
+      hom := pshIhomYonedaULiftFwd A B
+      inv := pshIhomYonedaULiftInv A B
+      hom_inv_id := funext
+        (pshIhomYonedaULift_left_inv A B)
+      inv_hom_id := funext
+        (pshIhomYonedaULift_right_inv A B) })
+    (fun {X Y} f => funext fun ⟨e⟩ => by
       apply Functor.functorHom_ext
       intro d h
-      apply ConcreteCategory.ext_apply
-      rintro ⟨a⟩
+      ext ⟨a⟩
       apply ULift.ext
-      change lift a (h.unop ≫ f.unop ≫ e) ≫ _ =
-        lift a ((f ≫ h).unop ≫ e) ≫ _
-      rw [unop_comp, Category.assoc])
+      dsimp [pshIhomYonedaULiftFwd,
+        yonedaULift, Functor.functorHom,
+        Functor.homObjFunctor,
+        Functor.HomObj.map]
+      simp only [Category.assoc])
 
 end YonedaPreservesIhomULift
 
@@ -3846,11 +3762,10 @@ theorem pshProdOverToRel_comp
     set r := (presheafPullbackFst f g).app c z
     set s := (presheafPullbackSnd f g).app c z
     have heq : f.app c r = g.app c s :=
-      ConcreteCategory.congr_hom
-        (NatTrans.congr_app
-          (presheafPullbackCondition f g) c) z
+      congr_fun (congr_app
+        (presheafPullbackCondition f g) c) z
     simp only [f, g, NatTrans.comp_app,
-      ConcreteCategory.comp_apply] at heq
+      types_comp_apply] at heq
     have hp : (pshProdFst P Q).app c
         (R.ι.app c r) = p := by
       have h := congr_arg Prod.fst hz
@@ -4073,12 +3988,9 @@ theorem relComp_barrLiftRel_le_of_preservesPullbacks
   let unitCone : PullbackCone
       (Gc.map pb_f) (Gc.map pb_g) :=
     PullbackCone.mk
-      (TypeCat.ofHom fun (_ : PUnit) => wR)
-      (TypeCat.ofHom fun (_ : PUnit) => wS)
-      (by
-        apply ConcreteCategory.ext_apply
-        intro _
-        exact hmatch)
+      (fun (_ : PUnit) => wR)
+      (fun (_ : PUnit) => wS)
+      (funext fun _ => hmatch)
   -- Lift through the limit
   let z := hGc_post.lift unitCone PUnit.unit
   -- Extract the projection properties of z
@@ -4086,10 +3998,10 @@ theorem relComp_barrLiftRel_le_of_preservesPullbacks
   have hfst :
       Gc.map (presheafPullbackFst pb_f pb_g)
         z = wR := by
-    have hfac := ConcreteCategory.congr_hom
+    have hfac := congr_fun
       (hGc_post.fac unitCone
         WalkingCospan.left) PUnit.unit
-    simp only [ConcreteCategory.comp_apply,
+    simp only [types_comp_apply,
       Functor.mapCone_π_app,
       Cone.postcompose_obj_π,
       NatTrans.comp_app,
@@ -4099,10 +4011,10 @@ theorem relComp_barrLiftRel_le_of_preservesPullbacks
   have hsnd :
       Gc.map (presheafPullbackSnd pb_f pb_g)
         z = wS := by
-    have hfac := ConcreteCategory.congr_hom
+    have hfac := congr_fun
       (hGc_post.fac unitCone
         WalkingCospan.right) PUnit.unit
-    simp only [ConcreteCategory.comp_apply,
+    simp only [types_comp_apply,
       Functor.mapCone_π_app,
       Cone.postcompose_obj_π,
       NatTrans.comp_app,
@@ -4331,22 +4243,18 @@ theorem natTrans_barrLiftRel_related
     Set.mem_range, Over.mk_hom] at hmem ⊢
   obtain ⟨w, hw⟩ := hmem
   refine ⟨(σ.app R.toFunctor).app c w, ?_⟩
-  have nf := ConcreteCategory.congr_hom
-    (NatTrans.congr_app
-      (σ.naturality
-        (R.ι ≫ pshProdFst P Q)) c) w
-  have ns := ConcreteCategory.congr_hom
-    (NatTrans.congr_app
-      (σ.naturality
-        (R.ι ≫ pshProdSnd P Q)) c) w
+  have nf := congr_fun (congr_app
+    (σ.naturality
+      (R.ι ≫ pshProdFst P Q)) c) w
+  have ns := congr_fun (congr_app
+    (σ.naturality
+      (R.ι ≫ pshProdSnd P Q)) c) w
   simp only [NatTrans.comp_app,
-    ConcreteCategory.comp_apply] at nf ns
+    types_comp_apply] at nf ns
   have hw₁ := congr_arg Prod.fst hw
   have hw₂ := congr_arg Prod.snd hw
-  simp only [pshProdLift,
-    FunctorToTypes.prod.lift_app,
-    ConcreteCategory.hom_ofHom]
-    at hw₁ hw₂ ⊢
+  dsimp [pshProdLift,
+    FunctorToTypes.prod] at hw₁ hw₂ ⊢
   exact Prod.ext
     (nf.symm.trans (congr_arg _ hw₁))
     (ns.symm.trans (congr_arg _ hw₂))
@@ -4701,24 +4609,20 @@ theorem pshArrowRel_le_barrLiftRel_ihom
     Subfunctor.range, Set.mem_range]
   refine ⟨?_, ?_⟩
   · exact
-      { app := fun d k => TypeCat.ofHom fun a =>
+      { app := fun d k a =>
           ⟨(g₁.app d k a, g₂.app d k a),
            pshArrowRel_apply hmem k rfl⟩
         naturality := fun {d e} f k => by
-          apply ConcreteCategory.ext_apply
-          intro a
+          ext a
           apply Subtype.ext
-          apply Prod.ext
-          · exact ConcreteCategory.congr_hom
-              (g₁.naturality f k) a
-          · exact ConcreteCategory.congr_hom
-              (g₂.naturality f k) a }
+          exact Prod.ext
+            (congr_fun (g₁.naturality f k) a)
+            (congr_fun (g₂.naturality f k) a) }
   · apply Prod.ext <;> (
-      apply Functor.HomObj.ext
-      funext d k
-      apply ConcreteCategory.ext_apply
-      intro a
-      rfl)
+      dsimp [pshBarrLift, pshProdLift,
+        pshIhomFunctor, pshIhomProfMap,
+        Subfunctor.ι]
+      ext d k a; rfl)
 
 /-- The Barr extension of the internal hom
 `[A, -]` equals the arrow relation with
@@ -4848,7 +4752,10 @@ theorem pshBarrLiftRel_prod_eq_prodRel
     simp only [pshRelId] at hid
     have hid' : a₁ = a₂ := hid; subst hid'
     refine ⟨(⟨(p₁, p₂), hR⟩, a₁), ?_⟩
-    rfl
+    dsimp [pshBarrLift, pshProdLift,
+      pshProdRightFunctor, pshProdMap,
+      pshProdFst, pshProdSnd,
+      Subfunctor.ι]
 
 /-- Composition preservation for the product
 relation: given `(x, y) ∈ pshProdRel R₁ S₁` and
@@ -4965,7 +4872,7 @@ obtained by applying `pshRelGraph` to
 `typeToPsh.map f`. -/
 abbrev typeRelGraph {A B : Type v}
     (f : A → B) : TypeRel A B :=
-  pshRelGraph (typeToPsh.map (TypeCat.ofHom f))
+  pshRelGraph (typeToPsh.map f)
 
 /-- Composition of type relations, obtained from
 `pshRelComp`. -/
@@ -4994,7 +4901,7 @@ theorem typeRelComp_assoc {A B C D : Type v}
 theorem typeRelGraph_eq_id (A : Type v) :
     typeRelGraph (id : A → A) =
       typeRelId A := by
-  change pshRelGraph (typeToPsh.map (𝟙 _)) =
+  change pshRelGraph (typeToPsh.map (𝟙 A)) =
     pshRelId (typeToPsh.obj A)
   rw [typeToPsh.map_id]
   exact pshRelGraph_eq_id (typeToPsh.obj A)
@@ -5005,8 +4912,7 @@ theorem typeRelGraph_comp {A B C : Type v}
       (typeRelGraph g) =
       typeRelGraph (g ∘ f) :=
   pshRelGraph_comp
-    (typeToPsh.map (TypeCat.ofHom f))
-    (typeToPsh.map (TypeCat.ofHom g))
+    (typeToPsh.map f) (typeToPsh.map g)
 
 /-- The category of types with relations as
 morphisms, obtained by specializing `PshRelCat`
@@ -5052,8 +4958,8 @@ abbrev TypeProdOverRelated
     (S : TypeProdOver B B')
     (f : A → B) (f' : A' → B') :=
   PshProdOverRelated R S
-    (typeToPsh.map (TypeCat.ofHom f))
-    (typeToPsh.map (TypeCat.ofHom f'))
+    (typeToPsh.map f)
+    (typeToPsh.map f')
 
 /-- Given `R : TypeRel A A'` and
 `S : TypeRel B B'`, `f` and `f'` are
@@ -5064,8 +4970,8 @@ abbrev typeRelRelated
     (S : TypeRel B B')
     (f : A → B) (f' : A' → B') :=
   pshRelRelated
-    (typeToPsh.map (TypeCat.ofHom f))
-    (typeToPsh.map (TypeCat.ofHom f'))
+    (typeToPsh.map f)
+    (typeToPsh.map f')
     R S
 
 /-- Lift a type endofunctor to a presheaf

@@ -106,29 +106,25 @@ def depToFunctorData.{u} (data : DepCategoryData.{u + 1}) :
   compC := Σ (a b c : data.objT) (f : data.morT a b) (g : data.morT b c)
     (h : data.morT a c), data.compT f g h
   -- dom: extract source
-  dom := TypeCat.ofHom fun m => m.1
+  dom := fun m => m.1
   -- cod: extract target
-  cod := TypeCat.ofHom fun m => m.2.1
+  cod := fun m => m.2.1
   -- idMor: extract the morphism from an identity witness
-  idMor := TypeCat.ofHom fun i => ⟨i.1, i.1, i.2.1⟩
+  idMor := fun i => ⟨i.1, i.1, i.2.1⟩
   -- left: second morphism in composition (b → c, "post-composed")
-  left := TypeCat.ofHom fun c => ⟨c.2.1, c.2.2.1, c.2.2.2.2.1⟩
+  left := fun c => ⟨c.2.1, c.2.2.1, c.2.2.2.2.1⟩
   -- right: first morphism in composition (a → b, "pre-composed")
-  right := TypeCat.ofHom fun c => ⟨c.1, c.2.1, c.2.2.2.1⟩
+  right := fun c => ⟨c.1, c.2.1, c.2.2.2.1⟩
   -- composite: result of composition (a → c)
-  composite := TypeCat.ofHom fun c => ⟨c.1, c.2.2.1, c.2.2.2.2.2.1⟩
+  composite := fun c => ⟨c.1, c.2.2.1, c.2.2.2.2.2.1⟩
   -- h_id_endo: idMor ≫ dom = idMor ≫ cod
-  h_id_endo := by
-    apply ConcreteCategory.ext_apply; intro i; rfl
+  h_id_endo := by funext i; simp
   -- h_comp_match: right ≫ cod = left ≫ dom
-  h_comp_match := by
-    apply ConcreteCategory.ext_apply; intro c; rfl
+  h_comp_match := by funext c; rfl
   -- h_comp_dom: composite ≫ dom = right ≫ dom
-  h_comp_dom := by
-    apply ConcreteCategory.ext_apply; intro c; rfl
+  h_comp_dom := by funext c; simp
   -- h_comp_cod: composite ≫ cod = left ≫ cod
-  h_comp_cod := by
-    apply ConcreteCategory.ext_apply; intro c; rfl
+  h_comp_cod := by funext c; simp
 
 /-- Convert CopresheafData to dependent category data.
     This extracts the dependent type structure from the copresheaf. -/
@@ -160,26 +156,18 @@ abbrev functorToDataDep.{u} (F : Obj ⥤ Type u) : DepCategoryData.{u + 1} :=
 def depNatTransToNatTrans {F G : DepCategoryData}
     (α : DepNatTransData F G) :
     NatTransData (depToFunctorData F) (depToFunctorData G) where
-  appObj := TypeCat.ofHom α.appObj
-  appMor := TypeCat.ofHom
-    fun ⟨a, b, m⟩ => ⟨α.appObj a, α.appObj b, α.appMor m⟩
-  appId := TypeCat.ofHom
-    fun ⟨o, m, i⟩ => ⟨α.appObj o, α.appMor m, α.appId i⟩
-  appComp := TypeCat.ofHom fun ⟨a, b, c, f, g, h, comp⟩ =>
+  appObj := α.appObj
+  appMor := fun ⟨a, b, m⟩ => ⟨α.appObj a, α.appObj b, α.appMor m⟩
+  appId := fun ⟨o, m, i⟩ => ⟨α.appObj o, α.appMor m, α.appId i⟩
+  appComp := fun ⟨a, b, c, f, g, h, comp⟩ =>
     ⟨α.appObj a, α.appObj b, α.appObj c, α.appMor f, α.appMor g,
       α.appMor h, α.appComp comp⟩
-  naturality_dom := by
-    apply ConcreteCategory.ext_apply; intro ⟨a, b, m⟩; rfl
-  naturality_cod := by
-    apply ConcreteCategory.ext_apply; intro ⟨a, b, m⟩; rfl
-  naturality_idMor := by
-    apply ConcreteCategory.ext_apply; intro ⟨o, m, i⟩; rfl
-  naturality_left := by
-    apply ConcreteCategory.ext_apply; intro ⟨a, b, c, f, g, h, comp⟩; rfl
-  naturality_right := by
-    apply ConcreteCategory.ext_apply; intro ⟨a, b, c, f, g, h, comp⟩; rfl
-  naturality_composite := by
-    apply ConcreteCategory.ext_apply; intro ⟨a, b, c, f, g, h, comp⟩; rfl
+  naturality_dom := by funext ⟨a, b, m⟩; rfl
+  naturality_cod := by funext ⟨a, b, m⟩; rfl
+  naturality_idMor := by funext ⟨o, m, i⟩; rfl
+  naturality_left := by funext ⟨a, b, c, f, g, h, comp⟩; rfl
+  naturality_right := by funext ⟨a, b, c, f, g, h, comp⟩; rfl
+  naturality_composite := by funext ⟨a, b, c, f, g, h, comp⟩; rfl
 
 /-- Convert a NatTransData to a DepNatTransData by extracting from sigma
     types. -/
@@ -188,19 +176,19 @@ def natTransToDepNatTrans {F G : CopresheafData}
     DepNatTransData (functorDataToDep F) (functorDataToDep G) where
   appObj := α.appObj
   appMor := fun m =>
-    let hdom := ConcreteCategory.congr_hom α.naturality_dom m.val
-    let hcod := ConcreteCategory.congr_hom α.naturality_cod m.val
+    let hdom := congr_fun α.naturality_dom m.val
+    let hcod := congr_fun α.naturality_cod m.val
     ⟨α.appMor m.val,
      hdom.symm.trans (congr_arg α.appObj m.property.1),
      hcod.symm.trans (congr_arg α.appObj m.property.2)⟩
   appId := fun i =>
-    let hidMor := ConcreteCategory.congr_hom α.naturality_idMor i.val
+    let hidMor := congr_fun α.naturality_idMor i.val
     ⟨α.appId i.val,
      hidMor.symm.trans (congr_arg α.appMor i.property)⟩
   appComp := fun comp =>
-    let hr := ConcreteCategory.congr_hom α.naturality_right comp.val
-    let hl := ConcreteCategory.congr_hom α.naturality_left comp.val
-    let hc := ConcreteCategory.congr_hom α.naturality_composite comp.val
+    let hr := congr_fun α.naturality_right comp.val
+    let hl := congr_fun α.naturality_left comp.val
+    let hc := congr_fun α.naturality_composite comp.val
     ⟨α.appComp comp.val,
      hr.symm.trans (congr_arg α.appMor comp.property.1),
      hl.symm.trans (congr_arg α.appMor comp.property.2.1),
@@ -288,13 +276,13 @@ def depToFunctorData_functorDataToDep_morC.{u}
 def depToFunctorData_functorDataToDep_morCIso.{u}
     (data : CopresheafData.{u}) :
     (depToFunctorData (functorDataToDep data)).morC ≅ data.morC where
-  hom := TypeCat.ofHom (depToFunctorData_functorDataToDep_morC data).toFun
-  inv := TypeCat.ofHom (depToFunctorData_functorDataToDep_morC data).invFun
+  hom := (depToFunctorData_functorDataToDep_morC data).toFun
+  inv := (depToFunctorData_functorDataToDep_morC data).invFun
   hom_inv_id := by
-    apply ConcreteCategory.ext_apply; intro m
+    funext m
     exact (depToFunctorData_functorDataToDep_morC data).left_inv m
   inv_hom_id := by
-    apply ConcreteCategory.ext_apply; intro m
+    funext m
     exact (depToFunctorData_functorDataToDep_morC data).right_inv m
 
 /-- Extract the underlying morphism from a round-tripped morphism type.
@@ -309,13 +297,13 @@ def functorDataToDep_depToFunctorData_morTIso.{u}
     (data : DepCategoryData.{u + 1}) (a b : data.objT) :
     (functorDataToDep (depToFunctorData data)).morT a b ≅
     data.morT a b where
-  hom := TypeCat.ofHom (functorDataToDep_depToFunctorData_morT data a b).toFun
-  inv := TypeCat.ofHom (functorDataToDep_depToFunctorData_morT data a b).invFun
+  hom := (functorDataToDep_depToFunctorData_morT data a b).toFun
+  inv := (functorDataToDep_depToFunctorData_morT data a b).invFun
   hom_inv_id := by
-    apply ConcreteCategory.ext_apply; intro m
+    funext m
     exact (functorDataToDep_depToFunctorData_morT data a b).left_inv m
   inv_hom_id := by
-    apply ConcreteCategory.ext_apply; intro m
+    funext m
     exact (functorDataToDep_depToFunctorData_morT data a b).right_inv m
 
 /-- Round-tripping from CopresheafData to DepCategoryData and back
@@ -326,7 +314,7 @@ def depToFunctorData_functorDataToDep_idC.{u}
     data.idC where
   toFun i := i.2.2.val
   invFun i :=
-    let h_endo := ConcreteCategory.congr_hom data.h_id_endo i
+    let h_endo := congrFun data.h_id_endo i
     ⟨data.dom (data.idMor i), ⟨data.idMor i, rfl, h_endo.symm⟩, ⟨i, rfl⟩⟩
   left_inv i := by
     rcases i with ⟨o, ⟨m, hdom, hcod⟩, ⟨i, hi⟩⟩
@@ -338,13 +326,13 @@ def depToFunctorData_functorDataToDep_idC.{u}
 def depToFunctorData_functorDataToDep_idCIso.{u}
     (data : CopresheafData.{u}) :
     (depToFunctorData (functorDataToDep data)).idC ≅ data.idC where
-  hom := TypeCat.ofHom (depToFunctorData_functorDataToDep_idC data).toFun
-  inv := TypeCat.ofHom (depToFunctorData_functorDataToDep_idC data).invFun
+  hom := (depToFunctorData_functorDataToDep_idC data).toFun
+  inv := (depToFunctorData_functorDataToDep_idC data).invFun
   hom_inv_id := by
-    apply ConcreteCategory.ext_apply; intro i
+    funext i
     exact (depToFunctorData_functorDataToDep_idC data).left_inv i
   inv_hom_id := by
-    apply ConcreteCategory.ext_apply; intro i
+    funext i
     exact (depToFunctorData_functorDataToDep_idC data).right_inv i
 
 /-- Helper lemma: Extract the morphism equality from the identity constraint.
@@ -355,9 +343,7 @@ private lemma idT_mor_eq.{u} (data : DepCategoryData.{u + 1}) (o : data.objT)
     data.idT wit.1.2.1 = data.idT (extractRoundTrippedMor data o o m) := by
   rcases wit with ⟨⟨o', m', w⟩,
     h : (depToFunctorData data).idMor ⟨o', m', w⟩ = m.val⟩
-  rcases m with ⟨⟨a, b, m_val⟩, ha, hb⟩
-  change a = o at ha
-  change b = o at hb
+  rcases m with ⟨⟨a, b, m_val⟩, ha : a = o, hb : b = o⟩
   cases h
   cases ha
   cases hb
@@ -373,8 +359,6 @@ private lemma idT_invFun_constraint.{u} (data : DepCategoryData.{u + 1})
     (depToFunctorData data).idMor
       ⟨o, ⟨extractRoundTrippedMor data o o m, wit⟩⟩ = m.val := by
   rcases m with ⟨⟨a, b, mor⟩, ha, hb⟩
-  change a = o at ha
-  change b = o at hb
   cases ha
   cases hb
   simp [depToFunctorData, functorDataToDep_depToFunctorData_morT]
@@ -394,9 +378,7 @@ def functorDataToDep_depToFunctorData_idT.{u}
      idT_invFun_constraint data o m wit⟩
   left_inv wit := by
     rcases wit with ⟨⟨o', m', w⟩, h⟩
-    rcases m with ⟨⟨a, b, m_val⟩, ha, hb⟩
-    change a = o at ha
-    change b = o at hb
+    rcases m with ⟨⟨a, b, m_val⟩, ha : a = o, hb : b = o⟩
     change (⟨o', ⟨o', m'⟩⟩ : Σ (a b : data.objT), data.morT a b) =
       ⟨a, ⟨b, m_val⟩⟩ at h
     rw [Sigma.mk.injEq] at h
@@ -410,8 +392,7 @@ def functorDataToDep_depToFunctorData_idT.{u}
     congr 1
   right_inv wit := by
     rcases m with ⟨⟨a, b, mor⟩, ha, hb⟩
-    change a = o at ha
-    change b = o at hb
+    simp only [depToFunctorData] at ha hb
     subst ha hb
     simp only [cast_eq]
 
@@ -420,13 +401,13 @@ def functorDataToDep_depToFunctorData_idIso.{u}
     (m : (functorDataToDep (depToFunctorData data)).morT o o) :
     (functorDataToDep (depToFunctorData data)).idT m ≅
     data.idT (extractRoundTrippedMor data o o m) where
-  hom := TypeCat.ofHom (functorDataToDep_depToFunctorData_idT data o m).toFun
-  inv := TypeCat.ofHom (functorDataToDep_depToFunctorData_idT data o m).invFun
+  hom := (functorDataToDep_depToFunctorData_idT data o m).toFun
+  inv := (functorDataToDep_depToFunctorData_idT data o m).invFun
   hom_inv_id := by
-    apply ConcreteCategory.ext_apply; intro i
+    funext i
     exact (functorDataToDep_depToFunctorData_idT data o m).left_inv i
   inv_hom_id := by
-    apply ConcreteCategory.ext_apply; intro i
+    funext i
     exact (functorDataToDep_depToFunctorData_idT data o m).right_inv i
 
 set_option backward.isDefEq.respectTransparency false in
@@ -593,9 +574,9 @@ def depToFunctorData_functorDataToDep_compC.{u}
     data.compC where
   toFun c := c.2.2.2.2.2.2.1
   invFun c :=
-    let h_match := ConcreteCategory.congr_hom data.h_comp_match c
-    let h_dom := ConcreteCategory.congr_hom data.h_comp_dom c
-    let h_cod := ConcreteCategory.congr_hom data.h_comp_cod c
+    let h_match := congrFun data.h_comp_match c
+    let h_dom := congrFun data.h_comp_dom c
+    let h_cod := congrFun data.h_comp_cod c
     ⟨data.dom (data.right c), data.cod (data.right c),
      data.cod (data.left c), ⟨data.right c, rfl, rfl⟩,
      ⟨data.left c, h_match.symm, rfl⟩,
@@ -612,13 +593,13 @@ def depToFunctorData_functorDataToDep_compC.{u}
 def depToFunctorData_functorDataToDep_compCIso.{u}
     (data : CopresheafData.{u}) :
     (depToFunctorData (functorDataToDep data)).compC ≅ data.compC where
-  hom := TypeCat.ofHom (depToFunctorData_functorDataToDep_compC data).toFun
-  inv := TypeCat.ofHom (depToFunctorData_functorDataToDep_compC data).invFun
+  hom := (depToFunctorData_functorDataToDep_compC data).toFun
+  inv := (depToFunctorData_functorDataToDep_compC data).invFun
   hom_inv_id := by
-    apply ConcreteCategory.ext_apply; intro c
+    funext c
     exact (depToFunctorData_functorDataToDep_compC data).left_inv c
   inv_hom_id := by
-    apply ConcreteCategory.ext_apply; intro c
+    funext c
     exact (depToFunctorData_functorDataToDep_compC data).right_inv c
 
 def functorDataToDep_depToFunctorData_compT.{u}
@@ -646,18 +627,7 @@ def functorDataToDep_depToFunctorData_compT.{u}
     match f, g, h with
     | ⟨⟨a_f, b_f, f'⟩, hfa, hfb⟩, ⟨⟨a_g, b_g, g'⟩, hga, hgb⟩,
       ⟨⟨a_h, b_h, h'⟩, hha, hhb⟩ =>
-      change a_f = a at hfa
-      change b_f = b at hfb
-      change a_g = b at hga
-      change b_g = c at hgb
-      change a_h = a at hha
-      change b_h = c at hhb
-      change (⟨a_c, ⟨b_c, f_c⟩⟩ : Σ (x y : data.objT), data.morT x y) =
-        ⟨a_f, ⟨b_f, f'⟩⟩ at hr
-      change (⟨b_c, ⟨c_c, g_c⟩⟩ : Σ (x y : data.objT), data.morT x y) =
-        ⟨a_g, ⟨b_g, g'⟩⟩ at hl
-      change (⟨a_c, ⟨c_c, h_c⟩⟩ : Σ (x y : data.objT), data.morT x y) =
-        ⟨a_h, ⟨b_h, h'⟩⟩ at hcomp
+      simp only [depToFunctorData] at hr hl hcomp hfa hfb hga hgb hha hhb
       have hσ :=
         compTSigma_eq data hfa hfb hga hgb hha hhb hr hl hcomp comp_wit
       cases hσ
@@ -666,12 +636,7 @@ def functorDataToDep_depToFunctorData_compT.{u}
     match f, g, h with
     | ⟨⟨a_f, b_f, f'⟩, hfa, hfb⟩, ⟨⟨a_g, b_g, g'⟩, hga, hgb⟩,
       ⟨⟨a_h, b_h, h'⟩, hha, hhb⟩ =>
-      change a_f = a at hfa
-      change b_f = b at hfb
-      change a_g = b at hga
-      change b_g = c at hgb
-      change a_h = a at hha
-      change b_h = c at hhb
+      simp only [depToFunctorData] at hfa hfb hga hgb hha hhb
       have hr :=
         extractRoundTrippedMor_sigma_eq (data := data) (m := f') hfa hfb
       have hl := extractRoundTrippedMor_sigma_eq (data := data) (a := b)
@@ -692,17 +657,17 @@ def functorDataToDep_depToFunctorData_compIso.{u}
     data.compT (extractRoundTrippedMor data a b f)
       (extractRoundTrippedMor data b c g)
       (extractRoundTrippedMor data a c h) where
-  hom := TypeCat.ofHom
+  hom :=
     (functorDataToDep_depToFunctorData_compT data a b c f g h).toFun
-  inv := TypeCat.ofHom
+  inv :=
     (functorDataToDep_depToFunctorData_compT data a b c f g h).invFun
   hom_inv_id := by
-    apply ConcreteCategory.ext_apply; intro comp_wit
+    funext comp_wit
     exact
       (functorDataToDep_depToFunctorData_compT data a b c f g h).left_inv
         comp_wit
   inv_hom_id := by
-    apply ConcreteCategory.ext_apply; intro comp_wit
+    funext comp_wit
     exact
       (functorDataToDep_depToFunctorData_compT data a b c f g h).right_inv
         comp_wit
@@ -752,38 +717,32 @@ def mkCopresheaf_depToFunctorData_functorDataToDep.{u}
     (fun X => match X with
       | .obj => eqToIso (depToFunctorData_functorDataToDep_objC data)
       | .mor =>
-          { hom :=
-              TypeCat.ofHom (depToFunctorData_functorDataToDep_morC data).toFun
-            inv :=
-              TypeCat.ofHom (depToFunctorData_functorDataToDep_morC data).invFun
+          { hom := (depToFunctorData_functorDataToDep_morC data).toFun
+            inv := (depToFunctorData_functorDataToDep_morC data).invFun
             hom_inv_id := by
-              apply ConcreteCategory.ext_apply; intro x
+              funext x
               exact (depToFunctorData_functorDataToDep_morC data).left_inv x
             inv_hom_id := by
-              apply ConcreteCategory.ext_apply; intro x
+              funext x
               exact (depToFunctorData_functorDataToDep_morC data).right_inv x }
       | .id =>
-          { hom :=
-              TypeCat.ofHom (depToFunctorData_functorDataToDep_idC data).toFun
-            inv :=
-              TypeCat.ofHom (depToFunctorData_functorDataToDep_idC data).invFun
+          { hom := (depToFunctorData_functorDataToDep_idC data).toFun
+            inv := (depToFunctorData_functorDataToDep_idC data).invFun
             hom_inv_id := by
-              apply ConcreteCategory.ext_apply; intro x
+              funext x
               exact (depToFunctorData_functorDataToDep_idC data).left_inv x
             inv_hom_id := by
-              apply ConcreteCategory.ext_apply; intro x
+              funext x
               exact (depToFunctorData_functorDataToDep_idC data).right_inv x }
       | .comp =>
-          { hom :=
-              TypeCat.ofHom (depToFunctorData_functorDataToDep_compC data).toFun
-            inv :=
-              TypeCat.ofHom (depToFunctorData_functorDataToDep_compC data).invFun
+          { hom := (depToFunctorData_functorDataToDep_compC data).toFun
+            inv := (depToFunctorData_functorDataToDep_compC data).invFun
             hom_inv_id := by
-              apply ConcreteCategory.ext_apply; intro x
+              funext x
               exact
                 (depToFunctorData_functorDataToDep_compC data).left_inv x
             inv_hom_id := by
-              apply ConcreteCategory.ext_apply; intro x
+              funext x
               exact
                 (depToFunctorData_functorDataToDep_compC data).right_inv x
           })
@@ -791,65 +750,58 @@ def mkCopresheaf_depToFunctorData_functorDataToDep.{u}
       intro X Y f
       cases f with
       | id => cases X <;> rfl
-      | hom f' =>
-        cases f' with
-        | dom =>
-          apply ConcreteCategory.ext_apply
-          intro x
-          exact x.snd.snd.property.1.symm
-        | cod =>
-          apply ConcreteCategory.ext_apply
-          intro x
-          exact x.snd.snd.property.2.symm
-        | idObj =>
-          apply ConcreteCategory.ext_apply
-          intro x
-          dsimp only [mkCopresheaf, mkFunctor, mapSemiHom,
-            depToFunctorData, objMap]
-          refine (x.snd.fst.property.1.symm).trans
-            (congrArg (ConcreteCategory.hom data.dom) ?_)
-          exact x.snd.snd.property.symm
-        | idMor =>
-          apply ConcreteCategory.ext_apply
-          intro x
-          dsimp only [mkCopresheaf, mkFunctor, mapSemiHom,
-            depToFunctorData, objMap]
-          exact x.snd.snd.property.symm
-        | left =>
-          apply ConcreteCategory.ext_apply
-          intro x
-          exact x.snd.snd.snd.snd.snd.snd.property.2.1.symm
-        | right =>
-          apply ConcreteCategory.ext_apply
-          intro x
-          exact x.snd.snd.snd.snd.snd.snd.property.1.symm
-        | composite =>
-          apply ConcreteCategory.ext_apply
-          intro x
-          exact x.snd.snd.snd.snd.snd.snd.property.2.2.symm
-        | intermediate =>
-          apply ConcreteCategory.ext_apply
-          intro x
-          exact (x.snd.snd.snd.fst.property.2.symm).trans
-            (congrArg data.cod
-              x.snd.snd.snd.snd.snd.snd.property.1.symm)
-        | compositeDom =>
-          apply ConcreteCategory.ext_apply
-          intro x
-          exact (x.snd.snd.snd.fst.property.1.symm).trans
-            (congrArg data.dom
-              x.snd.snd.snd.snd.snd.snd.property.1.symm)
-        | compositeCod =>
-          apply ConcreteCategory.ext_apply
-          intro x
-          exact (x.snd.snd.snd.snd.fst.property.2.symm).trans
-            (congrArg data.cod
-              x.snd.snd.snd.snd.snd.snd.property.2.1.symm))
+      | hom f' => cases f' <;>
+        simp only [mkCopresheaf, mkFunctor, depToFunctorData, functorDataToDep,
+                   depToFunctorData_functorDataToDep_morC,
+                   depToFunctorData_functorDataToDep_idC,
+                   depToFunctorData_functorDataToDep_compC, mapSemiHom]
+        <;> (first
+          | (ext x
+             simp only [eqToIso_refl, Iso.refl_hom, types_comp_apply, types_id_apply]
+             exact x.snd.snd.property.1.symm)
+          | (ext x
+             simp only [eqToIso_refl, Iso.refl_hom, types_comp_apply, types_id_apply]
+             exact x.snd.snd.property.2.symm)
+          | (ext x
+             simp only [eqToIso_refl, Iso.refl_hom, types_comp_apply, types_id_apply]
+             exact x.snd.snd.property.symm)
+          | (ext x
+             simp only [eqToIso_refl, Iso.refl_hom, types_comp_apply, types_id_apply]
+             exact x.snd.snd.snd.snd.snd.snd.property.1.symm)
+          | (ext x
+             simp only [eqToIso_refl, Iso.refl_hom, types_comp_apply, types_id_apply]
+             exact x.snd.snd.snd.snd.snd.snd.property.2.1.symm)
+          | (ext x
+             simp only [eqToIso_refl, Iso.refl_hom, types_comp_apply, types_id_apply]
+             exact x.snd.snd.snd.snd.snd.snd.property.2.2.symm)
+          | (ext x
+             simp only [eqToIso_refl, Iso.refl_hom, types_comp_apply, types_id_apply]
+             calc x.fst
+               _ = data.dom ↑x.snd.fst := x.snd.fst.property.1.symm
+               _ = data.dom (data.idMor ↑x.snd.snd) :=
+                     congrArg data.dom x.snd.snd.property.symm)
+                    | (ext x
+                       simp only [eqToIso_refl, Iso.refl_hom, types_comp_apply, types_id_apply]
+                       calc x.snd.fst
+                         _ = data.cod ↑x.snd.snd.snd.fst := x.snd.snd.snd.fst.property.2.symm
+                         _ = data.cod (data.right ↑x.snd.snd.snd.snd.snd.snd) :=
+                               congrArg data.cod x.snd.snd.snd.snd.snd.snd.property.1.symm)
+                    | (ext x
+                       simp only [eqToIso_refl, Iso.refl_hom, types_comp_apply, types_id_apply]
+                       calc x.fst
+                         _ = data.dom ↑x.snd.snd.snd.fst := x.snd.snd.snd.fst.property.1.symm
+                         _ = data.dom (data.right ↑x.snd.snd.snd.snd.snd.snd) :=
+                               congrArg data.dom x.snd.snd.snd.snd.snd.snd.property.1.symm)
+                    | (ext x
+                       simp only [eqToIso_refl, Iso.refl_hom, types_comp_apply, types_id_apply]
+                       calc x.snd.snd.fst
+                         _ = data.cod ↑x.snd.snd.snd.snd.fst :=
+                           x.snd.snd.snd.snd.fst.property.2.symm
+                         _ = data.cod (data.left ↑x.snd.snd.snd.snd.snd.snd) :=
+                           congrArg data.cod
+                             x.snd.snd.snd.snd.snd.snd.property.2.1.symm)))
 
 set_option backward.isDefEq.respectTransparency false in
-set_option maxHeartbeats 800000 in
--- The large round-trip proofs for the `.comp` case require additional
--- heartbeat budget beyond the default.
 /-- Round-tripping DepCategoryData through CopresheafData gives a
     naturally isomorphic functor. -/
 def mkCopresheafDep_functorDataToDep_depToFunctorData.{u}
@@ -860,86 +812,65 @@ def mkCopresheafDep_functorDataToDep_depToFunctorData.{u}
     (fun X => match X with
       | .obj => eqToIso (functorDataToDep_depToFunctorData_objT data)
       | .mor =>
-          { hom := TypeCat.ofHom fun m => ⟨m.1, m.2.1,
+          { hom := fun m => ⟨m.1, m.2.1,
                      (functorDataToDep_depToFunctorData_morT data m.1
                        m.2.1).toFun m.2.2⟩
-            inv := TypeCat.ofHom fun m => ⟨m.1, m.2.1,
+            inv := fun m => ⟨m.1, m.2.1,
                      (functorDataToDep_depToFunctorData_morT data m.1
                        m.2.1).invFun m.2.2⟩
-            hom_inv_id := by
-              apply ConcreteCategory.ext_apply; intro m; simp
-            inv_hom_id := by
-              apply ConcreteCategory.ext_apply; intro m; simp }
+            hom_inv_id := by funext m; simp
+            inv_hom_id := by funext m; simp }
       | .id =>
-          { hom := TypeCat.ofHom fun i =>
+          { hom := fun i =>
               let m_equiv :=
                 functorDataToDep_depToFunctorData_morT data i.1 i.1
               let m' := m_equiv.toFun i.2.1
-              (⟨i.1, m',
+              ⟨i.1, m',
                 (functorDataToDep_depToFunctorData_idT data i.1
-                  i.2.1).toFun i.2.2⟩ :
-                Σ (o : data.objT), Σ (m : data.morT o o), data.idT m)
-            inv := TypeCat.ofHom fun i =>
+                  i.2.1).toFun i.2.2⟩
+            inv := fun i =>
               let m_equiv :=
                 functorDataToDep_depToFunctorData_morT data i.1 i.1
               let m_inv := m_equiv.invFun i.2.1
               let id_equiv :=
                 functorDataToDep_depToFunctorData_idT data i.1 m_inv
-              (⟨i.1, m_inv, id_equiv.invFun (cast (by
+              ⟨i.1, m_inv, id_equiv.invFun (cast (by
                 simp [extractRoundTrippedMor]
-                rfl) i.2.2)⟩ :
-                Σ (o : (functorDataToDep (depToFunctorData data)).objT),
-                  Σ (m : (functorDataToDep (depToFunctorData data)).morT o o),
-                    (functorDataToDep (depToFunctorData data)).idT m)
+                rfl) i.2.2)⟩
             hom_inv_id := by
-              apply ConcreteCategory.ext_apply
-              intro ⟨o, ⟨m, id_wit⟩⟩
-              simp only [ConcreteCategory.comp_apply, TypeCat.hom_ofHom,
-                cast_eq, ConcreteCategory.id_apply]
-              refine Sigma.ext rfl (heq_of_eq ?_)
+              funext ⟨o, ⟨m, id_wit⟩⟩
+              simp only [CategoryStruct.comp, Function.comp_apply, cast_eq]
+              congr 1
               have hm :=
-                (functorDataToDep_depToFunctorData_morT data o o).left_inv m
-              refine Sigma.ext hm ?_
-              refine HEq.trans
-                (show
-                  (functorDataToDep_depToFunctorData_idT data o
-                    ((functorDataToDep_depToFunctorData_morT data o o).invFun
-                      ((functorDataToDep_depToFunctorData_morT data o o).toFun
-                        m))).invFun
-                    ((functorDataToDep_depToFunctorData_idT data o m).toFun
-                      id_wit) ≍
-                  (functorDataToDep_depToFunctorData_idT data o m).invFun
-                    ((functorDataToDep_depToFunctorData_idT data o m).toFun
-                      id_wit)
-                  by congr! 3)
-                (heq_of_eq
-                  ((functorDataToDep_depToFunctorData_idT data o m).left_inv
-                    id_wit))
+                (functorDataToDep_depToFunctorData_morT data o o).left_inv
+                  m
+              have hid :=
+                (functorDataToDep_depToFunctorData_idT data o m).left_inv
+                  id_wit
+              rw [Sigma.mk.injEq]
+              constructor
+              · exact hm
+              · grind
             inv_hom_id := by
-              apply ConcreteCategory.ext_apply
-              intro ⟨o, ⟨m, id_wit⟩⟩
-              simp only [ConcreteCategory.comp_apply, TypeCat.hom_ofHom,
-                cast_eq, ConcreteCategory.id_apply]
-              rfl }
+              funext ⟨o, ⟨m, id_wit⟩⟩
+              simp only [CategoryStruct.comp, Function.comp_apply, cast_eq]
+              congr 1 }
       | .comp =>
-          { hom := TypeCat.ofHom fun c =>
+          { hom := fun c =>
               let f_equiv :=
                 functorDataToDep_depToFunctorData_morT data c.1 c.2.1
               let g_equiv :=
                 functorDataToDep_depToFunctorData_morT data c.2.1 c.2.2.1
               let h_equiv :=
                 functorDataToDep_depToFunctorData_morT data c.1 c.2.2.1
-              (⟨c.1, c.2.1, c.2.2.1,
+              ⟨c.1, c.2.1, c.2.2.1,
                f_equiv.toFun c.2.2.2.1,
                g_equiv.toFun c.2.2.2.2.1,
                h_equiv.toFun c.2.2.2.2.2.1,
                (functorDataToDep_depToFunctorData_compT data c.1 c.2.1
                  c.2.2.1 c.2.2.2.1 c.2.2.2.2.1
-                 c.2.2.2.2.2.1).toFun c.2.2.2.2.2.2⟩ :
-                Σ (a : data.objT), Σ (b : data.objT), Σ (c : data.objT),
-                  Σ (f : data.morT a b), Σ (g : data.morT b c),
-                    Σ (h : data.morT a c), data.compT f g h)
-            inv := TypeCat.ofHom fun c =>
+                 c.2.2.2.2.2.1).toFun c.2.2.2.2.2.2⟩
+            inv := fun c =>
               let f_equiv :=
                 functorDataToDep_depToFunctorData_morT data c.1 c.2.1
               let g_equiv :=
@@ -952,51 +883,58 @@ def mkCopresheafDep_functorDataToDep_depToFunctorData.{u}
               let comp_equiv :=
                 functorDataToDep_depToFunctorData_compT data c.1 c.2.1
                   c.2.2.1 f_inv g_inv h_inv
-              (⟨c.1, c.2.1, c.2.2.1, f_inv, g_inv, h_inv,
+              ⟨c.1, c.2.1, c.2.2.1, f_inv, g_inv, h_inv,
                comp_equiv.invFun (cast (by
                  simp [extractRoundTrippedMor]
-                 rfl) c.2.2.2.2.2.2)⟩ :
-                Σ (a : (functorDataToDep (depToFunctorData data)).objT),
-                  Σ (b : (functorDataToDep (depToFunctorData data)).objT),
-                    Σ (c : (functorDataToDep (depToFunctorData data)).objT),
-                      Σ (f : (functorDataToDep (depToFunctorData data)).morT a b),
-                        Σ (g : (functorDataToDep (depToFunctorData data)).morT b c),
-                          Σ (h : (functorDataToDep (depToFunctorData data)).morT a c),
-                            (functorDataToDep (depToFunctorData data)).compT f g h)
+                 rfl) c.2.2.2.2.2.2)⟩
             hom_inv_id := by
-              apply ConcreteCategory.ext_apply
-              intro ⟨a, b, c, f, g, h, comp_wit⟩
-              simp only [ConcreteCategory.comp_apply, TypeCat.hom_ofHom,
-                cast_eq, ConcreteCategory.id_apply]
-              rcases f with ⟨⟨a_f, b_f, f'⟩, ha_f : a_f = a, hb_f : b_f = b⟩
-              rcases g with ⟨⟨a_g, b_g, g'⟩, ha_g : a_g = b, hb_g : b_g = c⟩
-              rcases h with ⟨⟨a_h, b_h, h'⟩, ha_h : a_h = a, hb_h : b_h = c⟩
+              funext ⟨a, b, c, f, g, h, comp_wit⟩
+              simp only [CategoryStruct.comp, Function.comp_apply, cast_eq]
+              rcases f with
+                ⟨⟨a_f, b_f, f'⟩, ha_f : a_f = a, hb_f : b_f = b⟩
+              rcases g with
+                ⟨⟨a_g, b_g, g'⟩, ha_g : a_g = b, hb_g : b_g = c⟩
+              rcases h with
+                ⟨⟨a_h, b_h, h'⟩, ha_h : a_h = a, hb_h : b_h = c⟩
+              have hf :=
+                (functorDataToDep_depToFunctorData_morT data a b).left_inv
+                  ⟨⟨a_f, b_f, f'⟩, ha_f, hb_f⟩
+              have hg :=
+                (functorDataToDep_depToFunctorData_morT data b c).left_inv
+                  ⟨⟨a_g, b_g, g'⟩, ha_g, hb_g⟩
+              have hh :=
+                (functorDataToDep_depToFunctorData_morT data a c).left_inv
+                  ⟨⟨a_h, b_h, h'⟩, ha_h, hb_h⟩
+              have hcomp :=
+                (functorDataToDep_depToFunctorData_compT data a b c
+                  ⟨⟨a_f, b_f, f'⟩, ha_f, hb_f⟩
+                  ⟨⟨a_g, b_g, g'⟩, ha_g, hb_g⟩
+                  ⟨⟨a_h, b_h, h'⟩, ha_h, hb_h⟩).left_inv comp_wit
               subst ha_f hb_f ha_g hb_g ha_h hb_h
-              rcases comp_wit with
-                ⟨⟨ac, bc, cc, fc, gc, hc, witc⟩, hr, hl, hcomp⟩
-              simp only [depToFunctorData] at hr hl hcomp
-              have ⟨hac, hr_rest⟩ := Sigma.mk.inj_iff.mp hr
-              subst hac
-              have ⟨hbc, hfc⟩ := Sigma.mk.inj_iff.mp (eq_of_heq hr_rest)
-              subst hbc
-              simp only [heq_eq_eq] at hfc
-              subst hfc
-              have ⟨_, hl_rest⟩ := Sigma.mk.inj_iff.mp hl
-              have ⟨hcc, hgc⟩ := Sigma.mk.inj_iff.mp (eq_of_heq hl_rest)
-              subst hcc
-              simp only [heq_eq_eq] at hgc
-              subst hgc
-              have ⟨_, hcomp_rest⟩ := Sigma.mk.inj_iff.mp hcomp
-              have ⟨_, hhc⟩ := Sigma.mk.inj_iff.mp (eq_of_heq hcomp_rest)
-              simp only [heq_eq_eq] at hhc
-              subst hhc
-              rfl
+              congr 1
+              grind
             inv_hom_id := by
-              apply ConcreteCategory.ext_apply
-              intro ⟨a, b, c, f, g, h, comp_wit⟩
-              simp only [ConcreteCategory.comp_apply, TypeCat.hom_ofHom,
-                cast_eq, ConcreteCategory.id_apply]
-              rfl })
+              funext ⟨a, b, c, f, g, h, comp_wit⟩
+              simp only [CategoryStruct.comp, Function.comp_apply, cast_eq]
+              have hf :=
+                (functorDataToDep_depToFunctorData_morT data a b).right_inv
+                  f
+              have hg :=
+                (functorDataToDep_depToFunctorData_morT data b c).right_inv
+                  g
+              have hh :=
+                (functorDataToDep_depToFunctorData_morT data a c).right_inv
+                  h
+              let f_inv :=
+                (functorDataToDep_depToFunctorData_morT data a b).invFun f
+              let g_inv :=
+                (functorDataToDep_depToFunctorData_morT data b c).invFun g
+              let h_inv :=
+                (functorDataToDep_depToFunctorData_morT data a c).invFun h
+              have hcomp :=
+                (functorDataToDep_depToFunctorData_compT data a b c f_inv
+                  g_inv h_inv).right_inv comp_wit
+              congr 1 })
     (by
       intro X Y f
       cases f with
@@ -1004,65 +942,45 @@ def mkCopresheafDep_functorDataToDep_depToFunctorData.{u}
       | hom f' =>
         cases f' with
         | dom =>
-          apply ConcreteCategory.ext_apply
-          intro x
           simp only [mkCopresheafDep, mkCopresheaf, mkFunctor,
                      depToFunctorData, functorDataToDep, mapSemiHom]
-          simp
+          ext x; simp
         | cod =>
-          apply ConcreteCategory.ext_apply
-          intro x
           simp only [mkCopresheafDep, mkCopresheaf, mkFunctor,
                      depToFunctorData, functorDataToDep, mapSemiHom]
-          simp
+          ext x; simp
         | idObj =>
-          apply ConcreteCategory.ext_apply
-          intro x
           simp only [mkCopresheafDep, mkCopresheaf, mkFunctor,
                      depToFunctorData, functorDataToDep, mapSemiHom]
-          simp
+          ext x; simp
         | idMor =>
-          apply ConcreteCategory.ext_apply
-          intro x
           simp only [mkCopresheafDep, mkCopresheaf, mkFunctor,
                      depToFunctorData, functorDataToDep, mapSemiHom]
-          simp
+          ext x; simp
         | left =>
-          apply ConcreteCategory.ext_apply
-          intro x
           simp only [mkCopresheafDep, mkCopresheaf, mkFunctor,
                      depToFunctorData, functorDataToDep, mapSemiHom]
-          simp
+          ext x; simp
         | right =>
-          apply ConcreteCategory.ext_apply
-          intro x
           simp only [mkCopresheafDep, mkCopresheaf, mkFunctor,
                      depToFunctorData, functorDataToDep, mapSemiHom]
-          simp
+          ext x; simp
         | composite =>
-          apply ConcreteCategory.ext_apply
-          intro x
           simp only [mkCopresheafDep, mkCopresheaf, mkFunctor,
                      depToFunctorData, functorDataToDep, mapSemiHom]
-          simp
+          ext x; simp
         | intermediate =>
-          apply ConcreteCategory.ext_apply
-          intro x
           simp only [mkCopresheafDep, mkCopresheaf, mkFunctor,
                      depToFunctorData, functorDataToDep, mapSemiHom]
-          simp
+          ext x; simp
         | compositeDom =>
-          apply ConcreteCategory.ext_apply
-          intro x
           simp only [mkCopresheafDep, mkCopresheaf, mkFunctor,
                      depToFunctorData, functorDataToDep, mapSemiHom]
-          simp
+          ext x; simp
         | compositeCod =>
-          apply ConcreteCategory.ext_apply
-          intro x
           simp only [mkCopresheafDep, mkCopresheaf, mkFunctor,
                      depToFunctorData, functorDataToDep, mapSemiHom]
-          simp)
+          ext x; simp)
 
 section DepCatCopresheafEquivalence
 
@@ -1070,38 +988,46 @@ section DepCatCopresheafEquivalence
     to the original. -/
 def copresheafRoundTripCounit (data : CopresheafData) :
     NatTransData (depToFunctorData (functorDataToDep data)) data where
-  appObj := TypeCat.ofHom _root_.id
-  appMor :=
-    TypeCat.ofHom (depToFunctorData_functorDataToDep_morC data).toFun
-  appId := TypeCat.ofHom (depToFunctorData_functorDataToDep_idC data).toFun
-  appComp :=
-    TypeCat.ofHom (depToFunctorData_functorDataToDep_compC data).toFun
+  appObj := id
+  appMor := (depToFunctorData_functorDataToDep_morC data).toFun
+  appId := (depToFunctorData_functorDataToDep_idC data).toFun
+  appComp := (depToFunctorData_functorDataToDep_compC data).toFun
   naturality_dom := by
-    apply ConcreteCategory.ext_apply
-    intro ⟨a, b, ⟨m, ha, hb⟩⟩
+    funext ⟨a, b, ⟨m, ha, hb⟩⟩
+    simp only [types_comp_apply, id_eq, Equiv.toFun_as_coe,
+      depToFunctorData_functorDataToDep_morC]
     exact ha.symm
   naturality_cod := by
-    apply ConcreteCategory.ext_apply
-    intro ⟨a, b, ⟨m, ha, hb⟩⟩
+    funext ⟨a, b, ⟨m, ha, hb⟩⟩
+    simp only [types_comp_apply, id_eq, Equiv.toFun_as_coe,
+      depToFunctorData_functorDataToDep_morC]
     exact hb.symm
   naturality_idMor := by
-    apply ConcreteCategory.ext_apply
-    intro ⟨o, ⟨m, hdom, hcod⟩, ⟨i, hi⟩⟩
+    funext ⟨o, ⟨m, hdom, hcod⟩, ⟨i, hi⟩⟩
+    simp only [types_comp_apply, Equiv.toFun_as_coe,
+      depToFunctorData_functorDataToDep_morC,
+      depToFunctorData_functorDataToDep_idC, depToFunctorData]
     exact hi.symm
   naturality_left := by
-    apply ConcreteCategory.ext_apply
-    intro ⟨a, b, c, ⟨f, hfa, hfb⟩, ⟨g, hga, hgb⟩, ⟨h, hha, hhb⟩,
+    funext ⟨a, b, c, ⟨f, hfa, hfb⟩, ⟨g, hga, hgb⟩, ⟨h, hha, hhb⟩,
       ⟨comp, hr, hl, hcomp⟩⟩
+    simp only [types_comp_apply, Equiv.toFun_as_coe,
+      depToFunctorData_functorDataToDep_morC,
+      depToFunctorData_functorDataToDep_compC, depToFunctorData]
     exact hl.symm
   naturality_right := by
-    apply ConcreteCategory.ext_apply
-    intro ⟨a, b, c, ⟨f, hfa, hfb⟩, ⟨g, hga, hgb⟩, ⟨h, hha, hhb⟩,
+    funext ⟨a, b, c, ⟨f, hfa, hfb⟩, ⟨g, hga, hgb⟩, ⟨h, hha, hhb⟩,
       ⟨comp, hr, hl, hcomp⟩⟩
+    simp only [types_comp_apply, Equiv.toFun_as_coe,
+      depToFunctorData_functorDataToDep_morC,
+      depToFunctorData_functorDataToDep_compC, depToFunctorData]
     exact hr.symm
   naturality_composite := by
-    apply ConcreteCategory.ext_apply
-    intro ⟨a, b, c, ⟨f, hfa, hfb⟩, ⟨g, hga, hgb⟩, ⟨h, hha, hhb⟩,
+    funext ⟨a, b, c, ⟨f, hfa, hfb⟩, ⟨g, hga, hgb⟩, ⟨h, hha, hhb⟩,
       ⟨comp, hr, hl, hcomp⟩⟩
+    simp only [types_comp_apply, Equiv.toFun_as_coe,
+      depToFunctorData_functorDataToDep_morC,
+      depToFunctorData_functorDataToDep_compC, depToFunctorData]
     exact hcomp.symm
 
 /-- Helper: HEq of nested sigma morphisms when the domain indices are equal.
@@ -1134,41 +1060,41 @@ private lemma morCSigma_heq_of_dom_cod_eq (data : CopresheafData) {m : data.morC
     the round-tripped version. -/
 def copresheafRoundTripCounitInv (data : CopresheafData) :
     NatTransData data (depToFunctorData (functorDataToDep data)) where
-  appObj := TypeCat.ofHom _root_.id
-  appMor :=
-    TypeCat.ofHom (depToFunctorData_functorDataToDep_morC data).invFun
-  appId := TypeCat.ofHom (depToFunctorData_functorDataToDep_idC data).invFun
-  appComp :=
-    TypeCat.ofHom (depToFunctorData_functorDataToDep_compC data).invFun
-  naturality_dom := by
-    apply ConcreteCategory.ext_apply; intro m; rfl
-  naturality_cod := by
-    apply ConcreteCategory.ext_apply; intro m; rfl
+  appObj := id
+  appMor := (depToFunctorData_functorDataToDep_morC data).invFun
+  appId := (depToFunctorData_functorDataToDep_idC data).invFun
+  appComp := (depToFunctorData_functorDataToDep_compC data).invFun
+  naturality_dom := by funext m; rfl
+  naturality_cod := by funext m; rfl
   naturality_idMor := by
-    apply ConcreteCategory.ext_apply
-    intro i
-    simp only [ConcreteCategory.comp_apply, TypeCat.hom_ofHom]
-    have h_endo := ConcreteCategory.congr_hom data.h_id_endo i
-    simp only [ConcreteCategory.comp_apply] at h_endo
-    refine Sigma.ext rfl ?_
-    exact morCSigma_heq_of_dom_cod_eq data rfl h_endo.symm rfl rfl rfl
-      h_endo.symm
+    funext i
+    simp only [types_comp_apply, depToFunctorData_functorDataToDep_morC,
+      depToFunctorData_functorDataToDep_idC, depToFunctorData, functorDataToDep]
+    have h_endo := congrFun data.h_id_endo i
+    simp only [types_comp_apply] at h_endo
+    congr 1
+    congr 1
+    · exact h_endo.symm
+    · rw [Subtype.heq_iff_coe_eq (fun _ => by simp [h_endo])]
   naturality_left := by
-    apply ConcreteCategory.ext_apply
-    intro comp
-    simp only [ConcreteCategory.comp_apply, TypeCat.hom_ofHom]
-    have h_match := ConcreteCategory.congr_hom data.h_comp_match comp
-    refine Sigma.ext h_match.symm ?_
+    funext comp
+    simp only [types_comp_apply, depToFunctorData_functorDataToDep_morC,
+      depToFunctorData_functorDataToDep_compC, depToFunctorData, functorDataToDep]
+    have h_match := congrFun data.h_comp_match comp
+    simp only [types_comp_apply] at h_match
+    rw [Sigma.mk.inj_iff]
+    refine ⟨h_match.symm, ?_⟩
     exact morCSigma_heq_of_dom_eq data h_match.symm rfl h_match.symm rfl rfl
-  naturality_right := by
-    apply ConcreteCategory.ext_apply; intro comp; rfl
+  naturality_right := by funext comp; rfl
   naturality_composite := by
-    apply ConcreteCategory.ext_apply
-    intro comp
-    simp only [ConcreteCategory.comp_apply, TypeCat.hom_ofHom]
-    have h_dom := ConcreteCategory.congr_hom data.h_comp_dom comp
-    have h_cod := ConcreteCategory.congr_hom data.h_comp_cod comp
-    refine Sigma.ext h_dom ?_
+    funext comp
+    simp only [types_comp_apply, depToFunctorData_functorDataToDep_morC,
+      depToFunctorData_functorDataToDep_compC, depToFunctorData, functorDataToDep]
+    have h_dom := congrFun data.h_comp_dom comp
+    have h_cod := congrFun data.h_comp_cod comp
+    simp only [types_comp_apply] at h_dom h_cod
+    rw [Sigma.mk.inj_iff]
+    refine ⟨h_dom, ?_⟩
     exact morCSigma_heq_of_dom_cod_eq data h_dom h_cod rfl h_dom rfl h_cod
 
 /-- The counit composed with its inverse gives identity on round-tripped. -/
@@ -1222,18 +1148,22 @@ def depCatCopresheafCounit :
       Functor.id_map, copresheafToDepCat, depCatToCopresheaf]
     apply NatTransData.ext
     · rfl
-    · apply ConcreteCategory.ext_apply
-      intro ⟨a, b, ⟨m, ha, hb⟩⟩
-      subst ha hb
-      rfl
-    · apply ConcreteCategory.ext_apply
-      intro ⟨o, ⟨m, hdom, hcod⟩, ⟨i, hi⟩⟩
-      subst hdom
-      rfl
-    · apply ConcreteCategory.ext_apply
-      intro ⟨a, b, c, ⟨fv, hfa, hfb⟩, ⟨gv, hga, hgb⟩, ⟨hv, hha, hhb⟩,
+    · funext ⟨a, b, ⟨m, ha, hb⟩⟩
+      simp only [depToFunctorData_functorDataToDep_morC, types_comp_apply,
+        CategoryStruct.comp, NatTransData.comp, copresheafRoundTripCounit,
+        natTransToDepNatTrans, depNatTransToNatTrans]
+      subst ha hb; rfl
+    · funext ⟨o, ⟨m, hdom, hcod⟩, ⟨i, hi⟩⟩
+      simp only [depToFunctorData_functorDataToDep_idC, types_comp_apply,
+        CategoryStruct.comp, NatTransData.comp, copresheafRoundTripCounit,
+        natTransToDepNatTrans, depNatTransToNatTrans]
+      subst hdom; rfl
+    · funext ⟨a, b, c, ⟨fv, hfa, hfb⟩, ⟨gv, hga, hgb⟩, ⟨hv, hha, hhb⟩,
         ⟨comp, hr, hl, hcomp⟩⟩
-      rfl
+      simp only [depToFunctorData_functorDataToDep_compC, types_comp_apply,
+        CategoryStruct.comp, NatTransData.comp, copresheafRoundTripCounit,
+        natTransToDepNatTrans, depNatTransToNatTrans, Subtype.coe_mk,
+        Function.comp_apply]
 
 /-- Helper: Convert naturality lemmas to sigma equalities for morC. -/
 private lemma natTrans_morC_sigma_eq {X Y : CopresheafData} (f : NatTransData X Y)
@@ -1241,10 +1171,10 @@ private lemma natTrans_morC_sigma_eq {X Y : CopresheafData} (f : NatTransData X 
     (⟨Y.dom (f.appMor m), Y.cod (f.appMor m), ⟨f.appMor m, rfl, rfl⟩⟩ :
       (depToFunctorData (functorDataToDep Y)).morC) =
     ⟨f.appObj (X.dom m), f.appObj (X.cod m), ⟨f.appMor m,
-      (ConcreteCategory.congr_hom f.naturality_dom m).symm,
-      (ConcreteCategory.congr_hom f.naturality_cod m).symm⟩⟩ := by
-  have h_dom := (ConcreteCategory.congr_hom f.naturality_dom m).symm
-  have h_cod := (ConcreteCategory.congr_hom f.naturality_cod m).symm
+      (congrFun f.naturality_dom m).symm, (congrFun f.naturality_cod m).symm⟩⟩ := by
+  have h_dom := (congrFun f.naturality_dom m).symm
+  have h_cod := (congrFun f.naturality_cod m).symm
+  simp only [types_comp_apply] at h_dom h_cod
   rw [Sigma.mk.inj_iff]
   refine ⟨h_dom, ?_⟩
   exact morCSigma_heq_of_dom_cod_eq Y h_dom h_cod rfl h_dom rfl h_cod
@@ -1293,23 +1223,19 @@ private lemma compCSigma_heq {data : CopresheafData}
 private lemma natTrans_idC_sigma_eq {X Y : CopresheafData} (f : NatTransData X Y)
     (i : X.idC) :
     (⟨Y.dom (Y.idMor (f.appId i)), ⟨Y.idMor (f.appId i),
-        rfl, (ConcreteCategory.congr_hom Y.h_id_endo (f.appId i)).symm⟩,
-        ⟨f.appId i, rfl⟩⟩ :
+        rfl, (congrFun Y.h_id_endo (f.appId i)).symm⟩, ⟨f.appId i, rfl⟩⟩ :
       (depToFunctorData (functorDataToDep Y)).idC) =
     ⟨f.appObj (X.dom (X.idMor i)), ⟨f.appMor (X.idMor i),
-        (ConcreteCategory.congr_hom f.naturality_dom (X.idMor i)).symm,
-        (ConcreteCategory.congr_hom f.naturality_cod (X.idMor i)).symm.trans
-          (congrArg f.appObj
-            (ConcreteCategory.congr_hom X.h_id_endo i).symm)⟩,
-      ⟨f.appId i, (ConcreteCategory.congr_hom f.naturality_idMor i).symm⟩⟩ := by
-  have h_nat_dom :=
-    (ConcreteCategory.congr_hom f.naturality_dom (X.idMor i)).symm
-  have h_nat_idMor :=
-    (ConcreteCategory.congr_hom f.naturality_idMor i).symm
-  have h_nat_cod :=
-    (ConcreteCategory.congr_hom f.naturality_cod (X.idMor i)).symm
-  have h_endo_X := (ConcreteCategory.congr_hom X.h_id_endo i).symm
-  have h_endo_Y := (ConcreteCategory.congr_hom Y.h_id_endo (f.appId i)).symm
+        (congrFun f.naturality_dom (X.idMor i)).symm,
+        (congrFun f.naturality_cod (X.idMor i)).symm.trans
+          (congrArg f.appObj (congrFun X.h_id_endo i).symm)⟩,
+      ⟨f.appId i, (congrFun f.naturality_idMor i).symm⟩⟩ := by
+  have h_nat_dom := (congrFun f.naturality_dom (X.idMor i)).symm
+  have h_nat_idMor := (congrFun f.naturality_idMor i).symm
+  have h_nat_cod := (congrFun f.naturality_cod (X.idMor i)).symm
+  have h_endo_X := (congrFun X.h_id_endo i).symm
+  have h_endo_Y := (congrFun Y.h_id_endo (f.appId i)).symm
+  simp only [types_comp_apply] at h_nat_dom h_nat_idMor h_nat_cod h_endo_X h_endo_Y
   rw [Sigma.mk.inj_iff]
   have h_obj_eq : Y.dom (Y.idMor (f.appId i)) = f.appObj (X.dom (X.idMor i)) :=
     (congrArg Y.dom h_nat_idMor).trans h_nat_dom
@@ -1328,54 +1254,57 @@ def depCatCopresheafCounitInv :
       Functor.id_map, copresheafToDepCat, depCatToCopresheaf]
     apply NatTransData.ext
     · rfl
-    · apply ConcreteCategory.ext_apply
-      intro m
+    · funext m
+      simp only [depToFunctorData_functorDataToDep_morC,
+        CategoryStruct.comp, NatTransData.comp, copresheafRoundTripCounitInv,
+        natTransToDepNatTrans, depNatTransToNatTrans, Function.comp_apply]
       exact natTrans_morC_sigma_eq f m
-    · apply ConcreteCategory.ext_apply
-      intro i
+    · funext i
+      simp only [depToFunctorData_functorDataToDep_idC,
+        CategoryStruct.comp, NatTransData.comp, copresheafRoundTripCounitInv,
+        natTransToDepNatTrans, depNatTransToNatTrans, Function.comp_apply]
       exact natTrans_idC_sigma_eq f i
-    · apply ConcreteCategory.ext_apply
-      intro c
-      have h_nat_dom : Y.dom (f.appMor (X.right c)) =
-          f.appObj (X.dom (X.right c)) :=
-        (ConcreteCategory.congr_hom f.naturality_dom (X.right c)).symm
-      have h_nat_cod : Y.cod (f.appMor (X.left c)) =
-          f.appObj (X.cod (X.left c)) :=
-        (ConcreteCategory.congr_hom f.naturality_cod (X.left c)).symm
-      have h_nat_cod' : Y.cod (f.appMor (X.right c)) =
-          f.appObj (X.cod (X.right c)) :=
-        (ConcreteCategory.congr_hom f.naturality_cod (X.right c)).symm
+    · funext c
+      simp only [depToFunctorData_functorDataToDep_compC,
+        CategoryStruct.comp, NatTransData.comp, copresheafRoundTripCounitInv,
+        natTransToDepNatTrans, depNatTransToNatTrans, Function.comp_apply]
+      have h_nat_dom : Y.dom (f.appMor (X.right c)) = f.appObj (X.dom (X.right c)) :=
+        (congrFun f.naturality_dom (X.right c)).symm
+      have h_nat_dom' : Y.dom (f.appMor (X.composite c)) =
+          f.appObj (X.dom (X.composite c)) :=
+        (congrFun f.naturality_dom (X.composite c)).symm
+      have h_nat_cod : Y.cod (f.appMor (X.left c)) = f.appObj (X.cod (X.left c)) :=
+        (congrFun f.naturality_cod (X.left c)).symm
+      have h_nat_cod' : Y.cod (f.appMor (X.right c)) = f.appObj (X.cod (X.right c)) :=
+        (congrFun f.naturality_cod (X.right c)).symm
       have h_nat_right : Y.right (f.appComp c) = f.appMor (X.right c) :=
-        (ConcreteCategory.congr_hom f.naturality_right c).symm
+        (congrFun f.naturality_right c).symm
       have h_nat_left : Y.left (f.appComp c) = f.appMor (X.left c) :=
-        (ConcreteCategory.congr_hom f.naturality_left c).symm
-      have h_nat_composite : Y.composite (f.appComp c) =
-          f.appMor (X.composite c) :=
-        (ConcreteCategory.congr_hom f.naturality_composite c).symm
-      have h_nat_dom_left : Y.dom (f.appMor (X.left c)) =
-          f.appObj (X.dom (X.left c)) :=
-        (ConcreteCategory.congr_hom f.naturality_dom (X.left c)).symm
+        (congrFun f.naturality_left c).symm
+      have h_nat_composite : Y.composite (f.appComp c) = f.appMor (X.composite c) :=
+        (congrFun f.naturality_composite c).symm
+      have h_nat_dom_left : Y.dom (f.appMor (X.left c)) = f.appObj (X.dom (X.left c)) :=
+        (congrFun f.naturality_dom (X.left c)).symm
       have h_comp_match_X : X.cod (X.right c) = X.dom (X.left c) :=
-        ConcreteCategory.congr_hom X.h_comp_match c
+        congrFun X.h_comp_match c
       have h_comp_dom_X : X.dom (X.composite c) = X.dom (X.right c) :=
-        ConcreteCategory.congr_hom X.h_comp_dom c
+        congrFun X.h_comp_dom c
       have h_comp_cod_X : X.cod (X.composite c) = X.cod (X.left c) :=
-        ConcreteCategory.congr_hom X.h_comp_cod c
+        congrFun X.h_comp_cod c
       have h_nat_dom_comp : Y.dom (f.appMor (X.composite c)) =
           f.appObj (X.dom (X.composite c)) :=
-        (ConcreteCategory.congr_hom f.naturality_dom (X.composite c)).symm
+        (congrFun f.naturality_dom (X.composite c)).symm
       have h_nat_cod_comp : Y.cod (f.appMor (X.composite c)) =
           f.appObj (X.cod (X.composite c)) :=
-        (ConcreteCategory.congr_hom f.naturality_cod (X.composite c)).symm
-      have h_comp_match_Y : Y.cod (Y.right (f.appComp c)) =
-          Y.dom (Y.left (f.appComp c)) :=
-        ConcreteCategory.congr_hom Y.h_comp_match (f.appComp c)
+        (congrFun f.naturality_cod (X.composite c)).symm
+      have h_comp_match_Y : Y.cod (Y.right (f.appComp c)) = Y.dom (Y.left (f.appComp c)) :=
+        congrFun Y.h_comp_match (f.appComp c)
       have h_comp_dom_Y : Y.dom (Y.composite (f.appComp c)) =
           Y.dom (Y.right (f.appComp c)) :=
-        ConcreteCategory.congr_hom Y.h_comp_dom (f.appComp c)
+        congrFun Y.h_comp_dom (f.appComp c)
       have h_comp_cod_Y : Y.cod (Y.composite (f.appComp c)) =
           Y.cod (Y.left (f.appComp c)) :=
-        ConcreteCategory.congr_hom Y.h_comp_cod (f.appComp c)
+        congrFun Y.h_comp_cod (f.appComp c)
       exact eq_of_heq (compCSigma_heq
         ((congrArg Y.dom h_nat_right).trans h_nat_dom)
         ((congrArg Y.cod h_nat_right).trans h_nat_cod')
@@ -1383,8 +1312,7 @@ def depCatCopresheafCounitInv :
         h_nat_right h_nat_left h_nat_composite rfl
         rfl h_nat_dom
         rfl h_nat_cod'
-        h_comp_match_Y.symm
-          (h_nat_dom_left.trans (congrArg f.appObj h_comp_match_X.symm))
+        h_comp_match_Y.symm (h_nat_dom_left.trans (congrArg f.appObj h_comp_match_X.symm))
         rfl h_nat_cod
         h_comp_dom_Y (h_nat_dom_comp.trans (congrArg f.appObj h_comp_dom_X))
         h_comp_cod_Y (h_nat_cod_comp.trans (congrArg f.appObj h_comp_cod_X))
@@ -1589,9 +1517,6 @@ private lemma depCatCopresheafUnitInv_naturality_appComp_heq
   simp only [heq_eq_eq] at hhc; subst hhc
   rfl
 
-set_option maxHeartbeats 800000 in
--- The appComp-component naturality reduction through nested sigma
--- destructuring requires additional heartbeat budget beyond the default.
 /-- The unit inverse natural transformation. -/
 def depCatCopresheafUnitInv :
     depCatToCopresheaf ⋙ copresheafToDepCat ⟶ 𝟭 DepCategoryData where
@@ -1670,13 +1595,13 @@ def depCatCopresheafEquiv.{u} :
   unitIso := depCatCopresheafUnitIso
   counitIso := depCatCopresheafCounitIso
   functor_unitIso_comp X := by
-    simp only [depCatCopresheafUnitIso,
+    simp only [Functor.comp_obj, depCatCopresheafUnitIso,
       depCatCopresheafCounitIso, depCatCopresheafUnit, depCatCopresheafCounit]
     apply NatTransData.ext
     · rfl
-    · apply ConcreteCategory.ext_apply; intro m; rfl
-    · apply ConcreteCategory.ext_apply; intro i; rfl
-    · apply ConcreteCategory.ext_apply; intro c; rfl
+    · funext m; rfl
+    · funext i; rfl
+    · funext c; rfl
 
 end DepCatCopresheafEquivalence
 

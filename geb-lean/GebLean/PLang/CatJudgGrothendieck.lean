@@ -57,38 +57,28 @@ squaring functor to give us quiver structures.
 /-- The squaring functor `X ↦ X × X` on types. -/
 def sqFunctor.{u} : Type u ⥤ Type u where
   obj X := X × X
-  map f := TypeCat.ofHom fun p => (f p.1, f p.2)
+  map f := fun p => (f p.1, f p.2)
 
 @[simp]
 theorem sqFunctor_map_id.{u} (X : Type u) :
-    sqFunctor.map (𝟙 X) = 𝟙 (X × X) := by
-  apply ConcreteCategory.ext_apply; intro p; rfl
+    sqFunctor.map (𝟙 X) = 𝟙 (X × X) := rfl
 
 @[simp]
 theorem sqFunctor_map_comp.{u} {X Y Z : Type u} (f : X ⟶ Y) (g : Y ⟶ Z) :
-    sqFunctor.map (f ≫ g) = sqFunctor.map f ≫ sqFunctor.map g := by
-  apply ConcreteCategory.ext_apply; intro p; rfl
+    sqFunctor.map (f ≫ g) = sqFunctor.map f ≫ sqFunctor.map g := rfl
 
 /-- The squaring functor on the opposite category. -/
-def sqFunctorOp'.{u} : (Type u)ᵒᵖ' ⥤ (Type u)ᵒᵖ' :=
-  Functor.op' sqFunctor.{u}
+def sqFunctorOp'.{u} : (Type u)ᵒᵖ' ⥤ (Type u)ᵒᵖ' where
+  obj X := X × X
+  map f := fun p => (f p.1, f p.2)
 
 @[simp]
 theorem sqFunctorOp'_map_id.{u} (X : (Type u)ᵒᵖ') :
-    sqFunctorOp'.map (𝟙 X) = 𝟙 (X × X) := by
-  change (sqFunctor.map (𝟙 X) : @Quiver.Hom (Type u) _ (X × X) (X × X)) =
-    (𝟙 (X × X) : @Quiver.Hom (Type u) _ (X × X) (X × X))
-  exact sqFunctor.map_id X
+    sqFunctorOp'.map (𝟙 X) = 𝟙 (X × X) := rfl
 
 @[simp]
 theorem sqFunctorOp'_map_comp.{u} {X Y Z : (Type u)ᵒᵖ'} (f : X ⟶ Y) (g : Y ⟶ Z) :
-    sqFunctorOp'.map (f ≫ g) = sqFunctorOp'.map f ≫ sqFunctorOp'.map g := by
-  change (sqFunctor.map (g ≫ f : @Quiver.Hom (Type u) _ Z X) :
-      @Quiver.Hom (Type u) _ (Z × Z) (X × X)) =
-    (sqFunctor.map (g : @Quiver.Hom (Type u) _ Z Y) ≫
-      sqFunctor.map (f : @Quiver.Hom (Type u) _ Y X) :
-      @Quiver.Hom (Type u) _ (Z × Z) (X × X))
-  exact sqFunctor.map_comp _ _
+    sqFunctorOp'.map (f ≫ g) = sqFunctorOp'.map f ≫ sqFunctorOp'.map g := rfl
 
 /-- The quiver functor with independent universes: sends `X : Type uObj` to
     the category of `(X × X)`-indexed type families in `Type uMor`.

@@ -75,7 +75,7 @@ def fiberMap {G F : C ⥤ Type w} (η : G ⟶ F)
   fun y => ⟨G.map f.val y.val, by
     have hy := y.property
     have hf := f.property
-    have nat := NatTrans.naturality_apply η f.val y.val
+    have nat := congrFun (η.naturality f.val) y.val
     calc η.app q.fst (G.map f.val y.val)
         = F.map f.val (η.app p.fst y.val) := nat
       _ = F.map f.val p.snd := by rw [hy]
@@ -88,131 +88,40 @@ Maps `η : G ⟶ F` to the fiber functor.
 def sliceToCopresheaf : Over F ⥤ (F.Elements ⥤ Type w) where
   obj η := {
     obj := fun p => Fiber η.hom p.fst p.snd
-    map := fun {p q} f => TypeCat.ofHom (fiberMap η.hom f)
+    map := fun {p q} f => fiberMap η.hom f
     map_id := by
       intro p
-      apply ConcreteCategory.ext_apply
-      intro y
-      apply Subtype.ext
-      dsimp [fiberMap]
-      exact Functor.map_id_apply η.left _ _
+      ext y
+      dsimp [fiberMap, Fiber]
+      congr 1
+      exact congrFun (η.left.map_id p.fst) y.val
     map_comp := by
       intros p q r f g
-      apply ConcreteCategory.ext_apply
-      intro y
-      apply Subtype.ext
-      dsimp [fiberMap]
-      exact Functor.map_comp_apply η.left f.val g.val _ }
+      ext y
+      dsimp [fiberMap, Fiber]
+      congr 1
+      exact congrFun (η.left.map_comp f.val g.val) y.val }
   map {η₁ η₂} α := {
-    app := fun p => TypeCat.ofHom fun y =>
-      ⟨α.left.app p.fst y.val, by
-        have hy := y.property
-        have h : α.left.app p.fst ≫ η₂.hom.app p.fst = η₁.hom.app p.fst :=
-          NatTrans.congr_app α.w p.fst
-        exact (ConcreteCategory.congr_hom h y.val).trans hy⟩
+    app := fun p y => ⟨α.left.app p.fst y.val, by
+      have hy := y.property
+      have h : α.left.app p.fst ≫ η₂.hom.app p.fst = η₁.hom.app p.fst :=
+        congrFun (congrArg NatTrans.app α.w) p.fst
+      exact (congrFun h y.val).trans hy⟩
     naturality := by
       intros p q f
-      apply ConcreteCategory.ext_apply
-      intro y
-      apply Subtype.ext
-      dsimp [fiberMap]
-      exact NatTrans.naturality_apply α.left f.val y.val
+      ext y
+      dsimp [fiberMap, Fiber]
+      congr 1
+      exact congrFun (α.left.naturality f.val) y.val
   }
   map_id := by
     intro η
     ext p y
-    rfl
+    simp [Fiber]
   map_comp := by
     intros η₁ η₂ η₃ α β
     ext p y
-    rfl
-
-/-- Underlying function of `totalSpace.map`. -/
-def totalSpaceMapAux (F : C ⥤ Type w) (G : F.Elements ⥤ Type w)
-    {X Y : C} (f : X ⟶ Y)
-    (pair : Σ (x : F.obj X), G.obj ⟨X, x⟩) :
-    Σ (y : F.obj Y), G.obj ⟨Y, y⟩ :=
-  ⟨F.map f pair.fst, G.map
-    (⟨f, rfl⟩ : (F.elementsMk X pair.fst : F.Elements) ⟶
-      F.elementsMk Y (F.map f pair.fst)) pair.snd⟩
-
-/-- Key helper: applying `G.map` at a morphism `⟨f, h⟩` in
-`F.Elements`, parameterized by the target value `y`. -/
-private lemma G_map_elements_hom_subst {F : C ⥤ Type w}
-    (G : F.Elements ⥤ Type w)
-    {X Y : C} (f : X ⟶ Y) (x : F.obj X)
-    (gx : G.obj ⟨X, x⟩) :
-    ∀ (y : F.obj Y) (h : F.map f x = y),
-      (⟨y, G.map (⟨f, h⟩ :
-        (F.elementsMk X x : F.Elements) ⟶ F.elementsMk Y y) gx⟩
-        : (y' : F.obj Y) × G.obj ⟨Y, y'⟩) =
-      ⟨F.map f x, G.map (⟨f, rfl⟩ :
-        (F.elementsMk X x : F.Elements) ⟶
-        F.elementsMk Y (F.map f x)) gx⟩ := by
-  intro y h
-  subst h
-  rfl
-
-lemma totalSpaceMapAux_id (F : C ⥤ Type w) (G : F.Elements ⥤ Type w)
-    (X : C) (x : F.obj X) (gx : G.obj ⟨X, x⟩) :
-    totalSpaceMapAux F G (𝟙 X) ⟨x, gx⟩ = ⟨x, gx⟩ := by
-  -- Use G_map_elements_hom_subst to get a canonical form
-  have hx : F.map (𝟙 X) x = x := Functor.map_id_apply F X x
-  have key := G_map_elements_hom_subst G (𝟙 X) x gx x hx
-  rw [show totalSpaceMapAux F G (𝟙 X) ⟨x, gx⟩ =
-      ⟨F.map (𝟙 X) x, G.map (⟨𝟙 X, rfl⟩ :
-        (F.elementsMk X x : F.Elements) ⟶
-        F.elementsMk X (F.map (𝟙 X) x)) gx⟩ from rfl]
-  rw [← key]
-  -- Now need: ⟨x, G.map (⟨𝟙 X, hx⟩ : ⟨X,x⟩ ⟶ ⟨X,x⟩) gx⟩ = ⟨x, gx⟩
-  congr 1
-  rw [show (⟨𝟙 X, hx⟩ :
-      (F.elementsMk X x : F.Elements) ⟶ F.elementsMk X x) =
-      𝟙 (F.elementsMk X x) from Subtype.ext rfl]
-  exact Functor.map_id_apply G _ gx
-
-lemma totalSpaceMapAux_comp (F : C ⥤ Type w) (G : F.Elements ⥤ Type w)
-    {X Y Z : C} (f : X ⟶ Y) (g : Y ⟶ Z)
-    (x : F.obj X) (gx : G.obj ⟨X, x⟩) :
-    totalSpaceMapAux F G (f ≫ g) ⟨x, gx⟩ =
-      totalSpaceMapAux F G g (totalSpaceMapAux F G f ⟨x, gx⟩) := by
-  have hfg : F.map (f ≫ g) x = F.map g (F.map f x) :=
-    Functor.map_comp_apply F f g x
-  have key := G_map_elements_hom_subst G (f ≫ g) x gx
-    (F.map g (F.map f x)) hfg
-  rw [show totalSpaceMapAux F G (f ≫ g) ⟨x, gx⟩ =
-      ⟨F.map (f ≫ g) x, G.map (⟨f ≫ g, rfl⟩ :
-        (F.elementsMk X x : F.Elements) ⟶
-        F.elementsMk Z (F.map (f ≫ g) x)) gx⟩ from rfl]
-  rw [← key]
-  -- RHS reduces similarly
-  change _ = totalSpaceMapAux F G g ⟨F.map f x,
-      G.map (⟨f, rfl⟩ :
-        (F.elementsMk X x : F.Elements) ⟶
-        F.elementsMk Y (F.map f x)) gx⟩
-  rw [show totalSpaceMapAux F G g ⟨F.map f x,
-        G.map (⟨f, rfl⟩ :
-          (F.elementsMk X x : F.Elements) ⟶
-          F.elementsMk Y (F.map f x)) gx⟩ =
-      ⟨F.map g (F.map f x), G.map (⟨g, rfl⟩ :
-        F.elementsMk Y (F.map f x) ⟶
-        F.elementsMk Z (F.map g (F.map f x)))
-        (G.map (⟨f, rfl⟩ :
-          (F.elementsMk X x : F.Elements) ⟶
-          F.elementsMk Y (F.map f x)) gx)⟩ from rfl]
-  congr 1
-  let fE : (F.elementsMk X x : F.Elements) ⟶
-      F.elementsMk Y (F.map f x) := ⟨f, rfl⟩
-  let gE : F.elementsMk Y (F.map f x) ⟶
-      F.elementsMk Z (F.map g (F.map f x)) := ⟨g, rfl⟩
-  have hcomp : (⟨f ≫ g, hfg⟩ :
-      (F.elementsMk X x : F.Elements) ⟶
-      F.elementsMk Z (F.map g (F.map f x))) = fE ≫ gE := by
-    apply Subtype.ext
-    change f ≫ g = f ≫ g
-    rfl
-  rw [hcomp]
-  exact Functor.map_comp_apply G fE gE gx
+    simp [Fiber]
 
 /--
 The total space copresheaf for a copresheaf `G` on `F.Elements`.
@@ -220,27 +129,47 @@ Sends `X : C` to `Σ (x : F.obj X), G.obj ⟨X, x⟩`.
 -/
 def totalSpace (G : F.Elements ⥤ Type w) : C ⥤ Type w where
   obj X := Σ (x : F.obj X), G.obj ⟨X, x⟩
-  map {X Y} f := TypeCat.ofHom (totalSpaceMapAux F G f)
+  map {X Y} f pair :=
+    ⟨F.map f pair.fst, G.map ⟨f, rfl⟩ pair.snd⟩
   map_id := by
     intro X
-    apply ConcreteCategory.ext_apply
-    rintro ⟨x, gx⟩
-    exact totalSpaceMapAux_id F G X x gx
+    funext ⟨x, gx⟩
+    have hx : F.map (𝟙 X) x = x := congrFun (F.map_id X) x
+    have h : G.map ⟨𝟙 X, hx⟩ gx = gx := by
+      have : G.map ⟨𝟙 X, hx⟩ gx = G.map (𝟙 ⟨X, x⟩) gx := by
+        congr 1
+      rw [this]
+      simp only [CategoryTheory.Functor.map_id, types_id_apply]
+    refine Sigma.ext hx ?_
+    simp only [types_id_apply]
+    convert heq_of_eq h using 2 <;> try exact sigma_ext_rfl_heq hx
+    congr 2
+    · funext; rw [hx]
+    exact proof_irrel_heq rfl hx
   map_comp := by
     intros X Y Z f g
-    apply ConcreteCategory.ext_apply
-    rintro ⟨x, gx⟩
-    exact totalSpaceMapAux_comp F G f g x gx
+    ext ⟨x, gx⟩
+    · simp only [Functor.map_comp, types_comp_apply]
+    · simp only [types_comp_apply]
+      have h := congrFun (@Functor.map_comp _ _ _ _ G ⟨X, x⟩ ⟨Y, F.map f x⟩ ⟨Z, F.map g (F.map f x)⟩
+        ⟨f, rfl⟩ ⟨g, rfl⟩) gx
+      simp only [types_comp_apply] at h
+      have hcomp : F.map (f ≫ g) x = F.map g (F.map f x) := by
+        rw [F.map_comp]; rfl
+      convert heq_of_eq h using 2 <;> try exact sigma_ext_rfl_heq hcomp
+      congr 2
+      · funext; rw [hcomp]
+      exact proof_irrel_heq _ _
 
 /--
 The projection from the total space to the base.
 -/
 def totalSpaceProj (G : F.Elements ⥤ Type w) : totalSpace F G ⟶ F where
-  app X := TypeCat.ofHom fun pair => pair.fst
+  app X pair := pair.fst
   naturality := by
     intros X Y f
-    apply ConcreteCategory.ext_apply
-    intro ⟨x, gx⟩
+    funext pair
+    obtain ⟨x, gx⟩ := pair
     rfl
 
 /--
@@ -251,20 +180,22 @@ def copresheafToSlice : (F.Elements ⥤ Type w) ⥤ Over F where
   obj G := Over.mk (totalSpaceProj F G)
   map {G H} α := {
     left := {
-      app := fun X => TypeCat.ofHom fun pair =>
-        ⟨pair.fst, α.app ⟨X, pair.fst⟩ pair.snd⟩
+      app := fun X pair => ⟨pair.fst, α.app ⟨X, pair.fst⟩ pair.snd⟩
       naturality := by
         intros X Y f
-        apply ConcreteCategory.ext_apply
-        intro pair
+        funext pair
         obtain ⟨x, gx⟩ := pair
-        -- Goal: LHS.snd = RHS.snd after Sigma-ext on rfl
-        -- The sigma first components are both F.map f x
-        refine Sigma.ext rfl (heq_of_eq ?_)
-        exact NatTrans.naturality_apply α
-          (⟨f, rfl⟩ :
-            (F.elementsMk X x : F.Elements) ⟶
-            F.elementsMk Y (F.map f x)) gx
+        dsimp [totalSpace]
+        ext
+        · rfl
+        · have h : F.map f x = F.map f x := rfl
+          let src : F.Elements := ⟨X, x⟩
+          let tgt : F.Elements := ⟨Y, F.map f x⟩
+          have nat := α.naturality (⟨f, h⟩ : src ⟶ tgt)
+          have nat_at_gx := congrFun nat gx
+          simp only [types_comp_apply, src, tgt] at nat_at_gx
+          exact heq_of_eq (congrArg
+            (fun z => (Sigma.mk (F.map f x) z : Σ _ : F.obj Y, _).snd) nat_at_gx)
     }
     right := eqToHom rfl }
   map_id := by
@@ -284,55 +215,47 @@ def sliceCopresheafUnitIso : 𝟭 (Over F) ≅ sliceToCopresheaf F ⋙ copreshea
   NatIso.ofComponents
     (fun η => Over.isoMk
       { hom := {
-          app := fun X => TypeCat.ofHom fun fx =>
-            ⟨η.hom.app X fx, ⟨fx, rfl⟩⟩
-          naturality := fun X Y f => by
-            apply ConcreteCategory.ext_apply
-            intro fx
-            have hnat := NatTrans.naturality_apply η.hom f fx
-            change (⟨η.hom.app Y (η.left.map f fx),
-                (⟨η.left.map f fx, rfl⟩
-                  : Fiber η.hom Y (η.hom.app Y (η.left.map f fx)))⟩
-                : (y : F.obj Y) × Fiber η.hom Y y) =
-              ⟨F.map f (η.hom.app X fx), fiberMap η.hom
-                  (⟨f, rfl⟩ :
-                    (F.elementsMk X (η.hom.app X fx)
-                      : F.Elements) ⟶
-                    F.elementsMk Y (F.map f (η.hom.app X fx)))
-                  ⟨fx, rfl⟩⟩
-            refine Sigma.ext hnat ?_
-            refine (Subtype.heq_iff_coe_eq ?_).mpr rfl
-            intro y
-            exact ⟨fun hp => hp.trans hnat,
-                   fun hp => hp.trans hnat.symm⟩
-            }
-        inv := {
-          app := fun X => TypeCat.ofHom fun pair => pair.snd.val
+          app := fun X fx => ⟨η.hom.app X fx, ⟨fx, rfl⟩⟩
           naturality := by
             intros X Y f
-            apply ConcreteCategory.ext_apply
-            intro pair
+            funext fx
+            dsimp [totalSpace, copresheafToSlice, sliceToCopresheaf, Fiber, fiberMap]
+            ext
+            · exact congrFun (η.hom.naturality f) fx
+            · dsimp
+            }
+        inv := {
+          app := fun X pair => pair.snd.val
+          naturality := by
+            intros X Y f
+            funext pair
             obtain ⟨x, ⟨fx, hfx⟩⟩ := pair
+            dsimp [totalSpace, Fiber, fiberMap]
             rfl }
         hom_inv_id := by
           ext X fx
           rfl
         inv_hom_id := by
           ext X ⟨x, ⟨fx, hfx⟩⟩
+          dsimp [Fiber]
           refine Sigma.ext hfx ?_
-          refine (Subtype.heq_iff_coe_eq ?_).mpr rfl
-          intro y
-          exact ⟨fun hp => hp.trans hfx, fun hp => hp.trans hfx.symm⟩ }
+          dsimp only []
+          congr 1
+          · funext y
+            rw [hfx]
+          · exact proof_irrel_heq _ _ }
       (by ext X x; rfl))
     (fun {η₁ η₂} α => by
-      apply Over.OverMorphism.ext
       ext X fx
-      have hw := ConcreteCategory.congr_hom
-        (NatTrans.congr_app α.w X) fx
-      refine Sigma.ext hw ?_
-      refine (Subtype.heq_iff_coe_eq ?_).mpr rfl
-      intro y
-      exact ⟨fun hp => hp.trans hw, fun hp => hp.trans hw.symm⟩)
+      dsimp [sliceToCopresheaf, copresheafToSlice, totalSpace, Fiber]
+      refine Sigma.ext (congrFun (congrFun (congrArg NatTrans.app α.w) X) fx) ?_
+      dsimp only []
+      congr 1
+      · funext y
+        have h := congrFun (congrFun (congrArg NatTrans.app α.w) X) fx
+        dsimp at h
+        simp only [h]
+      · exact proof_irrel_heq _ _)
 
 /--
 The counit isomorphism of the equivalence.
@@ -344,41 +267,57 @@ def sliceCopresheafCounitIso :
   NatIso.ofComponents
     (fun G => NatIso.ofComponents
       (fun p => {
-        hom := TypeCat.ofHom fun y => by
+        hom := fun y => by
           dsimp [sliceToCopresheaf, copresheafToSlice, Fiber, totalSpace, totalSpaceProj] at y
           have hp : (⟨p.fst, y.val.fst⟩ : F.Elements) = p := by
             ext
             · rfl
             · exact heq_of_eq y.property
           exact hp ▸ y.val.snd
-        inv := TypeCat.ofHom fun gx => by
+        inv := fun gx => by
           dsimp [sliceToCopresheaf, copresheafToSlice, Fiber, totalSpace, totalSpaceProj]
           exact ⟨⟨p.snd, gx⟩, rfl⟩
         hom_inv_id := by
-          apply ConcreteCategory.ext_apply
-          intro ⟨⟨x, gx⟩, hx⟩
+          ext ⟨⟨x, gx⟩, hx⟩
+          dsimp [Fiber, totalSpace, totalSpaceProj]
           apply Subtype.ext
           refine Sigma.ext hx.symm ?_
           exact eqRec_heq _ gx
         inv_hom_id := by
-          apply ConcreteCategory.ext_apply
-          intro gx
-          rfl})
+          ext gx
+          dsimp [Fiber, totalSpace, totalSpaceProj]})
       (fun {p q} f => by
-        apply ConcreteCategory.ext_apply
-        intro ⟨⟨x, gx⟩, hx⟩
-        change x = p.snd at hx
+        ext ⟨⟨x, gx⟩, hx⟩
+        dsimp [sliceToCopresheaf, copresheafToSlice, Fiber, fiberMap, totalSpace,
+          totalSpaceProj] at hx ⊢
+        have hp : (⟨p.fst, x⟩ : F.Elements) = p := by
+          ext
+          · rfl
+          · exact heq_of_eq hx
+        have hq : (⟨q.fst, F.map f.val x⟩ : F.Elements) = q := by
+          ext
+          · rfl
+          · have fprop : F.map f.val p.snd = q.snd := f.property
+            have : F.map f.val x = q.snd := by
+              rw [hx, fprop]
+            exact heq_of_eq this
         subst hx
-        rcases f with ⟨fval, fprop⟩
-        rcases q with ⟨q₁, q₂⟩
-        rcases p with ⟨p₁, p₂⟩
-        change F.map fval p₂ = q₂ at fprop
-        dsimp only [] at fprop gx ⊢
-        induction fprop
-        rfl))
+        apply transport_heq
+        cases f with
+        | mk fval fprop =>
+          generalize totalSpace._proof_1 F G fval ⟨p.snd, gx⟩ = proof
+          cases proof
+          simp only [Subtype.coe_mk]
+          cases p with | mk p₁ p₂ =>
+          cases q with | mk q₁ q₂ =>
+          dsimp only [] at fprop gx ⊢
+          cases hp
+          injection hq with hq₁ hq₂
+          grind
+        ))
     (fun {G H} α => by
       ext p ⟨⟨x, gx⟩, hx⟩
-      change x = p.snd at hx
+      dsimp [sliceToCopresheaf, copresheafToSlice, Fiber, totalSpace, totalSpaceProj] at hx ⊢
       have hp : (⟨p.fst, x⟩ : F.Elements) = p := by
         ext
         · rfl
@@ -1097,13 +1036,13 @@ private theorem natTrans_naturality_aux (e : ElementsEquivOver F G) {j k : J}
     _ = G.map (eqToHom hk) (G.map _morphG.val qj.snd) := by
         rw [eqToHom_map G hk, eqToHom_eq_cast]
     _ = G.map (_morphG.val ≫ eqToHom hk) qj.snd := by
-        rw [← Functor.map_comp_apply]
+        rw [← FunctorToTypes.map_comp_apply]
     _ = G.map (eqToHom hj ≫ f ≫ eqToHom hk.symm ≫ eqToHom hk) qj.snd := by
         rw [morphG_val_eq]; simp only [Category.assoc]
     _ = G.map (eqToHom hj ≫ f) qj.snd := by
         rw [eqToHom_trans, eqToHom_refl, Category.comp_id]
     _ = G.map f (G.map (eqToHom hj) qj.snd) := by
-        rw [Functor.map_comp_apply]
+        rw [FunctorToTypes.map_comp_apply]
     _ = G.map f (cast (congrArg G.obj hj) qj.snd) := by
         rw [eqToHom_map G hj, eqToHom_eq_cast]
 
@@ -1142,13 +1081,13 @@ theorem natTransInv_naturality (e : ElementsEquivOver F G) {j k : J}
     _ = F.map (eqToHom hk) (F.map morphF.val pj.snd) := by
         rw [eqToHom_map F hk, eqToHom_eq_cast]
     _ = F.map (morphF.val ≫ eqToHom hk) pj.snd := by
-        rw [← Functor.map_comp_apply]
+        rw [← FunctorToTypes.map_comp_apply]
     _ = F.map (eqToHom hj ≫ f) pj.snd := by
         rw [morphF_val_eq, Category.assoc,
           Category.assoc, eqToHom_trans,
           eqToHom_refl, Category.comp_id]
     _ = F.map f (F.map (eqToHom hj) pj.snd) := by
-        rw [Functor.map_comp_apply]
+        rw [FunctorToTypes.map_comp_apply]
     _ = F.map f (cast (congrArg F.obj hj) pj.snd) := by
         rw [eqToHom_map F hj, eqToHom_eq_cast]
 
@@ -1156,20 +1095,18 @@ theorem natTransInv_naturality (e : ElementsEquivOver F G) {j k : J}
 The natural transformation from F to G induced by the equivalence.
 -/
 def toNatTrans (e : ElementsEquivOver F G) : F ⟶ G where
-  app j := TypeCat.ofHom (e.natTransApp j)
+  app j := e.natTransApp j
   naturality j k f := by
-    apply ConcreteCategory.ext_apply
-    intro x
+    funext x
     exact e.natTrans_naturality f x
 
 /--
 The inverse natural transformation from G to F.
 -/
 def toNatTransInv (e : ElementsEquivOver F G) : G ⟶ F where
-  app j := TypeCat.ofHom (e.natTransInvApp j)
+  app j := e.natTransInvApp j
   naturality j k f := by
-    apply ConcreteCategory.ext_apply
-    intro y
+    funext y
     exact e.natTransInv_naturality f y
 
 /--
@@ -1200,28 +1137,13 @@ private lemma cast_heq_cast {A B T : Type w} {a : A} {b : B}
   exact eq_of_heq hab
 
 /--
-Helper for transport across a sigma equality inside an `eqToHom`
-application in the Type category.
--/
-private lemma eqToHom_snd_transport {H : J ⥤ Type w}
-    {p q : H.Elements} (hpq : p = q)
-    {j : J} (hj : q.fst = j) (y : H.obj j)
-    (hprop : (ConcreteCategory.hom (eqToHom (congrArg H.obj hj)))
-        q.snd = y) :
-    (ConcreteCategory.hom (eqToHom
-        (congrArg H.obj (hpq ▸ hj : p.fst = j))))
-      p.snd = y := by
-  subst hpq
-  exact hprop
-
-/--
 The forward and inverse natural transformations compose to the identity on G.
 -/
 theorem natTrans_inv_comp (e : ElementsEquivOver F G) :
     e.toNatTransInv ≫ e.toNatTrans = 𝟙 G := by
   ext j y
-  change (e.natTransApp j) ((e.natTransInvApp j) y) = y
-  simp only [natTransApp, natTransInvApp]
+  simp only [NatTrans.comp_app, types_comp_apply, NatTrans.id_app, types_id_apply,
+    toNatTrans, toNatTransInv, natTransApp, natTransInvApp]
   let q : G.Elements := ⟨j, y⟩
   have counit_prop := (e.equiv.counitIso.hom.app q).property
   have counit_val := e.counit_proj q
@@ -1230,11 +1152,9 @@ theorem natTrans_inv_comp (e : ElementsEquivOver F G) :
   have hp : (e.equiv.inverse.obj q).fst = j := e.inverse_base_eq q
   have hp' : (⟨j, cast (congrArg F.obj hp) (e.equiv.inverse.obj q).snd⟩ : F.Elements) =
       e.equiv.inverse.obj q := sigma_cast_snd_eq (e.equiv.inverse.obj q) hp
-  exact eqToHom_snd_transport
-    (p := e.equiv.functor.obj ⟨j, cast (congrArg F.obj hp)
-      (e.equiv.inverse.obj q).snd⟩)
-    (q := e.equiv.functor.obj (e.equiv.inverse.obj q))
-    (congrArg _ hp') (e.counit_proj_eq q) y counit_prop
+  have functor_eq := congrArg e.equiv.functor.obj hp'
+  convert counit_prop using 2
+  exact (Sigma.mk.inj_iff.mp functor_eq).2
 
 /--
 The inverse and forward natural transformations compose to the identity on F.
@@ -1243,8 +1163,8 @@ This mirrors the structure of `natTrans_inv_comp` but uses the unit property.
 theorem natTrans_comp_inv (e : ElementsEquivOver F G) :
     e.toNatTrans ≫ e.toNatTransInv = 𝟙 F := by
   ext j x
-  change (e.natTransInvApp j) ((e.natTransApp j) x) = x
-  simp only [natTransApp, natTransInvApp]
+  simp only [NatTrans.comp_app, types_comp_apply, NatTrans.id_app, types_id_apply,
+    toNatTrans, toNatTransInv, natTransApp, natTransInvApp]
   let p : F.Elements := ⟨j, x⟩
   let q := e.equiv.functor.obj p
   have hq : q.fst = j := e.functor_base_eq p
@@ -1318,7 +1238,9 @@ def elementsMapFunctor (α : F ⟶ G) :
     F.Elements ⥤ G.Elements where
   obj p := ⟨p.1, α.app p.1 p.2⟩
   map {p q} f := ⟨f.val, by
-    have nat := NatTrans.naturality_apply α f.val p.2
+    have nat :=
+      congrFun (α.naturality f.val) p.2
+    simp only [types_comp_apply] at nat
     rw [f.property] at nat
     exact nat.symm⟩
   map_id _ := by ext; rfl
@@ -1341,13 +1263,13 @@ def elementsEquivOfNatIso (α : F ≅ G) :
       (fun p => {
         hom := ⟨𝟙 p.1, by
           dsimp [elementsMapFunctor]
-          simp only [CategoryTheory.Functor.map_id]
+          simp only [CategoryTheory.Functor.map_id, types_id_apply]
           change p.snd =
             (α.hom ≫ α.inv).app p.fst p.snd
           simp⟩
         inv := ⟨𝟙 p.1, by
           dsimp [elementsMapFunctor]
-          simp only [CategoryTheory.Functor.map_id]
+          simp only [CategoryTheory.Functor.map_id, types_id_apply]
           change
             (α.hom ≫ α.inv).app p.fst p.snd =
             p.snd
@@ -1363,14 +1285,14 @@ def elementsEquivOfNatIso (α : F ≅ G) :
       (fun q => {
         hom := ⟨𝟙 q.1, by
           dsimp [elementsMapFunctor]
-          simp only [CategoryTheory.Functor.map_id]
+          simp only [CategoryTheory.Functor.map_id, types_id_apply]
           change
             (α.inv ≫ α.hom).app q.fst q.snd =
             q.snd
           simp⟩
         inv := ⟨𝟙 q.1, by
           dsimp [elementsMapFunctor]
-          simp only [CategoryTheory.Functor.map_id]
+          simp only [CategoryTheory.Functor.map_id, types_id_apply]
           change q.snd =
             (α.inv ≫ α.hom).app q.fst q.snd
           simp⟩

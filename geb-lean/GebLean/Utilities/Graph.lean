@@ -187,7 +187,7 @@ def graphSpanToCollage :
          apply ULift.ext
          dsimp [Collage.Hom.comp,
            Collage.inl, Collage.inr]
-         rfl)
+         simp [graphSpanProfunctor])
 
 /-- Object map for `collageToGraphSpan`. -/
 def collageToGraphSpanObj :
@@ -299,21 +299,19 @@ def collageToGraphSpan :
       subst heq
       match h.down with
       | .fst =>
-        simp only [collageToGraphSpanMap,
+        simp [collageToGraphSpanMap,
           collageToGraphSpanObj,
           Collage.Hom.comp,
           CategoryStruct.comp,
           GraphSpanHom.comp,
           graphSpanProfunctor]
-        rfl
       | .snd =>
-        simp only [collageToGraphSpanMap,
+        simp [collageToGraphSpanMap,
           collageToGraphSpanObj,
           Collage.Hom.comp,
           CategoryStruct.comp,
           GraphSpanHom.comp,
           graphSpanProfunctor]
-        rfl
     | .inr _, .inl _, _, f, _ =>
       exact PEmpty.elim f
     | .inl _, .inr _, .inl _,

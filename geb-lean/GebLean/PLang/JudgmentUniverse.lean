@@ -545,15 +545,9 @@ theorem JudgmentLevel.Hom.toMorBundleMap_comp.{uJ} : {j₁ j₂ j₃ : JudgmentL
     This assigns to each judgment level its morphism bundle type. -/
 def MorphismBundleCopresheaf.{uJ} : JudgmentLevel ⥤ Type (uJ + 2) where
   obj := JudgmentLevel.toMorBundleType.{uJ}
-  map f := TypeCat.ofHom (JudgmentLevel.Hom.toMorBundleMap.{uJ} f)
-  map_id j := by
-    apply TypeCat.Hom.ext
-    apply TypeCat.Fun.ext
-    exact JudgmentLevel.Hom.toMorBundleMap_id.{uJ} j
-  map_comp f g := by
-    apply TypeCat.Hom.ext
-    apply TypeCat.Fun.ext
-    exact JudgmentLevel.Hom.toMorBundleMap_comp.{uJ} f g
+  map := JudgmentLevel.Hom.toMorBundleMap.{uJ}
+  map_id := JudgmentLevel.Hom.toMorBundleMap_id.{uJ}
+  map_comp := JudgmentLevel.Hom.toMorBundleMap_comp.{uJ}
 
 /-! ### Source and Target Natural Transformations
 

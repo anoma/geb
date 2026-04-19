@@ -464,7 +464,7 @@ def ccrNewIndexFunctor
     (C : Type u) [Category.{v} C] :
     CoprodCovarRepCat.{u, v, w} C ⥤ Type w where
   obj P := ccrNewIndex P
-  map f := TypeCat.ofHom (ccrNewReindex f)
+  map f := ccrNewReindex f
 
 /--
 The fiber morphism from a morphism in
@@ -597,13 +597,9 @@ def ccrNewEvalFunctor
     (P : CoprodCovarRepCat.{u, v, w} C) :
     C ⥤ Type (max w v) where
   obj A := ccrNewEval P A
-  map f := TypeCat.ofHom (ccrNewEvalMap f)
-  map_id _ := by
-    apply ConcreteCategory.ext_apply
-    intro x; exact congrFun ccrNewEvalMap_id x
-  map_comp f g := by
-    apply ConcreteCategory.ext_apply
-    intro x; exact congrFun (ccrNewEvalMap_comp f g) x
+  map f := ccrNewEvalMap f
+  map_id _ := ccrNewEvalMap_id
+  map_comp f g := ccrNewEvalMap_comp f g
 
 /--
 The evaluation functor varying `P`: sends a polynomial
@@ -617,14 +613,11 @@ def ccrNewEvalCatFunctor
       (C ⥤ Type (max w v)) where
   obj P := ccrNewEvalFunctor P
   map f :=
-    { app := fun A => TypeCat.ofHom (ccrNewMorphEval f A)
+    { app := fun A => ccrNewMorphEval f A
       naturality := fun A B g => by
-        apply ConcreteCategory.ext_apply
-        intro ⟨i, η⟩
-        change (ccrNewMorphEval f B) (ccrNewEvalMap g ⟨i, η⟩) =
-          ccrNewEvalMap g ((ccrNewMorphEval f A) ⟨i, η⟩)
-        simp [ccrNewEvalMap, ccrNewMorphEval,
-          Category.assoc] }
+        ext ⟨i, η⟩
+        simp [ccrNewEvalFunctor, ccrNewMorphEval,
+          ccrNewEvalMap, Category.assoc] }
   map_id P := by
     ext A ⟨i, η⟩
     simp [ccrNewEvalFunctor, ccrNewMorphEval_id]
@@ -663,9 +656,9 @@ def ccrNewEvalPreimage
   refine ⟨?base, ?fiber⟩
   · -- base : Q.unop.base ⟶ P.unop.base in (Type w)ᵒᵖ
     -- wraps a function ccrNewIndex P → ccrNewIndex Q
-    exact Quiver.Hom.op (TypeCat.ofHom
+    exact Quiver.Hom.op
       (fun i => (α.app (ccrNewFamily P i)
-        (ccrNewYonedaElement P i)).1))
+        (ccrNewYonedaElement P i)).1)
   · -- fiber at each index
     intro i
     exact (α.app (ccrNewFamily P i)
@@ -692,8 +685,9 @@ def ccrNewEvalCatFullyFaithful
         (α.app (ccrNewFamily P i)
           ⟨i, 𝟙 _⟩).2 ≫ η⟩ =
         α.app A ⟨i, η⟩
-    have nat := NatTrans.naturality_apply α η
+    have nat := congrFun (α.naturality η)
       ⟨i, 𝟙 (ccrNewFamily P i)⟩
+    simp only [types_comp_apply] at nat
     dsimp [ccrNewEvalCatFunctor,
       ccrNewEvalFunctor, ccrNewEvalMap] at nat
     simp only [Category.id_comp] at nat
@@ -704,12 +698,16 @@ def ccrNewEvalCatFullyFaithful
     · -- base component
       apply Quiver.Hom.unop_inj
       ext i
-      rfl
-    · -- fiber component
-      funext i
       simp [ccrNewEvalPreimage, ccrNewYonedaElement,
-        ccrNewFiberMor, ccrNewEvalCatFunctor,
-        ccrNewMorphEval]
+        ccrNewEvalCatFunctor, ccrNewMorphEval,
+        ccrNewReindex]
+    · -- fiber component
+      simp only [ccrNewEvalPreimage,
+        ccrNewYonedaElement, ccrNewEvalCatFunctor,
+        ccrNewMorphEval, ccrNewFiberMor,
+        ccrNewReindex, Quiver.Hom.unop_op,
+        Category.comp_id, eqToHom_refl,
+        Category.id_comp]
 
 end FamilyOp
 
@@ -918,7 +916,7 @@ of the underlying category. The reindexing is `id` and each fiber morphism is `�
 -/
 @[simp]
 lemma fcId_mk (x : FreeCoprodCompletionCat.{u, v, w} C) :
-    𝟙 x = fcHomMk (TypeCat.ofHom id) (fun i => 𝟙 (fcFamily x i)) := rfl
+    𝟙 x = fcHomMk id (fun i => 𝟙 (fcFamily x i)) := rfl
 
 set_option backward.isDefEq.respectTransparency false in
 /--
@@ -929,7 +927,7 @@ the fiber morphism at index `i` is `f.fiber i ≫ g.fiber (f.reindex i)`.
 @[simp]
 lemma fcComp_mk {x y z : FreeCoprodCompletionCat.{u, v, w} C}
     (f : x ⟶ y) (g : y ⟶ z) :
-    f ≫ g = fcHomMk (fcReindex f ≫ fcReindex g)
+    f ≫ g = fcHomMk (fcReindex g ∘ fcReindex f)
       (fun i => fcFiberMor f i ≫ fcFiberMor g (fcReindex f i)) := by
   refine GrothendieckContra'.ext _ _ rfl ?_
   simp only [fcHomMk, eqToHom_refl, Category.comp_id]
@@ -998,9 +996,8 @@ Computable coproduct data for `Over X`. The coproduct of a family of arrows
 over `X` is the sigma type of their domains with the copairing morphism.
 -/
 instance : CoprodData.{w} (Over X) where
-  coprod F := Over.mk
-    (TypeCat.ofHom fun (p : Σ i, (F i).left) => (F p.1).hom p.2)
-  ι _ i := Over.homMk (TypeCat.ofHom (fun a => ⟨i, a⟩)) rfl
+  coprod F := Over.mk (fun (p : Σ i, (F i).left) => (F p.1).hom p.2)
+  ι _ i := Over.homMk (fun a => ⟨i, a⟩) rfl
 
 /--
 The coproduct object in `Over X` is the sigma type of the domains.
@@ -1024,11 +1021,8 @@ def overCoprodMap {I : Type w} {F G : I → Over X}
     (α : ∀ i, F i ⟶ G i) :
     ∐' F ⟶ ∐' G :=
   Over.homMk
-    (TypeCat.ofHom (fun ⟨i, x⟩ => ⟨i, (α i).left x⟩))
-    (by
-      apply ConcreteCategory.ext_apply
-      intro ⟨i, x⟩
-      exact ConcreteCategory.congr_hom (Over.w (α i)) x)
+    (fun ⟨i, x⟩ => ⟨i, (α i).left x⟩)
+    (by ext ⟨i, x⟩; exact congrFun (Over.w (α i)) x)
 
 @[simp]
 lemma overCoprodMap_id {I : Type w}
@@ -1114,13 +1108,8 @@ over `X` is the fiber product: pairs `(x, f)` where `x : X` and `f : ∀ i, A_i`
 such that all `h_i (f i) = x`.
 -/
 instance : ProdData.{w} (Over X) where
-  prod F := Over.mk (TypeCat.ofHom (overProdHom F))
-  π _ i := Over.homMk
-    (TypeCat.ofHom fun p => p.val.2 i)
-    (by
-      apply ConcreteCategory.ext_apply
-      intro p
-      exact p.property i)
+  prod F := Over.mk (overProdHom F)
+  π _ i := Over.homMk (fun p => p.val.2 i) (funext fun p => p.property i)
 
 /--
 The product object in `Over X` is the fiber product over X.
@@ -1183,7 +1172,7 @@ The injection morphism into the coproduct from component `i`.
 -/
 def fcCoprodι {I : Type w} (F : I → FreeCoprodCompletionCat.{u, v, w} C) (i : I) :
     F i ⟶ fcCoprodObj F :=
-  fcHomMk (TypeCat.ofHom fun x => ⟨i, x⟩) (fun _ => 𝟙 _)
+  fcHomMk (fun x => ⟨i, x⟩) (fun _ => 𝟙 _)
 
 /--
 The universal morphism from the coproduct given morphisms from each component.
@@ -1192,7 +1181,7 @@ def fcCoprodDesc {I : Type w} {F : I → FreeCoprodCompletionCat.{u, v, w} C}
     {P : FreeCoprodCompletionCat.{u, v, w} C}
     (f : ∀ i, F i ⟶ P) : fcCoprodObj F ⟶ P :=
   fcHomMk
-    (TypeCat.ofHom fun ⟨i, x⟩ => fcReindex (f i) x)
+    (fun ⟨i, x⟩ => fcReindex (f i) x)
     (fun ⟨i, x⟩ => fcFiberMor (f i) x)
 
 set_option backward.isDefEq.respectTransparency false in
@@ -1237,12 +1226,18 @@ lemma fcCoprodDesc_unique {I : Type w} {F : I → FreeCoprodCompletionCat.{u, v,
     (hg : ∀ i, fcCoprodι F i ≫ g = f i) : g = fcCoprodDesc f := by
   -- First establish base equality: g.base = (fcCoprodDesc f).base
   have hbase : g.base = (fcCoprodDesc f).base := by
-    apply ConcreteCategory.ext_apply
-    intro ⟨i, x⟩
+    funext ⟨i, x⟩
+    -- From hg i: fcCoprodι F i ≫ g = f i, extract base equality at x
     have hi := congrArg GrothendieckContra'.Hom.base (hg i)
+    -- hi: (fcCoprodι F i ≫ g).base = (f i).base
     unfold GrothendieckContra'.comp at hi
     simp only [fcCoprodι, fcHomMk, fcCoprodDesc, fcReindex] at hi ⊢
-    exact ConcreteCategory.congr_hom hi x
+    -- hi: (fun x => ⟨i, x⟩) ≫ g.base = (f i).base
+    -- Goal: g.base ⟨i, x⟩ = (f i).base x
+    have hix := congrFun hi x
+    -- hix: ((fun x => ⟨i, x⟩) ≫ g.base) x = (f i).base x
+    -- i.e., g.base ⟨i, x⟩ = (f i).base x
+    exact hix
   refine GrothendieckContra'.ext _ _ hbase ?_
   funext ⟨i, x⟩
   have hfibx := congrFun (GrothendieckContra'.congr (hg i)) x
@@ -1317,8 +1312,7 @@ uses the product projection in `C`.
 -/
 def fcProdπ {I : Type w} (F : I → FreeCoprodCompletionCat.{u, v, w} C) (j : I) :
     fcProdObj F ⟶ F j :=
-  fcHomMk (TypeCat.ofHom fun p => p j)
-    (fun p => ProdData.proj (fun i => fcFamily (F i) (p i)) j)
+  fcHomMk (fun p => p j) (fun p => ProdData.proj (fun i => fcFamily (F i) (p i)) j)
 
 /--
 `ProdData` instance for `FreeCoprodCompletionCat C` when `C` has `ProdData`.
@@ -1467,7 +1461,7 @@ Reindexes from `(a, ⟨i, x⟩)` to `⟨i, (a, x)⟩` with identity fiber morphi
 def distToRhs (A : FreeCoprodCompletionCat.{u, v, w} C)
     {I : Type w} (F : I → FreeCoprodCompletionCat.{u, v, w} C) :
     distLhsObj A F ⟶ distRhsObj A F :=
-  fcHomMk (TypeCat.ofHom distIndexToRhs) (fun _ => 𝟙 _)
+  fcHomMk distIndexToRhs (fun _ => 𝟙 _)
 
 /--
 The backward direction of distributivity: `∐ᵢ (A × Fᵢ) → A × (∐ᵢ Fᵢ)`.
@@ -1476,7 +1470,7 @@ Reindexes from `⟨i, (a, x)⟩` to `(a, ⟨i, x⟩)` with identity fiber morphi
 def distToLhs (A : FreeCoprodCompletionCat.{u, v, w} C)
     {I : Type w} (F : I → FreeCoprodCompletionCat.{u, v, w} C) :
     distRhsObj A F ⟶ distLhsObj A F :=
-  fcHomMk (TypeCat.ofHom distIndexToLhs) (fun _ => 𝟙 _)
+  fcHomMk distIndexToLhs (fun _ => 𝟙 _)
 
 set_option backward.isDefEq.respectTransparency false in
 /--
@@ -1673,7 +1667,7 @@ lemma fpComp_fiberMor {x y z : FreeProdCompletionCat.{u, v, w} C}
     (f : x ⟶ y) (g : y ⟶ z) (k : fpIndex z) :
     fpFiberMor (f ≫ g) k = fpFiberMor f (fpReindex g k) ≫ fpFiberMor g k := by
   unfold fpFiberMor fpReindex
-  change (Grothendieck.comp f g).fiber k = f.fiber (g.base.hom k) ≫ g.fiber k
+  change (Grothendieck.comp f g).fiber k = f.fiber (g.base k) ≫ g.fiber k
   unfold Grothendieck.comp
   simp only [eqToHom_refl, Category.id_comp]
   rfl
@@ -1814,7 +1808,7 @@ the underlying category. The reindexing is `id` and each fiber morphism is `𝟙
 -/
 @[simp]
 lemma ccrId_mk (x : CoprodCovarRepCat'.{u, v, w} C) :
-    𝟙 x = ccrHomMk (TypeCat.ofHom id) (fun i => 𝟙 (ccrFamily x i)) := rfl
+    𝟙 x = ccrHomMk id (fun i => 𝟙 (ccrFamily x i)) := rfl
 
 set_option backward.isDefEq.respectTransparency false in
 /--
@@ -1825,7 +1819,7 @@ the fiber morphism at index `i` is `g.fiber (f.reindex i) ≫ f.fiber i`.
 @[simp]
 lemma ccrComp_mk {x y z : CoprodCovarRepCat'.{u, v, w} C}
     (f : x ⟶ y) (g : y ⟶ z) :
-    f ≫ g = ccrHomMk (ccrReindex f ≫ ccrReindex g)
+    f ≫ g = ccrHomMk (ccrReindex g ∘ ccrReindex f)
       (fun i => ccrFiberMor g (ccrReindex f i) ≫ ccrFiberMor f i) := by
   refine GrothendieckContra'.ext _ _ rfl ?_
   simp only [ccrHomMk, eqToHom_refl, Category.comp_id]
@@ -1957,13 +1951,10 @@ def fcToFunctor
     (P : FreeCoprodCompletionCat.{u, v, w} C) :
     Cᵒᵖ ⥤ Type _ where
   obj A := fcEval P A.unop
-  map {_ _} f := TypeCat.ofHom (fcEvalMap f.unop)
-  map_id _ := by
-    apply ConcreteCategory.ext_apply
-    intro x; exact congrFun fcEvalMap_id x
-  map_comp {_ _ _} f g := by
-    apply ConcreteCategory.ext_apply
-    intro x; exact congrFun (fcEvalMap_comp P g.unop f.unop).symm x
+  map {_ _} f := fcEvalMap f.unop
+  map_id _ := fcEvalMap_id
+  map_comp {_ _ _} f g :=
+    (fcEvalMap_comp P g.unop f.unop).symm
 
 end CoprodCovarRepHelpers
 
@@ -2016,11 +2007,10 @@ Morphisms: The fiber morphisms transpose via unop.
 -/
 def ccrOpToFc : CoprodCovarRepCat'.{u, v, w} Cᵒᵖ ⥤ FreeCoprodCompletionCat.{u, v, w} C where
   obj P := fcObjMk (fun x => (ccrFamily P x).unop)
-  map {P Q} f := fcHomMk (TypeCat.ofHom (ccrReindex f))
+  map {P Q} f := fcHomMk (ccrReindex f)
     (fun i => (ccrFiberMor f i).unop)
   map_id P := by
-    refine fcHom_ext _ _ ?_ ?_
-    · apply ConcreteCategory.ext_apply; intro x; rfl
+    refine fcHom_ext _ _ rfl ?_
     simp only [eqToHom_refl, Category.comp_id]
     funext i
     simp only [fcHomMk, ccrId_fiberMor]
@@ -2030,8 +2020,6 @@ def ccrOpToFc : CoprodCovarRepCat'.{u, v, w} Cᵒᵖ ⥤ FreeCoprodCompletionCat
     congr 1
     funext i
     dsimp only [fcHomMk, fcFiberMor, fcReindex]
-    change _ = (ccrFiberMor f i).unop ≫
-      (ccrFiberMor g ((ccrReindex f) i)).unop
     simp only [ccrComp_fiberMor, unop_comp]
 
 set_option backward.isDefEq.respectTransparency false in
@@ -2043,11 +2031,10 @@ Morphisms: The fiber morphisms transpose via op.
 -/
 def fcToCcrOp : FreeCoprodCompletionCat.{u, v, w} C ⥤ CoprodCovarRepCat'.{u, v, w} Cᵒᵖ where
   obj P := ccrObjMk (fun x => Opposite.op (fcFamily P x))
-  map {P Q} f := ccrHomMk (TypeCat.ofHom (fcReindex f))
+  map {P Q} f := ccrHomMk (fcReindex f)
     (fun i => (fcFiberMor f i).op)
   map_id P := by
-    refine ccrHom_ext _ _ ?_ ?_
-    · apply ConcreteCategory.ext_apply; intro x; rfl
+    refine ccrHom_ext _ _ rfl ?_
     simp only [eqToHom_refl, Category.comp_id]
     funext i
     simp only [fcId_fiberMor]
@@ -2057,8 +2044,6 @@ def fcToCcrOp : FreeCoprodCompletionCat.{u, v, w} C ⥤ CoprodCovarRepCat'.{u, v
     congr 1
     funext i
     dsimp only [ccrHomMk, ccrFiberMor, ccrReindex]
-    change _ = (fcFiberMor g ((fcReindex f) i)).op ≫
-      (fcFiberMor f i).op
     simp only [fcComp_fiberMor, op_comp]
 
 set_option backward.isDefEq.respectTransparency false in
@@ -2173,7 +2158,7 @@ def ccrOpOp'Map
     {P Q : CoprodCovarRepCat.{u, v, w} C}
     (f : P ⟶ Q) :
     ccrOpOp'Obj P ⟶ ccrOpOp'Obj Q :=
-  ccrHomMk (TypeCat.ofHom (ccrNewReindex f)) (ccrNewFiberMor f)
+  ccrHomMk (ccrNewReindex f) (ccrNewFiberMor f)
 
 set_option backward.isDefEq.respectTransparency false in
 /--
@@ -2235,19 +2220,20 @@ def ccrOpOp'Functor :
   map := ccrOpOp'Map
   map_id P := by
     simp only [ccrOpOp'Map, ccrOpOp'Obj]
-    refine ccrHom_ext _ _ ?_ ?_
-    · apply ConcreteCategory.ext_apply; intro x; rfl
+    refine ccrHom_ext _ _ rfl ?_
     simp only [eqToHom_refl, Category.comp_id]
     funext i
     simp only [ccrNewFiberMor, ccrNewReindex, ccrNewFamily]
     rfl
   map_comp {P Q R} f g := by
     simp only [ccrOpOp'Map, ccrOpOp'Obj]
+    -- Rewrite the composition in
+    -- CoprodCovarRepCat' using ccrComp_mk
     rw [ccrComp_mk]
     simp only [ccrHomMk_reindex,
       ccrHomMk_fiberMor]
-    refine ccrHom_ext _ _ ?_ ?_
-    · apply ConcreteCategory.ext_apply; intro x; rfl
+    -- Now both sides are ccrHomMk
+    refine ccrHom_ext _ _ rfl ?_
     simp only [eqToHom_refl, Category.comp_id]
     funext i
     exact ccrNewFiberMor_comp f g i
@@ -2271,8 +2257,7 @@ lemma ccrOp'Op_OpOp'_eq :
     simp only [Functor.comp_map, Functor.id_map,
       eqToHom_refl, Category.id_comp,
       Category.comp_id]
-    refine ccrHom_ext _ _ ?_ ?_
-    · apply ConcreteCategory.ext_apply; intro x; rfl
+    refine ccrHom_ext _ _ rfl ?_
     simp only [eqToHom_refl, Category.comp_id]
     funext i
     rfl
@@ -2295,8 +2280,7 @@ lemma ccrOpOp'_Op'Op_eq :
       eqToHom_refl, Category.id_comp,
       Category.comp_id]
     apply Quiver.Hom.unop_inj
-    refine Grothendieck.ext _ _ ?_ ?_
-    · rfl
+    refine Grothendieck.ext _ _ rfl ?_
     simp only [eqToHom_refl, Category.id_comp]
     funext i
     rfl
@@ -2451,7 +2435,7 @@ lemma pcrComp_fiberMor {x y z : ProdContravarRepCat.{u, v, w} C}
     (f : x ⟶ y) (g : y ⟶ z) (k : pcrIndex z) :
     pcrFiberMor (f ≫ g) k = pcrFiberMor g k ≫ pcrFiberMor f (pcrReindex g k) := by
   unfold pcrFiberMor pcrReindex
-  change (Grothendieck.comp f g).fiber k = g.fiber k ≫ f.fiber (g.base.hom k)
+  change (Grothendieck.comp f g).fiber k = g.fiber k ≫ f.fiber (g.base k)
   unfold Grothendieck.comp
   simp only [eqToHom_refl, Category.id_comp]
   rfl
@@ -2705,20 +2689,12 @@ lemma fcpComp_fiberMor {x y z : FreeCoprodProdCat.{u, v, w₁, w₂} C}
       fcpFiberMor f i (fcpReindexInner g (fcpReindexOuter f i) k) ≫
       fcpFiberMor g (fcpReindexOuter f i) k := by
   simp only [fcpFiberMor, fcpReindexOuter, fcpReindexInner]
-  have h_fp :=
-    fpComp_fiberMor (fcFiberMor f i) (fcFiberMor g (fcReindex f i)) k
-  simp only [fcFiberMor, fcReindex, fpFiberMor, fpReindex] at h_fp
-  have h_fc : (f ≫ g).fiber i = f.fiber i ≫ g.fiber (f.base.hom i) :=
-    fcComp_fiberMor f g i
-  have hfib : HEq ((f ≫ g).fiber i).fiber
-      (f.fiber i ≫ g.fiber (f.base.hom i)).fiber := by
-    rw [h_fc]; exact HEq.rfl
-  have hfk : ((f ≫ g).fiber i).fiber k =
-      (f.fiber i ≫ g.fiber (f.base.hom i)).fiber k := by
-    have : ((f ≫ g).fiber i).fiber =
-        (f.fiber i ≫ g.fiber (f.base.hom i)).fiber := eq_of_heq hfib
-    exact congrFun this k
-  exact hfk.trans h_fp
+  have h_fc := fcComp_fiberMor f g i
+  have h_fp := fpComp_fiberMor (fcFiberMor f i) (fcFiberMor g (fcReindex f i)) k
+  simp only [fcFiberMor, fcReindex, fpFiberMor, fpReindex] at h_fc h_fp
+  intermediate_eq (f.fiber i ≫ g.fiber (f.base i)).fiber k
+  · grind
+  · exact h_fp
 
 end FreeCoprodProdHelpers
 
@@ -2908,19 +2884,12 @@ lemma ccrsComp_fiberMor {x y z : CoprodCovarRepSquaredCat.{u, v, w₁, w₂} C}
       ccrsFiberMor f i (ccrsReindexInner g (ccrsReindexOuter f i) k) ≫
       ccrsFiberMor g (ccrsReindexOuter f i) k := by
   simp only [ccrsFiberMor, ccrsReindexOuter, ccrsReindexInner]
-  have h_inner := ccrComp_fiberMor (g.fiber (f.base.hom i)) (f.fiber i) k
-  simp only [ccrFiberMor, ccrReindex] at h_inner
-  have h_outer : (f ≫ g).fiber i =
-      g.fiber (f.base.hom i) ≫ f.fiber i := ccrComp_fiberMor f g i
-  have hfib : HEq ((f ≫ g).fiber i).fiber
-      (g.fiber (f.base.hom i) ≫ f.fiber i).fiber := by
-    rw [h_outer]; exact HEq.rfl
-  have hfk : ((f ≫ g).fiber i).fiber k =
-      (g.fiber (f.base.hom i) ≫ f.fiber i).fiber k := by
-    have : ((f ≫ g).fiber i).fiber =
-        (g.fiber (f.base.hom i) ≫ f.fiber i).fiber := eq_of_heq hfib
-    exact congrFun this k
-  exact hfk.trans h_inner
+  have h_outer := ccrComp_fiberMor f g i
+  have h_inner := ccrComp_fiberMor (g.fiber (f.base i)) (f.fiber i) k
+  simp only [ccrFiberMor, ccrReindex] at h_outer h_inner
+  intermediate_eq (g.fiber (f.base i) ≫ f.fiber i).fiber k
+  · grind
+  · exact h_inner
 
 end CoprodCovarRepSquaredHelpers
 
@@ -3001,7 +2970,7 @@ lemma ccrsToFcpMor_comp {x y z : CoprodCovarRepSquaredCat.{u, v, w₁, w₂} C}
       have h_fcp := fcpComp_fiberMor (ccrsToFcpMor f) (ccrsToFcpMor g) i k
       simp only [ccrsToFcpMor, ccrsReindexOuter, ccrsReindexInner, ccrsFiberMor,
                  fcpReindexOuter, fcpReindexInner, fcpFiberMor] at *
-      convert h_ccrs using 2
+      rw [h_ccrs, h_fcp]
 
 set_option backward.isDefEq.respectTransparency false in
 @[simp]
@@ -3082,7 +3051,7 @@ The projection morphism from the product to component `i`.
 -/
 def fpProdπ {I : Type w} (F : I → FreeProdCompletionCat.{u, v, w} C) (i : I) :
     fpProdObj F ⟶ F i :=
-  fpHomMk (TypeCat.ofHom fun x => ⟨i, x⟩) (fun _ => 𝟙 _)
+  fpHomMk (fun x => ⟨i, x⟩) (fun _ => 𝟙 _)
 
 /--
 The universal morphism to the product given morphisms to each component.
@@ -3091,7 +3060,7 @@ def fpProdLift {I : Type w} {F : I → FreeProdCompletionCat.{u, v, w} C}
     {P : FreeProdCompletionCat.{u, v, w} C}
     (f : ∀ i, P ⟶ F i) : P ⟶ fpProdObj F :=
   fpHomMk
-    (TypeCat.ofHom fun ⟨i, x⟩ => fpReindex (f i) x)
+    (fun ⟨i, x⟩ => fpReindex (f i) x)
     (fun ⟨i, x⟩ => fpFiberMor (f i) x)
 
 set_option backward.isDefEq.respectTransparency false in
@@ -3136,15 +3105,13 @@ lemma fpProdLift_unique {I : Type w} {F : I → FreeProdCompletionCat.{u, v, w} 
     (hg : ∀ i, g ≫ fpProdπ F i = f i) : g = fpProdLift f := by
   -- First establish base equality: g.base = (fpProdLift f).base
   have hbase : g.base = (fpProdLift f).base := by
-    apply TypeCat.Hom.ext
-    apply TypeCat.Fun.ext
     funext ⟨i, x⟩
-    have hi : (g ≫ fpProdπ F i).base = (f i).base :=
-      congrArg Grothendieck.Hom.base (hg i)
-    have hu := congrArg
-      (fun h : P.base ⟶ (F i).base => h.hom'.toFun x) hi
-    simp only [fpProdπ, fpHomMk] at hu
-    exact hu
+    -- From hg i: g ≫ fpProdπ F i = f i, extract base equality at x
+    have hi := congrArg Grothendieck.Hom.base (hg i)
+    change (Grothendieck.comp g (fpProdπ F i)).base = (f i).base at hi
+    unfold Grothendieck.comp at hi
+    simp only [fpProdπ, fpHomMk, fpProdLift, fpReindex] at hi ⊢
+    exact congrFun hi x
   refine Grothendieck.ext _ _ hbase ?_
   funext ⟨i, x⟩
   have hfibx := congrFun (Grothendieck.congr (hg i)) x

@@ -94,18 +94,18 @@ theorem erInterpFunctor_not_full_via_tetration :
   have hsurj := Functor.map_surjective
     (F := erInterpFunctor)
     (X := (1 : ℕ)) (Y := (1 : ℕ))
-  obtain ⟨f, hf⟩ := hsurj (TypeCat.ofHom tetrationHom)
+  obtain ⟨f, hf⟩ := hsurj tetrationHom
   obtain ⟨f_raw, hfr⟩ :=
     Quotient.exists_rep (s := erMorNSetoid 1 1) f
-  have hf' : (erInterpFunctor.map f :
-      (Fin 1 → ℕ) ⟶ (Fin 1 → ℕ)) =
-      TypeCat.ofHom tetrationHom := hf
   have hinterp : ∀ ctx : Fin 1 → ℕ,
       f_raw.interp ctx = tetrationHom ctx := by
     intro ctx
-    have hctx : erInterpFunctor.map f ctx = tetrationHom ctx :=
-      ConcreteCategory.congr_hom hf' ctx
-    rw [← hfr] at hctx
+    have hmap : erInterpFunctor.map f = tetrationHom := hf
+    have heq1 : erInterpFunctor.map f =
+        ERMorNQuo.interp f := rfl
+    rw [heq1, ← hfr] at hmap
+    have hctx := congrFun hmap ctx
+    simp only [ERMorNQuo.interp, Quotient.lift_mk] at hctx
     exact hctx
   apply tetration_not_ER
   refine ⟨f_raw (0 : Fin 1), ?_⟩

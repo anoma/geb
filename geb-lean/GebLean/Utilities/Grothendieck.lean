@@ -2272,7 +2272,7 @@ def transferFromCovMap
     {G' : Eᵒᵖ' ⥤ Cat.{v₃, u₃}} {H' : E'ᵒᵖ' ⥤ Cat.{v₄, u₄}}
     {F_cov G_cov : GrothendieckContraCat G' ⥤ GrothendieckContraCat H'} :
     (F_cov ⟶ G_cov) ⟶ (transferFromCov F_cov ⟶ transferFromCov G_cov) :=
-  TypeCat.ofHom (bicompGcIsoHomInv (G' := G') (H' := H')).map
+  (bicompGcIsoHomInv (G' := G') (H' := H')).map
 
 end Transfer
 
@@ -6651,8 +6651,7 @@ def OplaxNatTransData.whiskerLeft (H : D ⥤ C) (α : OplaxNatTransData G' F') :
     simp only [Functor.comp_obj, Functor.comp_map, Functor.op', functorOp'Obj]
     have h := α.oplaxComp (H.map f) (H.map g) x
     simp only at h ⊢
-    convert h using 3
-    all_goals simp [H.map_comp]
+    grind
 
 /--
 Left whiskering respects identity oplax natural transformations.

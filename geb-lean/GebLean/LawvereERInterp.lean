@@ -64,15 +64,11 @@ standard interpretation. -/
 def erInterpFunctor :
     LawvereERCat ⥤ Type where
   obj n := Fin n → ℕ
-  map f := TypeCat.ofHom f.interp
+  map f := f.interp
   map_id n := by
-    apply TypeCat.Hom.ext
-    apply TypeCat.Fun.ext
     funext ctx
     exact ERMorNQuo.interp_id n ctx
   map_comp f g := by
-    apply TypeCat.Hom.ext
-    apply TypeCat.Fun.ext
     funext ctx
     exact ERMorNQuo.interp_comp f g ctx
 
@@ -86,12 +82,9 @@ instance : erInterpFunctor.Faithful where
     revert f g
     apply Quotient.ind₂
     intro f_raw g_raw heq
-    refine Quotient.sound
-      (s := erMorNSetoid n m) (fun ctx => ?_)
-    have heq' : TypeCat.ofHom f_raw.interp =
-        (TypeCat.ofHom g_raw.interp :
-          (Fin n → ℕ) ⟶ (Fin m → ℕ)) := heq
-    exact ConcreteCategory.congr_hom heq' ctx
+    exact Quotient.sound
+      (s := erMorNSetoid n m)
+      (fun ctx => congrFun heq ctx)
 
 /-- Ackermann at arity `2 → 1` as a function
 `(Fin 2 → ℕ) → (Fin 1 → ℕ)`.  Since `Nat.ack` is
@@ -112,18 +105,19 @@ theorem erInterpFunctor_not_full :
   have hsurj := Functor.map_surjective
     (F := erInterpFunctor)
     (X := (2 : ℕ)) (Y := (1 : ℕ))
-  obtain ⟨f, hf⟩ := hsurj (TypeCat.ofHom ackHom)
+  obtain ⟨f, hf⟩ := hsurj ackHom
   obtain ⟨f_raw, hfr⟩ :=
     Quotient.exists_rep (s := erMorNSetoid 2 1) f
-  have hf' : (erInterpFunctor.map f :
-      (Fin 2 → ℕ) ⟶ (Fin 1 → ℕ)) =
-      TypeCat.ofHom ackHom := hf
   have hinterp : ∀ ctx : Fin 2 → ℕ,
       f_raw.interp ctx = ackHom ctx := by
     intro ctx
-    have hctx : erInterpFunctor.map f ctx = ackHom ctx :=
-      ConcreteCategory.congr_hom hf' ctx
-    rw [← hfr] at hctx
+    have hmap : erInterpFunctor.map f = ackHom := hf
+    have heq1 : erInterpFunctor.map f =
+        ERMorNQuo.interp f := rfl
+    rw [heq1, ← hfr] at hmap
+    have hctx := congrFun hmap ctx
+    simp only [ERMorNQuo.interp, Quotient.lift_mk]
+      at hctx
     exact hctx
   set t : ERMor1 2 := f_raw 0
   have hcomp : ∀ ctx : Fin 2 → ℕ,
