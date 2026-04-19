@@ -287,4 +287,103 @@ def natBTV20ToERFunctor :
         (NatBTMorNV2Quo.toER g.hom)
     exact NatBTMorNV2Quo.toER_comp f.hom g.hom
 
+/-- Round-trip on ER quotient morphisms: `G ∘ F` is identity. -/
+theorem ERMorNQuo.toNatBTV2_toER {n m : ℕ}
+    (f : ERMorNQuo n m) :
+    NatBTMorNV2Quo.toER (ERMorNQuo.toNatBTV2 f) = f := by
+  refine Quotient.inductionOn f ?_
+  intro a
+  apply Quotient.sound
+  intro ctxN
+  rw [NatBTMorNV2.toER_interp]
+  change (a.toNatBTV2.interp ctxN Fin.elim0).1 = a.interp ctxN
+  rw [ERMorN.toNatBTV2_interp]
+
+/-- Round-trip on NatBTV20 quotient morphisms:
+`F ∘ G` is identity. -/
+theorem NatBTMorNV2Quo.toER_toNatBTV2 {n m : ℕ}
+    (f : NatBTMorNV2Quo (n, 0) (m, 0)) :
+    ERMorNQuo.toNatBTV2 (NatBTMorNV2Quo.toER f) = f := by
+  refine Quotient.inductionOn f ?_
+  intro a
+  apply Quotient.sound
+  intro ctxN ctxB
+  have hctxB : ctxB = Fin.elim0 := by
+    funext i; exact i.elim0
+  subst hctxB
+  rw [ERMorN.toNatBTV2_interp]
+  apply Prod.ext
+  · funext i
+    change (a.natComps i).toER.interp ctxN =
+      (a.natComps i).interp ctxN Fin.elim0
+    have h := NatBTMorNV2.toER_interp
+      (n := n) (m := m)
+      ⟨a.natComps, fun j => j.elim0⟩ ctxN
+    have := congrFun h i
+    change ((⟨a.natComps,
+      fun j => j.elim0⟩ : NatBTMorNV2 (n, 0) (m, 0)).natComps i).toER.interp
+        ctxN = _ at this
+    exact this
+  · funext i; exact i.elim0
+
+/-- Unit isomorphism: `𝟭 ≅ F ⋙ G`. -/
+def erToNatBTV2UnitIso :
+    𝟭 LawvereERCat ≅
+      erToNatBTV2Functor ⋙ natBTV20ToERFunctor :=
+  NatIso.ofComponents
+    (fun _ => Iso.refl _)
+    (fun {n m} f => by
+      change f ≫ 𝟙 _ = 𝟙 _ ≫
+        NatBTMorNV2Quo.toER (ERMorNQuo.toNatBTV2 f)
+      rw [Category.comp_id, Category.id_comp]
+      exact (ERMorNQuo.toNatBTV2_toER f).symm)
+
+/-- Helper: in `LawvereNatBTV20Cat`, an object `nm` equals
+the rebuilt `⟨(nm.obj.1, 0), rfl⟩`. -/
+theorem isNatBTV20.obj_eq (nm : LawvereNatBTV20Cat) :
+    nm = ⟨(nm.obj.1, 0), rfl⟩ := by
+  rcases nm with ⟨⟨a, b⟩, hp⟩
+  change b = 0 at hp
+  cases hp
+  rfl
+
+/-- Counit isomorphism: `G ⋙ F ≅ 𝟭`. -/
+def erToNatBTV2CounitIso :
+    natBTV20ToERFunctor ⋙ erToNatBTV2Functor ≅
+      𝟭 LawvereNatBTV20Cat :=
+  NatIso.ofComponents
+    (fun nm => eqToIso (isNatBTV20.obj_eq nm).symm)
+    (fun {nm nm'} f => by
+      apply ObjectProperty.hom_ext
+      rcases nm with ⟨⟨n, b1⟩, hp1⟩
+      change b1 = 0 at hp1
+      cases hp1
+      rcases nm' with ⟨⟨m, b2⟩, hp2⟩
+      change b2 = 0 at hp2
+      cases hp2
+      rw [ObjectProperty.FullSubcategory.comp_hom,
+        ObjectProperty.FullSubcategory.comp_hom]
+      change NatBTMorNV2Quo.comp
+          (ERMorNQuo.toNatBTV2 (NatBTMorNV2Quo.toER f.hom))
+          (NatBTMorNV2Quo.id _) =
+        NatBTMorNV2Quo.comp (NatBTMorNV2Quo.id _) f.hom
+      have heq := NatBTMorNV2Quo.toER_toNatBTV2 f.hom
+      rw [heq, NatBTMorNV2Quo.id_comp,
+        NatBTMorNV2Quo.comp_id])
+
+/-- Categorical equivalence `LawvereERCat ≃ LawvereNatBTV20Cat`. -/
+def lawvereERNatBTV20Equivalence :
+    LawvereERCat ≌ LawvereNatBTV20Cat where
+  functor := erToNatBTV2Functor
+  inverse := natBTV20ToERFunctor
+  unitIso := erToNatBTV2UnitIso
+  counitIso := erToNatBTV2CounitIso
+  functor_unitIso_comp n := by
+    apply ObjectProperty.hom_ext
+    rw [ObjectProperty.FullSubcategory.comp_hom]
+    change NatBTMorNV2Quo.comp
+        (ERMorNQuo.toNatBTV2 (ERMorNQuo.id n))
+        (NatBTMorNV2Quo.id (n, 0)) = NatBTMorNV2Quo.id (n, 0)
+    rw [ERMorNQuo.toNatBTV2_id, NatBTMorNV2Quo.id_comp]
+
 end GebLean
