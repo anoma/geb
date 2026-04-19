@@ -43,7 +43,7 @@ def NatBTMor1.isFoldFree : {nm : ℕ × ℕ} → {σ : NatBTSort} →
   | _, _, NatBTMor1.btProj _ => True
   | _, _, NatBTMor1.compBT (nm' := nm') f gNat _ =>
       nm'.2 = 0 ∧ f.isFoldFree ∧ ∀ i, (gNat i).isFoldFree
-  | _, _, NatBTMor1.foldBTNat _ _ _ => False
+  | _, _, NatBTMor1.foldBTNat _ _ _ _ => False
   | _, _, NatBTMor1.foldBTBT _ _ _ => False
   | _, _, NatBTMor1.encodeBT t => t.isFoldFree
   | _, _, NatBTMor1.decodeBT k => k.isFoldFree
@@ -75,7 +75,7 @@ def NatBTMor1.toERUniform : {nm : ℕ × ℕ} → {σ : NatBTSort} →
         ERMor1.zeroN _
   | _, _, NatBTMor1.bsum f => ERMor1.bsum f.toERUniform
   | _, _, NatBTMor1.bprod f => ERMor1.bprod f.toERUniform
-  | _, _, NatBTMor1.foldBTNat _ _ _ => ERMor1.zeroN _
+  | _, _, NatBTMor1.foldBTNat _ _ _ _ => ERMor1.zeroN _
   | _, _, NatBTMor1.encodeBT t => t.toERUniform
   | _, _, NatBTMor1.leafBT label =>
       ERMor1.comp ERMor1.btlEncodeLeaf

@@ -2,6 +2,7 @@ import GebLean.LawvereER
 import GebLean.LawvereERQuot
 import GebLean.LawvereBT
 import GebLean.LawvereBTPrimrec
+import GebLean.Utilities.SzudzikSeq
 
 /-!
 # Two-Sort Lawvere Theory over ℕ and Labeled Binary Trees
@@ -194,7 +195,8 @@ inductive NatBTMor1 : (ℕ × ℕ) → NatBTSort → Type where
   | foldBTNat {nm : ℕ × ℕ}
       (baseLeaf : NatBTMor1 (nm.1 + 1, nm.2) .nat)
       (stepNode : NatBTMor1 (nm.1 + 2, nm.2) .nat)
-      (tree : NatBTMor1 nm .bt) :
+      (tree : NatBTMor1 nm .bt)
+      (bound : NatBTMor1 (nm.1 + 1, nm.2) .nat) :
       NatBTMor1 nm .nat
   | foldBTBT {nm : ℕ × ℕ}
       (baseLeaf : NatBTMor1 (nm.1 + 1, nm.2) .bt)
@@ -239,14 +241,18 @@ def NatBTMor1.interp : {nm : ℕ × ℕ} → {σ : NatBTSort} →
       NatBTMor1.interp f
         (fun i => NatBTMor1.interp (gNat i) ctxN ctxB)
         (fun i => NatBTMor1.interp (gBT i) ctxN ctxB)
-  | _, _, NatBTMor1.foldBTNat baseLeaf stepNode tree, ctxN, ctxB =>
-      BTL.fold
+  | _, _, NatBTMor1.foldBTNat baseLeaf stepNode tree bound, ctxN,
+        ctxB =>
+      let t := NatBTMor1.interp tree ctxN ctxB
+      let boundVal :=
+        NatBTMor1.interp bound (Fin.cons t.encode ctxN) ctxB
+      Nat.min (Nat.foldBTLOnCode
         (fun lbl =>
           NatBTMor1.interp baseLeaf (Fin.cons lbl ctxN) ctxB)
         (fun a b =>
           NatBTMor1.interp stepNode
             (Fin.cons a (Fin.cons b ctxN)) ctxB)
-        (NatBTMor1.interp tree ctxN ctxB)
+        t.encode) boundVal
   | _, _, NatBTMor1.foldBTBT baseLeaf stepNode tree, ctxN, ctxB =>
       BTL.fold
         (fun lbl =>
@@ -356,15 +362,18 @@ def NatBTMor1.interp : {nm : ℕ × ℕ} → {σ : NatBTSort} →
     (baseLeaf : NatBTMor1 (nm.1 + 1, nm.2) .nat)
     (stepNode : NatBTMor1 (nm.1 + 2, nm.2) .nat)
     (tree : NatBTMor1 nm .bt)
+    (bound : NatBTMor1 (nm.1 + 1, nm.2) .nat)
     (ctxN : Fin nm.1 → ℕ) (ctxB : Fin nm.2 → BTL) :
-    (NatBTMor1.foldBTNat baseLeaf stepNode tree).interp
+    (NatBTMor1.foldBTNat baseLeaf stepNode tree bound).interp
         ctxN ctxB =
-      BTL.fold
+      Nat.min (Nat.foldBTLOnCode
         (fun lbl => baseLeaf.interp (Fin.cons lbl ctxN) ctxB)
         (fun a b =>
-          stepNode.interp
-            (Fin.cons a (Fin.cons b ctxN)) ctxB)
-        (tree.interp ctxN ctxB) := rfl
+          stepNode.interp (Fin.cons a (Fin.cons b ctxN)) ctxB)
+        (tree.interp ctxN ctxB).encode)
+        (bound.interp
+          (Fin.cons (tree.interp ctxN ctxB).encode ctxN) ctxB)
+  := rfl
 
 /-- Interpretation of `foldBTBT`. -/
 @[simp] theorem NatBTMor1.interp_foldBTBT
