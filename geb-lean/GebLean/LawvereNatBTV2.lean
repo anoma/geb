@@ -58,6 +58,39 @@ inductive NatBTMor1V2 : (ℕ × ℕ) → NatBTSort → Type where
   | bprod {nm : ℕ × ℕ}
       (f : NatBTMor1V2 (nm.1 + 1, nm.2) .nat) :
       NatBTMor1V2 (nm.1 + 1, nm.2) .nat
+  | leafBT {nm : ℕ × ℕ} (label : NatBTMor1V2 nm .nat) :
+      NatBTMor1V2 nm .bt
+  | nodeBT {nm : ℕ × ℕ} (l r : NatBTMor1V2 nm .bt) :
+      NatBTMor1V2 nm .bt
+  | btProj {nm : ℕ × ℕ} (i : Fin nm.2) :
+      NatBTMor1V2 nm .bt
+  | compBT {nm nm' : ℕ × ℕ}
+      (f : NatBTMor1V2 nm' .bt)
+      (gNat : Fin nm'.1 → NatBTMor1V2 nm .nat)
+      (gBT : Fin nm'.2 → NatBTMor1V2 nm .bt) :
+      NatBTMor1V2 nm .bt
+  | encodeBT {nm : ℕ × ℕ} (t : NatBTMor1V2 nm .bt) :
+      NatBTMor1V2 nm .nat
+  | decodeBT {nm : ℕ × ℕ} (k : NatBTMor1V2 nm .nat) :
+      NatBTMor1V2 nm .bt
+  | foldBTNat {nm : ℕ × ℕ}
+      (baseLeaf : NatBTMor1V2 (nm.1 + 1, nm.2) .nat)
+      (stepNode : NatBTMor1V2 (nm.1 + 2, nm.2) .nat)
+      (tree : NatBTMor1V2 nm .bt)
+      (bound : NatBTMor1V2 (nm.1 + 1, nm.2) .nat) :
+      NatBTMor1V2 nm .nat
+  | foldBTBT {nm : ℕ × ℕ}
+      (baseLeaf : NatBTMor1V2 (nm.1 + 1, nm.2) .bt)
+      (stepNode : NatBTMor1V2 (nm.1, nm.2 + 2) .bt)
+      (tree : NatBTMor1V2 nm .bt)
+      (bound : NatBTMor1V2 (nm.1 + 1, nm.2) .nat) :
+      NatBTMor1V2 nm .bt
+  | boundedNatRec {nm : ℕ × ℕ}
+      (base : NatBTMor1V2 nm .nat)
+      (step : NatBTMor1V2 (nm.1 + 2, nm.2) .nat)
+      (n : NatBTMor1V2 nm .nat)
+      (bound : NatBTMor1V2 (nm.1 + 1, nm.2) .nat) :
+      NatBTMor1V2 nm .nat
 
 /-- Structural translation to ER.  Each NatBTMor1V2 constructor
 maps to its named ER implementation, with BT context slots
@@ -96,6 +129,92 @@ def NatBTMor1V2.toER : {nm : ℕ × ℕ} → {σ : NatBTSort} →
       let g : ERMor1 ((nm0.1 + nm0.2) + 1) := ERMor1.bprod f'
       (by omega : (nm0.1 + nm0.2) + 1 = (nm0.1 + 1) + nm0.2)
         ▸ g
+  | _, _, NatBTMor1V2.leafBT label =>
+      ERMor1.comp ERMor1.btlEncodeLeaf
+        (fun _ : Fin 1 => label.toER)
+  | _, _, NatBTMor1V2.nodeBT l r =>
+      ERMor1.comp ERMor1.btlEncodeNode (fun i => match i with
+        | ⟨0, _⟩ => l.toER
+        | ⟨1, _⟩ => r.toER)
+  | nm, _, NatBTMor1V2.btProj i =>
+      ERMor1.proj (k := nm.1 + nm.2) ⟨nm.1 + i.val, by
+        have := i.isLt; omega⟩
+  | _, _, NatBTMor1V2.compBT (nm' := nm') f gNat gBT =>
+      ERMor1.comp f.toER (fun i =>
+        if h : i.val < nm'.1 then
+          (gNat ⟨i.val, h⟩).toER
+        else
+          (gBT ⟨i.val - nm'.1, by
+            have hi := i.isLt
+            omega⟩).toER)
+  | _, _, NatBTMor1V2.encodeBT t => t.toER
+  | _, _, NatBTMor1V2.decodeBT k => k.toER
+  | _, _, NatBTMor1V2.foldBTNat (nm := nm0) baseLeaf stepNode
+      tree bound =>
+      let baseLeaf' : ERMor1 ((nm0.1 + nm0.2) + 1) :=
+        (by omega : (nm0.1 + 1) + nm0.2 = (nm0.1 + nm0.2) + 1)
+          ▸ baseLeaf.toER
+      let stepNode' : ERMor1 ((nm0.1 + nm0.2) + 2) :=
+        (by omega : (nm0.1 + 2) + nm0.2 = (nm0.1 + nm0.2) + 2)
+          ▸ stepNode.toER
+      let bound' : ERMor1 ((nm0.1 + nm0.2) + 1) :=
+        (by omega : (nm0.1 + 1) + nm0.2 = (nm0.1 + nm0.2) + 1)
+          ▸ bound.toER
+      let foldExpr : ERMor1 ((nm0.1 + nm0.2) + 1) :=
+        ERMor1.foldBTLOnCode baseLeaf' stepNode' bound'
+      ERMor1.comp foldExpr (fun i : Fin ((nm0.1 + nm0.2) + 1) =>
+        if h0 : i.val = 0 then
+          tree.toER
+        else
+          ERMor1.proj ⟨i.val - 1, by
+            have := i.isLt; omega⟩)
+  | _, _, NatBTMor1V2.foldBTBT (nm := nm0) baseLeaf stepNode
+      tree bound =>
+      let baseLeaf' : ERMor1 ((nm0.1 + nm0.2) + 1) :=
+        (by omega : (nm0.1 + 1) + nm0.2 = (nm0.1 + nm0.2) + 1)
+          ▸ baseLeaf.toER
+      let stepNodeStruct : ERMor1 (nm0.1 + (nm0.2 + 2)) :=
+        stepNode.toER
+      let stepNode' : ERMor1 ((nm0.1 + nm0.2) + 2) :=
+        ERMor1.comp stepNodeStruct
+          (fun i : Fin (nm0.1 + (nm0.2 + 2)) =>
+            if h1 : i.val < nm0.1 then
+              ERMor1.proj (k := (nm0.1 + nm0.2) + 2)
+                ⟨i.val + 2, by omega⟩
+            else if h2 : i.val < nm0.1 + nm0.2 then
+              ERMor1.proj (k := (nm0.1 + nm0.2) + 2)
+                ⟨i.val + 2, by omega⟩
+            else
+              ERMor1.proj (k := (nm0.1 + nm0.2) + 2)
+                ⟨i.val - nm0.1 - nm0.2, by
+                  have := i.isLt; omega⟩)
+      let bound' : ERMor1 ((nm0.1 + nm0.2) + 1) :=
+        (by omega : (nm0.1 + 1) + nm0.2 = (nm0.1 + nm0.2) + 1)
+          ▸ bound.toER
+      let foldExpr : ERMor1 ((nm0.1 + nm0.2) + 1) :=
+        ERMor1.foldBTLOnCode baseLeaf' stepNode' bound'
+      ERMor1.comp foldExpr (fun i : Fin ((nm0.1 + nm0.2) + 1) =>
+        if h0 : i.val = 0 then
+          tree.toER
+        else
+          ERMor1.proj ⟨i.val - 1, by
+            have := i.isLt; omega⟩)
+  | _, _, NatBTMor1V2.boundedNatRec (nm := nm0) base step n
+      bound =>
+      let step' : ERMor1 ((nm0.1 + nm0.2) + 2) :=
+        (by omega : (nm0.1 + 2) + nm0.2 = (nm0.1 + nm0.2) + 2)
+          ▸ step.toER
+      let bound' : ERMor1 ((nm0.1 + nm0.2) + 1) :=
+        (by omega : (nm0.1 + 1) + nm0.2 = (nm0.1 + nm0.2) + 1)
+          ▸ bound.toER
+      let recExpr : ERMor1 ((nm0.1 + nm0.2) + 1) :=
+        ERMor1.boundedRec base.toER step' bound'
+      ERMor1.comp recExpr (fun i : Fin ((nm0.1 + nm0.2) + 1) =>
+        if h0 : i.val = 0 then
+          n.toER
+        else
+          ERMor1.proj ⟨i.val - 1, by
+            have := i.isLt; omega⟩)
 
 /-- Standard interpretation derived from `toER`.  Combined
 context places ℕ slots first, encoded BT slots second.  At sort
@@ -322,5 +441,186 @@ theorem NatBTMor1V2.bsumCtx_eq {nm : ℕ × ℕ}
   congr 1
   funext k
   exact NatBTMor1V2.bsumCtx_eq ctxN ctxB i k
+
+/-- Interpretation of `leafBT`. -/
+@[simp] theorem NatBTMor1V2.interp_leafBT {nm : ℕ × ℕ}
+    (label : NatBTMor1V2 nm .nat)
+    (ctxN : Fin nm.1 → ℕ) (ctxB : Fin nm.2 → BTL) :
+    (NatBTMor1V2.leafBT label).interp ctxN ctxB =
+      BTL.leaf (label.interp ctxN ctxB) := by
+  change BTL.decode ((NatBTMor1V2.leafBT label).toER.interp _) =
+      BTL.leaf (label.interp ctxN ctxB)
+  unfold NatBTMor1V2.toER
+  rw [ERMor1.interp_comp]
+  have hfun :
+      (fun (_ : Fin 1) => label.toER.interp
+        (Fin.append ctxN (fun j => (ctxB j).encode))) =
+      ![label.interp ctxN ctxB] := by
+    funext i
+    match i with
+    | ⟨0, _⟩ => rfl
+  rw [hfun, ERMor1.interp_btlEncodeLeaf]
+  exact BTL.decode_encode (BTL.leaf (label.interp ctxN ctxB))
+
+/-- Interpretation of `nodeBT`. -/
+@[simp] theorem NatBTMor1V2.interp_nodeBT {nm : ℕ × ℕ}
+    (l r : NatBTMor1V2 nm .bt)
+    (ctxN : Fin nm.1 → ℕ) (ctxB : Fin nm.2 → BTL) :
+    (NatBTMor1V2.nodeBT l r).interp ctxN ctxB =
+      BTL.node (l.interp ctxN ctxB) (r.interp ctxN ctxB) := by
+  change BTL.decode ((NatBTMor1V2.nodeBT l r).toER.interp _) =
+      BTL.node (l.interp ctxN ctxB) (r.interp ctxN ctxB)
+  unfold NatBTMor1V2.toER
+  rw [ERMor1.interp_comp]
+  set combined := Fin.append ctxN
+    (fun j => (ctxB j).encode) with _
+  have hfun :
+      (fun (i : Fin 2) =>
+        ((match i with
+          | ⟨0, _⟩ => l.toER
+          | ⟨1, _⟩ => r.toER : ERMor1 (nm.1 + nm.2))).interp
+          combined) =
+      ![l.toER.interp combined, r.toER.interp combined] := by
+    funext i
+    match i with
+    | ⟨0, _⟩ => rfl
+    | ⟨1, _⟩ => rfl
+  rw [hfun, ERMor1.interp_btlEncodeNode]
+  have hl :
+      l.toER.interp combined = (l.interp ctxN ctxB).encode := by
+    change l.toER.interp combined =
+      (BTL.decode (l.toER.interp combined)).encode
+    rw [BTL.encode_decode]
+  have hr :
+      r.toER.interp combined = (r.interp ctxN ctxB).encode := by
+    change r.toER.interp combined =
+      (BTL.decode (r.toER.interp combined)).encode
+    rw [BTL.encode_decode]
+  rw [hl, hr]
+  change BTL.decode
+      (2 * Nat.pair (l.interp ctxN ctxB).encode
+        (r.interp ctxN ctxB).encode + 1) = _
+  have hencN :
+      (BTL.node (l.interp ctxN ctxB) (r.interp ctxN ctxB)).encode
+        = 2 * Nat.pair (l.interp ctxN ctxB).encode
+          (r.interp ctxN ctxB).encode + 1 := rfl
+  rw [← hencN, BTL.decode_encode]
+
+/-- Interpretation of `compBT`. -/
+@[simp] theorem NatBTMor1V2.interp_compBT
+    {nm nm' : ℕ × ℕ}
+    (f : NatBTMor1V2 nm' .bt)
+    (gNat : Fin nm'.1 → NatBTMor1V2 nm .nat)
+    (gBT : Fin nm'.2 → NatBTMor1V2 nm .bt)
+    (ctxN : Fin nm.1 → ℕ) (ctxB : Fin nm.2 → BTL) :
+    (NatBTMor1V2.compBT f gNat gBT).interp ctxN ctxB =
+      f.interp
+        (fun i => (gNat i).interp ctxN ctxB)
+        (fun i => (gBT i).interp ctxN ctxB) := by
+  change BTL.decode (f.toER.interp _) = BTL.decode (f.toER.interp _)
+  congr 2
+  funext i
+  simp only []
+  refine Fin.addCases (fun j => ?_) (fun j => ?_) i
+  · rw [Fin.append_left]
+    have h : (Fin.castAdd nm'.2 j).val < nm'.1 := j.isLt
+    rw [dif_pos h]
+    rfl
+  · rw [Fin.append_right]
+    have h : ¬ (Fin.natAdd nm'.1 j).val < nm'.1 := by
+      change ¬ nm'.1 + j.val < nm'.1
+      omega
+    rw [dif_neg h]
+    have hidx : (⟨(Fin.natAdd nm'.1 j).val - nm'.1, by
+      change nm'.1 + j.val - nm'.1 < nm'.2
+      omega⟩ : Fin nm'.2) = j := by
+      apply Fin.ext
+      change nm'.1 + j.val - nm'.1 = j.val
+      omega
+    rw [hidx]
+    change (gBT j).toER.interp _ =
+      BTL.encode (BTL.decode ((gBT j).toER.interp _))
+    rw [BTL.encode_decode]
+
+/-- Interpretation of `btProj`. -/
+@[simp] theorem NatBTMor1V2.interp_btProj {nm : ℕ × ℕ}
+    (i : Fin nm.2)
+    (ctxN : Fin nm.1 → ℕ) (ctxB : Fin nm.2 → BTL) :
+    (NatBTMor1V2.btProj (nm := nm) i).interp ctxN ctxB =
+      ctxB i := by
+  change BTL.decode
+      ((NatBTMor1V2.btProj (nm := nm) i).toER.interp _) = ctxB i
+  unfold NatBTMor1V2.toER
+  change BTL.decode
+      (Fin.append ctxN (fun j => (ctxB j).encode)
+        ⟨nm.1 + i.val, _⟩) = ctxB i
+  have heq : (⟨nm.1 + i.val, by have := i.isLt; omega⟩ :
+      Fin (nm.1 + nm.2)) = Fin.natAdd nm.1 i := by
+    apply Fin.ext
+    rfl
+  rw [heq, Fin.append_right]
+  exact BTL.decode_encode (ctxB i)
+
+/-- Interpretation of `encodeBT`. -/
+@[simp] theorem NatBTMor1V2.interp_encodeBT {nm : ℕ × ℕ}
+    (t : NatBTMor1V2 nm .bt)
+    (ctxN : Fin nm.1 → ℕ) (ctxB : Fin nm.2 → BTL) :
+    (NatBTMor1V2.encodeBT t).interp ctxN ctxB =
+      BTL.encode (t.interp ctxN ctxB) := by
+  change t.toER.interp _ = (BTL.decode (t.toER.interp _)).encode
+  rw [BTL.encode_decode]
+
+/-- Interpretation of `decodeBT`. -/
+@[simp] theorem NatBTMor1V2.interp_decodeBT {nm : ℕ × ℕ}
+    (k : NatBTMor1V2 nm .nat)
+    (ctxN : Fin nm.1 → ℕ) (ctxB : Fin nm.2 → BTL) :
+    (NatBTMor1V2.decodeBT k).interp ctxN ctxB =
+      BTL.decode (k.interp ctxN ctxB) := rfl
+
+/-- Interpretation of `foldBTNat` as a derived ER expression.
+The full structural-form lemma (under bound adequacy and
+monotonicity hypotheses) is provided in Layer 1. -/
+theorem NatBTMor1V2.interp_foldBTNat_as_toER
+    {nm : ℕ × ℕ}
+    (baseLeaf : NatBTMor1V2 (nm.1 + 1, nm.2) .nat)
+    (stepNode : NatBTMor1V2 (nm.1 + 2, nm.2) .nat)
+    (tree : NatBTMor1V2 nm .bt)
+    (bound : NatBTMor1V2 (nm.1 + 1, nm.2) .nat)
+    (ctxN : Fin nm.1 → ℕ) (ctxB : Fin nm.2 → BTL) :
+    (NatBTMor1V2.foldBTNat baseLeaf stepNode tree bound).interp
+        ctxN ctxB =
+      (NatBTMor1V2.foldBTNat baseLeaf stepNode tree bound).toER.interp
+        (Fin.append ctxN (fun i => (ctxB i).encode)) := rfl
+
+/-- Interpretation of `foldBTBT` as a derived ER expression.
+The full structural-form lemma (under bound adequacy and
+monotonicity hypotheses) is provided in Layer 1. -/
+theorem NatBTMor1V2.interp_foldBTBT_as_toER
+    {nm : ℕ × ℕ}
+    (baseLeaf : NatBTMor1V2 (nm.1 + 1, nm.2) .bt)
+    (stepNode : NatBTMor1V2 (nm.1, nm.2 + 2) .bt)
+    (tree : NatBTMor1V2 nm .bt)
+    (bound : NatBTMor1V2 (nm.1 + 1, nm.2) .nat)
+    (ctxN : Fin nm.1 → ℕ) (ctxB : Fin nm.2 → BTL) :
+    (NatBTMor1V2.foldBTBT baseLeaf stepNode tree bound).interp
+        ctxN ctxB =
+      BTL.decode
+        ((NatBTMor1V2.foldBTBT baseLeaf stepNode tree bound).toER.interp
+          (Fin.append ctxN (fun i => (ctxB i).encode))) := rfl
+
+/-- Interpretation of `boundedNatRec` as a derived ER expression.
+The full structural-form lemma (under bound adequacy and
+monotonicity hypotheses) is provided in Layer 1. -/
+theorem NatBTMor1V2.interp_boundedNatRec_as_toER
+    {nm : ℕ × ℕ}
+    (base : NatBTMor1V2 nm .nat)
+    (step : NatBTMor1V2 (nm.1 + 2, nm.2) .nat)
+    (n : NatBTMor1V2 nm .nat)
+    (bound : NatBTMor1V2 (nm.1 + 1, nm.2) .nat)
+    (ctxN : Fin nm.1 → ℕ) (ctxB : Fin nm.2 → BTL) :
+    (NatBTMor1V2.boundedNatRec base step n bound).interp
+        ctxN ctxB =
+      (NatBTMor1V2.boundedNatRec base step n bound).toER.interp
+        (Fin.append ctxN (fun i => (ctxB i).encode)) := rfl
 
 end GebLean
