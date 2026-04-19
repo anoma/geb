@@ -668,6 +668,41 @@ gitignored).  ~17 tasks across five phases:
 Task A.1 (drop `@[reducible]` from the four aliases).  Proceed
 directly on branch `terence/syntax`.
 
+**Bottom-up NatBT chain complete (2026-04-19)**: all five phases
+landed.  Commits:
+
+* Phase A (`3c2ecc50`): drop @[reducible] from four ℕ-aliased
+  Lawvere category defs (16 fix sites across LawvereERInterp,
+  LawvereERDelta, LawvereERTetration, LawvereBTPrimrec,
+  LawvereBTInterp, TreePERLawvereBT).
+* Phase C wave 1 (`931c0567`): NatBTMor1V2 inductive
+  (foundational ER-direct constructors), structural toER,
+  derived interp, per-constructor simp lemmas.
+* Phase C wave 2 (`1d8336ce`): BT structural and bounded
+  recursive constructors added; foldBTBT slot permutation
+  handled.
+* Phase D Task D.1 (`685047ca`): NatBTMorNV2 + quotient +
+  Category + HasChosenFiniteProducts.
+* Phase D Task D.2 (`f6a23508`): faithful interp functor
+  natBTV2InterpFunctor.
+* Phase D Task D.3 (`b3a3084b`): LawvereNatBTV20Cat full
+  subcategory (m = 0).
+* Phase E Task E.1 (`71bef50f`): erToNatBTV2Functor.
+* Phase E Task E.2 (`38134a6e`): natBTV20ToERFunctor via toER.
+* Phase E Task E.3 (`3679df57`): lawvereERNatBTV20Equivalence
+  assembled.
+
+Layer 1 auto-bound combinators (foldBTNatAuto, primRecAuto,
+foldBTBTAuto with auto-derived bounds via NatBT-level tower
+infrastructure) are deferred to a follow-up workstream.  The
+basic equivalence chain ships without them; programmers who
+want to use the bounded recursive constructors must currently
+supply explicit `bound` parameters.
+
+Phase 4f non-fullness transport (Ackermann/tetration not
+definable in NatBTV2) is also deferred — the equivalence is in
+place, so the transport is a 1-2 task follow-up.
+
 **Task 14.5-extended (deferred)**: BT-only adequacy research
 — proving that the unlabeled-BT + 0-way-ℕ-product subfragment
 of `LawvereNatBTBounded` is already equivalent to
