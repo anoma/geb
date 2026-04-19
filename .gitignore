@@ -4,5 +4,6 @@
 *.fasl
 *.*fsl
 *.*fas
+.claude
 .vscode
 build/
