@@ -48,6 +48,7 @@ import GebLean.LawvereERBoundComputable
 import GebLean.LawvereERDelta
 import GebLean.LawvereERInterp
 import GebLean.LawvereERLex
+import GebLean.LawvereERNatBTV2Equiv
 import GebLean.LawvereERQuot
 import GebLean.LawvereERTetration
 import GebLean.LawvereNatBT
