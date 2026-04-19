@@ -7338,6 +7338,92 @@ def functorFromDataContra
           (data.hom (homBase g)).app (objFiber Z) := by
             rw [Category.assoc]
 
+variable (F)
+
+/--
+Fibre natural-transformation data for `NatTransFromDataContra`.
+For each `c : C`, a natural transformation between fibre functors.
+-/
+abbrev NatTransFromContraFib
+    (dataG dataH : FunctorFromDataContra F (T := T)) :=
+  ∀ c : C, dataG.fib c ⟶ dataH.fib c
+
+/--
+Coherence condition for `NatTransFromDataContra`.
+For each `f : c ⟶ d` in `C`, the following square commutes:
+
+```
+(F.map f.op) ⋙ dataG.fib c --dataG.hom f--> dataG.fib d
+        |                                          |
+whiskerLeft (F.map f.op) (fibNat c)            fibNat d
+        v                                          v
+(F.map f.op) ⋙ dataH.fib c --dataH.hom f--> dataH.fib d
+```
+-/
+abbrev NatTransFromContraCoherence
+    {dataG dataH : FunctorFromDataContra F (T := T)}
+    (fibNat : NatTransFromContraFib F dataG dataH) :=
+  ∀ {c d : C} (f : c ⟶ d),
+    dataG.hom f ≫ fibNat d =
+      Functor.whiskerLeft (F.map f.op).toFunctor (fibNat c) ≫
+        dataH.hom f
+
+/--
+Bundled data for a natural transformation between two
+`functorFromDataContra` functors.
+-/
+@[ext]
+structure NatTransFromDataContra
+    (dataG dataH : FunctorFromDataContra F (T := T)) where
+  /-- Fibre natural transformations. -/
+  fibNat : NatTransFromContraFib F dataG dataH
+  /-- Coherence with the `hom` data. -/
+  coherence : NatTransFromContraCoherence F fibNat
+
+variable {F}
+
+open GrothendieckContraFunctor in
+/--
+Construct a natural transformation between two `functorFromDataContra`
+functors from bundled `NatTransFromDataContra` data.
+-/
+def natTransFromContra
+    {dataG dataH : FunctorFromDataContra F (T := T)}
+    (natData : NatTransFromDataContra F dataG dataH) :
+    functorFromDataContra dataG ⟶ functorFromDataContra dataH where
+  app X := (natData.fibNat (objBase X)).app (objFiber X)
+  naturality {X Y} f := by
+    simp only [functorFromDataContra]
+    have hcoh := congrFun (congrArg NatTrans.app
+      (natData.coherence (homBase f))) (objFiber Y)
+    simp only [NatTrans.comp_app, Functor.whiskerLeft_app] at hcoh
+    have hnat := (natData.fibNat (objBase X)).naturality (homFiber f)
+    calc ((dataG.fib (objBase X)).map (homFiber f) ≫
+            (dataG.hom (homBase f)).app (objFiber Y)) ≫
+              (natData.fibNat (objBase Y)).app (objFiber Y)
+        = (dataG.fib (objBase X)).map (homFiber f) ≫
+            ((dataG.hom (homBase f)).app (objFiber Y) ≫
+              (natData.fibNat (objBase Y)).app (objFiber Y)) := by
+              rw [Category.assoc]
+      _ = (dataG.fib (objBase X)).map (homFiber f) ≫
+            (natData.fibNat (objBase X)).app
+              ((F.map (homBase f).op).toFunctor.obj (objFiber Y)) ≫
+                (dataH.hom (homBase f)).app (objFiber Y) := by
+              rw [hcoh]
+      _ = ((dataG.fib (objBase X)).map (homFiber f) ≫
+            (natData.fibNat (objBase X)).app
+              ((F.map (homBase f).op).toFunctor.obj (objFiber Y))) ≫
+                (dataH.hom (homBase f)).app (objFiber Y) := by
+              rw [Category.assoc]
+      _ = ((natData.fibNat (objBase X)).app (objFiber X) ≫
+            (dataH.fib (objBase X)).map (homFiber f)) ≫
+              (dataH.hom (homBase f)).app (objFiber Y) := by
+              rw [hnat]
+      _ = (natData.fibNat (objBase X)).app (objFiber X) ≫
+            (dataH.fib (objBase X)).map (homFiber f) ≫
+              (dataH.hom (homBase f)).app (objFiber Y) := by
+              rw [Category.assoc]
+
 end FunctorFromDataContra
 
 /-! ## Slice-Refined Contravariant Grothendieck Functor -/
