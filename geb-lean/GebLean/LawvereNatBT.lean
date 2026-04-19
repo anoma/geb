@@ -2,7 +2,6 @@ import GebLean.LawvereER
 import GebLean.LawvereERQuot
 import GebLean.LawvereBT
 import GebLean.LawvereBTPrimrec
-import GebLean.Utilities.SzudzikSeq
 
 /-!
 # Two-Sort Lawvere Theory over ℕ and Labeled Binary Trees
@@ -15,14 +14,6 @@ combined theory is equivalent as a category to `LawvereER`.
 
 See `docs/superpowers/specs/2026-04-17-lawvere-natbt-design.md`
 for rationale and design decisions.
-
-**Version note**: this file defines the *bounded* variant of the
-two-sort theory. `foldBTNat` and `foldBTBT` carry explicit `bound`
-parameters (added in Stage β.b). The ramified variant is in
-`LawvereNatBTRamified*.lean`. The two-stage equivalence
-`LawvereERCat ≃ LawvereNatBT_bounded ≃ LawvereNatBT_ramified`
-is documented in
-`docs/superpowers/specs/2026-04-18-lawvere-natbt-two-stage-design.md`.
 -/
 
 namespace GebLean
@@ -195,21 +186,13 @@ inductive NatBTMor1 : (ℕ × ℕ) → NatBTSort → Type where
   | foldBTNat {nm : ℕ × ℕ}
       (baseLeaf : NatBTMor1 (nm.1 + 1, nm.2) .nat)
       (stepNode : NatBTMor1 (nm.1 + 2, nm.2) .nat)
-      (tree : NatBTMor1 nm .bt)
-      (bound : NatBTMor1 (nm.1 + 1, nm.2) .nat) :
+      (tree : NatBTMor1 nm .bt) :
       NatBTMor1 nm .nat
   | foldBTBT {nm : ℕ × ℕ}
       (baseLeaf : NatBTMor1 (nm.1 + 1, nm.2) .bt)
       (stepNode : NatBTMor1 (nm.1, nm.2 + 2) .bt)
-      (tree : NatBTMor1 nm .bt)
-      (bound : NatBTMor1 (nm.1 + 1, nm.2) .nat) :
+      (tree : NatBTMor1 nm .bt) :
       NatBTMor1 nm .bt
-  | boundedNatRec {nm : ℕ × ℕ}
-      (base : NatBTMor1 nm .nat)
-      (step : NatBTMor1 (nm.1 + 2, nm.2) .nat)
-      (n : NatBTMor1 nm .nat)
-      (bound : NatBTMor1 (nm.1 + 1, nm.2) .nat) :
-      NatBTMor1 nm .nat
   | encodeBT {nm : ℕ × ℕ}
       (t : NatBTMor1 nm .bt) : NatBTMor1 nm .nat
   | decodeBT {nm : ℕ × ℕ}
@@ -248,39 +231,22 @@ def NatBTMor1.interp : {nm : ℕ × ℕ} → {σ : NatBTSort} →
       NatBTMor1.interp f
         (fun i => NatBTMor1.interp (gNat i) ctxN ctxB)
         (fun i => NatBTMor1.interp (gBT i) ctxN ctxB)
-  | _, _, NatBTMor1.foldBTNat baseLeaf stepNode tree bound, ctxN,
-        ctxB =>
-      let t := NatBTMor1.interp tree ctxN ctxB
-      Nat.foldBTLOnCodeAdequate
+  | _, _, NatBTMor1.foldBTNat baseLeaf stepNode tree, ctxN, ctxB =>
+      BTL.fold
         (fun lbl =>
           NatBTMor1.interp baseLeaf (Fin.cons lbl ctxN) ctxB)
         (fun a b =>
           NatBTMor1.interp stepNode
             (Fin.cons a (Fin.cons b ctxN)) ctxB)
-        (fun j => NatBTMor1.interp bound (Fin.cons j ctxN) ctxB)
-        t.encode
-  | _, _, NatBTMor1.foldBTBT baseLeaf stepNode tree bound, ctxN,
-        ctxB =>
-      let t := NatBTMor1.interp tree ctxN ctxB
-      BTL.decode (Nat.foldBTLOnCodeAdequate
+        (NatBTMor1.interp tree ctxN ctxB)
+  | _, _, NatBTMor1.foldBTBT baseLeaf stepNode tree, ctxN, ctxB =>
+      BTL.fold
         (fun lbl =>
-          (NatBTMor1.interp baseLeaf
-            (Fin.cons lbl ctxN) ctxB).encode)
+          NatBTMor1.interp baseLeaf (Fin.cons lbl ctxN) ctxB)
         (fun a b =>
-          (NatBTMor1.interp stepNode ctxN
-            (Fin.cons (BTL.decode a)
-              (Fin.cons (BTL.decode b) ctxB))).encode)
-        (fun j => NatBTMor1.interp bound (Fin.cons j ctxN) ctxB)
-        t.encode)
-  | _, _, NatBTMor1.boundedNatRec base step n bound, ctxN, ctxB =>
-      let nVal := NatBTMor1.interp n ctxN ctxB
-      Nat.boundedRecAdequate
-        (NatBTMor1.interp base ctxN ctxB)
-        (fun j prev =>
-          NatBTMor1.interp step
-            (Fin.cons j (Fin.cons prev ctxN)) ctxB)
-        (fun j => NatBTMor1.interp bound (Fin.cons j ctxN) ctxB)
-        nVal
+          NatBTMor1.interp stepNode ctxN
+            (Fin.cons a (Fin.cons b ctxB)))
+        (NatBTMor1.interp tree ctxN ctxB)
   | _, _, NatBTMor1.encodeBT t, ctxN, ctxB =>
       BTL.encode (NatBTMor1.interp t ctxN ctxB)
   | _, _, NatBTMor1.decodeBT k, ctxN, ctxB =>
@@ -382,17 +348,15 @@ def NatBTMor1.interp : {nm : ℕ × ℕ} → {σ : NatBTSort} →
     (baseLeaf : NatBTMor1 (nm.1 + 1, nm.2) .nat)
     (stepNode : NatBTMor1 (nm.1 + 2, nm.2) .nat)
     (tree : NatBTMor1 nm .bt)
-    (bound : NatBTMor1 (nm.1 + 1, nm.2) .nat)
     (ctxN : Fin nm.1 → ℕ) (ctxB : Fin nm.2 → BTL) :
-    (NatBTMor1.foldBTNat baseLeaf stepNode tree bound).interp
+    (NatBTMor1.foldBTNat baseLeaf stepNode tree).interp
         ctxN ctxB =
-      Nat.foldBTLOnCodeAdequate
+      BTL.fold
         (fun lbl => baseLeaf.interp (Fin.cons lbl ctxN) ctxB)
         (fun a b =>
-          stepNode.interp (Fin.cons a (Fin.cons b ctxN)) ctxB)
-        (fun j => bound.interp (Fin.cons j ctxN) ctxB)
-        (tree.interp ctxN ctxB).encode
-  := rfl
+          stepNode.interp
+            (Fin.cons a (Fin.cons b ctxN)) ctxB)
+        (tree.interp ctxN ctxB) := rfl
 
 /-- Interpretation of `foldBTBT`. -/
 @[simp] theorem NatBTMor1.interp_foldBTBT
@@ -400,39 +364,15 @@ def NatBTMor1.interp : {nm : ℕ × ℕ} → {σ : NatBTSort} →
     (baseLeaf : NatBTMor1 (nm.1 + 1, nm.2) .bt)
     (stepNode : NatBTMor1 (nm.1, nm.2 + 2) .bt)
     (tree : NatBTMor1 nm .bt)
-    (bound : NatBTMor1 (nm.1 + 1, nm.2) .nat)
     (ctxN : Fin nm.1 → ℕ) (ctxB : Fin nm.2 → BTL) :
-    (NatBTMor1.foldBTBT baseLeaf stepNode tree bound).interp
+    (NatBTMor1.foldBTBT baseLeaf stepNode tree).interp
         ctxN ctxB =
-      BTL.decode (Nat.foldBTLOnCodeAdequate
-        (fun lbl =>
-          (baseLeaf.interp (Fin.cons lbl ctxN) ctxB).encode)
+      BTL.fold
+        (fun lbl => baseLeaf.interp (Fin.cons lbl ctxN) ctxB)
         (fun a b =>
-          (stepNode.interp ctxN
-            (Fin.cons (BTL.decode a)
-              (Fin.cons (BTL.decode b) ctxB))).encode)
-        (fun j => bound.interp (Fin.cons j ctxN) ctxB)
-        (tree.interp ctxN ctxB).encode)
-  := rfl
-
-/-- Interpretation of `boundedNatRec`. -/
-@[simp] theorem NatBTMor1.interp_boundedNatRec
-    {nm : ℕ × ℕ}
-    (base : NatBTMor1 nm .nat)
-    (step : NatBTMor1 (nm.1 + 2, nm.2) .nat)
-    (n : NatBTMor1 nm .nat)
-    (bound : NatBTMor1 (nm.1 + 1, nm.2) .nat)
-    (ctxN : Fin nm.1 → ℕ) (ctxB : Fin nm.2 → BTL) :
-    (NatBTMor1.boundedNatRec base step n bound).interp
-        ctxN ctxB =
-      Nat.boundedRecAdequate
-        (base.interp ctxN ctxB)
-        (fun j prev =>
-          step.interp
-            (Fin.cons j (Fin.cons prev ctxN)) ctxB)
-        (fun j => bound.interp (Fin.cons j ctxN) ctxB)
-        (n.interp ctxN ctxB)
-  := rfl
+          stepNode.interp ctxN
+            (Fin.cons a (Fin.cons b ctxB)))
+        (tree.interp ctxN ctxB) := rfl
 
 /-- Interpretation of `encodeBT`. -/
 @[simp] theorem NatBTMor1.interp_encodeBT

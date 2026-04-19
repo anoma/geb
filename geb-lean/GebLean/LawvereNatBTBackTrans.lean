@@ -13,13 +13,6 @@ predicate `isFoldFree` isolates the sub-language without
 through composition constructors.  Correctness theorems
 `toER_interp` and `toER_bt_interp` are proved by mutual
 induction.  BT outputs are compared under `BTL.encode`.
-
-**Version note**: this file back-translates the *bounded* variant
-of the two-sort theory. The fold-free fragment excludes the bounded
-`foldBTNat` and `foldBTBT` operations (those with explicit bound
-parameters). The two-stage equivalence `LawvereERCat ≃
-LawvereNatBT_bounded ≃ LawvereNatBT_ramified` is documented in
-`docs/superpowers/specs/2026-04-18-lawvere-natbt-two-stage-design.md`.
 -/
 
 namespace GebLean
@@ -43,9 +36,8 @@ def NatBTMor1.isFoldFree : {nm : ℕ × ℕ} → {σ : NatBTSort} →
   | _, _, NatBTMor1.btProj _ => True
   | _, _, NatBTMor1.compBT (nm' := nm') f gNat _ =>
       nm'.2 = 0 ∧ f.isFoldFree ∧ ∀ i, (gNat i).isFoldFree
-  | _, _, NatBTMor1.foldBTNat _ _ _ _ => False
-  | _, _, NatBTMor1.foldBTBT _ _ _ _ => False
-  | _, _, NatBTMor1.boundedNatRec _ _ _ _ => False
+  | _, _, NatBTMor1.foldBTNat _ _ _ => False
+  | _, _, NatBTMor1.foldBTBT _ _ _ => False
   | _, _, NatBTMor1.encodeBT t => t.isFoldFree
   | _, _, NatBTMor1.decodeBT k => k.isFoldFree
 
@@ -76,7 +68,7 @@ def NatBTMor1.toERUniform : {nm : ℕ × ℕ} → {σ : NatBTSort} →
         ERMor1.zeroN _
   | _, _, NatBTMor1.bsum f => ERMor1.bsum f.toERUniform
   | _, _, NatBTMor1.bprod f => ERMor1.bprod f.toERUniform
-  | _, _, NatBTMor1.foldBTNat _ _ _ _ => ERMor1.zeroN _
+  | _, _, NatBTMor1.foldBTNat _ _ _ => ERMor1.zeroN _
   | _, _, NatBTMor1.encodeBT t => t.toERUniform
   | _, _, NatBTMor1.leafBT label =>
       ERMor1.comp ERMor1.btlEncodeLeaf
@@ -93,8 +85,7 @@ def NatBTMor1.toERUniform : {nm : ℕ × ℕ} → {σ : NatBTSort} →
           (fun i => (gNat i).toERUniform)
       else
         ERMor1.zeroN _
-  | _, _, NatBTMor1.foldBTBT _ _ _ _ => ERMor1.zeroN _
-  | _, _, NatBTMor1.boundedNatRec _ _ _ _ => ERMor1.zeroN _
+  | _, _, NatBTMor1.foldBTBT _ _ _ => ERMor1.zeroN _
   | _, _, NatBTMor1.decodeBT k => k.toERUniform
 
 /-- Back-translation specialized to `.nat` outputs. -/
@@ -290,11 +281,7 @@ theorem NatBTMor1.toERUniform_interp_aux :
       intro h _ _
       exact absurd h (by
         simp [NatBTMor1.isFoldFree])
-  | foldBTBT _ _ _ _ _ _ _ _ =>
-      intro h _ _
-      exact absurd h (by
-        simp [NatBTMor1.isFoldFree])
-  | boundedNatRec _ _ _ _ _ _ _ _ =>
+  | foldBTBT _ _ _ _ _ _ =>
       intro h _ _
       exact absurd h (by
         simp [NatBTMor1.isFoldFree])

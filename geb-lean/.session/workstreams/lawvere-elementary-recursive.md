@@ -487,7 +487,7 @@ adequacy plus counter monotonicity).
   `GebLeanTests/LawvereNatBTBackTrans.lean` with `#guard`s on
   zero/succ/natProj/sub/leafBT/nodeBT/encodeBT.
 
-**Design pivot (2026-04-18)**: during Task 14.5 research, a
+**First design pivot (2026-04-18)**: during Task 14.5 research, a
 strength-mismatch obstruction was identified — the current
 `foldBTNat`/`foldBTBT` (non-ramified state-threaded recursion
 over ER step functions) computes tower-of-variable-height values,
@@ -495,76 +495,102 @@ provably escaping E_3.  The proposed `LawvereERCat ≃ LawvereNatBT`
 equivalence therefore cannot hold for the theory as currently
 defined.
 
-After extensive brainstorming (documented in this session), the
-single-equivalence plan was replaced with a two-stage chain:
+The first design pivot proposed a two-stage chain
+`LawvereERCat ≃ LawvereNatBT_bounded ≃ LawvereNatBT_ramified`
+with a bounded intermediate exposing user-supplied bound
+parameters at constructor sites.  Five Stage β.a tasks were
+implemented (commits `a6fb05c7`..`7893c3bb`) before further
+analysis surfaced an irreducible impedance mismatch.
+
+**Second design pivot (2026-04-18, evening)**: closer reading of
+`ERMor1.boundedSearch`'s off-conditions behavior revealed that
+ER's `foldBTLOnCode` returns
+`min(β-of-(boundedRecRange + 1), bound)` (a Gödel-arithmetic
+garbage value) when the user-supplied bound is not pointwise
+adequate or not counter-monotonic.  No clean choice for the
+bounded theory's interp at the same off-conditions matches
+that semantics on the nose:
+
+* Truncation (`min(trace, bound)`) gives a meaningful value but
+  differs from ER's garbage.
+* Adequate-or-zero gives 0 but differs from ER (which gives
+  garbage, not 0).
+* Direct port of ER's witness search would require duplicating
+  the construction at the Nat level.
+
+The five Stage β.a commits were reverted.  The cleaner factoring
+removes the bounded intermediate entirely and inserts a Nat-only
+ramified intermediate instead:
 
 ```text
-LawvereERCat ≃ LawvereNatBT_bounded ≃ LawvereNatBT_ramified
+LawvereERCat ≃ LawvereNatRamified ≃ LawvereNatBTRamified
 ```
 
-* `LawvereNatBT_bounded` is the current theory with explicit
-  `bound` parameters on `foldBTNat`/`foldBTBT` and a new
-  `boundedNatRec` constructor.  Provably E_3 by construction.
-  Used as a proof-convenience intermediate.
-* `LawvereNatBT_ramified` is a new theory with a 3-indexed
-  inductive (domain, codomain, tier tag `NonRec`/`MayRec`), a
-  single unified recursive destructor for mutual recursion
-  over ℕ and BT with tier-disciplined non-recursive step, and
-  Leivant-standard non-recursive primitives (`add`, `mul`
-  beyond the Wikipedia-literal ER set).  Programmer-friendly:
-  no bound parameters at client sites.  Corresponds to
-  Leivant's tier-2 ramified recurrence over free algebras
-  (Leivant 1999) = E_3.
+* **`LawvereNatRamified`**: Nat-sort only, tier-disciplined
+  `foldMutNat` constructor with unbounded `Nat.rec` semantics.
+  No user-supplied bounds.  Adds `add` and `mul` as
+  Leivant-standard non-recursive primitives.  Equivalent to
+  `LawvereERCat` via a back-translation that synthesizes bounds
+  via `siteBound = towerER ∘ towerHeight(step)`.  Adequate-
+  monotonic by construction; off-conditions never arise.
+* **`LawvereNatBTRamified`**: extends `LawvereNatRamified` with
+  a BT sort, `leafBT`/`nodeBT`/`btProj`/`btMatch`/`foldMutBT`/
+  `encodeBT`/`decodeBT` constructors.  Tier-disciplined.
+  Equivalent to `LawvereNatRamified` (at the m=0 subcategory)
+  via a back-translation through `BTL.encode`/`decode`.
+
+Each stage handles exactly one orthogonal change (add fold; add
+BT sort), which keeps both back-translations small and
+auditable.  No user-supplied bounds at any constructor site,
+so no off-conditions mismatch with ER's witness-search
+fallback.
 
 Design spec:
-`docs/superpowers/specs/2026-04-18-lawvere-natbt-two-stage-design.md`
+`docs/superpowers/specs/2026-04-18-lawvere-natramified-two-stage-design.md`
 (local, gitignored).
 
 Implementation plan:
-`docs/superpowers/plans/2026-04-18-lawvere-natbt-two-stage.md`
-(local, gitignored).  23 tasks across five sub-stages:
+`docs/superpowers/plans/2026-04-18-lawvere-natramified-two-stage.md`
+(local, gitignored).  ~22 tasks across six stages:
 
-* **Stage β.a** (Tasks 1-5): bounded-theory refactor.  Add
-  bound parameters, `boundedNatRec`, extend Task 14a's
-  `toERUniform` to handle all fold cases.
-* **Stage β.b** (Tasks 6-9): equivalence 1.  Prove
-  `LawvereERCat ≃ LawvereNatBT_bounded`.
-* **Stage δ.a** (Tasks 10-13): ramified-theory definition.
-  New `NatBTMor1Ramified` inductive, interp, interp functor,
-  quotient category.
-* **Stage δ.b-δ.d** (Tasks 14-19): equivalence 2.  Back-
-  translation `F21`, forward `F12`, assemble.
-* **Stage δ.e** (Tasks 20-21): composition and Phase 4f
-  transport.
-* **Finalization** (Tasks 22-23): tests and tracker update.
+* **Stage A** (Tasks A1-A6): `LawvereNatRamified` definition.
+  `Tier`, inductive, interp, quotient + `Category`, products,
+  interp functor, tests.
+* **Stage B** (Tasks B1-B7): `LawvereERCat ≃ LawvereNatRamified`.
+  Forward translation, back-translation with `siteBound`,
+  equivalence assembly.
+* **Stage C** (Tasks C1-C4): `LawvereNatBTRamified` definition.
+* **Stage D** (Tasks D1-D4):
+  `LawvereNatRamified ≃ LawvereNatBTRamified` (m=0 subcategory).
+* **Stage E** (Tasks E1-E3): compose chain, transport Phase 4f
+  non-fullness, tracker update.
+* **Stage F** (Task F1): rename existing `LawvereNatBT*` to
+  `LawvereNatBTUnramified*` as a final cleanup pass.
 
 **Current resume point**: execute the plan via
 `superpowers:subagent-driven-development`.  Starts at Stage
-β.a Task 1 (documenting `LawvereNatBT` files as the bounded
-theory variant).  Use the existing `LawvereNatBT` files
-directly (conservative renaming — no file renames, just
-header-comment updates to note the bounded variant).  Proceed
-directly on branch `terence/syntax` per established project
-workflow.
+A Task A1 (define `Tier` and `NatRamifiedMor1` inductive).
+Proceed directly on branch `terence/syntax`.
 
 **Task 14.5-extended (deferred)**: BT-only adequacy research
 — proving that the unlabeled-BT + 0-way-ℕ-product subfragment
-of `LawvereNatBT_ramified` is already equivalent to
+of `LawvereNatBTRamified` is already equivalent to
 `LawvereERCat`.  Remains deferred until after the full
-equivalence chain ships (end of Task 23 in the new plan).
+equivalence chain ships (end of Stage F).
 
-Natural checkpoints: end of ER-Primrec mini-phase
-(Task 13 complete, foldBTLOnCode packaged), end of Stage β
-(Task 20), end of Stage γ (Task 24), completion (Task 25).
+Natural checkpoints: end of Stage A (NatRamified defined),
+end of Stage B (first equivalence), end of Stage D (second
+equivalence at m=0), end of Stage E (composed chain +
+transport), end of Stage F (rename cleanup).
 
-The three-stage factorization's distinguishing property:
-every NatBT computation explicitly back-translates to an ER
-computation via Szudzik + bounded primitive-recursion
-(Task 14's `NatBTMor1.toER` invoking `ERMor1.boundedRec` from
-the ER-Primrec mini-phase), which makes the equivalence
-constructive without appealing to choice or classical
-reasoning, and preserves the `ERMor1` inductive as exactly
-the 7 Wikipedia generators.
+The two-stage factorization's distinguishing property: each
+back-translation supplies its own bounds via `siteBound`
+construction, so no constructor-level bound parameters appear
+in either theory.  Both equivalences are interp-preserving on
+the nose (no adequacy hypotheses leaking into the categorical
+layer); the chain is constructive without `Classical.choice`,
+and preserves the `ERMor1` inductive as exactly the 7
+Wikipedia generators.
 
 ## Phase 4g: Tree-Native ER Parallel Development (planned)
 

@@ -14,13 +14,6 @@ two-step factorization
 `LawvereNatBTCat`: the product of `(n₁, 0)` and `(n₂, 0)` is
 `(n₁ + n₂, 0)`, still in the subcategory; the terminal `(0, 0)` is
 also in the subcategory.
-
-**Version note**: this file operates on the *bounded* variant of
-the two-sort theory. `LawvereNatBT0Cat` is the subcategory of
-`LawvereNatBTCat` with BT arity 0. The two-stage equivalence
-`LawvereERCat ≃ LawvereNatBT_bounded ≃ LawvereNatBT_ramified` is
-documented in
-`docs/superpowers/specs/2026-04-18-lawvere-natbt-two-stage-design.md`.
 -/
 
 namespace GebLean

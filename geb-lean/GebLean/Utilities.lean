@@ -28,7 +28,6 @@ import GebLean.Utilities.Sigma
 import GebLean.Utilities.Slice
 import GebLean.Utilities.SpanFamily
 import GebLean.Utilities.SzudzikSeq
-import GebLean.Utilities.SzudzikSeqBTL
 import GebLean.Utilities.Tower
 import GebLean.Utilities.TwArrPresheaf
 import GebLean.Utilities.TwistedArrow

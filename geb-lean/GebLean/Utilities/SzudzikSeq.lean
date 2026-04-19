@@ -1,6 +1,7 @@
 import Mathlib.Data.Nat.Pairing
 import GebLean.LawvereBT
 import GebLean.LawvereBTPrimrec
+import GebLean.LawvereNatBT
 
 /-!
 # Szudzik Sequence Encoding and Tree-Fold Simulation
@@ -185,33 +186,6 @@ theorem foldBTLOnCode_odd {α : Type*}
     conv_lhs => rw [foldBTLOnCode]
     simp only [ho, if_false]
 
-/-- Adequate-or-zero variant of `Nat.foldBTLOnCode`.  Returns
-the structural trace value at `code` when the supplied bound is
-pointwise adequate (dominates the trace at every `j ≤ code`) and
-monotonic in the counter slot (`bound j ≤ bound code` for
-`j ≤ code`).  Returns `0` otherwise.  Mirrors the semantics of
-`ERMor1.foldBTLOnCode` in `Utilities/ERTreeArith.lean`. -/
-def foldBTLOnCodeAdequate
-    (baseLeaf : ℕ → ℕ) (stepNode : ℕ → ℕ → ℕ)
-    (bound : ℕ → ℕ) (code : ℕ) : ℕ :=
-  if (∀ j, j ≤ code →
-        Nat.foldBTLOnCode baseLeaf stepNode j ≤ bound j) ∧
-     (∀ j, j ≤ code → bound j ≤ bound code) then
-    Nat.foldBTLOnCode baseLeaf stepNode code
-  else 0
-
-/-- Adequate-or-zero variant of bounded primitive recursion on
-ℕ.  Returns `Nat.rec base step n` when the supplied bound is
-pointwise adequate and monotonic in the counter slot; `0`
-otherwise.  Mirrors `ERMor1.boundedRec` semantics. -/
-def boundedRecAdequate (base : ℕ) (step : ℕ → ℕ → ℕ)
-    (bound : ℕ → ℕ) (n : ℕ) : ℕ :=
-  if (∀ j, j ≤ n →
-        Nat.rec (motive := fun _ => ℕ) base step j ≤ bound j) ∧
-     (∀ j, j ≤ n → bound j ≤ bound n) then
-    Nat.rec (motive := fun _ => ℕ) base step n
-  else 0
-
 /-- Finite-arity mutumorphism: `k` mutually recursive
 functions folded simultaneously over a natural-number bound.
 
@@ -285,5 +259,43 @@ theorem mutuTreeFoldOnCode_encodeBT {α : Type} {m : ℕ}
       encodeBT from rfl]
     rw [Nat.mutuTreeFoldOnCode_succ, Nat.unpair_pair,
         hl, hr]
+
+/-- Correctness of `Nat.foldBTLOnCode` against `BTL.fold`:
+running the labeled course-of-values recursion on the Gödel
+code of a labeled tree agrees with the structural fold of
+that tree. -/
+theorem foldBTLOnCode_encode {α : Type*}
+    (baseLeaf : ℕ → α) (stepNode : α → α → α) (t : BTL) :
+    Nat.foldBTLOnCode baseLeaf stepNode (BTL.encode t) =
+      BTL.fold baseLeaf stepNode t := by
+  induction t with
+  | leaf k =>
+      change Nat.foldBTLOnCode baseLeaf stepNode (2 * k) =
+        baseLeaf k
+      match h2k : 2 * k with
+      | 0 =>
+          have hk : k = 0 := by omega
+          subst hk
+          simp
+      | m + 1 =>
+          have heven : (m + 1) % 2 = 0 := by omega
+          have hdiv : (m + 1) / 2 = k := by omega
+          rw [Nat.foldBTLOnCode_even baseLeaf stepNode
+            (m + 1) (Nat.succ_pos m) heven, hdiv]
+  | node l r ihl ihr =>
+      change Nat.foldBTLOnCode baseLeaf stepNode
+        (2 * Nat.pair l.encode r.encode + 1) =
+        stepNode (BTL.fold baseLeaf stepNode l)
+          (BTL.fold baseLeaf stepNode r)
+      set p := Nat.pair l.encode r.encode with hp
+      change Nat.foldBTLOnCode baseLeaf stepNode
+        (2 * p + 1) = _
+      have hodd : (2 * p + 1) % 2 ≠ 0 := by omega
+      have hdiv : (2 * p + 1) / 2 = p := by omega
+      rw [Nat.foldBTLOnCode_odd baseLeaf stepNode
+        (2 * p + 1) hodd, hdiv]
+      rw [show Nat.unpair p = (l.encode, r.encode) from
+        by rw [hp]; exact Nat.unpair_pair _ _]
+      rw [ihl, ihr]
 
 end GebLean
