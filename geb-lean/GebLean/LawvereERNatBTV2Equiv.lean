@@ -179,4 +179,112 @@ def erToNatBTV2Functor :
       NatBTMorNV2Quo.comp f.toNatBTV2 g.toNatBTV2
     exact ERMorNQuo.toNatBTV2_comp f g
 
+/-- Back-translation at the tuple level for `(n, 0) → (m, 0)`.
+Each `natComps i` is a `NatBTMor1V2 (n, 0) .nat`; `toER` gives an
+`ERMor1 (n + 0)`, which is `ERMor1 n` by definitional equality. -/
+def NatBTMorNV2.toER {n m : ℕ}
+    (f : NatBTMorNV2 (n, 0) (m, 0)) : ERMorN n m :=
+  fun i => (f.natComps i).toER
+
+/-- Back-translation preserves interpretation. -/
+theorem NatBTMorNV2.toER_interp {n m : ℕ}
+    (f : NatBTMorNV2 (n, 0) (m, 0)) (ctxN : Fin n → ℕ) :
+    (NatBTMorNV2.toER f).interp ctxN =
+      (f.interp ctxN Fin.elim0).1 := by
+  funext i
+  change (f.natComps i).toER.interp ctxN =
+    (f.natComps i).interp ctxN Fin.elim0
+  unfold NatBTMor1V2.interp
+  have happend :
+      (Fin.append ctxN
+        (fun j : Fin 0 => BTL.encode (Fin.elim0 j)) :
+        Fin (n + 0) → ℕ) = ctxN := by
+    funext j
+    refine Fin.addCases (fun k => ?_) (fun k => ?_) j
+    · change Fin.append ctxN _ (Fin.castAdd 0 k) = ctxN k
+      rw [Fin.append_left]
+    · exact k.elim0
+  rw [happend]
+
+/-- Quotient-level back-translation. -/
+def NatBTMorNV2Quo.toER {n m : ℕ}
+    (f : NatBTMorNV2Quo (n, 0) (m, 0)) :
+    ERMorNQuo n m :=
+  Quotient.liftOn f
+    (fun a => Quotient.mk _ a.toER)
+    (fun a b hab => by
+      apply Quotient.sound
+      intro ctxN
+      rw [NatBTMorNV2.toER_interp,
+        NatBTMorNV2.toER_interp]
+      have := hab ctxN Fin.elim0
+      rw [this])
+
+theorem NatBTMorNV2Quo.toER_id (n : ℕ) :
+    NatBTMorNV2Quo.toER (NatBTMorNV2Quo.id (n, 0)) =
+      ERMorNQuo.id n := by
+  apply Quotient.sound
+  intro ctxN
+  rw [NatBTMorNV2.toER_interp]
+  change ((NatBTMorNV2.id (n, 0)).interp ctxN Fin.elim0).1 =
+    (ERMorN.id n).interp ctxN
+  rw [NatBTMorNV2.interp_id]
+  rfl
+
+theorem NatBTMorNV2Quo.toER_comp {n m k : ℕ}
+    (f : NatBTMorNV2Quo (n, 0) (m, 0))
+    (g : NatBTMorNV2Quo (m, 0) (k, 0)) :
+    NatBTMorNV2Quo.toER (NatBTMorNV2Quo.comp f g) =
+      ERMorNQuo.comp f.toER g.toER := by
+  refine Quotient.inductionOn₂ f g ?_
+  intro a b
+  apply Quotient.sound
+  intro ctxN
+  rw [NatBTMorNV2.toER_interp]
+  change ((NatBTMorNV2.comp a b).interp ctxN Fin.elim0).1 =
+    (ERMorN.comp a.toER b.toER).interp ctxN
+  rw [NatBTMorNV2.interp_comp, ERMorN.interp_comp]
+  rw [NatBTMorNV2.toER_interp, NatBTMorNV2.toER_interp]
+  have hempty :
+      (a.interp ctxN Fin.elim0).2 = Fin.elim0 := by
+    funext i; exact i.elim0
+  rw [hempty]
+
+/-- The back functor `LawvereNatBTV20Cat ⥤ LawvereERCat`. -/
+def natBTV20ToERFunctor :
+    LawvereNatBTV20Cat ⥤ LawvereERCat where
+  obj nm := nm.obj.1
+  map {nm nm'} f := by
+    have hnm : nm.obj = (nm.obj.1, 0) := by
+      apply Prod.ext
+      · rfl
+      · exact nm.property
+    have hnm' : nm'.obj = (nm'.obj.1, 0) := by
+      apply Prod.ext
+      · rfl
+      · exact nm'.property
+    refine NatBTMorNV2Quo.toER (n := nm.obj.1) (m := nm'.obj.1) ?_
+    rw [← hnm, ← hnm']
+    exact f.hom
+  map_id nm := by
+    change NatBTMorNV2Quo.toER _ = ERMorNQuo.id _
+    have heq : (𝟙 nm : nm ⟶ nm).hom =
+        NatBTMorNV2Quo.id nm.obj := rfl
+    have hnm2 : nm.obj.2 = 0 := nm.property
+    rcases nm with ⟨⟨nval, mval⟩, hp⟩
+    cases hp
+    rw [heq]
+    exact NatBTMorNV2Quo.toER_id nval
+  map_comp {nm nm' nm''} f g := by
+    rcases nm with ⟨⟨n, _⟩, hp⟩
+    cases hp
+    rcases nm' with ⟨⟨m, _⟩, hp⟩
+    cases hp
+    rcases nm'' with ⟨⟨k, _⟩, hp⟩
+    cases hp
+    change NatBTMorNV2Quo.toER (NatBTMorNV2Quo.comp f.hom g.hom) =
+      ERMorNQuo.comp (NatBTMorNV2Quo.toER f.hom)
+        (NatBTMorNV2Quo.toER g.hom)
+    exact NatBTMorNV2Quo.toER_comp f.hom g.hom
+
 end GebLean
