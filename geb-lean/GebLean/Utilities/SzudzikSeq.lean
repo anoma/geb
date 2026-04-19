@@ -185,6 +185,33 @@ theorem foldBTLOnCode_odd {α : Type*}
     conv_lhs => rw [foldBTLOnCode]
     simp only [ho, if_false]
 
+/-- Adequate-or-zero variant of `Nat.foldBTLOnCode`.  Returns
+the structural trace value at `code` when the supplied bound is
+pointwise adequate (dominates the trace at every `j ≤ code`) and
+monotonic in the counter slot (`bound j ≤ bound code` for
+`j ≤ code`).  Returns `0` otherwise.  Mirrors the semantics of
+`ERMor1.foldBTLOnCode` in `Utilities/ERTreeArith.lean`. -/
+def foldBTLOnCodeAdequate
+    (baseLeaf : ℕ → ℕ) (stepNode : ℕ → ℕ → ℕ)
+    (bound : ℕ → ℕ) (code : ℕ) : ℕ :=
+  if (∀ j, j ≤ code →
+        Nat.foldBTLOnCode baseLeaf stepNode j ≤ bound j) ∧
+     (∀ j, j ≤ code → bound j ≤ bound code) then
+    Nat.foldBTLOnCode baseLeaf stepNode code
+  else 0
+
+/-- Adequate-or-zero variant of bounded primitive recursion on
+ℕ.  Returns `Nat.rec base step n` when the supplied bound is
+pointwise adequate and monotonic in the counter slot; `0`
+otherwise.  Mirrors `ERMor1.boundedRec` semantics. -/
+def boundedRecAdequate (base : ℕ) (step : ℕ → ℕ → ℕ)
+    (bound : ℕ → ℕ) (n : ℕ) : ℕ :=
+  if (∀ j, j ≤ n →
+        Nat.rec (motive := fun _ => ℕ) base step j ≤ bound j) ∧
+     (∀ j, j ≤ n → bound j ≤ bound n) then
+    Nat.rec (motive := fun _ => ℕ) base step n
+  else 0
+
 /-- Finite-arity mutumorphism: `k` mutually recursive
 functions folded simultaneously over a natural-number bound.
 
