@@ -54,6 +54,7 @@ import GebLean.LawvereNatBT
 import GebLean.LawvereNatBT0
 import GebLean.LawvereNatBTBackTrans
 import GebLean.LawvereNatBTBounded
+import GebLean.LawvereNatBTBounded0
 import GebLean.LawvereNatBTBoundedInterp
 import GebLean.LawvereNatBTBoundedQuot
 import GebLean.LawvereNatBTInterp
