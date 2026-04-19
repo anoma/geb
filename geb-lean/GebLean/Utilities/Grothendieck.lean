@@ -7476,27 +7476,183 @@ lemma unop_comp_fiber_grothendieck
   Grothendieck.comp_fiber h.unop g.unop
 
 /--
+Endpoint equality for `toHomUnop (𝟙 X)` as an `eqToHom`.  Extracted as a
+separate lemma so it can also serve as the `hom_id` eqToHom-proof in
+`toFunctorToData`.
+-/
+lemma toHomUnop_id_endpoints_eq (data : FunctorBetweenCovContraData G F)
+    (X : (Grothendieck G)ᵒᵖ) :
+    (data.fibFib X.unop.base).obj X.unop.fiber =
+      (F.map (data.baseFib.map (𝟙 X).unop.base).op).toFunctor.obj
+        ((data.fibFib X.unop.base).obj X.unop.fiber) := by
+  conv_lhs => rw [functorBetweenCovContraBaseHomEqIdProof G F
+    data.baseFib data.fibFib X.unop.base X.unop.fiber]
+  congr 2
+  have hG : (G.map (𝟙 X.unop.base)).toFunctor = 𝟭 _ :=
+    congrArg Cat.Hom.toFunctor (G.map_id _) |>.trans (Cat.id_eq_id _)
+  exact congrFun (congrArg Functor.obj hG) X.unop.fiber
+
+/--
 Collapsed form of `toHomUnop` at the identity: equals an `eqToHom` from the
 fibre at `X` to its transport through `F.map (baseFib.map (𝟙 _)).op`.
 -/
 lemma toHomUnop_id (data : FunctorBetweenCovContraData G F)
     (X : (Grothendieck G)ᵒᵖ) :
-    data.toHomUnop (𝟙 X) =
-      eqToHom (by
-        have h : (data.fibFib X.unop.base).obj X.unop.fiber =
-            (F.map (data.baseFib.map (𝟙 X.unop.base)).op).toFunctor.obj
-              ((data.fibFib X.unop.base).obj X.unop.fiber) := by
-          conv_lhs => rw [functorBetweenCovContraBaseHomEqIdProof G F
-            data.baseFib data.fibFib X.unop.base X.unop.fiber]
-          congr 2
-          have hG : (G.map (𝟙 X.unop.base)).toFunctor = 𝟭 _ :=
-            congrArg Cat.Hom.toFunctor (G.map_id _)
-              |>.trans (Cat.id_eq_id _)
-          exact congrFun (congrArg Functor.obj hG) X.unop.fiber
-        exact h) := by
+    data.toHomUnop (𝟙 X) = eqToHom (data.toHomUnop_id_endpoints_eq X) := by
   unfold toHomUnop
   rw [data.toHomUnop_id_fst X, data.toHomUnop_id_snd X]
   rw [eqToHom_trans]
+
+/-!
+### Composition coherence for `toHomUnop`
+
+At a composition `g ≫ h : X ⟶ Z` in `(Grothendieck G)ᵒᵖ`, `toHomUnop (g ≫ h)`
+decomposes as `toHomUnop h` followed by the `F.map (baseFib.map h.unop.base).op`-
+transport of `toHomUnop g`, followed by an `eqToHom`.
+-/
+
+/--
+Endpoint equality for `toHomUnop_comp`: the "split" form of transporting an
+object through `F.map (baseFib.map h.unop.base).op` then through
+`F.map (baseFib.map g.unop.base).op` equals the "fused" form of transporting
+through `F.map (baseFib.map (h.unop.base ≫ g.unop.base)).op`.
+-/
+lemma toHomUnop_comp_endpoints_eq (data : FunctorBetweenCovContraData G F)
+    {X Y Z : (Grothendieck G)ᵒᵖ} (g : X ⟶ Y) (h : Y ⟶ Z) :
+    (F.map (data.baseFib.map h.unop.base).op).toFunctor.obj
+        ((F.map (data.baseFib.map g.unop.base).op).toFunctor.obj
+          ((data.fibFib X.unop.base).obj X.unop.fiber)) =
+      (F.map (data.baseFib.map (g ≫ h).unop.base).op).toFunctor.obj
+        ((data.fibFib X.unop.base).obj X.unop.fiber) := by
+  have hbase : (g ≫ h).unop.base = h.unop.base ≫ g.unop.base :=
+    unop_comp_base_grothendieck g h
+  rw [hbase, data.baseFib.map_comp, op_comp, F.map_comp]
+  rfl
+
+/--
+Distributivity of `(fibFib X.unop.base).map` over the three-piece
+composition exposed by `Grothendieck.comp_fiber`.
+-/
+lemma fibFib_map_comp_fiber (data : FunctorBetweenCovContraData G F)
+    {X Y Z : (Grothendieck G)ᵒᵖ} (g : X ⟶ Y) (h : Y ⟶ Z) :
+    (data.fibFib X.unop.base).map (g ≫ h).unop.fiber =
+      eqToHom (by
+        have hG := congrArg Cat.Hom.toFunctor
+          (G.map_comp h.unop.base g.unop.base)
+        have hC := Cat.Hom.comp_toFunctor
+          (G.map h.unop.base) (G.map g.unop.base)
+        have h1 :=
+          congrFun (congrArg Functor.obj (hG.trans hC)) Z.unop.fiber
+        exact congrArg (data.fibFib X.unop.base).obj h1) ≫
+      (data.fibFib X.unop.base).map
+        ((G.map g.unop.base).toFunctor.map h.unop.fiber) ≫
+      (data.fibFib X.unop.base).map g.unop.fiber := by
+  rw [unop_comp_fiber_grothendieck]
+  simp
+
+/--
+Collapsed form of `toHomUnop` at a composition `g ≫ h` in the opposite category
+(so `(g ≫ h).unop = h.unop ≫ g.unop` in `Grothendieck G`).  Decomposes as
+`toHomUnop h` followed by the `F.map (baseFib.map h.unop.base).op`-transport of
+`toHomUnop g`, adjusted by the `eqToHom` from the composition endpoint equality.
+-/
+lemma toHomUnop_comp (data : FunctorBetweenCovContraData G F)
+    {X Y Z : (Grothendieck G)ᵒᵖ} (g : X ⟶ Y) (h : Y ⟶ Z) :
+    data.toHomUnop (g ≫ h) =
+      data.toHomUnop h ≫
+        (F.map (data.baseFib.map h.unop.base).op).toFunctor.map
+          (data.toHomUnop g) ≫
+        eqToHom (data.toHomUnop_comp_endpoints_eq g h) := by
+  unfold toHomUnop
+  -- Distribute the fiber-side (fibFib X.unop.base).map over the three-piece
+  -- composition from Grothendieck.comp_fiber.
+  rw [data.fibFib_map_comp_fiber g h]
+  -- Apply baseHomComp via show-rewrite with explicit RHS to dodge
+  -- implicit-binding issues.
+  conv_lhs =>
+    rw [show data.fibHomCrossApp (g ≫ h).unop.base Z.unop.fiber =
+        data.fibHomCrossApp h.unop.base Z.unop.fiber ≫
+          (F.map (data.baseFib.map h.unop.base).op).toFunctor.map
+            (data.fibHomCrossApp g.unop.base
+              ((G.map h.unop.base).toFunctor.obj Z.unop.fiber)) ≫
+          eqToHom
+            (functorBetweenCovContraBaseHomEqCompProof G F
+              data.baseFib data.fibFib h.unop.base g.unop.base
+              Z.unop.fiber) from
+      data.baseHomComp h.unop.base g.unop.base Z.unop.fiber]
+  -- Expand the outer F.map over the three-piece (fibFib X).map composition.
+  simp only [Functor.map_comp, Category.assoc, eqToHom_map]
+  -- Cancel the leading fibHomCrossApp h.unop.base on both sides.
+  congr 1
+  -- Fuse the two adjacent (F.map _).map applications on the RHS into a
+  -- single (F.map _).map of a composition, apply fibHomCrossNat inside, and
+  -- split back out.
+  have hmap :
+      (F.map (data.baseFib.map h.unop.base).op).toFunctor.map
+          ((data.fibFib Y.unop.base).map h.unop.fiber) ≫
+        (F.map (data.baseFib.map h.unop.base).op).toFunctor.map
+          (data.fibHomCrossApp g.unop.base Y.unop.fiber) =
+      (F.map (data.baseFib.map h.unop.base).op).toFunctor.map
+          (data.fibHomCrossApp g.unop.base
+            ((G.map h.unop.base).toFunctor.obj Z.unop.fiber)) ≫
+        (F.map (data.baseFib.map h.unop.base).op).toFunctor.map
+          ((F.map (data.baseFib.map g.unop.base).op).toFunctor.map
+            ((data.fibFib X.unop.base).map
+              ((G.map g.unop.base).toFunctor.map h.unop.fiber))) := by
+    rw [← Functor.map_comp, data.fibHomCrossNat g.unop.base h.unop.fiber,
+      Functor.map_comp]
+  simp only [← Category.assoc]
+  rw [hmap]
+  simp only [Category.assoc]
+  -- Cancel the (F.map H).map (fibHomCrossApp g _) factor on both sides.
+  congr 1
+  -- Remaining equality: fused vs split F.map form, with eqToHom transport.
+  -- Transform the LHS's fused form into the split form via F.map_comp.
+  have hF :
+      (F.map (data.baseFib.map (g ≫ h).unop.base).op).toFunctor =
+        (F.map (data.baseFib.map g.unop.base).op).toFunctor ⋙
+          (F.map (data.baseFib.map h.unop.base).op).toFunctor := by
+    change
+        (F.map (data.baseFib.map (h.unop.base ≫ g.unop.base)).op).toFunctor = _
+    rw [data.baseFib.map_comp, op_comp, F.map_comp]
+    rfl
+  -- Apply hF to rewrite both `.map` applications on the LHS.
+  rw [Functor.congr_hom hF, Functor.congr_hom hF]
+  simp only [Functor.comp_map, Category.assoc, eqToHom_trans_assoc,
+    eqToHom_refl, Category.id_comp]
+
+/--
+The `FunctorToData` packaging of a `FunctorBetweenCovContraData` suitable for
+feeding into `Grothendieck.functorTo` at source `(Grothendieck G)ᵒᵖ` and target
+`F ⋙ Cat.opFunctor`.
+-/
+def toFunctorToData (data : FunctorBetweenCovContraData G F) :
+    Grothendieck.FunctorToData (F ⋙ Cat.opFunctor)
+      (D := (Grothendieck G)ᵒᵖ) where
+  baseFunc := data.toBaseFunc
+  fib X := data.toFib X
+  hom g := Quiver.Hom.op (data.toHomUnop g)
+  hom_id X := by
+    change Quiver.Hom.op (data.toHomUnop (𝟙 X)) = eqToHom _
+    rw [data.toHomUnop_id X, eqToHom_op]
+  hom_comp {X Y Z} g h := by
+    change Quiver.Hom.op (data.toHomUnop (g ≫ h)) = _
+    rw [data.toHomUnop_comp g h]
+    -- Distribute Quiver.Hom.op over the three-piece composition (in opposite
+    -- category, composition reverses), then collapse eqToHom.op and the
+    -- opped functor-map via Functor.op.
+    simp only [op_comp, eqToHom_op, Category.assoc, Functor.comp_map,
+      Cat.opFunctor_map]
+    rfl
+
+/--
+Construct a functor `Grothendieck G ⥤ (grothendieckContraFunctor D).obj F`
+from bundled `FunctorBetweenCovContraData`.  Constructed as the `.rightOp`
+of a `Grothendieck.functorTo` built from `toFunctorToData`.
+-/
+def toFunctor (data : FunctorBetweenCovContraData G F) :
+    Grothendieck G ⥤ (grothendieckContraFunctor D).obj F :=
+  (Grothendieck.functorTo (F ⋙ Cat.opFunctor) data.toFunctorToData).rightOp
 
 end FunctorBetweenCovContraData
 
