@@ -48,16 +48,11 @@ import GebLean.LawvereERBoundComputable
 import GebLean.LawvereERDelta
 import GebLean.LawvereERInterp
 import GebLean.LawvereERLex
-import GebLean.LawvereERNatBTBoundedEquiv
 import GebLean.LawvereERQuot
 import GebLean.LawvereERTetration
 import GebLean.LawvereNatBT
 import GebLean.LawvereNatBT0
 import GebLean.LawvereNatBTBackTrans
-import GebLean.LawvereNatBTBounded
-import GebLean.LawvereNatBTBounded0
-import GebLean.LawvereNatBTBoundedInterp
-import GebLean.LawvereNatBTBoundedQuot
 import GebLean.LawvereNatBTInterp
 import GebLean.LawvereNatBTQuot
 import GebLean.LawvereTreeER

@@ -604,9 +604,68 @@ Implementation plan:
 * **Stage 6** (Tasks 6.1-6.3): Phase 4f transport + tests +
   tracker.
 
+**Fourth design pivot (2026-04-19, morning)**: Option E was
+implemented through Stage 5.2.  The equivalence assembly
+required either restricting to a well-formed subcategory or
+extending the back-translation to handle `foldBTBT` and BT
+contexts.  Re-examination surfaced a more disciplined
+architecture: instead of designing the NatBT inductive
+top-down and trying to back-translate, build each NatBT
+constructor as a *named ER implementation* — implement first,
+expose afterwards.  Under this discipline:
+
+* The categorical equivalence with `LawvereERCat` is preserved
+  by construction: every NatBT constructor IS a named ER
+  expression.
+* `interp` is derived from `toER` (`(t.toER).interp combinedCtx`
+  with sort-aware decoding), eliminating the Layer 0 Nat-level
+  helpers and their soundness theorems.
+* The `LawvereERWrap` workaround disappears once the
+  `@[reducible]` aliases (`LawvereERCat`, `LawvereBTQuotCat`,
+  `LawvereBTCat`, `LawvereTreeERCat`) are made non-reducible,
+  eliminating the typeclass conflict.
+* `foldBTBT` becomes implementable in the back-translation
+  because BT context slots are encoded as ℕ slots in a
+  wider-arity ER term.
+* No more "settling" or "well-formed subcategory" gymnastics —
+  if a constructor isn't ER-implementable, we don't add it.
+* The API grows incrementally: each new constructor is added
+  only after its ER implementation is in hand.
+
+The eight Option E commits (`bf33e2d0`..`b5f8f7c9`) were
+reverted.  Implementation infrastructure built earlier in this
+workstream — particularly the `Utilities/ERArith.lean`,
+`Utilities/ERTreeArith.lean`, and `LawvereERBoundComputable.lean`
+files containing `boundedRec`, `foldBTLOnCode`, `towerHeight`,
+`towerER`, `towerBound`, `btlEncodeLeaf`, `btlEncodeNode`, and
+many other ER-derived primitives — is exactly what the new
+bottom-up design uses as its named-ER-implementation library.
+
+Design spec:
+`docs/superpowers/specs/2026-04-19-bottom-up-natbt-design.md`
+(local, gitignored).
+
+Implementation plan:
+`docs/superpowers/plans/2026-04-19-bottom-up-natbt.md` (local,
+gitignored).  ~17 tasks across five phases:
+
+* **Phase A** (3 tasks): drop `@[reducible]` from the four
+  ℕ-aliased Lawvere categories; fix breakage.
+* **Phase C** (7 tasks): build `LawvereNatBTV2.lean` —
+  inductive (foundational + BT structural + bounded recursive
+  constructors), `toER` structural translation, derived
+  `interp`, per-constructor `@[simp]` lemmas.
+* **Phase D** (3 tasks): quotient + category + products +
+  faithful interp functor.
+* **Phase E** (3 tasks): forward functor (lift of ER
+  constructors), back functor (case-split lookup of `toER`),
+  equivalence assembly (trivial by construction).
+* **Phase F** (3 tasks): Layer 1 auto-bound combinators +
+  tests + tracker update.
+
 **Current resume point**: execute the plan via
-`superpowers:subagent-driven-development`.  Starts at Stage 1
-Task 1.1 (`Nat.foldBTLOnCodeERStyle` definition).  Proceed
+`superpowers:subagent-driven-development`.  Starts at Phase A
+Task A.1 (drop `@[reducible]` from the four aliases).  Proceed
 directly on branch `terence/syntax`.
 
 **Task 14.5-extended (deferred)**: BT-only adequacy research
