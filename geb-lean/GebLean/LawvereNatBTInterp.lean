@@ -9,6 +9,14 @@ Sends an object `(n, m)` to the set `(Fin n → ℕ) × (Fin m → BTL)`
 and each morphism class to its componentwise interpretation.
 Faithfulness witnesses that extensionally distinct morphism
 classes produce distinct interpretations.
+
+**Version note**: this file operates on the *bounded* variant of
+the two-sort theory. The interpretation functor is defined on
+`LawvereNatBTCat`, which uses bounded `foldBTNat` and `foldBTBT`
+with explicit bound parameters. The two-stage equivalence
+`LawvereERCat ≃ LawvereNatBT_bounded ≃ LawvereNatBT_ramified` is
+documented in
+`docs/superpowers/specs/2026-04-18-lawvere-natbt-two-stage-design.md`.
 -/
 
 namespace GebLean

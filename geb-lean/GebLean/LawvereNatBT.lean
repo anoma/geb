@@ -14,6 +14,14 @@ combined theory is equivalent as a category to `LawvereER`.
 
 See `docs/superpowers/specs/2026-04-17-lawvere-natbt-design.md`
 for rationale and design decisions.
+
+**Version note**: this file defines the *bounded* variant of the
+two-sort theory. `foldBTNat` and `foldBTBT` carry explicit `bound`
+parameters (added in Stage β.b). The ramified variant is in
+`LawvereNatBTRamified*.lean`. The two-stage equivalence
+`LawvereERCat ≃ LawvereNatBT_bounded ≃ LawvereNatBT_ramified`
+is documented in
+`docs/superpowers/specs/2026-04-18-lawvere-natbt-two-stage-design.md`.
 -/
 
 namespace GebLean

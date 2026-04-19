@@ -13,6 +13,13 @@ predicate `isFoldFree` isolates the sub-language without
 through composition constructors.  Correctness theorems
 `toER_interp` and `toER_bt_interp` are proved by mutual
 induction.  BT outputs are compared under `BTL.encode`.
+
+**Version note**: this file back-translates the *bounded* variant
+of the two-sort theory. The fold-free fragment excludes the bounded
+`foldBTNat` and `foldBTBT` operations (those with explicit bound
+parameters). The two-stage equivalence `LawvereERCat ≃
+LawvereNatBT_bounded ≃ LawvereNatBT_ramified` is documented in
+`docs/superpowers/specs/2026-04-18-lawvere-natbt-two-stage-design.md`.
 -/
 
 namespace GebLean

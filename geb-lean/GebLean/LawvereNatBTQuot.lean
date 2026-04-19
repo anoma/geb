@@ -10,6 +10,13 @@ interpretations.  Subsequent tasks build the `NatBTMorNQuo`
 quotient type, identity and composition, the category instance
 `LawvereNatBTCat`, and the `HasChosenFiniteProducts`
 structure.
+
+**Version note**: this file operates on the *bounded* variant of
+the two-sort theory. The quotient construction uses morphisms with
+bounded `foldBTNat` and `foldBTBT` operations. The two-stage
+equivalence `LawvereERCat ≃ LawvereNatBT_bounded ≃
+LawvereNatBT_ramified` is documented in
+`docs/superpowers/specs/2026-04-18-lawvere-natbt-two-stage-design.md`.
 -/
 
 namespace GebLean
