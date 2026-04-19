@@ -14,6 +14,7 @@ import GebLean.Utilities.Fintype
 import GebLean.Utilities.Graph
 import GebLean.Utilities.Grothendieck
 import GebLean.Utilities.NatERStyle
+import GebLean.Utilities.NatERStyleSoundness
 import GebLean.Utilities.Opposites
 import GebLean.Utilities.OverCategoryEquiv
 import GebLean.Utilities.PolyCombinators
