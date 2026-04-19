@@ -7359,6 +7359,150 @@ end GrothendieckContraFunctor
 end GrothendieckContraFunctor
 
 /-!
+### Extractor for `FunctorBetweenCovContraData`
+
+Construct a functor `Grothendieck G ⥤ (grothendieckContraFunctor D).obj F`
+from bundled `FunctorBetweenCovContraData`.  Defined here (rather than with
+the abbrevs and structure) because it refers to the `grothendieckContraFunctor`
+and `GrothendieckContraFunctor.{mkObj,mkHom}` API declared above.
+-/
+
+section FunctorBetweenCovContraExtractor
+
+universe vC vD uC uD
+
+variable {C : Type uC} [Category.{vC} C] {G : C ⥤ Cat.{vC, uC}}
+variable {D : Type uD} [Category.{vD} D] {F : Dᵒᵖ ⥤ Cat.{vD, uD}}
+
+namespace FunctorBetweenCovContraData
+
+/--
+Base functor for the `FunctorToData` repackaging: sends `op X : (Grothendieck G)ᵒᵖ`
+to `op (data.baseFib.obj X.base) : Dᵒᵖ`, obtained by forgetting the source fibre
+and then opposite-applying the user-provided base functor.
+-/
+def toBaseFunc (data : FunctorBetweenCovContraData G F) :
+    (Grothendieck G)ᵒᵖ ⥤ Dᵒᵖ :=
+  (Grothendieck.forget G).op ⋙ data.baseFib.op
+
+/--
+Fibre object for the `FunctorToData` repackaging.
+-/
+def toFib (data : FunctorBetweenCovContraData G F)
+    (X : (Grothendieck G)ᵒᵖ) :
+    (F ⋙ Cat.opFunctor).obj (data.toBaseFunc.obj X) :=
+  Opposite.op ((data.fibFib X.unop.base).obj X.unop.fiber)
+
+/--
+The pre-op fibre morphism: a morphism in `F.obj (op (baseFib.obj Y.unop.base))`
+from `(data.fibFib Y.unop.base).obj Y.unop.fiber` to the fibre of the
+transported source.
+-/
+def toHomUnop (data : FunctorBetweenCovContraData G F)
+    {X Y : (Grothendieck G)ᵒᵖ} (g : X ⟶ Y) :
+    (data.fibFib Y.unop.base).obj Y.unop.fiber ⟶
+      (F.map (data.baseFib.map g.unop.base).op).toFunctor.obj
+        ((data.fibFib X.unop.base).obj X.unop.fiber) :=
+  data.fibHomCrossApp g.unop.base Y.unop.fiber ≫
+    (F.map (data.baseFib.map g.unop.base).op).toFunctor.map
+      ((data.fibFib X.unop.base).map g.unop.fiber)
+
+/-!
+### Identity coherence for `toHomUnop`
+
+At the identity, `toHomUnop (𝟙 X)` reduces to a chain of `eqToHom` s.
+We prove the reduction by unfolding the two composed factors separately.
+-/
+
+/--
+The first factor of `toHomUnop (𝟙 X)` is `fibHomCrossApp (𝟙 X.unop.base)
+X.unop.fiber`, which `data.baseHomId` identifies with an `eqToHom`.
+-/
+lemma toHomUnop_id_fst (data : FunctorBetweenCovContraData G F)
+    (X : (Grothendieck G)ᵒᵖ) :
+    data.fibHomCrossApp (𝟙 X).unop.base X.unop.fiber =
+      eqToHom
+        (functorBetweenCovContraBaseHomEqIdProof G F data.baseFib data.fibFib
+          X.unop.base X.unop.fiber) :=
+  data.baseHomId X.unop.base X.unop.fiber
+
+/--
+The second factor of `toHomUnop (𝟙 X)` reduces to an `eqToHom`, because
+`(𝟙 X).unop.fiber` is an `eqToHom` (by `Grothendieck.id_fiber`) and both
+`data.fibFib`-mapping and `F.map`-mapping preserve `eqToHom`.
+-/
+lemma toHomUnop_id_snd (data : FunctorBetweenCovContraData G F)
+    (X : (Grothendieck G)ᵒᵖ) :
+    (F.map (data.baseFib.map (𝟙 X).unop.base).op).toFunctor.map
+        ((data.fibFib X.unop.base).map (𝟙 X).unop.fiber) =
+      eqToHom (by
+        change (F.map _).toFunctor.obj
+            ((data.fibFib X.unop.base).obj
+              ((G.map (𝟙 X.unop.base)).toFunctor.obj X.unop.fiber)) =
+          (F.map _).toFunctor.obj
+            ((data.fibFib X.unop.base).obj X.unop.fiber)
+        congr 2
+        exact congrArg (fun (f : _ ⟶ _) =>
+          (Cat.Hom.toFunctor f).obj X.unop.fiber) (G.map_id _)) := by
+  change (F.map _).toFunctor.map
+      ((data.fibFib X.unop.base).map
+        (Grothendieck.Hom.fiber (𝟙 X.unop))) = _
+  rw [Grothendieck.id_fiber, eqToHom_map, eqToHom_map]
+
+/-!
+### Composition coherence for `toHomUnop`
+
+At a composition `g ≫ h` (in the opposite category, so unop'd to
+`h.unop ≫ g.unop` in `Grothendieck G`), `toHomUnop (g ≫ h)` reshuffles into
+`toHomUnop g ∘ (transported) toHomUnop h` up to `eqToHom`.
+-/
+
+/--
+Unfolding of the composition's base: `(g ≫ h).unop.base = h.unop.base ≫ g.unop.base`.
+-/
+lemma unop_comp_base_grothendieck
+    {X Y Z : (Grothendieck G)ᵒᵖ} (g : X ⟶ Y) (h : Y ⟶ Z) :
+    (g ≫ h).unop.base = h.unop.base ≫ g.unop.base := rfl
+
+/--
+Unfolding of the composition's fibre, split to expose the `eqToHom` prefix
+coming from `Grothendieck.comp_fiber`.
+-/
+lemma unop_comp_fiber_grothendieck
+    {X Y Z : (Grothendieck G)ᵒᵖ} (g : X ⟶ Y) (h : Y ⟶ Z) :
+    (g ≫ h).unop.fiber =
+      eqToHom (by simp) ≫
+        (G.map g.unop.base).toFunctor.map h.unop.fiber ≫ g.unop.fiber :=
+  Grothendieck.comp_fiber h.unop g.unop
+
+/--
+Collapsed form of `toHomUnop` at the identity: equals an `eqToHom` from the
+fibre at `X` to its transport through `F.map (baseFib.map (𝟙 _)).op`.
+-/
+lemma toHomUnop_id (data : FunctorBetweenCovContraData G F)
+    (X : (Grothendieck G)ᵒᵖ) :
+    data.toHomUnop (𝟙 X) =
+      eqToHom (by
+        have h : (data.fibFib X.unop.base).obj X.unop.fiber =
+            (F.map (data.baseFib.map (𝟙 X.unop.base)).op).toFunctor.obj
+              ((data.fibFib X.unop.base).obj X.unop.fiber) := by
+          conv_lhs => rw [functorBetweenCovContraBaseHomEqIdProof G F
+            data.baseFib data.fibFib X.unop.base X.unop.fiber]
+          congr 2
+          have hG : (G.map (𝟙 X.unop.base)).toFunctor = 𝟭 _ :=
+            congrArg Cat.Hom.toFunctor (G.map_id _)
+              |>.trans (Cat.id_eq_id _)
+          exact congrFun (congrArg Functor.obj hG) X.unop.fiber
+        exact h) := by
+  unfold toHomUnop
+  rw [data.toHomUnop_id_fst X, data.toHomUnop_id_snd X]
+  rw [eqToHom_trans]
+
+end FunctorBetweenCovContraData
+
+end FunctorBetweenCovContraExtractor
+
+/-!
 ### FunctorFromData: Bundled data for functors FROM the contravariant
 Grothendieck construction (mathlib-`op`-based version).
 
