@@ -162,6 +162,177 @@ def presheafPRACatBifunctorUncurried :
     presheafPRACatBifunctor.{u_I, v_I, u_J, v_J, w_I, w'}
 
 /--
+The `(Cat × Cat)ᵒᵖ`-indexed form of `presheafPRACatBifunctorUncurried`,
+obtained by precomposing with `prodOpEquiv.functor :
+(Cat × Cat)ᵒᵖ ≌ Catᵒᵖ × Catᵒᵖ`.  Used as the base functor for
+`FunctorFromDataContra`-based natural transformations.
+-/
+def presheafPRACatBifunctorUncurriedOp :
+    (Cat.{v_J, u_J} × Cat.{v_I, u_I})ᵒᵖ ⥤
+      Cat.{max u_I u_J w_I w',
+        max u_I u_J v_I v_J (w_I + 1) (w' + 1)} :=
+  (prodOpEquiv (C := Cat.{v_J, u_J})
+      (D := Cat.{v_I, u_I})).functor ⋙
+    presheafPRACatBifunctorUncurried.{u_I, v_I, u_J, v_J, w_I, w'}
+
+/--
+Per-`(J, I)` fibre functor for `sourceData`.  Sends
+`P : J ⥤ CoprodCovarRepCat (presheafCatFunctor.obj (op I))` to the
+category of elements of its positions presheaf
+`P ⋙ ccrNewIndexFunctor _`, universe-widened so that all fibres live
+in the same `Cat` universe.
+
+Factored out so that its universe annotations are visible.
+-/
+private def sourceDataFib
+    (JI : Cat.{v_J, u_J} × Cat.{v_I, u_I}) :
+    ↑(presheafPRACatBifunctorUncurriedOp.{u_I, v_I, u_J, v_J, w_I, w'}.obj
+        (Opposite.op JI)) ⥤
+      Cat.{max u_I u_J v_J w_I w',
+        max u_I u_J v_I v_J (w_I + 1) (w' + 1)} :=
+  (Functor.whiskeringRight JI.1.α _ _).obj
+      (ccrNewIndexFunctor.{max v_I u_I (w_I + 1),
+        max u_I w_I, w'}
+        (↑(presheafCatFunctor.{u_I, v_I, w_I}.obj
+          (Opposite.op JI.2)))) ⋙
+    Functor.elementsFunctor ⋙
+    catULiftFunctor2.{max u_J w', v_J, max u_I u_J w_I w',
+      max u_I v_I v_J (w_I + 1) (w' + 1)}
+
+/--
+The composite `(F.map f.op).obj P ⋙ ccrNewIndexFunctor _` equals
+`f_J ⋙ P ⋙ ccrNewIndexFunctor _` definitionally — the I-side
+transport on PRAs preserves `ccrNewIndexFunctor` on the nose, by the
+same property underlying `ccrNewIndexNat`.
+-/
+private theorem sourceData_base_change_eq
+    {JI₁ JI₂ : Cat.{v_J, u_J} × Cat.{v_I, u_I}}
+    (f : JI₁ ⟶ JI₂)
+    (P : ↑(presheafPRACatBifunctorUncurriedOp.{u_I, v_I, u_J, v_J,
+        w_I, w'}.obj (Opposite.op JI₂))) :
+    ((presheafPRACatBifunctorUncurriedOp.{u_I, v_I, u_J, v_J,
+        w_I, w'}.map f.op).toFunctor.obj P) ⋙
+        ccrNewIndexFunctor.{max v_I u_I (w_I + 1), max u_I w_I, w'}
+          (↑(presheafCatFunctor.{u_I, v_I, w_I}.obj
+            (Opposite.op JI₁.2))) =
+      f.1.toFunctor ⋙ P ⋙
+        ccrNewIndexFunctor.{max v_I u_I (w_I + 1), max u_I w_I, w'}
+          (↑(presheafCatFunctor.{u_I, v_I, w_I}.obj
+            (Opposite.op JI₂.2))) :=
+  rfl
+
+/--
+Per-morphism component of `sourceData.hom`.  For `f : JI₁ ⟶ JI₂`
+in `Cat × Cat` and `P : F.obj (op JI₂)`, the functor
+`(sourceDataFib JI₁).obj ((F.map f.op).obj P) ⟶ (sourceDataFib JI₂).obj P`
+obtained by widening `elementsPrecomp f.1.toFunctor`.
+-/
+private def sourceDataHomApp
+    {JI₁ JI₂ : Cat.{v_J, u_J} × Cat.{v_I, u_I}} (f : JI₁ ⟶ JI₂)
+    (P : ↑(presheafPRACatBifunctorUncurriedOp.{u_I, v_I, u_J, v_J,
+        w_I, w'}.obj (Opposite.op JI₂))) :
+    (sourceDataFib.{u_I, v_I, u_J, v_J, w_I, w'} JI₁).obj
+        ((presheafPRACatBifunctorUncurriedOp.{u_I, v_I, u_J, v_J,
+          w_I, w'}.map f.op).toFunctor.obj P) ⟶
+      (sourceDataFib.{u_I, v_I, u_J, v_J, w_I, w'} JI₂).obj P :=
+  (catULiftFunctor2.{max u_J w', v_J, max u_I u_J w_I w',
+    max u_I v_I v_J (w_I + 1) (w' + 1)}).map
+      (CategoryTheory.elementsPrecomp
+        (F := P ⋙ ccrNewIndexFunctor.{max v_I u_I (w_I + 1),
+          max u_I w_I, w'}
+          (↑(presheafCatFunctor.{u_I, v_I, w_I}.obj
+            (Opposite.op JI₂.2))))
+        f.1.toFunctor).toCatHom
+
+/--
+Per-morphism natural-transformation component of `sourceData.hom`.
+-/
+private def sourceDataHom
+    {JI₁ JI₂ : Cat.{v_J, u_J} × Cat.{v_I, u_I}} (f : JI₁ ⟶ JI₂) :
+    (presheafPRACatBifunctorUncurriedOp.{u_I, v_I, u_J, v_J, w_I,
+      w'}.map f.op).toFunctor ⋙
+      sourceDataFib.{u_I, v_I, u_J, v_J, w_I, w'} JI₁ ⟶
+      sourceDataFib.{u_I, v_I, u_J, v_J, w_I, w'} JI₂ where
+  app P := sourceDataHomApp.{u_I, v_I, u_J, v_J, w_I, w'} f P
+  naturality _ _ _ := by
+    apply Cat.Hom.ext
+    rfl
+
+/--
+Identity coherence for `sourceDataHom`.
+-/
+private lemma sourceData_hom_id
+    (JI : Cat.{v_J, u_J} × Cat.{v_I, u_I}) :
+    sourceDataHom.{u_I, v_I, u_J, v_J, w_I, w'} (𝟙 JI) =
+      eqToHom (by
+        rw [show (𝟙 JI : JI ⟶ JI).op = 𝟙 (Opposite.op JI) from rfl]
+        rw [presheafPRACatBifunctorUncurriedOp.{u_I, v_I, u_J, v_J,
+          w_I, w'}.map_id]
+        rfl) := by
+  apply NatTrans.ext
+  funext P
+  simp only [sourceDataHom, sourceDataHomApp,
+    CategoryTheory.eqToHom_app]
+  apply Cat.Hom.ext
+  refine CategoryTheory.Functor.ext ?_ ?_
+  · intro _; rfl
+  · intros _ _ _
+    simp only [eqToHom_refl, Category.id_comp, Category.comp_id]
+    rfl
+
+/--
+Composition coherence for `sourceDataHom`.
+-/
+private lemma sourceData_hom_comp
+    {JI₁ JI₂ JI₃ : Cat.{v_J, u_J} × Cat.{v_I, u_I}}
+    (f : JI₁ ⟶ JI₂) (g : JI₂ ⟶ JI₃) :
+    sourceDataHom.{u_I, v_I, u_J, v_J, w_I, w'} (f ≫ g) =
+      eqToHom (by
+        rw [show (f ≫ g : JI₁ ⟶ JI₃).op = g.op ≫ f.op from rfl]
+        rw [presheafPRACatBifunctorUncurriedOp.{u_I, v_I, u_J, v_J,
+          w_I, w'}.map_comp]
+        rfl) ≫
+      Functor.whiskerLeft
+        (presheafPRACatBifunctorUncurriedOp.{u_I, v_I, u_J, v_J,
+          w_I, w'}.map g.op).toFunctor
+        (sourceDataHom.{u_I, v_I, u_J, v_J, w_I, w'} f) ≫
+      sourceDataHom.{u_I, v_I, u_J, v_J, w_I, w'} g := by
+  apply NatTrans.ext
+  funext P
+  simp only [sourceDataHom, sourceDataHomApp,
+    CategoryTheory.eqToHom_app, NatTrans.comp_app,
+    Functor.whiskerLeft_app]
+  apply Cat.Hom.ext
+  refine CategoryTheory.Functor.ext ?_ ?_
+  · intro _; rfl
+  · intros _ _ _
+    simp only [eqToHom_refl, Category.id_comp, Category.comp_id]
+    rfl
+
+/--
+Source data for the directions natural transformation, packaged via
+the contravariant `FunctorFromDataContra` infrastructure.
+
+At each pair `(J, I) : Cat × Cat`, the fibre is a functor
+`PresheafPRACat I J ⥤ Cat` sending `P` to
+`(P ⋙ ccrNewIndexFunctor (presheafCat I)).Elements` universe-widened
+to land in a common `Cat`.  The morphism action on `f : (J₁, I₁) ⟶
+(J₂, I₂)` reduces — via the on-the-nose collapse of the I-side
+transport underlying `ccrNewIndexNat` — to `elementsPrecomp f.1`
+widened through `catULiftFunctor2`.
+-/
+private def sourceData :
+    FunctorFromDataContra
+      presheafPRACatBifunctorUncurriedOp.{u_I, v_I, u_J, v_J, w_I, w'}
+      (T := Cat.{max u_I u_J v_J w_I w',
+        max u_I u_J v_I v_J (w_I + 1) (w' + 1)}) where
+  fib JI := sourceDataFib.{u_I, v_I, u_J, v_J, w_I, w'} JI
+  hom f := sourceDataHom.{u_I, v_I, u_J, v_J, w_I, w'} f
+  hom_id _ := sourceData_hom_id.{u_I, v_I, u_J, v_J, w_I, w'} _
+  hom_comp _ _ :=
+    sourceData_hom_comp.{u_I, v_I, u_J, v_J, w_I, w'} _ _
+
+/--
 Target bifunctor of `praPositionsNat`.  Sends each
 `(J, I) : Cat.{v_J, u_J}ᵒᵖ × Cat.{v_I, u_I}ᵒᵖ` to the
 universe-widened form of `Jᵒᵖ ⥤ Type w'`, constant in `I`.
