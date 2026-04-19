@@ -505,8 +505,8 @@ analysis surfaced an irreducible impedance mismatch.
 **Second design pivot (2026-04-18, evening)**: closer reading of
 `ERMor1.boundedSearch`'s off-conditions behavior revealed that
 ER's `foldBTLOnCode` returns
-`min(β-of-(boundedRecRange + 1), bound)` (a Gödel-arithmetic
-garbage value) when the user-supplied bound is not pointwise
+`min(β-of-(boundedRecRange + 1), bound)` (a witness-search
+fallback value) when the user-supplied bound is not pointwise
 adequate or not counter-monotonic.  No clean choice for the
 bounded theory's interp at the same off-conditions matches
 that semantics on the nose:
@@ -526,71 +526,106 @@ ramified intermediate instead:
 LawvereERCat ≃ LawvereNatRamified ≃ LawvereNatBTRamified
 ```
 
-* **`LawvereNatRamified`**: Nat-sort only, tier-disciplined
-  `foldMutNat` constructor with unbounded `Nat.rec` semantics.
-  No user-supplied bounds.  Adds `add` and `mul` as
-  Leivant-standard non-recursive primitives.  Equivalent to
-  `LawvereERCat` via a back-translation that synthesizes bounds
-  via `siteBound = towerER ∘ towerHeight(step)`.  Adequate-
-  monotonic by construction; off-conditions never arise.
-* **`LawvereNatBTRamified`**: extends `LawvereNatRamified` with
-  a BT sort, `leafBT`/`nodeBT`/`btProj`/`btMatch`/`foldMutBT`/
-  `encodeBT`/`decodeBT` constructors.  Tier-disciplined.
-  Equivalent to `LawvereNatRamified` (at the m=0 subcategory)
-  via a back-translation through `BTL.encode`/`decode`.
+Stage A's first three commits (Tier + inductive, natMatch arity
+fix, interp, tuples-with-mayRec-fallback) were implemented before
+analysis surfaced a foundational obstruction (see third pivot).
 
-Each stage handles exactly one orthogonal change (add fold; add
-BT sort), which keeps both back-translations small and
-auditable.  No user-supplied bounds at any constructor site,
-so no off-conditions mismatch with ER's witness-search
-fallback.
+**Third design pivot (2026-04-18, late evening)**: while
+implementing Stage A's tuple-level composition, the Σ-erased-
+inner-family approach hit Lean's nested-Σ kernel restriction
+and was worked around with a `.mayRec` over-approximation.  This
+prompted re-examination of the ramified design's expressive
+class.  Re-reading earlier research (recorded above): first-
+order ramified recurrence over free algebras is polynomial-time
+or PR-strength (depending on what's allowed in the step), not
+E_3.  Operation-level tier discipline isn't strong enough to
+land at exactly E_3 — the only mechanisms that do are (a) ER's
+specific generators (`bsum`/`bprod`), (b) bounded recursion
+with explicit user-supplied bounds (Meyer-Ritchie limited
+primitive recursion), or (c) the ER witness-search construction
+itself.
+
+Stage A's four commits (`5ac6e47e`..`f2d087d7`) were reverted.
+The new design (Option E) uses bounded recursion at the
+constructor level, with the off-conditions match-with-ER issue
+resolved by porting ER's witness-search semantics to Nat-level
+helpers:
+
+```text
+LawvereERCat ≃ LawvereNatBTBounded   (single equivalence)
+                ↑
+                Layer 1 combinators (foldBTNatAuto, primRecAuto)
+                ↑
+                Layer 0 raw constructors (foldBTNat, foldBTBT,
+                                         boundedNatRec)
+                ↑
+                Nat.foldBTLOnCodeERStyle, Nat.boundedRecERStyle
+                (mirror ER's witness-search at Nat level)
+```
+
+The bounded NatBT theory has user-supplied `bound` parameters
+on the three recursive constructors.  Interp delegates to the
+Nat-level helpers, which mirror ER's witness-search semantics
+on the nose.  A soundness theorem connects each Nat helper to
+the corresponding ER combinator.  The categorical equivalence
+`LawvereERCat ≃ LawvereNatBTBounded` is on-the-nose at the
+raw constructor level.
+
+Layer 1 provides programmer-friendly auto-bound combinators
+(`foldBTNatAuto`, `primRecAuto`, `foldBTBTAuto`) that derive
+adequate-monotonic bounds from `step.towerHeight` automatically.
+`@[simp]` correctness lemmas reduce these to the structural
+`BTL.fold` / `Nat.rec` semantics (no min, no fallback).
+Programmers writing `foldBTNatAuto base step tree` see no
+witness-search machinery.
+
+Existing `LawvereNatBT*` files (the unbounded "non-ramified"
+two-sort theory) are kept under their current names as a
+parallel development.  The new bounded theory uses
+`LawvereNatBTBounded*` filenames.
 
 Design spec:
-`docs/superpowers/specs/2026-04-18-lawvere-natramified-two-stage-design.md`
+`docs/superpowers/specs/2026-04-18-option-e-bounded-natbt-design.md`
 (local, gitignored).
 
 Implementation plan:
-`docs/superpowers/plans/2026-04-18-lawvere-natramified-two-stage.md`
-(local, gitignored).  ~22 tasks across six stages:
+`docs/superpowers/plans/2026-04-18-option-e-bounded-natbt.md`
+(local, gitignored).  ~17 tasks across six stages:
 
-* **Stage A** (Tasks A1-A6): `LawvereNatRamified` definition.
-  `Tier`, inductive, interp, quotient + `Category`, products,
-  interp functor, tests.
-* **Stage B** (Tasks B1-B7): `LawvereERCat ≃ LawvereNatRamified`.
-  Forward translation, back-translation with `siteBound`,
-  equivalence assembly.
-* **Stage C** (Tasks C1-C4): `LawvereNatBTRamified` definition.
-* **Stage D** (Tasks D1-D4):
-  `LawvereNatRamified ≃ LawvereNatBTRamified` (m=0 subcategory).
-* **Stage E** (Tasks E1-E3): compose chain, transport Phase 4f
-  non-fullness, tracker update.
-* **Stage F** (Task F1): rename existing `LawvereNatBT*` to
-  `LawvereNatBTUnramified*` as a final cleanup pass.
+* **Stage 1** (Tasks 1.1-1.2): Layer 0 — Nat-level
+  ER-style helpers + soundness theorems.
+* **Stage 2** (Tasks 2.1-2.3): bounded NatBT inductive + interp.
+* **Stage 3** (Tasks 3.1-3.3): quotient + Category +
+  products + interp functor + `m = 0` subcategory.
+* **Stage 4** (Tasks 4.1-4.3): Layer 1 auto-bound combinators
+  + `@[simp]` correctness lemmas.
+* **Stage 5** (Tasks 5.1-5.3): `LawvereERCat ≃
+  LawvereNatBTBounded0` equivalence.
+* **Stage 6** (Tasks 6.1-6.3): Phase 4f transport + tests +
+  tracker.
 
 **Current resume point**: execute the plan via
-`superpowers:subagent-driven-development`.  Starts at Stage
-A Task A1 (define `Tier` and `NatRamifiedMor1` inductive).
-Proceed directly on branch `terence/syntax`.
+`superpowers:subagent-driven-development`.  Starts at Stage 1
+Task 1.1 (`Nat.foldBTLOnCodeERStyle` definition).  Proceed
+directly on branch `terence/syntax`.
 
 **Task 14.5-extended (deferred)**: BT-only adequacy research
 — proving that the unlabeled-BT + 0-way-ℕ-product subfragment
-of `LawvereNatBTRamified` is already equivalent to
+of `LawvereNatBTBounded` is already equivalent to
 `LawvereERCat`.  Remains deferred until after the full
-equivalence chain ships (end of Stage F).
+equivalence chain ships.
 
-Natural checkpoints: end of Stage A (NatRamified defined),
-end of Stage B (first equivalence), end of Stage D (second
-equivalence at m=0), end of Stage E (composed chain +
-transport), end of Stage F (rename cleanup).
+Natural checkpoints: end of Stage 1 (Layer 0 ready), end of
+Stage 4 (programmer-friendly API in place), end of Stage 5
+(equivalence proved), end of Stage 6 (full chain shipped).
 
-The two-stage factorization's distinguishing property: each
-back-translation supplies its own bounds via `siteBound`
-construction, so no constructor-level bound parameters appear
-in either theory.  Both equivalences are interp-preserving on
-the nose (no adequacy hypotheses leaking into the categorical
-layer); the chain is constructive without `Classical.choice`,
-and preserves the `ERMor1` inductive as exactly the 7
-Wikipedia generators.
+The Option E architecture's distinguishing property: a single
+on-the-nose categorical equivalence with `LawvereERCat`,
+with Layer 1 combinators providing native fold ergonomics
+without exposing witness-search machinery to programmers.
+The bounded constructors form a stable raw interface; Layer 1
+is built on top by pure `def`s with no proof content; the
+equivalence is proven once at the raw level.
 
 ## Phase 4g: Tree-Native ER Parallel Development (planned)
 
