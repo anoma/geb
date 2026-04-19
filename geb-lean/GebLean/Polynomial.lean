@@ -62,8 +62,8 @@ private lemma polynomial_typeCat_comp_toFun
 /-- Local reduction of `(ConcreteCategory.hom (TypeCat.ofHom f)).toFun
 x` to `f x`. -/
 @[simp]
-private lemma polynomial_typeCat_ofHom_toFun
-    {A B : Type u} (f : A → B) (x : A) :
+private lemma polynomial_typeCat_ofHom_toFun.{v}
+    {A B : Type v} (f : A → B) (x : A) :
     (ConcreteCategory.hom (TypeCat.ofHom f)).toFun x = f x := rfl
 
 /-- Local reduction of `(ConcreteCategory.hom (eqToHom h)).toFun x`
@@ -74,6 +74,34 @@ private lemma polynomial_typeCat_eqToHom_toFun
     (ConcreteCategory.hom (eqToHom (C := Type u) h)).toFun x =
       cast h x := by
   subst h; rfl
+
+/-- Local reduction of `(ConcreteCategory.hom (f ≫ g)) x` (FunLike
+coercion form). Mathlib's `Fun.toFun_apply` rewrites `.toFun x` to
+`f x` before the `_toFun` helpers can fire, so this sibling covers
+the post-rewrite form. -/
+@[simp]
+private lemma polynomial_typeCat_comp_apply.{v}
+    {A B C : Type v} (f : A ⟶ B) (g : B ⟶ C) (x : A) :
+    (ConcreteCategory.hom (f ≫ g)) x =
+      (ConcreteCategory.hom g) ((ConcreteCategory.hom f) x) := rfl
+
+/-- Local reduction of `(ConcreteCategory.hom (TypeCat.ofHom f)) x`
+(FunLike coercion form) to `f x`. -/
+@[simp]
+private lemma polynomial_typeCat_ofHom_apply.{v}
+    {A B : Type v} (f : A → B) (x : A) :
+    (ConcreteCategory.hom (TypeCat.ofHom f)) x = f x := rfl
+
+/-- Local reduction of `(ConcreteCategory.hom (eqToHom h)) x`
+(FunLike coercion form) to `cast h x`. -/
+@[simp]
+private lemma polynomial_typeCat_eqToHom_apply.{v}
+    {A B : Type v} (h : A = B) (x : A) :
+    (ConcreteCategory.hom (eqToHom (C := Type v) h)) x =
+      cast h x := by
+  subst h; rfl
+
+
 
 /-! ## Family-Slice Equivalence
 
@@ -3084,7 +3112,7 @@ private lemma polyComp_fiberMor_roundtrip_inv
       (heq_of_eq (ccrId_fiberMor _ i))
   rw [eq_of_heq_eqToHom heq, Category.comp_id]
 
-set_option maxHeartbeats 1000000 in
+set_option maxHeartbeats 8000000 in
 -- The chained polyCompGObj iso elaboration requires additional
 -- heartbeat budget beyond the default.
 /--
@@ -3109,39 +3137,28 @@ private lemma polyComp_homMk_inv_hom
     eqToHom h := by
   intro h
   apply Over.OverMorphism.ext
-  rw [Over.comp_left]
-  ext ⟨e, ef⟩
+  apply ConcreteCategory.ext_apply
+  rintro ⟨e, ef⟩
   dsimp only [polyCompGObj_isoHom,
     polyCompGObj_isoInv, ccrHomMk,
-    Over.homMk_left]
+    Over.comp_left, Over.homMk_left]
   have rt := polyComp_fiberMor_roundtrip αf
     ((ccrFamily G ig).hom.hom e) (pf e)
-  have rt_left :
-      (ccrFiberMor
-          (αf.hom ((ccrFamily G ig).hom.hom e))
-          (pf e)).left.hom
-        ((ccrFiberMor
-          (αf.inv ((ccrFamily G ig).hom.hom e))
-          ((ccrReindex
-            (αf.hom ((ccrFamily G ig).hom.hom e))).hom
-            (pf e))).left.hom ef) =
-      (eqToHom
-        (congrArg
-          (ccrFamily
-            (f₁ ((ccrFamily G ig).hom.hom e)))
-          (ccrReindex_hom_inv_cancel αf
-            ((ccrFamily G ig).hom.hom e)
-            (pf e)))).left.hom ef := by
-    have hcomp :=
-      ConcreteCategory.congr_hom
-        (congrArg Over.Hom.left rt) ef
-    exact hcomp
-  simp only [Over.comp_left, Over.homMk_left]
-  apply Sigma.ext
-  · rfl
-  · refine heq_of_eq ?_
-    rw [rt_left, Over.eqToHom_left,
-      types_eqToHom_eq_cast]
+  have rt_left := ConcreteCategory.congr_hom
+    (congrArg Over.Hom.left rt) ef
+  erw [polynomial_typeCat_comp_apply]
+  erw [polynomial_typeCat_ofHom_apply]
+  erw [polynomial_typeCat_ofHom_apply]
+  rw [rt_left, Over.eqToHom_left,
+    types_eqToHom_eq_cast, Over.eqToHom_left,
+    types_eqToHom_eq_cast]
+  symm
+  exact cast_sigma_eq' _ (funext fun e =>
+    congrArg (fun i =>
+      (ccrFamily
+        (f₁ ((ccrFamily G ig).hom.hom e)) i).left)
+      (ccrReindex_hom_inv_cancel αf
+        ((ccrFamily G ig).hom.hom e) (pf e))) e ef
 
 /--
 Base component of the forward-then-backward roundtrip:
@@ -3196,7 +3213,7 @@ private lemma polyComp_hom_inv_at_idx
     polyCompGObj_isoInv, ccrHomMk,
     ccrReindex_hom_inv_cancel]
 
-set_option maxHeartbeats 1000000 in
+set_option maxHeartbeats 8000000 in
 -- The chained polyCompGObj iso elaboration requires additional
 -- heartbeat budget beyond the default.
 /--
@@ -3220,30 +3237,19 @@ private lemma polyComp_homMk_hom_inv
       ⟨ig, pf⟩ =
     eqToHom h := by
   intro h
+  apply Over.OverMorphism.ext
+  apply ConcreteCategory.ext_apply
+  rintro ⟨e, ef⟩
   dsimp only [polyCompGObj_isoHom,
-    polyCompGObj_isoInv, ccrHomMk]
-  ext ⟨e, ef⟩
-  simp only [Over.comp_left, Over.homMk_left,
-    types_comp_apply]
+    polyCompGObj_isoInv, ccrHomMk,
+    Over.comp_left, Over.homMk_left]
   have rt := polyComp_fiberMor_roundtrip_inv αf
-    ((ccrFamily G ig).hom e) (pf e)
-  have rt_left : ((ccrFiberMor
-      (αf.hom ((ccrFamily G ig).hom e))
-      (ccrReindex
-        (αf.inv ((ccrFamily G ig).hom e))
-        (pf e))).left ≫
-    (ccrFiberMor
-      (αf.inv ((ccrFamily G ig).hom e))
-      (pf e)).left) ef =
-    (eqToHom
-      (congrArg
-        (ccrFamily
-          (f₂ ((ccrFamily G ig).hom e)))
-        (ccrReindex_inv_hom_cancel αf
-          ((ccrFamily G ig).hom e)
-          (pf e)))).left ef := by
-    rw [← Over.comp_left, rt]
-  simp only [types_comp_apply] at rt_left
+    ((ccrFamily G ig).hom.hom e) (pf e)
+  have rt_left := ConcreteCategory.congr_hom
+    (congrArg Over.Hom.left rt) ef
+  erw [polynomial_typeCat_comp_apply]
+  erw [polynomial_typeCat_ofHom_apply]
+  erw [polynomial_typeCat_ofHom_apply]
   rw [rt_left, Over.eqToHom_left,
     types_eqToHom_eq_cast, Over.eqToHom_left,
     types_eqToHom_eq_cast]
@@ -3251,9 +3257,9 @@ private lemma polyComp_homMk_hom_inv
   exact cast_sigma_eq' _ (funext fun e =>
     congrArg (fun i =>
       (ccrFamily
-        (f₂ ((ccrFamily G ig).hom e)) i).left)
+        (f₂ ((ccrFamily G ig).hom.hom e)) i).left)
       (ccrReindex_inv_hom_cancel αf
-        ((ccrFamily G ig).hom e) (pf e))) e ef
+        ((ccrFamily G ig).hom.hom e) (pf e))) e ef
 
 /--
 Base component of the backward-then-forward roundtrip:
@@ -3267,14 +3273,13 @@ private lemma polyCompGObj_iso_inv_hom_base
       polyCompGObj_isoHom αf G).base =
     (GrothendieckContra'.id
       (polyCompGObj f₂ G)).base := by
-  dsimp [polyCompGObj_isoHom,
-    polyCompGObj_isoInv, ccrHomMk,
-    GrothendieckContra'.comp,
+  apply ConcreteCategory.ext_apply
+  rintro ⟨ig, pf⟩
+  dsimp [polyCompGObj_isoHom, polyCompGObj_isoInv,
+    ccrHomMk, GrothendieckContra'.comp,
     GrothendieckContra'.id]
-  funext ⟨ig, pf⟩
   exact Sigma.ext rfl (heq_of_eq
-    (funext fun e =>
-      ccrReindex_inv_hom_cancel αf _ _))
+    (funext fun e => ccrReindex_inv_hom_cancel αf _ _))
 
 set_option backward.isDefEq.respectTransparency false in
 /--
