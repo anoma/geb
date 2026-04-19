@@ -7167,6 +7167,179 @@ end GrothendieckContraFunctor
 
 end GrothendieckContraFunctor
 
+/-!
+### FunctorFromData: Bundled data for functors FROM the contravariant
+Grothendieck construction (mathlib-`op`-based version).
+
+Analog of the `FunctorFromData` section for `GrothendieckContra'`
+(the custom-`op'` variant earlier in this file), adapted to work
+with `grothendieckContraFunctor`.
+
+Every functor `(grothendieckContraFunctor C).obj F ⥤ T` is determined
+by:
+- A family of fibre functors
+  `fib : ∀ c : C, F.obj (op c) ⥤ T`.
+- Natural transformations
+  `hom f : (F.map f.op) ⋙ fib c ⟶ fib d` for each `f : c ⟶ d` in `C`.
+- Coherence conditions for identity and composition.
+-/
+
+section FunctorFromDataContra
+
+universe v₇ u₇ v₈ u₈ vT uT
+
+variable {C : Type u₈} [Category.{v₈} C]
+variable (F : Cᵒᵖ ⥤ Cat.{v₇, u₇})
+variable {T : Type uT} [Category.{vT} T]
+
+/--
+The type of fibre functors for bundled data.
+For each `c : C`, a functor `F.obj (op c) ⥤ T`.
+-/
+abbrev FunctorFromDataContraFib := ∀ c : C, F.obj (Opposite.op c) ⥤ T
+
+/--
+The type of natural-transformation data for bundled
+`FunctorFromDataContra`.  For each `f : c ⟶ d` in `C`, a natural
+transformation `(F.map f.op) ⋙ fib c ⟶ fib d`.
+-/
+abbrev FunctorFromDataContraHom
+    (fib : FunctorFromDataContraFib F (T := T)) :=
+  ∀ {c d : C} (f : c ⟶ d),
+    (F.map f.op).toFunctor ⋙ fib c ⟶ fib d
+
+/--
+The identity coherence condition.  States that `hom (𝟙 c)` equals
+the canonical isomorphism from `op_id` and `F.map_id`.
+-/
+abbrev FunctorFromDataContraHomId
+    (fib : FunctorFromDataContraFib F (T := T))
+    (hom : FunctorFromDataContraHom F fib) :=
+  ∀ c : C, hom (𝟙 c) =
+    eqToHom (by
+      rw [show (𝟙 c : c ⟶ c).op = 𝟙 (Opposite.op c) from rfl]
+      rw [F.map_id]
+      rfl)
+
+/--
+The composition coherence condition.  States that `hom (f ≫ g)`
+decomposes as the composition of the canonical isomorphism from
+`op_comp` and `F.map_comp`, the whiskered `hom f`, and `hom g`.
+-/
+abbrev FunctorFromDataContraHomComp
+    (fib : FunctorFromDataContraFib F (T := T))
+    (hom : FunctorFromDataContraHom F fib) :=
+  ∀ {c d e : C} (f : c ⟶ d) (g : d ⟶ e),
+    hom (f ≫ g) =
+      eqToHom (by
+        rw [show (f ≫ g : c ⟶ e).op = g.op ≫ f.op from rfl]
+        rw [F.map_comp]
+        rfl) ≫
+      Functor.whiskerLeft (F.map g.op).toFunctor (hom f) ≫ hom g
+
+/--
+Bundled data for constructing a functor from the contravariant
+Grothendieck construction (`grothendieckContraFunctor` version).
+-/
+structure FunctorFromDataContra where
+  /-- Fibre functors: for each `c : C`, a functor `F.obj (op c) ⥤ T`. -/
+  fib : FunctorFromDataContraFib F (T := T)
+  /-- Natural-transformation data. -/
+  hom : FunctorFromDataContraHom F fib
+  /-- Identity coherence. -/
+  hom_id : FunctorFromDataContraHomId F fib hom
+  /-- Composition coherence. -/
+  hom_comp : FunctorFromDataContraHomComp F fib hom
+
+variable {F}
+
+open GrothendieckContraFunctor in
+/--
+Construct a functor `(grothendieckContraFunctor C).obj F ⥤ T` from
+bundled `FunctorFromDataContra` data.
+-/
+def functorFromDataContra
+    (data : FunctorFromDataContra F (T := T)) :
+    (grothendieckContraFunctor C).obj F ⥤ T where
+  obj X := (data.fib (objBase X)).obj (objFiber X)
+  map {X Y} f :=
+    (data.fib (objBase X)).map (homFiber f) ≫
+      (data.hom (homBase f)).app (objFiber Y)
+  map_id X := by
+    change (data.fib (objBase X)).map (homFiber (𝟙 X)) ≫
+        (data.hom (𝟙 (objBase X))).app (objFiber X) = _
+    have h := congrFun (congrArg NatTrans.app (data.hom_id (objBase X)))
+      (objFiber X)
+    simp only [eqToHom_app] at h
+    rw [h]
+    have hfiber : homFiber (𝟙 X) =
+        eqToHom (by
+          change objFiber X =
+            (F.map (𝟙 (objBase X)).op).toFunctor.obj (objFiber X)
+          rw [show (𝟙 (objBase X) : objBase X ⟶ objBase X).op =
+            𝟙 (Opposite.op (objBase X)) from rfl]
+          rw [CategoryTheory.Functor.map_id]; rfl) := by
+      have heq : homFiber (𝟙 X) =
+          (Grothendieck.Hom.fiber (𝟙 X.unop)).unop := rfl
+      rw [heq, Grothendieck.id_fiber]
+      exact eqToHom_unop _
+    rw [hfiber, eqToHom_map, eqToHom_trans, eqToHom_refl]
+  map_comp {X Y Z} f g := by
+    change (data.fib (objBase X)).map (homFiber (f ≫ g)) ≫
+        (data.hom (homBase f ≫ homBase g)).app (objFiber Z) =
+      ((data.fib (objBase X)).map (homFiber f) ≫
+          (data.hom (homBase f)).app (objFiber Y)) ≫
+        (data.fib (objBase Y)).map (homFiber g) ≫
+          (data.hom (homBase g)).app (objFiber Z)
+    have hcomp := congrFun (congrArg NatTrans.app
+      (data.hom_comp (homBase f) (homBase g))) (objFiber Z)
+    simp only [NatTrans.comp_app, Functor.whiskerLeft_app,
+      eqToHom_app] at hcomp
+    rw [hcomp]
+    have hfiber :
+        homFiber (f ≫ g) =
+          homFiber f ≫
+          (F.map (homBase f).op).toFunctor.map (homFiber g) ≫
+          eqToHom (by
+            change (F.map (homBase f).op).toFunctor.obj
+              ((F.map (homBase g).op).toFunctor.obj (objFiber Z)) =
+              (F.map (homBase f ≫ homBase g).op).toFunctor.obj
+                (objFiber Z)
+            rw [show (homBase f ≫ homBase g : objBase X ⟶ objBase Z).op =
+              (homBase g).op ≫ (homBase f).op from rfl]
+            rw [F.map_comp]; rfl) := by
+      have heq : homFiber (f ≫ g) =
+          (Grothendieck.Hom.fiber (g.unop ≫ f.unop)).unop := rfl
+      rw [heq, Grothendieck.comp_fiber, unop_comp, unop_comp,
+        eqToHom_unop, Category.assoc]
+      rfl
+    rw [hfiber, Functor.map_comp, Functor.map_comp]
+    simp only [Category.assoc, eqToHom_map, eqToHom_trans_assoc,
+      eqToHom_refl, Category.id_comp]
+    congr 1
+    have nat := (data.hom (homBase f)).naturality (homFiber g)
+    simp only [Functor.comp_map] at nat
+    calc (data.fib (objBase X)).map
+          ((F.map (homBase f).op).toFunctor.map (homFiber g)) ≫
+          (data.hom (homBase f)).app
+            ((F.map (homBase g).op).toFunctor.obj (objFiber Z)) ≫
+          (data.hom (homBase g)).app (objFiber Z)
+        = ((data.fib (objBase X)).map
+            ((F.map (homBase f).op).toFunctor.map (homFiber g)) ≫
+          (data.hom (homBase f)).app
+            ((F.map (homBase g).op).toFunctor.obj (objFiber Z))) ≫
+          (data.hom (homBase g)).app (objFiber Z) := by
+            rw [Category.assoc]
+      _ = ((data.hom (homBase f)).app (objFiber Y) ≫
+          (data.fib (objBase Y)).map (homFiber g)) ≫
+          (data.hom (homBase g)).app (objFiber Z) := by rw [nat]
+      _ = (data.hom (homBase f)).app (objFiber Y) ≫
+          (data.fib (objBase Y)).map (homFiber g) ≫
+          (data.hom (homBase g)).app (objFiber Z) := by
+            rw [Category.assoc]
+
+end FunctorFromDataContra
+
 /-! ## Slice-Refined Contravariant Grothendieck Functor -/
 
 section GrothendieckContraFunctorOver
