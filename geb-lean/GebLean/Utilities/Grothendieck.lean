@@ -5137,6 +5137,171 @@ structure FunctorBetweenContraData where
 end FunctorBetweenContra
 
 /-!
+## Functors Between Covariant and Contravariant Grothendieck Constructions
+
+This section defines bundled data for functors between a covariant source
+Grothendieck and a contravariant target Grothendieck,
+`Grothendieck G ⥤ (grothendieckContraFunctor D).obj F`, where `G : C ⥤ Cat` and
+`F : Dᵒᵖ ⥤ Cat`.
+
+A functor between these is characterized by:
+- A base functor `baseFib : C ⥤ D`.
+- For each `c : C`, a functor `fibFib c : G.obj c ⥤ F.obj (op (baseFib.obj c))`.
+- Cross-fibre morphisms whose direction is the contravariant-target one:
+  `(fibFib c).obj x ⟶
+      (F.map (baseFib.map f).op).obj ((fibFib c').obj ((G.map f).obj x))`.
+-/
+
+section FunctorBetweenCovContra
+
+universe vC vD uC uD
+
+variable {C : Type uC} [Category.{vC} C] (G : C ⥤ Cat.{vC, uC})
+variable {D : Type uD} [Category.{vD} D] (F : Dᵒᵖ ⥤ Cat.{vD, uD})
+
+/--
+The base-fibre functor for the mixed case: assigns to each `c : C` a base
+object in `D`.
+-/
+abbrev FunctorBetweenCovContraBaseFib := C ⥤ D
+
+/--
+The fibre-fibre functor: for each `c : C`, a functor
+`G.obj c ⥤ F.obj (op (baseFib.obj c))`.  The `op` reflects the contravariant
+target's `Dᵒᵖ`-indexing.
+-/
+abbrev FunctorBetweenCovContraFibFib
+    (baseFib : FunctorBetweenCovContraBaseFib (C := C) (D := D)) :=
+  ∀ c, G.obj c ⥤ F.obj (Opposite.op (baseFib.obj c))
+
+/--
+The cross-fibre morphism component.  For `f : c ⟶ c'` and `x : G.obj c`,
+a morphism from `(fibFib c).obj x` to
+`(F.map (baseFib.map f).op).obj ((fibFib c').obj ((G.map f).obj x))`.
+
+This direction is correct for a morphism in `(grothendieckContraFunctor D).obj F`
+from `mkObj (baseFib.obj c) ((fibFib c).obj x)` to
+`mkObj (baseFib.obj c') ((fibFib c').obj ((G.map f).obj x))`.
+-/
+abbrev FunctorBetweenCovContraFibHomCrossApp
+    (baseFib : FunctorBetweenCovContraBaseFib (C := C) (D := D))
+    (fibFib : FunctorBetweenCovContraFibFib G F baseFib) :=
+  ∀ {c c' : C} (f : c ⟶ c') (x : G.obj c),
+    (fibFib c).obj x ⟶
+      (F.map (baseFib.map f).op).toFunctor.obj
+        ((fibFib c').obj ((G.map f).toFunctor.obj x))
+
+/--
+Naturality of `fibHomCrossApp`: for `f : c ⟶ c'` and `g : x ⟶ y` in `G.obj c`,
+the square commutes.
+-/
+abbrev FunctorBetweenCovContraFibHomCrossNat
+    (baseFib : FunctorBetweenCovContraBaseFib (C := C) (D := D))
+    (fibFib : FunctorBetweenCovContraFibFib G F baseFib)
+    (fibHomCrossApp :
+      FunctorBetweenCovContraFibHomCrossApp G F baseFib fibFib) :=
+  ∀ {c c' : C} (f : c ⟶ c') {x y : G.obj c} (g : x ⟶ y),
+    (fibFib c).map g ≫ fibHomCrossApp f y =
+      fibHomCrossApp f x ≫
+        (F.map (baseFib.map f).op).toFunctor.map
+          ((fibFib c').map ((G.map f).toFunctor.map g))
+
+/--
+Equality of fibre-fibre values at identity.  Since
+`baseFib.map (𝟙 c) = 𝟙 (baseFib.obj c)` and `F.map (𝟙 _).op = 𝟭 _`, the source
+and target of `fibHomCrossApp (𝟙 c) x` coincide with `(fibFib c).obj x`.
+-/
+abbrev FunctorBetweenCovContraBaseHomEqId
+    (baseFib : FunctorBetweenCovContraBaseFib (C := C) (D := D))
+    (fibFib : FunctorBetweenCovContraFibFib G F baseFib) :=
+  ∀ (c : C) (x : G.obj c),
+    (fibFib c).obj x =
+      (F.map (baseFib.map (𝟙 c)).op).toFunctor.obj
+        ((fibFib c).obj ((G.map (𝟙 c)).toFunctor.obj x))
+
+/--
+Derive the identity equality from functor laws.
+-/
+lemma functorBetweenCovContraBaseHomEqIdProof
+    (baseFib : FunctorBetweenCovContraBaseFib (C := C) (D := D))
+    (fibFib : FunctorBetweenCovContraFibFib G F baseFib) :
+    FunctorBetweenCovContraBaseHomEqId G F baseFib fibFib := by
+  intro c x
+  have hG : (G.map (𝟙 c)).toFunctor = 𝟭 _ :=
+    congrArg Cat.Hom.toFunctor (G.map_id c) |>.trans (Cat.id_eq_id _)
+  have hF : (F.map (𝟙 (Opposite.op (baseFib.obj c)))).toFunctor = 𝟭 _ :=
+    congrArg Cat.Hom.toFunctor (F.map_id _) |>.trans (Cat.id_eq_id _)
+  simp only [baseFib.map_id, op_id, hG, hF, Functor.id_obj]
+
+/--
+Equality of fibre-fibre values at composition.  For `f : c ⟶ c'` and
+`g : c' ⟶ c''`, the two ways of transporting
+`(fibFib c'').obj ((G.map (f ≫ g)).obj x)` back to
+`F.obj (op (baseFib.obj c))` agree.  Stated as "split = fused" so that
+`eqToHom` of this proof transports split → fused.
+-/
+abbrev FunctorBetweenCovContraBaseHomEqComp
+    (baseFib : FunctorBetweenCovContraBaseFib (C := C) (D := D))
+    (fibFib : FunctorBetweenCovContraFibFib G F baseFib) :=
+  ∀ {c c' c'' : C} (f : c ⟶ c') (g : c' ⟶ c'') (x : G.obj c),
+    (F.map (baseFib.map f).op).toFunctor.obj
+        ((F.map (baseFib.map g).op).toFunctor.obj
+          ((fibFib c'').obj
+            ((G.map g).toFunctor.obj ((G.map f).toFunctor.obj x)))) =
+      (F.map (baseFib.map (f ≫ g)).op).toFunctor.obj
+        ((fibFib c'').obj ((G.map (f ≫ g)).toFunctor.obj x))
+
+/--
+Derive the composition equality from functor laws.
+-/
+lemma functorBetweenCovContraBaseHomEqCompProof
+    (baseFib : FunctorBetweenCovContraBaseFib (C := C) (D := D))
+    (fibFib : FunctorBetweenCovContraFibFib G F baseFib) :
+    FunctorBetweenCovContraBaseHomEqComp G F baseFib fibFib := by
+  intro c c' c'' f g x
+  have hG : (G.map (f ≫ g)).toFunctor.obj x =
+      (G.map g).toFunctor.obj ((G.map f).toFunctor.obj x) := by
+    rw [G.map_comp]; rfl
+  have hbase : (baseFib.map (f ≫ g)).op =
+      (baseFib.map g).op ≫ (baseFib.map f).op := by
+    rw [baseFib.map_comp]; rfl
+  rw [hG, hbase, F.map_comp]
+  rfl
+
+/--
+Identity coherence: `fibHomCrossApp (𝟙 c) x` equals the derived `eqToHom`.
+-/
+abbrev FunctorBetweenCovContraBaseHomId
+    (baseFib : FunctorBetweenCovContraBaseFib (C := C) (D := D))
+    (fibFib : FunctorBetweenCovContraFibFib G F baseFib)
+    (fibHomCrossApp :
+      FunctorBetweenCovContraFibHomCrossApp G F baseFib fibFib) :=
+  ∀ (c : C) (x : G.obj c),
+    fibHomCrossApp (𝟙 c) x =
+      eqToHom
+        (functorBetweenCovContraBaseHomEqIdProof G F baseFib fibFib c x)
+
+/--
+Composition coherence: `fibHomCrossApp (f ≫ g) x` decomposes as
+`fibHomCrossApp f x` followed by transport of `fibHomCrossApp g ((G.map f).obj x)`
+through `F.map (baseFib.map f).op`, adjusted by `eqToHom`.
+-/
+abbrev FunctorBetweenCovContraBaseHomComp
+    (baseFib : FunctorBetweenCovContraBaseFib (C := C) (D := D))
+    (fibFib : FunctorBetweenCovContraFibFib G F baseFib)
+    (fibHomCrossApp :
+      FunctorBetweenCovContraFibHomCrossApp G F baseFib fibFib) :=
+  ∀ {c c' c'' : C} (f : c ⟶ c') (g : c' ⟶ c'') (x : G.obj c),
+    fibHomCrossApp (f ≫ g) x =
+      fibHomCrossApp f x ≫
+        (F.map (baseFib.map f).op).toFunctor.map
+          (fibHomCrossApp g ((G.map f).toFunctor.obj x)) ≫
+        eqToHom
+          (functorBetweenCovContraBaseHomEqCompProof G F baseFib fibFib f g x)
+
+end FunctorBetweenCovContra
+
+/-!
 ## Natural Transformations Between Functors on Contravariant Grothendieck
 Constructions
 
