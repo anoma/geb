@@ -12,6 +12,7 @@ import GebLeanTests.LawvereERTetration
 import GebLeanTests.LawvereNatBT
 import GebLeanTests.LawvereNatBTInterp
 import GebLeanTests.LawvereNatBTQuot
+import GebLeanTests.LawvereNatBTV2
 import GebLeanTests.LawvereTreeER
 import GebLeanTests.LawvereTreeERInterp
 import GebLeanTests.LawvereTreeERQuot
