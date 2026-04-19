@@ -53,6 +53,7 @@ def Tier.max : Tier → Tier → Tier
 @[simp] theorem Tier.max_mayRec_mayRec :
     Tier.max .mayRec .mayRec = .mayRec := rfl
 
+mutual
 /-- Tier-disciplined ramified term over ℕ.  Indexed by domain
 arity `n` and tier `t`.  Constructors:
 
@@ -63,7 +64,9 @@ arity `n` and tier `t`.  Constructors:
   `LawvereERCat`, but exposed here as primitives so that
   ramified `foldMutNat` step terms can use them without
   triggering `mayRec`.
-* `comp`: composition; tier propagates as `Tier.max`.
+* `comp`: composition with tier-erased inner family; output
+  tier is `mayRec` to keep the index a fixed value (per-component
+  tier joins are not expressible as nested-inductive indices).
 * `natMatch`: one-level pattern match on a `nonRec` argument's
   zero/succ shape.  The `succCase` has arity `n + 1`, binding the
   predecessor in slot `0`.  Tier propagates as the max of the
@@ -80,10 +83,10 @@ inductive NatRamifiedMor1 : ℕ → Tier → Type
   | sub {n : ℕ} : NatRamifiedMor1 (n + 2) .nonRec
   | add {n : ℕ} : NatRamifiedMor1 (n + 2) .nonRec
   | mul {n : ℕ} : NatRamifiedMor1 (n + 2) .nonRec
-  | comp {a b : ℕ} {t1 t2 : Tier}
+  | comp {a b : ℕ} {t1 : Tier}
       (f : NatRamifiedMor1 b t1)
-      (g : Fin b → NatRamifiedMor1 a t2) :
-      NatRamifiedMor1 a (Tier.max t1 t2)
+      (g : Fin b → NatRamifiedMor1Erased a) :
+      NatRamifiedMor1 a .mayRec
   | natMatch {n : ℕ} {t1 t2 : Tier}
       (zeroCase : NatRamifiedMor1 n t1)
       (succCase : NatRamifiedMor1 (n + 1) t2)
@@ -94,7 +97,15 @@ inductive NatRamifiedMor1 : ℕ → Tier → Type
       (step : NatRamifiedMor1 (n + 2) .nonRec)
       (k : NatRamifiedMor1 n .nonRec) :
       NatRamifiedMor1 n .mayRec
+/-- Tier-erased wrapper around `NatRamifiedMor1`: a pair of a
+tier and a term at that tier.  Used by `comp` and by
+`NatRamifiedMorN` so that morphism families can mix tiers. -/
+inductive NatRamifiedMor1Erased : ℕ → Type
+  | mk {n : ℕ} {t : Tier} (f : NatRamifiedMor1 n t) :
+      NatRamifiedMor1Erased n
+end
 
+mutual
 /-- Standard interpretation: maps a domain context `Fin n → ℕ`
 to a ℕ value.  `foldMutNat` uses unbounded `Nat.rec`; total. -/
 def NatRamifiedMor1.interp :
@@ -108,7 +119,7 @@ def NatRamifiedMor1.interp :
   | _, _, NatRamifiedMor1.mul, ctx => ctx 0 * ctx 1
   | _, _, NatRamifiedMor1.comp f g, ctx =>
       NatRamifiedMor1.interp f
-        (fun i => NatRamifiedMor1.interp (g i) ctx)
+        (fun i => NatRamifiedMor1Erased.interp (g i) ctx)
   | _, _, NatRamifiedMor1.natMatch zeroCase succCase k, ctx =>
       match NatRamifiedMor1.interp k ctx with
       | 0 => NatRamifiedMor1.interp zeroCase (Fin.tail ctx)
@@ -122,6 +133,13 @@ def NatRamifiedMor1.interp :
           NatRamifiedMor1.interp step
             (Fin.cons j (Fin.cons prev ctx)))
         (NatRamifiedMor1.interp k ctx)
+/-- Interpretation of a tier-erased term: forwards to the
+underlying term's interpretation. -/
+def NatRamifiedMor1Erased.interp :
+    {n : ℕ} → NatRamifiedMor1Erased n → (Fin n → ℕ) → ℕ
+  | _, NatRamifiedMor1Erased.mk f, ctx =>
+      NatRamifiedMor1.interp f ctx
+end
 
 @[simp] theorem NatRamifiedMor1.interp_zero {n : ℕ}
     (ctx : Fin n → ℕ) :
@@ -157,12 +175,17 @@ def NatRamifiedMor1.interp :
       = ctx 0 * ctx 1 := rfl
 
 @[simp] theorem NatRamifiedMor1.interp_comp {a b : ℕ}
-    {t1 t2 : Tier}
+    {t1 : Tier}
     (f : NatRamifiedMor1 b t1)
-    (g : Fin b → NatRamifiedMor1 a t2)
+    (g : Fin b → NatRamifiedMor1Erased a)
     (ctx : Fin a → ℕ) :
     (NatRamifiedMor1.comp f g).interp ctx
       = f.interp (fun i => (g i).interp ctx) := rfl
+
+@[simp] theorem NatRamifiedMor1Erased.interp_mk {n : ℕ}
+    {t : Tier} (f : NatRamifiedMor1 n t) (ctx : Fin n → ℕ) :
+    (NatRamifiedMor1Erased.mk f).interp ctx = f.interp ctx :=
+  rfl
 
 @[simp] theorem NatRamifiedMor1.interp_natMatch {n : ℕ}
     {t1 t2 : Tier}
@@ -188,5 +211,50 @@ def NatRamifiedMor1.interp :
           (fun j prev =>
             step.interp (Fin.cons j (Fin.cons prev ctx)))
           (k.interp ctx) := rfl
+
+/-- A morphism `n → m` in the tuple Lawvere theory: a family
+of `m` tier-erased terms each at arity `n`. -/
+def NatRamifiedMorN (n m : ℕ) : Type :=
+  Fin m → NatRamifiedMor1Erased n
+
+/-- Componentwise interpretation. -/
+def NatRamifiedMorN.interp {n m : ℕ} (f : NatRamifiedMorN n m)
+    (ctx : Fin n → ℕ) : Fin m → ℕ :=
+  fun i => (f i).interp ctx
+
+/-- Identity tuple: each component is a projection. -/
+def NatRamifiedMorN.id (n : ℕ) : NatRamifiedMorN n n :=
+  fun i => NatRamifiedMor1Erased.mk (NatRamifiedMor1.proj i)
+
+/-- Composition: each output component composes the outer term
+with the entire inner family.  Uses the erased-input `comp`
+constructor so per-component tiers in the inner family are
+preserved. -/
+def NatRamifiedMorN.comp {n m k : ℕ}
+    (f : NatRamifiedMorN m k) (g : NatRamifiedMorN n m) :
+    NatRamifiedMorN n k :=
+  fun i =>
+    match f i with
+    | NatRamifiedMor1Erased.mk outer =>
+        NatRamifiedMor1Erased.mk
+          (NatRamifiedMor1.comp outer g)
+
+@[simp] theorem NatRamifiedMorN.interp_id {n : ℕ}
+    (ctx : Fin n → ℕ) :
+    (NatRamifiedMorN.id n).interp ctx = ctx := by
+  funext i
+  rfl
+
+@[simp] theorem NatRamifiedMorN.interp_comp {n m k : ℕ}
+    (f : NatRamifiedMorN m k) (g : NatRamifiedMorN n m)
+    (ctx : Fin n → ℕ) :
+    (NatRamifiedMorN.comp f g).interp ctx =
+      f.interp (g.interp ctx) := by
+  funext i
+  change (NatRamifiedMorN.comp f g i).interp ctx
+    = (f i).interp (g.interp ctx)
+  unfold NatRamifiedMorN.comp
+  match f i with
+  | NatRamifiedMor1Erased.mk _ => rfl
 
 end GebLean
