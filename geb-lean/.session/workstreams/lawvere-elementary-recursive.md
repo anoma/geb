@@ -1071,6 +1071,96 @@ Final state:
 Build state at chain completion: clean (zero warnings),
 `lake test` passes.
 
+**Honest assessment of what was delivered (2026-04-21)**: the
+chain produces a categorical equivalence `LawvereGodelTCat ≌
+LawvereERCat`, but `GodelTMor1`'s primitive set is only
+`ERMor1`'s primitives plus the two extras `pred` and `disc`
+(both trivially ER-derivable).  B-W's T* — the fragment of
+Gödel's T whose equivalence with the elementary-recursive
+functions is the paper's substantive content — is NOT yet
+represented at the categorical layer.  The `GodelTTerm`
+combinator inductive (with `K` / `S` / applicative `iter`
+and `GodelTPure`) is in the codebase but sits as an inert
+reference; no morphism in `LawvereGodelTCat` currently uses
+any of `K` / `S` / `iter`.  The equivalence, in its current
+form, is trivial by construction — not by B-W's theorem.
+
+The scaffolding is in place (equivalence proven; `toER` and
+`toGodelT` written as structural recursions; tests in place).
+Incremental extensions of `GodelTMor1`, preserving the
+equivalence at every step, are the path to delivering B-W's
+actual content.  See "GodelT follow-on roadmap" below.
+
+### GodelT follow-on roadmap
+
+**Development procedure**: each new `GodelTMor1` constructor
+is added under the bottom-up named-composite discipline
+recorded in `CLAUDE.md`:
+
+1. First build the image in `ERMor1` as a composition of
+   atomic ER generators (Wikipedia's exact formulation:
+   `zero` / `succ` / `proj` / `sub` / `comp` / `bsum` /
+   `bprod`), give it a name in `Utilities/`, prove its
+   `@[simp]` interp lemma.
+2. Only then add the corresponding `GodelTMor1` constructor,
+   whose `toER` clause calls out directly to the named
+   composite.
+3. Extend `GodelTMor1.toER_interp`, `toGodelT_interp`, and
+   the round-trip lemmas.  Verify `lawvereGodelTERCatEquivalence`
+   still holds.  Build and test must pass at every commit.
+
+Being unable to preserve the equivalence at any point is an
+immediate signal that the proposed extension is outside
+ER — DO NOT build a workaround; surface it and reconsider.
+
+Stages (task IDs #181-#185):
+
+* **Stage E (#181)**: Add T* iter to `GodelTMor1`.  Introduces
+  `GodelTMor1.iter {k} (count : GodelTMor1 k)
+  (step : GodelTMor1 (k + 2)) (base : GodelTMor1 k) :
+  GodelTMor1 k`, matching B-W's T* exactly (count is a
+  structured T* sub-term, not a context slot).  Requires
+  building the named ER composite `ERMor1.iterT` (wrapper
+  around `boundedRec` + `iterAutoBound` using `towerER`),
+  defining `GodelTMor1.towerHeight` structurally per
+  B-W's stratification, and proving
+  `GodelTMor1.lt_tower_towerHeight` — the substantive B-W
+  theorem.  ~100-300 lines of proof.
+* **Stage F (#182)**: Absorb the remaining `GodelTTerm`
+  combinators (`K`, `S`) into `GodelTMor1` (either as direct
+  constructors whose ER backings are built from `comp` /
+  `proj`, or via bracket abstraction — see Stage G).  After
+  Stage F, every `GodelTTerm` constructor has a `GodelTMor1`
+  analog; the combinator reference becomes fully absorbed.
+* **Stage G (#183)**: Promote `GodelTExpr` bracket
+  abstraction to the categorical layer.  `GodelTMor1`-valued
+  `abstract` operator over extended base contexts, with ER
+  backing via `ERMor1.comp` + projections.  Brings the
+  first-pass `GodelTBracket.lean` utility onto the critical
+  path at this point.
+* **Stage H (#184)**: Lambda-to-combinator compilation
+  helpers.  Programmer-facing macros / notation for writing
+  λ-style `GodelTMor1` terms that elaborate via Stage G's
+  bracket abstraction.  No new ER primitives — pure syntactic
+  transformation at the GodelT layer.
+* **Stage K (#185)**: Binary-tree base type + analogous
+  iter / bracket abstraction.  Only after Stage H delivers a
+  working T* = ER at the B-W level, AND Tree-ER 4g.2 lands
+  (task #136).  ER backings live in
+  `Utilities/ERTreeArith.lean`.
+
+Each stage produces commits that preserve
+`lawvereGodelTERCatEquivalence`; any stage where preservation
+fails is a signal that the proposed extension is outside ER
+— surface and reconsider, don't patch around.
+
+**Endpoint**: after Stage H, `LawvereGodelTCat` is a
+programmer-friendly presentation of B-W's T* (equivalently,
+the elementary-recursive functions) with iter / bracket
+abstraction / λ-syntax, and the equivalence with
+`LawvereERCat` is preserved on the nose.  After Stage K, the
+same story extends to binary trees.
+
 **Task 14.5-extended (deferred)**: BT-only adequacy research
 — proving that the unlabeled-BT + 0-way-ℕ-product subfragment
 of `LawvereNatBTBounded` is already equivalent to

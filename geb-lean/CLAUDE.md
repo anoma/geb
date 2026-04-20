@@ -473,6 +473,37 @@ framework.
 
 ## Development Processes
 
+- **Bottom-up named-composite discipline for categorical
+  equivalences**: when building a new categorical structure that
+  is to be proven equivalent (or related via a functor) to an
+  existing one, NEVER add a constructor or morphism to the new
+  category before its image in the target category has been
+  built and named as a `def` (with a `@[simp]` interp lemma).
+  The pipeline is:
+
+  1. Identify the image in the target category that the new
+     construct will translate to.
+  2. If it is not already present, build it bottom-up as a
+     composition of atomic constructors of the target category
+     (e.g. Wikipedia's exact elementary-recursive generators for
+     `ERMor1`: `zero` / `succ` / `proj` / `sub` / `comp` /
+     `bsum` / `bprod`).  Give it a name and prove its interp
+     lemma.  Place it in `Utilities/`.
+  3. Only then add the corresponding constructor (or helper) to
+     the new category, with its translation function pointing
+     directly at the named composite.  The equivalence is
+     preserved by construction at every incremental step.
+  4. If a proposed construct cannot be built ultimately out of
+     compositions of the target category's atomic generators,
+     that is a signal not to add it — NOT to build a workaround.
+
+  Applied to the `LawvereGodelT` chain: each `GodelTMor1`
+  constructor's `toER` points at a named `ERMor1` def; the
+  `Utilities/ERArith.lean` / `Utilities/ERTreeArith.lean` /
+  `LawvereERBoundComputable.lean` files exist to host the named
+  composites (`pred`, `discN`, `boundedRec`, `towerBound`,
+  `foldBTLOnCode`, etc.).
+
 - See [Theorem Proving in Lean 4](https://leanprover.github.io/theorem_proving_in_lean4/)
   for tips on many aspects of theorem-proving.  If you're struggling to
   prove something, or even just about to embark on a
