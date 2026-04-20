@@ -932,6 +932,61 @@ including the pairing trick for `bsum` / `bprod`), C.4
 (tuple-level lifts and equivalence functors), and C.5
 (round-trip identity proofs + equivalence assembly).
 
+**GodelT Stage C planning / Stage B rework pivot
+(2026-04-21)**: during Stage C planning, two obstructions
+to the `GodelTMor1.toER` back-translation under the
+first-pass Stage B representation surfaced:
+
+1. **Higher-order iter**: the original
+   `.iter (ρ : GodelTType) (t : GodelTTerm .base)` form
+   admits arbitrary ρ, which demands a Gödel-β-table
+   register-machine simulation of higher-order iteration in
+   ER — prohibitively substantive.
+2. **K/S combinator spines**: a structural `toER` recursion
+   on `GodelTTerm` with an argument accumulator runs into
+   the S-reduction non-termination classical for typed
+   combinator evaluators (S f g x ↦ f x (g x) does not
+   decrease raw term size, so structural recursion does not
+   define `toER` directly; termination would need a
+   well-founded measure such as β-normal-form size).
+
+Resolution adopted: (A) restrict `.iter` to base-typed
+iteratee + applicative form, matching B-W's T⁻′ discipline;
+(B) replace the combinator-encoded `GodelTMor1 n := GodelTTerm
+(arrow0 n)` representation with a fresh inductive
+`GodelTMor1` parallel to `ERMor1`, with one ER backing per
+constructor so that `toER` is a direct structural
+recursion.  Landed as two commits:
+
+* `5de73461` — `GodelTTerm.iter` now takes only
+  `t : GodelTTerm .base` (drops the ρ parameter) and fixes
+  the iteratee to `.arrow .base .base`.
+* `fa310255` — Task C.1 skeleton of
+  `GebLean/LawvereGodelTERCatEquiv.lean`.
+
+The subsequent rework commits change the categorical layer
+per the plan's "Stage B rework (2026-04-21)" section:
+applicative `.iter` in `GodelTTerm`; fresh `GodelTMor1`
+inductive replacing the combinator-encoded version; deletion
+of the `applyArrowN*` / `baseEnvRev` / `readBaseEnv*` /
+`applyAllBaseVars*` / `compExpr*` / `iterateAbstract*` stack
+from `GodelTBracket.lean` and `LawvereGodelTQuot.lean`; new
+`GodelTMorN` / quotient / `Category` / `HasChosenFiniteProducts`
+/ interp-functor on the new inductive; then resumption of
+Stage C with the straightforward structural `toER`.
+
+The design spec's Status section and D1′/D2′/D7′ decisions
+record this pivot in full.  `GodelTBracket.lean` is kept as
+a standalone utility for future Layer 1 programmer-ergonomics
+work.  See plan Tasks B′.0-B′.7 for the commit sequence.
+
+**Current resume point (revised)**: Stage B rework, starting
+from Task B′.0 (already landed as `5de73461`).  Next: Task
+B′.1 (delete first-pass Stage B artefacts), B′.2 (define
+fresh `GodelTMor1` inductive), …, B′.7 (update
+`LawvereGodelTInterp.lean` to the new definitions), then
+resume Stage C against the new representation.
+
 **Task 14.5-extended (deferred)**: BT-only adequacy research
 — proving that the unlabeled-BT + 0-way-ℕ-product subfragment
 of `LawvereNatBTBounded` is already equivalent to
