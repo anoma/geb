@@ -20,18 +20,17 @@ namespace GebLean
 open CategoryTheory
 
 /-- A single GodelT morphism `n → 1`: an elementary-recursive
-expression at arity `n`, built from the B-W T⁻′ generators.
-The shape parallels `ERMor1` exactly with two differences:
-`disc` takes the place of `sub` (matching Gödel T's 3-ary
-discriminator instead of ER's truncating subtraction), and
-the iteration primitives `bsum` / `bprod` match ER's bounded
-summation and bounded product — the iter forms that make
-T⁻′ elementary-recursive. -/
+expression at arity `n`, built from a Gödel-T-flavoured
+primitive set that contains `ERMor1`'s primitives plus the
+B-W T⁻′ extras `pred` and `disc`.  The iteration primitives
+`bsum` / `bprod` match `ERMor1`'s — the iter forms that keep
+the fragment within the elementary-recursive functions. -/
 inductive GodelTMor1 : ℕ → Type
   | zero : GodelTMor1 0
   | succ : GodelTMor1 1
   | pred : GodelTMor1 1
   | proj {k : ℕ} (i : Fin k) : GodelTMor1 k
+  | sub : GodelTMor1 2
   | disc : GodelTMor1 3
   | bsum {k : ℕ} (f : GodelTMor1 (k + 1)) :
       GodelTMor1 (k + 1)
@@ -49,6 +48,7 @@ def GodelTMor1.interp : {n : ℕ} → GodelTMor1 n →
   | _, .succ, ctx => Nat.succ (ctx 0)
   | _, .pred, ctx => Nat.pred (ctx 0)
   | _, .proj i, ctx => ctx i
+  | _, .sub, ctx => ctx 0 - ctx 1
   | _, .disc, ctx =>
       match ctx 0 with
       | 0 => ctx 1
@@ -74,6 +74,9 @@ def GodelTMor1.interp : {n : ℕ} → GodelTMor1 n →
 @[simp] theorem GodelTMor1.interp_proj {k : ℕ} (i : Fin k)
     (ctx : Fin k → ℕ) :
     (GodelTMor1.proj i).interp ctx = ctx i := rfl
+
+@[simp] theorem GodelTMor1.interp_sub (ctx : Fin 2 → ℕ) :
+    GodelTMor1.sub.interp ctx = ctx 0 - ctx 1 := rfl
 
 @[simp] theorem GodelTMor1.interp_disc (ctx : Fin 3 → ℕ) :
     GodelTMor1.disc.interp ctx =

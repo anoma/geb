@@ -29,6 +29,7 @@ def GodelTMor1.toER : {n : ℕ} → GodelTMor1 n → ERMor1 n
   | _, .succ       => ERMor1.succ
   | _, .pred       => ERMor1.pred
   | _, .proj i     => ERMor1.proj i
+  | _, .sub        => ERMor1.sub
   | _, .disc       => ERMor1.discN
   | _, .bsum f     => ERMor1.bsum f.toER
   | _, .bprod f    => ERMor1.bprod f.toER
@@ -43,6 +44,7 @@ theorem GodelTMor1.toER_interp : {n : ℕ} → (t : GodelTMor1 n) →
   | _, .succ, _ => rfl
   | _, .pred, _ => rfl
   | _, .proj _, _ => rfl
+  | _, .sub, _ => rfl
   | _, .disc, ctx => by
       change ERMor1.discN.interp ctx = _
       rw [ERMor1.interp_discN]
@@ -73,5 +75,49 @@ theorem GodelTMor1.toER_interp : {n : ℕ} → (t : GodelTMor1 n) →
       congr 1
       funext i
       exact GodelTMor1.toER_interp (g i) ctx
+
+/-- Forward translation from an `ERMor1 n` term to a
+`GodelTMor1 n` term.  The primitive sets match modulo
+`GodelTMor1`'s two T⁻′ extras (`pred`, `disc`), so each ER
+constructor maps to its same-named `GodelTMor1` constructor. -/
+def ERMor1.toGodelT : {n : ℕ} → ERMor1 n → GodelTMor1 n
+  | _, .zero       => GodelTMor1.zero
+  | _, .succ       => GodelTMor1.succ
+  | _, .proj i     => GodelTMor1.proj i
+  | _, .sub        => GodelTMor1.sub
+  | _, .bsum f     => GodelTMor1.bsum f.toGodelT
+  | _, .bprod f    => GodelTMor1.bprod f.toGodelT
+  | _, .comp f g   =>
+      GodelTMor1.comp f.toGodelT (fun i => (g i).toGodelT)
+
+/-- Interp preservation of `toGodelT`: structural induction
+whose cases all reduce to the matching `GodelTMor1` simp
+lemma (the constructors' semantics agree by construction). -/
+theorem ERMor1.toGodelT_interp : {n : ℕ} → (t : ERMor1 n) →
+    (ctx : Fin n → ℕ) → t.toGodelT.interp ctx = t.interp ctx
+  | _, .zero, _ => rfl
+  | _, .succ, _ => rfl
+  | _, .proj _, _ => rfl
+  | _, .sub, _ => rfl
+  | _, .bsum f, ctx => by
+      change (GodelTMor1.bsum f.toGodelT).interp ctx = _
+      rw [GodelTMor1.interp_bsum, ERMor1.interp_bsum]
+      congr 1
+      funext i
+      exact ERMor1.toGodelT_interp f _
+  | _, .bprod f, ctx => by
+      change (GodelTMor1.bprod f.toGodelT).interp ctx = _
+      rw [GodelTMor1.interp_bprod, ERMor1.interp_bprod]
+      congr 1
+      funext i
+      exact ERMor1.toGodelT_interp f _
+  | _, .comp f g, ctx => by
+      change (GodelTMor1.comp f.toGodelT
+          (fun i => (g i).toGodelT)).interp ctx = _
+      rw [GodelTMor1.interp_comp, ERMor1.interp_comp,
+        ERMor1.toGodelT_interp f]
+      congr 1
+      funext i
+      exact ERMor1.toGodelT_interp (g i) ctx
 
 end GebLean
