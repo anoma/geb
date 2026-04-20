@@ -140,4 +140,110 @@ example (f g : GodelTMor1 1) :
       GodelTExpr.iterateAbstract 1
         (GodelTExpr.compExpr f (fun _ => g)) := rfl
 
+/-- Interpreting a term cast along an arity equality, applied curried
+against a context of the new arity, equals interpreting the underlying
+term against the context reindexed across the equality. -/
+theorem applyArrowN_castArrow0 {a b : ℕ} (h : a = b)
+    (t : GodelTTerm (GodelTType.arrow0 a)) (ctx : Fin b → ℕ) :
+    applyArrowN b (GodelTTerm.castArrow0 h t).interp ctx =
+      applyArrowN a (GodelTTerm.interp t)
+        (fun i : Fin a => ctx ⟨i.val, h ▸ i.isLt⟩) := by
+  subst h
+  rfl
+
+/-- The reverse-indexed environment for `baseCtx rem`: given a Lean
+context `ctx : Fin rem → ℕ`, produce an environment whose value at
+`baseCtx rem` position `i` is `ctx (rem - 1 - i)`.  Defined by
+structural recursion on `rem` so that the recursive case unfolds as
+`envCons` of the last context entry onto the reverse-indexed
+environment for the first `rem` entries. -/
+def baseEnvRev : (rem : ℕ) → (Fin rem → ℕ) →
+    (i : Fin (GodelTExpr.baseCtx rem).length) →
+      ((GodelTExpr.baseCtx rem).get i).interp
+  | 0, _ =>
+      fun i => absurd i.isLt (by simp)
+  | rem + 1, ctx =>
+      GodelTExpr.envCons (ctx ⟨rem, Nat.lt_succ_self rem⟩)
+        (baseEnvRev rem
+          (fun j => ctx ⟨j.val, Nat.lt_succ_of_lt j.isLt⟩))
+
+@[simp] theorem baseEnvRev_succ (rem : ℕ) (ctx : Fin (rem + 1) → ℕ) :
+    baseEnvRev (rem + 1) ctx =
+      GodelTExpr.envCons (ctx ⟨rem, Nat.lt_succ_self rem⟩)
+        (baseEnvRev rem
+          (fun j => ctx ⟨j.val, Nat.lt_succ_of_lt j.isLt⟩)) := rfl
+
+/-- Interpretation of `iterateAbstractAux k rem e`.  Expressed as
+iterated bracket abstraction, the curried `(k + rem)`-ary function
+it denotes, when applied to a context `ctx`, substitutes the last
+`rem` entries of `ctx` (in reverse) for `e`'s free variables and
+then applies the remaining `k` entries to the resulting `k`-ary
+curried structure. -/
+theorem applyArrowN_iterateAbstractAux :
+    ∀ (rem k : ℕ)
+      (e : GodelTExpr (GodelTExpr.baseCtx rem) (GodelTType.arrow0 k))
+      (ctx : Fin (k + rem) → ℕ),
+    applyArrowN (k + rem)
+      (GodelTExpr.iterateAbstract.iterateAbstractAux k rem e).interp
+      ctx =
+    applyArrowN k
+      (e.interp
+        (baseEnvRev rem
+          (fun j : Fin rem => ctx ⟨j.val, by omega⟩)))
+      (fun j : Fin k => ctx ⟨rem + j.val, by omega⟩) := by
+  intro rem
+  induction rem with
+  | zero =>
+      intro k e ctx
+      have henv :
+          baseEnvRev 0 (fun j : Fin 0 => ctx ⟨j.val, by omega⟩)
+            = GodelTExpr.emptyEnv := by
+        funext i
+        exact absurd i.isLt (by simp)
+      have hctx :
+          (fun j : Fin k => ctx ⟨0 + j.val, by omega⟩) = ctx := by
+        funext j
+        apply congrArg
+        apply Fin.ext
+        change 0 + j.val = j.val
+        omega
+      rw [henv, hctx]
+      change applyArrowN k
+          (GodelTExpr.iterateAbstract.iterateAbstractAux k 0 e).interp
+          ctx =
+        applyArrowN k (e.interp GodelTExpr.emptyEnv) ctx
+      rw [show
+          (GodelTExpr.iterateAbstract.iterateAbstractAux k 0 e)
+            = e.compile from rfl]
+      rw [GodelTExpr.compile_interp]
+  | succ rem ih =>
+      intro k e ctx
+      show applyArrowN (k + (rem + 1))
+          (GodelTExpr.iterateAbstract.iterateAbstractAux k (rem + 1)
+            e).interp ctx = _
+      rw [show
+          GodelTExpr.iterateAbstract.iterateAbstractAux k (rem + 1) e =
+            GodelTTerm.castArrow0 (by omega)
+              (GodelTExpr.iterateAbstract.iterateAbstractAux (k + 1)
+                rem e.abstract) from rfl]
+      rw [applyArrowN_castArrow0]
+      rw [ih (k + 1) e.abstract]
+      show applyArrowN (k + 1) _ _ = _
+      rw [show
+          ∀ (f : (GodelTType.arrow0 (k + 1)).interp)
+            (xs : Fin (k + 1) → ℕ),
+            applyArrowN (k + 1) f xs
+              = applyArrowN k (f (xs 0)) (Fin.tail xs)
+          from fun _ _ => rfl]
+      rw [GodelTExpr.abstract_interp]
+      rw [baseEnvRev_succ]
+      congr 1
+      funext j
+      change ctx ⟨rem + (j.val + 1), _⟩
+        = ctx ⟨(rem + 1) + j.val, _⟩
+      apply congrArg
+      apply Fin.ext
+      change rem + (j.val + 1) = (rem + 1) + j.val
+      omega
+
 end GebLean
