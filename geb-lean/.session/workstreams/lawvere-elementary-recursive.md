@@ -1113,7 +1113,7 @@ Being unable to preserve the equivalence at any point is an
 immediate signal that the proposed extension is outside
 ER — DO NOT build a workaround; surface it and reconsider.
 
-Stages (task IDs #181-#185):
+Stages (task IDs #181-#186):
 
 * **Stage E (#181)**: Add T* iter to `GodelTMor1`.  Introduces
   `GodelTMor1.iter {k} (count : GodelTMor1 k)
@@ -1126,40 +1126,101 @@ Stages (task IDs #181-#185):
   B-W's stratification, and proving
   `GodelTMor1.lt_tower_towerHeight` — the substantive B-W
   theorem.  ~100-300 lines of proof.
-* **Stage F (#182)**: Absorb the remaining `GodelTTerm`
-  combinators (`K`, `S`) into `GodelTMor1` (either as direct
-  constructors whose ER backings are built from `comp` /
-  `proj`, or via bracket abstraction — see Stage G).  After
-  Stage F, every `GodelTTerm` constructor has a `GodelTMor1`
-  analog; the combinator reference becomes fully absorbed.
+* **Stage F (#182)**: Add the remaining B-W T* primitives
+  (`K`, `S`) to `GodelTMor1`.  After Stage F, `GodelTMor1`
+  contains the full B-W T* primitive set
+  (`zero` / `succ` / `pred` / `K σ τ` / `S ρ σ τ` /
+  `disc σ` / `iter`, plus application via categorical `comp`)
+  alongside the ER-identical extras (`sub`, `bsum`, `bprod`,
+  `proj`) that Stage I will remove.
 * **Stage G (#183)**: Promote `GodelTExpr` bracket
   abstraction to the categorical layer.  `GodelTMor1`-valued
   `abstract` operator over extended base contexts, with ER
   backing via `ERMor1.comp` + projections.  Brings the
   first-pass `GodelTBracket.lean` utility onto the critical
-  path at this point.
+  path at this point.  Essential for Stage I: the composites
+  that replace the ER-identical extras are expressed via
+  bracket abstraction.
+* **Stage I (#186)**: Reduce `GodelTMor1` to atomic B-W T*
+  primitives.  Systematically remove each ER-identical extra
+  (`sub`, `bsum`, `bprod`, and possibly `proj`) by replacing
+  it with a named composite built entirely from the B-W
+  primitives via Stage G's bracket abstraction.  Remove one
+  at a time, preserving the
+  `LawvereGodelTCat ≌ LawvereERCat` equivalence at each step.
+  **This is the stage that actually demonstrates that B-W's
+  primitives capture all of ER.**  Without it we have no
+  assurance: the T* primitives could be insufficient and
+  the category would still implement ER only because the
+  ER-identical extras are present atomically alongside them.
+  Endpoint of Stage I: `GodelTMor1` is B-W's exact T* in
+  Lean, categorically equivalent to Wikipedia ER.
 * **Stage H (#184)**: Lambda-to-combinator compilation
   helpers.  Programmer-facing macros / notation for writing
   λ-style `GodelTMor1` terms that elaborate via Stage G's
   bracket abstraction.  No new ER primitives — pure syntactic
-  transformation at the GodelT layer.
-* **Stage K (#185)**: Binary-tree base type + analogous
-  iter / bracket abstraction.  Only after Stage H delivers a
-  working T* = ER at the B-W level, AND Tree-ER 4g.2 lands
-  (task #136).  ER backings live in
-  `Utilities/ERTreeArith.lean`.
+  transformation at the GodelT layer.  Sits after Stage I
+  because it is programmer ergonomics that benefits from
+  having the atomic-B-W-primitive form already in place.
+* **Stage J (#185)**: Binary-tree extension `GodelTBT`.  A
+  NEW separate category whose objects are pairs of natural
+  numbers `(n, m)`: n product of ℕs and m product of binary
+  trees.  Morphisms act simultaneously on both slot kinds.
+  Binary-tree encoding via Szudzik pairing, written as a
+  `GodelTMor1` morphism (so the entire coding story is
+  internal to the T* fragment).  Equivalence
+  `GodelTBT ≌ GodelTMor` proven (passing through Szudzik).
+  ER backings live in `Utilities/ERTreeArith.lean`.
 
-Each stage produces commits that preserve
-`lawvereGodelTERCatEquivalence`; any stage where preservation
-fails is a signal that the proposed extension is outside ER
-— surface and reconsider, don't patch around.
+Each stage produces commits that preserve the categorical
+equivalences; any stage where preservation fails is a signal
+that the proposed extension is outside ER — surface and
+reconsider, don't patch around.
 
-**Endpoint**: after Stage H, `LawvereGodelTCat` is a
-programmer-friendly presentation of B-W's T* (equivalently,
-the elementary-recursive functions) with iter / bracket
-abstraction / λ-syntax, and the equivalence with
-`LawvereERCat` is preserved on the nose.  After Stage K, the
-same story extends to binary trees.
+### Endpoints
+
+* **After Stage I**: `GodelTMor` is B-W's exact T*, formalized
+  in Lean, categorically equivalent to `LawvereERCat`
+  (Wikipedia-style elementary recursive functions).  Three
+  deliverables: a Lean formalization of Wikipedia ER, a Lean
+  formalization of B-W T*, and a proof of their equivalence.
+  This gives us a programmer-friendly natural-number ER
+  proven equivalent to a mathematically ubiquitous formulation.
+* **After Stage J**: `GodelTBT` extends the above with
+  simultaneous binary-tree support via Szudzik coding, with
+  objects `(n : ℕ) × (m : ℕ)` and the equivalence
+  `GodelTBT ≌ GodelTMor` carrying the elementary-recursive
+  guarantee across binary-tree operations as well.
+
+### Non-negotiable interfaces
+
+These interfaces are mathematical contracts, not design
+choices:
+
+* `GodelTMor` after Stage I MUST be B-W's exact T* (primitive
+  set per the B-W paper).
+* `GodelTBT` after Stage J MUST be GodelTMor extended with a
+  binary-tree base, pair-of-ℕ objects, and Szudzik-coding-
+  based embedding into ℕ.
+* `GodelTMor ≌ LawvereERCat` MUST hold (proven by B-W
+  mathematically; our task is a Lean proof).
+* `GodelTBT ≌ GodelTMor` MUST hold (Szudzik coding is a
+  bijection ℕ → ℕ × ℕ which is T*-definable; our task is a
+  Lean proof).
+
+Implementation strategies may change freely during
+development.  Interface changes are NOT a valid response to
+implementation difficulty — the correct response is to
+re-examine the implementation, strengthen supporting
+infrastructure in `Utilities/`, or surface the obstruction
+and discuss.  Weakening the interface would render the
+formalization disconnected from the mathematical object it
+is meant to capture.  B-W proved the equivalences; if we
+cannot implement them, the bug is ours.
+
+See `CLAUDE.md` § Development Processes for the formal
+statement of both the bottom-up named-composite discipline
+and the non-negotiable-interface principle.
 
 **Task 14.5-extended (deferred)**: BT-only adequacy research
 — proving that the unlabeled-BT + 0-way-ℕ-product subfragment

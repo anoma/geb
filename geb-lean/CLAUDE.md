@@ -504,6 +504,48 @@ framework.
   composites (`pred`, `discN`, `boundedRec`, `towerBound`,
   `foldBTLOnCode`, etc.).
 
+- **Non-negotiable interfaces for categories formalizing
+  pre-existing mathematical objects**: when the goal of a
+  workstream is to formalize a specific mathematical object
+  (e.g. the elementary-recursive functions per Wikipedia, or
+  Beckmann-Weiermann's T*), the *interface* of the resulting
+  Lean category (its objects, its primitive constructors, its
+  generators) is a fixed mathematical contract.  It is
+  determined by the external mathematical source and is NOT a
+  design choice open to the implementation.
+
+  Implementation design (proof strategies, auxiliary inductives,
+  choice of named composites, representation of ambient context,
+  bracket-abstraction plumbing, etc.) may change freely during
+  development — and SHOULD change whenever a better path is
+  found.  But interface changes are not a valid response to
+  implementation difficulty.  If an interface implementation
+  gets stuck, the correct moves are:
+  1. Re-examine the implementation strategy (is there a cleaner
+     route via an auxiliary inductive, a different bound
+     construction, a different proof technique?);
+  2. Strengthen supporting infrastructure in `Utilities/`;
+  3. Surface the obstruction and discuss before continuing.
+
+  What is NOT a correct move: weakening or redefining the
+  interface so the implementation becomes easier.  That would
+  render the formalization disconnected from the mathematical
+  object it is meant to capture.  If the mathematical source
+  says the object exists (e.g. B-W proved T* = ER), then the
+  obstruction is in our implementation, not in the mathematical
+  content.
+
+  Applied to the `LawvereGodelT` chain: the final `GodelTMor`
+  category MUST be Beckmann-Weiermann's exact T* (primitive set
+  per the B-W paper: `zero`, `succ`, `pred`, `K σ τ`,
+  `S ρ σ τ`, `disc σ`, `iter`, and application); the final
+  `GodelTBT` category MUST be GodelTMor extended with a binary-
+  tree base, pair-of-ℕ objects `(n, m)` (n products of ℕ, m
+  products of binary trees), and Szudzik-coding-based embedding
+  into ℕ.  The equivalences (`GodelTMor ≌ LawvereERCat`;
+  `GodelTBT ≌ GodelTMor`) are mathematical results that B-W
+  have proven; our task is to exhibit Lean proofs.
+
 - See [Theorem Proving in Lean 4](https://leanprover.github.io/theorem_proving_in_lean4/)
   for tips on many aspects of theorem-proving.  If you're struggling to
   prove something, or even just about to embark on a
