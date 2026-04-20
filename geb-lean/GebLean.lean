@@ -52,6 +52,7 @@ import GebLean.LawvereERNatBTV2Equiv
 import GebLean.LawvereERQuot
 import GebLean.LawvereERTetration
 import GebLean.LawvereGodelT
+import GebLean.LawvereGodelTInterp
 import GebLean.LawvereGodelTQuot
 import GebLean.LawvereNatBT
 import GebLean.LawvereNatBT0
