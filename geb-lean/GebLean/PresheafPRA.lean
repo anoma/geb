@@ -401,6 +401,45 @@ private def praPolyDirectionsData_baseFib :
   map_comp _ _ := rfl
 
 /--
+Fibre functor of `praPolyDirectionsData` at a source-base object
+`c = ((J, I), P)`.  Composes the inverse of `catULiftFunctor2`'s
+widening on the element side with `elementsPrecomp P ⋙
+ccrNewFamilyFunctor (presheafCat I)`, then postcomposes with the
+`op` of the `catULiftFunctor2` widening on the presheaf side to
+land in `praDirectionsTargetFibre.obj (op I)`.
+-/
+private def praPolyDirectionsData_fibFib
+    (X : (grothendieckContraFunctor
+        (Cat.{v_J, u_J} × Cat.{v_I, u_I})).obj
+      presheafPRACatBifunctorUncurriedOp.{u_I, v_I, u_J, v_J,
+        w_I, w'}) :
+    (functorFromDataContra
+        sourceData.{u_I, v_I, u_J, v_J, w_I, w'}).obj X ⥤
+      praDirectionsTargetFibre.{u_I, v_I, u_J, v_J, w_I, w'}.obj
+        (Opposite.op
+          (praPolyDirectionsData_baseFib.{u_I, v_I, u_J, v_J,
+            w_I, w'}.obj X)) :=
+  show CategoryTheory.ULiftHom
+      (ULift
+        ((GrothendieckContraFunctor.objFiber X ⋙
+          ccrNewIndexFunctor.{max v_I u_I (w_I + 1),
+            max u_I w_I, w'}
+            (↑(presheafCatFunctor.{u_I, v_I, w_I}.obj
+              (Opposite.op
+                (GrothendieckContraFunctor.objBase X).2)))
+        ).Elements)) ⥤ _ from
+  CategoryTheory.ULiftHom.down ⋙
+    CategoryTheory.ULift.downFunctor ⋙
+    CategoryTheory.elementsPrecomp
+      (GrothendieckContraFunctor.objFiber X) ⋙
+    ccrNewFamilyFunctor.{max v_I u_I (w_I + 1), max u_I w_I, w'}
+      (↑(presheafCatFunctor.{u_I, v_I, w_I}.obj
+        (Opposite.op
+          (GrothendieckContraFunctor.objBase X).2))) ⋙
+    (CategoryTheory.ULift.upFunctor ⋙
+      CategoryTheory.ULiftHom.up).op
+
+/--
 Target bifunctor of `praPositionsNat`.  Sends each
 `(J, I) : Cat.{v_J, u_J}ᵒᵖ × Cat.{v_I, u_I}ᵒᵖ` to the
 universe-widened form of `Jᵒᵖ ⥤ Type w'`, constant in `I`.
