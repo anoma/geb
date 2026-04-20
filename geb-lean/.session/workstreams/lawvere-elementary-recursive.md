@@ -1015,6 +1015,62 @@ follow from the matching ER simp lemma.  No tower-bound
 
 Design spec D1′/D2′ and plan Task C.2 are updated to match.
 
+**LawvereGodelT chain complete (2026-04-21)**: all stages landed
+on `terence/syntax`.  Full commit ledger:
+
+| SHA | Stage | Content |
+|---|---|---|
+| `36c4d18d` | 0 | `ERMor1.pred` + `ERMor1.discN` named primitives with `@[simp]` interp lemmas. |
+| `9bbb5aee` | A.1 | Skeleton `GebLean/LawvereGodelT.lean`. |
+| `29f618e2` | A.2 | `GodelTType` + `interp` + `arrow0`. |
+| `af61043a` | A.3 | `GodelTTerm` inductive (first-pass form with `iter ρ t`). |
+| `aa6ba4db` | A.4-5 | `GodelTTerm.interp` + per-constructor `@[simp]`. |
+| `17a50e85` | A.6 | `GodelTPure` + `Decidable`. |
+| `a2c6dc51` | B.1 | Skeleton `GebLean/LawvereGodelTQuot.lean`. |
+| `17b5be08` – `eb079590` | B.2-B.4 | First-pass combinator-encoded `GodelTMor1 := GodelTTerm (arrow0 n)`, `applyArrowN`, `GodelTBracket.lean` bracket-abstraction utility, `compMor1` + `interp_compMor1` three-lemma factoring. |
+| `ffbc0213` – `fdf9058f` | B.5-B.8 | First-pass `GodelTMorN` tuple + quotient + `Category LawvereGodelTCat` + `HasChosenFiniteProducts` + faithful `godelTInterpFunctor`. |
+| `8898204a` | Tracker | First-pass Stage B complete. |
+| `fa310255` | C.1 | Skeleton `GebLean/LawvereGodelTERCatEquiv.lean`. |
+| `5de73461` | B′.0 (prep) | Restrict `GodelTTerm.iter`'s iteratee to `.base`. |
+| `da2dec01` | Tracker | Stage B rework design pivot documented. |
+| `8a6c6733` | B′.0 | `GodelTTerm.iter` applicative. |
+| `a2f38ded` | B′.1-B′.7 | `GodelTMor1` rebased on a fresh inductive parallel to `ERMor1`; first-pass `applyArrowN*` / `baseEnvRev` / `applyAllBaseVars*` / `compExpr*` / `iterateAbstract*` deleted.  `GodelTBracket.lean` trimmed to `GodelTExpr` + `abstract` + `compile` + `baseCtx` / `baseVar` only. |
+| `58922a2a` | B′ correction | `bsum`/`bprod` in `GodelTMor1` in place of generic iter (matches ER; keeps the fragment elementary-recursive). |
+| `e3fc6a10` | C.2 | `GodelTMor1.toER` + `toER_interp`. |
+| `6f4e70a9` | C.2 / C.3 prep | Adds `GodelTMor1.sub` primitive + `ERMor1.toGodelT` + `toGodelT_interp`. |
+| `4b6d2d43` | C.4 | Tuple-level lifts + `godelTToERFunctor` / `erToGodelTFunctor`. |
+| `32f13220` | C.5 | Round-trip identities at quotient level + `lawvereGodelTERCatEquivalence : LawvereGodelTCat ≌ LawvereERCat`. |
+| `c47c1f5a` | D.1 / D.2 | `GebLeanTests/LawvereGodelT.lean` + `GebLeanTests/LawvereGodelTERCatEquiv.lean` `#guard` sanity tests. |
+
+Final state:
+
+* `GebLean/LawvereGodelT.lean` — `GodelTType`, `GodelTTerm`
+  (B-W T⁻′ combinator reference with applicative `iter`),
+  `GodelTTerm.interp`, `GodelTPure` decidable predicate,
+  `GodelTTerm.I` combinator (used by `GodelTBracket`).
+* `GebLean/LawvereGodelTQuot.lean` — fresh `GodelTMor1`
+  inductive parallel to `ERMor1`, plus `GodelTMorN`
+  tuple, extensional-equality quotient, `Category
+  LawvereGodelTCat`, and `HasChosenFiniteProducts`.
+* `GebLean/LawvereGodelTInterp.lean` — faithful
+  `godelTInterpFunctor : LawvereGodelTCat ⥤ Type`.
+* `GebLean/LawvereGodelTERCatEquiv.lean` — `toER` / `toGodelT`
+  at term, tuple, and quotient levels; interp preservation +
+  round-trip identities; `godelTToERFunctor` /
+  `erToGodelTFunctor`; `lawvereGodelTERCatUnitIso` /
+  `lawvereGodelTERCatCounitIso`;
+  `lawvereGodelTERCatEquivalence : LawvereGodelTCat ≌
+  LawvereERCat`.
+* `GebLean/Utilities/GodelTBracket.lean` — standalone
+  combinator-logic utility for future Layer 1 work; no
+  longer on the critical path.
+* `GebLeanTests/LawvereGodelT.lean` +
+  `GebLeanTests/LawvereGodelTERCatEquiv.lean` — `#guard`
+  sanity tests.
+
+Build state at chain completion: clean (zero warnings),
+`lake test` passes.
+
 **Task 14.5-extended (deferred)**: BT-only adequacy research
 — proving that the unlabeled-BT + 0-way-ℕ-product subfragment
 of `LawvereNatBTBounded` is already equivalent to
