@@ -400,4 +400,62 @@ theorem applyAllBaseVars_interp (m : ℕ) (t : GodelTTerm (GodelTType.arrow0 m))
   change m - 1 - (m - 1 - j.val) = j.val
   omega
 
+/-- Interpretation of `compExprAux k e args` at an environment: the
+curried application of `e.interp env` to the tuple of
+`(applyAllBaseVars m (args i)).interp env` values. -/
+theorem compExprAux_interp {m : ℕ} :
+    ∀ (k : ℕ)
+      (e : GodelTExpr (GodelTExpr.baseCtx m) (GodelTType.arrow0 k))
+      (args : Fin k → GodelTTerm (GodelTType.arrow0 m))
+      (env : (i : Fin (GodelTExpr.baseCtx m).length) →
+        ((GodelTExpr.baseCtx m).get i).interp),
+    (GodelTExpr.compExpr.compExprAux k e args).interp env =
+      applyArrowN k (e.interp env)
+        (fun i : Fin k =>
+          (GodelTExpr.applyAllBaseVars m (args i)).interp env) := by
+  intro k
+  induction k with
+  | zero =>
+      intro _ _ _
+      rfl
+  | succ k ih =>
+      intro e args env
+      change (GodelTExpr.compExpr.compExprAux k
+          (e.app (GodelTExpr.applyAllBaseVars m (args 0)))
+          (fun i => args i.succ)).interp env = _
+      rw [ih]
+      rw [GodelTExpr.interp_app]
+      rfl
+
+/-- Interpretation of `compExpr f tuple` at the reverse-indexed
+environment of a context: curried application of `f` against the
+tuple's interpretations at the context. -/
+theorem compExpr_interp {n m : ℕ}
+    (f : GodelTTerm (GodelTType.arrow0 n))
+    (tuple : Fin n → GodelTTerm (GodelTType.arrow0 m))
+    (ctx : Fin m → ℕ) :
+    (GodelTExpr.compExpr f tuple).interp (baseEnvRev m ctx) =
+      applyArrowN n f.interp
+        (fun i : Fin n => applyArrowN m (tuple i).interp ctx) := by
+  unfold GodelTExpr.compExpr
+  rw [compExprAux_interp n (.const f) tuple (baseEnvRev m ctx)]
+  rw [GodelTExpr.interp_const]
+  congr 1
+  funext i
+  rw [applyAllBaseVars_interp]
+
+/-- Interpretation correctness of `GodelTMor1.compMor1`: the composite
+morphism's interpretation at a context equals the outer morphism's
+interpretation against the tuple of inner morphisms' interpretations
+at the context. -/
+theorem GodelTMor1.interp_compMor1 {n m : ℕ}
+    (f : GodelTMor1 n) (tuple : Fin n → GodelTMor1 m)
+    (ctx : Fin m → ℕ) :
+    (GodelTMor1.compMor1 f tuple).interp ctx =
+      f.interp (fun i => (tuple i).interp ctx) := by
+  unfold GodelTMor1.compMor1
+  unfold GodelTMor1.interp
+  rw [applyArrowN_iterateAbstract]
+  rw [compExpr_interp]
+
 end GebLean
