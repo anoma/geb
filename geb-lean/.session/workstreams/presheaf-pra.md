@@ -390,6 +390,8 @@ All commits on `terence/grothendieck`.  Plan at
 | `ee49bd58` | Task 7.2: `praPolyDirectionsData_unwidenFiber` |
 | `4ab23af6` → reverted by `34a0a36d` | Abandoned `elemMor` helper |
 | `83444c84` | Task 7.3 (revised): `praPolyDirectionsData_fibHomCrossUnwidened` |
+| `8badaeda` | Task 7.3.5: decouple U3 target Cat universe |
+| `86712d19`, `de1de0a3` | Task 7.4: `praPolyDirectionsData_fibHomCrossApp` |
 
 **Deviations from original plan (both intentional, implemented
 and committed):**
@@ -409,28 +411,40 @@ and committed):**
    than `Iᵒᵖ ⥤ Type`.  The spec at lines 55–59 and 173–192 now
    reflects the three-stage form.
 
-**Outstanding Task 7 work (remaining sub-tasks 7.3.5, 7.4–7.11):**
+**Outstanding Task 7 work (remaining sub-tasks 7.5–7.11):**
 
-The plan expands Task 7 into Tasks 7.1–7.11 (Phases 7A–7D), plus the
-newly-inserted Task 7.3.5 (2026-04-20).  See the plan file for
+Task 7.3.5 (U3 universe generalization) and Task 7.4 (widened
+`fibHomCrossApp`) were completed in this session.  The plan expands
+Task 7 into Tasks 7.1–7.11 (Phases 7A–7D).  See the plan file for
 detailed skeletons.  Summary of remaining:
 
-- **Task 7.3.5 (prerequisite for 7.4):** Generalize U3 abbrevs in
-  `Grothendieck.lean` (Tasks 1–3 infrastructure) to decouple target
-  Cat universe from source-category universes.  Current U3 forces
-  `G : C ⥤ Cat.{vC, uC}` and `F : Dᵒᵖ ⥤ Cat.{vD, uD}`; add a shared
-  target pair `(vT, uT)` so `G : C ⥤ Cat.{vT, uT}` and
-  `F : Dᵒᵖ ⥤ Cat.{vT, uT}`.  Needed because our setting has both `G`
-  and `F` target a Cat at a widened universe that differs from both
-  source categories' universes.
-- Task 7.4: `praPolyDirectionsData_fibHomCrossApp` (widened main).
-  Widens Task 7.3's unwidened morphism through
-  `catULiftFunctor2 ⋙ Cat.opFunctor`, gluing with `eqToHom` at
-  endpoints via `ccrNewFamilyFunctor_obj_naturality`.
 - Tasks 7.5/7.6: `fibHomCrossNat` (unwidened + widened).
 - Tasks 7.7/7.8: `baseHomId` (unwidened + widened).
 - Tasks 7.9/7.10: `baseHomComp` (unwidened + widened).
 - Task 7.11: `praPolyDirectionsData` bundle assembly.
+
+**Observations from the 7.4 implementation (preserve for next
+session):**
+
+1. **U3 generalization trivial.** Adding a `vT, uT` universe pair and
+   changing `G : C ⥤ Cat.{vC, uC}` → `G : C ⥤ Cat.{vT, uT}` (and
+   likewise for F) in the `variable` declarations was the only change
+   needed; all derived abbrevs, lemmas, and the extractor propagated.
+2. **No `eqToHom` glue needed for `fibHomCrossApp`.** The endpoint-
+   object equalities turned out to hold on the nose via how `fibFib`,
+   `sourceDataHomApp`, and the widening interact.  The plan's "two
+   `eqToHom` bookends" skeleton was overkill — the direct definition
+   `((ULift.upFunctor ⋙ ULiftHom.up).op).map (fibHomCrossUnwidened f
+   (unwidenFiber X₁ . obj x))` compiles without any bookends.
+3. **Abbrev-form signature gets stuck on universe unification.**
+   Writing `: FunctorBetweenCovContraFibHomCrossApp (functorFromData
+   Contra sourceData) praDirectionsTargetFibre ... fibFib ...` causes
+   Lean to produce a stuck metavar for F despite F being a specific
+   argument.  Workaround: write the signature in the fully-unfolded
+   `∀ {X₁ X₂} (f : X₁ ⟶ X₂) (x), ... ⟶ ...` form.  Abbrevs are
+   reducible, so Lean will still accept this as the `fibHomCrossApp`
+   field of the bundle.  Apply the same workaround to Tasks
+   7.6, 7.8, 7.10 (widened coherence lemmas).
 
 **Revision note for Tasks 7.5/7.7/7.9 (unwidened-level coherence
 proofs):** Their plan skeletons reference an abandoned
