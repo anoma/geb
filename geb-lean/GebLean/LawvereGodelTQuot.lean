@@ -1,5 +1,6 @@
 import GebLean.LawvereGodelT
 import GebLean.Utilities.ComputableLimits
+import GebLean.Utilities.GodelTBracket
 import Mathlib.CategoryTheory.Category.Basic
 
 /-!
@@ -13,32 +14,6 @@ GodelT morphisms, extensional-equality quotient,
 namespace GebLean
 
 open CategoryTheory
-
-/-- The identity combinator at type `σ`, encoded as
-`S σ (σ → σ) σ (K σ (σ → σ)) (K σ σ)`. -/
-def GodelTTerm.I (σ : GodelTType) :
-    GodelTTerm (.arrow σ σ) :=
-  ((GodelTTerm.S σ (.arrow σ σ) σ).app
-    (GodelTTerm.K σ (.arrow σ σ))).app (GodelTTerm.K σ σ)
-
-@[simp] theorem GodelTTerm.interp_I (σ : GodelTType)
-    (x : σ.interp) : (GodelTTerm.I σ).interp x = x := rfl
-
-/-- The composition combinator: `B f g x = f (g x)`.  Given
-`f : τ → ρ` and `g : σ → τ`, produce `σ → ρ`.  Encoded as
-`S σ τ ρ (K (τ → ρ) σ f) g`. -/
-def GodelTTerm.B {σ τ ρ : GodelTType}
-    (f : GodelTTerm (.arrow τ ρ))
-    (g : GodelTTerm (.arrow σ τ)) :
-    GodelTTerm (.arrow σ ρ) :=
-  ((GodelTTerm.S σ τ ρ).app
-    ((GodelTTerm.K (.arrow τ ρ) σ).app f)).app g
-
-@[simp] theorem GodelTTerm.interp_B {σ τ ρ : GodelTType}
-    (f : GodelTTerm (.arrow τ ρ))
-    (g : GodelTTerm (.arrow σ τ)) (x : σ.interp) :
-    (GodelTTerm.B f g).interp x = f.interp (g.interp x) :=
-  rfl
 
 /-- A single GodelT morphism `n → 1` is a curried n-ary
 ground function: a closed term of type `arrow0 n`. -/
@@ -146,5 +121,23 @@ def GodelTMor1.proj : (n : ℕ) → Fin n → GodelTMor1 n
           rw [GodelTMor1.interp_dropFirst]
           rw [ih ⟨j, Nat.lt_of_succ_lt_succ h⟩ (Fin.tail ctx)]
           rfl
+
+/-- Composition of an n-ary GodelT morphism with an n-tuple of
+m-ary GodelT morphisms, producing an m-ary GodelT morphism.
+Constructed via bracket abstraction: build a base-typed
+expression with `m` free variables representing `f` applied to
+the tuple entries each applied to those variables, then
+abstract all `m` variables and compile. -/
+def GodelTMor1.compMor1 {n m : ℕ} (f : GodelTMor1 n)
+    (tuple : Fin n → GodelTMor1 m) : GodelTMor1 m :=
+  GodelTExpr.iterateAbstract m
+    (GodelTExpr.compExpr f tuple)
+
+/-- Sanity example: composing a unary morphism with a unary
+morphism produces a unary morphism whose interp is composition. -/
+example (f g : GodelTMor1 1) :
+    GodelTMor1.compMor1 f (fun _ => g) =
+      GodelTExpr.iterateAbstract 1
+        (GodelTExpr.compExpr f (fun _ => g)) := rfl
 
 end GebLean

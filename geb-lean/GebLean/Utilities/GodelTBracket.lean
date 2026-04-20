@@ -1,5 +1,4 @@
 import GebLean.LawvereGodelT
-import GebLean.LawvereGodelTQuot
 
 /-!
 # Bracket Abstraction for `GodelTTerm`
@@ -202,5 +201,101 @@ theorem GodelTExpr.compile_interp {σ : GodelTType}
       simp only [compile_app, interp_app]
       change f.compile.interp (a.compile.interp) = _
       rw [ihf, iha]
+
+/-- The standard base-typed context of `m` variables. -/
+def GodelTExpr.baseCtx (m : ℕ) : List GodelTType :=
+  List.replicate m GodelTType.base
+
+@[simp] theorem GodelTExpr.baseCtx_zero :
+    GodelTExpr.baseCtx 0 = [] := rfl
+
+@[simp] theorem GodelTExpr.baseCtx_succ (m : ℕ) :
+    GodelTExpr.baseCtx (m + 1) =
+      GodelTType.base :: GodelTExpr.baseCtx m := rfl
+
+theorem GodelTExpr.baseCtx_length (m : ℕ) :
+    (GodelTExpr.baseCtx m).length = m :=
+  List.length_replicate
+
+theorem GodelTExpr.baseCtx_get (m : ℕ)
+    (i : Fin (GodelTExpr.baseCtx m).length) :
+    (GodelTExpr.baseCtx m).get i = GodelTType.base := by
+  unfold GodelTExpr.baseCtx
+  simp [List.getElem_replicate, List.get_eq_getElem]
+
+/-- The `i`-th variable in `baseCtx m`, typed at `base`. -/
+def GodelTExpr.baseVar (m : ℕ) (i : Fin m) :
+    GodelTExpr (GodelTExpr.baseCtx m) GodelTType.base :=
+  GodelTExpr.baseCtx_get m
+      ⟨i.val, by rw [GodelTExpr.baseCtx_length]; exact i.isLt⟩ ▸
+    GodelTExpr.var
+      ⟨i.val, by rw [GodelTExpr.baseCtx_length]; exact i.isLt⟩
+
+/-- Apply a partial `arrow0 k`-typed expression to a base variable
+at some position.  Used in the iterative construction of
+`applyAllBaseVars` below. -/
+private def GodelTExpr.appVar (m : ℕ) {k : ℕ}
+    (e : GodelTExpr (GodelTExpr.baseCtx m) (GodelTType.arrow0 (k + 1)))
+    (i : Fin m) :
+    GodelTExpr (GodelTExpr.baseCtx m) (GodelTType.arrow0 k) :=
+  e.app (GodelTExpr.baseVar m i)
+
+/-- Apply a closed `arrow0 m`-typed term to all `m` variables of the
+base context, producing a base-typed expression.  The variables are
+applied in order 0, 1, ..., m − 1. -/
+def GodelTExpr.applyAllBaseVars :
+    (m : ℕ) → GodelTTerm (GodelTType.arrow0 m) →
+    GodelTExpr (GodelTExpr.baseCtx m) GodelTType.base :=
+  fun m t => applyAllBaseVarsAux m m (Nat.le_refl m) (.const t)
+where
+  applyAllBaseVarsAux : (m : ℕ) → (k : ℕ) → (hk : k ≤ m) →
+      GodelTExpr (GodelTExpr.baseCtx m) (GodelTType.arrow0 k) →
+      GodelTExpr (GodelTExpr.baseCtx m) GodelTType.base
+    | _, 0, _, e => e
+    | m, k + 1, hk, e =>
+        applyAllBaseVarsAux m k (Nat.le_of_succ_le hk)
+          (GodelTExpr.appVar m e
+            ⟨m - k - 1, by omega⟩)
+
+/-- Build a closed base-typed expression in the `m`-variable context
+that represents applying `f` to the tuple of base-typed applications
+`tuple_i` at the context variables. -/
+def GodelTExpr.compExpr {n m : ℕ}
+    (f : GodelTTerm (GodelTType.arrow0 n)) (tuple : Fin n → GodelTTerm (GodelTType.arrow0 m)) :
+    GodelTExpr (GodelTExpr.baseCtx m) GodelTType.base :=
+  compExprAux n (.const f) tuple
+where
+  /-- Accumulator recursion on the remaining arity `k` of `f`. -/
+  compExprAux : (k : ℕ) →
+      GodelTExpr (GodelTExpr.baseCtx m) (GodelTType.arrow0 k) →
+      (Fin k → GodelTTerm (GodelTType.arrow0 m)) →
+      GodelTExpr (GodelTExpr.baseCtx m) GodelTType.base
+    | 0, e, _ => e
+    | k + 1, e, args =>
+        compExprAux k
+          (e.app (GodelTExpr.applyAllBaseVars m (args 0)))
+          (fun i => args i.succ)
+
+/-- Iterated bracket abstraction: close the `m` head context
+variables of a base-typed expression, producing a closed term of type
+`arrow0 m`. -/
+def GodelTExpr.iterateAbstract :
+    (m : ℕ) →
+    GodelTExpr (GodelTExpr.baseCtx m) GodelTType.base →
+    GodelTTerm (GodelTType.arrow0 m) :=
+  fun m e =>
+    GodelTTerm.castArrow0 (Nat.zero_add m)
+      (iterateAbstractAux 0 m e)
+where
+  /-- `k` tracks the already-abstracted suffix length; `rem` the
+  remaining context variables. -/
+  iterateAbstractAux : (k : ℕ) → (rem : ℕ) →
+      GodelTExpr (GodelTExpr.baseCtx rem) (GodelTType.arrow0 k) →
+      GodelTTerm (GodelTType.arrow0 (k + rem))
+    | k, 0, e => e.compile
+    | k, rem + 1, e =>
+        GodelTTerm.castArrow0
+          (by omega : (k + 1) + rem = k + (rem + 1))
+          (iterateAbstractAux (k + 1) rem e.abstract)
 
 end GebLean
