@@ -120,6 +120,20 @@ theorem ERMor1.toGodelT_interp : {n : ℕ} → (t : ERMor1 n) →
       funext i
       exact ERMor1.toGodelT_interp (g i) ctx
 
+/-- Round-trip identity: at the term level, `toER.toGodelT`
+preserves interp of the original `GodelTMor1`. -/
+theorem GodelTMor1.toER_toGodelT_interp {n : ℕ}
+    (t : GodelTMor1 n) (ctx : Fin n → ℕ) :
+    t.toER.toGodelT.interp ctx = t.interp ctx := by
+  rw [ERMor1.toGodelT_interp, GodelTMor1.toER_interp]
+
+/-- Round-trip identity: at the term level, `toGodelT.toER`
+preserves interp of the original `ERMor1`. -/
+theorem ERMor1.toGodelT_toER_interp {n : ℕ}
+    (t : ERMor1 n) (ctx : Fin n → ℕ) :
+    t.toGodelT.toER.interp ctx = t.interp ctx := by
+  rw [GodelTMor1.toER_interp, ERMor1.toGodelT_interp]
+
 /-- Componentwise lift of `GodelTMor1.toER` to `GodelTMorN`
 tuples. -/
 def GodelTMorN.toER {n m : ℕ} (f : GodelTMorN n m) :
@@ -211,5 +225,83 @@ def erToGodelTFunctor : LawvereERCat ⥤ LawvereGodelTCat where
     rw [GodelTMorN.interp_comp, ERMorN.toGodelT_interp,
       ERMorN.toGodelT_interp, ERMorN.toGodelT_interp,
       ERMorN.interp_comp]
+
+/-- Round-trip identity at the quotient level: `toER.toGodelT`
+of any `GodelTMorNQuo` morphism recovers the original. -/
+theorem GodelTMorNQuo.toER_toGodelT_id {n m : ℕ}
+    (f : GodelTMorNQuo n m) :
+    ERMorNQuo.toGodelT (GodelTMorNQuo.toER f) = f := by
+  revert f
+  apply Quotient.ind
+  intro f_raw
+  apply Quotient.sound (s := godelTMorNSetoid n m)
+  intro ctx
+  funext i
+  exact GodelTMor1.toER_toGodelT_interp (f_raw i) ctx
+
+/-- Round-trip identity at the quotient level: `toGodelT.toER`
+of any `ERMorNQuo` morphism recovers the original. -/
+theorem ERMorNQuo.toGodelT_toER_id {n m : ℕ}
+    (f : ERMorNQuo n m) :
+    GodelTMorNQuo.toER (ERMorNQuo.toGodelT f) = f := by
+  revert f
+  apply Quotient.ind
+  intro f_raw
+  apply Quotient.sound (s := erMorNSetoid n m)
+  intro ctx
+  funext i
+  exact ERMor1.toGodelT_toER_interp (f_raw i) ctx
+
+/-- Unit isomorphism: `𝟭 LawvereGodelTCat ≅ godelTToERFunctor
+⋙ erToGodelTFunctor`.  Both functors are identity on arity
+objects; naturality uses the round-trip identity
+`GodelTMorNQuo.toER_toGodelT_id`. -/
+def lawvereGodelTERCatUnitIso :
+    𝟭 LawvereGodelTCat ≅ godelTToERFunctor ⋙ erToGodelTFunctor :=
+  NatIso.ofComponents (fun _ => Iso.refl _)
+    (fun {_ _} f => by
+      revert f
+      apply Quotient.ind
+      intro f_raw
+      simp only [Iso.refl_hom, Category.id_comp,
+        Category.comp_id, Functor.comp_map, Functor.id_map]
+      exact (GodelTMorNQuo.toER_toGodelT_id _).symm)
+
+/-- Counit isomorphism: `erToGodelTFunctor ⋙ godelTToERFunctor
+≅ 𝟭 LawvereERCat`.  Symmetric to the unit, via
+`ERMorNQuo.toGodelT_toER_id`. -/
+def lawvereGodelTERCatCounitIso :
+    erToGodelTFunctor ⋙ godelTToERFunctor ≅ 𝟭 LawvereERCat :=
+  NatIso.ofComponents (fun _ => Iso.refl _)
+    (fun {_ _} f => by
+      revert f
+      apply Quotient.ind
+      intro f_raw
+      simp only [Iso.refl_hom, Category.id_comp,
+        Category.comp_id, Functor.comp_map, Functor.id_map]
+      change GodelTMorNQuo.toER
+          (ERMorNQuo.toGodelT (Quotient.mk _ f_raw)) =
+        Quotient.mk _ f_raw
+      exact ERMorNQuo.toGodelT_toER_id _)
+
+/-- The categorical equivalence `LawvereGodelTCat ≌
+LawvereERCat`.  Both unit and counit are identity isos: the
+two functors are identity on arity objects, and the
+round-trip identities at the quotient level make naturality
+immediate. -/
+def lawvereGodelTERCatEquivalence :
+    LawvereGodelTCat ≌ LawvereERCat where
+  functor := godelTToERFunctor
+  inverse := erToGodelTFunctor
+  unitIso := lawvereGodelTERCatUnitIso
+  counitIso := lawvereGodelTERCatCounitIso
+  functor_unitIso_comp n := by
+    change ERMorNQuo.comp
+        (GodelTMorNQuo.toER (GodelTMorNQuo.id n))
+        (ERMorNQuo.id n) =
+      ERMorNQuo.id n
+    rw [show GodelTMorNQuo.toER (GodelTMorNQuo.id n) =
+          ERMorNQuo.id n from rfl,
+      ERMorNQuo.id_comp]
 
 end GebLean
