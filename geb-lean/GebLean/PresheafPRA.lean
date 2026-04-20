@@ -440,6 +440,37 @@ private def praPolyDirectionsData_fibFib
       CategoryTheory.ULiftHom.up).op
 
 /--
+Unwiden a widened fibre element of the source Grothendieck back to an
+element of `(objFiber X ⋙ ccrNewIndexFunctor (presheafCat (objBase
+X).2)).Elements`.  The inverse of the `catULiftFunctor2` widening used
+inside `sourceDataFib`.
+-/
+private def praPolyDirectionsData_unwidenFiber
+    (X : (grothendieckContraFunctor
+        (Cat.{v_J, u_J} × Cat.{v_I, u_I})).obj
+      presheafPRACatBifunctorUncurriedOp.{u_I, v_I, u_J, v_J,
+        w_I, w'}) :
+    (functorFromDataContra
+        sourceData.{u_I, v_I, u_J, v_J, w_I, w'}).obj X ⥤
+      (GrothendieckContraFunctor.objFiber X ⋙
+        ccrNewIndexFunctor.{max v_I u_I (w_I + 1),
+          max u_I w_I, w'}
+          (↑(presheafCatFunctor.{u_I, v_I, w_I}.obj
+            (Opposite.op
+              (GrothendieckContraFunctor.objBase X).2)))).Elements :=
+  show CategoryTheory.ULiftHom
+      (ULift
+        ((GrothendieckContraFunctor.objFiber X ⋙
+          ccrNewIndexFunctor.{max v_I u_I (w_I + 1),
+            max u_I w_I, w'}
+            (↑(presheafCatFunctor.{u_I, v_I, w_I}.obj
+              (Opposite.op
+                (GrothendieckContraFunctor.objBase X).2)))
+        ).Elements)) ⥤ _ from
+  CategoryTheory.ULiftHom.down ⋙
+    CategoryTheory.ULift.downFunctor
+
+/--
 Target bifunctor of `praPositionsNat`.  Sends each
 `(J, I) : Cat.{v_J, u_J}ᵒᵖ × Cat.{v_I, u_I}ᵒᵖ` to the
 universe-widened form of `Jᵒᵖ ⥤ Type w'`, constant in `I`.
