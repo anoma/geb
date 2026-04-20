@@ -471,6 +471,45 @@ private def praPolyDirectionsData_unwidenFiber
     CategoryTheory.ULift.downFunctor
 
 /--
+Element-category morphism induced by a source-Grothendieck morphism
+`f : X₁ ⟶ X₂`, acting on an unwidened element `e` of
+`(objFiber X₁ ⋙ ccrNewIndexFunctor _).Elements`.
+
+The resulting element lives in the elements category of
+`(presheafPRACatBifunctorUncurriedOp.map (homBase f).op).toFunctor.obj
+(objFiber X₂) ⋙ ccrNewIndexFunctor _`.
+-/
+private def praPolyDirectionsData_elemMor
+    {X₁ X₂ : (grothendieckContraFunctor
+        (Cat.{v_J, u_J} × Cat.{v_I, u_I})).obj
+      presheafPRACatBifunctorUncurriedOp.{u_I, v_I, u_J, v_J,
+        w_I, w'}}
+    (f : X₁ ⟶ X₂)
+    (e : (GrothendieckContraFunctor.objFiber X₁ ⋙
+        ccrNewIndexFunctor.{max v_I u_I (w_I + 1),
+          max u_I w_I, w'}
+          (↑(presheafCatFunctor.{u_I, v_I, w_I}.obj
+            (Opposite.op
+              (GrothendieckContraFunctor.objBase X₁).2)))).Elements) :
+    ((presheafPRACatBifunctorUncurriedOp.{u_I, v_I, u_J, v_J,
+        w_I, w'}.map
+        (GrothendieckContraFunctor.homBase f).op).toFunctor.obj
+      (GrothendieckContraFunctor.objFiber X₂) ⋙
+      (ccrNewIndexFunctor.{max v_I u_I (w_I + 1),
+        max u_I w_I, w'}
+        (↑(presheafCatFunctor.{u_I, v_I, w_I}.obj
+          (Opposite.op
+            (GrothendieckContraFunctor.objBase X₁).2))))).Elements :=
+  (NatTrans.mapElements
+    (Functor.whiskerRight
+      (GrothendieckContraFunctor.homFiber f)
+      (ccrNewIndexFunctor.{max v_I u_I (w_I + 1),
+        max u_I w_I, w'}
+        (↑(presheafCatFunctor.{u_I, v_I, w_I}.obj
+          (Opposite.op
+            (GrothendieckContraFunctor.objBase X₁).2)))))).obj e
+
+/--
 Target bifunctor of `praPositionsNat`.  Sends each
 `(J, I) : Cat.{v_J, u_J}ᵒᵖ × Cat.{v_I, u_I}ᵒᵖ` to the
 universe-widened form of `Jᵒᵖ ⥤ Type w'`, constant in `I`.
