@@ -366,7 +366,7 @@ superseded.)
 Plan tasks 1-6 complete, Task 7 partial.  Plan tasks 8-22 remain.
 All commits on `terence/grothendieck`.
 
-**Task 7 state (2026-04-19, second session):**
+**Task 7 state (2026-04-19, third session):**
 
 - `praPolyDirectionsData_baseFib` is in place (commit `aad59f52`).
 - `praDirectionsTargetFibre` pipeline revised to drop the inner
@@ -382,6 +382,101 @@ All commits on `terence/grothendieck`.
   `ULiftHom.down`'s implicit arg is inferred; without this cast
   typeclass search fails on `Category ↑((functorFromDataContra
   sourceData).obj X)`.
+
+**Task 7 third session (2026-04-19) — analysis, no new code:**
+
+Confirmed the current `_baseFib` and `_fibFib` helpers build clean at
+HEAD.  Attempted `fibHomCrossApp := 𝟙 _` — fails with type mismatch:
+the two endpoint objects are not definitionally equal.  This matches
+the session-notes analysis.
+
+**Structural map of what must be constructed for `fibHomCrossApp`:**
+
+Let `f : X₁ ⟶ X₂` in
+`(grothendieckContraFunctor (Cat × Cat)).obj
+presheafPRACatBifunctorUncurriedOp`.
+
+- `homBase f : (J₁, I₁) ⟶ (J₂, I₂)` (note covariant orientation
+  after `unop` destructuring: `homBase f = f.unop.base.unop`).
+- `homFiber f : P₁ ⟶ (presheafPRACatBifunctorUncurriedOp.map
+  (homBase f).op).obj P₂`, which by `sourceData_base_change_eq`
+  reduces the `ccrNewIndexFunctor`-postcomposition to
+  `(homBase f).1.toFunctor ⋙ P₂ ⋙ ccrNewIndexFunctor _`.
+
+Let `g := (homBase f).2 : I₁ ⟶ I₂`.  The target transport
+`F.map (baseFib.map f).op : F.obj (op I₁) ⟶ F.obj (op I₂)` unfolds
+to `Cat.opFunctor.map (catULiftFunctor2.map (presheafCatFunctor.map
+g.op))` acting on `op (widened (Iᵒᵖ ⥤ Type w_I))`.
+
+Let `x : ULiftHom (ULift (P₁ ⋙ ccrNewIndexFunctor _).Elements)`.
+Let `e := ULift.downFunctor.obj (ULiftHom.down.obj x) : (P₁ ⋙
+ccrNewIndexFunctor _).Elements`, an element `⟨j : J₁ᵒᵖ, a :
+ccrNewIndex (P₁.obj j)⟩`.
+
+- `(fibFib X₁).obj x = op (up (ccrNewFamilyFunctor _ .obj
+  (elementsPrecomp P₁ .obj e)))`
+  = `op (up (op (ccrNewFamily (P₁.obj j) a)))` in
+  `op (widened (I₁ᵒᵖ ⥤ Type w_I))`.
+
+- `((functorFromDataContra sourceData).map f).obj x`: the
+  `sourceData.hom f` transports `x` through `sourceDataHomApp`,
+  which widens `elementsPrecomp f.1.toFunctor` where `f.1 =
+  (homBase f).1 : J₁ ⟶ J₂`.  So the element becomes `⟨(homBase
+  f).1.obj j, a⟩ ∈ (P₂ ⋙ ccrNewIndexFunctor _).Elements`, then
+  `(fibFib X₂)` applies to give
+  `op (up (op (ccrNewFamily (P₂.obj (f.1.obj j))
+  (homFiber f .app j).val a))))`
+  (since `homFiber f` includes a presheaf-level morphism that
+  reindexes the CCR element, potentially with an `eqToHom`
+  correction from `sourceData_base_change_eq`).
+
+- Transporting the latter through `F.map (baseFib.map f).op`:
+  applies `(presheafCatFunctor.map g.op).obj = whisker by g.op.op
+  = postcompose with g` on the unwrapped presheaf; giving
+  `op (up (op (g ⋙ ccrNewFamily (P₂.obj (f.1.obj j)) ...)))`.
+
+Equality of these two endpoints is *exactly* what
+`ccrNewFamilyNat.naturality` (`Families.lean:3484` and
+`ccrNewFamilyFunctor_naturality` at `Families.lean:3436`) proves in
+the unwidened form — with `F := g : I₁ ⟶ I₂` playing the role of
+that lemma's `F : C ⟶ D` (note `Cat.opFunctor`-adjusted direction:
+their statement relates `ccrNewFamilyFunctor D .map ((ccrElements
+.map F).map e_morphism)` to `Cat.opFunctor .map F .obj (ccrNewFamily
+C .map e_morphism)`).
+
+**Task 7 remaining work (substantial proof-engineering effort):**
+
+1. Factor out `private def praPolyDirectionsFibHomCrossApp` — the
+   morphism-level construction.  Likely implementable as a
+   composition built from `ccrNewFamilyFunctor_naturality`'s
+   underlying morphism, wrapped through ULift/ULiftHom up/down
+   and `eqToHom` transports to match the widened endpoints exactly.
+   The bridging lemma needs: `elementsPrecomp P₁` composed with
+   `ccrElementsFunctor.map g` factored via
+   `sourceData_base_change_eq` (or a strengthened version) to match
+   the source-data transport.
+
+2. Each of `fibHomCrossNat`, `baseHomId`, `baseHomComp` then
+   reduces to a naturality / coherence fact about
+   `ccrNewFamilyNat`, plus widening-transport commutation.
+   Template: Task 3's nine small lemmas
+   (`toHomUnop_id_fst`/`_snd`/`_endpoints_eq`/`toHomUnop_id`, etc.).
+
+3. Assemble the six-field `praPolyDirectionsData` struct literal.
+
+**Design observation (not a blocker, but a note for the next
+session):**
+
+The `fibHomCrossApp` type is expressed through a long chain of
+`ULift`/`ULiftHom` widenings that `ccrNewFamilyNat.naturality`
+does not directly speak about.  The natural intermediate is an
+unwidened version of the entire `fibHomCrossApp` pipeline, stated
+as a lemma taking an element of `(P ⋙ ccrNewIndexFunctor _).Elements`
+(unwidened) and producing the corresponding morphism in `(Iᵒᵖ ⥤ Type
+w_I)ᵒᵖ` (unwidened) — this is exactly what `ccrNewFamilyFunctor_
+naturality` provides.  Then the widened `fibHomCrossApp` is obtained
+by functoriality of `catULiftFunctor2 ⋙ Cat.opFunctor` applied to
+the unwidened version.
 
 **Remaining Task 7 (fibHomCrossApp + three coherences):**
 
