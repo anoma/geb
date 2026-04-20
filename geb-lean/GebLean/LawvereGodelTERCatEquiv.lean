@@ -120,4 +120,96 @@ theorem ERMor1.toGodelT_interp : {n : ℕ} → (t : ERMor1 n) →
       funext i
       exact ERMor1.toGodelT_interp (g i) ctx
 
+/-- Componentwise lift of `GodelTMor1.toER` to `GodelTMorN`
+tuples. -/
+def GodelTMorN.toER {n m : ℕ} (f : GodelTMorN n m) :
+    ERMorN n m :=
+  fun i => (f i).toER
+
+/-- Componentwise lift of `ERMor1.toGodelT` to `ERMorN`
+tuples. -/
+def ERMorN.toGodelT {n m : ℕ} (f : ERMorN n m) :
+    GodelTMorN n m :=
+  fun i => (f i).toGodelT
+
+theorem GodelTMorN.toER_interp {n m : ℕ}
+    (f : GodelTMorN n m) (ctx : Fin n → ℕ) :
+    f.toER.interp ctx = f.interp ctx := by
+  funext i
+  exact GodelTMor1.toER_interp (f i) ctx
+
+theorem ERMorN.toGodelT_interp {n m : ℕ}
+    (f : ERMorN n m) (ctx : Fin n → ℕ) :
+    f.toGodelT.interp ctx = f.interp ctx := by
+  funext i
+  exact ERMor1.toGodelT_interp (f i) ctx
+
+/-- Lift `GodelTMorN.toER` to quotient classes.  Well-defined
+because extensionally equal tuples translate to extensionally
+equal ER tuples via `toER_interp`. -/
+def GodelTMorNQuo.toER {n m : ℕ} (f : GodelTMorNQuo n m) :
+    ERMorNQuo n m :=
+  Quotient.lift (s := godelTMorNSetoid n m)
+    (fun f' => Quotient.mk (erMorNSetoid n m) f'.toER)
+    (fun a b h => Quotient.sound
+      (s := erMorNSetoid n m) (fun ctx => by
+        rw [GodelTMorN.toER_interp, GodelTMorN.toER_interp,
+          h ctx]))
+    f
+
+/-- Lift `ERMorN.toGodelT` to quotient classes. -/
+def ERMorNQuo.toGodelT {n m : ℕ} (f : ERMorNQuo n m) :
+    GodelTMorNQuo n m :=
+  Quotient.lift (s := erMorNSetoid n m)
+    (fun f' => Quotient.mk (godelTMorNSetoid n m) f'.toGodelT)
+    (fun a b h => Quotient.sound
+      (s := godelTMorNSetoid n m) (fun ctx => by
+        rw [ERMorN.toGodelT_interp, ERMorN.toGodelT_interp,
+          h ctx]))
+    f
+
+@[simp] theorem GodelTMorNQuo.toER_mk {n m : ℕ}
+    (f : GodelTMorN n m) :
+    GodelTMorNQuo.toER
+        (Quotient.mk (godelTMorNSetoid n m) f) =
+      Quotient.mk (erMorNSetoid n m) f.toER := rfl
+
+@[simp] theorem ERMorNQuo.toGodelT_mk {n m : ℕ}
+    (f : ERMorN n m) :
+    ERMorNQuo.toGodelT (Quotient.mk (erMorNSetoid n m) f) =
+      Quotient.mk (godelTMorNSetoid n m) f.toGodelT := rfl
+
+/-- The back functor from `LawvereGodelTCat` to `LawvereERCat`.
+Acts as the identity on arity objects and sends each morphism
+class to its `toER` image. -/
+def godelTToERFunctor : LawvereGodelTCat ⥤ LawvereERCat where
+  obj n := n
+  map {_ _} f := GodelTMorNQuo.toER f
+  map_id _ := rfl
+  map_comp {_ _ _} f g := by
+    revert f g
+    apply Quotient.ind₂
+    intro f_raw g_raw
+    apply Quotient.sound (s := erMorNSetoid _ _)
+    intro ctx
+    rw [ERMorN.interp_comp, GodelTMorN.toER_interp,
+      GodelTMorN.toER_interp, GodelTMorN.toER_interp,
+      GodelTMorN.interp_comp]
+
+/-- The forward functor from `LawvereERCat` to
+`LawvereGodelTCat`. -/
+def erToGodelTFunctor : LawvereERCat ⥤ LawvereGodelTCat where
+  obj n := n
+  map {_ _} f := ERMorNQuo.toGodelT f
+  map_id _ := rfl
+  map_comp {_ _ _} f g := by
+    revert f g
+    apply Quotient.ind₂
+    intro f_raw g_raw
+    apply Quotient.sound (s := godelTMorNSetoid _ _)
+    intro ctx
+    rw [GodelTMorN.interp_comp, ERMorN.toGodelT_interp,
+      ERMorN.toGodelT_interp, ERMorN.toGodelT_interp,
+      ERMorN.interp_comp]
+
 end GebLean
