@@ -471,6 +471,54 @@ private def praPolyDirectionsData_unwidenFiber
     CategoryTheory.ULift.downFunctor
 
 /--
+Unwidened cross-fibre morphism underlying `fibHomCrossApp f e` for a
+source-Grothendieck morphism `f : X₁ ⟶ X₂` and unwidened element `e`
+of `(objFiber X₁ ⋙ ccrNewIndexFunctor _).Elements`.
+
+Built by applying `(ccrNewFamilyFunctor _).map` to the
+`(ccrNewIndexFunctor _).Elements`-morphism
+`⟨(homFiber f).app e.fst, rfl⟩`.  The source endpoint is
+`⟨(objFiber X₁).obj e.fst, e.snd⟩`; the target endpoint is
+`⟨((presheafPRACatBifunctorUncurriedOp.map
+  (homBase f).op).toFunctor.obj (objFiber X₂)).obj e.fst,
+  ccrNewReindex ((homFiber f).app e.fst) e.snd⟩`.
+-/
+private def praPolyDirectionsData_fibHomCrossUnwidened
+    {X₁ X₂ : (grothendieckContraFunctor
+        (Cat.{v_J, u_J} × Cat.{v_I, u_I})).obj
+      presheafPRACatBifunctorUncurriedOp.{u_I, v_I, u_J, v_J,
+        w_I, w'}}
+    (f : X₁ ⟶ X₂)
+    (e : (GrothendieckContraFunctor.objFiber X₁ ⋙
+        ccrNewIndexFunctor.{max v_I u_I (w_I + 1),
+          max u_I w_I, w'}
+          (↑(presheafCatFunctor.{u_I, v_I, w_I}.obj
+            (Opposite.op
+              (GrothendieckContraFunctor.objBase X₁).2)))).Elements) :
+    (ccrNewFamilyFunctor.{max v_I u_I (w_I + 1), max u_I w_I, w'}
+        (↑(presheafCatFunctor.{u_I, v_I, w_I}.obj
+          (Opposite.op
+            (GrothendieckContraFunctor.objBase X₁).2)))).obj
+        ⟨(GrothendieckContraFunctor.objFiber X₁).obj e.fst,
+          e.snd⟩ ⟶
+      (ccrNewFamilyFunctor.{max v_I u_I (w_I + 1), max u_I w_I, w'}
+        (↑(presheafCatFunctor.{u_I, v_I, w_I}.obj
+          (Opposite.op
+            (GrothendieckContraFunctor.objBase X₁).2)))).obj
+        ⟨((presheafPRACatBifunctorUncurriedOp.{u_I, v_I, u_J, v_J,
+              w_I, w'}.map
+            (GrothendieckContraFunctor.homBase f).op).toFunctor.obj
+          (GrothendieckContraFunctor.objFiber X₂)).obj e.fst,
+          ccrNewReindex.{max v_I u_I (w_I + 1), max u_I w_I, w'}
+            ((GrothendieckContraFunctor.homFiber f).app e.fst)
+            e.snd⟩ :=
+  (ccrNewFamilyFunctor.{max v_I u_I (w_I + 1), max u_I w_I, w'}
+      (↑(presheafCatFunctor.{u_I, v_I, w_I}.obj
+        (Opposite.op
+          (GrothendieckContraFunctor.objBase X₁).2)))).map
+    ⟨(GrothendieckContraFunctor.homFiber f).app e.fst, rfl⟩
+
+/--
 Target bifunctor of `praPositionsNat`.  Sends each
 `(J, I) : Cat.{v_J, u_J}ᵒᵖ × Cat.{v_I, u_I}ᵒᵖ` to the
 universe-widened form of `Jᵒᵖ ⥤ Type w'`, constant in `I`.
