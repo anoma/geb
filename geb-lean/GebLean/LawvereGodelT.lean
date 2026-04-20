@@ -43,4 +43,29 @@ def GodelTType.arrow0 : ℕ → GodelTType
 @[simp] theorem GodelTType.arrow0_succ (n : ℕ) :
     GodelTType.arrow0 (n + 1) = .arrow .base (arrow0 n) := rfl
 
+/-- T*'s term inductive: typed combinatory logic with
+constants (`zero`, `succ`, `pred`, `K`, `S`, `disc`) and a
+placement-restricted iterator whose counter is always of
+base type.  The grammar enforces B-W's T* discipline
+syntactically: `iter` takes its counter via the
+ground-typed `t : GodelTTerm .base` parameter. -/
+inductive GodelTTerm : GodelTType → Type
+  | zero : GodelTTerm .base
+  | succ : GodelTTerm (.arrow .base .base)
+  | pred : GodelTTerm (.arrow .base .base)
+  | K (σ τ : GodelTType) :
+      GodelTTerm (.arrow σ (.arrow τ σ))
+  | S (ρ σ τ : GodelTType) :
+      GodelTTerm
+        (.arrow (.arrow ρ (.arrow σ τ))
+          (.arrow (.arrow ρ σ) (.arrow ρ τ)))
+  | disc (σ : GodelTType) :
+      GodelTTerm
+        (.arrow .base (.arrow σ (.arrow σ σ)))
+  | iter (ρ : GodelTType) (t : GodelTTerm .base) :
+      GodelTTerm (.arrow (.arrow ρ ρ) (.arrow ρ ρ))
+  | app {σ τ : GodelTType}
+      (f : GodelTTerm (.arrow σ τ)) (a : GodelTTerm σ) :
+      GodelTTerm τ
+
 end GebLean
