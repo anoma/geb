@@ -770,9 +770,146 @@ Implementation plan:
 `docs/superpowers/plans/2026-04-19-lawvere-godelt.md` (local,
 gitignored; written by `superpowers:writing-plans`).
 
-**Current resume point**: execute the GodelT plan via
-`superpowers:executing-plans` in a fresh session.  Starts at
-Stage 0 (ER infrastructure audit) per the bottom-up discipline.
+**GodelT Stage 0 + Stage A + partial Stage B landed
+(2026-04-20)**: foundational pieces of the GodelT chain are in
+place, together with a reusable bracket-abstraction utility
+that handles the mixing of lambda-style typed combinatory logic
+with GodelT's SKI-style term inductive.  Commits:
+
+* Stage 0 (`36c4d18d`): `ERMor1.pred` (truncating subtraction by
+  one) and `ERMor1.discN` (zero-test discriminator via `condN`
+  gated by `signN` with swapped branches) added to
+  `GebLean/Utilities/ERArith.lean`.  Each primitive has a
+  `@[simp]`-marked interpretation lemma.  The existing audit
+  covered all other GodelT-side ER backings: `zeroN`, `oneN`,
+  `addN`, `mulN`, `signN`, `condN`, `minN`, `factN`, `powN`,
+  `boundedRec` + conditional correctness, `foldBTLOnCode`,
+  `btlEncodeLeaf`/`Node`, `twoN`, and the
+  `LawvereERBoundComputable` tower machinery
+  (`towerHeight`, `towerER`, `sumCtxER`, `towerBound`,
+  `interp_le_towerBound`).
+* Stage A (`9bbb5aee`, `29f618e2`, `af61043a`, `aa6ba4db`,
+  `17a50e85`): `GebLean/LawvereGodelT.lean` with `GodelTType`
+  inductive (`.base` + `.arrow`), `arrow0 n` curried-ground
+  helper, `GodelTType.interp` marked `@[reducible]` so numerals
+  and Lean functions elaborate at `.base` without explicit
+  casts, `GodelTTerm : GodelTType → Type` inductive with
+  constructors `.zero`, `.succ`, `.pred`, `.K`, `.S`, `.disc`,
+  `.iter` (whose counter-parameter `t` is of `.base` type by
+  construction — the placement restriction lives in the
+  inductive), `.app`; `GodelTTerm.interp` with per-constructor
+  `@[simp]` lemmas; `GodelTPure` predicate for the iter-free
+  T⁻ sub-grammar, with a `Decidable` instance.
+* Stage B foundational pieces:
+  * `LawvereGodelT.lean` (in the same commit stream):
+    `GodelTTerm.I` (identity combinator `S σ (σ→σ) σ (K σ
+    (σ→σ)) (K σ σ)`), `GodelTTerm.B` (composition combinator
+    `S σ τ ρ (K (τ→ρ) σ f) g`), and `GodelTTerm.castArrow0`
+    (transport across arity equalities).
+  * `a2c6dc51` skeleton of `GebLean/LawvereGodelTQuot.lean`.
+  * `17b5be08`: `GodelTMor1 n := GodelTTerm (arrow0 n)` alias;
+    `applyArrowN : (arrow0 n).interp → (Fin n → ℕ) → ℕ`
+    walking a curried interpretation down against an n-tuple;
+    `GodelTMor1.interp` layered on top; `GodelTMor1.dropFirst`
+    prepending an ignored first argument via `K (arrow0 n)
+    base`; `GodelTMor1.projFirst n` (first-of-(n+1) projection,
+    defined inductively via `B (K (arrow0 n) base)
+    (projFirst n)`) with `applyArrowN_projFirst_term` and
+    `interp_projFirst` semantic lemmas proved by induction;
+    `GodelTMor1.proj n i` (the `i`-th projection of arity `n`,
+    defined via `projFirst` for `i = 0` and `dropFirst` applied
+    recursively for `i > 0`) with full `interp_proj` correctness.
+  * `3e85ad72`: `GebLean/Utilities/GodelTBracket.lean` with
+    typed de-Bruijn `GodelTExpr : List GodelTType → GodelTType
+    → Type` (constructors `var`, `const`, `app`);
+    `GodelTExpr.envCons` / `envCons_zero` / `envCons_succ`
+    for environment extension; `GodelTExpr.interp` with
+    per-constructor `@[simp]` equations; `GodelTExpr.abstract`
+    implementing standard bracket abstraction (I/K/S rules),
+    with per-constructor `@[simp]` equations; the correctness
+    theorem `GodelTExpr.abstract_interp` stating that applying
+    the abstracted expression to a value matches evaluating
+    the original with that value bound to the head context
+    variable; `GodelTExpr.compile` for closed expressions;
+    `GodelTExpr.emptyEnv` and `compile_interp`.  Extended with
+    `baseCtx m := List.replicate m .base` plus
+    `baseCtx_length` / `baseCtx_get` lemmas,
+    `GodelTExpr.baseVar m i : GodelTExpr (baseCtx m) .base`,
+    `appVar` private helper, `applyAllBaseVars` (applies a
+    closed `arrow0 m`-typed term to all `m` variables of the
+    base context), `compExpr` (builds the open base-typed
+    expression `(const f) applied to (tuple i applied to all
+    vars) for each i`), and `iterateAbstract m` (iterates
+    bracket abstraction `m` times, using `castArrow0` to
+    transport across the `(k+1)+rem = k+(rem+1)` arithmetic).
+  * `0e985faf`: `GodelTMor1.compMor1 f tuple := iterateAbstract
+    m (compExpr f tuple)` in `LawvereGodelTQuot.lean`.
+  * `50698390`: fix the variable-application order in
+    `applyAllBaseVars` to descend `m − 1, m − 2, ..., 0`
+    (instead of ascending `0, 1, ..., m − 1`), so that the two
+    reversals — bracket abstraction's head-first elimination
+    and the descending application order — cancel out, and
+    `compMor1` ends up with interp
+    `λ ctx. f.interp (fun i => (tuple i).interp ctx)`.
+
+The dependency graph is now:
+
+```
+LawvereGodelT.lean  (types, terms, interp, I, B, castArrow0)
+       ↑
+Utilities/GodelTBracket.lean  (GodelTExpr, abstract, compile,
+       ↑                       baseCtx, baseVar, applyAllBaseVars,
+       |                       compExpr, iterateAbstract)
+LawvereGodelTQuot.lean  (GodelTMor1, projections, compMor1)
+```
+
+This structure is intentional: the bracket-abstraction utility
+is independent of the `LawvereGodelT*` category development so
+that future uses (e.g., `GodelTMor1`-valued closure schemas,
+register-machine translations of T⁻ per B-W Section 4) can
+reuse it directly.
+
+**Remaining GodelT work**:
+
+Stage B (core category machinery):
+
+* `interp_compMor1` correctness theorem.  Factors into three
+  lemmas, proved in sequence:
+  1. `applyArrowN_iterateAbstract m e ctx`:
+     `applyArrowN m (iterateAbstract m e).interp ctx
+      = e.interp (baseEnvReversed m ctx)`, where
+     `baseEnvReversed m ctx i = ctx ⟨m − 1 − i.val, _⟩`.
+     By induction on `m`, reducing to `abstract_interp` at
+     each step and using `compile_interp` at the base case.
+  2. `applyAllBaseVars_interp m t env`:
+     the interp of `applyAllBaseVars t` at env equals
+     `applyArrowN m t.interp (fun j => env ⟨m − 1 − j.val, _⟩)`
+     (the reversed application order).
+  3. `compExpr_interp f tuple env`:
+     structural recursion on `compExprAux`.
+  The two reversals then cancel, giving the desired
+  `interp_compMor1`.
+* `GodelTMorN`, `.id`, `.comp`, quotient `GodelTMorNQuo n m`
+  mirroring `ERMorN` / `ERMorNQuo`.
+* `Category LawvereGodelTCat` instance (category laws from
+  interp agreement).
+* `HasChosenFiniteProducts` instance (terminal = 0, product
+  = `Nat.add`, projections via `Fin.castAdd` / `Fin.natAdd`,
+  pairing via tuple concatenation).
+* Faithful interp functor
+  `godelTInterpFunctor : LawvereGodelTCat ⥤ Type`.
+
+Stage C (equivalence with `LawvereERCat`) and Stage D (tests
++ tracker) are untouched.  Task `C.2` (`toER` via
+`ApplyContext`) and `C.3` (`toGodelT` for `bsum`/`bprod` via
+pairing trick) remain the two most substantive items,
+per the plan's risk notes.
+
+**Current resume point**: prove `interp_compMor1` and finish
+Stage B (tuple layer, quotient, Category, products, interp
+functor), then proceed to Stage C.  The bracket-abstraction
+utility is complete and reusable; no further changes to
+`GodelTBracket.lean` are anticipated for the core plan.
 
 **Task 14.5-extended (deferred)**: BT-only adequacy research
 — proving that the unlabeled-BT + 0-way-ℕ-product subfragment
