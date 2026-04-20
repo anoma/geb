@@ -354,6 +354,20 @@ def praDirectionsTargetFibre :
       max u_I u_J v_I v_J (w_I + 1) (w' + 1)}
 
 /--
+Total target Grothendieck for `praPolyDirectionsFunctor`.
+
+Objects are pairs `(I, x)` where `x : (widened Iᵒᵖ ⥤ Type w_I)ᵒᵖ`.
+Morphisms `(I₁, x₁) ⟶ (I₂, x₂)` are pairs `(f : I₁ ⟶ I₂,
+η : x₁ ⟶ (praDirectionsTargetFibre.map f.op).obj x₂)`, encoding the
+polynomial-functor-morphism backward-on-directions convention.
+-/
+def praPolyDirectionsTarget :
+    Cat.{max u_I u_J v_I v_J w_I w',
+      max (u_I + 1) (v_I + 1) u_J v_J (w_I + 1) (w' + 1)} :=
+  (grothendieckContraFunctor Cat.{v_I, u_I}).obj
+    praDirectionsTargetFibre.{u_I, v_I, u_J, v_J, w_I, w'}
+
+/--
 Target bifunctor of `praPositionsNat`.  Sends each
 `(J, I) : Cat.{v_J, u_J}ᵒᵖ × Cat.{v_I, u_I}ᵒᵖ` to the
 universe-widened form of `Jᵒᵖ ⥤ Type w'`, constant in `I`.
