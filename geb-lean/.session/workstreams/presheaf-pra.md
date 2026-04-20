@@ -296,6 +296,202 @@ for the full plan.
 | `GebLean/Utilities/Grothendieck.lean` | grothendieckFunctor |
 | `docs/presheaf-pra.md` | Concept documentation |
 
+## Directions-Promotion v2 (2026-04-18)
+
+Phase 2.5 (currently in progress at design time): promote
+`praDirectionsAtFunctor*` to an `(I, J, P)`-natural flat functor
+encoding polynomial-functor-morphism structure (forward on
+positions, backward on directions).
+
+### v1 attempt (abandoned; artifacts reusable)
+
+Tried a nat-trans between two `FunctorFromData`-packaged functors.
+Blocked twice:
+
+1. Covariant Grothendieck + covariant `FunctorFromData`: source-side
+   direction mismatch — elements are contravariant under base
+   precomposition in J.
+2. Contravariant Grothendieck + `FunctorFromDataContra` (U1/U2
+   ported): target-side direction mismatch — `presheafCatFunctor`
+   is inherently contravariant in I, no covariant sibling without
+   left Kan extension.
+
+Reusable v1 commits (all currently on `terence/grothendieck`):
+
+- `a7574b89` — `presheafPRACatBifunctorUncurried` (base for flat
+  source/target construction).
+- `19cae701` — U1: `FunctorFromDataContra` infrastructure in
+  `Utilities/Grothendieck.lean`.
+- `ef8ace94` — U2: `NatTransFromDataContra` infrastructure (not
+  used by v2, but valuable standalone).
+- `c0468683` — `sourceData` (becomes part of v2's source-total
+  Grothendieck).
+
+### v2 design
+
+Flat functor between Grothendiecks, encoding polynomial-functor
+morphisms (forward on positions, backward on directions):
+
+- `praPolyDirectionsSource` — covariant Grothendieck of
+  `functorFromDataContra sourceData`.  Objects: 4-tuples
+  `((J, I), P, element)`.
+- `praPolyDirectionsTarget` — `(grothendieckContraFunctor
+  Cat.{v_I, u_I}).obj praDirectionsTargetFibre`.  Objects: pairs
+  `(I, op_presheaf_on_I)`.  The outer `.op` (at the fibre) encodes
+  the backward-on-directions convention.
+- `praDirectionsTargetFibre : Cat.{v_I, u_I}ᵒᵖ ⥤ Cat.{…}` —
+  `Cat.opFunctor.op ⋙ presheafCatFunctor ⋙ catULiftFunctor2 ⋙
+  Cat.opFunctor`.  Two higher-order op's around `presheafCatFunctor`.
+- `praPolyDirectionsFunctor` — the main flat functor, built via
+  a new utility `FunctorBetweenCovContra` (U3) that mirrors
+  `FunctorBetween`'s shape for the mixed covariant-source /
+  contravariant-target case.
+
+Spec: `docs/superpowers/specs/2026-04-18-praDirections-naturality-design-v2.md`.
+(v1 spec at `2026-04-18-praDirections-naturality-design.md` is
+superseded.)
+
+### Known follow-ups (not blocked by Phase 2.5)
+
+- Task #397 — refactor `catULiftFunctor` as specialization of
+  `catULiftFunctor2`.
+- Task #398 — narrow `uliftCategory` local-instance scope in
+  `PresheafPRA.lean`.
+- Dirichlet-functor-morphism parallel (forward-on-directions) — a
+  distinct, meaningful construction, separate spec if/when wanted.
+- `praEvalAt*` promotion — deferred until `praDirections` lands.
+
+### v2 Progress (2026-04-19 session, partial — U3 utility done)
+
+Plan tasks 1-3 complete.  Plan tasks 4-22 remain.  All commits on
+`terence/grothendieck`.
+
+**Done (U3 utility, `GebLean/Utilities/Grothendieck.lean`):**
+
+- `b8fef801` — Task 1: `FunctorBetweenCovContra` abbrevs
+  (`FunctorBetweenCovContraBaseFib`, `FunctorBetweenCovContraFibFib`,
+  `FunctorBetweenCovContraFibHomCrossApp`,
+  `FunctorBetweenCovContraFibHomCrossNat`,
+  `FunctorBetweenCovContraBaseHomEqId`,
+  `functorBetweenCovContraBaseHomEqIdProof`,
+  `FunctorBetweenCovContraBaseHomEqComp`,
+  `functorBetweenCovContraBaseHomEqCompProof`,
+  `FunctorBetweenCovContraBaseHomId`,
+  `FunctorBetweenCovContraBaseHomComp`).  At line ~5137 of
+  `Grothendieck.lean`, immediately after `end FunctorBetweenContra`.
+- `5d26d36b` — Task 2: `FunctorBetweenCovContraData` structure (same
+  section).
+- `04882518` and `2219249a` — Task 3: the `toFunctor` extractor.
+
+**Task 3 factoring (all in `Grothendieck.lean`, inside new
+`section FunctorBetweenCovContraExtractor` at line ~7370, after the
+`GrothendieckContraFunctor` namespace since it uses
+`mkObj`/`mkHom`/`objBase`/`objFiber`):**
+
+- `FunctorBetweenCovContraData.toBaseFunc`: `(Grothendieck G)ᵒᵖ ⥤ Dᵒᵖ` =
+  `Grothendieck.forget G).op ⋙ data.baseFib.op`.
+- `FunctorBetweenCovContraData.toFib`: object fibre =
+  `op ((fibFib X.unop.base).obj X.unop.fiber)` in `(F ⋙ Cat.opFunctor).obj _`.
+- `FunctorBetweenCovContraData.toHomUnop`: pre-op fibre morphism =
+  `fibHomCrossApp g.unop.base Y.unop.fiber ≫ (F.map _).map ((fibFib
+  X.unop.base).map g.unop.fiber)`.
+- Identity-side lemmas: `toHomUnop_id_fst`, `toHomUnop_id_snd`,
+  `toHomUnop_id_endpoints_eq`, `toHomUnop_id` (collapsed form).
+- Composition-side lemmas: `unop_comp_base_grothendieck` (rfl),
+  `unop_comp_fiber_grothendieck` (rfl),
+  `fibFib_map_comp_fiber` (distributes `(fibFib X).map` over the
+  three-piece `Grothendieck.comp_fiber`),
+  `toHomUnop_comp_endpoints_eq` (split-equals-fused for the outer
+  `F.map`-transport via `baseFib.map_comp ∘ op_comp ∘ F.map_comp`),
+  `toHomUnop_comp` (the full reshape; uses `baseHomComp`,
+  `fibHomCrossNat`, `Functor.congr_hom` against
+  `F.map ((baseFib.map (h.unop.base ≫ g.unop.base)).op) =
+  F.map (baseFib.map g.unop.base).op ⋙ F.map (baseFib.map h.unop.base).op`).
+- `FunctorBetweenCovContraData.toFunctorToData`: the `FunctorToData`
+  repackaging (`hom_id` via `toHomUnop_id + eqToHom_op`;
+  `hom_comp` via `toHomUnop_comp + op_comp + eqToHom_op +
+  Cat.opFunctor_map`, finishing by `rfl`).
+- `FunctorBetweenCovContraData.toFunctor`: the main extractor,
+  `(Grothendieck.functorTo (F ⋙ Cat.opFunctor) data.toFunctorToData).rightOp`.
+
+**Proof-engineering lessons from Task 3:**
+
+1. `rw` does not match `data.fibHomCrossApp f g x` against a goal
+   that renders as `(fun {c c'} ↦ data.fibHomCrossApp) f g x` after
+   abbrev-implicit expansion.  Workaround: `conv_lhs =>
+   rw [show ... = ... from data.baseHomComp h.unop.base g.unop.base
+   Z.unop.fiber]` with the fully-resolved RHS spelled out in the
+   `show`.
+2. `rw` of `(g ≫ h).unop.base = h.unop.base ≫ g.unop.base` triggers
+   motive-not-type-correct because other sub-terms have types that
+   depend on the rewritten form.  Workaround: rewrite the dependent
+   sub-term *first* via `fibFib_map_comp_fiber` (which uses
+   `unop_comp_fiber_grothendieck` internally) to break the
+   dependency, then proceed.
+3. `change` allows forcing definitional-equality unfoldings that
+   `rw` cannot reach.  Used to expose `Grothendieck.id_fiber` and
+   `Grothendieck.comp_fiber` on `(𝟙 X).unop.fiber` and
+   `(g ≫ h).unop.fiber`.
+4. `show` with goal-changing intent triggers a lint warning; use
+   `change` instead.
+5. The fused-vs-split `F.map`-transport identity collapses via
+   `Functor.congr_hom hF` where `hF : F.map (fused).toFunctor =
+   F.map A.toFunctor ⋙ F.map B.toFunctor`, proven by `rw
+   [baseFib.map_comp, op_comp, F.map_comp]; rfl`.
+
+**Still to do (tasks 4-22, straight from plan):**
+
+- Task 4: `praDirectionsTargetFibre : Cat.{v_I, u_I}ᵒᵖ ⥤ Cat` =
+  `Cat.opFunctor.op ⋙ presheafCatFunctor ⋙ catULiftFunctor2 ⋙
+  Cat.opFunctor` in `PresheafPRA.lean`.
+- Task 5: `praPolyDirectionsTarget`
+  = `(grothendieckContraFunctor Cat.{v_I, u_I}).obj
+  praDirectionsTargetFibre`.
+- Task 6: `praPolyDirectionsSource`
+  = `Cat.of (Grothendieck (functorFromDataContra sourceData))`.
+- Task 7 (densest): `praPolyDirectionsData :
+  FunctorBetweenCovContraData (functorFromDataContra sourceData)
+  praDirectionsTargetFibre`.  Six fields including three coherences.
+  Use `sourceDataFib` widening (`PresheafPRA.lean:187`) and
+  `ccrNewFamilyNat` for the naturality component.  Plan recommends
+  factoring into `praPolyDirectionsData_fibFib`,
+  `praPolyDirectionsFibHomCrossApp`, `_fibHomCrossNat`,
+  `_baseHomId`, `_baseHomComp` as private defs/lemmas outside the
+  data bundle.
+- Task 8: `praPolyDirectionsFunctor` :=
+  `FunctorBetweenCovContraData.toFunctor praPolyDirectionsData`.
+- Task 9: three bridge lemmas (`_base`, `_fibre`, `_map_app`) that
+  should hold by `rfl` — if not, `simp only` with data-bundle unfolds.
+- Task 10: rename old `praPositionsPresheaf` → `praPositionsUnwidened`
+  private helper (body identical, just rename).
+- Task 11: rewrite `praPositions` to use `praPositionsUnwidened`.
+- Task 12: rewrite `praDirectionsAt` to use `praPolyDirectionsFunctor`
+  via a helper `praPolyDirectionsAtSourceObj`.
+- Task 13: migrate `PresheafPRAUMorph.lean` call sites (specifically
+  `praReassemble_directions` at lines 1230-1310) away from deleted
+  names.  Drop `private` from `praPositionsUnwidened` if needed for
+  cross-file use.
+- Task 14: delete `praDirectionsAtFunctorOp`, `praDirectionsAtFunctor`,
+  `praPositionsPresheaf`.
+- Task 15: remove `variable (P : PresheafPRACat …)` at line 459 of
+  `PresheafPRA.lean`; thread `P` as explicit parameter where used;
+  audit `variable (I …)` / `variable (J …)`.
+- Task 16: create `GebLeanTests/Utilities/PresheafPRADirNat.lean`
+  with type-signature sanity tests.
+- Task 17: import the new test module from `GebLeanTests.lean`.
+- Tasks 18-21: append bridge-collapse, pointwise-accessor,
+  functoriality, universe-polymorphism tests.
+- Task 22: mark the v2 spec as Complete in `.session/workstreams/`
+  and rename stale references.
+
+**Universe parameters to reuse** (from `PresheafPRA.lean:34`):
+`u_I v_I u_J v_J w_I w'`.
+
+**Plan location**:
+`docs/superpowers/plans/2026-04-19-praDirections-naturality-v2.md`.
+**Spec location**:
+`docs/superpowers/specs/2026-04-18-praDirections-naturality-design-v2.md`.
+
 ## References
 
 - nLab: parametric right adjoint
