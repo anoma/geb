@@ -340,8 +340,12 @@ morphisms (forward on positions, backward on directions):
   `(I, op_presheaf_on_I)`.  The outer `.op` (at the fibre) encodes
   the backward-on-directions convention.
 - `praDirectionsTargetFibre : Cat.{v_I, u_I}ᵒᵖ ⥤ Cat.{…}` —
-  `Cat.opFunctor.op ⋙ presheafCatFunctor ⋙ catULiftFunctor2 ⋙
-  Cat.opFunctor`.  Two higher-order op's around `presheafCatFunctor`.
+  three-stage pipeline: `presheafCatFunctor ⋙ catULiftFunctor2 ⋙
+  Cat.opFunctor`.  The input Cat already carries the `Iᵒᵖ`
+  convention inherited from `presheafPRACatBifunctorUncurriedOp`'s
+  base (`(objBase X).2 = Cat.of Iᵒᵖ`), so no additional inner
+  op-stage is required; the outer `Cat.opFunctor` encodes
+  backward-on-directions for polynomial-functor-morphisms.
 - `praPolyDirectionsFunctor` — the main flat functor, built via
   a new utility `FunctorBetweenCovContra` (U3) that mirrors
   `FunctorBetween`'s shape for the mixed covariant-source /
@@ -361,295 +365,131 @@ superseded.)
   distinct, meaningful construction, separate spec if/when wanted.
 - `praEvalAt*` promotion — deferred until `praDirections` lands.
 
-### v2 Progress (2026-04-19 session, partial — U3 utility done)
+### v2 Progress (current, as of 2026-04-20)
 
-Plan tasks 1-6 complete, Task 7 partial.  Plan tasks 8-22 remain.
-All commits on `terence/grothendieck`.
+All commits on `terence/grothendieck`.  Plan at
+`docs/superpowers/plans/2026-04-19-praDirections-naturality-v2.md`
+(gitignored).  Spec at
+`docs/superpowers/specs/2026-04-18-praDirections-naturality-design-v2.md`
+(gitignored).  `lake build` and `lake test` are clean at HEAD.
 
-**Task 7 state (2026-04-19, third session):**
+**Done (plan tasks 1–6, plus partial Task 7):**
 
-- `praPolyDirectionsData_baseFib` is in place (commit `aad59f52`).
-- `praDirectionsTargetFibre` pipeline revised to drop the inner
-  `Cat.opFunctor.op` stage (commit `0753fd6a`), so
-  `praDirectionsTargetFibre.obj (op (Cat.of Iᵒᵖ))` now yields
-  `op (widened (Iᵒᵖ ⥤ Type w_I))` matching `sourceDataFib`.
-- `praPolyDirectionsData_fibFib` is in place (commit `62b18098`) as
-  `ULiftHom.down ⋙ ULift.downFunctor ⋙ elementsPrecomp P ⋙
-  ccrNewFamilyFunctor (presheafCat I) ⋙
-  (ULift.upFunctor ⋙ ULiftHom.up).op`.  The `show` cast at the
-  front explicitly pins the input type to
-  `ULiftHom (ULift ((P ⋙ ccrNewIndexFunctor _).Elements))` so
-  `ULiftHom.down`'s implicit arg is inferred; without this cast
-  typeclass search fails on `Category ↑((functorFromDataContra
-  sourceData).obj X)`.
+| Commit | Task |
+|--------|------|
+| `b8fef801` | Task 1: `FunctorBetweenCovContra` abbrevs (U3 part 1) |
+| `5d26d36b` | Task 2: `FunctorBetweenCovContraData` structure (U3 part 2) |
+| `04882518`, `2219249a` | Task 3: `.toFunctor` extractor (U3 part 3) |
+| `37b8858d` | Task 4: `praDirectionsTargetFibre` |
+| `b0dbd50e` | Task 5: `praPolyDirectionsTarget` |
+| `42c75e74` | Task 6: `praPolyDirectionsSource` |
+| `aad59f52` | Task 7 helper: `praPolyDirectionsData_baseFib` |
+| `0753fd6a` | Pipeline revision: drop inner `Cat.opFunctor.op` |
+| `62b18098` | Task 7 helper: `praPolyDirectionsData_fibFib` |
 
-**Task 7 third session (2026-04-19) — analysis, no new code:**
+**Deviations from original plan (both intentional, implemented
+and committed):**
 
-Confirmed the current `_baseFib` and `_fibFib` helpers build clean at
-HEAD.  Attempted `fibHomCrossApp := 𝟙 _` — fails with type mismatch:
-the two endpoint objects are not definitionally equal.  This matches
-the session-notes analysis.
+1. `praPolyDirectionsTarget` and `praPolyDirectionsSource` Cat
+   universes widened from the plan's annotations to include
+   `(u_I + 1)`, `(v_I + 1)`, `(u_J + 1)`, `(v_J + 1)` where
+   required.  `grothendieckContraFunctor` sees `Cat.{v_I, u_I}`
+   itself as a type, forcing these +1 levels into the obj-level
+   universe.
+2. `praDirectionsTargetFibre` pipeline is three-stage
+   (`presheafCatFunctor ⋙ catULiftFunctor2 ⋙ Cat.opFunctor`) —
+   the plan's inner `Cat.opFunctor.op` was dropped.  Reason: the
+   input Cat coming in from `(objBase X).2` already carries the
+   `Iᵒᵖ` convention of `presheafPRACatBifunctorUncurriedOp`, so
+   the extra op over-applied and landed at `Iᵒᵖᵒᵖ ⥤ Type` rather
+   than `Iᵒᵖ ⥤ Type`.  The spec at lines 55–59 and 173–192 now
+   reflects the three-stage form.
 
-**Structural map of what must be constructed for `fibHomCrossApp`:**
+**Outstanding Task 7 work (remaining helpers + bundle):**
 
-Let `f : X₁ ⟶ X₂` in
-`(grothendieckContraFunctor (Cat × Cat)).obj
-presheafPRACatBifunctorUncurriedOp`.
+1. `praPolyDirectionsFibHomCrossApp` — the morphism-level
+   connecting map.  Endpoints are
+   `op (widened (ccrNewFamily (P₁.obj j) a))` on one side and a
+   transport through `presheafCatFunctor.map g.op` of
+   `op (widened (ccrNewFamily (P₂.obj (f_J.obj j)) ...))` on the
+   other.  Key building block:
+   `ccrNewFamilyFunctor_naturality` at
+   `GebLean/Utilities/Families.lean:3436`.
+   `sourceData_base_change_eq` (rfl, in `PresheafPRA.lean:208`)
+   preserves `ccrNewIndexFunctor` on the nose across the J-side
+   transport.
+2. `praPolyDirectionsData_fibHomCrossNat` — naturality of the
+   above in the element morphism.
+3. `praPolyDirectionsData_baseHomId` — collapse at identity base
+   morphism.
+4. `praPolyDirectionsData_baseHomComp` — composition coherence.
+5. The `praPolyDirectionsData : FunctorBetweenCovContraData …`
+   struct literal plugging in all six helpers.
 
-- `homBase f : (J₁, I₁) ⟶ (J₂, I₂)` (note covariant orientation
-  after `unop` destructuring: `homBase f = f.unop.base.unop`).
-- `homFiber f : P₁ ⟶ (presheafPRACatBifunctorUncurriedOp.map
-  (homBase f).op).obj P₂`, which by `sourceData_base_change_eq`
-  reduces the `ccrNewIndexFunctor`-postcomposition to
-  `(homBase f).1.toFunctor ⋙ P₂ ⋙ ccrNewIndexFunctor _`.
+Recommended approach (next session): write the *unwidened* form
+of `fibHomCrossApp` first, bridging `elementsPrecomp P ⋙
+ccrNewFamilyFunctor` to `ccrNewFamilyNat.app` on widened elements.
+Then widen via functoriality of `catULiftFunctor2 ⋙
+Cat.opFunctor`.  Task 3's nine-lemma decomposition is the scope
+template; expect similar count for each of (1)–(4).
 
-Let `g := (homBase f).2 : I₁ ⟶ I₂`.  The target transport
-`F.map (baseFib.map f).op : F.obj (op I₁) ⟶ F.obj (op I₂)` unfolds
-to `Cat.opFunctor.map (catULiftFunctor2.map (presheafCatFunctor.map
-g.op))` acting on `op (widened (Iᵒᵖ ⥤ Type w_I))`.
+**Outstanding plan tasks after Task 7 completes (tasks 8–22):**
 
-Let `x : ULiftHom (ULift (P₁ ⋙ ccrNewIndexFunctor _).Elements)`.
-Let `e := ULift.downFunctor.obj (ULiftHom.down.obj x) : (P₁ ⋙
-ccrNewIndexFunctor _).Elements`, an element `⟨j : J₁ᵒᵖ, a :
-ccrNewIndex (P₁.obj j)⟩`.
+- Task 8: `praPolyDirectionsFunctor :=
+  FunctorBetweenCovContraData.toFunctor praPolyDirectionsData`.
+- Task 9: three `rfl` bridge lemmas
+  (`praPolyDirectionsFunctor_base`, `_fibre`, `_map_app`).  Fall
+  back to `simp only` with data-bundle unfolds if `rfl` misses.
+- Task 10: rename old `praPositionsPresheaf` →
+  `praPositionsUnwidened` (private helper, body unchanged).
+- Task 11: rewrite `praPositions` via `praPositionsUnwidened`.
+- Task 12: rewrite `praDirectionsAt` via a helper
+  `praPolyDirectionsAtSourceObj` and the flat functor.
+- Task 13: migrate `PresheafPRAUMorph.lean`'s
+  `praReassemble_directions` proof (lines 1230–1310) away from
+  the soon-to-be-deleted names.
+- Task 14: delete `praDirectionsAtFunctorOp`,
+  `praDirectionsAtFunctor`, `praPositionsPresheaf`.
+- Task 15: remove `variable (P : PresheafPRACat …)` at
+  `PresheafPRA.lean:459`; thread `P` through accessors; audit
+  `variable (I …)`/`(J …)`.
+- Tasks 16–17: create and register
+  `GebLeanTests/Utilities/PresheafPRADirNat.lean`.
+- Tasks 18–21: four concrete tests (bridge-lemma collapse,
+  pointwise-accessor compatibility, functoriality at a morphism,
+  universe polymorphism).
+- Task 22: mark this workstream section Complete and clean stale
+  references to deleted names.
 
-- `(fibFib X₁).obj x = op (up (ccrNewFamilyFunctor _ .obj
-  (elementsPrecomp P₁ .obj e)))`
-  = `op (up (op (ccrNewFamily (P₁.obj j) a)))` in
-  `op (widened (I₁ᵒᵖ ⥤ Type w_I))`.
+**Proof-engineering lessons accumulated across the workstream
+(preserve across sessions):**
 
-- `((functorFromDataContra sourceData).map f).obj x`: the
-  `sourceData.hom f` transports `x` through `sourceDataHomApp`,
-  which widens `elementsPrecomp f.1.toFunctor` where `f.1 =
-  (homBase f).1 : J₁ ⟶ J₂`.  So the element becomes `⟨(homBase
-  f).1.obj j, a⟩ ∈ (P₂ ⋙ ccrNewIndexFunctor _).Elements`, then
-  `(fibFib X₂)` applies to give
-  `op (up (op (ccrNewFamily (P₂.obj (f.1.obj j))
-  (homFiber f .app j).val a))))`
-  (since `homFiber f` includes a presheaf-level morphism that
-  reindexes the CCR element, potentially with an `eqToHom`
-  correction from `sourceData_base_change_eq`).
-
-- Transporting the latter through `F.map (baseFib.map f).op`:
-  applies `(presheafCatFunctor.map g.op).obj = whisker by g.op.op
-  = postcompose with g` on the unwrapped presheaf; giving
-  `op (up (op (g ⋙ ccrNewFamily (P₂.obj (f.1.obj j)) ...)))`.
-
-Equality of these two endpoints is *exactly* what
-`ccrNewFamilyNat.naturality` (`Families.lean:3484` and
-`ccrNewFamilyFunctor_naturality` at `Families.lean:3436`) proves in
-the unwidened form — with `F := g : I₁ ⟶ I₂` playing the role of
-that lemma's `F : C ⟶ D` (note `Cat.opFunctor`-adjusted direction:
-their statement relates `ccrNewFamilyFunctor D .map ((ccrElements
-.map F).map e_morphism)` to `Cat.opFunctor .map F .obj (ccrNewFamily
-C .map e_morphism)`).
-
-**Task 7 remaining work (substantial proof-engineering effort):**
-
-1. Factor out `private def praPolyDirectionsFibHomCrossApp` — the
-   morphism-level construction.  Likely implementable as a
-   composition built from `ccrNewFamilyFunctor_naturality`'s
-   underlying morphism, wrapped through ULift/ULiftHom up/down
-   and `eqToHom` transports to match the widened endpoints exactly.
-   The bridging lemma needs: `elementsPrecomp P₁` composed with
-   `ccrElementsFunctor.map g` factored via
-   `sourceData_base_change_eq` (or a strengthened version) to match
-   the source-data transport.
-
-2. Each of `fibHomCrossNat`, `baseHomId`, `baseHomComp` then
-   reduces to a naturality / coherence fact about
-   `ccrNewFamilyNat`, plus widening-transport commutation.
-   Template: Task 3's nine small lemmas
-   (`toHomUnop_id_fst`/`_snd`/`_endpoints_eq`/`toHomUnop_id`, etc.).
-
-3. Assemble the six-field `praPolyDirectionsData` struct literal.
-
-**Design observation (not a blocker, but a note for the next
-session):**
-
-The `fibHomCrossApp` type is expressed through a long chain of
-`ULift`/`ULiftHom` widenings that `ccrNewFamilyNat.naturality`
-does not directly speak about.  The natural intermediate is an
-unwidened version of the entire `fibHomCrossApp` pipeline, stated
-as a lemma taking an element of `(P ⋙ ccrNewIndexFunctor _).Elements`
-(unwidened) and producing the corresponding morphism in `(Iᵒᵖ ⥤ Type
-w_I)ᵒᵖ` (unwidened) — this is exactly what `ccrNewFamilyFunctor_
-naturality` provides.  Then the widened `fibHomCrossApp` is obtained
-by functoriality of `catULiftFunctor2 ⋙ Cat.opFunctor` applied to
-the unwidened version.
-
-**Remaining Task 7 (fibHomCrossApp + three coherences):**
-
-- `fibHomCrossApp f x` is a morphism in `(widened (I₁ᵒᵖ ⥤ Type
-  w_I))ᵒᵖ` from `(fibFib X₁).obj x` to
-  `(praDirectionsTargetFibre.map (baseFib.map f).op).obj
-  ((fibFib X₂).obj (fFromData.map f x))`.  The two sides are not
-  definitionally equal: the LHS is `op (widened (ccrNewFamily of
-  (elementsPrecomp P₁ x')))` while the RHS wraps a transport of
-  `op (widened (ccrNewFamily of (elementsPrecomp P₂ (f.map x))))`
-  through `presheafCatFunctor.map g.op` (where `g := baseFib.map f
-  : I₁ ⟶ I₂`).
-- The natural building block is `ccrNewFamilyNat.naturality`
-  (`GebLean/Utilities/Families.lean:3484`).  On
-  `F := presheafCatFunctor.map g.op : presheafCat I₂ ⟶
-  presheafCat I₁`, it equates
-  `ccrElementsFunctor.map F ⋙ ccrNewFamilyNat.app (presheafCat I₁)`
-  with `ccrNewFamilyNat.app (presheafCat I₂) ⋙
-  ccrNewFamilyNatTarget.map F`.  But our chain is
-  `elementsPrecomp P ⋙ ccrNewFamilyFunctor _`, not directly
-  `ccrElementsFunctor`; plugging `ccrNewFamilyNat.naturality` into
-  the widened chain requires an intermediate lemma relating
-  `elementsPrecomp (P : J ⥤ CCR _)` composed with
-  `ccrNewFamilyFunctor` to `ccrNewFamilyNat.app`-application on
-  an element obtained by widening.
-- The `fibHomCrossNat`, `baseHomId`, `baseHomComp` proofs each
-  reduce to multiple small lemmas about how the widening
-  `(ULift.upFunctor ⋙ ULiftHom.up).op` commutes with naturality and
-  how `ccrNewFamilyNat`'s identity/composition coherence lifts
-  through the widening.  Task 3's nine small lemmas give a
-  template; expect similar count here.
-- Recommended next-session approach: (1) write the unwidened
-  version of `fibHomCrossApp` first as a component of
-  `ccrNewFamilyNat.naturality` on the `elementsPrecomp`-reindexed
-  input, then (2) widen by applying the ULift/ULiftHom up functors
-  in `op`.  Factor out one private def for each of the three
-  coherence proofs as in Task 3.
-
-**Proof-engineering note (carry over for next session):**
-
-- `show T from body` is necessary (not `body : T`) to pin a
-  `Cat`-coerced input type to an explicit `ULiftHom (ULift _)`
-  form.  Without this `ULiftHom.down`'s `C` argument is unsolvable
-  from `↑(Cat.of _)`.
-- The pipeline works with `ULiftHom.down ⋙ ULift.downFunctor` as
-  the unwidening inverse of `catULiftFunctor2` (mirrors
-  `sourceDataHomApp`'s widened `elementsPrecomp` pattern).
-
-**Done (U3 utility, `GebLean/Utilities/Grothendieck.lean`):**
-
-- `b8fef801` — Task 1: `FunctorBetweenCovContra` abbrevs
-  (`FunctorBetweenCovContraBaseFib`, `FunctorBetweenCovContraFibFib`,
-  `FunctorBetweenCovContraFibHomCrossApp`,
-  `FunctorBetweenCovContraFibHomCrossNat`,
-  `FunctorBetweenCovContraBaseHomEqId`,
-  `functorBetweenCovContraBaseHomEqIdProof`,
-  `FunctorBetweenCovContraBaseHomEqComp`,
-  `functorBetweenCovContraBaseHomEqCompProof`,
-  `FunctorBetweenCovContraBaseHomId`,
-  `FunctorBetweenCovContraBaseHomComp`).  At line ~5137 of
-  `Grothendieck.lean`, immediately after `end FunctorBetweenContra`.
-- `5d26d36b` — Task 2: `FunctorBetweenCovContraData` structure (same
-  section).
-- `04882518` and `2219249a` — Task 3: the `toFunctor` extractor.
-
-**Task 3 factoring (all in `Grothendieck.lean`, inside new
-`section FunctorBetweenCovContraExtractor` at line ~7370, after the
-`GrothendieckContraFunctor` namespace since it uses
-`mkObj`/`mkHom`/`objBase`/`objFiber`):**
-
-- `FunctorBetweenCovContraData.toBaseFunc`: `(Grothendieck G)ᵒᵖ ⥤ Dᵒᵖ` =
-  `Grothendieck.forget G).op ⋙ data.baseFib.op`.
-- `FunctorBetweenCovContraData.toFib`: object fibre =
-  `op ((fibFib X.unop.base).obj X.unop.fiber)` in `(F ⋙ Cat.opFunctor).obj _`.
-- `FunctorBetweenCovContraData.toHomUnop`: pre-op fibre morphism =
-  `fibHomCrossApp g.unop.base Y.unop.fiber ≫ (F.map _).map ((fibFib
-  X.unop.base).map g.unop.fiber)`.
-- Identity-side lemmas: `toHomUnop_id_fst`, `toHomUnop_id_snd`,
-  `toHomUnop_id_endpoints_eq`, `toHomUnop_id` (collapsed form).
-- Composition-side lemmas: `unop_comp_base_grothendieck` (rfl),
-  `unop_comp_fiber_grothendieck` (rfl),
-  `fibFib_map_comp_fiber` (distributes `(fibFib X).map` over the
-  three-piece `Grothendieck.comp_fiber`),
-  `toHomUnop_comp_endpoints_eq` (split-equals-fused for the outer
-  `F.map`-transport via `baseFib.map_comp ∘ op_comp ∘ F.map_comp`),
-  `toHomUnop_comp` (the full reshape; uses `baseHomComp`,
-  `fibHomCrossNat`, `Functor.congr_hom` against
-  `F.map ((baseFib.map (h.unop.base ≫ g.unop.base)).op) =
-  F.map (baseFib.map g.unop.base).op ⋙ F.map (baseFib.map h.unop.base).op`).
-- `FunctorBetweenCovContraData.toFunctorToData`: the `FunctorToData`
-  repackaging (`hom_id` via `toHomUnop_id + eqToHom_op`;
-  `hom_comp` via `toHomUnop_comp + op_comp + eqToHom_op +
-  Cat.opFunctor_map`, finishing by `rfl`).
-- `FunctorBetweenCovContraData.toFunctor`: the main extractor,
-  `(Grothendieck.functorTo (F ⋙ Cat.opFunctor) data.toFunctorToData).rightOp`.
-
-**Proof-engineering lessons from Task 3:**
-
-1. `rw` does not match `data.fibHomCrossApp f g x` against a goal
-   that renders as `(fun {c c'} ↦ data.fibHomCrossApp) f g x` after
-   abbrev-implicit expansion.  Workaround: `conv_lhs =>
-   rw [show ... = ... from data.baseHomComp h.unop.base g.unop.base
-   Z.unop.fiber]` with the fully-resolved RHS spelled out in the
-   `show`.
-2. `rw` of `(g ≫ h).unop.base = h.unop.base ≫ g.unop.base` triggers
-   motive-not-type-correct because other sub-terms have types that
-   depend on the rewritten form.  Workaround: rewrite the dependent
-   sub-term *first* via `fibFib_map_comp_fiber` (which uses
-   `unop_comp_fiber_grothendieck` internally) to break the
-   dependency, then proceed.
-3. `change` allows forcing definitional-equality unfoldings that
-   `rw` cannot reach.  Used to expose `Grothendieck.id_fiber` and
-   `Grothendieck.comp_fiber` on `(𝟙 X).unop.fiber` and
-   `(g ≫ h).unop.fiber`.
-4. `show` with goal-changing intent triggers a lint warning; use
-   `change` instead.
-5. The fused-vs-split `F.map`-transport identity collapses via
-   `Functor.congr_hom hF` where `hF : F.map (fused).toFunctor =
-   F.map A.toFunctor ⋙ F.map B.toFunctor`, proven by `rw
-   [baseFib.map_comp, op_comp, F.map_comp]; rfl`.
-
-**Still to do (tasks 4-22, straight from plan):**
-
-- Task 4: `praDirectionsTargetFibre : Cat.{v_I, u_I}ᵒᵖ ⥤ Cat` =
-  `Cat.opFunctor.op ⋙ presheafCatFunctor ⋙ catULiftFunctor2 ⋙
-  Cat.opFunctor` in `PresheafPRA.lean`.
-- Task 5: `praPolyDirectionsTarget`
-  = `(grothendieckContraFunctor Cat.{v_I, u_I}).obj
-  praDirectionsTargetFibre`.
-- Task 6: `praPolyDirectionsSource`
-  = `Cat.of (Grothendieck (functorFromDataContra sourceData))`.
-- Task 7 (densest): `praPolyDirectionsData :
-  FunctorBetweenCovContraData (functorFromDataContra sourceData)
-  praDirectionsTargetFibre`.  Six fields including three coherences.
-  Use `sourceDataFib` widening (`PresheafPRA.lean:187`) and
-  `ccrNewFamilyNat` for the naturality component.  Plan recommends
-  factoring into `praPolyDirectionsData_fibFib`,
-  `praPolyDirectionsFibHomCrossApp`, `_fibHomCrossNat`,
-  `_baseHomId`, `_baseHomComp` as private defs/lemmas outside the
-  data bundle.
-- Task 8: `praPolyDirectionsFunctor` :=
-  `FunctorBetweenCovContraData.toFunctor praPolyDirectionsData`.
-- Task 9: three bridge lemmas (`_base`, `_fibre`, `_map_app`) that
-  should hold by `rfl` — if not, `simp only` with data-bundle unfolds.
-- Task 10: rename old `praPositionsPresheaf` → `praPositionsUnwidened`
-  private helper (body identical, just rename).
-- Task 11: rewrite `praPositions` to use `praPositionsUnwidened`.
-- Task 12: rewrite `praDirectionsAt` to use `praPolyDirectionsFunctor`
-  via a helper `praPolyDirectionsAtSourceObj`.
-- Task 13: migrate `PresheafPRAUMorph.lean` call sites (specifically
-  `praReassemble_directions` at lines 1230-1310) away from deleted
-  names.  Drop `private` from `praPositionsUnwidened` if needed for
-  cross-file use.
-- Task 14: delete `praDirectionsAtFunctorOp`, `praDirectionsAtFunctor`,
-  `praPositionsPresheaf`.
-- Task 15: remove `variable (P : PresheafPRACat …)` at line 459 of
-  `PresheafPRA.lean`; thread `P` as explicit parameter where used;
-  audit `variable (I …)` / `variable (J …)`.
-- Task 16: create `GebLeanTests/Utilities/PresheafPRADirNat.lean`
-  with type-signature sanity tests.
-- Task 17: import the new test module from `GebLeanTests.lean`.
-- Tasks 18-21: append bridge-collapse, pointwise-accessor,
-  functoriality, universe-polymorphism tests.
-- Task 22: mark the v2 spec as Complete in `.session/workstreams/`
-  and rename stale references.
-
-**Universe parameters to reuse** (from `PresheafPRA.lean:34`):
-`u_I v_I u_J v_J w_I w'`.
-
-**Plan location**:
-`docs/superpowers/plans/2026-04-19-praDirections-naturality-v2.md`.
-**Spec location**:
-`docs/superpowers/specs/2026-04-18-praDirections-naturality-design-v2.md`.
+- `ULiftHom.down`'s `C` argument is unsolvable from a
+  `Cat.of`-coerced expression.  Fix: prefix the offending
+  functor composition with
+  `show ULiftHom (ULift _) ⥤ _ from …` to pin the input type.
+- `rw` of `(g ≫ h).unop.base = h.unop.base ≫ g.unop.base`
+  triggers motive-not-type-correct because other sub-terms
+  depend on the rewritten form.  Fix: rewrite the dependent
+  sub-term first via a helper like `fibFib_map_comp_fiber`, then
+  proceed.
+- `rw` does not match `data.fibHomCrossApp f g x` against a goal
+  that renders as `(fun {c c'} ↦ data.fibHomCrossApp) f g x`
+  after abbrev-implicit expansion.  Fix: `conv_lhs => rw [show
+  LHS = RHS from data.baseHomComp …]` with the fully-resolved
+  RHS spelled out in the `show`.
+- The fused-vs-split `F.map`-transport identity collapses via
+  `Functor.congr_hom hF` where `hF : F.map fused.toFunctor =
+  F.map A.toFunctor ⋙ F.map B.toFunctor`, proven by
+  `rw [baseFib.map_comp, op_comp, F.map_comp]; rfl`.
+- `show` with goal-changing intent triggers a lint warning; use
+  `change` instead.
+- Universe parameters for `catULiftFunctor2` and `Cat.opFunctor`
+  bind in declaration order (`u, v, w_v, w_u` for
+  `catULiftFunctor2`; `v, u` for `Cat.opFunctor`) — not in the
+  order they appear inside `Cat.{v, u}` annotations.  Mirror the
+  order already used by `praPositionsNatTarget` in
+  `PresheafPRA.lean:412-420`.
 
 ## References
 
