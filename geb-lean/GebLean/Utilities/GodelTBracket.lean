@@ -241,8 +241,14 @@ private def GodelTExpr.appVar (m : ℕ) {k : ℕ}
   e.app (GodelTExpr.baseVar m i)
 
 /-- Apply a closed `arrow0 m`-typed term to all `m` variables of the
-base context, producing a base-typed expression.  The variables are
-applied in order 0, 1, ..., m − 1. -/
+base context in reverse order (m − 1, m − 2, ..., 0), producing a
+base-typed expression.  The reverse ordering compensates for the
+head-first nature of bracket abstraction: after iterating
+`abstract` `m` times, the outermost argument corresponds to the
+last-applied (i.e., lowest-index) original variable.  The overall
+effect is that the final `arrow0 m`-typed term, when applied in
+order ctx 0, ctx 1, ..., ctx (m − 1), substitutes ctx i for the
+original variable i. -/
 def GodelTExpr.applyAllBaseVars :
     (m : ℕ) → GodelTTerm (GodelTType.arrow0 m) →
     GodelTExpr (GodelTExpr.baseCtx m) GodelTType.base :=
@@ -254,8 +260,7 @@ where
     | _, 0, _, e => e
     | m, k + 1, hk, e =>
         applyAllBaseVarsAux m k (Nat.le_of_succ_le hk)
-          (GodelTExpr.appVar m e
-            ⟨m - k - 1, by omega⟩)
+          (GodelTExpr.appVar m e ⟨k, Nat.lt_of_succ_le hk⟩)
 
 /-- Build a closed base-typed expression in the `m`-variable context
 that represents applying `f` to the tuple of base-typed applications
