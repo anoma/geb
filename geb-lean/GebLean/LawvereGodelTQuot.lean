@@ -593,4 +593,217 @@ instance : Category LawvereGodelTCat where
   comp_id := GodelTMorNQuo.comp_id
   assoc := GodelTMorNQuo.comp_assoc
 
+/-- Terminal morphism: the empty tuple. -/
+def GodelTMorN.terminal (n : ℕ) : GodelTMorN n 0 :=
+  fun i => i.elim0
+
+/-- First projection from the product arity `n + m`. -/
+def GodelTMorN.fst {n m : ℕ} : GodelTMorN (n + m) n :=
+  fun i => GodelTMor1.proj (n + m) ⟨i.val, by omega⟩
+
+/-- Second projection from the product arity `n + m`. -/
+def GodelTMorN.snd {n m : ℕ} : GodelTMorN (n + m) m :=
+  fun i => GodelTMor1.proj (n + m) ⟨n + i.val, by omega⟩
+
+/-- Pairing: produce a morphism to arity `n + m` from morphisms to
+arity `n` and arity `m`. -/
+def GodelTMorN.pair {k n m : ℕ}
+    (f : GodelTMorN k n) (g : GodelTMorN k m) : GodelTMorN k (n + m) :=
+  fun i =>
+    if h : i.val < n then f ⟨i.val, h⟩
+    else g ⟨i.val - n, by omega⟩
+
+@[simp] theorem GodelTMorN.interp_terminal {n : ℕ} (ctx : Fin n → ℕ) :
+    (GodelTMorN.terminal n).interp ctx = Fin.elim0 :=
+  funext (fun i => i.elim0)
+
+@[simp] theorem GodelTMorN.interp_fst {n m : ℕ}
+    (ctx : Fin (n + m) → ℕ) :
+    (GodelTMorN.fst (n := n) (m := m)).interp ctx =
+      fun i => ctx ⟨i.val, by omega⟩ := by
+  funext i
+  exact GodelTMor1.interp_proj (n + m) ⟨i.val, by omega⟩ ctx
+
+@[simp] theorem GodelTMorN.interp_snd {n m : ℕ}
+    (ctx : Fin (n + m) → ℕ) :
+    (GodelTMorN.snd (n := n) (m := m)).interp ctx =
+      fun i => ctx ⟨n + i.val, by omega⟩ := by
+  funext i
+  exact GodelTMor1.interp_proj (n + m) ⟨n + i.val, by omega⟩ ctx
+
+@[simp] theorem GodelTMorN.interp_pair {k n m : ℕ}
+    (f : GodelTMorN k n) (g : GodelTMorN k m) (ctx : Fin k → ℕ) :
+    (GodelTMorN.pair f g).interp ctx =
+      fun i =>
+        if h : i.val < n then f.interp ctx ⟨i.val, h⟩
+        else g.interp ctx ⟨i.val - n, by omega⟩ := by
+  funext i
+  change (GodelTMorN.pair f g i).interp ctx = _
+  unfold GodelTMorN.pair
+  split_ifs <;> rfl
+
+/-- Terminal morphism in the quotient category. -/
+def GodelTMorNQuo.terminal (n : ℕ) : GodelTMorNQuo n 0 :=
+  Quotient.mk (godelTMorNSetoid n 0) (GodelTMorN.terminal n)
+
+/-- Any quotient morphism to arity 0 equals the terminal. -/
+theorem GodelTMorNQuo.terminal_uniq {n : ℕ} (f : GodelTMorNQuo n 0) :
+    f = GodelTMorNQuo.terminal n :=
+  Quotient.ind
+    (motive := fun f => f = GodelTMorNQuo.terminal n)
+    (fun _ =>
+      Quotient.sound
+        (s := godelTMorNSetoid n 0)
+        (fun _ => funext (fun i => Fin.elim0 i)))
+    f
+
+/-- First projection in the quotient category. -/
+def GodelTMorNQuo.fst {n m : ℕ} : GodelTMorNQuo (n + m) n :=
+  Quotient.mk (godelTMorNSetoid (n + m) n) GodelTMorN.fst
+
+/-- Second projection in the quotient category. -/
+def GodelTMorNQuo.snd {n m : ℕ} : GodelTMorNQuo (n + m) m :=
+  Quotient.mk (godelTMorNSetoid (n + m) m) GodelTMorN.snd
+
+/-- Pairing in the quotient category. -/
+def GodelTMorNQuo.pair {k n m : ℕ}
+    (f : GodelTMorNQuo k n) (g : GodelTMorNQuo k m) :
+    GodelTMorNQuo k (n + m) :=
+  Quotient.lift₂
+    (s₁ := godelTMorNSetoid k n)
+    (s₂ := godelTMorNSetoid k m)
+    (fun f' g' =>
+      Quotient.mk (godelTMorNSetoid k (n + m))
+        (GodelTMorN.pair f' g'))
+    (fun _ _ _ _ hf hg =>
+      Quotient.sound
+        (s := godelTMorNSetoid k (n + m))
+        (fun ctx => by
+          simp only [GodelTMorN.interp_pair]
+          funext i
+          split_ifs with h
+          · exact congrFun (hf ctx) ⟨i.val, h⟩
+          · exact congrFun (hg ctx) ⟨i.val - n, by omega⟩))
+    f g
+
+theorem GodelTMorNQuo.pair_fst {k n m : ℕ}
+    (f : GodelTMorNQuo k n) (g : GodelTMorNQuo k m) :
+    GodelTMorNQuo.comp (GodelTMorNQuo.pair f g)
+      GodelTMorNQuo.fst = f :=
+  Quotient.ind₂
+    (motive := fun f g =>
+      GodelTMorNQuo.comp (GodelTMorNQuo.pair f g)
+        GodelTMorNQuo.fst = f)
+    (fun _ _ =>
+      Quotient.sound
+        (s := godelTMorNSetoid k n)
+        (fun ctx => by
+          simp only [GodelTMorN.interp_comp,
+            GodelTMorN.interp_pair, GodelTMorN.interp_fst]
+          funext i
+          simp only [Fin.is_lt, reduceDIte, Fin.eta]))
+    f g
+
+theorem GodelTMorNQuo.pair_snd {k n m : ℕ}
+    (f : GodelTMorNQuo k n) (g : GodelTMorNQuo k m) :
+    GodelTMorNQuo.comp (GodelTMorNQuo.pair f g)
+      GodelTMorNQuo.snd = g :=
+  Quotient.ind₂
+    (motive := fun f g =>
+      GodelTMorNQuo.comp (GodelTMorNQuo.pair f g)
+        GodelTMorNQuo.snd = g)
+    (fun _ g_raw =>
+      Quotient.sound
+        (s := godelTMorNSetoid k m)
+        (fun ctx => by
+          simp only [GodelTMorN.interp_comp,
+            GodelTMorN.interp_pair, GodelTMorN.interp_snd]
+          funext i
+          simp only [dif_neg
+            (show ¬ (n + i.val) < n by omega)]
+          change (g_raw ⟨n + i.val - n, _⟩).interp ctx =
+            (g_raw i).interp ctx
+          simp only [Nat.add_sub_cancel_left]))
+    f g
+
+theorem GodelTMorNQuo.pair_uniq {k n m : ℕ}
+    (f : GodelTMorNQuo k n) (g : GodelTMorNQuo k m)
+    (h : GodelTMorNQuo k (n + m))
+    (hfst : GodelTMorNQuo.comp h GodelTMorNQuo.fst = f)
+    (hsnd : GodelTMorNQuo.comp h GodelTMorNQuo.snd = g) :
+    h = GodelTMorNQuo.pair f g :=
+  Quotient.ind
+    (motive := fun h =>
+      ∀ (f : GodelTMorNQuo k n) (g : GodelTMorNQuo k m),
+        GodelTMorNQuo.comp h GodelTMorNQuo.fst = f →
+        GodelTMorNQuo.comp h GodelTMorNQuo.snd = g →
+        h = GodelTMorNQuo.pair f g)
+    (fun h_raw =>
+      Quotient.ind
+        (motive := fun f =>
+          ∀ (g : GodelTMorNQuo k m),
+            GodelTMorNQuo.comp (Quotient.mk _ h_raw)
+              GodelTMorNQuo.fst = f →
+            GodelTMorNQuo.comp (Quotient.mk _ h_raw)
+              GodelTMorNQuo.snd = g →
+            Quotient.mk _ h_raw = GodelTMorNQuo.pair f g)
+        (fun f_raw =>
+          Quotient.ind
+            (motive := fun g =>
+              GodelTMorNQuo.comp (Quotient.mk _ h_raw)
+                GodelTMorNQuo.fst = Quotient.mk _ f_raw →
+              GodelTMorNQuo.comp (Quotient.mk _ h_raw)
+                GodelTMorNQuo.snd = g →
+              Quotient.mk _ h_raw =
+                GodelTMorNQuo.pair (Quotient.mk _ f_raw) g)
+            (fun _ hf_eq hs_eq => by
+              have hf_rel := Quotient.exact
+                (s := godelTMorNSetoid k n) hf_eq
+              have hs_rel := Quotient.exact
+                (s := godelTMorNSetoid k m) hs_eq
+              apply Quotient.sound
+                (s := godelTMorNSetoid k (n + m))
+              intro ctx
+              simp only [GodelTMorN.interp_pair]
+              funext i
+              split_ifs with hlt
+              · have := congrFun (hf_rel ctx) ⟨i.val, hlt⟩
+                simp only [GodelTMorN.interp_comp,
+                  GodelTMorN.interp_fst] at this
+                exact this
+              · have step := congrFun (hs_rel ctx)
+                  ⟨i.val - n, by omega⟩
+                simp only [GodelTMorN.interp_comp,
+                  GodelTMorN.interp_snd] at step
+                have hrw : h_raw.interp ctx i =
+                  h_raw.interp ctx
+                    ⟨n + (i.val - n), by omega⟩ := by
+                  simp only [Nat.add_sub_cancel'
+                    (Nat.le_of_not_lt hlt)]
+                rw [hrw]
+                exact step)))
+    h f g hfst hsnd
+
+/-- Chosen binary product for `LawvereGodelTCat`. -/
+def lawvereGodelTProduct (n m : LawvereGodelTCat) :
+    ChosenBinaryProduct n m where
+  obj := (Nat.add n m : ℕ)
+  fst := GodelTMorNQuo.fst
+  snd := GodelTMorNQuo.snd
+  lift f g := GodelTMorNQuo.pair f g
+  lift_fst := GodelTMorNQuo.pair_fst
+  lift_snd := GodelTMorNQuo.pair_snd
+  lift_uniq f g h hf hs :=
+    GodelTMorNQuo.pair_uniq f g h hf hs
+
+/-- Chosen terminal object for `LawvereGodelTCat`. -/
+def lawvereGodelTTerminal : ChosenTerminal LawvereGodelTCat where
+  obj := (0 : ℕ)
+  from_ n := GodelTMorNQuo.terminal n
+  uniq f := GodelTMorNQuo.terminal_uniq f
+
+instance : HasChosenFiniteProducts LawvereGodelTCat where
+  terminal := lawvereGodelTTerminal
+  product := lawvereGodelTProduct
+
 end GebLean
