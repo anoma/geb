@@ -26,8 +26,11 @@ inductive GodelTType : Type
   deriving DecidableEq, Repr, Inhabited
 
 /-- Set-theoretic interpretation of a GodelT type: the base
-type is ℕ and arrow types are Lean function spaces. -/
-def GodelTType.interp : GodelTType → Type
+type is ℕ and arrow types are Lean function spaces.  The
+definition is reducible so that elaboration of numerals and
+Lean functions at `base.interp`/`arrow _ _` .interp succeeds
+without explicit casts. -/
+@[reducible] def GodelTType.interp : GodelTType → Type
   | .base => ℕ
   | .arrow σ τ => σ.interp → τ.interp
 
@@ -67,5 +70,56 @@ inductive GodelTTerm : GodelTType → Type
   | app {σ τ : GodelTType}
       (f : GodelTTerm (.arrow σ τ)) (a : GodelTTerm σ) :
       GodelTTerm τ
+
+/-- Standard interpretation of T* terms.  Each constructor
+maps to its set-theoretic semantics; `iter` reduces to
+`Nat.rec` over the iteration count `t.interp`. -/
+def GodelTTerm.interp : {σ : GodelTType} →
+    GodelTTerm σ → σ.interp
+  | _, .zero => 0
+  | _, .succ => Nat.succ
+  | _, .pred => Nat.pred
+  | _, .K _ _ => fun a _ => a
+  | _, .S _ _ _ => fun f g x => f x (g x)
+  | _, .disc _ => fun n a b =>
+      match n with
+      | 0 => a
+      | _ + 1 => b
+  | _, .iter _ t => fun step base =>
+      Nat.rec base (fun _ prev => step prev) t.interp
+  | _, .app f a => f.interp a.interp
+
+@[simp] theorem GodelTTerm.interp_zero :
+    GodelTTerm.zero.interp = 0 := rfl
+
+@[simp] theorem GodelTTerm.interp_succ :
+    GodelTTerm.succ.interp = Nat.succ := rfl
+
+@[simp] theorem GodelTTerm.interp_pred :
+    GodelTTerm.pred.interp = Nat.pred := rfl
+
+@[simp] theorem GodelTTerm.interp_K (σ τ : GodelTType) :
+    (GodelTTerm.K σ τ).interp = (fun a _ => a) := rfl
+
+@[simp] theorem GodelTTerm.interp_S (ρ σ τ : GodelTType) :
+    (GodelTTerm.S ρ σ τ).interp =
+      (fun f g x => f x (g x)) := rfl
+
+@[simp] theorem GodelTTerm.interp_disc (σ : GodelTType) :
+    (GodelTTerm.disc σ).interp =
+      (fun n a b => match n with
+        | 0 => a
+        | _ + 1 => b) := rfl
+
+@[simp] theorem GodelTTerm.interp_iter (ρ : GodelTType)
+    (t : GodelTTerm .base) :
+    (GodelTTerm.iter ρ t).interp =
+      (fun step base =>
+        Nat.rec base (fun _ prev => step prev) t.interp) :=
+  rfl
+
+@[simp] theorem GodelTTerm.interp_app {σ τ : GodelTType}
+    (f : GodelTTerm (.arrow σ τ)) (a : GodelTTerm σ) :
+    (f.app a).interp = f.interp a.interp := rfl
 
 end GebLean
