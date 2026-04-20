@@ -409,11 +409,20 @@ and committed):**
    than `Iᵒᵖ ⥤ Type`.  The spec at lines 55–59 and 173–192 now
    reflects the three-stage form.
 
-**Outstanding Task 7 work (remaining sub-tasks 7.4–7.11):**
+**Outstanding Task 7 work (remaining sub-tasks 7.3.5, 7.4–7.11):**
 
-The plan expands Task 7 into Tasks 7.1–7.11 (Phases 7A–7D).  See the
-plan file for detailed skeletons.  Summary of remaining:
+The plan expands Task 7 into Tasks 7.1–7.11 (Phases 7A–7D), plus the
+newly-inserted Task 7.3.5 (2026-04-20).  See the plan file for
+detailed skeletons.  Summary of remaining:
 
+- **Task 7.3.5 (prerequisite for 7.4):** Generalize U3 abbrevs in
+  `Grothendieck.lean` (Tasks 1–3 infrastructure) to decouple target
+  Cat universe from source-category universes.  Current U3 forces
+  `G : C ⥤ Cat.{vC, uC}` and `F : Dᵒᵖ ⥤ Cat.{vD, uD}`; add a shared
+  target pair `(vT, uT)` so `G : C ⥤ Cat.{vT, uT}` and
+  `F : Dᵒᵖ ⥤ Cat.{vT, uT}`.  Needed because our setting has both `G`
+  and `F` target a Cat at a widened universe that differs from both
+  source categories' universes.
 - Task 7.4: `praPolyDirectionsData_fibHomCrossApp` (widened main).
   Widens Task 7.3's unwidened morphism through
   `catULiftFunctor2 ⋙ Cat.opFunctor`, gluing with `eqToHom` at
