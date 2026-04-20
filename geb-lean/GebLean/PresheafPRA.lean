@@ -519,15 +519,6 @@ private def praPolyDirectionsData_fibHomCrossUnwidened
     ⟨(GrothendieckContraFunctor.homFiber f).app e.fst, rfl⟩
 
 /--
-Cross-fibre morphism for `praPolyDirectionsData`.  Built by widening
-`praPolyDirectionsData_fibHomCrossUnwidened` through the op of
-`catULiftFunctor2`'s underlying lift (`ULift.upFunctor ⋙
-ULiftHom.up`).  The endpoint objects coincide on the nose with
-`(fibFib X).obj x` / `(F.map _).obj ((fibFib Y).obj (G.map f . obj x))`
-by how `fibFib` and the widening interact, so no `eqToHom` glue is
-needed.
--/
-/--
 Cross-fibre morphism for `praPolyDirectionsData`.  Constructed by
 widening `praPolyDirectionsData_fibHomCrossUnwidened` through the op
 of `ULift.upFunctor ⋙ ULiftHom.up`.  Endpoint objects coincide with
