@@ -458,4 +458,139 @@ theorem GodelTMor1.interp_compMor1 {n m : ℕ}
   rw [applyArrowN_iterateAbstract]
   rw [compExpr_interp]
 
+/-- An `m`-tuple of `n`-ary GodelT morphisms: the hom-object of the
+Lawvere theory. -/
+def GodelTMorN (n m : ℕ) : Type := Fin m → GodelTMor1 n
+
+/-- Standard interpretation of a `GodelTMorN n m` tuple. -/
+def GodelTMorN.interp {n m : ℕ} (f : GodelTMorN n m)
+    (ctx : Fin n → ℕ) : Fin m → ℕ :=
+  fun i => (f i).interp ctx
+
+/-- The identity morphism at arity `n`: the tuple of `n`
+projections. -/
+def GodelTMorN.id (n : ℕ) : GodelTMorN n n :=
+  fun i => GodelTMor1.proj n i
+
+/-- Composition of `GodelTMorN` tuples: each output component of
+`g : GodelTMorN m k` is substituted with `f : GodelTMorN n m` via
+`GodelTMor1.compMor1`. -/
+def GodelTMorN.comp {n m k : ℕ}
+    (f : GodelTMorN n m) (g : GodelTMorN m k) : GodelTMorN n k :=
+  fun i => GodelTMor1.compMor1 (g i) f
+
+@[simp] theorem GodelTMorN.interp_id {n : ℕ} (ctx : Fin n → ℕ) :
+    (GodelTMorN.id n).interp ctx = ctx := by
+  funext i
+  exact GodelTMor1.interp_proj n i ctx
+
+@[simp] theorem GodelTMorN.interp_comp {n m k : ℕ}
+    (f : GodelTMorN n m) (g : GodelTMorN m k) (ctx : Fin n → ℕ) :
+    (f.comp g).interp ctx = g.interp (f.interp ctx) := by
+  funext i
+  exact GodelTMor1.interp_compMor1 (g i) f ctx
+
+/-- The setoid on `GodelTMorN n m` induced by extensional equality of
+interpretations. -/
+def godelTMorNSetoid (n m : ℕ) : Setoid (GodelTMorN n m) where
+  r f g := ∀ ctx : Fin n → ℕ, f.interp ctx = g.interp ctx
+  iseqv := {
+    refl := fun _ _ => rfl
+    symm := fun h ctx => (h ctx).symm
+    trans := fun h1 h2 ctx => (h1 ctx).trans (h2 ctx)
+  }
+
+/-- Quotient morphism type for the Lawvere theory of restricted
+Gödel-T. -/
+def GodelTMorNQuo (n m : ℕ) : Type :=
+  Quotient (godelTMorNSetoid n m)
+
+/-- The identity morphism in the quotient category. -/
+def GodelTMorNQuo.id (n : ℕ) : GodelTMorNQuo n n :=
+  Quotient.mk (godelTMorNSetoid n n) (GodelTMorN.id n)
+
+/-- Composition of quotient morphisms, lifted from
+`GodelTMorN.comp` via `Quotient.lift₂`. -/
+def GodelTMorNQuo.comp {n m k : ℕ}
+    (f : GodelTMorNQuo n m) (g : GodelTMorNQuo m k) :
+    GodelTMorNQuo n k :=
+  Quotient.lift₂
+    (s₁ := godelTMorNSetoid n m)
+    (s₂ := godelTMorNSetoid m k)
+    (fun f' g' =>
+      Quotient.mk (godelTMorNSetoid n k) (GodelTMorN.comp f' g'))
+    (fun _ _ _ _ hf hg =>
+      Quotient.sound
+        (s := godelTMorNSetoid n k)
+        (fun ctx => by
+          simp only [GodelTMorN.interp_comp]
+          rw [hf ctx, hg (_ : Fin m → ℕ)]))
+    f g
+
+theorem GodelTMorNQuo.id_comp {n m : ℕ} (f : GodelTMorNQuo n m) :
+    GodelTMorNQuo.comp (GodelTMorNQuo.id n) f = f :=
+  Quotient.ind
+    (motive := fun f => GodelTMorNQuo.comp (GodelTMorNQuo.id n) f = f)
+    (fun _ =>
+      Quotient.sound
+        (s := godelTMorNSetoid n m)
+        (fun _ => by simp [GodelTMorN.interp_comp, GodelTMorN.interp_id]))
+    f
+
+theorem GodelTMorNQuo.comp_id {n m : ℕ} (f : GodelTMorNQuo n m) :
+    GodelTMorNQuo.comp f (GodelTMorNQuo.id m) = f :=
+  Quotient.ind
+    (motive := fun f => GodelTMorNQuo.comp f (GodelTMorNQuo.id m) = f)
+    (fun _ =>
+      Quotient.sound
+        (s := godelTMorNSetoid n m)
+        (fun _ => by simp [GodelTMorN.interp_comp, GodelTMorN.interp_id]))
+    f
+
+theorem GodelTMorNQuo.comp_assoc {n m k l : ℕ}
+    (f : GodelTMorNQuo n m)
+    (g : GodelTMorNQuo m k)
+    (h : GodelTMorNQuo k l) :
+    GodelTMorNQuo.comp (GodelTMorNQuo.comp f g) h =
+      GodelTMorNQuo.comp f (GodelTMorNQuo.comp g h) :=
+  Quotient.ind
+    (motive := fun f =>
+      ∀ (g : GodelTMorNQuo m k) (h : GodelTMorNQuo k l),
+        GodelTMorNQuo.comp (GodelTMorNQuo.comp f g) h =
+          GodelTMorNQuo.comp f (GodelTMorNQuo.comp g h))
+    (fun _ =>
+      Quotient.ind
+        (motive := fun g =>
+          ∀ (h : GodelTMorNQuo k l),
+            GodelTMorNQuo.comp (GodelTMorNQuo.comp _ g) h =
+              GodelTMorNQuo.comp _ (GodelTMorNQuo.comp g h))
+        (fun _ =>
+          Quotient.ind
+            (motive := fun h =>
+              GodelTMorNQuo.comp (GodelTMorNQuo.comp _ _) h =
+                GodelTMorNQuo.comp _ (GodelTMorNQuo.comp _ h))
+            (fun _ =>
+              Quotient.sound
+                (s := godelTMorNSetoid n l)
+                (fun _ => by simp [GodelTMorN.interp_comp]))))
+    f g h
+
+/-- The quotient Lawvere theory of restricted Gödel-T. -/
+def LawvereGodelTCat := ℕ
+
+instance (n : ℕ) : OfNat LawvereGodelTCat n := ⟨(n : ℕ)⟩
+instance : BEq LawvereGodelTCat := inferInstanceAs (BEq ℕ)
+instance : DecidableEq LawvereGodelTCat :=
+  inferInstanceAs (DecidableEq ℕ)
+
+instance : CategoryStruct LawvereGodelTCat where
+  Hom := GodelTMorNQuo
+  id n := GodelTMorNQuo.id n
+  comp f g := GodelTMorNQuo.comp f g
+
+instance : Category LawvereGodelTCat where
+  id_comp := GodelTMorNQuo.id_comp
+  comp_id := GodelTMorNQuo.comp_id
+  assoc := GodelTMorNQuo.comp_assoc
+
 end GebLean
