@@ -161,26 +161,4 @@ def GodelTTerm.I (σ : GodelTType) :
 @[simp] theorem GodelTTerm.interp_I (σ : GodelTType)
     (x : σ.interp) : (GodelTTerm.I σ).interp x = x := rfl
 
-/-- The composition combinator: `B f g x = f (g x)`.  Given
-`f : τ → ρ` and `g : σ → τ`, produce `σ → ρ`.  Encoded as
-`S σ τ ρ (K (τ → ρ) σ f) g`. -/
-def GodelTTerm.B {σ τ ρ : GodelTType}
-    (f : GodelTTerm (.arrow τ ρ))
-    (g : GodelTTerm (.arrow σ τ)) :
-    GodelTTerm (.arrow σ ρ) :=
-  ((GodelTTerm.S σ τ ρ).app
-    ((GodelTTerm.K (.arrow τ ρ) σ).app f)).app g
-
-@[simp] theorem GodelTTerm.interp_B {σ τ ρ : GodelTType}
-    (f : GodelTTerm (.arrow τ ρ))
-    (g : GodelTTerm (.arrow σ τ)) (x : σ.interp) :
-    (GodelTTerm.B f g).interp x = f.interp (g.interp x) :=
-  rfl
-
-/-- Transport a `GodelTTerm` across an equality of arity
-indices.  Used by iterated bracket abstraction. -/
-def GodelTTerm.castArrow0 {a b : ℕ} (h : a = b)
-    (t : GodelTTerm (GodelTType.arrow0 a)) :
-    GodelTTerm (GodelTType.arrow0 b) := h ▸ t
-
 end GebLean
