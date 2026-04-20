@@ -234,7 +234,7 @@ def GodelTExpr.baseVar (m : ℕ) (i : Fin m) :
 /-- Apply a partial `arrow0 k`-typed expression to a base variable
 at some position.  Used in the iterative construction of
 `applyAllBaseVars` below. -/
-private def GodelTExpr.appVar (m : ℕ) {k : ℕ}
+def GodelTExpr.appVar (m : ℕ) {k : ℕ}
     (e : GodelTExpr (GodelTExpr.baseCtx m) (GodelTType.arrow0 (k + 1)))
     (i : Fin m) :
     GodelTExpr (GodelTExpr.baseCtx m) (GodelTType.arrow0 k) :=

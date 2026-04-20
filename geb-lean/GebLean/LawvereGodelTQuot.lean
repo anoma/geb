@@ -246,4 +246,158 @@ theorem applyArrowN_iterateAbstractAux :
       change rem + (j.val + 1) = (rem + 1) + j.val
       omega
 
+/-- Applying `iterateAbstract m e` curried against `ctx : Fin m → ℕ`
+substitutes `ctx` (in reverse) for `e`'s free variables. -/
+theorem applyArrowN_iterateAbstract (m : ℕ)
+    (e : GodelTExpr (GodelTExpr.baseCtx m) GodelTType.base)
+    (ctx : Fin m → ℕ) :
+    applyArrowN m (GodelTExpr.iterateAbstract m e).interp ctx =
+      e.interp (baseEnvRev m ctx) := by
+  unfold GodelTExpr.iterateAbstract
+  rw [applyArrowN_castArrow0]
+  have := applyArrowN_iterateAbstractAux m 0 e
+    (fun i : Fin (0 + m) => ctx ⟨i.val, by omega⟩)
+  change applyArrowN (0 + m) _ _ = _ at this
+  rw [this]
+  have hfg : (fun j : Fin m => (fun i : Fin (0 + m) =>
+      ctx ⟨i.val, by omega⟩) ⟨j.val, by omega⟩) = ctx := by
+    funext j
+    rfl
+  rw [hfg]
+  rfl
+
+/-- Interpreting the term cast across a type equality commutes with
+transporting the interpretation. -/
+theorem GodelTExpr.interp_cast {ctx : List GodelTType}
+    {a b : GodelTType} (h : a = b) (t : GodelTExpr ctx a)
+    (env : (i : Fin ctx.length) → (ctx.get i).interp) :
+    (h ▸ t).interp env = h ▸ t.interp env := by
+  subst h
+  rfl
+
+/-- Read a ℕ value from a base-context environment at position `j`,
+via the cast through `baseCtx_get`.  Uses `▸` with motive
+`fun σ => σ.interp` so that it coincides with the interpretation
+of `baseVar m j` at this environment. -/
+def readBaseEnv (m : ℕ)
+    (env : (i : Fin (GodelTExpr.baseCtx m).length) →
+      ((GodelTExpr.baseCtx m).get i).interp)
+    (j : Fin m) : ℕ :=
+  show GodelTType.base.interp from
+    GodelTExpr.baseCtx_get m ⟨j.val, by
+        rw [GodelTExpr.baseCtx_length]; exact j.isLt⟩ ▸
+      env ⟨j.val, by rw [GodelTExpr.baseCtx_length]; exact j.isLt⟩
+
+/-- Interpretation of a base-typed variable at an environment reduces
+via the cast to `readBaseEnv`. -/
+theorem baseVar_interp (m : ℕ) (j : Fin m)
+    (env : (i : Fin (GodelTExpr.baseCtx m).length) →
+      ((GodelTExpr.baseCtx m).get i).interp) :
+    (GodelTExpr.baseVar m j).interp env = readBaseEnv m env j := by
+  unfold GodelTExpr.baseVar readBaseEnv
+  rw [GodelTExpr.interp_cast, GodelTExpr.interp_var]
+
+/-- Reading the reverse-indexed environment of a context cancels the
+two casts, recovering the original ctx value at the mirrored index. -/
+theorem readBaseEnv_baseEnvRev (m : ℕ) (ctx : Fin m → ℕ) (j : Fin m) :
+    readBaseEnv m (baseEnvRev m ctx) j =
+      ctx ⟨m - 1 - j.val, by omega⟩ := by
+  induction m with
+  | zero => exact absurd j.isLt (by simp)
+  | succ m ih =>
+      match j with
+      | ⟨0, _⟩ =>
+          change readBaseEnv (m + 1) (baseEnvRev (m + 1) ctx)
+              ⟨0, by omega⟩ = ctx ⟨m, by omega⟩
+          rw [baseEnvRev_succ]
+          rfl
+      | ⟨i + 1, hi⟩ =>
+          change readBaseEnv (m + 1) (baseEnvRev (m + 1) ctx)
+              ⟨i + 1, hi⟩ = ctx ⟨m + 1 - 1 - (i + 1), by omega⟩
+          rw [baseEnvRev_succ]
+          have key := ih (fun j' : Fin m =>
+            ctx ⟨j'.val, Nat.lt_succ_of_lt j'.isLt⟩) ⟨i, by omega⟩
+          have hred : readBaseEnv (m + 1)
+              (GodelTExpr.envCons
+                (ctx ⟨m, Nat.lt_succ_self m⟩)
+                (baseEnvRev m (fun j' : Fin m =>
+                  ctx ⟨j'.val, Nat.lt_succ_of_lt j'.isLt⟩)))
+              ⟨i + 1, hi⟩ =
+            readBaseEnv m
+              (baseEnvRev m (fun j' : Fin m =>
+                ctx ⟨j'.val, Nat.lt_succ_of_lt j'.isLt⟩))
+              ⟨i, by omega⟩ := rfl
+          rw [hred, key]
+          apply congrArg
+          apply Fin.ext
+          change m - 1 - i = m + 1 - 1 - (i + 1)
+          omega
+
+/-- Interpretation of `applyAllBaseVarsAux m k hk e` at the
+reverse-indexed environment of a ctx: reduces to applyArrowN of e's
+interp against a descending subsequence of ctx. -/
+theorem applyAllBaseVarsAux_interp (m : ℕ) :
+    ∀ (k : ℕ) (hk : k ≤ m)
+      (e : GodelTExpr (GodelTExpr.baseCtx m) (GodelTType.arrow0 k))
+      (ctx : Fin m → ℕ),
+    (GodelTExpr.applyAllBaseVars.applyAllBaseVarsAux m k hk e).interp
+        (baseEnvRev m ctx) =
+      applyArrowN k (e.interp (baseEnvRev m ctx))
+        (fun j : Fin k =>
+          ctx ⟨m - 1 - (k - 1 - j.val), by omega⟩) := by
+  intro k
+  induction k with
+  | zero =>
+      intro _ e ctx
+      rfl
+  | succ k ih =>
+      intro hk e ctx
+      change (GodelTExpr.applyAllBaseVars.applyAllBaseVarsAux m k
+          (Nat.le_of_succ_le hk)
+          (GodelTExpr.appVar m e
+            ⟨k, Nat.lt_of_succ_le hk⟩)).interp (baseEnvRev m ctx)
+        = _
+      rw [ih (Nat.le_of_succ_le hk)]
+      unfold GodelTExpr.appVar
+      rw [GodelTExpr.interp_app]
+      rw [baseVar_interp]
+      rw [readBaseEnv_baseEnvRev]
+      change applyArrowN k
+          (e.interp (baseEnvRev m ctx) (ctx ⟨m - 1 - k, _⟩))
+          (fun j : Fin k =>
+            ctx ⟨m - 1 - (k - 1 - j.val), _⟩) =
+        applyArrowN (k + 1) (e.interp (baseEnvRev m ctx))
+          (fun j : Fin (k + 1) =>
+            ctx ⟨m - 1 - (k - j.val), _⟩)
+      change applyArrowN k _ _ =
+        applyArrowN k
+          ((e.interp (baseEnvRev m ctx)) (ctx ⟨m - 1 - (k - 0), _⟩))
+          (Fin.tail (fun j : Fin (k + 1) =>
+            ctx ⟨m - 1 - (k - j.val), _⟩))
+      congr 1
+      funext j
+      change ctx ⟨m - 1 - (k - 1 - j.val), _⟩
+        = ctx ⟨m - 1 - (k - (j.val + 1)), _⟩
+      apply congrArg
+      apply Fin.ext
+      change m - 1 - (k - 1 - j.val) = m - 1 - (k - (j.val + 1))
+      omega
+
+/-- Interpretation of `applyAllBaseVars m t` at the reverse-indexed
+environment of a context recovers the curried application of `t` to
+the context. -/
+theorem applyAllBaseVars_interp (m : ℕ) (t : GodelTTerm (GodelTType.arrow0 m))
+    (ctx : Fin m → ℕ) :
+    (GodelTExpr.applyAllBaseVars m t).interp (baseEnvRev m ctx) =
+      applyArrowN m t.interp ctx := by
+  unfold GodelTExpr.applyAllBaseVars
+  rw [applyAllBaseVarsAux_interp m m (Nat.le_refl m) (.const t) ctx]
+  rw [GodelTExpr.interp_const]
+  congr 1
+  funext j
+  apply congrArg
+  apply Fin.ext
+  change m - 1 - (m - 1 - j.val) = j.val
+  omega
+
 end GebLean
