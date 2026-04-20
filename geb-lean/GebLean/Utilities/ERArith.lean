@@ -2454,4 +2454,46 @@ set_option maxHeartbeats 400000 in
   · simp only [ERMor1.interp_oneN]
     rw [ERMor1.factorial_trace_direct]
 
+/-- Predecessor as an `ERMor1 1` term: `pred 0 = 0` and
+`pred (n + 1) = n`.  Built as truncating subtraction by `1`. -/
+def ERMor1.pred : ERMor1 1 :=
+  ERMor1.comp ERMor1.sub (fun i => match i with
+    | ⟨0, _⟩ => ERMor1.proj 0
+    | ⟨1, _⟩ => ERMor1.oneN 1)
+
+/-- Interpretation of `pred`. -/
+@[simp] theorem ERMor1.interp_pred (ctx : Fin 1 → ℕ) :
+    ERMor1.pred.interp ctx = (ctx 0).pred := by
+  unfold ERMor1.pred
+  simp only [ERMor1.interp_comp, ERMor1.interp_sub,
+    ERMor1.interp_proj, ERMor1.interp_oneN,
+    Nat.pred_eq_sub_one]
+
+/-- Zero-test discriminator: `discN.interp ![n, a, b]` returns
+`a` when `n = 0` and `b` otherwise.  Built from `condN` and
+`signN`: feed `signN n` as the condition of `condN` with
+branches swapped so that `n = 0` selects the `a` branch. -/
+def ERMor1.discN : ERMor1 3 :=
+  ERMor1.comp ERMor1.condN (fun i => match i with
+    | ⟨0, _⟩ =>
+        ERMor1.comp ERMor1.signN
+          (fun (_ : Fin 1) => ERMor1.proj 0)
+    | ⟨1, _⟩ => ERMor1.proj 2
+    | ⟨2, _⟩ => ERMor1.proj 1)
+
+/-- Interpretation of `discN`: selects `ctx 1` when `ctx 0 = 0`
+and `ctx 2` otherwise. -/
+@[simp] theorem ERMor1.interp_discN (ctx : Fin 3 → ℕ) :
+    ERMor1.discN.interp ctx =
+      if ctx 0 = 0 then ctx 1 else ctx 2 := by
+  unfold ERMor1.discN
+  simp only [ERMor1.interp_comp, ERMor1.interp_condN,
+    ERMor1.interp_signN, ERMor1.interp_proj]
+  by_cases h : ctx 0 = 0
+  · simp [h]
+  · have hpos : 1 ≤ ctx 0 := Nat.one_le_iff_ne_zero.mpr h
+    have hsign : 1 - (1 - ctx 0) = 1 := by omega
+    rw [hsign]
+    simp [h]
+
 end GebLean
