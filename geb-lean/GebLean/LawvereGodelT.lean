@@ -122,4 +122,32 @@ def GodelTTerm.interp : {σ : GodelTType} →
     (f : GodelTTerm (.arrow σ τ)) (a : GodelTTerm σ) :
     (f.app a).interp = f.interp a.interp := rfl
 
+/-- T⁻ membership: a `GodelTTerm` is pure when no `iter`
+constructor appears anywhere in its term tree.  Decidable by
+tree-walk; see the instance below. -/
+def GodelTPure : {σ : GodelTType} → GodelTTerm σ → Prop
+  | _, .zero => True
+  | _, .succ => True
+  | _, .pred => True
+  | _, .K _ _ => True
+  | _, .S _ _ _ => True
+  | _, .disc _ => True
+  | _, .iter _ _ => False
+  | _, .app f a => GodelTPure f ∧ GodelTPure a
+
+instance GodelTPure.decidable :
+    {σ : GodelTType} → (t : GodelTTerm σ) →
+      Decidable (GodelTPure t)
+  | _, .zero => instDecidableTrue
+  | _, .succ => instDecidableTrue
+  | _, .pred => instDecidableTrue
+  | _, .K _ _ => instDecidableTrue
+  | _, .S _ _ _ => instDecidableTrue
+  | _, .disc _ => instDecidableTrue
+  | _, .iter _ _ => instDecidableFalse
+  | _, .app f a =>
+      have := decidable f
+      have := decidable a
+      instDecidableAnd
+
 end GebLean
