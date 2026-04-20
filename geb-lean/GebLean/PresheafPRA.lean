@@ -519,6 +519,52 @@ private def praPolyDirectionsData_fibHomCrossUnwidened
     ⟨(GrothendieckContraFunctor.homFiber f).app e.fst, rfl⟩
 
 /--
+Cross-fibre morphism for `praPolyDirectionsData`.  Built by widening
+`praPolyDirectionsData_fibHomCrossUnwidened` through the op of
+`catULiftFunctor2`'s underlying lift (`ULift.upFunctor ⋙
+ULiftHom.up`).  The endpoint objects coincide on the nose with
+`(fibFib X).obj x` / `(F.map _).obj ((fibFib Y).obj (G.map f . obj x))`
+by how `fibFib` and the widening interact, so no `eqToHom` glue is
+needed.
+-/
+/--
+Cross-fibre morphism for `praPolyDirectionsData`.  Constructed by
+widening `praPolyDirectionsData_fibHomCrossUnwidened` through the op
+of `ULift.upFunctor ⋙ ULiftHom.up`.  Endpoint objects coincide with
+`(fibFib X).obj x` and `(F.map _).obj ((fibFib Y).obj ((G.map f).obj
+x))` on the nose by how `fibFib`, `sourceDataHomApp`, and the widening
+interact, so no `eqToHom` glue is required.
+
+Stated in the fully-unfolded `∀` form because direct application of
+the `FunctorBetweenCovContraFibHomCrossApp` abbrev gets stuck on
+universe unification; the abbrev's reducibility ensures this body can
+still be used as the `fibHomCrossApp` field of the bundle.
+-/
+private def praPolyDirectionsData_fibHomCrossApp
+    {X₁ X₂ : (grothendieckContraFunctor
+        (Cat.{v_J, u_J} × Cat.{v_I, u_I})).obj
+      presheafPRACatBifunctorUncurriedOp.{u_I, v_I, u_J, v_J,
+        w_I, w'}}
+    (f : X₁ ⟶ X₂)
+    (x : (functorFromDataContra
+        sourceData.{u_I, v_I, u_J, v_J, w_I, w'}).obj X₁) :
+    (praPolyDirectionsData_fibFib.{u_I, v_I, u_J, v_J, w_I, w'}
+      X₁).obj x ⟶
+      (praDirectionsTargetFibre.{u_I, v_I, u_J, v_J, w_I, w'}.map
+        (praPolyDirectionsData_baseFib.{u_I, v_I, u_J, v_J,
+          w_I, w'}.map f).op).toFunctor.obj
+        ((praPolyDirectionsData_fibFib.{u_I, v_I, u_J, v_J, w_I, w'}
+          X₂).obj
+          (((functorFromDataContra sourceData.{u_I, v_I, u_J, v_J,
+              w_I, w'}).map f).toFunctor.obj x)) :=
+  ((CategoryTheory.ULift.upFunctor ⋙
+    CategoryTheory.ULiftHom.up).op).map
+    (praPolyDirectionsData_fibHomCrossUnwidened.{u_I, v_I, u_J,
+      v_J, w_I, w'} f
+      ((praPolyDirectionsData_unwidenFiber.{u_I, v_I, u_J, v_J,
+        w_I, w'} X₁).obj x))
+
+/--
 Target bifunctor of `praPositionsNat`.  Sends each
 `(J, I) : Cat.{v_J, u_J}ᵒᵖ × Cat.{v_I, u_I}ᵒᵖ` to the
 universe-widened form of `Jᵒᵖ ⥤ Type w'`, constant in `I`.
