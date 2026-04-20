@@ -368,6 +368,22 @@ def praPolyDirectionsTarget :
     praDirectionsTargetFibre.{u_I, v_I, u_J, v_J, w_I, w'}
 
 /--
+Total source Grothendieck for `praPolyDirectionsFunctor`.
+
+Objects are 4-tuples: a base object of
+`(grothendieckContraFunctor (Cat × Cat)).obj
+presheafPRACatBifunctorUncurriedOp` — itself a triple `((J, I), P)` —
+together with an element of the widened `(P ⋙ ccrNewIndexFunctor
+_).Elements`.
+-/
+def praPolyDirectionsSource :
+    Cat.{max u_I u_J v_I v_J w_I w',
+      max (u_I + 1) (v_I + 1) (u_J + 1) (v_J + 1) (w_I + 1)
+        (w' + 1)} :=
+  Cat.of (Grothendieck
+    (functorFromDataContra sourceData.{u_I, v_I, u_J, v_J, w_I, w'}))
+
+/--
 Target bifunctor of `praPositionsNat`.  Sends each
 `(J, I) : Cat.{v_J, u_J}ᵒᵖ × Cat.{v_I, u_I}ᵒᵖ` to the
 universe-widened form of `Jᵒᵖ ⥤ Type w'`, constant in `I`.
