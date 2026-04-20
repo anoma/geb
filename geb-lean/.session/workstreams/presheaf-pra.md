@@ -363,8 +363,72 @@ superseded.)
 
 ### v2 Progress (2026-04-19 session, partial — U3 utility done)
 
-Plan tasks 1-3 complete.  Plan tasks 4-22 remain.  All commits on
-`terence/grothendieck`.
+Plan tasks 1-6 complete, Task 7 partial.  Plan tasks 8-22 remain.
+All commits on `terence/grothendieck`.
+
+**Task 7 state (2026-04-19, second session):**
+
+- `praPolyDirectionsData_baseFib` is in place (commit `aad59f52`).
+- `praDirectionsTargetFibre` pipeline revised to drop the inner
+  `Cat.opFunctor.op` stage (commit `0753fd6a`), so
+  `praDirectionsTargetFibre.obj (op (Cat.of Iᵒᵖ))` now yields
+  `op (widened (Iᵒᵖ ⥤ Type w_I))` matching `sourceDataFib`.
+- `praPolyDirectionsData_fibFib` is in place (commit `62b18098`) as
+  `ULiftHom.down ⋙ ULift.downFunctor ⋙ elementsPrecomp P ⋙
+  ccrNewFamilyFunctor (presheafCat I) ⋙
+  (ULift.upFunctor ⋙ ULiftHom.up).op`.  The `show` cast at the
+  front explicitly pins the input type to
+  `ULiftHom (ULift ((P ⋙ ccrNewIndexFunctor _).Elements))` so
+  `ULiftHom.down`'s implicit arg is inferred; without this cast
+  typeclass search fails on `Category ↑((functorFromDataContra
+  sourceData).obj X)`.
+
+**Remaining Task 7 (fibHomCrossApp + three coherences):**
+
+- `fibHomCrossApp f x` is a morphism in `(widened (I₁ᵒᵖ ⥤ Type
+  w_I))ᵒᵖ` from `(fibFib X₁).obj x` to
+  `(praDirectionsTargetFibre.map (baseFib.map f).op).obj
+  ((fibFib X₂).obj (fFromData.map f x))`.  The two sides are not
+  definitionally equal: the LHS is `op (widened (ccrNewFamily of
+  (elementsPrecomp P₁ x')))` while the RHS wraps a transport of
+  `op (widened (ccrNewFamily of (elementsPrecomp P₂ (f.map x))))`
+  through `presheafCatFunctor.map g.op` (where `g := baseFib.map f
+  : I₁ ⟶ I₂`).
+- The natural building block is `ccrNewFamilyNat.naturality`
+  (`GebLean/Utilities/Families.lean:3484`).  On
+  `F := presheafCatFunctor.map g.op : presheafCat I₂ ⟶
+  presheafCat I₁`, it equates
+  `ccrElementsFunctor.map F ⋙ ccrNewFamilyNat.app (presheafCat I₁)`
+  with `ccrNewFamilyNat.app (presheafCat I₂) ⋙
+  ccrNewFamilyNatTarget.map F`.  But our chain is
+  `elementsPrecomp P ⋙ ccrNewFamilyFunctor _`, not directly
+  `ccrElementsFunctor`; plugging `ccrNewFamilyNat.naturality` into
+  the widened chain requires an intermediate lemma relating
+  `elementsPrecomp (P : J ⥤ CCR _)` composed with
+  `ccrNewFamilyFunctor` to `ccrNewFamilyNat.app`-application on
+  an element obtained by widening.
+- The `fibHomCrossNat`, `baseHomId`, `baseHomComp` proofs each
+  reduce to multiple small lemmas about how the widening
+  `(ULift.upFunctor ⋙ ULiftHom.up).op` commutes with naturality and
+  how `ccrNewFamilyNat`'s identity/composition coherence lifts
+  through the widening.  Task 3's nine small lemmas give a
+  template; expect similar count here.
+- Recommended next-session approach: (1) write the unwidened
+  version of `fibHomCrossApp` first as a component of
+  `ccrNewFamilyNat.naturality` on the `elementsPrecomp`-reindexed
+  input, then (2) widen by applying the ULift/ULiftHom up functors
+  in `op`.  Factor out one private def for each of the three
+  coherence proofs as in Task 3.
+
+**Proof-engineering note (carry over for next session):**
+
+- `show T from body` is necessary (not `body : T`) to pin a
+  `Cat`-coerced input type to an explicit `ULiftHom (ULift _)`
+  form.  Without this `ULiftHom.down`'s `C` argument is unsolvable
+  from `↑(Cat.of _)`.
+- The pipeline works with `ULiftHom.down ⋙ ULift.downFunctor` as
+  the unwidening inverse of `catULiftFunctor2` (mirrors
+  `sourceDataHomApp`'s widened `elementsPrecomp` pattern).
 
 **Done (U3 utility, `GebLean/Utilities/Grothendieck.lean`):**
 
