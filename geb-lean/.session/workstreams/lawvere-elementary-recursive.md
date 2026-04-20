@@ -869,35 +869,54 @@ that future uses (e.g., `GodelTMor1`-valued closure schemas,
 register-machine translations of T⁻ per B-W Section 4) can
 reuse it directly.
 
-**Remaining GodelT work**:
+**GodelT Stage B complete (2026-04-20)**: the full core category
+machinery is in place.  Commits on `terence/syntax`:
 
-Stage B (core category machinery):
+* `27b9914c`: `applyArrowN_iterateAbstractAux` — inductive
+  semantic equation for iterated bracket abstraction's
+  accumulator recursion, plus `applyArrowN_castArrow0` cast
+  lemma and `baseEnvRev` reverse-indexed environment
+  constructor with its `baseEnvRev_succ` simp lemma.
+* `1c6db11f`: `applyAllBaseVars_interp` with supporting
+  lemmas — `applyArrowN_iterateAbstract` (k = 0
+  specialization), `GodelTExpr.interp_cast`, `readBaseEnv`
+  (ℕ reader through the `baseCtx_get` cast, using `▸` with
+  motive `σ.interp`), `baseVar_interp`,
+  `readBaseEnv_baseEnvRev`, `applyAllBaseVarsAux_interp`
+  (inductive descending-application recursion),
+  `applyAllBaseVars_interp` (closed form at k = m).  Also
+  makes `GodelTExpr.appVar` non-private.
+* `eb079590`: `GodelTMor1.interp_compMor1` — the main
+  composition correctness theorem, combining
+  `applyArrowN_iterateAbstract` with `compExpr_interp`
+  (which itself is built by induction on `compExprAux`).
+  The two reversals cancel, giving the expected
+  λ ctx. f.interp (fun i ↦ (tuple i).interp ctx).
+* `ffbc0213`: `GodelTMorN` tuple alias,
+  `GodelTMorN.interp` / `.id` / `.comp` with @[simp]
+  lemmas, `godelTMorNSetoid` extensional-equality setoid,
+  `GodelTMorNQuo` quotient type, lifted id / comp,
+  category laws (`id_comp` / `comp_id` / `comp_assoc`),
+  `LawvereGodelTCat := ℕ` with OfNat / BEq /
+  DecidableEq instances, and the `Category
+  LawvereGodelTCat` instance.
+* `76fc5902`: product structure —
+  `GodelTMorN.terminal` / `.fst` / `.snd` / `.pair` with
+  @[simp] interp lemmas; quotient versions
+  `GodelTMorNQuo.terminal` / `.fst` / `.snd` / `.pair`;
+  `terminal_uniq` / `pair_fst` / `pair_snd` /
+  `pair_uniq` universal properties;
+  `lawvereGodelTProduct` / `lawvereGodelTTerminal`
+  records; `HasChosenFiniteProducts LawvereGodelTCat`
+  instance.
+* `fdf9058f`: new file
+  `GebLean/LawvereGodelTInterp.lean` with
+  `GodelTMorNQuo.interp` lift, simp lemmas
+  (`interp_mk` / `interp_id` / `interp_comp`),
+  `godelTInterpFunctor : LawvereGodelTCat ⥤ Type`,
+  and its `Faithful` instance.
 
-* `interp_compMor1` correctness theorem.  Factors into three
-  lemmas, proved in sequence:
-  1. `applyArrowN_iterateAbstract m e ctx`:
-     `applyArrowN m (iterateAbstract m e).interp ctx
-      = e.interp (baseEnvReversed m ctx)`, where
-     `baseEnvReversed m ctx i = ctx ⟨m − 1 − i.val, _⟩`.
-     By induction on `m`, reducing to `abstract_interp` at
-     each step and using `compile_interp` at the base case.
-  2. `applyAllBaseVars_interp m t env`:
-     the interp of `applyAllBaseVars t` at env equals
-     `applyArrowN m t.interp (fun j => env ⟨m − 1 − j.val, _⟩)`
-     (the reversed application order).
-  3. `compExpr_interp f tuple env`:
-     structural recursion on `compExprAux`.
-  The two reversals then cancel, giving the desired
-  `interp_compMor1`.
-* `GodelTMorN`, `.id`, `.comp`, quotient `GodelTMorNQuo n m`
-  mirroring `ERMorN` / `ERMorNQuo`.
-* `Category LawvereGodelTCat` instance (category laws from
-  interp agreement).
-* `HasChosenFiniteProducts` instance (terminal = 0, product
-  = `Nat.add`, projections via `Fin.castAdd` / `Fin.natAdd`,
-  pairing via tuple concatenation).
-* Faithful interp functor
-  `godelTInterpFunctor : LawvereGodelTCat ⥤ Type`.
+Build state: clean (zero warnings); `lake test` passes.
 
 Stage C (equivalence with `LawvereERCat`) and Stage D (tests
 + tracker) are untouched.  Task `C.2` (`toER` via
@@ -905,11 +924,13 @@ Stage C (equivalence with `LawvereERCat`) and Stage D (tests
 pairing trick) remain the two most substantive items,
 per the plan's risk notes.
 
-**Current resume point**: prove `interp_compMor1` and finish
-Stage B (tuple layer, quotient, Category, products, interp
-functor), then proceed to Stage C.  The bracket-abstraction
-utility is complete and reusable; no further changes to
-`GodelTBracket.lean` are anticipated for the core plan.
+**Current resume point**: Stage C.  Start with Task C.1
+(skeleton `LawvereGodelTERCatEquiv.lean`), then C.2
+(`GodelTMor1.toER` via the typed `ApplyContext`
+accumulator), C.3 (`ERMor1.toGodelT` forward translation
+including the pairing trick for `bsum` / `bprod`), C.4
+(tuple-level lifts and equivalence functors), and C.5
+(round-trip identity proofs + equivalence assembly).
 
 **Task 14.5-extended (deferred)**: BT-only adequacy research
 — proving that the unlabeled-BT + 0-way-ℕ-product subfragment
