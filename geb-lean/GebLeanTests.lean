@@ -9,6 +9,8 @@ import GebLeanTests.LawvereERLex
 import GebLeanTests.LawvereERPrimrec
 import GebLeanTests.LawvereERQuot
 import GebLeanTests.LawvereERTetration
+import GebLeanTests.LawvereGodelT
+import GebLeanTests.LawvereGodelTERCatEquiv
 import GebLeanTests.LawvereNatBT
 import GebLeanTests.LawvereNatBTInterp
 import GebLeanTests.LawvereNatBTQuot
