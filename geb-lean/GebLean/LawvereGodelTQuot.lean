@@ -1,3 +1,4 @@
+import GebLean.LawvereER
 import GebLean.LawvereGodelT
 import GebLean.Utilities.ComputableLimits
 import Mathlib.CategoryTheory.Category.Basic
@@ -20,23 +21,28 @@ open CategoryTheory
 
 /-- A single GodelT morphism `n → 1`: an elementary-recursive
 expression at arity `n`, built from the B-W T⁻′ generators.
-`iter`'s shape mirrors `ERMor1.boundedRec`'s: the step lives
-at arity `k + 2` (slots: counter, prev, ctx…), the base at
-arity `k`, with result at `k + 1`. -/
+The shape parallels `ERMor1` exactly with two differences:
+`disc` takes the place of `sub` (matching Gödel T's 3-ary
+discriminator instead of ER's truncating subtraction), and
+the iteration primitives `bsum` / `bprod` match ER's bounded
+summation and bounded product — the iter forms that make
+T⁻′ elementary-recursive. -/
 inductive GodelTMor1 : ℕ → Type
   | zero : GodelTMor1 0
   | succ : GodelTMor1 1
   | pred : GodelTMor1 1
   | proj {k : ℕ} (i : Fin k) : GodelTMor1 k
   | disc : GodelTMor1 3
-  | iter {k : ℕ}
-      (step : GodelTMor1 (k + 2)) (base : GodelTMor1 k) :
+  | bsum {k : ℕ} (f : GodelTMor1 (k + 1)) :
+      GodelTMor1 (k + 1)
+  | bprod {k : ℕ} (f : GodelTMor1 (k + 1)) :
       GodelTMor1 (k + 1)
   | comp {k n : ℕ} (f : GodelTMor1 k)
       (g : Fin k → GodelTMor1 n) : GodelTMor1 n
 
 /-- Standard interpretation of a `GodelTMor1 n` as a function
-`(Fin n → ℕ) → ℕ`. -/
+`(Fin n → ℕ) → ℕ`.  The `bsum` / `bprod` cases delegate to
+the shared helpers `natBSum` / `natBProd`. -/
 def GodelTMor1.interp : {n : ℕ} → GodelTMor1 n →
     (Fin n → ℕ) → ℕ
   | _, .zero, _ => 0
@@ -47,12 +53,12 @@ def GodelTMor1.interp : {n : ℕ} → GodelTMor1 n →
       match ctx 0 with
       | 0 => ctx 1
       | _ + 1 => ctx 2
-  | _, .iter step base, ctx =>
-      Nat.rec (base.interp (Fin.tail ctx))
-        (fun j prev =>
-          step.interp
-            (Fin.cons j (Fin.cons prev (Fin.tail ctx))))
-        (ctx 0)
+  | _, .bsum f, ctx =>
+      natBSum (ctx 0) (fun i =>
+        f.interp (Fin.cons i (Fin.tail ctx)))
+  | _, .bprod f, ctx =>
+      natBProd (ctx 0) (fun i =>
+        f.interp (Fin.cons i (Fin.tail ctx)))
   | _, .comp f g, ctx =>
       f.interp (fun i => (g i).interp ctx)
 
@@ -75,15 +81,17 @@ def GodelTMor1.interp : {n : ℕ} → GodelTMor1 n →
         | 0 => ctx 1
         | _ + 1 => ctx 2) := rfl
 
-@[simp] theorem GodelTMor1.interp_iter {k : ℕ}
-    (step : GodelTMor1 (k + 2)) (base : GodelTMor1 k)
-    (ctx : Fin (k + 1) → ℕ) :
-    (GodelTMor1.iter step base).interp ctx =
-      Nat.rec (base.interp (Fin.tail ctx))
-        (fun j prev =>
-          step.interp
-            (Fin.cons j (Fin.cons prev (Fin.tail ctx))))
-        (ctx 0) := rfl
+@[simp] theorem GodelTMor1.interp_bsum {k : ℕ}
+    (f : GodelTMor1 (k + 1)) (ctx : Fin (k + 1) → ℕ) :
+    (GodelTMor1.bsum f).interp ctx =
+      natBSum (ctx 0) (fun i =>
+        f.interp (Fin.cons i (Fin.tail ctx))) := rfl
+
+@[simp] theorem GodelTMor1.interp_bprod {k : ℕ}
+    (f : GodelTMor1 (k + 1)) (ctx : Fin (k + 1) → ℕ) :
+    (GodelTMor1.bprod f).interp ctx =
+      natBProd (ctx 0) (fun i =>
+        f.interp (Fin.cons i (Fin.tail ctx))) := rfl
 
 @[simp] theorem GodelTMor1.interp_comp {k n : ℕ}
     (f : GodelTMor1 k) (g : Fin k → GodelTMor1 n)

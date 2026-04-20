@@ -987,6 +987,34 @@ fresh `GodelTMor1` inductive), …, B′.7 (update
 `LawvereGodelTInterp.lean` to the new definitions), then
 resume Stage C against the new representation.
 
+**GodelT Stage B rework landed (2026-04-21), Stage C
+unblocked**:
+
+* `8a6c6733` — `GodelTTerm.iter` made applicative (no
+  constructor-level counter).
+* `a2f38ded` — `GodelTMor1` rebased on a fresh inductive
+  parallel to `ERMor1` with `disc` replacing `sub`; plus
+  tuple / quotient / Category / HasChosenFiniteProducts
+  rebuild.  `LawvereGodelTQuot.lean` net -447 lines.
+
+A further design correction during Stage C.2 planning: a
+generic base-typed `iter step base` is not in general
+elementary-recursive (step `λx.2^x` gives tetration).  The
+iteration primitives in `GodelTMor1` are therefore `bsum` /
+`bprod` rather than a generic `iter`, matching
+`ERMor1.bsum` / `ERMor1.bprod` exactly.  The
+`GodelTTerm`-level `iter` constant is kept as the B-W
+combinator-logic reference but is not used in the categorical
+layer.
+
+With this correction `GodelTMor1.toER` is a trivial structural
+recursion with one ER case per constructor; `toER_interp` is
+a straightforward induction whose cases are either `rfl` or
+follow from the matching ER simp lemma.  No tower-bound
+`iterAutoBound` machinery is required.
+
+Design spec D1′/D2′ and plan Task C.2 are updated to match.
+
 **Task 14.5-extended (deferred)**: BT-only adequacy research
 — proving that the unlabeled-BT + 0-way-ℕ-product subfragment
 of `LawvereNatBTBounded` is already equivalent to
