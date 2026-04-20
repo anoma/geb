@@ -5154,10 +5154,10 @@ A functor between these is characterized by:
 
 section FunctorBetweenCovContra
 
-universe vC vD uC uD
+universe vC vD uC uD vT uT
 
-variable {C : Type uC} [Category.{vC} C] (G : C ⥤ Cat.{vC, uC})
-variable {D : Type uD} [Category.{vD} D] (F : Dᵒᵖ ⥤ Cat.{vD, uD})
+variable {C : Type uC} [Category.{vC} C] (G : C ⥤ Cat.{vT, uT})
+variable {D : Type uD} [Category.{vD} D] (F : Dᵒᵖ ⥤ Cat.{vT, uT})
 
 /--
 The base-fibre functor for the mixed case: assigns to each `c : C` a base
@@ -7369,10 +7369,10 @@ and `GrothendieckContraFunctor.{mkObj,mkHom}` API declared above.
 
 section FunctorBetweenCovContraExtractor
 
-universe vC vD uC uD
+universe vC vD uC uD vT uT
 
-variable {C : Type uC} [Category.{vC} C] {G : C ⥤ Cat.{vC, uC}}
-variable {D : Type uD} [Category.{vD} D] {F : Dᵒᵖ ⥤ Cat.{vD, uD}}
+variable {C : Type uC} [Category.{vC} C] {G : C ⥤ Cat.{vT, uT}}
+variable {D : Type uD} [Category.{vD} D] {F : Dᵒᵖ ⥤ Cat.{vT, uT}}
 
 namespace FunctorBetweenCovContraData
 
