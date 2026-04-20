@@ -373,7 +373,7 @@ All commits on `terence/grothendieck`.  Plan at
 `docs/superpowers/specs/2026-04-18-praDirections-naturality-design-v2.md`
 (gitignored).  `lake build` and `lake test` are clean at HEAD.
 
-**Done (plan tasks 1–6, plus partial Task 7):**
+**Done (plan tasks 1–6, plus Task 7 partial including expanded 7.1–7.3):**
 
 | Commit | Task |
 |--------|------|
@@ -386,6 +386,10 @@ All commits on `terence/grothendieck`.  Plan at
 | `aad59f52` | Task 7 helper: `praPolyDirectionsData_baseFib` |
 | `0753fd6a` | Pipeline revision: drop inner `Cat.opFunctor.op` |
 | `62b18098` | Task 7 helper: `praPolyDirectionsData_fibFib` |
+| `c201d619` | Task 7.1: `ccrNewFamilyFunctor_obj_naturality` |
+| `ee49bd58` | Task 7.2: `praPolyDirectionsData_unwidenFiber` |
+| `4ab23af6` → reverted by `34a0a36d` | Abandoned `elemMor` helper |
+| `83444c84` | Task 7.3 (revised): `praPolyDirectionsData_fibHomCrossUnwidened` |
 
 **Deviations from original plan (both intentional, implemented
 and committed):**
@@ -405,33 +409,28 @@ and committed):**
    than `Iᵒᵖ ⥤ Type`.  The spec at lines 55–59 and 173–192 now
    reflects the three-stage form.
 
-**Outstanding Task 7 work (remaining helpers + bundle):**
+**Outstanding Task 7 work (remaining sub-tasks 7.4–7.11):**
 
-1. `praPolyDirectionsFibHomCrossApp` — the morphism-level
-   connecting map.  Endpoints are
-   `op (widened (ccrNewFamily (P₁.obj j) a))` on one side and a
-   transport through `presheafCatFunctor.map g.op` of
-   `op (widened (ccrNewFamily (P₂.obj (f_J.obj j)) ...))` on the
-   other.  Key building block:
-   `ccrNewFamilyFunctor_naturality` at
-   `GebLean/Utilities/Families.lean:3436`.
-   `sourceData_base_change_eq` (rfl, in `PresheafPRA.lean:208`)
-   preserves `ccrNewIndexFunctor` on the nose across the J-side
-   transport.
-2. `praPolyDirectionsData_fibHomCrossNat` — naturality of the
-   above in the element morphism.
-3. `praPolyDirectionsData_baseHomId` — collapse at identity base
-   morphism.
-4. `praPolyDirectionsData_baseHomComp` — composition coherence.
-5. The `praPolyDirectionsData : FunctorBetweenCovContraData …`
-   struct literal plugging in all six helpers.
+The plan expands Task 7 into Tasks 7.1–7.11 (Phases 7A–7D).  See the
+plan file for detailed skeletons.  Summary of remaining:
 
-Recommended approach (next session): write the *unwidened* form
-of `fibHomCrossApp` first, bridging `elementsPrecomp P ⋙
-ccrNewFamilyFunctor` to `ccrNewFamilyNat.app` on widened elements.
-Then widen via functoriality of `catULiftFunctor2 ⋙
-Cat.opFunctor`.  Task 3's nine-lemma decomposition is the scope
-template; expect similar count for each of (1)–(4).
+- Task 7.4: `praPolyDirectionsData_fibHomCrossApp` (widened main).
+  Widens Task 7.3's unwidened morphism through
+  `catULiftFunctor2 ⋙ Cat.opFunctor`, gluing with `eqToHom` at
+  endpoints via `ccrNewFamilyFunctor_obj_naturality`.
+- Tasks 7.5/7.6: `fibHomCrossNat` (unwidened + widened).
+- Tasks 7.7/7.8: `baseHomId` (unwidened + widened).
+- Tasks 7.9/7.10: `baseHomComp` (unwidened + widened).
+- Task 7.11: `praPolyDirectionsData` bundle assembly.
+
+**Revision note for Tasks 7.5/7.7/7.9 (unwidened-level coherence
+proofs):** Their plan skeletons reference an abandoned
+`praPolyDirectionsData_elemMor` helper.  Implementers should adapt by
+reading `fibHomCrossUnwidened f e` as
+`(ccrNewFamilyFunctor _).map ⟨(homFiber f).app e.fst, rfl⟩` and using
+`ccrNewFamilyFunctor`'s `map_id`/`map_comp` directly, without any
+`NatTrans.mapElements`-level intermediate.  A cross-cutting note at
+the top of Task 7 in the plan spells this out.
 
 **Outstanding plan tasks after Task 7 completes (tasks 8–22):**
 
