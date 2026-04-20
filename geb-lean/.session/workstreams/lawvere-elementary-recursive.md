@@ -1222,6 +1222,49 @@ See `CLAUDE.md` § Development Processes for the formal
 statement of both the bottom-up named-composite discipline
 and the non-negotiable-interface principle.
 
+### Detailed plan for Stages E-J (2026-04-21)
+
+A full implementation plan for the Stage E through Stage J
+extension was written on 2026-04-21 and is saved at
+`docs/superpowers/plans/2026-04-21-lawvere-godelt-stages-e-through-j.md`
+(local, gitignored).  It covers:
+
+* **Stage E** (iter + tower-bound proof): task-level breakdown
+  of the B-W Lemma 16 proof adapted to our G(a)=0 categorical
+  layer, with specific code sketches for `nestDepth`,
+  `termSize`, `iterAutoBoundExpr`, `iterT`, the B-W theorem
+  `lt_tower_bound`, adequacy/monotonicity derivations, and
+  the `GodelTMor1.toER` extension.
+* **Stage F** (bracket abstraction helpers): `liftBy`,
+  `shiftUp`, `apply` at the categorical layer.
+* **Stage I** (reduction to atomic B-W primitives): one
+  sub-task per ER-identical primitive to remove (sub / bsum /
+  bprod), with `proj` documented as a Lawvere-theoretic
+  projection that stays as a primitive.
+* **Stage H** (λ-to-CL): Lean metaprogramming ergonomics.
+* **Stage J** (`LawvereGodelTBTCat`): Sort-indexed inductive
+  over `ℕ × ℕ` arities, Szudzik encoding written as a
+  GodelTMor1 morphism, translation, categorical structure,
+  equivalence with `LawvereGodelTCat`.
+
+The plan references B-W's Lemma 16 for the core tower-bound
+mathematical content and cites specific page numbers in the
+paper (`.claude/docs/characterizing-elementary-recursive-functions-fragment-godels-t.pdf`).
+
+**B-W paper key finding for Stage E**: for closed T* terms of
+base type (G(a)=0), the value bound simplifies from Lemma 16
+to `value(a) ≤ 2_{d(a) + 1}(d(a) + 1 + 2·lh(a) + 2·sumCtx)`
+where `d(a)` = iter-nesting degree (Definition 10) and
+`lh(a)` = tree size.  Under substitution of numerals for
+variables, `lh` absorbs the sum of numerals (Lemma 17).  This
+is a fixed-height tower whose argument grows with inputs —
+the ER-expressible bound we need for `boundedRec`.
+
+**Execution**: the plan is ready for a fresh session to pick
+up with `superpowers:executing-plans` or
+`superpowers:subagent-driven-development`.  See the resume
+prompt below.
+
 **Task 14.5-extended (deferred)**: BT-only adequacy research
 — proving that the unlabeled-BT + 0-way-ℕ-product subfragment
 of `LawvereNatBTBounded` is already equivalent to
