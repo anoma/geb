@@ -703,6 +703,77 @@ Phase 4f non-fullness transport (Ackermann/tetration not
 definable in NatBTV2) is also deferred — the equivalence is in
 place, so the transport is a 1-2 task follow-up.
 
+**Layer 1 BLOCKED on a foundational obstruction (2026-04-19)**:
+attempted to define `siteBoundForStep stepNode` as an auto-derived
+adequate-monotonic bound on the j-fold trace of an arbitrary
+NatBTV2 step term.  Provably impossible: take `step =
+λprev. 2^prev` (small towerHeight ~5).  The j-fold trace is
+tetration `2^^j(2)`, not in ER per `tetration_not_ER`.  Since
+NatBTV2 ⊆ ER expressivity (by the equivalence), no NatBTV2 term
+can dominate the trace.  The blocking case applies to any
+non-affine step.  Layer 1 in its originally-conceived form
+"auto-derive any bound from any step" is not constructible.
+
+**Fifth design pivot (2026-04-19, evening)**: the Layer 1
+obstruction motivates a different programmer-friendly category
+modeled after Beckmann-Weiermann's restricted Gödel-T fragment
+T*.  T*'s discipline restricts the *iteration count* (must be a
+type-0 sub-term) rather than the *step* — and this exactly
+fixes the obstruction, because a type-0 count's growth is
+structurally bounded a priori (no nested iterators in the
+count).  T* is provably equivalent to ER (B-W 2000); the
+equivalence is preserved structurally by the type-system
+discipline, with no user-supplied bounds anywhere.
+
+Design spec:
+`docs/superpowers/specs/2026-04-19-lawvere-godelt-design.md`
+(local, gitignored).  Reference paper:
+`.claude/docs/characterizing-elementary-recursive-functions-fragment-godels-t.pdf`.
+
+The new category `LawvereGodelTCat` is built bottom-up
+(per the established discipline):
+
+* Stage 0 (audit): inventory existing ER infrastructure
+  (`Utilities/ERArith.lean`, `Utilities/ERTreeArith.lean`,
+  `LawvereERBoundComputable.lean`); identify gaps for the
+  GodelT constructors' ER backings (predecessor, discriminator,
+  iter-with-structural-bound).  Add missing ER primitives as
+  named `def`s.
+* Stage A: `GodelTType`, `GodelTTerm` inductive (typed
+  combinatory logic with placement-restricted iterator),
+  `interp`, `GodelTPure` predicate (T⁻ as decidable
+  syntactic check, per design decision D3).
+* Stage B: `LawvereGodelTCat` (objects = ℕ, morphisms = curried
+  ground-typed terms quotiented by extensional equality),
+  `Category`, `HasChosenFiniteProducts`, faithful interp
+  functor.
+* Stage C: equivalence `LawvereGodelTCat ≃ LawvereERCat`.
+  Each GodelT constructor has a NAMED ER backing (built in
+  Stage 0); `toER` is case-split + lookup.  Forward functor
+  translates each ER constructor to a corresponding GodelT
+  term.  Equivalence by construction (interp matches
+  definitionally).
+
+Layer 1 (programmer ergonomics: λ-to-CL helpers, B-W Section 5
+closure schemas) and the trees extension (likely via T⁻ as
+RAM-style transition functions per B-W Section 4) are deferred
+to follow-up plans.
+
+**Why GodelT works where Layer 1 didn't**: T*'s discipline
+restricts what iteration counts can be (type-0 sub-terms),
+making their growth statically bounded.  Layer 1 tried to
+restrict step shape — but step shape doesn't determine trace
+growth (iteration count does).  GodelT puts the restriction in
+the right place.
+
+Implementation plan:
+`docs/superpowers/plans/2026-04-19-lawvere-godelt.md` (local,
+gitignored; written by `superpowers:writing-plans`).
+
+**Current resume point**: execute the GodelT plan via
+`superpowers:executing-plans` in a fresh session.  Starts at
+Stage 0 (ER infrastructure audit) per the bottom-up discipline.
+
 **Task 14.5-extended (deferred)**: BT-only adequacy research
 — proving that the unlabeled-BT + 0-way-ℕ-product subfragment
 of `LawvereNatBTBounded` is already equivalent to
