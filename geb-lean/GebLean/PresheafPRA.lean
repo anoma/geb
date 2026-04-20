@@ -384,6 +384,22 @@ def praPolyDirectionsSource :
     (functorFromDataContra sourceData.{u_I, v_I, u_J, v_J, w_I, w'}))
 
 /--
+Base functor of `praPolyDirectionsData`.  Projects a source-base
+object `((J, I), P)` to its `I`-component and a base morphism `f`
+to its `I`-component `f.unop.base.unop.2`.
+-/
+private def praPolyDirectionsData_baseFib :
+    (grothendieckContraFunctor
+        (Cat.{v_J, u_J} × Cat.{v_I, u_I})).obj
+      presheafPRACatBifunctorUncurriedOp.{u_I, v_I, u_J, v_J,
+        w_I, w'} ⥤
+      Cat.{v_I, u_I} where
+  obj X := (GrothendieckContraFunctor.objBase X).2
+  map f := (GrothendieckContraFunctor.homBase f).2
+  map_id _ := rfl
+  map_comp _ _ := rfl
+
+/--
 Target bifunctor of `praPositionsNat`.  Sends each
 `(J, I) : Cat.{v_J, u_J}ᵒᵖ × Cat.{v_I, u_I}ᵒᵖ` to the
 universe-widened form of `Jᵒᵖ ⥤ Type w'`, constant in `I`.
