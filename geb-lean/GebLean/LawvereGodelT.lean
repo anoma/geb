@@ -47,14 +47,12 @@ def GodelTType.arrow0 : ℕ → GodelTType
     GodelTType.arrow0 (n + 1) = .arrow .base (arrow0 n) := rfl
 
 /-- T*'s term inductive: typed combinatory logic with
-constants (`zero`, `succ`, `pred`, `K`, `S`, `disc`) and a
-placement-restricted iterator whose counter and iteratee are
-both at base type.  Matching B-W's T⁻′ discipline, `iter t`
-takes its counter via the ground-typed
-`t : GodelTTerm .base` parameter and its step / seed at
-`.base → .base` / `.base` respectively, which fixes the
-fragment's expressivity to exactly the elementary recursive
-functions. -/
+constants (`zero`, `succ`, `pred`, `K`, `S`, `disc`) and an
+applicative base-typed iterator.  Matching B-W's T⁻′
+discipline, `iter`'s counter, step, and seed are all at
+base type (`iter : .base → (.base → .base) → .base → .base`),
+which fixes the fragment's expressivity to exactly the
+elementary recursive functions. -/
 inductive GodelTTerm : GodelTType → Type
   | zero : GodelTTerm .base
   | succ : GodelTTerm (.arrow .base .base)
@@ -68,9 +66,9 @@ inductive GodelTTerm : GodelTType → Type
   | disc (σ : GodelTType) :
       GodelTTerm
         (.arrow .base (.arrow σ (.arrow σ σ)))
-  | iter (t : GodelTTerm .base) :
-      GodelTTerm
-        (.arrow (.arrow .base .base) (.arrow .base .base))
+  | iter : GodelTTerm
+      (.arrow .base
+        (.arrow (.arrow .base .base) (.arrow .base .base)))
   | app {σ τ : GodelTType}
       (f : GodelTTerm (.arrow σ τ)) (a : GodelTTerm σ) :
       GodelTTerm τ
@@ -89,8 +87,8 @@ def GodelTTerm.interp : {σ : GodelTType} →
       match n with
       | 0 => a
       | _ + 1 => b
-  | _, .iter t => fun step base =>
-      Nat.rec base (fun _ prev => step prev) t.interp
+  | _, .iter => fun count step base =>
+      Nat.rec base (fun _ prev => step prev) count
   | _, .app f a => f.interp a.interp
 
 @[simp] theorem GodelTTerm.interp_zero :
@@ -115,10 +113,10 @@ def GodelTTerm.interp : {σ : GodelTType} →
         | 0 => a
         | _ + 1 => b) := rfl
 
-@[simp] theorem GodelTTerm.interp_iter (t : GodelTTerm .base) :
-    (GodelTTerm.iter t).interp =
-      (fun step base =>
-        Nat.rec base (fun _ prev => step prev) t.interp) :=
+@[simp] theorem GodelTTerm.interp_iter :
+    GodelTTerm.iter.interp =
+      (fun count step base =>
+        Nat.rec base (fun _ prev => step prev) count) :=
   rfl
 
 @[simp] theorem GodelTTerm.interp_app {σ τ : GodelTType}
@@ -135,7 +133,7 @@ def GodelTPure : {σ : GodelTType} → GodelTTerm σ → Prop
   | _, .K _ _ => True
   | _, .S _ _ _ => True
   | _, .disc _ => True
-  | _, .iter _ => False
+  | _, .iter => False
   | _, .app f a => GodelTPure f ∧ GodelTPure a
 
 instance GodelTPure.decidable :
@@ -147,7 +145,7 @@ instance GodelTPure.decidable :
   | _, .K _ _ => instDecidableTrue
   | _, .S _ _ _ => instDecidableTrue
   | _, .disc _ => instDecidableTrue
-  | _, .iter _ => instDecidableFalse
+  | _, .iter => instDecidableFalse
   | _, .app f a =>
       have := decidable f
       have := decidable a
