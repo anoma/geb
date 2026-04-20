@@ -333,20 +333,21 @@ private def sourceData :
     sourceData_hom_comp.{u_I, v_I, u_J, v_J, w_I, w'} _ _
 
 /--
-Per-`I` target fibre for `praPolyDirectionsTarget`.  Sends `op I` to
-the universe-widened opposite of presheaves on `I`.
+Per-`I` target fibre for `praPolyDirectionsTarget`.  The input Cat
+already carries the `Iᵒᵖ` convention coming from
+`presheafPRACatBifunctorUncurriedOp`'s base; this pipeline widens the
+presheaf category `(input Cat) ⥤ Type w_I` and post-composes with
+`Cat.opFunctor` to encode the polynomial-functor-morphism
+backward-on-directions convention.
 
-The four-stage pipeline is `Cat.opFunctor.op ⋙ presheafCatFunctor ⋙
-catULiftFunctor2 ⋙ Cat.opFunctor`, where the outer `Cat.opFunctor`
-encodes the polynomial-functor-morphism backward-on-directions
-convention.
+Three-stage pipeline: `presheafCatFunctor ⋙ catULiftFunctor2 ⋙
+Cat.opFunctor`.
 -/
 def praDirectionsTargetFibre :
     Cat.{v_I, u_I}ᵒᵖ ⥤
       Cat.{max u_I u_J v_J w_I w',
         max u_I u_J v_I v_J (w_I + 1) (w' + 1)} :=
-  Cat.opFunctor.{v_I, u_I}.op ⋙
-    presheafCatFunctor.{u_I, v_I, w_I} ⋙
+  presheafCatFunctor.{u_I, v_I, w_I} ⋙
     catULiftFunctor2.{max v_I (w_I + 1) u_I, max u_I w_I,
       max u_I u_J v_J w_I w',
       max u_I u_J v_I v_J (w_I + 1) (w' + 1)} ⋙
