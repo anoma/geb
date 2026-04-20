@@ -3458,6 +3458,23 @@ private lemma ccrNewFamilyFunctor_naturality
   simp [Grothendieck.map_map_fiber]
 
 /--
+Object-level naturality of `ccrNewFamilyFunctor` in `C`.  For
+`F : C ⟶ D` in `Cat` and `e : (ccrNewIndexFunctor C).Elements`,
+applying `ccrNewFamilyFunctor D` to the reindexed object equals
+applying `F.op` to the result of `ccrNewFamilyFunctor C`.  Holds
+by `rfl` because `coprodCovarRepFunctor.map F` post-composes
+fibres with `F`.
+-/
+theorem ccrNewFamilyFunctor_obj_naturality
+    {C D : Cat.{v, u}} (F : C ⟶ D)
+    (e : (ccrNewIndexFunctor.{u, v, w} C.α).Elements) :
+    (ccrNewFamilyFunctor.{u, v, w} D.α).obj
+        ((ccrElementsFunctor.map.{u, v, w} F).obj e) =
+      (Cat.opFunctor.{v, u}.map F).toFunctor.obj
+        ((ccrNewFamilyFunctor.{u, v, w} C.α).obj e) :=
+  rfl
+
+/--
 Per-`C` widened family functor.  Obtained by post-composing the
 existing `ccrNewFamilyFunctor C` with the `ULift`/`ULiftHom` lifts
 that take its `Cᵒᵖ` target into the widened opposite category
