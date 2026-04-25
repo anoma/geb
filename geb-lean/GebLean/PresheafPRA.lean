@@ -867,6 +867,120 @@ private lemma praPolyDirectionsData_baseHomId
   rw [praPolyDirectionsData_baseHomId_unwidened]
   rw [eqToHom_map]
 
+set_option maxHeartbeats 800000 in
+-- Increased to accommodate the deep universe-polymorphic unfolding chain
+-- through the contraGrothendieck composition definitionally exposing
+-- `homFiber f ≫ ((F.map (homBase f).op).toFunctor.map (homFiber g))`.
+/--
+The `(ccrNewIndexFunctor _).Elements`-morphism factor used in
+`praPolyDirectionsData_baseHomComp_unwidened`.  The underlying
+CCR-morphism is the `(F.map (homBase f).op).toFunctor`-transport
+of `(homFiber g)` evaluated at `e.fst`.  The property holds on
+the nose because the target endpoint is built by applying
+`ccrNewReindex` of this morphism to the source endpoint's `snd`
+field.
+
+Stated with explicit `@Quiver.Hom` because Lean cannot otherwise
+infer the `Category` instance on the resulting Elements type from
+the bare anonymous constructor.
+-/
+private def praPolyDirectionsData_baseHomComp_unwidened_aux
+    {X₁ X₂ X₃ : (grothendieckContraFunctor
+        (Cat.{v_J, u_J} × Cat.{v_I, u_I})).obj
+      presheafPRACatBifunctorUncurriedOp.{u_I, v_I, u_J, v_J,
+        w_I, w'}}
+    (f : X₁ ⟶ X₂) (g : X₂ ⟶ X₃)
+    (e : (GrothendieckContraFunctor.objFiber X₁ ⋙
+        ccrNewIndexFunctor.{max v_I u_I (w_I + 1),
+          max u_I w_I, w'}
+          (↑(presheafCatFunctor.{u_I, v_I, w_I}.obj
+            (Opposite.op
+              (GrothendieckContraFunctor.objBase X₁).2)))).Elements) :
+    @Quiver.Hom
+      (ccrNewIndexFunctor.{max v_I u_I (w_I + 1),
+        max u_I w_I, w'}
+        (↑(presheafCatFunctor.{u_I, v_I, w_I}.obj
+          (Opposite.op
+            (GrothendieckContraFunctor.objBase X₁).2)))).Elements _
+      ⟨((presheafPRACatBifunctorUncurriedOp.{u_I, v_I, u_J, v_J,
+            w_I, w'}.map
+          (GrothendieckContraFunctor.homBase f).op).toFunctor.obj
+        (GrothendieckContraFunctor.objFiber X₂)).obj e.fst,
+        ccrNewReindex.{max v_I u_I (w_I + 1), max u_I w_I, w'}
+          ((GrothendieckContraFunctor.homFiber f).app e.fst)
+          e.snd⟩
+      ⟨((presheafPRACatBifunctorUncurriedOp.{u_I, v_I, u_J, v_J,
+            w_I, w'}.map
+          (GrothendieckContraFunctor.homBase f).op).toFunctor.obj
+          ((presheafPRACatBifunctorUncurriedOp.{u_I, v_I, u_J,
+              v_J, w_I, w'}.map
+            (GrothendieckContraFunctor.homBase
+              g).op).toFunctor.obj
+            (GrothendieckContraFunctor.objFiber X₃))).obj e.fst,
+        ccrNewReindex.{max v_I u_I (w_I + 1), max u_I w_I, w'}
+          (((presheafPRACatBifunctorUncurriedOp.{u_I, v_I, u_J,
+              v_J, w_I, w'}.map
+            (GrothendieckContraFunctor.homBase f).op).toFunctor.map
+            (GrothendieckContraFunctor.homFiber g)).app e.fst)
+          (ccrNewReindex.{max v_I u_I (w_I + 1), max u_I w_I, w'}
+            ((GrothendieckContraFunctor.homFiber f).app e.fst)
+            e.snd)⟩ :=
+  ⟨((presheafPRACatBifunctorUncurriedOp.{u_I, v_I, u_J, v_J,
+        w_I, w'}.map
+      (GrothendieckContraFunctor.homBase f).op).toFunctor.map
+        (GrothendieckContraFunctor.homFiber g)).app
+    e.fst, rfl⟩
+
+set_option maxHeartbeats 800000 in
+-- Increased to accommodate the deep universe-polymorphic unfolding chain
+-- through the contraGrothendieck composition definitionally exposing
+-- `homFiber f ≫ ((F.map (homBase f).op).toFunctor.map (homFiber g))`.
+/--
+Composition coherence for
+`praPolyDirectionsData_fibHomCrossUnwidened`.  The unwidened
+cross-fibre morphism for `f ≫ g` decomposes as
+`fibHomCrossUnwidened f e` followed by the
+`(ccrNewFamilyFunctor _).map`-image of the right-factor element-
+morphism `praPolyDirectionsData_baseHomComp_unwidened_aux f g e`.
+
+Holds by `Functor.map_comp` of `ccrNewFamilyFunctor _` once the
+underlying `Elements`-morphisms have been recognized as composing
+on the nose: the composite val
+`(homFiber f).app e.fst ≫ ((F.map (homBase f).op).toFunctor.map
+(homFiber g)).app ((objFiber X₂).obj e.fst)` reduces, via
+`(homFiber f).naturality ((homFiber g).app e.fst)`, to
+`(homFiber (f ≫ g)).app e.fst`, since `homFiber (f ≫ g)`
+unfolds to `homFiber f ≫ (homBase f).toFunctor.whiskerLeft
+(homFiber g)`.
+-/
+private lemma praPolyDirectionsData_baseHomComp_unwidened
+    {X₁ X₂ X₃ : (grothendieckContraFunctor
+        (Cat.{v_J, u_J} × Cat.{v_I, u_I})).obj
+      presheafPRACatBifunctorUncurriedOp.{u_I, v_I, u_J, v_J,
+        w_I, w'}}
+    (f : X₁ ⟶ X₂) (g : X₂ ⟶ X₃)
+    (e : (GrothendieckContraFunctor.objFiber X₁ ⋙
+        ccrNewIndexFunctor.{max v_I u_I (w_I + 1),
+          max u_I w_I, w'}
+          (↑(presheafCatFunctor.{u_I, v_I, w_I}.obj
+            (Opposite.op
+              (GrothendieckContraFunctor.objBase X₁).2)))).Elements) :
+    praPolyDirectionsData_fibHomCrossUnwidened.{u_I, v_I, u_J,
+      v_J, w_I, w'} (f ≫ g) e =
+      praPolyDirectionsData_fibHomCrossUnwidened.{u_I, v_I, u_J,
+        v_J, w_I, w'} f e ≫
+      (ccrNewFamilyFunctor.{max v_I u_I (w_I + 1),
+          max u_I w_I, w'}
+          (↑(presheafCatFunctor.{u_I, v_I, w_I}.obj
+            (Opposite.op
+              (GrothendieckContraFunctor.objBase X₁).2)))).map
+        (praPolyDirectionsData_baseHomComp_unwidened_aux.{u_I, v_I,
+          u_J, v_J, w_I, w'} f g e) := by
+  dsimp only [praPolyDirectionsData_fibHomCrossUnwidened,
+    praPolyDirectionsData_baseHomComp_unwidened_aux]
+  rw [← Functor.map_comp]
+  congr 1
+
 /--
 Target bifunctor of `praPositionsNat`.  Sends each
 `(J, I) : Cat.{v_J, u_J}ᵒᵖ × Cat.{v_I, u_I}ᵒᵖ` to the
