@@ -1072,6 +1072,48 @@ def praPolyDirectionsFunctor :
     praPolyDirectionsData.{u_I, v_I, u_J, v_J, w_I, w'}
 
 /--
+Bridge lemma: `praPolyDirectionsFunctor`'s action on objects projects
+to the `I` component of the source's base.
+-/
+theorem praPolyDirectionsFunctor_base
+    (X : praPolyDirectionsSource.{u_I, v_I, u_J, v_J, w_I, w'}) :
+    GrothendieckContraFunctor.objBase
+      (praPolyDirectionsFunctor.{u_I, v_I, u_J, v_J, w_I, w'}.obj X)
+    = (GrothendieckContraFunctor.objBase X.base).2 :=
+  rfl
+
+/--
+Bridge lemma: `praPolyDirectionsFunctor`'s fibre component agrees
+with the widened form of `elementsPrecomp P ⋙ ccrNewFamilyFunctor
+(presheafCat I)` applied to the unwidened element.
+-/
+theorem praPolyDirectionsFunctor_fibre
+    (X : praPolyDirectionsSource.{u_I, v_I, u_J, v_J, w_I, w'}) :
+    GrothendieckContraFunctor.objFiber
+      (praPolyDirectionsFunctor.{u_I, v_I, u_J, v_J, w_I, w'}.obj X)
+    = (praPolyDirectionsData.{u_I, v_I, u_J, v_J, w_I, w'}.fibFib
+        X.base).obj X.fiber :=
+  rfl
+
+/--
+Bridge lemma: `praPolyDirectionsFunctor`'s action on morphisms
+decomposes as `fibHomCrossApp` composed with the fibre-functor
+action.
+-/
+theorem praPolyDirectionsFunctor_map_app
+    {X Y : praPolyDirectionsSource.{u_I, v_I, u_J, v_J, w_I, w'}}
+    (f : X ⟶ Y) :
+    GrothendieckContraFunctor.homFiber
+      (praPolyDirectionsFunctor.{u_I, v_I, u_J, v_J, w_I, w'}.map
+        f) =
+    praPolyDirectionsData.{u_I, v_I, u_J, v_J, w_I, w'}.fibHomCrossApp
+        f.base X.fiber ≫
+      (praDirectionsTargetFibre.{u_I, v_I, u_J, v_J, w_I, w'}.map
+          (praPolyDirectionsData.baseFib.map f.base).op).toFunctor.map
+        ((praPolyDirectionsData.fibFib Y.base).map f.fiber) :=
+  rfl
+
+/--
 Target bifunctor of `praPositionsNat`.  Sends each
 `(J, I) : Cat.{v_J, u_J}ᵒᵖ × Cat.{v_I, u_I}ᵒᵖ` to the
 universe-widened form of `Jᵒᵖ ⥤ Type w'`, constant in `I`.
