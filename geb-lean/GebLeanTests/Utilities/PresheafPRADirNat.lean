@@ -53,3 +53,21 @@ example (I : Type 0) [Category.{0} I] (J : Type 0) [Category.{0} J]
   praDirectionsAt.{0, 0, 0, 0, 0, 0} I J P j a
 
 end AccessorCompat
+
+/-! ## Functoriality at a concrete morphism -/
+
+section FunctorialityTest
+
+example (X : praPolyDirectionsSource.{0, 0, 0, 0, 0, 0}) :
+    praPolyDirectionsFunctor.{0, 0, 0, 0, 0, 0}.map (𝟙 X) =
+      𝟙 (praPolyDirectionsFunctor.{0, 0, 0, 0, 0, 0}.obj X) :=
+  praPolyDirectionsFunctor.{0, 0, 0, 0, 0, 0}.map_id X
+
+example {X Y Z : praPolyDirectionsSource.{0, 0, 0, 0, 0, 0}}
+    (f : X ⟶ Y) (g : Y ⟶ Z) :
+    praPolyDirectionsFunctor.{0, 0, 0, 0, 0, 0}.map (f ≫ g) =
+      praPolyDirectionsFunctor.{0, 0, 0, 0, 0, 0}.map f ≫
+        praPolyDirectionsFunctor.{0, 0, 0, 0, 0, 0}.map g :=
+  praPolyDirectionsFunctor.{0, 0, 0, 0, 0, 0}.map_comp f g
+
+end FunctorialityTest
