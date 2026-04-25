@@ -1235,15 +1235,15 @@ def praPositionsUnwidened
       max u_I w_I, w'}
       (↑(presheafCat.{u_I, v_I, w_I} I)))).obj P
 
-variable (P : PresheafPRACat.{u_I, v_I, u_J, v_J, w_I, w'} I J)
-
 /--
 The type of positions at stage `j`.
 
 Defined via the `praPositionsUnwidened` helper, which absorbs the
 `ULift`/`ULiftHom` unwrap of `praPositionsNat`'s widening.
 -/
-def praPositions (j : Jᵒᵖ) : Type w' :=
+def praPositions
+    (P : PresheafPRACat.{u_I, v_I, u_J, v_J, w_I, w'} I J)
+    (j : Jᵒᵖ) : Type w' :=
   (praPositionsUnwidened I J P).obj j
 
 /--
@@ -1252,7 +1252,9 @@ directly via `(ccrNewFamilyFunctor _).obj` applied to the
 element-category projection of the unwidened position presheaf
 `praPositionsUnwidened`.
 -/
-def praDirectionsAt (j : Jᵒᵖ)
+def praDirectionsAt
+    (P : PresheafPRACat.{u_I, v_I, u_J, v_J, w_I, w'} I J)
+    (j : Jᵒᵖ)
     (a : praPositions I J P j) : Iᵒᵖ ⥤ Type w_I :=
   ((ccrNewFamilyFunctor.{max v_I u_I (w_I + 1),
       max u_I w_I, w'}
