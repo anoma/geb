@@ -556,6 +556,146 @@ private def praPolyDirectionsData_fibHomCrossApp
         w_I, w'} X₁).obj x))
 
 /--
+Auxiliary morphism in
+`(ccrNewIndexFunctor _).Elements` used to express the right-hand side
+of `praPolyDirectionsData_fibHomCrossNat_unwidened`.  Sends
+`g : e ⟶ e'` to the morphism between elements indexed by
+`(presheafPRACatBifunctorUncurriedOp.map (homBase f).op).toFunctor.obj
+(objFiber X₂)` whose underlying CCR-morphism is the action of that
+functor on `g.val` and whose property follows from naturality of
+`(homFiber f)` at `g.val`.
+-/
+private def praPolyDirectionsData_fibHomCrossNat_unwidened_aux
+    {X₁ X₂ : (grothendieckContraFunctor
+        (Cat.{v_J, u_J} × Cat.{v_I, u_I})).obj
+      presheafPRACatBifunctorUncurriedOp.{u_I, v_I, u_J, v_J,
+        w_I, w'}}
+    (f : X₁ ⟶ X₂)
+    {e e' : (GrothendieckContraFunctor.objFiber X₁ ⋙
+        ccrNewIndexFunctor.{max v_I u_I (w_I + 1),
+          max u_I w_I, w'}
+          (↑(presheafCatFunctor.{u_I, v_I, w_I}.obj
+            (Opposite.op
+              (GrothendieckContraFunctor.objBase X₁).2)))).Elements}
+    (g : e ⟶ e') :
+    @Quiver.Hom (((presheafPRACatBifunctorUncurriedOp.{u_I, v_I,
+              u_J, v_J, w_I, w'}.map
+          (GrothendieckContraFunctor.homBase f).op).toFunctor.obj
+        (GrothendieckContraFunctor.objFiber X₂)) ⋙
+        ccrNewIndexFunctor.{max v_I u_I (w_I + 1), max u_I w_I,
+            w'}
+          (↑(presheafCatFunctor.{u_I, v_I, w_I}.obj
+            (Opposite.op
+              (GrothendieckContraFunctor.objBase X₁).2)))
+        ).Elements _
+      ⟨e.fst,
+        ccrNewReindex
+          ((GrothendieckContraFunctor.homFiber f).app e.fst)
+          e.snd⟩
+      ⟨e'.fst,
+        ccrNewReindex
+          ((GrothendieckContraFunctor.homFiber f).app e'.fst)
+          e'.snd⟩ :=
+  ⟨g.val, by
+    have hnat :=
+      (GrothendieckContraFunctor.homFiber f).naturality g.val
+    have hprop : (ccrNewIndexFunctor _).map
+        ((GrothendieckContraFunctor.objFiber X₁).map g.val) e.snd =
+        e'.snd := g.property
+    change (ccrNewIndexFunctor _).map
+        (((presheafPRACatBifunctorUncurriedOp.map
+          (GrothendieckContraFunctor.homBase f).op).toFunctor.obj
+          (GrothendieckContraFunctor.objFiber X₂)).map g.val)
+        (ccrNewReindex
+          ((GrothendieckContraFunctor.homFiber f).app e.fst)
+          e.snd) =
+        ccrNewReindex
+          ((GrothendieckContraFunctor.homFiber f).app e'.fst)
+          e'.snd
+    have step1 : (ccrNewIndexFunctor _).map
+        (((presheafPRACatBifunctorUncurriedOp.map
+          (GrothendieckContraFunctor.homBase f).op).toFunctor.obj
+          (GrothendieckContraFunctor.objFiber X₂)).map g.val)
+        (ccrNewReindex
+          ((GrothendieckContraFunctor.homFiber f).app e.fst)
+          e.snd) =
+        (ccrNewIndexFunctor _).map
+          ((GrothendieckContraFunctor.homFiber f).app e.fst ≫
+            (((presheafPRACatBifunctorUncurriedOp.map
+              (GrothendieckContraFunctor.homBase f).op
+              ).toFunctor.obj
+              (GrothendieckContraFunctor.objFiber X₂)).map g.val))
+          e.snd := by
+      rw [Functor.map_comp]; rfl
+    have step2 :
+        (GrothendieckContraFunctor.homFiber f).app e.fst ≫
+          (((presheafPRACatBifunctorUncurriedOp.map
+            (GrothendieckContraFunctor.homBase f).op).toFunctor.obj
+            (GrothendieckContraFunctor.objFiber X₂)).map g.val) =
+        (GrothendieckContraFunctor.objFiber X₁).map g.val ≫
+          (GrothendieckContraFunctor.homFiber f).app e'.fst :=
+      hnat.symm
+    rw [step1, step2, Functor.map_comp]
+    change (ccrNewIndexFunctor _).map
+        ((GrothendieckContraFunctor.homFiber f).app e'.fst)
+        ((ccrNewIndexFunctor _).map
+          ((GrothendieckContraFunctor.objFiber X₁).map g.val)
+          e.snd) =
+        ccrNewReindex
+          ((GrothendieckContraFunctor.homFiber f).app e'.fst)
+          e'.snd
+    rw [hprop]
+    rfl⟩
+
+/--
+Naturality of `praPolyDirectionsData_fibHomCrossUnwidened` in the
+element morphism `g`.  Both sides factor through
+`(ccrNewFamilyFunctor _).map_comp` and reduce to the equality of the
+underlying `CoprodCovarRepCat` morphisms expressed by the naturality
+of `(GrothendieckContraFunctor.homFiber f)` at `g.val`.
+-/
+private lemma praPolyDirectionsData_fibHomCrossNat_unwidened
+    {X₁ X₂ : (grothendieckContraFunctor
+        (Cat.{v_J, u_J} × Cat.{v_I, u_I})).obj
+      presheafPRACatBifunctorUncurriedOp.{u_I, v_I, u_J, v_J,
+        w_I, w'}}
+    (f : X₁ ⟶ X₂)
+    {e e' : (GrothendieckContraFunctor.objFiber X₁ ⋙
+        ccrNewIndexFunctor.{max v_I u_I (w_I + 1),
+          max u_I w_I, w'}
+          (↑(presheafCatFunctor.{u_I, v_I, w_I}.obj
+            (Opposite.op
+              (GrothendieckContraFunctor.objBase X₁).2)))).Elements}
+    (g : e ⟶ e') :
+    (ccrNewFamilyFunctor.{max v_I u_I (w_I + 1), max u_I w_I, w'}
+        (↑(presheafCatFunctor.{u_I, v_I, w_I}.obj
+          (Opposite.op
+            (GrothendieckContraFunctor.objBase X₁).2)))).map
+        ((CategoryTheory.elementsPrecomp
+          (GrothendieckContraFunctor.objFiber X₁)).map g) ≫
+      praPolyDirectionsData_fibHomCrossUnwidened.{u_I, v_I, u_J,
+        v_J, w_I, w'} f e' =
+      praPolyDirectionsData_fibHomCrossUnwidened.{u_I, v_I, u_J,
+        v_J, w_I, w'} f e ≫
+      (ccrNewFamilyFunctor.{max v_I u_I (w_I + 1), max u_I w_I,
+          w'}
+          (↑(presheafCatFunctor.{u_I, v_I, w_I}.obj
+            (Opposite.op
+              (GrothendieckContraFunctor.objBase X₁).2)))).map
+        ((CategoryTheory.elementsPrecomp
+          ((presheafPRACatBifunctorUncurriedOp.{u_I, v_I, u_J,
+              v_J, w_I, w'}.map
+            (GrothendieckContraFunctor.homBase f).op).toFunctor.obj
+          (GrothendieckContraFunctor.objFiber X₂))).map
+          (praPolyDirectionsData_fibHomCrossNat_unwidened_aux
+            f g)) := by
+  dsimp only [praPolyDirectionsData_fibHomCrossUnwidened]
+  rw [← Functor.map_comp, ← Functor.map_comp]
+  congr 1
+  apply Subtype.ext
+  exact (GrothendieckContraFunctor.homFiber f).naturality g.val
+
+/--
 Target bifunctor of `praPositionsNat`.  Sends each
 `(J, I) : Cat.{v_J, u_J}ᵒᵖ × Cat.{v_I, u_I}ᵒᵖ` to the
 universe-widened form of `Jᵒᵖ ⥤ Type w'`, constant in `I`.
