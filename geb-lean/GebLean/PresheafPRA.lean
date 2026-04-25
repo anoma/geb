@@ -1257,9 +1257,13 @@ variable (P : PresheafPRACat.{u_I, v_I, u_J, v_J, w_I, w'} I J)
 
 /--
 The type of positions at stage `j`.
+
+Defined via the `private` `praPositionsUnwidened` helper, which
+absorbs the `ULift`/`ULiftHom` unwrap of `praPositionsNat`'s
+widening.
 -/
 def praPositions (j : Jᵒᵖ) : Type w' :=
-  (praPositionsPresheaf I J P).obj j
+  (praPositionsUnwidened I J P).obj j
 
 /--
 The directions functor into `PSh(I)ᵒᵖ`: for a fixed
