@@ -766,6 +766,71 @@ private lemma praPolyDirectionsData_fibHomCrossNat
         w_I, w'}.map f).op) _).symm
 
 /--
+Endpoint equality witnessing that the source and target of
+`praPolyDirectionsData_fibHomCrossUnwidened (𝟙 X) e` agree.
+Holds definitionally: `homBase (𝟙 X)` reduces to `𝟙 _`, so the
+target's outer `presheafPRACatBifunctorUncurriedOp.map` collapses
+to the identity functor, leaving both endpoint objects equal on
+the nose.
+-/
+private lemma praPolyDirectionsData_baseHomId_unwidened_endpoint
+    (X : (grothendieckContraFunctor
+        (Cat.{v_J, u_J} × Cat.{v_I, u_I})).obj
+      presheafPRACatBifunctorUncurriedOp.{u_I, v_I, u_J, v_J,
+        w_I, w'})
+    (e : (GrothendieckContraFunctor.objFiber X ⋙
+        ccrNewIndexFunctor.{max v_I u_I (w_I + 1),
+          max u_I w_I, w'}
+          (↑(presheafCatFunctor.{u_I, v_I, w_I}.obj
+            (Opposite.op
+              (GrothendieckContraFunctor.objBase X).2)))).Elements) :
+    (ccrNewFamilyFunctor.{max v_I u_I (w_I + 1), max u_I w_I, w'}
+        (↑(presheafCatFunctor.{u_I, v_I, w_I}.obj
+          (Opposite.op
+            (GrothendieckContraFunctor.objBase X).2)))).obj
+        ⟨(GrothendieckContraFunctor.objFiber X).obj e.fst,
+          e.snd⟩ =
+      (ccrNewFamilyFunctor.{max v_I u_I (w_I + 1), max u_I w_I, w'}
+        (↑(presheafCatFunctor.{u_I, v_I, w_I}.obj
+          (Opposite.op
+            (GrothendieckContraFunctor.objBase X).2)))).obj
+        ⟨((presheafPRACatBifunctorUncurriedOp.{u_I, v_I, u_J, v_J,
+              w_I, w'}.map
+            (GrothendieckContraFunctor.homBase
+              (𝟙 X)).op).toFunctor.obj
+          (GrothendieckContraFunctor.objFiber X)).obj e.fst,
+          ccrNewReindex.{max v_I u_I (w_I + 1), max u_I w_I, w'}
+            ((GrothendieckContraFunctor.homFiber (𝟙 X)).app e.fst)
+            e.snd⟩ := by
+  rfl
+
+/--
+Identity coherence for `praPolyDirectionsData_fibHomCrossUnwidened`.
+At `f = 𝟙 X`, the unwidened cross-fibre morphism reduces
+definitionally to the relevant `eqToHom`: the underlying
+`Elements`-morphism `⟨(homFiber (𝟙 X)).app e.fst, rfl⟩` is the
+identity element-morphism on the nose, and `(ccrNewFamilyFunctor
+_).map` of that identity is the identity, which is the same as
+`eqToHom rfl` between the (definitionally equal) endpoints.
+-/
+private lemma praPolyDirectionsData_baseHomId_unwidened
+    (X : (grothendieckContraFunctor
+        (Cat.{v_J, u_J} × Cat.{v_I, u_I})).obj
+      presheafPRACatBifunctorUncurriedOp.{u_I, v_I, u_J, v_J,
+        w_I, w'})
+    (e : (GrothendieckContraFunctor.objFiber X ⋙
+        ccrNewIndexFunctor.{max v_I u_I (w_I + 1),
+          max u_I w_I, w'}
+          (↑(presheafCatFunctor.{u_I, v_I, w_I}.obj
+            (Opposite.op
+              (GrothendieckContraFunctor.objBase X).2)))).Elements) :
+    praPolyDirectionsData_fibHomCrossUnwidened.{u_I, v_I, u_J,
+      v_J, w_I, w'} (𝟙 X) e =
+      eqToHom (praPolyDirectionsData_baseHomId_unwidened_endpoint
+        X e) := by
+  rfl
+
+/--
 Target bifunctor of `praPositionsNat`.  Sends each
 `(J, I) : Cat.{v_J, u_J}ᵒᵖ × Cat.{v_I, u_I}ᵒᵖ` to the
 universe-widened form of `Jᵒᵖ ⥤ Type w'`, constant in `I`.
