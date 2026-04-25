@@ -20,3 +20,4 @@ import GebLeanTests.TestTreeCalcReduction
 import GebLeanTests.Utilities.Tower
 import GebLeanTests.Utilities.Families
 import GebLeanTests.Utilities.PresheafPRANat
+import GebLeanTests.Utilities.PresheafPRADirNat
