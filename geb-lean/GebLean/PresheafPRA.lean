@@ -1037,7 +1037,7 @@ ccrNewFamilyFunctor (presheafCat I)` post-composed with widening.
 The cross-fibre morphism and its three coherence obligations are
 supplied by Tasks 7.4/7.6/7.8/7.10.
 -/
-private def praPolyDirectionsData :
+def praPolyDirectionsData :
     FunctorBetweenCovContraData.{_, _, _, _, _, _}
       (functorFromDataContra sourceData.{u_I, v_I, u_J, v_J,
         w_I, w'})
