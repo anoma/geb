@@ -725,9 +725,13 @@ count).  T* is provably equivalent to ER (B-W 2000); the
 equivalence is preserved structurally by the type-system
 discipline, with no user-supplied bounds anywhere.
 
-Design spec:
+Design spec (superseded 2026-04-25):
 `docs/superpowers/specs/2026-04-19-lawvere-godelt-design.md`
-(local, gitignored).  Reference paper:
+was the original design.  It has been superseded by
+`docs/superpowers/specs/2026-04-25-lawvere-godelt-typed-design.md`
+(local, gitignored); see the "2026-04-25 typed-term redesign"
+section below for the rationale and the current plan.
+Reference paper:
 `.claude/docs/characterizing-elementary-recursive-functions-fragment-godels-t.pdf`.
 
 The new category `LawvereGodelTCat` is built bottom-up
@@ -766,9 +770,13 @@ restrict step shape — but step shape doesn't determine trace
 growth (iteration count does).  GodelT puts the restriction in
 the right place.
 
-Implementation plan:
-`docs/superpowers/plans/2026-04-19-lawvere-godelt.md` (local,
-gitignored; written by `superpowers:writing-plans`).
+Implementation plan: the original 2026-04-19 plan
+(`docs/superpowers/plans/2026-04-19-lawvere-godelt.md`,
+local-only) covered Stages 0-D, all of which landed; see the
+Stage 0-D commit ledger below.  The Stages E-J extension that
+followed (`docs/superpowers/plans/2026-04-21-lawvere-godelt-stages-e-through-j.md`)
+has been superseded by the 2026-04-25 typed-term redesign;
+see that section below for the current plan.
 
 **GodelT Stage 0 + Stage A + partial Stage B landed
 (2026-04-20)**: foundational pieces of the GodelT chain are in
@@ -1087,11 +1095,50 @@ form, is trivial by construction — not by B-W's theorem.
 
 The scaffolding is in place (equivalence proven; `toER` and
 `toGodelT` written as structural recursions; tests in place).
-Incremental extensions of `GodelTMor1`, preserving the
-equivalence at every step, are the path to delivering B-W's
-actual content.  See "GodelT follow-on roadmap" below.
+The path forward is documented in the "2026-04-25 typed-term
+redesign" section below.
 
-### GodelT follow-on roadmap
+### Superseded follow-on roadmap (2026-04-21, kept as historical record)
+
+The 2026-04-21 GodelT follow-on roadmap proposed an incremental
+extension of the existing fresh-inductive `GodelTMor1`, adding
+constructors `iter`, `K`, `S` (Stages E, F, G) and reducing to
+atomic B-W primitives (Stage I).  The 2026-04-21 plan-document
+laid out task-level work items (#181-#186).  During the first
+implementation attempt for Stage E (Task #181) on 2026-04-25,
+the proposed `iter` constructor was found to admit a tetration
+counterexample at the categorical layer
+(`step = λx. 2^x` is ER-expressible, so `iter (proj 0) step
+zero` would be a `GodelTMor1` whose interpretation grows like
+tetration — outside ER).  The same observation appeared in the
+2026-04-21 Stage C.2 design correction
+(commit `58922a2a`), which had replaced a generic `iter`
+constructor with `bsum`/`bprod`.
+
+That correction was itself a misdiagnosis.  The actual
+restriction in B-W's T\* is in the term-formation rules of the
+typed combinator system (no λ-abstraction over the iter count),
+not in the constructor signature at the categorical layer.  The
+2026-04-21 roadmap therefore could not deliver B-W's theorem at
+the categorical layer because `GodelTMor1`'s constructor set
+was untyped — there was no place to put the type-stratification
+restriction.
+
+The 2026-04-25 typed-term redesign moves the categorical layer
+on top of `GodelTTerm` (the typed combinator system that already
+existed in the codebase as a sidelined reference).  Type
+stratification is then structural, the
+self-internalization-friendly reduction relation `▷` is
+exposed, Lemma 16 is formalized paper-faithfully, and the
+nucleus + tree-extended specializations are obtained from a
+single signature-parameterized inductive.
+
+The historical content immediately below (the 2026-04-21
+roadmap, stages E-J, endpoints, and non-negotiable interfaces)
+is retained as a record of prior thinking but is NOT the
+current plan.
+
+### GodelT follow-on roadmap (2026-04-21, superseded)
 
 **Development procedure**: each new `GodelTMor1` constructor
 is added under the bottom-up named-composite discipline
@@ -1222,66 +1269,92 @@ See `CLAUDE.md` § Development Processes for the formal
 statement of both the bottom-up named-composite discipline
 and the non-negotiable-interface principle.
 
-### Detailed plan for Stages E-J (2026-04-21)
+### 2026-04-25 typed-term redesign
 
-A full implementation plan for the Stage E through Stage J
-extension was written on 2026-04-21 and is saved at
-`docs/superpowers/plans/2026-04-21-lawvere-godelt-stages-e-through-j.md`
-(local, gitignored).  It covers:
+The current design and plan for the GodelT chain is recorded
+in `docs/superpowers/specs/2026-04-25-lawvere-godelt-typed-design.md`
+(local, gitignored).  It supersedes both the 2026-04-19 design
+and the 2026-04-21 stages-E-J plan.
 
-* **Stage E** (iter + tower-bound proof): task-level breakdown
-  of the B-W Lemma 16 proof adapted to our G(a)=0 categorical
-  layer, with specific code sketches for `nestDepth`,
-  `termSize`, `iterAutoBoundExpr`, `iterT`, the B-W theorem
-  `lt_tower_bound`, adequacy/monotonicity derivations, and
-  the `GodelTMor1.toER` extension.
-* **Stage F** (bracket abstraction helpers): `liftBy`,
-  `shiftUp`, `apply` at the categorical layer.
-* **Stage I** (reduction to atomic B-W primitives): one
-  sub-task per ER-identical primitive to remove (sub / bsum /
-  bprod), with `proj` documented as a Lawvere-theoretic
-  projection that stays as a primitive.
-* **Stage H** (λ-to-CL): Lean metaprogramming ergonomics.
-* **Stage J** (`LawvereGodelTBTCat`): Sort-indexed inductive
-  over `ℕ × ℕ` arities, Szudzik encoding written as a
-  GodelTMor1 morphism, translation, categorical structure,
-  equivalence with `LawvereGodelTCat`.
+**Summary.**  The categorical layer moves on top of
+`GodelTTerm`, the typed combinator system already in the
+codebase.  `GodelTTerm` is rebuilt as a signature-parameterized
+inductive `GodelTTerm S n σ` where `S : Set GodelTBase`
+selects available base types (`{nat}` for the nucleus,
+`{nat, tree}` for the binary-tree extension).  Free variables
+are base-typed only and indexed by `Fin n`; higher-typed terms
+are always closed.  This matches B-W Definition 6 for
+representability and structurally enforces the
+non-closure-under-λ-abstraction restriction that excludes
+tetration.
 
-The plan references B-W's Lemma 16 for the core tower-bound
-mathematical content and cites specific page numbers in the
-paper (`.claude/docs/characterizing-elementary-recursive-functions-fragment-godels-t.pdf`).
+**Mathematical content (paper-faithful).**  The full
+Beckmann-Weiermann proof package: Lemma 16 tower bound,
+strong normalization via Howard-Schütte tower-of-twos,
+Tait-Martin-Löf confluence, numeral normal form for closed
+base-typed terms, completeness of `≈` for extensional
+equality.  The categorical quotient is by `≈` (the
+equivalence closure of `▷`), not by extensional equality —
+chosen so that `LawvereGodelTCat`'s morphism equality is a
+syntactic relation suitable for ER-internal type-checking
+(supporting the longer-term self-internalization goal).
 
-**B-W paper key finding for Stage E**: for closed T* terms of
-base type (G(a)=0), the value bound simplifies from Lemma 16
-to `value(a) ≤ 2_{d(a) + 1}(d(a) + 1 + 2·lh(a) + 2·sumCtx)`
-where `d(a)` = iter-nesting degree (Definition 10) and
-`lh(a)` = tree size.  Under substitution of numerals for
-variables, `lh` absorbs the sum of numerals (Lemma 17).  This
-is a fixed-height tower whose argument grows with inputs —
-the ER-expressible bound we need for `boundedRec`.
+**Categorical equivalences.**
 
-**Execution**: the plan is ready for a fresh session to pick
-up with `superpowers:executing-plans` or
-`superpowers:subagent-driven-development`.  See the resume
-prompt below.
+* `LawvereGodelTCat ≌ LawvereERCat`: the nucleus (paper-faithful
+  B-W theorem).
+* `LawvereGodelTBTCat ≌ LawvereGodelTCat`: via Szudzik encoding
+  written as nuclear morphisms (demonstrative; client
+  implementations free to render trees natively).
+
+**Stages.**  Numbered α through ν per the design spec:
+
+* α — cleanup; tear down old fresh-inductive `GodelTMor1`.
+* β — scaffolding (`GodelTBase`, `GodelTType S`,
+  `GodelTTerm S n σ`, `interp`, `subst`, `interp_subst`).
+* γ — reduction relation `▷` and equivalence `≈` plus
+  soundness.
+* δ — paper-faithful Lemma 16 (largest single body of proof
+  work).
+* ε — strong normalization; total `normalize`.
+* ζ — Tait-Martin-Löf confluence.
+* η — numeral normal form and completeness of `≈`.
+* θ — categorical structure; `LawvereGodelTCat` =
+  `≈`-quotient.
+* ι — equivalence Nucleus ≌ LawvereERCat.
+* κ — binary-tree extension at `S = {.nat, .tree}`.
+* λ — Szudzik-encoded equivalence BT ≌ Nucleus.
+* μ — cross-stage tests including Plausible property tests.
+* ν — programmer ergonomics (deferred polish).
+
+**Surviving infrastructure.**  Tasks E.1 (commit `215b4a25`,
+`GodelTMor1.nestDepth` / `termSize`) and E.2 (commit
+`4346b496`, `ERMor1.natN` / `iterT` / `iterAutoBoundExpr` /
+`interp_iterT_of_bounded`) survive — the structural measures
+re-target to the new typed `GodelTTerm S n σ` (becoming inputs
+to `d` / `lh` of Lemma 16); the ER-side `iterT` infrastructure
+is used by the `godelTToER` translation's `iter` case
+(stage ι).
+
+**Mathlib upstream candidacy.**  The mathematical content of
+stages δ-η is independently worthwhile.  Mathlib does not
+contain a typed-T\*-style fragment of Gödel's T, the
+Howard-Schütte tower-of-twos strong normalization technique,
+or a Kalmár-elementary characterization beyond
+`Mathlib.Computability.Primrec`.  Candidate-for-upstream
+files include the `GodelTTerm` infrastructure, Lemma 16's
+tower bound, the categorical Lawvere theory of ER, and the
+Szudzik-coded tree extension.
+
+**Execution.**  An implementation plan derived from the design
+spec is the next item after the spec is approved.  See the
+resume prompt below.
 
 **Task 14.5-extended (deferred)**: BT-only adequacy research
 — proving that the unlabeled-BT + 0-way-ℕ-product subfragment
 of `LawvereNatBTBounded` is already equivalent to
 `LawvereERCat`.  Remains deferred until after the full
 equivalence chain ships.
-
-Natural checkpoints: end of Stage 1 (Layer 0 ready), end of
-Stage 4 (programmer-friendly API in place), end of Stage 5
-(equivalence proved), end of Stage 6 (full chain shipped).
-
-The Option E architecture's distinguishing property: a single
-on-the-nose categorical equivalence with `LawvereERCat`,
-with Layer 1 combinators providing native fold ergonomics
-without exposing witness-search machinery to programmers.
-The bounded constructors form a stable raw interface; Layer 1
-is built on top by pure `def`s with no proof content; the
-equivalence is proven once at the raw level.
 
 ## Phase 4g: Tree-Native ER Parallel Development (planned)
 
