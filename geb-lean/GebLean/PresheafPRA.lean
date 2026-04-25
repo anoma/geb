@@ -1290,12 +1290,18 @@ def praDirectionsAtFunctor :
     unopUnop _
 
 /--
-The directions presheaf at position `a` at stage `j`.
+The directions presheaf at position `a` at stage `j`.  Defined
+directly via `(ccrNewFamilyFunctor _).obj` applied to the
+element-category projection of the unwidened position presheaf
+`praPositionsUnwidened`.  Definitionally equal to its previous
+form via `praDirectionsAtFunctor`.
 -/
 def praDirectionsAt (j : Jᵒᵖ)
     (a : praPositions I J P j) : Iᵒᵖ ⥤ Type w_I :=
-  (praDirectionsAtFunctor I J P).obj
-    (Opposite.op ⟨j, a⟩)
+  ((ccrNewFamilyFunctor.{max v_I u_I (w_I + 1),
+      max u_I w_I, w'}
+      (↑(presheafCat.{u_I, v_I, w_I} I))).obj
+    ((CategoryTheory.elementsPrecomp P).obj ⟨j, a⟩)).unop
 
 end PresheafPRAAccessors
 
