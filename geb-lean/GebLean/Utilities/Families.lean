@@ -3433,7 +3433,7 @@ On a morphism `f : e1 ⟶ e2` in `(ccrNewIndexFunctor C).Elements`,
 applying `ccrNewFamilyFunctor D` to the reindexed morphism equals
 applying `F.op` to the result of `ccrNewFamilyFunctor C` on `f`.
 -/
-private lemma ccrNewFamilyFunctor_naturality
+lemma ccrNewFamilyFunctor_naturality
     {C D : Cat.{v, u}} (F : C ⟶ D)
     {e1 e2 : (ccrNewIndexFunctor.{u, v, w} C.α).Elements}
     (f : e1 ⟶ e2) :

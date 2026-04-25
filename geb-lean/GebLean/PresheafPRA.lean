@@ -696,6 +696,76 @@ private lemma praPolyDirectionsData_fibHomCrossNat_unwidened
   exact (GrothendieckContraFunctor.homFiber f).naturality g.val
 
 /--
+Structural commutation between `(praDirectionsTargetFibre.map
+h.op).toFunctor.map` and the `op` of the widening
+`ULift.upFunctor ⋙ ULiftHom.up`.  Holds definitionally because the
+target unfolds to `presheafCatFunctor ⋙ catULiftFunctor2 ⋙
+Cat.opFunctor`, and `catULiftFunctor2.map` post-composes both sides
+with the widening lifts in a way that absorbs the inner `widening.op`.
+-/
+private lemma praPolyDirectionsData_target_widening_compat
+    {I₁ I₂ : Cat.{v_I, u_I}} (h : I₂ ⟶ I₁)
+    {B₁ B₂ : (presheafCatFunctor.{u_I, v_I, w_I}.obj
+        (Opposite.op I₁))ᵒᵖ}
+    (B : B₁ ⟶ B₂) :
+    (praDirectionsTargetFibre.{u_I, v_I, u_J, v_J, w_I, w'}.map
+      h.op).toFunctor.map
+      (((CategoryTheory.ULift.upFunctor ⋙
+        CategoryTheory.ULiftHom.up).op).map B) =
+      ((CategoryTheory.ULift.upFunctor ⋙
+        CategoryTheory.ULiftHom.up).op).map
+        ((presheafCatFunctor.{u_I, v_I, w_I}.map h.op).toFunctor.op.map
+          B) := rfl
+
+/--
+Naturality of `praPolyDirectionsData_fibHomCrossApp` in the source
+fibre morphism `g`, stated in fully-unfolded `∀`-form because the
+abbrev `FunctorBetweenCovContraFibHomCrossNat` form gets stuck on
+universe unification.  Proof unfolds the widening, applies the
+structural compat lemma to commute `(target.map h).toFunctor.map`
+with `widening.op.map`, fuses across the resulting widening
+`(ULift.upFunctor ⋙ ULiftHom.up).op` via `Functor.map_comp`, and
+discharges the unwidened naturality through
+`praPolyDirectionsData_fibHomCrossNat_unwidened` plus
+`ccrNewFamilyFunctor_naturality` to absorb the I-side
+presheaf-cat transport.
+-/
+private lemma praPolyDirectionsData_fibHomCrossNat
+    {X₁ X₂ : (grothendieckContraFunctor
+        (Cat.{v_J, u_J} × Cat.{v_I, u_I})).obj
+      presheafPRACatBifunctorUncurriedOp.{u_I, v_I, u_J, v_J,
+        w_I, w'}}
+    (f : X₁ ⟶ X₂)
+    {x y : (functorFromDataContra
+        sourceData.{u_I, v_I, u_J, v_J, w_I, w'}).obj X₁}
+    (g : x ⟶ y) :
+    (praPolyDirectionsData_fibFib.{u_I, v_I, u_J, v_J, w_I, w'}
+      X₁).map g ≫
+      praPolyDirectionsData_fibHomCrossApp.{u_I, v_I, u_J, v_J,
+        w_I, w'} f y =
+      praPolyDirectionsData_fibHomCrossApp.{u_I, v_I, u_J, v_J,
+        w_I, w'} f x ≫
+      (praDirectionsTargetFibre.{u_I, v_I, u_J, v_J, w_I, w'}.map
+        (praPolyDirectionsData_baseFib.{u_I, v_I, u_J, v_J, w_I,
+          w'}.map f).op).toFunctor.map
+        ((praPolyDirectionsData_fibFib.{u_I, v_I, u_J, v_J, w_I,
+          w'} X₂).map
+          (((functorFromDataContra sourceData.{u_I, v_I, u_J, v_J,
+              w_I, w'}).map f).toFunctor.map g)) := by
+  dsimp only [praPolyDirectionsData_fibHomCrossApp,
+    praPolyDirectionsData_fibFib, Functor.comp_map]
+  rw [praPolyDirectionsData_target_widening_compat]
+  rw [← Functor.map_comp, ← Functor.map_comp]
+  congr 1
+  convert praPolyDirectionsData_fibHomCrossNat_unwidened
+    f ((praPolyDirectionsData_unwidenFiber X₁).map g) using 1
+  congr 1
+  exact (ccrNewFamilyFunctor_naturality
+    (presheafCatFunctor.{u_I, v_I, w_I}.map
+      (praPolyDirectionsData_baseFib.{u_I, v_I, u_J, v_J,
+        w_I, w'}.map f).op) _).symm
+
+/--
 Target bifunctor of `praPositionsNat`.  Sends each
 `(J, I) : Cat.{v_J, u_J}ᵒᵖ × Cat.{v_I, u_I}ᵒᵖ` to the
 universe-widened form of `Jᵒᵖ ⥤ Type w'`, constant in `I`.
