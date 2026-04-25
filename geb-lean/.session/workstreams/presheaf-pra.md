@@ -373,7 +373,7 @@ All commits on `terence/grothendieck`.  Plan at
 `docs/superpowers/specs/2026-04-18-praDirections-naturality-design-v2.md`
 (gitignored).  `lake build` and `lake test` are clean at HEAD.
 
-**Done (plan tasks 1–6, plus Task 7 partial including expanded 7.1–7.3):**
+**Done (plan tasks 1–11, plus partial Phase 3 — through 2026-04-25):**
 
 | Commit | Task |
 |--------|------|
@@ -392,6 +392,17 @@ All commits on `terence/grothendieck`.  Plan at
 | `83444c84` | Task 7.3 (revised): `praPolyDirectionsData_fibHomCrossUnwidened` |
 | `8badaeda` | Task 7.3.5: decouple U3 target Cat universe |
 | `86712d19`, `de1de0a3` | Task 7.4: `praPolyDirectionsData_fibHomCrossApp` |
+| `2c261288` | Task 7.5: `_fibHomCrossNat_unwidened` (+ aux def) |
+| `65475a51` | Task 7.6: `_fibHomCrossNat` (widened, with `_target_widening_compat`) |
+| `abb076f3` | Task 7.7: `_baseHomId_unwidened` (`rfl` proof) |
+| `57b4cae7` | Task 7.8: `_baseHomId` (widened, three-line proof) |
+| `19457465` | Task 7.9: `_baseHomComp_unwidened` (with `_aux`) |
+| `5b25263f` | Task 7.10: `_baseHomComp` (widened, `rfl` proof) |
+| `bca661f5` | Task 7.11: `praPolyDirectionsData` bundle assembly |
+| `4e7824f3` | Task 8: `praPolyDirectionsFunctor` |
+| `821da820` | Task 9: three `rfl` bridge lemmas |
+| `3b46d8b3` | Task 10: `praPositionsUnwidened` private helper |
+| `af370475` | Task 11: rewrite `praPositions` via `praPositionsUnwidened` |
 
 **Deviations from original plan (both intentional, implemented
 and committed):**
@@ -411,17 +422,11 @@ and committed):**
    than `Iᵒᵖ ⥤ Type`.  The spec at lines 55–59 and 173–192 now
    reflects the three-stage form.
 
-**Outstanding Task 7 work (remaining sub-tasks 7.5–7.11):**
-
-Task 7.3.5 (U3 universe generalization) and Task 7.4 (widened
-`fibHomCrossApp`) were completed in this session.  The plan expands
-Task 7 into Tasks 7.1–7.11 (Phases 7A–7D).  See the plan file for
-detailed skeletons.  Summary of remaining:
-
-- Tasks 7.5/7.6: `fibHomCrossNat` (unwidened + widened).
-- Tasks 7.7/7.8: `baseHomId` (unwidened + widened).
-- Tasks 7.9/7.10: `baseHomComp` (unwidened + widened).
-- Task 7.11: `praPolyDirectionsData` bundle assembly.
+**Task 7 status: Complete.** All sub-tasks 7.1–7.11 committed. The
+flat functor `praPolyDirectionsFunctor` and its three `rfl` bridge
+lemmas (Tasks 8, 9) are also committed. Tasks 10, 11 prepared the
+`praPositions` accessor for the final migration; `praPositionsPresheaf`
+is retained pending Task 14's deletion.
 
 **Observations from the 7.4 implementation (preserve for next
 session):**
@@ -455,21 +460,43 @@ reading `fibHomCrossUnwidened f e` as
 `NatTrans.mapElements`-level intermediate.  A cross-cutting note at
 the top of Task 7 in the plan spells this out.
 
-**Outstanding plan tasks after Task 7 completes (tasks 8–22):**
+**Outstanding plan tasks (12–22):**
 
-- Task 8: `praPolyDirectionsFunctor :=
-  FunctorBetweenCovContraData.toFunctor praPolyDirectionsData`.
-- Task 9: three `rfl` bridge lemmas
-  (`praPolyDirectionsFunctor_base`, `_fibre`, `_map_app`).  Fall
-  back to `simp only` with data-bundle unfolds if `rfl` misses.
-- Task 10: rename old `praPositionsPresheaf` →
-  `praPositionsUnwidened` (private helper, body unchanged).
-- Task 11: rewrite `praPositions` via `praPositionsUnwidened`.
-- Task 12: rewrite `praDirectionsAt` via a helper
-  `praPolyDirectionsAtSourceObj` and the flat functor.
+- **Task 12 — BLOCKED (2026-04-25).** Rewriting `praDirectionsAt`
+  via a `praPolyDirectionsAtSourceObj` helper plus a
+  `praPolyDirectionsAtUnwiden` widening-inverse helper compiles
+  the new accessors in isolation, but the resulting
+  `praDirectionsAt` value is no longer definitionally equal to
+  `(praDirectionsAtFunctor I J P).obj (op ⟨j, a⟩)`. Downstream,
+  `PresheafPRAUMorph.lean`'s `praReassemble_directions` (line
+  1778) hits a `whnf` heartbeat timeout, and several cofan/coprod
+  constructions cascade-fail (lines 2013, 2068, 2077, 2093, 2106,
+  2126, 2167, 2187). The new accessor's value is propositionally
+  but not definitionally equal to the old form.
+
+  Recommended next steps (none yet attempted across files):
+  - **(a) Batch Tasks 12 + 13 together.** Update
+    `praDirectionsAt`'s body and all `PresheafPRAUMorph.lean` call
+    sites (`praReassemble_directions` at 1230–1310, plus the
+    cofan/coprod constructions) in one commit, replacing
+    definitional-equality reliance with explicit bridge lemmas.
+  - **(b) Add a propositional bridge lemma.** State
+    `praDirectionsAt_via_praPolyDirectionsFunctor :
+       praDirectionsAt I J P j a =
+         (ccrNewFamilyFunctor _).obj ⟨j, a⟩.unop`
+    or the analogous identity, prove it, and use `rw` at the
+    downstream call sites.
+  - **(c) Restructure with `@[simp]` projection lemmas.** Add
+    structure-projection `simp` lemmas reducing
+    `praPolyDirectionsAtSourceObj` and `praPolyDirectionsAtUnwiden`
+    to closed forms. Marginally cleaner but requires `simp` to
+    fire reliably at downstream sites — may not handle deeply
+    nested compositions.
+
 - Task 13: migrate `PresheafPRAUMorph.lean`'s
   `praReassemble_directions` proof (lines 1230–1310) away from
-  the soon-to-be-deleted names.
+  the soon-to-be-deleted names. Likely to fold into Task 12 per
+  approach (a).
 - Task 14: delete `praDirectionsAtFunctorOp`,
   `praDirectionsAtFunctor`, `praPositionsPresheaf`.
 - Task 15: remove `variable (P : PresheafPRACat …)` at
@@ -486,6 +513,42 @@ the top of Task 7 in the plan spells this out.
 **Proof-engineering lessons accumulated across the workstream
 (preserve across sessions):**
 
+- **2026-04-25 (Tasks 7.5–7.10) — surprises in the unwidened
+  layer.** Tasks 7.7 and 7.10 closed by `rfl` with no tactic
+  scaffolding; Task 7.6 reduced to a one-line `rfl` structural
+  compat lemma plus a six-tactic naturality proof; Task 7.10's
+  widened composition coherence is `rfl` end-to-end. The key
+  observation: at the unwidened level, `homFiber f` (built from
+  `f.unop.fiber.unop`) decomposes definitionally through
+  `Grothendieck.id_fiber`/`comp_fiber` plus the `(homFiber f).app`
+  pointwise application. Tactic engineering is needed only at the
+  unwidened naturality step (Task 7.5) and at
+  `_target_widening_compat` (Task 7.6).
+- **2026-04-25 (Task 7.6) — structural compat lemma pattern.**
+  `(praDirectionsTargetFibre.map h.op).toFunctor.map ∘
+  widening.op.map = widening.op.map ∘
+  (presheafCatFunctor.map h.op).toFunctor.op.map` holds by `rfl`.
+  The lemma serves as a named rewrite handle; the proof itself is
+  trivial. The companion `Families.lean` change un-privates
+  `ccrNewFamilyFunctor_naturality` for use in the widened
+  naturality proof.
+- **2026-04-25 (Task 7.9) — `set_option maxHeartbeats 800000`
+  required by linter.** When elevating heartbeats above the
+  default 200000, the project's `linter.style.maxHeartbeats`
+  rejects the option without an explanatory comment immediately
+  above. The smallest sufficient value for Task 7.9 is 400000
+  (per code-review measurement); the committed version uses
+  800000 and could be tightened in a follow-up cleanup pass.
+- **2026-04-25 (Task 12) — definitional-equality cliff at the
+  accessor migration.** The new `praDirectionsAt` form (built via
+  `praPolyDirectionsFunctor.obj` + an `unwiden` helper) is only
+  propositionally equal to the old `(praDirectionsAtFunctor _).obj
+  (op ⟨j, a⟩)`. Downstream `PresheafPRAUMorph.lean` proofs
+  (`praReassemble_directions`, cofan/coprod constructions) rely
+  on the old definitional collapse. The migration must batch
+  Tasks 12 and 13 together (or introduce a propositional bridge
+  lemma) — see "Outstanding plan tasks (12–22)" above for the
+  three candidate paths forward.
 - `ULiftHom.down`'s `C` argument is unsolvable from a
   `Cat.of`-coerced expression.  Fix: prefix the offending
   functor composition with
