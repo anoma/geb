@@ -982,6 +982,53 @@ private lemma praPolyDirectionsData_baseHomComp_unwidened
   congr 1
 
 /--
+Widened composition coherence for
+`praPolyDirectionsData_fibHomCrossApp`.  At a composite
+`f ≫ g`, the widened cross-fibre morphism decomposes as
+`fibHomCrossApp f x ≫ (target.map (baseFib.map f).op).toFunctor.map
+(fibHomCrossApp g ((G.map f).obj x)) ≫ eqToHom (...)`.
+
+Holds by `rfl` because every step in the decomposition reduces
+definitionally: the unwidened decomposition is `rfl` modulo the
+underlying `Subtype.ext` (the morphism vals match on the nose), the
+widening `(ULift.upFunctor ⋙ ULiftHom.up).op` distributes across
+composition definitionally, the structural commutation between
+`(praDirectionsTargetFibre.map h.op).toFunctor.map` and
+`widening.op.map` is `rfl`, and the `eqToHom` adjustment for the
+fused/split base-functor distinction is `eqToHom rfl`.
+-/
+private lemma praPolyDirectionsData_baseHomComp
+    {X₁ X₂ X₃ : (grothendieckContraFunctor
+        (Cat.{v_J, u_J} × Cat.{v_I, u_I})).obj
+      presheafPRACatBifunctorUncurriedOp.{u_I, v_I, u_J, v_J,
+        w_I, w'}}
+    (f : X₁ ⟶ X₂) (g : X₂ ⟶ X₃)
+    (x : (functorFromDataContra
+        sourceData.{u_I, v_I, u_J, v_J, w_I, w'}).obj X₁) :
+    praPolyDirectionsData_fibHomCrossApp.{u_I, v_I, u_J, v_J,
+      w_I, w'} (f ≫ g) x =
+      praPolyDirectionsData_fibHomCrossApp.{u_I, v_I, u_J, v_J,
+        w_I, w'} f x ≫
+      (praDirectionsTargetFibre.{u_I, v_I, u_J, v_J, w_I, w'}.map
+        (praPolyDirectionsData_baseFib.{u_I, v_I, u_J, v_J,
+          w_I, w'}.map f).op).toFunctor.map
+        (praPolyDirectionsData_fibHomCrossApp.{u_I, v_I, u_J,
+          v_J, w_I, w'} g
+          (((functorFromDataContra sourceData.{u_I, v_I, u_J,
+              v_J, w_I, w'}).map f).toFunctor.obj x)) ≫
+      eqToHom
+        (functorBetweenCovContraBaseHomEqCompProof
+          (functorFromDataContra sourceData.{u_I, v_I, u_J, v_J,
+            w_I, w'})
+          praDirectionsTargetFibre.{u_I, v_I, u_J, v_J, w_I, w'}
+          praPolyDirectionsData_baseFib.{u_I, v_I, u_J, v_J,
+            w_I, w'}
+          praPolyDirectionsData_fibFib.{u_I, v_I, u_J, v_J,
+            w_I, w'}
+          f g x) := by
+  rfl
+
+/--
 Target bifunctor of `praPositionsNat`.  Sends each
 `(J, I) : Cat.{v_J, u_J}ᵒᵖ × Cat.{v_I, u_I}ᵒᵖ` to the
 universe-widened form of `Jᵒᵖ ⥤ Type w'`, constant in `I`.
