@@ -400,4 +400,144 @@ theorem ERMor1.interp_le_towerBound {n : ℕ} (t : ERMor1 n)
   rw [ERMor1.interp_twoN]
   exact hle2
 
+/-- Structural ER bound expression for the B-W-style iter
+combinator at arity `k + 1`.  Slot `0` of the context is the
+counter; slots `1..k` are parameters.  At parameters `d` (the
+tower depth offset) and `lh` (the loop-height term), the
+expression evaluates to `tower (d + 1) (d + 1 + 2 * lh +
+2 * sumCtx + 2)`, where `sumCtx` is the sum of all
+context entries. -/
+def ERMor1.iterAutoBoundExpr (k : ℕ) (d lh : ℕ) :
+    ERMor1 (k + 1) :=
+  ERMor1.comp (ERMor1.towerER (d + 1))
+    (fun (_ : Fin 1) =>
+      ERMor1.comp ERMor1.addN (fun i => match i with
+        | ⟨0, _⟩ =>
+            ERMor1.comp ERMor1.addN (fun j => match j with
+              | ⟨0, _⟩ => ERMor1.natN (k + 1) (d + 1 + 2 * lh)
+              | ⟨1, _⟩ =>
+                  ERMor1.comp ERMor1.addN
+                    (fun l => match l with
+                      | ⟨0, _⟩ => ERMor1.sumCtxER (k + 1)
+                      | ⟨1, _⟩ => ERMor1.sumCtxER (k + 1)))
+        | ⟨1, _⟩ => ERMor1.natN (k + 1) 2))
+
+/-- Interpretation of `iterAutoBoundExpr`: the bound expression
+evaluates to `tower (d + 1)` of an offset linear in the context
+sum. -/
+theorem ERMor1.interp_iterAutoBoundExpr {k : ℕ}
+    (d lh : ℕ) (ctx : Fin (k + 1) → ℕ) :
+    (ERMor1.iterAutoBoundExpr k d lh).interp ctx =
+      tower (d + 1) (d + 1 + 2 * lh + 2 *
+        ((ERMor1.sumCtxER (k + 1)).interp ctx) + 2) := by
+  unfold ERMor1.iterAutoBoundExpr
+  rw [ERMor1.interp_comp, ERMor1.interp_towerER]
+  congr 1
+  change ERMor1.addN.interp
+      (fun i => match i with
+        | ⟨0, _⟩ =>
+            ERMor1.addN.interp (fun j => match j with
+              | ⟨0, _⟩ =>
+                  (ERMor1.natN (k + 1) (d + 1 + 2 * lh)).interp
+                    ctx
+              | ⟨1, _⟩ =>
+                  ERMor1.addN.interp
+                    (fun l => match l with
+                      | ⟨0, _⟩ =>
+                          (ERMor1.sumCtxER (k + 1)).interp ctx
+                      | ⟨1, _⟩ =>
+                          (ERMor1.sumCtxER (k + 1)).interp ctx))
+        | ⟨1, _⟩ =>
+            (ERMor1.natN (k + 1) 2).interp ctx) =
+      d + 1 + 2 * lh + 2 *
+        ((ERMor1.sumCtxER (k + 1)).interp ctx) + 2
+  rw [ERMor1.interp_addN]
+  simp only [ERMor1.interp_addN, ERMor1.interp_natN]
+  ring
+
+/-- B-W-style iter combinator on ER terms with an automatic
+structural tower bound.  Composes `boundedRec` against
+`iterAutoBoundExpr` and substitutes `count` into slot `0` of
+the resulting `(k + 1)`-arity term, yielding a `k`-arity term.
+The numeric parameters `d` and `lh` are the tower depth and
+loop-height marker used to size the bound. -/
+def ERMor1.iterT {k : ℕ}
+    (count : ERMor1 k) (step : ERMor1 (k + 2))
+    (base : ERMor1 k) (d lh : ℕ) : ERMor1 k :=
+  ERMor1.comp
+    (ERMor1.boundedRec base step
+      (ERMor1.iterAutoBoundExpr k d lh))
+    (fun i : Fin (k + 1) =>
+      if h : i.val = 0 then count
+      else ERMor1.proj ⟨i.val - 1, by
+        have := i.isLt; omega⟩)
+
+/-- Conditional correctness for `iterT`.  Whenever the trace of
+the unfolded recursion stays under `iterAutoBoundExpr` and the
+bound is monotone in the counter slot up to `count`, `iterT`
+computes the true `Nat.rec` recursion. -/
+theorem ERMor1.interp_iterT_of_bounded {k : ℕ}
+    (count : ERMor1 k) (step : ERMor1 (k + 2))
+    (base : ERMor1 k) (d lh : ℕ)
+    (ctx : Fin k → ℕ)
+    (h : ∀ j, j ≤ count.interp ctx →
+      Nat.rec (base.interp ctx)
+        (fun i prev =>
+          step.interp (Fin.cons i (Fin.cons prev ctx))) j ≤
+      (ERMor1.iterAutoBoundExpr k d lh).interp
+        (Fin.cons j ctx))
+    (h_mono : ∀ j, j ≤ count.interp ctx →
+      (ERMor1.iterAutoBoundExpr k d lh).interp
+        (Fin.cons j ctx) ≤
+      (ERMor1.iterAutoBoundExpr k d lh).interp
+        (Fin.cons (count.interp ctx) ctx)) :
+    (ERMor1.iterT count step base d lh).interp ctx =
+      Nat.rec (base.interp ctx)
+        (fun j prev =>
+          step.interp (Fin.cons j (Fin.cons prev ctx)))
+        (count.interp ctx) := by
+  unfold ERMor1.iterT
+  rw [ERMor1.interp_comp]
+  have hsubst :
+      (fun i : Fin (k + 1) =>
+        ((if h : i.val = 0 then count
+          else ERMor1.proj ⟨i.val - 1, by
+            have := i.isLt; omega⟩) : ERMor1 k).interp ctx)
+        = Fin.cons (count.interp ctx) ctx := by
+    funext i
+    refine Fin.cases ?_ ?_ i
+    · change
+        ((if _h : ((0 : Fin (k + 1)) : Fin (k + 1)).val = 0
+          then count
+          else ERMor1.proj ⟨(0 : Fin (k + 1)).val - 1, by
+            have := (0 : Fin (k + 1)).isLt; omega⟩)
+              : ERMor1 k).interp ctx =
+        (Fin.cons (count.interp ctx) ctx : Fin (k + 1) → ℕ) 0
+      rw [Fin.cons_zero]
+      simp
+    · intro j
+      change
+        ((if _h : (Fin.succ j).val = 0 then count
+          else ERMor1.proj ⟨(Fin.succ j).val - 1, by
+            have := (Fin.succ j).isLt; omega⟩)
+              : ERMor1 k).interp ctx =
+        (Fin.cons (count.interp ctx) ctx : Fin (k + 1) → ℕ)
+          j.succ
+      rw [Fin.cons_succ]
+      have hne : (Fin.succ j).val ≠ 0 := by
+        change j.val + 1 ≠ 0
+        omega
+      simp only [hne, dite_false, ERMor1.interp_proj]
+      have hidx : (⟨(Fin.succ j).val - 1, by
+            have := (Fin.succ j).isLt; omega⟩ : Fin k) = j := by
+        apply Fin.ext
+        change (Fin.succ j).val - 1 = j.val
+        change j.val + 1 - 1 = j.val
+        omega
+      rw [hidx]
+  rw [hsubst]
+  exact ERMor1.interp_boundedRec_of_bounded
+    base step (ERMor1.iterAutoBoundExpr k d lh)
+    (count.interp ctx) ctx h h_mono
+
 end GebLean

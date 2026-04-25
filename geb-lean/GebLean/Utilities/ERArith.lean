@@ -69,6 +69,29 @@ def ERMor1.addN : ERMor1 2 :=
   rw [h, Nat.add_sub_cancel_left]
   omega
 
+/-- Constant ℕ at arity `n`: `natN n m` evaluates to `m` at
+every context in `Fin n → ℕ`.  Defined by recursion on `m`
+applying iterated `succ` to `zeroN`. -/
+def ERMor1.natN (n : ℕ) : ℕ → ERMor1 n
+  | 0 => ERMor1.zeroN n
+  | m + 1 => ERMor1.comp ERMor1.succ
+      (fun (_ : Fin 1) => ERMor1.natN n m)
+
+/-- Interpretation of `natN`: always returns the indexing
+literal `m`. -/
+@[simp] theorem ERMor1.interp_natN (n m : ℕ) (ctx : Fin n → ℕ) :
+    (ERMor1.natN n m).interp ctx = m := by
+  induction m with
+  | zero =>
+      change (ERMor1.zeroN n).interp ctx = 0
+      rw [ERMor1.interp_zeroN]
+  | succ m ih =>
+      change ERMor1.succ.interp
+          (fun (_ : Fin 1) => (ERMor1.natN n m).interp ctx) =
+        m + 1
+      rw [ERMor1.interp_succ]
+      rw [ih]
+
 /-- Sign function indicator: `signN.interp ![x] = 1` if `x ≥ 1`
 and `0` if `x = 0`.  Implemented as `1 - (1 - x)`. -/
 def ERMor1.signN : ERMor1 1 :=
