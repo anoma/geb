@@ -1221,29 +1221,11 @@ theorem praPositionsNat_app_eq_presheafCatFunctor
 
 /--
 Unwidened form of the positions presheaf.  Absorbs the
-`ULift`/`ULiftHom` unwrap of `praPositionsNat`'s widening.  The
-public `praPositions`/`praDirectionsAt` accessors use this rather
-than the soon-to-be-removed `praPositionsPresheaf`.
+`ULift`/`ULiftHom` unwrap of `praPositionsNat`'s widening, giving
+the underlying `Jᵒᵖ ⥤ Type w'` used by the per-component
+accessors `praPositions` and `praDirectionsAt`.
 -/
 def praPositionsUnwidened
-    (I : Type u_I) [Category.{v_I} I]
-    (J : Type u_J) [Category.{v_J} J]
-    (P : PresheafPRACat.{u_I, v_I, u_J, v_J, w_I, w'} I J) :
-    Jᵒᵖ ⥤ Type w' :=
-  ((Functor.whiskeringRight Jᵒᵖ _ _).obj
-    (ccrNewIndexFunctor.{max v_I u_I (w_I + 1),
-      max u_I w_I, w'}
-      (↑(presheafCat.{u_I, v_I, w_I} I)))).obj P
-
-/--
-Bridge to the non-widened form of the positions presheaf.
-Equivalent to `(praPositionsNat.app (Opposite.op (Cat.of Jᵒᵖ))).app
-(Opposite.op (Cat.of Iᵒᵖ)) |>.toFunctor.obj P` composed with the
-`ULift`/`ULiftHom`-unwrap that reverses the widening used in
-`praPositionsNatTarget`.  Serves `praDirectionsAtFunctor*` and
-`praDirectionsAt`, which need the underlying `Jᵒᵖ ⥤ Type w'` form.
--/
-def praPositionsPresheaf
     (I : Type u_I) [Category.{v_I} I]
     (J : Type u_J) [Category.{v_J} J]
     (P : PresheafPRACat.{u_I, v_I, u_J, v_J, w_I, w'} I J) :
@@ -1265,36 +1247,10 @@ def praPositions (j : Jᵒᵖ) : Type w' :=
   (praPositionsUnwidened I J P).obj j
 
 /--
-The directions functor into `PSh(I)ᵒᵖ`: for a fixed
-PRA `P`, sends an element `(j, a)` of the positions
-presheaf to `op (E_T(j,a))`.
--/
-def praDirectionsAtFunctorOp :
-    (praPositionsUnwidened I J P).Elements ⥤
-      (Iᵒᵖ ⥤ Type w_I)ᵒᵖ :=
-  CategoryTheory.elementsPrecomp P ⋙
-    ccrNewFamilyFunctor.{max v_I u_I (w_I + 1),
-      max u_I w_I, w'}
-      (↑(presheafCat.{u_I, v_I, w_I} I))
-
-/--
-The directions functor `E_T` from the nLab PRA
-formula: sends an element `(j, a)` of the opposite
-of the positions presheaf to the directions presheaf
-`E_T(j,a) : Iᵒᵖ ⥤ Type w_I`.
--/
-def praDirectionsAtFunctor :
-    (praPositionsUnwidened I J P).ElementsPre ⥤
-      (Iᵒᵖ ⥤ Type w_I) :=
-  (praDirectionsAtFunctorOp I J P).op ⋙
-    unopUnop _
-
-/--
 The directions presheaf at position `a` at stage `j`.  Defined
 directly via `(ccrNewFamilyFunctor _).obj` applied to the
 element-category projection of the unwidened position presheaf
-`praPositionsUnwidened`.  Definitionally equal to its previous
-form via `praDirectionsAtFunctor`.
+`praPositionsUnwidened`.
 -/
 def praDirectionsAt (j : Jᵒᵖ)
     (a : praPositions I J P j) : Iᵒᵖ ⥤ Type w_I :=
