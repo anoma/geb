@@ -1220,6 +1220,22 @@ theorem praPositionsNat_app_eq_presheafCatFunctor
   rfl
 
 /--
+Unwidened form of the positions presheaf.  Absorbs the
+`ULift`/`ULiftHom` unwrap of `praPositionsNat`'s widening.  The
+public `praPositions`/`praDirectionsAt` accessors use this rather
+than the soon-to-be-removed `praPositionsPresheaf`.
+-/
+private def praPositionsUnwidened
+    (I : Type u_I) [Category.{v_I} I]
+    (J : Type u_J) [Category.{v_J} J]
+    (P : PresheafPRACat.{u_I, v_I, u_J, v_J, w_I, w'} I J) :
+    Jᵒᵖ ⥤ Type w' :=
+  ((Functor.whiskeringRight Jᵒᵖ _ _).obj
+    (ccrNewIndexFunctor.{max v_I u_I (w_I + 1),
+      max u_I w_I, w'}
+      (↑(presheafCat.{u_I, v_I, w_I} I)))).obj P
+
+/--
 Bridge to the non-widened form of the positions presheaf.
 Equivalent to `(praPositionsNat.app (Opposite.op (Cat.of Jᵒᵖ))).app
 (Opposite.op (Cat.of Iᵒᵖ)) |>.toFunctor.obj P` composed with the
