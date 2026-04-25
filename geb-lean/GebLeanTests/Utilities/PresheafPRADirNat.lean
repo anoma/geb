@@ -41,3 +41,15 @@ example (X : praPolyDirectionsSource.{0, 0, 0, 0, 0, 0}) :
   praPolyDirectionsFunctor_fibre.{0, 0, 0, 0, 0, 0} X
 
 end CollapseTest
+
+/-! ## Pointwise-accessor compatibility -/
+
+section AccessorCompat
+
+example (I : Type 0) [Category.{0} I] (J : Type 0) [Category.{0} J]
+    (P : PresheafPRACat.{0, 0, 0, 0, 0, 0} I J) (j : Jᵒᵖ)
+    (a : praPositions.{0, 0, 0, 0, 0, 0} I J P j) :
+    Iᵒᵖ ⥤ Type 0 :=
+  praDirectionsAt.{0, 0, 0, 0, 0, 0} I J P j a
+
+end AccessorCompat
