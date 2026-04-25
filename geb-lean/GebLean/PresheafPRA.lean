@@ -1056,6 +1056,22 @@ private def praPolyDirectionsData :
     u_J, v_J, w_I, w'}
 
 /--
+The `(I, J, P)`-natural directions functor, in polynomial-functor-
+morphism form (backward-on-directions).  Built as a flat functor
+between two Grothendieck constructions via
+`FunctorBetweenCovContraData`.
+
+Objects of the source are 4-tuples `((J, I), P, element)`; objects
+of the target are pairs `(I, op_presheaf)`.  The functor sends
+`((J, I), P, element) ↦ (I, op (directions presheaf of element))`.
+-/
+def praPolyDirectionsFunctor :
+    praPolyDirectionsSource.{u_I, v_I, u_J, v_J, w_I, w'} ⥤
+      praPolyDirectionsTarget.{u_I, v_I, u_J, v_J, w_I, w'} :=
+  FunctorBetweenCovContraData.toFunctor
+    praPolyDirectionsData.{u_I, v_I, u_J, v_J, w_I, w'}
+
+/--
 Target bifunctor of `praPositionsNat`.  Sends each
 `(J, I) : Cat.{v_J, u_J}ᵒᵖ × Cat.{v_I, u_I}ᵒᵖ` to the
 universe-widened form of `Jᵒᵖ ⥤ Type w'`, constant in `I`.
