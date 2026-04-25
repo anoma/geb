@@ -1219,7 +1219,7 @@ Extracting positions from a reassembled PRA
 recovers the original position presheaf.
 -/
 theorem praReassemble_positions :
-    praPositionsPresheaf I J
+    praPositionsUnwidened I J
       (praReassemble A E) = A := by
   rfl
 
@@ -1346,17 +1346,17 @@ the product `∀ k, A_k(j)` stays in `Type w'`.
 def praProdPos : Jᵒᵖ ⥤ Type w' where
   obj j := ∀ k, praPositions I J (P k) j
   map {j₁ j₂} f t k :=
-    (praPositionsPresheaf I J
+    (praPositionsUnwidened I J
       (P k)).map f (t k)
   map_id j := by
     funext t; funext k
     exact congrFun
-      ((praPositionsPresheaf I J
+      ((praPositionsUnwidened I J
         (P k)).map_id j) (t k)
   map_comp {j₁ j₂ j₃} f g := by
     funext t; funext k
     exact congrFun
-      ((praPositionsPresheaf I J
+      ((praPositionsUnwidened I J
         (P k)).map_comp f g) (t k)
 
 /--
@@ -1391,20 +1391,20 @@ Project a product-element morphism to a
 factor-element morphism.  Given a morphism in
 `praProdPos.ElementsPre` and an index `k`,
 produces the corresponding morphism in
-`(praPositionsPresheaf I J (P k)).ElementsPre`.
+`(praPositionsUnwidened I J (P k)).ElementsPre`.
 -/
 def praProdElemProj
     {x y : (praProdPos P).ElementsPre}
     (φ : x ⟶ y) (k : K) :
     (Opposite.op ⟨x.unop.fst,
       x.unop.snd k⟩ :
-      (praPositionsPresheaf I J
+      (praPositionsUnwidened I J
         (P k)).ElementsPre) ⟶
     Opposite.op ⟨y.unop.fst,
       y.unop.snd k⟩ :=
   Quiver.Hom.op
     (CategoryOfElements.homMk (F :=
-      praPositionsPresheaf I J (P k))
+      praPositionsUnwidened I J (P k))
       ⟨y.unop.fst, y.unop.snd k⟩
       ⟨x.unop.fst, x.unop.snd k⟩
       φ.unop.val
@@ -1745,19 +1745,19 @@ in `j` by componentwise reindexing.
 def praCoprodPos : Jᵒᵖ ⥤ Type w' where
   obj j := Σ k, praPositions I J (P k) j
   map {j₁ j₂} f := fun ⟨k, a⟩ =>
-    ⟨k, (praPositionsPresheaf I J
+    ⟨k, (praPositionsUnwidened I J
       (P k)).map f a⟩
   map_id j := by
     funext ⟨k, a⟩
     exact congrArg (Sigma.mk k)
       (congrFun
-        ((praPositionsPresheaf I J
+        ((praPositionsUnwidened I J
           (P k)).map_id j) a)
   map_comp {j₁ j₂ j₃} f g := by
     funext ⟨k, a⟩
     exact congrArg (Sigma.mk k)
       (congrFun
-        ((praPositionsPresheaf I J
+        ((praPositionsUnwidened I J
           (P k)).map_comp f g) a)
 
 /--
@@ -1786,7 +1786,7 @@ private lemma praCoprodDir_map_comp
       (P z.unop.snd.fst)).map
       (Quiver.Hom.op
         (CategoryOfElements.homMk (F :=
-          praPositionsPresheaf I J
+          praPositionsUnwidened I J
             (P z.unop.snd.fst))
           ⟨z.unop.fst, z.unop.snd.snd⟩
           ⟨x.unop.fst,
@@ -1803,7 +1803,7 @@ private lemma praCoprodDir_map_comp
       (P y.unop.snd.fst)).map
       (Quiver.Hom.op
         (CategoryOfElements.homMk (F :=
-          praPositionsPresheaf I J
+          praPositionsUnwidened I J
             (P y.unop.snd.fst))
           ⟨y.unop.fst, y.unop.snd.snd⟩
           ⟨x.unop.fst,
@@ -1819,7 +1819,7 @@ private lemma praCoprodDir_map_comp
       (P z.unop.snd.fst)).map
       (Quiver.Hom.op
         (CategoryOfElements.homMk (F :=
-          praPositionsPresheaf I J
+          praPositionsUnwidened I J
             (P z.unop.snd.fst))
           ⟨z.unop.fst, z.unop.snd.snd⟩
           ⟨y.unop.fst,
@@ -1828,7 +1828,7 @@ private lemma praCoprodDir_map_comp
           ψ.unop.val
           rfl)) := by
   -- Decompose the composite element morphism.
-  -- Let pos_k = praPositionsPresheaf ... (P k),
+  -- Let pos_k = praPositionsUnwidened ... (P k),
   -- F_k = praDirectionsAtFunctor ... (P k).
   -- The element morphism m_comp has
   -- .val = f_ψ ≫ f_φ and target position
@@ -1849,7 +1849,7 @@ private lemma praCoprodDir_map_comp
           ((praCoprodPos P).map
             (φ ≫ ψ).unop.val
             z.unop.snd).snd⟩ :
-        (praPositionsPresheaf I J
+        (praPositionsUnwidened I J
           (P z.unop.snd.fst)).ElementsPre) =
       Opposite.op
         ⟨x.unop.fst,
@@ -1860,13 +1860,13 @@ private lemma praCoprodDir_map_comp
               z.unop.snd)).snd⟩ := by
     congr 1; congr 1
     exact congrFun
-      ((praPositionsPresheaf I J
+      ((praPositionsUnwidened I J
         (P z.unop.snd.fst)).map_comp
         ψ.unop.val φ.unop.val)
       z.unop.snd.snd
   have h_elem :
       (CategoryOfElements.homMk (F :=
-        praPositionsPresheaf I J
+        praPositionsUnwidened I J
           (P z.unop.snd.fst))
         ⟨z.unop.fst, z.unop.snd.snd⟩
         ⟨x.unop.fst,
@@ -1876,7 +1876,7 @@ private lemma praCoprodDir_map_comp
         (φ ≫ ψ).unop.val rfl).op =
       eqToHom h_pos_eq ≫
       (CategoryOfElements.homMk (F :=
-        praPositionsPresheaf I J
+        praPositionsUnwidened I J
           (P z.unop.snd.fst))
         ⟨y.unop.fst,
           ((praCoprodPos P).map
@@ -1889,7 +1889,7 @@ private lemma praCoprodDir_map_comp
               z.unop.snd)).snd⟩
         φ.unop.val rfl).op ≫
       (CategoryOfElements.homMk (F :=
-        praPositionsPresheaf I J
+        praPositionsUnwidened I J
           (P z.unop.snd.fst))
         ⟨z.unop.fst, z.unop.snd.snd⟩
         ⟨y.unop.fst,
@@ -1920,11 +1920,11 @@ private lemma praCoprodDir_map_comp
     | rfl
     | exact h_ψ
     | (exact congrArg
-        (praPositionsPresheaf I J ∘ P ∘
+        (praPositionsUnwidened I J ∘ P ∘
           Sigma.fst) h_ψ)
     | (exact congrArg Sigma.snd h_ψ |>.eq)
     | (exact congrArg (fun k =>
-        (praPositionsPresheaf I J
+        (praPositionsUnwidened I J
           (P k)).ElementsPre)
         (congrArg Sigma.fst h_ψ))
     | (exact h_ψ ▸ HEq.rfl)
@@ -1949,7 +1949,7 @@ private lemma praCoprodDir_map_comp
             praPositions I J (P k)
               x.unop.fst) =>
           @Opposite.op
-            ((praPositionsPresheaf I J
+            ((praPositionsUnwidened I J
               (P s.fst)).Elements)
             ⟨x.unop.fst, s.snd⟩)
         (congrArg
@@ -1960,7 +1960,7 @@ private lemma praCoprodDir_map_comp
             praPositions I J (P k)
               y.unop.fst) =>
           @Opposite.op
-            ((praPositionsPresheaf I J
+            ((praPositionsUnwidened I J
               (P s.fst)).Elements)
             ⟨y.unop.fst, s.snd⟩)
         h_ψ)
@@ -1970,7 +1970,7 @@ private lemma praCoprodDir_map_comp
             praPositions I J (P k)
               y.unop.fst) =>
           (CategoryOfElements.homMk (F :=
-            praPositionsPresheaf I J
+            praPositionsUnwidened I J
               (P s.fst))
             ⟨y.unop.fst, s.snd⟩
             ⟨x.unop.fst,
@@ -2018,7 +2018,7 @@ def praCoprodDir :
       (P y.unop.snd.fst)).map
       (Quiver.Hom.op
         (CategoryOfElements.homMk (F :=
-          praPositionsPresheaf I J
+          praPositionsUnwidened I J
             (P y.unop.snd.fst))
           ⟨y.unop.fst, y.unop.snd.snd⟩
           ⟨x.unop.fst,
@@ -2032,7 +2032,7 @@ def praCoprodDir :
     -- (val = 𝟙, verified by ext).
     have h_elem :
         (CategoryOfElements.homMk
-          (F := praPositionsPresheaf I J
+          (F := praPositionsUnwidened I J
             (P x.unop.snd.fst))
           ⟨x.unop.fst, x.unop.snd.snd⟩
           ⟨x.unop.fst,
