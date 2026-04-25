@@ -16,12 +16,13 @@ presheaf categories.
 `FunctorToData` into two presheaf-category
 components:
 
-- **Positions:** `praPositionsPresheaf P :
+- **Positions:** `praPositionsUnwidened P :
   Jᵒᵖ ⥤ Type w'` — a presheaf on `J`
-- **Directions:** `praDirectionsAtFunctor :
-  (praPositionsPresheaf P).ElementsPre ⥤
-  (Iᵒᵖ ⥤ Type w_I)` — a presheaf-valued functor
-  on the category of elements of positions
+- **Directions:** `praDirectionsAt P j a :
+  Iᵒᵖ ⥤ Type w_I` — pointwise direction
+  presheaf at each element of positions; the
+  natural-in-`(I, J, P)` form is
+  `praPolyDirectionsFunctor`
 
 Both components live in (co)complete categories
 (presheaf categories and Type). Universal
@@ -52,7 +53,7 @@ presheaf categories, Grothendieck construction,
 category of elements, W-types), existing GebLean
 infrastructure (polynomial functors, PRA
 definitions, `FunctorToData`/`functorToDataIsoCat`,
-`praPositionsNat`, `praDirectionsAtFunctor`).
+`praPositionsNat`, `praPolyDirectionsFunctor`).
 
 ---
 
@@ -64,7 +65,7 @@ definitions, `FunctorToData`/`functorToDataIsoCat`,
 | ---------- | ---- | ---- |
 | `PresheafPRACat I J` | `Cat` | PRA category |
 | `praPositionsNat` | `...⥤ (Jᵒᵖ ⥤ Type w')` | Position presheaf |
-| `praDirectionsAtFunctor` | `Elem(A)ᵒᵖ ⥤ PSh(I)` | Directions |
+| `praPolyDirectionsFunctor` | `Source ⥤ Target` | Directions, natural in `(I, J, P)` |
 | `praEvalAtFunctor` | `...⥤ (PSh(I) ⥤ PSh(J))` | Evaluation |
 
 ### Grothendieck Data (Utilities/Grothendieck.lean)
@@ -281,7 +282,9 @@ Q = (π_Q)_! ∘ E_Q^*
 Then `Q ∘ P = (π_Q)_! ∘ E_Q^* ∘ (π_P)_! ∘ E_P^*`.
 The middle part uses Beck-Chevalley.
 
-Uses `praDirectionsAtFunctor` for `E` and
+Uses the directions accessor (now `praDirectionsAt`
+or its natural-in-`(I, J, P)` form
+`praPolyDirectionsFunctor`) for `E` and
 `CategoryOfElements.π` for `π`. Generalizes
 `polyBetweenComp`.
 
@@ -294,7 +297,8 @@ factors as:
 PSh(I) --E^*--> PSh(el(A)) --π_!--> PSh(J)
 ```
 
-Uses `praDirectionsAtFunctor` and the category
+Uses the directions accessor (`praDirectionsAt`
+or `praPolyDirectionsFunctor`) and the category
 of elements projection.
 
 ---

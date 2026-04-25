@@ -51,7 +51,7 @@ Definitions in `PresheafPRA.lean`:
 - `presheafPRACatFunctor` — fix `J`, vary `I`
 - `PresheafPRACat I J` — the PRA category
 - `praPositionsNat` — positions as functor
-- `praDirectionsAtFunctor` — nLab's `E_T`
+- `praDirectionsAt` — nLab's `E_T`, per-component accessor
 - `praEvalAtProfunctor` — profunctor form
 - `praEvalAtFunctor` — `PSh(I) ⥤ PSh(J)` form
 - `praEvalAt P Z j` — pointwise evaluation
@@ -296,10 +296,10 @@ for the full plan.
 | `GebLean/Utilities/Grothendieck.lean` | grothendieckFunctor |
 | `docs/presheaf-pra.md` | Concept documentation |
 
-## Directions-Promotion v2 (2026-04-18)
+## Directions-Promotion v2 (2026-04-18; complete 2026-04-25)
 
-Phase 2.5 (currently in progress at design time): promote
-`praDirectionsAtFunctor*` to an `(I, J, P)`-natural flat functor
+Phase 2.5: promoted the per-component directions accessor to an
+`(I, J, P)`-natural flat functor `praPolyDirectionsFunctor`
 encoding polynomial-functor-morphism structure (forward on
 positions, backward on directions).
 
@@ -422,11 +422,15 @@ and committed):**
    than `Iᵒᵖ ⥤ Type`.  The spec at lines 55–59 and 173–192 now
    reflects the three-stage form.
 
-**Task 7 status: Complete.** All sub-tasks 7.1–7.11 committed. The
-flat functor `praPolyDirectionsFunctor` and its three `rfl` bridge
-lemmas (Tasks 8, 9) are also committed. Tasks 10, 11 prepared the
-`praPositions` accessor for the final migration; `praPositionsPresheaf`
-is retained pending Task 14's deletion.
+**v2 status: Complete (2026-04-25).** All plan tasks 1–22 committed.
+The flat functor `praPolyDirectionsFunctor` is the canonical
+`(I, J, P)`-natural directions construction. The per-component
+accessor `praDirectionsAt` is rewritten directly via
+`(ccrNewFamilyFunctor _).obj ((elementsPrecomp P).obj ⟨j, a⟩).unop`
+(rfl-equivalent to the deleted intermediate `praDirectionsAtFunctor`
+form). The deleted definitions are `praPositionsPresheaf`,
+`praDirectionsAtFunctor`, `praDirectionsAtFunctorOp`. Tests live in
+`GebLeanTests/Utilities/PresheafPRADirNat.lean`.
 
 **Observations from the 7.4 implementation (preserve for next
 session):**
@@ -460,55 +464,21 @@ reading `fibHomCrossUnwidened f e` as
 `NatTrans.mapElements`-level intermediate.  A cross-cutting note at
 the top of Task 7 in the plan spells this out.
 
-**Outstanding plan tasks (12–22):**
+**Tasks 12–22 (committed 2026-04-25):**
 
-- **Task 12 — BLOCKED (2026-04-25).** Rewriting `praDirectionsAt`
-  via a `praPolyDirectionsAtSourceObj` helper plus a
-  `praPolyDirectionsAtUnwiden` widening-inverse helper compiles
-  the new accessors in isolation, but the resulting
-  `praDirectionsAt` value is no longer definitionally equal to
-  `(praDirectionsAtFunctor I J P).obj (op ⟨j, a⟩)`. Downstream,
-  `PresheafPRAUMorph.lean`'s `praReassemble_directions` (line
-  1778) hits a `whnf` heartbeat timeout, and several cofan/coprod
-  constructions cascade-fail (lines 2013, 2068, 2077, 2093, 2106,
-  2126, 2167, 2187). The new accessor's value is propositionally
-  but not definitionally equal to the old form.
-
-  Recommended next steps (none yet attempted across files):
-  - **(a) Batch Tasks 12 + 13 together.** Update
-    `praDirectionsAt`'s body and all `PresheafPRAUMorph.lean` call
-    sites (`praReassemble_directions` at 1230–1310, plus the
-    cofan/coprod constructions) in one commit, replacing
-    definitional-equality reliance with explicit bridge lemmas.
-  - **(b) Add a propositional bridge lemma.** State
-    `praDirectionsAt_via_praPolyDirectionsFunctor :
-       praDirectionsAt I J P j a =
-         (ccrNewFamilyFunctor _).obj ⟨j, a⟩.unop`
-    or the analogous identity, prove it, and use `rw` at the
-    downstream call sites.
-  - **(c) Restructure with `@[simp]` projection lemmas.** Add
-    structure-projection `simp` lemmas reducing
-    `praPolyDirectionsAtSourceObj` and `praPolyDirectionsAtUnwiden`
-    to closed forms. Marginally cleaner but requires `simp` to
-    fire reliably at downstream sites — may not handle deeply
-    nested compositions.
-
-- Task 13: migrate `PresheafPRAUMorph.lean`'s
-  `praReassemble_directions` proof (lines 1230–1310) away from
-  the soon-to-be-deleted names. Likely to fold into Task 12 per
-  approach (a).
-- Task 14: delete `praDirectionsAtFunctorOp`,
-  `praDirectionsAtFunctor`, `praPositionsPresheaf`.
-- Task 15: remove `variable (P : PresheafPRACat …)` at
-  `PresheafPRA.lean:459`; thread `P` through accessors; audit
-  `variable (I …)`/`(J …)`.
-- Tasks 16–17: create and register
-  `GebLeanTests/Utilities/PresheafPRADirNat.lean`.
-- Tasks 18–21: four concrete tests (bridge-lemma collapse,
-  pointwise-accessor compatibility, functoriality at a morphism,
-  universe polymorphism).
-- Task 22: mark this workstream section Complete and clean stale
-  references to deleted names.
+| Commit | Task |
+|--------|------|
+| `a701d6c5` | Phase-1 of 12: rename `praPositionsPresheaf` → `praPositionsUnwidened` everywhere |
+| `772e1c0a` | Phase-2 of 12: rewrite `praDirectionsAt` body via `(ccrNewFamilyFunctor _).obj ((elementsPrecomp P).obj ⟨j, a⟩).unop` (rfl-equivalent) |
+| `7cdea116` | Task 13: inline the ~10 `praDirectionsAtFunctor*` references in `PresheafPRAUMorph.lean` |
+| `15497454` | Task 14: delete `praPositionsPresheaf`, `praDirectionsAtFunctor`, `praDirectionsAtFunctorOp` |
+| `d82bd25d` | Task 15: thread `P` through `praPositions`/`praDirectionsAt` instead of section variable |
+| `ffab612d` | Task 16: type-signature sanity tests |
+| `7665fead` | Task 17: register `PresheafPRADirNat.lean` |
+| `1674aa5f` | Task 18: bridge-lemma collapse tests (un-privates `praPolyDirectionsData` for test access) |
+| `cc3a397e` | Task 19: pointwise-accessor compatibility tests |
+| `c66ec987` | Task 20: functoriality tests |
+| `3b23d7cb` | Task 21: universe-polymorphism tests |
 
 **Proof-engineering lessons accumulated across the workstream
 (preserve across sessions):**
