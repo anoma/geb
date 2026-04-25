@@ -831,6 +831,43 @@ private lemma praPolyDirectionsData_baseHomId_unwidened
   rfl
 
 /--
+Widened identity coherence for
+`praPolyDirectionsData_fibHomCrossApp`.  At `f = 𝟙 X`, the cross-fibre
+morphism reduces to the canonical `eqToHom` produced by
+`functorBetweenCovContraBaseHomEqIdProof`.  Lifted from
+`praPolyDirectionsData_baseHomId_unwidened` through the widening
+`(ULift.upFunctor ⋙ ULiftHom.up).op` via `eqToHom_map`; the resulting
+two `eqToHom`s have proofs of equalities in `Prop`, identified by
+proof irrelevance.
+
+Stated in fully-unfolded `∀`-form because direct application of the
+`FunctorBetweenCovContraBaseHomId` abbrev gets stuck on universe
+unification.
+-/
+private lemma praPolyDirectionsData_baseHomId
+    (X : (grothendieckContraFunctor
+        (Cat.{v_J, u_J} × Cat.{v_I, u_I})).obj
+      presheafPRACatBifunctorUncurriedOp.{u_I, v_I, u_J, v_J,
+        w_I, w'})
+    (x : (functorFromDataContra
+        sourceData.{u_I, v_I, u_J, v_J, w_I, w'}).obj X) :
+    praPolyDirectionsData_fibHomCrossApp.{u_I, v_I, u_J, v_J,
+      w_I, w'} (𝟙 X) x =
+      eqToHom
+        (functorBetweenCovContraBaseHomEqIdProof
+          (functorFromDataContra sourceData.{u_I, v_I, u_J, v_J,
+            w_I, w'})
+          praDirectionsTargetFibre.{u_I, v_I, u_J, v_J, w_I, w'}
+          praPolyDirectionsData_baseFib.{u_I, v_I, u_J, v_J,
+            w_I, w'}
+          praPolyDirectionsData_fibFib.{u_I, v_I, u_J, v_J,
+            w_I, w'}
+          X x) := by
+  dsimp only [praPolyDirectionsData_fibHomCrossApp]
+  rw [praPolyDirectionsData_baseHomId_unwidened]
+  rw [eqToHom_map]
+
+/--
 Target bifunctor of `praPositionsNat`.  Sends each
 `(J, I) : Cat.{v_J, u_J}ᵒᵖ × Cat.{v_I, u_I}ᵒᵖ` to the
 universe-widened form of `Jᵒᵖ ⥤ Type w'`, constant in `I`.
