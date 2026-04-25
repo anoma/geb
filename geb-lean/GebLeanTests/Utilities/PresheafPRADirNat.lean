@@ -71,3 +71,19 @@ example {X Y Z : praPolyDirectionsSource.{0, 0, 0, 0, 0, 0}}
   praPolyDirectionsFunctor.{0, 0, 0, 0, 0, 0}.map_comp f g
 
 end FunctorialityTest
+
+/-! ## Universe polymorphism -/
+
+section UniversePoly
+
+example :
+    praPolyDirectionsSource.{1, 0, 0, 0, 0, 0} ⥤
+      praPolyDirectionsTarget.{1, 0, 0, 0, 0, 0} :=
+  praPolyDirectionsFunctor.{1, 0, 0, 0, 0, 0}
+
+example :
+    praPolyDirectionsSource.{0, 0, 1, 0, 0, 0} ⥤
+      praPolyDirectionsTarget.{0, 0, 1, 0, 0, 0} :=
+  praPolyDirectionsFunctor.{0, 0, 1, 0, 0, 0}
+
+end UniversePoly
