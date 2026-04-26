@@ -3271,32 +3271,6 @@ def typeCatLift : Cat.{max w v, max (w + 1) u} :=
       (ULift.{max (w + 1) u, w + 1} (Type w)))
 
 /--
-Universe-widening functor from `Cat.{v, u}` to
-`Cat.{max w v, max (w+1) u}`.  At each `C`, widens `C` via
-`ULift` on objects and `ULiftHom` on morphisms so that the output
-universe matches `coprodCovarRepFunctor.{u, v, w}`.  Used as a
-post-composition with `Cat.opFunctor` to build
-`ccrNewFamilyNatTarget`.
--/
-def catULiftFunctor :
-    Cat.{v, u} ⥤ Cat.{max w v, max (w + 1) u} where
-  obj C := Cat.of
-    (CategoryTheory.ULiftHom.{max w v}
-      (ULift.{max (w + 1) u, u} C.α))
-  map {C D} F :=
-    (CategoryTheory.ULiftHom.down ⋙
-      CategoryTheory.ULift.downFunctor ⋙
-      F.toFunctor ⋙
-      CategoryTheory.ULift.upFunctor ⋙
-      CategoryTheory.ULiftHom.up).toCatHom
-  map_id C := by
-    apply Cat.Hom.ext
-    rfl
-  map_comp {C D E} F G := by
-    apply Cat.Hom.ext
-    rfl
-
-/--
 Two-parameter universe-widening functor from `Cat.{v, u}` to
 `Cat.{max v w_v, max u w_u}`.  Generalizes `catULiftFunctor` by
 decoupling the hom-universe bump (`w_v`) from the obj-universe bump
@@ -3320,6 +3294,21 @@ def catULiftFunctor2 :
   map_comp {C D E} F G := by
     apply Cat.Hom.ext
     rfl
+
+/--
+Universe-widening functor from `Cat.{v, u}` to
+`Cat.{max w v, max (w+1) u}`.  At each `C`, widens `C` via
+`ULift` on objects and `ULiftHom` on morphisms so that the output
+universe matches `coprodCovarRepFunctor.{u, v, w}`.  Used as a
+post-composition with `Cat.opFunctor` to build
+`ccrNewFamilyNatTarget`.
+
+Specialization of `catULiftFunctor2` with `w_v := w` and
+`w_u := w + 1`.
+-/
+def catULiftFunctor :
+    Cat.{v, u} ⥤ Cat.{max w v, max (w + 1) u} :=
+  catULiftFunctor2.{u, v, w, w + 1}
 
 /--
 Per-`C` widened index functor.  Obtained by post-composing the
@@ -3512,7 +3501,7 @@ def ccrNewFamilyNat :
         Cat.Hom.comp_toFunctor, Functor.toCatHom_toFunctor,
         Functor.comp_map]
       unfold ccrNewFamilyNatFunctor ccrNewFamilyNatTarget
-        catULiftFunctor
+        catULiftFunctor catULiftFunctor2
       dsimp only [Functor.comp_obj, Functor.comp_map,
         Functor.toCatHom_toFunctor, ULift.upFunctor_map,
         ULift.downFunctor_map, ULiftHom.down_map]
