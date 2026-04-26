@@ -87,3 +87,23 @@ example :
   praPolyDirectionsFunctor.{0, 0, 1, 0, 0, 0}
 
 end UniversePoly
+
+/-! ## Bridge to praPolyDirectionsFunctor -/
+
+section BridgeTest
+
+example (I : Type 0) [Category.{0} I] (J : Type 0) [Category.{0} J]
+    (P : PresheafPRACat.{0, 0, 0, 0, 0, 0} I J)
+    (j : Jᵒᵖ) (a : praPositions.{0, 0, 0, 0, 0, 0} I J P j) :
+    praDirectionsAt.{0, 0, 0, 0, 0, 0} I J P j a =
+      (ULift.down.{1, 1}
+        (CategoryTheory.ULiftHom.objDown.{1, 0}
+          (GrothendieckContraFunctor.objFiber
+            (praPolyDirectionsFunctor.{0, 0, 0, 0, 0, 0}.obj
+              (praPolyDirectionsAtSourceObj.{0, 0, 0, 0, 0, 0}
+                I J P j a))).unop) :
+        Iᵒᵖ ⥤ Type 0) :=
+  praDirectionsAt_via_praPolyDirectionsFunctor.{0, 0, 0, 0, 0, 0}
+    I J P j a
+
+end BridgeTest

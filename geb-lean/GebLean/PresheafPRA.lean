@@ -1286,6 +1286,31 @@ def praPolyDirectionsAtSourceObj
               (↑(presheafCat.{u_I, v_I, w_I} I))).Elements)) from
       CategoryTheory.ULiftHom.objUp (ULift.up ⟨j, a⟩))⟩
 
+/--
+Bridge: `praDirectionsAt I J P j a` agrees with the unwidened-and-
+unopped fibre of `praPolyDirectionsFunctor` applied to the
+corresponding source object built by
+`praPolyDirectionsAtSourceObj`.  Connects the per-component
+accessor to the natural-in-`(I, J, P)` functor.
+
+Tagged `@[simp]` so callers can use `simp` to translate per-
+component direction expressions into natural-functor form.
+-/
+@[simp] theorem praDirectionsAt_via_praPolyDirectionsFunctor
+    (P : PresheafPRACat.{u_I, v_I, u_J, v_J, w_I, w'} I J)
+    (j : Jᵒᵖ) (a : praPositions I J P j) :
+    praDirectionsAt I J P j a =
+      (ULift.down.{max u_I u_J v_I v_J (w_I + 1) (w' + 1),
+        max v_I w_I u_I (w_I + 1)}
+        (CategoryTheory.ULiftHom.objDown.{max u_I u_J v_I v_J
+            (w_I + 1) (w' + 1), max u_I u_J w_I w'}
+          (GrothendieckContraFunctor.objFiber
+            (praPolyDirectionsFunctor.{u_I, v_I, u_J, v_J,
+                w_I, w'}.obj
+              (praPolyDirectionsAtSourceObj I J P j a))).unop) :
+        Iᵒᵖ ⥤ Type w_I) :=
+  rfl
+
 end PresheafPRAAccessors
 
 /-! ## Pointwise Evaluation -/
