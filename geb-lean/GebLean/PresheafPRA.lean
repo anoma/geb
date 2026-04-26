@@ -33,8 +33,6 @@ open CategoryTheory
 
 universe u_I v_I u_J v_J w_I w'
 
-attribute [local instance] CategoryTheory.uliftCategory
-
 variable (I : Type u_I) [Category.{v_I} I]
 variable (J : Type u_J) [Category.{v_J} J]
 
@@ -147,6 +145,10 @@ end PresheafPRADef
 /-! ## Accessors -/
 
 section PresheafPRAAccessors
+
+-- needed for accessors that widen presheaf categories via
+-- catULiftFunctor2 / `ULift`-based fibers
+attribute [local instance] CategoryTheory.uliftCategory
 
 /--
 The uncurried form of `presheafPRACatBifunctor`, as a functor
