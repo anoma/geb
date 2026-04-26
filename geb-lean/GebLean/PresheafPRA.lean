@@ -335,6 +335,29 @@ private def sourceData :
     sourceData_hom_comp.{u_I, v_I, u_J, v_J, w_I, w'} _ _
 
 /--
+Per-`(J, I)` fibre functor for `evalSourceData`.  Constant in `P`:
+sends every PRA at `(I, J)` to the universe-widened presheaf-on-`I`
+Cat.
+
+Mirrors `sourceDataFib`'s widening of the presheaf-on-`I` category
+through `presheafCatFunctor ⋙ catULiftFunctor2`, applied directly
+to `presheafCat I` rather than to a Sigma-type elements category.
+The constancy in `P` is encoded by `Functor.const`.
+-/
+private def evalSourceDataFib
+    (JI : Cat.{v_J, u_J} × Cat.{v_I, u_I}) :
+    ↑(presheafPRACatBifunctorUncurriedOp.{u_I, v_I, u_J, v_J,
+        w_I, w'}.obj (Opposite.op JI)) ⥤
+      Cat.{max u_I u_J v_I w_I w',
+        max u_I u_J v_I v_J (w_I + 1) (w' + 1)} :=
+  (Functor.const _).obj
+    (catULiftFunctor2.{max v_I (w_I + 1) u_I, max u_I w_I,
+      max u_I u_J v_I w_I w',
+      max u_I u_J v_I v_J (w_I + 1) (w' + 1)}.obj
+      (presheafCatFunctor.{u_I, v_I, w_I}.obj
+        (Opposite.op JI.2)))
+
+/--
 Per-`I` target fibre for `praPolyDirectionsTarget`.  The input Cat
 already carries the `Iᵒᵖ` convention coming from
 `presheafPRACatBifunctorUncurriedOp`'s base; this pipeline widens the
