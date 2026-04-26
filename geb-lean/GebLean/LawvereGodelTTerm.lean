@@ -199,4 +199,25 @@ def GodelTTerm.interp {S : Set GodelTBase} :
         GodelTTerm.btlIter base step t) := by
   simp [GodelTTerm.interp]
 
+/-- Substitute base-typed terms (in arity m) for the free
+variables of a term in arity n.  Direct structural recursion;
+no binders ⇒ no capture concerns. -/
+def GodelTTerm.subst {S : Set GodelTBase}
+    (hN : GodelTBase.nat ∈ S) {n m : Nat} :
+    {σ : GodelTType S} →
+    (Fin n → GodelTTerm S m (.base .nat hN)) →
+    GodelTTerm S n σ → GodelTTerm S m σ
+  | _, ε, .var i _      => ε i
+  | _, ε, .app f a      => .app (f.subst hN ε) (a.subst hN ε)
+  | _, _, .zero h       => .zero h
+  | _, _, .succ h       => .succ h
+  | _, _, .pred h       => .pred h
+  | _, _, .K σ τ        => .K σ τ
+  | _, _, .S_comb ρ σ τ => .S_comb ρ σ τ
+  | _, _, .disc σ       => .disc σ
+  | _, _, .iter h       => .iter h
+  | _, _, .leaf h       => .leaf h
+  | _, _, .node h       => .node h
+  | _, _, .treeIter h σ => .treeIter h σ
+
 end GebLean
