@@ -376,6 +376,21 @@ def praEvalTargetFibre :
       max u_I u_J v_I v_J (w_I + 1) (w' + 1)}
 
 /--
+Total target Grothendieck for `praPolyEvalFunctor`.
+
+Objects are pairs `(J, x)` where `x : (widened Jᵒᵖ ⥤ Type w')ᵒᵖ`.
+Morphisms `(J₁, x₁) ⟶ (J₂, x₂)` are pairs `(f : J₁ ⟶ J₂,
+η : x₁ ⟶ (praEvalTargetFibre.map f.op).obj x₂)`, encoding the
+polynomial-functor evaluation result's contravariant convention
+on `J`.
+-/
+def praPolyEvalTarget :
+    Cat.{max u_I u_J v_I v_J w_I w',
+      max u_I (u_J + 1) v_I (v_J + 1) (w_I + 1) (w' + 1)} :=
+  (grothendieckContraFunctor Cat.{v_J, u_J}).obj
+    praEvalTargetFibre.{u_I, v_I, u_J, v_J, w_I, w'}
+
+/--
 Total target Grothendieck for `praPolyDirectionsFunctor`.
 
 Objects are pairs `(I, x)` where `x : (widened Iᵒᵖ ⥤ Type w_I)ᵒᵖ`.
