@@ -1353,6 +1353,46 @@ covering stages α-ν.  Use
 `superpowers:subagent-driven-development` (recommended) or
 `superpowers:executing-plans` to drive execution.
 
+**Execution progress through 2026-04-25 evening (twenty-one
+commits on `terence/syntax`, build clean throughout):**
+
+| Stage | Commits | Status |
+|---|---|---|
+| α — cleanup | `fe99d5c4` | complete |
+| β — scaffolding | `82ee007f`..`03d98ebc` (10) | complete |
+| γ — reduction relation | `44aa1174`..`f958a21b` (5) | complete |
+| δ.1 — Lemma 16 file header | `453d273e` | complete |
+| δ.2 — `lh`, `d`, `G` | `dfe04f85` | complete |
+| δ.3 — `bracketLevel` per Definition 8 | `f3e59c55` | complete |
+| δ.4 — Lemma 5 multiplicative form | `048c72f4` | complete |
+| δ.5 — redex majorization lemmas | `75506450` | partial (5/10) |
+
+**δ.5 in flight.**  Five redex lemmas proven
+(`majorizes_redP_zero`, `majorizes_redP_succ`,
+`majorizes_redK`, `majorizes_redDisc_zero`,
+`majorizes_redDisc_succ`) plus four supporting helpers
+(`bracketLevel_app_ge_arg`, `bracketLevel_app_strict_arg`,
+`bracketLevel_app_high_ge`, `≫` notation via
+`GodelTTerm.majorizes`).  Remaining: `majorizes_redS`,
+`majorizes_redIter_zero`, `majorizes_redIter_succ`,
+`majorizes_redTreeIter_leaf`,
+`majorizes_redTreeIter_node`, plus the strict-decrease
+theorem `Reduces.bracketLevel_strict`.  The remaining
+lemmas need the multi-level argument: rule 11 gives
+`[I_ρ t^0]_1 = 1` for `g(ρ) = 0`, so by rule 14 the
+exponent `2^[head]_1 ≥ 2`, providing strict inequality
+even when the iter rule's level-0 pass-through makes
+`[head]_0 = 0` for base-typed-variable arguments.  See
+commit `75506450`'s message for the detailed argument.
+
+**Implementation choices carried forward** (see plan's
+"Implementation notes carried forward" section): rule-14
+self-reference uses a downward `Nat.rec` iteration with
+`bracketLevel_app_eq` as the paper-faithful unfold lemma;
+`bracketLevelAppGen`/`bracketLevelAppIter`/`isIterHead`
+are factored helpers; `GodelTTerm.btlIter` is the
+label-discarding tree-fold helper used by `interp`.
+
 **Task 14.5-extended (deferred)**: BT-only adequacy research
 — proving that the unlabeled-BT + 0-way-ℕ-product subfragment
 of `LawvereNatBTBounded` is already equivalent to
