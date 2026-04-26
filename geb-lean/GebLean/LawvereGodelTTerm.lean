@@ -110,4 +110,77 @@ def GodelTTerm.interp {S : Set GodelTBase} :
   | _, _, .treeIter _ _, _ =>
       fun t base step => GodelTTerm.btlIter base step t
 
+@[simp] theorem GodelTTerm.interp_var
+    {S : Set GodelTBase} {n : Nat} (i : Fin n)
+    (h : GodelTBase.nat ∈ S) (env : Fin n → Nat) :
+    (GodelTTerm.var (S := S) i h).interp env = env i := rfl
+
+@[simp] theorem GodelTTerm.interp_app
+    {S : Set GodelTBase} {n : Nat}
+    {σ τ : GodelTType S}
+    (f : GodelTTerm S n (.arrow σ τ))
+    (a : GodelTTerm S n σ) (env : Fin n → Nat) :
+    (GodelTTerm.app f a).interp env =
+      f.interp env (a.interp env) := rfl
+
+@[simp] theorem GodelTTerm.interp_zero
+    {S : Set GodelTBase} (h : GodelTBase.nat ∈ S)
+    (env : Fin 0 → Nat) :
+    (GodelTTerm.zero (S := S) h).interp env = 0 := rfl
+
+@[simp] theorem GodelTTerm.interp_succ
+    {S : Set GodelTBase} (h : GodelTBase.nat ∈ S)
+    (env : Fin 0 → Nat) :
+    (GodelTTerm.succ (S := S) h).interp env = Nat.succ := rfl
+
+@[simp] theorem GodelTTerm.interp_pred
+    {S : Set GodelTBase} (h : GodelTBase.nat ∈ S)
+    (env : Fin 0 → Nat) :
+    (GodelTTerm.pred (S := S) h).interp env = Nat.pred := rfl
+
+@[simp] theorem GodelTTerm.interp_K
+    {S : Set GodelTBase} (σ τ : GodelTType S)
+    (env : Fin 0 → Nat) :
+    (GodelTTerm.K (S := S) σ τ).interp env =
+      (fun a _ => a) := rfl
+
+@[simp] theorem GodelTTerm.interp_S_comb
+    {S : Set GodelTBase} (ρ σ τ : GodelTType S)
+    (env : Fin 0 → Nat) :
+    (GodelTTerm.S_comb (S := S) ρ σ τ).interp env =
+      (fun f g x => f x (g x)) := rfl
+
+@[simp] theorem GodelTTerm.interp_disc
+    {S : Set GodelTBase} {h : GodelTBase.nat ∈ S}
+    (σ : GodelTType S) (env : Fin 0 → Nat) :
+    (GodelTTerm.disc (S := S) (h := h) σ).interp env =
+      (fun n a b => match n with
+        | 0 => a
+        | _ + 1 => b) := rfl
+
+@[simp] theorem GodelTTerm.interp_iter
+    {S : Set GodelTBase} (h : GodelTBase.nat ∈ S)
+    (env : Fin 0 → Nat) :
+    (GodelTTerm.iter (S := S) h).interp env =
+      (fun count step base =>
+        Nat.rec base (fun _ prev => step prev) count) := rfl
+
+@[simp] theorem GodelTTerm.interp_leaf
+    {S : Set GodelTBase} (h : GodelTBase.tree ∈ S)
+    (env : Fin 0 → Nat) :
+    (GodelTTerm.leaf (S := S) h).interp env =
+      BTL.leaf 0 := rfl
+
+@[simp] theorem GodelTTerm.interp_node
+    {S : Set GodelTBase} (h : GodelTBase.tree ∈ S)
+    (env : Fin 0 → Nat) :
+    (GodelTTerm.node (S := S) h).interp env = BTL.node := rfl
+
+@[simp] theorem GodelTTerm.interp_treeIter
+    {S : Set GodelTBase} (h : GodelTBase.tree ∈ S)
+    (σ : GodelTType S) (env : Fin 0 → Nat) :
+    (GodelTTerm.treeIter (S := S) h σ).interp env =
+      (fun t base step =>
+        GodelTTerm.btlIter base step t) := rfl
+
 end GebLean
