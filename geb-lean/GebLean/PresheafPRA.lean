@@ -360,8 +360,10 @@ def praDirectionsTargetFibre :
 Per-`J` target fibre for `praPolyEvalTarget`.  Two-stage
 pipeline `presheafCatFunctor ⋙ catULiftFunctor2`.  Sends each
 `J : Cat` (passed via `Catᵒᵖ`) to the universe-widened
-`Jᵒᵖ ⥤ Type w'` Cat — the codomain Cat for the polynomial-
-functor evaluation result presheaf.
+`J ⥤ Type (max w' u_I w_I)` Cat — the codomain Cat for the
+polynomial-functor evaluation result presheaf.  The positions
+universe `max w' u_I w_I` matches `ccrNewEvalCatFunctor`'s
+output universe over the presheaf category on `I`.
 
 Differs from `praDirectionsTargetFibre` (which has a final
 `Cat.opFunctor` stage encoding the polynomial-functor-morphism
@@ -373,16 +375,18 @@ extra op.
 def praEvalTargetFibre :
     Cat.{v_J, u_J}ᵒᵖ ⥤
       Cat.{max u_I u_J v_I w_I w',
-        max u_I u_J v_I v_J (w_I + 1) (w' + 1)} :=
-  presheafCatFunctor.{u_J, v_J, w'} ⋙
-    catULiftFunctor2.{max v_J (w' + 1) u_J, max u_J w',
+        max (u_I + 1) u_J v_I v_J (w_I + 1) (w' + 1)} :=
+  presheafCatFunctor.{u_J, v_J, max w' u_I w_I} ⋙
+    catULiftFunctor2.{max v_J ((max w' u_I w_I) + 1) u_J,
+      max u_J w' u_I w_I,
       max u_I u_J v_I w_I w',
-      max u_I u_J v_I v_J (w_I + 1) (w' + 1)}
+      max (u_I + 1) u_J v_I v_J (w_I + 1) (w' + 1)}
 
 /--
 Total target Grothendieck for `praPolyEvalFunctor`.
 
-Objects are pairs `(J, x)` where `x : widened (Jᵒᵖ ⥤ Type w')`.
+Objects are pairs `(J, x)` where
+`x : widened (J ⥤ Type (max w' u_I w_I))`.
 Morphisms `(J₁, x₁) ⟶ (J₂, x₂)` are pairs `(f : J₁ ⟶ J₂,
 η : x₁ ⟶ (praEvalTargetFibre.map f.op).obj x₂)`, encoding the
 polynomial-functor evaluation result's natural variance on `J`
@@ -390,7 +394,7 @@ via presheaves' contravariance.
 -/
 def praPolyEvalTarget :
     Cat.{max u_I u_J v_I v_J w_I w',
-      max u_I (u_J + 1) v_I (v_J + 1) (w_I + 1) (w' + 1)} :=
+      max (u_I + 1) (u_J + 1) v_I (v_J + 1) (w_I + 1) (w' + 1)} :=
   (grothendieckContraFunctor Cat.{v_J, u_J}).obj
     praEvalTargetFibre.{u_I, v_I, u_J, v_J, w_I, w'}
 
@@ -466,6 +470,42 @@ private def praPolyEvalData_baseFib :
   map f := (GrothendieckContraFunctor.homBase f).1
   map_id _ := rfl
   map_comp _ _ := rfl
+
+/--
+Fibre functor of `praPolyEvalData` at a source-base object
+`c = ((J, I), P)`.  Sends a (widened) presheaf
+`Z : Iᵒᵖ ⥤ Type w_I` to the (widened) result presheaf
+`j ↦ ((praEvalAtFunctor I J).obj P).obj Z j` on `J`.
+-/
+private def praPolyEvalData_fibFib
+    (X : (grothendieckContraFunctor
+        (Cat.{v_J, u_J} × Cat.{v_I, u_I})).obj
+      presheafPRACatBifunctorUncurriedOp.{u_I, v_I, u_J, v_J,
+        w_I, w'}) :
+    evalSourceData.{u_I, v_I, u_J, v_J, w_I, w'}.obj
+        (Opposite.op X) ⥤
+      praEvalTargetFibre.{u_I, v_I, u_J, v_J, w_I, w'}.obj
+        (Opposite.op
+          (praPolyEvalData_baseFib.{u_I, v_I, u_J, v_J,
+            w_I, w'}.obj X)) :=
+  show CategoryTheory.ULiftHom
+      (ULift
+        ((↑(presheafCatFunctor.{u_I, v_I, w_I}.obj
+          (Opposite.op
+            (GrothendieckContraFunctor.objBase X).2)) : Type _))
+      ) ⥤ _ from
+  CategoryTheory.ULiftHom.down ⋙
+    CategoryTheory.ULift.downFunctor ⋙
+    (((Functor.whiskeringRight
+        (↑(GrothendieckContraFunctor.objBase X).1) _ _).obj
+      (ccrNewEvalCatFunctor.{max v_I u_I (w_I + 1),
+        max u_I w_I, w'}
+        (↑(presheafCatFunctor.{u_I, v_I, w_I}.obj
+          (Opposite.op
+            (GrothendieckContraFunctor.objBase X).2))))).obj
+      (GrothendieckContraFunctor.objFiber X)).flip ⋙
+    CategoryTheory.ULift.upFunctor ⋙
+    CategoryTheory.ULiftHom.up
 
 /--
 Total target Grothendieck for `praPolyDirectionsFunctor`.
