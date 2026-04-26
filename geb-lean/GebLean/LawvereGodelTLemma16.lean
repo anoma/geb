@@ -379,4 +379,337 @@ theorem GodelTTerm.bracketLevel_app_high
   unfold GodelTTerm.bracketLevelAppGen
   rw [if_neg (Nat.not_le_of_lt hi)]
 
+/-- For an application `app f a` whose head is not the bare
+iter/treeIter constant, and at level `i ≤ g(σ)` (σ the right
+argument's type): `[a]_i ≤ [app f a]_i` and
+`[f]_i ≤ [app f a]_i`. -/
+theorem GodelTTerm.bracketLevel_app_ge_arg
+    {S : Set GodelTBase} {n : Nat}
+    {σ τ : GodelTType S}
+    (f : GodelTTerm S n (.arrow σ τ))
+    (a : GodelTTerm S n σ)
+    (i : Nat) (hi : i ≤ σ.level)
+    (hNotIter : f.isIterHead = false) :
+    a.bracketLevel i ≤ (GodelTTerm.app f a).bracketLevel i ∧
+    f.bracketLevel i ≤ (GodelTTerm.app f a).bracketLevel i := by
+  rw [GodelTTerm.bracketLevel_app_eq f a i hi hNotIter]
+  have hp : 1 ≤ 2 ^ (GodelTTerm.app f a).bracketLevel (i + 1) :=
+    Nat.one_le_iff_ne_zero.mpr (by positivity)
+  refine ⟨?_, ?_⟩
+  · calc a.bracketLevel i
+        ≤ f.bracketLevel i + a.bracketLevel i := by omega
+      _ ≤ 2 ^ (GodelTTerm.app f a).bracketLevel (i + 1) *
+            (f.bracketLevel i + a.bracketLevel i) := by
+              exact Nat.le_mul_of_pos_left _ hp
+  · calc f.bracketLevel i
+        ≤ f.bracketLevel i + a.bracketLevel i := by omega
+      _ ≤ 2 ^ (GodelTTerm.app f a).bracketLevel (i + 1) *
+            (f.bracketLevel i + a.bracketLevel i) := by
+              exact Nat.le_mul_of_pos_left _ hp
+
+/-- For an application `app f a` whose head is not the bare
+iter/treeIter constant, at level `i ≤ g(σ)`, with `[f]_i ≥ 1`:
+`[a]_i < [app f a]_i`. -/
+theorem GodelTTerm.bracketLevel_app_strict_arg
+    {S : Set GodelTBase} {n : Nat}
+    {σ τ : GodelTType S}
+    (f : GodelTTerm S n (.arrow σ τ))
+    (a : GodelTTerm S n σ)
+    (i : Nat) (hi : i ≤ σ.level)
+    (hNotIter : f.isIterHead = false)
+    (hF : 1 ≤ f.bracketLevel i) :
+    a.bracketLevel i < (GodelTTerm.app f a).bracketLevel i := by
+  rw [GodelTTerm.bracketLevel_app_eq f a i hi hNotIter]
+  have hp : 1 ≤ 2 ^ (GodelTTerm.app f a).bracketLevel (i + 1) :=
+    Nat.one_le_iff_ne_zero.mpr (by positivity)
+  calc a.bracketLevel i
+      < f.bracketLevel i + a.bracketLevel i := by omega
+    _ ≤ 2 ^ (GodelTTerm.app f a).bracketLevel (i + 1) *
+          (f.bracketLevel i + a.bracketLevel i) := by
+            exact Nat.le_mul_of_pos_left _ hp
+
+/-- Beckmann-Weiermann's `≫` majorization relation
+(Definition 9): `a ≫ b` if `[a]_0 > [b]_0` and `[a]_i ≥ [b]_i`
+for all `i ≤ g(σ)` (where σ is the common type). -/
+def GodelTTerm.majorizes {S : Set GodelTBase} {n : Nat}
+    {σ : GodelTType S} (t s : GodelTTerm S n σ) : Prop :=
+  s.bracketLevel 0 < t.bracketLevel 0 ∧
+  ∀ i, i ≤ σ.level → s.bracketLevel i ≤ t.bracketLevel i
+
+/-- Beckmann-Weiermann Lemma 6: `P(0) ≫ 0`. -/
+theorem GodelTTerm.majorizes_redP_zero {S : Set GodelTBase}
+    {n : Nat} (hN : GodelTBase.nat ∈ S) :
+    GodelTTerm.majorizes
+      (.app (.pred (n := n) (S := S) hN) (.zero hN))
+      (.zero (n := n) (S := S) hN) := by
+  have hNotIter :
+      (GodelTTerm.pred (n := n) (S := S) hN).isIterHead = false := rfl
+  have hLevel :
+      (GodelTType.base GodelTBase.nat hN).level = 0 := rfl
+  have hHi : (GodelTTerm.app (.pred (n := n) (S := S) hN)
+      (.zero hN)).bracketLevel 1 = 0 := by
+    rw [GodelTTerm.bracketLevel_app_high _ _ 1
+      (by rw [hLevel]; exact Nat.zero_lt_one) hNotIter]
+    rfl
+  have hZero : (GodelTTerm.app (.pred (n := n) (S := S) hN)
+      (.zero hN)).bracketLevel 0 = 1 := by
+    rw [GodelTTerm.bracketLevel_app_eq _ _ 0
+      (by rw [hLevel]) hNotIter, hHi]
+    rfl
+  refine ⟨?_, ?_⟩
+  · rw [hZero]; exact Nat.zero_lt_one
+  · intro i _
+    rw [GodelTTerm.bracketLevel_zero]
+    exact Nat.zero_le _
+
+/-- Beckmann-Weiermann Lemma 7: `P(S^+ t) ≫ t`. -/
+theorem GodelTTerm.majorizes_redP_succ {S : Set GodelTBase}
+    {n : Nat} (hN : GodelTBase.nat ∈ S)
+    (t : GodelTTerm S n (.base .nat hN)) :
+    GodelTTerm.majorizes
+      (.app (.pred (n := n) hN) (.app (.succ hN) t)) t := by
+  have hPredNotIter :
+      (GodelTTerm.pred (n := n) (S := S) hN).isIterHead = false := rfl
+  have hSuccNotIter :
+      (GodelTTerm.succ (n := n) (S := S) hN).isIterHead = false := rfl
+  have hLevel :
+      (GodelTType.base GodelTBase.nat hN).level = 0 := rfl
+  have hSuccHi :
+      (GodelTTerm.app (.succ (n := n) hN) t).bracketLevel 1 = 0 := by
+    rw [GodelTTerm.bracketLevel_app_high _ _ 1
+      (by rw [hLevel]; exact Nat.zero_lt_one) hSuccNotIter]
+    rfl
+  have hSuccZero :
+      (GodelTTerm.app (.succ (n := n) hN) t).bracketLevel 0 =
+        1 + t.bracketLevel 0 := by
+    rw [GodelTTerm.bracketLevel_app_eq _ _ 0
+      (by rw [hLevel]) hSuccNotIter, hSuccHi]
+    change 2 ^ 0 * (1 + t.bracketLevel 0) = 1 + t.bracketLevel 0
+    simp
+  have hPredHi :
+      (GodelTTerm.app (.pred (n := n) hN)
+        (.app (.succ hN) t)).bracketLevel 1 = 0 := by
+    rw [GodelTTerm.bracketLevel_app_high _ _ 1
+      (by rw [hLevel]; exact Nat.zero_lt_one) hPredNotIter]
+    rfl
+  have hPredZero :
+      (GodelTTerm.app (.pred (n := n) hN)
+        (.app (.succ hN) t)).bracketLevel 0 =
+        1 + (1 + t.bracketLevel 0) := by
+    rw [GodelTTerm.bracketLevel_app_eq _ _ 0
+      (by rw [hLevel]) hPredNotIter, hPredHi, hSuccZero]
+    change 2 ^ 0 * (1 + (1 + t.bracketLevel 0)) = _
+    simp
+  refine ⟨?_, ?_⟩
+  · rw [hPredZero]; omega
+  · intro i hi
+    rw [hLevel] at hi
+    obtain rfl : i = 0 := Nat.le_zero.mp hi
+    rw [hPredZero]; omega
+
+/-- For an application `app f a` whose head is not the bare
+iter/treeIter constant, at level `i > g(σ)`, with
+`x.bracketLevel i ≤ f.bracketLevel i`:
+`x.bracketLevel i ≤ (app f a).bracketLevel i`. -/
+theorem GodelTTerm.bracketLevel_app_high_ge
+    {S : Set GodelTBase} {n : Nat}
+    {σ τ : GodelTType S}
+    (f : GodelTTerm S n (.arrow σ τ))
+    (a : GodelTTerm S n σ)
+    (i : Nat) (hi : σ.level < i)
+    (hNotIter : f.isIterHead = false)
+    {x : Nat} (hx : x ≤ f.bracketLevel i) :
+    x ≤ (GodelTTerm.app f a).bracketLevel i := by
+  rw [GodelTTerm.bracketLevel_app_high f a i hi hNotIter]
+  exact hx
+
+/-- Beckmann-Weiermann Lemma 8: `K_στ a b ≫ a`. -/
+theorem GodelTTerm.majorizes_redK {S : Set GodelTBase}
+    {n : Nat} (σ τ : GodelTType S)
+    (a : GodelTTerm S n σ) (b : GodelTTerm S n τ) :
+    GodelTTerm.majorizes
+      (.app (.app (.K (n := n) σ τ) a) b) a := by
+  have hKNotIter :
+      (GodelTTerm.K (n := n) (S := S) σ τ).isIterHead = false := rfl
+  have hAppKaNotIter :
+      (GodelTTerm.app (GodelTTerm.K (n := n) (S := S) σ τ) a).isIterHead =
+        false := rfl
+  have hKLevel :
+      (GodelTType.arrow σ (.arrow τ σ)).level ≥ σ.level + 1 := by
+    change max (σ.level + 1) (max (τ.level + 1) σ.level) ≥ σ.level + 1
+    omega
+  have hK_one : ∀ i, i ≤ σ.level →
+      (GodelTTerm.K (n := n) (S := S) σ τ).bracketLevel i = 1 := by
+    intro i hi
+    rw [GodelTTerm.bracketLevel_K]
+    have : i ≤ (GodelTType.arrow σ (.arrow τ σ)).level := by omega
+    rw [if_pos this]
+  refine ⟨?_, ?_⟩
+  · -- Strict at i = 0.
+    have hK0 : (GodelTTerm.K (n := n) (S := S) σ τ).bracketLevel 0 = 1 :=
+      hK_one 0 (Nat.zero_le _)
+    have hInner :
+        a.bracketLevel 0 <
+          (GodelTTerm.app (.K (n := n) σ τ) a).bracketLevel 0 := by
+      apply GodelTTerm.bracketLevel_app_strict_arg _ _ 0
+        (Nat.zero_le _) hKNotIter
+      rw [hK0]
+    -- For outer, σ_inner = τ; 0 ≤ τ.level always.
+    have hOuter :
+        (GodelTTerm.app (.K (n := n) σ τ) a).bracketLevel 0 ≤
+          (GodelTTerm.app (.app (.K (n := n) σ τ) a) b).bracketLevel 0 :=
+      ((GodelTTerm.bracketLevel_app_ge_arg _ b 0
+        (Nat.zero_le _) hAppKaNotIter).2)
+    omega
+  · intro i hi
+    have hInner :
+        a.bracketLevel i ≤
+          (GodelTTerm.app (.K (n := n) σ τ) a).bracketLevel i :=
+      ((GodelTTerm.bracketLevel_app_ge_arg _ a i hi hKNotIter).1)
+    rcases Nat.lt_or_ge τ.level i with hτ | hτ
+    · -- i > τ.level: outer pass-through.
+      exact GodelTTerm.bracketLevel_app_high_ge _ b i hτ hAppKaNotIter
+        hInner
+    · -- i ≤ τ.level: outer multiplicative.
+      have hOuter :
+          (GodelTTerm.app (.K (n := n) σ τ) a).bracketLevel i ≤
+            (GodelTTerm.app (.app (.K (n := n) σ τ) a) b).bracketLevel
+              i :=
+        ((GodelTTerm.bracketLevel_app_ge_arg _ b i hτ hAppKaNotIter).2)
+      omega
+
+/-- Beckmann-Weiermann Lemma 9: `D_σ 0 a b ≫ a`. -/
+theorem GodelTTerm.majorizes_redDisc_zero {S : Set GodelTBase}
+    {n : Nat} {hN : GodelTBase.nat ∈ S}
+    (σ : GodelTType S)
+    (a b : GodelTTerm S n σ) :
+    GodelTTerm.majorizes
+      (.app (.app (.app
+        (.disc (n := n) (h := hN) σ) (.zero hN)) a) b) a := by
+  have hDiscNotIter :
+      (GodelTTerm.disc (n := n) (S := S) (h := hN) σ).isIterHead =
+        false := rfl
+  have hAppDZ_NotIter :
+      (GodelTTerm.app (GodelTTerm.disc (n := n) (S := S)
+        (h := hN) σ) (.zero hN)).isIterHead = false := rfl
+  have hAppDZA_NotIter :
+      (GodelTTerm.app (GodelTTerm.app (GodelTTerm.disc
+        (n := n) (S := S) (h := hN) σ) (.zero hN))
+        a).isIterHead = false := rfl
+  have hNatLevel : (GodelTType.base GodelTBase.nat hN).level = 0 := rfl
+  -- Compute `[app .disc 0_]_0 ≥ 1`.
+  have hAppDZ_ge_one_zero :
+      1 ≤ (GodelTTerm.app (.disc (n := n) (h := hN) σ)
+        (.zero hN)).bracketLevel 0 := by
+    rw [GodelTTerm.bracketLevel_app_eq _ _ 0
+      (by rw [hNatLevel]) hDiscNotIter]
+    have hp : 1 ≤ 2 ^ (GodelTTerm.app (.disc (n := n) (h := hN) σ)
+        (.zero hN)).bracketLevel (0 + 1) :=
+      Nat.one_le_iff_ne_zero.mpr (by positivity)
+    have hd0 : (GodelTTerm.disc
+        (n := n) (S := S) (h := hN) σ).bracketLevel 0 = 1 := rfl
+    have hz0 : (GodelTTerm.zero (n := n) (S := S) hN).bracketLevel 0
+        = 0 := rfl
+    rw [hd0, hz0]
+    exact Nat.le_mul_of_pos_left _ hp
+  refine ⟨?_, ?_⟩
+  · -- Strict at i = 0.
+    have hMidStrict :
+        a.bracketLevel 0 <
+          (GodelTTerm.app (.app (.disc (h := hN) σ)
+            (.zero hN)) a).bracketLevel 0 := by
+      apply GodelTTerm.bracketLevel_app_strict_arg _ _ 0
+        (Nat.zero_le _) hAppDZ_NotIter
+      exact hAppDZ_ge_one_zero
+    have hOuter :
+        (GodelTTerm.app (.app (.disc (h := hN) σ)
+          (.zero hN)) a).bracketLevel 0 ≤
+          (GodelTTerm.app (.app (.app (.disc (h := hN) σ)
+            (.zero hN)) a) b).bracketLevel 0 :=
+      ((GodelTTerm.bracketLevel_app_ge_arg _ b 0
+        (Nat.zero_le _) hAppDZA_NotIter).2)
+    omega
+  · intro i hi
+    have hMid :
+        a.bracketLevel i ≤
+          (GodelTTerm.app (.app (.disc (h := hN) σ)
+            (.zero hN)) a).bracketLevel i :=
+      ((GodelTTerm.bracketLevel_app_ge_arg _ a i hi
+        hAppDZ_NotIter).1)
+    rcases Nat.lt_or_ge σ.level i with hσ | hσ
+    · exact GodelTTerm.bracketLevel_app_high_ge _ b i hσ
+        hAppDZA_NotIter hMid
+    · have hOuter :
+          (GodelTTerm.app (.app (.disc (h := hN) σ)
+            (.zero hN)) a).bracketLevel i ≤
+            (GodelTTerm.app (.app (.app (.disc (h := hN) σ)
+              (.zero hN)) a) b).bracketLevel i :=
+        ((GodelTTerm.bracketLevel_app_ge_arg _ b i hσ
+          hAppDZA_NotIter).2)
+      omega
+
+/-- Beckmann-Weiermann Lemma 10: `D_σ (S^+ t) a b ≫ b`. -/
+theorem GodelTTerm.majorizes_redDisc_succ {S : Set GodelTBase}
+    {n : Nat} {hN : GodelTBase.nat ∈ S}
+    (σ : GodelTType S)
+    (t : GodelTTerm S n (.base .nat hN))
+    (a b : GodelTTerm S n σ) :
+    GodelTTerm.majorizes
+      (.app (.app (.app
+        (.disc (n := n) (h := hN) σ)
+        (.app (.succ hN) t)) a) b) b := by
+  have hDiscNotIter :
+      (GodelTTerm.disc (n := n) (S := S) (h := hN) σ).isIterHead =
+        false := rfl
+  have hAppDS_NotIter :
+      (GodelTTerm.app (GodelTTerm.disc (n := n) (S := S)
+        (h := hN) σ) (.app (.succ hN) t)).isIterHead = false := rfl
+  have hAppDSA_NotIter :
+      (GodelTTerm.app (GodelTTerm.app (GodelTTerm.disc
+        (n := n) (S := S) (h := hN) σ) (.app (.succ hN) t))
+        a).isIterHead = false := rfl
+  have hNatLevel : (GodelTType.base GodelTBase.nat hN).level = 0 := rfl
+  -- `[app .disc (app .succ t)]_0 ≥ 1`.
+  have hAppDS_ge_one_zero :
+      1 ≤ (GodelTTerm.app (.disc (n := n) (h := hN) σ)
+        (.app (.succ hN) t)).bracketLevel 0 := by
+    rw [GodelTTerm.bracketLevel_app_eq _ _ 0
+      (by rw [hNatLevel]) hDiscNotIter]
+    have hp : 1 ≤ 2 ^ (GodelTTerm.app (.disc (n := n) (h := hN) σ)
+        (.app (.succ hN) t)).bracketLevel (0 + 1) :=
+      Nat.one_le_iff_ne_zero.mpr (by positivity)
+    have hd0 : (GodelTTerm.disc
+        (n := n) (S := S) (h := hN) σ).bracketLevel 0 = 1 := rfl
+    rw [hd0]
+    calc (1 : Nat)
+        ≤ 1 + (GodelTTerm.app (.succ hN) t).bracketLevel 0 := by omega
+      _ ≤ 2 ^ _ * (1 + (GodelTTerm.app (.succ hN) t).bracketLevel 0) :=
+          Nat.le_mul_of_pos_left _ hp
+  -- `[app (app .disc (app .succ t)) a]_0 ≥ 1`.
+  have hMid_ge_one_zero :
+      1 ≤ (GodelTTerm.app (.app (.disc (n := n) (h := hN) σ)
+        (.app (.succ hN) t)) a).bracketLevel 0 := by
+    rw [GodelTTerm.bracketLevel_app_eq _ _ 0
+      (Nat.zero_le _) hAppDS_NotIter]
+    have hp : 1 ≤ 2 ^ (GodelTTerm.app (.app (.disc (n := n) (h := hN) σ)
+        (.app (.succ hN) t)) a).bracketLevel (0 + 1) :=
+      Nat.one_le_iff_ne_zero.mpr (by positivity)
+    calc (1 : Nat)
+        ≤ (GodelTTerm.app (.disc (n := n) (h := hN) σ)
+            (.app (.succ hN) t)).bracketLevel 0 + a.bracketLevel 0 := by
+              have := hAppDS_ge_one_zero; omega
+      _ ≤ 2 ^ _ * _ := Nat.le_mul_of_pos_left _ hp
+  refine ⟨?_, ?_⟩
+  · have hStrict :
+        b.bracketLevel 0 <
+          (GodelTTerm.app (.app (.app (.disc (h := hN) σ)
+            (.app (.succ hN) t)) a) b).bracketLevel 0 := by
+      apply GodelTTerm.bracketLevel_app_strict_arg _ _ 0
+        (Nat.zero_le _) hAppDSA_NotIter
+      exact hMid_ge_one_zero
+    exact hStrict
+  · intro i hi
+    exact (GodelTTerm.bracketLevel_app_ge_arg _ b i hi
+      hAppDSA_NotIter).1
+
 end GebLean
