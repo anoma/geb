@@ -448,6 +448,22 @@ def praPolyEvalSource :
     evalSourceData.{u_I, v_I, u_J, v_J, w_I, w'}
 
 /--
+Base functor of `praPolyEvalData`.  Projects a base object
+`((J, I), P)` to its `J`-component and a base morphism `f` to its
+`J`-component `f.unop.base.unop.1`.
+-/
+private def praPolyEvalData_baseFib :
+    (grothendieckContraFunctor
+        (Cat.{v_J, u_J} × Cat.{v_I, u_I})).obj
+      presheafPRACatBifunctorUncurriedOp.{u_I, v_I, u_J, v_J,
+        w_I, w'} ⥤
+      Cat.{v_J, u_J} where
+  obj X := (GrothendieckContraFunctor.objBase X).1
+  map f := (GrothendieckContraFunctor.homBase f).1
+  map_id _ := rfl
+  map_comp _ _ := rfl
+
+/--
 Total target Grothendieck for `praPolyDirectionsFunctor`.
 
 Objects are pairs `(I, x)` where `x : (widened Iᵒᵖ ⥤ Type w_I)ᵒᵖ`.
