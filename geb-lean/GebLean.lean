@@ -52,9 +52,6 @@ import GebLean.LawvereERNatBTV2Equiv
 import GebLean.LawvereERQuot
 import GebLean.LawvereERTetration
 import GebLean.LawvereGodelT
-import GebLean.LawvereGodelTERCatEquiv
-import GebLean.LawvereGodelTInterp
-import GebLean.LawvereGodelTQuot
 import GebLean.LawvereNatBT
 import GebLean.LawvereNatBT0
 import GebLean.LawvereNatBTV2
@@ -142,7 +139,6 @@ import GebLean.Utilities.EndsAndCoends
 import GebLean.Utilities.Equalities
 import GebLean.Utilities.ERArith
 import GebLean.Utilities.ERTreeArith
-import GebLean.Utilities.GodelTBound
 import GebLean.Utilities.GodelTBracket
 import GebLean.Utilities.Families
 import GebLean.Utilities.Fintype
