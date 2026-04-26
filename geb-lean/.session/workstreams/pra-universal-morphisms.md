@@ -65,7 +65,7 @@ definitions, `FunctorToData`/`functorToDataIsoCat`,
 | ---------- | ---- | ---- |
 | `PresheafPRACat I J` | `Cat` | PRA category |
 | `praPositionsNat` | `...⥤ (Jᵒᵖ ⥤ Type w')` | Position presheaf |
-| `praPolyDirectionsFunctor` | `Source ⥤ Target` | Directions, natural in `(I, J, P)` |
+| `praPolyDirectionsFunctor` | `Src ⥤ Tgt` | Directions, `(I,J,P)`-natural |
 | `praEvalAtFunctor` | `...⥤ (PSh(I) ⥤ PSh(J))` | Evaluation |
 
 ### Grothendieck Data (Utilities/Grothendieck.lean)

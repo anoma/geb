@@ -393,7 +393,7 @@ All commits on `terence/grothendieck`.  Plan at
 | `8badaeda` | Task 7.3.5: decouple U3 target Cat universe |
 | `86712d19`, `de1de0a3` | Task 7.4: `praPolyDirectionsData_fibHomCrossApp` |
 | `2c261288` | Task 7.5: `_fibHomCrossNat_unwidened` (+ aux def) |
-| `65475a51` | Task 7.6: `_fibHomCrossNat` (widened, with `_target_widening_compat`) |
+| `65475a51` | Task 7.6: `_fibHomCrossNat` (widened, compat lemma) |
 | `abb076f3` | Task 7.7: `_baseHomId_unwidened` (`rfl` proof) |
 | `57b4cae7` | Task 7.8: `_baseHomId` (widened, three-line proof) |
 | `19457465` | Task 7.9: `_baseHomComp_unwidened` (with `_aux`) |
@@ -468,14 +468,14 @@ the top of Task 7 in the plan spells this out.
 
 | Commit | Task |
 |--------|------|
-| `a701d6c5` | Phase-1 of 12: rename `praPositionsPresheaf` → `praPositionsUnwidened` everywhere |
-| `772e1c0a` | Phase-2 of 12: rewrite `praDirectionsAt` body via `(ccrNewFamilyFunctor _).obj ((elementsPrecomp P).obj ⟨j, a⟩).unop` (rfl-equivalent) |
-| `7cdea116` | Task 13: inline the ~10 `praDirectionsAtFunctor*` references in `PresheafPRAUMorph.lean` |
-| `15497454` | Task 14: delete `praPositionsPresheaf`, `praDirectionsAtFunctor`, `praDirectionsAtFunctorOp` |
-| `d82bd25d` | Task 15: thread `P` through `praPositions`/`praDirectionsAt` instead of section variable |
+| `a701d6c5` | Task 12a: `praPositionsPresheaf` → `praPositionsUnwidened` |
+| `772e1c0a` | Task 12b: rewrite `praDirectionsAt` body (rfl-equivalent) |
+| `7cdea116` | Task 13: inline `praDirectionsAtFunctor*` in `PresheafPRAUMorph` |
+| `15497454` | Task 14: delete the three old definitions |
+| `d82bd25d` | Task 15: thread `P` through accessors; drop section variable |
 | `ffab612d` | Task 16: type-signature sanity tests |
 | `7665fead` | Task 17: register `PresheafPRADirNat.lean` |
-| `1674aa5f` | Task 18: bridge-lemma collapse tests (un-privates `praPolyDirectionsData` for test access) |
+| `1674aa5f` | Task 18: bridge-lemma collapse tests (un-privates `…Data`) |
 | `cc3a397e` | Task 19: pointwise-accessor compatibility tests |
 | `c66ec987` | Task 20: functoriality tests |
 | `3b23d7cb` | Task 21: universe-polymorphism tests |
