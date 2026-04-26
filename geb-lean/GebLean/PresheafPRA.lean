@@ -357,6 +357,25 @@ def praDirectionsTargetFibre :
       max u_I u_J v_I v_J (w_I + 1) (w' + 1)}
 
 /--
+Per-`J` target fibre for `praPolyEvalTarget`.  Three-stage
+pipeline `presheafCatFunctor ⋙ catULiftFunctor2 ⋙ Cat.opFunctor`,
+mirroring `praDirectionsTargetFibre`.  Sends each `J : Cat`
+(passed via `Catᵒᵖ`) to the universe-widened `op (Jᵒᵖ ⥤ Type w')`
+Cat — the codomain Cat for the polynomial-functor evaluation
+result presheaf.
+-/
+def praEvalTargetFibre :
+    Cat.{v_J, u_J}ᵒᵖ ⥤
+      Cat.{max u_I u_J v_I w_I w',
+        max u_I u_J v_I v_J (w_I + 1) (w' + 1)} :=
+  presheafCatFunctor.{u_J, v_J, w'} ⋙
+    catULiftFunctor2.{max v_J (w' + 1) u_J, max u_J w',
+      max u_I u_J v_I w_I w',
+      max u_I u_J v_I v_J (w_I + 1) (w' + 1)} ⋙
+    Cat.opFunctor.{max u_I u_J v_I w_I w',
+      max u_I u_J v_I v_J (w_I + 1) (w' + 1)}
+
+/--
 Total target Grothendieck for `praPolyDirectionsFunctor`.
 
 Objects are pairs `(I, x)` where `x : (widened Iᵒᵖ ⥤ Type w_I)ᵒᵖ`.
