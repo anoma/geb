@@ -867,7 +867,7 @@ private lemma praPolyDirectionsData_baseHomId
   rw [praPolyDirectionsData_baseHomId_unwidened]
   rw [eqToHom_map]
 
-set_option maxHeartbeats 800000 in
+set_option maxHeartbeats 400000 in
 -- Increased to accommodate the deep universe-polymorphic unfolding chain
 -- through the contraGrothendieck composition definitionally exposing
 -- `homFiber f ≫ ((F.map (homBase f).op).toFunctor.map (homFiber g))`.
@@ -931,7 +931,7 @@ private def praPolyDirectionsData_baseHomComp_unwidened_aux
         (GrothendieckContraFunctor.homFiber g)).app
     e.fst, rfl⟩
 
-set_option maxHeartbeats 800000 in
+set_option maxHeartbeats 400000 in
 -- Increased to accommodate the deep universe-polymorphic unfolding chain
 -- through the contraGrothendieck composition definitionally exposing
 -- `homFiber f ≫ ((F.map (homBase f).op).toFunctor.map (homFiber g))`.
