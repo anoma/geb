@@ -1263,6 +1263,29 @@ def praDirectionsAt
       (↑(presheafCat.{u_I, v_I, w_I} I))).obj
     ((CategoryTheory.elementsPrecomp P).obj ⟨j, a⟩)).unop
 
+/--
+Build a `praPolyDirectionsSource` object from a per-component
+`(I, J, P, j, a)` triple.  Public packaging: callers can apply
+`praPolyDirectionsFunctor` to this object to obtain the directions
+presheaf in the natural-functor form.
+-/
+def praPolyDirectionsAtSourceObj
+    (P : PresheafPRACat.{u_I, v_I, u_J, v_J, w_I, w'} I J)
+    (j : Jᵒᵖ) (a : praPositions I J P j) :
+    praPolyDirectionsSource.{u_I, v_I, u_J, v_J, w_I, w'} :=
+  let base : (grothendieckContraFunctor
+      (Cat.{v_J, u_J} × Cat.{v_I, u_I})).obj
+        presheafPRACatBifunctorUncurriedOp.{u_I, v_I, u_J, v_J,
+          w_I, w'} :=
+    GrothendieckContraFunctor.mkObj (Cat.of Jᵒᵖ, Cat.of Iᵒᵖ) P
+  ⟨base,
+    (show CategoryTheory.ULiftHom.{max u_I u_J w_I w'}
+        (ULift.{max u_I u_J v_I v_J (w_I + 1) (w' + 1), max u_J w'}
+          ((P ⋙ ccrNewIndexFunctor.{max v_I u_I (w_I + 1),
+              max u_I w_I, w'}
+              (↑(presheafCat.{u_I, v_I, w_I} I))).Elements)) from
+      CategoryTheory.ULiftHom.objUp (ULift.up ⟨j, a⟩))⟩
+
 end PresheafPRAAccessors
 
 /-! ## Pointwise Evaluation -/
