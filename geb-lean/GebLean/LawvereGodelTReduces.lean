@@ -117,4 +117,33 @@ theorem GodelTTerm.Reduces.toStar {S : Set GodelTBase}
     Reduces.Star t u :=
   .step h (.refl _)
 
+/-- Equivalence closure of `▷`: smallest equivalence relation
+containing the one-step reduction. -/
+inductive GodelTTerm.Reduces.Equiv {S : Set GodelTBase}
+    {n : Nat} :
+    {σ : GodelTType S} →
+    GodelTTerm S n σ → GodelTTerm S n σ → Prop
+  | refl {σ : GodelTType S} (t : GodelTTerm S n σ) :
+      Equiv t t
+  | base_fwd {σ : GodelTType S}
+      {t u : GodelTTerm S n σ} (r : t.Reduces u) :
+      Equiv t u
+  | base_bwd {σ : GodelTType S}
+      {t u : GodelTTerm S n σ} (r : t.Reduces u) :
+      Equiv u t
+  | trans {σ : GodelTType S}
+      {t u v : GodelTTerm S n σ}
+      (h₁ : Equiv t u) (h₂ : Equiv u v) :
+      Equiv t v
+
+theorem GodelTTerm.Reduces.Equiv.symm {S : Set GodelTBase}
+    {n : Nat} {σ : GodelTType S}
+    {t u : GodelTTerm S n σ} (h : Equiv t u) :
+    Equiv u t := by
+  induction h with
+  | refl _ => exact .refl _
+  | base_fwd r => exact .base_bwd r
+  | base_bwd r => exact .base_fwd r
+  | trans _ _ ih₁ ih₂ => exact .trans ih₂ ih₁
+
 end GebLean
