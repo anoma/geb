@@ -818,4 +818,76 @@ theorem GodelTTerm.bracketLevel_high_zero {S : Set GodelTBase}
         rw [GodelTTerm.bracketLevel_app_high f a i (by omega) hNotIter]
         exact ihf hGf
 
+/-- Beckmann-Weiermann for the binary-tree extension:
+`treeIter σ leaf a b ≫ a`. -/
+theorem GodelTTerm.majorizes_redTreeIter_leaf
+    {S : Set GodelTBase} {n : Nat}
+    (hT : GodelTBase.tree ∈ S) (σ : GodelTType S)
+    (a : GodelTTerm S n σ)
+    (b : GodelTTerm S n (.arrow σ (.arrow σ σ))) :
+    GodelTTerm.majorizes
+      (.app (.app (.app (.treeIter (n := n) hT σ)
+        (.leaf hT)) a) b) a := by
+  have hhead'NotIter :
+      (GodelTTerm.app (GodelTTerm.treeIter (S := S) (n := n) hT σ)
+        (GodelTTerm.leaf hT)).isIterHead = false := rfl
+  have hheadNotIter :
+      (GodelTTerm.app (GodelTTerm.app (GodelTTerm.treeIter
+        (S := S) (n := n) hT σ) (GodelTTerm.leaf hT))
+        a).isIterHead = false := rfl
+  have hhead'_ge_one :
+      1 ≤ (GodelTTerm.app (GodelTTerm.treeIter
+        (S := S) (n := n) hT σ)
+        (GodelTTerm.leaf hT)).bracketLevel 0 := by
+    rw [GodelTTerm.bracketLevel_app_treeIter_zero]
+    rfl
+  refine ⟨?_, ?_⟩
+  · have hMid :
+        a.bracketLevel 0 <
+          (GodelTTerm.app (GodelTTerm.app (GodelTTerm.treeIter
+            (S := S) (n := n) hT σ) (GodelTTerm.leaf hT))
+            a).bracketLevel 0 := by
+      apply GodelTTerm.bracketLevel_app_strict_arg _ _ 0
+        (Nat.zero_le _) hhead'NotIter
+      exact hhead'_ge_one
+    have hOuter :
+        (GodelTTerm.app (GodelTTerm.app (GodelTTerm.treeIter
+          (S := S) (n := n) hT σ) (GodelTTerm.leaf hT))
+          a).bracketLevel 0 ≤
+          (GodelTTerm.app (GodelTTerm.app (GodelTTerm.app
+            (GodelTTerm.treeIter (S := S) (n := n) hT σ)
+            (GodelTTerm.leaf hT)) a) b).bracketLevel 0 :=
+      ((GodelTTerm.bracketLevel_app_ge_arg _ b 0
+        (Nat.zero_le _) hheadNotIter).2)
+    omega
+  · intro i hi
+    have hMid :
+        a.bracketLevel i ≤
+          (GodelTTerm.app (GodelTTerm.app (GodelTTerm.treeIter
+            (S := S) (n := n) hT σ) (GodelTTerm.leaf hT))
+            a).bracketLevel i :=
+      ((GodelTTerm.bracketLevel_app_ge_arg _ a i hi
+        hhead'NotIter).1)
+    rcases Nat.lt_or_ge (σ.level + 1) i with hσ | hσ
+    · have hσb :
+          (GodelTType.arrow σ (.arrow σ σ)).level < i := by
+        change max (σ.level + 1) (max (σ.level + 1) σ.level) < i
+        omega
+      exact GodelTTerm.bracketLevel_app_high_ge _ b i hσb
+        hheadNotIter hMid
+    · have hσb :
+          i ≤ (GodelTType.arrow σ (.arrow σ σ)).level := by
+        change i ≤ max (σ.level + 1) (max (σ.level + 1) σ.level)
+        omega
+      have hOuter :
+          (GodelTTerm.app (GodelTTerm.app (GodelTTerm.treeIter
+            (S := S) (n := n) hT σ) (GodelTTerm.leaf hT))
+            a).bracketLevel i ≤
+            (GodelTTerm.app (GodelTTerm.app (GodelTTerm.app
+              (GodelTTerm.treeIter (S := S) (n := n) hT σ)
+              (GodelTTerm.leaf hT)) a) b).bracketLevel i :=
+        ((GodelTTerm.bracketLevel_app_ge_arg _ b i hσb
+          hheadNotIter).2)
+      omega
+
 end GebLean
