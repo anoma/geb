@@ -1346,9 +1346,12 @@ files include the `GodelTTerm` infrastructure, Lemma 16's
 tower bound, the categorical Lawvere theory of ER, and the
 Szudzik-coded tree extension.
 
-**Execution.**  An implementation plan derived from the design
-spec is the next item after the spec is approved.  See the
-resume prompt below.
+**Execution.**  Implementation plan saved at
+`docs/superpowers/plans/2026-04-25-lawvere-godelt-typed-rebuild.md`
+(local, gitignored).  Tasks are tracked as #188 through #200
+covering stages α-ν.  Use
+`superpowers:subagent-driven-development` (recommended) or
+`superpowers:executing-plans` to drive execution.
 
 **Task 14.5-extended (deferred)**: BT-only adequacy research
 — proving that the unlabeled-BT + 0-way-ℕ-product subfragment
