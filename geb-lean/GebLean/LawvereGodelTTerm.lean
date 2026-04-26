@@ -31,34 +31,35 @@ inductive GodelTTerm (S : Set GodelTBase) :
       (f : GodelTTerm S n (.arrow σ τ))
       (a : GodelTTerm S n σ) :
       GodelTTerm S n τ
-  | zero (h : GodelTBase.nat ∈ S) :
-      GodelTTerm S 0 (.base .nat h)
-  | succ (h : GodelTBase.nat ∈ S) :
-      GodelTTerm S 0 (.arrow (.base .nat h) (.base .nat h))
-  | pred (h : GodelTBase.nat ∈ S) :
-      GodelTTerm S 0 (.arrow (.base .nat h) (.base .nat h))
-  | K (σ τ : GodelTType S) :
-      GodelTTerm S 0 (.arrow σ (.arrow τ σ))
-  | S_comb (ρ σ τ : GodelTType S) :
-      GodelTTerm S 0
+  | zero {n : Nat} (h : GodelTBase.nat ∈ S) :
+      GodelTTerm S n (.base .nat h)
+  | succ {n : Nat} (h : GodelTBase.nat ∈ S) :
+      GodelTTerm S n (.arrow (.base .nat h) (.base .nat h))
+  | pred {n : Nat} (h : GodelTBase.nat ∈ S) :
+      GodelTTerm S n (.arrow (.base .nat h) (.base .nat h))
+  | K {n : Nat} (σ τ : GodelTType S) :
+      GodelTTerm S n (.arrow σ (.arrow τ σ))
+  | S_comb {n : Nat} (ρ σ τ : GodelTType S) :
+      GodelTTerm S n
         (.arrow (.arrow ρ (.arrow σ τ))
           (.arrow (.arrow ρ σ) (.arrow ρ τ)))
-  | disc {h : GodelTBase.nat ∈ S} (σ : GodelTType S) :
-      GodelTTerm S 0
+  | disc {n : Nat} {h : GodelTBase.nat ∈ S} (σ : GodelTType S) :
+      GodelTTerm S n
         (.arrow (.base .nat h) (.arrow σ (.arrow σ σ)))
-  | iter (h : GodelTBase.nat ∈ S) :
-      GodelTTerm S 0
+  | iter {n : Nat} (h : GodelTBase.nat ∈ S) :
+      GodelTTerm S n
         (.arrow (.base .nat h)
           (.arrow (.arrow (.base .nat h) (.base .nat h))
             (.arrow (.base .nat h) (.base .nat h))))
-  | leaf (h : GodelTBase.tree ∈ S) :
-      GodelTTerm S 0 (.base .tree h)
-  | node (h : GodelTBase.tree ∈ S) :
-      GodelTTerm S 0
+  | leaf {n : Nat} (h : GodelTBase.tree ∈ S) :
+      GodelTTerm S n (.base .tree h)
+  | node {n : Nat} (h : GodelTBase.tree ∈ S) :
+      GodelTTerm S n
         (.arrow (.base .tree h)
           (.arrow (.base .tree h) (.base .tree h)))
-  | treeIter (h : GodelTBase.tree ∈ S) (σ : GodelTType S) :
-      GodelTTerm S 0
+  | treeIter {n : Nat} (h : GodelTBase.tree ∈ S)
+      (σ : GodelTType S) :
+      GodelTTerm S n
         (.arrow (.base .tree h)
           (.arrow σ (.arrow (.arrow σ (.arrow σ σ)) σ)))
 
@@ -113,7 +114,8 @@ def GodelTTerm.interp {S : Set GodelTBase} :
 @[simp] theorem GodelTTerm.interp_var
     {S : Set GodelTBase} {n : Nat} (i : Fin n)
     (h : GodelTBase.nat ∈ S) (env : Fin n → Nat) :
-    (GodelTTerm.var (S := S) i h).interp env = env i := rfl
+    (GodelTTerm.var (S := S) i h).interp env = env i := by
+  simp [GodelTTerm.interp]
 
 @[simp] theorem GodelTTerm.interp_app
     {S : Set GodelTBase} {n : Nat}
@@ -121,66 +123,80 @@ def GodelTTerm.interp {S : Set GodelTBase} :
     (f : GodelTTerm S n (.arrow σ τ))
     (a : GodelTTerm S n σ) (env : Fin n → Nat) :
     (GodelTTerm.app f a).interp env =
-      f.interp env (a.interp env) := rfl
+      f.interp env (a.interp env) := by
+  simp [GodelTTerm.interp]
 
 @[simp] theorem GodelTTerm.interp_zero
-    {S : Set GodelTBase} (h : GodelTBase.nat ∈ S)
-    (env : Fin 0 → Nat) :
-    (GodelTTerm.zero (S := S) h).interp env = 0 := rfl
+    {S : Set GodelTBase} {n : Nat} (h : GodelTBase.nat ∈ S)
+    (env : Fin n → Nat) :
+    (GodelTTerm.zero (S := S) (n := n) h).interp env = 0 := by
+  simp [GodelTTerm.interp]
 
 @[simp] theorem GodelTTerm.interp_succ
-    {S : Set GodelTBase} (h : GodelTBase.nat ∈ S)
-    (env : Fin 0 → Nat) :
-    (GodelTTerm.succ (S := S) h).interp env = Nat.succ := rfl
+    {S : Set GodelTBase} {n : Nat} (h : GodelTBase.nat ∈ S)
+    (env : Fin n → Nat) :
+    (GodelTTerm.succ (S := S) (n := n) h).interp env =
+      Nat.succ := by
+  simp [GodelTTerm.interp]
 
 @[simp] theorem GodelTTerm.interp_pred
-    {S : Set GodelTBase} (h : GodelTBase.nat ∈ S)
-    (env : Fin 0 → Nat) :
-    (GodelTTerm.pred (S := S) h).interp env = Nat.pred := rfl
+    {S : Set GodelTBase} {n : Nat} (h : GodelTBase.nat ∈ S)
+    (env : Fin n → Nat) :
+    (GodelTTerm.pred (S := S) (n := n) h).interp env =
+      Nat.pred := by
+  simp [GodelTTerm.interp]
 
 @[simp] theorem GodelTTerm.interp_K
-    {S : Set GodelTBase} (σ τ : GodelTType S)
-    (env : Fin 0 → Nat) :
-    (GodelTTerm.K (S := S) σ τ).interp env =
-      (fun a _ => a) := rfl
+    {S : Set GodelTBase} {n : Nat} (σ τ : GodelTType S)
+    (env : Fin n → Nat) :
+    (GodelTTerm.K (S := S) (n := n) σ τ).interp env =
+      (fun a _ => a) := by
+  simp [GodelTTerm.interp]
 
 @[simp] theorem GodelTTerm.interp_S_comb
-    {S : Set GodelTBase} (ρ σ τ : GodelTType S)
-    (env : Fin 0 → Nat) :
-    (GodelTTerm.S_comb (S := S) ρ σ τ).interp env =
-      (fun f g x => f x (g x)) := rfl
+    {S : Set GodelTBase} {n : Nat} (ρ σ τ : GodelTType S)
+    (env : Fin n → Nat) :
+    (GodelTTerm.S_comb (S := S) (n := n) ρ σ τ).interp env =
+      (fun f g x => f x (g x)) := by
+  simp [GodelTTerm.interp]
 
 @[simp] theorem GodelTTerm.interp_disc
-    {S : Set GodelTBase} {h : GodelTBase.nat ∈ S}
-    (σ : GodelTType S) (env : Fin 0 → Nat) :
-    (GodelTTerm.disc (S := S) (h := h) σ).interp env =
+    {S : Set GodelTBase} {n : Nat} {h : GodelTBase.nat ∈ S}
+    (σ : GodelTType S) (env : Fin n → Nat) :
+    (GodelTTerm.disc (S := S) (n := n) (h := h) σ).interp env =
       (fun n a b => match n with
         | 0 => a
-        | _ + 1 => b) := rfl
+        | _ + 1 => b) := by
+  simp [GodelTTerm.interp]
 
 @[simp] theorem GodelTTerm.interp_iter
-    {S : Set GodelTBase} (h : GodelTBase.nat ∈ S)
-    (env : Fin 0 → Nat) :
-    (GodelTTerm.iter (S := S) h).interp env =
+    {S : Set GodelTBase} {n : Nat} (h : GodelTBase.nat ∈ S)
+    (env : Fin n → Nat) :
+    (GodelTTerm.iter (S := S) (n := n) h).interp env =
       (fun count step base =>
-        Nat.rec base (fun _ prev => step prev) count) := rfl
+        Nat.rec base (fun _ prev => step prev) count) := by
+  simp [GodelTTerm.interp]
 
 @[simp] theorem GodelTTerm.interp_leaf
-    {S : Set GodelTBase} (h : GodelTBase.tree ∈ S)
-    (env : Fin 0 → Nat) :
-    (GodelTTerm.leaf (S := S) h).interp env =
-      BTL.leaf 0 := rfl
+    {S : Set GodelTBase} {n : Nat} (h : GodelTBase.tree ∈ S)
+    (env : Fin n → Nat) :
+    (GodelTTerm.leaf (S := S) (n := n) h).interp env =
+      BTL.leaf 0 := by
+  simp [GodelTTerm.interp]
 
 @[simp] theorem GodelTTerm.interp_node
-    {S : Set GodelTBase} (h : GodelTBase.tree ∈ S)
-    (env : Fin 0 → Nat) :
-    (GodelTTerm.node (S := S) h).interp env = BTL.node := rfl
+    {S : Set GodelTBase} {n : Nat} (h : GodelTBase.tree ∈ S)
+    (env : Fin n → Nat) :
+    (GodelTTerm.node (S := S) (n := n) h).interp env =
+      BTL.node := by
+  simp [GodelTTerm.interp]
 
 @[simp] theorem GodelTTerm.interp_treeIter
-    {S : Set GodelTBase} (h : GodelTBase.tree ∈ S)
-    (σ : GodelTType S) (env : Fin 0 → Nat) :
-    (GodelTTerm.treeIter (S := S) h σ).interp env =
+    {S : Set GodelTBase} {n : Nat} (h : GodelTBase.tree ∈ S)
+    (σ : GodelTType S) (env : Fin n → Nat) :
+    (GodelTTerm.treeIter (S := S) (n := n) h σ).interp env =
       (fun t base step =>
-        GodelTTerm.btlIter base step t) := rfl
+        GodelTTerm.btlIter base step t) := by
+  simp [GodelTTerm.interp]
 
 end GebLean
