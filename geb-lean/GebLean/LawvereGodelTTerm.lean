@@ -220,4 +220,43 @@ def GodelTTerm.subst {S : Set GodelTBase}
   | _, _, .node h       => .node h
   | _, _, .treeIter h σ => .treeIter h σ
 
+theorem GodelTTerm.interp_subst {S : Set GodelTBase}
+    (hN : GodelTBase.nat ∈ S) {n m : Nat}
+    (ε : Fin n → GodelTTerm S m (.base .nat hN))
+    {σ : GodelTType S} (t : GodelTTerm S n σ)
+    (env : Fin m → Nat) :
+    (t.subst hN ε).interp env =
+      t.interp (fun i => (ε i).interp env) := by
+  induction t with
+  | var i h => simp [GodelTTerm.subst]
+  | app f a ih_f ih_a => simp [GodelTTerm.subst, ih_f, ih_a]
+  | zero h => simp [GodelTTerm.subst]
+  | succ h => simp [GodelTTerm.subst]
+  | pred h => simp [GodelTTerm.subst]
+  | K σ τ => simp [GodelTTerm.subst]
+  | S_comb ρ σ τ => simp [GodelTTerm.subst]
+  | disc σ => simp [GodelTTerm.subst]
+  | iter h => simp [GodelTTerm.subst]
+  | leaf h => simp [GodelTTerm.subst]
+  | node h => simp [GodelTTerm.subst]
+  | treeIter h σ => simp [GodelTTerm.subst]
+
+theorem GodelTTerm.subst_var {S : Set GodelTBase}
+    (hN : GodelTBase.nat ∈ S) {n : Nat}
+    {σ : GodelTType S} (t : GodelTTerm S n σ) :
+    t.subst hN (fun i => .var i hN) = t := by
+  induction t with
+  | var i h => simp [GodelTTerm.subst]
+  | app f a ih_f ih_a => simp [GodelTTerm.subst, ih_f, ih_a]
+  | zero h => simp [GodelTTerm.subst]
+  | succ h => simp [GodelTTerm.subst]
+  | pred h => simp [GodelTTerm.subst]
+  | K σ τ => simp [GodelTTerm.subst]
+  | S_comb ρ σ τ => simp [GodelTTerm.subst]
+  | disc σ => simp [GodelTTerm.subst]
+  | iter h => simp [GodelTTerm.subst]
+  | leaf h => simp [GodelTTerm.subst]
+  | node h => simp [GodelTTerm.subst]
+  | treeIter h σ => simp [GodelTTerm.subst]
+
 end GebLean
