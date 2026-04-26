@@ -480,6 +480,20 @@ the top of Task 7 in the plan spells this out.
 | `c66ec987` | Task 20: functoriality tests |
 | `3b23d7cb` | Task 21: universe-polymorphism tests |
 
+**Follow-ups (committed 2026-04-25):**
+
+| Commit | Follow-up |
+|--------|-----------|
+| `b576efe3` | Tighten `maxHeartbeats` to 400000 (Task 7.9 helpers) |
+| `23020778` | Refactor `catULiftFunctor` as `catULiftFunctor2` specialization |
+| `f80c2523` | Narrow `uliftCategory` scope to `PresheafPRAAccessors` |
+| `ed74a7ff` | Add public `praPolyDirectionsAtSourceObj` helper |
+| `b9daaca3` | Add `@[simp] praDirectionsAt_via_praPolyDirectionsFunctor` |
+
+The bridge theorem closed by `rfl` — required explicit universe
+annotations on `ULift.down` and `ULiftHom.objDown` to avoid
+metavariables.
+
 **Proof-engineering lessons accumulated across the workstream
 (preserve across sessions):**
 
