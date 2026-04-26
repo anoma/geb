@@ -74,6 +74,47 @@ def GodelTTerm.G {S : Set GodelTBase} {n : Nat} {σ : GodelTType S}
   | .node _       => σ.level
   | .treeIter _ _ => σ.level
 
+/-- The head of an application is the bare `iter` or
+`treeIter` constant.  Used to dispatch between rules 10-13
+(iter-form) and rules 14-15 (general `app`) of
+Beckmann-Weiermann Definition 8. -/
+def GodelTTerm.isIterHead {S : Set GodelTBase}
+    {n : Nat} {σ : GodelTType S} :
+    GodelTTerm S n σ → Bool
+  | .iter _ => true
+  | .treeIter _ _ => true
+  | _ => false
+
+/-- Bracket measure for a general application `app f a`,
+parameterized by the recursive bracketLevel of subterms.
+Used as the rule-14/15 case of `bracketLevel` when `f` is not
+the bare iter/treeIter constant.  When `i ≤ σ.level`, computed
+via downward `Nat.rec` iteration from `σ.level + 1` to `i`,
+matching Beckmann-Weiermann Definition 8 case 14.  When
+`i > σ.level`, returns `bf i` (rule 15). -/
+def GodelTTerm.bracketLevelAppGen (g : Nat) (i : Nat)
+    (bf : Nat → Nat) (ba : Nat → Nat) : Nat :=
+  if i ≤ g then
+    Nat.rec (motive := fun _ => Nat) (bf (g + 1))
+      (fun k prev =>
+        2 ^ prev * (bf (g - k) + ba (g - k)))
+      (g + 1 - i)
+  else
+    bf i
+
+/-- Bracket measure for an iter-form application
+`app (iter _) t` (rules 10-13 of Beckmann-Weiermann
+Definition 8).  Since the iterated type ρ is base `nat` with
+`g(ρ) = 0`, the case dispatch on `i` collapses to four
+discrete cases. -/
+def GodelTTerm.bracketLevelAppIter (i : Nat) (bt : Nat) :
+    Nat :=
+  match i with
+  | 0 => bt
+  | 1 => 1
+  | 2 => bt
+  | _ + 3 => 0
+
 /-- Bracket measure `[·]_i` from Beckmann-Weiermann Definition 8
 (pp. 480-481).  Each term-and-level pair receives a natural
 number used in the proof of Lemma 16's tower bound.
@@ -83,17 +124,10 @@ else `0`.  In the typed encoding `K`, `S_comb`, `iter`, `leaf`,
 `node`, and `treeIter` are all combinators in this sense.
 
 Iter applied to its first (numeral-shaped) argument (rules
-10-13): the iterated type `ρ` is always a base type (`nat` for
-`iter`, `tree` for `treeIter`), so `g(ρ) = 0` and the case
-dispatch on `i` collapses to: `i = 0 → [t]_0`; `i = 1 → 1`;
-`i = 2 → [t]_0`; `i ≥ 3 → 0`.
-
-General application (rules 14-15): if the head is not an
-iter-form, branch on whether `i ≤ g(σ)` (where σ is the right
-argument's type).  Rule 14 (`i ≤ g(σ)`) refers to `[ab]_{i+1}`
-itself; this is realized as a downward iteration from `g(σ)`
-to `i` with seed `[a]_{g(σ)+1}` (rule 15 at the boundary).
-Rule 15 (`i > g(σ)`) returns `[a]_i`. -/
+10-13) is delegated to `bracketLevelAppIter`; general
+applications (rules 14-15) are delegated to
+`bracketLevelAppGen`.  The iter-vs-general dispatch is
+performed by `isIterHead`. -/
 def GodelTTerm.bracketLevel {S : Set GodelTBase} {n : Nat}
     {σ : GodelTType S}
     (t : GodelTTerm S n σ) (i : Nat) : Nat :=
@@ -112,24 +146,12 @@ def GodelTTerm.bracketLevel {S : Set GodelTBase} {n : Nat}
   | .leaf _, i => if i ≤ σ.level then 1 else 0
   | .node _, i => if i ≤ σ.level then 1 else 0
   | .treeIter _ _, i => if i ≤ σ.level then 1 else 0
-  | .app (.iter _) t, 0 => t.bracketLevel 0
-  | .app (.iter _) _, 1 => 1
-  | .app (.iter _) t, 2 => t.bracketLevel 0
-  | .app (.iter _) _, _ + 3 => 0
-  | .app (.treeIter _ _) t, 0 => t.bracketLevel 0
-  | .app (.treeIter _ _) _, 1 => 1
-  | .app (.treeIter _ _) t, 2 => t.bracketLevel 0
-  | .app (.treeIter _ _) _, _ + 3 => 0
   | .app (σ := σ_inner) f a, i =>
-      let g := σ_inner.level
-      if i ≤ g then
-        Nat.rec (motive := fun _ => Nat) (f.bracketLevel (g + 1))
-          (fun k prev =>
-            2 ^ prev * (f.bracketLevel (g - k) +
-              a.bracketLevel (g - k)))
-          (g + 1 - i)
+      if f.isIterHead then
+        GodelTTerm.bracketLevelAppIter i (a.bracketLevel 0)
       else
-        f.bracketLevel i
+        GodelTTerm.bracketLevelAppGen σ_inner.level i
+          f.bracketLevel a.bracketLevel
 
 @[simp] theorem GodelTTerm.bracketLevel_var
     {S : Set GodelTBase} {n : Nat} (i : Fin n)
@@ -271,5 +293,90 @@ def GodelTTerm.bracketLevel {S : Set GodelTBase} {n : Nat}
     (k : Nat) :
     (GodelTTerm.app (GodelTTerm.treeIter h σ) t).bracketLevel
       (k + 3) = 0 := rfl
+
+/-- For an application whose head is not the bare iter or
+treeIter constant, `bracketLevel` reduces to
+`bracketLevelAppGen`, which directly encodes Beckmann-Weiermann
+Definition 8 cases 14-15. -/
+theorem GodelTTerm.bracketLevel_app_of_not_iter
+    {S : Set GodelTBase} {n : Nat}
+    {σ τ : GodelTType S}
+    (f : GodelTTerm S n (.arrow σ τ))
+    (a : GodelTTerm S n σ)
+    (i : Nat)
+    (hNotIter : f.isIterHead = false) :
+    (GodelTTerm.app f a).bracketLevel i =
+      GodelTTerm.bracketLevelAppGen σ.level i
+        f.bracketLevel a.bracketLevel := by
+  change (if f.isIterHead then _ else _) = _
+  rw [hNotIter]
+  rfl
+
+/-- Beckmann-Weiermann Lemma 5.1 (multiplicative form).
+For an application `app f a` whose head `f` is not the bare
+iter/treeIter constant, and at level `i ≤ g(σ)` (where σ is
+the type of the right argument):
+
+  [app f a]_i = 2^[app f a]_{i+1} * ([f]_i + [a]_i).
+
+This is paper-faithful equality: our `bracketLevel`'s internal
+`Nat.rec` downward iteration unfolds to this form when the
+threshold check `i ≤ σ.level` succeeds. -/
+theorem GodelTTerm.bracketLevel_app_eq
+    {S : Set GodelTBase} {n : Nat}
+    {σ τ : GodelTType S}
+    (f : GodelTTerm S n (.arrow σ τ))
+    (a : GodelTTerm S n σ)
+    (i : Nat) (hi : i ≤ σ.level)
+    (hNotIter : f.isIterHead = false) :
+    (GodelTTerm.app f a).bracketLevel i =
+      2 ^ (GodelTTerm.app f a).bracketLevel (i + 1) *
+        (f.bracketLevel i + a.bracketLevel i) := by
+  rw [GodelTTerm.bracketLevel_app_of_not_iter f a i hNotIter,
+      GodelTTerm.bracketLevel_app_of_not_iter f a (i + 1)
+        hNotIter]
+  unfold GodelTTerm.bracketLevelAppGen
+  rw [if_pos hi]
+  have hsucc : σ.level + 1 - i = (σ.level - i) + 1 := by
+    omega
+  rw [hsucc]
+  rcases Nat.lt_or_ge (i + 1) (σ.level + 1) with hi1 | hi1
+  · have hi1' : i + 1 ≤ σ.level := Nat.lt_succ_iff.mp hi1
+    rw [if_pos hi1']
+    have hsub : σ.level + 1 - (i + 1) = σ.level - i := by
+      omega
+    rw [hsub]
+    have hg : σ.level - (σ.level - i) = i := by omega
+    simp only [hg]
+  · have hi1' : ¬ i + 1 ≤ σ.level := by omega
+    rw [if_neg hi1']
+    have hi_eq : i = σ.level := by omega
+    have hsubz : σ.level - i = 0 := by omega
+    rw [hsubz]
+    change 2 ^ f.bracketLevel (σ.level + 1) *
+        (f.bracketLevel (σ.level - 0) +
+          a.bracketLevel (σ.level - 0)) = _
+    have hgz : σ.level - 0 = σ.level := by omega
+    rw [hgz, hi_eq]
+
+/-- Beckmann-Weiermann Lemma 5.2 (pass-through form).
+For an application `app f a` whose head `f` is not the bare
+iter/treeIter constant, and at level `i > g(σ)`:
+
+  [app f a]_i = [f]_i.
+
+This is rule 15 of Beckmann-Weiermann Definition 8. -/
+theorem GodelTTerm.bracketLevel_app_high
+    {S : Set GodelTBase} {n : Nat}
+    {σ τ : GodelTType S}
+    (f : GodelTTerm S n (.arrow σ τ))
+    (a : GodelTTerm S n σ)
+    (i : Nat) (hi : σ.level < i)
+    (hNotIter : f.isIterHead = false) :
+    (GodelTTerm.app f a).bracketLevel i =
+      f.bracketLevel i := by
+  rw [GodelTTerm.bracketLevel_app_of_not_iter f a i hNotIter]
+  unfold GodelTTerm.bracketLevelAppGen
+  rw [if_neg (Nat.not_le_of_lt hi)]
 
 end GebLean
