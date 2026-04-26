@@ -91,4 +91,30 @@ inductive GodelTTerm.Reduces {S : Set GodelTBase} {n : Nat} :
       {a b : GodelTTerm S n σ} (h : Reduces a b) :
       Reduces (.app f a) (.app f b)
 
+/-- Reflexive-transitive closure of `▷`. -/
+inductive GodelTTerm.Reduces.Star {S : Set GodelTBase}
+    {n : Nat} :
+    {σ : GodelTType S} →
+    GodelTTerm S n σ → GodelTTerm S n σ → Prop
+  | refl {σ : GodelTType S} (t : GodelTTerm S n σ) :
+      Star t t
+  | step {σ : GodelTType S}
+      {t u v : GodelTTerm S n σ}
+      (h₁ : t.Reduces u) (h₂ : Star u v) :
+      Star t v
+
+theorem GodelTTerm.Reduces.Star.trans {S : Set GodelTBase}
+    {n : Nat} {σ : GodelTType S}
+    {t u v : GodelTTerm S n σ}
+    (h₁ : Star t u) (h₂ : Star u v) : Star t v := by
+  induction h₁ with
+  | refl _ => exact h₂
+  | step h _ ih => exact .step h (ih h₂)
+
+theorem GodelTTerm.Reduces.toStar {S : Set GodelTBase}
+    {n : Nat} {σ : GodelTType S}
+    {t u : GodelTTerm S n σ} (h : t.Reduces u) :
+    Reduces.Star t u :=
+  .step h (.refl _)
+
 end GebLean
