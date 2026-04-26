@@ -146,4 +146,50 @@ theorem GodelTTerm.Reduces.Equiv.symm {S : Set GodelTBase}
   | base_bwd r => exact .base_fwd r
   | trans _ _ ih₁ ih₂ => exact .trans ih₂ ih₁
 
+/-- Reduction preserves interp.  The substantive lemma: each
+redex's two sides have the same standard interpretation. -/
+theorem GodelTTerm.Reduces.interp_invariance
+    {S : Set GodelTBase} {n : Nat}
+    {σ : GodelTType S} {t s : GodelTTerm S n σ}
+    (h : t.Reduces s) (env : Fin n → Nat) :
+    t.interp env = s.interp env := by
+  induction h with
+  | redP_zero hN => simp
+  | redP_succ hN t => simp
+  | redK σ τ a b => simp
+  | redS ρ σ τ f g x => simp
+  | redDisc_zero σ a b => simp
+  | redDisc_succ σ t a b => simp
+  | redIter_zero hN a b => simp
+  | redIter_succ hN t a b => simp
+  | redTreeIter_leaf hT σ a b =>
+      simp [GodelTTerm.btlIter]
+  | redTreeIter_node hT σ l r a b =>
+      simp [GodelTTerm.btlIter]
+  | redApp_left _ _ ih =>
+      simp [ih]
+  | redApp_right _ _ ih =>
+      simp [ih]
+
+theorem GodelTTerm.Reduces.Star.interp_invariance
+    {S : Set GodelTBase} {n : Nat} {σ : GodelTType S}
+    {t u : GodelTTerm S n σ} (h : Star t u)
+    (env : Fin n → Nat) : t.interp env = u.interp env := by
+  induction h with
+  | refl _ => rfl
+  | step r _ ih =>
+      rw [GodelTTerm.Reduces.interp_invariance r env, ih]
+
+theorem GodelTTerm.Reduces.Equiv.interp_invariance
+    {S : Set GodelTBase} {n : Nat} {σ : GodelTType S}
+    {t u : GodelTTerm S n σ} (h : Equiv t u)
+    (env : Fin n → Nat) : t.interp env = u.interp env := by
+  induction h with
+  | refl _ => rfl
+  | base_fwd r =>
+      exact GodelTTerm.Reduces.interp_invariance r env
+  | base_bwd r =>
+      exact (GodelTTerm.Reduces.interp_invariance r env).symm
+  | trans _ _ ih₁ ih₂ => rw [ih₁, ih₂]
+
 end GebLean
