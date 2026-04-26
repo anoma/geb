@@ -5328,6 +5328,202 @@ structure FunctorBetweenCovContraData where
 end FunctorBetweenCovContra
 
 /-!
+## Functors Between Two Contravariant Grothendieck Constructions
+
+This section defines bundled data for functors between a contravariant source
+Grothendieck and a contravariant target Grothendieck,
+`(grothendieckContraFunctor C).obj G ⥤ (grothendieckContraFunctor D).obj F`,
+where `G : Cᵒᵖ ⥤ Cat` and `F : Dᵒᵖ ⥤ Cat`.
+
+A functor between these is characterized by:
+- A base functor `baseFib : C ⥤ D`.
+- For each `c : C`, a functor
+  `fibFib c : G.obj (op c) ⥤ F.obj (op (baseFib.obj c))`.
+- Cross-fibre morphisms whose direction reflects both contravariances:
+  `(fibFib c).obj ((G.map f.op).obj x') ⟶
+      (F.map (baseFib.map f).op).obj ((fibFib c').obj x')`.
+-/
+
+section FunctorBetweenContraContra
+
+universe vC vD uC uD vT uT
+
+variable {C : Type uC} [Category.{vC} C] (G : Cᵒᵖ ⥤ Cat.{vT, uT})
+variable {D : Type uD} [Category.{vD} D] (F : Dᵒᵖ ⥤ Cat.{vT, uT})
+
+/--
+The base-fibre functor for the contra-contra case: assigns to each `c : C`
+a base object in `D`.
+-/
+abbrev FunctorBetweenContraContraBaseFib := C ⥤ D
+
+/--
+The fibre-fibre functor: for each `c : C`, a functor
+`G.obj (op c) ⥤ F.obj (op (baseFib.obj c))`.  Both `op`s reflect the
+contravariant indexing of the source and the target.
+-/
+abbrev FunctorBetweenContraContraFibFib
+    (baseFib : FunctorBetweenContraContraBaseFib (C := C) (D := D)) :=
+  ∀ c, G.obj (Opposite.op c) ⥤ F.obj (Opposite.op (baseFib.obj c))
+
+/--
+The cross-fibre morphism component.  For `f : c ⟶ c'` and `x' : G.obj (op c')`,
+a morphism from `(fibFib c).obj ((G.map f.op).obj x')` to
+`(F.map (baseFib.map f).op).obj ((fibFib c').obj x')`.
+
+This is the direction of a morphism in `(grothendieckContraFunctor D).obj F`
+from `mkObj (baseFib.obj c) ((fibFib c).obj ((G.map f.op).obj x'))` to
+`mkObj (baseFib.obj c') ((fibFib c').obj x')`.
+-/
+abbrev FunctorBetweenContraContraFibHomCrossApp
+    (baseFib : FunctorBetweenContraContraBaseFib (C := C) (D := D))
+    (fibFib : FunctorBetweenContraContraFibFib G F baseFib) :=
+  ∀ {c c' : C} (f : c ⟶ c') (x' : G.obj (Opposite.op c')),
+    (fibFib c).obj ((G.map f.op).toFunctor.obj x') ⟶
+      (F.map (baseFib.map f).op).toFunctor.obj
+        ((fibFib c').obj x')
+
+/--
+Naturality of `fibHomCrossApp`: for `f : c ⟶ c'` and a fibre morphism
+`g : x' ⟶ y'` in `G.obj (op c')`, the square commutes.
+-/
+abbrev FunctorBetweenContraContraFibHomCrossNat
+    (baseFib : FunctorBetweenContraContraBaseFib (C := C) (D := D))
+    (fibFib : FunctorBetweenContraContraFibFib G F baseFib)
+    (fibHomCrossApp :
+      FunctorBetweenContraContraFibHomCrossApp G F baseFib fibFib) :=
+  ∀ {c c' : C} (f : c ⟶ c') {x' y' : G.obj (Opposite.op c')} (g : x' ⟶ y'),
+    (fibFib c).map ((G.map f.op).toFunctor.map g) ≫ fibHomCrossApp f y' =
+      fibHomCrossApp f x' ≫
+        (F.map (baseFib.map f).op).toFunctor.map ((fibFib c').map g)
+
+/--
+Equality of fibre-fibre values at identity.  Since
+`baseFib.map (𝟙 c) = 𝟙 (baseFib.obj c)`, `(𝟙 c).op = 𝟙 (op c)`, and both
+`G.map (𝟙 _).op = 𝟭 _` and `F.map (𝟙 _).op = 𝟭 _`, the source and target of
+`fibHomCrossApp (𝟙 c) x` coincide with `(fibFib c).obj x`.
+-/
+abbrev FunctorBetweenContraContraBaseHomEqId
+    (baseFib : FunctorBetweenContraContraBaseFib (C := C) (D := D))
+    (fibFib : FunctorBetweenContraContraFibFib G F baseFib) :=
+  ∀ (c : C) (x : G.obj (Opposite.op c)),
+    (fibFib c).obj ((G.map (𝟙 c).op).toFunctor.obj x) =
+      (F.map (baseFib.map (𝟙 c)).op).toFunctor.obj
+        ((fibFib c).obj x)
+
+/--
+Derive the identity equality from functor laws.
+-/
+lemma functorBetweenContraContraBaseHomEqIdProof
+    (baseFib : FunctorBetweenContraContraBaseFib (C := C) (D := D))
+    (fibFib : FunctorBetweenContraContraFibFib G F baseFib) :
+    FunctorBetweenContraContraBaseHomEqId G F baseFib fibFib := by
+  intro c x
+  have hG : (G.map (𝟙 (Opposite.op c))).toFunctor = 𝟭 _ :=
+    congrArg Cat.Hom.toFunctor (G.map_id _) |>.trans (Cat.id_eq_id _)
+  have hF : (F.map (𝟙 (Opposite.op (baseFib.obj c)))).toFunctor = 𝟭 _ :=
+    congrArg Cat.Hom.toFunctor (F.map_id _) |>.trans (Cat.id_eq_id _)
+  simp only [baseFib.map_id, op_id, hG, hF, Functor.id_obj]
+
+/--
+Equality of fibre-fibre values at composition.  For `f : c ⟶ c'` and
+`g : c' ⟶ c''`, the two ways of transporting
+`(fibFib c'').obj x''` through the contravariant `F` agree.  Stated as
+"split = fused" so that `eqToHom` of this proof transports split → fused.
+-/
+abbrev FunctorBetweenContraContraBaseHomEqComp
+    (baseFib : FunctorBetweenContraContraBaseFib (C := C) (D := D))
+    (fibFib : FunctorBetweenContraContraFibFib G F baseFib) :=
+  ∀ {c c' c'' : C} (f : c ⟶ c') (g : c' ⟶ c'')
+      (x'' : G.obj (Opposite.op c'')),
+    (F.map (baseFib.map f).op).toFunctor.obj
+        ((F.map (baseFib.map g).op).toFunctor.obj
+          ((fibFib c'').obj x'')) =
+      (F.map (baseFib.map (f ≫ g)).op).toFunctor.obj
+        ((fibFib c'').obj x'')
+
+/--
+Derive the composition equality from functor laws.
+-/
+lemma functorBetweenContraContraBaseHomEqCompProof
+    (baseFib : FunctorBetweenContraContraBaseFib (C := C) (D := D))
+    (fibFib : FunctorBetweenContraContraFibFib G F baseFib) :
+    FunctorBetweenContraContraBaseHomEqComp G F baseFib fibFib := by
+  intro c c' c'' f g x''
+  have hbase : (baseFib.map (f ≫ g)).op =
+      (baseFib.map g).op ≫ (baseFib.map f).op := by
+    rw [baseFib.map_comp]; rfl
+  rw [hbase, F.map_comp]
+  rfl
+
+/--
+Source equality used by composition coherence: the source object of
+`fibHomCrossApp (f ≫ g) x''` agrees with the source object of the stepwise
+composite, by `G.map_comp` for the contravariant `G`.
+-/
+abbrev FunctorBetweenContraContraGMapCompEq
+    (baseFib : FunctorBetweenContraContraBaseFib (C := C) (D := D))
+    (fibFib : FunctorBetweenContraContraFibFib G F baseFib) :=
+  ∀ {c c' c'' : C} (f : c ⟶ c') (g : c' ⟶ c'')
+      (x'' : G.obj (Opposite.op c'')),
+    (fibFib c).obj ((G.map f.op).toFunctor.obj
+        ((G.map g.op).toFunctor.obj x'')) =
+      (fibFib c).obj ((G.map (f ≫ g).op).toFunctor.obj x'')
+
+/--
+Derive the `G.map_comp` equality from functor laws.
+-/
+lemma functorBetweenContraContraGMapCompEqProof
+    (baseFib : FunctorBetweenContraContraBaseFib (C := C) (D := D))
+    (fibFib : FunctorBetweenContraContraFibFib G F baseFib) :
+    FunctorBetweenContraContraGMapCompEq G F baseFib fibFib := by
+  intro c c' c'' f g x''
+  have hop : (f ≫ g).op = g.op ≫ f.op := rfl
+  have h := congrArg Cat.Hom.toFunctor (G.map_comp g.op f.op)
+  rw [hop]
+  exact congrArg (fibFib c).obj
+    (congrFun (congrArg Functor.obj h) x'').symm
+
+/--
+Identity coherence: `fibHomCrossApp (𝟙 c) x` equals the derived `eqToHom`.
+-/
+abbrev FunctorBetweenContraContraBaseHomId
+    (baseFib : FunctorBetweenContraContraBaseFib (C := C) (D := D))
+    (fibFib : FunctorBetweenContraContraFibFib G F baseFib)
+    (fibHomCrossApp :
+      FunctorBetweenContraContraFibHomCrossApp G F baseFib fibFib) :=
+  ∀ (c : C) (x : G.obj (Opposite.op c)),
+    fibHomCrossApp (𝟙 c) x =
+      eqToHom
+        (functorBetweenContraContraBaseHomEqIdProof G F baseFib fibFib c x)
+
+/--
+Composition coherence: `fibHomCrossApp (f ≫ g) x''` decomposes as
+`fibHomCrossApp f ((G.map g.op).obj x'')` followed by transport of
+`fibHomCrossApp g x''` through `F.map (baseFib.map f).op`, adjusted by
+`eqToHom` on both sides.
+-/
+abbrev FunctorBetweenContraContraBaseHomComp
+    (baseFib : FunctorBetweenContraContraBaseFib (C := C) (D := D))
+    (fibFib : FunctorBetweenContraContraFibFib G F baseFib)
+    (fibHomCrossApp :
+      FunctorBetweenContraContraFibHomCrossApp G F baseFib fibFib) :=
+  ∀ {c c' c'' : C} (f : c ⟶ c') (g : c' ⟶ c'')
+      (x'' : G.obj (Opposite.op c'')),
+    eqToHom
+        (functorBetweenContraContraGMapCompEqProof G F baseFib fibFib
+          f g x'') ≫
+      fibHomCrossApp (f ≫ g) x'' =
+    fibHomCrossApp f ((G.map g.op).toFunctor.obj x'') ≫
+      (F.map (baseFib.map f).op).toFunctor.map
+        (fibHomCrossApp g x'') ≫
+      eqToHom
+        (functorBetweenContraContraBaseHomEqCompProof G F baseFib fibFib
+          f g x'')
+
+end FunctorBetweenContraContra
+
+/-!
 ## Natural Transformations Between Functors on Contravariant Grothendieck
 Constructions
 
