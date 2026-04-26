@@ -62,4 +62,52 @@ inductive GodelTTerm (S : Set GodelTBase) :
         (.arrow (.base .tree h)
           (.arrow σ (.arrow (.arrow σ (.arrow σ σ)) σ)))
 
+/-- Tree iterator on `BTL` ignoring leaf labels: returns
+`base` at every leaf and combines child results via `step` at
+every node.  Used as the semantics of `GodelTTerm.treeIter`. -/
+def GodelTTerm.btlIter {α : Type} (base : α) (step : α → α → α) :
+    BTL → α
+  | .leaf _ => base
+  | .node l r =>
+      step (GodelTTerm.btlIter base step l)
+        (GodelTTerm.btlIter base step r)
+
+/-- Standard interpretation of a `GodelTTerm S n σ` against a
+base-typed environment `Fin n → ℕ`.  Each constructor maps to
+its set-theoretic semantics; tree primitives use `BTL.leaf 0`
+as the canonical leaf, `BTL.node` as the binary constructor,
+and `GodelTTerm.btlIter` (label-discarding fold) as the
+recursor. -/
+def GodelTTerm.interp {S : Set GodelTBase} :
+    {n : Nat} → {σ : GodelTType S} →
+    GodelTTerm S n σ → (Fin n → Nat) → σ.interp
+  | _, _, .var i _, env =>
+      env i
+  | _, _, .app f a, env =>
+      f.interp env (a.interp env)
+  | _, _, .zero _, _ =>
+      (0 : Nat)
+  | _, _, .succ _, _ =>
+      Nat.succ
+  | _, _, .pred _, _ =>
+      Nat.pred
+  | _, _, .K _ _, _ =>
+      fun a _ => a
+  | _, _, .S_comb _ _ _, _ =>
+      fun f g x => f x (g x)
+  | _, _, .disc _, _ =>
+      fun n a b =>
+        match n with
+        | 0 => a
+        | _ + 1 => b
+  | _, _, .iter _, _ =>
+      fun count step base =>
+        Nat.rec base (fun _ prev => step prev) count
+  | _, _, .leaf _, _ =>
+      BTL.leaf 0
+  | _, _, .node _, _ =>
+      BTL.node
+  | _, _, .treeIter _ _, _ =>
+      fun t base step => GodelTTerm.btlIter base step t
+
 end GebLean

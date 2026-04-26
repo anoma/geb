@@ -23,7 +23,7 @@ inductive GodelTBase : Type
   deriving DecidableEq, Repr, Inhabited
 
 /-- Carrier of each base type. -/
-def GodelTBase.carrier : GodelTBase → Type
+@[reducible] def GodelTBase.carrier : GodelTBase → Type
   | .nat => Nat
   | .tree => BTL
 
@@ -38,7 +38,7 @@ namespace GodelTType
 
 /-- Standard interpretation of a type: base types use their
 carriers, arrow types are Lean function types. -/
-def interp {S : Set GodelTBase} : GodelTType S → Type
+@[reducible] def interp {S : Set GodelTBase} : GodelTType S → Type
   | .base b _ => b.carrier
   | .arrow σ τ => σ.interp → τ.interp
 
