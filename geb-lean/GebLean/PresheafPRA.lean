@@ -391,6 +391,63 @@ def praPolyEvalTarget :
     praEvalTargetFibre.{u_I, v_I, u_J, v_J, w_I, w'}
 
 /--
+Source data for the `(I, J, P)`-natural form of polynomial-functor
+evaluation.  Sends each base object `op X = op ((J, I), P)` to the
+universe-widened presheaf-on-`I` Cat (constant in `P`).  Morphism
+action: precomposition by the I-component of a contraGrothendieck
+morphism on `Cat × Cat`, widened.
+-/
+def evalSourceData :
+    ((grothendieckContraFunctor
+        (Cat.{v_J, u_J} × Cat.{v_I, u_I})).obj
+      presheafPRACatBifunctorUncurriedOp.{u_I, v_I, u_J, v_J,
+        w_I, w'})ᵒᵖ ⥤
+      Cat.{max u_I u_J v_I w_I w',
+        max u_I u_J v_I v_J (w_I + 1) (w' + 1)} where
+  obj X :=
+    catULiftFunctor2.{max v_I (w_I + 1) u_I, max u_I w_I,
+      max u_I u_J v_I w_I w',
+      max u_I u_J v_I v_J (w_I + 1) (w' + 1)}.obj
+      (presheafCatFunctor.{u_I, v_I, w_I}.obj
+        (Opposite.op
+          (GrothendieckContraFunctor.objBase X.unop).2))
+  map g :=
+    (catULiftFunctor2.{max v_I (w_I + 1) u_I, max u_I w_I,
+      max u_I u_J v_I w_I w',
+      max u_I u_J v_I v_J (w_I + 1) (w' + 1)}).map
+      (presheafCatFunctor.{u_I, v_I, w_I}.map
+        (Quiver.Hom.op
+          (GrothendieckContraFunctor.homBase g.unop).2))
+  map_id _ := by
+    apply Cat.Hom.ext
+    rfl
+  map_comp _ _ := by
+    apply Cat.Hom.ext
+    rfl
+
+/--
+Total source Grothendieck for `praPolyEvalFunctor`.
+
+Objects are 4-tuples `((J, I), P, Z)`: a base object of
+`(grothendieckContraFunctor (Cat × Cat)).obj
+presheafPRACatBifunctorUncurriedOp` together with a (widened)
+presheaf `Z : Iᵒᵖ ⥤ Type w_I` on `I`.
+
+Built as a contravariant Grothendieck of `evalSourceData`, matching
+the natural variance of evaluation in `(I, J, P)`.
+-/
+def praPolyEvalSource :
+    Cat.{max u_I u_J v_I v_J w_I w',
+      max (u_I + 1) (v_I + 1) (u_J + 1) (v_J + 1) (w_I + 1)
+        (w' + 1)} :=
+  (grothendieckContraFunctor
+    ((grothendieckContraFunctor
+      (Cat.{v_J, u_J} × Cat.{v_I, u_I})).obj
+      presheafPRACatBifunctorUncurriedOp.{u_I, v_I, u_J, v_J,
+        w_I, w'})).obj
+    evalSourceData.{u_I, v_I, u_J, v_J, w_I, w'}
+
+/--
 Total target Grothendieck for `praPolyDirectionsFunctor`.
 
 Objects are pairs `(I, x)` where `x : (widened Iᵒᵖ ⥤ Type w_I)ᵒᵖ`.
