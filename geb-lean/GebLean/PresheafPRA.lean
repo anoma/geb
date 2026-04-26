@@ -1384,6 +1384,18 @@ def praEvalAtFunctor :
     Functor.flipping.functor
 
 /--
+The evaluation bifunctor: uncurried form of `praEvalAtFunctor`.
+Sends a pair `(P, Z)` of a PRA and an `I`-presheaf to the result
+presheaf on `J`.
+-/
+def praEvalAtBifunctor :
+    PresheafPRACat.{u_I, v_I, u_J, v_J, w_I, w'} I J ×
+        (Iᵒᵖ ⥤ Type w_I) ⥤
+      (Jᵒᵖ ⥤ Type (max w' u_I w_I)) :=
+  Functor.uncurry.obj
+    (praEvalAtFunctor.{u_I, v_I, u_J, v_J, w_I, w'} I J)
+
+/--
 `praEvalAtProfunctor` is fully faithful: every natural
 transformation between evaluation profunctors arises
 from a unique PRA morphism.
