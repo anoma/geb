@@ -712,4 +712,110 @@ theorem GodelTTerm.majorizes_redDisc_succ {S : Set GodelTBase}
     exact (GodelTTerm.bracketLevel_app_ge_arg _ b i hi
       hAppDSA_NotIter).1
 
+
+/-- For any term `t` of type `σ`, `G(t) ≥ σ.level`. -/
+theorem GodelTTerm.G_ge_level {S : Set GodelTBase} {n : Nat}
+    {σ : GodelTType S} (t : GodelTTerm S n σ) :
+    σ.level ≤ t.G := by
+  induction t with
+  | var _ _ => rfl
+  | zero _ => rfl
+  | succ _ => rfl
+  | pred _ => rfl
+  | disc _ => rfl
+  | K _ _ => rfl
+  | S_comb _ _ _ => rfl
+  | iter _ => rfl
+  | leaf _ => rfl
+  | node _ => rfl
+  | treeIter _ _ => rfl
+  | app f _a ihf _iha =>
+      -- f : GodelTTerm S n (σ_inner.arrow σ).
+      -- G(app f a) = max(G f, G a) ≥ G(f) ≥ (σ_inner→σ).level ≥ σ.level
+      simp only [GodelTTerm.G]
+      simp only [GodelTType.level] at ihf
+      omega
+
+/-- B-W Lemma 2: `[a]_i = 0` for all `i > G(a)`. -/
+theorem GodelTTerm.bracketLevel_high_zero {S : Set GodelTBase}
+    {n : Nat} {σ : GodelTType S}
+    (t : GodelTTerm S n σ) (i : Nat)
+    (hi : t.G < i) : t.bracketLevel i = 0 := by
+  induction t with
+  | var _ _ => rfl
+  | zero _ => rfl
+  | succ _ =>
+      simp only [GodelTTerm.G] at hi
+      cases i with
+      | zero => simp [GodelTType.level] at hi
+      | succ k => rfl
+  | pred _ =>
+      simp only [GodelTTerm.G] at hi
+      cases i with
+      | zero => simp [GodelTType.level] at hi
+      | succ k => rfl
+  | disc _ =>
+      simp only [GodelTTerm.G] at hi
+      cases i with
+      | zero => simp [GodelTType.level] at hi
+      | succ k => rfl
+  | K σ' τ' =>
+      simp only [GodelTTerm.G] at hi
+      simp only [GodelTTerm.bracketLevel]
+      rw [if_neg (by omega)]
+  | S_comb ρ' σ' τ' =>
+      simp only [GodelTTerm.G] at hi
+      simp only [GodelTTerm.bracketLevel]
+      rw [if_neg (by omega)]
+  | iter _ =>
+      simp only [GodelTTerm.G] at hi
+      simp only [GodelTTerm.bracketLevel]
+      rw [if_neg (by omega)]
+  | leaf _ =>
+      simp only [GodelTTerm.G] at hi
+      simp only [GodelTTerm.bracketLevel]
+      rw [if_neg (by omega)]
+  | node _ =>
+      simp only [GodelTTerm.G] at hi
+      simp only [GodelTTerm.bracketLevel]
+      rw [if_neg (by omega)]
+  | treeIter _ _ =>
+      simp only [GodelTTerm.G] at hi
+      simp only [GodelTTerm.bracketLevel]
+      rw [if_neg (by omega)]
+  | app f a ihf _iha =>
+      simp only [GodelTTerm.G] at hi
+      -- G(app f a) = max(G f, G a); so G f < i.
+      have hGf : f.G < i := by omega
+      by_cases hIter : f.isIterHead = true
+      · -- iter-form: f is bare iter or treeIter.
+        -- iter has G = 2, treeIter has G ≥ 2, so i ≥ 3,
+        -- making bracketLevelAppIter i _ = 0.
+        simp only [GodelTTerm.bracketLevel, if_pos hIter,
+          GodelTTerm.bracketLevelAppIter]
+        cases f with
+        | iter hN =>
+            have hGiter :
+                (GodelTTerm.iter (S := S) (n := n) hN).G = 2 := rfl
+            simp only [hGiter] at hGf hi
+            rcases i with _ | _ | _ | k <;> simp_all
+        | treeIter hT σ' =>
+            have hGti :
+                (GodelTTerm.treeIter (S := S) (n := n) hT σ').G ≥ 2 := by
+              simp [GodelTTerm.G, GodelTType.level]
+            have h3i : 2 < i := Nat.lt_of_le_of_lt hGti hGf
+            rcases i with _ | _ | _ | k <;> simp_all
+        | _ => exact absurd hIter (by simp [GodelTTerm.isIterHead])
+      · -- non-iter app: rule 15 gives [app f a]_i = [f]_i when
+        -- i > σ_inner.level.  Since G(f) ≥ (σ_inner→τ).level
+        -- ≥ σ_inner.level + 1 and G(f) < i, we have σ_inner.level < i.
+        have hNotIter : f.isIterHead = false := by
+          cases h : f.isIterHead <;> simp_all
+        -- f : GodelTTerm S n (σ✝.arrow τ✝), so we need σ✝.level < i.
+        -- G(f) ≥ (σ✝.arrow τ✝).level ≥ σ✝.level + 1, giving σ✝.level < i.
+        have hfGLevel := f.G_ge_level
+        simp only [GodelTType.level] at hfGLevel
+        rw [GodelTTerm.bracketLevel_app_high f a i (by omega) hNotIter]
+        exact ihf hGf
+
 end GebLean
