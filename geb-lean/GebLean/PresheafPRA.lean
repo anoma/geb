@@ -357,12 +357,18 @@ def praDirectionsTargetFibre :
       max u_I u_J v_I v_J (w_I + 1) (w' + 1)}
 
 /--
-Per-`J` target fibre for `praPolyEvalTarget`.  Three-stage
-pipeline `presheafCatFunctor ⋙ catULiftFunctor2 ⋙ Cat.opFunctor`,
-mirroring `praDirectionsTargetFibre`.  Sends each `J : Cat`
-(passed via `Catᵒᵖ`) to the universe-widened `op (Jᵒᵖ ⥤ Type w')`
-Cat — the codomain Cat for the polynomial-functor evaluation
-result presheaf.
+Per-`J` target fibre for `praPolyEvalTarget`.  Two-stage
+pipeline `presheafCatFunctor ⋙ catULiftFunctor2`.  Sends each
+`J : Cat` (passed via `Catᵒᵖ`) to the universe-widened
+`Jᵒᵖ ⥤ Type w'` Cat — the codomain Cat for the polynomial-
+functor evaluation result presheaf.
+
+Differs from `praDirectionsTargetFibre` (which has a final
+`Cat.opFunctor` stage encoding the polynomial-functor-morphism
+backward-on-directions convention): polynomial-functor
+*evaluation* is covariant in `Z`, so the result-side variance
+matches presheaves' natural contravariance directly without an
+extra op.
 -/
 def praEvalTargetFibre :
     Cat.{v_J, u_J}ᵒᵖ ⥤
@@ -371,18 +377,16 @@ def praEvalTargetFibre :
   presheafCatFunctor.{u_J, v_J, w'} ⋙
     catULiftFunctor2.{max v_J (w' + 1) u_J, max u_J w',
       max u_I u_J v_I w_I w',
-      max u_I u_J v_I v_J (w_I + 1) (w' + 1)} ⋙
-    Cat.opFunctor.{max u_I u_J v_I w_I w',
       max u_I u_J v_I v_J (w_I + 1) (w' + 1)}
 
 /--
 Total target Grothendieck for `praPolyEvalFunctor`.
 
-Objects are pairs `(J, x)` where `x : (widened Jᵒᵖ ⥤ Type w')ᵒᵖ`.
+Objects are pairs `(J, x)` where `x : widened (Jᵒᵖ ⥤ Type w')`.
 Morphisms `(J₁, x₁) ⟶ (J₂, x₂)` are pairs `(f : J₁ ⟶ J₂,
 η : x₁ ⟶ (praEvalTargetFibre.map f.op).obj x₂)`, encoding the
-polynomial-functor evaluation result's contravariant convention
-on `J`.
+polynomial-functor evaluation result's natural variance on `J`
+via presheaves' contravariance.
 -/
 def praPolyEvalTarget :
     Cat.{max u_I u_J v_I v_J w_I w',
