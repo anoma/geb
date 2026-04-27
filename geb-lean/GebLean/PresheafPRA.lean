@@ -5,6 +5,7 @@ import GebLean.Utilities.Families
 import Mathlib.CategoryTheory.Opposites
 import Mathlib.CategoryTheory.Functor.FullyFaithful
 import Mathlib.CategoryTheory.Functor.Currying
+import Mathlib.CategoryTheory.Category.Cat.Op
 
 /-!
 # Polynomial Functors Between Presheaf Categories
@@ -1717,89 +1718,124 @@ section PresheafPRAEvalNat
 attribute [local instance] CategoryTheory.uliftCategory
 
 /--
-PSh(I) factor for `praPolyEvalSourceFibBif`.  Projects
-`op (J, I)` to `op I` via `prodOpEquiv.functor` followed by
-`Prod.snd`, then applies `presheafCatFunctor`.  Constant in `J`
-and contravariant in `I`.
--/
-private def praPolyEvalPshFactor :
-    (Cat.{v_J, u_J} × Cat.{v_I, u_I})ᵒᵖ ⥤
-      Cat.{max u_I w_I, max v_I (w_I + 1) u_I} :=
-  (prodOpEquiv (C := Cat.{v_J, u_J})
-      (D := Cat.{v_I, u_I})).functor ⋙
-    CategoryTheory.Prod.snd Cat.{v_J, u_J}ᵒᵖ Cat.{v_I, u_I}ᵒᵖ ⋙
-    presheafCatFunctor.{u_I, v_I, w_I}
+Per-`opJ` component of the I-pullback natural transformation
+between `praPolyEvalAtISourceFib` fibres.
 
-/--
-Source fibre bifunctor for the (I, J)-natural praEval lax
-bundle.  Sends `op (J, I)` to the widened product
-`PresheafPRACat I J × PSh(I)`.
-
-PRA factor: `presheafPRACatBifunctorUncurriedOp`.
-PSh(I) factor: `praPolyEvalPshFactor`, both widened via
-`catULiftFunctor2` to land in a unified `Cat` universe.
+Given `f_I : opI₁ ⟶ opI₂` in `Cat.{v_I, u_I}ᵒᵖ`, this constructs
+the Cat hom from `(praPolyEvalAtISourceFib opI₁.unop).obj opJ`
+to `(praPolyEvalAtISourceFib opI₂.unop).obj opJ` as a product of
+the PRA-side I-pullback (via `presheafPRACatBifunctor.flip`) and
+the PSh-side I-pullback (via `presheafCatFunctor`), both
+post-composed through the appropriate `Cat.opFunctor` action and
+the universe-widening `lift`.
 -/
-private def praPolyEvalSourceFibBif :
-    (Cat.{v_J, u_J} × Cat.{v_I, u_I})ᵒᵖ ⥤
-      Cat.{max u_I u_J v_I w_I w',
-        max (u_I + 1) u_J v_I v_J (w_I + 1) (w' + 1)} :=
-  let praFactor : (Cat.{v_J, u_J} × Cat.{v_I, u_I})ᵒᵖ ⥤
-        Cat.{max u_I u_J w_I w',
-          max u_I u_J v_I v_J (w_I + 1) (w' + 1)} :=
-    presheafPRACatBifunctorUncurriedOp.{u_I, v_I, u_J, v_J,
-      w_I, w'}
-  let pshFactor : (Cat.{v_J, u_J} × Cat.{v_I, u_I})ᵒᵖ ⥤
-        Cat.{max u_I u_J w_I w',
-          max u_I u_J v_I v_J (w_I + 1) (w' + 1)} :=
-    praPolyEvalPshFactor.{u_I, v_I, u_J, v_J, w_I} ⋙
-      catULiftFunctor2.{max v_I (w_I + 1) u_I, max u_I w_I,
-        max u_J w', max u_J v_J (w' + 1)}
+private def praPolyEvalAtISourceFib_iAction_app
+    {opI₁ opI₂ : Cat.{v_I, u_I}ᵒᵖ} (f_I : opI₁ ⟶ opI₂)
+    (opJ : Cat.{v_J, u_J}ᵒᵖ) :
+    (praPolyEvalAtISourceFib.{u_I, v_I, u_J, v_J, w_I, w'}
+        opI₁.unop).obj opJ ⟶
+      (praPolyEvalAtISourceFib.{u_I, v_I, u_J, v_J, w_I, w'}
+        opI₂.unop).obj opJ :=
   let lift :=
     catULiftFunctor2.{max u_I u_J v_I v_J (w_I + 1) (w' + 1),
       max u_I u_J w_I w', v_I, u_I + 1}
-  { obj := fun opJI =>
-      lift.obj
-        (Cat.of (↑(praFactor.obj opJI) × ↑(pshFactor.obj opJI)))
-    map := fun {opJI₁ opJI₂} f =>
-      lift.map
-        ((praFactor.map f).toFunctor.prod
-          (pshFactor.map f).toFunctor).toCatHom
-    map_id := fun opJI => by
-      apply Cat.Hom.ext
-      change (lift.map _).toFunctor = _
-      rw [praFactor.map_id, pshFactor.map_id]
-      rfl
-    map_comp := fun {opJI₁ opJI₂ opJI₃} f g => by
-      apply Cat.Hom.ext
-      change (lift.map _).toFunctor = _
-      rw [praFactor.map_comp, pshFactor.map_comp]
-      rfl }
+  let praMap :=
+    ((presheafPRACatBifunctor.{u_I, v_I, u_J, v_J, w_I, w'}.flip.map
+        (Cat.opFunctor.{v_I, u_I}.op.map f_I)).app opJ)
+  let pshMap :=
+    catULiftFunctor2.{max v_I (w_I + 1) u_I, max u_I w_I,
+        max u_J w', max u_J v_J (w' + 1)}.map
+      (presheafCatFunctor.{u_I, v_I, w_I}.map
+        (Cat.opFunctor.{v_I, u_I}.op.map f_I))
+  lift.map (praMap.toFunctor.prod pshMap.toFunctor).toCatHom
+
+/--
+The I-pullback natural transformation between
+`praPolyEvalAtISourceFib` fibres.
+
+For `f_I : opI₁ ⟶ opI₂` in `Cat.{v_I, u_I}ᵒᵖ`, this is a
+NatTrans `praPolyEvalAtISourceFib opI₁.unop ⟶
+praPolyEvalAtISourceFib opI₂.unop` whose per-`opJ` component is
+`praPolyEvalAtISourceFib_iAction_app`.
+-/
+private def praPolyEvalAtISourceFib_iAction
+    {opI₁ opI₂ : Cat.{v_I, u_I}ᵒᵖ} (f_I : opI₁ ⟶ opI₂) :
+    praPolyEvalAtISourceFib.{u_I, v_I, u_J, v_J, w_I, w'}
+        opI₁.unop ⟶
+      praPolyEvalAtISourceFib.{u_I, v_I, u_J, v_J, w_I, w'}
+        opI₂.unop where
+  app opJ :=
+    praPolyEvalAtISourceFib_iAction_app.{u_I, v_I, u_J, v_J,
+      w_I, w'} f_I opJ
+  naturality {opJ₁ opJ₂} f_J := by
+    apply Cat.Hom.ext
+    rfl
+
+/--
+Source fibre bifunctor for the (I, J)-natural praEval lax bundle,
+indexed with `I` outer and `J` inner.
+
+Sends `op I` to `praPolyEvalAtISourceFib I` definitionally, so
+that `praPolyEvalSourceOverI.obj (op I) = praPolyEvalAtISource I`
+on the nose after composition with `grothendieckContraFunctor
+Cat`.
+
+Action on `f_I : opI₁ ⟶ opI₂` is the I-pullback natural
+transformation `praPolyEvalAtISourceFib_iAction`.
+-/
+def praPolyEvalSourceOverIFib :
+    Cat.{v_I, u_I}ᵒᵖ ⥤
+      (Cat.{v_J, u_J}ᵒᵖ ⥤
+        Cat.{max u_I u_J v_I w_I w',
+          max (u_I + 1) u_J v_I v_J (w_I + 1) (w' + 1)}) where
+  obj opI :=
+    praPolyEvalAtISourceFib.{u_I, v_I, u_J, v_J, w_I, w'} opI.unop
+  map {opI₁ opI₂} f_I :=
+    praPolyEvalAtISourceFib_iAction.{u_I, v_I, u_J, v_J, w_I, w'}
+      f_I
+  map_id opI := by
+    apply NatTrans.ext
+    funext opJ
+    apply Cat.Hom.ext
+    change (catULiftFunctor2.{
+        max u_I u_J v_I v_J (w_I + 1) (w' + 1),
+        max u_I u_J w_I w', v_I, u_I + 1}.map _).toFunctor = _
+    rw [Cat.opFunctor.{v_I, u_I}.op.map_id,
+      (presheafPRACatBifunctor.{u_I, v_I, u_J, v_J, w_I,
+          w'}.flip).map_id, presheafCatFunctor.map_id,
+      catULiftFunctor2.map_id]
+    rfl
+  map_comp {opI₁ opI₂ opI₃} f g := by
+    apply NatTrans.ext
+    funext opJ
+    apply Cat.Hom.ext
+    change (catULiftFunctor2.{
+        max u_I u_J v_I v_J (w_I + 1) (w' + 1),
+        max u_I u_J w_I w', v_I, u_I + 1}.map _).toFunctor = _
+    rw [Cat.opFunctor.{v_I, u_I}.op.map_comp,
+      (presheafPRACatBifunctor.{u_I, v_I, u_J, v_J, w_I,
+          w'}.flip).map_comp,
+      presheafCatFunctor.map_comp, catULiftFunctor2.map_comp]
+    rfl
 
 /--
 Source bifunctor over the I-base.  Sends `op I` to the fixed-`I`
-source contraGrothendieck (analogous to `praPolyEvalAtISource I`),
-viewed as a `Catᵒᵖ`-indexed family of categories.
+source contraGrothendieck `praPolyEvalAtISource I`
+definitionally.
 
-Constructed by reorganizing `praPolyEvalSourceFibBif :
-(Cat × Cat)ᵒᵖ ⥤ Cat` to put `I` as the outer parameter (via
-`prodOpEquiv` and `Prod.swap` to swap the J/I order, then back via
-`prodOpEquiv.inverse`), currying so that `I` appears outermost,
-then composing with `grothendieckContraFunctor Cat` to obtain a
-`Catᵒᵖ ⥤ Cat`.
+Defined as `praPolyEvalSourceOverIFib ⋙ grothendieckContraFunctor
+Cat`.  Because `praPolyEvalSourceOverIFib.obj (op I)` reduces to
+`praPolyEvalAtISourceFib I` and `praPolyEvalAtISource I` is
+defined as `(grothendieckContraFunctor Cat).obj
+(praPolyEvalAtISourceFib I)`, we have
+`praPolyEvalSourceOverI.obj (op I) = praPolyEvalAtISource I` by
+`rfl`.
 -/
 def praPolyEvalSourceOverI :
     Cat.{v_I, u_I}ᵒᵖ ⥤
       Cat.{max u_I u_J v_I v_J w_I w',
         max (u_I + 1) (u_J + 1) v_I (v_J + 1) (w_I + 1) (w' + 1)} :=
-  let swappedBif :
-      Cat.{v_I, u_I}ᵒᵖ × Cat.{v_J, u_J}ᵒᵖ ⥤
-        Cat.{max u_I u_J v_I w_I w',
-          max (u_I + 1) u_J v_I v_J (w_I + 1) (w' + 1)} :=
-    CategoryTheory.Prod.swap Cat.{v_I, u_I}ᵒᵖ Cat.{v_J, u_J}ᵒᵖ ⋙
-      (prodOpEquiv (C := Cat.{v_J, u_J})
-        (D := Cat.{v_I, u_I})).inverse ⋙
-      praPolyEvalSourceFibBif.{u_I, v_I, u_J, v_J, w_I, w'}
-  Functor.curry.obj swappedBif ⋙
+  praPolyEvalSourceOverIFib.{u_I, v_I, u_J, v_J, w_I, w'} ⋙
     grothendieckContraFunctor Cat.{v_J, u_J}
 
 /--
