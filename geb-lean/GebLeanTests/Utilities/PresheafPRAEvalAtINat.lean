@@ -86,3 +86,43 @@ example
     (Cat.of PUnit) f
 
 end CollapseTest
+
+/-! ## Pointwise-accessor compatibility -/
+
+section AccessorCompat
+
+example :
+    praEvalAtFunctor.{0, 0, 0, 0, 0, 0} PUnit PUnit =
+    praEvalAtFunctor.{0, 0, 0, 0, 0, 0} PUnit PUnit :=
+  rfl
+
+example (P : PresheafPRACat.{0, 0, 0, 0, 0, 0} PUnit PUnit)
+    (Z : PUnitᵒᵖ ⥤ Type 0) (j : PUnitᵒᵖ) :
+    praEvalAt.{0, 0, 0, 0, 0, 0} PUnit PUnit P Z j =
+    praEvalAt.{0, 0, 0, 0, 0, 0} PUnit PUnit P Z j :=
+  rfl
+
+example (P : PresheafPRACat.{0, 0, 0, 0, 0, 0} PUnit PUnit)
+    (Z : PUnitᵒᵖ ⥤ Type 0) {j : PUnitᵒᵖ}
+    (x : praEvalAt.{0, 0, 0, 0, 0, 0} PUnit PUnit P Z j) :
+    praEvalAt_index.{0, 0, 0, 0, 0, 0} PUnit PUnit P Z x =
+    x.1 :=
+  rfl
+
+example (P : PresheafPRACat.{0, 0, 0, 0, 0, 0} PUnit PUnit)
+    (Z : PUnitᵒᵖ ⥤ Type 0) {j : PUnitᵒᵖ}
+    (x : praEvalAt.{0, 0, 0, 0, 0, 0} PUnit PUnit P Z j) :
+    praEvalAt_mor.{0, 0, 0, 0, 0, 0} PUnit PUnit P Z x =
+    x.2 :=
+  rfl
+
+example (P : PresheafPRACat.{0, 0, 0, 0, 0, 0} PUnit PUnit)
+    (Z : PUnitᵒᵖ ⥤ Type 0) (j : PUnitᵒᵖ)
+    (a : praPositions.{0, 0, 0, 0, 0, 0} PUnit PUnit P j)
+    (η : praDirectionsAt.{0, 0, 0, 0, 0, 0}
+          PUnit PUnit P j a ⟶ Z) :
+    praEvalAt_mk.{0, 0, 0, 0, 0, 0} PUnit PUnit P Z j a η =
+    ⟨a, η⟩ :=
+  rfl
+
+end AccessorCompat
