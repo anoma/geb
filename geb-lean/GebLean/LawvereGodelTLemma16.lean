@@ -890,4 +890,33 @@ theorem GodelTTerm.majorizes_redTreeIter_leaf
           hheadNotIter).2)
       omega
 
+/-- Term-size strict-positivity helper. -/
+theorem GodelTTerm.lh_pos {S : Set GodelTBase} {n : Nat}
+    {σ : GodelTType S} (t : GodelTTerm S n σ) : 0 < t.lh := by
+  cases t <;> simp [GodelTTerm.lh]
+
+/-- `app`-formula for `lh`. -/
+@[simp] theorem GodelTTerm.lh_app
+    {S : Set GodelTBase} {n : Nat} {σ τ : GodelTType S}
+    (f : GodelTTerm S n (.arrow σ τ))
+    (a : GodelTTerm S n σ) :
+    (GodelTTerm.app f a).lh = f.lh + a.lh + 1 := by
+  simp [GodelTTerm.lh]
+
+/-- A sub-application's left child is strictly smaller. -/
+theorem GodelTTerm.lh_app_lt_left
+    {S : Set GodelTBase} {n : Nat} {σ τ : GodelTType S}
+    (f : GodelTTerm S n (.arrow σ τ))
+    (a : GodelTTerm S n σ) :
+    f.lh < (GodelTTerm.app f a).lh := by
+  have := a.lh_pos; simp; omega
+
+/-- A sub-application's right child is strictly smaller. -/
+theorem GodelTTerm.lh_app_lt_right
+    {S : Set GodelTBase} {n : Nat} {σ τ : GodelTType S}
+    (f : GodelTTerm S n (.arrow σ τ))
+    (a : GodelTTerm S n σ) :
+    a.lh < (GodelTTerm.app f a).lh := by
+  have := f.lh_pos; simp; omega
+
 end GebLean
