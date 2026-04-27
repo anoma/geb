@@ -1459,4 +1459,51 @@ def praEvalAt_mk (j : Jᵒᵖ)
 
 end PresheafPRAEvalAt
 
+/-! ## Pointwise Evaluation Naturality in I -/
+
+section PresheafPRAEvalAtINat
+
+attribute [local instance] CategoryTheory.uliftCategory
+
+/--
+The `Cat.{v_J, u_J}ᵒᵖ ⥤ Cat` functor sending `op J` to the
+widened product `PresheafPRACat I J × PSh(I)`.  As `J` varies
+contravariantly, the PRA factor pulls back via `f_J`; the
+`PSh(I)` factor stays constant.
+
+This is the source-side fibre functor for the
+`praPolyEvalAtIFunctor` Grothendieck source.
+-/
+def praPolyEvalAtISourceFib (I : Cat.{v_I, u_I}) :
+    Cat.{v_J, u_J}ᵒᵖ ⥤
+      Cat.{max u_I u_J v_I w_I w',
+        max (u_I + 1) u_J v_I v_J (w_I + 1) (w' + 1)} :=
+  let praFactor : Cat.{v_J, u_J}ᵒᵖ ⥤
+        Cat.{max u_I u_J w_I w',
+          max u_I u_J v_I v_J (w_I + 1) (w' + 1)} :=
+    presheafPRACatBifunctor.{u_I, v_I, u_J, v_J, w_I, w'}.flip.obj
+      (Opposite.op I)
+  let pshCatW :
+        Cat.{max u_I u_J w_I w',
+          max u_I u_J v_I v_J (w_I + 1) (w' + 1)} :=
+    catULiftFunctor2.{max v_I (w_I + 1) u_I, max u_I w_I,
+        max u_J w', max u_J v_J (w' + 1)}.obj
+      (presheafCatFunctor.{u_I, v_I, w_I}.obj (Opposite.op I))
+  let lift :=
+    catULiftFunctor2.{max u_I u_J v_I v_J (w_I + 1) (w' + 1),
+      max u_I u_J w_I w', v_I, u_I + 1}
+  { obj := fun opJ =>
+      lift.obj (Cat.of (↑(praFactor.obj opJ) × ↑pshCatW))
+    map := fun {opJ₁ opJ₂} f =>
+      lift.map
+        ((praFactor.map f).toFunctor.prod (𝟭 ↑pshCatW)).toCatHom
+    map_id := fun opJ => by
+      apply Cat.Hom.ext
+      rfl
+    map_comp := fun {opJ₁ opJ₂ opJ₃} f g => by
+      apply Cat.Hom.ext
+      rfl }
+
+end PresheafPRAEvalAtINat
+
 end GebLean
