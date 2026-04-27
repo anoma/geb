@@ -153,3 +153,29 @@ example {X Y Z : praPolyEvalAtISource.{0, 0, 0, 0, 0, 0}
     (Cat.of PUnit)).map_comp f g
 
 end FunctorialityTest
+
+/-! ## Universe polymorphism -/
+
+section UniversePoly
+
+-- u_I = 1: use ULift.{1, 0} PUnit : Type 1.
+example :
+    praPolyEvalAtISource.{1, 0, 0, 0, 0, 0}
+        (Cat.of (ULift.{1, 0} PUnit)) ⥤
+      praPolyEvalTarget.{1, 0, 0, 0, 0, 0} :=
+  praPolyEvalAtIFunctor.{1, 0, 0, 0, 0, 0}
+    (Cat.of (ULift.{1, 0} PUnit))
+
+-- u_J = 1: I can still be Cat.of PUnit.
+example :
+    praPolyEvalAtISource.{0, 0, 1, 0, 0, 0} (Cat.of PUnit) ⥤
+      praPolyEvalTarget.{0, 0, 1, 0, 0, 0} :=
+  praPolyEvalAtIFunctor.{0, 0, 1, 0, 0, 0} (Cat.of PUnit)
+
+-- w_I = 1: I can still be Cat.of PUnit.
+example :
+    praPolyEvalAtISource.{0, 0, 0, 0, 1, 0} (Cat.of PUnit) ⥤
+      praPolyEvalTarget.{0, 0, 0, 0, 1, 0} :=
+  praPolyEvalAtIFunctor.{0, 0, 0, 0, 1, 0} (Cat.of PUnit)
+
+end UniversePoly
