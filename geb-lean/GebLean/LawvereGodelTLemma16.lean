@@ -919,4 +919,176 @@ theorem GodelTTerm.lh_app_lt_right
     a.lh < (GodelTTerm.app f a).lh := by
   have := f.lh_pos; simp; omega
 
+-- Combined induction: for all k, the following two statements hold.
+-- (A) All N→N terms of lh = k have bracketLevel 0 ≥ 1.
+-- (B) For any arrow-typed f of lh = k:
+--     [f]_0 ≥ 1, OR σ (f's argument type) equals N→N.
+-- Mutually: (A) uses (B), and (B) uses (A).
+private theorem GodelTTerm.bracketLevel_zero_pos_combined
+    {S : Set GodelTBase} {hN : GodelTBase.nat ∈ S} {n : Nat}
+    (k : Nat) :
+    (∀ (t : GodelTTerm S n
+        (.arrow (.base .nat hN) (.base .nat hN))),
+      t.lh = k → 1 ≤ t.bracketLevel 0) ∧
+    (∀ {σ τ : GodelTType S}
+      (f : GodelTTerm S n (.arrow σ τ)),
+      f.lh = k →
+      (1 ≤ f.bracketLevel 0) ∨
+      (σ = .arrow (.base .nat hN) (.base .nat hN))) := by
+  induction k using Nat.strong_induction_on with
+  | _ k IH =>
+    have IHA : ∀ m < k,
+        ∀ (t : GodelTTerm S n
+            (.arrow (.base .nat hN) (.base .nat hN))),
+          t.lh = m → 1 ≤ t.bracketLevel 0 :=
+      fun m hm => (IH m hm).1
+    have IHB : ∀ m < k,
+        ∀ {σ τ : GodelTType S}
+          (f : GodelTTerm S n (.arrow σ τ)),
+          f.lh = m →
+          (1 ≤ f.bracketLevel 0) ∨
+          (σ = .arrow (.base .nat hN) (.base .nat hN)) :=
+      fun m hm => (IH m hm).2
+    constructor
+    · -- Part (A): t : N→N with t.lh = k.
+      intro t htk
+      cases t with
+      | succ _ => rfl
+      | pred _ => rfl
+      | app f a =>
+          have hflt : f.lh < k := by
+            rw [← htk]; exact GodelTTerm.lh_app_lt_left f a
+          have halt : a.lh < k := by
+            rw [← htk]; exact GodelTTerm.lh_app_lt_right f a
+          -- f : σ → (N→N), a : σ.
+          -- f.isIterHead = false (type rules out bare iter/treeIter).
+          have hfNotIter :
+              f.isIterHead = false := by cases f <;> rfl
+          rw [GodelTTerm.bracketLevel_app_eq f a 0
+            (Nat.zero_le _) hfNotIter]
+          have hp :
+              1 ≤ 2 ^ (GodelTTerm.app f a).bracketLevel 1 :=
+            Nat.one_le_iff_ne_zero.mpr (by positivity)
+          -- IHB on f : σ → (N→N): [f]_0 ≥ 1 or σ = N→N.
+          rcases IHB f.lh hflt f rfl with hf1 | hσNN
+          · -- [f]_0 ≥ 1.  Sum ≥ 1.
+            calc (1 : Nat)
+                ≤ f.bracketLevel 0 := hf1
+              _ ≤ f.bracketLevel 0 + a.bracketLevel 0 := by omega
+              _ ≤ 2 ^ _ * (f.bracketLevel 0 + a.bracketLevel 0) :=
+                Nat.le_mul_of_pos_left _ hp
+          · -- σ = N→N, so a : N→N.  IHA on a.
+            subst hσNN
+            have haNN : 1 ≤ a.bracketLevel 0 :=
+              IHA a.lh halt a rfl
+            calc (1 : Nat)
+                ≤ a.bracketLevel 0 := haNN
+              _ ≤ f.bracketLevel 0 + a.bracketLevel 0 := by omega
+              _ ≤ 2 ^ _ * (f.bracketLevel 0 + a.bracketLevel 0) :=
+                Nat.le_mul_of_pos_left _ hp
+    · -- Part (B): f : σ → τ with f.lh = k.
+      intro σ τ f hfk
+      cases f with
+      | succ _ =>
+          exact Or.inl (by rfl)
+      | pred _ =>
+          exact Or.inl (by rfl)
+      | K _ _ =>
+          exact Or.inl (by
+            simp [GodelTTerm.bracketLevel_K, GodelTType.level])
+      | S_comb _ _ _ =>
+          exact Or.inl (by
+            simp [GodelTTerm.bracketLevel_S_comb, GodelTType.level])
+      | disc _ =>
+          exact Or.inl (by rfl)
+      | iter _ =>
+          -- f = .iter _. bracketLevel 0 = 1 (level ≥ 2 ≥ 0).
+          exact Or.inl (by
+            simp [GodelTTerm.bracketLevel_iter, GodelTType.level])
+      | node _ =>
+          exact Or.inl (by
+            simp [GodelTTerm.bracketLevel_node, GodelTType.level])
+      | treeIter _ _ =>
+          exact Or.inl (by
+            simp [GodelTTerm.bracketLevel_treeIter, GodelTType.level])
+      | app f' g =>
+          -- f = .app f' g : σ → τ.
+          have hf'lt : f'.lh < k := by
+            rw [← hfk]; exact GodelTTerm.lh_app_lt_left f' g
+          have hglt : g.lh < k := by
+            rw [← hfk]; exact GodelTTerm.lh_app_lt_right f' g
+          by_cases hf'iter : f'.isIterHead = true
+          · cases f' with
+            | iter _ =>
+                -- f = .app (.iter _) g. σ of f equals N→N by type.
+                exact Or.inr rfl
+            | treeIter hT σ' =>
+                -- f = .app (.treeIter hT σ') g : σ → τ, g : BT.
+                -- Goal: [f]_0 ≥ 1, i.e. [g]_0 ≥ 1, by
+                -- bracketLevel_app_treeIter_zero.
+                refine Or.inl ?_
+                rw [GodelTTerm.bracketLevel_app_treeIter_zero]
+                -- All BT terms of lh < k have bracketLevel 0 ≥ 1.
+                -- Proved by strong induction on lh within this case,
+                -- using IHB from the outer induction.
+                suffices h : ∀ (j : Nat) (q : GodelTTerm S n
+                    (.base .tree hT)),
+                    q.lh < k → q.lh = j → 1 ≤ q.bracketLevel 0 from
+                  h g.lh g hglt rfl
+                intro j
+                induction j using Nat.strong_induction_on with
+                | _ j IHg =>
+                intro q hqk hjq
+                cases q with
+                | leaf _ =>
+                    simp [GodelTTerm.bracketLevel_leaf, GodelTType.level]
+                | app fg ag =>
+                    have hfglt : fg.lh < k :=
+                      Nat.lt_trans (GodelTTerm.lh_app_lt_left fg ag) hqk
+                    have hfgNotIter :
+                        fg.isIterHead = false := by cases fg; all_goals rfl
+                    rcases IHB fg.lh hfglt fg rfl with hfg1 | hσ'NN
+                    · -- [fg]_0 ≥ 1.
+                      calc (1 : Nat)
+                          ≤ fg.bracketLevel 0 := hfg1
+                        _ ≤ (GodelTTerm.app fg ag).bracketLevel 0 :=
+                          (GodelTTerm.bracketLevel_app_ge_arg fg ag 0
+                            (Nat.zero_le _) hfgNotIter).2
+                    · -- σ' = N→N, so ag : N→N.  IHA on ag.
+                      subst hσ'NN
+                      have haglt : ag.lh < k :=
+                        Nat.lt_trans (GodelTTerm.lh_app_lt_right fg ag) hqk
+                      have hag1 : 1 ≤ ag.bracketLevel 0 :=
+                        IHA ag.lh haglt ag rfl
+                      calc (1 : Nat)
+                          ≤ ag.bracketLevel 0 := hag1
+                        _ ≤ (GodelTTerm.app fg ag).bracketLevel 0 :=
+                          (GodelTTerm.bracketLevel_app_ge_arg fg ag 0
+                            (Nat.zero_le _) hfgNotIter).1
+            | _ => exact absurd hf'iter (by simp [GodelTTerm.isIterHead])
+          · -- f'.isIterHead = false.
+            have hf'NI : f'.isIterHead = false := by
+              simp only [Bool.eq_false_iff]; exact hf'iter
+            rcases IHB f'.lh hf'lt f' rfl with hf'1 | hσ'NN
+            · -- [f']_0 ≥ 1.  bracketLevel_app_ge_arg gives [f]_0 ≥ 1.
+              exact Or.inl (hf'1.trans
+                (GodelTTerm.bracketLevel_app_ge_arg f' g 0
+                  (Nat.zero_le _) hf'NI).2)
+            · -- σ' = N→N, so g : N→N.  IHA gives [g]_0 ≥ 1.
+              -- bracketLevel_app_ge_arg gives [f]_0 ≥ [g]_0 ≥ 1.
+              subst hσ'NN
+              have hg1 : 1 ≤ g.bracketLevel 0 :=
+                IHA g.lh hglt g rfl
+              exact Or.inl (hg1.trans
+                (GodelTTerm.bracketLevel_app_ge_arg f' g 0
+                  (Nat.zero_le _) hf'NI).1)
+
+-- Theorem 1: positivity of bracketLevel 0 for terms of type N→N.
+theorem GodelTTerm.bracketLevel_zero_pos_arrow_NN
+    {S : Set GodelTBase} {hN : GodelTBase.nat ∈ S} {n : Nat}
+    (t : GodelTTerm S n
+        (.arrow (.base .nat hN) (.base .nat hN))) :
+    1 ≤ t.bracketLevel 0 :=
+  (GodelTTerm.bracketLevel_zero_pos_combined t.lh).1 t rfl
+
 end GebLean
