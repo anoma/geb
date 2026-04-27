@@ -1581,6 +1581,22 @@ def praPolyEvalAtISource (I : Cat.{v_I, u_I}) :
   (grothendieckContraFunctor Cat.{v_J, u_J}).obj
     (praPolyEvalAtISourceFib.{u_I, v_I, u_J, v_J, w_I, w'} I)
 
+/--
+Flat functor `praPolyEvalAtISource I ⥤ praPolyEvalTarget` natural
+in `(J, P, Z)` at fixed `I`.  Sends `(J, (P, Z))` to
+`(J, praEvalAtBifunctor I J |>.obj (P, Z))` (widened).
+
+Constructed by lifting `praPolyEvalAtINatTrans I` to a flat functor
+between contraGrothendiecks via `(grothendieckContraFunctor
+Cat).map`.
+-/
+def praPolyEvalAtIFunctor (I : Cat.{v_I, u_I}) :
+    praPolyEvalAtISource.{u_I, v_I, u_J, v_J, w_I, w'} I ⥤
+      praPolyEvalTarget.{u_I, v_I, u_J, v_J, w_I, w'} :=
+  ((grothendieckContraFunctor Cat.{v_J, u_J}).map
+    (praPolyEvalAtINatTrans.{u_I, v_I, u_J, v_J, w_I, w'} I)
+  ).toFunctor
+
 end PresheafPRAEvalAtINat
 
 end GebLean
