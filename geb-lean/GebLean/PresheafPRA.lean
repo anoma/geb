@@ -1710,4 +1710,71 @@ evaluation to its `(J, P, Z)`-natural form at fixed `I`.
 
 end PresheafPRAEvalAtINat
 
+/-! ## (I, J)-Naturality (Lax in I) -/
+
+section PresheafPRAEvalNat
+
+attribute [local instance] CategoryTheory.uliftCategory
+
+/--
+PSh(I) factor for `praPolyEvalSourceFibBif`.  Projects
+`op (J, I)` to `op I` via `prodOpEquiv.functor` followed by
+`Prod.snd`, then applies `presheafCatFunctor`.  Constant in `J`
+and contravariant in `I`.
+-/
+private def praPolyEvalPshFactor :
+    (Cat.{v_J, u_J} × Cat.{v_I, u_I})ᵒᵖ ⥤
+      Cat.{max u_I w_I, max v_I (w_I + 1) u_I} :=
+  (prodOpEquiv (C := Cat.{v_J, u_J})
+      (D := Cat.{v_I, u_I})).functor ⋙
+    CategoryTheory.Prod.snd Cat.{v_J, u_J}ᵒᵖ Cat.{v_I, u_I}ᵒᵖ ⋙
+    presheafCatFunctor.{u_I, v_I, w_I}
+
+/--
+Source fibre bifunctor for the (I, J)-natural praEval lax
+bundle.  Sends `op (J, I)` to the widened product
+`PresheafPRACat I J × PSh(I)`.
+
+PRA factor: `presheafPRACatBifunctorUncurriedOp`.
+PSh(I) factor: `praPolyEvalPshFactor`, both widened via
+`catULiftFunctor2` to land in a unified `Cat` universe.
+-/
+private def praPolyEvalSourceFibBif :
+    (Cat.{v_J, u_J} × Cat.{v_I, u_I})ᵒᵖ ⥤
+      Cat.{max u_I u_J v_I w_I w',
+        max (u_I + 1) u_J v_I v_J (w_I + 1) (w' + 1)} :=
+  let praFactor : (Cat.{v_J, u_J} × Cat.{v_I, u_I})ᵒᵖ ⥤
+        Cat.{max u_I u_J w_I w',
+          max u_I u_J v_I v_J (w_I + 1) (w' + 1)} :=
+    presheafPRACatBifunctorUncurriedOp.{u_I, v_I, u_J, v_J,
+      w_I, w'}
+  let pshFactor : (Cat.{v_J, u_J} × Cat.{v_I, u_I})ᵒᵖ ⥤
+        Cat.{max u_I u_J w_I w',
+          max u_I u_J v_I v_J (w_I + 1) (w' + 1)} :=
+    praPolyEvalPshFactor.{u_I, v_I, u_J, v_J, w_I} ⋙
+      catULiftFunctor2.{max v_I (w_I + 1) u_I, max u_I w_I,
+        max u_J w', max u_J v_J (w' + 1)}
+  let lift :=
+    catULiftFunctor2.{max u_I u_J v_I v_J (w_I + 1) (w' + 1),
+      max u_I u_J w_I w', v_I, u_I + 1}
+  { obj := fun opJI =>
+      lift.obj
+        (Cat.of (↑(praFactor.obj opJI) × ↑(pshFactor.obj opJI)))
+    map := fun {opJI₁ opJI₂} f =>
+      lift.map
+        ((praFactor.map f).toFunctor.prod
+          (pshFactor.map f).toFunctor).toCatHom
+    map_id := fun opJI => by
+      apply Cat.Hom.ext
+      change (lift.map _).toFunctor = _
+      rw [praFactor.map_id, pshFactor.map_id]
+      rfl
+    map_comp := fun {opJI₁ opJI₂ opJI₃} f g => by
+      apply Cat.Hom.ext
+      change (lift.map _).toFunctor = _
+      rw [praFactor.map_comp, pshFactor.map_comp]
+      rfl }
+
+end PresheafPRAEvalNat
+
 end GebLean
