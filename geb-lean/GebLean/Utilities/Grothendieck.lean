@@ -7304,6 +7304,29 @@ abbrev LaxNatTransContraLaxNat :=
     (F.map f.op).toFunctor.map ((app c').map φ) ≫ laxApp f y =
     laxApp f x ≫ (app c).map ((G.map f.op).toFunctor.map φ)
 
+/-- Equality proof for identity laxity. -/
+abbrev LaxNatTransContraIdEq :=
+  ∀ (c : C) (x : G.obj (Opposite.op c)),
+    (F.map (𝟙 c).op).toFunctor.obj ((app c).obj x) =
+    (app c).obj ((G.map (𝟙 c).op).toFunctor.obj x)
+
+/-- Derive the identity equality from functor laws. -/
+lemma laxNatTransContraIdEqProof : LaxNatTransContraIdEq app := by
+  intro c x
+  have hF : (F.map (𝟙 c).op).toFunctor = 𝟭 _ := by
+    rw [show (𝟙 c).op = 𝟙 (Opposite.op c) from rfl, F.map_id]
+    exact Cat.id_eq_id (F.obj (Opposite.op c))
+  have hG : (G.map (𝟙 c).op).toFunctor = 𝟭 _ := by
+    rw [show (𝟙 c).op = 𝟙 (Opposite.op c) from rfl, G.map_id]
+    exact Cat.id_eq_id (G.obj (Opposite.op c))
+  simp only [hF, hG, Functor.id_obj]
+
+/-- Identity coherence: `laxApp (𝟙 c) x` equals the canonical
+`eqToHom`. -/
+abbrev LaxNatTransContraLaxId :=
+  ∀ (c : C) (x : G.obj (Opposite.op c)),
+    laxApp (𝟙 c) x = eqToHom (laxNatTransContraIdEqProof app c x)
+
 end LaxNatTransContraFunctor
 
 /-!
