@@ -7240,6 +7240,73 @@ instance : Category (OplaxFunctorCat C) where
 end OplaxFunctorCat
 
 /-!
+## Lax Natural Transformations Between Contravariant Cat-Valued Functors
+   (with `grothendieckContraFunctor` convention)
+
+This section defines lax natural transformations between Cat-valued
+functors `G F : Cᵒᵖ ⥤ Cat` (unprimed opposite, matching
+`grothendieckContraFunctor`).
+
+A lax natural transformation `α : G ⟹ F` between contra-functors
+consists of:
+
+- Component functors `α.app c : G.obj (op c) ⥤ F.obj (op c)` for each
+  `c : C`.
+- Laxity morphisms `α.laxApp f x : (F.map f.op).obj ((α.app c').obj x)
+  ⟶ (α.app c).obj ((G.map f.op).obj x)` for each `f : c ⟶ c'` in `C`
+  and `x : G.obj (op c')`.
+- Naturality and coherence conditions.
+
+Direction note: the lax comparison goes from
+"evaluate-then-pullback" to "pullback-then-evaluate", opposite of the
+oplax direction in the parallel `OplaxNatTransContraData` section.
+
+Unlike the covariant `LaxNatTransData` and the primed oplax
+`OplaxNatTransData`, this section does NOT provide a `.toFunctor`
+extractor: the lift to a strict functor between contraGrothendiecks
+in the lax direction does not exist (it would require a section of
+the lax comparison map, which is not available in general).
+-/
+
+section LaxNatTransContraFunctor
+
+universe vC uC vF uF
+
+variable {C : Type uC} [Category.{vC} C]
+variable (G F : Cᵒᵖ ⥤ Cat.{vF, uF})
+
+/-- Component functors for a lax natural transformation between
+contravariant Cat-valued functors. -/
+abbrev LaxNatTransContraApp :=
+  ∀ c : C, G.obj (Opposite.op c) ⥤ F.obj (Opposite.op c)
+
+variable {G F}
+variable (app : LaxNatTransContraApp G F)
+
+/-- Laxity morphism for `α : G ⟹ F` between contra-functors.  For
+`f : c ⟶ c'` in `C` and `x : G.obj (op c')`, a morphism
+
+  `(F.map f.op).obj ((app c').obj x) ⟶ (app c).obj ((G.map f.op).obj x)`
+
+encoding the comparison from "evaluate-then-pullback" to
+"pullback-then-evaluate". -/
+abbrev LaxNatTransContraLaxApp :=
+  ∀ {c c' : C} (f : c ⟶ c') (x : G.obj (Opposite.op c')),
+    (F.map f.op).toFunctor.obj ((app c').obj x) ⟶
+    (app c).obj ((G.map f.op).toFunctor.obj x)
+
+variable (laxApp : LaxNatTransContraLaxApp app)
+
+/-- Naturality of laxity morphisms: for each `f : c ⟶ c'` and
+`φ : x ⟶ y`, the appropriate square commutes. -/
+abbrev LaxNatTransContraLaxNat :=
+  ∀ {c c' : C} (f : c ⟶ c') {x y : G.obj (Opposite.op c')} (φ : x ⟶ y),
+    (F.map f.op).toFunctor.map ((app c').map φ) ≫ laxApp f y =
+    laxApp f x ≫ (app c).map ((G.map f.op).toFunctor.map φ)
+
+end LaxNatTransContraFunctor
+
+/-!
 ## Double Grothendieck Constructions
 
 Polynomial functors arise as double Grothendieck constructions. Given a span
