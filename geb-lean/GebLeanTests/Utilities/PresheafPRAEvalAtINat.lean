@@ -184,14 +184,19 @@ end UniversePoly
 
 section BridgeTheorem
 
-example (I : Cat.{0, 0}) (J : Cat.{0, 0})
+example
+    (I : Cat.{0, 0}) (J : Cat.{0, 0})
     (P : PresheafPRACat.{0, 0, 0, 0, 0, 0} I J)
     (Z : ↑(presheafCat.{0, 0, 0} I)) :
-    ((praEvalAtFunctor.{0, 0, 0, 0, 0, 0}
-          (↑I) (↑J)).obj P).obj Z =
-    ((praEvalAtFunctor.{0, 0, 0, 0, 0, 0}
-          (↑I) (↑J)).obj P).obj Z := by
-  simp [praEvalAtFunctor_via_praPolyEvalAtIFunctor.{0, 0, 0, 0, 0, 0}
-    I J P Z]
+    ((praEvalAtFunctor.{0, 0, 0, 0, 0, 0} (↑I) (↑J)).obj P).obj Z =
+    (ULift.down.{1, 1}
+      (ULiftHom.objDown.{1, 1}
+        (GrothendieckContraFunctor.objFiber
+          ((praPolyEvalAtIFunctor.{0, 0, 0, 0, 0, 0} I).obj
+            (praPolyEvalAtISourceObj.{0, 0, 0, 0, 0, 0}
+              I J P Z)))) :
+      (↑J)ᵒᵖ ⥤ Type 0) :=
+  praEvalAtFunctor_via_praPolyEvalAtIFunctor.{0, 0, 0, 0, 0, 0}
+    I J P Z
 
 end BridgeTheorem
