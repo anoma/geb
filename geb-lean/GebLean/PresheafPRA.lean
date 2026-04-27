@@ -1775,6 +1775,33 @@ private def praPolyEvalSourceFibBif :
       rw [praFactor.map_comp, pshFactor.map_comp]
       rfl }
 
+/--
+Source bifunctor over the I-base.  Sends `op I` to the fixed-`I`
+source contraGrothendieck (analogous to `praPolyEvalAtISource I`),
+viewed as a `Catᵒᵖ`-indexed family of categories.
+
+Constructed by reorganizing `praPolyEvalSourceFibBif :
+(Cat × Cat)ᵒᵖ ⥤ Cat` to put `I` as the outer parameter (via
+`prodOpEquiv` and `Prod.swap` to swap the J/I order, then back via
+`prodOpEquiv.inverse`), currying so that `I` appears outermost,
+then composing with `grothendieckContraFunctor Cat` to obtain a
+`Catᵒᵖ ⥤ Cat`.
+-/
+def praPolyEvalSourceOverI :
+    Cat.{v_I, u_I}ᵒᵖ ⥤
+      Cat.{max u_I u_J v_I v_J w_I w',
+        max (u_I + 1) (u_J + 1) v_I (v_J + 1) (w_I + 1) (w' + 1)} :=
+  let swappedBif :
+      Cat.{v_I, u_I}ᵒᵖ × Cat.{v_J, u_J}ᵒᵖ ⥤
+        Cat.{max u_I u_J v_I w_I w',
+          max (u_I + 1) u_J v_I v_J (w_I + 1) (w' + 1)} :=
+    CategoryTheory.Prod.swap Cat.{v_I, u_I}ᵒᵖ Cat.{v_J, u_J}ᵒᵖ ⋙
+      (prodOpEquiv (C := Cat.{v_J, u_J})
+        (D := Cat.{v_I, u_I})).inverse ⋙
+      praPolyEvalSourceFibBif.{u_I, v_I, u_J, v_J, w_I, w'}
+  Functor.curry.obj swappedBif ⋙
+    grothendieckContraFunctor Cat.{v_J, u_J}
+
 end PresheafPRAEvalNat
 
 end GebLean
