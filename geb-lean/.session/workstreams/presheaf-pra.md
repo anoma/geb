@@ -494,179 +494,130 @@ The bridge theorem closed by `rfl` — required explicit universe
 annotations on `ULift.down` and `ULiftHom.objDown` to avoid
 metavariables.
 
-## praEval Naturality (in progress, 2026-04-26)
+## praEvalAtI Naturality (complete, 2026-04-26)
 
-Goal: lift `praEvalAtFunctor` to a flat-functor-between-
-Grothendiecks form `praPolyEvalFunctor` natural in `(I, J)`,
-mirroring `praPolyDirectionsFunctor` in spirit but with inverted
-source-side variance.
+Goal: lift `praEvalAtFunctor I J` to a flat-functor-between-
+Grothendiecks form `praPolyEvalAtIFunctor` natural in `(J, P, Z)`
+at fixed `I`, built as `(grothendieckContraFunctor Cat).map` of a
+NatTrans between two `Catᵒᵖ ⥤ Cat` functors.
 
-Spec: `docs/superpowers/specs/2026-04-26-praEval-naturality-design.md`
+Spec:
+`docs/superpowers/specs/2026-04-26-praEvalAtI-naturality-design.md`
 (gitignored).
-Plan: `docs/superpowers/plans/2026-04-26-praEval-naturality.md`
+Plan: `docs/superpowers/plans/2026-04-26-praEvalAtI-naturality.md`
 (gitignored).
 
-**Done so far (10 commits):**
+The `(I, J)`-naturality variant is deferred to a separate
+workstream.  See "Earlier (I, J)-natural attempt" below for why.
 
-| Commit | Phase / Task |
-|--------|--------------|
-| `81a0369f` | Task 1: `praEvalTargetFibre` (initial) |
-| `f9859d89` | Task 2: `praPolyEvalTarget` |
-| `21a625f7` → `4203253f` | Task 3 first attempt (reverted) |
-| `64162066` | Task A1: `FunctorBetweenContraContra` abbrevs |
-| `774ee96e` | Task A2: `FunctorBetweenContraContraData` |
-| `d9d08504` | Task A3: `…Data.toFunctor` extractor |
-| `46923c37` | Tasks 3+4 (revised): source side |
-| `f0f1f208` | Task 8: `praPolyEvalData_baseFib` |
-| `d789a2ac` | Fix: drop `Cat.opFunctor` from target fibre |
-| `d701b401` | Task 9: `praPolyEvalData_fibFib` |
+### Done
 
-**Two design pivots during execution:**
+| Commit | Task |
+|--------|------|
+| `c2672b92` | Task 0: revert in-flight (I, J)-natural source side |
+| `08f9b229` | Task 1: `praEvalAtBifunctor` (uncurried form) |
+| `12d1be41` | Task 2: `praPolyEvalAtISourceFib` (initial; bug) |
+| `5ec0e850` | Task 3: `praPolyEvalAtISource` |
+| `b8ffe6b7` | Task 2 fix + Task 4: NatTrans (private helpers) |
+| `44bcb90f` | Task 5: `praPolyEvalAtIFunctor` |
+| `dcea57fd` | Task 6: three rfl bridge lemmas |
+| `02fa0387` | Task 7: `praPolyEvalAtISourceObj` (private helper) |
+| `4469b38a` | Task 8: bridge theorem `..._via_praPolyEvalAtIFunctor` |
+| `5db45870` | Task 9: create `PresheafPRAEvalAtINat.lean` |
+| `6b744c12` | Task 10: register test file |
+| `22185830` | Task 11: bridge-lemma collapse tests |
+| `25f3cb49` | Task 12: pointwise-accessor compatibility tests |
+| `4e046146` | Task 13: functoriality tests |
+| `e41b197c` | Task 14: universe polymorphism tests |
+| `e3099779` | Task 15: bridge-theorem test (via `simp`) |
 
-1. **Variance flip (commit `4203253f` revert + Phase A
-   commits)**: the original plan used the existing
-   `FunctorBetweenCovContra` framework with a covariant source
-   Grothendieck.  This was rejected: presheaves are
-   contravariant in `I`, so `Z`'s natural variance under an
-   `I`-morphism is BACKWARD, forcing the source Grothendieck to
-   be CONTRAVARIANT in `(J, I, P)`.  Resolution: built new U3
-   framework `FunctorBetweenContraContra` (Phase A), used it
-   for praEval.
-2. **Target `Cat.opFunctor` removal (commit `d789a2ac`)**: the
-   original `praEvalTargetFibre` mirrored
-   `praDirectionsTargetFibre`'s three-stage pipeline including
-   `Cat.opFunctor`.  This was rejected: polynomial-functor
-   *evaluation* is COVARIANT in `Z`, so the result-side variance
-   matches presheaves' natural contravariance directly.
-   Resolution: dropped the final `Cat.opFunctor` stage; the
-   target fibre is now `presheafCatFunctor ⋙
-   catULiftFunctor2` (two-stage).
+### Design notes (preserve for next session)
 
-**Outstanding tasks (10 remaining):**
+- `praPolyEvalAtISourceFib I` uses
+  `Opposite.op (Cat.of (↑I)ᵒᵖ)` (matching the convention of
+  `presheafPRACatFunctor`).  Earlier `Opposite.op I` was a bug;
+  fixed in `b8ffe6b7`.
+- `praEvalAtBifunctor` (Task 1) is parameterised by *type-level*
+  `I J` and uses them inside via `PresheafPRACat I J`.  Lean's
+  definitional reduction does not bridge this with the
+  *Cat-object-level* parameters in the fibre functor.  Resolution:
+  the private helper `praEvalAtBifunctorCat I opJ` (introduced in
+  `b8ffe6b7`) builds the same functor using
+  `Functor.uncurry.obj ((whiskeringRight ↑opJ.unop _ _).obj
+   (ccrNewEvalCatFunctor PSh(↑I)) ⋙ Functor.flipping.functor)`;
+  this matches Cat-object-level types definitionally.  The public
+  `praEvalAtBifunctor` remains as a public-API artifact.
+- The source fibre Cat at `op J` is doubly widened
+  (`ULiftHom (ULift (PRACat × ULiftHom (ULift PSh(I))))`): the
+  `pshCatW` factor is widened separately for `toCatHom` to apply
+  to the product Cat-morphism, and the outer `lift` widens the
+  full product into the target Cat universe.  The
+  `praPolyEvalAtINatTrans_app` private helper (in `b8ffe6b7`)
+  uses a `show ⥤ from` cast and `(Functor.id _).prod (ULiftHom
+  .down ⋙ ULift.downFunctor)` to navigate this two-layer
+  unwidening.
+- All naturality and bridge proofs close by `rfl`; the bridge
+  theorem (Task 8) closed by `rfl` after explicit
+  `ULift.down`/`ULiftHom.objDown` annotations on the RHS type.
+- `ULift.down` (not `CategoryTheory.ULift.down`) is the right
+  identifier in RHS type annotations; the latter does not resolve.
+- The `|>.obj Z` syntax does not parse cleanly in theorem-type
+  position when nested with parens; use `(_.obj Z)` flattened
+  on a single line.
 
-- Task 10: `praPolyEvalData_fibHomCrossUnwidened` (cross-fibre
-  morphism, unwidened).
-- Task 11: `praPolyEvalData_fibHomCrossApp` (widened, with
-  target-side `x'` input — note the ContraContra
-  `FibHomCrossApp` shape differs from CovContra; see
-  `Utilities/Grothendieck.lean` for the abbrev).
-- Task 12: `praPolyEvalData_fibHomCrossNat` (naturality).
-- Task 13: `praPolyEvalData_baseHomId` (identity coherence).
-- Task 14: `praPolyEvalData_baseHomComp` (composition
-  coherence).
-- Task 15: `praPolyEvalData` bundle assembly.
-- Task 16: `praPolyEvalFunctor` via
-  `FunctorBetweenContraContraData.toFunctor`.
-- Task 17: three `rfl` bridge lemmas.
-- Task 18: `praPolyEvalAtSourceObj` helper.
-- Task 19: `praEvalAtFunctor_via_praPolyEvalFunctor` bridge
-  theorem + test (via simp).
-- Tasks 20–25: tests + workstream notes.
+### Earlier (I, J)-natural attempt (abandoned)
 
-**Proof-engineering notes for the remaining tasks
-(preserve for next session):**
+Before scoping down to fixed `I`, an attempt was made to make the
+construction natural in `(I, J)` simultaneously.  This attempt
+spanned commits `81a0369f` through `d701b401`, with the source
+side reverted by `c2672b92`.  The kept artifacts from that
+attempt are:
 
-- The new `FunctorBetweenContraContra` framework's
-  `FibHomCrossApp` takes a TARGET-side input `x' : G.obj (op c')`
-  rather than CovContra's source-side input.  The cross-fibre
-  morphism shape is
-  `(fibFib c).obj ((G.map f.op).toFunctor.obj x') ⟶
-   (F.map (baseFib.map f).op).toFunctor.obj
-     ((fibFib c').obj x')`.
-  See `FunctorBetweenContraContraFibHomCrossApp` in
-  `Utilities/Grothendieck.lean` (commit `64162066`).
-- The framework includes an extra helper not in CovContra:
-  `FunctorBetweenContraContraGMapCompEq` /
-  `…GMapCompEqProof` — needed because the contravariant source's
-  composition coherence requires equating `(G.map f.op) ∘
-  (G.map g.op)` with `G.map (f≫g).op`.  This affects the shape
-  of `BaseHomComp` and may matter for Task 14.
-- The praDirections analog `praPolyDirectionsData_baseHomComp`
-  (Task 7.10) closed by `rfl` end-to-end.  It's plausible the
-  praEval analog also closes by `rfl` given the structural
-  parallel.  Same for `baseHomId` (Task 7.8 → praEval Task 13).
-- Task 11 (`fibHomCrossApp` widened) is the most likely place
-  for further design subtleties.  The polynomial-functor-
-  morphism action `homFiber f : objFiber c ⟶ (presheafPRACat
-  Bifunctor.map (homBase f).op).obj (objFiber c')` provides the
-  natural transformation between polynomial functors at
-  different `P`'s; the cross-fibre app should encode the
-  resulting natural transformation between evaluations.
-- The fibFib body uses `Functor.whiskeringRight ⋯ |>.flip`
-  inline (NOT `praEvalAtFunctor`, because that's defined later
-  in the file).  Future tasks may want to refer to this body
-  shape — see commit `d701b401`.
-- Universe annotations: `praEvalTargetFibre` now uses
-  `presheafCatFunctor.{u_J, v_J, max w' u_I w_I}` (not just
-  `w'`) to absorb `ccrNewEvalCatFunctor`'s output universe
-  inflation.  `praPolyEvalTarget`'s outer Cat universe was
-  correspondingly bumped to include `(u_I + 1)`.
+- `praEvalTargetFibre`, `praPolyEvalTarget` (target Grothendieck;
+  parametrised only by `J`, reusable as-is — commits `81a0369f`,
+  `f9859d89`, `d789a2ac`).
+- `FunctorBetweenContraContra` framework in
+  `Utilities/Grothendieck.lean` (general infrastructure parallel
+  to `FunctorBetweenCovContra`; useful regardless — commits
+  `64162066`, `774ee96e`, `d9d08504`).
 
-**Proof-engineering lessons accumulated across the workstream
-(preserve across sessions):**
+The attempt hit a variance mismatch in the framework's cross-
+fibre map: the source endpoint involves `Hom_{PSh(I_source)}`
+while the target endpoint involves `Hom_{PSh(I_target)}`, related
+by the *forward whisker* `Hom_{PSh(I_target)} ↪ Hom_{PSh
+(I_source)}`.  This whisker goes from target into source —
+opposite of what the framework's `FibHomCrossApp` shape requires.
+Investigation showed:
 
-- **2026-04-25 (Tasks 7.5–7.10) — surprises in the unwidened
-  layer.** Tasks 7.7 and 7.10 closed by `rfl` with no tactic
-  scaffolding; Task 7.6 reduced to a one-line `rfl` structural
-  compat lemma plus a six-tactic naturality proof; Task 7.10's
-  widened composition coherence is `rfl` end-to-end. The key
-  observation: at the unwidened level, `homFiber f` (built from
-  `f.unop.fiber.unop`) decomposes definitionally through
-  `Grothendieck.id_fiber`/`comp_fiber` plus the `(homFiber f).app`
-  pointwise application. Tactic engineering is needed only at the
-  unwidened naturality step (Task 7.5) and at
-  `_target_widening_compat` (Task 7.6).
-- **2026-04-25 (Task 7.6) — structural compat lemma pattern.**
-  `(praDirectionsTargetFibre.map h.op).toFunctor.map ∘
-  widening.op.map = widening.op.map ∘
-  (presheafCatFunctor.map h.op).toFunctor.op.map` holds by `rfl`.
-  The lemma serves as a named rewrite handle; the proof itself is
-  trivial. The companion `Families.lean` change un-privates
-  `ccrNewFamilyFunctor_naturality` for use in the widened
-  naturality proof.
-- **2026-04-25 (Task 7.9) — `set_option maxHeartbeats 800000`
-  required by linter.** When elevating heartbeats above the
-  default 200000, the project's `linter.style.maxHeartbeats`
-  rejects the option without an explanatory comment immediately
-  above. The smallest sufficient value for Task 7.9 is 400000
-  (per code-review measurement); the committed version uses
-  800000 and could be tightened in a follow-up cleanup pass.
-- **2026-04-25 (Task 12) — definitional-equality cliff at the
-  accessor migration.** The new `praDirectionsAt` form (built via
-  `praPolyDirectionsFunctor.obj` + an `unwiden` helper) is only
-  propositionally equal to the old `(praDirectionsAtFunctor _).obj
-  (op ⟨j, a⟩)`. Downstream `PresheafPRAUMorph.lean` proofs
-  (`praReassemble_directions`, cofan/coprod constructions) rely
-  on the old definitional collapse. The migration must batch
-  Tasks 12 and 13 together (or introduce a propositional bridge
-  lemma) — see "Outstanding plan tasks (12–22)" above for the
-  three candidate paths forward.
-- `ULiftHom.down`'s `C` argument is unsolvable from a
-  `Cat.of`-coerced expression.  Fix: prefix the offending
-  functor composition with
-  `show ULiftHom (ULift _) ⥤ _ from …` to pin the input type.
-- `rw` of `(g ≫ h).unop.base = h.unop.base ≫ g.unop.base`
-  triggers motive-not-type-correct because other sub-terms
-  depend on the rewritten form.  Fix: rewrite the dependent
-  sub-term first via a helper like `fibFib_map_comp_fiber`, then
-  proceed.
-- `rw` does not match `data.fibHomCrossApp f g x` against a goal
-  that renders as `(fun {c c'} ↦ data.fibHomCrossApp) f g x`
-  after abbrev-implicit expansion.  Fix: `conv_lhs => rw [show
-  LHS = RHS from data.baseHomComp …]` with the fully-resolved
-  RHS spelled out in the `show`.
-- The fused-vs-split `F.map`-transport identity collapses via
-  `Functor.congr_hom hF` where `hF : F.map fused.toFunctor =
-  F.map A.toFunctor ⋙ F.map B.toFunctor`, proven by
-  `rw [baseFib.map_comp, op_comp, F.map_comp]; rfl`.
-- `show` with goal-changing intent triggers a lint warning; use
-  `change` instead.
-- Universe parameters for `catULiftFunctor2` and `Cat.opFunctor`
-  bind in declaration order (`u, v, w_v, w_u` for
-  `catULiftFunctor2`; `v, u` for `Cat.opFunctor`) — not in the
-  order they appear inside `Cat.{v, u}` annotations.  Mirror the
-  order already used by `praPositionsNatTarget` in
-  `PresheafPRA.lean:412-420`.
+1. Adding `Cat.opFunctor` to the target fibre would fix the
+   I-variation case but reintroduce a Z-covariance violation in
+   the pure-Z-variation case.
+2. Redesigning the target Grothendieck (e.g., a covariant
+   Grothendieck or an extended fibre) does not produce a clean
+   flat functor — the natural construction yields a *span*
+   `praEvalAt P_t Z_t (J-pulled) ↪ middle ← praEvalAt P_s Z_s`
+   with no canonical arrow in either direction.
+
+Conclusion: `praEvalAt`'s `(I, J)`-naturality is genuinely lax —
+J-naturality is strict but I-naturality is up-to-inclusion via
+the forward whisker.  A flat functor between two single-level
+Grothendiecks cannot capture both Z-covariance at fixed `I` and
+I-pullback-via-whisker simultaneously.  The user's plan: use the
+fixed-`I` formula (now built) as a concrete reference for a
+later workstream that designs the appropriate `I`-natural
+object.  Possibilities to explore: paranatural transformation
+between two-variance-in-`I` functors, lax-natural infrastructure,
+or restricted-source-mor conventions.
+
+### Follow-up: (I, J)-naturality (deferred)
+
+A separate brainstorm/design session will use the concrete
+fixed-`I` formula above to design the appropriate `I`-natural
+object.  Directions to consider include paranatural
+transformations between two-variance-in-`I` functors, 2-cells
+between pseudofunctors, profunctor-style natural transformations
+capturing lax `I`-naturality, or restriction of source-mors to
+those with fully faithful or equivalence `f_I`.
 
 ## References
 
