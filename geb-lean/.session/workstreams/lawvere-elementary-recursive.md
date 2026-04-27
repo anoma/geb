@@ -598,7 +598,7 @@ Implementation plan:
 * **Stage 3** (Tasks 3.1-3.3): quotient + Category +
   products + interp functor + `m = 0` subcategory.
 * **Stage 4** (Tasks 4.1-4.3): Layer 1 auto-bound combinators
-  + `@[simp]` correctness lemmas.
+  with `@[simp]` correctness lemmas.
 * **Stage 5** (Tasks 5.1-5.3): `LawvereERCat ≃
   LawvereNatBTBounded0` equivalence.
 * **Stage 6** (Tasks 6.1-6.3): Phase 4f transport + tests +
@@ -862,7 +862,7 @@ with GodelT's SKI-style term inductive.  Commits:
 
 The dependency graph is now:
 
-```
+```text
 LawvereGodelT.lean  (types, terms, interp, I, B, castArrow0)
        ↑
 Utilities/GodelTBracket.lean  (GodelTExpr, abstract, compile,
@@ -926,8 +926,8 @@ machinery is in place.  Commits on `terence/syntax`:
 
 Build state: clean (zero warnings); `lake test` passes.
 
-Stage C (equivalence with `LawvereERCat`) and Stage D (tests
-+ tracker) are untouched.  Task `C.2` (`toER` via
+Stage C (equivalence with `LawvereERCat`) and Stage D
+(tests + tracker) are untouched.  Task `C.2` (`toER` via
 `ApplyContext`) and `C.3` (`toGodelT` for `bsum`/`bprod` via
 pairing trick) remain the two most substantive items,
 per the plan's risk notes.
@@ -1026,6 +1026,7 @@ Design spec D1′/D2′ and plan Task C.2 are updated to match.
 **LawvereGodelT chain complete (2026-04-21)**: all stages landed
 on `terence/syntax`.  Full commit ledger:
 
+<!-- markdownlint-disable MD013 -->
 | SHA | Stage | Content |
 |---|---|---|
 | `36c4d18d` | 0 | `ERMor1.pred` + `ERMor1.discN` named primitives with `@[simp]` interp lemmas. |
@@ -1049,6 +1050,7 @@ on `terence/syntax`.  Full commit ledger:
 | `4b6d2d43` | C.4 | Tuple-level lifts + `godelTToERFunctor` / `erToGodelTFunctor`. |
 | `32f13220` | C.5 | Round-trip identities at quotient level + `lawvereGodelTERCatEquivalence : LawvereGodelTCat ≌ LawvereERCat`. |
 | `c47c1f5a` | D.1 / D.2 | `GebLeanTests/LawvereGodelT.lean` + `GebLeanTests/LawvereGodelTERCatEquiv.lean` `#guard` sanity tests. |
+<!-- markdownlint-enable MD013 -->
 
 Final state:
 
@@ -1162,10 +1164,10 @@ ER — DO NOT build a workaround; surface it and reconsider.
 
 Stages (task IDs #181-#186):
 
-* **Stage E (#181)**: Add T* iter to `GodelTMor1`.  Introduces
+* **Stage E (#181)**: Add T\* iter to `GodelTMor1`.  Introduces
   `GodelTMor1.iter {k} (count : GodelTMor1 k)
   (step : GodelTMor1 (k + 2)) (base : GodelTMor1 k) :
-  GodelTMor1 k`, matching B-W's T* exactly (count is a
+  GodelTMor1 k`, matching B-W's T\* exactly (count is a
   structured T* sub-term, not a context slot).  Requires
   building the named ER composite `ERMor1.iterT` (wrapper
   around `boundedRec` + `iterAutoBound` using `towerER`),
@@ -1173,7 +1175,7 @@ Stages (task IDs #181-#186):
   B-W's stratification, and proving
   `GodelTMor1.lt_tower_towerHeight` — the substantive B-W
   theorem.  ~100-300 lines of proof.
-* **Stage F (#182)**: Add the remaining B-W T* primitives
+* **Stage F (#182)**: Add the remaining B-W T\* primitives
   (`K`, `S`) to `GodelTMor1`.  After Stage F, `GodelTMor1`
   contains the full B-W T* primitive set
   (`zero` / `succ` / `pred` / `K σ τ` / `S ρ σ τ` /
@@ -1370,6 +1372,7 @@ commits on `terence/syntax`, build clean throughout):**
 **Execution progress through 2026-04-26 / 27 (seven additional
 commits on `terence/syntax`, build clean throughout):**
 
+<!-- markdownlint-disable MD013 -->
 | Sub-stage | Commit | Status |
 |---|---|---|
 | δ.5 auxiliary: `G_ge_level`, `bracketLevel_high_zero` | `50c91c3f` | complete |
@@ -1379,6 +1382,7 @@ commits on `terence/syntax`, build clean throughout):**
 | δ.5 Theorem 2: `majorizes_redIter_zero` | `1e983c3a` | complete |
 | δ.5 Theorem 3: `majorizes_redIter_succ` | `f4f2df34` | complete |
 | δ.5 Theorem 4: `majorizes_redTreeIter_node` (σ.level=0 only) | `68607215` | partial (general σ pending) |
+<!-- markdownlint-enable MD013 -->
 
 **δ.5 in flight.**  Nine of ten redex majorization lemmas
 proven.  `majorizes_redS` (B-W Lemma 11, S combinator)

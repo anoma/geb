@@ -508,7 +508,7 @@ framework.
   pre-existing mathematical objects**: when the goal of a
   workstream is to formalize a specific mathematical object
   (e.g. the elementary-recursive functions per Wikipedia, or
-  Beckmann-Weiermann's T*), the *interface* of the resulting
+  Beckmann-Weiermann's T*), the _interface_ of the resulting
   Lean category (its objects, its primitive constructors, its
   generators) is a fixed mathematical contract.  It is
   determined by the external mathematical source and is NOT a
