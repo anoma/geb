@@ -1802,6 +1802,18 @@ def praPolyEvalSourceOverI :
   Functor.curry.obj swappedBif ⋙
     grothendieckContraFunctor Cat.{v_J, u_J}
 
+/--
+Target bifunctor over the I-base.  Constant at `praPolyEvalTarget`,
+the J-only target contraGrothendieck.  Action on Cat-mors is the
+identity functor on `praPolyEvalTarget`.
+-/
+def praPolyEvalTargetOverI :
+    Cat.{v_I, u_I}ᵒᵖ ⥤
+      Cat.{max u_I u_J v_I v_J w_I w',
+        max (u_I + 1) (u_J + 1) v_I (v_J + 1) (w_I + 1) (w' + 1)} :=
+  (Functor.const _).obj
+    praPolyEvalTarget.{u_I, v_I, u_J, v_J, w_I, w'}
+
 end PresheafPRAEvalNat
 
 end GebLean
