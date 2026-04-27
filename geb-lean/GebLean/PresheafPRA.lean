@@ -1597,6 +1597,53 @@ def praPolyEvalAtIFunctor (I : Cat.{v_I, u_I}) :
     (praPolyEvalAtINatTrans.{u_I, v_I, u_J, v_J, w_I, w'} I)
   ).toFunctor
 
+/--
+Base of `praPolyEvalAtIFunctor.obj X` agrees with the base of `X`
+on the nose: the functor is identity on the J-base.
+-/
+@[simp] theorem praPolyEvalAtIFunctor_base
+    (I : Cat.{v_I, u_I})
+    (X : praPolyEvalAtISource.{u_I, v_I, u_J, v_J, w_I, w'} I) :
+    GrothendieckContraFunctor.objBase
+      ((praPolyEvalAtIFunctor.{u_I, v_I, u_J, v_J, w_I, w'} I).obj
+        X) =
+    GrothendieckContraFunctor.objBase X :=
+  rfl
+
+/--
+Fibre of `praPolyEvalAtIFunctor.obj X` is the
+`praPolyEvalAtINatTrans` component applied at the base of `X`,
+acting on the fibre of `X`.
+-/
+@[simp] theorem praPolyEvalAtIFunctor_fibre
+    (I : Cat.{v_I, u_I})
+    (X : praPolyEvalAtISource.{u_I, v_I, u_J, v_J, w_I, w'} I) :
+    GrothendieckContraFunctor.objFiber
+      ((praPolyEvalAtIFunctor.{u_I, v_I, u_J, v_J, w_I, w'} I).obj
+        X) =
+    ((praPolyEvalAtINatTrans.{u_I, v_I, u_J, v_J, w_I, w'} I).app
+      (Opposite.op
+        (GrothendieckContraFunctor.objBase X))).toFunctor.obj
+      (GrothendieckContraFunctor.objFiber X) :=
+  rfl
+
+/--
+Fibre component of `praPolyEvalAtIFunctor.map f` is determined by
+`praPolyEvalAtINatTrans`'s naturality acting on the source fibre's
+hom.
+-/
+@[simp] theorem praPolyEvalAtIFunctor_map_homFiber
+    (I : Cat.{v_I, u_I})
+    {X Y : praPolyEvalAtISource.{u_I, v_I, u_J, v_J, w_I, w'} I}
+    (f : X ⟶ Y) :
+    GrothendieckContraFunctor.homFiber
+      ((praPolyEvalAtIFunctor.{u_I, v_I, u_J, v_J, w_I, w'} I).map
+        f) =
+    ((praPolyEvalAtINatTrans.{u_I, v_I, u_J, v_J, w_I, w'} I).app
+      (Opposite.op (GrothendieckContraFunctor.objBase X))).toFunctor.map
+      (GrothendieckContraFunctor.homFiber f) :=
+  rfl
+
 end PresheafPRAEvalAtINat
 
 end GebLean
