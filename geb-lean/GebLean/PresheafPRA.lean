@@ -1482,13 +1482,14 @@ def praPolyEvalAtISourceFib (I : Cat.{v_I, u_I}) :
         Cat.{max u_I u_J w_I w',
           max u_I u_J v_I v_J (w_I + 1) (w' + 1)} :=
     presheafPRACatBifunctor.{u_I, v_I, u_J, v_J, w_I, w'}.flip.obj
-      (Opposite.op I)
+      (Opposite.op (Cat.of (↑I)ᵒᵖ))
   let pshCatW :
         Cat.{max u_I u_J w_I w',
           max u_I u_J v_I v_J (w_I + 1) (w' + 1)} :=
     catULiftFunctor2.{max v_I (w_I + 1) u_I, max u_I w_I,
         max u_J w', max u_J v_J (w' + 1)}.obj
-      (presheafCatFunctor.{u_I, v_I, w_I}.obj (Opposite.op I))
+      (presheafCatFunctor.{u_I, v_I, w_I}.obj
+        (Opposite.op (Cat.of (↑I)ᵒᵖ)))
   let lift :=
     catULiftFunctor2.{max u_I u_J v_I v_J (w_I + 1) (w' + 1),
       max u_I u_J w_I w', v_I, u_I + 1}
@@ -1503,6 +1504,66 @@ def praPolyEvalAtISourceFib (I : Cat.{v_I, u_I}) :
     map_comp := fun {opJ₁ opJ₂ opJ₃} f g => by
       apply Cat.Hom.ext
       rfl }
+
+private def praEvalAtBifunctorCat
+    (I : Cat.{v_I, u_I}) (opJ : Cat.{v_J, u_J}ᵒᵖ) :
+    ↑((presheafPRACatBifunctor.{u_I, v_I, u_J, v_J, w_I, w'}.flip.obj
+          (Opposite.op (Cat.of (↑I)ᵒᵖ))).obj opJ) ×
+      ↑(presheafCatFunctor.{u_I, v_I, w_I}.obj
+          (Opposite.op (Cat.of (↑I)ᵒᵖ))) ⥤
+      ↑(presheafCatFunctor.{u_J, v_J,
+          max w' u_I w_I}.obj opJ) :=
+  Functor.uncurry.obj
+    ((Functor.whiskeringRight ↑opJ.unop _ _).obj
+        (ccrNewEvalCatFunctor.{max v_I u_I (w_I + 1),
+            max u_I w_I, w'}
+          ↑(presheafCatFunctor.{u_I, v_I, w_I}.obj
+              (Opposite.op (Cat.of (↑I)ᵒᵖ)))) ⋙
+      Functor.flipping.functor)
+
+private def praPolyEvalAtINatTrans_app
+    (I : Cat.{v_I, u_I}) (opJ : Cat.{v_J, u_J}ᵒᵖ) :
+    ↥((praPolyEvalAtISourceFib.{u_I, v_I, u_J, v_J, w_I, w'} I).obj
+        opJ) ⥤
+      ↑(catULiftFunctor2.{
+          max v_J ((max w' u_I w_I) + 1) u_J,
+          max u_J w' u_I w_I,
+          max u_I u_J v_I w_I w',
+          max (u_I + 1) u_J v_I v_J (w_I + 1)
+            (w' + 1)}.obj
+        (presheafCatFunctor.{u_J, v_J,
+          max w' u_I w_I}.obj opJ)) :=
+  show CategoryTheory.ULiftHom
+      (ULift (↑((presheafPRACatBifunctor.{u_I, v_I, u_J, v_J, w_I, w'}.flip.obj
+            (Opposite.op (Cat.of (↑I)ᵒᵖ))).obj opJ) ×
+        CategoryTheory.ULiftHom
+          (ULift (↑(presheafCatFunctor.{u_I, v_I, w_I}.obj
+              (Opposite.op (Cat.of (↑I)ᵒᵖ))))))) ⥤ _ from
+  CategoryTheory.ULiftHom.down ⋙
+  CategoryTheory.ULift.downFunctor ⋙
+  (Functor.id _).prod
+    (CategoryTheory.ULiftHom.down ⋙
+      CategoryTheory.ULift.downFunctor) ⋙
+  praEvalAtBifunctorCat.{u_I, v_I, u_J, v_J, w_I, w'} I opJ ⋙
+  CategoryTheory.ULift.upFunctor ⋙
+  CategoryTheory.ULiftHom.up
+
+/--
+The J-naturality natural transformation underlying
+`praPolyEvalAtIFunctor`.  Per-`op J` component is
+`praEvalAtBifunctorCat I opJ` composed with the appropriate
+widening down-casts and up-casts to align the source and target
+Cat universes.
+-/
+def praPolyEvalAtINatTrans (I : Cat.{v_I, u_I}) :
+    praPolyEvalAtISourceFib.{u_I, v_I, u_J, v_J, w_I, w'} I ⟶
+      praEvalTargetFibre.{u_I, v_I, u_J, v_J, w_I, w'} where
+  app opJ :=
+    (praPolyEvalAtINatTrans_app.{u_I, v_I, u_J, v_J, w_I, w'}
+      I opJ).toCatHom
+  naturality {opJ_s opJ_t} f := by
+    apply Cat.Hom.ext
+    rfl
 
 /--
 Total source contraGrothendieck for `praPolyEvalAtIFunctor`.
