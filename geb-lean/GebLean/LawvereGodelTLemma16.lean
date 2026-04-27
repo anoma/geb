@@ -1473,4 +1473,562 @@ theorem GodelTTerm.majorizes_redIter_succ
     rw [hRHS_bl0, hT₂'_bl0]
     exact Nat.le_of_lt hstrict
 
+
+/-- `bracketLevelAppGen` is monotone in both function-level and
+argument-level inputs (pointwise). -/
+theorem GodelTTerm.bracketLevelAppGen_mono
+    (g i : Nat)
+    (bf1 bf2 ba1 ba2 : Nat → Nat)
+    (hf : ∀ j, bf1 j ≤ bf2 j)
+    (ha : ∀ j, ba1 j ≤ ba2 j) :
+    GodelTTerm.bracketLevelAppGen g i bf1 ba1 ≤
+      GodelTTerm.bracketLevelAppGen g i bf2 ba2 := by
+  unfold GodelTTerm.bracketLevelAppGen
+  split_ifs with hi
+  · induction (g + 1 - i) with
+    | zero => exact hf (g + 1)
+    | succ k ih =>
+        simp only []
+        apply Nat.mul_le_mul
+        · exact Nat.pow_le_pow_right (by omega) ih
+        · exact Nat.add_le_add (hf (g - k)) (ha (g - k))
+  · exact hf i
+
+/-- Monotonicity of `treeIter t` bracketLevel in `t.bracketLevel 0`. -/
+private theorem GodelTTerm.bracketLevel_treeIter_arg_mono
+    {S : Set GodelTBase} {n : Nat}
+    (hT : GodelTBase.tree ∈ S) (σ : GodelTType S)
+    (t1 t2 : GodelTTerm S n (.base .tree hT))
+    (h : t1.bracketLevel 0 ≤ t2.bracketLevel 0)
+    (j : Nat) :
+    (GodelTTerm.app (GodelTTerm.treeIter hT σ) t1).bracketLevel j ≤
+      (GodelTTerm.app (GodelTTerm.treeIter hT σ) t2).bracketLevel j := by
+  rcases j with _ | _ | _ | k
+  · simp only [GodelTTerm.bracketLevel_app_treeIter_zero]; exact h
+  · rw [GodelTTerm.bracketLevel_app_treeIter_one,
+        GodelTTerm.bracketLevel_app_treeIter_one]
+  · rw [show (0 + 1 + 1 : Nat) = 2 from rfl,
+        GodelTTerm.bracketLevel_app_treeIter_two,
+        GodelTTerm.bracketLevel_app_treeIter_two]; exact h
+  · rw [GodelTTerm.bracketLevel_app_treeIter_ge_three,
+        GodelTTerm.bracketLevel_app_treeIter_ge_three]
+
+/-- Monotonicity of `[app f a]_i` when `f` is replaced by a
+pointwise-larger non-iter-head term (same `a`). -/
+private theorem GodelTTerm.bracketLevel_app_mono_left
+    {S : Set GodelTBase} {n : Nat}
+    {σ τ : GodelTType S}
+    (f1 f2 : GodelTTerm S n (.arrow σ τ))
+    (a : GodelTTerm S n σ)
+    (hf : ∀ j, f1.bracketLevel j ≤ f2.bracketLevel j)
+    (hf1NI : f1.isIterHead = false)
+    (hf2NI : f2.isIterHead = false)
+    (i : Nat) (_ : i ≤ σ.level) :
+    (GodelTTerm.app f1 a).bracketLevel i ≤
+      (GodelTTerm.app f2 a).bracketLevel i := by
+  rw [GodelTTerm.bracketLevel_app_of_not_iter f1 a i hf1NI,
+      GodelTTerm.bracketLevel_app_of_not_iter f2 a i hf2NI]
+  exact GodelTTerm.bracketLevelAppGen_mono σ.level i
+    f1.bracketLevel f2.bracketLevel
+    a.bracketLevel a.bracketLevel
+    hf (fun _ => le_refl _)
+
+/-- Monotonicity of `[app f a]_i` in both `f` and `a`. -/
+private theorem GodelTTerm.bracketLevel_app_mono
+    {S : Set GodelTBase} {n : Nat}
+    {σ τ : GodelTType S}
+    (f1 f2 : GodelTTerm S n (.arrow σ τ))
+    (a1 a2 : GodelTTerm S n σ)
+    (hf : ∀ j, f1.bracketLevel j ≤ f2.bracketLevel j)
+    (ha : ∀ j, a1.bracketLevel j ≤ a2.bracketLevel j)
+    (hf1NI : f1.isIterHead = false)
+    (hf2NI : f2.isIterHead = false)
+    (i : Nat) (_ : i ≤ σ.level) :
+    (GodelTTerm.app f1 a1).bracketLevel i ≤
+      (GodelTTerm.app f2 a2).bracketLevel i := by
+  rw [GodelTTerm.bracketLevel_app_of_not_iter f1 a1 i hf1NI,
+      GodelTTerm.bracketLevel_app_of_not_iter f2 a2 i hf2NI]
+  exact GodelTTerm.bracketLevelAppGen_mono σ.level i
+    f1.bracketLevel f2.bracketLevel
+    a1.bracketLevel a2.bracketLevel
+    hf ha
+
+/-- Beckmann-Weiermann Lemma 16 (treeIter-node case):
+`treeIter (node l r) a b ≫ b (treeIter l a b) (treeIter r a b)`
+for base-typed σ (σ.level = 0). -/
+theorem GodelTTerm.majorizes_redTreeIter_node
+    {S : Set GodelTBase} {n : Nat}
+    (hT : GodelTBase.tree ∈ S) (σ : GodelTType S)
+    (hσ : σ.level = 0)
+    (l r : GodelTTerm S n (.base .tree hT))
+    (a : GodelTTerm S n σ)
+    (b : GodelTTerm S n (.arrow σ (.arrow σ σ))) :
+    GodelTTerm.majorizes
+      (.app (.app (.app (.treeIter (n := n) hT σ)
+        (.app (.app (.node hT) l) r)) a) b)
+      (.app
+        (.app b
+          (.app (.app (.app (.treeIter hT σ) l) a) b))
+        (.app (.app (.app (.treeIter hT σ) r) a) b)) := by
+  have hTlevel : (GodelTType.base GodelTBase.tree hT).level = 0 := rfl
+  -- NLR = node l r, and its bracketLevel.
+  set NLR := GodelTTerm.app
+    (GodelTTerm.app (GodelTTerm.node (S := S) (n := n) hT) l) r
+    with hNLR_def
+  have hNLRNI : NLR.isIterHead = false := rfl
+  -- node : T→(T→T) has level 1.
+  have hNlevel : (GodelTType.arrow (.base .tree hT)
+      (.arrow (.base .tree hT) (.base .tree hT))).level = 1 := by
+    simp [GodelTType.level]
+  have hNodeNI : (GodelTTerm.node (S := S) (n := n) hT).isIterHead =
+      false := rfl
+  -- [app node l]_1 = 1 (pass-through, T.level=0 < 1).
+  set nodeL := GodelTTerm.app (GodelTTerm.node (S := S) (n := n) hT) l
+  have hNodel_bl1 : nodeL.bracketLevel 1 = 1 := by
+    rw [show nodeL = GodelTTerm.app
+        (GodelTTerm.node (S := S) (n := n) hT) l from rfl,
+      GodelTTerm.bracketLevel_app_high _ _ 1
+        (by rw [hTlevel]; omega) hNodeNI]
+    simp [GodelTTerm.bracketLevel_node, hNlevel]
+  set lBL := l.bracketLevel 0
+  set rBL := r.bracketLevel 0
+  have hNodel_bl0 : nodeL.bracketLevel 0 = 2 * (1 + lBL) := by
+    rw [show nodeL = GodelTTerm.app
+        (GodelTTerm.node (S := S) (n := n) hT) l from rfl,
+      GodelTTerm.bracketLevel_app_eq _ _ 0
+        (by rw [hTlevel]) hNodeNI, hNodel_bl1]
+    simp only [GodelTTerm.bracketLevel_node, hNlevel]
+    rfl
+  have hNLR_bl1 : NLR.bracketLevel 1 = 1 := by
+    rw [hNLR_def,
+      GodelTTerm.bracketLevel_app_high _ _ 1
+        (by rw [hTlevel]; omega) hNLRNI, hNodel_bl1]
+  set N := NLR.bracketLevel 0
+  have hNLR_bl0 : N = 2 * (2 * (1 + lBL) + rBL) := by
+    have : N = NLR.bracketLevel 0 := rfl
+    rw [this, hNLR_def,
+      GodelTTerm.bracketLevel_app_eq _ _ 0
+        (by rw [hTlevel]) hNLRNI,
+      hNLR_bl1, hNodel_bl0]
+    omega
+  have hN_ge4 : 4 ≤ N := by rw [hNLR_bl0]; omega
+  set TI_NLR := GodelTTerm.app
+    (GodelTTerm.treeIter (S := S) (n := n) hT σ) NLR
+  set TI_l := GodelTTerm.app
+    (GodelTTerm.treeIter (S := S) (n := n) hT σ) l
+  set TI_r := GodelTTerm.app
+    (GodelTTerm.treeIter (S := S) (n := n) hT σ) r
+  have hTI_NLRNI : TI_NLR.isIterHead = false := rfl
+  have hTI_lNI : TI_l.isIterHead = false := rfl
+  have hTI_rNI : TI_r.isIterHead = false := rfl
+  have hTI_NLR_bl0 : TI_NLR.bracketLevel 0 = N :=
+    GodelTTerm.bracketLevel_app_treeIter_zero hT σ NLR
+  have hTI_NLR_bl1 : TI_NLR.bracketLevel 1 = 1 :=
+    GodelTTerm.bracketLevel_app_treeIter_one hT σ NLR
+  have hTI_NLR_bl2 : TI_NLR.bracketLevel 2 = N := by
+    rw [GodelTTerm.bracketLevel_app_treeIter_two]
+  have hTI_l_bl0 : TI_l.bracketLevel 0 = lBL :=
+    GodelTTerm.bracketLevel_app_treeIter_zero hT σ l
+  have hTI_r_bl0 : TI_r.bracketLevel 0 = rBL :=
+    GodelTTerm.bracketLevel_app_treeIter_zero hT σ r
+  have hN_ge_l : lBL ≤ N := by rw [hNLR_bl0]; omega
+  have hN_ge_r : rBL ≤ N := by rw [hNLR_bl0]; omega
+  have hTI_NLR_ge_l : ∀ j,
+      TI_l.bracketLevel j ≤ TI_NLR.bracketLevel j :=
+    GodelTTerm.bracketLevel_treeIter_arg_mono hT σ l NLR
+      (by exact hN_ge_l)
+  have hTI_NLR_ge_r : ∀ j,
+      TI_r.bracketLevel j ≤ TI_NLR.bracketLevel j :=
+    GodelTTerm.bracketLevel_treeIter_arg_mono hT σ r NLR
+      (by exact hN_ge_r)
+  -- TI_NLR_a = TI_NLR a, TI_l_a = TI_l a, TI_r_a = TI_r a.
+  set TI_NLR_a := GodelTTerm.app TI_NLR a
+  set TI_l_a := GodelTTerm.app TI_l a
+  set TI_r_a := GodelTTerm.app TI_r a
+  have hTI_NLR_aNI : TI_NLR_a.isIterHead = false := rfl
+  have hTI_l_aNI : TI_l_a.isIterHead = false := rfl
+  have hTI_r_aNI : TI_r_a.isIterHead = false := rfl
+  have hTI_NLR_a_ge_l_all : ∀ j,
+      TI_l_a.bracketLevel j ≤ TI_NLR_a.bracketLevel j := fun j => by
+    rcases Nat.lt_or_ge σ.level j with hj | hj
+    · rw [show TI_l_a = GodelTTerm.app TI_l a from rfl,
+          GodelTTerm.bracketLevel_app_high TI_l a j hj hTI_lNI,
+          show TI_NLR_a = GodelTTerm.app TI_NLR a from rfl,
+          GodelTTerm.bracketLevel_app_high TI_NLR a j hj hTI_NLRNI]
+      exact hTI_NLR_ge_l j
+    · exact GodelTTerm.bracketLevel_app_mono_left
+        TI_l TI_NLR a hTI_NLR_ge_l hTI_lNI hTI_NLRNI j hj
+  have hTI_NLR_a_ge_r_all : ∀ j,
+      TI_r_a.bracketLevel j ≤ TI_NLR_a.bracketLevel j := fun j => by
+    rcases Nat.lt_or_ge σ.level j with hj | hj
+    · rw [show TI_r_a = GodelTTerm.app TI_r a from rfl,
+          GodelTTerm.bracketLevel_app_high TI_r a j hj hTI_rNI,
+          show TI_NLR_a = GodelTTerm.app TI_NLR a from rfl,
+          GodelTTerm.bracketLevel_app_high TI_NLR a j hj hTI_NLRNI]
+      exact hTI_NLR_ge_r j
+    · exact GodelTTerm.bracketLevel_app_mono_left
+        TI_r TI_NLR a hTI_NLR_ge_r hTI_rNI hTI_NLRNI j hj
+  set Rl := GodelTTerm.app TI_l_a b
+  set Rr := GodelTTerm.app TI_r_a b
+  set LHS := GodelTTerm.app TI_NLR_a b
+  have hbNI : b.isIterHead = false := by cases b <;> rfl
+  have hbTypeLevel :
+      (GodelTType.arrow σ (.arrow σ σ)).level = σ.level + 1 := by
+    simp [GodelTType.level]
+  have hLHS_ge_Rl : ∀ j, j ≤ σ.level →
+      Rl.bracketLevel j ≤ LHS.bracketLevel j := fun j hj =>
+    GodelTTerm.bracketLevel_app_mono
+      TI_l_a TI_NLR_a b b
+      hTI_NLR_a_ge_l_all
+      (fun _ => le_refl _) hTI_l_aNI hTI_NLR_aNI j
+      (by rw [hbTypeLevel]; omega)
+  have hLHS_ge_Rr : ∀ j, j ≤ σ.level →
+      Rr.bracketLevel j ≤ LHS.bracketLevel j := fun j hj =>
+    GodelTTerm.bracketLevel_app_mono
+      TI_r_a TI_NLR_a b b
+      hTI_NLR_a_ge_r_all
+      (fun _ => le_refl _) hTI_r_aNI hTI_NLR_aNI j
+      (by rw [hbTypeLevel]; omega)
+  -- b_Rl = b Rl, RHS = b_Rl Rr.
+  set b_Rl := GodelTTerm.app b Rl
+  set RHS := GodelTTerm.app b_Rl Rr
+  have hbRlNI : b_Rl.isIterHead = false := rfl
+  -- TI_NLR_a_0 positivity.
+  have hTI_NLR_a_bl0_eq :
+      TI_NLR_a.bracketLevel 0 =
+        2 ^ TI_NLR_a.bracketLevel 1 * (N + a.bracketLevel 0) := by
+    rw [show TI_NLR_a = GodelTTerm.app TI_NLR a from rfl,
+      GodelTTerm.bracketLevel_app_eq TI_NLR a 0
+        (Nat.zero_le _) hTI_NLRNI,
+      hTI_NLR_bl0]
+  have hTI_NLR_a_pos : 1 ≤ TI_NLR_a.bracketLevel 0 := by
+    rw [hTI_NLR_a_bl0_eq]
+    calc (1 : Nat) ≤ N + a.bracketLevel 0 := by omega
+      _ ≤ _ := Nat.le_mul_of_pos_left _
+            (Nat.one_le_iff_ne_zero.mpr (by positivity))
+  -- Abbreviate key bracketLevel values.
+  have hbTypeLevel1 :
+      (GodelTType.arrow σ (.arrow σ σ)).level = 1 := by
+    rw [hbTypeLevel, hσ]
+  set β₁ := b.bracketLevel 1 with hβ₁_def
+  set β₀ := b.bracketLevel 0 with hβ₀_def
+  set α₀ := a.bracketLevel 0 with hα₀_def
+  -- TI_l_a, TI_r_a bracketLevels (pass-through at i≥1 since σ.level=0).
+  have hTI_l_a_bl1 : TI_l_a.bracketLevel 1 =
+      TI_l.bracketLevel 1 := by
+    rw [show TI_l_a = GodelTTerm.app TI_l a from rfl,
+      GodelTTerm.bracketLevel_app_high TI_l a 1
+        (by rw [hσ]; omega) hTI_lNI]
+  have hTI_l_bl1_val : TI_l.bracketLevel 1 = 1 :=
+    GodelTTerm.bracketLevel_app_treeIter_one hT σ l
+  have hTI_l_a_bl1_val : TI_l_a.bracketLevel 1 = 1 := by
+    rw [hTI_l_a_bl1, hTI_l_bl1_val]
+  have hTI_l_a_bl2 : TI_l_a.bracketLevel 2 =
+      TI_l.bracketLevel 2 := by
+    rw [show TI_l_a = GodelTTerm.app TI_l a from rfl,
+      GodelTTerm.bracketLevel_app_high TI_l a 2
+        (by rw [hσ]; omega) hTI_lNI]
+  have hTI_l_bl2_val : TI_l.bracketLevel 2 = lBL :=
+    GodelTTerm.bracketLevel_app_treeIter_two hT σ l
+  have hTI_l_a_bl2_val : TI_l_a.bracketLevel 2 = lBL := by
+    rw [hTI_l_a_bl2, hTI_l_bl2_val]
+  have hTI_l_a_bl0 :
+      TI_l_a.bracketLevel 0 = 2 * (lBL + α₀) := by
+    rw [show TI_l_a = GodelTTerm.app TI_l a from rfl,
+      GodelTTerm.bracketLevel_app_eq TI_l a 0
+        (by rw [hσ]) hTI_lNI,
+      hTI_l_a_bl1_val, hTI_l_bl0]
+    simp [← hα₀_def]
+  have hTI_r_a_bl1 : TI_r_a.bracketLevel 1 =
+      TI_r.bracketLevel 1 := by
+    rw [show TI_r_a = GodelTTerm.app TI_r a from rfl,
+      GodelTTerm.bracketLevel_app_high TI_r a 1
+        (by rw [hσ]; omega) hTI_rNI]
+  have hTI_r_bl1_val : TI_r.bracketLevel 1 = 1 :=
+    GodelTTerm.bracketLevel_app_treeIter_one hT σ r
+  have hTI_r_a_bl1_val : TI_r_a.bracketLevel 1 = 1 := by
+    rw [hTI_r_a_bl1, hTI_r_bl1_val]
+  have hTI_r_a_bl2 : TI_r_a.bracketLevel 2 =
+      TI_r.bracketLevel 2 := by
+    rw [show TI_r_a = GodelTTerm.app TI_r a from rfl,
+      GodelTTerm.bracketLevel_app_high TI_r a 2
+        (by rw [hσ]; omega) hTI_rNI]
+  have hTI_r_bl2_val : TI_r.bracketLevel 2 = rBL :=
+    GodelTTerm.bracketLevel_app_treeIter_two hT σ r
+  have hTI_r_a_bl2_val : TI_r_a.bracketLevel 2 = rBL := by
+    rw [hTI_r_a_bl2, hTI_r_bl2_val]
+  have hTI_r_a_bl0 :
+      TI_r_a.bracketLevel 0 = 2 * (rBL + α₀) := by
+    rw [show TI_r_a = GodelTTerm.app TI_r a from rfl,
+      GodelTTerm.bracketLevel_app_eq TI_r a 0
+        (by rw [hσ]) hTI_rNI,
+      hTI_r_a_bl1_val, hTI_r_bl0]
+    simp [← hα₀_def]
+  -- TI_NLR_a bracketLevels.
+  have hTI_NLR_a_bl1_val : TI_NLR_a.bracketLevel 1 = 1 := by
+    rw [show TI_NLR_a = GodelTTerm.app TI_NLR a from rfl,
+      GodelTTerm.bracketLevel_app_high TI_NLR a 1
+        (by rw [hσ]; omega) hTI_NLRNI,
+      hTI_NLR_bl1]
+  have hTI_NLR_a_bl2_val : TI_NLR_a.bracketLevel 2 = N := by
+    rw [show TI_NLR_a = GodelTTerm.app TI_NLR a from rfl,
+      GodelTTerm.bracketLevel_app_high TI_NLR a 2
+        (by rw [hσ]; omega) hTI_NLRNI,
+      hTI_NLR_bl2]
+  have hTI_NLR_a_bl0_val :
+      TI_NLR_a.bracketLevel 0 = 2 * (N + α₀) := by
+    rw [hTI_NLR_a_bl0_eq, hTI_NLR_a_bl1_val]
+    norm_num
+  -- Rl bracketLevels (arg type b : σ→σ→σ, level 1).
+  have hRlNI : Rl.isIterHead = false := rfl
+  have hRl_bl2 : Rl.bracketLevel 2 = lBL := by
+    rw [show Rl = GodelTTerm.app TI_l_a b from rfl,
+      GodelTTerm.bracketLevel_app_high TI_l_a b 2
+        (by rw [hbTypeLevel1]; omega) hTI_l_aNI,
+      hTI_l_a_bl2_val]
+  have hRl_bl1 :
+      Rl.bracketLevel 1 = 2 ^ lBL * (1 + β₁) := by
+    rw [show Rl = GodelTTerm.app TI_l_a b from rfl,
+      GodelTTerm.bracketLevel_app_eq TI_l_a b 1
+        (by rw [hbTypeLevel1]) hTI_l_aNI,
+      show (GodelTTerm.app TI_l_a b).bracketLevel 2 = lBL
+        from hRl_bl2,
+      hTI_l_a_bl1_val, ← hβ₁_def]
+  have hRl_bl0 :
+      Rl.bracketLevel 0 =
+        2 ^ (2 ^ lBL * (1 + β₁)) *
+          (2 * (lBL + α₀) + β₀) := by
+    rw [show Rl = GodelTTerm.app TI_l_a b from rfl,
+      GodelTTerm.bracketLevel_app_eq TI_l_a b 0
+        (by rw [hbTypeLevel1]; omega) hTI_l_aNI,
+      show (GodelTTerm.app TI_l_a b).bracketLevel 1 =
+          2 ^ lBL * (1 + β₁) from hRl_bl1,
+      hTI_l_a_bl0, ← hβ₀_def]
+  -- Rr bracketLevels (same structure as Rl).
+  have hRrNI : Rr.isIterHead = false := rfl
+  have hRr_bl2 : Rr.bracketLevel 2 = rBL := by
+    rw [show Rr = GodelTTerm.app TI_r_a b from rfl,
+      GodelTTerm.bracketLevel_app_high TI_r_a b 2
+        (by rw [hbTypeLevel1]; omega) hTI_r_aNI,
+      hTI_r_a_bl2_val]
+  have hRr_bl1 :
+      Rr.bracketLevel 1 = 2 ^ rBL * (1 + β₁) := by
+    rw [show Rr = GodelTTerm.app TI_r_a b from rfl,
+      GodelTTerm.bracketLevel_app_eq TI_r_a b 1
+        (by rw [hbTypeLevel1]) hTI_r_aNI,
+      show (GodelTTerm.app TI_r_a b).bracketLevel 2 = rBL
+        from hRr_bl2,
+      hTI_r_a_bl1_val, ← hβ₁_def]
+  have hRr_bl0 :
+      Rr.bracketLevel 0 =
+        2 ^ (2 ^ rBL * (1 + β₁)) *
+          (2 * (rBL + α₀) + β₀) := by
+    rw [show Rr = GodelTTerm.app TI_r_a b from rfl,
+      GodelTTerm.bracketLevel_app_eq TI_r_a b 0
+        (by rw [hbTypeLevel1]; omega) hTI_r_aNI,
+      show (GodelTTerm.app TI_r_a b).bracketLevel 1 =
+          2 ^ rBL * (1 + β₁) from hRr_bl1,
+      hTI_r_a_bl0, ← hβ₀_def]
+  -- b_Rl bracketLevels (arg type Rl : σ, σ.level = 0).
+  have hbRl_bl1 : b_Rl.bracketLevel 1 = β₁ := by
+    rw [show b_Rl = GodelTTerm.app b Rl from rfl,
+      GodelTTerm.bracketLevel_app_high b Rl 1
+        (by rw [hσ]; omega) hbNI]
+  have hbRl_bl0 :
+      b_Rl.bracketLevel 0 =
+        2 ^ β₁ * (β₀ + Rl.bracketLevel 0) := by
+    rw [show b_Rl = GodelTTerm.app b Rl from rfl,
+      GodelTTerm.bracketLevel_app_eq b Rl 0
+        (by rw [hσ]) hbNI,
+      show (GodelTTerm.app b Rl).bracketLevel 1 = β₁
+        from hbRl_bl1, ← hβ₀_def]
+  -- RHS bracketLevels (arg type Rr : σ, σ.level = 0).
+  have hRHS_bl1 : RHS.bracketLevel 1 = β₁ := by
+    rw [show RHS = GodelTTerm.app b_Rl Rr from rfl,
+      GodelTTerm.bracketLevel_app_high b_Rl Rr 1
+        (by rw [hσ]; omega) hbRlNI,
+      hbRl_bl1]
+  have hRHS_bl0 :
+      RHS.bracketLevel 0 =
+        2 ^ β₁ * (b_Rl.bracketLevel 0 + Rr.bracketLevel 0) := by
+    rw [show RHS = GodelTTerm.app b_Rl Rr from rfl,
+      GodelTTerm.bracketLevel_app_eq b_Rl Rr 0
+        (by rw [hσ]) hbRlNI,
+      show (GodelTTerm.app b_Rl Rr).bracketLevel 1 = β₁
+        from hRHS_bl1]
+  -- LHS bracketLevels.
+  have hLHS_bl2 : LHS.bracketLevel 2 = N := by
+    rw [show LHS = GodelTTerm.app TI_NLR_a b from rfl,
+      GodelTTerm.bracketLevel_app_high TI_NLR_a b 2
+        (by rw [hbTypeLevel1]; omega) hTI_NLR_aNI,
+      hTI_NLR_a_bl2_val]
+  have hLHS_bl1 :
+      LHS.bracketLevel 1 = 2 ^ N * (1 + β₁) := by
+    rw [show LHS = GodelTTerm.app TI_NLR_a b from rfl,
+      GodelTTerm.bracketLevel_app_eq TI_NLR_a b 1
+        (by rw [hbTypeLevel1]) hTI_NLR_aNI,
+      show (GodelTTerm.app TI_NLR_a b).bracketLevel 2 = N
+        from hLHS_bl2,
+      hTI_NLR_a_bl1_val, ← hβ₁_def]
+  have hLHS_bl0 :
+      LHS.bracketLevel 0 =
+        2 ^ (2 ^ N * (1 + β₁)) *
+          (2 * (N + α₀) + β₀) := by
+    rw [show LHS = GodelTTerm.app TI_NLR_a b from rfl,
+      GodelTTerm.bracketLevel_app_eq TI_NLR_a b 0
+        (by rw [hbTypeLevel1]; omega) hTI_NLR_aNI,
+      show (GodelTTerm.app TI_NLR_a b).bracketLevel 1 =
+          2 ^ N * (1 + β₁) from hLHS_bl1,
+      hTI_NLR_a_bl0_val, ← hβ₀_def]
+  -- Height comparison: LHS.bl 1 ≥ 16 * Rl.bl 1.
+  -- N - lBL ≥ 4 (from N = 4+4lBL+2rBL ≥ lBL+4).
+  have hN_ge_lBL4 : lBL + 4 ≤ N := by rw [hNLR_bl0]; omega
+  have hN_ge_rBL4 : rBL + 4 ≤ N := by rw [hNLR_bl0]; omega
+  -- Let H = 2^N*(1+β₁), Rl₁ = 2^lBL*(1+β₁), Rr₁ = 2^rBL*(1+β₁).
+  set H := 2 ^ N * (1 + β₁) with hH_def
+  set Rl₁ := 2 ^ lBL * (1 + β₁) with hRl₁_def
+  set Rr₁ := 2 ^ rBL * (1 + β₁) with hRr₁_def
+  -- 16*Rl₁ ≤ H (from 2^(N-lBL) ≥ 16).
+  have hH_ge_16Rl1 : 16 * Rl₁ ≤ H := by
+    rw [hH_def, hRl₁_def]
+    calc 16 * (2 ^ lBL * (1 + β₁))
+        = 2 ^ lBL * 16 * (1 + β₁) := by ring
+      _ ≤ 2 ^ N * (1 + β₁) := by
+          apply Nat.mul_le_mul_right
+          calc 2 ^ lBL * 16 = 2 ^ lBL * 2 ^ 4 := by norm_num
+            _ = 2 ^ (lBL + 4) := by rw [Nat.pow_add]
+            _ ≤ 2 ^ N :=
+                Nat.pow_le_pow_right (by omega) hN_ge_lBL4
+  -- 16*Rr₁ ≤ H (from 2^(N-rBL) ≥ 16).
+  have hH_ge_16Rr1 : 16 * Rr₁ ≤ H := by
+    rw [hH_def, hRr₁_def]
+    calc 16 * (2 ^ rBL * (1 + β₁))
+        = 2 ^ rBL * 16 * (1 + β₁) := by ring
+      _ ≤ 2 ^ N * (1 + β₁) := by
+          apply Nat.mul_le_mul_right
+          calc 2 ^ rBL * 16 = 2 ^ rBL * 2 ^ 4 := by norm_num
+            _ = 2 ^ (rBL + 4) := by rw [Nat.pow_add]
+            _ ≤ 2 ^ N :=
+                Nat.pow_le_pow_right (by omega) hN_ge_rBL4
+  -- β₁ < Rl₁ (since 2^lBL*(1+β₁) ≥ 1+β₁ > β₁).
+  have hβ₁_lt_Rl1 : β₁ < Rl₁ := by
+    have hge : 1 + β₁ ≤ Rl₁ := by
+      rw [hRl₁_def]
+      exact Nat.le_mul_of_pos_left _ (Nat.two_pow_pos lBL)
+    omega
+  -- β₁ < Rr₁.
+  have hβ₁_lt_Rr1 : β₁ < Rr₁ := by
+    have hge : 1 + β₁ ≤ Rr₁ := by
+      rw [hRr₁_def]
+      exact Nat.le_mul_of_pos_left _ (Nat.two_pow_pos rBL)
+    omega
+  -- 2β₁ + Rl₁ + 3 ≤ H (key height bound for Rl branch).
+  have hK1_lt_H : 2 * β₁ + Rl₁ + 3 ≤ H := by
+    have h1 : 1 + β₁ ≤ Rl₁ := by
+      rw [hRl₁_def]
+      exact Nat.le_mul_of_pos_left _ (Nat.two_pow_pos lBL)
+    omega
+  -- β₁ + Rr₁ + 3 ≤ H (key height bound for Rr branch).
+  have hK2_lt_H : β₁ + Rr₁ + 3 ≤ H := by
+    have h1 : 1 + β₁ ≤ Rr₁ := by
+      rw [hRr₁_def]
+      exact Nat.le_mul_of_pos_left _ (Nat.two_pow_pos rBL)
+    omega
+  -- P = 2*(N+α₀)+β₀, Pl ≤ P, Pr ≤ P.
+  have hPl_le_P : 2 * (lBL + α₀) + β₀ ≤ 2 * (N + α₀) + β₀ := by
+    have := hN_ge_l; omega
+  have hPr_le_P : 2 * (rBL + α₀) + β₀ ≤ 2 * (N + α₀) + β₀ := by
+    have := hN_ge_r; omega
+  -- H ≥ 3 (from H ≥ 16*Rl₁ ≥ 16).
+  have hH3 : 3 ≤ H := by
+    have h1 : 1 + β₁ ≤ Rl₁ := by
+      rw [hRl₁_def]
+      exact Nat.le_mul_of_pos_left _ (Nat.two_pow_pos lBL)
+    omega
+  -- Key tower bound: 2^(2β₁) + 2^(2β₁+Rl₁) + 2^(β₁+Rr₁) < 2^H.
+  have hterm_bound :
+      2 ^ (2 * β₁) + 2 ^ (2 * β₁ + Rl₁) +
+        2 ^ (β₁ + Rr₁) < 2 ^ H := by
+    have hA : 2 ^ (2 * β₁) ≤ 2 ^ (H - 3) :=
+      Nat.pow_le_pow_right (by omega) (by omega)
+    have hB : 2 ^ (2 * β₁ + Rl₁) ≤ 2 ^ (H - 3) :=
+      Nat.pow_le_pow_right (by omega) (by omega)
+    have hC : 2 ^ (β₁ + Rr₁) ≤ 2 ^ (H - 3) :=
+      Nat.pow_le_pow_right (by omega) (by omega)
+    have h3pow : 2 ^ (H - 3) * 3 < 2 ^ H := by
+      have hpow : 2 ^ H = 2 ^ (H - 3) * 2 ^ 3 := by
+        rw [← Nat.pow_add]; congr 1; omega
+      rw [hpow]
+      apply Nat.mul_lt_mul_of_pos_left _ (Nat.two_pow_pos _)
+      norm_num
+    calc 2 ^ (2 * β₁) + 2 ^ (2 * β₁ + Rl₁) + 2 ^ (β₁ + Rr₁)
+        ≤ 2 ^ (H - 3) + 2 ^ (H - 3) + 2 ^ (H - 3) :=
+            Nat.add_le_add (Nat.add_le_add hA hB) hC
+      _ = 2 ^ (H - 3) * 3 := by ring
+      _ < 2 ^ H := h3pow
+  -- Prove strict: RHS.bl 0 < LHS.bl 0.
+  have hStrict :
+      RHS.bracketLevel 0 < LHS.bracketLevel 0 := by
+    rw [hRHS_bl0, hbRl_bl0, hRl_bl0, hRr_bl0, hLHS_bl0]
+    -- Now the goal is a pure Nat inequality.
+    have hP_pos : 0 < 2 * (N + α₀) + β₀ := by omega
+    have hβ₀_le_P : β₀ ≤ 2 * (N + α₀) + β₀ := by omega
+    have hRHS_upper :
+        2 ^ β₁ *
+          (2 ^ β₁ * (β₀ + 2 ^ Rl₁ * (2 * (lBL + α₀) + β₀)) +
+            2 ^ Rr₁ * (2 * (rBL + α₀) + β₀)) ≤
+          (2 * (N + α₀) + β₀) *
+            (2 ^ (2 * β₁) + 2 ^ (2 * β₁ + Rl₁) +
+              2 ^ (β₁ + Rr₁)) := by
+      have hPl : 2 * (lBL + α₀) + β₀ ≤ 2 * (N + α₀) + β₀ :=
+        hPl_le_P
+      have hPr : 2 * (rBL + α₀) + β₀ ≤ 2 * (N + α₀) + β₀ :=
+        hPr_le_P
+      have hpow2β₁ : 2 ^ (2 * β₁) = 2 ^ β₁ * 2 ^ β₁ := by
+        rw [← Nat.pow_add]; congr 1; omega
+      have hpowRl : 2 ^ (2 * β₁ + Rl₁) = 2 ^ β₁ * (2 ^ β₁ * 2 ^ Rl₁) := by
+        rw [← Nat.pow_add, ← Nat.pow_add]; congr 1; omega
+      have hpowRr : 2 ^ (β₁ + Rr₁) = 2 ^ β₁ * 2 ^ Rr₁ :=
+        Nat.pow_add 2 β₁ Rr₁
+      set P := 2 * (N + α₀) + β₀
+      set Pl := 2 * (lBL + α₀) + β₀
+      set Pr := 2 * (rBL + α₀) + β₀
+      set B := 2 ^ β₁
+      set Rl := 2 ^ Rl₁
+      set Rr := 2 ^ Rr₁
+      have hb1 : 1 ≤ B := Nat.one_le_two_pow
+      have hRl1 : 1 ≤ Rl := Nat.one_le_two_pow
+      have hRr1 : 1 ≤ Rr := Nat.one_le_two_pow
+      have hPl' : Pl ≤ P := hPl_le_P
+      have hPr' : Pr ≤ P := hPr_le_P
+      have hβ₀P : β₀ ≤ P := hβ₀_le_P
+      -- rw unfolds 2^(2β₁) = B*B, 2^(2β₁+Rl₁) = B*(B*Rl), 2^(β₁+Rr₁) = B*Rr
+      rw [hpow2β₁, hpowRl, hpowRr]
+      -- Goal: B*(B*(β₀+Rl*Pl)+Rr*Pr) ≤ P*(B*B+B*(B*Rl)+B*Rr)
+      -- = B*(B*(β₀+Rl*Pl)+Rr*Pr) ≤ B*P*(B+B*Rl+Rr)
+      -- Follows from: β₀ ≤ P, Pl ≤ P, Pr ≤ P, 1 ≤ Rl, 1 ≤ Rr
+      calc B * (B * (β₀ + Rl * Pl) + Rr * Pr)
+          = B * B * β₀ + B * B * Rl * Pl + B * Rr * Pr := by ring
+        _ ≤ B * B * P + B * B * Rl * P + B * Rr * P :=
+            Nat.add_le_add
+              (Nat.add_le_add
+                (Nat.mul_le_mul_left _ hβ₀P)
+                (Nat.mul_le_mul_left _ hPl'))
+              (Nat.mul_le_mul_left _ hPr')
+        _ = P * (B * B + B * (B * Rl) + B * Rr) := by ring
+    calc 2 ^ β₁ *
+          (2 ^ β₁ * (β₀ + 2 ^ Rl₁ * (2 * (lBL + α₀) + β₀)) +
+            2 ^ Rr₁ * (2 * (rBL + α₀) + β₀))
+        ≤ (2 * (N + α₀) + β₀) *
+            (2 ^ (2 * β₁) + 2 ^ (2 * β₁ + Rl₁) +
+              2 ^ (β₁ + Rr₁)) := hRHS_upper
+      _ < (2 * (N + α₀) + β₀) * 2 ^ H :=
+            Nat.mul_lt_mul_of_pos_left hterm_bound hP_pos
+      _ = 2 ^ H * (2 * (N + α₀) + β₀) := by ring
+  refine ⟨?_, ?_⟩
+  · exact hStrict
+  · intro i hi
+    obtain rfl : i = 0 := Nat.le_zero.mp (by rwa [hσ] at hi)
+    exact Nat.le_of_lt hStrict
+
 end GebLean
