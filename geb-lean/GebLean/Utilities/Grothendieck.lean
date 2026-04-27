@@ -7384,6 +7384,20 @@ structure LaxNatTransContraData (G F : Cᵒᵖ ⥤ Cat.{vF, uF}) where
   /-- Composition coherence. -/
   laxComp : LaxNatTransContraLaxComp app laxApp
 
+set_option backward.isDefEq.respectTransparency false in
+/-- Identity lax natural transformation. -/
+def LaxNatTransContraData.id (G : Cᵒᵖ ⥤ Cat.{vF, uF}) :
+    LaxNatTransContraData G G where
+  app c := 𝟭 (G.obj (Opposite.op c))
+  laxApp f x := eqToHom (by simp only [Functor.id_obj])
+  laxNat f φ := by
+    intro y φ'
+    simp only [Functor.id_map, eqToHom_naturality]
+  laxId c x := rfl
+  laxComp f g x := by
+    simp only [CategoryTheory.Functor.map_id, Category.id_comp,
+      eqToHom_trans, eqToHom_refl]
+
 end LaxNatTransContraFunctor
 
 /-!
