@@ -1,4 +1,5 @@
 import Mathlib.CategoryTheory.Category.Cat
+import Mathlib.CategoryTheory.Category.ULift
 import Mathlib.CategoryTheory.Comma.Over.Basic
 import Mathlib.CategoryTheory.Pi.Basic
 import Mathlib.CategoryTheory.Grothendieck
@@ -3274,5 +3275,285 @@ instance ccrsProdDataMatching :
     fcpToCcrsMor (ProdData.proj (ccrsToFcpObj ∘ F) j)
 
 end CoprodCovarRepSquaredDataMatching
+
+/-! ## C-Natural Packaging of ccrNewIndex and ccrNewFamily
+
+This section packages `ccrNewIndexFunctor` and `ccrNewFamilyFunctor`
+as `Cat`-valued natural transformations on `coprodCovarRepFunctor`.
+The existing per-`C` functors remain in place and are not modified.
+-/
+
+section CCRNaturalPackaging
+
+universe w w_v w_u
+
+attribute [local instance] CategoryTheory.uliftCategory
+
+/--
+Universe-widened form of `Cat.of (Type w)` living at
+`Cat.{max w v, max (w+1) u}`.  Used as the constant target of the
+natural transformation `ccrNewIndexNat`.
+-/
+def typeCatLift : Cat.{max w v, max (w + 1) u} :=
+  Cat.of
+    (CategoryTheory.ULiftHom.{max w v}
+      (ULift.{max (w + 1) u, w + 1} (Type w)))
+
+/--
+Two-parameter universe-widening functor from `Cat.{v, u}` to
+`Cat.{max v w_v, max u w_u}`.  Generalizes `catULiftFunctor` by
+decoupling the hom-universe bump (`w_v`) from the obj-universe bump
+(`w_u`), so the composite can land at any universe pair of the form
+`Cat.{max v x, max u y}`.
+-/
+def catULiftFunctor2 :
+    Cat.{v, u} ⥤ Cat.{max v w_v, max u w_u} where
+  obj C := Cat.of
+    (CategoryTheory.ULiftHom.{max v w_v}
+      (ULift.{max u w_u, u} C.α))
+  map {C D} F :=
+    (CategoryTheory.ULiftHom.down ⋙
+      CategoryTheory.ULift.downFunctor ⋙
+      F.toFunctor ⋙
+      CategoryTheory.ULift.upFunctor ⋙
+      CategoryTheory.ULiftHom.up).toCatHom
+  map_id C := by
+    apply Cat.Hom.ext
+    rfl
+  map_comp {C D E} F G := by
+    apply Cat.Hom.ext
+    rfl
+
+/--
+Universe-widening functor from `Cat.{v, u}` to
+`Cat.{max w v, max (w+1) u}`.  At each `C`, widens `C` via
+`ULift` on objects and `ULiftHom` on morphisms so that the output
+universe matches `coprodCovarRepFunctor.{u, v, w}`.  Used as a
+post-composition with `Cat.opFunctor` to build
+`ccrNewFamilyNatTarget`.
+
+Specialization of `catULiftFunctor2` with `w_v := w` and
+`w_u := w + 1`.
+-/
+def catULiftFunctor :
+    Cat.{v, u} ⥤ Cat.{max w v, max (w + 1) u} :=
+  catULiftFunctor2.{u, v, w, w + 1}
+
+/--
+Per-`C` widened index functor.  Obtained by post-composing the
+existing `ccrNewIndexFunctor C` with the `ULift`/`ULiftHom` lifts
+that take its `Type w` target into `typeCatLift`.
+-/
+def ccrNewIndexNatFunctor
+    (C : Type u) [Category.{v} C] :
+    CoprodCovarRepCat.{u, v, w} C ⥤
+      typeCatLift.{u, v, w}.α :=
+  ccrNewIndexFunctor.{u, v, w} C ⋙
+    CategoryTheory.ULift.upFunctor ⋙
+    CategoryTheory.ULiftHom.up
+
+/--
+The natural transformation packaging the per-`C` index functors.
+Source: `coprodCovarRepFunctor.{u, v, w}`.  Target: the constant
+functor at `typeCatLift.{u, v, w}`.
+
+The target is constant because `coprodCovarRepFunctor.map F`
+preserves the index type on the nose: `(X, E) ↦ (X, F ∘ E)` leaves
+`X` unchanged, so the naturality square collapses to an identity on
+index types.
+-/
+def ccrNewIndexNat :
+    coprodCovarRepFunctor.{u, v, w} ⟶
+      (Functor.const Cat.{v, u}).obj
+        typeCatLift.{u, v, w} where
+  app C :=
+    (ccrNewIndexNatFunctor.{u, v, w} C.α).toCatHom
+  naturality {C D} F := by
+    apply Cat.Hom.ext
+    rfl
+
+/--
+The functorial action of `ccrElementsFunctor` on a morphism
+`F : C ⟶ D` of `Cat.{v, u}`.  Sends an element `⟨P, i⟩` of
+`(ccrNewIndexFunctor C).Elements` to
+`⟨(coprodCovarRepFunctor.map F).toFunctor.obj P, i⟩`.  The index `i`
+is carried through unchanged because reindexing by `F` preserves the
+index type definitionally (this is the same fact that makes the
+target of `ccrNewIndexNat` constant).
+-/
+def ccrElementsFunctor.map
+    {C D : Cat.{v, u}} (F : C ⟶ D) :
+    (ccrNewIndexFunctor.{u, v, w} C.α).Elements ⥤
+      (ccrNewIndexFunctor.{u, v, w} D.α).Elements where
+  obj e :=
+    ⟨(coprodCovarRepFunctor.{u, v, w}.map F).toFunctor.obj e.fst,
+      e.snd⟩
+  map f :=
+    ⟨(coprodCovarRepFunctor.{u, v, w}.map F).toFunctor.map f.val,
+      f.property⟩
+  map_id _ :=
+    Subtype.ext
+      ((coprodCovarRepFunctor.{u, v, w}.map F).toFunctor.map_id _)
+  map_comp _ _ :=
+    Subtype.ext
+      ((coprodCovarRepFunctor.{u, v, w}.map F).toFunctor.map_comp _ _)
+
+/--
+Per-`C` element categories of `ccrNewIndexFunctor C` packaged as a
+`Cat`-valued functor on `Cat.{v, u}`.  See `ccrElementsFunctor.map`
+for the functorial action.
+-/
+def ccrElementsFunctor :
+    Cat.{v, u} ⥤ Cat.{max w v, max (w + 1) u} where
+  obj C :=
+    Cat.of (ccrNewIndexFunctor.{u, v, w} C.α).Elements
+  map F := (ccrElementsFunctor.map F).toCatHom
+  map_id C := by
+    apply Cat.Hom.ext
+    refine CategoryTheory.Functor.ext ?_ ?_
+    · intro _; rfl
+    · intros _ _ f
+      apply Subtype.ext
+      unfold ccrElementsFunctor.map
+      simp only [Functor.toCatHom_toFunctor, eqToHom_refl,
+        Category.id_comp, Category.comp_id]
+      rw [Functor.congr_hom
+        (congrArg Cat.Hom.toFunctor
+          (coprodCovarRepFunctor.{u, v, w}.map_id C)) f.val]
+      simp
+  map_comp {C D E} F G := by
+    apply Cat.Hom.ext
+    refine CategoryTheory.Functor.ext ?_ ?_
+    · intro _; rfl
+    · intros _ _ f
+      apply Subtype.ext
+      unfold ccrElementsFunctor.map
+      simp only [Functor.toCatHom_toFunctor, eqToHom_refl,
+        Category.id_comp, Category.comp_id,
+        Cat.Hom.comp_toFunctor]
+      rw [Functor.congr_hom
+        (congrArg Cat.Hom.toFunctor
+          (coprodCovarRepFunctor.{u, v, w}.map_comp F G)) f.val]
+      simp
+
+/--
+Target functor of `ccrNewFamilyNat`.  Sends each `C : Cat` to the
+universe-widened opposite category.  Obtained by composing
+`Cat.opFunctor` with `catULiftFunctor`.
+-/
+def ccrNewFamilyNatTarget :
+    Cat.{v, u} ⥤ Cat.{max w v, max (w + 1) u} :=
+  Cat.opFunctor ⋙ catULiftFunctor
+
+/--
+Naturality of `ccrNewFamilyFunctor` in `C`, stated pre-widening.
+On a morphism `f : e1 ⟶ e2` in `(ccrNewIndexFunctor C).Elements`,
+applying `ccrNewFamilyFunctor D` to the reindexed morphism equals
+applying `F.op` to the result of `ccrNewFamilyFunctor C` on `f`.
+-/
+lemma ccrNewFamilyFunctor_naturality
+    {C D : Cat.{v, u}} (F : C ⟶ D)
+    {e1 e2 : (ccrNewIndexFunctor.{u, v, w} C.α).Elements}
+    (f : e1 ⟶ e2) :
+    (ccrNewFamilyFunctor.{u, v, w} D.α).map
+        ((ccrElementsFunctor.map.{u, v, w} F).map f) =
+      (Cat.opFunctor.{v, u}.map F).toFunctor.map
+        ((ccrNewFamilyFunctor.{u, v, w} C.α).map f) := by
+  apply Quiver.Hom.unop_inj
+  dsimp only [ccrNewFamilyFunctor, ccrElementsFunctor.map,
+    Cat.opFunctor, Functor.op_map, Quiver.Hom.unop_op,
+    unop_comp]
+  change _ =
+    F.toFunctor.map (eqToHom _ ≫ ccrNewFiberMor f.val e1.snd)
+  rw [F.toFunctor.map_comp, eqToHom_map]
+  congr 1
+  unfold ccrNewFiberMor coprodCovarRepFunctor
+    freeProdCompletionFunctor
+  dsimp only [Functor.comp_map, Cat.opFunctor, Functor.op_map,
+    Quiver.Hom.unop_op, Functor.toCatHom_toFunctor,
+    Cat.Hom.comp_toFunctor, grothendieckFunctor,
+    familyBifunctor, familyNatTrans, familyPostcomp]
+  simp [Grothendieck.map_map_fiber]
+
+/--
+Object-level naturality of `ccrNewFamilyFunctor` in `C`.  For
+`F : C ⟶ D` in `Cat` and `e : (ccrNewIndexFunctor C).Elements`,
+applying `ccrNewFamilyFunctor D` to the reindexed object equals
+applying `F.op` to the result of `ccrNewFamilyFunctor C`.  Holds
+by `rfl` because `coprodCovarRepFunctor.map F` post-composes
+fibres with `F`.
+-/
+theorem ccrNewFamilyFunctor_obj_naturality
+    {C D : Cat.{v, u}} (F : C ⟶ D)
+    (e : (ccrNewIndexFunctor.{u, v, w} C.α).Elements) :
+    (ccrNewFamilyFunctor.{u, v, w} D.α).obj
+        ((ccrElementsFunctor.map.{u, v, w} F).obj e) =
+      (Cat.opFunctor.{v, u}.map F).toFunctor.obj
+        ((ccrNewFamilyFunctor.{u, v, w} C.α).obj e) :=
+  rfl
+
+/--
+Per-`C` widened family functor.  Obtained by post-composing the
+existing `ccrNewFamilyFunctor C` with the `ULift`/`ULiftHom` lifts
+that take its `Cᵒᵖ` target into the widened opposite category
+used by `ccrNewFamilyNatTarget`.
+-/
+def ccrNewFamilyNatFunctor
+    (C : Type u) [Category.{v} C] :
+    (ccrNewIndexFunctor.{u, v, w} C).Elements ⥤
+      (ccrNewFamilyNatTarget.{u, v, w}.obj (Cat.of C)).α :=
+  ccrNewFamilyFunctor.{u, v, w} C ⋙
+    CategoryTheory.ULift.upFunctor ⋙
+    CategoryTheory.ULiftHom.up
+
+/--
+The natural transformation packaging the per-`C` family functors.
+Source: `ccrElementsFunctor.{u, v, w}`.  Target:
+`ccrNewFamilyNatTarget.{u, v, w}`.
+
+On a morphism `F : C ⟶ D` of `Cat`, the naturality square commutes
+because `coprodCovarRepFunctor.map F` acts on the family component
+of each object by postcomposition with `F`, which matches the
+action of `F.op` on the widened target side.
+-/
+def ccrNewFamilyNat :
+    ccrElementsFunctor.{u, v, w} ⟶
+      ccrNewFamilyNatTarget.{u, v, w} where
+  app C :=
+    (ccrNewFamilyNatFunctor.{u, v, w} C.α).toCatHom
+  naturality {C D} F := by
+    apply Cat.Hom.ext
+    refine CategoryTheory.Functor.ext ?_ ?_
+    · intro _; rfl
+    · intros e1 e2 f
+      simp only [eqToHom_refl, Category.id_comp, Category.comp_id,
+        Cat.Hom.comp_toFunctor, Functor.toCatHom_toFunctor,
+        Functor.comp_map]
+      unfold ccrNewFamilyNatFunctor ccrNewFamilyNatTarget
+        catULiftFunctor catULiftFunctor2
+      dsimp only [Functor.comp_obj, Functor.comp_map,
+        Functor.toCatHom_toFunctor, ULift.upFunctor_map,
+        ULift.downFunctor_map, ULiftHom.down_map]
+      apply congrArg
+      exact ccrNewFamilyFunctor_naturality F f
+
+/--
+Bridge lemma: each `ccrNewFamilyNat.app C`, viewed as an underlying
+functor, equals `ccrNewFamilyFunctor C` post-composed with the
+`ULift`/`ULiftHom` widening used by `ccrNewFamilyNatTarget`.
+
+Not marked `@[simp]` to avoid unfolding cycles; intended to be
+invoked manually by downstream users who want to reach through the
+widening.
+-/
+theorem ccrNewFamilyNat_app_eq_ccrNewFamilyFunctor
+    (C : Type u) [Category.{v} C] :
+    (ccrNewFamilyNat.{u, v, w}.app (Cat.of C)).toFunctor =
+      ccrNewFamilyFunctor.{u, v, w} C ⋙
+        CategoryTheory.ULift.upFunctor ⋙
+        CategoryTheory.ULiftHom.up := by
+  rfl
+
+end CCRNaturalPackaging
 
 end GebLean

@@ -1228,7 +1228,7 @@ Extracting positions from a reassembled PRA
 recovers the original position presheaf.
 -/
 theorem praReassemble_positions :
-    (praPositionsFunctor I J).obj
+    praPositionsUnwidened I J
       (praReassemble A E) = A := by
   rfl
 
@@ -1238,14 +1238,16 @@ Extracting directions from a reassembled PRA
 recovers the original direction functor.
 -/
 theorem praReassemble_directions :
-    praDirectionsAtFunctor I J
-      (praReassemble A E) = E := by
+    (CategoryTheory.elementsPrecomp
+      (praReassemble A E) ⋙ ccrNewFamilyFunctor.{
+        max v_I u_I (w_I + 1),
+        max u_I w_I, w'}
+        (↑(presheafCat.{u_I, v_I, w_I} I))).op
+      ⋙ unopUnop _ = E := by
   apply Functor.hext
   · intro X; rfl
   · intro X Y f
     rw [heq_eq_eq]
-    unfold praDirectionsAtFunctor
-      praDirectionsAtFunctorOp
     dsimp only [praReassemble,
       Functor.op_obj, Functor.op_map,
       praReassembleGr,
@@ -1356,17 +1358,17 @@ the product `∀ k, A_k(j)` stays in `Type w'`.
 def praProdPos : Jᵒᵖ ⥤ Type w' where
   obj j := ∀ k, praPositions I J (P k) j
   map {j₁ j₂} f t k :=
-    ((praPositionsFunctor I J).obj
+    (praPositionsUnwidened I J
       (P k)).map f (t k)
   map_id j := by
     funext t; funext k
     exact congrFun
-      (((praPositionsFunctor I J).obj
+      ((praPositionsUnwidened I J
         (P k)).map_id j) (t k)
   map_comp {j₁ j₂ j₃} f g := by
     funext t; funext k
     exact congrFun
-      (((praPositionsFunctor I J).obj
+      ((praPositionsUnwidened I J
         (P k)).map_comp f g) (t k)
 
 /--
@@ -1401,20 +1403,20 @@ Project a product-element morphism to a
 factor-element morphism.  Given a morphism in
 `praProdPos.ElementsPre` and an index `k`,
 produces the corresponding morphism in
-`((praPositionsFunctor I J).obj (P k)).ElementsPre`.
+`(praPositionsUnwidened I J (P k)).ElementsPre`.
 -/
 def praProdElemProj
     {x y : (praProdPos P).ElementsPre}
     (φ : x ⟶ y) (k : K) :
     (Opposite.op ⟨x.unop.fst,
       x.unop.snd k⟩ :
-      ((praPositionsFunctor I J).obj
+      (praPositionsUnwidened I J
         (P k)).ElementsPre) ⟶
     Opposite.op ⟨y.unop.fst,
       y.unop.snd k⟩ :=
   Quiver.Hom.op
     (CategoryOfElements.homMk (F :=
-      (praPositionsFunctor I J).obj (P k))
+      praPositionsUnwidened I J (P k))
       ⟨y.unop.fst, y.unop.snd k⟩
       ⟨x.unop.fst, x.unop.snd k⟩
       φ.unop.val
@@ -1452,15 +1454,23 @@ def praProdDir :
   obj e := praProdDirAt P e.unop.fst e.unop.snd
   map {x y} φ :=
     { app := fun i => fun ⟨k, e⟩ =>
-        ⟨k, ((praDirectionsAtFunctor I J
-          (P k)).map
+        ⟨k, (((CategoryTheory.elementsPrecomp
+            (P k) ⋙ ccrNewFamilyFunctor.{
+              max v_I u_I (w_I + 1),
+              max u_I w_I, w'}
+              (↑(presheafCat.{u_I, v_I, w_I}
+                I))).op ⋙ unopUnop _).map
           (praProdElemProj P φ k)).app i e⟩
       naturality := fun {i₁ i₂} f => by
         funext ⟨k, e⟩
         simp only [types_comp_apply,
           praProdDirAt]
-        let Ek := praDirectionsAtFunctor I J
-          (P k)
+        let Ek := (CategoryTheory.elementsPrecomp
+          (P k) ⋙ ccrNewFamilyFunctor.{
+            max v_I u_I (w_I + 1),
+            max u_I w_I, w'}
+            (↑(presheafCat.{u_I, v_I, w_I} I))).op
+          ⋙ unopUnop _
         let α := Ek.map (praProdElemProj P φ k)
         exact congrArg (Sigma.mk k)
           (congrFun (α.naturality f) e) }
@@ -1468,7 +1478,12 @@ def praProdDir :
     ext i ⟨k, e⟩
     simp only [types_id_apply,
       NatTrans.id_app]
-    let Ek := praDirectionsAtFunctor I J (P k)
+    let Ek := (CategoryTheory.elementsPrecomp
+      (P k) ⋙ ccrNewFamilyFunctor.{
+        max v_I u_I (w_I + 1),
+        max u_I w_I, w'}
+        (↑(presheafCat.{u_I, v_I, w_I} I))).op
+      ⋙ unopUnop _
     rw [praProdElemProj_id]
     exact congrArg (Sigma.mk k)
       (congrFun (congrFun (congrArg
@@ -1477,7 +1492,12 @@ def praProdDir :
     ext i ⟨k, e⟩
     simp only [types_comp_apply,
       NatTrans.comp_app]
-    let Ek := praDirectionsAtFunctor I J (P k)
+    let Ek := (CategoryTheory.elementsPrecomp
+      (P k) ⋙ ccrNewFamilyFunctor.{
+        max v_I u_I (w_I + 1),
+        max u_I w_I, w'}
+        (↑(presheafCat.{u_I, v_I, w_I} I))).op
+      ⋙ unopUnop _
     rw [praProdElemProj_comp]
     exact congrArg (Sigma.mk k)
       (congrFun (congrFun (congrArg
@@ -1757,19 +1777,19 @@ in `j` by componentwise reindexing.
 def praCoprodPos : Jᵒᵖ ⥤ Type w' where
   obj j := Σ k, praPositions I J (P k) j
   map {j₁ j₂} f := fun ⟨k, a⟩ =>
-    ⟨k, ((praPositionsFunctor I J).obj
+    ⟨k, (praPositionsUnwidened I J
       (P k)).map f a⟩
   map_id j := by
     funext ⟨k, a⟩
     exact congrArg (Sigma.mk k)
       (congrFun
-        (((praPositionsFunctor I J).obj
+        ((praPositionsUnwidened I J
           (P k)).map_id j) a)
   map_comp {j₁ j₂ j₃} f g := by
     funext ⟨k, a⟩
     exact congrArg (Sigma.mk k)
       (congrFun
-        (((praPositionsFunctor I J).obj
+        ((praPositionsUnwidened I J
           (P k)).map_comp f g) a)
 
 /--
@@ -1795,11 +1815,15 @@ private lemma praCoprodDir_map_comp
       (fun s => praDirectionsAt I J
         (P s.fst) x.unop.fst s.snd)
       (φ ≫ ψ).unop.property.symm) ≫
-    (praDirectionsAtFunctor I J
-      (P z.unop.snd.fst)).map
+    ((CategoryTheory.elementsPrecomp
+      (P z.unop.snd.fst) ⋙ ccrNewFamilyFunctor.{
+        max v_I u_I (w_I + 1),
+        max u_I w_I, w'}
+        (↑(presheafCat.{u_I, v_I, w_I} I))).op
+      ⋙ unopUnop _).map
       (Quiver.Hom.op
         (CategoryOfElements.homMk (F :=
-          (praPositionsFunctor I J).obj
+          praPositionsUnwidened I J
             (P z.unop.snd.fst))
           ⟨z.unop.fst, z.unop.snd.snd⟩
           ⟨x.unop.fst,
@@ -1812,11 +1836,15 @@ private lemma praCoprodDir_map_comp
       (fun s => praDirectionsAt I J
         (P s.fst) x.unop.fst s.snd)
       φ.unop.property.symm) ≫
-    (praDirectionsAtFunctor I J
-      (P y.unop.snd.fst)).map
+    ((CategoryTheory.elementsPrecomp
+      (P y.unop.snd.fst) ⋙ ccrNewFamilyFunctor.{
+        max v_I u_I (w_I + 1),
+        max u_I w_I, w'}
+        (↑(presheafCat.{u_I, v_I, w_I} I))).op
+      ⋙ unopUnop _).map
       (Quiver.Hom.op
         (CategoryOfElements.homMk (F :=
-          (praPositionsFunctor I J).obj
+          praPositionsUnwidened I J
             (P y.unop.snd.fst))
           ⟨y.unop.fst, y.unop.snd.snd⟩
           ⟨x.unop.fst,
@@ -1828,11 +1856,15 @@ private lemma praCoprodDir_map_comp
       (fun s => praDirectionsAt I J
         (P s.fst) y.unop.fst s.snd)
       ψ.unop.property.symm) ≫
-    (praDirectionsAtFunctor I J
-      (P z.unop.snd.fst)).map
+    ((CategoryTheory.elementsPrecomp
+      (P z.unop.snd.fst) ⋙ ccrNewFamilyFunctor.{
+        max v_I u_I (w_I + 1),
+        max u_I w_I, w'}
+        (↑(presheafCat.{u_I, v_I, w_I} I))).op
+      ⋙ unopUnop _).map
       (Quiver.Hom.op
         (CategoryOfElements.homMk (F :=
-          (praPositionsFunctor I J).obj
+          praPositionsUnwidened I J
             (P z.unop.snd.fst))
           ⟨z.unop.fst, z.unop.snd.snd⟩
           ⟨y.unop.fst,
@@ -1841,8 +1873,9 @@ private lemma praCoprodDir_map_comp
           ψ.unop.val
           rfl)) := by
   -- Decompose the composite element morphism.
-  -- Let pos_k = (praPositionsFunctor ...).obj (P k),
-  -- F_k = praDirectionsAtFunctor ... (P k).
+  -- Let pos_k = praPositionsUnwidened ... (P k),
+  -- F_k = (elementsPrecomp (P k) ⋙
+  --   ccrNewFamilyFunctor _).op ⋙ unopUnop _.
   -- The element morphism m_comp has
   -- .val = f_ψ ≫ f_φ and target position
   -- pos_k.map (f_ψ ≫ f_φ) a_z.
@@ -1862,7 +1895,7 @@ private lemma praCoprodDir_map_comp
           ((praCoprodPos P).map
             (φ ≫ ψ).unop.val
             z.unop.snd).snd⟩ :
-        ((praPositionsFunctor I J).obj
+        (praPositionsUnwidened I J
           (P z.unop.snd.fst)).ElementsPre) =
       Opposite.op
         ⟨x.unop.fst,
@@ -1873,13 +1906,13 @@ private lemma praCoprodDir_map_comp
               z.unop.snd)).snd⟩ := by
     congr 1; congr 1
     exact congrFun
-      (((praPositionsFunctor I J).obj
+      ((praPositionsUnwidened I J
         (P z.unop.snd.fst)).map_comp
         ψ.unop.val φ.unop.val)
       z.unop.snd.snd
   have h_elem :
       (CategoryOfElements.homMk (F :=
-        (praPositionsFunctor I J).obj
+        praPositionsUnwidened I J
           (P z.unop.snd.fst))
         ⟨z.unop.fst, z.unop.snd.snd⟩
         ⟨x.unop.fst,
@@ -1889,7 +1922,7 @@ private lemma praCoprodDir_map_comp
         (φ ≫ ψ).unop.val rfl).op =
       eqToHom h_pos_eq ≫
       (CategoryOfElements.homMk (F :=
-        (praPositionsFunctor I J).obj
+        praPositionsUnwidened I J
           (P z.unop.snd.fst))
         ⟨y.unop.fst,
           ((praCoprodPos P).map
@@ -1902,7 +1935,7 @@ private lemma praCoprodDir_map_comp
               z.unop.snd)).snd⟩
         φ.unop.val rfl).op ≫
       (CategoryOfElements.homMk (F :=
-        (praPositionsFunctor I J).obj
+        praPositionsUnwidened I J
           (P z.unop.snd.fst))
         ⟨z.unop.fst, z.unop.snd.snd⟩
         ⟨y.unop.fst,
@@ -1933,11 +1966,11 @@ private lemma praCoprodDir_map_comp
     | rfl
     | exact h_ψ
     | (exact congrArg
-        ((praPositionsFunctor I J).obj ∘ P ∘
+        (praPositionsUnwidened I J ∘ P ∘
           Sigma.fst) h_ψ)
     | (exact congrArg Sigma.snd h_ψ |>.eq)
     | (exact congrArg (fun k =>
-        ((praPositionsFunctor I J).obj
+        (praPositionsUnwidened I J
           (P k)).ElementsPre)
         (congrArg Sigma.fst h_ψ))
     | (exact h_ψ ▸ HEq.rfl)
@@ -1962,7 +1995,7 @@ private lemma praCoprodDir_map_comp
             praPositions I J (P k)
               x.unop.fst) =>
           @Opposite.op
-            (((praPositionsFunctor I J).obj
+            ((praPositionsUnwidened I J
               (P s.fst)).Elements)
             ⟨x.unop.fst, s.snd⟩)
         (congrArg
@@ -1973,7 +2006,7 @@ private lemma praCoprodDir_map_comp
             praPositions I J (P k)
               y.unop.fst) =>
           @Opposite.op
-            (((praPositionsFunctor I J).obj
+            ((praPositionsUnwidened I J
               (P s.fst)).Elements)
             ⟨y.unop.fst, s.snd⟩)
         h_ψ)
@@ -1983,7 +2016,7 @@ private lemma praCoprodDir_map_comp
             praPositions I J (P k)
               y.unop.fst) =>
           (CategoryOfElements.homMk (F :=
-            (praPositionsFunctor I J).obj
+            praPositionsUnwidened I J
               (P s.fst))
             ⟨y.unop.fst, s.snd⟩
             ⟨x.unop.fst,
@@ -2028,11 +2061,15 @@ def praCoprodDir :
       (fun s => praDirectionsAt I J
         (P s.fst) x.unop.fst s.snd)
       φ.unop.property.symm) ≫
-    (praDirectionsAtFunctor I J
-      (P y.unop.snd.fst)).map
+    ((CategoryTheory.elementsPrecomp
+      (P y.unop.snd.fst) ⋙ ccrNewFamilyFunctor.{
+        max v_I u_I (w_I + 1),
+        max u_I w_I, w'}
+        (↑(presheafCat.{u_I, v_I, w_I} I))).op
+      ⋙ unopUnop _).map
       (Quiver.Hom.op
         (CategoryOfElements.homMk (F :=
-          (praPositionsFunctor I J).obj
+          praPositionsUnwidened I J
             (P y.unop.snd.fst))
           ⟨y.unop.fst, y.unop.snd.snd⟩
           ⟨x.unop.fst,
@@ -2046,7 +2083,7 @@ def praCoprodDir :
     -- (val = 𝟙, verified by ext).
     have h_elem :
         (CategoryOfElements.homMk
-          (F := (praPositionsFunctor I J).obj
+          (F := praPositionsUnwidened I J
             (P x.unop.snd.fst))
           ⟨x.unop.fst, x.unop.snd.snd⟩
           ⟨x.unop.fst,
