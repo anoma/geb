@@ -1091,4 +1091,62 @@ theorem GodelTTerm.bracketLevel_zero_pos_arrow_NN
     1 ≤ t.bracketLevel 0 :=
   (GodelTTerm.bracketLevel_zero_pos_combined t.lh).1 t rfl
 
+/-- Beckmann-Weiermann Lemma 16 (iter-zero case):
+`iter 0 a b ≫ b`. -/
+theorem GodelTTerm.majorizes_redIter_zero
+    {S : Set GodelTBase} {n : Nat}
+    (hN : GodelTBase.nat ∈ S)
+    (a : GodelTTerm S n
+      (.arrow (.base .nat hN) (.base .nat hN)))
+    (b : GodelTTerm S n (.base .nat hN)) :
+    GodelTTerm.majorizes
+      (.app (.app (.app (.iter (n := n) hN)
+        (.zero hN)) a) b) b := by
+  -- Abbreviations for the nested sub-terms.
+  -- T₀ = app .iter .zero : (N→N) → (N→N)
+  -- T₁ = app T₀ a       : N → N
+  -- T₂ = app T₁ b       : N
+  set T₀ := GodelTTerm.app (GodelTTerm.iter (S := S) (n := n) hN)
+    (GodelTTerm.zero hN) with hT₀_def
+  set T₁ := GodelTTerm.app T₀ a with hT₁_def
+  set T₂ := GodelTTerm.app T₁ b with hT₂_def
+  have hT₀NotIter : T₀.isIterHead = false := rfl
+  have hT₁NotIter : T₁.isIterHead = false := rfl
+  -- [T₀]_0 = 0 (bracketLevel_app_iter_zero; zero has [·]_0 = 0).
+  have hT₀_zero : T₀.bracketLevel 0 = 0 := by
+    simp [hT₀_def, GodelTTerm.bracketLevel_app_iter_zero,
+      GodelTTerm.bracketLevel_zero]
+  -- [a]_0 ≥ 1 (positivity theorem).
+  have ha_pos : 1 ≤ a.bracketLevel 0 :=
+    GodelTTerm.bracketLevel_zero_pos_arrow_NN a
+  -- [T₁]_0 ≥ 1.
+  -- level(N→N) = 1, so bracketLevel_app_eq at i=0 applies:
+  -- [T₁]_0 = 2^[T₁]_1 * ([T₀]_0 + [a]_0) = 2^... * [a]_0.
+  have hNNlevel : (GodelTType.arrow (.base .nat hN)
+      (.base .nat hN)).level = 1 := by
+    simp [GodelTType.level]
+  have hT₁_zero_eq :
+      T₁.bracketLevel 0 =
+        2 ^ T₁.bracketLevel 1 *
+          (T₀.bracketLevel 0 + a.bracketLevel 0) :=
+    GodelTTerm.bracketLevel_app_eq T₀ a 0
+      (by rw [hNNlevel]; omega) hT₀NotIter
+  have hT₁_pos : 1 ≤ T₁.bracketLevel 0 := by
+    rw [hT₁_zero_eq, hT₀_zero]
+    simp only [Nat.zero_add]
+    exact Nat.le_trans ha_pos
+      (Nat.le_mul_of_pos_left _ (Nat.two_pow_pos _))
+  -- Now prove majorization.
+  refine ⟨?_, ?_⟩
+  · -- Strict: [b]_0 < [T₂]_0.
+    -- bracketLevel_app_strict_arg: [T₁]_0 ≥ 1 gives [b]_0 < [T₂]_0.
+    exact GodelTTerm.bracketLevel_app_strict_arg T₁ b 0
+      (Nat.zero_le _) hT₁NotIter hT₁_pos
+  · -- Monotone: ∀ i ≤ N.level = 0, [b]_i ≤ [T₂]_i.
+    intro i hi
+    -- N.level = 0, so i = 0.
+    obtain rfl : i = 0 := Nat.le_zero.mp hi
+    exact Nat.le_of_lt (GodelTTerm.bracketLevel_app_strict_arg T₁ b 0
+      (Nat.zero_le _) hT₁NotIter hT₁_pos)
+
 end GebLean
