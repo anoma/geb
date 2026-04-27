@@ -1402,14 +1402,28 @@ Beckmann 1998/2001, Avigad-Feferman, and the Lean 4
 metatheory framework (arxiv:2512.09280) all cover related
 material in different formulations (recursors, λ-calculus,
 Tait reducibility) but none give the explicit elementary
-bracket-arithmetic proof.  The existing
-`majorizes_redIter_succ` proof (~350 lines, commit `f4f2df34`)
-is the structural template — explicit `set` abbreviations,
-step-by-step `bracketLevel_app_eq`/`_high` rewrites, careful
-arithmetic — and `redS` should follow the same pattern with
-one additional layer for the S combinator's chain.  Direct
-in-conversation work using this template is the chosen
-forward path.
+bracket-arithmetic proof.
+
+**Five attempts on `majorizes_redS` BLOCKED.**  Three
+Sonnet/Opus subagent dispatches plus a controller-direct
+attempt all failed at the same fundamental obstacle: the
+strict-at-0 inequality reduces to a "key inequality"
+`[LHS]_1 ≥ [RHS]_1 + max([appfx]_1, [appgx]_1) + 1` which
+requires either a stronger combined invariant (none found)
+or recursive descent through unbounded `bracketLevel`
+levels.  Diagnostic conclusion: the proof requires
+infrastructure not yet in the codebase.
+
+**User-approved direction (Path A): build BracketGap
+infrastructure first.**  New sub-stage **δ.4.5**: design and
+implement compositional lemmas about `[t]_i - [s]_i`
+propagation through application, in `Utilities/BracketGap.lean`
+(or extending `Utilities/Tower.lean`).  Estimated 200-400
+lines.  After this lands, `redS` proof becomes tractable
+(~50 lines), as does the `majorizes_redTreeIter_node`
+generalization.  Detailed plan and sub-stage design:
+`docs/superpowers/notes/2026-04-27-redS-proof-strategy.md`
+"2026-04-27 decision: Path A" section.
 
 **Implementation choices carried forward** (see plan's
 "Implementation notes carried forward" section): rule-14
