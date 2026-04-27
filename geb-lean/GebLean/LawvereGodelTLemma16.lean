@@ -980,6 +980,175 @@ theorem GodelTTerm.dominates_app {S : Set GodelTBase}
             f'.bracketLevel i + a'.bracketLevel i := by omega
       exact Nat.mul_le_mul hPow hSum
 
+/-- Pointwise variant of `dominates_app` whose conclusion ranges
+over `i ≤ (.arrow σ τ).level`, the source-arrow level (which can
+strictly exceed `τ.level`).  Provides the level-1 exponent
+comparison needed by `majorizes_app_left` / `_right` when
+`τ.level = 0`. -/
+theorem GodelTTerm.bracketLevel_app_le_at_arrow
+    {S : Set GodelTBase} {n : Nat} {σ τ : GodelTType S}
+    (f f' : GodelTTerm S n (.arrow σ τ))
+    (a a' : GodelTTerm S n σ)
+    (hf : f.isIterHead = false) (hf' : f'.isIterHead = false)
+    (hF : f'.dominates f) (hA : a'.dominates a)
+    (i : Nat) (hi : i ≤ (GodelTType.arrow σ τ).level) :
+    (GodelTTerm.app f a).bracketLevel i ≤
+      (GodelTTerm.app f' a').bracketLevel i := by
+  set M := (GodelTType.arrow σ τ).level with hM_def
+  suffices h : ∀ k, ∀ j, k + j = M → j ≤ M →
+      (GodelTTerm.app f a).bracketLevel j ≤
+        (GodelTTerm.app f' a').bracketLevel j by
+    have hiM : i ≤ M := by
+      change i ≤ (GodelTType.arrow σ τ).level
+      rw [← hM_def]; exact hi
+    exact h (M - i) i (by omega) hiM
+  intro k
+  induction k with
+  | zero =>
+    intro j hi_sum hi_le
+    obtain rfl : j = M := by omega
+    have hjσ : σ.level < M := by
+      rw [hM_def]; change σ.level < max (σ.level + 1) τ.level
+      omega
+    rw [GodelTTerm.bracketLevel_app_high f a M hjσ hf,
+        GodelTTerm.bracketLevel_app_high f' a' M hjσ hf']
+    exact hF M (Nat.le_refl _)
+  | succ k ih =>
+    intro j hi_sum hi_le
+    rcases Nat.lt_or_ge σ.level j with hjσ | hjσ
+    · rw [GodelTTerm.bracketLevel_app_high f a j hjσ hf,
+          GodelTTerm.bracketLevel_app_high f' a' j hjσ hf']
+      exact hF j hi_le
+    · rw [GodelTTerm.bracketLevel_app_eq f a j hjσ hf,
+          GodelTTerm.bracketLevel_app_eq f' a' j hjσ hf']
+      have hSucc_le : j + 1 ≤ M := by omega
+      have hStepInner :
+          (GodelTTerm.app f a).bracketLevel (j + 1) ≤
+            (GodelTTerm.app f' a').bracketLevel (j + 1) :=
+        ih (j + 1) (by omega) hSucc_le
+      have hPow :
+          2 ^ (GodelTTerm.app f a).bracketLevel (j + 1) ≤
+            2 ^ (GodelTTerm.app f' a').bracketLevel (j + 1) :=
+        Nat.pow_le_pow_right (by decide) hStepInner
+      have hF_at : f.bracketLevel j ≤ f'.bracketLevel j := by
+        apply hF j
+        show j ≤ (GodelTType.arrow σ τ).level
+        rw [← hM_def]; exact hi_le
+      have hA_at : a.bracketLevel j ≤ a'.bracketLevel j :=
+        hA j hjσ
+      have hSum :
+          f.bracketLevel j + a.bracketLevel j ≤
+            f'.bracketLevel j + a'.bracketLevel j := by omega
+      exact Nat.mul_le_mul hPow hSum
+
+/-- `majorizes` propagates through the left side of `app`:
+if `f' ≫ f` and both heads are non-iter, then
+`app f' a ≫ app f a` for any common right-argument `a`. -/
+theorem GodelTTerm.majorizes_app_left {S : Set GodelTBase}
+    {n : Nat} {σ τ : GodelTType S}
+    (f f' : GodelTTerm S n (.arrow σ τ))
+    (a : GodelTTerm S n σ)
+    (hf : f.isIterHead = false) (hf' : f'.isIterHead = false)
+    (h : f'.majorizes f) :
+    (GodelTTerm.app f' a).majorizes (GodelTTerm.app f a) := by
+  refine ⟨?_, ?_⟩
+  · rw [GodelTTerm.bracketLevel_app_eq f a 0 (Nat.zero_le _) hf,
+        GodelTTerm.bracketLevel_app_eq f' a 0
+          (Nat.zero_le _) hf']
+    have hF_dom : f'.dominates f :=
+      GodelTTerm.majorizes_imp_dominates h
+    have hA_dom : a.dominates a := GodelTTerm.dominates_refl a
+    have h_arr_ge_one :
+        1 ≤ (GodelTType.arrow σ τ).level := by
+      change 1 ≤ max (σ.level + 1) τ.level; omega
+    have hStep1 :
+        (GodelTTerm.app f a).bracketLevel 1 ≤
+          (GodelTTerm.app f' a).bracketLevel 1 :=
+      GodelTTerm.bracketLevel_app_le_at_arrow
+        f f' a a hf hf' hF_dom hA_dom 1 h_arr_ge_one
+    have hStrict : f.bracketLevel 0 < f'.bracketLevel 0 := h.1
+    have hPow1 :
+        1 ≤ 2 ^ (GodelTTerm.app f a).bracketLevel 1 :=
+      Nat.one_le_iff_ne_zero.mpr (by positivity)
+    have hPmono :
+        2 ^ (GodelTTerm.app f a).bracketLevel 1 ≤
+          2 ^ (GodelTTerm.app f' a).bracketLevel 1 :=
+      Nat.pow_le_pow_right (by decide) hStep1
+    have hSum :
+        f.bracketLevel 0 + a.bracketLevel 0 <
+          f'.bracketLevel 0 + a.bracketLevel 0 := by omega
+    calc 2 ^ (GodelTTerm.app f a).bracketLevel 1 *
+          (f.bracketLevel 0 + a.bracketLevel 0)
+        < 2 ^ (GodelTTerm.app f a).bracketLevel 1 *
+            (f'.bracketLevel 0 + a.bracketLevel 0) :=
+          Nat.mul_lt_mul_of_pos_left hSum
+            (Nat.lt_of_lt_of_le Nat.zero_lt_one hPow1)
+      _ ≤ 2 ^ (GodelTTerm.app f' a).bracketLevel 1 *
+            (f'.bracketLevel 0 + a.bracketLevel 0) :=
+          Nat.mul_le_mul_right _ hPmono
+  · intro i hi
+    have hF_dom : f'.dominates f :=
+      GodelTTerm.majorizes_imp_dominates h
+    have hA_dom : a.dominates a := GodelTTerm.dominates_refl a
+    have hAppDom :
+        (GodelTTerm.app f' a).dominates (GodelTTerm.app f a) :=
+      GodelTTerm.dominates_app f f' a a hf hf' hF_dom hA_dom
+    exact hAppDom i hi
+
+/-- `majorizes` propagates through the right side of `app`:
+if `a' ≫ a` and `f`'s head is non-iter, then
+`app f a' ≫ app f a`. -/
+theorem GodelTTerm.majorizes_app_right {S : Set GodelTBase}
+    {n : Nat} {σ τ : GodelTType S}
+    (f : GodelTTerm S n (.arrow σ τ))
+    (a a' : GodelTTerm S n σ)
+    (hf : f.isIterHead = false)
+    (h : a'.majorizes a) :
+    (GodelTTerm.app f a').majorizes (GodelTTerm.app f a) := by
+  refine ⟨?_, ?_⟩
+  · rw [GodelTTerm.bracketLevel_app_eq f a 0 (Nat.zero_le _) hf,
+        GodelTTerm.bracketLevel_app_eq f a' 0
+          (Nat.zero_le _) hf]
+    have hA_dom : a'.dominates a :=
+      GodelTTerm.majorizes_imp_dominates h
+    have hF_dom : f.dominates f := GodelTTerm.dominates_refl f
+    have h_arr_ge_one :
+        1 ≤ (GodelTType.arrow σ τ).level := by
+      change 1 ≤ max (σ.level + 1) τ.level; omega
+    have hStep1 :
+        (GodelTTerm.app f a).bracketLevel 1 ≤
+          (GodelTTerm.app f a').bracketLevel 1 :=
+      GodelTTerm.bracketLevel_app_le_at_arrow
+        f f a a' hf hf hF_dom hA_dom 1 h_arr_ge_one
+    have hStrict : a.bracketLevel 0 < a'.bracketLevel 0 := h.1
+    have hPow1 :
+        1 ≤ 2 ^ (GodelTTerm.app f a).bracketLevel 1 :=
+      Nat.one_le_iff_ne_zero.mpr (by positivity)
+    have hPmono :
+        2 ^ (GodelTTerm.app f a).bracketLevel 1 ≤
+          2 ^ (GodelTTerm.app f a').bracketLevel 1 :=
+      Nat.pow_le_pow_right (by decide) hStep1
+    have hSum :
+        f.bracketLevel 0 + a.bracketLevel 0 <
+          f.bracketLevel 0 + a'.bracketLevel 0 := by omega
+    calc 2 ^ (GodelTTerm.app f a).bracketLevel 1 *
+          (f.bracketLevel 0 + a.bracketLevel 0)
+        < 2 ^ (GodelTTerm.app f a).bracketLevel 1 *
+            (f.bracketLevel 0 + a'.bracketLevel 0) :=
+          Nat.mul_lt_mul_of_pos_left hSum
+            (Nat.lt_of_lt_of_le Nat.zero_lt_one hPow1)
+      _ ≤ 2 ^ (GodelTTerm.app f a').bracketLevel 1 *
+            (f.bracketLevel 0 + a'.bracketLevel 0) :=
+          Nat.mul_le_mul_right _ hPmono
+  · intro i hi
+    have hA_dom : a'.dominates a :=
+      GodelTTerm.majorizes_imp_dominates h
+    have hF_dom : f.dominates f := GodelTTerm.dominates_refl f
+    have hAppDom :
+        (GodelTTerm.app f a').dominates (GodelTTerm.app f a) :=
+      GodelTTerm.dominates_app f f a a' hf hf hF_dom hA_dom
+    exact hAppDom i hi
+
 /-- Term-size strict-positivity helper. -/
 theorem GodelTTerm.lh_pos {S : Set GodelTBase} {n : Nat}
     {σ : GodelTType S} (t : GodelTTerm S n σ) : 0 < t.lh := by
