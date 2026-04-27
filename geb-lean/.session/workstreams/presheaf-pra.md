@@ -521,6 +521,49 @@ Plan: `docs/superpowers/plans/2026-04-26-praEval-naturality.md`
 | `d789a2ac` | Fix: drop `Cat.opFunctor` from target fibre |
 | `d701b401` | Task 9: `praPolyEvalData_fibFib` |
 
+## praEvalAtI Naturality (in progress, 2026-04-26)
+
+Goal: define `praPolyEvalAtINatTrans` and `praPolyEvalAtIFunctor`
+— the I-fixed J-natural evaluation, forming the source-side
+fibre functor for the Grothendieck-construction-based
+`praPolyEvalAtIFunctor`.
+
+Spec: `docs/superpowers/specs/2026-04-26-praEvalAtI-naturality-design.md`
+(gitignored).
+Plan: `docs/superpowers/plans/2026-04-26-praEvalAtI-naturality.md`
+(gitignored).
+
+**Done:**
+
+| Commit | Task |
+|--------|------|
+| `93b25d60` | Task 0: revert in-flight source-side |
+| `f0f1f208` | Task 1: `praEvalAtBifunctor` |
+| `46923c37` | Task 3: `praPolyEvalAtISource` |
+| `b8ffe6b7` | Tasks 2+4: `praPolyEvalAtISourceFib` (fix I-arg) + `praPolyEvalAtINatTrans` (with `praEvalAtBifunctorCat` helper) |
+
+**Key design facts (preserve for next session):**
+
+- `praPolyEvalAtISourceFib I opJ` uses
+  `Opposite.op (Cat.of (↑I)ᵒᵖ)` (not `Opposite.op I`) as the
+  I-argument to `presheafPRACatBifunctor.flip`, giving
+  contravariant presheaves.
+- `praEvalAtBifunctor` takes TYPE-level `I J` and produces
+  `PresheafPRACat I J × PSh(I) ⥤ Jᵒᵖ ⥤ Type`, which does NOT
+  match the Cat-object-parameterized types in the fibre functor.
+  Resolution: `praEvalAtBifunctorCat I opJ` builds the same
+  functor using `Functor.uncurry.obj ((whiskeringRight ↑opJ.unop
+  _ _).obj (ccrNewEvalCatFunctor PSh(↑I)) ⋙ Functor.flipping.functor)`;
+  this matches definitionally.
+- Naturality proof reduces to `rfl`.
+
+**Outstanding tasks (13 remaining of 17):**
+
+- Task 5: `praEvalAtBifunctorCat_natural` bridge lemma
+- Task 6: `praPolyEvalAtIFunctor` (Grothendieck construction)
+- Task 7: access lemmas
+- Tasks 8–17: tests + workstream notes
+
 **Two design pivots during execution:**
 
 1. **Variance flip (commit `4203253f` revert + Phase A
