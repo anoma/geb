@@ -1437,6 +1437,38 @@ self-reference uses a downward `Nat.rec` iteration with
 are factored helpers; `GodelTTerm.btlIter` is the
 label-discarding tree-fold helper used by `interp`.
 
+**δ.4.5 progress (2026-04-27).**  Section A (the reusable
+`dominates` infrastructure) landed in three commits on
+`terence/syntax`: `842fd754` (predicate + routine lemmas),
+`c0f7df5b` (`dominates_app` binary monotonicity), `bfcef476`
+(`bracketLevel_app_le_at_arrow` + `majorizes_app_left/right`).
+Build clean throughout.  These ingredients will be reused in
+the eventual `Reduces.bracketLevel_strict`'s `redApp_left` /
+`redApp_right` congruence cases and in stages ε / ζ.
+
+A first attempt at Section B (`redS_f_coef_bound` and the
+companion B2/B3 inequalities at level 1) found that the
+case-split approach succeeds for case `(ρ.level=0,
+σ.level=0)` (~113 lines verified clean) but the harder cases
+`(0, 1+)`, `(1+, 0)`, `(1+, 1+)` reduce to comparing
+`[LHS]_2 vs [RHS]_2`, which has the same structural shape as
+the original `[LHS]_0 vs [RHS]_0` problem.  This recurses on
+bracket level without an obvious termination — the same
+diagnosis the original five attempts hit.  The new Section A
+infrastructure handles within-side dominance but does not
+bridge LHS / RHS chains since their app structures are
+disjoint.
+
+**Next direction (Option 2 in 2026-04-27 brainstorm):** try
+a parametric-at-level-i decomposition of the redS strict-
+decrease.  The level-`i` triple of inequalities (B1_i, B2_i,
+KI3_i) has its slack from `[Sat]_i = 1`, available for
+`i ≤ Sat.type.level`.  Above that, the brackets vanish and
+the inequalities trivialize.  Descending induction on `i`
+from a vanishing-bracket bound, with case-split per level on
+multiplicative versus pass-through, may close the chain
+analogously to `bracketLevel_app_le_at_arrow`'s structure.
+
 **Task 14.5-extended (deferred)**: BT-only adequacy research
 — proving that the unlabeled-BT + 0-way-ℕ-product subfragment
 of `LawvereNatBTBounded` is already equivalent to
