@@ -1644,6 +1644,36 @@ hom.
       (GrothendieckContraFunctor.homFiber f) :=
   rfl
 
+private def praPolyEvalAtISourceFibre
+    (I : Cat.{v_I, u_I})
+    (J : Cat.{v_J, u_J})
+    (P : PresheafPRACat.{u_I, v_I, u_J, v_J, w_I, w'} I J)
+    (Z : ↑(presheafCat.{u_I, v_I, w_I} I)) :
+    ↥((praPolyEvalAtISourceFib.{u_I, v_I, u_J, v_J, w_I, w'} I).obj
+        (Opposite.op (Cat.of (↑J)ᵒᵖ))) := by
+  change CategoryTheory.ULiftHom.{max (u_I + 1) u_J v_I v_J (w_I + 1) (w' + 1)}
+    (ULift (↑((presheafPRACatBifunctor.{u_I, v_I, u_J, v_J, w_I, w'}.flip.obj
+          (Opposite.op (Cat.of (↑I)ᵒᵖ))).obj
+        (Opposite.op (Cat.of (↑J)ᵒᵖ))) ×
+      CategoryTheory.ULiftHom.{max u_I u_J v_I v_J (w_I + 1) (w' + 1)}
+        (ULift ↑(presheafCatFunctor.{u_I, v_I, w_I}.obj
+          (Opposite.op (Cat.of (↑I)ᵒᵖ))))))
+  exact CategoryTheory.ULiftHom.objUp
+    (ULift.up (P,
+      CategoryTheory.ULiftHom.objUp (ULift.up Z)))
+
+/--
+Build a `praPolyEvalAtISource I` object from `(J, P, Z)`.
+-/
+def praPolyEvalAtISourceObj
+    (I : Cat.{v_I, u_I})
+    (J : Cat.{v_J, u_J})
+    (P : PresheafPRACat.{u_I, v_I, u_J, v_J, w_I, w'} I J)
+    (Z : ↑(presheafCat.{u_I, v_I, w_I} I)) :
+    praPolyEvalAtISource.{u_I, v_I, u_J, v_J, w_I, w'} I :=
+  GrothendieckContraFunctor.mkObj (Cat.of Jᵒᵖ)
+    (praPolyEvalAtISourceFibre.{u_I, v_I, u_J, v_J, w_I, w'} I J P Z)
+
 end PresheafPRAEvalAtINat
 
 end GebLean
