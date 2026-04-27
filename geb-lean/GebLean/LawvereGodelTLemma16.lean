@@ -1149,4 +1149,328 @@ theorem GodelTTerm.majorizes_redIter_zero
     exact Nat.le_of_lt (GodelTTerm.bracketLevel_app_strict_arg T₁ b 0
       (Nat.zero_le _) hT₁NotIter hT₁_pos)
 
+/-- Beckmann-Weiermann Lemma 16 (iter-succ case):
+`iter (S t) a b ≫ a (iter t a b)`. -/
+theorem GodelTTerm.majorizes_redIter_succ
+    {S : Set GodelTBase} {n : Nat}
+    (hN : GodelTBase.nat ∈ S)
+    (t : GodelTTerm S n (.base .nat hN))
+    (a : GodelTTerm S n
+      (.arrow (.base .nat hN) (.base .nat hN)))
+    (b : GodelTTerm S n (.base .nat hN)) :
+    GodelTTerm.majorizes
+      (.app (.app (.app (.iter (n := n) hN)
+        (.app (.succ hN) t)) a) b)
+      (.app a (.app (.app (.app (.iter hN) t) a) b)) := by
+  -- LHS: T₀' = iter(succ t), T₁' = T₀' a, T₂' = T₁' b.
+  -- RHS: Tinner₀ = iter t, Tinner₁ = Tinner₀ a,
+  --      Tinner₂ = Tinner₁ b, RHS_term = a Tinner₂.
+  set T₀' := GodelTTerm.app
+    (GodelTTerm.iter (S := S) (n := n) hN)
+    (.app (.succ hN) t) with hT₀'_def
+  set T₁' := GodelTTerm.app T₀' a with hT₁'_def
+  set T₂' := GodelTTerm.app T₁' b with hT₂'_def
+  set Tinner₀ := GodelTTerm.app
+    (GodelTTerm.iter (S := S) (n := n) hN)
+    t with hTinner₀_def
+  set Tinner₁ := GodelTTerm.app Tinner₀ a
+    with hTinner₁_def
+  set Tinner₂ := GodelTTerm.app Tinner₁ b
+    with hTinner₂_def
+  -- isIterHead flags.
+  have hT₀'NI : T₀'.isIterHead = false := rfl
+  have hT₁'NI : T₁'.isIterHead = false := rfl
+  have hTinner₀NI : Tinner₀.isIterHead = false := rfl
+  have hTinner₁NI : Tinner₁.isIterHead = false := rfl
+  have haNI : a.isIterHead = false := by cases a <;> rfl
+  -- Type level values.
+  have hNlevel :
+      (GodelTType.base GodelTBase.nat hN).level = 0 := rfl
+  have hNNlevel :
+      (GodelTType.arrow (.base .nat hN)
+        (.base .nat hN)).level = 1 := by
+    simp [GodelTType.level]
+  -- Abbreviate bracketLevel values.
+  set τ := t.bracketLevel 0 with hτ_def
+  set α := a.bracketLevel 0 with hα_def
+  set α₁ := a.bracketLevel 1 with hα₁_def
+  set β := b.bracketLevel 0 with hβ_def
+  -- succ t bracketLevel computations.
+  have hSuccNI :
+      (GodelTTerm.succ (n := n) (S := S) hN).isIterHead =
+        false := rfl
+  have hSt_bl1 :
+      (.app (.succ hN) t : GodelTTerm S n _).bracketLevel
+        1 = 0 := by
+    rw [GodelTTerm.bracketLevel_app_high _ _ 1
+      (by rw [hNlevel]; omega) hSuccNI]; rfl
+  have hSt_bl0 :
+      (.app (.succ hN) t : GodelTTerm S n _).bracketLevel
+        0 = 1 + τ := by
+    rw [GodelTTerm.bracketLevel_app_eq _ _ 0
+      (by rw [hNlevel]) hSuccNI, hSt_bl1]
+    simp [GodelTTerm.bracketLevel_succ_zero, ← hτ_def]
+  -- T₀' bracketLevel values.
+  have hT₀'_bl0 : T₀'.bracketLevel 0 = 1 + τ := by
+    rw [hT₀'_def, GodelTTerm.bracketLevel_app_iter_zero,
+      hSt_bl0]
+  have hT₀'_bl1 : T₀'.bracketLevel 1 = 1 := by
+    rw [hT₀'_def, GodelTTerm.bracketLevel_app_iter_one]
+  have hT₀'_bl2 : T₀'.bracketLevel 2 = 1 + τ := by
+    rw [hT₀'_def, GodelTTerm.bracketLevel_app_iter_two,
+      hSt_bl0]
+  -- T₁' bracketLevel values.
+  -- [T₁']_2 = [T₀']_2 = 1+τ (pass-through, i=2 > 1).
+  have hT₁'_bl2 : T₁'.bracketLevel 2 = 1 + τ := by
+    rw [hT₁'_def,
+      GodelTTerm.bracketLevel_app_high T₀' a 2
+        (by rw [hNNlevel]; omega) hT₀'NI, hT₀'_bl2]
+  -- [T₁']_1 = 2^(1+τ) * (1 + α₁).
+  have hT₁'_bl1 :
+      T₁'.bracketLevel 1 = 2 ^ (1 + τ) * (1 + α₁) := by
+    rw [hT₁'_def,
+      GodelTTerm.bracketLevel_app_eq T₀' a 1
+        (by rw [hNNlevel]) hT₀'NI,
+      show (GodelTTerm.app T₀' a).bracketLevel 2 =
+          1 + τ from hT₁'_bl2,
+      hT₀'_bl1]
+  -- Set M = T₁'.bracketLevel 1.
+  set M := T₁'.bracketLevel 1 with hM_def
+  -- [T₁']_0 = 2^M * (1+τ+α).
+  have hT₁'_bl0 :
+      T₁'.bracketLevel 0 = 2 ^ M * (1 + τ + α) := by
+    rw [hT₁'_def,
+      GodelTTerm.bracketLevel_app_eq T₀' a 0
+        (by rw [hNNlevel]; omega) hT₀'NI,
+      show (GodelTTerm.app T₀' a).bracketLevel 1 = M
+        from rfl,
+      hT₀'_bl0]
+  -- [T₂']_1 = M (pass-through, i=1 > 0).
+  have hT₂'_bl1 : T₂'.bracketLevel 1 = M := by
+    rw [hT₂'_def,
+      GodelTTerm.bracketLevel_app_high T₁' b 1
+        (by rw [hNlevel]; omega) hT₁'NI]
+  -- [T₂']_0 = 2^M * (2^M*(1+τ+α) + β).
+  have hT₂'_bl0 :
+      T₂'.bracketLevel 0 =
+        2 ^ M * (2 ^ M * (1 + τ + α) + β) := by
+    rw [hT₂'_def,
+      GodelTTerm.bracketLevel_app_eq T₁' b 0
+        (by rw [hNlevel]) hT₁'NI,
+      show (GodelTTerm.app T₁' b).bracketLevel 1 = M
+        from hT₂'_bl1,
+      hT₁'_bl0]
+  -- Tinner₀ bracketLevel values.
+  have hTi₀_bl0 : Tinner₀.bracketLevel 0 = τ := by
+    rw [hTinner₀_def, GodelTTerm.bracketLevel_app_iter_zero]
+  have hTi₀_bl1 : Tinner₀.bracketLevel 1 = 1 := by
+    rw [hTinner₀_def, GodelTTerm.bracketLevel_app_iter_one]
+  have hTi₀_bl2 : Tinner₀.bracketLevel 2 = τ := by
+    rw [hTinner₀_def, GodelTTerm.bracketLevel_app_iter_two]
+  -- Tinner₁ bracketLevel values.
+  -- [Tinner₁]_2 = τ (pass-through, i=2 > 1).
+  have hTi₁_bl2 : Tinner₁.bracketLevel 2 = τ := by
+    rw [hTinner₁_def,
+      GodelTTerm.bracketLevel_app_high Tinner₀ a 2
+        (by rw [hNNlevel]; omega) hTinner₀NI, hTi₀_bl2]
+  -- [Tinner₁]_1 = 2^τ * (1+α₁).
+  have hTi₁_bl1 :
+      Tinner₁.bracketLevel 1 = 2 ^ τ * (1 + α₁) := by
+    rw [hTinner₁_def,
+      GodelTTerm.bracketLevel_app_eq Tinner₀ a 1
+        (by rw [hNNlevel]) hTinner₀NI,
+      show Tinner₁.bracketLevel 2 = τ from hTi₁_bl2,
+      hTi₀_bl1]
+  -- Set Q = Tinner₁.bracketLevel 1.
+  set Q := Tinner₁.bracketLevel 1 with hQ_def
+  -- [Tinner₁]_0 = 2^Q * (τ+α).
+  have hTi₁_bl0 :
+      Tinner₁.bracketLevel 0 = 2 ^ Q * (τ + α) := by
+    rw [hTinner₁_def,
+      GodelTTerm.bracketLevel_app_eq Tinner₀ a 0
+        (by rw [hNNlevel]; omega) hTinner₀NI,
+      show (GodelTTerm.app Tinner₀ a).bracketLevel 1 = Q
+        from rfl,
+      hTi₀_bl0]
+  -- [Tinner₂]_1 = Q (pass-through, i=1 > 0).
+  have hTi₂_bl1 : Tinner₂.bracketLevel 1 = Q := by
+    rw [hTinner₂_def,
+      GodelTTerm.bracketLevel_app_high Tinner₁ b 1
+        (by rw [hNlevel]; omega) hTinner₁NI]
+  -- [Tinner₂]_0 = 2^Q * (2^Q*(τ+α) + β).
+  have hTi₂_bl0 :
+      Tinner₂.bracketLevel 0 =
+        2 ^ Q * (2 ^ Q * (τ + α) + β) := by
+    rw [hTinner₂_def,
+      GodelTTerm.bracketLevel_app_eq Tinner₁ b 0
+        (by rw [hNlevel]) hTinner₁NI,
+      show (GodelTTerm.app Tinner₁ b).bracketLevel 1 = Q
+        from hTi₂_bl1,
+      hTi₁_bl0]
+  -- RHS bracketLevel values.
+  -- [RHS]_1 = α₁ (pass-through, domain N, i=1 > 0).
+  have hRHS_bl1 :
+      (GodelTTerm.app a Tinner₂).bracketLevel 1 = α₁ := by
+    rw [GodelTTerm.bracketLevel_app_high a Tinner₂ 1
+      (by rw [hNlevel]; omega) haNI]
+  -- [RHS]_0 = 2^α₁ * (α + 2^Q*(2^Q*(τ+α)+β)).
+  have hRHS_bl0 :
+      (GodelTTerm.app a Tinner₂).bracketLevel 0 =
+        2 ^ α₁ * (α + 2 ^ Q * (2 ^ Q * (τ + α) + β)) := by
+    rw [GodelTTerm.bracketLevel_app_eq a Tinner₂ 0
+      (by rw [hNlevel]) haNI,
+      show (GodelTTerm.app a Tinner₂).bracketLevel 1 = α₁
+        from hRHS_bl1,
+      hTi₂_bl0]
+  -- M = 2*Q (from the explicit expressions).
+  have hMQ : M = 2 * Q := by
+    rw [hT₁'_bl1, hTi₁_bl1,
+      show 2 ^ (1 + τ) = 2 * 2 ^ τ from by
+        rw [show 1 + τ = τ + 1 from by omega, Nat.pow_succ]; ring]
+    ring
+  -- 2^M = 2^Q * 2^Q.
+  have h2M_sq : 2 ^ M = 2 ^ Q * 2 ^ Q := by
+    rw [hMQ, show 2 * Q = Q + Q from by ring, Nat.pow_add]
+  -- α₁ < M (from bracketLevel_app_strict_arg at level 1).
+  have hα₁_lt_M : α₁ < M := by
+    apply GodelTTerm.bracketLevel_app_strict_arg
+      T₀' a 1 (by rw [hNNlevel]) hT₀'NI
+    rw [hT₀'_bl1]
+  -- M ≥ 2*(1+α₁) (since M = 2^(1+τ)*(1+α₁) ≥ 2*(1+α₁)).
+  have hM_ge : 2 * (1 + α₁) ≤ M := by
+    rw [hT₁'_bl1]
+    have h2pow : 2 ≤ 2 ^ (1 + τ) :=
+      calc (2 : Nat) = 2 ^ 1 := by norm_num
+        _ ≤ 2 ^ (1 + τ) :=
+          Nat.pow_le_pow_right (by omega) (by omega)
+    exact Nat.mul_le_mul_right (1 + α₁) h2pow
+  -- Q ≥ 1+α₁ (since Q = 2^τ*(1+α₁) ≥ 1+α₁).
+  have hQ_ge : 1 + α₁ ≤ Q := by
+    rw [hTi₁_bl1]
+    have h1pow : 1 ≤ 2 ^ τ := Nat.one_le_two_pow
+    exact Nat.le_trans (by omega)
+      (Nat.mul_le_mul_right (1 + α₁) h1pow)
+  -- 2 * 2^α₁ ≤ 2^Q (from α₁+1 ≤ Q).
+  have h2F_le_e : 2 * 2 ^ α₁ ≤ 2 ^ Q := by
+    have hpow : 2 ^ (α₁ + 1) ≤ 2 ^ Q :=
+      Nat.pow_le_pow_right (by omega)
+        (show α₁ + 1 ≤ Q from by omega)
+    rw [Nat.pow_succ, Nat.mul_comm] at hpow
+    exact hpow
+  -- 2 ≤ 2^Q (from Q ≥ 1).
+  have he_ge2 : 2 ≤ 2 ^ Q :=
+    calc (2 : Nat) = 2 ^ 1 := by norm_num
+      _ ≤ 2 ^ Q :=
+        Nat.pow_le_pow_right (by omega)
+          (show 1 ≤ Q from by omega)
+  -- α ≥ 1 (from bracketLevel_zero_pos_arrow_NN).
+  have hα_pos : 1 ≤ α :=
+    GodelTTerm.bracketLevel_zero_pos_arrow_NN a
+  -- Main strict inequality:
+  -- 2^α₁*(α + 2^Q*(2^Q*(τ+α)+β)) < 2^M*(2^M*(1+τ+α)+β).
+  have hstrict :
+      2 ^ α₁ * (α + 2 ^ Q * (2 ^ Q * (τ + α) + β)) <
+        2 ^ M * (2 ^ M * (1 + τ + α) + β) := by
+    rw [h2M_sq]
+    -- e = 2^Q, F = 2^α₁.  Goal after substitution:
+    -- F*(α + e*(e*(τ+α)+β)) < e^2*(e^2*(1+τ+α)+β).
+    set e := 2 ^ Q with he_def
+    set F := 2 ^ α₁ with hF_def
+    -- F ≤ e (from 2F ≤ e).
+    have hFe : F ≤ e := by omega
+    -- 2*(F*e^2) ≤ e^3 (from 2F ≤ e, multiply by e^2).
+    have h2Fee2 : 2 * (F * (e * e)) ≤ e * e * e :=
+      calc 2 * (F * (e * e)) = 2 * F * (e * e) := by ring
+        _ ≤ e * (e * e) :=
+            Nat.mul_le_mul_right (e * e) h2F_le_e
+        _ = e * e * e := by ring
+    -- F*e ≤ e^2, F*e^2 ≤ e^3.
+    have hFee : F * e ≤ e * e :=
+      Nat.mul_le_mul_right e hFe
+    -- 1 ≤ e^2 (from e ≥ 2).
+    have hee_pos : 1 ≤ e * e := by
+      calc (1 : Nat) = 1 * 1 := by ring
+        _ ≤ e * e := by
+          apply Nat.mul_le_mul <;> omega
+    -- α < e^2*(1+τ+α): from 1 ≤ e^2.
+    have hα_lt : α < e * e * (1 + τ + α) :=
+      calc α < 1 + τ + α := by omega
+        _ ≤ e * e * (1 + τ + α) :=
+            Nat.le_mul_of_pos_left _ (by omega)
+    -- F*α < F*e^2*(1+τ+α) (from hα_lt since F ≥ 1).
+    have hF_pos : 0 < F := by positivity
+    have hFα_lt : F * α < F * (e * e) * (1 + τ + α) := by
+      have step1 : F * α < F * (e * e * (1 + τ + α)) :=
+        Nat.mul_lt_mul_of_pos_left hα_lt hF_pos
+      calc F * α < F * (e * e * (1 + τ + α)) := step1
+        _ = F * (e * e) * (1 + τ + α) := by ring
+    -- Main: show the expanded inequality.
+    have hLHS : F * (α + e * (e * (τ + α) + β)) =
+        F * α + F * (e * e) * (τ + α) + F * e * β := by ring
+    have hRHS : e * e * (e * e * (1 + τ + α) + β) =
+        e * e * e * e * (1 + τ + α) + e * e * β := by ring
+    rw [hLHS, hRHS]
+    -- F*α + F*e^2*(τ+α) + F*e*β
+    -- < F*e^2*(1+τ+α) + F*e^2*(τ+α) + e^2*β    [using hFα_lt, hFee*β]
+    -- = F*e^2*(1+2*(τ+α)) + e^2*β
+    -- Since 2*(F*e^2) ≤ e^3:
+    -- 2*(F*e^2*(1+2*(τ+α))) ≤ e^3*(1+2*(τ+α)) ≤ 2*e^4*(1+τ+α)
+    -- (last: e^3*(1+2*(τ+α)) ≤ 2*e^4*(1+τ+α) from e*(1+τ+α) ≥ (1+2*(τ+α))/2).
+    -- F*(e*e) ≤ e*(e*e) = e^3 (multiply F ≤ e by e^2).
+    have hFee2 : F * (e * e) ≤ e * (e * e) :=
+      Nat.mul_le_mul_right (e * e) hFe
+    have hFee3 : F * (e * e) ≤ e * e * e := by
+      calc F * (e * e) ≤ e * (e * e) := hFee2
+        _ = e * e * e := by ring
+    -- F*(e*e)*(1+τ+α) + F*(e*e)*(τ+α) = F*(e*e)*(1+2*(τ+α)).
+    -- F*(e*e)*(1+2*(τ+α)) ≤ e³*(1+2*(τ+α)) [hFee3].
+    -- e³*(1+2*(τ+α)) ≤ e⁴*(1+τ+α) [e≥2 gives e*(1+τ+α) ≥ 1+2*(τ+α)].
+    have he_ge : 1 + 2 * (τ + α) ≤ e * (1 + τ + α) := by
+      calc 1 + 2 * (τ + α)
+          ≤ 2 * (1 + τ + α) := by omega
+        _ ≤ e * (1 + τ + α) :=
+            Nat.mul_le_mul_right _ he_ge2
+    have hFee_sq_bound :
+        F * (e * e) * (1 + τ + α) + F * (e * e) * (τ + α) ≤
+          e * e * e * e * (1 + τ + α) := by
+      have hring : F * (e * e) * (1 + τ + α) +
+          F * (e * e) * (τ + α) =
+          F * (e * e) * (1 + 2 * (τ + α)) := by ring
+      rw [hring]
+      calc F * (e * e) * (1 + 2 * (τ + α))
+          ≤ e * e * e * (1 + 2 * (τ + α)) :=
+              Nat.mul_le_mul_right _ hFee3
+        _ ≤ e * e * e * (e * (1 + τ + α)) :=
+              Nat.mul_le_mul_left _ he_ge
+        _ = e * e * e * e * (1 + τ + α) := by ring
+    have hFeB : F * e * β ≤ e * e * β :=
+      Nat.mul_le_mul_right β hFee
+    -- The main strict bound by combining pieces.
+    -- Step 1a: use hFα_lt to get strict inequality on first pair.
+    have hstep1a :
+        F * α + F * (e * e) * (τ + α) <
+          F * (e * e) * (1 + τ + α) + F * (e * e) * (τ + α) :=
+      Nat.add_lt_add_right hFα_lt _
+    -- Step 1b: add F*e*β ≤ e*e*β to the right end.
+    have hstep1 :
+        F * α + F * (e * e) * (τ + α) + F * e * β <
+          F * (e * e) * (1 + τ + α) +
+            F * (e * e) * (τ + α) + e * e * β :=
+      Nat.add_lt_add_of_lt_of_le hstep1a hFeB
+    calc F * α + F * (e * e) * (τ + α) + F * e * β
+        < F * (e * e) * (1 + τ + α) +
+            F * (e * e) * (τ + α) + e * e * β := hstep1
+      _ ≤ e * e * e * e * (1 + τ + α) + e * e * β :=
+            Nat.add_le_add_right hFee_sq_bound _
+  -- Conclude majorization.
+  refine ⟨?_, ?_⟩
+  · -- Strict: [RHS]_0 < [T₂']_0.
+    rw [hRHS_bl0, hT₂'_bl0]
+    exact hstrict
+  · -- Monotone: ∀ i ≤ 0, [RHS]_i ≤ [T₂']_i.
+    intro i hi
+    obtain rfl : i = 0 := Nat.le_zero.mp hi
+    rw [hRHS_bl0, hT₂'_bl0]
+    exact Nat.le_of_lt hstrict
+
 end GebLean
