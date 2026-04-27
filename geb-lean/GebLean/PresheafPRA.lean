@@ -1504,6 +1504,22 @@ def praPolyEvalAtISourceFib (I : Cat.{v_I, u_I}) :
       apply Cat.Hom.ext
       rfl }
 
+/--
+Total source contraGrothendieck for `praPolyEvalAtIFunctor`.
+
+Objects are pairs `(J, (P, Z))` with `J : Cat`,
+`P : PresheafPRACat I J`, and `Z : PSh(I)` (all widened).
+
+Morphisms `((J_s, (P_s, Z_s))) ⟶ ((J_t, (P_t, Z_t)))` are
+triples `(f_J : J_s ⟶ J_t, f_P : P_s ⟶ f_J^* P_t,
+η : Z_s ⟶ Z_t)`.
+-/
+def praPolyEvalAtISource (I : Cat.{v_I, u_I}) :
+    Cat.{max u_I u_J v_I v_J w_I w',
+      max (u_I + 1) (u_J + 1) v_I (v_J + 1) (w_I + 1) (w' + 1)} :=
+  (grothendieckContraFunctor Cat.{v_J, u_J}).obj
+    (praPolyEvalAtISourceFib.{u_I, v_I, u_J, v_J, w_I, w'} I)
+
 end PresheafPRAEvalAtINat
 
 end GebLean
