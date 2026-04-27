@@ -106,7 +106,7 @@ theorem erInterpFunctor_not_full_via_tetration :
         ERMorNQuo.interp f := rfl
     rw [heq1, ← hfr] at hmap
     have hctx := congrFun hmap ctx
-    simp only [ERMorNQuo.interp, Quotient.lift_mk] at hctx
+    simp only [ERMorNQuo.interp] at hctx
     exact hctx
   apply tetration_not_ER
   refine ⟨f_raw (0 : Fin 1), ?_⟩

@@ -1706,7 +1706,7 @@ theorem GodelTTerm.majorizes_redTreeIter_node
     calc (1 : Nat) ≤ N + a.bracketLevel 0 := by omega
       _ ≤ _ := Nat.le_mul_of_pos_left _
             (Nat.one_le_iff_ne_zero.mpr (by positivity))
-  -- Abbreviate key bracketLevel values.
+  -- Abbreviate bracketLevel values.
   have hbTypeLevel1 :
       (GodelTType.arrow σ (.arrow σ σ)).level = 1 := by
     rw [hbTypeLevel, hσ]
@@ -1922,13 +1922,13 @@ theorem GodelTTerm.majorizes_redTreeIter_node
       rw [hRr₁_def]
       exact Nat.le_mul_of_pos_left _ (Nat.two_pow_pos rBL)
     omega
-  -- 2β₁ + Rl₁ + 3 ≤ H (key height bound for Rl branch).
+  -- 2β₁ + Rl₁ + 3 ≤ H (height bound for Rl branch).
   have hK1_lt_H : 2 * β₁ + Rl₁ + 3 ≤ H := by
     have h1 : 1 + β₁ ≤ Rl₁ := by
       rw [hRl₁_def]
       exact Nat.le_mul_of_pos_left _ (Nat.two_pow_pos lBL)
     omega
-  -- β₁ + Rr₁ + 3 ≤ H (key height bound for Rr branch).
+  -- β₁ + Rr₁ + 3 ≤ H (height bound for Rr branch).
   have hK2_lt_H : β₁ + Rr₁ + 3 ≤ H := by
     have h1 : 1 + β₁ ≤ Rr₁ := by
       rw [hRr₁_def]
@@ -1945,7 +1945,7 @@ theorem GodelTTerm.majorizes_redTreeIter_node
       rw [hRl₁_def]
       exact Nat.le_mul_of_pos_left _ (Nat.two_pow_pos lBL)
     omega
-  -- Key tower bound: 2^(2β₁) + 2^(2β₁+Rl₁) + 2^(β₁+Rr₁) < 2^H.
+  -- Tower bound: 2^(2β₁) + 2^(2β₁+Rl₁) + 2^(β₁+Rr₁) < 2^H.
   have hterm_bound :
       2 ^ (2 * β₁) + 2 ^ (2 * β₁ + Rl₁) +
         2 ^ (β₁ + Rr₁) < 2 ^ H := by

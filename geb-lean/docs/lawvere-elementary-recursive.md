@@ -289,7 +289,7 @@ project: the source of internal structures that transport
 into any ER-capable target.  The full subcategory
 `LawvereNatBT0Cat`, isomorphic on the nose to `LawvereERCat`,
 provides the in-category sub-presentation matching the
-classical ℕ-only formulation, so client code may restrict to
+classic ℕ-only formulation, so client code may restrict to
 it whenever the tree-sort structure is not needed without
 having to switch categories.
 

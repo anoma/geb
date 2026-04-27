@@ -2,8 +2,6 @@ import Mathlib.Data.Fin.Basic
 import Mathlib.Data.Nat.Basic
 import GebLean.Utilities.Tower
 
-set_option linter.dupNamespace false
-
 /-!
 # Abstract Register Machines over ℕ
 
@@ -23,7 +21,7 @@ each machine step is expressible as a constant-depth tree operation.
 -/
 
 namespace GebLean
-namespace RegisterMachine
+namespace RegisterMachineNS
 
 /-- Interface part of a register machine: state and register arities
 together with a transition function.  Separated from the outer
@@ -164,5 +162,5 @@ def runReg (M : RegisterMachine)
     runReg M regs (n + 1) i =
       (step M (run M regs n)).2 i := rfl
 
-end RegisterMachine
+end RegisterMachineNS
 end GebLean
