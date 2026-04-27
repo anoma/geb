@@ -7327,6 +7327,49 @@ abbrev LaxNatTransContraLaxId :=
   ∀ (c : C) (x : G.obj (Opposite.op c)),
     laxApp (𝟙 c) x = eqToHom (laxNatTransContraIdEqProof app c x)
 
+/-- Equality proof for composition laxity (left side).  For `f : c ⟶ c'`
+and `g : c' ⟶ c''` in `C`, the C-composition is `f ≫ g : c ⟶ c''`,
+and `(f ≫ g).op = g.op ≫ f.op` in `Cᵒᵖ`.  By contravariant
+functoriality: `F.map (f ≫ g).op = F.map f.op ⋙ F.map g.op`. -/
+abbrev LaxNatTransContraCompEq :=
+  ∀ {c c' c'' : C} (f : c ⟶ c') (g : c' ⟶ c'')
+    (x : G.obj (Opposite.op c'')),
+    (F.map (f ≫ g).op).toFunctor.obj ((app c'').obj x) =
+    (F.map f.op).toFunctor.obj
+      ((F.map g.op).toFunctor.obj ((app c'').obj x))
+
+/-- Derive the left composition equality from functor laws. -/
+lemma laxNatTransContraCompEqProof : LaxNatTransContraCompEq app := by
+  intro c c' c'' f g x
+  exact congrFun (congrArg Functor.obj
+    (congrArg (fun x => x.toFunctor) (F.map_comp g.op f.op)))
+    ((app c'').obj x)
+
+/-- Equality proof for composition laxity (right side). -/
+abbrev LaxNatTransContraCompEqRight :=
+  ∀ {c c' c'' : C} (f : c ⟶ c') (g : c' ⟶ c'')
+    (x : G.obj (Opposite.op c'')),
+    (app c).obj ((G.map f.op).toFunctor.obj
+      ((G.map g.op).toFunctor.obj x)) =
+    (app c).obj ((G.map (f ≫ g).op).toFunctor.obj x)
+
+/-- Derive the right composition equality from functor laws. -/
+lemma laxNatTransContraCompEqRightProof :
+    LaxNatTransContraCompEqRight app := by
+  intro c c' c'' f g x
+  exact congrArg (app c).obj (congrFun (congrArg Functor.obj
+    (congrArg (fun x => x.toFunctor) (G.map_comp g.op f.op))) x).symm
+
+/-- Composition coherence: `laxApp (f ≫ g) x` decomposes stepwise. -/
+abbrev LaxNatTransContraLaxComp :=
+  ∀ {c c' c'' : C} (f : c ⟶ c') (g : c' ⟶ c'')
+    (x : G.obj (Opposite.op c'')),
+    laxApp (f ≫ g) x =
+    eqToHom (laxNatTransContraCompEqProof app f g x) ≫
+    (F.map f.op).toFunctor.map (laxApp g x) ≫
+    laxApp f ((G.map g.op).toFunctor.obj x) ≫
+    eqToHom (laxNatTransContraCompEqRightProof app f g x)
+
 end LaxNatTransContraFunctor
 
 /-!
