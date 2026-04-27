@@ -43,3 +43,46 @@ example :
     praEvalAtBifunctor.{0, 0, 0, 0, 0, 0} PUnit PUnit =
     praEvalAtBifunctor.{0, 0, 0, 0, 0, 0} PUnit PUnit :=
   rfl
+
+/-! ## Bridge-lemma collapse at a small concrete base -/
+
+section CollapseTest
+
+example
+    (X : praPolyEvalAtISource.{0, 0, 0, 0, 0, 0}
+      (Cat.of PUnit)) :
+    GrothendieckContraFunctor.objBase
+      ((praPolyEvalAtIFunctor.{0, 0, 0, 0, 0, 0}
+          (Cat.of PUnit)).obj X) =
+    GrothendieckContraFunctor.objBase X :=
+  praPolyEvalAtIFunctor_base.{0, 0, 0, 0, 0, 0} (Cat.of PUnit) X
+
+example
+    (X : praPolyEvalAtISource.{0, 0, 0, 0, 0, 0}
+      (Cat.of PUnit)) :
+    GrothendieckContraFunctor.objFiber
+      ((praPolyEvalAtIFunctor.{0, 0, 0, 0, 0, 0}
+          (Cat.of PUnit)).obj X) =
+    ((praPolyEvalAtINatTrans.{0, 0, 0, 0, 0, 0}
+          (Cat.of PUnit)).app
+        (Opposite.op
+          (GrothendieckContraFunctor.objBase X))).toFunctor.obj
+      (GrothendieckContraFunctor.objFiber X) :=
+  praPolyEvalAtIFunctor_fibre.{0, 0, 0, 0, 0, 0} (Cat.of PUnit) X
+
+example
+    {X Y : praPolyEvalAtISource.{0, 0, 0, 0, 0, 0}
+      (Cat.of PUnit)}
+    (f : X ⟶ Y) :
+    GrothendieckContraFunctor.homFiber
+      ((praPolyEvalAtIFunctor.{0, 0, 0, 0, 0, 0}
+          (Cat.of PUnit)).map f) =
+    ((praPolyEvalAtINatTrans.{0, 0, 0, 0, 0, 0}
+          (Cat.of PUnit)).app
+        (Opposite.op
+          (GrothendieckContraFunctor.objBase X))).toFunctor.map
+      (GrothendieckContraFunctor.homFiber f) :=
+  praPolyEvalAtIFunctor_map_homFiber.{0, 0, 0, 0, 0, 0}
+    (Cat.of PUnit) f
+
+end CollapseTest
