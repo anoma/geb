@@ -7452,6 +7452,42 @@ def LaxNatTransContraData.comp {G H K : Cᵒᵖ ⥤ Cat.{vF, uF}}
     congr 1
     exact hβ.symm
 
+set_option backward.isDefEq.respectTransparency false in
+/-- Promote a strict natural transformation between contravariant
+Cat-valued functors to a lax natural transformation.  The laxity
+morphisms are derived from the strict naturality squares as
+`eqToHom`. -/
+def LaxNatTransContraData.ofNatTrans {G H : Cᵒᵖ ⥤ Cat.{vF, uF}}
+    (α : NatTrans G H) : LaxNatTransContraData G H where
+  app c := (α.app (Opposite.op c)).toFunctor
+  laxApp {c c'} f x := eqToHom (by
+    have nat := congrArg Cat.Hom.toFunctor (α.naturality f.op)
+    simp only [Cat.Hom.comp_toFunctor] at nat
+    exact (congrArg (·.obj x) nat).symm)
+  laxNat {c c'} f {x y} φ := by
+    have nat := congrArg Cat.Hom.toFunctor (α.naturality f.op)
+    simp only [Cat.Hom.comp_toFunctor] at nat
+    have h := Functor.congr_hom nat.symm φ
+    change (H.map f.op).toFunctor.map ((α.app (Opposite.op c')).toFunctor.map φ)
+        ≫ _ =
+      _ ≫ (α.app (Opposite.op c)).toFunctor.map
+        ((G.map f.op).toFunctor.map φ)
+    conv_lhs => rw [show (H.map f.op).toFunctor.map
+        ((α.app (Opposite.op c')).toFunctor.map φ) =
+        ((α.app (Opposite.op c')).toFunctor ⋙
+          (H.map f.op).toFunctor).map φ from rfl]
+    rw [h]
+    conv_lhs => rw [show ((G.map f.op).toFunctor ⋙
+        (α.app (Opposite.op c)).toFunctor).map φ =
+        (α.app (Opposite.op c)).toFunctor.map
+          ((G.map f.op).toFunctor.map φ) from rfl]
+    simp only [Category.assoc, eqToHom_trans, eqToHom_refl,
+      Category.comp_id]
+  laxId c x := by
+    simp
+  laxComp {c c' c''} f g x := by
+    simp
+
 end LaxNatTransContraFunctor
 
 /-!
