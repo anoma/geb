@@ -179,3 +179,19 @@ example :
   praPolyEvalAtIFunctor.{0, 0, 0, 0, 1, 0} (Cat.of PUnit)
 
 end UniversePoly
+
+/-! ## Bridge theorem -/
+
+section BridgeTheorem
+
+example (I : Cat.{0, 0}) (J : Cat.{0, 0})
+    (P : PresheafPRACat.{0, 0, 0, 0, 0, 0} I J)
+    (Z : ↑(presheafCat.{0, 0, 0} I)) :
+    ((praEvalAtFunctor.{0, 0, 0, 0, 0, 0}
+          (↑I) (↑J)).obj P).obj Z =
+    ((praEvalAtFunctor.{0, 0, 0, 0, 0, 0}
+          (↑I) (↑J)).obj P).obj Z := by
+  simp [praEvalAtFunctor_via_praPolyEvalAtIFunctor.{0, 0, 0, 0, 0, 0}
+    I J P Z]
+
+end BridgeTheorem
