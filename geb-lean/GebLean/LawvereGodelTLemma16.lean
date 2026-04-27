@@ -919,6 +919,67 @@ theorem GodelTTerm.majorizes_imp_dominates {S : Set GodelTBase}
     {t s : GodelTTerm S n σ} (h : t.majorizes s) :
     t.dominates s := h.2
 
+/-- Bracket dominance propagates through binary application:
+if both heads are non-iter and both arguments are pointwise-
+dominated within their type levels, the application is
+pointwise-dominated within its type level. -/
+theorem GodelTTerm.dominates_app {S : Set GodelTBase}
+    {n : Nat} {σ τ : GodelTType S}
+    (f f' : GodelTTerm S n (.arrow σ τ))
+    (a a' : GodelTTerm S n σ)
+    (hf : f.isIterHead = false) (hf' : f'.isIterHead = false)
+    (hF : f'.dominates f) (hA : a'.dominates a) :
+    (GodelTTerm.app f' a').dominates (GodelTTerm.app f a) := by
+  set M := (GodelTType.arrow σ τ).level with hM_def
+  have hM_ge_τ : τ.level ≤ M := by
+    rw [hM_def]; change τ.level ≤ max (σ.level + 1) τ.level
+    omega
+  suffices h : ∀ k, ∀ i, k + i = M → i ≤ M →
+      (GodelTTerm.app f a).bracketLevel i ≤
+        (GodelTTerm.app f' a').bracketLevel i by
+    intro i hi
+    have hiM : i ≤ M := Nat.le_trans hi hM_ge_τ
+    exact h (M - i) i (by omega) hiM
+  intro k
+  induction k with
+  | zero =>
+    intro i hi_sum hi_le
+    obtain rfl : i = M := by omega
+    have hiσ : σ.level < M := by
+      rw [hM_def]; change σ.level < max (σ.level + 1) τ.level
+      omega
+    rw [GodelTTerm.bracketLevel_app_high f a M hiσ hf,
+        GodelTTerm.bracketLevel_app_high f' a' M hiσ hf']
+    exact hF M (Nat.le_refl _)
+  | succ k ih =>
+    intro i hi_sum hi_le
+    rcases Nat.lt_or_ge σ.level i with hiσ | hiσ
+    · rw [GodelTTerm.bracketLevel_app_high f a i hiσ hf,
+          GodelTTerm.bracketLevel_app_high f' a' i hiσ hf']
+      exact hF i hi_le
+    · rw [GodelTTerm.bracketLevel_app_eq f a i hiσ hf,
+          GodelTTerm.bracketLevel_app_eq f' a' i hiσ hf']
+      have hSucc_le : i + 1 ≤ M := by omega
+      have hStepInner :
+          (GodelTTerm.app f a).bracketLevel (i + 1) ≤
+            (GodelTTerm.app f' a').bracketLevel (i + 1) :=
+        ih (i + 1) (by omega) hSucc_le
+      have hPow :
+          2 ^ (GodelTTerm.app f a).bracketLevel (i + 1) ≤
+            2 ^ (GodelTTerm.app f' a').bracketLevel (i + 1) :=
+        Nat.pow_le_pow_right (by decide) hStepInner
+      have hF_at : f.bracketLevel i ≤ f'.bracketLevel i := by
+        apply hF i
+        show i ≤ (GodelTType.arrow σ τ).level
+        rw [← hM_def]
+        exact hi_le
+      have hA_at : a.bracketLevel i ≤ a'.bracketLevel i :=
+        hA i hiσ
+      have hSum :
+          f.bracketLevel i + a.bracketLevel i ≤
+            f'.bracketLevel i + a'.bracketLevel i := by omega
+      exact Nat.mul_le_mul hPow hSum
+
 /-- Term-size strict-positivity helper. -/
 theorem GodelTTerm.lh_pos {S : Set GodelTBase} {n : Nat}
     {σ : GodelTType S} (t : GodelTTerm S n σ) : 0 < t.lh := by
