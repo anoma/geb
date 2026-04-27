@@ -1459,15 +1459,66 @@ infrastructure handles within-side dominance but does not
 bridge LHS / RHS chains since their app structures are
 disjoint.
 
-**Next direction (Option 2 in 2026-04-27 brainstorm):** try
-a parametric-at-level-i decomposition of the redS strict-
-decrease.  The level-`i` triple of inequalities (B1_i, B2_i,
-KI3_i) has its slack from `[Sat]_i = 1`, available for
-`i ≤ Sat.type.level`.  Above that, the brackets vanish and
-the inequalities trivialize.  Descending induction on `i`
-from a vanishing-bracket bound, with case-split per level on
-multiplicative versus pass-through, may close the chain
-analogously to `bracketLevel_app_le_at_arrow`'s structure.
+**Section B Option 2 attempted (2026-04-27).**  Parametric-at-
+level-`i` descending induction with `[Sat]_i` slack also reaches
+the same wall: any strengthened parametric IH that gives the
+sub-term exponent comparisons the multiplicative case requires
+is mathematically false in general (it would need
+`[Sat]_i ≥ [x]_i`, but `[Sat]_i ∈ {0,1}` cannot bound an
+arbitrary user-supplied `[x]_i`).  Without the strengthening,
+the un-strengthened IH is too weak to discharge the inductive
+step.
+
+**Section C Task 11 (`majorizes_redTreeIter_node` generalize)
+attempted (2026-04-27).**  Subagent diagnostic: shares the same
+LHS / RHS structural-disjoint family of obstructions as redS,
+though distinct in detail.  The redTreeIter_node case has a
+partial advantage in that its LHS chain is built around
+`.treeIter` whose bracket values are concretely computable at
+every level via `bracketLevel_app_treeIter_zero/_one/_two/
+_ge_three`, so the level-`i` algebra terminates deterministically
+rather than recursing on arbitrary user terms.  A fresh attempt
+emphasizing this structural advantage may close the
+generalization, but it would still be substantial (200-400 lines
+of explicit bracket-arithmetic by case-split on `σ.level` vs
+`i`).  No commit was made; the existing `σ.level = 0` version
+remains in place.
+
+**Final session state (2026-04-27).**  Five commits landed on
+`terence/syntax`: `842fd754`, `c0f7df5b`, `bfcef476`,
+`81ef5193` (this tracker entry), and the present update.  Build
+clean throughout.  `Reduces.bracketLevel_strict` and Lemma 16
+remain blocked on `majorizes_redS`, which is documented as
+requiring Schütte 1977 *Proof Theory* (Springer, Grundlehren
+225, ISBN 9780387079110) for its specific bracket-arithmetic
+argument; the user is procuring that text.
+
+Resumption priorities once Schütte arrives or once a fresh
+angle suggests itself:
+
+1. `majorizes_redS` (B-W Lemma 11) using the textbook's
+   argument as template.
+2. `majorizes_redTreeIter_node` general-σ generalization
+   leveraging the new Section A infrastructure plus the
+   treeIter explicit-bracket-values angle.
+3. `Reduces.bracketLevel_le_at` (helper) and
+   `Reduces.bracketLevel_strict` (main δ.5 theorem),
+   delegating each base reduction case to its respective
+   `majorizes_red*` lemma.
+4. δ.6 (Lemma 16) on top.
+
+Independent parallel work that does not depend on the above:
+
+* Stage ζ (Tait-Martin-Löf confluence) — explicitly orthogonal
+  to δ per the plan.  The biggest unblocked piece.
+* Stage κ (binary-tree extension instantiation) — mostly
+  mechanical given the signature-parameterized `GodelTTerm`.
+* Stage μ (cross-stage tests) — Plausible-based property
+  tests on random typed terms.
+* Stage θ (categorical structure on `≈`-quotient) —
+  some parts may proceed before confluence; the
+  `HasChosenFiniteProducts` instance and certain category-law
+  congruences become substantively easier after ζ.
 
 **Task 14.5-extended (deferred)**: BT-only adequacy research
 — proving that the unlabeled-BT + 0-way-ℕ-product subfragment
