@@ -890,6 +890,35 @@ theorem GodelTTerm.majorizes_redTreeIter_leaf
           hheadNotIter).2)
       omega
 
+/-- Non-strict bracket dominance: `t.dominates s` if at every
+level `i ≤ σ.level`,
+`s.bracketLevel i ≤ t.bracketLevel i`.
+
+Mirrors the monotone-at-`i` clause of `majorizes`.  The range
+restriction matches `majorizes`'s and reflects that bracket
+values are not in general comparable above `σ.level` for
+compound `.app` terms. -/
+def GodelTTerm.dominates {S : Set GodelTBase} {n : Nat}
+    {σ : GodelTType S} (t s : GodelTTerm S n σ) : Prop :=
+  ∀ i, i ≤ σ.level → s.bracketLevel i ≤ t.bracketLevel i
+
+theorem GodelTTerm.dominates_refl {S : Set GodelTBase}
+    {n : Nat} {σ : GodelTType S} (t : GodelTTerm S n σ) :
+    t.dominates t :=
+  fun _ _ => Nat.le_refl _
+
+theorem GodelTTerm.dominates_trans {S : Set GodelTBase}
+    {n : Nat} {σ : GodelTType S}
+    {t s u : GodelTTerm S n σ}
+    (h₁ : t.dominates s) (h₂ : s.dominates u) :
+    t.dominates u :=
+  fun i hi => Nat.le_trans (h₂ i hi) (h₁ i hi)
+
+theorem GodelTTerm.majorizes_imp_dominates {S : Set GodelTBase}
+    {n : Nat} {σ : GodelTType S}
+    {t s : GodelTTerm S n σ} (h : t.majorizes s) :
+    t.dominates s := h.2
+
 /-- Term-size strict-positivity helper. -/
 theorem GodelTTerm.lh_pos {S : Set GodelTBase} {n : Nat}
     {σ : GodelTType S} (t : GodelTTerm S n σ) : 0 < t.lh := by
