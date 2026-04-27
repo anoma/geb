@@ -126,3 +126,30 @@ example (P : PresheafPRACat.{0, 0, 0, 0, 0, 0} PUnit PUnit)
   rfl
 
 end AccessorCompat
+
+/-! ## Functoriality -/
+
+section FunctorialityTest
+
+example (X : praPolyEvalAtISource.{0, 0, 0, 0, 0, 0}
+    (Cat.of PUnit)) :
+    (praPolyEvalAtIFunctor.{0, 0, 0, 0, 0, 0}
+        (Cat.of PUnit)).map (𝟙 X) =
+      𝟙 ((praPolyEvalAtIFunctor.{0, 0, 0, 0, 0, 0}
+          (Cat.of PUnit)).obj X) :=
+  (praPolyEvalAtIFunctor.{0, 0, 0, 0, 0, 0}
+    (Cat.of PUnit)).map_id X
+
+example {X Y Z : praPolyEvalAtISource.{0, 0, 0, 0, 0, 0}
+    (Cat.of PUnit)}
+    (f : X ⟶ Y) (g : Y ⟶ Z) :
+    (praPolyEvalAtIFunctor.{0, 0, 0, 0, 0, 0}
+        (Cat.of PUnit)).map (f ≫ g) =
+      (praPolyEvalAtIFunctor.{0, 0, 0, 0, 0, 0}
+          (Cat.of PUnit)).map f ≫
+        (praPolyEvalAtIFunctor.{0, 0, 0, 0, 0, 0}
+          (Cat.of PUnit)).map g :=
+  (praPolyEvalAtIFunctor.{0, 0, 0, 0, 0, 0}
+    (Cat.of PUnit)).map_comp f g
+
+end FunctorialityTest
