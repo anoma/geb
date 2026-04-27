@@ -1367,23 +1367,49 @@ commits on `terence/syntax`, build clean throughout):**
 | δ.4 — Lemma 5 multiplicative form | `048c72f4` | complete |
 | δ.5 — redex majorization lemmas | `75506450` | partial (5/10) |
 
-**δ.5 in flight.**  Five redex lemmas proven
-(`majorizes_redP_zero`, `majorizes_redP_succ`,
-`majorizes_redK`, `majorizes_redDisc_zero`,
-`majorizes_redDisc_succ`) plus four supporting helpers
-(`bracketLevel_app_ge_arg`, `bracketLevel_app_strict_arg`,
-`bracketLevel_app_high_ge`, `≫` notation via
-`GodelTTerm.majorizes`).  Remaining: `majorizes_redS`,
-`majorizes_redIter_zero`, `majorizes_redIter_succ`,
-`majorizes_redTreeIter_leaf`,
-`majorizes_redTreeIter_node`, plus the strict-decrease
-theorem `Reduces.bracketLevel_strict`.  The remaining
-lemmas need the multi-level argument: rule 11 gives
-`[I_ρ t^0]_1 = 1` for `g(ρ) = 0`, so by rule 14 the
-exponent `2^[head]_1 ≥ 2`, providing strict inequality
-even when the iter rule's level-0 pass-through makes
-`[head]_0 = 0` for base-typed-variable arguments.  See
-commit `75506450`'s message for the detailed argument.
+**Execution progress through 2026-04-26 / 27 (seven additional
+commits on `terence/syntax`, build clean throughout):**
+
+| Sub-stage | Commit | Status |
+|---|---|---|
+| δ.5 auxiliary: `G_ge_level`, `bracketLevel_high_zero` | `50c91c3f` | complete |
+| δ.5 cont.: `majorizes_redTreeIter_leaf` | `9a205d06` | complete |
+| δ.5 auxiliary: `lh_pos`, `lh_app`, `lh_app_lt_*` | `481ea46c` | complete |
+| δ.5 Theorem 1: `bracketLevel_zero_pos_arrow_NN` | `fb302703` | complete |
+| δ.5 Theorem 2: `majorizes_redIter_zero` | `1e983c3a` | complete |
+| δ.5 Theorem 3: `majorizes_redIter_succ` | `f4f2df34` | complete |
+| δ.5 Theorem 4: `majorizes_redTreeIter_node` (σ.level=0 only) | `68607215` | partial (general σ pending) |
+
+**δ.5 in flight.**  Nine of ten redex majorization lemmas
+proven.  `majorizes_redS` (B-W Lemma 11, S combinator)
+remains.  Three subagent dispatches (one Sonnet, two Opus)
+attempted and reported BLOCKED — see new doc
+`docs/superpowers/notes/2026-04-27-redS-proof-strategy.md`
+(local, gitignored) for full research findings, the
+ongoing proof strategy, and reproducible briefing for
+follow-on work.  After `redS` lands, `majorizes_redTreeIter_node`
+needs to be generalized to arbitrary σ (currently restricted
+to `σ.level = 0`), and then the strict-decrease theorem
+`Reduces.bracketLevel_strict` plus auxiliary
+`Reduces.bracketLevel_le_at` complete the stage.
+
+**Research summary (2026-04-27).**  B-W defer Lemma 11's
+proof to Schütte's *Proof Theory* (Springer 1977), which is
+not freely available.  No alternative exposition or
+formalization of B-W's specific bracket-measure S-combinator
+proof exists — Howard 1970, Wilken-Weiermann 2012,
+Beckmann 1998/2001, Avigad-Feferman, and the Lean 4
+metatheory framework (arxiv:2512.09280) all cover related
+material in different formulations (recursors, λ-calculus,
+Tait reducibility) but none give the explicit elementary
+bracket-arithmetic proof.  The existing
+`majorizes_redIter_succ` proof (~350 lines, commit `f4f2df34`)
+is the structural template — explicit `set` abbreviations,
+step-by-step `bracketLevel_app_eq`/`_high` rewrites, careful
+arithmetic — and `redS` should follow the same pattern with
+one additional layer for the S combinator's chain.  Direct
+in-conversation work using this template is the chosen
+forward path.
 
 **Implementation choices carried forward** (see plan's
 "Implementation notes carried forward" section): rule-14
