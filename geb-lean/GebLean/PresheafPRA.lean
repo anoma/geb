@@ -260,6 +260,7 @@ private def sourceDataHom
     apply Cat.Hom.ext
     rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Identity coherence for `sourceDataHom`.
 -/
@@ -282,6 +283,7 @@ private lemma sourceData_hom_id
     simp only [eqToHom_refl, Category.id_comp, Category.comp_id]
     rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Composition coherence for `sourceDataHom`.
 -/
@@ -599,6 +601,7 @@ private def praPolyDirectionsData_fibHomCrossApp
       ((praPolyDirectionsData_unwidenFiber.{u_I, v_I, u_J, v_J,
         w_I, w'} X₁).obj x))
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Auxiliary morphism in
 `(ccrNewIndexFunctor _).Elements` used to express the right-hand side
@@ -691,6 +694,7 @@ private def praPolyDirectionsData_fibHomCrossNat_unwidened_aux
     rw [hprop]
     rfl⟩
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Naturality of `praPolyDirectionsData_fibHomCrossUnwidened` in the
 element morphism `g`.  Both sides factor through
@@ -761,6 +765,7 @@ private lemma praPolyDirectionsData_target_widening_compat
         ((presheafCatFunctor.{u_I, v_I, w_I}.map h.op).toFunctor.op.map
           B) := rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Naturality of `praPolyDirectionsData_fibHomCrossApp` in the source
 fibre morphism `g`, stated in fully-unfolded `∀`-form because the
@@ -874,6 +879,7 @@ private lemma praPolyDirectionsData_baseHomId_unwidened
         X e) := by
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Widened identity coherence for
 `praPolyDirectionsData_fibHomCrossApp`.  At `f = 𝟙 X`, the cross-fibre

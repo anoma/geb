@@ -103,6 +103,7 @@ def NatBTSort.encodeValue : (σ : NatBTSort) → σ.carrier → ℕ
   | .nat, v => v
   | .bt, v => v.encode
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Unified correctness of the back-translation.  For any
 `isFoldFree` term at ambient BT-arity 0, the ER interpretation
 of `toERUniform` equals the sort-encoded original

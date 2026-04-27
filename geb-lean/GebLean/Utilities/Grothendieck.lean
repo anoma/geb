@@ -7733,6 +7733,7 @@ lemma toHomUnop_id_fst (data : FunctorBetweenCovContraData G F)
           X.unop.base X.unop.fiber) :=
   data.baseHomId X.unop.base X.unop.fiber
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The second factor of `toHomUnop (𝟙 X)` reduces to an `eqToHom`, because
 `(𝟙 X).unop.fiber` is an `eqToHom` (by `Grothendieck.id_fiber`) and both
@@ -7799,6 +7800,7 @@ lemma toHomUnop_id_endpoints_eq (data : FunctorBetweenCovContraData G F)
     congrArg Cat.Hom.toFunctor (G.map_id _) |>.trans (Cat.id_eq_id _)
   exact congrFun (congrArg Functor.obj hG) X.unop.fiber
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Collapsed form of `toHomUnop` at the identity: equals an `eqToHom` from the
 fibre at `X` to its transport through `F.map (baseFib.map (𝟙 _)).op`.
@@ -7857,6 +7859,7 @@ lemma fibFib_map_comp_fiber (data : FunctorBetweenCovContraData G F)
   rw [unop_comp_fiber_grothendieck]
   simp
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Collapsed form of `toHomUnop` at a composition `g ≫ h` in the opposite category
 (so `(g ≫ h).unop = h.unop ≫ g.unop` in `Grothendieck G`).  Decomposes as
@@ -8021,6 +8024,7 @@ def toHomUnop (data : FunctorBetweenContraContraData G F)
 At the identity, `toHomUnop (𝟙 X)` reduces to a chain of `eqToHom`s.
 -/
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The first factor of `toHomUnop (𝟙 X)` is `(fibFib X.base.unop).map
 (Grothendieck.Hom.fiber (𝟙 X)).unop`, which reduces to an `eqToHom` because
@@ -8041,6 +8045,7 @@ lemma toHomUnop_id_fst (data : FunctorBetweenContraContraData G F)
   rw [Grothendieck.id_fiber]
   simp [eqToHom_unop]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The second factor of `toHomUnop (𝟙 X)` is
 `data.fibHomCrossApp (Grothendieck.Hom.base (𝟙 X)).unop X.fiber.unop`,
@@ -8073,6 +8078,7 @@ lemma toHomUnop_id_endpoints_eq (data : FunctorBetweenContraContraData G F)
   rw [hbase, data.baseFib.map_id, op_id, F.map_id]
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Collapsed form of `toHomUnop` at the identity: equals an `eqToHom` from the
 fibre at `X` to its transport through `F.map (baseFib.map (𝟙 _)).op`.
@@ -8110,6 +8116,7 @@ lemma toHomUnop_comp_endpoints_eq
   rw [hbase, data.baseFib.map_comp, op_comp, F.map_comp]
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Distributivity of `(fibFib Z.base.unop).map` over the three-piece
 composition exposed by `Grothendieck.comp_fiber` after taking `unop`.
@@ -8133,6 +8140,7 @@ lemma fibFib_map_comp_fiber
   rw [Grothendieck.comp_fiber]
   simp [eqToHom_unop]
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Collapsed form of `toHomUnop` at a composition `g ≫ h` in
 `Grothendieck (G ⋙ Cat.opFunctor)`.  Decomposes as `toHomUnop h` followed by
@@ -8304,6 +8312,7 @@ structure FunctorFromDataContra where
 
 variable {F}
 
+set_option backward.isDefEq.respectTransparency false in
 open GrothendieckContraFunctor in
 /--
 Construct a functor `(grothendieckContraFunctor C).obj F ⥤ T` from
@@ -8433,6 +8442,7 @@ structure NatTransFromDataContra
 
 variable {F}
 
+set_option backward.isDefEq.respectTransparency false in
 open GrothendieckContraFunctor in
 /--
 Construct a natural transformation between two `functorFromDataContra`

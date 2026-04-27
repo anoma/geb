@@ -442,6 +442,7 @@ theorem NatBTMor1V2.bsumCtx_eq {nm : ℕ × ℕ}
   funext k
   exact NatBTMor1V2.bsumCtx_eq ctxN ctxB i k
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Interpretation of `leafBT`. -/
 @[simp] theorem NatBTMor1V2.interp_leafBT {nm : ℕ × ℕ}
     (label : NatBTMor1V2 nm .nat)

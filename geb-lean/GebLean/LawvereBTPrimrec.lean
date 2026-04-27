@@ -971,8 +971,7 @@ theorem interpFunctor_not_full :
       rw [hmap] at hf
       rw [← hfr] at hf
       have := congrFun hf ctx
-      simp only [BTMorNQuo.interpU,
-        Quotient.lift_mk] at this
+      simp only [BTMorNQuo.interpU] at this
       exact this
     have hcomp :
         (fun bt : BT.{0} =>

@@ -3398,6 +3398,7 @@ def ccrElementsFunctor.map
     Subtype.ext
       ((coprodCovarRepFunctor.{u, v, w}.map F).toFunctor.map_comp _ _)
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Per-`C` element categories of `ccrNewIndexFunctor C` packaged as a
 `Cat`-valued functor on `Cat.{v, u}`.  See `ccrElementsFunctor.map`
@@ -3445,6 +3446,7 @@ def ccrNewFamilyNatTarget :
     Cat.{v, u} ⥤ Cat.{max w v, max (w + 1) u} :=
   Cat.opFunctor ⋙ catULiftFunctor
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Naturality of `ccrNewFamilyFunctor` in `C`, stated pre-widening.
 On a morphism `f : e1 ⟶ e2` in `(ccrNewIndexFunctor C).Elements`,
@@ -3506,6 +3508,7 @@ def ccrNewFamilyNatFunctor
     CategoryTheory.ULift.upFunctor ⋙
     CategoryTheory.ULiftHom.up
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 The natural transformation packaging the per-`C` family functors.
 Source: `ccrElementsFunctor.{u, v, w}`.  Target:
