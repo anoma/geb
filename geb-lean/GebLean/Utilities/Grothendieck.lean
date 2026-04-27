@@ -7370,6 +7370,20 @@ abbrev LaxNatTransContraLaxComp :=
     laxApp f ((G.map g.op).toFunctor.obj x) ≫
     eqToHom (laxNatTransContraCompEqRightProof app f g x)
 
+/-- Bundled data for a lax natural transformation `G ⟹ F` between
+contravariant Cat-valued functors `G F : Cᵒᵖ ⥤ Cat`. -/
+structure LaxNatTransContraData (G F : Cᵒᵖ ⥤ Cat.{vF, uF}) where
+  /-- Component functors. -/
+  app : LaxNatTransContraApp G F
+  /-- Laxity morphisms. -/
+  laxApp : LaxNatTransContraLaxApp app
+  /-- Naturality of laxity morphisms. -/
+  laxNat : LaxNatTransContraLaxNat app laxApp
+  /-- Identity coherence. -/
+  laxId : LaxNatTransContraLaxId app laxApp
+  /-- Composition coherence. -/
+  laxComp : LaxNatTransContraLaxComp app laxApp
+
 end LaxNatTransContraFunctor
 
 /-!
