@@ -1850,6 +1850,20 @@ def praPolyEvalTargetOverI :
   (Functor.const _).obj
     praPolyEvalTarget.{u_I, v_I, u_J, v_J, w_I, w'}
 
+/--
+Per-`I` component of the lax nat trans: the existing fixed-`I` flat
+functor `praPolyEvalAtIFunctor I`.  By Task 9's definitional collapse,
+`praPolyEvalSourceOverI.obj (op I) = praPolyEvalAtISource I` and
+`praPolyEvalTargetOverI.obj (op I) = praPolyEvalTarget`, so the type
+matches without transport.
+-/
+private def praPolyEvalLaxNatTrans_app (I : Cat.{v_I, u_I}) :
+    praPolyEvalSourceOverI.{u_I, v_I, u_J, v_J, w_I, w'}.obj
+        (Opposite.op I) ⥤
+      praPolyEvalTargetOverI.{u_I, v_I, u_J, v_J, w_I, w'}.obj
+        (Opposite.op I) :=
+  praPolyEvalAtIFunctor.{u_I, v_I, u_J, v_J, w_I, w'} I
+
 end PresheafPRAEvalNat
 
 end GebLean
