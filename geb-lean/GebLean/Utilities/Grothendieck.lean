@@ -7398,6 +7398,60 @@ def LaxNatTransContraData.id (G : Cᵒᵖ ⥤ Cat.{vF, uF}) :
     simp only [CategoryTheory.Functor.map_id, Category.id_comp,
       eqToHom_trans, eqToHom_refl]
 
+set_option backward.isDefEq.respectTransparency false in
+/-- Composition of lax natural transformations.
+
+Given `α : G ⟹ H` and `β : H ⟹ K`, their composition `α.comp β : G ⟹ K`
+has:
+- Component functors: `(α.comp β).app c = α.app c ⋙ β.app c`.
+- Laxity: for `f : c ⟶ c'` and `x : G.obj (op c')`,
+  `β.laxApp f ((α.app c').obj x) ≫ (β.app c).map (α.laxApp f x)`. -/
+def LaxNatTransContraData.comp {G H K : Cᵒᵖ ⥤ Cat.{vF, uF}}
+    (α : LaxNatTransContraData G H) (β : LaxNatTransContraData H K) :
+    LaxNatTransContraData G K where
+  app c := α.app c ⋙ β.app c
+  laxApp {c c'} f x :=
+    β.laxApp f ((α.app c').obj x) ≫ (β.app c).map (α.laxApp f x)
+  laxNat {c c'} f {x y} φ := by
+    simp only [Functor.comp_obj, Functor.comp_map, Category.assoc]
+    have hα : (H.map f.op).toFunctor.map ((α.app c').map φ) ≫
+        α.laxApp f y =
+        α.laxApp f x ≫
+          (α.app c).map ((G.map f.op).toFunctor.map φ) := α.laxNat f φ
+    have hβ : (K.map f.op).toFunctor.map
+          ((β.app c').map ((α.app c').map φ)) ≫
+        β.laxApp f ((α.app c').obj y) =
+        β.laxApp f ((α.app c').obj x) ≫
+          (β.app c).map
+            ((H.map f.op).toFunctor.map ((α.app c').map φ)) :=
+        β.laxNat f ((α.app c').map φ)
+    rw [← Category.assoc ((K.map f.op).toFunctor.map _) _ _, hβ,
+        Category.assoc, ← Functor.map_comp, hα, Functor.map_comp]
+  laxId c x := by
+    simp only [Functor.comp_obj, α.laxId, eqToHom_map, β.laxId,
+      eqToHom_trans]
+  laxComp {c c' c''} f g x := by
+    simp only [α.laxComp f g x, β.laxComp f g ((α.app c'').obj x)]
+    simp only [Functor.map_comp, (β.app c).map_comp, eqToHom_map,
+      Category.assoc, eqToHom_trans_assoc]
+    have hβ : (K.map f.op).toFunctor.map
+            ((β.app c').map (α.laxApp g x)) ≫
+          β.laxApp f ((α.app c').obj
+            ((G.map g.op).toFunctor.obj x)) =
+          β.laxApp f ((H.map g.op).toFunctor.obj
+            ((α.app c'').obj x)) ≫
+            (β.app c).map ((H.map f.op).toFunctor.map
+              (α.laxApp g x)) :=
+        β.laxNat f (α.laxApp g x)
+    congr 1
+    simp only [← Category.assoc]
+    congr 1
+    simp only [Category.assoc, eqToHom_refl, Category.id_comp]
+    congr 1
+    simp only [← Category.assoc]
+    congr 1
+    exact hβ.symm
+
 end LaxNatTransContraFunctor
 
 /-!
