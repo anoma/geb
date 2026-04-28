@@ -2003,6 +2003,29 @@ private def praPolyEvalLaxNatTrans_laxApp
         (praPolyEvalForwardWhisker_unwidened.{u_I, v_I, u_J, v_J,
           w_I, w'} f opJ P_t Z_t)))
 
+set_option maxHeartbeats 4000000 in
+-- Increased to accommodate the deep universe-polymorphic unfolding chain
+-- of `mkHom`-based lax components composed with widening/Cat.opFunctor.
+--
+/--
+The (I, J, P, Z)-natural-but-lax bundle representing `praEval` as an
+unapplied operator.  Per-`I` component is the existing fixed-`I` flat
+functor `praPolyEvalAtIFunctor I`; the lax structure is the
+forward-whisker comparison encoding I-naturality.
+-/
+def praPolyEvalLaxNatTrans :
+    LaxNatTransContraData
+      praPolyEvalSourceOverI.{u_I, v_I, u_J, v_J, w_I, w'}
+      praPolyEvalTargetOverI.{u_I, v_I, u_J, v_J, w_I, w'} where
+  app I := praPolyEvalLaxNatTrans_app.{u_I, v_I, u_J, v_J, w_I, w'} I
+  laxApp f x :=
+    praPolyEvalLaxNatTrans_laxApp.{u_I, v_I, u_J, v_J, w_I, w'} f x
+  laxNat {_ _} _ {_ _} _ := rfl
+  laxId _ _ := rfl
+  laxComp {_ _ _} _ _ _ := by
+    dsimp [praPolyEvalLaxNatTrans_laxApp]
+    rfl
+
 end PresheafPRAEvalNat
 
 end GebLean
