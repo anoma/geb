@@ -1948,6 +1948,61 @@ private def praPolyEvalForwardWhisker_unwidened
       w_I, w'} f opJ P_t Z_t j
   naturality _ _ _ := rfl
 
+/--
+Per-(I, I')-naturality lax-app component for `praPolyEvalLaxNatTrans`.
+
+For `f : I ⟶ I'` and `x : praPolyEvalSourceOverI.obj (op I')`, this
+constructs a morphism in `praPolyEvalTarget` from
+`(praPolyEvalAtIFunctor I').obj x` to
+`(praPolyEvalAtIFunctor I).obj (I-pulled-back x)`.
+
+The base component is the identity on `objBase x : Catᵒᵖ` (the J
+side), since I-action does not move the J base.  The fibre
+component is the widened forward-whisker natural transformation
+`praPolyEvalForwardWhisker_unwidened f opJ P_t Z_t`, where
+`(P_t, Z_t)` is `objFiber x` after the doubly nested unwidening.
+-/
+private def praPolyEvalLaxNatTrans_laxApp
+    {I I' : Cat.{v_I, u_I}} (f : I ⟶ I')
+    (x : praPolyEvalSourceOverI.{u_I, v_I, u_J, v_J, w_I, w'}.obj
+        (Opposite.op I')) :
+    (praPolyEvalTargetOverI.{u_I, v_I, u_J, v_J, w_I, w'}.map
+        f.op).toFunctor.obj
+      ((praPolyEvalLaxNatTrans_app.{u_I, v_I, u_J, v_J, w_I, w'}
+        I').obj x) ⟶
+    (praPolyEvalLaxNatTrans_app.{u_I, v_I, u_J, v_J, w_I, w'} I).obj
+      ((praPolyEvalSourceOverI.{u_I, v_I, u_J, v_J, w_I, w'}.map
+        f.op).toFunctor.obj x) :=
+  let opJ : Cat.{v_J, u_J}ᵒᵖ :=
+    Opposite.op (GrothendieckContraFunctor.objBase x)
+  let inner :
+      ↑((presheafPRACatBifunctor.{u_I, v_I, u_J, v_J, w_I,
+            w'}.flip.obj
+          (Opposite.op (Cat.of (↑I')ᵒᵖ))).obj opJ) ×
+        CategoryTheory.ULiftHom.{
+            max u_I u_J v_I v_J (w_I + 1) (w' + 1)}
+          (ULift.{max u_I u_J v_I v_J (w_I + 1) (w' + 1),
+              max u_I v_I (w_I + 1)}
+            (presheafCatFunctor.{u_I, v_I, w_I}.obj
+              (Opposite.op (Cat.of (↑I')ᵒᵖ))).α) :=
+    ULift.down (CategoryTheory.ULiftHom.objDown
+      (show CategoryTheory.ULiftHom.{max u_I u_J v_I v_J (w_I + 1) (w' + 1)}
+          (ULift _) from
+        GrothendieckContraFunctor.objFiber x))
+  let P_t :
+      ↑((presheafPRACatBifunctor.{u_I, v_I, u_J, v_J, w_I,
+            w'}.flip.obj
+          (Opposite.op (Cat.of (↑I')ᵒᵖ))).obj opJ) :=
+    inner.1
+  let Z_t : ↑(presheafCatFunctor.{u_I, v_I, w_I}.obj
+        (Opposite.op (Cat.of (↑I')ᵒᵖ))) :=
+    ULift.down (CategoryTheory.ULiftHom.objDown inner.2)
+  GrothendieckContraFunctor.mkHom (𝟙 _)
+    (ULiftHom.up.map
+      ((ULift.upFunctor).map
+        (praPolyEvalForwardWhisker_unwidened.{u_I, v_I, u_J, v_J,
+          w_I, w'} f opJ P_t Z_t)))
+
 end PresheafPRAEvalNat
 
 end GebLean
