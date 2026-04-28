@@ -93,4 +93,24 @@ example :
 
 end LaxId
 
+/-! ## Universe polymorphism -/
+
+example :
+    LaxNatTransContraData
+      praPolyEvalSourceOverI.{0, 1, 0, 0, 0, 0}
+      praPolyEvalTargetOverI.{0, 1, 0, 0, 0, 0} :=
+  praPolyEvalLaxNatTrans.{0, 1, 0, 0, 0, 0}
+
+example :
+    LaxNatTransContraData
+      praPolyEvalSourceOverI.{0, 0, 0, 0, 1, 0}
+      praPolyEvalTargetOverI.{0, 0, 0, 0, 1, 0} :=
+  praPolyEvalLaxNatTrans.{0, 0, 0, 0, 1, 0}
+
+example :
+    LaxNatTransContraData
+      praPolyEvalSourceOverI.{0, 0, 0, 0, 0, 0}
+      praPolyEvalTargetOverI.{0, 0, 0, 0, 0, 0} :=
+  praPolyEvalLaxNatTrans.{0, 0, 0, 0, 0, 0}
+
 end GebLeanTests.Utilities.PresheafPRAEvalNat
