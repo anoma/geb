@@ -2050,6 +2050,33 @@ fixed-`I` flat functor.  Trivial by construction (Task 11 defined
     praPolyEvalAtIFunctor.{u_I, v_I, u_J, v_J, w_I, w'} I :=
   rfl
 
+/--
+Weak per-component bridge: `praEvalAt`-style per-component evaluation
+agrees with the unwidened fibre of the lax bundle's `I`-component
+applied to the source-object helper.  Composes the strong bridge
+(Task 15) with the fixed-`I` per-component bridge
+`praEvalAtFunctor_via_praPolyEvalAtIFunctor`.
+-/
+@[simp] theorem praEvalAtFunctor_via_praPolyEvalLaxNatTrans
+    (I : Cat.{v_I, u_I}) (J : Cat.{v_J, u_J})
+    (P : PresheafPRACat.{u_I, v_I, u_J, v_J, w_I, w'} I J)
+    (Z : ↑(presheafCat.{u_I, v_I, w_I} I)) :
+    ((praEvalAtFunctor.{u_I, v_I, u_J, v_J, w_I, w'} I J).obj P).obj Z =
+    (ULift.down.{max (u_I + 1) u_J v_I v_J (w_I + 1) (w' + 1),
+        max v_J u_J (u_I + 1) (w_I + 1) (w' + 1)}
+      (ULiftHom.objDown.{max (u_I + 1) u_J v_I v_J (w_I + 1) (w' + 1),
+          max u_I u_J v_I v_J (w_I + 1) (w' + 1)}
+        (show ULiftHom.{max u_I u_J v_I w_I w'}
+            (ULift.{max (u_I + 1) u_J v_I v_J (w_I + 1) (w' + 1),
+              max v_J u_J (u_I + 1) (w_I + 1) (w' + 1)}
+              (Jᵒᵖ ⥤ Type (max w' u_I w_I))) from
+          GrothendieckContraFunctor.objFiber
+            ((praPolyEvalLaxNatTrans.{u_I, v_I, u_J, v_J, w_I, w'}.app I).obj
+              (praPolyEvalAtISourceObj.{u_I, v_I, u_J, v_J, w_I, w'}
+                I J P Z)))) :
+      Jᵒᵖ ⥤ Type (max w' u_I w_I)) :=
+  praEvalAtFunctor_via_praPolyEvalAtIFunctor I J P Z
+
 end PresheafPRAEvalNat
 
 end GebLean
