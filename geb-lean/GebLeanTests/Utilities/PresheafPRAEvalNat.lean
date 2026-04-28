@@ -22,4 +22,18 @@ example :
       praPolyEvalTargetOverI.{0, 0, 0, 0, 0, 0} :=
   praPolyEvalLaxNatTrans.{0, 0, 0, 0, 0, 0}
 
+/-! ## LaxNatTransContraData framework sanity -/
+
+example (G : Cat.{0, 0}ᵒᵖ ⥤ Cat.{0, 0}) :
+    LaxNatTransContraData G G :=
+  LaxNatTransContraData.id G
+
+example (G : Cat.{0, 0}ᵒᵖ ⥤ Cat.{0, 0}) :
+    LaxNatTransContraData G G :=
+  (LaxNatTransContraData.id G).comp (LaxNatTransContraData.id G)
+
+example (G : Cat.{0, 0}ᵒᵖ ⥤ Cat.{0, 0}) :
+    LaxNatTransContraData G G :=
+  LaxNatTransContraData.ofNatTrans (𝟙 G)
+
 end GebLeanTests.Utilities.PresheafPRAEvalNat
