@@ -2026,6 +2026,19 @@ def praPolyEvalLaxNatTrans :
     dsimp [praPolyEvalLaxNatTrans_laxApp]
     rfl
 
+/--
+Build a `praPolyEvalSourceOverI.obj (op I)` object from `(I, J, P, Z)`.
+By Task 9's definitional equality, this is the same as
+`praPolyEvalAtISourceObj I J P Z`.
+-/
+def praPolyEvalSourceOverIObj
+    (I : Cat.{v_I, u_I}) (J : Cat.{v_J, u_J})
+    (P : PresheafPRACat.{u_I, v_I, u_J, v_J, w_I, w'} I J)
+    (Z : ↑(presheafCat.{u_I, v_I, w_I} I)) :
+    praPolyEvalSourceOverI.{u_I, v_I, u_J, v_J, w_I, w'}.obj
+      (Opposite.op I) :=
+  praPolyEvalAtISourceObj.{u_I, v_I, u_J, v_J, w_I, w'} I J P Z
+
 end PresheafPRAEvalNat
 
 end GebLean
