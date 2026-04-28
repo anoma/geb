@@ -7912,6 +7912,23 @@ theorem homFiber_mkHom
     (ψ : objFiber X ⟶ (F.map h.op).toFunctor.obj (objFiber Y)) :
     homFiber (mkHom h ψ) = ψ := rfl
 
+@[simp]
+theorem objBase_map_obj
+    {G : Cᵒᵖ ⥤ Cat.{v₇, u₇}}
+    (α : F ⟶ G)
+    (X : (grothendieckContraFunctor C).obj F) :
+    objBase (((grothendieckContraFunctor C).map α).toFunctor.obj X)
+      = objBase X := rfl
+
+@[simp]
+theorem objFiber_map_obj
+    {G : Cᵒᵖ ⥤ Cat.{v₇, u₇}}
+    (α : F ⟶ G)
+    (X : (grothendieckContraFunctor C).obj F) :
+    objFiber (((grothendieckContraFunctor C).map α).toFunctor.obj X)
+      = (α.app (Opposite.op (objBase X))).toFunctor.obj
+          (objFiber X) := rfl
+
 end GrothendieckContraFunctor
 
 end GrothendieckContraFunctor
