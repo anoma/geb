@@ -60,4 +60,23 @@ example : ((praEvalAtFunctor.{0, 0, 0, 0, 0, 0} I J).obj P).obj Z =
 
 end WeakBridge
 
+/-! ## Per-component accessor compatibility -/
+
+section PerComponent
+variable (I : Cat.{0, 0}) (J : Cat.{0, 0})
+  (P : PresheafPRACat.{0, 0, 0, 0, 0, 0} I J)
+  (Z : ↑(presheafCat.{0, 0, 0} I))
+  (j : Jᵒᵖ)
+
+example : praEvalAt.{0, 0, 0, 0, 0, 0} I J P Z j =
+    (((praEvalAtFunctor.{0, 0, 0, 0, 0, 0} I J).obj P).obj Z).obj j :=
+  rfl
+
+example (a : praPositions.{0, 0, 0, 0, 0, 0} I J P j)
+    (η : praDirectionsAt.{0, 0, 0, 0, 0, 0} I J P j a ⟶ Z) :
+    praEvalAt_index.{0, 0, 0, 0, 0, 0} I J P Z
+      (praEvalAt_mk.{0, 0, 0, 0, 0, 0} I J P Z j a η) = a := rfl
+
+end PerComponent
+
 end GebLeanTests.Utilities.PresheafPRAEvalNat
