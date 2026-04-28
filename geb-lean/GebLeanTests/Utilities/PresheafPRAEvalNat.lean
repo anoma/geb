@@ -79,4 +79,18 @@ example (a : praPositions.{0, 0, 0, 0, 0, 0} I J P j)
 
 end PerComponent
 
+/-! ## Lax coherence at concrete inputs -/
+
+section LaxId
+variable (I : Cat.{0, 0})
+  (x : praPolyEvalSourceOverI.{0, 0, 0, 0, 0, 0}.obj (Opposite.op I))
+
+example :
+    praPolyEvalLaxNatTrans.{0, 0, 0, 0, 0, 0}.laxApp (𝟙 I) x =
+    eqToHom (laxNatTransContraIdEqProof
+      praPolyEvalLaxNatTrans.{0, 0, 0, 0, 0, 0}.app I x) :=
+  praPolyEvalLaxNatTrans.{0, 0, 0, 0, 0, 0}.laxId I x
+
+end LaxId
+
 end GebLeanTests.Utilities.PresheafPRAEvalNat
