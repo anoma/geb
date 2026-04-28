@@ -2039,6 +2039,17 @@ def praPolyEvalSourceOverIObj
       (Opposite.op I) :=
   praPolyEvalAtISourceObj.{u_I, v_I, u_J, v_J, w_I, w'} I J P Z
 
+/--
+Strong bridge: the per-`I` component of the lax bundle equals the
+fixed-`I` flat functor.  Trivial by construction (Task 11 defined
+`praPolyEvalLaxNatTrans_app I` as `praPolyEvalAtIFunctor I` directly).
+-/
+@[simp] theorem praPolyEvalAtIFunctor_eq_praPolyEvalLaxNatTrans_app
+    (I : Cat.{v_I, u_I}) :
+    praPolyEvalLaxNatTrans.{u_I, v_I, u_J, v_J, w_I, w'}.app I =
+    praPolyEvalAtIFunctor.{u_I, v_I, u_J, v_J, w_I, w'} I :=
+  rfl
+
 end PresheafPRAEvalNat
 
 end GebLean
