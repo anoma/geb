@@ -3559,4 +3559,73 @@ theorem ccrNewFamilyNat_app_eq_ccrNewFamilyFunctor
 
 end CCRNaturalPackaging
 
+/-!
+### Widening helpers for `catULiftFunctor2`
+
+These helpers lift the categorical data of an underlying Cat through
+the `catULiftFunctor2` widening on the object side.  They are useful
+when constructing morphisms in widened Cats from morphisms in the
+underlying Cat, e.g. when packaging a natural transformation of
+presheaves as a hom in the widened presheaf Cat used as the codomain
+of `presheafCatFunctor ⋙ catULiftFunctor2`.
+-/
+
+section CatULiftFunctor2Hom
+
+universe wu_v wu_u
+
+attribute [local instance] CategoryTheory.uliftCategory
+
+/--
+The underlying object type of `catULiftFunctor2.obj (Cat.of D)`,
+where `D` carries a category instance `Category.{v} D` at hom
+universe `v` and object universe `u`.  Equals
+`ULiftHom.{max v wu_v} (ULift.{max u wu_u, u} D)` definitionally.
+
+This is exposed as a separate definition so that `wu_v` and `wu_u`
+can be supplied explicitly without going through `catULiftFunctor2`'s
+implicit universe ordering.
+-/
+abbrev catULiftFunctor2Carrier
+    (D : Type u) [Category.{v} D] : Type max u wu_u :=
+  CategoryTheory.ULiftHom.{max v wu_v}
+    (ULift.{max u wu_u, u} D)
+
+/--
+Object widening: send `x : D` to its image in
+`catULiftFunctor2Carrier D = ULiftHom (ULift D)`.
+-/
+def catULiftFunctor2WidenObj
+    {D : Type u} [Category.{v} D] (x : D) :
+    catULiftFunctor2Carrier.{u, v, wu_v, wu_u} D :=
+  CategoryTheory.ULiftHom.objUp (ULift.up x)
+
+/--
+Morphism widening: lift a morphism `f : x ⟶ y` in `D` to a
+morphism between the corresponding widened objects in
+`catULiftFunctor2Carrier D`.
+-/
+def catULiftFunctor2WidenHom
+    {D : Type u} [Category.{v} D] {x y : D} (f : x ⟶ y) :
+    catULiftFunctor2WidenObj.{u, v, wu_v, wu_u} (D := D) x ⟶
+      catULiftFunctor2WidenObj.{u, v, wu_v, wu_u} (D := D) y :=
+  ULift.up f
+
+@[simp]
+theorem catULiftFunctor2WidenHom_id
+    {D : Type u} [Category.{v} D] (x : D) :
+    catULiftFunctor2WidenHom.{u, v, wu_v, wu_u} (D := D) (𝟙 x) =
+      𝟙 (catULiftFunctor2WidenObj.{u, v, wu_v, wu_u} (D := D) x) :=
+  rfl
+
+@[simp]
+theorem catULiftFunctor2WidenHom_comp
+    {D : Type u} [Category.{v} D] {x y z : D} (f : x ⟶ y) (g : y ⟶ z) :
+    catULiftFunctor2WidenHom.{u, v, wu_v, wu_u} (D := D) (f ≫ g) =
+      catULiftFunctor2WidenHom.{u, v, wu_v, wu_u} (D := D) f ≫
+        catULiftFunctor2WidenHom.{u, v, wu_v, wu_u} (D := D) g :=
+  rfl
+
+end CatULiftFunctor2Hom
+
 end GebLean
