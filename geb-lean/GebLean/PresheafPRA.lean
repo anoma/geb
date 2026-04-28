@@ -1867,29 +1867,36 @@ private def praPolyEvalLaxNatTrans_app (I : Cat.{v_I, u_I}) :
 /--
 Per-`j` component of the unwidened forward-whisker map for the
 praEval lax structure.  Sends an evaluation element
-`⟨a, η⟩ : praEvalAt I_t J P_t Z_t j` to
-`⟨a, Functor.whiskerLeft f.op η⟩ : praEvalAt I_s J P_t' Z_t' j`,
-where `P_t'` and `Z_t'` are the I-pullbacks along `f` of `P_t` and
-`Z_t`.
+`⟨a, η⟩ : ((praEvalAtBifunctorCat I_t opJ).obj (P_t, Z_t)).obj j`
+to `⟨a, Functor.whiskerLeft (Cat.opFunctor.map f).toFunctor η⟩`
+in the corresponding I-pulled-back fibre at I_s.
 
-Position `a` is preserved on the nose because the I-pullback of
-a presheaf PRA acts only on the directions side.  The directions
+Position `a` is preserved on the nose because the I-pullback of a
+presheaf PRA acts only on the directions side.  The directions
 themselves are precomposed with `f.op`, and the morphism `η` is
 likewise whiskered with `f.op`.
+
+Parametrized on `opJ : Catᵒᵖ` directly so that it applies at
+arbitrary fibres of `praPolyEvalAtISourceFib`, not only at fibres
+of the form `op (Cat.of Jᵒᵖ)`.
 -/
 private def praPolyEvalForwardWhisker_unwidenedApp
     {I_s I_t : Cat.{v_I, u_I}} (f : I_s ⟶ I_t)
-    (J : Cat.{v_J, u_J})
-    (P_t : PresheafPRACat.{u_I, v_I, u_J, v_J, w_I, w'} I_t J)
-    (Z_t : ↑(presheafCat.{u_I, v_I, w_I} I_t))
-    (j : Jᵒᵖ) :
-    (((praEvalAtBifunctor.{u_I, v_I, u_J, v_J, w_I, w'} I_t J).obj
-        (P_t, Z_t)).obj j) →
-      (((praEvalAtBifunctor.{u_I, v_I, u_J, v_J, w_I, w'} I_s J).obj
+    (opJ : Cat.{v_J, u_J}ᵒᵖ)
+    (P_t : ↑((presheafPRACatBifunctor.{u_I, v_I, u_J, v_J, w_I,
+            w'}.flip.obj
+          (Opposite.op (Cat.of (↑I_t)ᵒᵖ))).obj opJ))
+    (Z_t : ↑(presheafCatFunctor.{u_I, v_I, w_I}.obj
+        (Opposite.op (Cat.of (↑I_t)ᵒᵖ))))
+    (j : ↑opJ.unop) :
+    (((praEvalAtBifunctorCat.{u_I, v_I, u_J, v_J, w_I, w'}
+        I_t opJ).obj (P_t, Z_t)).obj j) →
+      (((praEvalAtBifunctorCat.{u_I, v_I, u_J, v_J, w_I, w'}
+        I_s opJ).obj
         (((presheafPRACatBifunctor.{u_I, v_I, u_J, v_J, w_I,
                 w'}.flip.map
               (Cat.opFunctor.{v_I, u_I}.op.map f.op)).app
-            (Opposite.op (Cat.of (↑J)ᵒᵖ))).toFunctor.obj P_t,
+            opJ).toFunctor.obj P_t,
           (presheafCatFunctor.{u_I, v_I, w_I}.map
               (Cat.opFunctor.{v_I, u_I}.op.map f.op)).toFunctor.obj
             Z_t)).obj j) :=
@@ -1900,39 +1907,45 @@ private def praPolyEvalForwardWhisker_unwidenedApp
 /--
 Unwidened forward-whisker NatTrans for the praEval lax structure.
 
-For `f : I_s ⟶ I_t`, `J : Cat`, `P_t : PRACat I_t J`, and
-`Z_t : PSh(I_t)`, this is a natural transformation between
-J-presheaves
-`praEvalAtBifunctor I_t J |>.obj (P_t, Z_t) ⟶
- praEvalAtBifunctor I_s J |>.obj (P_t', Z_t')`,
+For `f : I_s ⟶ I_t`, `opJ : Catᵒᵖ`, `P_t` an object of the
+PRA-side fibre at `(op I_t, opJ)`, and `Z_t : PSh(I_t)`, this is
+a natural transformation between objects of
+`presheafCatFunctor.obj opJ`:
+`(praEvalAtBifunctorCat I_t opJ).obj (P_t, Z_t) ⟶
+ (praEvalAtBifunctorCat I_s opJ).obj (P_t', Z_t')`,
 where `(P_t', Z_t')` is the I-pullback of `(P_t, Z_t)` along `f`.
 
-At each `j : Jᵒᵖ`, the component is
-`praPolyEvalForwardWhisker_unwidenedApp f J P_t Z_t j`, which
-sends `⟨a, η⟩` to `⟨a, Functor.whiskerLeft f.op η⟩`.
+At each `j : ↑opJ.unop`, the component is
+`praPolyEvalForwardWhisker_unwidenedApp f opJ P_t Z_t j`, which
+sends `⟨a, η⟩` to `⟨a, Functor.whiskerLeft (Cat.opFunctor.map
+f).toFunctor η⟩`.
 
-Naturality in `J` holds by `rfl`: position-action in `J` does not
-depend on `I`, and direction-action in `J` commutes with the
-`f.op` whiskering since both are precomposition.
+Naturality in `opJ.unop` holds by `rfl`: position-action does not
+depend on `I`, and direction-action commutes with the `f.op`
+whiskering since both are precomposition.
 -/
 private def praPolyEvalForwardWhisker_unwidened
     {I_s I_t : Cat.{v_I, u_I}} (f : I_s ⟶ I_t)
-    (J : Cat.{v_J, u_J})
-    (P_t : PresheafPRACat.{u_I, v_I, u_J, v_J, w_I, w'} I_t J)
-    (Z_t : ↑(presheafCat.{u_I, v_I, w_I} I_t)) :
-    (praEvalAtBifunctor.{u_I, v_I, u_J, v_J, w_I, w'} I_t J).obj
-        (P_t, Z_t) ⟶
-      (praEvalAtBifunctor.{u_I, v_I, u_J, v_J, w_I, w'} I_s J).obj
+    (opJ : Cat.{v_J, u_J}ᵒᵖ)
+    (P_t : ↑((presheafPRACatBifunctor.{u_I, v_I, u_J, v_J, w_I,
+            w'}.flip.obj
+          (Opposite.op (Cat.of (↑I_t)ᵒᵖ))).obj opJ))
+    (Z_t : ↑(presheafCatFunctor.{u_I, v_I, w_I}.obj
+        (Opposite.op (Cat.of (↑I_t)ᵒᵖ)))) :
+    (praEvalAtBifunctorCat.{u_I, v_I, u_J, v_J, w_I, w'}
+        I_t opJ).obj (P_t, Z_t) ⟶
+      (praEvalAtBifunctorCat.{u_I, v_I, u_J, v_J, w_I, w'}
+        I_s opJ).obj
         (((presheafPRACatBifunctor.{u_I, v_I, u_J, v_J, w_I,
                 w'}.flip.map
               (Cat.opFunctor.{v_I, u_I}.op.map f.op)).app
-            (Opposite.op (Cat.of (↑J)ᵒᵖ))).toFunctor.obj P_t,
+            opJ).toFunctor.obj P_t,
           (presheafCatFunctor.{u_I, v_I, w_I}.map
               (Cat.opFunctor.{v_I, u_I}.op.map f.op)).toFunctor.obj
             Z_t) where
   app j :=
     praPolyEvalForwardWhisker_unwidenedApp.{u_I, v_I, u_J, v_J,
-      w_I, w'} f J P_t Z_t j
+      w_I, w'} f opJ P_t Z_t j
   naturality _ _ _ := rfl
 
 end PresheafPRAEvalNat
