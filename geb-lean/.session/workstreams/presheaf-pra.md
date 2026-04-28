@@ -619,6 +619,109 @@ between pseudofunctors, profunctor-style natural transformations
 capturing lax `I`-naturality, or restriction of source-mors to
 those with fully faithful or equivalence `f_I`.
 
+## praEval (I, J, P, Z)-Naturality (Lax in I) (complete, 2026-04-27)
+
+Goal: realize the (I, J, P, Z)-natural form of `praEvalAtFunctor` as a
+lax natural transformation bundle, with strict J/P/Z-naturality and
+lax I-naturality (forward whisker on hom-sets).  Bundle is the type
+of the unapplied `praEval` operator.
+
+Spec:
+`docs/superpowers/specs/2026-04-27-praEval-IJ-naturality-design.md`
+(gitignored).
+Plan: `docs/superpowers/plans/2026-04-27-praEval-IJ-naturality.md`
+(gitignored).
+
+### Done (lax bundle)
+
+| Commit | Task |
+|--------|------|
+| `83c872b6` | Task 1: LaxNatTransContra{App,LaxApp,LaxNat} abbrevs |
+| `f1e3bd21` | Task 2: LaxNatTransContraIdEq + proof + LaxId |
+| `13711dcc` | Task 3: LaxNatTransContraCompEq* + proofs + LaxComp |
+| `13e43c87` | Task 4: LaxNatTransContraData bundle structure |
+| `1d3f1569` | Task 5: LaxNatTransContraData.id |
+| `42354813` | Task 6: LaxNatTransContraData.comp |
+| `4c6fda17` | Task 7: LaxNatTransContraData.ofNatTrans |
+| `5bc50358` | Task 8 (orig): praPolyEvalSourceFibBif (superseded) |
+| `8c0af9e1` | Task 9 (orig): praPolyEvalSourceOverI (superseded) |
+| `7f6f1446` | Task 10: praPolyEvalTargetOverI |
+| `3ea402d7` | Task 9 revision: praPolyEvalSourceOverI for collapse |
+| `7acbdee6` | Task 11: praPolyEvalLaxNatTrans_app helper |
+| `21afb35a` | Task 12a (orig): praPolyEvalForwardWhisker_unwidened |
+| `446378c1` | Utility: catULiftFunctor2WidenHom (currently unused) |
+| `a7f1c1cc` | Task 12a refactor: takes opJ directly |
+| `66211198` | Utility: GrothendieckContraFunctor objBase/objFiber simp |
+| `9ddedd81` | Task 12b: praPolyEvalLaxNatTrans_laxApp |
+| `e61d9261` | Task 13: praPolyEvalLaxNatTrans bundle |
+| `9574d03f` | Task 14: praPolyEvalSourceOverIObj helper |
+| `136ea3ef` | Task 15: strong bridge theorem |
+| `600ae47d` | Task 16: weak per-component bridge theorem |
+| `98fdd76d` | Task 17: test file create + type-signature sanity |
+| `a9767edb` | Task 18: register test file |
+| `b44d03c2` | Task 19: framework sanity tests |
+| `40479f37` | Task 20: bridge collapse tests |
+| `c5edb99e` | Task 21: per-component accessor compatibility tests |
+| `0819c27f` | Task 22: lax coherence tests |
+| `38053f97` | Task 23: universe polymorphism tests |
+
+### Design notes (preserve for future sessions)
+
+- The construction is lax in I (forward whisker), strict in J/P/Z.
+  The strict-functor lift between contraGrothendiecks does not
+  exist in either direction (see spec's "Why a flat-functor lift
+  does not exist" section).
+
+- The new infrastructure `LaxNatTransContraData` (in
+  `Utilities/Grothendieck.lean` `LaxNatTransContraFunctor` section)
+  intentionally does NOT have a `.toFunctor` extractor — by design,
+  since the lift is impossible in this direction.  The bundle
+  itself is the artifact.
+
+- Task 9's original abstract construction (`Functor.curry ⋙
+  grothendieckContraFunctor`) was revised because
+  `praPolyEvalSourceOverI.obj (op I)` was not definitionally equal
+  to `praPolyEvalAtISource I` — Task 11 needed that equality.  The
+  revision (commit `3ea402d7`) restructures via
+  `praPolyEvalSourceOverIFib` whose `obj (op I)` is literally
+  `praPolyEvalAtISourceFib I`, making the definitional collapse
+  `rfl`.
+
+- Task 12 (the laxApp construction) was the most substantial work
+  in Phase B — it required three sub-tasks: (12a) the unwidened
+  forward whisker `praPolyEvalForwardWhisker_unwidened`; (12a
+  refactor) to take `opJ : Catᵒᵖ` directly; and (12b) the widened
+  laxApp via `mkHom (𝟙 _) <forward whisker via ULiftHom.up.map>`.
+  Two utility commits accompanied: `446378c1` (catULiftFunctor2
+  widening helpers — unused in the final laxApp but available for
+  other consumers) and `66211198`
+  (`GrothendieckContraFunctor.{objBase,objFiber}_map_obj` simp
+  lemmas needed for the laxApp's `mkHom` to typecheck).
+
+- Bundle's coherence: `laxNat`/`laxId` close by `rfl`; `laxComp`
+  closes by `dsimp [praPolyEvalLaxNatTrans_laxApp]; rfl` after
+  `set_option maxHeartbeats 4000000` for the bundle's elaboration.
+
+### Follow-ups
+
+- Symmetric infrastructure: build `OplaxNatTransContraFunctorData`
+  (unprimed, against `grothendieckContraFunctor`) parallel to the
+  new `LaxNatTransContraData`, completing the four-corner table of
+  oplax/lax × cov-base/contra-base.  Not blocking current
+  consumers.
+
+- `GrothendieckContraFunctor.mkHom_comp` lemma — would help future
+  lax bundles avoid heartbeat-intensive `dsimp`+`rfl` patterns.
+
+- `catULiftFunctor2WidenHom` (commit `446378c1`) is currently
+  unused in this workstream but is available as general-purpose
+  infrastructure for lifting NatTrans of presheaves to widened-Cat
+  morphisms.
+
+- The plan's spec/plan files (under `docs/superpowers/`,
+  gitignored) document the spec/plan in detail and remain on disk
+  for reference.
+
 ## References
 
 - nLab: parametric right adjoint
