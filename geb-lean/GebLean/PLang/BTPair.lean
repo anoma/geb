@@ -153,30 +153,30 @@ private def BTα.dest {α : Type u} (t : BTα α) :
 private theorem BTα.leaf_injective {α : Type u}
     {a₁ a₂ : α} (h : BTα.leaf a₁ = BTα.leaf a₂) :
     a₁ = a₂ := by
-  have key : BTα.dest (BTα.leaf a₁) = BTα.dest (BTα.leaf a₂) := by
+  have comm : BTα.dest (BTα.leaf a₁) = BTα.dest (BTα.leaf a₂) := by
     rw [h]
-  rw [BTα.dest_leaf, BTα.dest_leaf] at key
-  exact Sum.inl.inj key
+  rw [BTα.dest_leaf, BTα.dest_leaf] at comm
+  exact Sum.inl.inj comm
 
 private theorem BTα.leaf_ne_node {α : Type u}
     (a : α) (l r : BTα α) :
     BTα.leaf a ≠ BTα.node l r := by
   intro h
-  have key : BTα.dest (BTα.leaf a) = BTα.dest (BTα.node l r) := by
+  have comm : BTα.dest (BTα.leaf a) = BTα.dest (BTα.node l r) := by
     rw [h]
-  rw [BTα.dest_leaf, BTα.dest_node] at key
-  exact (Sum.inl_ne_inr key).elim
+  rw [BTα.dest_leaf, BTα.dest_node] at comm
+  exact (Sum.inl_ne_inr comm).elim
 
 private theorem BTα.node_injective {α : Type u}
     {l₁ r₁ l₂ r₂ : BTα α}
     (h : BTα.node l₁ r₁ = BTα.node l₂ r₂) :
     l₁ = l₂ ∧ r₁ = r₂ := by
-  have key :
+  have comm :
       BTα.dest (BTα.node l₁ r₁) = BTα.dest (BTα.node l₂ r₂) := by
     rw [h]
-  rw [BTα.dest_node, BTα.dest_node] at key
-  exact ⟨congrArg (·.1) (Sum.inr.inj key),
-    congrArg (·.2) (Sum.inr.inj key)⟩
+  rw [BTα.dest_node, BTα.dest_node] at comm
+  exact ⟨congrArg (·.1) (Sum.inr.inj comm),
+    congrArg (·.2) (Sum.inr.inj comm)⟩
 
 /-- Reconstruct `t` from its `dest`-image: every `BTα α` tree
 equals `BTα.leaf a` or `BTα.node l r` according to `dest t`. -/
