@@ -120,6 +120,210 @@ theorem BTα.leaf_or_node {α : Type u} (t : BTα α) :
         | Sum.inl _ => rfl
         | Sum.inr _ => rfl⟩
 
+/-! ## Decidable equality on `BTα α`
+
+A structurally-recursive instance lifting `DecidableEq α` to
+`DecidableEq (BTα α)`.  The recursion is over the `PolyFix` carrier
+of `BTα`; constructor injectivity and disjointness are established
+by examining the underlying `PolyFix.mk` representation. -/
+
+/-- Decompose a `BTα α` tree as either a leaf or a node, returning
+the corresponding label or pair of subtrees.  This is a one-step
+destructor that does not recurse into subtrees. -/
+private def BTα.dest {α : Type u} (t : BTα α) :
+    α ⊕ (BTα α × BTα α) :=
+  match t with
+  | PolyFix.mk _ (Sum.inl leafIdx) _ => Sum.inl leafIdx.val
+  | PolyFix.mk _ (Sum.inr _) children =>
+      Sum.inr ⟨children (Sum.inl PUnit.unit),
+        children (Sum.inr PUnit.unit)⟩
+
+@[simp] private theorem BTα.dest_leaf {α : Type u} (a : α) :
+    BTα.dest (BTα.leaf a) = Sum.inl a := by
+  unfold BTα.dest BTα.leaf polyFreeMPure
+  rfl
+
+@[simp] private theorem BTα.dest_node {α : Type u}
+    (l r : BTα α) :
+    BTα.dest (BTα.node l r) = Sum.inr ⟨l, r⟩ := by
+  unfold BTα.dest BTα.node polyProdFreeMNode
+    polyFreeMStrFamily
+  rfl
+
+private theorem BTα.leaf_injective {α : Type u}
+    {a₁ a₂ : α} (h : BTα.leaf a₁ = BTα.leaf a₂) :
+    a₁ = a₂ := by
+  have key : BTα.dest (BTα.leaf a₁) = BTα.dest (BTα.leaf a₂) := by
+    rw [h]
+  rw [BTα.dest_leaf, BTα.dest_leaf] at key
+  exact Sum.inl.inj key
+
+private theorem BTα.leaf_ne_node {α : Type u}
+    (a : α) (l r : BTα α) :
+    BTα.leaf a ≠ BTα.node l r := by
+  intro h
+  have key : BTα.dest (BTα.leaf a) = BTα.dest (BTα.node l r) := by
+    rw [h]
+  rw [BTα.dest_leaf, BTα.dest_node] at key
+  exact (Sum.inl_ne_inr key).elim
+
+private theorem BTα.node_injective {α : Type u}
+    {l₁ r₁ l₂ r₂ : BTα α}
+    (h : BTα.node l₁ r₁ = BTα.node l₂ r₂) :
+    l₁ = l₂ ∧ r₁ = r₂ := by
+  have key :
+      BTα.dest (BTα.node l₁ r₁) = BTα.dest (BTα.node l₂ r₂) := by
+    rw [h]
+  rw [BTα.dest_node, BTα.dest_node] at key
+  exact ⟨congrArg (·.1) (Sum.inr.inj key),
+    congrArg (·.2) (Sum.inr.inj key)⟩
+
+/-- Reconstruct `t` from its `dest`-image: every `BTα α` tree
+equals `BTα.leaf a` or `BTα.node l r` according to `dest t`. -/
+private theorem BTα.eq_of_dest_leaf {α : Type u}
+    (t : BTα α) (a : α) (h : BTα.dest t = Sum.inl a) :
+    t = BTα.leaf a := by
+  match t with
+  | PolyFix.mk y idx children =>
+    have hy := PUnit.eq_punit y
+    subst hy
+    match idx with
+    | Sum.inl leafIdx =>
+      have h' : (Sum.inl leafIdx.val : α ⊕ (BTα α × BTα α)) =
+          Sum.inl a := h
+      have hval : leafIdx.val = a := Sum.inl.inj h'
+      unfold BTα.leaf polyFreeMPure
+      congr 1
+      · subst hval; rfl
+      · funext e; exact PEmpty.elim e
+    | Sum.inr nodeIdx =>
+      have h' :
+          (Sum.inr (children (Sum.inl PUnit.unit),
+            children (Sum.inr PUnit.unit)) :
+            α ⊕ (BTα α × BTα α)) = Sum.inl a := h
+      exact (Sum.inr_ne_inl h').elim
+
+private theorem BTα.eq_of_dest_node {α : Type u}
+    (t : BTα α) (l r : BTα α)
+    (h : BTα.dest t = Sum.inr ⟨l, r⟩) :
+    t = BTα.node l r := by
+  match t with
+  | PolyFix.mk y idx children =>
+    have hy := PUnit.eq_punit y
+    subst hy
+    match idx with
+    | Sum.inl leafIdx =>
+      have h' : (Sum.inl leafIdx.val : α ⊕ (BTα α × BTα α)) =
+          Sum.inr (l, r) := h
+      exact (Sum.inl_ne_inr h').elim
+    | Sum.inr nodeIdx =>
+      have hni := PUnit.eq_punit nodeIdx
+      subst hni
+      have h' :
+          (Sum.inr (children (Sum.inl PUnit.unit),
+            children (Sum.inr PUnit.unit)) :
+            α ⊕ (BTα α × BTα α)) = Sum.inr (l, r) := h
+      have hpair :
+          (children (Sum.inl PUnit.unit),
+            children (Sum.inr PUnit.unit)) = (l, r) :=
+        Sum.inr.inj h'
+      have hl : children (Sum.inl PUnit.unit) = l :=
+        congrArg Prod.fst hpair
+      have hr : children (Sum.inr PUnit.unit) = r :=
+        congrArg Prod.snd hpair
+      unfold BTα.node polyProdFreeMNode polyFreeMStrFamily
+      congr 1
+      funext e
+      match e with
+      | Sum.inl _ =>
+        change children (Sum.inl PUnit.unit) = l
+        exact hl
+      | Sum.inr _ =>
+        change children (Sum.inr PUnit.unit) = r
+        exact hr
+
+private def BTα.decEqAux {α : Type u} [DecidableEq α] :
+    ∀ (t₁ t₂ : BTα α), Decidable (t₁ = t₂) := by
+  intro t₁
+  refine PolyFix.ind
+    (motive := fun {x} (t : PolyFreeM (BTα.carrier α)
+      polyProdType x) =>
+      ∀ (t₂ : PolyFreeM (BTα.carrier α) polyProdType x),
+        Decidable (t = t₂)) ?step t₁
+  intro x i children ih t₂
+  have hx := PUnit.eq_punit x
+  subst hx
+  match i with
+  | Sum.inl leafIdx =>
+    have hself :
+        PolyFix.mk PUnit.unit
+          (show polyBetweenIndex PUnit PUnit
+            (polyTranslate (BTα.carrier α) polyProdType)
+            PUnit.unit from Sum.inl leafIdx) children =
+          BTα.leaf leafIdx.val := by
+      unfold BTα.leaf polyFreeMPure
+      congr 1
+      funext e; exact PEmpty.elim e
+    rw [hself]
+    set b : α := leafIdx.val with hb
+    cases hd : BTα.dest t₂ with
+    | inl a =>
+      have ht₂ := BTα.eq_of_dest_leaf t₂ a hd
+      subst ht₂
+      exact
+        if heq : b = a then
+          isTrue (by subst heq; rfl)
+        else
+          isFalse (fun h => heq (BTα.leaf_injective h))
+    | inr p =>
+      obtain ⟨l, r⟩ := p
+      have ht₂ := BTα.eq_of_dest_node t₂ l r hd
+      subst ht₂
+      exact isFalse (BTα.leaf_ne_node b l r)
+  | Sum.inr nodeIdx =>
+    have hni := PUnit.eq_punit nodeIdx
+    subst hni
+    have hself :
+        PolyFix.mk PUnit.unit
+          (show polyBetweenIndex PUnit PUnit
+            (polyTranslate (BTα.carrier α) polyProdType)
+            PUnit.unit from Sum.inr PUnit.unit) children =
+          BTα.node (children (Sum.inl PUnit.unit))
+            (children (Sum.inr PUnit.unit)) := by
+      unfold BTα.node polyProdFreeMNode polyFreeMStrFamily
+      congr 1
+      funext e
+      match e with
+      | Sum.inl _ => rfl
+      | Sum.inr _ => rfl
+    rw [hself]
+    cases hd : BTα.dest t₂ with
+    | inl a =>
+      have ht₂ := BTα.eq_of_dest_leaf t₂ a hd
+      subst ht₂
+      exact isFalse (fun h =>
+        BTα.leaf_ne_node a _ _ h.symm)
+    | inr p =>
+      obtain ⟨l, r⟩ := p
+      have ht₂ := BTα.eq_of_dest_node t₂ l r hd
+      subst ht₂
+      have hl := ih (Sum.inl PUnit.unit) l
+      have hr := ih (Sum.inr PUnit.unit) r
+      exact
+        if heql : children (Sum.inl PUnit.unit) = l then
+          if heqr : children (Sum.inr PUnit.unit) = r then
+            isTrue (by rw [heql, heqr])
+          else
+            isFalse (fun h =>
+              heqr (BTα.node_injective h).2)
+        else
+          isFalse (fun h =>
+            heql (BTα.node_injective h).1)
+
+instance BTα.decidableEq {α : Type u} [DecidableEq α] :
+    DecidableEq (BTα α) :=
+  fun t₁ t₂ => BTα.decEqAux t₁ t₂
+
 /-- Encode a `BTα (Fin (n+1))` tree as a natural number.
 
 Leaves with label `i : Fin (n+1)` use codes `0, …, n`; nodes

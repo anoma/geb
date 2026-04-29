@@ -39,14 +39,12 @@ open GebLean
     encodeBTn 2 (BTα.leaf (1 : Fin 3))
 
 #guard
-  encodeBTn 2
-      ((equivBTnBTm 2 1).symm
-        ((equivBTnBTm 2 1)
-          (BTα.node (BTα.leaf (0 : Fin 3))
-                    (BTα.leaf (2 : Fin 3))))) =
-    encodeBTn 2
-      (BTα.node (BTα.leaf (0 : Fin 3))
-                (BTα.leaf (2 : Fin 3)))
+  (equivBTnBTm 2 1).symm
+      ((equivBTnBTm 2 1)
+        (BTα.node (BTα.leaf (0 : Fin 3))
+                  (BTα.leaf (2 : Fin 3)))) =
+    BTα.node (BTα.leaf (0 : Fin 3))
+             (BTα.leaf (2 : Fin 3))
 
 /-! ## Perfect-tree encoding values
 
