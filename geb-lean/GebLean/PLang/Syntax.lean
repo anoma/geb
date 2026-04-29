@@ -267,6 +267,30 @@ The product polynomial endofunctor specialized to `PUnit`.
 abbrev polyProdType : PolyEndo PUnit.{u + 1} :=
   polyProd PUnit.{u + 1}
 
+/-- The free monad of `polyProdType`, specialized to `Type` via
+`X = PUnit`.  Companion to `polyProdType`. -/
+abbrev polyProdFreeMType : PolyEndo PUnit.{u + 1} :=
+  polyProdFreeM PUnit.{u + 1}
+
+/-- Evaluation functor of `polyProd X`. -/
+abbrev polyProdEvalFunctor (X : Type u) : Over X ⥤ Over X :=
+  polyBetweenEvalFunctor X X (polyProd X)
+
+/-- Evaluation functor of `polyProdFreeM X`. -/
+abbrev polyProdFreeMEvalFunctor (X : Type u) :
+    Over X ⥤ Over X :=
+  polyBetweenEvalFunctor X X (polyProdFreeM X)
+
+/-- `Type`-specialization of `polyProdEvalFunctor`. -/
+abbrev polyProdTypeEvalFunctor :
+    Over PUnit.{u + 1} ⥤ Over PUnit.{u + 1} :=
+  polyProdEvalFunctor PUnit.{u + 1}
+
+/-- `Type`-specialization of `polyProdFreeMEvalFunctor`. -/
+abbrev polyProdFreeMTypeEvalFunctor :
+    Over PUnit.{u + 1} ⥤ Over PUnit.{u + 1} :=
+  polyProdFreeMEvalFunctor PUnit.{u + 1}
+
 end PUnitSpecialization
 
 /-! ## Convenience constructors and fold for `polyProd`
