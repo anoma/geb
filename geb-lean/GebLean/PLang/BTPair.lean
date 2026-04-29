@@ -3,6 +3,7 @@ import GebLean.LawvereBT
 import GebLean.LawvereBTInterp
 import Mathlib.Data.Nat.Pairing
 import Mathlib.Logic.Encodable.Basic
+import Mathlib.Tactic.Ring
 
 /-!
 # Bijection between Finite-Alphabet Binary Trees and ℕ
@@ -957,5 +958,31 @@ def fullBT : ℕ → BT.{0}
 
 @[simp] theorem fullBT_succ (d : ℕ) :
     fullBT (d + 1) = BT.node (fullBT d) (fullBT d) := rfl
+
+private lemma Nat.pair_self_of_self (x : ℕ) :
+    Nat.pair x x = x * x + 2 * x := by
+  unfold Nat.pair
+  split_ifs with h
+  · omega
+  · ring
+
+/-- The encoding of `fullBTn` satisfies the recurrence
+`encode (fullBTn (d+1)) = (encode (fullBTn d) + 1)^2 + n`. -/
+theorem encodeBTn_fullBTn_succ (n d : ℕ) :
+    encodeBTn n (fullBTn n (d + 1)) =
+      (encodeBTn n (fullBTn n d) + 1) ^ 2 + n := by
+  rw [fullBTn_succ, encodeBTn_node, Nat.pair_self_of_self]
+  ring
+
+/-- Unlabeled specialization: `encode (fullBT (d+1)) =
+(encode (fullBT d) + 1)^2`. -/
+@[simp] theorem encodeBT_fullBT_succ (d : ℕ) :
+    encodeBT (fullBT (d + 1)) = (encodeBT (fullBT d) + 1) ^ 2 := by
+  rw [fullBT_succ]
+  simp only [encodeBT, BT.fold_node]
+  rw [show BT.fold 0 (fun el er => Nat.pair el er + 1) =
+    encodeBT from rfl]
+  rw [Nat.pair_self_of_self]
+  ring
 
 end GebLean
