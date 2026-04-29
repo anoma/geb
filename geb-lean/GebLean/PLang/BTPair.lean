@@ -278,4 +278,13 @@ theorem encodeBTn_decodeBTn (n : ℕ) (k : ℕ) :
         rw [Nat.pair_unpair]
         omega
 
+/-- The bijection `BTα (Fin (n+1)) ≃ ℕ`.  For `n = 0` this is the
+existing `encodeBT`/`decodeBT` bijection; for general `n` it
+encodes labeled binary trees over a finite alphabet. -/
+def equivBTnNat (n : ℕ) : BTα.{0} (Fin (n + 1)) ≃ ℕ where
+  toFun     := encodeBTn n
+  invFun    := decodeBTn n
+  left_inv  := decodeBTn_encodeBTn n
+  right_inv := encodeBTn_decodeBTn n
+
 end GebLean
