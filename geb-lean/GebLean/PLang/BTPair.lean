@@ -1,5 +1,6 @@
 import GebLean.PLang.Syntax
 import GebLean.LawvereBT
+import Mathlib.Data.Nat.Pairing
 
 /-!
 # Bijection between Finite-Alphabet Binary Trees and ℕ
@@ -112,5 +113,23 @@ theorem BTα.leaf_or_node {α : Type u} (t : BTα α) :
         match e with
         | Sum.inl _ => rfl
         | Sum.inr _ => rfl⟩
+
+/-- Encode a `BTα (Fin (n+1))` tree as a natural number.
+
+Leaves with label `i : Fin (n+1)` use codes `0, …, n`; nodes
+shift by `n+1` and `Nat.pair` the recursive encodings. -/
+def encodeBTn (n : ℕ) (t : BTα.{0} (Fin (n + 1))) : ℕ :=
+  BTα.fold (fun i : Fin (n + 1) => i.val)
+    (fun el er => (n + 1) + Nat.pair el er) t
+
+@[simp] theorem encodeBTn_leaf (n : ℕ) (i : Fin (n + 1)) :
+    encodeBTn n (BTα.leaf i) = i.val := by
+  simp [encodeBTn]
+
+@[simp] theorem encodeBTn_node (n : ℕ)
+    (l r : BTα.{0} (Fin (n + 1))) :
+    encodeBTn n (BTα.node l r) =
+      (n + 1) + Nat.pair (encodeBTn n l) (encodeBTn n r) := by
+  simp [encodeBTn]
 
 end GebLean
