@@ -1044,6 +1044,9 @@ private lemma pair_le_pair_self_iff {a b M : ℕ} :
   · intro ⟨ha, hb⟩
     exact natPair_le_pair ha hb
 
+/-- Trees of depth ≤ d are exactly those with encoding ≤ that of
+the perfect depth-d tree.  This is the precise statement that
+the encoding orders trees by depth. -/
 theorem encodeBTn_le_fullBTn_iff_depth_le {n : ℕ}
     (t : BTα.{0} (Fin (n + 1))) (d : ℕ) :
     encodeBTn n t ≤ encodeBTn n (fullBTn n d) ↔
