@@ -1115,4 +1115,25 @@ theorem encodeBTn_le_fullBTn_iff_depth_le {n : ℕ}
           have hsq : (M + 1) ^ 2 = M * M + 2 * M + 1 := by ring
           omega
 
+/-- Strict-monotonicity corollary of the depth-ordering
+biconditional: depth-strict-less implies encoding-strict-less. -/
+theorem encodeBTn_lt_of_depth_lt {n : ℕ}
+    (t₁ t₂ : BTα.{0} (Fin (n + 1)))
+    (h : BTα.depth t₁ < BTα.depth t₂) :
+    encodeBTn n t₁ < encodeBTn n t₂ := by
+  set d := BTα.depth t₂ - 1 with hd
+  have hd2 : BTα.depth t₂ = d + 1 := by omega
+  have h1 : BTα.depth t₁ ≤ d := by omega
+  have h2 : ¬ BTα.depth t₂ ≤ d := by omega
+  have hu :
+      encodeBTn n t₁ ≤ encodeBTn n (fullBTn n d) :=
+    (encodeBTn_le_fullBTn_iff_depth_le t₁ d).mpr h1
+  have hv :
+      ¬ encodeBTn n t₂ ≤ encodeBTn n (fullBTn n d) :=
+    fun he =>
+      h2 ((encodeBTn_le_fullBTn_iff_depth_le t₂ d).mp he)
+  have : encodeBTn n (fullBTn n d) < encodeBTn n t₂ :=
+    Nat.lt_of_not_le hv
+  exact lt_of_le_of_lt hu this
+
 end GebLean
