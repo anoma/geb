@@ -40,4 +40,12 @@ later section. -/
 abbrev BTα (α : Type u) : Type u :=
   PolyFreeM (BTα.carrier α) polyProdType PUnit.unit
 
+/-- Leaf with label `a : α`. -/
+def BTα.leaf {α : Type u} (a : α) : BTα α :=
+  polyFreeMPure (BTα.carrier α) polyProdType ⟨a, rfl⟩
+
+/-- Branching node from two subtrees. -/
+def BTα.node {α : Type u} (l r : BTα α) : BTα α :=
+  polyProdFreeMNode (BTα.carrier α) l r
+
 end GebLean
