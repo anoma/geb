@@ -300,19 +300,19 @@ layer inside the step — enough to express `case`-analysis on
 the outer constructor of the encoded configuration, following
 the Leivant 1999 §2.1 recurrence schema. -/
 structure RegisterMachineRealization
-    (M : GebLean.RegisterMachine.RegisterMachine) where
+    (M : GebLean.RegisterMachineNS.RegisterMachine) where
   /-- Encode a configuration as a single `BT`. -/
   encodeConfig :
-    GebLean.RegisterMachine.Config M → BT.{0}
+    GebLean.RegisterMachineNS.Config M → BT.{0}
   /-- Decode a `BT` back to a configuration.  Only required to be
   a left inverse of `encodeConfig` (`decode_encode`). -/
   decodeConfig :
-    BT.{0} → GebLean.RegisterMachine.Config M
+    BT.{0} → GebLean.RegisterMachineNS.Config M
   /-- Round-trip: decoding an encoded config returns the original
   config.  No section-side (`encode_decode`) property is imposed,
   which lets implementors use non-injective BT encodings. -/
   decode_encode :
-    ∀ c : GebLean.RegisterMachine.Config M,
+    ∀ c : GebLean.RegisterMachineNS.Config M,
       decodeConfig (encodeConfig c) = c
   /-- Depth-≤-1 tree-ER term realizing one transition step on
   the encoded configuration.  Arity 1: takes the current
@@ -322,34 +322,34 @@ structure RegisterMachineRealization
   `stepRealize` on an encoded configuration equals encoding the
   result of `RegisterMachine.step`. -/
   stepRealize_interp :
-    ∀ c : GebLean.RegisterMachine.Config M,
+    ∀ c : GebLean.RegisterMachineNS.Config M,
       stepRealize.interp
         (fun _ => encodeConfig c) =
-        encodeConfig (GebLean.RegisterMachine.step M c)
+        encodeConfig (GebLean.RegisterMachineNS.step M c)
 
 /-- Run the abstract register machine for `k` steps,
 with `k` derived from iterating `step` along the
 right-spine of a given BT.  The return value is the final
 configuration. -/
 private def runRightSpine
-    {M : GebLean.RegisterMachine.RegisterMachine}
-    (c₀ : GebLean.RegisterMachine.Config M)
-    (t : BT.{0}) : GebLean.RegisterMachine.Config M :=
+    {M : GebLean.RegisterMachineNS.RegisterMachine}
+    (c₀ : GebLean.RegisterMachineNS.Config M)
+    (t : BT.{0}) : GebLean.RegisterMachineNS.Config M :=
   BT.fold c₀
-    (fun _ r => GebLean.RegisterMachine.step M r) t
+    (fun _ r => GebLean.RegisterMachineNS.step M r) t
 
 @[simp] private theorem runRightSpine_leaf
-    {M : GebLean.RegisterMachine.RegisterMachine}
-    (c₀ : GebLean.RegisterMachine.Config M) :
+    {M : GebLean.RegisterMachineNS.RegisterMachine}
+    (c₀ : GebLean.RegisterMachineNS.Config M) :
     runRightSpine (M := M) c₀ BT.leaf = c₀ := by
   unfold runRightSpine; rw [BT.fold_leaf]
 
 @[simp] private theorem runRightSpine_node
-    {M : GebLean.RegisterMachine.RegisterMachine}
-    (c₀ : GebLean.RegisterMachine.Config M)
+    {M : GebLean.RegisterMachineNS.RegisterMachine}
+    (c₀ : GebLean.RegisterMachineNS.Config M)
     (l r : BT.{0}) :
     runRightSpine (M := M) c₀ (BT.node l r) =
-      GebLean.RegisterMachine.step M
+      GebLean.RegisterMachineNS.step M
         (runRightSpine (M := M) c₀ r) := by
   unfold runRightSpine; rw [BT.fold_node]
 
@@ -461,12 +461,12 @@ simulation result equals `encodeConfig` applied to
 `rightSpineLength(timeBound.interp ctx)` steps. -/
 theorem TreeERMor1.simulateRM_interp_rm
     {n : ℕ}
-    (M : GebLean.RegisterMachine.RegisterMachine)
+    (M : GebLean.RegisterMachineNS.RegisterMachine)
     (realization : RegisterMachineRealization M)
     (initialConfig : TreeERMor1_1 n)
     (timeBound : TreeERMor1_1 n)
     (ctx : Fin n → BT.{0})
-    (initConfig : GebLean.RegisterMachine.Config M)
+    (initConfig : GebLean.RegisterMachineNS.Config M)
     (hInit :
       initialConfig.interp ctx =
         realization.encodeConfig initConfig) :
