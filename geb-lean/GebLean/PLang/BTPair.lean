@@ -132,4 +132,39 @@ def encodeBTn (n : ℕ) (t : BTα.{0} (Fin (n + 1))) : ℕ :=
       (n + 1) + Nat.pair (encodeBTn n l) (encodeBTn n r) := by
   simp [encodeBTn]
 
+/-- Decode a natural number to a `BTα (Fin (n+1))` tree.
+Numbers `< n+1` decode to leaves; the rest decode by
+`Nat.unpair`-ing the residue after subtracting `n+1`. -/
+def decodeBTn (n : ℕ) : ℕ → BTα.{0} (Fin (n + 1))
+  | k =>
+    if h : k < n + 1 then
+      BTα.leaf ⟨k, h⟩
+    else
+      let r := k - (n + 1)
+      BTα.node
+        (decodeBTn n (Nat.unpair r).1)
+        (decodeBTn n (Nat.unpair r).2)
+  termination_by k => k
+  decreasing_by
+    all_goals
+      have hlt : k - (n + 1) < k := by omega
+      first
+        | exact Nat.lt_of_le_of_lt
+            (Nat.unpair_left_le _) hlt
+        | exact Nat.lt_of_le_of_lt
+            (Nat.unpair_right_le _) hlt
+
+@[simp] theorem decodeBTn_lt (n k : ℕ) (h : k < n + 1) :
+    decodeBTn n k = BTα.leaf ⟨k, h⟩ := by
+  unfold decodeBTn
+  simp [h]
+
+@[simp] theorem decodeBTn_ge (n k : ℕ) (h : ¬ k < n + 1) :
+    decodeBTn n k =
+      BTα.node
+        (decodeBTn n (Nat.unpair (k - (n + 1))).1)
+        (decodeBTn n (Nat.unpair (k - (n + 1))).2) := by
+  conv_lhs => rw [decodeBTn]
+  simp [h]
+
 end GebLean
