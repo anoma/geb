@@ -60,6 +60,8 @@ def BTα.fold {α β : Type u}
     (onLeaf := fun {_ : PUnit.{u + 1}} v => onLeaf v.val)
     (onNode := onNode) t
 
+/-- `BTα.fold` at a leaf returns the leaf action applied to the
+label. -/
 @[simp] theorem BTα.fold_leaf {α β : Type u}
     (onLeaf : α → β) (onNode : β → β → β) (a : α) :
     BTα.fold onLeaf onNode (BTα.leaf a) = onLeaf a := by
@@ -70,6 +72,8 @@ def BTα.fold {α β : Type u}
   unfold polyFreeMPure polyFreeCounitFoldAt
   rfl
 
+/-- `BTα.fold` at a node applies the node action to the two
+recursive fold results. -/
 @[simp] theorem BTα.fold_node {α β : Type u}
     (onLeaf : α → β) (onNode : β → β → β) (l r : BTα α) :
     BTα.fold onLeaf onNode (BTα.node l r) =
