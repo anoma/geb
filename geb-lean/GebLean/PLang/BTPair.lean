@@ -167,4 +167,91 @@ def decodeBTn (n : ℕ) : ℕ → BTα.{0} (Fin (n + 1))
   conv_lhs => rw [decodeBTn]
   simp [h]
 
+private theorem decodeBTn_encodeBTn_gen
+    (n : ℕ) {x : PUnit.{1}}
+    (t : PolyFreeM (BTα.carrier (Fin (n + 1)))
+      polyProdType x) :
+    decodeBTn n (encodeBTn n t) = t := by
+  induction t with
+  | mk y idx children ih =>
+    have hy := PUnit.eq_punit y
+    subst hy
+    match idx with
+    | Sum.inl leafIdx =>
+      have hleaf :
+          PolyFix.mk PUnit.unit
+            (show polyBetweenIndex PUnit PUnit
+              (polyTranslate
+                (BTα.carrier (Fin (n + 1)))
+                polyProdType) PUnit.unit from
+              Sum.inl leafIdx)
+            children =
+          BTα.leaf leafIdx.val := by
+        unfold BTα.leaf polyFreeMPure
+        congr 1
+        funext e
+        exact PEmpty.elim e
+      rw [hleaf]
+      change
+        decodeBTn n
+          (encodeBTn n (BTα.leaf leafIdx.val)) =
+        BTα.leaf leafIdx.val
+      rw [encodeBTn_leaf,
+        decodeBTn_lt _ _ leafIdx.val.isLt]
+      congr 1
+    | Sum.inr nodeIdx =>
+      have hni := PUnit.eq_punit nodeIdx
+      subst hni
+      have hnode :
+          PolyFix.mk PUnit.unit
+            (show polyBetweenIndex PUnit PUnit
+              (polyTranslate
+                (BTα.carrier (Fin (n + 1)))
+                polyProdType) PUnit.unit from
+              Sum.inr PUnit.unit)
+            children =
+          BTα.node
+            (children (Sum.inl PUnit.unit))
+            (children (Sum.inr PUnit.unit)) := by
+        unfold BTα.node polyProdFreeMNode
+          polyFreeMStrFamily
+        congr 1
+        funext e
+        match e with
+        | Sum.inl _ => rfl
+        | Sum.inr _ => rfl
+      rw [hnode, encodeBTn_node]
+      have hge :
+          ¬ ((n + 1) +
+            Nat.pair
+              (encodeBTn n
+                (children (Sum.inl PUnit.unit)))
+              (encodeBTn n
+                (children (Sum.inr PUnit.unit)))) <
+          n + 1 := by omega
+      rw [decodeBTn_ge _ _ hge]
+      have hsub :
+          (n + 1) +
+            Nat.pair
+              (encodeBTn n
+                (children (Sum.inl PUnit.unit)))
+              (encodeBTn n
+                (children (Sum.inr PUnit.unit))) -
+          (n + 1) =
+          Nat.pair
+            (encodeBTn n
+              (children (Sum.inl PUnit.unit)))
+            (encodeBTn n
+              (children (Sum.inr PUnit.unit))) := by
+        omega
+      rw [hsub, Nat.unpair_pair]
+      rw [ih (Sum.inl PUnit.unit),
+        ih (Sum.inr PUnit.unit)]
+
+/-- Decoding inverts encoding on every `BTα (Fin (n+1))` tree. -/
+theorem decodeBTn_encodeBTn (n : ℕ)
+    (t : BTα.{0} (Fin (n + 1))) :
+    decodeBTn n (encodeBTn n t) = t :=
+  decodeBTn_encodeBTn_gen n t
+
 end GebLean
