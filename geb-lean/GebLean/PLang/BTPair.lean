@@ -1136,4 +1136,201 @@ theorem encodeBTn_lt_of_depth_lt {n : ℕ}
     Nat.lt_of_not_le hv
   exact lt_of_le_of_lt hu this
 
+/-! ## Unlabeled depth specializations -/
+
+/-- Depth of an unlabeled `BT.{0}` tree.  Leaf has depth 0; node
+has depth 1 plus the maximum of its children's depths. -/
+def BT.depth (t : BT.{0}) : ℕ :=
+  BT.fold 0 (fun dl dr => 1 + max dl dr) t
+
+@[simp] theorem BT.depth_leaf : BT.depth BT.leaf = 0 := by
+  simp [BT.depth, BT.fold_leaf]
+
+@[simp] theorem BT.depth_node (l r : BT.{0}) :
+    BT.depth (BT.node l r) =
+      1 + max (BT.depth l) (BT.depth r) := by
+  simp [BT.depth, BT.fold_node]
+
+private lemma equivBTnBT1_zero_symm_id
+    (s : BTα.{0} (Fin 1)) :
+    (equivBTnBT1 0).symm s = s := by
+  unfold equivBTnBT1 equivBTnBTm
+  change (equivBTnNat 0).symm
+      ((equivBTnNat 0) s) = s
+  exact Equiv.symm_apply_apply _ s
+
+private lemma equivBTαPUnitBT_symm_leaf :
+    equivBTαPUnitBT.symm BT.leaf = BTα.leaf PUnit.unit := by
+  change BT.fold (BTα.leaf PUnit.unit) BTα.node BT.leaf =
+    BTα.leaf PUnit.unit
+  exact BT.fold_leaf _ _
+
+private lemma equivBTαPUnitBT_symm_node (l r : BT.{0}) :
+    equivBTαPUnitBT.symm (BT.node l r) =
+      BTα.node (equivBTαPUnitBT.symm l)
+        (equivBTαPUnitBT.symm r) := by
+  change BT.fold (BTα.leaf PUnit.unit) BTα.node
+      (BT.node l r) = _
+  rw [BT.fold_node]
+  rfl
+
+private lemma equivOfEquivFinPUnit_symm_leaf
+    (b : PUnit) :
+    (BTα.equivOfEquiv (Equiv.equivPUnit (Fin 1))).symm
+        (BTα.leaf b) =
+      BTα.leaf ((Equiv.equivPUnit (Fin 1)).symm b) := by
+  change BTα.fold
+      (fun b' => BTα.leaf
+        ((Equiv.equivPUnit (Fin 1)).symm b'))
+      BTα.node (BTα.leaf b) = _
+  exact BTα.fold_leaf _ _ _
+
+private lemma equivOfEquivFinPUnit_symm_node
+    (u v : BTα.{0} PUnit) :
+    (BTα.equivOfEquiv (Equiv.equivPUnit (Fin 1))).symm
+        (BTα.node u v) =
+      BTα.node
+        ((BTα.equivOfEquiv
+          (Equiv.equivPUnit (Fin 1))).symm u)
+        ((BTα.equivOfEquiv
+          (Equiv.equivPUnit (Fin 1))).symm v) := by
+  change BTα.fold
+      (fun b => BTα.leaf
+        ((Equiv.equivPUnit (Fin 1)).symm b))
+      BTα.node (BTα.node u v) = _
+  rw [BTα.fold_node]
+  rfl
+
+private lemma equivBTnBT_zero_symm_leaf :
+    (equivBTnBT 0).symm BT.leaf =
+      BTα.leaf (⟨0, Nat.zero_lt_one⟩ : Fin 1) := by
+  unfold equivBTnBT
+  change (equivBTnBT1 0).symm
+      ((BTα.equivOfEquiv (Equiv.equivPUnit (Fin 1))).symm
+        (equivBTαPUnitBT.symm BT.leaf)) = _
+  rw [equivBTαPUnitBT_symm_leaf,
+    equivOfEquivFinPUnit_symm_leaf,
+    equivBTnBT1_zero_symm_id]
+  rfl
+
+private lemma equivBTnBT_zero_symm_node (l r : BT.{0}) :
+    (equivBTnBT 0).symm (BT.node l r) =
+      BTα.node ((equivBTnBT 0).symm l)
+        ((equivBTnBT 0).symm r) := by
+  unfold equivBTnBT
+  change (equivBTnBT1 0).symm
+      ((BTα.equivOfEquiv (Equiv.equivPUnit (Fin 1))).symm
+        (equivBTαPUnitBT.symm (BT.node l r))) =
+    BTα.node _ _
+  rw [equivBTαPUnitBT_symm_node,
+    equivOfEquivFinPUnit_symm_node,
+    equivBTnBT1_zero_symm_id]
+  change BTα.node _ _ = BTα.node _ _
+  congr 1
+  · change _ =
+      (equivBTnBT1 0).symm
+        ((BTα.equivOfEquiv (Equiv.equivPUnit (Fin 1))).symm
+          (equivBTαPUnitBT.symm l))
+    rw [equivBTnBT1_zero_symm_id]
+  · change _ =
+      (equivBTnBT1 0).symm
+        ((BTα.equivOfEquiv (Equiv.equivPUnit (Fin 1))).symm
+          (equivBTαPUnitBT.symm r))
+    rw [equivBTnBT1_zero_symm_id]
+
+private lemma encodeBT_fullBT_eq_encodeBTn_fullBTn (d : ℕ) :
+    encodeBT (fullBT d) = encodeBTn 0 (fullBTn 0 d) := by
+  induction d with
+  | zero =>
+      simp [fullBT, encodeBT, BT.fold_leaf, fullBTn_zero,
+        encodeBTn_leaf]
+  | succ d ih =>
+      rw [encodeBT_fullBT_succ, encodeBTn_fullBTn_succ, ih]
+      omega
+
+private theorem BT_depth_eq_BTα_depth_gen
+    {x : PUnit.{1}}
+    (bt : PolyFreeM (overTerminal PUnit.{1})
+      polyProdType x) :
+    BT.depth bt =
+      BTα.depth ((equivBTnBT 0).symm bt) := by
+  induction bt with
+  | mk y idx children ih =>
+    have hy : y = PUnit.unit := PUnit.eq_punit y
+    subst hy
+    match idx with
+    | Sum.inl leafIdx =>
+      have hli : leafIdx = ⟨PUnit.unit, rfl⟩ :=
+        Subtype.ext (PUnit.eq_punit _)
+      subst hli
+      have hleaf :
+          PolyFix.mk PUnit.unit
+            (show polyBetweenIndex PUnit PUnit
+              (polyTranslate
+                (overTerminal PUnit.{1})
+                polyProdType) PUnit.unit from
+              Sum.inl ⟨PUnit.unit, rfl⟩)
+            children =
+          BT.leaf := by
+        unfold BT.leaf polyFreeMPure
+        congr 1
+        funext e; exact PEmpty.elim e
+      rw [hleaf, BT.depth_leaf, equivBTnBT_zero_symm_leaf,
+        BTα.depth_leaf]
+    | Sum.inr nodeIdx =>
+      have hni : nodeIdx = PUnit.unit :=
+        PUnit.eq_punit nodeIdx
+      subst hni
+      have hmk :
+          PolyFix.mk PUnit.unit
+            (show polyBetweenIndex PUnit PUnit
+              (polyTranslate
+                (overTerminal PUnit.{1})
+                polyProdType) PUnit.unit from
+              Sum.inr PUnit.unit)
+            children =
+          BT.node
+            (children (Sum.inl PUnit.unit))
+            (children (Sum.inr PUnit.unit)) := by
+        unfold BT.node polyProdFreeMNode
+          polyFreeMStrFamily
+        congr 1
+        funext e
+        match e with
+        | Sum.inl _ => rfl
+        | Sum.inr _ => rfl
+      rw [hmk, BT.depth_node, equivBTnBT_zero_symm_node,
+        BTα.depth_node, ih (Sum.inl PUnit.unit),
+        ih (Sum.inr PUnit.unit)]
+
+private theorem BT_depth_eq_BTα_depth (t : BT.{0}) :
+    BT.depth t = BTα.depth ((equivBTnBT 0).symm t) :=
+  BT_depth_eq_BTα_depth_gen t
+
+/-- Unlabeled trees of depth ≤ d are exactly those with encoding ≤
+that of the perfect depth-d tree. -/
+theorem encodeBT_le_fullBT_iff_depth_le (t : BT.{0}) (d : ℕ) :
+    encodeBT t ≤ encodeBT (fullBT d) ↔ BT.depth t ≤ d := by
+  rw [encodeBT_eq_encodeBTn_zero t,
+    encodeBT_fullBT_eq_encodeBTn_fullBTn d,
+    encodeBTn_le_fullBTn_iff_depth_le, BT_depth_eq_BTα_depth]
+
+/-- Strict-monotonicity corollary for unlabeled trees:
+depth-strict-less implies encoding-strict-less. -/
+theorem encodeBT_lt_of_depth_lt (t₁ t₂ : BT.{0})
+    (h : BT.depth t₁ < BT.depth t₂) :
+    encodeBT t₁ < encodeBT t₂ := by
+  set d := BT.depth t₂ - 1 with hd
+  have hd2 : BT.depth t₂ = d + 1 := by omega
+  have h1 : BT.depth t₁ ≤ d := by omega
+  have h2 : ¬ BT.depth t₂ ≤ d := by omega
+  have hu : encodeBT t₁ ≤ encodeBT (fullBT d) :=
+    (encodeBT_le_fullBT_iff_depth_le t₁ d).mpr h1
+  have hv : ¬ encodeBT t₂ ≤ encodeBT (fullBT d) :=
+    fun he =>
+      h2 ((encodeBT_le_fullBT_iff_depth_le t₂ d).mp he)
+  have : encodeBT (fullBT d) < encodeBT t₂ :=
+    Nat.lt_of_not_le hv
+  exact lt_of_le_of_lt hu this
+
 end GebLean
