@@ -299,4 +299,118 @@ def equivBTnBT1 (n : ℕ) :
     BTα.{0} (Fin (n + 1)) ≃ BTα.{0} (Fin 1) :=
   equivBTnBTm n 0
 
+private theorem BTα.equivOfEquiv_left_inv_gen
+    {α β : Type u} (e : α ≃ β) {x : PUnit.{u + 1}}
+    (t : PolyFreeM (BTα.carrier α) polyProdType x) :
+    BTα.fold (fun b => BTα.leaf (e.symm b)) BTα.node
+      (BTα.fold (fun a => BTα.leaf (e a)) BTα.node t) =
+    t := by
+  induction t with
+  | mk y idx children ih =>
+    have hy := PUnit.eq_punit y
+    subst hy
+    match idx with
+    | Sum.inl leafIdx =>
+      have hleaf :
+          PolyFix.mk PUnit.unit
+            (show polyBetweenIndex PUnit PUnit
+              (polyTranslate (BTα.carrier α)
+                polyProdType) PUnit.unit from
+              Sum.inl leafIdx)
+            children =
+          BTα.leaf leafIdx.val := by
+        unfold BTα.leaf polyFreeMPure
+        congr 1
+        funext e
+        exact PEmpty.elim e
+      rw [hleaf]
+      simp [BTα.fold_leaf, e.left_inv]
+    | Sum.inr nodeIdx =>
+      have hni := PUnit.eq_punit nodeIdx
+      subst hni
+      have hnode :
+          PolyFix.mk PUnit.unit
+            (show polyBetweenIndex PUnit PUnit
+              (polyTranslate (BTα.carrier α)
+                polyProdType) PUnit.unit from
+              Sum.inr PUnit.unit)
+            children =
+          BTα.node (children (Sum.inl PUnit.unit))
+            (children (Sum.inr PUnit.unit)) := by
+        unfold BTα.node polyProdFreeMNode
+          polyFreeMStrFamily
+        congr 1
+        funext e
+        match e with
+        | Sum.inl _ => rfl
+        | Sum.inr _ => rfl
+      rw [hnode]
+      simp [BTα.fold_node,
+        ih (Sum.inl PUnit.unit),
+        ih (Sum.inr PUnit.unit)]
+
+private theorem BTα.equivOfEquiv_right_inv_gen
+    {α β : Type u} (e : α ≃ β) {x : PUnit.{u + 1}}
+    (t : PolyFreeM (BTα.carrier β) polyProdType x) :
+    BTα.fold (fun a => BTα.leaf (e a)) BTα.node
+      (BTα.fold (fun b => BTα.leaf (e.symm b)) BTα.node t) =
+    t := by
+  induction t with
+  | mk y idx children ih =>
+    have hy := PUnit.eq_punit y
+    subst hy
+    match idx with
+    | Sum.inl leafIdx =>
+      have hleaf :
+          PolyFix.mk PUnit.unit
+            (show polyBetweenIndex PUnit PUnit
+              (polyTranslate (BTα.carrier β)
+                polyProdType) PUnit.unit from
+              Sum.inl leafIdx)
+            children =
+          BTα.leaf leafIdx.val := by
+        unfold BTα.leaf polyFreeMPure
+        congr 1
+        funext e
+        exact PEmpty.elim e
+      rw [hleaf]
+      simp [BTα.fold_leaf, e.right_inv]
+    | Sum.inr nodeIdx =>
+      have hni := PUnit.eq_punit nodeIdx
+      subst hni
+      have hnode :
+          PolyFix.mk PUnit.unit
+            (show polyBetweenIndex PUnit PUnit
+              (polyTranslate (BTα.carrier β)
+                polyProdType) PUnit.unit from
+              Sum.inr PUnit.unit)
+            children =
+          BTα.node (children (Sum.inl PUnit.unit))
+            (children (Sum.inr PUnit.unit)) := by
+        unfold BTα.node polyProdFreeMNode
+          polyFreeMStrFamily
+        congr 1
+        funext e
+        match e with
+        | Sum.inl _ => rfl
+        | Sum.inr _ => rfl
+      rw [hnode]
+      simp [BTα.fold_node,
+        ih (Sum.inl PUnit.unit),
+        ih (Sum.inr PUnit.unit)]
+
+/-- Functorial action of `BTα` on type equivalences: any
+equivalence between alphabets `α ≃ β` lifts to an equivalence
+`BTα α ≃ BTα β` by relabeling leaves. -/
+def BTα.equivOfEquiv {α β : Type u} (e : α ≃ β) :
+    BTα α ≃ BTα β where
+  toFun :=
+    BTα.fold (fun a => BTα.leaf (e a)) BTα.node
+  invFun :=
+    BTα.fold (fun b => BTα.leaf (e.symm b)) BTα.node
+  left_inv := fun t =>
+    BTα.equivOfEquiv_left_inv_gen e t
+  right_inv := fun t =>
+    BTα.equivOfEquiv_right_inv_gen e t
+
 end GebLean
