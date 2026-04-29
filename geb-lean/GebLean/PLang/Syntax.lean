@@ -17,7 +17,10 @@ This module defines:
 - `polyProd`: the product polynomial endofunctor on `Over X`
 - Natural isomorphism between the polynomial evaluation and
   the self-product functor (from `Utilities/Slice.lean`)
-- Specialization to `Type` via `X = PUnit`
+- Free monad and cofree comonad of the product
+- Evaluation functors `Over X ⥤ Over X` for the base and free
+  monad polynomial functors, plus their `Type`-specializations
+  (i.e., at `X = PUnit`)
 -/
 
 namespace GebLean
@@ -257,6 +260,23 @@ abbrev polyProdCofreeM : PolyEndo X :=
 
 end FreeCofree
 
+/-! ## Evaluation functors -/
+
+section EvalFunctors
+
+variable (X : Type u)
+
+/-- Evaluation functor of `polyProd X`. -/
+abbrev polyProdEvalFunctor : Over X ⥤ Over X :=
+  polyEndoFunctor X (polyProd X)
+
+/-- Evaluation functor of `polyProdFreeM X`. -/
+abbrev polyProdFreeMEvalFunctor :
+    Over X ⥤ Over X :=
+  polyEndoFunctor X (polyProdFreeM X)
+
+end EvalFunctors
+
 /-! ## PUnit specialization -/
 
 section PUnitSpecialization
@@ -271,15 +291,6 @@ abbrev polyProdType : PolyEndo PUnit.{u + 1} :=
 `X = PUnit`.  Companion to `polyProdType`. -/
 abbrev polyProdFreeMType : PolyEndo PUnit.{u + 1} :=
   polyProdFreeM PUnit.{u + 1}
-
-/-- Evaluation functor of `polyProd X`. -/
-abbrev polyProdEvalFunctor (X : Type u) : Over X ⥤ Over X :=
-  polyBetweenEvalFunctor X X (polyProd X)
-
-/-- Evaluation functor of `polyProdFreeM X`. -/
-abbrev polyProdFreeMEvalFunctor (X : Type u) :
-    Over X ⥤ Over X :=
-  polyBetweenEvalFunctor X X (polyProdFreeM X)
 
 /-- `Type`-specialization of `polyProdEvalFunctor`. -/
 abbrev polyProdTypeEvalFunctor :
