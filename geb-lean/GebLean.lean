@@ -65,6 +65,7 @@ import GebLean.LawvereNatBTBackTrans
 import GebLean.LawvereNatBTInterp
 import GebLean.LawvereNatBTQuot
 import GebLean.LawvereTreeER
+import GebLean.LawvereTreeERArith
 import GebLean.LawvereTreeERInterp
 import GebLean.LawvereTreeERQuot
 import GebLean.LayeredEquivalence
