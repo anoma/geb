@@ -81,4 +81,36 @@ recursive fold results. -/
         (BTα.fold onLeaf onNode r) := by
   rfl
 
+/-- Every `BTα α` tree is either a leaf or a node. -/
+theorem BTα.leaf_or_node {α : Type u} (t : BTα α) :
+    (∃ a : α, t = BTα.leaf a) ∨
+    (∃ l r : BTα α, t = BTα.node l r) := by
+  match t with
+  | PolyFix.mk y idx children =>
+    have hy := PUnit.eq_punit y
+    subst hy
+    match idx with
+    | Sum.inl leafIdx =>
+      left
+      refine ⟨leafIdx.val, ?_⟩
+      unfold BTα.leaf polyFreeMPure
+      congr 1
+      funext e
+      exact PEmpty.elim e
+    | Sum.inr nodeIdx =>
+      have hni : nodeIdx = PUnit.unit :=
+        PUnit.eq_punit nodeIdx
+      subst hni
+      right
+      exact ⟨children (Sum.inl PUnit.unit),
+        children (Sum.inr PUnit.unit), by
+        unfold BTα.node polyProdFreeMNode
+          polyFreeMStrFamily
+        simp only
+        congr 1
+        ext e
+        match e with
+        | Sum.inl _ => rfl
+        | Sum.inr _ => rfl⟩
+
 end GebLean
