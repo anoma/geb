@@ -38,4 +38,25 @@ open GebLean
     ((equivBTnBTm 2 1).toFun (BTα.leaf (1 : Fin 3))) =
     encodeBTn 2 (BTα.leaf (1 : Fin 3))
 
+/-! ## Perfect-tree encoding values
+
+The unlabeled-tree sequence `encodeBT (fullBT d)` is
+`0, 1, 4, 25, 676, 458329`, which is OEIS A003095(d+1) − 1
+(equivalently, the count of binary trees of depth ≤ d, minus
+one). -/
+
+#guard encodeBT (fullBT 0) = 0
+#guard encodeBT (fullBT 1) = 1
+#guard encodeBT (fullBT 2) = 4
+#guard encodeBT (fullBT 3) = 25
+#guard encodeBT (fullBT 4) = 676
+#guard encodeBT (fullBT 5) = 458329
+
+/-! ## Labeled perfect-tree values for small (n, d) -/
+
+#guard encodeBTn 1 (fullBTn 1 0) = 1
+#guard encodeBTn 2 (fullBTn 2 0) = 2
+#guard encodeBTn 1 (fullBTn 1 1) = 2 + Nat.pair 1 1
+#guard encodeBTn 0 (fullBTn 0 3) = 25
+
 end GebLeanTests.PLang.BTPair
