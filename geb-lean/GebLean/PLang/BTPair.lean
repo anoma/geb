@@ -985,4 +985,131 @@ theorem encodeBTn_fullBTn_succ (n d : ℕ) :
   rw [Nat.pair_self_of_self]
   ring
 
+private lemma n_le_encodeBTn_fullBTn (n d : ℕ) :
+    n ≤ encodeBTn n (fullBTn n d) := by
+  induction d with
+  | zero => simp [fullBTn_zero, encodeBTn_leaf]
+  | succ d _ =>
+      rw [encodeBTn_fullBTn_succ]
+      have hsq : 1 ≤ (encodeBTn n (fullBTn n d) + 1) ^ 2 := by
+        have h1 : 1 ≤ encodeBTn n (fullBTn n d) + 1 :=
+          Nat.le_add_left 1 _
+        have := Nat.pow_le_pow_left h1 2
+        simpa using this
+      omega
+
+private lemma natPair_le_pair {a b a' b' : ℕ}
+    (ha : a ≤ a') (hb : b ≤ b') :
+    Nat.pair a b ≤ Nat.pair a' b' := by
+  by_cases h1 : a = a'
+  · subst h1
+    rcases lt_or_eq_of_le hb with hb | rfl
+    · exact le_of_lt (Nat.pair_lt_pair_right a hb)
+    · rfl
+  · have ha' : a < a' := lt_of_le_of_ne ha h1
+    by_cases h2 : b = b'
+    · subst h2
+      exact le_of_lt (Nat.pair_lt_pair_left b ha')
+    · have hb' : b < b' := lt_of_le_of_ne hb h2
+      exact le_of_lt (lt_trans
+        (Nat.pair_lt_pair_left b ha')
+        (Nat.pair_lt_pair_right a' hb'))
+
+private lemma pair_le_pair_self_iff {a b M : ℕ} :
+    Nat.pair a b ≤ Nat.pair M M ↔ a ≤ M ∧ b ≤ M := by
+  constructor
+  · intro h
+    have hMM : Nat.pair M M = M * M + 2 * M :=
+      Nat.pair_self_of_self M
+    have hlb : max a b ^ 2 + min a b ≤ Nat.pair a b :=
+      Nat.max_sq_add_min_le_pair a b
+    have hbound : max a b ^ 2 + min a b ≤ M * M + 2 * M := by
+      rw [← hMM]; exact le_trans hlb h
+    have hmax : max a b ≤ M := by
+      by_contra hgt
+      push_neg at hgt
+      have hge : max a b ≥ M + 1 := hgt
+      have hsq : (M + 1) ^ 2 ≤ max a b ^ 2 :=
+        Nat.pow_le_pow_left hge 2
+      have hexp : (M + 1) ^ 2 = M * M + 2 * M + 1 := by ring
+      have : M * M + 2 * M + 1 ≤ M * M + 2 * M := by
+        calc M * M + 2 * M + 1
+            = (M + 1) ^ 2 := hexp.symm
+          _ ≤ max a b ^ 2 := hsq
+          _ ≤ max a b ^ 2 + min a b := Nat.le_add_right _ _
+          _ ≤ M * M + 2 * M := hbound
+      omega
+    exact ⟨le_trans (le_max_left a b) hmax,
+           le_trans (le_max_right a b) hmax⟩
+  · intro ⟨ha, hb⟩
+    exact natPair_le_pair ha hb
+
+theorem encodeBTn_le_fullBTn_iff_depth_le {n : ℕ}
+    (t : BTα.{0} (Fin (n + 1))) (d : ℕ) :
+    encodeBTn n t ≤ encodeBTn n (fullBTn n d) ↔
+      BTα.depth t ≤ d := by
+  induction d generalizing t with
+  | zero =>
+      rcases BTα.leaf_or_node t with ⟨i, rfl⟩ | ⟨l, r, rfl⟩
+      · simp only [encodeBTn_leaf, fullBTn_zero,
+          BTα.depth_leaf, Nat.le_zero, iff_true]
+        exact Nat.le_of_lt_succ i.isLt
+      · simp only [encodeBTn_node, fullBTn_zero,
+          encodeBTn_leaf, BTα.depth_node]
+        constructor
+        · intro h
+          have hpos : 0 < n + 1 + Nat.pair
+              (encodeBTn n l) (encodeBTn n r) := by omega
+          have hni : n < n + 1 + Nat.pair
+              (encodeBTn n l) (encodeBTn n r) := by omega
+          omega
+        · intro h; omega
+  | succ d ih =>
+      rcases BTα.leaf_or_node t with ⟨i, rfl⟩ | ⟨l, r, rfl⟩
+      · constructor
+        · intro _; simp [BTα.depth_leaf]
+        · intro _
+          rw [encodeBTn_leaf]
+          have hi : i.val ≤ n := Nat.le_of_lt_succ i.isLt
+          have hbase : n ≤ encodeBTn n (fullBTn n (d + 1)) :=
+            n_le_encodeBTn_fullBTn n (d + 1)
+          exact le_trans hi hbase
+      · rw [encodeBTn_node, encodeBTn_fullBTn_succ,
+          BTα.depth_node]
+        constructor
+        · intro h
+          set M := encodeBTn n (fullBTn n d) with hM
+          have hMpair : (M + 1) ^ 2 + n =
+              n + 1 + Nat.pair M M := by
+            rw [Nat.pair_self_of_self]; ring
+          rw [hMpair] at h
+          have hpair :
+              Nat.pair (encodeBTn n l) (encodeBTn n r) ≤
+              Nat.pair M M := by omega
+          rw [pair_le_pair_self_iff] at hpair
+          obtain ⟨hl, hr⟩ := hpair
+          have ihl := (ih l).mp hl
+          have ihr := (ih r).mp hr
+          have : max (BTα.depth l) (BTα.depth r) ≤ d :=
+            max_le ihl ihr
+          omega
+        · intro h
+          have hmax : max (BTα.depth l) (BTα.depth r) ≤ d := by
+            omega
+          have hl : BTα.depth l ≤ d :=
+            le_trans (le_max_left _ _) hmax
+          have hr : BTα.depth r ≤ d :=
+            le_trans (le_max_right _ _) hmax
+          have hle_l := (ih l).mpr hl
+          have hle_r := (ih r).mpr hr
+          set M := encodeBTn n (fullBTn n d) with hM
+          have hpair :
+              Nat.pair (encodeBTn n l) (encodeBTn n r) ≤
+              Nat.pair M M :=
+            natPair_le_pair hle_l hle_r
+          have hexp : Nat.pair M M = M * M + 2 * M :=
+            Nat.pair_self_of_self M
+          have hsq : (M + 1) ^ 2 = M * M + 2 * M + 1 := by ring
+          omega
+
 end GebLean
