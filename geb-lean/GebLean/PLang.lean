@@ -1,3 +1,4 @@
+import GebLean.PLang.BTPair
 import GebLean.PLang.Syntax
 import GebLean.PLang.TermCat
 import GebLean.PLang.CatJudgment
