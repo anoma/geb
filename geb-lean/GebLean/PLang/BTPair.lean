@@ -915,4 +915,47 @@ theorem decodeBT_eq_decodeBTn_zero (k : ℕ) :
   rw [h1] at h2
   exact h2
 
+/-! ## Perfect tree, depth, and depth-ordering theorem -/
+
+/-- Depth of a `BTα` tree.  Leaf has depth 0; node has depth
+1 plus the maximum of its children's depths.
+
+The return type `ℕ` lives in `Type 0`; `BTα.fold` requires both
+`α` and `β` in the same universe, so the universe is fixed to 0
+here. -/
+def BTα.depth {α : Type} : BTα.{0} α → ℕ :=
+  BTα.fold (fun _ => 0) (fun dl dr => 1 + max dl dr)
+
+@[simp] theorem BTα.depth_leaf {α : Type} (a : α) :
+    BTα.depth (BTα.leaf a) = 0 := by
+  simp [BTα.depth]
+
+@[simp] theorem BTα.depth_node {α : Type} (l r : BTα.{0} α) :
+    BTα.depth (BTα.node l r) =
+      1 + max (BTα.depth l) (BTα.depth r) := by
+  simp [BTα.depth]
+
+/-- Perfect labeled binary tree of depth `d` over `Fin (n+1)`,
+with all leaves labeled `n` (the maximum-code leaf). -/
+def fullBTn (n : ℕ) : ℕ → BTα.{0} (Fin (n + 1))
+  | 0     => BTα.leaf ⟨n, Nat.lt_succ_self n⟩
+  | d + 1 => BTα.node (fullBTn n d) (fullBTn n d)
+
+@[simp] theorem fullBTn_zero (n : ℕ) :
+    fullBTn n 0 = BTα.leaf ⟨n, Nat.lt_succ_self n⟩ := rfl
+
+@[simp] theorem fullBTn_succ (n d : ℕ) :
+    fullBTn n (d + 1) =
+      BTα.node (fullBTn n d) (fullBTn n d) := rfl
+
+/-- Perfect unlabeled binary tree of depth `d`. -/
+def fullBT : ℕ → BT.{0}
+  | 0     => BT.leaf
+  | d + 1 => BT.node (fullBT d) (fullBT d)
+
+@[simp] theorem fullBT_zero : fullBT 0 = BT.leaf := rfl
+
+@[simp] theorem fullBT_succ (d : ℕ) :
+    fullBT (d + 1) = BT.node (fullBT d) (fullBT d) := rfl
+
 end GebLean
