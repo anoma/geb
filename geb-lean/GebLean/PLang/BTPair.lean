@@ -267,7 +267,6 @@ theorem encodeBTn_decodeBTn (n : ℕ) (k : ℕ) :
       · rw [decodeBTn_ge n k h]
         rw [encodeBTn_node]
         set r := k - (n + 1) with hr
-        have hge : n + 1 ≤ k := Nat.not_lt.mp h
         have hlt : r < k := by omega
         have ihl := ih (Nat.unpair r).1
           (Nat.lt_of_le_of_lt
