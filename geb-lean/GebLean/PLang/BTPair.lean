@@ -256,4 +256,27 @@ theorem decodeBTn_encodeBTn (n : ℕ)
     decodeBTn n (encodeBTn n t) = t :=
   decodeBTn_encodeBTn_gen n t
 
+/-- Encoding inverts decoding on every natural number. -/
+theorem encodeBTn_decodeBTn (n : ℕ) (k : ℕ) :
+    encodeBTn n (decodeBTn n k) = k := by
+  induction k using Nat.strongRecOn with
+  | _ k ih =>
+      by_cases h : k < n + 1
+      · rw [decodeBTn_lt n k h]
+        rw [encodeBTn_leaf]
+      · rw [decodeBTn_ge n k h]
+        rw [encodeBTn_node]
+        set r := k - (n + 1) with hr
+        have hge : n + 1 ≤ k := Nat.not_lt.mp h
+        have hlt : r < k := by omega
+        have ihl := ih (Nat.unpair r).1
+          (Nat.lt_of_le_of_lt
+            (Nat.unpair_left_le _) hlt)
+        have ihr := ih (Nat.unpair r).2
+          (Nat.lt_of_le_of_lt
+            (Nat.unpair_right_le _) hlt)
+        rw [ihl, ihr]
+        rw [Nat.pair_unpair]
+        omega
+
 end GebLean
