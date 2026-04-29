@@ -1,7 +1,5 @@
 import GebLean.PLang.Syntax
 import GebLean.LawvereBT
-import Mathlib.Data.Nat.Pairing
-import Mathlib.Logic.Equiv.Defs
 
 /-!
 # Bijection between Finite-Alphabet Binary Trees and ℕ
@@ -29,9 +27,16 @@ def BTα.carrier (α : Type u) : Over PUnit.{u + 1} :=
   Over.mk (fun _ : α => PUnit.unit)
 
 /-- Labeled binary trees with leaf labels in `α`, as the free
-monad of `polyProdType` at the `α`-fibered carrier.  Specializes
-to the existing `BT` at `α = PUnit` (modulo a propositional
-carrier-equality bridge). -/
+monad of `polyProdType` at the `α`-fibered carrier.
+
+`BTα PUnit` and the existing `BT` (defined in
+`GebLean.LawvereBT`) share the same host `PolyFreeM
+… polyProdType PUnit.unit` but differ in their `Over PUnit`
+carriers: `Over.mk (fun _ : PUnit => PUnit.unit)` versus
+`Over.mk (@id PUnit)`.  These carriers are propositionally
+but not definitionally equal; an equivalence
+`equivBTαPUnitBT : BTα PUnit ≃ BT.{0}` is constructed in a
+later section. -/
 abbrev BTα (α : Type u) : Type u :=
   PolyFreeM (BTα.carrier α) polyProdType PUnit.unit
 
