@@ -242,6 +242,84 @@ def BT.fold {α : Type u} (b : α) (s : α → α → α)
     (overTerminal PUnit.{u + 1})
     (fun _ => b) s t
 
+/-- Structural induction principle for `BT.{u}`, factored over
+the underlying `PolyFix` carrier with the index `{x : PUnit}`
+free to permit application at any `PolyFix.mk` node during a
+deeper induction. -/
+private theorem BT.induction_gen
+    {motive : ∀ {x : PUnit.{u + 1}},
+      PolyFreeM (overTerminal PUnit.{u + 1})
+        polyProdType x → Prop}
+    (hleaf : motive BT.leaf)
+    (hnode : ∀ l r : BT.{u},
+      motive l → motive r → motive (BT.node l r))
+    {x : PUnit.{u + 1}}
+    (t : PolyFreeM (overTerminal PUnit.{u + 1})
+      polyProdType x) :
+    motive t := by
+  induction t with
+  | mk y idx children ih =>
+    have hy := PUnit.eq_punit y
+    subst hy
+    match idx with
+    | Sum.inl leafIdx =>
+      have hli :
+          leafIdx = ⟨PUnit.unit, rfl⟩ :=
+        Subtype.ext (PUnit.eq_punit _)
+      subst hli
+      have hself :
+          PolyFix.mk PUnit.unit
+            (show polyBetweenIndex PUnit PUnit
+              (polyTranslate
+                (overTerminal PUnit.{u + 1})
+                polyProdType) PUnit.unit from
+              Sum.inl ⟨PUnit.unit, rfl⟩)
+            children =
+          BT.leaf := by
+        unfold BT.leaf polyFreeMPure
+        congr 1
+        funext e
+        exact PEmpty.elim e
+      rw [hself]
+      exact hleaf
+    | Sum.inr nodeIdx =>
+      have hni := PUnit.eq_punit nodeIdx
+      subst hni
+      have hself :
+          PolyFix.mk PUnit.unit
+            (show polyBetweenIndex PUnit PUnit
+              (polyTranslate
+                (overTerminal PUnit.{u + 1})
+                polyProdType) PUnit.unit from
+              Sum.inr PUnit.unit)
+            children =
+          BT.node (children (Sum.inl PUnit.unit))
+            (children (Sum.inr PUnit.unit)) := by
+        unfold BT.node polyProdFreeMNode
+          polyFreeMStrFamily
+        congr 1
+        funext e
+        match e with
+        | Sum.inl _ => rfl
+        | Sum.inr _ => rfl
+      rw [hself]
+      exact hnode _ _
+        (ih (Sum.inl PUnit.unit))
+        (ih (Sum.inr PUnit.unit))
+
+/-- Structural induction principle for `BT.{u}`: to prove a
+predicate on every tree, prove it for the leaf and prove it
+preserved by node-formation given the inductive hypotheses on
+the two subtrees. -/
+theorem BT.induction
+    {motive : BT.{u} → Prop}
+    (hleaf : motive BT.leaf)
+    (hnode : ∀ l r : BT.{u},
+      motive l → motive r → motive (BT.node l r))
+    (t : BT.{u}) : motive t :=
+  BT.induction_gen (motive := fun {_} t => motive t)
+    hleaf hnode t
+
 /-! ## Morphism polynomial: components
 
 The morphism type `BTMor1 n` is the initial algebra of a
