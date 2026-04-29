@@ -27,6 +27,9 @@ universe u
 def BTα.carrier (α : Type u) : Over PUnit.{u + 1} :=
   Over.mk (fun _ : α => PUnit.unit)
 
+@[simp] theorem BTα.carrier_hom {α : Type u} (a : α) :
+    (BTα.carrier α).hom a = PUnit.unit := rfl
+
 /-- Labeled binary trees with leaf labels in `α`, as the free
 monad of `polyProdType` at the `α`-fibered carrier.
 
@@ -192,10 +195,9 @@ private theorem decodeBTn_encodeBTn_gen
         funext e
         exact PEmpty.elim e
       rw [hleaf]
-      change
-        decodeBTn n
-          (encodeBTn n (BTα.leaf leafIdx.val)) =
-        BTα.leaf leafIdx.val
+      change decodeBTn n (encodeBTn n
+          (BTα.leaf (leafIdx.val : Fin (n + 1)))) =
+        BTα.leaf (leafIdx.val : Fin (n + 1))
       rw [encodeBTn_leaf,
         decodeBTn_lt _ _ leafIdx.val.isLt]
       congr 1
