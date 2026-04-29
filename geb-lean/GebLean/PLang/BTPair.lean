@@ -535,4 +535,12 @@ def equivBTαPUnitBT : BTα.{0} PUnit ≃ BT.{0} where
   right_inv := fun t =>
     equivBTαPUnitBT_right_inv_gen t
 
+/-- Bijection between `BTα (Fin (n+1))` and the unlabeled `BT.{0}`.
+Composes the alphabet shift `Fin (n+1) → Fin 1`, the relabeling
+`Fin 1 ≃ PUnit`, and the carrier bridge. -/
+def equivBTnBT (n : ℕ) : BTα.{0} (Fin (n + 1)) ≃ BT.{0} :=
+  ((equivBTnBT1 n).trans
+    (BTα.equivOfEquiv (Equiv.equivPUnit (Fin 1)))).trans
+      equivBTαPUnitBT
+
 end GebLean
