@@ -52,4 +52,29 @@ the BTO at the `α`-fibered carrier, parametric analogue of
 def BTα.node {α : Type u} (l r : BTα α) : BTα α :=
   polyProdFreeMNode (BTα.carrier α) l r
 
+/-- Catamorphism: fold a `BTα α` to `β` given a leaf and node
+action.  Built on `polyProdFreeMFoldAt`. -/
+def BTα.fold {α β : Type u}
+    (onLeaf : α → β) (onNode : β → β → β) (t : BTα α) : β :=
+  polyProdFreeMFoldAt (BTα.carrier α)
+    (onLeaf := fun {_ : PUnit.{u + 1}} v => onLeaf v.val)
+    (onNode := onNode) t
+
+@[simp] theorem BTα.fold_leaf {α β : Type u}
+    (onLeaf : α → β) (onNode : β → β → β) (a : α) :
+    BTα.fold onLeaf onNode (BTα.leaf a) = onLeaf a := by
+  unfold BTα.fold BTα.leaf
+    polyProdFreeMFoldAt
+    polyFreeMapAt
+  simp only [polyFreeM_pure_bind]
+  unfold polyFreeMPure polyFreeCounitFoldAt
+  rfl
+
+@[simp] theorem BTα.fold_node {α β : Type u}
+    (onLeaf : α → β) (onNode : β → β → β) (l r : BTα α) :
+    BTα.fold onLeaf onNode (BTα.node l r) =
+      onNode (BTα.fold onLeaf onNode l)
+        (BTα.fold onLeaf onNode r) := by
+  rfl
+
 end GebLean
