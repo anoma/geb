@@ -40,11 +40,15 @@ later section. -/
 abbrev BTα (α : Type u) : Type u :=
   PolyFreeM (BTα.carrier α) polyProdType PUnit.unit
 
-/-- Leaf with label `a : α`. -/
+/-- Leaf with label `a : α` (the unit of the free monad,
+generalized from the unit-labeled `BT.leaf` to a labeled
+alphabet).  Constructed via `polyFreeMPure`. -/
 def BTα.leaf {α : Type u} (a : α) : BTα α :=
   polyFreeMPure (BTα.carrier α) polyProdType ⟨a, rfl⟩
 
-/-- Branching node from two subtrees. -/
+/-- Branching node from two subtrees (the binary operation of
+the BTO at the `α`-fibered carrier, parametric analogue of
+`BT.node`).  Constructed via `polyProdFreeMNode`. -/
 def BTα.node {α : Type u} (l r : BTα α) : BTα α :=
   polyProdFreeMNode (BTα.carrier α) l r
 
