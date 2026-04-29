@@ -1,5 +1,6 @@
 import GebLean.PLang.Syntax
 import GebLean.LawvereBT
+import GebLean.LawvereBTInterp
 import Mathlib.Data.Nat.Pairing
 
 /-!
@@ -311,6 +312,7 @@ private theorem BTα.equivOfEquiv_left_inv_gen
     subst hy
     match idx with
     | Sum.inl leafIdx =>
+      let a : α := leafIdx.val
       have hleaf :
           PolyFix.mk PUnit.unit
             (show polyBetweenIndex PUnit PUnit
@@ -318,13 +320,13 @@ private theorem BTα.equivOfEquiv_left_inv_gen
                 polyProdType) PUnit.unit from
               Sum.inl leafIdx)
             children =
-          BTα.leaf leafIdx.val := by
+          BTα.leaf a := by
         unfold BTα.leaf polyFreeMPure
         congr 1
         funext e
         exact PEmpty.elim e
-      rw [hleaf]
-      simp [BTα.fold_leaf, e.left_inv]
+      rw [hleaf, BTα.fold_leaf, BTα.fold_leaf,
+        Equiv.symm_apply_apply]
     | Sum.inr nodeIdx =>
       have hni := PUnit.eq_punit nodeIdx
       subst hni
@@ -345,7 +347,7 @@ private theorem BTα.equivOfEquiv_left_inv_gen
         | Sum.inl _ => rfl
         | Sum.inr _ => rfl
       rw [hnode]
-      simp [BTα.fold_node,
+      simp only [BTα.fold_node,
         ih (Sum.inl PUnit.unit),
         ih (Sum.inr PUnit.unit)]
 
@@ -361,6 +363,7 @@ private theorem BTα.equivOfEquiv_right_inv_gen
     subst hy
     match idx with
     | Sum.inl leafIdx =>
+      let b : β := leafIdx.val
       have hleaf :
           PolyFix.mk PUnit.unit
             (show polyBetweenIndex PUnit PUnit
@@ -368,13 +371,13 @@ private theorem BTα.equivOfEquiv_right_inv_gen
                 polyProdType) PUnit.unit from
               Sum.inl leafIdx)
             children =
-          BTα.leaf leafIdx.val := by
+          BTα.leaf b := by
         unfold BTα.leaf polyFreeMPure
         congr 1
         funext e
         exact PEmpty.elim e
-      rw [hleaf]
-      simp [BTα.fold_leaf, e.right_inv]
+      rw [hleaf, BTα.fold_leaf, BTα.fold_leaf,
+        Equiv.apply_symm_apply]
     | Sum.inr nodeIdx =>
       have hni := PUnit.eq_punit nodeIdx
       subst hni
@@ -412,5 +415,124 @@ def BTα.equivOfEquiv {α β : Type u} (e : α ≃ β) :
     BTα.equivOfEquiv_left_inv_gen e t
   right_inv := fun t =>
     BTα.equivOfEquiv_right_inv_gen e t
+
+private theorem equivBTαPUnitBT_left_inv_gen
+    {x : PUnit.{1}}
+    (t : PolyFreeM (BTα.carrier PUnit)
+      polyProdType x) :
+    BT.fold (BTα.leaf PUnit.unit) BTα.node
+      (BTα.fold (fun _ => BT.leaf) BT.node t) =
+    t := by
+  induction t with
+  | mk y idx children ih =>
+    have hy := PUnit.eq_punit y
+    subst hy
+    match idx with
+    | Sum.inl leafIdx =>
+      let a : PUnit := PUnit.unit
+      have hleaf :
+          PolyFix.mk PUnit.unit
+            (show polyBetweenIndex PUnit PUnit
+              (polyTranslate (BTα.carrier PUnit)
+                polyProdType) PUnit.unit from
+              Sum.inl leafIdx)
+            children =
+          BTα.leaf a := by
+        unfold BTα.leaf polyFreeMPure
+        congr 1
+        funext e
+        exact PEmpty.elim e
+      rw [hleaf, BTα.fold_leaf, BT.fold_leaf]
+    | Sum.inr nodeIdx =>
+      have hni := PUnit.eq_punit nodeIdx
+      subst hni
+      have hnode :
+          PolyFix.mk PUnit.unit
+            (show polyBetweenIndex PUnit PUnit
+              (polyTranslate (BTα.carrier PUnit)
+                polyProdType) PUnit.unit from
+              Sum.inr PUnit.unit)
+            children =
+          BTα.node (children (Sum.inl PUnit.unit))
+            (children (Sum.inr PUnit.unit)) := by
+        unfold BTα.node polyProdFreeMNode
+          polyFreeMStrFamily
+        congr 1
+        funext e
+        match e with
+        | Sum.inl _ => rfl
+        | Sum.inr _ => rfl
+      rw [hnode]
+      simp [BTα.fold_node, BT.fold_node,
+        ih (Sum.inl PUnit.unit),
+        ih (Sum.inr PUnit.unit)]
+
+private theorem equivBTαPUnitBT_right_inv_gen
+    {x : PUnit.{1}}
+    (t : PolyFreeM (overTerminal PUnit.{1})
+      polyProdType x) :
+    BTα.fold (fun _ => BT.leaf) BT.node
+      (BT.fold (BTα.leaf PUnit.unit) BTα.node t) =
+    t := by
+  induction t with
+  | mk y idx children ih =>
+    have hy := PUnit.eq_punit y
+    subst hy
+    match idx with
+    | Sum.inl leafIdx =>
+      have hli :
+          leafIdx = ⟨PUnit.unit, rfl⟩ :=
+        Subtype.ext (PUnit.eq_punit _)
+      subst hli
+      have hleaf :
+          PolyFix.mk PUnit.unit
+            (show polyBetweenIndex PUnit PUnit
+              (polyTranslate (overTerminal PUnit.{1})
+                polyProdType) PUnit.unit from
+              Sum.inl ⟨PUnit.unit, rfl⟩)
+            children =
+          BT.leaf := by
+        unfold BT.leaf polyFreeMPure
+        congr 1
+        funext e
+        exact PEmpty.elim e
+      rw [hleaf]
+      simp [BT.fold_leaf, BTα.fold_leaf]
+    | Sum.inr nodeIdx =>
+      have hni := PUnit.eq_punit nodeIdx
+      subst hni
+      have hnode :
+          PolyFix.mk PUnit.unit
+            (show polyBetweenIndex PUnit PUnit
+              (polyTranslate (overTerminal PUnit.{1})
+                polyProdType) PUnit.unit from
+              Sum.inr PUnit.unit)
+            children =
+          BT.node (children (Sum.inl PUnit.unit))
+            (children (Sum.inr PUnit.unit)) := by
+        unfold BT.node polyProdFreeMNode
+          polyFreeMStrFamily
+        congr 1
+        funext e
+        match e with
+        | Sum.inl _ => rfl
+        | Sum.inr _ => rfl
+      rw [hnode]
+      simp [BT.fold_node, BTα.fold_node,
+        ih (Sum.inl PUnit.unit),
+        ih (Sum.inr PUnit.unit)]
+
+/-- The bridge `BTα PUnit ≃ BT.{0}`.  Both sides are free monads
+of `polyProdType` at `PUnit.unit`, but `BTα.carrier PUnit` and
+`overTerminal PUnit` differ propositionally (PUnit η).  We fold
+through `BT.leaf`/`BT.node` and `BTα.leaf PUnit.unit`/`BTα.node`
+in either direction. -/
+def equivBTαPUnitBT : BTα.{0} PUnit ≃ BT.{0} where
+  toFun  := BTα.fold (fun _ => BT.leaf) BT.node
+  invFun := BT.fold (BTα.leaf PUnit.unit) BTα.node
+  left_inv := fun t =>
+    equivBTαPUnitBT_left_inv_gen t
+  right_inv := fun t =>
+    equivBTαPUnitBT_right_inv_gen t
 
 end GebLean
