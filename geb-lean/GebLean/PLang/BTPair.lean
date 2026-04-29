@@ -655,4 +655,264 @@ instance : Encodable BT.{0} where
   decode n := some (decodeBT n)
   encodek bt := by simp [decodeBT_encodeBT]
 
+/-! ## Connecting lemmas: unlabeled `encodeBT`/`decodeBT` agree
+with `encodeBTn 0` / `decodeBTn 0` modulo the bridge `equivBTnBT 0`. -/
+
+private theorem encodeBT_equivBTαPUnitBT_gen
+    {x : PUnit.{1}}
+    (u : PolyFreeM (BTα.carrier PUnit)
+      polyProdType x) :
+    encodeBT (BTα.fold (fun _ : PUnit => BT.leaf)
+        BT.node u) =
+      BTα.fold (fun _ : PUnit => 0)
+        (fun el er => Nat.pair el er + 1) u := by
+  induction u with
+  | mk y idx children ih =>
+    have hy := PUnit.eq_punit y
+    subst hy
+    match idx with
+    | Sum.inl leafIdx =>
+      have hleaf :
+          PolyFix.mk PUnit.unit
+            (show polyBetweenIndex PUnit PUnit
+              (polyTranslate (BTα.carrier PUnit)
+                polyProdType) PUnit.unit from
+              Sum.inl leafIdx)
+            children =
+          BTα.leaf leafIdx.val := by
+        unfold BTα.leaf polyFreeMPure
+        congr 1
+        funext e
+        exact PEmpty.elim e
+      rw [hleaf]
+      change encodeBT BT.leaf = (0 : ℕ)
+      rfl
+    | Sum.inr nodeIdx =>
+      have hni := PUnit.eq_punit nodeIdx
+      subst hni
+      have hnode :
+          PolyFix.mk PUnit.unit
+            (show polyBetweenIndex PUnit PUnit
+              (polyTranslate (BTα.carrier PUnit)
+                polyProdType) PUnit.unit from
+              Sum.inr PUnit.unit)
+            children =
+          BTα.node (children (Sum.inl PUnit.unit))
+            (children (Sum.inr PUnit.unit)) := by
+        unfold BTα.node polyProdFreeMNode
+          polyFreeMStrFamily
+        congr 1
+        funext e
+        match e with
+        | Sum.inl _ => rfl
+        | Sum.inr _ => rfl
+      rw [hnode]
+      have ihL := ih (Sum.inl PUnit.unit)
+      have ihR := ih (Sum.inr PUnit.unit)
+      change encodeBT (BT.node
+          (BTα.fold (fun _ : PUnit => BT.leaf) BT.node
+            (children (Sum.inl PUnit.unit)))
+          (BTα.fold (fun _ : PUnit => BT.leaf) BT.node
+            (children (Sum.inr PUnit.unit)))) =
+        Nat.pair
+          (BTα.fold (fun _ : PUnit => 0)
+            (fun el er => Nat.pair el er + 1)
+            (children (Sum.inl PUnit.unit)))
+          (BTα.fold (fun _ : PUnit => 0)
+            (fun el er => Nat.pair el er + 1)
+            (children (Sum.inr PUnit.unit))) + 1
+      change Nat.pair
+          (encodeBT (BTα.fold (fun _ : PUnit => BT.leaf)
+            BT.node (children (Sum.inl PUnit.unit))))
+          (encodeBT (BTα.fold (fun _ : PUnit => BT.leaf)
+            BT.node (children (Sum.inr PUnit.unit)))) +
+          1 = _
+      rw [ihL, ihR]
+
+private theorem encodeBT_equivOfEquiv_gen
+    {α : Type} (e : α ≃ PUnit) {x : PUnit.{1}}
+    (u : PolyFreeM (BTα.carrier α) polyProdType x) :
+    BTα.fold (fun _ : PUnit => 0)
+        (fun el er => Nat.pair el er + 1)
+        (BTα.fold
+          (fun a => BTα.leaf (e a)) BTα.node u) =
+      BTα.fold (fun _ : α => 0)
+        (fun el er => Nat.pair el er + 1) u := by
+  induction u with
+  | mk y idx children ih =>
+    have hy := PUnit.eq_punit y
+    subst hy
+    match idx with
+    | Sum.inl leafIdx =>
+      have hleaf :
+          PolyFix.mk PUnit.unit
+            (show polyBetweenIndex PUnit PUnit
+              (polyTranslate (BTα.carrier α)
+                polyProdType) PUnit.unit from
+              Sum.inl leafIdx)
+            children =
+          BTα.leaf leafIdx.val := by
+        unfold BTα.leaf polyFreeMPure
+        congr 1
+        funext e'
+        exact PEmpty.elim e'
+      rw [hleaf]
+      rfl
+    | Sum.inr nodeIdx =>
+      have hni := PUnit.eq_punit nodeIdx
+      subst hni
+      have hnode :
+          PolyFix.mk PUnit.unit
+            (show polyBetweenIndex PUnit PUnit
+              (polyTranslate (BTα.carrier α)
+                polyProdType) PUnit.unit from
+              Sum.inr PUnit.unit)
+            children =
+          BTα.node (children (Sum.inl PUnit.unit))
+            (children (Sum.inr PUnit.unit)) := by
+        unfold BTα.node polyProdFreeMNode
+          polyFreeMStrFamily
+        congr 1
+        funext e'
+        match e' with
+        | Sum.inl _ => rfl
+        | Sum.inr _ => rfl
+      rw [hnode]
+      change Nat.pair
+          (BTα.fold (fun _ : PUnit => 0)
+            (fun el er => Nat.pair el er + 1)
+            (BTα.fold (fun a => BTα.leaf (e a)) BTα.node
+              (children (Sum.inl PUnit.unit))))
+          (BTα.fold (fun _ : PUnit => 0)
+            (fun el er => Nat.pair el er + 1)
+            (BTα.fold (fun a => BTα.leaf (e a)) BTα.node
+              (children (Sum.inr PUnit.unit)))) + 1 =
+        Nat.pair
+          (BTα.fold (fun _ : α => 0)
+            (fun el er => Nat.pair el er + 1)
+            (children (Sum.inl PUnit.unit)))
+          (BTα.fold (fun _ : α => 0)
+            (fun el er => Nat.pair el er + 1)
+            (children (Sum.inr PUnit.unit))) + 1
+      rw [ih (Sum.inl PUnit.unit), ih (Sum.inr PUnit.unit)]
+
+/-- The fold computation appearing in `encodeBT ∘ equivBTαPUnitBT
+∘ BTα.equivOfEquiv` over `BTα (Fin 1)` matches `encodeBTn 0`. -/
+private theorem fold_eq_encodeBTn_zero
+    {x : PUnit.{1}}
+    (u : PolyFreeM (BTα.carrier (Fin 1))
+      polyProdType x) :
+    BTα.fold (fun _ : Fin 1 => 0)
+        (fun el er => Nat.pair el er + 1) u =
+      encodeBTn 0 u := by
+  induction u with
+  | mk y idx children ih =>
+    have hy := PUnit.eq_punit y
+    subst hy
+    match idx with
+    | Sum.inl leafIdx =>
+      have hleaf :
+          PolyFix.mk PUnit.unit
+            (show polyBetweenIndex PUnit PUnit
+              (polyTranslate (BTα.carrier (Fin 1))
+                polyProdType) PUnit.unit from
+              Sum.inl leafIdx)
+            children =
+          BTα.leaf leafIdx.val := by
+        unfold BTα.leaf polyFreeMPure
+        congr 1
+        funext e'
+        exact PEmpty.elim e'
+      rw [hleaf]
+      change BTα.fold (fun _ : Fin 1 => 0)
+          (fun el er => Nat.pair el er + 1)
+          (BTα.leaf (leafIdx.val : Fin 1)) =
+        encodeBTn 0 (BTα.leaf (leafIdx.val : Fin 1))
+      rw [BTα.fold_leaf, encodeBTn_leaf]
+      have hi : (leafIdx.val : Fin 1) = ⟨0, by omega⟩ := by
+        apply Fin.eq_of_val_eq
+        have := (leafIdx.val : Fin 1).isLt
+        simp
+      rw [hi]
+    | Sum.inr nodeIdx =>
+      have hni := PUnit.eq_punit nodeIdx
+      subst hni
+      have hnode :
+          PolyFix.mk PUnit.unit
+            (show polyBetweenIndex PUnit PUnit
+              (polyTranslate (BTα.carrier (Fin 1))
+                polyProdType) PUnit.unit from
+              Sum.inr PUnit.unit)
+            children =
+          BTα.node (children (Sum.inl PUnit.unit))
+            (children (Sum.inr PUnit.unit)) := by
+        unfold BTα.node polyProdFreeMNode
+          polyFreeMStrFamily
+        congr 1
+        funext e'
+        match e' with
+        | Sum.inl _ => rfl
+        | Sum.inr _ => rfl
+      rw [hnode]
+      change Nat.pair (BTα.fold (fun _ : Fin 1 => 0)
+          (fun el er => Nat.pair el er + 1)
+          (children (Sum.inl PUnit.unit)))
+        (BTα.fold (fun _ : Fin 1 => 0)
+          (fun el er => Nat.pair el er + 1)
+          (children (Sum.inr PUnit.unit))) + 1 =
+        encodeBTn 0 (BTα.node
+          (children (Sum.inl PUnit.unit))
+          (children (Sum.inr PUnit.unit)))
+      rw [encodeBTn_node]
+      rw [ih (Sum.inl PUnit.unit), ih (Sum.inr PUnit.unit)]
+      omega
+
+/-- The forward direction `equivBTnBT n` sends a labeled tree to its
+unlabeled image: at any `n`, encoding the unlabeled image equals the
+generic encoding `encodeBTn n`. -/
+private lemma encodeBT_equivBTnBT (n : ℕ)
+    (s : BTα.{0} (Fin (n + 1))) :
+    encodeBT (equivBTnBT n s) = encodeBTn n s := by
+  unfold equivBTnBT
+  change encodeBT
+      (BTα.fold (fun _ : PUnit => BT.leaf) BT.node
+        (BTα.fold
+          (fun a : Fin 1 =>
+            BTα.leaf (Equiv.equivPUnit (Fin 1) a))
+          BTα.node
+          (equivBTnBT1 n s))) = encodeBTn n s
+  rw [encodeBT_equivBTαPUnitBT_gen]
+  rw [encodeBT_equivOfEquiv_gen]
+  rw [fold_eq_encodeBTn_zero (equivBTnBT1 n s)]
+  unfold equivBTnBT1 equivBTnBTm
+  change (equivBTnNat 0)
+      ((equivBTnNat 0).symm ((equivBTnNat n) s)) =
+        encodeBTn n s
+  rw [Equiv.apply_symm_apply]
+  rfl
+
+/-- The unlabeled `encodeBT` agrees with `encodeBTn 0` after the
+bridge `BTα (Fin 1) ↔ BT.{0}`. -/
+theorem encodeBT_eq_encodeBTn_zero (t : BT.{0}) :
+    encodeBT t = encodeBTn 0 ((equivBTnBT 0).symm t) := by
+  have := encodeBT_equivBTnBT 0 ((equivBTnBT 0).symm t)
+  rw [Equiv.apply_symm_apply] at this
+  exact this
+
+/-- The unlabeled `decodeBT` agrees with `decodeBTn 0` after the
+bridge in the opposite direction. -/
+theorem decodeBT_eq_decodeBTn_zero (k : ℕ) :
+    decodeBT k = (equivBTnBT 0) (decodeBTn 0 k) := by
+  have h1 :
+      encodeBT (equivBTnBT 0 (decodeBTn 0 k)) = k := by
+    rw [encodeBT_equivBTnBT 0 (decodeBTn 0 k)]
+    exact encodeBTn_decodeBTn 0 k
+  have h2 :
+      decodeBT (encodeBT
+        (equivBTnBT 0 (decodeBTn 0 k))) =
+        equivBTnBT 0 (decodeBTn 0 k) :=
+    decodeBT_encodeBT _
+  rw [h1] at h2
+  exact h2
+
 end GebLean
