@@ -287,4 +287,16 @@ def equivBTnNat (n : ℕ) : BTα.{0} (Fin (n + 1)) ≃ ℕ where
   left_inv  := decodeBTn_encodeBTn n
   right_inv := encodeBTn_decodeBTn n
 
+/-- Bijection between trees over two finite alphabets, factored
+through `ℕ`. -/
+def equivBTnBTm (n m : ℕ) :
+    BTα.{0} (Fin (n + 1)) ≃ BTα.{0} (Fin (m + 1)) :=
+  (equivBTnNat n).trans (equivBTnNat m).symm
+
+/-- Specialization at `m = 0`: trees over `Fin (n+1)` are in
+bijection with trees over `Fin 1`. -/
+def equivBTnBT1 (n : ℕ) :
+    BTα.{0} (Fin (n + 1)) ≃ BTα.{0} (Fin 1) :=
+  equivBTnBTm n 0
+
 end GebLean
