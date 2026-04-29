@@ -59,4 +59,22 @@ one). -/
 #guard encodeBTn 1 (fullBTn 1 1) = 2 + Nat.pair 1 1
 #guard encodeBTn 0 (fullBTn 0 3) = 25
 
+/-! ## Depth-ordering smoke test
+
+`encodeBTn_lt_of_depth_lt` is the proper guarantee; this is
+constructive evidence at small sizes. -/
+
+#guard
+  encodeBT (BT.node BT.leaf BT.leaf) <
+    encodeBT (BT.node (BT.node BT.leaf BT.leaf) BT.leaf)
+
+#guard
+  encodeBT BT.leaf <
+    encodeBT (BT.node BT.leaf BT.leaf)
+
+/-! ## Depth-of-fullBT confirmation -/
+
+#guard BT.depth (fullBT 0) = 0
+#guard BT.depth (fullBT 3) = 3
+
 end GebLeanTests.PLang.BTPair
