@@ -408,8 +408,11 @@ structure KSimMor (d : ℕ) (n m : ℕ) where
   depth_witness : KMorNQuo.atDepth d hom
 
 /-- The depth-d K^sim category has the same objects as
-`LawvereKSimCat` but restricts to KSimMor d morphisms. -/
-def LawvereKSimDCat (d : ℕ) := ℕ
+`LawvereKSimCat` but restricts to KSimMor d morphisms.
+The depth `d` is a phantom-type parameter so that
+`Category` instances are distinguishable per depth via
+typeclass resolution. -/
+def LawvereKSimDCat (_d : ℕ) := ℕ
 
 instance (d n : ℕ) : OfNat (LawvereKSimDCat d) n :=
   ⟨(n : ℕ)⟩
