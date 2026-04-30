@@ -1161,13 +1161,35 @@ the value is at least 2 regardless of the input family. -/
 private theorem kSimSzudzikPackList_towerHeight_ge_two :
     ∀ {a k : ℕ} (t : Fin (k + 1) → ERMor1 a),
       2 ≤ (kSimSzudzikPackList t).towerHeight
-  | _, 0,     _ => by
+  | a, 0,     t => by
       unfold kSimSzudzikPackList
       simp only [ERMor1.towerHeight]
+      let F : Fin 1 → ℕ := fun _ ↦
+        ERMor1.natPair.towerHeight +
+          Finset.univ.sup (fun i : Fin 2 ↦
+            (match i with
+              | ⟨0, _⟩ => t 0
+              | ⟨1, _⟩ => ERMor1.zeroN a).towerHeight) + 1
+      have hF0 : F 0 ≥ 1 := Nat.le_add_left _ _
+      have hsup : F 0 ≤ Finset.univ.sup F :=
+        Finset.le_sup (Finset.mem_univ (0 : Fin 1))
+      change 2 ≤ 0 + Finset.univ.sup F + 1
       omega
-  | _, _ + 1, _ => by
+  | a, k + 1, t => by
       unfold kSimSzudzikPackList
       simp only [ERMor1.towerHeight]
+      let F : Fin 1 → ℕ := fun _ ↦
+        ERMor1.natPair.towerHeight +
+          Finset.univ.sup (fun i : Fin 2 ↦
+            (match i with
+              | ⟨0, _⟩ => t 0
+              | ⟨1, _⟩ =>
+                  kSimSzudzikPackList (a := a) (k := k)
+                    (fun j => t j.succ)).towerHeight) + 1
+      have hF0 : F 0 ≥ 1 := Nat.le_add_left _ _
+      have hsup : F 0 ≤ Finset.univ.sup F :=
+        Finset.le_sup (Finset.mem_univ (0 : Fin 1))
+      change 2 ≤ 0 + Finset.univ.sup F + 1
       omega
 
 /-- Structural lower bound on `kSimPackedStep`'s tower
