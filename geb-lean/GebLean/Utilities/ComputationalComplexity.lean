@@ -603,4 +603,31 @@ theorem tower_two_le_tower_three_linear (C D X : ℕ) :
   simp only [GebLean.tower_succ, GebLean.tower_zero]
   exact Nat.pow_le_pow_right (by decide) h_inner
 
+/-- Lifting a polynomial bound `(CC * S + KK + 2) ^ E` to a
+height-2 tower whose argument is linear in `S` plus a
+logarithmic correction in `E`.  Direct corollary of
+`tower_succ_pow_bound_strong` after rewriting
+`CC * S + KK + 2 = (CC * S + KK + 1) + 1` and using
+`self_le_tower` to show `CC * S + KK + 1 ≤ tower 2 _`. -/
+theorem pow_le_tower_two_with_shift (CC S KK E : ℕ) :
+    (CC * S + KK + 2) ^ E ≤
+      GebLean.tower 2
+        (CC * S + KK + 1 + Nat.log 2 E + 2) := by
+  set x := CC * S + KK + 1 with hx_def
+  have h_self : x ≤ GebLean.tower 2 x :=
+    GebLean.self_le_tower 2 x
+  have h_base_eq : CC * S + KK + 2 = x + 1 := by
+    rw [hx_def]
+  have h_base_le :
+      x + 1 ≤ GebLean.tower 2 x + 1 := by omega
+  have h_pow_lift :
+      (x + 1) ^ E ≤ (GebLean.tower 2 x + 1) ^ E :=
+    Nat.pow_le_pow_left h_base_le E
+  have h_strong :
+      (GebLean.tower 2 x + 1) ^ E ≤
+        GebLean.tower 2 (x + Nat.log 2 E + 2) :=
+    tower_succ_pow_bound_strong 2 E x (by decide)
+  rw [h_base_eq]
+  exact le_trans h_pow_lift h_strong
+
 end Nat
