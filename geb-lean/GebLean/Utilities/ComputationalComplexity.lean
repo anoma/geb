@@ -247,4 +247,133 @@ theorem seqPack_le_seqPackBound
   exact le_trans h_struct
     (pow_le_pow_right_m_add_two hexp_le)
 
+private theorem succ_le_two_pow_succ (n : ℕ) :
+    n + 1 ≤ 2 ^ (n + 1) := by
+  have h := Nat.lt_two_pow_self (n := n + 1)
+  omega
+
+private theorem self_le_two_pow_self (n : ℕ) : n ≤ 2 ^ n :=
+  GebLean.le_two_pow_self n
+
+private theorem tower_add_le_tower_shift
+    (h x D : ℕ) :
+    GebLean.tower h x + D + 1
+      ≤ GebLean.tower h (x + D + 1) := by
+  induction h with
+  | zero => simp [GebLean.tower_zero]
+  | succ h ih =>
+      change 2 ^ GebLean.tower h x + D + 1
+        ≤ 2 ^ GebLean.tower h (x + D + 1)
+      have hIH := ih
+      have hpow_le :
+          2 ^ (GebLean.tower h x + D + 1)
+            ≤ 2 ^ GebLean.tower h (x + D + 1) :=
+        Nat.pow_le_pow_right (by decide) hIH
+      have hsplit :
+          2 ^ (GebLean.tower h x + D + 1)
+            = 2 ^ GebLean.tower h x * 2 ^ (D + 1) := by
+        have : GebLean.tower h x + D + 1
+            = GebLean.tower h x + (D + 1) := by ring
+        rw [this, pow_add]
+      have hone_le_pow : 1 ≤ 2 ^ GebLean.tower h x :=
+        Nat.one_le_iff_ne_zero.mpr
+          (pow_ne_zero _ (by decide))
+      have h_d_plus_one : D + 1 ≤ 2 ^ (D + 1) - 1 := by
+        have h2 : 2 ^ (D + 1) ≥ D + 2 := by
+          have := Nat.lt_two_pow_self (n := D + 1)
+          omega
+        omega
+      have hbound :
+          2 ^ GebLean.tower h x + D + 1
+            ≤ 2 ^ GebLean.tower h x * 2 ^ (D + 1) := by
+        have hk : 2 ^ (D + 1) ≥ 2 := by
+          have : (2 : ℕ) ^ 1 = 2 := by decide
+          calc (2 : ℕ) = 2 ^ 1 := by decide
+            _ ≤ 2 ^ (D + 1) :=
+                Nat.pow_le_pow_right (by decide) (by omega)
+        have hexpand :
+            2 ^ GebLean.tower h x * 2 ^ (D + 1)
+              = 2 ^ GebLean.tower h x
+                + 2 ^ GebLean.tower h x
+                  * (2 ^ (D + 1) - 1) := by
+          have h_one_le : 1 ≤ 2 ^ (D + 1) := by
+            have := Nat.one_le_iff_ne_zero.mpr
+              (pow_ne_zero (D + 1) (by decide : (2 : ℕ) ≠ 0))
+            exact this
+          have :
+              2 ^ GebLean.tower h x * 2 ^ (D + 1)
+                = 2 ^ GebLean.tower h x * 1
+                  + 2 ^ GebLean.tower h x
+                    * (2 ^ (D + 1) - 1) := by
+            rw [← Nat.mul_add]
+            congr 1
+            omega
+          rw [this, Nat.mul_one]
+        rw [hexpand]
+        have hmul_ge :
+            2 ^ GebLean.tower h x * (2 ^ (D + 1) - 1)
+              ≥ D + 1 := by
+          calc D + 1
+              ≤ 2 ^ (D + 1) - 1 := h_d_plus_one
+            _ = 1 * (2 ^ (D + 1) - 1) := by ring
+            _ ≤ 2 ^ GebLean.tower h x
+                  * (2 ^ (D + 1) - 1) :=
+                Nat.mul_le_mul_right _ hone_le_pow
+        omega
+      calc 2 ^ GebLean.tower h x + D + 1
+          ≤ 2 ^ GebLean.tower h x * 2 ^ (D + 1) := hbound
+        _ = 2 ^ (GebLean.tower h x + D + 1) := hsplit.symm
+        _ ≤ 2 ^ GebLean.tower h (x + D + 1) := hpow_le
+
+/-- Polynomial-of-tower bound: a polynomial of degree `D`
+applied to `tower h x + 1` is dominated by a tower of
+height `h + 2` applied to `x + D + 1`.  Used in the
+inductive step of `polynomial_iter_tower_two_bound`.
+
+The bound shape uses `tower (h + 2)` and shifts the input
+by `D + 1` rather than `Nat.log 2 D + 1`, which gives a
+uniform inequality covering the `h = 0` boundary case
+(where a tighter logarithmic shift fails). -/
+theorem tower_succ_pow_bound (h D x : ℕ) :
+    (GebLean.tower h x + 1)^D ≤
+      GebLean.tower (h + 2) (x + D + 1) := by
+  set T := GebLean.tower h x with hT
+  have hT1 : T + 1 ≤ 2 ^ (T + 1) := succ_le_two_pow_succ T
+  have hpow_le : (T + 1) ^ D ≤ (2 ^ (T + 1)) ^ D :=
+    Nat.pow_le_pow_left hT1 D
+  have hpow_eq : (2 ^ (T + 1)) ^ D = 2 ^ ((T + 1) * D) := by
+    rw [← pow_mul]
+  have hmul_le : (T + 1) * D ≤ 2 ^ (T + 1 + D) := by
+    have h_t_le : T + 1 ≤ 2 ^ (T + 1) := hT1
+    have h_d_le : D ≤ 2 ^ D := self_le_two_pow_self D
+    calc (T + 1) * D
+        ≤ 2 ^ (T + 1) * 2 ^ D :=
+          Nat.mul_le_mul h_t_le h_d_le
+      _ = 2 ^ (T + 1 + D) := by rw [← pow_add]
+  have hexp_eq : T + 1 + D = T + D + 1 := by ring
+  have hmul_le' : (T + 1) * D ≤ 2 ^ (T + D + 1) := by
+    rw [← hexp_eq]; exact hmul_le
+  have h_shift :
+      T + D + 1 ≤ GebLean.tower h (x + D + 1) :=
+    tower_add_le_tower_shift h x D
+  have hexp_le_tower :
+      2 ^ (T + D + 1) ≤ GebLean.tower (h + 1) (x + D + 1) := by
+    change 2 ^ (T + D + 1) ≤ 2 ^ GebLean.tower h (x + D + 1)
+    exact Nat.pow_le_pow_right (by decide) h_shift
+  have h_outer :
+      2 ^ ((T + 1) * D)
+        ≤ 2 ^ GebLean.tower (h + 1) (x + D + 1) := by
+    have h1 : 2 ^ ((T + 1) * D) ≤ 2 ^ (2 ^ (T + D + 1)) :=
+      Nat.pow_le_pow_right (by decide) hmul_le'
+    have h2 :
+        2 ^ (2 ^ (T + D + 1))
+          ≤ 2 ^ GebLean.tower (h + 1) (x + D + 1) :=
+      Nat.pow_le_pow_right (by decide) hexp_le_tower
+    exact le_trans h1 h2
+  calc (T + 1) ^ D
+      ≤ (2 ^ (T + 1)) ^ D := hpow_le
+    _ = 2 ^ ((T + 1) * D) := hpow_eq
+    _ ≤ 2 ^ GebLean.tower (h + 1) (x + D + 1) := h_outer
+    _ = GebLean.tower (h + 2) (x + D + 1) := rfl
+
 end Nat
