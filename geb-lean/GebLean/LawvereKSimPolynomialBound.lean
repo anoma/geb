@@ -18,13 +18,33 @@ The principal results are:
   K^sim functions.
 - `KMor1.level0Shape` — Lemma 1.B from the research doc.
 - `KMor1.linearBound` — Lemma 1.A from the research doc.
-- `kToER_polyBound_of_level_one` — bridge to ER
-  polynomial bounds.
 - `kSimPackedStep_polyBound` /
   `kSimPackedBase_polyBound` — specialized for the
   packed simrec step / base.
 - `kSimTowerBound_dominates_inline` — final dominance
   assembly.
+
+The K^sim → ER polynomial-bound bridge originally
+scoped as `kToER_polyBound_of_level_one` is deferred to
+the call sites in Module C (Tasks 16, 17).  The
+deferral is structural rather than expedient: the
+simrec case of `kToER` produces a term containing
+`ERMor1.boundedRec`, whose value bound is governed by
+its `bound` argument and is not polynomial in the
+inputs without the dominance hypothesis.  That
+hypothesis is precisely what
+`kSimPackedStep_polyBound`,
+`kSimPackedBase_polyBound`, and
+`kSimTowerBound_dominates_inline` build, so the bridge
+is constructed at those call sites for the specific
+ER terms `kSimPackedBase`, `kSimPackedStep` directly,
+using `KMor1.linearBound`'s constants per Lemma 1.A on
+the level-≤-1 K^sim children.  For the atomic, `comp`,
+and `raise` cases the bridge would amount to
+straightforward structural composition of `ofZero`,
+`ofSucc`, `ofProj`, `ofComp`, and recursion through
+`raise`; those constructions are inlined wherever they
+are needed downstream.
 
 See `docs/plans/2026-04-30-er-polynomial-bound-design.md`
 (Module C) and
