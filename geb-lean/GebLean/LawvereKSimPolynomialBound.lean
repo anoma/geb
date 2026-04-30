@@ -1192,6 +1192,44 @@ private theorem kSimSzudzikPackList_towerHeight_ge_two :
       change 2 ≤ 0 + Finset.univ.sup F + 1
       omega
 
+/-- Strengthened structural lower bound on
+`kSimSzudzikPackList`'s tower height: each iteration of the
+right-associated `comp natPair` contributes one additional
+level, so a system of size `k + 1` packs to a term of tower
+height at least `k + 2`. -/
+private theorem kSimSzudzikPackList_towerHeight_ge_succ_k :
+    ∀ {a k : ℕ} (t : Fin (k + 1) → ERMor1 a),
+      k + 2 ≤ (kSimSzudzikPackList t).towerHeight
+  | _, 0,     t => kSimSzudzikPackList_towerHeight_ge_two t
+  | a, k + 1, t => by
+      unfold kSimSzudzikPackList
+      simp only [ERMor1.towerHeight]
+      let G : Fin 2 → ℕ := fun i ↦
+        (match i with
+          | ⟨0, _⟩ => t 0
+          | ⟨1, _⟩ =>
+              kSimSzudzikPackList (a := a) (k := k)
+                (fun j => t j.succ)).towerHeight
+      have hG1 : G ⟨1, by omega⟩ =
+          (kSimSzudzikPackList (a := a) (k := k)
+            (fun j => t j.succ)).towerHeight := rfl
+      have hG_le_sup : G ⟨1, by omega⟩ ≤ Finset.univ.sup G :=
+        Finset.le_sup (Finset.mem_univ _)
+      have hIH := kSimSzudzikPackList_towerHeight_ge_succ_k
+        (a := a) (k := k) (fun j => t j.succ)
+      let F : Fin 1 → ℕ := fun _ ↦
+        ERMor1.natPair.towerHeight +
+          Finset.univ.sup G + 1
+      have hF0_ge : F 0 ≥ k + 3 := by
+        change ERMor1.natPair.towerHeight +
+          Finset.univ.sup G + 1 ≥ k + 3
+        rw [hG1] at hG_le_sup
+        omega
+      have hF0_le_sup : F 0 ≤ Finset.univ.sup F :=
+        Finset.le_sup (Finset.mem_univ (0 : Fin 1))
+      change k + 1 + 2 ≤ 0 + Finset.univ.sup F + 1
+      omega
+
 /-- Structural lower bound on `kSimPackedStep`'s tower
 height. -/
 private theorem kSimPackedStep_towerHeight_ge_two
@@ -1200,5 +1238,15 @@ private theorem kSimPackedStep_towerHeight_ge_two
     2 ≤ (kSimPackedStep g).towerHeight := by
   unfold kSimPackedStep
   exact kSimSzudzikPackList_towerHeight_ge_two _
+
+/-- Strengthened structural lower bound on `kSimPackedStep`'s
+tower height: at system size `k + 1` the packed step term has
+tower height at least `k + 2`. -/
+private theorem kSimPackedStep_towerHeight_ge_succ_k
+    {a k : ℕ}
+    (g : Fin (k + 1) → ERMor1 (a + 1 + (k + 1))) :
+    k + 2 ≤ (kSimPackedStep g).towerHeight := by
+  unfold kSimPackedStep
+  exact kSimSzudzikPackList_towerHeight_ge_succ_k _
 
 end GebLean
