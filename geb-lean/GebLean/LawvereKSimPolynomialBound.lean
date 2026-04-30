@@ -1155,4 +1155,28 @@ private theorem packed_iteration_matches_simrecVec
       intro l _
       exact kToER_interp_level_zero (g_fam l) (h_g l) _
 
+/-- Structural lower bound on `kSimSzudzikPackList`'s
+tower height: the outer `comp succ (comp natPair _)` ensures
+the value is at least 2 regardless of the input family. -/
+private theorem kSimSzudzikPackList_towerHeight_ge_two :
+    ∀ {a k : ℕ} (t : Fin (k + 1) → ERMor1 a),
+      2 ≤ (kSimSzudzikPackList t).towerHeight
+  | _, 0,     _ => by
+      unfold kSimSzudzikPackList
+      simp only [ERMor1.towerHeight]
+      omega
+  | _, _ + 1, _ => by
+      unfold kSimSzudzikPackList
+      simp only [ERMor1.towerHeight]
+      omega
+
+/-- Structural lower bound on `kSimPackedStep`'s tower
+height. -/
+private theorem kSimPackedStep_towerHeight_ge_two
+    {a k : ℕ}
+    (g : Fin (k + 1) → ERMor1 (a + 1 + (k + 1))) :
+    2 ≤ (kSimPackedStep g).towerHeight := by
+  unfold kSimPackedStep
+  exact kSimSzudzikPackList_towerHeight_ge_two _
+
 end GebLean
