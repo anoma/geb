@@ -1,19 +1,15 @@
 import Mathlib.Data.Fin.Basic
-import Mathlib.Data.Nat.Basic
 
 /-!
 # Lawvere theory of the K^sim hierarchy: term language
 
 This module defines `KMor1 : ℕ → Type`, the type family of
-K^sim single-output morphisms (one per arity), together with
-`KMorN`, the multi-output Lawvere-theory wrapper.  The level
-function `KMor1.level` and its `KMorN`-counterpart
-`KMor1.levelN` are also defined here.  Interpretation into
-`ℕ` lives in `LawvereKSimInterp.lean`; the extensional
-quotient in `LawvereKSimQuot.lean`.
-
-See `docs/lawvere-k-sim-hierarchy.md` for the canonical
-mathematical reference and design principles P1 – P10.
+K^sim single-output morphisms representing functions
+`ℕ^n → ℕ`.  See `docs/lawvere-k-sim-hierarchy.md` for the
+canonical mathematical reference and design principles
+P1 – P10.  Companion modules `LawvereKSimInterp.lean` and
+`LawvereKSimQuot.lean` will add the interpretation into ℕ
+and the extensional-equality quotient respectively.
 -/
 
 namespace GebLean
