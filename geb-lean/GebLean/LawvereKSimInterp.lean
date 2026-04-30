@@ -207,4 +207,52 @@ previous vector. -/
                 ⟨idx.val - (a + 1), by omega⟩) :=
   rfl
 
+/-- Interpretation of `KMorN.id`: applying the identity
+morphism to a context returns the context itself. -/
+@[simp] theorem KMorN.interp_id (n : ℕ)
+    (ctx : Fin n → ℕ) :
+    (KMorN.id n).interp ctx = ctx := by
+  funext i
+  simp [KMorN.id, KMorN.interp]
+
+/-- Interpretation of `KMorN.terminal`: the empty
+morphism produces the empty function. -/
+@[simp] theorem KMorN.interp_terminal (n : ℕ)
+    (ctx : Fin n → ℕ) :
+    (KMorN.terminal n).interp ctx = Fin.elim0 := by
+  funext i
+  exact i.elim0
+
+/-- Interpretation of `KMorN.fst`: each output is
+the corresponding element from the first `n`
+components of the context. -/
+@[simp] theorem KMorN.interp_fst {n m : ℕ}
+    (ctx : Fin (n + m) → ℕ) :
+    (KMorN.fst (n := n) (m := m)).interp ctx
+      = fun i => ctx (Fin.castAdd m i) := by
+  funext i
+  simp [KMorN.fst, KMorN.interp]
+
+/-- Interpretation of `KMorN.snd`: each output is
+the corresponding element from the last `m`
+components of the context. -/
+@[simp] theorem KMorN.interp_snd {n m : ℕ}
+    (ctx : Fin (n + m) → ℕ) :
+    (KMorN.snd (n := n) (m := m)).interp ctx
+      = fun i => ctx (Fin.natAdd n i) := by
+  funext i
+  simp [KMorN.snd, KMorN.interp]
+
+/-- Interpretation of `KMorN.comp`: composing `f`
+after `g` first applies `g`'s interpretation to
+the context, then applies `f`'s interpretation. -/
+@[simp] theorem KMorN.interp_comp
+    {n m k : ℕ}
+    (f : KMorN m k) (g : KMorN n m)
+    (ctx : Fin n → ℕ) :
+    (KMorN.comp f g).interp ctx
+      = (f.interp (g.interp ctx)) := by
+  funext i
+  simp [KMorN.comp, KMorN.interp]
+
 end GebLean
