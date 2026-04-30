@@ -338,4 +338,20 @@ theorem kSimSzudzikUnpackAt_packList {a k : ℕ}
     (i := i.val) (h := by rw [hlen]; exact i.isLt)]
   simp
 
+/-- Base-family packer for `simrec` translation: packs
+the family `h : Fin (k + 1) → ERMor1 a` into a single
+`ERMor1 a` whose interp at `ctx` Szudzik-packs the
+component interps. -/
+def kSimPackedBase {a k : ℕ}
+    (h : Fin (k + 1) → ERMor1 a) : ERMor1 a :=
+  kSimSzudzikPackList h
+
+@[simp] theorem kSimPackedBase_interp {a k : ℕ}
+    (h : Fin (k + 1) → ERMor1 a) (ctx : Fin a → ℕ) :
+    (kSimPackedBase h).interp ctx =
+      Nat.seqPack
+        ((List.finRange (k + 1)).map
+          (fun j => (h j).interp ctx)) :=
+  kSimSzudzikPackList_interp h ctx
+
 end GebLean
