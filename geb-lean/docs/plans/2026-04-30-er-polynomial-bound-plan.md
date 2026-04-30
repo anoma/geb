@@ -1435,101 +1435,308 @@ ofComp."
 
 ---
 
-### Task 17: `kSimTowerBound_dominates_inline` (final assembly)
+### Plan amendment (2026-04-30, second): Task 17 → recursive bootstrap
+
+After two attempts at the original Task 17 (one via Module A's
+`polynomial_iter_tower_bound`, one via "direct per-component analysis"),
+both BLOCKED for the same root cause: **the dominance proof for
+level-2 K^sim simrec requires the dominance proof for level-1 simrec,
+which requires the level-0 case**.  This is the recursive structure of
+Tourlakis CN §4.2.2's Hilbert–Bernays reduction proof, where
+K^sim_n ⊆ E^{n+1} is proven by induction on `n`.
+
+**Decision**: Replace original Task 17 with **three sequential tasks
+(17a, 17b, 17c) implementing the recursive bootstrap by K^sim level**.
+Each level has three components:
+
+1. `kSimTowerBound_dominates_level_<n>` — dominance proof for
+   simrec at level `n`.
+2. `kToER_interp_level_<n>` — interp preservation for K^sim at
+   level `n`, using the dominance to convert `boundedRec` to
+   `Nat.rec` via `boundedRec_eq_natRec_of_bounded`.
+3. `kToER_linearBound_dominates_level_<n>` — explicit linear
+   bound on `(kToER f).interp` for `f.level ≤ n`, used by the
+   next level's dominance.
+
+The original signature `kSimTowerBound_dominates_inline` (used by
+Task 14 of the kToER plan) is the level-2 case (Task 17c).
+
+Total estimated effort: 600-1000 lines of Lean across multiple
+sessions.  Tasks 17a, 17b, 17c are designed to be implementable
+independently (each level builds on the previous level's interp
+preservation and linear bound, but its own level's dominance is
+self-contained given those).
+
+#### Why three tasks, not one
+
+The mathematical structure of the proof requires building K^sim
+level-by-level:
+
+- **Level 0**: K^sim_0 = closure of {zero, succ, proj} under composition.
+  Linear-value-bounded by `λ ctx. max ctx + constant` (via
+  `level0Shape` from Task 13).  No simrec, so no dominance needed.
+
+- **Level 1**: K^sim_1 = K^sim_0 + one simrec layer with level-0
+  children.  The simrec's trace at iter j is **linear in (j, params)**
+  because level-0 step is shifted-projection (additive only, no
+  multiplicative coefficients on prev).  Dominance: linear ≤ tower
+  (any height ≥ 1) trivially.
+
+- **Level 2**: K^sim_2 = K^sim_1 + one simrec layer with level-1
+  children.  Level-1 step is linear in inputs (per
+  `KMor1.linearBound`).  Iterating linear j times gives at most
+  polynomial-of-fixed-degree in (j, params) (because level-1's
+  multiplicative coefficient on prev is bounded — see `linearBound`'s
+  computed constants).  This polynomial fits in `tower 2 (linear)`
+  by standard polynomial-vs-tower comparison.
+
+Each level's dominance proof reuses the previous level's
+`kToER_interp_level_<n-1>` to translate level-(n-1) K^sim children's
+interps to their ER images.
+
+### Task 17a: Level-0 K^sim (K^sim_0 ⊆ E^0)
+
+**Status**: pending.  Estimated 50-150 lines.
 
 **Files**:
 
 - Modify: `GebLean/LawvereKSimPolynomialBound.lean`
 
-The dominance assembly: combines the previous tasks to
-produce the dominance hypothesis required by Task 14 of
-the kToER plan.
+**Goal**: prove interp preservation and explicit linear bound for
+level-0 K^sim's `kToER` image.  No simrec case (vacuous at level 0),
+so no dominance lemma needed at this level.
 
-- [ ] **Step 17.1: Append the assembly**
+- [ ] **Step 17a.1: Add `kToER_interp_level_zero`**
 
 ```lean
-namespace GebLean
+/-- Interp preservation for level-0 K^sim: at level 0,
+`kToER` produces an ER term whose interp equals the K^sim
+interp.  Proved by structural recursion on level-0 KMor1
+(no simrec or raise cases at level 0). -/
+theorem kToER_interp_level_zero :
+    ∀ {a : ℕ} (f : KMor1 a) (h : f.level ≤ 0)
+      (ctx : Fin a → ℕ),
+      (kToER f
+        (Nat.le_succ_of_le (Nat.le_succ_of_le h))).interp
+          ctx = f.interp ctx
+  | _, .zero,         _, _   => by simp [kToER]
+  | _, .succ,         _, _   => by simp [kToER]
+  | _, .proj _,       _, _   => by simp [kToER]
+  | _, .comp f gs,    h, ctx => by
+      have hf : f.level ≤ 0 := …
+      have hgs : ∀ i, (gs i).level ≤ 0 := …
+      simp only [kToER, ERMor1.interp_comp,
+        KMor1.interp_comp]
+      congr 1
+      funext i
+      exact kToER_interp_level_zero (gs i) (hgs i) ctx
+  | _, .raise _,      h, _   => by
+      unfold KMor1.level at h; omega
+  | _, .simrec _ _ _, h, _   => by
+      unfold KMor1.level at h; omega
+```
 
-/-- Dominance assembly: the simrec packed iteration's
-trace at iteration `j` is bounded by `kSimTowerBound`'s
-closed form.  Uses Module A's polynomial-iter analytic
-lemma plus Module B's structural towerHeight bound. -/
+- [ ] **Step 17a.2: Add `kToER_linearBound_dominates_level_zero`**
+
+Uses `KMor1.level0Shape` (Task 13) directly:
+
+```lean
+/-- Linear bound on level-0 K^sim's kToER image.  Given by
+`level0Shape`: either `(0, k)` (constant) or `(1, k)`
+(shifted projection). -/
+theorem kToER_linearBound_dominates_level_zero
+    {a : ℕ} (f : KMor1 a) (h : f.level ≤ 0)
+    (ctx : Fin a → ℕ) :
+    (kToER f
+      (Nat.le_succ_of_le (Nat.le_succ_of_le h))).interp
+        ctx ≤
+      ((KMor1.level0Shape f h).linearBound).1 *
+        (Finset.univ : Finset (Fin a)).sup ctx +
+      ((KMor1.level0Shape f h).linearBound).2 := by
+  rw [kToER_interp_level_zero f h ctx,
+    KMor1.level0Shape_interp f h ctx]
+  -- Then use ConstantOrShiftedProj.linearBound_dominates
+  -- (a private helper from Task 14).
+  sorry
+```
+
+- [ ] **Step 17a.3: Run `lake build` and `lake test`.  Commit.**
+
+```text
+Add level-0 kToER_interp + linear bound (recursive bootstrap step 1)
+
+Establishes the base case for the K^sim_n ⊆ E^{n+1}
+recursive bootstrap.  Level 0 has no simrec, so this is
+purely structural.
+```
+
+---
+
+### Task 17b: Level-1 K^sim (K^sim_1 ⊆ E^1)
+
+**Status**: pending.  Estimated 250-400 lines.
+
+**Files**:
+
+- Modify: `GebLean/LawvereKSimPolynomialBound.lean`
+
+**Goal**: prove dominance for level-1 simrec, then interp preservation
+and explicit linear bound for level-1 K^sim's kToER image.
+
+- [ ] **Step 17b.1: Add level-1 simrec packed value characterisation**
+
+Helper lemma: the iterated `Nat.rec` over `kSimPackedBase` /
+`kSimPackedStep` matches `KMor1.simrecVec` of the K^sim simrec at
+each iteration, when children are level 0.  Uses the round-trip
+via `kSimSzudzikUnpackAt_packList`.
+
+- [ ] **Step 17b.2: Add `kSimTowerBound_dominates_level_one`**
+
+```lean
+/-- Dominance for level-1 simrec: the trace at iter j is
+linear in (j, params), which is dominated by
+`kSimTowerBound`'s tower form. -/
+theorem kSimTowerBound_dominates_level_one {a k : ℕ}
+    (h_fam : Fin (k + 1) → KMor1 a)
+    (g_fam : Fin (k + 1) → KMor1 (a + 1 + (k + 1)))
+    (h_h : ∀ l, (h_fam l).level ≤ 0)
+    (h_g : ∀ l, (g_fam l).level ≤ 0)
+    (j : ℕ) (params : Fin a → ℕ)
+    (h_j : j ≤ ?_) :
+    Nat.rec ... ≤ ... := by
+  sorry
+```
+
+Approach:
+
+1. By Step 17b.1, the iterated value at iter j corresponds to the
+   K^sim simrec at iter j.
+2. K^sim simrec value at iter j is bounded by
+   `KMor1.linearBound_dominates` applied to the simrec.
+3. This linear bound is bounded by `tower (TH+1) (linear)` since
+   `tower (TH+1) X ≥ X` for X ≥ 0 and `TH ≥ 0`.
+
+- [ ] **Step 17b.3: Add `kToER_interp_level_one`**
+
+Uses `boundedRec_eq_natRec_of_bounded` with the dominance from
+Step 17b.2 to convert the boundedRec back to `Nat.rec`, then
+matches with `KMor1.simrecVec` for the simrec case.
+
+```lean
+theorem kToER_interp_level_one :
+    ∀ {a : ℕ} (f : KMor1 a) (h : f.level ≤ 1)
+      (ctx : Fin a → ℕ),
+      (kToER f (Nat.le_succ_of_le h)).interp ctx =
+        f.interp ctx
+```
+
+Six structural cases (zero/succ/proj/comp/raise/simrec); the simrec
+case uses `kSimTowerBound_dominates_level_one`.
+
+- [ ] **Step 17b.4: Add `kToER_linearBound_dominates_level_one`**
+
+Uses `kToER_interp_level_one` to translate K^sim's
+`KMor1.linearBound_dominates` to the ER side.
+
+- [ ] **Step 17b.5: Run `lake build` and `lake test`.  Commit.**
+
+```text
+Add level-1 dominance + kToER_interp + linear bound (recursive bootstrap step 2)
+
+K^sim_1 ⊆ E^1: level-1 K^sim's kToER image preserves interp,
+dominates linearly via `KMor1.linearBound`.  Simrec case
+discharges dominance directly (level-0 children give linear
+trace).
+```
+
+---
+
+### Task 17c: Level-2 K^sim (K^sim_2 ⊆ E^2 = ER), final assembly
+
+**Status**: pending.  Estimated 300-500 lines.
+
+**Files**:
+
+- Modify: `GebLean/LawvereKSimPolynomialBound.lean`
+
+**Goal**: prove dominance for level-2 simrec.  This is the original
+Task 17's `kSimTowerBound_dominates_inline` lemma — the deliverable
+of the polynomial-bound sub-project.
+
+- [ ] **Step 17c.1: Add `kSimTowerBound_dominates_inline`**
+
+Uses Task 17b's `kToER_interp_level_one` and
+`kToER_linearBound_dominates_level_one` to:
+
+1. Translate each level-1 child's kToER interp via Task 17b's
+   interp preservation.
+2. Bound each child's interp linearly via Task 17b's linear bound.
+3. Apply per-component analysis: each output's value at iter j
+   corresponds to `KMor1.simrecVec` (from `LawvereKSimInterp.lean`).
+4. Bound the seqPack via `Nat.seqPack_le_seqPackBound` (Task 3).
+5. Bound the resulting polynomial by `kSimTowerBound`'s tower form,
+   exploiting that the polynomial degree is fixed (constant in K^sim
+   term structure, not growing with j).
+
+```lean
 theorem kSimTowerBound_dominates_inline {a k : ℕ}
     (h_fam : Fin (k + 1) → KMor1 a)
     (g_fam : Fin (k + 1) → KMor1 (a + 1 + (k + 1)))
     (h_h : ∀ l, (h_fam l).level ≤ 1)
     (h_g : ∀ l, (g_fam l).level ≤ 1)
     (j : ℕ) (params : Fin a → ℕ) :
-    Nat.rec
-      ((kSimPackedBase
-          (fun l => kToER (h_fam l)
-            (Nat.le_succ_of_le (h_h l)))).interp params)
-      (fun i prev =>
-        (kSimPackedStep
-          (fun l => kToER (g_fam l)
-            (Nat.le_succ_of_le (h_g l)))).interp
-          (Fin.cons i (Fin.cons prev params)))
-      j ≤
-      (kSimTowerBound
-        (fun l => kToER (h_fam l)
-          (Nat.le_succ_of_le (h_h l)))
-        (fun l => kToER (g_fam l)
-          (Nat.le_succ_of_le (h_g l)))).interp
-        (Fin.cons j params) := by
-  -- 1. Get PolyBound on kSimPackedStep, kSimPackedBase.
-  have pb_step := kSimPackedStep_polyBound g_fam h_g
-  have pb_base := kSimPackedBase_polyBound h_fam h_h
-  -- 2. Apply Module A's polynomial_iter_tower_two_bound.
-  --    Need to massage step into Module A's curried form.
-  --    D = pb_step.degree = 2^(k+1)
-  --    m = ... derived from pb_base
-  -- 3. The result is a tower 2 (linear) bound.
-  -- 4. Show this is ≤ kSimTowerBound's closed form
-  --    (= iterAutoBoundExpr a (kSimPackedStep g_ER).towerHeight ...).
-  --    Use Module B's log_le_towerHeight to relate
-  --    pb_step.degree to towerHeight.
-  -- 5. Conclude.
-  sorry
-
-end GebLean
+    Nat.rec ... ≤ ...
 ```
 
-The `sorry` is a planning marker for the largest single
-proof in this sub-project (~150 lines estimated).  The
-implementer should:
+- [ ] **Step 17c.2: Run `lake build` and `lake test`.  Commit.**
 
-1. Extract `pb_step.degree` and `pb_base.degree`.
-2. Apply `Nat.polynomial_iter_tower_two_bound` to bound
-   the trace by `tower 2 (linear)`.
-3. Apply `ERMor1.PolyBound.log_le_towerHeight` to relate
-   `pb_step.degree`'s log to `(kSimPackedStep g_ER).towerHeight`.
-4. Apply `kSimTowerBound_interp` to expand the bound's
-   closed form.
-5. Compare both sides via tower-arithmetic (using
-   `tower_mono_left`, `tower_mono_right`, `tower_comp`
-   from `Utilities/Tower.lean`).
+```text
+Add kSimTowerBound_dominates_inline (final dominance assembly)
 
-If the proof becomes intractable beyond ~200 lines, add
-private helpers for each of steps 2–5.
-
-**Do not commit `sorry`**.
-
-- [ ] **Step 17.2: Run `lake build`**
-
-Expected: PASS, no warnings, no `sorry`.
-
-- [ ] **Step 17.3: Commit**
-
-```bash
-git add GebLean/LawvereKSimPolynomialBound.lean
-git commit -m "Add kSimTowerBound_dominates_inline (final assembly)
-
-Combines polynomial_iter_tower_two_bound from Module A
-with log_le_towerHeight from Module B and the K^sim-
-specific PolyBound bridges to produce the dominance
-hypothesis required by kToER_interp's level-2 simrec
-case."
+K^sim_2 ⊆ E^2 = ER: level-2 simrec's packed iteration
+trace is bounded by tower 2 of linear-in-(j, params),
+dominated by kSimTowerBound's tower (TH+1) (linear)
+form for TH ≥ 1.  Uses Task 17b's level-1 interp
+preservation and linear bound to translate level-1
+children's K^sim interps to ER bounds, then applies
+seqPack polynomial bound (Task 3) for the packed
+recursion.
 ```
+
+---
+
+### Cross-session continuity notes
+
+After Tasks 17a, 17b, 17c land (across multiple sessions if needed):
+
+- Task 14 of the kToER plan
+  (`docs/plans/2026-04-29-lawvere-k-sim-ktoer-plan.md`) becomes
+  unblocked.  Its simrec case dispatches to
+  `kSimTowerBound_dominates_inline` (Task 17c's deliverable).
+
+- The full forward direction K^sim_2 ⊆ ER is then formalized,
+  enabling the eventual categorical equivalence
+  K^sim_2 ≌ LawvereERCat (Phase 2 sub-project 4).
+
+- Task 17a, 17b, 17c may be subdivided further at dispatch time
+  if individual steps prove intractable (e.g., the dominance
+  proof at level 2 may need its own private helper for the
+  per-component analysis).
+
+### Why this matches the literature
+
+Tourlakis CN §4.2.2 (Hilbert–Bernays reduction) and Tourlakis
+2018 §0.1.0.34 (E^2 closure under simultaneous bounded recursion)
+both prove K^sim_n closure via induction on `n`, reducing
+simultaneous recursion to single recursion via an encoding
+function (Gödel multiplicative or Cantor pairing).  Each level's
+proof uses the previous level's closure result.
+
+Our recursive-bootstrap structure (Task 17a → 17b → 17c) directly
+mirrors this published proof, with Szudzik pairing as the encoding
+function (in place of Gödel or Cantor — both polynomial-bounded,
+per Task 3).  No novel mathematical content; the work is the
+Lean formalization of established results.
 
 ---
 

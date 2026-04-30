@@ -4,8 +4,22 @@
 
 Design document for the polynomial-bound infrastructure
 sub-project, a prerequisite of the K^sim → ER forward
-translation's interp-preservation theorem.  Awaiting user
-approval before writing the implementation plan.
+translation's interp-preservation theorem.
+
+**Amendment (2026-04-30, second)**: after Tasks 1–16 of
+the implementation plan landed, Task 17
+(`kSimTowerBound_dominates_inline`) was found to require
+a recursive bootstrap by K^sim level (matching Tourlakis
+CN §4.2.2's induction-on-n structure for K^sim_n closure
+proofs).  See the implementation plan at
+`docs/plans/2026-04-30-er-polynomial-bound-plan.md`,
+"Plan amendment (2026-04-30, second)" section, for the
+revised three-task structure (Tasks 17a/17b/17c).
+The design's Module C contents below are unchanged in
+spirit — the dominance assembly at the level-2 case (the
+original Task 17 deliverable) is now Task 17c, building
+on Tasks 17a (level 0) and 17b (level 1) per the
+literature.
 
 ## Scope
 
