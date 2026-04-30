@@ -19,9 +19,13 @@ The principal results are:
   pairing.
 - `Nat.seqPackBound` and its dominance lemma — closed-
   form polynomial upper bound on `Nat.seqPack`.
-- `Nat.polynomial_iter_tower_two_bound` — iterating a
+- `Nat.tower_succ_pow_bound` and
+  `Nat.tower_succ_pow_bound_strong` — polynomial-of-tower
+  bounds for the inductive step of polynomial iteration.
+- `Nat.polynomial_iter_tower_bound` — iterating a
   polynomially-bounded step `j` times keeps the value
-  within a height-2 tower of a linear function.
+  within a height-2 tower of a linear function in
+  `(j, x, Nat.log 2 D, m)`.
 
 See `docs/plans/2026-04-30-er-polynomial-bound-design.md`
 (Module A).
@@ -375,5 +379,170 @@ theorem tower_succ_pow_bound (h D x : ℕ) :
     _ = 2 ^ ((T + 1) * D) := hpow_eq
     _ ≤ 2 ^ GebLean.tower (h + 1) (x + D + 1) := h_outer
     _ = GebLean.tower (h + 2) (x + D + 1) := rfl
+
+/-- Strong polynomial-of-tower bound for `h ≥ 2`: a tower
+of height at least 2 dominates polynomial growth without
+needing a height bump.  The shift is logarithmic in `D`.
+
+This is the bound used by `polynomial_iter_tower_bound`,
+which iterates a polynomially-bounded step.  Keeping the
+height fixed across iterations requires this strong form;
+the looser `tower_succ_pow_bound` cannot keep height
+fixed because it adds 2 to the height each iteration. -/
+theorem tower_succ_pow_bound_strong
+    (h D x : ℕ) (h_h : 2 ≤ h) :
+    (GebLean.tower h x + 1)^D ≤
+      GebLean.tower h (x + Nat.log 2 D + 2) := by
+  obtain ⟨h', rfl⟩ : ∃ h', h = h' + 2 :=
+    ⟨h - 2, by omega⟩
+  set y := x + Nat.log 2 D + 2 with hy_def
+  set U := GebLean.tower h' x with hU_def
+  set T := GebLean.tower (h' + 2) x with hT_def
+  have hT_eq : T = 2 ^ (2 ^ U) := rfl
+  have hT_pos : 1 ≤ T := by
+    rw [hT_eq]
+    exact Nat.one_le_iff_ne_zero.mpr
+      (pow_ne_zero _ (by decide))
+  have hT_plus_one_le : T + 1 ≤ 2 * T := by omega
+  have hT_pow_eq : T ^ D = 2 ^ ((2 ^ U) * D) := by
+    rw [hT_eq, ← Nat.pow_mul]
+  have h_2T_pow_eq :
+      (2 * T) ^ D = 2 ^ (D + (2 ^ U) * D) := by
+    rw [Nat.mul_pow, hT_pow_eq, ← Nat.pow_add]
+  have hD_le : D ≤ 2 ^ (Nat.log 2 D + 1) :=
+    Nat.le_of_lt (Nat.lt_pow_succ_log_self (by decide) D)
+  have h_two_pow_U_pos : 1 ≤ 2 ^ U :=
+    Nat.one_le_iff_ne_zero.mpr (pow_ne_zero _ (by decide))
+  have h_sum_eq :
+      D + (2 ^ U) * D = (2 ^ U + 1) * D := by ring
+  have h_two_pow_U_plus_one_le :
+      2 ^ U + 1 ≤ 2 ^ (U + 1) := by
+    have hexp : 2 ^ (U + 1) = 2 * 2 ^ U := by
+      rw [Nat.pow_succ]; ring
+    omega
+  have h_main_exp_le :
+      (2 ^ U + 1) * D
+        ≤ 2 ^ (U + 1) * 2 ^ (Nat.log 2 D + 1) :=
+    Nat.mul_le_mul h_two_pow_U_plus_one_le hD_le
+  have h_pow_combine :
+      2 ^ (U + 1) * 2 ^ (Nat.log 2 D + 1)
+        = 2 ^ (U + Nat.log 2 D + 2) := by
+    rw [← Nat.pow_add]
+    congr 1
+    ring
+  have h_exp_bound :
+      D + (2 ^ U) * D ≤ 2 ^ (U + Nat.log 2 D + 2) := by
+    rw [h_sum_eq, ← h_pow_combine]
+    exact h_main_exp_le
+  have h_shift_le :
+      U + Nat.log 2 D + 2 ≤ GebLean.tower h' y := by
+    have h_step :=
+      tower_add_le_tower_shift h' x (Nat.log 2 D + 1)
+    have hyy : x + (Nat.log 2 D + 1) + 1 = y := by
+      change x + (Nat.log 2 D + 1) + 1 = x + Nat.log 2 D + 2
+      ring
+    rw [hyy] at h_step
+    have hUU : GebLean.tower h' x + (Nat.log 2 D + 1) + 1
+        = U + Nat.log 2 D + 2 := by ring
+    rw [hUU] at h_step
+    exact h_step
+  have h_inner_pow_le :
+      2 ^ (U + Nat.log 2 D + 2) ≤ 2 ^ GebLean.tower h' y :=
+    Nat.pow_le_pow_right (by decide) h_shift_le
+  have h_exp_le_two_pow_tower :
+      D + (2 ^ U) * D ≤ 2 ^ GebLean.tower h' y :=
+    le_trans h_exp_bound h_inner_pow_le
+  have h_target_eq :
+      GebLean.tower (h' + 2) y
+        = 2 ^ (2 ^ GebLean.tower h' y) := rfl
+  change (T + 1) ^ D ≤ GebLean.tower (h' + 2) y
+  rw [h_target_eq]
+  calc (T + 1) ^ D
+      ≤ (2 * T) ^ D := Nat.pow_le_pow_left hT_plus_one_le D
+    _ = 2 ^ (D + (2 ^ U) * D) := h_2T_pow_eq
+    _ ≤ 2 ^ (2 ^ GebLean.tower h' y) :=
+        Nat.pow_le_pow_right (by decide) h_exp_le_two_pow_tower
+
+/-- Iterating a polynomially-bounded step `j` times keeps
+the value bounded by a fixed-height tower (height 2) of a
+linear function in `(j, x, Nat.log 2 D, m)`.  The bound
+relies on `tower_succ_pow_bound_strong` to keep the tower
+height fixed across iterations. -/
+theorem polynomial_iter_tower_bound
+    (step : ℕ → ℕ → ℕ) (D m : ℕ)
+    (h_step : ∀ v x, step v x ≤ (max v x + 1) ^ D)
+    (v_0 : ℕ → ℕ) (h_base : ∀ x, v_0 x ≤ m * x + m)
+    (j x : ℕ) :
+    Nat.iterate (fun v => step v x) j (v_0 x) ≤
+      GebLean.tower 2
+        ((Nat.log 2 D + 2) * j + m * x + m + x
+          + Nat.log 2 D + 2) := by
+  induction j with
+  | zero =>
+      simp only [Nat.iterate]
+      have h0 : v_0 x ≤ m * x + m := h_base x
+      have h1 :
+          m * x + m ≤
+            (Nat.log 2 D + 2) * 0 + m * x + m + x
+              + Nat.log 2 D + 2 := by
+        omega
+      have h2 :
+          (Nat.log 2 D + 2) * 0 + m * x + m + x
+            + Nat.log 2 D + 2
+            ≤ GebLean.tower 2
+              ((Nat.log 2 D + 2) * 0 + m * x + m + x
+                + Nat.log 2 D + 2) :=
+        GebLean.self_le_tower _ _
+      exact le_trans h0 (le_trans h1 h2)
+  | succ j ih =>
+      set H_j :=
+        (Nat.log 2 D + 2) * j + m * x + m + x
+          + Nat.log 2 D + 2 with hHj
+      set H_succ :=
+        (Nat.log 2 D + 2) * (j + 1) + m * x + m + x
+          + Nat.log 2 D + 2 with hHsucc
+      have h_step_eq :
+          (fun v => step v x)^[j + 1] (v_0 x)
+            = step ((fun v => step v x)^[j] (v_0 x)) x := by
+        rw [Function.iterate_succ_apply']
+      rw [h_step_eq]
+      set prev := (fun v => step v x)^[j] (v_0 x) with hprev
+      have h_prev_le : prev ≤ GebLean.tower 2 H_j := ih
+      have h_x_le : x ≤ H_j := by
+        change x ≤
+          (Nat.log 2 D + 2) * j + m * x + m + x
+            + Nat.log 2 D + 2
+        omega
+      have h_x_le_tower : x ≤ GebLean.tower 2 H_j :=
+        le_trans h_x_le (GebLean.self_le_tower 2 H_j)
+      have h_max_le : max prev x ≤ GebLean.tower 2 H_j :=
+        max_le h_prev_le h_x_le_tower
+      have h_max_plus_one_le :
+          max prev x + 1 ≤ GebLean.tower 2 H_j + 1 := by
+        omega
+      have h_pow_le :
+          (max prev x + 1) ^ D
+            ≤ (GebLean.tower 2 H_j + 1) ^ D :=
+        Nat.pow_le_pow_left h_max_plus_one_le D
+      have h_strong :
+          (GebLean.tower 2 H_j + 1) ^ D
+            ≤ GebLean.tower 2 (H_j + Nat.log 2 D + 2) :=
+        tower_succ_pow_bound_strong 2 D H_j (by decide)
+      have h_step_bound : step prev x ≤ (max prev x + 1) ^ D :=
+        h_step prev x
+      have h_H_succ_eq :
+          H_j + Nat.log 2 D + 2 = H_succ := by
+        change
+          (Nat.log 2 D + 2) * j + m * x + m + x
+              + Nat.log 2 D + 2 + Nat.log 2 D + 2
+            = (Nat.log 2 D + 2) * (j + 1) + m * x + m + x
+              + Nat.log 2 D + 2
+        ring
+      calc step prev x
+          ≤ (max prev x + 1) ^ D := h_step_bound
+        _ ≤ (GebLean.tower 2 H_j + 1) ^ D := h_pow_le
+        _ ≤ GebLean.tower 2 (H_j + Nat.log 2 D + 2) :=
+            h_strong
+        _ = GebLean.tower 2 H_succ := by rw [h_H_succ_eq]
 
 end Nat
