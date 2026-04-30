@@ -406,4 +406,59 @@ def kSimPackedStep {a k : ℕ}
   rw [kSimSzudzikPackList_interp]
   simp only [ERMor1.interp_comp]
 
+/-- Bound term for the simrec packed recursion's
+`boundedRec`.  Uses `iterAutoBoundExpr` parameterised by
+the tower height of the packed step term and the tower
+height of the packed base term.  The dominance argument
+is supplied at the call site (in the simrec case of
+`kToER_interp`). -/
+def kSimTowerBound {a k : ℕ}
+    (h : Fin (k + 1) → ERMor1 a)
+    (g : Fin (k + 1) → ERMor1 (a + 1 + (k + 1))) :
+    ERMor1 (a + 1) :=
+  ERMor1.iterAutoBoundExpr a
+    (kSimPackedStep g).towerHeight
+    (kSimPackedBase h).towerHeight
+
+@[simp] theorem kSimTowerBound_interp {a k : ℕ}
+    (h : Fin (k + 1) → ERMor1 a)
+    (g : Fin (k + 1) → ERMor1 (a + 1 + (k + 1)))
+    (ctx : Fin (a + 1) → ℕ) :
+    (kSimTowerBound h g).interp ctx =
+      tower ((kSimPackedStep g).towerHeight + 1)
+        ((kSimPackedStep g).towerHeight + 1 +
+          2 * (kSimPackedBase h).towerHeight +
+          2 * ((ERMor1.sumCtxER (a + 1)).interp ctx) +
+          2) := by
+  unfold kSimTowerBound
+  exact ERMor1.interp_iterAutoBoundExpr _ _ _
+
+/-- The bound is non-decreasing as the iteration counter
+(slot 0) grows.  Used at the call site to discharge
+`boundedRec_eq_natRec_of_bounded`'s monotonicity
+hypothesis. -/
+theorem kSimTowerBound_mono_counter {a k : ℕ}
+    (h : Fin (k + 1) → ERMor1 a)
+    (g : Fin (k + 1) → ERMor1 (a + 1 + (k + 1)))
+    (j j' : ℕ) (params : Fin a → ℕ)
+    (hj : j ≤ j') :
+    (kSimTowerBound h g).interp (Fin.cons j params) ≤
+      (kSimTowerBound h g).interp
+        (Fin.cons j' params) := by
+  rw [kSimTowerBound_interp, kSimTowerBound_interp]
+  apply tower_mono_right
+  rw [ERMor1.interp_sumCtxER, ERMor1.interp_sumCtxER]
+  rw [Fin.sum_univ_succ (f := Fin.cons j params),
+    Fin.sum_univ_succ (f := Fin.cons j' params)]
+  simp only [Fin.cons_zero, Fin.cons_succ]
+  have hsum :
+      2 * (j + (Finset.univ : Finset (Fin a)).sum params) =
+        2 * j + 2 *
+          (Finset.univ : Finset (Fin a)).sum params := by ring
+  have hsum' :
+      2 * (j' + (Finset.univ : Finset (Fin a)).sum params) =
+        2 * j' + 2 *
+          (Finset.univ : Finset (Fin a)).sum params := by ring
+  omega
+
 end GebLean
