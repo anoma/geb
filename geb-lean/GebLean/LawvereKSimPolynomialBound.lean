@@ -1384,4 +1384,149 @@ private theorem kSimPackedStep_towerHeight_ge_propagate
   unfold kSimPackedStep
   exact kSimSzudzikPackList_towerHeight_ge_propagate _
 
+/-- Uniform linear bound on `KMor1.simrecVec` for level-0
+families: each component at iteration `n ≤ S` is bounded
+by `CC * S + KK`, with `CC` and `KK` extracted from the
+children's `level0Shape.linearBound` via foldr-max. -/
+private theorem KMor1.simrecVec_uniform_linear_bound
+    {a k : ℕ}
+    (h_fam : Fin (k + 1) → KMor1 a)
+    (g_fam : Fin (k + 1) → KMor1 (a + 1 + (k + 1)))
+    (h_h : ∀ l, (h_fam l).level ≤ 0)
+    (h_g : ∀ l, (g_fam l).level ≤ 0)
+    (params : Fin a → ℕ)
+    (S : ℕ)
+    (h_params : ∀ j, params j ≤ S)
+    (n : ℕ) (h_n : n ≤ S) :
+    let CC :=
+      (Fin.foldr (k + 1) (fun l acc =>
+        max acc
+          (KMor1.level0Shape (g_fam l) (h_g l)).linearBound.1)
+        0) +
+      2 * (Fin.foldr (k + 1) (fun l acc =>
+        max acc
+          (KMor1.level0Shape (g_fam l) (h_g l)).linearBound.2)
+        0) + 1
+    let KK :=
+      Fin.foldr (k + 1) (fun l acc =>
+        max acc
+          (KMor1.level0Shape (h_fam l) (h_h l)).linearBound.2)
+        0
+    ∀ l, KMor1.simrecVec h_fam g_fam params n l ≤
+          CC * S + KK := by
+  intro CC KK l
+  set max_base_const := Fin.foldr (k + 1) (fun l acc =>
+    max acc
+      (KMor1.level0Shape (h_fam l) (h_h l)).linearBound.2) 0
+    with h_mbc_def
+  set max_step_c := Fin.foldr (k + 1) (fun l acc =>
+    max acc
+      (KMor1.level0Shape (g_fam l) (h_g l)).linearBound.1) 0
+    with h_msc_def
+  set max_step_k := Fin.foldr (k + 1) (fun l acc =>
+    max acc
+      (KMor1.level0Shape (g_fam l) (h_g l)).linearBound.2) 0
+    with h_msk_def
+  have hbm : ∀ j,
+      (KMor1.level0Shape (h_fam j) (h_h j)).linearBound.2
+        ≤ max_base_const := fun j =>
+    Fin.foldr_max_ge
+      (fun l =>
+        (KMor1.level0Shape (h_fam l) (h_h l)).linearBound.2)
+      j
+  have hsc : ∀ j,
+      (KMor1.level0Shape (g_fam j) (h_g j)).linearBound.1
+        ≤ max_step_c := fun j =>
+    Fin.foldr_max_ge
+      (fun l =>
+        (KMor1.level0Shape (g_fam l) (h_g l)).linearBound.1)
+      j
+  have hsk : ∀ j,
+      (KMor1.level0Shape (g_fam j) (h_g j)).linearBound.2
+        ≤ max_step_k := fun j =>
+    Fin.foldr_max_ge
+      (fun l =>
+        (KMor1.level0Shape (g_fam l) (h_g l)).linearBound.2)
+      j
+  have haux := KMor1.simrecVec_linear_bound_aux
+    h_fam g_fam h_h h_g params S h_params
+    max_base_const hbm
+    max_step_c max_step_k hsc hsk
+    n h_n l
+  have hck : max_step_k * n ≤ max_step_k * S :=
+    Nat.mul_le_mul_left _ h_n
+  change KMor1.simrecVec h_fam g_fam params n l
+      ≤ (max_step_c + 2 * max_step_k + 1) * S
+          + max_base_const
+  calc KMor1.simrecVec h_fam g_fam params n l
+      ≤ (max_step_c + max_step_k + 1) * S
+          + max_base_const + max_step_k * n := haux
+    _ ≤ (max_step_c + max_step_k + 1) * S
+          + max_base_const + max_step_k * S := by omega
+    _ = (max_step_c + 2 * max_step_k + 1) * S
+          + max_base_const := by ring
+
+/-- Polynomial bound on the `seqPack` of the (k+1)-tuple
+of `simrecVec` components at iteration `n ≤ S`, via
+`Nat.seqPack_le_seqPackBound` applied to the per-component
+linear bound. -/
+private theorem KMor1.simrecVec_seqPack_le_pow
+    {a k : ℕ}
+    (h_fam : Fin (k + 1) → KMor1 a)
+    (g_fam : Fin (k + 1) → KMor1 (a + 1 + (k + 1)))
+    (h_h : ∀ l, (h_fam l).level ≤ 0)
+    (h_g : ∀ l, (g_fam l).level ≤ 0)
+    (params : Fin a → ℕ)
+    (S : ℕ)
+    (h_params : ∀ j, params j ≤ S)
+    (n : ℕ) (h_n : n ≤ S) :
+    let CC :=
+      (Fin.foldr (k + 1) (fun l acc =>
+        max acc
+          (KMor1.level0Shape (g_fam l) (h_g l)).linearBound.1)
+        0) +
+      2 * (Fin.foldr (k + 1) (fun l acc =>
+        max acc
+          (KMor1.level0Shape (g_fam l) (h_g l)).linearBound.2)
+        0) + 1
+    let KK :=
+      Fin.foldr (k + 1) (fun l acc =>
+        max acc
+          (KMor1.level0Shape (h_fam l) (h_h l)).linearBound.2)
+        0
+    Nat.seqPack
+      ((List.finRange (k + 1)).map
+        (fun l =>
+          KMor1.simrecVec h_fam g_fam params n l)) ≤
+      (CC * S + KK + 2) ^ (6 * 4 ^ (k + 1)) := by
+  intro CC KK
+  have h_each := KMor1.simrecVec_uniform_linear_bound
+    h_fam g_fam h_h h_g params S h_params n h_n
+  have h_each_in :
+      ∀ v ∈ ((List.finRange (k + 1)).map
+              (fun l =>
+                KMor1.simrecVec h_fam g_fam params n l)),
+        v ≤ ((CC * S + KK) + 1) ^ 1 := by
+    intro v hv
+    rcases List.mem_map.mp hv with ⟨l, _, hvl⟩
+    rw [← hvl, pow_one]
+    have hl := h_each l
+    exact le_trans hl (Nat.le_succ _)
+  have hlen :
+      ((List.finRange (k + 1)).map
+        (fun l =>
+          KMor1.simrecVec h_fam g_fam params n l)).length
+        ≤ k + 1 := by simp
+  have h_pack :=
+    Nat.seqPack_le_seqPackBound
+      ((List.finRange (k + 1)).map
+        (fun l =>
+          KMor1.simrecVec h_fam g_fam params n l))
+      k 1 (CC * S + KK) hlen h_each_in
+  unfold Nat.seqPackBound at h_pack
+  have hexp_eq : (1 + 5) * 4 ^ (k + 1) = 6 * 4 ^ (k + 1) := by
+    ring
+  rw [hexp_eq] at h_pack
+  exact h_pack
+
 end GebLean
