@@ -354,4 +354,56 @@ def kSimPackedBase {a k : ℕ}
           (fun j => (h j).interp ctx)) :=
   kSimSzudzikPackList_interp h ctx
 
+/-- Context substitution family for the simrec packed
+step.  Translates each slot `idx : Fin (a + 1 + (k + 1))`
+of the K^sim step's input context into an ER expression
+of arity `a + 2`.  Slot 0 is the iteration index;
+slots 1..a are parameters drawn from ER slots 2..a+1;
+slots a+1..a+k+1 unpack components 0..k of the packed
+previous value (ER slot 1) via `kSimSzudzikUnpackAt`. -/
+def kSimStepContext {a k : ℕ} :
+    Fin (a + 1 + (k + 1)) → ERMor1 (a + 2) :=
+  fun idx =>
+    if h₀ : idx.val = 0 then
+      ERMor1.proj (k := a + 2) ⟨0, by omega⟩
+    else if h₁ : idx.val < a + 1 then
+      ERMor1.proj (k := a + 2)
+        ⟨idx.val + 1, by
+          have := idx.isLt; omega⟩
+    else
+      ERMor1.comp
+        (kSimSzudzikUnpackAt a (idx.val - (a + 1)))
+        (fun j =>
+          if h : j.val = 0 then
+            ERMor1.proj (k := a + 2) ⟨1, by omega⟩
+          else
+            ERMor1.proj (k := a + 2)
+              ⟨j.val + 1, by
+                have := j.isLt; omega⟩)
+
+/-- Step-family packer for `simrec` translation: at
+ambient context `(j, prev, ȳ)`, applies each `g_j_ER`
+to the K^sim step context built by `kSimStepContext`
+and Szudzik-packs the resulting `(k + 1)`-vector. -/
+def kSimPackedStep {a k : ℕ}
+    (g : Fin (k + 1) → ERMor1 (a + 1 + (k + 1))) :
+    ERMor1 (a + 2) :=
+  kSimSzudzikPackList
+    (fun j =>
+      ERMor1.comp (g j) kSimStepContext)
+
+@[simp] theorem kSimPackedStep_interp {a k : ℕ}
+    (g : Fin (k + 1) → ERMor1 (a + 1 + (k + 1)))
+    (ctx : Fin (a + 2) → ℕ) :
+    (kSimPackedStep g).interp ctx =
+      Nat.seqPack
+        ((List.finRange (k + 1)).map
+          (fun j =>
+            (g j).interp
+              (fun idx =>
+                kSimStepContext idx |>.interp ctx))) := by
+  unfold kSimPackedStep
+  rw [kSimSzudzikPackList_interp]
+  simp only [ERMor1.interp_comp]
+
 end GebLean
