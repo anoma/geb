@@ -251,8 +251,7 @@ the context, then applies `f`'s interpretation. -/
     (f : KMorN m k) (g : KMorN n m)
     (ctx : Fin n → ℕ) :
     (KMorN.comp f g).interp ctx
-      = (f.interp (g.interp ctx)) := by
-  funext i
-  simp [KMorN.comp, KMorN.interp]
+      = (f.interp (g.interp ctx)) :=
+  rfl
 
 end GebLean
