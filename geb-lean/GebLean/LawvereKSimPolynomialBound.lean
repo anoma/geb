@@ -990,6 +990,104 @@ theorem kToER_linearBound_dominates_level_zero
     KMor1.level0Shape_interp f h ctx]
   exact ConstantOrShiftedProj.linearBound_dominates _ ctx
 
+/-- Structural bound on the constant offset of the
+level-0 shape's linear bound, in terms of the tower
+height of the ER translation: `linearBound.2 ≤
+towerHeight + 1`.  Required for A.5.2.2's argument-
+inequality proof. -/
+private theorem kToER_level0_towerHeight_ge_const :
+    {a : ℕ} → (f : KMor1 a) → (h : f.level ≤ 0) →
+      (KMor1.level0Shape f h).linearBound.2 ≤
+        (kToER f
+          (Nat.le_succ_of_le
+            (Nat.le_succ_of_le h))).towerHeight + 1
+  | _, .zero,         _ => by
+      simp [kToER, KMor1.level0Shape,
+        ConstantOrShiftedProj.linearBound, ERMor1.zeroN,
+        ERMor1.towerHeight]
+  | _, .succ,         _ => by
+      simp [kToER, KMor1.level0Shape,
+        ConstantOrShiftedProj.linearBound,
+        ERMor1.towerHeight]
+  | _, .proj _,       _ => by
+      simp [kToER, KMor1.level0Shape,
+        ConstantOrShiftedProj.linearBound,
+        ERMor1.towerHeight]
+  | _, .comp f gs,    h => by
+      have hf : f.level ≤ 0 := by
+        unfold KMor1.level at h
+        exact le_trans (le_max_left _ _) h
+      have hgs : ∀ i, (gs i).level ≤ 0 := fun i => by
+        unfold KMor1.level at h
+        have hsup : Finset.univ.sup
+            (fun j => (gs j).level) ≤ 0 :=
+          le_trans (le_max_right _ _) h
+        exact le_trans
+          (Finset.le_sup
+            (f := fun j => (gs j).level)
+            (Finset.mem_univ i))
+          hsup
+      have ihf := kToER_level0_towerHeight_ge_const f hf
+      have ihgs := fun i =>
+        kToER_level0_towerHeight_ge_const (gs i) (hgs i)
+      simp only [kToER, KMor1.level0Shape, ERMor1.towerHeight]
+      cases hshape_f : f.level0Shape hf with
+      | const k_f =>
+          rw [hshape_f] at ihf
+          simp only [ConstantOrShiftedProj.linearBound] at ihf ⊢
+          omega
+      | shifted i k_f =>
+          rw [hshape_f] at ihf
+          simp only [ConstantOrShiftedProj.linearBound] at ihf
+          have ihgi := ihgs i
+          cases hshape_gi : (gs i).level0Shape (hgs i) with
+          | const c =>
+              rw [hshape_gi] at ihgi
+              simp only [hshape_gi,
+                ConstantOrShiftedProj.linearBound]
+                at ihgi ⊢
+              have hsup_le :
+                  (kToER (gs i)
+                    (Nat.le_succ_of_le
+                      (Nat.le_succ_of_le (hgs i)))).towerHeight
+                  ≤ Finset.univ.sup
+                      (fun j => (kToER (gs j)
+                        (Nat.le_succ_of_le
+                          (Nat.le_succ_of_le
+                            (hgs j)))).towerHeight) :=
+                Finset.le_sup
+                  (f := fun j => (kToER (gs j)
+                    (Nat.le_succ_of_le
+                      (Nat.le_succ_of_le
+                        (hgs j)))).towerHeight)
+                  (Finset.mem_univ i)
+              omega
+          | shifted j k_gs =>
+              rw [hshape_gi] at ihgi
+              simp only [hshape_gi,
+                ConstantOrShiftedProj.linearBound]
+                at ihgi ⊢
+              have hsup_le :
+                  (kToER (gs i)
+                    (Nat.le_succ_of_le
+                      (Nat.le_succ_of_le (hgs i)))).towerHeight
+                  ≤ Finset.univ.sup
+                      (fun j => (kToER (gs j)
+                        (Nat.le_succ_of_le
+                          (Nat.le_succ_of_le
+                            (hgs j)))).towerHeight) :=
+                Finset.le_sup
+                  (f := fun j => (kToER (gs j)
+                    (Nat.le_succ_of_le
+                      (Nat.le_succ_of_le
+                        (hgs j)))).towerHeight)
+                  (Finset.mem_univ i)
+              omega
+  | _, .raise _,      h => by
+      unfold KMor1.level at h; omega
+  | _, .simrec _ _ _, h => by
+      unfold KMor1.level at h; omega
+
 /-- For level-1 simrec (level-0 children), the iterated
 packed value matches `seqPack` of `KMor1.simrecVec`. -/
 private theorem packed_iteration_matches_simrecVec
