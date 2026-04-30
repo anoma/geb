@@ -956,11 +956,18 @@ theorem kToER_interp_level_zero :
             (f := fun j => (gs j).level)
             (Finset.mem_univ i))
           hsup
+      have h_inner :
+          (fun i => (kToER (gs i)
+              (Nat.le_succ_of_le
+                (Nat.le_succ_of_le (hgs i)))).interp ctx)
+            = (fun i => (gs i).interp ctx) := by
+        funext i
+        exact kToER_interp_level_zero (gs i) (hgs i) ctx
       simp only [kToER, ERMor1.interp_comp,
         KMor1.interp_comp]
-      congr 1
-      funext i
-      exact kToER_interp_level_zero (gs i) (hgs i) ctx
+      rw [h_inner]
+      exact kToER_interp_level_zero f hf
+        (fun i => (gs i).interp ctx)
   | _, .raise _,      h, _   => by
       unfold KMor1.level at h; omega
   | _, .simrec _ _ _, h, _   => by
