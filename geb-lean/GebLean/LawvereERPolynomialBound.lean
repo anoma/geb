@@ -37,4 +37,45 @@ structure ERMor1.PolyBound {n : ℕ} (f : ERMor1 n) where
     f.interp ctx ≤
       ((Finset.univ : Finset (Fin n)).sup ctx + 1) ^ degree
 
+namespace ERMor1.PolyBound
+
+/-- Polynomial bound for `zero` (constant `0`). -/
+def ofZero : PolyBound ERMor1.zero where
+  degree := 0
+  bounds := fun _ => by
+    simp [ERMor1.interp_zero]
+
+/-- Polynomial bound for `succ` (linear, degree `1`). -/
+def ofSucc : PolyBound ERMor1.succ where
+  degree := 1
+  bounds := fun ctx => by
+    simp only [ERMor1.interp_succ, pow_one]
+    have h : ctx 0 ≤
+        (Finset.univ : Finset (Fin 1)).sup ctx :=
+      Finset.le_sup (Finset.mem_univ _)
+    omega
+
+/-- Polynomial bound for `proj i` (linear, degree `1`). -/
+def ofProj {k : ℕ} (i : Fin k) :
+    PolyBound (ERMor1.proj i) where
+  degree := 1
+  bounds := fun ctx => by
+    simp only [ERMor1.interp_proj, pow_one]
+    have h : ctx i ≤
+        (Finset.univ : Finset (Fin k)).sup ctx :=
+      Finset.le_sup (Finset.mem_univ _)
+    omega
+
+/-- Polynomial bound for `sub` (linear, degree `1`). -/
+def ofSub : PolyBound ERMor1.sub where
+  degree := 1
+  bounds := fun ctx => by
+    simp only [ERMor1.interp_sub, pow_one]
+    have h0 : ctx 0 ≤
+        (Finset.univ : Finset (Fin 2)).sup ctx :=
+      Finset.le_sup (Finset.mem_univ _)
+    omega
+
+end ERMor1.PolyBound
+
 end GebLean
