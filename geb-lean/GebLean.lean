@@ -68,6 +68,7 @@ import GebLean.LawvereTreeER
 import GebLean.LawvereTreeERArith
 import GebLean.LawvereTreeERInterp
 import GebLean.LawvereTreeERQuot
+import GebLean.LawvereKSim
 import GebLean.LayeredEquivalence
 import GebLean.MendlerLambekEndPower
 import GebLean.MendlerLambekPresheaf
