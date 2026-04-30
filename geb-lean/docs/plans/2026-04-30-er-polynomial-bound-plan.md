@@ -87,7 +87,127 @@ lake build              # verify clean build
 lake test               # verify clean tests
 ```
 
-Expected: build clean, 1515 jobs successful; tests pass.
+Expected: build clean, 1521 jobs successful; tests pass.
+
+(Note: `9fb91aac` repaired the `omega` failure in the structural
+lemma `kSimSzudzikPackList_towerHeight_ge_two` introduced at
+`c1773838`.  The lemma now proves `≥ 2` via `Finset.le_sup`
+extraction and is build-clean.)
+
+---
+
+## Brainstorm refinements (second pass, 2026-04-30)
+
+Adversarial review of the level-1/level-2 plans surfaced the
+following refinements.  Where these conflict with the original
+Task 17b/17c sections below, the refinements take precedence.
+
+### R1 — Structural towerHeight bound is stronger than k+1
+
+The natural inductive bound on
+`(kSimSzudzikPackList t).towerHeight` is `≥ 3k + 3`, not just
+`≥ k + 1`.  Tracing the recurrence:
+
+- `packList(0) = comp succ [comp natPair [t 0, zeroN a]]`
+  gives `towerHeight ≥ natPair.towerHeight + 2 ≥ 3` (since
+  `natPair = comp condN [...]` itself contributes at least 1).
+- `packList(k+1).towerHeight ≥ packList(k).towerHeight + 3`
+  inductively (one `comp succ` adds 1, the inner `comp natPair`
+  adds `natPair.towerHeight + 1 ≥ 2`).
+
+So `(kSimPackedStep g).towerHeight ≥ 3k + 3`.  The plan's
+`≥ k + 1` target is conservative; aim for `≥ 3k + 3` since it
+costs no additional effort with the same induction structure.
+
+### R2 — pow→tower bound is height 2 (not height 1)
+
+Step 17b.2 step 5 in the original plan calls for converting
+`(M+2)^E` to `tower 1 (E·(M+2))` via a "pow_le_two_pow style
+estimate".  No such lemma exists in the codebase; what exists
+(and was developed for exactly this purpose) is
+`tower_succ_pow_bound_strong` in
+`Utilities/ComputationalComplexity.lean`, which gives:
+
+```text
+(T + 1) ^ D ≤ tower 2 (T + log_2 D + 2)
+```
+
+Use this directly.  The intermediate `tower 1 (E·(M+2))` step
+disappears; we go from `(M+2)^E` to `tower 2 (M + log_2 E + 2)`
+in one step.
+
+### R3 — Strategy B available as alternative
+
+The plan implicitly chose Strategy A (route through
+`KMor1.simrecVec` and K^sim-side `linearBound`).  Strategy B
+exists and is fully equipped: `polynomial_iter_tower_bound` from
+Module A combined with `kSimPackedStep_polyBound` (Task 16)
+gives `tower 2 (linear in j, params)` directly, requiring only
+`stepTH ≥ 2` (already proved in `c1773838` + `9fb91aac`).
+
+Tradeoff:
+
+- Strategy A is closer to Tourlakis CN §4.2.2's literature
+  approach (reduce simrec to children's linear bound at the
+  K^sim level, then encode).  Stays default per research doc.
+- Strategy B uses the polynomial-iteration machinery developed
+  in Module A.  Use as fallback if Strategy A's arithmetic
+  chain proves intractable.
+
+Document the choice at implementation start and cite this
+section.
+
+### R4 — No circular dependency on Task 14 (linearBound)
+
+`KMor1.linearBound_dominates` (already proved at commit
+`2843884a`) is fully self-contained on the K^sim side.  The
+simrec case uses the auxiliary lemma
+`KMor1.simrecVec_linear_bound_aux` (lines 317-485 of
+`LawvereKSimPolynomialBound.lean`), which performs induction on
+the recursion variable `n` at the K^sim level using
+`KMor1.level0Shape` and
+`ConstantOrShiftedProj.linearBound_dominates`.  It does not
+reference `kSimTowerBound_dominates` or any ER-side dominance
+lemma.
+
+Therefore Task 17b's dominance proof can freely consume
+`KMor1.linearBound_dominates` without creating a circular
+dependency.
+
+### R5 — Task 17c reuses Task 17b's structural bound
+
+Task 17c (`kSimTowerBound_dominates_inline` for level-2 simrec)
+does not require a new structural towerHeight lemma at level 2.
+It reuses `kSimPackedStep_towerHeight_ge_two` (or its R1
+strengthening).  The level-2 case differs from level-1 only in
+that simrec children are level ≤ 1 instead of level ≤ 0; the
+arithmetic chain is identical because `KMor1.linearBound`
+applies uniformly to `f.level ≤ 1`, covering both levels.
+
+Children's ER `towerHeight` does grow at level 2 (since
+level-1 children's `kToER` images contain `boundedRec`), but
+Strategy A's chain never inspects ER-side child `towerHeight`;
+all bounding flows through K^sim's `linearBound` and exits via
+`seqPack`.
+
+### R6 — Effort estimate revision
+
+- Structural-lemma strengthening (R1): ~30 lines per case, two
+  cases.  The `Finset.le_sup` pattern is now established;
+  strengthening from `≥ 2` to `≥ 3k + 3` requires a second
+  extraction at the inner `Fin 2` sup plus the inductive
+  hypothesis.
+- Arithmetic chain (R2 + R3): step 5 collapses; total chain
+  effort revised down from ~200-400 lines to ~150-300 lines.
+- Strategy B fallback: not implemented unless Strategy A
+  blocks; estimate ~100-200 lines if invoked.
+
+### Where to apply these refinements
+
+Treat the original Task 17b.2 "Refined approach" subsection as
+superseded by R1 + R2.  Treat Task 17c's prose as augmented by
+R5.  R3 is an alternative-strategy footnote; R4 is a verified
+non-cycle reassurance; R6 is an estimate revision.
 
 ---
 
