@@ -8,13 +8,10 @@ K^sim single-output morphisms representing functions
 `ℕ^n → ℕ`, and `KMorN : ℕ → ℕ → Type`, the multi-output
 wrapper representing functions `ℕ^n → ℕ^m` as families of
 `m` single-output morphisms.  Basic operations on `KMorN`
-(`id`, `terminal`, `fst`, `snd`, `pair`, `comp`) mirror the
+(`id`, `terminal`, `fst`, `snd`, `pair`, `comp`) parallel the
 corresponding `ERMorN` definitions.  See
 `docs/lawvere-k-sim-hierarchy.md` for the canonical
 mathematical reference and design principles P1 – P10.
-Companion modules `LawvereKSimInterp.lean` and
-`LawvereKSimQuot.lean` will add the interpretation into ℕ
-and the extensional-equality quotient respectively.
 -/
 
 namespace GebLean
@@ -57,7 +54,7 @@ instance (n : ℕ) : Inhabited (KMor1 n) := ⟨KMor1.zero⟩
 
 /-- Multi-output K^sim Lawvere-theory wrapper:
 `KMorN n m` represents a morphism `ℕ^n → ℕ^m` as a
-family of `m` single-output morphisms.  Mirrors
+family of `m` single-output morphisms.  Parallels
 `ERMorN`'s definition. -/
 abbrev KMorN (n m : ℕ) : Type := Fin m → KMor1 n
 
@@ -87,9 +84,7 @@ def KMorN.pair {k n m : ℕ}
     if h : i.val < n then
       f ⟨i.val, h⟩
     else
-      g ⟨i.val - n, by
-        rcases i with ⟨v, hv⟩
-        omega⟩
+      g ⟨i.val - n, by omega⟩
 
 /-- Composition of multi-output morphisms: `f ∘ g`
 where `g : KMorN n m` and `f : KMorN m k`. -/
