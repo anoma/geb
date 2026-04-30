@@ -990,4 +990,169 @@ theorem kToER_linearBound_dominates_level_zero
     KMor1.level0Shape_interp f h ctx]
   exact ConstantOrShiftedProj.linearBound_dominates _ ctx
 
+/-- For level-1 simrec (level-0 children), the iterated
+packed value matches `seqPack` of `KMor1.simrecVec`. -/
+private theorem packed_iteration_matches_simrecVec
+    {a k : ℕ}
+    (h_fam : Fin (k + 1) → KMor1 a)
+    (g_fam : Fin (k + 1) → KMor1 (a + 1 + (k + 1)))
+    (h_h : ∀ l, (h_fam l).level ≤ 0)
+    (h_g : ∀ l, (g_fam l).level ≤ 0)
+    (params : Fin a → ℕ) (j : ℕ) :
+    Nat.rec
+      ((kSimPackedBase (fun l => kToER (h_fam l)
+        (Nat.le_succ_of_le
+          (Nat.le_succ_of_le (h_h l))))).interp params)
+      (fun i prev =>
+        (kSimPackedStep (fun l => kToER (g_fam l)
+          (Nat.le_succ_of_le
+            (Nat.le_succ_of_le (h_g l))))).interp
+        (Fin.cons i (Fin.cons prev params)))
+      j =
+      Nat.seqPack
+        ((List.finRange (k + 1)).map
+          (fun l =>
+            KMor1.simrecVec h_fam g_fam params j l)) := by
+  induction j with
+  | zero =>
+      change (kSimPackedBase _).interp params = _
+      rw [kSimPackedBase_interp]
+      congr 1
+      apply List.map_congr_left
+      intro l _
+      simp only [KMor1.simrecVec_zero]
+      exact kToER_interp_level_zero (h_fam l) (h_h l) params
+  | succ n ih =>
+      set base_val :=
+        (kSimPackedBase (fun l =>
+          kToER (h_fam l)
+            (Nat.le_succ_of_le
+              (Nat.le_succ_of_le (h_h l))))).interp params
+        with hbase
+      set step_fn :
+          ℕ → ℕ → ℕ :=
+        fun i prev =>
+          (kSimPackedStep (fun l =>
+            kToER (g_fam l)
+              (Nat.le_succ_of_le
+                (Nat.le_succ_of_le (h_g l))))).interp
+          (Fin.cons i (Fin.cons prev params))
+        with hstep
+      set P : ℕ :=
+        Nat.rec (motive := fun _ => ℕ) base_val step_fn n
+        with hP
+      change (kSimPackedStep _).interp
+          (Fin.cons (n : ℕ) (Fin.cons P params)) = _
+      rw [kSimPackedStep_interp]
+      have h_ctx_eq :
+          (fun idx : Fin (a + 1 + (k + 1)) =>
+              (kSimStepContext idx).interp
+                (Fin.cons (n : ℕ)
+                  (Fin.cons P params))) =
+            fun idx : Fin (a + 1 + (k + 1)) =>
+              if h₁ : idx.val < a + 1 then
+                if _h₂ : idx.val = 0 then
+                  (n : ℕ)
+                else
+                  params ⟨idx.val - 1, by omega⟩
+              else
+                KMor1.simrecVec h_fam g_fam params n
+                  ⟨idx.val - (a + 1), by omega⟩ := by
+        funext idx
+        unfold kSimStepContext
+        by_cases h₀ : idx.val = 0
+        · simp only [h₀, dite_true]
+          rw [ERMor1.interp_proj]
+          have hlt : (0 : ℕ) < a + 1 := by omega
+          simp only [hlt, dite_true]
+          rfl
+        · by_cases h₁ : idx.val < a + 1
+          · simp only [h₀, h₁, dite_true, dite_false]
+            rw [ERMor1.interp_proj]
+            have hidx_pos : 0 < idx.val := Nat.pos_of_ne_zero h₀
+            have hidx_lt_a : idx.val - 1 < a := by omega
+            have h_unfold :
+                (Fin.cons (n : ℕ)
+                  (Fin.cons P params) :
+                    Fin (a + 2) → ℕ)
+                  ⟨idx.val + 1, by
+                    have := idx.isLt; omega⟩ =
+                  params ⟨idx.val - 1, by omega⟩ := by
+              have h1 :
+                  (⟨idx.val + 1, by
+                    have := idx.isLt; omega⟩ :
+                      Fin (a + 2)) =
+                  Fin.succ ⟨idx.val, by omega⟩ := by
+                apply Fin.ext; rfl
+              rw [h1, Fin.cons_succ]
+              have h2 :
+                  (⟨idx.val, by omega⟩ : Fin (a + 1)) =
+                  Fin.succ ⟨idx.val - 1, hidx_lt_a⟩ := by
+                apply Fin.ext
+                change idx.val = (idx.val - 1) + 1
+                omega
+              rw [h2, Fin.cons_succ]
+            exact h_unfold
+          · simp only [h₀, h₁, dite_false]
+            rw [ERMor1.interp_comp]
+            set unpackCtx :
+                Fin (a + 1) → ℕ :=
+              fun j =>
+                (if h : j.val = 0 then
+                  ERMor1.proj (k := a + 2)
+                    ⟨1, by omega⟩
+                else
+                  ERMor1.proj (k := a + 2)
+                    ⟨j.val + 1, by
+                      have := j.isLt; omega⟩).interp
+                  (Fin.cons (n : ℕ)
+                    (Fin.cons P params))
+              with hu_def
+            change (kSimSzudzikUnpackAt a
+                (idx.val - (a + 1))).interp unpackCtx = _
+            have hu0 : unpackCtx 0 = P := by
+              rw [hu_def]
+              simp only [Fin.val_zero, dite_true]
+              rw [ERMor1.interp_proj]
+              rfl
+            have hu_eq :
+                unpackCtx = Fin.cons P params := by
+              funext j
+              refine Fin.cases ?_ ?_ j
+              · exact hu0
+              · intro j'
+                rw [hu_def]
+                have hjne : (Fin.succ j').val ≠ 0 := by
+                  simp [Fin.succ]
+                simp only [hjne, dite_false]
+                rw [ERMor1.interp_proj]
+                rw [Fin.cons_succ]
+                rfl
+            rw [hu_eq, kSimSzudzikUnpackAt_interp_eq_seqAt]
+            rw [show P = _ from ih]
+            have hlen :
+                ((List.finRange (k + 1)).map
+                  (fun l =>
+                    KMor1.simrecVec
+                      h_fam g_fam params n l)).length
+                  = k + 1 := by
+              simp
+            have h_idx_lt :
+                idx.val - (a + 1) < k + 1 := by
+              have := idx.isLt
+              omega
+            rw [Nat.seqAt_seqPack
+              (xs := (List.finRange (k + 1)).map
+                (fun l =>
+                  KMor1.simrecVec h_fam g_fam params n l))
+              (i := idx.val - (a + 1))
+              (h := by rw [hlen]; exact h_idx_lt)]
+            simp
+      rw [h_ctx_eq]
+      simp only [KMor1.simrecVec_succ]
+      congr 1
+      apply List.map_congr_left
+      intro l _
+      exact kToER_interp_level_zero (g_fam l) (h_g l) _
+
 end GebLean
