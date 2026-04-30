@@ -367,6 +367,32 @@ def ofBsum {k : ℕ} {f : ERMor1 (k + 1)}
         (le_trans h_step2 (le_of_eq h_eq_combine))
     exact le_trans h_sum h_combine
 
+/-!
+## On the structural `towerHeight` lemma
+
+A general structural lemma of the form
+`Nat.log 2 pb.degree ≤ f.towerHeight`, parameterized over
+arbitrary `pb : PolyBound f`, does not hold.  The
+`PolyBound` structure does not constrain `degree` from
+above when the value bound is satisfied vacuously: for
+example, on `ERMor1.zero`, every `pb.bounds` proof reduces
+to `0 ≤ ...`, which holds for any choice of `degree`,
+`coefficient`, and `constant`.  A user-supplied `pb` with
+`degree := 100` is then a valid `PolyBound ERMor1.zero`,
+yet `Nat.log 2 100 = 6 > 0 = ERMor1.zero.towerHeight`.
+
+The structural relationship between polynomial degree and
+`towerHeight` therefore depends on `pb` being built from
+the per-constructor builders `ofZero`, `ofSucc`, `ofProj`,
+`ofSub`, `ofComp`, `ofBsum` (the bprod-free fragment;
+`bprod`'s value bound is not polynomial in the inputs).
+The relationship is established at the call site in Module
+C (`LawvereKSimPolynomialBound.lean`) for the specific
+`PolyBound`s built for `kSimPackedStep` and
+`kSimPackedBase`, where the structural form of the
+underlying ER term is known.
+-/
+
 end ERMor1.PolyBound
 
 end GebLean
