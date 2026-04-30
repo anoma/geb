@@ -82,4 +82,14 @@ underlying interp; `raise` is a level marker only. -/
     (KMor1.raise f).interp ctx = f.interp ctx :=
   rfl
 
+/-- Interpretation of composition: apply `f`'s
+interpretation to the family of `gs`'s interpretations
+at the given context. -/
+@[simp] theorem KMor1.interp_comp
+    {a b : ℕ} (f : KMor1 b) (gs : Fin b → KMor1 a)
+    (ctx : Fin a → ℕ) :
+    (KMor1.comp f gs).interp ctx
+      = f.interp (fun i => (gs i).interp ctx) :=
+  rfl
+
 end GebLean
