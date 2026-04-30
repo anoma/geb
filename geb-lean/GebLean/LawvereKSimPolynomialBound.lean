@@ -1249,4 +1249,139 @@ private theorem kSimPackedStep_towerHeight_ge_succ_k
   unfold kSimPackedStep
   exact kSimSzudzikPackList_towerHeight_ge_succ_k _
 
+/-- `kSimSzudzikPackList`'s towerHeight propagates the
+maximum child tower height through a constant offset.
+The structural recursion adds `natPair.towerHeight + 2`
+per layer (`natPair.towerHeight` from the inner
+`comp natPair`, +1 from natPair's own outer `comp`, +1
+from the outer `comp succ`), so the sup over `l` of
+`(t l).towerHeight` enters at the deepest layer and the
+offset is independent of `k`. -/
+private theorem kSimSzudzikPackList_towerHeight_ge_propagate
+    : ∀ {a k : ℕ} (t : Fin (k + 1) → ERMor1 a),
+      ERMor1.natPair.towerHeight + 2 +
+        (Finset.univ : Finset (Fin (k + 1))).sup
+          (fun l => (t l).towerHeight) ≤
+      (kSimSzudzikPackList t).towerHeight
+  | _, 0,     t => by
+      unfold kSimSzudzikPackList
+      simp only [ERMor1.towerHeight]
+      have hsup_eq :
+          (Finset.univ : Finset (Fin 1)).sup
+            (fun l => (t l).towerHeight) =
+          (t 0).towerHeight := by
+        rw [show (Finset.univ : Finset (Fin 1)) =
+              {(0 : Fin 1)} from rfl]
+        simp [Finset.sup_singleton]
+      rw [hsup_eq]
+      let G : Fin 2 → ℕ := fun i =>
+        (match i with
+          | ⟨0, _⟩ => t 0
+          | ⟨1, _⟩ => ERMor1.zeroN _).towerHeight
+      have hG0 : G ⟨0, by omega⟩ = (t 0).towerHeight := rfl
+      have hG_le_sup :
+          (t 0).towerHeight ≤ Finset.univ.sup G := by
+        rw [← hG0]
+        exact Finset.le_sup (Finset.mem_univ _)
+      let F : Fin 1 → ℕ := fun _ =>
+        ERMor1.natPair.towerHeight + Finset.univ.sup G + 1
+      have hF0_le_sup : F 0 ≤ Finset.univ.sup F :=
+        Finset.le_sup (Finset.mem_univ (0 : Fin 1))
+      change ERMor1.natPair.towerHeight + 2 +
+          (t 0).towerHeight ≤ 0 + Finset.univ.sup F + 1
+      have hF_val : F 0 =
+          ERMor1.natPair.towerHeight +
+            Finset.univ.sup G + 1 := rfl
+      omega
+  | a, k + 1, t => by
+      unfold kSimSzudzikPackList
+      simp only [ERMor1.towerHeight]
+      have hIH :=
+        kSimSzudzikPackList_towerHeight_ge_propagate
+          (a := a) (k := k) (fun j => t j.succ)
+      let G : Fin 2 → ℕ := fun i =>
+        (match i with
+          | ⟨0, _⟩ => t 0
+          | ⟨1, _⟩ =>
+              kSimSzudzikPackList (a := a) (k := k)
+                (fun j => t j.succ)).towerHeight
+      have hG1 :
+          G ⟨1, by omega⟩ =
+            (kSimSzudzikPackList (a := a) (k := k)
+              (fun j => t j.succ)).towerHeight := rfl
+      have hG_le_sup1 :
+          (kSimSzudzikPackList (a := a) (k := k)
+            (fun j => t j.succ)).towerHeight ≤
+            Finset.univ.sup G := by
+        rw [← hG1]; exact Finset.le_sup (Finset.mem_univ _)
+      have hsup_le_sup_G :
+          (Finset.univ : Finset (Fin (k + 2))).sup
+              (fun l => (t l).towerHeight) ≤
+            Finset.univ.sup G := by
+        apply Finset.sup_le
+        intro i _
+        match i with
+        | ⟨0, _⟩ =>
+            have h0_eq :
+                ((t (⟨0, by omega⟩ : Fin (k + 2)))
+                  : ERMor1 a).towerHeight =
+                G ⟨0, by omega⟩ := rfl
+            rw [h0_eq]
+            exact Finset.le_sup (Finset.mem_univ _)
+        | ⟨n + 1, h⟩ =>
+            have hn : n < k + 1 := by omega
+            have hn_eq :
+                ((t (⟨n + 1, h⟩ : Fin (k + 2)))
+                  : ERMor1 a).towerHeight =
+                ((t (⟨n, hn⟩ : Fin (k + 1)).succ)
+                  : ERMor1 a).towerHeight := rfl
+            rw [hn_eq]
+            calc ((t (⟨n, hn⟩ : Fin (k + 1)).succ)
+                    : ERMor1 a).towerHeight
+                ≤ (Finset.univ : Finset (Fin (k + 1))).sup
+                    (fun l => (t l.succ).towerHeight) :=
+                  Finset.le_sup
+                    (f := fun l : Fin (k + 1) =>
+                      (t l.succ).towerHeight)
+                    (Finset.mem_univ _)
+              _ ≤ (kSimSzudzikPackList (a := a) (k := k)
+                    (fun j => t j.succ)).towerHeight := by
+                  omega
+              _ ≤ Finset.univ.sup G := hG_le_sup1
+      let F : Fin 1 → ℕ := fun _ =>
+        ERMor1.natPair.towerHeight + Finset.univ.sup G + 1
+      have hF0_le_sup : F 0 ≤ Finset.univ.sup F :=
+        Finset.le_sup (Finset.mem_univ (0 : Fin 1))
+      have hF_val : F 0 =
+          ERMor1.natPair.towerHeight +
+            Finset.univ.sup G + 1 := rfl
+      change ERMor1.natPair.towerHeight + 2 +
+          Finset.univ.sup
+            (fun l : Fin (k + 2) => (t l).towerHeight) ≤
+          0 + Finset.univ.sup F + 1
+      omega
+
+/-- Structural propagation corollary for `kSimPackedBase`. -/
+private theorem kSimPackedBase_towerHeight_ge_propagate
+    {a k : ℕ}
+    (h : Fin (k + 1) → ERMor1 a) :
+    ERMor1.natPair.towerHeight + 2 +
+      (Finset.univ : Finset (Fin (k + 1))).sup
+        (fun l => (h l).towerHeight) ≤
+      (kSimPackedBase h).towerHeight := by
+  unfold kSimPackedBase
+  exact kSimSzudzikPackList_towerHeight_ge_propagate _
+
+/-- Structural propagation corollary for `kSimPackedStep`. -/
+private theorem kSimPackedStep_towerHeight_ge_propagate
+    {a k : ℕ}
+    (g : Fin (k + 1) → ERMor1 (a + 1 + (k + 1))) :
+    ERMor1.natPair.towerHeight + 2 +
+      (Finset.univ : Finset (Fin (k + 1))).sup
+        (fun l =>
+          (ERMor1.comp (g l) kSimStepContext).towerHeight) ≤
+      (kSimPackedStep g).towerHeight := by
+  unfold kSimPackedStep
+  exact kSimSzudzikPackList_towerHeight_ge_propagate _
+
 end GebLean
