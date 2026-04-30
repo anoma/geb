@@ -97,4 +97,10 @@ def kToER : {a : ℕ} → (f : KMor1 a) → f.level ≤ 2 →
         omega
       exact kToER f hf
 
+/-- Multi-output forward translation: pointwise lift of
+`kToER` over a `KMorN` family. -/
+def kToERN {a m : ℕ} (f : KMorN a m)
+    (h : ∀ i, (f i).level ≤ 2) : ERMorN a m :=
+  fun i => kToER (f i) (h i)
+
 end GebLean
