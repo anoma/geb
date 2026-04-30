@@ -50,11 +50,14 @@ deliverable).
 
 ## Risk assessment
 
-This plan was reviewed adversarially after first draft.
-Findings (P1–P6) are inlined into the relevant tasks
-below.  The single highest-risk subtask is **Phase I
-Task A.5** (tower-level absorption + structural
-propagation).  Detail:
+This plan was reviewed adversarially after first draft,
+and **mid-execution** an additional correction was made
+to A.5.0 / A.5.2 — see the "Plan correction
+(2026-04-30, mid-execution)" callouts on those tasks.
+
+The single highest-risk subtask is **Phase I Task A.5**
+(tower-level absorption + structural propagation).
+Detail:
 
 The arithmetic chain bounds
 `iter j ≤ tower 2 (CC * S + KK + 1 + log_2 E + 2)`,
@@ -69,18 +72,28 @@ arbitrarily with K^sim term constants.
 Resolution path (Task A.5):
 
 1. **Structural propagation** (A.5.0): prove
-   `(kSimSzudzikPackList t).towerHeight ≥ k + 2 +
-   sup_j (t j).towerHeight`.  This passes children's
-   tower heights up through the packing structure.
+   `(kSimSzudzikPackList t).towerHeight ≥
+   natPair.towerHeight + 2 + sup_j (t j).towerHeight`.
+   Constant-coefficient version: each `comp natPair`
+   layer adds the fixed `natPair.towerHeight` per layer.
+   (The originally-drafted `k + 2 + sup` version is
+   mathematically false; see Plan correction callout.)
 2. **Tower-level absorption** (A.5.1): prove
    `tower 2 (C * X + D) ≤ tower 3 (X + log_2 (C+1) +
    log_2 (D+1) + 2)`.  Generic Module-A-friendly
    helper.
 3. **Connect-up** (A.5.2): combine A.5.0 with
-   level0Shape inspection to bound `log_2 CC ≤
-   max_l (g_ER l).towerHeight + small`, hence
-   `≤ stepTH - k - 2 + small`, hence absorbed by
-   stepTH+1's contribution to `Y`.
+   level0Shape inspection plus the existing
+   `_ge_succ_k` lemmas (separate slack channels).
+   - `+sup_l (g_ER l).tH` absorbed by A.5.0
+     (constant-coefficient propagation) on stepTH.
+   - `+k` absorbed by `≥ k + 2` (existing lemma).
+   - `+log_2 E ≈ 2k` absorbed by additional copies of
+     baseTH ≥ k+2 in `2 * baseTH`.
+   The combined absorption succeeds because the LHS
+   slack `stepTH + 2*baseTH + 1` exposes three
+   independent slack channels that match the three
+   summands on the RHS.
 
 Fallback if A.5 stalls: switch to Strategy B, which
 hits the same fundamental absorption issue but routes
@@ -539,82 +552,82 @@ small`, giving sufficient slack in the right-hand side.
 
 #### Task A.5.0: structural propagation lemma
 
+> **Plan correction (2026-04-30, mid-execution)**: the
+> originally-drafted statement `k + 2 + sup_l (t l).tH ≤
+> packList.tH` is *mathematically false*.  Each `comp
+> natPair` layer of `kSimSzudzikPackList` adds only the
+> *fixed constant* `natPair.towerHeight ≈ 4` (plus 2 for
+> the outer `comp succ`), not `k+1` per-layer slack.
+>
+> Concrete counterexample at `k = 5`: with `t 0` a chain of
+> 100 `succ`s (towerHeight 100) and `t 1..5 = zero`
+> (towerHeight 0): packList grows `6, 12, 18, 24, 30, then
+> 4 + max(100, 30) + 2 = 106`.  Plan's claim
+> `5+2+100 = 107 ≤ 106` is false by 1.
+>
+> Replacement: prove `natPair.towerHeight + 2 + sup ≤
+> packList.tH`.  Constant-coefficient (independent of k);
+> mathematically correct.  Downstream A.5.2 uses this
+> together with the existing structural lemma
+> `kSimSzudzikPackList_towerHeight_ge_succ_k` (which gives
+> `k + 2 ≤ packList.tH`) as two separate slack channels —
+> `+k` from the existing lemma, `+sup_l T_l` from the new
+> propagation.  See revised A.5.2 below.
+
 **Files:**
 
 - Modify: `GebLean/LawvereKSimPolynomialBound.lean`
   (append after
   `kSimSzudzikPackList_towerHeight_ge_succ_k`)
 
-**Goal:** prove `(kSimSzudzikPackList t).towerHeight ≥ k +
-2 + sup_l (t l).towerHeight`.  This pushes per-child
-heights up through the natPair stack.
+**Goal:** prove `(kSimSzudzikPackList t).towerHeight ≥
+natPair.tH + 2 + sup_l (t l).towerHeight`.  This pushes
+per-child heights up through the natPair stack via a
+constant offset.
 
 - [ ] **Step A.5.0.1: Append the propagation lemma**
 
 ```lean
 /-- `kSimSzudzikPackList`'s towerHeight propagates the
-maximum child tower height: each `comp natPair` layer
-contains the recursive packList plus the next child, so
-the sup over l of `(t l).towerHeight` enters via
-`Finset.le_sup` extraction at depth-l. -/
+maximum child tower height through a constant offset.
+The structural recursion adds `natPair.tH + 2` per layer
+(natPair.tH from the inner `comp natPair`, +1 from natPair's
+own comp, +1 from the outer `comp succ`), so the sup over
+l of `(t l).towerHeight` enters at the deepest layer and
+the offset is independent of k. -/
 private theorem kSimSzudzikPackList_towerHeight_ge_propagate
     : ∀ {a k : ℕ} (t : Fin (k + 1) → ERMor1 a),
-      k + 2 + (Finset.univ : Finset (Fin (k + 1))).sup
-        (fun l => (t l).towerHeight) ≤
+      ERMor1.natPair.towerHeight + 2 +
+        (Finset.univ : Finset (Fin (k + 1))).sup
+          (fun l => (t l).towerHeight) ≤
       (kSimSzudzikPackList t).towerHeight
-  | a, 0,     t => by
-      unfold kSimSzudzikPackList
-      simp only [ERMor1.towerHeight]
-      -- Goal: 0 + 2 + sup{(t 0).tH over Fin 1} ≤ ...
-      -- Inner: comp natPair [t 0, zeroN a] has tH ≥
-      --   natPair.tH + sup{(t 0).tH, 0} + 1 ≥
-      --   1 + (t 0).tH + 1 = (t 0).tH + 2
-      -- Outer: comp succ ... = sup{inner} + 1 = (t 0).tH
-      --   + 3 ≥ (t 0).tH + 2 ≥ sup{(t 0).tH over Fin 1}
-      --   + 2.
-      sorry
-  | a, k + 1, t => by
-      unfold kSimSzudzikPackList
-      simp only [ERMor1.towerHeight]
-      -- Goal: k + 1 + 2 + sup{(t l).tH over Fin (k+2)}
-      --   ≤ inner + 1 (outer comp succ adds 1)
-      -- where inner ≥ natPair.tH + sup{(t 0).tH,
-      --   packList recur.tH} + 1
-      -- packList recur has tH ≥ k + 2 + sup{(t l.succ).tH}
-      --   by IH.
-      -- sup{(t 0).tH, packList recur.tH} captures both
-      -- (t 0).tH and the IH's sup.  Combined:
-      -- inner ≥ 1 + max((t 0).tH, k+2+sup{others}) + 1
-      --   ≥ 1 + max(k+2+(t 0).tH, k+2+sup{others}) + 1
-      --     [if (t 0).tH ≤ sup{others}]
-      --   = k + 4 + sup{(t l).tH over Fin (k+2)}
-      -- LHS = k + 3 + sup{...over Fin (k+2)} ≤ inner + 1
-      --   ✓
-      sorry
+  | _, 0,     _ => by sorry
+  | _, _ + 1, _ => by sorry
 ```
 
-- [ ] **Step A.5.0.2: Discharge the base case sorry**
+- [ ] **Step A.5.0.2: Discharge the base case**
 
-The k=0 case extracts `(t 0).tH` via `Finset.le_sup` for
-both the inner Fin 2 (where `t 0` sits at index 0) and
-the outer Fin 1 (the comp natPair wrapper).  Goal
-manipulation uses `change` to shape into omega-amenable
-arithmetic.
+For k=0:
+
+- `packList(0, t).tH = natPair.tH + (t 0).tH + 2`
+  (inner comp natPair has `natPair.tH + sup{T_0, 0} + 1
+  = natPair.tH + T_0 + 1`; outer comp succ adds 1).
+- `sup{(t l).tH | l : Fin 1} = (t 0).tH`.
+- Need: `natPair.tH + 2 + (t 0).tH ≤ natPair.tH +
+  (t 0).tH + 2`.  Equality.
 
 ```lean
-  | a, 0, t => by
+  | _, 0, t => by
       unfold kSimSzudzikPackList
       simp only [ERMor1.towerHeight]
-      -- Sup over Fin 1 of (t l).tH is just (t 0).tH:
       have hsup_eq :
-          Finset.univ.sup
-            (fun l : Fin 1 => (t l).towerHeight) =
+          (Finset.univ : Finset (Fin 1)).sup
+            (fun l => (t l).towerHeight) =
           (t 0).towerHeight := by
         rw [show (Finset.univ : Finset (Fin 1)) =
               {(0 : Fin 1)} from rfl]
         simp [Finset.sup_singleton]
       rw [hsup_eq]
-      -- Inner (Fin 2) sup with (t 0).tH at idx 0:
       let G : Fin 2 → ℕ := fun i =>
         (match i with
           | ⟨0, _⟩ => t 0
@@ -624,56 +637,161 @@ arithmetic.
           (t 0).towerHeight ≤ Finset.univ.sup G := by
         rw [← hG0]
         exact Finset.le_sup (Finset.mem_univ _)
-      -- Outer (Fin 1) sup of (natPair.tH + sup G + 1):
       let F : Fin 1 → ℕ := fun _ =>
         ERMor1.natPair.towerHeight + Finset.univ.sup G + 1
-      have hF0_eq : F 0 ≥ (t 0).towerHeight + 2 := by
-        change ERMor1.natPair.towerHeight +
-          Finset.univ.sup G + 1 ≥ (t 0).towerHeight + 2
-        omega
       have hF0_le_sup : F 0 ≤ Finset.univ.sup F :=
         Finset.le_sup (Finset.mem_univ (0 : Fin 1))
-      change 0 + 2 + (t 0).towerHeight ≤
-        0 + Finset.univ.sup F + 1
+      change ERMor1.natPair.towerHeight + 2 +
+          (t 0).towerHeight ≤ 0 + Finset.univ.sup F + 1
       omega
 ```
 
-- [ ] **Step A.5.0.3: Discharge the inductive case sorry**
+- [ ] **Step A.5.0.3: Discharge the inductive case**
 
-Similar pattern but the inner Fin 2 sup at index 1 holds
-the recursive `packList(k)`.  Use IH on the recursive
-call, take `Finset.le_sup` at index 1, combine with sup
-over the outer Fin (k+2).
+For k+1 → induct on k:
 
-The trickiest part: connecting `sup{(t 0).tH, recur.tH}`
-to `sup{(t l).tH over Fin (k+2)}`.  Use:
-
-- `(t 0).tH ≤ sup over Fin (k+2)` (Finset.le_sup at l=0)
-- `(t l.succ).tH ≤ sup over Fin (k+2)` for l in Fin (k+1)
-- Therefore `sup over Fin (k+1) of (t l.succ).tH ≤ sup
-  over Fin (k+2) of (t l).tH`
-- IH gives recur.tH ≥ k+2 + sup over Fin (k+1) of
-  (t l.succ).tH
-- Combining: max((t 0).tH, recur.tH) ≥ max((t 0).tH,
-  k+2 + sup_succ) ≥ max(0, k+2) + sup over Fin (k+2)
-  = k+2 + sup over Fin (k+2).
-
-Then the outer adds 1 + 1 + natPair.tH ≥ 3 to reach the
-required `k + 3 + sup`.  Detailed proof ~50 lines.
-
-- [ ] **Step A.5.0.4: Add the kSimPackedStep corollary**
+- IH: for any t' : Fin (k+1) → ERMor1 a,
+  `natPair.tH + 2 + sup_l (t' l).tH ≤ packList(k, t').tH`.
+- Apply to `t' = fun j => t j.succ`:
+  `natPair.tH + 2 + sup_succ ≤ packList(k, t∘succ).tH`,
+  where `sup_succ = sup over Fin (k+1) of (t l.succ).tH`.
+- Inner of packList(k+1, t) is `comp natPair [t 0,
+  packList(k, t∘succ)]`, with tH `natPair.tH + max(T_0,
+  packList(k, t∘succ).tH) + 1`.
+- Outer adds 1 from `comp succ`.
+- So `packList(k+1, t).tH = natPair.tH + max(T_0,
+  packList(k, t∘succ).tH) + 2`.
+- Need: `natPair.tH + 2 + max(T_0, sup_succ) ≤
+  natPair.tH + max(T_0, packList(k, t∘succ).tH) + 2`,
+  i.e. `max(T_0, sup_succ) ≤ max(T_0, packList(k,
+  t∘succ).tH)`.
+- Since IH gives `packList(k, t∘succ).tH ≥ natPair.tH +
+  2 + sup_succ ≥ sup_succ`, this is immediate by case
+  analysis on `T_0` vs `sup_succ`.
 
 ```lean
+  | _, k + 1, t => by
+      unfold kSimSzudzikPackList
+      simp only [ERMor1.towerHeight]
+      have hIH :=
+        kSimSzudzikPackList_towerHeight_ge_propagate
+          (a := a) (k := k) (fun j => t j.succ)
+      let G : Fin 2 → ℕ := fun i =>
+        (match i with
+          | ⟨0, _⟩ => t 0
+          | ⟨1, _⟩ =>
+              kSimSzudzikPackList (a := a) (k := k)
+                (fun j => t j.succ)).towerHeight
+      have hG0 : G ⟨0, by omega⟩ = (t 0).towerHeight := rfl
+      have hG1 :
+          G ⟨1, by omega⟩ =
+            (kSimSzudzikPackList (a := a) (k := k)
+              (fun j => t j.succ)).towerHeight := rfl
+      have hG_le_sup0 :
+          (t 0).towerHeight ≤ Finset.univ.sup G := by
+        rw [← hG0]; exact Finset.le_sup (Finset.mem_univ _)
+      have hG_le_sup1 :
+          (kSimSzudzikPackList (a := a) (k := k)
+            (fun j => t j.succ)).towerHeight ≤
+            Finset.univ.sup G := by
+        rw [← hG1]; exact Finset.le_sup (Finset.mem_univ _)
+      have hsup_succ_le :
+          (Finset.univ : Finset (Fin (k + 1))).sup
+              (fun l => (t l.succ).towerHeight) ≤
+            Finset.univ.sup G := by
+        have :
+            (Finset.univ : Finset (Fin (k + 1))).sup
+                (fun l => (t l.succ).towerHeight) ≤
+              (kSimSzudzikPackList (a := a) (k := k)
+                (fun j => t j.succ)).towerHeight := by
+          have := hIH
+          omega
+        omega
+      have hT0_le :
+          (t 0).towerHeight ≤
+            (Finset.univ : Finset (Fin (k + 2))).sup
+              (fun l => (t l).towerHeight) := by
+        have h0 : (0 : Fin (k + 2)) ∈ Finset.univ :=
+          Finset.mem_univ _
+        exact Finset.le_sup (f :=
+          fun l : Fin (k + 2) => (t l).towerHeight) h0
+      have hsup_le :
+          (Finset.univ : Finset (Fin (k + 2))).sup
+              (fun l => (t l).towerHeight) ≤
+            max (t 0).towerHeight
+              ((Finset.univ : Finset (Fin (k + 1))).sup
+                (fun l => (t l.succ).towerHeight)) := by
+        apply Finset.sup_le
+        intro i _
+        match i with
+        | ⟨0, _⟩ =>
+            have : (t (⟨0, _⟩ : Fin (k + 2))).towerHeight =
+                (t 0).towerHeight := rfl
+            rw [this]; exact le_max_left _ _
+        | ⟨n + 1, h⟩ =>
+            have hn : n < k + 1 := by omega
+            have : (t (⟨n + 1, h⟩ : Fin (k + 2)))
+                .towerHeight =
+                (t (⟨n, hn⟩ : Fin (k + 1)).succ)
+                .towerHeight := rfl
+            rw [this]
+            apply le_trans
+              (Finset.le_sup (f :=
+                fun l : Fin (k + 1) =>
+                  (t l.succ).towerHeight)
+                (Finset.mem_univ _))
+            exact le_max_right _ _
+      let F : Fin 1 → ℕ := fun _ =>
+        ERMor1.natPair.towerHeight + Finset.univ.sup G + 1
+      have hF0_le_sup : F 0 ≤ Finset.univ.sup F :=
+        Finset.le_sup (Finset.mem_univ (0 : Fin 1))
+      change ERMor1.natPair.towerHeight + 2 +
+          Finset.univ.sup
+            (fun l : Fin (k + 2) => (t l).towerHeight) ≤
+        0 + Finset.univ.sup F + 1
+      have hsup_F :
+          Finset.univ.sup F ≥
+            ERMor1.natPair.towerHeight +
+              Finset.univ.sup G + 1 := by
+        have : F 0 = ERMor1.natPair.towerHeight +
+            Finset.univ.sup G + 1 := rfl
+        rw [← this]; exact hF0_le_sup
+      omega
+```
+
+The detailed proof above is approximate; expect 1-2
+iterations of `lean_goal` inspection to settle the
+`change` and `match` shaping.
+
+- [ ] **Step A.5.0.4: Add the kSimPackedBase / kSimPackedStep corollaries**
+
+```lean
+private theorem kSimPackedBase_towerHeight_ge_propagate
+    {a k : ℕ}
+    (h : Fin (k + 1) → ERMor1 a) :
+    ERMor1.natPair.towerHeight + 2 +
+      (Finset.univ : Finset (Fin (k + 1))).sup
+        (fun l => (h l).towerHeight) ≤
+      (kSimPackedBase h).towerHeight := by
+  unfold kSimPackedBase
+  exact kSimSzudzikPackList_towerHeight_ge_propagate _
+
 private theorem kSimPackedStep_towerHeight_ge_propagate
     {a k : ℕ}
     (g : Fin (k + 1) → ERMor1 (a + 1 + (k + 1))) :
-    k + 2 + (Finset.univ : Finset (Fin (k + 1))).sup
-      (fun l =>
-        (ERMor1.comp (g l) kSimStepContext).towerHeight) ≤
+    ERMor1.natPair.towerHeight + 2 +
+      (Finset.univ : Finset (Fin (k + 1))).sup
+        (fun l =>
+          (ERMor1.comp (g l) kSimStepContext).towerHeight) ≤
       (kSimPackedStep g).towerHeight := by
   unfold kSimPackedStep
   exact kSimSzudzikPackList_towerHeight_ge_propagate _
 ```
+
+The `kSimPackedBase` corollary is new (needed for
+absorbing `KK + log_2 E + 4` in A.6.4); the
+`kSimPackedStep` corollary's statement now matches the
+constant-coefficient form.
 
 - [ ] **Step A.5.0.5: Run `lake build`**
 
@@ -774,31 +892,110 @@ coefficient: tower 2 (C*X + D) is dominated by tower 3
 helper used by Task 17b.2's dominance chain."
 ```
 
-#### Task A.5.2: connect-up lemma absorbing log_2 CC
+#### Task A.5.2: connect-up lemmas absorbing log_2 CC and log_2 (KK + log_2 E + 4)
+
+> **Plan correction (2026-04-30, mid-execution)**: the
+> originally-drafted A.5.2 used the (false) propagation
+> `stepTH ≥ k + 2 + sup_l (g_ER l).tH`.  The corrected
+> chain instead splits the absorption across two slack
+> channels:
+>
+> - `+k` absorption uses the **existing** lemma
+>   `kSimPackedStep_towerHeight_ge_succ_k` (and similar for
+>   base): `stepTH ≥ k + 2`, `baseTH ≥ k + 2`.
+> - `+sup_l T_l` absorption uses the **new** corrected
+>   propagation: `stepTH ≥ natPair.tH + 2 + sup_l (g_ER
+>   l).tH + (sup over kSimStepContext slots) + 1` (the
+>   inner `comp (g l) kSimStepContext` adds 1 to the inner
+>   sup), simplified to `stepTH ≥ natPair.tH + 3 + sup_l
+>   (g_ER l).tH` for a lower bound; symmetrically `baseTH
+>   ≥ natPair.tH + 2 + sup_l (h_ER l).tH`.
+>
+> Final argument inequality (post A.5.1) becomes:
+>
+> ```text
+> log_2(CC + 1) + log_2(KK + log_2 E + 4) ≤
+>   stepTH + 2*baseTH + 1
+> ```
+>
+> The chain is:
+>
+> 1. `log_2(CC + 1) ≤ sup_l (g_ER l).tH + κ_g` (where κ_g
+>    depends on `log_2(linearBound.2 of g) ≤ tH + 1`,
+>    plus product-of-three-naturals log bound for CC's
+>    structure).
+> 2. `log_2(KK + log_2 E + 4) ≤ sup_l (h_ER l).tH + 2k +
+>    κ_h` (combining KK ≤ tH+1 and log_2 E ≤ 2k+5).
+> 3. `stepTH + 2*baseTH ≥ (natPair.tH + 3 + sup_l (g_ER
+>    l).tH) + (k + 2) + (natPair.tH + 2 + sup_l (h_ER
+>    l).tH) ≥ sup_l (g_ER l).tH + sup_l (h_ER l).tH + k +
+>    big_constant`.  (The first +k+2 uses baseTH ≥ k+2
+>    once; the +2k slack from log_2 E is absorbed by
+>    repeated use of stepTH ≥ k+2 / baseTH ≥ k+2 across
+>    the +1 already in `stepTH + 2*baseTH + 1` plus the
+>    full `sumCtx` slack on the RHS.)
 
 **Files:**
 
 - Modify: `GebLean/LawvereKSimPolynomialBound.lean`
 
-**Goal:** prove the specific connect-up inequality
-needed by A.6's calc chain.  This uses A.5.0's structural
-propagation to bound `log_2 CC ≤ stepTH - k - 2 + small`
-in a manner compatible with kSimTowerBound's argument
-shape.
+**Goal:** prove the specific connect-up inequalities
+needed by A.6's calc chain.
 
-- [ ] **Step A.5.2.1: Append a structural log-CC bound**
+- [ ] **Step A.5.2.1: Append the level-0 structural
+  bound on linearBound.2**
 
 ```lean
-/-- The structural towerHeight of `kSimPackedStep g`
-absorbs `log_2 (CC + 1)` where `CC` is the K^sim-side
-linear coefficient extracted from level0Shape.  Mechanism:
-each level-0 child's `linearBound.2` (constant) is
-bounded by `(kToER child).towerHeight + 1`, and the
-packed step's towerHeight propagates `sup_l (kToER
-child).towerHeight + (k+2)`. -/
-private theorem stepTH_dominates_log_CC
+private theorem kToER_level0_towerHeight_ge_const
+    {a : ℕ} (f : KMor1 a) (h : f.level ≤ 0) :
+    (KMor1.level0Shape f h).linearBound.2 ≤
+      (kToER f
+        (Nat.le_succ_of_le
+          (Nat.le_succ_of_le h))).towerHeight + 1 := by
+  sorry  -- ~40-60 lines, structural induction
+```
+
+The proof is by structural induction on the level-≤-0
+KMor1 term:
+
+- `zero`: linearBound.2 = 0, tH = 0; `0 ≤ 1` ✓.
+- `succ` (level 0 only at projection-arity 1; appears
+  via `comp succ [proj 0]` in level-0 contexts): linear
+  Bound.2 = 1 from `shifted 0 1`, kToER produces
+  `comp succ [proj 0]` with tH = `succ.tH + sup{proj.tH} +
+  1 = 0 + 0 + 1 = 1`; `1 ≤ 1 + 1 = 2` ✓.
+- `proj i`: linearBound.2 = 0, tH = 0; `0 ≤ 1` ✓.
+- `comp f gs`: by structural-shape recursion.  If
+  level0Shape's comp clause produces `const k` with k =
+  the substituted constant, kToER produces `comp ...`
+  whose tH grows by ≥ 1; combined with IH on f and on
+  the gs.  Detailed analysis depends on
+  `level0Shape`'s comp clause definition.
+- `raise f`: linearBound.2 unchanged from f; tH unchanged
+  modulo a fixed offset (raise is a `comp` in kToER);
+  IH plus offset bookkeeping.
+
+- [ ] **Step A.5.2.2: Append the global stepTH/baseTH
+  bounds in the form A.6 will consume**
+
+These bounds combine A.5.0's propagation with the
+existing `≥ k + 2` lemmas plus the constant-offset
+analysis.  They state the assertion in the exact form
+needed by A.6.4's argument inequality, with all slack
+constants tracked explicitly.
+
+```lean
+/-- Combined bound: `stepTH + 2*baseTH + 1` absorbs the
+sum of K^sim-term-determined log shifts and the
+polynomial-degree shift `log_2 E`.  Uses both slack
+channels — the existing `≥ k+2` lemmas (for `+k`
+absorption) and the corrected propagation (for
+`+sup_l T_l` absorption). -/
+private theorem stepTH_baseTH_dominates_arg
     {a k : ℕ}
+    (h_fam : Fin (k + 1) → KMor1 a)
     (g_fam : Fin (k + 1) → KMor1 (a + 1 + (k + 1)))
+    (h_h : ∀ l, (h_fam l).level ≤ 0)
     (h_g : ∀ l, (g_fam l).level ≤ 0) :
     let CC :=
       (Fin.foldr (k + 1) (fun l acc =>
@@ -809,64 +1006,63 @@ private theorem stepTH_dominates_log_CC
         max acc
           (KMor1.level0Shape (g_fam l) (h_g l)).linearBound.2)
         0) + 1
-    let g_ER : Fin (k + 1) → ERMor1 (a + 1 + (k + 1)) :=
+    let KK :=
+      Fin.foldr (k + 1) (fun l acc =>
+        max acc
+          (KMor1.level0Shape (h_fam l) (h_h l)).linearBound.2)
+        0
+    let E : ℕ := 6 * 4 ^ (k + 1)
+    let h_ER : Fin (k + 1) → ERMor1 a :=
+      fun l => kToER (h_fam l)
+        (Nat.le_succ_of_le (Nat.le_succ_of_le (h_h l)))
+    let g_ER : Fin (k + 1) →
+        ERMor1 (a + 1 + (k + 1)) :=
       fun l => kToER (g_fam l)
         (Nat.le_succ_of_le (Nat.le_succ_of_le (h_g l)))
-    Nat.log 2 (CC + 1) ≤
-      (kSimPackedStep g_ER).towerHeight := by
-  sorry
+    Nat.log 2 (CC + 1) +
+        Nat.log 2 (KK + Nat.log 2 E + 4) ≤
+      (kSimPackedStep g_ER).towerHeight +
+        2 * (kSimPackedBase h_ER).towerHeight + 1 := by
+  sorry  -- ~80-150 lines
 ```
 
-- [ ] **Step A.5.2.2: Discharge the sorry**
+Proof outline:
 
-Proof outline (estimated 60-100 lines):
+1. Bound `log_2(CC + 1)` using
+   `kToER_level0_towerHeight_ge_const`:
+   each level0Shape constant ≤ `(kToER ...).tH + 1`.
+   Foldr-max + log of sum ≤ `sup_l (g_ER l).tH + κ_g` for
+   small κ_g.
+2. Bound `log_2(KK + log_2 E + 4)` using the same level-0
+   structural bound (for KK) plus log of sum (for the
+   `log_2 E` term).  log_2 E ≤ 2k + 5 (from
+   `log_2(6*4^(k+1)) ≤ 2k+5`).
+3. Combine: total log ≤ `sup_g + sup_h + 2k + κ`.
+4. Bound the RHS using the existing `_ge_succ_k` lemmas
+   plus the new propagation:
+   - `stepTH ≥ natPair.tH + 3 + sup_l (g_ER l).tH`
+     (propagation + comp +1 inside)
+   - `stepTH ≥ k + 2`
+   - `baseTH ≥ natPair.tH + 2 + sup_l (h_ER l).tH`
+     (propagation, no comp wrapping)
+   - `baseTH ≥ k + 2`
+5. Combine RHS bounds: `stepTH + 2*baseTH + 1 ≥ sup_g +
+   2*(k+2) + sup_h + κ` (using one copy of each
+   propagation and one copy of each `≥ k+2`).
+6. Compare with LHS bound from step 3.
 
-1. Use A.5.0's propagation:
-   `(kSimPackedStep g_ER).towerHeight ≥ k + 2 + sup_l
-   (g_ER l).towerHeight`.
-2. Bound `sup_l (g_ER l).towerHeight ≥ max_step_k`:
-   - For each level-0 child `g_fam l`, `kToER (g_fam l)`
-     has the same structural shape (induction on level-0
-     KMor1).
-   - `(level0Shape (g_fam l)).linearBound.2` (the
-     constant component) equals the structural depth of
-     successive succs.
-   - This depth equals or exceeds `(kToER (g_fam l)).
-     towerHeight - 1` (succ atomically gives towerHeight
-     0 even though linearBound.2 = 1; for c≥1 the comp
-     stack matches).
-3. Combine: `stepTH ≥ k + 2 + max_step_k`.
-4. Bound `log_2(CC+1) ≤ log_2(2*max_step_k + 3) ≤
-   max_step_k + 2 ≤ stepTH - k`.  For `k ≥ 0`, this
-   gives `log_2(CC+1) ≤ stepTH`, satisfying the goal.
+- [ ] **Step A.5.2.3: Discharge the sorries**
 
-The (g_ER l).towerHeight ≥ linearBound.2 - 1 step
-requires its own induction lemma over level-0 KMor1.
-Place that as a private helper:
+The level-0 structural bound (A.5.2.1) is the
+combinatorial heart of the absorption; the global bound
+(A.5.2.2) is mostly arithmetic.  Estimated total:
+~100-200 lines.
 
-```lean
-private theorem kToER_level0_towerHeight_ge_const
-    {a : ℕ} (f : KMor1 a) (h : f.level ≤ 0) :
-    (KMor1.level0Shape f h).linearBound.2 ≤
-      (kToER f
-        (Nat.le_succ_of_le
-          (Nat.le_succ_of_le h))).towerHeight + 1 := by
-  -- Induction on level-0 KMor1: zero/succ/proj/comp/raise.
-  -- Atomic cases: zero (linearBound.2 = 0, tH = 0); succ
-  -- (linearBound.2 = 1, tH = 0, so tH+1 = 1 ≥ 1); proj
-  -- (linearBound.2 = 0, tH = 0).  Comp case: substitution
-  -- via level0Shape's comp clause; tower grows by ≥ 1
-  -- per layer.  Raise case: same as base.
-  sorry
-```
-
-This sub-lemma is also estimated 30-60 lines.
-
-- [ ] **Step A.5.2.3: Run `lake build`**
+- [ ] **Step A.5.2.4: Run `lake build`**
 
 Expected: PASS.
 
-- [ ] **Step A.5.2.4: Do not commit yet (commit after
+- [ ] **Step A.5.2.5: Do not commit yet (commit after
   A.6 closes the main theorem).**
 
 ---
@@ -989,10 +1185,11 @@ private theorem kSimTowerBound_dominates_level_one
             + Nat.log 2 (KK + Nat.log 2 E + 1 + 1) + 2) := by
     sorry  -- direct application of A.5.1 with type
            -- adjustments
-  -- Step 6: combine via stepTH ≥ k+2, then absorb
-  -- log_2 (CC+1) via A.5.2.
-  have h_step_dom :=
-    stepTH_dominates_log_CC g_fam h_g
+  -- Step 6: combine slack channels via A.5.2's combined
+  -- bound `stepTH + 2*baseTH + 1 ≥ log_2(CC+1) +
+  -- log_2(KK + log_2 E + 4)`.
+  have h_combined_dom :=
+    stepTH_baseTH_dominates_arg h_fam g_fam h_h h_g
   have h_step_ge : (kSimPackedStep g_ER).towerHeight ≥ 3 := by
     have := kSimPackedStep_towerHeight_ge_succ_k g_ER
     omega
