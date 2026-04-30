@@ -128,4 +128,30 @@ theorem KMorNQuo.comp_assoc {n m k l : ℕ}
         g)
     f
 
+/-- The Lawvere theory of K^sim functions.  Objects
+are natural numbers (arities); morphisms are
+equivalence classes of `KMorN` tuples under
+extensional equality. -/
+def LawvereKSimCat := ℕ
+
+instance (n : ℕ) : OfNat LawvereKSimCat n :=
+  ⟨(n : ℕ)⟩
+
+instance : BEq LawvereKSimCat :=
+  inferInstanceAs (BEq ℕ)
+
+instance : DecidableEq LawvereKSimCat :=
+  inferInstanceAs (DecidableEq ℕ)
+
+instance :
+    CategoryTheory.CategoryStruct LawvereKSimCat where
+  Hom := KMorNQuo
+  id n := KMorNQuo.id n
+  comp f g := KMorNQuo.comp f g
+
+instance : CategoryTheory.Category LawvereKSimCat where
+  id_comp := KMorNQuo.id_comp
+  comp_id := KMorNQuo.comp_id
+  assoc := KMorNQuo.comp_assoc
+
 end GebLean
