@@ -1,17 +1,13 @@
 import GebLean.LawvereKSim
-import Mathlib.Data.Fin.VecNotation
 
 /-!
 # Interpretation of K^sim morphisms into ℕ
 
-This module defines `KMor1.interp` (and `KMorN.interp`),
+This module defines `KMor1.interp` and `KMorN.interp`,
 mapping each K^sim morphism to its corresponding
-ℕ-valued function.  Standard `@[simp]` lemmas characterize
-the interpretation per generator.  Per design principle
-P10, every named composite is paired with an interp
-lemma; this discipline begins here for the constructors
-themselves and continues through the entire downstream
-development.
+ℕ-valued function.  Per design principle P10
+(`docs/lawvere-k-sim-hierarchy.md`), every named composite
+elsewhere in the development is paired with an interp lemma.
 -/
 
 namespace GebLean
@@ -46,13 +42,9 @@ def KMor1.interp : {n : ℕ} → KMor1 n →
                     if h₂ : idx.val = 0 then
                       m
                     else
-                      params ⟨idx.val - 1, by
-                        rcases idx with ⟨v, _⟩
-                        omega⟩
+                      params ⟨idx.val - 1, by omega⟩
                   else
-                    prev ⟨idx.val - (a + 1), by
-                      rcases idx with ⟨v, hv⟩
-                      omega⟩
+                    prev ⟨idx.val - (a + 1), by omega⟩
               (g j).interp stepCtx)
       stepVec recVar i
   | _, .raise f, ctx => f.interp ctx
