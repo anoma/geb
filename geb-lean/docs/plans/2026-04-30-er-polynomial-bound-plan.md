@@ -32,6 +32,65 @@ infrastructure (`ERMor1`, `KMor1`, `kToER`,
 
 ---
 
+## Session-resumption checkpoint (2026-04-30)
+
+This section is a "pick up here" anchor for fresh sessions
+resuming this workstream.
+
+### Completed (this workstream's commits, in order)
+
+- Research and design phase commits (db32cca7, 6401b46f, 14302f86,
+  1649c898, 986895bf — research doc, design doc, plan, plan
+  amendment for option C, plan amendment for kToER deferral).
+- Module A `Utilities/ComputationalComplexity.lean` (Tasks 1-6,
+  six commits).  Final commit for Task 5 / Task 6 lands the
+  `polynomial_iter_tower_bound`.
+- Module B `LawvereERPolynomialBound.lean` (Tasks 7-11, ~5
+  commits including a structural refactor at `c41064b8`).
+- Module C `LawvereKSimPolynomialBound.lean` Tasks 12-16
+  (~5 commits including a deferral note at `351a440a` for
+  `kToER_polyBound_of_level_one`).
+- Task 17a (level-0 base case): commit `159ff0bd`, with bug
+  fix at `7f2eb159` (fixed `congr 1` failure in the comp case
+  via explicit funext-based rewriting).
+- Task 17b.1 (helper `packed_iteration_matches_simrecVec`):
+  commit `27c66777`.
+- Task 17b.2 partial (structural lemmas
+  `kSimSzudzikPackList_towerHeight_ge_two`,
+  `kSimPackedStep_towerHeight_ge_two`): commit `c1773838`.
+- Plan refinement (this section): commit `e389c58f`.
+
+### Where to resume
+
+**Next task**: complete Task 17b.2.
+
+**Blocker identified at `c1773838`**: the dominance arithmetic
+requires `(kSimPackedStep g_ER).towerHeight ≥ k + 1` — stronger
+than the existing ≥ 2 lemma.  This is structurally true
+(`kSimSzudzikPackList` for system size k+1 has k+1 nested
+`comp natPair (...)` layers, each contributing to towerHeight),
+but proving it needs induction on `k` and tracking
+per-Szudzik-level depth.
+
+**After Task 17b.2 completes**, Tasks 17b.3, 17b.4, 17c, 18,
+19, 20, 21 follow.  Total estimated remaining: ~1500-2000
+lines of Lean.
+
+### Verification before resumption
+
+A fresh session should verify the current state:
+
+```bash
+cd /home/terence/git-workspaces/geb/geb-lean
+git log --oneline -25  # see recent commits
+lake build              # verify clean build
+lake test               # verify clean tests
+```
+
+Expected: build clean, 1515 jobs successful; tests pass.
+
+---
+
 ## File structure
 
 The plan creates and modifies these files:
