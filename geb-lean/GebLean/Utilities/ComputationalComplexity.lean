@@ -36,4 +36,36 @@ which is different from course-of-values.
 
 namespace Nat
 
+/-- Quadratic upper bound on mathlib's `Nat.pair`. -/
+theorem pair_le_sq (x y : ℕ) :
+    Nat.pair x y ≤ (x + y + 1)^2 := by
+  unfold Nat.pair
+  by_cases h : x < y
+  · simp only [h, if_true]
+    have hsq : (x + y + 1)^2 = (x + y + 1) * (x + y + 1) := by
+      ring
+    rw [hsq]
+    have h1 : y * y ≤ (x + y) * (x + y) := by
+      have hle : y ≤ x + y := Nat.le_add_left _ _
+      exact Nat.mul_le_mul hle hle
+    have h2 : (x + y) * (x + y) + x ≤ (x + y + 1) * (x + y + 1) := by
+      have hexp : (x + y + 1) * (x + y + 1)
+          = (x + y) * (x + y) + (x + y) + (x + y) + 1 := by ring
+      rw [hexp]
+      omega
+    omega
+  · simp only [h, if_false]
+    have hsq : (x + y + 1)^2 = (x + y + 1) * (x + y + 1) := by
+      ring
+    rw [hsq]
+    have h1 : x * x ≤ (x + y) * (x + y) := by
+      have hle : x ≤ x + y := Nat.le_add_right _ _
+      exact Nat.mul_le_mul hle hle
+    have h2 : (x + y) * (x + y) + x + y ≤ (x + y + 1) * (x + y + 1) := by
+      have hexp : (x + y + 1) * (x + y + 1)
+          = (x + y) * (x + y) + (x + y) + (x + y) + 1 := by ring
+      rw [hexp]
+      omega
+    omega
+
 end Nat
