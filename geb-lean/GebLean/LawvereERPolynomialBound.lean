@@ -367,6 +367,132 @@ def ofBsum {k : ℕ} {f : ERMor1 (k + 1)}
         (le_trans h_step2 (le_of_eq h_eq_combine))
     exact le_trans h_sum h_combine
 
+/-- Adapter from the three-field `PolyBound` shape to the
+single-degree polynomial-bound shape consumable by Module A's
+`polynomial_iter_tower_bound`.
+
+The conversion folds `c · y^d + k` into a single power
+`y^(d + c + k + 2)`.  The ambient base shift is `+ 2`
+(rather than `+ 1`) so that the base is always `≥ 2`,
+which makes `c ≤ y^c` and `k ≤ y^k` hold uniformly and
+absorbs the residual factor of two between the two
+`y^(...)` summands. -/
+theorem to_iter_step_form {k : ℕ}
+    (f : ERMor1 (k + 2)) (pb : PolyBound f)
+    (params : Fin k → ℕ) :
+    ∀ v x, f.interp (Fin.cons x (Fin.cons v params)) ≤
+      (max v (max x ((Finset.univ : Finset (Fin k)).sup params))
+        + 2) ^
+        (pb.degree + pb.coefficient + pb.constant + 2) := by
+  intro v x
+  set sp : ℕ := (Finset.univ : Finset (Fin k)).sup params with hsp
+  set y : ℕ := max v (max x sp) + 2 with hy
+  have h_y_ge_two : 2 ≤ y := by simp only [hy]; omega
+  have h_y_ge_one : 1 ≤ y := by omega
+  have h_ctx_sup_le :
+      maxCtx (Fin.cons x (Fin.cons v params)) ≤ max v (max x sp) := by
+    apply Finset.sup_le
+    intro i _
+    refine Fin.cases ?_ ?_ i
+    · change x ≤ max v (max x sp)
+      have : x ≤ max x sp := le_max_left _ _
+      exact le_trans this (le_max_right _ _)
+    · intro j
+      refine Fin.cases ?_ ?_ j
+      · change v ≤ max v (max x sp)
+        exact le_max_left _ _
+      · intro j'
+        change params j' ≤ max v (max x sp)
+        have h_p : params j' ≤ sp := by
+          simp only [hsp]
+          exact Finset.le_sup (f := params) (Finset.mem_univ j')
+        have h_sp : sp ≤ max x sp := le_max_right _ _
+        have h_mid : max x sp ≤ max v (max x sp) := le_max_right _ _
+        exact le_trans h_p (le_trans h_sp h_mid)
+  have h_applied :=
+    pb.bounds (Fin.cons x (Fin.cons v params))
+  change f.interp (Fin.cons x (Fin.cons v params)) ≤
+    pb.coefficient *
+        (maxCtx (Fin.cons x (Fin.cons v params)) + 1) ^ pb.degree
+      + pb.constant at h_applied
+  have h_base_le :
+      maxCtx (Fin.cons x (Fin.cons v params)) + 1 ≤ y := by
+    simp only [hy]; omega
+  have h_pow_base_le :
+      (maxCtx (Fin.cons x (Fin.cons v params)) + 1) ^ pb.degree
+        ≤ y ^ pb.degree :=
+    Nat.pow_le_pow_left h_base_le _
+  have h_step1 :
+      f.interp (Fin.cons x (Fin.cons v params)) ≤
+        pb.coefficient * y ^ pb.degree + pb.constant := by
+    have h_mul :
+        pb.coefficient *
+            (maxCtx (Fin.cons x (Fin.cons v params)) + 1) ^ pb.degree
+          ≤ pb.coefficient * y ^ pb.degree :=
+      Nat.mul_le_mul_left _ h_pow_base_le
+    omega
+  have h_pow_ge_succ : ∀ a : ℕ, a + 1 ≤ y ^ a := by
+    intro a
+    induction a with
+    | zero => simp
+    | succ a ih =>
+      calc a + 1 + 1
+          ≤ y ^ a + y ^ a := by
+            have h_one_le : 1 ≤ y ^ a := Nat.one_le_pow _ _ h_y_ge_one
+            omega
+        _ = 2 * y ^ a := by ring
+        _ ≤ y * y ^ a := Nat.mul_le_mul_right _ h_y_ge_two
+        _ = y ^ (a + 1) := by rw [pow_succ]; ring
+  have h_c_le : pb.coefficient ≤ y ^ pb.coefficient := by
+    have := h_pow_ge_succ pb.coefficient; omega
+  have h_k_le : pb.constant ≤ y ^ pb.constant := by
+    have := h_pow_ge_succ pb.constant; omega
+  have h_c_pow :
+      pb.coefficient * y ^ pb.degree
+        ≤ y ^ (pb.coefficient + pb.degree) := by
+    calc pb.coefficient * y ^ pb.degree
+        ≤ y ^ pb.coefficient * y ^ pb.degree :=
+          Nat.mul_le_mul_right _ h_c_le
+      _ = y ^ (pb.coefficient + pb.degree) := by
+            rw [← pow_add]
+  set D : ℕ :=
+    pb.degree + pb.coefficient + pb.constant + 2 with hD
+  have h_one_le_pow_D : 1 ≤ y ^ D := Nat.one_le_pow _ _ h_y_ge_one
+  have h_cd_le_D :
+      y ^ (pb.coefficient + pb.degree) ≤ y ^ (D - 1) := by
+    apply Nat.pow_le_pow_right h_y_ge_one
+    simp only [hD]; omega
+  have h_k_le_D :
+      y ^ pb.constant ≤ y ^ (D - 1) := by
+    apply Nat.pow_le_pow_right h_y_ge_one
+    simp only [hD]; omega
+  have h_pow_D_eq :
+      y ^ D = y * y ^ (D - 1) := by
+    have hD_pos : 0 < D := by simp only [hD]; omega
+    have h_eq : D = (D - 1) + 1 := by omega
+    calc y ^ D = y ^ ((D - 1) + 1) := by rw [← h_eq]
+      _ = y ^ (D - 1) * y := by rw [pow_succ]
+      _ = y * y ^ (D - 1) := by ring
+  have h_two_pow_le :
+      2 * y ^ (D - 1) ≤ y * y ^ (D - 1) :=
+    Nat.mul_le_mul_right _ h_y_ge_two
+  have h_sum_le :
+      pb.coefficient * y ^ pb.degree + pb.constant ≤ y ^ D := by
+    have h_left :
+        pb.coefficient * y ^ pb.degree ≤ y ^ (D - 1) :=
+      le_trans h_c_pow h_cd_le_D
+    have h_right :
+        pb.constant ≤ y ^ (D - 1) :=
+      le_trans h_k_le h_k_le_D
+    have h_combined :
+        pb.coefficient * y ^ pb.degree + pb.constant ≤
+          y ^ (D - 1) + y ^ (D - 1) := by omega
+    have h_two_eq :
+        y ^ (D - 1) + y ^ (D - 1) = 2 * y ^ (D - 1) := by ring
+    rw [h_pow_D_eq]
+    omega
+  exact le_trans h_step1 h_sum_le
+
 /-!
 ## On the structural `towerHeight` lemma
 
