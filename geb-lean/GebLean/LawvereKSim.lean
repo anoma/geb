@@ -1,4 +1,6 @@
 import Mathlib.Data.Fin.Basic
+import Mathlib.Data.Finset.Lattice.Fold
+import Mathlib.Data.Fintype.Basic
 
 /-!
 # Lawvere theory of the K^sim hierarchy: term language
@@ -9,7 +11,11 @@ K^sim single-output morphisms representing functions
 wrapper representing functions `ℕ^n → ℕ^m` as families of
 `m` single-output morphisms.  Basic operations on `KMorN`
 (`id`, `terminal`, `fst`, `snd`, `pair`, `comp`) parallel the
-corresponding `ERMorN` definitions.  See
+corresponding `ERMorN` definitions.  The structural level of a
+`KMor1` term is given by `KMor1.level`; `simrec` and `raise`
+each increment the level by one, while `comp` takes the maximum
+level of its subterms.  `KMorN.levelN` is the corresponding
+maximum level over a multi-output family.  See
 `docs/lawvere-k-sim-hierarchy.md` for the canonical
 mathematical reference and design principles P1 – P10.
 -/
@@ -91,5 +97,35 @@ where `g : KMorN n m` and `f : KMorN m k`. -/
 def KMorN.comp {n m k : ℕ}
     (f : KMorN m k) (g : KMorN n m) : KMorN n k :=
   fun i => KMor1.comp (f i) g
+
+/-- Structural level of a `KMor1` term per design
+principle P2: `simrec` and `raise` each add one to
+the maximum-children level; `comp` takes the maximum
+without adding. -/
+def KMor1.level : {n : ℕ} → KMor1 n → ℕ
+  | _, .zero        => 0
+  | _, .succ        => 0
+  | _, .proj _      => 0
+  | _, .comp f gs   =>
+      max (KMor1.level f)
+        (Finset.univ.sup (fun i => (gs i).level))
+  | _, .simrec _ h g =>
+      max (Finset.univ.sup (fun i => (h i).level))
+          (Finset.univ.sup (fun i => (g i).level)) + 1
+  | _, .raise f      => f.level + 1
+
+/-- Level of a multi-output `KMorN` family: the
+maximum level over the family. -/
+def KMorN.levelN {n m : ℕ} (f : KMorN n m) : ℕ :=
+  Finset.univ.sup (fun i => (f i).level)
+
+theorem KMor1.level_le_succ {n : ℕ} (f : KMor1 n)
+    {d : ℕ} (h : f.level ≤ d) : f.level ≤ d + 1 :=
+  Nat.le_succ_of_le h
+
+theorem KMorN.levelN_le_succ {n m : ℕ}
+    (f : KMorN n m) {d : ℕ} (h : f.levelN ≤ d) :
+    f.levelN ≤ d + 1 :=
+  Nat.le_succ_of_le h
 
 end GebLean
