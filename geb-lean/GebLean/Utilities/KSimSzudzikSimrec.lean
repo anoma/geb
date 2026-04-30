@@ -316,4 +316,26 @@ theorem kSimSzudzikUnpackAt_interp_eq_seqAt :
           (packed := (Nat.unpair n).2) (ctx := ctx)]
       rfl
 
+/-- Round-trip: extracting the `i`-th component of a
+Szudzik-packed family recovers the `i`-th component's
+interpretation. -/
+theorem kSimSzudzikUnpackAt_packList {a k : ℕ}
+    (t : Fin (k + 1) → ERMor1 a) (i : Fin (k + 1))
+    (ctx : Fin a → ℕ) :
+    (kSimSzudzikUnpackAt a i.val).interp
+        (Fin.cons
+          ((kSimSzudzikPackList t).interp ctx) ctx) =
+      (t i).interp ctx := by
+  rw [kSimSzudzikUnpackAt_interp_eq_seqAt,
+    kSimSzudzikPackList_interp]
+  have hlen :
+      ((List.finRange (k + 1)).map
+        (fun j => (t j).interp ctx)).length = k + 1 := by
+    simp
+  rw [Nat.seqAt_seqPack
+    (xs := (List.finRange (k + 1)).map
+      (fun j => (t j).interp ctx))
+    (i := i.val) (h := by rw [hlen]; exact i.isLt)]
+  simp
+
 end GebLean
