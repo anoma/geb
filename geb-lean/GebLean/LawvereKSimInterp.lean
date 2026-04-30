@@ -57,4 +57,29 @@ def KMorN.interp {n m : ℕ} (f : KMorN n m)
     (ctx : Fin n → ℕ) : Fin m → ℕ :=
   fun i => (f i).interp ctx
 
+/-- Interpretation of `zero`. -/
+@[simp] theorem KMor1.interp_zero {n : ℕ}
+    (ctx : Fin n → ℕ) :
+    (KMor1.zero (n := n)).interp ctx = 0 :=
+  rfl
+
+/-- Interpretation of `succ`. -/
+@[simp] theorem KMor1.interp_succ
+    (ctx : Fin 1 → ℕ) :
+    KMor1.succ.interp ctx = (ctx 0).succ :=
+  rfl
+
+/-- Interpretation of `proj`. -/
+@[simp] theorem KMor1.interp_proj {n : ℕ}
+    (i : Fin n) (ctx : Fin n → ℕ) :
+    (KMor1.proj i).interp ctx = ctx i :=
+  rfl
+
+/-- Interpretation of `raise` is identity on the
+underlying interp; `raise` is a level marker only. -/
+@[simp] theorem KMor1.interp_raise {n : ℕ}
+    (f : KMor1 n) (ctx : Fin n → ℕ) :
+    (KMor1.raise f).interp ctx = f.interp ctx :=
+  rfl
+
 end GebLean
