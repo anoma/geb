@@ -255,7 +255,7 @@ def KMor1.linearBound :
       (max_step_c + 2 * max_step_k + 1, max_base_const)
 
 /-- Linear-bound dominance for `ConstantOrShiftedProj`. -/
-private theorem ConstantOrShiftedProj.linearBound_dominates
+theorem ConstantOrShiftedProj.linearBound_dominates
     {a : ℕ} (s : ConstantOrShiftedProj a)
     (ctx : Fin a → ℕ) :
     s.interp ctx ≤
@@ -922,5 +922,65 @@ def kSimPackedStep_polyBound {a k : ℕ}
           _ ≤ (3 * (s + 1)) ^ E := h_pow_le
           _ = 3 ^ E * (s + 1) ^ E := h_split
       exact h_combined }
+
+/-- Interp preservation for level-0 K^sim: `kToER` of a
+level-0 term has interp matching the K^sim interp.  Base
+case of the recursive bootstrap for K^sim_n ⊆ E^{n+1}.
+
+By structural recursion on level-0 KMor1 (zero, succ,
+proj, comp).  `raise` and `simrec` cases are vacuous at
+level 0. -/
+theorem kToER_interp_level_zero :
+    ∀ {a : ℕ} (f : KMor1 a) (h : f.level ≤ 0)
+      (ctx : Fin a → ℕ),
+      (kToER f
+        (Nat.le_succ_of_le (Nat.le_succ_of_le h))).interp
+          ctx = f.interp ctx
+  | _, .zero,         _, _   => by
+      simp [kToER, KMor1.interp_zero, ERMor1.interp_zeroN]
+  | _, .succ,         _, _   => by
+      simp [kToER, KMor1.interp_succ, ERMor1.interp_succ]
+  | _, .proj _,       _, _   => by
+      simp [kToER, KMor1.interp_proj, ERMor1.interp_proj]
+  | _, .comp f gs,    h, ctx => by
+      have hf : f.level ≤ 0 := by
+        unfold KMor1.level at h
+        exact le_trans (le_max_left _ _) h
+      have hgs : ∀ i, (gs i).level ≤ 0 := fun i => by
+        unfold KMor1.level at h
+        have hsup : Finset.univ.sup
+            (fun j => (gs j).level) ≤ 0 :=
+          le_trans (le_max_right _ _) h
+        exact le_trans
+          (Finset.le_sup
+            (f := fun j => (gs j).level)
+            (Finset.mem_univ i))
+          hsup
+      simp only [kToER, ERMor1.interp_comp,
+        KMor1.interp_comp]
+      congr 1
+      funext i
+      exact kToER_interp_level_zero (gs i) (hgs i) ctx
+  | _, .raise _,      h, _   => by
+      unfold KMor1.level at h; omega
+  | _, .simrec _ _ _, h, _   => by
+      unfold KMor1.level at h; omega
+
+/-- Linear bound on level-0 K^sim's kToER image.  The
+constants are given by `level0Shape`'s `linearBound`:
+either `(0, k)` (constant) or `(1, k)` (shifted
+projection). -/
+theorem kToER_linearBound_dominates_level_zero
+    {a : ℕ} (f : KMor1 a) (h : f.level ≤ 0)
+    (ctx : Fin a → ℕ) :
+    (kToER f
+      (Nat.le_succ_of_le (Nat.le_succ_of_le h))).interp
+        ctx ≤
+      (KMor1.level0Shape f h).linearBound.1 *
+        (Finset.univ : Finset (Fin a)).sup ctx +
+      (KMor1.level0Shape f h).linearBound.2 := by
+  rw [kToER_interp_level_zero f h ctx,
+    KMor1.level0Shape_interp f h ctx]
+  exact ConstantOrShiftedProj.linearBound_dominates _ ctx
 
 end GebLean
