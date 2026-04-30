@@ -5,9 +5,14 @@ import Mathlib.Data.Fin.Basic
 
 This module defines `KMor1 : ℕ → Type`, the type family of
 K^sim single-output morphisms representing functions
-`ℕ^n → ℕ`.  See `docs/lawvere-k-sim-hierarchy.md` for the
-canonical mathematical reference and design principles
-P1 – P10.  Companion modules `LawvereKSimInterp.lean` and
+`ℕ^n → ℕ`, and `KMorN : ℕ → ℕ → Type`, the multi-output
+wrapper representing functions `ℕ^n → ℕ^m` as families of
+`m` single-output morphisms.  Basic operations on `KMorN`
+(`id`, `terminal`, `fst`, `snd`, `pair`, `comp`) mirror the
+corresponding `ERMorN` definitions.  See
+`docs/lawvere-k-sim-hierarchy.md` for the canonical
+mathematical reference and design principles P1 – P10.
+Companion modules `LawvereKSimInterp.lean` and
 `LawvereKSimQuot.lean` will add the interpretation into ℕ
 and the extensional-equality quotient respectively.
 -/
@@ -49,5 +54,47 @@ inductive KMor1 : ℕ → Type where
   | raise {n : ℕ} (f : KMor1 n) : KMor1 n
 
 instance (n : ℕ) : Inhabited (KMor1 n) := ⟨KMor1.zero⟩
+
+/-- Multi-output K^sim Lawvere-theory wrapper:
+`KMorN n m` represents a morphism `ℕ^n → ℕ^m` as a
+family of `m` single-output morphisms.  Mirrors
+`ERMorN`'s definition. -/
+abbrev KMorN (n m : ℕ) : Type := Fin m → KMor1 n
+
+/-- Identity morphism on `n` arguments: the family of
+`n` projections. -/
+def KMorN.id (n : ℕ) : KMorN n n :=
+  fun i => KMor1.proj i
+
+/-- Terminal morphism `ℕ^n → ℕ^0`: the empty family. -/
+def KMorN.terminal (n : ℕ) : KMorN n 0 :=
+  Fin.elim0
+
+/-- First projection `ℕ^(n+m) → ℕ^n`. -/
+def KMorN.fst {n m : ℕ} : KMorN (n + m) n :=
+  fun i => KMor1.proj (Fin.castAdd m i)
+
+/-- Second projection `ℕ^(n+m) → ℕ^m`. -/
+def KMorN.snd {n m : ℕ} : KMorN (n + m) m :=
+  fun i => KMor1.proj (Fin.natAdd n i)
+
+/-- Pairing of two morphisms with shared domain: given
+`f : KMorN k n` and `g : KMorN k m`, produce
+`⟨f, g⟩ : KMorN k (n + m)`. -/
+def KMorN.pair {k n m : ℕ}
+    (f : KMorN k n) (g : KMorN k m) : KMorN k (n + m) :=
+  fun i =>
+    if h : i.val < n then
+      f ⟨i.val, h⟩
+    else
+      g ⟨i.val - n, by
+        rcases i with ⟨v, hv⟩
+        omega⟩
+
+/-- Composition of multi-output morphisms: `f ∘ g`
+where `g : KMorN n m` and `f : KMorN m k`. -/
+def KMorN.comp {n m k : ℕ}
+    (f : KMorN m k) (g : KMorN n m) : KMorN n k :=
+  fun i => KMor1.comp (f i) g
 
 end GebLean
