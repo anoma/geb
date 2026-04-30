@@ -545,4 +545,62 @@ theorem polynomial_iter_tower_bound
             h_strong
         _ = GebLean.tower 2 H_succ := by rw [h_H_succ_eq]
 
+/-- Going from height 2 to height 3 absorbs a linear
+coefficient: `tower 2 (C * X + D)` is dominated by
+`tower 3 (X + log_2 (C+1) + log_2 (D+1) + 2)`.
+
+Mechanism: `C * X + D ≤ (C+1) * (X+1) * (D+1)`, each
+factor is bounded by a power of two whose exponent is the
+relevant `log` plus one, and `X + 1 ≤ 2^X`.  Multiplying
+yields `C * X + D ≤ 2^Y` where
+`Y = X + log_2 (C+1) + log_2 (D+1) + 2`, and the outer
+two layers of `tower` exponentiation preserve the order. -/
+theorem tower_two_le_tower_three_linear (C D X : ℕ) :
+    GebLean.tower 2 (C * X + D) ≤
+      GebLean.tower 3
+        (X + Nat.log 2 (C + 1) + Nat.log 2 (D + 1) + 2) := by
+  set Y := X + Nat.log 2 (C + 1) + Nat.log 2 (D + 1) + 2
+    with hY_def
+  have h_prod : C * X + D ≤ (C + 1) * (X + 1) * (D + 1) := by
+    have h_expand :
+        (C + 1) * (X + 1) * (D + 1) =
+          C * X + D +
+            (C * X * D + C * D + X * D + C + X + 1) := by
+      ring
+    omega
+  have hC : C + 1 ≤ 2 ^ (Nat.log 2 (C + 1) + 1) := by
+    have := Nat.lt_pow_succ_log_self
+      (b := 2) (by decide) (C + 1)
+    omega
+  have hD : D + 1 ≤ 2 ^ (Nat.log 2 (D + 1) + 1) := by
+    have := Nat.lt_pow_succ_log_self
+      (b := 2) (by decide) (D + 1)
+    omega
+  have hX : X + 1 ≤ 2 ^ X := by
+    have := Nat.lt_two_pow_self (n := X)
+    omega
+  have h_pow_Y :
+      (C + 1) * (X + 1) * (D + 1) ≤ 2 ^ Y := by
+    have h_mul :
+        2 ^ (Nat.log 2 (C + 1) + 1) * 2 ^ X *
+            2 ^ (Nat.log 2 (D + 1) + 1) =
+          2 ^ Y := by
+      rw [← Nat.pow_add, ← Nat.pow_add]
+      congr 1
+      rw [hY_def]; ring
+    calc (C + 1) * (X + 1) * (D + 1)
+        ≤ 2 ^ (Nat.log 2 (C + 1) + 1) * (X + 1) * (D + 1) :=
+          by gcongr
+      _ ≤ 2 ^ (Nat.log 2 (C + 1) + 1) * 2 ^ X * (D + 1) := by
+          gcongr
+      _ ≤ 2 ^ (Nat.log 2 (C + 1) + 1) * 2 ^ X *
+            2 ^ (Nat.log 2 (D + 1) + 1) := by gcongr
+      _ = 2 ^ Y := h_mul
+  have h_lin : C * X + D ≤ 2 ^ Y :=
+    le_trans h_prod h_pow_Y
+  have h_inner : 2 ^ (C * X + D) ≤ 2 ^ 2 ^ Y :=
+    Nat.pow_le_pow_right (by decide) h_lin
+  simp only [GebLean.tower_succ, GebLean.tower_zero]
+  exact Nat.pow_le_pow_right (by decide) h_inner
+
 end Nat
