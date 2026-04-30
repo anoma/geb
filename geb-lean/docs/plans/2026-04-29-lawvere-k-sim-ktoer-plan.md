@@ -31,6 +31,71 @@ infrastructure (`ERMor1`, `ERMor1.boundedRec`,
 
 **Spec**: `docs/plans/2026-04-29-lawvere-k-sim-ktoer-design.md`.
 
+## Plan amendment (2026-04-30): bound-dominance deferral
+
+After the implementer's analysis of the original
+Task 8, the `iterAutoBoundExpr`-based dominance lemma
+cannot be proven for arbitrary level-2 K^sim simrec
+under the conservative `interp_le_towerBound`.  The
+trace of an iterated step has effective tower height
+`j × stepHeight + base_height`, which does not fit
+inside any fixed-height tower whose argument is linear
+in the counter.
+
+The bound *does* hold mathematically because every
+level-1 K^sim term has polynomial growth, and iterating
+a polynomial step `j` times gives a function bounded by
+`tower 1 (poly(j, params))`.  Establishing this rigorously
+would require classifying K^sim_1's image in ER as a
+named class.  Examination of the obvious candidates:
+
+- LER (lower elementary recursive functions, per
+  Wikipedia) contains multiplication; multiplication is
+  K^sim_2, not K^sim_1.  So K^sim_1 ⊊ LER.
+- No other standard literature class is known to the
+  authors that would correspond exactly to K^sim_1.
+
+Per the project principle of formalizing only known
+mathematics — not inventing new structural classes —
+introducing an `ERPolynomial` (or analogous) predicate
+is rejected.
+
+**Decision**: defer the dominance lemma to Task 14
+(`kToER_interp`'s simrec case), where the inductive
+structure of level-1 K^sim children is naturally
+available via the recursive proof.  The strengthened
+induction hypothesis tracks an explicit bound-witness
+inline, scoped to the proof.
+
+**Resulting changes**:
+
+- **Task 8** is *replaced* by a smaller
+  "Task 8 (revised)" that defines `kSimTowerBound`
+  as an ER term via `iterAutoBoundExpr` with a
+  closed-form interp lemma.  No standalone dominance
+  lemma.
+- **Task 12** (kToER simrec case) is *unchanged*:
+  uses the (revised) `kSimTowerBound` as the
+  `boundedRec` bound.
+- **Task 14** (kToER_interp) needs a *revised
+  prompt* when reached: its simrec case will
+  strengthen the inductive hypothesis to also
+  produce a structural bound for the level-1 ER
+  image, then use that inline to discharge
+  `boundedRec_eq_natRec_of_bounded`'s dominance
+  hypothesis.  The exact strengthened-IH shape will
+  be designed at Task 14 dispatch time, drawing on
+  whatever `Utilities/ERArith.lean` /
+  `LawvereERBoundComputable.lean` infrastructure
+  exists at that point.
+
+The literal text of Task 8 below has been replaced
+with the revised version.  The literal text of
+Task 14 has been annotated with a "revision required"
+note; the original interp-preservation theorem
+statement stays, but the proof body is to be
+reconstructed inline.
+
 **Tooling note**: Lean MCP skills are available to
 implementer subagents — `lean_goal` for inspecting
 intermediate proof states, `lean_multi_attempt` for
@@ -903,151 +968,101 @@ context and the unpacked previous values."
 
 ---
 
-## Task 8: `kSimTowerBound` for the simrec recursion
+## Task 8 (revised): `kSimTowerBound` definition only
 
 **Files**:
 
 - Modify: `GebLean/Utilities/KSimSzudzikSimrec.lean`
 
-The bound term passed to `ERMor1.boundedRec`.  The
-tower-bound infrastructure in
-`GebLean/LawvereERBoundComputable.lean` exposes
-`ERMor1.towerBound : {n : ℕ} → ERMor1 n → ERMor1 n`
-satisfying `(t.towerBound).interp ctx ≥ t.interp ctx`
-pointwise.  For `boundedRec` we need a bound for the
-nominal `Nat.rec` trace's value at every iteration.
+Per the plan amendment dated 2026-04-30: this task
+defines `kSimTowerBound` as an ER term, plus its
+closed-form interp lemma, and a counter-monotonicity
+lemma.  **No standalone dominance lemma.**  The
+dominance argument is deferred to Task 14
+(`kToER_interp`'s simrec case), where the level-1
+K^sim children's inductive structure is naturally
+available.
 
-The simrec packed iteration's value at iteration `j` is
-`Nat.seqPack` of a `(k + 1)`-vector of values, each at
-most the maximum of the per-step ER terms applied to the
-ambient context and the previous-iteration values.  An
-unconditional dominator is the tower bound of the packed
-step term itself, evaluated at the worst-case packed
-context.
-
-A workable construction: take the tower bound of
-`kSimPackedStep g` plus `1`, lifted to the
-`(a + 1)`-arity bound shape required by `boundedRec`.
+The bound is constructed by reusing the existing
+`ERMor1.iterAutoBoundExpr` infrastructure from
+`GebLean/LawvereERBoundComputable.lean`.
 
 - [ ] **Step 8.1: Add `kSimTowerBound`**
 
-Append:
+Append to `GebLean/Utilities/KSimSzudzikSimrec.lean`:
 
 ```lean
 /-- Bound term for the simrec packed recursion's
-`boundedRec`.  Composes `towerBound` of the packed-step
-term with a fixed re-indexing that turns the
-`(a + 2)`-shaped step context into the `(a + 1)`-shaped
-bound context expected by `boundedRec`.  The bound
-expression is independent of the iteration counter and
-dominates the per-iteration trace value uniformly. -/
+`boundedRec`.  Uses `iterAutoBoundExpr` parameterised
+by the tower height of the packed step term and the
+tower height of the packed base term.  The closed-form
+interp is `tower (stepHeight + 1)
+  (stepHeight + 1 + 2 * baseHeight + 2 * sumCtx + 2)`.
+The dominance argument is supplied at the call site
+(in the simrec case of `kToER_interp`). -/
 def kSimTowerBound {a k : ℕ}
     (h : Fin (k + 1) → ERMor1 a)
     (g : Fin (k + 1) → ERMor1 (a + 1 + (k + 1))) :
     ERMor1 (a + 1) :=
-  ERMor1.comp
-    ((kSimPackedStep g).towerBound)
-    (fun i =>
-      if h₀ : i.val = 0 then
-        ERMor1.proj (k := a + 1) ⟨0, by omega⟩
-      else if h₁ : i.val = 1 then
-        ERMor1.comp (kSimPackedBase h)
-          (fun j =>
-            ERMor1.proj (k := a + 1)
-              ⟨j.val + 1, by
-                have := j.isLt; omega⟩)
-      else
-        ERMor1.proj (k := a + 1)
-          ⟨i.val - 1, by
-            have := i.isLt; omega⟩)
+  ERMor1.iterAutoBoundExpr a
+    (kSimPackedStep g).towerHeight
+    (kSimPackedBase h).towerHeight
 ```
 
-This composes `(kSimPackedStep g).towerBound` (an ER
-term of arity `a + 2`) with a substitution turning the
-`(a + 1)`-shaped bound context (slot `0` = iteration
-counter, slots `1..a` = parameters) into an
-`(a + 2)`-shaped step context (slot `0` = counter, slot
-`1` = packed previous value substituted with the base
-pack, slots `2..a + 1` = parameters).
-
-- [ ] **Step 8.2: Add the bound dominance lemma**
-
-Append:
+- [ ] **Step 8.2: Add the closed-form interp lemma**
 
 ```lean
-/-- The bound dominates the packed-recursion trace
-uniformly in the iteration count.  The proof composes
-`ERMor1.interp_le_towerBound` with the substitution
-underlying `kSimTowerBound`.  The implementer should
-expand `kSimTowerBound` and `kSimPackedStep` and use
-`ERMor1.interp_le_towerBound`. -/
-theorem kSimTowerBound_dominates {a k : ℕ}
+@[simp] theorem kSimTowerBound_interp {a k : ℕ}
     (h : Fin (k + 1) → ERMor1 a)
     (g : Fin (k + 1) → ERMor1 (a + 1 + (k + 1)))
-    (j : ℕ) (params : Fin a → ℕ) :
-    Nat.rec
-      ((kSimPackedBase h).interp params)
-      (fun i prev =>
-        (kSimPackedStep g).interp
-          (Fin.cons i (Fin.cons prev params)))
-      j ≤
+    (ctx : Fin (a + 1) → ℕ) :
+    (kSimTowerBound h g).interp ctx =
+      tower ((kSimPackedStep g).towerHeight + 1)
+        ((kSimPackedStep g).towerHeight + 1 +
+          2 * (kSimPackedBase h).towerHeight +
+          2 * ((ERMor1.sumCtxER (a + 1)).interp ctx) +
+          2) := by
+  unfold kSimTowerBound
+  exact ERMor1.interp_iterAutoBoundExpr _ _ _
+```
+
+- [ ] **Step 8.3: Add counter-monotonicity lemma**
+
+```lean
+/-- The bound is non-decreasing as the iteration
+counter (slot 0) grows.  Used at the call site to
+discharge `boundedRec_eq_natRec_of_bounded`'s
+monotonicity hypothesis. -/
+theorem kSimTowerBound_mono_counter {a k : ℕ}
+    (h : Fin (k + 1) → ERMor1 a)
+    (g : Fin (k + 1) → ERMor1 (a + 1 + (k + 1)))
+    (j j' : ℕ) (params : Fin a → ℕ)
+    (hj : j ≤ j') :
+    (kSimTowerBound h g).interp (Fin.cons j params) ≤
       (kSimTowerBound h g).interp
-        (Fin.cons j params) := by
-  -- Expand kSimTowerBound and apply
-  -- ERMor1.interp_le_towerBound; the substitution
-  -- builds a context where the towerBound's
-  -- guarantee covers the recursion trace.
-  -- See the spec doc, §"Data flow: the simrec
-  -- case in detail".
+        (Fin.cons j' params) := by
+  rw [kSimTowerBound_interp, kSimTowerBound_interp]
+  apply tower_mono_right
+  -- Reduce sumCtxER (Fin.cons j params) to j + sum_params
+  -- and use linearity in j.
   sorry
 ```
 
-Note: this `sorry` is a placeholder pending tactic
-exploration; the implementer must replace it with a
-working proof before committing.  Use the Lean MCP
-`lean_goal` and `lean_multi_attempt` skills, and the
-`*-filler-deep` route under the `lean4` plugin if the
-proof becomes long.  The dominance result follows from:
+The `sorry` here is a planning marker.  The
+implementer should discharge it via:
 
-- `ERMor1.interp_le_towerBound` for an unconditional
-  upper bound by the packed step's tower envelope;
-- a small monotonicity argument showing the
-  trace at iteration `j` is dominated by an iterated
-  step over a context bounded above by the same
-  envelope (possible because `towerBound` is monotone
-  in its context sum).
+- `ERMor1.interp_sumCtxER` to expose
+  `(sumCtxER (a + 1)).interp (Fin.cons j params) =
+   j + Σ_i params i`.
+- Linearity in `j` to derive
+  `j + Σ ≤ j' + Σ`.
+- `tower_mono_right` (look up exact name via
+  `mcp__lean-lsp__lean_local_search` if `tower_mono_right`
+  doesn't match the actual lemma name in
+  `Utilities/Tower.lean`).
 
-Note from the project conventions in `CLAUDE.md`:
-**No `sorry` may remain in committed code.**  This
-plan deliberately uses `sorry` as a planning marker to
-signal that the proof requires tactic exploration; the
-task's "commit" step is gated on the proof being
-discharged.
-
-- [ ] **Step 8.3: Discharge the `sorry`**
-
-Replace the `sorry` in `kSimTowerBound_dominates` with a
-proof.  Recommended approach: use
-`Nat.rec_le_self_of_step_le` or a direct induction on
-`j`; at each step, use
-`ERMor1.interp_le_towerBound` to bound the step's
-output, then composability of `towerBound` under the
-substitution.  Re-run `lake build` after each tactic
-attempt; the goal is to remove the `sorry` entirely.
-
-If the proof proves intractable inside the planned
-shape, **escalate to the controller** (see
-`subagent-driven-development.md`'s `BLOCKED` handling)
-rather than weakening the lemma.  Possible adjustments
-within the design contract:
-
-- Strengthen the bound (e.g. use
-  `tower (towerHeight + lh + a + 2)` of the param sum
-  with a larger constant offset).
-- Factor through an auxiliary "trace-to-bound" lemma
-  expressing the recursion's value as
-  `Nat.rec` of tower-bounded values and applying
-  `tower_mono`.
+If genuinely stuck on the monotonicity proof, **stop
+and report BLOCKED** — do not commit `sorry`.
 
 - [ ] **Step 8.4: Run `lake build`**
 
@@ -1059,23 +1074,20 @@ Expected: PASS, no warnings, **no `sorry`**.
 
 - [ ] **Step 8.5: Run `lake test`**
 
-```bash
-lake test
-```
-
 Expected: PASS.
 
 - [ ] **Step 8.6: Commit**
 
 ```bash
 git add GebLean/Utilities/KSimSzudzikSimrec.lean
-git commit -m "Add kSimTowerBound and dominance lemma
+git commit -m "Add kSimTowerBound and counter-monotonicity lemma
 
-Bound term for simrec's boundedRec, composed from the
-packed-step term's towerBound and a substitution that
-threads the base pack into the bound context.  The
-dominance lemma confirms the bound covers the packed
-recursion trace uniformly in the iteration count."
+Bound term for simrec's boundedRec, defined via
+iterAutoBoundExpr parameterised by the packed step's
+and packed base's tower heights, plus a closed-form
+interp lemma and counter-monotonicity.  The dominance
+argument is supplied at the call site in the simrec
+case of kToER_interp."
 ```
 
 ---
@@ -1414,6 +1426,20 @@ Pointwise lift of kToER over a KMorN family."
 ---
 
 ## Task 14: Interp-preservation theorem `kToER_interp`
+
+> **Revision required (2026-04-30)**: per the plan
+> amendment, the simrec case of this theorem must
+> discharge the dominance hypothesis of
+> `boundedRec_eq_natRec_of_bounded` *inline*.  The
+> standalone `kSimTowerBound_dominates` lemma was
+> removed.  When dispatching this task, the prompt
+> should be re-derived: keep the theorem statement
+> below; restructure the simrec proof body to
+> strengthen its inductive hypothesis with an explicit
+> structural bound for level-1 K^sim children, then
+> use that bound to discharge the dominance and
+> monotonicity hypotheses.  Detailed prompt to be
+> written at dispatch time.
 
 **Files**:
 
