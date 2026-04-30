@@ -70,6 +70,7 @@ import GebLean.LawvereTreeERInterp
 import GebLean.LawvereTreeERQuot
 import GebLean.LawvereKSim
 import GebLean.LawvereKSimInterp
+import GebLean.LawvereKSimPolynomialBound
 import GebLean.LawvereKSimQuot
 import GebLean.LayeredEquivalence
 import GebLean.MendlerLambekEndPower
