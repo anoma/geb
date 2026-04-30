@@ -367,6 +367,102 @@ def ofBsum {k : ℕ} {f : ERMor1 (k + 1)}
         (le_trans h_step2 (le_of_eq h_eq_combine))
     exact le_trans h_sum h_combine
 
+/-- Generic adapter: a `PolyBound` over any context yields a
+single-degree power bound `(maxCtx ctx + 2)^D` with
+`D = degree + coefficient + constant + 2`.  The base shift is
+`+ 2` so the base is always `≥ 2`, which absorbs the
+coefficient and constant fields uniformly. -/
+theorem le_pow_shift_of_polyBound {n : ℕ} (f : ERMor1 n)
+    (pb : PolyBound f) (ctx : Fin n → ℕ) :
+    f.interp ctx ≤
+      (maxCtx ctx + 2) ^
+        (pb.degree + pb.coefficient + pb.constant + 2) := by
+  set y : ℕ := maxCtx ctx + 2 with hy
+  have h_y_ge_two : 2 ≤ y := by simp only [hy]; omega
+  have h_y_ge_one : 1 ≤ y := by omega
+  have h_applied := pb.bounds ctx
+  change f.interp ctx ≤
+    pb.coefficient * (maxCtx ctx + 1) ^ pb.degree
+      + pb.constant at h_applied
+  have h_base_le : maxCtx ctx + 1 ≤ y := by
+    simp only [hy]; omega
+  have h_pow_base_le :
+      (maxCtx ctx + 1) ^ pb.degree ≤ y ^ pb.degree :=
+    Nat.pow_le_pow_left h_base_le _
+  have h_step1 :
+      f.interp ctx ≤
+        pb.coefficient * y ^ pb.degree + pb.constant := by
+    have h_mul :
+        pb.coefficient *
+            (maxCtx ctx + 1) ^ pb.degree
+          ≤ pb.coefficient * y ^ pb.degree :=
+      Nat.mul_le_mul_left _ h_pow_base_le
+    omega
+  have h_pow_ge_succ : ∀ a : ℕ, a + 1 ≤ y ^ a := by
+    intro a
+    induction a with
+    | zero => simp
+    | succ a ih =>
+      calc a + 1 + 1
+          ≤ y ^ a + y ^ a := by
+            have h_one_le : 1 ≤ y ^ a :=
+              Nat.one_le_pow _ _ h_y_ge_one
+            omega
+        _ = 2 * y ^ a := by ring
+        _ ≤ y * y ^ a := Nat.mul_le_mul_right _ h_y_ge_two
+        _ = y ^ (a + 1) := by rw [pow_succ]; ring
+  have h_c_le : pb.coefficient ≤ y ^ pb.coefficient := by
+    have := h_pow_ge_succ pb.coefficient; omega
+  have h_k_le : pb.constant ≤ y ^ pb.constant := by
+    have := h_pow_ge_succ pb.constant; omega
+  have h_c_pow :
+      pb.coefficient * y ^ pb.degree
+        ≤ y ^ (pb.coefficient + pb.degree) := by
+    calc pb.coefficient * y ^ pb.degree
+        ≤ y ^ pb.coefficient * y ^ pb.degree :=
+          Nat.mul_le_mul_right _ h_c_le
+      _ = y ^ (pb.coefficient + pb.degree) := by
+            rw [← pow_add]
+  set D : ℕ :=
+    pb.degree + pb.coefficient + pb.constant + 2 with hD
+  have h_cd_le_D :
+      y ^ (pb.coefficient + pb.degree) ≤ y ^ (D - 1) := by
+    apply Nat.pow_le_pow_right h_y_ge_one
+    simp only [hD]; omega
+  have h_k_le_D :
+      y ^ pb.constant ≤ y ^ (D - 1) := by
+    apply Nat.pow_le_pow_right h_y_ge_one
+    simp only [hD]; omega
+  have h_pow_D_eq :
+      y ^ D = y * y ^ (D - 1) := by
+    have h_eq : D = (D - 1) + 1 := by simp only [hD]; omega
+    calc y ^ D = y ^ ((D - 1) + 1) := by rw [← h_eq]
+      _ = y ^ (D - 1) * y := by rw [pow_succ]
+      _ = y * y ^ (D - 1) := by ring
+  have h_two_pow_le :
+      2 * y ^ (D - 1) ≤ y * y ^ (D - 1) :=
+    Nat.mul_le_mul_right _ h_y_ge_two
+  have h_sum_le :
+      pb.coefficient * y ^ pb.degree + pb.constant
+        ≤ y ^ D := by
+    have h_left :
+        pb.coefficient * y ^ pb.degree ≤ y ^ (D - 1) :=
+      le_trans h_c_pow h_cd_le_D
+    have h_right :
+        pb.constant ≤ y ^ (D - 1) :=
+      le_trans h_k_le h_k_le_D
+    have h_combined :
+        pb.coefficient * y ^ pb.degree + pb.constant ≤
+          y ^ (D - 1) + y ^ (D - 1) := by omega
+    have h_two_eq :
+        y ^ (D - 1) + y ^ (D - 1)
+          = 2 * y ^ (D - 1) := by ring
+    have h_y_mul_le :
+        2 * y ^ (D - 1) ≤ y ^ D := by
+      rw [h_pow_D_eq]; exact h_two_pow_le
+    omega
+  exact le_trans h_step1 h_sum_le
+
 /-- Adapter from the three-field `PolyBound` shape to the
 single-degree polynomial-bound shape consumable by Module A's
 `polynomial_iter_tower_bound`.

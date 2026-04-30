@@ -699,4 +699,228 @@ theorem KMor1.linearBound_dominates :
               ring
             omega
 
+/-- Polynomial bound for the packed simrec base.  Takes
+per-component PolyBounds as inputs and produces a
+PolyBound on the seqPack of the components. -/
+def kSimPackedBase_polyBound {a k : ℕ}
+    (h_ER : Fin (k + 1) → ERMor1 a)
+    (pb_h : (l : Fin (k + 1)) → ERMor1.PolyBound (h_ER l)) :
+    ERMor1.PolyBound (kSimPackedBase h_ER) :=
+  let D_of : Fin (k + 1) → ℕ := fun l =>
+    (pb_h l).degree + (pb_h l).coefficient
+      + (pb_h l).constant + 2
+  let D : ℕ :=
+    (Finset.univ : Finset (Fin (k + 1))).sup D_of
+  let E : ℕ := (D + 5) * 4 ^ (k + 1)
+  { degree := E
+    coefficient := 3 ^ E
+    constant := 0
+    bounds := fun ctx => by
+      simp only [kSimPackedBase_interp, Nat.add_zero]
+      set s := maxCtx ctx with hs_def
+      have h_each :
+          ∀ v ∈ ((List.finRange (k + 1)).map
+                  (fun j => (h_ER j).interp ctx)),
+            v ≤ (s + 1 + 1) ^ D := by
+        intro v hv
+        rcases List.mem_map.mp hv with ⟨l, _, hvl⟩
+        have h_pow_shift :=
+          ERMor1.PolyBound.le_pow_shift_of_polyBound
+            (h_ER l) (pb_h l) ctx
+        rw [hvl.symm] at *
+        change (h_ER l).interp ctx ≤ (s + 2) ^ D
+        have h_dl_le_D :
+            D_of l ≤ D := by
+          exact Finset.le_sup (f := D_of)
+            (Finset.mem_univ l)
+        have h_base_pos : 1 ≤ s + 2 := by omega
+        have h_pow_mono :
+            (s + 2) ^ (D_of l) ≤ (s + 2) ^ D :=
+          Nat.pow_le_pow_right h_base_pos h_dl_le_D
+        change (h_ER l).interp ctx ≤
+          (maxCtx ctx + 2) ^ (D_of l) at h_pow_shift
+        rw [hs_def.symm] at h_pow_shift
+        exact le_trans h_pow_shift h_pow_mono
+      have hlen :
+          ((List.finRange (k + 1)).map
+            (fun j => (h_ER j).interp ctx)).length
+            ≤ k + 1 := by
+        simp
+      have h_pack :=
+        Nat.seqPack_le_seqPackBound
+          ((List.finRange (k + 1)).map
+            (fun j => (h_ER j).interp ctx))
+          k D (s + 1) hlen h_each
+      change Nat.seqPack _ ≤ (s + 1 + 2) ^ E at h_pack
+      have h_base_le : s + 3 ≤ 3 * (s + 1) := by omega
+      have h_pow_le :
+          (s + 3) ^ E ≤ (3 * (s + 1)) ^ E :=
+        Nat.pow_le_pow_left h_base_le E
+      have h_split :
+          (3 * (s + 1)) ^ E = 3 ^ E * (s + 1) ^ E := by
+        rw [Nat.mul_pow]
+      have h_s3_eq : s + 1 + 2 = s + 3 := by ring
+      rw [h_s3_eq] at h_pack
+      have h_combined :
+          Nat.seqPack
+              ((List.finRange (k + 1)).map
+                (fun j => (h_ER j).interp ctx))
+            ≤ 3 ^ E * (s + 1) ^ E := by
+        calc Nat.seqPack _
+            ≤ (s + 3) ^ E := h_pack
+          _ ≤ (3 * (s + 1)) ^ E := h_pow_le
+          _ = 3 ^ E * (s + 1) ^ E := h_split
+      exact h_combined }
+
+/-- Polynomial bound for the packed simrec step.  Takes
+per-component PolyBounds as inputs (where each component
+is a step morphism `g_ER l : ERMor1 (a + 1 + (k + 1))`)
+and produces a PolyBound on the packed step term
+`kSimPackedStep g_ER : ERMor1 (a + 2)`.
+
+The packed step composes seqPack with kSimStepContext, so
+the bound combines seqPack's polynomial blow-up with
+kSimStepContext's substitution. -/
+def kSimPackedStep_polyBound {a k : ℕ}
+    (g_ER : Fin (k + 1) → ERMor1 (a + 1 + (k + 1)))
+    (pb_g : (l : Fin (k + 1)) → ERMor1.PolyBound (g_ER l)) :
+    ERMor1.PolyBound (kSimPackedStep g_ER) :=
+  let D_of : Fin (k + 1) → ℕ := fun l =>
+    (pb_g l).degree + (pb_g l).coefficient
+      + (pb_g l).constant + 2
+  let D : ℕ :=
+    (Finset.univ : Finset (Fin (k + 1))).sup D_of
+  let E : ℕ := (D + 5) * 4 ^ (k + 1)
+  { degree := E
+    coefficient := 3 ^ E
+    constant := 0
+    bounds := fun ctx => by
+      simp only [kSimPackedStep_interp, Nat.add_zero]
+      set s := maxCtx ctx with hs_def
+      set subCtx :
+          Fin (a + 1 + (k + 1)) → ℕ :=
+        fun idx => (kSimStepContext idx).interp ctx
+        with hsub_def
+      have h_subCtx_le : ∀ idx, subCtx idx ≤ s := by
+        intro idx
+        rw [hsub_def]
+        unfold kSimStepContext
+        by_cases h₀ : idx.val = 0
+        · simp only [h₀, dite_true]
+          rw [ERMor1.interp_proj]
+          rw [hs_def]
+          exact le_maxCtx ctx _
+        · by_cases h₁ : idx.val < a + 1
+          · simp only [h₀, h₁, dite_true, dite_false]
+            rw [ERMor1.interp_proj]
+            rw [hs_def]
+            exact le_maxCtx ctx _
+          · simp only [h₀, h₁, dite_false]
+            rw [ERMor1.interp_comp]
+            set unpackCtx :
+                Fin (a + 1) → ℕ :=
+              fun j =>
+                (if h : j.val = 0 then
+                  ERMor1.proj (k := a + 2)
+                    ⟨1, by omega⟩
+                else
+                  ERMor1.proj (k := a + 2)
+                    ⟨j.val + 1, by
+                      have := j.isLt; omega⟩).interp ctx
+              with hu_def
+            change (kSimSzudzikUnpackAt a
+                (idx.val - (a + 1))).interp unpackCtx ≤ s
+            have hu0 : unpackCtx 0 = ctx ⟨1, by omega⟩ := by
+              rw [hu_def]
+              simp only [Fin.val_zero, dite_true]
+              rw [ERMor1.interp_proj]
+            have hu_eq :
+                unpackCtx =
+                  Fin.cons (ctx ⟨1, by omega⟩)
+                    (fun j : Fin a =>
+                      ctx ⟨j.val + 2, by
+                        have := j.isLt; omega⟩) := by
+              funext j
+              refine Fin.cases ?_ ?_ j
+              · exact hu0
+              · intro j'
+                rw [hu_def]
+                have hjne : (Fin.succ j').val ≠ 0 := by
+                  simp [Fin.succ]
+                simp only [hjne, dite_false]
+                rw [ERMor1.interp_proj]
+                rw [Fin.cons_succ]
+                rfl
+            rw [hu_eq]
+            rw [kSimSzudzikUnpackAt_interp_eq_seqAt]
+            calc Nat.seqAt (ctx ⟨1, by omega⟩)
+                  (idx.val - (a + 1))
+                ≤ ctx ⟨1, by omega⟩ := Nat.seqAt_le _ _
+              _ ≤ s := by
+                  rw [hs_def]
+                  exact le_maxCtx ctx _
+      have h_each :
+          ∀ v ∈ ((List.finRange (k + 1)).map
+                  (fun j =>
+                    (g_ER j).interp subCtx)),
+            v ≤ (s + 1 + 1) ^ D := by
+        intro v hv
+        rcases List.mem_map.mp hv with ⟨l, _, hvl⟩
+        have h_pow_shift :=
+          ERMor1.PolyBound.le_pow_shift_of_polyBound
+            (g_ER l) (pb_g l) subCtx
+        change (g_ER l).interp subCtx ≤
+          (maxCtx subCtx + 2) ^ (D_of l) at h_pow_shift
+        have h_max_sub :
+            maxCtx subCtx ≤ s := by
+          apply Finset.sup_le
+          intro idx _
+          exact h_subCtx_le idx
+        have h_base_pos : 1 ≤ s + 2 := by omega
+        have h_pow_base :
+            (maxCtx subCtx + 2) ^ (D_of l)
+              ≤ (s + 2) ^ (D_of l) :=
+          Nat.pow_le_pow_left (by omega) _
+        have h_dl_le_D :
+            D_of l ≤ D := by
+          exact Finset.le_sup (f := D_of)
+            (Finset.mem_univ l)
+        have h_pow_mono :
+            (s + 2) ^ (D_of l) ≤ (s + 2) ^ D :=
+          Nat.pow_le_pow_right h_base_pos h_dl_le_D
+        rw [hvl.symm]
+        change (g_ER l).interp subCtx ≤ (s + 2) ^ D
+        exact le_trans h_pow_shift
+          (le_trans h_pow_base h_pow_mono)
+      have hlen :
+          ((List.finRange (k + 1)).map
+            (fun j => (g_ER j).interp subCtx)).length
+            ≤ k + 1 := by
+        simp
+      have h_pack :=
+        Nat.seqPack_le_seqPackBound
+          ((List.finRange (k + 1)).map
+            (fun j => (g_ER j).interp subCtx))
+          k D (s + 1) hlen h_each
+      change Nat.seqPack _ ≤ (s + 1 + 2) ^ E at h_pack
+      have h_base_le : s + 3 ≤ 3 * (s + 1) := by omega
+      have h_pow_le :
+          (s + 3) ^ E ≤ (3 * (s + 1)) ^ E :=
+        Nat.pow_le_pow_left h_base_le E
+      have h_split :
+          (3 * (s + 1)) ^ E = 3 ^ E * (s + 1) ^ E := by
+        rw [Nat.mul_pow]
+      have h_s3_eq : s + 1 + 2 = s + 3 := by ring
+      rw [h_s3_eq] at h_pack
+      have h_combined :
+          Nat.seqPack
+              ((List.finRange (k + 1)).map
+                (fun j => (g_ER j).interp subCtx))
+            ≤ 3 ^ E * (s + 1) ^ E := by
+        calc Nat.seqPack _
+            ≤ (s + 3) ^ E := h_pack
+          _ ≤ (3 * (s + 1)) ^ E := h_pow_le
+          _ = 3 ^ E * (s + 1) ^ E := h_split
+      exact h_combined }
+
 end GebLean

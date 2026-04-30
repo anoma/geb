@@ -64,6 +64,19 @@ theorem seqAt_seqPack :
       exact seqAt_seqPack xs i (by
         simp [List.length_cons] at h; omega)
 
+/-- Every component extracted from a packed natural is
+bounded by the packed natural itself. -/
+theorem seqAt_le : ∀ (n i : ℕ), seqAt n i ≤ n
+  | 0,     _     => by simp [seqAt_zero_of_zero]
+  | n + 1, 0     => by
+      change (unpair n).1 ≤ n + 1
+      exact le_trans (unpair_left_le n) (Nat.le_succ n)
+  | n + 1, i + 1 => by
+      change seqAt (unpair n).2 i ≤ n + 1
+      have ih := seqAt_le (unpair n).2 i
+      have h2 : (unpair n).2 ≤ n := unpair_right_le n
+      omega
+
 /-- Simulate `BT.fold` via course-of-values recursion on a
 Gödel code.  The encoding `code(leaf) = 0`,
 `code(branch l r) = 1 + pair(code l)(code r)` matches
