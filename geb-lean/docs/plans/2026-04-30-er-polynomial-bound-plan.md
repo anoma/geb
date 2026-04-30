@@ -1574,7 +1574,19 @@ purely structural.
 
 ### Task 17b: Level-1 K^sim (K^sim_1 ⊆ E^1)
 
-**Status**: pending.  Estimated 250-400 lines.
+**Status**: in progress.  Estimated 600-800 lines (revised
+upward after partial implementation revealed deeper structural
+arithmetic).
+
+**Progress as of 2026-04-30 (commit `c1773838`)**:
+
+- Step 17b.1 (helper `packed_iteration_matches_simrecVec`):
+  **DONE** at commit `27c66777`.
+- Step 17b.2 partial: structural lemmas
+  `kSimSzudzikPackList_towerHeight_ge_two` and
+  `kSimPackedStep_towerHeight_ge_two` proven (both ≥ 2)
+  at commit `c1773838`.  **Full dominance proof remains.**
+- Steps 17b.3, 17b.4: pending.
 
 **Files**:
 
@@ -1583,38 +1595,61 @@ purely structural.
 **Goal**: prove dominance for level-1 simrec, then interp preservation
 and explicit linear bound for level-1 K^sim's kToER image.
 
-- [ ] **Step 17b.1: Add level-1 simrec packed value characterisation**
+- [x] **Step 17b.1: Add level-1 simrec packed value characterisation**
 
 Helper lemma: the iterated `Nat.rec` over `kSimPackedBase` /
 `kSimPackedStep` matches `KMor1.simrecVec` of the K^sim simrec at
 each iteration, when children are level 0.  Uses the round-trip
-via `kSimSzudzikUnpackAt_packList`.
+via `kSimSzudzikUnpackAt_packList`.  **DONE** at commit `27c66777`.
 
 - [ ] **Step 17b.2: Add `kSimTowerBound_dominates_level_one`**
 
-```lean
-/-- Dominance for level-1 simrec: the trace at iter j is
-linear in (j, params), which is dominated by
-`kSimTowerBound`'s tower form. -/
-theorem kSimTowerBound_dominates_level_one {a k : ℕ}
-    (h_fam : Fin (k + 1) → KMor1 a)
-    (g_fam : Fin (k + 1) → KMor1 (a + 1 + (k + 1)))
-    (h_h : ∀ l, (h_fam l).level ≤ 0)
-    (h_g : ∀ l, (g_fam l).level ≤ 0)
-    (j : ℕ) (params : Fin a → ℕ)
-    (h_j : j ≤ ?_) :
-    Nat.rec ... ≤ ... := by
-  sorry
+**Refined approach (post-c1773838 analysis)**:
+
+The naive arithmetic approach fails because `seqPack` of (k+1)
+linear values has degree `E = 6 · 4^(k+1)` — exponential in k.
+For `tower (stepTH + 1) Y` to dominate `tower 1 (E · linear)`, we
+need `stepTH + 1 ≥ log E + 1 = O(k)`, not just `stepTH ≥ 2`.
+
+**Structural towerHeight strengthening required**: refine the
+existing `kSimPackedStep_towerHeight_ge_two` to
+`kSimPackedStep_towerHeight_ge_succ_k` proving
+`(kSimPackedStep g_ER).towerHeight ≥ k + 1` (or similar function
+of `k`).  This is structurally true because
+`kSimSzudzikPackList` for system size k+1 has k+1 nested
+`comp natPair (...)` layers, each contributing to towerHeight.
+
+Estimated refined-structural-lemma effort: ~50-100 lines.
+
+**Arithmetic chain after structural refinement**: once stepTH
+≥ k+1 is in hand, the chain
+
+```text
+seqPack ≤ (M+2)^E ≤ 2^(E·(M+2)) ≤ tower 1 (E·(M+2))
+       ≤ tower (k+2) (small + linear in M)   (using stepTH ≥ k+1)
+       ≤ tower (stepTH + 1) (Y)              (Y absorbing constants)
 ```
 
-Approach:
+closes with E = 6 · 4^(k+1) absorbed by the `tower (k+2)` height.
 
-1. By Step 17b.1, the iterated value at iter j corresponds to the
-   K^sim simrec at iter j.
-2. K^sim simrec value at iter j is bounded by
-   `KMor1.linearBound_dominates` applied to the simrec.
-3. This linear bound is bounded by `tower (TH+1) (linear)` since
-   `tower (TH+1) X ≥ X` for X ≥ 0 and `TH ≥ 0`.
+Estimated arithmetic chain effort: ~200-400 lines.
+
+Approach (in order):
+
+1. Strengthen structural lemma to `stepTH ≥ k + 1` (refine
+   `kSimSzudzikPackList_towerHeight_ge_two` by induction on `k`,
+   tracking per-Szudzik-level depth contribution).
+2. Use Step 17b.1 to convert iterated value to seqPack of simrecVec.
+3. Apply `KMor1.linearBound_dominates` to bound each simrecVec
+   component linearly.
+4. Apply `Nat.seqPack_le_seqPackBound` (with d=1) to bound the
+   seqPack by `(M+2)^E`.
+5. Convert `(M+2)^E` to `tower 1 (E · (M+2))` via `pow_le_two_pow`
+   style estimate.
+6. Use the structural `stepTH ≥ k+1` to dominate by
+   `tower (stepTH+1) Y` for appropriate Y.
+7. Show Y matches `kSimTowerBound`'s closed form (linear in
+   sumCtx, with constants absorbed by 2*BH and TH+1).
 
 - [ ] **Step 17b.3: Add `kToER_interp_level_one`**
 
