@@ -1,7 +1,6 @@
 import GebLean.LawvereKSimInterp
+import GebLean.Utilities.ComputableLimits
 import Mathlib.CategoryTheory.Category.Basic
-import Mathlib.CategoryTheory.Limits.Shapes.Terminal
-import Mathlib.CategoryTheory.Limits.Shapes.BinaryProducts
 
 /-!
 # Extensional-equality quotient and Lawvere structure
@@ -153,5 +152,216 @@ instance : CategoryTheory.Category LawvereKSimCat where
   id_comp := KMorNQuo.id_comp
   comp_id := KMorNQuo.comp_id
   assoc := KMorNQuo.comp_assoc
+
+/-- Terminal morphism in the quotient category:
+the equivalence class of the empty tuple. -/
+def KMorNQuo.terminal (n : ℕ) : KMorNQuo n 0 :=
+  Quotient.mk (kMorNSetoid n 0) (KMorN.terminal n)
+
+/-- Any quotient morphism to arity 0 equals the
+terminal morphism. -/
+theorem KMorNQuo.terminal_uniq {n : ℕ}
+    (f : KMorNQuo n 0) :
+    f = KMorNQuo.terminal n :=
+  Quotient.ind
+    (motive := fun f =>
+      f = KMorNQuo.terminal n)
+    (fun _ => Quotient.sound
+      (s := kMorNSetoid n 0)
+      (fun _ => funext
+        (fun i => Fin.elim0 i)))
+    f
+
+/-- First projection in the quotient category. -/
+def KMorNQuo.fst {n m : ℕ} :
+    KMorNQuo (n + m) n :=
+  Quotient.mk (kMorNSetoid (n + m) n) KMorN.fst
+
+/-- Second projection in the quotient category. -/
+def KMorNQuo.snd {n m : ℕ} :
+    KMorNQuo (n + m) m :=
+  Quotient.mk (kMorNSetoid (n + m) m) KMorN.snd
+
+/-- Pairing in the quotient category, lifted from
+`KMorN.pair` via `Quotient.lift₂`. -/
+def KMorNQuo.pair {k n m : ℕ}
+    (f : KMorNQuo k n) (g : KMorNQuo k m) :
+    KMorNQuo k (n + m) :=
+  Quotient.lift₂
+    (s₁ := kMorNSetoid k n)
+    (s₂ := kMorNSetoid k m)
+    (fun f' g' =>
+      Quotient.mk (kMorNSetoid k (n + m))
+        (KMorN.pair f' g'))
+    (fun fa fb ga gb hf hg =>
+      Quotient.sound
+        (s := kMorNSetoid k (n + m))
+        (fun ctx => by
+          simp only [KMorN.interp_pair]
+          funext i
+          split_ifs with h
+          · exact congrFun (hf ctx) ⟨i.val, h⟩
+          · exact congrFun (hg ctx)
+              ⟨i.val - n, by omega⟩))
+    f g
+
+/-- Composing pairing with the first projection
+recovers the first component. -/
+theorem KMorNQuo.pair_fst {k n m : ℕ}
+    (f : KMorNQuo k n) (g : KMorNQuo k m) :
+    KMorNQuo.comp (KMorNQuo.pair f g)
+        (KMorNQuo.fst (n := n) (m := m)) = f :=
+  Quotient.ind₂
+    (motive := fun f g =>
+      KMorNQuo.comp (KMorNQuo.pair f g)
+          (KMorNQuo.fst (n := n) (m := m)) = f)
+    (fun f_raw g_raw =>
+      Quotient.sound
+        (s := kMorNSetoid k n)
+        (fun ctx => by
+          funext j
+          simp only [KMorN.interp_comp,
+            KMorN.interp_pair, KMorN.interp_fst]
+          have hlt : (Fin.castAdd m j).val < n :=
+            j.is_lt
+          rw [dif_pos hlt]
+          rfl))
+    f g
+
+/-- Composing pairing with the second projection
+recovers the second component. -/
+theorem KMorNQuo.pair_snd {k n m : ℕ}
+    (f : KMorNQuo k n) (g : KMorNQuo k m) :
+    KMorNQuo.comp (KMorNQuo.pair f g)
+        (KMorNQuo.snd (n := n) (m := m)) = g :=
+  Quotient.ind₂
+    (motive := fun f g =>
+      KMorNQuo.comp (KMorNQuo.pair f g)
+          (KMorNQuo.snd (n := n) (m := m)) = g)
+    (fun f_raw g_raw =>
+      Quotient.sound
+        (s := kMorNSetoid k m)
+        (fun ctx => by
+          funext j
+          simp only [KMorN.interp_comp,
+            KMorN.interp_pair, KMorN.interp_snd]
+          have hge : ¬ (Fin.natAdd n j).val < n :=
+            by simp [Fin.natAdd]
+          rw [dif_neg hge]
+          congr 1
+          ext
+          simp [Fin.natAdd, Nat.add_sub_cancel_left]))
+    f g
+
+/-- Uniqueness of pairing: any morphism whose
+compositions with the projections yield `f` and
+`g` equals `pair f g`. -/
+theorem KMorNQuo.pair_uniq {k n m : ℕ}
+    (f : KMorNQuo k n)
+    (g : KMorNQuo k m)
+    (h : KMorNQuo k (n + m))
+    (hfst : KMorNQuo.comp h
+        (KMorNQuo.fst (n := n) (m := m)) = f)
+    (hsnd : KMorNQuo.comp h
+        (KMorNQuo.snd (n := n) (m := m)) = g) :
+    h = KMorNQuo.pair f g :=
+  Quotient.ind
+    (motive := fun h =>
+      ∀ (f : KMorNQuo k n)
+        (g : KMorNQuo k m),
+        KMorNQuo.comp h
+            (KMorNQuo.fst (n := n) (m := m)) = f →
+        KMorNQuo.comp h
+            (KMorNQuo.snd (n := n) (m := m)) = g →
+        h = KMorNQuo.pair f g)
+    (fun h_raw =>
+      Quotient.ind
+        (motive := fun f =>
+          ∀ (g : KMorNQuo k m),
+            KMorNQuo.comp
+              (Quotient.mk _ h_raw)
+              (KMorNQuo.fst (n := n) (m := m)) = f →
+            KMorNQuo.comp
+              (Quotient.mk _ h_raw)
+              (KMorNQuo.snd (n := n) (m := m)) = g →
+            Quotient.mk _ h_raw =
+              KMorNQuo.pair f g)
+        (fun f_raw =>
+          Quotient.ind
+            (motive := fun g =>
+              KMorNQuo.comp
+                (Quotient.mk _ h_raw)
+                (KMorNQuo.fst (n := n) (m := m)) =
+                Quotient.mk _ f_raw →
+              KMorNQuo.comp
+                (Quotient.mk _ h_raw)
+                (KMorNQuo.snd (n := n) (m := m)) = g →
+              Quotient.mk _ h_raw =
+                KMorNQuo.pair
+                  (Quotient.mk _ f_raw) g)
+            (fun g_raw hf_eq hs_eq => by
+              have hf_rel :=
+                Quotient.exact
+                  (s := kMorNSetoid k n)
+                  hf_eq
+              have hs_rel :=
+                Quotient.exact
+                  (s := kMorNSetoid k m)
+                  hs_eq
+              apply Quotient.sound
+                (s := kMorNSetoid k (n + m))
+              intro ctx
+              simp only [KMorN.interp_pair]
+              funext i
+              split_ifs with hlt
+              · have := congrFun
+                  (hf_rel ctx) ⟨i.val, hlt⟩
+                simp only [KMorN.interp_comp,
+                  KMorN.interp_fst] at this
+                exact this
+              · have step := congrFun
+                  (hs_rel ctx)
+                  ⟨i.val - n, by omega⟩
+                simp only [KMorN.interp_comp,
+                  KMorN.interp_snd] at step
+                have : h_raw.interp ctx i =
+                    h_raw.interp ctx
+                      ⟨n + (i.val - n),
+                        (by omega)⟩ := by
+                  simp only [
+                    Nat.add_sub_cancel'
+                      (Nat.le_of_not_lt hlt)]
+                rw [this]
+                exact step)))
+    h f g hfst hsnd
+
+/-- Chosen binary product for `LawvereKSimCat`:
+the product of `n` and `m` is `n + m`. -/
+def lawvereKSimProduct
+    (n m : LawvereKSimCat) :
+    ChosenBinaryProduct n m where
+  obj := (Nat.add n m : ℕ)
+  fst := KMorNQuo.fst
+  snd := KMorNQuo.snd
+  lift f g := KMorNQuo.pair f g
+  lift_fst := KMorNQuo.pair_fst
+  lift_snd := KMorNQuo.pair_snd
+  lift_uniq f g h hf hs :=
+    KMorNQuo.pair_uniq f g h hf hs
+
+/-- Chosen terminal object for
+`LawvereKSimCat`. -/
+def lawvereKSimTerminal :
+    ChosenTerminal LawvereKSimCat where
+  obj := (0 : ℕ)
+  from_ n := KMorNQuo.terminal n
+  uniq f := KMorNQuo.terminal_uniq f
+
+/-- `LawvereKSimCat` has chosen finite
+products. -/
+instance : HasChosenFiniteProducts
+    LawvereKSimCat where
+  terminal := lawvereKSimTerminal
+  product := lawvereKSimProduct
 
 end GebLean

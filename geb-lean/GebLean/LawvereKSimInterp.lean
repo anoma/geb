@@ -254,4 +254,21 @@ the context, then applies `f`'s interpretation. -/
       = (f.interp (g.interp ctx)) :=
   rfl
 
+/-- Interpretation of `KMorN.pair`: concatenates
+the results of interpreting `f` and `g`. -/
+@[simp] theorem KMorN.interp_pair
+    {k n m : ℕ}
+    (f : KMorN k n) (g : KMorN k m)
+    (ctx : Fin k → ℕ) :
+    (KMorN.pair f g).interp ctx
+      = fun i =>
+          if h : i.val < n then
+            f.interp ctx ⟨i.val, h⟩
+          else
+            g.interp ctx
+              ⟨i.val - n, by omega⟩ := by
+  funext i
+  simp [KMorN.pair, KMorN.interp]
+  split_ifs <;> rfl
+
 end GebLean
