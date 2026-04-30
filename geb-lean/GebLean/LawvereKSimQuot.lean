@@ -364,4 +364,109 @@ instance : HasChosenFiniteProducts
   terminal := lawvereKSimTerminal
   product := lawvereKSimProduct
 
+/-- The `KMorNQuo n m` class admits a syntactic
+representative at depth ≤ d iff some `KMorN n m`
+representative has each of its components at
+`KMor1.level ≤ d`. -/
+def KMorNQuo.atDepth {n m : ℕ} (d : ℕ)
+    (q : KMorNQuo n m) : Prop :=
+  ∃ f : KMorN n m,
+    (∀ i : Fin m, (f i).level ≤ d) ∧
+    Quotient.mk (kMorNSetoid n m) f = q
+
+theorem KMorNQuo.id_atDepth {n d : ℕ} :
+    KMorNQuo.atDepth d (KMorNQuo.id n) := by
+  refine ⟨KMorN.id n, ?_, rfl⟩
+  intro i
+  simp [KMorN.id, KMor1.level]
+
+theorem KMorNQuo.comp_atDepth
+    {n m k d : ℕ}
+    (f : KMorNQuo n m) (g : KMorNQuo m k)
+    (hf : KMorNQuo.atDepth d f)
+    (hg : KMorNQuo.atDepth d g) :
+    KMorNQuo.atDepth d (KMorNQuo.comp f g) := by
+  obtain ⟨f', hf_lvl, hf_eq⟩ := hf
+  obtain ⟨g', hg_lvl, hg_eq⟩ := hg
+  refine ⟨KMorN.comp g' f', ?_, ?_⟩
+  · intro i
+    simp only [KMorN.comp, KMor1.level]
+    apply Nat.max_le.mpr
+    constructor
+    · exact hg_lvl i
+    · apply Finset.sup_le
+      intro j _
+      exact hf_lvl j
+  · rw [← hf_eq, ← hg_eq]
+    rfl
+
+/-- The K^sim_d category at depth d: morphisms are
+`KMorNQuo` quotient classes admitting a level-≤-d
+representative.  Per design principle P4. -/
+structure KSimMor (d : ℕ) (n m : ℕ) where
+  hom : KMorNQuo n m
+  depth_witness : KMorNQuo.atDepth d hom
+
+/-- The depth-d K^sim category has the same objects as
+`LawvereKSimCat` but restricts to KSimMor d morphisms. -/
+def LawvereKSimDCat (d : ℕ) := ℕ
+
+instance (d n : ℕ) : OfNat (LawvereKSimDCat d) n :=
+  ⟨(n : ℕ)⟩
+
+instance (d : ℕ) : DecidableEq (LawvereKSimDCat d) :=
+  inferInstanceAs (DecidableEq ℕ)
+
+instance (d : ℕ) :
+    CategoryTheory.CategoryStruct
+      (LawvereKSimDCat d) where
+  Hom n m := KSimMor d n m
+  id n := ⟨KMorNQuo.id n, KMorNQuo.id_atDepth⟩
+  comp f g :=
+    ⟨KMorNQuo.comp f.hom g.hom,
+     KMorNQuo.comp_atDepth f.hom g.hom
+       f.depth_witness g.depth_witness⟩
+
+/-- An extensionality lemma reducing `KSimMor`
+equality to `hom`-field equality (since
+`depth_witness` is `Prop`-valued and
+proof-irrelevant). -/
+@[ext] theorem KSimMor.ext {d n m : ℕ}
+    {x y : KSimMor d n m} (h : x.hom = y.hom) :
+    x = y := by
+  cases x; cases y
+  congr
+
+instance (d : ℕ) :
+    CategoryTheory.Category (LawvereKSimDCat d) where
+  id_comp f := by
+    apply KSimMor.ext
+    exact KMorNQuo.id_comp f.hom
+  comp_id f := by
+    apply KSimMor.ext
+    exact KMorNQuo.comp_id f.hom
+  assoc f g h := by
+    apply KSimMor.ext
+    exact KMorNQuo.comp_assoc f.hom g.hom h.hom
+
+/-- The inclusion functor weakening the depth from
+`d` to `d+1`.  On objects it is the identity (both
+categories have the same `ℕ`-shaped object
+collection); on morphisms it forwards the underlying
+`KMorNQuo` and weakens the depth witness via
+monotonicity. -/
+def KSimMor.includeSucc (d : ℕ) :
+    CategoryTheory.Functor
+      (LawvereKSimDCat d)
+      (LawvereKSimDCat (d + 1)) where
+  obj n := n
+  map {n m} h :=
+    ⟨h.hom, by
+      obtain ⟨f, hf_lvl, hf_eq⟩ := h.depth_witness
+      exact ⟨f,
+        fun i => Nat.le_succ_of_le (hf_lvl i),
+        hf_eq⟩⟩
+  map_id _ := KSimMor.ext rfl
+  map_comp _ _ := KSimMor.ext rfl
+
 end GebLean
