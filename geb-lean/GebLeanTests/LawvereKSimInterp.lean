@@ -38,3 +38,21 @@ private def ctx3 (x y z : ℕ) : Fin 3 → ℕ := ![x, y, z]
   (KMor1.comp KMor1.succ
     (fun _ : Fin 1 => KMor1.proj (0 : Fin 2))).interp
     (ctx2 7 3) == 8
+
+/-- Addition `λ x y. x + y` as a level-1 K^sim
+composite: simrec on the first argument (x) with
+base = proj 0 of the one-parameter slot (returns y
+at x = 0) and step = succ applied to the previous
+value (occupying slot 2 of the step context). -/
+private def addK : KMor1 2 :=
+  KMor1.simrec (k := 0) (a := 1)
+    (0 : Fin 1)
+    (fun _ : Fin 1 => KMor1.proj (0 : Fin 1))
+    (fun _ : Fin 1 =>
+      KMor1.comp KMor1.succ
+        (fun _ : Fin 1 => KMor1.proj (2 : Fin 3)))
+
+#guard addK.interp (ctx2 3 5) == 8
+#guard addK.interp (ctx2 0 0) == 0
+#guard addK.interp (ctx2 7 1) == 8
+#guard addK.level == 1
