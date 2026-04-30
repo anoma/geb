@@ -364,41 +364,82 @@ instance : HasChosenFiniteProducts
   terminal := lawvereKSimTerminal
   product := lawvereKSimProduct
 
-/-- The `KMorNQuo n m` class admits a syntactic
-representative at depth ≤ d iff some `KMorN n m`
-representative has each of its components at
-`KMor1.level ≤ d`. -/
+/-- Constructive raw witness that a `KMorNQuo n m` class
+admits a representative whose components all have
+`KMor1.level ≤ d`.  Carries the representative tuple, a
+proof of the level bound, and a proof that it represents
+the given equivalence class. -/
+structure KMorNQuo.AtDepthRaw {n m : ℕ} (d : ℕ)
+    (q : KMorNQuo n m) where
+  rep : KMorN n m
+  rep_level : ∀ i : Fin m, (rep i).level ≤ d
+  rep_eq : Quotient.mk (kMorNSetoid n m) rep = q
+
+/-- The always-true Setoid on `KMorNQuo.AtDepthRaw`,
+making all raw witnesses equivalent.  Quotienting by this
+relation produces a Subsingleton type whose unique element
+encapsulates the existence claim. -/
+instance kMorNQuoAtDepthSetoid {n m : ℕ} (d : ℕ)
+    (q : KMorNQuo n m) :
+    Setoid (KMorNQuo.AtDepthRaw d q) where
+  r _ _ := True
+  iseqv :=
+    ⟨fun _ => trivial,
+     fun _ => trivial,
+     fun _ _ => trivial⟩
+
+/-- Data-bearing depth witness: the Quotient of
+`KMorNQuo.AtDepthRaw` by the always-true Setoid.  All
+elements are equal as Lean values via
+`Quotient.sound trivial`. -/
 def KMorNQuo.atDepth {n m : ℕ} (d : ℕ)
-    (q : KMorNQuo n m) : Prop :=
-  ∃ f : KMorN n m,
-    (∀ i : Fin m, (f i).level ≤ d) ∧
-    Quotient.mk (kMorNSetoid n m) f = q
+    (q : KMorNQuo n m) : Type :=
+  Quotient (kMorNQuoAtDepthSetoid d q)
 
-theorem KMorNQuo.id_atDepth {n d : ℕ} :
-    KMorNQuo.atDepth d (KMorNQuo.id n) := by
-  refine ⟨KMorN.id n, ?_, rfl⟩
-  intro i
-  simp [KMorN.id, KMor1.level]
+/-- All elements of `KMorNQuo.atDepth d q` are equal,
+preserving the proof-irrelevance behaviour of the
+original Prop formulation. -/
+instance KMorNQuo.atDepth.subsingleton {n m d : ℕ}
+    (q : KMorNQuo n m) :
+    Subsingleton (KMorNQuo.atDepth d q) where
+  allEq a b :=
+    Quotient.ind₂ (motive := fun a b => a = b)
+      (fun _ _ => Quotient.sound trivial) a b
 
-theorem KMorNQuo.comp_atDepth
-    {n m k d : ℕ}
-    (f : KMorNQuo n m) (g : KMorNQuo m k)
+/-- Constructive depth witness for the identity
+quotient morphism. -/
+def KMorNQuo.id_atDepth {n d : ℕ} :
+    KMorNQuo.atDepth d (KMorNQuo.id n) :=
+  Quotient.mk _
+    { rep        := KMorN.id n
+      rep_level  := fun _ => by
+        simp [KMorN.id, KMor1.level]
+      rep_eq     := rfl }
+
+/-- Constructive depth witness for composition. -/
+def KMorNQuo.comp_atDepth {n m k d : ℕ}
+    {f : KMorNQuo n m} {g : KMorNQuo m k}
     (hf : KMorNQuo.atDepth d f)
     (hg : KMorNQuo.atDepth d g) :
-    KMorNQuo.atDepth d (KMorNQuo.comp f g) := by
-  obtain ⟨f', hf_lvl, hf_eq⟩ := hf
-  obtain ⟨g', hg_lvl, hg_eq⟩ := hg
-  refine ⟨KMorN.comp g' f', ?_, ?_⟩
-  · intro i
-    simp only [KMorN.comp, KMor1.level]
-    apply Nat.max_le.mpr
-    constructor
-    · exact hg_lvl i
-    · apply Finset.sup_le
-      intro j _
-      exact hf_lvl j
-  · rw [← hf_eq, ← hg_eq]
-    rfl
+    KMorNQuo.atDepth d (KMorNQuo.comp f g) :=
+  Quotient.liftOn₂
+    (s₁ := kMorNQuoAtDepthSetoid d f)
+    (s₂ := kMorNQuoAtDepthSetoid d g)
+    hf hg
+    (fun fr gr =>
+      Quotient.mk _
+        { rep := KMorN.comp gr.rep fr.rep
+          rep_level := by
+            intro i
+            simp only [KMorN.comp, KMor1.level]
+            refine Nat.max_le.mpr ⟨gr.rep_level i, ?_⟩
+            apply Finset.sup_le
+            intro j _
+            exact fr.rep_level j
+          rep_eq := by
+            conv_rhs => rw [← fr.rep_eq, ← gr.rep_eq]
+            rfl })
+    (fun _ _ _ _ _ _ => Quotient.sound trivial)
 
 /-- The K^sim_d category at depth d: morphisms are
 `KMorNQuo` quotient classes admitting a level-≤-d
@@ -427,18 +468,19 @@ instance (d : ℕ) :
   id n := ⟨KMorNQuo.id n, KMorNQuo.id_atDepth⟩
   comp f g :=
     ⟨KMorNQuo.comp f.hom g.hom,
-     KMorNQuo.comp_atDepth f.hom g.hom
-       f.depth_witness g.depth_witness⟩
+     KMorNQuo.comp_atDepth f.depth_witness g.depth_witness⟩
 
 /-- An extensionality lemma reducing `KSimMor`
-equality to `hom`-field equality (since
-`depth_witness` is `Prop`-valued and
-proof-irrelevant). -/
+equality to `hom`-field equality, using the
+`Subsingleton` instance on `KMorNQuo.atDepth` to
+discharge the depth witness component. -/
 @[ext] theorem KSimMor.ext {d n m : ℕ}
     {x y : KSimMor d n m} (h : x.hom = y.hom) :
     x = y := by
   cases x; cases y
-  congr
+  subst h
+  congr 1
+  exact Subsingleton.elim _ _
 
 instance (d : ℕ) :
     CategoryTheory.Category (LawvereKSimDCat d) where
@@ -463,12 +505,18 @@ def KSimMor.includeSucc (d : ℕ) :
       (LawvereKSimDCat d)
       (LawvereKSimDCat (d + 1)) where
   obj n := n
-  map {n m} h :=
-    ⟨h.hom, by
-      obtain ⟨f, hf_lvl, hf_eq⟩ := h.depth_witness
-      exact ⟨f,
-        fun i => Nat.le_succ_of_le (hf_lvl i),
-        hf_eq⟩⟩
+  map {_n _m} h :=
+    ⟨h.hom,
+      Quotient.liftOn
+        (s := kMorNQuoAtDepthSetoid d h.hom)
+        h.depth_witness
+        (fun raw =>
+          Quotient.mk _
+            { rep        := raw.rep
+              rep_level  := fun i =>
+                Nat.le_succ_of_le (raw.rep_level i)
+              rep_eq     := raw.rep_eq })
+        (fun _ _ _ => Quotient.sound trivial)⟩
   map_id _ := KSimMor.ext rfl
   map_comp _ _ := KSimMor.ext rfl
 
