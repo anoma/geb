@@ -74,3 +74,28 @@ example (ctx : Fin 1 → ℕ) :
           pb_bsum_succ.degree
       + pb_bsum_succ.constant :=
   pb_bsum_succ.bounds ctx
+
+private def boundedRec_test :
+    ERMor1 (0 + 1) :=
+  ERMor1.boundedRec
+    (k := 0)
+    ERMor1.zero
+    (ERMor1.comp ERMor1.succ
+      (fun (_ : Fin 1) => ERMor1.proj (k := 2) 0))
+    ERMor1.succ
+
+private def pb_boundedRec_test :
+    ERMor1.PolyBound boundedRec_test :=
+  ERMor1.PolyBound.ofBoundedRec ERMor1.PolyBound.ofSucc
+
+example : pb_boundedRec_test.degree = 1 := rfl
+example : pb_boundedRec_test.coefficient = 1 := rfl
+example : pb_boundedRec_test.constant = 1 := rfl
+
+example (ctx : Fin 1 → ℕ) :
+    boundedRec_test.interp ctx ≤
+      pb_boundedRec_test.coefficient *
+        ((Finset.univ : Finset (Fin 1)).sup ctx + 1) ^
+          pb_boundedRec_test.degree
+      + pb_boundedRec_test.constant :=
+  pb_boundedRec_test.bounds ctx

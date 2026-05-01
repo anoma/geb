@@ -2,6 +2,7 @@ import GebLean.LawvereER
 import GebLean.LawvereERBound
 import GebLean.LawvereERBoundComputable
 import GebLean.Utilities.ComputationalComplexity
+import GebLean.Utilities.ERArith
 
 /-!
 # ER polynomial bounds and structural towerHeight lemma
@@ -367,6 +368,32 @@ def ofBsum {k : ℕ} {f : ERMor1 (k + 1)}
         (le_trans h_step2 (le_of_eq h_eq_combine))
     exact le_trans h_sum h_combine
 
+/-- Polynomial bound for `boundedRec`.  Inherits the `bound`
+argument's polynomial bound directly via
+`ERMor1.interp_boundedRec_le_bound` (the unconditional
+inequality `(boundedRec base step bound).interp ctx ≤
+bound.interp ctx`).
+
+Used at the level-2 simrec dominance call site
+(`kSimTowerBound_dominates_inline` in
+`LawvereKSimPolynomialBound.lean`, Phase IV-B Task D.2 of
+the 17b/17c completion plan).  At that call site, `bound` is
+the `kSimTowerBound` term, but the constructive
+`PolyBound` for `kToER (level-1 simrec)` is built bottom-up
+through this adapter starting from a `PolyBound` for some
+polynomial-bounded surrogate of `kSimTowerBound`. -/
+def ofBoundedRec {k : ℕ} {base : ERMor1 k}
+    {step : ERMor1 (k + 2)} {bound : ERMor1 (k + 1)}
+    (pb_bound : PolyBound bound) :
+    PolyBound (ERMor1.boundedRec base step bound) where
+  degree := pb_bound.degree
+  coefficient := pb_bound.coefficient
+  constant := pb_bound.constant
+  bounds := fun ctx =>
+    le_trans
+      (ERMor1.interp_boundedRec_le_bound base step bound ctx)
+      (pb_bound.bounds ctx)
+
 /-- Generic adapter: a `PolyBound` over any context yields a
 single-degree power bound `(maxCtx ctx + 2)^D` with
 `D = degree + coefficient + constant + 2`.  The base shift is
@@ -606,13 +633,21 @@ yet `Nat.log 2 100 = 6 > 0 = ERMor1.zero.towerHeight`.
 The structural relationship between polynomial degree and
 `towerHeight` therefore depends on `pb` being built from
 the per-constructor builders `ofZero`, `ofSucc`, `ofProj`,
-`ofSub`, `ofComp`, `ofBsum` (the bprod-free fragment;
-`bprod`'s value bound is not polynomial in the inputs).
+`ofSub`, `ofComp`, `ofBsum`, `ofBoundedRec` (the
+bprod-free fragment; `bprod`'s value bound is not
+polynomial in the inputs).
 The relationship is established at the call site in Module
 C (`LawvereKSimPolynomialBound.lean`) for the specific
 `PolyBound`s built for `kSimPackedStep` and
 `kSimPackedBase`, where the structural form of the
 underlying ER term is known.
+
+`ofBoundedRec` inherits its `PolyBound` fields from the
+`bound` argument's `PolyBound` directly, so its log-vs-tH
+relationship is exactly the input's.  At the level-2 simrec
+call site, this means the `PolyBound` for `kToER (level-1
+simrec)` reduces to a `PolyBound` for whatever polynomial
+surrogate is supplied for the `kSimTowerBound` argument.
 -/
 
 end ERMor1.PolyBound
