@@ -1730,6 +1730,62 @@ private theorem kToER_simrec_towerHeight_ge_max_child_tH
     (kToER_simrec_h_side_bound h_fam g_fam h_h h_g i hyp)
     (kToER_simrec_g_side_bound h_fam g_fam h_h h_g i hyp)
 
+/-- Arithmetic helper: `n + 3 < 2 ^ (n + 2)` for all `n`.
+Used in the `shifted` branch of
+`linearBoundLog_le_towerHeight_level_zero` to bound
+`Nat.log 2 (k + 2)`. -/
+private theorem Nat.add_three_lt_two_pow_succ_succ (n : ℕ) :
+    n + 3 < 2 ^ (n + 2) := by
+  induction n with
+  | zero => decide
+  | succ k ih =>
+      have hpow : 2 ^ (k + 1 + 2) = 2 * 2 ^ (k + 2) := by
+        rw [show k + 1 + 2 = (k + 2) + 1 from rfl, pow_succ]
+        ring
+      omega
+
+/-- Level-0 specialization of the main inequality,
+factored out for use in the `raise` and `comp ≤ 0` cases
+of `linearBoundLog_le_towerHeight`.  The level-0
+linearBound (via `level0Shape`) is tame
+(`.1 ∈ {0, 1}`, `.2 ≤ tH + 1` by A.5.2.1), so its
+`Nat.log 2` is bounded by `tH + 1 ≤ 3 · tH + 1`. -/
+private theorem linearBoundLog_le_towerHeight_level_zero
+    {a : ℕ} (f : KMor1 a) (h : f.level ≤ 0) :
+    Nat.log 2 ((KMor1.level0Shape f h).linearBound.1 +
+               (KMor1.level0Shape f h).linearBound.2 + 1)
+      ≤ 3 *
+        (kToER f
+          (Nat.le_succ_of_le
+            (Nat.le_succ_of_le h))).towerHeight + 1 := by
+  have hbound :=
+    kToER_level0_towerHeight_ge_const f h
+  set tH :=
+    (kToER f
+      (Nat.le_succ_of_le (Nat.le_succ_of_le h))).towerHeight
+  cases hshape : KMor1.level0Shape f h with
+  | const k =>
+      simp only [ConstantOrShiftedProj.linearBound]
+      rw [hshape] at hbound
+      simp only [ConstantOrShiftedProj.linearBound] at hbound
+      have hlt : k + 1 < 2 ^ (tH + 2) := by
+        have h1 : tH + 2 < 2 ^ (tH + 2) := Nat.lt_two_pow_self
+        omega
+      have hlog : Nat.log 2 (0 + k + 1) < tH + 2 :=
+        Nat.log_lt_of_lt_pow (by omega) (by simpa using hlt)
+      omega
+  | shifted i k =>
+      simp only [ConstantOrShiftedProj.linearBound]
+      rw [hshape] at hbound
+      simp only [ConstantOrShiftedProj.linearBound] at hbound
+      have hlt : 1 + k + 1 < 2 ^ (tH + 2) := by
+        have h2 : tH + 3 < 2 ^ (tH + 2) :=
+          Nat.add_three_lt_two_pow_succ_succ tH
+        omega
+      have hlog : Nat.log 2 (1 + k + 1) < tH + 2 :=
+        Nat.log_lt_of_lt_pow (by omega) hlt
+      omega
+
 /-- Strengthened structural lower bound on `kSimPackedBase`'s
 tower height, parallel to the Step version. -/
 private theorem kSimPackedBase_towerHeight_ge_succ_k
