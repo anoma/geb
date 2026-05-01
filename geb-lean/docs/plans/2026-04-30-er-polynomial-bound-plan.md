@@ -196,28 +196,50 @@ The original R5 read as follows (preserved for the record):
 
 ### R5' — Task 17c requires a polynomial chain (replaces R5)
 
+> **Update 2026-05-01 (post-`0e3bfa66`, `c2dfc3d6`,
+> `f48ecf78`, `31b407c5`)**: this section has been
+> reduced to the surviving structural skeleton.  The
+> earlier multiplicative-fan-out diagnosis (predicated
+> on `KMor1.linearBound`'s comp clause using
+> `sum_k = Σ_i (lb gs_i).2`) is resolved: commit
+> `0e3bfa66` switched the comp clause to
+> `max_k = max_i (lb gs_i).2` per Tourlakis Lemma 1.A's
+> proof, and commit `c2dfc3d6` added a `level0Shape`
+> fallback in `linearBound`'s `comp` dite for level-≤-0
+> sub-comps.  The B2 fallback sub-strategy ("custom
+> K^sim-side measure with fan-out tracking") was
+> abandoned in favor of B1 and has been deleted.  The
+> chain-closing inequality is now standardized as
+> `Nat.log 2 (lb.1 + lb.2 + 1) ≤ 3 · towerHeight + 1`
+> (project-internal accounting; shape from Wong's
+> Recursion Class Ch. 4 Prop. 4.6, factor 3 pinned by
+> the comp-case algebra under our `towerHeight`
+> recursion).  See the research doc's "Implication for
+> the level-2 dominance chain" callout and the Phase
+> IV-B section of the 17b/17c completion plan for the
+> current state.
+
 R5 was correct that no new `towerHeight` lemma is needed for
 the packed terms `kSimPackedBase` / `kSimPackedStep`.  R5 was
 incorrect in claiming the level-1 arithmetic chain extends
-uniformly to level 2.  The mistake: at level 1, the chain
-absorbs `Nat.log 2 (KK + …)` into `stepTH + 2*baseTH` via
-`kToER_level0_towerHeight_ge_const`, which exploits Lemma 1.B
-(level-0 `linearBound.2` ≤ `towerHeight + 1`).  Lemma 1.B is
-**level-stratified**: at level 1, no analogous additive shape
-lemma is available, because `KMor1.linearBound`'s `comp` clause
-produces `(p_f.1 * max_c, p_f.1 * sum_k + p_f.2)`, which is
-multiplicative in the children with a sum over fan-out.  No
-bound `(KMor1.linearBound f h).2 ≤ 2^((kToER f).towerHeight + c)`
-holds for level-1 `f` with fan-out ≥ 2 and any fixed `c`.
-
-This matches Tourlakis 2018 §0.1.0.27's level stratification:
-linear at level 1, polynomial at level 2, tower at level ≥ 3.
-The level-2 dominance proof must therefore route the chain
-through **polynomial** bounds on the level-1 children, not
-linear bounds.  See the research doc
+uniformly to level 2.  At level 1, the chain absorbs
+`Nat.log 2 (KK + …)` into `stepTH + 2*baseTH` via
+`kToER_level0_towerHeight_ge_const`, exploiting Lemma 1.B
+(level-0 `linearBound.2 ≤ towerHeight + 1`).  Lemma 1.B is
+level-stratified: at level 1, the analogous additive shape
+lemma fails, since `KMor1.linearBound`'s `comp` clause
+(post-`0e3bfa66`) produces
+`(p_f.1 * max_c, p_f.1 * max_k + p_f.2)` — multiplicative
+in the children with a max over fan-out.  This matches
+Wong's Prop. 4.6 inductive recipe (composition exponent =
+`m + max j(i)`) and Tourlakis 2018 §0.1.0.27's level
+stratification (linear at level 1, polynomial at level 2,
+tower at level ≥ 3).  The level-2 dominance proof routes
+the chain through polynomial bounds on the level-1
+children, not linear bounds.  See the research doc
 (`docs/research/2026-04-30-ksim-polynomial-bound-references.md`,
-"Implication for the level-2 dominance chain") for the full
-analysis.
+"Implication for the level-2 dominance chain") for the
+explicit comp-case algebra deriving the constant 3.
 
 The corrected level-2 chain:
 
@@ -252,46 +274,24 @@ The corrected level-2 chain:
    argument into `kSimTowerBound`'s closed-form
    `stepTH + 1 + 2*baseTH + 2*sumCtx + 2`.
 
-The **open question** that distinguishes this from a purely
-mechanical translation of Phase III: at the chain-closing step
-(7), we need a structural relationship between the polyBound
-fields `(degree, coefficient, constant)` of the constructed
-`kSimPackedStep_polyBound g_ER pb_g` (or its
-`to_iter_step_form` adapter `D`) and `stepTH`/`baseTH`.  Two
-candidate sub-strategies:
+At step (7), a structural relationship is required between
+the polyBound fields `(degree, coefficient, constant)` of the
+constructed `kSimPackedStep_polyBound g_ER pb_g` (or its
+`to_iter_step_form` adapter `D`) and `stepTH`/`baseTH`.  The
+chosen approach (per the Phase IV-B investigation, recorded in
+the 17b/17c completion plan):
 
-- **B1 (constructive PolyBound on ER side, structural log
-  bound)**: build each `pb_g l` for `kToER (g_fam l)` via the
-  per-constructor builders `ofZero` / `ofSucc` / `ofProj` /
-  `ofComp` / `ofBsum` (and a new `ofBoundedRec` for level-1's
-  embedded `boundedRec`).  Prove `Nat.log 2 (pb.degree +
-  pb.coefficient + pb.constant + 2) ≤ tH(g_ER l) + c` by
-  structural induction on the constructive build.  This avoids
-  the `KMor1.linearBound` multiplicative blow-up entirely,
-  because the polyBound fields are determined by the ER
-  structure rather than the K^sim source.  Cost: a new
-  `ofBoundedRec` builder, and the structural induction (~150-300
-  lines).
-- **B2 (custom K^sim-side measure)**: define
-  `KMor1.linearBoundLog : (f : KMor1 a) → f.level ≤ 1 → ℕ`
-  satisfying both
-  `(KMor1.linearBound f h).1 + (KMor1.linearBound f h).2 + 2
-    ≤ 2^(KMor1.linearBoundLog f h)` and
-  `KMor1.linearBoundLog f h ≤ (kToER f).towerHeight + size(f)`
-  for some structural-size measure on `f`.  The `comp` case
-  must include a `+ log_2 (arity)` term to absorb fan-out, and
-  the structural size's `+ log_2 (arity)` increment must be
-  bounded by tower height growth (which is `+1` per `comp`,
-  agnostic to fan-out — hence we'd need to prove
-  `log_2 (arity) ≤ 1`, i.e., arity ≤ 2 in the worst case, which
-  fails in general).  This sub-strategy may not work without a
-  separate accounting for fan-out.
-
-B1 is the more promising path because it works on the ER side
-where `towerHeight` is the natural measure; B2 fights against
-the ER tower-height counting convention.  Phase IV should begin
-with a focused investigation that picks one and validates the
-key inequality before drafting the full chain.
+**B1 (constructive PolyBound on ER side, structural log
+bound)**: build each `pb_g l` for `kToER (g_fam l)` via the
+per-constructor builders `ofZero` / `ofSucc` / `ofProj` /
+`ofComp` / `ofBsum` / `ofBoundedRec`.  The `ofBoundedRec`
+builder for level-1's embedded `boundedRec` landed at commit
+`f48ecf78`.  Prove the structural log-vs-tH inequality
+`Nat.log 2 ((KMor1.linearBound f h).1 +
+(KMor1.linearBound f h).2 + 1) ≤ 3 · (kToER f).towerHeight + 1`
+by induction on `f : KMor1 a` at level ≤ 1, using the
+existing `_ge_propagate` lemmas plus an auxiliary structural
+lemma on `kSimTowerBound`'s `iterAutoBoundExpr` substructure.
 
 ### R6 — Effort estimate revision
 
