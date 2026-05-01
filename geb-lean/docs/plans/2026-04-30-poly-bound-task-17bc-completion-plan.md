@@ -1732,12 +1732,66 @@ example before committing to ~300+ lines of proof.
   case, B1 is the only viable path; if B1 also failed at D.0.1,
   pause and surface to the user.
 
-- [ ] **Step D.0.3: Document the chosen sub-strategy**
+- [x] **Step D.0.3: Document the chosen sub-strategy**
 
   Write a brief callout at the top of Phase IV-B in this plan
   recording: which sub-strategy (B1 or B2), what the constant
   `c` (or `c'`) is, and what new infrastructure (e.g.,
   `ofBoundedRec`) needs to be built before the chain is drafted.
+
+  **Outcome (recorded 2026-05-01)**: chose **B1**.  Numerical
+  validation in `GebLeanTests/Phase4Investigation.lean`
+  (`#eval` outputs from `lake build`):
+
+  - For `addK : KMor1 2` (level 1, simrec with level-0 children):
+    - `KMor1.linearBound addK = (4, 0)`.
+    - `(kToER addK).towerHeight = 1117`.
+    - Diagnostic `Nat.log 2 ((linearBound).1 + (linearBound).2 + 1)
+      = 2`, so `2 ≤ 1117 + c` holds for any `c ≥ -1115`.
+
+  The huge slack arises structurally: every level-1 K^sim simrec's
+  `kToER` includes the `boundedRec` + `kSimTowerBound`
+  (`iterAutoBoundExpr`) encoding, which contributes ≥ 1100 of
+  tower height *independent of the children's structure*.  The
+  linear-bound's multiplicative-comp blow-up grows much slower
+  (logarithmic in the structural quantities), so the
+  log-vs-towerHeight inequality holds with a small constant `c`
+  (analysis suggests `c ≤ 5`; addK alone establishes
+  `c ≤ 5` for the simrec case at level 1).
+
+  Generalization argument: split the structural induction by
+  whether `f` contains a simrec.  If no, `f.level ≤ 0` and
+  Lemma 1.B gives the bound directly.  If yes, the simrec's
+  encoding cost dominates the linear-bound growth.  See the
+  "Findings" section in `GebLeanTests/Phase4Investigation.lean`
+  for the full structural argument.
+
+  **New infrastructure required for B1**:
+
+  - `ofBoundedRec : (base : ERMor1 k) → (step : ERMor1 (k + 2))
+    → (bound : ERMor1 (k + 1)) → (pb_bound : PolyBound bound) →
+    PolyBound (ERMor1.boundedRec base step bound)`.  Trivial
+    `bounds` proof via `interp_boundedRec_le_bound` (already
+    landed at `Utilities/ERArith.lean` line 1804).  Lives in
+    `GebLean/LawvereERPolynomialBound.lean`, ~30 lines.
+  - `KMor1.linearBoundLog_le_towerHeight :  
+    ∀ {a : ℕ} (f : KMor1 a) (h : f.level ≤ 1),
+       Nat.log 2 ((KMor1.linearBound f h).1 +
+                  (KMor1.linearBound f h).2 + 1)
+         ≤ (kToER f (Nat.le_succ_of_le h)).towerHeight + c`
+    for some explicit small constant `c` (target `c = 5`).
+    Proved by structural recursion on `f`, with the simrec
+    case using a separately-proved structural lower bound
+    `simrecCost_le_towerHeight : (kToER (simrec ...))
+    .towerHeight ≥ structural_min_cost` to dominate the
+    linear-bound's growth.  Lives in
+    `GebLean/LawvereKSimPolynomialBound.lean`, ~100-200 lines.
+  - `kToER_polyBound_of_level_one :
+    (f : KMor1 a) → (h : f.level ≤ 1) →
+    ERMor1.PolyBound (kToER f (Nat.le_succ_of_le h))`
+    constructed structurally.  Lives in
+    `GebLean/LawvereKSimPolynomialBound.lean`, ~50 lines
+    (simple wrapper around the inductive structure).
 
   **Do not proceed to D.1–D.5 until D.0.3 is complete.**
 

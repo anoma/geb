@@ -20,6 +20,7 @@ import GebLeanTests.LawvereTreeER
 import GebLeanTests.LawvereTreeERInterp
 import GebLeanTests.LawvereTreeERQuot
 import GebLeanTests.LayeredEquivalence
+import GebLeanTests.Phase4Investigation
 import GebLeanTests.TestEqualizerCompletion
 import GebLeanTests.TestTreeCalcMeta
 import GebLeanTests.TestTreeCalcPrograms
