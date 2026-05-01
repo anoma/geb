@@ -495,6 +495,341 @@ theorem ERMor1.iterAutoBoundExpr_towerHeight_ge_d
     htow (d + 1)
   omega
 
+/-- Each child of a `comp` carries a tower height bounded above
+by the `comp`'s own tower height.  Direct from the structural
+recursion on `towerHeight`. -/
+private theorem ERMor1.towerHeight_le_comp_of_mem
+    {n m : ℕ} (f : ERMor1 m) (g : Fin m → ERMor1 n)
+    (i : Fin m) :
+    (g i).towerHeight ≤ (ERMor1.comp f g).towerHeight := by
+  change (g i).towerHeight ≤
+      f.towerHeight +
+        (Finset.univ.sup (fun j => (g j).towerHeight)) + 1
+  have h : (g i).towerHeight ≤
+      Finset.univ.sup (fun j => (g j).towerHeight) :=
+    Finset.le_sup (f := fun j => (g j).towerHeight)
+      (Finset.mem_univ i)
+  omega
+
+/-- The head functor of a `comp` carries a tower height bounded
+above by the `comp`'s own tower height. -/
+private theorem ERMor1.towerHeight_le_comp_head
+    {n m : ℕ} (f : ERMor1 m) (g : Fin m → ERMor1 n) :
+    f.towerHeight ≤ (ERMor1.comp f g).towerHeight := by
+  change f.towerHeight ≤
+      f.towerHeight +
+        (Finset.univ.sup (fun j => (g j).towerHeight)) + 1
+  omega
+
+/-- Structural overhead of `boundedRec`'s tower height: the
+contribution from `boundedSearch`, `boundedRecRange`,
+`boundedRecPred`, `beta`, `minN`, `natUnpairFst`,
+`natUnpairSnd` evaluated at trivial inputs. -/
+private def ERMor1.boundedRec_towerHeight_overhead : ℕ :=
+  (ERMor1.boundedRec ERMor1.zero
+    (ERMor1.proj (k := 2) ⟨0, by omega⟩)
+    (ERMor1.zeroN 1)).towerHeight
+
+/-- Predicate's tower height bounded by `searchBody`. -/
+private theorem ERMor1.pred_towerHeight_le_searchBody
+    {k : ℕ} (pred : ERMor1 (k + 1)) :
+    pred.towerHeight ≤
+      (ERMor1.searchBody pred).towerHeight := by
+  unfold ERMor1.searchBody
+  refine le_trans
+    (ERMor1.towerHeight_le_comp_of_mem ERMor1.mulN
+      (fun j : Fin 2 => match j with
+        | ⟨0, _⟩ => ERMor1.comp ERMor1.boolNot
+            (fun _ : Fin 1 => ERMor1.bsum pred)
+        | ⟨1, _⟩ => pred)
+      ⟨1, by omega⟩) ?_
+  exact ERMor1.towerHeight_le_comp_of_mem ERMor1.mulN
+    (fun i : Fin 2 => match i with
+      | ⟨0, _⟩ =>
+        ERMor1.comp ERMor1.mulN
+          (fun j : Fin 2 => match j with
+            | ⟨0, _⟩ => ERMor1.comp ERMor1.boolNot
+                (fun _ : Fin 1 => ERMor1.bsum pred)
+            | ⟨1, _⟩ => pred)
+      | ⟨1, _⟩ =>
+        ERMor1.comp ERMor1.succ
+          (fun _ : Fin 1 => ERMor1.proj 0))
+    ⟨0, by omega⟩
+
+/-- Predicate's tower height bounded by `boundedSearch`. -/
+private theorem ERMor1.pred_towerHeight_le_boundedSearch
+    {k : ℕ} (bound : ERMor1 k) (pred : ERMor1 (k + 1)) :
+    pred.towerHeight ≤
+      (ERMor1.boundedSearch bound pred).towerHeight := by
+  unfold ERMor1.boundedSearch
+  refine le_trans
+    (ERMor1.pred_towerHeight_le_searchBody pred) ?_
+  refine le_trans
+    (?_ : (ERMor1.searchBody pred).towerHeight ≤
+      (ERMor1.bsum (ERMor1.searchBody pred)).towerHeight) ?_
+  · change _ ≤ _ + 3; omega
+  refine le_trans
+    (ERMor1.towerHeight_le_comp_head
+      (ERMor1.bsum (ERMor1.searchBody pred))
+      (ERMor1.consBound bound)) ?_
+  refine le_trans
+    (ERMor1.towerHeight_le_comp_of_mem ERMor1.sub
+      (fun j : Fin 2 => match j with
+        | ⟨0, _⟩ => ERMor1.comp
+            (ERMor1.bsum (ERMor1.searchBody pred))
+            (ERMor1.consBound bound)
+        | ⟨1, _⟩ => ERMor1.comp ERMor1.signN
+            (fun _ : Fin 1 => ERMor1.comp
+              (ERMor1.bsum pred)
+              (ERMor1.consBound bound)))
+      ⟨0, by omega⟩) ?_
+  exact ERMor1.towerHeight_le_comp_of_mem ERMor1.addN
+    (fun i : Fin 2 => match i with
+      | ⟨0, _⟩ =>
+        ERMor1.comp ERMor1.sub
+          (fun j : Fin 2 => match j with
+            | ⟨0, _⟩ =>
+              ERMor1.comp
+                (ERMor1.bsum (ERMor1.searchBody pred))
+                (ERMor1.consBound bound)
+            | ⟨1, _⟩ =>
+              ERMor1.comp ERMor1.signN
+                (fun _ : Fin 1 => ERMor1.comp
+                  (ERMor1.bsum pred)
+                  (ERMor1.consBound bound)))
+      | ⟨1, _⟩ =>
+        ERMor1.comp ERMor1.mulN
+          (fun j : Fin 2 => match j with
+            | ⟨0, _⟩ =>
+              ERMor1.comp ERMor1.boolNot
+                (fun _ : Fin 1 => ERMor1.comp ERMor1.signN
+                  (fun _ : Fin 1 => ERMor1.comp
+                    (ERMor1.bsum pred)
+                    (ERMor1.consBound bound)))
+            | ⟨1, _⟩ =>
+              ERMor1.comp ERMor1.succ
+                (fun _ : Fin 1 => bound)))
+    ⟨0, by omega⟩
+
+/-- `base.towerHeight` bounded by `boundedRecBaseCheck base`. -/
+private theorem ERMor1.base_towerHeight_le_baseCheck
+    {k : ℕ} (base : ERMor1 k) :
+    base.towerHeight ≤
+      (ERMor1.boundedRecBaseCheck base).towerHeight := by
+  unfold ERMor1.boundedRecBaseCheck ERMor1.boolEqAt
+  refine le_trans
+    (?_ : base.towerHeight ≤
+      (ERMor1.baseOnCand base).towerHeight) ?_
+  · unfold ERMor1.baseOnCand
+    exact ERMor1.towerHeight_le_comp_head base _
+  exact ERMor1.towerHeight_le_comp_of_mem ERMor1.boolEqNat
+    (fun i : Fin 2 => match i with
+      | ⟨0, _⟩ =>
+        ERMor1.betaOnCand (ERMor1.zeroN (k + 2))
+      | ⟨1, _⟩ => ERMor1.baseOnCand base)
+    ⟨1, by omega⟩
+
+/-- `step.towerHeight` bounded by `boundedRecStepCheck step`. -/
+private theorem ERMor1.step_towerHeight_le_stepCheck
+    {k : ℕ} (step : ERMor1 (k + 2)) :
+    step.towerHeight ≤
+      (ERMor1.boundedRecStepCheck step).towerHeight := by
+  refine le_trans
+    (?_ : step.towerHeight ≤
+      (ERMor1.stepOnCandStep step).towerHeight) ?_
+  · unfold ERMor1.stepOnCandStep
+    exact ERMor1.towerHeight_le_comp_head step _
+  refine le_trans
+    (?_ : (ERMor1.stepOnCandStep step).towerHeight ≤
+      (ERMor1.boundedRecStepBody step).towerHeight) ?_
+  · unfold ERMor1.boundedRecStepBody ERMor1.boolEqAt
+    exact ERMor1.towerHeight_le_comp_of_mem ERMor1.boolEqNat
+      (fun i : Fin 2 => match i with
+        | ⟨0, _⟩ =>
+          ERMor1.betaOnCandStep
+            (ERMor1.comp ERMor1.succ
+              (fun (_ : Fin 1) => ERMor1.proj 0))
+        | ⟨1, _⟩ => ERMor1.stepOnCandStep step)
+      ⟨1, by omega⟩
+  refine le_trans
+    (?_ : (ERMor1.boundedRecStepBody step).towerHeight ≤
+      (ERMor1.bprod
+        (ERMor1.boundedRecStepBody step)).towerHeight) ?_
+  · change _ ≤ _ + 4; omega
+  unfold ERMor1.boundedRecStepCheck
+  exact ERMor1.towerHeight_le_comp_head
+    (ERMor1.bprod (ERMor1.boundedRecStepBody step)) _
+
+/-- `boundedRecBaseCheck base.towerHeight` bounded by
+`boundedRecPred base step`. -/
+private theorem ERMor1.baseCheck_towerHeight_le_pred
+    {k : ℕ} (base : ERMor1 k) (step : ERMor1 (k + 2)) :
+    (ERMor1.boundedRecBaseCheck base).towerHeight ≤
+      (ERMor1.boundedRecPred base step).towerHeight := by
+  unfold ERMor1.boundedRecPred
+  exact ERMor1.towerHeight_le_comp_of_mem ERMor1.boolAnd
+    (fun i : Fin 2 => match i with
+      | ⟨0, _⟩ => ERMor1.boundedRecBaseCheck base
+      | ⟨1, _⟩ => ERMor1.boundedRecStepCheck step)
+    ⟨0, by omega⟩
+
+/-- `boundedRecStepCheck step.towerHeight` bounded by
+`boundedRecPred base step`. -/
+private theorem ERMor1.stepCheck_towerHeight_le_pred
+    {k : ℕ} (base : ERMor1 k) (step : ERMor1 (k + 2)) :
+    (ERMor1.boundedRecStepCheck step).towerHeight ≤
+      (ERMor1.boundedRecPred base step).towerHeight := by
+  unfold ERMor1.boundedRecPred
+  exact ERMor1.towerHeight_le_comp_of_mem ERMor1.boolAnd
+    (fun i : Fin 2 => match i with
+      | ⟨0, _⟩ => ERMor1.boundedRecBaseCheck base
+      | ⟨1, _⟩ => ERMor1.boundedRecStepCheck step)
+    ⟨1, by omega⟩
+
+/-- The full predicate `boundedRecPred base step` is bounded by
+the `boundedRec base step bound` tower height through the chain
+`pred ≤ boundedSearch ≤ comp natUnpairFst ≤ betaAtN ≤ boundedRec`.
+-/
+private theorem ERMor1.pred_towerHeight_le_boundedRec
+    {k : ℕ} (base : ERMor1 k) (step : ERMor1 (k + 2))
+    (bound : ERMor1 (k + 1)) :
+    (ERMor1.boundedRecPred base step).towerHeight ≤
+      (ERMor1.boundedRec base step bound).towerHeight := by
+  refine le_trans
+    (ERMor1.pred_towerHeight_le_boundedSearch
+      (ERMor1.boundedRecRange bound)
+      (ERMor1.boundedRecPred base step)) ?_
+  refine le_trans
+    (?_ : (ERMor1.boundedSearch (ERMor1.boundedRecRange bound)
+        (ERMor1.boundedRecPred base step)).towerHeight ≤
+      (ERMor1.comp ERMor1.natUnpairFst
+        (fun (_ : Fin 1) =>
+          ERMor1.boundedSearch (ERMor1.boundedRecRange bound)
+            (ERMor1.boundedRecPred base step))).towerHeight) ?_
+  · exact ERMor1.towerHeight_le_comp_of_mem
+      ERMor1.natUnpairFst
+      (fun (_ : Fin 1) =>
+        ERMor1.boundedSearch (ERMor1.boundedRecRange bound)
+          (ERMor1.boundedRecPred base step))
+      ⟨0, by omega⟩
+  refine le_trans
+    (?_ :
+      (ERMor1.comp ERMor1.natUnpairFst
+        (fun (_ : Fin 1) =>
+          ERMor1.boundedSearch (ERMor1.boundedRecRange bound)
+            (ERMor1.boundedRecPred base step))).towerHeight ≤
+      (ERMor1.comp ERMor1.beta
+        (fun i : Fin 3 => match i with
+          | ⟨0, _⟩ =>
+            ERMor1.comp ERMor1.natUnpairFst
+              (fun (_ : Fin 1) =>
+                ERMor1.boundedSearch
+                  (ERMor1.boundedRecRange bound)
+                  (ERMor1.boundedRecPred base step))
+          | ⟨1, _⟩ =>
+            ERMor1.comp ERMor1.natUnpairSnd
+              (fun (_ : Fin 1) =>
+                ERMor1.boundedSearch
+                  (ERMor1.boundedRecRange bound)
+                  (ERMor1.boundedRecPred base step))
+          | ⟨2, _⟩ => ERMor1.proj 0)).towerHeight) ?_
+  · exact ERMor1.towerHeight_le_comp_of_mem ERMor1.beta
+      (fun i : Fin 3 => match i with
+        | ⟨0, _⟩ =>
+          ERMor1.comp ERMor1.natUnpairFst
+            (fun (_ : Fin 1) =>
+              ERMor1.boundedSearch
+                (ERMor1.boundedRecRange bound)
+                (ERMor1.boundedRecPred base step))
+        | ⟨1, _⟩ =>
+          ERMor1.comp ERMor1.natUnpairSnd
+            (fun (_ : Fin 1) =>
+              ERMor1.boundedSearch
+                (ERMor1.boundedRecRange bound)
+                (ERMor1.boundedRecPred base step))
+        | ⟨2, _⟩ => ERMor1.proj 0)
+      ⟨0, by omega⟩
+  unfold ERMor1.boundedRec
+  dsimp only
+  exact ERMor1.towerHeight_le_comp_of_mem ERMor1.minN
+    (fun i : Fin 2 => match i with
+      | ⟨0, _⟩ =>
+        ERMor1.comp ERMor1.beta (fun i : Fin 3 =>
+          match i with
+          | ⟨0, _⟩ =>
+            ERMor1.comp ERMor1.natUnpairFst
+              (fun (_ : Fin 1) =>
+                ERMor1.boundedSearch
+                  (ERMor1.boundedRecRange bound)
+                  (ERMor1.boundedRecPred base step))
+          | ⟨1, _⟩ =>
+            ERMor1.comp ERMor1.natUnpairSnd
+              (fun (_ : Fin 1) =>
+                ERMor1.boundedSearch
+                  (ERMor1.boundedRecRange bound)
+                  (ERMor1.boundedRecPred base step))
+          | ⟨2, _⟩ => ERMor1.proj 0)
+      | ⟨1, _⟩ => bound)
+    ⟨0, by omega⟩
+
+/-- `bound.towerHeight` is dominated by the tower height of
+`boundedRec base step bound`. -/
+private theorem ERMor1.bound_towerHeight_le_boundedRec
+    {k : ℕ} (base : ERMor1 k) (step : ERMor1 (k + 2))
+    (bound : ERMor1 (k + 1)) :
+    bound.towerHeight ≤
+      (ERMor1.boundedRec base step bound).towerHeight := by
+  unfold ERMor1.boundedRec
+  dsimp only
+  exact ERMor1.towerHeight_le_comp_of_mem ERMor1.minN
+    (fun i : Fin 2 => match i with
+      | ⟨0, _⟩ =>
+        ERMor1.comp ERMor1.beta (fun i : Fin 3 =>
+          match i with
+          | ⟨0, _⟩ =>
+            ERMor1.comp ERMor1.natUnpairFst
+              (fun (_ : Fin 1) =>
+                ERMor1.boundedSearch
+                  (ERMor1.boundedRecRange bound)
+                  (ERMor1.boundedRecPred base step))
+          | ⟨1, _⟩ =>
+            ERMor1.comp ERMor1.natUnpairSnd
+              (fun (_ : Fin 1) =>
+                ERMor1.boundedSearch
+                  (ERMor1.boundedRecRange bound)
+                  (ERMor1.boundedRecPred base step))
+          | ⟨2, _⟩ => ERMor1.proj 0)
+      | ⟨1, _⟩ => bound)
+    ⟨1, by omega⟩
+
+/-- Combined max-of-three lower bound on
+`(boundedRec base step bound).towerHeight`.  All three input
+arguments' tower heights are dominated by the result.  The
+structural overhead `boundedRec_towerHeight_overhead` records the
+contribution from `boundedSearch` / `boundedRecRange` /
+`boundedRecPred` / `beta` / `minN` / `natUnpairFst` /
+`natUnpairSnd` evaluated at trivial inputs and is supplied as a
+named constant for downstream reference; the present statement
+gives the input-side bound. -/
+theorem ERMor1.boundedRec_towerHeight_eq {k : ℕ}
+    (base : ERMor1 k) (step : ERMor1 (k + 2))
+    (bound : ERMor1 (k + 1)) :
+    max base.towerHeight
+        (max step.towerHeight bound.towerHeight) ≤
+      (ERMor1.boundedRec base step bound).towerHeight := by
+  refine max_le ?_ (max_le ?_ ?_)
+  · refine le_trans
+      (ERMor1.base_towerHeight_le_baseCheck base) ?_
+    refine le_trans
+      (ERMor1.baseCheck_towerHeight_le_pred base step) ?_
+    exact ERMor1.pred_towerHeight_le_boundedRec base step bound
+  · refine le_trans
+      (ERMor1.step_towerHeight_le_stepCheck step) ?_
+    refine le_trans
+      (ERMor1.stepCheck_towerHeight_le_pred base step) ?_
+    exact ERMor1.pred_towerHeight_le_boundedRec base step bound
+  · exact ERMor1.bound_towerHeight_le_boundedRec base step bound
+
 /-- B-W-style iter combinator on ER terms with an automatic
 structural tower bound.  Composes `boundedRec` against
 `iterAutoBoundExpr` and substitutes `count` into slot `0` of
