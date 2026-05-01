@@ -184,9 +184,12 @@ slack acceptable):
   sub-terms).  Otherwise (when at least one of `f` or
   some `gs i` is genuinely level 1), uses the
   multiplicative formula
-  `(c_f * max_c, c_f * sum_k + k_f)` where `max_c` is
-  the maximum first-component over `gs` and `sum_k` is
-  the sum of second-components;
+  `(c_f * max_c, c_f * max_k + k_f)` where `max_c` is
+  the maximum first-component over `gs` and `max_k` is
+  the maximum second-component (matching Tourlakis
+  Lemma 1.A:
+  `max(args) ≤ (max_i c_i) · max(ctx) + (max_i k_i)`
+  with max — not sum — over fan-out);
 - `raise` reduces to the level-0 shape's bound;
 - `simrec` over a level-0 step family bounds by
   `(c_step + 2 * k_step + 1, base_max)`, absorbing the
@@ -226,9 +229,9 @@ def KMor1.linearBound :
         let p_f := KMor1.linearBound f hf
         let max_c := Fin.foldr _ (fun i acc =>
           max acc (KMor1.linearBound (gs i) (hgs i)).1) 0
-        let sum_k := Fin.foldr _ (fun i acc =>
-          acc + (KMor1.linearBound (gs i) (hgs i)).2) 0
-        (p_f.1 * max_c, p_f.1 * sum_k + p_f.2)
+        let max_k := Fin.foldr _ (fun i acc =>
+          max acc (KMor1.linearBound (gs i) (hgs i)).2) 0
+        (p_f.1 * max_c, p_f.1 * max_k + p_f.2)
   | _, .raise f,      h => by
       have hf : f.level ≤ 0 := by
         unfold KMor1.level at h; omega
@@ -574,10 +577,10 @@ theorem KMor1.linearBound_dominates :
                let max_c := Fin.foldr b (fun i acc =>
                  max acc
                    (KMor1.linearBound (gs i) (hgs i)).1) 0
-               let sum_k := Fin.foldr b (fun i acc =>
-                 acc +
+               let max_k := Fin.foldr b (fun i acc =>
+                 max acc
                    (KMor1.linearBound (gs i) (hgs i)).2) 0
-               (p_f.1 * max_c, p_f.1 * sum_k + p_f.2)) := by
+               (p_f.1 * max_c, p_f.1 * max_k + p_f.2)) := by
           simp only [KMor1.linearBound]
           rw [dif_neg hcomp_0]
         rw [h_lb_eq]
@@ -585,25 +588,25 @@ theorem KMor1.linearBound_dominates :
         set p_f := KMor1.linearBound f hf
         set max_c := Fin.foldr b (fun i acc =>
           max acc (KMor1.linearBound (gs i) (hgs i)).1) 0
-        set sum_k := Fin.foldr b (fun i acc =>
-          acc + (KMor1.linearBound (gs i) (hgs i)).2) 0
+        set max_k := Fin.foldr b (fun i acc =>
+          max acc (KMor1.linearBound (gs i) (hgs i)).2) 0
         have hmax_c : ∀ i,
             (KMor1.linearBound (gs i) (hgs i)).1 ≤ max_c :=
           fun i =>
             Fin.foldr_max_ge
               (fun j =>
                 (KMor1.linearBound (gs j) (hgs j)).1) i
-        have hsum_k : ∀ i,
-            (KMor1.linearBound (gs i) (hgs i)).2 ≤ sum_k :=
+        have hmax_k : ∀ i,
+            (KMor1.linearBound (gs i) (hgs i)).2 ≤ max_k :=
           fun i =>
-            Fin.foldr_sum_ge
+            Fin.foldr_max_ge
               (fun j =>
                 (KMor1.linearBound (gs j) (hgs j)).2) i
         set ys : Fin b → ℕ := fun i => (gs i).interp ctx
         have hys_bound : ∀ i,
             ys i ≤ max_c *
               (Finset.univ : Finset (Fin a)).sup ctx
-              + sum_k := by
+              + max_k := by
           intro i
           have hi := KMor1.linearBound_dominates
             (gs i) (hgs i) ctx
@@ -613,7 +616,7 @@ theorem KMor1.linearBound_dominates :
                 + (KMor1.linearBound (gs i) (hgs i)).2 := hi
             _ ≤ max_c *
                   (Finset.univ : Finset (Fin a)).sup ctx
-                + sum_k := by
+                + max_k := by
                 have h1 :
                     (KMor1.linearBound (gs i) (hgs i)).1 *
                       (Finset.univ :
@@ -624,13 +627,13 @@ theorem KMor1.linearBound_dominates :
                   Nat.mul_le_mul_right _ (hmax_c i)
                 have h2 :
                     (KMor1.linearBound (gs i) (hgs i)).2
-                      ≤ sum_k := hsum_k i
+                      ≤ max_k := hmax_k i
                 omega
         have hsup_ys :
             (Finset.univ : Finset (Fin b)).sup ys
               ≤ max_c *
                 (Finset.univ : Finset (Fin a)).sup ctx
-              + sum_k := by
+              + max_k := by
           apply Finset.sup_le
           intro i _
           exact hys_bound i
@@ -642,13 +645,13 @@ theorem KMor1.linearBound_dominates :
           _ ≤ p_f.1 *
                 (max_c *
                   (Finset.univ :
-                    Finset (Fin a)).sup ctx + sum_k)
+                    Finset (Fin a)).sup ctx + max_k)
               + p_f.2 := by
               exact Nat.add_le_add_right
                 (Nat.mul_le_mul_left _ hsup_ys) _
           _ = p_f.1 * max_c *
                 (Finset.univ : Finset (Fin a)).sup ctx
-              + (p_f.1 * sum_k + p_f.2) := by ring
+              + (p_f.1 * max_k + p_f.2) := by ring
   | _, .raise f,      h, ctx => by
       have hf : f.level ≤ 0 := by
         unfold KMor1.level at h; omega
