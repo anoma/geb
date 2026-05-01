@@ -1,5 +1,6 @@
 import Mathlib.Data.Nat.Pairing
 import Mathlib.Data.Nat.Log
+import Mathlib.Data.Finset.Lattice.Fold
 import GebLean.Utilities.Tower
 import GebLean.Utilities.SzudzikSeq
 
@@ -629,5 +630,122 @@ theorem pow_le_tower_two_with_shift (CC S KK E : ℕ) :
     tower_succ_pow_bound_strong 2 E x (by decide)
   rw [h_base_eq]
   exact le_trans h_pow_lift h_strong
+
+/-- Upper bound on `Nat.log 2 (a · b)` in terms of
+`Nat.log 2 a + Nat.log 2 b`.  Off by at most 1 due to
+the floor-of-log convention. -/
+private theorem log_two_mul_le (a b : ℕ) :
+    Nat.log 2 (a * b) ≤
+      Nat.log 2 a + Nat.log 2 b + 1 := by
+  rcases Nat.eq_zero_or_pos a with ha | ha
+  · subst ha; simp [Nat.log_zero_right]
+  rcases Nat.eq_zero_or_pos b with hb | hb
+  · subst hb; simp [Nat.log_zero_right]
+  have ha'' : a < 2 ^ (Nat.log 2 a + 1) :=
+    Nat.lt_pow_succ_log_self (by omega) a
+  have hb'' : b < 2 ^ (Nat.log 2 b + 1) :=
+    Nat.lt_pow_succ_log_self (by omega) b
+  have hmul_lt :
+      a * b < 2 ^ (Nat.log 2 a + Nat.log 2 b + 2) := by
+    have hpow_pos : 0 < 2 ^ (Nat.log 2 a + 1) := by
+      positivity
+    have hlt :
+        a * b < 2 ^ (Nat.log 2 a + 1) *
+          2 ^ (Nat.log 2 b + 1) :=
+      Nat.mul_lt_mul_of_le_of_lt ha''.le hb'' hpow_pos
+    rw [← pow_add] at hlt
+    convert hlt using 2
+    ring
+  have hpos : 0 < a * b := Nat.mul_pos ha hb
+  have hlog_lt :
+      Nat.log 2 (a * b) <
+        Nat.log 2 a + Nat.log 2 b + 2 :=
+    Nat.log_lt_of_lt_pow hpos.ne' hmul_lt
+  omega
+
+/-- Upper bound on `Nat.log 2 (a + b)` by
+`max (Nat.log 2 a) (Nat.log 2 b) + 1`.  Off by at most 1
+because `a + b ≤ 2 · max a b`. -/
+private theorem log_two_add_le_max_succ (a b : ℕ) :
+    Nat.log 2 (a + b) ≤
+      max (Nat.log 2 a) (Nat.log 2 b) + 1 := by
+  rcases Nat.eq_zero_or_pos a with ha | ha
+  · rcases Nat.eq_zero_or_pos b with hb | hb
+    · subst ha; subst hb
+      simp [Nat.log_zero_right]
+    · subst ha
+      simp only [Nat.zero_add, Nat.log_zero_right,
+        Nat.zero_le, Nat.max_eq_right]
+      omega
+  rcases Nat.eq_zero_or_pos b with hb | hb
+  · subst hb
+    simp only [Nat.add_zero, Nat.log_zero_right,
+      Nat.zero_le, Nat.max_eq_left]
+    omega
+  -- both a, b > 0
+  have ha_lt : a < 2 ^ (Nat.log 2 a + 1) :=
+    Nat.lt_pow_succ_log_self (by omega) a
+  have hb_lt : b < 2 ^ (Nat.log 2 b + 1) :=
+    Nat.lt_pow_succ_log_self (by omega) b
+  have ha_pow_le :
+      2 ^ (Nat.log 2 a + 1) ≤
+      2 ^ (max (Nat.log 2 a) (Nat.log 2 b) + 1) :=
+    Nat.pow_le_pow_right (by omega)
+      (Nat.add_le_add_right (le_max_left _ _) 1)
+  have hb_pow_le :
+      2 ^ (Nat.log 2 b + 1) ≤
+      2 ^ (max (Nat.log 2 a) (Nat.log 2 b) + 1) :=
+    Nat.pow_le_pow_right (by omega)
+      (Nat.add_le_add_right (le_max_right _ _) 1)
+  have hLT :
+      a + b <
+        2 ^ (max (Nat.log 2 a) (Nat.log 2 b) + 2) := by
+    have hsum :
+        a + b <
+        2 ^ (max (Nat.log 2 a) (Nat.log 2 b) + 1) +
+          2 ^ (max (Nat.log 2 a) (Nat.log 2 b) + 1) := by
+      omega
+    have hpow_eq :
+        2 ^ (max (Nat.log 2 a) (Nat.log 2 b) + 1) +
+          2 ^ (max (Nat.log 2 a) (Nat.log 2 b) + 1) =
+        2 ^ (max (Nat.log 2 a) (Nat.log 2 b) + 2) := by
+      rw [show max (Nat.log 2 a) (Nat.log 2 b) + 2 =
+            (max (Nat.log 2 a) (Nat.log 2 b) + 1) + 1
+          from rfl, pow_succ]
+      ring
+    omega
+  have hpos : 0 < a + b := by omega
+  have hlog_lt :
+      Nat.log 2 (a + b) <
+        max (Nat.log 2 a) (Nat.log 2 b) + 2 :=
+    Nat.log_lt_of_lt_pow hpos.ne' hLT
+  omega
+
+/-- `Nat.log 2` commutes with `Finset.sup` over a non-empty
+`Finset (Fin (n + 1))`. -/
+private theorem log_two_finset_sup
+    {n : ℕ} (f : Fin (n + 1) → ℕ) :
+    Nat.log 2
+        ((Finset.univ : Finset (Fin (n + 1))).sup f) =
+      (Finset.univ : Finset (Fin (n + 1))).sup
+        (fun i => Nat.log 2 (f i)) := by
+  obtain ⟨i₀, _, hi₀⟩ :=
+    Finset.exists_mem_eq_sup
+      (s := (Finset.univ : Finset (Fin (n + 1))))
+      (f := f)
+      (Finset.univ_nonempty (α := Fin (n + 1)))
+  rw [hi₀]
+  apply le_antisymm
+  · exact Finset.le_sup
+      (f := fun i => Nat.log 2 (f i))
+      (Finset.mem_univ i₀)
+  · apply Finset.sup_le
+    intro i _
+    apply Nat.log_mono_right
+    have hle :
+        f i ≤ (Finset.univ : Finset (Fin (n + 1))).sup f :=
+      Finset.le_sup (Finset.mem_univ i)
+    rw [hi₀] at hle
+    exact hle
 
 end Nat
