@@ -1,4 +1,10 @@
-# Phase IV (Task 17c) resumption prompt
+# Phase IV (Task 17c) resumption prompt — v1 (SUPERSEDED)
+
+> **SUPERSEDED 2026-05-01**: see
+> `2026-05-01-poly-bound-task-17c-resumption-prompt-v2.md`.
+> The v1 below predates the literature re-review (commits
+> `0e3bfa66`, `31b407c5`) and the B1' refinements
+> (commits `c2dfc3d6`, `b9415d87`).  Use v2 instead.
 
 You are resuming the GebLean K^sim_2 ⊆ ER recursive bootstrap
 formalization, mid-Phase-IV (Task 17c).
