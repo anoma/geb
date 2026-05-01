@@ -313,23 +313,6 @@ private theorem Fin.foldr_max_ge {n : ℕ}
         specialize ih (fun l => f l.succ) j'
         exact le_trans ih (le_max_left _ _)
 
-/-- Generic sum-foldr lemma: for any indexed function
-`f : Fin n → ℕ`, `f j ≤ Fin.foldr n (fun i acc => acc +
-(f i)) 0` for every `j`. -/
-private theorem Fin.foldr_sum_ge {n : ℕ}
-    (f : Fin n → ℕ) (j : Fin n) :
-    f j ≤ Fin.foldr n (fun i acc => acc + (f i)) 0 := by
-  induction n with
-  | zero => exact j.elim0
-  | succ n' ih =>
-      simp only [Fin.foldr_succ]
-      by_cases hj : j = 0
-      · subst hj
-        omega
-      · obtain ⟨j', rfl⟩ := Fin.exists_succ_eq.mpr hj
-        specialize ih (fun l => f l.succ) j'
-        omega
-
 /-- Helper for the simrec dominance proof: at iteration
 `n`, every entry of `simrecVec` is bounded by
 `base_max + n * (1 + step_k)` plus a multiple of
