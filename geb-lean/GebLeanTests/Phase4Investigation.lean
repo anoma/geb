@@ -121,6 +121,34 @@ private theorem projSuccFanOut5_level_one :
         projSuccFanOut5_level_one
 -- New: (1, 1).  Old (pre-tightening) would have been (1, 5).
 
+/-- Witness for the level-1 fan-out residual: even with the
+new tightened `linearBound`, level-1 comps with high fan-out
+to non-trivial children retain a multiplicative `b`-factor.
+However, the level-1 children's own `kToER` tower height
+(via simrec encoding) absorbs the residual via massive
+slack. -/
+private def addKFanOut5 : KMor1 2 :=
+  KMor1.comp (KMor1.proj (0 : Fin 5))
+    (fun _ : Fin 5 => addK)
+
+private theorem addKFanOut5_level :
+    addKFanOut5.level ≤ 1 := by decide
+
+#eval KMor1.linearBound addKFanOut5 addKFanOut5_level
+-- Expected: (4, 0).  Reasoning: p_f = linearBound (proj 0)
+-- = (1, 0); max_c = (linearBound addK).1 = 4; sum_k =
+-- 5 * (linearBound addK).2 = 5 * 0 = 0;
+-- result: (1*4, 1*0 + 0) = (4, 0).
+-- (`addK`'s linearBound.2 = 0 saves us from the b-factor.)
+
+#eval (kToER addKFanOut5
+  (Nat.le_succ_of_le addKFanOut5_level)).towerHeight
+-- Expected: tH(proj 0) + tH(addK) + 1 = 0 + 1117 + 1 = 1118.
+
+#eval Nat.log 2 (4 + 0 + 1)
+-- = 2.  Inequality 2 ≤ 1118 + c holds with massive slack
+-- (c ≥ -1116).
+
 /-!
 ## Refinement (recorded 2026-05-01, second pass)
 
