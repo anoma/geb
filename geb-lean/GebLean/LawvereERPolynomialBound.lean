@@ -394,6 +394,107 @@ def ofBoundedRec {k : ℕ} {base : ERMor1 k}
       (ERMor1.interp_boundedRec_le_bound base step bound ctx)
       (pb_bound.bounds ctx)
 
+/-- Polynomial bound for `zeroN n`: constantly `0`. -/
+def ofZeroN (n : ℕ) : PolyBound (ERMor1.zeroN n) where
+  degree := 0
+  coefficient := 0
+  constant := 0
+  bounds := fun _ => by
+    simp [ERMor1.interp_zeroN]
+
+/-- Polynomial bound for `twoN n`: constantly `2`. -/
+def ofTwoN (n : ℕ) : PolyBound (ERMor1.twoN n) where
+  degree := 0
+  coefficient := 0
+  constant := 2
+  bounds := fun _ => by
+    simp [ERMor1.interp_twoN]
+
+/-- Polynomial bound for `natN n m`: constantly `m`. -/
+def ofNatN (n m : ℕ) : PolyBound (ERMor1.natN n m) where
+  degree := 0
+  coefficient := 0
+  constant := m
+  bounds := fun _ => by
+    simp [ERMor1.interp_natN]
+
+/-- Polynomial bound for `pred`: dominated by `ctx 0`. -/
+def ofPred : PolyBound ERMor1.pred where
+  degree := 1
+  coefficient := 1
+  constant := 0
+  bounds := fun ctx => by
+    simp only [ERMor1.interp_pred, pow_one, one_mul]
+    have h : ctx 0 ≤
+        (Finset.univ : Finset (Fin 1)).sup ctx :=
+      Finset.le_sup (Finset.mem_univ _)
+    have hpred : (ctx 0).pred ≤ ctx 0 := Nat.pred_le _
+    omega
+
+/-- Polynomial bound for `minN`: dominated by `ctx 0`. -/
+def ofMinN : PolyBound ERMor1.minN where
+  degree := 1
+  coefficient := 1
+  constant := 0
+  bounds := fun ctx => by
+    simp only [ERMor1.interp_minN, pow_one, one_mul]
+    have h0 : ctx 0 ≤
+        (Finset.univ : Finset (Fin 2)).sup ctx :=
+      Finset.le_sup (Finset.mem_univ _)
+    have hmin : min (ctx 0) (ctx 1) ≤ ctx 0 := min_le_left _ _
+    omega
+
+/-- Polynomial bound for `addN`: linear of coefficient `2`. -/
+def ofAddN : PolyBound ERMor1.addN where
+  degree := 1
+  coefficient := 2
+  constant := 0
+  bounds := fun ctx => by
+    simp only [ERMor1.interp_addN, pow_one]
+    have h0 : ctx 0 ≤
+        (Finset.univ : Finset (Fin 2)).sup ctx :=
+      Finset.le_sup (Finset.mem_univ _)
+    have h1 : ctx 1 ≤
+        (Finset.univ : Finset (Fin 2)).sup ctx :=
+      Finset.le_sup (Finset.mem_univ _)
+    omega
+
+/-- Polynomial bound for `sumCtxER n`: linear of coefficient
+`n`, since the sum of `n` context entries is at most
+`n · maxCtx ctx ≤ n · (maxCtx ctx + 1)`. -/
+def ofSumCtxER (n : ℕ) :
+    PolyBound (ERMor1.sumCtxER n) where
+  degree := 1
+  coefficient := n
+  constant := 0
+  bounds := fun ctx => by
+    rw [ERMor1.interp_sumCtxER]
+    set S : ℕ :=
+      (Finset.univ : Finset (Fin n)).sup ctx + 1 with hS
+    have h_each : ∀ i ∈ (Finset.univ : Finset (Fin n)),
+        ctx i ≤ S - 1 := by
+      intro i _
+      simp only [hS, Nat.add_sub_cancel]
+      exact Finset.le_sup (Finset.mem_univ _)
+    have h_sum_le :
+        (Finset.univ : Finset (Fin n)).sum ctx ≤
+          (Finset.univ : Finset (Fin n)).sum (fun _ => S - 1) :=
+      Finset.sum_le_sum h_each
+    have h_card :
+        (Finset.univ : Finset (Fin n)).sum (fun _ : Fin n => S - 1)
+          = n * (S - 1) := by
+      rw [Finset.sum_const, Finset.card_univ, Fintype.card_fin,
+        smul_eq_mul]
+    have h_S_pos : 1 ≤ S := by simp only [hS]; omega
+    have h_le_S : n * (S - 1) ≤ n * S := by
+      have : S - 1 ≤ S := Nat.sub_le _ _
+      exact Nat.mul_le_mul_left _ this
+    rw [pow_one]
+    have : (Finset.univ : Finset (Fin n)).sum ctx ≤ n * S := by
+      rw [h_card] at h_sum_le
+      exact le_trans h_sum_le h_le_S
+    omega
+
 /-- Generic adapter: a `PolyBound` over any context yields a
 single-degree power bound `(maxCtx ctx + 2)^D` with
 `D = degree + coefficient + constant + 2`.  The base shift is
