@@ -1547,6 +1547,189 @@ private theorem kSimTowerBound_towerHeight_ge_max_step_child
     (kSimPackedStep_towerHeight_ge_propagate g)
     (kSimTowerBound_towerHeight_ge_packedStep h g)
 
+/-- Auxiliary structural lemma h-side: the maximum-over-the
+h-family child tower height under `kToER` is dominated by
+`kToER (simrec i h_fam g_fam)`'s tower height. -/
+private theorem kToER_simrec_h_side_bound
+    {a k : ℕ}
+    (h_fam : Fin (k + 1) → KMor1 a)
+    (g_fam : Fin (k + 1) → KMor1 (a + 1 + (k + 1)))
+    (h_h : ∀ l, (h_fam l).level ≤ 1)
+    (h_g : ∀ l, (g_fam l).level ≤ 1)
+    (i : Fin (k + 1))
+    (hyp : (KMor1.simrec i h_fam g_fam).level ≤ 2) :
+    (Finset.univ : Finset (Fin (k + 1))).sup
+        (fun l =>
+          (kToER (h_fam l)
+            (Nat.le_succ_of_le (h_h l))).towerHeight) ≤
+      (kToER (KMor1.simrec i h_fam g_fam) hyp).towerHeight := by
+  set h_ER : Fin (k + 1) → ERMor1 a :=
+    fun l => kToER (h_fam l) (Nat.le_succ_of_le (h_h l))
+  set g_ER : Fin (k + 1) → ERMor1 (a + 1 + (k + 1)) :=
+    fun l => kToER (g_fam l) (Nat.le_succ_of_le (h_g l))
+  change (Finset.univ.sup fun l => (h_ER l).towerHeight) ≤
+      (kToER (KMor1.simrec i h_fam g_fam) hyp).towerHeight
+  set recur : ERMor1 (a + 1) :=
+    ERMor1.boundedRec (kSimPackedBase h_ER)
+      (kSimPackedStep g_ER) (kSimTowerBound h_ER g_ER)
+  set branches : Fin (a + 1) → ERMor1 (a + 1) :=
+    fun j : Fin (a + 1) =>
+      if h_eq : j.val = 0 then recur
+      else ERMor1.proj (k := a + 1)
+        ⟨j.val, by have := j.isLt; omega⟩
+  change (Finset.univ.sup fun l => (h_ER l).towerHeight) ≤
+      ((kSimSzudzikUnpackAt a i.val).comp branches).towerHeight
+  apply Finset.sup_le
+  intro l _
+  have hpkg :
+      ERMor1.natPair.towerHeight + 2 +
+        (Finset.univ : Finset (Fin (k + 1))).sup
+          (fun j => (h_ER j).towerHeight) ≤
+        (kSimPackedBase h_ER).towerHeight :=
+    kSimPackedBase_towerHeight_ge_propagate h_ER
+  have hl_le_sup :
+      (h_ER l).towerHeight ≤
+        (Finset.univ : Finset (Fin (k + 1))).sup
+          (fun j => (h_ER j).towerHeight) :=
+    Finset.le_sup (f := fun j => (h_ER j).towerHeight)
+      (Finset.mem_univ _)
+  have hbase_ge :
+      (kSimPackedBase h_ER).towerHeight ≤ recur.towerHeight :=
+    ERMor1.boundedRec_towerHeight_ge_base _ _ _
+  have hbranch0 :
+      branches ⟨0, by omega⟩ = recur := by
+    simp [branches]
+  have hrecur_le_sup :
+      recur.towerHeight ≤
+        Finset.univ.sup (fun j => (branches j).towerHeight) := by
+    have h0 :=
+      Finset.le_sup (s := (Finset.univ : Finset (Fin (a + 1))))
+        (f := fun j => (branches j).towerHeight)
+        (Finset.mem_univ ⟨0, by omega⟩)
+    simp only [hbranch0] at h0
+    exact h0
+  have hcomp_eq :
+      ((kSimSzudzikUnpackAt a i.val).comp branches).towerHeight =
+      (kSimSzudzikUnpackAt a i.val).towerHeight +
+        Finset.univ.sup (fun j => (branches j).towerHeight) + 1 :=
+    rfl
+  rw [hcomp_eq]
+  omega
+
+/-- Auxiliary structural lemma g-side: the maximum-over-the
+g-family child tower height under `kToER` is dominated by
+`kToER (simrec i h_fam g_fam)`'s tower height. -/
+private theorem kToER_simrec_g_side_bound
+    {a k : ℕ}
+    (h_fam : Fin (k + 1) → KMor1 a)
+    (g_fam : Fin (k + 1) → KMor1 (a + 1 + (k + 1)))
+    (h_h : ∀ l, (h_fam l).level ≤ 1)
+    (h_g : ∀ l, (g_fam l).level ≤ 1)
+    (i : Fin (k + 1))
+    (hyp : (KMor1.simrec i h_fam g_fam).level ≤ 2) :
+    (Finset.univ : Finset (Fin (k + 1))).sup
+        (fun l =>
+          (kToER (g_fam l)
+            (Nat.le_succ_of_le (h_g l))).towerHeight) ≤
+      (kToER (KMor1.simrec i h_fam g_fam) hyp).towerHeight := by
+  set h_ER : Fin (k + 1) → ERMor1 a :=
+    fun l => kToER (h_fam l) (Nat.le_succ_of_le (h_h l))
+  set g_ER : Fin (k + 1) → ERMor1 (a + 1 + (k + 1)) :=
+    fun l => kToER (g_fam l) (Nat.le_succ_of_le (h_g l))
+  change (Finset.univ.sup fun l => (g_ER l).towerHeight) ≤
+      (kToER (KMor1.simrec i h_fam g_fam) hyp).towerHeight
+  set recur : ERMor1 (a + 1) :=
+    ERMor1.boundedRec (kSimPackedBase h_ER)
+      (kSimPackedStep g_ER) (kSimTowerBound h_ER g_ER)
+  set branches : Fin (a + 1) → ERMor1 (a + 1) :=
+    fun j : Fin (a + 1) =>
+      if h_eq : j.val = 0 then recur
+      else ERMor1.proj (k := a + 1)
+        ⟨j.val, by have := j.isLt; omega⟩
+  change (Finset.univ.sup fun l => (g_ER l).towerHeight) ≤
+      ((kSimSzudzikUnpackAt a i.val).comp branches).towerHeight
+  apply Finset.sup_le
+  intro l _
+  have hpkg :
+      ERMor1.natPair.towerHeight + 2 +
+        (Finset.univ : Finset (Fin (k + 1))).sup
+          (fun j =>
+            (ERMor1.comp (g_ER j) kSimStepContext).towerHeight) ≤
+        (kSimPackedStep g_ER).towerHeight :=
+    kSimPackedStep_towerHeight_ge_propagate g_ER
+  have hl_le_compsup :
+      (ERMor1.comp (g_ER l) kSimStepContext).towerHeight ≤
+        (Finset.univ : Finset (Fin (k + 1))).sup
+          (fun j =>
+            (ERMor1.comp (g_ER j) kSimStepContext).towerHeight) :=
+    Finset.le_sup
+      (f := fun j =>
+        (ERMor1.comp (g_ER j) kSimStepContext).towerHeight)
+      (Finset.mem_univ _)
+  have hl_le_comp :
+      (g_ER l).towerHeight ≤
+        (ERMor1.comp (g_ER l) kSimStepContext).towerHeight := by
+    change _ ≤ (g_ER l).towerHeight +
+      Finset.univ.sup
+        (fun j => (kSimStepContext j).towerHeight) + 1
+    omega
+  have hstep_ge :
+      (kSimPackedStep g_ER).towerHeight ≤ recur.towerHeight :=
+    ERMor1.boundedRec_towerHeight_ge_step _ _ _
+  have hbranch0 :
+      branches ⟨0, by omega⟩ = recur := by
+    simp [branches]
+  have hrecur_le_sup :
+      recur.towerHeight ≤
+        Finset.univ.sup (fun j => (branches j).towerHeight) := by
+    have h0 :=
+      Finset.le_sup (s := (Finset.univ : Finset (Fin (a + 1))))
+        (f := fun j => (branches j).towerHeight)
+        (Finset.mem_univ ⟨0, by omega⟩)
+    simp only [hbranch0] at h0
+    exact h0
+  have hcomp_eq :
+      ((kSimSzudzikUnpackAt a i.val).comp branches).towerHeight =
+      (kSimSzudzikUnpackAt a i.val).towerHeight +
+        Finset.univ.sup (fun j => (branches j).towerHeight) + 1 :=
+    rfl
+  rw [hcomp_eq]
+  omega
+
+/-- Auxiliary structural lemma for the Phase IV-B chain:
+`kToER (simrec h_fam g_fam i)`'s tower height dominates
+the combined-max-over-children tower height.  Used in the
+simrec case of the main inequality
+`KMor1.linearBoundLog_le_towerHeight`.
+
+Proof routes through `boundedRec_towerHeight_ge_base`
+(h-side, Task 17c E.3) and
+`boundedRec_towerHeight_ge_step` (g-side, Task 17c E.3),
+composed with the existing
+`kSimPackedBase_towerHeight_ge_propagate` /
+`kSimPackedStep_towerHeight_ge_propagate`. -/
+private theorem kToER_simrec_towerHeight_ge_max_child_tH
+    {a k : ℕ}
+    (h_fam : Fin (k + 1) → KMor1 a)
+    (g_fam : Fin (k + 1) → KMor1 (a + 1 + (k + 1)))
+    (h_h : ∀ l, (h_fam l).level ≤ 1)
+    (h_g : ∀ l, (g_fam l).level ≤ 1)
+    (i : Fin (k + 1))
+    (hyp : (KMor1.simrec i h_fam g_fam).level ≤ 2) :
+    max
+      ((Finset.univ : Finset (Fin (k + 1))).sup
+        (fun l =>
+          (kToER (h_fam l)
+            (Nat.le_succ_of_le (h_h l))).towerHeight))
+      ((Finset.univ : Finset (Fin (k + 1))).sup
+        (fun l =>
+          (kToER (g_fam l)
+            (Nat.le_succ_of_le (h_g l))).towerHeight)) ≤
+      (kToER (KMor1.simrec i h_fam g_fam) hyp).towerHeight :=
+  max_le
+    (kToER_simrec_h_side_bound h_fam g_fam h_h h_g i hyp)
+    (kToER_simrec_g_side_bound h_fam g_fam h_h h_g i hyp)
+
 /-- Strengthened structural lower bound on `kSimPackedBase`'s
 tower height, parallel to the Step version. -/
 private theorem kSimPackedBase_towerHeight_ge_succ_k
