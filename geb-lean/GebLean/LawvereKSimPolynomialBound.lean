@@ -2174,4 +2174,17 @@ private theorem kToER_interp_level_one :
         -- Final: relate Fin.tail ctx and ctx 0.
         simp [Fin.tail_def]
 
+/-- Linear bound on level-1 K^sim's kToER image.  Direct
+composition of `kToER_interp_level_one` and
+`KMor1.linearBound_dominates`. -/
+theorem kToER_linearBound_dominates_level_one
+    {a : ℕ} (f : KMor1 a) (h : f.level ≤ 1)
+    (ctx : Fin a → ℕ) :
+    (kToER f (Nat.le_succ_of_le h)).interp ctx ≤
+      (KMor1.linearBound f h).1 *
+        (Finset.univ : Finset (Fin a)).sup ctx +
+      (KMor1.linearBound f h).2 := by
+  rw [kToER_interp_level_one f h ctx]
+  exact KMor1.linearBound_dominates f h ctx
+
 end GebLean
