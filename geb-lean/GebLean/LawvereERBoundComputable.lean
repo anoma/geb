@@ -843,8 +843,8 @@ theorem ERMor1.boundedRec_towerHeight_ge_step {k : ℕ}
 
 /-- Structural lower bound on `boundedRec`'s tower height
 in terms of the `bound` argument's tower height.
-Supplementary; used by Task 17c E.4 (kSimTowerBound
-chain). -/
+Symmetric companion to `_ge_base` and `_ge_step`; retained
+for completeness. -/
 theorem ERMor1.boundedRec_towerHeight_ge_bound {k : ℕ}
     (base : ERMor1 k) (step : ERMor1 (k + 2))
     (bound : ERMor1 (k + 1)) :
