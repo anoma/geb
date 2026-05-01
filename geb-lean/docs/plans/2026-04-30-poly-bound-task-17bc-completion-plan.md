@@ -1626,11 +1626,124 @@ linearBound_dominates itself (already proved at 2843884a)."
 
 ## Phase IV — Task D: kSimTowerBound_dominates_inline (level-2)
 
-The level-2 simrec dominance, mirroring Task A's structure
-with level-1 children.  This is the deliverable that Task 14
-of the kToER plan consumes.
+> **Plan correction (2026-05-01, mid-execution)**: The
+> original Phase IV (preserved as "Phase IV-A: superseded"
+> below) followed Strategy A — a level-1 analog of Task A's
+> `simrecVec` / `linearBound` chain.  After investigating the
+> stub, this Strategy A approach was found to be
+> mathematically inconsistent with Tourlakis 2018 §0.1.0.27 (3),
+> which states that K^sim_2 functions are polynomially bounded
+> (not linearly bounded as at level 1).  The corrected plan is
+> Phase IV-B (Strategy B, polynomial-iteration chain) below.
+>
+> Specifically, the level-1 chain (Phase III, Task A) absorbed
+> `Nat.log 2 (KK + …)` into `stepTH + 2*baseTH` via
+> `kToER_level0_towerHeight_ge_const` — a structural shape lemma
+> for level-0 `linearBound`.  No analogous level-1 shape lemma
+> can hold, because `KMor1.linearBound`'s `comp` clause produces
+> `(p_f.1 * max_c, p_f.1 * sum_k + p_f.2)` (multiplicative in
+> the children with a sum-over-fan-out), while `(kToER f).tH`
+> only adds `+1` per `comp` regardless of fan-out.  The mismatch
+> blocks any bound
+> `(KMor1.linearBound f h).2 ≤ 2^((kToER f).tH + c)` for
+> level-1 `f` with fan-out ≥ 2 and any fixed `c`.
+>
+> The level-2 chain therefore must use polynomial bounds
+> (Recursion Class Ch. 4 Prop. 4.7's "iteration of a linear
+> function is polynomial"), which is exactly what
+> `Nat.polynomial_iter_tower_bound` (Module A, Poly Task 5)
+> formalizes, combined with `kSimPackedStep_polyBound` /
+> `kSimPackedBase_polyBound` (Module C, Poly Task 16).  The
+> infrastructure already exists; the level-2 case re-uses it
+> rather than re-implementing the level-1 chain.
+>
+> See research doc
+> `docs/research/2026-04-30-ksim-polynomial-bound-references.md`
+> "Implication for the level-2 dominance chain" callout, and
+> R5' in the parent plan
+> `docs/plans/2026-04-30-er-polynomial-bound-plan.md`.
 
-### Task D.1: Stub the theorem
+---
+
+## Phase IV-B — Task D: kSimTowerBound_dominates_inline (corrected)
+
+The level-2 simrec dominance.  Routes the iteration trace
+through a polynomial bound on the packed step (Strategy B),
+then through `Nat.polynomial_iter_tower_bound` to land in
+`tower 2 (linear)`, and finally into `kSimTowerBound`'s
+closed-form `tower (stepTH+1) (linear)` via the same
+`tower_two_le_tower_three_linear` + `tower_mono_left/right`
+absorption used at level 1.
+
+### Task D.0: Investigation phase (no code yet)
+
+**Goal:** before drafting the chain, settle the chain-closing
+log-vs-towerHeight relationship.  Two candidate sub-strategies
+(B1 and B2 in the parent plan's R5') are sketched; this task
+picks one by validating the key inequality on a concrete
+example before committing to ~300+ lines of proof.
+
+- [ ] **Step D.0.1: Validate B1 (constructive ER PolyBound)**
+  on a small test case.
+
+  Concretely, for a level-1 K^sim term `f := simrec 0 h_fam g_fam`
+  where `h_fam`, `g_fam` are families of level-0 K^sim atoms,
+  compute by hand:
+
+  - `kToER f` (an ER term with embedded `boundedRec`).
+  - `(kToER f).towerHeight`.
+  - A constructively-built `pb : ERMor1.PolyBound (kToER f)` via
+    per-constructor builders.  This requires a new builder
+    `ofBoundedRec` for `ERMor1.boundedRec`'s case.
+  - The single-power adapter
+    `D := pb.degree + pb.coefficient + pb.constant + 2`.
+  - Verify `Nat.log 2 D ≤ (kToER f).towerHeight + small_const`
+    holds for the specific term, and identify the small_const.
+
+  Specifically, the new `ofBoundedRec` would say: if `base`,
+  `step`, `bound : ERMor1 _` each have `PolyBound`s, and the
+  dominance hypothesis holds, then `boundedRec base step bound`
+  has a `PolyBound` whose fields are derived from `bound`'s
+  fields (since `boundedRec`'s value never exceeds the bound's
+  value at the same arguments).  The structural log-vs-tH
+  inequality for `boundedRec` reduces to that of the bound
+  argument, plus a small additive constant (per the structural
+  recursion of `ERMor1.towerHeight` on `boundedRec`).
+
+  **Outcome:** if B1's `Nat.log 2 D ≤ towerHeight + c` holds
+  with a small `c`, proceed to D.1.  If not, try B2 below
+  before reverting to a more involved approach.
+
+- [ ] **Step D.0.2: If B1 fails, validate B2 (custom K^sim
+  measure)** on the same test case.
+
+  Define `KMor1.linearBoundLog : (f : KMor1 a) → f.level ≤ 1 → ℕ`
+  recursively (atomic = small; `comp` = `lBL f + max lBL gs +
+  log_2 fan-out + small`; `raise` reduces to level-0; `simrec`
+  combines max-over-children).  Verify
+  `(KMor1.linearBound f h).1 + (KMor1.linearBound f h).2 + 2
+    ≤ 2^(KMor1.linearBoundLog f h)` and
+  `KMor1.linearBoundLog f h ≤ (kToER f).towerHeight + c'` for
+  some small `c'`.
+
+  The fan-out absorption is the unknown; if `log_2 fan-out`
+  cannot be bounded by tower-height growth (which is `+1` per
+  `comp`, agnostic to fan-out), B2 doesn't close.  In that
+  case, B1 is the only viable path; if B1 also failed at D.0.1,
+  pause and surface to the user.
+
+- [ ] **Step D.0.3: Document the chosen sub-strategy**
+
+  Write a brief callout at the top of Phase IV-B in this plan
+  recording: which sub-strategy (B1 or B2), what the constant
+  `c` (or `c'`) is, and what new infrastructure (e.g.,
+  `ofBoundedRec`) needs to be built before the chain is drafted.
+
+  **Do not proceed to D.1–D.5 until D.0.3 is complete.**
+
+---
+
+### Task D.1: Stub the main theorem
 
 **Files:**
 
@@ -1639,10 +1752,18 @@ of the kToER plan consumes.
 - [ ] **Step D.1.1: Append the stub**
 
 ```lean
-/-- Level-2 simrec dominance: same as
-`kSimTowerBound_dominates_level_one` but with level-1
-children instead of level-0.  Used by kToER's simrec case
-at level ≤ 2 (see Task 14 of the kToER plan). -/
+/-- Level-2 simrec dominance: the iterated packed value of
+`kSimPackedStep` over `kSimPackedBase` is dominated by
+`kSimTowerBound`'s closed-form tower at every iteration counter
+and parameter context, when both base and step families consist
+of level-≤-1 K^sim terms.  Used by kToER's simrec case at
+level ≤ 2 (see Task 14 of the kToER plan).
+
+Compared to `kSimTowerBound_dominates_level_one` (Task 17b.2,
+private), the level-2 case routes through polynomial-iteration
+bounds (Strategy B per parent plan R5') rather than linear
+bounds, in line with Tourlakis 2018 §0.1.0.27 (3): K^sim_2
+functions are polynomially bounded, not linearly. -/
 theorem kSimTowerBound_dominates_inline {a k : ℕ}
     (h_fam : Fin (k + 1) → KMor1 a)
     (g_fam : Fin (k + 1) → KMor1 (a + 1 + (k + 1)))
@@ -1679,95 +1800,50 @@ Expected: PASS with `sorry` warning.
 
 ---
 
-### Task D.2: add parallel level-1 simrecVec aux
+### Task D.2: Build per-component PolyBounds for level-1 children
 
 **Files:**
 
 - Modify: `GebLean/LawvereKSimPolynomialBound.lean`
 
-**Goal:** create a level-1 analog of
-`KMor1.simrecVec_linear_bound_aux` that uses
-`KMor1.linearBound` directly instead of `level0Shape`.
-Mirrors the existing aux's proof structure.
+**Goal:** for each level-1 K^sim child (`h_fam l` or `g_fam l`),
+construct an `ERMor1.PolyBound (kToER (child))`.  Two candidate
+constructions, depending on D.0's outcome:
 
-**Decision (per brainstorm P3)**: do NOT refactor the
-existing level-0 aux — it would risk breaking
-`KMor1.linearBound_dominates`'s simrec case (currently
-landed at line 502+).  Instead, create a parallel aux
-with a `_level_one` suffix and reuse helper code where
-possible.
+- **B1 path**: build constructively by structural induction on
+  the ER term `kToER (child)`, via per-constructor builders
+  (`ofZero`, `ofSucc`, `ofProj`, `ofComp`, `ofBoundedRec` —
+  the last being new).  This avoids `KMor1.linearBound`'s
+  multiplicative blow-up by working directly on the ER side
+  where `towerHeight` is the natural measure.  The `bounds`
+  proof for each builder follows the ER constructor's value
+  bound; the structural log-vs-tH inequality is established
+  for each builder during the structural induction.
+- **B2 path**: build with `degree = 1`,
+  `coefficient = (KMor1.linearBound child h).1`,
+  `constant = (KMor1.linearBound child h).1 +
+  (KMor1.linearBound child h).2`, with `bounds` proof via
+  `kToER_linearBound_dominates_level_one (child) h ctx` plus
+  algebra to absorb the `+1` shift between `c * sup ctx + k`
+  and `c * (maxCtx + 1) + (c + k)`.  The chain-closing log-vs-tH
+  bound then routes through the custom `KMor1.linearBoundLog`
+  measure.
 
-- [ ] **Step D.2.1: Append the level-1 aux**
+(After D.0.3, only the chosen path is implemented here.)
 
-```lean
-/-- Level-1 analog of
-`KMor1.simrecVec_linear_bound_aux`: at iteration `n ≤ S`,
-each component of `simrecVec` is bounded linearly when
-the families have level ≤ 1, using
-`KMor1.linearBound`'s pair (cf. `KMor1.linearBound_-`
-`dominates`). -/
-private theorem KMor1.simrecVec_linear_bound_aux_level_one
-    {a k : ℕ}
-    (h_fam : Fin (k + 1) → KMor1 a)
-    (g_fam : Fin (k + 1) → KMor1 (a + 1 + (k + 1)))
-    (hh : ∀ j, (h_fam j).level ≤ 1)
-    (hg : ∀ j, (g_fam j).level ≤ 1)
-    (params : Fin a → ℕ)
-    (S : ℕ)
-    (hparams : ∀ j, params j ≤ S)
-    (base_max : ℕ)
-    (hbase_max : ∀ j,
-      (KMor1.linearBound (h_fam j) (hh j)).2 ≤ base_max)
-    (step_c step_k : ℕ)
-    (hstep_c : ∀ j,
-      (KMor1.linearBound (g_fam j) (hg j)).1 ≤ step_c)
-    (hstep_k : ∀ j,
-      (KMor1.linearBound (g_fam j) (hg j)).2 ≤ step_k)
-    (n : ℕ) (hn : n ≤ S) :
-    ∀ j,
-      KMor1.simrecVec h_fam g_fam params n j
-        ≤ (step_c + step_k + 1) * S
-            + base_max + step_k * n := by
-  induction n with
-  | zero =>
-      intro j
-      simp only [KMor1.simrecVec]
-      -- KMor1.simrecVec at zero = (h_fam j).interp params
-      have hdom :=
-        KMor1.linearBound_dominates (h_fam j) (hh j) params
-      have hsup_params :
-          (Finset.univ : Finset (Fin a)).sup params ≤ S := by
-        apply Finset.sup_le
-        intro i _
-        exact hparams i
-      have hbase_j := hbase_max j
-      -- (h_fam j).interp params ≤ p.1 * sup ctx + p.2
-      -- with p = linearBound h_fam j.  Bound each piece.
-      sorry
-  | succ n ih =>
-      intro j
-      have hn' : n ≤ S := Nat.le_of_succ_le hn
-      have ih' := ih hn'
-      simp only [KMor1.simrecVec]
-      -- Mirror the existing level-0 aux's succ case but
-      -- substitute KMor1.linearBound for level0Shape.
-      sorry
-```
+- [ ] **Step D.2.1: Append the chosen per-component PolyBound
+  builders**
 
-The two `sorry`s mirror the existing aux's structure
-exactly; the implementer can copy the level-0 proof at
-line 342–485 of `LawvereKSimPolynomialBound.lean`,
-substituting:
+For B1, this includes `ofBoundedRec` in
+`GebLean/LawvereERPolynomialBound.lean` (~80-150 lines) plus a
+recursive `ofKToER : (f : KMor1 a) → f.level ≤ 1 → PolyBound
+(kToER f h)` in `GebLean/LawvereKSimPolynomialBound.lean`
+(~100-200 lines).
 
-- `KMor1.level0Shape (...)` → no longer used
-- `(level0Shape ...).linearBound.1` →
-  `(KMor1.linearBound ... hg/hh).1`
-- `ConstantOrShiftedProj.linearBound_dominates` →
-  `KMor1.linearBound_dominates`
-- `KMor1.level0Shape_interp` → omit (linearBound applies
-  to f directly)
-
-Estimated 100-180 lines (similar to the existing aux).
+For B2, this is a single `polyBoundOfLinearBound` wrapping
+`kToER_linearBound_dominates_level_one` (~30-50 lines), plus
+the `KMor1.linearBoundLog` definition and its two structural
+inequalities (~150-300 lines depending on fan-out absorption).
 
 - [ ] **Step D.2.2: Run `lake build`**
 
@@ -1777,47 +1853,191 @@ Expected: PASS.
 
 ---
 
-### Task D.3: Compose the level-2 chain
+### Task D.3: Apply the packed-step / packed-base PolyBound builders
 
 **Files:**
 
 - Modify: `GebLean/LawvereKSimPolynomialBound.lean`
 
-Same structure as Task A.6 but using level-1 inputs.
+**Goal:** use the per-component PolyBounds from D.2 to construct
+`pb_packed_base : ERMor1.PolyBound (kSimPackedBase h_ER)` and
+`pb_packed_step : ERMor1.PolyBound (kSimPackedStep g_ER)`.
+This is a direct call to `kSimPackedBase_polyBound` and
+`kSimPackedStep_polyBound` (both already landed at Poly Task 16).
 
-- [ ] **Step D.3.1: Replace D.1's sorry**
+- [ ] **Step D.3.1: Build the packed PolyBounds**
 
-The proof mirrors A.6 with the substitutions:
+```lean
+let pb_packed_base : ERMor1.PolyBound (kSimPackedBase h_ER) :=
+  kSimPackedBase_polyBound h_ER pb_h
+let pb_packed_step : ERMor1.PolyBound (kSimPackedStep g_ER) :=
+  kSimPackedStep_polyBound g_ER pb_g
+```
 
-- `level0Shape` → `KMor1.linearBound`
-- `simrecVec_uniform_linear_bound` →
-  `simrecVec_linear_bound_aux_general` (or `_level_one`)
-- The seqPack-to-tower chain (A.3, A.4, A.5) is identical
-  in structure; the constants `CC`/`KK` come from level-1
-  `linearBound` instead of level-0 `level0Shape`.
+(no new infrastructure; this is plumbing.)
 
-Estimated 100-200 lines.
+- [ ] **Step D.3.2: Build the chain-closing log-vs-tH lemma**
 
-- [ ] **Step D.3.2: Run `lake build`**
+A new lemma whose statement depends on D.0: roughly
+`Nat.log 2 (pb_packed_step.degree + pb_packed_step.coefficient +
+pb_packed_step.constant + 2) ≤ stepTH + small_const` (or
+analogous for B2).  Proof: combine D.2's per-component log-vs-tH
+inequality with the formula for `kSimPackedStep_polyBound`'s
+fields (degree = E = (D_max + 5) * 4^(k+1), coefficient = 3^E,
+constant = 0), and the structural propagate lemma
+`kSimPackedStep_towerHeight_ge_propagate`.
 
-Expected: PASS, no warnings.
+(~80-150 lines.)
 
-- [ ] **Step D.3.3: Run `lake test`**
+- [ ] **Step D.3.3: Run `lake build`**
 
 Expected: PASS.
 
-- [ ] **Step D.3.4: Commit**
+- [ ] **Step D.3.4: Do not commit yet.**
+
+---
+
+### Task D.4: Apply the iter-step-form adapter and the iteration bound
+
+**Files:**
+
+- Modify: `GebLean/LawvereKSimPolynomialBound.lean`
+
+**Goal:** convert the packed step `PolyBound` to the form
+consumed by `Nat.polynomial_iter_tower_bound`, then bound the
+j-iteration of the packed step starting from packed base.
+
+- [ ] **Step D.4.1: Apply `to_iter_step_form` to
+  `pb_packed_step`**
+
+Yields a single-power bound on the packed step's interp
+in terms of `(maxCtx + 2)^D` for the integer
+`D = pb_packed_step.degree + pb_packed_step.coefficient +
+pb_packed_step.constant + 2`.
+
+- [ ] **Step D.4.2: Bound the base linearly**
+
+`Nat.polynomial_iter_tower_bound`'s `h_base` hypothesis
+requires `v_0 x ≤ m * x + m` (linear in `x`).  Convert
+`pb_packed_base`'s polynomial bound to a linear bound by
+choosing `m` large enough; for our use, the polynomial degree
+of `pb_packed_base` may exceed 1, so we instead use a slightly
+loosened version: `pb_packed_base.interp params ≤
+(maxCtx params + 2)^D_base`, then absorb `(maxCtx + 2)^D_base
+≤ tower 2 (linear)` via `pow_le_tower_two_with_shift` and
+treat the iteration's base as the resulting tower-2 bound.
+
+(May require a generalization of
+`Nat.polynomial_iter_tower_bound` to allow polynomial base, or
+a small adapter lemma.)
+
+- [ ] **Step D.4.3: Apply `Nat.polynomial_iter_tower_bound`**
+
+Yields `iter j ≤ tower 2 ((Nat.log 2 D + 2) * j + linear in
+sumCtx)`.
+
+- [ ] **Step D.4.4: Run `lake build`**
+
+Expected: PASS.
+
+- [ ] **Step D.4.5: Do not commit yet.**
+
+---
+
+### Task D.5: Close the chain into `kSimTowerBound`
+
+**Files:**
+
+- Modify: `GebLean/LawvereKSimPolynomialBound.lean`
+
+**Goal:** chain `tower 2 (linear)` into `kSimTowerBound`'s
+`tower (stepTH+1) (linear)` form.  Same chain as Phase III's
+A.6 from line 1955+ onward, but starting from `tower 2 (linear
+in (j, sumCtx, log_2 D, m))` rather than `tower 2 (CC * S +
+KK + 1 + log_2 E + 2)`.
+
+- [ ] **Step D.5.1: Apply `tower_two_le_tower_three_linear`**
+
+Yields `tower 3 (j + sumCtx + log_2(log_2 D + 3) + log_2(other
+linear factor) + 2)`.
+
+- [ ] **Step D.5.2: Apply `tower_mono_left` (stepTH ≥ 2)
+  and `tower_mono_right`**
+
+`stepTH ≥ k+2 ≥ 2` from `kSimPackedStep_towerHeight_ge_succ_k`,
+giving stepTH+1 ≥ 3.  For `tower_mono_right`, use the chain-
+closing log-vs-tH inequality from D.3.2 to absorb the log_2
+factors into stepTH + 2*baseTH, plus j ≤ sumCtx and similar.
+
+- [ ] **Step D.5.3: Replace D.1's sorry**
+
+The full proof composes D.2–D.5's helpers.  Estimated 50-150
+lines for the assembly.
+
+- [ ] **Step D.5.4: Run `lake build` and `lake test`**
+
+Expected: PASS, no warnings.
+
+- [ ] **Step D.5.5: Commit**
 
 ```bash
-git add GebLean/LawvereKSimPolynomialBound.lean
+git add GebLean/LawvereKSimPolynomialBound.lean \
+        GebLean/LawvereERPolynomialBound.lean
 git commit -m "Add kSimTowerBound_dominates_inline (Task 17c)
 
-Level-2 simrec dominance: same chain as
-kSimTowerBound_dominates_level_one (Task 17b.2) but with
-level-1 children using KMor1.linearBound directly instead
-of level0Shape.  Public theorem, consumed by Task 14 of
-the kToER plan."
+Level-2 simrec dominance via polynomial-iteration chain
+(Strategy B per parent plan R5'), in line with Tourlakis 2018
+\$0.1.0.27 (3) — K^sim_2 functions are polynomially bounded,
+not linearly.  Routes through kSimPackedStep_polyBound
+(Task 16) plus Nat.polynomial_iter_tower_bound (Task 5,
+formalizing Recursion Class Ch. 4 Prop. 4.7) instead of the
+linear-bound chain used at level 1.  Public theorem,
+consumed by Task 14 of the kToER plan."
 ```
+
+---
+
+## Phase IV-A — superseded original plan
+
+*Preserved for the record.  Do not implement.*
+
+The original Phase IV plan (Tasks D.1, D.2, D.3 below)
+followed Strategy A: a level-1 analog of Task A's
+`simrecVec` / `linearBound` chain.  The plan was discarded
+on 2026-05-01 after investigation showed that Tourlakis 2018
+§0.1.0.27 (3) explicitly stratifies the bound at level — at
+level 2 the bound is polynomial, not linear — and that the
+level-1 chain's `kToER_level0_towerHeight_ge_const`
+absorption step does not extend to a level-1 analog because
+`KMor1.linearBound`'s `comp` clause is multiplicative in
+the children with a sum-over-fan-out, while `(kToER f).tH`
+is additive with a sup-over-fan-out.
+
+The corrected plan is Phase IV-B above.
+
+### (superseded) Task D.1: Stub the theorem
+
+```text
+[Same theorem statement as the corrected D.1 above; the
+statement itself is correct, only the proof strategy changed.]
+```
+
+### (superseded) Task D.2: add parallel level-1 simrecVec aux
+
+A `KMor1.simrecVec_linear_bound_aux_level_one` mirroring the
+existing level-0 aux's structure, with `KMor1.linearBound`
+substituted for `level0Shape.linearBound`.  The chain-closing
+step would need a level-1 analog of
+`kToER_level0_towerHeight_ge_const`, which does not exist (per
+the obstruction analysis above).
+
+### (superseded) Task D.3: Compose the level-2 chain
+
+Mirrors A.6's calc chain with substitutions
+`level0Shape → KMor1.linearBound`, etc.  The chain does not
+close at the final `tower_mono_right` step because the
+log-vs-tH bound on level-1 `linearBound` constants does not
+hold in additive form.
 
 ---
 

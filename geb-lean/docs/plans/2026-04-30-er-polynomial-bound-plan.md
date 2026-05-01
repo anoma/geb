@@ -176,19 +176,122 @@ dependency.
 
 ### R5 — Task 17c reuses Task 17b's structural bound
 
-Task 17c (`kSimTowerBound_dominates_inline` for level-2 simrec)
-does not require a new structural towerHeight lemma at level 2.
-It reuses `kSimPackedStep_towerHeight_ge_two` (or its R1
-strengthening).  The level-2 case differs from level-1 only in
-that simrec children are level ≤ 1 instead of level ≤ 0; the
-arithmetic chain is identical because `KMor1.linearBound`
-applies uniformly to `f.level ≤ 1`, covering both levels.
+**SUPERSEDED 2026-05-01**.  See R5' below.
 
-Children's ER `towerHeight` does grow at level 2 (since
-level-1 children's `kToER` images contain `boundedRec`), but
-Strategy A's chain never inspects ER-side child `towerHeight`;
-all bounding flows through K^sim's `linearBound` and exits via
-`seqPack`.
+The original R5 read as follows (preserved for the record):
+
+> Task 17c (`kSimTowerBound_dominates_inline` for level-2 simrec)
+> does not require a new structural towerHeight lemma at level 2.
+> It reuses `kSimPackedStep_towerHeight_ge_two` (or its R1
+> strengthening).  The level-2 case differs from level-1 only in
+> that simrec children are level ≤ 1 instead of level ≤ 0; the
+> arithmetic chain is identical because `KMor1.linearBound`
+> applies uniformly to `f.level ≤ 1`, covering both levels.
+>
+> Children's ER `towerHeight` does grow at level 2 (since
+> level-1 children's `kToER` images contain `boundedRec`), but
+> Strategy A's chain never inspects ER-side child `towerHeight`;
+> all bounding flows through K^sim's `linearBound` and exits via
+> `seqPack`.
+
+### R5' — Task 17c requires a polynomial chain (replaces R5)
+
+R5 was correct that no new `towerHeight` lemma is needed for
+the packed terms `kSimPackedBase` / `kSimPackedStep`.  R5 was
+incorrect in claiming the level-1 arithmetic chain extends
+uniformly to level 2.  The mistake: at level 1, the chain
+absorbs `Nat.log 2 (KK + …)` into `stepTH + 2*baseTH` via
+`kToER_level0_towerHeight_ge_const`, which exploits Lemma 1.B
+(level-0 `linearBound.2` ≤ `towerHeight + 1`).  Lemma 1.B is
+**level-stratified**: at level 1, no analogous additive shape
+lemma is available, because `KMor1.linearBound`'s `comp` clause
+produces `(p_f.1 * max_c, p_f.1 * sum_k + p_f.2)`, which is
+multiplicative in the children with a sum over fan-out.  No
+bound `(KMor1.linearBound f h).2 ≤ 2^((kToER f).towerHeight + c)`
+holds for level-1 `f` with fan-out ≥ 2 and any fixed `c`.
+
+This matches Tourlakis 2018 §0.1.0.27's level stratification:
+linear at level 1, polynomial at level 2, tower at level ≥ 3.
+The level-2 dominance proof must therefore route the chain
+through **polynomial** bounds on the level-1 children, not
+linear bounds.  See the research doc
+(`docs/research/2026-04-30-ksim-polynomial-bound-references.md`,
+"Implication for the level-2 dominance chain") for the full
+analysis.
+
+The corrected level-2 chain:
+
+1. For each level-1 K^sim child `g_fam l`, `kToER (g_fam l)` is
+   linear-bounded on the ER side by
+   `kToER_linearBound_dominates_level_one` (Phase III, landed).
+   Linear ⊆ polynomial of degree 1, so each `kToER (g_fam l)`
+   admits an `ERMor1.PolyBound` with `degree = 1`,
+   `coefficient = (KMor1.linearBound (g_fam l) h_g_l).1`,
+   `constant` chosen to absorb the `+coefficient` shift between
+   `c * sup ctx + k` and `coefficient * (maxCtx + 1)^1 + constant`.
+2. Apply `kSimPackedBase_polyBound` (Poly Task 16, landed) to
+   get an `ERMor1.PolyBound (kSimPackedBase h_ER)`.  Apply
+   `kSimPackedStep_polyBound` (Poly Task 16, landed) to get an
+   `ERMor1.PolyBound (kSimPackedStep g_ER)`.
+3. Apply `to_iter_step_form` (Poly Task 10, landed) to convert
+   the packed step's `PolyBound` to the single-power form
+   consumed by `Nat.polynomial_iter_tower_bound`.
+4. Apply `Nat.polynomial_iter_tower_bound` (Poly Task 5, landed,
+   the Lean realization of Recursion Class Ch. 4 Prop. 4.7's
+   "iteration of polynomial step is polynomial-iterated and
+   absorbed by tower 2") to bound the iterated trace by
+   `tower 2` of a linear function in `j`, `sumCtx`, the polyBound
+   constants.
+5. Apply `Nat.tower_two_le_tower_three_linear` (already used at
+   level 1) to bump the tower height to 3 at the cost of a `log`
+   shift on each linear coefficient.
+6. Apply `tower_mono_left` to land in `tower (stepTH+1)` —
+   uses the structural lower bound `stepTH ≥ k + 2 ≥ 2` already
+   proved (`kSimPackedStep_towerHeight_ge_succ_k`).
+7. Apply `tower_mono_right` to absorb the linear-in-`(j, sumCtx)`
+   argument into `kSimTowerBound`'s closed-form
+   `stepTH + 1 + 2*baseTH + 2*sumCtx + 2`.
+
+The **open question** that distinguishes this from a purely
+mechanical translation of Phase III: at the chain-closing step
+(7), we need a structural relationship between the polyBound
+fields `(degree, coefficient, constant)` of the constructed
+`kSimPackedStep_polyBound g_ER pb_g` (or its
+`to_iter_step_form` adapter `D`) and `stepTH`/`baseTH`.  Two
+candidate sub-strategies:
+
+- **B1 (constructive PolyBound on ER side, structural log
+  bound)**: build each `pb_g l` for `kToER (g_fam l)` via the
+  per-constructor builders `ofZero` / `ofSucc` / `ofProj` /
+  `ofComp` / `ofBsum` (and a new `ofBoundedRec` for level-1's
+  embedded `boundedRec`).  Prove `Nat.log 2 (pb.degree +
+  pb.coefficient + pb.constant + 2) ≤ tH(g_ER l) + c` by
+  structural induction on the constructive build.  This avoids
+  the `KMor1.linearBound` multiplicative blow-up entirely,
+  because the polyBound fields are determined by the ER
+  structure rather than the K^sim source.  Cost: a new
+  `ofBoundedRec` builder, and the structural induction (~150-300
+  lines).
+- **B2 (custom K^sim-side measure)**: define
+  `KMor1.linearBoundLog : (f : KMor1 a) → f.level ≤ 1 → ℕ`
+  satisfying both
+  `(KMor1.linearBound f h).1 + (KMor1.linearBound f h).2 + 2
+    ≤ 2^(KMor1.linearBoundLog f h)` and
+  `KMor1.linearBoundLog f h ≤ (kToER f).towerHeight + size(f)`
+  for some structural-size measure on `f`.  The `comp` case
+  must include a `+ log_2 (arity)` term to absorb fan-out, and
+  the structural size's `+ log_2 (arity)` increment must be
+  bounded by tower height growth (which is `+1` per `comp`,
+  agnostic to fan-out — hence we'd need to prove
+  `log_2 (arity) ≤ 1`, i.e., arity ≤ 2 in the worst case, which
+  fails in general).  This sub-strategy may not work without a
+  separate accounting for fan-out.
+
+B1 is the more promising path because it works on the ER side
+where `towerHeight` is the natural measure; B2 fights against
+the ER tower-height counting convention.  Phase IV should begin
+with a focused investigation that picks one and validates the
+key inequality before drafting the full chain.
 
 ### R6 — Effort estimate revision
 
@@ -205,9 +308,13 @@ all bounding flows through K^sim's `linearBound` and exits via
 ### Where to apply these refinements
 
 Treat the original Task 17b.2 "Refined approach" subsection as
-superseded by R1 + R2.  Treat Task 17c's prose as augmented by
-R5.  R3 is an alternative-strategy footnote; R4 is a verified
-non-cycle reassurance; R6 is an estimate revision.
+superseded by R1 + R2.  Treat Task 17c's prose as **superseded
+by R5'** (R5 itself is preserved for the record but is
+incorrect; the corrected analysis is in R5').  R3 is an
+alternative-strategy footnote at level 1, but at level 2
+becomes the primary-strategy direction (per R5').  R4 is a
+verified non-cycle reassurance; R6 is an estimate revision
+(superseded for Task 17c by R5's investigation phase).
 
 ---
 
@@ -1868,6 +1975,18 @@ trace).
 ### Task 17c: Level-2 K^sim (K^sim_2 ⊆ E^2 = ER), final assembly
 
 **Status**: pending.  Estimated 300-500 lines.
+
+> **Direction superseded 2026-05-01**: see R5' in the
+> "Brainstorm refinements (second pass, 2026-04-30)" section
+> of this plan, and the revised completion plan
+> `docs/plans/2026-04-30-poly-bound-task-17bc-completion-plan.md`
+> for the corrected approach.  The text below is preserved
+> for the record but uses Strategy A (linear chain), which
+> Tourlakis 2018 §0.1.0.27 (3) shows does not extend to
+> level 2 (level 2's bound is polynomial, not linear).  The
+> corrected level-2 chain routes through
+> `Nat.polynomial_iter_tower_bound` and `kSimPackedStep_polyBound`
+> per R5'.
 
 **Files**:
 

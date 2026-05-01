@@ -183,7 +183,10 @@ Lemma 1.A.
 
 - Lemma 1.A is stated only for `level f ≤ 1`; at level 2 the bound
   becomes polynomial (Tourlakis 2018 §0.1.0.27 (3)), and at level
-  ≥ 3 it becomes a tower (clause (4) of the same lemma).
+  ≥ 3 it becomes a tower (clause (4) of the same lemma).  This
+  level-stratification is **load-bearing** for the level-2 simrec
+  dominance proof in our project: see the "Implication for the
+  level-2 dominance chain" callout below.
 - The proof of the `simrec` case in Lemma 1.A relies on Lemma 1.B,
   which is what limits a level-0 step to "additive only". Without
   Lemma 1.B, the simrec case could give an exponential bound
@@ -195,6 +198,65 @@ Lemma 1.A.
   (the route taken by Lemma 1.A), or
   (b) the inclusion `K^sim_1 ⊆ E^1`, which the literature treats
   as a corollary of (a) plus E^1's closure properties.
+
+**Implication for the level-2 dominance chain (recorded
+2026-05-01)**:
+
+The level-1 dominance chain
+(`kSimTowerBound_dominates_level_one`, Phase III of the
+17b/17c completion plan) absorbs `Nat.log 2 (KK + …)` into
+`stepTH + 2*baseTH` via the structural lemma
+`kToER_level0_towerHeight_ge_const`, which states
+`(level0Shape f h).linearBound.2 ≤ (kToER f).towerHeight + 1`
+for level-≤-0 `f`.  The proof exploits Lemma 1.B: at level 0,
+`linearBound` factors through `ConstantOrShiftedProj`, whose
+constants accumulate **additively** under `comp` (each
+nested `comp` increments the constant offset by at most one
+shifted-projection's `k`).  The additive accumulation matches
+`towerHeight`'s `+1`-per-`comp` growth.
+
+At level 1, no such structural shape lemma is available
+(Lemma 1.A is the linear bound itself, not a shape lemma).
+`KMor1.linearBound`'s `comp` clause produces
+`(p_f.1 * max_c, p_f.1 * sum_k + p_f.2)` — multiplicative in
+the children, with a `Σ_i` over fan-out.  Tower-height of
+`kToER (comp f gs)` is `tH(kToER f) + sup_i tH(kToER gs_i) + 1`
+— additive, with a `sup` (no fan-out factor).  The mismatch
+makes any bound of the form
+`(KMor1.linearBound f h).2 ≤ 2^((kToER f).towerHeight + c)`
+fail in the `comp` case for fan-out ≥ 2 and any fixed `c`.
+
+This is exactly Tourlakis's stratification: at level 2 the
+bound is polynomial, not linear.  Iterating a level-1
+(linear) step `j` times under bounded recursion yields a
+polynomial-bounded result by Recursion Class Ch. 4
+Prop. 4.7 ("the iteration of a linear function is a
+polynomial function, yielding the n = 1 case"); applying
+the polynomial degree to `kSimTowerBound`'s closed-form
+tower then closes the dominance.
+
+The level-2 simrec dominance proof in our project must
+therefore route the chain through polynomial bounds, not
+linear bounds, on the level-1 children.  Concretely, the
+correct chain uses
+`Nat.polynomial_iter_tower_bound`
+(Module A, Poly Task 5) and
+`kSimPackedStep_polyBound` / `kSimPackedBase_polyBound`
+(Module C, Poly Task 16) — the polynomial-bound
+infrastructure that already exists in Modules A and B.
+
+Open question (to be resolved at Phase IV of the 17b/17c
+completion plan): the structural relationship between a
+constructively-built `ERMor1.PolyBound` (for `kToER` of a
+level-1 K^sim term) and `(kToER f).towerHeight`.
+`ERMor1.PolyBound.log_le_towerHeight` (Poly Task 9) was
+deferred for arbitrary `PolyBound` but established at call
+sites for specific terms.  At Phase IV the call site is
+`kSimPackedStep` of level-1 `kToER` images, and the
+structural relationship must be established for that
+specific shape.  Two candidate sub-strategies, B1 and B2,
+are sketched in the 17b/17c completion plan's revised
+Phase IV.
 
 **Relation to our use**: this is the base case of the polynomial-iter
 chain. Linear-value-bounded ⇒ polynomially-bounded (with degree 1),
