@@ -802,16 +802,18 @@ private theorem ERMor1.bound_towerHeight_le_boundedRec
       | ⟨1, _⟩ => bound)
     ⟨1, by omega⟩
 
-/-- Combined max-of-three lower bound on
-`(boundedRec base step bound).towerHeight`.  All three input
-arguments' tower heights are dominated by the result.  The
+/-- Closed-form lower bound on
+`(boundedRec base step bound).towerHeight`: the max of the three
+input arguments' tower heights is dominated by the result.  The
 structural overhead `boundedRec_towerHeight_overhead` records the
 contribution from `boundedSearch` / `boundedRecRange` /
 `boundedRecPred` / `beta` / `minN` / `natUnpairFst` /
 `natUnpairSnd` evaluated at trivial inputs and is supplied as a
 named constant for downstream reference; the present statement
-gives the input-side bound. -/
-theorem ERMor1.boundedRec_towerHeight_eq {k : ℕ}
+gives the input-side bound.  Equality does not hold here because
+`bound`, `base`, and `step` appear at differing structural depths
+in `boundedRec`'s body. -/
+theorem ERMor1.boundedRec_towerHeight_le {k : ℕ}
     (base : ERMor1 k) (step : ERMor1 (k + 2))
     (bound : ERMor1 (k + 1)) :
     max base.towerHeight
