@@ -817,6 +817,42 @@ theorem ERMor1.boundedRec_towerHeight_le {k : ℕ}
     exact ERMor1.pred_towerHeight_le_boundedRec base step bound
   · exact ERMor1.bound_towerHeight_le_boundedRec base step bound
 
+/-- Structural lower bound on `boundedRec`'s tower height
+in terms of `base`'s tower height.  Used by Task 17c E.5
+to lift bounds on the h-family children through the
+boundedRec layer. -/
+theorem ERMor1.boundedRec_towerHeight_ge_base {k : ℕ}
+    (base : ERMor1 k) (step : ERMor1 (k + 2))
+    (bound : ERMor1 (k + 1)) :
+    base.towerHeight ≤
+      (ERMor1.boundedRec base step bound).towerHeight :=
+  le_trans (le_max_left _ _)
+    (ERMor1.boundedRec_towerHeight_le base step bound)
+
+/-- Structural lower bound on `boundedRec`'s tower height
+in terms of `step`'s tower height.  Used by Task 17c E.5
+to lift bounds on the g-family children through the
+boundedRec layer. -/
+theorem ERMor1.boundedRec_towerHeight_ge_step {k : ℕ}
+    (base : ERMor1 k) (step : ERMor1 (k + 2))
+    (bound : ERMor1 (k + 1)) :
+    step.towerHeight ≤
+      (ERMor1.boundedRec base step bound).towerHeight :=
+  le_trans (le_trans (le_max_left _ _) (le_max_right _ _))
+    (ERMor1.boundedRec_towerHeight_le base step bound)
+
+/-- Structural lower bound on `boundedRec`'s tower height
+in terms of the `bound` argument's tower height.
+Supplementary; used by Task 17c E.4 (kSimTowerBound
+chain). -/
+theorem ERMor1.boundedRec_towerHeight_ge_bound {k : ℕ}
+    (base : ERMor1 k) (step : ERMor1 (k + 2))
+    (bound : ERMor1 (k + 1)) :
+    bound.towerHeight ≤
+      (ERMor1.boundedRec base step bound).towerHeight :=
+  le_trans (le_trans (le_max_right _ _) (le_max_right _ _))
+    (ERMor1.boundedRec_towerHeight_le base step bound)
+
 /-- B-W-style iter combinator on ER terms with an automatic
 structural tower bound.  Composes `boundedRec` against
 `iterAutoBoundExpr` and substitutes `count` into slot `0` of
