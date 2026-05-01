@@ -1482,6 +1482,244 @@ private theorem kSimPackedStep_towerHeight_ge_propagate
   unfold kSimPackedStep
   exact kSimSzudzikPackList_towerHeight_ge_propagate _
 
+/-- Strengthened structural lower bound on `kSimPackedBase`'s
+tower height, parallel to the Step version. -/
+private theorem kSimPackedBase_towerHeight_ge_succ_k
+    {a k : ℕ}
+    (h : Fin (k + 1) → ERMor1 a) :
+    k + 2 ≤ (kSimPackedBase h).towerHeight := by
+  unfold kSimPackedBase
+  exact kSimSzudzikPackList_towerHeight_ge_succ_k _
+
+/-- Reverse direction of `Fin.foldr_max_ge`: if every element
+is bounded by `b`, the foldr-max is bounded by `b`. -/
+private theorem Fin.foldr_max_le {n : ℕ}
+    (f : Fin n → ℕ) (b : ℕ)
+    (hb : ∀ j, f j ≤ b) :
+    Fin.foldr n (fun i acc => max acc (f i)) 0 ≤ b := by
+  induction n with
+  | zero =>
+      simp only [Fin.foldr_zero]
+      exact Nat.zero_le _
+  | succ n' ih =>
+      simp only [Fin.foldr_succ]
+      apply max_le
+      · exact ih (fun l => f l.succ)
+          (fun j => hb j.succ)
+      · exact hb 0
+
+/-- Combined absorption inequality: the log-sums on the
+left-hand side of A.6's calc chain are bounded by the
+sum-of-tower-heights expression on the right-hand side.
+Combines:
+- A.5.2.1 (`kToER_level0_towerHeight_ge_const`) to bound
+  the level-0 shape constants by tower heights;
+- the structural propagate lemmas
+  (`kSimPackedStep_towerHeight_ge_propagate`,
+  `kSimPackedBase_towerHeight_ge_propagate`) to absorb
+  `sup_l (g_ER l).tH` and `sup_l (h_ER l).tH`;
+- the structural `_ge_succ_k` lemmas
+  (`kSimPackedStep_towerHeight_ge_succ_k`,
+  `kSimPackedBase_towerHeight_ge_succ_k`) to absorb the
+  `+k` slack from `Nat.log 2 E ≤ 2k + 5`;
+- standard `Nat.log` bounds via `Nat.log_lt_of_lt_pow`. -/
+private theorem stepTH_baseTH_dominates_arg
+    {a k : ℕ}
+    (h_fam : Fin (k + 1) → KMor1 a)
+    (g_fam : Fin (k + 1) → KMor1 (a + 1 + (k + 1)))
+    (h_h : ∀ l, (h_fam l).level ≤ 0)
+    (h_g : ∀ l, (g_fam l).level ≤ 0) :
+    let CC :=
+      (Fin.foldr (k + 1) (fun l acc =>
+        max acc
+          (KMor1.level0Shape (g_fam l) (h_g l)).linearBound.1)
+        0) +
+      2 * (Fin.foldr (k + 1) (fun l acc =>
+        max acc
+          (KMor1.level0Shape (g_fam l) (h_g l)).linearBound.2)
+        0) + 1
+    let KK :=
+      Fin.foldr (k + 1) (fun l acc =>
+        max acc
+          (KMor1.level0Shape (h_fam l) (h_h l)).linearBound.2)
+        0
+    let E : ℕ := 6 * 4 ^ (k + 1)
+    let h_ER : Fin (k + 1) → ERMor1 a :=
+      fun l => kToER (h_fam l)
+        (Nat.le_succ_of_le (Nat.le_succ_of_le (h_h l)))
+    let g_ER : Fin (k + 1) →
+        ERMor1 (a + 1 + (k + 1)) :=
+      fun l => kToER (g_fam l)
+        (Nat.le_succ_of_le (Nat.le_succ_of_le (h_g l)))
+    Nat.log 2 (CC + 1) +
+        Nat.log 2 (KK + Nat.log 2 E + 4) ≤
+      (kSimPackedStep g_ER).towerHeight +
+        2 * (kSimPackedBase h_ER).towerHeight + 1 := by
+  intro CC KK E h_ER g_ER
+  set SG := (Finset.univ : Finset (Fin (k + 1))).sup
+    (fun l => (g_ER l).towerHeight) with hSG_def
+  set SH := (Finset.univ : Finset (Fin (k + 1))).sup
+    (fun l => (h_ER l).towerHeight) with hSH_def
+  set max_step_c :=
+    Fin.foldr (k + 1) (fun l acc =>
+      max acc
+        (KMor1.level0Shape (g_fam l) (h_g l)).linearBound.1) 0
+    with h_msc_def
+  set max_step_k :=
+    Fin.foldr (k + 1) (fun l acc =>
+      max acc
+        (KMor1.level0Shape (g_fam l) (h_g l)).linearBound.2) 0
+    with h_msk_def
+  have hCC_eq : CC = max_step_c + 2 * max_step_k + 1 := rfl
+  have hKK_eq : KK = Fin.foldr (k + 1) (fun l acc =>
+      max acc
+        (KMor1.level0Shape (h_fam l) (h_h l)).linearBound.2)
+      0 := rfl
+  have h_msc_le : max_step_c ≤ 1 := by
+    apply Fin.foldr_max_le
+    intro l
+    cases (KMor1.level0Shape (g_fam l) (h_g l)) with
+    | const _ => simp [ConstantOrShiftedProj.linearBound]
+    | shifted _ _ =>
+        simp [ConstantOrShiftedProj.linearBound]
+  have h_msk_le : max_step_k ≤ SG + 1 := by
+    apply Fin.foldr_max_le
+    intro l
+    have h_const :
+        ((g_fam l).level0Shape (h_g l)).linearBound.2 ≤
+        (g_ER l).towerHeight + 1 :=
+      kToER_level0_towerHeight_ge_const (g_fam l) (h_g l)
+    have h_le : (g_ER l).towerHeight ≤ SG :=
+      Finset.le_sup
+        (f := fun j => (g_ER j).towerHeight)
+        (Finset.mem_univ l)
+    omega
+  have h_KK_le : KK ≤ SH + 1 := by
+    rw [hKK_eq]
+    apply Fin.foldr_max_le
+    intro l
+    have h_const :
+        ((h_fam l).level0Shape (h_h l)).linearBound.2 ≤
+        (h_ER l).towerHeight + 1 :=
+      kToER_level0_towerHeight_ge_const (h_fam l) (h_h l)
+    have h_le : (h_ER l).towerHeight ≤ SH :=
+      Finset.le_sup
+        (f := fun j => (h_ER j).towerHeight)
+        (Finset.mem_univ l)
+    omega
+  have h_log_E : Nat.log 2 E ≤ 2 * k + 5 := by
+    change Nat.log 2 (6 * 4 ^ (k + 1)) ≤ 2 * k + 5
+    have h6 : (6 : ℕ) ≤ 8 := by omega
+    have h8 : (8 : ℕ) = 2 ^ 3 := by norm_num
+    have h4 : (4 : ℕ) = 2 ^ 2 := by norm_num
+    have h_le : 6 * 4 ^ (k + 1) ≤ 2 ^ (2 * k + 5) := by
+      calc 6 * 4 ^ (k + 1)
+          ≤ 8 * 4 ^ (k + 1) := Nat.mul_le_mul_right _ h6
+        _ = 2 ^ 3 * (2 ^ 2) ^ (k + 1) := by rw [h8, h4]
+        _ = 2 ^ (2 * k + 5) := by
+            rw [← Nat.pow_mul, ← Nat.pow_add]
+            congr 1; ring
+    calc Nat.log 2 (6 * 4 ^ (k + 1))
+        ≤ Nat.log 2 (2 ^ (2 * k + 5)) := Nat.log_mono_right h_le
+      _ = 2 * k + 5 := Nat.log_pow (by omega) _
+  have h_CC_lt : CC + 1 < 2 ^ (SG + 3) := by
+    have hSG_pow : SG + 1 ≤ 2 ^ SG := by
+      have : SG < 2 ^ SG := Nat.lt_two_pow_self
+      omega
+    have h_pow_eq : (2 : ℕ) ^ (SG + 3) = 2 ^ SG * 8 := by
+      rw [pow_add]; ring
+    rw [h_pow_eq]
+    have h_pow_ge : 2 ^ SG * 8 ≥ (SG + 1) * 8 := by
+      exact Nat.mul_le_mul_right _ hSG_pow
+    omega
+  have h_log_CC : Nat.log 2 (CC + 1) ≤ SG + 2 := by
+    have hlt :=
+      Nat.log_lt_of_lt_pow (b := 2) (x := SG + 3) (y := CC + 1)
+        (by omega) h_CC_lt
+    omega
+  have h_KK_term_lt : KK + Nat.log 2 E + 4 < 2 ^ (SH + k + 5) := by
+    have hSH_pow : SH + 1 ≤ 2 ^ SH := by
+      have : SH < 2 ^ SH := Nat.lt_two_pow_self
+      omega
+    have hk_pow : k + 1 ≤ 2 ^ k := by
+      have : k < 2 ^ k := Nat.lt_two_pow_self
+      omega
+    have h_pow_eq :
+        (2 : ℕ) ^ (SH + k + 5) = 2 ^ SH * 2 ^ k * 32 := by
+      rw [show SH + k + 5 = SH + (k + 5) from by ring, pow_add,
+        show k + 5 = k + 5 from rfl, pow_add]; ring
+    have h_prod : (SH + 1) * (k + 1) ≤ 2 ^ SH * 2 ^ k :=
+      Nat.mul_le_mul hSH_pow hk_pow
+    have h_lin : SH + k + 1 ≤ (SH + 1) * (k + 1) := by
+      have h_expand : (SH + 1) * (k + 1) = SH * k + SH + k + 1 := by
+        ring
+      omega
+    rw [h_pow_eq]
+    omega
+  have h_log_KK : Nat.log 2 (KK + Nat.log 2 E + 4) ≤
+      SH + k + 4 := by
+    have hlt :=
+      Nat.log_lt_of_lt_pow (b := 2) (x := SH + k + 5)
+        (y := KK + Nat.log 2 E + 4)
+        (by omega) h_KK_term_lt
+    omega
+  have h_step_propagate :=
+    kSimPackedStep_towerHeight_ge_propagate g_ER
+  have h_comp_ge : ∀ l : Fin (k + 1),
+      (g_ER l).towerHeight + 1 ≤
+      (ERMor1.comp (g_ER l) kSimStepContext).towerHeight := by
+    intro l
+    simp only [ERMor1.towerHeight]
+    omega
+  set sup_comp :=
+    (Finset.univ : Finset (Fin (k + 1))).sup
+      (fun l =>
+        (ERMor1.comp (g_ER l) kSimStepContext).towerHeight)
+    with h_sup_comp_def
+  have h_sup_comp_ge_one : 1 ≤ sup_comp := by
+    have h_le_sup :
+        (ERMor1.comp (g_ER 0) kSimStepContext).towerHeight
+          ≤ sup_comp :=
+      Finset.le_sup
+        (f := fun l =>
+          (ERMor1.comp (g_ER l) kSimStepContext).towerHeight)
+        (Finset.mem_univ 0)
+    have hc := h_comp_ge 0
+    omega
+  have h_each_le :
+      ∀ l : Fin (k + 1), (g_ER l).towerHeight ≤ sup_comp - 1 := by
+    intro l
+    have h_le_sup :
+        (ERMor1.comp (g_ER l) kSimStepContext).towerHeight
+          ≤ sup_comp :=
+      Finset.le_sup
+        (f := fun l =>
+          (ERMor1.comp (g_ER l) kSimStepContext).towerHeight)
+        (Finset.mem_univ l)
+    have hc := h_comp_ge l
+    omega
+  have h_SG_le : SG ≤ sup_comp - 1 := by
+    rw [hSG_def]
+    apply Finset.sup_le
+    intro l _
+    exact h_each_le l
+  have h_sup_comp_ge : SG + 1 ≤ sup_comp := by omega
+  have h_step_ge_SG : (kSimPackedStep g_ER).towerHeight ≥
+      ERMor1.natPair.towerHeight + 3 + SG := by
+    omega
+  have h_base_ge_k : (kSimPackedBase h_ER).towerHeight ≥
+      k + 2 := kSimPackedBase_towerHeight_ge_succ_k h_ER
+  have h_base_ge_SH : (kSimPackedBase h_ER).towerHeight ≥
+      ERMor1.natPair.towerHeight + 2 + SH :=
+    kSimPackedBase_towerHeight_ge_propagate h_ER
+  have h_2base : 2 * (kSimPackedBase h_ER).towerHeight ≥
+      SH + ERMor1.natPair.towerHeight + k + 4 := by
+    -- 2 * max(a, b) ≥ a + b: split via two copies of baseTH.
+    omega
+  -- LHS bounds in terms of CC and KK (use h_log_CC, h_log_KK).
+  -- RHS bounds via h_step_ge_SG, h_2base.
+  omega
+
 /-- Uniform linear bound on `KMor1.simrecVec` for level-0
 families: each component at iteration `n ≤ S` is bounded
 by `CC * S + KK`, with `CC` and `KK` extracted from the
