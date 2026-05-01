@@ -495,6 +495,83 @@ def ofSumCtxER (n : ℕ) :
       exact le_trans h_sum_le h_le_S
     omega
 
+/-- Polynomial bound for `natUnpairFst`: dominated by `ctx 0`,
+since the first component of `Nat.unpair n` is at most `n`. -/
+def ofNatUnpairFst : PolyBound ERMor1.natUnpairFst where
+  degree := 1
+  coefficient := 1
+  constant := 0
+  bounds := fun ctx => by
+    have h_interp :
+        ERMor1.natUnpairFst.interp ctx =
+          (Nat.unpair (ctx 0)).1 := by
+      have hctx : ctx = ![ctx 0] := by
+        funext i
+        match i with
+        | ⟨0, _⟩ => rfl
+      conv_lhs => rw [hctx]
+      rw [ERMor1.interp_natUnpairFst]
+    rw [h_interp]
+    simp only [pow_one, one_mul]
+    have h_le_n : (Nat.unpair (ctx 0)).1 ≤ ctx 0 :=
+      Nat.unpair_left_le _
+    have h : ctx 0 ≤
+        (Finset.univ : Finset (Fin 1)).sup ctx :=
+      Finset.le_sup (Finset.mem_univ _)
+    omega
+
+/-- Polynomial bound for `natUnpairSnd`: dominated by `ctx 0`,
+since the second component of `Nat.unpair n` is at most `n`. -/
+def ofNatUnpairSnd : PolyBound ERMor1.natUnpairSnd where
+  degree := 1
+  coefficient := 1
+  constant := 0
+  bounds := fun ctx => by
+    have h_interp :
+        ERMor1.natUnpairSnd.interp ctx =
+          (Nat.unpair (ctx 0)).2 := by
+      have hctx : ctx = ![ctx 0] := by
+        funext i
+        match i with
+        | ⟨0, _⟩ => rfl
+      conv_lhs => rw [hctx]
+      rw [ERMor1.interp_natUnpairSnd]
+    rw [h_interp]
+    simp only [pow_one, one_mul]
+    have h_le_n : (Nat.unpair (ctx 0)).2 ≤ ctx 0 :=
+      Nat.unpair_right_le _
+    have h : ctx 0 ≤
+        (Finset.univ : Finset (Fin 1)).sup ctx :=
+      Finset.le_sup (Finset.mem_univ _)
+    omega
+
+/-- Polynomial bound for `beta`: `a % (1 + (i+1)*b)` is at
+most `a = ctx 0`, hence linear in the context maximum. -/
+def ofBeta : PolyBound ERMor1.beta where
+  degree := 1
+  coefficient := 1
+  constant := 0
+  bounds := fun ctx => by
+    have h_interp :
+        ERMor1.beta.interp ctx =
+          ctx 0 % (1 + (ctx 2 + 1) * ctx 1) := by
+      have hctx : ctx = ![ctx 0, ctx 1, ctx 2] := by
+        funext i
+        match i with
+        | ⟨0, _⟩ => rfl
+        | ⟨1, _⟩ => rfl
+        | ⟨2, _⟩ => rfl
+      conv_lhs => rw [hctx]
+      rw [ERMor1.interp_beta]
+    rw [h_interp]
+    simp only [pow_one, one_mul]
+    have h_mod_le : ctx 0 % (1 + (ctx 2 + 1) * ctx 1) ≤ ctx 0 :=
+      Nat.mod_le _ _
+    have h : ctx 0 ≤
+        (Finset.univ : Finset (Fin 3)).sup ctx :=
+      Finset.le_sup (Finset.mem_univ _)
+    omega
+
 /-- Generic adapter: a `PolyBound` over any context yields a
 single-degree power bound `(maxCtx ctx + 2)^D` with
 `D = degree + coefficient + constant + 2`.  The base shift is
