@@ -129,11 +129,15 @@ load-bearing for the auxiliary chain.
   currently ending around line 456)
 
 The `iterAutoBoundExpr k d lh` body (lines 410–423) has
-shape `comp (towerER (d + 1)) [...]`.  By induction on `k`,
-`(towerER k).towerHeight = k`.  The outer `comp` adds `+1`
+shape `comp (towerER (d + 1)) [...]`.  By induction on `n`,
+`n ≤ (towerER n).towerHeight` (each successor case adds at
+least 1 via `comp expER [towerER n, twoN 1]`'s outer `+1`,
+combined with the IH bound on the first sub-branch).
+The outer `comp` of `iterAutoBoundExpr` adds another `+1`
 plus the inner block's tH.  Hence
-`(iterAutoBoundExpr k d lh).towerHeight ≥ (d + 1) + 1 =
-d + 2 ≥ d`.
+`d + 1 ≤ (towerER (d + 1)).towerHeight ≤
+(iterAutoBoundExpr k d lh).towerHeight`, so
+`d ≤ (iterAutoBoundExpr k d lh).towerHeight`.
 
 This task adds the `_ge_d` lemma as a standalone result.
 It is not used by the auxiliary lemma proof but is useful
@@ -145,27 +149,55 @@ documentation for the relationship between the
 ```lean
 /-- Structural lower bound on `iterAutoBoundExpr`'s tower
 height in terms of the `d` parameter.  The outer `comp
-(towerER (d + 1)) [...]` contributes `(d + 1) + sup(...)
-+ 1`, which dominates `d`. -/
+(towerER (d + 1)) [...]` contributes `(towerER (d + 1)).
+towerHeight + sup(...) + 1`, and `(towerER n).towerHeight
+≥ n` by induction, so `(iterAutoBoundExpr k d lh).
+towerHeight ≥ d + 1 + 0 + 1 ≥ d`. -/
 theorem ERMor1.iterAutoBoundExpr_towerHeight_ge_d
     (k d lh : ℕ) :
     d ≤ (ERMor1.iterAutoBoundExpr k d lh).towerHeight := by
   unfold ERMor1.iterAutoBoundExpr
   simp only [ERMor1.towerHeight]
-  have htow : ∀ n, (ERMor1.towerER n).towerHeight = n := by
+  -- After simp only, the goal exposes
+  -- (towerER (d + 1)).towerHeight + sup (...) + 1 on the
+  -- right.  Bound (towerER n).towerHeight ≥ n by induction.
+  have htow : ∀ n, n ≤ (ERMor1.towerER n).towerHeight := by
     intro n
     induction n with
-    | zero => rfl
+    | zero =>
+        change 0 ≤ (ERMor1.proj (0 : Fin 1)).towerHeight
+        simp [ERMor1.towerHeight]
     | succ n' ih =>
         unfold ERMor1.towerER
         simp only [ERMor1.towerHeight]
-        -- comp expER [towerER n', twoN 1].  expER and twoN 1
-        -- are atomic ER terms (towerHeight 0).  Inner sup
-        -- picks (towerER n').towerHeight = n' by ih.
+        -- comp expER [towerER n', twoN 1]: outer comp adds
+        -- expER.tH + sup [(towerER n').tH, (twoN 1).tH] + 1.
+        -- The sup is ≥ (towerER n').tH ≥ n' by ih.  Outer
+        -- contributes another +1.  Hence ≥ n' + 1.
+        have h1 : (ERMor1.towerER n').towerHeight ≤
+            (Finset.univ : Finset (Fin 2)).sup _ := by
+          exact Finset.le_sup
+            (f := fun i : Fin 2 => match i with
+              | ⟨0, _⟩ => (ERMor1.towerER n').towerHeight
+              | ⟨1, _⟩ => (ERMor1.twoN 1).towerHeight)
+            (Finset.mem_univ ⟨0, by omega⟩)
         omega
-  rw [htow (d + 1)]
+  have h_outer : (ERMor1.towerER (d + 1)).towerHeight ≤
+      (ERMor1.iterAutoBoundExpr k d lh).towerHeight := by
+    -- The outer comp's f is towerER (d + 1).  By
+    -- towerHeight's comp recursion, f.tH ≤ comp.tH.
+    unfold ERMor1.iterAutoBoundExpr
+    simp only [ERMor1.towerHeight]
+    omega
+  have h_d1 : d + 1 ≤ (ERMor1.towerER (d + 1)).towerHeight :=
+    htow (d + 1)
   omega
 ```
+
+If the inner `match`-based `Finset.le_sup` does not
+elaborate cleanly (because `Fin 2`'s sup over a `match`
+expression is opaque), substitute with explicit
+`change` or `show` unfolding the match.
 
 If `omega` fails because `Finset.univ.sup` over the inner
 match expression is opaque, add `Finset.le_sup`-based
