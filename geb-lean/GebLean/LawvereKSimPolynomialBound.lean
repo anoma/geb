@@ -1865,4 +1865,141 @@ private theorem KMor1.simrecVec_seqPack_le_pow
   rw [hexp_eq] at h_pack
   exact h_pack
 
+/-- Level-1 simrec dominance: the iterated packed value of
+`kSimPackedStep` over `kSimPackedBase` is dominated by
+`kSimTowerBound`'s closed-form tower at every iteration
+counter and parameter context, when both base and step
+families consist of level-0 K^sim terms.
+
+The proof composes A.2 (packed-iteration matches seqPack),
+A.3 (seqPack ≤ pow), A.4 (pow ≤ tower 2), A.5.1
+(tower 2 ≤ tower 3 with log shifts), and A.5.2.2
+(stepTH + 2*baseTH + 1 dominates the log-sum). -/
+private theorem kSimTowerBound_dominates_level_one
+    {a k : ℕ}
+    (h_fam : Fin (k + 1) → KMor1 a)
+    (g_fam : Fin (k + 1) → KMor1 (a + 1 + (k + 1)))
+    (h_h : ∀ l, (h_fam l).level ≤ 0)
+    (h_g : ∀ l, (g_fam l).level ≤ 0)
+    (j : ℕ) (params : Fin a → ℕ) :
+    Nat.rec
+      ((kSimPackedBase
+        (fun l => kToER (h_fam l)
+          (Nat.le_succ_of_le
+            (Nat.le_succ_of_le (h_h l))))).interp params)
+      (fun i prev =>
+        (kSimPackedStep
+          (fun l => kToER (g_fam l)
+            (Nat.le_succ_of_le
+              (Nat.le_succ_of_le (h_g l))))).interp
+        (Fin.cons i (Fin.cons prev params)))
+      j ≤
+      (kSimTowerBound
+        (fun l => kToER (h_fam l)
+          (Nat.le_succ_of_le
+            (Nat.le_succ_of_le (h_h l))))
+        (fun l => kToER (g_fam l)
+          (Nat.le_succ_of_le
+            (Nat.le_succ_of_le (h_g l))))).interp
+        (Fin.cons j params) := by
+  set h_ER : Fin (k + 1) → ERMor1 a :=
+    fun l => kToER (h_fam l)
+      (Nat.le_succ_of_le (Nat.le_succ_of_le (h_h l)))
+    with h_ER_def
+  set g_ER : Fin (k + 1) → ERMor1 (a + 1 + (k + 1)) :=
+    fun l => kToER (g_fam l)
+      (Nat.le_succ_of_le (Nat.le_succ_of_le (h_g l)))
+    with g_ER_def
+  rw [packed_iteration_matches_simrecVec
+        h_fam g_fam h_h h_g params j]
+  set sumCtx :=
+    (Finset.univ : Finset (Fin (a + 1))).sum
+      (Fin.cons j params)
+    with hsumCtx_def
+  set S := sumCtx with hS_def
+  set CC :=
+    (Fin.foldr (k + 1) (fun l acc =>
+      max acc
+        (KMor1.level0Shape (g_fam l) (h_g l)).linearBound.1)
+      0) +
+    2 * (Fin.foldr (k + 1) (fun l acc =>
+      max acc
+        (KMor1.level0Shape (g_fam l) (h_g l)).linearBound.2)
+      0) + 1
+    with hCC_def
+  set KK :=
+    Fin.foldr (k + 1) (fun l acc =>
+      max acc
+        (KMor1.level0Shape (h_fam l) (h_h l)).linearBound.2)
+      0
+    with hKK_def
+  set E : ℕ := 6 * 4 ^ (k + 1) with hE_def
+  have h_params_le_S : ∀ i, params i ≤ S := by
+    intro i
+    change params i ≤ Finset.univ.sum (Fin.cons j params)
+    rw [Fin.sum_univ_succ]
+    simp only [Fin.cons_zero, Fin.cons_succ]
+    have h_le : params i ≤ ∑ k, params k :=
+      Finset.single_le_sum
+        (f := params) (s := Finset.univ)
+        (hf := fun _ _ => Nat.zero_le _)
+        (Finset.mem_univ i)
+    omega
+  have h_j_le_S : j ≤ S := by
+    change j ≤ Finset.univ.sum (Fin.cons j params)
+    rw [Fin.sum_univ_succ]
+    simp [Fin.cons_zero]
+  have h_pack_le := KMor1.simrecVec_seqPack_le_pow
+    h_fam g_fam h_h h_g params S h_params_le_S j h_j_le_S
+  simp only at h_pack_le
+  have h_tower2 :=
+    Nat.pow_le_tower_two_with_shift CC S KK E
+  have h_tower3 :
+      GebLean.tower 2 (CC * S + KK + Nat.log 2 E + 3) ≤
+      GebLean.tower 3 (S + Nat.log 2 (CC + 1)
+        + Nat.log 2 (KK + Nat.log 2 E + 4) + 2) := by
+    have h_eq : CC * S + KK + Nat.log 2 E + 3 =
+                CC * S + (KK + Nat.log 2 E + 3) := by ring
+    rw [h_eq]
+    have h_apply :=
+      _root_.Nat.tower_two_le_tower_three_linear CC
+        (KK + Nat.log 2 E + 3) S
+    have h_arg_eq : Nat.log 2 (KK + Nat.log 2 E + 3 + 1) =
+        Nat.log 2 (KK + Nat.log 2 E + 4) := by
+      congr 1
+    rw [h_arg_eq] at h_apply
+    exact h_apply
+  have h_combined :
+      Nat.log 2 (CC + 1) +
+          Nat.log 2 (KK + Nat.log 2 E + 4) ≤
+        (kSimPackedStep g_ER).towerHeight +
+          2 * (kSimPackedBase h_ER).towerHeight + 1 :=
+    stepTH_baseTH_dominates_arg h_fam g_fam h_h h_g
+  have h_step_ge_2 : (kSimPackedStep g_ER).towerHeight ≥ k + 2 :=
+    kSimPackedStep_towerHeight_ge_succ_k g_ER
+  rw [kSimTowerBound_interp]
+  rw [ERMor1.interp_sumCtxER]
+  -- Final calc chain.
+  calc Nat.seqPack _
+      ≤ (CC * S + KK + 2) ^ E := h_pack_le
+    _ ≤ GebLean.tower 2 (CC * S + KK + 1 + Nat.log 2 E + 2)
+        := h_tower2
+    _ = GebLean.tower 2 (CC * S + KK + Nat.log 2 E + 3) := by
+        congr 1; ring
+    _ ≤ GebLean.tower 3 (S + Nat.log 2 (CC + 1)
+          + Nat.log 2 (KK + Nat.log 2 E + 4) + 2) :=
+        h_tower3
+    _ ≤ GebLean.tower ((kSimPackedStep g_ER).towerHeight + 1)
+          (S + Nat.log 2 (CC + 1)
+            + Nat.log 2 (KK + Nat.log 2 E + 4) + 2) :=
+        GebLean.tower_mono_left (by omega) _
+    _ ≤ GebLean.tower ((kSimPackedStep g_ER).towerHeight + 1)
+          ((kSimPackedStep g_ER).towerHeight + 1
+            + 2 * (kSimPackedBase h_ER).towerHeight
+            + 2 * (Finset.univ : Finset (Fin (a + 1))).sum
+                (Fin.cons j params)
+            + 2) := by
+        apply GebLean.tower_mono_right
+        omega
+
 end GebLean
