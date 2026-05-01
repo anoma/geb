@@ -48,30 +48,9 @@ example : addK.interp ![3, 5] = 8 := by decide
 /-- The K^sim-side linear-bound pair for `addK`. -/
 private def addK_lb : ℕ × ℕ := KMor1.linearBound addK addK_level
 
-#eval addK_lb
--- Expected (computed by hand): coefficient and constant from
---   simrec's linearBound clause:
---     (max_step_c + 2 * max_step_k + 1, max_base_const)
--- with one base child (proj 0, lb = (1, 0)) and one step child
--- (comp succ (fun _ => proj 2), lb = (1*1, 1*0+1) = (1, 1)).
--- max_step_c = 1, max_step_k = 1, max_base_const = 0.
--- → addK_lb = (1 + 2*1 + 1, 0) = (4, 0).
-
-#eval (addK_lb.1, addK_lb.2)
-#eval Nat.log 2 (addK_lb.1 + addK_lb.2 + 1)
--- Expected: log_2 (4 + 0 + 1) = log_2 5 = 2.
-
 /-- The ER-side tower height of `kToER addK`. -/
 private def addK_ER_tH : ℕ :=
   (kToER addK addK_level_two).towerHeight
-
-#eval addK_ER_tH
--- Will print the actual value computed by Lean.
-
--- Chain-closing diagnostic: log_2 of the linear-bound
--- constants vs. ER tower height of `kToER addK`.
-#eval (Nat.log 2 (addK_lb.1 + addK_lb.2 + 1), addK_ER_tH)
--- Want: first ≤ second + (small constant).
 
 -- For the polynomial-bound chain at Phase IV-B (Strategy B1
 -- or B2), the constant `D` consumed by
@@ -85,15 +64,6 @@ private def addK_ER_tH : ℕ :=
 --   = 2*addK_lb.1 + addK_lb.2 + 3.
 private def addK_D_of : ℕ :=
   1 + addK_lb.1 + (addK_lb.1 + addK_lb.2) + 2
-
-#eval addK_D_of
--- For addK: 1 + 4 + (4 + 0) + 2 = 11.
-
-#eval Nat.log 2 (addK_D_of + 1)
--- Want this ≤ `kSimPackedStep_g_ER`'s tower height for level-2.
--- For addK as the only level-1 child, sup_l D_of = D_of, so
--- D_max = D_of, and E = (D_max + 5) * 4^(k+1).  We want
--- log_2 D_max ≤ stepTH + small.
 
 -- Fan-out at every comp node in `addK`'s sub-structure is 1
 -- (each comp takes a single child).  This is the favorable
@@ -117,10 +87,6 @@ private theorem projSuccFanOut5_level_one :
     projSuccFanOut5.level ≤ 1 :=
   Nat.le_succ_of_le projSuccFanOut5_level
 
-#eval KMor1.linearBound projSuccFanOut5
-        projSuccFanOut5_level_one
--- New: (1, 1).  Old (pre-tightening) would have been (1, 5).
-
 /-- Witness for the level-1 fan-out residual: even with the
 new tightened `linearBound`, level-1 comps with high fan-out
 to non-trivial children retain a multiplicative `b`-factor.
@@ -133,21 +99,6 @@ private def addKFanOut5 : KMor1 2 :=
 
 private theorem addKFanOut5_level :
     addKFanOut5.level ≤ 1 := by decide
-
-#eval KMor1.linearBound addKFanOut5 addKFanOut5_level
--- Expected: (4, 0).  Reasoning: p_f = linearBound (proj 0)
--- = (1, 0); max_c = (linearBound addK).1 = 4; sum_k =
--- 5 * (linearBound addK).2 = 5 * 0 = 0;
--- result: (1*4, 1*0 + 0) = (4, 0).
--- (`addK`'s linearBound.2 = 0 saves us from the b-factor.)
-
-#eval (kToER addKFanOut5
-  (Nat.le_succ_of_le addKFanOut5_level)).towerHeight
--- Expected: tH(proj 0) + tH(addK) + 1 = 0 + 1117 + 1 = 1118.
-
-#eval Nat.log 2 (4 + 0 + 1)
--- = 2.  Inequality 2 ≤ 1118 + c holds with massive slack
--- (c ≥ -1116).
 
 /-!
 ## Refinement (recorded 2026-05-01, second pass)
