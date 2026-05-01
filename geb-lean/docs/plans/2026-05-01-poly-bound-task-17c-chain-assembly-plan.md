@@ -53,8 +53,15 @@ commit — the headline lands fully proven, not stubbed.
 
 ## File structure
 
-The plan touches one module:
+The plan touches three modules:
 
+- **Modify** `GebLean/LawvereERPolynomialBound.lean`:
+  add ~10 derived-term `PolyBound` builders (B4; D.0.A)
+  and a sharper `to_iter_step_form_log` adapter (B1;
+  D.0.B).
+- **Modify** `GebLean/Utilities/ComputationalComplexity.lean`:
+  add `polynomial_iter_tower_bound_with_pow_base`
+  (B2; D.0.C).
 - **Modify** `GebLean/LawvereKSimPolynomialBound.lean`:
   add a new section after the existing
   `kSimTowerBound_dominates_level_one` (line 2578) that
@@ -68,6 +75,32 @@ The plan touches one module:
   - `kSimTowerBound_dominates_inline` — the headline
     public theorem (D.1 + D.3.1 + D.4 + D.5; one
     combined commit).
+
+> **Audit note (2026-05-01, post plan v1)**: the original
+> plan v1 had a chain-breaking gap.  The existing
+> `to_iter_step_form` (Poly Task 10) folds
+> `c · y^d + k` into exponent `d + c + k + 2`.  With
+> `pb_packed_step.coefficient = 3^E` (from
+> `kSimPackedStep_polyBound`), this exponent grows
+> exponentially in `k` (the system size), making the
+> resulting `Nat.log 2 D` exponential in `k` while
+> `stepTH = (kSimPackedStep g_ER).towerHeight` grows
+> only linearly in `k`.  The chain-closing inequality
+> `Nat.log 2 (D + 1) ≤ 3 · stepTH + small_const` cannot
+> close with a closed `small_const` under those
+> growth rates.  The fix (D.0.B): a sharper
+> `to_iter_step_form_log` adapter that uses
+> `Nat.log 2 coefficient` (not `coefficient`) in the
+> exponent.  Justification:
+> `c · y^d ≤ y^(d + Nat.log 2 c + 1)` for `y ≥ 2`.
+>
+> Similarly, the polynomial-base case (kSimPackedBase
+> at level 2) requires a polynomial-base variant of
+> `polynomial_iter_tower_bound` (D.0.C).
+>
+> Plan v2 (this revision) adds three infrastructure
+> tasks (D.0.A / D.0.B / D.0.C) before D.2 to fix these
+> issues.
 
 No new files are created.  All landed infrastructure is
 in place (verified via grep on commit `4880d884`):
@@ -89,6 +122,516 @@ in place (verified via grep on commit `4880d884`):
   `ofComp` / `ofBoundedRec` (`LawvereERPolynomialBound`,
   per-constructor builders; `ofBoundedRec` landed at
   `f48ecf78`).
+
+---
+
+## Task D.0: infrastructure additions
+
+Three sub-tasks adding pre-requisites for the chain
+assembly.  Each is a standalone commit.
+
+### Task D.0.A: derived-term `PolyBound` builders
+
+**Files:**
+
+- Modify: `GebLean/LawvereERPolynomialBound.lean`.
+
+**Goal:** add named `PolyBound` builders for the derived
+ER terms used by `kSimSzudzikUnpackAt` and
+`iterAutoBoundExpr` (and thus by D.2's recursive
+`kToER_polyBound_of_level_one` in the simrec case).
+
+The verified existing builders are `ofZero`, `ofSucc`,
+`ofProj`, `ofSub`, `ofComp`, `ofBsum`, `ofBoundedRec`.
+Missing are the derived-term builders (which all
+expand to `ofComp` chains over the constructors above
+plus their internal definitions in `Utilities/ERArith.lean`
+or `LawvereERBoundComputable.lean`).
+
+The derived terms whose builders are needed:
+
+| Builder | ER term | Lines |
+|---|---|---|
+| `ofBprod` | `ERMor1.bprod` (constructor) | 30 |
+| `ofZeroN` | `ERMor1.zeroN n` | 10 |
+| `ofPred` | `ERMor1.pred` | 20 |
+| `ofTwoN` | `ERMor1.twoN n` | 10 |
+| `ofNatN` | `ERMor1.natN n m` | 20 |
+| `ofExpER` | `ERMor1.expER` | 20 |
+| `ofTowerER` | `ERMor1.towerER k` | 30 |
+| `ofAddN` | `ERMor1.addN` | 15 |
+| `ofSumCtxER` | `ERMor1.sumCtxER n` | 20 |
+| `ofNatUnpairFst` | `ERMor1.natUnpairFst` | 30 |
+| `ofNatUnpairSnd` | `ERMor1.natUnpairSnd` | 30 |
+| `ofMinN` | `ERMor1.minN` | 15 |
+| `ofBeta` | `ERMor1.beta` | 25 |
+
+Defining locations: `bprod` is a constructor in
+`LawvereER.lean`; the other terms are derived `def`s
+in `Utilities/ERArith.lean` or
+`LawvereERBoundComputable.lean`.
+
+Total estimated: ~250 lines.
+
+Each builder follows the same pattern: read the
+defining `def` of the derived term, expand its `comp`
+chain, and apply the existing per-constructor builders
+(`ofZero`, `ofSucc`, etc.) in the matching shape.  For
+recursive defs (`towerER`, `natN`, `kSimSzudzikUnpackAt`),
+build by induction on the recursive parameter; the
+implementer is empowered to factor a `private theorem`
+shape for the inductive step if needed.
+
+The simplest approach is **interp-then-bound**: for any
+derived term `f`, an `interp` lemma states
+`f.interp ctx = some closed expression`; from that
+expression's algebraic shape, derive the
+`coefficient · (maxCtx + 1)^degree + constant` bound by
+case-analysis or arithmetic.  This avoids building
+through `ofComp` chains for some terms (e.g. `addN`
+trivially has degree-1 bound `(maxCtx + 1)^1 · 2`).
+
+- [ ] **Step D.0.A.1: Add `ofBprod`**
+
+`ERMor1.bprod` is a constructor (parallel to `ofBsum`).
+Mirror `ofBsum` (line 275 of `LawvereERPolynomialBound.lean`)
+with the bprod-specific bound (multiplicative blow-up
+`(maxCtx + 1)^(d · maxCtx)` becomes a polynomial bound
+when truncated; or use `f.interp ctx = product over
+range`).  Estimated 30 lines.
+
+If `ofBprod` proves substantially harder than `ofBsum`
+(e.g. requires multiplicative-iter helpers), the
+implementer is empowered to skip it for now and use
+inline `ofComp` chains for any specific bprod use site.
+
+- [ ] **Step D.0.A.2: Add the simple atomic-derived
+  builders (`ofZeroN`, `ofTwoN`, `ofNatN`, `ofPred`,
+  `ofMinN`, `ofAddN`, `ofSumCtxER`)**
+
+Each is ~10-25 lines following the interp-then-bound
+pattern.  Use the `interp` lemmas already in `ERArith.lean`
+to compute the closed-form interp, then derive the
+PolyBound's `(coefficient, degree, constant)` from the
+arithmetic.
+
+```lean
+/-- PolyBound for `ERMor1.zeroN n`.  Always returns 0. -/
+def ofZeroN (n : ℕ) :
+    PolyBound (ERMor1.zeroN n) where
+  degree := 0
+  coefficient := 0
+  constant := 0
+  bounds := fun ctx => by
+    simp [ERMor1.interp_zeroN]
+
+/-- PolyBound for `ERMor1.addN`: x + y ≤ 2 · max ctx + 0. -/
+def ofAddN : PolyBound ERMor1.addN where
+  degree := 1
+  coefficient := 2
+  constant := 0
+  bounds := fun ctx => by
+    simp [ERMor1.interp_addN]
+    have := le_maxCtx ctx 0
+    have := le_maxCtx ctx 1
+    omega
+```
+
+(Adapt to actual interp-lemma names and shapes.  If
+`omega` doesn't close, substitute `nlinarith` or work
+out the exact bound by case analysis.)
+
+The implementer should add these in a single batch and
+commit.
+
+- [ ] **Step D.0.A.3: Add the recursive-derived
+  builders (`ofExpER`, `ofTowerER`, `ofNatUnpairFst`,
+  `ofNatUnpairSnd`, `ofBeta`)**
+
+These are larger (~20-30 lines each) because they
+either use `ofComp` over multiple atoms, or use
+`PolyBound.ofBoundedRec`-style recursion.
+
+For `ofTowerER k`:
+
+```lean
+def ofTowerER (k : ℕ) :
+    PolyBound (ERMor1.towerER k) := by
+  induction k with
+  | zero =>
+      -- towerER 0 = proj 0
+      change PolyBound (ERMor1.proj (k := 1) 0)
+      exact ofProj _
+  | succ k' ih =>
+      -- towerER (k+1) = comp expER [towerER k', twoN 1]
+      change PolyBound (ERMor1.comp ERMor1.expER _)
+      apply ofComp
+      · exact ofExpER  -- recursive — will need its own builder
+      · intro i
+        match i with
+        | ⟨0, _⟩ => exact ih
+        | ⟨1, _⟩ => exact ofTwoN 1
+```
+
+The exact shape may need adjustment.  If `change`
+doesn't elaborate cleanly, use `unfold ERMor1.towerER`
+combined with `simp only [...]` first.
+
+For `ofNatUnpairFst` / `ofNatUnpairSnd`:  these are
+defined in terms of `bsum` of conditional terms.  Use
+`ofBsum` plus inner-term builders.  Estimated 30 lines
+each.
+
+- [ ] **Step D.0.A.4: Run `lake build` + `lake test`**
+
+Run: `lake build && lake test`
+Expected: PASS, no warnings.
+
+- [ ] **Step D.0.A.5: Commit**
+
+```bash
+git add GebLean/LawvereERPolynomialBound.lean
+git commit -m "$(cat <<'EOF'
+Derived-term PolyBound builders (Task 17c D.0.A)
+
+Adds ~10 named PolyBound builders for derived ER terms
+(ofZeroN / ofPred / ofTwoN / ofNatN / ofExpER / ofTowerER
+/ ofAddN / ofSumCtxER / ofNatUnpairFst / ofNatUnpairSnd
+/ ofMinN / ofBeta / ofBprod) used by D.2's recursive
+kToER_polyBound_of_level_one in the simrec case.  Each
+builder is constructed as a comp chain over the
+existing per-constructor builders plus the derived
+term's defining interp.
+
+Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
+EOF
+)"
+```
+
+If a subset of builders proved harder than expected
+(e.g. `ofBprod`, `ofNatUnpairFst/Snd`), the
+implementer is empowered to defer them and use inline
+`ofComp` chains at the specific D.2 use site instead.
+Update the commit message body accordingly.
+
+---
+
+### Task D.0.B: sharper `to_iter_step_form_log` adapter
+
+**Files:**
+
+- Modify: `GebLean/LawvereERPolynomialBound.lean`
+  (insert after the existing `to_iter_step_form` at
+  line 503).
+
+**Goal:** add a sharper variant of `to_iter_step_form`
+that uses `Nat.log 2 coefficient` (not `coefficient`)
+in the resulting exponent.  This is the chain-breaking
+fix (audit finding B1).
+
+The existing `to_iter_step_form` produces
+
+```text
+f.interp (Fin.cons x (Fin.cons v params)) ≤
+  (max v (max x sp) + 2) ^
+    (pb.degree + pb.coefficient + pb.constant + 2)
+```
+
+i.e. exponent `d + c + k + 2` where `c, k` are the
+PolyBound's coefficient and constant.  When `c = 3^E`
+(as for `kSimPackedStep_polyBound`), this exponent is
+exponentially large in `E`, hence doubly-exponentially
+large in `k` (the system size).
+
+The sharper variant produces
+
+```text
+f.interp (Fin.cons x (Fin.cons v params)) ≤
+  (max v (max x sp) + 2) ^
+    (pb.degree + Nat.log 2 (pb.coefficient + 1) +
+     Nat.log 2 (pb.constant + 1) + 3)
+```
+
+i.e. exponent `d + Nat.log 2 (c + 1) + Nat.log 2 (k + 1) + 3`,
+which is logarithmic in `c, k`.  For `c = 3^E`, this
+is `O(d + E + 0 + 3)` — linear in `E`, hence linear in
+`k`.
+
+- [ ] **Step D.0.B.1: State the lemma**
+
+```lean
+/-- Sharper variant of `to_iter_step_form`: uses
+`Nat.log 2 coefficient` and `Nat.log 2 constant` in the
+exponent instead of the raw fields.  Closes the
+Phase IV-B chain when the polyBound's coefficient grows
+exponentially (as in `kSimPackedStep_polyBound`'s
+`3^E` field). -/
+theorem to_iter_step_form_log {k : ℕ}
+    (f : ERMor1 (k + 2)) (pb : PolyBound f)
+    (params : Fin k → ℕ) :
+    ∀ v x, f.interp (Fin.cons x (Fin.cons v params)) ≤
+      (max v (max x ((Finset.univ : Finset (Fin k)).sup
+        params)) + 2) ^
+        (pb.degree +
+         Nat.log 2 (pb.coefficient + 1) +
+         Nat.log 2 (pb.constant + 1) + 3) := by
+  _
+```
+
+The `+1`s on `coefficient` and `constant` ensure the
+`Nat.log 2` arguments are positive (avoiding the
+`Nat.log 2 0 = 0` corner case).
+
+- [ ] **Step D.0.B.2: Prove the lemma**
+
+The proof mirrors `to_iter_step_form`'s structure but
+uses the sharper bound `c · y^d ≤ y^(d + Nat.log 2 c + 1)`
+when `y ≥ 2`.
+
+```lean
+theorem to_iter_step_form_log {k : ℕ}
+    (f : ERMor1 (k + 2)) (pb : PolyBound f)
+    (params : Fin k → ℕ) :
+    ∀ v x, f.interp (Fin.cons x (Fin.cons v params)) ≤
+      (max v (max x ((Finset.univ : Finset (Fin k)).sup
+        params)) + 2) ^
+        (pb.degree +
+         Nat.log 2 (pb.coefficient + 1) +
+         Nat.log 2 (pb.constant + 1) + 3) := by
+  intro v x
+  set sp : ℕ :=
+    (Finset.univ : Finset (Fin k)).sup params with hsp
+  set y : ℕ := max v (max x sp) + 2 with hy
+  have h_y_ge_two : 2 ≤ y := by simp only [hy]; omega
+  have h_ctx_sup_le :
+      maxCtx (Fin.cons x (Fin.cons v params)) ≤
+        max v (max x sp) := by
+    -- (same as to_iter_step_form's proof)
+    sorry  -- copy from existing to_iter_step_form
+  have h_applied :=
+    pb.bounds (Fin.cons x (Fin.cons v params))
+  -- h_applied : f.interp _ ≤
+  --   pb.coefficient * (maxCtx _ + 1) ^ pb.degree
+  --   + pb.constant
+  have h_base_le :
+      maxCtx (Fin.cons x (Fin.cons v params)) + 1 ≤ y := by
+    simp only [hy]; omega
+  have h_pow_base_le :
+      (maxCtx (Fin.cons x (Fin.cons v params)) + 1)
+        ^ pb.degree ≤ y ^ pb.degree :=
+    Nat.pow_le_pow_left h_base_le _
+  -- Bound coefficient · y^degree using the sharper form.
+  -- coefficient ≤ 2 ^ (Nat.log 2 (coefficient + 1) + 1)
+  -- (since coefficient + 1 < 2^(Nat.log 2 (coefficient + 1) + 1))
+  have h_c_bd :
+      pb.coefficient ≤
+        2 ^ (Nat.log 2 (pb.coefficient + 1) + 1) := by
+    have h_c1 :
+        pb.coefficient + 1 <
+          2 ^ (Nat.log 2 (pb.coefficient + 1) + 1) :=
+      Nat.lt_pow_succ_log_self (by omega) _
+    omega
+  have h_c_pow_le :
+      pb.coefficient ≤
+        y ^ (Nat.log 2 (pb.coefficient + 1) + 1) := by
+    -- coefficient ≤ 2^(Nat.log 2 (c+1) + 1) ≤ y^(...)
+    have h_2_le_y : 2 ≤ y := h_y_ge_two
+    have h_pow_2_le_y :
+        2 ^ (Nat.log 2 (pb.coefficient + 1) + 1) ≤
+        y ^ (Nat.log 2 (pb.coefficient + 1) + 1) :=
+      Nat.pow_le_pow_left h_2_le_y _
+    omega
+  -- coefficient · y^degree ≤
+  --   y^(Nat.log 2 (c+1) + 1) · y^degree =
+  --   y^(degree + Nat.log 2 (c+1) + 1)
+  have h_c_mul :
+      pb.coefficient *
+        (maxCtx (Fin.cons x (Fin.cons v params)) + 1)
+          ^ pb.degree ≤
+        y ^
+          (pb.degree + Nat.log 2 (pb.coefficient + 1) + 1) := by
+    calc pb.coefficient *
+          (maxCtx (Fin.cons x (Fin.cons v params)) + 1)
+            ^ pb.degree
+        ≤ pb.coefficient * y ^ pb.degree :=
+          Nat.mul_le_mul_left _ h_pow_base_le
+      _ ≤ y ^ (Nat.log 2 (pb.coefficient + 1) + 1) *
+          y ^ pb.degree :=
+          Nat.mul_le_mul_right _ h_c_pow_le
+      _ = y ^
+          (pb.degree + Nat.log 2 (pb.coefficient + 1) + 1) := by
+          rw [← pow_add]; ring_nf
+  -- Similarly bound constant.
+  have h_k_bd :
+      pb.constant ≤
+        y ^ (Nat.log 2 (pb.constant + 1) + 1) := by
+    sorry  -- analogous to h_c_pow_le
+  -- coefficient · y^degree + constant ≤
+  --   2 · y^(max(degree + Nat.log 2 (c+1) + 1,
+  --              Nat.log 2 (k+1) + 1)) ≤
+  --   y^(max(...) + 2) (since y ≥ 2)
+  -- Conclude with degree + Nat.log 2 (c+1) + Nat.log 2 (k+1) + 3.
+  sorry  -- final assembly
+```
+
+The transient `sorry`s are filled by mechanical
+arithmetic.  Cap the proof at ~150 lines.  If the
+sharper exponent proves harder to prove than the looser
+one, the implementer is empowered to use a slightly
+looser-but-workable form (e.g. `degree + 2 · Nat.log 2
+(coefficient + constant + 2) + 4`) — as long as the
+chain in D.5 still closes.
+
+- [ ] **Step D.0.B.3: Run `lake build` + `lake test`**
+
+Run: `lake build && lake test`
+Expected: PASS, no warnings.
+
+- [ ] **Step D.0.B.4: Commit**
+
+```bash
+git add GebLean/LawvereERPolynomialBound.lean
+git commit -m "$(cat <<'EOF'
+Sharper to_iter_step_form_log adapter (Task 17c D.0.B)
+
+Adds public theorem to_iter_step_form_log: a sharper
+variant of to_iter_step_form (Poly Task 10) using
+Nat.log 2 (coefficient + 1) and Nat.log 2 (constant + 1)
+in the resulting exponent instead of the raw fields.
+Required for the Phase IV-B chain because
+kSimPackedStep_polyBound's coefficient = 3^E grows
+exponentially in the system size k; the existing adapter
+folds c · y^d into y^(d+c+...), producing exponentially
+large bounds.
+
+Justification: c · y^d ≤ y^(d + Nat.log 2 c + 1) when
+y ≥ 2.  Same justification for the constant term.
+
+Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
+EOF
+)"
+```
+
+---
+
+### Task D.0.C: polynomial-base adapter for `polynomial_iter_tower_bound`
+
+**Files:**
+
+- Modify: `GebLean/Utilities/ComputationalComplexity.lean`
+  (insert after the existing
+  `polynomial_iter_tower_bound` at line 471).
+
+**Goal:** add a polynomial-base variant of
+`polynomial_iter_tower_bound` that accepts a polynomial
+base bound `v_0 x ≤ (m_base · x + m_base + 1)^D_base`
+instead of the linear `v_0 x ≤ m · x + m`.
+
+The existing `polynomial_iter_tower_bound` requires a
+linear base, but `kSimPackedBase_polyBound` produces a
+polynomial bound on `kSimPackedBase h_ER`, not a linear
+bound.
+
+- [ ] **Step D.0.C.1: State and prove the variant**
+
+```lean
+/-- Polynomial-base variant of polynomial_iter_tower_bound:
+  iterating a polynomially-bounded step `j` times,
+starting from a polynomially-bounded base, keeps the
+value bounded by a fixed-height tower (height 2) of a
+linear function in `(j, x, Nat.log 2 D_step,
+Nat.log 2 D_base, m_base)`.  Used by Phase IV-B Task
+D.5 where the packed base has a polynomial (not
+linear) PolyBound. -/
+theorem polynomial_iter_tower_bound_with_pow_base
+    (step : ℕ → ℕ → ℕ) (D_step D_base m_base : ℕ)
+    (h_step : ∀ v x, step v x ≤ (max v x + 1) ^ D_step)
+    (v_0 : ℕ → ℕ)
+    (h_base : ∀ x, v_0 x ≤
+      (m_base * x + m_base + 1) ^ D_base)
+    (j x : ℕ) :
+    Nat.iterate (fun v => step v x) j (v_0 x) ≤
+      GebLean.tower 2
+        ((Nat.log 2 D_step + 2) * (j + 1) +
+         (Nat.log 2 D_base + 2) +
+         m_base * x + m_base + x +
+         Nat.log 2 D_step + 2) := by
+  _
+```
+
+- [ ] **Step D.0.C.2: Prove the variant**
+
+Strategy: convert `v_0 x` to a `tower 2` bound via
+`pow_le_tower_two_with_shift` (already in this file at
+line 612), then chain through the existing
+`polynomial_iter_tower_bound` with the inflated base.
+
+Actually, the cleanest proof: use induction on `j` and
+the strong-pow bound, mirroring
+`polynomial_iter_tower_bound`'s proof but with the
+polynomial-base zero case.
+
+```lean
+theorem polynomial_iter_tower_bound_with_pow_base
+    -- (signature as above) := by
+  induction j with
+  | zero =>
+      simp only [Nat.iterate]
+      have h0 : v_0 x ≤
+          (m_base * x + m_base + 1) ^ D_base := h_base x
+      -- Bound (m_base · x + m_base + 1)^D_base by
+      -- tower 2 (linear via pow_le_tower_two_with_shift).
+      have h_pow_le_tower :
+          (m_base * x + m_base + 1) ^ D_base ≤
+          GebLean.tower 2
+            ((m_base * x + m_base) +
+             Nat.log 2 D_base + 2) := by
+        -- pow_le_tower_two_with_shift takes (CC * S + KK + 2)^E
+        -- with CC=1, S=m_base*x+m_base, KK=1-shift, E=D_base.
+        sorry  -- fill in via pow_le_tower_two_with_shift
+      -- Then bound this tower by the larger tower in the
+      -- conclusion.
+      sorry
+  | succ j ih =>
+      -- Mirror polynomial_iter_tower_bound's succ case
+      -- with the larger base.
+      sorry
+```
+
+Cap at ~120 lines.  If the proof grows beyond that,
+the implementer is empowered to revise the bound's
+shape (e.g. drop the `+ 2 * (j+1)` factor in favor of
+a coarser `+ const * (j + log D_base + log D_step + ...)`)
+as long as the resulting bound still composes with the
+chain in D.5.
+
+- [ ] **Step D.0.C.3: Run `lake build` + `lake test`**
+
+Run: `lake build && lake test`
+Expected: PASS, no warnings.
+
+- [ ] **Step D.0.C.4: Commit**
+
+```bash
+git add GebLean/Utilities/ComputationalComplexity.lean
+git commit -m "$(cat <<'EOF'
+polynomial_iter_tower_bound_with_pow_base (Task 17c D.0.C)
+
+Adds the polynomial-base variant of Nat.polynomial_iter_tower_bound
+(Poly Task 5).  The original requires a linear base bound v_0 x
+≤ m · x + m; this variant accepts a polynomial base bound
+v_0 x ≤ (m_base · x + m_base + 1)^D_base.  Required for
+Phase IV-B Task D.5, where kSimPackedBase_polyBound produces
+a polynomial bound on the packed base (not linear).
+
+Proof: convert the polynomial base to a tower-2 bound via
+pow_le_tower_two_with_shift, then mirror polynomial_iter_tower_bound's
+induction with the inflated base.
+
+Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
+EOF
+)"
+```
 
 ---
 
@@ -356,11 +899,67 @@ The two sub-`sorry`s are:
 - [ ] **Step D.2.6: Fill the D.2.5.a `sorry`
   (`kSimSzudzikUnpackAt` PolyBound)**
 
-`kSimSzudzikUnpackAt` is defined recursively in
-`GebLean/Utilities/KSimSzudzikSimrec.lean:122` as a
-`comp` of `natUnpairFst` / `natUnpairSnd` /
-`kSimSzudzikUnpackAt` (recursive case).  Build the
-PolyBound by structural recursion on `i`:
+`kSimSzudzikUnpackAt : (a : ℕ) → (i : ℕ) → ERMor1 (a + 1)`
+is defined recursively in
+`GebLean/Utilities/KSimSzudzikSimrec.lean:122` on the
+Nat argument `i`.  In the simrec case at D.2.5, the
+caller has `i : Fin (k+1)` and passes `i.val` to
+`kSimSzudzikUnpackAt`.  Direct `induction i.val` does
+not work because `i.val` is not a free variable — it
+is a specific projection of `i`.
+
+**Resolution**: factor a generalized helper and
+specialize:
+
+```lean
+-- Helper: PolyBound for kSimSzudzikUnpackAt at any
+-- (a, n).  Proved by induction on n.
+private theorem kSimSzudzikUnpackAt_polyBound
+    (a n : ℕ) :
+    ERMor1.PolyBound (kSimSzudzikUnpackAt a n) := by
+  induction n with
+  | zero =>
+      -- Base case: kSimSzudzikUnpackAt a 0 = comp natUnpairFst (...)
+      unfold kSimSzudzikUnpackAt
+      apply ERMor1.PolyBound.ofComp
+      · exact ERMor1.PolyBound.ofNatUnpairFst  -- D.0.A.3
+      · intro _
+        apply ERMor1.PolyBound.ofComp
+        · exact ERMor1.PolyBound.ofPred  -- D.0.A.2
+        · intro _
+          exact ERMor1.PolyBound.ofProj _
+  | succ n' ih =>
+      -- Recursive case: comp (kSimSzudzikUnpackAt a n) (...)
+      unfold kSimSzudzikUnpackAt
+      apply ERMor1.PolyBound.ofComp
+      · exact ih
+      · intro l
+        by_cases h_eq : l.val = 0
+        · simp only [h_eq, dite_true]
+          apply ERMor1.PolyBound.ofComp
+          · exact ERMor1.PolyBound.ofNatUnpairSnd  -- D.0.A.3
+          · intro _
+            apply ERMor1.PolyBound.ofComp
+            · exact ERMor1.PolyBound.ofPred
+            · intro _
+              exact ERMor1.PolyBound.ofProj _
+        · simp only [h_eq, dite_false]
+          exact ERMor1.PolyBound.ofProj _
+```
+
+Then in the D.2.5 simrec case:
+
+```lean
+        · -- the kSimSzudzikUnpackAt sub-`sorry` from D.2.5
+          exact kSimSzudzikUnpackAt_polyBound a i.val
+```
+
+If the inner `match`-based `dite` doesn't elaborate
+cleanly, replace with `cases l with | mk val isLt => ...`
+or thread an explicit type ascription.
+
+The `D.0.A` builders (`ofNatUnpairFst`, `ofNatUnpairSnd`,
+`ofPred`) must be in place before this step.
 
 ```lean
         -- Helper: PolyBound for kSimSzudzikUnpackAt at any i.
@@ -578,12 +1177,17 @@ The proof outline:
    `pb_packed_step.constant = 0` (from
    `kSimPackedStep_polyBound`'s definition).
 2. So `D = E + 3^E + 0 + 2 = E + 3^E + 2`.
-3. `Nat.log 2 (D + 1) = Nat.log 2 (E + 3^E + 3)
-   ≤ Nat.log 2 (3^E + 3 · 3^E) + 1
-   = Nat.log 2 (4 · 3^E) + 1
-   ≤ Nat.log 2 (3^E) + 3
-   = E · Nat.log 2 3 + 3
-   ≤ 2 · E + 3` (since `Nat.log 2 3 ≤ 2`).
+3. With the SHARPER `to_iter_step_form_log` from D.0.B,
+   `D` is now
+   `pb.degree + Nat.log 2 (pb.coefficient + 1) +
+   Nat.log 2 (pb.constant + 1) + 3`,
+   not `pb.degree + pb.coefficient + pb.constant + 2`.
+   For `kSimPackedStep_polyBound`'s fields
+   (`degree = E`, `coefficient = 3^E`, `constant = 0`):
+   `D = E + Nat.log 2 (3^E + 1) + Nat.log 2 1 + 3
+   ≤ E + 2·E + 0 + 3 = 3·E + 3` (using
+   `Nat.log 2 (3^E + 1) ≤ Nat.log 2 (4^E) = 2·E`,
+   since `3^E + 1 ≤ 4^E` for `E ≥ 1`).
 4. `E = (D_max + 5) · 4^(k+1)`.  By
    `kSimPackedStep_towerHeight_ge_succ_k`,
    `(kSimPackedStep g_ER).tH ≥ k + 2`, so
@@ -741,11 +1345,17 @@ theorem kSimTowerBound_dominates_inline {a k : ℕ}
       (g_fam l) (h_g l)
   let pb_packed_base := kSimPackedBase_polyBound h_ER pb_h
   let pb_packed_step := kSimPackedStep_polyBound g_ER pb_g
-  -- D.4: apply to_iter_step_form to get single-power bound
-  -- on packed step.
+  -- D.4: apply to_iter_step_form_log (D.0.B's sharper
+  -- adapter) to get single-power bound on packed step.
+  -- IMPORTANT: use to_iter_step_form_log, NOT
+  -- to_iter_step_form, because pb_packed_step.coefficient
+  -- = 3^E grows exponentially in k; the original adapter's
+  -- exponent d + c + k + 2 would give a bound exponential
+  -- in k, which doesn't fit into stepTH = O(k).
   set D_step : ℕ :=
-    pb_packed_step.degree + pb_packed_step.coefficient
-      + pb_packed_step.constant + 2
+    pb_packed_step.degree +
+      Nat.log 2 (pb_packed_step.coefficient + 1) +
+      Nat.log 2 (pb_packed_step.constant + 1) + 3
     with hD_step_def
   -- The iterated trace: define iter step.
   -- packed step = fun (i, prev, params) => ...
