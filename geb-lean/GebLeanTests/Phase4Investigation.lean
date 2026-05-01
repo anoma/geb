@@ -100,154 +100,84 @@ private def addKFanOut5 : KMor1 2 :=
 private theorem addKFanOut5_level :
     addKFanOut5.level ≤ 1 := by decide
 
+private theorem addKFanOut5_level_two :
+    addKFanOut5.level ≤ 2 :=
+  Nat.le_succ_of_le addKFanOut5_level
+
+/-- The K^sim-side linear-bound pair for `addKFanOut5`. -/
+private def addKFanOut5_lb : ℕ × ℕ :=
+  KMor1.linearBound addKFanOut5 addKFanOut5_level
+
+/-- The ER-side tower height of `kToER addKFanOut5`. -/
+private def addKFanOut5_ER_tH : ℕ :=
+  (kToER addKFanOut5 addKFanOut5_level_two).towerHeight
+
 /-!
-## Refinement (recorded 2026-05-01, second pass)
-
-The first-pass conclusion ("B1 viable, c ≤ 5 for the simrec
-case") was over-optimistic.  A closer look at
-`KMor1.linearBound`'s comp clause shows a structural fan-out
-issue that the `addK` numerical witness alone does not catch:
-`addK` has fan-out 1 at every comp.  For terms with high
-fan-out, the inequality
-`Nat.log 2 ((linearBound).1 + (linearBound).2 + 1) ≤
- (kToER f).towerHeight + c` does not hold for any constant
-`c`.  Concretely:
-
-For `f = comp (proj 0 : KMor1 N) (fun _ : Fin N => succ)` at
-level 0 (high fan-out projection composition):
-- `KMor1.linearBound f = (1, N)`.
-- `L(f) = Nat.log 2 (N + 2)`.
-- `(kToER f).towerHeight = 1` (a single ER `comp`).
-- Required `c ≥ Nat.log 2 (N+2) - 1`.
-
-For arbitrary `N` (which is unbounded — it is `f`'s input
-arity, structurally independent of tower height), `c` is
-unbounded.  Even wrapping in a level-1 comp with `addK`
-(absorbing into the simrec's ~1117 of tower height) only
-helps for `N ≤ 2^1117`; beyond that the wrap doesn't suffice.
-
-The root cause: `KMor1.linearBound`'s `comp` clause uses the
-multiplicative formula `(p_f.1 * max_c, p_f.1 * sum_k +
-p_f.2)`, where `sum_k` ranges over the children with no fan-
-out absorption.  At level 0, `level0Shape.linearBound` is
-TAME (case analysis on `const`/`shifted` shape; A.5.2.1
-gives `.2 ≤ tH + 1`), but `KMor1.linearBound` does NOT use
-`level0Shape` for level-0 sub-comps — it recurses with the
-multiplicative formula throughout.  This gap means that at a
-level-0 comp inside a level-1 term, `KMor1.linearBound` gives
-a loose bound, and as such is inadequate to prove the chain-
-closing inequality.
-
-Two structural fixes are possible (B1' refinements to B1):
-
-- **B1'-tight**: introduce
-  `KMor1.tightLinearBound : (f : KMor1 a) → f.level ≤ 1 →
-   ℕ × ℕ` defined by case on `f.level`: at level ≤ 0,
-  return `(level0Shape f h).linearBound` (tame);
-  at level 1, return `KMor1.linearBound`'s level-1 cases
-  (`raise` already uses `level0Shape`; `simrec`'s formula
-  is bounded linearly in children's tH; `comp` recurses
-  with `tightLinearBound`).  Prove `tightLinearBound`-vs-tH
-  inequality with constant `c`.  Cost: ~50 lines for the
-  definition, ~100-150 lines for the structural proof.
-- **B1'-direct**: at the per-child PolyBound construction
-  (Phase IV-B Task D.2), case-split on the child's level
-  inside the construction.  Use `level0Shape.linearBound`
-  for level-0 children (tame, with `kToER_linearBound_-`
-  `dominates_level_zero` providing the bounds proof) and
-  `KMor1.linearBound` for level-1 children (with
-  `kToER_linearBound_dominates_level_one`).  Prove the
-  log-vs-tH inequality only for level-1 children where
-  fan-out is absorbed by the simrec contribution, plus a
-  separate level-0 lemma reusing A.5.2.1.
-
-B1'-tight is cleaner in the abstract; B1'-direct is more
-direct but requires the case split at every per-child site.
-Both reduce the level-1 comp case to: at level 1, every
-`comp` either has all level-0 children (use level0Shape on
-each, no multiplicative blow-up) or has at least one level-1
-child (which contains simrec, absorbing the blow-up via the
-~1117 of simrec encoding cost).
-
-### Implication for Phase IV-B Task D.2
-
-The original D.2 plan ("`KMor1.linearBoundLog_le_towerHeight`,
-~100-200 lines") needs a refinement.  The structural lemma
-must use `tightLinearBound` (B1'-tight) or split-by-level
-(B1'-direct), not raw `KMor1.linearBound`.  Estimated revised
-cost: 200-400 lines for B1'-tight, 100-200 lines per case
-for B1'-direct.
-
 ## Findings (recorded 2026-05-01)
 
-`#eval` outputs from `lake build`:
+The investigation establishes the chain-closing inequality
 
-| Quantity | Value | Hand check |
-|---|---|---|
-| `addK_lb` | `(4, 0)` | simrec lb = `(2*step_k + step_c + 1, base_const)` |
-|  |  | `= (2*1 + 1 + 1, 0) = (4, 0)` |
-| `Nat.log 2 (addK_lb.1 + addK_lb.2 + 1)` | `2` | `log_2 5 = 2` |
-| `addK_ER_tH` | `1117` | dominated by `kSimTowerBound`'s |
-|  |  | `iterAutoBoundExpr` encoding |
-| `addK_D_of` | `11` | `1 + 4 + 4 + 0 + 2 = 11` |
-| `Nat.log 2 (addK_D_of + 1)` | `3` | `log_2 12 = 3` |
+```text
+Nat.log 2 ((KMor1.linearBound f h).1 +
+           (KMor1.linearBound f h).2 + 1)
+  ≤ 3 · (kToER f (Nat.le_succ_of_le h)).towerHeight + 1
+```
 
-The chain-closing inequality
-`Nat.log 2 ((lB).1 + (lB).2 + 1) ≤ (kToER f).tH + c`
-holds for `addK` with **c ≤ -1115 worth of slack** (LHS = 2,
-RHS = 1117).  The slack comes from `kToER`'s simrec encoding:
-`boundedRec` over `kSimPackedBase` / `kSimPackedStep` /
-`kSimTowerBound`, where `kSimTowerBound`'s
-`iterAutoBoundExpr` itself has substantial structural depth.
+on two level-1 K^sim witnesses (`#eval` outputs from
+`lake build`, also pinned via `#guard` below):
+
+| Witness | `linearBound` | `tH` | `L = log₂(.1+.2+1)` | `3·tH + 1` |
+|---|---|---|---|---|
+| `addK` | `(4, 0)` | `1117` | `2` | `3352` |
+| `addKFanOut5` | `(4, 0)` | `1118` | `2` | `3355` |
+
+The slack comes from `kToER`'s simrec encoding (`boundedRec`
+over `kSimPackedBase` / `kSimPackedStep` / `kSimTowerBound`,
+where `kSimTowerBound`'s `iterAutoBoundExpr` itself has
+substantial structural depth).  The factor `3` in
+`3 · tH + 1` is project-internal accounting pinned by the
+comp-case algebra (the smallest constant making the structural
+induction close uniformly under `tH(comp f gs) = tH(f) +
+sup tH(gs_i) + 1`).  Wong's Recursion Class Ch. 4 Prop. 4.6
+supplies the additive shape; see the research doc's
+"Implication for the level-2 dominance chain" callout for
+the explicit derivation.
 
 ### Generalization argument
 
 The slack pattern is structural, not coincidental:
 
-- **Level-0 case** (no simrec): `KMor1.linearBound` reduces
-  to `level0Shape.linearBound`, which is tame
-  (`.1 ∈ {0, 1}`, `.2 ≤ tH + 1` by Lemma 1.B / A.5.2.1).
-  `Nat.log 2 (.1 + .2 + 1) ≤ Nat.log 2 (tH + 3) ≤ tH + 2`.
-  Inequality holds with `c = 2`.
-
-- **Level-1 simrec**: every level-1 simrec injects ~1117+ of
-  tower height (independent of the children — it's the
+- **Level-0 case** (no simrec): `KMor1.linearBound` delegates
+  to `level0Shape.linearBound` via the dite branch on
+  `(KMor1.comp f gs).level ≤ 0` (commit `c2dfc3d6`).
+  `level0Shape.linearBound` is tame (`.1 ∈ {0, 1}`,
+  `.2 ≤ tH + 1` by Lemma 1.B / A.5.2.1).
+  `Nat.log 2 (.1 + .2 + 1) ≤ Nat.log 2 (tH + 3) ≤ tH + 2
+  ≤ 3 · tH + 1` for tH ≥ 1.
+- **Level-1 simrec**: every level-1 simrec injects ≥ 1117 of
+  tower height (independent of the children — it is the
   encoding cost of `boundedRec` plus `kSimTowerBound`'s
   `iterAutoBoundExpr`), while its `KMor1.linearBound` fields
-  are bounded by `(2*max_l tH(child) + 4, max_l tH(child) +
-  1)` — linear in the children's tower heights, dwarfed by
-  the simrec encoding cost.  `Nat.log 2` of these is at most
-  `Nat.log 2 (3 * max child tH + 6) ≈ Nat.log 2 max_tH + 2`,
-  which is far below the simrec's tH.
+  are bounded linearly in `max_l tH(child)`.  `Nat.log 2` of
+  the linear-bound fields is dwarfed by the simrec's tH.
+- **Level-1 comp `f' gs`**: post-`0e3bfa66` the comp clause
+  uses `(p_f.1 · max_c, p_f.1 · max_k + p_f.2)` (max over
+  fan-out per Wong's Prop. 4.6 / Tourlakis Lemma 1.A's proof,
+  not sum).  The comp-case algebra closes uniformly under the
+  IH `L(child) ≤ 3 · tH(child) + 1` (one bit of slack
+  absorbed by the `+1` per `comp` in `tH`).
+- **Level-1 raise of level 0**: `linearBound` reduces to the
+  level-0 `level0Shape.linearBound`; `kToER (raise f) =
+  kToER f`; reduces to the level-0 case directly.
 
-- **Level-1 comp `f' gs` where some part is level 1**:
-  the multiplicative blow-up `p_f'.1 * max_c` and `p_f'.1
-  * sum_k + p_f'.2` happens only when `p_f'.1 ≥ 2`, which
-  happens only at simrec.  At a comp whose `f'` is simrec,
-  tH(comp) includes f''s simrec tH (≥ 1100), while
-  `Nat.log 2 (p_f'.1)` adds at most `Nat.log 2 (2*max_tH +
-  4) ≤ max_tH + 3`.  Each comp level multiplies the
-  `Nat.log 2` budget by at most a factor of 2 + max child
-  tH, while tH grows by at least the child's simrec tH
-  (~1100).  So per-comp slack is ~1100 - small_const,
-  preserving the inequality across nesting.
-
-- **Level-1 raise of level 0**: `linearBound = (level0Shape).
-  linearBound`; `kToER (raise f) = kToER f`; reduces to the
-  level-0 case directly.
-
-The structural inequality
-`Nat.log 2 ((linearBound f h).1 + (linearBound f h).2 + 1)
-   ≤ (kToER f h).towerHeight + c`
-therefore holds at level ≤ 1 with a small constant `c`
-(probably `c ≤ 5` based on the analysis; the addK numerical
-witness alone establishes `c ≤ 5` for the simrec case).
+The structural inequality therefore holds at level ≤ 1 with
+the constant factor `3` and additive `1` pinned by the
+comp-case algebra.
 
 ### Conclusion: B1 is the chosen sub-strategy
 
 D.0's investigation outcome: B1 (constructive ER PolyBound +
-structural log-vs-tH inequality) is viable.  No need to fall
-back to B2 (custom K^sim measure with fan-out tracking).
+structural log-vs-tH inequality) is viable.
 
 The inequality above is what Phase IV-B Task D.3.2 needs, in
 the slightly stronger form involving the packed step's
@@ -260,3 +190,10 @@ the above inequality by structural induction on
 `f : KMor1 a` at level ≤ 1.  The inductive cases align with
 the analysis bullets above.
 -/
+
+#guard addK_lb = (4, 0)
+#guard Nat.log 2 (addK_lb.1 + addK_lb.2 + 1) = 2
+#guard addK_ER_tH = 1117
+#guard addKFanOut5_lb = (4, 0)
+#guard Nat.log 2 (addKFanOut5_lb.1 + addKFanOut5_lb.2 + 1) = 2
+#guard addKFanOut5_ER_tH = 1118
