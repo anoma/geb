@@ -230,9 +230,9 @@ iterAutoBoundExpr towerHeight ≥ d (Task 17c E.1)
 Supplementary structural lower bound:
 (iterAutoBoundExpr k d lh).towerHeight ≥ d.  Proved via the
 outer comp (towerER (d + 1)) wrapping plus the auxiliary
-fact (towerER n).towerHeight = n.  Off the auxiliary-lemma
-critical path; useful documentation for the d-parameter's
-relationship to structural depth.
+fact n ≤ (towerER n).towerHeight (induction on n).  Off the
+auxiliary-lemma critical path; useful documentation for the
+d-parameter's relationship to structural depth.
 
 Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
 EOF
