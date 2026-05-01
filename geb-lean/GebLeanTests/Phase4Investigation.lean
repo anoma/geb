@@ -16,7 +16,7 @@ The test computes:
    linear-bound coefficients).
 2. `(kToER addK h_level).towerHeight` (the ER-side tower
    height of `addK`'s ER translation).
-3. The key quantity `Nat.log 2 ((linearBound).1 +
+3. The quantity `Nat.log 2 ((linearBound).1 +
    (linearBound).2 + 1)` — the proxy for the chain-closing
    log-vs-towerHeight inequality at Phase IV-B Task D.3.2.
 
@@ -184,7 +184,7 @@ gives `.2 ≤ tH + 1`), but `KMor1.linearBound` does NOT use
 `level0Shape` for level-0 sub-comps — it recurses with the
 multiplicative formula throughout.  This gap means that at a
 level-0 comp inside a level-1 term, `KMor1.linearBound` gives
-a loose bound, and that looseness is what blocks the chain-
+a loose bound, and as such is inadequate to prove the chain-
 closing inequality.
 
 Two structural fixes are possible (B1' refinements to B1):
@@ -309,4 +309,3 @@ the above inequality by structural induction on
 `f : KMor1 a` at level ≤ 1.  The inductive cases align with
 the analysis bullets above.
 -/
-
