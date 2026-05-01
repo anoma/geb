@@ -217,14 +217,16 @@ shifted-projection's `k`).  The additive accumulation matches
 
 At level 1, no such structural shape lemma is available
 (Lemma 1.A is the linear bound itself, not a shape lemma).
-`KMor1.linearBound`'s `comp` clause produces
-`(p_f.1 * max_c, p_f.1 * sum_k + p_f.2)` — multiplicative in
-the children, with a `Σ_i` over fan-out.  Tower-height of
-`kToER (comp f gs)` is `tH(kToER f) + sup_i tH(kToER gs_i) + 1`
-— additive, with a `sup` (no fan-out factor).  The mismatch
-makes any bound of the form
+`KMor1.linearBound`'s `comp` clause (post-`0e3bfa66`)
+produces `(p_f.1 * max_c, p_f.1 * max_k + p_f.2)` —
+multiplicative in the children, with a `max` over fan-out.
+Tower-height of `kToER (comp f gs)` is
+`tH(kToER f) + sup_i tH(kToER gs_i) + 1` — additive, with a
+`sup` (no fan-out factor).  The mismatch makes any bound of
+the form
 `(KMor1.linearBound f h).2 ≤ 2^((kToER f).towerHeight + c)`
-fail in the `comp` case for fan-out ≥ 2 and any fixed `c`.
+fail in the `comp` case at fan-out ≥ 2 with high children
+growth, for any fixed additive `c`.
 
 This is exactly Tourlakis's stratification: at level 2 the
 bound is polynomial, not linear.  Iterating a level-1
@@ -270,6 +272,54 @@ routine structural induction mapping Wong's exponent `k` to
 our `towerHeight` (with `+1` per `comp` wrapping and
 threading through `iterAutoBoundExpr`'s substructure for
 `kSimTowerBound`).
+
+**Project-internal target inequality**:
+
+```text
+∀ {a : ℕ} (f : KMor1 a) (h : f.level ≤ 1),
+  Nat.log 2 ((KMor1.linearBound f h).1 +
+             (KMor1.linearBound f h).2 + 1)
+    ≤ 3 · (kToER f (Nat.le_succ_of_le h)).towerHeight + 1
+```
+
+The shape (`Nat.log 2 (lb stuff) ≤ a · towerHeight + b` for
+some constants `a, b`) is justified by Wong's Prop. 4.6
+inductive recipe (additive in the inductive exponent at both
+`comp` and `boundedRec`).  The factor `a = 3` is **project-
+internal accounting**, pinned by the `comp`-case algebra
+under our specific `towerHeight` recursion
+(`tH(comp f gs) = tH(f) + sup_i tH(gs_i) + 1`).  Concretely,
+write `L(f) = Nat.log 2 (lb(f).1 + lb(f).2 + 1)` and assume
+the inductive hypothesis `L(f) ≤ 3 · tH(f) + 1`,
+`L(gs_l) ≤ 3 · tH(gs_l) + 1` for all `l`.  Then for the
+non-level-0 `comp` clause,
+`lb(comp).1 + lb(comp).2 + 1 = p_f.1 · (max_c + max_k) +
+p_f.2 + 1`, so
+
+```text
+L(comp) ≤ Nat.log 2 ((p_f.1 + p_f.2 + 1) ·
+                     (max_c + max_k + 1))
+        = L(f) + Nat.log 2 (max_c + max_k + 1).
+```
+
+`max_c + max_k + 1 ≤ 2 · max_l (lb(gs_l).1 + lb(gs_l).2 + 1)`,
+so `Nat.log 2 (max_c + max_k + 1) ≤ 1 + max_l L(gs_l)
+≤ 1 + max_l (3 · tH(gs_l) + 1) = 2 + 3 · sup_l tH(gs_l)`.
+Combining,
+
+```text
+L(comp) ≤ (3 · tH(f) + 1) + (2 + 3 · sup_l tH(gs_l))
+        = 3 · tH(f) + 3 · sup_l tH(gs_l) + 3
+        ≤ 3 · (tH(f) + sup_l tH(gs_l) + 1) + 1
+        = 3 · tH(comp f gs) + 1.
+```
+
+The final inequality has one bit of slack
+(`3 ≤ 4 = 3 · 1 + 1`), absorbed by the `+1` per `comp`
+wrapping in `tH`.  This is the smallest constant `a` for
+which the comp case closes uniformly under our recursion;
+literature gives the additive shape, the comp algebra pins
+`a = 3`.
 
 **Relation to our use**: this is the base case of the polynomial-iter
 chain. Linear-value-bounded ⇒ polynomially-bounded (with degree 1),
