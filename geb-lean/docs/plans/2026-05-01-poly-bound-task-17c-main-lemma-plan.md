@@ -118,83 +118,85 @@ The comp-at-level-1 case requires the following
 ones go into `Utilities/ComputationalComplexity.lean`
 as small private lemmas.
 
-**Lemma A** (existence-check; mathlib likely has):
-monotonicity in argument.
+**Mathlib API verified (audit 2026-05-01)** — all five
+lemmas below exist with the listed signatures:
 
 ```lean
-Nat.log_le_log : ∀ {b : ℕ} {n m : ℕ}, n ≤ m →
-  Nat.log b n ≤ Nat.log b m
+@Nat.log_lt_of_lt_pow :
+    ∀ {b x y : ℕ}, y ≠ 0 → y < b ^ x → Nat.log b y < x
+@Nat.log_mono_right :
+    ∀ {b n m : ℕ}, n ≤ m → Nat.log b n ≤ Nat.log b m
+Nat.pow_log_le_self :
+    ∀ (b : ℕ) {x : ℕ}, x ≠ 0 → b ^ Nat.log b x ≤ x
+@Nat.lt_pow_succ_log_self :
+    ∀ {b : ℕ}, 1 < b → ∀ (x : ℕ),
+      x < b ^ (Nat.log b x).succ
+@Nat.lt_two_pow_self :
+    ∀ {n : ℕ}, n < 2 ^ n
 ```
 
-(Mathlib: `Nat.log_mono_right` — verify name.)
+Plus `Nat.log_monotone : Monotone (Nat.log b)` and
+`Nat.log_le_self : Nat.log b x ≤ x`.
 
-**Lemma B** (existence-check; mathlib likely has):
-log of a power of 2.
+The plan therefore needs two project-internal helpers:
 
-```lean
-Nat.log 2 (2 ^ k) = k
-```
-
-(Mathlib: `Nat.log_pow` for `b ≥ 2` — verify.)
-
-**Lemma C** (project-internal if not in mathlib):
-log-of-product upper bound.
+**Helper C** — log-of-product upper bound:
 
 ```lean
 private theorem Nat.log_two_mul_le (a b : ℕ) :
-    Nat.log 2 (a * b) ≤ Nat.log 2 a + Nat.log 2 b + 1
+    Nat.log 2 (a * b) ≤
+      Nat.log 2 a + Nat.log 2 b + 1
 ```
 
-Proof sketch: if `a = 0` or `b = 0` then `a · b = 0`
-and `Nat.log 2 0 = 0`; otherwise `2^(Nat.log 2 a) ≤ a`
-and `2^(Nat.log 2 b) ≤ b`, so
-`a · b ≥ 2^(Nat.log 2 a + Nat.log 2 b)`, giving
-`Nat.log 2 (a · b) ≥ Nat.log 2 a + Nat.log 2 b`.  For
-the upper-bound side, `a < 2^(Nat.log 2 a + 1)` and
-`b < 2^(Nat.log 2 b + 1)`, so
-`a · b < 2^(Nat.log 2 a + Nat.log 2 b + 2)`, giving
-`Nat.log 2 (a · b) ≤ Nat.log 2 a + Nat.log 2 b + 1`.
+Proof: zero cases trivial; otherwise use
+`Nat.pow_log_le_self` and `Nat.lt_pow_succ_log_self`
+to bound `a · b < 2 ^ (Nat.log 2 a + Nat.log 2 b + 2)`,
+then close via `Nat.log_lt_of_lt_pow`.
 
-**Lemma D** (project-internal if not in mathlib):
-log-of-sum upper bound by max.
+**Helper D** — log-of-sum upper bound by max:
 
 ```lean
 private theorem Nat.log_two_add_le_max_succ (a b : ℕ) :
-    Nat.log 2 (a + b) ≤ max (Nat.log 2 a) (Nat.log 2 b) + 1
+    Nat.log 2 (a + b) ≤
+      max (Nat.log 2 a) (Nat.log 2 b) + 1
 ```
 
-Proof sketch: `a + b ≤ 2 · max a b`, so
-`Nat.log 2 (a + b) ≤ Nat.log 2 (2 · max a b) =
-1 + Nat.log 2 (max a b) = 1 + max (Nat.log 2 a)
-(Nat.log 2 b)` (last equality by `Nat.log_le_log` plus
-case analysis).
+Proof: `a + b ≤ 2 · max a b`, so via
+`Nat.log_mono_right` get
+`Nat.log 2 (a + b) ≤ Nat.log 2 (2 · max a b)`, which
+equals `1 + max (Nat.log 2 a) (Nat.log 2 b)` (by
+case-split on `a ≤ b` vs `b ≤ a` and monotonicity).
 
-- [ ] **Step L.1.1: Search mathlib for Lemmas A–D**
+**Helper E** — log commutes with `Finset.sup`:
 
-Use `mcp__lean-lsp__lean_local_search` and
-`mcp__lean-lsp__lean_loogle` to find existing mathlib
-lemmas that match.  Record the exact mathlib names
-that resolve each requirement.
-
-```text
-For Lemma A: search "Nat.log monotone" or "Nat.log_le_log".
-For Lemma B: search "Nat.log_pow" or "Nat.log (2 ^ k)".
-For Lemma C: search "Nat.log mul" or "Nat.log_mul".
-For Lemma D: search "Nat.log add max" — most likely
-  not in mathlib in this exact form; will need
-  project-internal helper.
+```lean
+private theorem Nat.log_two_finset_sup
+    {n : ℕ} (f : Fin (n + 1) → ℕ) :
+    Nat.log 2
+        ((Finset.univ : Finset (Fin (n + 1))).sup f) =
+      (Finset.univ : Finset (Fin (n + 1))).sup
+        (fun i => Nat.log 2 (f i))
 ```
 
-If mathlib provides Lemmas A–D directly, no new helpers
-are needed and Task L.1 reduces to documentation.  Skip
-to L.1.5.
+Proof: extract the witness `i₀` achieving sup via
+`Finset.exists_mem_eq_sup` (with explicit
+`(s := ...) (f := ...)` named arguments — direct
+`apply Finset.sup_le` has typeclass resolution issues
+verified in audit), then antisymmetry: ≤ via
+`Finset.le_sup`, ≥ via `Finset.sup_le` + monotonicity.
 
-If mathlib provides A and B but not C or D, add C and D
-as project-internal helpers in Task L.1.2/L.1.3.
+If the implementer prefers an inequality form
+(`Nat.log 2 (sup f) ≤ sup (Nat.log 2 ∘ f)`), that
+suffices for the comp-1 case.  Equality is recommended
+for `simp`-friendliness.
 
-If mathlib provides A only, add B as a wrapper around
-the relevant mathlib API (`Nat.log_pow` may exist under
-a different name) plus C and D.
+- [ ] **Step L.1.1: Confirm none of C, D, E are already
+  in mathlib**
+
+Use `mcp__lean-lsp__lean_local_search` to search for
+`Nat.log_two_mul`, `Nat.log_two_add`, `Nat.log_finset_sup`,
+or related names.  If found, use the existing names; if
+not, add the helpers below.
 
 - [ ] **Step L.1.2: Add `Nat.log_two_mul_le` (if needed)**
 
@@ -239,10 +241,10 @@ private theorem Nat.log_two_mul_le (a b : ℕ) :
   omega
 ```
 
-The exact mathlib names (`Nat.pow_log_le_self`,
-`Nat.lt_pow_succ_log_self`, `Nat.log_lt_of_lt_pow`) need
-to be verified; substitute equivalents if those names
-don't resolve.
+All three referenced mathlib names
+(`Nat.pow_log_le_self`, `Nat.lt_pow_succ_log_self`,
+`Nat.log_lt_of_lt_pow`) verified by audit on
+2026-05-01.
 
 - [ ] **Step L.1.3: Add `Nat.log_two_add_le_max_succ`
   (if needed)**
@@ -254,47 +256,130 @@ because `a + b ≤ 2 · max a b`. -/
 private theorem Nat.log_two_add_le_max_succ (a b : ℕ) :
     Nat.log 2 (a + b) ≤
       max (Nat.log 2 a) (Nat.log 2 b) + 1 := by
-  have hsum : a + b ≤ 2 * max a b := by
-    rcases Nat.le_total a b with h | h
-    · simp [max_eq_right h]; omega
-    · simp [max_eq_left h]; omega
-  have hmono : Nat.log 2 (a + b) ≤ Nat.log 2 (2 * max a b) :=
-    Nat.log_mono_right hsum
-  -- Nat.log 2 (2 * x) = Nat.log 2 x + 1 when x ≥ 1
-  -- (and = 0 when x = 0; check both).
-  rcases Nat.eq_zero_or_pos (max a b) with hmx | hmx
-  · -- both a and b are zero
-    have ha : a = 0 := by
-      rcases Nat.le_total a b with h | h
-      · rw [max_eq_right h] at hmx; omega
-      · rw [max_eq_left h] at hmx; omega
-    have hb : b = 0 := by
-      rcases Nat.le_total a b with h | h
-      · rw [max_eq_right h] at hmx; omega
-      · rw [max_eq_left h] at hmx; omega
+  -- Strategy: bound a + b above by 2 · 2 ^ max (log a) (log b),
+  -- then close via Nat.log_lt_of_lt_pow.
+  rcases Nat.eq_zero_or_pos (a + b) with hsum0 | hsum0
+  · -- a + b = 0 → both a and b are 0
+    have ha : a = 0 := by omega
+    have hb : b = 0 := by omega
     subst ha; subst hb; simp [Nat.log]
-  · have h2 : Nat.log 2 (2 * max a b) =
-        Nat.log 2 (max a b) + 1 := by
-      rw [show (2 * max a b) = 2 ^ 1 * max a b from by ring]
-      exact Nat.log_pow_mul_self_eq (by omega) hmx.ne'
-    -- (Or: Nat.log_mul + Nat.log_pow_self, depending on
-    -- which mathlib API is available.)
-    rw [h2] at hmono
-    have hmaxlog :
-        Nat.log 2 (max a b) =
-        max (Nat.log 2 a) (Nat.log 2 b) := by
-      rcases Nat.le_total a b with h | h
-      · rw [max_eq_right h]
-        rw [max_eq_right (Nat.log_mono_right h)]
-      · rw [max_eq_left h]
-        rw [max_eq_left (Nat.log_mono_right h)]
+  -- Bound a + b strictly by 2 ^ (max log + 2).
+  have hLT :
+      a + b <
+        2 ^ (max (Nat.log 2 a) (Nat.log 2 b) + 2) := by
+    rcases Nat.eq_zero_or_pos a with ha | ha
+    · subst ha
+      have hb : b ≠ 0 := by omega
+      calc 0 + b = b := by ring
+        _ < 2 ^ (Nat.log 2 b + 1) :=
+            Nat.lt_pow_succ_log_self (by omega) b
+        _ ≤ 2 ^ (max (Nat.log 2 a) (Nat.log 2 b) + 2) := by
+            have :
+                Nat.log 2 b + 1 ≤
+                max (Nat.log 2 a) (Nat.log 2 b) + 2 := by
+              have := le_max_right (Nat.log 2 a) (Nat.log 2 b)
+              omega
+            exact Nat.pow_le_pow_right (by omega) this
+    rcases Nat.eq_zero_or_pos b with hb | hb
+    · subst hb
+      have ha' : a ≠ 0 := by omega
+      calc a + 0 = a := by ring
+        _ < 2 ^ (Nat.log 2 a + 1) :=
+            Nat.lt_pow_succ_log_self (by omega) a
+        _ ≤ 2 ^ (max (Nat.log 2 a) (Nat.log 2 b) + 2) := by
+            have :
+                Nat.log 2 a + 1 ≤
+                max (Nat.log 2 a) (Nat.log 2 b) + 2 := by
+              have := le_max_left (Nat.log 2 a) (Nat.log 2 b)
+              omega
+            exact Nat.pow_le_pow_right (by omega) this
+    -- both a, b > 0
+    have ha_lt : a < 2 ^ (Nat.log 2 a + 1) :=
+      Nat.lt_pow_succ_log_self (by omega) a
+    have hb_lt : b < 2 ^ (Nat.log 2 b + 1) :=
+      Nat.lt_pow_succ_log_self (by omega) b
+    have ha_le_max :
+        2 ^ (Nat.log 2 a + 1) ≤
+        2 ^ (max (Nat.log 2 a) (Nat.log 2 b) + 1) :=
+      Nat.pow_le_pow_right (by omega)
+        (Nat.add_le_add_right (le_max_left _ _) 1)
+    have hb_le_max :
+        2 ^ (Nat.log 2 b + 1) ≤
+        2 ^ (max (Nat.log 2 a) (Nat.log 2 b) + 1) :=
+      Nat.pow_le_pow_right (by omega)
+        (Nat.add_le_add_right (le_max_right _ _) 1)
+    have :
+        a + b <
+        2 * 2 ^ (max (Nat.log 2 a) (Nat.log 2 b) + 1) := by
+      calc a + b
+          < 2 ^ (Nat.log 2 a + 1) +
+            2 ^ (Nat.log 2 b + 1) := by omega
+        _ ≤ 2 ^ (max (Nat.log 2 a) (Nat.log 2 b) + 1) +
+            2 ^ (max (Nat.log 2 a) (Nat.log 2 b) + 1) := by
+            omega
+        _ = 2 * 2 ^ (max (Nat.log 2 a) (Nat.log 2 b) + 1) := by
+            ring
+    have hpow_eq :
+        2 * 2 ^ (max (Nat.log 2 a) (Nat.log 2 b) + 1) =
+        2 ^ (max (Nat.log 2 a) (Nat.log 2 b) + 2) := by
+      rw [show max (Nat.log 2 a) (Nat.log 2 b) + 2 =
+            (max (Nat.log 2 a) (Nat.log 2 b) + 1) + 1 from rfl]
+      ring
     omega
+  -- Apply Nat.log_lt_of_lt_pow.
+  exact Nat.log_lt_of_lt_pow (by omega) hLT |>.le.trans
+    (by omega)
 ```
 
-The exact mathlib API call (`Nat.log_pow_mul_self_eq`)
-is a guess; substitute the right name.  The structure
-of the proof (separate the zero case + use `2 · max ≥
-sum`) is robust.
+If individual sub-lemmas (`Nat.pow_le_pow_right`) don't
+resolve, use Lean MCP `lean_local_search` to find the
+exact mathlib name and substitute.  The proof structure
+(case-split on a, b zero/positive; bound by powers of 2;
+close via `Nat.log_lt_of_lt_pow`) is robust.
+
+- [ ] **Step L.1.3.bis: Add `Nat.log_two_finset_sup`
+  helper E**
+
+```lean
+/-- `Nat.log 2` commutes with `Finset.sup` over a non-empty
+`Finset` of natural numbers (here over `Fin (n + 1)`,
+which is non-empty).  Equality form, useful as a `simp`
+target. -/
+private theorem Nat.log_two_finset_sup
+    {n : ℕ} (f : Fin (n + 1) → ℕ) :
+    Nat.log 2
+        ((Finset.univ : Finset (Fin (n + 1))).sup f) =
+      (Finset.univ : Finset (Fin (n + 1))).sup
+        (fun i => Nat.log 2 (f i)) := by
+  obtain ⟨i₀, _, hi₀⟩ :=
+    Finset.exists_mem_eq_sup
+      (s := (Finset.univ : Finset (Fin (n + 1))))
+      (f := f)
+      (Finset.univ_nonempty (α := Fin (n + 1)))
+  rw [hi₀]
+  apply le_antisymm
+  · exact Finset.le_sup
+      (f := fun i => Nat.log 2 (f i))
+      (Finset.mem_univ i₀)
+  · apply Finset.sup_le
+    intro i _
+    apply Nat.log_mono_right
+    have :
+        f i ≤ (Finset.univ : Finset (Fin (n + 1))).sup f :=
+      Finset.le_sup (Finset.mem_univ i)
+    rw [hi₀] at this
+    exact this
+```
+
+The explicit `(s := ...) (f := ...)` named arguments
+are required — direct `apply Finset.sup_le` has
+typeclass resolution problems due to `OrderBot`'s
+unresolved metavariables.  This was verified empirically
+during the audit.
+
+If a polymorphic `Finset α` form is needed downstream
+(beyond `Fin (n + 1)`), generalize accordingly; for the
+comp-1 case the `Fin (n + 1)` form is sufficient.
 
 - [ ] **Step L.1.4: Run `lake build` + `lake test`**
 
@@ -310,8 +395,9 @@ git add GebLean/Utilities/ComputationalComplexity.lean
 git commit -m "$(cat <<'EOF'
 Nat.log 2 arithmetic helpers (Task 17c L.1)
 
-Adds private theorems Nat.log_two_mul_le and
-Nat.log_two_add_le_max_succ to support the comp-at-level-1
+Adds private theorems Nat.log_two_mul_le,
+Nat.log_two_add_le_max_succ, and Nat.log_two_finset_sup
+to support the comp-at-level-1
 case of KMor1.linearBoundLog_le_towerHeight (Task 17c
 L.4).  Both are off-by-1 from the tight bound due to the
 floor-of-log convention; sufficient for the structural
@@ -693,8 +779,23 @@ L.4; do NOT commit while it is present.
   (in the `comp` case's `else` branch — the `sorry`
   inserted in L.3.6).
 
-The comp-at-level-1 case is the meatiest.  The
-inequality LHS is
+The comp-at-level-1 case requires sub-case-splitting on
+the fan-out arity `b`:
+
+- **`b = 0`** (empty fan-out, e.g. `comp (raise zero)
+  Fin.elim0 : KMor1 0` is a reachable level-1 term):
+  the foldr-max collapses to `0`, so
+  `linearBound (comp f gs) = (p_f.1 · 0, p_f.1 · 0 +
+  p_f.2) = (0, p_f.2)`.  The IH on `f` closes
+  immediately (no need for the comp-1 algebra).
+- **`b ≥ 1`**: the multiplicative-max algebra below.
+
+The b=0 branch must come first because the comp-1
+algebra's intermediate bound
+`max_c + max_k + 1 ≤ 2 · max_l (lb_sum gs_l + 1)`
+is FALSE at b=0 (LHS = 1, RHS = 0 over empty sup).
+
+The inequality LHS at b ≥ 1 is
 
 ```text
 Nat.log 2 (p_f.1 * max_c + p_f.1 * max_k + p_f.2 + 1)
@@ -744,11 +845,79 @@ chain" callout):
    Equal — closes with one bit of slack absorbed by the
    per-`comp` increment in `tH`.
 
-- [ ] **Step L.4.1: Replace the `sorry` in the
-  comp-1 branch**
+- [ ] **Step L.4.0: Add the b=0 sub-case-split**
 
-In the `· -- level-1 branch` block from L.3.6, replace
-`sorry` with:
+In the `· -- level-1 branch` block from L.3.6, before
+the multiplicative-max algebra, sub-case-split on
+`b = 0` vs `b ≥ 1`:
+
+```lean
+        -- level-1 branch: split on fan-out arity.
+        -- (b is the arity of `gs : Fin b → KMor1 a`,
+        -- inferred from the `comp` constructor's type.)
+        rcases Nat.eq_zero_or_pos b with hb0 | hb_pos
+        · -- b = 0: empty fan-out, linearBound is (0, p_f.2).
+          subst hb0
+          have h_lb_eq :
+              KMor1.linearBound (KMor1.comp f gs) h =
+                (0, (KMor1.linearBound f hf).2) := by
+            simp only [KMor1.linearBound]
+            rw [dif_neg hcomp_0]
+            simp
+            -- max_c, max_k both fold over Fin 0; both = 0
+            rfl
+          rw [h_lb_eq]
+          -- LHS = Nat.log 2 (0 + p_f.2 + 1) =
+          --       Nat.log 2 (p_f.2 + 1)
+          -- ≤ Nat.log 2 (p_f.1 + p_f.2 + 1) (monotone)
+          -- ≤ 3 · (kToER f).tH + 1 (IH on f)
+          -- ≤ 3 · ((kToER f).tH + 1) + 1 (RHS at b=0).
+          have IH_f :=
+            KMor1.linearBoundLog_le_towerHeight f hf
+          have h_kToER_tH :
+              (kToER (KMor1.comp f (gs : Fin 0 → _))
+                (Nat.le_succ_of_le h)).towerHeight =
+                (kToER f
+                  (Nat.le_succ_of_le hf)).towerHeight + 1 := by
+            simp only [kToER, ERMor1.towerHeight]
+            -- Finset.univ.sup over Fin 0 = 0
+            simp
+          rw [h_kToER_tH]
+          have hmono : Nat.log 2
+              (0 + (KMor1.linearBound f hf).2 + 1) ≤
+            Nat.log 2
+              ((KMor1.linearBound f hf).1 +
+               (KMor1.linearBound f hf).2 + 1) := by
+            apply Nat.log_mono_right; omega
+          omega
+        · -- b ≥ 1: multiplicative-max algebra below.
+          (continued in L.4.1)
+```
+
+If the `subst hb0` produces an unworkable goal because
+of `gs : Fin b` with `b` not yet unified to `0`, use
+`obtain rfl := Nat.eq_zero_of_le_zero (le_of_eq hb0)`
+or rewrite `b` to `0` via `cases b` instead of `rcases`.
+The implementer is empowered to adjust this skeleton.
+
+If `(comp f gs).level ≤ 0` is needed at b=0 to dispatch
+the dite (because `level (comp f Fin.elim0) = level f`,
+and if `f.level = 0` then the comp is level 0 — which
+went to the dite_pos branch already at L.3.6), then b=0
+combined with `level f ≥ 1` is the ONLY way to enter
+this branch.  Hence inside the b=0 branch we have
+`level f = 1` (from `hf : f.level ≤ 1` plus
+`(comp f gs).level = max (level f) 0 = level f`, and
+`hcomp_0 : ¬ level (comp f gs) ≤ 0` rules out
+`level f = 0`).  This means `Nat.log 2 (lb f).1 ≥ 1`
+implicitly, but we don't need this fact — the IH
+suffices.
+
+- [ ] **Step L.4.1: Replace the `sorry` in the
+  comp-1 branch (b ≥ 1 sub-case)**
+
+After the b=0 branch above, continue with the
+multiplicative-max algebra:
 
 ```lean
         -- level-1 branch: multiplicative max formula
@@ -1186,34 +1355,34 @@ arithmetic-chain assembly.  The structure:
       --   ≤ 3 · max(max_g_tH, max_h_tH) + 6
       --   ≤ 3 · (kToER simrec).tH + 6
       -- Nat.log 2 (3 · tH + 6) ≤ tH + 3 ≤ 3 · tH + 1
-      -- for tH ≥ 1.  The simrec's tH ≥ 2 (from
-      -- kSimPackedBase_towerHeight_ge_succ_k:
-      -- (kSimPackedBase h).tH ≥ k + 2; combined with
-      -- boundedRec_towerHeight_ge_base, simrec.tH ≥ k + 2 ≥ 2).
+      -- for tH ≥ 1.  The simrec's tH ≥ 1 trivially via
+      -- the outer comp wrapping in kToER's simrec case
+      -- (`comp f g`'s towerHeight = f.tH + sup g.tH + 1
+      -- ≥ 1).
       have h_simrec_tH_pos :
           1 ≤ (kToER (KMor1.simrec i h_fam g_fam)
             (Nat.le_succ_of_le h)).towerHeight := by
-        sorry  -- thread through kSimPackedBase_towerHeight_ge_succ_k
-                -- + boundedRec_towerHeight_ge_base + outer comp.
+        -- kToER (simrec ...) unfolds to
+        --   ERMor1.comp (kSimSzudzikUnpackAt _) (...)
+        -- whose towerHeight is f.tH + sup g.tH + 1 ≥ 1.
+        unfold kToER
+        simp only [ERMor1.towerHeight]
+        omega
       omega
 ```
 
-The remaining `sorry` (for `h_simrec_tH_pos`) is a
-lower-bound on the simrec's towerHeight.  The chain:
+The positivity helper above is one line — the outer
+`comp` in `kToER`'s simrec case adds `+1` to towerHeight
+unconditionally.  No deeper threading through
+`kSimPackedBase_towerHeight_ge_succ_k` / E.3 is needed
+(though those are available as fall-back if `unfold`
+elaborates poorly on the simrec case's `let`-bindings).
 
-- `kSimPackedBase_towerHeight_ge_succ_k`
-  (`LawvereKSimPolynomialBound.lean:1520`): `k + 2 ≤
-  (kSimPackedBase h).towerHeight`.
-- E.3 `boundedRec_towerHeight_ge_base`: `kSimPackedBase
-  ≤ boundedRec`.
-- The outer comp's towerHeight is `≥ branch.towerHeight`
-  for the recur branch.
-
-Hence `(kToER simrec).tH ≥ k + 2 ≥ 2 ≥ 1`.
-
-If filling this requires more than ~30 lines, factor it
-into a private helper `kToER_simrec_towerHeight_pos`
-adjacent to `kToER_simrec_towerHeight_ge_max_child_tH`.
+If `unfold kToER; simp only [ERMor1.towerHeight]; omega`
+does not close, the fall-back is to use `change` to
+rewrite the goal into the explicit `ERMor1.comp _ _`
+form (mirroring the technique used in E.5's helpers),
+then `omega`.
 
 - [ ] **Step L.5.3: Build, test, commit (combined
   L.3 / L.4 / L.5)**
