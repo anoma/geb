@@ -2002,4 +2002,176 @@ private theorem kSimTowerBound_dominates_level_one
         apply GebLean.tower_mono_right
         omega
 
+/-- Interp preservation for level-1 K^sim: at level ≤ 1,
+`kToER` produces an ER term whose interp equals the K^sim
+interp at every context.  Proved by structural recursion;
+the simrec case discharges the dominance hypothesis of
+`boundedRec_eq_natRec_of_bounded` via
+`kSimTowerBound_dominates_level_one`. -/
+private theorem kToER_interp_level_one :
+    ∀ {a : ℕ} (f : KMor1 a) (h : f.level ≤ 1)
+      (ctx : Fin a → ℕ),
+      (kToER f
+        (Nat.le_succ_of_le h)).interp ctx = f.interp ctx
+  | _, .zero,         _, _   => by
+      simp [kToER, KMor1.interp_zero, ERMor1.interp_zeroN]
+  | _, .succ,         _, _   => by
+      simp [kToER, KMor1.interp_succ, ERMor1.interp_succ]
+  | _, .proj _,       _, _   => by
+      simp [kToER, KMor1.interp_proj, ERMor1.interp_proj]
+  | _, .comp f gs,    h, ctx => by
+      have hf : f.level ≤ 1 := by
+        unfold KMor1.level at h
+        exact le_trans (le_max_left _ _) h
+      have hgs : ∀ i, (gs i).level ≤ 1 := fun i => by
+        unfold KMor1.level at h
+        have hsup : Finset.univ.sup
+            (fun j => (gs j).level) ≤ 1 :=
+          le_trans (le_max_right _ _) h
+        exact le_trans
+          (Finset.le_sup
+            (f := fun j => (gs j).level)
+            (Finset.mem_univ i))
+          hsup
+      have h_inner :
+          (fun i => (kToER (gs i)
+              (Nat.le_succ_of_le (hgs i))).interp ctx)
+            = (fun i => (gs i).interp ctx) := by
+        funext i
+        exact kToER_interp_level_one (gs i) (hgs i) ctx
+      simp only [kToER, ERMor1.interp_comp,
+        KMor1.interp_comp]
+      rw [h_inner]
+      exact kToER_interp_level_one f hf
+        (fun i => (gs i).interp ctx)
+  | _, .raise f,      h, ctx => by
+      have hf : f.level ≤ 0 := by
+        unfold KMor1.level at h; omega
+      simp only [kToER, KMor1.interp_raise]
+      exact kToER_interp_level_zero f hf ctx
+  | _, .simrec (a := a) (k := k) i h_fam g_fam, hyp, ctx =>
+      by
+        have h_h : ∀ l, (h_fam l).level ≤ 0 := fun l => by
+          unfold KMor1.level at hyp
+          have hsup_le : Finset.univ.sup
+              (fun j => (h_fam j).level) ≤ 0 := by omega
+          exact le_trans
+            (Finset.le_sup
+              (f := fun j => (h_fam j).level)
+              (Finset.mem_univ l))
+            hsup_le
+        have h_g : ∀ l, (g_fam l).level ≤ 0 := fun l => by
+          unfold KMor1.level at hyp
+          have hsup_le : Finset.univ.sup
+              (fun j => (g_fam j).level) ≤ 0 := by omega
+          exact le_trans
+            (Finset.le_sup
+              (f := fun j => (g_fam j).level)
+              (Finset.mem_univ l))
+            hsup_le
+        set h_ER : Fin (k + 1) → ERMor1 a :=
+          fun l => kToER (h_fam l)
+            (Nat.le_succ_of_le (Nat.le_succ_of_le (h_h l)))
+          with h_ER_def
+        set g_ER : Fin (k + 1) → ERMor1 (a + 1 + (k + 1)) :=
+          fun l => kToER (g_fam l)
+            (Nat.le_succ_of_le (Nat.le_succ_of_le (h_g l)))
+          with g_ER_def
+        set recur : ERMor1 (a + 1) :=
+          ERMor1.boundedRec
+            (kSimPackedBase h_ER)
+            (kSimPackedStep g_ER)
+            (kSimTowerBound h_ER g_ER)
+          with recur_def
+        -- Step 1: simplify LHS to the unpack-at-packed form.
+        change ((kSimSzudzikUnpackAt a i.val).comp
+            (fun j : Fin (a + 1) =>
+              if h_eq : j.val = 0 then recur
+              else ERMor1.proj (k := a + 1)
+                ⟨j.val, by
+                  have := j.isLt; omega⟩)).interp ctx = _
+        rw [ERMor1.interp_comp]
+        -- Step 2: rewrite the inner family as
+        -- `Fin.cons (recur.interp ctx) (Fin.tail ctx)`.
+        have h_inner :
+            (fun j : Fin (a + 1) =>
+              (if h_eq : j.val = 0 then recur
+              else ERMor1.proj (k := a + 1)
+                ⟨j.val, by
+                  have := j.isLt; omega⟩).interp ctx) =
+            Fin.cons (recur.interp ctx) (Fin.tail ctx) := by
+          funext j
+          by_cases hj : j.val = 0
+          · simp only [hj, dif_pos]
+            have hj_eq : j = (0 : Fin (a + 1)) :=
+              Fin.ext hj
+            rw [hj_eq, Fin.cons_zero]
+          · simp only [hj, dif_neg, not_false_eq_true]
+            rw [ERMor1.interp_proj]
+            obtain ⟨j', rfl⟩ : ∃ j' : Fin a,
+                j = Fin.succ j' := by
+              refine ⟨⟨j.val - 1, by
+                have := j.isLt; omega⟩, ?_⟩
+              apply Fin.ext
+              change j.val = (j.val - 1) + 1
+              omega
+            rw [Fin.cons_succ, Fin.tail_def]
+        rw [h_inner]
+        -- Step 3: apply unpack-at-seqAt.
+        rw [kSimSzudzikUnpackAt_interp_eq_seqAt
+          (a := a) (i := i.val) (packed := recur.interp ctx)
+          (ctx := Fin.tail ctx)]
+        -- Step 4: rewrite recur.interp via Fin.cons_self_tail
+        -- and apply boundedRec_eq_natRec_of_bounded.
+        have hctx_eq :
+            ctx = Fin.cons (ctx 0) (Fin.tail ctx) := by
+          rw [Fin.cons_self_tail]
+        have h_recur_eq :
+            recur.interp ctx =
+            Nat.rec ((kSimPackedBase h_ER).interp
+                (Fin.tail ctx))
+              (fun j prev =>
+                (kSimPackedStep g_ER).interp
+                  (Fin.cons j (Fin.cons prev
+                    (Fin.tail ctx))))
+              (ctx 0) := by
+          rw [recur_def]
+          conv_lhs => rw [hctx_eq]
+          apply ERMor1.boundedRec_eq_natRec_of_bounded
+          · intro j h_j_le
+            rw [recur_def] at *
+            -- Use kSimTowerBound_dominates_level_one,
+            -- specialized to this j.
+            have := kSimTowerBound_dominates_level_one
+              h_fam g_fam h_h h_g j (Fin.tail ctx)
+            change Nat.rec _ _ _ ≤
+              (kSimTowerBound h_ER g_ER).interp _
+            exact this
+          · intro j h_j_le
+            -- Monotonicity from kSimTowerBound_mono_counter.
+            exact kSimTowerBound_mono_counter
+              h_ER g_ER j (ctx 0) (Fin.tail ctx) h_j_le
+        rw [h_recur_eq]
+        -- Step 5: apply packed_iteration_matches_simrecVec.
+        rw [packed_iteration_matches_simrecVec
+          h_fam g_fam h_h h_g (Fin.tail ctx) (ctx 0)]
+        -- Step 6: apply Nat.seqAt_seqPack.
+        have hlen :
+            ((List.finRange (k + 1)).map
+              (fun l =>
+                KMor1.simrecVec h_fam g_fam
+                  (Fin.tail ctx) (ctx 0) l)).length
+              = k + 1 := by simp
+        rw [Nat.seqAt_seqPack
+          (xs := (List.finRange (k + 1)).map
+            (fun l =>
+              KMor1.simrecVec h_fam g_fam
+                (Fin.tail ctx) (ctx 0) l))
+          (i := i.val)
+          (h := by rw [hlen]; exact i.isLt)]
+        -- Step 7: rewrite RHS via KMor1.interp_simrec.
+        rw [KMor1.interp_simrec]
+        -- Final: relate Fin.tail ctx and ctx 0.
+        simp [Fin.tail_def]
+
 end GebLean
