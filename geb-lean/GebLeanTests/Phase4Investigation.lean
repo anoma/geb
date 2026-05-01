@@ -100,6 +100,27 @@ private def addK_D_of : ℕ :=
 -- case where B1's log-vs-tH inequality should close trivially.
 example : True := trivial
 
+/-- Witness for the level-0 tightening: `KMor1.linearBound`'s
+new comp clause delegates to `level0Shape` when the entire
+comp is level 0.  For a fan-out-5 level-0 comp, the OLD
+multiplicative formula gives `(1, 5)`; the NEW level0Shape-
+based bound gives `(1, 1)` (because `level0Shape` recognizes
+`comp (proj 0) (fun _ => succ)` collapses to `shifted 0 1`). -/
+private def projSuccFanOut5 : KMor1 1 :=
+  KMor1.comp (KMor1.proj (0 : Fin 5))
+    (fun _ : Fin 5 => KMor1.succ)
+
+private theorem projSuccFanOut5_level :
+    projSuccFanOut5.level ≤ 0 := by decide
+
+private theorem projSuccFanOut5_level_one :
+    projSuccFanOut5.level ≤ 1 :=
+  Nat.le_succ_of_le projSuccFanOut5_level
+
+#eval KMor1.linearBound projSuccFanOut5
+        projSuccFanOut5_level_one
+-- New: (1, 1).  Old (pre-tightening) would have been (1, 5).
+
 /-!
 ## Refinement (recorded 2026-05-01, second pass)
 
