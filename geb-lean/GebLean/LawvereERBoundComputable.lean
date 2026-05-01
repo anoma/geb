@@ -521,15 +521,6 @@ private theorem ERMor1.towerHeight_le_comp_head
         (Finset.univ.sup (fun j => (g j).towerHeight)) + 1
   omega
 
-/-- Structural overhead of `boundedRec`'s tower height: the
-contribution from `boundedSearch`, `boundedRecRange`,
-`boundedRecPred`, `beta`, `minN`, `natUnpairFst`,
-`natUnpairSnd` evaluated at trivial inputs. -/
-private def ERMor1.boundedRec_towerHeight_overhead : ℕ :=
-  (ERMor1.boundedRec ERMor1.zero
-    (ERMor1.proj (k := 2) ⟨0, by omega⟩)
-    (ERMor1.zeroN 1)).towerHeight
-
 /-- Predicate's tower height bounded by `searchBody`. -/
 private theorem ERMor1.pred_towerHeight_le_searchBody
     {k : ℕ} (pred : ERMor1 (k + 1)) :
@@ -802,17 +793,11 @@ private theorem ERMor1.bound_towerHeight_le_boundedRec
       | ⟨1, _⟩ => bound)
     ⟨1, by omega⟩
 
-/-- Closed-form lower bound on
-`(boundedRec base step bound).towerHeight`: the max of the three
-input arguments' tower heights is dominated by the result.  The
-structural overhead `boundedRec_towerHeight_overhead` records the
-contribution from `boundedSearch` / `boundedRecRange` /
-`boundedRecPred` / `beta` / `minN` / `natUnpairFst` /
-`natUnpairSnd` evaluated at trivial inputs and is supplied as a
-named constant for downstream reference; the present statement
-gives the input-side bound.  Equality does not hold here because
-`bound`, `base`, and `step` appear at differing structural depths
-in `boundedRec`'s body. -/
+/-- Lower bound on `(boundedRec base step bound).towerHeight`:
+the maximum of the three input arguments' tower heights is
+dominated by the result.  Equality does not hold because
+`bound`, `base`, and `step` appear at differing structural
+depths in `boundedRec`'s body. -/
 theorem ERMor1.boundedRec_towerHeight_le {k : ℕ}
     (base : ERMor1 k) (step : ERMor1 (k + 2))
     (bound : ERMor1 (k + 1)) :
