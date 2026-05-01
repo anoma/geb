@@ -1515,6 +1515,38 @@ private theorem kSimPackedStep_towerHeight_ge_propagate
   unfold kSimPackedStep
   exact kSimSzudzikPackList_towerHeight_ge_propagate _
 
+/-- Structural lower bound on `kSimTowerBound`'s tower
+height in terms of the packed step's tower height.
+Routes through `iterAutoBoundExpr_towerHeight_ge_d` (Task
+17c E.1): `kSimTowerBound h g = iterAutoBoundExpr a
+stepTH baseTH` where `stepTH = (kSimPackedStep g)
+.towerHeight`.  Supplementary to the auxiliary lemma. -/
+private theorem kSimTowerBound_towerHeight_ge_packedStep
+    {a k : ℕ}
+    (h : Fin (k + 1) → ERMor1 a)
+    (g : Fin (k + 1) → ERMor1 (a + 1 + (k + 1))) :
+    (kSimPackedStep g).towerHeight ≤
+      (kSimTowerBound h g).towerHeight := by
+  unfold kSimTowerBound
+  exact ERMor1.iterAutoBoundExpr_towerHeight_ge_d _ _ _
+
+/-- Structural lower bound on `kSimTowerBound`'s tower
+height in terms of the maximum-over-step-family child
+tower height.  Combines `kSimPackedStep_towerHeight_ge_propagate`
+with `_ge_packedStep`.  Supplementary. -/
+private theorem kSimTowerBound_towerHeight_ge_max_step_child
+    {a k : ℕ}
+    (h : Fin (k + 1) → ERMor1 a)
+    (g : Fin (k + 1) → ERMor1 (a + 1 + (k + 1))) :
+    ERMor1.natPair.towerHeight + 2 +
+      (Finset.univ : Finset (Fin (k + 1))).sup
+        (fun l =>
+          (ERMor1.comp (g l) kSimStepContext).towerHeight) ≤
+      (kSimTowerBound h g).towerHeight :=
+  le_trans
+    (kSimPackedStep_towerHeight_ge_propagate g)
+    (kSimTowerBound_towerHeight_ge_packedStep h g)
+
 /-- Strengthened structural lower bound on `kSimPackedBase`'s
 tower height, parallel to the Step version. -/
 private theorem kSimPackedBase_towerHeight_ge_succ_k
