@@ -1766,6 +1766,49 @@ example before committing to ~300+ lines of proof.
   "Findings" section in `GebLeanTests/Phase4Investigation.lean`
   for the full structural argument.
 
+  **Refinement (recorded 2026-05-01, after literature
+  re-check)**: the linear-bound formula's level-1 `comp` clause
+  was using `sum_k = Σ_i (lb gs_i).2` over fan-out, which is
+  strictly looser than Tourlakis Lemma 1.A's proof (research
+  doc lines 86-92), which uses `max(args) ≤ (max_i c_i) ·
+  max(ctx) + (max_i k_i)` — i.e., `max_i k_i` (max over
+  fan-out, not sum).  Switched to `max_k` per literature.
+  This eliminates the residual fan-out blow-up at level-1
+  comp, and the structural induction
+  `Nat.log 2 ((linearBound f h).1 + (linearBound f h).2 + 1)
+  ≤ 3 · (kToER f h).towerHeight + 1` closes uniformly with
+  the comp case satisfying equality (no slack wasted).
+
+  Commit `0e3bfa66` on `terence/develop` lands this fix.
+  Numerical witnesses in `Phase4Investigation.lean` confirm
+  `addK`'s `linearBound = (4, 0)` is unchanged (its simrec
+  clause already used `level0Shape` directly).
+
+  **Status of `linearBoundLog_le_towerHeight`'s simrec case**:
+  the structural induction for the simrec case requires an
+  auxiliary lemma `tH(kToER (simrec h_fam g_fam)) ≥ max_l
+  tH(kToER h_l) + small_const` (or analog for g_l).  This is
+  an instance of "Fix B (part 3): structural towerHeight
+  versus analytical tower height" in the research doc (lines
+  581-624), which the doc characterizes as **folklore** in
+  the literature: implicit in the proof of Recursion Class
+  Ch. 4 Prop. 4.6's exponent-tracking through composition
+  and bounded recursion, but no single literature
+  proposition states it explicitly.  The research doc
+  marks it "REQUIRES PROJECT-INTERNAL PROOF; routine
+  structural induction once `towerHeight` recursion is
+  fixed".
+
+  This lemma is in the same family as the existing
+  `kSimPackedBase_towerHeight_ge_propagate` /
+  `kSimPackedStep_towerHeight_ge_propagate` /
+  `kSimSzudzikPackList_towerHeight_ge_propagate` lemmas
+  (Phase III, landed) which lift Prop. 4.6's recipe through
+  specific ER terms (`kSimSzudzikPackList`, `kSimPackedBase`,
+  `kSimPackedStep`).  Lifting through `kToER (simrec)`'s
+  outer wrapping (`comp · (boundedRec · kSimTowerBound)`)
+  is the same exercise on a longer expression.
+
   **New infrastructure required for B1**:
 
   - `ofBoundedRec : (base : ERMor1 k) → (step : ERMor1 (k + 2))
