@@ -204,3 +204,15 @@ the analysis bullets above.
 -- while (kToER addK).towerHeight = 1117.  The lemma
 -- predicts max(small, small) ≤ 1117 — trivially.
 #guard 0 ≤ addK_ER_tH
+
+-- L.6 sanity: the main inequality
+-- linearBoundLog_le_towerHeight closes on the addK and
+-- addKFanOut5 witnesses.  The values are pre-computed
+-- above via #guards on addK_lb / addKFanOut5_lb /
+-- *_ER_tH; the inequalities below assert the chain-
+-- closing form `L ≤ 3 · tH + 1`.
+#guard Nat.log 2 (addK_lb.1 + addK_lb.2 + 1) ≤
+       3 * addK_ER_tH + 1
+#guard Nat.log 2
+       (addKFanOut5_lb.1 + addKFanOut5_lb.2 + 1) ≤
+       3 * addKFanOut5_ER_tH + 1
