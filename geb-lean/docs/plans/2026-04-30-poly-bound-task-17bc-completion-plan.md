@@ -1790,14 +1790,22 @@ example before committing to ~300+ lines of proof.
   tH(kToER h_l) + small_const` (or analog for g_l).  This is
   an instance of "Fix B (part 3): structural towerHeight
   versus analytical tower height" in the research doc (lines
-  581-624), which the doc characterizes as **folklore** in
-  the literature: implicit in the proof of Recursion Class
-  Ch. 4 Prop. 4.6's exponent-tracking through composition
-  and bounded recursion, but no single literature
-  proposition states it explicitly.  The research doc
-  marks it "REQUIRES PROJECT-INTERNAL PROOF; routine
-  structural induction once `towerHeight` recursion is
-  fixed".
+  581-624).
+
+  **Literature update (2026-05-01 re-review)**: the earlier
+  "folklore" framing of this lemma was overly cautious.
+  Wong's Recursion Class Ch. 4 Prop. 4.6 (verbatim text in
+  research doc) gives an EXPLICIT exponent-tracking recipe:
+  composition `C(f, g_1, …, g_k)` produces exponent
+  `m + max(j(1), …, j(k))`; bounded recursion
+  `R(g, f, e)` inherits the bound's exponent.  Our project-
+  side `towerHeight` maps directly onto Wong's exponent (with
+  `+1` per `comp` wrapping for our specific recursion, and
+  threading through `iterAutoBoundExpr`'s substructure for
+  `kSimTowerBound`).  The Lean realization is a routine
+  structural induction following Wong's recipe — not novel
+  mathematics, just the explicit Lean-side bookkeeping for
+  our specific ER terms.
 
   This lemma is in the same family as the existing
   `kSimPackedBase_towerHeight_ge_propagate` /

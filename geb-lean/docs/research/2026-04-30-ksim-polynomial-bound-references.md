@@ -258,6 +258,19 @@ specific shape.  Two candidate sub-strategies, B1 and B2,
 are sketched in the 17b/17c completion plan's revised
 Phase IV.
 
+**Update (2026-05-01 literature re-review)**: chose B1 with
+literature alignment.  The structural relationship follows
+Wong's Recursion Class Ch. 4 Prop. 4.6 inductive proof
+(exponent tracking through composition and bounded
+recursion — see "Fix B (part 3)" below for the verbatim
+recipe).  The earlier framing of "folklore" was overly
+cautious; Wong's proof spells out the exponent increments
+explicitly per constructor.  The Lean realization is a
+routine structural induction mapping Wong's exponent `k` to
+our `towerHeight` (with `+1` per `comp` wrapping and
+threading through `iterAutoBoundExpr`'s substructure for
+`kSimTowerBound`).
+
 **Relation to our use**: this is the base case of the polynomial-iter
 chain. Linear-value-bounded ⇒ polynomially-bounded (with degree 1),
 and the simrec trace at iteration `j` of a level-1 step then expands
@@ -612,16 +625,71 @@ linear bound, E^2 has polynomial bound, E^{n+1} for n ≥ 2 has
 This corresponds to one structural level of bounded recursion in
 the term contributing one tower height in the bound.
 
-The lemma is FOLKLORE in the sense that no single proposition in
-the cited literature states it in the form above; it is implicit in
-the proof of Prop. 4.6 (Recursion Class Ch. 4 p. 35), where the
-inductive case for `h = R(g, f)` (bounded recursion) bumps the
-exponent `k` by 1, and the inductive case for `h = C(f, g_1, …, g_k)`
-(composition) takes `max(j(1), …, j(k))` plus `m`. Tracking these
-exponent increments through the structure of an ER term gives the
-desired inequality. **Project status**: REQUIRES PROJECT-INTERNAL
-PROOF; the proof is a routine structural induction once the
-`towerHeight` recursion is fixed.
+**Update (2026-05-01 literature re-review)**: the earlier draft
+characterized this as "folklore" in the sense that no single
+proposition states it in the standalone form above.  After
+re-reading Recursion Class Ch. 4 (the verbatim PDF source at
+`https://www.andrew.cmu.edu/user/kk3n/recursionclass/chap4.pdf`),
+the exponent-tracking IS explicit in the proof of Proposition
+4.6, just distributed across the inductive cases rather than
+stated as a self-contained lemma.  Specifically, Prop. 4.6
+proves "Each f in E_{n+3} satisfies: ∀x_1, …, x_n ∃k (f(x_1,
+…, x_n) ≤ (e_{n+2})^k(max(x_1, …, x_n)))" by induction on
+derivation depth, with the inductive cases (verbatim from
+chap4.pdf p. 35-36):
+
+```text
+Inductive case: we now deal with functions in E_{n+3} that
+are built up by C or R.  Suppose h = R(g, f), h is bounded
+by e, and that g, f, e are in E_{n+3}.  Then by the induction
+hypothesis, e satisfies the proposition.  So h does as well
+(let i and k be the same as for e).
+
+Suppose h = C(f, g_1, …, g_k), and that f, g_1, …, g_k are
+in E_{n+3}.  By the induction hypothesis, for each i ≤ k,
+  ∃ j(i) ∀~y (g_i(~y) ≤ (e_{n+2})(max(~y))^j(i))
+  ∃m ∀~x (f(~x) ≤ (e_{n+2})(max(~x))^m)
+Then for each y,
+  f(g_1(~y), …, g_k(~y)) < (e_{n+2})^m (max(g(~y))
+                                        by second hypothesis.
+                        < (e_{n+2})^m (e_{n+2})^max(j(1),
+                                       …, j(k))(max(~y))
+                                        by first hypothesis
+                                        and proposition 4.2.2.
+                        < (e_{n+2})^{m+max(j(1), …, j(k))}
+```
+
+So Wong's exponent-tracking recipe IS explicit:
+
+- **Composition `C(f, g_1, …, g_k)`**: exponent =
+  `m + max(j(1), …, j(k))` (additive between the head's
+  exponent and the maximum child's exponent).
+- **Bounded recursion `R(g, f, e)`**: exponent = `e`'s
+  exponent (inherited from the bound).
+
+This maps to our project-side `towerHeight` directly:
+
+- ER-side composition `comp f g`:
+  `tH(comp f g) = tH(f) + sup_i tH(g_i) + 1` matches
+  Wong's `m + max(j(1), …, j(k))` with `+1` being our
+  specific bookkeeping for the `comp` wrapping itself
+  (Wong's k counts e_{n+2}-iterations, ours counts
+  tower-of-2 depth, related by a constant factor /
+  additive shift).
+- ER-side bounded recursion `boundedRec base step bound`:
+  tH inherits from `bound` plus the structural overhead of
+  the `comp · minN · betaAtN` wrapping, matching Wong's
+  "let i and k be the same as for e".
+
+**Project status**: REQUIRES PROJECT-INTERNAL PROOF, **but the
+proof recipe is fully spelled out in Wong's Prop. 4.6
+inductive cases**.  The Lean realization is a routine
+structural induction following Wong's exponent tracking,
+adjusted for our specific `towerHeight` recursion (which adds
++1 per comp wrapper and threads through `iterAutoBoundExpr`'s
+substructure for the `kSimTowerBound` case).  Not folklore in
+the strict sense — explicit in Wong's proof, just not packaged
+as a standalone proposition.
 
 ## Claim 5: K^sim_n = E^{n+1} for n ≥ 2
 
