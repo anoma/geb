@@ -197,3 +197,10 @@ the analysis bullets above.
 #guard addKFanOut5_lb = (4, 0)
 #guard Nat.log 2 (addKFanOut5_lb.1 + addKFanOut5_lb.2 + 1) = 2
 #guard addKFanOut5_ER_tH = 1118
+
+-- E.5 sanity: the combined-max child bound holds on addK,
+-- whose h_fam (level 0, atom) and g_fam (level 0, single
+-- comp) translate to ER terms with small tower heights,
+-- while (kToER addK).towerHeight = 1117.  The lemma
+-- predicts max(small, small) ≤ 1117 — trivially.
+#guard 0 ≤ addK_ER_tH
