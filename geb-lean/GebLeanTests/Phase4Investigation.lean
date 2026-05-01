@@ -101,6 +101,83 @@ private def addK_D_of : ℕ :=
 example : True := trivial
 
 /-!
+## Refinement (recorded 2026-05-01, second pass)
+
+The first-pass conclusion ("B1 viable, c ≤ 5 for the simrec
+case") was over-optimistic.  A closer look at
+`KMor1.linearBound`'s comp clause shows a structural fan-out
+issue that the `addK` numerical witness alone does not catch:
+`addK` has fan-out 1 at every comp.  For terms with high
+fan-out, the inequality
+`Nat.log 2 ((linearBound).1 + (linearBound).2 + 1) ≤
+ (kToER f).towerHeight + c` does not hold for any constant
+`c`.  Concretely:
+
+For `f = comp (proj 0 : KMor1 N) (fun _ : Fin N => succ)` at
+level 0 (high fan-out projection composition):
+- `KMor1.linearBound f = (1, N)`.
+- `L(f) = Nat.log 2 (N + 2)`.
+- `(kToER f).towerHeight = 1` (a single ER `comp`).
+- Required `c ≥ Nat.log 2 (N+2) - 1`.
+
+For arbitrary `N` (which is unbounded — it is `f`'s input
+arity, structurally independent of tower height), `c` is
+unbounded.  Even wrapping in a level-1 comp with `addK`
+(absorbing into the simrec's ~1117 of tower height) only
+helps for `N ≤ 2^1117`; beyond that the wrap doesn't suffice.
+
+The root cause: `KMor1.linearBound`'s `comp` clause uses the
+multiplicative formula `(p_f.1 * max_c, p_f.1 * sum_k +
+p_f.2)`, where `sum_k` ranges over the children with no fan-
+out absorption.  At level 0, `level0Shape.linearBound` is
+TAME (case analysis on `const`/`shifted` shape; A.5.2.1
+gives `.2 ≤ tH + 1`), but `KMor1.linearBound` does NOT use
+`level0Shape` for level-0 sub-comps — it recurses with the
+multiplicative formula throughout.  This gap means that at a
+level-0 comp inside a level-1 term, `KMor1.linearBound` gives
+a loose bound, and that looseness is what blocks the chain-
+closing inequality.
+
+Two structural fixes are possible (B1' refinements to B1):
+
+- **B1'-tight**: introduce
+  `KMor1.tightLinearBound : (f : KMor1 a) → f.level ≤ 1 →
+   ℕ × ℕ` defined by case on `f.level`: at level ≤ 0,
+  return `(level0Shape f h).linearBound` (tame);
+  at level 1, return `KMor1.linearBound`'s level-1 cases
+  (`raise` already uses `level0Shape`; `simrec`'s formula
+  is bounded linearly in children's tH; `comp` recurses
+  with `tightLinearBound`).  Prove `tightLinearBound`-vs-tH
+  inequality with constant `c`.  Cost: ~50 lines for the
+  definition, ~100-150 lines for the structural proof.
+- **B1'-direct**: at the per-child PolyBound construction
+  (Phase IV-B Task D.2), case-split on the child's level
+  inside the construction.  Use `level0Shape.linearBound`
+  for level-0 children (tame, with `kToER_linearBound_-`
+  `dominates_level_zero` providing the bounds proof) and
+  `KMor1.linearBound` for level-1 children (with
+  `kToER_linearBound_dominates_level_one`).  Prove the
+  log-vs-tH inequality only for level-1 children where
+  fan-out is absorbed by the simrec contribution, plus a
+  separate level-0 lemma reusing A.5.2.1.
+
+B1'-tight is cleaner in the abstract; B1'-direct is more
+direct but requires the case split at every per-child site.
+Both reduce the level-1 comp case to: at level 1, every
+`comp` either has all level-0 children (use level0Shape on
+each, no multiplicative blow-up) or has at least one level-1
+child (which contains simrec, absorbing the blow-up via the
+~1117 of simrec encoding cost).
+
+### Implication for Phase IV-B Task D.2
+
+The original D.2 plan ("`KMor1.linearBoundLog_le_towerHeight`,
+~100-200 lines") needs a refinement.  The structural lemma
+must use `tightLinearBound` (B1'-tight) or split-by-level
+(B1'-direct), not raw `KMor1.linearBound`.  Estimated revised
+cost: 200-400 lines for B1'-tight, 100-200 lines per case
+for B1'-direct.
+
 ## Findings (recorded 2026-05-01)
 
 `#eval` outputs from `lake build`:
