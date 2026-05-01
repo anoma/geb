@@ -634,7 +634,7 @@ theorem pow_le_tower_two_with_shift (CC S KK E : ℕ) :
 /-- Upper bound on `Nat.log 2 (a · b)` in terms of
 `Nat.log 2 a + Nat.log 2 b`.  Off by at most 1 due to
 the floor-of-log convention. -/
-private theorem log_two_mul_le (a b : ℕ) :
+theorem log_two_mul_le (a b : ℕ) :
     Nat.log 2 (a * b) ≤
       Nat.log 2 a + Nat.log 2 b + 1 := by
   rcases Nat.eq_zero_or_pos a with ha | ha
@@ -666,7 +666,7 @@ private theorem log_two_mul_le (a b : ℕ) :
 /-- Upper bound on `Nat.log 2 (a + b)` by
 `max (Nat.log 2 a) (Nat.log 2 b) + 1`.  Off by at most 1
 because `a + b ≤ 2 · max a b`. -/
-private theorem log_two_add_le_max_succ (a b : ℕ) :
+theorem log_two_add_le_max_succ (a b : ℕ) :
     Nat.log 2 (a + b) ≤
       max (Nat.log 2 a) (Nat.log 2 b) + 1 := by
   rcases Nat.eq_zero_or_pos a with ha | ha
@@ -723,7 +723,7 @@ private theorem log_two_add_le_max_succ (a b : ℕ) :
 
 /-- `Nat.log 2` commutes with `Finset.sup` over a non-empty
 `Finset (Fin (n + 1))`. -/
-private theorem log_two_finset_sup
+theorem log_two_finset_sup
     {n : ℕ} (f : Fin (n + 1) → ℕ) :
     Nat.log 2
         ((Finset.univ : Finset (Fin (n + 1))).sup f) =

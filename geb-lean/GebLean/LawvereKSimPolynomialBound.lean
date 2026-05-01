@@ -1786,14 +1786,22 @@ private theorem linearBoundLog_le_towerHeight_level_zero
         Nat.log_lt_of_lt_pow (by omega) hlt
       omega
 
-/-- Strengthened structural lower bound on `kSimPackedBase`'s
-tower height, parallel to the Step version. -/
-private theorem kSimPackedBase_towerHeight_ge_succ_k
-    {a k : ℕ}
-    (h : Fin (k + 1) → ERMor1 a) :
-    k + 2 ≤ (kSimPackedBase h).towerHeight := by
-  unfold kSimPackedBase
-  exact kSimSzudzikPackList_towerHeight_ge_succ_k _
+/-- Arithmetic helper: for `n ≥ 1`,
+`3 · n + 6 < 2 ^ (3 · n + 2)`.  Used in the simrec case
+of `linearBoundLog_le_towerHeight` to bound
+`Nat.log 2 (3 · tH + 6) ≤ 3 · tH + 1`. -/
+private theorem Nat.three_mul_add_six_lt_two_pow_three_mul_add_two
+    (n : ℕ) (hn : 1 ≤ n) :
+    3 * n + 6 < 2 ^ (3 * n + 2) := by
+  induction n, hn using Nat.le_induction with
+  | base => decide
+  | succ k _ ih =>
+      have hpow :
+          2 ^ (3 * (k + 1) + 2) = 8 * 2 ^ (3 * k + 2) := by
+        rw [show 3 * (k + 1) + 2 = (3 * k + 2) + 3 from by ring,
+          pow_add]
+        ring
+      omega
 
 /-- Reverse direction of `Fin.foldr_max_ge`: if every element
 is bounded by `b`, the foldr-max is bounded by `b`. -/
@@ -1811,6 +1819,394 @@ private theorem Fin.foldr_max_le {n : ℕ}
       · exact ih (fun l => f l.succ)
           (fun j => hb j.succ)
       · exact hb 0
+
+/-- Main lemma of Phase IV-B: the linear-bound's
+`Nat.log 2` over `(c + k + 1)` is dominated by the
+`towerHeight` of the ER translation, with multiplicative
+slack `3 ·` and an additive `+ 1`.  Established by
+structural recursion on `f : KMor1 a` at level ≤ 1. -/
+theorem KMor1.linearBoundLog_le_towerHeight :
+    ∀ {a : ℕ} (f : KMor1 a) (h : f.level ≤ 1),
+      Nat.log 2 ((KMor1.linearBound f h).1 +
+                 (KMor1.linearBound f h).2 + 1)
+        ≤ 3 * (kToER f (Nat.le_succ_of_le h)).towerHeight + 1
+  | _, .zero,         _ => by
+      change Nat.log 2 1 ≤ _
+      rw [Nat.log_one_right]
+      omega
+  | _, .succ,         _ => by
+      change Nat.log 2 3 ≤ _
+      have h : Nat.log 2 3 = 1 := by decide
+      rw [h]
+      omega
+  | _, .proj _,       _ => by
+      change Nat.log 2 2 ≤ _
+      have h : Nat.log 2 2 = 1 := by decide
+      rw [h]
+      omega
+  | _, .raise f,      h => by
+      have hf : f.level ≤ 0 := by
+        unfold KMor1.level at h; omega
+      simp only [KMor1.linearBound]
+      have h_kToER_eq :
+          (kToER (KMor1.raise f)
+              (Nat.le_succ_of_le h)).towerHeight =
+            (kToER f (Nat.le_succ_of_le
+              (Nat.le_succ_of_le hf))).towerHeight := rfl
+      rw [h_kToER_eq]
+      exact linearBoundLog_le_towerHeight_level_zero f hf
+  | _, .comp f gs,    h => by
+      have hf : f.level ≤ 1 := by
+        unfold KMor1.level at h
+        exact le_trans (le_max_left _ _) h
+      have hgs : ∀ i, (gs i).level ≤ 1 := fun i => by
+        unfold KMor1.level at h
+        have hsup : Finset.univ.sup
+            (fun j => (gs j).level) ≤ 1 :=
+          le_trans (le_max_right _ _) h
+        exact le_trans
+          (Finset.le_sup
+            (f := fun j => (gs j).level)
+            (Finset.mem_univ i))
+          hsup
+      by_cases hcomp_0 : (KMor1.comp f gs).level ≤ 0
+      · have h_lb_eq :
+            KMor1.linearBound (KMor1.comp f gs) h =
+              ConstantOrShiftedProj.linearBound
+                (KMor1.level0Shape (KMor1.comp f gs)
+                  hcomp_0) := by
+          simp only [KMor1.linearBound]
+          rw [dif_pos hcomp_0]
+        rw [h_lb_eq]
+        exact
+          linearBoundLog_le_towerHeight_level_zero
+            (KMor1.comp f gs) hcomp_0
+      · -- comp at level exactly 1
+        have h_lb_eq :
+            KMor1.linearBound (KMor1.comp f gs) h =
+              ((KMor1.linearBound f hf).1 *
+                Fin.foldr _ (fun i acc =>
+                  max acc
+                    (KMor1.linearBound (gs i) (hgs i)).1) 0,
+               (KMor1.linearBound f hf).1 *
+                Fin.foldr _ (fun i acc =>
+                  max acc
+                    (KMor1.linearBound (gs i) (hgs i)).2) 0 +
+                 (KMor1.linearBound f hf).2) := by
+          simp only [KMor1.linearBound]
+          rw [dif_neg hcomp_0]
+        rw [h_lb_eq]
+        set p_f := KMor1.linearBound f hf with hp_f
+        set max_c := Fin.foldr _ (fun i acc =>
+          max acc (KMor1.linearBound (gs i) (hgs i)).1) 0
+          with hmax_c
+        set max_k := Fin.foldr _ (fun i acc =>
+          max acc (KMor1.linearBound (gs i) (hgs i)).2) 0
+          with hmax_k
+        -- IH bounds.
+        have IH_f :
+            Nat.log 2 (p_f.1 + p_f.2 + 1) ≤
+              3 * (kToER f
+                (Nat.le_succ_of_le hf)).towerHeight + 1 :=
+          KMor1.linearBoundLog_le_towerHeight f hf
+        have IH_gs : ∀ i,
+            Nat.log 2 ((KMor1.linearBound (gs i)
+                  (hgs i)).1 +
+                (KMor1.linearBound (gs i) (hgs i)).2 + 1) ≤
+              3 * (kToER (gs i)
+                (Nat.le_succ_of_le (hgs i))).towerHeight + 1 :=
+          fun i =>
+            KMor1.linearBoundLog_le_towerHeight (gs i) (hgs i)
+        set tF :=
+          (kToER f (Nat.le_succ_of_le hf)).towerHeight
+          with htF
+        set T :=
+          (Finset.univ : Finset (Fin _)).sup
+            (fun i =>
+              (kToER (gs i)
+                (Nat.le_succ_of_le (hgs i))).towerHeight)
+          with hT
+        -- towerHeight of kToER (comp f gs) is tF + T + 1.
+        have h_kToER_comp_tH :
+            (kToER (KMor1.comp f gs)
+              (Nat.le_succ_of_le h)).towerHeight =
+              tF + T + 1 := by rfl
+        rw [h_kToER_comp_tH]
+        -- Bound p_f.1, p_f.2 via IH on f.
+        have h_pf_pos : 0 < p_f.1 + p_f.2 + 1 := by omega
+        have h_pf_lt :
+            p_f.1 + p_f.2 + 1 < 2 ^ (3 * tF + 2) := by
+          have := Nat.lt_pow_succ_log_self
+            (b := 2) (by omega) (p_f.1 + p_f.2 + 1)
+          calc p_f.1 + p_f.2 + 1
+              < 2 ^ (Nat.log 2 (p_f.1 + p_f.2 + 1) + 1) := this
+            _ ≤ 2 ^ (3 * tF + 2) :=
+              Nat.pow_le_pow_right (by omega) (by omega)
+        -- Bound each (gs i).1, (gs i).2 via IH on gs i.
+        have h_gsi_lt : ∀ i,
+            (KMor1.linearBound (gs i) (hgs i)).1 +
+              (KMor1.linearBound (gs i) (hgs i)).2 + 1 <
+              2 ^ (3 * T + 2) := fun i => by
+          have hpos :
+              0 < (KMor1.linearBound (gs i) (hgs i)).1 +
+                  (KMor1.linearBound (gs i) (hgs i)).2 + 1 :=
+            by omega
+          have hlt := Nat.lt_pow_succ_log_self
+            (b := 2) (by omega)
+            ((KMor1.linearBound (gs i) (hgs i)).1 +
+              (KMor1.linearBound (gs i) (hgs i)).2 + 1)
+          have h_tH_le :
+              (kToER (gs i)
+                (Nat.le_succ_of_le (hgs i))).towerHeight ≤ T :=
+            Finset.le_sup
+              (f := fun j => (kToER (gs j)
+                (Nat.le_succ_of_le (hgs j))).towerHeight)
+              (Finset.mem_univ i)
+          calc _
+              < _ := hlt
+            _ ≤ 2 ^ (3 * T + 2) :=
+              Nat.pow_le_pow_right (by omega) (by
+                have := IH_gs i; omega)
+        -- max_c, max_k bounded.
+        have hpow_pos : 0 < 2 ^ (3 * T + 2) := by positivity
+        set bnd_g := 2 ^ (3 * T + 2) - 1 with hbnd_g
+        have hbnd_g_eq : bnd_g + 1 = 2 ^ (3 * T + 2) := by
+          rw [hbnd_g]; omega
+        have h_max_c_le : max_c ≤ bnd_g := by
+          rw [hmax_c]
+          apply Fin.foldr_max_le
+          intro i
+          have := h_gsi_lt i
+          have hbnd : (KMor1.linearBound (gs i) (hgs i)).1 + 1 ≤
+              2 ^ (3 * T + 2) := by omega
+          omega
+        have h_max_k_le : max_k ≤ bnd_g := by
+          rw [hmax_k]
+          apply Fin.foldr_max_le
+          intro i
+          have := h_gsi_lt i
+          have hbnd : (KMor1.linearBound (gs i) (hgs i)).2 + 1 ≤
+              2 ^ (3 * T + 2) := by omega
+          omega
+        -- Final algebra: bound LHS by 2^(3·(tF+T+1)+2).
+        have hpow_f_pos : 0 < 2 ^ (3 * tF + 2) := by positivity
+        set bnd_f := 2 ^ (3 * tF + 2) - 1 with hbnd_f
+        have hbnd_f_eq : bnd_f + 1 = 2 ^ (3 * tF + 2) := by
+          rw [hbnd_f]; omega
+        have h_pf1_le : p_f.1 ≤ bnd_f := by omega
+        have h_pf2_le : p_f.2 ≤ bnd_f := by omega
+        -- Bound LHS by 2 · (bnd_f+1) · (bnd_g+1).
+        have h_lhs_lt_prod :
+            p_f.1 * max_c + (p_f.1 * max_k + p_f.2) + 1 <
+              2 * (bnd_f + 1) * (bnd_g + 1) := by
+          have h_m1 : p_f.1 * max_c ≤ bnd_f * bnd_g :=
+            Nat.mul_le_mul h_pf1_le h_max_c_le
+          have h_m2 : p_f.1 * max_k ≤ bnd_f * bnd_g :=
+            Nat.mul_le_mul h_pf1_le h_max_k_le
+          have h_pf2 : p_f.2 ≤ bnd_f := h_pf2_le
+          have hexp :
+              2 * (bnd_f + 1) * (bnd_g + 1) =
+                bnd_f * bnd_g + bnd_f * bnd_g + bnd_f +
+                  (bnd_f + 2 * bnd_g + 2) := by ring
+          rw [hexp]
+          omega
+        have h_target_eq :
+            2 * (bnd_f + 1) * (bnd_g + 1) =
+              2 ^ (3 * (tF + T + 1) + 2) := by
+          rw [hbnd_f_eq, hbnd_g_eq]
+          rw [show 3 * (tF + T + 1) + 2 = 3 * tF + 2 +
+                (3 * T + 2) + 1 from by ring]
+          rw [pow_succ, pow_add]
+          ring
+        have h_lhs_lt :
+            p_f.1 * max_c + (p_f.1 * max_k + p_f.2) + 1 <
+              2 ^ (3 * (tF + T + 1) + 2) := by
+          rw [← h_target_eq]
+          exact h_lhs_lt_prod
+        have h_log_lt :
+            Nat.log 2
+                (p_f.1 * max_c + (p_f.1 * max_k + p_f.2) + 1) <
+              3 * (tF + T + 1) + 2 := by
+          apply Nat.log_lt_of_lt_pow (by omega)
+          exact h_lhs_lt
+        exact Nat.lt_succ_iff.mp h_log_lt
+  | _, .simrec (a := a') (k := k') i h_fam g_fam, h => by
+      have hh : ∀ j, (h_fam j).level ≤ 0 := fun j => by
+        unfold KMor1.level at h
+        have hsup : Finset.univ.sup
+            (fun l => (h_fam l).level) ≤ 0 := by
+          have := le_trans (le_max_left _ _)
+            (Nat.le_of_succ_le_succ h)
+          exact this
+        exact le_trans
+          (Finset.le_sup
+            (f := fun l => (h_fam l).level)
+            (Finset.mem_univ j))
+          hsup
+      have hg : ∀ j, (g_fam j).level ≤ 0 := fun j => by
+        unfold KMor1.level at h
+        have hsup : Finset.univ.sup
+            (fun l => (g_fam l).level) ≤ 0 := by
+          have := le_trans (le_max_right _ _)
+            (Nat.le_of_succ_le_succ h)
+          exact this
+        exact le_trans
+          (Finset.le_sup
+            (f := fun l => (g_fam l).level)
+            (Finset.mem_univ j))
+          hsup
+      have hh_one : ∀ j, (h_fam j).level ≤ 1 := fun j =>
+        Nat.le_succ_of_le (hh j)
+      have hg_one : ∀ j, (g_fam j).level ≤ 1 := fun j =>
+        Nat.le_succ_of_le (hg j)
+      have h_base_const_bound : ∀ l,
+          (KMor1.level0Shape (h_fam l)
+              (hh l)).linearBound.2 ≤
+            (kToER (h_fam l)
+              (Nat.le_succ_of_le (hh_one l))).towerHeight + 1 :=
+        fun l => kToER_level0_towerHeight_ge_const _ _
+      have h_step_c_bound : ∀ l,
+          (KMor1.level0Shape (g_fam l)
+              (hg l)).linearBound.1 ≤ 1 := by
+        intro l
+        cases KMor1.level0Shape (g_fam l) (hg l) with
+        | const _ =>
+            simp [ConstantOrShiftedProj.linearBound]
+        | shifted _ _ =>
+            simp [ConstantOrShiftedProj.linearBound]
+      have h_step_k_bound : ∀ l,
+          (KMor1.level0Shape (g_fam l)
+              (hg l)).linearBound.2 ≤
+            (kToER (g_fam l)
+              (Nat.le_succ_of_le (hg_one l))).towerHeight + 1 :=
+        fun l => kToER_level0_towerHeight_ge_const _ _
+      have h_aux :=
+        kToER_simrec_towerHeight_ge_max_child_tH
+          h_fam g_fam hh_one hg_one i (Nat.le_succ_of_le h)
+      simp only [KMor1.linearBound]
+      set max_h_tH :=
+        (Finset.univ : Finset (Fin (k' + 1))).sup
+          (fun l =>
+            (kToER (h_fam l)
+              (Nat.le_succ_of_le (hh_one l))).towerHeight)
+        with hmax_h_tH
+      set max_g_tH :=
+        (Finset.univ : Finset (Fin (k' + 1))).sup
+          (fun l =>
+            (kToER (g_fam l)
+              (Nat.le_succ_of_le (hg_one l))).towerHeight)
+        with hmax_g_tH
+      have h_max_base :
+          (Fin.foldr (k' + 1) (fun l acc =>
+            max acc
+              (KMor1.level0Shape (h_fam l)
+                (hh l)).linearBound.2) 0) ≤ max_h_tH + 1 := by
+        apply Fin.foldr_max_le
+        intro j
+        have h_lb := h_base_const_bound j
+        have h_le :
+            (kToER (h_fam j)
+              (Nat.le_succ_of_le (hh_one j))).towerHeight ≤
+            max_h_tH :=
+          Finset.le_sup
+            (f := fun l =>
+              (kToER (h_fam l)
+                (Nat.le_succ_of_le (hh_one l))).towerHeight)
+            (Finset.mem_univ j)
+        omega
+      have h_max_step_c :
+          (Fin.foldr (k' + 1) (fun l acc =>
+            max acc
+              (KMor1.level0Shape (g_fam l)
+                (hg l)).linearBound.1) 0) ≤ 1 := by
+        apply Fin.foldr_max_le
+        intro j; exact h_step_c_bound j
+      have h_max_step_k :
+          (Fin.foldr (k' + 1) (fun l acc =>
+            max acc
+              (KMor1.level0Shape (g_fam l)
+                (hg l)).linearBound.2) 0) ≤ max_g_tH + 1 := by
+        apply Fin.foldr_max_le
+        intro j
+        have h_lb := h_step_k_bound j
+        have h_le :
+            (kToER (g_fam j)
+              (Nat.le_succ_of_le (hg_one j))).towerHeight ≤
+            max_g_tH :=
+          Finset.le_sup
+            (f := fun l =>
+              (kToER (g_fam l)
+                (Nat.le_succ_of_le (hg_one l))).towerHeight)
+            (Finset.mem_univ j)
+        omega
+      set tH_simrec :=
+        (kToER (KMor1.simrec i h_fam g_fam)
+          (Nat.le_succ_of_le h)).towerHeight
+        with htH_simrec
+      have h_simrec_tH_pos : 1 ≤ tH_simrec := by
+        rw [htH_simrec]
+        unfold kToER
+        simp only [ERMor1.towerHeight]
+        omega
+      have h_aux' :
+          max max_h_tH max_g_tH ≤ tH_simrec := by
+        rw [htH_simrec, hmax_h_tH, hmax_g_tH]
+        exact h_aux
+      -- linearBound.1 + linearBound.2 + 1 ≤
+      -- (max_step_c) + 2·(max_step_k) + 1 + (max_base) + 1
+      -- ≤ 1 + 2·(max_g_tH+1) + (max_h_tH+1) + 2
+      -- = 2·max_g_tH + max_h_tH + 6
+      -- ≤ 3·max(max_g_tH, max_h_tH) + 6
+      -- ≤ 3·tH_simrec + 6.
+      have h_lhs_le :
+          (Fin.foldr (k' + 1) (fun l acc =>
+            max acc
+              (KMor1.level0Shape (g_fam l)
+                (hg l)).linearBound.1) 0 +
+              2 * Fin.foldr (k' + 1) (fun l acc =>
+                max acc
+                  (KMor1.level0Shape (g_fam l)
+                    (hg l)).linearBound.2) 0 + 1 +
+            Fin.foldr (k' + 1) (fun l acc =>
+              max acc
+                (KMor1.level0Shape (h_fam l)
+                  (hh l)).linearBound.2) 0 + 1) ≤
+            3 * tH_simrec + 6 := by
+        have h_max1 : max_h_tH ≤ tH_simrec :=
+          le_trans (le_max_left _ _) h_aux'
+        have h_max2 : max_g_tH ≤ tH_simrec :=
+          le_trans (le_max_right _ _) h_aux'
+        omega
+      have h_lt :
+          Fin.foldr (k' + 1) (fun l acc =>
+            max acc
+              (KMor1.level0Shape (g_fam l)
+                (hg l)).linearBound.1) 0 +
+              2 * Fin.foldr (k' + 1) (fun l acc =>
+                max acc
+                  (KMor1.level0Shape (g_fam l)
+                    (hg l)).linearBound.2) 0 + 1 +
+            Fin.foldr (k' + 1) (fun l acc =>
+              max acc
+                (KMor1.level0Shape (h_fam l)
+                  (hh l)).linearBound.2) 0 + 1 <
+            2 ^ (3 * tH_simrec + 2) := by
+        have h_helper :=
+          Nat.three_mul_add_six_lt_two_pow_three_mul_add_two
+            tH_simrec h_simrec_tH_pos
+        omega
+      have h_log :=
+        Nat.log_lt_of_lt_pow (b := 2) (by omega) h_lt
+      exact Nat.lt_succ_iff.mp h_log
+
+/-- Strengthened structural lower bound on `kSimPackedBase`'s
+tower height, parallel to the Step version. -/
+private theorem kSimPackedBase_towerHeight_ge_succ_k
+    {a k : ℕ}
+    (h : Fin (k + 1) → ERMor1 a) :
+    k + 2 ≤ (kSimPackedBase h).towerHeight := by
+  unfold kSimPackedBase
+  exact kSimSzudzikPackList_towerHeight_ge_succ_k _
 
 /-- Combined absorption inequality: the log-sums on the
 left-hand side of A.6's calc chain are bounded by the
