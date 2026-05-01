@@ -455,6 +455,46 @@ theorem ERMor1.interp_iterAutoBoundExpr {k : ℕ}
   simp only [ERMor1.interp_addN, ERMor1.interp_natN]
   ring
 
+/-- Structural lower bound on `iterAutoBoundExpr`'s tower
+height in terms of the `d` parameter.  The body has shape
+`comp (towerER (d + 1)) [...]`, so `towerHeight` exposes
+`(towerER (d + 1)).towerHeight + _ + 1`.  Combined with the
+auxiliary fact `n ≤ (towerER n).towerHeight` (induction on
+`n`), this yields `d ≤ (iterAutoBoundExpr k d lh).
+towerHeight`. -/
+theorem ERMor1.iterAutoBoundExpr_towerHeight_ge_d
+    (k d lh : ℕ) :
+    d ≤ (ERMor1.iterAutoBoundExpr k d lh).towerHeight := by
+  have htow : ∀ n, n ≤ (ERMor1.towerER n).towerHeight := by
+    intro n
+    induction n with
+    | zero =>
+        change 0 ≤ (ERMor1.proj (0 : Fin 1)).towerHeight
+        simp [ERMor1.towerHeight]
+    | succ n' _ =>
+        unfold ERMor1.towerER
+        simp only [ERMor1.towerHeight]
+        have h1 : (ERMor1.towerER n').towerHeight ≤
+            (Finset.univ : Finset (Fin 2)).sup
+              (fun i : Fin 2 =>
+                (match i with
+                  | ⟨0, _⟩ => ERMor1.towerER n'
+                  | ⟨1, _⟩ => ERMor1.twoN 1).towerHeight) := by
+          have := Finset.le_sup
+            (s := (Finset.univ : Finset (Fin 2)))
+            (f := fun i : Fin 2 =>
+              (match i with
+                | ⟨0, _⟩ => ERMor1.towerER n'
+                | ⟨1, _⟩ => ERMor1.twoN 1).towerHeight)
+            (Finset.mem_univ (⟨0, by omega⟩ : Fin 2))
+          exact this
+        omega
+  unfold ERMor1.iterAutoBoundExpr
+  simp only [ERMor1.towerHeight]
+  have h_d1 : d + 1 ≤ (ERMor1.towerER (d + 1)).towerHeight :=
+    htow (d + 1)
+  omega
+
 /-- B-W-style iter combinator on ER terms with an automatic
 structural tower bound.  Composes `boundedRec` against
 `iterAutoBoundExpr` and substitutes `count` into slot `0` of
