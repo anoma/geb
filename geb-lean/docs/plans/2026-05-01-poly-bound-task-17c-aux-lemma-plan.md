@@ -434,13 +434,32 @@ EOF
 
 **Files:**
 
-- Modify: `GebLean/Utilities/ERArith.lean`
-  (insert after `boundedRec_towerHeight_eq`)
+- Modify: `GebLean/LawvereERBoundComputable.lean`
+  (insert after `boundedRec_towerHeight_le`, the lemma added
+  by E.2.  Note: file is `LawvereERBoundComputable.lean`, not
+  `Utilities/ERArith.lean` — see E.2's authorized deviation
+  on file placement.)
 
 Three short corollaries extracting each input's
 towerHeight as a lower bound on
 `(boundedRec base step bound).towerHeight`.  These are the
 critical-path lemmas for the auxiliary lemma.
+
+E.2 produced `boundedRec_towerHeight_le` (note: `_le`, not
+`_eq` as the original draft proposed — the `_eq` form does
+not hold; E.2's authorized deviation):
+
+```lean
+theorem ERMor1.boundedRec_towerHeight_le {k : ℕ}
+    (base : ERMor1 k) (step : ERMor1 (k + 2))
+    (bound : ERMor1 (k + 1)) :
+    max base.towerHeight
+        (max step.towerHeight bound.towerHeight) ≤
+      (ERMor1.boundedRec base step bound).towerHeight
+```
+
+The corollaries below derive directly from this `_le` form
+plus `le_max_*` chains.
 
 - [ ] **Step E.3.1: State and prove `_ge_base`**
 
@@ -453,9 +472,9 @@ theorem ERMor1.boundedRec_towerHeight_ge_base {k : ℕ}
     (base : ERMor1 k) (step : ERMor1 (k + 2))
     (bound : ERMor1 (k + 1)) :
     base.towerHeight ≤
-      (ERMor1.boundedRec base step bound).towerHeight := by
-  rw [ERMor1.boundedRec_towerHeight_eq]
-  exact le_trans (le_max_left _ _) (le_max_left _ _)
+      (ERMor1.boundedRec base step bound).towerHeight :=
+  le_trans (le_max_left _ _)
+    (ERMor1.boundedRec_towerHeight_le base step bound)
 ```
 
 - [ ] **Step E.3.2: State and prove `_ge_step`**
@@ -469,10 +488,9 @@ theorem ERMor1.boundedRec_towerHeight_ge_step {k : ℕ}
     (base : ERMor1 k) (step : ERMor1 (k + 2))
     (bound : ERMor1 (k + 1)) :
     step.towerHeight ≤
-      (ERMor1.boundedRec base step bound).towerHeight := by
-  rw [ERMor1.boundedRec_towerHeight_eq]
-  exact le_trans (le_trans (le_max_left _ _) (le_max_right _ _))
-                  (le_max_left _ _)
+      (ERMor1.boundedRec base step bound).towerHeight :=
+  le_trans (le_trans (le_max_left _ _) (le_max_right _ _))
+    (ERMor1.boundedRec_towerHeight_le base step bound)
 ```
 
 - [ ] **Step E.3.3: State and prove `_ge_bound`**
@@ -486,16 +504,10 @@ theorem ERMor1.boundedRec_towerHeight_ge_bound {k : ℕ}
     (base : ERMor1 k) (step : ERMor1 (k + 2))
     (bound : ERMor1 (k + 1)) :
     bound.towerHeight ≤
-      (ERMor1.boundedRec base step bound).towerHeight := by
-  rw [ERMor1.boundedRec_towerHeight_eq]
-  exact le_trans
-    (le_trans (le_max_right _ _) (le_max_right _ _))
-    (le_max_left _ _)
+      (ERMor1.boundedRec base step bound).towerHeight :=
+  le_trans (le_trans (le_max_right _ _) (le_max_right _ _))
+    (ERMor1.boundedRec_towerHeight_le base step bound)
 ```
-
-If the closed-form expression's max nesting in E.2's
-`_eq` differs from the above, adjust the `le_max_*` chain
-in each corollary accordingly.
 
 - [ ] **Step E.3.4: Run `lake build` + `lake test`**
 
@@ -505,11 +517,11 @@ Expected: PASS, no warnings.
 - [ ] **Step E.3.5: Commit**
 
 ```bash
-git add GebLean/Utilities/ERArith.lean
+git add GebLean/LawvereERBoundComputable.lean
 git commit -m "$(cat <<'EOF'
 boundedRec towerHeight ≥ {base, step, bound} (Task 17c E.3)
 
-Three corollaries of boundedRec_towerHeight_eq from E.2,
+Three corollaries of boundedRec_towerHeight_le from E.2,
 extracting each input argument's towerHeight as a lower
 bound on (boundedRec base step bound).towerHeight.  Used
 by Task 17c E.5 (auxiliary lemma): the h-side routes
