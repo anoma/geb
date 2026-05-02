@@ -1887,50 +1887,80 @@ Adversary obligation: verify by reading `kSimTowerBound` and
 `towerDominates` field of the new `URMComputes` structure
 genuinely concerns step counts and not function values.
 
-### §15.2 Does the URM-simulation strategy itself recreate the prior trap?
+### §15.2 Does either side of Path 2 recreate the prior trap?
 
-Claim: The runtime-bound shape `tower h_f (vMax v + offset_f)`
-is a value-bound on the `stepBound` Lean function (which is
-itself a number, not a K^sim function output). The composition
-of step bounds via combinators (§5) is additive (`urmSeq`,
-`urmIf`) or sums-of-iterations (`urmLoop`); none of these
-introduce an exponential coefficient field analogous to the
-prior `3^E`.
+Claim (kToER, structural-induction side): The new bound shape
+is Tourlakis's `A_n^r` (a sequence of explicit ER named
+composites: `A_one`, `A_one_iter`, `A_two_iter`). Composition
+of A_n^r bounds via `simultaneousBoundedRec` carries an
+encapsulated polynomial-shape bound on the packed iteration
+state; the packing and unpacking happen inside
+`simultaneousBoundedRec`, never visible at the kToER outer
+level. No `3^E` coefficient leaks out.
 
-Adversary obligation: spot-check the §5 combinator arithmetic
-table; trace whether any coefficient appears in the `stepBound`
-or `towerHeight` arithmetic that would force a prior-style
-absorption inequality.
+Claim (erToK, URM side): URM step counts are computed by
+combinators that are additive (`urmSeq`, `urmIf`) or sum-of-
+iterations (`urmLoop`); none introduce an exponential
+coefficient analogous to the prior `3^E`.
 
-### §15.3 Is K^sim_2 → URM compilation closed at level ≤ 2?
+Adversary obligation: spot-check the §3.4 majorization
+arithmetic and §3.2's `simultaneousBoundedRec` polyBound
+(kToER side); spot-check the §5 combinator arithmetic
+table (erToK side). Trace whether any coefficient appears
+in either side that would force a prior-style absorption
+inequality.
 
-Claim: The `compileKSim` compiler, applied to a level-≤-2 K^sim
-term, produces a URM whose `URMComputes.towerHeight` is bounded
-by 2 + small constant. The compiler does not implicitly require
-K^sim_3 features (e.g. unbounded `condJump` patterns smuggled in
-via the `simrec` combinator).
+### §15.3 Is ER → URM compilation closed in ER (erToK side)?
 
-Adversary obligation: trace the `simrec` case of `compileKSim`
-(§8.1) to confirm the produced URM uses `condJump` only on the
-recursion-counter register (a counted loop), never on
+(Note: under Path 2, K^sim_2 → URM compilation is NOT part
+of any path; kToER goes directly K^sim_2 → ER via
+structural induction. This punch-list item now applies only
+to the erToK side's ER → URM compilation.)
+
+Claim: The `compileER` compiler, applied to any ER term,
+produces a URM whose `URMComputes.towerHeight` is bounded
+appropriately for the `boundExprK e` runtime bound to
+remain in K^sim_2 (level ≤ 2). The compiler does not
+implicitly require K^sim_3 features (e.g. unbounded
+`condJump` patterns smuggled in via the `bsum`/`bprod`
+combinators).
+
+Adversary obligation: trace the `bsum`/`bprod` cases of
+`compileER` (§8.2) to confirm the produced URM uses
+`condJump` only on bounded counter registers, never on
 unbounded-iteration patterns. Verify that the `urmLoop`
-combinator's `+1` `towerHeight` jump is the only level
-contribution per simrec nesting.
+combinator's tower-height contribution per `bsum`/`bprod`
+nesting matches the K^sim_2 closure under bounded
+recursion.
 
-### §15.4 Is the level-1-vs-level-2 asymmetry from prior plan v5 absent?
+### §15.4 Is the level-1-vs-level-2 asymmetry from prior plan v5 absent (Path 2 kToER)?
 
-Claim: The URM-simulation strategy is uniform across K^sim levels
-0, 1, 2: the catalogue entries are populated by structural
-recursion on `KMor1` regardless of level; the level appears only
-in `compileKSim`'s argument and in the resulting tower-height
-computation. There is no level-1-only assumption (e.g.
-`level0Shape.linearBound.1 ≤ 1`) that fails to lift to level-2
-children.
+Plan v5's failure mode: the level-1 dominance chain in
+`kToERDirect` worked because of a level-0-specific shape
+assumption (`level0Shape.linearBound.1 ≤ 1`) that did not
+lift to level-1 children of a level-2 simrec. Path 2 must
+verify this asymmetry does not recur.
 
-Adversary obligation: examine the `compileKSim.simrec` case;
-verify that the `KMor1.simrec` case's recursive call applies to
-children at level n - 1 (where the parent is at level n) without
-constraints on the children's specific structure.
+Claim: Path 2's `KMor1.majorize_by_A_n_iter` is uniform
+across K^sim levels via structural induction. The level-2
+case is proven via `simultaneousBoundedRec`'s polyBound
+applied to children at K^sim_1 level. The level-1
+children's bound is `A_1^r` (explicit polynomial), not the
+prior `linearBound`/`level0Shape`-specific shape. The
+multi-output simrec is handled by
+`simultaneousBoundedRec`'s ERMorN interface; the packing
+arithmetic is encapsulated and produces a bound whose
+shape does not depend on level-0 specifics.
+
+Adversary obligation: trace §3.4's level-2 majorization
+proof. Verify that the recursive call applies to children
+at K^sim_1 with NO additional shape constraint beyond
+"K^sim level ≤ 1 hence bounded by `A_1^r` for some r".
+Verify that `simultaneousBoundedRec`'s polyBound builder
+takes any `A_1^r`-bounded children and produces an
+`A_2^{r'}`-bounded result for explicit r'. If any step
+requires a level-0-specific assumption, that's a defect
+and the prior failure mode has recurred.
 
 ### §15.5 Is the categorical iso of step 11 strict, not natural?
 
@@ -1947,19 +1977,24 @@ Adversary obligation: verify (a) by inspecting the proposed
 `erToK_interp` (§10.2); verify (c) by reading
 `LawvereKSimQuot.lean` and `LawvereERQuot.lean`.
 
-### §15.6 Is per-URM (not universal) construction what Tourlakis does?
+### §15.6 Per-URM construction matches Tourlakis (erToK only)
 
-Claim: Tourlakis 2018's proof of §0.1.0.43-44 constructs URMs
-per function (not a single universal URM) and the simulating
-function is per-URM (the phrasing "the simulating function for
-the output variable of M" is M-specific). The new design adopts
-per-URM construction by symmetry with Tourlakis.
+(Note: under Path 2, this item applies only to the erToK
+side, where Path 1's URM-simulation design is preserved.
+The kToER side does not use URM at all.)
 
-Adversary obligation: verify by reading `PR-complexity-topics.pdf`
-pp. 19-22 directly. Confirm the worked examples (`λx.x`,
-`λx.x+1`, `λxy.x·y`, the Loop-to-URM template, the bounded-
-recursion URM template) are all per-program / per-function. Check
-the §0.1.0.44 ⊇ proof for the per-M phrasing.
+Claim: Tourlakis 2018's proof of §0.1.0.43 (Ritchie–Cobham)
+constructs URMs per function (not a single universal URM)
+and the corresponding simulating function in the target
+language is per-URM. The erToK side adopts per-URM
+construction by symmetry with Tourlakis.
+
+Adversary obligation: verify by reading
+`PR-complexity-topics.pdf` pp. 19-22 directly. Confirm the
+worked examples (`λx.x`, `λx.x+1`, `λxy.x·y`, the Loop-to-
+URM template, the bounded-recursion URM template) are all
+per-program / per-function. Check the §0.1.0.44 ⊇ proof
+for the per-M phrasing.
 
 ### §15.7 Are the catalogue obligations local?
 
