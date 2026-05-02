@@ -113,6 +113,94 @@ construction applies in ER using `bsum`/`bprod`-based bounded
 exponentiation), iterated `h` times stays in ER by closure
 of ER under composition.
 
+### §1.5 What we implement, and what we only borrow as technique
+
+Tourlakis 2018 §0.1.0.43 (Ritchie–Cobham), §0.1.0.44
+(`K^sim_n = E^{n+1}`), §0.1.0.27 (bounding lemma), and
+§0.1.0.22 (Grzegorczyk hierarchy) are theorems whose Tourlakis
+proofs are stated and proved in `E^n` terms, using
+Grzegorczyk-hierarchy properties (notably, `E^{n+1}`'s
+closure under bounded primitive recursion as a definitional
+fact). Their proofs do not transfer to ER as Wikipedia
+defines it without first formalizing the Grzegorczyk
+hierarchy and the ER ↔ E^3 equivalence. **We do not do
+that.**
+
+**This project implements neither Ritchie–Cobham nor
+Tourlakis 0.1.0.44 as standalone Lean theorems.** Instead,
+the chain we implement (`compileKSim` + `boundExpr` +
+`simulateInER` + composition into `kToER` + `kToER_interp`)
+reaches the same conclusion (`K^sim_2 ⊆ ER` at the
+function-class level) by construction, bypassing the
+literature's E^n route entirely.
+
+What we **implement** (each as a Lean definition with a Lean
+correctness theorem, in steps 3–6 and the mirror 7–10):
+
+- `compileKSim : KMor1 a → KMor1.level f ≤ 2 → URMProgram`
+  (Lean metafunction; step 4).
+- `compileKSim_URMComputes` (Lean theorem stating the
+  compiled URM computes `f.interp` within an explicit
+  Lean-`Nat` step bound; step 4).
+- `boundExpr f : ERMor1 a` (Lean term; step 5).
+- `boundExpr_dominates` (Lean theorem stating `compileKSim
+  f`'s stepBound is `≤ (boundExpr f).interp`; step 5).
+- `simulateInER : URMProgram → ERMorN ...` (Lean term-
+  producing function; step 3).
+- `simulateInER_interp` (Lean theorem stating the
+  simulator's interp matches `runReg`; step 3).
+- `kToER : KMor1 a → ... → ERMor1 a` (Lean composition; step
+  6).
+- `kToER_interp` (Lean equality theorem; step 6).
+- `kToERFunctor : LawvereKSimDCat 2 ⥤ LawvereERCat` (step 6).
+- Mirrors for the erToK direction (steps 7–10).
+- `kToERFunctor ⋙ erToKFunctor = 𝟭 (LawvereKSimDCat 2)` and
+  reverse (Lean strict-equality theorems; step 11).
+
+What we **borrow as technique** (without transcribing
+proofs):
+
+- Tourlakis 2018 pp. 19-21 worked URM examples and the
+  Loop-to-URM template: shape-of-the-construction that
+  informs `compileKSim` and `urmLoop` per §3 and §4.3.
+- Tourlakis's per-program / per-URM convention: matched in
+  §6 by per-URM `simulateInER` rather than a universal
+  simulator.
+- The runtime-bound shape `tower h (linear)`: same shape
+  the literature labels `A_n^k`-bounded; we construct it
+  directly in `ERMor1` (see §8.4) and prove the dominance
+  via Module A's `polynomial_iter_tower_bound` and
+  `tower_succ_pow_bound_strong`, neither of which uses E^n.
+
+What we **do not implement and do not depend on**:
+
+- Tourlakis 2018 §0.1.0.43 (Ritchie–Cobham) as a Lean
+  theorem stating `f ∈ ER iff URM-computable in ER time`.
+  (We only need a fragment of the reverse direction —
+  "`simulateInER` is in ER and computes the URM's
+  function" — and that fragment is `simulateInER_interp`,
+  which is proven directly without invoking E^n.)
+- Tourlakis 2018 §0.1.0.44 as a Lean theorem stating
+  `K^sim_n = E^{n+1}`. The categorical iso (`step 11`) is
+  proven directly from `kToER_interp` + `erToK_interp` plus
+  the morphism-quotient setup; no E^n hierarchy intermediates.
+- Tourlakis 2018 §0.1.0.27 (bounding lemma) as a Lean
+  theorem characterizing E^{n+1} functions. Our `boundExpr`
+  is a per-K^sim-term ER term, not a bounding-lemma
+  consequence.
+- The Grzegorczyk hierarchy at any level. No `E^0`, `E^1`,
+  `E^2`, or `E^n` is formalized in this project.
+- The ER ↔ E^3 equivalence at any level (function-class or
+  individual-function). The two are mathematically equivalent
+  but our proof chain never uses that fact.
+
+The cycles in §2 each carry this discipline: every Lean
+function, definition, and theorem produced is realized
+directly in `ERMor1` / `KMor1` / `URMProgram` and their named
+composites; no cycle introduces an E^n placeholder, opaque
+"closure-under-bounded-recursion" lemma over E^n, or any
+other Grzegorczyk-hierarchy artefact.
+
 ---
 
 ## §2 The 0–11 cycle structure
@@ -1288,33 +1376,74 @@ Claim: The erToK direction's load-bearing files
 internal proofs are deferred to steps 7-10. The kToER side
 (steps 3-6) does not depend on any unfinished erToK content.
 
-### §14.11 Does any proof step depend on ER ↔ E^n?
+### §14.11 Does any Lean proof depend on ER ↔ E^n?
 
-Claim: Per §1.4, this project formalizes `ER` directly per
-`GebLean/LawvereER.lean` and does **not** formalize the
-Grzegorczyk hierarchy. Every load-bearing step in the proof
-chain uses `ER` directly (or its named composites in
-`Utilities/ERArith.lean` and `LawvereERPolynomialBound.lean`).
-Literature references using `E^n` notation appear only in the
-citation map (§13) and in motivation prose (§1, §4.4, §5.2,
-§8); none of those references is converted into a logical
-dependency.
+Claim: Per §1.4 and §1.5, this project formalizes `ER`
+directly per `GebLean/LawvereER.lean` and does **not**
+formalize the Grzegorczyk hierarchy. The chain of Lean
+theorems (`compileKSim_URMComputes`, `boundExpr_dominates`,
+`simulateInER_interp`, `kToER_interp`, the strict-iso
+equalities) closes `K^sim_2 ⊆ ER` (and the reverse) by
+direct construction, without ever stating or proving any
+of:
 
-Adversary obligation: trace each `E^n` occurrence in the
-document; confirm that for every occurrence, the surrounding
-context either (a) is in §1, §13, or another non-load-bearing
-section, or (b) restates the same claim in `ER` terms with a
-direct `ERMor1` construction. Any place where the proof
+- Tourlakis 2018 §0.1.0.43 (Ritchie–Cobham);
+- Tourlakis 2018 §0.1.0.44 (`K^sim_n = E^{n+1}`);
+- Tourlakis 2018 §0.1.0.27 (bounding lemma for `E^n`);
+- Tourlakis 2018 §0.1.0.22 (Grzegorczyk hierarchy);
+- the ER ↔ E^3 function-class equivalence;
+- any closure property of `E^n` for any `n`.
+
+Literature references using `E^n` notation appear only in
+the citation map (§13), in motivation prose (§1.2, §4.4,
+§5.2, §8.4), and in §1.4 / §1.5 explaining the discipline
+itself. None of those references is converted into a Lean
+lemma or used as a black-box step.
+
+Adversary obligation 1 (every E^n occurrence is non-load-
+bearing): trace each `E^n` occurrence in the document;
+confirm that for every occurrence, the surrounding context
+either (a) is in §1, §13, or another non-load-bearing
+section, or (b) restates the same claim in `ER` terms with
+a direct `ERMor1` construction. Any place where the proof
 chain steps from "X is in `E^n`" to "X is in `ER`" without
 going through a direct `ERMor1` term is a defect.
 
-Adversarial obligation: spot-check §8.4's "stays in ER"
-argument; confirm that the construction of `boundExpr f`'s
-ER expression (iterated `2^x` plus linear shift) does not
-rely on a Grzegorczyk-hierarchy fact. Also spot-check §6.1's
-`state_value_bound` polynomial in ER, confirming it is a
-polynomial expression in `ERMor1` directly (via `bsum`/`bprod`),
-not a black-box reference to "E^2's polynomial bound".
+Adversary obligation 2 (no Lean lemma reuses Tourlakis's
+E^n proof verbatim): trace each Lean theorem listed under
+§1.5's "What we implement" bullets; confirm its proof
+outline (per §6, §7, §8, §9 of this document, plus the
+per-cycle plans to be written) is a direct construction
+or induction on `ERMor1` / `KMor1` / `URMProgram` /
+`URMComputes`, **not** a transcription of a Tourlakis
+proof. Particular spot-checks: `compileKSim_URMComputes`
+must not invoke "E^n closure under bounded recursion" or
+any Grzegorczyk-hierarchy lemma; `simulateInER_interp`
+must not appeal to "the simulating function for the output
+variable of M" as a known fact (we construct it as a Lean
+term, not cite it from Tourlakis 0.1.0.37);
+`boundExpr_dominates` must not invoke 0.1.0.27's bounding
+lemma as a black box.
+
+Adversary obligation 3 (`boundExpr` is a direct ER term):
+spot-check §8.4's "stays in ER" argument; confirm that the
+construction of `boundExpr f`'s ER expression (iterated
+`2^x` plus linear shift) does not rely on a Grzegorczyk-
+hierarchy fact. The named composites for `tower 0`,
+`tower 1`, `tower 2` in `ERMor1` (or in
+`Utilities/ERArith.lean`) must each have their own
+`@[simp] interp` lemma so the runtime bound can be
+verified at the term level without invoking the
+hierarchy.
+
+Adversary obligation 4 (state-value bound is direct):
+spot-check §6.1's `state_value_bound`, confirming it is a
+polynomial expression in `ERMor1` directly (via
+`bsum`/`bprod`), not a black-box reference to "E^2's
+polynomial bound" or to Tourlakis's bounding lemma.
+
+If any spot-check fails, the master design must be revised
+before any cycle proceeds.
 
 Adversary obligation: verify the dependency graph (§11) does not
 contain a cycle or backward edge from kToER-load-bearing to
