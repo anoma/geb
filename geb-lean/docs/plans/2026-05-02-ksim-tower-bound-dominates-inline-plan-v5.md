@@ -1,5 +1,25 @@
 # `kSimTowerBound_dominates_inline` Implementation Plan (v5)
 
+> **SUPERSEDED 2026-05-02**.  Adversarial review identified that
+> T2's `simrecVec_uniform_linear_bound_level_one` is mathematically
+> false: at level 1 the simrec's iter is exponential in the iteration
+> count when level-1 children have multiplicative coefficient > 1
+> (counter-example: a level-1 simrec with `linearBound.1 = 12`
+> iterates as `12, 144, 1728, …`).  T3's level-1 absorption argument
+> additionally fails to close because `KMor1.linearBoundLog_le_towerHeight`'s
+> `3·tH+1` exponent does not absorb into the level-0-shaped
+> `stepTH + 2·baseTH + 1` RHS.  Plan v5 contradicts its own
+> investigation document (which recommended a polynomial-iter
+> route via `Nat.polynomial_iter_tower_bound`, not a linear-bound
+> mirror).
+>
+> Path forward: write a prose proof first
+> (`docs/research/2026-05-02-ksim-tower-bound-dominates-inline-prose-proof.md`,
+> in progress), iterate with adversarial review until the math
+> converges, then derive plan v6 from the verified proof.
+>
+> Preserved as a record of the planning exploration.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use
 > `superpowers:subagent-driven-development` (recommended) or
 > `superpowers:executing-plans` to implement this plan task-by-task.
