@@ -1,6 +1,6 @@
 import GebLean.LawvereKSim
 import GebLean.LawvereKSimInterp
-import GebLean.LawvereKSimER
+import GebLean.LawvereKSimERDirect
 import GebLean.LawvereERPolynomialBound
 import GebLean.Utilities.ComputationalComplexity
 import GebLean.Utilities.KSimSzudzikSimrec
@@ -9,7 +9,7 @@ import GebLean.Utilities.KSimSzudzikSimrec
 # K^sim polynomial bounds and dominance assembly
 
 K^sim-side proofs supporting the simrec dominance
-hypothesis required by `kToER_interp`'s level-2
+hypothesis required by `kToERDirect_interp`'s level-2
 simrec case.
 
 The principal results are:
@@ -25,10 +25,10 @@ The principal results are:
   assembly.
 
 The K^sim → ER polynomial-bound bridge originally
-scoped as `kToER_polyBound_of_level_one` is deferred to
+scoped as `kToERDirect_polyBound_of_level_one` is deferred to
 the call sites in Module C (Tasks 16, 17).  The
 deferral is structural rather than expedient: the
-simrec case of `kToER` produces a term containing
+simrec case of `kToERDirect` produces a term containing
 `ERMor1.boundedRec`, whose value bound is governed by
 its `bound` argument and is not polynomial in the
 inputs without the dominance hypothesis.  That
@@ -201,7 +201,7 @@ essential for the chain-closing log-vs-towerHeight
 inequality at Phase IV-B Task D.2 of the polynomial-
 bound 17b/17c plan: without it, high-fan-out level-0
 comps blow `linearBound`'s `.2` up multiplicatively in
-fan-out, while `(kToER f).towerHeight` only adds 1
+fan-out, while `(kToERDirect f).towerHeight` only adds 1
 per `comp` regardless of fan-out, and no constant
 offset closes the gap. -/
 def KMor1.linearBound :
@@ -956,25 +956,25 @@ def kSimPackedStep_polyBound {a k : ℕ}
           _ = 3 ^ E * (s + 1) ^ E := h_split
       exact h_combined }
 
-/-- Interp preservation for level-0 K^sim: `kToER` of a
+/-- Interp preservation for level-0 K^sim: `kToERDirect` of a
 level-0 term has interp matching the K^sim interp.  Base
 case of the recursive bootstrap for K^sim_n ⊆ E^{n+1}.
 
 By structural recursion on level-0 KMor1 (zero, succ,
 proj, comp).  `raise` and `simrec` cases are vacuous at
 level 0. -/
-theorem kToER_interp_level_zero :
+theorem kToERDirect_interp_level_zero :
     ∀ {a : ℕ} (f : KMor1 a) (h : f.level ≤ 0)
       (ctx : Fin a → ℕ),
-      (kToER f
+      (kToERDirect f
         (Nat.le_succ_of_le (Nat.le_succ_of_le h))).interp
           ctx = f.interp ctx
   | _, .zero,         _, _   => by
-      simp [kToER, KMor1.interp_zero, ERMor1.interp_zeroN]
+      simp [kToERDirect, KMor1.interp_zero, ERMor1.interp_zeroN]
   | _, .succ,         _, _   => by
-      simp [kToER, KMor1.interp_succ, ERMor1.interp_succ]
+      simp [kToERDirect, KMor1.interp_succ, ERMor1.interp_succ]
   | _, .proj _,       _, _   => by
-      simp [kToER, KMor1.interp_proj, ERMor1.interp_proj]
+      simp [kToERDirect, KMor1.interp_proj, ERMor1.interp_proj]
   | _, .comp f gs,    h, ctx => by
       have hf : f.level ≤ 0 := by
         unfold KMor1.level at h
@@ -990,36 +990,36 @@ theorem kToER_interp_level_zero :
             (Finset.mem_univ i))
           hsup
       have h_inner :
-          (fun i => (kToER (gs i)
+          (fun i => (kToERDirect (gs i)
               (Nat.le_succ_of_le
                 (Nat.le_succ_of_le (hgs i)))).interp ctx)
             = (fun i => (gs i).interp ctx) := by
         funext i
-        exact kToER_interp_level_zero (gs i) (hgs i) ctx
-      simp only [kToER, ERMor1.interp_comp,
+        exact kToERDirect_interp_level_zero (gs i) (hgs i) ctx
+      simp only [kToERDirect, ERMor1.interp_comp,
         KMor1.interp_comp]
       rw [h_inner]
-      exact kToER_interp_level_zero f hf
+      exact kToERDirect_interp_level_zero f hf
         (fun i => (gs i).interp ctx)
   | _, .raise _,      h, _   => by
       unfold KMor1.level at h; omega
   | _, .simrec _ _ _, h, _   => by
       unfold KMor1.level at h; omega
 
-/-- Linear bound on level-0 K^sim's kToER image.  The
+/-- Linear bound on level-0 K^sim's kToERDirect image.  The
 constants are given by `level0Shape`'s `linearBound`:
 either `(0, k)` (constant) or `(1, k)` (shifted
 projection). -/
-theorem kToER_linearBound_dominates_level_zero
+theorem kToERDirect_linearBound_dominates_level_zero
     {a : ℕ} (f : KMor1 a) (h : f.level ≤ 0)
     (ctx : Fin a → ℕ) :
-    (kToER f
+    (kToERDirect f
       (Nat.le_succ_of_le (Nat.le_succ_of_le h))).interp
         ctx ≤
       (KMor1.level0Shape f h).linearBound.1 *
         (Finset.univ : Finset (Fin a)).sup ctx +
       (KMor1.level0Shape f h).linearBound.2 := by
-  rw [kToER_interp_level_zero f h ctx,
+  rw [kToERDirect_interp_level_zero f h ctx,
     KMor1.level0Shape_interp f h ctx]
   exact ConstantOrShiftedProj.linearBound_dominates _ ctx
 
@@ -1028,22 +1028,22 @@ level-0 shape's linear bound, in terms of the tower
 height of the ER translation: `linearBound.2 ≤
 towerHeight + 1`.  Required for A.5.2.2's argument-
 inequality proof. -/
-private theorem kToER_level0_towerHeight_ge_const :
+private theorem kToERDirect_level0_towerHeight_ge_const :
     {a : ℕ} → (f : KMor1 a) → (h : f.level ≤ 0) →
       (KMor1.level0Shape f h).linearBound.2 ≤
-        (kToER f
+        (kToERDirect f
           (Nat.le_succ_of_le
             (Nat.le_succ_of_le h))).towerHeight + 1
   | _, .zero,         _ => by
-      simp [kToER, KMor1.level0Shape,
+      simp [kToERDirect, KMor1.level0Shape,
         ConstantOrShiftedProj.linearBound, ERMor1.zeroN,
         ERMor1.towerHeight]
   | _, .succ,         _ => by
-      simp [kToER, KMor1.level0Shape,
+      simp [kToERDirect, KMor1.level0Shape,
         ConstantOrShiftedProj.linearBound,
         ERMor1.towerHeight]
   | _, .proj _,       _ => by
-      simp [kToER, KMor1.level0Shape,
+      simp [kToERDirect, KMor1.level0Shape,
         ConstantOrShiftedProj.linearBound,
         ERMor1.towerHeight]
   | _, .comp f gs,    h => by
@@ -1060,10 +1060,10 @@ private theorem kToER_level0_towerHeight_ge_const :
             (f := fun j => (gs j).level)
             (Finset.mem_univ i))
           hsup
-      have ihf := kToER_level0_towerHeight_ge_const f hf
+      have ihf := kToERDirect_level0_towerHeight_ge_const f hf
       have ihgs := fun i =>
-        kToER_level0_towerHeight_ge_const (gs i) (hgs i)
-      simp only [kToER, KMor1.level0Shape, ERMor1.towerHeight]
+        kToERDirect_level0_towerHeight_ge_const (gs i) (hgs i)
+      simp only [kToERDirect, KMor1.level0Shape, ERMor1.towerHeight]
       cases hshape_f : f.level0Shape hf with
       | const k_f =>
           rw [hshape_f] at ihf
@@ -1080,16 +1080,16 @@ private theorem kToER_level0_towerHeight_ge_const :
                 ConstantOrShiftedProj.linearBound]
                 at ihgi ⊢
               have hsup_le :
-                  (kToER (gs i)
+                  (kToERDirect (gs i)
                     (Nat.le_succ_of_le
                       (Nat.le_succ_of_le (hgs i)))).towerHeight
                   ≤ Finset.univ.sup
-                      (fun j => (kToER (gs j)
+                      (fun j => (kToERDirect (gs j)
                         (Nat.le_succ_of_le
                           (Nat.le_succ_of_le
                             (hgs j)))).towerHeight) :=
                 Finset.le_sup
-                  (f := fun j => (kToER (gs j)
+                  (f := fun j => (kToERDirect (gs j)
                     (Nat.le_succ_of_le
                       (Nat.le_succ_of_le
                         (hgs j)))).towerHeight)
@@ -1101,16 +1101,16 @@ private theorem kToER_level0_towerHeight_ge_const :
                 ConstantOrShiftedProj.linearBound]
                 at ihgi ⊢
               have hsup_le :
-                  (kToER (gs i)
+                  (kToERDirect (gs i)
                     (Nat.le_succ_of_le
                       (Nat.le_succ_of_le (hgs i)))).towerHeight
                   ≤ Finset.univ.sup
-                      (fun j => (kToER (gs j)
+                      (fun j => (kToERDirect (gs j)
                         (Nat.le_succ_of_le
                           (Nat.le_succ_of_le
                             (hgs j)))).towerHeight) :=
                 Finset.le_sup
-                  (f := fun j => (kToER (gs j)
+                  (f := fun j => (kToERDirect (gs j)
                     (Nat.le_succ_of_le
                       (Nat.le_succ_of_le
                         (hgs j)))).towerHeight)
@@ -1131,11 +1131,11 @@ private theorem packed_iteration_matches_simrecVec
     (h_g : ∀ l, (g_fam l).level ≤ 0)
     (params : Fin a → ℕ) (j : ℕ) :
     Nat.rec
-      ((kSimPackedBase (fun l => kToER (h_fam l)
+      ((kSimPackedBase (fun l => kToERDirect (h_fam l)
         (Nat.le_succ_of_le
           (Nat.le_succ_of_le (h_h l))))).interp params)
       (fun i prev =>
-        (kSimPackedStep (fun l => kToER (g_fam l)
+        (kSimPackedStep (fun l => kToERDirect (g_fam l)
           (Nat.le_succ_of_le
             (Nat.le_succ_of_le (h_g l))))).interp
         (Fin.cons i (Fin.cons prev params)))
@@ -1152,11 +1152,11 @@ private theorem packed_iteration_matches_simrecVec
       apply List.map_congr_left
       intro l _
       simp only [KMor1.simrecVec_zero]
-      exact kToER_interp_level_zero (h_fam l) (h_h l) params
+      exact kToERDirect_interp_level_zero (h_fam l) (h_h l) params
   | succ n ih =>
       set base_val :=
         (kSimPackedBase (fun l =>
-          kToER (h_fam l)
+          kToERDirect (h_fam l)
             (Nat.le_succ_of_le
               (Nat.le_succ_of_le (h_h l))))).interp params
         with hbase
@@ -1164,7 +1164,7 @@ private theorem packed_iteration_matches_simrecVec
           ℕ → ℕ → ℕ :=
         fun i prev =>
           (kSimPackedStep (fun l =>
-            kToER (g_fam l)
+            kToERDirect (g_fam l)
               (Nat.le_succ_of_le
                 (Nat.le_succ_of_le (h_g l))))).interp
           (Fin.cons i (Fin.cons prev params))
@@ -1284,7 +1284,7 @@ private theorem packed_iteration_matches_simrecVec
       congr 1
       apply List.map_congr_left
       intro l _
-      exact kToER_interp_level_zero (g_fam l) (h_g l) _
+      exact kToERDirect_interp_level_zero (g_fam l) (h_g l) _
 
 /-- Structural lower bound on `kSimSzudzikPackList`'s
 tower height: the outer `comp succ (comp natPair _)` ensures
@@ -1548,9 +1548,9 @@ private theorem kSimTowerBound_towerHeight_ge_max_step_child
     (kSimTowerBound_towerHeight_ge_packedStep h g)
 
 /-- Auxiliary structural lemma h-side: the maximum-over-the
-h-family child tower height under `kToER` is dominated by
-`kToER (simrec i h_fam g_fam)`'s tower height. -/
-private theorem kToER_simrec_h_side_bound
+h-family child tower height under `kToERDirect` is dominated by
+`kToERDirect (simrec i h_fam g_fam)`'s tower height. -/
+private theorem kToERDirect_simrec_h_side_bound
     {a k : ℕ}
     (h_fam : Fin (k + 1) → KMor1 a)
     (g_fam : Fin (k + 1) → KMor1 (a + 1 + (k + 1)))
@@ -1560,15 +1560,15 @@ private theorem kToER_simrec_h_side_bound
     (hyp : (KMor1.simrec i h_fam g_fam).level ≤ 2) :
     (Finset.univ : Finset (Fin (k + 1))).sup
         (fun l =>
-          (kToER (h_fam l)
+          (kToERDirect (h_fam l)
             (Nat.le_succ_of_le (h_h l))).towerHeight) ≤
-      (kToER (KMor1.simrec i h_fam g_fam) hyp).towerHeight := by
+      (kToERDirect (KMor1.simrec i h_fam g_fam) hyp).towerHeight := by
   set h_ER : Fin (k + 1) → ERMor1 a :=
-    fun l => kToER (h_fam l) (Nat.le_succ_of_le (h_h l))
+    fun l => kToERDirect (h_fam l) (Nat.le_succ_of_le (h_h l))
   set g_ER : Fin (k + 1) → ERMor1 (a + 1 + (k + 1)) :=
-    fun l => kToER (g_fam l) (Nat.le_succ_of_le (h_g l))
+    fun l => kToERDirect (g_fam l) (Nat.le_succ_of_le (h_g l))
   change (Finset.univ.sup fun l => (h_ER l).towerHeight) ≤
-      (kToER (KMor1.simrec i h_fam g_fam) hyp).towerHeight
+      (kToERDirect (KMor1.simrec i h_fam g_fam) hyp).towerHeight
   set recur : ERMor1 (a + 1) :=
     ERMor1.boundedRec (kSimPackedBase h_ER)
       (kSimPackedStep g_ER) (kSimTowerBound h_ER g_ER)
@@ -1617,9 +1617,9 @@ private theorem kToER_simrec_h_side_bound
   omega
 
 /-- Auxiliary structural lemma g-side: the maximum-over-the
-g-family child tower height under `kToER` is dominated by
-`kToER (simrec i h_fam g_fam)`'s tower height. -/
-private theorem kToER_simrec_g_side_bound
+g-family child tower height under `kToERDirect` is dominated by
+`kToERDirect (simrec i h_fam g_fam)`'s tower height. -/
+private theorem kToERDirect_simrec_g_side_bound
     {a k : ℕ}
     (h_fam : Fin (k + 1) → KMor1 a)
     (g_fam : Fin (k + 1) → KMor1 (a + 1 + (k + 1)))
@@ -1629,15 +1629,15 @@ private theorem kToER_simrec_g_side_bound
     (hyp : (KMor1.simrec i h_fam g_fam).level ≤ 2) :
     (Finset.univ : Finset (Fin (k + 1))).sup
         (fun l =>
-          (kToER (g_fam l)
+          (kToERDirect (g_fam l)
             (Nat.le_succ_of_le (h_g l))).towerHeight) ≤
-      (kToER (KMor1.simrec i h_fam g_fam) hyp).towerHeight := by
+      (kToERDirect (KMor1.simrec i h_fam g_fam) hyp).towerHeight := by
   set h_ER : Fin (k + 1) → ERMor1 a :=
-    fun l => kToER (h_fam l) (Nat.le_succ_of_le (h_h l))
+    fun l => kToERDirect (h_fam l) (Nat.le_succ_of_le (h_h l))
   set g_ER : Fin (k + 1) → ERMor1 (a + 1 + (k + 1)) :=
-    fun l => kToER (g_fam l) (Nat.le_succ_of_le (h_g l))
+    fun l => kToERDirect (g_fam l) (Nat.le_succ_of_le (h_g l))
   change (Finset.univ.sup fun l => (g_ER l).towerHeight) ≤
-      (kToER (KMor1.simrec i h_fam g_fam) hyp).towerHeight
+      (kToERDirect (KMor1.simrec i h_fam g_fam) hyp).towerHeight
   set recur : ERMor1 (a + 1) :=
     ERMor1.boundedRec (kSimPackedBase h_ER)
       (kSimPackedStep g_ER) (kSimTowerBound h_ER g_ER)
@@ -1697,7 +1697,7 @@ private theorem kToER_simrec_g_side_bound
   omega
 
 /-- Auxiliary structural lemma for the Phase IV-B chain:
-`kToER (simrec h_fam g_fam i)`'s tower height dominates
+`kToERDirect (simrec h_fam g_fam i)`'s tower height dominates
 the combined-max-over-children tower height.  Used in the
 simrec case of the main inequality
 `KMor1.linearBoundLog_le_towerHeight`.
@@ -1708,7 +1708,7 @@ Proof routes through `boundedRec_towerHeight_ge_base`
 composed with the existing
 `kSimPackedBase_towerHeight_ge_propagate` /
 `kSimPackedStep_towerHeight_ge_propagate`. -/
-private theorem kToER_simrec_towerHeight_ge_max_child_tH
+private theorem kToERDirect_simrec_towerHeight_ge_max_child_tH
     {a k : ℕ}
     (h_fam : Fin (k + 1) → KMor1 a)
     (g_fam : Fin (k + 1) → KMor1 (a + 1 + (k + 1)))
@@ -1719,16 +1719,16 @@ private theorem kToER_simrec_towerHeight_ge_max_child_tH
     max
       ((Finset.univ : Finset (Fin (k + 1))).sup
         (fun l =>
-          (kToER (h_fam l)
+          (kToERDirect (h_fam l)
             (Nat.le_succ_of_le (h_h l))).towerHeight))
       ((Finset.univ : Finset (Fin (k + 1))).sup
         (fun l =>
-          (kToER (g_fam l)
+          (kToERDirect (g_fam l)
             (Nat.le_succ_of_le (h_g l))).towerHeight)) ≤
-      (kToER (KMor1.simrec i h_fam g_fam) hyp).towerHeight :=
+      (kToERDirect (KMor1.simrec i h_fam g_fam) hyp).towerHeight :=
   max_le
-    (kToER_simrec_h_side_bound h_fam g_fam h_h h_g i hyp)
-    (kToER_simrec_g_side_bound h_fam g_fam h_h h_g i hyp)
+    (kToERDirect_simrec_h_side_bound h_fam g_fam h_h h_g i hyp)
+    (kToERDirect_simrec_g_side_bound h_fam g_fam h_h h_g i hyp)
 
 /-- Arithmetic helper: `n + 3 < 2 ^ (n + 2)` for all `n`.
 Used in the `shifted` branch of
@@ -1755,13 +1755,13 @@ private theorem linearBoundLog_le_towerHeight_level_zero
     Nat.log 2 ((KMor1.level0Shape f h).linearBound.1 +
                (KMor1.level0Shape f h).linearBound.2 + 1)
       ≤ 3 *
-        (kToER f
+        (kToERDirect f
           (Nat.le_succ_of_le
             (Nat.le_succ_of_le h))).towerHeight + 1 := by
   have hbound :=
-    kToER_level0_towerHeight_ge_const f h
+    kToERDirect_level0_towerHeight_ge_const f h
   set tH :=
-    (kToER f
+    (kToERDirect f
       (Nat.le_succ_of_le (Nat.le_succ_of_le h))).towerHeight
   cases hshape : KMor1.level0Shape f h with
   | const k =>
@@ -1831,7 +1831,7 @@ exponent-tracking recipe (research doc Update
 2026-05-01): the inductive comp case matches Wong's
 `m + max(j(1), …, j(k))` with `+1` per `comp` wrapping;
 the simrec case routes through
-`kToER_simrec_towerHeight_ge_max_child_tH`'s
+`kToERDirect_simrec_towerHeight_ge_max_child_tH`'s
 boundedRec inductive shape.  The factor 3 is
 project-internal accounting pinned by the comp-case
 algebra under our specific `towerHeight` recursion. -/
@@ -1839,7 +1839,7 @@ theorem KMor1.linearBoundLog_le_towerHeight :
     ∀ {a : ℕ} (f : KMor1 a) (h : f.level ≤ 1),
       Nat.log 2 ((KMor1.linearBound f h).1 +
                  (KMor1.linearBound f h).2 + 1)
-        ≤ 3 * (kToER f (Nat.le_succ_of_le h)).towerHeight + 1
+        ≤ 3 * (kToERDirect f (Nat.le_succ_of_le h)).towerHeight + 1
   | _, .zero,         _ => by
       change Nat.log 2 1 ≤ _
       rw [Nat.log_one_right]
@@ -1859,9 +1859,9 @@ theorem KMor1.linearBoundLog_le_towerHeight :
         unfold KMor1.level at h; omega
       simp only [KMor1.linearBound]
       have h_kToER_eq :
-          (kToER (KMor1.raise f)
+          (kToERDirect (KMor1.raise f)
               (Nat.le_succ_of_le h)).towerHeight =
-            (kToER f (Nat.le_succ_of_le
+            (kToERDirect f (Nat.le_succ_of_le
               (Nat.le_succ_of_le hf))).towerHeight := rfl
       rw [h_kToER_eq]
       exact linearBoundLog_le_towerHeight_level_zero f hf
@@ -1916,29 +1916,29 @@ theorem KMor1.linearBoundLog_le_towerHeight :
         -- IH bounds.
         have IH_f :
             Nat.log 2 (p_f.1 + p_f.2 + 1) ≤
-              3 * (kToER f
+              3 * (kToERDirect f
                 (Nat.le_succ_of_le hf)).towerHeight + 1 :=
           KMor1.linearBoundLog_le_towerHeight f hf
         have IH_gs : ∀ i,
             Nat.log 2 ((KMor1.linearBound (gs i)
                   (hgs i)).1 +
                 (KMor1.linearBound (gs i) (hgs i)).2 + 1) ≤
-              3 * (kToER (gs i)
+              3 * (kToERDirect (gs i)
                 (Nat.le_succ_of_le (hgs i))).towerHeight + 1 :=
           fun i =>
             KMor1.linearBoundLog_le_towerHeight (gs i) (hgs i)
         set tF :=
-          (kToER f (Nat.le_succ_of_le hf)).towerHeight
+          (kToERDirect f (Nat.le_succ_of_le hf)).towerHeight
           with htF
         set T :=
           (Finset.univ : Finset (Fin _)).sup
             (fun i =>
-              (kToER (gs i)
+              (kToERDirect (gs i)
                 (Nat.le_succ_of_le (hgs i))).towerHeight)
           with hT
-        -- towerHeight of kToER (comp f gs) is tF + T + 1.
+        -- towerHeight of kToERDirect (comp f gs) is tF + T + 1.
         have h_kToER_comp_tH :
-            (kToER (KMor1.comp f gs)
+            (kToERDirect (KMor1.comp f gs)
               (Nat.le_succ_of_le h)).towerHeight =
               tF + T + 1 := by rfl
         rw [h_kToER_comp_tH]
@@ -1966,10 +1966,10 @@ theorem KMor1.linearBoundLog_le_towerHeight :
             ((KMor1.linearBound (gs i) (hgs i)).1 +
               (KMor1.linearBound (gs i) (hgs i)).2 + 1)
           have h_tH_le :
-              (kToER (gs i)
+              (kToERDirect (gs i)
                 (Nat.le_succ_of_le (hgs i))).towerHeight ≤ T :=
             Finset.le_sup
-              (f := fun j => (kToER (gs j)
+              (f := fun j => (kToERDirect (gs j)
                 (Nat.le_succ_of_le (hgs j))).towerHeight)
               (Finset.mem_univ i)
           calc _
@@ -2072,9 +2072,9 @@ theorem KMor1.linearBoundLog_le_towerHeight :
       have h_base_const_bound : ∀ l,
           (KMor1.level0Shape (h_fam l)
               (hh l)).linearBound.2 ≤
-            (kToER (h_fam l)
+            (kToERDirect (h_fam l)
               (Nat.le_succ_of_le (hh_one l))).towerHeight + 1 :=
-        fun l => kToER_level0_towerHeight_ge_const _ _
+        fun l => kToERDirect_level0_towerHeight_ge_const _ _
       have h_step_c_bound : ∀ l,
           (KMor1.level0Shape (g_fam l)
               (hg l)).linearBound.1 ≤ 1 := by
@@ -2087,23 +2087,23 @@ theorem KMor1.linearBoundLog_le_towerHeight :
       have h_step_k_bound : ∀ l,
           (KMor1.level0Shape (g_fam l)
               (hg l)).linearBound.2 ≤
-            (kToER (g_fam l)
+            (kToERDirect (g_fam l)
               (Nat.le_succ_of_le (hg_one l))).towerHeight + 1 :=
-        fun l => kToER_level0_towerHeight_ge_const _ _
+        fun l => kToERDirect_level0_towerHeight_ge_const _ _
       have h_aux :=
-        kToER_simrec_towerHeight_ge_max_child_tH
+        kToERDirect_simrec_towerHeight_ge_max_child_tH
           h_fam g_fam hh_one hg_one i (Nat.le_succ_of_le h)
       simp only [KMor1.linearBound]
       set max_h_tH :=
         (Finset.univ : Finset (Fin (k' + 1))).sup
           (fun l =>
-            (kToER (h_fam l)
+            (kToERDirect (h_fam l)
               (Nat.le_succ_of_le (hh_one l))).towerHeight)
         with hmax_h_tH
       set max_g_tH :=
         (Finset.univ : Finset (Fin (k' + 1))).sup
           (fun l =>
-            (kToER (g_fam l)
+            (kToERDirect (g_fam l)
               (Nat.le_succ_of_le (hg_one l))).towerHeight)
         with hmax_g_tH
       have h_max_base :
@@ -2115,12 +2115,12 @@ theorem KMor1.linearBoundLog_le_towerHeight :
         intro j
         have h_lb := h_base_const_bound j
         have h_le :
-            (kToER (h_fam j)
+            (kToERDirect (h_fam j)
               (Nat.le_succ_of_le (hh_one j))).towerHeight ≤
             max_h_tH :=
           Finset.le_sup
             (f := fun l =>
-              (kToER (h_fam l)
+              (kToERDirect (h_fam l)
                 (Nat.le_succ_of_le (hh_one l))).towerHeight)
             (Finset.mem_univ j)
         omega
@@ -2140,22 +2140,22 @@ theorem KMor1.linearBoundLog_le_towerHeight :
         intro j
         have h_lb := h_step_k_bound j
         have h_le :
-            (kToER (g_fam j)
+            (kToERDirect (g_fam j)
               (Nat.le_succ_of_le (hg_one j))).towerHeight ≤
             max_g_tH :=
           Finset.le_sup
             (f := fun l =>
-              (kToER (g_fam l)
+              (kToERDirect (g_fam l)
                 (Nat.le_succ_of_le (hg_one l))).towerHeight)
             (Finset.mem_univ j)
         omega
       set tH_simrec :=
-        (kToER (KMor1.simrec i h_fam g_fam)
+        (kToERDirect (KMor1.simrec i h_fam g_fam)
           (Nat.le_succ_of_le h)).towerHeight
         with htH_simrec
       have h_simrec_tH_pos : 1 ≤ tH_simrec := by
         rw [htH_simrec]
-        unfold kToER
+        unfold kToERDirect
         simp only [ERMor1.towerHeight]
         omega
       have h_aux' :
@@ -2222,7 +2222,7 @@ private theorem kSimPackedBase_towerHeight_ge_succ_k
 left-hand side of A.6's calc chain are bounded by the
 sum-of-tower-heights expression on the right-hand side.
 Combines:
-- A.5.2.1 (`kToER_level0_towerHeight_ge_const`) to bound
+- A.5.2.1 (`kToERDirect_level0_towerHeight_ge_const`) to bound
   the level-0 shape constants by tower heights;
 - the structural propagate lemmas
   (`kSimPackedStep_towerHeight_ge_propagate`,
@@ -2255,11 +2255,11 @@ private theorem stepTH_baseTH_dominates_arg
         0
     let E : ℕ := 6 * 4 ^ (k + 1)
     let h_ER : Fin (k + 1) → ERMor1 a :=
-      fun l => kToER (h_fam l)
+      fun l => kToERDirect (h_fam l)
         (Nat.le_succ_of_le (Nat.le_succ_of_le (h_h l)))
     let g_ER : Fin (k + 1) →
         ERMor1 (a + 1 + (k + 1)) :=
-      fun l => kToER (g_fam l)
+      fun l => kToERDirect (g_fam l)
         (Nat.le_succ_of_le (Nat.le_succ_of_le (h_g l)))
     Nat.log 2 (CC + 1) +
         Nat.log 2 (KK + Nat.log 2 E + 4) ≤
@@ -2298,7 +2298,7 @@ private theorem stepTH_baseTH_dominates_arg
     have h_const :
         ((g_fam l).level0Shape (h_g l)).linearBound.2 ≤
         (g_ER l).towerHeight + 1 :=
-      kToER_level0_towerHeight_ge_const (g_fam l) (h_g l)
+      kToERDirect_level0_towerHeight_ge_const (g_fam l) (h_g l)
     have h_le : (g_ER l).towerHeight ≤ SG :=
       Finset.le_sup
         (f := fun j => (g_ER j).towerHeight)
@@ -2311,7 +2311,7 @@ private theorem stepTH_baseTH_dominates_arg
     have h_const :
         ((h_fam l).level0Shape (h_h l)).linearBound.2 ≤
         (h_ER l).towerHeight + 1 :=
-      kToER_level0_towerHeight_ge_const (h_fam l) (h_h l)
+      kToERDirect_level0_towerHeight_ge_const (h_fam l) (h_h l)
     have h_le : (h_ER l).towerHeight ≤ SH :=
       Finset.le_sup
         (f := fun j => (h_ER j).towerHeight)
@@ -2610,30 +2610,30 @@ private theorem kSimTowerBound_dominates_level_one
     (j : ℕ) (params : Fin a → ℕ) :
     Nat.rec
       ((kSimPackedBase
-        (fun l => kToER (h_fam l)
+        (fun l => kToERDirect (h_fam l)
           (Nat.le_succ_of_le
             (Nat.le_succ_of_le (h_h l))))).interp params)
       (fun i prev =>
         (kSimPackedStep
-          (fun l => kToER (g_fam l)
+          (fun l => kToERDirect (g_fam l)
             (Nat.le_succ_of_le
               (Nat.le_succ_of_le (h_g l))))).interp
         (Fin.cons i (Fin.cons prev params)))
       j ≤
       (kSimTowerBound
-        (fun l => kToER (h_fam l)
+        (fun l => kToERDirect (h_fam l)
           (Nat.le_succ_of_le
             (Nat.le_succ_of_le (h_h l))))
-        (fun l => kToER (g_fam l)
+        (fun l => kToERDirect (g_fam l)
           (Nat.le_succ_of_le
             (Nat.le_succ_of_le (h_g l))))).interp
         (Fin.cons j params) := by
   set h_ER : Fin (k + 1) → ERMor1 a :=
-    fun l => kToER (h_fam l)
+    fun l => kToERDirect (h_fam l)
       (Nat.le_succ_of_le (Nat.le_succ_of_le (h_h l)))
     with h_ER_def
   set g_ER : Fin (k + 1) → ERMor1 (a + 1 + (k + 1)) :=
-    fun l => kToER (g_fam l)
+    fun l => kToERDirect (g_fam l)
       (Nat.le_succ_of_le (Nat.le_succ_of_le (h_g l)))
     with g_ER_def
   rw [packed_iteration_matches_simrecVec
@@ -2729,22 +2729,22 @@ private theorem kSimTowerBound_dominates_level_one
         omega
 
 /-- Interp preservation for level-1 K^sim: at level ≤ 1,
-`kToER` produces an ER term whose interp equals the K^sim
+`kToERDirect` produces an ER term whose interp equals the K^sim
 interp at every context.  Proved by structural recursion;
 the simrec case discharges the dominance hypothesis of
 `boundedRec_eq_natRec_of_bounded` via
 `kSimTowerBound_dominates_level_one`. -/
-private theorem kToER_interp_level_one :
+private theorem kToERDirect_interp_level_one :
     ∀ {a : ℕ} (f : KMor1 a) (h : f.level ≤ 1)
       (ctx : Fin a → ℕ),
-      (kToER f
+      (kToERDirect f
         (Nat.le_succ_of_le h)).interp ctx = f.interp ctx
   | _, .zero,         _, _   => by
-      simp [kToER, KMor1.interp_zero, ERMor1.interp_zeroN]
+      simp [kToERDirect, KMor1.interp_zero, ERMor1.interp_zeroN]
   | _, .succ,         _, _   => by
-      simp [kToER, KMor1.interp_succ, ERMor1.interp_succ]
+      simp [kToERDirect, KMor1.interp_succ, ERMor1.interp_succ]
   | _, .proj _,       _, _   => by
-      simp [kToER, KMor1.interp_proj, ERMor1.interp_proj]
+      simp [kToERDirect, KMor1.interp_proj, ERMor1.interp_proj]
   | _, .comp f gs,    h, ctx => by
       have hf : f.level ≤ 1 := by
         unfold KMor1.level at h
@@ -2760,21 +2760,21 @@ private theorem kToER_interp_level_one :
             (Finset.mem_univ i))
           hsup
       have h_inner :
-          (fun i => (kToER (gs i)
+          (fun i => (kToERDirect (gs i)
               (Nat.le_succ_of_le (hgs i))).interp ctx)
             = (fun i => (gs i).interp ctx) := by
         funext i
-        exact kToER_interp_level_one (gs i) (hgs i) ctx
-      simp only [kToER, ERMor1.interp_comp,
+        exact kToERDirect_interp_level_one (gs i) (hgs i) ctx
+      simp only [kToERDirect, ERMor1.interp_comp,
         KMor1.interp_comp]
       rw [h_inner]
-      exact kToER_interp_level_one f hf
+      exact kToERDirect_interp_level_one f hf
         (fun i => (gs i).interp ctx)
   | _, .raise f,      h, ctx => by
       have hf : f.level ≤ 0 := by
         unfold KMor1.level at h; omega
-      simp only [kToER, KMor1.interp_raise]
-      exact kToER_interp_level_zero f hf ctx
+      simp only [kToERDirect, KMor1.interp_raise]
+      exact kToERDirect_interp_level_zero f hf ctx
   | _, .simrec (a := a) (k := k) i h_fam g_fam, hyp, ctx =>
       by
         have h_h : ∀ l, (h_fam l).level ≤ 0 := fun l => by
@@ -2796,11 +2796,11 @@ private theorem kToER_interp_level_one :
               (Finset.mem_univ l))
             hsup_le
         set h_ER : Fin (k + 1) → ERMor1 a :=
-          fun l => kToER (h_fam l)
+          fun l => kToERDirect (h_fam l)
             (Nat.le_succ_of_le (Nat.le_succ_of_le (h_h l)))
           with h_ER_def
         set g_ER : Fin (k + 1) → ERMor1 (a + 1 + (k + 1)) :=
-          fun l => kToER (g_fam l)
+          fun l => kToERDirect (g_fam l)
             (Nat.le_succ_of_le (Nat.le_succ_of_le (h_g l)))
           with g_ER_def
         set recur : ERMor1 (a + 1) :=
@@ -2900,17 +2900,17 @@ private theorem kToER_interp_level_one :
         -- Final: relate Fin.tail ctx and ctx 0.
         simp [Fin.tail_def]
 
-/-- Linear bound on level-1 K^sim's kToER image.  Direct
-composition of `kToER_interp_level_one` and
+/-- Linear bound on level-1 K^sim's kToERDirect image.  Direct
+composition of `kToERDirect_interp_level_one` and
 `KMor1.linearBound_dominates`. -/
-theorem kToER_linearBound_dominates_level_one
+theorem kToERDirect_linearBound_dominates_level_one
     {a : ℕ} (f : KMor1 a) (h : f.level ≤ 1)
     (ctx : Fin a → ℕ) :
-    (kToER f (Nat.le_succ_of_le h)).interp ctx ≤
+    (kToERDirect f (Nat.le_succ_of_le h)).interp ctx ≤
       (KMor1.linearBound f h).1 *
         (Finset.univ : Finset (Fin a)).sup ctx +
       (KMor1.linearBound f h).2 := by
-  rw [kToER_interp_level_one f h ctx]
+  rw [kToERDirect_interp_level_one f h ctx]
   exact KMor1.linearBound_dominates f h ctx
 
 end GebLean

@@ -1,5 +1,5 @@
 import GebLean
-import GebLean.LawvereKSimER
+import GebLean.LawvereKSimERDirect
 import GebLean.LawvereKSimPolynomialBound
 
 /-!
@@ -14,13 +14,13 @@ The test computes:
 
 1. `KMor1.linearBound addK addK_level` (the K^sim-side
    linear-bound coefficients).
-2. `(kToER addK h_level).towerHeight` (the ER-side tower
+2. `(kToERDirect addK h_level).towerHeight` (the ER-side tower
    height of `addK`'s ER translation).
 3. The quantity `Nat.log 2 ((linearBound).1 +
    (linearBound).2 + 1)` — the proxy for the chain-closing
    log-vs-towerHeight inequality at Phase IV-B Task D.3.2.
 
-If this quantity is bounded by `(kToER addK).towerHeight +
+If this quantity is bounded by `(kToERDirect addK).towerHeight +
 small_const` for `addK`, that's positive evidence for B1
 (structural log-vs-tH bound holding on simple level-1
 witnesses).  Failure would push toward B2 or a fan-out-aware
@@ -48,9 +48,9 @@ example : addK.interp ![3, 5] = 8 := by decide
 /-- The K^sim-side linear-bound pair for `addK`. -/
 private def addK_lb : ℕ × ℕ := KMor1.linearBound addK addK_level
 
-/-- The ER-side tower height of `kToER addK`. -/
+/-- The ER-side tower height of `kToERDirect addK`. -/
 private def addK_ER_tH : ℕ :=
-  (kToER addK addK_level_two).towerHeight
+  (kToERDirect addK addK_level_two).towerHeight
 
 -- For the polynomial-bound chain at Phase IV-B (Strategy B1
 -- or B2), the constant `D` consumed by
@@ -90,7 +90,7 @@ private theorem projSuccFanOut5_level_one :
 /-- Witness for the level-1 fan-out residual: even with the
 new tightened `linearBound`, level-1 comps with high fan-out
 to non-trivial children retain a multiplicative `b`-factor.
-However, the level-1 children's own `kToER` tower height
+However, the level-1 children's own `kToERDirect` tower height
 (via simrec encoding) absorbs the residual via massive
 slack. -/
 private def addKFanOut5 : KMor1 2 :=
@@ -108,9 +108,9 @@ private theorem addKFanOut5_level_two :
 private def addKFanOut5_lb : ℕ × ℕ :=
   KMor1.linearBound addKFanOut5 addKFanOut5_level
 
-/-- The ER-side tower height of `kToER addKFanOut5`. -/
+/-- The ER-side tower height of `kToERDirect addKFanOut5`. -/
 private def addKFanOut5_ER_tH : ℕ :=
-  (kToER addKFanOut5 addKFanOut5_level_two).towerHeight
+  (kToERDirect addKFanOut5 addKFanOut5_level_two).towerHeight
 
 /-!
 ## Findings (recorded 2026-05-01)
@@ -120,7 +120,7 @@ The investigation establishes the chain-closing inequality
 ```text
 Nat.log 2 ((KMor1.linearBound f h).1 +
            (KMor1.linearBound f h).2 + 1)
-  ≤ 3 · (kToER f (Nat.le_succ_of_le h)).towerHeight + 1
+  ≤ 3 · (kToERDirect f (Nat.le_succ_of_le h)).towerHeight + 1
 ```
 
 on two level-1 K^sim witnesses (`#eval` outputs from
@@ -131,7 +131,7 @@ on two level-1 K^sim witnesses (`#eval` outputs from
 | `addK` | `(4, 0)` | `1117` | `2` | `3352` |
 | `addKFanOut5` | `(4, 0)` | `1118` | `2` | `3355` |
 
-The slack comes from `kToER`'s simrec encoding (`boundedRec`
+The slack comes from `kToERDirect`'s simrec encoding (`boundedRec`
 over `kSimPackedBase` / `kSimPackedStep` / `kSimTowerBound`,
 where `kSimTowerBound`'s `iterAutoBoundExpr` itself has
 substantial structural depth).  The factor `3` in
@@ -167,8 +167,8 @@ The slack pattern is structural, not coincidental:
   IH `L(child) ≤ 3 · tH(child) + 1` (one bit of slack
   absorbed by the `+1` per `comp` in `tH`).
 - **Level-1 raise of level 0**: `linearBound` reduces to the
-  level-0 `level0Shape.linearBound`; `kToER (raise f) =
-  kToER f`; reduces to the level-0 case directly.
+  level-0 `level0Shape.linearBound`; `kToERDirect (raise f) =
+  kToERDirect f`; reduces to the level-0 case directly.
 
 The structural inequality therefore holds at level ≤ 1 with
 the constant factor `3` and additive `1` pinned by the
@@ -201,7 +201,7 @@ the analysis bullets above.
 -- E.5 sanity: the combined-max child bound holds on addK,
 -- whose h_fam (level 0, atom) and g_fam (level 0, single
 -- comp) translate to ER terms with small tower heights,
--- while (kToER addK).towerHeight = 1117.  The lemma
+-- while (kToERDirect addK).towerHeight = 1117.  The lemma
 -- predicts max(small, small) ≤ 1117 — trivially.
 #guard 0 ≤ addK_ER_tH
 

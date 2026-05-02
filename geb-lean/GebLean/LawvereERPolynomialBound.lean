@@ -379,7 +379,7 @@ Used at the level-2 simrec dominance call site
 `LawvereKSimPolynomialBound.lean`, Phase IV-B Task D.2 of
 the 17b/17c completion plan).  At that call site, `bound` is
 the `kSimTowerBound` term, but the constructive
-`PolyBound` for `kToER (level-1 simrec)` is built bottom-up
+`PolyBound` for `kToERDirect (level-1 simrec)` is built bottom-up
 through this adapter starting from a `PolyBound` for some
 polynomial-bounded surrogate of `kSimTowerBound`. -/
 def ofBoundedRec {k : ℕ} {base : ERMor1 k}
@@ -823,7 +823,7 @@ underlying ER term is known.
 `ofBoundedRec` inherits its `PolyBound` fields from the
 `bound` argument's `PolyBound` directly, so its log-vs-tH
 relationship is exactly the input's.  At the level-2 simrec
-call site, this means the `PolyBound` for `kToER (level-1
+call site, this means the `PolyBound` for `kToERDirect (level-1
 simrec)` reduces to a `PolyBound` for whatever polynomial
 surrogate is supplied for the `kSimTowerBound` argument.
 -/

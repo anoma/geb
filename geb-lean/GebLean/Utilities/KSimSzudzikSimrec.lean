@@ -4,7 +4,7 @@ import GebLean.Utilities.ERArith
 import GebLean.Utilities.SzudzikSeq
 
 /-!
-# Szudzik-based simrec helpers for `kToER`
+# Szudzik-based simrec helpers for `kToERDirect`
 
 ER-side combinators packing a `(k+1)`-tuple of ER values
 into a single ℕ via iterated right-associated Szudzik
@@ -411,7 +411,7 @@ def kSimPackedStep {a k : ℕ}
 the tower height of the packed step term and the tower
 height of the packed base term.  The dominance argument
 is supplied at the call site (in the simrec case of
-`kToER_interp`).
+`kToERDirect_interp`).
 
 Realizes Claim 4 Fix B part 2 (research doc): the explicit
 ER bound term shape `tower h_e (linear)` matching
