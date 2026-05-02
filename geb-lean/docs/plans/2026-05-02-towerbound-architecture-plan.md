@@ -1,5 +1,12 @@
 # TowerBound architecture v3 Implementation Plan
 
+> **SUPERSEDED 2026-05-02** — see notice in the corresponding
+> design doc
+> (`docs/plans/2026-05-02-towerbound-architecture-design.md`).
+> Plan v4 (literature-aligned, level-1 mirror) replaces this:
+> `docs/plans/2026-05-02-ksim-tower-bound-dominates-inline-plan.md`.
+> Preserved as a record of the planning exploration.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use
 > `superpowers:subagent-driven-development` (recommended) or
 > `superpowers:executing-plans` to implement this plan task-by-task.

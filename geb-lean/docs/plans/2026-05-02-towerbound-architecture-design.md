@@ -1,5 +1,24 @@
 # TowerBound architecture for K^sim_2 ⊆ ER formalization (v3 design)
 
+> **SUPERSEDED 2026-05-02**.  The TowerBound architecture proposed
+> here introduced novelty (a new bound type generalizing `PolyBound`)
+> not present in the published K^sim_2 ⊆ ER proof.  Adversarial
+> review identified the resulting `Nat.tower_iter_tower_bound` as
+> mathematically false at non-zero step heights.  Re-reading the
+> research doc (`docs/research/2026-04-30-ksim-polynomial-bound-references.md`)
+> confirmed the published proof (Recursion Class Ch. 4 Prop. 4.7,
+> n=2 case) routes through polynomial bounds on level-1 K^sim
+> children combined with the existing `polynomial_iter_tower_bound`,
+> not a new bound type.  The correct level-2 dominance proof is a
+> structural mirror of the existing `kSimTowerBound_dominates_level_one`
+> (`LawvereKSimPolynomialBound.lean:2578`); see plan v4 at
+> `docs/plans/2026-05-02-ksim-tower-bound-dominates-inline-plan.md`.
+>
+> This document is preserved as a record of the design exploration.
+> The PolyBound ↔ TowerBound injection idea remains valid as a
+> general structural observation but is not load-bearing for the
+> current scope.
+
 ## Context and motivation
 
 The Phase IV-B headline theorem `kSimTowerBound_dominates_inline`
