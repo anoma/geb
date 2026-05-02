@@ -555,35 +555,62 @@ quotient.
 
 #### Lean entities
 
+**Indexing convention.** Throughout Path 2, the parameter
+`k : ℕ` of `tuplePack` / `tupleAt` indexes a tuple of
+length `k + 1`. That is, `tuplePack k` packs a `(k+1)`-vector,
+and `tupleAt k` extracts a component from a packed
+`(k+1)`-vector. Empty (length 0) tuples are excluded by
+construction: the bijection `(Fin (k+1) → ℕ) ↔ ℕ` is only
+meaningful for non-empty products, and using `Fin (k+1)`
+makes invalid (length-0) states unrepresentable rather than
+requiring a `k ≥ 1` side condition.
+
 Foundational layer (Lean Nat-level — `Utilities/Tupling.lean`):
 
-- `Nat.tuplePack : (k : ℕ) → (Fin k → ℕ) → ℕ`. 1-tuple =
-  identity; (n+2)-tuple = Szudzik `Nat.pair` on head with
-  packed tail.
-- `Nat.tupleAt : (k : ℕ) → ℕ → Fin k → ℕ`. Inverse: walk
-  the right-fold-pair encoding.
+- `Nat.tuplePack : (k : ℕ) → (Fin (k+1) → ℕ) → ℕ`. The
+  parameter `k` packs a `(k+1)`-vector; `k = 0` is
+  identity (1-tuple), `k+1` pairs the head with the packed
+  remaining `(k+1)`-vector via Szudzik `Nat.pair`.
+- `Nat.tupleAt : (k : ℕ) → ℕ → Fin (k+1) → ℕ`. Inverse:
+  walk the right-fold-pair encoding.
 - `Nat.tupleAt_tuplePack` and `Nat.tuplePack_tupleAt`:
-  pack-unpack bijection theorems.
+  pack-unpack bijection theorems (`(Fin (k+1) → ℕ) ↔ ℕ`).
 - `Nat.tuplePack_le`: polynomial value bound on packed
   tuple. The `Nat.pair x y ≤ (x + y + 1)^2` bound iterates
-  through right-fold-pair to give the recurrence
-  `B_1 = M`, `B_{k+1} ≤ (M + B_k + 2)^2` where `M = max v`.
-  The closed-form bound is `tuplePack k v ≤ (M + c_k)^{2^k}`
-  for explicit constants `c_k` computed by the recurrence
-  (`c_1 = 0`, `c_{k+1} = O(c_k)` summed to a small fixed
-  total per k). Step 1's cycle derives the precise `c_k`
-  formula and the corresponding `PolyBound` builder. The
-  asymptotic shape `(M + O(1))^{2^k}` is fixed-degree
-  polynomial in M for each fixed k; the additive
-  contribution from intermediate `pair` invocations is
-  what makes the formula `(M + c_k)^{2^k}` rather than
-  `(M+1)^{2^k}`.
+  through the recursion to give the closed form
+
+  ```text
+  tuplePack k v ≤ tuplePackCoef k * (M + 1)^(2^k)
+  ```
+
+  where `M = max v` over `Fin (k+1)` and
+  `tuplePackCoef : ℕ → ℕ` is the computable Lean function
+
+  ```text
+  tuplePackCoef 0     = 1
+  tuplePackCoef (k+1) = (tuplePackCoef k + 2)^2
+  ```
+
+  The bound is multiplicative-coefficient form
+  `c_k · (M+1)^{2^k}` (matching `ERMor1.PolyBound`'s
+  `coefficient * (max+1)^degree + constant` shape with
+  `degree = 2^k`, `coefficient = tuplePackCoef k`,
+  `constant = 0`).
+
+  *Earlier drafts of this section stated the bound as
+  `(M + c_k)^{2^k}` with a constant `c_k`; that formula is
+  asymptotically correct but does not hold as a literal Lean
+  inequality, since the leading coefficient of the iterated
+  `pair`-bound (4 at the 2-tuple step) cannot be absorbed into
+  the additive `c_k`. The multiplicative form
+  `c_k · (M+1)^{2^k}` is the formally correct closed form and
+  is what step 1 derives.*
 
 ER layer (`Utilities/ERTupling.lean`):
 
-- `ERMor1.tuplePack (k : ℕ) : ERMor1 k`. Interp =
+- `ERMor1.tuplePack (k : ℕ) : ERMor1 (k+1)`. Interp =
   `Nat.tuplePack k`.
-- `ERMor1.tupleAt (k : ℕ) (i : Fin k) : ERMor1 1`. Interp
+- `ERMor1.tupleAt (k : ℕ) (i : Fin (k+1)) : ERMor1 1`. Interp
   extracts component `i` from the packed value.
 - `@[simp] ERMor1.interp_tuplePack`,
   `@[simp] ERMor1.interp_tupleAt`.
@@ -625,10 +652,11 @@ we have not yet located the specific reference.)
 
 Categorical packaging:
 
-- `LawvereERCat.tupleIso (n : ℕ) : (n + 1) ≅ 1` in
+- `LawvereERCat.tupleIso (k : ℕ) : (k + 1) ≅ 1` in
   `LawvereERCat` (decorative, witnessing that ER-side
   products of the generator collapse via Szudzik pairing in
-  the morphism quotient). Useful for cleanly stating
+  the morphism quotient — a `(k+1)`-fold product is
+  isomorphic to the generator). Useful for cleanly stating
   multi-output ER translations as single-output ones.
 - The K^sim-side analogue is **not** built (see above).
 
@@ -669,13 +697,13 @@ each individual component value at every iteration:
 `f_j(n, x⃗) ≤ componentBound.interp (n, x⃗)` for all `j`.
 The implementation derives the packed-state bound
 internally (by composing with the §3.1 `tuplePack`
-polynomial bound: packed state `≤ (componentBound +
-c_{k+1})^{2^{k+1}}`), so callers do NOT need to provide a
-packed-state bound. This matches the F2-fixed
-`Nat.tuplePack_le` formula and is what the level-2
-majorization in §3.4 supplies (the `A_2^2(vMax v +
-offset)` bound is on each component, not on the packed
-tuple).
+polynomial bound: packed state ≤
+`tuplePackCoef k · (componentBound + 1)^{2^k}`), so
+callers do NOT need to provide a packed-state bound. This
+matches the §3.1 `Nat.tuplePack_le` formula and is what
+the level-2 majorization in §3.4 supplies (the
+`A_2^2(vMax v + offset)` bound is on each component, not
+on the packed tuple).
 
 Interpretation (when `componentBound` dominates each
 component value at every iteration):
@@ -700,18 +728,20 @@ where `f_0, …, f_k` are simultaneously defined by:
 2. Derive the packed-state bound from `componentBound`
    using `Nat.tuplePack_le` (per §3.1's recurrence): if
    each `f_j(n, x⃗) ≤ componentBound.interp (n, x⃗)`, then
-   `tuplePack (k+1) (f_0(n,x⃗), …, f_k(n,x⃗))` is bounded by
-   `(componentBound.interp (n, x⃗) + c_{k+1})^{2^{k+1}}`.
-   Express this packed-state bound in ER (closure under
-   composition + iterated multiplication; stays in ER for
-   any fixed `k`, with the bound's tower height at most
-   `componentBound`'s tower height plus 1 by Module A's
-   `tower_succ_pow_bound_strong` for `h ≥ 2`).
+   `tuplePack k (f_0(n,x⃗), …, f_k(n,x⃗))` is bounded by
+   `tuplePackCoef k * (componentBound.interp (n, x⃗) + 1)^{2^k}`
+   (where the `tuplePack k` parameter packs a `(k+1)`-tuple
+   per the §3.1 indexing convention). Express this packed-
+   state bound in ER (closure under composition + iterated
+   multiplication; stays in ER for any fixed `k`, with the
+   bound's tower height at most `componentBound`'s tower
+   height plus 1 by Module A's `tower_succ_pow_bound_strong`
+   for `h ≥ 2`).
 3. Apply `ERMor1.boundedRec` with the packed initial state
-   `tuplePack (k+1) ∘ (h_0, …, h_k)`, the packed step, and
+   `tuplePack k ∘ (h_0, …, h_k)`, the packed step, and
    the derived packed-state bound from step 2.
 4. The `i`-th component of the output `ERMorN` is
-   `tupleAt (k+1) i ∘ packed_state_at_recVar`.
+   `tupleAt k i ∘ packed_state_at_recVar`.
 
 The packing artefacts are encapsulated inside
 `simultaneousBoundedRec`. Downstream `kToER` sees a clean
@@ -2303,21 +2333,32 @@ before any cycle proceeds.
 
 ### §15.12 Path 2 specific — Tupling stays in ER at all levels
 
-Claim: The k-tuple Szudzik pairing (`Nat.tuplePack`,
-`ERMor1.tuplePack`) and its inverse (`Nat.tupleAt`,
-`ERMor1.tupleAt`) are in ER and have polynomial value
-bounds, with `tuplePack k v ≤ (M + c_k)^{2^k}` for `M = max
-v` and explicit constants `c_k` derived by the recurrence
-`B_{k+1} ≤ (M + B_k + 2)^2` (per §3.1). For each fixed `k`,
-this is a polynomial of fixed degree in inputs; ER's
-`PolyBound` infrastructure certifies it.
+Claim: The fixed-length Szudzik pairing
+(`Nat.tuplePack k` packing `(k+1)`-tuples,
+`ERMor1.tuplePack k`) and its inverse
+(`Nat.tupleAt k`, `ERMor1.tupleAt k`) are in ER and have
+polynomial value bounds, with
+
+```text
+tuplePack k v ≤ tuplePackCoef k * (M + 1)^{2^k}
+```
+
+for `M = max v` over `Fin (k+1)`, where
+`tuplePackCoef : ℕ → ℕ` is the computable Lean function
+`tuplePackCoef 0 = 1`, `tuplePackCoef (k+1) = (tuplePackCoef k + 2)^2`
+(derived from the underlying recurrence `B_0 = M`,
+`B_{k+1} ≤ (M + B_k + 1)^2`, per §3.1). For each fixed
+`k`, this is a polynomial of fixed degree `2^k` in inputs;
+ER's `PolyBound` infrastructure certifies it directly with
+`degree = 2^k`, `coefficient = tuplePackCoef k`,
+`constant = 0`.
 
 Adversary obligation: verify the recursive definition of
 `tuplePack` and `tupleAt` against §3.1. Confirm the
-`PolyBound` builders compose correctly (1-tuple is identity
-with degree 1; (n+2)-tuple via Szudzik `pair` adds at most
-quadratic to the bound's degree, accumulating to (n+2)^2 or
-similar — a fixed polynomial for each fixed k).
+`PolyBound` builders compose correctly (`k = 0` is the
+identity 1-tuple at degree 1; `k+1` via Szudzik `pair`
+squares the degree, accumulating to degree `2^{k+1}` per
+the recurrence — a fixed polynomial for each fixed `k`).
 
 ### §15.13 Path 2 specific — `simultaneousBoundedRec` packing is encapsulated
 
