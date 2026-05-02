@@ -437,17 +437,21 @@ end ERMor1.PolyBound
 
 ```lean
 /-- One-element vector view of a single-output ER term.
-`ERMorN.lift f i = f` for the unique `i : Fin 1`.  Used to
-state `ERMorN`-level round-trip lemmas where one side of
-the composition is a single-output morphism.  -/
+`ERMorN.lift f i = f` for the unique `i : Fin 1`. Auxiliary
+helper supporting the `ERMorN`-quotient round-trip lemmas
+named in master design §3.1; bridges single-output
+`ERMor1.tuplePack` to the multi-output `ERMorN` interface
+on which the round-trip equation is stated. -/
 def ERMorN.lift {n : ℕ} (f : ERMor1 n) : ERMorN n 1 :=
   fun _ => f
 
 /-- Named identity coercion from a vector of single-output
-ER terms to the multi-output `ERMorN`.  Definitionally
-`g`, since `ERMorN n m := Fin m → ERMor1 n`; the name
-exists so the §4.4 lemma signatures and §5.3 iso
-construction cite a stable interface.  -/
+ER terms to the multi-output `ERMorN`. Definitionally `g`,
+since `ERMorN n m := Fin m → ERMor1 n`. Auxiliary helper
+supporting the round-trip lemmas named in master design
+§3.1; gives the `Fin (k+1) → ERMor1 1` family of `tupleAt`
+projections a stable `ERMorN 1 (k+1)` interface for the
+quotient-level lemma signatures. -/
 def ERMorN.ofVec {n m : ℕ} (g : Fin m → ERMor1 n) :
     ERMorN n m := g
 ```
