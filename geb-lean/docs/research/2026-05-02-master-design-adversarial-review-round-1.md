@@ -94,10 +94,10 @@ This recurrence does NOT give `(M+1)^{2^k}`.  Solving: with
 `C_k := log(B_k + M)` we get roughly `C_{k+1} ≤ 2 C_k`, so `C_k ~
 2^k · log M` and `B_k ≤ M^{2^k}`.  So the design's
 **asymptotic** shape is right up to constants — the order of the
-exponent is `2^k`.  But the constant `1` inside the parens — `(max v
-+ 1)^{2^k}` — is what's wrong; the actual recurrence gives a
-multiplicative factor at each step that the design's bound doesn't
-account for.
+exponent is `2^k`.  But the constant `1` inside the parens —
+`(max v + 1)^{2^k}` — is what's wrong; the actual recurrence gives
+a multiplicative factor at each step that the design's bound
+doesn't account for.
 
 A more honest bound: `B_k ≤ (M + c_k)^{2^k}` for some constants
 `c_k` growing with k, OR `B_k ≤ (2M+2)^{2^k}` for sufficiently
@@ -173,7 +173,7 @@ But step 4 must produce this proof in advance; deferring it to
 implementation risks recreating the v2-v5 failure mode in a new
 costume.
 
-## Finding 4 — `KMor1.tuplePack` claim that K^sim has Cantor pair at level ≤ 2 needs care (needs-clarification)
+## Finding 4 — `KMor1.tuplePack` K^sim Cantor pair level ≤ 2 (clarification)
 
 **Claim being challenged.**  §3.1 line 537: "K^sim has Cantor pairing
 per Tourlakis §0.1.0.17 (b) (`λxy.xy ∈ K^sim_2`); iterated
@@ -259,7 +259,7 @@ smaller commitment.
 (drop the categorical-iso decoration; only do tupling on the ER
 side where it's needed for `simultaneousBoundedRec`).
 
-## Finding 5 — Strict-equality round-trip claim deserves explicit Functor.ext sketch (needs-clarification)
+## Finding 5 — Round-trip needs explicit `Functor.ext` sketch (clarification)
 
 **Claim being challenged.**  §11.1: `kToERFunctor ⋙ erToKFunctor =
 𝟭 (LawvereKSimDCat 2)` strictly (functor equality, not natural
@@ -269,11 +269,13 @@ iso).
 morphisms `KSimMor 2 n m` = `{hom : KMorNQuo n m, depth_witness :
 KMorNQuo.atDepth 2 hom}` per `LawvereKSimQuot.lean` line 447-449.
 Strict equality of functors `F : C ⥤ D` requires:
+
 - `F.obj = G.obj` as functions (definitionally or by funext).
 - `F.map = G.map` as functions in the heterogeneous-equality sense
   given the obj-equality.
 
 For our case:
+
 - `obj`: both `(F ⋙ G).obj` and `𝟭.obj` are `fun n => n`.  Equal.
 - `map`: `(F ⋙ G).map x = G.map (F.map x)`.  For
   `x : KSimMor 2 n m`, this composes through the ER side and
@@ -295,7 +297,7 @@ plus quotient-class-equality" is an over-simplification.
 
 **Verdict.**  Sound in principle but the design glosses real
 elaboration work.  Note the project's CLAUDE.md memory entry on
-"_root_.Functor.ext name collision": even invoking the right
+"`_root_.Functor.ext` name collision": even invoking the right
 `Functor.ext` variant is not transparent.
 
 **Recommended action.**  Step 11's cycle must (a) invoke
@@ -336,6 +338,7 @@ with Tourlakis's page-22 A_n^r usage.
 d`.
 
 **Verification.**  A_1(x) = 2x + 2.  A_1^r(x):
+
 - r = 0: x.
 - r = 1: 2x + 2.
 - r = 2: 2(2x+2) + 2 = 4x + 6.
@@ -346,6 +349,7 @@ The design says r = 0 gives A_1^0(x) = x — but `2^0 · x + (2^1 - 2)
 = x + 0 = x`.  Consistent.
 
 We want `A_1^r(x) ≥ c·x + d`, i.e. `2^r ≥ c` AND `2^{r+1} − 2 ≥ d`.
+
 - `2^r ≥ c` ⇔ `r ≥ ⌈log_2 c⌉` (with c=0 trivially true, c=1
   needing r ≥ 0).  Design says `⌈log_2(c+1)⌉` — this is
   `r ≥ ⌈log_2(c+1)⌉ ≥ log_2 c + 1` for `c ≥ 1`, so 2^r ≥ 2c ≥ c.
@@ -378,7 +382,7 @@ Nat-subtraction semantics, OR simpler `r := ⌈log_2(c+1)⌉ +
 ⌈log_2(d+2)⌉ + 1` (over-cautious but always works).  Add a Lean
 proof and #guard tests at d = 0, 1, 2, 5, c = 0, 1, 2.
 
-## Finding 8 — Categorical iso `(n+1) ≅ 1` claim is decorative, not load-bearing (non-defect, but design over-states)
+## Finding 8 — Iso `(n+1) ≅ 1` is decorative (non-defect, design over-states)
 
 **Claim being challenged.**  §3.1 line 498-502: "The categorical
 iso is direct evidence that our free Lawvere theory on ER does not
@@ -412,7 +416,7 @@ single-output, useful for cleanly stating multi-output translations
 as single-output ones".  Drop the K^sim-side tupleIso (per Finding
 4 risk); the ER-side tupleIso is justified.
 
-## Finding 9 — Existing `kToERDirect_linearBound_dominates_level_*` reuse needs lemma re-statement (needs-clarification)
+## Finding 9 — `kToERDirect_linearBound_dominates_level_*` reuse needs re-statement
 
 **Claim being challenged.**  §3.4 line 681-686: "Levels 0 and 1:
 reuses existing `kToERDirect_linearBound_dominates_level_zero` and
@@ -463,7 +467,7 @@ name.  The cleaner reuse is `KMor1.linearBound_dominates`, not
 `kToERDirect_*` theorems can be retired entirely once Path 2 is
 proven (they were specific to `kToERDirect`'s output term).
 
-## Finding 10 — K^sim simrec children at level ≤ 1: implications for level-2 majorization arithmetic (needs-clarification)
+## Finding 10 — K^sim simrec children at level ≤ 1: level-2 majorization (clarif.)
 
 **Claim being challenged.**  §3.4 line 678-687: "Level-2 (comp +
 simrec with K^sim_1 children + raise): each component's step
@@ -543,7 +547,7 @@ Adversarially review.  If the prose proof has an unbounded-r_1 or
 unbounded-component-count blowup, that is the v6 failure mode —
 catch it now, not in Lean.
 
-## Finding 11 — Master design retains URM-simulation infrastructure that conflicts with Path 2's pivot (design-bloat)
+## Finding 11 — URM-sim infra retained, conflicts with Path 2 pivot (design-bloat)
 
 **Claim being challenged.**  Master design §4-§9 elaborate URM
 kernel, combinators, four catalogues, and simulators.  §1.5 says
@@ -560,6 +564,7 @@ catalogues K^sim-to-URM subroutines, §8.1 defines
 simulator (step 7)".  These are remnants of pre-pivot design.
 
 Per §1.5, only the `erToK` side needs URM material:
+
 - `URMConcrete.lean` (step 7) ✓
 - `URMSubroutinesER.lean` (step 8, ER → URM) ✓
 - `KSimSubroutinesURM.lean` (step 9, URM → K^sim simulator) ✓
@@ -578,7 +583,7 @@ the actual scope of work.
 (compileKSim) from the master design.  The erToK side needs only
 ER → URM compilation.
 
-## Finding 12 — `KMor1.linearBound` exists only for level ≤ 1 (non-defect, but design under-emphasizes)
+## Finding 12 — `KMor1.linearBound` only at level ≤ 1 (non-defect, under-emphasized)
 
 **Claim being challenged.**  §3.4 line 691-694: `linearBound_le_A_one_iter`
 "reused at every level-0 / level-1 invocation".
@@ -647,7 +652,7 @@ bounded summation, bounded product.  Match.
 
 **Verdict.**  Non-defect.
 
-## Finding 15 — `K^sim_2` recursion variable is at index 0 of arity (a+1) (non-defect, matches design)
+## Finding 15 — `K^sim_2` recursion var at index 0 of arity `(a+1)` (non-defect)
 
 **Claim being challenged.**  Design assumes K^sim's simrec recurses
 in the FIRST argument.
@@ -674,7 +679,7 @@ matching K^sim's convention.
 
 **Verdict.**  Non-defect.
 
-## Finding 16 — The handoff document's "Option A (URM both)" recommendation was based on a misreading of Tourlakis (non-defect for the master design, but worth recording)
+## Finding 16 — Handoff's "Option A (URM both)" misread Tourlakis (non-defect, recorded)
 
 **Claim being challenged.**  The architectural pivot handoff (file
 `2026-05-02-ksim-to-er-architectural-pivot-handoff.md`) recommended
@@ -701,6 +706,7 @@ f ∈ E^{n+1} and let it run on some M within time t_f ∈ E^{n+1}.
 then f = λ x⃗.v_1(A_n^r(max x⃗), x⃗)".
 
 So the directions DIFFER in the literature:
+
 - ⊆ : structural induction with A_n^r majorant.
 - ⊇ : URM simulation.
 
@@ -718,7 +724,7 @@ note that the handoff's "URM both directions" recommendation
 was based on a misreading; the chosen approach (structural ⊆,
 URM ⊇) is the actual literature pattern.
 
-## Finding 17 — Existing kSimSzudzikSimrec / kSimTowerBound infrastructure NOT cleanly retired (potential confusion source)
+## Finding 17 — `kSimSzudzikSimrec` / `kSimTowerBound` infra not cleanly retired
 
 **Claim being challenged.**  §12 line 1626-1630: "
 `GebLean/Utilities/KSimSzudzikSimrec.lean` (Szudzik infrastructure;

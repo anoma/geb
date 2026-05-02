@@ -148,6 +148,7 @@ witnessed via `Quotient.sound` from interp-equality, not as
 definitional `rfl`)".  This is the correct form.
 
 Verification:
+
 - `_root_.CategoryTheory.Functor.ext` exists in mathlib
   (Mathlib.CategoryTheory.EqToHom): signature `h_obj : ∀ X,
   F.obj X = G.obj X` plus `h_map` with `cat_disch`
@@ -175,6 +176,7 @@ collision note) but the architecture is sound.
 `r := max ⌈log_2(c+1)⌉ ⌈log_2(d+2)⌉`.
 
 Verification at edge cases:
+
 - `d = 1`: `⌈log_2 3⌉ = 2`, `r = 2`, `A_1^2(x) = 4x+6 ≥
   c·x + 1`.  ✓
 - `d = 0`: `⌈log_2 2⌉ = 1`, `r = 1`, `A_1^1(x) = 2x+2 ≥
@@ -237,9 +239,11 @@ But this leaves dangling cross-references — see G1, G2 below.
 **Status: PARTIALLY FIXED.** §3.4 line 770-788 now correctly
 splits into `def KMor1.majorize_r` and `theorem
 KMor1.majorize_by_A_two_iter`.  But §3.5 line 955 still has:
-```
+
+```lean
 let r := KMor1.majorize_by_A_n_iter f h |>.choose
 ```
+
 This uses `.choose` against a theorem name that contradicts
 the §3.4 split (where the data is in `majorize_r` and the
 theorem is `majorize_by_A_two_iter`).  Real internal
@@ -325,9 +329,11 @@ delete the reference if not load-bearing).
 ### G3 — `kToER` simrec case uses `.choose` against split theorem (defect)
 
 **Claim being challenged.** §3.5 line 955:
-```
+
+```lean
 let r := KMor1.majorize_by_A_n_iter f h |>.choose
 ```
+
 This invokes `.choose` (Classical extraction from `∃`)
 against a theorem whose §3.4 statement (line 777-781)
 takes a separate `def KMor1.majorize_r` providing the
@@ -355,9 +361,11 @@ general.
 **Verdict.**  Defect.
 
 **Recommended action.**  Update §3.5 line 955 to:
-```
+
+```lean
 let r := KMor1.majorize_r f h
 ```
+
 and use the inequality theorem (`majorize_by_A_two_iter`)
 in the correctness proof of `kToER_interp`'s simrec case
 (to verify `bound` dominates the iteration values).

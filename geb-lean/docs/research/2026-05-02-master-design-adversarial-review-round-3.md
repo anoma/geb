@@ -75,9 +75,9 @@ preserved. Verdict: **correct**.
 > packed state `≤ (componentBound + c_{k+1})^{2^{k+1}}`), so
 > callers do NOT need to provide a packed-state bound. This
 > matches the F2-fixed `Nat.tuplePack_le` formula and is what
-> the level-2 majorization in §3.4 supplies (the `A_2^2(vMax v
-> + offset)` bound is on each component, not on the packed
-> tuple).
+> the level-2 majorization in §3.4 supplies (the
+> `A_2^2(vMax v + offset)` bound is on each component, not on
+> the packed tuple).
 
 The implementation outline (lines 657-675) now derives the
 packed-state bound from `componentBound` in step 2 of the
@@ -128,7 +128,8 @@ Verdict: **correct**.
 ### H1 — `ERMor1.maxCtxER` referenced in §3.5 but not defined anywhere (minor defect)
 
 **Claim.** §3.5 line 992-993 builds the `bound` as:
-```
+
+```lean
 ERMor1.comp (ERMor1.A_two_iter r) ![ERMor1.maxCtxER (a + 1)]
 ```
 
@@ -185,28 +186,30 @@ prior reviews missed it).
 
 ## Issues missed by prior rounds
 
-### J1 — `r := majorize_r f h` produces an `r` for `A_2^r(vMax v)`, not `A_2^2(vMax v + offset_2)` (needs-clarification, not a defect)
+### J1 — `r := majorize_r f h` gives `A_2^r(vMax v)`, not `A_2^2(vMax v + offset_2)`
 
 **Claim being challenged.** §3.4's prose proof concludes
 `f.interp v ≤ A_2^2(vMax v + offset_2)` with `r_2 = 2,
 offset_2 = r_H + r_G + 2`. But the Lean theorem statement
 (lines 812-815) reads:
-```
+
+```lean
 f.interp v ≤ (ERMor1.A_two_iter (KMor1.majorize_r f h)).interp ![vMax v]
 ```
+
 i.e., `A_2^{majorize_r f h}(vMax v)` with no explicit
 offset. The translation from `A_2^2(y + c)` to `A_2^r(y)`
 absorbs the offset into the iteration count.
 
 **Verification.** For `c ≥ 0` and `y ≥ 1`,
 `A_2^2(y + c) = 2^{2^{y+c}} = 2^{2^c · 2^y}`. We have
-`2^c · 2^y ≤ 2^{2^{y}}` for `y` large enough that `2^y ≥ c
-+ y` (true for `y ≥ ⌈log_2 c⌉ + 1`). So
-`A_2^2(y+c) ≤ 2^{2^{2^y}} = A_2^3(y)` for `y ≥ ⌈log_2 c⌉ +
-1`. For small `y`, take a larger `r` to dominate: there
-exists a Lean-`Nat` `r := r(c)` such that `A_2^2(y + c) ≤
-A_2^r(y)` for all `y`. This is the absorbed `r =
-majorize_r f h`.
+`2^c · 2^y ≤ 2^{2^{y}}` for `y` large enough that
+`2^y ≥ c + y` (true for `y ≥ ⌈log_2 c⌉ + 1`). So
+`A_2^2(y+c) ≤ 2^{2^{2^y}} = A_2^3(y)` for
+`y ≥ ⌈log_2 c⌉ + 1`. For small `y`, take a larger `r` to
+dominate: there exists a Lean-`Nat` `r := r(c)` such that
+`A_2^2(y + c) ≤ A_2^r(y)` for all `y`. This is the absorbed
+`r = majorize_r f h`.
 
 **Verdict.** Not a defect. The design defers the precise
 absorption formula to step 4's cycle ("Concrete formulas:
@@ -230,7 +233,7 @@ offset}(y)` (or some similar concrete shape). The current
 design's deferral is acceptable but step 4 must surface
 this absorption as a named lemma.
 
-### J2 — §3.2 implementation outline assumes `componentBound`'s tower height ≥ 2 (needs-clarification)
+### J2 — §3.2 outline assumes `componentBound` tower height ≥ 2 (clarification)
 
 **Claim being challenged.** §3.2 lines 681-688:
 > If `componentBound` is at ER tower height `h_c`, the
@@ -256,7 +259,7 @@ document whether `simultaneousBoundedRec` requires
 `componentBound` at height ≥ 2, or whether it handles
 lower heights via an extra inflation. Not a blocker.
 
-### J3 — Level-2 `comp` and `raise` cases of `majorize_by_A_two_iter` are deferred (acceptable but flagged)
+### J3 — `majorize_by_A_two_iter` level-2 `comp`/`raise` deferred (acceptable, flagged)
 
 **Claim being challenged.** §3.4 line 947-951:
 > **Recursive comp / raise cases.** For `comp f gs` and
@@ -282,7 +285,7 @@ terminates at the level-0/level-1 base cases via
 `linearBound_le_A_one_iter`. The bottom-up structural
 induction shape is well-specified by §3.4.
 
-### J4 — §3.4 prose proof's "n ≥ max x⃗" regime restriction is not maintained in formal statement (cosmetic)
+### J4 — §3.4 prose "n ≥ max x⃗" regime restriction not in formal statement (cosmetic)
 
 **Claim being challenged.** §3.4 line 867-869:
 > For `n ≥ max x⃗` (the only regime that matters; smaller
