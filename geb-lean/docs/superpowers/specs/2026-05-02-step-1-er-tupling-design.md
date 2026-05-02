@@ -97,9 +97,12 @@ order:
 
 ### §2.1 `GebLean/Utilities/Tupling.lean` (`Nat`-level)
 
-Imports: `Mathlib.Data.Nat.Pairing` only. Standalone — does
-not import `SzudzikSeq.lean`, `ComputationalComplexity.lean`,
-or any ER-related module.
+Imports: `Mathlib.Data.Nat.Pairing` and
+`Mathlib.Data.Fin.Tuple.Basic` (the latter for `Fin.init`,
+`Fin.lastCases`, and the reduction lemmas
+`Fin.lastCases_last` / `Fin.lastCases_castSucc`). Standalone
+otherwise — does not import `SzudzikSeq.lean`,
+`ComputationalComplexity.lean`, or any ER-related module.
 
 Namespace: `Nat`.
 
@@ -109,7 +112,8 @@ Public surface:
 - `Nat.tupleAt : (k : ℕ) → ℕ → Fin (k+1) → ℕ`
 - `Nat.tuplePackCoef : ℕ → ℕ`
 - `@[simp] Nat.tuplePack_zero`, `Nat.tuplePack_succ`,
-  `Nat.tupleAt_zero`
+  `Nat.tupleAt_zero`, `Nat.tupleAt_succ_last`,
+  `Nat.tupleAt_succ_castSucc`
 - `Nat.tupleAt_tuplePack`, `Nat.tuplePack_tupleAt`
 - `Nat.tupleAt_le`, `Nat.tuplePack_le`
 
@@ -127,6 +131,15 @@ Public surface:
   `@[simp] ERMor1.interp_tupleAt`
 - `ERMor1.PolyBound.ofTuplePack`,
   `ERMor1.PolyBound.ofTupleAt`
+- Two named-helper composites bridging single-output to
+  multi-output: `ERMorN.lift : ERMor1 n → ERMorN n 1` (the
+  one-element vector view) and
+  `ERMorN.ofVec : (Fin m → ERMor1 n) → ERMorN n m` (a
+  named identity coercion, since
+  `ERMorN n m := Fin m → ERMor1 n`). These exist solely so
+  the §4.4 round-trip lemma signatures and the §5.3 iso
+  construction cite a stable interface; they are otherwise
+  trivial.
 - `ERMorN.tupleAt_tuplePack`, `ERMorN.tuplePack_tupleAt`
   (round-trip at the ERMorN-quotient level)
 - `LawvereERCat.tupleIso (k : ℕ) : (k + 1) ≅ 1` — gated
@@ -210,11 +223,26 @@ end Nat
 
 @[simp] theorem Nat.tupleAt_zero (n : ℕ) (i : Fin 1) :
     Nat.tupleAt 0 n i = n := rfl
+
+/-- `tupleAt` reduction at the last index: peels one
+`Nat.unpair` step on the right. -/
+@[simp] theorem Nat.tupleAt_succ_last (k n : ℕ) :
+    Nat.tupleAt (k+1) n (Fin.last (k+1))
+      = (Nat.unpair n).2 := by
+  simp [Nat.tupleAt, Fin.lastCases_last]
+
+/-- `tupleAt` reduction at a non-last index: peels one
+`Nat.unpair` step on the left and recurses at depth `k`. -/
+@[simp] theorem Nat.tupleAt_succ_castSucc (k n : ℕ)
+    (j : Fin (k+1)) :
+    Nat.tupleAt (k+1) n j.castSucc
+      = Nat.tupleAt k (Nat.unpair n).1 j := by
+  simp [Nat.tupleAt, Fin.lastCases_castSucc]
 ```
 
-(Additional `simp` lemmas for the recursive case of `tupleAt`
-follow `Fin.lastCases_castSucc` / `Fin.lastCases_last` from
-mathlib.)
+These two lemmas reduce the bijection-theorem proofs in §3.3
+to a clean `induction k; · rfl; · simp [Nat.unpair_pair, ...]`
+shape rather than manual `Fin.lastCases` invocations.
 
 ### §3.3 Bijection theorems
 
@@ -278,23 +306,30 @@ Proof outline:
       ≤ (tuplePack k (Fin.init v) + v (Fin.last (k+1)) + 1)^2
     ```
 
-    By IH applied to `Fin.init v` (using
-    `(Fin.init v).sup ≤ M'` from monotonicity of `v` along
-    `Fin.castSucc`):
+    For the IH on `Fin.init v` we need
+    `(Finset.univ : Finset (Fin (k+1))).sup (Fin.init v) ≤ M'`.
+    Since `Fin.init v i = v i.castSucc`, this reduces to
+    `Finset.sup_le` followed by
+    `Finset.le_sup (Finset.mem_univ i.castSucc) :
+       v i.castSucc ≤ M'`. The IH then gives
 
     ```text
     tuplePack k (Fin.init v)
       ≤ tuplePackCoef k * (M' + 1)^{2^k}
     ```
 
+    by monotonicity of `(_ + 1)^{2^k}`.
     Combined with `v (Fin.last (k+1)) ≤ M'`, we obtain
 
     ```text
     tuplePack k (Fin.init v) + v (Fin.last (k+1)) + 1
+      ≤ tuplePackCoef k * (M' + 1)^{2^k} + (M' + 1)
+      ≤ (tuplePackCoef k + 1) * (M' + 1)^{2^k}
       ≤ (tuplePackCoef k + 2) * (M' + 1)^{2^k}
     ```
 
-    using `(M' + 1) ≤ (M' + 1)^{2^k}` (since `2^k ≥ 1`).
+    using `(M' + 1) ≤ (M' + 1)^{2^k}` (since `2^k ≥ 1`,
+    base case `k = 0` gives `(M' + 1)^1 = M' + 1`).
     Squaring both sides:
 
     ```text
@@ -398,33 +433,67 @@ end ERMor1.PolyBound
 
 ### §4.4 ERMorN-quotient round-trip lemmas
 
+#### §4.4.1 Bridging helpers `ERMorN.lift` and `ERMorN.ofVec`
+
 ```lean
-/-- Round-trip at the ERMorN-quotient level: composing
-`tupleAt` after `tuplePack` is extensionally equal to the
-identity multi-output morphism.  Restates
-`Nat.tupleAt_tuplePack` at the morphism-quotient level.  -/
+/-- One-element vector view of a single-output ER term.
+`ERMorN.lift f i = f` for the unique `i : Fin 1`.  Used to
+state `ERMorN`-level round-trip lemmas where one side of
+the composition is a single-output morphism.  -/
+def ERMorN.lift {n : ℕ} (f : ERMor1 n) : ERMorN n 1 :=
+  fun _ => f
+
+/-- Named identity coercion from a vector of single-output
+ER terms to the multi-output `ERMorN`.  Definitionally
+`g`, since `ERMorN n m := Fin m → ERMor1 n`; the name
+exists so the §4.4 lemma signatures and §5.3 iso
+construction cite a stable interface.  -/
+def ERMorN.ofVec {n m : ℕ} (g : Fin m → ERMor1 n) :
+    ERMorN n m := g
+```
+
+#### §4.4.2 Round-trip lemmas
+
+The composition convention is per `LawvereER.lean:167-170`:
+`ERMorN.comp (f : ERMorN n m) (g : ERMorN m k) : ERMorN n k`
+runs `f` first, then `g`. So "first pack, then unpack"
+applies `lift (tuplePack k) : ERMorN (k+1) 1` first, then
+`ofVec (fun i => tupleAt k i) : ERMorN 1 (k+1)`, yielding an
+`ERMorN (k+1) (k+1)` candidate for `id (k+1)`. The other
+direction reverses.
+
+```lean
+/-- Round-trip at the ERMorN-quotient level: first packing,
+then component-wise unpacking, is extensionally equal to the
+identity at arity `(k+1)`.  Restates
+`Nat.tupleAt_tuplePack` at the morphism-quotient level.
+
+The setoid `≈` resolves to `(erMorNSetoid (k+1) (k+1)).r`
+(per `LawvereERQuot.lean:23-32`). -/
 theorem ERMorN.tupleAt_tuplePack (k : ℕ) :
     ERMorN.comp
-      (ERMorN.ofVec (fun i : Fin (k+1) => ERMor1.tupleAt k i))
       (ERMorN.lift (ERMor1.tuplePack k))
+      (ERMorN.ofVec (fun i : Fin (k+1) => ERMor1.tupleAt k i))
       ≈ ERMorN.id (k+1)
 
-/-- Round-trip in the other direction.  Restates
-`Nat.tuplePack_tupleAt`.  -/
+/-- Round-trip in the other direction: first component-wise
+unpacking, then packing, is extensionally equal to the
+identity at arity `1`.  Restates `Nat.tuplePack_tupleAt`.
+
+The setoid `≈` resolves to `(erMorNSetoid 1 1).r`. -/
 theorem ERMorN.tuplePack_tupleAt (k : ℕ) :
     ERMorN.comp
-      (ERMorN.lift (ERMor1.tuplePack k))
       (ERMorN.ofVec (fun i : Fin (k+1) => ERMor1.tupleAt k i))
+      (ERMorN.lift (ERMor1.tuplePack k))
       ≈ ERMorN.id 1
 ```
 
-(`ERMorN.ofVec`, `ERMorN.lift`, `ERMorN.id`, and the
-extensional-equality relation `≈` follow whatever the
-existing `LawvereERQuot.lean` / `LawvereERN.lean`
-infrastructure exposes; if the direct names differ, the
-spec's intent — pack/unpack are mutually inverse at the
-quotient level — is preserved by the implementer using
-whatever names the existing infrastructure provides.)
+Both lemma proofs unfold `ERMorN.comp`, `ERMorN.id`,
+`ERMorN.lift`, `ERMorN.ofVec` to functions of indices,
+unfold `ERMor1.comp.interp` via the existing
+`@[simp] ERMor1.interp_comp`, and then reduce to the
+Nat-level bijection theorems via the §4.2 interp simp
+lemmas.
 
 ## §5 Categorical iso `(k + 1) ≅ 1` (gated, best-effort)
 
@@ -449,15 +518,21 @@ mechanically ticks each box:
       lifting needed).
 - [ ] **G2: Hom-set shapes.** The morphism types
       `(k + 1 : LawvereERCat) ⟶ 1` and
-      `(1 : LawvereERCat) ⟶ (k + 1)` are directly the
-      relevant `ERMor1`/`ERMorN` quotients (no coercion or
-      wrapping needed beyond `⟦·⟧` / `ERMorN.ofVec`).
+      `(1 : LawvereERCat) ⟶ (k + 1)` are quotients of
+      `ERMorN (k+1) 1` and `ERMorN 1 (k+1)` respectively
+      (per `LawvereERQuot.lean`'s `ERMorNQuo` shape).
+      Wrapping a single-output `ERMor1.tuplePack k` to
+      `ERMorN (k+1) 1` requires `ERMorN.lift`; wrapping a
+      family `Fin (k+1) → ERMor1 1` to `ERMorN 1 (k+1)`
+      uses `ERMorN.ofVec` (definitionally identity). The
+      §4.4.1 helpers exist precisely to make this wrapping
+      a stable named operation.
 - [ ] **G3: Iso laws via Quot.sound.** `hom_inv_id` and
       `inv_hom_id` reduce to `Quot.sound` applied to §4.4's
       round-trip lemmas plus standard category-theory
       boilerplate (`Category.id_comp`, `Category.comp_id`,
       `Functor.map_comp`, etc.); no new infrastructure is
-      required.
+      required beyond the §4.4.1 helpers.
 
 ### §5.3 Construction (gate-passing form)
 
@@ -469,8 +544,9 @@ product of the generator is isomorphic to the generator,
 witnessed by `ERMor1.tuplePack` and the tuple of
 `ERMor1.tupleAt`s.  Master design §3.1.  -/
 def tupleIso (k : ℕ) : (k + 1 : LawvereERCat) ≅ 1 where
-  hom        := ⟦ERMor1.tuplePack k⟧
-  inv        := ⟨fun i : Fin (k+1) => ⟦ERMor1.tupleAt k i⟧⟩
+  hom        := ⟦ERMorN.lift (ERMor1.tuplePack k)⟧
+  inv        := ⟦ERMorN.ofVec
+                    (fun i : Fin (k+1) => ERMor1.tupleAt k i)⟧
   hom_inv_id := by
     -- reduces to ERMorN.tupleAt_tuplePack via Quot.sound
     exact Quot.sound (ERMorN.tupleAt_tuplePack k)
@@ -735,7 +811,8 @@ named-composite construct is defined before its consumer):
 1. `GebLean/Utilities/Tupling.lean`:
    1. `Nat.tuplePack`, `Nat.tupleAt`, `Nat.tuplePackCoef`.
    2. `@[simp]` interp lemmas (`tuplePack_zero`,
-      `tuplePack_succ`, `tupleAt_zero`).
+      `tuplePack_succ`, `tupleAt_zero`,
+      `tupleAt_succ_last`, `tupleAt_succ_castSucc`).
    3. `Nat.tupleAt_le`.
    4. `Nat.tupleAt_tuplePack`, `Nat.tuplePack_tupleAt`.
    5. `Nat.tuplePack_le`.
@@ -747,20 +824,25 @@ named-composite construct is defined before its consumer):
       `interp_tupleAt`).
    3. `ERMor1.PolyBound.ofTuplePack`,
       `ERMor1.PolyBound.ofTupleAt`.
-   4. `ERMorN.tupleAt_tuplePack`,
+   4. `ERMorN.lift`, `ERMorN.ofVec` (the §4.4.1 helpers).
+   5. `ERMorN.tupleAt_tuplePack`,
       `ERMorN.tuplePack_tupleAt`.
 4. `test/utilitiesTests/ERTuplingTests.lean`: §6.1 (ER-side
    smoke) and §6.2 (ER-side boundary examples).
-5. **Gate check (§5.2).** Read `LawvereERCat.lean`; tick
-   G1, G2, G3.
-6. If gate passes: `LawvereERCat.tupleIso`, appended to
+5. **Citation cross-check.** Verify each entity's docstring
+   contains the §7-listed citation verbatim, not a
+   shortened paraphrase. Cross-reference the §7.1/§7.2
+   tables.
+6. **Gate check (§5.2).** Read `LawvereERCat.lean`; tick
+   G1, G2, G3 mechanically.
+7. If gate passes: `LawvereERCat.tupleIso`, appended to
    `ERTupling.lean`. Delete §8.3.
-7. If gate fails: fill §8.3 with the diagnosis. Do not land
+8. If gate fails: fill §8.3 with the diagnosis. Do not land
    any iso scaffolding.
-8. Re-export both modules from `GebLean.lean`; register
+9. Re-export both modules from `GebLean.lean`; register
    both test files in `GebLeanTests.lean`.
-9. `lake build`, `lake test`, `markdownlint-cli2` clean on
-   any new docs.
+10. `lake build`, `lake test`, `markdownlint-cli2` clean on
+    any new docs.
 
 ## §10 Success criteria
 
