@@ -111,26 +111,29 @@ theorem tupleAt_tuplePack :
     ∀ (k : ℕ) (v : Fin (k+1) → ℕ) (i : Fin (k+1)),
       tupleAt k (tuplePack k v) i = v i
   | 0,     v, i => by
-      simp [tupleAt_zero]
+      simp only [tupleAt_zero]
       exact congrArg v (Subsingleton.elim _ i)
   | k + 1, v, i => by
       refine Fin.lastCases ?_ ?_ i
-      · simp [tuplePack_succ, tupleAt_succ_last,
+      · simp only [tuplePack_succ, tupleAt_succ_last,
               Nat.unpair_pair]
       · intro j
-        simp [tuplePack_succ, tupleAt_succ_castSucc,
+        simp only [tuplePack_succ, tupleAt_succ_castSucc,
               Nat.unpair_pair]
         exact tupleAt_tuplePack k (Fin.init v) j
 
 /-- Round-trip: packing the components extracted from a
-packed natural returns the original natural. -/
+packed natural returns the original natural.  Realizes the
+inverse round-trip implicit in Tourlakis 2018 §0.1.0.34,
+p. 14's bijection (each `z` recovers from its projections
+under `[[·]]^{(k)}`). -/
 theorem tuplePack_tupleAt :
     ∀ (k n : ℕ),
       tuplePack k (tupleAt k n) = n
   | 0,     n => by
-      simp [tuplePack_zero, tupleAt_zero]
+      simp only [tuplePack_zero, tupleAt_zero]
   | k + 1, n => by
-      simp [tuplePack_succ, tupleAt_succ_last]
+      simp only [tuplePack_succ, tupleAt_succ_last]
       have h_init :
           Fin.init (tupleAt (k+1) n)
             = tupleAt k (Nat.unpair n).1 := by
