@@ -153,24 +153,31 @@ Lean correctness theorem, in steps 1–5 of §2):
 - Foundational tupling (step 1):
   - `Nat.tuplePack : (k : ℕ) → (Fin k → ℕ) → ℕ` and
     `Nat.tupleAt : (k : ℕ) → ℕ → Fin k → ℕ` (Lean Nat-level
-    fixed-length k-tuple Cantor pairing); pack-unpack
+    fixed-length k-tuple Szudzik pairing); pack-unpack
     bijection theorems; polynomial value bound on packed
     tuple.
   - `ERMor1.tuplePack`, `ERMor1.tupleAt` named composites in
     ER, with interp lemmas + `PolyBound` builders.
   - **K^sim-side tuplePack/tupleAt is not needed for Path 2's
-    load-bearing chain** and is omitted from this design.
-    Reason: K^sim_2's simrec children must be at level ≤ 1;
-    a Cantor-pair projection in K^sim requires bounded search
-    (or its equivalent) whose simrec step would itself need
-    `mul ∈ K^sim_2` as a step-function, pushing the term to
-    level 3. The categorical iso `(n+1) ≅ 1` is decorative
-    rather than load-bearing for `kToER`/`erToK`; the
+    load-bearing chain** and is therefore not built in this
+    cycle group. Pairing and projections at level ≤ 2 in
+    K^sim do exist — by Tourlakis 2018 §0.1.0.44, `K^sim_2 =
+    E^3 ⊇ ER`, and ER contains the pairing function and its
+    projections (in fact in E^2 per Tourlakis §0.1.0.34
+    proof). A naive K^sim construction (e.g. building Szudzik
+    unpair as bounded search whose simrec step uses
+    multiplication as a step-function) hits level 3 by an
+    obvious approach, but a less naive construction at level
+    ≤ 2 must exist by the equivalence we are proving.
+    Constructing K^sim-side `tuplePack`/`tupleAt` may turn
+    out to be needed for the erToK URM simulator (step 9);
+    it is not blocking for the kToER side. The categorical
+    iso `(n+1) ≅ 1` on the K^sim side is decorative; the
     `simultaneousBoundedRec` in step 2 needs only ER-side
     tuplePack/tupleAt.
   - Categorical iso `(n+1) ≅ 1` in `LawvereERCat` only
     (decorative, witnessing that ER-side products collapse
-    via Cantor pairing in the morphism quotient).
+    via Szudzik pairing in the morphism quotient).
 - Simultaneous bounded recursion in ER (step 2):
   - `ERMor1.simultaneousBoundedRec` — multi-output ER
     bounded recursion at the ERMorN level. Implementation
@@ -312,12 +319,19 @@ polynomial value bound (`Utilities/Tupling.lean`).
 interp lemmas (`Utilities/ERTupling.lean`). Categorical iso
 `(n+1) ≅ 1` in `LawvereERCat` (decorative).
 
-K^sim-side tuplePack/tupleAt is omitted: K^sim_2 simrec
-children must be at level ≤ 1, but a Cantor-pair projection
-in K^sim requires step-functions involving `mul ∈ K^sim_2`,
-pushing the simrec to level 3. The `simultaneousBoundedRec`
-in step 2 needs only ER-side tupling; K^sim's native
-multi-output `simrec` constructor handles K^sim's side.
+K^sim-side tuplePack/tupleAt is omitted from this cycle.
+Pairing and projections at level ≤ 2 in K^sim do exist (by
+the equivalence `K^sim_2 = E^3` and the fact that ER's
+`natPair` is in ER), but the naive K^sim construction —
+projection as `λz. μx ≤ z. ∃y ≤ z. J(x,y) = z` whose simrec
+step uses `mul ∈ K^sim_2` — pushes the simrec to level 3.
+A non-naive construction at level ≤ 2 must exist by the
+equivalence we are proving; we expect it is in published
+literature on K^sim / loop-program hierarchies. The
+`simultaneousBoundedRec` in step 2 needs only ER-side
+tupling; K^sim's native multi-output `simrec` constructor
+handles K^sim's side. K^sim-side tupling may be needed for
+the erToK URM simulator (step 9); if so, it gets built then.
 
 #### Step 2 — Simultaneous bounded recursion in ER
 
@@ -327,7 +341,7 @@ ERMorN-level interface; implementation packs the (k+1)-tuple
 of intermediate values via `Nat.tuplePack`, recurses on the
 packed state via single-output `boundedRec`, unpacks at the
 end via `Nat.tupleAt`. Interp lemma + `PolyBound` builder.
-The packing arithmetic uses Cantor pairing (already in ER as
+The packing arithmetic uses Szudzik pairing (already in ER as
 named composites) and produces a clean polynomial bound on
 the packed state; the kToER outer level sees a clean
 ERMorN interface.
@@ -505,8 +519,21 @@ output ER morphisms without packing artefacts that defeated
 prior attempts (the `3^E` coefficient that broke
 `kToERDirect`).
 
-We build fixed-length k-tuple Cantor pairing as named
-composites in both ER and K^sim, with the recursive shape:
+**Note on choice of pairing function.** The literature
+typically presents pairing constructions using Cantor's
+`J(x,y) = (x+y)(x+y+1)/2 + y`. We use Szudzik (also called
+"elegant") pairing: `Nat.pair x y = if x < y then y² + x
+else x² + x + y` (mathlib's `Nat.pair`, exposed in our
+project as `ERMor1.natPair`). Both are bijections
+`ℕ × ℕ → ℕ` with the same polynomial value bound `≤
+(max(x,y) + 1)²`; Szudzik's diagonal-versus-quadrant shape
+gives a depth-ordering property convenient for inductive
+arguments. Wherever the literature says "Cantor pairing",
+our Lean realization uses Szudzik; the bound shape and
+PolyBound-builder structure are identical.
+
+We build fixed-length k-tuple Szudzik pairing as named
+composites in ER, with the recursive shape:
 
 - 1-tuple combining = identity.
 - (n+2)-tuple combining = `pair` after `(proj 0,
@@ -531,7 +558,7 @@ quotient.
 Foundational layer (Lean Nat-level — `Utilities/Tupling.lean`):
 
 - `Nat.tuplePack : (k : ℕ) → (Fin k → ℕ) → ℕ`. 1-tuple =
-  identity; (n+2)-tuple = Cantor `Nat.pair` on head with
+  identity; (n+2)-tuple = Szudzik `Nat.pair` on head with
   packed tail.
 - `Nat.tupleAt : (k : ℕ) → ℕ → Fin k → ℕ`. Inverse: walk
   the right-fold-pair encoding.
@@ -567,15 +594,20 @@ ER layer (`Utilities/ERTupling.lean`):
 
 K^sim layer (NOT BUILT under Path 2):
 
-K^sim-side tuplePack/tupleAt would require K^sim's simrec
-to have step-functions at level ≤ 1, but the natural
-construction of Cantor unpair (e.g. `λz. μx ≤ z. ∃y ≤ z.
-J(x,y) = z`) is a bounded search whose body involves
-`λxy.xy ∈ K^sim_2`. Per K^sim's level grading (Tourlakis
-§0.1.0.7), simrec children must be at level ≤ 1, so a
-level-2 simrec cannot have a `mul`-using step. Therefore
-`KMor1.tupleAt` cannot be constructed at K^sim level ≤ 2 by
-the obvious approach.
+Pairing and projections at level ≤ 2 in K^sim do exist —
+by Tourlakis 2018 §0.1.0.44 our `kToER` proves `K^sim_2 ⊆
+ER`, and ER contains the pairing function and its
+projections (per Tourlakis §0.1.0.34 proof, both J and its
+projections K, L are in E^2). So K^sim_2 contains pairing
+and unpair as functions, by the equivalence we are
+proving. A naive K^sim construction (e.g. building Szudzik
+unpair as `λz. μx ≤ z. ∃y ≤ z. J(x,y) = z`, a bounded
+search whose body involves `λxy.xy ∈ K^sim_2`) hits level
+3 by the obvious approach since K^sim_2 simrec children
+must be at level ≤ 1 (Tourlakis §0.1.0.7) and `mul`-using
+step-functions push the simrec to level 3. A less naive
+construction at level ≤ 2 must exist (per the equivalence
+we are proving) but is not yet on this project's roadmap.
 
 Path 2 does not need K^sim-side tuplePack/tupleAt for the
 load-bearing chain. The simrec case of `kToER` translates
@@ -584,11 +616,18 @@ each K^sim simrec into ER directly using
 ER-side tuplePack/tupleAt. K^sim's native multi-output
 `simrec` constructor handles the K^sim side natively.
 
+(K^sim-side tuplePack/tupleAt may turn out to be needed by
+the erToK URM simulator at step 9; if so, it will be built
+in that cycle. Constructing it then will require the
+non-naive level-≤-2 approach — likely already published in
+the literature on K^sim / loop-program hierarchies, though
+we have not yet located the specific reference.)
+
 Categorical packaging:
 
 - `LawvereERCat.tupleIso (n : ℕ) : (n + 1) ≅ 1` in
   `LawvereERCat` (decorative, witnessing that ER-side
-  products of the generator collapse via Cantor pairing in
+  products of the generator collapse via Szudzik pairing in
   the morphism quotient). Useful for cleanly stating
   multi-output ER translations as single-output ones.
 - The K^sim-side analogue is **not** built (see above).
@@ -1082,10 +1121,15 @@ equality).
   recursion)** — `ERMor1.simultaneousBoundedRec`. Build,
   §3.2, step 2.
 - **§0.1.0.34 (proof, p. 13) and §0.1.0.17 (b)** —
-  Cantor pairing `J = λxy. (x+y)^2 + x` in E^2 (mul ∈ K^sim_2
-  per §0.1.0.17 (b) and `λxy. x+y` ∈ K^sim_1 per
-  §0.1.0.17 (a) compose to give Cantor in E^2).
-  Lean: `ERMor1.natPair`, `natUnpairFst`, `natUnpairSnd`.
+  Tourlakis's witness for pairing in E^2 is Cantor's
+  `J = λxy. (x+y)^2 + x` (mul ∈ K^sim_2 per §0.1.0.17 (b)
+  and `λxy. x+y` ∈ K^sim_1 per §0.1.0.17 (a) compose to
+  give Cantor's `J` in E^2). Our Lean formalization uses
+  Szudzik pairing instead (see the note in §3.1); the
+  reasoning that pairing is in E^2 is identical, since
+  Szudzik's defining expression is also a polynomial in
+  `mul` and `add`. Lean: `ERMor1.natPair`,
+  `natUnpairFst`, `natUnpairSnd`.
   Existing ✓. (Note: the design originally cited §0.1.0.39
   here; that section is in fact about the URM-simulating
   functions in K_4 and is not what we want.)
@@ -1173,7 +1217,7 @@ chose:
 
 Path 2 avoids these by:
 
-- Using k-tuple Cantor pairing (§3.1) packaged as named
+- Using k-tuple Szudzik pairing (§3.1) packaged as named
   composites with proven polynomial value bounds.
 - Encapsulating all packing inside `simultaneousBoundedRec`
   (§3.2). Callers (the kToER structural induction) see a
@@ -1967,8 +2011,9 @@ proof step depends on the ER ↔ E^n equivalence.
   K^sim, including the `switch` construct.
 - **§0.1.0.22** — Grzegorczyk hierarchy definition.
 - **§0.1.0.27** (esp. clauses (1)–(4)) — Bounding Lemma for E^n.
-- **§0.1.0.34** — E^2 closed under bounded recursion; Cantor
-  pairing in E^2.
+- **§0.1.0.34** — E^2 closed under bounded recursion;
+  pairing in E^2 (Tourlakis's witness is Cantor's `J`; we
+  use Szudzik's `Nat.pair`, see §3.1 note).
 - **§0.1.0.39** — URM-simulating functions in K_4
   (corollary to §0.1.0.37). Not directly used by the design;
   noted here for completeness.
@@ -2258,7 +2303,7 @@ before any cycle proceeds.
 
 ### §15.12 Path 2 specific — Tupling stays in ER at all levels
 
-Claim: The k-tuple Cantor pairing (`Nat.tuplePack`,
+Claim: The k-tuple Szudzik pairing (`Nat.tuplePack`,
 `ERMor1.tuplePack`) and its inverse (`Nat.tupleAt`,
 `ERMor1.tupleAt`) are in ER and have polynomial value
 bounds, with `tuplePack k v ≤ (M + c_k)^{2^k}` for `M = max
@@ -2270,7 +2315,7 @@ this is a polynomial of fixed degree in inputs; ER's
 Adversary obligation: verify the recursive definition of
 `tuplePack` and `tupleAt` against §3.1. Confirm the
 `PolyBound` builders compose correctly (1-tuple is identity
-with degree 1; (n+2)-tuple via Cantor `pair` adds at most
+with degree 1; (n+2)-tuple via Szudzik `pair` adds at most
 quadratic to the bound's degree, accumulating to (n+2)^2 or
 similar — a fixed polynomial for each fixed k).
 
