@@ -149,8 +149,8 @@ Both modules added to `GebLean.lean`'s public surface.
 
 ### §2.3 Test files
 
-- `test/utilitiesTests/TuplingTests.lean`
-- `test/utilitiesTests/ERTuplingTests.lean`
+- `GebLeanTests/Tupling.lean`
+- `GebLeanTests/ERTupling.lean`
 
 Both registered in `GebLeanTests.lean`.
 
@@ -879,7 +879,7 @@ named-composite construct is defined before its consumer):
    4. `Nat.tupleAt_le`.
    5. `Nat.tupleAt_tuplePack`, `Nat.tuplePack_tupleAt`.
    6. `Nat.tuplePack_le`.
-2. `test/utilitiesTests/TuplingTests.lean`: §6.1 (Nat-side
+2. `GebLeanTests/Tupling.lean`: §6.1 (Nat-side
    smoke) and §6.2 (Nat-side boundary examples).
 3. `GebLean/Utilities/ERTupling.lean`:
    1. `ERMor1.tuplePack`, `ERMor1.tupleAt`.
@@ -890,7 +890,7 @@ named-composite construct is defined before its consumer):
    4. `ERMorN.lift`, `ERMorN.ofVec` (the §4.4.1 helpers).
    5. `ERMorN.tupleAt_tuplePack`,
       `ERMorN.tuplePack_tupleAt`.
-4. `test/utilitiesTests/ERTuplingTests.lean`: §6.1 (ER-side
+4. `GebLeanTests/ERTupling.lean`: §6.1 (ER-side
    smoke) and §6.2 (ER-side boundary examples).
 5. **Citation cross-check.** Verify each entity's docstring
    contains the §7-listed citation verbatim, not a
