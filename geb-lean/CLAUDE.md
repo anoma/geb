@@ -40,17 +40,23 @@ should be a comment in the code itself.)
 - Minimum code that solves the problem. Nothing speculative.
 - Touch only what you must. Clean up only your own mess.
 - Define success criteria. Loop until verified.
-- **Literature-citation discipline**: this project formalizes published
-  mathematics; we do not invent constructions of our own.  Every planned
-  function, definition, or theorem in a plan document must carry a
-  reference to the literature proposition, theorem, or in-codebase lemma
-  it corresponds to.  Every implemented function, definition, or theorem
-  must include the literature reference in its docstring comment.  This
-  ensures we never lose track of where a construction came from or how
-  it fits into the overall picture.  Citations should be specific (e.g.
-  "Tourlakis 2018 §0.1.0.27 (3)" or "Recursion Class Ch. 4 Prop. 4.7
-  n=2 case") and should reference the project's research documents in
-  `docs/research/` for the cross-reference network.
+- **Literature-citation discipline (transcription workstreams only)**:
+  some workstreams in this repository are pure transcriptions of
+  published mathematics — the ER ↔ K^sim_2 equivalence (Tourlakis 2018,
+  Wagner-Wong, Grzegorczyk hierarchy literature) is the present
+  example.  In these transcription workstreams, we do not invent
+  constructions of our own; every planned function, definition, or
+  theorem in a plan document must carry a reference to the literature
+  proposition, theorem, or in-codebase lemma it corresponds to, and
+  every implemented function, definition, or theorem must include the
+  literature reference in its docstring comment.  Citations should be
+  specific (e.g.  "Tourlakis 2018 §0.1.0.27 (3)" or "Recursion Class
+  Ch. 4 Prop. 4.7 n=2 case") and should reference the project's
+  research documents in `docs/research/` for the cross-reference
+  network.  Other workstreams of this repository contain novel work
+  (most of the broader Geb categorical-foundations material) and are
+  not bound by this discipline; in those workstreams citations are
+  encouraged where applicable but not required.
 
 ## Workflow
 
