@@ -621,14 +621,29 @@ def ERMor1.simultaneousBoundedRec
     (a : ℕ)                                        -- input arity
     (h : Fin (k + 1) → ERMor1 a)                   -- bases
     (g : Fin (k + 1) → ERMor1 (a + 1 + (k + 1)))   -- steps
-    (bound : ERMor1 (a + 1)) :                     -- value bound
+    (componentBound : ERMor1 (a + 1)) :            -- bound per component
     ERMorN (a + 1) (k + 1)
 ```
 
-Interpretation (when bound dominates the iteration):
+**Bound-input contract.** `componentBound` is a bound on
+each individual component value at every iteration:
+`f_j(n, x⃗) ≤ componentBound.interp (n, x⃗)` for all `j`.
+The implementation derives the packed-state bound
+internally (by composing with the §3.1 `tuplePack`
+polynomial bound: packed state `≤ (componentBound +
+c_{k+1})^{2^{k+1}}`), so callers do NOT need to provide a
+packed-state bound. This matches the F2-fixed
+`Nat.tuplePack_le` formula and is what the level-2
+majorization in §3.4 supplies (the `A_2^2(vMax v +
+offset)` bound is on each component, not on the packed
+tuple).
+
+Interpretation (when `componentBound` dominates each
+component value at every iteration):
 
 ```text
-(simultaneousBoundedRec k a h g bound) i (n, x⃗) = f_i(n, x⃗)
+(simultaneousBoundedRec k a h g componentBound) i (n, x⃗)
+  = f_i(n, x⃗)
 ```
 
 where `f_0, …, f_k` are simultaneously defined by:
@@ -643,16 +658,34 @@ where `f_0, …, f_k` are simultaneously defined by:
    packed state into (k+1) components via `tupleAt`,
    evaluate each `g_j` on the appropriate inputs, repack
    via `tuplePack`. Single-Nat-to-single-Nat function.
-2. Apply `ERMor1.boundedRec` with the packed initial state
+2. Derive the packed-state bound from `componentBound`
+   using `Nat.tuplePack_le` (per §3.1's recurrence): if
+   each `f_j(n, x⃗) ≤ componentBound.interp (n, x⃗)`, then
+   `tuplePack (k+1) (f_0(n,x⃗), …, f_k(n,x⃗))` is bounded by
+   `(componentBound.interp (n, x⃗) + c_{k+1})^{2^{k+1}}`.
+   Express this packed-state bound in ER (closure under
+   composition + iterated multiplication; stays in ER for
+   any fixed `k`, with the bound's tower height at most
+   `componentBound`'s tower height plus 1 by Module A's
+   `tower_succ_pow_bound_strong` for `h ≥ 2`).
+3. Apply `ERMor1.boundedRec` with the packed initial state
    `tuplePack (k+1) ∘ (h_0, …, h_k)`, the packed step, and
-   a packed-state value bound (polynomial in
-   `bound`-dominated component values).
-3. The `i`-th component of the output `ERMorN` is
+   the derived packed-state bound from step 2.
+4. The `i`-th component of the output `ERMorN` is
    `tupleAt (k+1) i ∘ packed_state_at_recVar`.
 
 The packing artefacts are encapsulated inside
 `simultaneousBoundedRec`. Downstream `kToER` sees a clean
 ERMorN multi-output interface with no `3^E` coefficient.
+
+**Tower-height arithmetic.** If `componentBound` is at ER
+tower height `h_c`, the packed-state bound (derived in step 2)
+is at most height `max(h_c, 2) + 0` once `h_c ≥ 2` (per
+`tower_succ_pow_bound_strong`'s height-fixed property), so
+the whole `simultaneousBoundedRec` stays at the same tower
+height as `componentBound`. For Path 2's level-2 case where
+`componentBound = A_2^2(vMax v + offset)` (height 2), the
+output stays at height 2.
 
 #### Properties
 
@@ -756,7 +789,9 @@ Edge cases:
   ≥ c·x` for `c ≤ 2`. For `c > 2` the c-bound dominates.
 - `d = 1`: `⌈log_2 3⌉ = 2`, `r ≥ 2` gives `A_1^2(x) = 4x + 6
   ≥ c·x + 1`. ✓
-- `c = 0, d = 0`: `r = 0` works.
+- `c = 0, d = 0`: the formula gives `r = max 0 1 = 1`
+  (`A_1^1(x) = 2x + 2 ≥ 0`); `r = 0` would also be valid
+  (`A_1^0(x) = x ≥ 0`) but the formula picks `r = 1`.
 - `c = 0`: `⌈log_2 1⌉ = 0`, so `r = ⌈log_2 (d + 2)⌉ ≥ 1`
   for `d ≥ 0`. ✓
 
@@ -952,7 +987,7 @@ def kToER : ∀ {a : ℕ} (f : KMor1 a), f.level ≤ 2 → ERMor1 a
         fun j => kToER (h₀ j) (h_h₀ j)
       let steps : Fin (k + 1) → ERMor1 (a + 1 + (k + 1)) :=
         fun j => kToER (gs j) (h_gs j)
-      let r := KMor1.majorize_by_A_n_iter f h |>.choose
+      let r := KMor1.majorize_r f h
       let bound : ERMor1 (a + 1) :=
         ERMor1.comp (ERMor1.A_two_iter r)
                     ![ERMor1.maxCtxER (a + 1)]
@@ -1388,7 +1423,7 @@ For the load-bearing case (K^sim_2 → URM compilation), the
 goal of the §5 arithmetic is for the URM compiled from any
 K^sim morphism of level ≤ 2 to land in `tower 2` for its
 `stepBound`. The bound `tower 2 (linear)` is in ER directly
-(via iterated `2^x`-style ER expressions; see §1.4 and §9.4).
+(via iterated `2^x`-style ER expressions; see §1.4 and §9.2).
 The shape mirrors the bound shape that Tourlakis 2018
 §0.1.0.27 (4) and §0.1.0.43-44 use for `E^3`-runtimes (the
 `A_2`-tower bound), but the construction in our project lives
@@ -1447,11 +1482,14 @@ Plus a small set of helper named composites (`copyReg`, `addRegConst`,
 
 ### §6.2 `KSimSubroutinesURM.lean` — K^sim realizations of URM primitives
 
-Used by the URM → K^sim simulator (step 7). Mirror of §6.3,
-substituting `KMor1` for `ERMor1` and `simrec` for `boundedRec`.
-Per Appendix A.3 of `docs/lawvere-k-sim-hierarchy.md`, the K^sim
-PC-dispatch uses `switch` (Tourlakis 2018 §0.1.0.17 (6)) rather
-than `discN`; both are fixed level-1 K^sim functions.
+Used by the URM → K^sim simulator (step 9). Each entry is a
+K^sim subroutine that, given a packed register-state
+encoding, returns the encoding after one URM step under that
+primitive. Per Appendix A.3 of
+`docs/lawvere-k-sim-hierarchy.md`, the K^sim PC-dispatch
+uses `switch` (Tourlakis 2018 §0.1.0.17 (6), a fixed level-1
+K^sim function); register updates per primitive are
+level-≤-1 K^sim composites.
 
 ---
 
@@ -1851,7 +1889,7 @@ Re-exports updated in `GebLean.lean` per the project's policy.
   used by `URMConcrete.toRegisterMachine` (§4.3).
 - **`RegisterMachineNS.run`, `runFromConfig`, `runReg`** and their
   reduction lemmas — used in `URMComputes.correct` and simulator
-  interp proofs (§7.3).
+  interp proofs (§7.2).
 - **`RegisterMachineNS.ElementaryBound`** — derived from
   `URMComputes.toElementaryBound` (§4.5).
 - **`Utilities/Tower.lean`'s `tower`, `tower_zero`,
@@ -1863,8 +1901,9 @@ Re-exports updated in `GebLean.lean` per the project's policy.
   `polynomial_iter_tower_two_bound`** — `urmLoop` tower
   arithmetic (§5.3).
 - **`LawvereERPolynomialBound.lean`'s `ERMor1.PolyBound` and
-  builders** — certifying that `boundExpr f` is a genuine ER
-  expression at level ≤ 2 (§9).
+  builders** — used by Path 2 kToER for the `A_n^r` named
+  composites (§3.3) and for ER expressions internal to
+  `boundExprK e`'s K^sim construction (§9).
 - **`LawvereERPolynomialBound.lean`'s
   `ERMor1.PolyBound.log_le_towerHeight`** — bridging ER tower
   expressions to value bounds when needed.
@@ -1873,8 +1912,8 @@ Re-exports updated in `GebLean.lean` per the project's policy.
   register vectors and PCs as a single ℕ for the simulator's
   iteration state (§7.1).
 - **`Utilities/ERArith.lean`'s `pred`, `discN`, `boundedRec`** —
-  the ER simulator's per-instruction subroutines and PC
-  dispatch tree (§6.3, §7.1).
+  used by ER's runtime-bound construction (§9) and by the
+  ER side of the structural induction (§3).
 - **`LawvereKSim.lean`, `LawvereKSimInterp.lean`,
   `LawvereKSimQuot.lean`, `LawvereKSimCat.lean`** — Phase 1
   K^sim source / target infrastructure.
@@ -2160,10 +2199,10 @@ proving any of:
 - any closure property of `E^n` for any `n`.
 
 Literature references using `E^n` notation appear only in
-the citation map (§14), in motivation prose (§1.2, §5.4,
-§6.2, §9.4), and in §1.4 / §1.5 explaining the discipline
-itself. None of those references is converted into a Lean
-lemma or used as a black-box step.
+the citation map (§14), in motivation prose (§1.2, §3.4,
+§3.6, §5.4, §9), and in §1.4 / §1.5 explaining the
+discipline itself. None of those references is converted
+into a Lean lemma or used as a black-box step.
 
 Adversary obligation 1 (every E^n occurrence is non-load-
 bearing): trace each `E^n` occurrence in the document;
@@ -2192,7 +2231,7 @@ proof must not invoke 0.1.0.27's bounding lemma as a black
 box.
 
 Adversary obligation 3 (the A_n named composites are direct
-ER terms): spot-check §9.4 (erToK side) and §3.3, §3.4
+ER terms): spot-check §9.2 (erToK side) and §3.3, §3.4
 (kToER side) "stays in ER" arguments; confirm that the
 constructions of `A_one`, `A_one_iter`, `A_two_iter`, and
 the K^sim runtime bound `boundExprK e` do not rely on any
@@ -2216,9 +2255,11 @@ before any cycle proceeds.
 Claim: The k-tuple Cantor pairing (`Nat.tuplePack`,
 `ERMor1.tuplePack`) and its inverse (`Nat.tupleAt`,
 `ERMor1.tupleAt`) are in ER and have polynomial value
-bounds, with `tuplePack k v ≤ (max v + 1)^{2^k}`. For each
-fixed k, this is a polynomial of fixed degree in inputs;
-ER's `PolyBound` infrastructure certifies it.
+bounds, with `tuplePack k v ≤ (M + c_k)^{2^k}` for `M = max
+v` and explicit constants `c_k` derived by the recurrence
+`B_{k+1} ≤ (M + B_k + 2)^2` (per §3.1). For each fixed `k`,
+this is a polynomial of fixed degree in inputs; ER's
+`PolyBound` infrastructure certifies it.
 
 Adversary obligation: verify the recursive definition of
 `tuplePack` and `tupleAt` against §3.1. Confirm the
@@ -2326,8 +2367,8 @@ compilers and simulators are the consumers.
 ### §16.4 Failure-mode escalation
 
 If during a per-step cycle the adversarial review identifies an
-obstacle that revisits a prior-failure-mode hypothesis (§15.1-
-14.10), pause and re-open this master design rather than
+obstacle that revisits a prior-failure-mode hypothesis (§15.1
+through §15.16), pause and re-open this master design rather than
 attempting to patch the per-step plan. The master design's
 adversary-punch-list claims are the load-bearing assumptions of
 the project; their invalidation is a master-level event.
