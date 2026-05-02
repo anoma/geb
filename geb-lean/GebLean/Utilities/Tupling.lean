@@ -85,4 +85,22 @@ def tuplePackCoef : ℕ → ℕ
       = tupleAt k (Nat.unpair n).1 j := by
   simp [tupleAt, Fin.lastCases_castSucc]
 
+/-- Every component extracted from a packed natural is
+bounded by the packed natural itself.  Mirrors existing
+`Nat.seqAt_le` in `Utilities/SzudzikSeq.lean`; underlying
+mathlib lemmas: `Nat.unpair_left_le`,
+`Nat.unpair_right_le`. -/
+theorem tupleAt_le : ∀ (k n : ℕ) (i : Fin (k+1)),
+    tupleAt k n i ≤ n
+  | 0,     n, _ => by
+      simp [tupleAt]
+  | k + 1, n, i => by
+      refine Fin.lastCases ?_ ?_ i
+      · simp [tupleAt, Fin.lastCases_last]
+        exact Nat.unpair_right_le n
+      · intro j
+        simp [tupleAt, Fin.lastCases_castSucc]
+        exact le_trans (tupleAt_le k (Nat.unpair n).1 j)
+          (Nat.unpair_left_le n)
+
 end Nat
