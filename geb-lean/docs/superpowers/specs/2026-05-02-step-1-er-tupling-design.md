@@ -462,38 +462,60 @@ applies `lift (tuplePack k) : ERMorN (k+1) 1` first, then
 `ERMorN (k+1) (k+1)` candidate for `id (k+1)`. The other
 direction reverses.
 
+The relation is the explicit setoid relation
+`(erMorNSetoid n m).r` from `LawvereERQuot.lean:23-32`,
+written out longhand because `erMorNSetoid` is declared as a
+`def` (not an `instance`) and the rest of the codebase
+follows the same explicit-setoid convention (see
+`LawvereERQuot.lean:75, 90, 134` for representative call
+sites). This avoids `≈`/`Setoid` instance-resolution friction.
+
 ```lean
 /-- Round-trip at the ERMorN-quotient level: first packing,
 then component-wise unpacking, is extensionally equal to the
 identity at arity `(k+1)`.  Restates
-`Nat.tupleAt_tuplePack` at the morphism-quotient level.
-
-The setoid `≈` resolves to `(erMorNSetoid (k+1) (k+1)).r`
-(per `LawvereERQuot.lean:23-32`). -/
+`Nat.tupleAt_tuplePack` at the morphism-quotient level. -/
 theorem ERMorN.tupleAt_tuplePack (k : ℕ) :
-    ERMorN.comp
-      (ERMorN.lift (ERMor1.tuplePack k))
-      (ERMorN.ofVec (fun i : Fin (k+1) => ERMor1.tupleAt k i))
-      ≈ ERMorN.id (k+1)
+    (erMorNSetoid (k+1) (k+1)).r
+      (ERMorN.comp
+        (ERMorN.lift (ERMor1.tuplePack k))
+        (ERMorN.ofVec
+           (fun i : Fin (k+1) => ERMor1.tupleAt k i)))
+      (ERMorN.id (k+1))
 
 /-- Round-trip in the other direction: first component-wise
 unpacking, then packing, is extensionally equal to the
-identity at arity `1`.  Restates `Nat.tuplePack_tupleAt`.
-
-The setoid `≈` resolves to `(erMorNSetoid 1 1).r`. -/
+identity at arity `1`.  Restates `Nat.tuplePack_tupleAt`. -/
 theorem ERMorN.tuplePack_tupleAt (k : ℕ) :
-    ERMorN.comp
-      (ERMorN.ofVec (fun i : Fin (k+1) => ERMor1.tupleAt k i))
-      (ERMorN.lift (ERMor1.tuplePack k))
-      ≈ ERMorN.id 1
+    (erMorNSetoid 1 1).r
+      (ERMorN.comp
+        (ERMorN.ofVec
+           (fun i : Fin (k+1) => ERMor1.tupleAt k i))
+        (ERMorN.lift (ERMor1.tuplePack k)))
+      (ERMorN.id 1)
 ```
 
-Both lemma proofs unfold `ERMorN.comp`, `ERMorN.id`,
-`ERMorN.lift`, `ERMorN.ofVec` to functions of indices,
-unfold `ERMor1.comp.interp` via the existing
-`@[simp] ERMor1.interp_comp`, and then reduce to the
-Nat-level bijection theorems via the §4.2 interp simp
-lemmas.
+Both lemma proofs unfold `(erMorNSetoid · ·).r` to its
+defining relation `∀ ctx, f.interp ctx = g.interp ctx`
+(per `LawvereERQuot.lean:23-29`); then unfold `ERMorN.comp`,
+`ERMorN.id`, `ERMorN.lift`, `ERMorN.ofVec` to functions of
+indices, unfold `ERMor1.comp.interp` via the existing
+`@[simp] ERMor1.interp_comp`, and reduce to the Nat-level
+bijection theorems via the §4.2 interp simp lemmas. The two
+helper-interp reductions
+
+```lean
+@[simp] theorem ERMorN.lift_apply {n : ℕ} (f : ERMor1 n)
+    (i : Fin 1) :
+    ERMorN.lift f i = f := rfl
+
+@[simp] theorem ERMorN.ofVec_apply {n m : ℕ}
+    (g : Fin m → ERMor1 n) (i : Fin m) :
+    ERMorN.ofVec g i = g i := rfl
+```
+
+are added to §4.4.1's helper definitions so the proof's
+unfolding is mechanical.
 
 ## §5 Categorical iso `(k + 1) ≅ 1` (gated, best-effort)
 
@@ -527,12 +549,16 @@ mechanically ticks each box:
       uses `ERMorN.ofVec` (definitionally identity). The
       §4.4.1 helpers exist precisely to make this wrapping
       a stable named operation.
-- [ ] **G3: Iso laws via Quot.sound.** `hom_inv_id` and
-      `inv_hom_id` reduce to `Quot.sound` applied to §4.4's
-      round-trip lemmas plus standard category-theory
+- [ ] **G3: Iso laws via Quotient.sound.** `hom_inv_id` and
+      `inv_hom_id` reduce to
+      `Quotient.sound (s := erMorNSetoid · ·)` applied to
+      §4.4's round-trip lemmas plus standard category-theory
       boilerplate (`Category.id_comp`, `Category.comp_id`,
       `Functor.map_comp`, etc.); no new infrastructure is
-      required beyond the §4.4.1 helpers.
+      required beyond the §4.4.1 helpers. The codebase's
+      existing convention is the explicit-setoid form
+      `Quotient.sound (s := erMorNSetoid n m) ...`
+      (see `LawvereERQuot.lean:60, 75, 90, 134`).
 
 ### §5.3 Construction (gate-passing form)
 
@@ -544,15 +570,19 @@ product of the generator is isomorphic to the generator,
 witnessed by `ERMor1.tuplePack` and the tuple of
 `ERMor1.tupleAt`s.  Master design §3.1.  -/
 def tupleIso (k : ℕ) : (k + 1 : LawvereERCat) ≅ 1 where
-  hom        := ⟦ERMorN.lift (ERMor1.tuplePack k)⟧
-  inv        := ⟦ERMorN.ofVec
-                    (fun i : Fin (k+1) => ERMor1.tupleAt k i)⟧
+  hom        := Quotient.mk (erMorNSetoid (k+1) 1)
+                  (ERMorN.lift (ERMor1.tuplePack k))
+  inv        := Quotient.mk (erMorNSetoid 1 (k+1))
+                  (ERMorN.ofVec
+                    (fun i : Fin (k+1) => ERMor1.tupleAt k i))
   hom_inv_id := by
-    -- reduces to ERMorN.tupleAt_tuplePack via Quot.sound
-    exact Quot.sound (ERMorN.tupleAt_tuplePack k)
+    exact Quotient.sound
+      (s := erMorNSetoid (k+1) (k+1))
+      (ERMorN.tupleAt_tuplePack k)
   inv_hom_id := by
-    -- reduces to ERMorN.tuplePack_tupleAt via Quot.sound
-    exact Quot.sound (ERMorN.tuplePack_tupleAt k)
+    exact Quotient.sound
+      (s := erMorNSetoid 1 1)
+      (ERMorN.tuplePack_tupleAt k)
 
 end LawvereERCat
 ```
@@ -754,6 +784,15 @@ fallback so the implementer does not have to redesign:
    `decide`-based smoke tests are restricted to `k ≤ 2`
    accordingly; bound theorems use these as parameters and
    are not slowed by their size.
+5. **`ERMorN.lift` / `ERMorN.ofVec` implicit-argument
+   resolution.** `ERMorN.lift {n : ℕ} (f : ERMor1 n) :
+   ERMorN n 1` may need explicit `(n := k+1)` when applied
+   to `ERMor1.tuplePack k` if Lean's elaborator can pin
+   `n` from the body but not from the call-site context.
+   Similarly for `ERMorN.ofVec`'s `m` argument when applied
+   to `fun i : Fin (k+1) => ERMor1.tupleAt k i`. Fallback:
+   write `ERMorN.lift (n := k+1) (ERMor1.tuplePack k)` and
+   `ERMorN.ofVec (m := k+1) (...)` explicitly.
 
 ### §8.2 Master-design forward constraints
 
@@ -764,6 +803,20 @@ multiplicative `tuplePackCoef k * (M+1)^{2^k}` shape. Step 2's
 cycle must consume the multiplicative form; no path
 recreates the additive form. This spec records the
 constraint as a forward-looking obligation.
+
+The `tuplePackCoef k` constants grow doubly-exponentially:
+`tuplePackCoef 4 ≈ 2.3·10⁸`, `tuplePackCoef 5 ≈ 5.2·10¹⁶`.
+Step 2's `simultaneousBoundedRec_polyBound` proof will
+instantiate `tuplePackCoef k` at the K^sim-simrec's
+child-count `k` (in the `(k+1)`-tuple convention; child
+count `k+1`); for typical K^sim_2 simrec witnesses (e.g.
+`addK` at `k = 1`, giving `tuplePackCoef 1 = 9`) the literal
+is small, but level-2 simrec witnesses with 4+ children will
+produce 9-digit coefficient literals. This is not a soundness
+concern (the bound holds for any `k`), but step 2's
+documentation should surface the literal value to readers
+via a doc-comment near the polyBound builder so that error
+messages are interpretable.
 
 ### §8.3 Categorical iso deferral diagnosis (filled if §5 gate fails)
 
@@ -810,12 +863,18 @@ named-composite construct is defined before its consumer):
 
 1. `GebLean/Utilities/Tupling.lean`:
    1. `Nat.tuplePack`, `Nat.tupleAt`, `Nat.tuplePackCoef`.
-   2. `@[simp]` interp lemmas (`tuplePack_zero`,
+   2. **Mathlib name verification.** Before writing the
+      `@[simp]` recursive-case lemmas, verify the exact
+      mathlib names by `#check @Fin.lastCases_last` and
+      `#check @Fin.lastCases_castSucc`. If the names have
+      drifted in the pinned mathlib commit, update §3.2 and
+      §3.3 to match.
+   3. `@[simp]` interp lemmas (`tuplePack_zero`,
       `tuplePack_succ`, `tupleAt_zero`,
       `tupleAt_succ_last`, `tupleAt_succ_castSucc`).
-   3. `Nat.tupleAt_le`.
-   4. `Nat.tupleAt_tuplePack`, `Nat.tuplePack_tupleAt`.
-   5. `Nat.tuplePack_le`.
+   4. `Nat.tupleAt_le`.
+   5. `Nat.tupleAt_tuplePack`, `Nat.tuplePack_tupleAt`.
+   6. `Nat.tuplePack_le`.
 2. `test/utilitiesTests/TuplingTests.lean`: §6.1 (Nat-side
    smoke) and §6.2 (Nat-side boundary examples).
 3. `GebLean/Utilities/ERTupling.lean`:
