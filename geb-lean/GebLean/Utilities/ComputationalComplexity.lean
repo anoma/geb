@@ -237,7 +237,14 @@ private theorem seqPack_le_pow_aux
             h_final_pow
 
 /-- `Nat.seqPack` is bounded by `seqPackBound` when the
-components are themselves polynomially bounded. -/
+components are themselves polynomially bounded.
+
+Realizes Claim 3 from the research doc
+(`docs/research/2026-04-30-ksim-polynomial-bound-references.md`):
+the iterated pairing of polynomially-bounded components is
+polynomially bounded, with degree at most
+`(d + 5) * 4^(k+1)`.  Cites Tourlakis 2018 §0.1.0.34 and
+Damnjanovic Lemma 6.1 (2). -/
 theorem seqPack_le_seqPackBound
     (vs : List ℕ) (k d m : ℕ)
     (hlen : vs.length ≤ k + 1)
@@ -467,7 +474,12 @@ theorem tower_succ_pow_bound_strong
 the value bounded by a fixed-height tower (height 2) of a
 linear function in `(j, x, Nat.log 2 D, m)`.  The bound
 relies on `tower_succ_pow_bound_strong` to keep the tower
-height fixed across iterations. -/
+height fixed across iterations.
+
+Realizes Claim 4 from the research doc, instantiating
+Recursion Class Ch. 4 Prop. 4.7 specialized to n = 1 (the
+linear-step case yielding a polynomial; in our project's
+tower-of-2 form, height 2 absorbs the polynomial degree). -/
 theorem polynomial_iter_tower_bound
     (step : ℕ → ℕ → ℕ) (D m : ℕ)
     (h_step : ∀ v x, step v x ≤ (max v x + 1) ^ D)
@@ -554,7 +566,14 @@ factor is bounded by a power of two whose exponent is the
 relevant `log` plus one, and `X + 1 ≤ 2^X`.  Multiplying
 yields `C * X + D ≤ 2^Y` where
 `Y = X + log_2 (C+1) + log_2 (D+1) + 2`, and the outer
-two layers of `tower` exponentiation preserve the order. -/
+two layers of `tower` exponentiation preserve the order.
+
+Reflects Claim 7's tower-of-iterates absorption from the
+research doc: a tower-of-height-2 of a linear-in-`X` term
+fits inside a tower-of-height-3 of `X + log` shifts, the
+project-side analogue of Recursion Class Ch. 4 §4.4
+"composed exponentials are all elementary" applied to the
+tower-shift step. -/
 theorem tower_two_le_tower_three_linear (C D X : ℕ) :
     GebLean.tower 2 (C * X + D) ≤
       GebLean.tower 3
@@ -608,7 +627,12 @@ height-2 tower whose argument is linear in `S` plus a
 logarithmic correction in `E`.  Direct corollary of
 `tower_succ_pow_bound_strong` after rewriting
 `CC * S + KK + 2 = (CC * S + KK + 1) + 1` and using
-`self_le_tower` to show `CC * S + KK + 1 ≤ tower 2 _`. -/
+`self_le_tower` to show `CC * S + KK + 1 ≤ tower 2 _`.
+
+Realizes the polynomial-to-tower transition required by
+Claim 4 of the research doc: a degree-`E` polynomial in a
+linear function of inputs sits inside a tower-of-2 of
+height 2, with argument linear plus `log E`. -/
 theorem pow_le_tower_two_with_shift (CC S KK E : ℕ) :
     (CC * S + KK + 2) ^ E ≤
       GebLean.tower 2

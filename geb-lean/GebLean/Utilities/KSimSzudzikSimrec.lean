@@ -411,7 +411,16 @@ def kSimPackedStep {a k : ℕ}
 the tower height of the packed step term and the tower
 height of the packed base term.  The dominance argument
 is supplied at the call site (in the simrec case of
-`kToER_interp`). -/
+`kToER_interp`).
+
+Realizes Claim 4 Fix B part 2 (research doc): the explicit
+ER bound term shape `tower h_e (linear)` matching
+Recursion Class Ch. 4 Prop. 4.7's iterated bound for the
+n = 1 (linear step ⇒ polynomial output) and n = 2
+(polynomial step ⇒ tower output) cases.  The height
+parameters are the structural towerHeights of the step
+and base, supplying the analytical bound height required
+by Prop. 4.6 / Prop. 4.7 chaining. -/
 def kSimTowerBound {a k : ℕ}
     (h : Fin (k + 1) → ERMor1 a)
     (g : Fin (k + 1) → ERMor1 (a + 1 + (k + 1))) :

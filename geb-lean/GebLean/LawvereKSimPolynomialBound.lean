@@ -1824,7 +1824,17 @@ private theorem Fin.foldr_max_le {n : ℕ}
 `Nat.log 2` over `(c + k + 1)` is dominated by the
 `towerHeight` of the ER translation, with multiplicative
 slack `3 ·` and an additive `+ 1`.  Established by
-structural recursion on `f : KMor1 a` at level ≤ 1. -/
+structural recursion on `f : KMor1 a` at level ≤ 1.
+
+Realizes Wong's Recursion Class Ch. 4 Prop. 4.6
+exponent-tracking recipe (research doc Update
+2026-05-01): the inductive comp case matches Wong's
+`m + max(j(1), …, j(k))` with `+1` per `comp` wrapping;
+the simrec case routes through
+`kToER_simrec_towerHeight_ge_max_child_tH`'s
+boundedRec inductive shape.  The factor 3 is
+project-internal accounting pinned by the comp-case
+algebra under our specific `towerHeight` recursion. -/
 theorem KMor1.linearBoundLog_le_towerHeight :
     ∀ {a : ℕ} (f : KMor1 a) (h : f.level ≤ 1),
       Nat.log 2 ((KMor1.linearBound f h).1 +
@@ -2505,7 +2515,14 @@ private theorem KMor1.simrecVec_uniform_linear_bound
 /-- Polynomial bound on the `seqPack` of the (k+1)-tuple
 of `simrecVec` components at iteration `n ≤ S`, via
 `Nat.seqPack_le_seqPackBound` applied to the per-component
-linear bound. -/
+linear bound.
+
+Realizes Claim 3 (research doc, derived from
+Tourlakis 2018 §0.1.0.34 and Damnjanovic Lemma 6.1):
+iterated pairing of polynomially-bounded components yields
+a polynomially-bounded code; here at degree 1 (linear
+per-component bound from Lemma 1.A) yielding exponent
+`6 * 4^(k+1)`. -/
 private theorem KMor1.simrecVec_seqPack_le_pow
     {a k : ℕ}
     (h_fam : Fin (k + 1) → KMor1 a)
@@ -2574,7 +2591,16 @@ families consist of level-0 K^sim terms.
 The proof composes A.2 (packed-iteration matches seqPack),
 A.3 (seqPack ≤ pow), A.4 (pow ≤ tower 2), A.5.1
 (tower 2 ≤ tower 3 with log shifts), and A.5.2.2
-(stepTH + 2*baseTH + 1 dominates the log-sum). -/
+(stepTH + 2*baseTH + 1 dominates the log-sum).
+
+Realizes the level-1 instance of the chain Claim 3 +
+Claim 4 + Claim 7 from the research doc:
+- Claim 3 (Tourlakis 2018 §0.1.0.34, Damnjanovic Lem 6.1):
+  iterated pairing polynomial closure;
+- Claim 4 (Recursion Class Ch. 4 Prop. 4.7 specialized to
+  n = 1): polynomial-bounded step iterates to a polynomial;
+- Claim 7 (Tourlakis 2018 §0.1.0.27 (4)): every E^3 = ER
+  function bounded by a tower-of-2 of fixed height. -/
 private theorem kSimTowerBound_dominates_level_one
     {a k : ℕ}
     (h_fam : Fin (k + 1) → KMor1 a)
