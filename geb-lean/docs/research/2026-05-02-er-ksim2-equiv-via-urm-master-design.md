@@ -137,6 +137,14 @@ Ritchie–Cobham's URM-simulation argument (Appendix A's
 design). The two directions therefore use different
 techniques in our project, mirroring the literature exactly.
 
+(Historical note: the architectural-pivot handoff document
+recommended URM simulation in BOTH directions, claiming
+"Tourlakis's proof IS via URM simulation in both
+directions". On re-reading Tourlakis 2018 page 22, this is
+wrong: only the ⊇ direction uses URM. The ⊆ direction is
+structural with bounded recursion. Path 2's split — ⊆
+structural, ⊇ URM — is the actual literature pattern.)
+
 #### kToER side (Path 2 — Tourlakis ⊆ structural induction)
 
 What we **implement** (each as a Lean definition with a
@@ -349,9 +357,16 @@ level ≤ n (n ≤ 2), an explicit Lean-`Nat` `r` such that
 `f.interp v ≤ A_n^r (vMax v)`. Proof by structural induction:
 
 - Levels 0 and 1: reuses existing
-  `kToERDirect_linearBound_dominates_level_zero` and
-  `_level_one` (in `LawvereKSimPolynomialBound.lean`)
-  composed with `linearBound_le_A_one_iter`.
+  `KMor1.linearBound_dominates` (line 507 of
+  `LawvereKSimPolynomialBound.lean`) — the bound on
+  `f.interp v` directly, applicable to any ER realisation
+  of `f` — composed with `linearBound_le_A_one_iter`. The
+  prior `kToERDirect_linearBound_dominates_level_*`
+  theorems are equivalent under
+  `kToERDirect_interp_level_*`'s interp-preservation but
+  state the bound on `(kToERDirect f).interp` rather than
+  `f.interp`; using `KMor1.linearBound_dominates` is more
+  direct.
 - Level 2: fresh proof using `simultaneousBoundedRec`'s
   bound arithmetic.
 
@@ -749,19 +764,178 @@ Lean proof + `#guard` tests at `(c, d) ∈ {(0,0), (0,1),
 (1,0), (1,1), (2,0), (2,5)}` confirm correctness. Step 4's
 cycle finalizes the formula.
 
-#### Lean theorem statement
+#### Lean theorem statement (constructive `r`)
+
+Per the constructive discipline, the bound's `r` is split
+into an explicit `def` and a separate `theorem`:
 
 ```lean
-theorem KMor1.majorize_by_A_n_iter
-    {a : ℕ} (f : KMor1 a) (h : f.level ≤ 2) :
-  ∃ r : ℕ, ∀ v : Fin a → ℕ,
-    f.interp v ≤ (ERMor1.A_two_iter r).interp ![vMax v]
+def KMor1.majorize_r {a : ℕ} (f : KMor1 a) (h : f.level ≤ 2) : ℕ :=
+  -- bottom-up structural recursion on f
+  ...
+
+theorem KMor1.majorize_by_A_two_iter
+    {a : ℕ} (f : KMor1 a) (h : f.level ≤ 2) (v : Fin a → ℕ) :
+  f.interp v ≤
+    (ERMor1.A_two_iter (KMor1.majorize_r f h)).interp ![vMax v]
 ```
 
-(With a tighter version for `f.level ≤ 1` using A_1.)
+(With a tighter version for `f.level ≤ 1` using A_1: split
+into `KMor1.majorize_r_one` and
+`KMor1.majorize_by_A_one_iter`.)
 
-The existential is constructive: `r` is computed from f's
-structure by a Lean-level recursion. (`LawvereKSimMajorization.lean`.)
+`r` is a Lean function of `f`'s structure; no
+`Classical.choose` consumer downstream. (`LawvereKSimMajorization.lean`.)
+
+#### Prose proof of the level-2 case (the load-bearing math)
+
+This is the key arithmetic that distinguishes Path 2 from
+the failed v2-v5 attempts. The level-0 and level-1 cases
+reduce to existing `KMor1.linearBound_dominates` plus
+`linearBound_le_A_one_iter`. The level-2 case is genuinely
+new content.
+
+**Setup.** Consider `f : KMor1 a` with `f.level ≤ 2`. The
+non-trivial sub-cases are `simrec` (since `comp` and
+`raise` are passthrough at the bound level — see below).
+For a level-2 `simrec`, we have:
+
+- `f = simrec (i : Fin (k+1)) (h : Fin (k+1) → KMor1 a) (g
+  : Fin (k+1) → KMor1 (a+1+(k+1)))` with all `h_j` and
+  `g_j` at K^sim level ≤ 1.
+- `f.interp` over `(n, x⃗) : Fin (a+1) → ℕ`: defined by
+  simultaneous primitive recursion. Let `F_j(n, x⃗) :=`
+  the `j`-th simrec component evaluated at `(n, x⃗)`.
+
+**Inductive hypothesis.** For each child `h_j` and `g_j`,
+the level-1 majorization gives explicit `r_h, r_g : ℕ`
+such that:
+
+- `(h_j).interp x⃗ ≤ A_1^{r_h}(max x⃗)`.
+- `(g_j).interp (n, x⃗, F_0, ..., F_k) ≤ A_1^{r_g}(max(n,
+  max x⃗, F_0, ..., F_k))`.
+
+By taking the max over `j ∈ Fin (k+1)`, set:
+
+- `r_H := max_j r_{h,j}` so each `(h_j).interp x⃗ ≤
+  A_1^{r_H}(max x⃗)`.
+- `r_G := max_j r_{g,j}` so each `(g_j).interp ... ≤
+  A_1^{r_G}(max(n, max x⃗, F_0, ..., F_k))`.
+
+**Iteration arithmetic.** Let `M_n := max_j F_j(n, x⃗)`.
+The recursion equations give:
+
+- `M_0 = max_j (h_j).interp x⃗ ≤ A_1^{r_H}(max x⃗)`.
+- `M_{n+1} = max_j (g_j).interp (n, x⃗, F_0(n,x⃗), ...,
+  F_k(n,x⃗)) ≤ A_1^{r_G}(max(n, max x⃗, M_n))`.
+
+For `n ≥ max x⃗` (the only regime that matters; smaller
+inputs give smaller bounds), we have `max(n, max x⃗) = n`,
+so `M_{n+1} ≤ A_1^{r_G}(max(n, M_n))`.
+
+**Closed-form bound on M_n.** We show by induction on `n`:
+
+```text
+M_n ≤ A_1^{r_H + n · r_G}(max(n, max x⃗))
+```
+
+- **Base (n = 0)**: `M_0 ≤ A_1^{r_H}(max x⃗) ≤
+  A_1^{r_H}(max(0, max x⃗))`. ✓
+- **Step (n → n+1)**: by IH, `M_n ≤ A_1^{r_H + n·r_G}(max(n,
+  max x⃗))`. Since `A_1` is monotone (and `A_1^k` is
+  monotone), and `max(n, max x⃗) ≤ max(n+1, max x⃗)`:
+
+```text
+M_{n+1} ≤ A_1^{r_G}(max(n, M_n))
+       ≤ A_1^{r_G}(max(n, A_1^{r_H + n·r_G}(max(n, max x⃗))))
+       ≤ A_1^{r_G}(A_1^{r_H + n·r_G}(max(n, max x⃗)))
+       = A_1^{r_H + (n+1)·r_G}(max(n, max x⃗))
+       ≤ A_1^{r_H + (n+1)·r_G}(max(n+1, max x⃗))
+```
+
+(The third step uses `n ≤ A_1^{r_H + n·r_G}(max(n, max
+x⃗))` — true since `A_1^k(y) ≥ y` for any `k ≥ 0` —
+followed by `A_1` being monotone.) ✓
+
+**Bounding A_1^{linear_in_n} by A_2^constant.** We have
+`M_n ≤ A_1^{r_H + n·r_G}(max(n, max x⃗))`. The exponent
+`r_H + n·r_G` is linear in `n`; the input `max(n, max x⃗)`
+is linear in `n` and inputs. Use the closed-form
+`A_1^k(x) = 2^k · x + (2^{k+1} − 2)`:
+
+```text
+A_1^{r_H + n·r_G}(M)
+  = 2^{r_H + n·r_G} · M + 2^{r_H + n·r_G + 1} − 2
+  ≤ 2^{r_H + n·r_G + 1} · (M + 1)
+```
+
+For `M = max(n, max x⃗)` and `n ≤ max(n, max x⃗)`, we
+have:
+
+```text
+A_1^{r_H + n·r_G}(max(n, max x⃗))
+  ≤ 2^{r_H + (max(n, max x⃗))·r_G + 1} · (max(n, max x⃗) + 1)
+  ≤ 2^{(r_H + r_G + 2) · (max(n, max x⃗) + 1)}
+  ≤ 2^{2^{(max(n, max x⃗) + r_H + r_G + 2)}}
+  = A_2^2(max(n, max x⃗) + r_H + r_G + 2)
+```
+
+(The third step uses `(r_H + r_G + 2) · (m + 1) ≤
+2^{m + r_H + r_G + 2}` for `m = max(n, max x⃗)`, which
+holds for `m + r_H + r_G + 2 ≥ 4` — i.e. always for
+non-trivial cases — by `k · (m+1) ≤ 2^{m + log_2 k +
+small}` plus monotonicity of `2^x`.)
+
+**Substituting `n ≤ max v 0 = vMax v`.** The simrec's
+recursion variable is `v 0` (component 0 of the input
+vector), bounded by `vMax v`. So at the top:
+
+```text
+F_i(v 0, x⃗) = M_{v 0}_, i ≤ M_{v 0}
+            ≤ A_2^2(max(v 0, max x⃗) + r_H + r_G + 2)
+            ≤ A_2^2(vMax v + r_H + r_G + 2)
+```
+
+**Conclusion.** Set:
+
+```text
+r_2 := 2
+offset_2 := r_H + r_G + 2
+```
+
+Then `f.interp v = F_i(v 0, x⃗) ≤ A_2^{r_2}(vMax v +
+offset_2)`. The bound is at fixed tower height 2, with an
+explicit additive offset depending only on the children's
+majorant constants `r_H, r_G` (themselves Lean-`Nat`
+functions of `f`'s structure).
+
+**Recursive comp / raise cases.** For `comp f gs` and
+`raise f`: the bound is built bottom-up from children's
+bounds, with the height staying at 2 (or below) by Module
+A's `tower_succ_pow_bound_strong` (height-fixed for
+`h ≥ 2`). Concrete formulas: step 4's cycle.
+
+**Why this avoids the prior trap.** The key arithmetic is
+`A_1^{linear} ≤ A_2^{constant}`, NOT `polynomial-of-tower
+≤ tower`. The factor `r_H + r_G + 2` is additive in the
+offset, not multiplicative coefficient on the input. There
+is no `3^E` or `c^k` blowup; the bound's tower height
+stays at fixed 2 across all level-2 K^sim morphisms, and
+the offset accumulates additively. This is the
+mathematical reason Path 2 succeeds where the prior
+strategies failed: the iteration arithmetic over `A_1^k`
+(linear) telescopes cleanly into a single `A_2^2`
+application, whereas the prior `kSimTowerBound` shape
+inserted an extra `Nat.log 2 (3^E)` factor that couldn't
+absorb into linear-in-stepTH.
+
+**Adversarial-review obligation for step 4's cycle.** This
+prose proof must be Lean-realized as
+`KMor1.majorize_by_A_two_iter` with explicit `r_2 = 2` and
+`offset_2 = r_H + r_G + 2`. Step 4's adversarial review
+must verify the iteration arithmetic step-by-step in Lean
+and check that the boundary cases (`n = 0`, `max x⃗ = 0`)
+go through.
 
 ### §3.5 `kToER` by structural induction
 
@@ -872,7 +1046,7 @@ equality).
   §0.1.0.17 (a) compose to give Cantor in E^2).
   Lean: `ERMor1.natPair`, `natUnpairFst`, `natUnpairSnd`.
   Existing ✓. (Note: the design originally cited §0.1.0.39
-  here; that section is actually about the URM-simulating
+  here; that section is in fact about the URM-simulating
   functions in K_4 and is not what we want.)
 - **§0.1.0.43 (Ritchie–Cobham property of E^n)** — used
   for `erToK` only, via §4–§9 URM material. Not directly
@@ -923,9 +1097,7 @@ GebLean/Utilities/ERTupling.lean                     [step 1]
   ERMor1.tuplePack, ERMor1.tupleAt, PolyBound builders,
   interp lemmas; LawvereERCat.tupleIso.
 
-GebLean/Utilities/KSimTupling.lean                   [step 1]
-  KMor1.tuplePack, KMor1.tupleAt, level + interp lemmas;
-  LawvereKSimDCat.tupleIso.
+(K^sim-side tupling NOT BUILT under Path 2; see §3.1.)
 
 GebLean/Utilities/ERSimultaneousBoundedRec.lean      [step 2]
   ERMor1.simultaneousBoundedRec (multi-output);
@@ -1283,116 +1455,55 @@ than `discN`; both are fixed level-1 K^sim functions.
 
 ---
 
-## §7 The simulators
+## §7 The simulator (erToK side)
 
-### §7.1 ER simulator for URM
+Under Path 2, only one simulator direction is built: URM →
+K^sim, used by `erToK` per Tourlakis 0.1.0.43-44 ⊇. The
+URM → ER simulator from the Path-1 design is no longer
+built (kToER goes K^sim → ER directly via §3).
 
-```lean
-def simulateInER (P : URMProgram) : ERMorN (1 + P.numRegs) P.numRegs :=
-  fun outReg =>
-    -- pack initial state, iterate erDispatch P over the time bound,
-    -- unpack and project the output register
-    extractReg outReg ∘ stateBoundedRec ∘ packInitialState
-  where
-    stateBoundedRec :=
-      ERMor1.boundedRec (encode_initial_state)
-                        (erDispatch P)
-                        (state_value_bound)
-```
+### §7.1 K^sim simulator for URM
 
-Where `extractReg outReg`, `packInitialState`, `state_value_bound`
-are auxiliary ER expressions:
+Per Appendix A.3 of `docs/lawvere-k-sim-hierarchy.md`. For
+each URM `P`, build a K^sim term `simulateInKSim P :
+KSimMorN (1 + P.numRegs) P.numRegs` that, given a time
+bound and initial register values, yields the register
+values after that many URM steps. Implementation: K^sim
+`simrec` over time, with PC-dispatch via `switch` (Tourlakis
+§0.1.0.17 (6), a fixed K^sim_1 function), and per-
+instruction K^sim subroutines from §6.2 catalogue.
 
-- `packInitialState : ERMor1 (1 + numRegs)` packs the initial PC =
-  0 plus the input register vector into a single Szudzik code.
-- `erDispatch P : ERMor1 1` (in ambient context) maps the packed
-  state to its successor under one URM step.
-- `state_value_bound : ERMor1 (1 + numRegs)` gives a polynomial-
-  in-(time-and-max-input) bound on the packed state encoding,
-  controlling `boundedRec`. Concrete shape: each register's
-  value at iteration `i` is at most `max_initial + i` (one URM
-  step changes any register by at most ±1). The packed Szudzik
-  encoding of `(PC, regs)` is bounded by the product
-  `(P.instrs.length + 1) · ∏ (max_initial + time + 1)`, which
-  is polynomial in `(max_initial + time)`. This polynomial is
-  expressed in ER as iterated multiplication; bounded by
-  `Nat.seqPackBound`-style reasoning from Module A.
-- `extractReg outReg : ERMor1 1` decodes the final state and
-  projects the requested register.
+The K^sim simulator's level is ≤ 2: the simrec is at level
+2 (children at level ≤ 1), the per-instruction step is at
+level ≤ 1 (uses `switch` which is level 1 plus level-0
+register updates), and PC-dispatch via `switch`-tree
+composes level-1 functions.
 
-The Szudzik packing of register-vector iteration state happens
-inside the ER expression; at the API surface (`ERMorN`),
-projection is by `Fin` selection.
-
-**Multi-output independence.** Each component of the
-`ERMorN` simulator is an independent `ERMor1` expression
-(`(simulateInER P) i` for each `i : Fin P.numRegs` is its own
-ER term); they share no computation. This is fine for
-correctness — each component's interpretation independently
-agrees with the URM's `runReg` at register `i`. It does mean
-the ERMorN's syntactic size is `O(numRegs)` times an
-underlying simulator size; this is a syntactic concern, not a
-runtime/semantic concern. Optimizations sharing the
-`stateBoundedRec` across outputs are possible but not needed
-for correctness; they would not affect the URM-runtime bound
-that closes the equivalence.
-
-**State-value-bound correctness.** The `boundedRec` requires
-that the iteration state never exceeds `state_value_bound`.
-For a URM iteration starting from `encode_initial_state` and
-applying `erDispatch P` `time` times, each step changes at
-most one register by ±1 and the PC by O(1); the state at
-iteration `i` is therefore bounded by `state_value_bound v`
-for any `i ≤ time`. This is a step-by-step monotonicity
-argument; proof obligation lives at step 3's cycle.
-
-### §7.2 K^sim simulator for URM
-
-Mirror of §7.1 with `simrec` in place of `boundedRec` and
-`switch`-tree in place of `discN`-tree. Per Appendix A.3 of
-`docs/lawvere-k-sim-hierarchy.md`.
-
-### §7.3 Simulator interp-preservation
+### §7.2 Simulator interp-preservation
 
 ```lean
-theorem simulateInER_interp
+theorem simulateInKSim_interp
     (P : URMProgram)
     (outReg : Fin P.numRegs)
     (timeBound : ℕ) (regs : Fin P.numRegs → ℕ) :
-  ((simulateInER P) outReg).interp (timeBound, regs)
+  ((simulateInKSim P) outReg).interp (timeBound, regs)
     = runReg P.toRegisterMachine regs timeBound outReg
 ```
 
-Proof outline: by induction on `timeBound`, with the inductive
-step using `runReg_succ` (existing in `RegisterMachine.lean`)
-plus the per-instruction interp lemmas (one per URM primitive,
-in `ERSubroutinesURM.lean`). Mirror `simulateInKSim_interp`.
+Proof: by induction on `timeBound`, with the inductive step
+using `runReg_succ` (existing in `RegisterMachine.lean`)
+plus the per-instruction interp lemmas (one per URM
+primitive, in §6.2 `KSimSubroutinesURM.lean`).
 
 ---
 
-## §8 The compilers
+## §8 The compiler (erToK side)
 
-### §8.1 K^sim_2 → URM compiler
+Under Path 2, only one compiler direction is built: ER →
+URM. The Path-1 K^sim → URM compiler is no longer built
+(kToER goes K^sim → ER directly via §3).
 
-```lean
-def compileKSim : ∀ {a : ℕ} (f : KMor1 a), f.level ≤ 2 → URMProgram
-  | _, .zero,        _ => urmSubrKZero  ...
-  | _, .succ,        _ => urmSubrKSucc
-  | _, .proj i,      _ => urmSubrKProj i
-  | _, .comp f gs,   h => urmSubrKComp (compileKSim f h_f)
-                                       (fun i => compileKSim (gs i) h_gs)
-  | _, .simrec ...,  h => urmSubrKSimrec
-                            (fun j => compileKSim (h_base j) h_h)
-                            (fun j => compileKSim (g_step j) h_g)
-                            i
-  | _, .raise f,     h => urmSubrKRaise (compileKSim f h')
-```
-
-One-line per constructor: each line invokes a catalogue entry or
-combinator from §6.2. The `compileKSim` function's type is
-mechanically derived; all real work is in the catalogue.
-
-### §8.2 ER → URM compiler
+### §8.1 ER → URM compiler
 
 ```lean
 def compileER : ∀ {a : ℕ}, ERMor1 a → URMProgram
@@ -1405,182 +1516,143 @@ def compileER : ∀ {a : ℕ}, ERMor1 a → URMProgram
   | _, .bprod f   => urmSubrBprod (compileER f)
 ```
 
-Mirror.
+One-line per ER constructor; each line invokes a catalogue
+entry or combinator from §6.1.
 
-### §8.3 Compiler interp-preservation
+### §8.2 Compiler interp-preservation
 
 ```lean
-theorem compileKSim_URMComputes
-    {a : ℕ} (f : KMor1 a) (h : f.level ≤ 2) :
-  (compileKSim f h).URMComputes_for f.interp
+theorem compileER_URMComputes
+    {a : ℕ} (e : ERMor1 a) :
+  (compileER e).URMComputes_for e.interp
 ```
 
 The aggregate `URMComputes` instance is built by structural
-recursion: each constructor case applies the catalogue entry's
-`URMComputes` and the relevant composition combinator's
-`URMComputes`. By the design of §4.4 and §5, this is mechanical;
-no global dominance argument needed.
+recursion on `e`: each ER constructor case applies the
+catalogue entry's `URMComputes` and the relevant composition
+combinator's `URMComputes`. By the design of §4.4 and §5,
+this is mechanical; no global dominance argument needed.
 
 ---
 
-## §9 The runtime-bound function
+## §9 The runtime-bound function (erToK side)
 
-### §9.1 Per-`f` `boundExpr`
+Under Path 2, the runtime bound is needed only for the
+`erToK` direction (where the URM compiled from an ER term
+runs in K^sim_2 time, per Ritchie–Cobham). The Path-1
+`boundExpr f : ERMor1 a` (bounding K^sim_2 → URM runtime in
+ER) is no longer built — kToER goes K^sim → ER directly via
+§3 with `A_n^r` bounds, no URM compilation step.
 
-For each `f : KMor1 a` with `f.level ≤ 2`, define
-`boundExpr f : ERMor1 a` as a tower-elementary ER expression
-satisfying `(compileKSim f h).URMComputes.stepBound v ≤
-boundExpr f.interp v` for all `v`.
+### §9.1 `boundExprK e : KMor1 a` for the erToK URM runtime
 
-The shape: `boundExpr f := tower (h_f) (max_input + offset_f)`,
-constructed in ER as iterated `2^x` composed with an additive
-shift; `max_input` is built from `bsum`-of-projections
-expressing `Fin.foldr max 0`. Both `h_f` and `offset_f` are
-Lean `Nat`-valued functions of `f`'s structure, computed
-bottom-up.
+For each `e : ERMor1 a`, construct
+`boundExprK e : KMor1 a` of level ≤ 2 satisfying
+`(compileER e).URMComputes.stepBound v ≤
+(boundExprK e).interp v` for all `v`.
 
-The tight target is `h_f ≤ 2` for every `f.level ≤ 2`, with
-the precise arithmetic per K^sim constructor:
+Shape: `tower h_e (vMax v + offset_e)` constructed in K^sim
+using `2^x ∈ K^sim_2` per Tourlakis §0.1.0.17 (c). Both
+`h_e` and `offset_e` are Lean `Nat`-valued functions of
+`e`'s structure, computed bottom-up. The tight target is
+`h_e ≤ 2` for every ER term `e`.
 
-- **Atoms** (`zero`, `succ`, `proj`): `h_f = 0`,
-  `offset_f = small const`.
-- **`comp` over atoms**: `h_f = 0`, offset shift sums to a
-  small constant per Module A's sum-of-tower-0 bound.
-- **`simrec` of level-1 over atoms / level-1**: `h_f = 2`,
-  `offset_f = log-shift` per `polynomial_iter_tower_bound`
-  (which lands at `tower 2` for polynomial-step iteration over
-  linear initial).
-- **`comp` once at height 2**: `h_f = 2` stays (no bump),
-  offset shift is logarithmic per
-  `tower_succ_pow_bound_strong`.
-- **Nested `simrec` at level 2** (body at level ≤ 1, hence
-  `h ≤ 2`): `h_f = 2` stays, offset shift is logarithmic per
-  `tower_succ_pow_bound_strong`.
-- **`raise f`**: `h_f` passthrough, `offset_f` passthrough.
+Per-ER-constructor arithmetic (concrete formulas in step 9's
+cycle):
 
-Concrete formulas: step 5's cycle. Tight bound 2 across all
-K^sim_2 morphisms by Module A's height-fixed lemma. The
-result matches our target: every URM compiled from a K^sim_2
-term has `stepBound` bounded by a `tower 2 (linear)` ER
-expression. The `tower 2 (linear)` shape is the same shape
-the literature labels `A_2^k`-bounded (Tourlakis 2018
-§0.1.0.27 (4)); we construct it directly in `ERMor1` (see
-§1.4 and §9.4) without invoking the literature's
-characterization in the Grzegorczyk hierarchy.
+- **Atoms** (`zero`, `succ`, `proj`, `sub`): `h_e = 0`,
+  small constant offset.
+- **`comp f gs`**: tower-height arithmetic of children;
+  combined via Module A's `tower_succ_pow_bound_strong`.
+- **`bsum f`** and **`bprod f`**: per Module A's
+  `polynomial_iter_tower_bound`, the iteration produces
+  `tower 2`-bounded values; `h_e` rises to 2 (and stays
+  there for nested invocations).
 
-### §9.2 Mirror `boundExprK e : KMor1 a`
-
-For each `e : ERMor1 a`, construct `boundExprK e : KMor1 a` of
-level ≤ 2 in K^sim using `2^x ∈ K^sim_2` per Tourlakis 2018
-§0.1.0.17 (c). Mirror arithmetic on tower height per ER
-constructor.
-
-### §9.3 Reuse of existing infrastructure
+Reuse of existing infrastructure:
 
 - `Utilities/ComputationalComplexity.lean`: `tower`,
-  `tower_succ_pow_bound` (sequential composition tower-jump),
-  `polynomial_iter_tower_bound` (loop-induced bound landing in
-  `tower 2`), `tower_succ_pow_bound_strong` (height-fixed
-  variant for `h ≥ 2`).
-- `LawvereERPolynomialBound.lean`: `ERMor1.PolyBound`,
-  `log_le_towerHeight`, per-constructor builders. Used to
-  certify that the constructed `boundExpr f` is genuinely an ER
-  expression at the correct level.
+  `tower_succ_pow_bound` (sequential composition tower-
+  jump), `polynomial_iter_tower_bound` (loop-induced bound
+  landing in `tower 2`), `tower_succ_pow_bound_strong`
+  (height-fixed variant for `h ≥ 2`).
+- K^sim already has `2^x ∈ K^sim_2` per Tourlakis
+  §0.1.0.17 (c); the Lean realisation is a named composite
+  built from `succ`/`proj`/`simrec` plus the linear
+  arithmetic at level 1.
 
-### §9.4 Why `boundExpr f` is in ER (direct construction)
+### §9.2 Why `boundExprK e` is in K^sim_2
 
-For `f : KMor1 a` with `f.level ≤ 2`, the §9.1 arithmetic
-gives `h_f ≤ f.level + small_const` (each comp/simrec/raise
-adds at most a constant to `h_f`, and the K^sim term tree
-has depth bounded by `f.level`). For `f.level ≤ 2`, this
-means `h_f ≤ 2 + small_const`.
+The arithmetic `tower h_e (vMax v + offset_e)` for `h_e ≤
+2` is constructed directly in K^sim using:
 
-`boundExpr f := tower h_f (vMax v + offset_f)` is constructed
-directly in `ERMor1`:
+- `vMax v` via iterated `max` (a level-1 K^sim function).
+- `2^x` via simrec (level 2 in K^sim per Tourlakis 0.1.0.17
+  (c)). Iterating up to height 2 stays at level 2 by closure
+  of K^sim under composition (which is level-preserving by
+  K^sim's grading rule for non-simrec compositions).
+- The additive shift is comp with succ, level 0.
 
-- `vMax v` is the iterated maximum of inputs, expressed in
-  ER as a chain of `discN`-based pairwise maxima. Linear
-  growth in inputs.
-- `tower h x` (height ≤ 2) is constructed in ER by iterated
-  `2^x`. The base step `2^x` is the ER expression
-  `bsum (proj 0 ↦ ∏_{i < x} 2)` (or an equivalent named
-  composite), which is in `ERMor1` directly via `bprod` of
-  the constant `2`. Iterating up to height 2 stays in ER by
-  closure under `comp`. Concretely, the named composites for
-  `tower 0`, `tower 1`, `tower 2` live in `Utilities/ERArith.lean`
-  (or a small extension) and each carries its `interp` lemma.
-- The additive shift is `comp` with `succ`-iterated, also in
-  ER directly.
-
-No invocation of the Grzegorczyk-hierarchy `E^3 = ER`
-equivalence; the construction is a direct `ERMor1` term.
-
-The `ERMor1.PolyBound` infrastructure from
-`LawvereERPolynomialBound.lean` is the Lean-side encoding of
-"this `ERMor1` term has tower-shape value bound": it
-certifies, per constructor, that the `boundExpr f` term
-lives at the correct ER level. Step 5's cycle shows the
-per-constructor `boundExpr` cases are all in ER's named-
-composite catalogue.
+The construction is direct (no Grzegorczyk-hierarchy
+intermediates).
 
 ---
 
 ## §10 The functors and interp-preservation
 
-### §10.1 `kToER`
+### §10.1 `kToER` (Path 2 — see §3.5)
+
+`kToER : KMor1 a → KMor1.level f ≤ 2 → ERMor1 a` is defined
+in §3.5 by structural induction on K^sim, using
+`simultaneousBoundedRec` plus the `A_n^r` majorant from
+§3.4. `kToER_interp`, `kToERN`, `kToERN_interp`,
+`kToERFunctor : LawvereKSimDCat 2 ⥤ LawvereERCat` and the
+functor laws live in `LawvereKSimER.lean` (step 5's cycle
+output). Refer to §3.5 for the full Path 2 specification.
+
+### §10.2 `erToK` (URM-simulation side)
+
+`erToK : ERMor1 a → KMor1 a` of level ≤ 2 is built by
+composing §8 (ER → URM compiler), §7 (URM → K^sim
+simulator), and §9 (K^sim runtime bound):
 
 ```lean
-def kToER {a : ℕ} (f : KMor1 a) (h : f.level ≤ 2) : ERMor1 a :=
-  let P := compileKSim f h
-  let sim := simulateInER P
-  -- wire: time = boundExpr f.interp; inputs = projections;
-  -- working / output regs = zeros; project final outReg.
-  ERMor1.comp (sim P.outputReg)
-              (boundExpr f, projections, zero-padding)
+def erToK {a : ℕ} (e : ERMor1 a) : KMor1 a :=
+  let P := compileER e
+  let sim := simulateInKSim P
+  -- wire: time = boundExprK e; inputs = projections;
+  -- working / output regs = zeros; project final outputReg.
+  KMor1.comp (sim P.outputReg)
+             (boundExprK e, projections, zero-padding)
 ```
 
-Multi-output `kToERN : KMorN a m → KMorN.level f ≤ 2 → ERMorN a m`
-is pointwise.
+with level ≤ 2 by composition of K^sim_2 components.
 
-### §10.2 `kToER_interp`
+### §10.3 `erToK_interp`
 
 ```lean
-theorem kToER_interp
-    {a : ℕ} (f : KMor1 a) (h : f.level ≤ 2) (v : Fin a → ℕ) :
-  (kToER f h).interp v = f.interp v
+theorem erToK_interp
+    {a : ℕ} (e : ERMor1 a) (v : Fin a → ℕ) :
+  (erToK e).interp v = e.interp v
 ```
 
-Proof outline:
+Proof: by composing `simulateInKSim_interp` (§7.2) and
+`compileER_URMComputes` (§8.2), with the runtime bound
+`boundExprK e` ≥ `compileER e`'s `stepBound` (§9.1) ensuring
+the simulator's truncation does not fire.
 
-1. By `simulateInER_interp` (§7.3), `(simulateInER P)` at the
-   right output register applied to `(t, regs)` returns
-   `runReg P.toRegisterMachine regs t outReg`.
-2. By `compileKSim_URMComputes` (§8.3), `compileKSim f h` has
-   `URMComputes.stepBound` ≤ some elementary function, and
-   `runReg ... = f.interp v` once `t ≥ stepBound v`.
-3. By construction, the `time` argument fed to the simulator is
-   `boundExpr f.interp v ≥ stepBound v` (the runtime-bound
-   theorem from step 5).
-4. Combine: `(kToER f h).interp v
-   = runReg ... (boundExpr f.interp v) outReg = f.interp v`.
+### §10.4 Functor lifts
 
-### §10.3 Functor lift
+`kToERFunctor : LawvereKSimDCat 2 ⥤ LawvereERCat`: per §3.5.
 
-`kToERFunctor : LawvereKSimDCat 2 ⥤ LawvereERCat`:
+`erToKFunctor : LawvereERCat ⥤ LawvereKSimDCat 2`:
 
-- `obj n := n` (identity on objects: both categories have ℕ as
-  arities).
-- `map ⟦f, h⟧ := ⟦kToER f h⟧` — well-defined on quotient classes
-  by `kToER_interp`: extensionally equal K^sim representatives
-  produce extensionally equal ER outputs.
-- Functor laws (`map_id`, `map_comp`) — proven by `kToER_interp`
-  combined with the categorical interpretation lemmas
-  (`LawvereKSimDCat`'s `id_eq` and `comp_eq` reduce to interpretation
-  identities).
-
-### §10.4 `erToK` mirror
-
-Symmetric construction; symmetric statements; symmetric proofs.
+- `obj n := n` (identity on objects).
+- `map ⟦e⟧ := ⟦erToK e, level_proof⟧` — well-defined on
+  quotient classes by `erToK_interp` (extensional
+  equality propagates through the URM-simulation chain).
+- Functor laws via `erToK_interp` plus the morphism-
+  quotient setup.
 
 ---
 
@@ -1595,8 +1667,9 @@ theorem erToKFunctor_kToERFunctor :
   erToKFunctor ⋙ kToERFunctor = 𝟭 LawvereERCat
 ```
 
-Both hold strictly (functor equality, not natural isomorphism)
-because:
+Both hold as propositional functor equalities (Lean
+`Functor.ext`-witnessed via `Quotient.sound` from
+interp-equality, not as definitional `rfl`) because:
 
 1. `obj` fields agree: all four functors are identity on objects
    (both categories have ℕ as objects, and our functors use
@@ -1680,9 +1753,7 @@ GebLean/Utilities/ERTupling.lean                     [step 1]
   ERMor1.tuplePack, ERMor1.tupleAt; PolyBound builders;
   interp lemmas; LawvereERCat.tupleIso.
 
-GebLean/Utilities/KSimTupling.lean                   [step 1]
-  KMor1.tuplePack, KMor1.tupleAt; level + interp lemmas;
-  LawvereKSimDCat.tupleIso.
+(K^sim-side tupling NOT BUILT under Path 2; see §3.1.)
 
 GebLean/Utilities/ERSimultaneousBoundedRec.lean      [step 2]
   ERMor1.simultaneousBoundedRec (multi-output ER bounded
@@ -1751,7 +1822,7 @@ Module dependency graph:
 ```text
 kToER side:
   Tupling ─→ ERTupling ─→ ERSimultaneousBoundedRec ─┐
-       └──→ KSimTupling ─────────────────────────────┤
+       (KSimTupling not built — see §3.1)
                                                      ├─→ LawvereKSimER
        ERAckermann ─→ LawvereKSimMajorization ──────┘
                             ↑
