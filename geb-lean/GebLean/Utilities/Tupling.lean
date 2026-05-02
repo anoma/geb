@@ -103,4 +103,43 @@ theorem tupleAt_le : ∀ (k n : ℕ) (i : Fin (k+1)),
         exact le_trans (tupleAt_le k (Nat.unpair n).1 j)
           (Nat.unpair_left_le n)
 
+/-- Round-trip: extracting component `i` from a packed
+tuple returns the original component.  Realizes Tourlakis
+2018 §0.1.0.34, p. 14's
+`Π^k_i [[z_1,…,z_k]]^{(k)} = z_i`. -/
+theorem tupleAt_tuplePack :
+    ∀ (k : ℕ) (v : Fin (k+1) → ℕ) (i : Fin (k+1)),
+      tupleAt k (tuplePack k v) i = v i
+  | 0,     v, i => by
+      simp [tupleAt_zero]
+      exact congrArg v (Subsingleton.elim _ i)
+  | k + 1, v, i => by
+      refine Fin.lastCases ?_ ?_ i
+      · simp [tuplePack_succ, tupleAt_succ_last,
+              Nat.unpair_pair]
+      · intro j
+        simp [tuplePack_succ, tupleAt_succ_castSucc,
+              Nat.unpair_pair]
+        exact tupleAt_tuplePack k (Fin.init v) j
+
+/-- Round-trip: packing the components extracted from a
+packed natural returns the original natural. -/
+theorem tuplePack_tupleAt :
+    ∀ (k n : ℕ),
+      tuplePack k (tupleAt k n) = n
+  | 0,     n => by
+      simp [tuplePack_zero, tupleAt_zero]
+  | k + 1, n => by
+      simp [tuplePack_succ, tupleAt_succ_last]
+      have h_init :
+          Fin.init (tupleAt (k+1) n)
+            = tupleAt k (Nat.unpair n).1 := by
+        funext j
+        show tupleAt (k+1) n j.castSucc
+          = tupleAt k (Nat.unpair n).1 j
+        exact tupleAt_succ_castSucc k n j
+      rw [h_init]
+      rw [tuplePack_tupleAt k (Nat.unpair n).1]
+      exact Nat.pair_unpair n
+
 end Nat
