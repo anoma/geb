@@ -59,7 +59,7 @@ constructed as one-line `match` over source-language constructors
 or URM instructions; runtime-bound bookkeeping via a
 `URMComputes` structure carrying a Lean step-bound function plus
 a tower-witness; functor liftings; strict categorical
-isomorphism `LawvereERCat ≅ KSimCat 2` packaged as a mathlib
+isomorphism `LawvereERCat ≅ LawvereKSimDCat 2` packaged as a mathlib
 `Equivalence`.
 
 ---
@@ -127,7 +127,7 @@ is constructed in ER as iterated `2^x` per Tourlakis 2018
 `kToER : KMor1 a → KMor1.level f ≤ 2 → ERMor1 a` defined as
 `simulateInER (compileKSim f) (boundExpr f, project_inputs, zeros)`
 followed by output-register projection. Multi-output `kToERN`,
-quotient-lift to `kToERFunctor : KSimCat 2 ⥤ LawvereERCat`,
+quotient-lift to `kToERFunctor : LawvereKSimDCat 2 ⥤ LawvereERCat`,
 interp-preservation `kToER_interp`, functor laws.
 
 ### Step 7 — K^sim_2 simulator for URM (`KSimSubroutinesURM.lean`)
@@ -158,11 +158,11 @@ Mirror of step 5. For each `e : ERMor1 a`, construct
 
 Mirror of step 6. `erToK : ERMor1 a → KMor1 a` of level ≤ 2,
 multi-output `erToKN`, `erToKFunctor : LawvereERCat ⥤
-KSimCat 2`, `erToK_interp`, functor laws.
+LawvereKSimDCat 2`, `erToK_interp`, functor laws.
 
 ### Step 11 — Categorical isomorphism (`LawvereERKSimEquivalence.lean`)
 
-Strict equality `kToERFunctor ⋙ erToKFunctor = 𝟭 (KSimCat 2)` and
+Strict equality `kToERFunctor ⋙ erToKFunctor = 𝟭 (LawvereKSimDCat 2)` and
 `erToKFunctor ⋙ kToERFunctor = 𝟭 LawvereERCat`. Each holds
 because both functors preserve interpretation pointwise, the
 morphism categories are quotients by extensional-equality of
@@ -224,10 +224,20 @@ Semantics on PC and register vector:
 |---|---|---|
 | `zeroReg i` | `pc + 1` | `regs[i] := 0` |
 | `incReg i` | `pc + 1` | `regs[i] := regs[i] + 1` |
-| `decReg i` | `pc + 1` | `regs[i] := regs[i] ∸ 1` (truncated subtraction) |
+| `decReg i` | `pc + 1` | `regs[i] := regs[i] ∸ 1` (truncated) |
 | `condJump i t` | `t` if `regs[i] = 0`, else `pc + 1` | unchanged |
 | `gotoInstr t` | `t` | unchanged |
 | `stop` | `pc` (self-loop) | unchanged |
+
+**Note on `condJump` shape.** Tourlakis's literal notation is
+two-target: `if V_i = 0 goto m else goto m'`. Our `condJump i
+t` is one-target: jump to `t` on zero, fall through to `pc + 1`
+otherwise. Tourlakis's two-target form is recovered by a named
+composite `condJumpTwoTarget i t1 t2 := condJump i t1;
+gotoInstr t2`, which is the first entry of the helper-named-
+composite catalogue. Expressively identical; the simplification
+reduces the simulator's per-instruction case arity by one
+branch.
 
 ### §3.2 `URMProgram`
 
@@ -287,6 +297,13 @@ Where `initialRegsFrom v initRegs : Fin P.numRegs → ℕ` places `v`
 at the indices listed by `initRegs` and 0 elsewhere; `vMax v` is
 `Fin.foldr max 0 v` (zero on empty input).
 
+`initRegs` is required to be injective: the URM's input
+register-slots are distinct. The compiler ensures this by
+allocating fresh register indices for each input. The
+injectivity hypothesis is carried as a separate field of
+`URMComputes` (or as a precondition on the structure's
+constructor); concrete encoding to be settled at step 2.
+
 The fields' meanings:
 
 - `stepBound` — Lean `Nat`-valued function expressing the URM's
@@ -336,31 +353,31 @@ Existing downstream uses of `ElementaryBound` in
 ## §4 Composition combinators in URM
 
 Each combinator takes one or more `URMComputes` instances and
-produces a `URMComputes` instance for the combined program. Both
-the `stepBound` arithmetic and the tower-witness arithmetic are
-spelled out per combinator.
+produces a `URMComputes` instance for the combined program. The
+`stepBound` arithmetic is concrete Lean `Nat` arithmetic
+(sum / max / iterated sum). The tower-witness arithmetic is
+derived from existing Module A lemmas
+(`Utilities/ComputationalComplexity.lean`); the design names
+the lemmas to apply but defers the precise `(towerHeight,
+towerOffset)` formulas to step 2's cycle.
 
 ### §4.1 Sequential composition `urmSeq`
 
 `urmSeq P Q rmap : URMProgram`: run `P` first, then `Q` with
 `Q`'s registers remapped via `rmap` (so `Q` sees `P`'s output
-registers as its inputs). Defined by appending instruction lists
-with PC-shift on `Q`'s `condJump` and `gotoInstr` targets.
+registers as its inputs). Defined by appending instruction
+lists with PC-shift on `Q`'s `condJump` and `gotoInstr` targets.
 
 `URMComputes` arithmetic:
 
 - `stepBound (P;Q) v = stepBound P v + stepBound Q v'`
-  where `v'` is `Q`'s input wired from `P`'s output on `v`
-- `towerHeight (P;Q) = max(towerHeight P, towerHeight Q) + 1`
-- `towerOffset (P;Q) = towerOffset P + towerOffset Q + small_const`
-- `towerDominates (P;Q)` proven by `tower_succ_pow_bound` from
-  `Utilities/ComputationalComplexity.lean`.
-
-The `+1` in the `towerHeight` arithmetic absorbs the additive
-combination of two tower-bounded functions: if
-`f₁ ≤ tower h (x + a)` and `f₂ ≤ tower h (x + b)`, then
-`f₁ + f₂ ≤ tower (h+1) (x + a + b)` for sufficiently large
-inputs. (Per `tower_succ_pow_bound`.)
+  where `v'` is `Q`'s input wired from `P`'s output on `v`.
+- Tower witness derived using `tower_succ_pow_bound` (or
+  `tower_succ_pow_bound_strong` for the `h ≥ 2` case) from
+  `Utilities/ComputationalComplexity.lean`. Concrete formula:
+  step 2's cycle. Sum-of-two-tower-bounded functions stays at
+  the same height with a linear offset shift when both heights
+  are ≥ 1, and bumps height by 1 when starting from height 0.
 
 ### §4.2 Conditional composition `urmIf`
 
@@ -370,10 +387,11 @@ Defined via `condJump` on the test register.
 
 `URMComputes` arithmetic:
 
-- `stepBound (urmIf c P Q) v = max(stepBound P v, stepBound Q v) + small_const`
-- `towerHeight = max(towerHeight P, towerHeight Q)` (no level
-  jump; conditional is additive at the same tower level)
-- `towerOffset = max(towerOffset P, towerOffset Q) + small_const`
+- `stepBound (urmIf c P Q) v
+   = max(stepBound P v, stepBound Q v) + O(1)`.
+- Tower witness: `towerHeight = max(towerHeight P, towerHeight
+  Q)`; offset increases by a small constant. No height jump
+  (max at same level absorbs `O(1)` additive overhead).
 
 ### §4.3 Bounded loop `urmLoop`
 
@@ -397,29 +415,26 @@ L+1:
 - `stepBound (urmLoop c P) v
    = sum_{i < c_v} stepBound_P (state_i) + O(c_v)`
   where `c_v` is `regs[c]` as a function of `v` and `state_i`
-  is the register vector at iteration `i`
-- `towerHeight (urmLoop c P) = towerHeight P + 1`
-- `towerOffset (urmLoop c P) = towerOffset P + small_const`
-- `towerDominates` proven by `polynomial_iter_tower_two_bound`
-  from `Utilities/ComputationalComplexity.lean`. The `+1` in
-  `towerHeight` corresponds to multiplicative composition under
-  the loop: an `O(input)` repetition of an `E^n` body produces
-  an `E^{n+1}`-bounded total, exactly matching Tourlakis's
-  hierarchy increment per simrec / loop nesting.
+  is the register vector at iteration `i`.
+- Tower witness derived using `polynomial_iter_tower_bound`
+  from `Utilities/ComputationalComplexity.lean`, which states:
+  iterating a polynomially-bounded step over a linearly-bounded
+  initial value `j` times stays bounded by `tower 2 (linear of
+  inputs)`. Concrete formula: step 2's cycle. The
+  height-jump-per-loop-nesting matches the level grading of
+  Tourlakis's hierarchy: each simrec / loop layer contributes
+  at most one step in the tower, and the K^sim_2 case (two
+  nested loops over polynomial bodies) lands in `tower 2`.
 
-### §4.4 Composition arithmetic table
+### §4.4 Composition arithmetic summary
 
-| Combinator | `stepBound` arithmetic | `towerHeight` jump |
-|---|---|---|
-| `urmSeq` | sum | +1 (additive absorption) |
-| `urmIf` | max + const | 0 (max at same level) |
-| `urmLoop` | iterated sum | +1 (multiplicative absorption) |
-
-These are the three patterns. The catalogue entries (§5) compose
-their `URMComputes` proofs by repeated application of these three
-combinators; the design doc fixes the arithmetic so per-cycle
-work focuses on populating the catalogue, not re-deriving
-domination.
+For the load-bearing case (K^sim_2 → URM compilation), the
+goal of the §4 arithmetic is for the URM compiled from any
+K^sim morphism of level ≤ 2 to land in `tower 2` for its
+`stepBound`. This matches Tourlakis 2018 §0.1.0.27 (4) and
+§0.1.0.43-44, which characterize E^3 functions by their
+`A_2`-bounded URM runtimes. Step 2's cycle proves that the
+combinator arithmetic carries the bound through.
 
 ---
 
@@ -442,13 +457,13 @@ Used by the ER → URM compiler (step 8).
 | `ERMor1.succ` | `urmSubrSucc` | `1` | `0` |
 | `ERMor1.proj i` | `urmSubrProj i` | `v[i] + 1` (copy) | `0` |
 | `ERMor1.sub` | `urmSubrSub` | `v[1] + 1` (dec loop) | `0` |
-| `ERMor1.comp f gs` | `urmSubrComp` (comb.) | sum over subs | from subs |
-| `ERMor1.bsum f` | `urmSubrBsum` (comb.) | iterated sum | `+1` |
-| `ERMor1.bprod f` | `urmSubrBprod` (comb.) | iterated sum + mult | `+1` |
+| `ERMor1.comp f gs` | `urmSubrComp` (comb.) | sum over subs | per §4.1 |
+| `ERMor1.bsum f` | `urmSubrBsum` (comb.) | iter sum | per §4.3 |
+| `ERMor1.bprod f` | `urmSubrBprod` (comb.) | iter sum + mult | per §4.3 |
 
-(`tH` abbreviates `towerHeight`; "from subs" means the value
-is computed from the sub-subroutines' tower heights via the
-combinator's arithmetic in §4.)
+(`tH` abbreviates `towerHeight`. Combinator entries delegate
+their tower-height arithmetic to the corresponding §4
+combinator; concrete formulas land in step 2's cycle.)
 
 Plus a small set of helper named composites (`copyReg`, `addRegConst`,
 `zeroReg-via-decrement-loop` if `decReg` is used in place of
@@ -463,15 +478,17 @@ Used by the K^sim → URM compiler (step 4).
 | `KMor1.zero` | `urmSubrKZero` | `1` | `0` |
 | `KMor1.succ` | `urmSubrKSucc` | `1` | `0` |
 | `KMor1.proj i` | `urmSubrKProj i` | `v[i] + 1` | `0` |
-| `KMor1.comp f gs` | `urmSubrKComp` (comb.) | sum over subs | from subs |
-| `KMor1.simrec _ _ i` | `urmSubrKSimrec` (comb.) | iterated sum | `+1` |
+| `KMor1.comp f gs` | `urmSubrKComp` (comb.) | sum over subs | per §4.1 |
+| `KMor1.simrec _ _ i` | `urmSubrKSimrec` (comb.) | iter sum | per §4.3 |
 | `KMor1.raise f` | `urmSubrKRaise` (comb.) | passthrough | same as f |
 
 The level grading of the source K^sim term controls the
-`towerHeight` of the compiled URM: a level-2 K^sim term produces
-a URM whose total `stepBound`'s tower height is at most 2 + small
-constant. This is Meyer-Ritchie hierarchy reflection inside our
-Lean development.
+`towerHeight` of the compiled URM: every K^sim term of level
+≤ 2 produces a URM whose total `stepBound` is bounded by
+`tower 2 (linear inputs)` (per Module A's
+`polynomial_iter_tower_bound` and `tower_succ_pow_bound_strong`,
+which together stabilize the height at 2 once reached). This
+matches `K^sim_2 = E^3` exactly.
 
 ### §5.3 `ERSubroutinesURM.lean` — ER realizations of URM primitives
 
@@ -537,13 +554,42 @@ are auxiliary ER expressions:
   state to its successor under one URM step.
 - `state_value_bound : ERMor1 (1 + numRegs)` gives a polynomial-
   in-(time-and-max-input) bound on the packed state encoding,
-  controlling `boundedRec`.
+  controlling `boundedRec`. Concrete shape: each register's
+  value at iteration `i` is at most `max_initial + i` (one URM
+  step changes any register by at most ±1). The packed Szudzik
+  encoding of `(PC, regs)` is bounded by the product
+  `(P.instrs.length + 1) · ∏ (max_initial + time + 1)`, which
+  is polynomial in `(max_initial + time)`. This polynomial is
+  expressed in ER as iterated multiplication; bounded by
+  `Nat.seqPackBound`-style reasoning from Module A.
 - `extractReg outReg : ERMor1 1` decodes the final state and
   projects the requested register.
 
 The Szudzik packing of register-vector iteration state happens
 inside the ER expression; at the API surface (`ERMorN`),
 projection is by `Fin` selection.
+
+**Multi-output independence.** Each component of the
+`ERMorN` simulator is an independent `ERMor1` expression
+(`(simulateInER P) i` for each `i : Fin P.numRegs` is its own
+ER term); they share no computation. This is fine for
+correctness — each component's interpretation independently
+agrees with the URM's `runReg` at register `i`. It does mean
+the ERMorN's syntactic size is `O(numRegs)` times an
+underlying simulator size; this is a syntactic concern, not a
+runtime/semantic concern. Optimizations sharing the
+`stateBoundedRec` across outputs are possible but not needed
+for correctness; they would not affect the URM-runtime bound
+that closes the equivalence.
+
+**State-value-bound correctness.** The `boundedRec` requires
+that the iteration state never exceeds `state_value_bound`.
+For a URM iteration starting from `encode_initial_state` and
+applying `erDispatch P` `time` times, each step changes at
+most one register by ±1 and the PC by O(1); the state at
+iteration `i` is therefore bounded by `state_value_bound v`
+for any `i ≤ time`. This is a step-by-step monotonicity
+argument; proof obligation lives at step 3's cycle.
 
 ### §6.2 K^sim simulator for URM
 
@@ -633,18 +679,36 @@ boundExpr f.interp v` for all `v`.
 
 The shape: `boundExpr f := tower (h_f) (max_input + offset_f)`,
 constructed in ER as iterated `2^x` composed with an additive
-shift; `max_input` is built from `bsum`-of-projections expressing
-`Fin.foldr max 0`. Both `h_f` and `offset_f` are Lean `Nat`-
-valued functions of `f`'s structure, computed bottom-up:
+shift; `max_input` is built from `bsum`-of-projections
+expressing `Fin.foldr max 0`. Both `h_f` and `offset_f` are
+Lean `Nat`-valued functions of `f`'s structure, computed
+bottom-up.
 
-| K^sim constructor | `h_f` increment | `offset_f` arithmetic |
-|---|---|---|
-| `KMor1.zero`, `succ`, `proj` | 0 | small const |
-| `KMor1.comp f gs` | `max (h_f, sup h_gs) + 1` | sum |
-| `KMor1.simrec ...` | `max (h_base, h_step) + 1` | sum + small const |
-| `KMor1.raise f` | `h_f` (passthrough) | `offset_f + 1` |
+The tight target is `h_f ≤ 2` for every `f.level ≤ 2`, with
+the precise arithmetic per K^sim constructor:
 
-(Concrete arithmetic refined in step 5's cycle.)
+- **Atoms** (`zero`, `succ`, `proj`): `h_f = 0`,
+  `offset_f = small const`.
+- **`comp` over atoms**: `h_f = 0`, offset shift sums to a
+  small constant per Module A's sum-of-tower-0 bound.
+- **`simrec` of level-1 over atoms / level-1**: `h_f = 2`,
+  `offset_f = log-shift` per `polynomial_iter_tower_bound`
+  (which lands at `tower 2` for polynomial-step iteration over
+  linear initial).
+- **`comp` once at height 2**: `h_f = 2` stays (no bump),
+  offset shift is logarithmic per
+  `tower_succ_pow_bound_strong`.
+- **Nested `simrec` at level 2** (body at level ≤ 1, hence
+  `h ≤ 2`): `h_f = 2` stays, offset shift is logarithmic per
+  `tower_succ_pow_bound_strong`.
+- **`raise f`**: `h_f` passthrough, `offset_f` passthrough.
+
+Concrete formulas: step 5's cycle. Tight bound 2 across all
+K^sim_2 morphisms per Tourlakis 2018 §0.1.0.27 (4) and the
+Module A height-fixed lemma. This matches the categorical
+fact `K^sim_2 = E^3` exactly: every URM compiled from a
+K^sim_2 term has `stepBound` bounded by an E^3 expression
+(`tower 2 (linear)`).
 
 ### §8.2 Mirror `boundExprK e : KMor1 a`
 
@@ -657,11 +721,35 @@ constructor.
 
 - `Utilities/ComputationalComplexity.lean`: `tower`,
   `tower_succ_pow_bound` (sequential composition tower-jump),
-  `polynomial_iter_tower_two_bound` (loop-induced tower-jump).
+  `polynomial_iter_tower_bound` (loop-induced bound landing in
+  `tower 2`), `tower_succ_pow_bound_strong` (height-fixed
+  variant for `h ≥ 2`).
 - `LawvereERPolynomialBound.lean`: `ERMor1.PolyBound`,
   `log_le_towerHeight`, per-constructor builders. Used to
   certify that the constructed `boundExpr f` is genuinely an ER
   expression at the correct level.
+
+### §8.4 Why `boundExpr f` stays in ER
+
+For `f : KMor1 a` with `f.level ≤ 2`, the §8.1 arithmetic
+gives `h_f ≤ f.level + small_const` (each comp/simrec/raise
+adds at most a constant to `h_f`, and the K^sim term tree has
+depth bounded by `f.level`). For `f.level ≤ 2`, this means
+`h_f ≤ 2 + small_const`.
+
+`tower h_f (linear in inputs)` for `h_f` bounded is in E^3 by
+Tourlakis 2018 §0.1.0.27 (4), which characterizes E^3
+functions as bounded by `A_2^k`-towers (tower height ≤ 2 plus
+constant). Hence `boundExpr f` is in E^3 = ER, expressed as a
+finite composition of `2^x` (which is in E^3 per Tourlakis
+2018 §0.1.0.17 (c)) with linear-input shifts.
+
+The `ERMor1.PolyBound` infrastructure from
+`LawvereERPolynomialBound.lean` is the Lean-side encoding of
+this fact: it certifies, per constructor, that the
+`boundExpr f` term lives at the correct ER level. Step 5's
+cycle shows the per-constructor `boundExpr` cases are all in
+ER's named-composite catalogue.
 
 ---
 
@@ -706,7 +794,7 @@ Proof outline:
 
 ### §9.3 Functor lift
 
-`kToERFunctor : KSimCat 2 ⥤ LawvereERCat`:
+`kToERFunctor : LawvereKSimDCat 2 ⥤ LawvereERCat`:
 
 - `obj n := n` (identity on objects: both categories have ℕ as
   arities).
@@ -715,7 +803,7 @@ Proof outline:
   produce extensionally equal ER outputs.
 - Functor laws (`map_id`, `map_comp`) — proven by `kToER_interp`
   combined with the categorical interpretation lemmas
-  (`KSimCat`'s `id_eq` and `comp_eq` reduce to interpretation
+  (`LawvereKSimDCat`'s `id_eq` and `comp_eq` reduce to interpretation
   identities).
 
 ### §9.4 `erToK` mirror
@@ -730,7 +818,7 @@ Symmetric construction; symmetric statements; symmetric proofs.
 
 ```lean
 theorem kToERFunctor_erToKFunctor :
-  kToERFunctor ⋙ erToKFunctor = 𝟭 (KSimCat 2)
+  kToERFunctor ⋙ erToKFunctor = 𝟭 (LawvereKSimDCat 2)
 theorem erToKFunctor_kToERFunctor :
   erToKFunctor ⋙ kToERFunctor = 𝟭 LawvereERCat
 ```
@@ -755,7 +843,7 @@ direction plus quotient-class-equality from interp-equality.
 ### §10.2 Equivalence wrapper
 
 ```lean
-def lawvereERCatEquivKSimCat2 : LawvereERCat ≌ KSimCat 2 :=
+def lawvereERCatEquivKSimCat2 : LawvereERCat ≌ LawvereKSimDCat 2 :=
   -- via mathlib `equivOfIso` (or equivalent constructor)
   -- with the strict functor equalities lifted to nat isos
   -- via `eqToIso`.
@@ -771,7 +859,7 @@ def lawvereERCatEquivKSimCat2 : LawvereERCat ≌ KSimCat 2 :=
 
 The strict iso (functor-equality round-trip) gives strictly more
 structural information than the bare equivalence. Anything proved
-for `KSimCat 2` morphisms (e.g. categorical limits, products,
+for `LawvereKSimDCat 2` morphisms (e.g. categorical limits, products,
 structural lemmas) transports along the iso without natural-
 transformation-coherence overhead.
 
@@ -1047,7 +1135,7 @@ constraints on the children's specific structure.
 
 ### §14.5 Is the categorical iso of step 11 strict, not natural?
 
-Claim: `kToERFunctor ⋙ erToKFunctor = 𝟭 (KSimCat 2)` holds
+Claim: `kToERFunctor ⋙ erToKFunctor = 𝟭 (LawvereKSimDCat 2)` holds
 strictly (functor equality), not merely up to natural
 isomorphism. The argument relies on:
 (a) both functors being identity on objects;
