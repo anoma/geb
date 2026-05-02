@@ -150,13 +150,19 @@ Lean correctness theorem, in steps 1–5 of §2):
     tuple.
   - `ERMor1.tuplePack`, `ERMor1.tupleAt` named composites in
     ER, with interp lemmas + `PolyBound` builders.
-  - `KMor1.tuplePack`, `KMor1.tupleAt` named composites in
-    K^sim, with interp + level lemmas.
-  - Categorical iso `(n+1) ≅ 1` in `LawvereERCat` and
-    `LawvereKSimDCat 2`, exhibiting that the Lawvere theory's
-    products of the generator collapse to the generator (and
-    so our free Lawvere theory has no more computational
-    content than the standard non-categorical ER).
+  - **K^sim-side tuplePack/tupleAt is not needed for Path 2's
+    load-bearing chain** and is omitted from this design.
+    Reason: K^sim_2's simrec children must be at level ≤ 1;
+    a Cantor-pair projection in K^sim requires bounded search
+    (or its equivalent) whose simrec step would itself need
+    `mul ∈ K^sim_2` as a step-function, pushing the term to
+    level 3. The categorical iso `(n+1) ≅ 1` is decorative
+    rather than load-bearing for `kToER`/`erToK`; the
+    `simultaneousBoundedRec` in step 2 needs only ER-side
+    tuplePack/tupleAt.
+  - Categorical iso `(n+1) ≅ 1` in `LawvereERCat` only
+    (decorative, witnessing that ER-side products collapse
+    via Cantor pairing in the morphism quotient).
 - Simultaneous bounded recursion in ER (step 2):
   - `ERMor1.simultaneousBoundedRec` — multi-output ER
     bounded recursion at the ERMorN level. Implementation
@@ -290,16 +296,20 @@ proposal.
 
 ### Steps 1–5 — kToER side (Tourlakis ⊆ structural induction)
 
-#### Step 1 — Foundational tupling infrastructure
+#### Step 1 — Foundational tupling infrastructure (ER side only)
 
 `Nat.tuplePack`, `Nat.tupleAt`, pack-unpack bijection,
 polynomial value bound (`Utilities/Tupling.lean`).
 `ERMor1.tuplePack`, `ERMor1.tupleAt`, `PolyBound` builders,
-interp lemmas (`Utilities/ERTupling.lean`).
-`KMor1.tuplePack`, `KMor1.tupleAt`, level + interp lemmas
-(`Utilities/KSimTupling.lean`). Categorical iso `(n+1) ≅ 1`
-in `LawvereERCat` and `LawvereKSimDCat 2` exhibiting the
-collapse of generator-products to the generator.
+interp lemmas (`Utilities/ERTupling.lean`). Categorical iso
+`(n+1) ≅ 1` in `LawvereERCat` (decorative).
+
+K^sim-side tuplePack/tupleAt is omitted: K^sim_2 simrec
+children must be at level ≤ 1, but a Cantor-pair projection
+in K^sim requires step-functions involving `mul ∈ K^sim_2`,
+pushing the simrec to level 3. The `simultaneousBoundedRec`
+in step 2 needs only ER-side tupling; K^sim's native
+multi-output `simrec` constructor handles K^sim's side.
 
 #### Step 2 — Simultaneous bounded recursion in ER
 
@@ -513,8 +523,19 @@ Foundational layer (Lean Nat-level — `Utilities/Tupling.lean`):
 - `Nat.tupleAt_tuplePack` and `Nat.tuplePack_tupleAt`:
   pack-unpack bijection theorems.
 - `Nat.tuplePack_le`: polynomial value bound on packed
-  tuple, `tuplePack k v ≤ (max v + 1)^{2^k}` (or similar
-  conservative form).
+  tuple. The `Nat.pair x y ≤ (x + y + 1)^2` bound iterates
+  through right-fold-pair to give the recurrence
+  `B_1 = M`, `B_{k+1} ≤ (M + B_k + 2)^2` where `M = max v`.
+  The closed-form bound is `tuplePack k v ≤ (M + c_k)^{2^k}`
+  for explicit constants `c_k` computed by the recurrence
+  (`c_1 = 0`, `c_{k+1} = O(c_k)` summed to a small fixed
+  total per k). Step 1's cycle derives the precise `c_k`
+  formula and the corresponding `PolyBound` builder. The
+  asymptotic shape `(M + O(1))^{2^k}` is fixed-degree
+  polynomial in M for each fixed k; the additive
+  contribution from intermediate `pair` invocations is
+  what makes the formula `(M + c_k)^{2^k}` rather than
+  `(M+1)^{2^k}`.
 
 ER layer (`Utilities/ERTupling.lean`):
 
@@ -529,27 +550,39 @@ ER layer (`Utilities/ERTupling.lean`):
 - Round-trip lemmas at the interp level and at the
   ERMorN-quotient level.
 
-K^sim layer (`Utilities/KSimTupling.lean`):
+K^sim layer (NOT BUILT under Path 2):
 
-- `KMor1.tuplePack (k : ℕ) : KMor1 k`. Interp matches
-  `Nat.tuplePack k`. K^sim has Cantor pairing per Tourlakis
-  §0.1.0.17 (b) (`λxy.xy ∈ K^sim_2`); iterated tuplePack
-  stays at level ≤ 2.
-- `KMor1.tupleAt (k : ℕ) (i : Fin k) : KMor1 1`.
-- Interp + level + round-trip lemmas.
+K^sim-side tuplePack/tupleAt would require K^sim's simrec
+to have step-functions at level ≤ 1, but the natural
+construction of Cantor unpair (e.g. `λz. μx ≤ z. ∃y ≤ z.
+J(x,y) = z`) is a bounded search whose body involves
+`λxy.xy ∈ K^sim_2`. Per K^sim's level grading (Tourlakis
+§0.1.0.7), simrec children must be at level ≤ 1, so a
+level-2 simrec cannot have a `mul`-using step. Therefore
+`KMor1.tupleAt` cannot be constructed at K^sim level ≤ 2 by
+the obvious approach.
+
+Path 2 does not need K^sim-side tuplePack/tupleAt for the
+load-bearing chain. The simrec case of `kToER` translates
+each K^sim simrec into ER directly using
+`ERMor1.simultaneousBoundedRec` (step 2), which only needs
+ER-side tuplePack/tupleAt. K^sim's native multi-output
+`simrec` constructor handles the K^sim side natively.
 
 Categorical packaging:
 
 - `LawvereERCat.tupleIso (n : ℕ) : (n + 1) ≅ 1` in
-  `LawvereERCat`.
-- `LawvereKSimDCat.tupleIso (n : ℕ) : (n + 1) ≅ 1` in
-  `LawvereKSimDCat 2`.
+  `LawvereERCat` (decorative, witnessing that ER-side
+  products of the generator collapse via Cantor pairing in
+  the morphism quotient). Useful for cleanly stating
+  multi-output ER translations as single-output ones.
+- The K^sim-side analogue is **not** built (see above).
 
 Properties:
 
-- Pack and unpack carry polynomial value bounds (in the
-  inputs); composing with k-tuple pack produces an ER
-  expression whose value bound is polynomial of fixed
+- ER-side pack and unpack carry polynomial value bounds
+  (in the inputs); composing with k-tuple pack produces an
+  ER expression whose value bound is polynomial of fixed
   degree depending on k (not on inputs).
 
 ### §3.2 Simultaneous bounded recursion in ER
@@ -689,13 +722,32 @@ existential is constructive.
 
 ```lean
 theorem linearBound_le_A_one_iter (c d : ℕ) :
-  let r := max ⌈log_2 (c + 1)⌉ ⌈log_2 (d / 2 + 1)⌉
+  let r := max ⌈log_2 (c + 1)⌉ (⌈log_2 (d + 2)⌉)
   ∀ x, c * x + d ≤ (ERMor1.A_one_iter r).interp ![x]
 ```
 
-Choose `r` such that `2^r ≥ c` and `2^{r+1} − 2 ≥ d`, then
-`A_1^r(x) = 2^r · x + (2^{r+1} − 2) ≥ c · x + d`. One Lean
-proof; reused at every level-0 / level-1 invocation.
+We need `A_1^r(x) = 2^r · x + (2^{r+1} − 2) ≥ c · x + d`,
+i.e. `2^r ≥ c` and `2^{r+1} − 2 ≥ d`, i.e. `2^{r+1} ≥ d + 2`.
+
+- `2^r ≥ c` ⇐ `r ≥ ⌈log_2 (c + 1)⌉` (with `c = 0` trivial).
+- `2^{r+1} ≥ d + 2` ⇐ `r + 1 ≥ ⌈log_2 (d + 2)⌉`, i.e.
+  `r ≥ ⌈log_2 (d + 2)⌉ − 1`. Conservatively take
+  `r ≥ ⌈log_2 (d + 2)⌉` (one bit of slack; correct at all
+  edge cases including `d = 0, 1, 2`).
+
+Edge cases:
+
+- `d = 0`: `⌈log_2 2⌉ = 1`, `r ≥ 1` gives `A_1^1(x) = 2x + 2
+  ≥ c·x` for `c ≤ 2`. For `c > 2` the c-bound dominates.
+- `d = 1`: `⌈log_2 3⌉ = 2`, `r ≥ 2` gives `A_1^2(x) = 4x + 6
+  ≥ c·x + 1`. ✓
+- `c = 0, d = 0`: `r = 0` works.
+- `c = 0`: `⌈log_2 1⌉ = 0`, so `r = ⌈log_2 (d + 2)⌉ ≥ 1`
+  for `d ≥ 0`. ✓
+
+Lean proof + `#guard` tests at `(c, d) ∈ {(0,0), (0,1),
+(1,0), (1,1), (2,0), (2,5)}` confirm correctness. Step 4's
+cycle finalizes the formula.
 
 #### Lean theorem statement
 
@@ -814,8 +866,14 @@ equality).
 - **§0.1.0.35 (E^{n+1} closed under simultaneous bounded
   recursion)** — `ERMor1.simultaneousBoundedRec`. Build,
   §3.2, step 2.
-- **§0.1.0.39 (Cantor pairing in E^2)** — `ERMor1.natPair`,
-  `natUnpairFst`, `natUnpairSnd`. Existing ✓.
+- **§0.1.0.34 (proof, p. 13) and §0.1.0.17 (b)** —
+  Cantor pairing `J = λxy. (x+y)^2 + x` in E^2 (mul ∈ K^sim_2
+  per §0.1.0.17 (b) and `λxy. x+y` ∈ K^sim_1 per
+  §0.1.0.17 (a) compose to give Cantor in E^2).
+  Lean: `ERMor1.natPair`, `natUnpairFst`, `natUnpairSnd`.
+  Existing ✓. (Note: the design originally cited §0.1.0.39
+  here; that section is actually about the URM-simulating
+  functions in K_4 and is not what we want.)
 - **§0.1.0.43 (Ritchie–Cobham property of E^n)** — used
   for `erToK` only, via §4–§9 URM material. Not directly
   realized as a Lean theorem.
@@ -1168,14 +1226,30 @@ arithmetic carries the bound through.
 
 ---
 
-## §6 The four catalogues
+## §6 The two catalogues (erToK side)
+
+Under Path 2, the URM material is needed only for the
+`erToK` direction (which compiles ER → URM, then simulates
+URM in K^sim). Two catalogues are needed:
+
+- §6.1 `URMSubroutinesER.lean` — URM subroutines emulating
+  each ERMor1 constructor; used by the ER → URM compiler.
+- §6.2 `KSimSubroutinesURM.lean` — K^sim subroutines
+  emulating each URM primitive; used by the URM → K^sim
+  simulator.
+
+The earlier Path-1 design also catalogued URM subroutines
+emulating K^sim atoms (used by a K^sim → URM compiler) and
+ER subroutines emulating URM primitives (used by a URM → ER
+simulator). Path 2 does not use either compiler or simulator
+direction (kToER goes K^sim → ER directly via structural
+induction in §3), so those two catalogues are not built.
 
 Each catalogue is a Lean module exporting a list of named
 program / term entries, each with its `URMComputes` (or
-`ERSimulatorRealizes` / `KSimSimulatorRealizes`) lemma. Compilers
-and simulators are then literal `match` expressions referencing
-catalogue entries. The catalogues partition by translation
-direction.
+`KSimSimulatorRealizes`) lemma. The compiler and simulator
+are then literal `match` expressions referencing catalogue
+entries.
 
 ### §6.1 `URMSubroutinesER.lean` — URM realizations of ER atoms
 
@@ -1199,58 +1273,7 @@ Plus a small set of helper named composites (`copyReg`, `addRegConst`,
 `zeroReg-via-decrement-loop` if `decReg` is used in place of
 `zeroReg` for some purpose; `mvRegToReg`).
 
-### §6.2 `URMSubroutinesKSim.lean` — URM realizations of K^sim atoms
-
-Used by the K^sim → URM compiler (step 4).
-
-| K^sim constructor | URM subroutine | `stepBound` | `tH` |
-|---|---|---|---|
-| `KMor1.zero` | `urmSubrKZero` | `1` | `0` |
-| `KMor1.succ` | `urmSubrKSucc` | `1` | `0` |
-| `KMor1.proj i` | `urmSubrKProj i` | `v[i] + 1` | `0` |
-| `KMor1.comp f gs` | `urmSubrKComp` (comb.) | sum over subs | per §5.1 |
-| `KMor1.simrec _ _ i` | `urmSubrKSimrec` (comb.) | iter sum | per §5.3 |
-| `KMor1.raise f` | `urmSubrKRaise` (comb.) | passthrough | same as f |
-
-The level grading of the source K^sim term controls the
-`towerHeight` of the compiled URM: every K^sim term of level
-≤ 2 produces a URM whose total `stepBound` is bounded by
-`tower 2 (linear inputs)` (per Module A's
-`polynomial_iter_tower_bound` and `tower_succ_pow_bound_strong`,
-which together stabilize the height at 2 once reached). The
-`tower 2 (linear)` bound is itself in ER (constructed
-directly from `ERMor1.bsum`/`bprod`-based exponentiation; see
-§9.4).
-
-### §6.3 `ERSubroutinesURM.lean` — ER realizations of URM primitives
-
-Used by the URM → ER simulator (step 3).
-
-Each entry is an ER subroutine that, given a packed
-register-state encoding, returns the encoding after one URM
-step under that primitive. PC and register components are
-unpacked, updated, and re-packed by the subroutine.
-
-- **`erInstrZeroReg i`** (for `zeroReg i`) — set the `i`-th
-  register component to 0; advance PC by 1.
-- **`erInstrIncReg i`** (for `incReg i`) — increment the
-  `i`-th register component; advance PC by 1.
-- **`erInstrDecReg i`** (for `decReg i`) — truncated decrement
-  on the `i`-th register component; advance PC by 1.
-- **`erInstrCondJump i t`** (for `condJump i t`) — registers
-  unchanged; PC := `t` if `regs[i] = 0`, else PC := `pc + 1`.
-- **`erInstrGoto t`** (for `gotoInstr t`) — registers
-  unchanged; PC := `t`.
-- **`erInstrStop`** (for `stop`) — identity on the full state.
-
-Plus a per-URM **dispatch combinator** `erDispatch P : ERMor1 a`
-that performs PC-conditioned selection over `P.instrs.length + 1`
-branches via a `discN`-tree, returning the corresponding
-per-instruction subroutine's effect on the state. The simulator's
-step is `erDispatch P` applied at each iteration of `boundedRec`
-over time.
-
-### §6.4 `KSimSubroutinesURM.lean` — K^sim realizations of URM primitives
+### §6.2 `KSimSubroutinesURM.lean` — K^sim realizations of URM primitives
 
 Used by the URM → K^sim simulator (step 7). Mirror of §6.3,
 substituting `KMor1` for `ERMor1` and `simrec` for `boundedRec`.
@@ -1830,7 +1853,9 @@ proof step depends on the ER ↔ E^n equivalence.
 - **§0.1.0.27** (esp. clauses (1)–(4)) — Bounding Lemma for E^n.
 - **§0.1.0.34** — E^2 closed under bounded recursion; Cantor
   pairing in E^2.
-- **§0.1.0.39** — Cantor pairing in E^2 (continued).
+- **§0.1.0.39** — URM-simulating functions in K_4
+  (corollary to §0.1.0.37). Not directly used by the design;
+  noted here for completeness.
 - **proof of §0.1.0.43, pp. 19-21** — Loop-to-URM translation
   with worked examples (`λx.x`, `λx.x+1`, `λxy.x·y`,
   Loop-to-URM template, bounded-recursion URM template).
