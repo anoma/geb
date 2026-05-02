@@ -58,4 +58,31 @@ def tuplePackCoef : ℕ → ℕ
   | 0     => 1
   | k + 1 => (tuplePackCoef k + 2)^2
 
+@[simp] theorem tuplePack_zero (v : Fin 1 → ℕ) :
+    tuplePack 0 v = v 0 := rfl
+
+@[simp] theorem tuplePack_succ (k : ℕ)
+    (v : Fin (k+2) → ℕ) :
+    tuplePack (k+1) v
+      = Nat.pair (tuplePack k (Fin.init v))
+          (v (Fin.last (k+1))) := rfl
+
+@[simp] theorem tupleAt_zero (n : ℕ) (i : Fin 1) :
+    tupleAt 0 n i = n := rfl
+
+/-- `tupleAt` reduction at the last index: peels one
+`Nat.unpair` step on the right. -/
+@[simp] theorem tupleAt_succ_last (k n : ℕ) :
+    tupleAt (k+1) n (Fin.last (k+1))
+      = (Nat.unpair n).2 := by
+  simp [tupleAt, Fin.lastCases_last]
+
+/-- `tupleAt` reduction at a non-last index: peels one
+`Nat.unpair` step on the left and recurses at depth `k`. -/
+@[simp] theorem tupleAt_succ_castSucc (k n : ℕ)
+    (j : Fin (k+1)) :
+    tupleAt (k+1) n j.castSucc
+      = tupleAt k (Nat.unpair n).1 j := by
+  simp [tupleAt, Fin.lastCases_castSucc]
+
 end Nat
