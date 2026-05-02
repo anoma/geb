@@ -990,7 +990,13 @@ def kToER : ∀ {a : ℕ} (f : KMor1 a), f.level ≤ 2 → ERMor1 a
       let r := KMor1.majorize_r f h
       let bound : ERMor1 (a + 1) :=
         ERMor1.comp (ERMor1.A_two_iter r)
-                    ![ERMor1.maxCtxER (a + 1)]
+                    ![ERMor1.sumCtxER (a + 1)]
+                    -- `sumCtxER` dominates `maxCtx`
+                    -- pointwise; using it gives a slightly
+                    -- looser but valid bound. Step 5's
+                    -- cycle may build a tighter
+                    -- `ERMor1.maxCtxER` named composite if
+                    -- desired.
       ERMor1.simultaneousBoundedRec k a bases steps bound i
   | _, .raise f,             h => kToER f h_f
 ```
@@ -1898,7 +1904,7 @@ Re-exports updated in `GebLean.lean` per the project's policy.
 - **`Utilities/ComputationalComplexity.lean`'s
   `tower_succ_pow_bound`** — `urmSeq` tower arithmetic (§5.1).
 - **`Utilities/ComputationalComplexity.lean`'s
-  `polynomial_iter_tower_two_bound`** — `urmLoop` tower
+  `polynomial_iter_tower_bound`** — `urmLoop` tower
   arithmetic (§5.3).
 - **`LawvereERPolynomialBound.lean`'s `ERMor1.PolyBound` and
   builders** — used by Path 2 kToER for the `A_n^r` named
