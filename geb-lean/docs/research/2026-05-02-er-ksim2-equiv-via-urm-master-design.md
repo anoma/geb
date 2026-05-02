@@ -33,14 +33,20 @@ absorption inequalities involving a `3^E` coefficient field).
 
 ### §1.2 Why the strategy was misaligned with the literature
 
-The published proofs of `K^sim_n = E^{n+1}` (n ≥ 2) do not
-construct an ER expression that bounds the K^sim function's value
-pointwise. They route through register-machine simulation:
-Tourlakis 2018 §0.1.0.44 reduces to §0.1.0.43 (Ritchie–Cobham
-Property of E^n) and §0.1.0.15 (`K^sim_n = L_n`). Ritchie–Cobham
-states that `f ∈ E^n` iff `f` is computable on some URM in time
-bounded by an `E^n` function. The bound is on URM *runtime*, not
-on the function's *value*.
+The published proofs of the elementary-recursive ↔ K^sim
+equivalence (notation: Tourlakis 2018 §0.1.0.44,
+`K^sim_n = E^{n+1}` for n ≥ 2; the `E^{n+1}` here is the
+Grzegorczyk-hierarchy notation that the literature uses
+interchangeably with our `ERMor1` formalization at n+1 = 3 —
+see §1.4) do not construct an ER expression that bounds the
+K^sim function's value pointwise. They route through
+register-machine simulation: Tourlakis's §0.1.0.44 reduces
+to §0.1.0.43 (Ritchie–Cobham property) and §0.1.0.15
+(`K^sim_n = L_n`). Ritchie–Cobham, in our project's
+terminology, states that a function is in ER iff it is
+computable on some URM with runtime bounded by an ER
+expression. The bound is on URM *runtime*, not on the
+function's *value*.
 
 The asymmetry of the project's prior strategy is also visible:
 the `erToK` direction had been designed via URM simulation per
@@ -61,6 +67,51 @@ or URM instructions; runtime-bound bookkeeping via a
 a tower-witness; functor liftings; strict categorical
 isomorphism `LawvereERCat ≅ LawvereKSimDCat 2` packaged as a mathlib
 `Equivalence`.
+
+### §1.4 What "ER" means in this project, and what it does not
+
+This project formalizes a specific construction of the
+elementary-recursive functions:
+
+- The morphism inductive `ERMor1` with constructors `zero`,
+  `succ`, `proj`, `sub`, `comp`, `bsum`, `bprod` (per
+  `GebLean/LawvereER.lean`), matching Wikipedia's
+  elementary-recursive-function definition.
+- The categorical packaging `LawvereERCat` (objects `ℕ`,
+  morphisms quotients of `ERMor1` by extensional equality of
+  interpretations).
+
+The literature commonly characterizes the same function class
+as `E^3`, the third level of the Grzegorczyk hierarchy. The
+two are provably equivalent — the same total functions on `ℕ`
+arise — but are constructed quite differently: the
+Grzegorczyk hierarchy is built iteratively, with each level
+`E^{n+1}` obtained from `E^n` by closing under bounded
+recursion using a level-`n` bounding function. **This
+project does not formalize the Grzegorczyk construction, and
+every step in the proof chain below uses ER directly without
+invoking the ER ↔ E^3 equivalence as a logical dependency.**
+
+Throughout this design, when literature citations refer to
+`E^n` or `E^3` (notably Tourlakis 2018 §0.1.0.27, §0.1.0.43,
+§0.1.0.44), those references are used for the proof
+**structure** that they exhibit (URM simulation, runtime
+bound shape, hierarchy correspondence) — not as logical
+dependencies. Concretely: every claim of the form "this
+expression is in `E^n`" in the literature is replaced in our
+proof by "this expression is in `ER`" by direct construction
+in our `ERMor1` inductive plus its named composites
+(`pred`, `discN`, `boundedRec`, etc., per `Utilities/ERArith.lean`
+and `LawvereERPolynomialBound.lean`). The cited literature
+guides what to construct; the constructions live entirely
+inside our `ERMor1` formalization.
+
+The bound shape `tower h (linear of inputs)` for fixed `h ≤
+2` is itself in ER directly: `2^x ∈ ER` (Tourlakis 2018
+§0.1.0.17 (c) gives this construction in K^sim, and the same
+construction applies in ER using `bsum`/`bprod`-based bounded
+exponentiation), iterated `h` times stays in ER by closure
+of ER under composition.
 
 ---
 
@@ -431,10 +482,14 @@ L+1:
 For the load-bearing case (K^sim_2 → URM compilation), the
 goal of the §4 arithmetic is for the URM compiled from any
 K^sim morphism of level ≤ 2 to land in `tower 2` for its
-`stepBound`. This matches Tourlakis 2018 §0.1.0.27 (4) and
-§0.1.0.43-44, which characterize E^3 functions by their
-`A_2`-bounded URM runtimes. Step 2's cycle proves that the
-combinator arithmetic carries the bound through.
+`stepBound`. The bound `tower 2 (linear)` is in ER directly
+(via iterated `2^x`-style ER expressions; see §1.4 and §8.4).
+The shape mirrors the bound shape that Tourlakis 2018
+§0.1.0.27 (4) and §0.1.0.43-44 use for `E^3`-runtimes (the
+`A_2`-tower bound), but the construction in our project lives
+entirely in `ERMor1` and does not invoke the ER ↔ E^3
+equivalence. Step 2's cycle proves that the combinator
+arithmetic carries the bound through.
 
 ---
 
@@ -487,8 +542,10 @@ The level grading of the source K^sim term controls the
 ≤ 2 produces a URM whose total `stepBound` is bounded by
 `tower 2 (linear inputs)` (per Module A's
 `polynomial_iter_tower_bound` and `tower_succ_pow_bound_strong`,
-which together stabilize the height at 2 once reached). This
-matches `K^sim_2 = E^3` exactly.
+which together stabilize the height at 2 once reached). The
+`tower 2 (linear)` bound is itself in ER (constructed
+directly from `ERMor1.bsum`/`bprod`-based exponentiation; see
+§8.4).
 
 ### §5.3 `ERSubroutinesURM.lean` — ER realizations of URM primitives
 
@@ -704,11 +761,14 @@ the precise arithmetic per K^sim constructor:
 - **`raise f`**: `h_f` passthrough, `offset_f` passthrough.
 
 Concrete formulas: step 5's cycle. Tight bound 2 across all
-K^sim_2 morphisms per Tourlakis 2018 §0.1.0.27 (4) and the
-Module A height-fixed lemma. This matches the categorical
-fact `K^sim_2 = E^3` exactly: every URM compiled from a
-K^sim_2 term has `stepBound` bounded by an E^3 expression
-(`tower 2 (linear)`).
+K^sim_2 morphisms by Module A's height-fixed lemma. The
+result matches our target: every URM compiled from a K^sim_2
+term has `stepBound` bounded by a `tower 2 (linear)` ER
+expression. The `tower 2 (linear)` shape is the same shape
+the literature labels `A_2^k`-bounded (Tourlakis 2018
+§0.1.0.27 (4)); we construct it directly in `ERMor1` (see
+§1.4 and §8.4) without invoking the literature's
+characterization in the Grzegorczyk hierarchy.
 
 ### §8.2 Mirror `boundExprK e : KMor1 a`
 
@@ -729,27 +789,41 @@ constructor.
   certify that the constructed `boundExpr f` is genuinely an ER
   expression at the correct level.
 
-### §8.4 Why `boundExpr f` stays in ER
+### §8.4 Why `boundExpr f` is in ER (direct construction)
 
 For `f : KMor1 a` with `f.level ≤ 2`, the §8.1 arithmetic
 gives `h_f ≤ f.level + small_const` (each comp/simrec/raise
-adds at most a constant to `h_f`, and the K^sim term tree has
-depth bounded by `f.level`). For `f.level ≤ 2`, this means
-`h_f ≤ 2 + small_const`.
+adds at most a constant to `h_f`, and the K^sim term tree
+has depth bounded by `f.level`). For `f.level ≤ 2`, this
+means `h_f ≤ 2 + small_const`.
 
-`tower h_f (linear in inputs)` for `h_f` bounded is in E^3 by
-Tourlakis 2018 §0.1.0.27 (4), which characterizes E^3
-functions as bounded by `A_2^k`-towers (tower height ≤ 2 plus
-constant). Hence `boundExpr f` is in E^3 = ER, expressed as a
-finite composition of `2^x` (which is in E^3 per Tourlakis
-2018 §0.1.0.17 (c)) with linear-input shifts.
+`boundExpr f := tower h_f (vMax v + offset_f)` is constructed
+directly in `ERMor1`:
+
+- `vMax v` is the iterated maximum of inputs, expressed in
+  ER as a chain of `discN`-based pairwise maxima. Linear
+  growth in inputs.
+- `tower h x` (height ≤ 2) is constructed in ER by iterated
+  `2^x`. The base step `2^x` is the ER expression
+  `bsum (proj 0 ↦ ∏_{i < x} 2)` (or an equivalent named
+  composite), which is in `ERMor1` directly via `bprod` of
+  the constant `2`. Iterating up to height 2 stays in ER by
+  closure under `comp`. Concretely, the named composites for
+  `tower 0`, `tower 1`, `tower 2` live in `Utilities/ERArith.lean`
+  (or a small extension) and each carries its `interp` lemma.
+- The additive shift is `comp` with `succ`-iterated, also in
+  ER directly.
+
+No invocation of the Grzegorczyk-hierarchy `E^3 = ER`
+equivalence; the construction is a direct `ERMor1` term.
 
 The `ERMor1.PolyBound` infrastructure from
 `LawvereERPolynomialBound.lean` is the Lean-side encoding of
-this fact: it certifies, per constructor, that the
-`boundExpr f` term lives at the correct ER level. Step 5's
-cycle shows the per-constructor `boundExpr` cases are all in
-ER's named-composite catalogue.
+"this `ERMor1` term has tower-shape value bound": it
+certifies, per constructor, that the `boundExpr f` term
+lives at the correct ER level. Step 5's cycle shows the
+per-constructor `boundExpr` cases are all in ER's named-
+composite catalogue.
 
 ---
 
@@ -1021,6 +1095,14 @@ representatives at each cycle.
 
 ## §13 Citation map
 
+The literature uses `E^n` notation (Grzegorczyk hierarchy);
+our project uses `ER` directly per `GebLean/LawvereER.lean`'s
+inductive (see §1.4). The references below are catalogued in
+the literature's original `E^n` notation. Per §1.4, every
+load-bearing claim using `E^n` in the literature is realized
+in our project as a direct construction in `ERMor1`; no
+proof step depends on the ER ↔ E^n equivalence.
+
 ### §13.1 Tourlakis 2018 (file `PR-complexity-topics.pdf`)
 
 - **§0.1.0.7** — K^sim definition.
@@ -1205,6 +1287,34 @@ Claim: The erToK direction's load-bearing files
 `LawvereERKSim.lean`) are designed in this master doc but their
 internal proofs are deferred to steps 7-10. The kToER side
 (steps 3-6) does not depend on any unfinished erToK content.
+
+### §14.11 Does any proof step depend on ER ↔ E^n?
+
+Claim: Per §1.4, this project formalizes `ER` directly per
+`GebLean/LawvereER.lean` and does **not** formalize the
+Grzegorczyk hierarchy. Every load-bearing step in the proof
+chain uses `ER` directly (or its named composites in
+`Utilities/ERArith.lean` and `LawvereERPolynomialBound.lean`).
+Literature references using `E^n` notation appear only in the
+citation map (§13) and in motivation prose (§1, §4.4, §5.2,
+§8); none of those references is converted into a logical
+dependency.
+
+Adversary obligation: trace each `E^n` occurrence in the
+document; confirm that for every occurrence, the surrounding
+context either (a) is in §1, §13, or another non-load-bearing
+section, or (b) restates the same claim in `ER` terms with a
+direct `ERMor1` construction. Any place where the proof
+chain steps from "X is in `E^n`" to "X is in `ER`" without
+going through a direct `ERMor1` term is a defect.
+
+Adversarial obligation: spot-check §8.4's "stays in ER"
+argument; confirm that the construction of `boundExpr f`'s
+ER expression (iterated `2^x` plus linear shift) does not
+rely on a Grzegorczyk-hierarchy fact. Also spot-check §6.1's
+`state_value_bound` polynomial in ER, confirming it is a
+polynomial expression in `ERMor1` directly (via `bsum`/`bprod`),
+not a black-box reference to "E^2's polynomial bound".
 
 Adversary obligation: verify the dependency graph (§11) does not
 contain a cycle or backward edge from kToER-load-bearing to
