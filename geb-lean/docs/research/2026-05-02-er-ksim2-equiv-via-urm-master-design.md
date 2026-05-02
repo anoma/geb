@@ -481,7 +481,7 @@ Longest serial chain on the kToER side: 0 → 1 → 2 → 3 → 4 →
 ### Per-step expected size
 
 | Step | Side | Expected size | Notes |
-|---|---|---|---|
+| - | - | - | - |
 | 0 | both | substantial | this document |
 | 1 | kToER | medium | tupling infra + bijection + bounds |
 | 2 | kToER | medium | simultaneousBoundedRec |
@@ -1262,7 +1262,7 @@ inductive URMInstr (r : ℕ) : Type
 Semantics on PC and register vector:
 
 | Instruction | PC update | Register update |
-|---|---|---|
+| - | - | - |
 | `zeroReg i` | `pc + 1` | `regs[i] := 0` |
 | `incReg i` | `pc + 1` | `regs[i] := regs[i] + 1` |
 | `decReg i` | `pc + 1` | `regs[i] := regs[i] ∸ 1` (truncated) |
@@ -1513,7 +1513,7 @@ entries.
 Used by the ER → URM compiler (step 8).
 
 | ER constructor | URM subroutine | `stepBound` | `tH` |
-|---|---|---|---|
+| - | - | - | - |
 | `ERMor1.zero` | `urmSubrZero` | `1` | `0` |
 | `ERMor1.succ` | `urmSubrSucc` | `1` | `0` |
 | `ERMor1.proj i` | `urmSubrProj i` | `v[i] + 1` (copy) | `0` |
