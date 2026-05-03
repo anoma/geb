@@ -822,22 +822,6 @@ documentation should surface the literal value to readers
 via a doc-comment near the polyBound builder so that error
 messages are interpretable.
 
-### §8.3 Categorical iso deferral diagnosis (filled if §5 gate fails)
-
-If the §5.2 gate fails during implementation, the
-implementer fills this section with:
-
-```text
-Failed condition: G[1|2|3]
-Obstruction: <1–2 sentence reading of the relevant
-            LawvereERCat.lean construct, with line reference>
-Proposed Step 1.5 cycle scope: <what infrastructure would
-            need to land before the iso is reachable>
-```
-
-If the gate passes and the iso lands, this section is
-deleted before merging.
-
 ### §8.4 K^sim-side tupling explicitly out of scope
 
 Per master design §3.1's "K^sim layer (NOT BUILT under Path 2)"

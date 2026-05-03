@@ -250,4 +250,32 @@ theorem tuplePack_tupleAt (k : ℕ) :
 
 end ERMorN
 
+namespace LawvereERCat
+
+/-- Decorative iso: in `LawvereERCat`, the `(k + 1)`-fold
+product of the generator is isomorphic to the generator,
+witnessed by `ERMor1.tuplePack` and the tuple of
+`ERMor1.tupleAt`s.  Master design §3.1.
+
+The iso laws reduce to the round-trip lemmas
+`ERMorN.tupleAt_tuplePack` and `ERMorN.tuplePack_tupleAt`
+via `Quotient.sound (s := erMorNSetoid · ·)`. -/
+def tupleIso (k : ℕ) :
+    (k + 1 : LawvereERCat) ≅ 1 where
+  hom        := Quotient.mk (erMorNSetoid (k + 1) 1)
+                  (ERMorN.lift (ERMor1.tuplePack k))
+  inv        := Quotient.mk (erMorNSetoid 1 (k + 1))
+                  (ERMorN.ofVec
+                    (fun i : Fin (k + 1) => ERMor1.tupleAt k i))
+  hom_inv_id :=
+    Quotient.sound
+      (s := erMorNSetoid (k + 1) (k + 1))
+      (ERMorN.tupleAt_tuplePack k)
+  inv_hom_id :=
+    Quotient.sound
+      (s := erMorNSetoid 1 1)
+      (ERMorN.tuplePack_tupleAt k)
+
+end LawvereERCat
+
 end GebLean
