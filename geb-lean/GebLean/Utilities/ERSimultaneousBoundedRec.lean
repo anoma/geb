@@ -94,5 +94,31 @@ def packedStep (k a : ℕ)
     (fun j : Fin (k + 1) =>
       ERMor1.comp (g j) (ERMor1.packedStepCtx k a))
 
+/-- Multi-output bounded simultaneous recursion in ER.
+Realizes Tourlakis 2018 §0.1.0.34 (the proof technique:
+closure of E^2 under simultaneous bounded recursion via
+pairing-based pack-and-unpack; §0.1.0.35 is the
+higher-level corollary for `n ≥ 2`).  Master design §3.2.
+
+The implementation packs the `(k + 1)`-component state
+into a single natural via `Nat.tuplePack`, applies
+single-output `ERMor1.boundedRec` with a packed-state
+bound derived via `ERMor1.tuplePackedBound`, then
+unpacks the result component-wise via `Nat.tupleAt`.
+Bottom-up named composite per CLAUDE.md "bottom-up
+named-composite discipline". -/
+def simultaneousBoundedRec (k a : ℕ)
+    (h : Fin (k + 1) → ERMor1 a)
+    (g : Fin (k + 1) → ERMor1 (a + 1 + (k + 1)))
+    (componentBound : ERMor1 (a + 1)) :
+    ERMorN (a + 1) (k + 1) :=
+  let packedRec : ERMor1 (a + 1) :=
+    ERMor1.boundedRec
+      (ERMor1.packedBase k a h)
+      (ERMor1.packedStep k a g)
+      (ERMor1.tuplePackedBound k componentBound)
+  fun i : Fin (k + 1) =>
+    ERMor1.comp (ERMor1.tupleAt k i) ![packedRec]
+
 end ERMor1
 end GebLean
