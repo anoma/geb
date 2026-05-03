@@ -25,12 +25,12 @@ import GebLeanTests.TestEqualizerCompletion
 import GebLeanTests.TestTreeCalcMeta
 import GebLeanTests.TestTreeCalcPrograms
 import GebLeanTests.TestTreeCalcReduction
-import GebLeanTests.Tupling
 import GebLeanTests.PLang.BTPair
 import GebLeanTests.Utilities.ERArith
 import GebLeanTests.Utilities.ERTreeArith
 import GebLeanTests.Utilities.SzudzikSeq
 import GebLeanTests.Utilities.Tower
+import GebLeanTests.Utilities.Tupling
 import GebLeanTests.Utilities.Families
 import GebLeanTests.Utilities.PresheafPRANat
 import GebLeanTests.Utilities.PresheafPRADirNat
