@@ -1,7 +1,5 @@
 import GebLean.Utilities.Tupling
 import GebLean.Utilities.ERArith
-import GebLean.LawvereERPolynomialBound
-import GebLean.LawvereERQuot
 
 /-!
 # ER-side fixed-length k-tuple Szudzik pairing
