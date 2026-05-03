@@ -809,11 +809,19 @@ versions A_n^r are r-fold composition of A_n with itself.
   or any equivalent.
 - `ERMor1.A_one_iter : ℕ → ERMor1 1`. r-fold composition of
   `A_one` with itself. Interp `λx. 2^r · x + (2^{r+1} − 2)`.
-- `ERMor1.A_two = ERMor1.expER` (existing in
-  `LawvereERArith.lean` line 25). Interp `λx. 2^x`.
 - `ERMor1.A_two_iter (r : ℕ) := ERMor1.towerER r`
-  (existing in `LawvereERBoundComputable.lean` line 230).
-  Interp `tower r x` = `A_2^r(x)`.
+  (existing — see `def ERMor1.towerER` in
+  `LawvereERBoundComputable.lean`).  Interp
+  `tower r x` = `A_2^r(x)`.  No separate unary
+  `ERMor1.A_two : ERMor1 1` definition: Tourlakis's
+  `A_2 = λx. 2^x` is exactly `A_two_iter 1` (since
+  `tower 1 x = 2^x` per `Utilities/Tower.lean`), and
+  introducing a third name for the same expression
+  invites confusion.  (`ERMor1.expER : ERMor1 2`
+  computes the binary `λ(n, y). y^n`, not the unary
+  `λx. 2^x`; partial application would be needed to
+  recover the unary form, which is why aliasing
+  `A_two = expER` is type-inconsistent.)
 
 #### Polynomial bound certification
 
@@ -1156,8 +1164,10 @@ equality).
 
 ### §3.6 Tourlakis result-to-Lean-entity catalogue
 
-- **§0.1.0.4 (A_n def)** — `ERMor1.A_one` (build, §3.3),
-  `ERMor1.A_two = ERMor1.expER` (existing).
+- **§0.1.0.4 (A_n def)** — `ERMor1.A_one` (build, §3.3);
+  `A_2 = λx. 2^x` realized as `A_two_iter 1`
+  (= `towerER 1`); no separate unary `A_two` named
+  composite (see §3.3 Lean entities subsection).
 - **§0.1.0.5 (K_n majorization)** — (not directly used; the
   K^sim version is 0.1.0.10).
 - **§0.1.0.7 (K^sim def)** — `KMor1` inductive

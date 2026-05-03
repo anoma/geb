@@ -69,6 +69,11 @@ Out of scope and not anyone's job:
 - A unary `ERMor1.A_two : ERMor1 1` definition.  The
   literature's `A_2 = λx. 2^x` is exactly `A_two_iter 1`
   (since `tower 1 x = 2^x`); no separate name is warranted.
+  (Master design §3.3 originally listed an
+  `ERMor1.A_two = ERMor1.expER` line, which is type-
+  inconsistent because `expER : ERMor1 2`; that line has
+  been amended in the master design alongside this
+  spec.)
 - K^sim-side `A_n` composites.  Master design §3.3 builds
   the `A_n` family on the ER side only; K^sim-side
   majorization (step 4) consumes the ER `A_n` via
@@ -121,11 +126,16 @@ One new module under `GebLean/Utilities/`:
 ### §2.1 `GebLean/Utilities/ERAMajorants.lean`
 
 - Imports:
-  - `GebLean.LawvereERArith` (for `ERMor1.addN`,
-    `ERMor1.succ`, `ERMor1.proj`, and their interp simp
-    lemmas).
+  - `GebLean.LawvereER` (for the `ERMor1` constructors
+    `succ`, `proj`, `comp` and their interp simp lemmas
+    `interp_succ`, `interp_proj`, `interp_comp`;
+    transitively pulled in by the polynomial-bound
+    import below, but listed explicitly here for
+    clarity).
+  - `GebLean.Utilities.ERArith` (for `ERMor1.addN` and
+    its interp simp lemma `interp_addN`).
   - `GebLean.LawvereERBoundComputable` (for
-    `ERMor1.towerER`, `ERMor1.interp_towerER`).
+    `ERMor1.towerER` and `ERMor1.interp_towerER`).
   - `GebLean.LawvereERPolynomialBound` (for
     `ERMor1.PolyBound`).
   - `GebLean.Utilities.Tower` (transitively pulled in;
@@ -184,10 +194,10 @@ def A_one : ERMor1 1 :=
   ERMor1.comp ERMor1.addN fun i => match i with
     | ⟨0, _⟩ => ERMor1.comp ERMor1.succ
                   (fun _ : Fin 1 =>
-                    ERMor1.proj ⟨0, by decide⟩)
+                    ERMor1.proj (0 : Fin 1))
     | ⟨1, _⟩ => ERMor1.comp ERMor1.succ
                   (fun _ : Fin 1 =>
-                    ERMor1.proj ⟨0, by decide⟩)
+                    ERMor1.proj (0 : Fin 1))
 ```
 
 Citation: Tourlakis 2018 page 22 (proof of §0.1.0.44 ⊆),
@@ -204,7 +214,7 @@ Recursion direction: `A_1 ∘ A_1^r` (apply r-fold first,
 then one more `A_one`).  At `r = 0` returns the identity
 on `Fin 1`, realized as `proj 0`. -/
 def A_one_iter : ℕ → ERMor1 1
-  | 0     => ERMor1.proj ⟨0, by decide⟩
+  | 0     => ERMor1.proj (0 : Fin 1)
   | r + 1 => ERMor1.comp A_one
               (fun _ : Fin 1 => A_one_iter r)
 ```
@@ -218,10 +228,11 @@ design §3.3 lines 192-193 (closed form
 ```lean
 /-- Tourlakis 2018 page 22 iterated majorant
 `A_2^r = λx. tower r x`, realized as the existing named
-composite `ERMor1.towerER r` (`LawvereERBoundComputable.lean`
-line 230).  Underlying construction iterates `expER` with
-base `2`, citing Tourlakis 2018 §0.1.0.17 (c)
-`λx. 2^x ∈ ER`.  Master design §3.3. -/
+composite `def ERMor1.towerER` in
+`LawvereERBoundComputable.lean`.  Underlying
+construction iterates `expER` with base `2`, citing
+Tourlakis 2018 §0.1.0.17 (c) `λx. 2^x ∈ ER`.  Master
+design §3.3. -/
 def A_two_iter (r : ℕ) : ERMor1 1 := ERMor1.towerER r
 ```
 
@@ -230,11 +241,17 @@ design §3.3.
 
 ## §4 Closed-form interp lemmas
 
+All theorems in this section carry the docstring citations
+listed in §7.  The code blocks below show only the
+statement and proof skeleton; the implementation prefixes
+each with the appropriate `/-- ... -/` literature
+citation.
+
 ### §4.1 `interp_A_one`
 
 ```lean
 @[simp] theorem interp_A_one (ctx : Fin 1 → ℕ) :
-    A_one.interp ctx = 2 * (ctx ⟨0, by decide⟩) + 2 := by
+    A_one.interp ctx = 2 * (ctx 0) + 2 := by
   unfold A_one
   simp only [ERMor1.interp_comp, ERMor1.interp_addN,
     ERMor1.interp_succ, ERMor1.interp_proj]
@@ -250,7 +267,7 @@ design §3.3.
 @[simp] theorem interp_A_one_iter (r : ℕ)
     (ctx : Fin 1 → ℕ) :
     (A_one_iter r).interp ctx
-      = 2 ^ r * (ctx ⟨0, by decide⟩)
+      = 2 ^ r * (ctx 0)
           + (2 ^ (r + 1) - 2) := by
   induction r with
   | zero =>
@@ -261,12 +278,20 @@ design §3.3.
   | succ r ih =>
       unfold A_one_iter
       simp only [ERMor1.interp_comp, interp_A_one]
-      rw [show (fun _ : Fin 1 =>
-                  (A_one_iter r).interp ctx) ⟨0, by decide⟩
-              = (A_one_iter r).interp ctx from rfl, ih]
-      have h_pow_ge_two : 2 ^ (r + 1) ≥ 2 :=
-        Nat.pow_le_pow_right (by omega) (by omega)
-      ring_nf
+      have hcoll :
+          (fun _ : Fin 1 =>
+            (A_one_iter r).interp ctx) (0 : Fin 1)
+            = (A_one_iter r).interp ctx := rfl
+      rw [hcoll, ih]
+      have h_succ1 : 2 ^ (r + 1) = 2 * 2 ^ r := by
+        rw [pow_succ]; ring
+      have h_succ2 : 2 ^ (r + 2) = 2 * 2 ^ (r + 1) := by
+        rw [pow_succ]; ring
+      have h_pow_ge_two : 2 ≤ 2 ^ (r + 1) := by
+        rw [h_succ1]
+        have h_pow_pos_r : 1 ≤ 2 ^ r :=
+          Nat.one_le_pow _ _ (by omega)
+        omega
       omega
 ```
 
@@ -289,7 +314,7 @@ Proof outline (tactic shape; implementation may streamline):
 @[simp] theorem interp_A_two_iter (r : ℕ)
     (ctx : Fin 1 → ℕ) :
     (A_two_iter r).interp ctx
-      = tower r (ctx ⟨0, by decide⟩) := by
+      = tower r (ctx 0) := by
   unfold A_two_iter
   exact ERMor1.interp_towerER r ctx
 ```
@@ -318,12 +343,12 @@ def ofA_one : PolyBound A_one where
   bounds      := fun ctx => by
     rw [interp_A_one]
     simp only [pow_one, Nat.add_zero]
-    have h_ctx0 : ctx ⟨0, by decide⟩
+    have h_ctx0 : ctx 0
                     ≤ (Finset.univ : Finset (Fin 1)).sup ctx
                   + 0 := by
       have := Finset.le_sup
         (s := (Finset.univ : Finset (Fin 1)))
-        (f := ctx) (b := ⟨0, by decide⟩)
+        (f := ctx) (b := (0 : Fin 1))
         (by simp)
       omega
     omega
@@ -332,21 +357,26 @@ def ofA_one : PolyBound A_one where
 (Tactic shape; implementation will adjust the
 `Finset.le_sup` invocation to match the existing
 `PolyBound.bounds` field's exact statement, mirroring
-`ofAddN` at `LawvereERPolynomialBound.lean` line 448.)
+`def ERMor1.PolyBound.ofAddN` in
+`LawvereERPolynomialBound.lean`.)
 
 ### §5.2 `ofA_one_iter`
 
 ```lean
 /-- Polynomial bound for `A_one_iter r`: linear with
-leading coefficient `2^r` and constant `2^{r+1} − 2`,
-matching the closed-form `interp_A_one_iter` literally so
-the bounds proof reduces to `ctx 0 ≤ sup ctx`.
+leading coefficient `2^r` and constant `2^{r+1} − 2`.
 
-The bound is loose by `2^r` at the constant slot if
-compared to the tightest possible `Nat` constant
-(`max(0, 2^r − 2)`); the looser choice is preferred for
-proof brevity.  Master design §3.3 amended
-polynomial-bound certification subsection. -/
+The chosen `(degree, coefficient, constant)` triple
+matches the closed-form `interp_A_one_iter` literally:
+the closed form `2^r * (ctx 0) + (2^{r+1} − 2)` is
+dominated by `2^r * (sup ctx + 1) + (2^{r+1} − 2)`
+because `ctx 0 ≤ sup ctx ≤ sup ctx + 1`, so the bounds
+proof reduces to a `Nat.mul_le_mul_left` step on the
+leading-coefficient slot.  The constant slot is matched
+exactly (no looseness there).
+
+Master design §3.3 amended polynomial-bound
+certification subsection. -/
 def ofA_one_iter (r : ℕ) : PolyBound (A_one_iter r) where
   degree      := 1
   coefficient := 2 ^ r
@@ -354,19 +384,32 @@ def ofA_one_iter (r : ℕ) : PolyBound (A_one_iter r) where
   bounds      := fun ctx => by
     rw [interp_A_one_iter]
     simp only [pow_one]
-    have h_ctx0 : ctx ⟨0, by decide⟩
-                    ≤ (Finset.univ : Finset (Fin 1)).sup ctx
-                  := Finset.le_sup
+    have h_ctx0_le_sup :
+        ctx 0
+          ≤ (Finset.univ : Finset (Fin 1)).sup ctx :=
+      Finset.le_sup
         (s := (Finset.univ : Finset (Fin 1)))
-        (f := ctx) (b := ⟨0, by decide⟩) (by simp)
-    have h_pow_pos : 1 ≤ 2 ^ r := Nat.one_le_pow _ _ (by omega)
-    nlinarith
+        (f := ctx) (b := (0 : Fin 1))
+        (Finset.mem_univ _)
+    have h_ctx0_le_succ :
+        ctx 0
+          ≤ (Finset.univ : Finset (Fin 1)).sup ctx + 1 := by
+      omega
+    have h_mul :
+        2 ^ r * ctx 0
+          ≤ 2 ^ r *
+              ((Finset.univ : Finset (Fin 1)).sup ctx + 1) :=
+      Nat.mul_le_mul_left _ h_ctx0_le_succ
+    omega
 ```
 
-(Tactic shape; if `nlinarith` does not close the residual
-multiplicative goal, the implementer will fall back to a
-manual `Nat.mul_le_mul_left` chain after a
-`Nat.add_le_add_right` step.)
+(Tactic shape; primary path is `Nat.mul_le_mul_left` —
+not `nlinarith`, which is unreliable when the
+multiplicative factor is an opaque `2 ^ r`.  The
+constant slot subtracts and re-adds the same
+`2 ^ (r + 1) − 2` term on both sides, so `omega` closes
+the final additive step without needing
+`Nat`-subtraction lemmas.)
 
 ### §5.3 No `PolyBound.ofA_two_iter`
 
@@ -400,12 +443,15 @@ import GebLean.Utilities.ERAMajorants
 
 namespace GebLean
 
--- A_one: 7-generator-deep, no bprod / no boundedRec.
+-- A_one: shallow, with bsum reductions only at small bounds
+-- via mulN (= boolAnd = bsum ...).  No bprod, no boundedRec;
+-- bsum-via-mulN size scales linearly with input, so small-
+-- input #guards terminate fast.
 #guard ERMor1.A_one.interp ![0] = 2
 #guard ERMor1.A_one.interp ![3] = 8
 #guard ERMor1.A_one.interp ![5] = 12
 
--- A_one_iter at small r: still bprod-free.
+-- A_one_iter at small r: bsum sizes <= 9 at r = 2, x = 3.
 #guard (ERMor1.A_one_iter 0).interp ![3] = 3
 #guard (ERMor1.A_one_iter 1).interp ![3] = 8
 #guard (ERMor1.A_one_iter 2).interp ![0] = 6
@@ -507,7 +553,9 @@ step 4 (`LawvereKSimMajorization.lean`):
 
 4. **`KMor1.majorize_by_A_one_iter`**: `f.interp v
    ≤ (A_one_iter r).interp ![vMax v]` for `f.level ≤ 1`,
-   with explicit `r`.  Master design §3.4 line 887-889.
+   with explicit `r`.  Master design §3.4 (parenthetical
+   on the `KMor1.majorize_r_one` and
+   `KMor1.majorize_by_A_one_iter` split).
 
 5. **`KMor1.majorize_by_A_two_iter`**: `f.interp v
    ≤ (A_two_iter r).interp ![vMax v]` for `f.level ≤ 2`,
@@ -582,7 +630,24 @@ argument rather than around it); both are valid.
 Mitigation: choice documented in §3.2; flexibility allowed
 by §1.3.
 
-### §9.6 No `PolyBound` for `A_two_iter` triggers downstream confusion
+### §9.6 `omega` does not handle `2 ^ r` symbolically
+
+`omega` reduces Presburger arithmetic over linear
+equalities/inequalities; exponential terms `2 ^ r`,
+`2 ^ (r + 1)`, `2 ^ (r + 2)` are opaque to it.  The
+closed-form induction in §4.2 introduces explicit
+equalities (`pow_succ`-derived) tying these together so
+`omega` can substitute and close the linear arithmetic.
+`ring_nf` is similarly inadequate: it does not normalize
+`Nat`-truncating subtraction (`a - b` with `b > a`
+truncates to `0`), so `ring_nf` followed by `omega`
+fails on the constant slot.  Mitigation: explicit
+`have h_succ1 : 2 ^ (r + 1) = 2 * 2 ^ r := by rw [pow_succ]; ring`
+chain in §4.2's proof, plus a positivity hypothesis
+`Nat.one_le_pow _ _ (by omega) : 1 ≤ 2 ^ r` so `omega`
+handles the `Nat`-subtraction guard.
+
+### §9.7 No `PolyBound` for `A_two_iter` triggers downstream confusion
 
 Step 4 readers expecting a uniform `PolyBound`-shaped
 interface across `A_n` may search for `ofA_two_iter` and
@@ -606,8 +671,11 @@ warnings, no `sorry`, no `admit`, after which:
    - `def PolyBound.ofA_one_iter (r) : PolyBound
      (A_one_iter r)`.
    - Module docstring citing Tourlakis 2018 page 22 and
-     master design §3.3, with the polynomial-vs-tower split
-     paragraph.
+     master design §3.3, including the polynomial-vs-tower
+     split paragraph that explicitly documents the absence
+     of `ofA_two_iter` (per §5.3) and pointers to
+     `docs/research/2026-04-30-ksim-polynomial-bound-references.md`
+     and master design §3.3 (per §7).
    - Per-entity docstrings carrying the citations from §7.
 2. `GebLeanTests/Utilities/ERAMajorants.lean` exists with
    the `#guard`s from §6.1.
