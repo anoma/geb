@@ -178,6 +178,49 @@ def ofA_one : PolyBound A_one where
 
 end PolyBound
 
+namespace PolyBound
+
+/-- Polynomial bound for `A_one_iter r`: linear with
+leading coefficient `2^r` and constant `2^{r+1} − 2`.
+
+The chosen `(degree, coefficient, constant)` triple
+matches the closed-form `interp_A_one_iter` literally:
+the closed form `2^r * (ctx 0) + (2^{r+1} − 2)` is
+dominated by `2^r * (sup ctx + 1) + (2^{r+1} − 2)`
+because `ctx 0 ≤ sup ctx ≤ sup ctx + 1`, so the bounds
+proof reduces to a `Nat.mul_le_mul_left` step on the
+leading-coefficient slot.  The constant slot is matched
+exactly.
+
+Master design §3.3 amended polynomial-bound
+certification subsection. -/
+def ofA_one_iter (r : ℕ) : PolyBound (A_one_iter r) where
+  degree      := 1
+  coefficient := 2 ^ r
+  constant    := 2 ^ (r + 1) - 2
+  bounds      := fun ctx => by
+    rw [interp_A_one_iter]
+    simp only [pow_one]
+    have h_ctx0_le_sup :
+        ctx 0
+          ≤ (Finset.univ : Finset (Fin 1)).sup ctx :=
+      Finset.le_sup
+        (s := (Finset.univ : Finset (Fin 1)))
+        (f := ctx) (b := (0 : Fin 1))
+        (Finset.mem_univ _)
+    have h_ctx0_le_succ :
+        ctx 0
+          ≤ (Finset.univ : Finset (Fin 1)).sup ctx + 1 := by
+      omega
+    have h_mul :
+        2 ^ r * ctx 0
+          ≤ 2 ^ r *
+              ((Finset.univ : Finset (Fin 1)).sup ctx + 1) :=
+      Nat.mul_le_mul_left _ h_ctx0_le_succ
+    omega
+
+end PolyBound
+
 end ERMor1
 
 end GebLean
