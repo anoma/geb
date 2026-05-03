@@ -200,13 +200,20 @@ end GebLean
 
 - [ ] **Step 1.2: Register the import in `GebLean.lean` immediately**
 
-Open `GebLean.lean`.  Add (in alphabetical order, near the
-existing `import GebLean.Utilities.ERSimultaneousBoundedRec`
-line):
+Open `GebLean.lean`.  Add the new line **immediately above
+the existing `import GebLean.Utilities.ERArith` line**
+(case-insensitive alphabetical order: `ERAMajorants` <
+`ERArith` because `m` < `r`):
 
 ```lean
 import GebLean.Utilities.ERAMajorants
 ```
+
+Note: `Utilities/Tower.lean` and `LawvereERPolynomialBound`
+are imported directly by `ERAMajorants.lean` but are not
+listed in `GebLean.lean` (both are transitively reachable
+via existing entries).  No additional `GebLean.lean` lines
+are needed for this task.
 
 - [ ] **Step 1.3: Verify the empty skeleton builds**
 
@@ -552,8 +559,10 @@ def ofA_one : PolyBound A_one where
     omega
 ```
 
-This proof was empirically verified during round-4
-adversarial review.
+The proof structure mirrors `def ERMor1.PolyBound.ofAddN`
+in `LawvereERPolynomialBound.lean`: simp through the
+constructor interp lemmas, introduce a `Finset.le_sup`
+hypothesis on `ctx 0`, close with `omega`.
 
 - [ ] **Step 7.2: Build and commit**
 
@@ -626,8 +635,10 @@ def ofA_one_iter (r : ℕ) : PolyBound (A_one_iter r) where
     omega
 ```
 
-This proof was empirically verified during round-4
-adversarial review.
+The proof structure mirrors `def ERMor1.PolyBound.ofAddN`
+in `LawvereERPolynomialBound.lean`: simp through the
+constructor interp lemmas, introduce a `Finset.le_sup`
+hypothesis on `ctx 0`, close with `omega`.
 
 - [ ] **Step 8.2: Close namespaces and build**
 
@@ -707,10 +718,11 @@ end GebLean
 
 - [ ] **Step 9.2: Register the test import in `GebLeanTests.lean` immediately**
 
-Open `GebLeanTests.lean`.  Add (in alphabetical order, near
-the existing
-`import GebLeanTests.Utilities.ERSimultaneousBoundedRec`
-line):
+Open `GebLeanTests.lean`.  Add the new line **immediately
+above the existing
+`import GebLeanTests.Utilities.ERArith` line**
+(case-insensitive alphabetical order: `ERAMajorants` <
+`ERArith` because `m` < `r`):
 
 ```lean
 import GebLeanTests.Utilities.ERAMajorants
@@ -897,20 +909,51 @@ Workstream notes updated.  Step 3 complete."
 
 - [ ] **Step 10.7: Cycle-end code review (delegated)**
 
-Dispatch a fresh code-review subagent covering the entire
-diff of step 3 (`origin/terence/develop..HEAD` after the
-spec/plan commits land):
+Dispatch a fresh code-reviewer subagent (using
+`superpowers:requesting-code-review` or `lean4:review`,
+whichever is more appropriate to the project) covering the
+entire diff of step 3 (`git diff origin/terence/develop..HEAD`
+after all task commits land).
 
-- The subagent should read every line of
-  `GebLean/Utilities/ERAMajorants.lean`,
-  `GebLeanTests/Utilities/ERAMajorants.lean`, and the
-  diffs in `GebLean.lean` and `GebLeanTests.lean`.
-- It should verify the spec §10 acceptance criteria
-  against the actual code, not the plan.
-- It should produce a finding list at
-  `docs/research/2026-05-03-step-3-cycle-end-review.md`.
-- Address its substantive findings before declaring step 3
-  done.
+The reviewer's brief MUST verify the following six §10
+acceptance criteria against the actual code (not against
+the plan):
+
+1. `def ERMor1.A_one : ERMor1 1`,
+   `def ERMor1.A_one_iter : ℕ → ERMor1 1`, and
+   `def ERMor1.A_two_iter : ℕ → ERMor1 1` are present in
+   `GebLean/Utilities/ERAMajorants.lean`, with `A_two_iter`
+   defined as an alias of `ERMor1.towerER`.
+2. `@[simp] theorem ERMor1.interp_A_one`,
+   `interp_A_one_iter`, `interp_A_two_iter` are present
+   with the closed forms from spec §4.
+3. `def ERMor1.PolyBound.ofA_one` and
+   `def ERMor1.PolyBound.ofA_one_iter (r : ℕ)` are present
+   with the field values from spec §5.  No
+   `ofA_two_iter` is shipped.
+4. The module docstring cites Tourlakis 2018 page 22 and
+   master design §3.3, includes the polynomial-vs-tower
+   split paragraph that documents the absence of
+   `ofA_two_iter`, and points at
+   `docs/research/2026-04-30-ksim-polynomial-bound-references.md`.
+5. Each public def/theorem carries a per-entity docstring
+   with the citations from spec §7.
+6. `GebLean.lean` and `GebLeanTests.lean` import the new
+   modules in case-insensitive alphabetical order
+   (`ERAMajorants` immediately above `ERArith` in both).
+
+Plus the cross-cutting checks:
+
+- `lake build` and `lake test` both clean (no errors, no
+  warnings, no `sorry`, no `admit`).
+- `markdownlint-cli2` clean on the touched docs.
+- No banned words from CLAUDE.md in code, comments, or
+  commit messages.
+
+The reviewer should produce a finding list at
+`docs/research/2026-05-03-step-3-cycle-end-review.md`.
+Address its substantive findings before declaring step 3
+done.
 
 (This step is the final per-cycle review step described in
 the procedure document; do not skip it.)
