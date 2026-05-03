@@ -45,6 +45,20 @@ namespace GebLean
 
 namespace ERMor1
 
+/-- Tourlakis 2018 page 22 majorant `A_1 = λx. 2x + 2`,
+realized as an ER named composite.  Master design §3.3.
+
+Construction: `addN(succ(proj 0), succ(proj 0))`, i.e.
+`(x + 1) + (x + 1) = 2x + 2`. -/
+def A_one : ERMor1 1 :=
+  ERMor1.comp ERMor1.addN fun i => match i with
+    | ⟨0, _⟩ => ERMor1.comp ERMor1.succ
+                  (fun _ : Fin 1 =>
+                    ERMor1.proj (0 : Fin 1))
+    | ⟨1, _⟩ => ERMor1.comp ERMor1.succ
+                  (fun _ : Fin 1 =>
+                    ERMor1.proj (0 : Fin 1))
+
 end ERMor1
 
 end GebLean
