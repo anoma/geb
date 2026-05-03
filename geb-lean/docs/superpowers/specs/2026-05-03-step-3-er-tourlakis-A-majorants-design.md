@@ -292,6 +292,9 @@ citation.
         have h_pow_pos_r : 1 ≤ 2 ^ r :=
           Nat.one_le_pow _ _ (by omega)
         omega
+      have h_mul_bridge :
+          2 ^ (r + 1) * ctx 0 = 2 * (2 ^ r * ctx 0) := by
+        rw [h_succ1]; ring
       omega
 ```
 
@@ -634,18 +637,25 @@ by §1.3.
 
 `omega` reduces Presburger arithmetic over linear
 equalities/inequalities; exponential terms `2 ^ r`,
-`2 ^ (r + 1)`, `2 ^ (r + 2)` are opaque to it.  The
-closed-form induction in §4.2 introduces explicit
-equalities (`pow_succ`-derived) tying these together so
-`omega` can substitute and close the linear arithmetic.
-`ring_nf` is similarly inadequate: it does not normalize
-`Nat`-truncating subtraction (`a - b` with `b > a`
-truncates to `0`), so `ring_nf` followed by `omega`
-fails on the constant slot.  Mitigation: explicit
-`have h_succ1 : 2 ^ (r + 1) = 2 * 2 ^ r := by rw [pow_succ]; ring`
-chain in §4.2's proof, plus a positivity hypothesis
-`Nat.one_le_pow _ _ (by omega) : 1 ≤ 2 ^ r` so `omega`
-handles the `Nat`-subtraction guard.
+`2 ^ (r + 1)`, `2 ^ (r + 2)` are opaque to it.  Even
+with the linear equalities `2 ^ (r + 1) = 2 * 2 ^ r`
+and `2 ^ (r + 2) = 2 * 2 ^ (r + 1)` in scope, `omega`
+treats the products `2 ^ (r + 1) * ctx 0` and
+`2 ^ r * ctx 0` as independent atoms; multiplying the
+linear equality through by `ctx 0` is a nonlinear move
+`omega` does not perform.  `ring_nf` is similarly
+inadequate: it does not normalize `Nat`-truncating
+subtraction (`a - b` with `b > a` truncates to `0`),
+so `ring_nf` followed by `omega` fails on the constant
+slot.  Mitigation: §4.2's proof supplies (a) the
+linear `pow_succ` equalities for `2 ^ (r + 1)` and
+`2 ^ (r + 2)`, (b) a positivity hypothesis
+`Nat.one_le_pow _ _ (by omega) : 1 ≤ 2 ^ r` for the
+`Nat`-subtraction guard, and (c) an explicit
+multiplicative bridge `h_mul_bridge :
+2 ^ (r + 1) * ctx 0 = 2 * (2 ^ r * ctx 0)` (proved by
+`rw [h_succ1]; ring`) so that `omega` can close the
+linear system after substitution.
 
 ### §9.7 No `PolyBound` for `A_two_iter` triggers downstream confusion
 

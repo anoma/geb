@@ -1182,8 +1182,12 @@ equality).
   Existing ✓.
 - **§0.1.0.17 (b) (`λxy.xy` ∈ K^sim_2)** — `ERMor1.mulN`.
   Existing ✓.
-- **§0.1.0.17 (c) (`λx.2^x` ∈ K^sim_2)** — `ERMor1.expER =
-  ERMor1.A_two`. Existing ✓.
+- **§0.1.0.17 (c) (`λx.2^x` ∈ K^sim_2)** — realized by
+  `A_two_iter 1` = `ERMor1.towerER 1` (since
+  `tower 1 x = 2 ^ x` per `Utilities/Tower.lean`).  No
+  separate unary `ERMor1.A_two` exists; `ERMor1.expER :
+  ERMor1 2` realizes the binary `λ(n, y). y ^ n`, not
+  the unary form (see §3.3 Lean entities).
 - **§0.1.0.22 (Grzegorczyk hierarchy def)** — NOT
   formalized. Excluded by §1.4.
 - **§0.1.0.27 (bounding lemma for E^n)** — not used; we use
