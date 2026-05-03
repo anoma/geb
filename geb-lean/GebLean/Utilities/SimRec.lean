@@ -56,4 +56,23 @@ def simRec (k a : ℕ)
     (j : Fin (k + 1)) (n : ℕ) (x : Fin a → ℕ) : ℕ :=
   simRecVec k a h_all g_all n x j
 
+/-- Recurrence at zero; master design §3.2. -/
+@[simp] theorem simRecVec_zero (k a : ℕ)
+    (h_all : Fin (k + 1) → (Fin a → ℕ) → ℕ)
+    (g_all : Fin (k + 1) →
+      (Fin (a + 1 + (k + 1)) → ℕ) → ℕ)
+    (x : Fin a → ℕ) (j : Fin (k + 1)) :
+    simRecVec k a h_all g_all 0 x j = h_all j x := rfl
+
+/-- Recurrence at successor; master design §3.2. -/
+@[simp] theorem simRecVec_succ (k a : ℕ)
+    (h_all : Fin (k + 1) → (Fin a → ℕ) → ℕ)
+    (g_all : Fin (k + 1) →
+      (Fin (a + 1 + (k + 1)) → ℕ) → ℕ)
+    (n : ℕ) (x : Fin a → ℕ) (j : Fin (k + 1)) :
+    simRecVec k a h_all g_all (n + 1) x j
+      = g_all j (Fin.append (Fin.cons n x)
+          (simRecVec k a h_all g_all n x))
+        := rfl
+
 end Nat
