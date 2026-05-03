@@ -255,11 +255,12 @@ citation.
   unfold A_one
   simp only [ERMor1.interp_comp, ERMor1.interp_addN,
     ERMor1.interp_succ, ERMor1.interp_proj]
-  ring
+  omega
 ```
 
-(Tactic shape; final implementation may use `omega` if
-`ring` does not close the residual `Nat`-arithmetic goal.)
+(Tactic shape; the residual goal contains `Nat.succ`-shaped
+terms left by the simp set, so `omega` is preferred over
+`ring` — `ring` does not normalize `Nat.succ` patterns.)
 
 ### §4.2 `interp_A_one_iter`
 
@@ -272,17 +273,12 @@ citation.
   induction r with
   | zero =>
       unfold A_one_iter
-      simp only [ERMor1.interp_proj, pow_zero, one_mul,
-        pow_one]
+      simp only [ERMor1.interp_proj, pow_zero, one_mul]
       omega
   | succ r ih =>
       unfold A_one_iter
       simp only [ERMor1.interp_comp, interp_A_one]
-      have hcoll :
-          (fun _ : Fin 1 =>
-            (A_one_iter r).interp ctx) (0 : Fin 1)
-            = (A_one_iter r).interp ctx := rfl
-      rw [hcoll, ih]
+      rw [ih]
       have h_succ1 : 2 ^ (r + 1) = 2 * 2 ^ r := by
         rw [pow_succ]; ring
       have h_succ2 : 2 ^ (r + 2) = 2 * 2 ^ (r + 1) := by
