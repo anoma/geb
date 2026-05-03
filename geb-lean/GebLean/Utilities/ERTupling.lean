@@ -1,5 +1,6 @@
-import GebLean.Utilities.Tupling
+import GebLean.LawvereERPolynomialBound
 import GebLean.Utilities.ERArith
+import GebLean.Utilities.Tupling
 
 /-!
 # ER-side fixed-length k-tuple Szudzik pairing
@@ -123,6 +124,47 @@ composite computes Tourlakis 2018 §0.1.0.34, p. 14's
               exact ERMor1.interp_natUnpairFst n
         rw [hctx]
         exact ih
+
+namespace PolyBound
+
+/-- PolyBound builder for `tuplePack k`.  Cites master
+design §3.1: `tuplePack k v ≤ tuplePackCoef k * (M+1)^(2^k)`. -/
+def ofTuplePack (k : ℕ) :
+    PolyBound (tuplePack k) where
+  degree      := 2 ^ k
+  coefficient := Nat.tuplePackCoef k
+  constant    := 0
+  bounds      := fun ctx => by
+    rw [interp_tuplePack]
+    simpa using Nat.tuplePack_le k ctx
+
+/-- PolyBound builder for `tupleAt k i`.  Linear bound
+from `Nat.tupleAt_le` (single-arity context); master
+design §3.1. -/
+def ofTupleAt (k : ℕ) (i : Fin (k + 1)) :
+    PolyBound (tupleAt k i) where
+  degree      := 1
+  coefficient := 1
+  constant    := 0
+  bounds      := fun ctx => by
+    have hctx : ctx = ![ctx 0] := by
+      funext x
+      match x with
+      | ⟨0, _⟩ => rfl
+    have hinterp :
+        (tupleAt k i).interp ctx
+          = Nat.tupleAt k (ctx 0) i := by
+      conv_lhs => rw [hctx]
+      exact interp_tupleAt k i (ctx 0)
+    rw [hinterp]
+    simp only [pow_one, one_mul, Nat.add_zero]
+    have h := Nat.tupleAt_le k (ctx 0) i
+    have hsup :
+        ctx 0 ≤ (Finset.univ : Finset (Fin 1)).sup ctx :=
+      Finset.le_sup (f := ctx) (Finset.mem_univ 0)
+    omega
+
+end PolyBound
 
 end ERMor1
 end GebLean
