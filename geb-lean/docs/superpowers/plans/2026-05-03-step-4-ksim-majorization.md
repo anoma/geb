@@ -678,31 +678,22 @@ private theorem tower_add_offset_le (b x d : ℕ) :
   | zero => simp [tower_zero]
   | succ b ih =>
       change 2 ^ tower b x + d ≤ 2 ^ tower b (x + d)
+      have h_pow_ge : d + 1 ≤ 2 ^ d := by
+        have := Nat.lt_two_pow_self (n := d)
+        omega
+      have h_pos : 1 ≤ 2 ^ tower b x :=
+        Nat.one_le_pow _ _ (by omega)
+      have h_dle : d ≤ 2 ^ tower b x * d :=
+        Nat.le_mul_of_pos_left _ h_pos
       have h_mul : 2 ^ tower b x + d
                      ≤ 2 ^ tower b x * 2 ^ d := by
-        rcases Nat.eq_zero_or_pos d with hd | hd
-        · subst hd; simp
-        · have h_pow_ge : 2 ^ d ≥ d + 1 := by
-            have := Nat.lt_two_pow_self (n := d)
-            omega
-          have h_pos : 1 ≤ 2 ^ tower b x :=
-            Nat.one_le_pow _ _ (by omega)
-          have : 2 ^ tower b x + d
-                   ≤ 2 ^ tower b x * (d + 1) := by
-            have := Nat.mul_le_mul_left
-                      (2 ^ tower b x)
-                      (show 1 + d ≤ d + 1 from by omega)
-            calc 2 ^ tower b x + d
-                ≤ 2 ^ tower b x * 1 + 2 ^ tower b x * d := by
-                  have := h_pos
-                  nlinarith
-              _ = 2 ^ tower b x * (1 + d) := by ring
-              _ ≤ 2 ^ tower b x * (d + 1) := by
-                  exact Nat.mul_le_mul_left _ (by omega)
-          calc 2 ^ tower b x + d
-              ≤ 2 ^ tower b x * (d + 1) := this
-            _ ≤ 2 ^ tower b x * 2 ^ d := by
-                exact Nat.mul_le_mul_left _ h_pow_ge
+        calc 2 ^ tower b x + d
+            ≤ 2 ^ tower b x + 2 ^ tower b x * d :=
+              Nat.add_le_add_left h_dle _
+          _ = 2 ^ tower b x * (1 + d) := by ring
+          _ ≤ 2 ^ tower b x * 2 ^ d :=
+              Nat.mul_le_mul_left _
+                (by omega : 1 + d ≤ 2 ^ d)
       calc 2 ^ tower b x + d
           ≤ 2 ^ tower b x * 2 ^ d := h_mul
         _ = 2 ^ (tower b x + d) := by rw [← Nat.pow_add]
@@ -811,17 +802,15 @@ theorem linearBound_le_A_one_iter (c d : ℕ) :
           Nat.pow_le_pow_right (by omega) (by omega)
   have h_pow_pos : 1 ≤ 2 ^ (r + 1) :=
     Nat.one_le_pow _ _ (by omega)
-  show c * x + d ≤ 2 ^ r * (![x] (0 : Fin 1))
-                    + (2 ^ (r + 1) - 2)
   simp only [Matrix.cons_val_zero]
   have h_mul : c * x ≤ 2 ^ r * x :=
     Nat.mul_le_mul_right _ h_c
   omega
 ```
 
-(Tactic shape; the implementer adjusts simp / `show` /
-`change` based on the exact `(A_one_iter r).interp ![x]`
-unfolding.  Critical sub-lemmas: `Nat.lt_pow_succ_log_self`
+(Tactic shape; the implementer adjusts simp / `change`
+based on the exact `(A_one_iter r).interp ![x]`
+unfolding.  Required sub-lemmas: `Nat.lt_pow_succ_log_self`
 gives `n < 2 ^ (Nat.log 2 n + 1)` for `n > 0`; combined
 with `c + 1 ≥ 1` and `d + 2 ≥ 2`.)
 
@@ -928,18 +917,14 @@ theorem two_pow_succ_mul_succ_le_tower_two (k x : ℕ) :
     _ = 2 ^ (k + x + 2) := h_step2
     _ ≤ 2 ^ (2 ^ (x + k + 2)) := h_step4
     _ = tower 2 (x + k + 2) := by
-        change 2 ^ (2 ^ (x + k + 2))
-                 = 2 ^ tower 1 (x + k + 2)
-        rw [tower_succ]
-        change 2 ^ (2 ^ (x + k + 2))
-                 = 2 ^ (2 ^ tower 0 (x + k + 2))
-        rw [tower_zero]
+        simp only [tower_succ, tower_zero]
 ```
 
-(The final `tower 2` unfolding may simplify with
-`change`/`rfl` or the `tower_succ`/`tower_zero` simp lemmas;
-the implementer adjusts based on what builds.  Master
-design's chain is preserved up to commutativity.)
+The final tower equality is closed by the rfl-simp
+lemmas `tower_succ` and `tower_zero` from `Tower.lean`.
+If `simp only [...]` does not close it, fall back to
+`rfl` (since `tower 2 y = 2 ^ tower 1 y = 2 ^ (2 ^ y)`
+unfolds definitionally).
 
 - [ ] **Step 11.2: Build and commit**
 
@@ -1038,8 +1023,12 @@ theorem A_one_iter_linear_le_A_two_iter_two
     A_one_iter_le_two_pow_succ (r_H + m * r_G) m
   have h_int :
       r_H + m * r_G + 1 ≤ (r_H + r_G + 1) * (m + 1) := by
-    nlinarith [Nat.zero_le r_H, Nat.zero_le r_G,
-               Nat.zero_le m]
+    have h_expand :
+        (r_H + r_G + 1) * (m + 1) =
+          r_H * m + r_H + m * r_G + r_G + m + 1 := by
+      ring
+    rw [h_expand]
+    omega
   have h_step_b :
       2 ^ (r_H + m * r_G + 1) * (m + 1)
         ≤ 2 ^ ((r_H + r_G + 1) * (m + 1)) := by
@@ -1087,12 +1076,7 @@ theorem A_one_iter_linear_le_A_two_iter_two
   have h_tower :
       2 ^ (2 ^ (m + r_H + r_G + 2))
         = tower 2 (m + r_H + r_G + 2) := by
-    change 2 ^ (2 ^ (m + r_H + r_G + 2))
-             = 2 ^ tower 1 (m + r_H + r_G + 2)
-    rw [tower_succ]
-    change 2 ^ (2 ^ (m + r_H + r_G + 2))
-             = 2 ^ (2 ^ tower 0 (m + r_H + r_G + 2))
-    rw [tower_zero]
+    simp only [tower_succ, tower_zero]
   calc (ERMor1.A_one_iter (r_H + m * r_G)).interp ![m]
       ≤ 2 ^ (r_H + m * r_G + 1) * (m + 1) := h_step_a
     _ ≤ 2 ^ ((r_H + r_G + 1) * (m + 1)) := h_step_b
@@ -1130,7 +1114,7 @@ Parametric cross-family bound matching master design lines
 (as r_H + m * r_G), the result fits inside A_2^2 with
 constant tower height and additive offset r_H + r_G + 2.
 This is the load-bearing arithmetic that closes the
-level-2 simrec case where the simple
+level-2 simrec case where the unparametric
 A_one_iter_le_A_two_iter_two corollary fails to absorb
 the m-dependent exponent."
 ```
@@ -1158,32 +1142,40 @@ theorem A_one_iter_compose (a b x : ℕ) :
   rw [ERMor1.interp_A_one_iter, ERMor1.interp_A_one_iter,
       ERMor1.interp_A_one_iter]
   simp only [Matrix.cons_val_zero]
-  have h_pow_add : 2 ^ (a + b) = 2 ^ a * 2 ^ b := by
-    rw [Nat.pow_add]
-  have h_pow_succ_a : 2 ^ (a + 1) = 2 * 2 ^ a := by
-    rw [Nat.pow_succ]; ring
+  -- Explicitly substitute every 2^expr that omega cannot
+  -- reason about (omega treats opaque 2^a and 2^b as
+  -- atomic; products like 2^a * 2^b need the pow_add
+  -- bridge first).
+  have h_pow_add : 2 ^ (a + b) = 2 ^ a * 2 ^ b :=
+    Nat.pow_add 2 a b
   have h_pow_succ_b : 2 ^ (b + 1) = 2 * 2 ^ b := by
     rw [Nat.pow_succ]; ring
-  have h_pow_succ_ab : 2 ^ (a + b + 1) = 2 * 2 ^ (a + b) := by
-    rw [Nat.pow_succ]; ring
+  have h_pow_succ_ab :
+      2 ^ (a + b + 1) = 2 * (2 ^ a * 2 ^ b) := by
+    rw [Nat.pow_succ, h_pow_add]; ring
   have h_pow_pos_a : 1 ≤ 2 ^ a :=
     Nat.one_le_pow _ _ (by omega)
   have h_pow_pos_b : 1 ≤ 2 ^ b :=
     Nat.one_le_pow _ _ (by omega)
-  have h_pow_pos_ab : 1 ≤ 2 ^ (a + b) :=
-    Nat.one_le_pow _ _ (by omega)
+  rw [h_pow_add, h_pow_succ_b, h_pow_succ_ab]
+  -- After these rewrites, both sides become Nat
+  -- expressions in `2^a`, `2^b`, `2^(a+1)`, `x`, and
+  -- omega closes the truncating-subtraction equality.
   ring_nf
-  -- residual: a Nat-linear identity in 2^a, 2^b, 2^(a+b),
-  -- 2^(a+1), 2^(b+1), 2^(a+b+1), x.  After substituting
-  -- via h_pow_add etc, omega closes.
+  have h_pow_succ_a : 2 ^ (a + 1) = 2 * 2 ^ a := by
+    rw [Nat.pow_succ]; ring
+  rw [h_pow_succ_a]
+  ring_nf
   omega
 ```
 
-(Tactic shape; if `ring_nf` + `omega` fail, the implementer
-falls back to explicit `calc` chain unfolding both sides
-to `2^a · 2^b · x + ...`.  Both sides are equal in `ℤ`; in
-`ℕ` care needed for the subtraction-truncation argument
-via the `1 ≤ 2^*` positivity hypotheses.)
+If `ring_nf; omega` fails to close after these rewrites,
+the fallback is explicit `Nat.left_distrib` /
+`Nat.mul_assoc` rewrites + `omega`.  The point of the
+extensive `have`-chain is that `omega` treats `2^a` and
+`2^b` as atoms unless given equations linking them; the
+`h_pow_add` rewrite collapses `2^(a+b)` into `2^a * 2^b`
+so the only remaining atoms are `2^a`, `2^b`, `x`.
 
 - [ ] **Step 14.2: Add `self_le_A_one_iter`**
 
@@ -1374,88 +1366,82 @@ theorem KMor1.simrecVec_le_A_one_iter
 ```lean
   | zero =>
       intro j
-      simp only [KMor1.simrecVec, Nat.zero_mul,
-        Nat.add_zero]
-      have h_zero_max : max 0 (vMax params) = vMax params :=
-        Nat.zero_max _
+      rw [KMor1.simrecVec_zero]
+      simp only [Nat.zero_mul, Nat.add_zero]
+      have h_zero_max : max 0 (vMax params) = vMax params := by
+        omega
       rw [h_zero_max]
       exact hbase j params
 ```
 
+Use the existing `KMor1.simrecVec_zero` rfl-simp lemma
+(`LawvereKSimInterp.lean` line 179) rather than unfolding
+`simrecVec` directly, and close the `max 0 _ = _` step
+with `omega` instead of relying on a specific name.
+
 - [ ] **Step 16.3: Prove the step case (`n + 1`)**
 
 The succ case follows master design lines 999–1007.  Build
-up via several `have` blocks:
+up via several `have` blocks.  No `sorry` is permitted in
+the committed code; the placeholder below uses Lean's
+`_` underscore (which yields a typed "unsolved goals"
+error) only to scaffold the proof — the implementer fills
+each `_` in this same task before committing.
 
 ```lean
   | succ n ih =>
       intro j
-      simp only [KMor1.simrecVec]
-      -- The step computes (g_fam j).interp at the
-      -- concatenated context (counter, params, prev-slots).
-      set stepCtx :
-          Fin (a + 1 + (k + 1)) → ℕ :=
-        fun idx =>
-          if h₁ : idx.val < a + 1 then
-            if _ : idx.val = 0 then n
-            else params ⟨idx.val - 1, by omega⟩
-          else
-            KMor1.simrecVec h_fam g_fam params n
-              ⟨idx.val - (a + 1), by omega⟩
-        with hstepCtx
-      -- IH bounds the prev-slots; counter and params
-      -- bounded by max n (vMax params).
+      simp only [KMor1.simrecVec_succ]
+      -- Skip the explicit `stepCtx` binding; work
+      -- directly on the dite-shaped context that
+      -- simrecVec_succ leaves in the goal.
       have h_prev_le_M :
           ∀ j',
             KMor1.simrecVec h_fam g_fam params n j'
               ≤ (ERMor1.A_one_iter (r_H + n * r_G)).interp
                   ![max n (vMax params)] := ih
-      -- Set M := max n (vMax params).
       set M := max n (vMax params) with hM
-      have h_iterate_M :
-          (ERMor1.A_one_iter (r_H + n * r_G)).interp ![M]
-            = M.succ.pred + 0 := by sorry
-      -- (placeholder: iterate value, not actually needed
-      -- as a separate `have` — the bound goes through ih
-      -- directly)
-      -- Bound vMax stepCtx by an A_1^{r_H + n·r_G} of M.
+      -- Bound vMax of the step context by an
+      -- A_1^{r_H + n·r_G} of M.
       have h_stepCtx_bound :
-          vMax stepCtx
+          vMax (fun idx : Fin (a + 1 + (k + 1)) =>
+                  if h₁ : idx.val < a + 1 then
+                    if _ : idx.val = 0 then n
+                    else params ⟨idx.val - 1, by omega⟩
+                  else
+                    KMor1.simrecVec h_fam g_fam params n
+                      ⟨idx.val - (a + 1), by omega⟩)
             ≤ (ERMor1.A_one_iter (r_H + n * r_G)).interp
                 ![M] := by
         apply vMax_le_of_pointwise
         intro idx
-        unfold_let stepCtx
         by_cases h₁ : idx.val < a + 1
         · simp only [h₁, dite_true]
           by_cases h₂ : idx.val = 0
           · simp only [h₂, dite_true]
-            have : n ≤ M := by exact le_max_left _ _
-            exact le_trans this
+            have h_n_le_M : n ≤ M := le_max_left _ _
+            exact le_trans h_n_le_M
               (self_le_A_one_iter _ _)
           · simp only [h₂, dite_false]
-            have : params ⟨idx.val - 1, by omega⟩
-                     ≤ vMax params :=
+            have h_p : params ⟨idx.val - 1, by omega⟩
+                         ≤ vMax params :=
               vMax_apply_le _ _
-            have : params ⟨idx.val - 1, by omega⟩ ≤ M :=
-              le_trans this (le_max_right _ _)
-            exact le_trans this
+            have h_p_M : params ⟨idx.val - 1, by omega⟩
+                           ≤ M :=
+              le_trans h_p (le_max_right _ _)
+            exact le_trans h_p_M
               (self_le_A_one_iter _ _)
         · simp only [h₁, dite_false]
           exact h_prev_le_M _
-      -- Apply hstep at j: (g_fam j).interp stepCtx
-      -- ≤ A_1^{r_G}(vMax stepCtx).
-      have h_apply_step := hstep j stepCtx
-      -- Compose: (g_fam j).interp stepCtx
-      -- ≤ A_1^{r_G}(vMax stepCtx)
-      -- ≤ A_1^{r_G}(A_1^{r_H + n·r_G}(M))
-      -- = A_1^{r_G + (r_H + n·r_G)}(M)
-      -- by A_one_iter_mono on the input + A_one_iter_compose.
-      sorry
+      _
 ```
 
-Replace each `sorry`/`_` with the actual proof body.  The
-key chain after `h_apply_step`:
+The trailing `_` is the residual goal after the
+`h_stepCtx_bound` / `h_prev_le_M` setup — closed by the
+chain below.  Replace the `_` with the actual proof
+body in this same task before committing.
+
+The key chain after `h_apply_step`:
 
 ```text
 (g_fam j).interp stepCtx
@@ -1615,20 +1601,23 @@ structural-recursion shape."
 
 ---
 
-## Task 18 — `KMor1.majorize_by_A_two_iter` (atomic + raise cases)
+## Task 18 — `KMor1.majorize_by_A_two_iter` (full proof, all cases)
 
 **Files:**
 
 - Modify: `GebLean/LawvereKSimMajorization.lean` (append
   inside `namespace GebLean`)
 
-The level-≤2 dominance theorem.  Build up by structural
-induction on `f`; this task lands the atomic cases
-(`zero`, `succ`, `proj`) and the `raise` case in a single
-`match`-skeleton with `comp` and `simrec` cases done in
-Task 19.
+The level-≤2 dominance theorem.  Tasks 18 and 19 are merged
+into a single task to keep each commit green: theorem-by-
+pattern-match requires every constructor case to be filled
+before the file builds, so splitting atomic and raise
+into one task with comp and simrec into another would
+leave the intermediate state with "unsolved goals" build
+errors.  This combined task lands all five branches in
+one commit.
 
-- [ ] **Step 18.1: State `majorize_by_A_two_iter` with full skeleton**
+- [ ] **Step 18.1: State `majorize_by_A_two_iter` with all cases**
 
 ```lean
 /-- Level-≤2 majorization (Tourlakis 2018 §0.1.0.10).
@@ -1673,12 +1662,7 @@ theorem KMor1.majorize_by_A_two_iter :
           f.interp v ≤
             (ERMor1.A_one_iter p.1).interp ![vMax v + p.2] :=
         KMor1.majorize_by_A_one_iter f hf v
-      have h_p2_zero : p.2 = 0 := by
-        unfold KMor1.majorize_one at hp
-        simp only at hp
-        exact congrArg Prod.snd hp.symm |>.trans rfl
-        -- (or simply `rfl` if majorize_one's Prod
-        -- definitional unfolding goes through)
+      have h_p2_zero : p.2 = 0 := rfl
       rw [h_p2_zero, Nat.add_zero] at h_dom_one
       have h_cross :
           (ERMor1.A_one_iter p.1).interp ![vMax v]
@@ -1689,48 +1673,6 @@ theorem KMor1.majorize_by_A_two_iter :
           vMax v + p.1 + 2 = vMax v + (p.1 + 2) := by ring
       rw [h_input_eq] at h_cross
       exact le_trans h_dom_one h_cross
-  | _, .comp f gs,    h, v => sorry  -- Task 19
-  | _, .simrec _ h_fam g_fam, hyp, v => sorry  -- Task 19
-```
-
-(The `sorry` placeholders in the `comp` and `simrec`
-cases are dropped in Task 19.  Lean's pattern-completion
-checker will complain about missing cases until both are
-filled, so this task does NOT yet build cleanly — Task
-18 ends in a temporarily broken state, and Task 19 closes
-it.)
-
-Alternative: use `_` instead of `sorry` so the build
-fails with "unsolved goals" (which is the expected state
-after Task 18) — Lean's error messages remain accurate
-about what's left.
-
-- [ ] **Step 18.2: Build (expecting "unsolved goals" on comp/simrec)**
-
-```bash
-rm -f .lake/build/lib/lean/GebLean/LawvereKSimMajorization.olean
-lake build GebLean.LawvereKSimMajorization 2>&1 | tail -10
-```
-
-Expected: build fails with "unsolved goals" on the `comp`
-and `simrec` branches; no other errors or warnings.  This
-locks in the atomic / raise proof structure before
-moving to the harder cases.
-
-DO NOT commit yet — Task 19 closes the remaining cases.
-
----
-
-## Task 19 — `KMor1.majorize_by_A_two_iter` (comp + simrec cases)
-
-**Files:**
-
-- Modify: `GebLean/LawvereKSimMajorization.lean`
-  (replace the two `_` placeholders from Task 18)
-
-- [ ] **Step 19.1: Replace the `comp` placeholder**
-
-```lean
   | _, .comp f gs,    h, v => by
       have hf : f.level ≤ 2 := by
         unfold KMor1.level at h
@@ -1810,7 +1752,9 @@ DO NOT commit yet — Task 19 closes the remaining cases.
             congr 1; ring
 ```
 
-- [ ] **Step 19.2: Replace the `simrec` placeholder**
+Continue the same `match` definition with the simrec case
+appended below the comp case (all five cases are part of
+the single theorem definition started in Step 18.1):
 
 ```lean
   | _, .simrec i h_fam g_fam, hyp, v => by
@@ -1833,6 +1777,12 @@ DO NOT commit yet — Task 19 closes the remaining cases.
             (f := fun l => (g_fam l).level)
             (Finset.mem_univ j)) this
       simp only [KMor1.majorize, KMor1.interp_simrec]
+      -- KMor1.interp_simrec leaves the goal with
+      -- (fun j => v (Fin.succ j)) where simrecVec_le's
+      -- params slot expects Fin.tail v.  These are
+      -- definitionally equal — make the rewrite explicit.
+      change KMor1.simrecVec h_fam g_fam (Fin.tail v) (v 0) i
+               ≤ _
       set r_H := Fin.foldr _ (fun j acc =>
                    max acc
                      (KMor1.majorize_one (h_fam j) (hh j)).1) 0
@@ -1853,8 +1803,7 @@ DO NOT commit yet — Task 19 closes the remaining cases.
             (KMor1.majorize_one (h_fam j) (hh j)).1 ≤ r_H :=
           Fin.foldr_max_ge _ j
         have h_offset_zero :
-            (KMor1.majorize_one (h_fam j) (hh j)).2 = 0 := by
-          unfold KMor1.majorize_one
+            (KMor1.majorize_one (h_fam j) (hh j)).2 = 0 :=
           rfl
         rw [h_offset_zero, Nat.add_zero] at h_dom
         exact le_trans h_dom
@@ -1869,8 +1818,7 @@ DO NOT commit yet — Task 19 closes the remaining cases.
             (KMor1.majorize_one (g_fam j) (hg j)).1 ≤ r_G :=
           Fin.foldr_max_ge _ j
         have h_offset_zero :
-            (KMor1.majorize_one (g_fam j) (hg j)).2 = 0 := by
-          unfold KMor1.majorize_one
+            (KMor1.majorize_one (g_fam j) (hg j)).2 = 0 :=
           rfl
         rw [h_offset_zero, Nat.add_zero] at h_dom
         exact le_trans h_dom
@@ -1919,7 +1867,7 @@ DO NOT commit yet — Task 19 closes the remaining cases.
             congr 1; ring
 ```
 
-- [ ] **Step 19.3: Build and commit**
+- [ ] **Step 18.2: Build and commit**
 
 ```bash
 rm -f .lake/build/lib/lean/GebLean/LawvereKSimMajorization.olean
@@ -1930,7 +1878,7 @@ Expected: clean build, no warnings, no `sorry`.
 
 ```bash
 git add GebLean/LawvereKSimMajorization.lean
-git commit -m "Step 4 tasks 18+19: KMor1.majorize_by_A_two_iter
+git commit -m "Step 4 task 18: KMor1.majorize_by_A_two_iter
 
 Level-≤2 dominance theorem via structural induction.
 - Atomic cases (zero, succ, proj): self_le_tower at r=2.
