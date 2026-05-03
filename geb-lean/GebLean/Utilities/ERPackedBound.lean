@@ -66,5 +66,49 @@ Master design §3.2. -/
     ERMor1.interp_expER, ERMor1.interp_addN,
     ERMor1.interp_natN]
 
+/-- If each component of a `(k + 1)`-vector `v` is
+bounded by `componentBound.interp ctx`, then
+`Nat.tuplePack k v` is bounded by
+`(tuplePackedBound k componentBound).interp ctx`.  This
+is the per-iteration bound feeding into
+`boundedRec_eq_natRec_of_bounded`'s dominance hypothesis
+inside `simultaneousBoundedRec_interp_correct`.  Master
+design §3.2. -/
+theorem tuplePackedBound_dominates
+    (k : ℕ) {a : ℕ} (componentBound : ERMor1 a)
+    (v : Fin (k + 1) → ℕ) (ctx : Fin a → ℕ)
+    (h_components :
+        ∀ j, v j ≤ componentBound.interp ctx) :
+    Nat.tuplePack k v
+      ≤ (ERMor1.tuplePackedBound k componentBound).interp
+          ctx := by
+  rw [ERMor1.interp_tuplePackedBound]
+  have h_pack :
+      Nat.tuplePack k v
+        ≤ Nat.tuplePackCoef k *
+            ((Finset.univ : Finset (Fin (k + 1))).sup v + 1)
+              ^ (2 ^ k) :=
+    Nat.tuplePack_le k v
+  have h_sup :
+      (Finset.univ : Finset (Fin (k + 1))).sup v
+        ≤ componentBound.interp ctx := by
+    apply Finset.sup_le
+    intro j _
+    exact h_components j
+  have h_pow_le :
+      ((Finset.univ : Finset (Fin (k + 1))).sup v + 1)
+            ^ (2 ^ k)
+        ≤ (componentBound.interp ctx + 1) ^ (2 ^ k) := by
+    apply Nat.pow_le_pow_left
+    omega
+  calc Nat.tuplePack k v
+      ≤ Nat.tuplePackCoef k *
+          ((Finset.univ : Finset (Fin (k + 1))).sup v + 1)
+            ^ (2 ^ k) := h_pack
+    _ ≤ Nat.tuplePackCoef k *
+          (componentBound.interp ctx + 1) ^ (2 ^ k) := by
+        apply Nat.mul_le_mul_left
+        exact h_pow_le
+
 end ERMor1
 end GebLean
