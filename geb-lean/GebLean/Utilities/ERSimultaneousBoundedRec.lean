@@ -428,5 +428,64 @@ theorem simultaneousBoundedRec_interp_correct
         k a h g componentBound n x h_dominates h_mono]
   exact Nat.tupleAt_tuplePack k _ i
 
+namespace PolyBound
+
+/-- PolyBound builder for the i-th component of
+`simultaneousBoundedRec`.  Each output component is
+bounded by the packed state's value (via
+`Nat.tupleAt_le`), which is itself bounded by
+`tuplePackedBound k componentBound` (via
+`interp_boundedRec_le_bound`).  The PolyBound shape
+inherits from `ofTuplePackedBound`:
+
+- `degree = pb_bound.degree * 2^k`
+- `coefficient = tuplePackCoef k *
+                   (pb_bound.coefficient + pb_bound.constant + 1)^(2^k)`
+- `constant = 0`
+
+Master design §3.2; §15.13 punch-list claim
+("no `3^E`-style coefficient leaks out") satisfied:
+the coefficient depends only on `(k, pb_bound)`, not on
+the source K^sim term's structure. -/
+def ofSimultaneousBoundedRec (k a : ℕ)
+    {h : Fin (k + 1) → ERMor1 a}
+    {g : Fin (k + 1) → ERMor1 (a + 1 + (k + 1))}
+    {componentBound : ERMor1 (a + 1)}
+    (pb_bound : PolyBound componentBound)
+    (i : Fin (k + 1)) :
+    PolyBound
+      ((ERMor1.simultaneousBoundedRec k a h g
+          componentBound) i)
+    where
+  degree :=
+    (PolyBound.ofTuplePackedBound k pb_bound).degree
+  coefficient :=
+    (PolyBound.ofTuplePackedBound k pb_bound).coefficient
+  constant :=
+    (PolyBound.ofTuplePackedBound k pb_bound).constant
+  bounds := fun ctx => by
+    have h_component :
+        ((ERMor1.simultaneousBoundedRec k a h g
+              componentBound) i).interp ctx
+          ≤ (ERMor1.boundedRec
+                (ERMor1.packedBase k a h)
+                (ERMor1.packedStep k a g)
+                (ERMor1.tuplePackedBound k
+                  componentBound)).interp ctx := by
+      simp only [ERMor1.simultaneousBoundedRec,
+        ERMor1.interp_comp, ERMor1.interp_tupleAt,
+        Matrix.cons_val_zero]
+      exact Nat.tupleAt_le k _ i
+    have h_bound :=
+      ERMor1.interp_boundedRec_le_bound
+        (ERMor1.packedBase k a h)
+        (ERMor1.packedStep k a g)
+        (ERMor1.tuplePackedBound k componentBound) ctx
+    have h_poly :=
+      (PolyBound.ofTuplePackedBound k pb_bound).bounds ctx
+    exact h_component.trans (h_bound.trans h_poly)
+
+end PolyBound
+
 end ERMor1
 end GebLean
