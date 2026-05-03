@@ -146,6 +146,7 @@ import GebLean.Utilities.Elements
 import GebLean.Utilities.EndsAndCoends
 import GebLean.Utilities.Equalities
 import GebLean.Utilities.ERArith
+import GebLean.Utilities.ERPackedBound
 import GebLean.Utilities.ERTreeArith
 import GebLean.Utilities.ERTupling
 import GebLean.Utilities.Families
