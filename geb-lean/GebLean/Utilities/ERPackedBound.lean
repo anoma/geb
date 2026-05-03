@@ -110,5 +110,91 @@ theorem tuplePackedBound_dominates
         apply Nat.mul_le_mul_left
         exact h_pow_le
 
+namespace PolyBound
+
+/-- PolyBound for `tuplePackedBound k componentBound`.
+Given `pb : PolyBound componentBound`, produces:
+
+- `degree = pb.degree * 2 ^ k`
+- `coefficient = tuplePackCoef k *
+                   (pb.coefficient + pb.constant + 1) ^ (2 ^ k)`
+- `constant = 0`
+
+Derivation: substituting `pb`'s formula
+`componentBound.interp ctx ≤
+  pb.coefficient * X ^ pb.degree + pb.constant`
+(where `X = maxCtx ctx + 1`) into
+`tuplePackCoef k * (componentBound.interp ctx + 1) ^ (2 ^ k)`
+and applying
+`(A * X ^ d + B + 1) ≤ (A + B + 1) * X ^ d` for `X ≥ 1`,
+we get the formula above.  Master design §3.2; §15.13
+punch-list. -/
+def ofTuplePackedBound (k : ℕ) {a : ℕ}
+    {componentBound : ERMor1 a}
+    (pb : PolyBound componentBound) :
+    PolyBound (ERMor1.tuplePackedBound k componentBound) where
+  degree := pb.degree * 2 ^ k
+  coefficient := Nat.tuplePackCoef k *
+    (pb.coefficient + pb.constant + 1) ^ (2 ^ k)
+  constant := 0
+  bounds := fun ctx => by
+    rw [ERMor1.interp_tuplePackedBound]
+    set M := (Finset.univ : Finset (Fin a)).sup ctx with hM
+    have h_cb := pb.bounds ctx
+    set X := M + 1 with hX
+    have hX_pos : 1 ≤ X := by omega
+    have h_cb_step :
+        componentBound.interp ctx + 1
+          ≤ (pb.coefficient + pb.constant + 1)
+              * X ^ pb.degree := by
+      have hpow_pos : 1 ≤ X ^ pb.degree :=
+        Nat.one_le_pow _ _ hX_pos
+      have h_const_le :
+          pb.constant ≤ pb.constant * X ^ pb.degree :=
+        Nat.le_mul_of_pos_right _ hpow_pos
+      calc componentBound.interp ctx + 1
+          ≤ pb.coefficient * X ^ pb.degree
+              + pb.constant + 1 := by
+            have := h_cb
+            omega
+        _ ≤ pb.coefficient * X ^ pb.degree
+              + pb.constant * X ^ pb.degree
+              + X ^ pb.degree := by
+            have := h_const_le
+            have := hpow_pos
+            omega
+        _ = (pb.coefficient + pb.constant + 1)
+              * X ^ pb.degree := by ring
+    have h_pow :
+        (componentBound.interp ctx + 1) ^ (2 ^ k)
+          ≤ ((pb.coefficient + pb.constant + 1)
+                * X ^ pb.degree) ^ (2 ^ k) :=
+      Nat.pow_le_pow_left h_cb_step (2 ^ k)
+    have h_expand :
+        ((pb.coefficient + pb.constant + 1)
+              * X ^ pb.degree) ^ (2 ^ k)
+          = (pb.coefficient + pb.constant + 1) ^ (2 ^ k)
+              * X ^ (pb.degree * 2 ^ k) := by
+      rw [Nat.mul_pow, ← pow_mul]
+    calc Nat.tuplePackCoef k
+          * (componentBound.interp ctx + 1) ^ (2 ^ k)
+        ≤ Nat.tuplePackCoef k
+            * ((pb.coefficient + pb.constant + 1)
+                * X ^ pb.degree) ^ (2 ^ k) :=
+          Nat.mul_le_mul_left _ h_pow
+      _ = Nat.tuplePackCoef k
+            * ((pb.coefficient + pb.constant + 1) ^ (2 ^ k)
+                * X ^ (pb.degree * 2 ^ k)) := by
+          rw [h_expand]
+      _ = Nat.tuplePackCoef k
+            * (pb.coefficient + pb.constant + 1) ^ (2 ^ k)
+            * (M + 1) ^ (pb.degree * 2 ^ k) := by
+          rw [hX]; ring
+      _ ≤ Nat.tuplePackCoef k
+            * (pb.coefficient + pb.constant + 1) ^ (2 ^ k)
+            * (M + 1) ^ (pb.degree * 2 ^ k) + 0 := by omega
+
+end PolyBound
+
 end ERMor1
 end GebLean
