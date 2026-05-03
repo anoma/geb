@@ -151,6 +151,33 @@ page 22, `A_2^r = tower r x`).  Routes through the existing
   unfold A_two_iter
   exact ERMor1.interp_towerER r ctx
 
+namespace PolyBound
+
+/-- Polynomial bound for `A_one`: linear with leading
+coefficient `2` and zero constant.
+
+The bound shape `2 * (sup ctx + 1)^1 + 0` evaluates to
+`2 * (sup + 1) = 2 * sup + 2 ≥ 2 * (ctx 0) + 2`, since
+`ctx 0 ≤ sup ctx`.  Master design §3.3 amended
+polynomial-bound certification subsection. -/
+def ofA_one : PolyBound A_one where
+  degree      := 1
+  coefficient := 2
+  constant    := 0
+  bounds      := fun ctx => by
+    rw [interp_A_one]
+    simp only [pow_one, Nat.add_zero]
+    have h_ctx0_le_sup :
+        ctx 0
+          ≤ (Finset.univ : Finset (Fin 1)).sup ctx :=
+      Finset.le_sup
+        (s := (Finset.univ : Finset (Fin 1)))
+        (f := ctx) (b := (0 : Fin 1))
+        (Finset.mem_univ _)
+    omega
+
+end PolyBound
+
 end ERMor1
 
 end GebLean
