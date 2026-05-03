@@ -25,7 +25,7 @@ imports into a non-alphabetical position.
 
 ## Findings (severity-ordered)
 
-### Finding 1: Wrong "near" anchor for `GebLean.lean` and `GebLeanTests.lean` imports (severity: substantive)
+### Finding 1 (substantive): wrong "near" anchor for the import position
 
 **Location:** Plan §1.2 (lines 201-209) and §9.2 (lines
 708-717).
@@ -71,7 +71,7 @@ line" with "immediately above the existing
 `import GebLean.Utilities.ERArith` line". Same
 substitution in Plan §9.2 with the test counterpart.
 
-### Finding 2: Task 7 proof deviates from the round-4-empirically-verified spec text (severity: minor)
+### Finding 2 (minor): Task 7 proof deviates from the round-4 spec text
 
 **Location:** Plan Task 7 Step 7.1 (lines 538-553).
 
@@ -121,7 +121,7 @@ same `omega` after the `Finset.le_sup` step." Option
 fine if the implementer is allowed to adjust under
 spec §1.3's flexibility clause.
 
-### Finding 3: Task 10.7 cycle-end-review brief under-specifies the criteria (severity: minor)
+### Finding 3 (minor): Task 10.7 cycle-end-review brief under-specifies the criteria
 
 **Location:** Plan §10.7 (lines 898-916).
 
@@ -166,7 +166,7 @@ specific review skill. E.g.:
 > 2026-05-03-step-3-cycle-end-review.md`. Address
 > substantive findings before declaring step 3 done.
 
-### Finding 4: Plan does not list `Utilities/Tower.lean` or `LawvereERPolynomialBound` as `GebLean.lean` import additions, but ERAMajorants imports them directly (severity: minor / cosmetic)
+### Finding 4 (minor / cosmetic): direct imports not in `GebLean.lean`
 
 **Location:** Plan File-structure section (lines 51-71)
 and Task 1.
@@ -204,7 +204,7 @@ is correct. (One-line note in plan §1.2: "Only
 `Utilities.Tower` are reached transitively via the
 existing `LawvereERBoundComputable` line.")
 
-### Finding 5: Step 9.4's `#guard` line for `A_one_iter 2` may be slow due to nested `addN`-via-`mulN`-via-`bsum` expansion (severity: minor / pre-flagged)
+### Finding 5 (minor / pre-flagged): Step 9.4's `A_one_iter 2` `#guard` may be slow
 
 **Location:** Plan Step 9.4 (lines 728-754) and Step
 9.5 (lines 757-769).
@@ -263,8 +263,8 @@ the canonical correctness witness.
 - `PolyBound` structure signature: confirmed at
   `LawvereERPolynomialBound.lean:42-50`. Plan Task
   7's `where ... bounds := ...` shape matches the
-  field signature (`∀ ctx, f.interp ctx ≤ coefficient
-  * (sup + 1) ^ degree + constant`).
+  field signature
+  (`∀ ctx, f.interp ctx ≤ coefficient * (sup + 1) ^ degree + constant`).
 - `addN`, `succ`, `proj`, `comp` arities and
   signatures match what Task 2's construction
   expects.

@@ -149,8 +149,7 @@ Verified.
   8.2, 9.3, 9.5, 10.1 all consistently `rm -f` the
   expected `.olean`.  No drift was introduced.
 
-## Pre-existing under-specification (non-blocking,
-   inherited from spec §10)
+## Pre-existing under-specification (non-blocking; inherited from spec §10)
 
 Spec §10.2 mandates "the test file exists with the
 `#guard`s from §6.1", but Plan §10.3 (line 825-856)
