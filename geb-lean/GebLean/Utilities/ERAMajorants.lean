@@ -81,6 +81,50 @@ def A_one_iter : ℕ → ERMor1 1
   | r + 1 => ERMor1.comp A_one
               (fun _ : Fin 1 => A_one_iter r)
 
+/-- Closed-form interpretation of `A_one_iter`:
+`(A_one_iter r).interp ![x] = 2^r * x + (2^{r+1} − 2)`
+(Tourlakis 2018 page 22, `A_1^r` r-fold composition closed
+form).  Master design §3.3.
+
+Proof outline: induction on `r`.  Base case unfolds
+`A_one_iter 0 = proj 0` and reduces by `omega`.  Successor
+case unfolds one layer of `A_one_iter (r + 1)`, applies the
+`@[simp] interp_A_one` rewrite to collapse the outer
+`A_one`, rewrites by the IH, and closes via `omega` after
+introducing explicit `pow_succ`-derived equalities for
+`2^(r+1)` and `2^(r+2)`, a positivity hypothesis
+`Nat.one_le_pow _ _` for the `Nat`-subtraction guard, and
+a multiplicative bridge
+`2^(r+1) * ctx 0 = 2 * (2^r * ctx 0)` (without which omega
+treats the two `* ctx 0` products as independent atoms;
+see spec §9.6). -/
+@[simp] theorem interp_A_one_iter (r : ℕ)
+    (ctx : Fin 1 → ℕ) :
+    (A_one_iter r).interp ctx
+      = 2 ^ r * (ctx 0) + (2 ^ (r + 1) - 2) := by
+  induction r with
+  | zero =>
+      unfold A_one_iter
+      simp only [ERMor1.interp_proj, pow_zero, one_mul]
+      omega
+  | succ r ih =>
+      unfold A_one_iter
+      simp only [ERMor1.interp_comp, interp_A_one]
+      rw [ih]
+      have h_succ1 : 2 ^ (r + 1) = 2 * 2 ^ r := by
+        rw [pow_succ]; ring
+      have h_succ2 : 2 ^ (r + 2) = 2 * 2 ^ (r + 1) := by
+        rw [pow_succ]; ring
+      have h_pow_ge_two : 2 ≤ 2 ^ (r + 1) := by
+        rw [h_succ1]
+        have h_pow_pos_r : 1 ≤ 2 ^ r :=
+          Nat.one_le_pow _ _ (by omega)
+        omega
+      have h_mul_bridge :
+          2 ^ (r + 1) * ctx 0 = 2 * (2 ^ r * ctx 0) := by
+        rw [h_succ1]; ring
+      omega
+
 end ERMor1
 
 end GebLean
