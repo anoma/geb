@@ -1,4 +1,5 @@
 import GebLean.LawvereERPolynomialBound
+import GebLean.LawvereERQuot
 import GebLean.Utilities.ERArith
 import GebLean.Utilities.Tupling
 
@@ -193,6 +194,59 @@ def ofVec {n m : ℕ} (g : Fin m → ERMor1 n) :
 @[simp] theorem ofVec_apply {n m : ℕ}
     (g : Fin m → ERMor1 n) (i : Fin m) :
     ERMorN.ofVec g i = g i := rfl
+
+/-- Round-trip at the ERMorN-quotient level: first packing,
+then component-wise unpacking, is extensionally equal to
+the identity at arity `(k + 1)`.  Restates
+`Nat.tupleAt_tuplePack` (Tourlakis 2018 §0.1.0.34, p. 14)
+at the morphism-quotient level.  Master design §3.1.
+
+Stated using the explicit setoid relation
+`(erMorNSetoid n m).r` because `erMorNSetoid` is declared
+as a `def` (not `instance`) in `LawvereERQuot.lean`; the
+codebase uses the explicit-setoid form uniformly. -/
+theorem tupleAt_tuplePack (k : ℕ) :
+    (erMorNSetoid (k + 1) (k + 1)).r
+      (ERMorN.comp
+        (ERMorN.lift (ERMor1.tuplePack k))
+        (ERMorN.ofVec
+           (fun i : Fin (k + 1) => ERMor1.tupleAt k i)))
+      (ERMorN.id (k + 1)) := by
+  intro ctx
+  rw [ERMorN.interp_comp, ERMorN.interp_id]
+  funext i
+  change (ERMor1.tupleAt k i).interp
+      (fun _ : Fin 1 => (ERMor1.tuplePack k).interp ctx)
+    = ctx i
+  rw [ERMor1.interp_tupleAt, ERMor1.interp_tuplePack]
+  exact Nat.tupleAt_tuplePack k ctx i
+
+/-- Round-trip in the other direction: first
+component-wise unpacking, then packing, is extensionally
+equal to the identity at arity `1`.  Restates
+`Nat.tuplePack_tupleAt` (Tourlakis 2018 §0.1.0.34, p. 14).
+Master design §3.1. -/
+theorem tuplePack_tupleAt (k : ℕ) :
+    (erMorNSetoid 1 1).r
+      (ERMorN.comp
+        (ERMorN.ofVec
+           (fun i : Fin (k + 1) => ERMor1.tupleAt k i))
+        (ERMorN.lift (ERMor1.tuplePack k)))
+      (ERMorN.id 1) := by
+  intro ctx
+  rw [ERMorN.interp_comp, ERMorN.interp_id]
+  funext i
+  change (ERMor1.tuplePack k).interp
+      (fun j : Fin (k + 1) => (ERMor1.tupleAt k j).interp ctx)
+    = ctx i
+  have hctx :
+      (fun j : Fin (k + 1) => (ERMor1.tupleAt k j).interp ctx)
+        = Nat.tupleAt k (ctx 0) := by
+    funext j
+    rw [ERMor1.interp_tupleAt]
+  rw [hctx, ERMor1.interp_tuplePack, Nat.tuplePack_tupleAt]
+  match i with
+  | ⟨0, _⟩ => rfl
 
 end ERMorN
 
