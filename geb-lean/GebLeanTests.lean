@@ -25,6 +25,7 @@ import GebLeanTests.TestEqualizerCompletion
 import GebLeanTests.TestTreeCalcMeta
 import GebLeanTests.TestTreeCalcPrograms
 import GebLeanTests.TestTreeCalcReduction
+import GebLeanTests.Tupling
 import GebLeanTests.PLang.BTPair
 import GebLeanTests.Utilities.ERArith
 import GebLeanTests.Utilities.ERTreeArith
