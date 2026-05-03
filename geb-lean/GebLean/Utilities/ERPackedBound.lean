@@ -53,5 +53,18 @@ def tuplePackedBound (k : ℕ) {a : ℕ}
                 | ⟨0, _⟩ => componentBound
                 | ⟨1, _⟩ => ERMor1.natN a 1
 
+/-- Interpretation of `tuplePackedBound`:
+`Nat.tuplePackCoef k * (componentBound.interp ctx + 1) ^ (2 ^ k)`.
+Master design §3.2. -/
+@[simp] theorem interp_tuplePackedBound (k : ℕ) {a : ℕ}
+    (componentBound : ERMor1 a) (ctx : Fin a → ℕ) :
+    (ERMor1.tuplePackedBound k componentBound).interp ctx
+      = Nat.tuplePackCoef k *
+          (componentBound.interp ctx + 1) ^ (2 ^ k) := by
+  unfold ERMor1.tuplePackedBound
+  simp only [ERMor1.interp_comp, ERMor1.interp_mulN,
+    ERMor1.interp_expER, ERMor1.interp_addN,
+    ERMor1.interp_natN]
+
 end ERMor1
 end GebLean
