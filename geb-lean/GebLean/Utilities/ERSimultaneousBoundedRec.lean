@@ -184,5 +184,213 @@ theorem packedBound_mono
   have := h_mono m h_m_le_n
   omega
 
+/-- Interp of `packedStepCtx` at each slot of the
+`Fin (a + 1 + (k + 1))`-context.
+
+Outer slot 0 routes to the inner counter (slot 0).
+Outer slots 1..a (parameter indices 0..a-1) route to
+inner slots 2..a+1 (the parameters).  Outer slots
+a+1..a+k+1 (prev indices 0..k) route via `Nat.tupleAt k`
+extraction from inner slot 1 (the packed previous
+state).  Master design §3.2. -/
+theorem interp_packedStepCtx (k a : ℕ)
+    (n prev_packed : ℕ) (x : Fin a → ℕ)
+    (i : Fin (a + 1 + (k + 1))) :
+    (ERMor1.packedStepCtx k a i).interp
+        (Fin.cons n (Fin.cons prev_packed x))
+      = (Fin.append (Fin.cons n x)
+          (Nat.tupleAt k prev_packed)) i := by
+  rcases i with ⟨v, h_v⟩
+  match v, h_v with
+  | 0, _ =>
+      change (ERMor1.proj (k := a + 2) 0).interp _
+        = Fin.append (Fin.cons n x)
+            (Nat.tupleAt k prev_packed) ⟨0, _⟩
+      rw [ERMor1.interp_proj]
+      have h_cast :
+          (⟨0, by omega⟩ : Fin (a + 1 + (k + 1)))
+            = Fin.castAdd (k + 1)
+                (⟨0, by omega⟩ : Fin (a + 1)) := by
+        apply Fin.ext; rfl
+      rw [h_cast, Fin.append_left]
+      rfl
+  | s + 1, h_in =>
+      by_cases h_param : s < a
+      · have h_eq :
+            ERMor1.packedStepCtx k a ⟨s + 1, h_in⟩
+              = ERMor1.proj ⟨s + 2, by omega⟩ := by
+          change (if h_param : s < a then
+                    ERMor1.proj (k := a + 2)
+                      ⟨s + 2, by omega⟩
+                  else
+                    ERMor1.comp
+                      (ERMor1.tupleAt k
+                        ⟨s - a, by omega⟩)
+                      ![ERMor1.proj 1])
+                = ERMor1.proj ⟨s + 2, by omega⟩
+          rw [dif_pos h_param]
+        rw [h_eq, ERMor1.interp_proj]
+        have h_cast :
+            (⟨s + 1, h_in⟩ : Fin (a + 1 + (k + 1)))
+              = Fin.castAdd (k + 1)
+                  (⟨s + 1, by omega⟩ : Fin (a + 1)) := by
+          apply Fin.ext; rfl
+        rw [h_cast, Fin.append_left]
+        have h1 :
+            (⟨s + 2, by omega⟩ : Fin (a + 1 + 1))
+              = Fin.succ
+                  (⟨s + 1, by omega⟩ : Fin (a + 1)) := by
+          apply Fin.ext; rfl
+        have h2 :
+            (⟨s + 1, by omega⟩ : Fin (a + 1))
+              = Fin.succ (⟨s, h_param⟩ : Fin a) := by
+          apply Fin.ext; rfl
+        rw [h1, Fin.cons_succ, h2, Fin.cons_succ,
+          Fin.cons_succ]
+      · push_neg at h_param
+        have h_eq :
+            ERMor1.packedStepCtx k a ⟨s + 1, h_in⟩
+              = ERMor1.comp
+                  (ERMor1.tupleAt k ⟨s - a, by omega⟩)
+                  ![ERMor1.proj 1] := by
+          change (if h_param : s < a then
+                    ERMor1.proj (k := a + 2)
+                      ⟨s + 2, by omega⟩
+                  else
+                    ERMor1.comp
+                      (ERMor1.tupleAt k
+                        ⟨s - a, by omega⟩)
+                      ![ERMor1.proj 1])
+                = ERMor1.comp
+                    (ERMor1.tupleAt k ⟨s - a, by omega⟩)
+                    ![ERMor1.proj 1]
+          rw [dif_neg (Nat.not_lt.mpr h_param)]
+        rw [h_eq, ERMor1.interp_comp,
+          ERMor1.interp_tupleAt]
+        have h_proj1 :
+            (![ERMor1.proj (k := a + 2) 1] 0).interp
+                (Fin.cons n (Fin.cons prev_packed x))
+              = prev_packed := by
+          rfl
+        rw [h_proj1]
+        have h_cast :
+            (⟨s + 1, h_in⟩ : Fin (a + 1 + (k + 1)))
+              = Fin.natAdd (a + 1)
+                  ⟨s - a, by omega⟩ := by
+          apply Fin.ext
+          change s + 1 = (a + 1) + (s - a)
+          omega
+        rw [h_cast, Fin.append_right]
+
+/-- Step case: applying `packedStep` to a packed state
+`prev_packed` (which equals
+`Nat.tuplePack k (simRecVec ... n x)`) yields
+`Nat.tuplePack k (simRecVec ... (n + 1) x)`.  Master
+design §3.2. -/
+theorem packedStep_interp_eq_tuplePack_step
+    (k a : ℕ)
+    (h : Fin (k + 1) → ERMor1 a)
+    (g : Fin (k + 1) → ERMor1 (a + 1 + (k + 1)))
+    (n : ℕ) (x : Fin a → ℕ) :
+    (ERMor1.packedStep k a g).interp
+        (Fin.cons n (Fin.cons
+          (Nat.tuplePack k
+            (Nat.simRecVec k a (fun j' => (h j').interp)
+              (fun j' => (g j').interp) n x))
+          x))
+      = Nat.tuplePack k
+          (Nat.simRecVec k a (fun j' => (h j').interp)
+            (fun j' => (g j').interp) (n + 1) x) := by
+  change (ERMor1.comp (ERMor1.tuplePack k) _).interp _ = _
+  rw [ERMor1.interp_comp, ERMor1.interp_tuplePack]
+  congr 1
+  funext j
+  rw [Nat.simRecVec_succ]
+  rw [ERMor1.interp_comp]
+  congr 1
+  funext i
+  rw [ERMor1.interp_packedStepCtx]
+  congr 1
+  funext j'
+  exact Nat.tupleAt_tuplePack k _ j'
+
+/-- The `Nat.rec`-trace of `(packedBase, packedStep)`
+equals `Nat.tuplePack k (simRecVec ... j x)`.  Proven by
+induction on `j`, dispatching the base case via
+`packedBase_interp_eq_tuplePack_simRecVec_zero` and the
+step case via `packedStep_interp_eq_tuplePack_step`.
+This is an unconditional equation (no dominance
+hypothesis); the `boundedRec`-vs-`Nat.rec` correctness
+input is what consumes the dominance hypothesis at the
+caller.  Master design §3.2. -/
+theorem Nat_rec_packed_eq_tuplePack_simRecVec
+    (k a : ℕ)
+    (h : Fin (k + 1) → ERMor1 a)
+    (g : Fin (k + 1) → ERMor1 (a + 1 + (k + 1)))
+    (j : ℕ) (x : Fin a → ℕ) :
+    Nat.rec ((ERMor1.packedBase k a h).interp x)
+        (fun m prev =>
+          (ERMor1.packedStep k a g).interp
+            (Fin.cons m (Fin.cons prev x))) j
+      = Nat.tuplePack k
+          (Nat.simRecVec k a (fun j' => (h j').interp)
+            (fun j' => (g j').interp) j x) := by
+  induction j with
+  | zero =>
+      exact
+        ERMor1.packedBase_interp_eq_tuplePack_simRecVec_zero
+          k a h g x
+  | succ m ih =>
+      change (ERMor1.packedStep k a g).interp
+          (Fin.cons m (Fin.cons _ x)) = _
+      rw [ih]
+      exact ERMor1.packedStep_interp_eq_tuplePack_step
+        k a h g m x
+
+/-- Main intermediate: the packed `boundedRec` output at
+iteration `n` equals
+`Nat.tuplePack k (Nat.simRecVec ... n x)`, under the
+dominance hypothesis.  Master design §3.2. -/
+theorem packedRec_eq_tuplePack_simRecVec
+    (k a : ℕ)
+    (h : Fin (k + 1) → ERMor1 a)
+    (g : Fin (k + 1) → ERMor1 (a + 1 + (k + 1)))
+    (componentBound : ERMor1 (a + 1))
+    (n : ℕ) (x : Fin a → ℕ)
+    (h_dominates :
+      ∀ (m : ℕ), m ≤ n → ∀ (j : Fin (k + 1)),
+        Nat.simRecVec k a (fun j' => (h j').interp)
+            (fun j' => (g j').interp) m x j
+          ≤ componentBound.interp (Fin.cons m x))
+    (h_mono :
+      ∀ (m : ℕ), m ≤ n →
+        componentBound.interp (Fin.cons m x)
+          ≤ componentBound.interp (Fin.cons n x)) :
+    (ERMor1.boundedRec
+        (ERMor1.packedBase k a h)
+        (ERMor1.packedStep k a g)
+        (ERMor1.tuplePackedBound k componentBound)).interp
+        (Fin.cons n x)
+      = Nat.tuplePack k
+          (Nat.simRecVec k a (fun j' => (h j').interp)
+            (fun j' => (g j').interp) n x) := by
+  rw [ERMor1.boundedRec_eq_natRec_of_bounded
+        (ERMor1.packedBase k a h)
+        (ERMor1.packedStep k a g)
+        (ERMor1.tuplePackedBound k componentBound)
+        n x ?h_dom ?h_mon]
+  · exact ERMor1.Nat_rec_packed_eq_tuplePack_simRecVec
+      k a h g n x
+  case h_dom =>
+    intro j h_j_le_n
+    rw [ERMor1.Nat_rec_packed_eq_tuplePack_simRecVec
+          k a h g j x]
+    exact ERMor1.packedBound_dominates_iter
+      k a h g componentBound n x j h_j_le_n h_dominates
+  case h_mon =>
+    intro j h_j_le_n
+    exact ERMor1.packedBound_mono
+      k a componentBound n x h_mono j h_j_le_n
+
 end ERMor1
 end GebLean
