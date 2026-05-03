@@ -75,4 +75,37 @@ def simRec (k a : ℕ)
           (simRecVec k a h_all g_all n x))
         := rfl
 
+/-- If each base value is dominated by `componentBound`
+at iteration 0, and the step preserves dominance
+inductively, then every component value at every
+iteration up to `n` is bounded.  Internal helper for
+`simultaneousBoundedRec_interp_correct`'s dominance-
+hypothesis discharge.  Master design §3.2. -/
+theorem simRecVec_le_of_dominates
+    (k a : ℕ)
+    (h_all : Fin (k + 1) → (Fin a → ℕ) → ℕ)
+    (g_all : Fin (k + 1) →
+      (Fin (a + 1 + (k + 1)) → ℕ) → ℕ)
+    (componentBound : ℕ → (Fin a → ℕ) → ℕ)
+    (h_base : ∀ j x, h_all j x ≤ componentBound 0 x)
+    (h_step : ∀ n x prev j,
+       (∀ j', prev j' ≤ componentBound n x) →
+       g_all j (Fin.append (Fin.cons n x) prev)
+         ≤ componentBound (n + 1) x)
+    (n : ℕ) :
+    ∀ (x : Fin a → ℕ) (j : Fin (k + 1)),
+      simRecVec k a h_all g_all n x j
+        ≤ componentBound n x := by
+  induction n with
+  | zero =>
+      intro x j
+      simp only [simRecVec_zero]
+      exact h_base j x
+  | succ n ih =>
+      intro x j
+      simp only [simRecVec_succ]
+      apply h_step n x (simRecVec k a h_all g_all n x) j
+      intro j'
+      exact ih x j'
+
 end Nat
