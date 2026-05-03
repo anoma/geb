@@ -59,6 +59,16 @@ def A_one : ERMor1 1 :=
                   (fun _ : Fin 1 =>
                     ERMor1.proj (0 : Fin 1))
 
+/-- Closed-form interpretation of `A_one`:
+`A_one.interp ![x] = 2 * x + 2` (Tourlakis 2018 page 22,
+`A_1`).  Master design §3.3. -/
+@[simp] theorem interp_A_one (ctx : Fin 1 → ℕ) :
+    A_one.interp ctx = 2 * (ctx 0) + 2 := by
+  unfold A_one
+  simp only [ERMor1.interp_comp, ERMor1.interp_addN,
+    ERMor1.interp_succ, ERMor1.interp_proj]
+  omega
+
 end ERMor1
 
 end GebLean
