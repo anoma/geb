@@ -69,6 +69,18 @@ def A_one : ERMor1 1 :=
     ERMor1.interp_succ, ERMor1.interp_proj]
   omega
 
+/-- Tourlakis 2018 page 22 iterated majorant
+`A_1^r = λx. 2^r * x + (2^{r+1} − 2)`, realized as r-fold
+composition of `A_one` with itself.  Master design §3.3.
+
+Recursion direction: `A_1 ∘ A_1^r` (apply r-fold first,
+then one more `A_one`).  At `r = 0` returns the
+identity-on-1, realized as `proj 0`. -/
+def A_one_iter : ℕ → ERMor1 1
+  | 0     => ERMor1.proj (0 : Fin 1)
+  | r + 1 => ERMor1.comp A_one
+              (fun _ : Fin 1 => A_one_iter r)
+
 end ERMor1
 
 end GebLean
