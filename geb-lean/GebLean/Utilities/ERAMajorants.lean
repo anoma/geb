@@ -125,6 +125,32 @@ see spec §9.6). -/
         rw [h_succ1]; ring
       omega
 
+/-- Tourlakis 2018 page 22 iterated majorant
+`A_2^r = λx. tower r x`, realized as the existing named
+composite `def ERMor1.towerER` in
+`LawvereERBoundComputable.lean`.  Underlying construction
+iterates `expER` with base `2`, citing Tourlakis 2018
+§0.1.0.17 (c) `λx. 2^x ∈ ER`.  Master design §3.3.
+
+No `PolyBound` builder is provided: `tower r x` for
+`r ≥ 1` is not polynomially bounded in `x`, and
+`ERMor1.PolyBound` is the bprod-free polynomial fragment
+per `LawvereERPolynomialBound.lean`'s structural-towerHeight
+section.  See the module docstring for how downstream
+consumers handle this. -/
+def A_two_iter (r : ℕ) : ERMor1 1 := ERMor1.towerER r
+
+/-- Closed-form interpretation of `A_two_iter`:
+`(A_two_iter r).interp ![x] = tower r x` (Tourlakis 2018
+page 22, `A_2^r = tower r x`).  Routes through the existing
+`interp_towerER` simp lemma.  Master design §3.3. -/
+@[simp] theorem interp_A_two_iter (r : ℕ)
+    (ctx : Fin 1 → ℕ) :
+    (A_two_iter r).interp ctx
+      = tower r (ctx 0) := by
+  unfold A_two_iter
+  exact ERMor1.interp_towerER r ctx
+
 end ERMor1
 
 end GebLean
