@@ -392,5 +392,41 @@ theorem packedRec_eq_tuplePack_simRecVec
     exact ERMor1.packedBound_mono
       k a componentBound n x h_mono j h_j_le_n
 
+/-- Conditional correctness of `simultaneousBoundedRec`:
+when `componentBound` dominates each component value at
+every iteration up to `n` (against the abstract semantic
+function `Nat.simRecVec`), and `componentBound` is
+monotone in the iteration counter up to `n`, the
+ERMorN's i-th component computes exactly the i-th
+simultaneous-recursion value at iteration `n`.  Master
+design §3.2.  Realizes Tourlakis 2018 §0.1.0.34 (the
+proof technique; §0.1.0.35 is the higher-level
+corollary). -/
+theorem simultaneousBoundedRec_interp_correct
+    (k a : ℕ)
+    (h : Fin (k + 1) → ERMor1 a)
+    (g : Fin (k + 1) → ERMor1 (a + 1 + (k + 1)))
+    (componentBound : ERMor1 (a + 1))
+    (n : ℕ) (x : Fin a → ℕ) (i : Fin (k + 1))
+    (h_dominates :
+      ∀ (m : ℕ), m ≤ n → ∀ (j : Fin (k + 1)),
+        Nat.simRecVec k a (fun j' => (h j').interp)
+            (fun j' => (g j').interp) m x j
+          ≤ componentBound.interp (Fin.cons m x))
+    (h_mono :
+      ∀ (m : ℕ), m ≤ n →
+        componentBound.interp (Fin.cons m x)
+          ≤ componentBound.interp (Fin.cons n x)) :
+    ((ERMor1.simultaneousBoundedRec k a h g componentBound)
+        i).interp (Fin.cons n x) =
+      Nat.simRecVec k a (fun j' => (h j').interp)
+        (fun j' => (g j').interp) n x i := by
+  simp only [ERMor1.simultaneousBoundedRec,
+    ERMor1.interp_comp, ERMor1.interp_tupleAt,
+    Matrix.cons_val_zero]
+  rw [ERMor1.packedRec_eq_tuplePack_simRecVec
+        k a h g componentBound n x h_dominates h_mono]
+  exact Nat.tupleAt_tuplePack k _ i
+
 end ERMor1
 end GebLean
