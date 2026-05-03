@@ -1,5 +1,6 @@
 import Mathlib.Data.Nat.Pairing
 import Mathlib.Data.Fin.Tuple.Basic
+import GebLean.Utilities.ComputationalComplexity
 
 /-!
 # Fixed-length k-tuple Szudzik pairing
@@ -144,5 +145,116 @@ theorem tuplePack_tupleAt :
       rw [h_init]
       rw [tuplePack_tupleAt k (Nat.unpair n).1]
       exact Nat.pair_unpair n
+
+/-- The sup of `Fin.init v` is at most the sup of `v`. -/
+private theorem tuplePack_sup_init_le_sup
+    {k : ℕ} (v : Fin (k + 2) → ℕ) :
+    (Finset.univ : Finset (Fin (k + 1))).sup (Fin.init v)
+      ≤ (Finset.univ : Finset (Fin (k + 2))).sup v := by
+  apply Finset.sup_le
+  intro i _
+  change v i.castSucc ≤ _
+  exact Finset.le_sup (f := v) (Finset.mem_univ _)
+
+/-- Polynomial value bound on `tuplePack`.  At parameter
+`k` (packing `(k + 1)`-tuples), `tuplePack k v` is bounded
+by `tuplePackCoef k * (M + 1)^(2^k)` where `M = sup v` over
+`Fin (k + 1)`.  Cites Tourlakis 2018 §0.1.0.34, p. 14
+(proof that pairing stays in E²); master design §3.1. -/
+theorem tuplePack_le :
+    ∀ (k : ℕ) (v : Fin (k + 1) → ℕ),
+      tuplePack k v ≤
+        tuplePackCoef k *
+          ((Finset.univ : Finset (Fin (k + 1))).sup v
+            + 1) ^ (2 ^ k)
+  | 0, v => by
+      simp only [tuplePack_zero, tuplePackCoef, pow_zero,
+        pow_one, one_mul]
+      have hv0 : v 0
+          ≤ (Finset.univ : Finset (Fin 1)).sup v :=
+        Finset.le_sup (f := v) (Finset.mem_univ 0)
+      omega
+  | k + 1, v => by
+      set M' :=
+        (Finset.univ : Finset (Fin (k + 2))).sup v
+      set Mi :=
+        (Finset.univ : Finset (Fin (k + 1))).sup
+          (Fin.init v)
+      have hMi : Mi ≤ M' := tuplePack_sup_init_le_sup v
+      have hlast : v (Fin.last (k + 1)) ≤ M' :=
+        Finset.le_sup (f := v) (Finset.mem_univ _)
+      have ih := tuplePack_le k (Fin.init v)
+      have ih' :
+          tuplePack k (Fin.init v)
+            ≤ tuplePackCoef k * (M' + 1) ^ (2 ^ k) := by
+        apply le_trans ih
+        apply Nat.mul_le_mul_left
+        apply Nat.pow_le_pow_left
+        omega
+      have hpair :
+          tuplePack (k + 1) v
+            ≤ (tuplePack k (Fin.init v)
+                + v (Fin.last (k + 1)) + 1) ^ 2 := by
+        rw [tuplePack_succ]
+        exact Nat.pair_le_sq _ _
+      have hsum :
+          tuplePack k (Fin.init v)
+              + v (Fin.last (k + 1)) + 1
+            ≤ (tuplePackCoef k + 2)
+                * (M' + 1) ^ (2 ^ k) := by
+        have hC : 1 ≤ (M' + 1) ^ (2 ^ k) := by
+          apply Nat.one_le_pow
+          omega
+        have hM'1 :
+            v (Fin.last (k + 1)) + 1 ≤ M' + 1 := by omega
+        have hM'pow :
+            (M' + 1) ≤ (M' + 1) ^ (2 ^ k) := by
+          have h2k : 1 ≤ 2 ^ k :=
+            Nat.one_le_pow _ _ (by omega)
+          calc M' + 1
+              = (M' + 1) ^ 1 := by ring
+            _ ≤ (M' + 1) ^ (2 ^ k) :=
+                Nat.pow_le_pow_right (by omega) h2k
+        calc tuplePack k (Fin.init v)
+              + v (Fin.last (k + 1)) + 1
+            ≤ tuplePackCoef k * (M' + 1) ^ (2 ^ k)
+                + (M' + 1) := by omega
+          _ ≤ tuplePackCoef k * (M' + 1) ^ (2 ^ k)
+                + (M' + 1) ^ (2 ^ k) := by
+              have := hM'pow; omega
+          _ = (tuplePackCoef k + 1)
+                * (M' + 1) ^ (2 ^ k) := by ring
+          _ ≤ (tuplePackCoef k + 2)
+                * (M' + 1) ^ (2 ^ k) := by
+              apply Nat.mul_le_mul_right; omega
+      have hsq :
+          (tuplePack k (Fin.init v)
+              + v (Fin.last (k + 1)) + 1) ^ 2
+            ≤ ((tuplePackCoef k + 2)
+                * (M' + 1) ^ (2 ^ k)) ^ 2 :=
+        Nat.pow_le_pow_left hsum 2
+      have hexpand :
+          ((tuplePackCoef k + 2)
+                * (M' + 1) ^ (2 ^ k)) ^ 2
+            = (tuplePackCoef k + 2) ^ 2
+                * (M' + 1) ^ (2 * 2 ^ k) := by
+          rw [Nat.mul_pow, ← pow_mul]
+          ring_nf
+      have h2k1 : 2 * 2 ^ k = 2 ^ (k + 1) := by
+        rw [pow_succ]; ring
+      have hcoef :
+          tuplePackCoef (k + 1)
+            = (tuplePackCoef k + 2) ^ 2 :=
+        rfl
+      calc tuplePack (k + 1) v
+          ≤ (tuplePack k (Fin.init v)
+              + v (Fin.last (k + 1)) + 1) ^ 2 := hpair
+        _ ≤ ((tuplePackCoef k + 2)
+                * (M' + 1) ^ (2 ^ k)) ^ 2 := hsq
+        _ = (tuplePackCoef k + 2) ^ 2
+                * (M' + 1) ^ (2 * 2 ^ k) := hexpand
+        _ = tuplePackCoef (k + 1)
+                * (M' + 1) ^ (2 ^ (k + 1)) := by
+            rw [h2k1, hcoef]
 
 end Nat
