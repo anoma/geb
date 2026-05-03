@@ -25,10 +25,21 @@ Formalizing the categorical equivalence
   `docs/superpowers/specs/2026-05-02-step-1-er-tupling-design.md`.
   3 rounds adversarial review on spec; clean bill of
   health round 3.
+- Step 2 (ER-side simultaneous bounded recursion):
+  complete.  Lands `Nat.simRecVec` / `Nat.simRec`
+  semantic functions, `ERMor1.tuplePackedBound`
+  packed-state bound + PolyBound builder + dominance
+  helper, `ERMor1.simultaneousBoundedRec` with
+  conditional correctness theorem
+  `simultaneousBoundedRec_interp_correct` and
+  per-component PolyBound builder
+  `ofSimultaneousBoundedRec`.  Plan at
+  `docs/superpowers/plans/2026-05-03-step-2-er-simultaneous-bounded-rec.md`.
+  Spec at
+  `docs/superpowers/specs/2026-05-03-step-2-er-simultaneous-bounded-rec-design.md`.
 
 ## Next steps
 
-- Step 2: `ERMor1.simultaneousBoundedRec` consuming the
-  step-1 tupling infrastructure.
-- See master design §3.2 + §3.7 for downstream module
-  layout.
+- Step 3: `A_n^r` Tourlakis named composites in ER
+  (`ERMor1.A_one`, `ERMor1.A_one_iter`,
+  `ERMor1.A_two_iter`).  See master design §3.3.
