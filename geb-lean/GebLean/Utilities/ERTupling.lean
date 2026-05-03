@@ -98,32 +98,37 @@ composite computes Tourlakis 2018 §0.1.0.34, p. 14's
 `Π^{k+1}_i` projection of its argument.  Master design
 §3.1. -/
 @[simp] theorem interp_tupleAt :
-    ∀ (k : ℕ) (i : Fin (k + 1)) (n : ℕ),
-      (tupleAt k i).interp ![n] = Nat.tupleAt k n i
-  | 0, _, n => by
-      simp only [tupleAt, ERMor1.interp_proj, Nat.tupleAt,
-        Matrix.cons_val_zero]
-  | k + 1, i, n => by
+    ∀ (k : ℕ) (i : Fin (k + 1)) (ctx : Fin 1 → ℕ),
+      (tupleAt k i).interp ctx = Nat.tupleAt k (ctx 0) i
+  | 0, _, ctx => by
+      simp only [tupleAt, ERMor1.interp_proj, Nat.tupleAt]
+  | k + 1, i, ctx => by
+      have hctx_eq : ctx = ![ctx 0] := by
+        funext x
+        match x with
+        | ⟨0, _⟩ => rfl
       refine Fin.lastCases ?_ ?_ i
-      · simp only [tupleAt, Fin.lastCases_last,
-          ERMor1.interp_natUnpairSnd, Nat.tupleAt_succ_last]
+      · rw [hctx_eq]
+        simp only [tupleAt, Fin.lastCases_last,
+          ERMor1.interp_natUnpairSnd, Nat.tupleAt_succ_last,
+          Matrix.cons_val_zero]
       · intro j
         simp only [tupleAt, Fin.lastCases_castSucc,
           ERMor1.interp_comp, Nat.tupleAt_succ_castSucc]
-        have ih := interp_tupleAt k j (Nat.unpair n).1
+        have ih := interp_tupleAt k j ![(Nat.unpair (ctx 0)).1]
         have hctx :
             (fun i : Fin 1 =>
-              (![ERMor1.natUnpairFst] i).interp
-                (![n] : Fin 1 → ℕ))
-              = ![(Nat.unpair n).1] := by
+              (![ERMor1.natUnpairFst] i).interp ctx)
+              = ![(Nat.unpair (ctx 0)).1] := by
           funext x
           match x with
           | ⟨0, _⟩ =>
-              change ERMor1.natUnpairFst.interp ![n]
-                = (Nat.unpair n).1
-              exact ERMor1.interp_natUnpairFst n
+              change ERMor1.natUnpairFst.interp ctx
+                = (Nat.unpair (ctx 0)).1
+              rw [hctx_eq]
+              exact ERMor1.interp_natUnpairFst (ctx 0)
         rw [hctx]
-        exact ih
+        simpa using ih
 
 namespace PolyBound
 
@@ -131,10 +136,10 @@ namespace PolyBound
 design §3.1: `tuplePack k v ≤ tuplePackCoef k * (M+1)^(2^k)`. -/
 def ofTuplePack (k : ℕ) :
     PolyBound (tuplePack k) where
-  degree      := 2 ^ k
+  degree := 2 ^ k
   coefficient := Nat.tuplePackCoef k
-  constant    := 0
-  bounds      := fun ctx => by
+  constant := 0
+  bounds := fun ctx => by
     rw [interp_tuplePack]
     simpa using Nat.tuplePack_le k ctx
 
@@ -143,25 +148,16 @@ from `Nat.tupleAt_le` (single-arity context); master
 design §3.1. -/
 def ofTupleAt (k : ℕ) (i : Fin (k + 1)) :
     PolyBound (tupleAt k i) where
-  degree      := 1
+  degree := 1
   coefficient := 1
-  constant    := 0
-  bounds      := fun ctx => by
-    have hctx : ctx = ![ctx 0] := by
-      funext x
-      match x with
-      | ⟨0, _⟩ => rfl
-    have hinterp :
-        (tupleAt k i).interp ctx
-          = Nat.tupleAt k (ctx 0) i := by
-      conv_lhs => rw [hctx]
-      exact interp_tupleAt k i (ctx 0)
-    rw [hinterp]
-    simp only [pow_one, one_mul, Nat.add_zero]
+  constant := 0
+  bounds := fun ctx => by
+    rw [interp_tupleAt]
     have h := Nat.tupleAt_le k (ctx 0) i
     have hsup :
         ctx 0 ≤ (Finset.univ : Finset (Fin 1)).sup ctx :=
       Finset.le_sup (f := ctx) (Finset.mem_univ 0)
+    simp only [pow_one, one_mul, Nat.add_zero]
     omega
 
 end PolyBound
