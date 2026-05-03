@@ -37,9 +37,23 @@ Formalizing the categorical equivalence
   `docs/superpowers/plans/2026-05-03-step-2-er-simultaneous-bounded-rec.md`.
   Spec at
   `docs/superpowers/specs/2026-05-03-step-2-er-simultaneous-bounded-rec-design.md`.
+- Step 3 (Tourlakis A_n^r majorant family in ER):
+  complete.  Lands `ERMor1.A_one`, `ERMor1.A_one_iter`,
+  `ERMor1.A_two_iter` named composites; closed-form
+  `@[simp]` interp lemmas; `ERMor1.PolyBound.ofA_one` and
+  `ERMor1.PolyBound.ofA_one_iter` builders.  No PolyBound
+  for `A_two_iter` (tower-fast; level-2 chain consumes
+  Nat-level dominance via
+  `simultaneousBoundedRec_interp_correct` at step 5).
+  Plan at
+  `docs/superpowers/plans/2026-05-03-step-3-er-tourlakis-A-majorants.md`.
+  Spec at
+  `docs/superpowers/specs/2026-05-03-step-3-er-tourlakis-A-majorants-design.md`.
+  4 rounds adversarial review on the spec, 2 on the plan;
+  round 4 of the spec review empirically Lean-verified all
+  five proofs.
 
 ## Next steps
 
-- Step 3: `A_n^r` Tourlakis named composites in ER
-  (`ERMor1.A_one`, `ERMor1.A_one_iter`,
-  `ERMor1.A_two_iter`).  See master design §3.3.
+- Step 4: `LawvereKSimMajorization.lean` (master design
+  §3.4).
