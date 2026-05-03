@@ -38,7 +38,9 @@ def tuplePack : (k : ℕ) → ERMor1 (k + 1)
 /-- ER named composite extracting component `i` from a
 packed `(k + 1)`-tuple.  Built bottom-up from `proj`,
 `natUnpairFst`, `natUnpairSnd`, `comp`.  Mirrors
-`Nat.tupleAt`'s left-fold recurrence (master design §3.1). -/
+`Nat.tupleAt`'s left-fold recurrence (master design §3.1;
+Tourlakis 2018 §0.1.0.34, p. 14, with index orientation
+matched to the inverse of the left-fold recurrence). -/
 def tupleAt : (k : ℕ) → Fin (k + 1) → ERMor1 1
   | 0,     _ => ERMor1.proj 0
   | k + 1, i =>
