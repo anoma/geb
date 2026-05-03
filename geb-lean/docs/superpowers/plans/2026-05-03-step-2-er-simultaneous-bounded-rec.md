@@ -1,17 +1,19 @@
 # Step 2 — ER-side multi-output bounded simultaneous recursion — Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use
+> **For agentic workers:** Required sub-skill: use
 > superpowers:subagent-driven-development (recommended) or
 > superpowers:executing-plans to implement this plan
 > task-by-task. Steps use checkbox (`- [ ]`) syntax for
 > tracking.
 
 **Goal:** Land `ERMor1.simultaneousBoundedRec` as a Lean
-named composite realizing Tourlakis 2018 §0.1.0.35
-(closure of E^{n+1} under simultaneous bounded recursion),
-plus its conditional correctness theorem against the
-abstract `Nat.simRecVec` semantic function and a
-per-component PolyBound builder. Three new modules:
+named composite realizing Tourlakis 2018 §0.1.0.34 (closure
+of E^2 under simultaneous bounded recursion via the
+pairing-based pack-and-unpack proof technique; §0.1.0.35 is
+the higher-level corollary for `n ≥ 2`), plus its
+conditional correctness theorem against the abstract
+`Nat.simRecVec` semantic function and a per-component
+PolyBound builder. Three new modules:
 `SimRec.lean` (Nat-level), `ERPackedBound.lean` (ER-level
 packed-state bound), `ERSimultaneousBoundedRec.lean`
 (consumer-facing API).
@@ -94,8 +96,10 @@ Each task's code must follow CLAUDE.md:
   `Fin (k + 1)` not `Fin (k+1)`, `(2 ^ k)` not `(2^k)`.
 - Every implemented function/definition/theorem carries a
   literature reference in its docstring (Tourlakis 2018
-  §0.1.0.35 / §0.1.0.7 / §0.1.0.34, p. 14, or master
-  design §3.2).
+  §0.1.0.34 / §0.1.0.7 / §0.1.0.35, or master design §3.2).
+  The primary citation is §0.1.0.34 (the pairing-based
+  proof technique for E^2); §0.1.0.35 is cited only as the
+  higher-level corollary for `n ≥ 2`.
 - Use `simp only [...]` not bare `simp [...]`.
 - Use `change` not `show` when the goal text differs from
   what Lean has after reduction.
@@ -157,15 +161,19 @@ Vector-valued semantic function for simultaneous primitive
 recursion.  Used to state
 `simultaneousBoundedRec_interp_correct` per master design
 §3.2.  Realizes Tourlakis 2018 §0.1.0.7 (definition of
-K^sim hierarchy via simultaneous primitive recursion).
+K^sim hierarchy via simultaneous primitive recursion); the
+pairing-based proof technique is from Tourlakis 2018
+§0.1.0.34.
 
-The step input convention matches `ERMor1.boundedRec` in
-`Utilities/ERArith.lean:1782-1799`: slot 0 is the
-iteration counter, slots 1..k+1 are the previous-iteration
-component values, slots k+2..k+1+a are the parameter
-context.
+The step input convention matches master design §3.2's
+prose `g_j(n, x⃗, F_0..F_k)` and the existing
+`kSimStepContext` in `Utilities/KSimSzudzikSimrec.lean:364`:
+slot 0 is the iteration counter, slots 1..a are the
+parameter context, slots a+1..a+k+1 are the
+previous-iteration component values.
 
-See `docs/superpowers/specs/2026-05-03-step-2-er-simultaneous-bounded-rec-design.md`
+See
+`docs/superpowers/specs/2026-05-03-step-2-er-simultaneous-bounded-rec-design.md`
 and master design §3.2 in
 `docs/research/2026-05-02-er-ksim2-equiv-via-urm-master-design.md`.
 -/
@@ -203,28 +211,31 @@ Inside `namespace Nat`:
 Returns the full `(k + 1)`-vector of component values at
 iteration `n` with parameter context `x : Fin a → ℕ`.
 
-Step input convention (matching `ERMor1.boundedRec` in
-`Utilities/ERArith.lean:1782-1799`): slot 0 is the
-iteration counter, slots 1..k+1 are the previous-iteration
-component values, slots k+2..k+1+a are the parameter
-context.  The step is therefore
-`g_all : Fin (k + 1) → (Fin (1 + (k + 1) + a) → ℕ) → ℕ`,
+Step input convention (matching master design §3.2's
+prose `g_j(n, x⃗, F_0..F_k)` and existing
+`kSimStepContext` in
+`Utilities/KSimSzudzikSimrec.lean:364`): slot 0 is the
+iteration counter, slots 1..a are the parameter context,
+slots a+1..a+k+1 are the previous-iteration component
+values.  The step is therefore
+`g_all : Fin (k + 1) → (Fin (a + 1 + (k + 1)) → ℕ) → ℕ`,
 applied as
-`g_all j (Fin.cons n (Fin.append prev x))`.
+`g_all j (Fin.append (Fin.cons n x) prev)`.
 
 Used to state `simultaneousBoundedRec_interp_correct` per
 master design §3.2.  Realizes Tourlakis 2018 §0.1.0.7
 (definition of K^sim hierarchy via simultaneous primitive
-recursion). -/
+recursion); the pairing-based proof technique is from
+Tourlakis 2018 §0.1.0.34. -/
 def simRecVec (k a : ℕ)
     (h_all : Fin (k + 1) → (Fin a → ℕ) → ℕ)
     (g_all : Fin (k + 1) →
-      (Fin (1 + (k + 1) + a) → ℕ) → ℕ) :
+      (Fin (a + 1 + (k + 1)) → ℕ) → ℕ) :
     ℕ → (Fin a → ℕ) → (Fin (k + 1) → ℕ)
   | 0,     x => fun j => h_all j x
   | n + 1, x => fun j =>
-      g_all j (Fin.cons n
-        (Fin.append (simRecVec k a h_all g_all n x) x))
+      g_all j (Fin.append (Fin.cons n x)
+        (simRecVec k a h_all g_all n x))
 ```
 
 - [ ] **Step 1.5: Define `Nat.simRec`**
@@ -237,7 +248,7 @@ unfold it.  Master design §3.2. -/
 def simRec (k a : ℕ)
     (h_all : Fin (k + 1) → (Fin a → ℕ) → ℕ)
     (g_all : Fin (k + 1) →
-      (Fin (1 + (k + 1) + a) → ℕ) → ℕ)
+      (Fin (a + 1 + (k + 1)) → ℕ) → ℕ)
     (j : Fin (k + 1)) (n : ℕ) (x : Fin a → ℕ) : ℕ :=
   simRecVec k a h_all g_all n x j
 ```
@@ -264,16 +275,18 @@ git commit -m "Step 2 task 1: Nat.simRecVec and Nat.simRec definitions
 
 Vector-valued simultaneous primitive recursion semantic
 function for the ER ↔ K^sim_2 categorical equivalence.
-Step input convention matches ERMor1.boundedRec: slot 0 is
-the iteration counter, slots 1..k+1 are the previous-
-iteration component values, slots k+2..k+1+a are the
-parameter context.
+Step input convention matches master design §3.2 prose
+g_j(n, x⃗, F_0..F_k) and existing kSimStepContext: slot 0
+is the iteration counter, slots 1..a are the parameter
+context, slots a+1..a+k+1 are the previous-iteration
+component values.
 
 Per the import-at-skeleton-creation rule, GebLean.lean's
 import is registered as part of this same commit.
 
 Realizes Tourlakis 2018 §0.1.0.7 (definition of K^sim
-hierarchy via simultaneous primitive recursion); master
+hierarchy via simultaneous primitive recursion); the
+pairing-based proof technique is from §0.1.0.34.  Master
 design §3.2."
 ```
 
@@ -284,7 +297,7 @@ design §3.2."
 **Files:**
 
 - Modify: `GebLean/Utilities/SimRec.lean` (append, inside
-  the existing `namespace Nat ... end Nat` block)
+  the existing `namespace Nat ... end Nat` region)
 
 - [ ] **Step 2.1: Add `simRecVec_zero` and `simRecVec_succ`**
 
@@ -294,18 +307,18 @@ Append within `namespace Nat`:
 @[simp] theorem simRecVec_zero (k a : ℕ)
     (h_all : Fin (k + 1) → (Fin a → ℕ) → ℕ)
     (g_all : Fin (k + 1) →
-      (Fin (1 + (k + 1) + a) → ℕ) → ℕ)
+      (Fin (a + 1 + (k + 1)) → ℕ) → ℕ)
     (x : Fin a → ℕ) (j : Fin (k + 1)) :
     simRecVec k a h_all g_all 0 x j = h_all j x := rfl
 
 @[simp] theorem simRecVec_succ (k a : ℕ)
     (h_all : Fin (k + 1) → (Fin a → ℕ) → ℕ)
     (g_all : Fin (k + 1) →
-      (Fin (1 + (k + 1) + a) → ℕ) → ℕ)
+      (Fin (a + 1 + (k + 1)) → ℕ) → ℕ)
     (n : ℕ) (x : Fin a → ℕ) (j : Fin (k + 1)) :
     simRecVec k a h_all g_all (n + 1) x j
-      = g_all j (Fin.cons n
-          (Fin.append (simRecVec k a h_all g_all n x) x))
+      = g_all j (Fin.append (Fin.cons n x)
+          (simRecVec k a h_all g_all n x))
         := rfl
 ```
 
@@ -347,12 +360,12 @@ theorem simRecVec_le_of_dominates
     (k a : ℕ)
     (h_all : Fin (k + 1) → (Fin a → ℕ) → ℕ)
     (g_all : Fin (k + 1) →
-      (Fin (1 + (k + 1) + a) → ℕ) → ℕ)
+      (Fin (a + 1 + (k + 1)) → ℕ) → ℕ)
     (componentBound : ℕ → (Fin a → ℕ) → ℕ)
     (h_base : ∀ j x, h_all j x ≤ componentBound 0 x)
     (h_step : ∀ n x prev j,
        (∀ j', prev j' ≤ componentBound n x) →
-       g_all j (Fin.cons n (Fin.append prev x))
+       g_all j (Fin.append (Fin.cons n x) prev)
          ≤ componentBound (n + 1) x) :
     ∀ (n : ℕ) (x : Fin a → ℕ) (j : Fin (k + 1)),
       simRecVec k a h_all g_all n x j
@@ -443,8 +456,9 @@ Replace the `end` placeholder. Add:
 ```lean
 -- Identity-case smoke (k = 0, a = 0): 1-component
 -- "simrec" reduces to ordinary recursion.  Step input
--- arity = 1 + 1 + 0 = 2: slot 0 = counter, slot 1 =
--- previous singleton component.
+-- arity = a + 1 + (k + 1) = 0 + 1 + 1 = 2: slot 0 =
+-- counter, slot 1 = previous singleton component (no
+-- params at a = 0).
 
 -- Constant base, constant step: f(0) = 5, f(n+1) = 7.
 #guard simRecVec 0 0 (fun _ _ => 5) (fun _ _ => 7) 0
@@ -460,11 +474,12 @@ Replace the `end` placeholder. Add:
 
 - [ ] **Step 4.3: Add a non-trivial 2-component smoke (swap example)**
 
-At `k = 1, a = 0`, step input arity is `1 + 2 + 0 = 3`:
-slot 0 = counter, slot 1 = previous component 0, slot 2
-= previous component 1.  The swap step (component 0
-returns slot 2; component 1 returns slot 1) gives
-parity-dependent values from bases `(1, 2)`:
+At `k = 1, a = 0`, step input arity is
+`a + 1 + (k + 1) = 0 + 1 + 2 = 3`: slot 0 = counter, no
+params (a = 0), slots 1..2 = previous components 0 and 1.
+The swap step (component 0 returns slot 2; component 1
+returns slot 1) gives parity-dependent values from bases
+`(1, 2)`:
 
 ```text
 iteration 0: (1, 2)
@@ -507,7 +522,7 @@ git commit -m "Step 2 task 4: Nat-side tests for SimRec
 Identity-case #guards (k = 0): simRecVec degenerates to
 ordinary recursion.  Non-trivial 2-component swap example
 verifying the step input convention (slot 0 = counter,
-slots 1..k+1 = prev-vector, slots k+2..k+1+a = params) and
+slots 1..a = params, slots a+1..a+k+1 = prev-vector) and
 the parity behavior of the swap step.
 
 Per the import-at-skeleton-creation rule, the test
@@ -759,7 +774,7 @@ dominance-hypothesis discharge.  Master design §3.2."
 **Files:**
 
 - Modify: `GebLean/Utilities/ERPackedBound.lean` (append,
-  inside a new `namespace ERMor1.PolyBound` block)
+  inside a new `namespace ERMor1.PolyBound` region)
 
 - [ ] **Step 8.1: Add the PolyBound builder**
 
@@ -939,39 +954,37 @@ import GebLeanTests.Utilities.ERPackedBound
 Replace the `end` placeholder. Add:
 
 ```lean
--- PolyBound shape at k = 0: degree 1 * 2^0 = 1,
--- coefficient = tuplePackCoef 0 * (1 + 0 + 1)^1 = 1 * 2 = 2.
--- (Using ERMor1.PolyBound.ofZero at arity 0 as a trivial
--- componentBound: degree = 0, coefficient = 0, constant = 0.)
+-- PolyBound shape at k = 0: degree 0 * 2^0 = 0,
+-- coefficient = tuplePackCoef 0 * (0 + 0 + 1)^1 = 1.
+-- (Using ERMor1.PolyBound.ofZeroN 0 at arity 0 as a
+-- trivial componentBound: degree = 0, coefficient = 0,
+-- constant = 0.)
 example :
     (ERMor1.PolyBound.ofTuplePackedBound 0
-       (ERMor1.PolyBound.ofZero
-          (n := 0))).degree = 0 := rfl
+       (ERMor1.PolyBound.ofZeroN 0)).degree = 0 := rfl
 
 example :
     (ERMor1.PolyBound.ofTuplePackedBound 1
-       (ERMor1.PolyBound.ofZero
-          (n := 0))).degree = 0 := rfl
+       (ERMor1.PolyBound.ofZeroN 0)).degree = 0 := rfl
 
 -- tuplePackCoef k for small k (sanity).
 example :
     (ERMor1.PolyBound.ofTuplePackedBound 1
-       (ERMor1.PolyBound.ofZero
-          (n := 0))).coefficient
+       (ERMor1.PolyBound.ofZeroN 0)).coefficient
       = Nat.tuplePackCoef 1 * 1 ^ (2 ^ 1) := rfl
 
 example :
     (ERMor1.PolyBound.ofTuplePackedBound 1
-       (ERMor1.PolyBound.ofZero
-          (n := 0))).constant = 0 := rfl
+       (ERMor1.PolyBound.ofZeroN 0)).constant = 0 := rfl
 ```
 
-`ERMor1.PolyBound.ofZero` produces a PolyBound with
-`degree = 0`, `coefficient = 0`, `constant = 0`. The
-derived `ofTuplePackedBound` therefore has
-`degree = pb.degree * 2^k = 0`, `coefficient =
-tuplePackCoef k * (0 + 0 + 1)^(2^k) = tuplePackCoef k`,
-`constant = 0`. Adjust the example values to match.
+`ERMor1.PolyBound.ofZeroN 0` produces a PolyBound for
+`ERMor1.zeroN 0` with `degree = 0`, `coefficient = 0`,
+`constant = 0`.  The derived `ofTuplePackedBound`
+therefore has `degree = pb.degree * 2^k = 0`,
+`coefficient = tuplePackCoef k * (0 + 0 + 1)^(2^k) =
+tuplePackCoef k`, `constant = 0`.  Adjust the example
+values to match.
 
 - [ ] **Step 9.3: Build and commit**
 
@@ -1011,9 +1024,10 @@ import GebLean.Utilities.ERPackedBound
 /-!
 # ER-side multi-output bounded simultaneous recursion
 
-Realizes Tourlakis 2018 §0.1.0.35 (closure of E^{n+1}
-under simultaneous bounded recursion).  Master design
-§3.2.
+Realizes Tourlakis 2018 §0.1.0.34 (closure of E^2 under
+simultaneous bounded recursion via the pairing-based
+pack-and-unpack proof technique; §0.1.0.35 is the
+higher-level corollary for `n ≥ 2`).  Master design §3.2.
 
 Packs the `(k + 1)`-component state into a single
 natural via `Nat.tuplePack` (step 1), applies single-
@@ -1023,12 +1037,17 @@ ERPackedBound module), and unpacks component-wise via
 `Nat.tupleAt` (step 1).  Bottom-up named composite per
 CLAUDE.md "bottom-up named-composite discipline".
 
-Step input convention matches `ERMor1.boundedRec`: slot
-0 is the iteration counter, slots 1..k+1 are the
-previous-iteration component values, slots k+2..k+1+a
-are the parameter context.
+Outer `simRecVec` step input convention (matching master
+design §3.2's prose `g_j(n, x⃗, F_0..F_k)`): slot 0 is the
+iteration counter, slots 1..a are the parameter context,
+slots a+1..a+k+1 are the previous-iteration component
+values.  Inner `boundedRec` step input convention
+(matching `Utilities/ERArith.lean:2200`): slot 0 is the
+counter, slot 1 is the packed previous state, slots
+2..a+1 are the parameters.
 
-See `docs/superpowers/specs/2026-05-03-step-2-er-simultaneous-bounded-rec-design.md`
+See
+`docs/superpowers/specs/2026-05-03-step-2-er-simultaneous-bounded-rec-design.md`
 and master design §3.2 in
 `docs/research/2026-05-02-er-ksim2-equiv-via-urm-master-design.md`.
 -/
@@ -1071,37 +1090,54 @@ def packedBase (k a : ℕ)
 
 ```lean
 /-- Slot-routing for `packedStep`'s input context: takes
-a `Fin (1 + (k + 1) + a)` index and returns the
-`ERMor1 (1 + 1 + a)` selecting the appropriate slot.
-- Slot 0 → counter (proj 0).
-- Slots 1..k+1 → tupleAt extraction from the packed
-  prev state (proj 1).
-- Slots k+2..k+1+a → params (proj 2..k+2+a).
-Master design §3.2. -/
+a `Fin (a + 1 + (k + 1))` index and returns the
+`ERMor1 (a + 2)` selecting the appropriate slot.
+
+Outer `(a + 1 + (k + 1))`-context (matching master design
+§3.2 `g_j(n, x⃗, F_0..F_k)`):
+
+- Slot 0 = counter.
+- Slots 1..a = parameters.
+- Slots a+1..a+k+1 = previous-iteration components.
+
+Inner `(a + 2)`-context (matching `ERMor1.boundedRec`'s
+step input convention, `Utilities/ERArith.lean:2200`):
+
+- Slot 0 = counter.
+- Slot 1 = packed previous state.
+- Slots 2..a+1 = parameters.
+
+Routing:
+
+- Outer slot 0 → inner slot 0 (`proj 0`).
+- Outer slots 1..a (parameter indices 0..a-1) → inner
+  slots 2..a+1 (`proj (v + 1)` for outer index `v + 1`
+  with `v < a`).
+- Outer slots a+1..a+k+1 (prev indices 0..k) → tupleAt
+  extraction from inner slot 1 (the packed previous
+  state). -/
 def packedStepCtx (k a : ℕ) :
-    Fin (1 + (k + 1) + a) → ERMor1 (1 + 1 + a)
+    Fin (a + 1 + (k + 1)) → ERMor1 (a + 2)
   | ⟨0, _⟩ => ERMor1.proj 0
-  | ⟨s + 1, h_in⟩ =>
-      if h_prev : s < k + 1 then
-        ERMor1.comp (ERMor1.tupleAt k ⟨s, h_prev⟩)
-          ![ERMor1.proj 1]
+  | ⟨v + 1, h_v⟩ =>
+      if h_param : v < a then
+        ERMor1.proj ⟨v + 2, by omega⟩
       else
-        ERMor1.proj
-          ⟨s - k, by
-            have hs_ge : s ≥ k + 1 :=
-              Nat.le_of_not_lt h_prev
-            have h_in' : s + 1 < 1 + (k + 1) + a :=
-              h_in
-            -- s + 1 < 1 + k + 1 + a means s < k + 1 + a;
-            -- since s ≥ k + 1, s - k ≥ 1, and s - k <
-            -- a + 2.
-            omega⟩
+        ERMor1.comp
+          (ERMor1.tupleAt k ⟨v - a, by omega⟩)
+          ![ERMor1.proj 1]
 ```
 
-(The `omega` at the bottom may need adjustment if the
-exact arithmetic doesn't go through. The `Fin` index
-`⟨s - k, _⟩` needs `s - k < 1 + 1 + a`, given
-`s + 1 < 1 + (k + 1) + a` and `s ≥ k + 1`.)
+(The first branch's outer index is 0; the second
+branch's outer index is `v + 1`.  For the parameter case
+(`v < a`, outer index `1 ≤ v + 1 ≤ a`), the target inner
+slot is `v + 2` (zero-based parameter index `v` mapping
+to inner slot `v + 2`).  For the prev case (`v ≥ a`,
+outer index `a + 1 ≤ v + 1 ≤ a + k + 1`), the
+prev-component index is `v - a`.  The two `omega`
+invocations must close `v + 2 < a + 2` (from `v < a`)
+and `v - a < k + 1` (from `v + 1 < a + 1 + (k + 1)` and
+`v ≥ a`).)
 
 - [ ] **Step 10.6: Define `ERMor1.packedStep`**
 
@@ -1109,12 +1145,12 @@ exact arithmetic doesn't go through. The `Fin` index
 /-- Packed step function: takes the packed previous
 state and produces the packed next state.  Each
 component step `g j` is evaluated on the unpacked
-context (counter + previous-component vector + params),
-results are repacked via `Nat.tuplePack`.  Master design
-§3.2 step 1. -/
+context (counter + parameters + previous-component
+vector), results are repacked via `Nat.tuplePack`.
+Master design §3.2 step 1. -/
 def packedStep (k a : ℕ)
-    (g : Fin (k + 1) → ERMor1 (1 + (k + 1) + a)) :
-    ERMor1 (1 + 1 + a) :=
+    (g : Fin (k + 1) → ERMor1 (a + 1 + (k + 1))) :
+    ERMor1 (a + 2) :=
   ERMor1.comp (ERMor1.tuplePack k)
     (fun j : Fin (k + 1) =>
       ERMor1.comp (g j) (ERMor1.packedStepCtx k a))
@@ -1136,8 +1172,10 @@ git commit -m "Step 2 task 10: ERSimultaneousBoundedRec skeleton + definitional 
 Three named definitional helpers:
 - packedBase: comp tuplePack h.
 - packedStepCtx: slot routing for packed step's input
-  context, decomposing Fin (1 + (k + 1) + a) into
-  (counter, prev_vector, params).
+  context, mapping outer Fin (a + 1 + (k + 1)) with
+  (counter, params, prev_vector) layout to inner
+  Fin (a + 2) with (counter, packed_prev, params)
+  layout.
 - packedStep: comp tuplePack (g j ∘ packedStepCtx) for
   each component j.
 
@@ -1160,9 +1198,10 @@ Master design §3.2."
 
 ```lean
 /-- Multi-output bounded simultaneous recursion in ER.
-Realizes Tourlakis 2018 §0.1.0.35 (closure of E^{n+1}
-under simultaneous bounded recursion).  Master design
-§3.2.
+Realizes Tourlakis 2018 §0.1.0.34 (the proof technique:
+closure of E^2 under simultaneous bounded recursion via
+pairing-based pack-and-unpack; §0.1.0.35 is the
+higher-level corollary for `n ≥ 2`).  Master design §3.2.
 
 The implementation packs the `(k + 1)`-component state
 into a single natural via `Nat.tuplePack`, applies
@@ -1173,10 +1212,10 @@ Bottom-up named composite per CLAUDE.md "bottom-up
 named-composite discipline".  -/
 def simultaneousBoundedRec (k a : ℕ)
     (h : Fin (k + 1) → ERMor1 a)
-    (g : Fin (k + 1) → ERMor1 (1 + (k + 1) + a))
-    (componentBound : ERMor1 (1 + a)) :
-    ERMorN (1 + a) (k + 1) :=
-  let packedRec : ERMor1 (1 + a) :=
+    (g : Fin (k + 1) → ERMor1 (a + 1 + (k + 1)))
+    (componentBound : ERMor1 (a + 1)) :
+    ERMorN (a + 1) (k + 1) :=
+  let packedRec : ERMor1 (a + 1) :=
     ERMor1.boundedRec
       (ERMor1.packedBase k a h)
       (ERMor1.packedStep k a g)
@@ -1202,7 +1241,9 @@ Multi-output bounded simultaneous recursion: packs (k+1)
 components via tuplePack, applies boundedRec with
 tuplePackedBound, unpacks component-wise via tupleAt.
 
-Realizes Tourlakis 2018 §0.1.0.35; master design §3.2."
+Realizes Tourlakis 2018 §0.1.0.34 (the proof technique;
+§0.1.0.35 is the higher-level corollary); master design
+§3.2."
 ```
 
 ---
@@ -1222,7 +1263,7 @@ equals `Nat.tuplePack k` applied to the bases.  Master
 design §3.2. -/
 theorem packedBase_interp_eq_tuplePack_simRecVec_zero
     (k a : ℕ) (h : Fin (k + 1) → ERMor1 a)
-    (g : Fin (k + 1) → ERMor1 (1 + (k + 1) + a))
+    (g : Fin (k + 1) → ERMor1 (a + 1 + (k + 1)))
     (x : Fin a → ℕ) :
     (ERMor1.packedBase k a h).interp x
       = Nat.tuplePack k
@@ -1256,220 +1297,18 @@ the bases.  Master design §3.2."
 
 ---
 
-## Task 13 — Named intermediate lemmas (2/2): step case + main intermediate
+## Task 13 — Hypothesis-discharge lemmas
+
+**Note (round-1 review C2):** Tasks 13 and 14 swapped
+relative to the original draft, so the discharge lemmas
+land before the main intermediate that consumes them.
 
 **Files:**
 
 - Modify: `GebLean/Utilities/ERSimultaneousBoundedRec.lean`
   (append)
 
-- [ ] **Step 13.1: Add helper for `packedStepCtx`'s interp**
-
-A small helper that the step-case proof will consume —
-proving how `packedStepCtx`'s interp maps slots of the
-step's input context to the inner ER computation:
-
-```lean
-/-- Interp of `packedStepCtx` at each slot of the
-`Fin (1 + (k + 1) + a)`-context.  Slot 0 routes to the
-counter (slot 0 of the inner 1+1+a context); slots 1..k+1
-route to `Nat.tupleAt k` extraction from the packed prev
-state (slot 1 of inner context); slots k+2..k+1+a route
-to the params (slots 2..1+a of inner context). -/
-theorem interp_packedStepCtx (k a : ℕ)
-    (n prev_packed : ℕ) (x : Fin a → ℕ)
-    (i : Fin (1 + (k + 1) + a)) :
-    (ERMor1.packedStepCtx k a i).interp
-        (Fin.cons n (Fin.cons prev_packed x))
-      = (Fin.cons n
-          (Fin.append
-            (Nat.tupleAt k prev_packed) x)) i := by
-  -- Case-split on `i.val`: 0, or 1..k+1, or k+2..k+1+a.
-  rcases i with ⟨v, h_v⟩
-  match v, h_v with
-  | 0, _ => simp [ERMor1.packedStepCtx, ERMor1.interp_proj]
-  | s + 1, h_in =>
-      by_cases h_prev : s < k + 1
-      · simp [ERMor1.packedStepCtx, h_prev,
-          ERMor1.interp_comp, ERMor1.interp_tupleAt,
-          ERMor1.interp_proj, Fin.cons, Fin.append]
-        -- The slot s+1 in (Fin.cons n (Fin.append ... x))
-        -- corresponds to (Fin.append ... x) at index s,
-        -- which is Nat.tupleAt k prev_packed s for s < k+1.
-        sorry  -- placeholder; implementer fills in
-      · simp [ERMor1.packedStepCtx, h_prev,
-          ERMor1.interp_proj, Fin.cons, Fin.append]
-        sorry  -- placeholder; implementer fills in
-```
-
-(The `sorry`s are placeholders. The implementer must fill
-them in by working out the `Fin.cons`/`Fin.append`
-arithmetic. If the proof gets stuck, report `BLOCKED`
-with the goal state. CLAUDE.md forbids `sorry` in
-commits; this lemma is allowed to fail and the implementer
-should iterate until clean before committing. The
-structure of the proof is: distinguish the three index
-ranges and verify each routes correctly.)
-
-- [ ] **Step 13.2: Add `packedStep_interp_eq_tuplePack_step`**
-
-```lean
-/-- Step case: applying `packedStep` to a packed state
-`prev_packed` (which equals
-`Nat.tuplePack k (simRecVec ... n x)`) yields
-`Nat.tuplePack k (simRecVec ... (n + 1) x)`.  Master
-design §3.2. -/
-theorem packedStep_interp_eq_tuplePack_step
-    (k a : ℕ)
-    (h : Fin (k + 1) → ERMor1 a)
-    (g : Fin (k + 1) → ERMor1 (1 + (k + 1) + a))
-    (n : ℕ) (x : Fin a → ℕ) :
-    let prev_packed :=
-      Nat.tuplePack k
-        (Nat.simRecVec k a (fun j' => (h j').interp)
-          (fun j' => (g j').interp) n x)
-    (ERMor1.packedStep k a g).interp
-        (Fin.cons n (Fin.cons prev_packed x))
-      = Nat.tuplePack k
-          (Nat.simRecVec k a (fun j' => (h j').interp)
-            (fun j' => (g j').interp) (n + 1) x) := by
-  intro prev_packed
-  simp only [ERMor1.packedStep, ERMor1.interp_comp,
-    ERMor1.interp_tuplePack]
-  congr 1
-  funext j
-  -- Reduce the j-th component:
-  -- (g j).interp (packedStepCtx k a · ).interp ctx
-  -- = (g j).interp (Fin.cons n (Fin.append (tupleAt k prev_packed) x))
-  -- = (g j).interp (Fin.cons n (Fin.append (simRecVec ... n x) x))
-  -- (using Nat.tupleAt_tuplePack)
-  -- = simRecVec ... (n + 1) x j  (by simRecVec_succ)
-  rw [ERMor1.interp_comp]
-  congr 1
-  funext i
-  rw [ERMor1.interp_packedStepCtx]
-  -- Now reduce tupleAt of tuplePack = id:
-  show (Fin.cons n
-        (Fin.append (Nat.tupleAt k prev_packed) x)) i
-      = (Fin.cons n
-        (Fin.append (Nat.simRecVec k a
-          (fun j' => (h j').interp)
-          (fun j' => (g j').interp) n x) x)) i
-  congr 1
-  funext j'
-  show Nat.tupleAt k prev_packed j'
-    = Nat.simRecVec k a (fun j' => (h j').interp)
-        (fun j' => (g j').interp) n x j'
-  -- prev_packed = Nat.tuplePack k (simRecVec ... n x)
-  -- so tupleAt k prev_packed j' = simRecVec ... n x j'
-  -- by Nat.tupleAt_tuplePack.
-  show Nat.tupleAt k
-        (Nat.tuplePack k
-          (Nat.simRecVec k a (fun j' => (h j').interp)
-            (fun j' => (g j').interp) n x)) j'
-      = Nat.simRecVec k a (fun j' => (h j').interp)
-          (fun j' => (g j').interp) n x j'
-  exact Nat.tupleAt_tuplePack k _ j'
-```
-
-(The proof uses `congr 1; funext` to walk into nested
-function applications. If the elaboration gets confused
-by the `let` binding, the implementer may need to unfold
-`prev_packed` explicitly via `show` or `change`. Report
-deviation.)
-
-- [ ] **Step 13.3: Add `packedRec_eq_tuplePack_simRecVec`**
-
-```lean
-/-- Main intermediate: the packed `boundedRec` output at
-iteration `n` equals
-`Nat.tuplePack k (Nat.simRecVec ... n x)`, under the
-dominance hypothesis.  Master design §3.2. -/
-theorem packedRec_eq_tuplePack_simRecVec
-    (k a : ℕ)
-    (h : Fin (k + 1) → ERMor1 a)
-    (g : Fin (k + 1) → ERMor1 (1 + (k + 1) + a))
-    (componentBound : ERMor1 (1 + a))
-    (n : ℕ) (x : Fin a → ℕ)
-    (h_dominates :
-      ∀ (m : ℕ), m ≤ n → ∀ (j : Fin (k + 1)),
-        Nat.simRecVec k a (fun j' => (h j').interp)
-            (fun j' => (g j').interp) m x j
-          ≤ componentBound.interp (Fin.cons m x))
-    (h_mono :
-      ∀ (m : ℕ), m ≤ n →
-        componentBound.interp (Fin.cons m x)
-          ≤ componentBound.interp (Fin.cons n x)) :
-    (ERMor1.boundedRec
-        (ERMor1.packedBase k a h)
-        (ERMor1.packedStep k a g)
-        (ERMor1.tuplePackedBound k componentBound)).interp
-        (Fin.cons n x)
-      = Nat.tuplePack k
-          (Nat.simRecVec k a (fun j' => (h j').interp)
-            (fun j' => (g j').interp) n x) := by
-  -- Apply boundedRec_eq_natRec_of_bounded with
-  --   base := packedBase k a h
-  --   step := packedStep k a g
-  --   bound := tuplePackedBound k componentBound
-  -- Goal becomes: Nat.rec (packedBase.interp x)
-  --                  (fun m prev => packedStep.interp ...) n
-  --              = Nat.tuplePack k (simRecVec ... n x)
-  -- Which we prove by induction on n.
-  --
-  -- Hypothesis 1 of boundedRec_eq_natRec_of_bounded:
-  --   ∀ j, j ≤ n → Nat.rec ...j ≤ tuplePackedBound interp.
-  -- Discharged via packedBound_dominates_iter (next task).
-  -- Hypothesis 2: bound monotone in counter.
-  -- Discharged via packedBound_mono (next task).
-  --
-  -- The inductive proof of Nat.rec value = Nat.tuplePack k ...
-  -- uses packedBase_interp_eq_tuplePack_simRecVec_zero
-  -- (base) and packedStep_interp_eq_tuplePack_step
-  -- (step) in turn.
-  sorry  -- placeholder; full proof follows in implementation
-```
-
-(The actual proof is ~40 lines and requires Tasks 14–15
-which discharge the dominance and monotonicity
-hypotheses. The implementer is expected to land this
-fully — `sorry` is a placeholder showing the proof
-structure but must be replaced with real tactics. Report
-status `BLOCKED` if you cannot fill it.)
-
-- [ ] **Step 13.4: Build and commit (with all three lemmas filled in)**
-
-```bash
-rm -f .lake/build/lib/lean/GebLean/Utilities/ERSimultaneousBoundedRec.olean
-lake build GebLean.Utilities.ERSimultaneousBoundedRec 2>&1 | tail -5
-```
-
-Expected: clean (no `sorry`-warnings).
-
-```bash
-git add GebLean/Utilities/ERSimultaneousBoundedRec.lean
-git commit -m "Step 2 task 13: step-case lemmas for simultaneousBoundedRec correctness
-
-Three intermediate lemmas:
-- interp_packedStepCtx: slot routing's interp.
-- packedStep_interp_eq_tuplePack_step: step case of the
-  iteration-induction.
-- packedRec_eq_tuplePack_simRecVec: main intermediate
-  combining base and step via boundedRec_eq_natRec_of_bounded.
-
-Master design §3.2."
-```
-
----
-
-## Task 14 — Hypothesis-discharge lemmas
-
-**Files:**
-
-- Modify: `GebLean/Utilities/ERSimultaneousBoundedRec.lean`
-  (append, before `simultaneousBoundedRec_interp_correct`)
-
-- [ ] **Step 14.1: Add `packedBound_dominates_iter`**
+- [ ] **Step 13.1: Add `packedBound_dominates_iter`**
 
 ```lean
 /-- Dominance hypothesis discharge: under
@@ -1481,8 +1320,8 @@ interp.  Used to apply
 theorem packedBound_dominates_iter
     (k a : ℕ)
     (h : Fin (k + 1) → ERMor1 a)
-    (g : Fin (k + 1) → ERMor1 (1 + (k + 1) + a))
-    (componentBound : ERMor1 (1 + a))
+    (g : Fin (k + 1) → ERMor1 (a + 1 + (k + 1)))
+    (componentBound : ERMor1 (a + 1))
     (n : ℕ) (x : Fin a → ℕ) (m : ℕ) (h_m_le_n : m ≤ n)
     (h_dominates :
       ∀ (m' : ℕ), m' ≤ n → ∀ (j : Fin (k + 1)),
@@ -1499,7 +1338,7 @@ theorem packedBound_dominates_iter
   exact h_dominates m h_m_le_n j
 ```
 
-- [ ] **Step 14.2: Add `packedBound_mono`**
+- [ ] **Step 13.2: Add `packedBound_mono`**
 
 ```lean
 /-- Monotonicity hypothesis discharge: if
@@ -1507,7 +1346,7 @@ theorem packedBound_dominates_iter
 counter, so is `tuplePackedBound k componentBound`.
 Master design §3.2. -/
 theorem packedBound_mono
-    (k a : ℕ) (componentBound : ERMor1 (1 + a))
+    (k a : ℕ) (componentBound : ERMor1 (a + 1))
     (n : ℕ) (x : Fin a → ℕ)
     (h_mono :
       ∀ (m : ℕ), m ≤ n →
@@ -1526,7 +1365,7 @@ theorem packedBound_mono
   omega
 ```
 
-- [ ] **Step 14.3: Build and commit**
+- [ ] **Step 13.3: Build and commit**
 
 ```bash
 rm -f .lake/build/lib/lean/GebLean/Utilities/ERSimultaneousBoundedRec.olean
@@ -1537,7 +1376,7 @@ Expected: clean.
 
 ```bash
 git add GebLean/Utilities/ERSimultaneousBoundedRec.lean
-git commit -m "Step 2 task 14: hypothesis-discharge lemmas
+git commit -m "Step 2 task 13: hypothesis-discharge lemmas
 
 Two helpers for packedRec_eq_tuplePack_simRecVec's
 boundedRec_eq_natRec_of_bounded application:
@@ -1545,6 +1384,223 @@ boundedRec_eq_natRec_of_bounded application:
   tuplePackedBound_dominates.
 - packedBound_mono: monotonicity discharge via
   componentBound's monotonicity.
+
+Master design §3.2."
+```
+
+---
+
+## Task 14 — Step lemma + main intermediate
+
+**Files:**
+
+- Modify: `GebLean/Utilities/ERSimultaneousBoundedRec.lean`
+  (append)
+
+- [ ] **Step 14.1: Add helper `interp_packedStepCtx`**
+
+A small helper that the step-case proof will consume —
+proving how `packedStepCtx`'s interp maps slots of the
+outer step's input context to the inner ER computation.
+The outer convention is `(counter, params, prev)` and the
+inner is `(counter, packed_prev, params)`:
+
+```lean
+/-- Interp of `packedStepCtx` at each slot of the
+`Fin (a + 1 + (k + 1))`-context.
+
+Outer slot 0 routes to the inner counter (slot 0).
+Outer slots 1..a (parameter indices 0..a-1) route to
+inner slots 2..a+1 (the parameters).  Outer slots
+a+1..a+k+1 (prev indices 0..k) route via `Nat.tupleAt k`
+extraction from inner slot 1 (the packed previous
+state).  -/
+theorem interp_packedStepCtx (k a : ℕ)
+    (n prev_packed : ℕ) (x : Fin a → ℕ)
+    (i : Fin (a + 1 + (k + 1))) :
+    (ERMor1.packedStepCtx k a i).interp
+        (Fin.cons n (Fin.cons prev_packed x))
+      = (Fin.append (Fin.cons n x)
+          (Nat.tupleAt k prev_packed)) i := by
+  rcases i with ⟨v, h_v⟩
+  match v, h_v with
+  | 0, _ =>
+      -- proj 0: returns slot 0 of the inner ctx = n.
+      -- RHS at index 0: Fin.append's left = (Fin.cons n x) 0 = n.
+      simp [ERMor1.packedStepCtx, ERMor1.interp_proj,
+        Fin.append, Fin.cons]
+  | s + 1, h_in =>
+      by_cases h_param : s < a
+      · -- Param case: proj (s + 2) returns x ⟨s, _⟩.
+        -- RHS at index s + 1: Fin.append's left at s + 1
+        -- = Fin.cons n x ⟨s + 1, _⟩ = x ⟨s, _⟩.
+        simp [ERMor1.packedStepCtx, h_param,
+          ERMor1.interp_proj, Fin.append, Fin.cons]
+      · -- Prev case: comp tupleAt at inner slot 1 returns
+        -- Nat.tupleAt k prev_packed ⟨s - a, _⟩.
+        -- RHS at index s + 1 ≥ a + 1: Fin.append's right
+        -- at (s + 1 - (a + 1)) = s - a, which is the
+        -- prev-vector index.
+        simp [ERMor1.packedStepCtx, h_param,
+          ERMor1.interp_comp, ERMor1.interp_tupleAt,
+          ERMor1.interp_proj, Fin.append, Fin.cons]
+```
+
+(If the `simp` calls do not close, additional
+`Fin.append_left` / `Fin.append_right` /
+`Fin.cons_zero` / `Fin.cons_succ` lemmas may be needed.
+The implementer can also reference the existing
+`kSimStepContext_interp` lemma in `KSimSzudzikSimrec.lean`
+for an analogous slot-routing pattern.  CLAUDE.md forbids
+`sorry` in commits; iterate until clean before
+committing.)
+
+- [ ] **Step 14.2: Add `packedStep_interp_eq_tuplePack_step`**
+
+```lean
+/-- Step case: applying `packedStep` to a packed state
+`prev_packed` (which equals
+`Nat.tuplePack k (simRecVec ... n x)`) yields
+`Nat.tuplePack k (simRecVec ... (n + 1) x)`.  Master
+design §3.2. -/
+theorem packedStep_interp_eq_tuplePack_step
+    (k a : ℕ)
+    (h : Fin (k + 1) → ERMor1 a)
+    (g : Fin (k + 1) → ERMor1 (a + 1 + (k + 1)))
+    (n : ℕ) (x : Fin a → ℕ) :
+    let prev_packed :=
+      Nat.tuplePack k
+        (Nat.simRecVec k a (fun j' => (h j').interp)
+          (fun j' => (g j').interp) n x)
+    (ERMor1.packedStep k a g).interp
+        (Fin.cons n (Fin.cons prev_packed x))
+      = Nat.tuplePack k
+          (Nat.simRecVec k a (fun j' => (h j').interp)
+            (fun j' => (g j').interp) (n + 1) x) := by
+  intro prev_packed
+  simp only [ERMor1.packedStep, ERMor1.interp_comp,
+    ERMor1.interp_tuplePack]
+  congr 1
+  funext j
+  rw [ERMor1.interp_comp]
+  congr 1
+  funext i
+  rw [ERMor1.interp_packedStepCtx]
+  -- Goal: (Fin.append (Fin.cons n x)
+  --         (Nat.tupleAt k prev_packed)) i
+  --     = (Fin.append (Fin.cons n x)
+  --         (Nat.simRecVec k a ... n x)) i
+  congr 1
+  funext j'
+  show Nat.tupleAt k prev_packed j'
+    = Nat.simRecVec k a (fun j' => (h j').interp)
+        (fun j' => (g j').interp) n x j'
+  show Nat.tupleAt k
+        (Nat.tuplePack k
+          (Nat.simRecVec k a (fun j' => (h j').interp)
+            (fun j' => (g j').interp) n x)) j'
+      = Nat.simRecVec k a (fun j' => (h j').interp)
+          (fun j' => (g j').interp) n x j'
+  exact Nat.tupleAt_tuplePack k _ j'
+```
+
+(The proof uses `congr 1; funext` to walk into nested
+function applications.  If the elaboration gets confused
+by the `let` binding, the implementer may need to unfold
+`prev_packed` explicitly via `show` or `change`.)
+
+- [ ] **Step 14.3: Add `packedRec_eq_tuplePack_simRecVec`**
+
+```lean
+/-- Main intermediate: the packed `boundedRec` output at
+iteration `n` equals
+`Nat.tuplePack k (Nat.simRecVec ... n x)`, under the
+dominance hypothesis.  Master design §3.2. -/
+theorem packedRec_eq_tuplePack_simRecVec
+    (k a : ℕ)
+    (h : Fin (k + 1) → ERMor1 a)
+    (g : Fin (k + 1) → ERMor1 (a + 1 + (k + 1)))
+    (componentBound : ERMor1 (a + 1))
+    (n : ℕ) (x : Fin a → ℕ)
+    (h_dominates :
+      ∀ (m : ℕ), m ≤ n → ∀ (j : Fin (k + 1)),
+        Nat.simRecVec k a (fun j' => (h j').interp)
+            (fun j' => (g j').interp) m x j
+          ≤ componentBound.interp (Fin.cons m x))
+    (h_mono :
+      ∀ (m : ℕ), m ≤ n →
+        componentBound.interp (Fin.cons m x)
+          ≤ componentBound.interp (Fin.cons n x)) :
+    (ERMor1.boundedRec
+        (ERMor1.packedBase k a h)
+        (ERMor1.packedStep k a g)
+        (ERMor1.tuplePackedBound k componentBound)).interp
+        (Fin.cons n x)
+      = Nat.tuplePack k
+          (Nat.simRecVec k a (fun j' => (h j').interp)
+            (fun j' => (g j').interp) n x) := by
+  apply ERMor1.boundedRec_eq_natRec_of_bounded
+  · -- Hypothesis 1: ∀ j ≤ n, packed Nat.rec value ≤
+    -- tuplePackedBound interp.
+    intro j h_j_le_n
+    -- The Nat.rec value at iteration j equals
+    -- Nat.tuplePack k (simRecVec ... j x), proven by
+    -- induction.  Then apply packedBound_dominates_iter.
+    have h_rec_eq :
+        Nat.rec ((ERMor1.packedBase k a h).interp x)
+          (fun m prev =>
+            (ERMor1.packedStep k a g).interp
+              (Fin.cons m (Fin.cons prev x))) j
+          = Nat.tuplePack k
+              (Nat.simRecVec k a
+                (fun j' => (h j').interp)
+                (fun j' => (g j').interp) j x) := by
+      induction j with
+      | zero =>
+          simp only [Nat.rec, Nat.zero_eq]
+          exact
+            ERMor1.packedBase_interp_eq_tuplePack_simRecVec_zero
+              k a h g x
+      | succ m ih =>
+          rw [Nat.rec, ih]
+          exact
+            ERMor1.packedStep_interp_eq_tuplePack_step
+              k a h g m x
+    rw [h_rec_eq]
+    exact ERMor1.packedBound_dominates_iter
+      k a h g componentBound n x j h_j_le_n h_dominates
+  · -- Hypothesis 2: bound monotone in counter.
+    exact ERMor1.packedBound_mono
+      k a componentBound n x h_mono
+```
+
+(The `induction j` chain may need adjustment depending
+on how `Nat.rec` reduces and how
+`boundedRec_eq_natRec_of_bounded` exposes the goal.  The
+implementer should verify by viewing intermediate goals.
+Iterate until clean before committing — CLAUDE.md
+forbids `sorry` in commits.)
+
+- [ ] **Step 14.4: Build and commit (with all three lemmas filled in)**
+
+```bash
+rm -f .lake/build/lib/lean/GebLean/Utilities/ERSimultaneousBoundedRec.olean
+lake build GebLean.Utilities.ERSimultaneousBoundedRec 2>&1 | tail -5
+```
+
+Expected: clean (no `sorry`-warnings).
+
+```bash
+git add GebLean/Utilities/ERSimultaneousBoundedRec.lean
+git commit -m "Step 2 task 14: step-case lemmas + main intermediate
+
+Three intermediate lemmas:
+- interp_packedStepCtx: slot routing's interp.
+- packedStep_interp_eq_tuplePack_step: step case of the
+  iteration-induction.
+- packedRec_eq_tuplePack_simRecVec: main intermediate
+  combining base and step via boundedRec_eq_natRec_of_bounded
+  and the discharge lemmas from task 13.
 
 Master design §3.2."
 ```
@@ -1568,12 +1624,14 @@ function `Nat.simRecVec`), and `componentBound` is
 monotone in the iteration counter up to `n`, the
 ERMorN's i-th component computes exactly the i-th
 simultaneous-recursion value at iteration `n`.  Master
-design §3.2.  Realizes Tourlakis 2018 §0.1.0.35. -/
+design §3.2.  Realizes Tourlakis 2018 §0.1.0.34 (the
+proof technique; §0.1.0.35 is the higher-level
+corollary). -/
 theorem simultaneousBoundedRec_interp_correct
     (k a : ℕ)
     (h : Fin (k + 1) → ERMor1 a)
-    (g : Fin (k + 1) → ERMor1 (1 + (k + 1) + a))
-    (componentBound : ERMor1 (1 + a))
+    (g : Fin (k + 1) → ERMor1 (a + 1 + (k + 1)))
+    (componentBound : ERMor1 (a + 1))
     (n : ℕ) (x : Fin a → ℕ) (i : Fin (k + 1))
     (h_dominates :
       ∀ (m : ℕ), m ≤ n → ∀ (j : Fin (k + 1)),
@@ -1589,13 +1647,28 @@ theorem simultaneousBoundedRec_interp_correct
       Nat.simRecVec k a (fun j' => (h j').interp)
         (fun j' => (g j').interp) n x i := by
   simp only [ERMor1.simultaneousBoundedRec,
-    ERMor1.interp_comp, ERMor1.interp_tupleAt]
+    ERMor1.interp_comp, ERMor1.interp_tupleAt,
+    Matrix.cons_val_zero]
   rw [ERMor1.packedRec_eq_tuplePack_simRecVec
         k a h g componentBound n x h_dominates h_mono]
-  -- Goal: Nat.tupleAt k (Nat.tuplePack k (simRecVec ... n x)) i
+  -- Goal: Nat.tupleAt k (Nat.tuplePack k
+  --         (simRecVec ... n x)) i
   --     = simRecVec ... n x i
-  rw [Nat.tupleAt_tuplePack]
+  exact Nat.tupleAt_tuplePack k _ i
 ```
+
+(If `simp only` does not reduce the
+`fun _ : Fin 1 => packedRec.interp ctx` lambda to a
+direct `interp` call, add a `change` step to align the
+goal:
+
+```lean
+change Nat.tupleAt k
+          ((ERMor1.boundedRec ...).interp
+            (Fin.cons n x)) i = _
+```
+
+Iterate until clean before committing.)
 
 - [ ] **Step 15.2: Build and commit**
 
@@ -1616,7 +1689,9 @@ the i-th simultaneous-recursion value.  Composes
 packedRec_eq_tuplePack_simRecVec with
 Nat.tupleAt_tuplePack.
 
-Realizes Tourlakis 2018 §0.1.0.35; master design §3.2."
+Realizes Tourlakis 2018 §0.1.0.34 (the proof technique;
+§0.1.0.35 is the higher-level corollary); master design
+§3.2."
 ```
 
 ---
@@ -1626,7 +1701,7 @@ Realizes Tourlakis 2018 §0.1.0.35; master design §3.2."
 **Files:**
 
 - Modify: `GebLean/Utilities/ERSimultaneousBoundedRec.lean`
-  (append, inside a `namespace PolyBound` block)
+  (append, inside a `namespace PolyBound` region)
 
 - [ ] **Step 16.1: Add the PolyBound builder**
 
@@ -1652,8 +1727,8 @@ the coefficient depends only on `(k, pb_bound)`, not on
 the source K^sim term's structure.  -/
 def ofSimultaneousBoundedRec (k a : ℕ)
     {h : Fin (k + 1) → ERMor1 a}
-    {g : Fin (k + 1) → ERMor1 (1 + (k + 1) + a)}
-    {componentBound : ERMor1 (1 + a)}
+    {g : Fin (k + 1) → ERMor1 (a + 1 + (k + 1))}
+    {componentBound : ERMor1 (a + 1)}
     (pb_bound : PolyBound componentBound)
     (i : Fin (k + 1)) :
     PolyBound
@@ -1667,56 +1742,40 @@ def ofSimultaneousBoundedRec (k a : ℕ)
   constant :=
     (PolyBound.ofTuplePackedBound k pb_bound).constant
   bounds := fun ctx => by
-    -- Chain: component ≤ packedRec ≤ packedBound interp ≤ poly bound
+    -- Chain via Nat.le_trans: component ≤ packedRec
+    -- ≤ tuplePackedBound interp ≤ poly bound.  Cannot
+    -- use `omega` here because the final goal has a
+    -- non-linear `^` term (round-1 review fix C5).
     have h_component :
         ((ERMor1.simultaneousBoundedRec k a h g
               componentBound) i).interp ctx
           ≤ (ERMor1.boundedRec
                 (ERMor1.packedBase k a h)
                 (ERMor1.packedStep k a g)
-                (ERMor1.tuplePackedBound k componentBound)).interp
-                ctx := by
+                (ERMor1.tuplePackedBound k
+                  componentBound)).interp ctx := by
       simp only [ERMor1.simultaneousBoundedRec,
-        ERMor1.interp_comp, ERMor1.interp_tupleAt]
-      have h_at :
-          Nat.tupleAt k
-              ((ERMor1.boundedRec
-                  (ERMor1.packedBase k a h)
-                  (ERMor1.packedStep k a g)
-                  (ERMor1.tuplePackedBound k
-                    componentBound)).interp ctx) i
-            ≤
-              (ERMor1.boundedRec
-                  (ERMor1.packedBase k a h)
-                  (ERMor1.packedStep k a g)
-                  (ERMor1.tuplePackedBound k
-                    componentBound)).interp ctx :=
-        Nat.tupleAt_le k _ i
-      -- The simp + rw above reduces to Nat.tupleAt
-      -- applied to the boundedRec interp; bound it.
-      exact h_at
-    have h_bound :
-        (ERMor1.boundedRec
-            (ERMor1.packedBase k a h)
-            (ERMor1.packedStep k a g)
-            (ERMor1.tuplePackedBound k componentBound)).interp
-            ctx
-          ≤ (ERMor1.tuplePackedBound k componentBound).interp
-              ctx :=
-      ERMor1.interp_boundedRec_le_bound _ _ _ ctx
+        ERMor1.interp_comp, ERMor1.interp_tupleAt,
+        Matrix.cons_val_zero]
+      exact Nat.tupleAt_le k _ i
+    have h_bound :=
+      ERMor1.interp_boundedRec_le_bound
+        (ERMor1.packedBase k a h)
+        (ERMor1.packedStep k a g)
+        (ERMor1.tuplePackedBound k componentBound) ctx
     have h_poly :=
       (PolyBound.ofTuplePackedBound k pb_bound).bounds ctx
-    -- Chain: h_component ≤ h_bound ≤ h_poly
-    -- Final: ≤ coefficient * (max + 1)^degree + constant.
-    omega
+    exact h_component.trans (h_bound.trans h_poly)
 
 end PolyBound
 ```
 
-(The `omega` at the end may not close the goal directly
-if the inequality chain involves non-linear terms.
-Fallback: `linarith [h_component, h_bound, h_poly]` or
-explicit `Nat.le_trans` chain. Report deviation.)
+(The terminal `Nat.le_trans` chain replaces the original
+`omega`, which cannot close non-linear `^`-bearing goals.
+The `simp only`+`exact Nat.tupleAt_le` is a tighter
+restatement of the per-component bound; if it does not
+reduce cleanly, fall back to a `change` step matching the
+post-`simp` goal shape.)
 
 - [ ] **Step 16.2: Build and commit**
 
@@ -1847,8 +1906,9 @@ For each public `def` / `theorem` in the three new
 implementation modules, verify the docstring contains the
 spec §7-listed citation verbatim:
 
-- `Nat.simRecVec`, `Nat.simRec` — Tourlakis 2018 §0.1.0.7;
-  master design §3.2.
+- `Nat.simRecVec`, `Nat.simRec` — Tourlakis 2018 §0.1.0.7
+  (definition); §0.1.0.34 (proof technique); master design
+  §3.2.
 - `Nat.simRecVec_zero`, `Nat.simRecVec_succ` — master
   design §3.2.
 - `Nat.simRecVec_le_of_dominates` — master design §3.2.
@@ -1861,7 +1921,8 @@ spec §7-listed citation verbatim:
 - `ERMor1.packedBase`, `packedStepCtx`, `packedStep` —
   master design §3.2.
 - `ERMor1.simultaneousBoundedRec` — Tourlakis 2018
-  §0.1.0.35; master design §3.2.
+  §0.1.0.34 (the proof technique; §0.1.0.35 is the
+  higher-level corollary for `n ≥ 2`); master design §3.2.
 - Named intermediate lemmas
   (`packedBase_interp_eq_tuplePack_simRecVec_zero`,
   `packedStep_interp_eq_tuplePack_step`,
@@ -1870,7 +1931,8 @@ spec §7-listed citation verbatim:
   `packedBound_dominates_iter`, `packedBound_mono`) —
   master design §3.2.
 - `simultaneousBoundedRec_interp_correct` — Tourlakis 2018
-  §0.1.0.35; master design §3.2.
+  §0.1.0.34 (the proof technique; §0.1.0.35 is the
+  higher-level corollary); master design §3.2.
 - `ERMor1.PolyBound.ofSimultaneousBoundedRec` — master
   design §3.2 + §15.13.
 
@@ -1954,10 +2016,11 @@ Before declaring step 2 done:
   cover §4; Tasks 10–17 cover §5.
 - [ ] **Citation-discipline check**: every public entity
   has the §7-listed citation in its docstring.
-- [ ] **`Fin (k + 1)` / `Fin (1 + (k + 1) + a)` index
+- [ ] **`Fin (k + 1)` / `Fin (a + 1 + (k + 1))` index
   consistency**: the slot conventions match between
-  `Nat.simRecVec`, `ERMor1.packedStepCtx`, `ERMor1.packedStep`,
-  and the correctness theorem hypotheses.
+  `Nat.simRecVec`, `ERMor1.packedStepCtx`,
+  `ERMor1.packedStep`, and the correctness theorem
+  hypotheses.
 - [ ] **Forced re-elaboration**: every new `.lean` module
   passes a fresh `lake build <Module>` after
   `rm .olean`.
