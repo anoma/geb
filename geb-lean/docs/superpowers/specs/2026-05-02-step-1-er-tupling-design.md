@@ -163,7 +163,7 @@ ERTupling.lean                            [step 1, this cycle]
    ↓
 ERSimultaneousBoundedRec.lean             [step 2]
    ↓
-ERAckermann.lean                          [step 3]
+ERAMajorants.lean                         [step 3]
    ↓
 LawvereKSimMajorization.lean              [step 4]
    ↓

@@ -375,7 +375,7 @@ page 22 A_1).
 (linear-shape). `A_two_iter` has no `PolyBound`
 (tower-fast); the level-2 chain uses a Nat-level
 inequality from step 4 instead.
-(`Utilities/ERAckermann.lean`.)
+(`Utilities/ERAMajorants.lean`.)
 
 #### Step 4 — Majorization theorem (Tourlakis 0.1.0.10)
 
@@ -799,7 +799,7 @@ Following Tourlakis 2018 page 22 (proof of §0.1.0.44 ⊆):
 A_1 = `λx. 2x + 2 ∈ ER`, A_2 = `λx. 2^x ∈ ER`. Iterated
 versions A_n^r are r-fold composition of A_n with itself.
 
-#### Lean entities (`Utilities/ERAckermann.lean`)
+#### Lean entities (`Utilities/ERAMajorants.lean`)
 
 - `ERMor1.A_one : ERMor1 1`. Interp `λx. 2*x + 2`.
   Construction via existing named composites: e.g.
@@ -1256,7 +1256,7 @@ GebLean/Utilities/ERSimultaneousBoundedRec.lean      [step 2]
   packs internally via tuplePack, recurses via boundedRec,
   unpacks via tupleAt.
 
-GebLean/Utilities/ERAckermann.lean                   [step 3]
+GebLean/Utilities/ERAMajorants.lean                   [step 3]
   ERMor1.A_one, A_one_iter; A_two_iter alias; PolyBound
   builders for the A_one variants only (A_two_iter is
   tower-fast; no PolyBound).
@@ -1918,7 +1918,7 @@ GebLean/Utilities/ERSimultaneousBoundedRec.lean      [step 2]
   Nat.tuplePack, recurses via single-output boundedRec,
   unpacks via Nat.tupleAt.  Interp lemma + PolyBound builder.
 
-GebLean/Utilities/ERAckermann.lean                   [step 3]
+GebLean/Utilities/ERAMajorants.lean                   [step 3]
   ERMor1.A_one (interp λx.2x+2);
   ERMor1.A_one_iter (r-fold composition; interp A_1^r);
   ERMor1.A_two_iter alias of ERMor1.towerER (interp A_2^r);
@@ -1982,7 +1982,7 @@ kToER side:
   Tupling ─→ ERTupling ─→ ERSimultaneousBoundedRec ─┐
        (KSimTupling not built — see §3.1)
                                                      ├─→ LawvereKSimER
-       ERAckermann ─→ LawvereKSimMajorization ──────┘
+       ERAMajorants ─→ LawvereKSimMajorization ──────┘
                             ↑
        (existing) LawvereKSimPolynomialBound (for the
                   linearBound dominance theorems reused

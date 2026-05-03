@@ -179,7 +179,7 @@ ERSimultaneousBoundedRec.lean  [step 2, this cycle]
    ↓                         (consumes ERTupling + SimRec
    ↓                          + ERPackedBound)
    ↓
-ERAckermann.lean             [step 3]
+ERAMajorants.lean            [step 3]
    ↓
 LawvereKSimMajorization.lean [step 4]
    ↓
