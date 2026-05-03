@@ -163,4 +163,37 @@ def ofTupleAt (k : ℕ) (i : Fin (k + 1)) :
 end PolyBound
 
 end ERMor1
+
+namespace ERMorN
+
+/-- One-element vector view of a single-output ER term.
+`ERMorN.lift f i = f` for the unique `i : Fin 1`.
+Auxiliary helper supporting the `ERMorN`-quotient
+round-trip lemmas named in master design §3.1; bridges
+single-output `ERMor1.tuplePack` to the multi-output
+`ERMorN` interface on which the round-trip equation is
+stated. -/
+def lift {n : ℕ} (f : ERMor1 n) : ERMorN n 1 :=
+  fun _ => f
+
+/-- Named identity coercion from a vector of single-output
+ER terms to the multi-output `ERMorN`.  Definitionally `g`,
+since `ERMorN n m := Fin m → ERMor1 n`.  Auxiliary helper
+supporting the round-trip lemmas named in master design
+§3.1; gives the `Fin (k + 1) → ERMor1 1` family of
+`tupleAt` projections a stable `ERMorN 1 (k + 1)` interface
+for the quotient-level lemma signatures. -/
+def ofVec {n m : ℕ} (g : Fin m → ERMor1 n) :
+    ERMorN n m := g
+
+@[simp] theorem lift_apply {n : ℕ} (f : ERMor1 n)
+    (i : Fin 1) :
+    ERMorN.lift f i = f := rfl
+
+@[simp] theorem ofVec_apply {n m : ℕ}
+    (g : Fin m → ERMor1 n) (i : Fin m) :
+    ERMorN.ofVec g i = g i := rfl
+
+end ERMorN
+
 end GebLean
