@@ -120,5 +120,20 @@ def simultaneousBoundedRec (k a : ℕ)
   fun i : Fin (k + 1) =>
     ERMor1.comp (ERMor1.tupleAt k i) ![packedRec]
 
+/-- Base case: at iteration 0, the packed initial state
+equals `Nat.tuplePack k` applied to the bases.  Master
+design §3.2. -/
+theorem packedBase_interp_eq_tuplePack_simRecVec_zero
+    (k a : ℕ) (h : Fin (k + 1) → ERMor1 a)
+    (g : Fin (k + 1) → ERMor1 (a + 1 + (k + 1)))
+    (x : Fin a → ℕ) :
+    (ERMor1.packedBase k a h).interp x
+      = Nat.tuplePack k
+          (Nat.simRecVec k a (fun j' => (h j').interp)
+            (fun j' => (g j').interp) 0 x) := by
+  simp only [ERMor1.packedBase, ERMor1.interp_comp,
+    ERMor1.interp_tuplePack]
+  rfl
+
 end ERMor1
 end GebLean
