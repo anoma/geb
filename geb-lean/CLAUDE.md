@@ -71,6 +71,11 @@ When making changes to Lean code:
    Never use `lake env lean`; it fails to pick up options from
    our `lakefile`.  It will produce spurious errors.  Always use
    `lake build` and `lake test`.
+   Avoid bash process substitution (`<(...)`, `>(...)`, and similar
+   patterns).  These trigger a manual approval prompt that interrupts
+   the user.  When a workflow seems to call for process substitution,
+   write the intermediate output to a file (under `/tmp` or in the
+   working tree) and read it back instead.
 2. **Iterate on errors**: If the build fails, fix errors yourself and rebuild
    before proposing a change.
 3. **No warnings or sorry or admit**:
