@@ -161,6 +161,7 @@ import GebLean.Utilities.Sigma
 import GebLean.Utilities.Skeleton
 import GebLean.Utilities.Slice
 import GebLean.Utilities.SpanFamily
+import GebLean.Utilities.Tupling
 import GebLean.Utilities.TwArrPresheaf
 import GebLean.Utilities.TwistedArrow
 import GebLean.WedgeWeightComputation

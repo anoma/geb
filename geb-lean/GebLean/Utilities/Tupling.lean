@@ -30,11 +30,11 @@ via iterated left-associated Szudzik pairing.  Realizes
 Tourlakis 2018 §0.1.0.34, p. 14's `[[z_1,…,z_{k+1}]]^{(k+1)}`
 (with Szudzik replacing Cantor's J).  See master design
 §3.1. -/
-def tuplePack : (k : ℕ) → (Fin (k+1) → ℕ) → ℕ
+def tuplePack : (k : ℕ) → (Fin (k + 1) → ℕ) → ℕ
   | 0,     v => v 0
   | k + 1, v =>
       Nat.pair (tuplePack k (Fin.init v))
-        (v (Fin.last (k+1)))
+        (v (Fin.last (k + 1)))
 
 /-- Extract the `i`-th component from a packed
 `(k+1)`-tuple.  Inverse of `tuplePack`.  Realizes Tourlakis
@@ -42,12 +42,12 @@ def tuplePack : (k : ℕ) → (Fin (k+1) → ℕ) → ℕ
 index orientation matched to the left-fold recurrence;
 `Nat.unpair.fst` plays the role of Tourlakis's K and
 `Nat.unpair.snd` plays L).  See master design §3.1. -/
-def tupleAt : (k : ℕ) → ℕ → Fin (k+1) → ℕ
+def tupleAt : (k : ℕ) → ℕ → Fin (k + 1) → ℕ
   | 0,     n, _ => n
   | k + 1, n, i =>
-      Fin.lastCases (motive := fun _ : Fin (k+2) => ℕ)
+      Fin.lastCases (motive := fun _ : Fin (k + 2) => ℕ)
         ((Nat.unpair n).2)
-        (fun j : Fin (k+1) => tupleAt k (Nat.unpair n).1 j)
+        (fun j : Fin (k + 1) => tupleAt k (Nat.unpair n).1 j)
         i
 
 /-- Closed-form coefficient witnessing the polynomial
@@ -62,10 +62,10 @@ def tuplePackCoef : ℕ → ℕ
     tuplePack 0 v = v 0 := rfl
 
 @[simp] theorem tuplePack_succ (k : ℕ)
-    (v : Fin (k+2) → ℕ) :
-    tuplePack (k+1) v
+    (v : Fin (k + 2) → ℕ) :
+    tuplePack (k + 1) v
       = Nat.pair (tuplePack k (Fin.init v))
-          (v (Fin.last (k+1))) := rfl
+          (v (Fin.last (k + 1))) := rfl
 
 @[simp] theorem tupleAt_zero (n : ℕ) (i : Fin 1) :
     tupleAt 0 n i = n := rfl
@@ -73,15 +73,15 @@ def tuplePackCoef : ℕ → ℕ
 /-- `tupleAt` reduction at the last index: peels one
 `Nat.unpair` step on the right. -/
 @[simp] theorem tupleAt_succ_last (k n : ℕ) :
-    tupleAt (k+1) n (Fin.last (k+1))
+    tupleAt (k + 1) n (Fin.last (k + 1))
       = (Nat.unpair n).2 := by
   simp [tupleAt, Fin.lastCases_last]
 
 /-- `tupleAt` reduction at a non-last index: peels one
 `Nat.unpair` step on the left and recurses at depth `k`. -/
 @[simp] theorem tupleAt_succ_castSucc (k n : ℕ)
-    (j : Fin (k+1)) :
-    tupleAt (k+1) n j.castSucc
+    (j : Fin (k + 1)) :
+    tupleAt (k + 1) n j.castSucc
       = tupleAt k (Nat.unpair n).1 j := by
   simp [tupleAt, Fin.lastCases_castSucc]
 
@@ -90,16 +90,16 @@ bounded by the packed natural itself.  Mirrors existing
 `Nat.seqAt_le` in `Utilities/SzudzikSeq.lean`; underlying
 mathlib lemmas: `Nat.unpair_left_le`,
 `Nat.unpair_right_le`. -/
-theorem tupleAt_le : ∀ (k n : ℕ) (i : Fin (k+1)),
+theorem tupleAt_le : ∀ (k n : ℕ) (i : Fin (k + 1)),
     tupleAt k n i ≤ n
   | 0,     n, _ => by
       simp [tupleAt]
   | k + 1, n, i => by
       refine Fin.lastCases ?_ ?_ i
-      · simp [tupleAt, Fin.lastCases_last]
+      · simp only [tupleAt, Fin.lastCases_last]
         exact Nat.unpair_right_le n
       · intro j
-        simp [tupleAt, Fin.lastCases_castSucc]
+        simp only [tupleAt, Fin.lastCases_castSucc]
         exact le_trans (tupleAt_le k (Nat.unpair n).1 j)
           (Nat.unpair_left_le n)
 
@@ -108,11 +108,11 @@ tuple returns the original component.  Realizes Tourlakis
 2018 §0.1.0.34, p. 14's
 `Π^k_i [[z_1,…,z_k]]^{(k)} = z_i`. -/
 theorem tupleAt_tuplePack :
-    ∀ (k : ℕ) (v : Fin (k+1) → ℕ) (i : Fin (k+1)),
+    ∀ (k : ℕ) (v : Fin (k + 1) → ℕ) (i : Fin (k + 1)),
       tupleAt k (tuplePack k v) i = v i
-  | 0,     v, i => by
+  | 0,     v, ⟨0, _⟩ => by
       simp only [tupleAt_zero]
-      exact congrArg v (Subsingleton.elim _ i)
+      rfl
   | k + 1, v, i => by
       refine Fin.lastCases ?_ ?_ i
       · simp only [tuplePack_succ, tupleAt_succ_last,
@@ -135,10 +135,10 @@ theorem tuplePack_tupleAt :
   | k + 1, n => by
       simp only [tuplePack_succ, tupleAt_succ_last]
       have h_init :
-          Fin.init (tupleAt (k+1) n)
+          Fin.init (tupleAt (k + 1) n)
             = tupleAt k (Nat.unpair n).1 := by
         funext j
-        show tupleAt (k+1) n j.castSucc
+        change tupleAt (k + 1) n j.castSucc
           = tupleAt k (Nat.unpair n).1 j
         exact tupleAt_succ_castSucc k n j
       rw [h_init]
