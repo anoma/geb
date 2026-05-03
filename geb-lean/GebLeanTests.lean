@@ -26,6 +26,7 @@ import GebLeanTests.TestTreeCalcMeta
 import GebLeanTests.TestTreeCalcPrograms
 import GebLeanTests.TestTreeCalcReduction
 import GebLeanTests.PLang.BTPair
+import GebLeanTests.Utilities.ERAMajorants
 import GebLeanTests.Utilities.ERArith
 import GebLeanTests.Utilities.ERPackedBound
 import GebLeanTests.Utilities.ERSimultaneousBoundedRec
