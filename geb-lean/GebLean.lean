@@ -147,6 +147,7 @@ import GebLean.Utilities.EndsAndCoends
 import GebLean.Utilities.Equalities
 import GebLean.Utilities.ERArith
 import GebLean.Utilities.ERTreeArith
+import GebLean.Utilities.ERTupling
 import GebLean.Utilities.Families
 import GebLean.Utilities.Fintype
 import GebLean.Utilities.Graph
