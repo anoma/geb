@@ -127,6 +127,50 @@ inspect the full output for `error:` lines and not stop
 at "Build completed successfully (N jobs)" — that line is
 unreliable when the module is already cached.
 
+### Test discipline for ER-side `.interp` (Gödel numbering)
+
+ER's named composites for primitive operations (`natPair`,
+`natUnpairFst`, `natUnpairSnd`, `tuplePack`, `tupleAt`) are
+witnesses that the operations are elementary recursive.
+They are built from atomic ER constructors via composition,
+`boundedRec`, `boundedSearch`, etc. When kernel-reduced via
+`#guard` / `decide`:
+
+- `natPair x y` evaluates `(x+y)*(x+y) + x` (or Szudzik's
+  branch) via `mulN` → `boundedRec` over `addN`, which
+  itself unfolds into iterated reductions.
+- `natUnpairFst n` runs `boundedSearch` (bounded
+  μ-operator) up to `n`, checking each candidate by
+  re-reducing `natPair`.
+- `tuplePack k v` for `k ≥ 1` triggers nested `natPair`
+  calls.
+- `tupleAt k i n` for `k ≥ 1` triggers nested `natUnpair*`
+  calls.
+
+The cumulative kernel-reduction cost is impractical even
+for tiny inputs (e.g. `(ERMor1.tuplePack 1).interp ![3, 5]`
+ran for ages in an early Task 12 attempt). Therefore, in
+test files:
+
+- DO NOT write `#guard (ERMor1.<X>).interp <ctx> = <value>`
+  for `X` involving `tuplePack k` / `tupleAt k` /
+  `natPair` / `natUnpair*` / `boundedRec` / `boundedSearch`
+  / `expER` / `towerER` etc., except at trivial arity
+  (`k = 0`, where `tuplePack 0 = proj 0` and no `natPair`
+  is invoked).
+- DO rely on the proven universal `@[simp]` interp lemmas
+  (`interp_tuplePack`, `interp_tupleAt`) for higher-arity
+  correctness — they cover all inputs by induction.
+- If a concrete higher-arity `example` is wanted for
+  documentation, use `:= by simp [interp_*]` to rewrite
+  the goal to the Nat level first; but be aware that
+  `simp` may not fully reduce `Fin.lastCases` on
+  literal `Fin (k+1)` indices and may leave residual
+  goals like `Nat.tupleAt 1 (Nat.pair 3 5) 0 = 3` that
+  themselves require manual `Fin.cases` dispatch. In
+  practice, dropping such examples is cleaner — the
+  universal proof subsumes them.
+
 ---
 
 ## Task 1 — `Nat.tuplePack`, `Nat.tupleAt`, `Nat.tuplePackCoef`
@@ -761,7 +805,12 @@ alphabetically next to `import GebLean.Utilities.Tupling`:
 import GebLean.Utilities.ERTupling
 ```
 
-Run: `rm -f .lake/build/lib/lean/GebLean/Utilities/ERTupling.olean && lake build GebLean.Utilities.ERTupling`
+Run:
+
+```bash
+rm -f .lake/build/lib/lean/GebLean/Utilities/ERTupling.olean
+lake build GebLean.Utilities.ERTupling
+```
 
 Expected: clean build of the empty skeleton (the module has
 no definitions yet, so this just confirms imports resolve).

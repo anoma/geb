@@ -28,6 +28,7 @@ import GebLeanTests.TestTreeCalcReduction
 import GebLeanTests.PLang.BTPair
 import GebLeanTests.Utilities.ERArith
 import GebLeanTests.Utilities.ERTreeArith
+import GebLeanTests.Utilities.ERTupling
 import GebLeanTests.Utilities.SzudzikSeq
 import GebLeanTests.Utilities.Tower
 import GebLeanTests.Utilities.Tupling
