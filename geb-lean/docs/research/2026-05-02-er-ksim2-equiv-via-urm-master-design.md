@@ -193,7 +193,14 @@ Lean correctness theorem, in steps 1–5 of §2):
     `A_1^r(x) = 2^r · x + (2^{r+1} − 2)`.
   - `ERMor1.A_two_iter` aliasing existing
     `ERMor1.towerER` (interp = `tower r x` = A_2^r(x)).
-  - `PolyBound` builders for both.
+  - `PolyBound` builders for `A_one` and `A_one_iter`
+    (linear-shape).  No `PolyBound` for `A_two_iter`:
+    `tower r x` for `r ≥ 1` is not polynomially bounded
+    in `x`, and `ERMor1.PolyBound` is the bprod-free
+    polynomial fragment per the structural-towerHeight
+    section of `LawvereERPolynomialBound.lean`.  The
+    level-2 chain (steps 4–5) uses Nat-level inequalities
+    directly, not a PolyBound on `A_two_iter`.
 - Majorization theorem (step 4 — Tourlakis 0.1.0.10):
   - `linearBound_le_A_one_iter` translation lemma turning
     any `KMor1.linearBound (c, d)` into `A_1^r` for an
@@ -342,9 +349,16 @@ of intermediate values via `Nat.tuplePack`, recurses on the
 packed state via single-output `boundedRec`, unpacks at the
 end via `Nat.tupleAt`. Interp lemma + `PolyBound` builder.
 The packing arithmetic uses Szudzik pairing (already in ER as
-named composites) and produces a clean polynomial bound on
-the packed state; the kToER outer level sees a clean
-ERMorN interface.
+named composites). When the per-component bound is itself
+polynomially bounded (K^sim levels ≤ 1), the
+`PolyBound` builder (`ofSimultaneousBoundedRec`) produces a
+polynomial bound on the packed state. At level 2 the
+per-component bound is `A_2^r` (tower-fast), so neither it
+nor the resulting packed-state bound is a PolyBound; the
+level-2 chain uses `simultaneousBoundedRec_interp_correct`
+directly with a Nat-level dominance hypothesis. In both
+regimes, the kToER outer level sees a clean ERMorN
+interface.
 
 K^sim has simultaneous recursion built in (the `simrec`
 constructor); no analogous infrastructure is needed on the
@@ -357,7 +371,10 @@ page 22 A_1).
 `ERMor1.A_one_iter : ℕ → ERMor1 1` (interp `A_1^r`).
 `ERMor1.A_two_iter` aliasing existing `ERMor1.towerER`
 (interp `A_2^r = tower r`).
-`PolyBound` builders for both.
+`PolyBound` builders for `A_one` and `A_one_iter`
+(linear-shape). `A_two_iter` has no `PolyBound`
+(tower-fast); the level-2 chain uses a Nat-level
+inequality from step 4 instead.
 (`Utilities/ERAckermann.lean`.)
 
 #### Step 4 — Majorization theorem (Tourlakis 0.1.0.10)
@@ -764,7 +781,13 @@ output stays at height 2.
   semantic equations.
 - `simultaneousBoundedRec_polyBound`: `PolyBound` for each
   component, derived from the bound's `PolyBound` and the
-  packed-state arithmetic.
+  packed-state arithmetic. Applies only when
+  `componentBound` has a `PolyBound` — i.e. K^sim levels
+  ≤ 1. At level 2 the chain instead uses
+  `simultaneousBoundedRec_interp_correct` with a
+  Nat-level dominance hypothesis from step 4 majorization;
+  no `PolyBound` is produced for the level-2 simrec
+  output.
 
 K^sim has simultaneous recursion built-in (the `simrec`
 constructor is the multi-output primitive); no
@@ -795,12 +818,26 @@ versions A_n^r are r-fold composition of A_n with itself.
 #### Polynomial bound certification
 
 - `ERMor1.PolyBound.ofA_one`: PolyBound for `A_one`
-  (linear-shape; height-0 tower).
-- `ERMor1.PolyBound.ofA_one_iter`: PolyBound for `A_one_iter
-  r` (polynomial in inputs of degree depending on `r`).
-- `ERMor1.PolyBound.ofA_two_iter`: PolyBound for
-  `A_two_iter r` (height-`r` tower; reuses existing
-  `towerER` infrastructure).
+  (linear-shape; degree 1).
+- `ERMor1.PolyBound.ofA_one_iter`: PolyBound for
+  `A_one_iter r` (degree 1, coefficient `2^r`,
+  constant `2^{r+1} − 2`).
+- No PolyBound for `A_two_iter`. `tower r x` for `r ≥ 1`
+  is not polynomially bounded in `x`, and
+  `ERMor1.PolyBound`'s structural-towerHeight section
+  (`LawvereERPolynomialBound.lean`) explicitly restricts
+  the per-constructor builder set to the bprod-free
+  fragment; `expER` (and therefore `towerER` and
+  `A_two_iter`) is bprod-based and falls outside that
+  fragment.  The level-2 chain consumes the
+  Nat-level inequality
+  `f.interp v ≤ (A_two_iter r).interp ![vMax v]`
+  produced by step 4 majorization, fed into
+  `simultaneousBoundedRec_interp_correct`'s dominance
+  hypothesis.  Step 5's kToER simrec at level 2 uses the
+  ER term `simultaneousBoundedRec` (the term-builder)
+  with this `componentBound`, never invoking
+  `ofSimultaneousBoundedRec` (the PolyBound builder).
 
 ### §3.4 Majorization theorem (Tourlakis 0.1.0.10 transcribed)
 
@@ -1220,7 +1257,9 @@ GebLean/Utilities/ERSimultaneousBoundedRec.lean      [step 2]
   unpacks via tupleAt.
 
 GebLean/Utilities/ERAckermann.lean                   [step 3]
-  ERMor1.A_one, A_one_iter; A_two_iter alias; PolyBound builders.
+  ERMor1.A_one, A_one_iter; A_two_iter alias; PolyBound
+  builders for the A_one variants only (A_two_iter is
+  tower-fast; no PolyBound).
 
 GebLean/LawvereKSimMajorization.lean                 [step 4]
   KMor1.majorize_by_A_n_iter (Tourlakis 0.1.0.10);
@@ -1883,7 +1922,8 @@ GebLean/Utilities/ERAckermann.lean                   [step 3]
   ERMor1.A_one (interp λx.2x+2);
   ERMor1.A_one_iter (r-fold composition; interp A_1^r);
   ERMor1.A_two_iter alias of ERMor1.towerER (interp A_2^r);
-  PolyBound builders.
+  PolyBound builders for A_one and A_one_iter only
+  (A_two_iter is tower-fast; no PolyBound).
 
 GebLean/LawvereKSimMajorization.lean                 [step 4]
   KMor1.majorize_by_A_n_iter (Tourlakis 0.1.0.10 transcribed);
@@ -2108,9 +2148,15 @@ genuinely concerns step counts and not function values.
 Claim (kToER, structural-induction side): The new bound shape
 is Tourlakis's `A_n^r` (a sequence of explicit ER named
 composites: `A_one`, `A_one_iter`, `A_two_iter`). Composition
-of A_n^r bounds via `simultaneousBoundedRec` carries an
-encapsulated polynomial-shape bound on the packed iteration
-state; the packing and unpacking happen inside
+of A_n^r bounds via `simultaneousBoundedRec` encapsulates the
+packing arithmetic: at K^sim levels ≤ 1 the packed-state
+bound is polynomial-shape (consumed via the
+`ofSimultaneousBoundedRec` PolyBound builder); at level 2
+the packed-state bound is tower-shape, derived at the Nat
+level from step 4 majorization and fed to
+`simultaneousBoundedRec_interp_correct` as a dominance
+hypothesis (no PolyBound builder invoked). In both regimes
+the packing and unpacking happen inside
 `simultaneousBoundedRec`, never visible at the kToER outer
 level. No `3^E` coefficient leaks out.
 
@@ -2120,11 +2166,12 @@ iterations (`urmLoop`); none introduce an exponential
 coefficient analogous to the prior `3^E`.
 
 Adversary obligation: spot-check the §3.4 majorization
-arithmetic and §3.2's `simultaneousBoundedRec` polyBound
-(kToER side); spot-check the §5 combinator arithmetic
-table (erToK side). Trace whether any coefficient appears
-in either side that would force a prior-style absorption
-inequality.
+arithmetic (Nat-level iteration on `A_n^r` bounds, kToER
+side) and §3.2's `simultaneousBoundedRec` polyBound (used
+at K^sim levels ≤ 1); spot-check the §5 combinator
+arithmetic table (erToK side). Trace whether any
+coefficient appears in either side that would force a
+prior-style absorption inequality.
 
 ### §15.3 Is ER → URM compilation closed in ER (erToK side)?
 
@@ -2159,24 +2206,30 @@ verify this asymmetry does not recur.
 
 Claim: Path 2's `KMor1.majorize_by_A_n_iter` is uniform
 across K^sim levels via structural induction. The level-2
-case is proven via `simultaneousBoundedRec`'s polyBound
-applied to children at K^sim_1 level. The level-1
-children's bound is `A_1^r` (explicit polynomial), not the
-prior `linearBound`/`level0Shape`-specific shape. The
+case is proven via Nat-level iteration arithmetic on
+`A_1^r` bounds for K^sim_1 children, yielding an
+`A_2^{r'}` bound on the simrec output (a Nat inequality,
+not a PolyBound). The level-1 children's bound is `A_1^r`
+(explicit polynomial), not the prior
+`linearBound`/`level0Shape`-specific shape.  The
 multi-output simrec is handled by
 `simultaneousBoundedRec`'s ERMorN interface; the packing
-arithmetic is encapsulated and produces a bound whose
-shape does not depend on level-0 specifics.
+arithmetic is encapsulated and the resulting per-component
+bound shape does not depend on level-0 specifics.
 
 Adversary obligation: trace §3.4's level-2 majorization
 proof. Verify that the recursive call applies to children
 at K^sim_1 with NO additional shape constraint beyond
 "K^sim level ≤ 1 hence bounded by `A_1^r` for some r".
-Verify that `simultaneousBoundedRec`'s polyBound builder
-takes any `A_1^r`-bounded children and produces an
-`A_2^{r'}`-bounded result for explicit r'. If any step
-requires a level-0-specific assumption, that's a defect
-and the prior failure mode has recurred.
+Verify that the level-2 majorization arithmetic
+(Nat-level) takes any `A_1^r`-bounded children and
+produces an `A_2^{r'}`-bounded result for explicit r'.
+(`A_2^{r'}` is tower-fast and has no PolyBound; the
+result is a Nat inequality, fed to
+`simultaneousBoundedRec_interp_correct`'s dominance
+hypothesis at step 5, not to `ofSimultaneousBoundedRec`.)
+If any step requires a level-0-specific assumption,
+that's a defect and the prior failure mode has recurred.
 
 ### §15.5 Is the categorical iso of step 11 strict, not natural?
 
@@ -2363,35 +2416,54 @@ the recurrence — a fixed polynomial for each fixed `k`).
 ### §15.13 Path 2 specific — `simultaneousBoundedRec` packing is encapsulated
 
 Claim: `ERMor1.simultaneousBoundedRec` packs the (k+1)-tuple
-of intermediate values via `Nat.tuplePack` internally. The
-packing arithmetic produces a polynomial-shape value bound
-on the packed state. The output is `ERMorN`; downstream
-`kToER` sees a clean ERMorN multi-output interface and never
-sees the packing's coefficient. No `3^E`-style coefficient
-leaks out of `simultaneousBoundedRec`'s implementation.
+of intermediate values via `Nat.tuplePack` internally. When
+the per-component bound is itself polynomially bounded
+(K^sim levels ≤ 1), the packing arithmetic produces a
+polynomial-shape value bound on the packed state, surfaced
+through the `ofSimultaneousBoundedRec` PolyBound builder.
+At level 2 the per-component bound is `A_2^r` (tower-fast)
+and has no PolyBound; the level-2 chain consumes a
+Nat-level dominance hypothesis directly via
+`simultaneousBoundedRec_interp_correct` and does not
+invoke the PolyBound builder. The output is `ERMorN`;
+downstream `kToER` sees a clean ERMorN multi-output
+interface and never sees the packing's coefficient. No
+`3^E`-style coefficient leaks out of
+`simultaneousBoundedRec`'s implementation.
 
 Adversary obligation: verify that
 `simultaneousBoundedRec`'s `PolyBound` builder has a
 polynomial-shape bound with degree depending only on `k`
-(the simrec's component count), not on the source K^sim
-term's overall structure. Compare against the prior
-`kSimPackedStep_polyBound`'s `coefficient = 3^E` field; the
-new bound must not have an analog.
+(the simrec's component count) and on the per-component
+PolyBound's degree, not on the source K^sim term's
+overall structure. Compare against the prior
+`kSimPackedStep_polyBound`'s `coefficient = 3^E` field;
+the new bound must not have an analog. Verify that the
+level-2 chain bypasses the PolyBound builder and instead
+threads a Nat-level dominance hypothesis from step 4
+through `simultaneousBoundedRec_interp_correct`.
 
 ### §15.14 Path 2 specific — `A_n^r` named composites are direct ER constructions
 
 Claim: `ERMor1.A_one`, `ERMor1.A_one_iter`, and
 `ERMor1.A_two_iter` are constructed directly using
 existing ER named composites (`addN`, `succ`, `expER`,
-`towerER`). Their `PolyBound` builders certify they stay in
-ER without invoking E^n closure properties.
+`towerER`). `A_one` and `A_one_iter` carry `PolyBound`
+builders certifying linear-shape bounds in inputs.
+`A_two_iter` is the alias `towerER r`, already in ER by
+its existing construction; no `PolyBound` exists for it
+(`tower r x` is not polynomially bounded), and none is
+needed by the level-2 chain.
 
 Adversary obligation: verify the construction of
 `A_one := comp addN [comp succ (proj 0), comp succ (proj 0)]`
 (or equivalent) does not invoke any `E^n` closure. Verify
 `A_two_iter` aliases existing `towerER` (which uses `expER`
 as the closure step). Confirm the `PolyBound` builders for
-both compose with existing ER constructor builders.
+`A_one` and `A_one_iter` compose with existing ER
+constructor builders. Confirm that `A_two_iter` ships only
+an interp routing lemma (delegating to `interp_towerER`)
+and no `PolyBound` builder.
 
 ### §15.15 Path 2 specific — Majorization is per-K^sim-level structural induction
 
@@ -2399,18 +2471,23 @@ Claim: `KMor1.majorize_by_A_n_iter` is proven by structural
 induction over K^sim levels. Levels 0 and 1 reuse existing
 `kToERDirect_linearBound_dominates_level_*` theorems composed
 with `linearBound_le_A_one_iter`. Level 2 is a fresh proof
-using `simultaneousBoundedRec`'s bound arithmetic — not
-using the prior `kSimTowerBound` shape (which had the `3^E`
+using Nat-level iteration arithmetic on `A_1^r` bounds for
+the K^sim_1 children of a level-2 simrec — not using the
+prior `kSimTowerBound` shape (which had the `3^E`
 coefficient that defeated v2-v5).
 
 Adversary obligation: verify the proof outline for level-2
 majorization in §3.4. Trace whether any step uses the prior
 `kSimTowerBound`, `kSimPackedStep`, or related Szudzik-
 packed scaffolding that previously failed. Confirm the
-level-2 proof relies only on (a) `simultaneousBoundedRec`'s
-PolyBound builder, (b) `A_two_iter`'s PolyBound, (c)
-existing Module A tower lemmas. None of these has the prior
-trap's structure.
+level-2 proof relies only on (a) Nat-level iteration
+arithmetic over `A_1^r` bounds (step 4 majorization),
+(b) `simultaneousBoundedRec_interp_correct` (the
+Nat-hypothesis-driven correctness theorem; not the
+`PolyBound` builder, which is unavailable at level 2
+because `A_two_iter` has no `PolyBound`), and
+(c) the `A_two_iter` interp simp lemma. None of these has
+the prior trap's structure.
 
 ### §15.16 Path 2 specific — `kToER` is one-line per K^sim constructor
 
