@@ -675,11 +675,15 @@ Proof: structural induction on `f`, mirroring
   variable `m := v 0` (the first slot of the simrec's
   `Fin (a+1) → ℕ` input).  This gives
   `simrec.interp v ≤ A_1^{r_H + m·r_G}(max m (vMax_params))`
-  where `vMax_params` is `vMax` of the remaining `Fin a → ℕ`.
-  Note `max m (vMax_params) = vMax v` (using `vMax_cons`
-  from §6.4).  Hence
+  where `vMax_params := vMax (Fin.tail v)`.  Use
+  `Fin.cons_self_tail` to rewrite
+  `v = Fin.cons (v 0) (Fin.tail v)`, then `vMax_cons` to
+  get `max m (vMax_params) = vMax v`.  Hence
   `simrec.interp v ≤ A_1^{r_H + (v 0)·r_G}(vMax v)`.
-  Bound `v 0 ≤ vMax v` and apply
+  Bound `v 0 ≤ vMax v` (via `vMax_apply_le`), then lift
+  the exponent using `A_one_iter_mono_left`:
+  `A_1^{r_H + (v 0)·r_G}(vMax v) ≤
+   A_1^{r_H + (vMax v)·r_G}(vMax v)`.  Apply
   `A_one_iter_linear_le_A_two_iter_two` (§4.5) at
   `m := vMax v`: get
   `≤ A_2^2(vMax v + r_H + r_G + 2)`.  This matches
@@ -698,6 +702,24 @@ Small support lemmas, file-local:
   unfolding or mathlib's `Fin.sup_cons`-style lemma if
   available.  Per §9.2.6, fall back to manual induction
   if no direct mathlib lemma applies.
+- `self_le_A_one_iter (k x : ℕ) :
+  x ≤ (ERMor1.A_one_iter k).interp ![x]` — derived from
+  `interp_A_one_iter`'s closed form `2^k · x + (2^{k+1} − 2)
+  ≥ x` for `k ≥ 0`.  Used at §6.2's step bullet to bound
+  the recursion variable `n` by an `A_1`-iterate of the
+  same input.
+- `A_one_iter_mono_left {k₁ k₂ x : ℕ} (h : k₁ ≤ k₂) :
+  (ERMor1.A_one_iter k₁).interp ![x]
+    ≤ (ERMor1.A_one_iter k₂).interp ![x]` — the
+  `A_one_iter` family is monotone in the iteration count
+  for fixed input.  Provable from `interp_A_one_iter`'s
+  closed form plus `Nat.pow_le_pow_right`.  Used in §6.3's
+  simrec bullet to lift `r_H + (v 0)·r_G ≤ r_H + (vMax v)·r_G`
+  before applying §4.5.
+- `Fin.cons_self_tail {a : ℕ} (v : Fin (a+1) → ℕ) :
+  Fin.cons (v 0) (Fin.tail v) = v` — mathlib has this
+  (or equivalent); used in §6.3 to rewrite the simrec
+  context into `Fin.cons`-form before applying `vMax_cons`.
 - `tower_add_offset_le {b : ℕ} (x d : ℕ) :
   tower b x + d ≤ tower b (x + d)` — proved by induction
   on `b`.  At `b = 0`: equality.  At `b + 1`: by IH,
