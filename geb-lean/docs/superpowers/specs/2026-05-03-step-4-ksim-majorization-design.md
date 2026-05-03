@@ -153,7 +153,45 @@ One new top-level module:
 
 - `GebLeanTests/LawvereKSimMajorization.lean`.
 
-### §2.3 Imports at skeleton-creation time
+### §2.3 The `vMax` private abbreviation
+
+Defined once at the top of `LawvereKSimMajorization.lean`,
+inside `namespace GebLean`:
+
+```lean
+private abbrev vMax {a : ℕ} (v : Fin a → ℕ) : ℕ :=
+  (Finset.univ : Finset (Fin a)).sup v
+```
+
+This is the exact `Finset.sup` form returned by
+`KMor1.linearBound_dominates`'s conclusion (existing in
+`LawvereKSimPolynomialBound.lean` line 511–513), so
+`majorize_by_A_one_iter`'s proof unfolding works without
+adapter rewrites.  All theorem statements in §6 / §7 use
+`vMax v` uniformly; the spec's reader can mentally replace
+`vMax v` with `(Finset.univ : Finset (Fin a)).sup v` at any
+point.
+
+### §2.4 Re-exporting `Fin.foldr_max_ge`
+
+`KMor1.majorize`'s `comp` and `simrec` cases consume
+`Fin.foldr_max_ge` (the `f j ≤ Fin.foldr n max f 0` lemma)
+to project per-child `(r, offset)` values into the foldr-max.
+The lemma exists at `LawvereKSimPolynomialBound.lean` line
+302 but is `private`.  Step 4 either:
+
+- de-privates the lemma (drop `private` modifier in the
+  upstream file as a one-line edit), OR
+- restates the lemma locally in
+  `LawvereKSimMajorization.lean` (a 5-line proof by
+  induction on `n`).
+
+The implementation chooses one of these at task-1 time.
+Either choice keeps the upstream file's API surface in
+the public direction (de-privating is strictly weaker
+than the existing private form).
+
+### §2.5 Imports at skeleton-creation time
 
 Per discipline-1 (steps 1–3 lessons): each new module's
 import is registered in `GebLean.lean` (or
@@ -163,7 +201,7 @@ This guarantees `lake build` re-elaborates the new module
 on every subsequent task, catching linter regressions in
 real time.
 
-### §2.4 Dependency graph
+### §2.6 Dependency graph
 
 ```text
 LawvereKSim                    (existing)
@@ -208,8 +246,10 @@ def sumCtxER : (n : ℕ) → ERMor1 n
 ```
 
 Proof: induction on `n` using `interp_addN`, `interp_proj`,
-`interp_zeroN`, and mathlib's `Fin.sum_univ_succ` /
-`Fin.sum_univ_castSucc`.
+`interp_zeroN`, and mathlib's `Fin.sum_univ_castSucc`
+(which states `∑ i : Fin (n+1), f i = ∑ i : Fin n,
+f (Fin.castSucc i) + f (Fin.last n)` — exactly the
+`sumCtxER (n+1)` shape after unfolding).
 
 ```lean
 theorem vMax_le_sumCtxER (n : ℕ) (v : Fin n → ℕ) :
@@ -234,6 +274,11 @@ def sumCtxERPlusOffset (n offset : ℕ) : ERMor1 n :=
     | ⟨0, _⟩ => sumCtxER n
     | ⟨1, _⟩ => ERMor1.natN n offset
 ```
+
+The pattern-match shape mirrors §3.1's `sumCtxER (n + 1)`
+clause.  Lean's exhaustiveness check accepts the
+`⟨0, _⟩` / `⟨1, _⟩` split for `Fin 2` since both cases are
+exhausted.
 
 ```lean
 @[simp] theorem interp_sumCtxERPlusOffset
@@ -286,10 +331,10 @@ theorem A_one_iter_le_two_pow_succ (k x : ℕ) :
 ```
 
 Proof: by `interp_A_one_iter`, LHS = `2^k · x + (2^{k+1} − 2)`.
-RHS expands to `2^{k+1} · x + 2^{k+1} = 2 · 2^k · x + 2 · 2^k`.
-Difference: `2^k · x + (2 · 2^k − 2) ≤ 2 · 2^k · x + 2 · 2^k`,
-which holds by `omega` once `1 ≤ 2^k` (from `Nat.one_le_pow`)
-is in scope.
+RHS expands via `Nat.pow_succ` to `2^{k+1} · x + 2^{k+1}
+= 2 · 2^k · x + 2 · 2^k`.  Difference: `2^k · x + 2 ≥ 0` —
+trivially true, no positivity hypothesis needed.  `omega`
+plus `Nat.pow_succ` rewrites close the goal directly.
 
 ### §4.3 `two_pow_succ_mul_succ_le_tower_two` (γ.3)
 
@@ -305,23 +350,23 @@ Proof chain:
 
 ```text
 2^{k+1} · (x+1)
-  ≤ 2^{k+1} · 2^{x+1}        (by le_two_pow_self on x+1)
-  = 2^{k + x + 2}             (by pow_add; rearrange)
-  ≤ 2^{2^{x + k + 2}}         (by le_two_pow_self on
-                               k + x + 2 plus
-                               pow_le_pow_right)
-  = tower 2 (x + k + 2)       (by tower_succ twice)
+  ≤ 2^{k+1} · 2^{x+1}        (le_two_pow_self on x+1)
+  = 2^{k + x + 2}             (Nat.pow_add + omega)
+  ≤ 2^{2^{x + k + 2}}         (le_two_pow_self on k+x+2
+                               plus Nat.pow_le_pow_right)
+  = tower 2 (x + k + 2)       (tower_succ twice)
 ```
 
-Each step is a small `Nat.pow_*` lemma already in mathlib or
-`Tower.lean`.
+Each step is a small `Nat.pow_*` lemma already in mathlib
+(`Nat.pow_add`, `Nat.pow_le_pow_right`) or `Tower.lean`
+(`le_two_pow_self`, `tower_succ`).
 
 ### §4.4 `A_one_iter_le_A_two_iter_two` (composed corollary)
 
 ```lean
 /-- Combined cross-family bound: `A_1^k(x) ≤ A_2^2(x + k + 2)`.
 Master design §3.4 lines 1015–1029; Tourlakis 2018 §0.1.0.10.
--/
+Used in the level-2 `raise` case of `majorize_by_A_two_iter`. -/
 theorem A_one_iter_le_A_two_iter_two (k x : ℕ) :
     (ERMor1.A_one_iter k).interp ![x]
       ≤ (ERMor1.A_two_iter 2).interp ![x + k + 2]
@@ -329,7 +374,55 @@ theorem A_one_iter_le_A_two_iter_two (k x : ℕ) :
 
 Proof: compose γ.2 + γ.3 + `interp_A_two_iter`.
 
-### §4.5 `A_one_iter_compose`
+### §4.5 `A_one_iter_linear_le_A_two_iter_two` (level-2 simrec γ)
+
+The level-2 simrec case requires a *parametric* combined
+bound where the A_1 exponent depends linearly on the
+recursion variable `m`.  This is the master-design
+absorption step (lines 1027–1029) where `2^{r_H + m·r_G + 1}
+· (m + 1)` is rebounded by `tower 2 (m + r_H + r_G + 2)`
+via the multiplicative-into-additive collapse.
+
+```lean
+/-- Parametric combined cross-family bound for the level-2
+simrec case: when the A_1 exponent depends linearly on the
+recursion variable `m`, we still get a constant-tower-height
+A_2 bound with offset linear in `r_H, r_G`.  Master design
+§3.4 lines 1027–1029.  This is the load-bearing arithmetic
+that lets level-2 majorization close: the `m·r_G` exponent
+collapses into the additive offset on A_2's input rather
+than persisting in the A_2 height. -/
+theorem A_one_iter_linear_le_A_two_iter_two
+    (r_H r_G m : ℕ) :
+    (ERMor1.A_one_iter (r_H + m * r_G)).interp ![m]
+      ≤ (ERMor1.A_two_iter 2).interp
+          ![m + r_H + r_G + 2]
+```
+
+Proof outline (transcribing master design lines 1027–1029):
+
+```text
+A_1^{r_H + m·r_G}(m)
+  ≤ 2^{r_H + m·r_G + 1} · (m + 1)             (γ.2 family)
+  ≤ 2^{(r_H + r_G + 1) · (m + 1)}              (step A)
+  ≤ 2^{(r_H + r_G + 1) · 2^{m+1}}              (m+1 ≤ 2^{m+1})
+  ≤ 2^{2^{r_H + r_G + 1} · 2^{m+1}}            (k ≤ 2^k)
+  = 2^{2^{r_H + r_G + m + 2}}                  (pow_add)
+  = tower 2 (m + r_H + r_G + 2)
+```
+
+Step A uses the integer inequality `r_H + m·r_G + 1 ≤
+(r_H + r_G + 1)·(m + 1)` for all `r_H, r_G, m ≥ 0`
+(expand RHS: `r_H·m + r_H + m·r_G + r_G + m + 1 ≥
+r_H + m·r_G + 1` since `r_H·m, r_G, m ≥ 0`).
+
+Implementation: `omega` handles step A directly.  The
+remaining steps chain `Nat.pow_le_pow_right`, `pow_add`,
+and `le_two_pow_self` (existing in `Tower.lean` and
+mathlib).  Per §9.4, factor into named sub-lemmas if the
+combined proof exceeds ~20 lines.
+
+### §4.6 `A_one_iter_compose`
 
 ```lean
 /-- Composition of `A_1` iterates:
@@ -388,8 +481,16 @@ def KMor1.majorize : {a : ℕ} → (f : KMor1 a) →
   | _, .succ,         _ => (2, 3)
   | _, .proj _,       _ => (2, 2)
   | _, .comp f gs,    h =>
-      have hf  : f.level ≤ 2  := /- from level/comp -/
-      have hgs : ∀ i, (gs i).level ≤ 2 := /- ditto -/
+      have hf  : f.level ≤ 2 := by
+        unfold KMor1.level at h
+        exact le_trans (le_max_left _ _) h
+      have hgs : ∀ i, (gs i).level ≤ 2 := fun i => by
+        unfold KMor1.level at h
+        exact le_trans
+          (Finset.le_sup
+            (f := fun j => (gs j).level)
+            (Finset.mem_univ i))
+          (le_trans (le_max_right _ _) h)
       let p_f  := KMor1.majorize f hf
       let r_g  := Fin.foldr _ (fun i acc =>
                     max acc
@@ -399,35 +500,50 @@ def KMor1.majorize : {a : ℕ} → (f : KMor1 a) →
                       (KMor1.majorize (gs i) (hgs i)).2) 0
       (p_f.1 + r_g, p_f.2 + o_g)
   | _, .raise f,      h =>
-      have hf : f.level ≤ 1 := /- raise adds 1 to level -/
+      have hf : f.level ≤ 1 := by
+        unfold KMor1.level at h
+        exact Nat.le_of_succ_le_succ h
       let p := KMor1.majorize_one f hf
-      (2, p.2 + p.1 + 2)
+      (2, p.1 + 2)
   | _, .simrec _ h_fam g_fam, hyp =>
-      have hh : ∀ j, (h_fam j).level ≤ 1 :=
-        /- simrec adds 1 to max-children -/
-      have hg : ∀ j, (g_fam j).level ≤ 1 :=
-        /- ditto -/
+      have hh : ∀ j, (h_fam j).level ≤ 1 := by
+        unfold KMor1.level at hyp
+        intro j
+        have := le_trans (le_max_left _ _)
+          (Nat.le_of_succ_le_succ hyp)
+        exact le_trans
+          (Finset.le_sup
+            (f := fun l => (h_fam l).level)
+            (Finset.mem_univ j)) this
+      have hg : ∀ j, (g_fam j).level ≤ 1 := by
+        unfold KMor1.level at hyp
+        intro j
+        have := le_trans (le_max_right _ _)
+          (Nat.le_of_succ_le_succ hyp)
+        exact le_trans
+          (Finset.le_sup
+            (f := fun l => (g_fam l).level)
+            (Finset.mem_univ j)) this
       let r_H := Fin.foldr _ (fun j acc =>
                    max acc
                      (KMor1.majorize_one (h_fam j) (hh j)).1) 0
-      let o_H := Fin.foldr _ (fun j acc =>
-                   max acc
-                     (KMor1.majorize_one (h_fam j) (hh j)).2) 0
       let r_G := Fin.foldr _ (fun j acc =>
                    max acc
                      (KMor1.majorize_one (g_fam j) (hg j)).1) 0
-      let o_G := Fin.foldr _ (fun j acc =>
-                   max acc
-                     (KMor1.majorize_one (g_fam j) (hg j)).2) 0
-      (2, r_H + r_G + o_H + o_G + 2)
+      (2, r_H + r_G + 2)
 ```
 
 The simrec offset matches master design lines 1051–1053
-(`offset_2 := r_H + r_G + 2`), with `o_H + o_G` additionally
-accumulating the children's offsets.  The implementer
-may discover during proof that a slightly different
-offset value works; per §1.3 the precise value is
-flexible as long as the dominance theorem closes.
+exactly: `r_2 = 2`, `offset_2 = r_H + r_G + 2`.  Note that
+`majorize_one` always returns `(r, 0)` (zero offset; see §5.1),
+so the `o_H` and `o_G` terms that would otherwise appear in
+the accumulation are identically zero.  This is the
+mathematically clean form transcribed directly from
+Tourlakis 2018 §0.1.0.10.
+
+Per §1.3 the precise offset value is flexible as long as the
+dominance theorem closes; if a tighter or looser value emerges
+during proof, the implementer may adjust.
 
 ## §6 K^sim majorization theorems
 
@@ -454,52 +570,70 @@ to bound by `A_1^r`.
 
 ### §6.2 `KMor1.simrecVec_le_A_one_iter`
 
+The hypothesis shape mirrors master design §3.4 line 977
+exactly: zero-offset A_1 bounds on the children, no
+offset accumulation in the conclusion.  This works because
+the consumer at §6.3 always supplies `majorize_one`-derived
+hypotheses, and `majorize_one` returns `(r, 0)` (offset
+identically 0; see §5.1).  Removing the dead-variable
+offset bookkeeping makes the proof transcribe master
+design lines 985–1007 line by line.
+
 ```lean
 /-- Closed-form bound on simrecVec: every component at
 step `n` is dominated by an `A_1`-iter applied to
-`max(n, vMax params)`, with iteration count linear in `n`.
+`max n (vMax params)`, with iteration count linear in `n`.
 Master design §3.4 lines 985–1007 (the `M_n` closed-form
 inductive proof on `n`).  Tourlakis 2018 §0.1.0.10
-proof of the level-2 case. -/
+proof of the level-2 case.
+
+The hypotheses `hbase, hstep` are stated with zero offset
+on the A_1 input — matching the shape `majorize_one`
+produces (which always has offset 0).  The consumer at
+§6.3 supplies these by invoking `majorize_by_A_one_iter`
+on each child and noting `(majorize_one _).2 = 0`. -/
 theorem KMor1.simrecVec_le_A_one_iter
     {a k : ℕ}
     (h_fam : Fin (k + 1) → KMor1 a)
     (g_fam : Fin (k + 1) → KMor1 (a + 1 + (k + 1)))
     (hh : ∀ j, (h_fam j).level ≤ 1)
     (hg : ∀ j, (g_fam j).level ≤ 1)
-    (r_H o_H r_G o_G : ℕ)
+    (r_H r_G : ℕ)
     (hbase : ∀ j x,
       (h_fam j).interp x
-        ≤ (ERMor1.A_one_iter r_H).interp ![vMax x + o_H])
+        ≤ (ERMor1.A_one_iter r_H).interp ![vMax x])
     (hstep : ∀ j y,
       (g_fam j).interp y
-        ≤ (ERMor1.A_one_iter r_G).interp ![vMax y + o_G])
+        ≤ (ERMor1.A_one_iter r_G).interp ![vMax y])
     (params : Fin a → ℕ) (n : ℕ) :
     ∀ j,
       KMor1.simrecVec h_fam g_fam params n j
         ≤ (ERMor1.A_one_iter (r_H + n * r_G)).interp
-            ![max n (vMax params) + o_H + n * o_G]
+            ![max n (vMax params)]
 ```
 
 Proof: induction on `n`, mirroring master design lines
 985–1007.
 
 - **Base (n = 0)**: `simrecVec ... 0 j = (h_fam j).interp params`.
-  Apply `hbase j params`.  Conclude via
-  `vMax params ≤ max 0 (vMax params)` and trivial 0
-  arithmetic.
+  Apply `hbase j params`.  At `r_H + 0 · r_G = r_H` and
+  `max 0 (vMax params) = vMax params`, this matches.  Use
+  the identity `max 0 (vMax params) = vMax params` plus
+  trivial 0 arithmetic.
 - **Step (n → n+1)**: by IH, every entry of `simrecVec ... n`
-  is bounded by an iterate of `A_1` at exponent
-  `r_H + n · r_G` applied to `max n (vMax params) + o_H + n · o_G`.
-  The step computes `(g_fam j).interp` of the concatenated
-  context (counter, params, prev-component slots).  Bound
-  vMax of that concatenated context by IH and `n ≤ max (n+1) ...`.
-  Apply `hstep j`.  Compose with IH via `A_one_iter_compose`.
-  Fold terms into the desired form
-  `max (n+1) (vMax params) + o_H + (n+1) · o_G`.
+  is bounded by an A_1 iterate at exponent `r_H + n · r_G`
+  applied to `max n (vMax params)`.  The step computes
+  `(g_fam j).interp` of the concatenated context (counter
+  slot = `n`, params slots, prev-component slots).  Bound
+  vMax of the concatenated context by IH (for prev-slots)
+  and `n ≤ max (n+1) (vMax params)` (for counter and
+  params slots).  Apply `hstep j`.  Compose with IH via
+  `A_one_iter_compose`.  Fold terms into the desired form
+  `r_H + (n+1) · r_G` exponent and `max (n+1) (vMax params)`
+  input.
 
 The succ-case proof is the largest single proof in the
-cycle.  Per §9.2.4, factor into named sub-lemmas
+cycle.  Per §9.4, factor into named sub-lemmas
 (`simrecVec_step_input_bound`, `step_dominance_apply`,
 etc.) for tractability.
 
@@ -537,11 +671,19 @@ Proof: structural induction on `f`, mirroring
   `(raise f).interp = f.interp` (per `interp_raise`)
   transfers the bound directly.
 - **`simrec`**: apply `simrecVec_le_A_one_iter` (§6.2) to
-  bound every component.  Specialize at `n = v 0`.
-  Bound `n` by `vMax v`.  Convert the `A_1^{linear-in-n}`
-  bound to `A_2^2(linear-in-input)` via
-  `A_one_iter_le_A_two_iter_two`.  Collect into
-  `tower 2 (vMax v + r_H + r_G + o_H + o_G + 2)`.
+  bound every component.  Specialize at the recursion
+  variable `m := v 0` (the first slot of the simrec's
+  `Fin (a+1) → ℕ` input).  This gives
+  `simrec.interp v ≤ A_1^{r_H + m·r_G}(max m (vMax_params))`
+  where `vMax_params` is `vMax` of the remaining `Fin a → ℕ`.
+  Note `max m (vMax_params) = vMax v` (using `vMax_cons`
+  from §6.4).  Hence
+  `simrec.interp v ≤ A_1^{r_H + (v 0)·r_G}(vMax v)`.
+  Bound `v 0 ≤ vMax v` and apply
+  `A_one_iter_linear_le_A_two_iter_two` (§4.5) at
+  `m := vMax v`: get
+  `≤ A_2^2(vMax v + r_H + r_G + 2)`.  This matches
+  `KMor1.majorize`'s simrec output `(2, r_H + r_G + 2)`.
 
 ### §6.4 Auxiliary lemmas
 
@@ -556,10 +698,26 @@ Small support lemmas, file-local:
   unfolding or mathlib's `Fin.sup_cons`-style lemma if
   available.  Per §9.2.6, fall back to manual induction
   if no direct mathlib lemma applies.
-- `tower_compose_offsets (a b x c d : ℕ) :
+- `tower_add_offset_le {b : ℕ} (x d : ℕ) :
+  tower b x + d ≤ tower b (x + d)` — proved by induction
+  on `b`.  At `b = 0`: equality.  At `b + 1`: by IH,
+  `tower b x + d ≤ tower b (x + d)`, so by monotonicity
+  of `(2 ^ ·)` we have `2^(tower b x) + d ≤ 2^(tower b (x+d))`
+  via the chain
+  `2^(tower b x) + d ≤ 2^(tower b x) · 2^d
+    = 2^(tower b x + d)
+    ≤ 2^(tower b (x+d))`,
+  using `2^d ≥ d + 1` (from `Nat.lt_two_pow_self`) at the
+  first step (with the trivial `d = 0` edge case as
+  equality).  Used in the `comp` case to absorb the outer
+  `+ p_f.2` offset into the tower's input.
+- `tower_compose_offsets {a b : ℕ} (x c d : ℕ) :
   tower a (tower b (x + c) + d) ≤ tower (a + b) (x + c + d)`
-  — used in the comp case.  Pure tower arithmetic via
-  `tower_comp` and `tower_mono_right`.
+  — proved by combining `tower_add_offset_le` (giving
+  `tower b (x+c) + d ≤ tower b (x+c+d)`), `tower_mono_right`
+  on the outer `tower a`, and `tower_comp`
+  (`tower a (tower b y) = tower (a+b) y`).  Used in the
+  comp case to telescope two child bounds.
 
 ## §7 Step-5 bridge lemma
 
@@ -575,8 +733,14 @@ theorem KMor1.majorize_by_componentBound
     let p := KMor1.majorize f h
     f.interp v ≤
       (ERMor1.comp (ERMor1.A_two_iter p.1)
-        ![ERMor1.sumCtxERPlusOffset a p.2]).interp v
+        (fun _ : Fin 1 =>
+          ERMor1.sumCtxERPlusOffset a p.2)).interp v
 ```
+
+The explicit `fun _ : Fin 1 => ...` ascription (instead of
+the `![...]` vector-literal sugar) avoids elaboration
+ambiguity around `Fin 1`-shaped families.  Step 5's `kToER`
+plug-in uses the same shape.
 
 Proof: unfold via `interp_comp`, `interp_A_two_iter`,
 `interp_sumCtxERPlusOffset`.  RHS becomes
@@ -629,28 +793,40 @@ example : addK.level = 1 := by decide
 -- raise/comp branches: r still 2.
 #guard (KMor1.majorize addK (by decide)).1 = 2
 
--- Concrete-input dominance: addK.interp ![1, 1] = 2 per
--- existing addK semantics (see GebLeanTests/
--- LawvereKSimInterp.lean).
-#guard
-  let p := KMor1.majorize addK (by decide)
-  addK.interp ![1, 1]
-    ≤ (ERMor1.A_two_iter p.1).interp ![max 1 1 + p.2]
+-- Concrete-input dominance via the proven theorem.
+-- These are NOT `#guard` (which would force kernel
+-- reduction of `(A_two_iter 2).interp` through ER
+-- bprod-based `expER` — intractable per CLAUDE.md memory
+-- on Gödel-numbering interp).  Instead they're `example`
+-- proof terms: the theorem itself proves the inequality
+-- for all inputs, and the example pins concrete inputs
+-- without forcing kernel evaluation of the tower bound.
 
--- Atomic dominance: succ.interp ![3] = 4.
-#guard
-  let p := KMor1.majorize KMor1.succ (by decide)
-  KMor1.succ.interp ![3]
-    ≤ (ERMor1.A_two_iter p.1).interp ![3 + p.2]
+example : addK.interp ![1, 1] ≤
+    (ERMor1.A_two_iter
+      (KMor1.majorize addK (by decide)).1).interp
+        ![vMax (![1, 1] : Fin 2 → ℕ)
+            + (KMor1.majorize addK (by decide)).2] :=
+  KMor1.majorize_by_A_two_iter addK (by decide) ![1, 1]
+
+example : KMor1.succ.interp ![3] ≤
+    (ERMor1.A_two_iter
+      (KMor1.majorize KMor1.succ (by decide)).1).interp
+        ![vMax (![3] : Fin 1 → ℕ)
+            + (KMor1.majorize KMor1.succ (by decide)).2] :=
+  KMor1.majorize_by_A_two_iter KMor1.succ (by decide) ![3]
 
 end GebLean
 ```
 
-ER-side `#guard`s on `A_two_iter r` for `r ≥ 1` rely on
-`interp_A_two_iter` (existing simp lemma from step 3)
-firing inside `decide`, after which the RHS becomes
-`tower 2 (·)` over Nat — `decide`-tractable for tiny
-inputs.
+The two trailing `example` proofs verify the dominance
+theorem closes at concrete inputs without forcing the
+kernel to evaluate `A_two_iter`'s `expER` tree (whose
+reduction at `r ≥ 1` is intractable per CLAUDE.md memory
+"ER / Gödel-numbering interp not safe for `#guard`").
+The theorem proves the inequality universally, and the
+`example` provides a concrete-input sanity check by
+specialization.
 
 ### §8.2 Re-exports
 
@@ -690,9 +866,11 @@ elaborate.
 `KMor1.linearBound`'s structure.  Pattern-matched
 correctness depends on `Fin.foldr`'s unfolding lemmas
 being in scope — `Fin.foldr_max_ge` exists in
-`LawvereKSimPolynomialBound.lean` already.  Mitigation:
-re-use the existing `Fin.foldr_max_ge` (and add a sister
-lemma for the offset slot if needed).
+`LawvereKSimPolynomialBound.lean` line 302 but is `private`
+(so unimportable as-is).  Mitigation: per §2.4, either
+de-private the upstream lemma (one-line edit removing the
+`private` modifier, strictly weaker than the existing
+form) or restate it locally.
 
 ### §9.4 Level-2 simrec iteration arithmetic size
 
@@ -762,6 +940,8 @@ warnings, no `sorry`, no `admit`, after which:
      `A_one_iter_le_two_pow_succ`,
      `two_pow_succ_mul_succ_le_tower_two`,
      `A_one_iter_le_A_two_iter_two`,
+     `A_one_iter_linear_le_A_two_iter_two` (the level-2
+     simrec γ-lemma per §4.5),
      `A_one_iter_compose` cross-family lemmas.
    - `KMor1.majorize_one`, `KMor1.majorize` defs.
    - `KMor1.majorize_by_A_one_iter`,
@@ -770,7 +950,7 @@ warnings, no `sorry`, no `admit`, after which:
    - `KMor1.majorize_by_componentBound` step-5 bridge.
    - Auxiliary lemmas (`vMax_apply_le`,
      `vMax_le_of_pointwise`, `vMax_cons`,
-     `tower_compose_offsets`).
+     `tower_add_offset_le`, `tower_compose_offsets`).
    - Module docstring citing Tourlakis 2018 §0.1.0.10
      and master design §3.4 / §3.5.
    - Per-entity docstrings carrying the citations from
