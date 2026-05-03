@@ -148,19 +148,20 @@ They are built from atomic ER constructors via composition,
   calls.
 
 The cumulative kernel-reduction cost is impractical even
-for tiny inputs (e.g. `(ERMor1.tuplePack 1).interp ![3, 5]`
-ran for ages in an early Task 12 attempt). Therefore, in
-test files:
+for tiny inputs: `(ERMor1.tuplePack 1).interp ![3, 5]`
+already exceeds reasonable build time. Therefore, in test
+files:
 
-- DO NOT write `#guard (ERMor1.<X>).interp <ctx> = <value>`
+- **Do not** write `#guard (ERMor1.<X>).interp <ctx> = <value>`
   for `X` involving `tuplePack k` / `tupleAt k` /
   `natPair` / `natUnpair*` / `boundedRec` / `boundedSearch`
   / `expER` / `towerER` etc., except at trivial arity
   (`k = 0`, where `tuplePack 0 = proj 0` and no `natPair`
   is invoked).
-- DO rely on the proven universal `@[simp]` interp lemmas
-  (`interp_tuplePack`, `interp_tupleAt`) for higher-arity
-  correctness — they cover all inputs by induction.
+- **Do** rely on the proven universal `@[simp]` interp
+  lemmas (`interp_tuplePack`, `interp_tupleAt`) for
+  higher-arity correctness — they cover all inputs by
+  induction.
 - If a concrete higher-arity `example` is wanted for
   documentation, use `:= by simp [interp_*]` to rewrite
   the goal to the Nat level first; but be aware that
