@@ -159,6 +159,7 @@ import GebLean.Utilities.Presheaf
 import GebLean.Utilities.Profunctors
 import GebLean.Utilities.SetoidCat
 import GebLean.Utilities.Sigma
+import GebLean.Utilities.SimRec
 import GebLean.Utilities.Skeleton
 import GebLean.Utilities.Slice
 import GebLean.Utilities.SpanFamily
