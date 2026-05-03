@@ -71,7 +71,7 @@ verbatim into a temporary file and asked the Lean LSP for
 diagnostics.  The result was an `omega` error with the
 counterexample summary:
 
-```
+```text
 omega could not prove the goal:
 a possible counterexample may satisfy the constraints
   c ≥ 0

@@ -49,7 +49,8 @@ their interp simp lemmas are constructors / theorems in
 `GebLean/LawvereER.lean` (lines 36-145).
 
 **Evidence:**
-```
+
+```text
 GebLean/Utilities/ERArith.lean:42:def ERMor1.addN : ERMor1 2 :=
 GebLean/Utilities/ERArith.lean:58:@[simp] theorem ERMor1.interp_addN ...
 GebLean/LawvereER.lean:40:  | succ : ERMor1 1
@@ -76,7 +77,7 @@ But spelling out `Utilities.ERArith` directly is the right
 move per the spec's own §2.3 "imports for clarity"
 discipline.
 
-### Finding 2: `ring_nf; omega` will not close `interp_A_one_iter`'s succ case (severity: substantive)
+### Finding 2 (substantive): `interp_A_one_iter` succ case won't close
 
 **Location:** §4.2 lines 261-270, the `succ r ih` branch of
 the proof.
@@ -85,7 +86,7 @@ the proof.
 applying the `rfl` rewrite, and rewriting by `ih`, the goal
 reduces (after beta) to roughly:
 
-```
+```text
 2 * (2 ^ r * ctx ⟨0, _⟩ + (2 ^ (r + 1) - 2)) + 2
   = 2 ^ (r + 1) * ctx ⟨0, _⟩ + (2 ^ (r + 2) - 2)
 ```
@@ -147,14 +148,14 @@ This is still tactic-level; the implementer may inline some
 steps.  The point is the spec's `ring_nf; omega` is
 optimistic and should be flagged as such.
 
-### Finding 3: `omega` arithmetic in `ofA_one_iter`'s bounds proof needs the same exponential expansion (severity: substantive)
+### Finding 3 (substantive): `ofA_one_iter` bounds proof needs same expansion
 
 **Location:** §5.2 lines 354-364.
 
 **Issue:** After `rw [interp_A_one_iter]; simp only [pow_one]`
 the goal is:
 
-```
+```text
 2 ^ r * ctx ⟨0, _⟩ + (2 ^ (r + 1) - 2)
   ≤ 2 ^ r * ((sup ctx + 1)) + (2 ^ (r + 1) - 2)
 ```
@@ -188,7 +189,7 @@ fallback as the primary path, since `nlinarith` over Nat
 with opaque `2 ^ r` is not reliable.  §9.2 already alludes
 to the fallback; promote it.
 
-### Finding 4: Master-design vs spec inconsistency on `A_two = expER` (severity: minor)
+### Finding 4 (minor): master-design vs spec inconsistency on `A_two = expER`
 
 **Location:** Spec §1.2 "Out of scope and not anyone's
 job", lines 70-72; master design §3.3 line 812-813.
@@ -213,7 +214,8 @@ will need a parallel correction.  Otherwise readers cross-
 referencing the two docs will be confused.
 
 **Evidence:**
-```
+
+```text
 GebLean/LawvereERArith.lean:25:def ERMor1.expER : ERMor1 2 :=
 docs/.../master-design.md:812:- `ERMor1.A_two = ERMor1.expER` (existing in
 docs/.../master-design.md:813:  `LawvereERArith.lean` line 25). Interp `λx. 2^x`.
@@ -268,7 +270,7 @@ is the unique projection target.  In the constructions,
 `ERMor1.proj 0` (with `k := 1` inferred from context) is
 shorter and matches existing code.
 
-### Finding 6: `proj 0` vs `proj ⟨0, by decide⟩` in `A_one_iter` zero case (severity: minor)
+### Finding 6 (minor): `proj 0` vs `proj ⟨0, by decide⟩` in `A_one_iter` zero case
 
 **Location:** §3.2 line 207 and §4.2 line 257-260.
 
@@ -299,7 +301,7 @@ is awkward.
 throughout.  Standardize all interp simp lemmas to
 `ctx 0` on the right-hand side.
 
-### Finding 7: `r = 0` edge case in `ofA_one_iter`'s `constant` field (severity: substantive)
+### Finding 7 (substantive): `r = 0` edge case in `ofA_one_iter`'s `constant` field
 
 **Location:** §5.2 line 353.
 
@@ -340,7 +342,7 @@ correct statement:
 > to `ctx 0 ≤ sup ctx + 1` (with one bit of slack, since
 > `Finset.le_sup` gives `ctx 0 ≤ sup ctx`).
 
-### Finding 8: `#guard` cost claim conflates "no bprod" with "no bsum" (severity: minor)
+### Finding 8 (minor): `#guard` cost claim conflates "no bprod" with "no bsum"
 
 **Location:** §6.1 lines 403-413, §9.3 lines 555-561.
 
@@ -383,7 +385,7 @@ boundedRec" with "shallow, with `bsum` reductions only at
 small bounds via `mulN`".  Adjust §9.3 risk text to
 mention the dependency on `bsum` size scaling with input.
 
-### Finding 9: Citation discipline — `interp_A_one`, `interp_A_one_iter`, `interp_A_two_iter` docstrings (severity: minor)
+### Finding 9 (minor): citation discipline — `interp_A_*` docstrings
 
 **Location:** §4.1, §4.2, §4.3 (the theorems' code blocks
 do not include docstrings); §7 promises them.
@@ -406,7 +408,7 @@ pattern shown in §3.1 / §3.2 / §3.3.  Or add a sentence at
 the top of §4 saying "all theorems carry the docstrings
 listed in §7".
 
-### Finding 10: §10 acceptance criteria omit a few §3-§5 deliverables (severity: minor)
+### Finding 10 (minor): §10 acceptance criteria omit a few §3-§5 deliverables
 
 **Location:** §10 lines 593-619.
 
@@ -431,14 +433,14 @@ listed in §7".
 
 **Proposed fix:** Add to §10:
 
-> 1.h  Module docstring includes the polynomial-vs-tower
->      split paragraph explaining the absence of
->      `ofA_two_iter` (per §5.3).
-> 1.i  Module docstring includes pointers to
->      `docs/research/2026-04-30-ksim-polynomial-bound-references.md`
->      and master design §3.3 (per §7).
+> 1.h Module docstring includes the polynomial-vs-tower
+> split paragraph explaining the absence of
+> `ofA_two_iter` (per §5.3).
+> 1.i Module docstring includes pointers to
+> `docs/research/2026-04-30-ksim-polynomial-bound-references.md`
+> and master design §3.3 (per §7).
 
-### Finding 11: §9 risks omit `omega` exponential-handling and `ring_nf` Nat-subtraction risks (severity: substantive)
+### Finding 11 (substantive): §9 risks omit `omega` / `ring_nf` issues
 
 **Location:** §9 (Risks).
 
@@ -460,15 +462,15 @@ generally, and §9.2 covers `nlinarith` failure on
 **Proposed fix:** Add a §9.7 risk:
 
 > §9.7 `omega` does not handle `2 ^ r` symbolically.
->      The closed-form induction in §4.2 will require
->      `pow_succ` rewrites (`2 ^ (r+1) = 2 * 2 ^ r`,
->      `2 ^ (r+2) = 2 * 2 ^ (r+1)`) before `omega` can
->      close the linear step.  Mitigation: explicit
->      `have` chain in the proof; do not rely on
->      `ring_nf` (which is also blocked by Nat-truncating
->      subtraction).
+> The closed-form induction in §4.2 will require
+> `pow_succ` rewrites (`2 ^ (r+1) = 2 * 2 ^ r`,
+> `2 ^ (r+2) = 2 * 2 ^ (r+1)`) before `omega` can
+> close the linear step.  Mitigation: explicit
+> `have` chain in the proof; do not rely on
+> `ring_nf` (which is also stymied by Nat-truncating
+> subtraction).
 
-### Finding 12: `LawvereERBoundComputable.lean` line 230 reference is correct but spec line 815 calls it line 230 vs spec §3.3 calls it "line 230" (severity: minor)
+### Finding 12 (minor): line-number reference for `towerER` (cosmetic drift)
 
 **Location:** §3.3 line 222-224 cites
 "LawvereERBoundComputable.lean line 230".

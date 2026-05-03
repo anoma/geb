@@ -137,7 +137,7 @@ already been beta-reduced (and the surrounding `interp_A_one`
 rewrite has fired), so the goal at the `rw [hcoll, ...]`
 position is:
 
-```
+```text
 2 * (A_one_iter r).interp ctx + 2
   = 2 ^ (r + 1) * ctx 0 + (2 ^ (r + 1 + 1) - 2)
 ```
@@ -210,7 +210,7 @@ Empirically, `ring` does NOT close.  `ERMor1.interp_addN`'s
 RHS is `ctx 0 + ctx 1`, but after `simp only` fires through
 the `succ`/`proj` slots, the residual goal Lean produces is
 
-```
+```text
 (ctx 0).succ * 2 = 2 + ctx 0 * 2
 ```
 

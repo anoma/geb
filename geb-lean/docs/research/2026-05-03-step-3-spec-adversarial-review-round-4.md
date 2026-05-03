@@ -69,7 +69,7 @@ future implementation), with imports matching §2.1, and ran
 Result: clean build, no errors, no warnings, no `sorry`, no
 `admit`.  The build line was
 
-```
+```text
 ✔ [1288/1288] Built GebLean.Utilities.<...> (1.0s)
 Build completed successfully.
 ```
