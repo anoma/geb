@@ -145,6 +145,7 @@ import GebLean.Utilities.LambdaBialgebra
 import GebLean.Utilities.Elements
 import GebLean.Utilities.EndsAndCoends
 import GebLean.Utilities.Equalities
+import GebLean.Utilities.ERAMajorants
 import GebLean.Utilities.ERArith
 import GebLean.Utilities.ERPackedBound
 import GebLean.Utilities.ERSimultaneousBoundedRec
