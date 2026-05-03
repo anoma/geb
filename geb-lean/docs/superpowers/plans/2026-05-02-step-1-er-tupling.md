@@ -80,15 +80,52 @@ layout), §15.12 (punch-list claim).
 Each task's code must follow CLAUDE.md:
 
 - Lines ≤ 80 characters.
+- Spaces around binary operators in source: write
+  `Fin (k + 1)` not `Fin (k+1)`, especially in binder
+  positions (the project's mathlibStandardSet linter
+  enforces this).
 - Every implemented function/definition/theorem carries a
   literature reference in its docstring (Tourlakis 2018
   §0.1.0.34, p. 14, or master design §3.1).
+- Use `simp only [...]` not bare `simp [...]` — the
+  project's flexible-tactic linter rejects `simp [...]`
+  modifying `⊢` (per `linter.flexible`). Use `simp` alone
+  only when no rewrite list is needed.
+- Use `change` not `show` when the goal text differs from
+  what Lean has after reduction (`linter.style.show`).
 - No `sorry`, no `admit`, no warnings (the lakefile sets
   `warningAsError = true`).
 - No banned words from CLAUDE.md's list.
-- After each task: `lake build` + `lake test` must pass
-  clean before committing.
 - `markdownlint-cli2` clean on any new docs.
+
+### Import-at-skeleton-creation rule
+
+**Add the import to `GebLean.lean` (and the test
+counterpart to `GebLeanTests.lean`) the moment you create
+the skeleton file**, before adding any code. Reason: this
+guarantees `lake build` always re-elaborates the new file
+on every subsequent task, so the lakefile's
+`warningAsError = true` catches every linter error in real
+time. Otherwise `lake build` may incrementally cache the
+new file as `.olean` after the first task and never
+re-lint it on later tasks, masking errors until a
+later cleanup pass forces a re-elaboration.
+
+### Verifying a clean build
+
+To force re-elaboration of a single module without the
+incremental cache short-circuiting:
+
+```bash
+rm -f .lake/build/lib/lean/GebLean/Utilities/<Module>.olean
+lake build GebLean.Utilities.<Module>
+```
+
+After each task, before committing, run this command for
+the module touched in the task. The implementer must
+inspect the full output for `error:` lines and not stop
+at "Build completed successfully (N jobs)" — that line is
+unreliable when the module is already cached.
 
 ---
 
@@ -713,6 +750,21 @@ namespace ERMor1
 end ERMor1
 end GebLean
 ```
+
+- [ ] **Step 7.1.1: Register the import in `GebLean.lean` immediately**
+
+Per the import-at-skeleton-creation rule (top of this
+plan), open `GebLean.lean` and add the import
+alphabetically next to `import GebLean.Utilities.Tupling`:
+
+```lean
+import GebLean.Utilities.ERTupling
+```
+
+Run: `rm -f .lake/build/lib/lean/GebLean/Utilities/ERTupling.olean && lake build GebLean.Utilities.ERTupling`
+
+Expected: clean build of the empty skeleton (the module has
+no definitions yet, so this just confirms imports resolve).
 
 - [ ] **Step 7.2: Define `ERMor1.tuplePack`**
 
