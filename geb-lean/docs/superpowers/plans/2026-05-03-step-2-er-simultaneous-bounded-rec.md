@@ -1427,26 +1427,28 @@ theorem interp_packedStepCtx (k a : ℕ)
   | 0, _ =>
       -- proj 0: returns slot 0 of the inner ctx = n.
       -- RHS at index 0: Fin.append's left = (Fin.cons n x) 0 = n.
-      simp [ERMor1.packedStepCtx, ERMor1.interp_proj,
-        Fin.append, Fin.cons]
+      simp only [ERMor1.packedStepCtx, ERMor1.interp_proj,
+        Fin.append_left, Fin.cons_zero]
   | s + 1, h_in =>
       by_cases h_param : s < a
       · -- Param case: proj (s + 2) returns x ⟨s, _⟩.
         -- RHS at index s + 1: Fin.append's left at s + 1
         -- = Fin.cons n x ⟨s + 1, _⟩ = x ⟨s, _⟩.
-        simp [ERMor1.packedStepCtx, h_param,
-          ERMor1.interp_proj, Fin.append, Fin.cons]
+        simp only [ERMor1.packedStepCtx, h_param,
+          ERMor1.interp_proj, Fin.append_left,
+          Fin.cons_succ]
       · -- Prev case: comp tupleAt at inner slot 1 returns
         -- Nat.tupleAt k prev_packed ⟨s - a, _⟩.
         -- RHS at index s + 1 ≥ a + 1: Fin.append's right
         -- at (s + 1 - (a + 1)) = s - a, which is the
         -- prev-vector index.
-        simp [ERMor1.packedStepCtx, h_param,
+        simp only [ERMor1.packedStepCtx, h_param,
           ERMor1.interp_comp, ERMor1.interp_tupleAt,
-          ERMor1.interp_proj, Fin.append, Fin.cons]
+          ERMor1.interp_proj, Fin.append_right,
+          Fin.cons_zero]
 ```
 
-(If the `simp` calls do not close, additional
+(If the `simp only` calls do not close, additional
 `Fin.append_left` / `Fin.append_right` /
 `Fin.cons_zero` / `Fin.cons_succ` lemmas may be needed.
 The implementer can also reference the existing
@@ -1479,7 +1481,7 @@ theorem packedStep_interp_eq_tuplePack_step
             (fun j' => (g j').interp) (n + 1) x) := by
   intro prev_packed
   simp only [ERMor1.packedStep, ERMor1.interp_comp,
-    ERMor1.interp_tuplePack]
+    ERMor1.interp_tuplePack, Nat.simRecVec_succ]
   congr 1
   funext j
   rw [ERMor1.interp_comp]
@@ -1509,7 +1511,64 @@ function applications.  If the elaboration gets confused
 by the `let` binding, the implementer may need to unfold
 `prev_packed` explicitly via `show` or `change`.)
 
-- [ ] **Step 14.3: Add `packedRec_eq_tuplePack_simRecVec`**
+- [ ] **Step 14.3: Add `Nat_rec_packed_eq_tuplePack_simRecVec`**
+
+This is the unconditional `Nat.rec`-trace identity,
+extracted to top level so it is available both for the
+dominance discharge and for the main equality (round-2
+review fix E1):
+
+```lean
+/-- The `Nat.rec`-trace of `(packedBase, packedStep)`
+equals `Nat.tuplePack k (simRecVec ... j x)`.  Proven by
+induction on `j`, dispatching the base case via
+`packedBase_interp_eq_tuplePack_simRecVec_zero` and the
+step case via `packedStep_interp_eq_tuplePack_step`.
+This is an unconditional equation (no dominance
+hypothesis); the `boundedRec`-vs-`Nat.rec` correctness
+input is what consumes the dominance hypothesis at the
+caller.  Master design §3.2. -/
+theorem Nat_rec_packed_eq_tuplePack_simRecVec
+    (k a : ℕ)
+    (h : Fin (k + 1) → ERMor1 a)
+    (g : Fin (k + 1) → ERMor1 (a + 1 + (k + 1)))
+    (j : ℕ) (x : Fin a → ℕ) :
+    Nat.rec ((ERMor1.packedBase k a h).interp x)
+        (fun m prev =>
+          (ERMor1.packedStep k a g).interp
+            (Fin.cons m (Fin.cons prev x))) j
+      = Nat.tuplePack k
+          (Nat.simRecVec k a (fun j' => (h j').interp)
+            (fun j' => (g j').interp) j x) := by
+  induction j with
+  | zero =>
+      -- The zero case of `Nat.rec` reduces definitionally
+      -- to the base value.  The base value
+      -- `(packedBase k a h).interp x` equals
+      -- `Nat.tuplePack k (simRecVec ... 0 x)` by the
+      -- packedBase lemma.
+      exact
+        ERMor1.packedBase_interp_eq_tuplePack_simRecVec_zero
+          k a h g x
+  | succ m ih =>
+      -- The succ case of `Nat.rec` reduces definitionally
+      -- to `step m (Nat.rec ... m)`.  Substitute the
+      -- inductive hypothesis to expose the
+      -- `tuplePack k (simRecVec ... m x)` form, then
+      -- close via `packedStep_interp_eq_tuplePack_step`.
+      simp only [ih]
+      exact
+        ERMor1.packedStep_interp_eq_tuplePack_step
+          k a h g m x
+```
+
+(If `simp only [ih]` does not fire because `Nat.rec`'s
+definitional unfolding is needed first, the implementer
+can use a `change` step to expose
+`(packedStep ...).interp (Fin.cons m (Fin.cons (Nat.rec ... m) x))
+= _` and then `rw [ih]`.)
+
+- [ ] **Step 14.4: Add `packedRec_eq_tuplePack_simRecVec`**
 
 ```lean
 /-- Main intermediate: the packed `boundedRec` output at
@@ -1539,34 +1598,28 @@ theorem packedRec_eq_tuplePack_simRecVec
       = Nat.tuplePack k
           (Nat.simRecVec k a (fun j' => (h j').interp)
             (fun j' => (g j').interp) n x) := by
-  apply ERMor1.boundedRec_eq_natRec_of_bounded
-  · -- Hypothesis 1: ∀ j ≤ n, packed Nat.rec value ≤
-    -- tuplePackedBound interp.
+  -- Rewrite `boundedRec` via `boundedRec_eq_natRec_of_bounded`
+  -- to expose a `Nat.rec`-trace, then close via
+  -- `Nat_rec_packed_eq_tuplePack_simRecVec`.  The two
+  -- side-conditions of `boundedRec_eq_natRec_of_bounded`
+  -- (dominance + monotonicity) are dispatched via the
+  -- discharge lemmas from Task 13, with the `Nat.rec`-vs-
+  -- `simRecVec` identity reused inside the dominance
+  -- discharge to convert the `Nat.rec` form (matching the
+  -- lemma's hypothesis shape) into the `simRecVec` form
+  -- (matching `packedBound_dominates_iter`'s shape).
+  rw [ERMor1.boundedRec_eq_natRec_of_bounded
+        (ERMor1.packedBase k a h)
+        (ERMor1.packedStep k a g)
+        (ERMor1.tuplePackedBound k componentBound)
+        n x ?_ ?_]
+  · exact ERMor1.Nat_rec_packed_eq_tuplePack_simRecVec
+      k a h g n x
+  · -- Hypothesis 1 of boundedRec_eq_natRec_of_bounded:
+    -- ∀ j ≤ n, Nat.rec ... j ≤ tuplePackedBound interp.
     intro j h_j_le_n
-    -- The Nat.rec value at iteration j equals
-    -- Nat.tuplePack k (simRecVec ... j x), proven by
-    -- induction.  Then apply packedBound_dominates_iter.
-    have h_rec_eq :
-        Nat.rec ((ERMor1.packedBase k a h).interp x)
-          (fun m prev =>
-            (ERMor1.packedStep k a g).interp
-              (Fin.cons m (Fin.cons prev x))) j
-          = Nat.tuplePack k
-              (Nat.simRecVec k a
-                (fun j' => (h j').interp)
-                (fun j' => (g j').interp) j x) := by
-      induction j with
-      | zero =>
-          simp only [Nat.rec, Nat.zero_eq]
-          exact
-            ERMor1.packedBase_interp_eq_tuplePack_simRecVec_zero
-              k a h g x
-      | succ m ih =>
-          rw [Nat.rec, ih]
-          exact
-            ERMor1.packedStep_interp_eq_tuplePack_step
-              k a h g m x
-    rw [h_rec_eq]
+    rw [ERMor1.Nat_rec_packed_eq_tuplePack_simRecVec
+          k a h g j x]
     exact ERMor1.packedBound_dominates_iter
       k a h g componentBound n x j h_j_le_n h_dominates
   · -- Hypothesis 2: bound monotone in counter.
@@ -1574,14 +1627,18 @@ theorem packedRec_eq_tuplePack_simRecVec
       k a componentBound n x h_mono
 ```
 
-(The `induction j` chain may need adjustment depending
-on how `Nat.rec` reduces and how
-`boundedRec_eq_natRec_of_bounded` exposes the goal.  The
-implementer should verify by viewing intermediate goals.
-Iterate until clean before committing — CLAUDE.md
-forbids `sorry` in commits.)
+(`rw` against `boundedRec_eq_natRec_of_bounded` produces
+the equation with side-conditions exposed via `?_`
+placeholders, which are discharged in order: the main
+equality (closed by `Nat_rec_packed_eq_tuplePack_simRecVec`),
+then the dominance hypothesis, then the monotonicity
+hypothesis.  If `rw` does not unify (depending on the
+lemma's exact form), fall back to constructing the
+equality via `Eq.trans
+(boundedRec_eq_natRec_of_bounded ...) (Nat_rec_packed_...)`
+and dispatching the side-conditions separately.)
 
-- [ ] **Step 14.4: Build and commit (with all three lemmas filled in)**
+- [ ] **Step 14.5: Build and commit (with all four lemmas filled in)**
 
 ```bash
 rm -f .lake/build/lib/lean/GebLean/Utilities/ERSimultaneousBoundedRec.olean
@@ -1594,10 +1651,14 @@ Expected: clean (no `sorry`-warnings).
 git add GebLean/Utilities/ERSimultaneousBoundedRec.lean
 git commit -m "Step 2 task 14: step-case lemmas + main intermediate
 
-Three intermediate lemmas:
+Four intermediate lemmas:
 - interp_packedStepCtx: slot routing's interp.
 - packedStep_interp_eq_tuplePack_step: step case of the
   iteration-induction.
+- Nat_rec_packed_eq_tuplePack_simRecVec: unconditional
+  Nat.rec-trace identity, factored to top level so it is
+  available both for the dominance discharge and for the
+  main equality (round-2 review fix E1).
 - packedRec_eq_tuplePack_simRecVec: main intermediate
   combining base and step via boundedRec_eq_natRec_of_bounded
   and the discharge lemmas from task 13.
@@ -1927,6 +1988,7 @@ spec §7-listed citation verbatim:
   (`packedBase_interp_eq_tuplePack_simRecVec_zero`,
   `packedStep_interp_eq_tuplePack_step`,
   `interp_packedStepCtx`,
+  `Nat_rec_packed_eq_tuplePack_simRecVec`,
   `packedRec_eq_tuplePack_simRecVec`,
   `packedBound_dominates_iter`, `packedBound_mono`) —
   master design §3.2.

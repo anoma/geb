@@ -145,6 +145,7 @@ dependency order:
   - `ERMor1.simultaneousBoundedRec`.
   - Named intermediate lemmas: `packedBase_interp_eq_tuplePack_simRecVec_zero`,
     `packedStep_interp_eq_tuplePack_step`,
+    `Nat_rec_packed_eq_tuplePack_simRecVec`,
     `packedRec_eq_tuplePack_simRecVec`,
     `packedBound_dominates_iter`, `packedBound_mono`.
   - `simultaneousBoundedRec_interp_correct`.
@@ -504,26 +505,54 @@ theorem packedBase_interp_eq_tuplePack_simRecVec_zero
           (Nat.simRecVec k a (fun j' => (h j').interp)
             (fun j' => (g j').interp) 0 x)
 
-/-- Step case: applying `packedStep` to a packed state
-that equals `Nat.tuplePack k (Nat.simRecVec ... n x)`
-yields `Nat.tuplePack k (Nat.simRecVec ... (n+1) x)`.
-The inner `boundedRec` step input convention is
-`(counter, packed_prev, params)`, so the assembled
-context is `Fin.cons n (Fin.cons prev_packed x)`. -/
+/-- Step case: applying `packedStep` to the packed state
+at iteration `n` yields the packed state at iteration
+`n + 1`.  The inner `boundedRec` step input convention
+is `(counter, packed_prev, params)`, so the assembled
+context is `Fin.cons n (Fin.cons prev_packed x)`.
+
+Although `packedStep` itself does not depend on `h`, the
+lemma's statement does — `simRecVec ... (n + 1) x` is
+defined in terms of `simRecVec ... n x`, whose value at
+iteration 0 comes from `h`.  The dependency on `h` is
+mathematically real. -/
 theorem packedStep_interp_eq_tuplePack_step
     (k a : ℕ)
+    (h : Fin (k + 1) → ERMor1 a)
     (g : Fin (k + 1) → ERMor1 (a + 1 + (k + 1)))
-    (n : ℕ) (x : Fin a → ℕ) (prev_packed : ℕ)
-    (h_prev :
-      prev_packed = Nat.tuplePack k
-        (Nat.simRecVec k a
-          (fun j' => fun y => 0)  -- bases unused at step
-          (fun j' => (g j').interp) n x)) :
+    (n : ℕ) (x : Fin a → ℕ) :
     (ERMor1.packedStep k a g).interp
-        (Fin.cons n (Fin.cons prev_packed x))
+        (Fin.cons n
+          (Fin.cons
+            (Nat.tuplePack k
+              (Nat.simRecVec k a (fun j' => (h j').interp)
+                (fun j' => (g j').interp) n x))
+            x))
       = Nat.tuplePack k
-          (Nat.simRecVec k a (fun j' => fun y => 0)
+          (Nat.simRecVec k a (fun j' => (h j').interp)
             (fun j' => (g j').interp) (n + 1) x)
+
+/-- The `Nat.rec`-trace of `(packedBase, packedStep)`
+equals `Nat.tuplePack k (simRecVec ... j x)`.  Proven by
+induction on `j`, dispatching the base case via
+`packedBase_interp_eq_tuplePack_simRecVec_zero` and the
+step case via `packedStep_interp_eq_tuplePack_step`.
+This is an unconditional equation (no dominance
+hypothesis); the `boundedRec`-vs-`Nat.rec` correctness
+input is what consumes the dominance hypothesis at the
+caller. -/
+theorem Nat_rec_packed_eq_tuplePack_simRecVec
+    (k a : ℕ)
+    (h : Fin (k + 1) → ERMor1 a)
+    (g : Fin (k + 1) → ERMor1 (a + 1 + (k + 1)))
+    (j : ℕ) (x : Fin a → ℕ) :
+    Nat.rec ((ERMor1.packedBase k a h).interp x)
+        (fun m prev =>
+          (ERMor1.packedStep k a g).interp
+            (Fin.cons m (Fin.cons prev x))) j
+      = Nat.tuplePack k
+          (Nat.simRecVec k a (fun j' => (h j').interp)
+            (fun j' => (g j').interp) j x)
 
 /-- Main intermediate: the packed `boundedRec` output at
 iteration `n` equals `Nat.tuplePack k (Nat.simRecVec ... n x)`,
@@ -851,6 +880,7 @@ Per CLAUDE.md transcription discipline.
   `Utilities/ERArith.lean`.
 - **`packedBase_interp_eq_tuplePack_simRecVec_zero`,
   `packedStep_interp_eq_tuplePack_step`,
+  `Nat_rec_packed_eq_tuplePack_simRecVec`,
   `packedRec_eq_tuplePack_simRecVec`,
   `packedBound_dominates_iter`, `packedBound_mono`** —
   auxiliary intermediate lemmas; master design §3.2.
