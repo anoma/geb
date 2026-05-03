@@ -135,5 +135,54 @@ theorem packedBase_interp_eq_tuplePack_simRecVec_zero
     ERMor1.interp_tuplePack]
   rfl
 
+/-- Dominance hypothesis discharge: under
+`h_dominates`, the packed state at iteration `m ≤ n` is
+bounded by `tuplePackedBound k componentBound`'s
+interp.  Used to apply
+`boundedRec_eq_natRec_of_bounded` inside
+`packedRec_eq_tuplePack_simRecVec`.  Master design §3.2. -/
+theorem packedBound_dominates_iter
+    (k a : ℕ)
+    (h : Fin (k + 1) → ERMor1 a)
+    (g : Fin (k + 1) → ERMor1 (a + 1 + (k + 1)))
+    (componentBound : ERMor1 (a + 1))
+    (n : ℕ) (x : Fin a → ℕ) (m : ℕ) (h_m_le_n : m ≤ n)
+    (h_dominates :
+      ∀ (m' : ℕ), m' ≤ n → ∀ (j : Fin (k + 1)),
+        Nat.simRecVec k a (fun j' => (h j').interp)
+            (fun j' => (g j').interp) m' x j
+          ≤ componentBound.interp (Fin.cons m' x)) :
+    Nat.tuplePack k
+        (Nat.simRecVec k a (fun j' => (h j').interp)
+          (fun j' => (g j').interp) m x)
+      ≤ (ERMor1.tuplePackedBound k componentBound).interp
+          (Fin.cons m x) := by
+  apply ERMor1.tuplePackedBound_dominates
+  intro j
+  exact h_dominates m h_m_le_n j
+
+/-- Monotonicity hypothesis discharge: if
+`componentBound.interp` is monotone in the iteration
+counter, so is `tuplePackedBound k componentBound`.
+Master design §3.2. -/
+theorem packedBound_mono
+    (k a : ℕ) (componentBound : ERMor1 (a + 1))
+    (n : ℕ) (x : Fin a → ℕ)
+    (h_mono :
+      ∀ (m : ℕ), m ≤ n →
+        componentBound.interp (Fin.cons m x)
+          ≤ componentBound.interp (Fin.cons n x))
+    (m : ℕ) (h_m_le_n : m ≤ n) :
+    (ERMor1.tuplePackedBound k componentBound).interp
+        (Fin.cons m x)
+      ≤ (ERMor1.tuplePackedBound k componentBound).interp
+          (Fin.cons n x) := by
+  rw [ERMor1.interp_tuplePackedBound,
+    ERMor1.interp_tuplePackedBound]
+  apply Nat.mul_le_mul_left
+  apply Nat.pow_le_pow_left
+  have := h_mono m h_m_le_n
+  omega
+
 end ERMor1
 end GebLean
