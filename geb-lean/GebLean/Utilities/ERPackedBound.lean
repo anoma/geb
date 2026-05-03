@@ -21,7 +21,8 @@ Bottom-up construction from atomic ER generators
 `ERMor1.mulN`) per CLAUDE.md "bottom-up named-composite
 discipline".
 
-See `docs/superpowers/specs/2026-05-03-step-2-er-simultaneous-bounded-rec-design.md`
+See
+`docs/superpowers/specs/2026-05-03-step-2-er-simultaneous-bounded-rec-design.md`
 and master design §3.2 in
 `docs/research/2026-05-02-er-ksim2-equiv-via-urm-master-design.md`.
 -/
@@ -132,7 +133,8 @@ punch-list. -/
 def ofTuplePackedBound (k : ℕ) {a : ℕ}
     {componentBound : ERMor1 a}
     (pb : PolyBound componentBound) :
-    PolyBound (ERMor1.tuplePackedBound k componentBound) where
+    PolyBound (ERMor1.tuplePackedBound k componentBound)
+    where
   degree := pb.degree * 2 ^ k
   coefficient := Nat.tuplePackCoef k *
     (pb.coefficient + pb.constant + 1) ^ (2 ^ k)
