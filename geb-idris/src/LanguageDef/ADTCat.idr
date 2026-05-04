@@ -142,39 +142,39 @@ PairShowAlg () d = "(" ++ d PAIRFST ++ "," ++ d PAIRSND ++ ")"
 ----------------------------------
 
 public export
-BinTreeF : ParamPolyFunc PolyFunc
-BinTreeF a = pfCoproductArena a PairF
+BinTree'F : ParamPolyFunc PolyFunc
+BinTree'F a = pfCoproductArena a PairF
 
 public export
-BinTreeAlg : PolyFunc -> Type -> Type
-BinTreeAlg a = PFAlg (BinTreeF a)
+BinTree'Alg : PolyFunc -> Type -> Type
+BinTree'Alg a = PFAlg (BinTree'F a)
 
 public export
-BinTreeMu : PolyFunc -> Type
-BinTreeMu a = PolyFuncMu (BinTreeF a)
+BinTree'Mu : PolyFunc -> Type
+BinTree'Mu a = PolyFuncMu (BinTree'F a)
 
 public export
 binTreeCata : {0 a : PolyFunc} -> {0 b : Type} ->
-  BinTreeAlg a b -> BinTreeMu a -> b
-binTreeCata {a} {b} = pfCata {p=(BinTreeF a)} {a=b}
+  BinTree'Alg a b -> BinTree'Mu a -> b
+binTreeCata {a} {b} = pfCata {p=(BinTree'F a)} {a=b}
 
 public export
-BinTreeShowAlg : {a : PolyFunc} -> PFAlg a String -> BinTreeAlg a String
-BinTreeShowAlg {a=(pos ** dir)} alg (Left i) d = alg i d
-BinTreeShowAlg {a=(pos ** dir)} alg (Right ()) d = PairShowAlg () d
+BinTree'ShowAlg : {a : PolyFunc} -> PFAlg a String -> BinTree'Alg a String
+BinTree'ShowAlg {a=(pos ** dir)} alg (Left i) d = alg i d
+BinTree'ShowAlg {a=(pos ** dir)} alg (Right ()) d = PairShowAlg () d
 
 public export
-binTreeShow : {a : PolyFunc} -> PFAlg a String -> BinTreeMu a -> String
-binTreeShow = binTreeCata . BinTreeShowAlg
+binTreeShow : {a : PolyFunc} -> PFAlg a String -> BinTree'Mu a -> String
+binTreeShow = binTreeCata . BinTree'ShowAlg
 
 -- Construct a leaf of a binary tree.
 public export
-InBTL : {a : PolyFunc} -> PolyFuncMu a -> BinTreeMu a
+InBTL : {a : PolyFunc} -> PolyFuncMu a -> BinTree'Mu a
 InBTL {a=a@(pos ** dir)} = pfCata {p=a} $ \i, d => InPFM (Left i) d
 
 -- Construct an internal node of a binary tree.
 public export
-InBTN : {a : PolyFunc} -> BinTreeMu a -> BinTreeMu a -> BinTreeMu a
+InBTN : {a : PolyFunc} -> BinTree'Mu a -> BinTree'Mu a -> BinTree'Mu a
 InBTN {a=(pos ** dir)} x y = InPFM (Right ()) $ \i => case i of
   False => x
   True => y
@@ -184,8 +184,8 @@ InBTN {a=(pos ** dir)} x y = InPFM (Right ()) $ \i => case i of
 -----------------------------------------
 
 public export
-BinTreeB : Type
-BinTreeB = BinTreeMu BoolF
+BinTree'B : Type
+BinTree'B = BinTree'Mu BoolF
 
 ---------------------------
 ---------------------------
@@ -299,21 +299,21 @@ sexpBCata {a} = spfCata {spf=(SexpF a)}
 -- component handling both cases to produce the return type for the overall
 -- expressions.
 public export
-BinTreeAlgToSexpAlg : {0 a : PolyFunc} -> {0 b : Type} ->
-  BinTreeAlg a b -> SexpAlg a (const b)
-BinTreeAlgToSexpAlg {a=(_ ** _)} alg (Left ()) (i ** d) = alg (Left i) d
-BinTreeAlgToSexpAlg {a=(_ ** _)} alg (Right False) (() ** d) = alg (Right ()) d
-BinTreeAlgToSexpAlg {a=(_ ** _)} alg (Right True) ((False ** d)) = d ()
-BinTreeAlgToSexpAlg {a=(_ ** _)} alg (Right True) ((True ** d)) = d ()
+BinTree'AlgToSexpAlg : {0 a : PolyFunc} -> {0 b : Type} ->
+  BinTree'Alg a b -> SexpAlg a (const b)
+BinTree'AlgToSexpAlg {a=(_ ** _)} alg (Left ()) (i ** d) = alg (Left i) d
+BinTree'AlgToSexpAlg {a=(_ ** _)} alg (Right False) (() ** d) = alg (Right ()) d
+BinTree'AlgToSexpAlg {a=(_ ** _)} alg (Right True) ((False ** d)) = d ()
+BinTree'AlgToSexpAlg {a=(_ ** _)} alg (Right True) ((True ** d)) = d ()
 
 public export
 sexpBTCata : {a : PolyFunc} -> {b : Type} ->
-  BinTreeAlg a b -> SexpSliceM a (const b)
-sexpBTCata {a} {b} = sexpBCata {a} {sa=(const b)} . BinTreeAlgToSexpAlg
+  BinTree'Alg a b -> SexpSliceM a (const b)
+sexpBTCata {a} {b} = sexpBCata {a} {sa=(const b)} . BinTree'AlgToSexpAlg
 
 public export
 SexpShowAlg : {a : PolyFunc} -> PFAlg a String -> SexpAlg a (const String)
-SexpShowAlg alg = BinTreeAlgToSexpAlg (BinTreeShowAlg alg)
+SexpShowAlg alg = BinTree'AlgToSexpAlg (BinTree'ShowAlg alg)
 
 public export
 sexpBShow : {a : PolyFunc} ->
@@ -431,13 +431,13 @@ soProductHomCata = pfProductHomCata {p=SubstObjPF} {q=SubstObjPF}
 
 public export
 SOHomAlg : {m : Type -> Type} -> {isMonad : Monad m} -> Type -> Type
-SOHomAlg a = BinTreeAlg BoolF (a -> m a)
+SOHomAlg a = BinTree'Alg BoolF (a -> m a)
 
 public export
 SOHomAlgToFAlg : {m : Type -> Type} -> {isMonad : Monad m} -> {0 a : Type} ->
   SOHomAlg {m} {isMonad} a -> SOAlg (a -> m a)
-SOHomAlgToFAlg alg SOPos0 d = alg (Left False) $ \i => case i of _ impossible
-SOHomAlgToFAlg alg SOPos1 d = alg (Left True) $ \i => case i of _ impossible
+SOHomAlgToFAlg alg SOPos0 d = alg (Left False) $ \i => void i
+SOHomAlgToFAlg alg SOPos1 d = alg (Left True) $ \i => void i
 SOHomAlgToFAlg alg SOPosC d = alg (Right ()) $ \i => case i of
   False => d SODirL
   True => d SODirR
@@ -691,7 +691,7 @@ SOHomReflectAlg v u f = InSOP v (InSOP u f)
 public export
 SOHomReflect : {v, u, f : SOMu} -> {a : Type} ->
   (SOInterp v -> a) -> (SOInterp u -> a) -> (SOInterp f -> a -> a -> a) ->
-  SOInterp (SOHomReflectAlg v u f) -> BinTreeAlg BoolF a
+  SOInterp (SOHomReflectAlg v u f) -> BinTree'Alg BoolF a
 SOHomReflect vi ui fi alg (Left False) d = vi $ fst alg
 SOHomReflect vi ui fi alg (Left True) d = ui $ fst $ snd alg
 SOHomReflect vi ui fi alg (Right ()) d = fi (snd $ snd alg) (d False) (d True)
@@ -1331,11 +1331,11 @@ stCata : {0 a : Type} -> STAlg a -> STMu -> a
 stCata = pfCata {p=SubstTermPF}
 
 public export
-STProdAlg : Type -> Type
-STProdAlg = PFProductAlg SubstTermPF SubstTermPF
+STProdAlg' : Type -> Type
+STProdAlg' = PFProductAlg SubstTermPF SubstTermPF
 
 public export
-stProdCata : {0 a : Type} -> STProdAlg a -> STMu -> STMu -> a
+stProdCata : {0 a : Type} -> STProdAlg' a -> STMu -> STMu -> a
 stProdCata {a} = pfProductCata {a} {p=SubstTermPF} {q=SubstTermPF}
 
 public export
@@ -1453,7 +1453,7 @@ Show STMu where
   show = stCata STShowAlg
 
 public export
-STEqAlg : STProdAlg Bool
+STEqAlg : STProdAlg' Bool
 STEqAlg (STPosLeaf, STPosLeaf) d = True
 STEqAlg (STPosLeaf, STPosLeft) d = False
 STEqAlg (STPosLeaf, STPosRight) d = False
@@ -1592,15 +1592,15 @@ SOTermValidation : SOMu -> STMu -> Type
 SOTermValidation = pfProductCata SOTermValidationAlg
 
 public export
-SOCheckedTermAlg : SOAlg Type
-SOCheckedTermAlg SOPos0 d = Void
-SOCheckedTermAlg SOPos1 d = Unit
-SOCheckedTermAlg SOPosC d = Either (d SODirL) (d SODirR)
-SOCheckedTermAlg SOPosP d = Pair (d SODir1) (d SODir2)
+SOCheckedTrAlg : SOAlg Type
+SOCheckedTrAlg SOPos0 d = Void
+SOCheckedTrAlg SOPos1 d = Unit
+SOCheckedTrAlg SOPosC d = Either (d SODirL) (d SODirR)
+SOCheckedTrAlg SOPosP d = Pair (d SODir1) (d SODir2)
 
 public export
 SOCheckedTerm : SOMu -> Type
-SOCheckedTerm = pfCata SOCheckedTermAlg
+SOCheckedTerm = pfCata SOCheckedTrAlg
 
 public export
 SOCheckedTermPFAlg : SOAlg PolyFunc
@@ -1706,7 +1706,7 @@ UBTreeAlgToPF : {a : Type} -> UBTreeAlg a -> PFAlg UBTreeF a
 UBTreeAlgToPF {a} (u, p) (Right () ** i) d = u
 UBTreeAlgToPF {a} (u, p) (Left () ** i) d with (i ()) proof ieq
   UBTreeAlgToPF {a} (u, p) (Left () ** i) d | ((), ()) =
-    p (d (() ** rewrite ieq in Left ())) (d (() ** rewrite ieq in Right ()))
+    p (d (() ** Left ())) (d (() ** Right ()))
 
 public export
 UBTreeMu : Type
@@ -1800,15 +1800,15 @@ FinPCTermF = pfSquareArena pfMaybeArena
 --  - right
 --  - pair
 public export
-FinPCTermAlg : Type -> Type
-FinPCTermAlg a = (a, a -> a, a -> a, a -> a -> a)
+FinPCTrAlg : Type -> Type
+FinPCTrAlg a = (a, a -> a, a -> a, a -> a -> a)
 
 public export
-FinPCTermAlgToPF : {a : Type} -> FinPCTermAlg a -> PFAlg FinPCTermF a
-FinPCTermAlgToPF (u, l, r, p) (Right (), Right ()) d = u
-FinPCTermAlgToPF (u, l, r, p) (Right (), Left ()) d = r $ d $ Right ()
-FinPCTermAlgToPF (u, l, r, p) (Left (), Right ()) d = l $ d $ Left ()
-FinPCTermAlgToPF (u, l, r, p) (Left (), Left ()) d =
+FinPCTrAlgToPF : {a : Type} -> FinPCTrAlg a -> PFAlg FinPCTermF a
+FinPCTrAlgToPF (u, l, r, p) (Right (), Right ()) d = u
+FinPCTrAlgToPF (u, l, r, p) (Right (), Left ()) d = r $ d $ Right ()
+FinPCTrAlgToPF (u, l, r, p) (Left (), Right ()) d = l $ d $ Left ()
+FinPCTrAlgToPF (u, l, r, p) (Left (), Left ()) d =
   p (d $ Left ()) (d $ Right ())
 
 public export
@@ -1816,8 +1816,8 @@ FinPCTermMu : Type
 FinPCTermMu = PolyFuncMu FinPCTermF
 
 public export
-finPCTermCata : {a : Type} -> FinPCTermAlg a -> FinPCTermMu -> a
-finPCTermCata = pfCata {p=FinPCTermF} . FinPCTermAlgToPF
+finPCTermCata : {a : Type} -> FinPCTrAlg a -> FinPCTermMu -> a
+finPCTermCata = pfCata {p=FinPCTermF} . FinPCTrAlgToPF
 
 public export
 FinPCTermFreePF : PolyFunc
@@ -1829,11 +1829,11 @@ FinPCTermFreeM = InterpPolyFuncFreeM FinPCTermF
 
 public export
 finPCTermSubstCata : {a, b : Type} ->
-  (a -> b) -> FinPCTermAlg b -> FinPCTermFreeM a -> b
-finPCTermSubstCata subst = pfSubstCata subst . FinPCTermAlgToPF
+  (a -> b) -> FinPCTrAlg b -> FinPCTermFreeM a -> b
+finPCTermSubstCata subst = pfSubstCata subst . FinPCTrAlgToPF
 
 public export
-FinPCTermShowAlg : FinPCTermAlg String
+FinPCTermShowAlg : FinPCTrAlg String
 FinPCTermShowAlg =
   ("!",
    \x => "l[" ++ x ++ "]",
@@ -1853,7 +1853,7 @@ Show FinPCTermMu where
 public export
 record TermAtom where
   constructor TAtom
-  tAtom : GebAtom
+  tAtom : OldAtom
   tData : Nat
 
 public export
@@ -1921,16 +1921,16 @@ ADTTermDir : ADTTermPos -> Type
 ADTTermDir = pfDir {p=ADTTermPF}
 
 public export
-ProdAlg : Type -> Type
-ProdAlg a = List a -> a
+ProdAlg' : Type -> Type
+ProdAlg' a = List a -> a
 
 public export
-MkProdAlg : {0 a : Type} -> ProdAlg a -> PFAlg ProdTermPF a
-MkProdAlg alg len = alg . toList . finFToVect {n=len}
+MkProdAlg' : {0 a : Type} -> ProdAlg' a -> PFAlg ProdTermPF a
+MkProdAlg' alg len = alg . toList . finFToVect {n=len}
 
 public export
-prodCata : {0 a : Type} -> ProdAlg a -> PolyFuncMu ProdTermPF -> a
-prodCata = pfCata {p=ProdTermPF} . MkProdAlg
+prodCata : {0 a : Type} -> ProdAlg' a -> PolyFuncMu ProdTermPF -> a
+prodCata = pfCata {p=ProdTermPF} . MkProdAlg'
 
 public export
 CoprodAlg : Type -> Type
@@ -1957,32 +1957,32 @@ TermMu = PolyFuncMu ADTTermPF
 ---------------------------------
 
 public export
-TermAlg : Type -> Type
-TermAlg = PFAlg ADTTermPF
+TrAlg : Type -> Type
+TrAlg = PFAlg ADTTermPF
 
 public export
-termCata : {0 a : Type} -> TermAlg a -> TermMu -> a
+termCata : {0 a : Type} -> TrAlg a -> TermMu -> a
 termCata = pfCata {p=ADTTermPF}
 
 public export
-record TermAlgRec (a : Type) where
-  constructor MkTermAlg
-  talgProd : ProdAlg a
+record TrAlgRec (a : Type) where
+  constructor MkTrAlg
+  talgProd : ProdAlg' a
   talgCoprod : CoprodAlg a
 
 public export
-talgFromRec : {0 a : Type} -> TermAlgRec a -> TermAlg a
-talgFromRec alg (Left len) ts = MkProdAlg alg.talgProd len ts
+talgFromRec : {0 a : Type} -> TrAlgRec a -> TrAlg a
+talgFromRec alg (Left len) ts = MkProdAlg' alg.talgProd len ts
 talgFromRec alg (Right idx) t = MkCoprodAlg alg.talgCoprod idx t
 
 public export
-termCataRec : {0 a : Type} -> TermAlgRec a -> TermMu -> a
+termCataRec : {0 a : Type} -> TrAlgRec a -> TermMu -> a
 termCataRec = termCata . talgFromRec
 
 public export
-termCataCtx : {0 ctx, a : Type} -> (ctx -> TermAlgRec a) -> ctx -> TermMu -> a
+termCataCtx : {0 ctx, a : Type} -> (ctx -> TrAlgRec a) -> ctx -> TermMu -> a
 termCataCtx {ctx} {a} alg =
-  pfParamCata {p=ADTTermPF} {x=ctx} {a} ?termCataCtx_hole
+  pfFreeFEval {p=ADTTermPF} {x=ctx} {a} ?termCataCtx_hole
 
 ----------------------
 ---- Constructors ----
@@ -1997,7 +1997,7 @@ InTermAtom : TermAtom -> TermMu -> TermMu
 InTermAtom n t = InPFM (Right n) $ \() => t
 
 public export
-InAtom : GebAtom -> Nat -> TermMu -> TermMu
+InAtom : OldAtom -> Nat -> TermMu -> TermMu
 InAtom = InTermAtom .* TAtom
 
 public export
@@ -2009,16 +2009,16 @@ InNat = InAtom SL_NAT
 -------------------
 
 public export
-TermSizeAlg : TermAlgRec Nat
-TermSizeAlg = MkTermAlg (foldl (+) 1) (const $ (+) 1)
+TermSizeAlg : TrAlgRec Nat
+TermSizeAlg = MkTrAlg (foldl (+) 1) (const $ (+) 1)
 
 public export
 termSize : TermMu -> Nat
 termSize = termCataRec TermSizeAlg
 
 public export
-TermDepthAlg : TermAlgRec Nat
-TermDepthAlg = MkTermAlg (S . foldl max 0) (const $ (+) 1)
+TermDepthAlg : TrAlgRec Nat
+TermDepthAlg = MkTrAlg (S . foldl max 0) (const $ (+) 1)
 
 public export
 termDepth : TermMu -> Nat
@@ -2039,8 +2039,8 @@ termShowCoproduct : TermAtom -> String -> String
 termShowCoproduct n t = "[" ++ show n ++ ":" ++ t ++ "]"
 
 public export
-TermShowAlg : TermAlgRec String
-TermShowAlg = MkTermAlg termShowProduct termShowCoproduct
+TermShowAlg : TrAlgRec String
+TermShowAlg = MkTrAlg termShowProduct termShowCoproduct
 
 public export
 Show TermMu where
@@ -2076,13 +2076,13 @@ FinBCObjDir = pfDir {p=FinBCObjPF}
 public export
 record FinBCObjAlgRec (a : Type) where
   constructor MkFinBCObjAlg
-  fbcAlgProd : ProdAlg a
-  fbcAlgCoprod : ProdAlg a
+  fbcAlgProd : ProdAlg' a
+  fbcAlgCoprod : ProdAlg' a
 
 public export
 fbcAlgFromRec : {0 a : Type} -> FinBCObjAlgRec a -> PFAlg FinBCObjPF a
-fbcAlgFromRec alg (Left len) ts = MkProdAlg alg.fbcAlgProd len ts
-fbcAlgFromRec alg (Right len) ts = MkProdAlg alg.fbcAlgCoprod len ts
+fbcAlgFromRec alg (Left len) ts = MkProdAlg' alg.fbcAlgProd len ts
+fbcAlgFromRec alg (Right len) ts = MkProdAlg' alg.fbcAlgCoprod len ts
 
 public export
 FinBCObjMu : Type
@@ -2116,9 +2116,9 @@ fbcObjRep : FinBCObjMu -> TermMu
 fbcObjRep = fbcObjCataRec FBCObjRepAlg
 
 public export
-FBCObjParseAlg : TermAlgRec (Maybe FinBCObjMu)
+FBCObjParseAlg : TrAlgRec (Maybe FinBCObjMu)
 FBCObjParseAlg =
-  MkTermAlg
+  MkTrAlg
     (\ts => let tra = sequence ts in map ?FBCObjParse_hole_prod tra)
     (\ts => ?FBCObjParse_hole_coprod)
 
@@ -2142,7 +2142,7 @@ AsSubstObjAlg STPosPair dir (i, cont) = ?IsSubstObj_alg_hole_3
 
 public export
 asSubstObj : STMu -> Maybe SOMu
-asSubstObj = pfParamCata AsSubstObjAlg (SOPos0, const Nothing)
+asSubstObj = pfFreeFEval AsSubstObjAlg (SOPos0, const Nothing)
 
 public export
 isSubstObj : STMu -> Bool
@@ -2230,8 +2230,8 @@ SubstMorphPosDep sig pos = ?SubstMorphPosDep_hole
 ---- Functor which generates polynomial functors (not using PolyFunc) ----
 --------------------------------------------------------------------------
 
-infixr 8 $$+
-infixr 9 $$*
+export infixr 8 $$+
+export infixr 9 $$*
 
 public export
 data PolyF : Type -> Type where
@@ -2294,8 +2294,8 @@ public export
 data PolyNu : Type where
   InPLabel : Inf (PolyF PolyNu) -> PolyNu
 
-infixr 8 $+
-infixr 9 $*
+export infixr 8 $+
+export infixr 9 $*
 
 public export
 PolyI : PolyMu
@@ -2561,7 +2561,8 @@ MetaPolyCoalg : Type -> Type
 MetaPolyCoalg x = x -> PolyF x
 
 public export
-metaPolyAna : MetaPolyCoalg x -> x -> Inf PolyNu
+partial
+0 metaPolyAna : MetaPolyCoalg x -> x -> Inf PolyNu
 metaPolyAna coalg t = case coalg t of
   PFI => InPLabel PFI
   PF0 => InPLabel PF0
@@ -2570,16 +2571,19 @@ metaPolyAna coalg t = case coalg t of
   p $$* q => InPLabel $ metaPolyAna coalg p $$* metaPolyAna coalg q
 
 public export
-metaPolyAnaCPS : MetaPolyCoalg x -> x -> Inf PolyNu
+partial
+0 metaPolyAnaCPS : MetaPolyCoalg x -> x -> Inf PolyNu
 metaPolyAnaCPS coalg = metaPolyUnfold id where
   mutual
-    metaPolyAnaCont : (PolyNu -> PolyNu -> PolyF PolyNu) ->
+    partial
+    0 metaPolyAnaCont : (PolyNu -> PolyNu -> PolyF PolyNu) ->
       (PolyNu -> PolyNu) -> x -> x -> PolyNu
     metaPolyAnaCont op cont x y =
       metaPolyUnfold
         (\x' => metaPolyUnfold (\y' => cont $ InPLabel $ op x' y') y) x
 
-    metaPolyUnfold : (PolyNu -> PolyNu) -> x -> Inf PolyNu
+    partial
+    0 metaPolyUnfold : (PolyNu -> PolyNu) -> x -> Inf PolyNu
     metaPolyUnfold cont t = case coalg t of
       PFI => cont (InPLabel PFI)
       PF0 => cont (InPLabel PF0)
@@ -2778,7 +2782,7 @@ PolyComposeAlg PF1 _ = Poly1
 PolyComposeAlg (p $$+ q) r = p r $+ q r
 PolyComposeAlg (p $$* q) r = p r $* q r
 
-infixr 2 $.
+export infixr 2 $.
 public export
 ($.) : PolyMu -> PolyMu -> PolyMu
 ($.) = metaPolyPairAdjCata PolyComposeAlg
@@ -2787,7 +2791,7 @@ public export
 ---- Multiplication by a constant (via addition) ----
 -----------------------------------------------------
 
-infix 10 $:*
+export infix 10 $:*
 public export
 ($:*) : Nat -> PolyMu -> PolyMu
 n $:* p = foldrNatNoUnit (($+) p) Poly0 p n
@@ -2796,7 +2800,7 @@ n $:* p = foldrNatNoUnit (($+) p) Poly0 p n
 ---- Multiplicative exponentiation ----
 ---------------------------------------
 
-infix 10 $*^
+export infix 10 $*^
 public export
 ($*^) : PolyMu -> Nat -> PolyMu
 p $*^ n = foldrNatNoUnit (($*) p) Poly1 p n
@@ -2805,7 +2809,7 @@ p $*^ n = foldrNatNoUnit (($*) p) Poly1 p n
 ---- Compositional exponentiation (iteration) ----
 --------------------------------------------------
 
-infix 10 $.^
+export infix 10 $.^
 public export
 ($.^) : PolyMu -> Nat -> PolyMu
 p $.^ n = foldrNatNoUnit (($.) p) PolyI p n
@@ -3285,7 +3289,7 @@ public export
 ($>) : ADTTerm -> ADTTerm
 ($>) t = InADTT (ADTRight t)
 
-infixr 12 $$
+export infixr 12 $$
 public export
 ($$) : ADTTerm -> ADTTerm -> ADTTerm
 t $$ t' = InADTT (ADTPair t t')
@@ -3295,19 +3299,19 @@ t $$ t' = InADTT (ADTPair t t')
 ----------------------
 
 public export
-TermAlg' : Type -> Type
-TermAlg' a = ADTTermF a -> a
+TrAlg' : Type -> Type
+TrAlg' a = ADTTermF a -> a
 
 public export
 TermEndoAlg : Type
-TermEndoAlg = TermAlg' ADTTerm
+TermEndoAlg = TrAlg' ADTTerm
 
 ----------------------------------------------------------
 ---- Zero-usage (compile-time-only) term catamorphism ----
 ----------------------------------------------------------
 
 public export
-0 termCataZeroUsage : {0 a : Type} -> (0 _ : TermAlg' a) -> (0 _ : ADTTerm) -> a
+0 termCataZeroUsage : {0 a : Type} -> (0 _ : TrAlg' a) -> (0 _ : ADTTerm) -> a
 termCataZeroUsage alg (InADTT t) = alg $ case t of
   ADTUnit => ADTUnit
   ADTLeft t => ADTLeft (termCataZeroUsage alg t)
@@ -3319,7 +3323,7 @@ termCataZeroUsage alg (InADTT t) = alg $ case t of
 --------------------------------------
 
 public export
-TermSizeAlg' : TermAlg' Nat
+TermSizeAlg' : TrAlg' Nat
 TermSizeAlg' ADTUnit = 1
 TermSizeAlg' (ADTLeft t) = S t
 TermSizeAlg' (ADTRight t) = S t
@@ -3330,7 +3334,7 @@ public export
 termSize' = termCataZeroUsage TermSizeAlg'
 
 public export
-TermDepthAlg' : TermAlg' Nat
+TermDepthAlg' : TrAlg' Nat
 TermDepthAlg' ADTUnit = 1
 TermDepthAlg' (ADTLeft t) = S t
 TermDepthAlg' (ADTRight t) = S t
@@ -3346,7 +3350,7 @@ termDepth' = termCataZeroUsage TermDepthAlg'
 
 mutual
   public export
-  termFold : {0 a : Type} -> TermAlg' a -> (a -> a) -> ADTTerm -> a
+  termFold : {0 a : Type} -> TrAlg' a -> (a -> a) -> ADTTerm -> a
   termFold alg cont (InADTT t) = case t of
     ADTUnit => cont (alg ADTUnit)
     ADTLeft l => termFold alg (cont . alg . ADTLeft) l
@@ -3354,7 +3358,7 @@ mutual
     ADTPair l r => termFold alg (termFoldPair alg cont r) l
 
   public export
-  termFoldPair : {0 a : Type} -> TermAlg' a -> (a -> a) -> ADTTerm -> a -> a
+  termFoldPair : {0 a : Type} -> TrAlg' a -> (a -> a) -> ADTTerm -> a -> a
   termFoldPair alg cont r l = termFold alg (cont . alg . ADTPair l) r
 
 ---------------------------------------
@@ -3379,7 +3383,7 @@ mutual
   public export
   partial
   termStackRun : {0 a : Type} ->
-    TermAlg' a -> TermStack a -> ADTTerm -> a
+    TrAlg' a -> TermStack a -> ADTTerm -> a
   termStackRun alg stack (InADTT t) = case t of
     ADTUnit => termContRun alg stack (alg ADTUnit)
     ADTLeft l => termStackRun alg (TSELeft :: stack) l
@@ -3388,7 +3392,7 @@ mutual
 
   public export
   partial
-  termContRun : {0 a : Type} -> TermAlg' a -> TermStack a -> a -> a
+  termContRun : {0 a : Type} -> TrAlg' a -> TermStack a -> a -> a
   termContRun {a} alg [] result = result
   termContRun {a} alg (elem :: stack) result = case elem of
     TSELeft => termContRun alg stack (alg $ ADTLeft result)
@@ -3402,7 +3406,7 @@ mutual
 ------------------------------------------
 
 public export
-termCata' : {0 a : Type} -> TermAlg' a -> ADTTerm -> a
+termCata' : {0 a : Type} -> TrAlg' a -> ADTTerm -> a
 termCata' alg = termFold alg id
 
 -------------------------------------------------------------
@@ -3423,12 +3427,12 @@ mutual
     gebTermToADTTerm t :: gebTermListToADTTermList ts
 
 public export
-termToGebTermAlg : TermAlgRec GebTerm
-termToGebTermAlg = MkTermAlg GebRecordTerm GebSumTerm
+termToGebTrAlg : TrAlgRec GebTerm
+termToGebTrAlg = MkTrAlg GebRecordTerm GebSumTerm
 
 public export
 termToGebTerm : TermMu -> GebTerm
-termToGebTerm = termCataRec termToGebTermAlg
+termToGebTerm = termCataRec termToGebTrAlg
 
 -----------------------------------------------------
 -----------------------------------------------------
@@ -3613,18 +3617,6 @@ interpProdUnit x ex =
           prodAdjUnit x (() ** const ex))
   in
   (ipnt (Left () ** ()), ipnt (Right () ** ()))
-
--- L a -> b => a -> R b (`L a` and `b` are in the product category)
--- R f . nu a
-public export
-prodLeftAdjunct : (a, b, b' : Type) -> (a -> b, a -> b') -> (a -> (b, b'))
-prodLeftAdjunct a b b' (f, f') ea = (f ea, f' ea)
-
--- a -> R b => L a -> b
--- ep b . L g
-public export
-prodRightAdjunct : (a, b, b' : Type) -> (a -> (b, b')) -> (a -> b, a -> b')
-prodRightAdjunct a b b' g = (fst . g, snd . g)
 
 -------------------
 ---- Coproduct ----

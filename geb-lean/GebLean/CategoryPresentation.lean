@@ -1,0 +1,75 @@
+import Mathlib.CategoryTheory.Category.Cat
+import Mathlib.CategoryTheory.Category.Quiv
+import Mathlib.CategoryTheory.Quotient
+
+/-!
+# Presentation of Categories by Generators and Relations
+
+This module implements the presentation of a category by generators and
+relations, following the standard construction:
+
+1. Start with a quiver (generators)
+2. Form the free category on that quiver (using `Quiv.free`)
+3. Quotient by a congruence relation (using `CategoryTheory.Quotient`)
+
+The result is a category where morphisms are equivalence classes of paths
+in the quiver, with specified paths identified according to the relations.
+
+## Main definitions
+
+- `CategoryPresentation`: A structure packaging a quiver and relations on
+  its free category
+- `toCategory`: The presented category, formed as the quotient
+
+## References
+
+- https://ncatlab.org/nlab/show/presentation+of+a+category+by+generators+and+relations
+- [Mathlib.CategoryTheory.Quotient](https://leanprover-community.github.io/mathlib4_docs/Mathlib/CategoryTheory/Quotient.html)
+- [Mathlib.CategoryTheory.Category.Quiv](https://leanprover-community.github.io/mathlib4_docs/Mathlib/CategoryTheory/Category/Quiv.html)
+
+-/
+
+namespace GebLean
+
+open CategoryTheory Quiver
+
+universe v u
+
+/-- A presentation of a category consists of:
+    - A type of vertices (generators)
+    - A quiver structure
+    - Relations on morphisms in the free category
+-/
+structure CategoryPresentation where
+  /-- The type of vertices (generators) -/
+  generators : Type u
+  /-- The quiver structure on generators -/
+  generatorQuiver : Quiver.{v} generators
+  /-- Relations on paths in the free category -/
+  relations : let _ := generatorQuiver; @HomRel (Paths generators) _
+
+namespace CategoryPresentation
+
+variable (P : CategoryPresentation.{v, u})
+
+/-- Make the quiver instance available as a typeclass instance (wrapper) -/
+instance : Quiver.{v} P.generators := P.generatorQuiver
+
+/-- The free category on the generators has Paths as morphisms -/
+abbrev FreeCategory := Paths P.generators
+
+/-- The presented category, formed by quotienting the free category by the
+    relations -/
+def toCategory (P : CategoryPresentation.{v, u}) : Type u :=
+  let _ := P.generatorQuiver
+  Quotient P.relations
+
+/-- The presented category has a natural category structure -/
+instance categoryToCategory (P : CategoryPresentation.{v, u}) :
+    Category.{max u v} P.toCategory :=
+  let _ := P.generatorQuiver
+  Quotient.category P.relations
+
+end CategoryPresentation
+
+end GebLean

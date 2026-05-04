@@ -6,6 +6,198 @@ import public LanguageDef.Atom
 
 %default total
 
+-------------------------------------------------------
+-------------------------------------------------------
+---- Polynomial functors on a skeleton of `FinSet` ----
+-------------------------------------------------------
+-------------------------------------------------------
+
+public export
+lidxOk : {0 a : Type} -> (List a, Nat) -> Bool
+lidxOk (ar, i) = i < length ar
+
+public export
+ListIdx : Type -> Type
+ListIdx a = PullbackDec {a=(List a)} {b=Nat} lidxOk
+
+public export
+lidx : {0 a : Type} -> ListIdx a -> a
+lidx {a} (Element0 (l, i) ok) = lindexN {a} i l {ok}
+
+public export
+data ListIdxR : Type -> Type where
+  LIz : {0 a : Type} -> (x : a) -> (xs : List a) -> ListIdxR a
+  LIs : {0 a : Type} -> (x : a) -> (xs : ListIdxR a) -> ListIdxR a
+
+public export
+lidxR : {0 a : Type} -> ListIdxR a -> a
+lidxR (LIz x xs) = x
+lidxR (LIs x xs) = lidxR xs
+
+public export
+lidxToR' : {0 a : Type} -> (0 sz : Nat) -> (l : ListIdx a) ->
+  (0 eq : snd (fst0 l) = sz) -> ListIdxR a
+lidxToR' n (Element0 ([], 0) ok) eq = void $ case ok of Refl impossible
+lidxToR' n (Element0 ((x :: xs), 0) ok) eq =
+  LIz x xs
+lidxToR' n (Element0 ([], (S i)) ok) eq = void $ case ok of Refl impossible
+lidxToR' (S i) (Element0 ((x :: xs), (S i)) ok) Refl =
+  LIs x $ lidxToR' i (Element0 (xs, i) ok) Refl
+
+public export
+lidxToR : {0 a : Type} -> ListIdx a -> ListIdxR a
+lidxToR l = lidxToR' (snd (fst0 l)) l Refl
+
+public export
+lidxFromR : {0 a : Type} -> ListIdxR a -> ListIdx a
+lidxFromR (LIz x xs) = Element0 ((x :: xs), 0) Refl
+lidxFromR (LIs x xs) with (lidxFromR xs)
+  lidxFromR (LIs x xs) | Element0 ([], 0) eq =
+    void $ case eq of Refl impossible
+  lidxFromR (LIs x xs) | Element0 ([], (S i)) eq =
+    void $ case eq of Refl impossible
+  lidxFromR (LIs x xs) | Element0 ((x' :: xs'), i) eq =
+    Element0 (x :: x' :: xs', S i) eq
+
+-- A polynomial endofunctor on a category can be described as an
+-- arena, or dependent set (the same arena also determines a Dirichlet
+-- endofunctor).  On a skeleton of `FinSet`, that's a mapping from
+-- `FS n` for some natural number `n` to `Nat` itself.  That in turn
+-- may be represented concretely simply as a list of natural numbers.
+public export
+record FSArena where
+  constructor FSAr
+  fsaset : List Nat
+
+public export
+fspos : FSArena -> Nat
+fspos = length . fsaset
+
+public export
+FSPos : Type
+FSPos = PullbackDec {a=FSArena} {b=Nat} (lidxOk . mapFst fsaset)
+
+public export
+fsdir : FSPos -> Nat
+fsdir (Element0 (FSAr ar, i) ok) = lidx $ Element0 (ar, i) ok
+
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+---- Dependent polynomial functors on a skeleton of `FinSet` ----
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+
+-- A constructor (equivalently, position) of a dependent polynomial functor
+-- from `FinSet/N` for some natural number `N` to `FinSet` itself (which is
+-- isomorphic to `FinSet/1`).
+public export
+record FinSetPosTo1 where
+  constructor FSP1
+  fsp1dir : List Nat
+
+public export
+deqFSPto1 : DecEqPred FinSetPosTo1
+deqFSPto1 (FSP1 d) (FSP1 d') with (decEq d d')
+  deqFSPto1 (FSP1 d) (FSP1 d) | Yes Refl = Yes Refl
+  deqFSPto1 (FSP1 d) (FSP1 d') | No neq =
+    No $ \eq => case eq of Refl => neq Refl
+
+public export
+DecEq FinSetPosTo1 where
+  decEq = deqFSPto1
+
+public export
+Eq FinSetPosTo1 where
+  p == p' = isYes $ decEq p p'
+
+-- Given a `FinSetPosTo1` and an `N`, check whether the `FinSetPosTo1` is
+-- a valid constructor of a dependent polynomial functor out of `FinSet/N`.
+public export
+checkListBound : Nat -> List Nat -> Bool
+checkListBound n = foldr (\d, b => d < n && b) True
+
+public export
+checkFSPto1 : Nat -> FinSetPosTo1 -> Bool
+checkFSPto1 n fsp1 = checkListBound n (fsp1dir fsp1)
+
+public export
+showFSPto1 : FinSetPosTo1 -> String
+showFSPto1 = show . fsp1dir
+
+public export
+Show FinSetPosTo1 where
+  show = showFSPto1
+
+-- A dependent polynomial functor from `FinSet/N` for some natural number `N`
+-- to `FinSet` itself (which is isomorphic to `FinSet/1`).
+public export
+record FinSetPFto1 where
+  constructor FSPF1
+  fspf1pos : List FinSetPosTo1
+
+public export
+deqFSPFto1 : DecEqPred FinSetPFto1
+deqFSPFto1 (FSPF1 i) (FSPF1 i') with (decEq i i')
+  deqFSPFto1 (FSPF1 i) (FSPF1 i) | Yes Refl = Yes Refl
+  deqFSPFto1 (FSPF1 i) (FSPF1 i') | No neq =
+    No $ \eq => case eq of Refl => neq Refl
+
+public export
+DecEq FinSetPFto1 where
+  decEq = deqFSPFto1
+
+public export
+Eq FinSetPFto1 where
+  i == i' = isYes $ decEq i i'
+
+public export
+checkFSPFto1 : Nat -> FinSetPFto1 -> Bool
+checkFSPFto1 n = foldr (\i, b => checkFSPto1 n i && b) True . fspf1pos
+
+public export
+showFSPFto1 : FinSetPFto1 -> String
+showFSPFto1 = show . fspf1pos
+
+public export
+Show FinSetPFto1 where
+  show = showFSPFto1
+
+-- A dependent polynomial functor from `FinSet/N` to `FinSet/M` for
+-- some natural numbers `N` and `M`.
+public export
+record FinSetDepPF where
+  constructor FSDPF
+  fsdpfSlice : List FinSetPFto1
+
+public export
+deqFSDPF : DecEqPred FinSetDepPF
+deqFSDPF (FSDPF s) (FSDPF s') with (decEq s s')
+  deqFSDPF (FSDPF s) (FSDPF s) | Yes Refl = Yes Refl
+  deqFSDPF (FSDPF s) (FSDPF s') | No neq =
+    No $ \eq => case eq of Refl => neq Refl
+
+public export
+DecEq FinSetDepPF where
+  decEq = deqFSDPF
+
+public export
+Eq FinSetDepPF where
+  pf == pf' = isYes $ decEq pf pf'
+
+public export
+checkFSDPF : Nat -> Nat -> FinSetDepPF -> Bool
+checkFSDPF n m fsdpf =
+  length (fsdpfSlice fsdpf) < m &&
+  foldr (\i, b => checkFSPFto1 n i && b) True (fsdpfSlice fsdpf)
+
+public export
+showFSDPF : FinSetDepPF -> String
+showFSDPF = show . fsdpfSlice
+
+public export
+Show FinSetDepPF where
+  show = showFSDPF
+
 ------------------------------------------
 ------------------------------------------
 ---- Zeroth-order ADTs as polynomials ----
@@ -47,6 +239,7 @@ public export
 pzPolyCoeff : (poly : PZPoly) -> pzPowT poly -> NatObj
 pzPolyCoeff poly pow = pzCoeff (pzCoeffRep poly pow) (fst pow) (pzMaxPow poly)
 
+{-
 public export
 Show PZPoly where
   show poly =
@@ -64,9 +257,10 @@ Show PZPoly where
               (ss ++ " + ", " * n^" ++ show n')
         in
         ss' ++ sc ++ pow')
+        -}
 
 public export
-pzApplyMeta : PZPoly -> Nat -> Nat
+0 pzApplyMeta : PZPoly -> Nat -> Nat
 pzApplyMeta poly n =
   NatObjBoundedMapFold {a=(const NatObj)} {b=(const Nat)} {c=(const Nat)}
     (const NatObjToMeta)
@@ -75,7 +269,7 @@ pzApplyMeta poly n =
     (\pow, lt, coeff, sum => sum + coeff * power n (NatObjToMeta pow))
 
 public export
-pzApply : PZPoly -> NatObj -> NatObj
+0 pzApply : PZPoly -> NatObj -> NatObj
 pzApply poly = MetaToNatObj . pzApplyMeta poly . NatObjToMeta
 
 public export
@@ -87,20 +281,16 @@ pzSetTerminalObj : NatObj
 pzSetTerminalObj = NatO1
 
 public export
-pzPolyInitialObj : PZPoly
+0 pzPolyInitialObj : PZPoly
 pzPolyInitialObj = MkPZPoly NatOZ $ sliceArrayFromList NatOZ []
 
 public export
-pzPolyTerminalObj : PZPoly
+0 pzPolyTerminalObj : PZPoly
 pzPolyTerminalObj = MkPZPoly NatOZ $ sliceArrayFromList NatO1 []
 
 public export
-pzIdentity : PZPoly
+0 pzIdentity : PZPoly
 pzIdentity = MkPZPoly NatO1 $ sliceArrayFromList NatOZ [NatOZ]
-
-public export
-pzIdentityCorrect : (n : NatObj) -> pzApply RefinedADT.pzIdentity n = n
-pzIdentityCorrect n = ?pzIdentityCorrect_hole
 
 ---------------------------
 ---- Arena formulation ----
@@ -120,6 +310,7 @@ public export
 pzDirT : (ar : PZArena) -> (pos : pzPosT ar) -> Type
 pzDirT ar pos = NatOPrefix (pzNumDir ar pos)
 
+{-
 public export
 Show PZArena where
   show (MkPZArena n nd) =
@@ -131,6 +322,7 @@ Show PZArena where
       (\n', morph, sc, ss =>
         let ss' = if n' == NatOZ then "" else ss ++ "; " in
         ss' ++ "#Dirs[" ++ show n' ++ "] = " ++ sc)
+        -}
 
 public export
 OnPosT : PZArena -> PZArena -> Type
@@ -144,14 +336,14 @@ OnDirT {domain} {codomain} =
     (pzNumDir domain) (pzNumDir codomain)
 
 public export
-onDirFromLists : {domain, codomain : PZArena} ->
+0 onDirFromLists : {domain, codomain : PZArena} ->
   (onpos : OnPosT domain codomain) -> List (List Nat) ->
   Maybe (OnDirT {domain} {codomain} onpos)
 onDirFromLists {domain} {codomain} =
   depPrefixContraMapFromLists (pzNumDir domain) (pzNumDir codomain)
 
 public export
-InitOnDir : {domain, codomain : PZArena} ->
+0 InitOnDir : {domain, codomain : PZArena} ->
   (onpos : OnPosT domain codomain) -> (l : List (List Nat)) ->
   {auto ok : IsJustTrue (onDirFromLists {domain} {codomain} onpos l)} ->
   OnDirT {domain} {codomain} onpos
@@ -164,14 +356,14 @@ record PZLens (domain, codomain : PZArena) where
   pzOnDir : OnDirT {domain} {codomain} pzOnPos
 
 public export
-showPZLens : {domain : PZArena} -> {codomain : PZArena} ->
+0 showPZLens : {domain : PZArena} -> {codomain : PZArena} ->
   PZLens domain codomain -> String
 showPZLens {domain} {codomain} (MkPZLens op od) =
   "pzOnPos: " ++ showPrefixMap op ++ "; pzOnDir: " ++
   showDepPrefixContraMap (pzNumDir domain) (pzNumDir codomain) op od
 
 public export
-pzLensFromLists :
+0 pzLensFromLists :
   {domain, codomain : PZArena} ->
   (onpos : OnPosT domain codomain) ->
   List (List Nat) ->
@@ -185,7 +377,7 @@ pzLensFromLists onpos l with (onDirFromLists onpos l)
 ------------------------------------------
 
 public export
-pzSumCoeff : PZPoly -> NatObj
+0 pzSumCoeff : PZPoly -> NatObj
 pzSumCoeff poly = natSliceSum (pzPolyCoeff poly)
 
 public export
@@ -195,17 +387,17 @@ NatPrefixReplicateMap :
 NatPrefixReplicateMap {n} v sl = NatPrefixReplicate (v sl) (fst sl)
 
 public export
-posPowers : (n : NatObj) ->
+0 posPowers : (n : NatObj) ->
   (v : SliceArray n NatObj) ->
   PrefixArray (natSliceSum v) NatObj
 posPowers n v = NatPrefixFoldAppend {n} v (NatPrefixReplicateMap {n} v)
 
 public export
-pzDirs : (poly : PZPoly) -> NatOPrefix (pzSumCoeff poly) -> NatObj
+0 pzDirs : (poly : PZPoly) -> NatOPrefix (pzSumCoeff poly) -> NatObj
 pzDirs poly = posPowers (pzMaxPow poly) (pzPolyCoeff poly)
 
 public export
-pzToArena : PZPoly -> PZArena
+0 pzToArena : PZPoly -> PZArena
 pzToArena poly = MkPZArena (pzSumCoeff poly) (pzDirs poly)
 
 -------------------------------
@@ -402,7 +594,7 @@ data NatPolyLTP : NatPolyTermPair -> Type where
     NatLTStrict p p' -> NatPolyLTP (NatCoeffPow (c, p), NatCoeffPow (c', p'))
 
 public export
-decNatPolyLTP : (np : NatPolyTermPair) -> Dec (NatPolyLTP np)
+0 decNatPolyLTP : (np : NatPolyTermPair) -> Dec (NatPolyLTP np)
 decNatPolyLTP (NatCoeffPow (_, p), NatCoeffPow (_, p')) =
   case NatMorphCompare p p' of
     Left eq => No $ \ltp => case ltp of
@@ -605,15 +797,11 @@ Show S0EInitColimit where
   show = omegaColimitShow {f=Subst0EndoF} {a=Void} showS0EFAlg
 
 public export
-FInitAlgS0EF : FInitAlg Subst0EndoF
+0 FInitAlgS0EF : FInitAlg Subst0EndoF
 FInitAlgS0EF Subst0EndoEmpty = colimitConst Subst0EndoEmpty
 FInitAlgS0EF (Subst0EndoCovarRep f) = colimitOne Subst0EndoCovarRep f
 FInitAlgS0EF (Subst0EndoSum f g) = colimitPair Subst0EndoSum f g
 FInitAlgS0EF (Subst0EndoCompose g f) = colimitPair Subst0EndoCompose g f
-
-public export
-InitAlgS0EF_Correct : InitAlgCorrect {f=Subst0EndoF} FInitAlgS0EF
-InitAlgS0EF_Correct = ?InitAlgS0EF_Correct_hole
 
 public export
 interpS0EChain : ChainMapAlgF Subst0EndoF (Type -> Type)
@@ -826,7 +1014,7 @@ data SumRepOrCorepF :
 
 public export
 Functor (SumRepOrCorepF generator obj rep) where
-  map f (SumRepOrCorep l) = SumRepOrCorep $ map f l
+  map f (SumRepOrCorep l) = SumRepOrCorep $ map @{BifunctorToFunctor} f l
 
 public export
 (Show obj, Show rep, Show carrier, Show (generator obj rep)) =>
@@ -896,7 +1084,7 @@ MuS0EF : Type
 MuS0EF = Mu Subst0EndoF
 
 public export
-pCataS0EF : ParamCata Subst0EndoF
+pCataS0EF : FreeFEval Subst0EndoF
 pCataS0EF v a subst alg (InFree x) = case x of
   TFV var => subst var
   TFC com => alg $ case com of
@@ -909,7 +1097,7 @@ pCataS0EF v a subst alg (InFree x) = case x of
 
 public export
 cataS0EF : Catamorphism Subst0EndoF
-cataS0EF = cataFromParam pCataS0EF
+cataS0EF = cataFromEval pCataS0EF
 
 public export
 showFreeS0EF : {v : Type} -> (v -> String) -> FreeS0EF v -> String
@@ -931,7 +1119,7 @@ public export
 -- The representable endofunctor represented by a given object -- in the
 -- endofunctor category, that is, by some endofunctor, which implicitly
 -- means that endofunctor applied to the terminal object.
-prefix 11 :>:
+export prefix 11 :>:
 public export
 (:>:) : FreeS0EF v -> FreeS0EF v
 (:>:) a = inFC $ Subst0EndoCovarRep a
@@ -945,7 +1133,7 @@ public export
 
 -- The sum of two endofunctors.  (In particular, any sum of representables
 -- is a polynomial; so, therefore, is any sum of polynomials.)
-infixl 7 :+:
+export infixl 7 :+:
 public export
 (:+:) : FreeS0EF v -> FreeS0EF v -> FreeS0EF v
 a :+: b = inFC $ Subst0EndoSum a b
@@ -1280,7 +1468,7 @@ LimitRNat = TrEitherF RNatF
 
 public export
 ColimitRNat : Type -> Type
-ColimitRNat = ColimitIterF RNatF
+ColimitRNat = ScalePairF RNatF
 
 public export
 TRNat0 : TermRNat v a
@@ -1315,7 +1503,7 @@ NuRNatF : Type
 NuRNatF = Nu RNatF
 
 public export
-cataRNatF : ParamCata RNatF
+cataRNatF : FreeFEval RNatF
 cataRNatF v a subst alg (InFree x) = case x of
   TFV var => subst var
   TFC n => alg $ case n of
@@ -1371,7 +1559,7 @@ NuENatF : Type
 NuENatF = Nu ENatF
 
 public export
-cataENatF : ParamCata ENatF
+cataENatF : FreeFEval ENatF
 cataENatF v a subst alg (InFree x) = case x of
   TFV var => subst var
   TFC n => alg $ case n of
@@ -1896,9 +2084,9 @@ finOrdId (S n) =
 public export
 finOrdCompose : {m, n, p : Nat} ->
   FinOrdMorph n p -> FinOrdMorph m n -> FinOrdMorph m p
-finOrdCompose {m=0} {n} {p} _ (FinOrdFromVoid n) = FinOrdFromVoid p
-finOrdCompose {m=(S m)} {n=0} (FinOrdFromVoid _) _ impossible
-finOrdCompose {m=(S m)} {n=(S n)} {p=0} _ _ impossible
+finOrdCompose {m=Z} {n} {p} _ (FinOrdFromVoid n) = FinOrdFromVoid p
+finOrdCompose {m=(S m)} {n=Z} (FinOrdFromVoid _) _ impossible
+finOrdCompose {m=(S m)} {n=(S n)} {p=Z} _ _ impossible
 finOrdCompose {m=(S m)} {n=(S n)} {p=(S p)} (FinOrdFromVoid _) _ impossible
 finOrdCompose {m=(S m)} {n=(S n)} {p=(S p)} _ (FinOrdFromVoid _) impossible
 finOrdCompose {m=(S m)} {n=(S n)} {p=(S p)}
@@ -1984,8 +2172,8 @@ SExpTreeF : Type -> Type -> Type
 SExpTreeF = ScaleFunctor SExpBaseF
 
 public export
-SExpTermAlg : Type -> Type -> Type
-SExpTermAlg = TermAlgebra SExpBaseF
+SExpTrAlg : Type -> Type -> Type
+SExpTrAlg = TrAlgebra SExpBaseF
 
 public export
 SExpTreeCoalg : Type -> Type -> Type
@@ -2426,14 +2614,14 @@ PathF vEq carrier =
 
 public export
 GebTermProductCatObject : Type
-GebTermProductCatObject = ProductCatObject GebAtom
+GebTermProductCatObject = ProductCatObject OldAtom
 
 -- A morphism in a product category is a product of morphisms.
 -- (In an Idris category, morphisms are functions.)
 public export
 GebTermProductCatMorphism :
   GebTermProductCatObject -> GebTermProductCatObject -> Type
-GebTermProductCatMorphism = ProductCatMorphism {idx=GebAtom}
+GebTermProductCatMorphism = ProductCatMorphism {idx=OldAtom}
 
 -- An endofunctor on the Idris product category in which Geb terms are defined
 -- is a function on objects of the product category together with a function
@@ -2441,7 +2629,7 @@ GebTermProductCatMorphism = ProductCatMorphism {idx=GebAtom}
 
 public export
 GebTermProductCatObjectMap : Type
-GebTermProductCatObjectMap = ProductCatObjectEndoMap GebAtom
+GebTermProductCatObjectMap = ProductCatObjectEndoMap OldAtom
 
 public export
 GebTermProductCatMorphismMap : GebTermProductCatObjectMap -> Type
@@ -2449,7 +2637,7 @@ GebTermProductCatMorphismMap = ProductCatMorphismEndoMap
 
 public export
 GebTermProductCatEndofunctor : Type
-GebTermProductCatEndofunctor = ProductCatEndofunctor GebAtom
+GebTermProductCatEndofunctor = ProductCatEndofunctor OldAtom
 
 ------------------------------------------
 ---- Term-checking and interpretation ----
@@ -2615,8 +2803,8 @@ data RewritableTermF : Type -> Type where
 -- may exhibit free equalities, objects may as well, unlike in traditional
 -- category theory.  The typechecking of morphisms must respect a carrier
 -- free equivalence on _objects_, because an equivalence of objects may allow a
--- composition which would not have been allowed by intentional equality
--- (meaning that the domain of the following morphism was not intentionally
+-- composition which would not have been allowed by intensional equality
+-- (meaning that the domain of the following morphism was not intensionally
 -- equal to the codomain of the preceding morphism).
 public export
 data MorphismF : Type -> Type -> Type where
@@ -3032,7 +3220,7 @@ FreeFSexp = FreeMonad . FSexpF
 
 public export
 FreeFSalg : {atom : Type} -> ArityMap atom -> Type -> Type
-FreeFSalg = FreeAlgebra . FSexpF
+FreeFSalg = FreeAlgSig . FSexpF
 
 public export
 MuFSexp : {atom : Type} -> ArityMap atom -> Type
@@ -3048,7 +3236,7 @@ CofreeFSexp = CofreeComonad . FSexpF
 
 public export
 CofreeFScoalg : {atom : Type} -> ArityMap atom -> Type -> Type
-CofreeFScoalg = CofreeCoalgebra . FSexpF
+CofreeFScoalg = CofreeCoalgSig . FSexpF
 
 public export
 NuFSexp : {atom : Type} -> ArityMap atom -> Type
@@ -3141,7 +3329,7 @@ NSList : Type
 NSList = NSexpType NSLIST
 
 public export
-nsexpCata : ProductCatParamCata NSexpFunctor
+nsexpCata : ProductCatFreeFEval NSexpFunctor
 nsexpCata v carrier alg type (InFreeProduct type term) = alg type $ case type of
   NSexpNat => nsexpCataNat term
   NSEXP => nsexpCataExp term

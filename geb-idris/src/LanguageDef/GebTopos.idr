@@ -554,7 +554,7 @@ InitialInterpObj interp Obj0 = Void
 public export
 ExtendInitialInterpObj : {obj : Type} ->
   SliceObj obj -> SliceObj (TrEitherF InitialObjF obj)
-ExtendInitialInterpObj = sliceTrMap InitialInterpObj
+ExtendInitialInterpObj = sliceTrLift InitialInterpObj
 
 public export
 initialInterpUnit : {obj : Type} -> (hom : HomSlice obj) ->
@@ -563,7 +563,7 @@ initialInterpUnit : {obj : Type} -> (hom : HomSlice obj) ->
   (a : obj) -> (b : InitialObjF obj) ->
   InitialUnitF hom (a, b) ->
   ointerp a -> InitialInterpObj {obj} ointerp b
-initialInterpUnit hom ointerp minterp a Obj0 f = case f of _ impossible
+initialInterpUnit hom ointerp minterp a Obj0 f oi = case f of _ impossible
 
 public export
 initialInterpRightAdj : {obj, obj' : Type} -> (hom : SliceObj (obj, obj')) ->
@@ -792,48 +792,48 @@ coprodPostCompUnit {obj} hom a a' b b' c mbc mab ma'b =
     (coprodRAAfterUnit a' (ObjCp b b') c mbc ma'b)
 
 public export
-coprodUnitExtendEq : {obj : Type} -> {hom : HomSlice obj} ->
-  (eq : (0 a, b : obj) -> RelationOn (hom (a, b))) ->
-  (a : obj) -> (b : CoprodObjF obj) ->
-  RelationOn (CoprodUnitF hom (a, b))
-coprodUnitExtendEq eq a (ObjCp a b) (CpUnInjL a b) (CpUnInjL a b) = Unit
-coprodUnitExtendEq eq a (ObjCp a a) (CpUnInjL a a) (CpUnInjR a a) = Void
-coprodUnitExtendEq eq a (ObjCp a a) (CpUnInjR a a) (CpUnInjL a a) = Void
-coprodUnitExtendEq eq b (ObjCp a b) (CpUnInjR a b) (CpUnInjR a b) = Unit
+data CoprodUnitExtendEq : {obj : Type} -> {hom : HomSlice obj} ->
+    (eq : (0 a, b : obj) -> RelationOn (hom (a, b))) ->
+    (a : obj) -> (b : CoprodObjF obj) ->
+    RelationOn (CoprodUnitF hom (a, b)) where
+  CpInjLRefl : (0 a, b : obj) ->
+    CoprodUnitExtendEq eq a (ObjCp a b) (CpUnInjL a b) (CpUnInjL a b)
+  CpInjRRefl : (0 a, b : obj) ->
+    CoprodUnitExtendEq eq b (ObjCp a b) (CpUnInjR a b) (CpUnInjR a b)
 
 public export
-coprodRightAdjExtendEq : {obj : Type} -> {hom : HomSlice obj} ->
+CoprodRightAdjExtendEq : {obj : Type} -> {hom : HomSlice obj} ->
   (eq : (0 a, b : obj) -> RelationOn (hom (a, b))) ->
   (a : CoprodObjF obj) -> (b : obj) ->
   RelationOn (CoprodRightAdj hom (a, b))
-coprodRightAdjExtendEq eq (ObjCp a a') b (CpRACase f g) (CpRACase f' g') =
+CoprodRightAdjExtendEq eq (ObjCp a a') b (CpRACase f g) (CpRACase f' g') =
   Pair (eq a b f f') (eq a' b g g')
 
 public export
-coprodRightAdjUnitExtendEq : {obj : Type} -> {hom : HomSlice obj} ->
+CoprodRightAdjUnitExtendEq : {obj : Type} -> {hom : HomSlice obj} ->
   (eq : (0 a, b : obj) -> RelationOn (hom (a, b))) ->
   (a, b : CoprodObjF obj) ->
   RelationOn (CoprodRightAdj {obj} {obj'=(CoprodObjF obj)}
     (CoprodUnitF hom) (a, b))
-coprodRightAdjUnitExtendEq eq (ObjCp a a') b (CpRACase f g) (CpRACase f' g') =
+CoprodRightAdjUnitExtendEq eq (ObjCp a a') b (CpRACase f g) (CpRACase f' g') =
   Pair
-    (coprodUnitExtendEq {hom} eq a b f f')
-    (coprodUnitExtendEq {hom} eq a' b g g')
+    (CoprodUnitExtendEq {hom} eq a b f f')
+    (CoprodUnitExtendEq {hom} eq a' b g g')
 
 -- Extend equality.
 public export
-coprodExtendEq : {obj : Type} -> {hom : HomSlice obj} ->
+CoprodExtendEq : {obj : Type} -> {hom : HomSlice obj} ->
   (eq : (0 a, b : obj) -> RelationOn (hom (a, b))) ->
   (a, b : TrEitherF CoprodObjF obj) ->
   RelationOn (CoprodExtendHom hom (a, b))
-coprodExtendEq eq (TFV a) (TFV b) f g =
+CoprodExtendEq eq (TFV a) (TFV b) f g =
   eq a b f g
-coprodExtendEq eq (TFV a) (TFC b) f g =
-  coprodUnitExtendEq eq a b f g
-coprodExtendEq {hom} eq (TFC a) (TFV b) f g =
-  coprodRightAdjExtendEq {hom} eq a b f g
-coprodExtendEq eq (TFC a) (TFC b) f g =
-  coprodRightAdjUnitExtendEq {obj} {hom} eq a b f g
+CoprodExtendEq eq (TFV a) (TFC b) f g =
+  CoprodUnitExtendEq eq a b f g
+CoprodExtendEq {hom} eq (TFC a) (TFV b) f g =
+  CoprodRightAdjExtendEq {hom} eq a b f g
+CoprodExtendEq eq (TFC a) (TFC b) f g =
+  CoprodRightAdjUnitExtendEq {obj} {hom} eq a b f g
 
 -- Extend reduction.  Returns Nothing if irreducible.
 public export
@@ -876,7 +876,7 @@ CoprodInterpObj interp (ObjCp x y) = Either (interp x) (interp y)
 public export
 ExtendCoprodInterpObj : {obj : Type} ->
   SliceObj obj -> SliceObj (TrEitherF CoprodObjF obj)
-ExtendCoprodInterpObj = sliceTrMap CoprodInterpObj
+ExtendCoprodInterpObj = sliceTrLift CoprodInterpObj
 
 public export
 coprodInterpUnit : {obj : Type} -> (hom : HomSlice obj) ->
@@ -1801,125 +1801,6 @@ DeqRelExtF =
    DeqRelDirExt . snd **
    \((() ** i) ** d) => DeqRelAssignExt (i ** d))
 
-------------------------------------------------------
-------------------------------------------------------
----- Dependent polynomial endofunctors as W-types ----
-------------------------------------------------------
-------------------------------------------------------
-
---------------------------------------------------
----- Definition and interpretation of W-types ----
---------------------------------------------------
-
-public export
-record WTypeFunc (parambase, posbase : Type) where
-  constructor MkWTF
-  wtPos : Type
-  wtDir : Type
-  wtAssign : wtDir -> parambase
-  wtDirSlice : wtDir -> wtPos
-  wtPosSlice : wtPos -> posbase
-
-public export
-WTypeEndoFunc : Type -> Type
-WTypeEndoFunc base = WTypeFunc base base
-
-public export
-InterpWTF : {parambase, posbase : Type} ->
-  WTypeFunc parambase posbase -> SliceFunctor parambase posbase
-InterpWTF {parambase} {posbase} wtf sl ib =
-  (i : PreImage {a=(wtPos wtf)} {b=posbase} (wtPosSlice wtf) ib **
-   (d : PreImage {a=(wtDir wtf)} {b=(wtPos wtf)} (wtDirSlice wtf) (fst0 i)) ->
-   sl $ wtAssign wtf $ fst0 d)
-
-public export
-WTFtoSPF : {parambase, posbase : Type} ->
-  WTypeFunc parambase posbase -> SlicePolyFunc parambase posbase
-WTFtoSPF {parambase} {posbase} (MkWTF pos dir assign dsl psl) =
-  (\i => PreImage {a=pos} {b=posbase} psl i **
-   \x => PreImage {a=dir} {b=pos} dsl $ fst0 $ snd x **
-   \d => assign $ fst0 $ snd d)
-
-public export
-SPFtoWTF : {parambase, posbase : Type} ->
-  SlicePolyFunc parambase posbase -> WTypeFunc parambase posbase
-SPFtoWTF (posdep ** dirdep ** assign) =
-  MkWTF
-    (Sigma {a=posbase} posdep)
-    (Sigma {a=(Sigma {a=posbase} posdep)} dirdep)
-    assign
-    fst
-    fst
-
-public export
-InterpWTFtoSPF : {parambase, posbase : Type} ->
-  (wtf : WTypeFunc parambase posbase) ->
-  (sl : SliceObj parambase) -> (ib : posbase) ->
-  InterpSPFunc {a=parambase} {b=posbase}
-    (WTFtoSPF {parambase} {posbase} wtf) sl ib ->
-  InterpWTF {parambase} {posbase} wtf sl ib
-InterpWTFtoSPF (MkWTF pos dir assign dsl psl) sl ib = id
-
-public export
-InterpWTFtoSPFInv : {parambase, posbase : Type} ->
-  (wtf : WTypeFunc parambase posbase) ->
-  (sl : SliceObj parambase) -> (ib : posbase) ->
-  InterpWTF {parambase} {posbase} wtf sl ib ->
-  InterpSPFunc {a=parambase} {b=posbase}
-    (WTFtoSPF {parambase} {posbase} wtf) sl ib
-InterpWTFtoSPFInv (MkWTF pos dir assign dsl psl) sl ib = id
-
-public export
-InterpSPFtoWTF : {parambase, posbase : Type} ->
-  (spf : SlicePolyFunc parambase posbase) ->
-  (sl : SliceObj parambase) -> (ib : posbase) ->
-  InterpWTF {parambase} {posbase} (SPFtoWTF {parambase} {posbase} spf) sl ib ->
-  InterpSPFunc {a=parambase} {b=posbase} spf sl ib
-InterpSPFtoWTF {parambase} {posbase} (posdep ** dirdep ** assign) sl ib
-  (Element0 {type=(Sigma {a=posbase} posdep)} (ib' ** i) eq ** p) =
-    (rewrite sym eq in i **
-     \d => p $
-      Element0 ((ib ** rewrite sym eq in i) ** d) (rewrite sym eq in Refl))
-
-public export
-InterpSPFtoWTFInv : {parambase, posbase : Type} ->
-  (spf : SlicePolyFunc parambase posbase) ->
-  (sl : SliceObj parambase) -> (ib : posbase) ->
-  InterpSPFunc {a=parambase} {b=posbase} spf sl ib ->
-  InterpWTF {parambase} {posbase} (SPFtoWTF {parambase} {posbase} spf) sl ib
-InterpSPFtoWTFInv {parambase} {posbase} (posdep ** dirdep ** assign) sl ib
-  (i ** d) =
-    (Element0 (ib ** i) Refl **
-     \(Element0 (i' ** di) deq) => rewrite deq in d $ rewrite sym deq in di)
-
------------------------------
----- Algebras of W-types ----
------------------------------
-
-public export
-WTFAlg : {a : Type} -> WTypeEndoFunc a -> SliceObj a -> Type
-WTFAlg {a} wtf sa = SliceMorphism {a} (InterpWTF wtf sa) sa
-
--------------------------------------
----- Initial algebras of W-types ----
--------------------------------------
-
-public export
-data WTFMu : {a : Type} -> WTypeEndoFunc a -> SliceObj a where
-  InWTFM : {a : Type} -> {wtf : WTypeEndoFunc a} ->
-    (i : (dc : a ** PreImage {a=(wtPos wtf)} {b=a} (wtPosSlice wtf) dc)) ->
-    ((d :
-        PreImage {a=(wtDir wtf)} {b=(wtPos wtf)}
-          (wtDirSlice wtf) (fst0 (snd i))) ->
-      WTFMu {a} wtf (wtAssign wtf (fst0 d))) ->
-    WTFMu {a} wtf (fst i)
-
-public export
-wtfCata : {0 a : Type} -> {wtf : WTypeEndoFunc a} -> {sa : SliceObj a} ->
-  WTFAlg wtf sa -> SliceMorphism {a} (WTFMu wtf) sa
-wtfCata {a} {wtf} {sa} alg _ (InWTFM (dc ** i) dm) =
-  alg dc (i ** \d => wtfCata {a} {wtf} {sa} alg (wtAssign wtf (fst0 d)) $ dm d)
-
 ------------------------------------------------------------------
 ------------------------------------------------------------------
 ---- "Interpretation" of morphisms as natural transformations ----
@@ -2060,12 +1941,12 @@ FinRF : Nat -> Type -> Type
 FinRF = ConstSPF . FinR
 
 -------------------------------------
----- GebAtom as constant functor ----
+---- OldAtom as constant functor ----
 -------------------------------------
 
 public export
-GebAtomF : Type -> Type
-GebAtomF = const GebAtom
+OldAtomF : Type -> Type
+OldAtomF = const OldAtom
 
 ----------------------------------------
 ----------------------------------------
@@ -2254,7 +2135,7 @@ ftypeToGExp : SliceMorphism {a=FS3CP} FinBCSl FTypeToGExpSl
 ftypeToGExp = ftypeCata FTypeToGExpAlg
 
 public export
-BNatFromSExpAlg : GebAtom -> Pi {a=Nat} (GExpMaybeAlg . FinR)
+BNatFromSExpAlg : OldAtom -> Pi {a=Nat} (GExpMaybeAlg . FinR)
 BNatFromSExpAlg ea n (SXF a ns xs) = case decEq ea a of
   Yes Refl => case (ns, xs) of
     ([n'], []) => case isLT n' n of
@@ -2376,7 +2257,7 @@ FTSlProdL = FTProdL .* FTc
 public export
 data FinTermSl : FTSlice -> Type where
   -- A term of an atom type is an atom
-  InFTA : GebAtom -> FinTermSl FTSlA
+  InFTA : OldAtom -> FinTermSl FTSlA
   -- A term of a bounded-natural-number type is a number which obeys the bounds.
   InFTN : {0 n : Nat} -> FinR n -> FinTermSl $ FTSlN n
   -- A term of a coproduct type is a term from one of the component types.
@@ -2423,7 +2304,7 @@ FinTermN : Nat -> Type
 FinTermN = FinTermSl . FTSlN
 
 public export
-TA : GebAtom -> FinTermA
+TA : OldAtom -> FinTermA
 TA = InFTA
 
 --------------------------------------------
@@ -2543,7 +2424,7 @@ showTypeFam : {0 nty : Nat} -> TypeFamily nty -> String
 showTypeFam {nty} (TFamily rtype) = show rtype
 
 public export
-Show (TypeFamily nty) where
+Show (LanguageDef.GebTopos.TypeFamily nty) where
   show = showTypeFam
 
 public export
@@ -2554,7 +2435,7 @@ typeFamEq {nty} (TFamily rt) (TFamily rt') =
     No neq => No $ \eq => case eq of Refl => neq Refl
 
 public export
-DecEq (TypeFamily nty) where
+DecEq (GebTopos.TypeFamily nty) where
   decEq = typeFamEq
 
 public export
@@ -2601,7 +2482,7 @@ InterpTF {nty} tf sl ity =
   (i : Fin (tfnumCtor tf ity) **
    let ct = tfCtor tf ity i in
    (FinV {len=ct.numConst} ct.cconst,
-    HVect {k=ct.numDir} $ map sl ct.cdir))
+    HVect {n=ct.numDir} $ map sl ct.cdir))
 
 public export
 showITF : {0 nty : Nat} ->
@@ -2690,64 +2571,64 @@ record Arena where
   aAssign : aPosIdx -> aTy
 
 public export
-APDirType : (ar : Arena) -> ar.aPosIdx -> Type
+APDirType : (ar : LanguageDef.GebTopos.Arena) -> ar.aPosIdx -> Type
 APDirType ar i = (ar.aPos i).pDirTy
 
 public export
-record SliceArena (domSlice, codSlice : Type) where
+record SliceArena' (domSlice, codSlice : Type) where
   constructor ProdAr
-  saTy : codSlice -> Arena
+  saTy : codSlice -> LanguageDef.GebTopos.Arena
   saAssign : (i : codSlice) -> (saTy i).aTy -> domSlice
 
 public export
-SliceEndoArena : Type -> Type
-SliceEndoArena base = SliceArena base base
+SliceEndoArena' : Type -> Type
+SliceEndoArena' base = SliceArena' base base
 
 public export
-saAr : SliceArena domSlice codSlice -> codSlice -> Arena
+saAr : SliceArena' domSlice codSlice -> codSlice -> LanguageDef.GebTopos.Arena
 saAr sa ci = sa.saTy ci
 
 public export
-saPosIdx : SliceArena domSlice codSlice -> codSlice -> Type
+saPosIdx : SliceArena' domSlice codSlice -> codSlice -> Type
 saPosIdx sa ci = (saAr sa ci).aPosIdx
 
 public export
-saPos : (sa : SliceArena domSlice codSlice) ->
+saPos : (sa : SliceArena' domSlice codSlice) ->
   (ci : codSlice) -> saPosIdx sa ci -> Position
 saPos sa ci pi = (saAr sa ci).aPos pi
 
 public export
-saDirTy : (sa : SliceArena domSlice codSlice) ->
+saDirTy : (sa : SliceArena' domSlice codSlice) ->
   (ci : codSlice) -> saPosIdx sa ci -> Type
 saDirTy sa ci pi = (saPos sa ci pi).pDirTy
 
 public export
 saDir :
-  (sa : SliceArena domSlice codSlice) -> (ci : codSlice) ->
+  (sa : SliceArena' domSlice codSlice) -> (ci : codSlice) ->
   (pi : saPosIdx sa ci) -> List (saDirTy sa ci pi)
 saDir sa ci pi = (saPos sa ci pi).pDir
 
 public export
 saDirIdx :
-  (sa : SliceArena domSlice codSlice) -> (ci : codSlice) ->
+  (sa : SliceArena' domSlice codSlice) -> (ci : codSlice) ->
   (pi : saPosIdx sa ci) -> Type
 saDirIdx sa ci pi = (i : Nat ** InBounds i (saDir sa ci pi))
 
 public export
-sapAssign : (sa : SliceArena domSlice codSlice) -> (ci : codSlice) ->
+sapAssign : (sa : SliceArena' domSlice codSlice) -> (ci : codSlice) ->
   (pi : saPosIdx sa ci) -> saDirTy sa ci pi -> domSlice
 sapAssign sa ci pi = sa.saAssign ci . (saTy sa ci).aPosTyMap pi
 
 public export
 SAInterpPoly : {domSlice : Type} -> {0 codSlice : Type} ->
-  SliceArena domSlice codSlice -> SliceFunctor domSlice codSlice
+  SliceArena' domSlice codSlice -> SliceFunctor domSlice codSlice
 SAInterpPoly sa ds ci =
   (pi : saPosIdx sa ci ** piDir : List (Sigma {a=domSlice} ds) **
    map fst piDir = map (sapAssign sa ci pi) (saDir sa ci pi))
 
 public export
 saInterpPolyMap : {domSlice : Type} -> {0 codSlice : Type} ->
-  (sa : SliceArena domSlice codSlice) ->
+  (sa : SliceArena' domSlice codSlice) ->
   {ds, ds' : SliceObj domSlice} ->
   SliceMorphism ds ds' ->
   SliceMorphism (SAInterpPoly sa ds) (SAInterpPoly sa ds')
@@ -2756,7 +2637,7 @@ saInterpPolyMap {domSlice} {codSlice} sa {ds} {ds'} m ci (pi ** piDir ** eq) =
 
 public export
 SAInterpDirich : {domSlice : Type} -> {codSlice : Type} ->
-  SliceArena domSlice codSlice -> SliceFunctor domSlice codSlice
+  SliceArena' domSlice codSlice -> SliceFunctor domSlice codSlice
 SAInterpDirich {domSlice} {codSlice} sa ds ci =
   (pi : saPosIdx sa ci **
    piDir : Sigma {a=domSlice} ds -> saDirIdx sa ci pi **
@@ -2768,7 +2649,7 @@ SAInterpDirich {domSlice} {codSlice} sa ds ci =
 
 public export
 saInterpDirichMap : {domSlice : Type} -> {0 codSlice : Type} ->
-  (sa : SliceArena domSlice codSlice) ->
+  (sa : SliceArena' domSlice codSlice) ->
   {ds, ds' : SliceObj domSlice} ->
   SliceMorphism ds ds' ->
   SliceMorphism (SAInterpDirich sa ds') (SAInterpDirich sa ds)
@@ -2776,13 +2657,13 @@ saInterpDirichMap {domSlice} {codSlice} sa {ds} {ds'} m ci (pi ** piDir ** eq) =
   (pi ** piDir . smApp m ** \di, dd => eq di (m di dd))
 
 public export
-SAAlg : {base : Type} -> SliceEndoArena base -> SliceObj base -> Type
+SAAlg : {base : Type} -> SliceEndoArena' base -> SliceObj base -> Type
 SAAlg {base} sa s = SliceMorphism {a=base} (SAInterpPoly sa s) s
 
 public export
-data SAInterpMu : {0 base : Type} -> SliceEndoArena base -> SliceObj base where
+data SAInterpMu : {0 base : Type} -> SliceEndoArena' base -> SliceObj base where
   InSAM :
-    {0 base : Type} -> {0 sa : SliceEndoArena base} ->
+    {0 base : Type} -> {0 sa : SliceEndoArena' base} ->
     SAAlg {base} sa (SAInterpMu sa)
 
 ------------------------------------------------------------------
@@ -2790,46 +2671,6 @@ data SAInterpMu : {0 base : Type} -> SliceEndoArena base -> SliceObj base where
 ---- Experiments with subobject classifiers and power objects ----
 ------------------------------------------------------------------
 ------------------------------------------------------------------
-
--- Subobject classifier in what I think is the style of the HoTT book with
--- an `isProp` as in https://ncatlab.org/nlab/show/mere+proposition.
-
-public export
-IsHProp : Type -> Type
-IsHProp a = (x, y : a) -> x = y
-
-public export
-SubCFromHProp : Type
-SubCFromHProp = Subset0 Type IsHProp
-
-public export
-PowerObjFromProp : Type -> Type
-PowerObjFromProp a = a -> SubCFromHProp
-
-public export
-TrueForHProp : () -> SubCFromHProp
-TrueForHProp () = Element0 Unit $ \(), () => Refl
-
-public export
-ChiForHProp : {0 a, b : Type} ->
-  (f : a -> b) -> ((x, y : a) -> f x = f y -> x = y) ->
-  b -> SubCFromHProp
-ChiForHProp {a} {b} f isMonic eb =
-  Element0
-    (Exists0 a $ \x => f x = eb)
-    $ \(Evidence0 x eqx), (Evidence0 y eqy) =>
-      case isMonic x y (trans eqx (sym eqy)) of
-        Refl => case uip {eq=eqx} {eq'=eqy} of
-          Refl => Refl
-
-public export
-0 ChiForHPropPbToDom : {0 a, b : Type} ->
-  (f : a -> b) -> (isMonic : (x, y : a) -> f x = f y -> x = y) ->
-  Pullback {a=b} {b=Unit} {c=SubCFromHProp}
-    (ChiForHProp f isMonic) TrueForHProp ->
-  a
-ChiForHPropPbToDom {a} {b} f isMonic (Element0 (eb, ()) eq) =
-  fst0 $ replace {p=id} (sym $ elementInjectiveFst eq) ()
 
 -- `Type` itself as a subobject classifier -- treating it like `Prop`.
 public export
@@ -3046,11 +2887,11 @@ ChiForEqFalseCorrect f g x neq eq with (exists0inj1 eq)
         rewrite sndEq eq2 in
         Refl
 
----------------------------------------------------------------
----------------------------------------------------------------
----- Categories internal to 'Type' as a well-pointed topos ----
----------------------------------------------------------------
----------------------------------------------------------------
+---------------------------------------
+---------------------------------------
+---- Categories internal to 'Type' ----
+---------------------------------------
+---------------------------------------
 
 public export
 record TCatSig where
@@ -3084,28 +2925,31 @@ record TCatSig where
     (0 _ : tcMorphEq domeq' codeq' m' m'') ->
     (0 _ : tcMorphEq domeq codeq m m') ->
     tcMorphEq domeq'' codeq'' m m''
+  tcMorphRew : {0 dom, dom', cod, cod' : tcObj} ->
+    (0 _ : tcObjEq dom dom') -> (0 _ : tcObjEq cod cod') ->
+    tcMorph dom cod -> tcMorph dom' cod'
+  0 tcMorphRewEq : {0 dom, dom', cod, cod' : tcObj} ->
+    (0 domeq : tcObjEq dom dom') -> (0 codeq : tcObjEq cod cod') ->
+    (m : tcMorph dom cod) -> tcMorphEq domeq codeq m (tcMorphRew domeq codeq m)
   tcId : (obj : tcObj) -> tcMorph obj obj
-  tcCompose : {0 a, b, b', c : tcObj} ->
-    (0 _ : tcObjEq b b') ->
-    tcMorph b' c -> tcMorph a b -> tcMorph a c
-  0 tcIdLeft : {0 a, b, b' : tcObj} ->
-    {0 domeq : tcObjEq a a} -> {0 codeq, codeq' : tcObjEq b b'} ->
+  tcCompose : {0 a, b, c : tcObj} -> tcMorph b c -> tcMorph a b -> tcMorph a c
+  0 tcComposeEq : {0 a, b, c : tcObj} ->
+    (0 g, g' : tcMorph b c) -> (0 f, f' : tcMorph a b) ->
+    tcMorphEq (tcObjEqRefl a) (tcObjEqRefl c)
+      (tcCompose g f) (tcCompose g' f')
+  0 tcIdLeft : {0 a, b : tcObj} ->
     (0 m : tcMorph a b) ->
-    tcMorphEq {dom=a} {cod=b} {dom'=a} {cod'=b'}
-      domeq codeq m (tcCompose {a} {b} {b'} {c=b'} codeq' (tcId b') m)
-  0 tcIdRight : {0 a, a', b : tcObj} ->
-    {0 domeq, domeq' : tcObjEq a a'} -> {0 codeq : tcObjEq b b} ->
-    (0 m : tcMorph a' b) ->
-    tcMorphEq {dom=a} {cod=b} {dom'=a'} {cod'=b}
-      domeq codeq (tcCompose {a} {b=a} {b'=a'} {c=b} domeq' m (tcId a)) m
-  0 tcComposeAssoc : {0 a, b, b', c, c', d : tcObj} ->
-    {0 domeq : tcObjEq a a} -> {0 codeq : tcObjEq d d} ->
-    {0 beq, beq' : tcObjEq b b'} -> {0 ceq, ceq' : tcObjEq c c'} ->
-    (0 h : tcMorph c' d) -> (0 g : tcMorph b' c) -> (0 f : tcMorph a b) ->
-    tcMorphEq {dom=a} {cod=d}
-      domeq codeq
-      (tcCompose ceq h (tcCompose beq' g f))
-      (tcCompose beq (tcCompose ceq' h g) f)
+    tcMorphEq {dom=a} {cod=b} {dom'=a} {cod'=b} (tcObjEqRefl a) (tcObjEqRefl b)
+      m (tcCompose {a} {b} {c=b} (tcId b) m)
+  0 tcIdRight : {0 a, b : tcObj} ->
+    (0 m : tcMorph a b) ->
+    tcMorphEq {dom=a} {cod=b} {dom'=a} {cod'=b} (tcObjEqRefl a) (tcObjEqRefl b)
+      (tcCompose {a} {b=a} {c=b} m (tcId a)) m
+  0 tcComposeAssoc : {0 a, b, c, d : tcObj} ->
+    (0 h : tcMorph c d) -> (0 g : tcMorph b c) -> (0 f : tcMorph a b) ->
+    tcMorphEq {dom=a} {cod=d} (tcObjEqRefl a) (tcObjEqRefl d)
+      (tcCompose h (tcCompose g f))
+      (tcCompose (tcCompose h g) f)
 
 public export
 record TFunctorSig (c, d : TCatSig) where
@@ -3162,7 +3006,7 @@ data GExpSlice : Type where
   GSEXPL : GExpSlice
 
 public export
-gSliceAtom : GExpSlice -> GebAtom
+gSliceAtom : GExpSlice -> OldAtom
 gSliceAtom GSATOM = SL_ATOM
 gSliceAtom GSNAT = SL_NAT
 gSliceAtom GSNATL = SL_NATL
@@ -3213,7 +3057,7 @@ data GWExpNonAtomPos : Type where
 
 public export
 data GWExpPos : Type where
-  GPA : GebAtom -> GWExpPos
+  GPA : OldAtom -> GWExpPos
   GPNAP : GWExpNonAtomPos -> GWExpPos
 
 public export
@@ -3245,7 +3089,7 @@ GPXC : GWExpPos
 GPXC = GPNAP GPNAXC
 
 public export
-gNonAtomPosAtom : GWExpNonAtomPos -> GebAtom
+gNonAtomPosAtom : GWExpNonAtomPos -> OldAtom
 gNonAtomPosAtom GPNAZ = POS_Z
 gNonAtomPosAtom GPNAS = POS_S
 gNonAtomPosAtom GPNAX = POS_X
@@ -3255,7 +3099,7 @@ gNonAtomPosAtom GPNAXN = POS_XN
 gNonAtomPosAtom GPNAXC = POS_XC
 
 public export
-gPosAtom : GWExpPos -> GebAtom
+gPosAtom : GWExpPos -> OldAtom
 gPosAtom (GPA a) = a
 gPosAtom (GPNAP i) = gNonAtomPosAtom i
 
@@ -3318,7 +3162,7 @@ data GWExpDir : Type where
   GDXCTL : GWExpDir
 
 public export
-gDirAtom : GWExpDir -> GebAtom
+gDirAtom : GWExpDir -> OldAtom
 gDirAtom GDS = DIR_S
 gDirAtom GDXA = DIR_XA
 gDirAtom GDXNL = DIR_XNL
@@ -3438,7 +3282,7 @@ GWExpXL = GWExpWT GSEXPL
 public export
 record GWExpAlg (sa : GExpSlice -> Type) where
   constructor GAlg
-  galgA : GebAtom -> sa GSATOM
+  galgA : OldAtom -> sa GSATOM
   galgZ : sa GSNAT
   galgS : sa GSNAT -> sa GSNAT
   galgNN : sa GSNATL
@@ -3538,7 +3382,7 @@ gwexpCata {sa} alg = wtfCata {wtf=GWExpWTF} {sa} (GAlgToSPF {sa} alg)
 
 public export
 GWExpWTtoGExpAlgSl : SliceObj GExpSlice
-GWExpWTtoGExpAlgSl GSATOM = GebAtom
+GWExpWTtoGExpAlgSl GSATOM = OldAtom
 GWExpWTtoGExpAlgSl GSNAT = Nat
 GWExpWTtoGExpAlgSl GSNATL = List Nat
 GWExpWTtoGExpAlgSl GSEXP = GExp
@@ -3557,7 +3401,7 @@ gwexpWTtoGExp : GWExpX -> GExp
 gwexpWTtoGExp = gwexpWTtoGExpSl GSEXP
 
 public export
-InGA : GebAtom -> GWExpA
+InGA : OldAtom -> GWExpA
 InGA a = InWTFM (GSATOM ** Element0 (GPA a) Refl) $ \(Element0 d dsl) =>
   case d of
     GDS => void $ case dsl of Refl impossible
@@ -3661,7 +3505,7 @@ InGXC x xs = InWTFM (GSEXPL ** Element0 GPXC Refl) $ \(Element0 d dsl) =>
     GDXCTL => xs
 
 public export
-InGX : GebAtom -> GWExpNL -> GWExpXL -> GWExpX
+InGX : OldAtom -> GWExpNL -> GWExpXL -> GWExpX
 InGX a ns xs = InWTFM (GSEXP ** Element0 GPX Refl) $ \(Element0 d dsl) =>
   case d of
     GDS => void $ case dsl of Refl impossible
@@ -3674,7 +3518,7 @@ InGX a ns xs = InWTFM (GSEXP ** Element0 GPX Refl) $ \(Element0 d dsl) =>
     GDXCTL => void $ case dsl of Refl impossible
 
 public export
-InGNatX : GebAtom -> List Nat -> GWExpXL -> GWExpX
+InGNatX : OldAtom -> List Nat -> GWExpXL -> GWExpX
 InGNatX a ns = InGX a (InGNatList ns)
 
 public export
@@ -3682,7 +3526,7 @@ InGWExpList : List GWExpX -> GWExpXL
 InGWExpList = foldr InGXC InGXN
 
 public export
-GExpToWTAlg : SXLAlg GebAtom GWExpX GWExpXL
+GExpToWTAlg : SXLAlg OldAtom GWExpX GWExpXL
 GExpToWTAlg = SXA InGNatX InGXN InGXC
 
 public export
@@ -3706,7 +3550,7 @@ gexpToWT = sxCata GExpToWTAlg
 
 public export
 GAtomF : PolyFunc
-GAtomF = PFConstArena GebAtom
+GAtomF = PFConstArena OldAtom
 
 public export
 GAtomPos : Type
@@ -3798,12 +3642,12 @@ GNatDir : SliceObj GNatPos
 GNatDir = pfDir {p=GNatF}
 
 public export
-gNatPosAtom : GNatPos -> GebAtom
+gNatPosAtom : GNatPos -> OldAtom
 gNatPosAtom (Left ()) = POS_S
 gNatPosAtom (Right ()) = POS_Z
 
 public export
-gNatDirAtom : Sigma {a=GNatPos} GNatDir -> GebAtom
+gNatDirAtom : Sigma {a=GNatPos} GNatDir -> OldAtom
 gNatDirAtom ((Left ()) ** ()) = DIR_S
 gNatDirAtom ((Right ()) ** v) = void v
 
@@ -3838,18 +3682,18 @@ GExpDir : SliceObj GExpPos
 GExpDir = pfDir {p=GExpF}
 
 public export
-GExpPosAtom : GExpPos -> GebAtom
+GExpPosAtom : GExpPos -> OldAtom
 GExpPosAtom () = POS_X
 
 public export
-GExpDirAtom : Sigma {a=GExpPos} GExpDir -> GebAtom
+GExpDirAtom : Sigma {a=GExpPos} GExpDir -> OldAtom
 GExpDirAtom (() ** FZ) = DIR_XA
 GExpDirAtom (() ** FS FZ) = DIR_XNL
 GExpDirAtom (() ** FS (FS FZ)) = DIR_XXL
 
 public export
 GExpXSPF : SlicePolyFunc GExpXSlice ()
-GExpXSPF = SliceFuncDimap (pfSliceAll GExpF) (\(() ** d) => d) id
+GExpXSPF = SliceFuncRmap (pfSliceAll GExpF) (\(() ** d) => d)
 
 -----------------------------------------
 ---- Natural number list endofunctor ----
@@ -3866,7 +3710,7 @@ GNatExpLAssign (Right ()) = GSNATL
 
 public export
 GNatLExpSPF : SlicePolyFunc GExpSlice Unit
-GNatLExpSPF = SliceFuncLmap GListSPF GNatExpLAssign
+GNatLExpSPF = SliceFuncRmap GListSPF GNatExpLAssign
 
 public export
 GNatLFPos : Type
@@ -3877,12 +3721,12 @@ GNatLFDir : SliceObj GNatLFPos
 GNatLFDir = spfSliceDir GNatLSPF ()
 
 public export
-GNatLFPosAtom : GNatLFPos -> GebAtom
+GNatLFPosAtom : GNatLFPos -> OldAtom
 GNatLFPosAtom (Left ()) = POS_NN
 GNatLFPosAtom (Right ()) = POS_NC
 
 public export
-GNatLFDirAtom : Sigma {a=GNatLFPos} GNatLFDir -> GebAtom
+GNatLFDirAtom : Sigma {a=GNatLFPos} GNatLFDir -> OldAtom
 GNatLFDirAtom ((Left ()) ** d) = void d
 GNatLFDirAtom (Right () ** (Left ())) = DIR_NCHD
 GNatLFDirAtom (Right () ** Right ()) = DIR_NCTL
@@ -3902,7 +3746,7 @@ GXExpLAssign (Right ()) = GSEXPL
 
 public export
 GExpLExpSPF : SlicePolyFunc GExpSlice Unit
-GExpLExpSPF = SliceFuncLmap GListSPF GXExpLAssign
+GExpLExpSPF = SliceFuncRmap GListSPF GXExpLAssign
 
 public export
 GExpLFPos : Type
@@ -3913,12 +3757,12 @@ GExpLFDir : SliceObj GExpLFPos
 GExpLFDir = spfSliceDir GExpLSPF ()
 
 public export
-GExpLFPosAtom : GExpLFPos -> GebAtom
+GExpLFPosAtom : GExpLFPos -> OldAtom
 GExpLFPosAtom (Left ()) = POS_XN
 GExpLFPosAtom (Right ()) = POS_XC
 
 public export
-GExpLFDirAtom : Sigma {a=GExpLFPos} GExpLFDir -> GebAtom
+GExpLFDirAtom : Sigma {a=GExpLFPos} GExpLFDir -> OldAtom
 GExpLFDirAtom ((Left ()) ** d) = void d
 GExpLFDirAtom (Right () ** (Left ())) = DIR_XCHD
 GExpLFDirAtom (Right () ** Right ()) = DIR_XCTL
@@ -3937,7 +3781,7 @@ GNatExpAssign () = GSNAT
 
 public export
 GNatExpSPF : SlicePolyFunc GExpSlice Unit
-GNatExpSPF = SliceFuncLmap GNatSPF GNatExpAssign
+GNatExpSPF = SliceFuncRmap GNatSPF GNatExpAssign
 
 public export
 GXExpAssign : GExpXSlice -> GExpSlice
@@ -3947,7 +3791,7 @@ GXExpAssign (FS (FS FZ)) = GSEXPL
 
 public export
 GXExpSPF : SlicePolyFunc GExpSlice Unit
-GXExpSPF = SliceFuncLmap GExpXSPF GXExpAssign
+GXExpSPF = SliceFuncRmap GExpXSPF GXExpAssign
 
 public export
 GSExpCombinedSlice : Type
@@ -3969,7 +3813,7 @@ GSExpSPFAssign GSEXPL = Right (Right (Right (Right ())))
 
 public export
 GSExpSPF : SlicePolyEndoFunc GExpSlice
-GSExpSPF = SliceFuncRmap GSExpCombined GSExpSPFAssign
+GSExpSPF = SliceFuncLmap GSExpCombined GSExpSPFAssign
 
 public export
 GSExp : SliceObj GExpSlice
@@ -4010,7 +3854,7 @@ gsexpCata {sa} = spfCata {spf=GSExpSPF} {sa}
 
 public export
 GSExptoGExpAlgSl : SliceObj GExpSlice
-GSExptoGExpAlgSl GSATOM = GebAtom
+GSExptoGExpAlgSl GSATOM = OldAtom
 GSExptoGExpAlgSl GSNAT = Nat
 GSExptoGExpAlgSl GSNATL = List Nat
 GSExptoGExpAlgSl GSEXP = GExp

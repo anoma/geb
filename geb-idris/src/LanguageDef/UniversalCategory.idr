@@ -44,7 +44,7 @@ import public LanguageDef.RefinedADT
 -- not assert that some type implements the binary operation, but
 -- rather calls the functor to _produce_ a type which has a binary
 -- operation on the input type.
-infixr 8 <>
+export infixr 8 <>
 public export
 data MagmaF : Type -> Type where
   (<>) : a -> a -> MagmaF a
@@ -65,7 +65,7 @@ SymBinRel a = a -> a -> Type
 ---- Semigroups ----
 --------------------
 
-infixr 8 <<>>
+export infixr 8 <<>>
 public export
 data SemigroupOpF :
     ((Type -> Type), (Type -> Type -> Type)) -> (Type -> Type) where

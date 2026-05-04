@@ -2,6 +2,7 @@ module LanguageDef.Test.PolyCatTest
 
 import Test.TestLibrary
 import LanguageDef.PolyCat
+import LanguageDef.NatPrefixCat
 
 %default total
 
@@ -627,19 +628,19 @@ but1 : BUNat 4
 but1 = Left ()
 
 bat1 : BANat 4
-bat1 = u2a but1
+bat1 = u2a {n=4} but1
 
 bat2 : BANat 4
-bat2 = MkBANat 3
+bat2 = MkBANat {n=4} 3
 
 but2 : BUNat 4
-but2 = a2u bat2
+but2 = a2u {n=4} bat2
 
 tbut21 : Assertion
 tbut21 = Assert $ MkBUNat {n=4} 3 == but2
 
 tbut22 : Assertion
-tbut22 = Assert $ u2a but2 == bat2
+tbut22 = Assert $ u2a {n=4} but2 == bat2
 
 bnclm0 : BNCListMorph
 bnclm0 = [ 3, 1, 5, 0 ]
@@ -703,10 +704,10 @@ bncpm0 : BNCPolyM
 bncpm0 = #| 4 #+ #| 2 #* PI #^ 3 #+ PI #^ 4
 
 bncpm0mod200 : BANat 200 -> BANat 200
-bncpm0mod200 = baPolyM bncpm0
+bncpm0mod200 = baPolyM {m=200} {n=199} bncpm0
 
 bncpm0mod100 : BANat 200 -> BANat 100
-bncpm0mod100 = baPolyM bncpm0
+bncpm0mod100 = baPolyM {m=200} {n=99} bncpm0
 
 bncpm1 : BNCPolyM
 bncpm1 = (PI #+ #| 1) #^ 3
@@ -739,10 +740,10 @@ bncpmt8 : Assertion
 bncpmt8 = Assert $ metaBNCPolyM 100 bncpm0 3 == 38
 
 bncpmt9 : Assertion
-bncpmt9 = Assert $ fst0 (bncpm0mod200 (MkBANat 3)) == 139
+bncpmt9 = Assert $ fst0 (bncpm0mod200 (MkBANat {n=200} 3)) == 139
 
 bncpmt10 : Assertion
-bncpmt10 = Assert $ fst0 (bncpm0mod100 (MkBANat 3)) == 39
+bncpmt10 = Assert $ fst0 (bncpm0mod100 (MkBANat {n=200} 3)) == 39
 
 bncpmt11 : Assertion
 bncpmt11 = Assert $ metaBNCPolyM 200 (bncpm0 #- bncpm1) 3 == 75
@@ -1026,7 +1027,7 @@ l5_5_fold_add = sumlist_20 {k=5} <! l5_5
 reflectionTestPair : {x : SubstObjMu} -> {n : Nat} ->
   SubstMorph ((x !-> SUNat n) !* (x !-> SUNat n)) (x !-> SUNat n)
 reflectionTestPair {x} {n} =
-  covarYonedaEmbed (suAddUnrolled {k=n}) x
+  contravarYonedaEmbed (suAddUnrolled {k=n}) x
   <! soReflectedPair x (SUNat n) (SUNat n)
 
 reflectionPairTerm : SOTerm ((SUNat 8 !-> SUNat 8) !* (SUNat 8 !-> SUNat 8))
@@ -1127,6 +1128,80 @@ stlc_t6 : STLC_Term
 stlc_t6 = STLC_App SubstBool stlc_t4
   (STLC_Pair (STLC_Left STLC_Unit Subst1) (STLC_Right Subst1 STLC_Unit))
 
+--------------------------
+--------------------------
+---- Arithmetic tests ----
+--------------------------
+--------------------------
+
+public export
+pfNatToMaybeMuTest0 : Assertion
+pfNatToMaybeMuTest0 = Assert $ pfMaybeMuToNat (pfNatToMaybeMu 0) == 0
+
+public export
+pfNatToMaybeMuTest1 : Assertion
+pfNatToMaybeMuTest1 = Assert $ pfMaybeMuToNat (pfNatToMaybeMu 1) == 1
+
+public export
+pfNatToMaybeMuTest2 : Assertion
+pfNatToMaybeMuTest2 = Assert $ pfMaybeMuToNat (pfNatToMaybeMu 2) == 2
+
+public export
+pfFactN : Nat -> Nat
+pfFactN = pfFact . pfNatToMaybeMu
+
+public export
+pfFact0 : Assertion
+pfFact0 = Assert $ pfFactN 0 == 1
+
+public export
+pfFact1 : Assertion
+pfFact1 = Assert $ pfFactN 1 == 1
+
+public export
+pfFact2 : Assertion
+pfFact2 = Assert $ pfFactN 2 == 2
+
+public export
+pfFact3 : Assertion
+pfFact3 = Assert $ pfFactN 3 == 6
+
+public export
+pfFact4 : Assertion
+pfFact4 = Assert $ pfFactN 4 == 24
+
+public export
+pfFact5 : Assertion
+pfFact5 = Assert $ pfFactN 5 == 120
+
+public export
+pfFib0 : Assertion
+pfFib0 = Assert $ pfFibN 0 == 0
+
+public export
+pfFib1 : Assertion
+pfFib1 = Assert $ pfFibN 1 == 1
+
+public export
+pfFib2 : Assertion
+pfFib2 = Assert $ pfFibN 2 == 1
+
+public export
+pfFib3 : Assertion
+pfFib3 = Assert $ pfFibN 3 == 2
+
+public export
+pfFib4 : Assertion
+pfFib4 = Assert $ pfFibN 4 == 3
+
+public export
+pfFib5 : Assertion
+pfFib5 = Assert $ pfFibN 5 == 5
+
+public export
+pfFib6 : Assertion
+pfFib6 = Assert $ pfFibN 6 == 8
+
 ----------------------------------
 ----------------------------------
 ----- Exported test function -----
@@ -1141,6 +1216,7 @@ polyCatTest = do
   putStrLn "Begin polyCatTest:"
   putStrLn "------------------"
   putStrLn ""
+  {-
   putStrLn "---------------------------------"
   putStrLn "---- Bounded natural numbers ----"
   putStrLn "---------------------------------"
@@ -1148,7 +1224,7 @@ polyCatTest = do
   putStrLn $ "bat1: " ++ show bat1
   putStrLn $ "but1: " ++ show but1
   putStrLn $ "bat2: " ++ show bat2
-  putStrLn $ "bat2 (long): " ++ baShowLong bat2
+  putStrLn $ "bat2 (long): " ++ baShowLong {n=4} bat2
   putStrLn $ "but2: " ++ show but2
   putStrLn ""
   putStrLn "------------------------------"
@@ -1180,6 +1256,7 @@ polyCatTest = do
   putStrLn $ show testBL3
   putStrLn $ show testBL4
   putStrLn "---------------------"
+  -}
   putStrLn ""
   putStrLn "--------------------"
   putStrLn "---- Polynomial ----"

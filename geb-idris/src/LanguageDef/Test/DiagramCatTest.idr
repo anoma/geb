@@ -6,6 +6,70 @@ import LanguageDef.DiagramCat
 
 %default total
 
+--------------------
+--------------------
+---- Telescopes ----
+--------------------
+--------------------
+
+data TelObj : TelN 0 where
+  T1 : TelObj
+  TP : TelObj -> TelObj -> TelObj
+
+data TelMorphD : (TelObj, TelObj) -> Type where
+  TM1 : (a : TelObj) -> TelMorphD (a, T1)
+  TMp1 : (a, b : TelObj) -> TelMorphD (TP a b, a)
+  TMp2 : (a, b : TelObj) -> TelMorphD (TP a b, b)
+  TMpi : {a, b, c :  TelObj} ->
+    TelMorphD (a, b) -> TelMorphD (a, c) -> TelMorphD (a, TP b c)
+
+data TelMorphEqD : {a, b : TelObj} ->
+    (TelMorphD (a, b), TelMorphD (a, b)) -> Type where
+  TM1Sym : {a, b : TelObj} -> {f, g : TelMorphD (a, b)} ->
+    TelMorphEqD (f, g) -> TelMorphEqD (g, f)
+  TM1Eq : {a : TelObj} -> (f : TelMorphD (a, T1)) -> TelMorphEqD (f, TM1 a)
+
+TelMorph : TelN 1
+TelMorph = ((TelObj, TelObj) ** TelMorphD)
+
+TelMorphEq : TelN 2
+TelMorphEq =
+  (TelMorph ** \((a, b) ** f) => (g : TelMorphD (a, b)) -> TelMorphEqD (f, g))
+
+---------------
+---------------
+---- Paths ----
+---------------
+---------------
+
+data TPDvert : Type where
+  TPDm : TPDvert
+  TPDo : TPDvert
+  TPDeqm : TPDvert
+  TPDi : TPDvert
+
+data TPDedge : SliceObj (TPDvert, TPDvert) where
+  TPDm1 : TPDedge (TPDm, TPDo)
+  TPDm2 : TPDedge (TPDm, TPDo)
+  TPDeq1 : TPDedge (TPDeqm, TPDm)
+  TPDeq2 : TPDedge (TPDeqm, TPDm)
+
+testPreDiag : PreDiagram
+testPreDiag = MkPreDiag TPDvert TPDedge
+
+TPDPath : SliceObj (TPDvert, TPDvert)
+TPDPath = PDPath testPreDiag
+
+tpdiId : TPDPath (TPDi, TPDi)
+tpdiId = InSPFM ((TPDi, TPDi) ** Left Refl) $ \((v, w) ** d) => void d
+
+tpdeqo : TPDPath (TPDeqm, TPDo)
+tpdeqo = InSPFM ((TPDeqm, TPDo) ** Right (TPDm ** TPDeq2)) $
+  \((v, w) ** d) => rewrite fst d in rewrite snd d in
+    InSPFM ((TPDm, TPDo) ** Right (TPDo ** TPDm1)) $ \((v', w') ** d') =>
+      rewrite fst d' in rewrite snd d' in InSPFM ((TPDo, TPDo) ** Left Refl) $
+        \((v', w'') ** d'') => void d''
+
 ----------------------------------
 ----------------------------------
 ----- Exported test function -----

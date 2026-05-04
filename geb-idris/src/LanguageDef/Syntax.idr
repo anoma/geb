@@ -6,6 +6,12 @@ import public LanguageDef.Atom
 
 %default total
 
+--------------------------------------
+--------------------------------------
+---- Geb term for core categories ----
+--------------------------------------
+--------------------------------------
+
 ----------------------------------
 ----------------------------------
 ---- General syntax utilities ----
@@ -954,19 +960,21 @@ frsexpJoin = frsexpCata id frsexpJoinAlg
 
 public export
 frsexpBind : FrSExpM atom a -> (a -> FrSExpM atom b) -> FrSExpM atom b
-frsexpBind x f = frsexpJoin (map {f=(FrSExpM atom)} f x)
+frsexpBind x f =
+  frsexpJoin (map @{BifunctorToFunctor} {f=(FrSExpM atom)} f x)
 
 public export
 frsexpApp : FrSExpM atom (a -> b) -> FrSExpM atom a -> FrSExpM atom b
-frsexpApp xf = frsexpBind xf . flip (map {f=(FrSExpM atom)})
+frsexpApp xf =
+  frsexpBind xf . flip (map @{BifunctorToFunctor} {f=(FrSExpM atom)})
 
 public export
-Applicative (FrSExpM atom) where
+Applicative (FrSExpM atom) using BifunctorToFunctor where
   pure = frsexpReturn
   (<*>) = frsexpApp
 
 public export
-Monad (FrSExpM atom) where
+Monad (FrSExpM atom) using BifunctorToFunctor where
   (>>=) = frsexpBind
   join = frsexpJoin
 
@@ -1031,12 +1039,12 @@ mutual
     (step : SExpDepAlg alg paramAlg) ->
     (l : SList atom) ->
     Maybe (slistGenTypeCata alg l)
-  slistGenTypeDec alg paramAlg step [] = Just HNil
+  slistGenTypeDec alg paramAlg step [] = Just []
   slistGenTypeDec alg paramAlg step (x :: xs) =
     case
       (sexpGenTypeDec alg paramAlg step x,
        slistGenTypeDec alg paramAlg step xs) of
-        (Just v, Just vs) => Just (HCons v vs)
+        (Just v, Just vs) => Just (v :: vs)
         _ => Nothing
 
 ---------------------------
@@ -1265,23 +1273,23 @@ NList = SList Nat
 
 public export
 GExp : Type
-GExp = SExp GebAtom
+GExp = SExp OldAtom
 
 public export
 FrGExp : Type -> Type
-FrGExp = FrSExpM GebAtom
+FrGExp = FrSExpM OldAtom
 
 public export
 GList : Type
-GList = SList GebAtom
+GList = SList OldAtom
 
 public export
 FrGList : Type -> Type
-FrGList = FrSListM GebAtom
+FrGList = FrSListM OldAtom
 
 public export
 GBtAtom : Type
-GBtAtom = SExpToBtAtom GebAtom
+GBtAtom = SExpToBtAtom OldAtom
 
 public export
 GBTExp : Type
@@ -1289,16 +1297,16 @@ GBTExp = BTExp GBtAtom
 
 public export
 GExpAlg : Type -> Type
-GExpAlg = SExpAlg GebAtom
+GExpAlg = SExpAlg OldAtom
 
 public export
 GExpMaybeAlg : Type -> Type
-GExpMaybeAlg = SExpMaybeAlg GebAtom
+GExpMaybeAlg = SExpMaybeAlg OldAtom
 
 public export
 GExpBoolAlg : Type
-GExpBoolAlg = SExpBoolAlg GebAtom
+GExpBoolAlg = SExpBoolAlg OldAtom
 
 public export
 GExpMaybeCtxAlg : Type -> Type -> Type
-GExpMaybeCtxAlg = SExpMaybeCtxAlg GebAtom
+GExpMaybeCtxAlg = SExpMaybeCtxAlg OldAtom

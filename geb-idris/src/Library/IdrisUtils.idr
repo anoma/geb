@@ -6,12 +6,15 @@ import public Data.Contravariant
 import public Data.List
 import public Data.List.Equalities
 import public Data.List.Reverse
+import public Data.List.Quantifiers
+import public Data.SnocList
+import public Data.SnocList.Quantifiers
+import public Data.Vect.Quantifiers
 import public Data.Nat
 import public Data.Nat.Order.Properties
 import public Data.Nat.Division
 import public Data.Vect
 import public Data.Vect.Properties.Foldr
-import public Data.HVect
 import public Data.Fin
 import public Data.Fin.Order
 import public Data.DPair
@@ -24,6 +27,8 @@ import public Control.Relation
 import public Control.Order
 import public Control.Monad.Identity
 import public Control.Monad.Trans
+import public Control.Monad.Reader
+import public Control.Monad.Either
 import public Data.Binary
 import public Data.Nat.Properties
 import public Data.Nat.Exponentiation
@@ -33,21 +38,31 @@ import public Syntax.PreorderReasoning
 
 %default total
 
-infixr 1 |>
+%hide Prelude.(|>)
+
+export infixr 1 |>
 public export
 (|>) : {0 a, b, c : Type} -> (a -> b) -> (b -> c) -> (a -> c)
 (|>) = flip (.)
 
-infixr 1 .*
+export infixr 1 .*
 public export
 (.*) : {0 a, b, c, d : Type} -> (c -> d) -> (a -> b -> c) -> (a -> b -> d)
 (.*) = (.) . (.)
 
-infixr 1 .**
+export infixr 1 .**
 public export
 (.**) : {0 a, b, c, d, e : Type} ->
   (d -> e) -> (a -> b -> c -> d) -> (a -> b -> c -> e)
 (.**) = (.) . (.) . (.)
+
+public export
+flipApp : {0 a, b : Type} -> a -> (a -> b) -> b
+flipApp = flip apply
+
+public export
+preCompFlipApp : {0 a, b, c : Type} -> (((a -> b) -> b) -> c) -> a -> c
+preCompFlipApp {a} {b} {c} = (|>) {a} {b=((a -> b) -> b)} {c} (flipApp {a} {b})
 
 public export
 [IdFunctor] Functor Prelude.id where
@@ -102,6 +117,53 @@ fcong : {0 a, b : Type} -> {0 f, g : a -> b} ->
   (f ~=~ g) -> {x : a} -> f x = g x
 fcong Refl = Refl
 
+public export
+fcongdep : {0 a : Type} -> {0 b : a -> Type} -> {0 f, g : (ea : a) -> b ea} ->
+  (f ~=~ g) -> {x : a} -> f x = g x
+fcongdep Refl = Refl
+
+public export
+fconghet : {0 a, a' : Type} -> {0 b : a -> Type} -> {0 b' : a' -> Type} ->
+  {0 f : (ea : a) -> b ea} -> {0 f' : (ea' : a') -> b' ea'} ->
+  (f ~=~ f') -> {ea : a} -> {ea' : a'} -> ea = ea' -> f ea ~=~ f' ea'
+fconghet Refl Refl = Refl
+
+public export
+fcompeq : {0 a, b, c : Type} -> {0 g, g' : b -> c} -> {0 f, f' : a -> b} ->
+  (g ~=~ g') -> (f ~=~ f') -> g . f = g' . f'
+fcompeq Refl Refl = Refl
+
+public export
+fprecompeq : {0 a, b, c : Type} -> {0 f, g : b -> c} -> {0 h : a -> b} ->
+  (f ~=~ g) -> f . h = g . h
+fprecompeq eq = fcompeq eq Refl
+
+public export
+fpostcompeq : {0 a, b, c : Type} -> {0 f, g : a -> b} -> {0 h : b -> c} ->
+  (f ~=~ g) -> h . f = h . g
+fpostcompeq eq = fcompeq {g=h} Refl eq
+
+public export
+dpBimap : {0 a, b : Type} -> {0 p : a -> Type} -> {0 q : b -> Type} ->
+  (f : a -> b) -> ((ea : a) -> p ea -> q (f ea)) -> DPair a p -> DPair b q
+dpBimap {a} {b} {p} {q} f m eap = (f (fst eap) ** m (fst eap) (snd eap))
+
+public export
+dpMapSnd : {0 a : Type} -> {0 p : a -> Type} -> {0 q : a -> Type} ->
+  ((ea : a) -> p ea -> q ea) -> DPair a p -> DPair a q
+dpMapSnd {a} {p} {q} = dpBimap {a} {b=a} {p} {q} (id {a})
+
+public export
+dpEq12 : {0 a : Type} -> {0 p : a -> Type} -> {x, y : a} ->
+  {0 px : p x} -> {0 py : p y} ->
+  x = y -> px = py -> MkDPair {p} x px = MkDPair {p} y py
+dpEq12 {a} {p} {x} {y=x} {px} {py=px} Refl Refl = Refl
+
+public export
+dpEqPat : {0 a : Type} -> {0 p : a -> Type} ->
+  {0 dp : DPair a p} -> dp = (fst dp ** snd dp)
+dpEqPat {a} {p} {dp=(_ ** _)} = Refl
+
 export
 mkDPairInjectiveFstHet :
   {0 a, b : Type} -> {0 p : a -> Type} -> {0 q : b -> Type} ->
@@ -117,6 +179,85 @@ mkDPairInjectiveSndHet :
   f ~=~ g
 mkDPairInjectiveSndHet Refl = Refl
 
+export
+dpeq1 : {0 a : Type} -> {0 b : a -> Type} -> {0 dp, dp' : DPair a b} ->
+  dp = dp' -> fst dp = fst dp'
+dpeq1 Refl = Refl
+
+export
+dpeq2 : {0 a : Type} -> {0 b : a -> Type} -> {0 dp, dp' : DPair a b} ->
+  dp = dp' -> snd dp ~=~ snd dp'
+dpeq2 Refl = Refl
+
+-- Replacing forward then backward cancels.
+public export
+0 replaceCancelLeft :
+  {0 a : Type} -> {0 p : a -> Type} ->
+  {0 x, y : a} ->
+  (eq : x = y) -> (d : p x) ->
+  replace {p} (sym eq) (replace {p} eq d) = d
+replaceCancelLeft Refl d = Refl
+
+-- Replace on function types: replace acts on the
+-- domain contravariantly.
+public export
+0 replaceFun :
+  {0 a : Type} -> {0 p : a -> Type} ->
+  {0 b : Type} -> {0 x, y : a} ->
+  (eq : x = y) -> (f : p x -> b) ->
+  (d : p y) ->
+  replace {p=(\i => p i -> b)} eq f d =
+  f (replace {p} (sym eq) d)
+replaceFun Refl f d = Refl
+
+-- Dependent pair equality via transport: if
+-- transporting px along eq gives py, then the
+-- pairs are equal.
+public export
+0 dpReplaceEq :
+  {0 a : Type} -> {0 p : a -> Type} ->
+  {x, y : a} ->
+  {0 px : p x} -> {0 py : p y} ->
+  (eq : x = y) ->
+  replace {p} eq px = py ->
+  MkDPair {p} x px = MkDPair {p} y py
+dpReplaceEq Refl Refl = Refl
+
+-- A predicate on a dependent pair which only holds when the first
+-- element of the pair matches a given one.
+public export
+MatchingSnd : {0 a : Type} -> {0 b : a -> Type} ->
+  (ea : a) -> (b ea -> Type) -> (DPair a b -> Type)
+MatchingSnd {a} {b} ea sl dp =
+  Exists {type=(fst dp = ea)} $ \eqa => sl $ replace {p=b} eqa $ snd dp
+
+public export
+showDP : {0 a : Type} -> {0 p : a -> Type} ->
+  (a -> String) -> ((x : a) -> p x -> String) ->
+  DPair a p -> String
+showDP {a} {p} showA showP (x ** l) =
+  -- Copied from the Idris standard libraries because I can't figure out
+  -- how to get Idris to infer (Show DPair).
+  "(" ++ showA x ++ " ** " ++ showP x l ++ ")"
+
+public export
+voidFalseTrue : {0 a : Type} -> False = True -> a
+voidFalseTrue {a} Refl impossible
+
+public export
+voidTrueFalse : {0 a : Type} -> True = False -> a
+voidTrueFalse {a} Refl impossible
+
+public export
+voidLeftRight : {0 a, b, c : Type} -> {0 ea : a} -> {0 eb : b} ->
+  Left ea = Right eb -> c
+voidLeftRight {a} {b} {c} Refl impossible
+
+public export
+voidRightLeft : {0 a, b, c : Type} -> {0 ea : a} -> {0 eb : b} ->
+  Right ea = Left eb -> c
+voidRightLeft {a} {b} {c} Refl impossible
+
 public export
 maybeElim : {0 a, b : Type} -> (a -> b) -> b -> Maybe a -> b
 maybeElim f g (Just e) = f e
@@ -126,6 +267,11 @@ public export
 eitherElim : {0 a, b, c : Type} -> (a -> c) -> (b -> c) -> Either a b -> c
 eitherElim f g (Left e) = f e
 eitherElim f g (Right e) = g e
+
+public export
+eitherSym : {0 a, b : Type} -> Either a b -> Either b a
+eitherSym {a} {b} (Left x) = Right x
+eitherSym {a} {b} (Right x) = Left x
 
 public export
 codiag : {0 a : Type} -> Either a a -> a
@@ -158,7 +304,19 @@ elementInjectiveSnd Refl = Refl
 public export
 bimap : (f : a -> b) -> (0 _ : forall x. p x -> q (f x)) ->
   Subset0 a p -> Subset0 b q
-bimap f g (Element0 x y) = Element0 (f x) (g y)
+bimap f g e = Element0 (f $ fst0 e) (g $ snd0 e)
+
+public export
+s0Bimap : {0 a, b : Type} -> {0 p : a -> Type} -> {0 q : b -> Type} ->
+  (f : a -> b) -> (0 _ : (ea : a) -> p ea -> q (f ea)) ->
+  Subset0 a p -> Subset0 b q
+s0Bimap {a} {b} {p} {q} f m eap =
+  Element0 (f (fst0 eap)) (m (fst0 eap) (snd0 eap))
+
+public export
+s0MapSnd : {0 a : Type} -> {0 p : a -> Type} -> {0 q : a -> Type} ->
+  (0 _ : (ea : a) -> p ea -> q ea) -> Subset0 a p -> Subset0 a q
+s0MapSnd {a} {p} {q} = s0Bimap {a} {b=a} {p} {q} (id {a})
 
 public export
 Eq type => Eq (Subset0 type dep) where
@@ -172,6 +330,23 @@ public export
 Show type => Show (Subset0 type dep) where
   show = show . fst0
 
+public export
+s0Eq1 : {0 a : Type} -> {0 p : a -> Type} -> {s0, s0' : Subset0 a p} ->
+  (0 _ : s0 = s0') -> fst0 s0 = fst0 s0'
+s0Eq1 {a} {p} Refl = Refl
+
+public export
+s0Eq2 : {0 a : Type} -> {0 p : a -> Type} -> {s0, s0' : Subset0 a p} ->
+  (0 _ : s0 = s0') -> snd0 s0 ~=~ snd0 s0'
+s0Eq2 {a} {p} Refl = Refl
+
+public export
+s0Eq12 : {0 a : Type} -> {0 p : a -> Type} -> {x, y : a} ->
+  {0 px : p x} -> {0 py : p y} ->
+  x = y -> px ~=~ py ->
+  Element0 {type=a} {dep=p} x px = Element0 {type=a} {dep=p} y py
+s0Eq12 {a} {p} {x} {y=x} {px} {py=px} Refl Refl = Refl
+
 -- Like Idris's standard `Exists`, but with the `this` dependent type
 -- taking a zero-usage type parameter.
 public export
@@ -179,6 +354,20 @@ record Exists0 (0 type : Type) (0 this : (0 _ : type) -> Type) where
   constructor Evidence0
   0 fst0 : type
   0 snd0 : this fst0
+
+public export
+e0Bimap : {0 a, b : Type} ->
+  {0 p : (0 _ : a) -> Type} -> {0 q : (0 _ : b) -> Type} ->
+  (0 f : a -> b) -> (0 _ : (0 ea : a) -> p ea -> q (f ea)) ->
+  Exists0 a p -> Exists0 b q
+e0Bimap {a} {b} {p} {q} f m eap =
+  Evidence0 (f (fst0 eap)) (m (fst0 eap) (snd0 eap))
+
+public export
+e0MapSnd : {0 a : Type} ->
+  {0 p : (0 _ : a) -> Type} -> {0 q : (0 _ : a) -> Type} ->
+  (0 _ : (0 ea : a) -> p ea -> q ea) -> Exists0 a p -> Exists0 a q
+e0MapSnd {a} {p} {q} = e0Bimap {a} {b=a} {p} {q} (id {a})
 
 public export
 exists0inj1 :
@@ -213,8 +402,8 @@ CExists0 a b = Exists0 a (const0 b)
 
 public export
 DecNonZero : (n : Nat) -> Dec (NonZero n)
-DecNonZero Z = No $ \nzz => case nzz of SIsNonZero impossible
-DecNonZero (S n) = Yes SIsNonZero
+DecNonZero Z = No $ \nzz => case nzz of ItIsSucc impossible
+DecNonZero (S n) = Yes ItIsSucc
 
 public export
 divMaybe : Nat -> Nat -> Maybe Nat
@@ -258,8 +447,15 @@ exfalsoTF : {0 a : Type} -> (0 tf : True = False) -> a
 exfalsoTF Refl impossible
 
 public export
-uip : {0 a : Type} -> {0 x, x' : a} -> {eq, eq' : x = x'} -> eq = eq'
+uip : {0 a, a' : Type} -> {0 x : a} -> {0 x' : a'} ->
+  {eq, eq' : x = x'} -> eq = eq'
 uip {eq=Refl} {eq'=Refl} = Refl
+
+public export
+uipHet : {0 a, a' : Type} -> {0 x, y : a} -> {0 x', y' : a'} ->
+  {eq : x = y} -> {eq' : x' = y'} -> {eq'' : x = x'} -> eq ~=~ eq'
+uipHet {a} {a'=a} {x} {y=x} {x'=x} {y'=x} {eq=Refl} {eq'=Refl} {eq''=Refl} =
+  Refl
 
 public export
 lteTolt : {m, n : Nat} -> LTE m n -> Not (m = n) -> LT m n
@@ -343,10 +539,20 @@ IsNothingTrue : {a : Type} -> Maybe a -> Type
 IsNothingTrue x = isJust x = False
 
 public export
+0 ReturnsJust : {0 a, b : Type} -> (f : a -> Maybe b) -> (x : a) -> Type
+ReturnsJust {a} {b} f x = IsJust (f x)
+
+public export
+MkMaybe : {0 a, b : Type} ->
+  (f : a -> Maybe b) -> (x : a) -> {auto 0 j : ReturnsJust f x} -> b
+MkMaybe {a} {b} f x {j} with (f x)
+  MkMaybe {a} {b} f x {j=ItIsJust} | (Just x') = x'
+
+public export
 fromIsTrueNat : (m, n : Nat) -> m == n = True -> m = n
-fromIsTrueNat 0 0 Refl = Refl
-fromIsTrueNat 0 (S n) Refl impossible
-fromIsTrueNat (S m) 0 Refl impossible
+fromIsTrueNat Z Z Refl = Refl
+fromIsTrueNat Z (S n) Refl impossible
+fromIsTrueNat (S m) Z Refl impossible
 fromIsTrueNat (S m) (S n) eq = cong S $ fromIsTrueNat m n eq
 
 public export
@@ -376,6 +582,20 @@ andBoth {p=True} {q=True} Refl Refl = Refl
 andBoth {p=True} {q=False} Refl Refl impossible
 andBoth {p=False} {q=True} Refl Refl impossible
 andBoth {p=False} {q=False} Refl Refl impossible
+
+public export
+orLeft : {p, q : Bool} -> IsTrue p -> IsTrue (p || q)
+orLeft {p=True} {q=True} Refl = Refl
+orLeft {p=True} {q=False} Refl = Refl
+orLeft {p=False} {q=True} Refl impossible
+orLeft {p=False} {q=False} Refl impossible
+
+public export
+orRight : {p, q : Bool} -> IsTrue q -> IsTrue (p || q)
+orRight {p=True} {q=True} Refl = Refl
+orRight {p=True} {q=False} Refl impossible
+orRight {p=False} {q=True} Refl = Refl
+orRight {p=False} {q=False} Refl impossible
 
 public export
 foldTrueInit : (b : Bool) -> (bs : List Bool) ->
@@ -415,9 +635,33 @@ repeat f Z e = e
 repeat f (S n) e = repeat f n (f e)
 
 public export
-fromIsJust : {a : Type} -> {x : Maybe a} -> IsJustTrue x -> a
+fromIsJust : {a : Type} -> {x : Maybe a} -> (0 _ : IsJustTrue x) -> a
 fromIsJust {x=(Just x)} Refl = x
 fromIsJust {x=Nothing} Refl impossible
+
+public export
+decCase : {0 a, b : Type} -> (e : Either a b) ->
+  Either (ea : a ** e = Left ea) (eb : b ** e = Right eb)
+decCase {a} {b} (Left ea) = Left (ea ** Refl)
+decCase {a} {b} (Right eb) = Right (eb ** Refl)
+
+public export
+IsLeftTrue : {0 a, b : Type} -> Either a b -> Type
+IsLeftTrue x = isLeft x = True
+
+public export
+fromIsLeft : {0 a, b : Type} -> {x : Either a b} -> (0 _ : IsLeftTrue x) -> a
+fromIsLeft {x=(Left x)} Refl = x
+fromIsLeft {x=(Right _)} Refl impossible
+
+public export
+IsRightTrue : {0 a, b : Type} -> Either a b -> Type
+IsRightTrue x = isRight x = True
+
+public export
+fromIsRight : {0 a, b : Type} -> {x : Either a b} -> (0 _ : IsRightTrue x) -> b
+fromIsRight {x=(Left _)} Refl impossible
+fromIsRight {x=(Right x)} Refl = x
 
 public export
 IsYesTrue : {a : Type} -> Dec a -> Type
@@ -442,15 +686,63 @@ sndEq : {a, b : Type} -> {x, y : (a, b)} -> x = y -> snd x = snd y
 sndEq Refl = Refl
 
 public export
+fstEqHetTy : {a, a', b, b' : Type} -> {x : (a, b)} -> {y : (a', b')} ->
+  x = y -> a = a'
+fstEqHetTy Refl = Refl
+
+public export
+sndEqHetTy : {a, a', b, b' : Type} -> {x : (a, b)} -> {y : (a', b')} ->
+  x = y -> b = b'
+sndEqHetTy Refl = Refl
+
+public export
+fstEqHet : {a, a', b, b' : Type} -> {x : (a, b)} -> {y : (a', b')} ->
+  (eq : x = y) -> fst x = (rewrite fstEqHetTy eq in fst y)
+fstEqHet Refl = Refl
+
+public export
+sndEqHet : {a, a', b, b' : Type} -> {x : (a, b)} -> {y : (a', b')} ->
+  (eq : x = y) -> snd x = (rewrite sndEqHetTy eq in snd y)
+sndEqHet Refl = Refl
+
+public export
+typeEq : {a, a' : Type} -> {ea : a} -> {ea' : a'} -> ea = ea' -> a = a'
+typeEq {a} {a'=a} {ea} {ea'=ea} Refl = Refl
+
+public export
 fromLteSuccYes : {m, n : Nat} ->
   IsYesTrue (isLT (S m) (S n)) -> IsYesTrue (isLT m n)
 fromLteSuccYes y = toIsYes (fromLteSucc $ fromIsYes y)
+
+public export
+lindexN : {0 a : Type} -> (i : Nat) -> (l : List a) ->
+  {auto 0 ok : IsTrue (i < length l)} -> a
+lindexN {a} Z [] {ok=Refl} impossible
+lindexN {a} (S i) [] {ok=Refl} impossible
+lindexN {a} Z (x :: xs) {ok=Refl} = x
+lindexN {a} (S i) (x :: xs) {ok} = lindexN {a} i xs {ok}
 
 public export
 finToNatLT : {m : Nat} -> (i : Fin m) -> LT (finToNat i) m
 finToNatLT {m=Z} i = absurd i
 finToNatLT {m=(S m)} FZ = LTESucc LTEZero
 finToNatLT {m=(S m)} (FS i) = LTESucc $ finToNatLT {m} i
+
+public export
+finToFin : {n : Nat} -> {i : Fin n} -> Fin (finToNat i) -> Fin n
+finToFin {n} {i} j = weakenLTE j $ lteSuccLeft $ finToNatLT {m=n} i
+
+-- Nothing but an alias with a shorter name, in anticipation of using this
+-- one a lot.
+public export
+nf : {0 n : Nat} -> (x : Nat) -> {auto 0 ok : LT x n} -> Fin n
+nf {n} x {ok} = natToFinLT {n} x
+
+public export
+fromListMaybe : {0 a : Type} -> {n : Nat} -> List a -> Maybe (Vect n a)
+fromListMaybe {a} {n} l with (decEq n $ length l)
+  fromListMaybe {a} {n=(length l)} l | Yes Refl = Just $ Data.Vect.fromList l
+  fromListMaybe {a} {n} l | No _ = Nothing
 
 public export
 indexN : {0 a : Type} -> {n : Nat} ->
@@ -521,6 +813,22 @@ finFToVect {a} {n=Z} f = []
 finFToVect {a} {n=(S n)} f = f FZ :: finFToVect {n} (f . FS)
 
 public export
+finFToVectIdx : {0 a : Type} -> {n : Nat} -> (f : Fin n -> a) -> (i : Fin n) ->
+  index i (finFToVect f) = f i
+finFToVectIdx {a} {n=(S _)} f FZ = Refl
+finFToVectIdx {a} {n=(S n)} f (FS i) = finFToVectIdx {a} {n} (f . FS) i
+
+public export
+finFToFromVectInv : FunExt -> {0 a : Type} -> {n : Nat} -> (v : Fin n -> a) ->
+  (flip (Vect.index {len=n} {elem=a}) (finFToVect {a} {n} v) = v)
+finFToFromVectInv fext {a} {n=Z} v =
+  funExt $ \i => case i of _ impossible
+finFToFromVectInv fext {a} {n=(S n)} v =
+  funExt $ \i => case i of
+    FZ => Refl
+    FS i' => fcong {x=i'} (finFToFromVectInv fext {a} {n} (v . FS))
+
+public export
 finHFToHVect : {n : Nat} -> {t : Fin n -> Type} -> ((i : Fin n) -> t i) ->
   HVect (finFToVect t)
 finHFToHVect {n=Z} {t} f = []
@@ -544,10 +852,7 @@ public export
 showHV : {0 n : Nat} -> {0 a : Type} ->
   (sl : a -> Type) -> (sh : (x : a) -> sl x -> String) ->
   (v : Vect n a) -> (hv : HVect (map sl v)) -> String
-showHV {n} {a} sl sh v =
-  show where
-    Shows n (map sl v) where
-      shows = showHVv {n} {a} sl sh v
+showHV {n} {a} sl sh v hv = show $ showHVv {n} {a} sl sh v hv
 
 public export
 hvDecEq : {0 n : Nat} -> {0 a : Type} ->
@@ -568,6 +873,17 @@ hvMap : {n : Nat} -> (ts, ts' : Vect n Type) ->
 hvMap {n=Z} [] [] f [] = []
 hvMap {n=(S n)} (t :: ts) (t' :: ts') f (x :: hv) =
   f FZ x :: hvMap {n} ts ts' (\i, u => f (FS i) u) hv
+
+public export
+HMatrix : {0 k : Nat} -> Vect k Nat -> Vect k Type -> Type
+HMatrix {k} ns tys = HVect {n=k} $ map (uncurry Vect) $ zip ns tys
+
+public export
+hmindex : {0 k : Nat} -> {ns : Vect k Nat} -> {tys : Vect k Type} ->
+  (i : Fin k) -> Fin (index i ns) -> HMatrix {k} ns tys -> index i tys
+hmindex {k=(S k)} {ns=(S n :: ns)} {tys=(ty :: tys)} FZ j (v :: hm) = index j v
+hmindex {k=(S k)} {ns=(n :: ns)} {tys=(ty :: tys)} (FS i) j (v :: hm) =
+  hmindex {k} {ns} {tys} i j hm
 
 public export
 mapIndex : {0 n : Nat} -> {0 a, b : Type} -> {0 f : a -> b} ->
@@ -750,13 +1066,13 @@ toIsTrueMaybeNat Nothing Nothing Refl = Refl
 toIsTrueMaybeNat (Just m) (Just m) Refl = equalNatCorrect {m}
 
 public export
-foldAppendExtensional : {0 a : Type} -> {n : Nat} ->
+0 foldAppendExtensional : {0 a : Type} -> {n : Nat} ->
   (l : List a) -> (v : Vect n a) ->
   foldrImpl (::) [] ((++) l) v = l ++ foldrImpl (::) [] (id {a=(List a)}) v
 foldAppendExtensional {a} {n} l v = ?foldAppendExtensional_hole
 
 public export
-foldLengthAppend : {0 a : Type} -> {n : Nat} ->
+0 foldLengthAppend : {0 a : Type} -> {n : Nat} ->
   (l : List a) -> (v : Vect n a) ->
   List.length (foldrImpl (::) [] ((++) l) v) =
     length l + (List.length (foldrImpl (::) [] (id {a=(List a)}) v))
@@ -848,7 +1164,7 @@ public export
 notLteReflectsLTE : {k, n : Nat} -> lte k n = False -> Not (k `LTE` n)
 notLteReflectsLTE nlte with (isLTE k n)
   notLteReflectsLTE nlte | Yes yLTE =
-    case trans (sym nlte) (LTEReflectsLte yLTE) of Refl impossible
+    case trans (sym nlte) (LTEReflectsLte yLTE) of eq => voidFalseTrue eq
   notLteReflectsLTE nlte | No notLTE = notLTE
 
 public export
@@ -893,21 +1209,21 @@ diffToLte {m} {n} {k=(S k)} pleq =
     pleq
 
 public export
-multDivLTLemma : (k, m, n, diffmsnsk : Nat) ->
+0 multDivLTLemma : (k, m, n, diffmsnsk : Nat) ->
   diffmsnsk + S k = m * S n ->
-  (diffmdivksn : Nat ** diffmdivksn + S (divNatNZ k (S n) SIsNonZero) = m)
+  (diffmdivksn : Nat ** diffmdivksn + S (divNatNZ k (S n) ItIsSucc) = m)
 multDivLTLemma k m n diffmsnsk diffmsnskeq = ?multDivLTLemma_hole
 
 public export
-multDivLT : {k, m, n : Nat} ->
+0 multDivLT : {k, m, n : Nat} ->
   LT k (m * n) -> (nz : NonZero n) -> LT (divNatNZ k n nz) m
-multDivLT {k} {m} {n=(S n)} lt SIsNonZero =
+multDivLT {k} {m} {n=(S n)} lt ItIsSucc =
   let
     (diffmsnsk ** diffmsnskeq) = lteToDiff lt
     (diffmdivksn ** diffmdivksneq) = multDivLTLemma k m n diffmsnsk diffmsnskeq
   in
   diffToLte
-    {m=(S (divNatNZ k (S n) SIsNonZero))} {n=m} {k=diffmdivksn} diffmdivksneq
+    {m=(S (divNatNZ k (S n) ItIsSucc))} {n=m} {k=diffmdivksn} diffmdivksneq
 
 public export
 multAddLT : {k, m, n, p : Nat} ->
@@ -925,11 +1241,11 @@ multAddLT {k} {m} {n=(S n)} {p=(S p)} (LTESucc ltkn) (LTESucc ltmp) =
       ltmp
 
 public export
-modLTDivisor : (m, n : Nat) -> LT (modNatNZ m (S n) SIsNonZero) (S n)
-modLTDivisor m n = boundModNatNZ m (S n) SIsNonZero
+modLTDivisor : (m, n : Nat) -> LT (modNatNZ m (S n) ItIsSucc) (S n)
+modLTDivisor m n = boundModNatNZ m (S n) ItIsSucc
 
 public export
-modLtDivisor : (m, n : Nat) -> IsTrue $ gt (S n) $ modNatNZ m (S n) SIsNonZero
+modLtDivisor : (m, n : Nat) -> IsTrue $ gt (S n) $ modNatNZ m (S n) ItIsSucc
 modLtDivisor m n = LTEReflectsLte $ fromLteSucc $ modLTDivisor m n
 
 public export
@@ -955,12 +1271,59 @@ monoidFromList id compose [] = id
 monoidFromList id compose (x :: l) = magmaFromNonEmptyList compose x l
 
 public export
-pairInj1 : {a, b : Type} -> {p, p' : (a, b)} -> p = p' -> fst p = fst p'
-pairInj1 Refl = Refl
+mapNonEmpty : {0 a, b : Type} -> {0 f : a -> b} -> {0 l : List a} ->
+  {0 ne : NonEmpty l} -> NonEmpty (map f l)
+mapNonEmpty {a} {b} {f} {l=(x :: xs)} {ne=IsNonEmpty} = IsNonEmpty
 
 public export
-pairInj2 : {a, b : Type} -> {p, p' : (a, b)} -> p = p' -> snd p = snd p'
-pairInj2 Refl = Refl
+pairInj1 : {a, a', b, b' : Type} -> {p : (a, b)} -> {p' : (a', b')} ->
+  p = p' -> fst p = fst p'
+pairInj1 {a} {a'=a} {b} {b'=b} {p=(ea, eb)} {p'=(ea, eb)} Refl = Refl
+
+public export
+pairInj2 : {a, a', b, b' : Type} -> {p : (a, b)} -> {p' : (a', b')} ->
+  p = p' -> snd p = snd p'
+pairInj2 {a} {a'=a} {b} {b'=b} {p=(ea, eb)} {p'=(ea, eb)} Refl = Refl
+
+public export
+pairFstSnd : {0 a, b : Type} -> (p : (a, b)) -> p = (fst p, snd p)
+pairFstSnd {a} {b} (ela, elb) = Refl
+
+public export
+pairEqCong : {0 a, b : Type} -> {p, p' : (a, b)} ->
+  fst p = fst p' -> snd p = snd p' -> p = p'
+pairEqCong {a} {b} {p=(ela, elb)} {p'=(ela', elb')} eq eq' =
+  rewrite eq in rewrite eq' in Refl
+
+public export
+bimapIdL : {0 a, c, d : Type} -> {0 g : c -> d} -> {ea : a} -> {ec : c} ->
+  bimap Prelude.id g (ea, ec) = (ea, g ec)
+bimapIdL {a} {c} {d} {g} {ea} {ec} = Refl
+
+public export
+bimapIdL1 : {0 a, c, d : Type} -> {0 g : c -> d} -> {eac : (a, c)} ->
+  fst (bimap Prelude.id g eac) = fst eac-- , g $ snd eac)
+bimapIdL1 {a} {c} {d} {g} {eac=(ea, ec)} = Refl
+
+public export
+bimapIdL2 : {0 a, c, d : Type} -> {0 g : c -> d} -> {eac : (a, c)} ->
+  snd (bimap Prelude.id g eac) = g (snd eac)
+bimapIdL2 {a} {c} {d} {g} {eac=(ea, ec)} = Refl
+
+public export
+bimapIdR : {0 a, b, d : Type} -> {0 f : a -> b} -> {ea : a} -> {ed : d} ->
+  bimap f Prelude.id (ea, ed) = (f ea, ed)
+bimapIdR {a} {b} {d} {f} {ea} {ed} = Refl
+
+public export
+bimapIdR1 : {0 a, b, d : Type} -> {0 f : a -> b} -> {ead : (a, d)} ->
+  fst (bimap f Prelude.id ead) = f (fst ead)
+bimapIdR1 {a} {b} {d} {f} {ead=(ea, ed)} = Refl
+
+public export
+bimapIdR2 : {0 a, b, d : Type} -> {0 f : a -> b} -> {ead : (a, d)} ->
+  snd (bimap f Prelude.id ead) = snd ead
+bimapIdR2 {a} {b} {d} {f} {ead=(ea, ed)} = Refl
 
 public export
 DecEqPred : (a: Type) -> Type
@@ -1011,6 +1374,15 @@ FinDecoder : Type -> Nat -> Type
 FinDecoder a size = Fin size -> a
 
 public export
+VectDecoder : Type -> Nat -> Type
+VectDecoder = flip Vect
+
+public export
+VectToFinDecoder : {0 a : Type} -> {0 size : Nat} ->
+  VectDecoder a size -> FinDecoder a size
+VectToFinDecoder {a} {size} = flip $ index {len=size} {elem=a}
+
+public export
 FinEncoder : {a : Type} -> {size : Nat} -> FinDecoder a size -> Type
 FinEncoder {a} {size} decoder = (e : a) -> (x : Fin size ** decoder x = e)
 
@@ -1021,10 +1393,21 @@ NatEncoder {a} {size} decoder =
     (n : Nat ** x : IsJustTrue (natToFin n size) ** decoder (fromIsJust x) = e)
 
 public export
+VectEncoder : {a : Type} -> {size : Nat} -> VectDecoder a size -> Type
+VectEncoder {a} {size} vd = NatEncoder {a} {size} (VectToFinDecoder vd)
+
+public export
 NatToFinEncoder : {a : Type} -> {size : Nat} -> {d : FinDecoder a size} ->
   NatEncoder {a} {size} d -> FinEncoder {a} {size} d
 NatToFinEncoder {a} {size} {d} enc e with (enc e)
   NatToFinEncoder {a} {size} {d} enc e | (n ** x ** eq) = (fromIsJust x ** eq)
+
+public export
+VectToFinEncoder : {a : Type} -> {size : Nat} -> {vd : VectDecoder a size} ->
+  VectEncoder {a} {size} vd -> FinEncoder {a} {size} (VectToFinDecoder vd)
+VectToFinEncoder {a} {size} {vd} ve ea with (ve ea)
+  VectToFinEncoder {a} {size} {vd} ve ea | (n ** islt ** eq) =
+    (fromIsJust islt ** eq)
 
 public export
 FinDecEncoding : (a : Type) -> (size : Nat) -> Type
@@ -1034,6 +1417,11 @@ public export
 NatDecEncoding : {a : Type} -> {size : Nat} ->
   (d : FinDecoder a size) -> NatEncoder {a} {size} d -> FinDecEncoding a size
 NatDecEncoding {a} {size} d enc = (d ** NatToFinEncoder enc)
+
+public export
+VectDecEncoding : {a : Type} -> {size : Nat} ->
+  (d : VectDecoder a size) -> VectEncoder {a} {size} d -> FinDecEncoding a size
+VectDecEncoding {a} {size} d e = (flip index d ** VectToFinEncoder e)
 
 public export
 fdeEq : {0 a : Type} -> {n : Nat} -> FinDecEncoding a n -> a -> a -> Bool
@@ -1097,7 +1485,7 @@ FinUnitDecEncoding : FinDecEncoding Unit 1
 FinUnitDecEncoding = (FinUnitDecoder ** FinUnitEncoder)
 
 public export
-FinSumDecoder : {m, n : Nat} -> {ty, ty' : Type} ->
+0 FinSumDecoder : {m, n : Nat} -> {ty, ty' : Type} ->
   FinDecoder ty m -> FinDecoder ty' n -> FinDecoder (Either ty ty') (m + n)
 FinSumDecoder {m} {n} {ty} {ty'} fde fde' i with (finToNat i) proof prf
   FinSumDecoder {m} {n} {ty} {ty'} fde fde' i | idx with (isLT idx m)
@@ -1109,7 +1497,7 @@ FinSumDecoder {m} {n} {ty} {ty'} fde fde' i with (finToNat i) proof prf
       natToFinLT {n} (minus idx m)
 
 public export
-FinSumEncoder : {m, n : Nat} -> {ty, ty' : Type} ->
+0 FinSumEncoder : {m, n : Nat} -> {ty, ty' : Type} ->
   {dec : FinDecoder ty m} -> {dec' : FinDecoder ty' n} ->
   (enc : FinEncoder {a=ty} {size=m} dec) ->
   (enc' : FinEncoder {a=ty'} {size=n} dec') ->
@@ -1132,7 +1520,7 @@ FinSumEncoder {m} {n} {dec} {dec'} enc enc' (Right e') with (enc' e') proof eqe
            ?finSumEncoder_hole_right_isinv)
 
 public export
-FinSumDecEncoding : {m, n : Nat} -> {ty, ty' : Type} ->
+0 FinSumDecEncoding : {m, n : Nat} -> {ty, ty' : Type} ->
   {dec : FinDecoder ty m} -> {dec' : FinDecoder ty' n} ->
   (enc : FinEncoder {a=ty} {size=m} dec) ->
   (enc' : FinEncoder {a=ty'} {size=n} dec') ->
@@ -1212,7 +1600,7 @@ FSlice ft = ftType ft -> Type
 -- A dependent list indexed by terms of a finite type.
 public export
 FHList : (ft : FinType) -> FTITyVect ft -> Type
-FHList ft tys = HVect {k=(ftSize ft)} tys
+FHList ft tys = HVect {n=(ftSize ft)} tys
 
 public export
 ListContains : {a : Type} -> List a -> a -> Type
@@ -1246,6 +1634,10 @@ ListContainsTrueUIP deq l x c c' = uip
 public export
 ListMember : {a : Type} -> List a -> Type
 ListMember {a} l = Subset0 a (ListContains l)
+
+public export
+listGet : {a : Type} -> {l : List a} -> ListMember {a} l -> a
+listGet {a} {l} = fst0
 
 public export
 ListMemberDec : {a : Type} -> DecEqPred a -> List a -> Type
@@ -1338,11 +1730,6 @@ blockIndent : Nat -> String -> String
 blockIndent n = unlines . map (indent n) . lines
 
 public export
-data HList : List Type -> Type where
-  HNil : HList []
-  HCons : ty -> HList tys -> HList (ty :: tys)
-
-public export
 mapExtEq : {0 a, b : Type} -> (f, g : a -> b) -> (l : List a) ->
   ((x : a) -> f x = g x) -> map f l = map g l
 mapExtEq f g [] eq = Refl
@@ -1391,3 +1778,65 @@ zipLen f [] [] Refl = []
 zipLen f [] (x :: xs) Refl impossible
 zipLen f (x :: xs) [] Refl impossible
 zipLen f (x :: xs) (y :: ys) eq = f x y :: zipLen f xs ys (injective eq)
+
+public export
+nzUnique : {n : Nat} -> (nz, nz' : NonZero n) -> nz = nz'
+nzUnique {n=(S n)} ItIsSucc ItIsSucc = Refl
+
+-- The number of bits required to store a natural number less than or equal to
+-- the input.  (Note that we don't need any bits to store a number less than
+-- or equal to 0, because it can only be zero, so we know what it is from the
+-- type alone.)
+public export
+bitsNeededFuel : (bits, target, fuel : Nat) -> Nat
+bitsNeededFuel bits target Z = bits
+bitsNeededFuel bits target (S n) =
+  if power 2 bits > target then bits else bitsNeededFuel (S bits) target n
+
+public export
+bitsNeeded : Nat -> Nat
+bitsNeeded n = bitsNeededFuel 0 n n
+
+public export
+succNonZero : {n : Nat} -> Not (S n = 0)
+succNonZero {n=Z} Refl impossible
+succNonZero {n=(S n)} Refl impossible
+
+public export
+plusZeroLeftZero : {m, n : Nat} -> m + n = 0 -> m = 0
+plusZeroLeftZero {m=Z} {n} _ = Refl
+plusZeroLeftZero {m=(S m)} {n} Refl impossible
+
+public export
+plusZeroRightZero : {m, n : Nat} -> m + n = 0 -> n = 0
+plusZeroRightZero {m} {n} eq =
+  plusZeroLeftZero {m=n} {n=m} $ trans (sym $ plusCommutative m n) eq
+
+-- Idris's `last'`, but with its internals exported to allow things to
+-- be proven about it.
+public export
+maybeLast : List a -> Maybe a
+maybeLast [] = Nothing
+maybeLast xs@(_::_) = Just (last xs)
+
+public export
+applyPure : Applicative f => {0 a, b : Type} -> f (a -> b) -> a -> f b
+applyPure = (|>) pure . (<*>)
+
+public export
+unitUnique : (x, y : Unit) -> x = y
+unitUnique () () = Refl
+
+public export
+congList : {0 a : Type} -> {x, x' : a} -> {l, l' : List a} ->
+  x = x' -> l = l' -> x :: l = x' :: l'
+congList {a} {x} {x'=x} {l} {l'=l} Refl Refl = Refl
+
+public export
+iterNpnt : Nat -> (x : Type) -> (x -> x) -> (x -> x)
+iterNpnt Z x f = id
+iterNpnt (S n) x f = f . iterNpnt n x f
+
+public export
+iterNf : (x : Type) -> (x -> x) -> Nat -> (x -> x)
+iterNf x f n = iterNpnt n x f

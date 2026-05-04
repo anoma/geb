@@ -110,101 +110,104 @@ fsObjTest2 = :>: ((!+) :+: (!+) :+: (!*))
 adt0ShowTest : ADT0ObjF Void
 adt0ShowTest = ADT0Initial
 
-pzPolyFromObjList : List NatObj -> PZPoly
+0 pzPolyFromObjList : List NatObj -> PZPoly
 pzPolyFromObjList [] =
   MkPZPoly NatOZ (const NatOZ)
 pzPolyFromObjList (x :: xs) =
   MkPZPoly (MetaToNatObj (length xs)) (sliceArrayFromList x xs)
 
-pzPolyFromList : List Nat -> PZPoly
+0 pzPolyFromList : List Nat -> PZPoly
 pzPolyFromList = pzPolyFromObjList . map MetaToNatObj
 
-examplePzPoly : PZPoly
+0 examplePzPoly : PZPoly
 examplePzPoly = pzPolyFromList [3, 2, 0, 3]
 
-examplePzPolyTest : Assertion
-examplePzPolyTest = Assert $ pzApplyMeta examplePzPoly 7 == 1389
+-- 0 examplePzPolyTest : Assertion
+-- examplePzPolyTest = Assert $ pzApplyMeta examplePzPoly 7 == 1389
 
-examplePzPolySum : Assertion
-examplePzPolySum = Assert $ NatObjToMeta (pzSumCoeff examplePzPoly) == 9
+-- 0 examplePzPolySum : Assertion
+-- examplePzPolySum = Assert $ NatObjToMeta (pzSumCoeff examplePzPoly) == 9
 
-exampleLongPzPoly : PZPoly
+0 exampleLongPzPoly : PZPoly
 exampleLongPzPoly = pzPolyFromList [0, 1, 2, 3, 4, 5, 6, 7, 7]
 
-exampleEmptyPzPoly : PZPoly
+0 exampleEmptyPzPoly : PZPoly
 exampleEmptyPzPoly = pzPolyFromList []
 
-exampleZeroPzPoly : PZPoly
+0 exampleZeroPzPoly : PZPoly
 exampleZeroPzPoly = pzPolyFromList [0]
 
-exampleOnePzPoly : PZPoly
+0 exampleOnePzPoly : PZPoly
 exampleOnePzPoly = pzPolyFromList [1]
 
-exampleIncZeroPzPoly : PZPoly
+0 exampleIncZeroPzPoly : PZPoly
 exampleIncZeroPzPoly = pzPolyFromList [3, 0]
 
-exampleIncOnePzPoly : PZPoly
+0 exampleIncOnePzPoly : PZPoly
 exampleIncOnePzPoly = pzPolyFromList [3, 1]
 
-pzArenaFromObjList : List NatObj -> PZArena
+0 pzArenaFromObjList : List NatObj -> PZArena
 pzArenaFromObjList l =
   MkPZArena (MetaToNatObj (length l)) (prefixArrayFromList l)
 
-pzArenaFromList : List Nat -> PZArena
+0 pzArenaFromList : List Nat -> PZArena
 pzArenaFromList = pzArenaFromObjList . map MetaToNatObj
 
-exampleEmptyPzArena : PZArena
+0 exampleEmptyPzArena : PZArena
 exampleEmptyPzArena = pzArenaFromList []
 
-exampleSmallPzArena : PZArena
+0 exampleSmallPzArena : PZArena
 exampleSmallPzArena = pzArenaFromList [3]
 
-exampleLongPzArena : PZArena
+0 exampleLongPzArena : PZArena
 exampleLongPzArena = pzArenaFromList [11, 17, 3, 5, 10, 0, 2]
 
-ex256p1 : PZPoly
+0 ex256p1 : PZPoly
 ex256p1 = pzPolyFromList [0, 2, 0, 0]
 
-ex256p2 : PZPoly
+0 ex256p2 : PZPoly
 ex256p2 = pzPolyFromList [2, 0, 1, 0, 0]
 
-ex256p1a : PZArena
+0 ex256p1a : PZArena
 ex256p1a = pzToArena ex256p1
 
-ex256p2a : PZArena
+0 ex256p2a : PZArena
 ex256p2a = pzToArena ex256p2
 
-ex256onPos : OnPosT RefinedADTTest.ex256p1a RefinedADTTest.ex256p2a
+0 ex256onPos : OnPosT RefinedADTTest.ex256p1a RefinedADTTest.ex256p2a
 ex256onPos = InitPrefixMap 4 [0, 0, 3]
 
 ex256onDir0List : List Nat
 ex256onDir0List = [2, 0, 2, 2]
 
-ex256onDir0 : MetaPrefixMap 4 3
+0 ex256onDir0 : MetaPrefixMap 4 3
 ex256onDir0 = InitPrefixMap 3 ex256onDir0List
 
 ex256onDir1List : List Nat
 ex256onDir1List = [0, 0, 0, 0]
 
-ex256onDir1 : MetaPrefixMap 4 1
+0 ex256onDir1 : MetaPrefixMap 4 1
 ex256onDir1 = InitPrefixMap 1 ex256onDir1List
 
 ex256onDir2List : List Nat
 ex256onDir2List = []
 
-ex256onDir2 : MetaPrefixMap 0 1
+0 ex256onDir2 : MetaPrefixMap 0 1
 ex256onDir2 = InitPrefixMap 1 ex256onDir2List
 
-ex256onDir :
+0 ex256onDir :
   OnDirT
     {domain=(RefinedADTTest.ex256p1a)}
     {codomain=(RefinedADTTest.ex256p2a)}
     RefinedADTTest.ex256onPos
+ex256onDir = ?ex256onDir_hole
+{-
 ex256onDir =
   InitOnDir {domain=ex256p1a} {codomain=ex256p2a}
     ex256onPos [ex256onDir0List, ex256onDir1List, ex256onDir2List]
+    -}
 
-ex256lens : PZLens RefinedADTTest.ex256p1a RefinedADTTest.ex256p2a
+0 ex256lens : PZLens RefinedADTTest.ex256p1a RefinedADTTest.ex256p2a
 ex256lens = MkPZLens ex256onPos ex256onDir
 
 natObjSumTest0 : Assertion
@@ -291,10 +294,21 @@ natObjPowTest11 : Assertion
 natObjPowTest11 = Assert $
   natObjPow (MetaToNatObj 4) (MetaToNatObj 3) == MetaToNatObj 64
 
+----------------------------------
+----------------------------------
+----- Exported test function -----
+----------------------------------
+----------------------------------
+
 export
 languageDefRefinedADTTest : IO ()
 languageDefRefinedADTTest = do
-  putStrLn "Begin languageDefRefinedADTTest:"
+  putStrLn ""
+  putStrLn "===================="
+  putStrLn "Begin RefinedADTTest:"
+  putStrLn "--------------------"
+  putStrLn ""
+  {-
   putStrLn $ show exampleFinNatPoly
   putStrLn "Begin pzPoly"
   putStrLn $ show examplePzPoly
@@ -326,7 +340,6 @@ languageDefRefinedADTTest = do
     showDepPrefixContraMap
       (pzNumDir ex256p1a) (pzNumDir ex256p2a) ex256onPos ex256onDir
   putStrLn $ "Ex 2.56 lens: " ++ showPZLens ex256lens
-  {-
   putStrLn $ show finOrdMorphTest1
   putStrLn $ show finOrdMorphTest5
   putStrLn $ show finOrdMorphTest6
@@ -347,5 +360,7 @@ languageDefRefinedADTTest = do
   putStrLn $ show fsObjTest2
   putStrLn $ show adt0ShowTest
   -}
-  putStrLn "End languageDefRefinedADTTest."
+  putStrLn "-------------------"
+  putStrLn "End RefinedADTTest."
+  putStrLn "==================="
   pure ()

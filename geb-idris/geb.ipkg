@@ -5,14 +5,68 @@ modules =
     , Library.IdrisUtils
     , Library.IdrisCategories
     , Library.CategoryTheory
+    , Library.IdrisAlgebra
+    , Test.TestLibrary
+    , Library.Test.IdrisUtilsTest
+    , Library.Test.IdrisCategoriesTest
+    , Library.Test.CategoryTheoryTest
+    , Library.Test.IdrisAlgebraTest
+    , LanguageDef.QType
+    , LanguageDef.SpanCospan
+    , LanguageDef.InternalCat
+    , LanguageDef.InternalHigherCat
+    , LanguageDef.InternalProfunctor
+    , LanguageDef.Nock
+    , LanguageDef.IntArena
+    , LanguageDef.IntTwistedArrowCat
+    , LanguageDef.IntUFamCat
+    , LanguageDef.IntEFamCat
+    , LanguageDef.IntParamCat
+    , LanguageDef.IntDisheafCat
+    , LanguageDef.IntUCofamCat
+    , LanguageDef.IntECofamCat
+    , LanguageDef.IntDepFamCat
+    , LanguageDef.IntFactCat
+    , LanguageDef.IntFactCatFunc
+    , LanguageDef.MLBundleCat
+    , LanguageDef.MLDirichCat
+    , LanguageDef.MLTwistPair
+    , LanguageDef.SlicePolyCat
+    , LanguageDef.SliceFuncCat
+    , LanguageDef.HelixCat
+    , LanguageDef.DiPolyFunc
+    , LanguageDef.MLDiPolyFunc
+    , LanguageDef.RopeCat
+    , LanguageDef.SlPolyIntCat
+    , LanguageDef.SlPolyImpred
+    , LanguageDef.SlicePolyDialg
+    , LanguageDef.HigherPolyCat
+    , LanguageDef.SlicePolyUMorph
+    , LanguageDef.Telescope
+    , LanguageDef.FinPoly
+    , LanguageDef.RQFin
+    , LanguageDef.DisliceCat
+    , LanguageDef.DislicePolyCat
+    , LanguageDef.Quiver
+    , LanguageDef.MLQuivCat
+    , LanguageDef.MLQuivUniv
+    , LanguageDef.PolyDifunc
+    , LanguageDef.MLQuivPoly
+    , LanguageDef.GenPolyFunc
+    , LanguageDef.PolySliceCat
+    , LanguageDef.FinCat
+    , LanguageDef.BinTree
+    , LanguageDef.Geb
     , LanguageDef.NatPrefixCat
     , LanguageDef.PolyProfunctor
     , LanguageDef.ADTCat
     , LanguageDef.ProgFinSet
     , LanguageDef.GebTopos
     , LanguageDef.PolyCat
+    , LanguageDef.PolyProfEnd
     , LanguageDef.Atom
     , LanguageDef.RefinedADT
+    , LanguageDef.PolyIndTypes
     , LanguageDef.Expression
     , LanguageDef.UniversalCategory
     , LanguageDef.Interpretation
@@ -22,6 +76,53 @@ modules =
     , LanguageDef.ComputationalEffects
     , LanguageDef.Embedded
     , LanguageDef.FullLanguageDef
+    , LanguageDef.Diprofunctor
+    , LanguageDef.TreeCalculus
+    , LanguageDef.FinCatPRA
+    , LanguageDef.SlicePolyDifunc
+    , LanguageDef.Test.QTypeTest
+    , LanguageDef.Test.IntArenaTest
+    , LanguageDef.Test.IntTwistedArrowCatTest
+    , LanguageDef.Test.IntUFamCatTest
+    , LanguageDef.Test.IntEFamCatTest
+    , LanguageDef.Test.IntParamCatTest
+    , LanguageDef.Test.IntDisheafCatTest
+    , LanguageDef.Test.IntUCofamCatTest
+    , LanguageDef.Test.IntECofamCatTest
+    , LanguageDef.Test.IntDepFamCatTest
+    , LanguageDef.Test.IntFactCatTest
+    , LanguageDef.Test.IntFactCatFuncTest
+    , LanguageDef.Test.SpanCospanTest
+    , LanguageDef.Test.InternalCatTest
+    , LanguageDef.Test.InternalHigherCatTest
+    , LanguageDef.Test.InternalProfunctorTest
+    , LanguageDef.Test.NockTest
+    , LanguageDef.Test.MLBundleCatTest
+    , LanguageDef.Test.MLDirichCatTest
+    , LanguageDef.Test.MLTwistPairTest
+    , LanguageDef.Test.SlicePolyCatTest
+    , LanguageDef.Test.SliceFuncCatTest
+    , LanguageDef.Test.HelixCatTest
+    , LanguageDef.Test.DiPolyFuncTest
+    , LanguageDef.Test.MLDiPolyFuncTest
+    , LanguageDef.Test.RopeCatTest
+    , LanguageDef.Test.SlPolyIntCatTest
+    , LanguageDef.Test.SlPolyImpredTest
+    , LanguageDef.Test.SlicePolyUMorphTest
+    , LanguageDef.Test.TelescopeTest
+    , LanguageDef.Test.SlicePolyDialgTest
+    , LanguageDef.Test.DisliceCatTest
+    , LanguageDef.Test.QuiverTest
+    , LanguageDef.Test.MLQuivCatTest
+    , LanguageDef.Test.MLQuivUnivTest
+    , LanguageDef.Test.PolyDifuncTest
+    , LanguageDef.Test.MLQuivPolyTest
+    , LanguageDef.Test.GenPolyFuncTest
+    , LanguageDef.Test.PolySliceCatTest
+    , LanguageDef.Test.HigherPolyCatTest
+    , LanguageDef.Test.FinCatTest
+    , LanguageDef.Test.BinTreeTest
+    , LanguageDef.Test.GebTest
     , LanguageDef.Test.NatPrefixCatTest
     , LanguageDef.Test.PolyProfunctorTest
     , LanguageDef.Test.ADTCatTest
@@ -30,6 +131,7 @@ modules =
     , LanguageDef.Test.PolyCatTest
     , LanguageDef.Test.AtomTest
     , LanguageDef.Test.RefinedADTTest
+    , LanguageDef.Test.PolyIndTypesTest
     , LanguageDef.Test.ExpressionTest
     , LanguageDef.Test.InterpretationTest
     , LanguageDef.Test.SyntaxTest
@@ -38,16 +140,19 @@ modules =
     , LanguageDef.Test.LogicTest
     , LanguageDef.Test.ComputationalEffectsTest
     , LanguageDef.Test.EmbeddedTest
-    , Test.TestLibrary
-    , Library.Test.IdrisUtilsTest
-    , Library.Test.IdrisCategoriesTest
-    , Library.Test.CategoryTheoryTest
+    , LanguageDef.Test.FinPolyTest
+    , LanguageDef.Test.RQFinTest
+    , LanguageDef.Test.DiprofunctorTest
+    , LanguageDef.Test.TreeCalculusTest
+    , LanguageDef.Test.FinCatPRATest
+    , LanguageDef.Test.PolyProfEndTest
+    , LanguageDef.Test.SlicePolyDifuncTest
 
 depends = contrib, network, test
 
 sourcedir = "src"
 
-opts = "--total --warnpartial"
+opts = "--total"
 
 main = Executable.Test.Main
 executable = geb

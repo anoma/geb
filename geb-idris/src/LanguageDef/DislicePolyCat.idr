@@ -1,0 +1,1495 @@
+module LanguageDef.DislicePolyCat
+
+import Library.IdrisUtils
+import Library.IdrisCategories
+import public LanguageDef.DisliceCat
+import LanguageDef.PolyCat
+import LanguageDef.SlicePolyCat
+import LanguageDef.PolySliceCat
+import LanguageDef.InternalCat
+
+--------------------------------------------------------
+--------------------------------------------------------
+---- Polynomial functors between dislice categories ----
+--------------------------------------------------------
+--------------------------------------------------------
+
+----------------------------------------------
+---- Dependent-type style (`ABundleObj`) ----
+----------------------------------------------
+
+export
+ADSLbc : {b, b' : Type} -> {cb : SliceObj b} ->
+  (m : b' -> b) -> ADSLomap (b ** cb) (b' ** (cb . m))
+ADSLbc {b} {b'} {cb} m (ADSO tot inj) = ADSO (tot . m) (\eb' => inj $ m eb')
+
+export
+ADSLbcMap : {b, b' : Type} -> {cb : SliceObj b} ->
+  (m : b' -> b) -> ADSLfmap (ADSLbc {b} {b'} {cb} m)
+ADSLbcMap {b} {b'} {cb} m (ADSO tot inj) (ADSO tot' inj') (ADSM mor _ {eq}) =
+  ADSM (\eb' => mor (m eb')) (\eb' => inj' (m eb')) {eq=(\eb' => eq $ m eb')}
+
+export
+ADSLbcFunc : {b, b' : Type} -> {cb : SliceObj b} ->
+  (m : b' -> b) -> ADSLfunc (b ** cb) (b' ** (cb . m))
+ADSLbcFunc {b} {b'} {cb} m = ADSLf (ADSLbc m) (ADSLbcMap m)
+
+export
+ADSLcbc : {b : Type} -> {cb, cb' : SliceObj b} ->
+  SliceMorphism {a=b} cb' cb -> ADSLomap (b ** cb) (b ** cb')
+ADSLcbc {b} {cb} {cb'} m (ADSO tot inj) =
+  ADSO tot (\eb, ecb' => inj eb $ m eb ecb')
+
+export
+ADSLcbcMap : {b : Type} -> {cb, cb' : SliceObj b} ->
+  (m : SliceMorphism {a=b} cb' cb) -> ADSLfmap (ADSLcbc {b} {cb} {cb'} m)
+ADSLcbcMap {b} {cb} {cb'} m (ADSO tot inj) (ADSO tot' inj') (ADSM mor _ {eq}) =
+  ADSM mor (\eb => inj' eb . m eb) {eq=(\eb, ecb' => eq eb (m eb ecb'))}
+
+export
+ADSLcbcFunc : {b : Type} -> {cb, cb' : SliceObj b} ->
+  SliceMorphism {a=b} cb' cb -> ADSLfunc (b ** cb) (b ** cb')
+ADSLcbcFunc {b} {cb} {cb'} m = ADSLf (ADSLcbc m) (ADSLcbcMap m)
+
+-- Dibase change: simultaneous base and cobase change.  For a dislice category,
+-- this is the analogue of base change to a slice category, or cobase change
+-- to a cobase category.
+export
+ADSLdc : {b, b' : Type} -> {cb : SliceObj b} -> {cb' : SliceObj b'} ->
+  ABundleMor (b' ** cb') (b ** cb) ->
+  ADSLomap (b ** cb) (b' ** cb')
+ADSLdc {b} {b'} {cb} {cb'} (mb ** mc) =
+  ADSLcbc {b=b'} {cb=(cb . mb)} {cb'} mc . ADSLbc {b} {b'} {cb} mb
+
+export
+ADSLdcMap : {b, b' : Type} -> {cb : SliceObj b} -> {cb' : SliceObj b'} ->
+  (mb : ABundleMor (b' ** cb') (b ** cb)) ->
+  ADSLfmap (ADSLdc {b} {b'} {cb} {cb'} mb)
+ADSLdcMap {b} {b'} {cb} {cb'} (mb ** mc) x y =
+  ADSLcbcMap {b=b'} {cb=(cb . mb)} {cb'} mc (ADSLbc mb x) (ADSLbc mb y)
+  . ADSLbcMap {b} {b'} {cb} mb x y
+
+export
+ADSLdcFunc : {b, b' : Type} -> {cb : SliceObj b} -> {cb' : SliceObj b'} ->
+  (mb : ABundleMor (b' ** cb') (b ** cb)) ->
+  ADSLfunc (b ** cb) (b' ** cb')
+ADSLdcFunc {b} {b'} {cb} {cb'} mb = ADSLf (ADSLdc mb) (ADSLdcMap mb)
+
+export
+ADSLsigma : {b : Type} -> (p : SliceObj b) -> {cb : SliceObj (Sigma {a=b} p)} ->
+  ADSLomap ((Sigma {a=b} p) ** cb) (b ** SliceSigmaF {c=b} p cb)
+ADSLsigma {b} p {cb} (ADSO tot inj) =
+  ADSO (SliceSigmaF {c=b} p tot) (ssMap {c=b} {sl=p} cb tot inj)
+
+export
+ADSLsigmaMap : {b : Type} ->
+  (p : SliceObj b) -> {cb : SliceObj (Sigma {a=b} p)} ->
+  ADSLfmap (ADSLsigma {b} p {cb})
+ADSLsigmaMap {b} p {cb} (ADSO tot inj) (ADSO tot' inj') (ADSM mor _ {eq}) =
+  ADSM
+    (ssMap {c=b} {sl=p} tot tot' mor)
+    (ssMap {c=b} {sl=p} cb tot' inj')
+    {eq=(\eb, (ep ** ecb) => dpEq12 Refl $ eq (eb ** ep) ecb)}
+
+export
+ADSLsigmaFunc : {b : Type} ->
+  (p : SliceObj b) -> (cb : SliceObj (Sigma {a=b} p)) ->
+  ADSLfunc ((Sigma {a=b} p) ** cb) (b ** SliceSigmaF {c=b} p cb)
+ADSLsigmaFunc {b} p cb = ADSLf (ADSLsigma {b} p {cb}) (ADSLsigmaMap {b} p {cb})
+
+export
+ADSLfibSigma : {b, b' : Type} -> (p : SliceObj b) -> (mb : b -> b') ->
+  ADSLomap (b ** p) (b' ** SliceFibSigmaF {c=b} mb p)
+ADSLfibSigma {b} {b'} p mb (ADSO tot inj) =
+  ADSO (SliceFibSigmaF mb tot) (sfsMap {f=mb} p tot inj)
+
+export
+ADSLfibSigmaMap : {b, b' : Type} ->
+  (p : SliceObj b) -> (mb : b -> b') ->
+  ADSLfmap (ADSLfibSigma {b} {b'} p mb)
+ADSLfibSigmaMap {b} {b'} p mb
+  (ADSO tot inj) (ADSO tot' inj') (ADSM mor _ {eq}) =
+    ADSM
+      (sfsMap tot tot' mor)
+      (sfsMap p tot' inj')
+      {eq=(\eb', (SFS eb ep) => rewrite eq eb ep in Refl)}
+
+export
+ADSLfibSigmaFunc : {b, b': Type} ->
+  (p : SliceObj b) -> (mb : b -> b') ->
+  ADSLfunc (b ** p) (b' ** SliceFibSigmaF {c=b} mb p)
+ADSLfibSigmaFunc {b} {b'} p mb =
+  ADSLf (ADSLfibSigma {b} {b'} p mb) (ADSLfibSigmaMap {b} {b'} p mb)
+
+export
+ADSLcbcSigma :
+  {b, b' : Type} -> {cb : SliceObj b} -> {cb' : SliceObj b'} ->
+  (mb : b -> b') -> SliceMorphism {a=b'} cb' (SliceFibSigmaF mb cb) ->
+  ADSLomap (b ** cb) (b' ** cb')
+ADSLcbcSigma {b} {b'} {cb} {cb'} mb mcb =
+  ADSLcbc mcb . ADSLfibSigma {b} {b'} cb mb
+
+export
+ADSLcbcSigmaMap :
+  {b, b' : Type} -> {cb : SliceObj b} -> {cb' : SliceObj b'} ->
+  (mb : b -> b') -> (mcb : SliceMorphism {a=b'} cb' (SliceFibSigmaF mb cb)) ->
+  ADSLfmap (ADSLcbcSigma {b} {b'} {cb} {cb'} mb mcb)
+ADSLcbcSigmaMap {b} {b'} {cb} {cb'} mb mcb x y =
+  ADSLcbcMap {cb=(SliceFibSigmaF mb cb)} {cb'} mcb
+      (ADSLfibSigma cb mb x) (ADSLfibSigma cb mb y)
+  . ADSLfibSigmaMap cb mb x y
+
+-- An analogue of `SPFpoCell` -- a twisted-arrow morphism which
+-- induces a functor between dislice categories.
+export
+ADSLcbcSigmaFunc :
+  {b, b' : Type} -> {cb : SliceObj b} -> {cb' : SliceObj b'} ->
+  (mb : b -> b') -> (mcb : SliceMorphism {a=b'} cb' (SliceFibSigmaF mb cb)) ->
+  ADSLfunc (b ** cb) (b' ** cb')
+ADSLcbcSigmaFunc mb mcb = ADSLf (ADSLcbcSigma mb mcb) (ADSLcbcSigmaMap mb mcb)
+
+export
+ADSLpi : {b : Type} -> (p : SliceObj b) -> {cb : SliceObj (Sigma {a=b} p)} ->
+  ADSLomap ((Sigma {a=b} p) ** cb) (b ** SlicePiF {c=b} p cb)
+ADSLpi {b} p {cb} (ADSO tot inj) =
+  ADSO (SlicePiF {c=b} p tot) (spMap {c=b} {sl=p} cb tot inj)
+
+export
+ADSLpiMap : FunExt -> {b : Type} ->
+  (p : SliceObj b) -> {cb : SliceObj (Sigma {a=b} p)} ->
+  ADSLfmap (ADSLpi {b} p {cb})
+ADSLpiMap fext {b} p {cb} (ADSO tot inj) (ADSO tot' inj') (ADSM mor _ {eq}) =
+  ADSM
+    (spMap {c=b} {sl=p} tot tot' mor)
+    (spMap {c=b} {sl=p} cb tot' inj')
+    {eq=(\eb, picb => funExt $ \ep => eq (eb ** ep) $ picb ep)}
+
+export
+ADSLpiFunc : FunExt -> {b : Type} ->
+  (p : SliceObj b) -> (cb : SliceObj (Sigma {a=b} p)) ->
+  ADSLfunc ((Sigma {a=b} p) ** cb) (b ** SlicePiF {c=b} p cb)
+ADSLpiFunc fext {b} p cb = ADSLf (ADSLpi {b} p {cb}) (ADSLpiMap fext {b} p {cb})
+
+------------------------------------------
+---- Categorial-style (`CBundleObj`) ----
+------------------------------------------
+
+export
+CDSLbc : {b, b', cb : Type} -> {proj : cb -> b} ->
+  (m : b' -> b) ->
+  CDSLomap (CBO b cb proj) (cbPullback (CBO b cb proj) m)
+CDSLbc {b} {b'} {cb} {proj} m (CDSO tot f1 f2 comm) =
+  CDSO
+    (Pullback f2 m)
+    (\(Element0 (eb', ecb) eqpm) =>
+      Element0 (f1 ecb, eb') $ trans (comm ecb) $ sym eqpm)
+    (pbProj2 {f=f2} {g=m})
+    (\(Element0 (eb', ecb) eqpm) => Refl)
+
+export
+CDSLbcMap : {b, b', cb : Type} -> {proj : cb -> b} ->
+  (m : b' -> b) ->
+  CDSLfmap (CDSLbc {b} {b'} {proj} m)
+CDSLbcMap {b} {b'} {cb} {proj} m (CDSO tot f1 f2 comm) (CDSO tot' f1' f2' comm')
+  (CDSM mtot meq1 meq2) =
+    CDSM
+      (\(Element0 (et, eb') eqf2m) =>
+        Element0 (mtot et, eb') $ trans (sym $ meq2 et) eqf2m)
+      (\(Element0 (eb', ecb) eqpm) =>
+        s0Eq12
+          (rewrite meq1 ecb in Refl)
+          (rewrite meq1 ecb in uip))
+      (\(Element0 (et, eb') eqf2m) => Refl)
+
+export
+CDSLbcFunc : {b, b', cb : Type} -> {proj : cb -> b} ->
+  (m : b' -> b) ->
+  CDSLfunc (CBO b cb proj) (cbPullback (CBO b cb proj) m)
+CDSLbcFunc {b} {b'} {cb} {proj} m = CDSLf (CDSLbc m) (CDSLbcMap m)
+
+export
+CDSLcbc : {b, cb, cb' : Type} -> {proj : cb -> b} -> {proj' : cb' -> b} ->
+  CSliceMorphism {c=b} (cb' ** proj') (cb ** proj) ->
+  CDSLomap (CBO b cb proj) (CBO b cb' proj')
+CDSLcbc {b} {cb} {cb'} {proj} {proj'}
+  (Element0 mcb mcomm) (CDSO tot f1 f2 fcomm) =
+    CDSO
+      tot
+      (f1 . mcb)
+      f2
+      (\ecb' => trans (fcomm $ mcb ecb') $ sym $ mcomm ecb')
+
+export
+CDSLcbcMap : {b, cb, cb' : Type} -> {proj : cb -> b} -> {proj' : cb' -> b} ->
+  (m : CSliceMorphism {c=b} (cb' ** proj') (cb ** proj)) ->
+  CDSLfmap (CDSLcbc {b} {cb} {cb'} {proj} {proj'} m)
+CDSLcbcMap {b} {cb} {cb'} {proj} {proj'}
+  (Element0 mcb mcomm) (CDSO xtot xf1 xf2 xfcomm) (CDSO ytot yf1 yf2 yfcomm)
+  (CDSM mtot meq1 meq2) =
+    CDSM mtot (\ecb' => meq1 $ mcb ecb') meq2
+
+export
+CDSLcbcFunc : {b, cb, cb' : Type} -> {proj : cb -> b} -> {proj' : cb' -> b} ->
+  (m : CSliceMorphism {c=b} (cb' ** proj') (cb ** proj)) ->
+  CDSLfunc (CBO b cb proj) (CBO b cb' proj')
+CDSLcbcFunc {b} {cb} {cb'} {proj} {proj'} m = CDSLf (CDSLcbc m) (CDSLcbcMap m)
+
+export
+CDSLdc : {b, b', cb, cb' : Type} -> {proj : cb -> b} -> {proj' : cb' -> b'} ->
+  CBundleMor (CBO b' cb' proj') (CBO b cb proj) ->
+  CDSLomap (CBO b cb proj) (CBO b' cb' proj')
+CDSLdc {b} {b'} {cb} {cb'} {proj} {proj'} (CBM mb mp) =
+  CDSLcbc
+    {b=b'} {cb=(Pullback mb proj)} {cb'}
+    {proj=(pbProj1 {f=mb} {g=proj})} {proj'}
+    mp
+  . CDSLbc
+    {b} {b'} {cb} {proj}
+    mb
+
+export
+CDSLdcMap : {b, b', cb, cb' : Type} -> {proj : cb -> b} -> {proj' : cb' -> b'} ->
+  (mb : CBundleMor (CBO b' cb' proj') (CBO b cb proj)) ->
+  CDSLfmap (CDSLdc {b} {b'} {cb} {cb'} {proj} {proj'} mb)
+CDSLdcMap {b} {b'} {cb} {cb'} {proj} {proj'} (CBM mb mcb) x y =
+  CDSLcbcMap {b=b'} {cb=(Pullback mb proj)} {cb'}
+    {proj=(pbProj1 {f=mb} {g=proj})} {proj'}
+    mcb (CDSLbc mb x) (CDSLbc mb y)
+  . CDSLbcMap {b} {b'} {cb} {proj} mb x y
+
+-- Dibase change: simultaneous base and cobase change.  For a dislice category,
+-- this is the analogue of base change to a slice category, or cobase change
+-- to a cobase category.
+export
+CDSLdcFunc : {b, b', cb, cb' : Type} ->
+  {proj : cb -> b} -> {proj' : cb' -> b'} ->
+  CBundleMor (CBO b' cb' proj') (CBO b cb proj) ->
+  CDSLfunc (CBO b cb proj) (CBO b' cb' proj')
+CDSLdcFunc mb = CDSLf (CDSLdc mb) (CDSLdcMap mb)
+
+export
+CDSLsigma : {b, b', cb : Type} -> {proj : cb -> b} ->
+  (m : b -> b') ->
+  CDSLomap (CBO b cb proj) (CBO b' cb (m . proj))
+CDSLsigma {b} {b'} {cb} {proj} m (CDSO tot f1 f2 comm) =
+  CDSO
+    (fst $ CSSigma {c=b} {d=b'} m (tot ** f2))
+    f1
+    (snd $ CSSigma {c=b} {d=b'} m (tot ** f2))
+    (\ecb => cong m $ comm ecb)
+
+export
+CDSLsigmaMap : {b, b', cb : Type} -> {proj : cb -> b} ->
+  (m : b -> b') ->
+  CDSLfmap (CDSLsigma {proj} m)
+CDSLsigmaMap {b} {b'} {cb} {proj}
+  m (CDSO xtot xf1 xf2 xcomm) (CDSO ytot yf1 yf2 ycomm) (CDSM mtot meq1 meq2) =
+    CDSM
+      (fst0
+       $ csSigmaMap {c=b} {d=b'} {f=m} (xtot ** xf2) (ytot ** yf2)
+       $ Element0 mtot meq2)
+      meq1
+      (snd0
+       $ csSigmaMap {c=b} {d=b'} {f=m} (xtot ** xf2) (ytot ** yf2)
+       $ Element0 mtot meq2)
+
+export
+CDSLsigmaFunc : {b, b', cb : Type} -> {proj : cb -> b} ->
+  (m : b -> b') ->
+  CDSLfunc (CBO b cb proj) (CBO b' cb (m . proj))
+CDSLsigmaFunc m = CDSLf (CDSLsigma m) (CDSLsigmaMap m)
+
+export
+CDSLcbcSigma :
+  {b, b', cb, cb' : Type} -> {proj : cb -> b} -> {proj' : cb' -> b'} ->
+  (mb : b -> b') ->
+  CSliceMorphism {c=b'} (cb' ** proj') (CSSigma mb (cb ** proj)) ->
+  CDSLomap (CBO b cb proj) (CBO b' cb' proj')
+CDSLcbcSigma {b} {b'} {cb} {cb'} {proj} {proj'} mb mcb =
+  CDSLcbc mcb . CDSLsigma {b} {b'} {cb} {proj} mb
+
+export
+CDSLcbcSigmaMap :
+  {b, b', cb, cb' : Type} -> {proj : cb -> b} -> {proj' : cb' -> b'} ->
+  (mb : b -> b') ->
+  (mcb : CSliceMorphism {c=b'} (cb' ** proj') (CSSigma mb (cb ** proj))) ->
+  CDSLfmap (CDSLcbcSigma {proj} {proj'} mb mcb)
+CDSLcbcSigmaMap {b} {b'} {cb} {cb'} {proj} {proj'} mb mcb x y =
+  CDSLcbcMap {proj=(mb . proj)} mcb (CDSLsigma mb x) (CDSLsigma mb y)
+  . CDSLsigmaMap {proj} mb x y
+
+-- An analogue of `SPFpoCell` -- a twisted-arrow morphism which
+-- induces a functor between dislice categories.
+export
+CDSLcbcSigmaFunc :
+  {b, b', cb, cb' : Type} -> {proj : cb -> b} -> {proj' : cb' -> b'} ->
+  (mb : b -> b') ->
+  CSliceMorphism {c=b'} (cb' ** proj') (CSSigma mb (cb ** proj)) ->
+  CDSLfunc (CBO b cb proj) (CBO b' cb' proj')
+CDSLcbcSigmaFunc mb mcb = CDSLf (CDSLcbcSigma mb mcb) (CDSLcbcSigmaMap mb mcb)
+
+-- Here we show that the parameters to `CDSLcbcSigmaFunc` may be seen
+-- as a twisted-arrow morphism.
+export
+CDSLcbcSigmaFuncTw :
+  {b, b', cb, cb' : Type} -> {proj : cb -> b} -> {proj' : cb' -> b'} ->
+  (mcb : cb' -> cb) -> (mb : b -> b') ->
+  ExtEq {a=cb'} {b=b'} (mb . proj . mcb) proj' ->
+  CDSLfunc (CBO b cb proj) (CBO b' cb' proj')
+CDSLcbcSigmaFuncTw {proj} {proj'} mcb mb twcomm =
+  CDSLcbcSigmaFunc {proj} {proj'} mb (Element0 mcb $ \ecb' => sym $ twcomm ecb')
+
+export
+CDSLpi : {b, p, cb : Type} ->
+  (pproj : p -> b) -> {cbbproj : cb -> b} ->
+  (cbpproj : CSliceMorphism {c=b} (cb ** cbbproj) (p ** pproj)) ->
+  CDSLomap
+    (CBO p cb $ fst0 cbpproj)
+    (CBO
+      b
+      (CSliceObjDomain $ CSPi {c=p} {d=b} pproj (cb ** fst0 cbpproj))
+      (CSliceObjMap $ CSPi {c=p} {d=b} pproj (cb ** fst0 cbpproj)))
+CDSLpi {b} {p} {cb} pproj {cbbproj} (Element0 cbpproj cbpeq)
+  (CDSO tot fact1 fact2 comm) =
+    CDSO
+      (fst $ CSPi {c=p} {d=b} pproj (tot ** fact2))
+      (\(eb ** Element0 pcb pcbeq) =>
+        (eb **
+         (Element0 (fact1 . pcb)
+          (\ep => trans (pcbeq ep) $ sym $ comm $ pcb $ ep))))
+      (snd $ CSPi {c=p} {d=b} pproj (tot ** fact2))
+      (\(eb ** Element0 ep pcbeq) => Refl)
+
+export
+CDSLpiMap : FunExt -> {b, p, cb : Type} ->
+  (pproj : p -> b) -> {cbbproj : cb -> b} ->
+  (cbpproj : CSliceMorphism {c=b} (cb ** cbbproj) (p ** pproj)) ->
+  CDSLfmap (CDSLpi pproj cbpproj)
+CDSLpiMap fext {b} {p} {cb} pproj {cbbproj} (Element0 cbpproj cbpeq)
+  x@(CDSO xtot xfact1 xfact2 xcomm)
+  y@(CDSO ytot yfact1 yfact2 ycomm)
+  m@(CDSM mtot meq1 meq2) =
+    CDSM
+      (fst0
+       $ csPiMap {f=pproj} (xtot ** xfact2) (ytot ** yfact2)
+       $ Element0 mtot meq2)
+      (\(eb ** Element0 xmap xmeq) =>
+        dpEq12
+          Refl
+          $ s0Eq12
+            (funExt $ \ep => meq1 $ xmap $ ep)
+            $ rewrite funExt meq1 in funExt $ \ep => uip)
+       (snd0
+        $ csPiMap {f=pproj} (xtot ** xfact2) (ytot ** yfact2)
+        $ Element0 mtot meq2)
+
+export
+CDSLpiFunc : FunExt -> {b, p, cb : Type} ->
+  (pproj : p -> b) -> {cbbproj : cb -> b} ->
+  (cbpproj : CSliceMorphism {c=b} (cb ** cbbproj) (p ** pproj)) ->
+  CDSLfunc
+    (CBO p cb $ fst0 cbpproj)
+    (CBO
+      b
+      (CSliceObjDomain $ CSPi {c=p} {d=b} pproj (cb ** fst0 cbpproj))
+      (CSliceObjMap $ CSPi {c=p} {d=b} pproj (cb ** fst0 cbpproj)))
+CDSLpiFunc fext pproj cbpproj =
+  CDSLf (CDSLpi pproj cbpproj) (CDSLpiMap fext pproj cbpproj)
+
+------------------------------------------
+------------------------------------------
+---- CDislice as category of elements ----
+------------------------------------------
+------------------------------------------
+
+-- Here we use `CDSLcbcSigmaFuncTw` to exhibit dislice categories
+-- as categories of elements of twisted-arrow copresheaves.
+--
+-- It turns out that what I've called the "dislice category" has a
+-- standard name, the "factorization category":
+--
+-- https://ncatlab.org/nlab/show/factorization+category
+--
+-- Note also that the twisted-arrow category is the category of elements
+-- of the (covariant) hom-profunctor, and a copresheaf on the category of
+-- elements of a copresheaf `p` is a slice over `p` (in the category of
+-- copresheaves), so we may equally view this copresheaf as an object
+-- in the slice category of the category of endoprofunctors over the
+-- hom-profunctor.
+--
+-- This copresheaf on the twisted-arrow category can be seen as analogous
+-- to a simultaneous covariant and contravariant hom-functor in the base
+-- category -- where the (co)total spaces are shared.  Compared to the
+-- profunctor `SpliceObj`, this partitions the splice category into its
+-- connected components, with each component determined by the composite
+-- of the two morphisms in each object (which must be the same for all
+-- objects in each connected component).  Thus a splice category is the
+-- coproduct category over all morphisms.
+--
+-- Because this is the analogue of a combination of covariant and contravariant
+-- hom-functors on the base category, we shall view these as direpresentables,
+-- one per twisted-arrow object -- the bundles are viewed as objects of the
+-- twisted-arrow category as opposed to any other category whose objects are
+-- bundles because twisted-arrow morphisms are the ones which act on the
+-- pairs of morphisms contained within the `CDisliceObj` objects in the same
+-- way as the covariant and contravariant hom-functors do on those morphisms
+-- (while preserving the factorization condition thanks to the commutativity
+-- condition of twisted-arrow morphisms).
+--
+-- Thus `CDSLtwCopr` is a further-refined version of the sequence of
+-- covariant or contravariant hom-functor and hom-profunctor:  the
+-- one-variable hom-functors act on objects of the base category and
+-- produce types of outgoing or incoming morphisms; the hom-profunctor
+-- acts on objects of the product of the opposite of the base category
+-- with the base category itself and produces types of morphisms between
+-- them; and the factorization functor acts on twisted arrows to produce
+-- compatible pairs of outgoing and incoming morphisms (i.e. pairs which
+-- compose with each other and whose composites equal the arrow part of
+-- the twisted-arrow object).
+--
+-- Note that while the twisted-arrow category itself, like any category,
+-- has representable functors for each object (covariant and contravariant),
+-- the _direpresentable_ functors, also indexed by twisted arrows, are
+-- different.  The representable functors, as with any category, produce
+-- sets of outgoing (for the covariant representable functor) or incoming
+-- (for the contravariant representable functor) morphisms (twisted-arrow
+-- morphisms, in this case); `CDSLtwCopr` produces sets of _factorizations_.
+-- We tend to view the direpresentables as probes of the underlying category,
+-- like the one-variable representables, rather than of the twisted-arrow
+-- category.
+public export
+CDSLtwCopr : TwArrCoprSig
+CDSLtwCopr x y mxy = CDisliceObj (CBO y x mxy)
+
+public export
+CDSLtwMap : TwArrCoprDimapSig CDSLtwCopr
+CDSLtwMap s t a b mst mas mtb =
+  cdslO $
+    CDSLcbcSigmaFuncTw
+      {b=t} {b'=b} {cb=s} {cb'=a} {proj=mst} {proj'=(mtb . mst . mas)}
+      mas mtb (\_ => Refl)
+
+-- Here we make precise the comment above about why we treat the bundles
+-- as twisted-arrow objects by showing that the copresheaf `CDSLtwCopr`
+-- on the twisted-arrow category extends to a functor from the twisted-arrow
+-- category to `Cat`, of which it is the object projection.
+public export
+CDSLtwCoprMor : (s, t : Type) -> (mst : s -> t) ->
+  IntMorSig (CDSLtwCopr s t mst)
+CDSLtwCoprMor s t mst = CDisliceMorph {cat=(CBO t s mst)}
+
+public export
+CDSLtwCoprMorMap : (s, t, a, b : Type) ->
+  (mst : s -> t) -> (mas : a -> s) -> (mtb : t -> b) ->
+  (x, y : CDSLtwCopr s t mst) ->
+  CDSLtwCoprMor s t mst
+    x
+    y ->
+  CDSLtwCoprMor a b (mtb . mst . mas)
+    (CDSLtwMap s t a b mst mas mtb x)
+    (CDSLtwMap s t a b mst mas mtb y)
+CDSLtwCoprMorMap s t a b mst mas mtb =
+  cdslF $
+    CDSLcbcSigmaFuncTw
+      {b=t} {b'=b} {cb=s} {cb'=a} {proj=mst} {proj'=(mtb . mst . mas)}
+      mas mtb (\_ => Refl)
+
+-- The objects of the coproduct category of the dislice categories
+-- over all morphisms from `x` to `y`, which is equivalent to the
+-- splice category of `x` and `y`.
+public export
+CDSLtwToHomSlTot : ProfunctorSig
+CDSLtwToHomSlTot x y = DPair (x -> y) (CDSLtwCopr x y)
+
+-- This projection exhibits `CDSLtwCopr` as an object in the slice category
+-- of the category of endoprofunctors over the hom-profunctor.
+public export
+CDSLtwToHomSlProj : TypeProfNT CDSLtwToHomSlTot HomProf
+CDSLtwToHomSlProj x y = DPair.fst
+
+-- The opposite of a dislice category is equivalent to the dislice
+-- category of the opposite morphism (i.e. the same morphism of the
+-- underlying category, viewed as a morphism in the opposite category -
+-- so for `a, b : C` and `f : C(a,b)`, we have `f^op : C^op (b,a)`).
+-- We define here another functor from the twisted-arrow category to
+-- `Cat`, this time yielding the dislice category of the opposite morphism.
+-- For Grothendieck-construction purposes, we will end up viewing this
+-- as a presheaf on `(Tw(C^op)^op)`, meaning we'll use the contravariant
+-- Grothendieck construction, where we pull back the codomain instead
+-- of pushing forward the domain.
+public export
+CDSLtwOp : TwArrCoprOpSig
+CDSLtwOp x y = CDSLtwCopr y x
+
+public export
+CDSLtwOpMap : TwArrCoprOpContraDimapSig CDSLtwOp
+CDSLtwOpMap s t a b mts msa mbt = CDSLtwMap t s b a mts mbt msa
+
+public export
+CDSLtwOpMor : (s, t : Type) -> (mst : t -> s) ->
+  IntMorSig (CDSLtwOp s t mst)
+CDSLtwOpMor s t = CDSLtwCoprMor t s
+
+public export
+CDSLtwOpMorMap : (s, t, a, b : Type) ->
+  (mts : t -> s) -> (msa : s -> a) -> (mbt : b -> t) ->
+  (x, y : CDSLtwOp s t mts) ->
+  CDSLtwOpMor s t mts
+    x
+    y ->
+  CDSLtwOpMor a b (msa . mts . mbt)
+    (CDSLtwOpMap s t a b mts msa mbt x)
+    (CDSLtwOpMap s t a b mts msa mbt y)
+CDSLtwOpMorMap s t a b mts msa mbt = CDSLtwCoprMorMap t s b a mts mbt msa
+
+public export
+CDSLtwOpToHomSlTot : ProfunctorSig
+CDSLtwOpToHomSlTot x y = DPair (y -> x) (CDSLtwOp x y)
+
+public export
+CDSLtwOpToHomSlProj : TypeProfNT CDSLtwOpToHomSlTot (flip HomProf)
+CDSLtwOpToHomSlProj x y = DPair.fst
+
+---------------------------------------------------
+---------------------------------------------------
+---- Dipolynomial functors from dislice arenas ----
+---------------------------------------------------
+---------------------------------------------------
+
+public export
+record ADiArena where
+  constructor DiAr
+  daPos : Type
+  daCat : daPos -> ABundleObj
+
+public export
+DAobj : (da : ADiArena) -> SliceObj (daPos da)
+DAobj da = ADisliceObj . daCat da
+
+public export
+DAbase : (da : ADiArena) -> SliceObj (daPos da)
+DAbase da = abBase . daCat da
+
+public export
+DAcoTot : (da : ADiArena) -> SliceObj (daPos da)
+DAcoTot da = abTot . daCat da
+
+public export
+DAcobase : (da : ADiArena) -> (i : daPos da) -> SliceObj (DAbase da i)
+DAcobase da i = abCobase (daCat da i)
+
+public export
+DAtot : {da : ADiArena} -> {i : daPos da} -> DAobj da i ->
+  SliceObj (DAbase da i)
+DAtot {da} {i} = adsoTot {cat=(daCat da i)}
+
+public export
+DAsigma : {da : ADiArena} -> {i : daPos da} -> SliceObj (DAobj da i)
+DAsigma {da} {i} = Sigma {a=(DAbase da i)} . DAtot {da} {i}
+
+public export
+DAinj : {da : ADiArena} -> {i : daPos da} -> (x : DAobj da i) ->
+  SliceMorphism {a=(DAbase da i)} (DAcobase da i) (DAtot {da} {i} x)
+DAinj {da} {i} = adsoInj {cat=(daCat da i)}
+
+public export
+data InterpDAf : ADiArena -> Type -> Type where
+  IDAf :
+    {0 da : ADiArena} -> (i : daPos da) -> (obj : DAobj da i) ->
+    InterpDAf da (DAsigma {da} {i} obj)
+
+export
+IDAfpos : {da : ADiArena} -> {x : Type} -> (e : InterpDAf da x) -> daPos da
+IDAfpos {da} (IDAf {da} i obj) = i
+
+export
+IDAfobj : {da : ADiArena} -> {x : Type} ->
+  (e : InterpDAf da x) -> DAobj da (IDAfpos e)
+IDAfobj {da} (IDAf {da} i obj) = obj
+
+--------------------------------------------------
+--------------------------------------------------
+---- Polynomial profunctors as curried arenas ----
+--------------------------------------------------
+--------------------------------------------------
+
+-- If we consider `ADiArena`s where `pos : Type` is `Type` itself,
+-- then, given that `ADiArena` actually has effectively the same
+-- signature as `PolyFunc`, then we are considering arenas of type
+-- `Type -> PolyFunc`.  If we absorb the type parameter into the
+-- structure, we obtain a position functor and a natural transformation
+-- from that functor to the constant functor which returns `Type`
+-- itself.
+--
+-- In order to obtain a profunctor, it turns out that we must make
+-- the position functor contravariant, i.e. into a functor not
+-- `Type -> Type`, but `op(Type) -> Type`.
+--
+-- However, that definition by itself requires multiple pieces of
+-- other attendant definitions and proof content:  the position
+-- functor requires a `contramap`, which must be proven to obey the
+-- functor laws, and the natural transformation requires a proof of
+-- the naturality condition.
+--
+-- Furthermore, it is unclear in that definition whether we should
+-- consider the resulting profunctor "polynomial", in particular because
+-- there is no constraint on the contravariant position functor.
+--
+-- Thus, we can take a further step and require that the position functor
+-- be _Dirichlet_ -- a "contravariant polynomial functor".  This provides
+-- an implicit `contramap` which is guaranteed to obey the functor laws,
+-- and furthermore provides a notion of Dirichlet natural transformation
+-- which is guaranteed to obey the naturality condition.
+--
+-- It also allows a reduction of some components of the structure,
+-- for example to eliminate functions to `Unit`, which are redundant
+-- as they can only be the unique morphism to the terminal object.
+--
+-- Once such reductions are performed, it results in the `PolyProAr`
+-- structure below.  This structure specializes to polynomial functors
+-- when all the `ppContra`s are `Unit`, and to Dirichlet functors when
+-- all the `ppCovar`s are `Void`.  It also corresponds to the notion
+-- of a slice polynomial functor where the domain is `Fin(2)` and the
+-- codomain is `Fin(1)`, which is isomorphic to just `Type` -- in
+-- effect, an uncurried form of the signature of an endoprofunctor on
+-- `Type`, i.e. `(Type, Type) -> Type` -- but interpreted so that the
+-- first parameter is contravariant.
+public export
+record PolyProAr where
+  constructor PPA
+  ppPos : Type
+  ppContra : SliceObj ppPos
+  ppCovar : SliceObj ppPos
+
+export
+InterpPPA : PolyProAr -> ProfunctorSig
+InterpPPA (PPA pos contra covar) x y =
+  (i : pos ** (x -> contra i, covar i -> y))
+
+export
+InterpPPAdimap : (ppa : PolyProAr) -> (0 s, t, a, b : Type) ->
+  (a -> s) -> (t -> b) -> InterpPPA ppa s t -> InterpPPA ppa a b
+InterpPPAdimap (PPA pos contra covar) s t a b mas mtb (i ** (dx, dy)) =
+  (i ** (dx . mas, mtb . dy))
+
+PPAEndBase : PolyProAr -> Type
+PPAEndBase ppa = (x : Type) -> InterpPPA ppa x x
+
+-- This could be seen as a natural transformation from the hom-profunctor
+-- to `InterpPPA ppa`.  It induces a functor from the category of
+-- elements of the hom-profunctor (which is the twisted-arrow category)
+-- to the category of elements of `InterpPPA`.
+public export
+PPAProdP : PolyProAr -> Type
+PPAProdP ppa = (a, b : Type) -> (a -> b) -> InterpPPA ppa a b
+
+public export
+ppaWedgeRight : (ppa : PolyProAr) -> PPAEndBase ppa -> PPAProdP ppa
+ppaWedgeRight (PPA pos contra covar) eb a b f with (eb a)
+  ppaWedgeRight (PPA pos contra covar) eb a b f | (i ** (dx, dy)) =
+    (i ** (dx, f . dy))
+
+public export
+ppaWedgeLeft : (ppa : PolyProAr) -> PPAEndBase ppa -> PPAProdP ppa
+ppaWedgeLeft (PPA pos contra covar) eb a b f with (eb b)
+  ppaWedgeLeft (PPA pos contra covar) eb a b f | (i ** (dx, dy)) =
+    (i ** (dx . f, dy))
+
+public export
+PPAEnd : PolyProAr -> Type
+PPAEnd ppa@(PPA pos contra covar) =
+  (ebi : pos **
+   ebcont : (x : Type) -> x -> contra ebi **
+   ebcov : (x : Type) -> covar ebi -> x **
+   (a, b : Type) -> (f : a -> b) ->
+    (ExtEq (ebcont b . f) (ebcont a), ExtEq (ebcov b) (f . ebcov a)))
+
+-- This may be viewed as an object of the category of diagonal
+-- elements of `InterpPPA ppa`.
+PPACoendBase : PolyProAr -> Type
+PPACoendBase ppa = (x : Type ** InterpPPA ppa x x)
+
+PPASumP : PolyProAr -> Type
+PPASumP ppa =
+  (ab : (Type, Type) ** (snd ab -> fst ab, InterpPPA ppa (fst ab) (snd ab)))
+
+public export
+ppaCowedgeLeft : (ppa : PolyProAr) -> PPASumP ppa -> PPACoendBase ppa
+ppaCowedgeLeft (PPA pos contra covar) ((a, b) ** (mba, (i ** (dcont, dcov)))) =
+  (b ** i ** (dcont . mba, dcov))
+
+public export
+ppaCowedgeRight : (ppa : PolyProAr) -> PPASumP ppa -> PPACoendBase ppa
+ppaCowedgeRight (PPA pos contra covar) ((a, b) ** (mba, (i ** (dcont, dcov)))) =
+  (a ** i ** (dcont, mba . dcov))
+
+-- Again viewing a polynomial endoprofunctor on `Type` as a slice functor
+-- from `Fin(2)` to `Fin(1)` but with different variances, we can define
+-- natural transformations in the style of slice natural transformations.
+record PPAnt (p, q : PolyProAr) where
+  constructor MkPPAnt
+  ppaOnPos : ppPos p -> ppPos q
+  ppaOnContra : (i : ppPos p) -> ppContra p i -> ppContra q (ppaOnPos i)
+  ppaOnCovar : (i : ppPos p) -> ppCovar q (ppaOnPos i) -> ppCovar p i
+
+-- Modulo coequalization, we could view the hom-profunctor as a polynomial
+-- functor whose position-set is `Type` and whose direction-slice-objects
+-- are both `id`.  Then we can ask what natural transformations to the
+-- hom-profunctor look like.
+PHomProf : PolyProAr
+PHomProf = PPA Type id id
+
+-- Note that this structure resembles a category of elements itself,
+-- if we imagine `InterpPPA` as a functor into the slice category of
+-- `Type` over the positions of `p`.`
+record PPAntToHom (p : PolyProAr) where
+  constructor NTtoHP
+  pthOnPos : SliceObj (ppPos p)
+  pthOnContra : SliceMorphism {a=(ppPos p)} (ppContra p) pthOnPos
+  pthOnCovar : SliceMorphism {a=(ppPos p)} pthOnPos (ppCovar p)
+
+--------------------------------------------------
+--------------------------------------------------
+---- Experiments with natural transformations ----
+--------------------------------------------------
+--------------------------------------------------
+
+-- A natural transformation between covariant representable functors `p, q` of
+-- the form `SliceObj c -> Type` is, by the Yoneda lemma, determined by a
+-- morphism in the opposite direction between their representing objects --
+-- so, `SliceMorphism(rep(q), rep(p))`.
+--
+-- If `q` is a _sum_ of representable functors (but `p` is still representable),
+-- then a natural transformation from `p` to `q` is a natural transformation
+-- into a sum, which, in the case of polynomial functors, amounts to a choice
+-- of a single one of the representing objects of the functors of which `q`
+-- is a sum.  So for `q` as a sum over `qpos` of representables, a natural
+-- transformation from a representable `p` is takes the form
+-- `(qi : qpos ** SliceMorphism (q[qi], rep(p)))`.
+--
+-- If `p` is _also_ a sum of representables, then a natural transformation
+-- from `p` to `q` is a natural transformation _from_ a sum, which is a
+-- product of natural transformations.  Thus such a transformation takes the
+-- form `(pi : ppos) -> (qi : qpos ** SliceMorphism(q[qi], p[pi]))`.
+-- We can factor this into
+-- `(onpos : ppos -> qpos ** (pi : ppos) -> SliceMorphism(q[onpos pi], p[pi]))`,
+-- which we might expand to be more explicit as
+-- `(onpos : ppos -> qpos **
+--   (pi : ppos) -> (ec : c) -> q[onpos pi](ec) -> p[pi](ec))`.
+--
+-- Finally, _any_ functor of the form `SliceObj c -> SliceObj d` can be
+-- factored into `d` functors of the form `SliceObj c -> SliceObj d`, and
+-- we know that the category of polynomial functors is closed under products,
+-- so a polynomial natural transformation between functors of the form
+-- `SliceObj(c) -> SliceObj(d)` must be a natural transformation between
+-- products:
+
+-- So if `p` and `q`
+-- of the form `SliceObj c -> SliceObj d` are both products of `d` representable
+-- functors, then a natural transformation between them takes the form
+-- `SliceMorphism(sum(d)(rep(q[_])), sum(d)(rep(p[_])))`, where the morphism
+-- is still in the slice category over `c`, between `d`-indexed set-coproducts
+-- of objects of the slice category over `c`.
+record PSS (c, d : Type) where
+  constructor MkPSS
+  pssPos : SliceObj d
+  pssDir : (ed : d) -> pssPos ed -> SliceObj c
+
+InterpCovPSS : (c, d : Type) -> PSS c d -> SliceObj c -> SliceObj d
+InterpCovPSS c d pss slc eld =
+  (i : pssPos pss eld ** SliceMorphism {a=c} (pssDir pss eld i) slc)
+
+interpCovPSSfmap : (c, d : Type) -> (pss : PSS c d) -> (sc, sc' : SliceObj c) ->
+  SliceMorphism {a=c} sc sc' ->
+  SliceMorphism {a=d} (InterpCovPSS c d pss sc) (InterpCovPSS c d pss sc')
+interpCovPSSfmap c d pss sc sc' m ed (i ** di) = (i ** sliceComp {a=c} m di)
+
+record PSnt (c, d : Type) (p, q : PSS c d) where
+  constructor MkPSNT
+  psntOnPos : SliceMorphism {a=d} (pssPos p) (pssPos q)
+  psntOnDir : (ed : d) -> (i : pssPos p ed) ->
+    SliceMorphism {a=c} (pssDir q ed (psntOnPos ed i)) (pssDir p ed i)
+
+InterpPSnt : (c, d : Type) -> (p, q : PSS c d) -> PSnt c d p q ->
+  (sc : SliceObj c) ->
+  SliceMorphism {a=d} (InterpCovPSS c d p sc) (InterpCovPSS c d q sc)
+InterpPSnt c d (MkPSS ppos pdir) (MkPSS qpos qdir) (MkPSNT op od)
+  sc ed (i ** pdi) =
+    (op ed i ** \ec, qdi => pdi ec $ od ed i ec qdi)
+
+-------------------------------------------------------------------------------
+---- Embedding of slice polynomial functors within polynomial endofunctors ----
+-------------------------------------------------------------------------------
+
+public export
+PSStoPos : {dom, cod : Type} -> PSS dom cod -> Type
+PSStoPos {dom} {cod} (MkPSS pos dir) = Pair (Sigma {a=cod} pos) dom
+
+public export
+PSStoDir : {dom, cod : Type} -> (pss : PSS dom cod) ->
+  PSStoPos {dom} {cod} pss -> Type
+PSStoDir {dom} {cod} (MkPSS pos dir) ((i ** ec), ed) = dir i ec ed
+
+public export
+PSStoPoly : {dom, cod : Type} -> PSS dom cod -> PolyFunc
+PSStoPoly {dom} {cod} pss =
+  (PSStoPos {dom} {cod} pss ** PSStoDir {dom} {cod} pss)
+
+public export
+PSSDomSlice : {dom, cod : Type} -> (pss : PSS dom cod) ->
+  MLPolyCatElemObj (PSStoPoly {dom} {cod} pss) -> dom
+PSSDomSlice {dom} {cod} (MkPSS pos dir) (x ** ((ec ** i), ed) ** d) = ed
+
+public export
+PSSCodSlice : {dom, cod : Type} -> (pss : PSS dom cod) ->
+  MLPolyCatElemObj (PSStoPoly {dom} {cod} pss) -> cod
+PSSCodSlice {dom} {cod} (MkPSS pos dir) (x ** ((ec ** i), ed) ** d) = ec
+
+--------------------------------------
+--------------------------------------
+---- Slice polynomial profunctors ----
+--------------------------------------
+--------------------------------------
+
+-- The data which determine a slice polynomial profunctor from
+-- `(op(Type)/d, Type/c)`, to (enriched over) `Type/v`.
+record SlProAr (d, c, v : Type) where
+  constructor SPA
+  spaPos : SliceObj v
+  spaContra : (ev : v) -> spaPos ev -> SliceObj d
+  spaCovar : (ev : v) -> spaPos ev -> SliceObj c
+
+public export
+spaDirPB : {c, v : Type} ->
+  (p : SlProAr c c v) -> (ev : v) -> spaPos p ev -> SliceObj c
+spaDirPB {c} {v} p ev ep ec = (spaContra p ev ep ec, spaCovar p ev ep ec)
+
+InterpSPA : (d, c, v : Type) -> SlProAr d c v ->
+  SliceObj d -> SliceObj c -> SliceObj v
+InterpSPA d c v (SPA pos contra covar) sld slc elv =
+  (i : pos elv **
+   (SliceMorphism {a=d} sld (contra elv i),
+    SliceMorphism {a=c} (covar elv i) slc))
+
+spaLmap : (d, c, v : Type) -> (spa : SlProAr d c v) ->
+  (sld, sld' : SliceObj d) -> (slc : SliceObj c) ->
+  SliceMorphism {a=d} sld' sld ->
+  SliceMorphism {a=v}
+    (InterpSPA d c v spa sld slc)
+    (InterpSPA d c v spa sld' slc)
+spaLmap d c v (SPA pos contra covar) sld sld' slc md'd elv
+  (i ** (dd, dc)) =
+    (i ** (sliceComp {a=d} dd md'd, dc))
+
+spaRmap : (d, c, v : Type) -> (spa : SlProAr d c v) ->
+  (sld : SliceObj d) -> (slc, slc' : SliceObj c) ->
+  SliceMorphism {a=c} slc slc' ->
+  SliceMorphism {a=v}
+    (InterpSPA d c v spa sld slc)
+    (InterpSPA d c v spa sld slc')
+spaRmap d c v (SPA pos contra covar) sld slc slc' mcc' elv
+  (i ** (dd, dc)) =
+    (i ** (dd, sliceComp {a=c} mcc' dc))
+
+spaDimap : (d, c, v : Type) -> (spa : SlProAr d c v) ->
+  (sld, sld' : SliceObj d) -> (slc, slc' : SliceObj c) ->
+  SliceMorphism {a=d} sld' sld ->
+  SliceMorphism {a=c} slc slc' ->
+  SliceMorphism {a=v}
+    (InterpSPA d c v spa sld slc)
+    (InterpSPA d c v spa sld' slc')
+spaDimap d c v spa sld sld' slc slc' md'd mcc' elv =
+  spaLmap d c v spa sld sld' slc' md'd elv
+  . spaRmap d c v spa sld slc slc' mcc' elv
+
+public export
+record SlProNT {d, c, v : Type} (p, q : SlProAr d c v) where
+  constructor SProNT
+  sproPos : SliceMorphism {a=v} (spaPos p) (spaPos q)
+  sproContra : (ev : v) -> (ep : spaPos p ev) ->
+    SliceMorphism {a=d} (spaContra p ev ep) (spaContra q ev (sproPos ev ep))
+  sproCovar : (ev : v) -> (ep : spaPos p ev) ->
+    SliceMorphism {a=c} (spaCovar q ev (sproPos ev ep)) (spaCovar p ev ep)
+
+InterpSlProNT : {d, c, v : Type} -> {p, q : SlProAr d c v} ->
+  SlProNT {d} {c} {v} p q ->
+  (sld : SliceObj d) -> (slc : SliceObj c) ->
+  SliceMorphism {a=v} (InterpSPA d c v p sld slc) (InterpSPA d c v q sld slc)
+InterpSlProNT {d} {c} {v}
+  {p=(SPA ppos pcontra pcovar)} {q=(SPA qpos qcontra qcovar)}
+  (SProNT onpos oncont oncov) sld slc ev (i ** (mcont, mcovar)) =
+    (onpos ev i **
+     (sliceComp (oncont ev i) mcont,
+      sliceComp mcovar (oncov ev i)))
+
+-----------------------------------------
+-----------------------------------------
+---- Slice polynomial pro/difunctors ----
+-----------------------------------------
+-----------------------------------------
+
+----------------------------------------------------------
+---- Determining data of slice polynomial profunctors ----
+----------------------------------------------------------
+
+-- https://ncatlab.org/nlab/show/parametric+right+adjoint#generic_morphisms
+-- describes how a PRA functor between presheaf categories is determined
+-- by two pieces of data which it calls `T1` and `E_T`.  It refers to
+-- general presheaf categories over categories it calls `I` and `J`.
+--
+-- Suppose we wish to determine what constitutes a parametric right adjoint
+-- which is a profunctor on slice categories -- that is, a parametric right
+-- adjoint from `(op(SliceObj d), SliceObj c)` to `Type` (AKA `SliceObj Unit`).
+--
+-- We could write the curried form of such a profunctor in the style of the
+-- Yoneda embedding, as `SliceObj c -> op(SliceObj d) -> Type`.  Because a
+-- slice category is a discrete presheaf, this is a functor between presheaves,
+-- as in the ncatlab page, with `I = disc(c)` (where `disc(c)` is the discrete
+-- category whose objects are the terms of `c`) and `J = SliceObj d`.
+--
+-- Thus, the object called `T1` on the ncatlab page is a presheaf on
+-- `SliceObj d`.  `SliceObj d` is the category of elements of the contravariant
+-- representable functor represented by `d`, and a presheaf on a category of
+-- elements is a slice object in the presheaf category.  Thus `T1` is a presheaf
+-- sliced over the presheaf represented by `d`.
+--
+-- Suppose that, in our attempt to define a notion of polynomial profunctor,
+-- we constrain `T1` to be a _Dirichlet_ functor -- a polynomial functor on
+-- `op(SliceObj d)`.  Then `T1` would have to be a Dirichlet functor sliced
+-- over the presheaf represented by `d` (which is the Dirichlet functor with
+-- one position, whose direction-set is `d`).
+--
+-- Hence we define:
+
+-- This is equivalent to a Dirichlet slice over a representable, but with
+-- a redundant `Unit` removed.
+public export
+SlProT1type : Type -> Type
+SlProT1type d = (pos : Type ** pos -> SliceObj d)
+
+public export
+SlProT1pos : {d : Type} -> SlProT1type d -> Type
+SlProT1pos {d} = DPair.fst
+
+public export
+SlProT1dir : {d : Type} -> (p : SlProT1type d) -> SlProT1pos p -> SliceObj d
+SlProT1dir {d} = DPair.snd
+
+public export
+SlProT1toSl : {d : Type} -> SlProT1type d -> MlDirichSlObj (dfRepObj d)
+SlProT1toSl {d} t1 = MDSobj (\() => fst t1) (\() => snd t1)
+
+-- This is equivalent to `InterpMlDirichSlObj` on `T1`, but again with
+-- some redundancies removed.
+public export
+InterpProT1 : {d : Type} -> SlProT1type d -> SliceObj d -> Type
+InterpProT1 {d} t1 j =
+  (i : SlProT1pos t1 ** SliceMorphism {a=d} j (SlProT1dir t1 i))
+
+public export
+InterpProT1contramap : {d : Type} -> (t1 : SlProT1type d) ->
+  (a, b : SliceObj d) ->
+  SliceMorphism {a=d} b a ->
+  InterpProT1 {d} t1 a -> InterpProT1 {d} t1 b
+InterpProT1contramap {d} t1 a b mba = dpMapSnd $ \t1i => flip sliceComp mba
+
+-- Now we consider the data called `E_T` on the ncatlab page.  This is a
+-- functor from the category of elements of `T1` to the category of
+-- presheaves on `I`.  `I` in this case is `disc(c)`, so this means a
+-- functor from the category of elements of `T1` to `SliceObj c`.
+--
+-- A functor into `SliceObj c` is equivalently a `c`-way product of functors
+-- into `Type`, so `E_T` is equivalently a `c`-way product of presheaves
+-- on the category of elements of `T1`.
+--
+-- Again imposing a constraint in our attempt to define _polynomial_
+-- profunctors specifically, we treat `E_T` as a `c`-way product of _Dirichlet_
+-- presheaves on the category of elements of `T1`, and therefore as
+-- a Dirichlet functor sliced over `T1` (i.e. as an object in the slice
+-- category of Dirichlet functors over `T1`).
+--
+-- We have defined `T1` itself as a slice object, so a presheaf on its
+-- category of elements is a slice of a slice.  The definition below is
+-- effectively a slice of `T1` (which is itself a slice of `dfRepObj d`),
+-- but with some redundancies removed.  We call it `Fib` as in a single
+-- fiber of the overall `ET`, which is a `c`-way product of such fibers.
+public export
+SlProETtypeFib : {d : Type} -> SlProT1type d -> Type
+SlProETtypeFib {d} t1 =
+  (etPos : SliceObj (SlProT1pos t1) **
+   SliceMorphism {a=(SlProT1pos t1)}
+    etPos
+    (SliceObj . Sigma {a=d} . SlProT1dir t1))
+
+public export
+SlProETtypeFibPos : {d : Type} -> {t1 : SlProT1type d} ->
+  SlProETtypeFib {d} t1 -> SliceObj (SlProT1pos t1)
+SlProETtypeFibPos {d} {t1} = DPair.fst
+
+public export
+SlProETtypeFibDir : {d : Type} -> {t1 : SlProT1type d} ->
+  (etf : SlProETtypeFib {d} t1) ->
+  SliceMorphism {a=(SlProT1pos t1)}
+    (SlProETtypeFibPos {d} {t1} etf)
+    (SliceObj . Sigma {a=d} . SlProT1dir t1)
+SlProETtypeFibDir {d} {t1} = DPair.snd
+
+public export
+SlProETtypeFibToSlOfSl : {d : Type} -> (p : SlProT1type d) ->
+  SlProETtypeFib {d} p -> MlDirichSlOfSl {ar=(dfRepObj d)} (SlProT1toSl {d} p)
+SlProETtypeFibToSlOfSl {d} p et =
+  MDSobj
+    (\(() ** t1i) => SlProETtypeFibPos et t1i)
+    (\(() ** t1i), eti, (ed ** etd) => SlProETtypeFibDir et t1i eti (ed ** etd))
+
+-- This is equivalent to interpreting an `SlProETtypeFib`, which we
+-- represent internally as a Dirichlet slice object, as a presheaf on
+-- its category of elements, and then applying it to `Sigma {a=d} j`.
+-- It just removes a redundant `Unit`.
+public export
+InterpProETfib : {d : Type} -> {t1 : SlProT1type d} ->
+  SlProETtypeFib {d} t1 -> (j : SliceObj d) -> InterpProT1 {d} t1 j -> Type
+InterpProETfib {d} et j t1idm =
+  (eti : SlProETtypeFibPos et (fst t1idm) **
+   (ed : d) -> (ej : j ed) ->
+    SlProETtypeFibDir et (fst t1idm) eti (ed ** snd t1idm ed ej))
+
+public export
+InterpProETfibContramap : {d : Type} -> {t1 : SlProT1type d} ->
+  (et : SlProETtypeFib {d} t1) ->
+  (a, b : SliceObj d) -> (et1 : InterpProT1 {d} t1 a) ->
+  (mba : SliceMorphism {a=d} b a) ->
+  InterpProETfib {d} {t1} et a et1 ->
+  InterpProETfib {d} {t1} et b (InterpProT1contramap t1 a b mba et1)
+InterpProETfibContramap {d} {t1} et a b et1 mba =
+  dpMapSnd $ \eti, etdm, ed, eb => etdm ed (mba ed eb)
+
+public export
+SlProETtype : {d : Type} -> (c : Type) -> SlProT1type d -> Type
+SlProETtype {d} c t1ty = c -> SlProETtypeFib {d} t1ty
+
+public export
+SlProETtypePos : {d, c : Type} -> {t1 : SlProT1type d} ->
+  SlProETtype {d} c t1 -> c -> SliceObj (SlProT1pos t1)
+SlProETtypePos {d} {c} {t1} et = SlProETtypeFibPos . et
+
+public export
+SlProETtypeDir : {d, c : Type} -> {t1 : SlProT1type d} ->
+  (et : SlProETtype {d} c t1) ->
+  SliceMorphism {a=(SlProT1pos t1)}
+    (Sigma {a=c} . flip (SlProETtypePos {d} {t1} et))
+    (SliceObj . Sigma {a=d} . SlProT1dir t1)
+SlProETtypeDir {d} {c} {t1} et et1i eceti =
+  SlProETtypeFibDir {d} {t1} (et $ fst eceti) et1i (snd eceti)
+
+-- Thus we can define the data of what we shall call a slice polynomial
+-- profunctor as follows:
+public export
+SlProData : (d, c : Type) -> Type
+SlProData d c = DPair (SlProT1type d) (SlProETtype {d} c)
+
+public export
+SlProDataT1 : {d, c : Type} -> SlProData d c -> SlProT1type d
+SlProDataT1 {d} {c} = DPair.fst
+
+public export
+SlProDataET : {d, c : Type} ->
+  (p : SlProData d c) -> SlProETtype {d} c (SlProDataT1 {d} {c} p)
+SlProDataET {d} {c} = DPair.snd
+
+public export
+SlProDataT1pos : {d, c : Type} -> SlProData d c -> Type
+SlProDataT1pos {d} {c} = SlProT1pos {d} . SlProDataT1 {d} {c}
+
+public export
+SlProDataT1dir : {d, c : Type} ->
+  (p : SlProData d c) -> SlProDataT1pos {d} {c} p -> SliceObj d
+SlProDataT1dir {d} {c} p = SlProT1dir (SlProDataT1 p)
+
+public export
+SlProDataETpos : {d, c : Type} -> (p : SlProData d c) ->
+  c -> SliceObj (SlProDataT1pos {d} {c} p)
+SlProDataETpos {d} {c} p = SlProETtypePos (SlProDataET {d} {c} p)
+
+public export
+SlProDataETdir : {d, c : Type} -> (p : SlProData d c) ->
+  SliceMorphism {a=(SlProDataT1pos {d} {c} p)}
+    (Sigma {a=c} . flip (SlProDataETpos {d} {c} p))
+    (SliceObj . Sigma {a=d} . SlProDataT1dir {d} {c} p)
+SlProDataETdir {d} {c} p = SlProETtypeDir (SlProDataET {d} {c} p)
+
+-- With respect to
+-- https://ncatlab.org/nlab/show/parametric+right+adjoint#generic_morphisms ,
+-- what we call `SlProDataInterpT1` here is `T1(j)` for a given
+-- `j : SliceObj d`.
+public export
+SlProDataInterpT1 : {d, c : Type} -> SlProData d c -> SliceObj d -> Type
+SlProDataInterpT1 {d} {c} = InterpProT1 {d} . SlProDataT1
+
+public export
+InterpSlProDataT1contramap : {d, c : Type} -> (p : SlProData d c) ->
+  (a, b : SliceObj d) -> SliceMorphism {a=d} b a ->
+  SlProDataInterpT1 {d} {c} p a ->
+  SlProDataInterpT1 {d} {c} p b
+InterpSlProDataT1contramap {d} {c} p = InterpProT1contramap (SlProDataT1 p)
+
+-- With respect to
+-- https://ncatlab.org/nlab/show/parametric+right+adjoint#generic_morphisms ,
+-- what we call `SlProDataInterpET` here is `ET(x)` for a given `j : SliceObj d`
+-- and `x : T1(j)` (i.e. `x : SlProDataInterpT1 p j`).
+--
+-- This is equivalent to interpreting `ET`, which we represent internally
+-- as a Dirichlet slice object, as a presheaf on its category of elements,
+-- and then applying it to `Sigma {a=d} j`.  It just removes a redundant `Unit`.
+public export
+SlProDataInterpET : {d, c : Type} -> (p : SlProData d c) -> (j : SliceObj d) ->
+  SlProDataInterpT1 {d} {c} p j -> SliceObj c
+SlProDataInterpET {d} {c} p j t1idm ec =
+  InterpProETfib {d} {t1=(SlProDataT1 p)} (SlProDataET p ec) j t1idm
+
+public export
+InterpSlProDataETcontramap : {d, c : Type} -> (p : SlProData d c) ->
+  (a, b : SliceObj d) -> (mba : SliceMorphism {a=d} b a) ->
+  (et1 : SlProDataInterpT1 {d} {c} p a) ->
+  SliceMorphism {a=c}
+    (SlProDataInterpET p a et1)
+    (SlProDataInterpET p b $ InterpSlProDataT1contramap {d} {c} p a b mba et1)
+InterpSlProDataETcontramap {d} {c} p a b mba et1 ec =
+  InterpProETfibContramap {t1=(SlProDataT1 p)} (SlProDataET p ec) a b et1 mba
+
+-- Finally, we again use the equivalence of a functor into `SliceObj v` with
+-- a `v`-way product of functors into `Type` to define the data of a
+-- slice polynomial profunctor _enriched_ over a slice category:
+public export
+SlEnrProData : (d, c, v : Type) -> Type
+SlEnrProData d c v = v -> SlProData d c
+
+--------------------------------------------------------
+---- Interpretation of slice polynomial profunctors ----
+--------------------------------------------------------
+
+-- Now we use the formula for the functor referred to as `T` in
+-- https://ncatlab.org/nlab/show/parametric+right+adjoint#generic_morphisms
+-- to compute our interpretation of a slice polynomial profunctor.
+-- The variable called `Z` in that definition is in `[op(I), Set]`, which
+-- in our case, since `I` is `disc(c)`, is equivalent to `SliceObj c`.
+-- The variable called `j` in that definition is in `op(J)`, which in our
+-- case, since `J` is `SliceObj d`, is `op(SliceObj d)`.
+
+public export
+InterpSlProFib : {d, c : Type} -> (p : SlProData d c) ->
+  (j : SliceObj d) -> (z : SliceObj c) ->
+  SlProDataInterpT1 {d} {c} p j -> Type
+InterpSlProFib {d} {c} p j z i =
+  SliceMorphism {a=c} (SlProDataInterpET {d} {c} p j i) z
+
+public export
+InterpSlPro : {d, c : Type} -> (p : SlProData d c) ->
+  (j : SliceObj d) -> (z : SliceObj c) -> Type
+InterpSlPro {d} {c} p j z =
+  DPair (SlProDataInterpT1 {d} {c} p j) (InterpSlProFib p j z)
+
+public export
+InterpSlEnrPro : {d, c, v : Type} -> (p : SlEnrProData d c v) ->
+  (j : SliceObj d) -> (z : SliceObj c) -> SliceObj v
+InterpSlEnrPro {d} {c} p j z ev = InterpSlPro {d} {c} (p ev) j z
+
+--------------------------
+---- Slice difunctors ----
+--------------------------
+
+public export
+record SlDiAr (c, v : Type) where
+  constructor SDAr
+  sdaPos :
+    SliceObj v
+  sdaContra :
+    (ev : v) -> sdaPos ev -> SliceObj c
+  sdaCovar :
+    (ev : v) -> (ep : sdaPos ev) -> Pi {a=c} (SliceObj . sdaContra ev ep)
+
+public export
+sdaDirPB : {c, v : Type} ->
+  (p : SlDiAr c v) -> (ev : v) -> sdaPos p ev -> SliceObj c
+sdaDirPB {c} {v} p ev ep ec = DPair (sdaContra p ev ep ec) (sdaCovar p ev ep ec)
+
+public export
+InterpSDA : {c, v : Type} -> SlDiAr c v ->
+  (x, y : SliceObj c) -> SliceObj v
+InterpSDA {c} {v} p x y ev =
+  (ep : sdaPos p ev **
+   dmcont : SliceMorphism {a=c} x (sdaContra p ev ep) **
+   SliceMorphism {a=c}
+    (\ec => Sigma {a=(x ec)} (sdaCovar p ev ep ec . dmcont ec))
+    y)
+
+public export
+InterpSDApos : {c, v : Type} -> {p : SlDiAr c v} -> {x, y : SliceObj c} ->
+  SliceMorphism {a=v} (InterpSDA {c} {v} p x y) (sdaPos p)
+InterpSDApos {c} {v} {p} {x} {y} ev = DPair.fst
+
+public export
+InterpSDAdmContra : {c, v : Type} -> {p : SlDiAr c v} -> {x, y : SliceObj c} ->
+  (ev : v) -> (el : InterpSDA {c} {v} p x y ev) ->
+  SliceMorphism {a=c} x (sdaContra p ev (InterpSDApos {p} ev el))
+InterpSDAdmContra {c} {v} {p} {x} {y} ev el = DPair.fst (DPair.snd el)
+
+public export
+InterpSDAdmCovar : {c, v : Type} -> {p : SlDiAr c v} -> {x, y : SliceObj c} ->
+  (ev : v) -> (el : InterpSDA {c} {v} p x y ev) ->
+  SliceMorphism {a=c}
+    (\ec =>
+      Sigma {a=(x ec)}
+        (sdaCovar p ev (InterpSDApos {p} ev el) ec
+         . InterpSDAdmContra {p} ev el ec))
+    y
+InterpSDAdmCovar {c} {v} {p} {x} {y} ev el = DPair.snd (DPair.snd el)
+
+public export
+sdaLmap : {c, v : Type} -> (p : SlDiAr c v) ->
+  {s, t, a : SliceObj c} ->
+  SliceMorphism {a=c} a s ->
+  SliceMorphism {a=v} (InterpSDA p s t) (InterpSDA p a t)
+sdaLmap {c} {v} p {s} {t} {a} mas ev =
+  dpMapSnd $ \ep =>
+    dpBimap
+      (flip sliceComp mas)
+      (\dmcont, dmcovar, ec => dmcovar ec . dpBimap (mas ec) (\_ => id))
+
+public export
+sdaRmap : {c, v : Type} -> (p : SlDiAr c v) ->
+  {s, t, b : SliceObj c} ->
+  SliceMorphism {a=c} t b ->
+  SliceMorphism {a=v} (InterpSDA p s t) (InterpSDA p s b)
+sdaRmap {c} {v} p {s} {t} {b} mtb ev =
+  dpMapSnd $ \ep => dpMapSnd $ \dmcont => sliceComp mtb
+
+public export
+sdaDimap : {c, v : Type} -> (p : SlDiAr c v) ->
+  {s, t, a, b : SliceObj c} ->
+  SliceMorphism {a=c} a s ->
+  SliceMorphism {a=c} t b ->
+  SliceMorphism {a=v} (InterpSDA p s t) (InterpSDA p a b)
+sdaDimap {c} {v} p {s} {t} {a} mas mtb ev =
+  sdaRmap {s=a} {t} {b} p mtb ev . sdaLmap {s} {t} {a} p mas ev
+
+public export
+record SlDiPara {c, v : Type} (p, q : SlDiAr c v) where
+  constructor SDPara
+  sdarPos : SliceMorphism {a=v} (sdaPos p) (sdaPos q)
+  sdarContra : (ev : v) -> (ep : sdaPos p ev) ->
+    SliceMorphism {a=c} (sdaContra p ev ep) (sdaContra q ev (sdarPos ev ep))
+  sdarCovar : (ev : v) -> (ep : sdaPos p ev) -> (ec : c) ->
+    SliceMorphism {a=(sdaContra p ev ep ec)}
+      (sdaCovar q ev (sdarPos ev ep) ec . sdarContra ev ep ec)
+      (sdaCovar p ev ep ec)
+
+public export
+SlProfuncSig : {c, v : Type} -> (p, q : SlDiAr c v) -> Type
+SlProfuncSig {c} {v} p q =
+  (x, y : SliceObj c) -> SliceMorphism {a=v} (InterpSDA p x y) (InterpSDA q x y)
+
+public export
+SlDifuncSig : {c, v : Type} -> (p, q : SlDiAr c v) -> Type
+SlDifuncSig {c} {v} p q =
+  (x : SliceObj c) -> SliceMorphism {a=v} (InterpSDA p x x) (InterpSDA q x x)
+
+public export
+InterpSlProPara : {c, v : Type} -> {p, q : SlDiAr c v} ->
+  SlDiPara {c} {v} p q -> SlProfuncSig {c} {v} p q
+InterpSlProPara {c} {v} {p} {q} para x y ev =
+  dpBimap
+    (sdarPos para ev)
+  $ \ep => dpBimap
+    (sliceComp $ sdarContra para ev ep)
+    (\dmcont, dmcovar, ec, qd =>
+      dmcovar ec
+        (fst qd ** sdarCovar para ev ep ec (dmcont ec $ fst qd) (snd qd)))
+
+public export
+0 SlProNatCond : {c, v : Type} -> {p, q : SlDiAr c v} ->
+  SlProfuncSig {c} p q -> Type
+SlProNatCond {c} {p} {q} alpha =
+  (i0, i1, j0, j1 : SliceObj c) ->
+  (mcont : SliceMorphism {a=c} j0 i0) ->
+  (mcovar : SliceMorphism {a=c} i1 j1) ->
+  SliceExtEq {a=v} {s=(InterpSDA p i0 i1)} {s'=(InterpSDA q j0 j1)}
+    (sliceComp (sdaDimap q mcont mcovar) (alpha i0 i1))
+    (sliceComp (alpha j0 j1) (sdaDimap p mcont mcovar))
+
+public export
+0 SlDiNatCond : {c, v : Type} -> {p, q : SlDiAr c v} ->
+  SlDiPara {c} {v} p q -> Type
+SlDiNatCond {c} {v} {p} {q} =
+  SlProNatCond {c} {v} {p} {q} . InterpSlProPara {c} {v} {p} {q}
+
+public export
+0 SlDiNatCorrect : FunExt ->
+  {c, v : Type} -> {p, q : SlDiAr c v} ->
+  (para : SlDiPara {c} {v} p q) -> SlDiNatCond {c} {v} {p} {q} para
+SlDiNatCorrect fext {c} {v}
+  {p=(SDAr ppos pcontra pcovar)} {q=(SDAr qpos qcontra qcovar)}
+  (SDPara onpos oncont oncov) =
+    \i0, i1, j0, j1, mcont, mcovar, ev, (pp0 ** dcont0 ** dcov0) =>
+      Refl
+
+public export
+InterpSlDiPara : {c, v : Type} -> {p, q : SlDiAr c v} ->
+  SlDiPara {c} {v} p q -> SlDifuncSig {c} {v} p q
+InterpSlDiPara {c} {v} {p} {q} para slc =
+  InterpSlProPara {c} {v} {p} {q} para slc slc
+
+public export
+0 SlDiParaCond : {c, v : Type} -> {p, q : SlDiAr c v} ->
+  SlDifuncSig {c} p q -> Type
+SlDiParaCond {c} {p} {q} gamma =
+  (i0, i1 : SliceObj c) -> (i2 : SliceMorphism {a=c} i0 i1) ->
+  (ev : v) -> (d0 : InterpSDA p i0 i0 ev) -> (d1 : InterpSDA p i1 i1 ev) ->
+  (sdaLmap p i2 ev d1 = sdaRmap p i2 ev d0) ->
+  (sdaLmap q i2 ev (gamma i1 ev d1) = sdaRmap q i2 ev (gamma i0 ev d0))
+
+public export
+0 SlDiArParaCond : {c, v : Type} -> {p, q : SlDiAr c v} ->
+  SlDiPara {c} {v} p q -> Type
+SlDiArParaCond {c} {v} {p} {q} =
+  SlDiParaCond {c} {v} {p} {q} . InterpSlDiPara {c} {v} {p} {q}
+
+public export
+0 SlDiParaCorrect : FunExt ->
+  {c, v : Type} -> {p, q : SlDiAr c v} ->
+  (para : SlDiPara {c} {v} p q) -> SlDiArParaCond {c} {v} {p} {q} para
+SlDiParaCorrect fext {c} {v}
+  {p=(SDAr ppos pcontra pcovar)} {q=(SDAr qpos qcontra qcovar)}
+  (SDPara onpos oncont oncov) =
+    \i0, i1, i2, ev, (pp0 ** dcont0 ** dcov0), (pp1 ** dcont1 ** dcov1), cond =>
+      case dpeq1 cond of
+        Refl =>
+          let
+            cond2 = dpeq2 cond
+            cond21 = dpeq1 cond2
+            cond22 = dpeq2 cond2
+          in
+          case cond21 of
+            Refl =>
+              dpEq12
+                Refl
+              $ dpEq12
+                Refl
+                (funExt $ \_ => funExt $ \_ => fcongdep $ fcongdep cond22)
+
+-------------------------------------------------------------------------
+-------------------------------------------------------------------------
+---- Polynomial functors enriched over polynomial functors on `Type` ----
+-------------------------------------------------------------------------
+-------------------------------------------------------------------------
+
+public export
+record PolyEnrAr where
+  constructor PEA
+  peaPos : Type
+  peaDir : peaPos -> PolyFunc
+
+public export
+peaPos2 : (pea : PolyEnrAr) -> peaPos pea -> Type
+peaPos2 pea i = fst (peaDir pea i)
+
+public export
+peaDir2 : (pea : PolyEnrAr) -> (i : peaPos pea) -> peaPos2 pea i -> Type
+peaDir2 pea i = snd (peaDir pea i)
+
+-------------------
+---- Poly-poly ----
+-------------------
+
+-- Interpret a `PolyEnrAr` as a (covariant) polynomial functor on the
+-- category of (covariant) polynomial functors.
+public export
+InterpPEA : PolyEnrAr -> PolyFunc -> PolyFunc
+InterpPEA (PEA epos edir) pf =
+  pfSetCoproductArena $ (\i : epos => pfHomObj (edir i) pf)
+
+export
+peaMapOnPos : (pea : PolyEnrAr) ->
+  (p, q : PolyFunc) -> PolyNatTrans p q ->
+  pfPos (InterpPEA pea p) -> pfPos (InterpPEA pea q)
+peaMapOnPos (PEA epos edir) (ppos ** pdir) (qpos ** qdir) (onpos ** ondir)
+  (i ** d) with (edir i) proof eq
+    peaMapOnPos (PEA epos edir) (ppos ** pdir) (qpos ** qdir) (onpos ** ondir)
+      (i ** d) | (pdi ** pdd) =
+        (i ** \edii => case d (replace {p=fst} eq edii) of
+          (pi ** pd) => (onpos pi ** \qdi => rewrite eq in pd (ondir pi qdi)))
+
+export
+peaMapOnDir : (pea : PolyEnrAr) ->
+  (p, q : PolyFunc) -> (alpha : PolyNatTrans p q) ->
+  (i : pfPos (InterpPEA pea p)) ->
+  pfDir {p=(InterpPEA pea q)} (peaMapOnPos pea p q alpha i) ->
+  pfDir {p=(InterpPEA pea p)} i
+peaMapOnDir (PEA epos edir) (ppos ** pdir) (qpos ** qdir) (onpos ** ondir)
+  (ei ** pd) d with (edir ei) proof eeq
+    peaMapOnDir (PEA epos edir) (ppos ** pdir) (qpos ** qdir) (onpos ** ondir)
+      (ei ** pd) (ed ** (qd ** pcd)) | (pdi ** pdp)
+          with (pd $ replace {p=fst} eeq ed) proof peq
+        peaMapOnDir (PEA epos edir) (ppos ** pdir) (qpos ** qdir)
+          (onpos ** ondir)
+          (ei ** pd) (ed ** (qd ** pcd)) | (pdi ** pdp) | (pi ** pdd) =
+            (replace {p=fst} eeq ed **
+             rewrite peq in ondir pi qd **
+             rewrite peq in case dpeq2 eeq of Refl => pcd)
+
+export
+peaMap : (pea : PolyEnrAr) ->
+  (p, q : PolyFunc) -> PolyNatTrans p q ->
+  PolyNatTrans (InterpPEA pea p) (InterpPEA pea q)
+peaMap pea p q alpha = (peaMapOnPos pea p q alpha ** peaMapOnDir pea p q alpha)
+
+-- A `Poly`-internal representation of the right side of formula 6.78
+-- from the polynomial functors book.
+public export
+HomToCompPEA : PolyFunc -> PolyFunc -> PolyEnrAr
+HomToCompPEA p q = PEA (pfPos p -> pfPos q) (pfPosChangeArena p q)
+
+-- This shows that `HomToCompPEA` is an embedding of the postcomposition
+-- functor into the category of polynomial functors (parametric right
+-- adjoints) on `Poly` itself.
+
+public export
+0 HomToCompPEAcorrect : (p, q, r : PolyFunc) ->
+  InterpPEA (HomToCompPEA p q) r = pfHomToCompArena p q r
+HomToCompPEAcorrect p q r = Refl
+
+public export
+PostcompPEA : PolyFunc -> PolyEnrAr
+PostcompPEA q = PEA (pfPos q) (\i => (pfDir {p=q} i ** const Void))
+
+public export
+PostcompFromPEApos: (q, p : PolyFunc) ->
+  pfPos (InterpPEA (PostcompPEA q) p) -> pfPos (pfCompositionArena q p)
+PostcompFromPEApos (qpos ** qdir) (ppos ** pdir) qidm =
+  (fst qidm ** DPair.fst . snd qidm)
+
+public export
+PostcompFromPEAdir: (q, p : PolyFunc) ->
+  (i : pfPos (InterpPEA (PostcompPEA q) p)) ->
+  pfDir {p=(pfCompositionArena q p)} (PostcompFromPEApos q p i) ->
+  pfDir {p=(InterpPEA (PostcompPEA q) p)} i
+PostcompFromPEAdir (qpos ** qdir) (ppos ** pdir) qidm (qd ** pd)
+    with (snd (snd qidm qd) pd) proof eq
+  PostcompFromPEAdir (qpos ** qdir) (ppos ** pdir) qidm (qd ** pd)
+    | Left () =
+      (qd ** pd ** rewrite eq in ())
+  PostcompFromPEAdir (qpos ** qdir) (ppos ** pdir) qidm (qd ** pd)
+    | Right ev =
+      void ev
+
+public export
+PostcompFromPEA: (q, p : PolyFunc) ->
+  PolyNatTrans (InterpPEA (PostcompPEA q) p) (pfCompositionArena q p)
+PostcompFromPEA q p = (PostcompFromPEApos q p ** PostcompFromPEAdir q p)
+
+public export
+PostcompToPEA: (q, p : PolyFunc) ->
+  PolyNatTrans (pfCompositionArena q p) (InterpPEA (PostcompPEA q) p)
+PostcompToPEA (qpos ** qdir) (ppos ** pdir) =
+  (\(qi ** qdm) => (qi ** \qd => (qdm qd ** \_ => Left ())) **
+   \(qi ** qdm), (qd ** (pd ** ())) => (qd ** pd))

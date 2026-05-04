@@ -3,17 +3,65 @@ module Executable.Test.Main
 import Test.TestLibrary
 import Library.Test.IdrisUtilsTest
 import Library.Test.IdrisCategoriesTest
+import Library.Test.IdrisAlgebraTest
+import Library.Test.CategoryTheoryTest
+import LanguageDef.Test.IntTwistedArrowCatTest
+import LanguageDef.Test.IntUFamCatTest
+import LanguageDef.Test.IntEFamCatTest
+import LanguageDef.Test.IntUCofamCatTest
+import LanguageDef.Test.IntECofamCatTest
+import LanguageDef.Test.IntDepFamCatTest
+import LanguageDef.Test.IntParamCatTest
+import LanguageDef.Test.IntDisheafCatTest
+import LanguageDef.Test.QTypeTest
+import LanguageDef.Test.SpanCospanTest
+import LanguageDef.Test.InternalCatTest
+import LanguageDef.Test.InternalHigherCatTest
+import LanguageDef.Test.InternalProfunctorTest
+import LanguageDef.Test.NockTest
+import LanguageDef.Test.SlicePolyCatTest
+import LanguageDef.Test.SliceFuncCatTest
+import LanguageDef.Test.HelixCatTest
+import LanguageDef.Test.DiPolyFuncTest
+import LanguageDef.Test.MLDiPolyFuncTest
+import LanguageDef.Test.RopeCatTest
+import LanguageDef.Test.SlPolyImpredTest
+import LanguageDef.Test.SlPolyIntCatTest
+import LanguageDef.Test.SlicePolyUMorphTest
+import LanguageDef.Test.TelescopeTest
+import LanguageDef.Test.RQFinTest
+import LanguageDef.Test.DiprofunctorTest
+import LanguageDef.Test.TreeCalculusTest
+import LanguageDef.Test.FinPolyTest
+import LanguageDef.Test.SlicePolyDialgTest
+import LanguageDef.Test.HigherPolyCatTest
+import LanguageDef.Test.DisliceCatTest
+import LanguageDef.Test.MLBundleCatTest
+import LanguageDef.Test.MLDirichCatTest
+import LanguageDef.Test.MLTwistPairTest
+import LanguageDef.Test.DislicePolyCatTest
+import LanguageDef.Test.QuiverTest
+import LanguageDef.Test.MLQuivCatTest
+import LanguageDef.Test.MLQuivUnivTest
+import LanguageDef.Test.PolyDifuncTest
+import LanguageDef.Test.MLQuivPolyTest
+import LanguageDef.Test.GenPolyFuncTest
+import LanguageDef.Test.PolySliceCatTest
+import LanguageDef.Test.FinCatTest
+import LanguageDef.Test.BinTreeTest
+import LanguageDef.Test.GebTest
+import LanguageDef.Test.RefinedADTTest
+import LanguageDef.Test.FiguresTest
+import LanguageDef.Test.TheoriesTest
 import LanguageDef.Test.NatPrefixCatTest
 import LanguageDef.Test.ADTCatTest
 import LanguageDef.Test.ProgFinSetTest
 import LanguageDef.Test.DiagramCatTest
 import LanguageDef.Test.AdjunctionsTest
 import LanguageDef.Test.GebToposTest
-import LanguageDef.Test.GenPolyFuncTest
 import LanguageDef.Test.PolyCatTest
 import LanguageDef.Test.PolyProfunctorTest
 import LanguageDef.Test.AtomTest
-import LanguageDef.Test.RefinedADTTest
 import LanguageDef.Test.UniversalCategoryTest
 import LanguageDef.Test.InterpretationTest
 import LanguageDef.Test.SyntaxTest
@@ -22,18 +70,23 @@ import LanguageDef.Test.MetaprogrammingTest
 import LanguageDef.Test.LogicTest
 import LanguageDef.Test.ComputationalEffectsTest
 import LanguageDef.Test.EmbeddedTest
-import Library.Test.CategoryTheoryTest
+import LanguageDef.Test.PolyIndTypesTest
+import LanguageDef.Test.TreeCalculusTest
+import LanguageDef.Test.FinCatPRATest
+import LanguageDef.Test.PolyProfEndTest
+import LanguageDef.Test.SlicePolyDifuncTest
 
 %default total
 
 export
-main : IO ()
-main = do
+totalTests : IO ()
+totalTests = do
   Test.TestLibrary.testLibraryTest
   Library.Test.IdrisUtilsTest.idrisUtilsTest
   Library.Test.IdrisCategoriesTest.libraryIdrisCategoriesTest
+  Library.Test.IdrisAlgebraTest.libraryIdrisAlgebraTest
+  LanguageDef.Test.BinTreeTest.binTreeTest
   LanguageDef.Test.AtomTest.languageDefAtomTest
-  LanguageDef.Test.RefinedADTTest.languageDefRefinedADTTest
   LanguageDef.Test.UniversalCategoryTest.languageDefUniversalCategoryTest
   LanguageDef.Test.InterpretationTest.languageDefInterpretationTest
   LanguageDef.Test.ExpressionTest.languageDefExpressionTest
@@ -42,13 +95,74 @@ main = do
   LanguageDef.Test.ComputationalEffectsTest.languageDefComputationalEffectsTest
   LanguageDef.Test.EmbeddedTest.languageDefEmbeddedTest
   Library.Test.CategoryTheoryTest.libraryCategoryTheoryTest
+  LanguageDef.Test.SpanCospanTest.spanCospanTest
   LanguageDef.Test.PolyCatTest.polyCatTest
   LanguageDef.Test.NatPrefixCatTest.natPrefixCatTest
   LanguageDef.Test.PolyProfunctorTest.polyProfunctorTest
   LanguageDef.Test.ADTCatTest.adtCatTest
   LanguageDef.Test.ProgFinSetTest.progFinSetTest
-  LanguageDef.Test.SyntaxTest.languageDefSyntaxTest
   LanguageDef.Test.DiagramCatTest.diagramCatTest
   LanguageDef.Test.AdjunctionsTest.adjunctionsTest
-  LanguageDef.Test.GenPolyFuncTest.genPolyFuncTest
   LanguageDef.Test.GebToposTest.gebToposTest
+  LanguageDef.Test.RefinedADTTest.languageDefRefinedADTTest
+  LanguageDef.Test.SyntaxTest.languageDefSyntaxTest
+  LanguageDef.Test.TheoriesTest.theoriesTest
+  LanguageDef.Test.FiguresTest.figuresTest
+  LanguageDef.Test.PolyIndTypesTest.polyIndTypesTest
+  LanguageDef.Test.GebTest.gebTest
+  LanguageDef.Test.FinCatTest.finCatTest
+  LanguageDef.Test.QuiverTest.quiverTest
+  LanguageDef.Test.MLQuivCatTest.mlQuivCatTest
+  LanguageDef.Test.MLQuivUnivTest.mlQuivUnivTest
+  LanguageDef.Test.MLQuivPolyTest.mlQuivPolyTest
+  LanguageDef.Test.GenPolyFuncTest.genPolyFuncTest
+  LanguageDef.Test.PolySliceCatTest.polySliceCatTest
+  LanguageDef.Test.DisliceCatTest.disliceCatTest
+  LanguageDef.Test.DislicePolyCatTest.dislicePolyCatTest
+  LanguageDef.Test.InternalProfunctorTest.internalProfunctorTest
+  LanguageDef.Test.InternalCatTest.internalCatTest
+  LanguageDef.Test.InternalHigherCatTest.internalHigherCatTest
+  LanguageDef.Test.SlicePolyCatTest.slicePolyCatTest
+  LanguageDef.Test.SliceFuncCatTest.sliceFuncCatTest
+  LanguageDef.Test.SlicePolyUMorphTest.slicePolyUMorphTest
+  LanguageDef.Test.SlPolyImpredTest.slPolyImpredTest
+  LanguageDef.Test.SlPolyIntCatTest.slPolyIntCatTest
+  LanguageDef.Test.SlicePolyDialgTest.slicePolyDialgTest
+  LanguageDef.Test.MLBundleCatTest.mlBundleCatTest
+  LanguageDef.Test.MLDirichCatTest.mlDirichCatTest
+  LanguageDef.Test.MLTwistPairTest.mlTwistPairTest
+  LanguageDef.Test.IntTwistedArrowCatTest.intTwistedArrowCatTest
+  LanguageDef.Test.IntUFamCatTest.intUFamCatTest
+  LanguageDef.Test.IntEFamCatTest.intEFamCatTest
+  LanguageDef.Test.IntUCofamCatTest.intUCofamCatTest
+  LanguageDef.Test.IntECofamCatTest.intECofamCatTest
+  LanguageDef.Test.IntDepFamCatTest.intDepFamCatTest
+  LanguageDef.Test.IntParamCatTest.intParamCatTest
+  LanguageDef.Test.IntDisheafCatTest.intDisheafCatTest
+  LanguageDef.Test.HigherPolyCatTest.higherPolyCatTest
+  LanguageDef.Test.QTypeTest.qtypeTest
+  LanguageDef.Test.HelixCatTest.helixCatTest
+  LanguageDef.Test.DiPolyFuncTest.diPolyFuncTest
+  LanguageDef.Test.MLDiPolyFuncTest.mlDiPolyFuncTest
+  LanguageDef.Test.RopeCatTest.ropeCatTest
+  LanguageDef.Test.NockTest.nockTest
+  LanguageDef.Test.TelescopeTest.telescopeTest
+  LanguageDef.Test.FinPolyTest.finPolyTest
+  LanguageDef.Test.RQFinTest.rqFinTest
+  LanguageDef.Test.DiprofunctorTest.diprofunctorTest
+  LanguageDef.Test.TreeCalculusTest.treeCalculusTest
+  LanguageDef.Test.FinCatPRATest.finCatPRATest
+  LanguageDef.Test.PolyDifuncTest.polyDifuncTest
+  LanguageDef.Test.PolyProfEndTest.polyProfEndTest
+  LanguageDef.Test.SlicePolyDifuncTest.slicePolyDifuncTest
+
+export
+partial potentiallyNonTerminatingTests : IO ()
+potentiallyNonTerminatingTests = do
+  LanguageDef.Test.GebTest.gebTestPotentiallyNonTerminating
+
+export
+partial main : IO ()
+main = do
+  totalTests
+  potentiallyNonTerminatingTests

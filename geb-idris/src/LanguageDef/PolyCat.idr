@@ -2,8 +2,15 @@ module LanguageDef.PolyCat
 
 import Library.IdrisUtils
 import Library.IdrisCategories
+import Library.IdrisAlgebra
+import LanguageDef.NatPrefixCat
+import public LanguageDef.MLDirichCat
+import public LanguageDef.IntArena
 
 %default total
+
+-- In favor of the (identical) one from `SliceFuncCat`.
+%hide Library.IdrisCategories.BaseChangeF
 
 -----------------------------
 -----------------------------
@@ -27,11 +34,11 @@ PolyFunc = DPair Type PolyFuncDir
 
 public export
 pfPos : PolyFunc -> Type
-pfPos (pos ** dir) = pos
+pfPos = fst
 
 public export
 pfDir : {p : PolyFunc} -> pfPos p -> Type
-pfDir {p=(pos ** dir)} i = dir i
+pfDir {p} i = snd p i
 
 public export
 pfPDir : PolyFunc -> Type
@@ -44,7 +51,7 @@ InterpPolyFunc p x = (i : pfPos p ** (pfDir {p} i -> x))
 public export
 InterpPFMap : (p : PolyFunc) -> {0 a, b : Type} ->
   (a -> b) -> InterpPolyFunc p a -> InterpPolyFunc p b
-InterpPFMap (_ ** _) m (i ** d) = (i ** m . d)
+InterpPFMap p m = dpMapSnd $ \_ => (.) m
 
 public export
 (p : PolyFunc) => Functor (InterpPolyFunc p) where
@@ -62,23 +69,32 @@ public export
 SliceToPolyFunc : {a : Type} -> SliceObj a -> PolyFunc
 SliceToPolyFunc {a} sl = (a ** sl)
 
--- Interpret the same data as determine a polynomial functor --
--- namely, a dependent set, AKA arena -- as a Dirichlet functor
--- (rather than a polynomial functor).  While a polynomial
--- functor is a sum of covariant representables, a Dirichlet
--- functor is a sum of contravariant representables.
+-- A reflective property of the polynomial functors is that a slice
+-- of the interpretation of a polynomial functor applied to `Type` --
+-- which is also the type of directions of a polynomial functor whose
+-- position type is that type application -- is equivalently an algebra
+-- of the polynomial functor with carrier `Type`.
 public export
-InterpDirichFunc : PolyFunc -> Type -> Type
-InterpDirichFunc (pos ** dir) x = (i : pos ** (x -> dir i))
+PolyFuncDirIsAlg : (p : PolyFunc) ->
+  SliceObj (InterpPolyFunc p Type) = Algebra (InterpPolyFunc p) Type
+PolyFuncDirIsAlg p = FunctorSliceIsAlg (InterpPolyFunc p)
 
 public export
-InterpDFMap : (p : PolyFunc) -> {0 a, b : Type} ->
-  (a -> b) -> InterpDirichFunc p b -> InterpDirichFunc p a
-InterpDFMap (_ ** _) m (i ** d) = (i ** d . m)
+PolyTypeAlg : PolyFunc -> Type
+PolyTypeAlg p = Algebra (InterpPolyFunc p) Type
+
+------------------------------------------------------------------
+---- Universal families (the opposite category of `PolyFunc`) ----
+------------------------------------------------------------------
 
 public export
-(p : PolyFunc) => Contravariant (InterpDirichFunc p) where
-  contramap {p} = InterpDFMap p
+InterpTypeUFam : PolyFunc -> Type -> Type
+InterpTypeUFam p a = Pi {a=(pfPos p)} (HomProf a . pfDir)
+
+public export
+tufamContramap : {p : PolyFunc} ->
+  (a, b : Type) -> (b -> a) -> InterpTypeUFam p a -> InterpTypeUFam p b
+tufamContramap {p} a b mba dm i = dm i . mba
 
 --------------------------------------------------------
 ---- Polynomial functors with finite direction-sets ----
@@ -126,20 +142,42 @@ PolyNatTrans p q =
 public export
 pntOnPos : {0 p, q : PolyFunc} -> PolyNatTrans p q ->
   pfPos p -> pfPos q
-pntOnPos {p=(_ ** _)} {q=(_ ** _)} (onPos ** onDir) = onPos
+pntOnPos = DPair.fst
 
 public export
 pntOnDir : {0 p, q : PolyFunc} -> (alpha : PolyNatTrans p q) ->
   (i : pfPos p) -> pfDir {p=q} (pntOnPos {p} {q} alpha i) -> pfDir {p} i
-pntOnDir {p=(_ ** _)} {q=(_ ** _)} (onPos ** onDir) = onDir
+pntOnDir = DPair.snd
 
 -- A natural transformation may be viewed as a morphism in the
 -- slice category of `Type` over `Type`.
 public export
 InterpPolyNT : {0 p, q : PolyFunc} -> PolyNatTrans p q ->
   SliceMorphism {a=Type} (InterpPolyFunc p) (InterpPolyFunc q)
-InterpPolyNT {p=(_ ** _)} {q=(_ ** _)} (onPos ** onDir) a (pi ** pd) =
-  (onPos pi ** (pd . onDir pi))
+InterpPolyNT {p} {q} alpha a pi_pd =
+  (fst alpha (fst pi_pd) ** (snd pi_pd . snd alpha (fst pi_pd)))
+
+public export
+PolyNTonPosEq : {p, q : PolyFunc} ->
+  PolyNatTrans p q -> PolyNatTrans p q -> Type
+PolyNTonPosEq {p} {q} alpha beta =
+  (i : pfPos p) -> pntOnPos alpha i ~=~ pntOnPos beta i
+
+public export
+PolyNTonDirEq : {p, q : PolyFunc} ->
+  (alpha, beta : PolyNatTrans p q) ->
+  PolyNTonPosEq {p} {q} alpha beta ->
+  Type
+PolyNTonDirEq {p} {q} alpha beta poseq =
+  (pi : pfPos p) -> (qd : pfDir {p=q} (pntOnPos alpha pi)) ->
+  pntOnDir alpha pi qd ~=~
+    pntOnDir beta pi (replace {p=(pfDir {p=q})} (poseq pi) qd)
+
+public export
+PolyNTeq : {p, q : PolyFunc} ->
+  PolyNatTrans p q -> PolyNatTrans p q -> Type
+PolyNTeq {p} {q} alpha beta =
+  DPair (PolyNTonPosEq {p} {q} alpha beta) (PolyNTonDirEq {p} {q} alpha beta)
 
 -- A slice morphism can be viewed as a special case of a natural transformation
 -- between the polynomial endofunctors as which the codomain and domain slices
@@ -163,49 +201,22 @@ PolyNatTransToSliceMorphism : {0 p, q : PolyFunc} ->
 PolyNatTransToSliceMorphism {p=(_ ** _)} {q=(_ ** qdir)}
   (_ ** ondir) onPosId i sp = ondir i $ replace {p=qdir} (sym (onPosId i)) sp
 
-------------------------------------------------------------
----- Natural transformations on polynomial endofunctors ----
-------------------------------------------------------------
-
-public export
-DirichNatTrans : PolyFunc -> PolyFunc -> Type
-DirichNatTrans (ppos ** pdir) (qpos ** qdir) =
-  (onPos : ppos -> qpos ** SliceMorphism pdir (qdir . onPos))
-
-public export
-dntOnPos : {0 p, q : PolyFunc} -> DirichNatTrans p q ->
-  pfPos p -> pfPos q
-dntOnPos {p=(_ ** _)} {q=(_ ** _)} (onPos ** onDir) = onPos
-
-public export
-dntOnDir : {0 p, q : PolyFunc} -> (alpha : DirichNatTrans p q) ->
-  (i : pfPos p) -> pfDir {p} i -> pfDir {p=q} (dntOnPos {p} {q} alpha i)
-dntOnDir {p=(_ ** _)} {q=(_ ** _)} (onPos ** onDir) = onDir
-
--- A natural transformation between Dirichlet functors may be viewed as a
--- morphism in the slice category of `Type` over `Type`.
-public export
-InterpDirichNT : {0 p, q : PolyFunc} -> DirichNatTrans p q ->
-  SliceMorphism {a=Type} (InterpDirichFunc p) (InterpDirichFunc q)
-InterpDirichNT {p=(_ ** _)} {q=(_ ** _)} (onPos ** onDir) a (pi ** pd) =
-  (onPos pi ** onDir pi . pd)
-
 ----------------------------------------------------------------------------
 ---- Vertical-Cartesian factoring of polynomial natural transformations ----
 ----------------------------------------------------------------------------
 
 public export
 pfBaseChangePos : (p : PolyFunc) -> {a : Type} -> (a -> pfPos p) -> Type
-pfBaseChangePos p {a} f = a
+pfBaseChangePos = arBaseChangePos
 
 public export
 pfBaseChangeDir : (p : PolyFunc) -> {a : Type} -> (f : a -> pfPos p) ->
   pfBaseChangePos p {a} f -> Type
-pfBaseChangeDir (pos ** dir) {a} f i = dir $ f i
+pfBaseChangeDir = arBaseChangeDir
 
 public export
 pfBaseChangeArena : (p : PolyFunc) -> {a : Type} -> (a -> pfPos p) -> PolyFunc
-pfBaseChangeArena p {a} f = (pfBaseChangePos p {a} f ** pfBaseChangeDir p {a} f)
+pfBaseChangeArena = arBaseChangeArena
 
 -- The intermediate polynomial functor in the vertical-Cartesian
 -- factoring of a natural transformation.
@@ -262,68 +273,6 @@ CartFactNatTrans : {0 p, q : PolyFunc} -> (alpha : PolyNatTrans p q) ->
 CartFactNatTrans {p=p@(ppos ** pdir)} {q=q@(qpos ** qdir)} alpha =
   (CartFactOnPos {p} {q} alpha ** CartFactOnDir {p} {q} alpha)
 
----------------------------------------------------------------------------
----- Vertical-Cartesian factoring of Dirichlet natural transformations ----
----------------------------------------------------------------------------
-
--- The intermediate Dirichlet functor in the vertical-Cartesian
--- factoring of a natural transformation between Dirichlet functors.
-public export
-DirichVertCartFactFunc : {p, q : PolyFunc} -> DirichNatTrans p q -> PolyFunc
-DirichVertCartFactFunc {p} {q} alpha =
-  pfBaseChangeArena q {a=(pfPos p)} (dntOnPos alpha)
-
-public export
-DirichVertCartFactPos : {p, q : PolyFunc} -> DirichNatTrans p q -> Type
-DirichVertCartFactPos {p} {q} alpha =
-  pfPos (DirichVertCartFactFunc {p} {q} alpha)
-
-public export
-DirichVertCartFactDir : {p, q : PolyFunc} -> (alpha : DirichNatTrans p q) ->
-  DirichVertCartFactPos {p} {q} alpha -> Type
-DirichVertCartFactDir {p} {q} alpha =
-  pfDir {p=(DirichVertCartFactFunc {p} {q} alpha)}
-
-public export
-DirichVertFactOnPos : {0 p, q : PolyFunc} -> (alpha : DirichNatTrans p q) ->
-  pfPos p -> DirichVertCartFactPos {p} {q} alpha
-DirichVertFactOnPos {p=(ppos ** pdir)} {q=(qpos ** qdir)} (onPos ** onDir) i = i
-
-public export
-DirichVertFactOnDir :
-  {0 p, q : PolyFunc} -> (alpha : DirichNatTrans p q) -> (i : pfPos p) ->
-  pfDir {p} i ->
-  DirichVertCartFactDir {p} {q} alpha (DirichVertFactOnPos {p} {q} alpha i)
-DirichVertFactOnDir {p=p@(_ ** _)} {q=q@(_ ** _)} (onPos ** onDir) i j =
-  onDir i j
-
-public export
-DirichVertFactNatTrans : {0 p, q : PolyFunc} -> (alpha : DirichNatTrans p q) ->
-  DirichNatTrans p (DirichVertCartFactFunc {p} {q} alpha)
-DirichVertFactNatTrans {p=p@(ppos ** pdir)} {q=q@(qpos ** qdir)} alpha =
-  (DirichVertFactOnPos {p} {q} alpha ** DirichVertFactOnDir {p} {q} alpha)
-
-public export
-DirichCartFactOnPos : {0 p, q : PolyFunc} -> (alpha : DirichNatTrans p q) ->
-  DirichVertCartFactPos {p} {q} alpha -> pfPos q
-DirichCartFactOnPos {p=(ppos ** pdir)} {q=(qpos ** qdir)} (onPos ** onDir) i =
-  onPos i
-
-public export
-DirichCartFactOnDir :
-  {0 p, q : PolyFunc} -> (alpha : DirichNatTrans p q) ->
-  (i : DirichVertCartFactPos {p} {q} alpha) ->
-  DirichVertCartFactDir {p} {q} alpha i ->
-  pfDir {p=q} (DirichCartFactOnPos {p} {q} alpha i)
-DirichCartFactOnDir {p=p@(_ ** _)} {q=q@(_ ** _)} (_ ** _) i j =
-  j
-
-public export
-DirichCartFactNatTrans : {0 p, q : PolyFunc} -> (alpha : DirichNatTrans p q) ->
-  DirichNatTrans (DirichVertCartFactFunc {p} {q} alpha) q
-DirichCartFactNatTrans {p=p@(ppos ** pdir)} {q=q@(qpos ** qdir)} alpha =
-  (DirichCartFactOnPos {p} {q} alpha ** DirichCartFactOnDir {p} {q} alpha)
-
 -------------------------------------------------
 -------------------------------------------------
 ---- Polynomial-functor universal properties ----
@@ -367,12 +316,16 @@ PFIdentityArena : PolyFunc
 PFIdentityArena = (PFIdentityPos ** PFIdentityDir)
 
 public export
+PolyElimId : (x : Type) -> InterpPolyFunc PFIdentityArena x -> x
+PolyElimId x (i ** d) = d ()
+
+public export
 PFHomPos : Type -> Type
 PFHomPos _ = Unit
 
 public export
 PFHomDir : (a : Type) -> PFHomPos a -> Type
-PFHomDir a () = a
+PFHomDir a _ = a
 
 public export
 PFHomArena : Type -> PolyFunc
@@ -396,7 +349,8 @@ pfCoproductPos (ppos ** pdir) (qpos ** qdir) = Either ppos qpos
 
 public export
 pfCoproductDir : (p, q : PolyFunc) -> pfCoproductPos p q -> Type
-pfCoproductDir (ppos ** pdir) (qpos ** qdir) = eitherElim pdir qdir
+pfCoproductDir (ppos ** pdir) (qpos ** qdir) (Left pi) = pdir pi
+pfCoproductDir (ppos ** pdir) (qpos ** qdir) (Right qi) = qdir qi
 
 public export
 pfCoproductArena : PolyFunc -> PolyFunc -> PolyFunc
@@ -404,15 +358,92 @@ pfCoproductArena p q = (pfCoproductPos p q ** pfCoproductDir p q)
 
 public export
 pfProductPos : PolyFunc -> PolyFunc -> Type
-pfProductPos (ppos ** pdir) (qpos ** qdir) = Pair ppos qpos
+pfProductPos p q = Pair (pfPos p) (pfPos q)
 
 public export
 pfProductDir : (p, q : PolyFunc) -> pfProductPos p q -> Type
-pfProductDir (ppos ** pdir) (qpos ** qdir) = uncurry Either . bimap pdir qdir
+pfProductDir p q pqi = Either (pfDir {p} (fst pqi)) (pfDir {p=q} (snd pqi))
 
 public export
 pfProductArena : PolyFunc -> PolyFunc -> PolyFunc
 pfProductArena p q = (pfProductPos p q ** pfProductDir p q)
+
+--------------------------------------------------------------
+---- Eliminators and introductions for coproduct/product ----
+--------------------------------------------------------------
+
+-- Eliminator for InterpPolyFunc of a coproduct arena.
+-- Given handlers for the left and right cases, dispatches appropriately.
+public export
+elimInterpPfCoproduct :
+  (p, q : PolyFunc) -> (x : Type) -> (r : Type) ->
+  (leftCase : (i : pfPos p) -> (pfDir {p} i -> x) -> r) ->
+  (rightCase : (j : pfPos q) -> (pfDir {p=q} j -> x) -> r) ->
+  InterpPolyFunc (pfCoproductArena p q) x -> r
+elimInterpPfCoproduct (ppos ** pdir) (qpos ** qdir) x r leftCase rightCase
+  (Left i ** dirFn) = leftCase i dirFn
+elimInterpPfCoproduct (ppos ** pdir) (qpos ** qdir) x r leftCase rightCase
+  (Right j ** dirFn) = rightCase j dirFn
+
+-- Eliminator for InterpPolyFunc of a product arena.
+-- The direction type is Either (pdir i) (qdir j), so we need a handler that
+-- receives both positions and the combined direction function.
+public export
+elimInterpPfProduct :
+  (p, q : PolyFunc) -> (x : Type) -> (r : Type) ->
+  (handler :
+    (i : pfPos p) -> (j : pfPos q) ->
+    (Either (pfDir {p} i) (pfDir {p=q} j) -> x) -> r) ->
+  InterpPolyFunc (pfProductArena p q) x -> r
+elimInterpPfProduct (ppos ** pdir) (qpos ** qdir) x r handler
+  ((i, j) ** dirFn) = handler i j dirFn
+
+-- Specialized eliminator for InterpPolyFunc of (pfProductArena PFIdentityArena q).
+-- The left position is Unit, so we ignore it. The left direction is also Unit,
+-- so `dirFn (Left ())` gives us an x directly.
+public export
+elimInterpPfProductId :
+  (q : PolyFunc) -> (x : Type) -> (r : Type) ->
+  (handler :
+    (j : pfPos q) ->
+    (getX : x) ->                        -- dirFn (Left ())
+    (recurse : pfDir {p=q} j -> x) ->    -- \d => dirFn (Right d)
+    r) ->
+  InterpPolyFunc (pfProductArena PFIdentityArena q) x -> r
+elimInterpPfProductId (qpos ** qdir) x r handler (((), j) ** dirFn) =
+  handler j (dirFn (Left ())) (\d => dirFn (Right d))
+
+-- Introduce a Left element in a coproduct arena interpretation.
+public export
+introInterpPfCoproductLeft :
+  (p, q : PolyFunc) -> (x : Type) ->
+  (i : pfPos p) -> (pfDir {p} i -> x) ->
+  InterpPolyFunc (pfCoproductArena p q) x
+introInterpPfCoproductLeft (ppos ** pdir) (qpos ** qdir) x i dirFn =
+  (Left i ** dirFn)
+
+-- Introduce a Right element in a coproduct arena interpretation.
+public export
+introInterpPfCoproductRight :
+  (p, q : PolyFunc) -> (x : Type) ->
+  (j : pfPos q) -> (pfDir {p=q} j -> x) ->
+  InterpPolyFunc (pfCoproductArena p q) x
+introInterpPfCoproductRight (ppos ** pdir) (qpos ** qdir) x j dirFn =
+  (Right j ** dirFn)
+
+-- Introduce an element in (pfProductArena PFIdentityArena q).
+-- Given a position in q, a direct x value, and a function for recursive dirs.
+public export
+introInterpPfProductId :
+  (q : PolyFunc) -> (x : Type) ->
+  (j : pfPos q) ->
+  (getX : x) ->
+  (recurse : pfDir {p=q} j -> x) ->
+  InterpPolyFunc (pfProductArena PFIdentityArena q) x
+introInterpPfProductId (qpos ** qdir) x j getX recurse =
+  (((), j) ** \d => case d of Left () => getX; Right rd => recurse rd)
+
+--------------------------------------------------------------
 
 public export
 pfDoubleArena : PolyFunc -> PolyFunc
@@ -488,28 +519,45 @@ pfMaybeDir = pfDir {p=pfMaybeArena}
 
 public export
 pfParProductPos : PolyFunc -> PolyFunc -> Type
-pfParProductPos = pfProductPos
+pfParProductPos = dfParProductPos
 
 public export
 pfParProductDir : (p, q : PolyFunc) -> pfParProductPos p q -> Type
-pfParProductDir (ppos ** pdir) (qpos ** qdir) = uncurry Pair . bimap pdir qdir
+pfParProductDir = dfParProductDir
 
 public export
 pfParProductArena : PolyFunc -> PolyFunc -> PolyFunc
-pfParProductArena p q = (pfParProductPos p q ** pfParProductDir p q)
+pfParProductArena = dfParProductArena
+
+public export
+pfCofreeCopointedPos : PolyFunc -> Type
+pfCofreeCopointedPos = pfPos
+
+public export
+pfCofreeCopointedDir : (p : PolyFunc) -> pfCofreeCopointedPos p -> Type
+pfCofreeCopointedDir p = Either Unit . pfDir {p}
+
+-- Equivalent to `pfProductArena PFIdentityArena`.
+public export
+pfCofreeCopointed : PolyFunc -> PolyFunc
+pfCofreeCopointed p = (pfCofreeCopointedPos p ** pfCofreeCopointedDir p)
 
 public export
 pfCompositionPos : PolyFunc -> PolyFunc -> Type
-pfCompositionPos q p = (i : pfPos q ** (pfDir {p=q} i -> pfPos p))
+pfCompositionPos q p = InterpPolyFunc q (pfPos p)
 
 public export
 pfCompositionDir : (p, q : PolyFunc) -> pfCompositionPos p q -> Type
 pfCompositionDir q p qppos =
-  (qdir : pfDir {p=q} (fst qppos) ** pfDir {p} $ snd qppos qdir)
+  Sigma {a=(pfDir {p=q} (fst qppos))} (pfDir {p} . snd qppos)
 
 public export
 pfCompositionArena : PolyFunc -> PolyFunc -> PolyFunc
 pfCompositionArena p q = (pfCompositionPos p q ** pfCompositionDir p q)
+
+public export
+pfCompProj : (q, r : PolyFunc) -> pfCompositionPos q r -> pfPos q
+pfCompProj (qpos ** qdir) (rpos ** rdir) = DPair.fst
 
 public export
 pfComposeInterp : {q, p : PolyFunc} -> {x : Type} ->
@@ -524,6 +572,67 @@ pfComposeInterpInv : {q, p : PolyFunc} -> {x : Type} ->
   InterpPolyFunc q (InterpPolyFunc p x)
 pfComposeInterpInv {q=(qpos ** qdir)} {p=(ppos ** pdir)} {x} ((qi ** qd) ** d) =
   (qi ** \qdi => (qd qdi ** \pdi => d (qdi ** pdi)))
+
+public export
+pfFunctorExpArena : Type -> PolyFunc -> PolyFunc
+pfFunctorExpArena a p = (a -> pfPos p ** Sigma {a} . (.) (pfDir {p}))
+
+public export
+pfFromCompHomArena : (a : Type) -> (p : PolyFunc) ->
+  PolyNatTrans (pfFunctorExpArena a p) (pfCompositionArena (PFHomArena a) p)
+pfFromCompHomArena a (pos ** dir) = (MkDPair () ** \_ => id)
+
+public export
+pfToCompHomArena : (a : Type) -> (p : PolyFunc) ->
+  PolyNatTrans (pfCompositionArena (PFHomArena a) p) (pfFunctorExpArena a p)
+pfToCompHomArena a (pos ** dir) = (DPair.snd ** \_ => id)
+
+public export
+pfFunctorExpFromArena : (a : Type) -> (p : PolyFunc) ->
+  NaturalTransformation
+    (InterpPolyFunc (pfFunctorExpArena a p))
+    (FunctorExp (InterpPolyFunc p) a)
+pfFunctorExpFromArena a (ppos ** pdir) x (f ** pdx) ea =
+  (f ea ** \d => pdx (ea ** d))
+
+public export
+pfFunctorExpToArena : (a : Type) -> (p : PolyFunc) ->
+  NaturalTransformation
+    (FunctorExp (InterpPolyFunc p) a)
+    (InterpPolyFunc (pfFunctorExpArena a p))
+pfFunctorExpToArena a (ppos ** pdir) x f =
+  (DPair.fst . f ** \(ea ** d) => snd (f ea) d)
+
+-- Composing a polynomial functor after a Dirichlet functor yields
+-- a Dirichlet functor.
+
+public export
+pdfCompositionPos : PolyFunc -> MLDirichCatObj -> Type
+pdfCompositionPos = pfCompositionPos
+
+public export
+pdfCompositionDir : (q : PolyFunc) -> (p : MLDirichCatObj) ->
+  pdfCompositionPos q p -> Type
+pdfCompositionDir q p qppos =
+  Pi {a=(pfDir {p=q} (fst qppos))} (pfDir {p} . snd qppos)
+
+public export
+pdfCompositionArena : PolyFunc -> MLDirichCatObj -> MLDirichCatObj
+pdfCompositionArena q p = (pdfCompositionPos q p ** pdfCompositionDir q p)
+
+public export
+pdfComposeInterp : {q : PolyFunc} -> {p : MLDirichCatObj} -> {x : Type} ->
+  InterpPolyFunc q (InterpDirichFunc p x) ->
+  InterpDirichFunc (pdfCompositionArena q p) x
+pdfComposeInterp {q} {p} {x} qidm =
+  ((fst qidm ** fst . snd qidm) ** \ex, qd => snd (snd qidm qd) ex)
+
+public export
+pdfComposeInterpInv : {q : PolyFunc} -> {p : MLDirichCatObj} -> {x : Type} ->
+  InterpDirichFunc (pdfCompositionArena q p) x ->
+  InterpPolyFunc q (InterpDirichFunc p x)
+pdfComposeInterpInv {q} {p} {x} el =
+  (fst $ fst el ** \qd => (snd (fst el) qd ** \ex => snd el ex qd))
 
 public export
 pfDuplicateArena : PolyFunc -> PolyFunc
@@ -594,20 +703,20 @@ pfCompositionPowerDir p n = pfDir {p=(pfCompositionPowerArena p n)}
 
 public export
 pfSetCoproductPos : {a : Type} -> (a -> PolyFunc) -> Type
-pfSetCoproductPos {a} ps = DPair a (fst . ps)
+pfSetCoproductPos = dfSetCoproductPos
 
 public export
 pfSetCoproductDir : {a : Type} ->
   (ps : a -> PolyFunc) -> pfSetCoproductPos ps -> Type
-pfSetCoproductDir ps (x ** xpos) = snd (ps x) xpos
+pfSetCoproductDir = dfSetCoproductDir
 
 public export
 pfSetCoproductArena : {a : Type} -> (a -> PolyFunc) -> PolyFunc
-pfSetCoproductArena ps = (pfSetCoproductPos ps ** pfSetCoproductDir ps)
+pfSetCoproductArena = dfSetCoproductArena
 
 public export
 pfSetProductPos : {a : Type} -> (a -> PolyFunc) -> Type
-pfSetProductPos {a} ps = (x : a) -> fst $ ps x
+pfSetProductPos = dfSetParProductPos
 
 public export
 pfSetProductDir : {a : Type} ->
@@ -620,18 +729,137 @@ pfSetProductArena {a} ps = (pfSetProductPos ps ** pfSetProductDir ps)
 
 public export
 pfSetParProductPos : {a : Type} -> (a -> PolyFunc) -> Type
-pfSetParProductPos = pfSetProductPos
+pfSetParProductPos = dfSetParProductPos
 
 public export
 pfSetParProductDir : {a : Type} ->
   (ps : a -> PolyFunc) -> pfSetParProductPos ps -> Type
-pfSetParProductDir {a} ps fpos = ((x : a) -> snd (ps x) $ fpos x)
+pfSetParProductDir = dfSetParProductDir
 
 public export
 pfSetParProductArena : {a : Type} -> (a -> PolyFunc) -> PolyFunc
-pfSetParProductArena {a} ps = (pfSetParProductPos ps ** pfSetParProductDir ps)
+pfSetParProductArena = dfSetParProductArena
 
--- Formula 4.27 from "Polynomial Functors: A General Theory of Interaction".
+-- Formula 4.75 from "Polynomial Functors: A General Theory of Interaction".
+-- See also the section on formula 3.82 below.
+public export
+pfParProdClosure : PolyFunc -> PolyFunc -> PolyFunc
+pfParProdClosure q r =
+  pfSetProductArena {a=(pfPos q)} $
+    pfCompositionArena r .
+    pfProductArena PFIdentityArena .
+    PFConstArena . pfDir {p=q}
+
+public export
+pfParProdClosurePos : PolyFunc -> PolyFunc -> Type
+pfParProdClosurePos = pfPos .* pfParProdClosure
+
+public export
+pfParProdClosureDir : (p, q : PolyFunc) -> pfParProdClosurePos p q -> Type
+pfParProdClosureDir p q = pfDir {p=(pfParProdClosure p q)}
+
+-- Formula 4.79 from "Polynomial Functors: A General Theory of Interaction":
+-- this is isomorphic to `pfParProdClosure` (that isomorphism shows that
+-- `pfParProdClosure` can be used as a way of computing the natural
+-- transformations between polynomial functors as the positions of a polynomial
+-- functor).  See the section on formula 4.75 above.
+public export
+pfParProdClosurePosNT : PolyFunc -> PolyFunc -> Type
+pfParProdClosurePosNT = PolyNatTrans
+
+-- Here we show that there is a (straightforward) conversion
+-- between the position-set of the earlier, product-of-compositions
+-- definition of the parallel-product closure and the set-of-natural
+-- transformations definition:
+
+public export
+pfParProdClosurePosToNT : (q, r : PolyFunc) ->
+  pfParProdClosurePos q r -> pfParProdClosurePosNT q r
+pfParProdClosurePosToNT (qpos ** qdir) (rpos ** rdir) f =
+  (\qi => fst (f qi) ** \qi, rd => snd (snd (f qi) rd))
+
+public export
+pfParProdClosurePosFromNT : (q, r : PolyFunc) ->
+  pfParProdClosurePosNT q r -> pfParProdClosurePos q r
+pfParProdClosurePosFromNT (qpos ** qdir) (rpos ** rdir) (f1 ** f2) qi =
+  (f1 qi ** \rd => ((), f2 qi rd))
+
+-- Now we define the directions of the parallel-product closure:
+
+public export
+pfParProdClosureDirPolyFunc :
+  (q, r : PolyFunc) -> pfParProdClosurePosNT q r -> PolyFunc
+pfParProdClosureDirPolyFunc q r alpha = VertCartFactFunc {p=q} {q=r} alpha
+
+public export
+pfParProdClosureDirNT :
+  (q, r : PolyFunc) -> pfParProdClosurePosNT q r -> Type
+pfParProdClosureDirNT q r alpha = pfPDir (pfParProdClosureDirPolyFunc q r alpha)
+
+-- An explicit formula for the above, just for documentation.
+public export
+0 pfParProdClosureDirFormula : (p, q : PolyFunc) ->
+  (alpha : pfParProdClosurePosNT p q) ->
+  (pfParProdClosureDirNT p q alpha =
+   (pi : pfPos p ** pfDir {p=q} (pntOnPos {p} {q} alpha pi)))
+pfParProdClosureDirFormula (ppos ** pdir) (qpos ** qdir) (onpos ** ondir) =
+  Refl
+
+public export
+pfParProdClosureNT : PolyFunc -> PolyFunc -> PolyFunc
+pfParProdClosureNT q r =
+  (pfParProdClosurePosNT q r ** pfParProdClosureDirNT q r)
+
+-- Here we exhibit the translation between the product-of-compositions
+-- direction-type of the parallel-product closure and the explicit
+-- direction-type:
+
+public export
+pfParProdClosureNTtoDir : (q, r : PolyFunc) ->
+  (f : pfParProdClosurePosNT q r) ->
+  pfParProdClosureDirNT q r f ->
+  pfParProdClosureDir q r (pfParProdClosurePosFromNT q r f)
+pfParProdClosureNTtoDir (qpos ** qdir) (rpos ** rdir) (onpos ** ondir) =
+  \(qi ** rd) => (qi ** rd ** Left ())
+
+public export
+pfParProdClosureNTfromDir : (q, r : PolyFunc) ->
+  (f : pfParProdClosurePosNT q r) ->
+  pfParProdClosureDir q r (pfParProdClosurePosFromNT q r f) ->
+  pfParProdClosureDirNT q r f
+pfParProdClosureNTfromDir (qpos ** rpos) (qdir ** rdir)
+    (onpos ** ondir) (qi ** rd ** Left ()) =
+      (qi ** rd)
+pfParProdClosureNTfromDir (qpos ** rpos) (qdir ** rdir)
+    (onpos ** ondir) (qi ** rd ** Right ev) =
+      void ev
+
+public export
+pfParProdClosureDirToNT : (q, r : PolyFunc) ->
+  (f : pfParProdClosurePos q r) ->
+  pfParProdClosureDir q r f ->
+  pfParProdClosureDirNT q r (pfParProdClosurePosToNT q r f)
+pfParProdClosureDirToNT (qpos ** qdir) (rpos ** rdir) f (qi ** rd ** cpd)
+    with (snd (f qi) rd)
+  pfParProdClosureDirToNT (qpos ** qdir) (rpos ** rdir) f (qi ** rd ** Left ())
+    | ((), qd) =
+      (qi ** rd)
+  pfParProdClosureDirToNT (qpos ** qdir) (rpos ** rdir) f (qi ** rd ** Right ev)
+    | ((), qd) =
+      void ev
+
+public export
+pfParProdClosureDirFromNT : (q, r : PolyFunc) ->
+  (f : pfParProdClosurePos q r) ->
+  pfParProdClosureDirNT q r (pfParProdClosurePosToNT q r f) ->
+  pfParProdClosureDir q r f
+pfParProdClosureDirFromNT (qpos ** qdir) (rpos ** rdir) f (qi ** rd)
+    with (snd (f qi) rd)
+  pfParProdClosureDirFromNT (qpos ** qdir) (rpos ** rdir) f (qi ** rd)
+    | ((), qd) =
+      (qi ** rd ** Left ())
+
+-- Formula 5.27 from "Polynomial Functors: A General Theory of Interaction".
 public export
 pfHomObj : PolyFunc -> PolyFunc -> PolyFunc
 pfHomObj q r =
@@ -660,78 +888,193 @@ public export
 pfExpObjDir : (p, q : PolyFunc) -> pfExpObjPos p q -> Type
 pfExpObjDir p q = pfDir {p=(pfExpObj p q)}
 
-public export
-pfEvalOnPos :
-  (p, q : PolyFunc) ->
-  pfPos (pfProductArena (pfHomObj p q) p) -> pfPos q
-pfEvalOnPos (ppos ** pdir) (qpos ** qdir) (qpi, pi) = fst $ qpi pi
+-- Above, we have expressed the hom-object as a product of compositions,
+-- as shown in the polynomial functors book.  Now we demonstrate an
+-- equivalent way of writing it in which the positions and directions
+-- are computed separately, so that it exhibits the hom-object explicitly as
+-- a coproduct of representables.
+--
+-- In that explicit representation, the position-set is a dependent pair:
 
 public export
-pfEvalOnDir : (p, q : PolyFunc) ->
-  (i : pfPos (pfProductArena (pfHomObj p q) p)) ->
-  pfDir {p=q} (pfEvalOnPos p q i) ->
-  pfDir {p=(pfProductArena (pfHomObj p q) p)} i
-pfEvalOnDir (ppos ** pdir) (qpos ** qdir) qpi qd with
-    (pfEvalOnPos (ppos ** pdir) (qpos ** qdir) qpi)
-  pfEvalOnDir (ppos ** pdir) (qpos ** qdir) qpi qd | qi = ?pfEvalOnDir_hole
+pfHomObjPosAltFst : (q, r : PolyFunc) -> Type
+pfHomObjPosAltFst q r = pfPos q -> pfPos r
 
 public export
-pfEval : (p, q : PolyFunc) -> PolyNatTrans (pfProductArena (pfHomObj p q) p) q
-pfEval p q = (pfEvalOnPos p q ** pfEvalOnDir p q)
-
--- Formula 3.78 from "Polynomial Functors: A General Theory of Interaction".
--- See also the section on formula 3.82 below.
-public export
-pfParProdClosure : PolyFunc -> PolyFunc -> PolyFunc
-pfParProdClosure q r =
-  pfSetProductArena {a=(pfPos q)} $
-    pfCompositionArena r .
-    pfProductArena PFIdentityArena .
-    PFConstArena . pfDir {p=q}
+pfHomObjPosAltSnd : (q, r : PolyFunc) -> pfHomObjPosAltFst q r -> Type
+pfHomObjPosAltSnd q r f =
+  -- Note that one way of viewing the `Either Unit` codomain is that
+  -- instead of sending _all_ directions of `r` whose positions are in
+  -- the image of `f` to directions of `q`, we choose some _subset_ of
+  -- those directions to send to `q` (and do nothing with the others).
+  (qi : pfPos q) -> pfDir {p=r} (f qi) -> Either Unit (pfDir {p=q} qi)
 
 public export
-pfParProdClosurePos : PolyFunc -> PolyFunc -> Type
-pfParProdClosurePos = pfPos .* pfParProdClosure
+pfHomObjPosAlt : (q, r : PolyFunc) -> Type
+pfHomObjPosAlt q r = DPair (pfHomObjPosAltFst q r) (pfHomObjPosAltSnd q r)
+
+-- Note, however, that that dependent pair has precisely the form of
+-- a polynomial natural transformation to the codomain from a functor
+-- derived from the domain!  Specifically, we can define it as follows:
+public export
+pfHomObjPosNT : (q, r : PolyFunc) -> Type
+pfHomObjPosNT q r = PolyNatTrans (pfCofreeCopointed q) r
 
 public export
-pfParProdClosureDir : (p, q : PolyFunc) -> pfParProdClosurePos p q -> Type
-pfParProdClosureDir p q = pfDir {p=(pfParProdClosure p q)}
+0 pfHomObjPosNTisAlt : (q, r : PolyFunc) ->
+  pfHomObjPosNT q r = pfHomObjPosAlt q r
+pfHomObjPosNTisAlt q r = Refl
 
--- Formula 3.82 from "Polynomial Functors: A General Theory of Interaction":
--- this is isomorphic to `pfParProdClosure` (that isomorphism shows that
--- `pfParProdClosure` can be used as a way of computing the natural
--- transformations between polynomial functors as the positions of a polynomial
--- functor).  See the section on formula 3.78 above.
-public export
-pfParProdClosurePosNT : PolyFunc -> PolyFunc -> Type
-pfParProdClosurePosNT = PolyNatTrans
+-- And now we can show that there is a (straightforward) conversion
+-- between the position-set of the earlier, product-of-compositions
+-- definition of the hom-object and the explicit one above written as
+-- a set of natural transformations:
 
 public export
-pfParProdClosureDirPolyFunc :
-  (q, r : PolyFunc) -> pfParProdClosurePosNT q r -> PolyFunc
-pfParProdClosureDirPolyFunc q r alpha = VertCartFactFunc {p=q} {q=r} alpha
+pfHomObjPosToNT : (q, r : PolyFunc) ->
+  pfHomObjPos q r -> pfHomObjPosNT q r
+pfHomObjPosToNT (qpos ** qdir) (rpos ** rdir) f =
+  (\qi => fst (f qi) ** \qi => snd (f qi))
 
 public export
-pfParProdClosureDirNT :
-  (q, r : PolyFunc) -> pfParProdClosurePosNT q r -> Type
-pfParProdClosureDirNT q r alpha = pfPDir (pfParProdClosureDirPolyFunc q r alpha)
+pfHomObjPosFromNT : (q, r : PolyFunc) ->
+  pfHomObjPosNT q r -> pfHomObjPos q r
+pfHomObjPosFromNT (qpos ** qdir) (rpos ** rdir) (f1 ** f2) qi =
+  (f1 qi ** f2 qi)
+
+-- Next we can define the direction-set of the hom-object explicitly.
+-- We can express the (per-position, dependent) direction-set itself
+-- as the total direction-space of another polynomial functor (hence
+-- as a dependent polynomial functor).  This functor may be seen as
+-- the intermediate object of the vertical-Cartesian factorization of
+-- the epi component of the epi-mono factorization of the natural
+-- transformation which constitutes the position.
 
 public export
-pfParProdClosureNT : PolyFunc -> PolyFunc -> PolyFunc
-pfParProdClosureNT q r =
-  (pfParProdClosurePosNT q r ** pfParProdClosureDirNT q r)
+pfHomObjDirNTpos : (q, r : PolyFunc) ->
+  pfHomObjPosNT q r -> Type
+pfHomObjDirNTpos q r f = pfCofreeCopointedPos q
 
 public export
-PolyRKanExtPos : PolyFunc -> PolyFunc -> Type
-PolyRKanExtPos g j = (pfPos j, PolyNatTrans j g)
+pfHomObjDirNTdir : (q, r : PolyFunc) ->
+  (f : pfHomObjPosNT q r) -> SliceObj (pfHomObjDirNTpos q r f)
+pfHomObjDirNTdir q r (onpos ** ondir) qi =
+  (rd : pfDir {p=r} (onpos qi) ** ondir qi rd = Left ())
 
 public export
-PolyRKanExtDir : (g, j : PolyFunc) -> PolyRKanExtPos g j -> Type
-PolyRKanExtDir g j (pi, alpha) = pfDir {p=j} pi
+pfHomObjDirNTPolyFunc : (q, r : PolyFunc) -> pfHomObjPosNT q r -> PolyFunc
+pfHomObjDirNTPolyFunc q r f = (pfHomObjDirNTpos q r f ** pfHomObjDirNTdir q r f)
 
 public export
-PolyRKanExt : (g, j : PolyFunc) -> PolyFunc
-PolyRKanExt g j = (PolyRKanExtPos g j ** PolyRKanExtDir g j)
+pfHomObjDirNT : (q, r : PolyFunc) -> pfHomObjPosNT q r -> Type
+pfHomObjDirNT q r f = pfPDir (pfHomObjDirNTPolyFunc q r f)
+
+-- Now we can exhibit the translation between the product-of-compositions
+-- direction-type and the explicit direction-type:
+
+public export
+pfHomObjNTtoDir : (q, r : PolyFunc) -> (f : pfHomObjPosNT q r) ->
+  pfHomObjDirNT q r f -> pfHomObjDir q r (pfHomObjPosFromNT q r f)
+pfHomObjNTtoDir (qpos ** qdir) (rpos ** rdir) (onpos ** ondir) =
+  \(qi ** rd ** isleft) => (qi ** rd ** rewrite isleft in ())
+
+public export
+pfHomObjNTfromDir : (q, r : PolyFunc) -> (f : pfHomObjPosNT q r) ->
+  pfHomObjDir q r (pfHomObjPosFromNT q r f) -> pfHomObjDirNT q r f
+pfHomObjNTfromDir (qpos ** rpos) (qdir ** rdir)
+    (onpos ** ondir) (qi ** rd ** cpd) with (ondir qi rd) proof isleft
+  pfHomObjNTfromDir (qpos ** rpos) (qdir ** rdir)
+    (onpos ** ondir) (qi ** rd ** cpd) | Left ()
+      = (qi ** rd ** isleft)
+  pfHomObjNTfromDir (qpos ** rpos) (qdir ** rdir)
+    (onpos ** ondir) (qi ** rd ** cpd) | Right ri
+      = void cpd
+
+public export
+pfHomObjDirToNT : (q, r : PolyFunc) -> (f : pfHomObjPos q r) ->
+  pfHomObjDir q r f -> pfHomObjDirNT q r (pfHomObjPosToNT q r f)
+pfHomObjDirToNT (qpos ** qdir) (rpos ** rdir) f (qi ** rd ** cpd)
+    with (snd (f qi) rd) proof isleft
+  pfHomObjDirToNT (qpos ** qdir) (rpos ** rdir) f (qi ** rd ** ())
+    | Left () =
+      (qi ** rd ** isleft)
+  pfHomObjDirToNT (qpos ** qdir) (rpos ** rdir) f (qi ** rd ** cpd)
+    | Right qd =
+      void cpd
+
+public export
+pfHomObjDirFromNT : (q, r : PolyFunc) -> (f : pfHomObjPos q r) ->
+  pfHomObjDirNT q r (pfHomObjPosToNT q r f) -> pfHomObjDir q r f
+pfHomObjDirFromNT (qpos ** qdir) (rpos ** rdir) f =
+  \(qi ** rd ** isleft) => (qi ** rd ** rewrite isleft in ())
+
+-- Thus we can now define the full explicit version of the hom-object
+-- as a pair of position-type and dependent direction-type.
+public export
+pfHomObjNT : (q, r : PolyFunc) -> PolyFunc
+pfHomObjNT q r = (pfHomObjPosNT q r ** pfHomObjDirNT q r)
+
+-- Here we show that the value of `pfHomObj(p, q)(x)` is
+-- `PolyNatTrans (pfProductArena (PFHomArena x) p) q`, as
+-- suggested by a Yoneda argument as to what the hom-object
+-- would have to be if it existed.
+
+public export
+PolyToInterpHomPos : (p, q : PolyFunc) -> (x : Type) ->
+  InterpPolyFunc (pfHomObj p q) x ->
+  pfPos (pfProductArena (PFHomArena x) p) -> pfPos q
+PolyToInterpHomPos p q x i_dm upi =
+  fst ((fst i_dm) (snd upi))
+
+public export
+PolyToInterpHomDir : (p, q : PolyFunc) -> (x : Type) ->
+  (el : InterpPolyFunc (pfHomObj p q) x) ->
+  (i : pfPos (pfProductArena (PFHomArena x) p)) ->
+  pfDir {p=q} (PolyToInterpHomPos p q x el i) ->
+  pfDir {p=(pfProductArena (PFHomArena x) p)} i
+PolyToInterpHomDir p q x i_dm u_pi qd
+    with (snd (fst i_dm $ snd u_pi) qd) proof eq
+  PolyToInterpHomDir p q x i_dm u_pi qd
+    | Left () = Left $ snd i_dm (snd u_pi ** qd ** rewrite eq in ())
+  PolyToInterpHomDir p q x i_dm u_pi qd
+    | Right pd = Right pd
+
+public export
+PolyToInterpHom : (p, q : PolyFunc) -> (x : Type) ->
+  InterpPolyFunc (pfHomObj p q) x ->
+  PolyNatTrans (pfProductArena (PFHomArena x) p) q
+PolyToInterpHom p q x el =
+  (PolyToInterpHomPos p q x el ** PolyToInterpHomDir p q x el)
+
+public export
+PolyFromInterpHomFst : (p, q : PolyFunc) -> (x : Type) ->
+  PolyNatTrans (pfProductArena (PFHomArena x) p) q ->
+  pfPos (pfHomObj p q)
+PolyFromInterpHomFst (ppos ** pdir) (qpos ** qdir) x (onpos ** ondir) pi =
+  (onpos ((), pi) **
+   \qd => case ondir ((), pi) qd of
+    Left ex => Left ()
+    Right pd => Right pd)
+
+public export
+PolyFromInterpHomSnd : (p, q : PolyFunc) -> (x : Type) ->
+  (alpha : PolyNatTrans (pfProductArena (PFHomArena x) p) q) ->
+  pfDir {p=(pfHomObj p q)} (PolyFromInterpHomFst p q x alpha) -> x
+PolyFromInterpHomSnd (ppos ** pdir) (qpos ** qdir) x (onpos ** ondir)
+    (pi ** qd ** dd) with (ondir ((), pi) qd)
+  PolyFromInterpHomSnd (ppos ** pdir) (qpos ** qdir) x (onpos ** ondir)
+    (pi ** qd ** ()) | Left ex =
+      ex
+  PolyFromInterpHomSnd (ppos ** pdir) (qpos ** qdir) x (onpos ** ondir)
+    (pi ** qd ** dd) | Right pd =
+      void dd
+
+public export
+PolyFromInterpHom : (p, q : PolyFunc) -> (x : Type) ->
+  PolyNatTrans (pfProductArena (PFHomArena x) p) q ->
+  InterpPolyFunc (pfHomObj p q) x
+PolyFromInterpHom p q x alpha =
+  (PolyFromInterpHomFst p q x alpha ** PolyFromInterpHomSnd p q x alpha)
 
 public export
 pfLeftCoclosurePos : (q, p : PolyFunc) -> Type
@@ -746,12 +1089,100 @@ pfLeftCoclosure : (q, p : PolyFunc) -> PolyFunc
 pfLeftCoclosure q p = (pfLeftCoclosurePos q p ** pfLeftCoclosureDir q p)
 
 public export
-PolyLKanExt : (g, j : PolyFunc) -> PolyFunc
-PolyLKanExt = flip pfLeftCoclosure
+PolyLKanExt : (j, g : PolyFunc) -> PolyFunc
+PolyLKanExt = pfLeftCoclosure
 
 public export
 PolyDensityComonad : PolyFunc -> PolyFunc
 PolyDensityComonad f = PolyLKanExt f f
+
+public export
+InterpPolyRKanExt : PolyFunc -> PolyFunc -> Type -> Type
+InterpPolyRKanExt j g a = PolyNatTrans (pfCompositionArena (PFHomArena a) j) g
+
+public export
+PolyRKanExtPos : (j, g : PolyFunc) -> Type
+PolyRKanExtPos j g = DPair Type (InterpPolyRKanExt j g)
+
+public export
+PolyRKanExtDir : (j, g : PolyFunc) -> PolyRKanExtPos j g -> Type
+PolyRKanExtDir j g = DPair.fst
+
+public export
+PolyRKanExt : (j, g : PolyFunc) -> PolyFunc
+PolyRKanExt j g = (PolyRKanExtPos j g ** PolyRKanExtDir j g)
+
+public export
+RKanExtPoly : PolyFunc -> PolyFunc -> Type -> Type
+RKanExtPoly j g a = PolyNatTrans (pfFunctorExpArena a j) g
+
+public export
+rkpMap : (j, g : PolyFunc) ->
+  (a, b : Type) -> (a -> b) -> RKanExtPoly j g a -> RKanExtPoly j g b
+rkpMap j g a b mab =
+  dpBimap
+    (\rk, bj =>
+      rk (bj . mab))
+    (\onpos, ondir, bj, gd =>
+      dpBimap mab (sliceId {a} (snd j . bj . mab)) $ ondir (bj . mab) gd)
+
+public export
+0 RKanExtPolyFormula : (j, g : PolyFunc) -> (a : Type) ->
+  RKanExtPoly j g a =
+  (onpos : (a -> pfPos j) -> pfPos g **
+   {- ondir : -} (aji : a -> pfPos j) -> pfDir {p=g} (onpos aji) ->
+    DPair a (pfDir {p=j} . aji))
+RKanExtPolyFormula j g a = Refl
+
+public export
+CountableType : Type
+CountableType = Either Nat Unit
+
+public export
+InterpCountableType : CountableType -> Type
+InterpCountableType (Left n) = Fin n
+InterpCountableType (Right ()) = Nat
+
+public export
+InterpPolyNRKanExt : PolyFunc -> PolyFunc -> CountableType -> Type
+InterpPolyNRKanExt j g a =
+  PolyNatTrans (pfCompositionArena (PFHomArena $ InterpCountableType a) j) g
+
+public export
+PolyNRKanExtPos : (j, g : PolyFunc) -> Type
+PolyNRKanExtPos j g = DPair CountableType (InterpPolyNRKanExt j g)
+
+public export
+PolyNRKanExtDir : (j, g : PolyFunc) -> PolyNRKanExtPos j g -> Type
+PolyNRKanExtDir j g = InterpCountableType . DPair.fst
+
+public export
+PolyNRKanExt : (j, g : PolyFunc) -> PolyFunc
+PolyNRKanExt j g = (PolyNRKanExtPos j g ** PolyNRKanExtDir j g)
+
+public export
+pfNRKanExtMap : (j : PolyFunc) -> {f, g : PolyFunc} ->
+  PolyNatTrans f g ->
+  PolyNatTrans (PolyNRKanExt j f) (PolyNRKanExt j g)
+pfNRKanExtMap
+  (jpos ** jdir) {f=(fpos ** fdir)} {g=(gpos ** gdir)} (onpos ** ondir) =
+    (\(a ** pjf ** dfj) =>
+      (a ** onpos . pjf ** \ajp => dfj ajp . ondir (pjf ajp)) **
+     \(a ** pjf ** dfj) =>
+      id)
+
+public export
+PolyRKanExtRepPos : Type -> PolyFunc -> Type
+PolyRKanExtRepPos j g = InterpPolyFunc g j
+
+public export
+PolyRKanExtRepDir : (j : Type) -> (g : PolyFunc) ->
+  PolyRKanExtRepPos j g -> Type
+PolyRKanExtRepDir j (gpos ** gdir) i = gdir $ fst i
+
+public export
+PolyRKanExtRep : Type -> PolyFunc -> PolyFunc
+PolyRKanExtRep j g = (PolyRKanExtRepPos j g ** PolyRKanExtRepDir j g)
 
 public export
 pfHomComposePos : Type -> Type -> Type
@@ -791,7 +1222,7 @@ public export
 pfDayConvArena : (m : Type -> Type -> Type) -> PolyFunc -> PolyFunc -> PolyFunc
 pfDayConvArena m p q = (pfDayConvPos p q ** pfDayConvDir m p q)
 
--- Formula 5.81 from the "General Theory of Interaction" book.
+-- Formula 6.75 from the "General Theory of Interaction" book.
 public export
 pfPosChangePos : (p, q : PolyFunc) -> (pfPos p -> pfPos q) -> Type
 pfPosChangePos p q f = (i : pfPos p ** pfDir {p=q} $ f i)
@@ -805,13 +1236,82 @@ public export
 pfPosChangeArena : (p, q : PolyFunc) -> (pfPos p -> pfPos q) -> PolyFunc
 pfPosChangeArena p q f = (pfPosChangePos p q f ** pfPosChangeDir p q f)
 
--- Formula 5.84 from the "General Theory of Interaction" book (I think).
--- If I'm reading exercise 5.83 correctly, this states that for any
--- polynomial functor `p`, the functor defined by precompositon with `p`
+-- One direction of formula 6.73 in the "Polynomial Functors" book.
+-- The isomorphism here is between `Poly` on the left, and `Poly`
+-- sliced over the constant `pfPos q`-valued functor on the right.
+-- The projection component of an object of the latter category is
+-- simply a function from the position-set of the total space to
+-- the position-set of `q`, as the on-directions component is the
+-- unique morphism from `Void`, and a morphism in the latter category
+-- is a natural transformation whose on-positions function commutes
+-- (any on-directions dependent functions always do).  The left
+-- adjoint is therefore `flip pfPosChangeArena q`, which takes a
+-- slice object `(p, f)` of `pfPos q` and yields a polynomial functor,
+-- while the right adjoint is post-composition by `q` in the slice
+-- category with `q` being viewed as a slice object whose projection
+-- is the identity on positions.
+public export
+PosChangeLAdjunctBase : (p, q, r : PolyFunc) -> (f : pfPos p -> pfPos q) ->
+  PolyNatTrans (pfPosChangeArena p q f) r ->
+  PolyNatTrans p (pfCompositionArena q r)
+PosChangeLAdjunctBase (ppos ** pdir) (qpos ** qdir) (rpos ** rdir)
+  f (onpos ** ondir) =
+    (\pi => (f pi ** curry onpos pi) ** \pi, (qd ** rd) => ondir (pi ** qd) rd)
+
+public export
+PosChangeLAdjunctComm : (p, q, r : PolyFunc) -> (f : pfPos p -> pfPos q) ->
+  (alpha : PolyNatTrans (pfPosChangeArena p q f) r) ->
+  ExtEq {a=(pfPos p)} {b=(pfPos q)}
+    (pfCompProj q r . fst (PosChangeLAdjunctBase p q r f alpha))
+    f
+PosChangeLAdjunctComm (ppos ** pdir ) (qpos ** qdir) (rpos ** rdir)
+  f (onpos ** ondir) pi =
+    Refl
+
+-- The other direction of formula 6.73.
+public export
+PosChangeRAdjunct : (p, q, r : PolyFunc) -> (f : pfPos p -> pfPos q) ->
+  (alpha : PolyNatTrans p (pfCompositionArena q r)) ->
+  ExtEq {a=(pfPos p)} {b=(pfPos q)}
+    (pfCompProj q r . fst alpha)
+    f ->
+  PolyNatTrans (pfPosChangeArena p q f) r
+PosChangeRAdjunct (ppos ** pdir) (qpos ** qdir) (rpos ** rdir)
+  f (onpos ** ondir) comm =
+    (\(pi ** qd) => snd (onpos pi) (rewrite comm pi in qd) **
+     \(pi ** qd) => curry (ondir pi) (rewrite comm pi in qd))
+
+-- Formula 6.78 from the "General Theory of Interaction" book (I think).
+-- If I'm reading exercise 6.77 correctly, this states that for any
+-- polynomial functor `q`, the functor defined by postcomposition with `q`
 -- has a left multiadjoint.  And if I'm further understanding ncatlab's
 -- https://ncatlab.org/nlab/show/parametric+right+adjoint correctly, that
--- in turn also means that that precomposition functor is itself a
--- parametric right adjoint.
+-- in turn also means that that postcomposition functor is itself a
+-- parametric right adjoint (i.e., is polynomial).
+
+-- One direction of formula 6.78 in the "Polynomial Functors" book.
+public export
+PosChangeLMultiAdjunct : (p, q, r : PolyFunc) ->
+  (f : pfPos p -> pfPos q ** PolyNatTrans (pfPosChangeArena p q f) r) ->
+  PolyNatTrans p (pfCompositionArena q r)
+PosChangeLMultiAdjunct p q r = DPair.uncurry (PosChangeLAdjunctBase p q r)
+
+-- The other direction of formula 6.78 in the "Polynomial Functors" book.
+public export
+PosChangeRMultiAdjunct : (p, q, r : PolyFunc) ->
+  PolyNatTrans p (pfCompositionArena q r) ->
+  (f : pfPos p -> pfPos q ** PolyNatTrans (pfPosChangeArena p q f) r)
+PosChangeRMultiAdjunct (ppos ** pdir) (qpos ** qdir) (rpos ** rdir)
+  (onpos ** ondir) =
+    (fst . onpos **
+     PosChangeRAdjunct (ppos ** pdir) (qpos ** qdir) (rpos ** rdir)
+      (fst . onpos)
+      (onpos ** ondir)
+      (\_ => Refl))
+
+-- See `InterpPEA` and `HomToCompPEA` for an explicit embedding of
+-- the postcomposition functor into the category of polynomial functors
+-- (parametric right adjoints) on `Poly` itself.
 public export
 pfHomToCompArena : PolyFunc -> PolyFunc -> PolyFunc -> PolyFunc
 pfHomToCompArena p q r =
@@ -842,6 +1342,66 @@ public export
 pfMonomialArena : Type -> Type -> PolyFunc
 pfMonomialArena a b = (pfMonomialPos a b ** pfMonomialDir a b)
 
+-- A functor whose category of elements is the two-category of slice
+-- categories of `Type` whose morphisms are the `Sigma` functors.
+public export
+PolySliceObj : PolyFunc
+PolySliceObj = (Type ** id)
+
+public export
+PolySliceObjFromInterp :
+  (a : Type) -> InterpPolyFunc PolySliceObj a -> CSliceObj a
+PolySliceObjFromInterp a = id
+
+public export
+PolySliceObjToInterp :
+  (a : Type) -> CSliceObj a -> InterpPolyFunc PolySliceObj a
+PolySliceObjToInterp a = id
+
+public export
+PolySliceObjFromInterpMap :
+  {a, b : Type} -> (m : a -> b) ->
+  CSliceNatTrans {c=a} {d=b}
+    (InterpPFMap PolySliceObj {a} {b} m)
+    (CSSigma {c=a} {d=b} m)
+PolySliceObjFromInterpMap {a} {b} m (x ** xp) = Element0 id (\_ => Refl)
+
+public export
+PolySliceObjToInterpMap :
+  {a, b : Type} -> (m : a -> b) ->
+  CSliceNatTrans {c=a} {d=b}
+    (CSSigma {c=a} {d=b} m)
+    (InterpPFMap PolySliceObj {a} {b} m)
+PolySliceObjToInterpMap {a} {b} m (x ** xp) = Element0 id (\_ => Refl)
+
+-- Applying a polynomial functor to a type `a` yields the set of natural
+-- transformations from the covariant representable represented by `a` to
+-- that functor.  Indeed, this is true of any functor -- that's just one
+-- form of the Yoneda lemma.
+--
+-- Thus, the category of elements of a (polynomial, or otherwise) functor is
+-- the category of natural transformations from covariant representables
+-- to that polynomial functor.
+public export
+PolyRepNT : (p : PolyFunc) ->
+  (a : Type) -> InterpPolyFunc p a -> PolyNatTrans (PFHomArena a) p
+PolyRepNT (pos ** dir) a (i ** d) = (\() => i ** \() => d)
+
+-- Equivalent to a natural transformation to the identity functor.
+public export
+PFSection : PolyFunc -> Type
+PFSection p = Pi {a=(pfPos p)} $ pfDir {p}
+
+-- A natural transformation out of a sum is a product of natural
+-- transformations.  Therefore, a natural transformation out of a
+-- polynomial functor is a product of natural transformations out of
+-- covariant representables.
+public export
+PolyRepNTProd : (p, q : PolyFunc) ->
+  PFSection (PolyLKanExt q p) -> PolyNatTrans p q
+PolyRepNTProd (ppos ** pdir) q alpha =
+  (\i => fst (alpha i) ** \i, d => snd (alpha i) d)
+
 ------------------------------------------------
 ------------------------------------------------
 ---- Composition of natural transformations ----
@@ -857,9 +1417,8 @@ pntId (pos ** dir) = (id ** \_ => id)
 public export
 pntVCatComp : {0 p, q, r : PolyFunc} ->
   PolyNatTrans q r -> PolyNatTrans p q -> PolyNatTrans p r
-pntVCatComp {p=(ppos ** pdir)} {q=(qpos ** qdir)} {r=(rpos ** rdir)}
-  (gOnPos ** gOnDir) (fOnPos ** fOnDir) =
-    (gOnPos . fOnPos ** \pi, rd => fOnDir pi $ gOnDir (fOnPos pi) rd)
+pntVCatComp {p} {q} {r} g f =
+  (pntOnPos g . pntOnPos f ** \pi => pntOnDir f pi . pntOnDir g (pntOnPos f pi))
 
 -- Horizontal composition of natural transformations, also known as
 -- the monoidal product or composition product.
@@ -960,34 +1519,744 @@ VertCartFactIsCorrect : {0 p, q : PolyFunc} ->
 VertCartFactIsCorrect {p=(ppos ** pdir)} {q=(qpos ** qdir)} (onPos ** onDir) =
   Refl
 
-----------------------------------------------------------
-----------------------------------------------------------
----- Composition of Dirichlet natural transformations ----
-----------------------------------------------------------
-----------------------------------------------------------
+public export
+PNTslOnPosEq : {p, q, r : PolyFunc} ->
+  (qsl : PolyNatTrans q p) -> (rsl : PolyNatTrans r p) ->
+  PolyNatTrans q r -> Type
+PNTslOnPosEq {p} {q} {r} qsl rsl alpha =
+  PolyNTonPosEq {p=q} {q=p} (pntVCatComp rsl alpha) qsl
 
 public export
-dntId : (p : PolyFunc) -> DirichNatTrans p p
-dntId (pos ** dir) = (id ** \_ => id)
-
--- Vertical composition of natural transformations, which is the categorial
--- composition in the category of Dirichlet functors.
-public export
-dntVCatComp : {0 p, q, r : PolyFunc} ->
-  DirichNatTrans q r -> DirichNatTrans p q -> DirichNatTrans p r
-dntVCatComp {p=(ppos ** pdir)} {q=(qpos ** qdir)} {r=(rpos ** rdir)}
-  (gOnPos ** gOnDir) (fOnPos ** fOnDir) =
-    (gOnPos . fOnPos ** \pi, rd => gOnDir (fOnPos pi) $ fOnDir pi rd)
+PNTslOnDirEq : {p, q, r : PolyFunc} ->
+  (qsl : PolyNatTrans q p) -> (rsl : PolyNatTrans r p) ->
+  (alpha : PolyNatTrans q r) ->
+  PNTslOnPosEq {p} {q} {r} qsl rsl alpha ->
+  Type
+PNTslOnDirEq {p} {q} {r} qsl rsl alpha =
+  PolyNTonDirEq {p=q} {q=p} (pntVCatComp rsl alpha) qsl
 
 public export
-DirichVertCartFactIsCorrect : {0 p, q : PolyFunc} ->
-  (alpha : DirichNatTrans p q) ->
-  (dntVCatComp {p} {q=(DirichVertCartFactFunc {p} {q} alpha)} {r=q}
-    (DirichCartFactNatTrans {p} {q} alpha)
-    (DirichVertFactNatTrans {p} {q} alpha))
-  = alpha
-DirichVertCartFactIsCorrect {p=(_ ** _)} {q=(_ ** _)} (_ ** _) =
-  Refl
+PNTisSliceM : {p, q, r : PolyFunc} ->
+  (qsl : PolyNatTrans q p) -> (rsl : PolyNatTrans r p) ->
+  PolyNatTrans q r -> Type
+PNTisSliceM {p} {q} {r} qsl rsl alpha =
+  PolyNTeq {p=q} {q=p} (pntVCatComp rsl alpha) qsl
+
+public export
+PolySliceMor : {p, q, r : PolyFunc} ->
+  (qsl : PolyNatTrans q p) -> (rsl : PolyNatTrans r p) ->
+  Type
+PolySliceMor {p} {q} {r} qsl rsl =
+  DPair (PolyNatTrans q r) (PNTisSliceM {p} {q} {r} qsl rsl)
+
+---------------------------------
+---------------------------------
+---- Slice objects in `Poly` ----
+---------------------------------
+---------------------------------
+
+public export
+CPFSliceObj : PolyFunc -> Type
+CPFSliceObj p = (q : PolyFunc ** PolyNatTrans q p)
+
+public export
+0 CPFNatTransPosEq :
+  (p, q : PolyFunc) -> (alpha, beta : PolyNatTrans p q) -> Type
+CPFNatTransPosEq p q a b =
+  (ExtEq {a=(fst p)} {b=(fst q)} (fst a) (fst b))
+
+public export
+0 CPFNatTransDirEq :
+  (p, q : PolyFunc) -> (alpha, beta : PolyNatTrans p q) ->
+  (0 _ : CPFNatTransPosEq p q alpha beta) -> Type
+CPFNatTransDirEq p q a b onposeq =
+  (i : (fst p)) -> (d : snd q ((fst a) i)) ->
+  snd b i (replace {p=(snd q)} (onposeq i) d) = snd a i d
+
+public export
+0 CPFNatTransEq :
+  (p, q : PolyFunc) -> (alpha, beta : PolyNatTrans p q) -> Type
+CPFNatTransEq p q a b =
+  Exists0 (CPFNatTransPosEq p q a b) (CPFNatTransDirEq p q a b)
+
+---------------------------------------
+---------------------------------------
+---- Universal morphisms in `Poly` ----
+---------------------------------------
+---------------------------------------
+
+public export
+polyFromInitOnPos : (p : PolyFunc) -> pfPos PFInitialArena -> pfPos p
+polyFromInitOnPos p v = void v
+
+public export
+polyFromInitOnDir : (p : PolyFunc) ->
+  (i : pfPos PFInitialArena) ->
+  pfDir {p} (polyFromInitOnPos p i) -> pfDir {p=PFInitialArena} i
+polyFromInitOnDir p v = void v
+
+public export
+polyFromInit : (p : PolyFunc) -> PolyNatTrans PFInitialArena p
+polyFromInit p = (polyFromInitOnPos p ** polyFromInitOnDir p)
+
+public export
+polyToTermOnPos : (p : PolyFunc) -> pfPos p -> pfPos PFTerminalArena
+polyToTermOnPos p _ = ()
+
+public export
+polyToTermOnDir : (p : PolyFunc) ->
+  (i : pfPos p) ->
+  pfDir {p=PFTerminalArena} (polyToTermOnPos p i) -> pfDir {p} i
+polyToTermOnDir p _ v = void v
+
+public export
+polyToTerm : (p : PolyFunc) -> PolyNatTrans p PFTerminalArena
+polyToTerm p = (polyToTermOnPos p ** polyToTermOnDir p)
+
+public export
+polyInjLOnPos : (p, q : PolyFunc) -> pfPos p -> pfPos (pfCoproductArena p q)
+polyInjLOnPos (ppos ** pdir) (qpos ** qdir) i = Left i
+
+public export
+polyInjLOnDir : (p, q : PolyFunc) ->
+  (i : pfPos p) ->
+  pfDir {p=(pfCoproductArena p q)} (polyInjLOnPos p q i) -> pfDir {p} i
+polyInjLOnDir (ppos ** pdir) (qpos ** qdir) i d = d
+
+public export
+polyInjL : (p, q : PolyFunc) -> PolyNatTrans p (pfCoproductArena p q)
+polyInjL p q = (polyInjLOnPos p q ** polyInjLOnDir p q)
+
+public export
+polyInjROnPos : (p, q : PolyFunc) -> pfPos q -> pfPos (pfCoproductArena p q)
+polyInjROnPos (ppos ** pdir) (qpos ** qdir) i = Right i
+
+public export
+polyInjROnDir : (p, q : PolyFunc) ->
+  (i : pfPos q) ->
+  pfDir {p=(pfCoproductArena p q)} (polyInjROnPos p q i) -> pfDir {p=q} i
+polyInjROnDir (ppos ** pdir) (qpos ** qdir) i d = d
+
+public export
+polyInjR : (p, q : PolyFunc) -> PolyNatTrans q (pfCoproductArena p q)
+polyInjR p q = (polyInjROnPos p q ** polyInjROnDir p q)
+
+public export
+polyCaseOnPos : (p, q, r : PolyFunc) ->
+  PolyNatTrans p r -> PolyNatTrans q r ->
+  pfPos (pfCoproductArena p q) -> pfPos r
+polyCaseOnPos (ppos ** pdir) (qpos ** qdir) (rpos ** rdir)
+  (pronpos ** prondir) (qronpos ** qrondir) pqi =
+    case pqi of
+      Left pqi => pronpos pqi
+      Right pqi => qronpos pqi
+
+public export
+polyCaseOnDir : (p, q, r : PolyFunc) ->
+  (f : PolyNatTrans p r) -> (g : PolyNatTrans q r) ->
+  (i : pfPos (pfCoproductArena p q)) ->
+  pfDir {p=r} (polyCaseOnPos p q r f g i) -> pfDir {p=(pfCoproductArena p q)} i
+polyCaseOnDir (ppos ** pdir) (qpos ** qdir) (rpos ** rdir)
+  (pronpos ** prondir) (qronpos ** qrondir) (Left pi) rd =
+    prondir pi rd
+polyCaseOnDir (ppos ** pdir) (qpos ** qdir) (rpos ** rdir)
+  (pronpos ** prondir) (qronpos ** qrondir) (Right qi) rd =
+    qrondir qi rd
+
+public export
+polyCase : {p, q, r : PolyFunc} ->
+  PolyNatTrans p r -> PolyNatTrans q r -> PolyNatTrans (pfCoproductArena p q) r
+polyCase {p} {q} {r} f g = (polyCaseOnPos p q r f g ** polyCaseOnDir p q r f g)
+
+public export
+polyProj1OnPos : (p, q : PolyFunc) -> pfPos (pfProductArena p q) -> pfPos p
+polyProj1OnPos (ppos ** pdir) (qpos ** qdir) (pi, qi) = pi
+
+public export
+polyProj1OnDir : (p, q : PolyFunc) ->
+  (i : pfPos (pfProductArena p q)) ->
+  pfDir {p} (polyProj1OnPos p q i) ->
+  pfDir {p=(pfProductArena p q)} i
+polyProj1OnDir (ppos ** pdir) (qpos ** qdir) (pi, qi) d = Left d
+
+public export
+polyProj1 : (p, q : PolyFunc) -> PolyNatTrans (pfProductArena p q) p
+polyProj1 p q = (polyProj1OnPos p q ** polyProj1OnDir p q)
+
+public export
+polyProj2OnPos : (p, q : PolyFunc) -> pfPos (pfProductArena p q) -> pfPos q
+polyProj2OnPos (ppos ** pdir) (qpos ** qdir) (pi, qi) = qi
+
+public export
+polyProj2OnDir : (p, q : PolyFunc) ->
+  (i : pfPos (pfProductArena p q)) ->
+  pfDir {p=q} (polyProj2OnPos p q i) ->
+  pfDir {p=(pfProductArena p q)} i
+polyProj2OnDir (ppos ** pdir) (qpos ** qdir) (pi, qi) d = Right d
+
+public export
+polyProj2 : (p, q : PolyFunc) -> PolyNatTrans (pfProductArena p q) q
+polyProj2 p q = (polyProj2OnPos p q ** polyProj2OnDir p q)
+
+public export
+polyPairOnPos : (p, q, r : PolyFunc) ->
+  PolyNatTrans p q -> PolyNatTrans p r ->
+  pfPos p ->
+  pfPos (pfProductArena q r)
+polyPairOnPos (ppos ** pdir) (qpos ** qdir) (rpos ** rdir)
+  (pqonpos ** pqondir) (pronpos ** prondir) pi =
+    (pqonpos pi, pronpos pi)
+
+public export
+polyPairOnDir : (p, q, r : PolyFunc) ->
+  (f : PolyNatTrans p q) -> (g : PolyNatTrans p r) ->
+  (pi : pfPos p) ->
+  pfDir {p=(pfProductArena q r)} (polyPairOnPos p q r f g pi) ->
+  pfDir {p} pi
+polyPairOnDir (ppos ** pdir) (qpos ** qdir) (rpos ** rdir)
+  (pqonpos ** pqondir) (pronpos ** prondir) pi qrd =
+    case qrd of
+      Left qd => pqondir pi qd
+      Right rd => prondir pi rd
+
+public export
+polyPair : {p, q, r : PolyFunc} ->
+  PolyNatTrans p q -> PolyNatTrans p r -> PolyNatTrans p (pfProductArena q r)
+polyPair {p} {q} {r} f g = (polyPairOnPos p q r f g ** polyPairOnDir p q r f g)
+
+public export
+pfEvalOnPos :
+  (p, q : PolyFunc) ->
+  pfPos (pfProductArena (pfHomObj p q) p) -> pfPos q
+pfEvalOnPos (ppos ** pdir) (qpos ** qdir) (qpi, pi) = fst $ qpi pi
+
+public export
+pfEvalOnDir : (p, q : PolyFunc) ->
+  (i : pfPos (pfProductArena (pfHomObj p q) p)) ->
+  pfDir {p=q} (pfEvalOnPos p q i) ->
+  pfDir {p=(pfProductArena (pfHomObj p q) p)} i
+pfEvalOnDir (ppos ** pdir) (qpos ** qdir) (qpd, pi) qd with
+    (pfEvalOnPos (ppos ** pdir) (qpos ** qdir) (qpd, pi)) proof eqq
+  pfEvalOnDir (ppos ** pdir) (qpos ** qdir) (qpd, pi) qd | qi with
+      (snd (qpd pi) (replace {p=qdir} (sym eqq) qd)) proof eqp
+    pfEvalOnDir (ppos ** pdir) (qpos ** qdir) (qpd, pi) qd | qi | Left () =
+      Left (pi ** replace {p=qdir} (sym eqq) qd ** rewrite eqp in ())
+    pfEvalOnDir (ppos ** pdir) (qpos ** qdir) (qpd, pi) qd | qi | Right pd =
+      Right pd
+
+public export
+pfEval : (p, q : PolyFunc) -> PolyNatTrans (pfProductArena (pfHomObj p q) p) q
+pfEval p q = (pfEvalOnPos p q ** pfEvalOnDir p q)
+
+public export
+pfCurryOnPos1 :
+  (ppos, qpos, rpos : Type) ->
+  (pdir : ppos -> Type) ->
+  (qdir : qpos -> Type) ->
+  (rdir : rpos -> Type) ->
+  (alpha : PolyNatTrans
+    (pfProductArena (ppos ** pdir) (qpos ** qdir)) (rpos ** rdir)) ->
+  ppos -> qpos -> rpos
+pfCurryOnPos1 ppos qpos rpos pdir qdir rdir (onpos ** ondir) pi qi =
+  onpos (pi, qi)
+
+public export
+pfCurryOnPos2 :
+  (ppos, qpos, rpos : Type) ->
+  (pdir : ppos -> Type) ->
+  (qdir : qpos -> Type) ->
+  (rdir : rpos -> Type) ->
+  (alpha : PolyNatTrans
+    (pfProductArena (ppos ** pdir) (qpos ** qdir)) (rpos ** rdir)) ->
+  (pi : ppos) -> (qi : qpos) ->
+  rdir (pfCurryOnPos1 ppos qpos rpos pdir qdir rdir alpha pi qi) ->
+  Either () (qdir qi)
+pfCurryOnPos2 ppos qpos rpos pdir qdir rdir (onpos ** ondir) pi qi rd
+    with (ondir (pi, qi) rd)
+  pfCurryOnPos2 ppos qpos rpos pdir qdir rdir (onpos ** ondir) pi qi rd |
+    Left pd = Left ()
+  pfCurryOnPos2 ppos qpos rpos pdir qdir rdir (onpos ** ondir) pi qi rd |
+    Right qd = Right qd
+
+public export
+pfCurryOnPos :
+  (ppos, qpos, rpos : Type) ->
+  (pdir : ppos -> Type) ->
+  (qdir : qpos -> Type) ->
+  (rdir : rpos -> Type) ->
+  (alpha : PolyNatTrans
+    (pfProductArena (ppos ** pdir) (qpos ** qdir)) (rpos ** rdir)) ->
+  ppos -> pfPos (pfHomObj (qpos ** qdir) (rpos ** rdir))
+pfCurryOnPos ppos qpos rpos pdir qdir rdir alpha pi qi =
+  (pfCurryOnPos1 ppos qpos rpos pdir qdir rdir alpha pi qi **
+   pfCurryOnPos2 ppos qpos rpos pdir qdir rdir alpha pi qi)
+
+public export
+pfCurryOnDir :
+  (ppos, qpos, rpos : Type) ->
+  (pdir : ppos -> Type) ->
+  (qdir : qpos -> Type) ->
+  (rdir : rpos -> Type) ->
+  (alpha : PolyNatTrans
+    (pfProductArena (ppos ** pdir) (qpos ** qdir)) (rpos ** rdir)) ->
+  (pi : ppos) ->
+  pfDir {p=(pfHomObj (qpos ** qdir) (rpos ** rdir))}
+    (pfCurryOnPos ppos qpos rpos pdir qdir rdir alpha pi) ->
+  pfDir {p=(ppos ** pdir)} pi
+pfCurryOnDir ppos qpos rpos pdir qdir rdir (onpos ** ondir)
+  pi (qi ** rd ** cd) with (ondir (pi, qi) rd) proof eq
+    pfCurryOnDir ppos qpos rpos pdir qdir rdir (onpos ** ondir)
+      pi (qi ** rd ** ()) | Left pd =
+        pd
+    pfCurryOnDir ppos qpos rpos pdir qdir rdir (onpos ** ondir)
+      pi (qi ** rd ** v) | Right qd =
+        void v
+
+public export
+pfCurry : {p, q, r : PolyFunc} ->
+  PolyNatTrans (pfProductArena p q) r ->
+  PolyNatTrans p (pfHomObj q r)
+pfCurry {p=(ppos ** pdir)} {q=(qpos ** qdir)} {r=(rpos ** rdir)} alpha =
+  (pfCurryOnPos ppos qpos rpos pdir qdir rdir alpha **
+   pfCurryOnDir ppos qpos rpos pdir qdir rdir alpha)
+
+public export
+PFprodRMapPos : (q, a, b : PolyFunc) ->
+  PolyNatTrans a b ->
+  pfPos (pfProductArena a q) -> pfPos (pfProductArena b q)
+PFprodRMapPos q a b = mapFst . pntOnPos
+
+public export
+PFprodRMapDir : (q, a, b : PolyFunc) ->
+  (alpha : PolyNatTrans a b) ->
+  (aqi : pfPos (pfProductArena a q)) ->
+  pfDir {p=(pfProductArena b q)} (PFprodRMapPos q a b alpha aqi) ->
+  pfDir {p=(pfProductArena a q)} aqi
+PFprodRMapDir q a b alpha (ai, qi) = mapFst {f=Either} (pntOnDir alpha ai)
+
+public export
+PFprodRMap : (q, a, b : PolyFunc) ->
+  PolyNatTrans a b ->
+  PolyNatTrans (pfProductArena a q) (pfProductArena b q)
+PFprodRMap q a b alpha =
+  (PFprodRMapPos q a b alpha ** PFprodRMapDir q a b alpha)
+
+public export
+PFcovarHomLAdjunctPosFst : (q, a, b : PolyFunc) ->
+  PolyNatTrans (pfProductArena a q) b ->
+  pfPos a -> pfPos q -> pfPos b
+PFcovarHomLAdjunctPosFst q a b alpha ai qi =
+  pntOnPos {p=(pfProductArena a q)} {q=b} alpha (ai, qi)
+
+public export
+PFcovarHomLAdjunctPosSnd : (q, a, b : PolyFunc) ->
+  (alpha : PolyNatTrans (pfProductArena a q) b) ->
+  (ai : pfPos a) -> (qi : pfPos q) ->
+  pfDir {p=b} (PFcovarHomLAdjunctPosFst q a b alpha ai qi) ->
+  pfDir {p=(pfProductArena a q)} (ai, qi)
+PFcovarHomLAdjunctPosSnd q a b alpha ai qi =
+  pntOnDir {p=(pfProductArena a q)} {q=b} alpha (ai, qi)
+
+public export
+PFcovarHomLAdjunctPosSndUnit : (q, a, b : PolyFunc) ->
+  (alpha : PolyNatTrans (pfProductArena a q) b) ->
+  (ai : pfPos a) -> (qi : pfPos q) ->
+  pfDir {p=b} (PFcovarHomLAdjunctPosFst q a b alpha ai qi) ->
+  pfDir {p=(pfProductArena PFIdentityArena q)} ((), qi)
+PFcovarHomLAdjunctPosSndUnit q a b alpha ai qi =
+  mapFst {f=Either} (const ()) . PFcovarHomLAdjunctPosSnd q a b alpha ai qi
+
+public export
+PFcovarHomLAdjunctPos : (q, a, b : PolyFunc) ->
+  PolyNatTrans (pfProductArena a q) b ->
+  pfPos a -> pfHomObjPosNT q b
+PFcovarHomLAdjunctPos q a b alpha ai =
+  (PFcovarHomLAdjunctPosFst q a b alpha ai **
+   PFcovarHomLAdjunctPosSndUnit q a b alpha ai)
+
+public export
+PFcovarHomLAdjunctDir : (q, a, b : PolyFunc) ->
+  (alpha : PolyNatTrans (pfProductArena a q) b) ->
+  (ai : pfPos a) ->
+  pfHomObjDirNT q b (PFcovarHomLAdjunctPos q a b alpha ai) -> pfDir {p=a} ai
+PFcovarHomLAdjunctDir q a b alpha ai (qi ** rd ** isl)
+    with (PFcovarHomLAdjunctPosSnd q a b alpha ai qi rd)
+  PFcovarHomLAdjunctDir q a b alpha ai (qi ** rd ** isl) | Left ad =
+    ad
+  PFcovarHomLAdjunctDir q a b alpha ai (qi ** rd ** isl) | Right qd =
+    case isl of Refl impossible
+
+public export
+PFcovarHomLAdjunct : (q, a, b : PolyFunc) ->
+  PolyNatTrans (pfProductArena a q) b ->
+  PolyNatTrans a (pfHomObjNT q b)
+PFcovarHomLAdjunct q a b alpha =
+  (PFcovarHomLAdjunctPos q a b alpha ** PFcovarHomLAdjunctDir q a b alpha)
+
+public export
+PFcovarHomMap : (q, a, b : PolyFunc) ->
+  PolyNatTrans a b -> PolyNatTrans (pfHomObjNT q a) (pfHomObjNT q b)
+PFcovarHomMap q a b alpha =
+  (dpBimap
+    ((.) (pntOnPos alpha))
+    (\qaonpos, qaondir, qi => qaondir qi . pntOnDir alpha (qaonpos qi)) **
+   \(qaonpos ** qaondir), (qi ** bd) =>
+    (qi ** (pntOnDir alpha (qaonpos qi) (DPair.fst bd) ** DPair.snd bd)))
+
+public export
+PFcovarHomRAdjunctPos : (q, a, b : PolyFunc) ->
+  PolyNatTrans a (pfHomObjNT q b) -> pfPos (pfProductArena a q) -> pfPos b
+PFcovarHomRAdjunctPos q a b alpha aqi =
+  pntOnPos {p=(pfCofreeCopointed q)} {q=b}
+    (pntOnPos {p=a} {q=(pfHomObjNT q b)} alpha (fst aqi))
+    (snd aqi)
+
+public export
+PFcovarHomRAdjunctDir : (q, a, b : PolyFunc) ->
+  (alpha : PolyNatTrans a (pfHomObjNT q b)) ->
+  (aqi : pfPos (pfProductArena a q)) ->
+  pfDir {p=b} (PFcovarHomRAdjunctPos q a b alpha aqi) ->
+  pfDir {p=(pfProductArena a q)} aqi
+PFcovarHomRAdjunctDir q a b (aonpos ** aondir) (ai, qi) bd
+    with (aonpos ai) proof aeq
+  PFcovarHomRAdjunctDir q a b (aonpos ** aondir) (ai, qi) bd
+      | (qbonpos ** qbondir) with (qbondir qi bd) proof qeq
+    PFcovarHomRAdjunctDir q a b (aonpos ** aondir) (ai, qi) bd
+      | (qbonpos ** qbondir) | Left () =
+        Left $ aondir ai (qi ** rewrite aeq in (bd ** qeq))
+    PFcovarHomRAdjunctDir q a b (aonpos ** aondir) (ai, qi) bd
+      | (qbonpos ** qbondir) | Right qd =
+        Right qd
+
+public export
+PFcovarHomRAdjunct : (q, a, b : PolyFunc) ->
+  PolyNatTrans a (pfHomObjNT q b) -> PolyNatTrans (pfProductArena a q) b
+PFcovarHomRAdjunct q a b alpha =
+  (PFcovarHomRAdjunctPos q a b alpha ** PFcovarHomRAdjunctDir q a b alpha)
+
+public export
+pfParEvalOnPos :
+  (p, q : PolyFunc) ->
+  pfPos (pfParProductArena (pfParProdClosure p q) p) -> pfPos q
+pfParEvalOnPos (ppos ** pdir) (qpos ** qdir) (qpi, pi) = fst $ qpi pi
+
+public export
+pfParEvalOnDir : (p, q : PolyFunc) ->
+  (i : pfPos (pfParProductArena (pfParProdClosure p q) p)) ->
+  pfDir {p=q} (pfParEvalOnPos p q i) ->
+  pfDir {p=(pfParProductArena (pfParProdClosure p q) p)} i
+pfParEvalOnDir (ppos ** pdir) (qpos ** qdir) (qpd, pi) qd with
+    (pfParEvalOnPos (ppos ** pdir) (qpos ** qdir) (qpd, pi)) proof eqq
+  pfParEvalOnDir (ppos ** pdir) (qpos ** qdir) (qpd, pi) qd | qi with
+      (snd (qpd pi) (replace {p=qdir} (sym eqq) qd))
+    pfParEvalOnDir (ppos ** pdir) (qpos ** qdir) (qpd, pi) qd | qi | ((), pd) =
+      ((pi ** rewrite eqq in qd ** Left ()), pd)
+
+public export
+pfParEval : (p, q : PolyFunc) ->
+  PolyNatTrans (pfParProductArena (pfParProdClosure p q) p) q
+pfParEval p q = (pfParEvalOnPos p q ** pfParEvalOnDir p q)
+
+public export
+pfParCurryOnPos1 :
+  (ppos, qpos, rpos : Type) ->
+  (pdir : ppos -> Type) ->
+  (qdir : qpos -> Type) ->
+  (rdir : rpos -> Type) ->
+  (alpha : PolyNatTrans
+    (pfParProductArena (ppos ** pdir) (qpos ** qdir)) (rpos ** rdir)) ->
+  ppos -> qpos -> rpos
+pfParCurryOnPos1 ppos qpos rpos pdir qdir rdir (onpos ** ondir) pi qi =
+  onpos (pi, qi)
+
+public export
+pfParCurryOnPos2 :
+  (ppos, qpos, rpos : Type) ->
+  (pdir : ppos -> Type) ->
+  (qdir : qpos -> Type) ->
+  (rdir : rpos -> Type) ->
+  (alpha : PolyNatTrans
+    (pfParProductArena (ppos ** pdir) (qpos ** qdir)) (rpos ** rdir)) ->
+  (pi : ppos) -> (qi : qpos) ->
+  rdir (pfParCurryOnPos1 ppos qpos rpos pdir qdir rdir alpha pi qi) ->
+  ((), qdir qi)
+pfParCurryOnPos2 ppos qpos rpos pdir qdir rdir (onpos ** ondir) pi qi rd
+    with (ondir (pi, qi) rd)
+  pfParCurryOnPos2 ppos qpos rpos pdir qdir rdir (onpos ** ondir) pi qi rd |
+    (pd, qd) = ((), qd)
+
+public export
+pfParCurryOnPos :
+  (ppos, qpos, rpos : Type) ->
+  (pdir : ppos -> Type) ->
+  (qdir : qpos -> Type) ->
+  (rdir : rpos -> Type) ->
+  (alpha : PolyNatTrans
+    (pfParProductArena (ppos ** pdir) (qpos ** qdir)) (rpos ** rdir)) ->
+  ppos -> pfPos (pfParProdClosure (qpos ** qdir) (rpos ** rdir))
+pfParCurryOnPos ppos qpos rpos pdir qdir rdir alpha pi qi =
+  (pfParCurryOnPos1 ppos qpos rpos pdir qdir rdir alpha pi qi **
+   pfParCurryOnPos2 ppos qpos rpos pdir qdir rdir alpha pi qi)
+
+public export
+pfParCurryOnDir :
+  (ppos, qpos, rpos : Type) ->
+  (pdir : ppos -> Type) ->
+  (qdir : qpos -> Type) ->
+  (rdir : rpos -> Type) ->
+  (alpha : PolyNatTrans
+    (pfParProductArena (ppos ** pdir) (qpos ** qdir)) (rpos ** rdir)) ->
+  (pi : ppos) ->
+  pfDir {p=(pfParProdClosure (qpos ** qdir) (rpos ** rdir))}
+    (pfParCurryOnPos ppos qpos rpos pdir qdir rdir alpha pi) ->
+  pfDir {p=(ppos ** pdir)} pi
+pfParCurryOnDir ppos qpos rpos pdir qdir rdir (onpos ** ondir)
+  pi (qi ** rd ** cd) with (ondir (pi, qi) rd) proof eq
+    pfParCurryOnDir ppos qpos rpos pdir qdir rdir (onpos ** ondir)
+      pi (qi ** rd ** uv) | (pd, qd) =
+        pd
+
+public export
+pfParCurry : {p, q, r : PolyFunc} ->
+  PolyNatTrans (pfParProductArena p q) r ->
+  PolyNatTrans p (pfParProdClosure q r)
+pfParCurry {p=(ppos ** pdir)} {q=(qpos ** qdir)} {r=(rpos ** rdir)} alpha =
+  (pfParCurryOnPos ppos qpos rpos pdir qdir rdir alpha **
+   pfParCurryOnDir ppos qpos rpos pdir qdir rdir alpha)
+
+-- Left Kan extension is the left adjoint of precomposition, so the
+-- unit is the constructor and the right adjunct is the destructor.
+
+public export
+pfPrecompMap : (j : PolyFunc) -> {f, g : PolyFunc} ->
+  PolyNatTrans f g ->
+  PolyNatTrans (pfCompositionArena f j) (pfCompositionArena g j)
+pfPrecompMap
+  (jpos ** jdir) {f=(fpos ** fdir)} {g=(gpos ** gdir)} (onpos ** ondir) =
+    (\(fi ** fdji) => (onpos fi ** fdji . ondir fi) **
+     \(fi ** fdji), (gd ** jd) => (ondir fi gd ** jd))
+
+public export
+pfLKanExtMap : (j : PolyFunc) -> {f, g : PolyFunc} ->
+  PolyNatTrans f g ->
+  PolyNatTrans (PolyLKanExt j f) (PolyLKanExt j g)
+pfLKanExtMap
+  (jpos ** jdir) {f=(fpos ** fdir)} {g=(gpos ** gdir)} (onpos ** ondir) =
+    (onpos ** \fi, (ji ** jgd) => (ji ** ondir fi . jgd))
+
+public export
+pfLKanExtUnit : (j, g : PolyFunc) ->
+  PolyNatTrans g (pfCompositionArena (PolyLKanExt j g) j)
+pfLKanExtUnit (jpos ** jdir) (gpos ** gdir) =
+  (\gi => (gi ** \(ji ** jgd) => ji) ** \gi, ((ji ** jgd) ** jd) => jgd jd)
+
+public export
+pfLKanExtCounit : (j, g : PolyFunc) ->
+  PolyNatTrans (PolyLKanExt j (pfCompositionArena g j)) g
+pfLKanExtCounit (jpos ** jdir) (gpos ** gdir) =
+  (\(ji ** gdjp) => ji **
+   \(ji ** gdjp), gd => (gdjp gd ** \jd => (gd ** jd)))
+
+public export
+pfLKanExtLAdj : (j : PolyFunc) -> {f, g : PolyFunc} ->
+  PolyNatTrans (PolyLKanExt j f) g ->
+  PolyNatTrans f (pfCompositionArena g j)
+pfLKanExtLAdj j {f} {g} =
+  flip
+    (pntVCatComp
+      {p=f}
+      {q=(pfCompositionArena (PolyLKanExt j f) j)}
+      {r=(pfCompositionArena g j)})
+    (pfLKanExtUnit j f)
+  . pfPrecompMap j {f=(PolyLKanExt j f)} {g}
+
+public export
+pfLKanExtRAdj : (j : PolyFunc) -> {f, g : PolyFunc} ->
+  PolyNatTrans f (pfCompositionArena g j) ->
+  PolyNatTrans (PolyLKanExt j f) g
+pfLKanExtRAdj j {f} {g} =
+  pntVCatComp
+    {p=(PolyLKanExt j f)}
+    {q=(PolyLKanExt j (pfCompositionArena g j))}
+    {r=g}
+    (pfLKanExtCounit j g)
+  . pfLKanExtMap j {f} {g=(pfCompositionArena g j)}
+
+public export
+pfLKanExtRLAdjInvSnd : (j : PolyFunc) -> {f, g : PolyFunc} ->
+  (alpha : PolyNatTrans (PolyLKanExt j f) g) ->
+  (pi : pfPos f) ->
+  (rd : pfDir {p=g}
+    (fst (pfLKanExtRAdj  j {f} {g} (pfLKanExtLAdj j {f} {g} alpha)) pi)) ->
+  (rd' : pfDir {p=g}
+    (fst alpha pi)) ->
+  rd ~=~ rd' ->
+  (snd (pfLKanExtRAdj j {f} {g} (pfLKanExtLAdj j {f} {g} alpha)) pi rd ~=~
+   snd alpha pi rd')
+pfLKanExtRLAdjInvSnd
+    j@(jpos ** jdir) {f=f@(fpos ** fdir)} {g=g@(gpos ** gdir)}
+    alpha@(onpos ** ondir) pi rd rd Refl with (ondir pi rd)
+  pfLKanExtRLAdjInvSnd
+    j@(jpos ** jdir) {f=f@(fpos ** fdir)} {g=g@(gpos ** gdir)}
+    alpha@(onpos ** ondir) pi rd rd Refl | (ji ** jfd) =
+      Refl
+
+public export
+pfLKanExtRLAdjInv : (j : PolyFunc) -> {f, g : PolyFunc} ->
+  (alpha : PolyNatTrans (PolyLKanExt j f) g) ->
+  FunExt -> (pfLKanExtRAdj j {f} {g} (pfLKanExtLAdj j {f} {g} alpha)) ~=~ alpha
+pfLKanExtRLAdjInv j@(jpos ** jdir) {f=f@(fpos ** fdir)} {g=g@(gpos ** gdir)}
+  alpha@(onpos ** ondir) fext =
+    dpEq12
+      Refl
+      (funExt $ \pi => funExt $ \rd =>
+        pfLKanExtRLAdjInvSnd j {f} {g} alpha pi rd rd Refl)
+
+-- Right Kan extension is the right adjoint of precomposition, so the left
+-- adjunct is the constructor and the counit is the destructor.
+
+public export
+pfRKanExtMap : (j : PolyFunc) -> {f, g : PolyFunc} ->
+  PolyNatTrans f g ->
+  PolyNatTrans (PolyRKanExt j f) (PolyRKanExt j g)
+pfRKanExtMap
+  (jpos ** jdir) {f=(fpos ** fdir)} {g=(gpos ** gdir)} (onpos ** ondir) =
+    (\(a ** pjf ** dfj) =>
+      (a ** onpos . pjf ** \ajp => dfj ajp . ondir (pjf ajp)) **
+     \(a ** pjf ** dfj) =>
+      id)
+
+public export
+pfRKanExtUnit : (j, g : PolyFunc) ->
+  PolyNatTrans g (PolyRKanExt j (pfCompositionArena g j))
+pfRKanExtUnit (jpos ** jdir) (gpos ** gdir) =
+  (\gi => (gdir gi ** (\(() ** gdjp) => (gi ** gdjp) ** \(() ** gdjp) => id)) **
+   sliceId gdir)
+
+public export
+pfRKanExtCounit : (j, g : PolyFunc) ->
+  PolyNatTrans (pfCompositionArena (PolyRKanExt j g) j) g
+pfRKanExtCounit (jpos ** jdir) (gpos ** gdir) =
+  (\((a ** (onpos ** ondir)) ** ajp) => onpos (() ** ajp) **
+   \((a ** (onpos ** ondir)) ** ajp) => ondir (() ** ajp))
+
+public export
+pfRKanExtLAdj : (j : PolyFunc) -> {f, g : PolyFunc} ->
+  PolyNatTrans (pfCompositionArena f j) g ->
+  PolyNatTrans f (PolyRKanExt j g)
+pfRKanExtLAdj j {f} {g} =
+  flip
+    (pntVCatComp
+      {p=f}
+      {q=(PolyRKanExt j (pfCompositionArena f j))}
+      {r=(PolyRKanExt j g)}
+      )
+    (pfRKanExtUnit j f)
+  . pfRKanExtMap {f=(pfCompositionArena f j)} {g} j
+
+public export
+pfRKanExtRAdj : (j : PolyFunc) -> {f, g : PolyFunc} ->
+  PolyNatTrans f (PolyRKanExt j g) ->
+  PolyNatTrans (pfCompositionArena f j) g
+pfRKanExtRAdj j {f} {g} =
+  pntVCatComp
+    {p=(pfCompositionArena f j)}
+    {q=(pfCompositionArena (PolyRKanExt j g) j)}
+    {r=g}
+    (pfRKanExtCounit j g)
+  . pfPrecompMap j {f} {g=(PolyRKanExt j g)}
+
+public export
+0 pfRKanRLAdjIsoPos : (j : PolyFunc) -> {f, g : PolyFunc} ->
+  (alpha : PolyNatTrans (pfCompositionArena f j) g) ->
+  CPFNatTransPosEq (pfCompositionArena f j) g
+    (pfRKanExtRAdj j {f} {g} $ pfRKanExtLAdj j {f} {g} alpha)
+    alpha
+pfRKanRLAdjIsoPos (jpos ** jdir) {f=(fpos ** fdir)} {g=(gpos ** gdir)}
+  (aonpos ** aondir) (fi ** fdjp) =
+    Refl
+
+public export
+0 pfRKanRLAdjIsoDir : (j : PolyFunc) -> {f, g : PolyFunc} ->
+  (alpha : PolyNatTrans (pfCompositionArena f j) g) ->
+  CPFNatTransDirEq (pfCompositionArena f j) g
+    (pfRKanExtRAdj j {f} {g} $ pfRKanExtLAdj j {f} {g} alpha)
+    alpha
+    (pfRKanRLAdjIsoPos j {f} {g} alpha)
+pfRKanRLAdjIsoDir (jpos ** jdir) {f=(fpos ** fdir)} {g=(gpos ** gdir)}
+    (aonpos ** aondir) (fi ** fdjp) gd with (aondir (fi ** fdjp) gd)
+  pfRKanRLAdjIsoDir (jpos ** jdir) {f=(fpos ** fdir)} {g=(gpos ** gdir)}
+    (aonpos ** aondir) (fi ** fdjp) gd | (fd ** jd) =
+      Refl
+
+public export
+0 pfRKanRLAdjIso : (j : PolyFunc) -> {f, g : PolyFunc} ->
+  (alpha : PolyNatTrans (pfCompositionArena f j) g) ->
+  CPFNatTransEq (pfCompositionArena f j) g
+    (pfRKanExtRAdj j {f} {g} $ pfRKanExtLAdj j {f} {g} alpha)
+    alpha
+pfRKanRLAdjIso j {f} {g} alpha =
+  Evidence0
+    (pfRKanRLAdjIsoPos j {f} {g} alpha)
+    (pfRKanRLAdjIsoDir j {f} {g} alpha)
+
+public export
+PolyRKanExtRepUnit : (j : Type) -> (g : PolyFunc) ->
+  PolyNatTrans g (PolyRKanExtRep j $ pfCompositionArena g (PFHomArena j))
+PolyRKanExtRepUnit j (gpos ** gdir) =
+  (\gi => ((gi ** \_ => ()) ** snd) ** \gi => fst)
+
+public export
+PolyRKanExtRepCounit : (j : Type) -> (g : PolyFunc) ->
+  PolyNatTrans (pfCompositionArena (PolyRKanExtRep j g) (PFHomArena j)) g
+PolyRKanExtRepCounit j (gpos ** gdir) =
+  (\i => fst (fst i) **
+   \((gi ** mgdj) ** tounit), gd => (gd ** mgdj gd))
+
+public export
+PolyRKanExtRepToInterp : (j : Type) -> (g : PolyFunc) ->
+  NaturalTransformation
+    (InterpPolyFunc (PolyRKanExtRep j g))
+    (RKanExt (CovarHomFunc j) (InterpPolyFunc g))
+PolyRKanExtRepToInterp j (gpos ** gdir) x ((gi ** mgdj) ** mgdx) y mxjy =
+  (gi ** \gd => mxjy (mgdx gd) (mgdj gd))
+
+public export
+PFfunctorExpMap : (p : PolyFunc) ->
+  (a : Type) ->
+  (0 x, y : Type) -> (x -> y) ->
+  FunctorExp (InterpPolyFunc p) a x -> FunctorExp (InterpPolyFunc p) a y
+PFfunctorExpMap p a x y = (.) . InterpPFMap p
+
+public export
+0 PolyRKanExtRepFromInterp : (j : Type) -> (g : PolyFunc) ->
+  (z : Type) ->
+  (rk : NaturalTransformation
+    (FunctorExp (InterpPolyFunc $ PFHomArena j) z)
+    (InterpPolyFunc g)) ->
+  (rknat :
+    NaturalityCondition
+      (PFfunctorExpMap (PFHomArena j) z)
+      (\_, _ => InterpPFMap g) rk) ->
+  InterpPolyFunc (PolyRKanExtRep j g) z
+PolyRKanExtRepFromInterp j (gpos ** gdir) z rk rknat =
+  (rk j (\_ => (() ** id)) **
+   \gd =>
+    let
+      rkn =
+        rknat z j
+          (\_ => snd (rk j (\_ => (() ** id))) gd)
+          (\ez => (() ** \ej => ez))
+      rkn1 = dpeq1 rkn
+      rkeq :
+        (fst (rk j (\_ => (() ** id))) =
+         fst (rk z (\ez => (() ** \ej => ez)))) =
+          trans
+            (?PolyRKanExtRepFromInterp_hole)
+            rkn1
+    in
+    snd (rk z (\ez => (() ** \ej => ez))) $
+      rewrite sym rkeq in gd)
 
 -----------------------------------------------------------
 -----------------------------------------------------------
@@ -1000,6 +2269,62 @@ polyNTConst : (p, q : PolyFunc) -> (qi : pfPos q) -> (pfDir {p=q} qi -> Void) ->
   PolyNatTrans p q
 polyNTConst (ppos ** pdir) (qpos ** qdir) qi qdv =
   (const qi ** \pi, qd => void $ qdv qd)
+
+---------------------------------------
+---------------------------------------
+---- Derived morphisms in PolyFunc ----
+---------------------------------------
+---------------------------------------
+
+public export
+pfUncurry : {p, q, r : PolyFunc} ->
+  PolyNatTrans p (pfHomObj q r) -> PolyNatTrans (pfProductArena p q) r
+pfUncurry {p} {q} {r} f =
+  pntVCatComp {p=(pfProductArena p q)} {q=(pfProductArena (pfHomObj q r) q)} {r}
+    (pfEval q r)
+    (polyPair {p=(pfProductArena p q)} {q=(pfHomObj q r)} {r=q}
+      (pntVCatComp
+        {p=(pfProductArena p q)}
+        {q=p}
+        {r=(pfHomObj q r)}
+        f
+        (polyProj1 p q))
+      (polyProj2 p q))
+
+public export
+pfProd1LeftElim : {p, q : PolyFunc} ->
+  PolyNatTrans (pfProductArena PFTerminalArena p) q -> PolyNatTrans p q
+pfProd1LeftElim {p=(ppos ** pdir)} {q=(qpos ** qdir)} (onpos ** ondir) =
+  (onpos . MkPair () **
+   \pi, qd => case ondir ((), pi) qd of Left v => void v ; Right pd => pd)
+
+public export
+pfProdLeftIntro : {p, q, r : PolyFunc} ->
+  PolyNatTrans q r -> PolyNatTrans (pfProductArena p q) r
+pfProdLeftIntro {p=(ppos ** pdir)} {q=(qpos ** qdir)} {r=(rpos ** rdir)}
+  (onpos ** ondir) =
+    (onpos . snd ** \(pi, qi), rd => Right $ ondir qi rd)
+
+----------------------------------------------------------------
+----------------------------------------------------------------
+---- Reflections of natural transformations into `PolyFunc` ----
+----------------------------------------------------------------
+----------------------------------------------------------------
+
+public export
+PFHomTerm : PolyFunc -> PolyFunc -> Type
+PFHomTerm p q = PolyNatTrans PFTerminalArena (pfHomObj p q)
+
+public export
+PFtermAsNT : {p, q : PolyFunc} -> PFHomTerm p q -> PolyNatTrans p q
+PFtermAsNT {p} {q} t =
+  pfProd1LeftElim $ pfUncurry {p=PFTerminalArena} {q=p} {r=q} t
+
+public export
+NTasPFterm : {p, q : PolyFunc} -> PolyNatTrans p q -> PFHomTerm p q
+NTasPFterm {p} {q} f =
+  pfCurry {p=PFTerminalArena} {q=p} {r=q}
+  $ pfProdLeftIntro {p=PFTerminalArena} f
 
 ------------------------------
 ------------------------------
@@ -1035,8 +2360,19 @@ InterpPFAlg : {0 p : PolyFunc} -> {0 a : Type} ->
 InterpPFAlg {p} {a} alg (i ** d) = alg i d
 
 public export
+PFAlgFromAlg : {0 p : PolyFunc} -> {0 a : Type} ->
+  Algebra (InterpPolyFunc p) a -> PFAlg p a
+PFAlgFromAlg {p} {a} alg i d = alg (i ** d)
+
+public export
 PFAlgCPS : PolyFunc -> Type -> Type
 PFAlgCPS p = PFAlg p . Continuation
+
+public export
+0 PolyAlgCommutes : (0 p : PolyFunc) -> {0 a, b : Type} -> (0 j : a -> b) ->
+  (g : Algebra (InterpPolyFunc p) a) -> (h : Algebra (InterpPolyFunc p) b) ->
+  Type
+PolyAlgCommutes p {a} {b} j g h = ExtEq (j . g) (h . InterpPFMap p j)
 
 public export
 PolyContinuation : Type -> Type
@@ -1074,12 +2410,6 @@ PFAlgToBaseF : {p : PolyFunc} -> {a : Type} -> PFAlg p a -> PFBaseF p a
 PFAlgToBaseF {p=(pos ** dir)} {a} alg b f (i ** d) = alg i $ \di => f $ d di
 
 public export
-DFMonoToFunc : {p : PolyFunc} -> {a, b : Type} ->
-  DirichNatTrans p (pfMonomialArena a b) -> InterpDirichFunc p a -> b
-DFMonoToFunc {p=(pos ** dir)} {a} {b} (onPos ** onDir) (i ** d) =
-  onDir i $ d $ onPos i
-
-public export
 PFNAlg : PolyFuncN -> Type -> Type
 PFNAlg (pos ** dir) a = (i : pos) -> Vect (dir i) a -> a
 
@@ -1087,6 +2417,16 @@ public export
 PFAlgFromN : {0 a : Type} -> {p : PolyFuncN} ->
   PFNAlg p a -> PFAlg (pfnFunc p) a
 PFAlgFromN {a} {p=(pos ** dir)} alg i = alg i . finFToVect
+
+public export
+PFNfoldAlg : PolyFuncN -> Type -> Type
+PFNfoldAlg p a = (pfnPos p -> a, (i : pfnPos p) -> a -> a -> a)
+
+public export
+PFNalgFromFold : {p : PolyFuncN} -> {a : Type} ->
+  PFNfoldAlg p a -> PFNAlg p a
+PFNalgFromFold {p=(pos ** dir)} {a} (algp, algd) =
+  \i : pos => foldl {t=(Vect (dir i))} {elem=a} {acc=a} (algd i) (algp i)
 
 public export
 PFCoprodAlg : {p, q : PolyFunc} -> {a : Type} ->
@@ -1137,13 +2477,26 @@ pfCata {p=p@(pos ** dir)} {a} alg (InPFM i da) =
   alg i $ \d : dir i => pfCata {p} alg $ da d
 
 public export
+PolyInFree : (p : PolyFunc) -> InterpPolyFunc p (PolyFuncMu p) -> PolyFuncMu p
+PolyInFree p (i ** d) = InPFM i d
+
+public export
+PolyFuncCataIsAlgHomomorphism :
+  (p : PolyFunc) -> (b : Type) -> (alg : PFAlg p b) ->
+  (x : InterpPolyFunc p (PolyFuncMu p)) ->
+  pfCata alg (PolyInFree p x) =
+    InterpPFAlg {p} alg (InterpPFMap p (pfCata alg) x)
+PolyFuncCataIsAlgHomomorphism (pos ** dir) b alg (i ** d) = Refl
+
+public export
 pfnCata : {p : PolyFuncN} -> {0 a : Type} -> PFNAlg p a -> PolyFuncNMu p -> a
 pfnCata = pfCata . PFAlgFromN
 
 public export
 partial
-pfnFold : {p : PolyFuncN} -> {0 a : Type} -> PFNAlg p a -> PolyFuncNMu p -> a
-pfnFold {p=p@(pos ** dir)} {a} alg = pfnFold' id where
+pfnFoldPartial : {p : PolyFuncN} -> {0 a : Type} ->
+  PFNAlg p a -> PolyFuncNMu p -> a
+pfnFoldPartial {p=p@(pos ** dir)} {a} alg = pfnFold' id where
   mutual
     pfnFold' : (a -> a) -> PolyFuncNMu p -> a
     pfnFold' cont (InPFM i da) =
@@ -1153,6 +2506,265 @@ pfnFold {p=p@(pos ** dir)} {a} alg = pfnFold' id where
     pfnFoldMap Z cont _ = cont []
     pfnFoldMap (S n) cont v =
       pfnFoldMap n (\v' => cont $ (pfnFold' id $ v FZ) :: v') $ v . FS
+
+public export
+pfnFold : {p : PolyFuncN} -> {a : Type} -> PFNfoldAlg p a -> PolyFuncNMu p -> a
+pfnFold {p} {a} = pfnCata {p} {a} . PFNalgFromFold {p} {a}
+
+public export
+pfnDepthPredAlg : (p : PolyFuncN) -> PFNfoldAlg p Nat
+pfnDepthPredAlg (pos ** dir) = (\i_ => Z, \i_ => max)
+
+public export
+pfnDepthPred : (p : PolyFuncN) -> PolyFuncNMu p -> Nat
+pfnDepthPred p = pfnFold {p} {a=Nat} $ pfnDepthPredAlg p
+
+public export
+pfCataRewrite : (p : PolyFunc) -> (a : Type) -> (alg : PFAlg p a) ->
+  (i : pfPos p) -> (dm : pfDir {p} i -> PolyFuncMu p) ->
+  pfCata {p} {a} alg (InPFM i dm) =
+  alg i (\d : pfDir {p} i => pfCata {p} alg $ dm d)
+pfCataRewrite (pos ** dir) a alg i dm = Refl
+
+public export
+pfCataInId : FunExt -> (p : PolyFunc) ->
+  ExtEq (pfCata {p} (\i, dm => InPFM i dm)) Prelude.id
+pfCataInId fext (pos ** dir) (InPFM i dm) =
+  trans
+    (pfCataRewrite
+      (pos ** dir)
+      (PolyFuncMu (pos ** dir))
+      (InPFM {p=(pos ** dir)}) i dm)
+    (cong (InPFM i) (funExt $ \dd => pfCataInId fext (pos ** dir) (dm dd)))
+
+public export
+pfCataInIdRefl : FunExt -> (p : PolyFunc) -> (alg : PFAlg p (PolyFuncMu p)) ->
+  (alg = InPFM) -> ExtEq (pfCata {p} alg) Prelude.id
+pfCataInIdRefl fext p InPFM Refl = pfCataInId fext p
+
+public export
+InPFMdp : {p : PolyFunc} -> Algebra (InterpPolyFunc p) (PolyFuncMu p)
+InPFMdp {p} el = case el of (i ** dm) => InPFM i dm
+
+---------------------------
+---- Directed colimits ----
+---------------------------
+
+public export
+pfN : PolyFunc -> Nat -> Type
+pfN p Z = Void
+pfN p (S n) = InterpPolyFunc p (pfN p n)
+
+public export
+pfLift : (p : PolyFunc) -> (m, n : Nat) -> LTE m n -> pfN p m -> pfN p n
+pfLift p Z n LTEZero = voidF (pfN p n)
+pfLift p (S m) (S n) (LTESucc lte) =
+  InterpPFMap p {a=(pfN p m)} {b=(pfN p n)} $ pfLift p m n lte
+
+public export
+pfLiftS : (p : PolyFunc) -> (n : Nat) -> pfN p n -> pfN p (S n)
+pfLiftS p n = pfLift p n (S n) (lteSuccRight {m=n} {n} reflexive)
+
+public export
+pfFrom0 : (p : PolyFunc) -> pfN p 0 -> pfN p 1
+pfFrom0 p = pfLiftS p 0
+
+public export
+pfNtoMu : (p : PolyFunc) -> (n : Nat) -> pfN p n -> PolyFuncMu p
+pfNtoMu p Z el = void el
+pfNtoMu p (S n) (i ** dm) = InPFM i (pfNtoMu p n . dm)
+
+public export
+data PFmuNewS : (p : PolyFunc) -> Nat -> PolyFuncMu p -> Type where
+  PFmnZ : {p : PolyFunc} ->
+    (i : pfPos p) -> (nd : Not (pfDir {p} i)) ->
+    PFmuNewS p Z (InPFM i (voidF (PolyFuncMu p) . nd))
+  PFmnS : {p : PolyFunc} ->
+    (i : pfPos p) -> (dm : pfDir {p} i -> PolyFuncMu p) ->
+    (dn : pfDir {p} i) -> PFmuNewS p n (dm dn) ->
+    PFmuNewS p (S n) (InPFM i dm)
+
+public export
+PFmuNew : (p : PolyFunc) -> Nat -> PolyFuncMu p -> Type
+PFmuNew p Z el = Void
+PFmuNew p (S n) el = PFmuNewS p n el
+
+---------------------------------------------------------
+---- Mutumorphisms (mutual recursion for `PolyFunc`) ----
+---------------------------------------------------------
+
+public export
+PFmutuAlg : PolyFunc -> {c : Type} -> SliceObj c -> Type
+PFmutuAlg p {c} = PFAlg p . Pi {a=c}
+
+public export
+pfMutu : {p : PolyFunc} -> {c : Type} -> {sl : SliceObj c} ->
+  PFmutuAlg p {c} sl -> PolyFuncMu p -> Pi {a=c} sl
+pfMutu {p} {c} {sl} = pfCata {p} {a=(Pi {a=c} sl)}
+
+public export
+PFmutu2AlgProj : PolyFunc -> Type -> Type -> Type -> Type
+PFmutu2AlgProj p a b c =
+  (i : pfPos p) -> (pfDir {p} i -> a) -> (pfDir {p} i -> b) -> c
+
+public export
+PFmutu2AlgA : PolyFunc -> Type -> Type -> Type
+PFmutu2AlgA p a b = PFmutu2AlgProj p a b a
+
+public export
+PFmutu2AlgB : PolyFunc -> Type -> Type -> Type
+PFmutu2AlgB p a b = PFmutu2AlgProj p a b b
+
+public export
+PFmutu2Alg : PolyFunc -> Type -> Type -> Type
+PFmutu2Alg p a b = (PFmutu2AlgA p a b, PFmutu2AlgB p a b)
+
+public export
+PFmutu2ToMutuAlg : {p : PolyFunc} -> {a, b : Type} ->
+  PFmutu2Alg p a b -> PFmutuAlg p {c=(Fin 2)} (SliceFin2 a b)
+PFmutu2ToMutuAlg {p} {a} {b} (alga, algb) i dm FZ =
+  alga i (\d => dm d FZ) (\d => dm d (FS FZ))
+PFmutu2ToMutuAlg {p} {a} {b} (alga, algb) i dm (FS FZ) =
+  algb i (\d => dm d FZ) (\d => dm d (FS FZ))
+
+public export
+pfMutu2 : {p : PolyFunc} -> {a, b : Type} ->
+  PFmutu2Alg p a b -> PolyFuncMu p -> PiSliceFin2 a b
+pfMutu2 {p} {a} {b} =
+  pfMutu {p} {c=(Fin 2)} {sl=SliceFin2 a b} . PFmutu2ToMutuAlg {p} {a} {b}
+
+public export
+pfMutu2a : {p : PolyFunc} -> {a, b : Type} ->
+  PFmutu2Alg p a b -> PolyFuncMu p -> a
+pfMutu2a {p} {a} {b} alg el = pfMutu2 {p} {a} {b} alg el FZ
+
+public export
+pfMutu2b : {p : PolyFunc} -> {a, b : Type} ->
+  PFmutu2Alg p a b -> PolyFuncMu p -> b
+pfMutu2b {p} {a} {b} alg el = pfMutu2 {p} {a} {b} alg el (FS FZ)
+
+-----------------------
+---- Zygomorphisms ----
+-----------------------
+
+-- A zygomorphism is a fold using two functions, the second of which depends
+-- on the output of the first.  But this is simply a special case of general
+-- two-way mutual recursion where the first function ignores one argument,
+-- so we can implement it in terms of two-way mutual recursion.
+
+public export
+PFzygoAlg : PolyFunc -> Type -> Type -> Type
+PFzygoAlg p a b = (PFAlg p a, PFmutu2AlgB p a b)
+
+public export
+PFzygoToMutu2Alg : {p : PolyFunc} -> {a, b : Type} ->
+  PFzygoAlg p a b -> PFmutu2Alg p a b
+PFzygoToMutu2Alg {p} {a} {b} (alga, algb) = (\i, dma, dmb_ => alga i dma, algb)
+
+public export
+pfZygo : {p : PolyFunc} -> {a, b : Type} ->
+  PFzygoAlg p a b -> PolyFuncMu p -> b
+pfZygo {p} {a} {b} = pfMutu2b {p} {a} {b} . PFzygoToMutu2Alg {p} {a} {b}
+
+-----------------------
+---- Paramorphisms ----
+-----------------------
+
+public export
+PFParaAlg : PolyFunc -> Type -> Type
+PFParaAlg p = PFmutu2AlgB p (PolyFuncMu p)
+
+public export
+PFParaToZygoAlg : {p : PolyFunc} -> {a : Type} ->
+  PFParaAlg p a -> PFzygoAlg p (PolyFuncMu p) a
+PFParaToZygoAlg {p} {a} = MkPair $ InPFM {p}
+
+public export
+pfPara : {p : PolyFunc} -> {a : Type} -> PFParaAlg p a -> PolyFuncMu p -> a
+pfPara {p} {a} = pfZygo {p} {a=(PolyFuncMu p)} {b=a} . PFParaToZygoAlg {p} {a}
+
+-----------------------------
+---- Primitive recursion ----
+-----------------------------
+
+public export
+PNNOAlg : Type -> Type -> Type
+PNNOAlg a x = ((a -> x), ((a, Nat, x) -> x))
+
+public export
+pnnoCata : {a, x : Type} -> PNNOAlg a x -> (a, Nat) -> x
+pnnoCata {a} {x} (algz, algs) (ea, Z) =
+  algz ea
+pnnoCata {a} {x} (algz, algs) (ea, (S n)) =
+  algs (ea, n, pnnoCata {a} {x} (algz, algs) (ea, n))
+
+-- A generalization of "parameterized NNO" to "parameterized initial
+-- algebra of a polynomial functor", expressed in a form which
+-- characterizes the ability to do primitive recursion even in the
+-- absence of higher-order functions.
+public export
+PrimRecAlg : PolyFunc -> Type -> Type -> Type
+PrimRecAlg p a x =
+  (i : pfPos p) -> (a, pfDir {p} i -> (PolyFuncMu p, x)) -> x
+
+public export
+pfPrimRec : {p : PolyFunc} -> {a, x : Type} ->
+  PrimRecAlg p a x -> (a, PolyFuncMu p) -> x
+pfPrimRec {p} {a} {x} alg (ea, InPFM i dm) =
+  alg i (ea, \d => (dm d, pfPrimRec {p} {a} {x} alg (ea, dm d)))
+
+----------------------------------------
+---- Parallel-product catamorphisms ----
+----------------------------------------
+
+public export
+PFParProdAlg : PolyFunc -> PolyFunc -> Type -> Type
+PFParProdAlg p q = PFAlg (pfParProductArena p q)
+
+public export
+PFParSymProdAlg : PolyFunc -> Type -> Type
+PFParSymProdAlg p = PFParProdAlg p p
+
+public export
+pfParProdCata : (p, q : PolyFunc) -> (a : Type) ->
+  PFParProdAlg p q a -> PolyFuncMu p -> PolyFuncMu q -> a
+pfParProdCata p q a alg (InPFM pi pd) (InPFM qi qd) =
+  alg (pi, qi) (\dd => pfParProdCata p q a alg (pd $ fst dd) (qd $ snd dd))
+
+public export
+pfParSymProdCata : (p : PolyFunc) -> (a : Type) ->
+  PFParSymProdAlg p a -> PolyFuncMu p -> PolyFuncMu p -> a
+pfParSymProdCata p = pfParProdCata p p
+
+----------------------------------------
+---- Parallel-product paramorphisms ----
+----------------------------------------
+
+public export
+PFParaParProdAlg : PolyFunc -> PolyFunc -> Type -> Type
+PFParaParProdAlg p q a =
+  (pi : pfPos p) -> (qi : pfPos q) ->
+  (pfDir {p=p} pi -> PolyFuncMu p) ->
+  (pfDir {p=q} qi -> PolyFuncMu q) ->
+  (pfDir {p=p} pi ->
+   pfDir {p=q} qi ->
+   a) ->
+  a
+
+public export
+PFParaParSymProdAlg : PolyFunc -> Type -> Type
+PFParaParSymProdAlg p = PFParaParProdAlg p p
+
+public export
+pfParProdPara : (p, q : PolyFunc) -> (a : Type) ->
+  PFParaParProdAlg p q a -> PolyFuncMu p -> PolyFuncMu q -> a
+pfParProdPara p q a alg (InPFM pi pdm) (InPFM qi qdm) =
+  alg pi qi pdm qdm $ \pd, qd => pfParProdPara p q a alg (pdm pd) (qdm qd)
+
+public export
+pfParSymProdPara : (p : PolyFunc) -> (a : Type) ->
+  PFParaParSymProdAlg p a -> PolyFuncMu p -> PolyFuncMu p -> a
+pfParSymProdPara p = pfParProdPara p p
 
 --------------------------------------------------------------------------
 ---- Variants of polynomial-functor catamorphism (recursion schemes ) ----
@@ -1164,9 +2776,9 @@ PFParamAlg : PolyFunc -> Type -> Type -> Type
 PFParamAlg p x a = PFAlg p (x -> a)
 
 public export
-pfParamCata : {0 p : PolyFunc} -> {0 x, a : Type} ->
+pfFreeFEval : {0 p : PolyFunc} -> {0 x, a : Type} ->
   PFParamAlg p x a -> x -> PolyFuncMu p -> a
-pfParamCata alg = flip $ pfCata alg
+pfFreeFEval alg = flip $ pfCata alg
 
 -- Catamorphism which passes not only the output of the previous
 -- induction steps but also the original `PolyFuncMu` to the algebra.
@@ -1260,6 +2872,46 @@ pfProductBoolCata : {p, q : PolyFunc} ->
   PFProductBoolAlg p q -> PolyFuncMu p -> PolyFuncMu q -> Bool
 pfProductBoolCata peq qeq = pfProductCata . PFProductAlgFromBool peq qeq
 
+public export
+PolyDirMu : (p : PolyFunc) -> PolyTypeAlg p -> SliceObj (PolyFuncMu p)
+PolyDirMu p alg = pfCata {p} {a=Type} (curry alg)
+
+mutual
+  public export
+  PolyDirPi : {p : PolyFunc} -> (tyalg : PolyTypeAlg p) ->
+    (depalg :
+      (el : InterpPolyFunc p (PolyFuncMu p)) ->
+      ((dd : pfDir {p} (fst el)) -> PolyDirMu p tyalg (snd el dd)) ->
+      PolyDirMu p tyalg (InPFM (fst el) (snd el))) ->
+    (em : PolyFuncMu p) ->
+    PolyDirMu p tyalg em
+  PolyDirPi {p=p@(pos ** dir)} tyalg depalg (InPFM i dm) =
+    depalg (i ** dm) (PolyDirPiDir {p} tyalg depalg i dm)
+
+  public export
+  PolyDirPiDir : {p : PolyFunc} -> (tyalg : PolyTypeAlg p) ->
+    (depalg :
+      (el : InterpPolyFunc p (PolyFuncMu p)) ->
+      ((dd : pfDir {p} (fst el)) -> PolyDirMu p tyalg (snd el dd)) ->
+      PolyDirMu p tyalg (InPFM (fst el) (snd el))) ->
+    (i : pfPos p) -> (dm : pfDir {p} i -> PolyFuncMu p) ->
+    (dir : pfDir {p} i) -> PolyDirMu p tyalg (dm dir)
+  PolyDirPiDir {p=p@(pos ** dir)} tyalg depalg i dm dd =
+    PolyDirPi {p} tyalg depalg (dm dd)
+
+public export
+polyDirCata : {p : PolyFunc} -> (tyalg : PolyTypeAlg p) ->
+  (a : SliceObj (PolyFuncMu p)) ->
+  (diralg :
+    (i : pfPos p) ->
+    (dm : pfDir {p} i -> PolyFuncMu p) ->
+    ((dd : pfDir {p} i) -> PolyDirMu p tyalg (dm dd) -> a (dm dd)) ->
+    tyalg (i ** PolyDirMu p tyalg . dm) ->
+    a (InPFM i dm)) ->
+  SliceMorphism {a=(PolyFuncMu p)} (PolyDirMu p tyalg) a
+polyDirCata {p=p@(pos ** dir)} tyalg a diralg (InPFM i dm) =
+  diralg i dm (\dd : pfDir {p} i => polyDirCata {p} tyalg a diralg (dm dd))
+
 ----------------------------------
 ---- Polynomial (free) monads ----
 ----------------------------------
@@ -1303,6 +2955,10 @@ PolyFuncFreeMDir p = pfCata {p=(PFTranslate1 p)} $ PolyFuncFreeMDirAlg p
 public export
 PolyFuncFreeM : PolyFunc -> PolyFunc
 PolyFuncFreeM p = (PolyFuncFreeMPos p ** PolyFuncFreeMDir p)
+
+public export
+PolyNTvar : (p : PolyFunc) -> PolyNatTrans PFIdentityArena (PolyFuncFreeM p)
+PolyNTvar (pos ** dir) = (\_ => InPFM (PFVar ()) (\v => void v) ** \_, _ => ())
 
 public export
 InterpPolyFuncFreeM : PolyFunc -> Type -> Type
@@ -1391,6 +3047,11 @@ pfSubstCata : {p : PolyFunc} -> {a, b : Type} ->
 pfSubstCata {p} {a} {b} subst alg = pfFreeCata (PFAlgToTranslate subst alg)
 
 public export
+pfSubstIdCata : {p : PolyFunc} -> {b : Type} ->
+  PFAlg p b -> InterpPolyFuncFreeM p b -> b
+pfSubstIdCata {p} {b} = pfSubstCata {p} {a=b} {b} id
+
+public export
 PFFreeVoidToMuAlg : (p : PolyFunc) -> PFTranslateAlg p Void (PolyFuncMu p)
 PFFreeVoidToMuAlg (pos ** dir) (PFVar v) d = void v
 PFFreeVoidToMuAlg (pos ** dir) (PFCom c) d = InPFM c d
@@ -1400,10 +3061,21 @@ pfFreeMVoidToMu : {p : PolyFunc} -> InterpPolyFuncFreeM p Void -> PolyFuncMu p
 pfFreeMVoidToMu {p} =
   pfFreeCata {p} {a=Void} {b=(PolyFuncMu p)} $ PFFreeVoidToMuAlg p
 
+-- Another name for an algebra just to emphasize when we think of it
+-- as the implementation of an interface represented by a polynomial.
+public export
+PolyIFace : PolyFunc -> Type -> Type
+PolyIFace = Algebra . InterpPolyFunc
+
+public export
+PolyFreeAlgF : (p : PolyFunc) -> (a : Type) ->
+  PolyIFace p (InterpPolyFuncFreeM p a)
+PolyFreeAlgF (pos ** dir) a (i ** d) =
+  (InPFM (PFCom {p=(pos ** dir)} i) (fst . d) ** \(di ** dd) => snd (d di) dd)
+
 public export
 PFMuToFreeMVoidAlg : (p : PolyFunc) -> PFAlg p (InterpPolyFuncFreeM p Void)
-PFMuToFreeMVoidAlg (pos ** dir) i d =
-  (InPFM (PFCom i) (fst . d) ** \(d' ** v) => snd (d d') v)
+PFMuToFreeMVoidAlg p = PFAlgFromAlg $ PolyFreeAlgF p Void
 
 public export
 pfMuToFreeMVoid : {p : PolyFunc} -> PolyFuncMu p -> InterpPolyFuncFreeM p Void
@@ -1496,6 +3168,87 @@ pfProductHomCataNT : {p, q, r : PolyFunc} -> PFProductHomAlgNT p q r ->
 pfProductHomCataNT {p} {q} {r} =
   pfPolyCata {p=q} {q=r} .* pfCata {p} {a=(PolyNatTrans q r)}
 
+------------------------------------
+---- Free monad depth utilities ----
+------------------------------------
+
+public export
+PFfmMax : {p : PolyFunc} -> {a : Type} -> Nat -> InterpPolyFuncFreeM p a -> Type
+PFfmMax {p=(pos ** dir)} {a} n (InPFM (PFVar ()) dmi ** dmm) =
+  Unit
+PFfmMax {p=(pos ** dir)} {a} Z (InPFM (PFCom i) dmi ** dmm) =
+  Void
+PFfmMax {p=(pos ** dir)} {a} (S n) (InPFM (PFCom i) dmi ** dmm) =
+  (d : dir i) -> PFfmMax {p=(pos ** dir)} {a} n (dmi d ** curry dmm d)
+
+public export
+PFfmMin : {p : PolyFunc} -> {a : Type} -> Nat -> InterpPolyFuncFreeM p a -> Type
+PFfmMin {p=(pos ** dir)} {a} Z el = Unit
+PFfmMin {p=(pos ** dir)} {a} (S n) (InPFM (PFVar ()) dmi ** dmm) =
+  Void
+PFfmMin {p=(pos ** dir)} {a} (S n) (InPFM (PFCom i) dmi ** dmm) =
+  Not (Not (d : dir i ** PFfmMin {p=(pos ** dir)} {a} n (dmi d ** curry dmm d)))
+
+public export
+PFfmDepth : {p : PolyFunc} -> {a : Type} ->
+  Nat -> InterpPolyFuncFreeM p a -> Type
+PFfmDepth {p} {a} n el = (PFfmMax {p} {a} n el, PFfmMin {p} {a} n el)
+
+-------------------------
+---- Some arithmetic ----
+-------------------------
+
+public export
+PFMaybeMu : Type
+PFMaybeMu = PolyFuncMu PolyCat.pfMaybeArena
+
+public export
+pfMaybeMuToNatAlg : PFAlg PolyCat.pfMaybeArena Nat
+pfMaybeMuToNatAlg (Left ()) dm = S $ dm ()
+pfMaybeMuToNatAlg (Right ()) dm = Z
+
+public export
+pfMaybeMuToNat : PFMaybeMu -> Nat
+pfMaybeMuToNat = pfCata {p=pfMaybeArena} {a=Nat} pfMaybeMuToNatAlg
+
+public export
+pfNatToMaybeMu : Nat -> PFMaybeMu
+pfNatToMaybeMu Z = InPFM (Right ()) $ \v => void v
+pfNatToMaybeMu (S n) = InPFM (Left ()) $ \() => pfNatToMaybeMu n
+
+public export
+pfFactAlg : PFParaAlg PolyCat.pfMaybeArena Nat
+pfFactAlg (Left ()) mm dm = S (pfMaybeMuToNat $ mm ()) * dm ()
+pfFactAlg (Right ()) mm dm = 1
+
+public export
+pfFact : PFMaybeMu -> Nat
+pfFact = pfPara {p=pfMaybeArena} {a=Nat} pfFactAlg
+
+-- Computes `fib(n)`.
+public export
+pfFibAlgA : PFmutu2AlgA PolyCat.pfMaybeArena Nat Nat
+pfFibAlgA (Left ()) prev prevS = prevS ()
+pfFibAlgA (Right ()) prev prevS = 0
+
+-- Computes `fib(S(n))`.
+public export
+pfFibAlgB : PFmutu2AlgB PolyCat.pfMaybeArena Nat Nat
+pfFibAlgB (Left ()) prev prevS = prev() + prevS ()
+pfFibAlgB (Right ()) prev prevS = 1
+
+public export
+pfFibAlg : PFmutu2Alg PolyCat.pfMaybeArena Nat Nat
+pfFibAlg = (pfFibAlgA, pfFibAlgB)
+
+public export
+pfFib : PFMaybeMu -> Nat
+pfFib = pfMutu2a {a=Nat} {b=Nat} pfFibAlg
+
+public export
+pfFibN : Nat -> Nat
+pfFibN = pfFib . pfNatToMaybeMu
+
 --------------------------------------
 --------------------------------------
 ---- Polynomial-functor coalgebra ----
@@ -1528,7 +3281,7 @@ PFCoalgToCobaseF : {p : PolyFunc} -> {a : Type} -> PFCoalg p a -> PFCobaseF p a
 PFCoalgToCobaseF {p=(pos ** dir)} {a} coalg b f x =
   let (i ** d) = coalg x in (i ** f . d)
 
-{- One direction of 5.71 from "A General Theory of Interaction". -}
+{- One direction of 6.65 from "A General Theory of Interaction". -}
 public export
 PFMonoToCofunc : {p : PolyFunc} -> {a, b : Type} ->
   PolyNatTrans (pfMonomialArena a b) p -> a -> InterpPolyFunc p b
@@ -1540,7 +3293,7 @@ PFMonoToCoalg : {p : PolyFunc} -> {a : Type} ->
   PolyNatTrans (pfMonomialArena a a) p -> PFCoalg p a
 PFMonoToCoalg {p=(pos ** dir)} {a} = PFMonoToCofunc {p=(pos ** dir)} {a} {b=a}
 
-{- The other direction of 5.71 from "A General Theory of Interaction". -}
+{- The other direction of 6.65 from "A General Theory of Interaction". -}
 public export
 PFCofuncToMono : {p : PolyFunc} -> {a, b : Type} ->
   (a -> InterpPolyFunc p b) -> PolyNatTrans (pfMonomialArena a b) p
@@ -1602,7 +3355,7 @@ PPathPredGenPosT pred j (PPPath {i} pp di j) =
   Pair (PPathPredGenPosT pred i pp) (pred i pp di = Just j)
 
 public export
-PPathPredGenPosDec : {p : PolyFunc} ->
+0 PPathPredGenPosDec : {p : PolyFunc} ->
   (dirDec : (i' : pfPos p) -> (di', di'' : pfDir {p} i') -> Dec (di' = di'')) ->
   (pred : PPathPred p) -> (i : pfPos p) -> (pp : PPathPos p i) ->
   Dec (PPathPredGenPosT {p} pred i pp)
@@ -1613,7 +3366,7 @@ PPathPredGenPosDec {p} dirDec pred j (PPPath {i} pp di j) =
   ?PPathPredGenPosDec_hole_path
 
 public export
-PPathPredGenPosDecPred : {p : PolyFunc} ->
+0 PPathPredGenPosDecPred : {p : PolyFunc} ->
   (dirDec : (i' : pfPos p) -> (di', di'' : pfDir {p} i') -> Dec (di' = di'')) ->
   (pred : PPathPred p) -> (i : pfPos p) -> (pp : PPathPos p i) ->
   Bool
@@ -1646,21 +3399,21 @@ PPathPredNotGen : {p : PolyFunc} -> PPathPred p -> PPath p -> Type
 PPathPredNotGen {p} pred pp = Not $ PPathPredGen {p} pred pp
 
 public export
-PPathPredGenCorrect : {p : PolyFunc} -> PPathPred p -> Type
+0 PPathPredGenCorrect : {p : PolyFunc} -> PPathPred p -> Type
 PPathPredGenCorrect {p} pred =
   (i : pfPos p) -> (ppi : PPathPos p i) ->
   PPathPredGenPos {p} pred i ppi -> (di : pfDir {p} i) ->
   IsJustTrue (pred i ppi di)
 
 public export
-PPathPredNotGenCorrect : {p : PolyFunc} -> PPathPred p -> Type
+0 PPathPredNotGenCorrect : {p : PolyFunc} -> PPathPred p -> Type
 PPathPredNotGenCorrect {p} pred =
   (i : pfPos p) -> (ppi : PPathPos p i) ->
   PPathPredNotGenPos {p} pred i ppi -> (di : pfDir {p} i) ->
   IsNothingTrue (pred i ppi di)
 
 public export
-PPathPredCorrect : {p : PolyFunc} -> PPathPred p -> Type
+0 PPathPredCorrect : {p : PolyFunc} -> PPathPred p -> Type
 PPathPredCorrect {p} pred =
   (PPathPredGenCorrect {p} pred, PPathPredNotGenCorrect {p} pred)
 
@@ -1819,19 +3572,19 @@ InterpPolyFuncCofreeCMFromPTree =
   InterpPolyFunc . PolyFuncCofreeCMFromPTreeArena
 
 public export
-PolyFuncCofreeCMPosNuScaleToPTree : {p : PolyFunc} ->
+0 PolyFuncCofreeCMPosNuScaleToPTree : {p : PolyFunc} ->
   PolyFuncCofreeCMPosFromNuScale p -> PolyFuncCofreeCMFromPTreePos p
 PolyFuncCofreeCMPosNuScaleToPTree {p=p@(pos ** dir)} (InPFN (PFNode () i) d) =
   ?PolyFuncCofreeCMPosNuScaleToPTree_hole
 
 public export
-PolyFuncCofreeCMPosPTreeToNuScale : {p : PolyFunc} ->
+0 PolyFuncCofreeCMPosPTreeToNuScale : {p : PolyFunc} ->
   PolyFuncCofreeCMFromPTreePos p -> PolyFuncCofreeCMPosFromNuScale p
 PolyFuncCofreeCMPosPTreeToNuScale {p=p@(pos ** dir)} =
   ?PolyFuncCofreeCMPosPTreeToNuScale_hole
 
 public export
-PolyFuncCofreeCMDirNuScaleToPTree : {p : PolyFunc} ->
+0 PolyFuncCofreeCMDirNuScaleToPTree : {p : PolyFunc} ->
   (i : PolyFuncCofreeCMPosFromNuScale p) ->
   PolyFuncCofreeCMDirFromNuScale p i ->
   PolyFuncCofreeCMFromPTreeDir p (PolyFuncCofreeCMPosNuScaleToPTree i)
@@ -1839,12 +3592,378 @@ PolyFuncCofreeCMDirNuScaleToPTree {p=(pos ** dir)} i di =
   ?PolyFuncCofreeCMDirNuScaleToPTree_hole
 
 public export
-PolyFuncCofreeCMDirPTreeToNuScale : {p : PolyFunc} ->
+0 PolyFuncCofreeCMDirPTreeToNuScale : {p : PolyFunc} ->
   (i : PolyFuncCofreeCMFromPTreePos p) ->
   PolyFuncCofreeCMFromPTreeDir p i ->
   PolyFuncCofreeCMDirFromNuScale p (PolyFuncCofreeCMPosPTreeToNuScale i)
 PolyFuncCofreeCMDirPTreeToNuScale {p=(pos ** dir)} i di =
   ?PolyFuncCofreeCMDPTreeToNuScale_hole
+
+------------------------------------------
+------------------------------------------
+---- Polynomial-profunctor fix points ----
+------------------------------------------
+------------------------------------------
+
+-- See "Bananas in Space" by Meijer and Hutton.
+
+public export
+ProfToParamDimap : (p : ProfunctorSig) -> (pdm : TypeDimapSig p) ->
+  (a : Type) -> (c, d : Type) -> (c -> d) -> p a c -> p a d
+ProfToParamDimap p pdm a c d = pdm a c a d id
+
+public export
+PolyPolyFunc : Type
+PolyPolyFunc = Type -> PolyFunc
+
+public export
+PolyPolyFuncMap : PolyPolyFunc -> Type
+PolyPolyFuncMap p =
+  ((a, b : Type) -> (a -> b) -> PolyNatTrans (p a) (p b))
+
+public export
+PolyPolyFuncContramap : PolyPolyFunc -> Type
+PolyPolyFuncContramap p =
+  ((a, b : Type) -> (b -> a) -> PolyNatTrans (p a) (p b))
+
+public export
+ProfToParamFix : PolyPolyFunc -> Type -> Type
+ProfToParamFix p a = PolyFuncMu (p a)
+
+public export
+profToParamCata : (p : PolyPolyFunc) -> (a, b : Type) ->
+  PFAlg (p a) b -> ProfToParamFix p a -> b
+profToParamCata p a b = pfCata {p=(p a)} {a=b}
+
+public export
+PTPFmap : (p : PolyPolyFunc) -> PolyPolyFuncMap p ->
+  (a, b : Type) -> (a -> b) -> ProfToParamFix p a -> ProfToParamFix p b
+PTPFmap p pm a b = pfPolyCata {p=(p a)} {q=(p b)} . pm a b
+
+public export
+PTPFcontramap :
+  (p : PolyPolyFunc) -> PolyPolyFuncContramap p ->
+  (a, b : Type) -> (b -> a) -> ProfToParamFix p a -> ProfToParamFix p b
+PTPFcontramap p pcm a b = pfPolyCata {p=(p a)} {q=(p b)} . pcm a b
+
+public export
+ProfToParamFreeM : PolyPolyFunc -> PolyPolyFunc
+ProfToParamFreeM p a = PolyFuncFreeM (p a)
+
+public export
+PTPFMmap : (p : PolyPolyFunc) -> PolyPolyFuncMap p ->
+  (a, b : Type) -> (a -> b) ->
+  PolyNatTrans (ProfToParamFreeM p a) (ProfToParamFreeM p b)
+PTPFMmap p pm a b = pfFreePolyCata {p=(p a)} {q=(p b)} . pm a b
+
+public export
+PTPFMcontramap : (p : PolyPolyFunc) -> PolyPolyFuncContramap p ->
+  (a, b : Type) -> (b -> a) ->
+  PolyNatTrans (ProfToParamFreeM p a) (ProfToParamFreeM p b)
+PTPFMcontramap p pcm a b = pfFreePolyCata {p=(p a)} {q=(p b)} . pcm a b
+
+-- For a functor `f : op(Type) -> Type`, we may define
+-- `f_squareCont : Type -> Type := f . f_op`.  This is its
+-- morphism component.`
+public export
+squareContMap :
+  (f : Type -> Type) -> (fcm : (a, b : Type) -> (b -> a) -> f a -> f b) ->
+  (a, b : Type) -> (a -> b) -> f (f a) -> f (f b)
+squareContMap f fcm a b = fcm (f a) (f b) . fcm b a
+
+public export
+SquareParamFix : PolyPolyFunc -> Type -> Type
+SquareParamFix p = ProfToParamFix p . ProfToParamFix p
+
+public export
+squareParamFixMap : (p : PolyPolyFunc) -> PolyPolyFuncContramap p ->
+  (a, b : Type) -> (a -> b) -> SquareParamFix p a -> SquareParamFix p b
+squareParamFixMap p pcm = squareContMap (ProfToParamFix p) (PTPFcontramap p pcm)
+
+public export
+PolyPolyFuncFix : PolyPolyFunc -> Type
+PolyPolyFuncFix p = Mu (SquareParamFix p)
+
+public export
+PolyPolyProf : PolyPolyFunc -> ProfunctorSig
+PolyPolyProf p a = InterpPolyFunc (p a)
+
+public export
+polyPolyProfDimap :
+  (p : PolyPolyFunc) -> PolyPolyFuncContramap p -> TypeDimapSig (PolyPolyProf p)
+polyPolyProfDimap p pcm s t a b mas mtb =
+  InterpPolyNT (pcm s a mas) b . InterpPFMap (p s) mtb
+
+public export
+polyPolyProfLmap :
+  (p : PolyPolyFunc) -> PolyPolyFuncContramap p -> TypeLmapSig (PolyPolyProf p)
+polyPolyProfLmap p pcm =
+  TypeLmapFromDimap (PolyPolyProf p) (polyPolyProfDimap p pcm)
+
+public export
+polyPolyProfRmap :
+  (p : PolyPolyFunc) -> PolyPolyFuncContramap p -> TypeRmapSig (PolyPolyProf p)
+polyPolyProfRmap p pcm =
+  TypeRmapFromDimap (PolyPolyProf p) (polyPolyProfDimap p pcm)
+
+-- Suppose we have a polymorphic algebra for a `PolyPolyFunc`.  Then
+-- for each object we would have a morphism from its curried functor's
+-- fixed point to the carrier of the algebra.
+public export
+PolyPolyAlgProf : PolyPolyFunc -> Type -> Type -> Type -> Type
+PolyPolyAlgProf p x c d =
+  (i : pfPos (p x)) -> AlgebraProf (CovarHomFunc (pfDir {p=(p x)} i)) c d
+
+public export
+ppapDimap : {p : PolyPolyFunc} ->
+  (x : Type) -> TypeDimapSig (PolyPolyAlgProf p x)
+ppapDimap {p} x s t a b mas mtb alg i d = mtb $ alg i (mas . d)
+
+public export
+PolyPolyAlg : PolyPolyFunc -> Type -> Type
+PolyPolyAlg p c = (x : Type) -> PFAlg (p x) c
+
+public export
+PolyPolyAlgFormula : (p : PolyPolyFunc) -> (c : Type) ->
+  PolyPolyAlg p c = ((x : Type) -> PolyPolyAlgProf p x c c)
+PolyPolyAlgFormula p c = Refl
+
+public export
+partial
+data PolyPolyFuncFix' : PolyPolyFunc -> Type where
+  InPPF : {p : PolyPolyFunc} ->
+    PolyPolyProf p (PolyPolyFuncFix' p) (PolyPolyFuncFix' p) ->
+    PolyPolyFuncFix' p
+
+mutual
+  public export
+  partial
+  polyPolyFuncCata : (p : PolyPolyFunc) -> (pcm : PolyPolyFuncContramap p) ->
+    (a, b : Type) ->
+    (InterpPolyFunc (p b) a -> a) -> (b -> InterpPolyFunc (p a) b) ->
+    PolyPolyFuncFix' p -> a
+  polyPolyFuncCata p pcm a b alg coalg (InPPF el) =
+    alg $
+      polyPolyProfDimap p pcm (PolyPolyFuncFix' p) (PolyPolyFuncFix' p) b a
+      (polyPolyFuncCocata p pcm a b alg coalg)
+      (polyPolyFuncCata p pcm a b alg coalg)
+      el
+
+  -- A finite analogue of anamorphism.
+  -- Perhaps also a dual-variant analogue of para-recursive coalgebras
+  -- as used in finite course-of-values recursion.
+  public export
+  partial
+  polyPolyFuncCocata : (p : PolyPolyFunc) -> (pcm : PolyPolyFuncContramap p) ->
+    (a, b : Type) ->
+    (InterpPolyFunc (p b) a -> a) -> (b -> InterpPolyFunc (p a) b) ->
+    b -> PolyPolyFuncFix' p
+  polyPolyFuncCocata p pcm a b alg coalg eb =
+    InPPF $
+      polyPolyProfDimap p pcm a b (PolyPolyFuncFix' p) (PolyPolyFuncFix' p)
+      (polyPolyFuncCata p pcm a b alg coalg)
+      (polyPolyFuncCocata p pcm a b alg coalg)
+      (coalg eb)
+
+-------------------------------------------------
+---- Polynomial dialgebras as `PolyPolyFunc` ----
+-------------------------------------------------
+
+-- A polynomial dialgebra is `(x, y) |-> p(x) -> q(y)` for some
+-- polynomial functors `p` and `q`.
+public export
+PolyDialgToParam : PolyFunc -> PolyFunc -> PolyPolyFunc
+PolyDialgToParam p q a = pfCompositionArena (PFHomArena $ InterpPolyFunc p a) q
+
+public export
+polyDialgPolyContramap : (p, q : PolyFunc) ->
+  PolyPolyFuncContramap (PolyDialgToParam p q)
+polyDialgPolyContramap p q a b mba =
+  (dpMapSnd (\_ => (|>) (InterpPFMap p mba)) **
+   \pdi, pdd => (InterpPFMap p mba (fst pdd) ** snd pdd))
+
+public export
+PolyDialgParamFromDialg : (p, q : PolyFunc) -> (x, y : Type) ->
+  (InterpPolyFunc p x -> InterpPolyFunc q y) ->
+  PolyPolyProf (PolyDialgToParam p q) x y
+PolyDialgParamFromDialg p q x y dialg =
+  ((() ** DPair.fst . dialg) ** \elp => snd (dialg $ fst elp) (snd elp))
+
+public export
+PolyDialgParamToDialg : (p, q : PolyFunc) -> (x, y : Type) ->
+  PolyPolyProf (PolyDialgToParam p q) x y ->
+  (InterpPolyFunc p x -> InterpPolyFunc q y)
+PolyDialgParamToDialg p q x y dialg elp =
+  (snd (fst dialg) elp ** snd dialg . MkDPair elp)
+
+-- A multidialgebra is a product of dialgebras.
+public export
+PolyMultiDialgToParam : {n : Type} ->
+  (n -> PolyFunc) -> (n -> PolyFunc) -> PolyPolyFunc
+PolyMultiDialgToParam {n} ps qs a =
+  pfSetProductArena {a=n} $ \idx => PolyDialgToParam (ps idx) (qs idx) a
+
+public export
+polyMultiDialgPolyContramap : {n : Type} -> (ps, qs : n -> PolyFunc) ->
+  PolyPolyFuncContramap (PolyMultiDialgToParam {n} ps qs)
+polyMultiDialgPolyContramap {n} ps qs a b mba =
+  (\pm, en =>
+    fst (polyDialgPolyContramap (ps en) (qs en) a b mba) (pm en) **
+   \pm, ndm =>
+    dpMapSnd
+      (\en => snd (polyDialgPolyContramap (ps en) (qs en) a b mba) (pm en))
+      ndm)
+
+public export
+PolyMultiDialgParamFromDialg : {n : Type} -> (ps, qs : n -> PolyFunc) ->
+  (x, y : Type) ->
+  ((en : n) -> InterpPolyFunc (ps en) x -> InterpPolyFunc (qs en) y) ->
+  PolyPolyProf (PolyMultiDialgToParam {n} ps qs) x y
+PolyMultiDialgParamFromDialg {n} ps qs x y dialg =
+  (\en => (() ** \pm => fst $ dialg en pm) **
+   \ndm => snd (dialg (fst ndm) (fst $ snd ndm)) (snd $ snd ndm))
+
+public export
+PolyMultiDialgParamToDialg : {n : Type} -> (ps, qs : n -> PolyFunc) ->
+  (x, y : Type) ->
+  PolyPolyProf (PolyMultiDialgToParam {n} ps qs) x y ->
+  ((en : n) -> InterpPolyFunc (ps en) x -> InterpPolyFunc (qs en) y)
+PolyMultiDialgParamToDialg {n} ps qs x y dialg en elp =
+  (snd (fst dialg en) elp ** \qd => snd dialg (en ** elp ** qd))
+
+-- A polydialgebra is a coproduct of multidialgebras (hence a coproduct
+-- of products of (polynomial-functor) dialgebras).
+public export
+PolyPolyDialgToParam : {pos : Type} -> {n : pos -> Type} ->
+  ((ep : pos) -> n ep -> PolyFunc) -> ((ep : pos) -> n ep -> PolyFunc) ->
+  PolyPolyFunc
+PolyPolyDialgToParam {pos} {n} ps qs a =
+  pfSetCoproductArena {a=pos} $ \ep => PolyMultiDialgToParam (ps ep) (qs ep) a
+
+public export
+polyPolyDialgPolyContramap : {pos : Type} -> {n : pos -> Type} ->
+  (ps, qs : (ep : pos) -> n ep -> PolyFunc) ->
+  PolyPolyFuncContramap (PolyPolyDialgToParam {pos} {n} ps qs)
+polyPolyDialgPolyContramap {pos} {n} ps qs a b mba =
+  (dpMapSnd
+    (\ep =>
+      fst (polyMultiDialgPolyContramap {n=(n ep)} (ps ep) (qs ep) a b mba)) **
+   \ep =>
+    snd
+      (polyMultiDialgPolyContramap {n=(n $ fst ep)} (ps $ fst ep) (qs $ fst ep)
+       a b mba)
+      (snd ep))
+
+public export
+PolyPolyDialgParamFromDialg : {pos : Type} -> {n : pos -> Type} ->
+  (ps, qs : (ep : pos) -> n ep -> PolyFunc) ->
+  (x, y : Type) ->
+  (ep : pos **
+   (en : n ep) -> InterpPolyFunc (ps ep en) x -> InterpPolyFunc (qs ep en) y) ->
+  PolyPolyProf (PolyPolyDialgToParam {pos} {n} ps qs) x y
+PolyPolyDialgParamFromDialg {n} ps qs x y dialg =
+  let
+    md =
+      PolyMultiDialgParamFromDialg
+        {n=(n $ fst dialg)}
+        (ps $ fst dialg)
+        (qs $ fst dialg)
+        x
+        y
+        (snd dialg)
+  in
+  ((fst dialg ** fst md) ** snd md)
+
+public export
+PolyPolyDialgParamToDialg : {pos : Type} -> {n : pos -> Type} ->
+  (ps, qs : (ep : pos) -> n ep -> PolyFunc) ->
+  (x, y : Type) ->
+  PolyPolyProf (PolyPolyDialgToParam {pos} {n} ps qs) x y ->
+  (ep : pos **
+   (en : n ep) -> InterpPolyFunc (ps ep en) x -> InterpPolyFunc (qs ep en) y)
+PolyPolyDialgParamToDialg {n} ps qs x y md =
+  (fst (fst md) **
+   PolyMultiDialgParamToDialg
+    {n=(n $ fst $ fst md)}
+    (ps $ fst $ fst md)
+    (qs $ fst $ fst md)
+    x
+    y
+    (snd (fst md) ** snd md))
+
+public export
+PolyPolyDialgNT :
+  {pos : Type} -> {pos' : Type} -> {n : pos -> Type} -> {n' : pos' -> Type} ->
+  (ps, qs : (ep : pos) -> n ep -> PolyFunc) ->
+  (ps', qs' : (ep' : pos') -> n' ep' -> PolyFunc) ->
+  Type
+PolyPolyDialgNT {pos} {pos'} {n} {n'} ps qs ps' qs' =
+  (onidx : pos -> pos' **
+   onpidx : (idx : pos) -> (en' : n' (onidx idx)) ->
+    pfPos (ps' (onidx idx) en') -> n idx **
+   onppos : (idx : pos) -> (en' : n' (onidx idx)) ->
+    (pi' : pfPos (ps' (onidx idx) en')) ->
+    pfPos (ps idx (onpidx idx en' pi')) **
+   onqpos : (idx : pos) -> (en' : n' (onidx idx)) ->
+    (pi' : pfPos (ps' (onidx idx) en')) ->
+    pfPos (qs idx (onpidx idx en' pi')) -> pfPos (qs' (onidx idx) en') **
+   onpdir : (idx : pos) -> (en' : n' (onidx idx)) ->
+    (pi' : pfPos (ps' (onidx idx) en')) ->
+    pfDir {p=(ps idx (onpidx idx en' pi'))} (onppos idx en' pi') ->
+    pfDir {p=(ps' (onidx idx) en')} pi' **
+   (idx : pos) -> (en' : n' (onidx idx)) ->
+    (pi' : pfPos (ps' (onidx idx) en')) ->
+    (qi : pfPos (qs idx (onpidx idx en' pi'))) ->
+    pfDir {p=(qs' (onidx idx) en')} (onqpos idx en' pi' qi) ->
+    pfDir {p=(qs idx (onpidx idx en' pi'))} qi)
+
+public export
+InterpPolyPolyDialgNT :
+  {pos : Type} -> {pos' : Type} -> {n : pos -> Type} -> {n' : pos' -> Type} ->
+  {ps, qs : (ep : pos) -> n ep -> PolyFunc} ->
+  {ps', qs' : (ep' : pos') -> n' ep' -> PolyFunc} ->
+  PolyPolyDialgNT {pos} {pos'} {n} {n'} ps qs ps' qs' ->
+  TypeProfNT
+    (PolyPolyProf $ PolyPolyDialgToParam {pos} {n} ps qs)
+    (PolyPolyProf $ PolyPolyDialgToParam {pos=pos'} {n=n'} ps' qs')
+InterpPolyPolyDialgNT {pos} {pos'} {n} {n'} {ps} {qs} {ps'} {qs'}
+  (onidx ** onpidx ** onppos ** onqpos ** onpdir ** onqdir) x y
+  ((idx ** pidm) ** qydm) =
+    ((onidx idx **
+      \en' =>
+        (() ** \(pi' ** pdmx') =>
+          onqpos idx en' pi' $
+            snd (pidm $ onpidx idx en' pi')
+              (onppos idx en' pi' ** pdmx' . onpdir idx en' pi'))) **
+     \(en' ** (pi' ** pdmx') ** qd') =>
+      qydm
+        (onpidx idx en' pi' **
+         (onppos idx en' pi' ** pdmx' . onpdir idx en' pi') **
+         onqdir idx en' pi'
+          (snd (pidm (onpidx idx en' pi'))
+            (onppos idx en' pi' ** pdmx' . onpdir idx en' pi'))
+          qd'))
+
+-------------------------------
+-------------------------------
+---- Polynomial interfaces ----
+-------------------------------
+-------------------------------
+
+-- The free monad of a coproduct of polynomial functors implements each of the
+-- interfaces induced by the two functors.
+
+public export
+PolyCoprodFreeAlgFl : (p, q : PolyFunc) -> (a : Type) ->
+  PolyIFace p (InterpPolyFuncFreeM (pfCoproductArena p q) a)
+PolyCoprodFreeAlgFl (ppos ** pdir) (qpos ** qdir) a (i ** d) =
+  (InPFM (PFCom $ Left i) (fst . d) ** \(di ** dd) => snd (d di) dd)
+
+public export
+PolyCoprodFreeAlgFr : (p, q : PolyFunc) -> (a : Type) ->
+  PolyIFace q (InterpPolyFuncFreeM (pfCoproductArena p q) a)
+PolyCoprodFreeAlgFr (ppos ** pdir) (qpos ** qdir) a (i ** d) =
+  (InPFM (PFCom $ Right i) (fst . d) ** \(di ** dd) => snd (d di) dd)
 
 ----------------------------------------------
 ----------------------------------------------
@@ -1975,11 +4094,11 @@ ComonoidDupOnDirPosId {p=(pos ** dir)}
   -}
   ?ComonoidDupOnDirPosId_hole
 
------------------------------------------------------------
------------------------------------------------------------
---- Polynomial commands as categories (and vice versa) ----
------------------------------------------------------------
------------------------------------------------------------
+------------------------------------------------------------
+------------------------------------------------------------
+---- Polynomial comonads as categories (and vice versa) ----
+------------------------------------------------------------
+------------------------------------------------------------
 
 public export
 CatToPolyPos : CatSig -> Type
@@ -1987,7 +4106,7 @@ CatToPolyPos (MkCatSig o m eq i comp) = o
 
 public export
 CatToPolyDir : (c : CatSig) -> CatToPolyPos c -> Type
-CatToPolyDir (MkCatSig o m eq i comp) a = (b : o ** m a b)
+CatToPolyDir (MkCatSig o m eq i comp) = Sigma {a=o} . m
 
 public export
 CatToPoly : CatSig -> PolyFunc
@@ -2046,7 +4165,7 @@ ComonoidToCatId {p=(pos ** dir)}
     Element0 (eOnDir a ()) (ComonoidDupOnDirPosId c holds a)
 
 public export
-ComonoidToCatComp : {p : PolyFunc} ->
+0 ComonoidToCatComp : {p : PolyFunc} ->
   (com : PFComonoid p) -> (holds : PFComonoidCorrect p com) ->
   {a, b, c : ComonoidToCatObj com} ->
   ComonoidToCatMorph com holds b c ->
@@ -2063,7 +4182,7 @@ ComonoidToCatComp {p=(pos ** dir)}
       (trans (?ComonoidToCatComp_hole_codomain_correct) gcod)
 
 public export
-ComonoidToCat : {p : PolyFunc} ->
+0 ComonoidToCat : {p : PolyFunc} ->
   (c : PFComonoid p) -> PFComonoidCorrect p c -> CatSig
 ComonoidToCat c holds =
   MkCatSig
@@ -2074,9 +4193,54 @@ ComonoidToCat c holds =
     (ComonoidToCatComp c holds)
 
 public export
-ComonadToCat : (com : PFComonad) ->
+0 ComonadToCat : (com : PFComonad) ->
   PFComonoidCorrect (fst com) (snd com) -> CatSig
 ComonadToCat (p ** c) holds = ComonoidToCat {p} c holds
+
+----------------------------------------------------
+----------------------------------------------------
+---- Density comonad (specifically) as category ----
+----------------------------------------------------
+----------------------------------------------------
+
+public export
+DensityToCatObj : PolyFunc -> Type
+DensityToCatObj p = pfPos (PolyDensityComonad p)
+
+public export
+DensityToCatEmanate : (p : PolyFunc) -> DensityToCatObj p -> Type
+DensityToCatEmanate p = pfDir {p=(PolyDensityComonad p)}
+
+public export
+DensityToCatCodom : (p : PolyFunc) -> (a : DensityToCatObj p) ->
+  DensityToCatEmanate p a -> DensityToCatObj p
+DensityToCatCodom (pos ** dir) i (j ** d) = j
+
+public export
+DensityToCatMorph : (p : PolyFunc) ->
+  DensityToCatObj p -> DensityToCatObj p -> Type
+DensityToCatMorph (pos ** dir) i j = dir j -> dir i
+
+public export
+DensityToCatId : (p : PolyFunc) ->
+  (a : DensityToCatObj p) -> DensityToCatMorph p a a
+DensityToCatId (pos ** dir) i = id {a=(dir i)}
+
+public export
+DensityToCatComp : (p : PolyFunc) ->
+  {a, b, c : DensityToCatObj p} ->
+  DensityToCatMorph p b c -> DensityToCatMorph p a b -> DensityToCatMorph p a c
+DensityToCatComp (pos ** dir) {a} {b} {c} = (|>)
+
+public export
+DensityToCat : PolyFunc -> CatSig
+DensityToCat p@(pos ** dir) =
+  MkCatSig
+    (DensityToCatObj p)
+    (DensityToCatMorph p)
+    (\a, b => ExtEq)
+    (DensityToCatId p)
+    (DensityToCatComp p)
 
 ------------------------------------
 ------------------------------------
@@ -2108,8 +4272,8 @@ PFReaderJoinOnPos env (() ** _) = ()
 public export
 PFReaderJoinOnDir : (env : Type) -> (i : pfHomComposePos env env) ->
   PFHomDir env (PFReaderJoinOnPos env i) -> pfHomComposeDir env env i
-PFReaderJoinOnDir env (() ** i) d with (i d) proof ideq
-  PFReaderJoinOnDir env (() ** i) d | () = (d ** rewrite ideq in d)
+PFReaderJoinOnDir env (() ** i) d with (i d)
+  PFReaderJoinOnDir env (() ** i) d | () = (d ** d)
 
 public export
 PFReaderJoin : (env : Type) ->
@@ -2350,7 +4514,7 @@ pfFreeToComposeN (pos ** dir) (S n) =
     ret
 
 public export
-pfFreeFromComposeN : (p : PolyFunc) -> (n : Nat) ->
+0 pfFreeFromComposeN : (p : PolyFunc) -> (n : Nat) ->
   PolyNatTrans
     (pfCompositionPowerArenaS (PolyFuncFreeM p) n)
     (PolyFuncFreeM p)
@@ -2374,13 +4538,13 @@ pfFreeFromComposeN (pos ** dir) (S n) =
         {q=(PolyFuncFreeM (pos ** dir))}
         {r=(pfCompositionPowerArena (PolyFuncFreeM (pos ** dir)) n)}
         {s=(pfCompositionPowerArenaS (PolyFuncFreeM (pos ** dir)) n)}
-        ?from_compose_sS2S_hole
+        from_compose_sS2S_hole
       -}
   in
   ret
 
 public export
-pfFreePolyReturnN : (p : PolyFunc) -> (n : Nat) ->
+0 pfFreePolyReturnN : (p : PolyFunc) -> (n : Nat) ->
   PolyNatTrans
     (PolyFuncFreeM p)
     (PolyFuncFreeM (pfCompositionPowerArenaS p n))
@@ -2388,7 +4552,7 @@ pfFreePolyReturnN p Z = pntId $ PolyFuncFreeM p
 pfFreePolyReturnN p (S n) = ?pfFreePolyReturnN_hole_1
 
 public export
-pfFreePolyJoinN : (p : PolyFunc) -> (n : Nat) ->
+0 pfFreePolyJoinN : (p : PolyFunc) -> (n : Nat) ->
   PolyNatTrans
     (PolyFuncFreeM (pfCompositionPowerArenaS p n))
     (PolyFuncFreeM p)
@@ -2401,7 +4565,7 @@ pfNatTransMN p q m n =
   PolyNatTrans (pfCompositionPowerArenaS p m) (pfCompositionPowerArenaS q n)
 
 public export
-pfFreePolyCataN : {p, q : PolyFunc} -> {n : Nat} ->
+0 pfFreePolyCataN : {p, q : PolyFunc} -> {n : Nat} ->
   pfNatTransMN p q n n ->
   PolyNatTrans (PolyFuncFreeM p) (PolyFuncFreeM q)
 pfFreePolyCataN {p} {q} {n} alpha =
@@ -2418,7 +4582,7 @@ pfFreePolyCataN {p} {q} {n} alpha =
       (pfFreePolyReturnN p n))
 
 public export
-pfPolyCataN : {p, q : PolyFunc} -> {n : Nat} ->
+0 pfPolyCataN : {p, q : PolyFunc} -> {n : Nat} ->
   PolyNatTrans
     (pfCompositionPowerArenaS p n)
     (pfCompositionPowerArenaS q n) ->
@@ -2432,7 +4596,7 @@ pfPolyCataN {p} {q} {n} alpha =
   pfFreeMVoidToMu {p=q} . alphaNint . pfMuToFreeMVoid {p}
 
 public export
-pfFreeContCata : {p, q : PolyFunc} ->
+0 pfFreeContCata : {p, q : PolyFunc} ->
   PolyContNT p q ->
   PolyContNT (PolyFuncFreeM p) (PolyFuncFreeM q)
 pfFreeContCata {p=p@(ppos ** pdir)} {q=q@(qpos ** qdir)} cont x =
@@ -2475,15 +4639,15 @@ pfCofreeIdF = InterpPolyFunc pfCofreeId
 -------------------------
 
 public export
-PFDensityComonoid : (p : PolyFunc) -> PFComonoid (PolyDensityComonad p)
+0 PFDensityComonoid : (p : PolyFunc) -> PFComonoid (PolyDensityComonad p)
 PFDensityComonoid p = ?PFDensityComonoid_hole
 
 public export
-PFDensityComonad : PolyFunc -> PFComonad
+0 PFDensityComonad : PolyFunc -> PFComonad
 PFDensityComonad p = (PolyDensityComonad p ** PFDensityComonoid p)
 
 public export
-PFDensityComonadCorrect : (p : PolyFunc) ->
+0 PFDensityComonadCorrect : (p : PolyFunc) ->
   PFComonoidCorrect (PolyDensityComonad p) (PFDensityComonoid p)
 PFDensityComonadCorrect p = ?PFDensityComonadCorrect_hole
 
@@ -2504,11 +4668,11 @@ pfToCat (ppos ** pdir) =
     (\f, g => g . f)
 
 public export
-densityToCat : PolyFunc -> CatSig
+0 densityToCat : PolyFunc -> CatSig
 densityToCat p = ComonadToCat (PFDensityComonad p) (PFDensityComonadCorrect p)
 
 public export
-pfDensityToCatConsistent : (p : PolyFunc) -> FunExt ->
+0 pfDensityToCatConsistent : (p : PolyFunc) -> FunExt ->
   pfToCat p = densityToCat p
 pfDensityToCatConsistent (ppos ** pdir) funext with
   (PolyDensityComonad (ppos ** pdir)) proof prf
@@ -2525,35 +4689,51 @@ pfDensityToCatConsistent (ppos ** pdir) funext with
 -----------------------------------
 -----------------------------------
 
+--------------
+---- Left ----
+--------------
+
 public export
 InterpPolyLKan : (p, q : PolyFunc) -> (a : Type) ->
-  InterpPolyFunc (PolyLKanExt p q) a ->
-  LKanExt (InterpPolyFunc p) (InterpPolyFunc q) a
+  InterpPolyFunc (PolyLKanExt q p) a ->
+  LKanExt (InterpPolyFunc q) (InterpPolyFunc p) a
 InterpPolyLKan (ppos ** pdir) (qpos ** qdir) a (i ** f) =
   (pdir i ** (f, (i ** id)))
 
 public export
-PolyRKanPoly : (p, q : PolyFunc) -> (a : Type) ->
-  InterpPolyFunc (PolyRKanExt p q) a ->
-  PolyNatTrans (pfCompositionArena (PFHomArena a) q) p
-PolyRKanPoly (ppos ** pdir) (qpos ** qdir) a ((qi, (onPos ** onDir)) ** pd) =
-  (\(u ** di) => case u of () => onPos qi **
-   \(u ** di), pdi => case u of
-    () =>
-      (pd (onDir qi pdi) **
-       onDir (di (pd (onDir qi pdi))) ?PolyRKanPoly_hole_ondir))
+InterpLKanPoly : (p, q : PolyFunc) -> (a : Type) ->
+  LKanExt (InterpPolyFunc q) (InterpPolyFunc p) a ->
+  InterpPolyFunc (PolyLKanExt q p) a
+InterpLKanPoly (ppos ** pdir) (qpos ** qdir) a (b ** (f, (i ** d))) =
+  (i ** \(qi ** qpd) => f (qi ** d . qpd))
+
+---------------
+---- Right ----
+---------------
 
 public export
-InterpPolyRKan : (p, q : PolyFunc) -> (a : Type) ->
-  InterpPolyFunc (PolyRKanExt p q) a ->
-  RKanExt (InterpPolyFunc p) (InterpPolyFunc q) a
-InterpPolyRKan p q a rk b qf =
-  InterpPolyNT
-    {p=(pfCompositionArena (PFHomArena a) q)}
-    {q=p}
-    (PolyRKanPoly p q a rk)
-    b
-    ((() ** DPair.fst . qf) ** \(x ** qd) => DPair.snd (qf x) qd)
+InterpIPolyRKan : (j, g : PolyFunc) -> (a : Type) ->
+  InterpPolyRKanExt j g a ->
+  RKanExt (InterpPolyFunc j) (InterpPolyFunc g) a
+InterpIPolyRKan j g a rk x f =
+  InterpPolyNT {p=(pfCompositionArena (PFHomArena a) j)} {q=g} rk x
+    ((() ** DPair.fst . f) ** \(ea ** jd) => snd (f ea) jd)
+
+public export
+InterpPolyRKan : (j, g : PolyFunc) -> (a : Type) ->
+  InterpPolyFunc (PolyRKanExt j g) a ->
+  InterpPolyRKanExt j g a
+InterpPolyRKan (jpos ** jdir) (gpos ** gdir) a ((c ** (onpos ** ondir)) ** f) =
+  (\(() ** ajp) =>
+    onpos (() ** ajp . f) **
+   \(() ** ajp), gd =>
+    let (ea ** jd) = ondir (() ** ajp . f) gd in (f ea ** jd))
+
+public export
+InterpRKanPoly : (j, g : PolyFunc) -> (a : Type) ->
+  InterpPolyRKanExt j g a ->
+  InterpPolyFunc (PolyRKanExt j g) a
+InterpRKanPoly (jpos ** jdir) (gpos ** gdir) a alpha = ((a ** alpha) ** id)
 
 ---------------------------------------
 ---------------------------------------
@@ -2654,6 +4834,12 @@ SPFToPrimes : {parambase, posbase : Type} ->
   SlicePolyFunc'' (SliceObj parambase) (Sigma (fst spf))
 SPFToPrimes (posdep ** dirdep ** assign) =
   (dirdep ** \ipos, paramslice => paramslice $ assign ipos)
+
+public export
+SPFToPrimes' : {dom, cod : Type} ->
+  SlicePolyFunc dom cod -> SlicePolyFunc'' dom cod
+SPFToPrimes' (pos ** dir ** assign) =
+  (pos ** \p, eld => Subset0 (dir p) (\d => Equal (assign (p ** d)) eld))
 
 -- Yet another equivalent way of specifying a SlicePolyFunc.
 public export
@@ -2812,6 +4998,73 @@ InterpSPFMap {a} {b} spf {sa} {sa'} =
   PredDepPolyFMap
     {parambase=a} {posbase=b} (spfPos spf) (spfDir spf) (spfAssign spf) sa sa'
 
+-- Yet another formulation of dependent polynomial functors.
+public export
+SliceGenPF : Type -> Type -> Type
+SliceGenPF dom cod = (pos : SliceObj cod ** SliceObj (dom, Sigma pos))
+
+public export
+SGPFtoSPF : {dom, cod : Type} -> SliceGenPF dom cod -> SlicePolyFunc dom cod
+SGPFtoSPF {dom} {cod} (pos ** dir) =
+  (pos ** Sigma {a=dom} . flip (curry dir) ** \i => fst $ snd $ i)
+
+public export
+SPFtoSGPF : {dom, cod : Type} -> SlicePolyFunc dom cod -> SliceGenPF dom cod
+SPFtoSGPF {dom} {cod} (pos ** dir ** assign) =
+  (pos ** \(i, j) => Subset0 (dir j) $ \d => Equal (assign (j ** d)) i)
+
+------------------------------------------------------------------------
+------------------------------------------------------------------------
+---- Generalized-polynomial-functor-style slice polynomial functors ----
+------------------------------------------------------------------------
+------------------------------------------------------------------------
+
+-- `SlicePolyFunc''`, but with field names.
+public export
+record SliceArena (dom, cod : Type) where
+  constructor SlAr
+  SLApos : SliceObj cod
+  SLAdir : Sigma {a=cod} SLApos -> SliceObj dom
+
+public export
+SliceEndoArena : Type -> Type
+SliceEndoArena base = SliceArena base base
+
+public export
+SLAPomap : {dom : Type} -> {0 cod : Type} ->
+  SliceArena dom cod -> SliceFunctor dom cod
+SLAPomap {dom} {cod} ar sl j =
+  (p : SLApos ar j ** SliceMorphism {a=dom} (SLAdir ar (j ** p)) sl)
+
+public export
+SLAPfmap : {dom : Type} -> {0 cod : Type} ->
+  (ar : SliceArena dom cod) ->
+  {a, b : SliceObj dom} ->
+  SliceMorphism {a=dom} a b ->
+  SliceMorphism {a=cod} (SLAPomap {dom} {cod} ar a) (SLAPomap {dom} {cod} ar b)
+SLAPfmap {dom} {cod} ar {a} {b} m elcod elmap =
+  (fst elmap ** sliceComp m $ snd elmap)
+
+public export
+SlArToPrimes : {0 dom, cod : Type} ->
+  SliceArena dom cod -> SlicePolyFunc'' dom cod
+SlArToPrimes {dom} {cod} ar = (SLApos ar ** SLAdir ar)
+
+public export
+SlArFromPrimes : {0 dom, cod : Type} ->
+  SlicePolyFunc'' dom cod -> SliceArena dom cod
+SlArFromPrimes {dom} {cod} spf = SlAr (fst spf) (snd spf)
+
+public export
+SlArToSPF : {dom, cod : Type} ->
+  SliceArena dom cod -> SlicePolyFunc dom cod
+SlArToSPF = SPFFromPrimes . SlArToPrimes
+
+public export
+SlArFromSPF : {dom, cod : Type} ->
+  SlicePolyFunc dom cod -> SliceArena dom cod
+SlArFromSPF = SlArFromPrimes . SPFToPrimes'
+
 -----------------------------------------------------
 -----------------------------------------------------
 ---- Parameterized dependent polynomial functors ----
@@ -2937,6 +5190,10 @@ public export
 SPFPolyId : (y : Type) -> SlicePolyFunc y y
 SPFPolyId y = (const Unit ** const Unit ** fst . fst)
 
+public export
+SPFConst : {y : Type} -> SliceObj y -> SlicePolyFunc y y
+SPFConst {y} sl = (sl ** const Void ** \(_ ** v) => void v)
+
 -- A (covariant) hom-functor in `Poly`, which may also be viewed as the same
 -- hom-functor in any slice category (by precomposition).
 public export
@@ -2985,31 +5242,29 @@ public export
 SPFSigma : (a : Type) -> SlicePolyFunc a ()
 SPFSigma a = (const a ** const Unit ** DPair.snd . DPair.fst)
 
--- Precomposition and postcomposition by base change give `SlicePolyFunc`
--- itself a profunctor structure (`dimap`).  (Note that, written as it is
--- here, it is covariant in its first argument and contravariant in the
--- second -- the reverse of the standard definition of profunctor.)
+-- Precomposition and postcomposition by base change give `flip SlicePolyFunc`
+-- itself a profunctor structure (`dimap`).
 public export
 SliceFuncDimap : {0 w, x, y, z : Type} ->
-  SlicePolyFunc w x -> (w -> y) -> (z -> x) -> SlicePolyFunc y z
-SliceFuncDimap {w} {x} {y} {z} (wxp ** wxd ** wxa) fwy fzx =
+  flip SlicePolyFunc x w -> (z -> x) -> (w -> y) -> flip SlicePolyFunc z y
+SliceFuncDimap {w} {x} {y} {z} (wxp ** wxd ** wxa) fzx fwy =
   (wxp . fzx **
    \izwxi => wxd (fzx (fst izwxi) ** snd izwxi) **
    \dd => fwy (wxa ((fzx (fst (fst dd)) ** snd (fst dd)) ** snd dd)))
 
 public export
-SliceFuncLmap : {0 w, x, y : Type} ->
-  SlicePolyFunc w x -> (w -> y) -> SlicePolyFunc y x
-SliceFuncLmap spf = flip (SliceFuncDimap spf) id
-
-public export
-SliceFuncRmap : {0 w, x, z : Type} ->
-  SlicePolyFunc w x -> (z -> x) -> SlicePolyFunc w z
+SliceFuncRmap : {0 w, x, y : Type} ->
+  flip SlicePolyFunc x w -> (w -> y) -> flip SlicePolyFunc x y
 SliceFuncRmap spf = SliceFuncDimap spf id
 
 public export
+SliceFuncLmap : {0 w, x, z : Type} ->
+  flip SlicePolyFunc x w -> (z -> x) -> flip SlicePolyFunc z w
+SliceFuncLmap spf = flip (SliceFuncDimap spf) id
+
+public export
 spfWeaken : {0 x, y : Type} -> SlicePolyFunc x Unit -> SlicePolyFunc x y
-spfWeaken {x} {y} spf = SliceFuncRmap spf (const ())
+spfWeaken {x} {y} spf = SliceFuncLmap spf (const ())
 
 --------------------------------------------------------------
 ---- As morphisms in the two-category of slice categories ----
@@ -3058,7 +5313,7 @@ SPFSliceInitial x =
 -- the slice category `Type/x`.
 public export
 SPFSliceTerminal : (x : Type) -> SlicePolyEndoFunc x
-SPFSliceTerminal x = (const Unit ** const Void ** \x => void $ snd x)
+SPFSliceTerminal x = (const Unit ** const Void ** \d => void $ snd d)
 
 public export
 SPFSliceCoproduct : {x, y : Type} ->
@@ -3081,120 +5336,6 @@ SPFSliceProduct {x} (pd ** dd ** asn) (pd' ** dd' ** asn') =
    \((i ** (d, d')) ** (dd, dd')) =>
     (asn ((i ** d) ** dd), asn' ((i ** d') ** dd')))
 
--------------------------------------------------------------
--------------------------------------------------------------
----- Universal objects and morphisms in slice categories ----
--------------------------------------------------------------
--------------------------------------------------------------
-
----------------------------------
----- Within a slice category ----
----------------------------------
-
-public export
-SliceObjInitial : (a : Type) -> SliceObj a
-SliceObjInitial a = const Void
-
-public export
-sliceFromInitial : (sl : SliceObj a) -> SliceMorphism {a} (SliceObjInitial a) sl
-sliceFromInitial {a} sl = \_, v => void v
-
-public export
-SliceObjTerminal : (a : Type) -> SliceObj a
-SliceObjTerminal a = const Unit
-
-public export
-sliceToTerminal : (sl : SliceObj a) -> SliceMorphism {a} sl (SliceObjTerminal a)
-sliceToTerminal {a} sl = \_, _ => ()
-
-public export
-SliceObjCoproduct : SliceObj a -> SliceObj a -> SliceObj a
-SliceObjCoproduct sa sa' ea = Either (sa ea) (sa' ea)
-
-public export
-sliceObjInjL : (sa, sa' : SliceObj a) ->
-  SliceMorphism {a} sa (SliceObjCoproduct sa sa')
-sliceObjInjL sa sa' ea sea = Left sea
-
-public export
-sliceObjInjR : (sa, sa' : SliceObj a) ->
-  SliceMorphism {a} sa' (SliceObjCoproduct sa sa')
-sliceObjInjR sa sa' ea sea = Right sea
-
-public export
-sliceObjCase : {sa, sa', sa'' : SliceObj a} ->
-  SliceMorphism {a} sa sa'' -> SliceMorphism {a} sa' sa'' ->
-  SliceMorphism {a} (SliceObjCoproduct sa sa') sa''
-sliceObjCase m m' ea (Left sea) = m ea sea
-sliceObjCase m m' ea (Right sea') = m' ea sea'
-
-public export
-SliceObjProduct : SliceObj a -> SliceObj a -> SliceObj a
-SliceObjProduct sa sa' ea = (sa ea, sa' ea)
-
-public export
-sliceObjProjL : (sa, sa' : SliceObj a) ->
-  SliceMorphism {a} (SliceObjProduct sa sa') sa
-sliceObjProjL sa sa' ea = fst
-
-public export
-sliceObjProjR : (sa, sa' : SliceObj a) ->
-  SliceMorphism {a} (SliceObjProduct sa sa') sa'
-sliceObjProjR sa sa' ea = snd
-
-public export
-sliceObjPair : {sa, sa', sa'' : SliceObj a} ->
-  SliceMorphism {a} sa sa' -> SliceMorphism {a} sa sa'' ->
-  SliceMorphism {a} sa (SliceObjProduct sa' sa'')
-sliceObjPair m m' ea sea = (m ea sea, m' ea sea)
-
-public export
-SliceObjHom : SliceObj a -> SliceObj a -> SliceObj a
-SliceObjHom sa sa' ea = sa ea -> sa' ea
-
-public export
-sliceObjEval : (sa, sa' : SliceObj a) ->
-  SliceMorphism {a} (SliceProduct (SliceObjHom sa sa') sa) sa'
-sliceObjEval sa sa' ea (f, sea) = f sea
-
-public export
-sliceObjCurry : {sa, sa', sa'' : SliceObj a} ->
-  SliceMorphism {a} (SliceObjProduct sa sa') sa'' ->
-  SliceMorphism {a} sa (SliceObjHom sa' sa'')
-sliceObjCurry f ea sea sea' = f ea (sea, sea')
-
-public export
-sliceObjId : (sl : SliceObj a) -> SliceMorphism {a} sl sl
-sliceObjId sl ea = id
-
--------------------------------------------------
----- In the two-category of slice categories ----
--------------------------------------------------
-
-public export
-SlicePolyCoprod : SliceObj a -> SliceObj b -> SliceObj (Either a b)
-SlicePolyCoprod sa sb (Left ea) = sa ea
-SlicePolyCoprod sa sb (Right eb) = sb eb
-
-public export
-SlicePolyProd : SliceObj a -> SliceObj b -> SliceObj (a, b)
-SlicePolyProd sa sb (ea, eb) = (sa ea, sb eb)
-
-public export
-sliceMorphCoproduct : {sa, sa' : SliceObj a} -> {sb, sb' : SliceObj b} ->
-  SliceMorphism {a} sa sa' -> SliceMorphism {a=b} sb sb' ->
-  SliceMorphism {a=(Either a b)}
-    (SlicePolyCoprod sa sb) (SlicePolyCoprod sa' sb')
-sliceMorphCoproduct ma mb (Left ea) sea = ma ea sea
-sliceMorphCoproduct ma mb (Right eb) seb = mb eb seb
-
-public export
-sliceMorphProduct : {sa, sa' : SliceObj a} -> {sb, sb' : SliceObj b} ->
-  SliceMorphism {a} sa sa' -> SliceMorphism {a=b} sb sb' ->
-  SliceMorphism {a=(a, b)}
-    (SlicePolyProd sa sb) (SlicePolyProd sa' sb')
-sliceMorphProduct ma mb (ea, eb) (sea, seb) = (ma ea sea, mb eb seb)
-
 ------------------------------------------------------------------------
 ------------------------------------------------------------------------
 ---- Direct interpretation of DepParamPolyFunc form of SliceFunctor ----
@@ -3216,22 +5357,6 @@ InterpDPPFMap : {a, b : Type} -> (dppf : DepParamPolyFunc a b) ->
   SliceMorphism (InterpDPPF dppf sa) (InterpDPPF dppf sa')
 InterpDPPFMap {a} {b} dppf {sa} {sa'} m eb (pos ** dir) =
   (pos ** \di => m (fst (snd dppf (eb ** pos))) (dir di))
-
-public export
-InterpDPPFDirich : {a, b : Type} ->
-  DepParamPolyFunc a b -> SliceFunctor a b
-InterpDPPFDirich {a} {b} dppf paramslice posfst =
-  (possnd : fst dppf posfst **
-   paramslice (fst (snd dppf (posfst ** possnd))) ->
-    snd (snd dppf (posfst ** possnd)))
-
-public export
-InterpDPPFDirichMap : {a, b : Type} -> (dppf : DepParamPolyFunc a b) ->
-  {sa, sa' : SliceObj a} ->
-  SliceMorphism sa sa' ->
-  SliceMorphism (InterpDPPFDirich dppf sa') (InterpDPPFDirich dppf sa)
-InterpDPPFDirichMap {a} {b} dppf {sa} {sa'} m eb (pos ** dir) =
-  (pos ** \di => dir $ m (fst (snd dppf (eb ** pos))) di)
 
 ------------------------------
 ---- Slices over PolyFunc ----
@@ -3314,6 +5439,14 @@ InterpSPNT : {w, z : Type} -> {f, g : SlicePolyFunc w z} ->
 InterpSPNT {w} {z} {f} {g} alpha slw posfi (posf ** dirsf) =
   (spntOnPos alpha posfi posf ** InterpSPNTDir alpha slw posfi posf dirsf)
 
+public export
+SPNatTrans'' : {w, z : Type} ->
+  SlicePolyFunc'' w z -> SlicePolyFunc'' w z -> Type
+SPNatTrans'' {w} {z} (fpos ** fdir) (gpos ** gdir) =
+  (onPos : SliceMorphism {a=z} fpos gpos **
+   (ez : z) -> (i : fpos ez) ->
+   SliceMorphism {a=w} (gdir (ez ** onPos ez i)) (fdir (ez ** i)))
+
 ------------------------------------------------------
 ------------------------------------------------------
 ---- Composition of dependent polynomial functors ----
@@ -3353,7 +5486,7 @@ spfDimapFromBaseChange : {0 w, x, y, z : Type} ->
   InterpSPFunc
     (spfCompose (SPFBaseChange g) (spfCompose spf (SPFBaseChange f))) sy ez ->
   InterpSPFunc
-    (SliceFuncDimap spf f g) sy ez
+    (SliceFuncDimap spf g f) sy ez
 spfDimapFromBaseChange (posdep ** dirdep ** assign) f g sy ez
   ((() ** d) ** di) with (d ()) proof prf
     spfDimapFromBaseChange (posdep ** dirdep ** assign) f g sy ez
@@ -3366,7 +5499,7 @@ spfDimapToBaseChange : {0 w, x, y, z : Type} ->
   (spf : SlicePolyFunc w x) -> (f : w -> y) -> (g : z -> x) ->
   (sy : SliceObj y) -> (ez : z) ->
   InterpSPFunc
-    (SliceFuncDimap spf f g) sy ez ->
+    (SliceFuncDimap spf g f) sy ez ->
   InterpSPFunc
     (spfCompose (SPFBaseChange g) (spfCompose spf (SPFBaseChange f))) sy ez
 spfDimapToBaseChange {w} {x} {y} {z} (posdep ** dirdep ** assign) f g sy ez
@@ -3384,7 +5517,7 @@ spfForgetParam (posdep ** dirdep ** assign) = (posdep ** dirdep ** const ())
 public export
 spfApplyPos : SlicePolyFunc x y -> y -> SlicePolyFunc x ()
 spfApplyPos (posdep ** dirdep ** assign) ey =
-  -- Equivalent to `SliceFuncDimap spf id (const ey)`.
+  -- Equivalent to `SliceFuncDimap spf (const ey) id`.
   (const (posdep ey) **
    \pd => dirdep (ey ** snd pd) **
    \dd => assign ((ey ** snd (fst dd)) ** snd dd))
@@ -3471,7 +5604,7 @@ public export
 SPFCell : {w, w', z, z' : Type} ->
   (w -> w') -> (z -> z') -> SlicePolyFunc w z -> SlicePolyFunc w' z' -> Type
 SPFCell {w} {w'} {z} {z'} f g spf spf' =
-  SPNatTrans (SliceFuncDimap spf f id) (SliceFuncDimap spf' id g)
+  SPNatTrans (SliceFuncRmap spf f) (SliceFuncLmap spf' g)
 
 ---------------------------------------------------------------------------
 ---------------------------------------------------------------------------
@@ -3497,6 +5630,72 @@ SPFToDepPolyF : {w, z : Type} -> SlicePolyFunc w z ->
 SPFToDepPolyF {w} {z} (posdep ** dirdep ** assign) =
   ((w, Sigma {a=(Sigma {a=z} posdep)} dirdep, Sigma {a=z} posdep, z) **
    (assign, DPair.fst, DPair.fst))
+
+-------------------------------------------------------
+-------------------------------------------------------
+---- Conversions between SlicePolyFunc and W-types ----
+-------------------------------------------------------
+-------------------------------------------------------
+
+public export
+WTFtoSPF : {parambase, posbase : Type} ->
+  WTypeFunc parambase posbase -> SlicePolyFunc parambase posbase
+WTFtoSPF {parambase} {posbase} (MkWTF pos dir assign dsl psl) =
+  (\i => PreImage {a=pos} {b=posbase} psl i **
+   \x => PreImage {a=dir} {b=pos} dsl $ fst0 $ snd x **
+   \d => assign $ fst0 $ snd d)
+
+public export
+SPFtoWTF : {parambase, posbase : Type} ->
+  SlicePolyFunc parambase posbase -> WTypeFunc parambase posbase
+SPFtoWTF (posdep ** dirdep ** assign) =
+  MkWTF
+    (Sigma {a=posbase} posdep)
+    (Sigma {a=(Sigma {a=posbase} posdep)} dirdep)
+    assign
+    fst
+    fst
+
+public export
+InterpWTFtoSPF : {parambase, posbase : Type} ->
+  (wtf : WTypeFunc parambase posbase) ->
+  (sl : SliceObj parambase) -> (ib : posbase) ->
+  InterpSPFunc {a=parambase} {b=posbase}
+    (WTFtoSPF {parambase} {posbase} wtf) sl ib ->
+  InterpWTF {parambase} {posbase} wtf sl ib
+InterpWTFtoSPF (MkWTF pos dir assign dsl psl) sl ib = id
+
+public export
+InterpWTFtoSPFInv : {parambase, posbase : Type} ->
+  (wtf : WTypeFunc parambase posbase) ->
+  (sl : SliceObj parambase) -> (ib : posbase) ->
+  InterpWTF {parambase} {posbase} wtf sl ib ->
+  InterpSPFunc {a=parambase} {b=posbase}
+    (WTFtoSPF {parambase} {posbase} wtf) sl ib
+InterpWTFtoSPFInv (MkWTF pos dir assign dsl psl) sl ib = id
+
+public export
+InterpSPFtoWTF : {parambase, posbase : Type} ->
+  (spf : SlicePolyFunc parambase posbase) ->
+  (sl : SliceObj parambase) -> (ib : posbase) ->
+  InterpWTF {parambase} {posbase} (SPFtoWTF {parambase} {posbase} spf) sl ib ->
+  InterpSPFunc {a=parambase} {b=posbase} spf sl ib
+InterpSPFtoWTF {parambase} {posbase} (posdep ** dirdep ** assign) sl ib
+  (Element0 {type=(Sigma {a=posbase} posdep)} (ib' ** i) eq ** p) =
+    (rewrite sym eq in i **
+     \d => p $
+      Element0 ((ib ** rewrite sym eq in i) ** d) (rewrite sym eq in Refl))
+
+public export
+InterpSPFtoWTFInv : {parambase, posbase : Type} ->
+  (spf : SlicePolyFunc parambase posbase) ->
+  (sl : SliceObj parambase) -> (ib : posbase) ->
+  InterpSPFunc {a=parambase} {b=posbase} spf sl ib ->
+  InterpWTF {parambase} {posbase} (SPFtoWTF {parambase} {posbase} spf) sl ib
+InterpSPFtoWTFInv {parambase} {posbase} (posdep ** dirdep ** assign) sl ib
+  (i ** d) =
+    (Element0 (ib ** i) Refl **
+     \(Element0 (i' ** di) deq) => rewrite deq in d $ rewrite sym deq in di)
 
 ------------------------------------------------
 ------------------------------------------------
@@ -3700,6 +5899,10 @@ public export
 SPFMuSigma : {a : Type} -> SlicePolyEndoFunc a -> Type
 SPFMuSigma {a} spf = Sigma {a} (SPFMu {a} spf)
 
+public export
+SlArMu : {a : Type} -> SliceEndoArena a -> SliceObj a
+SlArMu {a} = SPFMu {a} . SlArToSPF {dom=a} {cod=a}
+
 --------------------------------------------------------
 ---- Catamorphisms of dependent polynomial functors ----
 --------------------------------------------------------
@@ -3715,37 +5918,151 @@ spfCata {spf} alg _ (InSPFM (posi ** pos) dir) =
 ---- Dependent polynomial (free) monads ----
 --------------------------------------------
 
-{-
+-- Another name for an algebra just to emphasize when we think of it
+-- as the implementation of an interface represented by a polynomial.
 public export
-SPFTranslatePos : {0 x, y : Type} -> SlicePolyFunc x y -> Type -> Type
-SPFTranslatePos = PFTranslatePos . spfFunc
+SliceIFace : {a : Type} -> SlicePolyEndoFunc a -> SliceObj a -> Type
+SliceIFace = SPFAlg
 
 public export
-SPFTranslateDir : {x, y : Type} -> (spf : SlicePolyFunc x y) -> (a : Type) ->
-  SPFTranslatePos spf a -> Type
-SPFTranslateDir spf a = PFTranslateDir (spfFunc spf) a
+SPFFreeAlg : {a : Type} -> (sf : SlicePolyEndoFunc a) -> (sl : SliceObj a) ->
+  SPFAlg sf (SliceFreeM (InterpSPFunc sf) sl)
+SPFFreeAlg {a} (posdep ** dirdep ** assign) sl ea (i ** d) =
+  InSlFc {f=(InterpSPFunc (posdep ** dirdep ** assign))} {sa=sl} {ea} (i ** d)
 
 public export
-SPFTranslateFunc : {x, y : Type} -> (spf : SlicePolyFunc x y) -> (a : Type) ->
-  PolyFunc
-SPFTranslateFunc spf a = (SPFTranslatePos spf a ** SPFTranslateDir spf a)
+SPFTranslate : {a : Type} ->
+  SlicePolyEndoFunc a -> SliceObj a -> SlicePolyEndoFunc a
+SPFTranslate {a} spf sl = SPFSliceCoproduct {x=a} {y=a} (SPFConst {y=a} sl) spf
 
 public export
-SPFTranslateIdx : {0 x, y : Type} -> (spf : SlicePolyFunc x y) -> (a : Type) ->
-  (a -> y) -> SliceIdx (SPFTranslateFunc spf a) x y
-SPFTranslateIdx ((pos ** dir) ** idx) a f (PFVar v) di = f v
-SPFTranslateIdx ((pos ** dir) ** idx) a f (PFCom i) di = idx i di
+SPFTranslateUnit : {a : Type} -> SlicePolyEndoFunc a -> SlicePolyEndoFunc a
+SPFTranslateUnit {a} spf = SPFTranslate {a} spf (const Unit)
 
 public export
-SPFTranslate : {x, y : Type} -> SlicePolyFunc x y -> (a : Type) ->
-  (a -> y) -> SlicePolyFunc x y
-SPFTranslate spf a f = (SPFTranslateFunc spf a ** SPFTranslateIdx spf a f)
+SlArTranslateUnit : {a : Type} -> SliceEndoArena a -> SlicePolyEndoFunc a
+SlArTranslateUnit {a} = SPFTranslateUnit {a} . SlArToSPF
 
 public export
-SPFFreeMFromMu : {x : Type} -> SlicePolyEndoF x -> SliceObj x -> SliceObj x
-SPFFreeMFromMu spf sx =
-  SPFMu {a=x} (SPFTranslate {x} {y=x} spf (Sigma sx) DPair.fst)
-  -}
+SlicePolyFree : {a : Type} -> SlicePolyEndoFunc a -> SliceEndofunctor a
+SlicePolyFree {a} = SPFMu {a} .* SPFTranslate {a}
+
+public export
+SliceArenaFree : {a : Type} -> SliceEndoArena a -> SliceEndofunctor a
+SliceArenaFree {a} = SlicePolyFree {a} . SlArToSPF
+
+-- The signature of the "eval" universal morphism for "SPFFreeM spf".
+-- (This is the right adjunct of the free/forgetful adjunction between
+-- the category of F-algebras of `spf` and `Type/a`.)
+public export
+SPFMeval : {a : Type} -> SlicePolyEndoFunc a -> Type
+SPFMeval {a} spf = (slv, sla : SliceObj a) ->
+  SliceMorphism {a} slv sla -> SPFAlg spf sla ->
+  SliceMorphism {a} (SlicePolyFree {a} spf slv) sla
+
+-- All polynomial functors have universal eval morphisms.
+public export
+spfmEval : {a : Type} -> (spf : SlicePolyEndoFunc a) -> SPFMeval spf
+spfmEval {a} (pos ** dir ** assign) slv sla subst alg =
+  spfCata {a} {spf=(SPFTranslate {a} (pos ** dir ** assign) slv)} {sa=sla} $
+    \ela, (p ** d) => case p of
+      Left elv => subst ela elv
+      Right elp => alg ela (elp ** d)
+
+public export
+SlArFMeval : {a : Type} -> SliceEndoArena a -> Type
+SlArFMeval {a} ar = (slv, sla : SliceObj a) ->
+  SliceMorphism {a} slv sla -> SPFAlg (SlArToSPF ar) sla ->
+  SliceMorphism {a} (SliceArenaFree {a} ar slv) sla
+
+public export
+slarEval : {a : Type} -> (ar : SliceEndoArena a) -> SlArFMeval ar
+slarEval {a} ar = spfmEval {a} (SlArToSPF ar)
+
+public export
+SlArFreeMPos : {a : Type} -> SliceEndoArena a -> SliceObj a
+SlArFreeMPos {a} ar = SliceArenaFree {a} ar (const Unit)
+
+public export
+SlArFreeMDirAlg : {a : Type} -> (ar : SliceEndoArena a) ->
+  SPFAlg {a} (SlArTranslateUnit {a} ar) (const $ SliceObj a)
+SlArFreeMDirAlg {a} ar ela (Left () ** d) ela' =
+  ela = ela'
+SlArFreeMDirAlg {a} ar ela (Right p ** d) ela' =
+  Sigma {a=(Sigma {a} (SLAdir ar (ela ** p)))} $ flip d ela'
+
+public export
+SlArFreeMDir : {a : Type} -> (ar : SliceEndoArena a) ->
+  Sigma (SlArFreeMPos {a} ar) -> SliceObj a
+SlArFreeMDir {a} ar (ela ** i) =
+  spfCata {a}
+    {spf=(SlArTranslateUnit {a} ar)} {sa=(const $ SliceObj a)}
+    (SlArFreeMDirAlg {a} ar) ela i
+
+public export
+SlArFreeM : {a : Type} -> SliceEndoArena a -> SliceEndoArena a
+SlArFreeM {a} ar = SlAr (SlArFreeMPos {a} ar) (SlArFreeMDir {a} ar)
+
+public export
+InterpSlArFree : {a : Type} -> SliceEndoArena a -> SliceEndofunctor a
+InterpSlArFree {a} = SLAPomap {dom=a} {cod=a} . SlArFreeM {a}
+
+public export
+SlArFreeToInterp : {a : Type} ->
+  (ar : SliceEndoArena a) -> (sa : SliceObj a) ->
+  SliceMorphism (SliceArenaFree ar sa) (InterpSlArFree ar sa)
+SlArFreeToInterp {a} ar sa =
+  slarEval {a} ar sa (InterpSlArFree ar sa)
+    (\ela, elsa => (InSPFM (ela ** Left ()) (\v => void v) ** \_, Refl => elsa))
+    (\ela, (p ** d) =>
+      (InSPFM (ela ** Right p) (\di => fst $ d di) **
+       \ela', ((ela'' ** d'') ** d''') => snd (d (ela'' ** d'')) ela' d'''))
+
+public export
+SlArInterpToFreeCurried : {a : Type} ->
+  (ar : SliceEndoArena a) -> (sa : SliceObj a) ->
+  (ela : a) -> (p : SlArFreeMPos ar ela) ->
+  SliceMorphism {a} (SLAdir (SlArFreeM ar) (ela ** p)) sa ->
+  SliceArenaFree ar sa ela
+SlArInterpToFreeCurried {a} ar sa ela (InSPFM (ela ** (Left ())) d) m =
+  InSPFM (ela ** Left $ m ela Refl) $ \v => void v
+SlArInterpToFreeCurried {a} ar sa ela (InSPFM (ela ** (Right p)) d) m =
+  InSPFM (ela ** Right p) $ \(ela' ** d') =>
+    SlArInterpToFreeCurried {a} ar sa ela' (d (ela' ** d')) $
+      \ela'', d'' => m ela'' ((ela' ** d') ** d'')
+
+public export
+SlArInterpToFree : {a : Type} ->
+  (ar : SliceEndoArena a) -> (sa : SliceObj a) ->
+  SliceMorphism (InterpSlArFree ar sa) (SliceArenaFree ar sa)
+SlArInterpToFree {a} ar sa ela (p ** m) =
+  SlArInterpToFreeCurried {a} ar sa ela p m
+
+public export
+SPFFreeM : {a : Type} -> SlicePolyEndoFunc a -> SlicePolyEndoFunc a
+SPFFreeM {a} spf = SlArToSPF (SlArFreeM (SlArFromSPF spf))
+
+public export
+SPFFreeMPos : {a : Type} -> SlicePolyEndoFunc a -> SliceObj a
+SPFFreeMPos spf = spfPos (SPFFreeM spf)
+
+public export
+SPFFreeMDir : {a : Type} -> (spf : SlicePolyEndoFunc a) ->
+  Sigma (SPFFreeMPos {a} spf) -> Type
+SPFFreeMDir spf = spfDir (SPFFreeM spf)
+
+public export
+SPFFreeMAssign : {a : Type} -> (spf : SlicePolyEndoFunc a) ->
+  Sigma (SPFFreeMDir {a} spf) -> a
+SPFFreeMAssign spf = spfAssign (SPFFreeM spf)
+
+public export
+InterpSPFFree : {a : Type} -> SlicePolyEndoFunc a -> SliceEndofunctor a
+InterpSPFFree {a} = InterpSPFunc {a} . SPFFreeM {a}
+
+public export
+SPFMAlg : {a : Type} -> SlicePolyEndoFunc a -> SliceObj a -> Type
+SPFMAlg spf sa = SliceMorphism (InterpSPFFree spf sa) sa
 
 -------------------------------------------------
 -------------------------------------------------
@@ -3820,6 +6137,31 @@ SPFCofreeCMFromNu : {x : Type} -> SlicePolyEndoF x -> SliceObj x -> SliceObj x
 SPFCofreeCMFromNu spf sx =
   SPFNu {a=-x} (SPFScale {x} {y=x} spf (Sigma sx) (const id))
   -}
+
+-----------------------------------------
+-----------------------------------------
+---- Dependent polynomial interfaces ----
+-----------------------------------------
+-----------------------------------------
+
+-- The free monad of a coproduct of dependent polynomial functors implements
+-- each of the interfaces induced by the two functors.
+
+public export
+SPFCoprodFreeAlgFl : {a : Type} -> (sf, sf' : SlicePolyEndoFunc a) ->
+  (sl : SliceObj a) ->
+  SPFAlg sf (SliceFreeM (InterpSPFunc (SPFSliceCoproduct sf sf')) sl)
+SPFCoprodFreeAlgFl {a}
+  (posdep ** dirdep ** assign) (posdep' ** dirdep' ** assign') sl ea (i ** d) =
+    InSlFc (Left i ** d)
+
+public export
+SPFCoprodFreeAlgFr : {a : Type} -> (sf, sf' : SlicePolyEndoFunc a) ->
+  (sl : SliceObj a) ->
+  SPFAlg sf' (SliceFreeM (InterpSPFunc (SPFSliceCoproduct sf sf')) sl)
+SPFCoprodFreeAlgFr {a}
+  (posdep ** dirdep ** assign) (posdep' ** dirdep' ** assign') sl ea (i ** d) =
+    InSlFc (Right i ** d)
 
 --------------------------------------------
 --------------------------------------------
@@ -4087,36 +6429,36 @@ TFDepthToMu {n} (m ** (lte, type)) = (m ** type)
 -- hom-set is isomorphic to the object itself.  From the perspective
 -- of (dependent) types, these are the terms of the object/type.
 public export
-data FinTFNewTermAlg : FinTFNewIndAlg (\_, _ => Type) where
+data FinTFNewTrAlg : FinTFNewIndAlg (\_, _ => Type) where
   FTTUnit :
     {0 hyp : FinTFDepth Z -> Type} ->
-    FinTFNewTermAlg Z hyp FTFNTerminal
+    FinTFNewTrAlg Z hyp FTFNTerminal
   FTTLeft :
     {0 m, n : Nat} -> {0 hyp : FinTFDepth (maximum m n) -> Type} ->
     {0 x : FinTFNew m} -> {0 y : FinTFNew n} ->
     hyp (FinPromoteLeft {n} x) ->
-    FinTFNewTermAlg (maximum m n) hyp (FTFNCoproduct x y)
+    FinTFNewTrAlg (maximum m n) hyp (FTFNCoproduct x y)
   FTTRight :
     {0 m, n : Nat} -> {0 hyp : FinTFDepth (maximum m n) -> Type} ->
     {0 x : FinTFNew m} -> {0 y : FinTFNew n} ->
     hyp (FinPromoteRight {m} y) ->
-    FinTFNewTermAlg (maximum m n) hyp (FTFNCoproduct x y)
+    FinTFNewTrAlg (maximum m n) hyp (FTFNCoproduct x y)
   FTTPair :
     {0 m, n : Nat} -> {0 hyp : FinTFDepth (maximum m n) -> Type} ->
     {0 x : FinTFNew m} -> {0 y : FinTFNew n} ->
     hyp (FinPromoteLeft {n} x) ->
     hyp (FinPromoteRight {m} y) ->
-    FinTFNewTermAlg (maximum m n) hyp (FTFNProduct x y)
+    FinTFNewTrAlg (maximum m n) hyp (FTFNProduct x y)
 
 public export
 FinTFNewTerm : {funext : FunExt} -> (n : Nat) -> FinTFNew n -> Type
-FinTFNewTerm {funext} = finTFNewInd {funext} FinTFNewTermAlg
+FinTFNewTerm {funext} = finTFNewInd {funext} FinTFNewTrAlg
 
 -- Generate the exponential object of a pair of finite unrefined objects.
 public export
 FinExpObjF : (n : Nat) ->
   (FinTFDepth n -> MuFinTF -> MuFinTF) -> FinTFNew (S n) -> MuFinTF -> MuFinTF
-FinExpObjF n morph type cod = ?FinExpObjF_hole
+FinExpObjF n morph type cod = FinExpObjF_hole
 
 public export
 FinNewExpObj : {funext : FunExt} ->
@@ -4141,7 +6483,7 @@ MuFinExpObj {funext} (m ** tm) (n ** tn) = FinNewExpObj {funext} tm tn
 public export
 FinNewMorphF : (n : Nat) ->
   (FinTFDepth n -> MuFinTF -> Type) -> FinTFNew (S n) -> MuFinTF -> Type
-FinNewMorphF n morph type cod = ?FinNewMorphF_hole
+FinNewMorphF n morph type cod = FinNewMorphF_hole
 
 public export
 FinNewMorph : {funext : FunExt} ->
@@ -4530,12 +6872,12 @@ isubstOMorphism : MuISubstO -> MuISubstO -> Type
 isubstOMorphism = isubstOToMeta .* isubstOHomObj
 
 public export
-isubstOEval : (x, y : MuISubstO) ->
+0 isubstOEval : (x, y : MuISubstO) ->
   isubstOMorphism (ISOProduct (isubstOHomObj x y) x) y
 isubstOEval x y = ?isubstOEval_hole
 
 public export
-isubstOCurry : {x, y, z : MuISubstO} ->
+0 isubstOCurry : {x, y, z : MuISubstO} ->
   isubstOMorphism (ISOProduct x y) z -> isubstOMorphism x (isubstOHomObj y z)
 isubstOCurry {x} {y} {z} f = ?isubstOCurry_hole
 
@@ -5196,12 +7538,12 @@ s0ObjCard = s0ObjFreeCata s0ObjCardAlg
 -- is an inpretation within `Type` of the index (which is a term of
 -- `FreeS0Obj v`).
 public export
-s0ObjTermAlg : FreeS0SliceAlg
-s0ObjTermAlg = MkS0ObjAlg Void Unit Either Pair
+s0ObjTrAlg : FreeS0SliceAlg
+s0ObjTrAlg = MkS0ObjAlg Void Unit Either Pair
 
 public export
 s0ObjTerm : {0 v : Type} -> (v -> Type) -> FreeS0Slice v
-s0ObjTerm = s0slice s0ObjTermAlg
+s0ObjTerm = s0slice s0ObjTrAlg
 
 -- For any object `x` of the zeroth-order substitution category, a
 -- `FreeS0DepSet x` is a type which depends on `x`.  In dependent
@@ -5554,7 +7896,7 @@ scaleMonPolyShape : PolyTerm -> PolyShape -> PolyShape
 scaleMonPolyShape pt = reverse . scaleMonPolyRev pt
 
 public export
-scalePreservesValid : {0 pt : PolyTerm} -> {0 poly : PolyShape} ->
+0 scalePreservesValid : {0 pt : PolyTerm} -> {0 poly : PolyShape} ->
   ValidPoly poly -> ValidPoly (scaleMonPolyShape pt poly)
 scalePreservesValid {pt} {poly} valid = ?scaleMonPolyShapeCorrect_hole
 
@@ -5588,7 +7930,7 @@ parProdMonPolyShape (Z, c) poly = [(0, c * sumPTCoeff poly)]
 parProdMonPolyShape pt@(S _, _) poly = reverse (parProdMonPolyRev pt poly)
 
 public export
-parProdMonPreservesValid : {0 pt : PolyTerm} -> {0 poly : PolyShape} ->
+0 parProdMonPreservesValid : {0 pt : PolyTerm} -> {0 poly : PolyShape} ->
   ValidPoly poly -> ValidPoly (parProdMonPolyShape pt poly)
 parProdMonPreservesValid {pt} {poly} valid = ?parProdMonPolyShapeCorrect_hole
 
@@ -5661,7 +8003,7 @@ addPolyShape : PolyShape -> PolyShape -> PolyShape
 addPolyShape p q = reverse (addPolyShapeRev p q)
 
 public export
-addPreservesValid : {0 p, q : PolyShape} ->
+0 addPreservesValid : {0 p, q : PolyShape} ->
   ValidPoly p -> ValidPoly q -> ValidPoly (addPolyShape p q)
 addPreservesValid {p} {q} pvalid qvalid = ?addPolyShapeCorrect_hole
 
@@ -5685,7 +8027,7 @@ mulPolyShape : PolyShape -> PolyShape -> PolyShape
 mulPolyShape = addMapPolyShapeList scaleMonPolyShape
 
 public export
-mulPreservesValid : {0 p, q : PolyShape} ->
+0 mulPreservesValid : {0 p, q : PolyShape} ->
   ValidPoly p -> ValidPoly q -> ValidPoly (mulPolyShape p q)
 mulPreservesValid {p} {q} pvalid qvalid = ?mulPolyShapeCorrect_hole
 
@@ -5703,7 +8045,7 @@ parProdPolyShape : PolyShape -> PolyShape -> PolyShape
 parProdPolyShape = addMapPolyShapeList parProdMonPolyShape
 
 public export
-parProdPreservesValid : {0 p, q : PolyShape} ->
+0 parProdPreservesValid : {0 p, q : PolyShape} ->
   ValidPoly p -> ValidPoly q -> ValidPoly (parProdPolyShape p q)
 parProdPreservesValid {p} {q} pvalid qvalid = ?parProdPolyShapeCorrect_hole
 
@@ -5722,7 +8064,7 @@ expNPolyShape Z _ = terminalPolyShape
 expNPolyShape (S n) p = mulPolyShape p (expNPolyShape n p)
 
 public export
-expNPreservesValid : {0 n : Nat} -> {0 poly : PolyShape} ->
+0 expNPreservesValid : {0 n : Nat} -> {0 poly : PolyShape} ->
   ValidPoly poly -> ValidPoly (expNPolyShape n poly)
 expNPreservesValid {n} {poly} valid = ?expNPolyShapeCorrect_hole
 
@@ -5740,7 +8082,7 @@ composePolyShape : PolyShape -> PolyShape -> PolyShape
 composePolyShape = flip (addMapPolyShapeList composeMonPoly)
 
 public export
-composePreservesValid : {0 p, q : PolyShape} ->
+0 composePreservesValid : {0 p, q : PolyShape} ->
   ValidPoly q -> ValidPoly p -> ValidPoly (composePolyShape q p)
 composePreservesValid {p} {q} pvalid qvalid = ?composePolyShapeCorrect_hole
 
@@ -5749,12 +8091,12 @@ composePoly : Polynomial -> Polynomial -> Polynomial
 composePoly (Element0 q qvalid) (Element0 p pvalid) =
   Element0 (composePolyShape q p) (composePreservesValid qvalid pvalid)
 
-infixr 1 <|
+export infixr 1 <|
 public export
 (<|) : Polynomial -> Polynomial -> Polynomial
 (<|) = composePoly
 
-infixr 1 |>
+export infixr 1 |>
 public export
 (|>) : Polynomial -> Polynomial -> Polynomial
 (|>) = flip (<|)
@@ -5764,7 +8106,7 @@ iterNPolyShape : Nat -> PolyShape -> PolyShape
 iterNPolyShape n p = foldrNat (composePolyShape p) terminalPolyShape n
 
 public export
-iterNPreservesValid : {0 n : Nat} -> {0 poly : PolyShape} ->
+0 iterNPreservesValid : {0 n : Nat} -> {0 poly : PolyShape} ->
   ValidPoly poly -> ValidPoly (iterNPolyShape n poly)
 iterNPreservesValid {n} {poly} valid = ?iterNPolyShapeCorrect_hole
 
@@ -5844,7 +8186,7 @@ polyInterpRange : Polynomial -> NatRange -> NatRange
 polyInterpRange = psInterpRange . shape
 
 public export
-idPSCorrect : (0 range : NatRange) ->
+0 idPSCorrect : (0 range : NatRange) ->
   psInterpRange PolyCat.idPolyShape range = range
 idPSCorrect (min, max) = ?idPsCorrect_hole
 
@@ -6229,7 +8571,7 @@ record PolyNTShape where
   psOnPos : AugRNM
 
 public export
-validPNTS : Polynomial -> Polynomial -> DecPred PolyNTShape
+0 validPNTS : Polynomial -> Polynomial -> DecPred PolyNTShape
 validPNTS p q nt = ?validate_PNTS_is_correct_hole
 
 public export
@@ -6243,7 +8585,7 @@ PolyNT p q = Refinement {a=PolyNTShape} (validPNTS p q)
 -- hence a term of `AugRNM` -- from `p(r)` to `q(r)`.  (`p(r)` and `q(r)` are
 -- the ranges computed by `psApplyAugRange`.)
 public export
-pntsComponent : PolyShape -> PolyShape -> PolyNTShape -> AugNatRange -> AugRNM
+0 pntsComponent : PolyShape -> PolyShape -> PolyNTShape -> AugNatRange -> AugRNM
 pntsComponent p q alpha range = ?pntsComponent_hole
 
 --------------------------------------
@@ -6343,8 +8685,8 @@ PolyOp = InitialColimit PolyOpF
 --------------------------------------------------------------
 --------------------------------------------------------------
 
-infixr 8 !!+
-infixr 9 !!*
+export infixr 8 !!+
+export infixr 9 !!*
 
 public export
 data SubstObjF : Type -> Type where
@@ -6360,12 +8702,16 @@ data SubstObjF : Type -> Type where
   -- Product
   (!!*) : carrier -> carrier -> SubstObjF carrier
 
+  -- Fin(n)
+  SOn : (n : Nat) -> {auto 0 nz : NonZero n} -> SubstObjF carrier
+
 public export
 Functor SubstObjF where
   map m SO0 = SO0
   map m SO1 = SO1
   map m (x !!+ y) = m x !!+ m y
   map m (x !!* y) = m x !!* m y
+  map m (SOn n {nz}) = SOn n {nz}
 
 public export
 MetaSOAlg : Type -> Type
@@ -6383,8 +8729,8 @@ public export
 data SubstObjMu : Type where
   InSO : SubstObjF SubstObjMu -> SubstObjMu
 
-infixr 8 !+
-infixr 9 !*
+export infixr 8 !+
+export infixr 9 !*
 
 public export
 Subst0 : SubstObjMu
@@ -6403,6 +8749,22 @@ public export
 (!*) = InSO .* (!!*)
 
 public export
+SubstN : (n : Nat) -> {auto 0 nz : NonZero n} -> SubstObjMu
+SubstN n {nz} = InSO (SOn n {nz})
+
+public export
+SubstN1 : SubstObjMu
+SubstN1 = SubstN 1 {nz=ItIsSucc}
+
+public export
+SubstBool : SubstObjMu
+SubstBool = Subst1 !+ Subst1
+
+public export
+SubstMaybe : SubstObjMu -> SubstObjMu
+SubstMaybe x = Subst1 !+ x
+
+public export
 substObjCata : MetaSOAlg x -> SubstObjMu -> x
 substObjCata alg = substObjFold id where
   mutual
@@ -6418,27 +8780,32 @@ substObjCata alg = substObjFold id where
       SO1 => cont (alg SO1)
       p !!+ q => substObjCataCont (!!+) cont p q
       p !!* q => substObjCataCont (!!*) cont p q
+      SOn n {nz} => cont (alg $ SOn n {nz})
 
 public export
 data SubstObjNu : Type where
   InSOLabel : Inf (SubstObjF SubstObjNu) -> SubstObjNu
 
 public export
-substObjAna : MetaSOCoalg x -> x -> Inf SubstObjNu
+partial
+0 substObjAna : MetaSOCoalg x -> x -> Inf SubstObjNu
 substObjAna coalg = substObjUnfold id where
   mutual
-    substObjAnaCont : (SubstObjNu -> SubstObjNu -> SubstObjF SubstObjNu) ->
+    partial
+    0 substObjAnaCont : (SubstObjNu -> SubstObjNu -> SubstObjF SubstObjNu) ->
       (SubstObjNu -> SubstObjNu) -> x -> x -> SubstObjNu
     substObjAnaCont op cont x y =
       substObjUnfold
         (\x' => substObjUnfold (\y' => cont $ InSOLabel $ op x' y') y) x
 
-    substObjUnfold : (SubstObjNu -> SubstObjNu) -> x -> Inf SubstObjNu
+    partial
+    0 substObjUnfold : (SubstObjNu -> SubstObjNu) -> x -> Inf SubstObjNu
     substObjUnfold cont t = case coalg t of
       SO0 => cont (InSOLabel SO0)
       SO1 => cont (InSOLabel SO1)
       p !!+ q => substObjAnaCont (!!+) cont p q
       p !!* q => substObjAnaCont (!!*) cont p q
+      SOn n {nz} => cont (InSOLabel $ SOn n {nz})
 
 public export
 SubstObjPairAlg : Type -> Type
@@ -6458,6 +8825,7 @@ SOSizeAlg SO0 = 1
 SOSizeAlg SO1 = 1
 SOSizeAlg (p !!+ q) = p + q
 SOSizeAlg (p !!* q) = p + q
+SOSizeAlg (SOn n) = 1
 
 public export
 substObjSize : SubstObjMu -> Nat
@@ -6469,6 +8837,7 @@ SODepthAlg SO0 = 0
 SODepthAlg SO1 = 0
 SODepthAlg (p !!+ q) = smax p q
 SODepthAlg (p !!* q) = smax p q
+SODepthAlg (SOn n) = 0
 
 public export
 substObjDepth : SubstObjMu -> Nat
@@ -6482,6 +8851,7 @@ SOCardAlg SO0 = 0
 SOCardAlg SO1 = 1
 SOCardAlg (p !!+ q) = p + q
 SOCardAlg (p !!* q) = p * q
+SOCardAlg (SOn n) = n
 
 public export
 substObjCard : SubstObjMu -> Nat
@@ -6497,6 +8867,7 @@ SOShowAlg SO0 = "0"
 SOShowAlg SO1 = "1"
 SOShowAlg (x !!+ y) = "(" ++ x ++ " + " ++ y ++ ")"
 SOShowAlg (x !!* y) = x ++ " * " ++ y
+SOShowAlg (SOn n) = "Fin(" ++ show n ++ ")"
 
 public export
 Show SubstObjMu where
@@ -6516,6 +8887,8 @@ SubstObjMuEqAlg (p !!+ q) (InSO (r !!+ s)) = p r && q s
 SubstObjMuEqAlg (p !!+ q) _ = False
 SubstObjMuEqAlg (p !!* q) (InSO (r !!* s)) = p r && q s
 SubstObjMuEqAlg (p !!* q) _ = False
+SubstObjMuEqAlg (SOn m) (InSO (SOn n)) = m == n
+SubstObjMuEqAlg (SOn m) _ = False
 
 public export
 Eq SubstObjMu where
@@ -6530,12 +8903,16 @@ substObjMuDecEq (InSO SO0) (InSO (_ !!+ _)) =
   No $ \eq => case eq of Refl impossible
 substObjMuDecEq (InSO SO0) (InSO (_ !!* _)) =
   No $ \eq => case eq of Refl impossible
+substObjMuDecEq (InSO SO0) (InSO (SOn _)) =
+  No $ \eq => case eq of Refl impossible
 substObjMuDecEq (InSO SO1) (InSO SO0) =
   No $ \eq => case eq of Refl impossible
 substObjMuDecEq (InSO SO1) (InSO SO1) = Yes Refl
 substObjMuDecEq (InSO SO1) (InSO (_ !!+ _)) =
   No $ \eq => case eq of Refl impossible
 substObjMuDecEq (InSO SO1) (InSO (_ !!* _)) =
+  No $ \eq => case eq of Refl impossible
+substObjMuDecEq (InSO SO1) (InSO (SOn _)) =
   No $ \eq => case eq of Refl impossible
 substObjMuDecEq (InSO (_ !!+ _)) (InSO SO0) =
   No $ \eq => case eq of Refl impossible
@@ -6548,6 +8925,8 @@ substObjMuDecEq (InSO (w !!+ x)) (InSO (y !!+ z)) =
     (No neq, _) => No $ \eq => case eq of Refl => neq Refl
 substObjMuDecEq (InSO (_ !!+ _)) (InSO (_ !!* _)) =
   No $ \eq => case eq of Refl impossible
+substObjMuDecEq (InSO (_ !!+ _)) (InSO (SOn _)) =
+  No $ \eq => case eq of Refl impossible
 substObjMuDecEq (InSO (_ !!* _)) (InSO SO0) =
   No $ \eq => case eq of Refl impossible
 substObjMuDecEq (InSO (_ !!* _)) (InSO SO1) =
@@ -6559,6 +8938,20 @@ substObjMuDecEq (InSO (w !!* x)) (InSO (y !!* z)) =
     (Yes Refl, Yes Refl) => Yes Refl
     (Yes Refl, No neq) => No $ \eq => case eq of Refl => neq Refl
     (No neq, _) => No $ \eq => case eq of Refl => neq Refl
+substObjMuDecEq (InSO (_ !!* _)) (InSO (SOn _)) =
+  No $ \eq => case eq of Refl impossible
+substObjMuDecEq (InSO (SOn m)) (InSO SO0) =
+  No $ \eq => case eq of Refl impossible
+substObjMuDecEq (InSO (SOn m)) (InSO SO1) =
+  No $ \eq => case eq of Refl impossible
+substObjMuDecEq (InSO (SOn m)) (InSO (_ !!+ _)) =
+  No $ \eq => case eq of Refl impossible
+substObjMuDecEq (InSO (SOn m)) (InSO (_ !!* _)) =
+  No $ \eq => case eq of Refl impossible
+substObjMuDecEq (InSO (SOn m {nz=nzm})) (InSO (SOn n {nz=nzn})) =
+  case decEq m n of
+    Yes Refl => rewrite nzUnique nzm nzn in Yes Refl
+    No neq => No $ \eq => case eq of Refl => neq Refl
 
 public export
 DecEq SubstObjMu where
@@ -6586,6 +8979,7 @@ SORemoveZeroAlg (p !!* q) = case p of
       InSO q' => case q' of
         SO0 => Subst0
         _ => p !* q
+SORemoveZeroAlg (SOn n) = InSO (SOn n)
 
 public export
 substObjRemoveZero : SubstObjMu -> SubstObjMu
@@ -6603,6 +8997,7 @@ SORemoveOneAlg (p !!* q) = case p of
       InSO q' => case q' of
         SO1 => p
         _ => p !* q
+SORemoveOneAlg (SOn n) = InSO (SOn n)
 
 public export
 substObjRemoveOne : SubstObjMu -> SubstObjMu
@@ -6616,7 +9011,7 @@ substObjNormalize = substObjRemoveOne . substObjRemoveZero
 ---- Multiplication by a constant (via addition) ----
 -----------------------------------------------------
 
-infix 10 !:*
+export infix 10 !:*
 public export
 (!:*) : Nat -> SubstObjMu -> SubstObjMu
 n !:* p = foldrNatNoUnit ((!+) p) Subst0 p n
@@ -6625,7 +9020,7 @@ n !:* p = foldrNatNoUnit ((!+) p) Subst0 p n
 ---- Multiplicative exponentiation ----
 ---------------------------------------
 
-infix 10 !*^
+export infix 10 !*^
 public export
 (!*^) : SubstObjMu -> Nat -> SubstObjMu
 p !*^ n = foldrNatNoUnit ((!*) p) Subst1 p n
@@ -6635,16 +9030,17 @@ p !*^ n = foldrNatNoUnit ((!*) p) Subst1 p n
 ----------------------------------------
 
 public export
-SubstTermAlg : MetaSOAlg Type
-SubstTermAlg SO0 = Void
-SubstTermAlg SO1 = ()
-SubstTermAlg (x !!+ y) = Either x y
-SubstTermAlg (x !!* y) = Pair x y
+SubstTrAlg : MetaSOAlg Type
+SubstTrAlg SO0 = Void
+SubstTrAlg SO1 = ()
+SubstTrAlg (x !!+ y) = Either x y
+SubstTrAlg (x !!* y) = Pair x y
+SubstTrAlg (SOn n) = Fin n
 
 -- Variant from an algebra rather than explicit recursion
 public export
 SubstTerm' : SubstObjMu -> Type
-SubstTerm' = substObjCata SubstTermAlg
+SubstTerm' = substObjCata SubstTrAlg
 
 -- Variant using explicit recursion
 public export
@@ -6653,6 +9049,7 @@ SubstTerm (InSO SO0) = Void
 SubstTerm (InSO SO1) = ()
 SubstTerm (InSO (x !!+ y)) = Either (SubstTerm x) (SubstTerm y)
 SubstTerm (InSO (x !!* y)) = Pair (SubstTerm x) (SubstTerm y)
+SubstTerm (InSO (SOn n)) = Fin n
 
 public export
 showSubstTerm : {x : SubstObjMu} -> SubstTerm x -> String
@@ -6666,6 +9063,8 @@ showSubstTerm {x=(InSO (x !!+ y))} (Right t) =
   "R[" ++ showSubstTerm t ++ "]"
 showSubstTerm {x=(InSO (x !!* y))} (t, t') =
   "(" ++ showSubstTerm t ++ "," ++ showSubstTerm t' ++ ")"
+showSubstTerm {x=(InSO (SOn n))} m =
+  "(" ++ show m ++ "/" ++ show n ++ ")"
 
 public export
 (x : SubstObjMu) => Show (SubstTerm x) where
@@ -6677,6 +9076,7 @@ SubstContradictionAlg SO0 = ()
 SubstContradictionAlg SO1 = Void
 SubstContradictionAlg (x !!+ y) = Pair x y
 SubstContradictionAlg (x !!* y) = Either x y
+SubstContradictionAlg (SOn n) = Void
 
 -- `SubstContradiction x` is inhabited if and only if `x` is uninhabited;
 -- it is the dual of `SubstTerm x` (reflecting that a type is contradictory
@@ -6690,6 +9090,12 @@ SubstContradiction = substObjCata SubstContradictionAlg
 -------------------------------------
 
 public export
+SubstHomObjAlgN : (n : Nat) -> (0 _ : NonZero n) -> SubstObjMu -> SubstObjMu
+SubstHomObjAlgN Z ItIsSucc q impossible
+SubstHomObjAlgN (S Z) ItIsSucc q = q
+SubstHomObjAlgN (S (S n)) ItIsSucc q = q !* SubstHomObjAlgN (S n) ItIsSucc q
+
+public export
 SubstHomObjAlg : MetaSOAlg (SubstObjMu -> SubstObjMu)
 -- 0 -> x == 1
 SubstHomObjAlg SO0 _ = Subst1
@@ -6699,6 +9105,7 @@ SubstHomObjAlg SO1 q = q
 SubstHomObjAlg (p !!+ q) r = p r !* q r
 -- (p * q) -> r == p -> q -> r
 SubstHomObjAlg (p !!* q) r = p $ q r
+SubstHomObjAlg (SOn n {nz}) q = SubstHomObjAlgN n nz q
 
 public export
 SubstHomObj' : SubstObjMu -> SubstObjMu -> SubstObjMu
@@ -6716,7 +9123,7 @@ SubstMorph' = SubstTerm .* SubstHomObj'
 ---- Universal morphisms ----
 -----------------------------
 
-infixr 1 <!
+export infixr 1 <!
 public export
 data SubstMorph : SubstObjMu -> SubstObjMu -> Type where
   SMId : (x : SubstObjMu) -> SubstMorph x x
@@ -6734,6 +9141,25 @@ data SubstMorph : SubstObjMu -> SubstObjMu -> Type where
   SMProjRight : (x, y : SubstObjMu) -> SubstMorph (x !* y) y
   SMDistrib : (x, y, z : SubstObjMu) ->
     SubstMorph (x !* (y !+ z)) ((x !* y) !+ (x !* z))
+  SMNInj : (m, n : Nat) ->
+    {auto 0 m_nz : NonZero m} -> {auto 0 n_nz : NonZero n} ->
+    SubstMorph (SubstN m {nz=m_nz}) (SubstN n {nz=n_nz})
+  SMNConst : (n : Nat) -> {auto 0 nz : NonZero n} ->
+    Nat -> SubstMorph Subst1 (SubstN n {nz})
+  SMNAdd : (n : Nat) -> {auto 0 nz : NonZero n} ->
+    SubstMorph (SubstN n !* SubstN n) (SubstN n)
+  SMNMult : (n : Nat) -> {auto 0 nz : NonZero n} ->
+    SubstMorph (SubstN n !* SubstN n) (SubstN n)
+  SMNSub : (n : Nat) -> {auto 0 nz : NonZero n} ->
+    SubstMorph (SubstN n !* SubstN n) (SubstN n)
+  SMNDiv : (n : Nat) -> {auto 0 nz : NonZero n} ->
+    SubstMorph (SubstN n !* SubstN n) (SubstN n)
+  SMNMod : (n : Nat) -> {auto 0 nz : NonZero n} ->
+    SubstMorph (SubstN n !* SubstN n) (SubstN n)
+  SMNEq : (n : Nat) -> {auto 0 nz : NonZero n} ->
+    SubstMorph (SubstN n !* SubstN n) SubstBool
+  SMNLt : (n : Nat) -> {auto 0 nz : NonZero n} ->
+    SubstMorph (SubstN n !* SubstN n) SubstBool
 
 public export
 showSubstMorph : {x, y : SubstObjMu} -> SubstMorph x y -> String
@@ -6751,6 +9177,21 @@ showSubstMorph (SMProjLeft x y) = "<-Left<" ++ show x ++ ", " ++ show y ++ ">"
 showSubstMorph (SMProjRight x y) = "<-Right<" ++ show x ++ ", " ++ show y ++ ">"
 showSubstMorph (SMDistrib x y z) =
   "distrib{" ++ show x ++ ", " ++ show y ++ ", " ++ show z ++ "}"
+showSubstMorph (SMNInj m n) = "inj{" ++ show m ++ ", " ++ show n ++ "}"
+showSubstMorph (SMNConst n k) = "const{" ++ show k ++ " -> " ++ show n ++ "}"
+showSubstMorph (SMNAdd n) = "+[%" ++ show n ++ "]"
+showSubstMorph (SMNMult n) = "*[%" ++ show n ++ "]"
+showSubstMorph (SMNSub n) = "-[%" ++ show n ++ "]"
+showSubstMorph (SMNDiv n) = "/[%" ++ show n ++ "]"
+showSubstMorph (SMNMod n) = "%[%" ++ show n ++ "]"
+showSubstMorph (SMNEq n) = "?=[" ++ show n ++ "]"
+showSubstMorph (SMNLt n) = "?<[" ++ show n ++ "]"
+
+public export
+SMParallel : {w, x, y, z : SubstObjMu} ->
+  SubstMorph w y -> SubstMorph x z -> SubstMorph (w !* x) (y !* z)
+SMParallel {w} {x} {y} {z} f g =
+  SMPair (f <! SMProjLeft w x) (g <! SMProjRight w x)
 
 public export
 soProdCommutes : (x, y : SubstObjMu) -> SubstMorph (x !* y) (y !* x)
@@ -6876,6 +9317,10 @@ public export
 SOTerm : SubstObjMu -> Type
 SOTerm = SubstMorph Subst1
 
+public export
+soConst : {x, y : SubstObjMu} -> SOTerm y -> SubstMorph x y
+soConst {x} {y} f = f <! SMToTerminal _
+
 --------------------------------------------------------------
 ---- Exponentiation (hom-objects) of substitutive objects ----
 --------------------------------------------------------------
@@ -6890,16 +9335,63 @@ SubstHomObj (InSO SO1) y = y
 SubstHomObj (InSO (x !!+ y)) z = SubstHomObj x z !* SubstHomObj y z
 -- (x * y) -> z == x -> y -> z
 SubstHomObj (InSO (x !!* y)) z = SubstHomObj x (SubstHomObj y z)
+SubstHomObj (InSO (SOn n {nz})) z = SubstHomObjAlgN n nz z
 
-infixr 10 !->
+export infixr 10 !->
 public export
 (!->) : SubstObjMu -> SubstObjMu -> SubstObjMu
 (!->) = SubstHomObj
 
-infix 10 !^
+export infix 10 !^
 public export
 (!^) : SubstObjMu -> SubstObjMu -> SubstObjMu
 (!^) = flip SubstHomObj
+
+public export
+SubstNIsZero : (n : Nat) -> SubstMorph (SubstN (S n)) SubstBool
+SubstNIsZero n =
+  SMNEq (S n) <! SMPair (SMId (SubstN (S n))) (soConst $ SMNConst (S n) 0)
+
+public export
+SubstNSucc : (n : Nat) -> SubstMorph (SubstN (S n)) (SubstN (S (S n)))
+SubstNSucc n =
+  SMNAdd (S (S n)) <!
+  (SMPair (SMId (SubstN (S (S n)))) (soConst $ SMNConst (S (S n)) 1)) <!
+  SMNInj (S n) (S (S n))
+
+public export
+SubstNPred : (n : Nat) -> SubstMorph (SubstN (S (S n))) (SubstN (S n))
+SubstNPred n =
+  SMNInj (S (S n)) (S n) <!
+  SMNSub (S (S n)) <!
+    SMPair (SMId (SubstN (S (S n)))) (soConst $ SMNConst (S (S n)) 1)
+
+public export
+substNIf0 : (n : Nat) -> SubstMorph (SubstN (S (S n))) (Subst1 !+ SubstN (S n))
+substNIf0 n =
+  SMCase
+    (SMInjLeft Subst1 (SubstN (S n)) <! SMToTerminal (SubstN (S n) !* Subst1))
+    (SMInjRight Subst1 (SubstN (S n)) <! SMProjLeft (SubstN (S n)) Subst1)
+  <! (SMDistrib (SubstN (S n)) Subst1 Subst1)
+  <! (SMPair (SubstNPred n) (SubstNIsZero (S n)))
+
+public export
+soEval0 : (y : SubstObjMu) ->
+  SubstMorph ((SubstN (S Z) !-> y) !* SubstN (S Z)) y
+soEval0 y = SMProjLeft y (SubstN (S Z))
+
+public export
+soEvalN : (n : Nat) -> (y : SubstObjMu) ->
+  SubstMorph ((SubstN (S n) !-> y) !* SubstN (S n)) y
+soEvalN Z y = soEval0 y
+soEvalN (S n) y =
+  let evN = soEvalN n y in
+  SMCase
+    (SMProjLeft y (SubstN (S n) !-> y)
+     <! SMProjLeft (y !* (SubstN (S n) !-> y)) Subst1)
+    (soEvalN n y <! soForgetFirst y (SubstN (S n) !-> y) (SubstN (S n)))
+  <! SMDistrib (y !* (SubstN (S n) !-> y)) Subst1 (SubstN (S n))
+  <! SMParallel (SMId (y !* (SubstN (S n) !-> y))) (substNIf0 n)
 
 public export
 soEval : (x, y : SubstObjMu) ->
@@ -6920,6 +9412,24 @@ soEval (InSO (x !!* y)) z =
     SMPair
       (exhyz <! soForgetRight _ _ _)
       (SMProjRight _ _ <! SMProjRight _ _)
+soEval (InSO (SOn Z {nz=ItIsSucc})) z impossible
+soEval (InSO (SOn (S n) {nz=ItIsSucc})) z = soEvalN n z
+
+public export
+soCurry0 : {x, z : SubstObjMu} ->
+  SubstMorph (x !* SubstN (S Z)) z -> SubstMorph x (SubstN (S Z) !-> z)
+soCurry0 {x} {z} f = f <! SMPair (SMId x) (soConst $ SMNConst 1 0)
+
+public export
+soCurryN : {x, z : SubstObjMu} -> {n : Nat} ->
+  SubstMorph (x !* SubstN (S n)) z -> SubstMorph x (SubstN (S n) !-> z)
+soCurryN {x} {z} {n=Z} f = soCurry0 {x} {z} f
+soCurryN {x} {z} {n=(S n)} f =
+  SMPair
+    (f <! SMPair (SMId x) (soConst $ SMNConst (S (S n)) 0))
+    (soCurryN {x} {z} {n} $ f <! SMPair
+      (SMProjLeft x (SubstN (S n)))
+      (SubstNSucc n <! SMProjRight x (SubstN (S n))))
 
 public export
 soCurry : {x, y, z : SubstObjMu} ->
@@ -6935,6 +9445,9 @@ soCurry {x} {y=(InSO (y !!* y'))} {z} f =
     cxhyz = soCurry {x} {y} {z=(SubstHomObj y' z)}
   in
   cxhyz $ cxyz $ soProdLeftAssoc f
+soCurry {x} {y=(InSO (SOn Z {nz=ItIsSucc}))} {z} f impossible
+soCurry {x} {y=(InSO (SOn (S n) {nz=ItIsSucc}))} {z} f =
+  soCurryN {x} {z} {n} f
 
 public export
 soUncurry : {x, y, z : SubstObjMu} ->
@@ -6953,15 +9466,15 @@ soPartialAppTerm : {w, x, y, z : SubstObjMu} ->
 soPartialAppTerm g t = soProd1LeftElim $ soPartialApp {w=Subst1} g t
 
 public export
-contravarYonedaEmbed : {a, b : SubstObjMu} ->
+covarYonedaEmbed : {a, b : SubstObjMu} ->
   SubstMorph b a -> (x : SubstObjMu) -> SubstMorph (a !-> x) (b !-> x)
-contravarYonedaEmbed {a} {b} f x =
+covarYonedaEmbed {a} {b} f x =
   soCurry (soEval a x <! SMPair (SMProjLeft _ _) (f <! SMProjRight _ _))
 
 public export
-covarYonedaEmbed : {a, b : SubstObjMu} ->
+contravarYonedaEmbed : {a, b : SubstObjMu} ->
   SubstMorph a b -> (x : SubstObjMu) -> SubstMorph (x !-> a) (x !-> b)
-covarYonedaEmbed {a} {b} f x =
+contravarYonedaEmbed {a} {b} f x =
   soCurry (f <! soEval x a)
 
 public export
@@ -6987,6 +9500,8 @@ soSubst (SMCase g h) (SMProjRight _ _) = SMCase g h <! SMProjRight _ _
 soSubst (SMCase h j) (SMCase f g) =
   SMCase (soSubst (SMCase h j) f) (soSubst (SMCase h j) g)
 soSubst (SMCase g h) (SMDistrib _ _ _) = SMCase g h <! SMDistrib _ _ _
+soSubst (SMCase g h) (SMNEq m) = SMCase g h <! SMNEq m
+soSubst (SMCase g h) (SMNLt m) = SMCase g h <! SMNLt m
 soSubst (SMPair g h) f = SMPair (soSubst g f) (soSubst h f)
 soSubst (SMProjLeft _ _) (SMProjLeft _ _) = SMProjLeft _ _ <! SMProjLeft _ _
 soSubst (SMProjLeft _ _) (SMProjRight _ _) = SMProjLeft _ _ <! SMProjRight _ _
@@ -7002,6 +9517,15 @@ soSubst (SMDistrib _ _ _) (SMProjLeft _ _) = SMDistrib _ _ _ <! SMProjLeft _ _
 soSubst (SMDistrib _ _ _) (SMProjRight _ _) = SMDistrib _ _ _ <! SMProjRight _ _
 soSubst (SMDistrib _ _ _) (SMCase f g) = SMDistrib _ _ _ <! SMCase f g
 soSubst (SMDistrib _ _ _) (SMPair f g) = SMDistrib _ _ _ <! SMPair f g
+soSubst (SMNInj m n) f = SMNInj m n <! f
+soSubst (SMNConst m n) f = SMNConst m n <! f
+soSubst (SMNAdd n) f = SMNAdd n <! f
+soSubst (SMNMult n) f = SMNMult n <! f
+soSubst (SMNSub n) f = SMNSub n <! f
+soSubst (SMNDiv n) f = SMNDiv n <! f
+soSubst (SMNMod n) f = SMNMod n <! f
+soSubst (SMNEq n) f = SMNEq n <! f
+soSubst (SMNLt n) f = SMNLt n <! f
 
 public export
 soReduce : {x, y : SubstObjMu} -> SubstMorph x y -> SubstMorph x y
@@ -7016,6 +9540,15 @@ soReduce (SMPair f g) = SMPair (soReduce f) (soReduce g)
 soReduce (SMProjLeft _ _) = SMProjLeft _ _
 soReduce (SMProjRight _ _) = SMProjRight _ _
 soReduce (SMDistrib _ _ _) = SMDistrib _ _ _
+soReduce (SMNInj m n) = SMNInj m n
+soReduce (SMNConst m n) = SMNConst m n
+soReduce (SMNAdd n) = SMNAdd n
+soReduce (SMNMult n) = SMNMult n
+soReduce (SMNSub n) = SMNSub n
+soReduce (SMNDiv n) = SMNDiv n
+soReduce (SMNMod n) = SMNMod n
+soReduce (SMNEq n) = SMNEq n
+soReduce (SMNLt n) = SMNLt n
 
 -------------------------------------------
 ---- Morphisms as terms of hom-objects ----
@@ -7036,10 +9569,6 @@ MorphAsTerm {x} {y} f = soCurry {x=Subst1} {y=x} {z=y} $ soProdLeftIntro f
 ----------------------------------------------------------------------------
 ---- Homoiconicity: SubstMorph reflected into the substitutive category ----
 ----------------------------------------------------------------------------
-
-public export
-soConst : {x, y : SubstObjMu} -> SOTerm y -> SubstMorph x y
-soConst {x} {y} f = f <! SMToTerminal _
 
 public export
 soReflectedConst : (x, y : SubstObjMu) -> SubstMorph y (x !-> y)
@@ -7081,6 +9610,44 @@ soReflectedCase : (x, y, z : SubstObjMu) ->
 soReflectedCase x y z = SMId (SubstHomObj x z !* SubstHomObj y z)
 
 public export
+soReflectedPair0 : (y, z : SubstObjMu) ->
+  SubstMorph
+    ((SubstN (S Z) !-> y) !* (SubstN (S Z) !-> z)) (SubstN (S Z) !-> (y !* z))
+soReflectedPair0 y z = SMId (y !* z)
+
+public export
+soReflectedPairN : (n : Nat) -> (y, z : SubstObjMu) ->
+  SubstMorph
+    ((SubstN (S n) !-> y) !* (SubstN (S n) !-> z)) (SubstN (S n) !-> (y !* z))
+soReflectedPairN Z y z = soReflectedPair0 y z
+soReflectedPairN (S n) y z =
+  let
+    szyz = soReflectedPair0 y z
+    nyz = soReflectedPairN n y z
+  in
+  SMPair
+    (szyz <!
+      SMPair
+        (SMProjLeft y (SubstHomObjAlgN (S n) ItIsSucc y) <!
+          SMProjLeft
+            (y !* SubstHomObjAlgN (S n) ItIsSucc y)
+            (z !* SubstHomObjAlgN (S n) ItIsSucc z))
+        (SMProjLeft z (SubstHomObjAlgN (S n) ItIsSucc z) <!
+          SMProjRight
+            (y !* SubstHomObjAlgN (S n) ItIsSucc y)
+            (z !* SubstHomObjAlgN (S n) ItIsSucc z)))
+    (nyz <!
+      SMPair
+        (SMProjRight y (SubstHomObjAlgN (S n) ItIsSucc y) <!
+          SMProjLeft
+            (y !* SubstHomObjAlgN (S n) ItIsSucc y)
+            (z !* SubstHomObjAlgN (S n) ItIsSucc z))
+        (SMProjRight z (SubstHomObjAlgN (S n) ItIsSucc z) <!
+          SMProjRight
+            (y !* SubstHomObjAlgN (S n) ItIsSucc y)
+            (z !* SubstHomObjAlgN (S n) ItIsSucc z)))
+
+public export
 soReflectedPair : (x, y, z : SubstObjMu) ->
   SubstMorph ((x !-> y) !* (x !-> z)) (x !-> (y !* z))
 soReflectedPair (InSO SO0) _ _ = SMToTerminal _
@@ -7104,7 +9671,34 @@ soReflectedPair (InSO (w !!* x)) y z =
     xyz = soReflectedPair x y z
     wxyz = soReflectedPair w (x !-> y) (x !-> z)
   in
-  covarYonedaEmbed xyz w <! wxyz
+  contravarYonedaEmbed xyz w <! wxyz
+soReflectedPair (InSO (SOn (S n) {nz=ItIsSucc})) y z = soReflectedPairN n y z
+
+public export
+soReflectedCompose0 : (y, z : SubstObjMu) ->
+  SubstMorph ((y !-> z) !* (SubstN (S Z) !-> y)) (SubstN (S Z) !-> z)
+soReflectedCompose0 y z = soEval y z
+
+public export
+soReflectedComposeN : (n : Nat) -> (y, z : SubstObjMu) ->
+  SubstMorph ((y !-> z) !* (SubstN (S n) !-> y)) (SubstN (S n) !-> z)
+soReflectedComposeN Z y z = soReflectedCompose0 y z
+soReflectedComposeN (S n) y z =
+  let
+    czyz = soReflectedCompose0 y z
+    csyz = soReflectedComposeN n y z
+  in
+  SMPair
+    (czyz <!
+      SMPair
+        (SMProjLeft (y !-> z) (y !* SubstHomObjAlgN (S n) ItIsSucc y))
+        (SMProjLeft y (SubstHomObjAlgN (S n) ItIsSucc y) <!
+         SMProjRight (y !-> z) (y !* SubstHomObjAlgN (S n) ItIsSucc y)))
+    (csyz <!
+      SMPair
+        (SMProjLeft (y !-> z) (y !* SubstHomObjAlgN (S n) ItIsSucc y))
+        (SMProjRight y (SubstHomObjAlgN (S n) ItIsSucc y) <!
+         SMProjRight (y !-> z) (y !* SubstHomObjAlgN (S n) ItIsSucc y)))
 
 public export
 soReflectedCompose : (x, y, z : SubstObjMu) ->
@@ -7128,6 +9722,8 @@ soReflectedCompose (InSO (w !!* x)) y z =
           (SMProjRight _ _ <! SMProjLeft _ _ <! SMProjLeft _ _)
           (SMProjRight _ _ <! SMProjLeft _ _))
         (SMProjRight _ _))
+soReflectedCompose (InSO (SOn (S n) {nz=ItIsSucc})) y z =
+  soReflectedComposeN n y z
 
 public export
 soReflectedPartialApp : (w, x, y, z : SubstObjMu) ->
@@ -7183,6 +9779,14 @@ showSubstHomTerm : {x, y : SubstObjMu} -> SubstHomTerm x y -> String
 showSubstHomTerm {x} {y} = showSubstTerm {x=(x !-> y)}
 
 public export
+substHomTermToFuncN : {n : Nat} -> {y : SubstObjMu} ->
+  SubstHomTerm (SubstN (S n)) y -> (SubstTerm (SubstN (S n)) -> SubstTerm y)
+substHomTermToFuncN {n=Z} {y} t FZ = t
+substHomTermToFuncN {n=(S n)} {y} (tz, ts) FZ = tz
+substHomTermToFuncN {n=(S n)} {y} (tz, ts) (FS k) =
+  substHomTermToFuncN {n} {y} ts k
+
+public export
 substHomTermToFunc : {x, y : SubstObjMu} ->
   SubstHomTerm x y -> (SubstTerm x -> SubstTerm y)
 substHomTermToFunc {x=(InSO SO0)} f t =
@@ -7195,6 +9799,15 @@ substHomTermToFunc {x=(InSO (x !!+ x'))} (f, f') (Right t) =
   substHomTermToFunc f' t
 substHomTermToFunc {x=(InSO (x !!* x'))} f (t, t') =
   substHomTermToFunc {x=x'} {y} (substHomTermToFunc {x} {y=(x' !-> y)} f t) t'
+substHomTermToFunc {x=(InSO (SOn (S n) {nz=ItIsSucc}))} {y} f t =
+  substHomTermToFuncN {n} {y} f t
+
+public export
+substFuncToHomTermN : {n : Nat} -> {y : SubstObjMu} ->
+  (SubstTerm (SubstN (S n)) -> SubstTerm y) -> SubstHomTerm (SubstN (S n)) y
+substFuncToHomTermN {n=Z} {y} f = f FZ
+substFuncToHomTermN {n=(S n)} {y} f =
+  (f FZ, substFuncToHomTermN {n} {y} $ f . FS)
 
 public export
 substFuncToHomTerm : {x, y : SubstObjMu} ->
@@ -7208,6 +9821,8 @@ substFuncToHomTerm {x=(InSO (x !!+ x'))} f =
 substFuncToHomTerm {x=(InSO (x !!* x'))} f =
   substFuncToHomTerm {x} {y=(x' !-> y)} $
     \t => substFuncToHomTerm {x=x'} {y} $ \t' => f (t, t')
+substFuncToHomTerm {x=(InSO (SOn (S n) {nz=ItIsSucc}))} f =
+  substFuncToHomTermN {n} {y} f
 
 public export
 SubstIdTerm : (x : SubstObjMu) -> SubstHomTerm x x
@@ -7299,6 +9914,39 @@ SubstTermToSOTerm (InSO (x !!+ y)) (Right t) =
   SMInjRight x y <! SubstTermToSOTerm y t
 SubstTermToSOTerm (InSO (x !!* y)) (t1, t2) =
   SMPair (SubstTermToSOTerm x t1) (SubstTermToSOTerm y t2)
+SubstTermToSOTerm (InSO (SOn n {nz})) k = SMNConst n {nz} (finToNat k)
+
+public export
+SubstTermToSubstMorph0 : {y : SubstObjMu} ->
+  SubstHomTerm (SubstN (S Z)) y -> SubstMorph (SubstN (S Z)) y
+SubstTermToSubstMorph0 {y} t = soConst $ SubstTermToSOTerm y t
+
+public export
+SubstNCase0 : {n : Nat} -> {y : SubstObjMu} ->
+  -- Zero case
+  SubstTerm y ->
+  -- Non-zero case
+  SubstMorph (SubstN (S n)) y ->
+  -- Result
+  SubstMorph (SubstN (S (S n))) y
+SubstNCase0 {n} {y} t f =
+  SMCase
+    (SMProjLeft y y <! SMProjLeft (y !* y) Subst1)
+    (SMProjRight y y <! SMProjLeft (y !* y) Subst1)
+  <! SMDistrib (y !* y) Subst1 Subst1
+  <!
+  SMPair
+    (SMPair
+      (soConst {x=(SubstN (S (S n)))} (SubstTermToSOTerm y t))
+      (f <! SubstNPred n))
+    (SubstNIsZero (S n))
+
+public export
+SubstTermToSubstMorphN : {n : Nat} -> {y : SubstObjMu} ->
+  SubstHomTerm (SubstN (S n)) y -> SubstMorph (SubstN (S n)) y
+SubstTermToSubstMorphN {n=Z} {y} t = SubstTermToSubstMorph0 {y} t
+SubstTermToSubstMorphN {n=(S n)} {y} (ty, ts) =
+  SubstNCase0 ty $ SubstTermToSubstMorphN {n} {y} ts
 
 public export
 SubstTermToSubstMorph : {x, y : SubstObjMu} ->
@@ -7311,6 +9959,18 @@ SubstTermToSubstMorph {x=(InSO (x !!+ x'))} {y} (t, t') =
   SMCase (SubstTermToSubstMorph t) (SubstTermToSubstMorph t')
 SubstTermToSubstMorph {x=(InSO (x !!* x'))} {y} t =
   soUncurry $ SubstTermToSubstMorph {x} {y=(x' !-> y)} t
+SubstTermToSubstMorph {x=(InSO (SOn (S n) {nz=ItIsSucc}))} {y} t =
+  SubstTermToSubstMorphN {n} {y} t
+
+public export
+finBinOpMod : (Nat -> Nat -> Nat) ->
+  {n : Nat} -> {nz : NonZero n} -> (m, k : Fin n) -> Fin n
+finBinOpMod op {n=(S n)} {nz=ItIsSucc} m k =
+  let
+    res = op (finToNat m) (finToNat k)
+    _ = modLTDivisor res n
+  in
+  natToFinLT $ modNatNZ res (S n) ItIsSucc
 
 public export
 SubstMorphToSubstTerm : {x, y : SubstObjMu} ->
@@ -7329,6 +9989,39 @@ SubstMorphToSubstTerm (SMPair f g) =
 SubstMorphToSubstTerm (SMProjLeft x y) = SubstProjLeftTerm x y
 SubstMorphToSubstTerm (SMProjRight x y) = SubstProjRightTerm x y
 SubstMorphToSubstTerm (SMDistrib x y z) = SubstDistribTerm x y z
+SubstMorphToSubstTerm (SMNInj (S m) (S n)
+  {m_nz=ItIsSucc} {n_nz=ItIsSucc}) =
+    substFuncToHomTerm {x=(SubstN (S m))} {y=(SubstN (S n))} $
+      \k =>
+        let
+          k' = finToNat k
+          _ = modLTDivisor k' n
+        in
+        natToFinLT $ modNatNZ k' (S n) ItIsSucc
+SubstMorphToSubstTerm (SMNConst (S n) k {nz=ItIsSucc}) =
+  substFuncToHomTerm {x=(SubstN 1)} {y=(SubstN (S n))} $
+    \FZ => let _ = modLTDivisor k n in natToFinLT $ modNatNZ k (S n) ItIsSucc
+SubstMorphToSubstTerm (SMNAdd (S n) {nz=ItIsSucc}) =
+  substFuncToHomTerm {x=(SubstN (S n) !* (SubstN (S n)))} {y=(SubstN (S n))} $
+    \(k, p) => finBinOpMod {n=(S n)} {nz=ItIsSucc} (+) k p
+SubstMorphToSubstTerm (SMNMult (S n) {nz=ItIsSucc}) =
+  substFuncToHomTerm {x=(SubstN (S n) !* (SubstN (S n)))} {y=(SubstN (S n))} $
+    \(k, p) => finBinOpMod {n=(S n)} {nz=ItIsSucc} (*) k p
+SubstMorphToSubstTerm (SMNSub (S n) {nz=ItIsSucc}) =
+  substFuncToHomTerm {x=(SubstN (S n) !* (SubstN (S n)))} {y=(SubstN (S n))} $
+    \(k, p) => finBinOpMod {n=(S n)} {nz=ItIsSucc} minus k p
+SubstMorphToSubstTerm (SMNDiv (S n) {nz=ItIsSucc}) =
+  substFuncToHomTerm {x=(SubstN (S n) !* (SubstN (S n)))} {y=(SubstN (S n))} $
+    \(k, p) => finBinOpMod {n=(S n)} {nz=ItIsSucc} div k p
+SubstMorphToSubstTerm (SMNMod (S n) {nz=ItIsSucc}) =
+  substFuncToHomTerm {x=(SubstN (S n) !* (SubstN (S n)))} {y=(SubstN (S n))} $
+    \(k, p) => finBinOpMod {n=(S n)} {nz=ItIsSucc} mod k p
+SubstMorphToSubstTerm (SMNEq (S n) {nz=ItIsSucc}) =
+  substFuncToHomTerm {x=(SubstN (S n) !* (SubstN (S n)))} {y=SubstBool} $
+    \(k, p) => case k == p of False => Left () ; True => Right ()
+SubstMorphToSubstTerm (SMNLt (S n) {nz=ItIsSucc}) =
+  substFuncToHomTerm {x=(SubstN (S n) !* (SubstN (S n)))} {y=SubstBool} $
+    \(k, p) => case k < p of False => Left () ; True => Right ()
 
 public export
 SOTermToSubstTerm : (x : SubstObjMu) -> SOTerm x -> SubstTerm x
@@ -7401,10 +10094,6 @@ soTuple {n=(S (S n))} {x} {v=(y :: (y' :: ys))} (m :: (m' :: ms)) =
 ------------------
 
 public export
-SubstBool : SubstObjMu
-SubstBool = Subst1 !+ Subst1
-
-public export
 SFalse : SOTerm SubstBool
 SFalse = SMInjLeft _ _
 
@@ -7442,7 +10131,7 @@ public export
 SHigherIfElse : {x, y : SubstObjMu} ->
   SubstMorph x SubstBool -> SubstMorph x y -> SubstMorph x y -> SubstMorph x y
 SHigherIfElse {x} {y} b t f =
-  soEval x y <! SMPair (SMCase (MorphAsTerm t) (MorphAsTerm f) <! b) (SMId x)
+  soEval x y <! SMPair (SMCase (MorphAsTerm f) (MorphAsTerm t) <! b) (SMId x)
 
 public export
 SEqual : (x : SubstObjMu) -> SubstMorph (x !* x) SubstBool
@@ -7462,6 +10151,7 @@ SEqual (InSO (x !!* y)) =
       (SEqual y <! SMPair
         (SMProjRight _ _ <! SMProjLeft _ _)
         (SMProjRight _ _ <! SMProjRight _ _))
+SEqual (InSO (SOn (S n) {nz})) = SMNEq (S n) {nz}
 
 public export
 SEqualF : {x, y : SubstObjMu} -> (f, g : SubstMorph x y) ->
@@ -7737,6 +10427,7 @@ MetaSOTypeAlg SO0 = Void
 MetaSOTypeAlg SO1 = Unit
 MetaSOTypeAlg (p !!+ q) = Either p q
 MetaSOTypeAlg (p !!* q) = Pair p q
+MetaSOTypeAlg (SOn (S n) {nz}) = Fin (S n)
 
 public export
 MetaSOType : SubstObjMu -> Type
@@ -7748,6 +10439,7 @@ MetaSOShowTypeAlg SO0 = "Void"
 MetaSOShowTypeAlg SO1 = "Unit"
 MetaSOShowTypeAlg (p !!+ q) = "Either (" ++ p ++ ") (" ++ q ++ ")"
 MetaSOShowTypeAlg (p !!* q) = "Pair (" ++ p ++ ") (" ++ q ++ ")"
+MetaSOShowTypeAlg (SOn n {nz}) = "Fin (" ++ show n ++ ")"
 
 public export
 metaSOShowType : SubstObjMu -> String
@@ -7806,7 +10498,7 @@ SubstMorphADTSig : Type
 SubstMorphADTSig = (SubstObjMu, SubstObjMu)
 
 public export
-SubstMorphADTPFAlgCheckSig : SubstMorphADTPFAlg (Maybe SubstMorphADTSig)
+0 SubstMorphADTPFAlgCheckSig : SubstMorphADTPFAlg (Maybe SubstMorphADTSig)
 SubstMorphADTPFAlgCheckSig (SMAPFrom0 x) d = Just (Subst0, x)
 SubstMorphADTPFAlgCheckSig SMAPId1 d = Just (Subst1, Subst1)
 SubstMorphADTPFAlgCheckSig (SMAPCopTo1 x y) d = Just (x !+ y, Subst1)
@@ -7863,7 +10555,7 @@ SubstMorphADTAlg : Type -> Type
 SubstMorphADTAlg x = SubstMorphADTF x -> Maybe x
 
 public export
-substMorphADTCata : SubstMorphADTAlg x -> SubstMorphADT -> Maybe x
+0 substMorphADTCata : SubstMorphADTAlg x -> SubstMorphADT -> Maybe x
 substMorphADTCata alg (InSM x) = ?substMorphADTCata_hole
 
 public export
@@ -7889,434 +10581,8 @@ SMADTCheckSigAlg (SMAAssoc x y z (d, c)) =
   if d == (x !* y) !* z then Just (x !* (y !* z), c) else Nothing
 
 public export
-smadtCheckSig : SubstMorphADT -> Maybe (SubstObjMu, SubstObjMu)
+0 smadtCheckSig : SubstMorphADT -> Maybe (SubstObjMu, SubstObjMu)
 smadtCheckSig = substMorphADTCata SMADTCheckSigAlg
-
--------------------------------------------------------------
--------------------------------------------------------------
----- Natural numbers as objects representing finite sets ----
--------------------------------------------------------------
--------------------------------------------------------------
-
--- Define and translate two ways of interpreting natural numbers.
-
----------------------------------------
----- Bounded unary natural numbers ----
----------------------------------------
-
--- First, as coproducts of Unit.  As such, they are the first non-trivial
--- objects that can be formed in a category which is inductively defined as
--- the smallest one containing only (all) finite coproducts and finite products.
--- In this form, they are unary natural numbers, often suited as indexes.
-
-public export
-BUNat : Nat -> Type
-BUNat Z = Void
-BUNat (S n) = Either Unit (BUNat n)
-
-public export
-BUNatDepAlg :
-  {0 p : (n : Nat) -> BUNat n -> Type} ->
-  ((n : Nat) -> p (S n) (Left ())) ->
-  ((n : Nat) ->
-   ((bu : BUNat n) -> p n bu) ->
-   (bu : BUNat n) -> p (S n) (Right bu)) ->
-  NatDepAlgebra (\n => (bu : BUNat n) -> p n bu)
-BUNatDepAlg {p} z s =
-  (\bu => void bu,
-   \n, hyp, bu => case bu of
-    Left () => z n
-    Right bu' => s n hyp bu')
-
-public export
-buNatDepCata :
-  {0 p : (n : Nat) -> BUNat n -> Type} ->
-  ((n : Nat) -> p (S n) (Left ())) ->
-  ((n : Nat) ->
-   ((bu : BUNat n) -> p n bu) ->
-   (bu : BUNat n) -> p (S n) (Right bu)) ->
-  (n : Nat) -> (bu : BUNat n) -> p n bu
-buNatDepCata {p} z s = natDepCata (BUNatDepAlg {p} z s)
-
---------------------------------------------
----- Bounded arithmetic natural numbers ----
---------------------------------------------
-
--- Second, as bounds, which allow us to do bounded arithmetic,
--- or arithmetic modulo a given number.
-
-public export
-BoundedBy : Nat -> DecPred Nat
-BoundedBy = gt
-
-public export
-NotBoundedBy : Nat -> DecPred Nat
-NotBoundedBy = not .* BoundedBy
-
-public export
-IsBoundedBy : Nat -> Nat -> Type
-IsBoundedBy = Satisfies . BoundedBy
-
-public export
-BANat : (0 _ : Nat) -> Type
-BANat n = Refinement {a=Nat} (BoundedBy n)
-
-public export
-MkBANat : {0 n : Nat} -> (m : Nat) -> {auto 0 satisfies : IsBoundedBy n m} ->
-  BANat n
-MkBANat = MkRefinement
-
-public export
-baS : {0 n : Nat} -> BANat n -> BANat (S n)
-baS (Element0 m lt) = Element0 (S m) lt
-
-public export
-baShowLong : {n : Nat} -> BANat n -> String
-baShowLong {n} m = show m ++ "[<" ++ show n ++ "]"
-
-public export
-baNatDepCata :
-  {0 p : (n : Nat) -> BANat n -> Type} ->
-  ((n : Nat) -> p (S n) (Element0 0 Refl)) ->
-  ((n : Nat) ->
-   ((ba : BANat n) -> p n ba) ->
-   (ba : BANat n) -> p (S n) (baS {n} ba)) ->
-  (n : Nat) -> (ba : BANat n) -> p n ba
-baNatDepCata {p} z s =
-  natDepCata {p=(\n' => (ba' : BANat n') -> p n' ba')}
-    (\ba => case ba of Element0 ba' Refl impossible,
-     \n, hyp, ba => case ba of
-      Element0 Z lt => rewrite uip {eq=lt} {eq'=Refl} in z n
-      Element0 (S ba') lt => s n hyp (Element0 ba' lt))
-
--------------------------------------------------------------------
----- Translation between unary and arithmetic bounded naturals ----
--------------------------------------------------------------------
-
-public export
-u2a : {n : Nat} -> BUNat n -> BANat n
-u2a {n=Z} v = void v
-u2a {n=(S n)} (Left ()) = Element0 0 Refl
-u2a {n=(S n)} (Right bu) with (u2a bu)
-  u2a {n=(S n)} (Right bu) | Element0 bu' lt = Element0 (S bu') lt
-
-public export
-a2u : {n : Nat} -> BANat n -> BUNat n
-a2u {n=Z} (Element0 ba Refl) impossible
-a2u {n=(S n)} (Element0 Z lt) = Left ()
-a2u {n=(S n)} (Element0 (S ba) lt) = Right $ a2u $ Element0 ba lt
-
-public export
-u2a2u_correct : {n : Nat} -> {bu : BUNat n} -> bu = a2u {n} (u2a {n} bu)
-u2a2u_correct {n=Z} {bu} = void bu
-u2a2u_correct {n=(S n)} {bu=(Left ())} = Refl
-u2a2u_correct {n=(S n)} {bu=(Right bu)} with (u2a bu) proof eq
-  u2a2u_correct {n=(S n)} {bu=(Right bu)} | Element0 m lt =
-    rewrite (sym eq) in cong Right $ u2a2u_correct {n} {bu}
-
-public export
-a2u2a_fst_correct : {n : Nat} -> {ba : BANat n} ->
-  fst0 ba = fst0 (u2a {n} (a2u {n} ba))
-a2u2a_fst_correct {n=Z} {ba=(Element0 ba Refl)} impossible
-a2u2a_fst_correct {n=(S n)} {ba=(Element0 Z lt)} = Refl
-a2u2a_fst_correct {n=(S n)} {ba=(Element0 (S ba) lt)}
-  with (u2a (a2u (Element0 ba lt))) proof p
-    a2u2a_fst_correct {n=(S n)} {ba=(Element0 (S ba) lt)} | Element0 ba' lt' =
-      cong S $ trans (a2u2a_fst_correct {ba=(Element0 ba lt)}) $ cong fst0 p
-
-public export
-a2u2a_correct : {n : Nat} -> {ba : BANat n} -> ba = u2a {n} (a2u {n} ba)
-a2u2a_correct {n} {ba} = refinementFstEq $ a2u2a_fst_correct {n} {ba}
-
-public export
-MkBUNat : {n : Nat} -> (m : Nat) -> {auto 0 satisfies : IsBoundedBy n m} ->
-  BUNat n
-MkBUNat m {satisfies} = a2u (MkBANat m {satisfies})
-
-public export
-up2a : {n : Nat} -> (BUNat n -> Type) -> BANat n -> Type
-up2a p ba = p (a2u ba)
-
-public export
-ap2u : {n : Nat} -> (BANat n -> Type) -> BUNat n -> Type
-ap2u p bu = p (u2a bu)
-
-public export
-up2a_rewrite : {0 n : Nat} -> {0 p : BUNat n -> Type} ->
-  {0 bu : BUNat n} -> p bu -> up2a {n} p (u2a {n} bu)
-up2a_rewrite {p} t = replace {p} u2a2u_correct t
-
-public export
-ap2u_rewrite : {0 n : Nat} -> {0 p : BANat n -> Type} ->
-  {0 ba : BANat n} -> p ba -> ap2u {n} p (a2u {n} ba)
-ap2u_rewrite {p} t = replace {p} a2u2a_correct t
-
-----------------------------------------
----- Bounded-natural-number objects ----
-----------------------------------------
-
--- The bounded natural numbers can be interpreted as a category whose
--- objects are simply natural numbers (which give the bounds) and whose
--- morphisms are the polynomial circuit operations modulo the bounds.
--- An object is therefore specified simply by a natural number, and
--- interpreted as a Nat-bounded set.
-
-public export
-BNCatObj : Type
-BNCatObj = Nat
-
--- We can interpret objects of the natural-number-bounded category as
--- bounded unary representations of Nat.
-public export
-bncInterpU : BNCatObj -> Type
-bncInterpU = BUNat
-
--- We can also interpreted a `BNCatObj` as an arithmetic Nat-bounded set.
--- bounded unary representations of Nat.
-public export
-bncObjA : (0 _ : BNCatObj) -> Type
-bncObjA = BANat
-
--- The simplest morphisms of the Nat-bounded-set category are specified
--- by spelling out, for each term of the domain, which term of the codomain
--- it maps to.
-public export
-BNCListMorph : Type
-BNCListMorph = List Nat
-
--- For a given BNCListMorph, we can check whether it is a valid morphism
--- between a given pair of objects.
-public export
-checkVBNCLM : BNCatObj -> BNCatObj -> DecPred BNCListMorph
-checkVBNCLM Z _ [] = True
-checkVBNCLM Z _ (_ :: _) = False
-checkVBNCLM (S _) _ [] = False
-checkVBNCLM (S m') n (k :: ks) = BoundedBy n k && checkVBNCLM m' n ks
-
-public export
-isVBNCLM : BNCatObj -> BNCatObj -> BNCListMorph -> Type
-isVBNCLM = Satisfies .* checkVBNCLM
-
--- Given a pair of objects, we can define a type dependent on those
--- objects representing just those BNCListMorphs which are valid
--- morphisms between those particular objects.
-
-public export
-VBNCLM : BNCatObj -> BNCatObj -> Type
-VBNCLM m n = Refinement {a=BNCListMorph} $ checkVBNCLM m n
-
-public export
-MkVBNCLM : {0 m, n : BNCatObj} -> (l : BNCListMorph) ->
-  {auto 0 satisfies : isVBNCLM m n l} -> VBNCLM m n
-MkVBNCLM l {satisfies} = MkRefinement l {satisfies}
-
--- We can interpret a valid list-specified morphism as a function
--- of the metalanguage.
-public export
-bncLMA : {m, n : BNCatObj} -> VBNCLM m n -> BANat m -> BANat n
-bncLMA {m=Z} {n} (Element0 [] kvalid) (Element0 p pvalid) = exfalsoFT pvalid
-bncLMA {m=(S _)} {n} (Element0 [] kvalid) vp = exfalsoFT kvalid
-bncLMA {m=(S m)} {n} (Element0 (k :: ks) kvalid) (Element0 Z pvalid) =
-  Element0 k (andLeft kvalid)
-bncLMA {m=(S m)} {n} (Element0 (k :: ks) kvalid) (Element0 (S p) pvalid) =
-  bncLMA {m} {n} (Element0 ks (andRight kvalid)) (Element0 p pvalid)
-
--- Utility function for applying a bncLMA to a Nat that can be
--- validated at compile time as satisfying the bounds.
-public export
-bncLMAN : {m, n : BNCatObj} -> VBNCLM m n -> (k : Nat) ->
-  {auto 0 satisfies : IsBoundedBy m k} -> BANat n
-bncLMAN lm k {satisfies} = bncLMA lm $ MkBANat k {satisfies}
-
--- Utility function for applying bncLMAN and then forgetting the
--- constraint on the output.
-public export
-bncLMANN : {m, n : BNCatObj} -> VBNCLM m n -> (k : Nat) ->
-  {auto 0 satisfies : IsBoundedBy m k} -> Nat
-bncLMANN l k {satisfies} = fst0 $ bncLMAN l k {satisfies}
-
--- Another class of morphism in the category of bounded arithmetic
--- natural numbers is the polynomial functions -- constants, addition,
--- multiplication.  Because we are so far defining only a "single-variable"
--- category, we can make all such morphisms valid (as opposed to invalid if
--- they fail bound checks) by performing the arithmetic modulo the sizes
--- of the domain and codomain.
-
--- Thus we can in particular interpret any metalanguage function on the
--- natural numbers as a function from any BANat object to any non-empty
--- BANat object by post-composing with modulus.
-
-public export
-metaToNatToBNC : {n : Nat} -> (Integer -> Integer) -> Nat -> BANat (S n)
-metaToNatToBNC {n} f k =
-  let
-    k' = natToInteger k
-    fk = integerToNat $ f k'
-  in
-  Element0 (modNatNZ fk (S n) SIsNonZero) (modLtDivisor fk n)
-
-public export
-metaToBNCToBNC : {m, n : Nat} -> (Integer -> Integer) -> BANat m -> BANat (S n)
-metaToBNCToBNC f (Element0 k _) = metaToNatToBNC {n} f k
-
--- Object-language representation of polynomial morphisms.
-
-prefix 11 #|
-infixr 8 #+
-infix 8 #-
-infixr 9 #*
-infix 9 #/
-infix 9 #%
-infixr 2 #.
-
-public export
-data BNCPolyM : Type where
-  -- Polynomial operations --
-
-  -- Constant
-  (#|) : Nat -> BNCPolyM
-
-  -- Identity
-  PI : BNCPolyM
-
-  -- Compose
-  (#.) : BNCPolyM -> BNCPolyM -> BNCPolyM
-
-  -- Add
-  (#+) : BNCPolyM -> BNCPolyM -> BNCPolyM
-
-  -- Multiply
-  (#*) : BNCPolyM -> BNCPolyM -> BNCPolyM
-
-  -- Inverse operations --
-
-  -- Subtract
-  (#-) : BNCPolyM -> BNCPolyM -> BNCPolyM
-
-  -- Divide (division by zero returns zero)
-  (#/) : BNCPolyM -> BNCPolyM -> BNCPolyM
-
-  -- Modulus (modulus by zero returns zero)
-  (#%) : BNCPolyM -> BNCPolyM -> BNCPolyM
-
-  -- Branch operation(s)
-
-  -- Compare with zero: equal takes first branch; not-equal takes second branch
-  IfZero : BNCPolyM -> BNCPolyM -> BNCPolyM -> BNCPolyM
-
-  -- If the first argument is strictly less than the second, then
-  -- take the first branch (which is the third argument); otherwise,
-  -- take the second branch (which is the fourth argument)
-  IfLT : BNCPolyM -> BNCPolyM -> BNCPolyM -> BNCPolyM -> BNCPolyM
-
-public export
-record BNCPolyMAlg (0 a : BNCPolyM -> Type) where
-  constructor MkBNCPolyAlg
-  bncaConst : (n : Nat) -> a (#| n)
-  bncaId : a PI
-  bncaCompose : (q, p : BNCPolyM) -> a q -> a p -> a (q #. p)
-  bncaAdd : (p, q : BNCPolyM) -> a p -> a q -> a (p #+ q)
-  bncaMul : (p, q : BNCPolyM) -> a p -> a q -> a (p #* q)
-  bncaSub : (p, q : BNCPolyM) -> a p -> a q -> a (p #- q)
-  bncaDiv : (p, q : BNCPolyM) -> a p -> a q -> a (p #/ q)
-  bncaMod : (p, q : BNCPolyM) -> a p -> a q -> a (p #% q)
-  bncaIfZ : (p, q, r : BNCPolyM) -> a p -> a q -> a r -> a (IfZero p q r)
-  bncaIfLT :
-     (p, q, r, s : BNCPolyM) -> a p -> a q -> a r -> a s -> a (IfLT p q r s)
-
-public export
-bncPolyMInd : {0 a : BNCPolyM -> Type} -> BNCPolyMAlg a -> (p : BNCPolyM) -> a p
-bncPolyMInd alg (#| k) = bncaConst alg k
-bncPolyMInd alg PI = bncaId alg
-bncPolyMInd alg (q #. p) =
-  bncaCompose alg q p (bncPolyMInd alg q) (bncPolyMInd alg p)
-bncPolyMInd alg (p #+ q) =
-  bncaAdd alg p q (bncPolyMInd alg p) (bncPolyMInd alg q)
-bncPolyMInd alg (p #* q) =
-  bncaMul alg p q (bncPolyMInd alg p) (bncPolyMInd alg q)
-bncPolyMInd alg (p #- q) =
-  bncaSub alg p q (bncPolyMInd alg p) (bncPolyMInd alg q)
-bncPolyMInd alg (p #/ q) =
-  bncaDiv alg p q (bncPolyMInd alg p) (bncPolyMInd alg q)
-bncPolyMInd alg (p #% q) =
-  bncaMod alg p q (bncPolyMInd alg p) (bncPolyMInd alg q)
-bncPolyMInd alg (IfZero p q r) =
-  bncaIfZ alg p q r (bncPolyMInd alg p) (bncPolyMInd alg q) (bncPolyMInd alg r)
-bncPolyMInd alg (IfLT p q r s) =
-  bncaIfLT alg p q r s
-    (bncPolyMInd alg p) (bncPolyMInd alg q)
-    (bncPolyMInd alg r) (bncPolyMInd alg s)
-
-public export
-showInfix : (is, ls, rs : String) -> String
-showInfix is ls rs = "(" ++ ls ++ ") " ++ is ++ " (" ++ rs ++ ")"
-
-public export
-const2ShowInfix : {0 a, b : Type} ->
-  (is : String) -> a -> b -> (ls, rs : String) -> String
-const2ShowInfix is _ _ = showInfix is
-
-public export
-BNCPMshowAlg : BNCPolyMAlg (const String)
-BNCPMshowAlg = MkBNCPolyAlg
-  show
-  "PI"
-  (const2ShowInfix ".")
-  (const2ShowInfix "+")
-  (const2ShowInfix "*")
-  (const2ShowInfix "-")
-  (const2ShowInfix "/")
-  (const2ShowInfix "%")
-  (\_, _, _, ps, qs, rs =>
-    "(" ++ ps ++ " == 0 ? " ++ qs ++ " : " ++ rs ++ ")")
-  (\_, _, _, _, ps, qs, rs, ss =>
-    "(" ++ ps ++ " < " ++ qs ++ " ? " ++ rs ++ " : " ++ ss ++ ")")
-
-public export
-Show BNCPolyM where
-  show  = bncPolyMInd BNCPMshowAlg
-
-public export
-P0 : BNCPolyM
-P0 = #| 0
-
-public export
-P1 : BNCPolyM
-P1 = #| 1
-
-public export
-powerAcc : BNCPolyM -> Nat -> BNCPolyM -> BNCPolyM
-powerAcc p Z acc = acc
-powerAcc p (S n) acc = powerAcc p n (p #* acc)
-
-infixl 10 #^
-public export
-(#^) : BNCPolyM -> Nat -> BNCPolyM
-(#^) p n = powerAcc p n P1
-
--- Interpret a BNCPolyM into the metalanguage.
-public export
-MetaBNCPolyMAlg : BNCPolyMAlg (\_ => Integer -> Integer)
-MetaBNCPolyMAlg = MkBNCPolyAlg
-  (\n, _ => natToInteger n)
-  id
-  (\q, p, qf, pf, k => qf (pf k))
-  (\p, q, pf, qf, k => pf k + qf k)
-  (\p, q, pf, qf, k => pf k * qf k)
-  (\p, q, pf, qf, k => pf k - qf k)
-  (\p, q, pf, qf, k => divWithZtoZ (pf k) (qf k))
-  (\p, q, pf, qf, k => modWithZtoZ (pf k) (qf k))
-  (\p, q, r, pf, qf, rf, k => if pf k == 0 then qf k else rf k)
-  (\p, q, r, s, pf, qf, rf, sf, k => if pf k < qf k then rf k else sf k)
-
-public export
-metaBNCPolyM : (modpred : Integer) -> BNCPolyM -> Integer -> Integer
-metaBNCPolyM modpred p n = modSucc (bncPolyMInd MetaBNCPolyMAlg p n) modpred
-
--- Interpret a BNCPolyM as a function between BANat objects.
-public export
-baPolyM : {m, n : Nat} -> BNCPolyM -> BANat m -> BANat (S n)
-baPolyM {n} p = metaToBNCToBNC (metaBNCPolyM (natToInteger n) p)
 
 ----------------------------------------------------------------------
 ----------------------------------------------------------------------
@@ -8327,6 +10593,16 @@ baPolyM {n} p = metaToBNCToBNC (metaBNCPolyM (natToInteger n) p)
 public export
 substObjToNat : SubstObjMu -> Nat
 substObjToNat = substObjCard
+
+-- Given a binary operation and a non-zero natural number size, produce
+-- a binary operation on an input which is assumed to be a product.
+--
+-- We implement this by applying the operation to the left and right
+-- projections.
+public export
+substMorphBinOpToBNC : (BNCPolyM -> BNCPolyM -> BNCPolyM) ->
+  (n : Nat) -> (0 _ : NonZero n) -> BNCPolyM
+substMorphBinOpToBNC op (S n) ItIsSucc = op (PI #/ #| (S n)) (PI #% #| (S n))
 
 public export
 substMorphToBNC : {x, y : SubstObjMu} -> SubstMorph x y -> BNCPolyM
@@ -8377,6 +10653,19 @@ substMorphToBNC {x=(x' !* (y' !+ z'))} {y=((x' !* y') !+ (x' !* z'))}
       IfLT yzin (#| cy)
         (#| cy #* xin #+ yzin)
         (#| cz #* xin #+ (yzin #- #| cy) #+ #| (cx * cy))
+substMorphToBNC (SMNInj m n {m_nz} {n_nz}) = PI #% #| n
+substMorphToBNC (SMNConst n k {nz}) = #| (modNatNZ k n nz)
+substMorphToBNC (SMNAdd n {nz}) = substMorphBinOpToBNC (#+) n nz
+substMorphToBNC (SMNMult n {nz}) = substMorphBinOpToBNC (#*) n nz
+substMorphToBNC (SMNSub n {nz}) = substMorphBinOpToBNC (#-) n nz
+substMorphToBNC (SMNDiv n {nz}) = substMorphBinOpToBNC (#/) n nz
+substMorphToBNC (SMNMod n {nz}) = substMorphBinOpToBNC (#%) n nz
+substMorphToBNC (SMNEq n {nz}) =
+  -- We implement testing `f = g` as `if (isZero (f - g))`.
+  -- The return value is just a boolean (true is 1; false is 0).
+  substMorphBinOpToBNC (\f, g => IfZero (f #- g) (#| 1) (#| 0)) n nz
+substMorphToBNC (SMNLt n {nz}) =
+  substMorphBinOpToBNC (\f, g => IfLT f g (#| 1) (#| 0)) n nz
 
 public export
 substMorphToFunc : {a, b : SubstObjMu} -> SubstMorph a b -> Integer -> Integer
@@ -8406,6 +10695,7 @@ natToSubstTerm (InSO (x !!* y)) n = do
   xt <- natToSubstTerm x xn
   yt <- natToSubstTerm y yn
   Just $ SMPair xt yt
+natToSubstTerm (InSO (SOn n {nz})) m = Just $ SMNConst n {nz} m
 
 public export
 NatToSubstTerm : (a : SubstObjMu) -> (n : Nat) ->
@@ -8526,6 +10816,69 @@ data Checked_STLC_Term : SOMu_Context -> SubstObjMu -> Type where
     {ctx : SOMu_Context} -> {i : Nat} -> {auto ok : InBounds i ctx} ->
     Checked_STLC_Term ctx (index i ctx {ok})
 
+  -- Cast (Fin m) to (Fin n)
+  Checked_STLC_NInj :
+    {ctx : SOMu_Context} -> {m, n : Nat} ->
+    {auto 0 m_nz : NonZero m} ->
+    {auto 0 n_nz : NonZero n} ->
+    Checked_STLC_Term ctx (SubstN m) ->
+    Checked_STLC_Term ctx (SubstN n)
+
+  Checked_STLC_NConst :
+    {ctx : SOMu_Context} -> {n : Nat} ->
+    {auto 0 nz : NonZero n} ->
+    Checked_STLC_Term ctx (SubstN n) ->
+    Checked_STLC_Term ctx (SubstN n)
+
+  Checked_STLC_NAdd :
+    {ctx : SOMu_Context} -> {n : Nat} ->
+    {auto 0 nz : NonZero n} ->
+    Checked_STLC_Term ctx (SubstN n) ->
+    Checked_STLC_Term ctx (SubstN n) ->
+    Checked_STLC_Term ctx (SubstN n)
+
+  Checked_STLC_NMult :
+    {ctx : SOMu_Context} -> {n : Nat} ->
+    {auto 0 nz : NonZero n} ->
+    Checked_STLC_Term ctx (SubstN n) ->
+    Checked_STLC_Term ctx (SubstN n) ->
+    Checked_STLC_Term ctx (SubstN n)
+
+  Checked_STLC_NSub :
+    {ctx : SOMu_Context} -> {n : Nat} ->
+    {auto 0 nz : NonZero n} ->
+    Checked_STLC_Term ctx (SubstN n) ->
+    Checked_STLC_Term ctx (SubstN n) ->
+    Checked_STLC_Term ctx (SubstN n)
+
+  Checked_STLC_NDiv :
+    {ctx : SOMu_Context} -> {n : Nat} ->
+    {auto 0 nz : NonZero n} ->
+    Checked_STLC_Term ctx (SubstN n) ->
+    Checked_STLC_Term ctx (SubstN n) ->
+    Checked_STLC_Term ctx (SubstN n)
+
+  Checked_STLC_NMod :
+    {ctx : SOMu_Context} -> {n : Nat} ->
+    {auto 0 nz : NonZero n} ->
+    Checked_STLC_Term ctx (SubstN n) ->
+    Checked_STLC_Term ctx (SubstN n) ->
+    Checked_STLC_Term ctx (SubstN n)
+
+  Checked_STLC_NEq :
+    {ctx : SOMu_Context} -> {n : Nat} ->
+    {auto 0 nz : NonZero n} ->
+    Checked_STLC_Term ctx (SubstN n) ->
+    Checked_STLC_Term ctx (SubstN n) ->
+    Checked_STLC_Term ctx SubstBool
+
+  Checked_STLC_NLt :
+    {ctx : SOMu_Context} -> {n : Nat} ->
+    {auto 0 nz : NonZero n} ->
+    Checked_STLC_Term ctx (SubstN n) ->
+    Checked_STLC_Term ctx (SubstN n) ->
+    Checked_STLC_Term ctx SubstBool
+
 public export
 Checked_Closed_STLC_Function : SubstObjMu -> SubstObjMu -> Type
 Checked_Closed_STLC_Function x y = Checked_STLC_Term [] (x !-> y)
@@ -8540,7 +10893,7 @@ stlcCtxProj :
   SubstMorph (stlcCtxToSOMu ctx) (index n ctx {ok})
 stlcCtxProj (ty :: ctx) Z {ok=InFirst} =
   SMProjLeft ty (stlcCtxToSOMu ctx)
-stlcCtxProj (ty :: ctx) Z {ok=InLater} impossible
+stlcCtxProj (ty :: ctx) Z {ok=(InLater ok)} impossible
 stlcCtxProj (ty :: ctx) (S n) {ok=InFirst} impossible
 stlcCtxProj (ty :: ctx) (S n) {ok=(InLater ok)} =
   stlcCtxProj ctx n {ok} <! SMProjRight ty (stlcCtxToSOMu ctx)
@@ -8583,6 +10936,47 @@ compileCheckedTerm {ctx} {ty=cod} (Checked_STLC_App {dom} {cod} f x) =
 compileCheckedTerm
   {ctx} {ty=(index i ctx {ok})} (Checked_STLC_Var {ctx} {i} {ok}) =
     stlcCtxProj ctx i {ok}
+compileCheckedTerm {ctx} {ty=(InSO (SOn n {nz=n_nz}))}
+  (Checked_STLC_NInj {ctx} {m} {n} {m_nz} {n_nz} k) =
+    SMNInj m n <! (compileCheckedTerm {ctx} {ty=(SubstN m {nz=m_nz})} k)
+compileCheckedTerm {ctx} {ty=(InSO (SOn n {nz}))}
+  (Checked_STLC_NConst {ctx} {n} {nz} k) =
+    compileCheckedTerm {ctx} {ty=(SubstN n {nz})} k
+compileCheckedTerm {ctx} {ty=(InSO (SOn n {nz}))}
+  (Checked_STLC_NAdd {ctx} {n} {nz} m k) =
+    SMNAdd n {nz} <! SMPair
+      (compileCheckedTerm {ctx} {ty=(SubstN n {nz=nz})} k)
+      (compileCheckedTerm {ctx} {ty=(SubstN n {nz=nz})} m)
+compileCheckedTerm {ctx} {ty=(InSO (SOn n {nz}))}
+  (Checked_STLC_NMult {ctx} {n} {nz} m k) =
+    SMNMult n {nz} <! SMPair
+      (compileCheckedTerm {ctx} {ty=(SubstN n {nz=nz})} k)
+      (compileCheckedTerm {ctx} {ty=(SubstN n {nz=nz})} m)
+compileCheckedTerm {ctx} {ty=(InSO (SOn n {nz}))}
+  (Checked_STLC_NSub {ctx} {n} {nz} m k) =
+    SMNSub n {nz} <! SMPair
+      (compileCheckedTerm {ctx} {ty=(SubstN n {nz=nz})} k)
+      (compileCheckedTerm {ctx} {ty=(SubstN n {nz=nz})} m)
+compileCheckedTerm {ctx} {ty=(InSO (SOn n {nz}))}
+  (Checked_STLC_NDiv {ctx} {n} {nz} m k) =
+    SMNDiv n {nz} <! SMPair
+      (compileCheckedTerm {ctx} {ty=(SubstN n {nz=nz})} k)
+      (compileCheckedTerm {ctx} {ty=(SubstN n {nz=nz})} m)
+compileCheckedTerm {ctx} {ty=(InSO (SOn n {nz}))}
+  (Checked_STLC_NMod {ctx} {n} {nz} m k) =
+    SMNMod n {nz} <! SMPair
+      (compileCheckedTerm {ctx} {ty=(SubstN n {nz=nz})} k)
+      (compileCheckedTerm {ctx} {ty=(SubstN n {nz=nz})} m)
+compileCheckedTerm {ctx} {ty=SubstBool}
+  (Checked_STLC_NEq {ctx} {n} {nz} m k) =
+    SMNEq n {nz} <! SMPair
+      (compileCheckedTerm {ctx} {ty=(SubstN n {nz=nz})} k)
+      (compileCheckedTerm {ctx} {ty=(SubstN n {nz=nz})} m)
+compileCheckedTerm {ctx} {ty=SubstBool}
+  (Checked_STLC_NLt {ctx} {n} {nz} m k) =
+    SMNLt n {nz} <! SMPair
+      (compileCheckedTerm {ctx} {ty=(SubstN n {nz=nz})} k)
+      (compileCheckedTerm {ctx} {ty=(SubstN n {nz=nz})} m)
 
 public export
 data STLC_Term : Type where
@@ -9174,7 +11568,7 @@ finSubstEvalMorph x y = snd $ snd $ snd $ FinSubstHomDepthObjEval x y
 ------------------------------------
 
 public export
-FSToBANatMorph : {0 cx, dx, cy, dy : Nat} ->
+0 FSToBANatMorph : {0 cx, dx, cy, dy : Nat} ->
   {0 depth : Nat} -> {dom : FinSubstT cx dx} -> {cod : FinSubstT cy dy} ->
   FinSubstMorph depth dom cod ->
   BNCPolyM
@@ -9194,16 +11588,16 @@ interpFinSubst : {0 c, d : Nat} -> FinSubstT c d -> Type
 interpFinSubst = finSubstCata InterpFSAlg
 
 public export
-InterpTermAlg : FSTAlg (\_, _, x, _ => interpFinSubst x)
-InterpTermAlg = MkFSTAlg () (\_ => Left) (\_ => Right) (\_, _ => MkPair)
+InterpTrAlg : FSTAlg (\_, _, x, _ => interpFinSubst x)
+InterpTrAlg = MkFSTAlg () (\_ => Left) (\_ => Right) (\_, _ => MkPair)
 
 public export
 interpFinSubstTerm : {0 c, d : Nat} -> {x : FinSubstT c d} ->
   FinSubstTerm x -> interpFinSubst {c} {d} x
-interpFinSubstTerm {x} = fstCata InterpTermAlg
+interpFinSubstTerm {x} = fstCata InterpTrAlg
 
 public export
-interpFinSubstMorph : {0 cx, dx, cy, dy, depth : Nat} ->
+0 interpFinSubstMorph : {0 cx, dx, cy, dy, depth : Nat} ->
   {x : FinSubstT cx dx} -> {y : FinSubstT cy dy} ->
   FinSubstMorph {cx} {dx} {cy} {dy} depth x y ->
   interpFinSubst {c=cx} {d=dx} x ->

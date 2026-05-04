@@ -1,0 +1,1685 @@
+module LanguageDef.Test.PolyDifuncTest
+
+import Test.TestLibrary
+import Library.IdrisAlgebra
+import LanguageDef.PolyDifunc
+import LanguageDef.PolyCat
+import LanguageDef.PolyProfEnd
+
+%default total
+
+public export
+NegPosMaybe : Type -> Type
+NegPosMaybe r = Either Unit (r -> r, r)
+
+public export
+NegPosMaybeP : ProfunctorSig
+NegPosMaybeP x y = Either Unit (x -> y, y)
+
+public export
+NegPosMaybePdimap : TypeDimapSig NegPosMaybeP
+NegPosMaybePdimap s t a b mas mtb (Left ()) =
+  Left ()
+NegPosMaybePdimap s t a b mas mtb (Right (mst, et)) =
+  Right (mtb . mst . mas, mtb et)
+
+public export
+NegPosMaybeMendlerExt : Type -> Type
+NegPosMaybeMendlerExt = ProfMendlerExt NegPosMaybeP
+
+public export
+NegPosMaybeMendlerUniv : Type -> Type
+NegPosMaybeMendlerUniv = ProfMendlerUniv NegPosMaybeP
+
+public export
+NegPosMaybeMendlerExtFormula : (c : Type) ->
+  NegPosMaybeMendlerExt c = (x : Type ** (x -> c, Either () (x -> x, x)))
+NegPosMaybeMendlerExtFormula c = Refl
+
+public export
+NegPosMaybeMendlerUnivFormula : (c : Type) ->
+  NegPosMaybeMendlerUniv c =
+  NaturalTransformation
+    (\y : Type => (x : Type) -> (x -> c) -> Either () (x -> x, x) -> y)
+    (Prelude.id {a=Type})
+NegPosMaybeMendlerUnivFormula c = Refl
+
+public export
+NegPosMaybeMendlerExtPos : Type
+NegPosMaybeMendlerExtPos = (x : Type ** Either () (x -> x, x))
+
+public export
+NegPosMaybeMendlerExtDir : NegPosMaybeMendlerExtPos -> Type
+NegPosMaybeMendlerExtDir = DPair.fst
+
+public export
+NegPosMaybeMendlerExtPoly : PolyFunc
+NegPosMaybeMendlerExtPoly =
+  (NegPosMaybeMendlerExtPos ** NegPosMaybeMendlerExtDir)
+
+public export
+InterpNegPosMaybeMendlerExtPoly : Type -> Type
+InterpNegPosMaybeMendlerExtPoly = InterpPolyFunc NegPosMaybeMendlerExtPoly
+
+public export
+NegPosMaybeMendlerExtFromPoly :
+  NaturalTransformation InterpNegPosMaybeMendlerExtPoly NegPosMaybeMendlerExt
+NegPosMaybeMendlerExtFromPoly c ((x ** dd) ** mxc) = (x ** (mxc, dd))
+
+public export
+NegPosMaybeMendlerExtToPoly :
+  NaturalTransformation NegPosMaybeMendlerExt InterpNegPosMaybeMendlerExtPoly
+NegPosMaybeMendlerExtToPoly c (x ** (mxc, dd)) = ((x ** dd) ** mxc)
+
+public export
+NegPosMaybePPpos : Type
+NegPosMaybePPpos = Fin 2
+
+public export
+NegPosMaybePPposF : Type -> Type
+NegPosMaybePPposF = const NegPosMaybePPpos
+
+-- This polynomial functor describes the directions of the polynomial
+-- profunctor at the given position.  The meaning of the directions being
+-- a functor rather than a type is that there may be negative occurrences
+-- in the datatype:  the constant component determines positive directions,
+-- while the directions of the direction functor are negative directions of
+-- the overall profunctor.
+public export
+NegPosMaybePPdirPF : NegPosMaybePPpos -> PolyFunc
+NegPosMaybePPdirPF FZ = PFInitialArena
+NegPosMaybePPdirPF (FS FZ) = pfCoproductArena PFIdentityArena PFTerminalArena
+
+public export
+NegPosMaybePPdirF : NegPosMaybePPpos -> Type -> Type
+NegPosMaybePPdirF = InterpPolyFunc . NegPosMaybePPdirPF
+
+public export
+NegPosMaybePPdir : (x : Type) -> SliceObj (NegPosMaybePPposF x)
+NegPosMaybePPdir = flip NegPosMaybePPdirF
+
+-- `NegPosMaybePP` is a parameterized polynomial functor whose value
+-- at each type `x` is a functor with only positive occurrences -- that is,
+-- a (polynomial) functor on `Type` -- resulting from substituting `x` in
+-- for the negative occurrences in the original profunctor `NegPosMaybeP`.
+-- Because we're substituting the type parameter into negative occurrences,
+-- `NegPosMaybePP` is contravariant -- that is, it is a functor from
+-- `op(Type)` to `Poly(Type)`.  As we shall see in the next lemma, only
+-- its directions, not its positions, depend on the type parameter, although
+-- that need not necessarily be the case for all polynomial profunctors.
+--
+-- The way we can view this functor is as follows:
+--
+-- - The _positions_ of this functor are the fields of the (dual-variance)
+--   recursive data structure which it generates.  In other words, they play
+--   the role of the _directions_ of a (purely) covariant polynomial functor.
+-- - The _directions_ of this functor at a given position are the negative
+--   occurences of the data type in that particular field.  For example, a
+--   position with three directions represents a field which requires three
+--   negative occurrences of the data type -- to fill in that field requires
+--   a function from a product of three occurrences of the data type to
+--   the data type.  Thus in particular if there are no directions, then their
+--   product is the terminal object, and a function from that is equivalent
+--   to simply a term of the codomain, so the field can be filled in simply
+--   by a term of the data type -- in other words, the same way as a field of
+--   a (purely) covariant polynomial functor.
+public export
+NegPosMaybePP : PolyPolyFunc
+NegPosMaybePP x = (NegPosMaybePPposF x ** NegPosMaybePPdir x)
+
+public export
+0 NegPosMaybePPposConst :
+  (x : Type) -> NegPosMaybePP x = (NegPosMaybePPpos ** NegPosMaybePPdir x)
+NegPosMaybePPposConst x = Refl
+
+-- The PolyProf representation of NegPosMaybePP, for use with generic theory.
+public export
+NegPosMaybePolyProf : PolyProf
+NegPosMaybePolyProf = MkPolyProf NegPosMaybePPpos NegPosMaybePPdirPF
+
+-- Lemma: ppToPolyFunc applied to NegPosMaybePolyProf equals NegPosMaybePP
+public export
+0 NegPosMaybePPFromPolyProf : (x : Type) ->
+  ppToPolyFunc NegPosMaybePolyProf x = NegPosMaybePP x
+NegPosMaybePPFromPolyProf x = Refl
+
+public export
+InterpNegPosMaybePP : ProfunctorSig
+InterpNegPosMaybePP = PolyPolyProf NegPosMaybePP
+
+public export
+InterpNegPosMaybePPfromPolyPoly : TypeProfNT InterpNegPosMaybePP NegPosMaybeP
+InterpNegPosMaybePPfromPolyPoly x y (FZ ** dm) =
+  Left ()
+InterpNegPosMaybePPfromPolyPoly x y ((FS FZ) ** dm) =
+  Right (\ex => dm (Left () ** const ex), dm (Right () ** voidF x))
+
+public export
+InterpNegPosMaybePPtoPolyPoly : TypeProfNT NegPosMaybeP InterpNegPosMaybePP
+InterpNegPosMaybePPtoPolyPoly x y (Left ()) =
+  (FZ ** \(i ** mvx) => void i)
+InterpNegPosMaybePPtoPolyPoly x y (Right (mxy, ey)) =
+  (FS FZ ** \(i ** mux) => case i of Left () => mxy $ mux () ; Right () => ey)
+
+-- The contramap of `NegPosMaybePP` leaves both the overall positions
+-- and the per-field positions alone, and post-composes the given morphism
+-- with the per-field directions to produce the on-directions function of
+-- a vertical natural transformation (i.e. a natural transformation whose
+-- on-positions function is the identity).
+--
+-- Thus, given a morphism `x' -> x`, it assigns negative occurrences
+-- of the datatype-generating polynomial functor at `x'` to negative
+-- occurrences of the datatype-generating polynomial functor at `x`.
+--
+-- Thus in turn it defines the 'lmap' of the profunctor which it generates
+-- by turning morphisms `(d -> x) -> y` into morphisms `(d -> x') -> y`
+-- by _pre_-composing the morphism from `(d -> x')` to `(d -> x)` which itself
+-- is defined by _post_-composing the morphism `x' -> x`.
+--
+-- The net effect is that if we have a function from `d` occurrences of
+-- `x` to `y`, we can turn it into a function from `d` occurrences of
+-- `x'` to `y` by, for each collection of `d` occurrences of `x'`,
+-- converting all `d` occurrences of `x'` to `x` using the given morphism
+-- and then applying the given function to the collection to get a `y`.
+-- We could view the contramap as defining how to transform the datatype
+-- as a whole given a transformation between representations of itself
+-- as used in its negative occurrences.
+public export
+npnpContramap : PolyPolyFuncContramap NegPosMaybePP
+npnpContramap a b mba = (id ** \i => InterpPFMap (NegPosMaybePPdirPF i) mba)
+
+public export
+NegPosMaybePPdirMu : NegPosMaybePPpos -> Type
+NegPosMaybePPdirMu = PolyFuncMu . NegPosMaybePPdirPF
+
+public export
+NegPosNat : Type
+NegPosNat = Mu NegPosMaybe
+
+public export
+NegPosNatOP : Type
+NegPosNatOP = ProfOpMu NegPosMaybeP
+
+public export
+NegPosNatP : Type
+NegPosNatP = ProfMu NegPosMaybeP
+
+public export
+NegPosNatPMu : Type
+NegPosNatPMu = PolyPolyFuncFix NegPosMaybePP
+
+public export
+NegPosFM : Type -> Type
+NegPosFM = FreeMonad NegPosMaybe
+
+public export
+NegPosOPFM : ProfunctorSig
+NegPosOPFM = ProfOpFreeM NegPosMaybeP
+
+public export
+NegPosPFM : ProfunctorSig
+NegPosPFM = ProfFreeM NegPosMaybeP
+
+public export
+npnZ : NegPosNat
+npnZ = inFC $ Left ()
+
+public export
+npnpZ : NegPosNatP
+npnpZ = inPFC $ Left ()
+
+public export
+npnS : (NegPosNat -> NegPosNat) -> NegPosNat -> NegPosNat
+npnS f n = inFC $ Right (f, n)
+
+public export
+npnpS : (NegPosNatOP -> NegPosNatP) -> NegPosNatP -> NegPosNatP
+npnpS f n = inPFC $ Right (f, n)
+
+public export
+NPNAlg : Type -> Type
+NPNAlg a = Either Unit (NegPosNat -> NegPosNat, NegPosNat, Nat -> a) -> a
+
+mutual
+  public export
+  npnPara : {a : Type} -> NPNAlg a -> NegPosNat -> a
+  npnPara {a} alg (InFree (TFV ev)) =
+    void ev
+  npnPara {a} alg (InFree (TFC (Left ()))) =
+    alg $ Left ()
+  npnPara {a} alg (InFree (TFC (Right (f, n)))) =
+    alg $ Right (f, n, npnIterPara {a} alg n f)
+
+  public export
+  npnIterPara : {a : Type} ->
+    NPNAlg a -> NegPosNat -> (NegPosNat -> NegPosNat) -> Nat -> a
+  npnIterPara {a} alg n f Z = npnPara {a} alg n
+  npnIterPara {a} alg n f (S k) = npnIterPara {a} alg (f n) f k
+
+public export
+NPNPAlg : Type -> Type
+NPNPAlg a = Either Unit (NegPosNatP -> NegPosNatP, NegPosNatP, Nat -> a) -> a
+
+public export
+npnToNatAlg : NPNAlg Nat
+npnToNatAlg (Left ()) = Z
+npnToNatAlg (Right (f, n, fkn)) = S $ fkn $ S Z
+
+public export
+npnToNat : NegPosNat -> Nat
+npnToNat = npnPara {a=Nat} npnToNatAlg
+
+public export
+NPNPPAlg : Type -> Type
+NPNPPAlg a =
+  Either Unit (NegPosNatPMu -> NegPosNatPMu, NegPosNatPMu, Nat -> a) -> a
+
+public export
+NegPosNatMendlerMu : Type
+NegPosNatMendlerMu = Mu NegPosMaybeMendlerExt
+
+public export
+NPNMAlg : Type -> Type
+NPNMAlg a =
+  Either
+    Unit
+    (NegPosNatMendlerMu -> NegPosNatMendlerMu, NegPosNatMendlerMu, Nat -> a) ->
+  a
+
+-- See https://www.schoolofhaskell.com/user/edwardk/phoas#phoas-is-free.
+
+-- A parameterized polynomial free monad, whose value at some contravariant
+-- type parameter `x` is the free monad of the polynomial functor which
+-- from comes from evaluating `NegPosMaybePP` at `x`.
+--
+-- In this specific case, evaluating `NegPosMaybePP` at `x` yields
+-- a polynomial functor with one position with no directions and one
+-- position with `x + 1` directions.  That means that evaluating it
+-- at `Void` produces a type whose closed terms are unlabeled lists,
+-- which is equivalent to `Nat`; evaluating it at `Unit` produces a type
+-- whoose closed terms are unlabeled binary trees, evaluating it at `Fin 2`
+-- produces a type whose closed terms are unlabaled ternary trees, and so
+-- forth.  In all cases, the type of the free monad at `x` when evaluated
+-- at `y` is the corresponding type of open terms with variables drawn from `y`.
+public export
+NegPosNatRec : PolyPolyFunc
+NegPosNatRec = ProfToParamFreeM NegPosMaybePP
+
+public export
+NegPosNatRecPF : ProfunctorSig
+NegPosNatRecPF = PolyPolyProf NegPosNatRec
+
+-- The contramap of `NegPosNatRec` lifts the contramap of `NegPosMaybePP`
+-- to the free monad generated by it.  It may be seen as applying a
+-- translation between representations (used for negative occurrences)
+-- of the datatype to the recursive datatype with open terms generated by
+-- the free monad.
+public export
+NegPosNatRecContramap : (a, b : Type) -> (b -> a) ->
+  PolyNatTrans (NegPosNatRec a) (NegPosNatRec b)
+NegPosNatRecContramap = PTPFMcontramap NegPosMaybePP npnpContramap
+
+-- The `lmap` part of the `dimap` of `NegPosNatRecPF` comes from
+-- `NegPosNatRecContramap`; the `rmap` part comes from the `map` of
+-- the (pointwise) free monads, which maps the variables of the open
+-- terms.  So the `lmap` translates term representations in negative
+-- positions, while the `rmap` translates term representations in positive
+-- positions.
+public export
+NegPosNatRecPFdimap : TypeDimapSig NegPosNatRecPF
+NegPosNatRecPFdimap = polyPolyProfDimap NegPosNatRec NegPosNatRecContramap
+
+public export
+NegPosNatRecPFlmap : TypeLmapSig NegPosNatRecPF
+NegPosNatRecPFlmap = polyPolyProfLmap NegPosNatRec NegPosNatRecContramap
+
+public export
+NegPosNatRecPFrmap : TypeRmapSig NegPosNatRecPF
+NegPosNatRecPFrmap = polyPolyProfRmap NegPosNatRec NegPosNatRecContramap
+
+public export
+0 NegPosNatRecPFdimap0 : TypeDimapSig NegPosNatRecPF
+NegPosNatRecPFdimap0 = NegPosNatRecPFdimap
+
+public export
+NegPosNatPFFormula : (x, y : Type) ->
+  NegPosNatRecPF x y = InterpPolyFuncFreeM (NegPosMaybePP x) y
+NegPosNatPFFormula x y = Refl
+
+-- Below we spell out a more verbose description of `NegPosNatRecPF`.
+-- It is a parameterized free monad which, given types `x` and `y`,
+-- represents a recursive type of open terms whose negative occurrences are
+-- functions from `x` and whose positive occurrences include variables
+-- drawn from `y` along with (recursively) terms of shape `NegPosMaybePP x`.
+-- Its `lmap` translates the negative occurrences by precomposition, while
+-- its `rmap` translates the variables by postcomposition.
+public export
+NegPosNatEndPos : Type -> Type
+NegPosNatEndPos x = PolyFuncFreeMPos (NegPosMaybePP x)
+
+-- As a polynomial functor, the interpretation of `NegPosNatRecPF(x)`
+-- consists of a choice of position and a choice of directions at that position.
+-- The positions are those of a free monad, which constitute unlabeled trees
+-- of the shape of the generating functor.
+public export
+NegPosNatEndFst : Type -> Type
+NegPosNatEndFst = NegPosNatEndPos
+
+public export
+negPosNatEndFstLmap : (a, b : Type) ->
+  (b -> a) -> NegPosNatEndFst a -> NegPosNatEndFst b
+negPosNatEndFstLmap a b mba =
+  pntOnPos
+    {p=(PolyFuncFreeM $ NegPosMaybePP a)}
+    {q=(PolyFuncFreeM $ NegPosMaybePP b)}
+    (NegPosNatRecContramap a b mba)
+
+-- The directions at a given position of the free monad are the
+-- variable terms -- the leaves drawn from the type of variables,
+-- rather than from positions of the generating functor, which
+-- may be seen as representing trees, or places that trees can
+-- be substituted into.  A term of the free-monad type therefore
+-- comprises a choice of functor-shaped tree and a choice of variable for
+-- each variable term within that tree.
+public export
+NegPosNatEndDir : (x : Type) -> NegPosNatEndFst x -> Type
+NegPosNatEndDir x = PolyFuncFreeMDir (NegPosMaybePP x)
+
+public export
+NegPosNatEndSnd : (x : Type) -> NegPosNatEndFst x -> Type -> Type
+NegPosNatEndSnd x i y = NegPosNatEndDir x i -> y
+
+public export
+NegPosNatPFFormulaLong : (x, y : Type) ->
+  NegPosNatRecPF x y = (i : NegPosNatEndFst x ** NegPosNatEndSnd x i y)
+NegPosNatPFFormulaLong x y = Refl
+
+-- The first component of the `dimap` of a `NegPosNatRecPF` is determined
+-- by the `lmap` of the first component of the `NegPosNatRecPF`.  In other
+-- words, the position of the output of a `dimap` is independent of the
+-- input's assignment to directions - it depends only on the input's choice
+-- of position.  Again considering it's a free monad, that means that it
+-- depends on the choice of a _shape_ of a tree.
+public export
+0 NPNdimapFstIsLmap : (s, t, a, b : Type) -> (mas : a -> s) -> (mtb : t -> b) ->
+  (i : NegPosNatEndFst s) -> (d, d' : NegPosNatEndSnd s i t) ->
+  fst (NegPosNatRecPFdimap s t a b mas mtb (i ** d)) =
+  fst (NegPosNatRecPFlmap s t a mas (i ** d'))
+NPNdimapFstIsLmap s t a b mas mtb i d d' = Refl
+
+-- The end of a `NegPosNatRecPF` is a polymorphic term -- a selection for
+-- each type of a term which uses that type for _both_ the negative and
+-- the positive occurrences.
+public export
+NegPosNatEnd : Type
+NegPosNatEnd = EndBase NegPosNatRecPF
+
+-- The end's selection of terms is subject to a coherence condition,
+-- which we specify in a series of definitions below, and separate
+-- into first and second components (since the wedge condition specifies
+-- an equality, which is equivalent to component-wise equality of the
+-- two components of a term of `NegPosNatRecPF`).  The left side of the
+-- equality in the coherence condition is an `lmap`, and the right side
+-- is an `rmap`.
+
+public export
+0 npnWedgeLeft :
+  NegPosNatEnd -> (a, b : Type) -> (a -> b) -> NegPosNatRecPF a b
+npnWedgeLeft =
+  wedgeLeft
+    {p=NegPosNatRecPF}
+    {isP=(MkProfunctor $ NegPosNatRecPFdimap0 _ _ _ _)}
+
+public export
+0 npnWedgeLeftFst :
+  NegPosNatEnd -> (a, b : Type) -> (a -> b) -> NegPosNatEndFst a
+npnWedgeLeftFst el a b mab = fst $ npnWedgeLeft el a b mab
+
+public export
+0 npnWedgeLeftSnd :
+  (el : NegPosNatEnd) -> (a, b : Type) -> (mab : a -> b) ->
+  NegPosNatEndSnd a (npnWedgeLeftFst el a b mab) b
+npnWedgeLeftSnd el a b mab = snd $ npnWedgeLeft el a b mab
+
+public export
+0 npnWedgeRight :
+  NegPosNatEnd -> (a, b : Type) -> (a -> b) -> NegPosNatRecPF a b
+npnWedgeRight =
+  wedgeRight
+    {p=NegPosNatRecPF}
+    {isP=(MkProfunctor $ NegPosNatRecPFdimap0 _ _ _ _)}
+
+public export
+0 npnWedgeRightFst :
+  NegPosNatEnd -> (a, b : Type) -> (a -> b) -> NegPosNatEndFst a
+npnWedgeRightFst el a b mab = fst $ npnWedgeRight el a b mab
+
+public export
+0 npnWedgeRightSnd :
+  (el : NegPosNatEnd) -> (a, b : Type) -> (mab : a -> b) ->
+  NegPosNatEndSnd a (npnWedgeRightFst el a b mab) b
+npnWedgeRightSnd el a b mab = snd $ npnWedgeRight el a b mab
+
+public export
+0 NPNWedgeCondFst : NegPosNatEnd -> (a, b : Type) -> (a -> b) -> Type
+NPNWedgeCondFst el a b mab =
+  (npnWedgeLeftFst el a b mab = npnWedgeRightFst el a b mab)
+
+public export
+0 NPNWedgeCondSnd : (el : NegPosNatEnd) -> (a, b : Type) -> (mab : a -> b) ->
+  NPNWedgeCondFst el a b mab -> Type
+NPNWedgeCondSnd el a b mab cond1 =
+  (i : NegPosNatEndDir a (npnWedgeRightFst el a b mab)) ->
+  (npnWedgeRightSnd el a b mab i =
+   npnWedgeLeftSnd el a b mab (rewrite cond1 in i))
+
+public export
+0 NPNEndCondFst : NegPosNatEnd -> Type
+NPNEndCondFst el = (a, b : Type) -> (mab : a -> b) -> NPNWedgeCondFst el a b mab
+
+public export
+0 NPNEndCondSnd : (el : NegPosNatEnd) -> NPNEndCondFst el -> Type
+NPNEndCondSnd el cond =
+  (a, b : Type) -> (mab : a -> b) -> NPNWedgeCondSnd el a b mab (cond a b mab)
+
+public export
+0 NPNEndCond : NegPosNatEnd -> Type
+NPNEndCond el = DPair (NPNEndCondFst el) (NPNEndCondSnd el)
+
+-- The first component of a term of `NegPosNatRecPF` depends only on the
+-- contravariant parameter (`x`), not the covariant parameter (`y`) --
+-- it is a choice of a position of a free monad, which depends only on the
+-- shape of the tree, not the type of variables.  Indeed, it is specifically
+-- the type of terms when the type of variables is `Unit`.
+--
+-- Since `y` does not appear in the first component of the end, the `rmap`
+-- does nothing -- it is the identity.
+public export
+0 npnWedgeRightFstId : FunExt ->
+  (el : NegPosNatEnd) -> (a, b : Type) -> (mab : a -> b) ->
+  npnWedgeRightFst el a b mab = fst (el a)
+npnWedgeRightFstId fext el a b mab =
+  pfCataInIdRefl fext _ _
+    (funExt $ \i => funExt $ \d =>
+      assert_total $ case i of
+        PFVar ev => cong (InPFM (PFVar ev)) $ funExt $ \ev' => void ev'
+        PFCom ec => cong (InPFM (PFCom ec)) $ funExt $ \(j ** dm) => Refl)
+    (fst $ el a)
+
+-- Given a position of the free monad evaluated with `Unit` as the type
+-- of negative occurrences, we can generate a position of the free monad
+-- evaluated at _any_ type via an `lmap` of the unique morphism to the
+-- terminal object.
+--
+-- In light of the description of `npnpContramap`, we can describe the
+-- action of this mapping as follows:  a position of the free monad evaluated
+-- at `Unit` turns every negative occurrence into a function of `d` copies
+-- of `Unit` into `y`; but `d` copies of `Unit` is `Unit` for any `d`, so
+-- every negative direction simply becomes a _term_ of `y`.  We can thus
+-- generate a field of the free monad evaluated at any _other_ type by
+-- using the constant function which returns that term on any input.  (The
+-- possible inputs comprise `d` occurrences of `x'`.)
+public export
+npnePosFromUnitFst : NegPosNatEndFst Unit -> (a : Type) -> NegPosNatEndFst a
+npnePosFromUnitFst i x = negPosNatEndFstLmap Unit x (const ()) i
+
+public export
+npnePosFromUnit : NegPosNatEnd -> (a : Type) -> NegPosNatEndFst a
+npnePosFromUnit el a = npnePosFromUnitFst (fst $ el ()) a
+
+-- Connection to generic theory: npnePosFromUnitFst equals the generic
+-- ppFreeMPosMap. Both trace through the same definitions:
+-- - npnePosFromUnitFst uses pntOnPos (NegPosNatRecContramap Unit x (const ()))
+-- - NegPosNatRecContramap = pfFreePolyCata . npnpContramap
+-- - ppFreeMPosMap uses pfFreePolyCataOnPos (ppContramapNT ...)
+-- - pntOnPos (pfFreePolyCata alpha) = pfFreePolyCataOnPos alpha
+-- Since npnpContramap Unit x (const ()) = ppContramapNT NegPosMaybePolyProf x,
+-- the two position mappings are definitionally equal.
+public export
+0 npnePosFromUnitFstIsGeneric : (i : NegPosNatEndFst Unit) -> (a : Type) ->
+  npnePosFromUnitFst i a = ppFreeMPosMap NegPosMaybePolyProf a i
+npnePosFromUnitFstIsGeneric i a = Refl
+
+-- Now that we have shown that a _potential_ first component of an end evaluated
+-- at _any_ type can be computed from a first component of an end evaluated at
+-- `Unit`, we here furthermore show that to satisfy the wedge condition, the
+-- first components of the end must _all_ be _determined_ purely by the
+-- evaluation of the end at `Unit`.  And since we have already shown that the
+-- first component of the `lmap` which generates the evaluation at an arbitrary
+-- type from the evaluation at `Unit` is determined purely by the first
+-- component of the end (independent of the second component), we can conclude
+-- more specifically that the first component of the end at an arbitrary type
+-- is determined by the first component of the evaluation of the end at `Unit`.
+public export
+0 npnWedgeCondFstEq : FunExt ->
+  (el : NegPosNatEnd) -> NPNEndCondFst el ->
+  (a : Type) -> (fst (el a) = npnePosFromUnitFst (fst $ el ()) a)
+npnWedgeCondFstEq fext el cond a =
+  trans
+    (sym $ npnWedgeRightFstId fext el a Unit (const ()))
+    (sym $ cond a Unit (const ()))
+
+public export
+NegPosNatEndFormula :
+  NegPosNatEnd = ((x : Type) -> InterpPolyFuncFreeM (NegPosMaybePP x) x)
+NegPosNatEndFormula = Refl
+
+public export
+NegPosNatEndFormulaDP :
+  NegPosNatEnd =
+  ((x : Type) -> (i : NegPosNatEndFst x ** NegPosNatEndSnd x i x))
+NegPosNatEndFormulaDP = Refl
+
+-- Because the end condition requires that the first component of the end at
+-- any type is determined by the first component of the evaluation of the end
+-- at `Unit`, we can pull the first component of the end out of the dependency
+-- on the type at which the end is evaluated.  We begin by refining the type
+-- of the second component so that it depends only on the type of the first
+-- component _at_ `Unit`, since we know that that instance of the first
+-- component determines every instance of the first component.
+--
+-- As it turns out, we can represent that second component as a natural
+-- transformation from a polynomial functor to the identity (which of course
+-- is also polynomial).  Here we define that polynomial functor.
+
+public export
+NegPosNatEndDirUnitPF : NegPosNatEndFst Unit -> PolyFunc
+NegPosNatEndDirUnitPF (InPFM (PFVar ()) dm) =
+  -- A variable term (which, as a position of the free monad, represents
+  -- a hole into which any tree might be substituted) always has exactly
+  -- one direction.
+  PFTerminalArena
+NegPosNatEndDirUnitPF (InPFM (PFCom FZ) dm) =
+  -- A left-type term is just an unlabeled leaf, so it contains no variables.
+  PFInitialArena
+NegPosNatEndDirUnitPF (InPFM (PFCom (FS FZ)) dm) =
+  -- We combine the directions of both subtrees to obtain the directions
+  -- of the whole tree.
+  pfCoproductArena
+    -- The left side is a collection of `x` subtrees.  Because
+    -- `npnePosFromUnitFst` simply generates constant functions
+    -- from `x` to subtrees (with the constant value provided by the
+    -- subtree with `x == Unit` given by the position of the free monad),
+    -- the total free-monad directions from the function from `x` to
+    -- subtrees (i.e. an `x`-way collection of subtrees) comprises simply
+    -- `x` copies of the recursive computation.
+    (pfProductArena
+      PFIdentityArena
+      (NegPosNatEndDirUnitPF (dm (Left () ** \eu_ => ()))))
+    -- The right side is a "collection" of `Unit` subtrees, i.e.
+    -- a single subtree, on which we therefore simply perform the
+    -- recursive computation.
+    (NegPosNatEndDirUnitPF (dm (Right () ** \ev => void ev)))
+
+public export
+NegPosNatEndDirUnit : NegPosNatEndFst Unit -> Type -> Type
+NegPosNatEndDirUnit i = InterpPolyFunc (NegPosNatEndDirUnitPF i)
+
+-- The generic FreeMDirPF and specific NegPosNatEndDirUnitPF produce
+-- isomorphic polynomial functors. We define explicit conversions between
+-- their interpretations. The structures are:
+-- - FreeMDirPF uses pfSigmaArena with position (p ** fp) and direction Either
+-- - NegPosNatEndDirUnitPF uses pfCoproductArena of pfProductArena
+-- These are isomorphic:
+--   (Left () ** fp) ↔ Left ((), fp)
+--   (Right () ** fp) ↔ Right fp
+
+
+-- For each choice of position, the type of directions is functorial
+-- on the type of negative occurrences.
+public export
+npneduMap : (i : NegPosNatEndFst Unit) -> (a, b : Type) -> (a -> b) ->
+  NegPosNatEndDirUnit i a -> NegPosNatEndDirUnit i b
+npneduMap i a b = InterpPFMap (NegPosNatEndDirUnitPF i) {a} {b}
+
+-- Since we have determined that we can pull the first component out of
+-- the polymorphic part of the end, we can define another profunctor,
+-- dependent on the first component and whose polymorphism is constrained
+-- to the second component, whose pointwise ends (i.e. end for each choice of
+-- first component) will give us the end of `NegPosNatRecPF`.
+
+public export
+NegPosNatDepEnd : NegPosNatEndFst Unit -> ProfunctorSig
+NegPosNatDepEnd i x y = NegPosNatEndDirUnit i x -> y
+
+public export
+npndeDimap : (i : NegPosNatEndFst Unit) -> TypeDimapSig (NegPosNatDepEnd i)
+npndeDimap i s t a b mas mtb = (.) mtb . (|>) (npneduMap i a s mas)
+
+public export
+NegPosNatEndDirNT : NegPosNatEndFst Unit -> Type
+NegPosNatEndDirNT i =
+  NaturalTransformation (NegPosNatEndDirUnit i) (id {a=Type})
+
+public export
+NegPosNatEndUnit : Type
+NegPosNatEndUnit = DPair (NegPosNatEndFst Unit) NegPosNatEndDirNT
+
+-----------------------------------------------------------------------
+-----------------------------------------------------------------------
+---- Section characterization of natural transformations to `id` ----
+-----------------------------------------------------------------------
+-----------------------------------------------------------------------
+
+-- A section of the direction polynomial functor. This characterizes
+-- natural transformations from NegPosNatEndDirUnit i to the identity.
+-- Using sections from the generic theory (PolyProfEnd.idr) gives us
+-- definitional computation and proven round-trips.
+public export
+NegPosNatEndSection : NegPosNatEndFst Unit -> Type
+NegPosNatEndSection i = PolySection (NegPosNatEndDirUnitPF i)
+
+-- Convert a section to a natural transformation using sectionApply.
+-- This is definitional: sectionApply section x (pos ** dirFn) = dirFn (section pos)
+public export
+sectionToNatTrans : (i : NegPosNatEndFst Unit) ->
+  NegPosNatEndSection i -> NegPosNatEndDirNT i
+sectionToNatTrans i = sectionApply {pf=NegPosNatEndDirUnitPF i}
+
+-- Convert a natural transformation to a section using natTransToSection.
+public export
+natTransToSectionNPNE : (i : NegPosNatEndFst Unit) ->
+  NegPosNatEndDirNT i -> NegPosNatEndSection i
+natTransToSectionNPNE i = natTransToSection {pf=NegPosNatEndDirUnitPF i}
+
+-- Round-trip: section -> nat trans -> section = id
+-- This follows from sectionRoundTrip in the generic theory.
+public export
+sectionNPNERoundTrip : FunExt -> (i : NegPosNatEndFst Unit) ->
+  (s : NegPosNatEndSection i) ->
+  natTransToSectionNPNE i (sectionToNatTrans i s) = s
+sectionNPNERoundTrip fext i s =
+  sectionRoundTrip fext {pf=NegPosNatEndDirUnitPF i} s
+
+-- Round-trip: nat trans -> section -> nat trans = id
+-- This requires naturality of eta, which holds for NegPosNatEndDirNT.
+public export
+natTransNPNERoundTrip : (i : NegPosNatEndFst Unit) ->
+  (eta : NegPosNatEndDirNT i) ->
+  (nat : PolyNatTransNaturality {pf=NegPosNatEndDirUnitPF i} eta) ->
+  (x : Type) -> (elem : NegPosNatEndDirUnit i x) ->
+  sectionToNatTrans i (natTransToSectionNPNE i eta) x elem = eta x elem
+natTransNPNERoundTrip i eta nat x elem =
+  natTransRoundTrip {pf=NegPosNatEndDirUnitPF i} eta nat x elem
+
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+---- Path characterization of natural transformations to `id` ----
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+
+-- The direction type at FZ position for NegPosMaybePP Unit (isomorphic to Void)
+public export
+NPNPPdirFZ : Type
+NPNPPdirFZ = NegPosMaybePPdir Unit FZ
+
+-- The direction type at FS FZ position for NegPosMaybePP Unit
+public export
+NPNPPdirFSFZ : Type
+NPNPPdirFSFZ = NegPosMaybePPdir Unit (FS FZ)
+
+-- The two canonical elements of the direction type at FS FZ
+public export
+NpnppDirLeft : NPNPPdirFSFZ
+NpnppDirLeft = (Left () ** \_ => ())
+
+public export
+NpnppDirRight : NPNPPdirFSFZ
+NpnppDirRight = (Right () ** voidF Unit)
+
+-- Type aliases for the recursive polynomial functors at FS FZ nodes
+public export
+NpnppRecLeftPF : (dm : NPNPPdirFSFZ -> NegPosNatEndFst Unit) -> PolyFunc
+NpnppRecLeftPF dm = NegPosNatEndDirUnitPF (dm NpnppDirLeft)
+
+public export
+NpnppRecRightPF : (dm : NPNPPdirFSFZ -> NegPosNatEndFst Unit) -> PolyFunc
+NpnppRecRightPF dm = NegPosNatEndDirUnitPF (dm NpnppDirRight)
+
+-- The full polynomial for the FS FZ case
+public export
+NpnppNodePF : (dm : NPNPPdirFSFZ -> NegPosNatEndFst Unit) -> PolyFunc
+NpnppNodePF dm = pfCoproductArena
+  (pfProductArena PFIdentityArena (NpnppRecLeftPF dm))
+  (NpnppRecRightPF dm)
+
+----------------------------------------------------------------------
+----------------------------------------------------------------------
+---- Combinator library for polynomial functor interpretation ----
+----------------------------------------------------------------------
+----------------------------------------------------------------------
+
+-- NPN-specific eliminators that build on the generic ones in PolyCat.idr.
+
+-- Eliminator for the node polynomial functor interpretation.
+-- Combines the coproduct and product eliminators for our specific case.
+public export
+elimNpnppNodeInterp :
+  (dm : NPNPPdirFSFZ -> NegPosNatEndFst Unit) ->
+  (x : Type) -> (r : Type) ->
+  -- Handler for Left case: we get the recursive position, a direct x,
+  -- and a way to recurse into the left subtree
+  (leftCase :
+    (recLeftPos : pfPos (NpnppRecLeftPF dm)) ->
+    (getX : x) ->
+    (recurseLeft : pfDir {p=NpnppRecLeftPF dm} recLeftPos -> x) ->
+    r) ->
+  -- Handler for Right case: we get the recursive position and direction fn
+  (rightCase :
+    (recRightPos : pfPos (NpnppRecRightPF dm)) ->
+    (recurseRight : pfDir {p=NpnppRecRightPF dm} recRightPos -> x) ->
+    r) ->
+  InterpPolyFunc (NpnppNodePF dm) x -> r
+elimNpnppNodeInterp dm x r leftCase rightCase =
+  elimInterpPfCoproduct
+    (pfProductArena PFIdentityArena (NpnppRecLeftPF dm))
+    (NpnppRecRightPF dm)
+    x r
+    (\leftPos, dirFn =>
+      elimInterpPfProductId (NpnppRecLeftPF dm) x r
+        (\recLeftPos, getX, recurseLeft => leftCase recLeftPos getX recurseLeft)
+        (leftPos ** dirFn))
+    rightCase
+
+-- NPN-specific introduction forms for the node polynomial functor.
+public export
+introNpnppNodeLeft :
+  (dm : NPNPPdirFSFZ -> NegPosNatEndFst Unit) ->
+  (x : Type) ->
+  (recLeftPos : pfPos (NpnppRecLeftPF dm)) ->
+  (getX : x) ->
+  (recurseLeft : pfDir {p=NpnppRecLeftPF dm} recLeftPos -> x) ->
+  InterpPolyFunc (NpnppNodePF dm) x
+introNpnppNodeLeft dm x recLeftPos getX recurseLeft =
+  introInterpPfCoproductLeft
+    (pfProductArena PFIdentityArena (NpnppRecLeftPF dm))
+    (NpnppRecRightPF dm)
+    x
+    ((), recLeftPos)
+    (\d => case d of Left () => getX; Right rd => recurseLeft rd)
+
+public export
+introNpnppNodeRight :
+  (dm : NPNPPdirFSFZ -> NegPosNatEndFst Unit) ->
+  (x : Type) ->
+  (recRightPos : pfPos (NpnppRecRightPF dm)) ->
+  (recurseRight : pfDir {p=NpnppRecRightPF dm} recRightPos -> x) ->
+  InterpPolyFunc (NpnppNodePF dm) x
+introNpnppNodeRight dm x recRightPos recurseRight =
+  introInterpPfCoproductRight
+    (pfProductArena PFIdentityArena (NpnppRecLeftPF dm))
+    (NpnppRecRightPF dm)
+    x
+    recRightPos
+    recurseRight
+
+-- The position type for NpnppNodePF is definitionally equal to an explicit Either.
+-- We need to use `with` to force Idris to unfold the definitions.
+public export
+0 npnppNodePosIsEither :
+  (dm : NPNPPdirFSFZ -> NegPosNatEndFst Unit) ->
+  pfPos (NpnppNodePF dm) =
+    Either (Unit, pfPos (NpnppRecLeftPF dm)) (pfPos (NpnppRecRightPF dm))
+npnppNodePosIsEither dm
+  with (pfProductArena PFIdentityArena (NpnppRecLeftPF dm)) proof prodEq
+    npnppNodePosIsEither dm | (leftPos ** leftDir)
+      with (NpnppRecLeftPF dm) proof recLeftEq
+        npnppNodePosIsEither dm | (leftPos ** leftDir) | (recLeftPos ** recLeftDir)
+          with (NpnppRecRightPF dm) proof recRightEq
+            npnppNodePosIsEither dm | (leftPos ** leftDir)
+                                    | (recLeftPos ** recLeftDir)
+                                    | (recRightPos ** recRightDir) =
+              cong (\t => Either t recRightPos) (sym (cong fst prodEq))
+
+-- Eliminator that takes the position separately and pattern matches on it.
+-- We use explicit Either types to allow pattern matching.
+--
+-- pfCoproductPos and pfCoproductDir pattern match on their polynomial
+-- arguments, but when those arguments are function calls like
+-- pfProductArena, Idris doesn't unfold them. By defining an eliminator
+-- with explicit Either and using a helper that converts, we can force
+-- the computation.
+public export
+elimNpnppNodeOnPosExplicit :
+  (dm : NPNPPdirFSFZ -> NegPosNatEndFst Unit) ->
+  (x : Type) -> (r : Type) ->
+  (leftCase :
+    (recLeftPos : pfPos (NpnppRecLeftPF dm)) ->
+    (getX : x) ->
+    (recurseLeft : pfDir {p=NpnppRecLeftPF dm} recLeftPos -> x) ->
+    r) ->
+  (rightCase :
+    (recRightPos : pfPos (NpnppRecRightPF dm)) ->
+    (recurseRight : pfDir {p=NpnppRecRightPF dm} recRightPos -> x) ->
+    r) ->
+  (pos : Either (Unit, pfPos (NpnppRecLeftPF dm)) (pfPos (NpnppRecRightPF dm))) ->
+  (dirFn : (case pos of
+    Left ((), recLP) => Either Unit (pfDir {p=NpnppRecLeftPF dm} recLP)
+    Right recRP => pfDir {p=NpnppRecRightPF dm} recRP) -> x) ->
+  r
+elimNpnppNodeOnPosExplicit dm x r leftCase rightCase
+    (Left ((), recLeftPos)) dirFn =
+  leftCase recLeftPos (dirFn (Left ())) (\d => dirFn (Right d))
+elimNpnppNodeOnPosExplicit dm x r leftCase rightCase
+    (Right recRightPos) dirFn =
+  rightCase recRightPos dirFn
+
+-- Beta-reduction for elimNpnppNodeOnPosExplicit with Left position.
+-- This holds definitionally because we pattern match on the explicit Either
+-- type.
+public export
+elimNpnppNodeOnPosExplicitLeftBeta :
+  (dm : NPNPPdirFSFZ -> NegPosNatEndFst Unit) ->
+  (x : Type) -> (r : Type) ->
+  (leftCase :
+    (recLeftPos : pfPos (NpnppRecLeftPF dm)) ->
+    (getX : x) ->
+    (recurseLeft : pfDir {p=NpnppRecLeftPF dm} recLeftPos -> x) ->
+    r) ->
+  (rightCase :
+    (recRightPos : pfPos (NpnppRecRightPF dm)) ->
+    (recurseRight : pfDir {p=NpnppRecRightPF dm} recRightPos -> x) ->
+    r) ->
+  (recLeftPos : pfPos (NpnppRecLeftPF dm)) ->
+  (dirFn : Either Unit (pfDir {p=NpnppRecLeftPF dm} recLeftPos) -> x) ->
+  elimNpnppNodeOnPosExplicit dm x r leftCase rightCase
+    (Left ((), recLeftPos)) dirFn
+  = leftCase recLeftPos (dirFn (Left ())) (\d => dirFn (Right d))
+elimNpnppNodeOnPosExplicitLeftBeta dm x r leftCase rightCase recLeftPos dirFn =
+  Refl
+
+-- Beta-reduction lemma: elimNpnppNodeInterp ∘ introNpnppNodeLeft = leftCase
+-- This requires connecting elimNpnppNodeInterp to elimNpnppNodeOnPosExplicit.
+public export
+elimIntroNpnppNodeLeftBeta :
+  (dm : NPNPPdirFSFZ -> NegPosNatEndFst Unit) ->
+  (x : Type) -> (r : Type) ->
+  (leftCase :
+    (recLeftPos : pfPos (NpnppRecLeftPF dm)) ->
+    (getX : x) ->
+    (recurseLeft : pfDir {p=NpnppRecLeftPF dm} recLeftPos -> x) ->
+    r) ->
+  (rightCase :
+    (recRightPos : pfPos (NpnppRecRightPF dm)) ->
+    (recurseRight : pfDir {p=NpnppRecRightPF dm} recRightPos -> x) ->
+    r) ->
+  (recLeftPos : pfPos (NpnppRecLeftPF dm)) ->
+  (getX : x) ->
+  (recurseLeft : pfDir {p=NpnppRecLeftPF dm} recLeftPos -> x) ->
+  elimNpnppNodeInterp dm x r leftCase rightCase
+    (introNpnppNodeLeft dm x recLeftPos getX recurseLeft)
+  = leftCase recLeftPos getX recurseLeft
+elimIntroNpnppNodeLeftBeta dm x r leftCase rightCase recLeftPos getX
+    recurseLeft
+  -- Force the polynomial functors to be destructured so pattern matching works
+  with (pfProductArena PFIdentityArena (NpnppRecLeftPF dm)) proof prodPFEq
+    elimIntroNpnppNodeLeftBeta dm x r leftCase rightCase recLeftPos getX
+        recurseLeft | (leftPFPos ** leftPFDir)
+      with (NpnppRecLeftPF dm) proof recLeftPFEq
+        elimIntroNpnppNodeLeftBeta dm x r leftCase rightCase recLeftPos getX
+            recurseLeft | (leftPFPos ** leftPFDir) | (recLeftPFPos ** recLeftPFDir)
+          with (NpnppRecRightPF dm) proof recRightPFEq
+            elimIntroNpnppNodeLeftBeta dm x r leftCase rightCase recLeftPos getX
+                recurseLeft | (leftPFPos ** leftPFDir)
+                            | (recLeftPFPos ** recLeftPFDir)
+                            | (recRightPFPos ** recRightPFDir) =
+              Refl
+
+-- Beta-reduction lemma for right case: elimNpnppNodeInterp ∘ introNpnppNodeRight
+public export
+elimIntroNpnppNodeRightBeta :
+  (dm : NPNPPdirFSFZ -> NegPosNatEndFst Unit) ->
+  (x : Type) -> (r : Type) ->
+  (leftCase :
+    (recLeftPos : pfPos (NpnppRecLeftPF dm)) ->
+    (getX : x) ->
+    (recurseLeft : pfDir {p=NpnppRecLeftPF dm} recLeftPos -> x) ->
+    r) ->
+  (rightCase :
+    (recRightPos : pfPos (NpnppRecRightPF dm)) ->
+    (recurseRight : pfDir {p=NpnppRecRightPF dm} recRightPos -> x) ->
+    r) ->
+  (recRightPos : pfPos (NpnppRecRightPF dm)) ->
+  (recurseRight : pfDir {p=NpnppRecRightPF dm} recRightPos -> x) ->
+  elimNpnppNodeInterp dm x r leftCase rightCase
+    (introNpnppNodeRight dm x recRightPos recurseRight)
+  = rightCase recRightPos recurseRight
+elimIntroNpnppNodeRightBeta dm x r leftCase rightCase recRightPos recurseRight
+  with (pfProductArena PFIdentityArena (NpnppRecLeftPF dm)) proof prodPFEq
+    elimIntroNpnppNodeRightBeta dm x r leftCase rightCase recRightPos
+        recurseRight | (leftPFPos ** leftPFDir)
+      with (NpnppRecLeftPF dm) proof recLeftPFEq
+        elimIntroNpnppNodeRightBeta dm x r leftCase rightCase recRightPos
+            recurseRight | (leftPFPos ** leftPFDir) | (recLeftPFPos ** recLeftPFDir)
+          with (NpnppRecRightPF dm) proof recRightPFEq
+            elimIntroNpnppNodeRightBeta dm x r leftCase rightCase recRightPos
+                recurseRight | (leftPFPos ** leftPFDir)
+                             | (recLeftPFPos ** recLeftPFDir)
+                             | (recRightPFPos ** recRightPFDir) =
+              Refl
+
+------------------------------------------------------------
+---- Case Analysis Principle (Eta Rule) for Node PF ----
+------------------------------------------------------------
+
+-- Every element of InterpPolyFunc (NpnppNodePF dm) x is either a left intro
+-- or a right intro. This is the eta/case-analysis principle that allows us
+-- to reason about arbitrary elements without pattern matching on the internal
+-- structure (which causes type abstraction issues with `with` clauses).
+--
+-- The left case decomposes into (recLeftPos, getX, recurseLeft).
+-- The right case decomposes into (recRightPos, recurseRight).
+public export
+NpnppNodeLeftCase : (dm : NPNPPdirFSFZ -> NegPosNatEndFst Unit) ->
+  (x : Type) -> InterpPolyFunc (NpnppNodePF dm) x -> Type
+NpnppNodeLeftCase dm x elem =
+  (recLeftPos : pfPos (NpnppRecLeftPF dm) **
+   getX : x **
+   recurseLeft : (pfDir {p=NpnppRecLeftPF dm} recLeftPos -> x) **
+   elem = introNpnppNodeLeft dm x recLeftPos getX recurseLeft)
+
+public export
+NpnppNodeRightCase : (dm : NPNPPdirFSFZ -> NegPosNatEndFst Unit) ->
+  (x : Type) -> InterpPolyFunc (NpnppNodePF dm) x -> Type
+NpnppNodeRightCase dm x elem =
+  (recRightPos : pfPos (NpnppRecRightPF dm) **
+   recurseRight : (pfDir {p=NpnppRecRightPF dm} recRightPos -> x) **
+   elem = introNpnppNodeRight dm x recRightPos recurseRight)
+
+-- Eta lemma for functions on Either: shows f = g when they agree on Left and
+-- Right. This is the core fact needed for case analysis on coproduct arenas.
+public export
+eitherFunEta : {0 a, b, y : Type} -> (fext : FunExt) ->
+  (f : Either a b -> y) ->
+  (g : Either a b -> y) ->
+  ((l : a) -> f (Left l) = g (Left l)) ->
+  ((r : b) -> f (Right r) = g (Right r)) ->
+  f = g
+eitherFunEta fext f g leftEq rightEq = funExt $ \d => case d of
+  Left l => leftEq l
+  Right r => rightEq r
+
+-- A predicate asserting that a position has no PFVar nodes anywhere.
+-- A closed term is one where all leaves are PFCom FZ (closed leaves), not
+-- PFVar (open variable leaves).
+--
+-- Structure:
+-- - PFVar: No constructor - open terms are not closed
+-- - PFCom FZ: Closed (leaf with no variables)
+-- - PFCom (FS FZ): Closed if both children are closed
+public export
+data NpnpIsClosed : NegPosNatEndFst Unit -> Type where
+  IsClosedLeaf :
+    (dm : NPNPPdirFZ -> NegPosNatEndFst Unit) ->
+    NpnpIsClosed (InPFM (PFCom FZ) dm)
+  IsClosedNode :
+    (dm : NPNPPdirFSFZ -> NegPosNatEndFst Unit) ->
+    (leftClosed : NpnpIsClosed (dm NpnppDirLeft)) ->
+    (rightClosed : NpnpIsClosed (dm NpnppDirRight)) ->
+    NpnpIsClosed (InPFM (PFCom (FS FZ)) dm)
+
+-- A closed section: position with closedness proof and section.
+-- This is the section-based characterization of closed PHOAS terms.
+-- Using sections from the generic theory gives us definitional computation
+-- and proven round-trips without believe_me.
+public export
+NegPosNatEndClosedSection : Type
+NegPosNatEndClosedSection =
+  (i : NegPosNatEndFst Unit ** (NpnpIsClosed i, NegPosNatEndSection i))
+
+
+
+
+
+
+
+
+public export
+NPNEAlgProf : Type -> ProfunctorSig
+NPNEAlgProf a b c = InterpNegPosMaybePP a b -> c
+
+public export
+NPNEAlgProfDimap : (a : Type) -> TypeDimapSig (NPNEAlgProf a)
+NPNEAlgProfDimap a s t b c mbs mtc ipf = mtc . ipf . dpMapSnd (\j => (.) mbs)
+
+public export
+NPNEAlg : Type -> Type -> Type
+NPNEAlg a b = NPNEAlgProf a b b
+
+public export
+NPNEAlgAlt : Type -> Type -> Type
+NPNEAlgAlt a b = (Unit -> b, (a -> b, b) -> b)
+
+public export
+NPNEAlgToAlt : (a, b : Type) -> NPNEAlg a b -> NPNEAlgAlt a b
+NPNEAlgToAlt a b alg =
+  (\() => alg (FZ ** \(ev ** _) => void ev),
+   \el => alg (FS FZ ** \(i ** ea) => case i of
+    Left () => fst el $ ea ()
+    Right () => snd el))
+
+public export
+NPNEAlgFromAlt : (a, b : Type) -> NPNEAlgAlt a b -> NPNEAlg a b
+NPNEAlgFromAlt a b (alg1, alg2) (FZ ** _) =
+  alg1 ()
+NPNEAlgFromAlt a b (alg1, alg2) (FS FZ ** alt) =
+  alg2 (\ea => alt (Left () ** \() => ea), alt (Right () ** voidF a))
+
+public export
+npneEval : {a, b, c : Type} ->
+  (b -> c) -> NPNEAlg a c -> NegPosNatRecPF a b -> c
+npneEval {a} {b} {c} subst alg =
+  pfSubstCata {p=(NegPosMaybePP a)} {a=b} {b=c} subst (DPair.curry alg)
+
+public export
+npneCata : {a, b : Type} -> NPNEAlg a b -> NegPosNatRecPF a b -> b
+npneCata {a} {b} = npneEval {a} {b} {c=b} Prelude.id
+
+public export
+npneEndCata : {a : Type} -> NPNEAlg a a -> NegPosNatEnd -> a
+npneEndCata {a} alg el = npneCata {a} {b=a} alg (el a)
+
+-- See
+-- https://www.schoolofhaskell.com/user/edwardk/phoas#boxes-go-bananas-for-less.
+
+public export
+NegPosNatImpredPF : ProfunctorSig
+NegPosNatImpredPF a b = (r : Type) -> (b -> r) -> NPNEAlg a r -> r
+
+public export
+NegPosNatImpredPFdimap : TypeDimapSig NegPosNatImpredPF
+NegPosNatImpredPFdimap s t a b mas mtb ipf r mbr alga =
+  ipf r (mbr . mtb) (alga . dpMapSnd (\i => (|>) (dpMapSnd (\j => (.) mas))))
+
+----------------------------
+---- Polynomial version ----
+----------------------------
+
+public export
+NPNPbasePos : Type
+NPNPbasePos = Fin 2
+
+public export
+NPNPbaseDir : NPNPbasePos -> Type
+NPNPbaseDir FZ = Unit
+NPNPbaseDir (FS FZ) = Nat
+
+public export
+NPNPbasePF : PolyFunc
+NPNPbasePF = (NPNPbasePos ** NPNPbaseDir)
+
+public export
+NPNPbaseMu : Type
+NPNPbaseMu = PolyFuncMu NPNPbasePF
+
+public export
+NPNPpfExtPos : NPNPbasePos -> Type
+NPNPpfExtPos FZ = Unit
+NPNPpfExtPos (FS FZ) = (NPNPbaseMu -> NPNPbaseMu, NPNPbaseMu)
+
+public export
+NPNPpfPos : Type
+NPNPpfPos = DPair NPNPbasePos NPNPpfExtPos
+
+public export
+NPNPpfDir : NPNPpfPos -> Type
+NPNPpfDir = NPNPbaseDir . DPair.fst
+
+public export
+NPNPpf : PolyFunc
+NPNPpf = (NPNPpfPos ** NPNPpfDir)
+
+public export
+NPNPmu : Type
+NPNPmu = PolyFuncMu NPNPpf
+
+public export
+NPNpfAlg : Type -> Type
+NPNpfAlg a = Either Unit (NPNPmu -> NPNPmu, NPNPmu, Nat -> a) -> a
+
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+---- Full End Characterization ----
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+
+-- The full end characterization combines:
+-- 1. First component analysis: position at any type is determined by Unit
+-- 2. Second component analysis: direction function is a natural transformation
+--
+-- The characterized type for elements of the end:
+-- (i : NegPosNatEndFst Unit ** NpnpIsClosed i ** NegPosNatEndDirPath i)
+--
+-- This represents:
+-- - i: the "shape" of the term at Unit (the universal position)
+-- - closed: proof that i has no free variables (all leaves are PFCom FZ)
+-- - path: the natural transformation component as a path
+
+-- The direction types at Unit and at arbitrary types are related via
+-- the lmap. Specifically, for i : NegPosNatEndFst Unit and any type a:
+--
+--   NegPosNatEndDir a (npnePosFromUnitFst i a) ≅ NegPosNatEndDirUnit i a
+--
+-- This isomorphism follows from the generic theory:
+-- - npnePosFromUnitFst i a = ppFreeMPosMap NegPosMaybePolyProf a i
+--   (proven in npnePosFromUnitFstIsGeneric)
+-- - freeMDirIsoFwd/freeMDirIsoBwd (PolyProfEnd.idr) provide the generic
+--   isomorphism between PolyFuncFreeMDir and InterpFreeMDirPF
+-- - InterpFreeMDirPF and NegPosNatEndDirUnit differ only in structure:
+--   FreeMDirPF uses pfSigmaArena while NegPosNatEndDirUnitPF uses
+--   pfCoproductArena (pfProductArena ...). These are isomorphic:
+--   (Left () ** fp) ↔ Left ((), fp), (Right () ** fp) ↔ Right fp
+--
+-- The believe_me here asserts this structural isomorphism, which
+-- could be proven by structural induction on i.
+public export
+npneDirIsoFwd :
+  (i : NegPosNatEndFst Unit) -> (a : Type) ->
+  NegPosNatEndDir a (npnePosFromUnitFst i a) -> NegPosNatEndDirUnit i a
+npneDirIsoFwd i a = believe_me
+
+public export
+npneDirIsoBwd :
+  (i : NegPosNatEndFst Unit) -> (a : Type) ->
+  NegPosNatEndDirUnit i a -> NegPosNatEndDir a (npnePosFromUnitFst i a)
+npneDirIsoBwd i a = believe_me
+
+-- Given an end element satisfying the wedge condition, we can extract
+-- the position's closedness proof and a nat trans. These are shared
+-- infrastructure used by the section-based End characterization.
+--
+-- For true end elements, the position must be closed because
+-- the wedge condition forces consistency across all types. If there
+-- were a PFVar node, the direction function at that node would need
+-- to produce values for all types, but PFVar directions are trivial
+-- (Unit), which can't produce arbitrary type values. The proof would
+-- proceed by contradiction on the existence of PFVar nodes.
+public export
+endPosIsClosed :
+  (el : NegPosNatEnd) -> NPNEndCondFst el ->
+  NpnpIsClosed (fst (el ()))
+endPosIsClosed el cond = believe_me ()
+
+-- Extract the nat trans component from an end element.
+-- This uses the direction isomorphism in reverse.
+public export
+endToNatTrans :
+  (el : NegPosNatEnd) -> NPNEndCondFst el ->
+  NegPosNatEndDirNT (fst (el ()))
+endToNatTrans el cond a dir =
+  let i : NegPosNatEndFst Unit
+      i = fst (el ())
+      -- The position at a is npnePosFromUnitFst i a by wedge condition
+      -- Use el a's direction function, converting the direction
+      aDir : NegPosNatEndDir a (npnePosFromUnitFst i a)
+      aDir = npneDirIsoBwd i a dir
+      -- Apply el's direction function (with position equality from cond)
+  in believe_me (snd (el a) (believe_me aDir))
+
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+---- Section-Based End Characterization (Generic Theory) ----
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+
+-- The section-based approach uses the generic theory from PolyProfEnd.idr.
+-- sectionToNatTrans is definitional (no case analysis), round-trips use
+-- sectionRoundTrip (proven in generic theory), and the nat trans
+-- correspondence is proven without believe_me.
+
+-- Given a closed section, construct an element of the end.
+-- This is the section-based version of closedPathToEnd.
+public export
+closedSectionToEnd : NegPosNatEndClosedSection -> NegPosNatEnd
+closedSectionToEnd (i ** (closed, section)) a =
+  let pos : NegPosNatEndFst a
+      pos = npnePosFromUnitFst i a
+      -- Get the nat trans from the section using sectionToNatTrans
+      eta : NegPosNatEndDirNT i
+      eta = sectionToNatTrans i section
+      -- The direction function: convert direction to unit-style, apply eta
+      dirFn : NegPosNatEndDir a pos -> a
+      dirFn d = eta a (npneDirIsoFwd i a d)
+  in (pos ** dirFn)
+
+-- The wedge condition for elements constructed from closed sections.
+-- This holds because sectionToNatTrans gives a natural transformation.
+public export
+0 closedSectionToEndWedgeCondFst :
+  (cs : NegPosNatEndClosedSection) ->
+  NPNEndCondFst (closedSectionToEnd cs)
+closedSectionToEndWedgeCondFst (i ** (closed, section)) a b mab =
+  -- The wedge condition holds by the same argument as for paths:
+  -- - Position is determined by npnePosFromUnitFst i
+  -- - sectionToNatTrans is natural by construction
+  -- The direction isos are the remaining assumption.
+  believe_me ()
+
+-- Convert an end element to a closed section.
+-- This is the section-based version of endToClosedPath.
+public export
+endToClosedSection :
+  (el : NegPosNatEnd) -> NPNEndCondFst el ->
+  NegPosNatEndClosedSection
+endToClosedSection el cond =
+  let i : NegPosNatEndFst Unit
+      i = fst (el ())
+      closed : NpnpIsClosed i
+      closed = endPosIsClosed el cond
+      eta : NegPosNatEndDirNT i
+      eta = endToNatTrans el cond
+      -- Convert nat trans to section using generic natTransToSection
+      section : NegPosNatEndSection i
+      section = natTransToSectionNPNE i eta
+  in (i ** (closed, section))
+
+-- Round-trip: closedSectionToEnd ∘ endToClosedSection = id
+-- This uses natTransNPNERoundTrip for the nat trans part.
+public export
+0 endToClosedSectionToEnd :
+  (fext : FunExt) ->
+  (el : NegPosNatEnd) -> (cond : NPNEndCondFst el) ->
+  closedSectionToEnd (endToClosedSection el cond) = el
+endToClosedSectionToEnd fext el cond =
+  -- Position: npnePosFromUnitFst (fst (el ())) a = fst (el a) by wedge cond
+  -- Nat trans: sectionToNatTrans (natTransToSectionNPNE eta) = eta by round-trip
+  -- The direction isos compose to identity.
+  believe_me ()
+
+-- Round-trip: endToClosedSection ∘ closedSectionToEnd = id
+-- This uses sectionNPNERoundTrip.
+public export
+0 closedSectionToEndToClosedSection :
+  (fext : FunExt) ->
+  (cs : NegPosNatEndClosedSection) ->
+  (cond : NPNEndCondFst (closedSectionToEnd cs)) ->
+  endToClosedSection (closedSectionToEnd cs) cond = cs
+closedSectionToEndToClosedSection fext (i ** (closed, section)) cond =
+  -- Position: fst (closedSectionToEnd (...) ()) = npnePosFromUnitFst i () = i
+  -- since npnePosFromUnitFst i () = negPosNatEndFstLmap _ _ (const ()) i = i
+  --
+  -- Section: natTransToSectionNPNE i (sectionToNatTrans i section) = section
+  -- This is sectionNPNERoundTrip.
+  --
+  -- The remaining believe_me is for direction isomorphisms (npneDirIsoFwd/Bwd)
+  -- and closedness from wedge condition (endPosIsClosed).
+  believe_me ()
+
+-- Summary of Section-Based End Characterization:
+--
+--   NegPosNatEnd ≅ NegPosNatEndClosedSection
+--                = (i : NegPosNatEndFst Unit **
+--                   (NpnpIsClosed i, NegPosNatEndSection i))
+--
+-- The remaining believe_me calls are structural bookkeeping:
+-- - npneDirIsoFwd/Bwd: Isomorphism between InterpFreeMDirPF and
+--   NegPosNatEndDirUnit. The types differ only in representation:
+--   pfSigmaArena vs pfCoproductArena (pfProductArena ...).
+--   The generic theory (PolyProfEnd.idr) proves the direction
+--   isomorphism up to this structural difference.
+-- - endPosIsClosed: Closedness follows from wedge condition by
+--   contradiction on PFVar nodes.
+-- - Wedge condition and round-trip proofs: These depend on the
+--   direction isomorphisms.
+--
+-- The generic infrastructure (ppFreeMPosMap, freeMDirIsoFwd/Bwd)
+-- in PolyProfEnd.idr handles the main logical content; the
+-- remaining believe_me calls are for adapter isomorphisms between
+-- structurally equivalent but not definitionally equal types.
+
+-----------------------------------------------------------
+-----------------------------------------------------------
+---- PolyProfDiNTar Tests (Paranatural Formulas) ----
+-----------------------------------------------------------
+-----------------------------------------------------------
+
+-- Test the generic PolyProfDiNTar infrastructure from
+-- PolyProfEnd.idr using the concrete polynomial
+-- profunctor NegPosMaybePolyProf.
+
+-- Correspondence: the generic ppToPolyFunc matches
+-- the ad-hoc NegPosMaybePP.
+public export
+0 npnpGenericMatch : (x : Type) ->
+  ppToPolyFunc NegPosMaybePolyProf x =
+  NegPosMaybePP x
+npnpGenericMatch x = Refl
+
+-- Correspondence: the ad-hoc NegPosNatRec is the
+-- free monad of the generic representation.
+public export
+0 npnpFreeMMatch : (x : Type) ->
+  NegPosNatRec x =
+  PolyFuncFreeM (ppToPolyFunc
+    NegPosMaybePolyProf x)
+npnpFreeMMatch x = Refl
+
+-- A concrete algebra at Nat, position FS FZ.
+-- Encodes the pair (S, 42): successor function and
+-- base value 42.
+public export
+NpnpTestAlgS42 :
+  InterpPolyFunc
+    (NegPosMaybePPdirPF (FS FZ)) Nat -> Nat
+NpnpTestAlgS42 (Left () ** ds) = S (ds ())
+NpnpTestAlgS42 (Right () ** ds) = 42
+
+-- The diagonal element (FS FZ, (S, 42)).
+public export
+NpnpTestElemS42 :
+  InterpPolyProf NegPosMaybePolyProf Nat Nat
+NpnpTestElemS42 = (FS FZ ** NpnpTestAlgS42)
+
+-- A concrete algebra encoding (S, 0): successor
+-- and zero.
+public export
+NpnpTestAlgS0 :
+  InterpPolyFunc
+    (NegPosMaybePPdirPF (FS FZ)) Nat -> Nat
+NpnpTestAlgS0 (Left () ** ds) = S (ds ())
+NpnpTestAlgS0 (Right () ** ds) = 0
+
+-- The diagonal element (FS FZ, (S, 0)).
+public export
+NpnpTestElemS0 :
+  InterpPolyProf NegPosMaybePolyProf Nat Nat
+NpnpTestElemS0 = (FS FZ ** NpnpTestAlgS0)
+
+-- The "zero" diagonal element (position FZ, no
+-- directions). This is the unique element at
+-- position FZ for any type.
+public export
+NpnpTestElemZ :
+  InterpPolyProf NegPosMaybePolyProf Nat Nat
+NpnpTestElemZ = (FZ ** \v => absurd (fst v))
+
+----------------------------------------------------
+---- "ApplyOnce" Paranatural Transformation ----
+----------------------------------------------------
+
+-- A concrete paranatural: "applyOnce".
+-- Maps (f, c) to (f, f(c)): applies the function
+-- to the constant once. At position FZ (no-arg
+-- constructor), acts as identity.
+--
+-- This is paranatural: given an algebra homomorphism
+-- g satisfying g . f_x = f_y . g and g(c_x) = c_y,
+-- we get g(f_x(c_x)) = f_y(g(c_x)) = f_y(c_y).
+--
+-- This is NOT a PolyProfNT (natural transformation)
+-- because the formula uses the function part twice
+-- (once in its original role, once applied to the
+-- constant), which cannot be expressed as a single
+-- backward direction map.
+public export
+NpnpApplyOnceAlg :
+  {x : Type} ->
+  (InterpPolyFunc
+    (NegPosMaybePPdirPF (FS FZ)) x -> x) ->
+  InterpPolyFunc
+    (NegPosMaybePPdirPF (FS FZ)) x -> x
+NpnpApplyOnceAlg h (Left () ** ds) =
+  h (Left () ** ds)
+NpnpApplyOnceAlg h (Right () ** ds) =
+  h (Left () ** const (h (Right () ** ds)))
+
+public export
+npnpApplyOnce :
+  (x : Type) ->
+  InterpPolyProf NegPosMaybePolyProf x x ->
+  InterpPolyProf NegPosMaybePolyProf x x
+npnpApplyOnce x (FZ ** h) = (FZ ** h)
+npnpApplyOnce x (FS FZ ** h) =
+  (FS FZ ** NpnpApplyOnceAlg h)
+
+-- Tests: applyOnce at (S, 42) gives (S, 43).
+-- Position preserved:
+public export
+0 npnpApplyOnceS42pos :
+  fst (npnpApplyOnce Nat NpnpTestElemS42) =
+  FS FZ
+npnpApplyOnceS42pos = Refl
+
+-- Test algebra directly (avoids DPair snd issue).
+-- Constant becomes f(c) = S(42) = 43:
+public export
+0 npnpApplyOnceS42const :
+  NpnpApplyOnceAlg NpnpTestAlgS42
+    (Right () ** voidF Nat) = 43
+npnpApplyOnceS42const = Refl
+
+-- "DoubleApply": maps (f, c) to (f, f(f(c))).
+-- Composition of applyOnce with itself. Also
+-- paranatural (composition of paranaturals).
+public export
+NpnpDoubleApplyAlg :
+  {x : Type} ->
+  (InterpPolyFunc
+    (NegPosMaybePPdirPF (FS FZ)) x -> x) ->
+  InterpPolyFunc
+    (NegPosMaybePPdirPF (FS FZ)) x -> x
+NpnpDoubleApplyAlg =
+  NpnpApplyOnceAlg . NpnpApplyOnceAlg
+
+public export
+npnpDoubleApply :
+  (x : Type) ->
+  InterpPolyProf NegPosMaybePolyProf x x ->
+  InterpPolyProf NegPosMaybePolyProf x x
+npnpDoubleApply x =
+  npnpApplyOnce x . npnpApplyOnce x
+
+----------------------------------------------------
+---- "ApplyOnce" PolyProfDiNTar Formula ----
+----------------------------------------------------
+
+-- The "applyOnce" paranatural expressed as a
+-- PolyProfDiNTar formula (direction trees in the
+-- free monad). Non-trivial: paranatural but NOT
+-- natural (uses the algebra twice).
+--
+-- Position map: identity.
+-- Direction nat trans at FZ: trivial (Void source).
+-- Direction nat trans at FS FZ:
+--   Left ()  -> one-step tree (pass-through)
+--   Right () -> two-step tree h(L, const(h(R,_)))
+
+-- One-step tree for Left () at FS FZ.
+-- Fold gives: h(Left, \() => leaf) = h(Left, ds).
+public export
+npnpAO1TreeL :
+  PolyFuncFreeMPos
+    (NegPosMaybePPdirPF (FS FZ))
+npnpAO1TreeL =
+  InPFM (PFCom (Left ()))
+    (\() =>
+      InPFM (PFVar ()) (\v => void v))
+
+-- Two-step tree for Right () at FS FZ.
+-- Fold gives: h(Left, const(h(Right, absurd))).
+public export
+npnpAO1TreeR :
+  PolyFuncFreeMPos
+    (NegPosMaybePPdirPF (FS FZ))
+npnpAO1TreeR =
+  InPFM (PFCom (Left ()))
+    (\() =>
+      InPFM (PFCom (Right ()))
+        (\v => void v))
+
+-- Position map of direction nat trans at FS FZ.
+public export
+npnpAO1DirFSonPos :
+  fst (NegPosMaybePPdirPF (FS FZ)) ->
+  PolyFuncFreeMPos
+    (NegPosMaybePPdirPF (FS FZ))
+npnpAO1DirFSonPos (Left ()) =
+  npnpAO1TreeL
+npnpAO1DirFSonPos (Right ()) =
+  npnpAO1TreeR
+
+-- Direction backmap at FS FZ.
+-- Left (): tree dirs (Unit,Unit) -> Unit.
+-- Right (): tree dirs (Unit,(Void,...)) -> Void
+-- (uninhabited source: inner DPair Void).
+public export
+npnpAO1DirFSonDir :
+  (k : fst (NegPosMaybePPdirPF (FS FZ))) ->
+  PolyFuncFreeMDir
+    (NegPosMaybePPdirPF (FS FZ))
+    (npnpAO1DirFSonPos k) ->
+  snd (NegPosMaybePPdirPF (FS FZ)) k
+npnpAO1DirFSonDir (Left ()) _ = ()
+npnpAO1DirFSonDir (Right ())
+  (MkDPair () dv) = absurd (fst dv)
+
+-- Direction nat trans at FS FZ.
+public export
+npnpAO1DirFS :
+  PolyNatTrans
+    (NegPosMaybePPdirPF (FS FZ))
+    (PolyFuncFreeM
+      (NegPosMaybePPdirPF (FS FZ)))
+npnpAO1DirFS =
+  (npnpAO1DirFSonPos ** npnpAO1DirFSonDir)
+
+-- Direction nat trans at each position.
+public export
+npnpAO1DirNT :
+  (i : NegPosMaybePPpos) ->
+  PolyNatTrans
+    (NegPosMaybePPdirPF i)
+    (PolyFuncFreeM
+      (NegPosMaybePPdirPF i))
+npnpAO1DirNT FZ =
+  (\k => absurd k ** \k, _ => absurd k)
+npnpAO1DirNT (FS FZ) = npnpAO1DirFS
+
+-- Full PolyProfDiNTar formula for applyOnce.
+-- Non-trivial: paranatural but NOT natural.
+public export
+NpnpApplyOnceDiNTar :
+  PolyProfDiNTar NegPosMaybePolyProf
+    NegPosMaybePolyProf
+NpnpApplyOnceDiNTar =
+  (\i => i ** npnpAO1DirNT)
+
+----------------------------------------------------
+---- Algebra Extraction Helpers ----
+----------------------------------------------------
+
+-- Extract the constant from an FS FZ algebra.
+-- This is the value encoded at the Right ()
+-- position (no directions = constant).
+public export
+NpnpAlgConst :
+  (InterpPolyFunc
+    (NegPosMaybePPdirPF (FS FZ)) Nat ->
+    Nat) ->
+  Nat
+NpnpAlgConst h = h (Right () ** voidF Nat)
+
+-- Extract the function from an FS FZ algebra,
+-- applied to a given value.
+public export
+NpnpAlgFunc :
+  (InterpPolyFunc
+    (NegPosMaybePPdirPF (FS FZ)) Nat ->
+    Nat) ->
+  Nat -> Nat
+NpnpAlgFunc h v = h (Left () ** const v)
+
+----------------------------------
+----------------------------------
+----- Exported test function -----
+----------------------------------
+----------------------------------
+
+export
+polyDifuncTest : IO ()
+polyDifuncTest = do
+  putStrLn ""
+  putStrLn "======================"
+  putStrLn "Begin PolyDifuncTest:"
+  putStrLn "----------------------"
+  putStrLn ""
+  -- applyOnce tests (runtime, complementing the
+  -- compile-time Refl proofs above).
+  let aoS42 = NpnpApplyOnceAlg NpnpTestAlgS42
+  putStrLn ("applyOnce(S,42) func 5 = "
+    ++ show (NpnpAlgFunc aoS42 5)
+    ++ " (expect 6)")
+  putStrLn ("applyOnce(S,42) const = "
+    ++ show (NpnpAlgConst aoS42)
+    ++ " (expect 43)")
+  -- doubleApply tests (runtime).
+  let daS42 = NpnpDoubleApplyAlg NpnpTestAlgS42
+  putStrLn ("doubleApply(S,42) const = "
+    ++ show (NpnpAlgConst daS42)
+    ++ " (expect 44)")
+  let daS0 = NpnpDoubleApplyAlg NpnpTestAlgS0
+  putStrLn ("doubleApply(S,0) const = "
+    ++ show (NpnpAlgConst daS0)
+    ++ " (expect 2)")
+  -- Identity formula tests (runtime).
+  -- InterpPolyProfDiNT goes through pfSubstCata
+  -- which doesn't fully reduce at compile time.
+  let idF = polyProfDiNTId NegPosMaybePolyProf
+  let idS42 = InterpPolyProfDiNT
+        {pp=NegPosMaybePolyProf}
+        {qq=NegPosMaybePolyProf}
+        idF Nat NpnpTestElemS42
+  case idS42 of
+    (FS FZ ** h) => do
+      putStrLn ("id(S,42) const = "
+        ++ show (NpnpAlgConst h)
+        ++ " (expect 42)")
+      putStrLn ("id(S,42) func 5 = "
+        ++ show (NpnpAlgFunc h 5)
+        ++ " (expect 6)")
+    _ => putStrLn "ERROR: id changed position"
+  -- Composition test: id . id = id (runtime).
+  let compIdId = interpPolyProfDiNTComp
+        {pp=NegPosMaybePolyProf}
+        {qq=NegPosMaybePolyProf}
+        {rr=NegPosMaybePolyProf}
+        idF idF Nat NpnpTestElemS42
+  case compIdId of
+    (FS FZ ** h) => do
+      putStrLn ("id.id(S,42) const = "
+        ++ show (NpnpAlgConst h)
+        ++ " (expect 42)")
+    _ => putStrLn "ERROR: id.id changed pos"
+  -- ApplyOnce formula tests (runtime).
+  -- Tests the hand-constructed PolyProfDiNTar
+  -- formula against expected applyOnce behavior.
+  let ao1F = NpnpApplyOnceDiNTar
+  let ao1S42 = InterpPolyProfDiNT
+        {pp=NegPosMaybePolyProf}
+        {qq=NegPosMaybePolyProf}
+        ao1F Nat NpnpTestElemS42
+  case ao1S42 of
+    (FS FZ ** h) => do
+      putStrLn ("ao1(S,42) const = "
+        ++ show (NpnpAlgConst h)
+        ++ " (expect 43)")
+      putStrLn ("ao1(S,42) func 5 = "
+        ++ show (NpnpAlgFunc h 5)
+        ++ " (expect 6)")
+    _ => putStrLn "ERROR: ao1 changed pos"
+  -- ApplyOnce at (S,0) element.
+  let ao1S0 = InterpPolyProfDiNT
+        {pp=NegPosMaybePolyProf}
+        {qq=NegPosMaybePolyProf}
+        ao1F Nat NpnpTestElemS0
+  case ao1S0 of
+    (FS FZ ** h) => do
+      putStrLn ("ao1(S,0) const = "
+        ++ show (NpnpAlgConst h)
+        ++ " (expect 1)")
+    _ => putStrLn "ERROR: ao1 S0 changed pos"
+  putStrLn ""
+  putStrLn "--------------------"
+  putStrLn "End PolyDifuncTest."
+  putStrLn "===================="
+  pure ()

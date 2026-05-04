@@ -1,0 +1,93 @@
+import GebLean.LawvereERLex
+
+/-!
+# Tests for LawvereERLex
+
+Sanity tests for the decidable ER-subobject category.
+-/
+
+open GebLean
+open CategoryTheory
+
+-- The always-one predicate at arity 0: the constant
+-- successor applied to zero at the empty context.
+private def oneZero : ERMor1 0 :=
+  ERMor1.comp ERMor1.succ
+    (fun (_ : Fin 1) =>
+      ERMor1.comp ERMor1.zero Fin.elim0)
+
+-- oneZero evaluates to 1 at the empty context.
+example : oneZero.interp Fin.elim0 = 1 := rfl
+
+-- Construct an object using the always-true
+-- quotient predicate.
+private def trueObj0 : LexObj :=
+  { arity := 0, pred := ERBoolPredE.alwaysTrue 0 }
+
+-- Category instance is inferred.
+example : Category LawvereERLexCat := inferInstance
+
+-- Identity composed with itself yields identity.
+example :
+    (𝟙 trueObj0 : trueObj0 ⟶ trueObj0) ≫
+    (𝟙 trueObj0) = 𝟙 trueObj0 := by
+  rw [Category.id_comp]
+
+-- Terminal uniqueness: any morphism to terminal
+-- equals the terminal morphism.
+example (obj : LexObj)
+    (f : obj ⟶ (LexObj.terminal :
+        LawvereERLexCat)) :
+    f = ERLexMorNQuo.toTerminal obj :=
+  ERLexMorNQuo.toTerminal_uniq f
+
+-- HasChosenFiniteProducts is available for
+-- LawvereERLexCat.
+example : HasChosenFiniteProducts LawvereERLexCat :=
+  inferInstance
+
+-- Product of the terminal with itself has arity 0.
+example : (LexObj.prod LexObj.terminal
+    LexObj.terminal).arity = 0 := rfl
+
+-- Equalizer of a morphism with itself is a
+-- well-typed object.
+example (a b : LawvereERLexCat)
+    (f : ERLexMorN a b) : LawvereERLexCat :=
+  LexObj.equalizer f f
+
+-- Equalizer morphism types correctly.
+example (a b : LawvereERLexCat)
+    (f g : ERLexMorN a b) :
+    ERLexMorNQuo (LexObj.equalizer f g) a :=
+  ERLexMorNQuo.equalizerMap f g
+
+-- Equalizer arity matches the source arity.
+example (a b : LawvereERLexCat)
+    (f g : ERLexMorN a b) :
+    (LexObj.equalizer f g).arity = a.arity :=
+  rfl
+
+-- Chosen equalizers instance is available.
+example : HasChosenEqualizers LawvereERLexCat :=
+  inferInstance
+
+-- Chosen finite limits instance is available.
+example : HasChosenFiniteLimits LawvereERLexCat :=
+  inferInstance
+
+-- Chosen equalizer of identity with itself
+-- produces a well-typed object.
+example (a b : LawvereERLexCat)
+    (f : a ⟶ b) : LawvereERLexCat :=
+  (HasChosenEqualizers.equalizer f f).obj
+
+-- Mathlib's HasEqualizers is now derived
+-- automatically.
+example : Limits.HasEqualizers LawvereERLexCat :=
+  inferInstance
+
+-- Mathlib's HasFiniteLimits is now derived
+-- automatically.
+example : Limits.HasFiniteLimits LawvereERLexCat :=
+  inferInstance
