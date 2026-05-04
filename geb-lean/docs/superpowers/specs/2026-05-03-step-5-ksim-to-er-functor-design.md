@@ -165,16 +165,32 @@ at 935 lines).
 
 ## §3 Module file layout
 
+### §3.1 Files added / edited
+
 ```text
+GebLean/LawvereKSimInterp.lean                       [step 5 ADDS]
+  KMor1.simrecVec_eq_Nat_simRecVec
+    -- Bridges KMor1's K^sim-side simrec interpreter to the
+    -- Nat-side flatten consumed by step 2's
+    -- simultaneousBoundedRec_interp_correct.  Proved by
+    -- induction on the iteration counter (~15 lines: base
+    -- case rfl, step case rewrites the dite-based stepCtx
+    -- to Fin.append-based form, mirroring the existing
+    -- private interp_simrec_eq_simrecVec proof at lines
+    -- 121-155 of LawvereKSimInterp.lean).
+
 GebLean/LawvereKSimMajorization.lean                 [step 5 ADDS]
   KMor1.majorize_simrec_index_indep
-    -- One-line lemma; proof is rfl (or near-rfl).
-    -- Asserts that KMor1.majorize at simrec ignores the
-    -- output index argument.
-  ERMor1.sumCtxER_cons_le_of_le                  [conditional]
-    -- Added only if §6.1.3's bound-monotonicity proof needs
-    -- it (i.e. if no analogous Fin.foldr lemma is already
-    -- available).  Implementer assesses at task time.
+    -- One-line lemma; proof is rfl-or-fallback per §6.1.1.
+    -- Asserts KMor1.majorize at simrec ignores the output
+    -- index argument.
+  ERMor1.sumCtxER_cons_le_of_le
+    -- Default plan: add it at task time (§6.1.3 needs it
+    -- for the bound-monotonicity proof; no analogous
+    -- Fin.foldr lemma is currently in the codebase).  Skip
+    -- only if the implementer finds an inline-clean tactic
+    -- (e.g. via Fin.foldr_succ + omega) that does not
+    -- require the helper.
 
 GebLean/LawvereKSimER.lean                           [step 5 NEW]
   kToER, kToERN, kToER_interp, kToERN_interp,
@@ -188,13 +204,35 @@ GebLean.lean                                         [step 5 EDITS]
 
 GebLeanTests/LawvereKSimER.lean                      [step 5 NEW]
   Tier 1 atomic #guard tests.
-  Tier 2 universal-theorem `example` proofs.
+  Tier 2 universal-theorem `example` proofs (with an
+    inline-constructed addK : KMor1 2; see §9.2).
   Tier 3 kToERFunctor sanity checks.
 
 GebLeanTests.lean                                    [step 5 EDITS]
   Add `import GebLeanTests.LawvereKSimER`
   (alphabetically).
 ```
+
+### §3.2 `LawvereKSimER.lean` import set
+
+The new module's import header (alphabetised):
+
+```lean
+import GebLean.LawvereER
+import GebLean.LawvereERQuot
+import GebLean.LawvereKSim
+import GebLean.LawvereKSimInterp
+import GebLean.LawvereKSimMajorization
+import GebLean.LawvereKSimQuot
+import GebLean.Utilities.ERAMajorants
+import GebLean.Utilities.ERSimultaneousBoundedRec
+```
+
+Some of these are pulled transitively (e.g.,
+`LawvereERBoundComputable` via `LawvereKSimMajorization`),
+so the implementer prunes per `lean_unused_imports` /
+mathlib lints.  The set above is the explicit minimum
+required to name every API consumed in §§4–8.
 
 ## §4 The structural recursion `kToER`
 
@@ -335,9 +373,20 @@ theorem kToER_interp
       exact ih_gs i ...
       -- and apply ih_f to the outer call
   | simrec i h_fam g_fam ih_h ih_g =>
+      -- The IHs from `induction` over KMor1.simrec produce
+      -- ih_h : ∀ j, (kToER (h_fam j) (h_h j)).interp = ...
+      -- where h_h is the level-derivation in scope.  Pass
+      -- to kToER_interp_simrec via a level-irrelevance
+      -- adapter that re-quantifies over the level proof.
       exact kToER_interp_simrec i h_fam g_fam h v
-        (fun j v' => ih_h j v')
-        (fun j v' => ih_g j v')
+        (fun j h' v' => by
+          rw [show kToER (h_fam j) h' = kToER (h_fam j) _
+              from rfl]
+          exact ih_h j v')
+        (fun j h' v' => by
+          rw [show kToER (g_fam j) h' = kToER (g_fam j) _
+              from rfl]
+          exact ih_g j v')
   | raise f ih =>
       simp only [kToER, KMor1.interp_raise]
       exact ih ...
@@ -348,9 +397,43 @@ hypothesis names to Lean 4's induction-on-`KMor1` shape.)
 
 ## §6 The simrec case: load-bearing proof
 
-### §6.1 The three Factoring R helpers
+### §6.1 The bridge lemma `KMor1.simrecVec_eq_Nat_simRecVec`
 
-#### §6.1.1 `KMor1.majorize_simrec_index_indep` (placement: `LawvereKSimMajorization.lean`)
+`simultaneousBoundedRec_interp_correct` (step 2) consumes a
+hypothesis using `Nat.simRecVec` (the value-side simultaneous
+recursion); `KMor1.interp_simrec` rewrites the K^sim simrec
+interp into `KMor1.simrecVec` form (which uses
+`KMor1.interp` calls inline).  Bridging these two forms is
+needed at multiple points in §6 and is therefore extracted
+as its own lemma in `LawvereKSimInterp.lean`.
+
+```lean
+theorem KMor1.simrecVec_eq_Nat_simRecVec {a k : ℕ}
+    (h : Fin (k + 1) → KMor1 a)
+    (g : Fin (k + 1) → KMor1 (a + 1 + (k + 1)))
+    (params : Fin a → ℕ) (n : ℕ) (j : Fin (k + 1)) :
+    KMor1.simrecVec h g params n j
+      = Nat.simRecVec k a
+          (fun j' => (h j').interp)
+          (fun j' => (g j').interp) n params j := by
+  -- Induction on n.
+  -- Base case (n = 0): rfl by definitional unfolding.
+  -- Step case: KMor1.simrecVec uses an inline `dite`-based
+  -- stepCtx; Nat.simRecVec uses `Fin.append (Fin.cons n x)`.
+  -- The same equivalence already proved (privately) for
+  -- KMor1.interp_simrec_eq_simrecVec at lines 121-155 of
+  -- LawvereKSimInterp.lean — replicate that proof shape:
+  -- congr 1 + funext idx + by_cases idx.val < a + 1 +
+  -- routing to (Fin.cons n params) on the inner branch and
+  -- the inductive hypothesis on the outer branch.
+  ...  -- ~15 lines per the documented proof shape
+```
+
+Citation: master design §3.5; bridging step.
+
+### §6.2 The four Factoring R helpers
+
+#### §6.2.1 `KMor1.majorize_simrec_index_indep` (placement: `LawvereKSimMajorization.lean`)
 
 ```lean
 theorem KMor1.majorize_simrec_index_indep
@@ -362,20 +445,36 @@ theorem KMor1.majorize_simrec_index_indep
     (h_j : (KMor1.simrec j h_fam g_fam).level ≤ 2) :
     KMor1.majorize (KMor1.simrec i h_fam g_fam) h_i
       = KMor1.majorize (KMor1.simrec j h_fam g_fam) h_j := by
-  rfl
+  -- Default plan: simp only [KMor1.majorize] followed by
+  -- rfl.  Reason: KMor1.majorize's simrec branch (line 632
+  -- of LawvereKSimMajorization.lean) returns
+  -- (2, r_H + r_G + 2) without referencing the index (the
+  -- constructor argument is bound to `_` in the `match`
+  -- pattern); the simp unfolds the match, the rfl closes
+  -- after proof-irrelevance for the level-discharge `have`s.
+  simp only [KMor1.majorize]
 ```
 
-The proof is `rfl` because `KMor1.majorize`'s simrec branch
-(line 632 of `LawvereKSimMajorization.lean`) returns
-`(2, r_H + r_G + 2)` without referencing the index `i` (the
-constructor argument is bound to `_` in the `match`
-pattern).  If `rfl` does not close it directly because of
-Lean's elaboration of the level-discharge `have`s, fall back
-to `simp only [KMor1.majorize]` followed by `rfl`.
+If even the `simp only` is not enough (e.g., because the
+internal `Fin.foldr`-based `r_H` / `r_G` computation does
+not reduce through proof-irrelevance), prove via term-mode
+construction by hand: extract `(2, r_H + r_G + 2)` directly
+from both sides.  The implementer verifies via lean-lsp at
+task time.
 
-Citation: master design §3.5 + §3.4.
+Citation: master design §3.5 + §3.4 (Tourlakis 0.1.0.10's
+level-2 `r_2 = 2`, `offset_2 = r_H + r_G + 2`).
 
-#### §6.1.2 `kToER_simrec_dominates`
+#### §6.2.2 `kToER_simrec_dominates`
+
+The dominance hypothesis `simultaneousBoundedRec_interp_correct`
+consumes is over the families *passed to `simultaneousBoundedRec`*
+— at the kToER simrec branch, those are the kToER-translated
+`bases` / `steps`, not the K^sim originals.  This helper
+states the dominance directly in that shape, taking the
+inductive hypotheses (kToER preserves interp on each child)
+as explicit hypotheses to handle the IH-mediated rewrite
+internally.
 
 ```lean
 theorem kToER_simrec_dominates
@@ -384,6 +483,16 @@ theorem kToER_simrec_dominates
     (h_fam : Fin (k + 1) → KMor1 a)
     (g_fam : Fin (k + 1) → KMor1 (a + 1 + (k + 1)))
     (hyp : (KMor1.simrec i h_fam g_fam).level ≤ 2)
+    (h_h : ∀ j, (h_fam j).level ≤ 2)
+    (h_g : ∀ j, (g_fam j).level ≤ 2)
+    (ih_h : ∀ (j : Fin (k + 1))
+             (h' : (h_fam j).level ≤ 2)
+             (v' : Fin a → ℕ),
+       (kToER (h_fam j) h').interp v' = (h_fam j).interp v')
+    (ih_g : ∀ (j : Fin (k + 1))
+             (h' : (g_fam j).level ≤ 2)
+             (v' : Fin (a + 1 + (k + 1)) → ℕ),
+       (kToER (g_fam j) h').interp v' = (g_fam j).interp v')
     (n : ℕ) (x : Fin a → ℕ) :
     let p :=
       KMor1.majorize (.simrec i h_fam g_fam) hyp
@@ -391,39 +500,62 @@ theorem kToER_simrec_dominates
       ERMor1.comp (ERMor1.A_two_iter p.1)
         ![ERMor1.sumCtxERPlusOffset (a + 1) p.2]
     ∀ (m : ℕ), m ≤ n → ∀ (j : Fin (k + 1)),
-      Nat.simRecVec k a (fun j' => (h_fam j').interp)
-          (fun j' => (g_fam j').interp) m x j
+      Nat.simRecVec k a
+          (fun j' => (kToER (h_fam j') (h_h j')).interp)
+          (fun j' => (kToER (g_fam j') (h_g j')).interp)
+          m x j
         ≤ bound.interp (Fin.cons m x) := by
   intro p bound m _ j
-  -- LHS = (KMor1.simrec j h_fam g_fam).interp (Fin.cons m x)
-  -- via KMor1.interp_simrec + Fin.tail_cons + Fin.cons_zero
+  -- Step 1: Use IHs to rewrite the kToER-translated families
+  -- back to the K^sim-side ones.
+  have h_bases :
+      (fun j' => (kToER (h_fam j') (h_h j')).interp)
+        = (fun j' => (h_fam j').interp) := by
+    funext j' v'; exact ih_h j' (h_h j') v'
+  have h_steps :
+      (fun j' => (kToER (g_fam j') (h_g j')).interp)
+        = (fun j' => (g_fam j').interp) := by
+    funext j' v'; exact ih_g j' (h_g j') v'
+  rw [h_bases, h_steps]
+  -- Step 2: Bridge Nat.simRecVec to KMor1.simrecVec.
+  rw [← KMor1.simrecVec_eq_Nat_simRecVec h_fam g_fam x m j]
+  -- Step 3: Bridge KMor1.simrecVec back to
+  -- (.simrec j h_fam g_fam).interp via reverse of
+  -- KMor1.interp_simrec.  The reverse uses the equality
+  -- (Fin.cons m x) 0 = m and (fun j' => (Fin.cons m x)
+  -- (Fin.succ j')) = x, both rfl-or-simp.
+  have h_rev :
+      KMor1.simrecVec h_fam g_fam x m j
+        = (KMor1.simrec j h_fam g_fam).interp
+            (Fin.cons m x) := by
+    rw [KMor1.interp_simrec]
+    congr 2 <;> simp [Fin.cons_zero, Fin.cons_succ]
+  rw [h_rev]
+  -- Step 4: Apply majorize_by_componentBound at index j.
   have h_j : (KMor1.simrec j h_fam g_fam).level ≤ 2 := by
-    have hfact :
-        (KMor1.simrec j h_fam g_fam).level
-          = (KMor1.simrec i h_fam g_fam).level := by
-      simp [KMor1.level]
-    rw [hfact]; exact hyp
-  have h_dom :
-      (KMor1.simrec j h_fam g_fam).interp (Fin.cons m x)
-        ≤ (ERMor1.comp (ERMor1.A_two_iter
-              (KMor1.majorize (.simrec j h_fam g_fam) h_j).1)
-            ![ERMor1.sumCtxERPlusOffset (a + 1)
-                (KMor1.majorize (.simrec j h_fam g_fam) h_j).2]
-          ).interp (Fin.cons m x) :=
+    -- KMor1.level at simrec ignores the index; both
+    -- (.simrec j h_fam g_fam).level and (.simrec i h_fam
+    -- g_fam).level reduce to the same expression.
+    show _ ≤ 2
+    simp only [KMor1.level]
+    have := hyp
+    simp only [KMor1.level] at this
+    exact this
+  have h_dom :=
     KMor1.majorize_by_componentBound
       (.simrec j h_fam g_fam) h_j (Fin.cons m x)
-  -- Use index-independence to identify the two bound terms.
-  rw [KMor1.majorize_simrec_index_indep j i ...] at h_dom
-  -- Convert (.simrec j h_fam g_fam).interp at Fin.cons m x
-  -- into Nat.simRecVec k a ... m x j.
-  simp only [KMor1.interp_simrec, Fin.tail_cons,
-    Fin.cons_zero] at h_dom
+  -- Step 5: Use index-independence to identify the bound at
+  -- index j with `bound` (built from the index-i majorize).
+  rw [KMor1.majorize_simrec_index_indep j i h_fam g_fam
+        h_j hyp] at h_dom
   exact h_dom
 ```
 
-Citation: master design §3.5 + step 4 §3.5 bridge.
+Citation: master design §3.5 + §3.4 (Tourlakis 0.1.0.10
+level-2 majorization); §0.1.0.34 (bounded-recursion closure
+the bridge corresponds to).
 
-#### §6.1.3 `kToER_simrec_bound_mono`
+#### §6.2.3 `kToER_simrec_bound_mono`
 
 ```lean
 theorem kToER_simrec_bound_mono
@@ -442,44 +574,73 @@ theorem kToER_simrec_bound_mono
       bound.interp (Fin.cons m x)
         ≤ bound.interp (Fin.cons n x) := by
   intro p bound m h_m_le_n
-  -- Unfold bound and rewrite via @[simp] interp lemmas.
   simp only [bound, ERMor1.interp_comp,
     ERMor1.interp_A_two_iter,
     ERMor1.interp_sumCtxERPlusOffset,
     Matrix.cons_val_zero]
-  -- Goal: tower p.1 ((sumCtxER (a+1)).interp (Fin.cons m x)
-  --                  + p.2)
-  --       ≤ tower p.1 ((sumCtxER (a+1)).interp (Fin.cons n x)
-  --                    + p.2)
+  -- Goal:
+  -- tower p.1 ((sumCtxER (a+1)).interp (Fin.cons m x) + p.2)
+  --   ≤ tower p.1 ((sumCtxER (a+1)).interp (Fin.cons n x) + p.2)
   apply tower_mono_right
   apply Nat.add_le_add_right
-  -- Need: (sumCtxER (a+1)).interp (Fin.cons m x)
-  --        ≤ (sumCtxER (a+1)).interp (Fin.cons n x)
-  -- This follows from a sumCtxER_cons-style helper or by
-  -- direct Fin.foldr-induction.
-  exact sumCtxER_cons_le_of_le h_m_le_n x
+  exact ERMor1.sumCtxER_cons_le_of_le x h_m_le_n
 ```
 
-Where `sumCtxER_cons_le_of_le` is a small helper
-(implementer adds it to step 4's module if not already
-present, near `vMax_cons` / `interp_sumCtxER`):
+The supporting helper, added to
+`LawvereKSimMajorization.lean` near `interp_sumCtxER` /
+`vMax_cons`:
 
 ```lean
-theorem ERMor1.sumCtxER_cons_le_of_le {a m n : ℕ}
-    (x : Fin a → ℕ) (h : m ≤ n) :
+theorem ERMor1.sumCtxER_cons_le_of_le {a : ℕ} (x : Fin a → ℕ)
+    {m n : ℕ} (h : m ≤ n) :
     (ERMor1.sumCtxER (a + 1)).interp (Fin.cons m x)
       ≤ (ERMor1.sumCtxER (a + 1)).interp (Fin.cons n x) := by
   rw [ERMor1.interp_sumCtxER, ERMor1.interp_sumCtxER]
-  -- Induction or direct calculation on Fin.foldr.
-  -- The Fin.cons m x sum factors as m + (Fin.foldr ... x);
-  -- bound the m-component by n, unchanged on the rest.
-  -- Tactic shape: `gcongr` if available, else induction.
-  ...
+  -- (sumCtxER (a+1)).interp = Fin.foldr (a+1) (fun i acc =>
+  --                            acc + ctx i) 0.
+  -- Mirroring step 4's `vMax_cons` proof shape: split the
+  -- foldr at index 0 (slot containing m or n) and use that
+  -- the rest of the fold is identical (both contexts agree
+  -- on Fin.tail = x).
+  -- Concrete proof (~6 lines):
+  induction a with
+  | zero =>
+    simp only [Fin.foldr_succ, Fin.foldr_zero,
+      Fin.cons_zero]
+    omega
+  | succ a' ih =>
+    simp only [Fin.foldr_succ, Fin.cons_zero, Fin.cons_succ]
+    have ih_step :
+        Fin.foldr (a' + 1)
+            (fun i acc => acc + Fin.cons m x (Fin.succ i)) 0
+          ≤ Fin.foldr (a' + 1)
+              (fun i acc =>
+                acc + Fin.cons n x (Fin.succ i)) 0 := by
+      simp only [Fin.cons_succ]
+      -- The inner cons-with-tail terms agree, so the foldr
+      -- over them is identical; use le_of_eq + rfl.
+      exact le_of_eq rfl
+    -- Combine the slot-0 bump (m ≤ n) with the unchanged
+    -- inner foldr.
+    omega
 ```
 
-Citation: master design §3.5; transitively step 4 §3.
+Implementer assesses at task time whether the inductive
+shape above closes cleanly or needs adaptation (e.g.
+`Fin.foldr_succ` might be `Fin.foldr_succ_last` in the
+current mathlib).  An alternative-shape: state the helper
+with the slot-0 difference factored out via
+`Nat.add_le_add_right` over a `Fin.foldr` equality lemma
+(if available).
 
-#### §6.1.4 `kToER_interp_simrec` (assembly)
+Citation: master design §3.5; transitively step 4
+`sumCtxERPlusOffset` (step 4 §3.5 lines 116-121).
+
+#### §6.2.4 `kToER_interp_simrec` (assembly)
+
+The IH arguments bind the level proof `h'` explicitly so
+the theorem's signature does not reference any `kToER`
+local `have` not in scope.
 
 ```lean
 theorem kToER_interp_simrec
@@ -489,76 +650,135 @@ theorem kToER_interp_simrec
     (g_fam : Fin (k + 1) → KMor1 (a + 1 + (k + 1)))
     (h : (KMor1.simrec i h_fam g_fam).level ≤ 2)
     (v : Fin (a + 1) → ℕ)
-    (ih_h : ∀ (j : Fin (k + 1)) (v' : Fin a → ℕ),
-      (kToER (h_fam j) (h_h j)).interp v' = (h_fam j).interp v')
-    (ih_g : ∀ (j : Fin (k + 1)) (v' : Fin (a + 1 + (k + 1)) → ℕ),
-      (kToER (g_fam j) (h_g j)).interp v' = (g_fam j).interp v') :
+    (ih_h : ∀ (j : Fin (k + 1))
+             (h' : (h_fam j).level ≤ 2)
+             (v' : Fin a → ℕ),
+       (kToER (h_fam j) h').interp v' = (h_fam j).interp v')
+    (ih_g : ∀ (j : Fin (k + 1))
+             (h' : (g_fam j).level ≤ 2)
+             (v' : Fin (a + 1 + (k + 1)) → ℕ),
+       (kToER (g_fam j) h').interp v' = (g_fam j).interp v') :
     (kToER (.simrec i h_fam g_fam) h).interp v
       = (KMor1.simrec i h_fam g_fam).interp v := by
+  -- Reconstruct the level-discharge h_h, h_g locally so the
+  -- proof body matches kToER's simrec-branch shape.
+  have h_h : ∀ j, (h_fam j).level ≤ 2 := fun j => by
+    have h1 : (h_fam j).level ≤ 1 :=
+      le_trans
+        (Finset.le_sup
+          (f := fun l => (h_fam l).level)
+          (Finset.mem_univ j))
+        (le_trans (le_max_left _ _)
+          (Nat.le_of_succ_le_succ
+            (by unfold KMor1.level at h; exact h)))
+    omega
+  have h_g : ∀ j, (g_fam j).level ≤ 2 := fun j => by
+    have h1 : (g_fam j).level ≤ 1 :=
+      le_trans
+        (Finset.le_sup
+          (f := fun l => (g_fam l).level)
+          (Finset.mem_univ j))
+        (le_trans (le_max_right _ _)
+          (Nat.le_of_succ_le_succ
+            (by unfold KMor1.level at h; exact h)))
+    omega
+  -- Step 1: cons/tail-shape v.
   set n := v 0
   set x := Fin.tail v
   have hv : v = Fin.cons n x := (Fin.cons_self_tail v).symm
   rw [hv]
-  -- LHS unfolds to simultaneousBoundedRec ... bound i applied
-  -- at Fin.cons n x.
-  simp only [kToER]
+  -- Step 2: unfold kToER's simrec branch, naming the
+  -- ER-side bases / steps / bound.
+  show (ERMor1.simultaneousBoundedRec k a
+          (fun j => kToER (h_fam j) (h_h j))
+          (fun j => kToER (g_fam j) (h_g j))
+          (let p := KMor1.majorize (.simrec i h_fam g_fam) h
+           ERMor1.comp (ERMor1.A_two_iter p.1)
+             ![ERMor1.sumCtxERPlusOffset (a + 1) p.2])
+          i).interp (Fin.cons n x) = _
+  -- Step 3: apply simultaneousBoundedRec_interp_correct.
   rw [ERMor1.simultaneousBoundedRec_interp_correct
-        k a (fun j => kToER (h_fam j) _)
-            (fun j => kToER (g_fam j) _)
-            (ERMor1.comp (ERMor1.A_two_iter ...)
-              ![ERMor1.sumCtxERPlusOffset (a + 1) ...])
-            n x i
-        (kToER_simrec_dominates i h_fam g_fam h n x)
+        k a _ _ _ n x i
+        (kToER_simrec_dominates i h_fam g_fam h
+          h_h h_g ih_h ih_g n x)
         (kToER_simrec_bound_mono i h_fam g_fam h n x)]
-  -- Now LHS = simRecVec k a (fun j' => (kToER (h_fam j')).interp)
-  --             (fun j' => (kToER (g_fam j')).interp) n x i.
-  -- Use ih_h, ih_g to replace each kToER-interp by the K^sim
-  -- interp, recovering simRecVec ... n x i.
+  -- Step 4: the LHS is now Nat.simRecVec over kToER-
+  -- translated families; convert back via IH + bridge to
+  -- (.simrec i h_fam g_fam).interp.
   have h_bases :
-      (fun j' => (kToER (h_fam j') _).interp)
+      (fun j' => (kToER (h_fam j') (h_h j')).interp)
         = (fun j' => (h_fam j').interp) := by
-    funext j' v'; exact ih_h j' v'
+    funext j' v'; exact ih_h j' (h_h j') v'
   have h_steps :
-      (fun j' => (kToER (g_fam j') _).interp)
+      (fun j' => (kToER (g_fam j') (h_g j')).interp)
         = (fun j' => (g_fam j').interp) := by
-    funext j' v'; exact ih_g j' v'
+    funext j' v'; exact ih_g j' (h_g j') v'
   rw [h_bases, h_steps]
-  -- RHS: KMor1.interp_simrec rewrites to simRecVec ... n x i.
-  simp only [KMor1.interp_simrec, Fin.tail_cons, Fin.cons_zero]
+  rw [← KMor1.simrecVec_eq_Nat_simRecVec h_fam g_fam x n i]
+  -- Step 5: KMor1.interp_simrec rewrites the K^sim-side RHS
+  -- into matching simrecVec form.
+  rw [KMor1.interp_simrec]
+  -- Reduce (Fin.cons n x) 0 to n and
+  -- (fun j' => (Fin.cons n x) (Fin.succ j')) to x.
+  congr 1 <;> simp [Fin.cons_zero, Fin.cons_succ]
 ```
 
-(Implementer adapts argument-passing for the bound's `p.1`
-and `p.2` projections; the placeholders `...` indicate where
-the actual `KMor1.majorize (.simrec i h_fam g_fam) h` reduction
-materializes.)
+(Implementer adapts the exact rewrite-ordering at task
+time; the structural shape — IH-driven family rewrite,
+bridge to K^sim simrecVec, then apply
+`KMor1.interp_simrec` — is the canonical path.)
 
-### §6.2 Risk callouts
+Citation: master design §3.5; Tourlakis 2018 §0.1.0.44
+(K^sim_n ⊆ E^{n+1}; the level-2 case).
 
-- **`Fin.foldr` unfolding through `Fin.cons`.**  Step 6.1.3's
+### §6.3 Risk callouts
+
+- **`Fin.foldr` unfolding through `Fin.cons`.**  §6.2.3's
   proof of `kToER_simrec_bound_mono` requires that
   `(sumCtxER (a+1)).interp (Fin.cons m x)` decomposes
   cleanly so the `m`-slot can be bumped to `n`.  Step 4's
-  `vMax_cons` (line 875) is the analogue for `vMax`; if no
-  `sumCtxER_cons` exists yet, add it (~5 lines) or unfold
-  `Fin.foldr` directly via `Fin.foldr_succ`.  Implementer
-  to assess at task time.
+  `vMax_cons` (line 875) is the analogue for `vMax`; the
+  spec's default plan adds `ERMor1.sumCtxER_cons_le_of_le`
+  to `LawvereKSimMajorization.lean` at task time (~6 lines
+  per §6.2.3).  Skip only if the implementer finds an
+  inline-clean tactic (e.g. via `Fin.foldr_succ` + `omega`)
+  that does not require the helper.
 
 - **Equation compiler for `kToER` recursion.**  The simrec
   branch's `let bases / let steps / let p / let bound`
-  bindings may confuse Lean's equation compiler, requiring
-  `termination_by` or `decreasing_by` annotations.  If so,
-  pull the let-bindings into a separate helper `kToER_simrec`
-  taking `(bases, steps, bound, i)` as explicit arguments.
+  bindings (or the equivalent inline construction) may
+  require `termination_by` or `decreasing_by` annotations
+  in some Lean configurations.  If the equation compiler
+  rejects the inline form at task time, refactor by
+  pulling the bound construction into a non-recursive
+  helper `kToER_simrec_bound` taking
+  `(a k h_fam g_fam hyp)` as explicit arguments and
+  returning `ERMor1 (a + 1)`.  Step 4's `KMor1.majorize`
+  uses similarly-shaped `let` chains in its `match` bodies
+  without compiler complaints, so the inline form is the
+  default expectation.
 
-- **`KMor1.interp_simrec`'s `change`-or-`simp` shape.**
-  Step 4's line 814 used `change KMor1.simrecVec ... ≤ _` to
-  bridge the goal-text mismatch.  Step 5's simrec proof may
-  need the same trick.  Reuse the existing `change` pattern.
+- **`KMor1.interp_simrec` rewriting.**  §6.2.4's proof
+  uses `KMor1.interp_simrec` (a `@[simp]` lemma) to
+  rewrite the K^sim-side simrec interp into `simrecVec`
+  form.  The rewrite produces
+  `KMor1.simrecVec h_fam g_fam (fun j' => ctx (Fin.succ j'))
+  (ctx 0) i`, which is *eta-equivalent but not syntactically
+  identical* to `KMor1.simrecVec h_fam g_fam (Fin.tail ctx)
+  (ctx 0) i`.  At the simrec proof step, use `Fin.cons_zero`
+  together with `Fin.cons_succ` to reduce the eta-form
+  rather than relying on `Fin.tail_cons` (the latter
+  rewrites only when
+  the goal already has `Fin.tail` syntactically).  Step 4's
+  line 814 used `change KMor1.simrecVec h_fam g_fam (Fin.tail
+  v) (v 0) i ≤ _` to bridge — replicate that pattern at
+  step 5's call site if needed.
 
-- **`Fin.tail_cons` / `Fin.cons_zero` simp lemmas.**  These
-  are mathlib-standard but their exact names may have shifted
-  across Lean / mathlib versions.  Confirm at implementation
-  time via `lean_local_search` or `lean_loogle`.
+- **`Fin.tail_cons` / `Fin.cons_zero` / `Fin.cons_succ` simp
+  lemmas.**  These are mathlib-standard but the exact names
+  may have shifted across Lean / mathlib versions.  Confirm
+  at implementation time via `lean_local_search` or
+  `lean_loogle`.
 
 ## §7 The multi-output `kToERN` and its companion
 
@@ -620,59 +840,82 @@ def kToERFunctor_map {n m : ℕ}
                  (kToERN rec.rep rec.rep_level))
     (fun rec₁ rec₂ _ => by
       apply Quotient.sound
-      -- Setoid relation on ERMorN: extensional equality.
+      -- Setoid relation on ERMorN: extensional equality of
+      -- interps componentwise.
+      have h_eq :
+          Quotient.mk (kMorNSetoid n m) rec₁.rep
+            = Quotient.mk (kMorNSetoid n m) rec₂.rep :=
+        rec₁.rep_eq.trans rec₂.rep_eq.symm
+      have hrel :
+          (kMorNSetoid n m).r rec₁.rep rec₂.rep :=
+        Quotient.exact h_eq
+      -- hrel : ∀ v i, (rec₁.rep i).interp v
+      --              = (rec₂.rep i).interp v
       intro v i
-      apply kToERN_compat_extEq
-        rec₁.rep_level rec₂.rep_level
-        ?_ v i
-      -- Goal: ∀ v i, (rec₁.rep i).interp v = (rec₂.rep i).interp v
-      have hrel : kMorNSetoid n m |>.r rec₁.rep rec₂.rep := by
-        apply Quotient.exact
-        rw [rec₁.rep_eq, rec₂.rep_eq]
-      exact hrel)
+      exact kToERN_compat_extEq rec₁.rep_level
+        rec₂.rep_level (fun v' i' => hrel v' i') v i)
 ```
+
+The well-definedness proof chains the two `rep_eq` fields
+to establish `Quotient.mk _ rec₁.rep = Quotient.mk _
+rec₂.rep`, then uses `Quotient.exact` to extract the
+extensional equality, which `kToERN_compat_extEq` carries
+to the ER side.
 
 Citation: master design §3.5 lines 1153–1163.
 
 ### §8.3 Functor laws
 
+The default plan is `Quotient.sound` + `simp`-then-extEq —
+`rfl` may close them in some elaboration regimes but is not
+guaranteed to fire through `Quotient.liftOn` on
+`Quotient.mk` without a `simp only [Quotient.lift_mk]`-style
+unfolding.  Implementer attempts `rfl` first; if it fails,
+uses the documented `Quotient.sound`-and-compute path.
+
 ```lean
 theorem kToERFunctor_map_id (n : LawvereKSimDCat 2) :
     kToERFunctor_map (𝟙 n) = 𝟙 (n : LawvereERCat) := by
-  -- The `𝟙 n` in LawvereKSimDCat 2 has depth_witness with
-  -- rep = KMorN.id n; kToERN (KMorN.id n) _ is fun i =>
-  -- ERMor1.proj i = ERMorN.id n (definitionally).
-  -- Quotient.mk of that is 𝟙 in LawvereERCat.
-  rfl
-  -- Fallback if rfl too weak:
-  -- apply Quotient.sound
-  -- intro v i
-  -- simp [kToER, kToERN, KMorN.id, ERMorN.id]
+  -- The `𝟙 n` in LawvereKSimDCat 2 has depth_witness =
+  -- KMorNQuo.id_atDepth, whose Quotient representative has
+  -- rep = KMorN.id n.  Apply Quotient.sound + extensional
+  -- equality witnessed by kToER on KMor1.proj.
+  apply Quotient.sound
+  intro v i
+  -- Goal: (kToERN (KMorN.id n) _ i).interp v
+  --       = (ERMorN.id n i).interp v
+  simp only [kToERN, kToER, KMorN.id, ERMorN.id,
+    KMor1.interp_proj, ERMor1.interp_proj]
 
 theorem kToERFunctor_map_comp {n m k : ℕ}
     (f : KSimMor 2 n m) (g : KSimMor 2 m k) :
     kToERFunctor_map (f ≫ g)
       = kToERFunctor_map f ≫ kToERFunctor_map g := by
-  rfl
-  -- Fallback if rfl too weak:
-  -- apply Quotient.sound
-  -- intro v i
-  -- simp [kToER, kToERN, KMorN.comp, ERMorN.comp]
+  -- Composition in LawvereKSimDCat 2 is via
+  -- KMorNQuo.comp_atDepth, which produces a representative
+  -- KMorN.comp f.rep g.rep.  kToERN commutes with comp
+  -- pointwise; both sides reduce to the same ER class.
+  apply Quotient.sound
+  intro v i
+  simp only [kToERN, kToER, KMorN.comp, ERMorN.comp,
+    KMor1.interp_comp, ERMor1.interp_comp]
 ```
 
-The `rfl` closes are expected because:
+The `simp only` set may need additional lemmas the
+implementer discovers at task time
+(`Quotient.lift_mk` / `Quotient.mk_eq_mk`-style); add them
+as needed.
+
+If `rfl` happens to close: replace the `Quotient.sound`
+tactic with `rfl`.  This is acceptable but not assumed.
+
+The defeq-grounds for an opportunistic `rfl`:
 
 - `kToER`'s comp branch translates `KMor1.comp f gs` literally
   to `ERMor1.comp (kToER f) (fun i => kToER (gs i))`.
-- `kToERN` commutes with `KMorN.comp` pointwise (`fun i =>
-  kToER (KMor1.comp (fst i) snd) = ERMor1.comp (kToER fst i)
-  (fun j => kToER (snd j))`).
+- `kToERN` commutes with `KMorN.comp` pointwise.
 - `KMorNQuo.comp_atDepth`'s representative is exactly
   `KMorN.comp f.rep g.rep`.
-
-If the Quotient layer's elaboration hides this defeq, the
-`Quotient.sound` + `simp` fallback is at most 5 lines per
-law.
 
 ### §8.4 Opportunistic step-11 helpers (Scope B)
 
@@ -686,19 +929,24 @@ none required.
 -- arguments.
 @[simp] theorem kToERFunctor_obj (n : LawvereKSimDCat 2) :
     kToERFunctor.obj n = n := rfl
-
--- Quotient-class commutation.
-theorem kToERFunctor_map_quot {n m : ℕ}
-    (rep : KMorN n m)
-    (h_lvl : ∀ i, (rep i).level ≤ 2)
-    (h_dw : KMorNQuo.atDepth 2 (Quotient.mk _ rep)) :
-    kToERFunctor.map ⟨Quotient.mk _ rep, h_dw⟩
-      = Quotient.mk _ (kToERN rep h_lvl) := by
-  ...
-
--- KSimMor.includeSucc compatibility (if step 11 needs it).
--- ...
 ```
+
+Other candidates the implementer may consider:
+
+- A version of `kToERFunctor.map` that operates on a raw
+  representative: given `rep : KMorN n m` with each
+  component at level ≤ 2, produce the ER quotient class
+  directly, bypassing the `KSimMor` wrapper.  Such a
+  helper would need a `Quotient.mk _ rep`-shaped
+  `depth_witness` constructor — likely a small
+  `KMorNQuo.atDepth.ofRep` add-on at task time.  Skip if
+  the construction looks involved.
+
+- Compatibility with `KSimMor.includeSucc d`: a lemma
+  saying `kToERFunctor` commutes with the depth-weakening
+  inclusion.  Useful only if step 11 explicitly invokes
+  the inclusion functor; defer until step 11's plan asks
+  for it.
 
 Each helper added is documented in its docstring and noted
 in `.session/workstreams/er-ksim2-equiv-via-urm.md`.
@@ -725,19 +973,38 @@ example {f : KMor1 0} (h : (KMor1.raise f).level ≤ 2)
 ```
 
 Implementer confirms `rfl` works; if level-discharge `have`s
-block reduction, fall back to `simp [kToER]`.
+prevent reduction, fall back to `simp [kToER]`.
 
 ### §9.2 Tier 2 — universal-theorem `example` proofs
 
-Use the `addK : KMor1 1` simrec witness from Phase-1
-task #239 (level 1 — fits within the level-2 hypothesis).
+Construct an inline `addK : KMor1 2` simrec witness in the
+test module (the existing landed `addK` in
+`GebLeanTests/LawvereKSimInterp.lean` is `private` and so
+not importable; it is `KMor1 2`, not `KMor1 1`).  Inline
+construction:
 
 ```lean
-example : (kToER addK (by simp [KMor1.level])).interp ![3, 5]
+-- Inline addK: λ(x, y). x + y, level 1, simrec over
+-- successor.
+private def addK : KMor1 2 :=
+  KMor1.simrec (k := 0)
+    ⟨0, by omega⟩
+    -- Base family at index 0: KMor1 1 returning the
+    -- single parameter.
+    (fun _ => KMor1.proj 0)
+    -- Step family at index 0: KMor1 (1 + 1 + 1) =
+    -- KMor1 3.  succ of slot 2 (the previous-iter value).
+    (fun _ =>
+      KMor1.comp KMor1.succ
+        ![KMor1.proj 2])
+
+example : (kToER addK (by simp [addK, KMor1.level])).interp
+              ![3, 5]
             = addK.interp ![3, 5] :=
   kToER_interp addK _ _
 
-example : (kToER addK (by simp [KMor1.level])).interp ![0, 7]
+example : (kToER addK (by simp [addK, KMor1.level])).interp
+              ![0, 7]
             = addK.interp ![0, 7] :=
   kToER_interp addK _ _
 ```
@@ -841,7 +1108,7 @@ The step-5 cycle is complete when:
 
 5. The cycle-end review (a full
    `git diff origin/terence/develop..HEAD`) finds no
-   substantive issues.
+   substantive defects.
 
 6. `.session/workstreams/er-ksim2-equiv-via-urm.md` is
    updated with step 5's completion entry, listing what was
