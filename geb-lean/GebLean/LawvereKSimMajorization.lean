@@ -348,4 +348,80 @@ theorem A_one_iter_linear_le_A_two_iter_two
     _ ≤ 2 ^ (2 ^ (m + r_H + r_G + 2)) := h_outer
     _ = tower 2 (m + r_H + r_G + 2) := h_tower
 
+/-- `A_one_iter` composes additively in the iteration count:
+`A_1^a(A_1^b(x)) = A_1^{a+b}(x)`.  Master design §3.4 lines
+994-1007 (used implicitly in the M_n closed-form inductive
+proof). -/
+theorem A_one_iter_compose (a b x : ℕ) :
+    (ERMor1.A_one_iter a).interp
+        ![(ERMor1.A_one_iter b).interp ![x]]
+      = (ERMor1.A_one_iter (a + b)).interp ![x] := by
+  rw [ERMor1.interp_A_one_iter, ERMor1.interp_A_one_iter,
+      ERMor1.interp_A_one_iter]
+  simp only [Matrix.cons_val_zero]
+  have hpa : 1 ≤ 2 ^ a := Nat.one_le_pow _ _ (by omega)
+  have hpb : 1 ≤ 2 ^ b := Nat.one_le_pow _ _ (by omega)
+  have h3 : 2 ^ (a + b) = 2 ^ a * 2 ^ b :=
+    Nat.pow_add 2 a b
+  have h4 : 2 ^ (a + b + 1) = 2 * (2 ^ a * 2 ^ b) := by
+    rw [Nat.pow_succ, h3]; ring
+  have h5 : 2 ^ (b + 1) = 2 * 2 ^ b := by
+    rw [Nat.pow_succ]; ring
+  have h6 : 2 ^ (a + 1) = 2 * 2 ^ a := by
+    rw [Nat.pow_succ]; ring
+  rw [h3, h4, h5, h6]
+  have hdist :
+      2 ^ a * (2 ^ b * x + (2 * 2 ^ b - 2))
+        = 2 ^ a * 2 ^ b * x
+            + 2 ^ a * (2 * 2 ^ b - 2) := by
+    ring
+  rw [hdist]
+  have hbridge :
+      2 ^ a * (2 * 2 ^ b - 2)
+        = 2 * (2 ^ a * 2 ^ b) - 2 * 2 ^ a := by
+    rw [Nat.mul_sub _ (2 * 2 ^ b) 2]
+    ring_nf
+  rw [hbridge]
+  have h2ab_ge : 2 * 2 ^ a ≤ 2 * (2 ^ a * 2 ^ b) := by
+    apply Nat.mul_le_mul_left
+    have : 2 ^ a * 1 ≤ 2 ^ a * 2 ^ b :=
+      Nat.mul_le_mul_left _ hpb
+    omega
+  omega
+
+/-- `A_1^k` dominates the identity at every `x`:
+`x ≤ (A_one_iter k).interp ![x]`.  Used in §6.2's step
+bullet to bound the recursion variable `n` by an
+`A_1`-iterate. -/
+theorem self_le_A_one_iter (k x : ℕ) :
+    x ≤ (ERMor1.A_one_iter k).interp ![x] := by
+  rw [ERMor1.interp_A_one_iter]
+  simp only [Matrix.cons_val_zero]
+  have h_pow_pos : 1 ≤ 2 ^ k :=
+    Nat.one_le_pow _ _ (by omega)
+  have h_mul : x ≤ 2 ^ k * x :=
+    Nat.le_mul_of_pos_left _ h_pow_pos
+  omega
+
+/-- `A_1^k` is monotone in the iteration count for fixed
+input.  Used in §6.3's simrec bullet to lift the exponent
+from `r_H + (v 0) · r_G` to `r_H + (vMax v) · r_G` before
+applying §4.5. -/
+theorem A_one_iter_mono_left {k₁ k₂ x : ℕ} (h : k₁ ≤ k₂) :
+    (ERMor1.A_one_iter k₁).interp ![x]
+      ≤ (ERMor1.A_one_iter k₂).interp ![x] := by
+  rw [ERMor1.interp_A_one_iter, ERMor1.interp_A_one_iter]
+  simp only [Matrix.cons_val_zero]
+  have h_pow_k : 2 ^ k₁ ≤ 2 ^ k₂ :=
+    Nat.pow_le_pow_right (by omega) h
+  have h_pow_succ : 2 ^ (k₁ + 1) ≤ 2 ^ (k₂ + 1) :=
+    Nat.pow_le_pow_right (by omega) (by omega)
+  have h_mul : 2 ^ k₁ * x ≤ 2 ^ k₂ * x :=
+    Nat.mul_le_mul_right _ h_pow_k
+  have h_pow_pos₁ : 1 ≤ 2 ^ (k₁ + 1) :=
+    Nat.one_le_pow _ _ (by omega)
+  have h_pow_pos₂ : 1 ≤ 2 ^ (k₂ + 1) :=
+    Nat.one_le_pow _ _ (by omega)
+  omega
+
 end GebLean
