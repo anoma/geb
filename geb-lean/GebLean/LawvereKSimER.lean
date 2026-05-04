@@ -375,4 +375,30 @@ theorem kToERN_compat_extEq {n m : ℕ}
   rw [kToERN_interp, kToERN_interp]
   exact hfg v i
 
+/-- Morphism component of the forward functor.  Lifts a
+`KSimMor 2 n m` (an equivalence class of `KMorN n m`
+families with depth-2 witness) to an `ERMorNQuo n m`.
+Well-definedness via `kToERN_compat_extEq` plus
+`Quotient.exact` on the depth-witness's `rep_eq` fields.
+Master design §3.5 lines 1153-1163. -/
+def kToERFunctor_map {n m : ℕ}
+    (f : KSimMor 2 n m) : ERMorNQuo n m :=
+  Quotient.liftOn f.depth_witness
+    (fun rec => Quotient.mk (erMorNSetoid n m)
+                 (kToERN rec.rep rec.rep_level))
+    (fun rec₁ rec₂ _ => by
+      apply Quotient.sound
+      have h_eq :
+          Quotient.mk (kMorNSetoid n m) rec₁.rep
+            = Quotient.mk (kMorNSetoid n m) rec₂.rep :=
+        rec₁.rep_eq.trans rec₂.rep_eq.symm
+      have hrel :
+          (kMorNSetoid n m).r rec₁.rep rec₂.rep :=
+        Quotient.exact h_eq
+      intro v
+      funext i
+      exact kToERN_compat_extEq rec₁.rep_level
+        rec₂.rep_level
+        (fun v' i' => congr_fun (hrel v') i') v i)
+
 end GebLean
