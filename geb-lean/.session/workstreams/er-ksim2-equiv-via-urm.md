@@ -73,9 +73,44 @@ Formalizing the categorical equivalence
   reports clean (0 blockers, 0 majors).  2 rounds
   adversarial review on the plan with empirical lean-lsp
   verification of arithmetic.
+- Step 5 (`kToER` structural-recursion functor):
+  complete.  Lands `kToER : KMor1 a → ERMor1 a` (level ≤
+  2), `kToERN` multi-output companion, the universal
+  correctness theorem `kToER_interp` (Tourlakis 2018
+  §0.1.0.44 ⊆ pointwise, level-2 case), three Factoring R
+  simrec-branch helpers (`kToER_simrec_dominates`,
+  `kToER_simrec_bound_mono`, `kToER_interp_simrec`), the
+  Quotient-lift well-definedness helper
+  `kToERN_compat_extEq`, and the categorical functor
+  `kToERFunctor : LawvereKSimDCat 2 ⥤ LawvereERCat` with
+  `map_id` and `map_comp`.  Adds three small lemmas to
+  existing modules: `KMor1.simrecVec_eq_Nat_simRecVec` to
+  `LawvereKSimInterp.lean` (bridge between K^sim simrecVec
+  and Nat.simRecVec), `KMor1.majorize_simrec_index_indep`,
+  and `ERMor1.sumCtxER_cons_le_of_le`, the latter two to
+  `LawvereKSimMajorization.lean`.  Plan at
+  `docs/superpowers/plans/2026-05-03-step-5-ksim-to-er-functor.md`.
+  Spec at
+  `docs/superpowers/specs/2026-05-03-step-5-ksim-to-er-functor-design.md`.
+  3 rounds adversarial review on the spec; round 3 reports
+  0 blockers / 0 majors.  Plan went through 2 rounds
+  adversarial review (round-1: 7 majors, all addressed;
+  round-2: 1 major downgrade, 4 cosmetic minors,
+  reviewer signed off).
+
+  Implementation notes:
+  - Tasks 13-15 used explicit `CategoryStruct.id (obj := ...)`
+    / `CategoryStruct.comp (obj := ...)` forms in lemma
+    statements rather than `𝟙` / `≫` notation, because
+    `LawvereKSimDCat 2` and `LawvereERCat` are both defeq
+    to `ℕ` and the elaborator could not disambiguate which
+    category's notation was meant from the goal type alone.
+    Inside the bundled `kToERFunctor` (Task 16), the
+    notation works because the `Functor` structure pins
+    down the categories per field.
 
 ## Next steps
 
-- Step 5: `kToER` structural-induction definition + its
-  correctness theorem (master design §3.5).  Uses
-  `KMor1.majorize_by_componentBound` as a black box.
+- Step 6: RegisterMachine audit (master design §4 + step 6).
+  Begin the URM-side chain for the reverse direction
+  `erToK : ERMor1 a → KMor1 a`.
