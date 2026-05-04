@@ -23,4 +23,28 @@ example {f : KMor1 2}
         (h' : f.level ≤ 2) :
     kToER (KMor1.raise f) h = kToER f h' := rfl
 
+-- Tier 2 — universal-theorem example proofs.
+--
+-- Inline addK : KMor1 2 simrec witness (level 1).
+-- λ(x, y). x + y, defined via simrec over successor.
+-- The Phase-1 addK at GebLeanTests/LawvereKSimInterp.lean
+-- is private; reconstruct here for step 5's tests.
+private def addK : KMor1 2 :=
+  KMor1.simrec (k := 0)
+    ⟨0, by omega⟩
+    (fun _ => KMor1.proj 0)
+    (fun _ =>
+      KMor1.comp KMor1.succ
+        ![KMor1.proj 2])
+
+example : (kToER addK
+              (by simp [addK, KMor1.level])).interp ![3, 5]
+            = addK.interp ![3, 5] :=
+  kToER_interp addK (by simp [addK, KMor1.level]) ![3, 5]
+
+example : (kToER addK
+              (by simp [addK, KMor1.level])).interp ![0, 7]
+            = addK.interp ![0, 7] :=
+  kToER_interp addK (by simp [addK, KMor1.level]) ![0, 7]
+
 end GebLeanTests.LawvereKSimER
