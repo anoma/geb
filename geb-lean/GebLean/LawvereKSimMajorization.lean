@@ -228,4 +228,31 @@ theorem A_one_iter_le_two_pow_succ (k x : ℕ) :
   ring_nf
   omega
 
+/-- γ.3 cross-family bound: `2^{k+1} · (x + 1) ≤
+tower 2 (x + k + 2)`.  Master design §3.4 lines
+1027-1029. -/
+theorem two_pow_succ_mul_succ_le_tower_two (k x : ℕ) :
+    2 ^ (k + 1) * (x + 1) ≤ tower 2 (x + k + 2) := by
+  have h_succ_le : x + 1 ≤ 2 ^ (x + 1) :=
+    le_two_pow_self (x + 1)
+  have h_step1 : 2 ^ (k + 1) * (x + 1)
+                   ≤ 2 ^ (k + 1) * 2 ^ (x + 1) :=
+    Nat.mul_le_mul_left _ h_succ_le
+  have h_step2 : 2 ^ (k + 1) * 2 ^ (x + 1)
+                   = 2 ^ (k + x + 2) := by
+    rw [← Nat.pow_add]; ring_nf
+  have h_step3 : k + x + 2 ≤ 2 ^ (k + x + 2) :=
+    le_two_pow_self _
+  have h_step4 : 2 ^ (k + x + 2) ≤ 2 ^ (2 ^ (x + k + 2)) := by
+    apply Nat.pow_le_pow_right (by omega)
+    have heq : k + x + 2 = x + k + 2 := by ring
+    rw [← heq]
+    exact h_step3
+  calc 2 ^ (k + 1) * (x + 1)
+      ≤ 2 ^ (k + 1) * 2 ^ (x + 1) := h_step1
+    _ = 2 ^ (k + x + 2) := h_step2
+    _ ≤ 2 ^ (2 ^ (x + k + 2)) := h_step4
+    _ = tower 2 (x + k + 2) := by
+        simp only [tower_succ, tower_zero]
+
 end GebLean
