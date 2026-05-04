@@ -77,4 +77,31 @@ def kToER : ∀ {a : ℕ} (f : KMor1 a), f.level ≤ 2 → ERMor1 a
           (fun _ : Fin 1 => ERMor1.sumCtxERPlusOffset (a + 1) p.2)
       ERMor1.simultaneousBoundedRec k a bases steps bound i
 
+@[simp] theorem kToER_zero {a : ℕ}
+    (h : (KMor1.zero (n := a)).level ≤ 2) :
+    kToER (KMor1.zero (n := a)) h = ERMor1.zeroN a := rfl
+
+@[simp] theorem kToER_succ (h : KMor1.succ.level ≤ 2) :
+    kToER KMor1.succ h = ERMor1.succ := rfl
+
+@[simp] theorem kToER_proj {a : ℕ} (i : Fin a)
+    (h : (KMor1.proj i).level ≤ 2) :
+    kToER (KMor1.proj i) h = ERMor1.proj i := rfl
+
+@[simp] theorem kToER_raise {a : ℕ} (f : KMor1 a)
+    (h : (KMor1.raise f).level ≤ 2)
+    (h' : f.level ≤ 2) :
+    kToER (KMor1.raise f) h = kToER f h' := by
+  rfl
+
+@[simp] theorem kToER_comp {a b : ℕ} (f : KMor1 b)
+    (gs : Fin b → KMor1 a)
+    (h : (KMor1.comp f gs).level ≤ 2)
+    (hf : f.level ≤ 2)
+    (hgs : ∀ i, (gs i).level ≤ 2) :
+    kToER (KMor1.comp f gs) h
+      = ERMor1.comp (kToER f hf)
+          (fun i => kToER (gs i) (hgs i)) := by
+  rfl
+
 end GebLean
