@@ -421,4 +421,52 @@ theorem kToERFunctor_map_id (n : LawvereKSimDCat 2) :
   funext i
   rfl
 
+/-- Functor law: `kToERFunctor_map` preserves composition.
+`kToER`'s `comp` branch translates `KMor1.comp f gs`
+literally to `ERMor1.comp (kToER f) (fun i => kToER (gs i))`,
+and `kToERN` commutes with `KMorN.comp` pointwise.  Master
+design §3.5. -/
+theorem kToERFunctor_map_comp {n m k : ℕ}
+    (f : KSimMor 2 n m) (g : KSimMor 2 m k) :
+    kToERFunctor_map
+        (CategoryTheory.CategoryStruct.comp
+          (obj := LawvereKSimDCat 2) f g)
+      = CategoryTheory.CategoryStruct.comp
+          (obj := LawvereERCat)
+          (kToERFunctor_map f) (kToERFunctor_map g) := by
+  unfold kToERFunctor_map
+  rcases f with ⟨fh, fdw⟩
+  rcases g with ⟨gh, gdw⟩
+  refine Quotient.inductionOn₂
+    (motive := fun (fdw : KMorNQuo.atDepth 2 fh)
+        (gdw : KMorNQuo.atDepth 2 gh) =>
+      Quotient.liftOn
+          (s := kMorNQuoAtDepthSetoid 2 (KMorNQuo.comp fh gh))
+          (KMorNQuo.comp_atDepth fdw gdw)
+          (fun rec => Quotient.mk (erMorNSetoid n k)
+                       (kToERN rec.rep rec.rep_level))
+          _
+        = ERMorNQuo.comp
+          (Quotient.liftOn fdw
+            (fun rec => Quotient.mk (erMorNSetoid n m)
+                         (kToERN rec.rep rec.rep_level))
+            _)
+          (Quotient.liftOn gdw
+            (fun rec => Quotient.mk (erMorNSetoid m k)
+                         (kToERN rec.rep rec.rep_level))
+            _))
+    fdw gdw ?_
+  intro fr gr
+  apply Quotient.sound
+  intro v
+  funext i
+  change (kToERN (KMorN.comp gr.rep fr.rep) _ i).interp v
+    = ((kToERN gr.rep _) i).interp
+        (fun j => ((kToERN fr.rep _) j).interp v)
+  rw [kToERN_interp, kToERN_interp]
+  simp only [KMorN.comp, KMor1.interp_comp]
+  congr 1
+  funext j
+  rw [kToERN_interp]
+
 end GebLean
