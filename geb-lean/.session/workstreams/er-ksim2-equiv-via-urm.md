@@ -52,8 +52,30 @@ Formalizing the categorical equivalence
   4 rounds adversarial review on the spec, 2 on the plan;
   round 4 of the spec review empirically Lean-verified all
   five proofs.
+- Step 4 (K^sim majorization theorems):
+  complete.  Lands `KMor1.majorize_one` /
+  `majorize_by_A_one_iter` (level-≤1 in A_1),
+  `KMor1.majorize` / `majorize_by_A_two_iter`
+  (level-≤2 in A_2), `KMor1.simrecVec_le_A_one_iter`
+  (level-2 iteration arithmetic transcribing master
+  design lines 985-1007), the cross-family translation
+  lemmas (`linearBound_le_A_one_iter`,
+  `A_one_iter_le_A_two_iter_two`,
+  `A_one_iter_linear_le_A_two_iter_two`,
+  `A_one_iter_compose`), ER-side `sumCtxER` /
+  `sumCtxERPlusOffset` named composites with closed-form
+  interp + dominance helpers, and the step-5 bridge
+  lemma `KMor1.majorize_by_componentBound`.  Plan at
+  `docs/superpowers/plans/2026-05-03-step-4-ksim-majorization.md`.
+  Spec at
+  `docs/superpowers/specs/2026-05-03-step-4-ksim-majorization-design.md`.
+  2 rounds adversarial review on the spec; round 2
+  reports clean (0 blockers, 0 majors).  2 rounds
+  adversarial review on the plan with empirical lean-lsp
+  verification of arithmetic.
 
 ## Next steps
 
-- Step 4: `LawvereKSimMajorization.lean` (master design
-  §3.4).
+- Step 5: `kToER` structural-induction definition + its
+  correctness theorem (master design §3.5).  Uses
+  `KMor1.majorize_by_componentBound` as a black box.
