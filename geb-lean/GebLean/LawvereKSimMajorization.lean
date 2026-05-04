@@ -255,4 +255,16 @@ theorem two_pow_succ_mul_succ_le_tower_two (k x : ℕ) :
     _ = tower 2 (x + k + 2) := by
         simp only [tower_succ, tower_zero]
 
+/-- Combined cross-family bound: `A_1^k(x) ≤ A_2^2(x + k + 2)`.
+Master design §3.4 lines 1015-1029; Tourlakis 2018
+§0.1.0.10.  Used by the `raise` case of
+`majorize_by_A_two_iter`. -/
+theorem A_one_iter_le_A_two_iter_two (k x : ℕ) :
+    (ERMor1.A_one_iter k).interp ![x]
+      ≤ (ERMor1.A_two_iter 2).interp ![x + k + 2] := by
+  rw [ERMor1.interp_A_two_iter]
+  simp only [Matrix.cons_val_zero]
+  exact le_trans (A_one_iter_le_two_pow_succ k x)
+    (two_pow_succ_mul_succ_le_tower_two k x)
+
 end GebLean
