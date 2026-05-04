@@ -104,4 +104,75 @@ def kToER : ∀ {a : ℕ} (f : KMor1 a), f.level ≤ 2 → ERMor1 a
           (fun i => kToER (gs i) (hgs i)) := by
   rfl
 
+/-- Dominance hypothesis for
+`ERMor1.simultaneousBoundedRec_interp_correct` at step 5's
+simrec branch.  States that for each component `j` and
+each iteration `m ≤ n`, the value-side simRecVec over the
+kToER-translated families is dominated by the bound
+`bound = comp (A_two_iter p.1)
+(fun _ : Fin 1 => sumCtxERPlusOffset (a+1) p.2)` evaluated
+at `Fin.cons m x`, where `p` is `KMor1.majorize` of the
+simrec node.  Master design §3.5; Tourlakis 2018 §0.1.0.34
+(bounded-recursion closure underlying step 4's bridge) +
+§0.1.0.10 (level-2 majorization). -/
+theorem kToER_simrec_dominates
+    {a k : ℕ}
+    (i : Fin (k + 1))
+    (h_fam : Fin (k + 1) → KMor1 a)
+    (g_fam : Fin (k + 1) → KMor1 (a + 1 + (k + 1)))
+    (hyp : (KMor1.simrec i h_fam g_fam).level ≤ 2)
+    (h_h : ∀ j, (h_fam j).level ≤ 2)
+    (h_g : ∀ j, (g_fam j).level ≤ 2)
+    (ih_h : ∀ (j : Fin (k + 1))
+             (h' : (h_fam j).level ≤ 2)
+             (v' : Fin a → ℕ),
+       (kToER (h_fam j) h').interp v'
+         = (h_fam j).interp v')
+    (ih_g : ∀ (j : Fin (k + 1))
+             (h' : (g_fam j).level ≤ 2)
+             (v' : Fin (a + 1 + (k + 1)) → ℕ),
+       (kToER (g_fam j) h').interp v'
+         = (g_fam j).interp v')
+    (n : ℕ) (x : Fin a → ℕ) :
+    let p := KMor1.majorize (.simrec i h_fam g_fam) hyp
+    let bound : ERMor1 (a + 1) :=
+      ERMor1.comp (ERMor1.A_two_iter p.1)
+        (fun _ : Fin 1 => ERMor1.sumCtxERPlusOffset (a + 1) p.2)
+    ∀ (m : ℕ), m ≤ n → ∀ (j : Fin (k + 1)),
+      Nat.simRecVec k a
+          (fun j' => (kToER (h_fam j') (h_h j')).interp)
+          (fun j' => (kToER (g_fam j') (h_g j')).interp)
+          m x j
+        ≤ bound.interp (Fin.cons m x) := by
+  intro p bound m _ j
+  have h_bases :
+      (fun j' => (kToER (h_fam j') (h_h j')).interp)
+        = (fun j' => (h_fam j').interp) := by
+    funext j' v'; exact ih_h j' (h_h j') v'
+  have h_steps :
+      (fun j' => (kToER (g_fam j') (h_g j')).interp)
+        = (fun j' => (g_fam j').interp) := by
+    funext j' v'; exact ih_g j' (h_g j') v'
+  rw [h_bases, h_steps]
+  rw [← KMor1.simrecVec_eq_Nat_simRecVec h_fam g_fam x m j]
+  have h_rev :
+      KMor1.simrecVec h_fam g_fam x m j
+        = (KMor1.simrec j h_fam g_fam).interp
+            (Fin.cons m x) := by
+    rw [KMor1.interp_simrec]
+    congr 2
+  rw [h_rev]
+  have h_j : (KMor1.simrec j h_fam g_fam).level ≤ 2 := by
+    have hfact :
+        (KMor1.simrec j h_fam g_fam).level
+          = (KMor1.simrec i h_fam g_fam).level :=
+      rfl
+    rw [hfact]; exact hyp
+  have h_dom :=
+    KMor1.majorize_by_componentBound
+      (.simrec j h_fam g_fam) h_j (Fin.cons m x)
+  rw [KMor1.majorize_simrec_index_indep j i h_fam g_fam
+        h_j hyp] at h_dom
+  exact h_dom
+
 end GebLean
