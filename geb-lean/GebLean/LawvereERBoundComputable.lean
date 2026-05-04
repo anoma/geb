@@ -285,7 +285,7 @@ def ERMor1.sumCtxER : (n : ℕ) → ERMor1 n
                 (fun j => ERMor1.proj ⟨j.val + 1, by omega⟩))
 
 /-- Interpretation of `sumCtxER`: sums all context entries. -/
-theorem ERMor1.interp_sumCtxER :
+@[simp] theorem ERMor1.interp_sumCtxER :
     ∀ {n : ℕ} (ctx : Fin n → ℕ),
       (ERMor1.sumCtxER n).interp ctx =
         (Finset.univ : Finset (Fin n)).sum ctx
