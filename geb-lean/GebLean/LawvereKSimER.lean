@@ -555,4 +555,22 @@ composes / decomposes functors.  Master design §3.5. -/
 @[simp] theorem kToERFunctor_obj (n : LawvereKSimDCat 2) :
     kToERFunctor.obj n = n := rfl
 
+/-- Commutation lemma: when applied to a `KSimMor 2`
+constructed from a raw representative `rep : KMorN n m`
+with explicit level proof `h`, `kToERFunctor.map`
+reduces to the ER-quotient class of `kToERN rep h`.
+Step 11 (the categorical iso) consumes this when
+building morphisms from representatives.  Master design
+§3.5; spec §8.4 Scope-B helper. -/
+theorem kToERFunctor_map_quot {n m : ℕ}
+    (rep : KMorN n m)
+    (h : ∀ i, (rep i).level ≤ 2) :
+    kToERFunctor.map
+        (⟨Quotient.mk (kMorNSetoid n m) rep,
+          Quotient.mk (kMorNQuoAtDepthSetoid 2 _)
+            { rep := rep, rep_level := h, rep_eq := rfl }⟩
+          : KSimMor 2 n m)
+      = Quotient.mk (erMorNSetoid n m) (kToERN rep h) :=
+  rfl
+
 end GebLean
