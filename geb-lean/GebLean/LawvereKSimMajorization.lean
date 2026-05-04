@@ -78,6 +78,26 @@ private theorem vMax_cons {a : ℕ} (n : ℕ) (v : Fin a → ℕ) :
       have h := vMax_apply_le (Fin.cons n v) j.succ
       simpa only [Fin.cons_succ] using h
 
+/-- Monotonicity of `sumCtxER` in the cons-head slot: if
+`m ≤ n` then `(sumCtxER (a+1)).interp (Fin.cons m x) ≤
+(sumCtxER (a+1)).interp (Fin.cons n x)`.  Used by step 5's
+`kToER_simrec_bound_mono` for the bound's
+iteration-counter monotonicity.  Master design §3.5;
+analogue of `vMax_cons` for the sum-context. -/
+theorem ERMor1.sumCtxER_cons_le_of_le {a : ℕ}
+    (x : Fin a → ℕ) {m n : ℕ} (h : m ≤ n) :
+    (ERMor1.sumCtxER (a + 1)).interp (Fin.cons m x)
+      ≤ (ERMor1.sumCtxER (a + 1)).interp (Fin.cons n x) := by
+  rw [ERMor1.interp_sumCtxER, ERMor1.interp_sumCtxER]
+  apply Finset.sum_le_sum
+  intro i _
+  refine Fin.cases ?_ ?_ i
+  · simp only [Fin.cons_zero]
+    exact h
+  · intro j
+    simp only [Fin.cons_succ]
+    exact le_rfl
+
 namespace ERMor1
 
 /-- Sum dominates max: `vMax v ≤ (sumCtxER n).interp v`.
