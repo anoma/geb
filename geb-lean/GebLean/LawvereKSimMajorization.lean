@@ -591,4 +591,69 @@ theorem KMor1.simrecVec_le_A_one_iter
                 ![max (n + 1) (vMax params)] :=
             h_outer_input_mono
 
+/-- Level-≤2 majorize witness: returns `(r, offset)` such
+that `f.interp v ≤ A_2^r (vMax v + offset)`.  Structural
+recursion on `f`.  Master design §3.4 lines 916-937.
+
+All atomic cases use uniform `r = 2`: tighter atom-level
+`r` would force per-case upcasting at every comp/simrec
+node.  The simrec offset matches master design lines
+1051-1053 exactly: `r_2 = 2`, `offset_2 = r_H + r_G + 2`. -/
+def KMor1.majorize : {a : ℕ} → (f : KMor1 a) →
+    f.level ≤ 2 → ℕ × ℕ
+  | _, .zero,         _ => (2, 2)
+  | _, .succ,         _ => (2, 3)
+  | _, .proj _,       _ => (2, 2)
+  | _, .comp f gs,    h =>
+      have hf  : f.level ≤ 2 := by
+        unfold KMor1.level at h
+        exact le_trans (le_max_left _ _) h
+      have hgs : ∀ i, (gs i).level ≤ 2 := fun i => by
+        unfold KMor1.level at h
+        exact le_trans
+          (Finset.le_sup
+            (f := fun j => (gs j).level)
+            (Finset.mem_univ i))
+          (le_trans (le_max_right _ _) h)
+      let p_f  := KMor1.majorize f hf
+      let r_g  := Fin.foldr _ (fun i acc =>
+                    max acc
+                      (KMor1.majorize (gs i) (hgs i)).1) 0
+      let o_g  := Fin.foldr _ (fun i acc =>
+                    max acc
+                      (KMor1.majorize (gs i) (hgs i)).2) 0
+      (p_f.1 + r_g, p_f.2 + o_g)
+  | _, .raise f,      h =>
+      have hf : f.level ≤ 1 := by
+        unfold KMor1.level at h
+        exact Nat.le_of_succ_le_succ h
+      let p := KMor1.majorize_one f hf
+      (2, p.1 + 2)
+  | _, .simrec _ h_fam g_fam, hyp =>
+      have hh : ∀ j, (h_fam j).level ≤ 1 := by
+        unfold KMor1.level at hyp
+        intro j
+        have := le_trans (le_max_left _ _)
+          (Nat.le_of_succ_le_succ hyp)
+        exact le_trans
+          (Finset.le_sup
+            (f := fun l => (h_fam l).level)
+            (Finset.mem_univ j)) this
+      have hg : ∀ j, (g_fam j).level ≤ 1 := by
+        unfold KMor1.level at hyp
+        intro j
+        have := le_trans (le_max_right _ _)
+          (Nat.le_of_succ_le_succ hyp)
+        exact le_trans
+          (Finset.le_sup
+            (f := fun l => (g_fam l).level)
+            (Finset.mem_univ j)) this
+      let r_H := Fin.foldr _ (fun j acc =>
+                   max acc
+                     (KMor1.majorize_one (h_fam j) (hh j)).1) 0
+      let r_G := Fin.foldr _ (fun j acc =>
+                   max acc
+                     (KMor1.majorize_one (g_fam j) (hg j)).1) 0
+      (2, r_H + r_G + 2)
+
 end GebLean
