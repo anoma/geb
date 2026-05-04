@@ -283,4 +283,64 @@ theorem kToER_interp_simrec
   rw [KMor1.interp_simrec]
   congr 2
 
+/-- Universal correctness of `kToER`: for every
+`f : KMor1 a` of level ≤ 2 and every context `v`,
+`(kToER f h).interp v = f.interp v`.  Realises Tourlakis
+2018 §0.1.0.44 (K^sim_n ⊆ E^{n+1}) ⊆-direction pointwise
+at level ≤ 2.  Master design §3.5. -/
+theorem kToER_interp :
+    ∀ {a : ℕ} (f : KMor1 a) (h : f.level ≤ 2)
+      (v : Fin a → ℕ),
+    (kToER f h).interp v = f.interp v
+  | _, .zero,         _, _ => rfl
+  | _, .succ,         _, _ => rfl
+  | _, .proj _,       _, _ => rfl
+  | _, .comp f gs,    h, v => by
+      have hf  : f.level ≤ 2 :=
+        le_trans (le_max_left _ _) h
+      have hgs : ∀ i, (gs i).level ≤ 2 := fun i =>
+        le_trans
+          (Finset.le_sup
+            (f := fun j => (gs j).level)
+            (Finset.mem_univ i))
+          (le_trans (le_max_right _ _) h)
+      simp only [kToER, KMor1.interp_comp,
+        ERMor1.interp_comp]
+      have hgs_eq :
+          (fun i => (kToER (gs i) (hgs i)).interp v)
+            = (fun i => (gs i).interp v) := by
+        funext i
+        exact kToER_interp (gs i) (hgs i) v
+      rw [hgs_eq]
+      exact kToER_interp f hf _
+  | _, .raise f,      h, v => by
+      have hf : f.level ≤ 2 := by
+        unfold KMor1.level at h; omega
+      simp only [kToER, KMor1.interp_raise]
+      exact kToER_interp f hf v
+  | _, .simrec i h_fam g_fam, h, v =>
+      have h_h : ∀ j, (h_fam j).level ≤ 2 := fun j => by
+        have h1 : (h_fam j).level ≤ 1 :=
+          le_trans
+            (Finset.le_sup
+              (f := fun l => (h_fam l).level)
+              (Finset.mem_univ j))
+            (le_trans (le_max_left _ _)
+              (Nat.le_of_succ_le_succ
+                (by unfold KMor1.level at h; exact h)))
+        omega
+      have h_g : ∀ j, (g_fam j).level ≤ 2 := fun j => by
+        have h1 : (g_fam j).level ≤ 1 :=
+          le_trans
+            (Finset.le_sup
+              (f := fun l => (g_fam l).level)
+              (Finset.mem_univ j))
+            (le_trans (le_max_right _ _)
+              (Nat.le_of_succ_le_succ
+                (by unfold KMor1.level at h; exact h)))
+        omega
+      kToER_interp_simrec i h_fam g_fam h v
+        (fun j h' v' => kToER_interp (h_fam j) h' v')
+        (fun j h' v' => kToER_interp (g_fam j) h' v')
+
 end GebLean
