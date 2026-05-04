@@ -78,4 +78,19 @@ private theorem vMax_cons {a : ℕ} (n : ℕ) (v : Fin a → ℕ) :
       have h := vMax_apply_le (Fin.cons n v) j.succ
       simpa only [Fin.cons_succ] using h
 
+namespace ERMor1
+
+/-- Sum dominates max: `vMax v ≤ (sumCtxER n).interp v`.
+Thin wrapper around the pre-existing
+`ERMor1.maxCtx_le_interp_sumCtxER` from
+`LawvereERBoundComputable.lean`, exposed under the `vMax`
+naming for consistency with this module's downstream
+consumers.  Master design §3.5. -/
+theorem vMax_le_sumCtxER {n : ℕ} (v : Fin n → ℕ) :
+    (Finset.univ : Finset (Fin n)).sup v ≤
+      (sumCtxER n).interp v :=
+  ERMor1.maxCtx_le_interp_sumCtxER v
+
+end ERMor1
+
 end GebLean
