@@ -213,4 +213,19 @@ theorem linearBound_le_A_one_iter (c d : ℕ) :
     Nat.mul_le_mul_right _ h_c
   omega
 
+/-- γ.2 closed-form bound: `A_1^k(x) ≤ 2^{k+1} · (x + 1)`.
+Master design §3.4 lines 1015-1019. -/
+theorem A_one_iter_le_two_pow_succ (k x : ℕ) :
+    (ERMor1.A_one_iter k).interp ![x]
+      ≤ 2 ^ (k + 1) * (x + 1) := by
+  rw [ERMor1.interp_A_one_iter]
+  simp only [Matrix.cons_val_zero]
+  have h_succ : 2 ^ (k + 1) = 2 * 2 ^ k := by
+    rw [Nat.pow_succ]; ring
+  have h_pow_pos : 1 ≤ 2 ^ k :=
+    Nat.one_le_pow _ _ (by omega)
+  rw [h_succ]
+  ring_nf
+  omega
+
 end GebLean
