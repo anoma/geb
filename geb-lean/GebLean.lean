@@ -69,6 +69,7 @@ import GebLean.LawvereTreeERArith
 import GebLean.LawvereTreeERInterp
 import GebLean.LawvereTreeERQuot
 import GebLean.LawvereKSim
+import GebLean.LawvereKSimER
 import GebLean.LawvereKSimInterp
 import GebLean.LawvereKSimMajorization
 import GebLean.LawvereKSimPolynomialBound
