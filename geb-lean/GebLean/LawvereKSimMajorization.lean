@@ -656,4 +656,250 @@ def KMor1.majorize : {a : ℕ} → (f : KMor1 a) →
                      (KMor1.majorize_one (g_fam j) (hg j)).1) 0
       (2, r_H + r_G + 2)
 
+/-- Level-≤2 majorization theorem (Tourlakis 2018
+§0.1.0.10).  Master design §3.4 lines 916-937.  Structural
+recursion mirroring `KMor1.majorize`. -/
+theorem KMor1.majorize_by_A_two_iter :
+    ∀ {a : ℕ} (f : KMor1 a) (h : f.level ≤ 2)
+      (v : Fin a → ℕ),
+      f.interp v ≤
+        (ERMor1.A_two_iter
+          (KMor1.majorize f h).1).interp
+            ![vMax v + (KMor1.majorize f h).2]
+  | _, .zero,         _, v => by
+      simp only [KMor1.majorize, KMor1.interp_zero,
+        ERMor1.interp_A_two_iter,
+        Matrix.cons_val_zero]
+      have h_self : vMax v + 2 ≤ tower 2 (vMax v + 2) :=
+        self_le_tower 2 _
+      omega
+  | _, .succ,         _, v => by
+      simp only [KMor1.majorize, KMor1.interp_succ,
+        ERMor1.interp_A_two_iter,
+        Matrix.cons_val_zero]
+      have h_self : vMax v + 3 ≤ tower 2 (vMax v + 3) :=
+        self_le_tower 2 _
+      have h_v0 : v 0 ≤ vMax v := vMax_apply_le v 0
+      omega
+  | _, .proj i,       _, v => by
+      simp only [KMor1.majorize, KMor1.interp_proj,
+        ERMor1.interp_A_two_iter,
+        Matrix.cons_val_zero]
+      have h_self : vMax v + 2 ≤ tower 2 (vMax v + 2) :=
+        self_le_tower 2 _
+      have h_vi : v i ≤ vMax v := vMax_apply_le v i
+      omega
+  | _, .raise f,      h, v => by
+      have hf : f.level ≤ 1 := by
+        unfold KMor1.level at h
+        exact Nat.le_of_succ_le_succ h
+      simp only [KMor1.majorize, KMor1.interp_raise]
+      set p := KMor1.majorize_one f hf with hp
+      have h_dom_one :
+          f.interp v ≤
+            (ERMor1.A_one_iter p.1).interp ![vMax v + p.2] :=
+        KMor1.majorize_by_A_one_iter f hf v
+      have h_p2_zero : p.2 = 0 := by
+        simp only [hp, KMor1.majorize_one]
+      rw [h_p2_zero] at h_dom_one
+      simp only [Nat.add_zero] at h_dom_one
+      have h_cross :
+          (ERMor1.A_one_iter p.1).interp ![vMax v]
+            ≤ (ERMor1.A_two_iter 2).interp
+                ![vMax v + p.1 + 2] :=
+        A_one_iter_le_A_two_iter_two p.1 (vMax v)
+      have h_input_eq :
+          vMax v + p.1 + 2 = vMax v + (p.1 + 2) := by ring
+      rw [h_input_eq] at h_cross
+      exact le_trans h_dom_one h_cross
+  | _, .comp f gs,    h, v => by
+      have hf : f.level ≤ 2 := by
+        unfold KMor1.level at h
+        exact le_trans (le_max_left _ _) h
+      have hgs : ∀ i, (gs i).level ≤ 2 := fun i => by
+        unfold KMor1.level at h
+        exact le_trans
+          (Finset.le_sup
+            (f := fun j => (gs j).level)
+            (Finset.mem_univ i))
+          (le_trans (le_max_right _ _) h)
+      simp only [KMor1.majorize, KMor1.interp_comp]
+      set p_f := KMor1.majorize f hf with hp_f
+      set r_g := Fin.foldr _ (fun i acc =>
+                   max acc
+                     (KMor1.majorize (gs i) (hgs i)).1) 0
+        with hr_g
+      set o_g := Fin.foldr _ (fun i acc =>
+                   max acc
+                     (KMor1.majorize (gs i) (hgs i)).2) 0
+        with ho_g
+      have h_child : ∀ i,
+          (gs i).interp v ≤
+            (ERMor1.A_two_iter r_g).interp
+              ![vMax v + o_g] := fun i => by
+        have h_i :=
+          KMor1.majorize_by_A_two_iter (gs i) (hgs i) v
+        have h_r_le :
+            (KMor1.majorize (gs i) (hgs i)).1 ≤ r_g := by
+          simp only [hr_g]
+          exact Fin.foldr_max_ge
+            (fun j => (KMor1.majorize (gs j) (hgs j)).1) i
+        have h_o_le :
+            (KMor1.majorize (gs i) (hgs i)).2 ≤ o_g := by
+          simp only [ho_g]
+          exact Fin.foldr_max_ge
+            (fun j => (KMor1.majorize (gs j) (hgs j)).2) i
+        rw [ERMor1.interp_A_two_iter] at h_i ⊢
+        simp only [Matrix.cons_val_zero] at h_i ⊢
+        calc (gs i).interp v
+            ≤ tower (KMor1.majorize (gs i) (hgs i)).1
+                (vMax v
+                  + (KMor1.majorize (gs i) (hgs i)).2) :=
+              h_i
+          _ ≤ tower r_g
+                (vMax v
+                  + (KMor1.majorize (gs i) (hgs i)).2) :=
+              tower_mono_left h_r_le _
+          _ ≤ tower r_g (vMax v + o_g) :=
+              tower_mono_right r_g
+                (Nat.add_le_add_left h_o_le _)
+      have h_compose_max :
+          vMax (fun i => (gs i).interp v) ≤
+            (ERMor1.A_two_iter r_g).interp
+              ![vMax v + o_g] := by
+        apply vMax_le_of_pointwise
+        intro i
+        exact h_child i
+      have h_outer :=
+        KMor1.majorize_by_A_two_iter f hf
+          (fun i => (gs i).interp v)
+      rw [ERMor1.interp_A_two_iter] at h_outer
+      simp only [Matrix.cons_val_zero] at h_outer
+      rw [ERMor1.interp_A_two_iter] at h_compose_max
+      simp only [Matrix.cons_val_zero] at h_compose_max
+      rw [ERMor1.interp_A_two_iter]
+      simp only [Matrix.cons_val_zero]
+      calc f.interp (fun i => (gs i).interp v)
+          ≤ tower p_f.1 (vMax (fun i => (gs i).interp v)
+                          + p_f.2) := h_outer
+        _ ≤ tower p_f.1 (tower r_g (vMax v + o_g)
+                          + p_f.2) :=
+            tower_mono_right _
+              (Nat.add_le_add_right h_compose_max _)
+        _ ≤ tower (p_f.1 + r_g) (vMax v + o_g + p_f.2) :=
+            tower_compose_offsets _ _ _
+        _ = tower (p_f.1 + r_g)
+              (vMax v + (p_f.2 + o_g)) := by
+            congr 1; ring
+  | _, .simrec i h_fam g_fam, hyp, v => by
+      have hh : ∀ j, (h_fam j).level ≤ 1 := by
+        unfold KMor1.level at hyp
+        intro j
+        have := le_trans (le_max_left _ _)
+          (Nat.le_of_succ_le_succ hyp)
+        exact le_trans
+          (Finset.le_sup
+            (f := fun l => (h_fam l).level)
+            (Finset.mem_univ j)) this
+      have hg : ∀ j, (g_fam j).level ≤ 1 := by
+        unfold KMor1.level at hyp
+        intro j
+        have := le_trans (le_max_right _ _)
+          (Nat.le_of_succ_le_succ hyp)
+        exact le_trans
+          (Finset.le_sup
+            (f := fun l => (g_fam l).level)
+            (Finset.mem_univ j)) this
+      simp only [KMor1.majorize, KMor1.interp_simrec]
+      change KMor1.simrecVec h_fam g_fam (Fin.tail v) (v 0) i
+               ≤ _
+      set r_H := Fin.foldr _ (fun j acc =>
+                   max acc
+                     (KMor1.majorize_one (h_fam j)
+                       (hh j)).1) 0
+        with hr_H
+      set r_G := Fin.foldr _ (fun j acc =>
+                   max acc
+                     (KMor1.majorize_one (g_fam j)
+                       (hg j)).1) 0
+        with hr_G
+      have h_base : ∀ j x,
+          (h_fam j).interp x
+            ≤ (ERMor1.A_one_iter r_H).interp ![vMax x] := by
+        intro j x
+        have h_dom :=
+          KMor1.majorize_by_A_one_iter (h_fam j) (hh j) x
+        have h_r_le :
+            (KMor1.majorize_one (h_fam j) (hh j)).1
+              ≤ r_H := by
+          simp only [hr_H]
+          exact Fin.foldr_max_ge
+            (fun l => (KMor1.majorize_one (h_fam l)
+              (hh l)).1) j
+        have h_offset_zero :
+            (KMor1.majorize_one (h_fam j) (hh j)).2 = 0 :=
+          rfl
+        rw [h_offset_zero] at h_dom
+        simp only [Nat.add_zero] at h_dom
+        exact le_trans h_dom
+          (A_one_iter_mono_left h_r_le)
+      have h_step : ∀ j y,
+          (g_fam j).interp y
+            ≤ (ERMor1.A_one_iter r_G).interp ![vMax y] := by
+        intro j y
+        have h_dom :=
+          KMor1.majorize_by_A_one_iter (g_fam j) (hg j) y
+        have h_r_le :
+            (KMor1.majorize_one (g_fam j) (hg j)).1
+              ≤ r_G := by
+          simp only [hr_G]
+          exact Fin.foldr_max_ge
+            (fun l => (KMor1.majorize_one (g_fam l)
+              (hg l)).1) j
+        have h_offset_zero :
+            (KMor1.majorize_one (g_fam j) (hg j)).2 = 0 :=
+          rfl
+        rw [h_offset_zero] at h_dom
+        simp only [Nat.add_zero] at h_dom
+        exact le_trans h_dom
+          (A_one_iter_mono_left h_r_le)
+      have h_simrec_bound :=
+        KMor1.simrecVec_le_A_one_iter
+          h_fam g_fam hh hg r_H r_G
+          h_base h_step (Fin.tail v) (v 0) i
+      have h_cons_v : v = Fin.cons (v 0) (Fin.tail v) :=
+        (Fin.cons_self_tail v).symm
+      have h_max_eq :
+          max (v 0) (vMax (Fin.tail v)) = vMax v := by
+        conv_rhs => rw [h_cons_v]
+        rw [vMax_cons]
+      rw [h_max_eq] at h_simrec_bound
+      have h_v0 : v 0 ≤ vMax v := vMax_apply_le v 0
+      have h_exp_le :
+          r_H + (v 0) * r_G ≤ r_H + vMax v * r_G :=
+        Nat.add_le_add_left
+          (Nat.mul_le_mul_right _ h_v0) _
+      have h_lift :
+          (ERMor1.A_one_iter (r_H + (v 0) * r_G)).interp
+              ![vMax v]
+            ≤ (ERMor1.A_one_iter
+                (r_H + vMax v * r_G)).interp ![vMax v] :=
+        A_one_iter_mono_left h_exp_le
+      have h_gamma :=
+        A_one_iter_linear_le_A_two_iter_two
+          r_H r_G (vMax v)
+      rw [ERMor1.interp_A_two_iter]
+      simp only [Matrix.cons_val_zero]
+      rw [ERMor1.interp_A_two_iter] at h_gamma
+      simp only [Matrix.cons_val_zero] at h_gamma
+      calc KMor1.simrecVec h_fam g_fam (Fin.tail v) (v 0) i
+          ≤ (ERMor1.A_one_iter (r_H + (v 0) * r_G)).interp
+              ![vMax v] := h_simrec_bound
+        _ ≤ (ERMor1.A_one_iter
+              (r_H + vMax v * r_G)).interp ![vMax v] :=
+            h_lift
+        _ ≤ tower 2 (vMax v + r_H + r_G + 2) := h_gamma
+        _ = tower 2 (vMax v + (r_H + r_G + 2)) := by
+            congr 1; ring
+
 end GebLean
