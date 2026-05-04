@@ -171,4 +171,46 @@ private theorem tower_compose_offsets
   rw [tower_comp] at h_outer
   exact h_outer
 
+/-- Translate a linear bound `c · x + d` into an `A_1^r`
+bound, with explicit `r := max (Nat.log 2 (c + 1) + 1)
+(Nat.log 2 (d + 2) + 1)`.  Master design §3.4 lines
+884-898; Tourlakis 2018 §0.1.0.10. -/
+theorem linearBound_le_A_one_iter (c d : ℕ) :
+    let r := max (Nat.log 2 (c + 1) + 1)
+                 (Nat.log 2 (d + 2) + 1)
+    ∀ x, c * x + d ≤ (ERMor1.A_one_iter r).interp ![x] := by
+  intro r x
+  rw [ERMor1.interp_A_one_iter]
+  have h_pow_c : c + 1 ≤ 2 ^ (Nat.log 2 (c + 1) + 1) := by
+    have h := Nat.lt_pow_succ_log_self
+                (b := 2) (by decide) (c + 1)
+    omega
+  have h_pow_d : d + 2 ≤ 2 ^ (Nat.log 2 (d + 2) + 1) := by
+    have h := Nat.lt_pow_succ_log_self
+                (b := 2) (by decide) (d + 2)
+    omega
+  have h_r1 : 2 ^ (Nat.log 2 (c + 1) + 1)
+                ≤ 2 ^ (max (Nat.log 2 (c + 1) + 1)
+                           (Nat.log 2 (d + 2) + 1)) :=
+    Nat.pow_le_pow_right (by omega) (le_max_left _ _)
+  have h_r2 : 2 ^ (Nat.log 2 (d + 2) + 1)
+                ≤ 2 ^ (max (Nat.log 2 (c + 1) + 1)
+                           (Nat.log 2 (d + 2) + 1)) :=
+    Nat.pow_le_pow_right (by omega) (le_max_right _ _)
+  have h_c : c ≤ 2 ^ r := by
+    calc c ≤ c + 1 := by omega
+      _ ≤ 2 ^ (Nat.log 2 (c + 1) + 1) := h_pow_c
+      _ ≤ 2 ^ r := h_r1
+  have h_d : d + 2 ≤ 2 ^ (r + 1) := by
+    calc d + 2 ≤ 2 ^ (Nat.log 2 (d + 2) + 1) := h_pow_d
+      _ ≤ 2 ^ r := h_r2
+      _ ≤ 2 ^ (r + 1) :=
+          Nat.pow_le_pow_right (by omega) (by omega)
+  have h_pow_pos : 1 ≤ 2 ^ (r + 1) :=
+    Nat.one_le_pow _ _ (by omega)
+  simp only [Matrix.cons_val_zero]
+  have h_mul : c * x ≤ 2 ^ r * x :=
+    Nat.mul_le_mul_right _ h_c
+  omega
+
 end GebLean
