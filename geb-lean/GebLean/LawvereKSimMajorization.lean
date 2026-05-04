@@ -267,4 +267,85 @@ theorem A_one_iter_le_A_two_iter_two (k x : ℕ) :
   exact le_trans (A_one_iter_le_two_pow_succ k x)
     (two_pow_succ_mul_succ_le_tower_two k x)
 
+/-- γ.5 parametric cross-family bound: when the A_1
+exponent depends linearly on `m`, the result still fits
+inside an A_2^2 with constant tower height and additive
+offset linear in `r_H, r_G`.  Master design §3.4 lines
+1027-1029.  Load-bearing for the level-2 simrec case. -/
+theorem A_one_iter_linear_le_A_two_iter_two
+    (r_H r_G m : ℕ) :
+    (ERMor1.A_one_iter (r_H + m * r_G)).interp ![m]
+      ≤ (ERMor1.A_two_iter 2).interp
+          ![m + r_H + r_G + 2] := by
+  rw [ERMor1.interp_A_two_iter]
+  simp only [Matrix.cons_val_zero]
+  have h_step_a :
+      (ERMor1.A_one_iter (r_H + m * r_G)).interp ![m]
+        ≤ 2 ^ (r_H + m * r_G + 1) * (m + 1) :=
+    A_one_iter_le_two_pow_succ (r_H + m * r_G) m
+  have h_int :
+      r_H + m * r_G + 1 ≤ (r_H + r_G + 1) * (m + 1) := by
+    have h_expand :
+        (r_H + r_G + 1) * (m + 1) =
+          r_H * m + r_H + m * r_G + r_G + m + 1 := by
+      ring
+    rw [h_expand]
+    omega
+  have h_step_b :
+      2 ^ (r_H + m * r_G + 1) * (m + 1)
+        ≤ 2 ^ ((r_H + r_G + 2) * (m + 1)) := by
+    have h_pow := Nat.pow_le_pow_right
+                    (show 1 ≤ 2 by omega) h_int
+    have h_succ : m + 1 ≤ 2 ^ (m + 1) :=
+      le_two_pow_self (m + 1)
+    calc 2 ^ (r_H + m * r_G + 1) * (m + 1)
+        ≤ 2 ^ ((r_H + r_G + 1) * (m + 1)) * (m + 1) :=
+          Nat.mul_le_mul_right _ h_pow
+      _ ≤ 2 ^ ((r_H + r_G + 1) * (m + 1))
+          * 2 ^ (m + 1) :=
+          Nat.mul_le_mul_left _ h_succ
+      _ = 2 ^ ((r_H + r_G + 1) * (m + 1) + (m + 1)) := by
+          rw [← Nat.pow_add]
+      _ ≤ 2 ^ ((r_H + r_G + 2) * (m + 1)) := by
+          apply Nat.pow_le_pow_right (by omega)
+          have h_eq :
+              (r_H + r_G + 2) * (m + 1)
+                = (r_H + r_G + 1) * (m + 1) + (m + 1) := by
+            ring
+          rw [h_eq]
+  have h_factor_le :
+      r_H + r_G + 2 ≤ 2 ^ (r_H + r_G + 1) := by
+    have h_lt : r_H + r_G + 1 < 2 ^ (r_H + r_G + 1) :=
+      Nat.lt_two_pow_self
+    omega
+  have h_step_c :
+      (r_H + r_G + 2) * (m + 1)
+        ≤ 2 ^ (r_H + r_G + 1) * 2 ^ (m + 1) := by
+    calc (r_H + r_G + 2) * (m + 1)
+        ≤ 2 ^ (r_H + r_G + 1) * (m + 1) :=
+          Nat.mul_le_mul_right _ h_factor_le
+      _ ≤ 2 ^ (r_H + r_G + 1) * 2 ^ (m + 1) :=
+          Nat.mul_le_mul_left _
+            (le_two_pow_self (m + 1))
+  have h_step_d :
+      2 ^ (r_H + r_G + 1) * 2 ^ (m + 1)
+        = 2 ^ (m + r_H + r_G + 2) := by
+    rw [← Nat.pow_add]; ring_nf
+  have h_outer :
+      2 ^ ((r_H + r_G + 2) * (m + 1))
+        ≤ 2 ^ (2 ^ (m + r_H + r_G + 2)) := by
+    apply Nat.pow_le_pow_right (by omega)
+    calc (r_H + r_G + 2) * (m + 1)
+        ≤ 2 ^ (r_H + r_G + 1) * 2 ^ (m + 1) := h_step_c
+      _ = 2 ^ (m + r_H + r_G + 2) := h_step_d
+  have h_tower :
+      2 ^ (2 ^ (m + r_H + r_G + 2))
+        = tower 2 (m + r_H + r_G + 2) := by
+    simp only [tower_succ, tower_zero]
+  calc (ERMor1.A_one_iter (r_H + m * r_G)).interp ![m]
+      ≤ 2 ^ (r_H + m * r_G + 1) * (m + 1) := h_step_a
+    _ ≤ 2 ^ ((r_H + r_G + 2) * (m + 1)) := h_step_b
+    _ ≤ 2 ^ (2 ^ (m + r_H + r_G + 2)) := h_outer
+    _ = tower 2 (m + r_H + r_G + 2) := h_tower
+
 end GebLean
