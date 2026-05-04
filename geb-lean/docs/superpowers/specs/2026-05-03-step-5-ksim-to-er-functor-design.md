@@ -374,18 +374,32 @@ theorem kToER_interp
       -- and apply ih_f to the outer call
   | simrec i h_fam g_fam ih_h ih_g =>
       -- The IHs from `induction` over KMor1.simrec produce
-      -- ih_h : ∀ j, (kToER (h_fam j) (h_h j)).interp = ...
+      -- ih_h : ∀ j v', (kToER (h_fam j) (h_h j)).interp v'
+      --                = (h_fam j).interp v'
       -- where h_h is the level-derivation in scope.  Pass
       -- to kToER_interp_simrec via a level-irrelevance
-      -- adapter that re-quantifies over the level proof.
+      -- adapter.  Three fallback patterns, in preference
+      -- order — implementer tries them in sequence:
+      --
+      --   1. `exact ih_h j v'`  (if `induction f`'s IH
+      --      level argument matches Lean's inferred level
+      --      proof in the simrec branch's context, this
+      --      works without further work).
+      --   2. `convert ih_h j v' using 0`  (forces
+      --      reduction modulo Prop irrelevance; closes
+      --      when the IH's level proof and the helper's
+      --      `h'` are propositionally equal).
+      --   3. `rw [show kToER (h_fam j) h' = kToER (h_fam j)
+      --      _ from rfl]; exact ih_h j v'`  (the rfl-
+      --      coercion fallback; works when `rw` finds the
+      --      pattern after Lean's pattern matcher
+      --      normalises the level-proof slot).
       exact kToER_interp_simrec i h_fam g_fam h v
         (fun j h' v' => by
-          rw [show kToER (h_fam j) h' = kToER (h_fam j) _
-              from rfl]
+          -- Default fallback path 1; alternatives 2 and 3
+          -- documented above.
           exact ih_h j v')
         (fun j h' v' => by
-          rw [show kToER (g_fam j) h' = kToER (g_fam j) _
-              from rfl]
           exact ih_g j v')
   | raise f ih =>
       simp only [kToER, KMor1.interp_raise]
@@ -546,16 +560,14 @@ theorem kToER_simrec_dominates
         = (KMor1.simrec j h_fam g_fam).interp
             (Fin.cons m x) := by
     rw [KMor1.interp_simrec]
-    -- Empirically: bare `congr 2` closes both residual
-    -- goals; `(Fin.cons m x) 0` reduces to `m` and
-    -- `(fun j' => (Fin.cons m x) (Fin.succ j'))` reduces
-    -- to `x` by `Fin.cons`'s computation rules without
-    -- explicit simp.  Adding `<;> simp [Fin.cons_zero,
-    -- Fin.cons_succ]` would trigger the unused-tactic
-    -- linter under the project's `warningAsError = true`.
-    -- If the bare `congr 2` leaves residual goals at task
-    -- time, fall back to `congr 1; · ...; · funext j';
-    -- exact Fin.cons_succ ...` per residual.
+    -- Empirically (round-3 verified): bare `congr 2`
+    -- closes the goal entirely.  No residual subgoals
+    -- remain because `Fin.cons`'s definitional reduction
+    -- drives both arguments of the resulting equality
+    -- between two `KMor1.simrecVec` calls to reflexivity.
+    -- Do NOT add `<;> simp [Fin.cons_zero, Fin.cons_succ]`
+    -- — that triggers the unused-tactic linter under the
+    -- project's `warningAsError = true`.
     congr 2
   rw [h_rev]
   -- Step 4: Apply majorize_by_componentBound at index j.
@@ -750,13 +762,15 @@ theorem kToER_interp_simrec
   -- Step 5: KMor1.interp_simrec rewrites the K^sim-side RHS
   -- into matching simrecVec form.
   rw [KMor1.interp_simrec]
-  -- (Fin.cons n x) 0 reduces to n and
-  -- (fun j' => (Fin.cons n x) (Fin.succ j')) reduces to x
-  -- by Fin.cons's computation rules; `congr 1` (or `congr 2`
-  -- depending on residual structure) closes definitionally.
-  -- A trailing `<;> simp [...]` would trigger the unused-
-  -- tactic linter under `warningAsError = true`.
-  congr 1
+  -- The resulting equality between two `KMor1.simrecVec`
+  -- calls reduces to reflexivity by `Fin.cons`'s
+  -- definitional rules; `congr 2` closes definitionally
+  -- (verify exact congruence depth at task time — if
+  -- `congr 2` leaves residual goals, escalate to deeper
+  -- congruence; do NOT add a trailing `<;> simp [...]`
+  -- (would trigger the unused-tactic linter under
+  -- `warningAsError = true`).
+  congr 2
 ```
 
 (Implementer adapts the exact rewrite-ordering at task
