@@ -422,11 +422,28 @@ theorem KMor1.simrecVec_eq_Nat_simRecVec {a k : ℕ}
   -- stepCtx; Nat.simRecVec uses `Fin.append (Fin.cons n x)`.
   -- The same equivalence already proved (privately) for
   -- KMor1.interp_simrec_eq_simrecVec at lines 121-155 of
-  -- LawvereKSimInterp.lean — replicate that proof shape:
-  -- congr 1 + funext idx + by_cases idx.val < a + 1 +
-  -- routing to (Fin.cons n params) on the inner branch and
-  -- the inductive hypothesis on the outer branch.
-  ...  -- ~15 lines per the documented proof shape
+  -- LawvereKSimInterp.lean — replicate that proof shape.
+  --
+  -- Proof skeleton (~25-40 lines, mirroring the existing
+  -- private proof; "~15 lines" was an under-estimate).
+  -- The IH must be quantified over the output index `j` so
+  -- the step case can apply the IH componentwise to the
+  -- previous-iter vector inside `Fin.append`:
+  --
+  --   intro n
+  --   induction n with
+  --   | zero => intro j; rfl
+  --   | succ n ih =>
+  --       intro j
+  --       -- Step case: `KMor1.simrecVec` uses an inline
+  --       -- `dite`-based stepCtx; `Nat.simRecVec` uses
+  --       -- `Fin.append (Fin.cons n params) ...`.  Bridge:
+  --       -- congr 1; funext idx; by_cases idx.val < a + 1;
+  --       --   inner branch routes to (Fin.cons n params)
+  --       --     via Fin.cons_zero / Fin.cons_succ;
+  --       --   outer branch routes to ih via
+  --       --     `congr_fun ih ⟨idx.val - (a + 1), ...⟩`.
+  ...
 ```
 
 Citation: master design §3.5; bridging step.
@@ -529,7 +546,17 @@ theorem kToER_simrec_dominates
         = (KMor1.simrec j h_fam g_fam).interp
             (Fin.cons m x) := by
     rw [KMor1.interp_simrec]
-    congr 2 <;> simp [Fin.cons_zero, Fin.cons_succ]
+    -- Empirically: bare `congr 2` closes both residual
+    -- goals; `(Fin.cons m x) 0` reduces to `m` and
+    -- `(fun j' => (Fin.cons m x) (Fin.succ j'))` reduces
+    -- to `x` by `Fin.cons`'s computation rules without
+    -- explicit simp.  Adding `<;> simp [Fin.cons_zero,
+    -- Fin.cons_succ]` would trigger the unused-tactic
+    -- linter under the project's `warningAsError = true`.
+    -- If the bare `congr 2` leaves residual goals at task
+    -- time, fall back to `congr 1; · ...; · funext j';
+    -- exact Fin.cons_succ ...` per residual.
+    congr 2
   rw [h_rev]
   -- Step 4: Apply majorize_by_componentBound at index j.
   have h_j : (KMor1.simrec j h_fam g_fam).level ≤ 2 := by
@@ -596,42 +623,47 @@ theorem ERMor1.sumCtxER_cons_le_of_le {a : ℕ} (x : Fin a → ℕ)
     (ERMor1.sumCtxER (a + 1)).interp (Fin.cons m x)
       ≤ (ERMor1.sumCtxER (a + 1)).interp (Fin.cons n x) := by
   rw [ERMor1.interp_sumCtxER, ERMor1.interp_sumCtxER]
-  -- (sumCtxER (a+1)).interp = Fin.foldr (a+1) (fun i acc =>
-  --                            acc + ctx i) 0.
-  -- Mirroring step 4's `vMax_cons` proof shape: split the
-  -- foldr at index 0 (slot containing m or n) and use that
-  -- the rest of the fold is identical (both contexts agree
-  -- on Fin.tail = x).
-  -- Concrete proof (~6 lines):
-  induction a with
-  | zero =>
-    simp only [Fin.foldr_succ, Fin.foldr_zero,
-      Fin.cons_zero]
-    omega
-  | succ a' ih =>
-    simp only [Fin.foldr_succ, Fin.cons_zero, Fin.cons_succ]
-    have ih_step :
-        Fin.foldr (a' + 1)
-            (fun i acc => acc + Fin.cons m x (Fin.succ i)) 0
-          ≤ Fin.foldr (a' + 1)
-              (fun i acc =>
-                acc + Fin.cons n x (Fin.succ i)) 0 := by
-      simp only [Fin.cons_succ]
-      -- The inner cons-with-tail terms agree, so the foldr
-      -- over them is identical; use le_of_eq + rfl.
-      exact le_of_eq rfl
-    -- Combine the slot-0 bump (m ≤ n) with the unchanged
-    -- inner foldr.
-    omega
+  -- (sumCtxER (a+1)).interp ctx evaluates to a Fin.foldr
+  -- over (fun i acc => acc + ctx i).  The two foldrs
+  -- differ only at index 0 (where Fin.cons m x = m,
+  -- Fin.cons n x = n) and agree on every other index
+  -- (where both reduce to x via Fin.cons_succ).
+  --
+  -- Proof strategy (10-15 lines):
+  --
+  -- 1. Generalize the foldr's initial accumulator (which
+  --    is 0) to an arbitrary `acc₀` so the induction
+  --    hypothesis stays applicable across nested folds.
+  -- 2. Prove a small `Fin.foldr` monotonicity-in-acc
+  --    lemma: for fixed body f, if acc₁ ≤ acc₂ then
+  --    Fin.foldr n f acc₁ ≤ Fin.foldr n f acc₂.
+  -- 3. Show that for any acc₀ and any context that
+  --    agrees with `Fin.cons m x` on indices ≥ 1, the
+  --    Fin.foldr value at the (a+1)-arity context
+  --    differs from the corresponding (a+1)-arity
+  --    Fin.cons n x foldr only by the slot-0
+  --    accumulator increment (m vs n).
+  -- 4. Apply with `m ≤ n` to close.
+  --
+  -- An alternative path: rewrite both sides via a
+  -- `sumCtxER_cons_eq` lemma that explicitly factors as
+  -- `(Fin.cons m x slot 0) + (sumCtxER a).interp x`, then
+  -- close with `Nat.add_le_add_right` and `m ≤ n`.  Step 4
+  -- uses an analogous shape for `vMax_cons` (line 875 of
+  -- LawvereKSimMajorization.lean).  Implementer adopts
+  -- whichever shape composes more cleanly with the
+  -- existing `Fin.foldr_succ` / `Fin.foldr_succ_last`
+  -- lemma names in current mathlib.
+  _  -- task-time hole; closes per the strategy above
 ```
 
-Implementer assesses at task time whether the inductive
-shape above closes cleanly or needs adaptation (e.g.
-`Fin.foldr_succ` might be `Fin.foldr_succ_last` in the
-current mathlib).  An alternative-shape: state the helper
-with the slot-0 difference factored out via
-`Nat.add_le_add_right` over a `Fin.foldr` equality lemma
-(if available).
+The pseudocode body intentionally elides the detailed
+tactic shape because mathlib's `Fin.foldr_succ`-side lemma
+names have shifted across recent versions and the
+implementer should use `lean_local_search` / `lean_loogle`
+at task time to find the current names.  The proof
+mathematics is unambiguous; the Lean realisation is
+implementer-discretion within the documented strategy.
 
 Citation: master design §3.5; transitively step 4
 `sumCtxERPlusOffset` (step 4 §3.5 lines 116-121).
@@ -718,9 +750,13 @@ theorem kToER_interp_simrec
   -- Step 5: KMor1.interp_simrec rewrites the K^sim-side RHS
   -- into matching simrecVec form.
   rw [KMor1.interp_simrec]
-  -- Reduce (Fin.cons n x) 0 to n and
-  -- (fun j' => (Fin.cons n x) (Fin.succ j')) to x.
-  congr 1 <;> simp [Fin.cons_zero, Fin.cons_succ]
+  -- (Fin.cons n x) 0 reduces to n and
+  -- (fun j' => (Fin.cons n x) (Fin.succ j')) reduces to x
+  -- by Fin.cons's computation rules; `congr 1` (or `congr 2`
+  -- depending on residual structure) closes definitionally.
+  -- A trailing `<;> simp [...]` would trigger the unused-
+  -- tactic linter under `warningAsError = true`.
+  congr 1
 ```
 
 (Implementer adapts the exact rewrite-ordering at task
@@ -884,7 +920,11 @@ theorem kToERFunctor_map_id (n : LawvereKSimDCat 2) :
   intro v i
   -- Goal: (kToERN (KMorN.id n) _ i).interp v
   --       = (ERMorN.id n i).interp v
-  simp only [kToERN, kToER, KMorN.id, ERMorN.id,
+  -- The Quotient.liftOn outer wrapper requires a
+  -- Quotient.lift_mk / liftOn_mk firing first, then the
+  -- inner kToERN / kToER simp lemmas match.
+  simp only [Quotient.liftOn_mk, Quotient.lift_mk,
+    kToERN, kToER, KMorN.id, ERMorN.id,
     KMor1.interp_proj, ERMor1.interp_proj]
 
 theorem kToERFunctor_map_comp {n m k : ℕ}
@@ -897,7 +937,8 @@ theorem kToERFunctor_map_comp {n m k : ℕ}
   -- pointwise; both sides reduce to the same ER class.
   apply Quotient.sound
   intro v i
-  simp only [kToERN, kToER, KMorN.comp, ERMorN.comp,
+  simp only [Quotient.liftOn_mk, Quotient.lift_mk,
+    kToERN, kToER, KMorN.comp, ERMorN.comp,
     KMor1.interp_comp, ERMor1.interp_comp]
 ```
 
