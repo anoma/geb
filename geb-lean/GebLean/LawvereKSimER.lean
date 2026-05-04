@@ -175,4 +175,34 @@ theorem kToER_simrec_dominates
         h_j hyp] at h_dom
   exact h_dom
 
+/-- Monotonicity of the kToER simrec bound in the
+iteration counter.  The bound is `comp (A_two_iter p.1)
+(fun _ : Fin 1 => sumCtxERPlusOffset (a+1) p.2)`; both
+`tower` and `sumCtxER` are monotone in the slot
+incremented from `m` to `n`.  Used as the `h_mono`
+argument to `simultaneousBoundedRec_interp_correct`.
+Master design §3.5; transitively step 4 §3. -/
+theorem kToER_simrec_bound_mono
+    {a k : ℕ}
+    (i : Fin (k + 1))
+    (h_fam : Fin (k + 1) → KMor1 a)
+    (g_fam : Fin (k + 1) → KMor1 (a + 1 + (k + 1)))
+    (hyp : (KMor1.simrec i h_fam g_fam).level ≤ 2)
+    (n : ℕ) (x : Fin a → ℕ) :
+    let p := KMor1.majorize (.simrec i h_fam g_fam) hyp
+    let bound : ERMor1 (a + 1) :=
+      ERMor1.comp (ERMor1.A_two_iter p.1)
+        (fun _ : Fin 1 => ERMor1.sumCtxERPlusOffset (a + 1) p.2)
+    ∀ (m : ℕ), m ≤ n →
+      bound.interp (Fin.cons m x)
+        ≤ bound.interp (Fin.cons n x) := by
+  intro p bound m h_m_le_n
+  simp only [bound, ERMor1.interp_comp,
+    ERMor1.interp_A_two_iter,
+    ERMor1.interp_sumCtxERPlusOffset]
+  apply tower_mono_right
+  apply Nat.add_le_add_right
+  have h := ERMor1.sumCtxER_cons_le_of_le x h_m_le_n
+  simpa only [ERMor1.interp_sumCtxER] using h
+
 end GebLean
