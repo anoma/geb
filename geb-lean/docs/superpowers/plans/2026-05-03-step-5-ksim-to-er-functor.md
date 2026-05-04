@@ -697,7 +697,7 @@ def kToER : ∀ {a : ℕ} (f : KMor1 a), f.level ≤ 2 → ERMor1 a
         KMor1.majorize (.simrec i h_fam g_fam) hyp
       let bound : ERMor1 (a + 1) :=
         ERMor1.comp (ERMor1.A_two_iter p.1)
-          ![ERMor1.sumCtxERPlusOffset (a + 1) p.2]
+          (fun _ : Fin 1 => ERMor1.sumCtxERPlusOffset (a + 1) p.2)
       ERMor1.simultaneousBoundedRec k a bases steps bound i
 ```
 
@@ -769,6 +769,20 @@ Insert after `kToER`:
   -- kToER raise body: passthrough (definitional).  The
   -- two level proofs are propositionally equal but not
   -- syntactically; rfl after the definitional unfolding.
+  rfl
+
+@[simp] theorem kToER_comp {a b : ℕ} (f : KMor1 b)
+    (gs : Fin b → KMor1 a)
+    (h : (KMor1.comp f gs).level ≤ 2)
+    (hf : f.level ≤ 2)
+    (hgs : ∀ i, (gs i).level ≤ 2) :
+    kToER (KMor1.comp f gs) h
+      = ERMor1.comp (kToER f hf)
+          (fun i => kToER (gs i) (hgs i)) := by
+  -- comp branch of kToER: structural translation.  The
+  -- level-discharge `have`s in kToER's body are
+  -- propositionally equal to the externally-supplied
+  -- `hf` / `hgs` by Prop irrelevance; `rfl` closes.
   rfl
 ```
 
@@ -854,7 +868,7 @@ theorem kToER_simrec_dominates
     let p := KMor1.majorize (.simrec i h_fam g_fam) hyp
     let bound : ERMor1 (a + 1) :=
       ERMor1.comp (ERMor1.A_two_iter p.1)
-        ![ERMor1.sumCtxERPlusOffset (a + 1) p.2]
+        (fun _ : Fin 1 => ERMor1.sumCtxERPlusOffset (a + 1) p.2)
     ∀ (m : ℕ), m ≤ n → ∀ (j : Fin (k + 1)),
       Nat.simRecVec k a
           (fun j' => (kToER (h_fam j') (h_h j')).interp)
@@ -979,7 +993,7 @@ theorem kToER_simrec_bound_mono
     let p := KMor1.majorize (.simrec i h_fam g_fam) hyp
     let bound : ERMor1 (a + 1) :=
       ERMor1.comp (ERMor1.A_two_iter p.1)
-        ![ERMor1.sumCtxERPlusOffset (a + 1) p.2]
+        (fun _ : Fin 1 => ERMor1.sumCtxERPlusOffset (a + 1) p.2)
     ∀ (m : ℕ), m ≤ n →
       bound.interp (Fin.cons m x)
         ≤ bound.interp (Fin.cons n x) := by
@@ -1095,15 +1109,18 @@ theorem kToER_interp_simrec
   set x := Fin.tail v
   have hv : v = Fin.cons n x := (Fin.cons_self_tail v).symm
   rw [hv]
-  -- Step 2: unfold kToER's simrec branch.  The `show` move
-  -- exposes the simultaneousBoundedRec call so the
-  -- correctness theorem can rewrite it.
-  show (ERMor1.simultaneousBoundedRec k a
+  -- Step 2: unfold kToER's simrec branch.  Use `change`
+  -- rather than `show` for elaboration robustness —
+  -- `show` requires exact goal-text match, while `change`
+  -- accepts defeq-modulo-let unfolding.
+  change (ERMor1.simultaneousBoundedRec k a
           (fun j => kToER (h_fam j) (h_h j))
           (fun j => kToER (g_fam j) (h_g j))
-          (let p := KMor1.majorize (.simrec i h_fam g_fam) h
+          (let p :=
+            KMor1.majorize (.simrec i h_fam g_fam) h
            ERMor1.comp (ERMor1.A_two_iter p.1)
-             ![ERMor1.sumCtxERPlusOffset (a + 1) p.2])
+             (fun _ : Fin 1 =>
+               ERMor1.sumCtxERPlusOffset (a + 1) p.2))
           i).interp (Fin.cons n x) = _
   -- Step 3: apply simultaneousBoundedRec_interp_correct.
   rw [ERMor1.simultaneousBoundedRec_interp_correct
@@ -1428,9 +1445,14 @@ def kToERFunctor_map {n m : ℕ}
       have hrel :
           (kMorNSetoid n m).r rec₁.rep rec₂.rep :=
         Quotient.exact h_eq
+      -- hrel : ∀ ctx, rec₁.rep.interp ctx
+      --              = rec₂.rep.interp ctx
+      -- where rec_i.rep.interp ctx : Fin m → ℕ.
+      -- Per-component eq via congr_fun.
       intro v i
       exact kToERN_compat_extEq rec₁.rep_level
-        rec₂.rep_level (fun v' i' => hrel v' i') v i)
+        rec₂.rep_level
+        (fun v' i' => congr_fun (hrel v') i') v i)
 ```
 
 - [ ] **Step 13.2: Build to verify**
@@ -1488,10 +1510,19 @@ componentwise equals `ERMorN.id n` (since
 §3.5. -/
 theorem kToERFunctor_map_id (n : LawvereKSimDCat 2) :
     kToERFunctor_map (𝟙 n) = 𝟙 (n : LawvereERCat) := by
+  -- Unfold the morphism map's Quotient.liftOn so the
+  -- inner Quotient.mk on the ER side becomes visible.
+  unfold kToERFunctor_map
+  -- After Quotient.liftOn_mk fires (which it does
+  -- definitionally on Quotient.mk-applied liftOn), the
+  -- goal is Quotient.mk _ (kToERN ...) = Quotient.mk _ (...).
   apply Quotient.sound
   intro v i
+  -- Per-component extEq.  Use kToER_proj for the proj-i
+  -- atom on the K^sim side, ERMor1.interp_proj for the
+  -- ER side.
   simp only [Quotient.liftOn_mk, Quotient.lift_mk,
-    kToERN, kToER, KMorN.id, ERMorN.id,
+    kToERN, kToER_proj, KMorN.id, ERMorN.id,
     KMor1.interp_proj, ERMor1.interp_proj]
 ```
 
@@ -1551,10 +1582,13 @@ theorem kToERFunctor_map_comp {n m k : ℕ}
     (f : KSimMor 2 n m) (g : KSimMor 2 m k) :
     kToERFunctor_map (f ≫ g)
       = kToERFunctor_map f ≫ kToERFunctor_map g := by
+  unfold kToERFunctor_map
   apply Quotient.sound
   intro v i
+  -- kToER_comp from Task 6 reduces the kToER of a
+  -- composition to ERMor1.comp at the morphism level.
   simp only [Quotient.liftOn_mk, Quotient.lift_mk,
-    kToERN, kToER, KMorN.comp, ERMorN.comp,
+    kToERN, kToER_comp, KMorN.comp, ERMorN.comp,
     KMor1.interp_comp, ERMor1.interp_comp]
 ```
 
@@ -1755,12 +1789,12 @@ private def addK : KMor1 2 :=
 example : (kToER addK
               (by simp [addK, KMor1.level])).interp ![3, 5]
             = addK.interp ![3, 5] :=
-  kToER_interp addK _ _
+  kToER_interp addK (by simp [addK, KMor1.level]) ![3, 5]
 
 example : (kToER addK
               (by simp [addK, KMor1.level])).interp ![0, 7]
             = addK.interp ![0, 7] :=
-  kToER_interp addK _ _
+  kToER_interp addK (by simp [addK, KMor1.level]) ![0, 7]
 ```
 
 - [ ] **Step 18.2: Build and test**
@@ -2030,7 +2064,7 @@ substantive tasks (Task 1's bridge proof, Task 7's 5-step
 chain, Task 9's correctness proof, Task 13's
 well-definedness, Tasks 14-15 functor laws) get a
 spec-compliance reviewer subagent; trivially mechanical
-tasks (skeleton creation, simple def additions) skip the
+tasks (skeleton creation, atomic def additions) skip the
 extra review.
 
 **2. Inline Execution** — execute tasks in this session

@@ -294,7 +294,7 @@ Citation: master design §3.5 lines 1089–1116.
       KMor1.majorize (.simrec i h_fam g_fam) hyp
     let bound : ERMor1 (a + 1) :=
       ERMor1.comp (ERMor1.A_two_iter p.1)
-        ![ERMor1.sumCtxERPlusOffset (a + 1) p.2]
+        (fun _ : Fin 1 => ERMor1.sumCtxERPlusOffset (a + 1) p.2)
     ERMor1.simultaneousBoundedRec k a bases steps bound i
 ```
 
@@ -529,7 +529,7 @@ theorem kToER_simrec_dominates
       KMor1.majorize (.simrec i h_fam g_fam) hyp
     let bound : ERMor1 (a + 1) :=
       ERMor1.comp (ERMor1.A_two_iter p.1)
-        ![ERMor1.sumCtxERPlusOffset (a + 1) p.2]
+        (fun _ : Fin 1 => ERMor1.sumCtxERPlusOffset (a + 1) p.2)
     ∀ (m : ℕ), m ≤ n → ∀ (j : Fin (k + 1)),
       Nat.simRecVec k a
           (fun j' => (kToER (h_fam j') (h_h j')).interp)
@@ -608,7 +608,7 @@ theorem kToER_simrec_bound_mono
       KMor1.majorize (.simrec i h_fam g_fam) hyp
     let bound : ERMor1 (a + 1) :=
       ERMor1.comp (ERMor1.A_two_iter p.1)
-        ![ERMor1.sumCtxERPlusOffset (a + 1) p.2]
+        (fun _ : Fin 1 => ERMor1.sumCtxERPlusOffset (a + 1) p.2)
     ∀ (m : ℕ), m ≤ n →
       bound.interp (Fin.cons m x)
         ≤ bound.interp (Fin.cons n x) := by
@@ -738,7 +738,7 @@ theorem kToER_interp_simrec
           (fun j => kToER (g_fam j) (h_g j))
           (let p := KMor1.majorize (.simrec i h_fam g_fam) h
            ERMor1.comp (ERMor1.A_two_iter p.1)
-             ![ERMor1.sumCtxERPlusOffset (a + 1) p.2])
+             (fun _ : Fin 1 => ERMor1.sumCtxERPlusOffset (a + 1) p.2))
           i).interp (Fin.cons n x) = _
   -- Step 3: apply simultaneousBoundedRec_interp_correct.
   rw [ERMor1.simultaneousBoundedRec_interp_correct
@@ -899,11 +899,14 @@ def kToERFunctor_map {n m : ℕ}
       have hrel :
           (kMorNSetoid n m).r rec₁.rep rec₂.rep :=
         Quotient.exact h_eq
-      -- hrel : ∀ v i, (rec₁.rep i).interp v
-      --              = (rec₂.rep i).interp v
+      -- hrel : ∀ ctx, rec₁.rep.interp ctx
+      --              = rec₂.rep.interp ctx
+      -- where rec_i.rep.interp ctx : Fin m → ℕ.
+      -- Per-component eq via congr_fun.
       intro v i
       exact kToERN_compat_extEq rec₁.rep_level
-        rec₂.rep_level (fun v' i' => hrel v' i') v i)
+        rec₂.rep_level
+        (fun v' i' => congr_fun (hrel v') i') v i)
 ```
 
 The well-definedness proof chains the two `rep_eq` fields
