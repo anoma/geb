@@ -490,7 +490,7 @@ private theorem A_one_iter_mono_input (k : ℕ)
 /-- Closed-form bound on every component of
 `KMor1.simrecVec` at step `n`: bounded by
 `A_1^{r_H + n*r_G}(max n (vMax params))` whenever the base
-and step families admit per-call A_1 bounds with exponents
+and step families have per-call A_1 bounds with exponents
 `r_H` and `r_G` respectively.  Master design lines 985-1007;
 Tourlakis 2018 §0.1.0.10 proof of the level-2 case. -/
 theorem KMor1.simrecVec_le_A_one_iter
