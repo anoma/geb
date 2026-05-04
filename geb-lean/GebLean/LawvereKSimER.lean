@@ -205,4 +205,82 @@ theorem kToER_simrec_bound_mono
   have h := ERMor1.sumCtxER_cons_le_of_le x h_m_le_n
   simpa only [ERMor1.interp_sumCtxER] using h
 
+/-- The simrec case of `kToER_interp`: combines step 2's
+correctness theorem `simultaneousBoundedRec_interp_correct`
+with step 5's `kToER_simrec_dominates` and
+`kToER_simrec_bound_mono` (Tasks 7 and 8) plus the
+inductive hypotheses on each child to establish that
+`(kToER (.simrec i h_fam g_fam) h).interp` agrees with
+`(KMor1.simrec i h_fam g_fam).interp`.  Master design §3.5;
+Tourlakis 2018 §0.1.0.44 (level-2 case). -/
+theorem kToER_interp_simrec
+    {a k : ℕ}
+    (i : Fin (k + 1))
+    (h_fam : Fin (k + 1) → KMor1 a)
+    (g_fam : Fin (k + 1) → KMor1 (a + 1 + (k + 1)))
+    (h : (KMor1.simrec i h_fam g_fam).level ≤ 2)
+    (v : Fin (a + 1) → ℕ)
+    (ih_h : ∀ (j : Fin (k + 1))
+             (h' : (h_fam j).level ≤ 2)
+             (v' : Fin a → ℕ),
+       (kToER (h_fam j) h').interp v'
+         = (h_fam j).interp v')
+    (ih_g : ∀ (j : Fin (k + 1))
+             (h' : (g_fam j).level ≤ 2)
+             (v' : Fin (a + 1 + (k + 1)) → ℕ),
+       (kToER (g_fam j) h').interp v'
+         = (g_fam j).interp v') :
+    (kToER (.simrec i h_fam g_fam) h).interp v
+      = (KMor1.simrec i h_fam g_fam).interp v := by
+  have h_h : ∀ j, (h_fam j).level ≤ 2 := fun j => by
+    have h1 : (h_fam j).level ≤ 1 :=
+      le_trans
+        (Finset.le_sup
+          (f := fun l => (h_fam l).level)
+          (Finset.mem_univ j))
+        (le_trans (le_max_left _ _)
+          (Nat.le_of_succ_le_succ
+            (by unfold KMor1.level at h; exact h)))
+    omega
+  have h_g : ∀ j, (g_fam j).level ≤ 2 := fun j => by
+    have h1 : (g_fam j).level ≤ 1 :=
+      le_trans
+        (Finset.le_sup
+          (f := fun l => (g_fam l).level)
+          (Finset.mem_univ j))
+        (le_trans (le_max_right _ _)
+          (Nat.le_of_succ_le_succ
+            (by unfold KMor1.level at h; exact h)))
+    omega
+  set n := v 0
+  set x := Fin.tail v
+  have hv : v = Fin.cons n x := (Fin.cons_self_tail v).symm
+  rw [hv]
+  change (ERMor1.simultaneousBoundedRec k a
+          (fun j => kToER (h_fam j) (h_h j))
+          (fun j => kToER (g_fam j) (h_g j))
+          (let p :=
+            KMor1.majorize (.simrec i h_fam g_fam) h
+           ERMor1.comp (ERMor1.A_two_iter p.1)
+             (fun _ : Fin 1 =>
+               ERMor1.sumCtxERPlusOffset (a + 1) p.2))
+          i).interp (Fin.cons n x) = _
+  rw [ERMor1.simultaneousBoundedRec_interp_correct
+        k a _ _ _ n x i
+        (kToER_simrec_dominates i h_fam g_fam h
+          h_h h_g ih_h ih_g n x)
+        (kToER_simrec_bound_mono i h_fam g_fam h n x)]
+  have h_bases :
+      (fun j' => (kToER (h_fam j') (h_h j')).interp)
+        = (fun j' => (h_fam j').interp) := by
+    funext j' v'; exact ih_h j' (h_h j') v'
+  have h_steps :
+      (fun j' => (kToER (g_fam j') (h_g j')).interp)
+        = (fun j' => (g_fam j').interp) := by
+    funext j' v'; exact ih_g j' (h_g j') v'
+  rw [h_bases, h_steps]
+  rw [← KMor1.simrecVec_eq_Nat_simRecVec h_fam g_fam x n i]
+  rw [KMor1.interp_simrec]
+  congr 2
+
 end GebLean
