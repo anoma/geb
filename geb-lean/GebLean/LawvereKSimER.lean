@@ -343,4 +343,20 @@ theorem kToER_interp :
         (fun j h' v' => kToER_interp (h_fam j) h' v')
         (fun j h' v' => kToER_interp (g_fam j) h' v')
 
+/-- Multi-output companion of `kToER`: pointwise lift to
+`KMorN n m → ERMorN n m`.  Master design §3.5. -/
+def kToERN {n m : ℕ} (f : KMorN n m)
+    (h : ∀ i, (f i).level ≤ 2) : ERMorN n m :=
+  fun i => kToER (f i) (h i)
+
+/-- Componentwise correctness of `kToERN`: each component
+of the kToERN-translated family agrees with the
+corresponding K^sim component on every context.  Master
+design §3.5. -/
+theorem kToERN_interp {n m : ℕ} (f : KMorN n m)
+    (h : ∀ i, (f i).level ≤ 2)
+    (v : Fin n → ℕ) (j : Fin m) :
+    (kToERN f h j).interp v = (f j).interp v :=
+  kToER_interp (f j) (h j) v
+
 end GebLean
