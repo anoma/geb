@@ -1142,40 +1142,54 @@ theorem A_one_iter_compose (a b x : ℕ) :
   rw [ERMor1.interp_A_one_iter, ERMor1.interp_A_one_iter,
       ERMor1.interp_A_one_iter]
   simp only [Matrix.cons_val_zero]
-  -- Explicitly substitute every 2^expr that omega cannot
-  -- reason about (omega treats opaque 2^a and 2^b as
-  -- atomic; products like 2^a * 2^b need the pow_add
-  -- bridge first).
-  have h_pow_add : 2 ^ (a + b) = 2 ^ a * 2 ^ b :=
+  have hpa : 1 ≤ 2 ^ a := Nat.one_le_pow _ _ (by omega)
+  have hpb : 1 ≤ 2 ^ b := Nat.one_le_pow _ _ (by omega)
+  have h3 : 2 ^ (a + b) = 2 ^ a * 2 ^ b :=
     Nat.pow_add 2 a b
-  have h_pow_succ_b : 2 ^ (b + 1) = 2 * 2 ^ b := by
+  have h4 : 2 ^ (a + b + 1) = 2 * (2 ^ a * 2 ^ b) := by
+    rw [Nat.pow_succ, h3]; ring
+  have h5 : 2 ^ (b + 1) = 2 * 2 ^ b := by
     rw [Nat.pow_succ]; ring
-  have h_pow_succ_ab :
-      2 ^ (a + b + 1) = 2 * (2 ^ a * 2 ^ b) := by
-    rw [Nat.pow_succ, h_pow_add]; ring
-  have h_pow_pos_a : 1 ≤ 2 ^ a :=
-    Nat.one_le_pow _ _ (by omega)
-  have h_pow_pos_b : 1 ≤ 2 ^ b :=
-    Nat.one_le_pow _ _ (by omega)
-  rw [h_pow_add, h_pow_succ_b, h_pow_succ_ab]
-  -- After these rewrites, both sides become Nat
-  -- expressions in `2^a`, `2^b`, `2^(a+1)`, `x`, and
-  -- omega closes the truncating-subtraction equality.
-  ring_nf
-  have h_pow_succ_a : 2 ^ (a + 1) = 2 * 2 ^ a := by
+  have h6 : 2 ^ (a + 1) = 2 * 2 ^ a := by
     rw [Nat.pow_succ]; ring
-  rw [h_pow_succ_a]
-  ring_nf
+  rw [h3, h4, h5, h6]
+  have hdist :
+      2 ^ a * (2 ^ b * x + (2 * 2 ^ b - 2))
+        = 2 ^ a * 2 ^ b * x
+            + 2 ^ a * (2 * 2 ^ b - 2) := by
+    ring
+  rw [hdist]
+  have hbridge :
+      2 ^ a * (2 * 2 ^ b - 2)
+        = 2 * (2 ^ a * 2 ^ b) - 2 * 2 ^ a := by
+    rw [Nat.mul_sub _ (2 * 2 ^ b) 2]
+    ring_nf
+  rw [hbridge]
+  have h2ab_ge : 2 * 2 ^ a ≤ 2 * (2 ^ a * 2 ^ b) := by
+    apply Nat.mul_le_mul_left
+    nlinarith
   omega
 ```
 
-If `ring_nf; omega` fails to close after these rewrites,
-the fallback is explicit `Nat.left_distrib` /
-`Nat.mul_assoc` rewrites + `omega`.  The point of the
-extensive `have`-chain is that `omega` treats `2^a` and
-`2^b` as atoms unless given equations linking them; the
-`h_pow_add` rewrite collapses `2^(a+b)` into `2^a * 2^b`
-so the only remaining atoms are `2^a`, `2^b`, `x`.
+The truncating-subtraction term `2 ^ a * (2 * 2 ^ b - 2)`
+must be distributed via `Nat.mul_sub` rather than the
+ordinary `ring` distribution: `ring` operates over `ℤ` /
+commutative-semiring laws and does not preserve Nat
+subtraction's `0`-truncation at `2 * 2^b < 2`.  The
+`hbridge` step uses `Nat.mul_sub _ (2 * 2 ^ b) 2`
+explicitly to perform the distribution under the
+truncating subtraction, then the `h2ab_ge` positivity
+hypothesis `2 * 2^a ≤ 2 * (2^a * 2^b)` (from `hpb`
+plus monotonicity) lets `omega` close the residual.
+
+If the `Nat.mul_sub` API name has shifted in the current
+mathlib, the implementer searches for the variant
+matching `(a : ℕ) (b c : ℕ) : a * (b - c) = a * b - a * c`
+(or its order-flipped form) via `loogle`.  Alternative:
+prove `A_one_iter_compose` by induction on `a`,
+mirroring `interp_A_one_iter`'s succ case — that
+recursion avoids the Nat-subtraction-distribution
+barrier entirely.
 
 - [ ] **Step 14.2: Add `self_le_A_one_iter`**
 
@@ -1662,7 +1676,8 @@ theorem KMor1.majorize_by_A_two_iter :
           f.interp v ≤
             (ERMor1.A_one_iter p.1).interp ![vMax v + p.2] :=
         KMor1.majorize_by_A_one_iter f hf v
-      have h_p2_zero : p.2 = 0 := rfl
+      have h_p2_zero : p.2 = 0 := by
+        unfold KMor1.majorize_one; rfl
       rw [h_p2_zero, Nat.add_zero] at h_dom_one
       have h_cross :
           (ERMor1.A_one_iter p.1).interp ![vMax v]
@@ -2101,6 +2116,8 @@ markdownlint-cli2 \
   docs/superpowers/plans/2026-05-03-step-4-ksim-majorization.md \
   docs/research/2026-05-03-step-4-spec-adversarial-review-round-1.md \
   docs/research/2026-05-03-step-4-spec-adversarial-review-round-2.md \
+  docs/research/2026-05-03-step-4-plan-adversarial-review-round-1.md \
+  docs/research/2026-05-03-step-4-plan-adversarial-review-round-2.md \
   2>&1 | tail -10
 ```
 
@@ -2194,13 +2211,13 @@ After writing the spec back through this plan one more time:
      Task 15.
    - `KMor1.simrecVec_le_A_one_iter` → Task 16.
    - `KMor1.majorize` def → Task 17.
-   - `KMor1.majorize_by_A_two_iter` → Tasks 18 + 19.
+   - `KMor1.majorize_by_A_two_iter` → Task 18.
    - `KMor1.majorize_by_componentBound` → Task 20.
    - Tests → Task 21.
    - Final verification + workstream update → Task 22.
 
 2. **Placeholder scan.**  No "TBD" / "TODO" / "implement
-   later".  Tasks 16 and 18-19 use `_` placeholders inside
+   later".  Task 16 uses one `_` placeholder inside
    the proof body that are explicitly filled in within the
    same task; no inter-task placeholders.
 
