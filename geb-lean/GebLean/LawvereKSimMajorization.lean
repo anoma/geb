@@ -424,4 +424,34 @@ theorem A_one_iter_mono_left {k₁ k₂ x : ℕ} (h : k₁ ≤ k₂) :
     Nat.one_le_pow _ _ (by omega)
   omega
 
+/-- Level-≤1 majorize witness: returns `(r, offset)` such
+that `f.interp v ≤ A_1^r (vMax v + offset)`.  Master design
+§3.4.  Wrapper around `KMor1.linearBound` plus γ.1.  Offset
+is uniformly `0` because γ.1 produces an A_1^r bound with
+no input offset. -/
+def KMor1.majorize_one : {a : ℕ} → (f : KMor1 a) →
+    f.level ≤ 1 → ℕ × ℕ :=
+  fun f h =>
+    let p := KMor1.linearBound f h
+    let r := max (Nat.log 2 (p.1 + 1) + 1)
+                 (Nat.log 2 (p.2 + 2) + 1)
+    (r, 0)
+
+/-- Level-≤1 majorization (Tourlakis 2018 §0.1.0.10
+restricted to level 1).  Master design §3.4. -/
+theorem KMor1.majorize_by_A_one_iter
+    {a : ℕ} (f : KMor1 a) (h : f.level ≤ 1)
+    (v : Fin a → ℕ) :
+    f.interp v ≤
+      (ERMor1.A_one_iter
+        (KMor1.majorize_one f h).1).interp
+          ![vMax v + (KMor1.majorize_one f h).2] := by
+  unfold KMor1.majorize_one
+  simp only [Nat.add_zero]
+  set p := KMor1.linearBound f h with hp
+  have h_dom :
+      f.interp v ≤ p.1 * vMax v + p.2 :=
+    KMor1.linearBound_dominates f h v
+  exact le_trans h_dom (linearBound_le_A_one_iter p.1 p.2 _)
+
 end GebLean
