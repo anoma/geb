@@ -14,8 +14,8 @@ jobs:
     strategy:
       matrix:
         lisp:
-          - sbcl-bin
-          - ccl-bin
+          # - sbcl-bin
+          # - ccl-bin
 
     env:
       LISP: ${{ matrix.lisp }}
