@@ -469,4 +469,15 @@ theorem kToERFunctor_map_comp {n m k : ℕ}
   funext j
   rw [kToERN_interp]
 
+/-- The forward functor of the categorical equivalence
+`LawvereKSimDCat 2 ≌ LawvereERCat` (forward direction;
+reverse direction in step 10, equivalence assembled in
+step 11).  Master design §3.5. -/
+def kToERFunctor : CategoryTheory.Functor
+    (LawvereKSimDCat 2) LawvereERCat where
+  obj n := n
+  map := kToERFunctor_map
+  map_id := kToERFunctor_map_id
+  map_comp := kToERFunctor_map_comp
+
 end GebLean
