@@ -363,6 +363,18 @@ theorem kToERN_interp {n m : ℕ} (f : KMorN n m)
     (kToERN f h j).interp v = (f j).interp v :=
   kToER_interp (f j) (h j) v
 
+/-- Function-level form of `kToER_interp`: the kToER-translated
+ER morphism's interpretation equals the original K^sim
+morphism's interpretation as functions `(Fin a → ℕ) → ℕ`.
+Useful for `rw`-style callers that don't want to thread
+`funext` themselves.  Master design §3.5; Tourlakis 2018
+§0.1.0.44 (function-level reformulation). -/
+theorem kToER_interp_funext {a : ℕ} (f : KMor1 a)
+    (h : f.level ≤ 2) :
+    (kToER f h).interp = f.interp := by
+  funext v
+  exact kToER_interp f h v
+
 /-- Compatibility of `kToERN` with K^sim ext-eq:
 extensionally-equal K^sim families produce extensionally-
 equal ER families.  Used by `kToERFunctor.map` to discharge
