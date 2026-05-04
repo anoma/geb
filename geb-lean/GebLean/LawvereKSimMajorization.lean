@@ -454,4 +454,141 @@ theorem KMor1.majorize_by_A_one_iter
     KMor1.linearBound_dominates f h v
   exact le_trans h_dom (linearBound_le_A_one_iter p.1 p.2 _)
 
+/-- `A_one_iter` is monotone in its input: increasing `x`
+weakly increases `(A_one_iter k).interp ![x]`.  Used in the
+input-monotonicity step of `simrecVec_le_A_one_iter`. -/
+private theorem A_one_iter_mono_input (k : ℕ)
+    {x₁ x₂ : ℕ} (hx : x₁ ≤ x₂) :
+    (ERMor1.A_one_iter k).interp ![x₁]
+      ≤ (ERMor1.A_one_iter k).interp ![x₂] := by
+  rw [ERMor1.interp_A_one_iter, ERMor1.interp_A_one_iter]
+  simp only [Matrix.cons_val_zero]
+  have h_mul : 2 ^ k * x₁ ≤ 2 ^ k * x₂ :=
+    Nat.mul_le_mul_left _ hx
+  omega
+
+/-- Closed-form bound on every component of
+`KMor1.simrecVec` at step `n`: bounded by
+`A_1^{r_H + n*r_G}(max n (vMax params))` whenever the base
+and step families admit per-call A_1 bounds with exponents
+`r_H` and `r_G` respectively.  Master design lines 985-1007;
+Tourlakis 2018 §0.1.0.10 proof of the level-2 case. -/
+theorem KMor1.simrecVec_le_A_one_iter
+    {a k : ℕ}
+    (h_fam : Fin (k + 1) → KMor1 a)
+    (g_fam : Fin (k + 1) → KMor1 (a + 1 + (k + 1)))
+    (_hh : ∀ j, (h_fam j).level ≤ 1)
+    (_hg : ∀ j, (g_fam j).level ≤ 1)
+    (r_H r_G : ℕ)
+    (hbase : ∀ j x,
+      (h_fam j).interp x
+        ≤ (ERMor1.A_one_iter r_H).interp ![vMax x])
+    (hstep : ∀ j y,
+      (g_fam j).interp y
+        ≤ (ERMor1.A_one_iter r_G).interp ![vMax y])
+    (params : Fin a → ℕ) (n : ℕ) :
+    ∀ j,
+      KMor1.simrecVec h_fam g_fam params n j
+        ≤ (ERMor1.A_one_iter (r_H + n * r_G)).interp
+            ![max n (vMax params)] := by
+  induction n with
+  | zero =>
+      intro j
+      rw [KMor1.simrecVec_zero]
+      simp only [Nat.zero_mul, Nat.add_zero]
+      have h_zero_max : max 0 (vMax params) = vMax params := by
+        omega
+      rw [h_zero_max]
+      exact hbase j params
+  | succ n ih =>
+      intro j
+      rw [KMor1.simrecVec_succ]
+      set stepCtx : Fin (a + 1 + (k + 1)) → ℕ :=
+        fun idx =>
+          if h₁ : idx.val < a + 1 then
+            if _h₂ : idx.val = 0 then
+              n
+            else
+              params ⟨idx.val - 1, by omega⟩
+          else
+            KMor1.simrecVec h_fam g_fam params n
+              ⟨idx.val - (a + 1), by omega⟩
+        with hStepCtx
+      set M : ℕ := max n (vMax params) with hM
+      have h_self_M : M ≤ (ERMor1.A_one_iter
+          (r_H + n * r_G)).interp ![M] :=
+        self_le_A_one_iter _ _
+      have h_ctx_pointwise : ∀ idx, stepCtx idx
+          ≤ (ERMor1.A_one_iter
+              (r_H + n * r_G)).interp ![M] := by
+        intro idx
+        simp only [hStepCtx]
+        by_cases h₁ : idx.val < a + 1
+        · simp only [h₁, dite_true]
+          by_cases h₂ : idx.val = 0
+          · simp only [h₂, dite_true]
+            calc n ≤ M := by simp only [hM]; omega
+              _ ≤ _ := h_self_M
+          · simp only [h₂, dite_false]
+            have h_pl : params ⟨idx.val - 1, by omega⟩
+                ≤ vMax params :=
+              vMax_apply_le params _
+            have h_pM : vMax params ≤ M := by
+              simp only [hM]; omega
+            exact le_trans (le_trans h_pl h_pM) h_self_M
+        · simp only [h₁, dite_false]
+          exact le_trans (ih _) (A_one_iter_mono_input _
+            (by simp only [hM]; omega))
+      have h_vmax_ctx : vMax stepCtx
+          ≤ (ERMor1.A_one_iter
+              (r_H + n * r_G)).interp ![M] :=
+        vMax_le_of_pointwise stepCtx _ h_ctx_pointwise
+      have h_step_apply :
+          (g_fam j).interp stepCtx
+            ≤ (ERMor1.A_one_iter r_G).interp ![vMax stepCtx] :=
+        hstep j stepCtx
+      have h_input_mono :
+          (ERMor1.A_one_iter r_G).interp ![vMax stepCtx]
+            ≤ (ERMor1.A_one_iter r_G).interp
+                ![(ERMor1.A_one_iter
+                    (r_H + n * r_G)).interp ![M]] :=
+        A_one_iter_mono_input _ h_vmax_ctx
+      have h_compose :
+          (ERMor1.A_one_iter r_G).interp
+              ![(ERMor1.A_one_iter
+                  (r_H + n * r_G)).interp ![M]]
+            = (ERMor1.A_one_iter
+                (r_G + (r_H + n * r_G))).interp ![M] :=
+        A_one_iter_compose r_G (r_H + n * r_G) M
+      have h_exp_eq :
+          r_G + (r_H + n * r_G) = r_H + (n + 1) * r_G := by
+        ring
+      have h_M_le :
+          M ≤ max (n + 1) (vMax params) := by
+        simp only [hM]; omega
+      have h_outer_input_mono :
+          (ERMor1.A_one_iter
+              (r_H + (n + 1) * r_G)).interp ![M]
+            ≤ (ERMor1.A_one_iter
+                (r_H + (n + 1) * r_G)).interp
+                  ![max (n + 1) (vMax params)] :=
+        A_one_iter_mono_input _ h_M_le
+      calc (g_fam j).interp stepCtx
+          ≤ (ERMor1.A_one_iter r_G).interp ![vMax stepCtx] :=
+            h_step_apply
+        _ ≤ (ERMor1.A_one_iter r_G).interp
+              ![(ERMor1.A_one_iter
+                  (r_H + n * r_G)).interp ![M]] :=
+            h_input_mono
+        _ = (ERMor1.A_one_iter
+              (r_G + (r_H + n * r_G))).interp ![M] :=
+            h_compose
+        _ = (ERMor1.A_one_iter
+              (r_H + (n + 1) * r_G)).interp ![M] := by
+            rw [h_exp_eq]
+        _ ≤ (ERMor1.A_one_iter
+              (r_H + (n + 1) * r_G)).interp
+                ![max (n + 1) (vMax params)] :=
+            h_outer_input_mono
+
 end GebLean
