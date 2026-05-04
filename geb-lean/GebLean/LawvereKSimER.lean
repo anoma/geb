@@ -1,6 +1,8 @@
 import GebLean.LawvereER
+import GebLean.LawvereERInterp
 import GebLean.LawvereERQuot
 import GebLean.LawvereKSim
+import GebLean.LawvereKSimDCatInterp
 import GebLean.LawvereKSimInterp
 import GebLean.LawvereKSimMajorization
 import GebLean.LawvereKSimQuot
@@ -479,5 +481,72 @@ def kToERFunctor : CategoryTheory.Functor
   map := kToERFunctor_map
   map_id := kToERFunctor_map_id
   map_comp := kToERFunctor_map_comp
+
+/-- Morphism-level interpretation preservation: the
+ER-quotient interpretation of `kToERFunctor_map f`
+agrees with the K^sim-quotient interpretation of `f.hom`.
+This is the pointwise companion of
+`kToERFunctor_comp_erInterpFunctor`.  Master design
+§3.5; the morphism-level form of Tourlakis 2018 §0.1.0.44
+⊆ direction. -/
+theorem kToERFunctor_map_interp {n m : ℕ}
+    (f : KSimMor 2 n m) :
+    (kToERFunctor_map f).interp = f.hom.interp := by
+  unfold kToERFunctor_map
+  rcases f with ⟨fh, fdw⟩
+  refine Quotient.inductionOn
+    (motive := fun (fdw : KMorNQuo.atDepth 2 fh) =>
+      ERMorNQuo.interp
+          (Quotient.liftOn
+            (s := kMorNQuoAtDepthSetoid 2 fh)
+            fdw
+            (fun rec => Quotient.mk (erMorNSetoid n m)
+                         (kToERN rec.rep rec.rep_level))
+            _)
+        = fh.interp) fdw ?_
+  intro rec
+  have hkn :
+      ERMorNQuo.interp
+          (Quotient.mk (erMorNSetoid n m)
+            (kToERN rec.rep rec.rep_level))
+        = rec.rep.interp := by
+    funext ctx
+    funext i
+    change (kToERN rec.rep rec.rep_level i).interp ctx
+      = (rec.rep i).interp ctx
+    exact kToERN_interp rec.rep rec.rep_level ctx i
+  have hfh : fh.interp = rec.rep.interp :=
+    (congrArg KMorNQuo.interp rec.rep_eq.symm)
+  change ERMorNQuo.interp
+      (Quotient.mk (erMorNSetoid n m)
+        (kToERN rec.rep rec.rep_level))
+    = fh.interp
+  rw [hkn, hfh]
+
+/-- The strict equality of functors:
+`kToERFunctor ⋙ erInterpFunctor = kInterpFunctor`.
+
+Both functors send `n : LawvereKSimDCat 2` to
+`Fin n → ℕ` (definitionally), and both send a morphism
+`f : KSimMor 2 n m` to a function
+`(Fin n → ℕ) → (Fin m → ℕ)`.  The map equality follows
+from `kToERFunctor_map_interp`, which itself follows
+from `kToER_interp` componentwise via `Quotient.ind` on
+the depth witness.
+
+This is stronger than a natural isomorphism with the
+identity: full functor equality (no eqToHom transports
+needed since obj is `rfl`).  Master design §3.5; the
+functor-level form of Tourlakis 2018 §0.1.0.44 ⊆
+direction. -/
+theorem kToERFunctor_comp_erInterpFunctor :
+    kToERFunctor ⋙ erInterpFunctor = kInterpFunctor := by
+  refine CategoryTheory.Functor.ext (fun _ => rfl) ?_
+  intro n m f
+  funext ctx
+  simp only [CategoryTheory.Functor.comp_obj,
+    CategoryTheory.Functor.comp_map]
+  change (kToERFunctor_map f).interp ctx = f.hom.interp ctx
+  rw [kToERFunctor_map_interp]
 
 end GebLean
