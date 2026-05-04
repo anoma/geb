@@ -10,6 +10,7 @@ import GebLeanTests.LawvereERPrimrec
 import GebLeanTests.LawvereERQuot
 import GebLeanTests.LawvereERTetration
 import GebLeanTests.LawvereGodelTTerm
+import GebLeanTests.LawvereKSimER
 import GebLeanTests.LawvereKSimInterp
 import GebLeanTests.LawvereKSimMajorization
 import GebLeanTests.LawvereKSimQuot
