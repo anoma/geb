@@ -91,6 +91,35 @@ theorem vMax_le_sumCtxER {n : ℕ} (v : Fin n → ℕ) :
       (sumCtxER n).interp v :=
   ERMor1.maxCtx_le_interp_sumCtxER v
 
+/-- n-ary sum plus a constant offset:
+`(sumCtxERPlusOffset n offset).interp v
+  = (∑ i, v i) + offset`.
+Master design §3.5 lines 1108-1113.  Step-5 plug-in for
+`simultaneousBoundedRec`'s componentBound slot. -/
+def sumCtxERPlusOffset (n offset : ℕ) : ERMor1 n :=
+  ERMor1.comp ERMor1.addN fun i => match i with
+    | ⟨0, _⟩ => sumCtxER n
+    | ⟨1, _⟩ => ERMor1.natN n offset
+
+/-- Closed-form interpretation:
+`(sumCtxERPlusOffset n offset).interp v
+  = (∑ i, v i) + offset`.  Master design §3.5. -/
+@[simp] theorem interp_sumCtxERPlusOffset
+    (n offset : ℕ) (v : Fin n → ℕ) :
+    (sumCtxERPlusOffset n offset).interp v
+      = (∑ i, v i) + offset := by
+  unfold sumCtxERPlusOffset
+  simp only [ERMor1.interp_comp, ERMor1.interp_addN,
+    ERMor1.interp_natN, interp_sumCtxER]
+
+/-- Sum-plus-offset dominates `vMax v + offset`. -/
+theorem vMax_add_offset_le_sumCtxERPlusOffset
+    {n : ℕ} (offset : ℕ) (v : Fin n → ℕ) :
+    (Finset.univ : Finset (Fin n)).sup v + offset
+      ≤ (sumCtxERPlusOffset n offset).interp v := by
+  rw [interp_sumCtxERPlusOffset, ← interp_sumCtxER]
+  exact Nat.add_le_add_right (vMax_le_sumCtxER v) offset
+
 end ERMor1
 
 end GebLean
