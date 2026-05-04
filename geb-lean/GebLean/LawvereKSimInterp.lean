@@ -1,4 +1,5 @@
 import GebLean.LawvereKSim
+import GebLean.Utilities.SimRec
 
 /-!
 # Interpretation of K^sim morphisms into ℕ
@@ -270,5 +271,81 @@ the results of interpreting `f` and `g`. -/
   funext i
   simp [KMorN.pair, KMorN.interp]
   split_ifs <;> rfl
+
+/-- Bridge between K^sim's `simrecVec` interpreter (which
+recurses with `KMor1.interp` calls inline) and `Nat.simRecVec`
+(the value-side simultaneous recursion consumed by
+`ERMor1.simultaneousBoundedRec_interp_correct`).  Master
+design §3.5; supports the simrec branch of step 5's
+`kToER_simrec_dominates` / `kToER_interp_simrec`. -/
+theorem KMor1.simrecVec_eq_Nat_simRecVec {a k : ℕ}
+    (h : Fin (k + 1) → KMor1 a)
+    (g : Fin (k + 1) → KMor1 (a + 1 + (k + 1)))
+    (params : Fin a → ℕ) :
+    ∀ (n : ℕ) (j : Fin (k + 1)),
+      KMor1.simrecVec h g params n j
+        = Nat.simRecVec k a (fun j' => (h j').interp)
+            (fun j' => (g j').interp) n params j := by
+  intro n
+  induction n with
+  | zero => intro j; rfl
+  | succ n ih =>
+      intro j
+      simp only [KMor1.simrecVec, Nat.simRecVec_succ]
+      congr 1
+      funext idx
+      rcases idx with ⟨v, h_v⟩
+      by_cases h₁ : v < a + 1
+      · have h_cast :
+            (⟨v, h_v⟩ : Fin (a + 1 + (k + 1)))
+              = Fin.castAdd (k + 1)
+                  (⟨v, h₁⟩ : Fin (a + 1)) := by
+          apply Fin.ext; rfl
+        rw [show Fin.append (Fin.cons n params)
+              (Nat.simRecVec k a (fun j' => (h j').interp)
+                (fun j' => (g j').interp) n params)
+              ⟨v, h_v⟩
+              = Fin.append (Fin.cons n params)
+                  (Nat.simRecVec k a
+                    (fun j' => (h j').interp)
+                    (fun j' => (g j').interp) n params)
+                  (Fin.castAdd (k + 1)
+                    (⟨v, h₁⟩ : Fin (a + 1))) from
+            congrArg _ h_cast,
+          Fin.append_left]
+        simp only [h₁, dite_true]
+        by_cases h₂ : v = 0
+        · simp only [h₂, dite_true]
+          rfl
+        · simp only [h₂, dite_false]
+          have h_succ :
+              (⟨v, h₁⟩ : Fin (a + 1))
+                = Fin.succ
+                    (⟨v - 1, by omega⟩ : Fin a) := by
+            apply Fin.ext
+            change v = (v - 1) + 1
+            omega
+          rw [h_succ, Fin.cons_succ]
+      · have h_cast :
+            (⟨v, h_v⟩ : Fin (a + 1 + (k + 1)))
+              = Fin.natAdd (a + 1)
+                  ⟨v - (a + 1), by omega⟩ := by
+          apply Fin.ext
+          change v = (a + 1) + (v - (a + 1))
+          omega
+        rw [show Fin.append (Fin.cons n params)
+              (Nat.simRecVec k a (fun j' => (h j').interp)
+                (fun j' => (g j').interp) n params)
+              ⟨v, h_v⟩
+              = Fin.append (Fin.cons n params)
+                  (Nat.simRecVec k a
+                    (fun j' => (h j').interp)
+                    (fun j' => (g j').interp) n params)
+                  (Fin.natAdd (a + 1)
+                    ⟨v - (a + 1), by omega⟩) from
+            congrArg _ h_cast,
+          Fin.append_right]
+        simp only [h₁, dite_false]
+        exact ih ⟨v - (a + 1), by omega⟩
 
 end GebLean
