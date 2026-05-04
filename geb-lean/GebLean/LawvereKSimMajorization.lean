@@ -122,4 +122,53 @@ theorem vMax_add_offset_le_sumCtxERPlusOffset
 
 end ERMor1
 
+/-- Adding an offset commutes past a tower (loosely):
+`tower b x + d ≤ tower b (x + d)` for all `b, x, d ≥ 0`.
+Used by `tower_compose_offsets` to absorb the outer
+offset of a `tower a (tower b ... + offset)` shape. -/
+private theorem tower_add_offset_le (b x d : ℕ) :
+    tower b x + d ≤ tower b (x + d) := by
+  induction b with
+  | zero => simp only [tower_zero, le_refl]
+  | succ b ih =>
+      change 2 ^ tower b x + d ≤ 2 ^ tower b (x + d)
+      have h_pow_ge : d + 1 ≤ 2 ^ d := by
+        have := Nat.lt_two_pow_self (n := d)
+        omega
+      have h_pos : 1 ≤ 2 ^ tower b x :=
+        Nat.one_le_pow _ _ (by omega)
+      have h_dle : d ≤ 2 ^ tower b x * d :=
+        Nat.le_mul_of_pos_left _ h_pos
+      have h_mul : 2 ^ tower b x + d
+                     ≤ 2 ^ tower b x * 2 ^ d := by
+        calc 2 ^ tower b x + d
+            ≤ 2 ^ tower b x + 2 ^ tower b x * d :=
+              Nat.add_le_add_left h_dle _
+          _ = 2 ^ tower b x * (1 + d) := by ring
+          _ ≤ 2 ^ tower b x * 2 ^ d :=
+              Nat.mul_le_mul_left _
+                (by omega : 1 + d ≤ 2 ^ d)
+      calc 2 ^ tower b x + d
+          ≤ 2 ^ tower b x * 2 ^ d := h_mul
+        _ = 2 ^ (tower b x + d) := by rw [← Nat.pow_add]
+        _ ≤ 2 ^ tower b (x + d) :=
+            Nat.pow_le_pow_right (by omega) ih
+
+/-- Two-stage tower composition with an outer offset:
+`tower a (tower b (x + c) + d) ≤ tower (a + b) (x + c + d)`.
+Used in the `comp` case of `majorize_by_A_two_iter` to
+telescope two child A_2 bounds. -/
+private theorem tower_compose_offsets
+    {a b : ℕ} (x c d : ℕ) :
+    tower a (tower b (x + c) + d)
+      ≤ tower (a + b) (x + c + d) := by
+  have h_inner : tower b (x + c) + d
+                   ≤ tower b (x + c + d) :=
+    tower_add_offset_le b (x + c) d
+  have h_outer : tower a (tower b (x + c) + d)
+                   ≤ tower a (tower b (x + c + d)) :=
+    tower_mono_right a h_inner
+  rw [tower_comp] at h_outer
+  exact h_outer
+
 end GebLean
