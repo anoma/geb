@@ -359,4 +359,20 @@ theorem kToERN_interp {n m : ℕ} (f : KMorN n m)
     (kToERN f h j).interp v = (f j).interp v :=
   kToER_interp (f j) (h j) v
 
+/-- Compatibility of `kToERN` with K^sim ext-eq:
+extensionally-equal K^sim families produce extensionally-
+equal ER families.  Used by `kToERFunctor.map` to discharge
+the Quotient.lift well-definedness obligation.  Master
+design §3.5. -/
+theorem kToERN_compat_extEq {n m : ℕ}
+    {f g : KMorN n m}
+    (hf : ∀ i, (f i).level ≤ 2)
+    (hg : ∀ i, (g i).level ≤ 2)
+    (hfg : ∀ v i, (f i).interp v = (g i).interp v) :
+    ∀ v i, (kToERN f hf i).interp v
+            = (kToERN g hg i).interp v := by
+  intro v i
+  rw [kToERN_interp, kToERN_interp]
+  exact hfg v i
+
 end GebLean
