@@ -656,6 +656,23 @@ def KMor1.majorize : {a : ℕ} → (f : KMor1 a) →
                      (KMor1.majorize_one (g_fam j) (hg j)).1) 0
       (2, r_H + r_G + 2)
 
+/-- Index-independence of `KMor1.majorize` at simrec: the
+result depends only on the families `h_fam` and `g_fam`,
+not on the output index `i`.  Used by step 5's
+`kToER_simrec_dominates` to align the bound built from
+output index `i` with the bound built from any other
+output index `j`.  Master design §3.5 + §3.4. -/
+theorem KMor1.majorize_simrec_index_indep
+    {a k : ℕ}
+    (i j : Fin (k + 1))
+    (h_fam : Fin (k + 1) → KMor1 a)
+    (g_fam : Fin (k + 1) → KMor1 (a + 1 + (k + 1)))
+    (h_i : (KMor1.simrec i h_fam g_fam).level ≤ 2)
+    (h_j : (KMor1.simrec j h_fam g_fam).level ≤ 2) :
+    KMor1.majorize (KMor1.simrec i h_fam g_fam) h_i
+      = KMor1.majorize (KMor1.simrec j h_fam g_fam) h_j := by
+  simp only [KMor1.majorize]
+
 /-- Level-≤2 majorization theorem (Tourlakis 2018
 §0.1.0.10).  Master design §3.4 lines 916-937.  Structural
 recursion mirroring `KMor1.majorize`. -/
