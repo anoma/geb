@@ -299,7 +299,7 @@ theorem ConstantOrShiftedProj.linearBound_dominates
 /-- Generic max-foldr lemma: for any indexed function
 `f : Fin n → ℕ`, `f j ≤ Fin.foldr n (fun i acc => max acc
 (f i)) 0` for every `j`. -/
-private theorem Fin.foldr_max_ge {n : ℕ}
+theorem Fin.foldr_max_ge {n : ℕ}
     (f : Fin n → ℕ) (j : Fin n) :
     f j ≤ Fin.foldr n (fun i acc => max acc (f i)) 0 := by
   induction n with
