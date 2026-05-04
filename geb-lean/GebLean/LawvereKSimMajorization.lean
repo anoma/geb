@@ -902,4 +902,34 @@ theorem KMor1.majorize_by_A_two_iter :
         _ = tower 2 (vMax v + (r_H + r_G + 2)) := by
             congr 1; ring
 
+/-- Step-5 plug-in: combines `majorize_by_A_two_iter` with
+`sumCtxERPlusOffset` to produce the dominance hypothesis
+shape that
+`ERMor1.simultaneousBoundedRec_interp_correct` consumes.
+Master design §3.5 lines 1099-1116. -/
+theorem KMor1.majorize_by_componentBound
+    {a : ℕ} (f : KMor1 a) (h : f.level ≤ 2)
+    (v : Fin a → ℕ) :
+    let p := KMor1.majorize f h
+    f.interp v ≤
+      (ERMor1.comp (ERMor1.A_two_iter p.1)
+        (fun _ : Fin 1 =>
+          ERMor1.sumCtxERPlusOffset a p.2)).interp v := by
+  intro p
+  have h_dom :
+      f.interp v ≤
+        (ERMor1.A_two_iter p.1).interp ![vMax v + p.2] :=
+    KMor1.majorize_by_A_two_iter f h v
+  rw [ERMor1.interp_A_two_iter] at h_dom
+  simp only [Matrix.cons_val_zero] at h_dom
+  rw [ERMor1.interp_comp]
+  rw [ERMor1.interp_A_two_iter]
+  simp only [ERMor1.interp_sumCtxERPlusOffset]
+  have h_sum_dom :
+      vMax v + p.2
+        ≤ (ERMor1.sumCtxER a).interp v + p.2 :=
+    Nat.add_le_add_right (ERMor1.vMax_le_sumCtxER v) _
+  rw [ERMor1.interp_sumCtxER] at h_sum_dom
+  exact le_trans h_dom (tower_mono_right p.1 h_sum_dom)
+
 end GebLean
