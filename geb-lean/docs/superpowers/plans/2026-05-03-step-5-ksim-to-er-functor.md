@@ -178,7 +178,7 @@ The proof shape mirrors the existing private
 
 - [ ] **Step 1.1: Add the import**
 
-Add `import GebLean.Utilities.SimRec` to the import block
+Add `import GebLean.Utilities.SimRec` to the import section
 of `GebLean/LawvereKSimInterp.lean` (alphabetical order;
 should come before any deeper `Utilities/...` imports if
 present).
@@ -618,7 +618,7 @@ git add GebLean/LawvereKSimER.lean GebLean.lean
 git commit -m "$(cat <<'EOF'
 Step 5 Task 4: LawvereKSimER.lean skeleton + index registration
 
-Empty module with import block and namespace.  Registered
+Empty module with import section and namespace.  Registered
 in GebLean.lean per discipline #1.
 
 Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
@@ -633,7 +633,7 @@ EOF
 **Files:**
 
 - Modify: `GebLean/LawvereKSimER.lean` (add the def inside
-  the namespace block)
+  the namespace scope)
 
 The structural-recursion definition.  All five cases per
 spec §4.2.
@@ -900,12 +900,18 @@ theorem kToER_simrec_dominates
     congr 2
   rw [h_rev]
   -- Step 4: get the simrec at index j's level proof from
-  -- index-independence of KMor1.level at simrec.
+  -- index-independence of KMor1.level at simrec.  The
+  -- simrec branch of KMor1.level (LawvereKSim.lean:112-114)
+  -- ignores the index argument, so the equality
+  -- (.simrec j ...).level = (.simrec i ...).level closes
+  -- by `rfl`.  Fallback to `simp only [KMor1.level]` only
+  -- if `rfl` fails (e.g., due to elaboration of the
+  -- internal lambda).
   have h_j : (KMor1.simrec j h_fam g_fam).level ≤ 2 := by
     have hfact :
         (KMor1.simrec j h_fam g_fam).level
-          = (KMor1.simrec i h_fam g_fam).level := by
-      simp only [KMor1.level]
+          = (KMor1.simrec i h_fam g_fam).level :=
+      rfl
     rw [hfact]; exact hyp
   -- Step 5: apply step 4's bridge lemma.
   have h_dom :=
@@ -998,10 +1004,13 @@ theorem kToER_simrec_bound_mono
       bound.interp (Fin.cons m x)
         ≤ bound.interp (Fin.cons n x) := by
   intro p bound m h_m_le_n
+  -- The bound's `fun _ : Fin 1 => sumCtxERPlusOffset
+  -- (a+1) p.2` shape (post-round-1 M1 fix) does not need
+  -- `Matrix.cons_val_zero`; the lambda's single argument
+  -- beta-reduces directly under `interp_comp`.
   simp only [bound, ERMor1.interp_comp,
     ERMor1.interp_A_two_iter,
-    ERMor1.interp_sumCtxERPlusOffset,
-    Matrix.cons_val_zero]
+    ERMor1.interp_sumCtxERPlusOffset]
   apply tower_mono_right
   apply Nat.add_le_add_right
   exact ERMor1.sumCtxER_cons_le_of_le x h_m_le_n
@@ -1279,7 +1288,7 @@ If termination is rejected:
 - If the recursive call in the simrec branch's IH-suppliers
   is rejected (because `f.simrec` is not recognised as a
   decreasing argument), refactor by using `induction f`
-  inside a `by` block instead of pattern-matching at the
+  inside a `by` tactic body instead of pattern-matching at the
   def level.
 
 - [ ] **Step 10.3: Commit**
@@ -1521,7 +1530,9 @@ theorem kToERFunctor_map_id (n : LawvereKSimDCat 2) :
   -- Per-component extEq.  Use kToER_proj for the proj-i
   -- atom on the K^sim side, ERMor1.interp_proj for the
   -- ER side.
-  simp only [Quotient.liftOn_mk, Quotient.lift_mk,
+  -- kToERFunctor_map uses Quotient.liftOn (not lift), so
+  -- only Quotient.liftOn_mk is needed here.
+  simp only [Quotient.liftOn_mk,
     kToERN, kToER_proj, KMorN.id, ERMorN.id,
     KMor1.interp_proj, ERMor1.interp_proj]
 ```
@@ -1587,7 +1598,9 @@ theorem kToERFunctor_map_comp {n m k : ℕ}
   intro v i
   -- kToER_comp from Task 6 reduces the kToER of a
   -- composition to ERMor1.comp at the morphism level.
-  simp only [Quotient.liftOn_mk, Quotient.lift_mk,
+  -- kToERFunctor_map uses Quotient.liftOn (not lift), so
+  -- only Quotient.liftOn_mk is needed here.
+  simp only [Quotient.liftOn_mk,
     kToERN, kToER_comp, KMorN.comp, ERMorN.comp,
     KMor1.interp_comp, ERMor1.interp_comp]
 ```
