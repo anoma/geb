@@ -47,4 +47,15 @@ example : (kToER addK
             = addK.interp ![0, 7] :=
   kToER_interp addK (by simp [addK, KMor1.level]) ![0, 7]
 
+-- Tier 3 — kToERFunctor sanity.
+
+example : kToERFunctor.obj 5 = 5 := rfl
+
+example {n : ℕ} :
+    kToERFunctor.map (CategoryTheory.CategoryStruct.id
+        (obj := LawvereKSimDCat 2) n)
+      = CategoryTheory.CategoryStruct.id
+          (obj := LawvereERCat) (kToERFunctor.obj n) :=
+  kToERFunctor.map_id n
+
 end GebLeanTests.LawvereKSimER
