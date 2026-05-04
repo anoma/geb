@@ -11,6 +11,7 @@ import GebLeanTests.LawvereERQuot
 import GebLeanTests.LawvereERTetration
 import GebLeanTests.LawvereGodelTTerm
 import GebLeanTests.LawvereKSimInterp
+import GebLeanTests.LawvereKSimMajorization
 import GebLeanTests.LawvereKSimQuot
 import GebLeanTests.LawvereNatBT
 import GebLeanTests.LawvereNatBTInterp
