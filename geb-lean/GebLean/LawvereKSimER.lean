@@ -549,4 +549,10 @@ theorem kToERFunctor_comp_erInterpFunctor :
   change (kToERFunctor_map f).interp ctx = f.hom.interp ctx
   rw [kToERFunctor_map_interp]
 
+/-- Object component of `kToERFunctor` is identity on `ℕ`.
+Useful as a simp lemma when step 11 (the categorical iso)
+composes / decomposes functors.  Master design §3.5. -/
+@[simp] theorem kToERFunctor_obj (n : LawvereKSimDCat 2) :
+    kToERFunctor.obj n = n := rfl
+
 end GebLean

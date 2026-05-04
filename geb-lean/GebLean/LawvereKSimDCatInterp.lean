@@ -92,4 +92,11 @@ instance : kInterpFunctor.Faithful where
     intro a b heq
     exact Quotient.sound (fun ctx => congrFun heq ctx)
 
+/-- Object component of `kInterpFunctor`: arity `n` maps
+to the function space `Fin n → ℕ`.  Useful as a simp lemma
+when reasoning about `kInterpFunctor`-images at concrete
+arities. -/
+@[simp] theorem kInterpFunctor_obj (n : LawvereKSimDCat 2) :
+    kInterpFunctor.obj n = (Fin n → ℕ) := rfl
+
 end GebLean
