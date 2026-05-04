@@ -20,6 +20,8 @@ Master design §3.5.
 
 namespace GebLean
 
+open CategoryTheory
+
 /-- Forward translation `KMor1 a → ERMor1 a` for K^sim
 morphisms of level ≤ 2.  Atomic constructors map to ER
 atoms; `comp` and `raise` recurse structurally; `simrec`
@@ -400,5 +402,23 @@ def kToERFunctor_map {n m : ℕ}
       exact kToERN_compat_extEq rec₁.rep_level
         rec₂.rep_level
         (fun v' i' => congr_fun (hrel v') i') v i)
+
+/-- Functor law: `kToERFunctor_map` preserves identities.
+The `𝟙 n` morphism in `LawvereKSimDCat 2` has
+representative `KMorN.id n`; its kToERN-translation
+componentwise equals `ERMorN.id n` (since
+`kToER (KMor1.proj i) _ = ERMor1.proj i`).  Master design
+§3.5. -/
+theorem kToERFunctor_map_id (n : LawvereKSimDCat 2) :
+    kToERFunctor_map
+        (CategoryTheory.CategoryStruct.id
+          (obj := LawvereKSimDCat 2) n)
+      = CategoryTheory.CategoryStruct.id
+          (obj := LawvereERCat) (n : LawvereERCat) := by
+  unfold kToERFunctor_map
+  apply Quotient.sound
+  intro v
+  funext i
+  rfl
 
 end GebLean
