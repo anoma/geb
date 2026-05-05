@@ -158,4 +158,62 @@ private lemma KMor1.add_aux (n : ℕ) (p : Fin 1 → ℕ) :
 
 example : KMor1.add.level = 1 := by decide
 
+/-- Doubling: `double(0) = 0`, `double(x+1) = succ(succ(double(x)))`.
+
+Derived at K^sim_1; used as the level-1 step in `pow2`. -/
+def KMor1.double : KMor1 1 :=
+  KMor1.rec1
+    (h := KMor1.zero)
+    (g := KMor1.comp KMor1.succ
+            (fun _ : Fin 1 =>
+              KMor1.comp KMor1.succ
+                (fun _ : Fin 1 => KMor1.proj ⟨1, by decide⟩)))
+
+private lemma KMor1.double_aux (n : ℕ) :
+    KMor1.double.interp (Fin.cons n Fin.elim0) = 2 * n := by
+  induction n with
+  | zero =>
+    unfold KMor1.double
+    rw [KMor1.interp_rec1_zero]
+    rfl
+  | succ n ih =>
+    unfold KMor1.double
+    rw [KMor1.interp_rec1_succ, KMor1.interp_comp,
+        KMor1.interp_succ, KMor1.interp_comp,
+        KMor1.interp_succ, KMor1.interp_proj]
+    have hidx :
+        (⟨1, KMor1.double._proof_1⟩ : Fin (0 + 1 + 1))
+          = Fin.natAdd (0 + 1) (⟨0, by decide⟩ : Fin 1) := by
+      apply Fin.ext; rfl
+    rw [hidx, Fin.append_right]
+    change ((KMor1.zero (n := 0)).rec1
+              (KMor1.succ.comp
+                (fun _ : Fin 1 =>
+                  KMor1.succ.comp
+                    (fun _ : Fin 1 =>
+                      KMor1.proj ⟨1, KMor1.double._proof_1⟩)))).interp
+              (Fin.cons n Fin.elim0) + 1 + 1
+          = 2 * (n + 1)
+    rw [show (KMor1.zero (n := 0)).rec1
+              (KMor1.succ.comp
+                (fun _ : Fin 1 =>
+                  KMor1.succ.comp
+                    (fun _ : Fin 1 =>
+                      KMor1.proj ⟨1, KMor1.double._proof_1⟩)))
+            = KMor1.double from rfl]
+    rw [ih]
+    omega
+
+/-- Interpretation of `double`: `2 * ctx 0`. -/
+@[simp] theorem KMor1.interp_double (ctx : Fin 1 → ℕ) :
+    KMor1.double.interp ctx = 2 * ctx 0 := by
+  have hctx : ctx = Fin.cons (ctx 0) Fin.elim0 := by
+    funext i
+    match i with
+    | ⟨0, _⟩ => rfl
+  rw [hctx]
+  exact KMor1.double_aux (ctx 0)
+
+example : KMor1.double.level = 1 := by decide
+
 end GebLean

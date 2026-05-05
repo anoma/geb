@@ -18,3 +18,6 @@ open GebLean
 #guard KMor1.add.interp ![0, 7] == 7
 #guard KMor1.add.interp ![3, 4] == 7
 #guard KMor1.add.interp ![5, 0] == 5
+
+#guard KMor1.double.interp ![0] == 0
+#guard KMor1.double.interp ![5] == 10
