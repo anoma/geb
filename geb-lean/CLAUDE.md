@@ -76,6 +76,16 @@ When making changes to Lean code:
    the user.  When a workflow seems to call for process substitution,
    write the intermediate output to a file (under `/tmp` or in the
    working tree) and read it back instead.
+
+   **In a freshly created git worktree**: before the first `lake build`,
+   run `lake exe cache get` to populate the worktree's
+   `.lake/packages/mathlib4/.lake/build/lib/` with precompiled `.olean`
+   artifacts from the mathlib4 cache server.  Without this step, lake
+   falls back to building mathlib from source, which both takes hours
+   and (in our experience) fails on individual mathlib targets.  The
+   download itself is fast when the user-level cache at
+   `~/.cache/mathlib/` is already warm from the main checkout
+   (decompress only, ~15 seconds).
 2. **Iterate on errors**: If the build fails, fix errors yourself and rebuild
    before proposing a change.
 3. **No warnings or sorry or admit**:
