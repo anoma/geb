@@ -350,4 +350,51 @@ private lemma KMor1.mult_aux (n : ℕ) (p : Fin 1 → ℕ) :
 
 example : KMor1.mult.level = 2 := by decide
 
+/-- Helper: monus with arguments swapped, recursing on slot 0.
+`monusSwapped(y, x) = x ∸ y`.  K^sim's recursion always recurses
+on slot 0; this helper makes that explicit, with `KMor1.monus`
+below swapping the arg order to recover the conventional
+`λxy. x ∸ y`. -/
+private def KMor1.monusSwapped : KMor1 2 :=
+  KMor1.rec1
+    (h := KMor1.proj ⟨0, by decide⟩)
+    (g := KMor1.comp KMor1.pred
+            (fun _ : Fin 1 => KMor1.proj ⟨2, by decide⟩))
+
+private lemma KMor1.monusSwapped_aux (n : ℕ) (p : Fin 1 → ℕ) :
+    KMor1.monusSwapped.interp (Fin.cons n p)
+      = p ⟨0, by decide⟩ - n := by
+  induction n with
+  | zero =>
+    unfold KMor1.monusSwapped
+    rw [KMor1.interp_rec1_zero, KMor1.interp_proj]
+    simp
+  | succ n ih =>
+    unfold KMor1.monusSwapped
+    rw [KMor1.interp_rec1_succ, KMor1.interp_comp,
+        KMor1.interp_pred, KMor1.interp_proj]
+    have hidx :
+        (⟨2, by decide⟩ : Fin (1 + 1 + 1))
+          = Fin.natAdd (1 + 1) (⟨0, by decide⟩ : Fin 1) := by
+      apply Fin.ext; rfl
+    rw [hidx, Fin.append_right]
+    change (KMor1.monusSwapped.interp (Fin.cons n p)).pred
+        = p ⟨0, by decide⟩ - (n + 1)
+    rw [ih, Nat.pred_eq_sub_one]
+    omega
+
+@[simp] private theorem KMor1.interp_monusSwapped
+    (ctx : Fin 2 → ℕ) :
+    KMor1.monusSwapped.interp ctx = ctx 1 - ctx 0 := by
+  have hctx :
+      ctx = Fin.cons (ctx 0) (fun j => ctx (Fin.succ j)) := by
+    funext i
+    match i with
+    | ⟨0, _⟩ => rfl
+    | ⟨1, _⟩ => rfl
+  rw [hctx, KMor1.monusSwapped_aux]
+  rfl
+
+example : KMor1.monusSwapped.level = 2 := by decide
+
 end GebLean
