@@ -277,6 +277,7 @@ params)`. -/
         (fun j => Fin.cons n params (Fin.succ j)) = params := by
       funext j; simp [Fin.cons_succ]
     rw [h_ctx0', h_params']
+    rfl
 ```
 
 - [ ] **Step 2: Build and verify clean**
@@ -319,6 +320,94 @@ git commit -m "Add KMor1.interp_rec1_succ step-case simp lemma"
 ---
 
 ## Phase 1: Level-1 functions
+
+### Common proof pattern for `rec1`-defined functions
+
+Every `KMor1.foo` defined via `KMor1.rec1` (Tasks 1.3–1.7, 2.1–2.4)
+gets two lemmas: a private helper `KMor1.foo_aux` proved by
+induction on the recursion variable, and a public `@[simp]
+KMor1.interp_foo` derived by reducing `ctx` to a `Fin.cons` form
+and applying the helper.
+
+**Why a helper:** induction on `ctx 0` directly (after a `rw [hctx]`
+that already replaced `ctx` with `Fin.cons (ctx 0) params`) produces
+an IH with the wrong shape, because `ctx 0` no longer appears in
+the goal. The standard fix is to introduce a fresh `n : ℕ` via the
+helper.
+
+**Template:**
+
+```lean
+private lemma KMor1.foo_aux {a : ℕ} (n : ℕ) (params : Fin a → ℕ) :
+    KMor1.foo.interp (Fin.cons n params) = NatExpr n params := by
+  induction n with
+  | zero =>
+    unfold KMor1.foo
+    rw [KMor1.interp_rec1_zero]
+    -- Discharge base: depends on the base term `h`.
+  | succ n ih =>
+    unfold KMor1.foo
+    rw [KMor1.interp_rec1_succ]
+    -- Reduce step term `g.interp (Fin.append (Fin.cons n params)
+    --   (fun _ => (rec1 h g).interp (Fin.cons n params)))` by
+    -- `interp_comp`/`interp_succ`/`interp_proj` and slot lookups.
+    -- For each `proj ⟨k, _⟩` accessed:
+    --   k < a + 1: use Fin.append_left + Fin.cons indexing
+    --   k = a + 1 (the prev slot): use the slot-lookup pattern
+    rw [show (Fin.append (Fin.cons n params)
+              (fun _ : Fin 1 =>
+                (KMor1.rec1 _ _).interp (Fin.cons n params))) ⟨a+1, _⟩
+            = (KMor1.rec1 _ _).interp (Fin.cons n params)
+        from by
+          rw [show (⟨a+1, by omega⟩ : Fin (a+1+1))
+                = Fin.natAdd (a+1) (⟨0, by decide⟩ : Fin 1) from
+              by apply Fin.ext; rfl]
+          rw [Fin.append_right]]
+    -- Now the prev slot is replaced; fold `(rec1 _ _).interp …`
+    -- back to `KMor1.foo.interp …` to apply IH:
+    rw [show (KMor1.rec1 _ _).interp (Fin.cons n params)
+            = KMor1.foo.interp (Fin.cons n params) from rfl,
+        ih]
+    -- Discharge with `omega` / `ring` / explicit arithmetic.
+
+@[simp] theorem KMor1.interp_foo {a : ℕ} (ctx : Fin (a+1) → ℕ) :
+    KMor1.foo.interp ctx = NatExpr (ctx 0) (fun j => ctx (Fin.succ j))
+    := by
+  have hctx :
+      ctx = Fin.cons (ctx 0) (fun j => ctx (Fin.succ j)) := by
+    funext i
+    refine Fin.cases ?_ ?_ i
+    · simp [Fin.cons_zero]
+    · intro j; simp [Fin.cons_succ]
+  rw [hctx]
+  exact KMor1.foo_aux (ctx 0) _
+```
+
+For functions with `a = 0` (e.g. `pred`, `isZero`, `double`,
+`pow2`), `params` is `Fin.elim0` and the prev-slot index is 1.
+For `a = 1` (e.g. `add`, `mult`, `monusSwapped`), prev-slot is 2.
+For `a = 2` (e.g. `cond`), prev-slot is 3 (though `cond` does not
+reference prev).
+
+**Note on `simp` vs `rw`:** the proofs below use explicit `rw`
+chains rather than `simp` sets because `simp` may or may not fire
+the `Fin.append_right` lemma at the unstated index automatically,
+and the explicit form is robust. Implementers may try `simp [...,
+Fin.append_left, Fin.append_right]` first and fall back to the
+explicit `rw [show … from …]` pattern if `simp` does not close the
+goal.
+
+**Coverage of subsequent tasks:** Tasks 1.3 (`pred`) and 1.5 (`add`)
+below give the pattern fully worked out. Tasks 1.4 (`isZero`), 1.6
+(`double`), 1.7 (`cond`), 2.1 (`mult`), 2.2 (`monusSwapped`), 2.4
+(`pow2`) follow the same template; their `_aux` helpers differ only
+in the base discharge, the step-term reduction (which `interp_*`
+lemmas to apply), and the final arithmetic discharge (`omega`,
+`ring`, `rfl`). Each task lists what is specific to that function;
+the `Fin.append_right`/`Fin.append_left` slot-lookup machinery is
+identical to Tasks 1.3 and 1.5. If the proof gets stuck on the slot
+arithmetic, copy the corresponding block from Task 1.5's `add_aux`
+and adjust the slot index for the function's arity.
 
 ### Task 1.1: Create `Utilities/KArith.lean` skeleton
 
@@ -442,29 +531,47 @@ def KMor1.pred : KMor1 1 :=
     (g := KMor1.proj ⟨0, by decide⟩)
 ```
 
-- [ ] **Step 2: Add interp simp lemma**
+- [ ] **Step 2: Add helper lemma + interp simp lemma**
+
+Helper (proved by induction on `n`, per the common pattern):
+
+```lean
+private lemma KMor1.pred_aux (n : ℕ) :
+    KMor1.pred.interp (Fin.cons n Fin.elim0) = n.pred := by
+  induction n with
+  | zero =>
+    unfold KMor1.pred
+    rw [KMor1.interp_rec1_zero]
+    rfl
+  | succ n _ =>
+    unfold KMor1.pred
+    rw [KMor1.interp_rec1_succ]
+    -- step is `proj ⟨0, _⟩`; ⟨0, _⟩ < a+1=1 so it's left side
+    rw [KMor1.interp_proj]
+    rw [show (Fin.append (Fin.cons n Fin.elim0)
+              (fun _ : Fin 1 =>
+                (KMor1.rec1 _ _).interp (Fin.cons n Fin.elim0)))
+              ⟨0, by decide⟩
+            = Fin.cons n Fin.elim0 ⟨0, by decide⟩
+        from by
+          rw [show (⟨0, by decide⟩ : Fin (0+1+1))
+                = Fin.castAdd 1 (⟨0, by decide⟩ : Fin 1) from
+              by apply Fin.ext; rfl]
+          rw [Fin.append_left]]
+    simp [Fin.cons_zero, Nat.pred_succ]
+```
+
+Public lemma:
 
 ```lean
 /-- Interpretation of `pred`: `Nat.pred`. -/
 @[simp] theorem KMor1.interp_pred (ctx : Fin 1 → ℕ) :
     KMor1.pred.interp ctx = (ctx 0).pred := by
-  unfold KMor1.pred
-  -- Case on ctx 0 = 0 or n + 1 by reducing through Fin.cons-shape
   have hctx : ctx = Fin.cons (ctx 0) Fin.elim0 := by
     funext i; fin_cases i; rfl
   rw [hctx]
-  cases h : ctx 0 with
-  | zero => simp [KMor1.interp_rec1_zero]
-  | succ n =>
-    simp [KMor1.interp_rec1_succ]
-    rfl
+  exact KMor1.pred_aux (ctx 0)
 ```
-
-If the `simp` calls fail: drop to step-by-step
-`rw [KMor1.interp_rec1_zero]` / `rw [KMor1.interp_rec1_succ]` and
-finish with `rfl`. The interp of `proj ⟨0, _⟩` against the Fin.append
-context is `Fin.append (Fin.cons n Fin.elim0) (fun _ => 0) ⟨0, _⟩
-= n` by `Fin.append_left` + `Fin.cons_zero`.
 
 - [ ] **Step 3: Add level proof and #guards**
 
@@ -568,61 +675,59 @@ def KMor1.add : KMor1 2 :=
             (fun _ : Fin 1 => KMor1.proj ⟨2, by decide⟩))
 ```
 
-- [ ] **Step 2: Add interp simp lemma**
+- [ ] **Step 2: Add helper lemma + interp simp lemma**
+
+Apply the common pattern (Phase 1 preamble): helper over `(n, p)`,
+public lemma reduces to helper.
 
 ```lean
+private lemma KMor1.add_aux (n : ℕ) (p : Fin 1 → ℕ) :
+    KMor1.add.interp (Fin.cons n p) = n + p ⟨0, by decide⟩ := by
+  induction n with
+  | zero =>
+    unfold KMor1.add
+    rw [KMor1.interp_rec1_zero]
+    rfl
+  | succ n ih =>
+    unfold KMor1.add
+    rw [KMor1.interp_rec1_succ, KMor1.interp_comp,
+        KMor1.interp_succ, KMor1.interp_proj]
+    -- Slot 2 (= a+1 with a=1) is the prev slot
+    rw [show (Fin.append (Fin.cons n p)
+              (fun _ : Fin 1 =>
+                (KMor1.rec1 _ _).interp (Fin.cons n p)))
+              ⟨2, by decide⟩
+            = (KMor1.rec1 _ _).interp (Fin.cons n p)
+        from by
+          rw [show (⟨2, by decide⟩ : Fin (1+1+1))
+                = Fin.natAdd 2 (⟨0, by decide⟩ : Fin 1) from
+              by apply Fin.ext; rfl]
+          rw [Fin.append_right]]
+    -- Fold rec1-interp back to KMor1.add to apply IH
+    rw [show (KMor1.rec1
+              (h := (KMor1.proj ⟨0, by decide⟩ : KMor1 1))
+              (g := KMor1.comp KMor1.succ
+                (fun _ : Fin 1 =>
+                  KMor1.proj ⟨2, by decide⟩))).interp
+                (Fin.cons n p)
+            = KMor1.add.interp (Fin.cons n p)
+        from rfl,
+        ih]
+    omega
+
 /-- Interpretation of `add`: `ctx 0 + ctx 1`. -/
 @[simp] theorem KMor1.interp_add (ctx : Fin 2 → ℕ) :
     KMor1.add.interp ctx = ctx 0 + ctx 1 := by
-  unfold KMor1.add
-  -- Decompose ctx as Fin.cons (ctx 0) (fun j => ctx (Fin.succ j))
-  have hctx : ctx = Fin.cons (ctx 0) (fun j => ctx (Fin.succ j)) := by
+  have hctx :
+      ctx = Fin.cons (ctx 0) (fun j => ctx (Fin.succ j)) := by
     funext i
     refine Fin.cases ?_ ?_ i
     · simp [Fin.cons_zero]
     · intro j; simp [Fin.cons_succ]
   rw [hctx]
-  -- Induction on ctx 0
-  generalize hp : (fun j => ctx (Fin.succ j)) = params
-  induction (ctx 0) with
-  | zero =>
-    simp [KMor1.interp_rec1_zero]
-    -- proj 0 of single-param Fin 1 → ℕ context is params 0 = ctx 1
-    rfl
-  | succ n ih =>
-    simp [KMor1.interp_rec1_succ]
-    rw [show Fin.append (Fin.cons n params)
-          (fun _ : Fin 1 => (KMor1.rec1 _ _).interp _)
-          ⟨2, by decide⟩
-        = (KMor1.rec1
-            (h := (KMor1.proj ⟨0, by decide⟩ : KMor1 1))
-            (g := KMor1.comp KMor1.succ
-              (fun _ : Fin 1 =>
-                KMor1.proj ⟨2, by decide⟩))).interp
-            (Fin.cons n params) by
-      simp [Fin.append_right]; rfl]
-    -- now LHS = succ (rec1 ... interp (Fin.cons n params))
-    -- and we want = n + 1 + ctx 1 = (n + ctx 1) + 1
-    -- IH: rec1 interp (Fin.cons n params) = n + ctx 1, so we're done
-    omega_or_rfl_via_ih
+  rw [KMor1.add_aux]
+  rfl
 ```
-
-The exact final step depends on what `simp` leaves. If `simp` gets
-stuck, drop to manual step-by-step `rw`s:
-
-```lean
-    rw [KMor1.interp_succ]
-    -- Goal: (rec1 _ _).interp (Fin.cons n params) + 1 = ...
-    -- Need: ctx becomes Fin.cons n params on RHS too
-    have : Fin.cons (n + 1) params = ctx := hctx.symm  -- from earlier
-    -- IH applied: rewrite back to ctx then back to (n, params)
-    sorry  -- placeholder; remove and finish
-```
-
-If the proof gets long, factor out a helper lemma stating
-`(KMor1.add).interp (Fin.cons n params) = n + params 0` and prove
-it by induction on `n`; then derive the main lemma by setting
-`n := ctx 0` and `params := fun j => ctx (Fin.succ j)`.
 
 - [ ] **Step 3: Add level proof and #guards**
 
@@ -1067,9 +1172,38 @@ git commit -m "Add KMor1.pow2 (2^x at K^sim_2)"
 
 - Modify: `GebLean/Utilities/KArith.lean`
 
-- [ ] **Step 1: Add the system-size-2 simrec**
+- [ ] **Step 1: Add the system-size-2 simrec, with private h/g extracted**
+
+The base and step families are extracted as private definitions to
+make Task 3.2's `modAux_components` unify cleanly with the inline
+shapes used in `modAux`. Without this extraction, `match`-pattern
+unification between the two definitions is fragile.
 
 ```lean
+private def KMor1.modAux_h : Fin 2 → KMor1 1 := fun i =>
+  match i with
+  | ⟨0, _⟩ => KMor1.zero
+  | ⟨1, _⟩ => KMor1.pred
+
+private def KMor1.modAux_g : Fin 2 → KMor1 (1 + 1 + 2) := fun i =>
+  -- step ctx is Fin 4: slots 0 = x, 1 = y, 2 = prev_f₀, 3 = prev_f₁
+  match i with
+  | ⟨0, _⟩ =>
+      -- f₀ step: cond(prev_f₁, 0, succ(prev_f₀))
+      KMor1.comp KMor1.cond (fun j => match j with
+        | ⟨0, _⟩ => KMor1.proj ⟨3, by decide⟩
+        | ⟨1, _⟩ => KMor1.zero
+        | ⟨2, _⟩ => KMor1.comp KMor1.succ
+                      (fun _ : Fin 1 => KMor1.proj ⟨2, by decide⟩))
+  | ⟨1, _⟩ =>
+      -- f₁ step: cond(prev_f₁, pred(y), pred(prev_f₁))
+      KMor1.comp KMor1.cond (fun j => match j with
+        | ⟨0, _⟩ => KMor1.proj ⟨3, by decide⟩
+        | ⟨1, _⟩ => KMor1.comp KMor1.pred
+                      (fun _ : Fin 1 => KMor1.proj ⟨1, by decide⟩)
+        | ⟨2, _⟩ => KMor1.comp KMor1.pred
+                      (fun _ : Fin 1 => KMor1.proj ⟨3, by decide⟩))
+
 /-- Helper: joint recursion of `mod` and a "distance to wrap"
 companion. Output index 0 of the `simrec` (the `mod` component);
 the second component `(y ∸ 1) ∸ mod(x, y)` is internal and used to
@@ -1085,28 +1219,7 @@ At `y = 0`: `f₁` stays at `0` forever (since `pred(0) = 0`), so
 this case to match `Nat.mod_zero : x % 0 = x`. -/
 private def KMor1.modAux : KMor1 2 :=
   KMor1.simrec (a := 1) (k := 1) (i := ⟨0, by decide⟩)
-    (h := fun i => match i with
-      | ⟨0, _⟩ => KMor1.zero       -- f₀(0, y) = 0
-      | ⟨1, _⟩ => KMor1.pred)      -- f₁(0, y) = pred(y)
-    (g := fun i =>
-      -- step ctx is Fin (1 + 1 + 2) = Fin 4:
-      -- slots 0 = x, 1 = y, 2 = prev_f₀, 3 = prev_f₁
-      match i with
-      | ⟨0, _⟩ =>
-          -- f₀ step: cond(prev_f₁, 0, succ(prev_f₀))
-          KMor1.comp KMor1.cond (fun j => match j with
-            | ⟨0, _⟩ => KMor1.proj ⟨3, by decide⟩
-            | ⟨1, _⟩ => KMor1.zero
-            | ⟨2, _⟩ => KMor1.comp KMor1.succ
-                          (fun _ : Fin 1 => KMor1.proj ⟨2, by decide⟩))
-      | ⟨1, _⟩ =>
-          -- f₁ step: cond(prev_f₁, pred(y), pred(prev_f₁))
-          KMor1.comp KMor1.cond (fun j => match j with
-            | ⟨0, _⟩ => KMor1.proj ⟨3, by decide⟩
-            | ⟨1, _⟩ => KMor1.comp KMor1.pred
-                          (fun _ : Fin 1 => KMor1.proj ⟨1, by decide⟩)
-            | ⟨2, _⟩ => KMor1.comp KMor1.pred
-                          (fun _ : Fin 1 => KMor1.proj ⟨3, by decide⟩)))
+    KMor1.modAux_h KMor1.modAux_g
 
 example : KMor1.modAux.level = 2 := by decide
 ```
@@ -1438,35 +1551,41 @@ Marchenkov 2007 (the function `x/y` is one of the four basis
 elements `S = {x+y, x∸y, x/y, 2^x}`); the construction technique
 extends Notes 4.2.3's two-row companion-shift to a three-row
 shift-plus-counter. -/
+private def KMor1.divAux_h : Fin 3 → KMor1 1 := fun i =>
+  match i with
+  | ⟨0, _⟩ => KMor1.zero
+  | ⟨1, _⟩ => KMor1.pred
+  | ⟨2, _⟩ => KMor1.zero
+
+private def KMor1.divAux_g : Fin 3 → KMor1 (1 + 1 + 3) := fun i =>
+  -- step ctx is Fin 5: slots 0=x, 1=y, 2=prev_f₀, 3=prev_f₁, 4=prev_f₂
+  match i with
+  | ⟨0, _⟩ =>
+      -- f₀ step: cond(prev_f₁, 0, succ(prev_f₀))
+      KMor1.comp KMor1.cond (fun j => match j with
+        | ⟨0, _⟩ => KMor1.proj ⟨3, by decide⟩
+        | ⟨1, _⟩ => KMor1.zero
+        | ⟨2, _⟩ => KMor1.comp KMor1.succ
+                      (fun _ : Fin 1 => KMor1.proj ⟨2, by decide⟩))
+  | ⟨1, _⟩ =>
+      -- f₁ step: cond(prev_f₁, pred(y), pred(prev_f₁))
+      KMor1.comp KMor1.cond (fun j => match j with
+        | ⟨0, _⟩ => KMor1.proj ⟨3, by decide⟩
+        | ⟨1, _⟩ => KMor1.comp KMor1.pred
+                      (fun _ : Fin 1 => KMor1.proj ⟨1, by decide⟩)
+        | ⟨2, _⟩ => KMor1.comp KMor1.pred
+                      (fun _ : Fin 1 => KMor1.proj ⟨3, by decide⟩))
+  | ⟨2, _⟩ =>
+      -- f₂ step: cond(prev_f₁, succ(prev_f₂), prev_f₂)
+      KMor1.comp KMor1.cond (fun j => match j with
+        | ⟨0, _⟩ => KMor1.proj ⟨3, by decide⟩
+        | ⟨1, _⟩ => KMor1.comp KMor1.succ
+                      (fun _ : Fin 1 => KMor1.proj ⟨4, by decide⟩)
+        | ⟨2, _⟩ => KMor1.proj ⟨4, by decide⟩)
+
 private def KMor1.divAux : KMor1 2 :=
   KMor1.simrec (a := 1) (k := 2) (i := ⟨2, by decide⟩)
-    (h := fun i => match i with
-      | ⟨0, _⟩ => KMor1.zero
-      | ⟨1, _⟩ => KMor1.pred
-      | ⟨2, _⟩ => KMor1.zero)
-    (g := fun i => match i with
-      | ⟨0, _⟩ =>
-          -- f₀ step: cond(prev_f₁, 0, succ(prev_f₀))
-          KMor1.comp KMor1.cond (fun j => match j with
-            | ⟨0, _⟩ => KMor1.proj ⟨3, by decide⟩
-            | ⟨1, _⟩ => KMor1.zero
-            | ⟨2, _⟩ => KMor1.comp KMor1.succ
-                          (fun _ : Fin 1 => KMor1.proj ⟨2, by decide⟩))
-      | ⟨1, _⟩ =>
-          -- f₁ step: cond(prev_f₁, pred(y), pred(prev_f₁))
-          KMor1.comp KMor1.cond (fun j => match j with
-            | ⟨0, _⟩ => KMor1.proj ⟨3, by decide⟩
-            | ⟨1, _⟩ => KMor1.comp KMor1.pred
-                          (fun _ : Fin 1 => KMor1.proj ⟨1, by decide⟩)
-            | ⟨2, _⟩ => KMor1.comp KMor1.pred
-                          (fun _ : Fin 1 => KMor1.proj ⟨3, by decide⟩))
-      | ⟨2, _⟩ =>
-          -- f₂ step: cond(prev_f₁, succ(prev_f₂), prev_f₂)
-          KMor1.comp KMor1.cond (fun j => match j with
-            | ⟨0, _⟩ => KMor1.proj ⟨3, by decide⟩
-            | ⟨1, _⟩ => KMor1.comp KMor1.succ
-                          (fun _ : Fin 1 => KMor1.proj ⟨4, by decide⟩)
-            | ⟨2, _⟩ => KMor1.proj ⟨4, by decide⟩))
+    KMor1.divAux_h KMor1.divAux_g
 
 example : KMor1.divAux.level = 2 := by decide
 ```
@@ -1674,8 +1793,9 @@ git commit -m "Add KMor1.div (Marchenkov integer division)"
 
 ```lean
 /-- Lean-`Nat.div`-convention integer division: `divNat(x, 0) = 0`
-(matching `Nat.div_zero`).  Wraps `KMor1.div` (Marchenkov) with an
-outer `cond` to short-circuit the `y = 0` case to `0`. -/
+(matching `Nat.div_zero`).  Wraps `KMor1.div` (Marchenkov 2007 §1)
+with an outer `cond` to short-circuit the `y = 0` case to `0`.
+This is a Lean-specific wrapper, not part of Marchenkov's basis. -/
 def KMor1.divNat : KMor1 2 :=
   KMor1.comp KMor1.cond (fun i => match i with
     | ⟨0, _⟩ => KMor1.proj ⟨1, by decide⟩       -- switch on y
@@ -1768,21 +1888,33 @@ Expected: no errors.
 
 - [ ] **Step 4: Forbidden-style-word scan**
 
-Build the grep pattern from the CLAUDE.md forbidden list and run
-against `GebLean/Utilities/KArith.lean`. Expected: empty output
-(false positives like `by decide` filtered out via `grep -v`).
+Run:
+
+Save the long pattern to a variable to keep the line short:
+
+```bash
+PAT='\b(fundamental|actually|key|insight|core|advanced|complex'
+PAT="$PAT|complicated|simple|advantage|benefit|important|challenge"
+PAT="$PAT|wait|hmm|sorry|careful|difficult|blocked|incomplete"
+PAT="$PAT|future|issue|problem|block)\b"
+grep -niE "$PAT" GebLean/Utilities/KArith.lean
+```
+
+Expected: empty output. The `\b` word-boundary anchors ensure no
+substring matches; `-i` makes the match case-insensitive.
 
 - [ ] **Step 5: All twelve functions present**
 
 Run:
 
 ```bash
-grep -E "^def KMor1\\.(pred|isZero|add|double|cond|\
-notEq1|mult|monus|pow2|mod|div|divNat) " \
-  GebLean/Utilities/KArith.lean | wc -l
+PAT='^def KMor1\.(pred|isZero|add|double|cond|notEq1'
+PAT="$PAT|mult|monus|pow2|mod|div|divNat)( |:)"
+grep -cE "$PAT" GebLean/Utilities/KArith.lean
 ```
 
-Expected: `12`.
+Expected: `12`. The `( |:)` matches either a space or colon after
+the function name.
 
 - [ ] **Step 6: Update session notes and commit**
 
