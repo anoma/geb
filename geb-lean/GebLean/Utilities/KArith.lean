@@ -25,4 +25,16 @@ Sibling of `Utilities/ERArith.lean`; spec at
 
 namespace GebLean
 
+/-- The constant `1` morphism at arity 0.
+
+PR §0.1.0.17 implicit (constants and `succ` generate K^sim_0). -/
+def KMor1.one : KMor1 0 :=
+  KMor1.comp KMor1.succ (fun _ : Fin 1 => KMor1.zero)
+
+/-- Interpretation of `one`: always returns `1`. -/
+@[simp] theorem KMor1.interp_one (ctx : Fin 0 → ℕ) :
+    KMor1.one.interp ctx = 1 := rfl
+
+example : KMor1.one.level = 0 := by decide
+
 end GebLean
