@@ -38,3 +38,7 @@ open GebLean
 #guard KMor1.monus.interp ![5, 3] == 2
 #guard KMor1.monus.interp ![3, 5] == 0
 #guard KMor1.monus.interp ![5, 5] == 0
+
+#guard KMor1.pow2.interp ![0] == 1
+#guard KMor1.pow2.interp ![1] == 2
+#guard KMor1.pow2.interp ![4] == 16

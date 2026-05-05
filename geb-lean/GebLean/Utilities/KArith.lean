@@ -414,4 +414,46 @@ def KMor1.monus : KMor1 2 :=
 
 example : KMor1.monus.level = 2 := by decide
 
+/-- Powers of two: `pow2(0) = 1`, `pow2(x+1) = double(pow2(x))`.
+
+Tourlakis PR §0.1.0.17(c); Notes 10.2.12 row 5. -/
+def KMor1.pow2 : KMor1 1 :=
+  KMor1.rec1
+    (h := KMor1.one)
+    (g := KMor1.comp KMor1.double
+            (fun _ : Fin 1 => KMor1.proj ⟨1, by decide⟩))
+
+private lemma KMor1.pow2_aux (n : ℕ) :
+    KMor1.pow2.interp (Fin.cons n Fin.elim0) = 2 ^ n := by
+  induction n with
+  | zero =>
+    unfold KMor1.pow2
+    rw [KMor1.interp_rec1_zero, KMor1.interp_one]
+    rfl
+  | succ n ih =>
+    unfold KMor1.pow2
+    rw [KMor1.interp_rec1_succ, KMor1.interp_comp,
+        KMor1.interp_double, KMor1.interp_proj]
+    have hidx :
+        (⟨1, by decide⟩ : Fin (0 + 1 + 1))
+          = Fin.natAdd (0 + 1) (⟨0, by decide⟩ : Fin 1) := by
+      apply Fin.ext; rfl
+    rw [hidx, Fin.append_right]
+    change 2 * KMor1.pow2.interp (Fin.cons n Fin.elim0)
+        = 2 ^ (n + 1)
+    rw [ih, pow_succ]
+    omega
+
+/-- Interpretation of `pow2`: `2 ^ ctx 0`. -/
+@[simp] theorem KMor1.interp_pow2 (ctx : Fin 1 → ℕ) :
+    KMor1.pow2.interp ctx = 2 ^ ctx 0 := by
+  have hctx : ctx = Fin.cons (ctx 0) Fin.elim0 := by
+    funext i
+    match i with
+    | ⟨0, _⟩ => rfl
+  rw [hctx]
+  exact KMor1.pow2_aux (ctx 0)
+
+example : KMor1.pow2.level = 2 := by decide
+
 end GebLean
