@@ -34,6 +34,7 @@ import GebLeanTests.Utilities.ERPackedBound
 import GebLeanTests.Utilities.ERSimultaneousBoundedRec
 import GebLeanTests.Utilities.ERTreeArith
 import GebLeanTests.Utilities.ERTupling
+import GebLeanTests.Utilities.KArith
 import GebLeanTests.Utilities.SzudzikSeq
 import GebLeanTests.Utilities.Tower
 import GebLeanTests.Utilities.Tupling
