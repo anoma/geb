@@ -71,4 +71,38 @@ private lemma KMor1.pred_aux (n : ℕ) :
 
 example : KMor1.pred.level = 1 := by decide
 
+/-- Zero indicator: `isZero(0) = 1`, `isZero(x+1) = 0`.
+Equivalently `1 ∸ x`.
+
+Tourlakis PR §0.1.0.17(3) (`λx.1 ∸ x ∈ K_1`). -/
+def KMor1.isZero : KMor1 1 :=
+  KMor1.rec1
+    (h := KMor1.one)
+    (g := KMor1.zero)
+
+private lemma KMor1.isZero_aux (n : ℕ) :
+    KMor1.isZero.interp (Fin.cons n Fin.elim0)
+      = if n = 0 then 1 else 0 := by
+  induction n with
+  | zero =>
+    unfold KMor1.isZero
+    rw [KMor1.interp_rec1_zero]
+    simp [KMor1.interp_one]
+  | succ n _ =>
+    unfold KMor1.isZero
+    rw [KMor1.interp_rec1_succ]
+    simp [KMor1.interp_zero]
+
+/-- Interpretation of `isZero`: 1 if input is 0, else 0. -/
+@[simp] theorem KMor1.interp_isZero (ctx : Fin 1 → ℕ) :
+    KMor1.isZero.interp ctx = if ctx 0 = 0 then 1 else 0 := by
+  have hctx : ctx = Fin.cons (ctx 0) Fin.elim0 := by
+    funext i
+    match i with
+    | ⟨0, _⟩ => rfl
+  rw [hctx]
+  exact KMor1.isZero_aux (ctx 0)
+
+example : KMor1.isZero.level = 1 := by decide
+
 end GebLean
