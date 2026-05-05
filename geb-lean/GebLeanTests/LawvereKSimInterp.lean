@@ -61,3 +61,8 @@ private def addK : KMor1 2 :=
 #guard (KMor1.rec1 (h := (KMor1.zero : KMor1 0))
     (g := (KMor1.proj ⟨0, by decide⟩ : KMor1 2))).interp
     ![0] == 0
+
+-- rec1 zero (proj 0) at recvar 5 returns 4 (predecessor step).
+#guard (KMor1.rec1 (h := (KMor1.zero : KMor1 0))
+    (g := (KMor1.proj ⟨0, by decide⟩ : KMor1 2))).interp
+    ![5] == 4

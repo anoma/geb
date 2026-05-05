@@ -219,6 +219,81 @@ previous vector. -/
   rw [KMor1.interp_simrec]
   rfl
 
+/-- Step-case interp for `rec1`: at recursion variable `n + 1`,
+`rec1 h g` returns `g.interp` applied to the context
+`(n, params, prev)` where `prev = (rec1 h g).interp (Fin.cons n
+params)`. -/
+@[simp] theorem KMor1.interp_rec1_succ {a : ℕ}
+    (h : KMor1 a) (g : KMor1 (a + 2))
+    (n : ℕ) (params : Fin a → ℕ) :
+    (KMor1.rec1 h g).interp (Fin.cons (n + 1) params)
+      = g.interp (Fin.append (m := a + 1) (n := 1)
+          ((Fin.cons n params : Fin (a + 1) → ℕ))
+          (fun _ : Fin 1 =>
+            (KMor1.rec1 h g).interp (Fin.cons n params))) := by
+  set prev := (KMor1.rec1 h g).interp (Fin.cons n params) with hprev
+  unfold KMor1.rec1
+  rw [KMor1.interp_simrec]
+  have h_ctx0 :
+      (Fin.cons (n + 1) params : Fin (a + 1) → ℕ) 0 = n + 1 := by
+    simp [Fin.cons_zero]
+  have h_params :
+      (fun j => (Fin.cons (n + 1) params : Fin (a + 1) → ℕ)
+          (Fin.succ j)) = params := by
+    funext j; simp [Fin.cons_succ]
+  rw [h_ctx0, h_params]
+  simp only [KMor1.simrecVec_succ]
+  congr 1
+  funext idx
+  rcases idx with ⟨v, h_v⟩
+  by_cases h₁ : v < a + 1
+  · have h_cast : (⟨v, h_v⟩ : Fin (a + 1 + 1))
+        = Fin.castAdd 1 (⟨v, h₁⟩ : Fin (a + 1)) := by
+      apply Fin.ext; rfl
+    rw [show Fin.append (Fin.cons n params)
+            (fun _ : Fin 1 => prev) ⟨v, h_v⟩
+            = Fin.append (Fin.cons n params)
+                (fun _ : Fin 1 => prev)
+                (Fin.castAdd 1 (⟨v, h₁⟩ : Fin (a + 1)))
+          from congrArg _ h_cast,
+        Fin.append_left]
+    simp only [h₁, dite_true]
+    by_cases h₂ : v = 0
+    · simp only [h₂, dite_true]; rfl
+    · simp only [h₂, dite_false]
+      have h_succ : (⟨v, h₁⟩ : Fin (a + 1))
+          = Fin.succ (⟨v - 1, by omega⟩ : Fin a) := by
+        apply Fin.ext; change v = (v - 1) + 1; omega
+      rw [h_succ, Fin.cons_succ]
+  · have h_cast : (⟨v, h_v⟩ : Fin (a + 1 + 1))
+        = Fin.natAdd (a + 1) ⟨v - (a + 1), by omega⟩ := by
+      apply Fin.ext
+      change v = (a + 1) + (v - (a + 1))
+      omega
+    rw [show Fin.append (Fin.cons n params)
+            (fun _ : Fin 1 => prev) ⟨v, h_v⟩
+            = Fin.append (Fin.cons n params)
+                (fun _ : Fin 1 => prev)
+                (Fin.natAdd (a + 1) ⟨v - (a + 1), by omega⟩)
+          from congrArg _ h_cast,
+        Fin.append_right]
+    simp only [h₁, dite_false]
+    have h_idx : (⟨v - (a + 1), by omega⟩ : Fin 1)
+        = ⟨0, by decide⟩ := by
+      apply Fin.ext; omega
+    rw [h_idx]
+    rw [hprev]
+    unfold KMor1.rec1
+    rw [KMor1.interp_simrec]
+    have h_ctx0' :
+        (Fin.cons n params : Fin (a + 1) → ℕ) 0 = n := by
+      simp [Fin.cons_zero]
+    have h_params' :
+        (fun j => (Fin.cons n params : Fin (a + 1) → ℕ)
+            (Fin.succ j)) = params := by
+      funext j; simp [Fin.cons_succ]
+    rw [h_ctx0', h_params']
+
 /-- Interpretation of `KMorN.id`: applying the identity
 morphism to a context returns the context itself. -/
 @[simp] theorem KMorN.interp_id (n : ℕ)
