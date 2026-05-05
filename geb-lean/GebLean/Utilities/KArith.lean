@@ -456,4 +456,45 @@ private lemma KMor1.pow2_aux (n : ℕ) :
 
 example : KMor1.pow2.level = 2 := by decide
 
+/-- Base family for `modAux`: `f₀(0, y) = 0`, `f₁(0, y) = pred(y)`. -/
+private def KMor1.modAux_h : Fin 2 → KMor1 1 := fun i =>
+  match i with
+  | ⟨0, _⟩ => KMor1.zero
+  | ⟨1, _⟩ => KMor1.pred
+
+/-- Step family for `modAux` (Fin 4 step context: x, y, prev_f₀,
+prev_f₁); see `modAux` docstring for slot layout. -/
+private def KMor1.modAux_g : Fin 2 → KMor1 (1 + 1 + 2) := fun i =>
+  match i with
+  | ⟨0, _⟩ =>
+      KMor1.comp KMor1.cond (fun j => match j with
+        | ⟨0, _⟩ => KMor1.proj ⟨3, by decide⟩
+        | ⟨1, _⟩ => KMor1.zero
+        | ⟨2, _⟩ => KMor1.comp KMor1.succ
+                      (fun _ : Fin 1 => KMor1.proj ⟨2, by decide⟩))
+  | ⟨1, _⟩ =>
+      KMor1.comp KMor1.cond (fun j => match j with
+        | ⟨0, _⟩ => KMor1.proj ⟨3, by decide⟩
+        | ⟨1, _⟩ => KMor1.comp KMor1.pred
+                      (fun _ : Fin 1 => KMor1.proj ⟨1, by decide⟩)
+        | ⟨2, _⟩ => KMor1.comp KMor1.pred
+                      (fun _ : Fin 1 => KMor1.proj ⟨3, by decide⟩))
+
+/-- Helper: joint recursion of `mod` and a "distance to wrap"
+companion. Output index 0 of the simrec is the `mod` component;
+the second component `(y ∸ 1) ∸ mod(x, y)` is internal and used
+to make the wrap test expressible at level 1 via `cond`.
+
+At `y = 0`: `f₁` stays at `0` forever (since `pred(0) = 0`), so
+`f₀(x, 0) = 0` for all `x`. The outer `KMor1.mod` (next def)
+wraps this case to match `Nat.mod_zero : x % 0 = x`.
+
+Marchenkov 2007 (placement); generalizes Tourlakis Notes 4.2.3's
+two-row companion-shift technique. -/
+private def KMor1.modAux : KMor1 2 :=
+  KMor1.simrec (a := 1) (k := 1) (i := ⟨0, by decide⟩)
+    KMor1.modAux_h KMor1.modAux_g
+
+example : KMor1.modAux.level = 2 := by decide
+
 end GebLean
