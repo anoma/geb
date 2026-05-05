@@ -626,4 +626,30 @@ def KMor1.mod : KMor1 2 :=
 
 example : KMor1.mod.level = 2 := by decide
 
+/-- Interpretation of `mod`: `ctx 0 % ctx 1` (matches `Nat.mod`). -/
+@[simp] theorem KMor1.interp_mod (ctx : Fin 2 → ℕ) :
+    KMor1.mod.interp ctx = ctx 0 % ctx 1 := by
+  unfold KMor1.mod
+  rw [KMor1.interp_comp, KMor1.interp_cond]
+  change (if (KMor1.proj (⟨1, by decide⟩ : Fin 2)).interp ctx = 0
+          then (KMor1.proj (⟨0, by decide⟩ : Fin 2)).interp ctx
+          else KMor1.modAux.interp ctx) = ctx 0 % ctx 1
+  rw [KMor1.interp_proj, KMor1.interp_proj]
+  by_cases hy : ctx 1 = 0
+  · have hctx1 : ctx (⟨1, by decide⟩ : Fin 2) = 0 := hy
+    rw [if_pos hctx1, hy, Nat.mod_zero]
+    rfl
+  · have hctx1 : ¬ ctx (⟨1, by decide⟩ : Fin 2) = 0 := hy
+    rw [if_neg hctx1]
+    unfold KMor1.modAux
+    rw [KMor1.interp_simrec]
+    have hparams :
+        (fun j : Fin 1 => ctx (Fin.succ j)) = (fun _ : Fin 1 => ctx 1) := by
+      funext j
+      match j with
+      | ⟨0, _⟩ => rfl
+    rw [hparams]
+    rw [KMor1.modAux_components (ctx 0) (ctx 1) ⟨0, by decide⟩]
+    simp only [hy, ite_false]
+
 end GebLean
