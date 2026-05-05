@@ -105,4 +105,57 @@ private lemma KMor1.isZero_aux (n : ℕ) :
 
 example : KMor1.isZero.level = 1 := by decide
 
+/-- Addition: `add(0, y) = y`, `add(x+1, y) = succ(add(x, y))`.
+
+Tourlakis PR §0.1.0.17(1); Notes 10.2.12 row 1. -/
+def KMor1.add : KMor1 2 :=
+  KMor1.rec1
+    (h := KMor1.proj ⟨0, by decide⟩)
+    (g := KMor1.comp KMor1.succ
+            (fun _ : Fin 1 => KMor1.proj ⟨2, by decide⟩))
+
+private lemma KMor1.add_aux (n : ℕ) (p : Fin 1 → ℕ) :
+    KMor1.add.interp (Fin.cons n p) = n + p ⟨0, by decide⟩ := by
+  induction n with
+  | zero =>
+    unfold KMor1.add
+    rw [KMor1.interp_rec1_zero, KMor1.interp_proj]
+    simp
+  | succ n ih =>
+    unfold KMor1.add
+    rw [KMor1.interp_rec1_succ, KMor1.interp_comp,
+        KMor1.interp_succ, KMor1.interp_proj]
+    have hidx :
+        (⟨2, KMor1.add._proof_2⟩ : Fin (1 + 1 + 1))
+          = Fin.natAdd (1 + 1) (⟨0, by decide⟩ : Fin 1) := by
+      apply Fin.ext; rfl
+    rw [hidx, Fin.append_right]
+    change ((KMor1.proj ⟨0, KMor1.add._proof_1⟩).rec1
+              (KMor1.succ.comp
+                (fun _ : Fin 1 =>
+                  KMor1.proj ⟨2, KMor1.add._proof_2⟩))).interp
+              (Fin.cons n p) + 1
+          = n + 1 + p ⟨0, by decide⟩
+    rw [show (KMor1.proj ⟨0, KMor1.add._proof_1⟩).rec1
+              (KMor1.succ.comp
+                (fun _ : Fin 1 =>
+                  KMor1.proj ⟨2, KMor1.add._proof_2⟩))
+            = KMor1.add from rfl]
+    rw [ih]
+    omega
+
+/-- Interpretation of `add`: `ctx 0 + ctx 1`. -/
+@[simp] theorem KMor1.interp_add (ctx : Fin 2 → ℕ) :
+    KMor1.add.interp ctx = ctx 0 + ctx 1 := by
+  have hctx :
+      ctx = Fin.cons (ctx 0) (fun j => ctx (Fin.succ j)) := by
+    funext i
+    match i with
+    | ⟨0, _⟩ => rfl
+    | ⟨1, _⟩ => rfl
+  rw [hctx, KMor1.add_aux]
+  rfl
+
+example : KMor1.add.level = 1 := by decide
+
 end GebLean
