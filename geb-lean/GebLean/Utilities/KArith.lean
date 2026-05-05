@@ -607,4 +607,23 @@ private theorem KMor1.modAux_components (x y : ℕ) :
           rw [hsucc, Nat.pred_eq_sub_one]
           omega
 
+/-- Remainder: `mod(x, y) = x % y` matching Lean's `Nat.mod`,
+including `x % 0 = x` (`Nat.mod_zero`).
+
+Construction: `cond(y, x, modAux(x, y))`. At `y = 0` returns `x`;
+at `y > 0` defers to `modAux`, which computes `x % y` via the
+companion-tracked simrec.
+
+Marchenkov 2007 (basis member, derived from `x ∸ y · (x/y)` over
+the basis `{x+y, x∸y, x/y, 2^x}`); inspired by Tourlakis Notes
+4.2.3's `rem(x, 2)` companion-shift technique. The convention
+`rm(x, 0) = x` matches Marchenkov §1 and Lean's `Nat.mod_zero`. -/
+def KMor1.mod : KMor1 2 :=
+  KMor1.comp KMor1.cond (fun i => match i with
+    | ⟨0, _⟩ => KMor1.proj ⟨1, by decide⟩
+    | ⟨1, _⟩ => KMor1.proj ⟨0, by decide⟩
+    | ⟨2, _⟩ => KMor1.modAux)
+
+example : KMor1.mod.level = 2 := by decide
+
 end GebLean
