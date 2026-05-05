@@ -257,7 +257,8 @@ def KMor1.double : KMor1 1 :=
             (fun _ : Fin 1 =>
               KMor1.comp KMor1.succ
                 (fun _ : Fin 1 => KMor1.proj ⟨1, by decide⟩)))
-    -- a = 0; step ctx is Fin 2: slot 0 = x, slot 1 = prev; return succ(succ(prev))
+    -- a = 0; step ctx Fin 2: slot 0 = x, slot 1 = prev
+    -- return succ(succ(prev))
 
 @[simp] theorem KMor1.interp_double (ctx : Fin 1 → ℕ) :
     KMor1.double.interp ctx = 2 * ctx 0
@@ -497,28 +498,27 @@ Verification (recall `cond(0, b1, b2) = b1`, `cond(n+1, b1, b2) = b2`):
 private def KMor1.modAux : KMor1 2 :=
   KMor1.simrec (a := 1) (k := 1) (i := ⟨0, by decide⟩)
     (h := fun i => match i with
-      | ⟨0, _⟩ => KMor1.zero                                    -- f₀(0, y) = 0
-      | ⟨1, _⟩ => KMor1.pred)                                   -- f₁(0, y) = pred(y)
+      | ⟨0, _⟩ => KMor1.zero       -- f₀(0, y) = 0
+      | ⟨1, _⟩ => KMor1.pred)      -- f₁(0, y) = pred(y)
     (g := fun i =>
       -- step ctx is Fin (1 + 1 + 2) = Fin 4:
       -- slot 0 = x, slot 1 = y, slot 2 = prev_f₀, slot 3 = prev_f₁
       match i with
       | ⟨0, _⟩ =>
+          -- f₀ step: cond(prev_f₁, 0, succ(prev_f₀))
           KMor1.comp KMor1.cond (fun j => match j with
-            | ⟨0, _⟩ => KMor1.proj ⟨3, by decide⟩               -- f₁ as switch
-            | ⟨1, _⟩ => KMor1.zero                              -- branch1: 0
+            | ⟨0, _⟩ => KMor1.proj ⟨3, by decide⟩
+            | ⟨1, _⟩ => KMor1.zero
             | ⟨2, _⟩ => KMor1.comp KMor1.succ
                           (fun _ : Fin 1 => KMor1.proj ⟨2, by decide⟩))
-                                                                -- branch2: succ(prev_f₀)
       | ⟨1, _⟩ =>
+          -- f₁ step: cond(prev_f₁, pred(y), pred(prev_f₁))
           KMor1.comp KMor1.cond (fun j => match j with
-            | ⟨0, _⟩ => KMor1.proj ⟨3, by decide⟩               -- f₁ as switch
+            | ⟨0, _⟩ => KMor1.proj ⟨3, by decide⟩
             | ⟨1, _⟩ => KMor1.comp KMor1.pred
                           (fun _ : Fin 1 => KMor1.proj ⟨1, by decide⟩)
-                                                                -- branch1: pred(y)
             | ⟨2, _⟩ => KMor1.comp KMor1.pred
                           (fun _ : Fin 1 => KMor1.proj ⟨3, by decide⟩)))
-                                                                -- branch2: pred(prev_f₁)
 ```
 
 Level proof: `modAux` is one `simrec` over children of level ≤ 1
