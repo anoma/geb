@@ -30,8 +30,13 @@ membership in `K^sim_n`. Level 0 covers constants and shifted
 projections; `simrec` and `raise` each add one level; `comp` takes the
 maximum.
 
-The Tourlakis classification table (Notes Prop 10.2.12) places the ten
-functions of this design at levels:
+The twelve functions of this design include the entire Marchenkov 2007
+superposition basis `S = {x+y, x∸y, x/y, 2^x}` for the Kalmar
+elementary functions (= ER = K^sim_2). The corresponding K^sim
+functions are `add`, `monus`, `div`, `pow2`. The Tourlakis
+classification table (Notes Prop 10.2.12) places the functions at the
+following levels (`div` and `divNat` are placed using the
+construction in §4.11–§4.12):
 
 | Function | K^sim level | Source |
 | --- | --- | --- |
@@ -45,6 +50,8 @@ functions of this design at levels:
 | `monus` (= λxy.x ∸ y) | 2 | PR §0.1.0.17(a); Notes 10.2.12 r6 |
 | `pow2` (= λx.2^x) | 2 | PR §0.1.0.17(c); Notes 10.2.12 r5 |
 | `mod` (= λxy.rem(x,y)) | ≤ 2 | Marchenkov 2007; Notes 4.2.3 |
+| `div` (= λxy.⌊x/y⌋, x/0 = x) | ≤ 2 | Marchenkov 2007 basis (in S) |
+| `divNat` (Lean Nat.div: x/0 = 0) | ≤ 2 | wrapper of `div` for Nat.div |
 
 ### 1.2 Lean encoding conventions
 
@@ -578,6 +585,114 @@ vector. Decomposition: (a) `modAux_components` as a separate lemma,
 (b) the wrap-case mathlib bridge, (c) the no-wrap-case mathlib bridge,
 (d) the final `interp_mod` assembly.
 
+### 4.11 `div : KMor1 2`
+
+Source: Marchenkov 2007. `x/y` is one of the four basis functions
+`S = {x+y, x∸y, x/y, 2^x}` (paper equation (2)). Marchenkov §1
+states `x/y = x when y = 0`; we follow this convention exactly so
+that `KMor1.div` IS the Marchenkov basis function.
+
+Construction extends the system-size-2 simrec used by `modAux` to a
+system-size-3 simrec tracking three jointly-recurring functions:
+
+```text
+f₀(x, y) = mod(x, y)
+f₁(x, y) = (y ∸ 1) ∸ mod(x, y)        -- distance to wrap
+f₂(x, y) = div(x, y)                   -- Marchenkov: f₂(x, 0) = x
+```
+
+Bases:
+
+```text
+f₀(0, y) = 0
+f₁(0, y) = pred(y)
+f₂(0, y) = 0
+```
+
+Steps (slot 0 = x, slot 1 = y, slots 2..4 = prev_f₀, prev_f₁, prev_f₂):
+
+```text
+f₀(x+1, y) = cond(prev_f₁,  0,         succ(prev_f₀))
+f₁(x+1, y) = cond(prev_f₁,  pred(y),   pred(prev_f₁))
+f₂(x+1, y) = cond(prev_f₁,  succ(prev_f₂), prev_f₂)
+```
+
+The third recurrence increments the running quotient exactly when
+`f₁` reaches zero, i.e., exactly at the wrap points where `f₀` resets
+from `y - 1` to `0`. At `y = 0`: `f₁(0, 0) = pred(0) = 0`, so every
+step picks `branch1`, incrementing `f₂` at every step; hence
+`f₂(x, 0) = x`, matching Marchenkov.
+
+```lean
+private def KMor1.divAux : KMor1 2 :=
+  KMor1.simrec (a := 1) (k := 2) (i := ⟨2, by decide⟩)
+    (h := fun i => match i with
+      | ⟨0, _⟩ => KMor1.zero       -- f₀(0, y) = 0
+      | ⟨1, _⟩ => KMor1.pred       -- f₁(0, y) = pred(y)
+      | ⟨2, _⟩ => KMor1.zero)      -- f₂(0, y) = 0
+    (g := fun i =>
+      -- step ctx is Fin (1 + 1 + 3) = Fin 5:
+      -- slots 0 = x, 1 = y, 2 = prev_f₀, 3 = prev_f₁, 4 = prev_f₂
+      match i with
+      | ⟨0, _⟩ =>
+          -- f₀ step: cond(prev_f₁, 0, succ(prev_f₀))
+          KMor1.comp KMor1.cond (fun j => match j with
+            | ⟨0, _⟩ => KMor1.proj ⟨3, by decide⟩
+            | ⟨1, _⟩ => KMor1.zero
+            | ⟨2, _⟩ => KMor1.comp KMor1.succ
+                          (fun _ : Fin 1 => KMor1.proj ⟨2, by decide⟩))
+      | ⟨1, _⟩ =>
+          -- f₁ step: cond(prev_f₁, pred(y), pred(prev_f₁))
+          KMor1.comp KMor1.cond (fun j => match j with
+            | ⟨0, _⟩ => KMor1.proj ⟨3, by decide⟩
+            | ⟨1, _⟩ => KMor1.comp KMor1.pred
+                          (fun _ : Fin 1 => KMor1.proj ⟨1, by decide⟩)
+            | ⟨2, _⟩ => KMor1.comp KMor1.pred
+                          (fun _ : Fin 1 => KMor1.proj ⟨3, by decide⟩))
+      | ⟨2, _⟩ =>
+          -- f₂ step: cond(prev_f₁, succ(prev_f₂), prev_f₂)
+          KMor1.comp KMor1.cond (fun j => match j with
+            | ⟨0, _⟩ => KMor1.proj ⟨3, by decide⟩
+            | ⟨1, _⟩ => KMor1.comp KMor1.succ
+                          (fun _ : Fin 1 => KMor1.proj ⟨4, by decide⟩)
+            | ⟨2, _⟩ => KMor1.proj ⟨4, by decide⟩))
+
+def KMor1.div : KMor1 2 := KMor1.divAux
+
+@[simp] theorem KMor1.interp_div (ctx : Fin 2 → ℕ) :
+    KMor1.div.interp ctx =
+      if ctx 1 = 0 then ctx 0 else ctx 0 / ctx 1
+```
+
+(The `if`-form on the RHS captures the Marchenkov convention exactly:
+`x/0 = x`, otherwise standard integer division.)
+
+Level: 2. The proof of `interp_div` mirrors `interp_mod` but uses
+the third component of the joint-vector helper. Decomposition:
+(a) extend `modAux_components` to `divAux_components` proving the
+joint vector at any `x`, `y` is `![x % y, (y - 1) - x % y, x / y]`
+for `y ≥ 1` and `![0, 0, x]` for `y = 0`; (b) final `interp_div`
+assembly via component-2 projection.
+
+### 4.12 `divNat : KMor1 2`
+
+A Lean-`Nat.div`-convention wrapper around `KMor1.div`. Lean's
+`Nat.div_zero : n / 0 = 0` differs from Marchenkov's `x/0 = x`,
+so we expose both forms.
+
+```lean
+def KMor1.divNat : KMor1 2 :=
+  KMor1.comp KMor1.cond (fun i => match i with
+    | ⟨0, _⟩ => KMor1.proj ⟨1, by decide⟩       -- switch on y
+    | ⟨1, _⟩ => KMor1.zero                      -- if y = 0, return 0
+    | ⟨2, _⟩ => KMor1.div)                      -- else, Marchenkov div
+
+@[simp] theorem KMor1.interp_divNat (ctx : Fin 2 → ℕ) :
+    KMor1.divNat.interp ctx = ctx 0 / ctx 1
+```
+
+Level: 2 (`cond` and `div` are both 2; outer `comp` keeps at 2).
+
 ## 5. Tests
 
 ### 5.1 Coverage
@@ -626,6 +741,17 @@ must be exercised.
 #guard KMor1.mod.interp ![6, 3] = 0
 #guard KMor1.mod.interp ![7, 3] = 1
 #guard KMor1.mod.interp ![3, 0] = 3
+#guard KMor1.div.interp ![7, 3] = 2
+#guard KMor1.div.interp ![6, 3] = 2
+#guard KMor1.div.interp ![5, 1] = 5
+#guard KMor1.div.interp ![3, 5] = 0
+#guard KMor1.div.interp ![5, 0] = 5      -- Marchenkov: x/0 = x
+#guard KMor1.div.interp ![0, 5] = 0
+#guard KMor1.div.interp ![5, 5] = 1
+#guard KMor1.divNat.interp ![7, 3] = 2
+#guard KMor1.divNat.interp ![5, 0] = 0   -- Lean Nat.div: x/0 = 0
+#guard KMor1.divNat.interp ![0, 5] = 0
+#guard KMor1.divNat.interp ![5, 5] = 1
 ```
 
 ### 5.2 Test sizing risk
@@ -658,9 +784,13 @@ build` and `lake test`, no warnings, no `sorry`. Order:
      and `level` example proof, building cleanly.
    - Phase 2 (level 2, deps on Phase 1): `mult`, `monusSwapped`
      (private), `monus`, `pow2`. Each landed independently with proofs.
-   - Phase 3: `modAux` (private), `mod`. The `mod` correctness proof
-     (`interp_mod`) is the longest proof in the spec; its inductive
-     helper `modAux_components` is built first.
+   - Phase 3: `modAux` (private), `mod`, `divAux` (private), `div`,
+     `divNat`. The `mod` and `div` correctness proofs (`interp_mod`,
+     `interp_div`) are the longest proofs in the spec; their
+     inductive helpers (`modAux_components`, `divAux_components`)
+     are built first. `divAux_components` extends
+     `modAux_components` from a 2-vector to a 3-vector; the wrap
+     and no-wrap case structures are shared.
 4. Re-export `Utilities/KArith` from `GebLean.lean`.
 5. Add tests; `lake test` must pass.
 
