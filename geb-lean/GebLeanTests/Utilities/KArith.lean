@@ -34,3 +34,7 @@ open GebLean
 #guard KMor1.mult.interp ![0, 7] == 0
 #guard KMor1.mult.interp ![3, 4] == 12
 #guard KMor1.mult.interp ![1, 5] == 5
+
+#guard KMor1.monus.interp ![5, 3] == 2
+#guard KMor1.monus.interp ![3, 5] == 0
+#guard KMor1.monus.interp ![5, 5] == 0
