@@ -864,4 +864,26 @@ private theorem KMor1.divAux_components (x y : ℕ) :
             KMor1.div_succ_no_wrap x y hpos hlt
           rw [hsucc]
 
+/-- Integer division (Marchenkov convention): `div(x, y) = ⌊x/y⌋`
+for `y ≥ 1`; `div(x, 0) = x` per Marchenkov 2007 §1. -/
+def KMor1.div : KMor1 2 := KMor1.divAux
+
+/-- Interpretation of `div`: matches Marchenkov's `x/y` (with
+`x/0 = x`). -/
+@[simp] theorem KMor1.interp_div (ctx : Fin 2 → ℕ) :
+    KMor1.div.interp ctx =
+      if ctx 1 = 0 then ctx 0 else ctx 0 / ctx 1 := by
+  unfold KMor1.div KMor1.divAux
+  rw [KMor1.interp_simrec]
+  have hparams :
+      (fun j : Fin 1 => ctx (Fin.succ j))
+        = (fun _ : Fin 1 => ctx 1) := by
+    funext j
+    match j with
+    | ⟨0, _⟩ => rfl
+  rw [hparams]
+  rw [KMor1.divAux_components (ctx 0) (ctx 1) ⟨2, by decide⟩]
+
+example : KMor1.div.level = 2 := by decide
+
 end GebLean

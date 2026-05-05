@@ -49,3 +49,11 @@ open GebLean
 #guard KMor1.mod.interp ![6, 3] == 0
 #guard KMor1.mod.interp ![7, 3] == 1
 #guard KMor1.mod.interp ![3, 0] == 3
+
+#guard KMor1.div.interp ![7, 3] == 2
+#guard KMor1.div.interp ![6, 3] == 2
+#guard KMor1.div.interp ![5, 1] == 5
+#guard KMor1.div.interp ![3, 5] == 0
+#guard KMor1.div.interp ![5, 0] == 5
+#guard KMor1.div.interp ![0, 5] == 0
+#guard KMor1.div.interp ![5, 5] == 1
