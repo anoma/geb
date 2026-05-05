@@ -886,4 +886,31 @@ def KMor1.div : KMor1 2 := KMor1.divAux
 
 example : KMor1.div.level = 2 := by decide
 
+/-- Lean-`Nat.div`-convention integer division:
+`divNat(x, 0) = 0` (matching `Nat.div_zero`). Wraps `KMor1.div`
+(Marchenkov 2007 §1) with an outer `cond` to short-circuit the
+`y = 0` case to `0`. Lean-specific wrapper, not part of
+Marchenkov's basis. -/
+def KMor1.divNat : KMor1 2 :=
+  KMor1.comp KMor1.cond (fun i => match i with
+    | ⟨0, _⟩ => KMor1.proj ⟨1, by decide⟩
+    | ⟨1, _⟩ => KMor1.zero
+    | ⟨2, _⟩ => KMor1.div)
+
+@[simp] theorem KMor1.interp_divNat (ctx : Fin 2 → ℕ) :
+    KMor1.divNat.interp ctx = ctx 0 / ctx 1 := by
+  unfold KMor1.divNat
+  rw [KMor1.interp_comp, KMor1.interp_cond]
+  change (if (KMor1.proj (⟨1, by decide⟩ : Fin 2)).interp ctx = 0
+          then (KMor1.zero (n := 2)).interp ctx
+          else KMor1.div.interp ctx) = ctx 0 / ctx 1
+  rw [KMor1.interp_proj, KMor1.interp_zero, KMor1.interp_div]
+  by_cases hy : ctx 1 = 0
+  · have hctx1 : ctx (⟨1, by decide⟩ : Fin 2) = 0 := hy
+    rw [if_pos hctx1, hy, Nat.div_zero]
+  · have hctx1 : ¬ ctx (⟨1, by decide⟩ : Fin 2) = 0 := hy
+    rw [if_neg hctx1, if_neg hy]
+
+example : KMor1.divNat.level = 2 := by decide
+
 end GebLean

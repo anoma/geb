@@ -57,3 +57,8 @@ open GebLean
 #guard KMor1.div.interp ![5, 0] == 5
 #guard KMor1.div.interp ![0, 5] == 0
 #guard KMor1.div.interp ![5, 5] == 1
+
+#guard KMor1.divNat.interp ![7, 3] == 2
+#guard KMor1.divNat.interp ![5, 0] == 0
+#guard KMor1.divNat.interp ![0, 5] == 0
+#guard KMor1.divNat.interp ![5, 5] == 1
