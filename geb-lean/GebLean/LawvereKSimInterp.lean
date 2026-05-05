@@ -208,6 +208,17 @@ previous vector. -/
                 ⟨idx.val - (a + 1), by omega⟩) :=
   rfl
 
+/-- Base-case interp for `rec1`: at recursion variable `0`,
+`rec1 h g` returns `h.interp params`. -/
+@[simp] theorem KMor1.interp_rec1_zero {a : ℕ}
+    (h : KMor1 a) (g : KMor1 (a + 2))
+    (params : Fin a → ℕ) :
+    (KMor1.rec1 h g).interp (Fin.cons 0 params)
+      = h.interp params := by
+  unfold KMor1.rec1
+  rw [KMor1.interp_simrec]
+  rfl
+
 /-- Interpretation of `KMorN.id`: applying the identity
 morphism to a context returns the context itself. -/
 @[simp] theorem KMorN.interp_id (n : ℕ)

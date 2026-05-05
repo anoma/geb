@@ -56,3 +56,8 @@ private def addK : KMor1 2 :=
 #guard addK.interp (ctx2 0 0) == 0
 #guard addK.interp (ctx2 7 1) == 8
 #guard addK.level == 1
+
+-- rec1 zero (proj 0) at recvar 0 returns 0 (predecessor base).
+#guard (KMor1.rec1 (h := (KMor1.zero : KMor1 0))
+    (g := (KMor1.proj ⟨0, by decide⟩ : KMor1 2))).interp
+    ![0] == 0
