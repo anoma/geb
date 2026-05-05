@@ -1,0 +1,602 @@
+# KArith design
+
+K^sim arithmetic library: a sibling of `Utilities/ERArith.lean` for the
+`KMor1` Lawvere-theory term language defined in `LawvereKSim.lean`.
+Provides ten elementary arithmetic functions at the lowest hierarchy
+levels permitted by Tourlakis's K^sim hierarchy, each with a proven
+`@[simp]` interp theorem against its standard `Nat`-valued meaning.
+
+This is a pure transcription workstream: every function corresponds to
+a published witness in Tourlakis's *Notes on Computability* (2019–2022)
+or *Primitive Recursive Complexity Topics* (2018), and every `def` and
+`theorem` carries a specific section/proposition citation per the
+literature-citation discipline in `CLAUDE.md`.
+
+## 1. Background
+
+### 1.1 The K^sim hierarchy
+
+Tourlakis (PR-complexity-topics §0.1.0.7; Notes 10.2.7) defines the
+K^sim hierarchy:
+
+- `K^sim_0` is the closure of `{λx.x, λx.x+1}` under substitution.
+- `K^sim_{n+1}` is the closure of `K^sim_n ∪ R^sim_{n+1}` under
+  substitution, where `R^sim_{n+1}` is the family of functions obtained
+  from simultaneous primitive recursion (`simprim`) over `K^sim_n`.
+
+The Lean encoding (`GebLean/LawvereKSim.lean`) follows this exactly: a
+`KMor1 n` syntactic level (`KMor1.level`) of `n` corresponds to
+membership in `K^sim_n`. Level 0 covers constants and shifted
+projections; `simrec` and `raise` each add one level; `comp` takes the
+maximum.
+
+The Tourlakis classification table (Notes Prop 10.2.12) places the ten
+functions of this design at levels:
+
+| Function | K^sim level | Source |
+| --- | --- | --- |
+| `pred` (= λx.x ∸ 1) | 1 | PR §0.1.0.17(4); Notes 10.2.12 r2 |
+| `isZero` (= λx.1 ∸ x) | 1 | PR §0.1.0.17(3) |
+| `add` (= λxy.x+y) | 1 | PR §0.1.0.17(1); Notes 10.2.12 r1 |
+| `double` (= λx.2x) | 1 | derived from `add` |
+| `cond` (switch, λxyz. y if x=0 else z) | 1 | PR §0.1.0.17(6) |
+| `notEq1` (= λx. 0 if x=1 else 1) | 1 | Notes 10.2.13–10.2.15 |
+| `mult` (= λxy.xy) | 2 | PR §0.1.0.17(b); Notes 10.2.12 r4 |
+| `monus` (= λxy.x ∸ y) | 2 | PR §0.1.0.17(a); Notes 10.2.12 r6 |
+| `pow2` (= λx.2^x) | 2 | PR §0.1.0.17(c); Notes 10.2.12 r5 |
+| `mod` (= λxy.rem(x,y)) | 2 | Notes 4.2.3 (rem(x,2)) ext. |
+
+### 1.2 Lean encoding conventions
+
+The `KMor1` `simrec` constructor encodes Tourlakis's `simprim`. With
+parameters `a k : ℕ`, output index `i : Fin (k+1)`, base family
+`h : Fin (k+1) → KMor1 a` and step family
+`g : Fin (k+1) → KMor1 (a + 1 + (k + 1))`, it produces a term of
+`KMor1 (a + 1)` with semantics
+
+```text
+f_i(0,    y⃗) = h_i(y⃗)
+f_i(x+1,  y⃗) = g_i(x, y⃗, f_0(x,y⃗), …, f_k(x,y⃗))
+```
+
+Slot 0 of the `(a+1)`-arity result is the recursion variable; slots
+`1..a` are the parameters.
+
+In the step-context for `g_i`, the slots are:
+
+- slot 0: recursion variable `x`
+- slots `1..a`: parameters `y⃗`
+- slots `a+1..a+k+1`: previous values `f_0(x,y⃗), …, f_k(x,y⃗)`
+
+The single-output non-simultaneous specialization
+(`k = 0`, `i = 0`) is so common that we add a thin wrapper, `KMor1.rec1`
+(see §3).
+
+## 2. Module layout
+
+- `GebLean/LawvereKSim.lean`: add `KMor1.rec1` shortly after the `KMor1`
+  inductive definition. Definition only; no interp content.
+- `GebLean/LawvereKSimInterp.lean`: add `KMor1.interp_rec1_zero` and
+  `KMor1.interp_rec1_succ` `@[simp]` lemmas, derived from the existing
+  `KMor1.simrecVec_zero` and `KMor1.simrecVec_succ`.
+- `GebLean/Utilities/KArith.lean` (new): the ten arithmetic functions,
+  their `@[simp]` interp theorems, and `example : foo.level ≤ N` level
+  proofs. Sibling of `GebLean/Utilities/ERArith.lean`.
+- `GebLean.lean`: re-export `Utilities/KArith.lean`.
+- `test/KArithTest.lean` (new) or per-module `#guard` blocks: small-input
+  evaluation tests for each function plus boundary cases.
+
+## 3. `rec1`: the non-simultaneous primrec wrapper
+
+### 3.1 Definition
+
+```lean
+/-- Single-output (non-simultaneous) primitive recursion at arity
+`a + 1`.  The base `h : KMor1 a` returns the value at recursion
+variable `0`; the step `g : KMor1 (a + 2)` receives
+`(x, y⃗, prev)` in slots `(0, 1..a, a+1)` and returns the value at
+`x + 1`.  Definitional reduction to `KMor1.simrec` with `k = 0`,
+`i = 0`.
+
+Tourlakis Notes 10.2.7 (definition of K^sim, with simultaneous
+recursion as the primitive); the non-simultaneous case is the
+`k = 0` specialization. -/
+def KMor1.rec1 {a : ℕ} (h : KMor1 a) (g : KMor1 (a + 2)) :
+    KMor1 (a + 1) :=
+  KMor1.simrec (a := a) (k := 0) (i := 0)
+    (fun _ => h) (fun _ => g)
+```
+
+### 3.2 Interp lemmas
+
+```lean
+@[simp] theorem KMor1.interp_rec1_zero {a : ℕ}
+    (h : KMor1 a) (g : KMor1 (a + 2))
+    (params : Fin a → ℕ) :
+    (KMor1.rec1 h g).interp (Fin.cons 0 params)
+      = h.interp params
+
+@[simp] theorem KMor1.interp_rec1_succ {a : ℕ}
+    (h : KMor1 a) (g : KMor1 (a + 2))
+    (n : ℕ) (params : Fin a → ℕ) :
+    (KMor1.rec1 h g).interp (Fin.cons (n + 1) params)
+      = g.interp (Fin.append (Fin.cons n params)
+          (fun _ : Fin 1 =>
+            (KMor1.rec1 h g).interp (Fin.cons n params)))
+```
+
+Both lemmas reduce to `KMor1.simrec`'s interp theorem composed with
+`KMor1.simrecVec_zero` / `KMor1.simrecVec_succ`. Since `k = 0`, the
+previous-values vector has length 1 and is a single-element `Fin.cons`.
+
+### 3.3 Level
+
+`(KMor1.rec1 h g).level = max h.level g.level + 1` by definitional
+unfolding, matching the existing `level_simrec`.
+
+## 4. Function-by-function spec
+
+Conventions for the rest of this section:
+
+- Every function is `def`'d in `GebLean/Utilities/KArith.lean` under
+  `namespace GebLean`.
+- Every function gets a `@[simp]` interp theorem.
+- Every function gets `example : foo.level ≤ N := by decide`.
+- Names go under the `KMor1` namespace (e.g. `KMor1.pred`).
+- Docstrings cite Tourlakis at the level of section/example/proposition.
+- For functions with naturally-recursive parameters in the "wrong" slot
+  for K^sim (where slot 0 is the recursion variable), an explicit named
+  swap or helper is provided.
+
+### 4.1 `pred : KMor1 1`
+
+Source: PR §0.1.0.17(4).
+
+```text
+pred(0)   = 0
+pred(x+1) = x
+```
+
+```lean
+def KMor1.pred : KMor1 1 :=
+  KMor1.rec1
+    (h := KMor1.zero)            -- value at 0
+    (g := KMor1.proj ⟨0, by decide⟩)
+    -- step ctx is Fin (0+2) = Fin 2: slot 0 = recvar x, slot 1 = prev
+    -- step returns x = proj 0
+
+@[simp] theorem KMor1.interp_pred (ctx : Fin 1 → ℕ) :
+    KMor1.pred.interp ctx = (ctx 0).pred
+```
+
+Level proof: `example : KMor1.pred.level = 1 := by decide`.
+
+### 4.2 `isZero : KMor1 1`
+
+Source: PR §0.1.0.17(3); equivalent to `λx.1 ∸ x`.
+
+```text
+isZero(0)   = 1
+isZero(x+1) = 0
+```
+
+Helper at K_0:
+
+```lean
+private def KMor1.one : KMor1 0 :=
+  KMor1.comp KMor1.succ (fun _ => KMor1.zero)
+```
+
+with `@[simp] interp_one : KMor1.one.interp ctx = 1` (definitional).
+
+```lean
+def KMor1.isZero : KMor1 1 :=
+  KMor1.rec1
+    (h := KMor1.one)             -- value at 0 is 1
+    (g := KMor1.zero)            -- value at x+1 is 0
+
+@[simp] theorem KMor1.interp_isZero (ctx : Fin 1 → ℕ) :
+    KMor1.isZero.interp ctx = if ctx 0 = 0 then 1 else 0
+```
+
+Level: 1.
+
+### 4.3 `add : KMor1 2`
+
+Source: PR §0.1.0.17(1); Notes 10.2.12 row 1.
+
+```text
+add(0,   y) = y
+add(x+1, y) = succ(add(x, y))
+```
+
+```lean
+def KMor1.add : KMor1 2 :=
+  KMor1.rec1
+    (h := KMor1.proj ⟨0, by decide⟩)         -- a = 1; base ctx = (y); return y
+    (g := KMor1.comp KMor1.succ
+            (fun _ : Fin 1 => KMor1.proj ⟨2, by decide⟩))
+    -- step ctx is Fin (1+2) = Fin 3: slot 0 = x, slot 1 = y, slot 2 = prev
+    -- step returns succ(prev) = succ(proj 2)
+
+@[simp] theorem KMor1.interp_add (ctx : Fin 2 → ℕ) :
+    KMor1.add.interp ctx = ctx 0 + ctx 1
+```
+
+Level: 1.
+
+### 4.4 `double : KMor1 1`
+
+Derived; PR §0.1.0.17 implicit. Direct construction at level 1 to keep
+the dependency chain shallow (`pow2` only needs `double`, not `add`).
+
+```text
+double(0)   = 0
+double(x+1) = succ(succ(double(x)))
+```
+
+```lean
+def KMor1.double : KMor1 1 :=
+  KMor1.rec1
+    (h := KMor1.zero)
+    (g := KMor1.comp KMor1.succ
+            (fun _ : Fin 1 =>
+              KMor1.comp KMor1.succ
+                (fun _ : Fin 1 => KMor1.proj ⟨1, by decide⟩)))
+    -- a = 0; step ctx is Fin 2: slot 0 = x, slot 1 = prev; return succ(succ(prev))
+
+@[simp] theorem KMor1.interp_double (ctx : Fin 1 → ℕ) :
+    KMor1.double.interp ctx = 2 * ctx 0
+```
+
+Level: 1.
+
+### 4.5 `cond : KMor1 3`
+
+Source: PR §0.1.0.17(6) ("switch").
+
+```text
+cond(0,   y, z) = y
+cond(x+1, y, z) = z
+```
+
+```lean
+def KMor1.cond : KMor1 3 :=
+  KMor1.rec1
+    (h := KMor1.proj ⟨0, by decide⟩)
+    -- a = 2; base ctx = (y, z); return y = proj 0
+    (g := KMor1.proj ⟨2, by decide⟩)
+    -- step ctx is Fin (2+2) = Fin 4
+    -- slots 0 = x, 1 = y, 2 = z, 3 = prev; step returns z = proj 2
+
+@[simp] theorem KMor1.interp_cond (ctx : Fin 3 → ℕ) :
+    KMor1.cond.interp ctx = if ctx 0 = 0 then ctx 1 else ctx 2
+```
+
+Level: 1.
+
+### 4.6 `notEq1 : KMor1 1`
+
+Source: Notes 10.2.13 (predicate classes K_{n,*}); 10.2.20 places
+`x = 1` in K_{1,*}, i.e. its 0/1 characteristic is in K_1.
+
+Construction (composition only, no new recursion):
+
+```text
+notEq1(x) = isZero(x) + signum(pred(x))
+where signum(n) = isZero(isZero(n))
+```
+
+Verification of values:
+
+- `x = 0`: `isZero(0) + signum(pred(0)) = 1 + signum(0) = 1 + 0 = 1` ✓
+- `x = 1`: `isZero(1) + signum(pred(1)) = 0 + signum(0) = 0 + 0 = 0` ✓
+- `x = 2`: `isZero(2) + signum(pred(2)) = 0 + signum(1) = 0 + 1 = 1` ✓
+- `x ≥ 2`: `isZero(x) + signum(pred(x)) = 0 + signum(x-1) = 0 + 1 = 1` ✓
+
+```lean
+private def KMor1.signum : KMor1 1 :=
+  KMor1.comp KMor1.isZero (fun _ : Fin 1 => KMor1.isZero)
+
+@[simp] private theorem KMor1.interp_signum (ctx : Fin 1 → ℕ) :
+    KMor1.signum.interp ctx = if ctx 0 = 0 then 0 else 1
+
+def KMor1.notEq1 : KMor1 1 :=
+  KMor1.comp KMor1.add (fun i =>
+    match i with
+    | ⟨0, _⟩ => KMor1.isZero
+    | ⟨1, _⟩ => KMor1.comp KMor1.signum
+                  (fun _ : Fin 1 => KMor1.pred))
+
+@[simp] theorem KMor1.interp_notEq1 (ctx : Fin 1 → ℕ) :
+    KMor1.notEq1.interp ctx = if ctx 0 = 1 then 0 else 1
+```
+
+Level: 1 (max of `add` (1), `isZero` (1), `signum ∘ pred` (1) is 1; outer
+`comp` does not raise level).
+
+### 4.7 `mult : KMor1 2`
+
+Source: PR §0.1.0.17(b); Notes 10.2.12 row 4.
+
+```text
+mult(0,   y) = 0
+mult(x+1, y) = y + mult(x, y)
+```
+
+```lean
+def KMor1.mult : KMor1 2 :=
+  KMor1.rec1
+    (h := KMor1.zero)
+    (g := KMor1.comp KMor1.add (fun i =>
+      match i with
+      | ⟨0, _⟩ => KMor1.proj ⟨1, by decide⟩       -- y
+      | ⟨1, _⟩ => KMor1.proj ⟨2, by decide⟩))     -- prev
+    -- a = 1; step ctx Fin 3: slot 0 = x, slot 1 = y, slot 2 = prev
+
+@[simp] theorem KMor1.interp_mult (ctx : Fin 2 → ℕ) :
+    KMor1.mult.interp ctx = ctx 0 * ctx 1
+```
+
+Level: 2 (outer `rec1` adds 1 to max child level which is 1 for `add`).
+
+### 4.8 `monus : KMor1 2`
+
+Source: PR §0.1.0.17(a); Notes 10.2.12 row 6.
+
+```text
+monus(x, 0)   = x
+monus(x, y+1) = pred(monus(x, y))
+```
+
+K^sim's `simrec` recurses on slot 0; we want to recurse on `y` (the
+second arg). Strategy: build a swapped helper `monusSwapped(y, x)` that
+recurses on slot 0, then expose `monus(x, y)` as a `comp` that swaps
+the projections. The swap is a level-0 composition, so the final level
+is unchanged.
+
+```lean
+private def KMor1.monusSwapped : KMor1 2 :=
+  KMor1.rec1
+    (h := KMor1.proj ⟨0, by decide⟩)
+    -- a = 1; base ctx = (x); return x
+    (g := KMor1.comp KMor1.pred
+            (fun _ : Fin 1 => KMor1.proj ⟨2, by decide⟩))
+    -- step ctx Fin 3: slot 0 = y, slot 1 = x, slot 2 = prev; return pred(prev)
+
+@[simp] private theorem KMor1.interp_monusSwapped (ctx : Fin 2 → ℕ) :
+    KMor1.monusSwapped.interp ctx = ctx 1 - ctx 0
+
+def KMor1.monus : KMor1 2 :=
+  KMor1.comp KMor1.monusSwapped (fun i =>
+    match i with
+    | ⟨0, _⟩ => KMor1.proj ⟨1, by decide⟩       -- y → slot 0 of monusSwapped
+    | ⟨1, _⟩ => KMor1.proj ⟨0, by decide⟩)      -- x → slot 1 of monusSwapped
+
+@[simp] theorem KMor1.interp_monus (ctx : Fin 2 → ℕ) :
+    KMor1.monus.interp ctx = ctx 0 - ctx 1
+```
+
+Level: 2 (`monusSwapped` is 2; outer `comp` keeps it at 2).
+
+### 4.9 `pow2 : KMor1 1`
+
+Source: PR §0.1.0.17(c); Notes 10.2.12 row 5.
+
+```text
+pow2(0)   = 1
+pow2(x+1) = double(pow2(x))
+```
+
+```lean
+def KMor1.pow2 : KMor1 1 :=
+  KMor1.rec1
+    (h := KMor1.one)
+    (g := KMor1.comp KMor1.double
+            (fun _ : Fin 1 => KMor1.proj ⟨1, by decide⟩))
+    -- a = 0; step ctx Fin 2: slot 0 = x, slot 1 = prev; return double(prev)
+
+@[simp] theorem KMor1.interp_pow2 (ctx : Fin 1 → ℕ) :
+    KMor1.pow2.interp ctx = 2 ^ ctx 0
+```
+
+Level: 2 (outer `rec1` adds 1 to `double`'s level 1).
+
+### 4.10 `mod : KMor1 2`
+
+Source: Notes 4.2.3 (`rem(x, 2) ∈ K_1^sim` via simultaneous recursion
+with companion "shifted row") generalized to general divisor `y`.
+
+This is the only function in the spec that requires true simultaneous
+(system-size > 1) primitive recursion in our K^sim Lean encoding. The
+trick: track two functions at once,
+
+```text
+f₀(x, y) = rem(x, y)                  -- the result
+f₁(x, y) = (y ∸ 1) ∸ rem(x, y)        -- "distance to wrap"
+```
+
+so that the comparison "would `rem + 1` reach `y`?" reduces to
+"is `f₁` zero?", which `cond` (level 1) can dispatch directly on
+`f₁`.
+
+```text
+f₀(0,   y) = 0
+f₁(0,   y) = pred(y)
+f₀(x+1, y) = cond(f₁(x, y), 0,           succ(f₀(x, y)))
+f₁(x+1, y) = cond(f₁(x, y), pred(y),     pred(f₁(x, y)))
+```
+
+Verification:
+
+- `y = 0`: pred(y) = 0, so `f₁(0, 0) = 0`, and cond's branch picks
+  `branch1` everywhere. `f₀(x, 0) = 0` for all `x`. (Convention to
+  reconcile with `Nat.mod_zero : x % 0 = x` — see §4.10.1.)
+- `y ≥ 1`: `f₁` cycles through `y-1, y-2, …, 0, y-1, y-2, …`,
+  producing `f₀ = 0, 1, 2, …, y-1, 0, 1, 2, …` = `x % y`. ✓
+
+```lean
+private def KMor1.modAux : KMor1 2 :=
+  KMor1.simrec (a := 1) (k := 1) (i := ⟨0, by decide⟩)
+    (h := fun i => match i with
+      | ⟨0, _⟩ => KMor1.zero                                    -- f₀(0, y) = 0
+      | ⟨1, _⟩ => KMor1.pred)                                   -- f₁(0, y) = pred(y)
+    (g := fun i =>
+      -- step ctx is Fin (1 + 1 + 2) = Fin 4:
+      -- slot 0 = x, slot 1 = y, slot 2 = prev_f₀, slot 3 = prev_f₁
+      match i with
+      | ⟨0, _⟩ =>
+          KMor1.comp KMor1.cond (fun j => match j with
+            | ⟨0, _⟩ => KMor1.proj ⟨3, by decide⟩               -- f₁ as switch
+            | ⟨1, _⟩ => KMor1.zero                              -- branch1: 0
+            | ⟨2, _⟩ => KMor1.comp KMor1.succ
+                          (fun _ : Fin 1 => KMor1.proj ⟨2, by decide⟩))
+                                                                -- branch2: succ(prev_f₀)
+      | ⟨1, _⟩ =>
+          KMor1.comp KMor1.cond (fun j => match j with
+            | ⟨0, _⟩ => KMor1.proj ⟨3, by decide⟩               -- f₁ as switch
+            | ⟨1, _⟩ => KMor1.comp KMor1.pred
+                          (fun _ : Fin 1 => KMor1.proj ⟨1, by decide⟩)
+                                                                -- branch1: pred(y)
+            | ⟨2, _⟩ => KMor1.comp KMor1.pred
+                          (fun _ : Fin 1 => KMor1.proj ⟨3, by decide⟩)))
+                                                                -- branch2: pred(prev_f₁)
+```
+
+Level proof: `modAux` is one `simrec` over children of level ≤ 1
+(`zero`, `pred`, `cond` (1), `succ`); `simrec` adds 1; final level 2.
+
+#### 4.10.1 Convention for `mod(x, 0)`
+
+User intent (per session clarification): match the standard
+`Nat.mod` convention, i.e. `x % 0 = x` (Lean: `Nat.mod_zero`).
+
+`modAux` produces `0` at `y = 0`, not `x`. Wrap with one outer `cond`:
+
+```lean
+def KMor1.mod : KMor1 2 :=
+  KMor1.comp KMor1.cond (fun i => match i with
+    | ⟨0, _⟩ => KMor1.proj ⟨1, by decide⟩       -- switch on y
+    | ⟨1, _⟩ => KMor1.proj ⟨0, by decide⟩       -- if y = 0, return x
+    | ⟨2, _⟩ => KMor1.modAux)                  -- else, run modAux
+
+@[simp] theorem KMor1.interp_mod (ctx : Fin 2 → ℕ) :
+    KMor1.mod.interp ctx = ctx 0 % ctx 1
+```
+
+Level: 2 (outer `cond` and `modAux` are both 2; outer `comp` keeps at 2).
+
+The `interp_mod` proof case-splits on `ctx 1 = 0` vs `> 0`. The
+`y = 0` case is direct from `Nat.mod_zero`. The `y > 0` case requires
+an inductive argument on `ctx 0` against the recurrence relations of
+`modAux`; this is the substantive proof in this section. Helper
+lemma: `KMor1.modAux_components` returning the joint value of `(f₀, f₁)`
+at `(x, y)` as `(x % y, (y - 1) - x % y)` for `y > 0`, proven by
+induction on `x`.
+
+## 5. Tests
+
+### 5.1 Coverage
+
+For each of the ten user-facing functions, in `test/KArithTest.lean`
+(or per-module `#guard` blocks in `Utilities/KArith.lean`):
+
+- 3 to 6 `#guard` cases on small inputs covering: zero/zero, zero/nonzero,
+  small generic, one boundary case (e.g. divisor = 1 for `mod`, `x = y`
+  for `monus`).
+- One `example : foo.level ≤ N := by decide` per function.
+
+Sample `#guard`s:
+
+```lean
+#guard KMor1.pred.interp ![0] = 0
+#guard KMor1.pred.interp ![5] = 4
+#guard KMor1.add.interp ![3, 4] = 7
+#guard KMor1.cond.interp ![0, 11, 22] = 11
+#guard KMor1.cond.interp ![1, 11, 22] = 22
+#guard KMor1.notEq1.interp ![0] = 1
+#guard KMor1.notEq1.interp ![1] = 0
+#guard KMor1.notEq1.interp ![5] = 1
+#guard KMor1.mult.interp ![3, 4] = 12
+#guard KMor1.monus.interp ![5, 3] = 2
+#guard KMor1.monus.interp ![3, 5] = 0
+#guard KMor1.pow2.interp ![0] = 1
+#guard KMor1.pow2.interp ![4] = 16
+#guard KMor1.mod.interp ![7, 3] = 1
+#guard KMor1.mod.interp ![6, 3] = 0
+#guard KMor1.mod.interp ![3, 0] = 3
+```
+
+### 5.2 Test sizing risk
+
+Per the prior session memory note
+`feedback_godel_interp_not_decidable_in_tests.md`, deeply nested
+`simrec` interpretations evaluate symbolically and can stall a `#guard`.
+All inputs above are bounded by ~16 with at most level-2 simrecs, which
+should evaluate quickly. Mitigation if a `#guard` stalls: switch from
+`#guard foo = bar` to `example : foo = bar := by simp` using the
+proven `@[simp]` interp lemmas, which avoids kernel reduction of the
+underlying simrec tree.
+
+## 6. Build sequence
+
+Per `CLAUDE.md` workflow §1, §3, every increment must build with `lake
+build` and `lake test`, no warnings, no `sorry`. Order:
+
+1. Add `KMor1.rec1` to `LawvereKSim.lean`. Smoke-check `level` reduces
+   correctly with one trivial `example`.
+2. Add `interp_rec1_zero`, `interp_rec1_succ` to
+   `LawvereKSimInterp.lean`. Verify with one trivial `#guard`.
+3. Create `Utilities/KArith.lean`. Add functions in dependency order:
+   - Phase 1 (level 1, no KArith deps): `one` (private),
+     `pred`, `isZero`, `signum` (private), `add`, `double`, `cond`,
+     `notEq1`. Each function landed independently with its `@[simp]`
+     interp lemma and `level` example proof, building cleanly.
+   - Phase 2 (level 2, deps on Phase 1): `mult`, `monusSwapped`
+     (private), `monus`, `pow2`. Each landed independently with proofs.
+   - Phase 3: `modAux` (private), `mod`. The `mod` correctness proof
+     (`interp_mod`) is the substantive proof in the spec; its inductive
+     helper `modAux_components` is built first.
+4. Re-export `Utilities/KArith` from `GebLean.lean`.
+5. Add tests; `lake test` must pass.
+
+## 7. Out of scope
+
+- Higher-level functions (Ackermann, tetration, bsum, bprod) — not part
+  of this spec.
+- Quotient lifts (`KSimMor` morphisms via `KMorNQuo`) of these functions
+  — not part of this spec.
+- `kToER` translations of these functions — handled uniformly by the
+  existing `kToERFunctor`; no per-function bridge needed here.
+- Replacement of any existing inline `addK` test fixture from Step 5.
+
+## 8. Risk register
+
+- **`mod` convention reconciliation**: §4.10.1's outer `cond` adds one
+  composition. If the adversary or implementation finds a cleaner
+  encoding directly producing `Nat.mod` semantics (including the
+  `y = 0` case), we switch.
+- **Symbolic `#guard` blowup**: §5.2 mitigation in place.
+- **`monusSwapped` arg-order swap surface area**: the swap helper is
+  private and its interp lemma is proved against `ctx 1 - ctx 0`,
+  exposing only `KMor1.monus` with the conventional `ctx 0 - ctx 1`
+  semantics.
+- **Tourlakis citation drift**: the adversarial review must
+  cross-check every cited section/proposition number against the source
+  PDFs in `.claude/docs/arithmetic-hierarchies/` to confirm each
+  citation matches the construction.
+
+## 9. References
+
+- Tourlakis, *Notes on Computability* (2019–2022),
+  `.claude/docs/arithmetic-hierarchies/tourlakis-Computability-Notes-ROOT.pdf`
+  — Definition 10.2.7, Proposition 10.2.12, Example 4.2.3,
+  Definitions 10.2.13–10.2.20.
+- Tourlakis, *Primitive Recursive Complexity Topics* (2018),
+  `.claude/docs/arithmetic-hierarchies/PR-complexity-topics.pdf`
+  — Definition 0.1.0.7, Example 0.1.0.17, Proposition 0.1.0.20.
+- `docs/lawvere-k-sim-hierarchy.md` — design principles P1–P10 for the
+  Lean K^sim formalization, including the level rule
+  (`simrec`/`raise` add 1; `comp` takes max).
+- `GebLean/Utilities/ERArith.lean` — sibling module for `ERMor1`-side
+  arithmetic; this spec mirrors its structure.
