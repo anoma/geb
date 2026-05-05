@@ -263,4 +263,36 @@ private lemma KMor1.cond_aux (n : ℕ) (p : Fin 2 → ℕ) :
 
 example : KMor1.cond.level = 1 := by decide
 
+/-- Characteristic of the predicate `x ≠ 1` (Tourlakis
+predicate-as-zero convention): `notEq1(x) = 0` when `x ≠ 1`,
+`notEq1(x) = 1` when `x = 1`.
+
+Construction: `isZero(pred(x) + isZero(x))`. The inner sum vanishes
+exactly at `x = 1` (since `pred(1) = 0` and `isZero(1) = 0`).
+
+The name refers to the predicate being characterized. Per
+Tourlakis convention, the value is 0 when the predicate holds.
+
+Tourlakis PR §0.1.0.20 (`λx.x = a ∈ K_{1,*}`) plus Notes 10.2.14
+(Boolean closure of K_{n,*}). -/
+def KMor1.notEq1 : KMor1 1 :=
+  KMor1.comp KMor1.isZero (fun _ : Fin 1 =>
+    KMor1.comp KMor1.add (fun i => match i with
+      | ⟨0, _⟩ => KMor1.pred
+      | ⟨1, _⟩ => KMor1.isZero))
+
+/-- Interpretation of `notEq1`: `1` if `ctx 0 = 1`, else `0`. -/
+@[simp] theorem KMor1.interp_notEq1 (ctx : Fin 1 → ℕ) :
+    KMor1.notEq1.interp ctx = if ctx 0 = 1 then 1 else 0 := by
+  unfold KMor1.notEq1
+  rw [KMor1.interp_comp, KMor1.interp_isZero,
+      KMor1.interp_comp, KMor1.interp_add,
+      KMor1.interp_pred, KMor1.interp_isZero]
+  rcases h : ctx 0 with _ | _ | n
+  · simp
+  · simp
+  · simp
+
+example : KMor1.notEq1.level = 1 := by decide
+
 end GebLean

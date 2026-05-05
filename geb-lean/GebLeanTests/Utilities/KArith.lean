@@ -25,3 +25,8 @@ open GebLean
 #guard KMor1.cond.interp ![0, 11, 22] == 11
 #guard KMor1.cond.interp ![1, 11, 22] == 22
 #guard KMor1.cond.interp ![2, 11, 22] == 22
+
+#guard KMor1.notEq1.interp ![0] == 0
+#guard KMor1.notEq1.interp ![1] == 1
+#guard KMor1.notEq1.interp ![2] == 0
+#guard KMor1.notEq1.interp ![5] == 0
