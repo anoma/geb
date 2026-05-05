@@ -40,11 +40,11 @@ functions of this design at levels:
 | `add` (= λxy.x+y) | 1 | PR §0.1.0.17(1); Notes 10.2.12 r1 |
 | `double` (= λx.2x) | 1 | derived from `add` |
 | `cond` (switch, λxyz. y if x=0 else z) | 1 | PR §0.1.0.17(6) |
-| `notEq1` (= λx. 0 if x=1 else 1) | 1 | Notes 10.2.13–10.2.15 |
+| `notEq1` (= χ(x ≠ 1) per Tourlakis) | 1 | PR §0.1.0.20 + Notes 10.2.14 |
 | `mult` (= λxy.xy) | 2 | PR §0.1.0.17(b); Notes 10.2.12 r4 |
 | `monus` (= λxy.x ∸ y) | 2 | PR §0.1.0.17(a); Notes 10.2.12 r6 |
 | `pow2` (= λx.2^x) | 2 | PR §0.1.0.17(c); Notes 10.2.12 r5 |
-| `mod` (= λxy.rem(x,y)) | 2 | Notes 4.2.3 (rem(x,2)) ext. |
+| `mod` (= λxy.rem(x,y)) | 2 | Marchenkov 2007 basis; Notes 4.2.3 |
 
 ### 1.2 Lean encoding conventions
 
@@ -83,8 +83,9 @@ The single-output non-simultaneous specialization
   their `@[simp]` interp theorems, and `example : foo.level ≤ N` level
   proofs. Sibling of `GebLean/Utilities/ERArith.lean`.
 - `GebLean.lean`: re-export `Utilities/KArith.lean`.
-- `test/KArithTest.lean` (new) or per-module `#guard` blocks: small-input
-  evaluation tests for each function plus boundary cases.
+- Inline `#guard` blocks in `Utilities/KArith.lean` (mirroring
+  `Utilities/ERArith.lean`): small-input evaluation tests for each
+  function plus boundary cases.
 
 ## 3. `rec1`: the non-simultaneous primrec wrapper
 
@@ -93,10 +94,15 @@ The single-output non-simultaneous specialization
 ```lean
 /-- Single-output (non-simultaneous) primitive recursion at arity
 `a + 1`.  The base `h : KMor1 a` returns the value at recursion
-variable `0`; the step `g : KMor1 (a + 2)` receives
-`(x, y⃗, prev)` in slots `(0, 1..a, a+1)` and returns the value at
-`x + 1`.  Definitional reduction to `KMor1.simrec` with `k = 0`,
-`i = 0`.
+variable `0`; the step `g : KMor1 (a + 2)` receives the recursion
+variable, the parameters, and the previous value, in this slot order:
+
+* slot `0`            : recursion variable `x`
+* slots `1, …, a`     : parameters `y_1, …, y_a`
+* slot `a + 1`        : previous value `f(x, y⃗)`
+
+It returns the value at `x + 1`.  Definitional reduction to
+`KMor1.simrec` with `k = 0`, `i = 0`.
 
 Tourlakis Notes 10.2.7 (definition of K^sim, with simultaneous
 recursion as the primitive); the non-simultaneous case is the
@@ -125,9 +131,17 @@ def KMor1.rec1 {a : ℕ} (h : KMor1 a) (g : KMor1 (a + 2)) :
             (KMor1.rec1 h g).interp (Fin.cons n params)))
 ```
 
-Both lemmas reduce to `KMor1.simrec`'s interp theorem composed with
-`KMor1.simrecVec_zero` / `KMor1.simrecVec_succ`. Since `k = 0`, the
-previous-values vector has length 1 and is a single-element `Fin.cons`.
+`interp_rec1_zero` reduces directly via `simrec` interp +
+`simrecVec_zero` and is `rfl`-close. `interp_rec1_succ` is **not**
+definitional: the existing `simrecVec_succ` produces the step context
+in dite form (`if idx.val < a + 1 then …`), whereas the lemma above
+states the equivalent `Fin.append (Fin.cons …)` form. Bridging the
+two requires `funext idx; rcases idx with ⟨v, h_v⟩; by_cases v < a+1;
+…` plus `Fin.cons_zero`/`Fin.cons_succ`/`Fin.append_left`/
+`Fin.append_right` rewrites — the same shape as the existing proof of
+`KMor1.simrecVec_eq_Nat_simRecVec` in `LawvereKSimInterp.lean`. The
+implementation plan must allocate a task for this bridging proof; it
+is not a one-line `rfl`.
 
 ### 3.3 Level
 
@@ -180,10 +194,11 @@ isZero(0)   = 1
 isZero(x+1) = 0
 ```
 
-Helper at K_0:
+Helper at K_0 (made non-private since `pow2` reuses it; both live in
+the same module but the constant `1` at any arity is generally useful):
 
 ```lean
-private def KMor1.one : KMor1 0 :=
+def KMor1.one : KMor1 0 :=
   KMor1.comp KMor1.succ (fun _ => KMor1.zero)
 ```
 
@@ -277,43 +292,53 @@ Level: 1.
 
 ### 4.6 `notEq1 : KMor1 1`
 
-Source: Notes 10.2.13 (predicate classes K_{n,*}); 10.2.20 places
-`x = 1` in K_{1,*}, i.e. its 0/1 characteristic is in K_1.
+Source: PR §0.1.0.20 (Corollary placing `λx. x = a` in K_{1,*}) +
+Notes 10.2.14 (Boolean closure of K_{n,*}).
 
-Construction (composition only, no new recursion):
+**Convention**: Tourlakis's predicate-as-zero convention. The
+characteristic of a predicate `P(x)` is a function `χ_P` with
+`χ_P(x) = 0` iff `P(x)` holds and `χ_P(x) ≠ 0` (normalized to 1)
+otherwise. `notEq1` is the characteristic of the predicate `x ≠ 1`:
 
 ```text
-notEq1(x) = isZero(x) + signum(pred(x))
-where signum(n) = isZero(isZero(n))
+notEq1(0)   = 0       -- x ≠ 1 holds at x = 0, so χ = 0
+notEq1(1)   = 1       -- x ≠ 1 fails at x = 1, so χ ≠ 0
+notEq1(n+2) = 0       -- x ≠ 1 holds at x ≥ 2, so χ = 0
+```
+
+(This is opposite the boolean-true convention; the Lean K^sim
+formalization adheres to Tourlakis's convention throughout to
+minimize cognitive switching against the source.)
+
+Construction following Tourlakis's standard approach for `x = a`
+predicates (composition only, no new recursion):
+
+```text
+notEq1(x) = isZero((x ∸ 1) + (1 ∸ x))
+        = isZero(pred(x) + isZero(x))
 ```
 
 Verification of values:
 
-- `x = 0`: `isZero(0) + signum(pred(0)) = 1 + signum(0) = 1 + 0 = 1` ✓
-- `x = 1`: `isZero(1) + signum(pred(1)) = 0 + signum(0) = 0 + 0 = 0` ✓
-- `x = 2`: `isZero(2) + signum(pred(2)) = 0 + signum(1) = 0 + 1 = 1` ✓
-- `x ≥ 2`: `isZero(x) + signum(pred(x)) = 0 + signum(x-1) = 0 + 1 = 1` ✓
+- `x = 0`: `isZero(pred(0) + isZero(0)) = isZero(0 + 1) = isZero(1) = 0` ✓
+- `x = 1`: `isZero(pred(1) + isZero(1)) = isZero(0 + 0) = isZero(0) = 1` ✓
+- `x = 2`: `isZero(pred(2) + isZero(2)) = isZero(1 + 0) = isZero(1) = 0` ✓
+- `x ≥ 2`: `isZero(pred(x) + 0) = isZero(x − 1) = 0` (since x ≥ 2 ⇒
+  x − 1 ≥ 1) ✓
 
 ```lean
-private def KMor1.signum : KMor1 1 :=
-  KMor1.comp KMor1.isZero (fun _ : Fin 1 => KMor1.isZero)
-
-@[simp] private theorem KMor1.interp_signum (ctx : Fin 1 → ℕ) :
-    KMor1.signum.interp ctx = if ctx 0 = 0 then 0 else 1
-
 def KMor1.notEq1 : KMor1 1 :=
-  KMor1.comp KMor1.add (fun i =>
-    match i with
-    | ⟨0, _⟩ => KMor1.isZero
-    | ⟨1, _⟩ => KMor1.comp KMor1.signum
-                  (fun _ : Fin 1 => KMor1.pred))
+  KMor1.comp KMor1.isZero (fun _ : Fin 1 =>
+    KMor1.comp KMor1.add (fun i => match i with
+      | ⟨0, _⟩ => KMor1.pred
+      | ⟨1, _⟩ => KMor1.isZero))
 
 @[simp] theorem KMor1.interp_notEq1 (ctx : Fin 1 → ℕ) :
-    KMor1.notEq1.interp ctx = if ctx 0 = 1 then 0 else 1
+    KMor1.notEq1.interp ctx = if ctx 0 = 1 then 1 else 0
 ```
 
-Level: 1 (max of `add` (1), `isZero` (1), `signum ∘ pred` (1) is 1; outer
-`comp` does not raise level).
+Level: 1 (max of `isZero` (1), `add` (1), inner `pred`/`isZero` (1)
+is 1; outer `comp`s do not raise level).
 
 ### 4.7 `mult : KMor1 2`
 
@@ -404,12 +429,26 @@ Level: 2 (outer `rec1` adds 1 to `double`'s level 1).
 
 ### 4.10 `mod : KMor1 2`
 
-Source: Notes 4.2.3 (`rem(x, 2) ∈ K_1^sim` via simultaneous recursion
-with companion "shifted row") generalized to general divisor `y`.
+Source — placement: Marchenkov 2007 (
+`.claude/docs/arithmetic-hierarchies/superpositions-elementary-arithmetic-functions-marchenkov.pdf`)
+establishes `{n+m, n mod m, n², 2^n}` as a superposition basis for
+the elementary functions, which equal K^sim_2 (Notes 10.2.20:
+K^sim_n = L_n; Meyer–Ritchie L_2 = ER). Therefore
+`λxy. x mod y ∈ K^sim_2`.
+
+Source — construction technique: Notes 4.2.3 (`rem(x, 2) ∈ K_1^sim`
+via simultaneous recursion with a companion "shifted-row" function).
+The construction below generalizes Tourlakis 4.2.3's
+two-function-simrec technique from the fixed-divisor case (`y = 2`)
+to the general-divisor case. This generalization is not literally
+present in Tourlakis; per the literature-citation discipline the
+docstring of `KMor1.mod` and `KMor1.modAux` will explicitly note
+"generalization of Tourlakis Notes 4.2.3 technique to general
+divisor; placement in K^sim_2 follows from Marchenkov 2007 basis".
 
 This is the only function in the spec that requires true simultaneous
-(system-size > 1) primitive recursion in our K^sim Lean encoding. The
-trick: track two functions at once,
+(system-size > 1) primitive recursion in our K^sim Lean encoding.
+Construction: track two functions jointly,
 
 ```text
 f₀(x, y) = rem(x, y)                  -- the result
@@ -427,13 +466,20 @@ f₀(x+1, y) = cond(f₁(x, y), 0,           succ(f₀(x, y)))
 f₁(x+1, y) = cond(f₁(x, y), pred(y),     pred(f₁(x, y)))
 ```
 
-Verification:
+Verification (recall `cond(0, b1, b2) = b1`, `cond(n+1, b1, b2) = b2`):
 
-- `y = 0`: pred(y) = 0, so `f₁(0, 0) = 0`, and cond's branch picks
-  `branch1` everywhere. `f₀(x, 0) = 0` for all `x`. (Convention to
-  reconcile with `Nat.mod_zero : x % 0 = x` — see §4.10.1.)
-- `y ≥ 1`: `f₁` cycles through `y-1, y-2, …, 0, y-1, y-2, …`,
-  producing `f₀ = 0, 1, 2, …, y-1, 0, 1, 2, …` = `x % y`. ✓
+- `y = 0`: `pred(0) = 0`, so `f₁(0, 0) = 0`. At each step `cond`
+  switches on `f₁_prev = 0`, picking `branch1`. So `f₀(x+1, 0) = 0`
+  and `f₁(x+1, 0) = pred(0) = 0` for all x. Hence `f₀(x, 0) = 0`.
+  (Convention to reconcile with `Nat.mod_zero : x % 0 = x` —
+  see §4.10.1.)
+- `y ≥ 1`: `f₁(0, y) = y - 1`. At each step:
+  - if `f₁_prev > 0` (no wrap), `cond` picks `branch2`:
+    `f₀(x+1, y) = succ(f₀_prev)`, `f₁(x+1, y) = pred(f₁_prev)`.
+  - if `f₁_prev = 0` (wrap), `cond` picks `branch1`:
+    `f₀(x+1, y) = 0`, `f₁(x+1, y) = pred(y) = y - 1`.
+  So `f₁` cycles through `y-1, y-2, …, 0, y-1, y-2, …`, producing
+  `f₀ = 0, 1, 2, …, y-1, 0, 1, 2, …` = `x % y`. ✓
 
 ```lean
 private def KMor1.modAux : KMor1 2 :=
@@ -486,13 +532,39 @@ def KMor1.mod : KMor1 2 :=
 
 Level: 2 (outer `cond` and `modAux` are both 2; outer `comp` keeps at 2).
 
-The `interp_mod` proof case-splits on `ctx 1 = 0` vs `> 0`. The
-`y = 0` case is direct from `Nat.mod_zero`. The `y > 0` case requires
-an inductive argument on `ctx 0` against the recurrence relations of
-`modAux`; this is the substantive proof in this section. Helper
-lemma: `KMor1.modAux_components` returning the joint value of `(f₀, f₁)`
-at `(x, y)` as `(x % y, (y - 1) - x % y)` for `y > 0`, proven by
-induction on `x`.
+**Proof obligation for `interp_mod`** (the only nontrivial interp
+proof in the module). Case-split on `ctx 1 = 0` vs `> 0`:
+
+- `ctx 1 = 0` case: `KMor1.mod` outer `cond` selects branch 1
+  (`proj 0 = ctx 0`); the result is `ctx 0` directly. Combined with
+  `Nat.mod_zero : x % 0 = x` gives the equality.
+- `ctx 1 > 0` case: outer `cond` selects branch 2 (`modAux`); the
+  result is `modAux.interp ctx`. Reduce to a helper lemma
+  `KMor1.modAux_components` stating: for all `x : ℕ`, `y : ℕ`, with
+  `y ≥ 1`, the joint vector returned by `KMor1.simrecVec` for the
+  `modAux` recursion at step `x` with parameter `y` equals
+  `![x % y, (y - 1) - x % y]`. Proof by induction on `x`:
+  - Base `x = 0`: vector is `![0, pred(y)] = ![0, y - 1]` with
+    `0 % y = 0` and `(y - 1) - 0 = y - 1`, both for `y ≥ 1`.
+  - Step `x → x + 1`: by IH the prev vector is
+    `![x % y, (y - 1) - x % y]`. Case-split on
+    `(y - 1) - x % y = 0` (i.e. `x % y = y - 1`, the wrap point):
+    - Wrap case: `cond` picks branch 1; new vector is
+      `![0, y - 1]`. Need `(x + 1) % y = 0` (true since
+      `x % y = y - 1` ⇒ `x ≡ -1 (mod y)` ⇒ `x + 1 ≡ 0 (mod y)`)
+      and `(y - 1) - 0 = y - 1`. Mathlib lemma:
+      `Nat.add_mod_right` or `Nat.succ_mod_self`.
+    - No-wrap case (`(y - 1) - x % y > 0`): `cond` picks branch 2;
+      new vector is `![succ(x % y), pred((y - 1) - x % y)]`. Need
+      `(x + 1) % y = (x % y) + 1` and
+      `(y - 1) - ((x % y) + 1) = pred((y - 1) - x % y)`. Mathlib
+      lemma: `Nat.add_mod` plus `Nat.mod_eq_of_lt` for the
+      condition `(x % y) + 1 < y`.
+
+The `interp_mod` lemma then projects component 0 of the joint
+vector. The implementation plan must allocate (a) `modAux_components`
+as a separate task, (b) the wrap-case mathlib bridge, (c) the
+no-wrap-case mathlib bridge, (d) the final `interp_mod` assembly.
 
 ## 5. Tests
 
@@ -501,29 +573,46 @@ induction on `x`.
 For each of the ten user-facing functions, in `test/KArithTest.lean`
 (or per-module `#guard` blocks in `Utilities/KArith.lean`):
 
-- 3 to 6 `#guard` cases on small inputs covering: zero/zero, zero/nonzero,
-  small generic, one boundary case (e.g. divisor = 1 for `mod`, `x = y`
-  for `monus`).
-- One `example : foo.level ≤ N := by decide` per function.
+For each function, 3 to 6 `#guard` cases on small inputs, plus
+`example : foo.level ≤ N := by decide`. Tests live inline in
+`Utilities/KArith.lean` (mirroring `Utilities/ERArith.lean`'s pattern).
 
-Sample `#guard`s:
+Tests cover at minimum: identity-like input, generic small input, and
+the boundary case relevant to the function's recurrence. For `mod`
+the boundary set is wider because the construction's wrap-detection
+must be exercised.
 
 ```lean
 #guard KMor1.pred.interp ![0] = 0
+#guard KMor1.pred.interp ![1] = 0
 #guard KMor1.pred.interp ![5] = 4
+#guard KMor1.isZero.interp ![0] = 1
+#guard KMor1.isZero.interp ![1] = 0
+#guard KMor1.isZero.interp ![10] = 0
+#guard KMor1.add.interp ![0, 7] = 7
 #guard KMor1.add.interp ![3, 4] = 7
+#guard KMor1.double.interp ![0] = 0
+#guard KMor1.double.interp ![5] = 10
 #guard KMor1.cond.interp ![0, 11, 22] = 11
 #guard KMor1.cond.interp ![1, 11, 22] = 22
-#guard KMor1.notEq1.interp ![0] = 1
-#guard KMor1.notEq1.interp ![1] = 0
-#guard KMor1.notEq1.interp ![5] = 1
+#guard KMor1.cond.interp ![2, 11, 22] = 22
+#guard KMor1.notEq1.interp ![0] = 0    -- Tourlakis χ(x ≠ 1)
+#guard KMor1.notEq1.interp ![1] = 1
+#guard KMor1.notEq1.interp ![2] = 0
+#guard KMor1.notEq1.interp ![5] = 0
+#guard KMor1.mult.interp ![0, 7] = 0
 #guard KMor1.mult.interp ![3, 4] = 12
 #guard KMor1.monus.interp ![5, 3] = 2
 #guard KMor1.monus.interp ![3, 5] = 0
+#guard KMor1.monus.interp ![5, 5] = 0
 #guard KMor1.pow2.interp ![0] = 1
+#guard KMor1.pow2.interp ![1] = 2
 #guard KMor1.pow2.interp ![4] = 16
-#guard KMor1.mod.interp ![7, 3] = 1
+#guard KMor1.mod.interp ![0, 5] = 0
+#guard KMor1.mod.interp ![5, 1] = 0
+#guard KMor1.mod.interp ![5, 5] = 0
 #guard KMor1.mod.interp ![6, 3] = 0
+#guard KMor1.mod.interp ![7, 3] = 1
 #guard KMor1.mod.interp ![3, 0] = 3
 ```
 
@@ -532,11 +621,14 @@ Sample `#guard`s:
 Per the prior session memory note
 `feedback_godel_interp_not_decidable_in_tests.md`, deeply nested
 `simrec` interpretations evaluate symbolically and can stall a `#guard`.
-All inputs above are bounded by ~16 with at most level-2 simrecs, which
-should evaluate quickly. Mitigation if a `#guard` stalls: switch from
-`#guard foo = bar` to `example : foo = bar := by simp` using the
-proven `@[simp]` interp lemmas, which avoids kernel reduction of the
-underlying simrec tree.
+All inputs above are bounded by ~16 with at most level-2 simrecs.
+Empirical verification (via `mcp__lean-lsp__lean_run_code` against
+minimal reproductions of each construction) confirms all `#guard`s
+in §5.1 evaluate in milliseconds, including the `mod` system-size-2
+simrec at inputs `(7, 3)` and `(5, 1)`. Mitigation if a `#guard`
+unexpectedly stalls: switch from `#guard foo = bar` to
+`example : foo = bar := by simp` using the proven `@[simp]` interp
+lemmas, which avoids kernel reduction of the underlying simrec tree.
 
 ## 6. Build sequence
 
@@ -568,23 +660,40 @@ build` and `lake test`, no warnings, no `sorry`. Order:
   — not part of this spec.
 - `kToER` translations of these functions — handled uniformly by the
   existing `kToERFunctor`; no per-function bridge needed here.
-- Replacement of any existing inline `addK` test fixture from Step 5.
+- Modification of any existing inline `addK` test fixture from Step 5;
+  that test stays as it is, independent of `KArith.add`.
 
 ## 8. Risk register
 
 - **`mod` convention reconciliation**: §4.10.1's outer `cond` adds one
-  composition. If the adversary or implementation finds a cleaner
-  encoding directly producing `Nat.mod` semantics (including the
-  `y = 0` case), we switch.
+  composition. If the implementation finds a cleaner encoding directly
+  producing `Nat.mod` semantics (including the `y = 0` case), we switch.
 - **Symbolic `#guard` blowup**: §5.2 mitigation in place.
 - **`monusSwapped` arg-order swap surface area**: the swap helper is
   private and its interp lemma is proved against `ctx 1 - ctx 0`,
   exposing only `KMor1.monus` with the conventional `ctx 0 - ctx 1`
   semantics.
-- **Tourlakis citation drift**: the adversarial review must
-  cross-check every cited section/proposition number against the source
-  PDFs in `.claude/docs/arithmetic-hierarchies/` to confirm each
-  citation matches the construction.
+- **`mod` literature placement vs construction technique**: §4.10
+  cites Marchenkov 2007 for the placement claim (`mod ∈ K^sim_2`) and
+  Tourlakis Notes 4.2.3 for the inspiration of the two-function
+  simrec technique. The specific generalization from `rem(x, 2)` to
+  general-divisor `rem(x, y)` is not literally in either source; the
+  docstring of `KMor1.mod` and `KMor1.modAux` must explicitly state
+  this generalization per the literature-citation discipline.
+- **`decide` for `level` proofs**: empirically verified to work for
+  all spec functions including the system-size-2 `modAux`. (Test
+  performed via `mcp__lean-lsp__lean_run_code` against minimal
+  reproductions of each construction.) If a future change to
+  `KMor1.level` or `Finset.univ.sup` reduction breaks this, fall
+  back to explicit `unfold KMor1.level; simp [...]`.
+- **`interp_rec1_succ` is propositional, not definitional**: §3.2
+  notes the proof obligation; the implementation plan must allocate
+  a task for the dite ↔ `Fin.append (Fin.cons …)` bridge proof,
+  modeled on `KMor1.simrecVec_eq_Nat_simRecVec`.
+- **`interp_mod` proof scope**: §4.10.1 spells out the inductive
+  structure and the four sub-tasks the implementation plan must
+  allocate (`modAux_components`, wrap case bridge, no-wrap case
+  bridge, final assembly).
 
 ## 9. References
 
