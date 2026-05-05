@@ -44,7 +44,7 @@ functions of this design at levels:
 | `mult` (= λxy.xy) | 2 | PR §0.1.0.17(b); Notes 10.2.12 r4 |
 | `monus` (= λxy.x ∸ y) | 2 | PR §0.1.0.17(a); Notes 10.2.12 r6 |
 | `pow2` (= λx.2^x) | 2 | PR §0.1.0.17(c); Notes 10.2.12 r5 |
-| `mod` (= λxy.rem(x,y)) | 2 | Marchenkov 2007 basis; Notes 4.2.3 |
+| `mod` (= λxy.rem(x,y)) | ≤ 2 | Marchenkov 2007; Notes 4.2.3 |
 
 ### 1.2 Lean encoding conventions
 
@@ -139,8 +139,7 @@ states the equivalent `Fin.append (Fin.cons …)` form. Bridging the
 two requires `funext idx; rcases idx with ⟨v, h_v⟩; by_cases v < a+1;
 …` plus `Fin.cons_zero`/`Fin.cons_succ`/`Fin.append_left`/
 `Fin.append_right` rewrites — the same shape as the existing proof of
-`KMor1.simrecVec_eq_Nat_simRecVec` in `LawvereKSimInterp.lean`. The
-implementation plan must allocate a task for this bridging proof; it
+`KMor1.simrecVec_eq_Nat_simRecVec` in `LawvereKSimInterp.lean`. This
 is not a one-line `rfl`.
 
 ### 3.3 Level
@@ -298,7 +297,9 @@ Notes 10.2.14 (Boolean closure of K_{n,*}).
 **Convention**: Tourlakis's predicate-as-zero convention. The
 characteristic of a predicate `P(x)` is a function `χ_P` with
 `χ_P(x) = 0` iff `P(x)` holds and `χ_P(x) ≠ 0` (normalized to 1)
-otherwise. `notEq1` is the characteristic of the predicate `x ≠ 1`:
+otherwise. `notEq1` is the characteristic of the predicate `x ≠ 1`,
+hence the value pattern below — the name `notEq1` evokes the
+predicate being characterized, not the value semantics:
 
 ```text
 notEq1(0)   = 0       -- x ≠ 1 holds at x = 0, so χ = 0
@@ -429,12 +430,20 @@ Level: 2 (outer `rec1` adds 1 to `double`'s level 1).
 
 ### 4.10 `mod : KMor1 2`
 
-Source — placement: Marchenkov 2007 (
-`.claude/docs/arithmetic-hierarchies/superpositions-elementary-arithmetic-functions-marchenkov.pdf`)
-establishes `{n+m, n mod m, n², 2^n}` as a superposition basis for
-the elementary functions, which equal K^sim_2 (Notes 10.2.20:
-K^sim_n = L_n; Meyer–Ritchie L_2 = ER). Therefore
-`λxy. x mod y ∈ K^sim_2`.
+Source — placement: Marchenkov 2007 (PDF
+`superpositions-elementary-arithmetic-functions-marchenkov.pdf`,
+abstract and equation (2)) establishes that `{x+y, x∸y, x/y, 2^x}`
+is a superposition basis for the Kalmar elementary functions,
+i.e. ER. Marchenkov's §1 also defines `rm(x, y)` as the remainder
+of `x` divided by `y`, with `rm(x, 0) = x` (matching Lean's
+`Nat.mod_zero`). Since `rm(x, y) = x ∸ ((x/y) · y)` and ER is
+closed under multiplication and `∸`, we have `rm ∈ ER`. By Notes
+10.2.20 (`K^sim_n = L_n`) plus Meyer–Ritchie (`L_2 = ER`),
+ER = K^sim_2, hence `rm ∈ K^sim_2`. We therefore claim
+`mod.level ≤ 2`; the spec does not assert tight placement
+(Tourlakis 10.2.16 places only the fixed-divisor `rem(x, 2)` at
+K^sim_1, leaving the general-divisor lower bound open in the
+literature).
 
 Source — construction technique: Notes 4.2.3 (`rem(x, 2) ∈ K_1^sim`
 via simultaneous recursion with a companion "shifted-row" function).
@@ -470,9 +479,12 @@ Verification (recall `cond(0, b1, b2) = b1`, `cond(n+1, b1, b2) = b2`):
 
 - `y = 0`: `pred(0) = 0`, so `f₁(0, 0) = 0`. At each step `cond`
   switches on `f₁_prev = 0`, picking `branch1`. So `f₀(x+1, 0) = 0`
-  and `f₁(x+1, 0) = pred(0) = 0` for all x. Hence `f₀(x, 0) = 0`.
-  (Convention to reconcile with `Nat.mod_zero : x % 0 = x` —
-  see §4.10.1.)
+  and `f₁(x+1, 0) = pred(0) = 0` for all x. Hence `modAux(x, 0) = 0`.
+  (Note: the outer `KMor1.mod` per §4.10.1 short-circuits this
+  branch via its own outer `cond` on `y`, returning `x` when `y = 0`
+  to match `Nat.mod_zero`. The y = 0 internal walkthrough above is
+  thus unused at the `KMor1.mod` level; it is included for
+  completeness of `KMor1.modAux`'s standalone semantics.)
 - `y ≥ 1`: `f₁(0, y) = y - 1`. At each step:
   - if `f₁_prev > 0` (no wrap), `cond` picks `branch2`:
     `f₀(x+1, y) = succ(f₀_prev)`, `f₁(x+1, y) = pred(f₁_prev)`.
@@ -562,9 +574,9 @@ proof in the module). Case-split on `ctx 1 = 0` vs `> 0`:
       condition `(x % y) + 1 < y`.
 
 The `interp_mod` lemma then projects component 0 of the joint
-vector. The implementation plan must allocate (a) `modAux_components`
-as a separate task, (b) the wrap-case mathlib bridge, (c) the
-no-wrap-case mathlib bridge, (d) the final `interp_mod` assembly.
+vector. Decomposition: (a) `modAux_components` as a separate lemma,
+(b) the wrap-case mathlib bridge, (c) the no-wrap-case mathlib bridge,
+(d) the final `interp_mod` assembly.
 
 ## 5. Tests
 
@@ -641,13 +653,13 @@ build` and `lake test`, no warnings, no `sorry`. Order:
    `LawvereKSimInterp.lean`. Verify with one trivial `#guard`.
 3. Create `Utilities/KArith.lean`. Add functions in dependency order:
    - Phase 1 (level 1, no KArith deps): `one` (private),
-     `pred`, `isZero`, `signum` (private), `add`, `double`, `cond`,
-     `notEq1`. Each function landed independently with its `@[simp]`
-     interp lemma and `level` example proof, building cleanly.
+     `pred`, `isZero`, `add`, `double`, `cond`, `notEq1`. Each
+     function landed independently with its `@[simp]` interp lemma
+     and `level` example proof, building cleanly.
    - Phase 2 (level 2, deps on Phase 1): `mult`, `monusSwapped`
      (private), `monus`, `pow2`. Each landed independently with proofs.
    - Phase 3: `modAux` (private), `mod`. The `mod` correctness proof
-     (`interp_mod`) is the substantive proof in the spec; its inductive
+     (`interp_mod`) is the longest proof in the spec; its inductive
      helper `modAux_components` is built first.
 4. Re-export `Utilities/KArith` from `GebLean.lean`.
 5. Add tests; `lake test` must pass.
@@ -683,17 +695,15 @@ build` and `lake test`, no warnings, no `sorry`. Order:
 - **`decide` for `level` proofs**: empirically verified to work for
   all spec functions including the system-size-2 `modAux`. (Test
   performed via `mcp__lean-lsp__lean_run_code` against minimal
-  reproductions of each construction.) If a future change to
+  reproductions of each construction.) If a subsequent change to
   `KMor1.level` or `Finset.univ.sup` reduction breaks this, fall
   back to explicit `unfold KMor1.level; simp [...]`.
 - **`interp_rec1_succ` is propositional, not definitional**: §3.2
-  notes the proof obligation; the implementation plan must allocate
-  a task for the dite ↔ `Fin.append (Fin.cons …)` bridge proof,
-  modeled on `KMor1.simrecVec_eq_Nat_simRecVec`.
+  notes the proof shape (dite ↔ `Fin.append (Fin.cons …)` bridge,
+  modeled on `KMor1.simrecVec_eq_Nat_simRecVec`).
 - **`interp_mod` proof scope**: §4.10.1 spells out the inductive
-  structure and the four sub-tasks the implementation plan must
-  allocate (`modAux_components`, wrap case bridge, no-wrap case
-  bridge, final assembly).
+  structure and the four sub-lemmas (`modAux_components`, wrap case
+  bridge, no-wrap case bridge, final assembly).
 
 ## 9. References
 
