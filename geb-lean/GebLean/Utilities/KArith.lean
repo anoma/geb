@@ -216,4 +216,51 @@ private lemma KMor1.double_aux (n : ℕ) :
 
 example : KMor1.double.level = 1 := by decide
 
+/-- Conditional / switch: `cond(0, y, z) = y`, `cond(x+1, y, z) = z`.
+
+Tourlakis PR §0.1.0.17(6) (`switch`). -/
+def KMor1.cond : KMor1 3 :=
+  KMor1.rec1
+    (h := KMor1.proj ⟨0, by decide⟩)
+    (g := KMor1.proj ⟨2, by decide⟩)
+
+private lemma KMor1.cond_aux (n : ℕ) (p : Fin 2 → ℕ) :
+    KMor1.cond.interp (Fin.cons n p)
+      = if n = 0 then p ⟨0, by decide⟩ else p ⟨1, by decide⟩ := by
+  cases n with
+  | zero =>
+    unfold KMor1.cond
+    rw [KMor1.interp_rec1_zero, KMor1.interp_proj]
+    rfl
+  | succ n =>
+    unfold KMor1.cond
+    rw [KMor1.interp_rec1_succ, KMor1.interp_proj]
+    have hidx : (⟨2, by decide⟩ : Fin (2 + 1 + 1))
+        = Fin.castAdd 1 (⟨2, by decide⟩ : Fin (2 + 1)) := by
+      apply Fin.ext; rfl
+    rw [hidx, Fin.append_left]
+    have hsucc : (⟨2, by decide⟩ : Fin (2 + 1))
+        = Fin.succ (⟨1, by decide⟩ : Fin 2) := by
+      apply Fin.ext; rfl
+    rw [hsucc, Fin.cons_succ]
+    rfl
+
+/-- Interpretation of `cond`: `if ctx 0 = 0 then ctx 1 else ctx 2`. -/
+@[simp] theorem KMor1.interp_cond (ctx : Fin 3 → ℕ) :
+    KMor1.cond.interp ctx
+      = if ctx 0 = 0 then ctx 1 else ctx 2 := by
+  have hctx :
+      ctx = Fin.cons (ctx 0) (fun j => ctx (Fin.succ j)) := by
+    funext i
+    match i with
+    | ⟨0, _⟩ => rfl
+    | ⟨1, _⟩ => rfl
+    | ⟨2, _⟩ => rfl
+  rw [hctx, KMor1.cond_aux]
+  cases h : ctx 0 with
+  | zero => rfl
+  | succ n => rfl
+
+example : KMor1.cond.level = 1 := by decide
+
 end GebLean
