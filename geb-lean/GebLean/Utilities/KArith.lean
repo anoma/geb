@@ -295,4 +295,59 @@ def KMor1.notEq1 : KMor1 1 :=
 
 example : KMor1.notEq1.level = 1 := by decide
 
+/-- Multiplication: `mult(0, y) = 0`, `mult(x+1, y) = y + mult(x, y)`.
+
+Tourlakis PR §0.1.0.17(b); Notes 10.2.12 row 4. -/
+def KMor1.mult : KMor1 2 :=
+  KMor1.rec1
+    (h := KMor1.zero)
+    (g := KMor1.comp KMor1.add (fun i => match i with
+      | ⟨0, _⟩ => KMor1.proj ⟨1, by decide⟩
+      | ⟨1, _⟩ => KMor1.proj ⟨2, by decide⟩))
+
+private lemma KMor1.mult_aux (n : ℕ) (p : Fin 1 → ℕ) :
+    KMor1.mult.interp (Fin.cons n p) = n * p ⟨0, by decide⟩ := by
+  induction n with
+  | zero =>
+    unfold KMor1.mult
+    rw [KMor1.interp_rec1_zero, KMor1.interp_zero]
+    omega
+  | succ n ih =>
+    unfold KMor1.mult
+    rw [KMor1.interp_rec1_succ, KMor1.interp_comp, KMor1.interp_add,
+        KMor1.interp_proj, KMor1.interp_proj]
+    have hidx1 :
+        (⟨1, by decide⟩ : Fin (1 + 1 + 1))
+          = Fin.castAdd 1
+              (⟨1, by decide⟩ : Fin (1 + 1)) := by
+      apply Fin.ext; rfl
+    rw [hidx1, Fin.append_left]
+    have hidx2 :
+        (⟨2, by decide⟩ : Fin (1 + 1 + 1))
+          = Fin.natAdd (1 + 1) (⟨0, by decide⟩ : Fin 1) := by
+      apply Fin.ext; rfl
+    rw [hidx2, Fin.append_right]
+    have hsucc : (⟨1, by decide⟩ : Fin (1 + 1))
+        = Fin.succ (⟨0, by decide⟩ : Fin 1) := by
+      apply Fin.ext; rfl
+    rw [hsucc, Fin.cons_succ]
+    change p ⟨0, by decide⟩ + KMor1.mult.interp (Fin.cons n p)
+        = (n + 1) * p ⟨0, by decide⟩
+    rw [ih, Nat.succ_mul]
+    omega
+
+/-- Interpretation of `mult`: `ctx 0 * ctx 1`. -/
+@[simp] theorem KMor1.interp_mult (ctx : Fin 2 → ℕ) :
+    KMor1.mult.interp ctx = ctx 0 * ctx 1 := by
+  have hctx :
+      ctx = Fin.cons (ctx 0) (fun j => ctx (Fin.succ j)) := by
+    funext i
+    match i with
+    | ⟨0, _⟩ => rfl
+    | ⟨1, _⟩ => rfl
+  rw [hctx, KMor1.mult_aux]
+  rfl
+
+example : KMor1.mult.level = 2 := by decide
+
 end GebLean

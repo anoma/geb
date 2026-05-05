@@ -30,3 +30,7 @@ open GebLean
 #guard KMor1.notEq1.interp ![1] == 1
 #guard KMor1.notEq1.interp ![2] == 0
 #guard KMor1.notEq1.interp ![5] == 0
+
+#guard KMor1.mult.interp ![0, 7] == 0
+#guard KMor1.mult.interp ![3, 4] == 12
+#guard KMor1.mult.interp ![1, 5] == 5
