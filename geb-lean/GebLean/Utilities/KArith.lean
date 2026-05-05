@@ -706,4 +706,162 @@ private def KMor1.divAux : KMor1 2 :=
 
 example : KMor1.divAux.level = 2 := by decide
 
+private lemma KMor1.div_succ_wrap (x y : ℕ) (hy : 0 < y)
+    (hw : x % y = y - 1) :
+    (x + 1) / y = x / y + 1 := by
+  have hdvd : y ∣ (x + 1) := by
+    refine ⟨x / y + 1, ?_⟩
+    have h := Nat.mod_add_div x y
+    rw [hw] at h
+    rw [Nat.mul_succ]
+    omega
+  rcases hdvd with ⟨k, hk⟩
+  rw [hk, Nat.mul_div_cancel_left _ hy]
+  have hkeq : y * (x / y + 1) = y * k := by
+    rw [Nat.mul_succ]
+    have h := Nat.mod_add_div x y
+    rw [hw] at h
+    omega
+  exact (Nat.eq_of_mul_eq_mul_left hy hkeq).symm
+
+private lemma KMor1.div_succ_no_wrap (x y : ℕ) (hy : 0 < y)
+    (hw : x % y < y - 1) :
+    (x + 1) / y = x / y := by
+  have hmod_eq : (x + 1) % y = x % y + 1 :=
+    KMor1.mod_succ_no_wrap x y hy hw
+  have h1 := Nat.mod_add_div x y
+  have h2 := Nat.mod_add_div (x + 1) y
+  rw [hmod_eq] at h2
+  have hmul : y * ((x + 1) / y) = y * (x / y) := by omega
+  exact Nat.eq_of_mul_eq_mul_left hy hmul
+
+private theorem KMor1.divAux_components (x y : ℕ) :
+    ∀ (j : Fin 3),
+    KMor1.simrecVec KMor1.divAux_h KMor1.divAux_g
+        (fun _ : Fin 1 => y) x j
+      = (if y = 0 then
+           match j with
+           | ⟨0, _⟩ => 0
+           | ⟨1, _⟩ => 0
+           | ⟨2, _⟩ => x
+         else
+           match j with
+           | ⟨0, _⟩ => x % y
+           | ⟨1, _⟩ => (y - 1) - x % y
+           | ⟨2, _⟩ => x / y) := by
+  induction x with
+  | zero =>
+    intro j
+    match j with
+    | ⟨0, _⟩ =>
+      simp only [KMor1.simrecVec_zero, KMor1.divAux_h,
+        KMor1.interp_zero]
+      split_ifs with hy
+      · rfl
+      · simp [Nat.zero_mod]
+    | ⟨1, _⟩ =>
+      simp only [KMor1.simrecVec_zero, KMor1.divAux_h,
+        KMor1.interp_pred]
+      split_ifs with hy
+      · simp [hy]
+      · simp [Nat.pred_eq_sub_one, Nat.zero_mod]
+    | ⟨2, _⟩ =>
+      simp only [KMor1.simrecVec_zero, KMor1.divAux_h,
+        KMor1.interp_zero]
+      split_ifs with hy
+      · rfl
+      · simp [Nat.zero_div]
+  | succ x ih =>
+    intro j
+    have ih0 := ih ⟨0, by decide⟩
+    have ih1 := ih ⟨1, by decide⟩
+    have ih2 := ih ⟨2, by decide⟩
+    match j with
+    | ⟨0, _⟩ =>
+      rw [KMor1.simrecVec_succ]
+      change (KMor1.divAux_g ⟨0, by decide⟩).interp _ = _
+      change (KMor1.comp KMor1.cond _).interp _ = _
+      simp only [KMor1.interp_comp, KMor1.interp_cond,
+        KMor1.interp_zero, KMor1.interp_succ,
+        KMor1.interp_proj]
+      have hf3 : ¬ ((3 : ℕ) < 1 + 1) := by decide
+      have hf2 : ¬ ((2 : ℕ) < 1 + 1) := by decide
+      simp only [hf3, hf2, dite_false]
+      simp only [show (3 - (1 + 1) : ℕ) = 1 from rfl,
+        show (2 - (1 + 1) : ℕ) = 0 from rfl, ih0, ih1]
+      by_cases hy : y = 0
+      · simp [hy]
+      · simp only [hy, ite_false]
+        by_cases hwrap : (y - 1) - x % y = 0
+        · have hpos : 0 < y := Nat.pos_of_ne_zero hy
+          have hxy : x % y < y := Nat.mod_lt _ hpos
+          have hw : x % y = y - 1 := by omega
+          have hsucc : (x + 1) % y = 0 :=
+            KMor1.mod_succ_wrap x y hpos hw
+          simp [hwrap, hsucc]
+        · simp only [hwrap, ite_false]
+          have hpos : 0 < y := Nat.pos_of_ne_zero hy
+          have hxy : x % y < y := Nat.mod_lt _ hpos
+          have hlt : x % y < y - 1 := by omega
+          have hsucc : (x + 1) % y = x % y + 1 :=
+            KMor1.mod_succ_no_wrap x y hpos hlt
+          rw [hsucc]
+    | ⟨1, _⟩ =>
+      rw [KMor1.simrecVec_succ]
+      change (KMor1.divAux_g ⟨1, by decide⟩).interp _ = _
+      change (KMor1.comp KMor1.cond _).interp _ = _
+      simp only [KMor1.interp_comp, KMor1.interp_cond,
+        KMor1.interp_pred, KMor1.interp_proj]
+      have hf3 : ¬ ((3 : ℕ) < 1 + 1) := by decide
+      have ht1 : ((1 : ℕ) < 1 + 1) := by decide
+      have hne : ¬ ((1 : ℕ) = 0) := by decide
+      simp only [hf3, ht1, hne, dite_true, dite_false]
+      simp only [show (3 - (1 + 1) : ℕ) = 1 from rfl, ih1]
+      by_cases hy : y = 0
+      · simp [hy, Nat.pred_eq_sub_one]
+      · simp only [hy, ite_false]
+        by_cases hwrap : (y - 1) - x % y = 0
+        · have hpos : 0 < y := Nat.pos_of_ne_zero hy
+          have hxy : x % y < y := Nat.mod_lt _ hpos
+          have hw : x % y = y - 1 := by omega
+          have hsucc : (x + 1) % y = 0 :=
+            KMor1.mod_succ_wrap x y hpos hw
+          simp [hwrap, hsucc, Nat.pred_eq_sub_one]
+        · simp only [hwrap, ite_false]
+          have hpos : 0 < y := Nat.pos_of_ne_zero hy
+          have hxy : x % y < y := Nat.mod_lt _ hpos
+          have hlt : x % y < y - 1 := by omega
+          have hsucc : (x + 1) % y = x % y + 1 :=
+            KMor1.mod_succ_no_wrap x y hpos hlt
+          rw [hsucc, Nat.pred_eq_sub_one]
+          omega
+    | ⟨2, _⟩ =>
+      rw [KMor1.simrecVec_succ]
+      change (KMor1.divAux_g ⟨2, by decide⟩).interp _ = _
+      change (KMor1.comp KMor1.cond _).interp _ = _
+      simp only [KMor1.interp_comp, KMor1.interp_cond,
+        KMor1.interp_succ, KMor1.interp_proj]
+      have hf3 : ¬ ((3 : ℕ) < 1 + 1) := by decide
+      have hf4 : ¬ ((4 : ℕ) < 1 + 1) := by decide
+      simp only [hf3, hf4, dite_false]
+      simp only [show (3 - (1 + 1) : ℕ) = 1 from rfl,
+        show (4 - (1 + 1) : ℕ) = 2 from rfl, ih1, ih2]
+      by_cases hy : y = 0
+      · simp [hy]
+      · simp only [hy, ite_false]
+        by_cases hwrap : (y - 1) - x % y = 0
+        · have hpos : 0 < y := Nat.pos_of_ne_zero hy
+          have hxy : x % y < y := Nat.mod_lt _ hpos
+          have hw : x % y = y - 1 := by omega
+          have hsucc : (x + 1) / y = x / y + 1 :=
+            KMor1.div_succ_wrap x y hpos hw
+          simp [hwrap, hsucc]
+        · simp only [hwrap, ite_false]
+          have hpos : 0 < y := Nat.pos_of_ne_zero hy
+          have hxy : x % y < y := Nat.mod_lt _ hpos
+          have hlt : x % y < y - 1 := by omega
+          have hsucc : (x + 1) / y = x / y :=
+            KMor1.div_succ_no_wrap x y hpos hlt
+          rw [hsucc]
+
 end GebLean
