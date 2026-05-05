@@ -652,4 +652,58 @@ example : KMor1.mod.level = 2 := by decide
     rw [KMor1.modAux_components (ctx 0) (ctx 1) ⟨0, by decide⟩]
     simp only [hy, ite_false]
 
+/-- Base family for `divAux`: `f₀(0,y)=0, f₁(0,y)=pred(y),
+f₂(0,y)=0`. -/
+private def KMor1.divAux_h : Fin 3 → KMor1 1 := fun i =>
+  match i with
+  | ⟨0, _⟩ => KMor1.zero
+  | ⟨1, _⟩ => KMor1.pred
+  | ⟨2, _⟩ => KMor1.zero
+
+/-- Step family for `divAux` (Fin 5 step context: x, y,
+prev_f₀, prev_f₁, prev_f₂); see `divAux` docstring for slot
+layout. -/
+private def KMor1.divAux_g : Fin 3 → KMor1 (1 + 1 + 3) := fun i =>
+  match i with
+  | ⟨0, _⟩ =>
+      KMor1.comp KMor1.cond (fun j => match j with
+        | ⟨0, _⟩ => KMor1.proj ⟨3, by decide⟩
+        | ⟨1, _⟩ => KMor1.zero
+        | ⟨2, _⟩ => KMor1.comp KMor1.succ
+                      (fun _ : Fin 1 => KMor1.proj ⟨2, by decide⟩))
+  | ⟨1, _⟩ =>
+      KMor1.comp KMor1.cond (fun j => match j with
+        | ⟨0, _⟩ => KMor1.proj ⟨3, by decide⟩
+        | ⟨1, _⟩ => KMor1.comp KMor1.pred
+                      (fun _ : Fin 1 => KMor1.proj ⟨1, by decide⟩)
+        | ⟨2, _⟩ => KMor1.comp KMor1.pred
+                      (fun _ : Fin 1 => KMor1.proj ⟨3, by decide⟩))
+  | ⟨2, _⟩ =>
+      KMor1.comp KMor1.cond (fun j => match j with
+        | ⟨0, _⟩ => KMor1.proj ⟨3, by decide⟩
+        | ⟨1, _⟩ => KMor1.comp KMor1.succ
+                      (fun _ : Fin 1 => KMor1.proj ⟨4, by decide⟩)
+        | ⟨2, _⟩ => KMor1.proj ⟨4, by decide⟩)
+
+/-- Helper: joint recursion of `mod`, "distance to wrap", and
+`div`. Output index 2 of the simrec (the `div` component).
+
+The first two components mirror `modAux`; the third tracks the
+running quotient, incrementing exactly at wrap points (when
+`prev_f₁ = 0`, i.e. `x % y = y - 1`).
+
+At `y = 0`: `f₁` stays at 0 forever, so the cond switch always
+selects `branch1 = succ(prev_f₂)`; hence `f₂(x, 0) = x`,
+matching Marchenkov §1's convention `x/0 = x`.
+
+Marchenkov 2007 (`x/y` is one of the four basis elements
+`S = {x+y, x∸y, x/y, 2^x}`); construction technique extends
+Tourlakis Notes 4.2.3's two-row companion-shift to a three-row
+shift-plus-counter. -/
+private def KMor1.divAux : KMor1 2 :=
+  KMor1.simrec (a := 1) (k := 2) (i := ⟨2, by decide⟩)
+    KMor1.divAux_h KMor1.divAux_g
+
+example : KMor1.divAux.level = 2 := by decide
+
 end GebLean
