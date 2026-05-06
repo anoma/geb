@@ -71,3 +71,12 @@ open GebLean
 #guard KMor1.divNat.interp ![5, 0] == 0
 #guard KMor1.divNat.interp ![0, 5] == 0
 #guard KMor1.divNat.interp ![5, 5] == 1
+
+example : KMor1.pow.interp ![2, 3] = 8 := by simp
+example : KMor1.pow.interp ![3, 2] = 9 := by simp
+example : KMor1.pow.interp ![1, 5] = 1 := by simp
+example : KMor1.pow.interp ![5, 1] = 5 := by simp
+example : KMor1.pow.interp ![0, 0] = 1 := by simp
+example : KMor1.pow.interp ![0, 1] = 0 := by simp
+example : KMor1.pow.interp ![5, 0] = 1 := by simp
+example : KMor1.pow.interp ![2, 5] = 32 := by simp
