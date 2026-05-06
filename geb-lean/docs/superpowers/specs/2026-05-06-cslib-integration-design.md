@@ -337,8 +337,10 @@ No other memory changes.
    Confirm `git status` is clean.
 8. Apply the `CLAUDE.md` edits (per §6). Run `markdownlint-cli2`
    on `README.md CLAUDE.md .github/copilot-instructions.md
-   docs/superpowers/specs/2026-05-06-cslib-integration-design.md`
-   (the project's standing convention plus this spec file).
+   docs/superpowers/specs/2026-05-06-cslib-integration-design.md
+   docs/superpowers/plans/2026-05-06-cslib-integration.md`
+   (the project's standing convention plus the spec and plan files
+   for this integration).
 9. Create the new memory file `reference_cslib.md` (per §7), update
    `MEMORY.md`. Run `markdownlint-cli2` on both memory files.
 10. Commit on `cslib-integration`, listing files explicitly (not
@@ -368,8 +370,9 @@ Before declaring the integration done:
   baseline recorded in §8 step 3.
 - `markdownlint-cli2` clean on the project markdown set (`README.md`,
   `CLAUDE.md`, `.github/copilot-instructions.md`,
-  `docs/superpowers/specs/2026-05-06-cslib-integration-design.md`)
-  and on the new memory file (`reference_cslib.md`) and `MEMORY.md`.
+  `docs/superpowers/specs/2026-05-06-cslib-integration-design.md`,
+  `docs/superpowers/plans/2026-05-06-cslib-integration.md`) and on
+  the new memory file (`reference_cslib.md`) and `MEMORY.md`.
 - `git status` clean (no leftover smoke files).
 - The new memory file and `MEMORY.md` entry exist and are
   consistent.

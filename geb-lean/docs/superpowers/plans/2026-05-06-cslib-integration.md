@@ -45,56 +45,108 @@ shared dep), CSLib, markdownlint-cli2, `gh`.
 - Create (worktree): branch `cslib-integration` based on `main`
 - Create: `.session/workstreams/cslib-integration.md`
 
+**Tooling note (applies to subagent-driven execution):** the
+`EnterWorktree` and `ExitWorktree` tools are deferred. Before invoking
+`EnterWorktree`, load its schema with
+`ToolSearch` using query `select:EnterWorktree,ExitWorktree`. The
+agent dispatching subagents should load these schemas once per
+session.
+
 - [ ] **Step 1: Verify clean working tree on `main` before forking**
 
 Run from the project root:
 
 ```bash
-git status --short && git log --oneline -1
+git status --short
+git branch --show-current
+git log --oneline -3
 ```
 
-Expected: empty `git status`; HEAD points to a commit whose message
-starts with `Add CSLib integration design spec` (the spec commit). If
-either fails, surface to the user — do not proceed.
+Expected: empty `git status`; current branch is `main`; HEAD is on a
+commit whose message is one of the planning commits for this
+integration. The acceptable commit messages start with one of:
 
-- [ ] **Step 2: Create worktree via EnterWorktree**
+- `Add CSLib integration design spec`
+- `Add CSLib integration implementation plan`
 
-Use the `EnterWorktree` tool with branch name `cslib-integration`.
-Lean's auto-naming is acceptable; the **branch** name must be
-`cslib-integration` (the worktree directory name does not matter).
+If `git status` is non-empty, or the branch is not `main`, or none of
+the recent commit messages match, surface to the user — do not
+proceed.
 
-After this step, all subsequent commands run from the new worktree's
-working directory.
+- [ ] **Step 2: Create the worktree**
 
-- [ ] **Step 3: Verify the worktree branch and HEAD**
+Invoke the `EnterWorktree` tool with `name: "cslib-integration"`. The
+tool creates a worktree under
+`/home/terence/git-workspaces/geb/.claude/worktrees/cslib-integration`
+(the parent-of-`geb-lean` `.claude/worktrees/` directory is the
+project's standard worktree location) on a new branch called
+`cslib-integration` based on the current `main`.
+
+After `EnterWorktree` returns, the session's working directory is the
+worktree's top — i.e. the **monorepo top**, not the Lean project. The
+Lean project lives in the `geb-lean/` subdirectory. The next step
+descends into it; every subsequent step in this plan assumes the
+working directory ends with `/geb-lean`.
+
+- [ ] **Step 3: Descend into the Lean project subdirectory**
+
+```bash
+cd geb-lean
+pwd
+```
+
+Expected: the printed path ends with `/.claude/worktrees/cslib-integration/geb-lean`.
+
+If `cd geb-lean` fails (no such directory), surface to the user — the
+worktree was created from the wrong starting point.
+
+- [ ] **Step 4: Verify the worktree branch and the Lean project layout**
 
 ```bash
 git branch --show-current
 git log --oneline -1
+ls lakefile.toml GebLean.lean
 ```
 
-Expected: branch is `cslib-integration`, HEAD is the spec commit.
+Expected: branch is `cslib-integration`; HEAD matches the head of
+`main` at the time the worktree was created; `lakefile.toml` and
+`GebLean.lean` are listed (no errors).
 
-- [ ] **Step 4: Create the workstream tracker file**
+- [ ] **Step 5: Create the workstream tracker file**
 
 Create `.session/workstreams/cslib-integration.md` with content:
 
 ```markdown
 # CSLib Integration
 
-Active workstream tracker. Remove this file after the integration
-commit is merged into `main`.
+Active workstream tracker. Remove after the integration is merged.
 
 - Spec: `docs/superpowers/specs/2026-05-06-cslib-integration-design.md`
 - Plan: `docs/superpowers/plans/2026-05-06-cslib-integration.md`
 - Branch: `cslib-integration`
 
-## Status
+## Tasks
 
-In progress. The plan is the source of truth for the active task.
+1. Set up worktree and workstream tracker.
+2. Establish baseline build and record baseline state below.
+3. Add CSLib `[[require]]` to `lakefile.toml`.
+4. Resolve via `lake update cslib`.
+5. Verify build and test counts after CSLib is added.
+6. Smoke test (write, build, delete).
+7. Update CLAUDE.md.
+8. Commit on the feature branch.
+9. Memory file and `MEMORY.md` update.
+10. Surface to user for review.
+11. Merge into `main` and clean up.
+
+## Baseline state
+
+(Filled in by Task 2 and read by Tasks 4 and 5; see those tasks for
+the exact format. Lines below this heading are append-only by the
+plan and are read by later tasks.)
 ```
 
-- [ ] **Step 5: Verify the file exists**
+- [ ] **Step 6: Verify the file exists**
 
 ```bash
 ls -1 .session/workstreams/cslib-integration.md
@@ -103,17 +155,22 @@ ls -1 .session/workstreams/cslib-integration.md
 Expected: the path is printed.
 
 (No commit yet — the workstream tracker is not committed; it is
-removed in the final task.)
+removed in Task 11.)
 
 ---
 
 ## Task 2: Establish baseline build
 
-**Files:** none modified.
+**Files:**
+
+- Modify: `.session/workstreams/cslib-integration.md` (append baseline
+  data under the "Baseline state" heading).
 
 This task records that `lake build` and `lake test` are clean before
-the CSLib require is added, so a later regression can be attributed
-to the integration.
+the CSLib require is added, so a later regression can be attributed to
+the integration. Baseline data is appended to the workstream tracker
+(not `/tmp`) so a separately-dispatched subagent in a later task can
+read it.
 
 - [ ] **Step 1: Populate the mathlib cache**
 
@@ -136,18 +193,50 @@ Expected: completes without errors, without warnings, and without
 failure to the user — do not proceed (the failure is unrelated to
 CSLib).
 
-- [ ] **Step 3: Run baseline `lake test`**
+- [ ] **Step 3: Run baseline `lake test` and record the count**
 
 ```bash
 lake test 2>&1 | tee /tmp/cslib-baseline-test.log
+BASELINE_TESTS=$(grep -E '[0-9]+ test|All [0-9]+ tests' \
+  /tmp/cslib-baseline-test.log | tail -1)
+echo "$BASELINE_TESTS"
 ```
 
-Inspect `/tmp/cslib-baseline-test.log` and record the test count
-(look for the summary line, e.g. "All N tests passed"). Note the
-number; it is the baseline used in the §5 verification gate of the
-spec.
+Inspect the printed line; it must summarise a successful test run
+(e.g. "All N tests passed" or "N tests, 0 failures"). If any test
+failed or the summary is missing, surface to the user — do not
+proceed. Note the literal summary line; it is the baseline.
 
-If any test fails, surface to the user — do not proceed.
+- [ ] **Step 4: Record the baseline mathlib rev and test summary**
+
+Append the following to `.session/workstreams/cslib-integration.md`
+(the workstream tracker created in Task 1) under the existing
+"Baseline state" heading. Use exactly this format so Tasks 4 and 5
+can grep it:
+
+```markdown
+- baseline-mathlib-rev: `<rev hash>`
+- baseline-test-summary: `<verbatim summary line from Step 3>`
+```
+
+To compute `<rev hash>`:
+
+```bash
+jq -r '.packages[] | select(.name=="mathlib") | .rev' \
+  lake-manifest.json
+```
+
+Use the printed value as `<rev hash>`. Use the `BASELINE_TESTS` value
+from Step 3 as `<verbatim summary line>`.
+
+- [ ] **Step 5: Verify the recorded baseline**
+
+```bash
+grep -E 'baseline-(mathlib-rev|test-summary)' \
+  .session/workstreams/cslib-integration.md
+```
+
+Expected: both lines are printed with non-empty values.
 
 ---
 
@@ -197,47 +286,64 @@ boundary, but Task 8 holds the single integration commit.)
 
 - Modify: `lake-manifest.json` (resolver-driven)
 
-- [ ] **Step 1: Capture the pre-update manifest mathlib rev**
-
-```bash
-jq -r '.packages[] | select(.name=="mathlib") | .rev' \
-  lake-manifest.json > /tmp/cslib-pre-mathlib-rev.txt
-cat /tmp/cslib-pre-mathlib-rev.txt
-```
-
-Note the rev printed. It is the comparison point for Step 3.
-
-- [ ] **Step 2: Run `lake update cslib`**
+- [ ] **Step 1: Run `lake update cslib`**
 
 ```bash
 lake update cslib
 ```
 
 Expected: completes without error; `lake-manifest.json` now contains
-a `cslib` entry. If the command errors out, surface to the user.
+a `cslib` entry.
 
-- [ ] **Step 3: Inspect the manifest diff**
+If the command errors with a message like "unknown package 'cslib'"
+(this can happen when the package is newly added to `lakefile.toml`
+and lake's prior manifest has no record of it), fall back to:
 
 ```bash
-git diff lake-manifest.json | head -120
+lake update
 ```
 
-Required: a new `cslib` package entry has been added, with `inputRev =
-"v4.29.0-rc6"` and a concrete `rev`. Allowed: `mathlib` rev (and any of
-its transitive deps: `batteries`, `aesop`, `Qq`, `proofwidgets`,
-`plausible`) may have moved, if the resolver chose to bump them for
-compatibility with cslib's master pin. Forbidden: any other unrelated
-package moves. If forbidden churn appears, surface to the user.
+After `lake update`, the manifest must contain a `cslib` entry.
+Either way, if the command errors out, surface to the user.
 
-- [ ] **Step 4: If mathlib rev moved, repopulate the cache**
+- [ ] **Step 2: Inspect the manifest diff (full)**
 
-Compare the post-update mathlib rev against
-`/tmp/cslib-pre-mathlib-rev.txt`:
+```bash
+git diff lake-manifest.json
+```
+
+Read the entire diff (do not truncate). Required: a new `cslib`
+package entry has been added with `inputRev = "v4.29.0-rc6"` and a
+concrete `rev`. Allowed: `mathlib` rev (and any of its transitive
+deps: `batteries`, `aesop`, `Qq`, `proofwidgets`, `plausible`) may
+have moved, if the resolver chose to bump them for compatibility with
+cslib's master pin. Forbidden: any other unrelated package moves.
+
+To enumerate the package list before/after deterministically:
+
+```bash
+jq -r '.packages[].name' lake-manifest.json | sort -u > /tmp/post.txt
+git show HEAD:geb-lean/lake-manifest.json 2>/dev/null \
+  | jq -r '.packages[].name' | sort -u > /tmp/pre.txt
+diff /tmp/pre.txt /tmp/post.txt
+```
+
+(The `geb-lean/` path prefix is correct because the worktree's
+manifest lives under that subdirectory in the repo's tree.) Expected
+diff: a single addition line `> cslib`. Anything else is a yellow
+flag — STOP and surface to the user; do not proceed to Task 5.
+
+- [ ] **Step 3: If mathlib rev moved, repopulate the cache**
+
+Read the baseline mathlib rev recorded in Task 2 from the workstream
+tracker, and compare to the post-update rev:
 
 ```bash
 NEW=$(jq -r '.packages[] | select(.name=="mathlib") | .rev' \
   lake-manifest.json)
-OLD=$(cat /tmp/cslib-pre-mathlib-rev.txt)
+OLD=$(grep '^- baseline-mathlib-rev:' \
+  .session/workstreams/cslib-integration.md \
+  | sed 's/.*`\(.*\)`.*/\1/')
 echo "OLD=$OLD"; echo "NEW=$NEW"
 ```
 
@@ -280,15 +386,21 @@ If the build fails:
 4. If the build still fails inside CSLib after a forward mathlib
    bump, surface to the user.
 
-- [ ] **Step 2: Run `lake test`**
+- [ ] **Step 2: Run `lake test` and compare against the baseline**
 
 ```bash
 lake test 2>&1 | tee /tmp/cslib-post-test.log
+POST=$(grep -E '[0-9]+ test|All [0-9]+ tests' \
+  /tmp/cslib-post-test.log | tail -1)
+BASELINE=$(grep '^- baseline-test-summary:' \
+  .session/workstreams/cslib-integration.md \
+  | sed 's/.*`\(.*\)`.*/\1/')
+echo "BASELINE: $BASELINE"
+echo "POST    : $POST"
 ```
 
-Compare the test-count summary to `/tmp/cslib-baseline-test.log`. The
-counts must match exactly. If they differ, surface to the user — a
-silent change in test discovery would be a yellow flag.
+The two summary lines must match exactly. If they differ, surface to
+the user — a silent change in test discovery would be a yellow flag.
 
 ---
 
@@ -298,10 +410,19 @@ silent change in test discovery would be a yellow flag.
 
 - Create then delete (transient):
   `GebLean/_CslibSmokeTest.lean`
+- Modify then revert (transient): `GebLean.lean` (one extra `import`
+  line, removed before commit).
 
-The leading underscore ensures the file is never confused for a
-deliverable module and is alphabetically grouped at the top of any
-directory listing for deletion.
+`GebLean.lean` is the project's library root and lists every
+deliverable module's import explicitly; lake's `lean_lib` defaults to
+that single root, so a file under `GebLean/` is only compiled when it
+is reached transitively from `GebLean.lean`. The smoke test therefore
+needs a temporary `import` line in `GebLean.lean` so `lake build`
+picks it up. Both the smoke file and the temporary import are
+reverted before commit.
+
+The smoke-file leading underscore (`_CslibSmokeTest.lean`) signals
+"not a deliverable module" and groups it for cleanup.
 
 - [ ] **Step 1: Write the smoke test file**
 
@@ -329,10 +450,26 @@ example : URM.Regs.read (URM.Regs.write URM.Regs.zero 0 7) 0 = 7 := by
 #check @HasFresh
 ```
 
-- [ ] **Step 2: Build the smoke test file**
+- [ ] **Step 2: Add a temporary import to `GebLean.lean`**
+
+Append a single line at the very end of `GebLean.lean`:
+
+```lean
+import GebLean._CslibSmokeTest
+```
+
+Verify:
 
 ```bash
-lake build GebLean._CslibSmokeTest
+tail -1 GebLean.lean
+```
+
+Expected output: exactly the line above.
+
+- [ ] **Step 3: Build the smoke test via the library root**
+
+```bash
+lake build
 ```
 
 Expected: the file compiles cleanly. The two `example` proofs close
@@ -348,31 +485,44 @@ diagnostic (CSLib uses `module`/`public import`), prepend `module`
 to the smoke file's first line, retry, and document the
 substitution.
 
-- [ ] **Step 3: Delete the smoke test file**
+- [ ] **Step 4: Revert the temporary import in `GebLean.lean`**
+
+Remove the last line of `GebLean.lean` (the
+`import GebLean._CslibSmokeTest` line just added):
+
+```bash
+sed -i '$d' GebLean.lean
+tail -1 GebLean.lean
+```
+
+Expected: the printed last line is whatever the original last import
+was (NOT `import GebLean._CslibSmokeTest`).
+
+- [ ] **Step 5: Delete the smoke test file**
 
 ```bash
 rm GebLean/_CslibSmokeTest.lean
 ```
 
-- [ ] **Step 4: Verify the tree is clean**
+- [ ] **Step 6: Verify the tree is clean**
 
 ```bash
 git status --short
+git diff GebLean.lean
 ```
 
-Expected: only `lakefile.toml` and `lake-manifest.json` are listed
-as modified. No new files. If the smoke file appears, the deletion
-failed — re-attempt and re-verify.
+Expected: `git status` lists exactly two modified files —
+`lakefile.toml` and `lake-manifest.json`. `git diff GebLean.lean`
+produces no output. If either fails, restore `GebLean.lean` from the
+git index (`git checkout -- GebLean.lean`) and re-attempt.
 
-- [ ] **Step 5: Re-build to confirm the deletion did not break the build**
+- [ ] **Step 7: Re-build after cleanup**
 
 ```bash
 lake build
 ```
 
-Expected: clean build. (This will be a no-op if the build cache
-recognises the workspace state; if it recompiles GebLean, that is
-fine.)
+Expected: clean build (cached).
 
 ---
 
@@ -475,7 +625,9 @@ re-run. Common fixers:
 
 - MD013 line-length: rewrap to 80 columns.
 - MD007 list-indent: align nested list bullets to two-space indent.
-- MD060 table-style: ensure pipe-separator rows have spaces.
+- Table issues: ensure separator rows have spaces around pipes
+  (`| --- | --- |`, not `|---|---|`), and surround tables with
+  blank lines.
 
 Do not silence warnings via inline disables.
 
@@ -657,23 +809,30 @@ amendments; apply them and re-surface if needed.)
 **Files:**
 
 - Modify: `main` branch HEAD
-- Delete: `.session/workstreams/cslib-integration.md`
+- Delete: `.session/workstreams/cslib-integration.md` (on the main
+  checkout)
 - Delete: branch `cslib-integration`
 - Delete: the worktree
 
 This task runs only after explicit user approval at Task 10.
 
-- [ ] **Step 1: Determine integration mode (fast-forward or rebase)**
+**Tooling note:** `ExitWorktree` is a deferred tool; load its schema
+once with `ToolSearch` query `select:ExitWorktree` (already done in
+Task 1 if `EnterWorktree` was loaded with the same call) before
+invoking.
+
+- [ ] **Step 1: Inside the worktree — fetch and decide mode**
 
 ```bash
 git fetch origin main
-git rev-list --count main..origin/main
+git rev-list --count cslib-integration..origin/main
 ```
 
-If the count is `0`, `main` has not advanced; fast-forward is
-possible. Continue with Step 2.
+If the count is `0`, `origin/main` has not advanced past the branch
+point; fast-forward is possible without a rebase. Skip Step 2.
 
-If the count is non-zero, `main` advanced. Rebase:
+If the count is non-zero, `origin/main` advanced; rebase the feature
+branch onto it from inside the worktree:
 
 ```bash
 git rebase origin/main
@@ -682,13 +841,24 @@ lake test
 ```
 
 Both `lake build` and `lake test` must pass after the rebase. If
-either fails, abort the rebase (`git rebase --abort`) and surface
-to the user — do not force-push, do not weaken the integration.
+either fails, abort with `git rebase --abort` and surface to the
+user — do not force-push, do not weaken the integration. After a
+successful rebase, push the rebased branch with
+`git push --force-with-lease origin cslib-integration` (the
+`--force-with-lease` is safer than `--force` because it refuses if
+the remote moved unexpectedly).
 
-- [ ] **Step 2: Switch to `main` and merge**
+- [ ] **Step 2: Exit the worktree (keep the branch on disk)**
 
-Exit the worktree (or use a fresh shell on the main checkout) and
-run:
+Invoke the `ExitWorktree` tool with `action: "remove"` and
+`discard_changes: false`. The tool refuses if the worktree has
+uncommitted changes; if it does, surface and stop. After this step,
+the session's working directory is back at the main checkout
+(`/home/terence/git-workspaces/geb/geb-lean`), the worktree directory
+is gone, and the feature branch `cslib-integration` still exists in
+the repo (because the commits were pushed to `origin` in Task 8).
+
+- [ ] **Step 3: On the main checkout, merge fast-forward**
 
 ```bash
 git checkout main
@@ -696,16 +866,17 @@ git pull --ff-only origin main
 git merge --ff-only cslib-integration
 ```
 
-Expected: fast-forward succeeds. `git log --oneline -3` should now
-show the integration commit at HEAD.
+Expected: fast-forward succeeds. If `--ff-only` refuses, the rebase
+in Step 1 was insufficient — surface to the user. `git log --oneline
+-3` should show the integration commit at HEAD.
 
-- [ ] **Step 3: Push `main`**
+- [ ] **Step 4: Push `main`**
 
 ```bash
 git push origin main
 ```
 
-- [ ] **Step 4: Delete the feature branch (local and remote)**
+- [ ] **Step 5: Delete the feature branch (local and remote)**
 
 ```bash
 git branch -d cslib-integration
@@ -716,15 +887,15 @@ The lowercase `-d` is required (not `-D`). If `-d` refuses with
 "not fully merged", do not escalate to `-D`; surface to the user
 to investigate.
 
-- [ ] **Step 5: Remove the worktree**
+- [ ] **Step 6: Remove the workstream tracker on `main`**
 
-Use the `ExitWorktree` tool with `action: "remove"`. The worktree
-must have no uncommitted changes; if it does, surface and stop.
-
-- [ ] **Step 6: Remove the workstream tracker**
+The tracker file lives only on the feature branch and is therefore
+not in `main`'s working tree (the merge brought `lakefile.toml`,
+`lake-manifest.json`, and `CLAUDE.md` only). If for any reason the
+file is present in `main`'s working tree, remove it:
 
 ```bash
-rm .session/workstreams/cslib-integration.md
+rm -f .session/workstreams/cslib-integration.md
 ```
 
 CSLib is now a standing dependency, not an active workstream.
