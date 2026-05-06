@@ -1042,7 +1042,8 @@ def limitHomToParametricCone
       simp only [Functor.const_obj_obj,
         Functor.const_obj_map,
         Category.id_comp, Category.assoc]
-      rw [s.w g] }
+      rw [← s.w g]
+      rfl }
 
 open Limits in
 /-- Roundtrip: `limitHom → cone → limitHom`
@@ -2519,7 +2520,8 @@ theorem parametricCoconeInject_naturality
     parametricCoconeInject C G hs e₁ x := by
   simp only [parametricCoconeInject,
     Category.assoc]
-  rw [s.w f]
+  rw [← s.w f]
+  rfl
 
 open Limits in
 /-- A presheaf cosection of an endofunctor
@@ -2573,7 +2575,8 @@ theorem presheafCosectionInject_naturality
     presheafCosectionInject C hs P x := by
   simp only [presheafCosectionInject,
     Category.assoc]
-  rw [s.w α]
+  rw [← s.w α]
+  rfl
 
 open Limits in
 /-- Every presheaf cosection factors through the
