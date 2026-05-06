@@ -322,6 +322,13 @@ params)`. -/
   rw [h_right]
   rfl
 
+@[simp] theorem KMor1.interp_permArgs {n m : ℕ}
+    (σ : Fin m → Fin n) (f : KMor1 m) (ctx : Fin n → ℕ) :
+    (f.permArgs σ).interp ctx = f.interp (fun i => ctx (σ i)) := by
+  unfold KMor1.permArgs
+  rw [KMor1.interp_comp]
+  rfl
+
 /-- Interpretation of `KMorN.id`: applying the identity
 morphism to a context returns the context itself. -/
 @[simp] theorem KMorN.interp_id (n : ℕ)
