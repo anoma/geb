@@ -1038,4 +1038,50 @@ private theorem KMor1.pow_bound (x y : ℕ) :
         (Nat.mul_lt_mul_right h_2pow_pos).mpr hx_lt
       omega
 
+/-- Wikipedia/Marchenkov formula for `x^y`:
+
+  `x^y = 2^((x*y + x + 1) * y) % (2^(x*y + x + 1) - x)`. -/
+private theorem KMor1.pow_formula (x y : ℕ) :
+    x ^ y =
+      2 ^ ((x * y + x + 1) * y) %
+        (2 ^ (x * y + x + 1) - x) := by
+  have h_bound : x ^ y + x < 2 ^ (x * y + x + 1) :=
+    KMor1.pow_bound x y
+  have h_pow_gt_x : 2 ^ (x * y + x + 1) > x := by omega
+  have hM_pos : 2 ^ (x * y + x + 1) - x > 0 := by omega
+  have h_pow_mul :
+      2 ^ ((x * y + x + 1) * y) = (2 ^ (x * y + x + 1)) ^ y := by
+    rw [← Nat.pow_mul]
+  have h_x_lt_M : x ^ y < 2 ^ (x * y + x + 1) - x := by omega
+  have h_x_lt_M_base : x < 2 ^ (x * y + x + 1) - x := by
+    by_cases hy : y = 0
+    · subst hy
+      have hx_lt : x < 2 ^ x := Nat.lt_two_pow_self
+      have h_pow : 2 ^ (x * 0 + x + 1) = 2 * 2 ^ x := by
+        rw [Nat.mul_zero, Nat.zero_add, Nat.pow_succ, Nat.mul_comm]
+      rw [h_pow]
+      omega
+    · have hy1 : y ≥ 1 := Nat.one_le_iff_ne_zero.mpr hy
+      have h_x_le_xy : x ≤ x ^ y := by
+        by_cases hx0 : x = 0
+        · simp [hx0, Nat.zero_pow (Nat.pos_of_ne_zero hy)]
+        · calc x = x ^ 1 := (pow_one x).symm
+            _ ≤ x ^ y := Nat.pow_le_pow_right
+                (Nat.one_le_iff_ne_zero.mpr hx0) hy1
+      omega
+  have h_2pow_mod :
+      2 ^ (x * y + x + 1) % (2 ^ (x * y + x + 1) - x) = x := by
+    have h_eq : 2 ^ (x * y + x + 1)
+        = x + (2 ^ (x * y + x + 1) - x) := by omega
+    nth_rw 1 [h_eq]
+    rw [Nat.add_mod_right, Nat.mod_eq_of_lt h_x_lt_M_base]
+  have h_pow_mod :
+      (2 ^ (x * y + x + 1)) ^ y % (2 ^ (x * y + x + 1) - x)
+        = x ^ y % (2 ^ (x * y + x + 1) - x) := by
+    conv_lhs => rw [Nat.pow_mod, h_2pow_mod]
+  have h_xy_mod :
+      x ^ y % (2 ^ (x * y + x + 1) - x) = x ^ y :=
+    Nat.mod_eq_of_lt h_x_lt_M
+  rw [h_pow_mul, h_pow_mod, h_xy_mod]
+
 end GebLean
