@@ -468,6 +468,32 @@ def KMor1.eq : KMor1 2 :=
 
 example : KMor1.eq.level = 2 := by decide
 
+/-- "If x = y then z else z'": composition of `cond` with
+`eq(x, y)`.
+
+`condEq(x, y, z, z') = z` when `x = y`, `z'` otherwise. -/
+def KMor1.condEq : KMor1 4 :=
+  KMor1.comp KMor1.cond (fun i => match i with
+    | ⟨0, _⟩ =>
+        KMor1.comp KMor1.eq (fun j => match j with
+          | ⟨0, _⟩ => KMor1.proj ⟨0, by decide⟩
+          | ⟨1, _⟩ => KMor1.proj ⟨1, by decide⟩)
+    | ⟨1, _⟩ => KMor1.proj ⟨2, by decide⟩
+    | ⟨2, _⟩ => KMor1.proj ⟨3, by decide⟩)
+
+@[simp] theorem KMor1.interp_condEq (ctx : Fin 4 → ℕ) :
+    KMor1.condEq.interp ctx
+      = if ctx 0 = ctx 1 then ctx 2 else ctx 3 := by
+  unfold KMor1.condEq
+  rw [KMor1.interp_comp, KMor1.interp_cond, KMor1.interp_comp,
+      KMor1.interp_eq, KMor1.interp_proj, KMor1.interp_proj,
+      KMor1.interp_proj, KMor1.interp_proj]
+  by_cases h : ctx 0 = ctx 1
+  · simp [h]
+  · simp [h]
+
+example : KMor1.condEq.level = 2 := by decide
+
 /-- Powers of two: `pow2(0) = 1`, `pow2(x+1) = double(pow2(x))`.
 
 Tourlakis PR §0.1.0.17(c); Notes 10.2.12 row 5. -/
