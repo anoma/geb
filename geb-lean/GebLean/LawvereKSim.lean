@@ -143,6 +143,18 @@ example : (KMor1.rec1
     (h := (KMor1.zero : KMor1 0))
     (g := (KMor1.zero : KMor1 2))).level = 1 := by decide
 
+/-- Precompose a `KMor1 m` term with a context-projection map
+`σ : Fin m → Fin n`. Given `f : KMor1 m`, produces a `KMor1 n`
+that interprets at context `ctx : Fin n → ℕ` as
+`f.interp (fun i => ctx (σ i))`.
+
+Built from `comp` and `proj` only; no new constructors. The level
+is unchanged from `f.level`: `comp` takes `max` over children's
+levels and the inner `proj`s are level 0. -/
+def KMor1.permArgs {n m : ℕ} (σ : Fin m → Fin n) (f : KMor1 m) :
+    KMor1 n :=
+  KMor1.comp f (fun i => KMor1.proj (σ i))
+
 theorem KMor1.level_le_succ {n : ℕ} (f : KMor1 n)
     {d : ℕ} (h : f.level ≤ d) : f.level ≤ d + 1 :=
   Nat.le_succ_of_le h
