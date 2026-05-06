@@ -329,6 +329,19 @@ params)`. -/
   rw [KMor1.interp_comp]
   rfl
 
+@[simp] theorem KMor1.interp_swap (f : KMor1 2) (ctx : Fin 2 → ℕ) :
+    (KMor1.swap f).interp ctx
+      = f.interp (fun i => match i with
+                            | ⟨0, _⟩ => ctx 1
+                            | ⟨1, _⟩ => ctx 0) := by
+  unfold KMor1.swap
+  rw [KMor1.interp_permArgs]
+  congr 1
+  funext i
+  match i with
+  | ⟨0, _⟩ => rfl
+  | ⟨1, _⟩ => rfl
+
 /-- Interpretation of `KMorN.id`: applying the identity
 morphism to a context returns the context itself. -/
 @[simp] theorem KMorN.interp_id (n : ℕ)
