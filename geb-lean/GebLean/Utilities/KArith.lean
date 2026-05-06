@@ -993,4 +993,49 @@ def KMor1.divNat : KMor1 2 :=
 
 example : KMor1.divNat.level = 2 := by decide
 
+/-- Bound used in the Wikipedia/Marchenkov formula for `x^y`:
+`x^y + x < 2^(x*y + x + 1)`. -/
+private theorem KMor1.pow_bound (x y : ℕ) :
+    x ^ y + x < 2 ^ (x * y + x + 1) := by
+  induction y with
+  | zero =>
+    have hx : x < 2 ^ x := Nat.lt_two_pow_self
+    have h_pow : 2 ^ x ≥ 1 := Nat.one_le_two_pow
+    have h1 : 1 + x < 2 ^ (x + 1) := by
+      rw [Nat.pow_succ]
+      omega
+    simpa [Nat.pow_zero, Nat.mul_zero] using h1
+  | succ y ih =>
+    by_cases hx : x = 0
+    · simp [hx,
+            Nat.zero_pow (Nat.pos_of_ne_zero (Nat.succ_ne_zero y))]
+    · have hx1 : x ≥ 1 := Nat.one_le_iff_ne_zero.mpr hx
+      have hx_lt : x < 2 ^ x := Nat.lt_two_pow_self
+      have h_2pow_pos : 2 ^ (x * y + x + 1) > 0 := Nat.two_pow_pos _
+      have h_target : 2 ^ (x * (y + 1) + x + 1)
+          = 2 ^ x * 2 ^ (x * y + x + 1) := by
+        rw [← Nat.pow_add]
+        congr 1
+        rw [Nat.mul_succ]
+        omega
+      rw [Nat.pow_succ x y, h_target]
+      have h_xy_lt : x ^ y < 2 ^ (x * y + x + 1) := by omega
+      have h_xy_le : x ^ y ≤ 2 ^ (x * y + x + 1) - 1 := by omega
+      have h_xy_x : x ^ y * x + x ≤ x * 2 ^ (x * y + x + 1) := by
+        have h1 : x ^ y * x ≤ (2 ^ (x * y + x + 1) - 1) * x :=
+          Nat.mul_le_mul_right x h_xy_le
+        have h2 : (2 ^ (x * y + x + 1) - 1) * x
+                  = 2 ^ (x * y + x + 1) * x - x := by
+          rw [Nat.sub_mul, Nat.one_mul]
+        have h3 : x ≤ 2 ^ (x * y + x + 1) * x := by
+          have hge : 1 ≤ 2 ^ (x * y + x + 1) := h_2pow_pos
+          calc x = 1 * x := by rw [Nat.one_mul]
+            _ ≤ 2 ^ (x * y + x + 1) * x := Nat.mul_le_mul_right x hge
+        rw [Nat.mul_comm x (2 ^ (x * y + x + 1))]
+        omega
+      have h_right :
+          x * 2 ^ (x * y + x + 1) < 2 ^ x * 2 ^ (x * y + x + 1) :=
+        (Nat.mul_lt_mul_right h_2pow_pos).mpr hx_lt
+      omega
+
 end GebLean
