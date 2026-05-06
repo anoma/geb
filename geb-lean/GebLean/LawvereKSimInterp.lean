@@ -208,6 +208,58 @@ previous vector. -/
                 ⟨idx.val - (a + 1), by omega⟩) :=
   rfl
 
+/-- Step-case interp for `simrecVec` in the `Fin.append (Fin.cons …)`
+form. Equivalent to `simrecVec_succ` (which produces a dite-form
+context) but expressed via the standard `Fin.append` of
+`Fin.cons (recvar, params)` and the `simrecVec`-at-`n` family.
+This is the form used by `KMor1.interp_rec1_succ` and any other
+caller that wants to treat the step context positionally. -/
+@[simp] theorem KMor1.simrecVec_succ_append {a k : ℕ}
+    (h : Fin (k + 1) → KMor1 a)
+    (g : Fin (k + 1) → KMor1 (a + 1 + (k + 1)))
+    (params : Fin a → ℕ) (n : ℕ) (j : Fin (k + 1)) :
+    KMor1.simrecVec h g params (n + 1) j
+      = (g j).interp (Fin.append (Fin.cons n params)
+                                  (KMor1.simrecVec h g params n)) := by
+  simp only [KMor1.simrecVec_succ]
+  congr 1
+  funext idx
+  rcases idx with ⟨v, h_v⟩
+  by_cases h₁ : v < a + 1
+  · have h_cast : (⟨v, h_v⟩ : Fin (a + 1 + (k + 1)))
+        = Fin.castAdd (k + 1) (⟨v, h₁⟩ : Fin (a + 1)) := by
+      apply Fin.ext; rfl
+    rw [show Fin.append (Fin.cons n params)
+            (KMor1.simrecVec h g params n) ⟨v, h_v⟩
+            = Fin.append (Fin.cons n params)
+                (KMor1.simrecVec h g params n)
+                (Fin.castAdd (k + 1) (⟨v, h₁⟩ : Fin (a + 1)))
+        from congrArg _ h_cast,
+        Fin.append_left]
+    simp only [h₁, dite_true]
+    by_cases h₂ : v = 0
+    · simp only [h₂, dite_true]; rfl
+    · simp only [h₂, dite_false]
+      have h_succ : (⟨v, h₁⟩ : Fin (a + 1))
+          = Fin.succ (⟨v - 1, by omega⟩ : Fin a) := by
+        apply Fin.ext; change v = (v - 1) + 1; omega
+      rw [h_succ, Fin.cons_succ]
+  · have h_cast : (⟨v, h_v⟩ : Fin (a + 1 + (k + 1)))
+        = Fin.natAdd (a + 1)
+            (⟨v - (a + 1), by omega⟩ : Fin (k + 1)) := by
+      apply Fin.ext
+      change v = (a + 1) + (v - (a + 1))
+      omega
+    rw [show Fin.append (Fin.cons n params)
+            (KMor1.simrecVec h g params n) ⟨v, h_v⟩
+            = Fin.append (Fin.cons n params)
+                (KMor1.simrecVec h g params n)
+                (Fin.natAdd (a + 1)
+                  (⟨v - (a + 1), by omega⟩ : Fin (k + 1)))
+        from congrArg _ h_cast,
+        Fin.append_right]
+    simp only [h₁, dite_false]
+
 /-- Base-case interp for `rec1`: at recursion variable `0`,
 `rec1 h g` returns `h.interp params`. -/
 @[simp] theorem KMor1.interp_rec1_zero {a : ℕ}
