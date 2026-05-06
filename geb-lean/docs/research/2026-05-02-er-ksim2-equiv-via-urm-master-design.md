@@ -1,7 +1,44 @@
 # Master design — ER ↔ K^sim_2 categorical equivalence via URM simulation
 
-> **Status.** Step 0 master design. Awaits adversarial review and
-> user sign-off before per-step cycles begin.
+> **Status.** Phase 1 (kToER, steps 0-5) complete. Phase 2 (erToK,
+> steps 6-10) and Phase 3 (categorical iso, step 11) remain open.
+>
+> Steps 0-5 closed `K^sim_2 ⊆ ER` via the structural-induction
+> Path 2 of §3:
+>
+> - Step 0 — master design (this document) and adversarial review.
+> - Step 1 — `Nat.tuplePack` / `Nat.tupleAt` plus ER-side
+>   `ERMor1.tuplePack` / `ERMor1.tupleAt` with `PolyBound`
+>   builders and bijection theorems
+>   (`GebLean/Utilities/Tupling.lean`,
+>   `GebLean/Utilities/ERTupling.lean`).
+> - Step 2 — Nat-level `Nat.simRecVec` plus
+>   `ERMor1.simultaneousBoundedRec` with packed-state bounds and
+>   correctness theorem `simultaneousBoundedRec_interp_correct`
+>   (`GebLean/Utilities/SimRec.lean`,
+>   `GebLean/Utilities/ERPackedBound.lean`,
+>   `GebLean/Utilities/ERSimultaneousBoundedRec.lean`).
+> - Step 3 — `ERMor1.A_one`, `ERMor1.A_one_iter`,
+>   `ERMor1.A_two_iter` (alias of `towerER`) with `PolyBound`
+>   builders for the linear-shape variants
+>   (`GebLean/Utilities/ERAMajorants.lean`).
+> - Step 4 — `KMor1.majorize_by_A_one_iter`,
+>   `KMor1.majorize_by_A_two_iter`, the
+>   `linearBound_le_A_one_iter` translation, and the level-2
+>   structural-induction proof
+>   (`GebLean/LawvereKSimMajorization.lean`).
+> - Step 5 — `kToER`, `kToER_interp`, `kToERN`, `kToERN_interp`,
+>   the bundled `kToERFunctor : LawvereKSimDCat 2 ⥤ LawvereERCat`
+>   with `map_id` / `map_comp`, plus the follow-up
+>   `kInterpFunctor` definition and the strict functor equality
+>   `kToERFunctor ⋙ erInterpFunctor = kInterpFunctor`
+>   (`GebLean/LawvereKSimER.lean`,
+>   `GebLean/LawvereKSimDCatInterp.lean`).
+>
+> All five implementation cycles concluded with passing
+> `lake build` and `lake test` runs and clean code-review
+> approvals; no `sorry`, `admit`, `Classical`, `noncomputable`,
+> or `axiom` appears on the load-bearing path.
 >
 > **Position in the project.** Supersedes the direct-translation
 > `kToER` strategy (preserved as renamed `kToERDirect` /
@@ -12,6 +49,15 @@
 > brainstorm + writing-plans + adversarial-review cycles execute,
 > closing both `kToER` and `erToK` directions on a shared URM
 > kernel.
+>
+> **Document conventions.** §2 lists per-step status. §3 (kToER
+> via structural induction) describes Path 2 as it was
+> implemented; the entities named in §3.1–§3.5 now exist in the
+> Lean codebase, and the prose has been left in its design-time
+> voice with status banners at each subsection. §4–§9 (URM
+> kernel, combinators, catalogues, simulator, compiler, runtime
+> bound) and §10–§11 (functors, iso) remain forward-looking
+> design for the not-yet-started erToK side.
 
 ---
 
@@ -312,13 +358,25 @@ URM-simulation), with step 11 producing the categorical iso.
 
 ### Step 0 — Master design (this document)
 
-Lays out the full structure. Adversarial review obligated to
-re-run the prior failure-mode hypotheses (§15) against the
-proposal.
+**Status: complete.** Lays out the full structure. Adversarial
+review obligated to re-run the prior failure-mode hypotheses
+(§15) against the proposal. Three rounds of adversarial review
+landed before per-step cycles began (commits `aa1b563b`,
+`3afb62fe`, `1a1a3cb3`, `9c806cb8`).
 
 ### Steps 1–5 — kToER side (Tourlakis ⊆ structural induction)
 
+**Status: complete.** All five cycles closed. The strict functor
+equality `kToERFunctor ⋙ erInterpFunctor = kInterpFunctor`
+(commits `28325ef4`, `c96dd275`) packages the kToER side as the
+final ⊆ statement: every K^sim_2 morphism quotient class has the
+same interpretation as its ER image, witnessed by an explicit
+`ERMor1` term constructed without `Classical.choice`.
+
 #### Step 1 — Foundational tupling infrastructure (ER side only)
+
+**Status: complete** (commits `ba7f387c`–`60c2e388`, plus
+`4e601b63` for the `LawvereERCat.tupleIso` decorative iso).
 
 `Nat.tuplePack`, `Nat.tupleAt`, pack-unpack bijection,
 polynomial value bound (`Utilities/Tupling.lean`).
@@ -341,6 +399,8 @@ handles K^sim's side. K^sim-side tupling may be needed for
 the erToK URM simulator (step 9); if so, it gets built then.
 
 #### Step 2 — Simultaneous bounded recursion in ER
+
+**Status: complete** (commits `95ab67a3`–`02be0af3`).
 
 `ERMor1.simultaneousBoundedRec` named composite
 (`Utilities/ERSimultaneousBoundedRec.lean`). Multi-output
@@ -366,6 +426,9 @@ K^sim side.
 
 #### Step 3 — Tourlakis A_n named composites in ER
 
+**Status: complete** (commits `7303731a`–`a7a0b629`,
+`cd5d0b8e`).
+
 `ERMor1.A_one : ERMor1 1` (interp `λx. 2x + 2`, Tourlakis
 page 22 A_1).
 `ERMor1.A_one_iter : ℕ → ERMor1 1` (interp `A_1^r`).
@@ -378,6 +441,15 @@ inequality from step 4 instead.
 (`Utilities/ERAMajorants.lean`.)
 
 #### Step 4 — Majorization theorem (Tourlakis 0.1.0.10)
+
+**Status: complete** (commits `106c1efb`–`635a0935`,
+`2f23ff1d`). The level-2 prose proof in §3.4 was Lean-realized
+as `KMor1.majorize_by_A_two_iter` with explicit
+`r_2 = 2` and an explicit Nat-level `offset` derived from the
+children's `A_1^r` witnesses. The bridge lemma
+`KMor1.majorize_by_componentBound` (commit `ce265629`)
+packages the level-2 result as the dominance hypothesis that
+step 5 feeds into `simultaneousBoundedRec_interp_correct`.
 
 `linearBound_le_A_one_iter` — translation lemma turning any
 `KMor1.linearBound (c, d)` into an `A_1^r` bound with
@@ -405,6 +477,13 @@ level ≤ n (n ≤ 2), an explicit Lean-`Nat` `r` such that
 
 #### Step 5 — `kToER` and `kToERFunctor`
 
+**Status: complete** (commits `a787a60c`–`297a58a8`, plus
+follow-ups `28325ef4`–`1352cb3c` packaging
+`kInterpFunctor`, the strict functor equality
+`kToERFunctor ⋙ erInterpFunctor = kInterpFunctor`, and
+the obj/quot simp closure lemmas). Lands in
+`GebLean/LawvereKSimER.lean`.
+
 `kToER : KMor1 a → KMor1.level f ≤ 2 → ERMor1 a` by
 structural induction on K^sim. Each constructor case is a
 one-line `match` invoking named composites and
@@ -418,13 +497,20 @@ LawvereKSimDCat 2 ⥤ LawvereERCat`, functor laws.
 
 ### Steps 6–10 — erToK side (URM simulation)
 
+**Status: not started.** The descriptions below remain
+forward-looking design.
+
 #### Step 6 — `RegisterMachine.lean` audit and gap-fill
+
+**Status: pending.**
 
 Audit existing `GebLean/Utilities/RegisterMachine.lean` (166
 lines) for sufficiency relative to §4 below. Likely outcome:
 small additive lemmas. Near-empty cycle.
 
 #### Step 7 — `URMConcrete.lean`
+
+**Status: pending.**
 
 Define `URMInstr` (Tourlakis's six primitives), `URMProgram`,
 `toRegisterMachine`, the `URMComputes` structure (§4.4), and
@@ -433,6 +519,8 @@ with both stepBound arithmetic and tower-witness arithmetic.
 
 #### Step 8 — ER → URM compiler
 
+**Status: pending.**
+
 Catalogue `URMSubroutinesER.lean`: URM subroutines
 emulating each `ERMor1` constructor (`zero`, `succ`, `proj`,
 `sub`, `comp`, `bsum`, `bprod`), each with `URMComputes`.
@@ -440,6 +528,8 @@ Compiler `compileER : ERMor1 a → URMProgram` as a one-line
 `match`.
 
 #### Step 9 — K^sim simulator for URM and runtime bound
+
+**Status: pending.**
 
 Catalogue `KSimSubroutinesURM.lean`: K^sim subroutines
 emulating each URM primitive instruction. Per-URM simulator
@@ -456,6 +546,8 @@ Tourlakis §0.1.0.17 (c).
 
 #### Step 10 — `erToK` and `erToKFunctor`
 
+**Status: pending.**
+
 `erToK : ERMor1 a → KMor1 a` of level ≤ 2 defined as
 `simulateInKSim (compileER e) (boundExprK e, projects, zeros)`
 followed by output-register projection. `erToKN`,
@@ -464,6 +556,14 @@ LawvereKSimDCat 2`, functor laws.
 (`LawvereERKSim.lean`.)
 
 ### Step 11 — Categorical isomorphism (`LawvereERKSimEquivalence.lean`)
+
+**Status: pending.** Awaits step 10. The kToER half of the
+strict iso is now witnessed by
+`kToERFunctor_comp_erInterpFunctor` (in
+`GebLean/LawvereKSimER.lean`) packaged as the equality
+`kToERFunctor ⋙ erInterpFunctor = kInterpFunctor`; the
+analogous `erToKFunctor`-side equality and the round-trip
+identities will be proven once step 10 lands.
 
 Strict equality `kToERFunctor ⋙ erToKFunctor = 𝟭
 (LawvereKSimDCat 2)` and `erToKFunctor ⋙ kToERFunctor = 𝟭
@@ -497,24 +597,31 @@ Longest serial chain on the kToER side: 0 → 1 → 2 → 3 → 4 →
 
 ### Per-step expected size
 
-| Step | Side | Expected size | Notes |
-| - | - | - | - |
-| 0 | both | substantial | this document |
-| 1 | kToER | medium | tupling infra + bijection + bounds |
-| 2 | kToER | medium | simultaneousBoundedRec |
-| 3 | kToER | small | A_one + iters + aliasing |
-| 4 | kToER | substantial | majorization theorem |
-| 5 | kToER | medium | structural induction + functor |
-| 6 | erToK | empty/small | RegisterMachine audit |
-| 7 | erToK | substantial | URM kernel + URMComputes |
-| 8 | erToK | substantial | ER → URM compiler + catalogue |
-| 9 | erToK | substantial | K^sim simulator + bound |
-| 10 | erToK | medium | erToK composition + functor |
-| 11 | both | small | strict iso packaging |
+| Step | Side | Expected size | Status | Notes |
+| - | - | - | - | - |
+| 0 | both | substantial | complete | this document |
+| 1 | kToER | medium | complete | tupling infra + bijection + bounds |
+| 2 | kToER | medium | complete | simultaneousBoundedRec |
+| 3 | kToER | small | complete | A_one + iters + aliasing |
+| 4 | kToER | substantial | complete | majorization theorem |
+| 5 | kToER | medium | complete | structural induction + functor |
+| 6 | erToK | empty/small | pending | RegisterMachine audit |
+| 7 | erToK | substantial | pending | URM kernel + URMComputes |
+| 8 | erToK | substantial | pending | ER → URM compiler + catalogue |
+| 9 | erToK | substantial | pending | K^sim simulator + bound |
+| 10 | erToK | medium | pending | erToK composition + functor |
+| 11 | both | small | pending | strict iso packaging |
 
 ---
 
 ## §3 Path 2 — kToER via structural induction (Tourlakis 0.1.0.44 ⊆)
+
+**Status: implemented.** The descriptions in §3.1–§3.5 are
+preserved as the design record; each subsection carries a
+status banner pointing at the landed Lean entities and
+modules. Mathematical prose (especially the level-2 prose
+proof in §3.4 and the per-section "why this avoids the prior
+trap" arguments in §3.8) is retained verbatim as a reference.
 
 This section presents the load-bearing path for `kToER`
 (`K^sim_2 ⊆ ER`), following Tourlakis 2018 §0.1.0.44 ⊆
@@ -528,6 +635,20 @@ in §4–§9, which is now scoped to `erToK` (Tourlakis 0.1.0.44
 ⊇ direction) only.
 
 ### §3.1 Foundational tupling — bijection ℕ^{n+1} ≅ ℕ in ER and K^sim
+
+**Status: implemented in step 1.**
+`Nat.tuplePack`, `Nat.tupleAt`, `Nat.tuplePackCoef`, and the
+recurrence `tuplePackCoef (k+1) = (tuplePackCoef k + 2)^2`
+land in `GebLean/Utilities/Tupling.lean` along with bijection
+theorems and the polynomial value bound. ER analogues
+`ERMor1.tuplePack`, `ERMor1.tupleAt`, with `@[simp]`
+interp lemmas, `PolyBound.ofTuplePack` /
+`PolyBound.ofTupleAt`, and the round-trip lemmas at
+ERMorN-quotient level, land in
+`GebLean/Utilities/ERTupling.lean`. The decorative iso
+`LawvereERCat.tupleIso` lives at
+`GebLean/Utilities/ERTupling.lean:263`. K^sim-side tupling
+was not built, per the §3.1 design decision.
 
 K^sim's `simrec` is multi-output: the constructor produces a
 vector of mutually-recursive functions. Translating it to ER
@@ -686,6 +807,18 @@ Properties:
 
 ### §3.2 Simultaneous bounded recursion in ER
 
+**Status: implemented in step 2.** Nat-level
+`Nat.simRecVec` / `Nat.simRec` plus the recurrence and
+dominance helper `Nat.simRecVec_le_of_dominates` land in
+`GebLean/Utilities/SimRec.lean`. The packed-state bound
+`ERMor1.tuplePackedBound`, its dominance lemma, and
+`PolyBound.ofTuplePackedBound` land in
+`GebLean/Utilities/ERPackedBound.lean`. The named composite
+`ERMor1.simultaneousBoundedRec` and the correctness theorem
+`simultaneousBoundedRec_interp_correct` together with
+`PolyBound.ofSimultaneousBoundedRec` land in
+`GebLean/Utilities/ERSimultaneousBoundedRec.lean`.
+
 ER's existing `ERMor1.boundedRec` (in
 `Utilities/ERArith.lean` line 1782) is single-output: it
 iterates a single step function with access to that
@@ -795,6 +928,17 @@ corresponding K^sim infrastructure is needed.
 
 ### §3.3 Tourlakis A_n named composites in ER
 
+**Status: implemented in step 3.** `ERMor1.A_one`,
+`ERMor1.A_one_iter`, the closed-form interp lemmas
+`interp_A_one`, `interp_A_one_iter`, the alias
+`ERMor1.A_two_iter := ERMor1.towerER`, and the PolyBound
+builders `PolyBound.ofA_one`, `PolyBound.ofA_one_iter` all
+land in `GebLean/Utilities/ERAMajorants.lean`. No PolyBound
+exists for `A_two_iter` (per the master design's
+`tower r x` analysis); the level-2 chain consumes the
+A_2-side bound as a Nat inequality threaded through
+`simultaneousBoundedRec_interp_correct`.
+
 Following Tourlakis 2018 page 22 (proof of §0.1.0.44 ⊆):
 A_1 = `λx. 2x + 2 ∈ ER`, A_2 = `λx. 2^x ∈ ER`. Iterated
 versions A_n^r are r-fold composition of A_n with itself.
@@ -848,6 +992,20 @@ versions A_n^r are r-fold composition of A_n with itself.
   `ofSimultaneousBoundedRec` (the PolyBound builder).
 
 ### §3.4 Majorization theorem (Tourlakis 0.1.0.10 transcribed)
+
+**Status: implemented in step 4.**
+`KMor1.majorize_one` / `KMor1.majorize_by_A_one_iter` (level
+≤ 1) and `KMor1.majorize` / `KMor1.majorize_by_A_two_iter`
+(level ≤ 2) land in `GebLean/LawvereKSimMajorization.lean`.
+The translation lemma `linearBound_le_A_one_iter`, the
+infrastructure lemmas `ERMor1.sumCtxER`,
+`sumCtxERPlusOffset`, `tower_add_offset_le`,
+`tower_compose_offsets`, the `A_one_iter`-side composition
+lemmas, the `A_one_iter_le_A_two_iter_two` corollary, the
+`KMor1.simrecVec_le_A_one_iter` step lemma, and the bridge
+`KMor1.majorize_by_componentBound` for step 5 all land in
+the same module. The `vMax`-based statement is the one
+described in the prose proof below.
 
 For every `f : KMor1 a` with `f.level ≤ n` (where n ≤ 2),
 there is a Lean-computable `r` such that:
@@ -1088,6 +1246,23 @@ go through.
 
 ### §3.5 `kToER` by structural induction
 
+**Status: implemented in step 5.** The full pipeline
+`kToER`, `kToER_interp`, `kToERN`, `kToERN_interp`,
+`kToERFunctor` (with `map_id` and `map_comp`),
+`kToERFunctor_map_interp`, `kToERFunctor_map_quot`, and the
+follow-up strict equality
+`kToERFunctor_comp_erInterpFunctor :
+kToERFunctor ⋙ erInterpFunctor = kInterpFunctor` land in
+`GebLean/LawvereKSimER.lean`. The companion functor
+`kInterpFunctor : LawvereKSimDCat 2 ⥤ Type` lives in
+`GebLean/LawvereKSimDCatInterp.lean`. The simrec case is
+discharged via `kToER_simrec_dominates` and
+`kToER_simrec_bound_mono` factoring lemmas plus the
+majorization bridge from §3.4. The `kToER` definition
+sketched below is faithful to what landed; the actual
+signature (with explicit indexing and dependent contexts)
+appears at `GebLean/LawvereKSimER.lean:33`.
+
 ```lean
 def kToER : ∀ {a : ℕ} (f : KMor1 a), f.level ≤ 2 → ERMor1 a
   | _, .zero,                _ => ERMor1.zeroN _
@@ -1254,34 +1429,56 @@ equality).
 (In addition to the URM-related modules in §12 for the
 erToK side.)
 
-```text
-GebLean/Utilities/Tupling.lean                       [step 1]
-  Nat.tuplePack, Nat.tupleAt, bijection theorems,
-  polynomial value bound.
+All modules below have landed (steps 1-5 complete).
 
-GebLean/Utilities/ERTupling.lean                     [step 1]
+```text
+GebLean/Utilities/Tupling.lean                       [step 1, LANDED]
+  Nat.tuplePack, Nat.tupleAt, Nat.tuplePackCoef,
+  bijection theorems, polynomial value bound.
+
+GebLean/Utilities/ERTupling.lean                     [step 1, LANDED]
   ERMor1.tuplePack, ERMor1.tupleAt, PolyBound builders,
   interp lemmas; LawvereERCat.tupleIso.
 
 (K^sim-side tupling NOT BUILT under Path 2; see §3.1.)
 
-GebLean/Utilities/ERSimultaneousBoundedRec.lean      [step 2]
+GebLean/Utilities/SimRec.lean                        [step 2, LANDED]
+  Nat.simRecVec, Nat.simRec, recurrence simp lemmas,
+  Nat.simRecVec_le_of_dominates dominance helper.
+
+GebLean/Utilities/ERPackedBound.lean                 [step 2, LANDED]
+  ERMor1.tuplePackedBound, dominance lemma,
+  PolyBound.ofTuplePackedBound.
+
+GebLean/Utilities/ERSimultaneousBoundedRec.lean      [step 2, LANDED]
   ERMor1.simultaneousBoundedRec (multi-output);
   packs internally via tuplePack, recurses via boundedRec,
-  unpacks via tupleAt.
+  unpacks via tupleAt; simultaneousBoundedRec_interp_correct;
+  PolyBound.ofSimultaneousBoundedRec.
 
-GebLean/Utilities/ERAMajorants.lean                   [step 3]
+GebLean/Utilities/ERAMajorants.lean                   [step 3, LANDED]
   ERMor1.A_one, A_one_iter; A_two_iter alias; PolyBound
   builders for the A_one variants only (A_two_iter is
   tower-fast; no PolyBound).
 
-GebLean/LawvereKSimMajorization.lean                 [step 4]
-  KMor1.majorize_by_A_n_iter (Tourlakis 0.1.0.10);
-  linearBound_le_A_one_iter translation.
+GebLean/LawvereKSimMajorization.lean                 [step 4, LANDED]
+  KMor1.majorize_one + majorize_by_A_one_iter (level ≤ 1);
+  KMor1.majorize + majorize_by_A_two_iter (level ≤ 2);
+  KMor1.majorize_by_componentBound bridge for step 5;
+  linearBound_le_A_one_iter translation; ERMor1.sumCtxER
+  context-sum named composite plus dominance lemma.
 
-GebLean/LawvereKSimER.lean                           [step 5]
+GebLean/LawvereKSimER.lean                           [step 5, LANDED]
   kToER, kToER_interp, kToERN, kToERN_interp,
-  kToERFunctor, functor laws.
+  kToERFunctor, functor laws (map_id, map_comp);
+  kToERFunctor_map_interp, kToERFunctor_map_quot
+  morphism-quotient compatibility lemmas;
+  kToERFunctor_comp_erInterpFunctor strict equality
+  kToERFunctor ⋙ erInterpFunctor = kInterpFunctor.
+
+GebLean/LawvereKSimDCatInterp.lean                   [step 5 follow-up, LANDED]
+  kInterpFunctor : LawvereKSimDCat 2 ⥤ Type, faithful
+  instance, kInterpFunctor_obj simp lemma.
 ```
 
 ### §3.8 Why this avoids the prior `kToERDirect` failure
@@ -1911,48 +2108,27 @@ GebLean/LawvereKSimPolynomialBound.lean      (KMor1.linearBound; level-0
                                               level0Shape; ConstantOrShiftedProj)
 ```
 
-New files (proposed):
+New files:
 
-For the kToER side (Path 2 — structural induction):
+For the kToER side (Path 2 — structural induction): all
+landed (steps 1-5 complete; see §3.7 for the per-module
+inventory and detailed contents).
 
 ```text
-GebLean/Utilities/Tupling.lean                       [step 1]
-  Nat.tuplePack, Nat.tupleAt, bijection theorems,
-  polynomial value bound on packed tuple.
-
-GebLean/Utilities/ERTupling.lean                     [step 1]
-  ERMor1.tuplePack, ERMor1.tupleAt; PolyBound builders;
-  interp lemmas; LawvereERCat.tupleIso.
-
-(K^sim-side tupling NOT BUILT under Path 2; see §3.1.)
-
-GebLean/Utilities/ERSimultaneousBoundedRec.lean      [step 2]
-  ERMor1.simultaneousBoundedRec (multi-output ER bounded
-  recursion); packs the (k+1)-tuple internally via
-  Nat.tuplePack, recurses via single-output boundedRec,
-  unpacks via Nat.tupleAt.  Interp lemma + PolyBound builder.
-
-GebLean/Utilities/ERAMajorants.lean                   [step 3]
-  ERMor1.A_one (interp λx.2x+2);
-  ERMor1.A_one_iter (r-fold composition; interp A_1^r);
-  ERMor1.A_two_iter alias of ERMor1.towerER (interp A_2^r);
-  PolyBound builders for A_one and A_one_iter only
-  (A_two_iter is tower-fast; no PolyBound).
-
-GebLean/LawvereKSimMajorization.lean                 [step 4]
-  KMor1.majorize_by_A_n_iter (Tourlakis 0.1.0.10 transcribed);
-  linearBound_le_A_one_iter translation lemma reusing
-  existing kToERDirect_linearBound_dominates_level_zero
-  and _level_one for levels 0 and 1.
-
-GebLean/LawvereKSimER.lean                           [step 5]
-  kToER (structural induction on K^sim using
-  simultaneousBoundedRec + A_n^r majorant);
-  kToER_interp, kToERN, kToERN_interp;
-  kToERFunctor : LawvereKSimDCat 2 ⥤ LawvereERCat;
-  functor laws.  (Bare name, distinct from
-  LawvereKSimERDirect.lean.)
+GebLean/Utilities/Tupling.lean                       [step 1, LANDED]
+GebLean/Utilities/ERTupling.lean                     [step 1, LANDED]
+GebLean/Utilities/SimRec.lean                        [step 2, LANDED]
+GebLean/Utilities/ERPackedBound.lean                 [step 2, LANDED]
+GebLean/Utilities/ERSimultaneousBoundedRec.lean      [step 2, LANDED]
+GebLean/Utilities/ERAMajorants.lean                   [step 3, LANDED]
+GebLean/LawvereKSimMajorization.lean                 [step 4, LANDED]
+GebLean/LawvereKSimER.lean                           [step 5, LANDED]
 ```
+
+The follow-up `GebLean/LawvereKSimDCatInterp.lean` (housing
+`kInterpFunctor` and the strict functor equality
+`kToERFunctor ⋙ erInterpFunctor = kInterpFunctor`) was added
+as part of step 5's closure.
 
 For the erToK side (URM simulation):
 
@@ -2137,6 +2313,12 @@ proof step depends on the ER ↔ E^n equivalence.
 
 ## §15 Adversary's punch list for step 0
 
+**Status: closed for the kToER side (steps 1–5).** Each
+Path-2-specific claim (§15.12–§15.16) was discharged by the
+Lean-realized constructions cited in §3.1–§3.5 above. Generic
+claims (§15.1–§15.11) that constrain the erToK side and step
+11 remain open until those steps complete.
+
 The step-0 adversarial brainstorm + sequential-thinking review
 must explicitly check the following claims, each derived from a
 prior-failure-mode hypothesis. The adversary is obligated to
@@ -2210,7 +2392,7 @@ combinator's tower-height contribution per `bsum`/`bprod`
 nesting matches the K^sim_2 closure under bounded
 recursion.
 
-### §15.4 Is the level-1-vs-level-2 asymmetry from prior plan v5 absent (Path 2 kToER)?
+### §15.4 Level-1-vs-level-2 asymmetry absent (Path 2 kToER)?
 
 Plan v5's failure mode: the level-1 dominance chain in
 `kToERDirect` worked because of a level-0-specific shape

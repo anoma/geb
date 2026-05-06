@@ -1245,9 +1245,8 @@ def weightedCoconeHomToCopowerCoconeHom {c₁ c₂ : WeightedCocone W F}
   w := fun tw => by
     -- Goal: copowerCoconeιApp c₁ tw ≫ f.hom = copowerCoconeιApp c₂ tw
     -- Expand: (mapIdx _ ≫ desc (c₁.leg _)) ≫ f.hom = mapIdx _ ≫ desc (c₂.leg _)
-    simp only [weightedCoconeToCopowerCocone, copowerCoconeιApp]
-    -- Reassociate to: mapIdx _ ≫ (desc _ ≫ f.hom) = mapIdx _ ≫ desc _
-    rw [Category.assoc]
+    simp only [weightedCoconeToCopowerCocone, copowerCoconeιApp,
+      Functor.const_obj_obj, Category.assoc]
     -- It suffices to prove: desc (c₁.leg _) ≫ f.hom = desc (c₂.leg _)
     congr 1
     -- Use ext to reduce to showing: inj s ≫ (desc _ ≫ f.hom) = inj s ≫ desc _

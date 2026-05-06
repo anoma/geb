@@ -31,8 +31,10 @@ should be a comment in the code itself.)
 - Library namespace: `GebLean` (see `[[lean_lib]] name = "GebLean"` in
   `lakefile.toml`).
 - Source files live under `GebLean/` and should use the `GebLean` namespace.
-- External deps: mathlib and related tools are pinned in
+- External deps: mathlib, CSLib, and related tools are pinned in
   `lake-manifest.json`; see `lean-toolchain` for the toolchain.
+  CSLib tracks Lean toolchain RCs via tagged releases; bump the
+  CSLib pin deliberately when the GebLean toolchain bumps.
 
 ## Principles
 
@@ -76,6 +78,16 @@ When making changes to Lean code:
    the user.  When a workflow seems to call for process substitution,
    write the intermediate output to a file (under `/tmp` or in the
    working tree) and read it back instead.
+
+   **In a freshly created git worktree**: before the first `lake build`,
+   run `lake exe cache get` to populate the worktree's
+   `.lake/packages/mathlib4/.lake/build/lib/` with precompiled `.olean`
+   artifacts from the mathlib4 cache server.  Without this step, lake
+   falls back to building mathlib from source, which both takes hours
+   and (in our experience) fails on individual mathlib targets.  The
+   download itself is fast when the user-level cache at
+   `~/.cache/mathlib/` is already warm from the main checkout
+   (decompress only, ~15 seconds).
 2. **Iterate on errors**: If the build fails, fix errors yourself and rebuild
    before proposing a change.
 3. **No warnings or sorry or admit**:
@@ -309,6 +321,16 @@ might want to examine external libraries for ideas.
     use this to try to find standard implementations of concepts that
     we don't already know about.
 - [Reservoir](https://reservoir.lean-lang.org/)
+- The remote-index search tools (Loogle, `lean_leansearch`,
+  `lean_leanfinder`, `lean_state_search`, `lean_hammer_premise`)
+  index mathlib + Lean core + batteries; **none currently index
+  CSLib**. For CSLib content, use the CSLib API docs site
+  (<https://api.cslib.io/docs/>) or grep the CSLib source under
+  `.lake/packages/cslib/Cslib/`.
+- When introducing a new computational construct (register
+  machine, Turing machine, automaton, λ-calculus variant,
+  programming-language semantics, etc.), search CSLib first, just
+  as we search mathlib for general mathematical concepts.
 
 ### Lean language
 
@@ -322,6 +344,35 @@ might want to examine external libraries for ideas.
 - [Use and abuse of instance parameters in the Lean mathematical library](https://arxiv.org/pdf/2202.01629.pdf)
 - [Lean projects and build process](https://leanprover-community.github.io/install/project.html)
 - [A Beginner's Guide to Theorem Proving in Lean 4](https://emallson.net/blog/a-beginners-companion-to-theorem-proving-in-lean/)
+
+### CSLib
+
+- [Homepage](https://www.cslib.io/) and
+  [whitepaper (arXiv:2602.04846)](https://arxiv.org/abs/2602.04846)
+- [API docs](https://api.cslib.io/docs/)
+- [Repository](https://github.com/leanprover/cslib)
+- Top-level directory layout under `Cslib/` (snapshot at
+  `v4.29.0-rc6`; verify against the pinned tag when bumping):
+  - `Algorithms/` — algorithm/data-structure formalizations.
+  - `Computability/` — `Automata/`, `Languages/`, `Machines/`,
+    `URM/` (Unlimited Register Machine; namespace `Cslib.URM`).
+  - `Foundations/` — `Combinatorics/`, `Control/`, `Data/`,
+    `Lint/`, `Logic/`, `Semantics/` (including `LTS/` and
+    `FLTS/`), `Syntax/`.
+  - `Languages/` — `Boole/`, `CCS/`, `CombinatoryLogic/`,
+    `LambdaCalculus/`.
+  - `Logics/` — `HML/`, `LinearLogic/` (plural directory name).
+- Constructive discipline: importing CSLib is fine in the same
+  sense that importing mathlib is fine, but the project rule that
+  bans `Classical`, `noncomputable`, and `axiom` applies to any
+  _transitive_ axiom dependency too: a GebLean term that depends
+  on a CSLib (or mathlib) lemma using `Classical.choice` will
+  surface that axiom under `#print axioms`. For results that must
+  remain constructive, run `#print axioms` and refactor if a
+  non-pure axiom appears.
+- Reuse discipline: prefer CSLib typeclasses and abstract
+  structures (e.g. `LTS`, `HasFresh`) over reaching into concrete
+  instances, so internal CSLib changes do not break our code.
 
 ### General mathematics
 

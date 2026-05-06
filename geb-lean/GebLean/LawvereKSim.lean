@@ -119,6 +119,51 @@ maximum level over the family. -/
 def KMorN.levelN {n m : ℕ} (f : KMorN n m) : ℕ :=
   Finset.univ.sup (fun i => (f i).level)
 
+/-- Single-output (non-simultaneous) primitive recursion at arity
+`a + 1`.  The base `h : KMor1 a` returns the value at recursion
+variable `0`; the step `g : KMor1 (a + 2)` receives the recursion
+variable, the parameters, and the previous value, in this slot order:
+
+* slot `0`        : recursion variable `x`
+* slots `1, …, a` : parameters `y_1, …, y_a`
+* slot `a + 1`    : previous value `f(x, y⃗)`
+
+It returns the value at `x + 1`.  Definitional reduction to
+`KMor1.simrec` with `k = 0`, `i = 0`.
+
+Tourlakis Notes 10.2.7 (definition of K^sim, with simultaneous
+recursion as the primitive); the non-simultaneous case is the
+`k = 0` specialization. -/
+def KMor1.rec1 {a : ℕ} (h : KMor1 a) (g : KMor1 (a + 2)) :
+    KMor1 (a + 1) :=
+  KMor1.simrec (a := a) (k := 0) (i := ⟨0, by decide⟩)
+    (fun _ => h) (fun _ => g)
+
+example : (KMor1.rec1
+    (h := (KMor1.zero : KMor1 0))
+    (g := (KMor1.zero : KMor1 2))).level = 1 := by decide
+
+/-- Precompose a `KMor1 m` term with a context-projection map
+`σ : Fin m → Fin n`. Given `f : KMor1 m`, produces a `KMor1 n`
+that interprets at context `ctx : Fin n → ℕ` as
+`f.interp (fun i => ctx (σ i))`.
+
+Built from `comp` and `proj` only; no new constructors. The level
+is unchanged from `f.level`: `comp` takes `max` over children's
+levels and the inner `proj`s are level 0. -/
+def KMor1.permArgs {n m : ℕ} (σ : Fin m → Fin n) (f : KMor1 m) :
+    KMor1 n :=
+  KMor1.comp f (fun i => KMor1.proj (σ i))
+
+/-- Argument-swap for 2-argument K^sim morphisms:
+`(KMor1.swap f).interp ctx = f.interp ![ctx 1, ctx 0]`.
+Specialization of `permArgs` to the swap permutation on `Fin 2`. -/
+def KMor1.swap (f : KMor1 2) : KMor1 2 :=
+  KMor1.permArgs
+    (fun i => match i with
+      | ⟨0, _⟩ => ⟨1, by decide⟩
+      | ⟨1, _⟩ => ⟨0, by decide⟩) f
+
 theorem KMor1.level_le_succ {n : ℕ} (f : KMor1 n)
     {d : ℕ} (h : f.level ≤ d) : f.level ≤ d + 1 :=
   Nat.le_succ_of_le h
