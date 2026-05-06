@@ -39,6 +39,10 @@ open GebLean
 #guard KMor1.monus.interp ![3, 5] == 0
 #guard KMor1.monus.interp ![5, 5] == 0
 
+#guard (KMor1.swap KMor1.add).interp ![3, 7] == 10
+#guard (KMor1.swap KMor1.monus).interp ![3, 5] == 2
+#guard (KMor1.swap KMor1.monus).interp ![5, 3] == 0
+
 #guard KMor1.eq.interp ![3, 3] == 0
 #guard KMor1.eq.interp ![3, 5] == 1
 #guard KMor1.eq.interp ![5, 3] == 1
