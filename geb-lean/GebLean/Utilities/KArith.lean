@@ -430,6 +430,44 @@ private def KMor1.signum : KMor1 1 :=
 
 example : KMor1.signum.level = 1 := by decide
 
+/-- Characteristic of the predicate `x = y` (Tourlakis convention):
+`eq(x, y) = 0` iff `x = y`, `eq(x, y) = 1` iff `x ≠ y`.
+
+Composes with `cond` for "if x = y then z else z'":
+`cond(eq(x, y), z, z') = if x = y then z else z'`.
+
+Construction: `signum((x ∸ y) + (y ∸ x))`. The inner sum vanishes
+exactly at `x = y`; `signum` normalizes the result to {0, 1}.
+
+Tourlakis Notes 10.2.20 (`λx.x = a ∈ K_{1,*}` for fixed `a`);
+generalized here to two-variable equality via Boolean closure of
+K_{n,*} (Notes 10.2.14) plus `monus` at K^sim_2. -/
+def KMor1.eq : KMor1 2 :=
+  KMor1.comp KMor1.signum (fun _ : Fin 1 =>
+    KMor1.comp KMor1.add (fun i => match i with
+      | ⟨0, _⟩ => KMor1.monus
+      | ⟨1, _⟩ => KMor1.swap KMor1.monus))
+
+@[simp] theorem KMor1.interp_eq (ctx : Fin 2 → ℕ) :
+    KMor1.eq.interp ctx = if ctx 0 = ctx 1 then 0 else 1 := by
+  unfold KMor1.eq
+  rw [KMor1.interp_comp, KMor1.interp_signum,
+      KMor1.interp_comp, KMor1.interp_add,
+      KMor1.interp_monus, KMor1.interp_swap, KMor1.interp_monus]
+  by_cases h : ctx 0 = ctx 1
+  · simp [h]
+  · rcases lt_or_gt_of_ne h with hlt | hgt
+    · have h1 : ctx 0 - ctx 1 = 0 := Nat.sub_eq_zero_of_le (le_of_lt hlt)
+      have h2 : ctx 1 - ctx 0 > 0 := Nat.sub_pos_of_lt hlt
+      simp [h, h1]
+      omega
+    · have h1 : ctx 1 - ctx 0 = 0 := Nat.sub_eq_zero_of_le (le_of_lt hgt)
+      have h2 : ctx 0 - ctx 1 > 0 := Nat.sub_pos_of_lt hgt
+      simp [h, h1]
+      omega
+
+example : KMor1.eq.level = 2 := by decide
+
 /-- Powers of two: `pow2(0) = 1`, `pow2(x+1) = double(pow2(x))`.
 
 Tourlakis PR §0.1.0.17(c); Notes 10.2.12 row 5. -/
