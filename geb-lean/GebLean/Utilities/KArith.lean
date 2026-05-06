@@ -400,17 +400,13 @@ example : KMor1.monusSwapped.level = 2 := by decide
 /-- Truncated subtraction: `monus(x, y) = x ∸ y`.
 
 Tourlakis PR §0.1.0.17(a); Notes 10.2.12 row 6. -/
-def KMor1.monus : KMor1 2 :=
-  KMor1.comp KMor1.monusSwapped (fun i => match i with
-    | ⟨0, _⟩ => KMor1.proj ⟨1, by decide⟩
-    | ⟨1, _⟩ => KMor1.proj ⟨0, by decide⟩)
+def KMor1.monus : KMor1 2 := KMor1.swap KMor1.monusSwapped
 
 /-- Interpretation of `monus`: `ctx 0 - ctx 1` (truncated). -/
 @[simp] theorem KMor1.interp_monus (ctx : Fin 2 → ℕ) :
     KMor1.monus.interp ctx = ctx 0 - ctx 1 := by
   unfold KMor1.monus
-  rw [KMor1.interp_comp, KMor1.interp_monusSwapped]
-  rfl
+  rw [KMor1.interp_swap, KMor1.interp_monusSwapped]
 
 example : KMor1.monus.level = 2 := by decide
 
