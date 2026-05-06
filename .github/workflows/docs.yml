@@ -1,11 +1,7 @@
 name: 'pages-build-deployment'
 
 on:
-  push:
-    branches:
-      - 'main'
-      - 'master'
-      - 'mariari/github-actions'
+  workflow_dispatch:
 
 jobs:
   build-sbcl:
@@ -14,7 +10,7 @@ jobs:
     strategy:
       matrix:
         lisp:
-          # - sbcl-bin
+          - sbcl-bin
           # - ccl-bin
 
     env:
