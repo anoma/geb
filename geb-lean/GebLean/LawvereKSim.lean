@@ -155,6 +155,15 @@ def KMor1.permArgs {n m : ℕ} (σ : Fin m → Fin n) (f : KMor1 m) :
     KMor1 n :=
   KMor1.comp f (fun i => KMor1.proj (σ i))
 
+/-- Argument-swap for 2-argument K^sim morphisms:
+`(KMor1.swap f).interp ctx = f.interp ![ctx 1, ctx 0]`.
+Specialization of `permArgs` to the swap permutation on `Fin 2`. -/
+def KMor1.swap (f : KMor1 2) : KMor1 2 :=
+  KMor1.permArgs
+    (fun i => match i with
+      | ⟨0, _⟩ => ⟨1, by decide⟩
+      | ⟨1, _⟩ => ⟨0, by decide⟩) f
+
 theorem KMor1.level_le_succ {n : ℕ} (f : KMor1 n)
     {d : ℕ} (h : f.level ≤ d) : f.level ≤ d + 1 :=
   Nat.le_succ_of_le h
