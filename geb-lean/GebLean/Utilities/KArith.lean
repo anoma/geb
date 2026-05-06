@@ -410,6 +410,26 @@ def KMor1.monus : KMor1 2 := KMor1.swap KMor1.monusSwapped
 
 example : KMor1.monus.level = 2 := by decide
 
+/-- Sign function: `signum(0) = 0`, `signum(n+1) = 1`. Equivalent
+to the level-1 composite `isZero ∘ isZero`: `isZero(n) = 1 - sgn n`,
+so `isZero (isZero n) = sgn n`. Used to normalize `eq`'s {0, ≥1}-
+valued output to {0, 1}.
+
+Tourlakis PR §0.1.0.17(3) (`λx. 1 ∸ x ∈ K_1`); composition with
+itself stays at K^sim_1. -/
+private def KMor1.signum : KMor1 1 :=
+  KMor1.comp KMor1.isZero (fun _ : Fin 1 => KMor1.isZero)
+
+@[simp] private theorem KMor1.interp_signum (ctx : Fin 1 → ℕ) :
+    KMor1.signum.interp ctx = if ctx 0 = 0 then 0 else 1 := by
+  unfold KMor1.signum
+  rw [KMor1.interp_comp, KMor1.interp_isZero, KMor1.interp_isZero]
+  by_cases h : ctx 0 = 0
+  · simp [h]
+  · simp [h]
+
+example : KMor1.signum.level = 1 := by decide
+
 /-- Powers of two: `pow2(0) = 1`, `pow2(x+1) = double(pow2(x))`.
 
 Tourlakis PR §0.1.0.17(c); Notes 10.2.12 row 5. -/
