@@ -283,68 +283,44 @@ params)`. -/
           ((Fin.cons n params : Fin (a + 1) → ℕ))
           (fun _ : Fin 1 =>
             (KMor1.rec1 h g).interp (Fin.cons n params))) := by
-  set prev := (KMor1.rec1 h g).interp (Fin.cons n params) with hprev
   unfold KMor1.rec1
   rw [KMor1.interp_simrec]
   have h_ctx0 :
       (Fin.cons (n + 1) params : Fin (a + 1) → ℕ) 0 = n + 1 := by
     simp [Fin.cons_zero]
   have h_params :
-      (fun j => (Fin.cons (n + 1) params : Fin (a + 1) → ℕ)
-          (Fin.succ j)) = params := by
+      (fun j : Fin a =>
+          (Fin.cons (n + 1) params : Fin (a + 1) → ℕ) (Fin.succ j))
+        = params := by
     funext j; simp [Fin.cons_succ]
   rw [h_ctx0, h_params]
-  simp only [KMor1.simrecVec_succ]
-  congr 1
-  funext idx
-  rcases idx with ⟨v, h_v⟩
-  by_cases h₁ : v < a + 1
-  · have h_cast : (⟨v, h_v⟩ : Fin (a + 1 + 1))
-        = Fin.castAdd 1 (⟨v, h₁⟩ : Fin (a + 1)) := by
-      apply Fin.ext; rfl
-    rw [show Fin.append (Fin.cons n params)
-            (fun _ : Fin 1 => prev) ⟨v, h_v⟩
-            = Fin.append (Fin.cons n params)
-                (fun _ : Fin 1 => prev)
-                (Fin.castAdd 1 (⟨v, h₁⟩ : Fin (a + 1)))
-          from congrArg _ h_cast,
-        Fin.append_left]
-    simp only [h₁, dite_true]
-    by_cases h₂ : v = 0
-    · simp only [h₂, dite_true]; rfl
-    · simp only [h₂, dite_false]
-      have h_succ : (⟨v, h₁⟩ : Fin (a + 1))
-          = Fin.succ (⟨v - 1, by omega⟩ : Fin a) := by
-        apply Fin.ext; change v = (v - 1) + 1; omega
-      rw [h_succ, Fin.cons_succ]
-  · have h_cast : (⟨v, h_v⟩ : Fin (a + 1 + 1))
-        = Fin.natAdd (a + 1) ⟨v - (a + 1), by omega⟩ := by
+  rw [KMor1.simrecVec_succ_append]
+  have h_right :
+      KMor1.simrecVec (fun _ : Fin 1 => h) (fun _ => g) params n
+        = (fun _ : Fin 1 =>
+            (KMor1.rec1 h g).interp (Fin.cons n params)) := by
+    funext j
+    have hj : j = ⟨0, by decide⟩ := by
       apply Fin.ext
-      change v = (a + 1) + (v - (a + 1))
+      obtain ⟨v, hv⟩ := j
       omega
-    rw [show Fin.append (Fin.cons n params)
-            (fun _ : Fin 1 => prev) ⟨v, h_v⟩
-            = Fin.append (Fin.cons n params)
-                (fun _ : Fin 1 => prev)
-                (Fin.natAdd (a + 1) ⟨v - (a + 1), by omega⟩)
-          from congrArg _ h_cast,
-        Fin.append_right]
-    simp only [h₁, dite_false]
-    have h_idx : (⟨v - (a + 1), by omega⟩ : Fin 1)
-        = ⟨0, by decide⟩ := by
-      apply Fin.ext; omega
-    rw [h_idx]
-    rw [hprev]
+    subst hj
+    change KMor1.simrecVec (fun _ : Fin 1 => h)
+            (fun _ : Fin 1 => g) params n ⟨0, by decide⟩
+        = (KMor1.rec1 h g).interp (Fin.cons n params)
     unfold KMor1.rec1
     rw [KMor1.interp_simrec]
     have h_ctx0' :
         (Fin.cons n params : Fin (a + 1) → ℕ) 0 = n := by
       simp [Fin.cons_zero]
     have h_params' :
-        (fun j => (Fin.cons n params : Fin (a + 1) → ℕ)
-            (Fin.succ j)) = params := by
+        (fun j : Fin a =>
+            (Fin.cons n params : Fin (a + 1) → ℕ) (Fin.succ j))
+          = params := by
       funext j; simp [Fin.cons_succ]
     rw [h_ctx0', h_params']
+  rw [h_right]
+  rfl
 
 /-- Interpretation of `KMorN.id`: applying the identity
 morphism to a context returns the context itself. -/
