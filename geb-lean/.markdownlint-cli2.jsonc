@@ -1,0 +1,25 @@
+// Shared markdownlint configuration for geb-lean.
+// Picked up by both `markdownlint-cli2` (CLI / CI) and the VSCode
+// markdownlint extension when the workspace is opened at this dir.
+//
+// Policy: keep the config as close to markdownlint defaults as
+// possible. The only override is to exempt tables and code blocks
+// from MD013 line-length checks (long lines in those contexts are
+// legitimate; ordinary prose stays under the default limit).
+{
+  "config": {
+    "default": true,
+    "MD013": {
+      "tables": false,
+      "code_blocks": false
+    }
+  },
+  "globs": [
+    "**/*.md"
+  ],
+  "ignores": [
+    ".lake/**",
+    ".jj/**",
+    "node_modules/**"
+  ]
+}
