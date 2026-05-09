@@ -35,8 +35,7 @@ read -ra tokens <<< "$command"
 # jj git stripping: if .jj/ exists, allow jj-mediated git interop outright.
 # ---------------------------------------------------------------------------
 
-project_dir="${CLAUDE_PROJECT_DIR:-$PWD}"
-if [[ -d "$project_dir/.jj" ]]; then
+if jj root > /dev/null 2>&1; then
   # If the first token is "jj" and the second is "git", pass through.
   if [[ "${tokens[0]:-}" == "jj" && "${tokens[1]:-}" == "git" ]]; then
     exit 0
