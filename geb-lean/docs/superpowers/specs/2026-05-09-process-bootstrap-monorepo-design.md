@@ -256,7 +256,10 @@ geb-lean/
 │       ├── lean-coding.md       (+ paths: ["**/*.lean"])
 │       ├── markdown-writing.md  (+ paths: ["**/*.md"])
 │       └── ci-and-workflow.md   (+ paths: …)
-├── .gitignore                   (existing; unchanged)
+├── .gitignore                   (existing; reverted to
+│                                   pre-refactor state by
+│                                   cleanup task; otherwise
+│                                   unchanged)
 ├── .markdownlint-cli2.jsonc     (+ shared config)
 ├── .github/
 │   └── workflows/
@@ -470,8 +473,9 @@ Sections in order:
     lease-protected pushes; `.jj/` is git-ignored
     automatically by jj; do NOT run `git clean -xdf`, which
     deletes `.jj/`); build (`lake`); CI
-    (`lean_action_ci.yml`, `update.yml`, `markdown-lint.yml`
-    — the last two at the parent level); linters
+    (`lean_action_ci.yml` and `markdown-lint.yml` at the
+    parent level; `update.yml` and `create-release.yml`
+    inert at `geb-lean/.github/workflows/`); linters
     (`markdownlint-cli2`, `lake lint`,
     `scripts/check-axioms.sh`); skills (`superpowers:*`,
     `lean4:*`, `claude-md-management:*`, `code-review:*`,
@@ -890,9 +894,9 @@ unless they have their own.)
 ## To be done in geb-mathlib (not pending here)
 
 Items intentionally deferred until after migration to the
-new repository, where the curated context there applies. **None of the items in this section are
-pending in the present repository.** Listed here so the
-work is not lost.
+new repository, where the curated context there applies.
+**None of the items in this section are pending in the
+present repository.** Listed here so the work is not lost.
 
 ### <Item name>
 
@@ -1014,9 +1018,9 @@ the following form:
 
 > The Lean formalisation of this project lives in `geb-lean/`;
 > see [`geb-lean/README.md`](geb-lean/README.md). The material
-> below documents the original implementation and is largely
-> superseded by the geb-lean subproject, which will eventually
-> replace it.
+> below documents the original implementation; the geb-lean
+> subproject is the active development home for the Lean
+> formalisation of this project.
 
 (Three to five lines; state the supersession-direction
 without prescribing timing.)
@@ -1104,7 +1108,17 @@ The promoted file gains:
 
 - `paths: ['geb-lean/**']` filter on `push` /
   `pull_request` triggers.
-- `defaults.run.working-directory: geb-lean`.
+- The `leanprover/lean-action@v1` step passes
+  `lake-package-directory: geb-lean` (the action's
+  documented input for specifying which subdirectory
+  contains the Lake package; verified against the
+  leanprover/lean-action README). `defaults.run.working-directory`
+  in GitHub Actions applies only to `run:` shell steps, not
+  to `uses:` action steps; the `lake-package-directory`
+  input is the correct mechanism for this action. For `run:`
+  steps in the same workflow (e.g., the `axiom_check` job),
+  `defaults.run.working-directory: geb-lean` is used as
+  before — those steps execute in the configured directory.
 - The new `axiom_check` job (parallel to the existing build
   / test / lint jobs), running
   `bash scripts/check-axioms.sh GebLean/ test/` after the
@@ -1139,14 +1153,27 @@ the new plan. The parent-level workflow supersedes it.
 `markdown-lint.yml` (new): lives at
 `geb/.github/workflows/markdown-lint.yml`. Path filter:
 `paths: ['geb-lean/**/*.md', 'geb-lean/.markdownlint-cli2.jsonc']`.
-Action invocation passes geb-lean-scoped globs/config:
+Action invocation uses a `run:` step to pass explicit globs
+and suppress config-file glob expansion:
 
 ```yaml
-- uses: DavidAnson/markdownlint-cli2-action@<SHA>
-  with:
-    globs: 'geb-lean/**/*.md'
-    config: 'geb-lean/.markdownlint-cli2.jsonc'
+- name: markdownlint
+  run: |
+    markdownlint-cli2 \
+      --config geb-lean/.markdownlint-cli2.jsonc \
+      --no-globs \
+      'geb-lean/**/*.md'
 ```
+
+A `run:` step is used rather than the
+`DavidAnson/markdownlint-cli2-action` action step because
+the action does not expose a `--no-globs` equivalent input;
+without `--no-globs`, the config's presence causes
+additive glob expansion from the parent CWD, scanning
+the entire monorepo. The `run:` form requires
+`markdownlint-cli2` to be installed in the CI environment
+(e.g. via `npm install -g markdownlint-cli2` in a preceding
+step or pre-installed in the runner image).
 
 The action reference is **SHA-pinned** (not tag-pinned) per
 the project's general action-pinning policy; the SHA is
@@ -1158,9 +1185,20 @@ The configuration starts close to markdownlint defaults,
 with rule overrides accumulated as friction is encountered.
 The current configuration committed alongside this spec
 exempts MD013 line-length checks for tables and code blocks
-(long lines in those contexts are legitimate), and ignores
-`.lake/`, `.jj/`, `node_modules/`. The configuration is
-**iterated until clean against the refactor's own
+(long lines in those contexts are legitimate). The
+configuration has only `config` and `ignores` keys — no
+top-level `globs` key. (Per markdownlint-cli2 behaviour,
+CLI glob arguments and a config-file `globs` field are
+additive, not mutually exclusive; omitting `globs` from the
+config prevents unintended glob union when CLI globs are
+passed.) The `ignores` patterns cover both direct invocation
+from `geb-lean/` and parent-level invocation from `geb/`:
+`["geb-lean/.lake/**", "geb-lean/.jj/**",
+"geb-lean/node_modules/**", "geb-lean/.session/**"]`. The
+`geb-lean/` prefix is harmless when CWD is `geb-lean/`
+(the patterns simply match nothing), and correctly excludes
+generated directories when CWD is `geb/`. The configuration
+is **iterated until clean against the refactor's own
 artefacts**; the final set of overrides is recorded in
 `docs/process.md` § Markdownlint discipline so the rationale
 for each override persists.
@@ -1189,7 +1227,18 @@ sibling subprojects' `.claude/` ignored, but permits
 change that permits the refactor without touching sibling
 subprojects.
 
-The `geb-lean/.gitignore` is unchanged.
+The existing in-flight commit `69123dd0` modified
+`geb-lean/.gitignore` by adding `/.claude/*`,
+`!/.claude/rules/`, and `!/.claude/settings.json`. Those
+negation patterns are functionally inert because the parent
+`geb/.gitignore` still has the blanket `.claude` pattern at
+line 7, which overrides them (`git check-ignore` confirms
+`geb-lean/.claude/settings.json` is ignored via
+`geb/.gitignore:7`). The cleanup task that opens the new
+plan reverts `geb-lean/.gitignore` to its pre-A12 state
+(the three patterns removed) before applying the parent
+`.gitignore` fix described above. After cleanup,
+`geb-lean/.gitignore` matches its pre-refactor state.
 
 ## jj setup
 
@@ -1484,6 +1533,14 @@ whether `jj root` (run with no arguments) exits 0 —
 portable across whether `.jj/` is at the parent or at
 geb-lean/ — and if so strips `jj git X` forms (so jj's
 git interop still works) and applies the allowlists below.
+The existing `block-mutating-git.sh` (committed as
+`125c6d4e` on `chore/process-refactor`) checks
+`[[ -d $CLAUDE_PROJECT_DIR/.jj ]]` rather than invoking
+`jj root`. The new plan's cleanup task amends this hook
+script before task A27 wires it into
+`.claude/settings.json`; until that amendment lands, the
+hook would fail verification matrix item 12 case (b) when
+`.jj/` is at the parent rather than at `geb-lean/`.
 Anything not on an allowlist — including unrecognised
 subcommands and user-defined aliases — is blocked.
 
@@ -1642,9 +1699,15 @@ expected to warm gpg-agent on every session.
 - `scripts/check-axioms.sh`: vendored derivative of the
   `lean4-skills` plugin's `check_axioms_inline.sh`. The
   vendored copy carries a header comment recording the
-  exact upstream source URL and commit SHA from which it
-  was copied, plus the local modifications, so on
-  re-vendoring the header can detect drift. Allowlist customised: the
+  upstream source URL, the lean4-skills plugin version
+  string (e.g. `4.4.9`), the on-disk path of the upstream
+  script, and instructions for re-vendoring by diffing
+  against that path. (The lean4-skills plugin's manifest
+  does not currently expose its source-commit SHA; if the
+  plugin starts to expose one in a later version, the
+  header should be updated to record it.) The header also
+  records the local modifications, so on re-vendoring the
+  header can detect drift. Allowlist customised: the
   allowlist is reduced to `propext`, `Quot.sound`,
   `quot.sound` (the `lean4-skills` default has
   `Classical.choice` in its allowlist; we remove it, with
@@ -1838,7 +1901,7 @@ interpretive items (15–17) are confirmed by user sign-off.
 | # | Item |
 | --- | --- |
 | 1 | `lake build` and `lake test` succeed (no source-side breakage). |
-| 2 | `markdownlint-cli2 --config geb-lean/.markdownlint-cli2.jsonc 'geb-lean/**/*.md'` is quiet. |
+| 2 | `markdownlint-cli2 --config geb-lean/.markdownlint-cli2.jsonc --no-globs 'geb-lean/**/*.md'` is quiet on the files newly authored or modified by this refactor: `geb-lean/CLAUDE.md`, `geb-lean/.claude/rules/*.md`, `geb-lean/docs/process.md`, `geb-lean/docs/index.md`, `geb-lean/docs/lean-resources.md`, `geb-lean/TODO.md`, `geb-lean/README.md`. Pre-existing markdown files outside this set are out of refactor scope. (The existing `.session/`, `docs/*.md`, `docs/research/*.md`, and `docs/superpowers/specs/*.review-*.md` files have markdownlint findings outside the refactor's scope; cleanup is a separate workstream after Milestone B's `.session/` retirement.) |
 | 3 | `bash scripts/check-axioms.sh GebLean/ test/` runs to completion, produces output, and exits with a defined code. (In report-only mode, the script may report many flagged declarations because mathlib transitively introduces `Classical.choice`; this is the documented current state.) |
 | 4 | `lake lint` is quiet on the current source AND, when a deliberate violation is introduced (e.g. an unused `set_option` or a `linter.unusedVariables`-tripping let-binding), `lake lint` flags it. The violation is then removed and `lake lint` returns to quiet. (Positive verification that `lintDriver = "batteries/runLinter"` is wired and active, not silently no-op.) |
 | 5 | `geb-lean/CLAUDE.md` is under 200 lines and is markdownlint-clean. |
@@ -1849,8 +1912,8 @@ interpretive items (15–17) are confirmed by user sign-off.
 | 10 | `geb/.gitignore` is modified to permit `geb-lean/.claude/{settings.json, rules/}` per the documented replacement in § .gitignore change at the parent. |
 | 11 | jj is initialised colocated at the parent `geb/` root; `geb/.jj/.gitignore` exists; `jj root` (run from any path under `geb/`) exits 0; `jj config list --repo git.private-commits` output equals `conflicts()` exactly (anchored, not substring); `jj config list --repo remotes.origin.fetch-tags` output equals `glob:cutover-*` exactly (anchored); `jj config path --repo` prints a path in user-config-dir (per jj 0.38+'s config-relocation), not under `.jj/`. Per-developer signing and identity are set at user-level. |
 | 12 | `geb-lean/.claude/settings.json` (committed) wires `block-mutating-git` (PreToolUse) and `check-signing-key` (SessionStart). The hook script is smoke-tested **by direct invocation** — feed synthesised JSON-stdin payloads representing tool invocations, assert the exit code (0 = allow, 2 = block). No real `git` or `jj` commands run. Required cases: (a) `git commit -m '...'` returns 2 (blocked, exercising the default-deny default); (b) `jj git push --remote origin -b feat/x` returns 0 (allowed; `jj git X` forms are stripped from the hook's scope); (c) `git status` returns 0 (allowed read-only subcommand); (d) `git checkout -b new-branch` returns 2 (blocked mutating subcommand); (e) `git push origin 'refs/tags/v1.0.0:refs/tags/v1.0.0'` returns 2 (blocked — no tag-push allowlist entry exists; tag operations are user-direct per § Hooks). |
-| 13 | `geb/.github/workflows/markdown-lint.yml` exists (at the parent level) and is path-filtered to `geb-lean/**`. `geb/.github/workflows/lean_action_ci.yml` exists (promoted) with `paths: ['geb-lean/**']` filter and `defaults.run.working-directory: geb-lean`. |
-| 14 | `geb-lean/scripts/check-axioms.sh`, `check-jj-setup.sh`, `pre-push.sh`, `hooks/block-mutating-git.sh`, `hooks/check-signing-key.sh` all exist, are executable, and pass a smoke-test invocation. `check-jj-setup.sh` returns non-zero for a deliberately-unconfigured fresh clone and zero after the on-boarding sequence completes. |
+| 13 | `geb/.github/workflows/markdown-lint.yml` exists (at the parent level) and is path-filtered to `geb-lean/**`. `geb/.github/workflows/lean_action_ci.yml` exists (promoted) with `paths: ['geb-lean/**']` filter; the `leanprover/lean-action@v1` step passes `lake-package-directory: geb-lean`; and `run:` steps in the same workflow (e.g. `axiom_check`) use `defaults.run.working-directory: geb-lean`. (Note: `defaults.run.working-directory` applies only to `run:` steps, not to `uses:` steps; `lake-package-directory` is the correct mechanism for the lean-action step.) |
+| 14 | `geb-lean/scripts/check-axioms.sh`, `check-jj-setup.sh`, `pre-push.sh`, `hooks/block-mutating-git.sh`, `hooks/check-signing-key.sh` all exist, are executable, and pass a smoke-test invocation. `check-jj-setup.sh` returns non-zero for a deliberately-unconfigured fresh clone and zero after the on-boarding sequence completes. `check-signing-key.sh`: `bash scripts/hooks/check-signing-key.sh; echo "exit=$?"` returns exit=0; the script's stderr is empty unless a configured signing backend is unavailable (in which case the diagnostic message is informational and does not affect the exit code). |
 | 15 | The refactor's spec and plan have each gone through fresh-context adversarial review until termination, where termination means every finding is cosmetic-taste, rationale-rejected, or fixed (no open blocker / serious / minor findings remain). |
 | 16 | The user has reviewed the final state and confirmed Milestone A is complete. |
 | 17 | The refactor's work has been performed on a topic branch (`chore/process-refactor`). The merge commit on the parent's `main` that lands this work is recorded as the **cutover commit**. The **primary record** of the cutover SHA is a signed git tag (e.g. `cutover-2026-MM-DD`) pushed to the remote. The signing and pushing of the cutover tag are user-manual operations performed in the user's own terminal outside Claude Code (per § Hooks); the user chooses an unambiguous push form, either `git push origin tag cutover-2026-MM-DD` (specific tag) or `git push origin 'refs/tags/cutover-*:refs/tags/cutover-*'` (wildcard refspec). The bare-name form `git push origin cutover-2026-MM-DD` is avoided because git would resolve `cutover-2026-MM-DD` against both branch and tag namespaces and refuse if both exist; using `tag` or the explicit refspec disambiguates. Before pushing, the user verifies the local `cutover-*` tag listing contains exactly one entry (`git tag --list 'cutover-*'` prints exactly one line); any stray tags from earlier attempts are resolved first. The tag is protected from deletion by the repository protection rules (item 17a). `docs/process.md` § Branch model carries the same SHA as a navigation aid only; the tag is authoritative. From the cutover commit forward, `git log --first-parent origin/main` (against the remote, not the local `main` or its reflog) shows only fast-forward updates and normal merge commits — no force-pushes. The append-only invariant binds commits whose first parent is at or after the cutover SHA; pre-cutover history is exempt. |
