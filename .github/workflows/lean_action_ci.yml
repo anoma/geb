@@ -31,3 +31,20 @@ jobs:
             lake build
             lake test
       - uses: leanprover-community/docgen-action@v1
+
+  axiom_check:
+    runs-on: ubuntu-latest
+    needs: [build]
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      - name: Run axiom check (report-only)
+        run: |
+          bash scripts/check-axioms.sh --exit-zero-on-findings \
+            GebLean/ GebLeanTests/ \
+            | tee axiom-check-report.txt
+      - name: Upload axiom-check report
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: axiom-check-report
+          path: geb-lean/axiom-check-report.txt
+          if-no-files-found: error
