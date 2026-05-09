@@ -62,8 +62,8 @@ The refactor leaves the following unchanged:
 
 - `geb-agda/`, `geb-idris/`, `src/`, `test/`, `geb.asd`,
   `Makefile` (other subprojects)
-- Parent's existing `geb/LICENSE` (Apache 2.0; geb-lean uses
-  it transitively)
+- Parent's existing `geb/LICENSE` (GNU General Public License
+  version 3; geb-lean inherits it)
 - Parent's existing `geb/.github/workflows/{ci.yml, docs.yml}`
   (Common Lisp workflows)
 - Inert `geb-lean/.github/workflows/{update.yml,`
@@ -76,8 +76,8 @@ project-wide policy commitment binding all subprojects, not a
 geb-lean-internal one. Other subprojects' contributors operate
 under the same rule.
 
-Future split-out (treating geb-lean as its own git repo) is out
-of scope.
+A potential split-out (treating geb-lean as its own git repo) is
+out of scope.
 
 ## Context
 
@@ -165,10 +165,12 @@ repository's character. Concretely:
    the subdirectory and its place in the monorepo; add a brief
    pointer near the top of the parent `geb/README.md` pointing
    at `geb-lean/README.md`.
-9. No `geb-lean/LICENSE` is created: the parent `geb/LICENSE`
-   (Apache 2.0) is the licence under which geb-lean content
-   falls. Spec/CLAUDE.md/README references to licence point at
-   `../LICENSE`.
+9. No `geb-lean/LICENSE` is created: geb-lean falls under the
+   parent `geb/LICENSE` (GNU General Public License version 3)
+   by inheritance. Spec/CLAUDE.md/README references to licence
+   point at `../LICENSE`. The in-flight A5 commit's
+   `geb-lean/LICENSE` (Apache 2.0) is removed in the cleanup
+   task that opens the new plan.
 10. Add a vendored `scripts/check-axioms.sh` (derivative of the
     `lean4-skills` plugin's `check_axioms_inline.sh` with
     `Classical.choice` excluded from the allowlist), wired into
@@ -208,7 +210,7 @@ The refactor deliberately excludes:
   such migration is a separate workstream, outside this
   refactor.
 - **Mass docstring rewrite**: the new `.claude/rules/lean-coding.md`
-  rules bind future edits; existing files are not rewritten as
+  rules bind subsequent edits; existing files are not rewritten as
   part of this refactor unless directly touched.
 - **Standalone git repo split-out**: geb-lean will remain a
   subdirectory of the geb/ monorepo for the duration of this
@@ -254,12 +256,14 @@ geb-lean/
 │       ├── lean-coding.md       (+ paths: ["**/*.lean"])
 │       ├── markdown-writing.md  (+ paths: ["**/*.md"])
 │       └── ci-and-workflow.md   (+ paths: …)
-├── .git/                        (existing; unchanged)
 ├── .gitignore                   (existing; unchanged)
 ├── .markdownlint-cli2.jsonc     (+ shared config)
 ├── .github/
 │   └── workflows/
 │       ├── lean_action_ci.yml   (- moved to parent)
+│       ├── markdown-lint.yml    (- removed; superseded by
+│       │                           parent geb/.github/
+│       │                           workflows/markdown-lint.yml)
 │       ├── update.yml           (existing; inert; unchanged)
 │       └── create-release.yml   (existing; inert; unchanged)
 ├── CLAUDE.md                    (~ rewritten, ≤ 200 lines)
@@ -628,13 +632,14 @@ sections:
    preserved from the existing project rule. This
    intentionally diverges from mathlib's per-file `Authors:`
    template. Licence coverage for the project lives at the
-   repository-level `../LICENSE` file (Apache 2.0, at the
-   parent `geb/` root); per-file copyright headers are not
-   required by Apache 2.0 §4 for original GebLean code.
-   Vendored upstream content (e.g. files copied verbatim from
-   mathlib or `lean4-skills`) preserves any per-file notices
-   it carries verbatim, per Apache 2.0 §4(c)'s "retain
-   notices from the Work" requirement.
+   repository-level `../LICENSE` file (GNU General Public
+   License version 3, at the parent `geb/` root); per-file
+   copyright headers are not required by GPLv3 for original
+   GebLean code. Vendored upstream content (e.g. files copied
+   verbatim from mathlib or `lean4-skills`, which carry
+   Apache 2.0 notices — mathlib is Apache 2.0, a dependency
+   of this GPLv3 project) preserves any per-file notices it
+   carries verbatim per those upstream licences' requirements.
 7. **Reminder of unconditionally-loaded disciplines**: the
    project-specific Lean disciplines (literature citations,
    bottom-up named composites, non-negotiable interfaces,
@@ -667,7 +672,7 @@ Content:
    (specs, plans, README, docs, comments). History belongs in
    commit messages and review threads. Comments in code do not
    refer to prior states of the code or to in-progress /
-   future work.
+   planned work.
 4. **Generic user references**: "the user" / "they" / "them";
    no first names, email addresses, or autobiographical
    details in committed text. (Per-developer local state,
@@ -699,6 +704,12 @@ paths:
   - "scripts/**"
 ```
 
+> Note: This rule applies to CI and workflow files inside the
+> geb-lean subdirectory. Parent-level workflow files at
+> `geb/.github/workflows/` are outside the geb-lean project's
+> `paths:` scope; when editing those files, load
+> `geb-lean/docs/process.md` § CI as the reference.
+
 Content:
 
 1. **Workflow conventions**: the `lean_action_ci.yml` and
@@ -707,7 +718,7 @@ Content:
    `geb-lean/**`; `update.yml` and `create-release.yml`
    remain inert at `geb-lean/.github/workflows/` as forward
    prep. Third-party action references are SHA-pinned where
-   the security benefit warrants the maintenance cost;
+   the security gain warrants the maintenance cost;
    major-version pinning is acceptable for actions whose
    maintainers have a release-discipline track record.
 2. **Pre-push checklist**: `scripts/pre-push.sh` runs
@@ -782,15 +793,17 @@ files for full text:
     why no `Mathlib/` vs `Internal/` split here.
 18. **GebLean-specific: no per-file copyright or author
     headers.** Project rule preserved from the existing
-    `CLAUDE.md`. The repository-level Apache 2.0 `../LICENSE`
-    (at the parent `geb/` root) covers all original GebLean
-    code; per-file headers are not required by Apache 2.0 §4
-    for original work. Vendored upstream content (e.g. files
-    copied from mathlib or `lean4-skills`) preserves any
-    per-file notices it carries verbatim per Apache 2.0 §4(c).
-    Rationale for diverging from mathlib's per-file `Authors:`
-    template: project-author preference, recorded as a
-    deliberate stylistic choice rather than an oversight.
+    `CLAUDE.md`. The repository-level `../LICENSE` (GNU
+    General Public License version 3, at the parent `geb/`
+    root) covers all original GebLean code; per-file headers
+    are not required by GPLv3 for original work. Vendored
+    upstream content (e.g. files copied from mathlib or
+    `lean4-skills`, which carry Apache 2.0 notices) preserves
+    any per-file notices it carries verbatim per those
+    upstream licences' requirements. Rationale for diverging
+    from mathlib's per-file `Authors:` template:
+    project-author preference, recorded as a deliberate
+    stylistic choice rather than an oversight.
 
 ## docs/index.md
 
@@ -861,7 +874,7 @@ lands in `docs/index.md`.
 
 - **Status**: <one phrase: planning | spec drafted | spec
   under review | plan drafted | plan under review | executing
-  | blocked-on-X>
+  | waiting-on-X>
 - **Spec**: `docs/superpowers/specs/<file>` (or "—" if not
   yet written)
 - **Plan**: `docs/superpowers/plans/<file>` (or "—")
@@ -877,8 +890,7 @@ unless they have their own.)
 ## To be done in geb-mathlib (not pending here)
 
 Items intentionally deferred until after migration to the
-new repository, where they will benefit from the curated
-context there. **None of the items in this section are
+new repository, where the curated context there applies. **None of the items in this section are
 pending in the present repository.** Listed here so the
 work is not lost.
 
@@ -1000,12 +1012,11 @@ near the top of `geb/README.md` (placed after the title and
 any tagline, before the first body section), of approximately
 the following form:
 
-> The active and future-direction code of this project lives
-> in `geb-lean/`; see
-> [`geb-lean/README.md`](geb-lean/README.md). The material
+> The Lean formalisation of this project lives in `geb-lean/`;
+> see [`geb-lean/README.md`](geb-lean/README.md). The material
 > below documents the original implementation and is largely
-> superseded by the geb-lean subproject, which will
-> eventually replace it.
+> superseded by the geb-lean subproject, which will eventually
+> replace it.
 
 (Three to five lines; state the supersession-direction
 without prescribing timing.)
@@ -1026,7 +1037,8 @@ Concretely, sections in order:
    of 2026-05-09 in effect.").
 3. Dependencies (mathlib + CSLib at the pinned versions;
    pointer to `lakefile.toml`).
-4. Licence (Apache 2.0; see `../LICENSE`).
+4. Licence (GNU General Public License version 3; see
+   `../LICENSE`).
 5. Index of project documentation: links to `docs/index.md`,
    `docs/process.md`, `docs/lean-resources.md`, this
    refactor's spec and plan, and the workstream-specific
@@ -1063,11 +1075,11 @@ Existing options preserved (verified against `lakefile.toml`):
 
 Additions:
 
-- `lintDriver = "batteries/runLinter"`. Verified against
-  `lakefile.toml`: this is currently absent. The plan adds
-  it as the first lakefile-touching task; the pre-push
-  checklist's `lake lint` invocation depends on this
-  addition having landed.
+- `lintDriver = "batteries/runLinter"`. (Already added in
+  `chore/process-refactor` commit 00284252; carried forward
+  unchanged.) Verification-only check: confirm the line is
+  present in `lakefile.toml` and that `lake lint` runs. The
+  plan does not re-add the line.
 - **`weak.linter.flexible = true` is deliberately NOT
   adopted** in this refactor, despite the `geb-mathlib`
   design including it. Rationale: the `flexible` linter
@@ -1118,6 +1130,11 @@ The promoted file gains:
 
 `update.yml` and `create-release.yml` remain inert at
 `geb-lean/.github/workflows/`; they are not moved.
+
+The `geb-lean/.github/workflows/markdown-lint.yml` file
+landed in `chore/process-refactor` commit 3d27311f at the
+wrong location; it is removed in the cleanup task that opens
+the new plan. The parent-level workflow supersedes it.
 
 `markdown-lint.yml` (new): lives at
 `geb/.github/workflows/markdown-lint.yml`. Path filter:
@@ -1281,7 +1298,7 @@ Milestone B (below) clears it after triage.
 **On-boarding for new developers**: a developer cloning the
 repository performs the following sequence. Per-repo
 configuration must be set *before* the first
-`jj git fetch --remote origin` so the fetch can benefit from
+`jj git fetch --remote origin` so the fetch applies
 the `fetch-tags` pattern:
 
 1. `jj git init --colocate` (in the cloned repository's
@@ -1417,7 +1434,7 @@ script:
   by default (verified against
   <https://docs.jj-vcs.dev/latest/revsets/>), but jj is
   pre-1.0 and revset string-pattern semantics may change in
-  future versions. Explicit `glob:` pinning is robust
+  later versions. Explicit `glob:` pinning is robust
   against silent default changes.
 
 - **Mass-rebase active topic branches onto a new `main`**
@@ -1626,8 +1643,8 @@ expected to warm gpg-agent on every session.
   `lean4-skills` plugin's `check_axioms_inline.sh`. The
   vendored copy carries a header comment recording the
   exact upstream source URL and commit SHA from which it
-  was copied, plus the local modifications, so future
-  re-vendoring can detect drift. Allowlist customised: the
+  was copied, plus the local modifications, so on
+  re-vendoring the header can detect drift. Allowlist customised: the
   allowlist is reduced to `propext`, `Quot.sound`,
   `quot.sound` (the `lean4-skills` default has
   `Classical.choice` in its allowlist; we remove it, with
@@ -1660,11 +1677,12 @@ expected to warm gpg-agent on every session.
   theorem foo : … := …
   ```
 
-  CI fails unless every flagged declaration has either an
-  `AXIOM_ALLOW` comment or no axiom dependency outside the
-  (reduced) allowlist. Direct `Classical.choice` use in our
-  own code (i.e. without a matching `AXIOM_ALLOW` rationale)
-  is forbidden.
+  Once the axiom_check job is flipped to fail-mode at
+  Milestone B, CI fails unless every flagged declaration has
+  either an `AXIOM_ALLOW` comment or no axiom dependency
+  outside the (reduced) allowlist. Direct `Classical.choice`
+  use in our own code (i.e. without a matching `AXIOM_ALLOW`
+  rationale) is forbidden.
 - `scripts/pre-push.sh`: **manual** pre-push checklist
   runner. Invoked explicitly by the user before each push
   (e.g. `bash scripts/pre-push.sh && jj git push --remote
@@ -1680,8 +1698,8 @@ expected to warm gpg-agent on every session.
   `GebLean` and `GebLeanTests` libraries (these are the
   inputs to `scripts/check-axioms.sh`). Running an explicit
   `lake build` before `lake test` would be redundant given
-  current lakefile targets. **If a future lakefile addition
-  introduces a target outside the test driver's dependency
+  current lakefile targets. **Should a lakefile addition
+  introduce a target outside the test driver's dependency
   graph, this script must be amended to add `lake build`
   explicitly.** Then `lake lint`,
   `markdownlint-cli2 --config .markdownlint-cli2.jsonc
@@ -1821,7 +1839,7 @@ interpretive items (15–17) are confirmed by user sign-off.
 | --- | --- |
 | 1 | `lake build` and `lake test` succeed (no source-side breakage). |
 | 2 | `markdownlint-cli2 --config geb-lean/.markdownlint-cli2.jsonc 'geb-lean/**/*.md'` is quiet. |
-| 3 | `bash scripts/check-axioms.sh GebLean/ test/` reports no non-allowlisted axioms. |
+| 3 | `bash scripts/check-axioms.sh GebLean/ test/` runs to completion, produces output, and exits with a defined code. (In report-only mode, the script may report many flagged declarations because mathlib transitively introduces `Classical.choice`; this is the documented current state.) |
 | 4 | `lake lint` is quiet on the current source AND, when a deliberate violation is introduced (e.g. an unused `set_option` or a `linter.unusedVariables`-tripping let-binding), `lake lint` flags it. The violation is then removed and `lake lint` returns to quiet. (Positive verification that `lintDriver = "batteries/runLinter"` is wired and active, not silently no-op.) |
 | 5 | `geb-lean/CLAUDE.md` is under 200 lines and is markdownlint-clean. |
 | 6 | `geb-lean/.claude/rules/lean-disciplines.md`, `lean-coding.md`, `markdown-writing.md`, `ci-and-workflow.md` exist and are markdownlint-clean. |
@@ -1848,7 +1866,7 @@ interpretive items (15–17) are confirmed by user sign-off.
 | B4 | `.session/` directory (including its `README.md`) has been removed. |
 | B5 | The Claude-harness task list has been reset: brainstorming-tracking tasks #534–#542, the plan's tasks, and any tasks of currently-`live` workstreams are kept; the rest are archived or deleted. |
 | B6 | The user has reviewed the final state and confirmed Milestone B is complete. |
-| B7 | `axiom_check` job has been flipped from report-only mode to fail-mode; report-only mode has been retired. |
+| B7 | `axiom_check` job has been flipped from report-only mode to fail-mode; report-only mode has been retired. After the flip, `bash scripts/check-axioms.sh GebLean/ test/` reports no non-allowlisted axioms (every flagged declaration carries an `AXIOM_ALLOW` comment). |
 
 ## Open questions / deferred decisions
 
@@ -1904,9 +1922,8 @@ interpretive items (15–17) are confirmed by user sign-off.
   <https://leanprover-community.github.io/contribute/doc.html>,
   <https://leanprover-community.github.io/contribute/commit.html>.
 - `lean4-skills` `check_axioms_inline.sh` (vendored source).
-- Apache 2.0 license (at parent `geb/LICENSE`):
-  <https://github.com/leanprover-community/mathlib4/blob/master/LICENSE>
-  (reference copy; the governing file is `../LICENSE`).
+- GNU General Public License version 3 (at parent
+  `geb/LICENSE`): the governing file is `../LICENSE`.
 
 ### Empirical verifications
 
@@ -1920,8 +1937,8 @@ and observing output, rather than by citation:
   (`git init -q && jj git init --colocate`), followed by
   inspection of the resulting `.jj/.gitignore` contents
   (`xxd .jj/.gitignore` showed `2f2a 0a` = `/*\n`).
-  Behaviour persists between 0.40 and 0.41. If a future jj
-  version changes this behaviour, the manual fallback
+  Behaviour persists between 0.40 and 0.41. Should a later
+  jj version change this behaviour, the manual fallback
   documented in the upstream colocated-conversion procedure
   (`echo '/*' > .jj/.gitignore`) remains applicable and is
   reproduced in `docs/process.md` § jj as a safety net.
