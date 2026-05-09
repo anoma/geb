@@ -1285,14 +1285,12 @@ forms for each generated directory:
 ```json
 "ignores": [
   ".lake/**",
-  ".jj/**",
   "node_modules/**",
   ".session/**",
   ".claude/memory/**",
   ".claude/docs/**",
   ".claude/tools/**",
   "geb-lean/.lake/**",
-  "geb-lean/.jj/**",
   "geb-lean/node_modules/**",
   "geb-lean/.session/**",
   "geb-lean/.claude/memory/**",
@@ -1300,6 +1298,17 @@ forms for each generated directory:
   "geb-lean/.claude/tools/**"
 ]
 ```
+
+`.jj/` is deliberately not listed: jj manages its own
+git-visibility via the self-contained `.jj/.gitignore`
+(`/*`) it creates at `jj git init --colocate`. Adding
+`.jj/**` to markdownlint's ignores would override any
+later jj decision to expose a markdown file under `.jj/`
+(e.g. a commit-message template). In normal operation
+`.jj/` contains no markdown files, so the absence of this
+ignore entry is a no-op; if jj ever does expose a markdown
+file, markdownlint will lint it like any other file rather
+than silently skip it.
 
 The unprefixed forms match when CWD is `geb-lean/` (the
 `pre-push.sh` case); the `geb-lean/`-prefixed forms match
@@ -2028,7 +2037,7 @@ self-contained. Ordering constraints are noted per task.
 | C-workflow-rm | Remove `geb-lean/.github/workflows/markdown-lint.yml` (revert in-flight A4 file location; the parent-level workflow supersedes it). | Before A13 (parent-level workflow authoring). |
 | C-lean-action-ci-promote | Move `geb-lean/.github/workflows/lean_action_ci.yml` to `geb/.github/workflows/lean_action_ci.yml` via `git mv`; add `paths: ['geb-lean/**']` filter on push/PR triggers; add `defaults.run.working-directory: geb-lean` at workflow level; add the `lake-package-directory: geb-lean` input to the `leanprover/lean-action@v1` step. (The `axiom_check` job addition is a main-plan task, not part of this cleanup.) | After C-workflow-rm; before the main plan's CI verification task. |
 | C-gitignore-revert | Rewrite `geb-lean/.gitignore` so it contains no `.claude`-related patterns. Currently (at HEAD) it contains `/.claude/*`, `!/.claude/rules/`, `!/.claude/settings.json`, and `/docs/.claude`. Remove all of these. The parent `geb/.gitignore` (per § `.gitignore` change at the parent) becomes the only authoritative source for `.claude/`-path ignore and unignore decisions. After this task and the new plan's parent-`.gitignore` task, `git check-ignore -v geb-lean/.claude/settings.json` returns nothing (not ignored) and `git check-ignore -v geb-lean/.claude/settings.local.json` shows the path ignored via the parent's `/geb-lean/.claude/*` pattern. | Before the new plan's parent-`.gitignore` task. |
-| C-markdownlint-config-rewrite | Rewrite `geb-lean/.markdownlint-cli2.jsonc`: (a) remove the top-level `globs` key, (b) replace all `ignores` patterns with both unprefixed forms (`.lake/**`, `.jj/**`, `node_modules/**`, `.session/**`, `.claude/memory/**`, `.claude/docs/**`, `.claude/tools/**`) and `geb-lean/`-prefixed forms (`geb-lean/.lake/**`, `geb-lean/.jj/**`, `geb-lean/node_modules/**`, `geb-lean/.session/**`, `geb-lean/.claude/memory/**`, `geb-lean/.claude/docs/**`, `geb-lean/.claude/tools/**`). The unprefixed forms handle the `pre-push.sh` case (CWD is `geb-lean/`); the prefixed forms handle the parent-CWD CI case. The existing committed file (introduced at `aeae31f9`) carries a `"globs": ["**/*.md"]` key and ignores without either form. After this task, the config file matches the description in § `.markdownlint-cli2.jsonc` and both invocation contexts work correctly. | Before A2 (markdownlint verification). |
+| C-markdownlint-config-rewrite | Rewrite `geb-lean/.markdownlint-cli2.jsonc`: (a) remove the top-level `globs` key, (b) replace all `ignores` patterns with both unprefixed forms (`.lake/**`, `node_modules/**`, `.session/**`, `.claude/memory/**`, `.claude/docs/**`, `.claude/tools/**`) and `geb-lean/`-prefixed forms (`geb-lean/.lake/**`, `geb-lean/node_modules/**`, `geb-lean/.session/**`, `geb-lean/.claude/memory/**`, `geb-lean/.claude/docs/**`, `geb-lean/.claude/tools/**`). `.jj/**` is deliberately omitted: jj manages its own git-visibility via the self-contained `.jj/.gitignore`, and adding it to markdownlint ignores would override any later jj decision to expose a markdown file. The unprefixed forms handle the `pre-push.sh` case (CWD is `geb-lean/`); the prefixed forms handle the parent-CWD CI case. The existing committed file (introduced at `aeae31f9`) carries a `"globs": ["**/*.md"]` key and ignores without either form. After this task, the config file matches the description in § `.markdownlint-cli2.jsonc` and both invocation contexts work correctly. | Before A2 (markdownlint verification). |
 | C-hook-amend | Amend `geb-lean/scripts/hooks/block-mutating-git.sh` so its `.jj/` discovery uses `jj root` (exit 0 = jj is initialised somewhere up the tree) instead of `[[ -d $CLAUDE_PROJECT_DIR/.jj ]]`. After this task, the five `block-mutating-git.sh` smoke-test cases (originally Task A10 in the 2026-05-07 plan; the JSON-stdin payloads are: (a) `git commit -m '...'` → exit 2; (b) `jj git push --remote origin -b feat/x` → exit 0; (c) `git status` → exit 0; (d) `git checkout -b new-branch` → exit 2; (e) `git push origin 'refs/tags/v1.0.0:refs/tags/v1.0.0'` → exit 2) must be re-run after the amendment, and all five must produce the expected exits before A27 wires the hook into `.claude/settings.json`. | Precedes A27 (hook wiring into `.claude/settings.json`). Only after C-hook-amend lands and all five smoke-test cases pass may A27 proceed. |
 
 ## Order of artefact production
