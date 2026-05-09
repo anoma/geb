@@ -256,10 +256,10 @@ geb-lean/
 │       ├── lean-coding.md       (+ paths: ["**/*.lean"])
 │       ├── markdown-writing.md  (+ paths: ["**/*.md"])
 │       └── ci-and-workflow.md   (+ paths: …)
-├── .gitignore                   (existing; reverted to
-│                                   pre-refactor state by
-│                                   cleanup task; otherwise
-│                                   unchanged)
+├── .gitignore                   (existing; all .claude-related
+│                                   patterns removed by cleanup
+│                                   task C-gitignore-revert;
+│                                   otherwise unchanged)
 ├── .markdownlint-cli2.jsonc     (existing; rewritten by
 │                                   cleanup task
 │                                   C-markdownlint-config-rewrite
@@ -289,9 +289,16 @@ geb-lean/
 │   └── superpowers/
 │       ├── specs/               (existing; new entries)
 │       └── plans/               (existing; new entries)
-├── scripts/                     (+ new directory)
+├── scripts/                     (existing; created by
+│   │                               in-flight A2-prep mkdir;
+│   │                               carried forward)
 │   ├── check-axioms.sh          (+ vendored)
 │   ├── check-jj-setup.sh        (+ on-boarding verifier)
+│   ├── nolints.json             (existing; lake-lint baseline
+│   │                               ratchet; ~919 entries;
+│   │                               updated by
+│   │                               lake lint -- --update
+│   │                               when the baseline shrinks)
 │   ├── pre-push.sh              (+ manual checklist runner)
 │   └── hooks/
 │       ├── block-mutating-git.sh  (+ PreToolUse)
@@ -418,7 +425,7 @@ Sections in order:
    unopinionated register. The canonical list of value-laden
    adjectives to avoid lives in
    `.claude/rules/markdown-writing.md`; CLAUDE.md gives a few
-   examples (`key`, `important`, `core`, `complex`, `crucial`)
+   examples (`key`, `important`, `core`, `complex`)
    with a pointer to the full list. Detailed prose-tone rules
    live in `.claude/rules/markdown-writing.md` and
    `.claude/rules/lean-coding.md`. The rule binds repository
@@ -438,7 +445,7 @@ Sections in order:
    each workstream's spec, plan, and code co-evolve on the
    same topic branch. Spec at
    `docs/superpowers/specs/<date>-<topic>-design.md`; plan at
-   `docs/superpowers/plans/<date>-<topic>-plan.md`.
+   `plans/<date>-<topic>-plan.md`.
    Adversarial-review iterations and self-review fixes are
    commits on the same branch.
 10. **GebLean-specific disciplines** (fresh): one paragraph
@@ -885,7 +892,7 @@ lands in `docs/index.md`.
   | waiting-on-X>
 - **Spec**: `docs/superpowers/specs/<file>` (or "—" if not
   yet written)
-- **Plan**: `docs/superpowers/plans/<file>` (or "—")
+- **Plan**: `plans/<file>` (or "—")
 - **Scope**: <one or two sentences>
 - **Next**: <the immediate next thing to do>
 
@@ -1004,7 +1011,7 @@ deleted (Milestone B item B4).
 The Claude-harness task list is treated similarly: tasks
 that are children of a `live` workstream are implicitly
 carried by that workstream's plan in
-`docs/superpowers/plans/`; `completed` tasks are historical
+`plans/`; `completed` tasks are historical
 only; `pending` or `in_progress` tasks under non-`live`
 workstreams are surfaced during triage. Reset (Milestone B
 item B5) keeps brainstorming-tracking tasks, the refactor's
@@ -1222,21 +1229,36 @@ markdownlint-cli2 behaviour, CLI glob arguments and a
 config-file `globs` field are additive, not mutually
 exclusive; omitting `globs` from the config prevents
 unintended glob union when CLI globs are passed.) The
-`ignores` patterns cover both direct invocation from
-`geb-lean/` and parent-level invocation from `geb/`:
-`["geb-lean/.lake/**", "geb-lean/.jj/**",
-"geb-lean/node_modules/**", "geb-lean/.session/**"]`. The
-`geb-lean/` prefix is harmless when CWD is `geb-lean/`
-(the patterns simply match nothing), and correctly excludes
-generated directories when CWD is `geb/`. The configuration
-is **iterated until clean against the refactor's own
-artefacts**; the final set of overrides is recorded in
-`docs/process.md` § Markdownlint discipline so the rationale
-for each override persists.
+`ignores` array carries both unprefixed and `geb-lean/`-prefixed
+forms for each generated directory:
+
+```json
+"ignores": [
+  ".lake/**",
+  ".jj/**",
+  "node_modules/**",
+  ".session/**",
+  "geb-lean/.lake/**",
+  "geb-lean/.jj/**",
+  "geb-lean/node_modules/**",
+  "geb-lean/.session/**"
+]
+```
+
+The unprefixed forms match when CWD is `geb-lean/` (the
+`pre-push.sh` case); the `geb-lean/`-prefixed forms match
+when CWD is `geb/` (the parent-CWD CI case). Each
+invocation triggers exactly one of the two sets; the other
+matches nothing (harmless). The configuration is **iterated
+until clean against the refactor's own artefacts**; the
+final set of overrides is recorded in `docs/process.md`
+§ Markdownlint discipline so the rationale for each override
+persists.
 
 The file committed pre-refactor (introduced at `aeae31f9`)
 carries a `"globs": ["**/*.md"]` key and `ignores` patterns
-without the `geb-lean/` prefix and without `.session/**`.
+without the `geb-lean/` prefix, without the unprefixed
+forms, and without `.session/**`.
 Cleanup task C-markdownlint-config-rewrite rewrites the file
 to the target configuration described above. The parent-level
 CI workflow's `markdownlint-cli2 --no-globs` invocation reads
@@ -1274,11 +1296,21 @@ negation patterns are functionally inert because the parent
 `geb/.gitignore` still has the blanket `.claude` pattern at
 line 7, which overrides them (`git check-ignore` confirms
 `geb-lean/.claude/settings.json` is ignored via
-`geb/.gitignore:7`). The cleanup task that opens the new
-plan reverts `geb-lean/.gitignore` to its pre-A12 state
-(the three patterns removed) before applying the parent
-`.gitignore` fix described above. After cleanup,
-`geb-lean/.gitignore` matches its pre-refactor state.
+`geb/.gitignore:7`). After the cleanup task
+`C-gitignore-revert`, `geb-lean/.gitignore` contains no
+`.claude`-related patterns: the three patterns from
+commit `69123dd0` are removed, and the pre-A12 `/.claude`
+line is also removed. The parent `geb/.gitignore` (per the
+replacement above) becomes the only authoritative source for
+`.claude/`-path ignore and unignore decisions. After both
+`C-gitignore-revert` and the parent-`.gitignore` edit are
+in place: `git check-ignore -v geb-lean/.claude/settings.json`
+returns nothing (the path is not ignored); and
+`git check-ignore -v geb-lean/.claude/settings.local.json`
+identifies the path as ignored via the parent's
+`/geb-lean/.claude/*` pattern, with no negation for
+`.local.json`. These two outcomes are confirmed by
+verification checklist item V11.
 
 ## jj setup
 
@@ -1834,7 +1866,8 @@ After any spec or plan is committed, before downstream work
 begins:
 
 1. **Author commits** the spec or plan to its file under
-   `docs/superpowers/specs/` or `docs/superpowers/plans/`.
+   `docs/superpowers/specs/` (for specs) or `plans/`
+   (for plans).
 2. **Author runs spec-self-review or plan-self-review** as a
    brief inline check: placeholder scan, internal
    consistency, scope check, ambiguity check. Fixes are
@@ -1902,8 +1935,8 @@ self-contained. Ordering constraints are noted per task.
 | --- | --- | --- |
 | C-license-rm | Remove `geb-lean/LICENSE` (revert in-flight A5 commit). | Before any task that reads the file-layout as definitive. |
 | C-workflow-rm | Remove `geb-lean/.github/workflows/markdown-lint.yml` (revert in-flight A4 file location; the parent-level workflow supersedes it). | Before A13 (parent-level workflow authoring). |
-| C-gitignore-revert | Revert `geb-lean/.gitignore` to pre-A12 state (remove the three negation patterns `/.claude/*`, `!/.claude/rules/`, `!/.claude/settings.json` added in commit `69123dd0`; they are inert against the parent's blanket `.claude` pattern). | Before A10 (parent `.gitignore` fix). |
-| C-markdownlint-config-rewrite | Rewrite `geb-lean/.markdownlint-cli2.jsonc`: (a) remove the top-level `globs` key, (b) replace all `ignores` patterns with `geb-lean/`-prefixed versions covering parent-CWD invocations (`geb-lean/.lake/**`, `geb-lean/.jj/**`, `geb-lean/node_modules/**`, `geb-lean/.session/**`). The existing committed file (introduced at `aeae31f9`) carries a `"globs": ["**/*.md"]` key and ignores without the `geb-lean/` prefix. After this task, the config file matches the description in § `.markdownlint-cli2.jsonc` and the parent-level CI workflow's `markdownlint-cli2 --no-globs` invocation reads it correctly. | Before A2 (markdownlint verification). |
+| C-gitignore-revert | Rewrite `geb-lean/.gitignore` so it contains no `.claude`-related patterns: remove the `/.claude` line present in the pre-A12 state and remove the three patterns (`/.claude/*`, `!/.claude/rules/`, `!/.claude/settings.json`) added by commit `69123dd0`. The parent `geb/.gitignore` (per § `.gitignore` change at the parent) becomes the only authoritative source for `.claude/`-path ignore and unignore decisions. After this task and A10, `git check-ignore -v geb-lean/.claude/settings.json` returns nothing (not ignored) and `git check-ignore -v geb-lean/.claude/settings.local.json` shows the path ignored via the parent's `/geb-lean/.claude/*` pattern. | Before A10 (parent `.gitignore` fix). |
+| C-markdownlint-config-rewrite | Rewrite `geb-lean/.markdownlint-cli2.jsonc`: (a) remove the top-level `globs` key, (b) replace all `ignores` patterns with both unprefixed forms (`.lake/**`, `.jj/**`, `node_modules/**`, `.session/**`) and `geb-lean/`-prefixed forms (`geb-lean/.lake/**`, `geb-lean/.jj/**`, `geb-lean/node_modules/**`, `geb-lean/.session/**`). The unprefixed forms handle the `pre-push.sh` case (CWD is `geb-lean/`); the prefixed forms handle the parent-CWD CI case. The existing committed file (introduced at `aeae31f9`) carries a `"globs": ["**/*.md"]` key and ignores without either form. After this task, the config file matches the description in § `.markdownlint-cli2.jsonc` and both invocation contexts work correctly. | Before A2 (markdownlint verification). |
 | C-hook-amend | Amend `geb-lean/scripts/hooks/block-mutating-git.sh` so its `.jj/` discovery uses `jj root` (exit 0 = jj is initialised somewhere up the tree) instead of `[[ -d $CLAUDE_PROJECT_DIR/.jj ]]`. After this task, re-run A10's smoke-test cases (all five must produce expected exits). | Precedes A27 (hook wiring into `.claude/settings.json`). Only after C-hook-amend lands and all five smoke-test cases pass may A27 proceed. |
 
 ## Order of artefact production
@@ -1967,7 +2000,7 @@ interpretive items (15–17) are confirmed by user sign-off.
 | 7 | `geb-lean/docs/process.md`, `docs/index.md`, `docs/lean-resources.md` exist and are markdownlint-clean. |
 | 8 | `geb-lean/TODO.md` exists with both top-level sections; every entry follows the documented shape. |
 | 9 | `geb-lean/README.md` exists and is authored in the new pattern; markdownlint-clean. Parent `geb/README.md` carries the brief pointer near the top. |
-| 10 | `geb/.gitignore` is modified to permit `geb-lean/.claude/{settings.json, rules/}` per the documented replacement in § .gitignore change at the parent. |
+| 10 | `geb/.gitignore` is modified per the documented replacement in § `.gitignore` change at the parent; `geb-lean/.gitignore` contains no `.claude`-related patterns (neither the pre-A12 `/.claude` line nor the A12 negation lines). Verified by three `git check-ignore` tests run from the parent `geb/` root: (a) `git check-ignore -v geb-lean/.claude/settings.json` returns nothing (path not ignored); (b) `git check-ignore -v geb-lean/.claude/rules/lean-coding.md` returns nothing (path not ignored); (c) `git check-ignore -v geb-lean/.claude/settings.local.json` identifies the path as ignored via the parent's `/geb-lean/.claude/*` pattern (no negation for `.local.json`). |
 | 11 | jj is initialised colocated at the parent `geb/` root; `geb/.jj/.gitignore` exists; `jj root` (run from any path under `geb/`) exits 0; `jj config list --repo git.private-commits` output equals `conflicts()` exactly (anchored, not substring); `jj config list --repo remotes.origin.fetch-tags` output equals `glob:cutover-*` exactly (anchored); `jj config path --repo` prints a path in user-config-dir (per jj 0.38+'s config-relocation), not under `.jj/`. Per-developer signing and identity are set at user-level. |
 | 12 | `geb-lean/.claude/settings.json` (committed) wires `block-mutating-git` (PreToolUse) and `check-signing-key` (SessionStart). The hook script is smoke-tested **by direct invocation** — feed synthesised JSON-stdin payloads representing tool invocations, assert the exit code (0 = allow, 2 = block). No real `git` or `jj` commands run. Required cases: (a) `git commit -m '...'` returns 2 (blocked, exercising the default-deny default); (b) `jj git push --remote origin -b feat/x` returns 0 (allowed; `jj git X` forms are stripped from the hook's scope); (c) `git status` returns 0 (allowed read-only subcommand); (d) `git checkout -b new-branch` returns 2 (blocked mutating subcommand); (e) `git push origin 'refs/tags/v1.0.0:refs/tags/v1.0.0'` returns 2 (blocked — no tag-push allowlist entry exists; tag operations are user-direct per § Hooks). |
 | 13 | `geb/.github/workflows/markdown-lint.yml` exists (at the parent level) and is path-filtered to `geb-lean/**`. `geb/.github/workflows/lean_action_ci.yml` exists (promoted) with `paths: ['geb-lean/**']` filter; the `leanprover/lean-action@v1` step passes `lake-package-directory: geb-lean`; the workflow carries a top-level (workflow-level) `defaults.run.working-directory: geb-lean` key so all `run:` steps in all jobs execute from `geb-lean/`; and the `axiom_check` job declares `needs: [build]` so it runs after the `build` job has populated `.lake/`. (Note: `defaults.run.working-directory` applies only to `run:` steps, not to `uses:` steps; `lake-package-directory` is the correct mechanism for the lean-action step; `actions/checkout` is a `uses:` step unaffected by `defaults.run.working-directory`.) |
