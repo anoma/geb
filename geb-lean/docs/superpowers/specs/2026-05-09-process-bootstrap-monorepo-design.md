@@ -591,7 +591,7 @@ paths:
 
 Loaded automatically when Claude reads a `.lean` file (per
 <https://code.claude.com/docs/en/memory>: path-scoped rules
-trigger on Read tool calls matching the pattern). Content
+trigger on file reads matching the pattern). Content
 sections:
 
 1. **Build discipline**: `lake build` and `lake test` after
