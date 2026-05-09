@@ -32,7 +32,7 @@ reference.
 
 Committed prose (specs, plans, README, docs, code comments) does
 not refer to prior states of the code, to currently in-progress
-work, or to planned future work. Such history belongs in commit
+work, or to work yet to be done. Such history belongs in commit
 messages and review threads, not in the tree. Comments in code
 describe the code as written, not how it came to be written.
 
