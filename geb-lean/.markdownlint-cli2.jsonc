@@ -1,11 +1,21 @@
 // Shared markdownlint configuration for geb-lean.
-// Picked up by both `markdownlint-cli2` (CLI / CI) and the VSCode
-// markdownlint extension when the workspace is opened at this dir.
+// Picked up by both `markdownlint-cli2` (CLI / CI) and
+// the VSCode markdownlint extension when the workspace
+// is opened at this directory.
 //
-// Policy: keep the config as close to markdownlint defaults as
-// possible. The only override is to exempt tables and code blocks
-// from MD013 line-length checks (long lines in those contexts are
-// legitimate; ordinary prose stays under the default limit).
+// No top-level "globs" key: callers pass glob args on
+// the CLI. Omitting "globs" prevents unintended glob
+// union when CLI globs are passed alongside this config.
+//
+// Ignores: both unprefixed (pre-push.sh CWD=geb-lean/)
+// and geb-lean/-prefixed (CI CWD=geb/) forms are listed.
+// Each invocation triggers exactly one set; the other
+// matches nothing (harmless).
+//
+// .jj/ is not listed: jj manages its own git-visibility
+// via the self-contained .jj/.gitignore it creates at
+// jj git init --colocate. Listing .jj/ here would
+// suppress linting of any markdown jj later exposes.
 {
   "config": {
     "default": true,
@@ -14,12 +24,18 @@
       "code_blocks": false
     }
   },
-  "globs": [
-    "**/*.md"
-  ],
   "ignores": [
     ".lake/**",
-    ".jj/**",
-    "node_modules/**"
+    "node_modules/**",
+    ".session/**",
+    ".claude/memory/**",
+    ".claude/docs/**",
+    ".claude/tools/**",
+    "geb-lean/.lake/**",
+    "geb-lean/node_modules/**",
+    "geb-lean/.session/**",
+    "geb-lean/.claude/memory/**",
+    "geb-lean/.claude/docs/**",
+    "geb-lean/.claude/tools/**"
   ]
 }
