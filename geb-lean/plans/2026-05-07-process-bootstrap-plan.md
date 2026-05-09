@@ -1,5 +1,10 @@
 # geb-lean process-bootstrap implementation plan
 
+> **Superseded** by
+> [the 2026-05-09 monorepo-aware plan](2026-05-09-process-bootstrap-monorepo-plan.md).
+> The text below preserves the converged content for historical
+> reference.
+>
 > **For agentic workers:** REQUIRED SUB-SKILL: Use
 > `superpowers:subagent-driven-development` (recommended) or
 > `superpowers:executing-plans` to implement this plan
