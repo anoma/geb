@@ -1150,8 +1150,9 @@ The promoted file gains:
   `bash scripts/check-axioms.sh --exit-zero-on-findings
   GebLean/ test/` (the `--exit-zero-on-findings` flag,
   which is also accepted as `--report-only` — both are
-  aliases implemented in the vendored script at line 87 of
-  `scripts/check-axioms.sh`). The script's stdout is
+  aliases implemented near the argument-parsing section
+  near the top of `scripts/check-axioms.sh`). The
+  script's stdout is
   captured via `actions/upload-artifact@<SHA>` (SHA-pinned,
   where the SHA is the exact commit hash of the
   `actions/upload-artifact@v4` release resolved at
@@ -1195,6 +1196,8 @@ Action invocation uses a `run:` step to pass explicit globs
 and suppress config-file glob expansion:
 
 ```yaml
+- name: Install markdownlint-cli2
+  run: npm install -g markdownlint-cli2
 - name: markdownlint
   run: |
     markdownlint-cli2 \
@@ -1209,9 +1212,9 @@ the action does not expose a `--no-globs` equivalent input;
 without `--no-globs`, the config's presence causes
 additive glob expansion from the parent CWD, scanning
 the entire monorepo. The `run:` form requires
-`markdownlint-cli2` to be installed in the CI environment
-(e.g. via `npm install -g markdownlint-cli2` in a preceding
-step or pre-installed in the runner image).
+`markdownlint-cli2` to be installed in the CI environment;
+the install step above covers this since `markdownlint-cli2`
+is not pre-installed on `ubuntu-latest`.
 
 The action reference is **SHA-pinned** (not tag-pinned) per
 the project's general action-pinning policy; the SHA is
@@ -1238,10 +1241,14 @@ forms for each generated directory:
   ".jj/**",
   "node_modules/**",
   ".session/**",
+  ".claude/memory/**",
+  ".claude/docs/**",
   "geb-lean/.lake/**",
   "geb-lean/.jj/**",
   "geb-lean/node_modules/**",
-  "geb-lean/.session/**"
+  "geb-lean/.session/**",
+  "geb-lean/.claude/memory/**",
+  "geb-lean/.claude/docs/**"
 ]
 ```
 
@@ -1310,7 +1317,7 @@ returns nothing (the path is not ignored); and
 identifies the path as ignored via the parent's
 `/geb-lean/.claude/*` pattern, with no negation for
 `.local.json`. These two outcomes are confirmed by
-verification checklist item V11.
+verification checklist item V10.
 
 ## jj setup
 
@@ -1472,16 +1479,23 @@ if no signing config is found).
 find `.jj/`; portable across whether `.jj/` is at the
 parent or at geb-lean/) to validate the jj installation
 before querying configuration. It then asserts:
-(a) `jj config list --repo git.private-commits` output
-equals `conflicts()` exactly (anchored string match, not
-substring; a configuration of e.g.
-`conflicts() | description("private")` would correctly
-fail this check); (b) `jj config list --repo
-remotes.origin.fetch-tags` output equals `glob:cutover-*`
-exactly (anchored string match; this forecloses
-unintentionally-broader patterns like `glob:bug-cutover-*`
-that would silently mirror unrelated tags); (c) at least
-one of `jj config get signing.behavior` or
+(a) `jj config list --repo git.private-commits` outputs a
+TOML line of the form
+`git.private-commits = "conflicts()"`;
+the script strips the TOML wrapper via `sed` to extract
+the bare value and compares it to `conflicts()` exactly
+(anchored string match, not substring; a configuration of
+e.g. `conflicts() | description("private")` would
+correctly fail this check);
+(b) `jj config list --repo remotes.origin.fetch-tags`
+outputs a TOML line of the form
+`remotes.origin.fetch-tags = "glob:cutover-*"`;
+the script similarly strips the TOML wrapper and compares
+the bare value to `glob:cutover-*` exactly (anchored
+string match; this forecloses unintentionally-broader
+patterns like `glob:bug-cutover-*` that would silently
+mirror unrelated tags);
+(c) at least one of `jj config get signing.behavior` or
 `git config --get commit.gpgsign` indicates signing is
 active. Exits non-zero on any failure with a message
 pointing the developer at `docs/process.md`
@@ -1935,9 +1949,10 @@ self-contained. Ordering constraints are noted per task.
 | --- | --- | --- |
 | C-license-rm | Remove `geb-lean/LICENSE` (revert in-flight A5 commit). | Before any task that reads the file-layout as definitive. |
 | C-workflow-rm | Remove `geb-lean/.github/workflows/markdown-lint.yml` (revert in-flight A4 file location; the parent-level workflow supersedes it). | Before A13 (parent-level workflow authoring). |
-| C-gitignore-revert | Rewrite `geb-lean/.gitignore` so it contains no `.claude`-related patterns: remove the `/.claude` line present in the pre-A12 state and remove the three patterns (`/.claude/*`, `!/.claude/rules/`, `!/.claude/settings.json`) added by commit `69123dd0`. The parent `geb/.gitignore` (per § `.gitignore` change at the parent) becomes the only authoritative source for `.claude/`-path ignore and unignore decisions. After this task and A10, `git check-ignore -v geb-lean/.claude/settings.json` returns nothing (not ignored) and `git check-ignore -v geb-lean/.claude/settings.local.json` shows the path ignored via the parent's `/geb-lean/.claude/*` pattern. | Before A10 (parent `.gitignore` fix). |
-| C-markdownlint-config-rewrite | Rewrite `geb-lean/.markdownlint-cli2.jsonc`: (a) remove the top-level `globs` key, (b) replace all `ignores` patterns with both unprefixed forms (`.lake/**`, `.jj/**`, `node_modules/**`, `.session/**`) and `geb-lean/`-prefixed forms (`geb-lean/.lake/**`, `geb-lean/.jj/**`, `geb-lean/node_modules/**`, `geb-lean/.session/**`). The unprefixed forms handle the `pre-push.sh` case (CWD is `geb-lean/`); the prefixed forms handle the parent-CWD CI case. The existing committed file (introduced at `aeae31f9`) carries a `"globs": ["**/*.md"]` key and ignores without either form. After this task, the config file matches the description in § `.markdownlint-cli2.jsonc` and both invocation contexts work correctly. | Before A2 (markdownlint verification). |
-| C-hook-amend | Amend `geb-lean/scripts/hooks/block-mutating-git.sh` so its `.jj/` discovery uses `jj root` (exit 0 = jj is initialised somewhere up the tree) instead of `[[ -d $CLAUDE_PROJECT_DIR/.jj ]]`. After this task, re-run A10's smoke-test cases (all five must produce expected exits). | Precedes A27 (hook wiring into `.claude/settings.json`). Only after C-hook-amend lands and all five smoke-test cases pass may A27 proceed. |
+| C-lean-action-ci-promote | Move `geb-lean/.github/workflows/lean_action_ci.yml` to `geb/.github/workflows/lean_action_ci.yml` via `git mv`; add `paths: ['geb-lean/**']` filter on push/PR triggers; add `defaults.run.working-directory: geb-lean` at workflow level; add the `lake-package-directory: geb-lean` input to the `leanprover/lean-action@v1` step. (The `axiom_check` job addition is a main-plan task, not part of this cleanup.) | After C-workflow-rm; before the main plan's CI verification task. |
+| C-gitignore-revert | Rewrite `geb-lean/.gitignore` so it contains no `.claude`-related patterns: remove the `/.claude` line present in the pre-A12 state and remove the three patterns (`/.claude/*`, `!/.claude/rules/`, `!/.claude/settings.json`) added by commit `69123dd0`. The parent `geb/.gitignore` (per § `.gitignore` change at the parent) becomes the only authoritative source for `.claude/`-path ignore and unignore decisions. After this task and the new plan's parent-`.gitignore` task, `git check-ignore -v geb-lean/.claude/settings.json` returns nothing (not ignored) and `git check-ignore -v geb-lean/.claude/settings.local.json` shows the path ignored via the parent's `/geb-lean/.claude/*` pattern. | Before the new plan's parent-`.gitignore` task. |
+| C-markdownlint-config-rewrite | Rewrite `geb-lean/.markdownlint-cli2.jsonc`: (a) remove the top-level `globs` key, (b) replace all `ignores` patterns with both unprefixed forms (`.lake/**`, `.jj/**`, `node_modules/**`, `.session/**`, `.claude/memory/**`, `.claude/docs/**`) and `geb-lean/`-prefixed forms (`geb-lean/.lake/**`, `geb-lean/.jj/**`, `geb-lean/node_modules/**`, `geb-lean/.session/**`, `geb-lean/.claude/memory/**`, `geb-lean/.claude/docs/**`). The unprefixed forms handle the `pre-push.sh` case (CWD is `geb-lean/`); the prefixed forms handle the parent-CWD CI case. The existing committed file (introduced at `aeae31f9`) carries a `"globs": ["**/*.md"]` key and ignores without either form. After this task, the config file matches the description in § `.markdownlint-cli2.jsonc` and both invocation contexts work correctly. | Before A2 (markdownlint verification). |
+| C-hook-amend | Amend `geb-lean/scripts/hooks/block-mutating-git.sh` so its `.jj/` discovery uses `jj root` (exit 0 = jj is initialised somewhere up the tree) instead of `[[ -d $CLAUDE_PROJECT_DIR/.jj ]]`. After this task, the five `block-mutating-git.sh` smoke-test cases (originally Task A10 in the 2026-05-07 plan; the JSON-stdin payloads are: (a) `git commit -m '...'` → exit 2; (b) `jj git push --remote origin -b feat/x` → exit 0; (c) `git status` → exit 0; (d) `git checkout -b new-branch` → exit 2; (e) `git push origin 'refs/tags/v1.0.0:refs/tags/v1.0.0'` → exit 2) must be re-run after the amendment, and all five must produce the expected exits before A27 wires the hook into `.claude/settings.json`. | Precedes A27 (hook wiring into `.claude/settings.json`). Only after C-hook-amend lands and all five smoke-test cases pass may A27 proceed. |
 
 ## Order of artefact production
 
@@ -2001,7 +2016,7 @@ interpretive items (15–17) are confirmed by user sign-off.
 | 8 | `geb-lean/TODO.md` exists with both top-level sections; every entry follows the documented shape. |
 | 9 | `geb-lean/README.md` exists and is authored in the new pattern; markdownlint-clean. Parent `geb/README.md` carries the brief pointer near the top. |
 | 10 | `geb/.gitignore` is modified per the documented replacement in § `.gitignore` change at the parent; `geb-lean/.gitignore` contains no `.claude`-related patterns (neither the pre-A12 `/.claude` line nor the A12 negation lines). Verified by three `git check-ignore` tests run from the parent `geb/` root: (a) `git check-ignore -v geb-lean/.claude/settings.json` returns nothing (path not ignored); (b) `git check-ignore -v geb-lean/.claude/rules/lean-coding.md` returns nothing (path not ignored); (c) `git check-ignore -v geb-lean/.claude/settings.local.json` identifies the path as ignored via the parent's `/geb-lean/.claude/*` pattern (no negation for `.local.json`). |
-| 11 | jj is initialised colocated at the parent `geb/` root; `geb/.jj/.gitignore` exists; `jj root` (run from any path under `geb/`) exits 0; `jj config list --repo git.private-commits` output equals `conflicts()` exactly (anchored, not substring); `jj config list --repo remotes.origin.fetch-tags` output equals `glob:cutover-*` exactly (anchored); `jj config path --repo` prints a path in user-config-dir (per jj 0.38+'s config-relocation), not under `.jj/`. Per-developer signing and identity are set at user-level. |
+| 11 | jj is initialised colocated at the parent `geb/` root; `geb/.jj/.gitignore` exists; `jj root` (run from any path under `geb/`) exits 0; `jj config list --repo git.private-commits` outputs a TOML line whose extracted bare value equals `conflicts()` exactly (anchored, not substring; `check-jj-setup.sh` strips the TOML wrapper via `sed` before comparing); `jj config list --repo remotes.origin.fetch-tags` outputs a TOML line whose extracted bare value equals `glob:cutover-*` exactly (anchored; same stripping); `jj config path --repo` prints a path in user-config-dir (per jj 0.38+'s config-relocation), not under `.jj/`. Per-developer signing and identity are set at user-level. |
 | 12 | `geb-lean/.claude/settings.json` (committed) wires `block-mutating-git` (PreToolUse) and `check-signing-key` (SessionStart). The hook script is smoke-tested **by direct invocation** — feed synthesised JSON-stdin payloads representing tool invocations, assert the exit code (0 = allow, 2 = block). No real `git` or `jj` commands run. Required cases: (a) `git commit -m '...'` returns 2 (blocked, exercising the default-deny default); (b) `jj git push --remote origin -b feat/x` returns 0 (allowed; `jj git X` forms are stripped from the hook's scope); (c) `git status` returns 0 (allowed read-only subcommand); (d) `git checkout -b new-branch` returns 2 (blocked mutating subcommand); (e) `git push origin 'refs/tags/v1.0.0:refs/tags/v1.0.0'` returns 2 (blocked — no tag-push allowlist entry exists; tag operations are user-direct per § Hooks). |
 | 13 | `geb/.github/workflows/markdown-lint.yml` exists (at the parent level) and is path-filtered to `geb-lean/**`. `geb/.github/workflows/lean_action_ci.yml` exists (promoted) with `paths: ['geb-lean/**']` filter; the `leanprover/lean-action@v1` step passes `lake-package-directory: geb-lean`; the workflow carries a top-level (workflow-level) `defaults.run.working-directory: geb-lean` key so all `run:` steps in all jobs execute from `geb-lean/`; and the `axiom_check` job declares `needs: [build]` so it runs after the `build` job has populated `.lake/`. (Note: `defaults.run.working-directory` applies only to `run:` steps, not to `uses:` steps; `lake-package-directory` is the correct mechanism for the lean-action step; `actions/checkout` is a `uses:` step unaffected by `defaults.run.working-directory`.) |
 | 14 | `geb-lean/scripts/check-axioms.sh`, `check-jj-setup.sh`, `pre-push.sh`, `hooks/block-mutating-git.sh`, `hooks/check-signing-key.sh` all exist, are executable, and pass a smoke-test invocation. `check-jj-setup.sh` returns non-zero for a deliberately-unconfigured fresh clone and zero after the on-boarding sequence completes. `check-signing-key.sh`: `bash scripts/hooks/check-signing-key.sh; echo "exit=$?"` returns exit=0; the script's stderr is empty unless a configured signing backend is unavailable (in which case the diagnostic message is informational and does not affect the exit code). |
