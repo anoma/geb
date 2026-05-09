@@ -1,7 +1,3 @@
 /.lake
 /.github/copilot-instructions.md
-/.claude/*
-!/.claude/rules/
-!/.claude/settings.json
-/docs/.claude
 .remember
