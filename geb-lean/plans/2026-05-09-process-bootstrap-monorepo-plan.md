@@ -1103,13 +1103,13 @@ subprojects' `.claude/` ignored.
   Run from `geb/`:
 
   ```sh
-  git check-ignore -v geb-lean/.claude/settings.json
-  git check-ignore -v geb-lean/.claude/rules/lean-coding.md
+  ! git check-ignore -v geb-lean/.claude/settings.json
+  ! git check-ignore -v geb-lean/.claude/rules/lean-coding.md
   git check-ignore -v geb-lean/.claude/settings.local.json
   ```
 
   Expected:
-  - First two: no output (not ignored).
+  - First two: exit 0 when not ignored (inverted check).
   - Third: shows ignored via
     `/geb-lean/.claude/*` pattern.
 
@@ -2114,8 +2114,8 @@ user-direct or routed through `jj describe`.
   test -f README.md
   grep -q 'geb-lean/README.md' ../README.md
   # 10 — gitignore verification (run from geb/ root)
-  git -C .. check-ignore -v geb-lean/.claude/settings.json
-  git -C .. check-ignore -v geb-lean/.claude/rules/lean-coding.md
+  ! git -C .. check-ignore -v geb-lean/.claude/settings.json
+  ! git -C .. check-ignore -v geb-lean/.claude/rules/lean-coding.md
   git -C .. check-ignore -v geb-lean/.claude/settings.local.json
   # 11 — jj configuration
   bash scripts/check-jj-setup.sh
@@ -2428,7 +2428,14 @@ since the hook is wired from A27 forward.
 
 **Depends on:** A34.
 
-- [ ] **Step 1: Prepend the post-Milestone-A note.**
+- [ ] **Step 1: Create new change and bookmark.**
+
+  ```sh
+  jj new -r main
+  jj bookmark create docs/session-milestone-a-note -r @
+  ```
+
+- [ ] **Step 2: Prepend the post-Milestone-A note.**
 
   Add the spec's exact transitional header to the top of
   the existing `.session/README.md` content:
@@ -2442,27 +2449,21 @@ since the hook is wired from A27 forward.
   > removed at Milestone B.
   ```
 
-- [ ] **Step 2: Markdown-lint.**
+- [ ] **Step 3: Markdown-lint.**
 
-  The `.markdownlint-cli2.jsonc` config lists `.session/**`
-  in its `ignores` array, so the standard invocation would
-  silently skip this file. Use an explicit invocation that
-  bypasses the ignore for this single file:
+  The `.markdownlint-cli2.jsonc` config auto-discovers
+  `.session/**` in its `ignores` array by default. Use an
+  explicit-path invocation to bypass the ignore pattern for
+  this single file (explicitly-passed paths are linted
+  regardless of config ignore entries):
 
   ```sh
   markdownlint-cli2 --no-globs '.session/README.md'
   ```
 
-  (No `--config` flag: the bare invocation applies only
-  the built-in defaults, which is sufficient for checking
-  that the prepended blockquote does not introduce lint
-  violations.)
-
-- [ ] **Step 3: Commit via jj describe.**
+- [ ] **Step 4: Commit via jj describe.**
 
   ```sh
-  jj new -r main
-  jj bookmark create docs/session-milestone-a-note -r @
   jj describe -m \
     "doc(session): add post-Milestone-A transitional note"
   ```
