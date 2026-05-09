@@ -488,8 +488,8 @@ cases produce the expected exit codes.
 
 ### Task C6: `C-lean-action-ci-promote` — move `lean_action_ci.yml` to parent
 
-**Files:** delete `geb-lean/.github/workflows/lean_action_ci.yml`;
-create `geb/.github/workflows/lean_action_ci.yml`.
+**Files:** move `geb-lean/.github/workflows/lean_action_ci.yml`
+to `geb/.github/workflows/lean_action_ci.yml` via `git mv`.
 
 **Depends on:** C2.
 
@@ -519,17 +519,23 @@ and gain:
   cat .github/workflows/lean_action_ci.yml
   ```
 
-- [ ] **Step 2: Remove the original.**
+- [ ] **Step 2: Move the file to the parent level.**
+
+  Run from `geb-lean/`:
 
   ```sh
-  git rm .github/workflows/lean_action_ci.yml
+  git mv .github/workflows/lean_action_ci.yml \
+    ../.github/workflows/lean_action_ci.yml
   ```
 
-- [ ] **Step 3: Author the parent-level file.**
+  Both the deletion and the new path are staged
+  automatically by `git mv`.
 
-  Create `geb/.github/workflows/lean_action_ci.yml` with
-  the adapted content. The `on:` block gains the `paths`
-  filter:
+- [ ] **Step 3: Edit the file at its new path.**
+
+  Open `geb/.github/workflows/lean_action_ci.yml`
+  and apply the three changes. The `on:` block gains the
+  `paths` filter:
 
   ```yaml
   on:
@@ -559,14 +565,19 @@ and gain:
   All other content (job name, step names, SHA pins,
   cache configuration) is carried forward unchanged.
 
-- [ ] **Step 4: YAML validity check.**
+- [ ] **Step 4: Stage the edits and YAML validity check.**
 
   ```sh
+  git add ../.github/workflows/lean_action_ci.yml
   python3 -c \
     "import yaml, sys; yaml.safe_load(open('../.github/workflows/lean_action_ci.yml'))"
   ```
 
 - [ ] **Step 5: Commit both changes together.**
+
+  At this point the index contains both the rename (deletion
+  at the old path + addition at the new path, from Step 2)
+  and the content edits (Step 4). Commit:
 
   ```sh
   git commit -m \
@@ -578,6 +589,13 @@ does not exist; `geb/.github/workflows/lean_action_ci.yml`
 exists, is YAML-valid, contains `paths: ['geb-lean/**']`,
 `lake-package-directory: geb-lean`, and a workflow-level
 `defaults.run.working-directory: geb-lean` key.
+Confirm both the rename and the edits landed:
+
+```sh
+git log --stat HEAD~1..HEAD
+git ls-files --error-unmatch \
+  ../.github/workflows/lean_action_ci.yml
+```
 
 ---
 
@@ -767,14 +785,17 @@ equivalent input.
 
 - [ ] **Step 2: Resolve the `<SHA>` placeholder.**
 
+  Run from `geb-lean/` CWD:
+
   ```sh
-  ! grep '<SHA>' ../geb/.github/workflows/markdown-lint.yml \
-    2>/dev/null || \
-  ! grep '<SHA>' geb/.github/workflows/markdown-lint.yml
+  test -f ../.github/workflows/markdown-lint.yml \
+    && ! grep -n '<SHA-' \
+         ../.github/workflows/markdown-lint.yml
   ```
 
-  (Run from whichever directory the file was created in.)
-  Expected: no `<SHA>` strings remain.
+  The first clause asserts the file exists at the parent
+  level. The second asserts no `<SHA-` placeholder remains.
+  Expected: exits 0 with no output.
 
 - [ ] **Step 3: YAML validity check.**
 
@@ -792,9 +813,11 @@ equivalent input.
   ```
 
 **Verification:** the file exists at
-`geb/.github/workflows/markdown-lint.yml`; no `<SHA>`
-placeholder remains; YAML-valid; the `paths:` filter
-covers `geb-lean/**/*.md`.
+`geb/.github/workflows/markdown-lint.yml`; no `<SHA-`
+placeholder remains (`test -f ../.github/workflows/markdown-lint.yml
+&& ! grep -n '<SHA-' ../.github/workflows/markdown-lint.yml`
+exits 0 with no output from `geb-lean/` CWD); YAML-valid;
+the `paths:` filter covers `geb-lean/**/*.md`.
 
 ---
 
@@ -1278,11 +1301,12 @@ matching `**/*.lean`; markdownlint-clean.
   6. Line length ≤ 80 characters.
   7. No emojis.
   8. Link conventions.
+  9. No nested `CLAUDE.md` files (per spec § CLAUDE.md
+     content); per-area instructions go in
+     `.claude/rules/<name>.md` with `paths:` frontmatter.
 
-  Item 8 also notes: no nested `CLAUDE.md` files are
-  permitted (per spec § CLAUDE.md content); per-area
-  instructions go in `.claude/rules/<name>.md` with
-  `paths:` frontmatter.
+  Item 9 must appear as a standalone top-level item, not
+  as a sub-bullet of item 8.
 
 - [ ] **Step 2: Markdown-lint.**
 
@@ -1301,7 +1325,9 @@ matching `**/*.lean`; markdownlint-clean.
   ```
 
 **Verification:** file exists with `paths:` frontmatter
-`**/*.md`; markdownlint-clean.
+`**/*.md`; the no-nested-`CLAUDE.md` rule appears as a
+standalone top-level item (item 9), not as a sub-bullet
+of item 8; markdownlint-clean.
 
 ---
 
@@ -1643,7 +1669,8 @@ Two sub-tasks:
   ```
 
 **Verification:** `geb-lean/README.md` exists, is under
-~170 lines, and is markdownlint-clean. `geb/README.md`
+~150 lines (spec target; flexible up to ~170 if content
+scope demands), and is markdownlint-clean. `geb/README.md`
 carries the pointer paragraph near the top and is
 markdownlint-clean.
 
@@ -1944,15 +1971,52 @@ user-direct or routed through `jj describe`.
 
 - [ ] **Step 1: Author the settings file.**
 
-  The file wires both hooks per spec § Hooks:
-
-  - PreToolUse: `scripts/hooks/block-mutating-git.sh`.
-  - SessionStart: `scripts/hooks/check-signing-key.sh`.
-
+  The file wires both hooks per spec § Hooks.
   Use `${CLAUDE_PROJECT_DIR}` for the script paths so the
   file is portable across worktrees. The
   `geb-lean/.claude/settings.json` path (not the parent's
   `.claude/`) is the committed location per spec § Hooks.
+
+  Content skeleton (verify the exact field names against the
+  Claude Code `settings.json` documentation at execution
+  time; if the schema has changed, use the documented form
+  and note the deviation):
+
+  ```json
+  {
+    "hooks": {
+      "PreToolUse": [
+        {
+          "matcher": "Bash",
+          "hooks": [
+            {
+              "type": "command",
+              "command":
+                "${CLAUDE_PROJECT_DIR}/scripts/hooks/block-mutating-git.sh"
+            }
+          ]
+        }
+      ],
+      "SessionStart": [
+        {
+          "hooks": [
+            {
+              "type": "command",
+              "command":
+                "${CLAUDE_PROJECT_DIR}/scripts/hooks/check-signing-key.sh"
+            }
+          ]
+        }
+      ]
+    }
+  }
+  ```
+
+  The `$schema` URL (`https://json.schemastore.org/claude-code-settings.json`)
+  may be added as a top-level field if the Claude Code
+  documentation confirms it is valid at execution time;
+  omit it if uncertain to avoid a spurious schema-validation
+  error.
 
 - [ ] **Step 2: Commit.**
 
@@ -1962,10 +2026,31 @@ user-direct or routed through `jj describe`.
     "chore(claude): wire block-mutating-git and check-signing-key hooks"
   ```
 
-**Verification:** the file is JSON-parseable
-(`python3 -c "import json, sys;
-json.load(open('.claude/settings.json'))"` succeeds);
-both hook script paths resolve.
+**Verification:**
+
+- (a) The file is JSON-parseable:
+
+  ```sh
+  python3 -c "import json; json.load(open('.claude/settings.json'))"
+  ```
+
+- (b) Both hook script paths are present:
+
+  ```sh
+  python3 -c "
+  import json
+  s = json.load(open('.claude/settings.json'))
+  hooks = s['hooks']
+  pre = hooks['PreToolUse'][0]['hooks'][0]['command']
+  sess = hooks['SessionStart'][0]['hooks'][0]['command']
+  assert 'block-mutating-git.sh' in pre, pre
+  assert 'check-signing-key.sh' in sess, sess
+  print('hook paths ok')
+  "
+  ```
+
+- (c) Re-run the five A10 smoke-test cases to confirm the
+  hook fires correctly via the wired settings.
 
 ---
 
@@ -2342,12 +2427,19 @@ since the hook is wired from A27 forward.
 
 - [ ] **Step 2: Markdown-lint.**
 
+  The `.markdownlint-cli2.jsonc` config lists `.session/**`
+  in its `ignores` array, so the standard invocation would
+  silently skip this file. Use an explicit invocation that
+  bypasses the ignore for this single file:
+
   ```sh
-  markdownlint-cli2 \
-    --config .markdownlint-cli2.jsonc \
-    --no-globs \
-    '.session/README.md'
+  markdownlint-cli2 --no-globs '.session/README.md'
   ```
+
+  (No `--config` flag: the bare invocation applies only
+  the built-in defaults, which is sufficient for checking
+  that the prepended blockquote does not introduce lint
+  violations.)
 
 - [ ] **Step 3: Commit via jj describe.**
 
@@ -2360,7 +2452,10 @@ since the hook is wired from A27 forward.
   The push is user-direct.
 
 **Verification:** the file's first non-blank line is the
-transitional note; markdownlint-clean.
+transitional note; markdownlint-clean via the explicit
+`markdownlint-cli2 --no-globs '.session/README.md'`
+invocation (the standard config-based invocation skips
+this path due to the `.session/**` ignore entry).
 
 ---
 
