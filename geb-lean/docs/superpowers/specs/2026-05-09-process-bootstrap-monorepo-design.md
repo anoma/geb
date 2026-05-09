@@ -1162,24 +1162,27 @@ The promoted file gains:
     run: |
       bash scripts/check-axioms.sh --exit-zero-on-findings \
         GebLean/ test/ \
-        | tee /tmp/axiom-check-report.txt
+        | tee axiom-check-report.txt
   - name: Upload axiom-check report
     uses: actions/upload-artifact@<SHA>
     with:
       name: axiom-check-report
-      path: /tmp/axiom-check-report.txt
+      path: geb-lean/axiom-check-report.txt
       if-no-files-found: error
   ```
 
   The `tee` redirection makes the run-step's stdout visible
   in the Actions log while writing the intermediate file.
-  The upload step's `path:` input references that file.
-  The `/tmp/axiom-check-report.txt` path is absolute and
-  does not depend on `defaults.run.working-directory`.
-  The `<SHA>` placeholder is the exact commit hash of the
+  Because `defaults.run.working-directory: geb-lean` applies
+  to the `run:` step, `tee axiom-check-report.txt` writes to
+  `geb-lean/axiom-check-report.txt` relative to the checkout
+  root — inside `$GITHUB_WORKSPACE`. The upload step's
+  `path:` references that file by its repo-root-relative
+  path, satisfying `actions/upload-artifact`'s requirement
+  that the path be within the workspace. The `<SHA>`
+  placeholder is the exact commit hash of the
   `actions/upload-artifact@v4` release, resolved at
-  workflow-authoring time (using the same SHA-pinning
-  approach as the markdown-lint workflow).
+  workflow-authoring time.
 
   Post-Milestone-B (fail-mode): the `--exit-zero-on-findings`
   flag is removed; CI then fails on any non-allowlisted axiom
@@ -1238,9 +1241,17 @@ the entire monorepo. The `run:` form requires
 the install step above covers this since `markdownlint-cli2`
 is not pre-installed on `ubuntu-latest`.
 
-The action reference is **SHA-pinned** (not tag-pinned) per
-the project's general action-pinning policy; the SHA is
-resolved at workflow-authoring time and committed verbatim.
+This workflow contains no third-party `uses:` action
+references; both steps are `run:` steps. The
+`actions/checkout` step (added by `C-lean-action-ci-promote`
+to the parent-level `lean_action_ci.yml`) and the
+`actions/upload-artifact` step (in `lean_action_ci.yml`'s
+`axiom_check` job) are the `uses:` references that carry
+SHA-pins in this plan; all `uses:` action references in those
+workflows are SHA-pinned (40-hex-char commit IDs, not tag
+references); the plan author resolves SHAs at
+workflow-authoring time via WebFetch against the action's
+GitHub release page.
 
 ## .markdownlint-cli2.jsonc
 
@@ -1643,6 +1654,20 @@ whether `jj root` (run with no arguments) exits 0 —
 portable across whether `.jj/` is at the parent or at
 geb-lean/ — and if so strips `jj git X` forms (so jj's
 git interop still works) and applies the allowlists below.
+If `jj root` exits non-zero (jj not installed, or the
+working directory is outside any jj-initialised tree), the
+hook does not strip `jj git X` invocations; default-deny
+policy then applies. Concretely: in such an environment,
+Claude attempting `jj git push` would be blocked because
+`jj` is not a `git` subcommand and there is no `jj`
+allowlist. This is the documented behaviour before A24
+(before `jj git init --colocate` lands at the parent);
+after A24 the `jj root` check succeeds in the project's
+working tree and the strip-branch becomes reachable.
+Developers running Claude in a non-jj environment after A24
+(e.g., on a server where the working tree was provisioned
+via raw git) need to either re-init jj or accept that jj
+operations are out of scope until they do.
 The existing `block-mutating-git.sh` (committed as
 `125c6d4e` on `chore/process-refactor`) checks
 `[[ -d $CLAUDE_PROJECT_DIR/.jj ]]` rather than invoking
@@ -2052,7 +2077,7 @@ interpretive items (15–17) are confirmed by user sign-off.
 | 9 | `geb-lean/README.md` exists and is authored in the new pattern; markdownlint-clean. Parent `geb/README.md` carries the brief pointer near the top. |
 | 10 | `geb/.gitignore` is modified per the documented replacement in § `.gitignore` change at the parent; `geb-lean/.gitignore` contains no `.claude`-related patterns (neither the pre-A12 `/.claude` line nor the A12 negation lines). Verified by three `git check-ignore` tests run from the parent `geb/` root: (a) `git check-ignore -v geb-lean/.claude/settings.json` returns nothing (path not ignored); (b) `git check-ignore -v geb-lean/.claude/rules/lean-coding.md` returns nothing (path not ignored); (c) `git check-ignore -v geb-lean/.claude/settings.local.json` identifies the path as ignored via the parent's `/geb-lean/.claude/*` pattern (no negation for `.local.json`). |
 | 11 | jj is initialised colocated at the parent `geb/` root; `geb/.jj/.gitignore` exists; `jj root` (run from any path under `geb/`) exits 0; `jj config list --repo git.private-commits` outputs a TOML line whose extracted bare value equals `conflicts()` exactly (anchored, not substring; `check-jj-setup.sh` strips the TOML wrapper via `sed` before comparing); `jj config list --repo remotes.origin.fetch-tags` outputs a TOML line whose extracted bare value equals `glob:cutover-*` exactly (anchored; same stripping); `jj config path --repo` prints a path in user-config-dir (per jj 0.38+'s config-relocation), not under `.jj/`. Per-developer signing and identity are set at user-level. |
-| 12 | `geb-lean/.claude/settings.json` (committed) wires `block-mutating-git` (PreToolUse) and `check-signing-key` (SessionStart). The hook script is smoke-tested **by direct invocation** — feed synthesised JSON-stdin payloads representing tool invocations, assert the exit code (0 = allow, 2 = block). No real `git` or `jj` commands run. Required cases: (a) `git commit -m '...'` returns 2 (blocked, exercising the default-deny default); (b) `jj git push --remote origin -b feat/x` returns 0 (allowed; `jj git X` forms are stripped from the hook's scope); (c) `git status` returns 0 (allowed read-only subcommand); (d) `git checkout -b new-branch` returns 2 (blocked mutating subcommand); (e) `git push origin 'refs/tags/v1.0.0:refs/tags/v1.0.0'` returns 2 (blocked — no tag-push allowlist entry exists; tag operations are user-direct per § Hooks). |
+| 12 | `geb-lean/.claude/settings.json` (committed) wires `block-mutating-git` (PreToolUse) and `check-signing-key` (SessionStart). The hook script is smoke-tested **by direct invocation** — feed synthesised JSON-stdin payloads representing tool invocations, assert the exit code (0 = allow, 2 = block). The synthesised JSON payloads themselves do not invoke `git` or `jj`; the hook script's own `jj root` (a read-only subprocess, no arguments) runs as a side effect of the hook's jj-detection logic. For case (b) to produce exit 0, the smoke test must run with the working directory inside a jj-initialised tree (e.g. `cd /path/with/.jj` first, or set `CLAUDE_PROJECT_DIR` to a directory with a `.jj/` subdirectory). The smoke test may therefore be deferred until after A24 (`jj git init --colocate` at the parent `geb/` root) so that the jj-initialised tree is available; alternatively the test can run immediately after C-hook-amend by using `CLAUDE_PROJECT_DIR` pointing to any `.jj/`-containing directory. Required cases: (a) `git commit -m '...'` returns 2 (blocked, exercising the default-deny default); (b) `jj git push --remote origin -b feat/x` returns 0 (allowed; `jj git X` forms are stripped from the hook's scope); (c) `git status` returns 0 (allowed read-only subcommand); (d) `git checkout -b new-branch` returns 2 (blocked mutating subcommand); (e) `git push origin 'refs/tags/v1.0.0:refs/tags/v1.0.0'` returns 2 (blocked — no tag-push allowlist entry exists; tag operations are user-direct per § Hooks). |
 | 13 | `geb/.github/workflows/markdown-lint.yml` exists (at the parent level) and is path-filtered to `geb-lean/**`. `geb/.github/workflows/lean_action_ci.yml` exists (promoted) with `paths: ['geb-lean/**']` filter; the `leanprover/lean-action@v1` step passes `lake-package-directory: geb-lean`; the workflow carries a top-level (workflow-level) `defaults.run.working-directory: geb-lean` key so all `run:` steps in all jobs execute from `geb-lean/`; and the `axiom_check` job declares `needs: [build]` so it runs after the `build` job has populated `.lake/`. (Note: `defaults.run.working-directory` applies only to `run:` steps, not to `uses:` steps; `lake-package-directory` is the correct mechanism for the lean-action step; `actions/checkout` is a `uses:` step unaffected by `defaults.run.working-directory`.) |
 | 14 | `geb-lean/scripts/check-axioms.sh`, `check-jj-setup.sh`, `pre-push.sh`, `hooks/block-mutating-git.sh`, `hooks/check-signing-key.sh` all exist, are executable, and pass a smoke-test invocation. `check-jj-setup.sh` returns non-zero for a deliberately-unconfigured fresh clone and zero after the on-boarding sequence completes. `check-signing-key.sh`: `bash scripts/hooks/check-signing-key.sh; echo "exit=$?"` returns exit=0; the script's stderr is empty unless a configured signing backend is unavailable (in which case the diagnostic message is informational and does not affect the exit code). |
 | 15 | The refactor's spec and plan have each gone through fresh-context adversarial review until termination, where termination means every finding is cosmetic-taste, rationale-rejected, or fixed (no open blocker / serious / minor findings remain). |
