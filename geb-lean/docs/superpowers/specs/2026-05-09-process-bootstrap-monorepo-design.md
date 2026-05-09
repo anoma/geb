@@ -1250,9 +1250,10 @@ the entire monorepo. The `run:` form requires
 `markdownlint-cli2` to be installed in the CI environment;
 the install step above covers this since `markdownlint-cli2`
 is not pre-installed on `ubuntu-latest`. The version pin
-(`@^0.18.0`) is required because the `--no-globs` flag was
-introduced in markdownlint-cli2 v3.0.0 (the npm package
-version); without it, older versions may not recognize the flag.
+(`@^0.18.0`) is appropriate; the `--no-globs` flag was
+introduced in markdownlint-cli2 v0.12.0 (the npm package
+version, which is on the 0.x series); without it, older
+versions do not recognize the flag.
 
 This workflow contains no third-party `uses:` action
 references; both steps are `run:` steps. The
@@ -1353,9 +1354,9 @@ line 7, which overrides them (`git check-ignore` confirms
 `geb-lean/.claude/settings.json` is ignored via
 `geb/.gitignore:7`). After the cleanup task
 `C-gitignore-revert`, `geb-lean/.gitignore` contains no
-`.claude`-related patterns: the three patterns from
-commit `69123dd0` are removed, and the pre-A12 `/.claude`
-line is also removed. The parent `geb/.gitignore` (per the
+`.claude`-related patterns: all four currently present
+(`/.claude/*`, `!/.claude/rules/`, `!/.claude/settings.json`,
+`/docs/.claude`) are removed. The parent `geb/.gitignore` (per the
 replacement above) becomes the only authoritative source for
 `.claude/`-path ignore and unignore decisions. After both
 `C-gitignore-revert` and the parent-`.gitignore` edit are
@@ -2091,7 +2092,7 @@ interpretive items (15–17) are confirmed by user sign-off.
 | 7 | `geb-lean/docs/process.md`, `docs/index.md`, `docs/lean-resources.md` exist and are markdownlint-clean. |
 | 8 | `geb-lean/TODO.md` exists with both top-level sections; every entry follows the documented shape. |
 | 9 | `geb-lean/README.md` exists and is authored in the new pattern; markdownlint-clean. Parent `geb/README.md` carries the brief pointer near the top. |
-| 10 | `geb/.gitignore` is modified per the documented replacement in § `.gitignore` change at the parent; `geb-lean/.gitignore` contains no `.claude`-related patterns (neither the pre-A12 `/.claude` line nor the A12 negation lines). Verified by three `git check-ignore` tests run from the parent `geb/` root: (a) `git check-ignore -v geb-lean/.claude/settings.json` returns nothing (path not ignored); (b) `git check-ignore -v geb-lean/.claude/rules/lean-coding.md` returns nothing (path not ignored); (c) `git check-ignore -v geb-lean/.claude/settings.local.json` identifies the path as ignored via the parent's `/geb-lean/.claude/*` pattern (no negation for `.local.json`). |
+| 10 | `geb/.gitignore` is modified per the documented replacement in § `.gitignore` change at the parent; `geb-lean/.gitignore` contains no `.claude`-related patterns (none of the four currently present at HEAD: `/.claude/*`, `!/.claude/rules/`, `!/.claude/settings.json`, `/docs/.claude`). Verified by three `git check-ignore` tests run from the parent `geb/` root: (a) `git check-ignore -v geb-lean/.claude/settings.json` returns nothing (path not ignored); (b) `git check-ignore -v geb-lean/.claude/rules/lean-coding.md` returns nothing (path not ignored); (c) `git check-ignore -v geb-lean/.claude/settings.local.json` identifies the path as ignored via the parent's `/geb-lean/.claude/*` pattern (no negation for `.local.json`). |
 | 11 | jj is initialised colocated at the parent `geb/` root; `geb/.jj/.gitignore` exists; `jj root` (run from any path under `geb/`) exits 0; `jj config list --repo git.private-commits` outputs a TOML line whose extracted bare value equals `conflicts()` exactly (anchored, not substring; `check-jj-setup.sh` strips the TOML wrapper via `sed` before comparing); `jj config list --repo remotes.origin.fetch-tags` outputs a TOML line whose extracted bare value equals `glob:cutover-*` exactly (anchored; same stripping); `jj config path --repo` prints a path in user-config-dir (per jj 0.38+'s config-relocation), not under `.jj/`. Per-developer signing and identity are set at user-level. |
 | 12 | `geb-lean/.claude/settings.json` (committed) wires `block-mutating-git` (PreToolUse) and `check-signing-key` (SessionStart). The hook script is smoke-tested **by direct invocation** — feed synthesised JSON-stdin payloads representing tool invocations, assert the exit code (0 = allow, 2 = block). The synthesised JSON payloads themselves do not invoke `git` or `jj`; the hook script's own `jj root` (a read-only subprocess, no arguments) runs as a side effect of the hook's jj-detection logic. For case (b) to produce exit 0, the smoke test must run with the working directory inside a jj-initialised tree (e.g. `cd /path/with/.jj` first, or set `CLAUDE_PROJECT_DIR` to a directory with a `.jj/` subdirectory). The smoke test may therefore be deferred until after A24 (`jj git init --colocate` at the parent `geb/` root) so that the jj-initialised tree is available; alternatively the test can run immediately after C-hook-amend by using `CLAUDE_PROJECT_DIR` pointing to any `.jj/`-containing directory. Required cases: (a) `git commit -m '...'` returns 2 (blocked, exercising the default-deny default); (b) `jj git push --remote origin -b feat/x` returns 0 (allowed; `jj git X` forms are stripped from the hook's scope); (c) `git status` returns 0 (allowed read-only subcommand); (d) `git checkout -b new-branch` returns 2 (blocked mutating subcommand); (e) `git push origin 'refs/tags/v1.0.0:refs/tags/v1.0.0'` returns 2 (blocked — no tag-push allowlist entry exists; tag operations are user-direct per § Hooks). |
 | 13 | `geb/.github/workflows/markdown-lint.yml` exists (at the parent level) and is path-filtered to `geb-lean/**`. `geb/.github/workflows/lean_action_ci.yml` exists (promoted) with `paths: ['geb-lean/**']` filter; the `leanprover/lean-action@v1` step passes `lake-package-directory: geb-lean`; the workflow carries a top-level (workflow-level) `defaults.run.working-directory: geb-lean` key so all `run:` steps in all jobs execute from `geb-lean/`; and the `axiom_check` job declares `needs: [build]` so it runs after the `build` job has populated `.lake/`. (Note: `defaults.run.working-directory` applies only to `run:` steps, not to `uses:` steps; `lake-package-directory` is the correct mechanism for the lean-action step; `actions/checkout` is a `uses:` step unaffected by `defaults.run.working-directory`.) |
