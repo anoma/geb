@@ -260,7 +260,10 @@ geb-lean/
 │                                   pre-refactor state by
 │                                   cleanup task; otherwise
 │                                   unchanged)
-├── .markdownlint-cli2.jsonc     (+ shared config)
+├── .markdownlint-cli2.jsonc     (existing; rewritten by
+│                                   cleanup task
+│                                   C-markdownlint-config-rewrite
+│                                   per § .markdownlint-cli2.jsonc)
 ├── .github/
 │   └── workflows/
 │       ├── lean_action_ci.yml   (- moved to parent)
@@ -727,7 +730,8 @@ Content:
    maintainers have a release-discipline track record.
 2. **Pre-push checklist**: `scripts/pre-push.sh` runs
    `lake build`, `lake test`, `lake lint`,
-   `markdownlint-cli2 '**/*.md'`,
+   `markdownlint-cli2 --config .markdownlint-cli2.jsonc
+   --no-globs '**/*.md'`,
    `bash scripts/check-axioms.sh GebLean/ test/`. The script
    additionally surfaces user-driven gates as reminders:
    - `lean4:golf` and `lean4:review` ran on changed Lean
@@ -1115,32 +1119,59 @@ The promoted file gains:
   leanprover/lean-action README). `defaults.run.working-directory`
   in GitHub Actions applies only to `run:` shell steps, not
   to `uses:` action steps; the `lake-package-directory`
-  input is the correct mechanism for this action. For `run:`
-  steps in the same workflow (e.g., the `axiom_check` job),
-  `defaults.run.working-directory: geb-lean` is used as
-  before — those steps execute in the configured directory.
-- The new `axiom_check` job (parallel to the existing build
-  / test / lint jobs), running
-  `bash scripts/check-axioms.sh GebLean/ test/` after the
-  main build job has populated `.lake/`. The job lands in
-  **report-only mode** at first: it runs the script and
-  uploads the output as a CI artefact, but does not fail the
-  build. Rationale: CSLib (a peer dependency) and mathlib
-  both transitively introduce `Classical.choice` into the
-  closure of practically every GebLean declaration; flipping
-  the job to fail-mode on day 1 would break CI universally.
-  Migration to fail-mode is a Milestone-B item (the per-touch
-  annotation cadence matches Milestone B's triage rhythm):
-  as individual files are touched, `AXIOM_ALLOW` comments
-  are appended above each flagged declaration that
-  legitimately depends on `Classical.choice` transitively.
-  When the report-only output is empty, the job flips to
-  fail-mode (failure condition: any non-allowlisted axiom —
-  anything other than `propext`, `Quot.sound`, `quot.sound`
-  — appears in the closure of any declaration without a
-  matching `AXIOM_ALLOW` comment). The flip is recorded as
-  Milestone B verification item B7. The job runs on every
-  PR and every push to `main` or `integration`.
+  input is the correct mechanism for this action.
+- The `defaults.run.working-directory: geb-lean` setting is
+  at the **workflow level** (top-level `defaults` key, not
+  per-job). This applies to all `run:` steps across all jobs
+  in the workflow. The `actions/checkout` step does not run
+  a `run:` command — it is a `uses:` step — so it is
+  unaffected by this setting and checks out at
+  `$GITHUB_WORKSPACE` (the repo root) as expected. The
+  `leanprover/lean-action@v1` step likewise is `uses:`, and
+  uses its own `lake-package-directory: geb-lean` input. The
+  `axiom_check` job's `run:` step inherits
+  `working-directory: geb-lean` and so executes
+  `bash scripts/check-axioms.sh ...` from `geb-lean/`.
+- The new `axiom_check` job depends on the existing build
+  job (`needs: [build]`) since the script reads compiled
+  `.lake/` artefacts. It may run in parallel with other jobs
+  that also declare `needs: [build]`, but it is not parallel
+  to `build` itself. The job runs
+  `bash scripts/check-axioms.sh GebLean/ test/`.
+
+  Pre-Milestone-B (report-only mode): the CI step is
+  `bash scripts/check-axioms.sh --exit-zero-on-findings
+  GebLean/ test/` (the `--exit-zero-on-findings` flag,
+  which is also accepted as `--report-only` — both are
+  aliases implemented in the vendored script at line 87 of
+  `scripts/check-axioms.sh`). The script's stdout is
+  captured via `actions/upload-artifact@<SHA>` (SHA-pinned,
+  where the SHA is the exact commit hash of the
+  `actions/upload-artifact@v4` release resolved at
+  workflow-authoring time) so the report is available for
+  review without failing the build.
+
+  Post-Milestone-B (fail-mode): the `--exit-zero-on-findings`
+  flag is removed; CI then fails on any non-allowlisted axiom
+  (see Milestone B item B7).
+
+  Rationale for report-only at first: CSLib (a peer
+  dependency) and mathlib both transitively introduce
+  `Classical.choice` into the closure of practically every
+  GebLean declaration; flipping the job to fail-mode on day 1
+  would break CI universally. Migration to fail-mode is a
+  Milestone-B item (the per-touch annotation cadence matches
+  Milestone B's triage rhythm): as individual files are
+  touched, `AXIOM_ALLOW` comments are appended above each
+  flagged declaration that legitimately depends on
+  `Classical.choice` transitively. When the report-only
+  output is empty, the job flips to fail-mode (failure
+  condition: any non-allowlisted axiom — anything other than
+  `propext`, `Quot.sound`, `quot.sound` — appears in the
+  closure of any declaration without a matching `AXIOM_ALLOW`
+  comment). The flip is recorded as Milestone B verification
+  item B7. The job runs on every PR and every push to `main`
+  or `integration`.
 
 `update.yml` and `create-release.yml` remain inert at
 `geb-lean/.github/workflows/`; they are not moved.
@@ -1183,16 +1214,16 @@ resolved at workflow-authoring time and committed verbatim.
 
 The configuration starts close to markdownlint defaults,
 with rule overrides accumulated as friction is encountered.
-The current configuration committed alongside this spec
-exempts MD013 line-length checks for tables and code blocks
-(long lines in those contexts are legitimate). The
-configuration has only `config` and `ignores` keys — no
-top-level `globs` key. (Per markdownlint-cli2 behaviour,
-CLI glob arguments and a config-file `globs` field are
-additive, not mutually exclusive; omitting `globs` from the
-config prevents unintended glob union when CLI globs are
-passed.) The `ignores` patterns cover both direct invocation
-from `geb-lean/` and parent-level invocation from `geb/`:
+The target configuration (post-cleanup) exempts MD013
+line-length checks for tables and code blocks (long lines in
+those contexts are legitimate). It has only `config` and
+`ignores` keys — no top-level `globs` key. (Per
+markdownlint-cli2 behaviour, CLI glob arguments and a
+config-file `globs` field are additive, not mutually
+exclusive; omitting `globs` from the config prevents
+unintended glob union when CLI globs are passed.) The
+`ignores` patterns cover both direct invocation from
+`geb-lean/` and parent-level invocation from `geb/`:
 `["geb-lean/.lake/**", "geb-lean/.jj/**",
 "geb-lean/node_modules/**", "geb-lean/.session/**"]`. The
 `geb-lean/` prefix is harmless when CWD is `geb-lean/`
@@ -1202,6 +1233,15 @@ is **iterated until clean against the refactor's own
 artefacts**; the final set of overrides is recorded in
 `docs/process.md` § Markdownlint discipline so the rationale
 for each override persists.
+
+The file committed pre-refactor (introduced at `aeae31f9`)
+carries a `"globs": ["**/*.md"]` key and `ignores` patterns
+without the `geb-lean/` prefix and without `.session/**`.
+Cleanup task C-markdownlint-config-rewrite rewrites the file
+to the target configuration described above. The parent-level
+CI workflow's `markdownlint-cli2 --no-globs` invocation reads
+the post-cleanup config correctly; the pre-push invocation
+in § Auxiliary scripts likewise uses `--no-globs`.
 
 ## .gitignore change at the parent
 
@@ -1766,8 +1806,12 @@ expected to warm gpg-agent on every session.
   graph, this script must be amended to add `lake build`
   explicitly.** Then `lake lint`,
   `markdownlint-cli2 --config .markdownlint-cli2.jsonc
-  '**/*.md'`, `bash scripts/check-axioms.sh GebLean/
-  test/`. Note: the `lake lint` invocation depends on
+  --no-globs '**/*.md'` (the `--no-globs` flag suppresses
+  any `globs` key in the config, matching CI behaviour and
+  guarding against future config edits that inadvertently
+  re-add a `globs` key),
+  `bash scripts/check-axioms.sh GebLean/ test/`.
+  Note: the `lake lint` invocation depends on
   `lintDriver = "batteries/runLinter"` having been added to
   `lakefile.toml` (see Lakefile changes); the plan orders
   the lakefile change before `pre-push.sh` is authored.
@@ -1848,6 +1892,20 @@ small clean spec; ten or more is fine for a larger one.
 § Adversarial review → process self-update mechanism in
 `docs/process.md` § Process self-update mechanism.
 
+## Cleanup tasks (preceding the new plan's main sequence)
+
+The following cleanup tasks must be completed at the opening of the new
+plan, before the plan's main numbered sequence begins. Each is atomic and
+self-contained. Ordering constraints are noted per task.
+
+| Task | Description | Ordering constraint |
+| --- | --- | --- |
+| C-license-rm | Remove `geb-lean/LICENSE` (revert in-flight A5 commit). | Before any task that reads the file-layout as definitive. |
+| C-workflow-rm | Remove `geb-lean/.github/workflows/markdown-lint.yml` (revert in-flight A4 file location; the parent-level workflow supersedes it). | Before A13 (parent-level workflow authoring). |
+| C-gitignore-revert | Revert `geb-lean/.gitignore` to pre-A12 state (remove the three negation patterns `/.claude/*`, `!/.claude/rules/`, `!/.claude/settings.json` added in commit `69123dd0`; they are inert against the parent's blanket `.claude` pattern). | Before A10 (parent `.gitignore` fix). |
+| C-markdownlint-config-rewrite | Rewrite `geb-lean/.markdownlint-cli2.jsonc`: (a) remove the top-level `globs` key, (b) replace all `ignores` patterns with `geb-lean/`-prefixed versions covering parent-CWD invocations (`geb-lean/.lake/**`, `geb-lean/.jj/**`, `geb-lean/node_modules/**`, `geb-lean/.session/**`). The existing committed file (introduced at `aeae31f9`) carries a `"globs": ["**/*.md"]` key and ignores without the `geb-lean/` prefix. After this task, the config file matches the description in § `.markdownlint-cli2.jsonc` and the parent-level CI workflow's `markdownlint-cli2 --no-globs` invocation reads it correctly. | Before A2 (markdownlint verification). |
+| C-hook-amend | Amend `geb-lean/scripts/hooks/block-mutating-git.sh` so its `.jj/` discovery uses `jj root` (exit 0 = jj is initialised somewhere up the tree) instead of `[[ -d $CLAUDE_PROJECT_DIR/.jj ]]`. After this task, re-run A10's smoke-test cases (all five must produce expected exits). | Precedes A27 (hook wiring into `.claude/settings.json`). Only after C-hook-amend lands and all five smoke-test cases pass may A27 proceed. |
+
 ## Order of artefact production
 
 The order, which `docs/process.md` § 4 records explicitly,
@@ -1912,7 +1970,7 @@ interpretive items (15–17) are confirmed by user sign-off.
 | 10 | `geb/.gitignore` is modified to permit `geb-lean/.claude/{settings.json, rules/}` per the documented replacement in § .gitignore change at the parent. |
 | 11 | jj is initialised colocated at the parent `geb/` root; `geb/.jj/.gitignore` exists; `jj root` (run from any path under `geb/`) exits 0; `jj config list --repo git.private-commits` output equals `conflicts()` exactly (anchored, not substring); `jj config list --repo remotes.origin.fetch-tags` output equals `glob:cutover-*` exactly (anchored); `jj config path --repo` prints a path in user-config-dir (per jj 0.38+'s config-relocation), not under `.jj/`. Per-developer signing and identity are set at user-level. |
 | 12 | `geb-lean/.claude/settings.json` (committed) wires `block-mutating-git` (PreToolUse) and `check-signing-key` (SessionStart). The hook script is smoke-tested **by direct invocation** — feed synthesised JSON-stdin payloads representing tool invocations, assert the exit code (0 = allow, 2 = block). No real `git` or `jj` commands run. Required cases: (a) `git commit -m '...'` returns 2 (blocked, exercising the default-deny default); (b) `jj git push --remote origin -b feat/x` returns 0 (allowed; `jj git X` forms are stripped from the hook's scope); (c) `git status` returns 0 (allowed read-only subcommand); (d) `git checkout -b new-branch` returns 2 (blocked mutating subcommand); (e) `git push origin 'refs/tags/v1.0.0:refs/tags/v1.0.0'` returns 2 (blocked — no tag-push allowlist entry exists; tag operations are user-direct per § Hooks). |
-| 13 | `geb/.github/workflows/markdown-lint.yml` exists (at the parent level) and is path-filtered to `geb-lean/**`. `geb/.github/workflows/lean_action_ci.yml` exists (promoted) with `paths: ['geb-lean/**']` filter; the `leanprover/lean-action@v1` step passes `lake-package-directory: geb-lean`; and `run:` steps in the same workflow (e.g. `axiom_check`) use `defaults.run.working-directory: geb-lean`. (Note: `defaults.run.working-directory` applies only to `run:` steps, not to `uses:` steps; `lake-package-directory` is the correct mechanism for the lean-action step.) |
+| 13 | `geb/.github/workflows/markdown-lint.yml` exists (at the parent level) and is path-filtered to `geb-lean/**`. `geb/.github/workflows/lean_action_ci.yml` exists (promoted) with `paths: ['geb-lean/**']` filter; the `leanprover/lean-action@v1` step passes `lake-package-directory: geb-lean`; the workflow carries a top-level (workflow-level) `defaults.run.working-directory: geb-lean` key so all `run:` steps in all jobs execute from `geb-lean/`; and the `axiom_check` job declares `needs: [build]` so it runs after the `build` job has populated `.lake/`. (Note: `defaults.run.working-directory` applies only to `run:` steps, not to `uses:` steps; `lake-package-directory` is the correct mechanism for the lean-action step; `actions/checkout` is a `uses:` step unaffected by `defaults.run.working-directory`.) |
 | 14 | `geb-lean/scripts/check-axioms.sh`, `check-jj-setup.sh`, `pre-push.sh`, `hooks/block-mutating-git.sh`, `hooks/check-signing-key.sh` all exist, are executable, and pass a smoke-test invocation. `check-jj-setup.sh` returns non-zero for a deliberately-unconfigured fresh clone and zero after the on-boarding sequence completes. `check-signing-key.sh`: `bash scripts/hooks/check-signing-key.sh; echo "exit=$?"` returns exit=0; the script's stderr is empty unless a configured signing backend is unavailable (in which case the diagnostic message is informational and does not affect the exit code). |
 | 15 | The refactor's spec and plan have each gone through fresh-context adversarial review until termination, where termination means every finding is cosmetic-taste, rationale-rejected, or fixed (no open blocker / serious / minor findings remain). |
 | 16 | The user has reviewed the final state and confirmed Milestone A is complete. |
