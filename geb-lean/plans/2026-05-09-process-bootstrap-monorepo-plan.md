@@ -783,18 +783,31 @@ equivalent input.
   `integration` is intentionally omitted from the trigger
   list at this point; it is added at A32 post-cutover.
 
+  **Note on spec divergence**: spec § CI changes states
+  "both steps are `run:` steps," referring to the
+  markdownlint invocation replacing the prior
+  `DavidAnson/markdownlint-cli2-action@<SHA>` `uses:`
+  step. The workflow still requires the standard
+  `actions/checkout@<SHA>` `uses:` step at the top so
+  that subsequent `run:` steps can access the repository
+  contents. The spec's prose describes the markdownlint
+  *invocation* as a `run:` step; the checkout step is a
+  separate, required `uses:` step. The template above
+  (three steps: checkout + two `run:` steps) is
+  authoritative; the spec's two-step framing is loose.
+
 - [ ] **Step 2: Resolve the `<SHA>` placeholder.**
 
   Run from `geb-lean/` CWD:
 
   ```sh
   test -f ../.github/workflows/markdown-lint.yml \
-    && ! grep -n '<SHA-' \
+    && ! grep -n '<SHA>' \
          ../.github/workflows/markdown-lint.yml
   ```
 
   The first clause asserts the file exists at the parent
-  level. The second asserts no `<SHA-` placeholder remains.
+  level. The second asserts no `<SHA>` placeholder remains.
   Expected: exits 0 with no output.
 
 - [ ] **Step 3: YAML validity check.**
@@ -813,9 +826,9 @@ equivalent input.
   ```
 
 **Verification:** the file exists at
-`geb/.github/workflows/markdown-lint.yml`; no `<SHA-`
+`geb/.github/workflows/markdown-lint.yml`; no `<SHA>`
 placeholder remains (`test -f ../.github/workflows/markdown-lint.yml
-&& ! grep -n '<SHA-' ../.github/workflows/markdown-lint.yml`
+&& ! grep -n '<SHA>' ../.github/workflows/markdown-lint.yml`
 exits 0 with no output from `geb-lean/` CWD); YAML-valid;
 the `paths:` filter covers `geb-lean/**/*.md`.
 
@@ -2049,8 +2062,12 @@ user-direct or routed through `jj describe`.
   "
   ```
 
-- (c) Re-run the five A10 smoke-test cases to confirm the
-  hook fires correctly via the wired settings.
+- (c) Re-run the five `block-mutating-git.sh` smoke-test
+  cases as documented in C5's body and as enumerated in
+  spec verification matrix item 12 (cases (a)-(e)) to
+  confirm the hook fires correctly via the wired settings.
+  The five cases are defined in Task A9 (not A10; A10
+  covers `check-signing-key.sh`).
 
 ---
 
@@ -2445,11 +2462,17 @@ since the hook is wired from A27 forward.
 
   ```sh
   jj new -r main
+  jj bookmark create docs/session-milestone-a-note -r @
   jj describe -m \
     "doc(session): add post-Milestone-A transitional note"
   ```
 
-  The push is user-direct.
+  The user then runs from the parent `geb/` working tree:
+
+  ```sh
+  jj git push --remote origin \
+    -b docs/session-milestone-a-note
+  ```
 
 **Verification:** the file's first non-blank line is the
 transitional note; markdownlint-clean via the explicit
@@ -2556,6 +2579,7 @@ preserved categories.
 
   ```sh
   jj new -r main
+  jj bookmark create chore/session-retire -r @
   rm -rf .session/
   jj describe -m \
     "chore(session): retire .session directory at Milestone B"
@@ -2564,7 +2588,11 @@ preserved categories.
   This includes `.session/README.md` and any
   `.session/docs/` content.
 
-  The push is user-direct.
+  The user then runs from the parent `geb/` working tree:
+
+  ```sh
+  jj git push --remote origin -b chore/session-retire
+  ```
 
 **Verification:** the directory does not exist; `jj status`
 reflects the deletion as part of the working copy.
@@ -2636,8 +2664,10 @@ file causes the job to fail (smoke test, then revert).
 
 - [ ] **Step 1: Compile the Milestone B status report.**
 
-  Items B1 through B7 (per spec § Milestone B), with
-  status for each.
+  All Milestone B items (plan tasks B1–B6, corresponding
+  to spec items B1–B7; the spec's B5 is this plan's B3,
+  and the spec's B7 axiom-check fail-mode flip is this
+  plan's B5), with status for each.
 
 - [ ] **Step 2: Surface to the user.**
 
