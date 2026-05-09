@@ -742,8 +742,13 @@ Content:
    `lake build`, `lake test`, `lake lint`,
    `markdownlint-cli2 --config .markdownlint-cli2.jsonc
    --no-globs '**/*.md'`,
-   `bash scripts/check-axioms.sh GebLean/ test/`. The script
-   additionally surfaces user-driven gates as reminders:
+   `bash scripts/check-axioms.sh GebLean/ test/`. Note: the
+   single-quotes around `'**/*.md'` are load-bearing — without
+   them, the shell would expand the glob before
+   `markdownlint-cli2` sees it, defeating `--no-globs`. The
+   same applies wherever a glob is passed: always quote the
+   glob argument. The script additionally surfaces user-driven
+   gates as reminders:
    - `lean4:golf` and `lean4:review` ran on changed Lean
      code;
    - line-by-line user diff review of every change about to
@@ -1179,10 +1184,15 @@ The promoted file gains:
   root — inside `$GITHUB_WORKSPACE`. The upload step's
   `path:` references that file by its repo-root-relative
   path, satisfying `actions/upload-artifact`'s requirement
-  that the path be within the workspace. The `<SHA>`
-  placeholder is the exact commit hash of the
-  `actions/upload-artifact@v4` release, resolved at
-  workflow-authoring time.
+  that the path be within the workspace. This `path:`
+  resolution depends on the workflow's `actions/checkout`
+  step using the default destination (`$GITHUB_WORKSPACE`,
+  the repository root). If a custom checkout `path:` input is
+  set, the upload step's `path:` would need adjustment. The
+  default destination is preserved by not specifying a
+  `path:` input on the checkout step. The `<SHA>` placeholder
+  is the exact commit hash of the `actions/upload-artifact@v4`
+  release, resolved at workflow-authoring time.
 
   Post-Milestone-B (fail-mode): the `--exit-zero-on-findings`
   flag is removed; CI then fails on any non-allowlisted axiom
@@ -1222,7 +1232,7 @@ and suppress config-file glob expansion:
 
 ```yaml
 - name: Install markdownlint-cli2
-  run: npm install -g markdownlint-cli2
+  run: npm install -g 'markdownlint-cli2@^0.18.0'
 - name: markdownlint
   run: |
     markdownlint-cli2 \
@@ -1239,7 +1249,10 @@ additive glob expansion from the parent CWD, scanning
 the entire monorepo. The `run:` form requires
 `markdownlint-cli2` to be installed in the CI environment;
 the install step above covers this since `markdownlint-cli2`
-is not pre-installed on `ubuntu-latest`.
+is not pre-installed on `ubuntu-latest`. The version pin
+(`@^0.18.0`) is required because the `--no-globs` flag was
+introduced in markdownlint-cli2 v3.0.0 (the npm package
+version); without it, older versions may not recognize the flag.
 
 This workflow contains no third-party `uses:` action
 references; both steps are `run:` steps. The
@@ -1915,7 +1928,10 @@ ssh path applies to that configuration.
   --no-globs '**/*.md'` (the `--no-globs` flag suppresses
   any `globs` key in the config, matching CI behaviour and
   guarding against future config edits that inadvertently
-  re-add a `globs` key),
+  re-add a `globs` key; note: the single-quotes around
+  `'**/*.md'` are load-bearing — without them, the shell
+  would expand the glob before markdownlint-cli2 sees it,
+  defeating `--no-globs`),
   `bash scripts/check-axioms.sh GebLean/ test/`.
   Note: the `lake lint` invocation depends on
   `lintDriver = "batteries/runLinter"` having been added to
@@ -2099,6 +2115,24 @@ interpretive items (15–17) are confirmed by user sign-off.
 
 ## Open questions / deferred decisions
 
+- **`check-signing-key.sh` ssh-backend warm-correctness**: the
+  ssh-backend warm path invokes `ssh-add -l` and exits 0 if
+  any key is loaded. If the loaded keys do not include the
+  developer's configured signing key (e.g., the developer has
+  a non-signing-key loaded in ssh-agent), the hook reports
+  success but the next signed commit will still fail.
+  Resolution path: extend the hook to read the configured
+  signing-key fingerprint (from git/jj config) and compare
+  against `ssh-add -l` output; defer to a separate cleanup
+  workstream once the ssh-signing flow is more thoroughly
+  characterised.
+- **`check-jj-setup.sh` signing.behavior verification scope**:
+  assertion (c) accepts `signing.behavior = own` without
+  verifying that `signing.key` (or the equivalent ssh-key
+  path config) is populated and refers to a key the agent can
+  access. A more thorough check would verify the signing
+  key's existence and accessibility; deferred to a later
+  cleanup workstream alongside the ssh-backend fix above.
 - **Specific markdownlint rule customisations** in
   `.markdownlint-cli2.jsonc` (line length, MD013, link
   checking). The plan resolves these in response to
