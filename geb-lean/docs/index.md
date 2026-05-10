@@ -81,7 +81,9 @@ and gaps are filled in as workstreams complete.
   paranatural topos, polynomial combinator libraries used as
   computational scaffolding, the generic comonad bar
   resolution and its instantiation at the copresheaf-cover
-  comonad to resolve a copresheaf by representables.
+  comonad to resolve a copresheaf by representables, the
+  equivalence between polynomial coalgebras and copresheaves
+  on the cofree category of a polynomial endofunctor.
 - **Dependencies**:
   [quivers, semicategories, acyclic categories](#quivers-semicategories-acyclic-categories)
   for underlying graph data; later entries
