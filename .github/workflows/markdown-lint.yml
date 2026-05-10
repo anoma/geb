@@ -2,7 +2,7 @@ name: markdown-lint
 
 on:
   push:
-    branches: [main]
+    branches: [main, integration]
     paths:
       - 'geb-lean/**/*.md'
       - 'geb-lean/.markdownlint-cli2.jsonc'

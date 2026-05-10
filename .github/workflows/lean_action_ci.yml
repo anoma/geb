@@ -2,7 +2,7 @@ name: Lean Action CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, integration]
     paths: ['geb-lean/**']
   pull_request:
     paths: ['geb-lean/**']
