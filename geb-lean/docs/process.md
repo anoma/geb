@@ -97,6 +97,10 @@ prefix-by-purpose names (`feat/`, `fix/`, `refactor/`, `chore/`,
 `docs/`, `bump/`) and carry their workstream's spec, plan, and
 code together until the branch lands on `main`.
 
+The 2026-05-10 process bootstrap cutover is at commit
+`3cdbc55f6ede525ca2cd358244c65c879626e1bd` on main,
+tagged `cutover-2026-05-10`.
+
 ## `jj` colocated mode
 
 `jj` runs in colocated mode at the parent `geb/` root, not at
