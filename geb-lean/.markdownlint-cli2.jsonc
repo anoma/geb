@@ -16,6 +16,21 @@
 // via the self-contained .jj/.gitignore it creates at
 // jj git init --colocate. Listing .jj/ here would
 // suppress linting of any markdown jj later exposes.
+//
+// Pre-cutover historical content under docs/superpowers/
+// specs/, docs/plans/, and docs/research/ is grandfathered
+// via date-bounded ignore patterns: legacy material from
+// before the 2026-05-09 process-bootstrap cutover is
+// preserved as committed and not subject to current
+// markdownlint discipline. Content authored on or after
+// 2026-05-09 is linted normally. The geb-lean/ mirror
+// pair for each legacy pattern handles the parent-CWD CI
+// invocation case.
+//
+// .remember/ is deliberately NOT listed: the directory
+// hosts the remember tool's session-state output. The
+// project chooses to clean each file as it appears
+// rather than blanket-ignore the directory.
 {
   "config": {
     "default": true,
@@ -31,11 +46,25 @@
     ".claude/memory/**",
     ".claude/docs/**",
     ".claude/tools/**",
+    "docs/superpowers/specs/2026-0[1-4]-*.md",
+    "docs/superpowers/specs/2026-05-0[1-8]-*.md",
+    "docs/superpowers/plans/**",
+    "docs/superpowers/notes/2026-0[1-4]-*.md",
+    "docs/plans/**",
+    "docs/research/2026-0[1-4]-*.md",
+    "docs/research/2026-05-0[1-3]-*.md",
     "geb-lean/.lake/**",
     "geb-lean/node_modules/**",
     "geb-lean/.session/**",
     "geb-lean/.claude/memory/**",
     "geb-lean/.claude/docs/**",
-    "geb-lean/.claude/tools/**"
+    "geb-lean/.claude/tools/**",
+    "geb-lean/docs/superpowers/specs/2026-0[1-4]-*.md",
+    "geb-lean/docs/superpowers/specs/2026-05-0[1-8]-*.md",
+    "geb-lean/docs/superpowers/plans/**",
+    "geb-lean/docs/superpowers/notes/2026-0[1-4]-*.md",
+    "geb-lean/docs/plans/**",
+    "geb-lean/docs/research/2026-0[1-4]-*.md",
+    "geb-lean/docs/research/2026-05-0[1-3]-*.md"
   ]
 }
