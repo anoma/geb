@@ -22,12 +22,12 @@ Given:
 
 ## The Pattern
 
-| n | Category | Copresheaf Target |
-|---|----------|-------------------|
-| 1 | Cat | [J, Type] |
-| 2 | 2-Cat | [J², Type] = [J × J, Type] |
-| 3 | 3-Cat | [J³, Type] = [J × J × J, Type] |
-| ω | ω-Cat | [J^ω, Type] = ??? |
+|n|Category|Copresheaf Target|
+|---|---|---|
+|1|Cat|[J, Type]|
+|2|2-Cat|[J², Type] = [J × J, Type]|
+|3|3-Cat|[J³, Type] = [J × J × J, Type]|
+|ω|ω-Cat|[J^ω, Type] = ???|
 
 ## Analysis
 
@@ -54,16 +54,16 @@ categorical structure:
 
 For [J × J, Type], the 16 objects can be interpreted as:
 
-| First factor | Second factor | Interpretation |
-|--------------|---------------|----------------|
-| Obj | Obj | 0-cells |
-| Mor | Obj | Horizontal 1-cells |
-| Obj | Mor | Vertical 1-cells |
-| Mor | Mor | 2-cells |
-| Id | * | Horizontal identity data |
-| * | Id | Vertical identity data |
-| Comp | * | Horizontal composition data |
-| * | Comp | Vertical composition data |
+|First factor|Second factor|Interpretation|
+|---|---|---|
+|Obj|Obj|0-cells|
+|Mor|Obj|Horizontal 1-cells|
+|Obj|Mor|Vertical 1-cells|
+|Mor|Mor|2-cells|
+|Id|*|Horizontal identity data|
+|*|Id|Vertical identity data|
+|Comp|*|Horizontal composition data|
+|*|Comp|Vertical composition data|
 
 This structure is natural for DOUBLE CATEGORIES, which have:
 
@@ -104,11 +104,11 @@ The standard approach to ∞-categories uses simplicial sets [Δ^op, Set] where
 
 Comparing approaches:
 
-| Approach | Index category | Object count | Geometric flavor |
-|----------|----------------|--------------|------------------|
-| [J^n, Type] | J^n (product) | 4^n | Cubical |
-| [J_n, Type] | J_n (hierarchy) | O(n) | Globular |
-| [Δ^op, Set] | Δ | Infinite | Simplicial |
+|Approach|Index category|Object count|Geometric flavor|
+|---|---|---|---|
+|[J^n, Type]|J^n (product)|4^n|Cubical|
+|[J_n, Type]|J_n (hierarchy)|O(n)|Globular|
+|[Δ^op, Set]|Δ|Infinite|Simplicial|
 
 **Observations:**
 

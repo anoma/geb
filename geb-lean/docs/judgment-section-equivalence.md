@@ -30,11 +30,11 @@ L ⊣ Φ adjunction.
 The judgment category J = `JudgmentLevel` has three objects representing
 levels of categorical structure:
 
-| Level | Object | Structure |
-|-------|--------|-----------|
-| obj | `ObjCopr` | A type (objects of a would-be category) |
-| quiv | `ObjMorCopr` | A quiver (objects + morphisms + dom/cod) |
-| cat | `CatJudgCopr` | Full category (quiver + id + comp + axioms) |
+|Level|Object|Structure|
+|---|---|---|
+|obj|`ObjCopr`|A type (objects of a would-be category)|
+|quiv|`ObjMorCopr`|A quiver (objects + morphisms + dom/cod)|
+|cat|`CatJudgCopr`|Full category (quiver + id + comp + axioms)|
 
 Morphisms in J are forgetful: `cat → quiv → obj`. These form a total order.
 
@@ -104,11 +104,11 @@ The natural isomorphisms are provided by `toCatJudgCopr_ofCatJudgCopr` and
 
 Cat is a 2-category (strict bicategory):
 
-| Level | Elements | Notation |
-|-------|----------|----------|
-| 0-cells | Small categories | C, D |
-| 1-cells | Functors | F : C → D |
-| 2-cells | Natural transformations | α : F ⇒ G |
+|Level|Elements|Notation|
+|---|---|---|
+|0-cells|Small categories|C, D|
+|1-cells|Functors|F : C → D|
+|2-cells|Natural transformations|α : F ⇒ G|
 
 The functor categories `Fun(C, D)` have:
 
@@ -126,11 +126,11 @@ L : [J, Type] → Cat    (left adjoint, free category)
 
 Under this adjunction:
 
-| Cat | [J, Type] |
-|-----|-----------|
-| Categories | Copresheaves |
-| Functors | Natural transformations |
-| Nat. trans. | **No correspondent** |
+|Cat|[J, Type]|
+|---|---|
+|Categories|Copresheaves|
+|Functors|Natural transformations|
+|Nat. trans.|**No correspondent**|
 
 The 2-cells of Cat are "collapsed" because [J, Type] is a 1-category.
 
@@ -138,11 +138,11 @@ The 2-cells of Cat are "collapsed" because [J, Type] is a 1-category.
 
 To preserve 2-categorical structure, use Cat-valued copresheaves [J, Cat]:
 
-| Cat | [J, Cat] |
-|-----|----------|
-| Categories (0-cells) | Cat-valued copresheaves |
-| Functors (1-cells) | Natural transformations |
-| Nat. trans. (2-cells) | **Modifications** |
+|Cat|[J, Cat]|
+|---|---|
+|Categories (0-cells)|Cat-valued copresheaves|
+|Functors (1-cells)|Natural transformations|
+|Nat. trans. (2-cells)|**Modifications**|
 
 A **modification** Γ : α ⇛ β between natural transformations
 α, β : F ⇒ G (where F, G : A → B are functors into Cat) consists of:
@@ -154,11 +154,11 @@ A **modification** Γ : α ⇛ β between natural transformations
 
 Since `JudgmentUniverse : JudgmentLevel ⥤ Cat` is Cat-valued:
 
-| JudgmentUniverse structure | Corresponds to |
-|---------------------------|----------------|
-| Sections | Categories (0-cells) |
-| Section morphisms | Functors (1-cells) |
-| Modifications between section morphisms | Natural transformations (2-cells) |
+|JudgmentUniverse structure|Corresponds to|
+|---|---|
+|Sections|Categories (0-cells)|
+|Section morphisms|Functors (1-cells)|
+|Modifications between section morphisms|Natural transformations (2-cells)|
 
 The hom-categories at each level provide the 2-categorical structure:
 
@@ -186,11 +186,11 @@ For D = JudgmentLevel:
 The setoid machinery (`SetoidNatTrans`, `SetoidNatIso`, `SetoidEquivalence`)
 provides structure analogous to 2-cells:
 
-| Setoid structure | Cat-valued analogue |
-|-----------------|---------------------|
-| `SetoidNatTrans` (naturality up to ≈) | Lax natural transformation |
-| Pre-quotient morphisms | Modifications |
-| `SetoidNatIso` | Pseudonatural isomorphism |
+|Setoid structure|Cat-valued analogue|
+|---|---|
+|`SetoidNatTrans` (naturality up to ≈)|Lax natural transformation|
+|Pre-quotient morphisms|Modifications|
+|`SetoidNatIso`|Pseudonatural isomorphism|
 
 The pre-quotient data in `PolyPresentationLoc` (before quotienting by
 induced-map equivalence) tracks "different ways to represent the same

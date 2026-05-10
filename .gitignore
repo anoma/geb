@@ -4,7 +4,16 @@
 *.fasl
 *.*fsl
 *.*fas
-.claude
+/.claude/
+geb-agda/.claude
+geb-idris/.claude
+/geb-lean/.claude/*
+!/geb-lean/.claude/rules/
+!/geb-lean/.claude/settings.json
+/geb-lean/.claude/memory/
+/geb-lean/.claude/docs/
+/geb-lean/.claude/tools/
+/geb-lean/docs/.claude/
 .remember
 .vscode
 build/

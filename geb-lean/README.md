@@ -1,60 +1,132 @@
 # geb-lean
 
-Formalizes the categorical gadgets that underpin the Geb programming
-language in Lean 4. The library builds on mathlib to provide structured
-treatments of finite quivers, semicategories, and the “judgment” categories
-that encode the axioms of (semi)categories.
+`geb-lean` is a subproject of the `geb/` monorepo. It hosts the
+Lean 4 formalisation of the categorical structures underlying
+the Geb programming language. For the broader project — including
+the Common Lisp reference implementation, the original Idris and
+Agda artefacts, and the user-facing manual — see
+[`../README.md`](../README.md). The licence under which both the
+parent project and this subproject are distributed is recorded
+at [`../LICENSE`](../LICENSE).
 
-## Layout
+## Status
 
-- `GebLean/FiniteQuiver.lean`: witnesses and packages finite quivers
-  together with their embeddings into mathlib's `Quiver`.
-- `GebLean/Semicategory.lean`: axiomatizes semicategories and semifunctors
-  and bundles them into categorical structures.
-- `GebLean/AcyclicQuiver.lean`, `GebLean/AcyclicCat.lean`: extend quivers
-  with acyclicity data and assemble bundled (finite) categories.
-- `GebLean/CategoryJudgments.lean`, `GebLean/DepCategoryJudgments.lean`:
-  parallel encodings of categorical axioms via functor data and dependent
-  types, linked by explicit equivalences.
-- `test/`: worked examples (see `test/AcyclicCat.lean`) and notes on future
-  property-based testing.
+Active experimentation; process refactor of 2026-05-09 in
+effect. The conventions, directory layout, and contribution
+flow described below reflect that refactor and supersede earlier
+arrangements. The Lean library itself continues to grow as the
+formalisation programme advances.
 
-`GebLean.lean` re-exports the public API so downstream users can import a
-single module.
+## Dependencies
 
-## Building
+The Lean toolchain is pinned in [`lean-toolchain`](lean-toolchain).
+External library pins are recorded in
+[`lake-manifest.json`](lake-manifest.json) and declared in
+[`lakefile.toml`](lakefile.toml). The two upstream libraries on
+which this project depends are mathlib4 and CSLib; both are
+required for the project to build and test.
 
-The project uses Lake with Lean 4.24.0-rc1 and a pinned mathlib revision.
-The first build will download those dependencies.
+## Licence
 
-```bash
-lake build
-```
+Distributed under the GNU General Public License version 3. The
+licence text is in [`../LICENSE`](../LICENSE) at the parent
+monorepo root. The same licence covers all files in this
+subdirectory unless an individual file declares otherwise.
 
-## Testing
+## Index of project documentation
 
-Run the Lean test driver (configured in `lakefile.toml`):
+The documentation tree under [`docs/`](docs) is organised so
+that this README is a thin index over it. The entry points are:
 
-```bash
-lake test
-```
+- [`docs/index.md`](docs/index.md) — topological index of
+  formalised workstreams: paths, mathematical content,
+  dependencies among workstreams, and pointers into
+  `docs/research/` and `docs/superpowers/specs/`.
+- [`docs/process.md`](docs/process.md) — rationale for the
+  conventions in `CLAUDE.md` and `.claude/rules/`, with
+  cross-references to the spec that introduced them.
+- [`docs/lean-resources.md`](docs/lean-resources.md) — curated
+  pointers into mathlib4, CSLib, and external Lean material on
+  the mathematical theories formalised here.
+- [`docs/superpowers/specs/2026-05-09-process-bootstrap-monorepo-design.md`](docs/superpowers/specs/2026-05-09-process-bootstrap-monorepo-design.md)
+  — design spec for the 2026-05-09 process refactor.
+- [`plans/2026-05-09-process-bootstrap-monorepo-plan.md`](plans/2026-05-09-process-bootstrap-monorepo-plan.md)
+  — the task-level plan executing that spec.
+- [`TODO.md`](TODO.md) — short-horizon list of pending work
+  outside the scope of any active spec/plan.
 
-See [test/README.md](test/README.md) for conventions and future testing
-plans.
+Workstream-specific specs live under
+[`docs/superpowers/specs/`](docs/superpowers/specs); their
+plans live under [`plans/`](plans). The topological index links
+to each active workstream by name.
 
-## Example
+## Index of project processes
 
-Import the library and access its definitions:
+The process and rule files live at the top of this directory and
+under `.claude/rules/`. Their roles:
 
-```lean
-import GebLean
+- [`CLAUDE.md`](CLAUDE.md) — repository-wide instructions for
+  AI assistants and human contributors. Always loaded.
+- [`.claude/rules/lean-disciplines.md`](.claude/rules/lean-disciplines.md)
+  — hole-marking, constructive-only Lean, build hygiene, and
+  related disciplines that apply across all Lean development.
+- [`.claude/rules/lean-coding.md`](.claude/rules/lean-coding.md)
+  — path-scoped coding conventions for `.lean` files: naming,
+  layout, typeclass and structure idioms, proof-style guidance.
+- [`.claude/rules/markdown-writing.md`](.claude/rules/markdown-writing.md)
+  — register, line length, and formatting conventions for
+  every committed Markdown file.
+- [`.claude/rules/ci-and-workflow.md`](.claude/rules/ci-and-workflow.md)
+  — conventions for CI and workflow files governing the
+  geb-lean subdirectory.
 
-example (V : Type) [Quiver V] [AcyclicQuiver V] [AcyclicCategory V] :
-    Semicategory V := inferInstance
+## Contribution pointers
 
-example (V : Type) [inst : AcyclicQuiver V] [AcyclicCategory V] :
-    Quiver V := inst.toQuiver
-```
+The development flow used in this subproject:
 
-Concrete examples such as the walking parallel pair semicategory are
-available in `test/AcyclicCat.lean`.
+1. Clone the parent monorepo at
+   <https://github.com/anoma/geb>; `geb-lean/` is a
+   subdirectory.
+2. Read [`CLAUDE.md`](CLAUDE.md) for the repository-wide
+   instructions, then the rule files under `.claude/rules/`
+   relevant to the area being touched.
+3. Brainstorm a workstream and write a spec under
+   `docs/superpowers/specs/<date>-<topic>.md`, then a plan
+   under `plans/<date>-<topic>-plan.md`. Both are tracked
+   with adversarial review cycles.
+4. Implement the plan on a topic branch named
+   `feat/<topic>`, `fix/<topic>`, or `chore/<topic>`. Use jj
+   as the primary VCS; the colocated git repository is the
+   integration channel for GitHub.
+5. Run `lake build` and `lake test` after every edit; fix the
+   first error first.
+6. Open a pull request against `main`. Commits use the
+   mathlib commit-message form: a short imperative subject
+   line of the form `kind(scope): summary`, optional body,
+   no trailing punctuation in the subject.
+
+The reasoning behind these conventions is in
+[`docs/process.md`](docs/process.md); the mechanical rules are
+in `CLAUDE.md` and `.claude/rules/`.
+
+## Pointers to upstream and sibling projects
+
+This subproject is the active development home for the Lean
+formalisation of Geb. Two pointers to related repositories:
+
+- `geb-mathlib` is the eventual upstream destination for
+  results developed here. Material formalised in `geb-lean`
+  that reaches a stable, peer-reviewable form is intended for
+  migration into `geb-mathlib`, where it joins the broader
+  mathlib ecosystem under mathlib's contribution process. The
+  literature-citation discipline recorded in
+  [`CLAUDE.md`](CLAUDE.md) supports that migration: every
+  transcribed function, definition, and theorem carries a
+  citation to its source that survives the move.
+- The library dependencies — mathlib4 at
+  <https://github.com/leanprover-community/mathlib4> and
+  CSLib at <https://github.com/leanprover/cslib> — supply the
+  ambient mathematical infrastructure on which the
+  formalisation rests. Pinned versions are recorded in
+  `lake-manifest.json`; bumps are made deliberately and in
+  step with `lean-toolchain`.

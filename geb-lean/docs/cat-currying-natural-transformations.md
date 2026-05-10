@@ -52,7 +52,8 @@ by
 
 Naturality of `F^♯(f)` in `b` follows from functoriality of `F` in `A × B`.
 
-Conversely, given `H : A → [B, C]`, define its uncurried form `H^♭ : A × B → C` by
+Conversely, given `H : A → [B, C]`, define its uncurried form
+`H^♭ : A × B → C` by
 
 ```text
 H^♭(a, b) := H(a)(b),

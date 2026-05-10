@@ -1,0 +1,26 @@
+name: markdown-lint
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'geb-lean/**/*.md'
+      - 'geb-lean/.markdownlint-cli2.jsonc'
+  pull_request:
+    paths:
+      - 'geb-lean/**/*.md'
+      - 'geb-lean/.markdownlint-cli2.jsonc'
+
+jobs:
+  markdown-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      - name: Install markdownlint-cli2
+        run: npm install -g 'markdownlint-cli2@^0.18.0'
+      - name: markdownlint
+        run: |
+          markdownlint-cli2 \
+            --config geb-lean/.markdownlint-cli2.jsonc \
+            --no-globs \
+            'geb-lean/**/*.md'

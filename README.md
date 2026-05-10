@@ -2,6 +2,12 @@
 
 # The GEB Manual
 
+The Lean formalisation of this project lives in `geb-lean/`;
+see [`geb-lean/README.md`](geb-lean/README.md). The material
+below documents the original implementation; the geb-lean
+subproject is the active development home for the Lean
+formalisation of this project.
+
 ## Table of Contents
 
 - [1 Links][9bc5]

@@ -92,11 +92,11 @@ Replace Type with Cat as the target:
 
 An embedding Φ' : Cat → [J, Cat] would preserve 2-categorical structure:
 
-| Cat | [J, Cat] |
-|-----|----------|
-| Category C | Cat-valued copresheaf Φ'(C) |
-| Functor F : C → D | Natural transformation Φ'(F) |
-| Nat. trans. α : F ⇒ G | Modification Γ_α |
+|Cat|[J, Cat]|
+|---|---|
+|Category C|Cat-valued copresheaf Φ'(C)|
+|Functor F : C → D|Natural transformation Φ'(F)|
+|Nat. trans. α : F ⇒ G|Modification Γ_α|
 
 ### Option 2: Internal Hom Enrichment
 
@@ -144,12 +144,12 @@ In [J, Cat], modifications are the natural 2-cells. If we embed Cat into
 
 Transfors generalize the notion of morphisms between categorical structures:
 
-| k | k-transfor | Between |
-|---|------------|---------|
-| 0 | Functor | Categories |
-| 1 | Natural transformation | Functors |
-| 2 | Modification | Natural transformations |
-| 3 | Perturbation | Modifications |
+|k|k-transfor|Between|
+|---|---|---|
+|0|Functor|Categories|
+|1|Natural transformation|Functors|
+|2|Modification|Natural transformations|
+|3|Perturbation|Modifications|
 
 Under Φ : Cat → [J, Type]:
 
@@ -240,12 +240,12 @@ where L_* denotes post-composition with L.
 
 The product J × J has 16 objects (pairs from {Obj, Mor, Id, Comp}²):
 
-| | Obj | Mor | Id | Comp |
+||Obj|Mor|Id|Comp|
 |---|---|---|---|---|
-| **Obj** | (Obj,Obj) | (Obj,Mor) | (Obj,Id) | (Obj,Comp) |
-| **Mor** | (Mor,Obj) | (Mor,Mor) | (Mor,Id) | (Mor,Comp) |
-| **Id** | (Id,Obj) | (Id,Mor) | (Id,Id) | (Id,Comp) |
-| **Comp** | (Comp,Obj) | (Comp,Mor) | (Comp,Id) | (Comp,Comp) |
+|**Obj**|(Obj,Obj)|(Obj,Mor)|(Obj,Id)|(Obj,Comp)|
+|**Mor**|(Mor,Obj)|(Mor,Mor)|(Mor,Id)|(Mor,Comp)|
+|**Id**|(Id,Obj)|(Id,Mor)|(Id,Id)|(Id,Comp)|
+|**Comp**|(Comp,Obj)|(Comp,Mor)|(Comp,Id)|(Comp,Comp)|
 
 This 16-object category provides enough structure to encode:
 

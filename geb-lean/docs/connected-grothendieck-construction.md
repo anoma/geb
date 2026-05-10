@@ -42,7 +42,8 @@ h ∘ f = f' ∘ g.
 
 * **Objects:** Morphisms `f : a → b` in `C`.
 * **Morphisms:** A morphism `(u, v) : f → f'` for arrows
-  `f : a → b` and `f' : a' → b'` consists of `u : a' → a` and `v : b → b'` such that
+  `f : a → b` and `f' : a' → b'` consists of `u : a' → a` and
+  `v : b → b'` such that
 
 ```text
 f' = v ∘ f ∘ u.
@@ -532,10 +533,10 @@ where fiberFunctorPresheaf G : C^op → Cat is defined by
 
 Compared to the copresheaf decomposition:
 
-| Layer | Copresheaf | Presheaf |
-|-------|------------|----------|
-| Outer | Grothendieck (covariant on C) | GrothendieckContra' (contravariant) |
-| Inner | GrothendieckContra' (contravariant) | Grothendieck (covariant) |
+|Layer|Copresheaf|Presheaf|
+|---|---|---|
+|Outer|Grothendieck (covariant on C)|GrothendieckContra' (contravariant)|
+|Inner|GrothendieckContra' (contravariant)|Grothendieck (covariant)|
 
 ### 11.6 Using Over Categories
 

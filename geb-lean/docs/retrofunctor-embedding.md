@@ -119,13 +119,13 @@ that makes CategoryJudgments attractive.
 
 ## Comparison Table
 
-| Aspect | Cat embedding | Potential Cof embedding |
-|--------|---------------|------------------------|
-| Morphism direction | Covariant | Mixed (objects forward, morphisms backward) |
-| Dependency structure | Independent types | Dependent lifting |
-| Known characterization | Copresheaves on finite J | Comonoids in Poly |
-| Adjunction type | Reflective | Unknown |
-| Index category size | Finite (4 objects) | Likely infinite or dependent |
+|Aspect|Cat embedding|Potential Cof embedding|
+|---|---|---|
+|Morphism direction|Covariant|Mixed (objects forward, morphisms backward)|
+|Dependency structure|Independent types|Dependent lifting|
+|Known characterization|Copresheaves on finite J|Comonoids in Poly|
+|Adjunction type|Reflective|Unknown|
+|Index category size|Finite (4 objects)|Likely infinite or dependent|
 
 ## Theoretical Obstacles
 
@@ -207,19 +207,19 @@ A retrofunctor φ : A ↛ B has:
 
 Tracking these as relations yields a category with approximately 11 objects:
 
-| Object | Description |
-|--------|-------------|
-| Obj_S | Objects of source category |
-| Obj_T | Objects of target category |
-| Mor_S | Morphisms of source category |
-| Mor_T | Morphisms of target category |
-| Id_S | Identity witnesses in source |
-| Id_T | Identity witnesses in target |
-| Comp_S | Composable pairs in source |
-| Comp_T | Composable pairs in target |
-| ObjMap | Object correspondence witnesses |
-| LiftablePair | Pairs (a, u) with dom(u) = φ₀(a) |
-| Lift | Lifted morphism witnesses |
+|Object|Description|
+|---|---|
+|Obj_S|Objects of source category|
+|Obj_T|Objects of target category|
+|Mor_S|Morphisms of source category|
+|Mor_T|Morphisms of target category|
+|Id_S|Identity witnesses in source|
+|Id_T|Identity witnesses in target|
+|Comp_S|Composable pairs in source|
+|Comp_T|Composable pairs in target|
+|ObjMap|Object correspondence witnesses|
+|LiftablePair|Pairs (a, u) with dom(u) = φ₀(a)|
+|Lift|Lifted morphism witnesses|
 
 Morphisms would encode the structure maps and coherence conditions.
 

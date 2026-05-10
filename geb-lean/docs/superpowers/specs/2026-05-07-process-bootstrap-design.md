@@ -1,5 +1,10 @@
 # geb-lean process refactor design
 
+> **Superseded** by
+> [the 2026-05-09 monorepo-aware redesign](2026-05-09-process-bootstrap-monorepo-design.md).
+> The text below preserves the converged content for historical
+> reference.
+
 **Date drafted**: 2026-05-07.
 **Authoring**: drafted by Claude through brainstorming with the
 user; subject to fresh-context adversarial review before approval

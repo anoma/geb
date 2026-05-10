@@ -25,12 +25,12 @@ The distinctive feature is that the index category J is **finite** (4 objects,
 
 The nerve-realization adjunction τ₁ ⊣ N relates Cat to simplicial sets:
 
-| Property | Nerve-Realization | Our Construction |
-|----------|------------------|------------------|
-| Index category | Δ (infinite) | J (4 objects) |
-| Direction | Presheaves (contravariant) | Copresheaves (covariant) |
-| Reflective? | No (nerve not fully faithful) | Y |
-| Left adjoint | τ₁ (1-truncation) | L (quotient of free cat) |
+|Property|Nerve-Realization|Our Construction|
+|---|---|---|
+|Index category|Δ (infinite)|J (4 objects)|
+|Direction|Presheaves (contravariant)|Copresheaves (covariant)|
+|Reflective?|No (nerve not fully faithful)|Y|
+|Left adjoint|τ₁ (1-truncation)|L (quotient of free cat)|
 
 The nerve is not fully faithful because it fails to detect "extra"
 degeneracies in simplicial sets. Our Φ is fully faithful because the counit

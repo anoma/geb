@@ -3,6 +3,7 @@ version = "0.1.0"
 keywords = ["math"]
 defaultTargets = ["GebLean"]
 testDriver = "GebLeanTests"
+lintDriver = "batteries/runLinter"
 moreLeanArgs = ["-DwarningAsError=true"]
 
 [leanOptions]
