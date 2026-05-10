@@ -94,15 +94,19 @@ and gaps are filled in as workstreams complete.
 
 ## Profunctors and end machinery
 
-- **Source-tree paths**: `GebLean/HexagonCat.lean`,
+- **Source-tree paths**: `GebLean/ComprehensiveFactorization.lean`,
+  `GebLean/ComprehensiveWeighted.lean`,
+  `GebLean/HexagonCat.lean`,
   `GebLean/ProfAlg.lean`,
   `GebLean/MendlerLambekEndPower.lean`,
   `GebLean/MendlerLambekPresheaf.lean`,
+  `GebLean/Paranatural.lean`,
   `GebLean/RestrictedCoendAsColimit.lean`,
   `GebLean/ParanatAlg.lean`,
   `GebLean/Weighted.lean`,
   `GebLean/WeightedAlg.lean`,
   `GebLean/Utilities/Profunctors.lean`,
+  `GebLean/Utilities/ConnectedComponents.lean`,
   `GebLean/Utilities/EndsAndCoends.lean`,
   `GebLean/Utilities/TwArrPresheaf.lean`,
   `GebLean/Utilities/TwistedArrow.lean`.
@@ -114,9 +118,14 @@ and gaps are filled in as workstreams complete.
   identification of structural ends of `AlgProf G` with
   initial-algebra carriers via sections of the forgetful
   functor, weight pullback and diagram postcomposition
-  bifunctoriality of weighted (co)wedges, and the
-  obstruction to terminality transfer across non-full
-  weight-comparison functors.
+  bifunctoriality of weighted (co)wedges, the obstruction
+  to terminality transfer across non-full weight-comparison
+  functors, the Street-Walters comprehensive factorization
+  of a functor through a discrete (op)fibration with the
+  comprehensive (co)presheaf as a pointwise left Kan
+  extension, and the characterisation of paranatural
+  transformations as ordinary natural transformations into a
+  weighted limit.
 - **Dependencies**:
   [polynomial / W- / M-types and PFunctors](#polynomial--w---m-types-and-pfunctors)
   for the polynomial side of profunctorial constructions.
