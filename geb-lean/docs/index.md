@@ -41,7 +41,8 @@ and gaps are filled in as workstreams complete.
   categories and dependent categories, the equivalence between
   judgmental and structural presentations, adjunctions
   relating coproduct and Grothendieck constructions on the
-  judgmental side.
+  judgmental side, the analysis of 2-categorical structure
+  transported across the L ⊣ Φ adjunction.
 - **Dependencies**:
   [quivers, semicategories, acyclic categories](#quivers-semicategories-acyclic-categories)
   for the underlying quiver layer.
