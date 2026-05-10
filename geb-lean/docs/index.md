@@ -82,8 +82,9 @@ and gaps are filled in as workstreams complete.
   computational scaffolding, the generic comonad bar
   resolution and its instantiation at the copresheaf-cover
   comonad to resolve a copresheaf by representables, the
-  equivalence between polynomial coalgebras and copresheaves
-  on the cofree category of a polynomial endofunctor.
+  cofree category of a polynomial endofunctor with its
+  comonoid structure, and the equivalence between polynomial
+  coalgebras and copresheaves on that cofree category.
 - **Dependencies**:
   [quivers, semicategories, acyclic categories](#quivers-semicategories-acyclic-categories)
   for underlying graph data; later entries
