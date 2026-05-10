@@ -59,27 +59,27 @@ Given a category C, we construct a copresheaf F : J → Type as follows:
 
 ### Object assignments
 
-| J object | F assigns | Description |
-|----------|-----------|-------------|
-| Obj | Obj_C | The type of objects in C |
-| Mor | Σ (a b : Obj_C), Hom(a,b) | The sigma type of all morphisms |
-| Id | Obj_C | One identity witness per object |
-| Comp | { (f,g) \| tgt(f) = src(g) } | Composable pairs |
+|J object|F assigns|Description|
+|---|---|---|
+|Obj|Obj_C|The type of objects in C|
+|Mor|Σ (a b : Obj_C), Hom(a,b)|The sigma type of all morphisms|
+|Id|Obj_C|One identity witness per object|
+|Comp|{ (f,g) \| tgt(f) = src(g) }|Composable pairs|
 
 ### Morphism assignments
 
-| J morphism | F assigns | Description |
-|------------|-----------|-------------|
-| dom | src | First projection of sigma |
-| cod | tgt | Second index of sigma |
-| idObj | id_Obj | Identity on objects |
-| idMor | a ↦ ⟨a, a, id_a⟩ | Identity morphism assignment |
-| left | (f,g) ↦ g | Second morphism of pair |
-| right | (f,g) ↦ f | First morphism of pair |
-| composite | (f,g) ↦ f ≫ g | Actual composition |
-| intermediate | (f,g) ↦ tgt(f) | Shared object |
-| compositeDom | (f,g) ↦ src(f) | Domain of composite |
-| compositeCod | (f,g) ↦ tgt(g) | Codomain of composite |
+|J morphism|F assigns|Description|
+|---|---|---|
+|dom|src|First projection of sigma|
+|cod|tgt|Second index of sigma|
+|idObj|id_Obj|Identity on objects|
+|idMor|a ↦ ⟨a, a, id_a⟩|Identity morphism assignment|
+|left|(f,g) ↦ g|Second morphism of pair|
+|right|(f,g) ↦ f|First morphism of pair|
+|composite|(f,g) ↦ f ≫ g|Actual composition|
+|intermediate|(f,g) ↦ tgt(f)|Shared object|
+|compositeDom|(f,g) ↦ src(f)|Domain of composite|
+|compositeCod|(f,g) ↦ tgt(g)|Codomain of composite|
 
 ### Verification of commutativity
 

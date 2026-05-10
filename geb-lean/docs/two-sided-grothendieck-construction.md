@@ -264,7 +264,7 @@ generalizes the two-sided construction by:
 * Projecting to `Arr(C)` instead of `A × B`
 * Allowing dependence on the arrow itself, not just its endpoints
 
-The twisted-arrow to Grothendieck equivalence
-`twArrEquivGrothendieckUnder : TwistedArrow' C ≌ Grothendieck (Under.mapFunctor C)`
-in `TwistedArrow.lean` (lines 1008-1037) shows a concrete case of this
+The twisted-arrow to Grothendieck equivalence `twArrEquivGrothendieckUnder`
+`: TwistedArrow' C ≌ Grothendieck (Under.mapFunctor C)` in
+`TwistedArrow.lean` (lines 1008-1037) shows a concrete case of this
 relationship.

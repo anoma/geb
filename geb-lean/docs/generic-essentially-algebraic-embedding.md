@@ -32,8 +32,8 @@ category J_T derived from T?
 
 ### The Structure of J_T
 
-For an essentially algebraic theory T, the judgment category J_T is constructed as
-follows:
+For an essentially algebraic theory T, the judgment category J_T is
+constructed as follows:
 
 **Objects of J_T:**
 

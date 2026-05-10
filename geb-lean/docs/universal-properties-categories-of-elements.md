@@ -200,7 +200,8 @@ Universal arrows are (co)representability problems for hom-functors:
 * `(X ↓ F)` is the category of elements of the **copresheaf** `c ↦ D(X, F(c))`,
 * `(F ↓ X)` is the category of elements of the **presheaf** `c ↦ D(F(c), X)`,
 
-so universal morphisms are just initial/terminal objects in those categories of elements.
+so universal morphisms are just initial/terminal objects in those
+categories of elements.
 
 [1]: https://en.wikipedia.org/wiki/Universal_property "Universal property - Wikipedia"
 

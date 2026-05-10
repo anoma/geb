@@ -373,7 +373,8 @@ A cowedge for P with apex X is:
 β_c : P(c, c) → X
 ```
 
-- such that for every arrow f : c → d in C, the cowedge (dinaturality) equation holds:
+- such that for every arrow f : c → d in C, the cowedge (dinaturality)
+  equation holds:
 
 ```text
 β_d ∘ P(1, f) = β_c ∘ P(f, 1) : P(d, c) → X.

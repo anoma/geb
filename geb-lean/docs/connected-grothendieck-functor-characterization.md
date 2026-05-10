@@ -14,8 +14,9 @@ we have:
 - **FunctorFromData**: Characterizes functors `Grothendieck F ⥤ E` via fiber
   functors `F.obj c ⥤ E` for each `c`, natural transformations, and coherence.
 
-- **FunctorBetweenData**: Characterizes functors `Grothendieck G ⥤ Grothendieck F`
-  via a base functor, fiber-to-fiber functors, and cross-fiber morphisms.
+- **FunctorBetweenData**: Characterizes functors
+  `Grothendieck G ⥤ Grothendieck F` via a base functor, fiber-to-fiber
+  functors, and cross-fiber morphisms.
 
 The connected Grothendieck construction is built from two nested Grothendieck
 constructions:
@@ -47,8 +48,10 @@ where `arr, arr' : Arrow C` and `e, e'` are fiber elements consists of:
 2. A fiber morphism via the **diagonal construction**:
    - The diagonal `w = arr.hom >> beta = alpha >> arr'.hom` is another arrow
    - There are canonical TwistedArrow morphisms:
-     - `tw_arr : TwistedArrow.mk' arr.hom -> TwistedArrow.mk' w` via `(id, beta)`
-     - `tw_arr' : TwistedArrow.mk' arr'.hom -> TwistedArrow.mk' w` via `(alpha, id)`
+     - `tw_arr : TwistedArrow.mk' arr.hom -> TwistedArrow.mk' w` via
+       `(id, beta)`
+     - `tw_arr' : TwistedArrow.mk' arr'.hom -> TwistedArrow.mk' w` via
+       `(alpha, id)`
    - Since `F : TwistedArrow' C ⥤ Cat` is covariant, both fibers transport into
      `F.obj (TwistedArrow.mk' w)`:
      - `(F.map tw_arr).obj e` in `F.obj (TwistedArrow.mk' w)`
@@ -72,7 +75,8 @@ Data specifying a functor `D ⥤ ConnectedGrothendieckAlt C F`:
 3. **Fiber morphisms** via the diagonal:
    - For each `g : d -> d'`, let `(alpha, beta) = arrFun.map g`
    - Let `w` be the diagonal arrow, with `tw_d`, `tw_d'` the canonical morphisms
-   - `fiberMap g : (F.map tw_d).obj (fiberObj d) -> (F.map tw_d').obj (fiberObj d')`
+   - `fiberMap g : (F.map tw_d).obj (fiberObj d) ->`
+     `(F.map tw_d').obj (fiberObj d')`
 
 4. **Identity coherence**: `fiberMap (id d)` equals identity (up to transport)
 
@@ -102,8 +106,9 @@ Given `G : D ⥤ ConnectedGrothendieckAlt C F`, extract `ofFunctorToConnGrothend
 
 Data specifying a functor `ConnectedGrothendieckAlt C F ⥤ E`.
 
-Since `ConnectedGrothendieckAlt C F = GrothendieckContra' (domainFiberFunctor C F)`,
-this specializes `GrothendieckContra'.FunctorFromData`.
+Since `ConnectedGrothendieckAlt C F = GrothendieckContra'`
+`(domainFiberFunctor C F)`, this specializes
+`GrothendieckContra'.FunctorFromData`.
 
 ### Structure
 
