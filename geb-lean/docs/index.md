@@ -48,7 +48,9 @@ and gaps are filled in as workstreams complete.
 
 ## Polynomial / W- / M-types and PFunctors
 
-- **Source-tree paths**: `GebLean/Polynomial.lean`,
+- **Source-tree paths**: `GebLean/BarResolution.lean`,
+  `GebLean/CopresheafCoverComonad.lean`,
+  `GebLean/Polynomial.lean`,
   `GebLean/PolyAlg.lean`,
   `GebLean/PolyAlgUMorph.lean`,
   `GebLean/PolyAlgColimits.lean`,
@@ -71,7 +73,9 @@ and gaps are filled in as workstreams complete.
   presentations and presentation-equivalences, distributive
   laws and GSOS rules, paranatural transformations and the
   paranatural topos, polynomial combinator libraries used as
-  computational scaffolding.
+  computational scaffolding, the generic comonad bar
+  resolution and its instantiation at the copresheaf-cover
+  comonad to resolve a copresheaf by representables.
 - **Dependencies**:
   [quivers, semicategories, acyclic categories](#quivers-semicategories-acyclic-categories)
   for underlying graph data; later entries
