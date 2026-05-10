@@ -42,7 +42,8 @@ and gaps are filled in as workstreams complete.
   judgmental and structural presentations, adjunctions
   relating coproduct and Grothendieck constructions on the
   judgmental side, the analysis of 2-categorical structure
-  transported across the L ⊣ Φ adjunction.
+  transported across the L ⊣ Φ adjunction, preservation of
+  binary products by the L functor.
 - **Dependencies**:
   [quivers, semicategories, acyclic categories](#quivers-semicategories-acyclic-categories)
   for the underlying quiver layer.
