@@ -43,24 +43,32 @@ if jj root > /dev/null 2>&1; then
 fi
 
 # ---------------------------------------------------------------------------
-# Find the position of "git" in the token array, and build the argv that
-# git itself sees (everything after "git", option flags included, but
-# excluding any shell-level env-var assignments that precede the command).
-# For example:
+# Find the position of a bare "git" token in the token array, and build the
+# argv that git itself sees (everything after "git", option flags included,
+# but excluding any shell-level env-var assignments that precede the
+# command). For example:
 #   GIT_DIR=/tmp git status  →  argv = (status)
 #   git -C /some/path log    →  argv = (-C /some/path log)
-# We locate the first token that equals "git" and use the rest.
+# A "git" token preceded immediately by "jj" is part of a `jj git X`
+# invocation, which jj routes to its own implementation; such tokens are
+# skipped so the finder reports only bare-`git` invocations elsewhere in
+# the command. This handles compound forms like `cd /path && jj git push`
+# and `jj git fetch | tail -5` that the early-exit at lines 38-43 (which
+# only inspects the first two tokens) does not catch.
 # ---------------------------------------------------------------------------
 
 git_pos=-1
 for i in "${!tokens[@]}"; do
   if [[ "${tokens[$i]}" == "git" ]]; then
+    if [[ $i -gt 0 && "${tokens[$((i - 1))]}" == "jj" ]]; then
+      continue
+    fi
     git_pos=$i
     break
   fi
 done
 
-# If there is no "git" token this hook has nothing to check.
+# If there is no bare "git" token this hook has nothing to check.
 if [[ $git_pos -lt 0 ]]; then
   exit 0
 fi
