@@ -29,12 +29,16 @@ release-discipline track record.
 
 `scripts/pre-push.sh` runs the following commands:
 
-- `lake build`
-- `lake test`
+- `bash scripts/check-jj-setup.sh`
+- `lake test` (builds `GebLean` and `GebLeanTests`; explicit
+  `lake build` is omitted as redundant against current lakefile
+  targets)
 - `lake lint`
 - `markdownlint-cli2 --config .markdownlint-cli2.jsonc
   --no-globs '**/*.md'`
-- `bash scripts/check-axioms.sh GebLean/ test/`
+- `bash scripts/check-axioms.sh GebLean/ GebLeanTests/ || true`
+  (`|| true` is informational pre-Milestone-B; Milestone B item
+  B5 removes the suffix to make the check a hard gate)
 
 The single-quotes around `'**/*.md'` are load-bearing — without
 them, the shell would expand the glob before
