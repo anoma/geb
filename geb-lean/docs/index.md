@@ -98,6 +98,9 @@ and gaps are filled in as workstreams complete.
   `GebLean/MendlerLambekEndPower.lean`,
   `GebLean/MendlerLambekPresheaf.lean`,
   `GebLean/RestrictedCoendAsColimit.lean`,
+  `GebLean/ParanatAlg.lean`,
+  `GebLean/Weighted.lean`,
+  `GebLean/WeightedAlg.lean`,
   `GebLean/Utilities/Profunctors.lean`,
   `GebLean/Utilities/EndsAndCoends.lean`,
   `GebLean/Utilities/TwArrPresheaf.lean`,
@@ -106,7 +109,13 @@ and gaps are filled in as workstreams complete.
   their two left and right actions, the hexagon diagram for
   dialgebra-of-profunctor data, ends and coends presented as
   limits and colimits over the twisted-arrow category,
-  Mendler-Lambek-style end powers, restricted coends.
+  Mendler-Lambek-style end powers, restricted coends, the
+  identification of structural ends of `AlgProf G` with
+  initial-algebra carriers via sections of the forgetful
+  functor, weight pullback and diagram postcomposition
+  bifunctoriality of weighted (co)wedges, and the
+  obstruction to terminality transfer across non-full
+  weight-comparison functors.
 - **Dependencies**:
   [polynomial / W- / M-types and PFunctors](#polynomial--w---m-types-and-pfunctors)
   for the polynomial side of profunctorial constructions.
