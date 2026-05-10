@@ -162,6 +162,21 @@ fenced code blocks are exempt from the 80-character line limit
 via `MD013` configuration; all other prose obeys it. The
 authoritative statement is in `.claude/rules/markdown-writing.md`.
 
+The config's `ignores` array (e.g. `.session/**`,
+`docs/superpowers/plans/**`, etc.) suppresses files in glob
+expansion AND in explicit-path arguments. To lint a single file
+that lives in an ignored directory, use the `:` literal-path
+prefix documented by `markdownlint-cli2 --help`:
+
+```sh
+markdownlint-cli2 ':.session/README.md'
+```
+
+The leading `:` marks the argument as a literal path that
+bypasses both the config's `globs` and `ignores` matching;
+`--no-globs` alone does not bypass `ignores` (it suppresses
+only the `globs` key).
+
 ## No LLM-drafted user-facing text
 
 Pull request descriptions, GitHub issue and comment threads, and
