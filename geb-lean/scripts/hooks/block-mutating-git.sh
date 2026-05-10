@@ -26,10 +26,31 @@ if [[ -z "$command" ]]; then
 fi
 
 # ---------------------------------------------------------------------------
-# Tokenise the command string with whitespace splitting.
+# Tokenise the command string respecting shell quoting via python3's shlex.
+# Naive whitespace splitting causes false positives on quoted strings that
+# happen to contain the literal word "git" (e.g., commit messages, echo
+# arguments). Falls back to whitespace splitting if python3 is unavailable
+# or if shlex rejects the input (e.g., unbalanced quotes).
 # ---------------------------------------------------------------------------
 
-read -ra tokens <<< "$command"
+shlex_script='
+import shlex, sys
+try:
+    for tok in shlex.split(sys.stdin.read(), posix=True):
+        print(tok)
+except ValueError:
+    sys.exit(1)
+'
+if shlex_output=$(printf "%s" "$command" | python3 -c "$shlex_script" 2>/dev/null); then
+  mapfile -t tokens <<< "$shlex_output"
+  # mapfile of an empty string produces a single empty element; trim to ()
+  # so the downstream finder treats it as "no tokens".
+  if [[ ${#tokens[@]} -eq 1 && -z "${tokens[0]}" ]]; then
+    tokens=()
+  fi
+else
+  read -ra tokens <<< "$command"
+fi
 
 # ---------------------------------------------------------------------------
 # jj git stripping: if .jj/ exists, allow jj-mediated git interop outright.
