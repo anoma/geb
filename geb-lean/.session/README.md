@@ -1,3 +1,10 @@
+> **Note (post-Milestone-A)**: `TODO.md` at the
+> repository root is now the source of truth for active
+> work. The contents below are legacy entries pending
+> triage. See `docs/process.md` § Workstream triage
+> method for the migration scheme. The directory will be
+> removed at Milestone B.
+
 # Session Context
 
 This directory maintains continuity across Claude Code sessions. After a

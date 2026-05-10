@@ -162,6 +162,21 @@ fenced code blocks are exempt from the 80-character line limit
 via `MD013` configuration; all other prose obeys it. The
 authoritative statement is in `.claude/rules/markdown-writing.md`.
 
+The config's `ignores` array (e.g. `.session/**`,
+`docs/superpowers/plans/**`, etc.) suppresses files in glob
+expansion AND in explicit-path arguments. To lint a single file
+that lives in an ignored directory, use the `:` literal-path
+prefix documented by `markdownlint-cli2 --help`:
+
+```sh
+markdownlint-cli2 ':.session/README.md'
+```
+
+The leading `:` marks the argument as a literal path that
+bypasses both the config's `globs` and `ignores` matching;
+`--no-globs` alone does not bypass `ignores` (it suppresses
+only the `globs` key).
+
 ## No LLM-drafted user-facing text
 
 Pull request descriptions, GitHub issue and comment threads, and
@@ -189,6 +204,44 @@ the workstream that uncovered it. Rule edits are reviewed by
 the same brainstorm-spec-plan-execute pipeline as Lean code
 edits. The rationale layer here is updated in lock-step with
 the rule text it explains.
+
+## Workstream triage method
+
+The repository's source of truth for active and deferred work
+is `TODO.md` at the repository root. Pre-cutover work was
+tracked under `.session/workstreams/*.md`; that directory is
+in transitional retirement and is removed at the end of the
+triage migration. Each `.session/workstreams/<name>.md` entry
+is classified with exactly one label:
+
+| Label | Meaning | Disposition |
+| --- | --- | --- |
+| `live` | Active or paused with intent to resume | Migrated to `TODO.md` § Active in geb-lean. |
+| `live-deferred-to-geb-mathlib` | Real work better done after migration to the curated repository | Migrated to `TODO.md` § To be done in geb-mathlib. |
+| `completed` | Finished and merged | Material described in `docs/index.md` if not already; `.session/` entry deleted. |
+| `superseded` | Started a direction later abandoned in favour of another approach | `.session/` entry deleted. Notes on *why* superseded captured in the surviving approach's spec or plan if non-obvious. |
+| `abandoned` | Explored and decided not to pursue | `.session/` entry deleted. |
+| `unclear` | Cannot be classified from content alone | Surfaced for explicit user decision; not auto-classified. |
+
+The same scheme applies to the Claude-harness task list,
+most of which rolls up into "child of workstream X (live)"
+or "completed" once workstream-level classifications are
+fixed.
+
+The per-file procedure: read the entry; cross-reference
+against version-control history for any commits referencing
+the topic; cross-reference against current source-tree state
+and the harness task list. Before deletion, search for inbound
+references across `docs/superpowers/`, `docs/`, `README.md`,
+and `CLAUDE.md`; either update each reference to point at the
+new home (`TODO.md`, `docs/index.md`, the relevant
+`docs/superpowers/specs/<file>`, etc.) or migrate the
+referenced content first. Propose a classification with a
+one-sentence justification, surface to the user, and on
+confirmation perform the disposition.
+
+Triage is human-paced and auditable: each file gets a brief
+surface-and-confirm rather than bulk auto-classification.
 
 ## Literature-citation discipline
 
