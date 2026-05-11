@@ -79,6 +79,8 @@ and gaps are filled in as workstreams complete.
   `GebLean/Utilities/PolyCombinators.lean`.
 - **Central concepts**: polynomial endofunctors and their
   categories of algebras, universal-morphism characterisations,
+  regular projective covers of presheaves and copresheaves by
+  coproducts of representables yielding enough projectives,
   presentations and presentation-equivalences, distributive
   laws and GSOS rules with the lifted operational monad,
   paranatural transformations and the
