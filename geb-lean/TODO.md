@@ -72,6 +72,17 @@ present repository.** Listed here so the work is not lost.
   dependent-type transport proofs with `functorFrom`,
   `functorTo`, and `functorBetween` universal-property
   interfaces.
+- **plang-category-judgments**: complete the
+  universe-polymorphic `L ⊣ Φ` adjunction between
+  `Cat.{v,u}` and `CatJudgCopr.{u,v,w,x}` with all four
+  universe levels independent, including the reflective
+  embedding instances (`FullyFaithful Φ`, `Reflective Φ`),
+  triangle identities, and the recursive generalization
+  `CatJudgCoprRec`. Deferred so the work proceeds on top of
+  Geb-native category-theory foundations rather than the
+  current Lean encoding; an earlier draft was set aside in
+  favour of the current Phase-3 universe-flexible formulation,
+  which is the version carried forward.
 - **cat-depcategorydata-reflective**: complete the reflective
   inclusion `Cat ↪ DepCategoryData` by reflecting the
   `Exists`, `CategoryLaws`, and `Unique` properties along the
