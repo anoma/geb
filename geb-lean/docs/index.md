@@ -168,7 +168,9 @@ and gaps are filled in as workstreams complete.
   `GebLean/PshSpanBicategory.lean`,
   `GebLean/YonedaRelDouble.lean`,
   `GebLean/PshTypeExpr.lean`,
-  `GebLean/Utilities/ArrowSpanAdjunction.lean`.
+  `GebLean/Utilities/ArrowSpanAdjunction.lean`,
+  `GebLean/Utilities/ReflexiveGraph.lean`,
+  `GebLean/Utilities/SpanFamily.lean`.
 - **Central concepts**: the edge-of-presheaf double category
   `PshRelEdge(C)`, its cartesian-closed structure on
   endofunctors, separation properties, the reflective chain
@@ -176,7 +178,10 @@ and gaps are filled in as workstreams complete.
   the arrow-span reflective adjunction factoring the chain
   through pushouts of presheaf spans, Yoneda extensions and
   the right Kan extension presented functorially, subobject
-  classifiers in the edge category.
+  classifiers in the edge category, the Hermida-Reddy-Robinson
+  reflexive graph category with identity-extension property
+  and jointly monic span projections distinguishing parametric
+  functors from merely natural ones.
 - **Dependencies**:
   [profunctors and end machinery](#profunctors-and-end-machinery)
   for ends used in CCC structure;
