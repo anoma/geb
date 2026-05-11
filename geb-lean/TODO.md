@@ -9,6 +9,21 @@ lands in `docs/index.md`.
 
 ## Active in geb-lean
 
+### lawvere-elementary-recursive
+
+- **Status**: Phase 4g.2 in progress as the `LawvereNatBT`
+  sub-project.
+- **Scope**: Continue Phase 4g.2 (the
+  `LawvereERCat ≃ LawvereNatBTCat` three-stage equivalence
+  via `LawvereNatBT0Cat` and `LawvereNatBTPureCat`), then
+  Phase 4g.3-4g.5 (transport of non-fullness results and
+  Lex-level parity) and Phase 5 (internal-category
+  structure inside `LawvereTreeERLexCat`).
+- **Files**: `GebLean/LawvereER*.lean`,
+  `GebLean/LawvereTreeER*.lean`,
+  `GebLean/LawvereNatBT*.lean`,
+  `GebLean/Utilities/ER*.lean`.
+
 ### 2026-05-09 process-bootstrap monorepo refactor
 
 - **Status**: executing
