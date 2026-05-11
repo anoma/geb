@@ -56,6 +56,9 @@ and gaps are filled in as workstreams complete.
 
 - **Source-tree paths**: `GebLean/BarResolution.lean`,
   `GebLean/CopresheafCoverComonad.lean`,
+  `GebLean/LawvereBT.lean`,
+  `GebLean/LawvereBTInterp.lean`,
+  `GebLean/LawvereBTQuot.lean`,
   `GebLean/Polynomial.lean`,
   `GebLean/PolyAlg.lean`,
   `GebLean/PolyAlgUMorph.lean`,
@@ -83,7 +86,9 @@ and gaps are filled in as workstreams complete.
   computational scaffolding, the generic comonad bar
   resolution and its instantiation at the copresheaf-cover
   comonad to resolve a copresheaf by representables, the
-  cofree category of a polynomial endofunctor with its
+  Lawvere theory of parameterized binary tree objects with
+  faithful universe-polymorphic interpretation functor to
+  `Type`, the cofree category of a polynomial endofunctor with its
   comonoid structure, and the equivalence between polynomial
   coalgebras and copresheaves on that cofree category.
 - **Dependencies**:
