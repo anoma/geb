@@ -83,6 +83,15 @@ present repository.** Listed here so the work is not lost.
   current Lean encoding; an earlier draft was set aside in
   favour of the current Phase-3 universe-flexible formulation,
   which is the version carried forward.
+- **poly-distributive-law**: complete the GSOS-rule phase
+  (Steps 10-14) on top of the distributive law
+  `λ : T·D ⟶ D·T` between the free monad and cofree comonad
+  of a polynomial endofunctor, including the fiberwise
+  product, the `GSOSRule` structure, the canonical GSOS, and
+  the construction of a distributive law from a GSOS rule.
+  Deferred so the GSOS layer is built on top of Geb-native
+  polynomial-functor foundations rather than the present Lean
+  encoding.
 - **cat-depcategorydata-reflective**: complete the reflective
   inclusion `Cat ↪ DepCategoryData` by reflecting the
   `Exists`, `CategoryLaws`, and `Unique` properties along the
