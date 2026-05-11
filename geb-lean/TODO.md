@@ -203,6 +203,16 @@ present repository.** Listed here so the work is not lost.
   alternatively the fully constructive setoid-valued variant
   `PolyPresentationLoc D ≌ (D ⥤ SetoidCat)` that avoids
   quotient choice.
+- **over-category-equiv**: complete Phase 8 of the
+  Over/Arrow-based category-equivalence programme in
+  `GebLean/Utilities/OverCategoryEquiv.lean` and
+  `GebLean/CatJudgmentAdjunction.lean`: respect of
+  `FreeMor.mapQuiver` for the free-morphism equivalence,
+  universe generalisation to `{v, u}`, unit and counit
+  natural transformations, triangle identities, and the
+  mathlib `Adjunction` integration. Phase 6d natural
+  isomorphisms for the over/cat round-trip also fall
+  here.
 - **mendler-lambek-correspondence**: extend the existing
   `MendlerAlgebra G ≌ ConventionalAlgebra (GExtFunctor G)`
   correspondence (Vene 2000, §5.3-5.7) along the lines
