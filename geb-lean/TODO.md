@@ -203,6 +203,17 @@ present repository.** Listed here so the work is not lost.
   alternatively the fully constructive setoid-valued variant
   `PolyPresentationLoc D ≌ (D ⥤ SetoidCat)` that avoids
   quotient choice.
+- **parametricity-free-theorems**: formalise Wadler's
+  "Theorems for free!" (1989) and Reasonably Polymorphic
+  blog-post correspondences in a generalised
+  categorical setting. The track has a type-level
+  System F layer (`ParanaturalTopos.lean`,
+  `RelSpanDiagram.lean`, etc.) serving as the
+  `C = Discrete PUnit` specialisation, and a
+  presheaf-level layer based on `PshRelEdge C`
+  (`PshRelDouble.lean`, `PshRelEdge*.lean`,
+  `PshRelEdgeInclusion.lean`). Absorbs the earlier
+  `parametric-generalization` line of investigation.
 - **parametric-copresheaf-topos**: develop the general
   theory of parametric polymorphism via the edge
   category `PshRelEdge C` and its reflective embedding
