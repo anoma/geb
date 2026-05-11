@@ -30,6 +30,15 @@ lands in `docs/index.md`.
   RegisterMachine audit and the URM-side chain for the
   reverse direction `erToK : ERMor1 a → KMor1 a` (master
   design §4 + step 6).
+- **Scope (natEq / elegant pairing arithmetic
+  pipeline)**: Prove `natEq` transitivity and
+  `elegantPair` injectivity so that `treeEqG_ββ` becomes
+  unconditional. Carries through the integer-square-root
+  pipeline (`isqrtStep`, `isqrtState`, `isqrt`,
+  `elegantPair`, `elegantUnpair`) on the parameterized
+  NNO side, including within-level stability for
+  `isqrtState` and the level-transition lemma
+  `natSquare ≫ isqrtState = isqrtLevelState`.
 - **Files**: `GebLean/LawvereER*.lean`,
   `GebLean/LawvereTreeER*.lean`,
   `GebLean/LawvereNatBT*.lean`,
@@ -43,7 +52,9 @@ lands in `docs/index.md`.
   `GebLean/Utilities/Tupling.lean`,
   `GebLean/Utilities/SimRec.lean`,
   `GebLean/Utilities/ComputationalComplexity.lean`,
-  `GebLean/NatElegantPair.lean`.
+  `GebLean/NatElegantPair.lean`,
+  `GebLean/NatNNO.lean`,
+  `GebLean/TreeLogic.lean`.
 
 ### 2026-05-09 process-bootstrap monorepo refactor
 
@@ -192,6 +203,72 @@ present repository.** Listed here so the work is not lost.
   alternatively the fully constructive setoid-valued variant
   `PolyPresentationLoc D ≌ (D ⥤ SetoidCat)` that avoids
   quotient choice.
+- **paranatural-investigations**: investigate the
+  paranatural / strong-dinatural structure including
+  the dialgebra category and its diagonal-element
+  equivalence, the presentation of structure /
+  costructure integrals as Type-valued ends and
+  coends, wedges and cowedges as diagonal-element
+  categories, the parametricity / paranaturality
+  divergence at higher kinds (`updates-on-paranatural`
+  slides), and slice-presheaf equivalences for
+  diagonal elements.
+- **parametricity-free-theorems**: formalise Wadler's
+  "Theorems for free!" (1989) and Reasonably Polymorphic
+  blog-post correspondences in a generalised
+  categorical setting. The track has a type-level
+  System F layer (`ParanaturalTopos.lean`,
+  `RelSpanDiagram.lean`, etc.) serving as the
+  `C = Discrete PUnit` specialisation, and a
+  presheaf-level layer based on `PshRelEdge C`
+  (`PshRelDouble.lean`, `PshRelEdge*.lean`,
+  `PshRelEdgeInclusion.lean`). Absorbs the earlier
+  `parametric-generalization` line of investigation.
+- **parametric-copresheaf-topos**: develop the general
+  theory of parametric polymorphism via the edge
+  category `PshRelEdge C` and its reflective embedding
+  into the presheaf topos `[WalkingSpan, PSh(C)]`,
+  including the three-layer
+  `[WalkingSpan, PSh(C)] -> PshRelEdge C -> Sh_J(C × I^op)`
+  presentation, the match against Wadler's
+  "Theorems for free!" framework, and the conjectural
+  sheafification step.
+- **parameterized-list-object**: investigate a
+  PSTO → PBTO construction in
+  `GebLean/PSTOtoPBTO.lean`. The five direct approaches
+  attempted there (enriched-carrier catamorphism, PSO
+  paramorphism, fixed-point equation, double PSO fold,
+  product carrier) all stall at the same point: the
+  PSO/PSTO fold does not provide a recursive result on
+  the right subtree. A construction likely requires
+  additional structure beyond the PBTO universal
+  property (internal fixed-point operator, parameterized
+  NNO, or exponential objects).
+- **over-category-equiv**: complete Phase 8 of the
+  Over/Arrow-based category-equivalence programme in
+  `GebLean/Utilities/OverCategoryEquiv.lean` and
+  `GebLean/CatJudgmentAdjunction.lean`: respect of
+  `FreeMor.mapQuiver` for the free-morphism equivalence,
+  universe generalisation to `{v, u}`, unit and counit
+  natural transformations, triangle identities, and the
+  mathlib `Adjunction` integration. Phase 6d natural
+  isomorphisms for the over/cat round-trip also fall
+  here.
+- **mendler-lambek-correspondence**: extend the existing
+  `MendlerAlgebra G ≌ ConventionalAlgebra (GExtFunctor G)`
+  correspondence (Vene 2000, §5.3-5.7) along the lines
+  opened in `GebLean/WeightedAlg.lean` and
+  `GebLean/MendlerLambekPresheaf.lean`, including the
+  open question of whether weighted Mendler coends agree
+  with restricted Mendler coends when both exist.
+- **mendler-lambek-end-power-formulation**: complete the
+  Phase-6 end-based reformulation of the Mendler-Lambek
+  equivalence in `GebLean/MendlerLambekEndPower.lean`,
+  including enriched Yoneda factorisation under the
+  `ihomCoendHasTerminalWedge` specialisation, the
+  `HasAllHomToProfCoends G` instance for `C = Type v`,
+  and the presheaf instantiation
+  `C = E ⥤ Type v`.
 - **connected-grothendieck**: complete the connected
   Grothendieck construction
   `E : Fun(Tw(C), Cat) ⥤ Cat/Arr(C)`, including the universal
