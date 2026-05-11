@@ -1837,7 +1837,12 @@ catamorphism (fold) plays for initial algebras.
 - `docs/ParametricityViaYonedaRelations.md` -- Reynolds/
   Wadler to Yoneda relation connection
 - `docs/paranatural-topos-research.md` -- topos structure
-  investigation
+  investigation; the paranatural-topos workstream was
+  consolidated into this document and
+  `parametricity-free-theorems.md`, with the resolution that
+  `PshRelEdge C` is a quasitopos of separated presheaves in
+  `[WalkingSpan, PSh(C)]` and `[WalkingSpan, PSh(C)]` is its
+  exact topos completion
 - `docs/DoubleCategory.md` -- double category formalism
 
 ### Literature
