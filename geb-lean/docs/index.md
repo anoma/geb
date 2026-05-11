@@ -59,6 +59,11 @@ and gaps are filled in as workstreams complete.
   `GebLean/LawvereBT.lean`,
   `GebLean/LawvereBTInterp.lean`,
   `GebLean/LawvereBTQuot.lean`,
+  `GebLean/LawvereBTEqCompletion.lean`,
+  `GebLean/EqualizerCompletion.lean`,
+  `GebLean/EqualizerCompletionLimits.lean`,
+  `GebLean/EqualizerCompletionPBTO.lean`,
+  `GebLean/FreeCoequalizerCompletion.lean`,
   `GebLean/Polynomial.lean`,
   `GebLean/PolyAlg.lean`,
   `GebLean/PolyAlgUMorph.lean`,
@@ -95,8 +100,12 @@ and gaps are filled in as workstreams complete.
   Lawvere theory of parameterized binary tree objects with
   faithful universe-polymorphic interpretation functor to
   `Type`, the cofree category of a polynomial endofunctor with its
-  comonoid structure, and the equivalence between polynomial
-  coalgebras and copresheaves on that cofree category.
+  comonoid structure, the equivalence between polynomial
+  coalgebras and copresheaves on that cofree category, the
+  Bunge-Carboni free equalizer completion of a category with
+  finite products applied to `LawvereBTQuotCat` (yielding
+  `LawvereBTLexCat` with finite limits), and the free binary
+  coequalizer completion via parallel-pair diagrams.
 - **Dependencies**:
   [quivers, semicategories, acyclic categories](#quivers-semicategories-acyclic-categories)
   for underlying graph data; later entries
@@ -108,6 +117,7 @@ and gaps are filled in as workstreams complete.
 
 - **Source-tree paths**: `GebLean/ComprehensiveFactorization.lean`,
   `GebLean/ComprehensiveWeighted.lean`,
+  `GebLean/Factorization.lean`,
   `GebLean/HexagonCat.lean`,
   `GebLean/ProfAlg.lean`,
   `GebLean/MendlerLambekEndPower.lean`,
@@ -135,9 +145,12 @@ and gaps are filled in as workstreams complete.
   functors, the Street-Walters comprehensive factorization
   of a functor through a discrete (op)fibration with the
   comprehensive (co)presheaf as a pointwise left Kan
-  extension, and the characterisation of paranatural
+  extension, the characterisation of paranatural
   transformations as ordinary natural transformations into a
-  weighted limit.
+  weighted limit, and the decorated factorisation category
+  with `decFactFunctor : TwistedArrow C ⥤ Cat` generalising
+  `factorisationFunctor` and the total-decorated Grothendieck
+  equivalence.
 - **Dependencies**:
   [polynomial / W- / M-types and PFunctors](#polynomial--w---m-types-and-pfunctors)
   for the polynomial side of profunctorial constructions.

@@ -12,17 +12,38 @@ lands in `docs/index.md`.
 ### lawvere-elementary-recursive
 
 - **Status**: Phase 4g.2 in progress as the `LawvereNatBT`
-  sub-project.
+  sub-project; the `er-ksim2-equiv-via-urm` sub-project
+  (forward direction `kToER` complete through Step 5, reverse
+  direction `erToK` pending Step 6).
 - **Scope**: Continue Phase 4g.2 (the
   `LawvereERCat ≃ LawvereNatBTCat` three-stage equivalence
   via `LawvereNatBT0Cat` and `LawvereNatBTPureCat`), then
   Phase 4g.3-4g.5 (transport of non-fullness results and
   Lex-level parity) and Phase 5 (internal-category
-  structure inside `LawvereTreeERLexCat`).
+  structure inside `LawvereTreeERLexCat`). The
+  `er-ksim2-equiv-via-urm` sub-project formalises the
+  categorical equivalence `LawvereKSimDCat 2 ≌ LawvereERCat`;
+  Steps 0-5 (master design, ER tupling, ER simultaneous
+  bounded recursion, Tourlakis A-majorants, K^sim
+  majorization, and the `kToERFunctor : LawvereKSimDCat 2 ⥤
+  LawvereERCat`) are complete. Step 6 begins the
+  RegisterMachine audit and the URM-side chain for the
+  reverse direction `erToK : ERMor1 a → KMor1 a` (master
+  design §4 + step 6).
 - **Files**: `GebLean/LawvereER*.lean`,
   `GebLean/LawvereTreeER*.lean`,
   `GebLean/LawvereNatBT*.lean`,
-  `GebLean/Utilities/ER*.lean`.
+  `GebLean/LawvereKSim*.lean`,
+  `GebLean/Utilities/ER*.lean`,
+  `GebLean/Utilities/KArith.lean`,
+  `GebLean/Utilities/RegisterMachine.lean`,
+  `GebLean/Utilities/SzudzikSeq.lean`,
+  `GebLean/Utilities/KSimSzudzikSimrec.lean`,
+  `GebLean/Utilities/Tower.lean`,
+  `GebLean/Utilities/Tupling.lean`,
+  `GebLean/Utilities/SimRec.lean`,
+  `GebLean/Utilities/ComputationalComplexity.lean`,
+  `GebLean/NatElegantPair.lean`.
 
 ### 2026-05-09 process-bootstrap monorepo refactor
 
@@ -134,3 +155,52 @@ present repository.** Listed here so the work is not lost.
   `Exists`, `CategoryLaws`, and `Unique` properties along the
   stacked subcategory chain `DepCategoryData ⊃ DepCompleteObj
   ⊃ DepCompleteCL ⊃ DepCompleteUCL ⊃ DepCategoryCat`.
+- **exact-completion-pbto**: complete the PER-based exact /
+  ex-lex completion of `LawvereBTQuotCat`, including the
+  remaining Layer-1 tasks (finite coproducts via the
+  `inl/inr` tag encoding, PBTO preservation with `(T,
+  treeEq)` as the PBTO, decidability of every object, and
+  preservation of limits and colimits by `interpFunctor`),
+  the LawvereBTQuotCat coproducts instance, and the
+  prospective Layer-2 general PER category that drops
+  `rel_bool` to gain coequalizers, regularity, and exactness.
+- **endofunctor-ccc**: complete `MonoidalClosed (PshRelEdge C
+  ⥤ PshRelEdge C)` (the endofunctor category of
+  `PshRelEdge C` is cartesian closed). The general
+  endofunctor formulation has a universe gap that polynomial
+  endofunctors are expected to bridge.
+- **endofunctor-ccc-adjunction**: build the
+  `tensorLeft F ⊣ endoIhomFunctor F` adjunction underlying
+  the `MonoidalClosed` instance above, including the
+  representable-density infrastructure, the end projection at
+  representables, the full curry, the uncurry via density and
+  the round-trip proofs.
+- **double-categories**: complete the strict double-category
+  layer, including the uniqueness isomorphism of companions
+  (mate correspondence, connections, or universal-property
+  characterisation), and supply further examples beyond
+  `YonedaRel` (spans, commutative squares in a category,
+  quintets in a 2-category), tabulators, weak double
+  categories, double limits and colimits, and the connection
+  to 2-categories and bicategories.
+- **copresheaf-coequalizer-equivalence**: complete the
+  equivalence `PolyPresentationLoc D ≌ (D ⥤ Type)` between
+  the localised category of polynomial presentations and the
+  category of copresheaves, including essential surjectivity
+  via the density formula, comparison-morphism inversion in
+  the localised category, and the assembled equivalence; or
+  alternatively the fully constructive setoid-valued variant
+  `PolyPresentationLoc D ≌ (D ⥤ SetoidCat)` that avoids
+  quotient choice.
+- **connected-grothendieck**: complete the connected
+  Grothendieck construction
+  `E : Fun(Tw(C), Cat) ⥤ Cat/Arr(C)`, including the universal
+  properties for the copresheaf and presheaf variants, the
+  equivalence between `ConnectedGrothendieckContra` and
+  `ConnectedGrothendieckAlt`, universe-level generalisation of
+  `ConnGrothendieckObj` to `Cat.{w, w'}` so that
+  `TwGrothendieckObj` accepts `factorisationFunctor`, and the
+  `FunctorToConnGrothendieckData` /
+  `FunctorFromConnGrothendieckData` characterisations of
+  functors to and from the connected Grothendieck
+  construction.
