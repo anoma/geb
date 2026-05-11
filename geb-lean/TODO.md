@@ -199,6 +199,14 @@ present repository.** Listed here so the work is not lost.
   `GebLean/MendlerLambekPresheaf.lean`, including the
   open question of whether weighted Mendler coends agree
   with restricted Mendler coends when both exist.
+- **mendler-lambek-end-power-formulation**: complete the
+  Phase-6 end-based reformulation of the Mendler-Lambek
+  equivalence in `GebLean/MendlerLambekEndPower.lean`,
+  including enriched Yoneda factorisation under the
+  `ihomCoendHasTerminalWedge` specialisation, the
+  `HasAllHomToProfCoends G` instance for `C = Type v`,
+  and the presheaf instantiation
+  `C = E ⥤ Type v`.
 - **connected-grothendieck**: complete the connected
   Grothendieck construction
   `E : Fun(Tw(C), Cat) ⥤ Cat/Arr(C)`, including the universal
