@@ -32,6 +32,11 @@ new repository, where the curated context there applies.
 **None of the items in this section are pending in the
 present repository.** Listed here so the work is not lost.
 
+- **generic-eat-embedding**: generalise the
+  `CategoryJudgments` construction to embed any
+  essentially algebraic theory `T` into a copresheaf
+  category `[J_T, Type]` via a two-stage adjunction
+  (completion plus quotient).
 - **cat-depcategorydata-reflective**: complete the reflective
   inclusion `Cat ↪ DepCategoryData` by reflecting the
   `Exists`, `CategoryLaws`, and `Unique` properties along the
