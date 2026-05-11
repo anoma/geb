@@ -203,6 +203,16 @@ present repository.** Listed here so the work is not lost.
   alternatively the fully constructive setoid-valued variant
   `PolyPresentationLoc D ≌ (D ⥤ SetoidCat)` that avoids
   quotient choice.
+- **paranatural-investigations**: investigate the
+  paranatural / strong-dinatural structure including
+  the dialgebra category and its diagonal-element
+  equivalence, the presentation of structure /
+  costructure integrals as Type-valued ends and
+  coends, wedges and cowedges as diagonal-element
+  categories, the parametricity / paranaturality
+  divergence at higher kinds (`updates-on-paranatural`
+  slides), and slice-presheaf equivalences for
+  diagonal elements.
 - **parametricity-free-theorems**: formalise Wadler's
   "Theorems for free!" (1989) and Reasonably Polymorphic
   blog-post correspondences in a generalised
