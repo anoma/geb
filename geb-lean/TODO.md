@@ -9,6 +9,21 @@ lands in `docs/index.md`.
 
 ## Active in geb-lean
 
+### lawvere-elementary-recursive
+
+- **Status**: Phase 4g.2 in progress as the `LawvereNatBT`
+  sub-project.
+- **Scope**: Continue Phase 4g.2 (the
+  `LawvereERCat ≃ LawvereNatBTCat` three-stage equivalence
+  via `LawvereNatBT0Cat` and `LawvereNatBTPureCat`), then
+  Phase 4g.3-4g.5 (transport of non-fullness results and
+  Lex-level parity) and Phase 5 (internal-category
+  structure inside `LawvereTreeERLexCat`).
+- **Files**: `GebLean/LawvereER*.lean`,
+  `GebLean/LawvereTreeER*.lean`,
+  `GebLean/LawvereNatBT*.lean`,
+  `GebLean/Utilities/ER*.lean`.
+
 ### 2026-05-09 process-bootstrap monorepo refactor
 
 - **Status**: executing
@@ -32,6 +47,31 @@ new repository, where the curated context there applies.
 **None of the items in this section are pending in the
 present repository.** Listed here so the work is not lost.
 
+- **generic-eat-embedding**: generalise the
+  `CategoryJudgments` construction to embed any
+  essentially algebraic theory `T` into a copresheaf
+  category `[J_T, Type]` via a two-stage adjunction
+  (completion plus quotient).
+- **higher-categorical-structure**: investigate whether the
+  iterated copresheaf category `[J^n, Type]` provides a
+  natural home for n-categorical and ω-categorical
+  structure, including the cubical and globular variants.
+- **lean-430-upgrade**: deferred because `geb-mathlib` will
+  track mathlib releases closely from the start, so the
+  `Polynomial.lean` `TypeCat.Hom` migration work owed by the
+  `v4.30.0-rc1` upgrade is undertaken in that repository
+  rather than carried forward here.
+- **indexed-eat-implementation**: instantiate the
+  `EATHasQuotient` typeclass on non-trivial essentially
+  algebraic theories (starting with the category EAT) so the
+  combined `L ⊣ Φ` adjunction applies beyond the trivial
+  case currently in `GebLean/PLang/IndexedEAT.lean`.
+- **grothendieck-refactoring**: refactor polynomial functor
+  operations to work at the categorical level via double
+  Grothendieck constructions, replacing low-level
+  dependent-type transport proofs with `functorFrom`,
+  `functorTo`, and `functorBetween` universal-property
+  interfaces.
 - **cat-depcategorydata-reflective**: complete the reflective
   inclusion `Cat ↪ DepCategoryData` by reflecting the
   `Exists`, `CategoryLaws`, and `Unique` properties along the

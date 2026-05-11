@@ -56,6 +56,9 @@ and gaps are filled in as workstreams complete.
 
 - **Source-tree paths**: `GebLean/BarResolution.lean`,
   `GebLean/CopresheafCoverComonad.lean`,
+  `GebLean/LawvereBT.lean`,
+  `GebLean/LawvereBTInterp.lean`,
+  `GebLean/LawvereBTQuot.lean`,
   `GebLean/Polynomial.lean`,
   `GebLean/PolyAlg.lean`,
   `GebLean/PolyAlgUMorph.lean`,
@@ -77,12 +80,15 @@ and gaps are filled in as workstreams complete.
 - **Central concepts**: polynomial endofunctors and their
   categories of algebras, universal-morphism characterisations,
   presentations and presentation-equivalences, distributive
-  laws and GSOS rules, paranatural transformations and the
+  laws and GSOS rules with the lifted operational monad,
+  paranatural transformations and the
   paranatural topos, polynomial combinator libraries used as
   computational scaffolding, the generic comonad bar
   resolution and its instantiation at the copresheaf-cover
   comonad to resolve a copresheaf by representables, the
-  cofree category of a polynomial endofunctor with its
+  Lawvere theory of parameterized binary tree objects with
+  faithful universe-polymorphic interpretation functor to
+  `Type`, the cofree category of a polynomial endofunctor with its
   comonoid structure, and the equivalence between polynomial
   coalgebras and copresheaves on that cofree category.
 - **Dependencies**:
@@ -167,7 +173,9 @@ and gaps are filled in as workstreams complete.
   `GebLean/PshSpanBicategory.lean`,
   `GebLean/YonedaRelDouble.lean`,
   `GebLean/PshTypeExpr.lean`,
-  `GebLean/Utilities/ArrowSpanAdjunction.lean`.
+  `GebLean/Utilities/ArrowSpanAdjunction.lean`,
+  `GebLean/Utilities/ReflexiveGraph.lean`,
+  `GebLean/Utilities/SpanFamily.lean`.
 - **Central concepts**: the edge-of-presheaf double category
   `PshRelEdge(C)`, its cartesian-closed structure on
   endofunctors, separation properties, the reflective chain
@@ -175,7 +183,10 @@ and gaps are filled in as workstreams complete.
   the arrow-span reflective adjunction factoring the chain
   through pushouts of presheaf spans, Yoneda extensions and
   the right Kan extension presented functorially, subobject
-  classifiers in the edge category.
+  classifiers in the edge category, the Hermida-Reddy-Robinson
+  reflexive graph category with identity-extension property
+  and jointly monic span projections distinguishing parametric
+  functors from merely natural ones.
 - **Dependencies**:
   [profunctors and end machinery](#profunctors-and-end-machinery)
   for ends used in CCC structure;
