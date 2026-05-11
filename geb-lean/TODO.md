@@ -110,6 +110,15 @@ present repository.** Listed here so the work is not lost.
   `PshRelEdge C`). Deferred so the construction is built on
   Geb-native polynomial and presheaf foundations rather than
   the current Lean encoding.
+- **poly-presheaf-equivalence**: prove the equivalence
+  `PolyFunctorBetweenCat X Y ≌ PresheafPRACat (Discrete X)
+  (Discrete Y)` between polynomial functors over slice
+  categories and presheaf-parametric-right-adjoint functors
+  on discrete bases, assembled as a composition of four
+  named categorical equivalences with explicit universe
+  annotations. Deferred so the equivalence is constructed on
+  Geb-native polynomial and presheaf-PRA foundations rather
+  than the current Lean encoding.
 - **cat-depcategorydata-reflective**: complete the reflective
   inclusion `Cat ↪ DepCategoryData` by reflecting the
   `Exists`, `CategoryLaws`, and `Unique` properties along the
