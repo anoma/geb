@@ -192,6 +192,13 @@ present repository.** Listed here so the work is not lost.
   alternatively the fully constructive setoid-valued variant
   `PolyPresentationLoc D ≌ (D ⥤ SetoidCat)` that avoids
   quotient choice.
+- **mendler-lambek-correspondence**: extend the existing
+  `MendlerAlgebra G ≌ ConventionalAlgebra (GExtFunctor G)`
+  correspondence (Vene 2000, §5.3-5.7) along the lines
+  opened in `GebLean/WeightedAlg.lean` and
+  `GebLean/MendlerLambekPresheaf.lean`, including the
+  open question of whether weighted Mendler coends agree
+  with restricted Mendler coends when both exist.
 - **connected-grothendieck**: complete the connected
   Grothendieck construction
   `E : Fun(Tw(C), Cat) ⥤ Cat/Arr(C)`, including the universal
