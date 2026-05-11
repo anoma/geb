@@ -134,6 +134,14 @@ present repository.** Listed here so the work is not lost.
   `Exists`, `CategoryLaws`, and `Unique` properties along the
   stacked subcategory chain `DepCategoryData ⊃ DepCompleteObj
   ⊃ DepCompleteCL ⊃ DepCompleteUCL ⊃ DepCategoryCat`.
+- **double-categories**: complete the strict double-category
+  layer, including the uniqueness isomorphism of companions
+  (mate correspondence, connections, or universal-property
+  characterisation), and supply further examples beyond
+  `YonedaRel` (spans, commutative squares in a category,
+  quintets in a 2-category), tabulators, weak double
+  categories, double limits and colimits, and the connection
+  to 2-categories and bicategories.
 - **copresheaf-coequalizer-equivalence**: complete the
   equivalence `PolyPresentationLoc D ≌ (D ⥤ Type)` between
   the localised category of polynomial presentations and the
