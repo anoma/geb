@@ -12,17 +12,38 @@ lands in `docs/index.md`.
 ### lawvere-elementary-recursive
 
 - **Status**: Phase 4g.2 in progress as the `LawvereNatBT`
-  sub-project.
+  sub-project; the `er-ksim2-equiv-via-urm` sub-project
+  (forward direction `kToER` complete through Step 5, reverse
+  direction `erToK` pending Step 6).
 - **Scope**: Continue Phase 4g.2 (the
   `LawvereERCat ≃ LawvereNatBTCat` three-stage equivalence
   via `LawvereNatBT0Cat` and `LawvereNatBTPureCat`), then
   Phase 4g.3-4g.5 (transport of non-fullness results and
   Lex-level parity) and Phase 5 (internal-category
-  structure inside `LawvereTreeERLexCat`).
+  structure inside `LawvereTreeERLexCat`). The
+  `er-ksim2-equiv-via-urm` sub-project formalises the
+  categorical equivalence `LawvereKSimDCat 2 ≌ LawvereERCat`;
+  Steps 0-5 (master design, ER tupling, ER simultaneous
+  bounded recursion, Tourlakis A-majorants, K^sim
+  majorization, and the `kToERFunctor : LawvereKSimDCat 2 ⥤
+  LawvereERCat`) are complete. Step 6 begins the
+  RegisterMachine audit and the URM-side chain for the
+  reverse direction `erToK : ERMor1 a → KMor1 a` (master
+  design §4 + step 6).
 - **Files**: `GebLean/LawvereER*.lean`,
   `GebLean/LawvereTreeER*.lean`,
   `GebLean/LawvereNatBT*.lean`,
-  `GebLean/Utilities/ER*.lean`.
+  `GebLean/LawvereKSim*.lean`,
+  `GebLean/Utilities/ER*.lean`,
+  `GebLean/Utilities/KArith.lean`,
+  `GebLean/Utilities/RegisterMachine.lean`,
+  `GebLean/Utilities/SzudzikSeq.lean`,
+  `GebLean/Utilities/KSimSzudzikSimrec.lean`,
+  `GebLean/Utilities/Tower.lean`,
+  `GebLean/Utilities/Tupling.lean`,
+  `GebLean/Utilities/SimRec.lean`,
+  `GebLean/Utilities/ComputationalComplexity.lean`,
+  `GebLean/NatElegantPair.lean`.
 
 ### 2026-05-09 process-bootstrap monorepo refactor
 
