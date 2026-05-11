@@ -134,6 +134,17 @@ present repository.** Listed here so the work is not lost.
   `Exists`, `CategoryLaws`, and `Unique` properties along the
   stacked subcategory chain `DepCategoryData ⊃ DepCompleteObj
   ⊃ DepCompleteCL ⊃ DepCompleteUCL ⊃ DepCategoryCat`.
+- **endofunctor-ccc**: complete `MonoidalClosed (PshRelEdge C
+  ⥤ PshRelEdge C)` (the endofunctor category of
+  `PshRelEdge C` is cartesian closed). The general
+  endofunctor formulation has a universe gap that polynomial
+  endofunctors are expected to bridge.
+- **endofunctor-ccc-adjunction**: build the
+  `tensorLeft F ⊣ endoIhomFunctor F` adjunction underlying
+  the `MonoidalClosed` instance above, including the
+  representable-density infrastructure, the end projection at
+  representables, the full curry, the uncurry via density and
+  the round-trip proofs.
 - **double-categories**: complete the strict double-category
   layer, including the uniqueness isomorphism of companions
   (mate correspondence, connections, or universal-property
