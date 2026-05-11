@@ -37,6 +37,10 @@ present repository.** Listed here so the work is not lost.
   essentially algebraic theory `T` into a copresheaf
   category `[J_T, Type]` via a two-stage adjunction
   (completion plus quotient).
+- **higher-categorical-structure**: investigate whether the
+  iterated copresheaf category `[J^n, Type]` provides a
+  natural home for n-categorical and ω-categorical
+  structure, including the cubical and globular variants.
 - **grothendieck-refactoring**: refactor polynomial functor
   operations to work at the categorical level via double
   Grothendieck constructions, replacing low-level
