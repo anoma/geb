@@ -41,6 +41,11 @@ present repository.** Listed here so the work is not lost.
   iterated copresheaf category `[J^n, Type]` provides a
   natural home for n-categorical and ω-categorical
   structure, including the cubical and globular variants.
+- **indexed-eat-implementation**: instantiate the
+  `EATHasQuotient` typeclass on non-trivial essentially
+  algebraic theories (starting with the category EAT) so the
+  combined `L ⊣ Φ` adjunction applies beyond the trivial
+  case currently in `GebLean/PLang/IndexedEAT.lean`.
 - **grothendieck-refactoring**: refactor polynomial functor
   operations to work at the categorical level via double
   Grothendieck constructions, replacing low-level
