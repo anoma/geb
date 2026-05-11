@@ -134,3 +134,15 @@ present repository.** Listed here so the work is not lost.
   `Exists`, `CategoryLaws`, and `Unique` properties along the
   stacked subcategory chain `DepCategoryData ⊃ DepCompleteObj
   ⊃ DepCompleteCL ⊃ DepCompleteUCL ⊃ DepCategoryCat`.
+- **connected-grothendieck**: complete the connected
+  Grothendieck construction
+  `E : Fun(Tw(C), Cat) ⥤ Cat/Arr(C)`, including the universal
+  properties for the copresheaf and presheaf variants, the
+  equivalence between `ConnectedGrothendieckContra` and
+  `ConnectedGrothendieckAlt`, universe-level generalisation of
+  `ConnGrothendieckObj` to `Cat.{w, w'}` so that
+  `TwGrothendieckObj` accepts `factorisationFunctor`, and the
+  `FunctorToConnGrothendieckData` /
+  `FunctorFromConnGrothendieckData` characterisations of
+  functors to and from the connected Grothendieck
+  construction.
