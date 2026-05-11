@@ -203,6 +203,17 @@ present repository.** Listed here so the work is not lost.
   alternatively the fully constructive setoid-valued variant
   `PolyPresentationLoc D ≌ (D ⥤ SetoidCat)` that avoids
   quotient choice.
+- **parameterized-list-object**: investigate a
+  PSTO → PBTO construction in
+  `GebLean/PSTOtoPBTO.lean`. The five direct approaches
+  attempted there (enriched-carrier catamorphism, PSO
+  paramorphism, fixed-point equation, double PSO fold,
+  product carrier) all stall at the same point: the
+  PSO/PSTO fold does not provide a recursive result on
+  the right subtree. A construction likely requires
+  additional structure beyond the PBTO universal
+  property (internal fixed-point operator, parameterized
+  NNO, or exponential objects).
 - **over-category-equiv**: complete Phase 8 of the
   Over/Arrow-based category-equivalence programme in
   `GebLean/Utilities/OverCategoryEquiv.lean` and
