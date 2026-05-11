@@ -101,6 +101,15 @@ present repository.** Listed here so the work is not lost.
   inductive-type machinery. Deferred so the replacement is
   carried out atop Geb-native polynomial-functor foundations
   rather than the current Lean encoding.
+- **poly-presheaf-ccc**: generalise the polynomial-functor
+  category `PolyFunctorBetweenCat` from slice categories
+  `Over X` to presheaf categories `PSh(D)` via parametric
+  right adjoints, and prove the resulting category of
+  polynomial functors on presheaves is cartesian closed
+  (prerequisite for the endofunctor CCC structure on
+  `PshRelEdge C`). Deferred so the construction is built on
+  Geb-native polynomial and presheaf foundations rather than
+  the current Lean encoding.
 - **cat-depcategorydata-reflective**: complete the reflective
   inclusion `Cat ↪ DepCategoryData` by reflecting the
   `Exists`, `CategoryLaws`, and `Unique` properties along the
