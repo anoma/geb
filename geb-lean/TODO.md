@@ -37,6 +37,12 @@ present repository.** Listed here so the work is not lost.
   essentially algebraic theory `T` into a copresheaf
   category `[J_T, Type]` via a two-stage adjunction
   (completion plus quotient).
+- **grothendieck-refactoring**: refactor polynomial functor
+  operations to work at the categorical level via double
+  Grothendieck constructions, replacing low-level
+  dependent-type transport proofs with `functorFrom`,
+  `functorTo`, and `functorBetween` universal-property
+  interfaces.
 - **cat-depcategorydata-reflective**: complete the reflective
   inclusion `Cat ↪ DepCategoryData` by reflecting the
   `Exists`, `CategoryLaws`, and `Unique` properties along the
