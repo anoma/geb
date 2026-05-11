@@ -77,7 +77,8 @@ and gaps are filled in as workstreams complete.
 - **Central concepts**: polynomial endofunctors and their
   categories of algebras, universal-morphism characterisations,
   presentations and presentation-equivalences, distributive
-  laws and GSOS rules, paranatural transformations and the
+  laws and GSOS rules with the lifted operational monad,
+  paranatural transformations and the
   paranatural topos, polynomial combinator libraries used as
   computational scaffolding, the generic comonad bar
   resolution and its instantiation at the copresheaf-cover
