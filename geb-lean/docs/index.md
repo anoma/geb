@@ -59,6 +59,11 @@ and gaps are filled in as workstreams complete.
   `GebLean/LawvereBT.lean`,
   `GebLean/LawvereBTInterp.lean`,
   `GebLean/LawvereBTQuot.lean`,
+  `GebLean/LawvereBTEqCompletion.lean`,
+  `GebLean/EqualizerCompletion.lean`,
+  `GebLean/EqualizerCompletionLimits.lean`,
+  `GebLean/EqualizerCompletionPBTO.lean`,
+  `GebLean/FreeCoequalizerCompletion.lean`,
   `GebLean/Polynomial.lean`,
   `GebLean/PolyAlg.lean`,
   `GebLean/PolyAlgUMorph.lean`,
@@ -95,8 +100,12 @@ and gaps are filled in as workstreams complete.
   Lawvere theory of parameterized binary tree objects with
   faithful universe-polymorphic interpretation functor to
   `Type`, the cofree category of a polynomial endofunctor with its
-  comonoid structure, and the equivalence between polynomial
-  coalgebras and copresheaves on that cofree category.
+  comonoid structure, the equivalence between polynomial
+  coalgebras and copresheaves on that cofree category, the
+  Bunge-Carboni free equalizer completion of a category with
+  finite products applied to `LawvereBTQuotCat` (yielding
+  `LawvereBTLexCat` with finite limits), and the free binary
+  coequalizer completion via parallel-pair diagrams.
 - **Dependencies**:
   [quivers, semicategories, acyclic categories](#quivers-semicategories-acyclic-categories)
   for underlying graph data; later entries
