@@ -92,6 +92,15 @@ present repository.** Listed here so the work is not lost.
   Deferred so the GSOS layer is built on top of Geb-native
   polynomial-functor foundations rather than the present Lean
   encoding.
+- **poly-native-replacement**: complete Phase 2 of the
+  replacement programme, substituting Lean-native inductive
+  types in `GebLean/PolyAlg.lean` (W-types, M-types, free
+  monad, cofree comonad approximations and agreements) with
+  the proven-isomorphic polynomial fixed-point versions, so
+  that `PolyFix` is the sole consumer of Lean's native
+  inductive-type machinery. Deferred so the replacement is
+  carried out atop Geb-native polynomial-functor foundations
+  rather than the current Lean encoding.
 - **cat-depcategorydata-reflective**: complete the reflective
   inclusion `Cat ↪ DepCategoryData` by reflecting the
   `Exists`, `CategoryLaws`, and `Unique` properties along the
