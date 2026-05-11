@@ -38,7 +38,8 @@ and gaps are filled in as workstreams complete.
   `GebLean/PLang/CatJudgCoprAdjunction.lean`,
   `GebLean/PLang/CatJudgGrAdjunction.lean`,
   `GebLean/Utilities/Category.lean`,
-  `GebLean/Utilities/OverCategoryEquiv.lean`.
+  `GebLean/Utilities/OverCategoryEquiv.lean`,
+  `docs/novelty-analysis.md`.
 - **Central concepts**: judgment-style presentations of
   categories and dependent categories, the equivalence between
   judgmental and structural presentations, adjunctions
