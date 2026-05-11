@@ -119,6 +119,16 @@ present repository.** Listed here so the work is not lost.
   annotations. Deferred so the equivalence is constructed on
   Geb-native polynomial and presheaf-PRA foundations rather
   than the current Lean encoding.
+- **polynomial-adjunctions**: complete the suite of
+  adjunctions between polynomial-functor categories and
+  `Type` (or slice categories): the free/forgetful adjunction
+  for polynomial functors over `Type`, slice-based
+  adjunctions relating `PolyFunctorBetweenCat X Y` to slice
+  categories, the cofree/forgetful adjunction, and the
+  adjunctions arising from the family-slice equivalence.
+  Deferred so the adjunction layer is built on Geb-native
+  polynomial-functor foundations rather than the current Lean
+  encoding.
 - **cat-depcategorydata-reflective**: complete the reflective
   inclusion `Cat ↪ DepCategoryData` by reflecting the
   `Exists`, `CategoryLaws`, and `Unique` properties along the
