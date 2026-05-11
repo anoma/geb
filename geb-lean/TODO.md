@@ -56,6 +56,11 @@ present repository.** Listed here so the work is not lost.
   iterated copresheaf category `[J^n, Type]` provides a
   natural home for n-categorical and ω-categorical
   structure, including the cubical and globular variants.
+- **lean-430-upgrade**: deferred because `geb-mathlib` will
+  track mathlib releases closely from the start, so the
+  `Polynomial.lean` `TypeCat.Hom` migration work owed by the
+  `v4.30.0-rc1` upgrade is undertaken in that repository
+  rather than carried forward here.
 - **indexed-eat-implementation**: instantiate the
   `EATHasQuotient` typeclass on non-trivial essentially
   algebraic theories (starting with the category EAT) so the
