@@ -36,19 +36,27 @@ and gaps are filled in as workstreams complete.
   `GebLean/PLang/CatJudgment.lean`,
   `GebLean/PLang/CatJudgGrothendieck.lean`,
   `GebLean/PLang/CatJudgCoprAdjunction.lean`,
-  `GebLean/PLang/CatJudgGrAdjunction.lean`.
+  `GebLean/PLang/CatJudgGrAdjunction.lean`,
+  `GebLean/Utilities/Category.lean`,
+  `GebLean/Utilities/OverCategoryEquiv.lean`.
 - **Central concepts**: judgment-style presentations of
   categories and dependent categories, the equivalence between
   judgmental and structural presentations, adjunctions
   relating coproduct and Grothendieck constructions on the
-  judgmental side.
+  judgmental side, the analysis of 2-categorical structure
+  transported across the L ⊣ Φ adjunction, preservation of
+  binary products by the L functor, the L ⊣ Φ adjunction
+  between categories and copresheaves on `CategoryJudgments`
+  with reflective right adjoint and fully faithful Φ.
 - **Dependencies**:
   [quivers, semicategories, acyclic categories](#quivers-semicategories-acyclic-categories)
   for the underlying quiver layer.
 
 ## Polynomial / W- / M-types and PFunctors
 
-- **Source-tree paths**: `GebLean/Polynomial.lean`,
+- **Source-tree paths**: `GebLean/BarResolution.lean`,
+  `GebLean/CopresheafCoverComonad.lean`,
+  `GebLean/Polynomial.lean`,
   `GebLean/PolyAlg.lean`,
   `GebLean/PolyAlgUMorph.lean`,
   `GebLean/PolyAlgColimits.lean`,
@@ -71,7 +79,12 @@ and gaps are filled in as workstreams complete.
   presentations and presentation-equivalences, distributive
   laws and GSOS rules, paranatural transformations and the
   paranatural topos, polynomial combinator libraries used as
-  computational scaffolding.
+  computational scaffolding, the generic comonad bar
+  resolution and its instantiation at the copresheaf-cover
+  comonad to resolve a copresheaf by representables, the
+  cofree category of a polynomial endofunctor with its
+  comonoid structure, and the equivalence between polynomial
+  coalgebras and copresheaves on that cofree category.
 - **Dependencies**:
   [quivers, semicategories, acyclic categories](#quivers-semicategories-acyclic-categories)
   for underlying graph data; later entries
@@ -81,12 +94,19 @@ and gaps are filled in as workstreams complete.
 
 ## Profunctors and end machinery
 
-- **Source-tree paths**: `GebLean/HexagonCat.lean`,
+- **Source-tree paths**: `GebLean/ComprehensiveFactorization.lean`,
+  `GebLean/ComprehensiveWeighted.lean`,
+  `GebLean/HexagonCat.lean`,
   `GebLean/ProfAlg.lean`,
   `GebLean/MendlerLambekEndPower.lean`,
   `GebLean/MendlerLambekPresheaf.lean`,
+  `GebLean/Paranatural.lean`,
   `GebLean/RestrictedCoendAsColimit.lean`,
+  `GebLean/ParanatAlg.lean`,
+  `GebLean/Weighted.lean`,
+  `GebLean/WeightedAlg.lean`,
   `GebLean/Utilities/Profunctors.lean`,
+  `GebLean/Utilities/ConnectedComponents.lean`,
   `GebLean/Utilities/EndsAndCoends.lean`,
   `GebLean/Utilities/TwArrPresheaf.lean`,
   `GebLean/Utilities/TwistedArrow.lean`.
@@ -94,7 +114,18 @@ and gaps are filled in as workstreams complete.
   their two left and right actions, the hexagon diagram for
   dialgebra-of-profunctor data, ends and coends presented as
   limits and colimits over the twisted-arrow category,
-  Mendler-Lambek-style end powers, restricted coends.
+  Mendler-Lambek-style end powers, restricted coends, the
+  identification of structural ends of `AlgProf G` with
+  initial-algebra carriers via sections of the forgetful
+  functor, weight pullback and diagram postcomposition
+  bifunctoriality of weighted (co)wedges, the obstruction
+  to terminality transfer across non-full weight-comparison
+  functors, the Street-Walters comprehensive factorization
+  of a functor through a discrete (op)fibration with the
+  comprehensive (co)presheaf as a pointwise left Kan
+  extension, and the characterisation of paranatural
+  transformations as ordinary natural transformations into a
+  weighted limit.
 - **Dependencies**:
   [polynomial / W- / M-types and PFunctors](#polynomial--w---m-types-and-pfunctors)
   for the polynomial side of profunctorial constructions.
@@ -135,13 +166,16 @@ and gaps are filled in as workstreams complete.
   `GebLean/PshRelSpanDiagram.lean`,
   `GebLean/PshSpanBicategory.lean`,
   `GebLean/YonedaRelDouble.lean`,
-  `GebLean/PshTypeExpr.lean`.
+  `GebLean/PshTypeExpr.lean`,
+  `GebLean/Utilities/ArrowSpanAdjunction.lean`.
 - **Central concepts**: the edge-of-presheaf double category
   `PshRelEdge(C)`, its cartesian-closed structure on
   endofunctors, separation properties, the reflective chain
   `PSh(C) ⊣ Arr(PSh(C)) ⊣ PshRelEdge(C) ⊣ PshSpanCat`,
-  Yoneda extensions and the right Kan extension presented
-  functorially, subobject classifiers in the edge category.
+  the arrow-span reflective adjunction factoring the chain
+  through pushouts of presheaf spans, Yoneda extensions and
+  the right Kan extension presented functorially, subobject
+  classifiers in the edge category.
 - **Dependencies**:
   [profunctors and end machinery](#profunctors-and-end-machinery)
   for ends used in CCC structure;

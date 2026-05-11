@@ -31,3 +31,9 @@ Items intentionally deferred until after migration to the
 new repository, where the curated context there applies.
 **None of the items in this section are pending in the
 present repository.** Listed here so the work is not lost.
+
+- **cat-depcategorydata-reflective**: complete the reflective
+  inclusion `Cat ↪ DepCategoryData` by reflecting the
+  `Exists`, `CategoryLaws`, and `Unique` properties along the
+  stacked subcategory chain `DepCategoryData ⊃ DepCompleteObj
+  ⊃ DepCompleteCL ⊃ DepCompleteUCL ⊃ DepCategoryCat`.
