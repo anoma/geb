@@ -72,6 +72,63 @@ present repository.** Listed here so the work is not lost.
   dependent-type transport proofs with `functorFrom`,
   `functorTo`, and `functorBetween` universal-property
   interfaces.
+- **plang-category-judgments**: complete the
+  universe-polymorphic `L ⊣ Φ` adjunction between
+  `Cat.{v,u}` and `CatJudgCopr.{u,v,w,x}` with all four
+  universe levels independent, including the reflective
+  embedding instances (`FullyFaithful Φ`, `Reflective Φ`),
+  triangle identities, and the recursive generalization
+  `CatJudgCoprRec`. Deferred so the work proceeds on top of
+  Geb-native category-theory foundations rather than the
+  current Lean encoding; an earlier draft was set aside in
+  favour of the current Phase-3 universe-flexible formulation,
+  which is the version carried forward.
+- **poly-distributive-law**: complete the GSOS-rule phase
+  (Steps 10-14) on top of the distributive law
+  `λ : T·D ⟶ D·T` between the free monad and cofree comonad
+  of a polynomial endofunctor, including the fiberwise
+  product, the `GSOSRule` structure, the canonical GSOS, and
+  the construction of a distributive law from a GSOS rule.
+  Deferred so the GSOS layer is built on top of Geb-native
+  polynomial-functor foundations rather than the present Lean
+  encoding.
+- **poly-native-replacement**: complete Phase 2 of the
+  replacement programme, substituting Lean-native inductive
+  types in `GebLean/PolyAlg.lean` (W-types, M-types, free
+  monad, cofree comonad approximations and agreements) with
+  the proven-isomorphic polynomial fixed-point versions, so
+  that `PolyFix` is the sole consumer of Lean's native
+  inductive-type machinery. Deferred so the replacement is
+  carried out atop Geb-native polynomial-functor foundations
+  rather than the current Lean encoding.
+- **poly-presheaf-ccc**: generalise the polynomial-functor
+  category `PolyFunctorBetweenCat` from slice categories
+  `Over X` to presheaf categories `PSh(D)` via parametric
+  right adjoints, and prove the resulting category of
+  polynomial functors on presheaves is cartesian closed
+  (prerequisite for the endofunctor CCC structure on
+  `PshRelEdge C`). Deferred so the construction is built on
+  Geb-native polynomial and presheaf foundations rather than
+  the current Lean encoding.
+- **poly-presheaf-equivalence**: prove the equivalence
+  `PolyFunctorBetweenCat X Y ≌ PresheafPRACat (Discrete X)
+  (Discrete Y)` between polynomial functors over slice
+  categories and presheaf-parametric-right-adjoint functors
+  on discrete bases, assembled as a composition of four
+  named categorical equivalences with explicit universe
+  annotations. Deferred so the equivalence is constructed on
+  Geb-native polynomial and presheaf-PRA foundations rather
+  than the current Lean encoding.
+- **polynomial-adjunctions**: complete the suite of
+  adjunctions between polynomial-functor categories and
+  `Type` (or slice categories): the free/forgetful adjunction
+  for polynomial functors over `Type`, slice-based
+  adjunctions relating `PolyFunctorBetweenCat X Y` to slice
+  categories, the cofree/forgetful adjunction, and the
+  adjunctions arising from the family-slice equivalence.
+  Deferred so the adjunction layer is built on Geb-native
+  polynomial-functor foundations rather than the current Lean
+  encoding.
 - **cat-depcategorydata-reflective**: complete the reflective
   inclusion `Cat ↪ DepCategoryData` by reflecting the
   `Exists`, `CategoryLaws`, and `Unique` properties along the
