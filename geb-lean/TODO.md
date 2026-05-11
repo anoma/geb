@@ -203,6 +203,15 @@ present repository.** Listed here so the work is not lost.
   alternatively the fully constructive setoid-valued variant
   `PolyPresentationLoc D ≌ (D ⥤ SetoidCat)` that avoids
   quotient choice.
+- **parametric-copresheaf-topos**: develop the general
+  theory of parametric polymorphism via the edge
+  category `PshRelEdge C` and its reflective embedding
+  into the presheaf topos `[WalkingSpan, PSh(C)]`,
+  including the three-layer
+  `[WalkingSpan, PSh(C)] -> PshRelEdge C -> Sh_J(C × I^op)`
+  presentation, the match against Wadler's
+  "Theorems for free!" framework, and the conjectural
+  sheafification step.
 - **parameterized-list-object**: investigate a
   PSTO → PBTO construction in
   `GebLean/PSTOtoPBTO.lean`. The five direct approaches
