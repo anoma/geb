@@ -155,6 +155,15 @@ present repository.** Listed here so the work is not lost.
   `Exists`, `CategoryLaws`, and `Unique` properties along the
   stacked subcategory chain `DepCategoryData ⊃ DepCompleteObj
   ⊃ DepCompleteCL ⊃ DepCompleteUCL ⊃ DepCategoryCat`.
+- **exact-completion-pbto**: complete the PER-based exact /
+  ex-lex completion of `LawvereBTQuotCat`, including the
+  remaining Layer-1 tasks (finite coproducts via the
+  `inl/inr` tag encoding, PBTO preservation with `(T,
+  treeEq)` as the PBTO, decidability of every object, and
+  preservation of limits and colimits by `interpFunctor`),
+  the LawvereBTQuotCat coproducts instance, and the
+  prospective Layer-2 general PER category that drops
+  `rel_bool` to gain coequalizers, regularity, and exactness.
 - **endofunctor-ccc**: complete `MonoidalClosed (PshRelEdge C
   ⥤ PshRelEdge C)` (the endofunctor category of
   `PshRelEdge C` is cartesian closed). The general
