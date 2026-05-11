@@ -108,6 +108,7 @@ and gaps are filled in as workstreams complete.
 
 - **Source-tree paths**: `GebLean/ComprehensiveFactorization.lean`,
   `GebLean/ComprehensiveWeighted.lean`,
+  `GebLean/Factorization.lean`,
   `GebLean/HexagonCat.lean`,
   `GebLean/ProfAlg.lean`,
   `GebLean/MendlerLambekEndPower.lean`,
@@ -135,9 +136,12 @@ and gaps are filled in as workstreams complete.
   functors, the Street-Walters comprehensive factorization
   of a functor through a discrete (op)fibration with the
   comprehensive (co)presheaf as a pointwise left Kan
-  extension, and the characterisation of paranatural
+  extension, the characterisation of paranatural
   transformations as ordinary natural transformations into a
-  weighted limit.
+  weighted limit, and the decorated factorisation category
+  with `decFactFunctor : TwistedArrow C ⥤ Cat` generalising
+  `factorisationFunctor` and the total-decorated Grothendieck
+  equivalence.
 - **Dependencies**:
   [polynomial / W- / M-types and PFunctors](#polynomial--w---m-types-and-pfunctors)
   for the polynomial side of profunctorial constructions.
