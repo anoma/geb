@@ -30,6 +30,15 @@ lands in `docs/index.md`.
   RegisterMachine audit and the URM-side chain for the
   reverse direction `erToK : ERMor1 a → KMor1 a` (master
   design §4 + step 6).
+- **Scope (natEq / elegant pairing arithmetic
+  pipeline)**: Prove `natEq` transitivity and
+  `elegantPair` injectivity so that `treeEqG_ββ` becomes
+  unconditional. Carries through the integer-square-root
+  pipeline (`isqrtStep`, `isqrtState`, `isqrt`,
+  `elegantPair`, `elegantUnpair`) on the parameterized
+  NNO side, including within-level stability for
+  `isqrtState` and the level-transition lemma
+  `natSquare ≫ isqrtState = isqrtLevelState`.
 - **Files**: `GebLean/LawvereER*.lean`,
   `GebLean/LawvereTreeER*.lean`,
   `GebLean/LawvereNatBT*.lean`,
@@ -43,7 +52,9 @@ lands in `docs/index.md`.
   `GebLean/Utilities/Tupling.lean`,
   `GebLean/Utilities/SimRec.lean`,
   `GebLean/Utilities/ComputationalComplexity.lean`,
-  `GebLean/NatElegantPair.lean`.
+  `GebLean/NatElegantPair.lean`,
+  `GebLean/NatNNO.lean`,
+  `GebLean/TreeLogic.lean`.
 
 ### 2026-05-09 process-bootstrap monorepo refactor
 
