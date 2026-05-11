@@ -134,6 +134,15 @@ present repository.** Listed here so the work is not lost.
   `Exists`, `CategoryLaws`, and `Unique` properties along the
   stacked subcategory chain `DepCategoryData ⊃ DepCompleteObj
   ⊃ DepCompleteCL ⊃ DepCompleteUCL ⊃ DepCategoryCat`.
+- **copresheaf-coequalizer-equivalence**: complete the
+  equivalence `PolyPresentationLoc D ≌ (D ⥤ Type)` between
+  the localised category of polynomial presentations and the
+  category of copresheaves, including essential surjectivity
+  via the density formula, comparison-morphism inversion in
+  the localised category, and the assembled equivalence; or
+  alternatively the fully constructive setoid-valued variant
+  `PolyPresentationLoc D ≌ (D ⥤ SetoidCat)` that avoids
+  quotient choice.
 - **connected-grothendieck**: complete the connected
   Grothendieck construction
   `E : Fun(Tw(C), Cat) ⥤ Cat/Arr(C)`, including the universal
