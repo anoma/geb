@@ -248,7 +248,7 @@ conjectures about GEB")
 
 1. [lisp with quicklisp](https://lisp-lang.org/learn/getting-started/).
 
-2. [Emacs](https://en.wikipedia.org/wiki/Emacs) along with one of the following:
+2. a) [Emacs](https://en.wikipedia.org/wiki/Emacs) along with one of the following:
 
     - [sly](https://github.com/joaotavora/sly)
 
@@ -256,7 +256,13 @@ conjectures about GEB")
 
     - [slime](https://github.com/slime/slime)
 
-         + [slime user manual](http://www.chiark.greenend.org.uk/doc/slime/slime.pdf)")
+         + [slime user manual](http://www.chiark.greenend.org.uk/doc/slime/slime.pdf)
+
+2. b) [Spacemacs](https://github.com/syl20bnr/spacemacs) along with:
+
+    - [slime](https://github.com/slime/slime) via 
+      [the common-lisplayer](https://www.spacemacs.org/layers/+lang/common-lisp/README.html)
+      based on [sblc](https://www.sbcl.org/)")
 
 (pax:defsection @loading (:title "loading")
   "Now that we have an environment setup, we can load the project, this
@@ -273,9 +279,13 @@ conjectures about GEB")
      - For Emacs, this is simply calling either `M-x sly` or `M-x slime`
        if you are using either [sly](https://github.com/joaotavora/sly) or [slime](https://github.com/slime/slime)
 
+     - For Spacemacs, this is (also) `M-x slime` besides alternative key bindings
 
 2. From Emacs: open `geb.asd` and press `C-ck` (`sly-compile-and-load-file`, or
    `swank-compile-and-load-file` if you are using swank).
+
+3. From Spacemacs: open `geb.asd` and press `C-c C-k` (invoking
+   `slime-compile-and-load-file`).
 
 Now that we have the file open, we can now load the system by
 writing:
@@ -293,7 +303,6 @@ writing:
 ;; if you want to run the tests once the system is loaded!
 (geb-test:run-tests)
 ```")
-
 
 (pax:defsection @idioms (:title "Project Idioms and Conventions")
   "The Geb Project is written in [Common
