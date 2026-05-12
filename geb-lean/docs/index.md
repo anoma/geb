@@ -155,7 +155,11 @@ and gaps are filled in as workstreams complete.
   equivalence, the reduction of restricted and strong-restricted
   (co)wedges to standard (co)wedges over power and copower
   profunctors with terminal / initial cases identified as
-  structural ends and coends.
+  structural ends and coends, the categorical equivalence
+  `TwCoprArrElem F ≌ ConnGrothendieck (F ⋙ typeToCat)`
+  between the category of elements of a twisted-arrow
+  copresheaf and the connected Grothendieck construction
+  on the same data passed through `typeToCat`.
 - **Dependencies**:
   [polynomial / W- / M-types and PFunctors](#polynomial--w---m-types-and-pfunctors)
   for the polynomial side of profunctorial constructions.
