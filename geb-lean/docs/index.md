@@ -230,13 +230,20 @@ and gaps are filled in as workstreams complete.
   `GebLean/PLang/TermCat.lean`,
   `GebLean/Utilities/PolyCombinators.lean`,
   `GebLean/Utilities/GSOSRule.lean`,
-  `GebLean/Utilities/LambdaBialgebra.lean`.
+  `GebLean/Utilities/LambdaBialgebra.lean`,
+  `docs/tree-calculus.md`.
 - **Central concepts**: Barendregt-style tree calculus over a
   binary-tree base, polynomial combinators presenting the
   computation polynomial as a two-sorted construction, value
   polynomial and behaviour polynomial as reduction coalgebra,
   partial combinatory algebra structure, confluence, derived
-  combinators, primitive-recursive fragment.
+  combinators, primitive-recursive fragment. Reference
+  material from Jay's *Reflective Programs in Tree Calculus*
+  (2021), Jay's *Typed Program Analysis without Encodings*
+  (PEPM '25), and the associated Coq formalisation is
+  consolidated in `docs/tree-calculus.md` (type system,
+  programs and verified theorems, by-chapter coverage of the
+  book, by-file coverage of the Coq files).
 - **Dependencies**:
   [polynomial / W- / M-types and PFunctors](#polynomial--w---m-types-and-pfunctors)
   for the polynomial-functor base;
