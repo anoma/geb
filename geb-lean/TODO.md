@@ -39,10 +39,40 @@ lands in `docs/index.md`.
   NNO side, including within-level stability for
   `isqrtState` and the level-transition lemma
   `natSquare ≫ isqrtState = isqrtLevelState`.
+- **Scope (term-cat / binary-tree-category
+  substrate)**: the Lawvere theory of binary trees and
+  the tree-calculus Phase 2 layer underpinning the ER /
+  K^sim pipeline, comprising the `LawvereBT*` /
+  `LawvereNatBT*` material in `GebLean/` and the
+  tree-calculus modules in `GebLean/PLang/` (value
+  polynomial, two-sorted computation polynomial,
+  behaviour polynomial and reduction coalgebra, derived
+  combinators, PCA structure, confluence). Remaining
+  Phase 2 tasks: the GSOS rule and distributive law for
+  triage, the primitive-recursive fragment with
+  syntactic criterion, the self-recognizer, and the
+  final integration test suite.
+- **Scope (Gödel-numbering tree-equality
+  pipeline)**: the categorical Gödel-encoding of binary
+  trees as natural numbers and the derivation of
+  decidable tree equality via natural-number equality
+  (`treeToNat`, `treeEqG`, `natEq`, the Cantor-pairing
+  / triangular-number infrastructure, `triRootState`
+  and the shifted-NNO recurrences). Supports the
+  reverse direction `erToK` by providing the
+  arithmetic substrate for tree-side encodings.
+  Remaining items: closing `NatEqCantorPair` (the
+  Cantor-pair injectivity statement under `natEq`)
+  to make `treeEqG_ββ` unconditional, and
+  `treeEqG_trans` via the addition-subtraction
+  identity and `natTruncSub_fold_comp`.
 - **Files**: `GebLean/LawvereER*.lean`,
   `GebLean/LawvereTreeER*.lean`,
   `GebLean/LawvereNatBT*.lean`,
   `GebLean/LawvereKSim*.lean`,
+  `GebLean/PLang/TreeCalc*.lean`,
+  `GebLean/PLang/TermCat.lean`,
+  `GebLean/PLang/Syntax.lean`,
   `GebLean/Utilities/ER*.lean`,
   `GebLean/Utilities/KArith.lean`,
   `GebLean/Utilities/RegisterMachine.lean`,
@@ -53,7 +83,10 @@ lands in `docs/index.md`.
   `GebLean/Utilities/SimRec.lean`,
   `GebLean/Utilities/ComputationalComplexity.lean`,
   `GebLean/NatElegantPair.lean`,
+  `GebLean/NatArith.lean`,
   `GebLean/NatNNO.lean`,
+  `GebLean/TreeGoedel.lean`,
+  `GebLean/TreeEqGoedel.lean`,
   `GebLean/TreeLogic.lean`.
 
 ### 2026-05-09 process-bootstrap monorepo refactor
@@ -363,3 +396,32 @@ present repository.** Listed here so the work is not lost.
   `FunctorFromConnGrothendieckData` characterisations of
   functors to and from the connected Grothendieck
   construction.
+- **reflective-subcategory-conjectures**: prove the
+  conjectured additional preservation properties of the
+  `LFunctor ⊣ PhiFunctor` reflective adjunction documented
+  in `GebLean/CatJudgmentAdjunction.lean` § `PreservationInstances`:
+  binary-coproduct preservation by `PhiFunctor`, binary-product
+  preservation by `LFunctor`, and exponential preservation by
+  `PhiFunctor` (conditional on product preservation, via the
+  exponential-ideal characterisation).
+- **terminal-preservation-strategy**: carry the terminal-object
+  preservation proof for `LFunctor` (the `TerminalAndInitial`
+  section of `GebLean/CatJudgmentAdjunction.lean`) into
+  geb-mathlib alongside the rest of the `L ⊣ Φ` adjunction,
+  including the `terminal_freemor_equiv_id` induction, the
+  `terminalToLFunctor` inverse, and the
+  `lTerminal_roundtrip_*` lemmas.
+- **tree-per-finite-limits**: complete finite limits in the
+  category of partial equivalence relations on the binary-tree
+  type, building on the existing terminal and binary-product
+  PER infrastructure. Outstanding items: the equalizer lift
+  pre-morphism and quotient morphism, the equalizer
+  factorisation and uniqueness, the `Fork` / `IsLimit`
+  assembly, and the `HasEqualizers` instance feeding
+  `hasFiniteLimits_of_hasEqualizers_and_finite_products`.
+  The `HasTreeEq LawvereBTQuotCat` construction (a
+  prerequisite for downstream `LawvereBTPER` results) is
+  recorded as needing one of three routes: a primitive-
+  recursive completeness theorem, a Gödel-encoded reduction
+  via `treeToNat` + `natEq`, or an axiomatic extension of
+  `HasPBTO` supporting double structural recursion.

@@ -131,6 +131,7 @@ and gaps are filled in as workstreams complete.
   `GebLean/Utilities/Profunctors.lean`,
   `GebLean/Utilities/ConnectedComponents.lean`,
   `GebLean/Utilities/EndsAndCoends.lean`,
+  `GebLean/Utilities/PowersAndCopowers.lean`,
   `GebLean/Utilities/TwArrPresheaf.lean`,
   `GebLean/Utilities/TwistedArrow.lean`.
 - **Central concepts**: profunctors as functors `Cᵒᵖ × C ⥤ D`,
@@ -151,7 +152,22 @@ and gaps are filled in as workstreams complete.
   weighted limit, and the decorated factorisation category
   with `decFactFunctor : TwistedArrow C ⥤ Cat` generalising
   `factorisationFunctor` and the total-decorated Grothendieck
-  equivalence.
+  equivalence, the reduction of restricted and strong-restricted
+  (co)wedges to standard (co)wedges over power and copower
+  profunctors with terminal / initial cases identified as
+  structural ends and coends, the categorical equivalence
+  `TwCoprArrElem F ≌ ConnGrothendieck (F ⋙ typeToCat)`
+  between the category of elements of a twisted-arrow
+  copresheaf and the connected Grothendieck construction
+  on the same data passed through `typeToCat`, the
+  Grothendieck-construction presentations of twisted-arrow
+  categories
+  (`TwistedArrow' C ≌ Grothendieck (Under.mapFunctor C)`,
+  `OpTwistedArrow' C ≌ (Grothendieck (Under.mapFunctor C))^op'`,
+  `TwistedArrow C ≌ TwistedArrow' C`) and the
+  `SectionData` / `SectionDataContra` slice-Grothendieck
+  presheaf-and-copresheaf assembly for the four
+  twisted-arrow variants.
 - **Dependencies**:
   [polynomial / W- / M-types and PFunctors](#polynomial--w---m-types-and-pfunctors)
   for the polynomial side of profunctorial constructions.
@@ -226,13 +242,20 @@ and gaps are filled in as workstreams complete.
   `GebLean/PLang/TermCat.lean`,
   `GebLean/Utilities/PolyCombinators.lean`,
   `GebLean/Utilities/GSOSRule.lean`,
-  `GebLean/Utilities/LambdaBialgebra.lean`.
+  `GebLean/Utilities/LambdaBialgebra.lean`,
+  `docs/tree-calculus.md`.
 - **Central concepts**: Barendregt-style tree calculus over a
   binary-tree base, polynomial combinators presenting the
   computation polynomial as a two-sorted construction, value
   polynomial and behaviour polynomial as reduction coalgebra,
   partial combinatory algebra structure, confluence, derived
-  combinators, primitive-recursive fragment.
+  combinators, primitive-recursive fragment. Reference
+  material from Jay's *Reflective Programs in Tree Calculus*
+  (2021), Jay's *Typed Program Analysis without Encodings*
+  (PEPM '25), and the associated Coq formalisation is
+  consolidated in `docs/tree-calculus.md` (type system,
+  programs and verified theorems, by-chapter coverage of the
+  book, by-file coverage of the Coq files).
 - **Dependencies**:
   [polynomial / W- / M-types and PFunctors](#polynomial--w---m-types-and-pfunctors)
   for the polynomial-functor base;
