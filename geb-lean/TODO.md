@@ -39,10 +39,26 @@ lands in `docs/index.md`.
   NNO side, including within-level stability for
   `isqrtState` and the level-transition lemma
   `natSquare ≫ isqrtState = isqrtLevelState`.
+- **Scope (term-cat / binary-tree-category
+  substrate)**: the Lawvere theory of binary trees and
+  the tree-calculus Phase 2 layer underpinning the ER /
+  K^sim pipeline, comprising the `LawvereBT*` /
+  `LawvereNatBT*` material in `GebLean/` and the
+  tree-calculus modules in `GebLean/PLang/` (value
+  polynomial, two-sorted computation polynomial,
+  behaviour polynomial and reduction coalgebra, derived
+  combinators, PCA structure, confluence). Remaining
+  Phase 2 tasks: the GSOS rule and distributive law for
+  triage, the primitive-recursive fragment with
+  syntactic criterion, the self-recognizer, and the
+  final integration test suite.
 - **Files**: `GebLean/LawvereER*.lean`,
   `GebLean/LawvereTreeER*.lean`,
   `GebLean/LawvereNatBT*.lean`,
   `GebLean/LawvereKSim*.lean`,
+  `GebLean/PLang/TreeCalc*.lean`,
+  `GebLean/PLang/TermCat.lean`,
+  `GebLean/PLang/Syntax.lean`,
   `GebLean/Utilities/ER*.lean`,
   `GebLean/Utilities/KArith.lean`,
   `GebLean/Utilities/RegisterMachine.lean`,
