@@ -94,7 +94,9 @@ and gaps are filled in as workstreams complete.
   `GebLean/ParamPoly.lean`,
   `GebLean/ParanatAlg.lean`,
   `GebLean/Paranatural.lean`,
-  `GebLean/Utilities/PolyCombinators.lean`.
+  `GebLean/Utilities/PolyCombinators.lean`;
+  `docs/coalgebra-copresheaf-math.md` (Adamek-Porst
+  `Coalg(P) ≌ Set^{C_P}` math reference).
 - **Central concepts**: polynomial endofunctors and their
   categories of algebras, universal-morphism characterisations
   including arbitrary-indexed products and coproducts, binary
