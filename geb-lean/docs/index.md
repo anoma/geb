@@ -48,7 +48,19 @@ and gaps are filled in as workstreams complete.
   transported across the L ⊣ Φ adjunction, preservation of
   binary products by the L functor, the L ⊣ Φ adjunction
   between categories and copresheaves on `CategoryJudgments`
-  with reflective right adjoint and fully faithful Φ.
+  with reflective right adjoint and fully faithful Φ, the
+  closure analysis of universal-property preservation for
+  `L ⊣ Φ` (Φ preserves binary coproducts and initial objects;
+  L preserves terminal objects; preservation of binary products
+  by L and of equalizers by L recorded with construction
+  outlines; Φ does not preserve coequalizers, with the
+  free-monoid generation counterexample; preservation of
+  exponentials by Φ reduced to product preservation by L via
+  the exponential-ideal characterisation; the subobject
+  classifier on copresheaves transported from mathlib's
+  presheaf-topos classifier; the structural comparison with
+  the nerve / realisation adjunction
+  `|-| ⊣ N : Cat ⇆ [Δᵒᵖ, Set]`).
 - **Dependencies**:
   [quivers, semicategories, acyclic categories](#quivers-semicategories-acyclic-categories)
   for the underlying quiver layer.
