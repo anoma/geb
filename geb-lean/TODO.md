@@ -92,7 +92,13 @@ present repository.** Listed here so the work is not lost.
   track mathlib releases closely from the start, so the
   `Polynomial.lean` `TypeCat.Hom` migration work owed by the
   `v4.30.0-rc1` upgrade is undertaken in that repository
-  rather than carried forward here.
+  rather than carried forward here. Absorbs the earlier
+  `potential-lean-430-port` strategic-decision investigation
+  (restructure-vs-grind-vs-defer options, calibrated
+  ~25-30 hour cost estimate, root-cause analysis of the
+  `TypeCat.Fun.toFun_apply` simp priority and the
+  Sigma-transport motive-not-type-correct failures), now
+  resolved in favour of deferral to `geb-mathlib`.
 - **indexed-eat-implementation**: instantiate the
   `EATHasQuotient` typeclass on non-trivial essentially
   algebraic theories (starting with the category EAT) so the
