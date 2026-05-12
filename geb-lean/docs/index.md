@@ -159,7 +159,15 @@ and gaps are filled in as workstreams complete.
   `TwCoprArrElem F ≌ ConnGrothendieck (F ⋙ typeToCat)`
   between the category of elements of a twisted-arrow
   copresheaf and the connected Grothendieck construction
-  on the same data passed through `typeToCat`.
+  on the same data passed through `typeToCat`, the
+  Grothendieck-construction presentations of twisted-arrow
+  categories
+  (`TwistedArrow' C ≌ Grothendieck (Under.mapFunctor C)`,
+  `OpTwistedArrow' C ≌ (Grothendieck (Under.mapFunctor C))^op'`,
+  `TwistedArrow C ≌ TwistedArrow' C`) and the
+  `SectionData` / `SectionDataContra` slice-Grothendieck
+  presheaf-and-copresheaf assembly for the four
+  twisted-arrow variants.
 - **Dependencies**:
   [polynomial / W- / M-types and PFunctors](#polynomial--w---m-types-and-pfunctors)
   for the polynomial side of profunctorial constructions.
