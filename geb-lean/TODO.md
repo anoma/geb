@@ -278,7 +278,14 @@ present repository.** Listed here so the work is not lost.
   and the earlier `psh-parametric-free-theorems` line of
   investigation (the presheaf-level free-theorems layer
   `PshRelEdge C`), now treated as a sub-layer of the present
-  workstream.
+  workstream, the earlier `weighted-vs-paranatural-algebra`
+  investigation of whether weighted (co)ends provide equivalent
+  formalisations of the three algebraic justifications for
+  paranatural transformations (initial-algebra carrier,
+  terminal-coalgebra carrier, Church numerals), and the earlier
+  `yoneda-rel-parametricity` line on `YonedaRel`-mediated
+  parametric relations, both subsumed by the present
+  `PshRelEdge`-based formulation of parametric polymorphism.
 - **parametric-copresheaf-topos**: develop the general
   theory of parametric polymorphism via the edge
   category `PshRelEdge C` and its reflective embedding
