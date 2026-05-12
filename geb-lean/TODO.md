@@ -387,3 +387,10 @@ present repository.** Listed here so the work is not lost.
   preservation by `LFunctor`, and exponential preservation by
   `PhiFunctor` (conditional on product preservation, via the
   exponential-ideal characterisation).
+- **terminal-preservation-strategy**: carry the terminal-object
+  preservation proof for `LFunctor` (the `TerminalAndInitial`
+  section of `GebLean/CatJudgmentAdjunction.lean`) into
+  geb-mathlib alongside the rest of the `L ⊣ Φ` adjunction,
+  including the `terminal_freemor_equiv_id` induction, the
+  `terminalToLFunctor` inverse, and the
+  `lTerminal_roundtrip_*` lemmas.
