@@ -103,7 +103,14 @@ present repository.** Listed here so the work is not lost.
   Grothendieck constructions, replacing low-level
   dependent-type transport proofs with `functorFrom`,
   `functorTo`, and `functorBetween` universal-property
-  interfaces.
+  interfaces. Absorbs the earlier
+  `polynomial-functor-extensions` line of investigation (free
+  monad monad, cofree comonad comonad, small adjunctions with
+  `Type`, epi/mono and vertical/cartesian factorisations,
+  universal morphisms, dual-variance polynomial functors, and
+  the polynomial double category), all of which depend on the
+  Grothendieck-construction reformulation rather than the
+  current low-level Sigma-transport encoding.
 - **plang-category-judgments**: complete the
   universe-polymorphic `L ⊣ Φ` adjunction between
   `Cat.{v,u}` and `CatJudgCopr.{u,v,w,x}` with all four
