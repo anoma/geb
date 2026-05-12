@@ -236,12 +236,16 @@ present repository.** Listed here so the work is not lost.
   presheaf-level layer based on `PshRelEdge C`
   (`PshRelDouble.lean`, `PshRelEdge*.lean`,
   `PshRelEdgeInclusion.lean`). Absorbs the earlier
-  `parametric-generalization` line of investigation, and the
+  `parametric-generalization` line of investigation, the
   earlier `polynomial-profunctors` line of investigation
   (`PolyProf` / `GenPolyProf` for dual-variance datatypes such
   as PHOAS, with diagonal-element categories generalising
   algebras and coalgebras), now subsumed by the
-  `PshRelEdge`-based formulation of parametric polymorphism.
+  `PshRelEdge`-based formulation of parametric polymorphism,
+  and the earlier `psh-parametric-free-theorems` line of
+  investigation (the presheaf-level free-theorems layer
+  `PshRelEdge C`), now treated as a sub-layer of the present
+  workstream.
 - **parametric-copresheaf-topos**: develop the general
   theory of parametric polymorphism via the edge
   category `PshRelEdge C` and its reflective embedding
