@@ -165,8 +165,12 @@ and gaps are filled in as workstreams complete.
   `StrongRestrictedCowedge ↪ RestrictedCowedge`, and the
   failure of an inverse
   `StrongRestrictedCowedge → WeightedCowedge` distinguishing
-  weighted from strong-restricted (co)wedges, the
-  Street-Walters comprehensive factorization
+  weighted from strong-restricted (co)wedges, the resolution
+  that every `WeightedWedge W P` is equivalent to an ordinary
+  `Wedge P'` for a suitable category `C'` and profunctor
+  `P' : C'ᵒᵖ ⥤ C' ⥤ D` at the level of cone categories (cone
+  category equivalence does not require indexing-category
+  equivalence), the Street-Walters comprehensive factorization
   of a functor through a discrete (op)fibration with the
   comprehensive (co)presheaf as a pointwise left Kan
   extension, the characterisation of paranatural
