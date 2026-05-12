@@ -131,6 +131,7 @@ and gaps are filled in as workstreams complete.
   `GebLean/Utilities/Profunctors.lean`,
   `GebLean/Utilities/ConnectedComponents.lean`,
   `GebLean/Utilities/EndsAndCoends.lean`,
+  `GebLean/Utilities/PowersAndCopowers.lean`,
   `GebLean/Utilities/TwArrPresheaf.lean`,
   `GebLean/Utilities/TwistedArrow.lean`.
 - **Central concepts**: profunctors as functors `Cᵒᵖ × C ⥤ D`,
@@ -151,7 +152,10 @@ and gaps are filled in as workstreams complete.
   weighted limit, and the decorated factorisation category
   with `decFactFunctor : TwistedArrow C ⥤ Cat` generalising
   `factorisationFunctor` and the total-decorated Grothendieck
-  equivalence.
+  equivalence, the reduction of restricted and strong-restricted
+  (co)wedges to standard (co)wedges over power and copower
+  profunctors with terminal / initial cases identified as
+  structural ends and coends.
 - **Dependencies**:
   [polynomial / W- / M-types and PFunctors](#polynomial--w---m-types-and-pfunctors)
   for the polynomial side of profunctorial constructions.
