@@ -36,8 +36,13 @@ narrative.
   names, emails, or autobiographical details.
 - No `noncomputable`, no `axiom`; minimise `Classical` (see
   Constructive-only Lean code below).
-- Specs and plans are adversarially reviewed before user review;
-  see `docs/process.md` § Adversarial review of specs and plans.
+- Specs and plans pass through fresh-context adversarial review
+  looped to convergence before user review. Convergence requires
+  zero blocker, zero serious, and zero minor findings (only
+  cosmetic-taste may remain). Each round's reviewer is a new
+  `Agent` invocation reading only the artefact and its cited
+  sources. See `docs/process.md` § Adversarial review of specs
+  and plans for the full protocol.
 - No `admit` anywhere — ever.
 - No `sorry` in any commit. (`sorry` is a permitted transient
   working tool between commits; committed code must build under
@@ -52,9 +57,9 @@ narrative.
 | --- | --- |
 | Brainstorm | `superpowers:brainstorming` |
 | Spec | author at `docs/superpowers/specs/` on topic branch |
-| Adversarial review (spec) | dispatched subagent; see process |
+| Adversarial review (spec) | fresh-context subagent per round, looped to convergence (zero blocker/serious/minor); see process |
 | Plan | `superpowers:writing-plans` at `plans/` |
-| Adversarial review (plan) | dispatched subagent |
+| Adversarial review (plan) | fresh-context subagent per round, looped to convergence (zero blocker/serious/minor); see process |
 | Execute | `superpowers:subagent-driven-development` |
 | Lean code | `lean4:*` (incl. `prove`, `golf`, `refactor`) |
 | Mathlib search | Loogle, `lean_leansearch`, `lean_loogle` |
