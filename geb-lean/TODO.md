@@ -52,6 +52,20 @@ lands in `docs/index.md`.
   triage, the primitive-recursive fragment with
   syntactic criterion, the self-recognizer, and the
   final integration test suite.
+- **Scope (Gödel-numbering tree-equality
+  pipeline)**: the categorical Gödel-encoding of binary
+  trees as natural numbers and the derivation of
+  decidable tree equality via natural-number equality
+  (`treeToNat`, `treeEqG`, `natEq`, the Cantor-pairing
+  / triangular-number infrastructure, `triRootState`
+  and the shifted-NNO recurrences). Supports the
+  reverse direction `erToK` by providing the
+  arithmetic substrate for tree-side encodings.
+  Remaining items: closing `NatEqCantorPair` (the
+  Cantor-pair injectivity statement under `natEq`)
+  to make `treeEqG_ββ` unconditional, and
+  `treeEqG_trans` via the addition-subtraction
+  identity and `natTruncSub_fold_comp`.
 - **Files**: `GebLean/LawvereER*.lean`,
   `GebLean/LawvereTreeER*.lean`,
   `GebLean/LawvereNatBT*.lean`,
@@ -69,7 +83,10 @@ lands in `docs/index.md`.
   `GebLean/Utilities/SimRec.lean`,
   `GebLean/Utilities/ComputationalComplexity.lean`,
   `GebLean/NatElegantPair.lean`,
+  `GebLean/NatArith.lean`,
   `GebLean/NatNNO.lean`,
+  `GebLean/TreeGoedel.lean`,
+  `GebLean/TreeEqGoedel.lean`,
   `GebLean/TreeLogic.lean`.
 
 ### 2026-05-09 process-bootstrap monorepo refactor
