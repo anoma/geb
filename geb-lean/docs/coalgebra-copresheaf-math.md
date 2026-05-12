@@ -146,7 +146,7 @@ the children.
 ## Connection to Our Infrastructure
 
 | Mathematical concept | Our definition |
-|---|---|
+| --- | --- |
 | Cofree category C_P | `PolyCofreeCat P` |
 | C_P objects | `⟨x, s⟩ : PolyCofreeCat P` |
 | C_P morphisms | `PolyCofreeCatHom P` |

@@ -37,9 +37,9 @@ jobs:
     needs: [build]
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-      - name: Run axiom check (report-only)
+      - name: Run axiom check
         run: |
-          bash scripts/check-axioms.sh --exit-zero-on-findings \
+          bash scripts/check-axioms.sh \
             GebLean/ GebLeanTests/ \
             | tee axiom-check-report.txt
       - name: Upload axiom-check report
