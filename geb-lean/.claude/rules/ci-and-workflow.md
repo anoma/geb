@@ -36,9 +36,10 @@ release-discipline track record.
 - `lake lint`
 - `markdownlint-cli2 --config .markdownlint-cli2.jsonc
   --no-globs '**/*.md'`
-- `bash scripts/check-axioms.sh GebLean/ GebLeanTests/ || true`
-  (`|| true` is informational pre-Milestone-B; Milestone B item
-  B5 removes the suffix to make the check a hard gate)
+- `bash scripts/check-axioms.sh GebLean/ GebLeanTests/`
+  (a non-allowlisted axiom dependency fails the push; CI repeats
+  the check via the `axiom_check` job in
+  `geb/.github/workflows/lean_action_ci.yml`)
 
 The single-quotes around `'**/*.md'` are load-bearing — without
 them, the shell would expand the glob before
