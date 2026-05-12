@@ -411,3 +411,17 @@ present repository.** Listed here so the work is not lost.
   including the `terminal_freemor_equiv_id` induction, the
   `terminalToLFunctor` inverse, and the
   `lTerminal_roundtrip_*` lemmas.
+- **tree-per-finite-limits**: complete finite limits in the
+  category of partial equivalence relations on the binary-tree
+  type, building on the existing terminal and binary-product
+  PER infrastructure. Outstanding items: the equalizer lift
+  pre-morphism and quotient morphism, the equalizer
+  factorisation and uniqueness, the `Fork` / `IsLimit`
+  assembly, and the `HasEqualizers` instance feeding
+  `hasFiniteLimits_of_hasEqualizers_and_finite_products`.
+  The `HasTreeEq LawvereBTQuotCat` construction (a
+  prerequisite for downstream `LawvereBTPER` results) is
+  recorded as needing one of three routes: a primitive-
+  recursive completeness theorem, a Gödel-encoded reduction
+  via `treeToNat` + `natEq`, or an axiomatic extension of
+  `HasPBTO` supporting double structural recursion.
