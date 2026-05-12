@@ -156,7 +156,17 @@ and gaps are filled in as workstreams complete.
   functor, weight pullback and diagram postcomposition
   bifunctoriality of weighted (co)wedges, the obstruction
   to terminality transfer across non-full weight-comparison
-  functors, the Street-Walters comprehensive factorization
+  functors, the faithful but non-full strong-restriction
+  functor `WeightedCowedge H G ⥤ StrongRestrictedCowedge G H`
+  (`cValued_strongRestrictionFunctor_not_full`), with the
+  weighted naturality at off-diagonal co-twisted arrows
+  forcing extracted families to be paranatural, factoring
+  through the fully faithful inclusion
+  `StrongRestrictedCowedge ↪ RestrictedCowedge`, and the
+  failure of an inverse
+  `StrongRestrictedCowedge → WeightedCowedge` distinguishing
+  weighted from strong-restricted (co)wedges, the
+  Street-Walters comprehensive factorization
   of a functor through a discrete (op)fibration with the
   comprehensive (co)presheaf as a pointwise left Kan
   extension, the characterisation of paranatural
