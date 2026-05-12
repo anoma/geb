@@ -237,7 +237,8 @@ and gaps are filled in as workstreams complete.
   `GebLean/PshTypeExpr.lean`,
   `GebLean/Utilities/ArrowSpanAdjunction.lean`,
   `GebLean/Utilities/ReflexiveGraph.lean`,
-  `GebLean/Utilities/SpanFamily.lean`.
+  `GebLean/Utilities/SpanFamily.lean`,
+  `GebLean/Utilities/WSubfunctor.lean`.
 - **Central concepts**: the edge-of-presheaf double category
   `PshRelEdge(C)`, its cartesian-closed structure on
   endofunctors, separation properties, the reflective chain
@@ -248,7 +249,15 @@ and gaps are filled in as workstreams complete.
   classifiers in the edge category, the Hermida-Reddy-Robinson
   reflexive graph category with identity-extension property
   and jointly monic span projections distinguishing parametric
-  functors from merely natural ones.
+  functors from merely natural ones, the constructive
+  `WSubfunctor` analogue of `Subfunctor` carrying
+  `Subsingleton` membership witnesses, the corresponding
+  `WSieve` presheaf and `wPshClassifierData` /
+  `wPshHasClassifier` subobject classifier for copresheaves
+  depending only on the standard `propext` and `Quot.sound`
+  (no `Classical.choice`), and the equivalence
+  `PshRelEdge C ≌ FullSubcategory IsSeparatedSpan` assembled
+  via `WSubfunctor`.
 - **Dependencies**:
   [profunctors and end machinery](#profunctors-and-end-machinery)
   for ends used in CCC structure;
