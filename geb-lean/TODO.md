@@ -269,6 +269,66 @@ present repository.** Listed here so the work is not lost.
   `HasAllHomToProfCoends G` instance for `C = Type v`,
   and the presheaf instantiation
   `C = E ⥤ Type v`.
+- **polynomial-algebra-coalgebra-combinators**: complete the
+  polynomial-algebra/coalgebra combinator library, including the
+  outstanding Phase-4 items (interaction map
+  `Xi : m_P ⊗ c_Q → m_{P ⊗ Q}` and the module structure of the
+  free monad functor over the cofree comonad functor), the
+  remainder of Phase-5 (the operational monad lifting syntax to
+  behaviour coalgebras), and the deferred B1/B2/F1-F3 items
+  (copresheaves as a variety of unary algebras, fiber
+  decomposition over the terminal coalgebra, Stone topology on
+  M-types, and the sheaf topos
+  `Sh(c_P(1))`). Deferred so the
+  construction is built on Geb-native polynomial-functor
+  foundations rather than the current Lean encoding.
+- **polynomial-double-category**: complete Phase 5 of the
+  polynomial double-category construction (the adjunction
+  bijection between the pushout-based 2-cell formulation
+  `SPFnt (Sigma . f . BaseChange bcl) g` and the
+  natural-transformation formulation
+  `SPFnt (Sigma . f) (g . Sigma bcr)`, formalised as an
+  equivalence of types via the sigma / base-change adjunction).
+  Deferred so the bijection is established on Geb-native
+  polynomial-functor foundations rather than the current Lean
+  encoding.
+- **pra-universal-morphisms**: complete the universal-morphisms,
+  composition, algebra, and double-category structure for
+  presheaf-PRA functors, generalising the existing
+  polynomial-functor infrastructure from slice categories to
+  presheaf categories. Includes Phase A (limits and colimits via
+  the position/direction decomposition), Phase B (closed
+  monoidal structure: cartesian product, internal hom,
+  Dirichlet product and closure), Phase C (identity, composition,
+  PRA factorisation `π_! ∘ E^*`), Phase D (algebras and
+  coalgebras, W- and M-types, free monads, cofree comonads), and
+  Phase E (the double category with small categories as objects,
+  functors as vertical morphisms, PRAs as horizontal morphisms,
+  and natural transformations as cells). Deferred so the
+  construction proceeds on Geb-native presheaf-PRA foundations
+  rather than the current Lean encoding.
+- **presheaf-pra**: complete the presheaf-PRA programme started
+  in `GebLean/PresheafPRA.lean` and continued in
+  `PresheafPRADiscrete.lean`, `PresheafPRAUMorph.lean`,
+  `PresheafPRADirNat.lean`, and `PresheafPRAEvalAtINat.lean`,
+  including Phase 3 (identity and composition via
+  Beck-Chevalley, PRA factorisation), the remaining Phase 4
+  items (universal morphisms for `PresheafPRACat I J` via the
+  underlying presheaf categories, the cartesian product,
+  internal hom, and Dirichlet product), Phase 5 (algebras and
+  coalgebras for PRA endofunctors, initial algebras as W-types
+  in presheaf categories, terminal coalgebras as M-types, free
+  monads, cofree comonads), Phase 6 (the double category with
+  small categories as objects, functors as vertical morphisms,
+  PRAs as horizontal morphisms, natural transformations as
+  cells), and the deferred
+  `praEvalAtFunctor` `(I, J)`-naturality follow-up (a separate
+  brainstorm using the fixed-`I` formula as a concrete reference
+  for the appropriate `I`-natural object via paranatural
+  transformations, lax-natural infrastructure, or
+  restricted-source-mor conventions). Deferred so the
+  construction proceeds on Geb-native presheaf-PRA foundations
+  rather than the current Lean encoding.
 - **connected-grothendieck**: complete the connected
   Grothendieck construction
   `E : Fun(Tw(C), Cat) ⥤ Cat/Arr(C)`, including the universal
