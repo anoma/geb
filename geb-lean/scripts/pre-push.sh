@@ -47,12 +47,10 @@ lake lint
 step "Step 4: markdownlint-cli2"
 markdownlint-cli2 --config .markdownlint-cli2.jsonc --no-globs '**/*.md'
 
-# Step 5: axiom check (informational pre-Milestone-B).
-#
-# The trailing `|| true` is intentional per spec; Milestone B item B5
-# removes it once the allowlist mechanism is in place.
-step "Step 5: scripts/check-axioms.sh (informational)"
-bash scripts/check-axioms.sh GebLean/ GebLeanTests/ || true
+# Step 5: axiom check (fail-mode; flipped from informational at Milestone B
+# item B5). A non-allowlisted axiom dependency now fails the push.
+step "Step 5: scripts/check-axioms.sh"
+bash scripts/check-axioms.sh GebLean/ GebLeanTests/
 
 # Step 6: user-driven gates (reminders, not mechanical checks).
 step "Step 6: user-driven gates (reminders)"
