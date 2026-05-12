@@ -425,3 +425,23 @@ present repository.** Listed here so the work is not lost.
   recursive completeness theorem, a Gödel-encoded reduction
   via `treeToNat` + `natEq`, or an axiomatic extension of
   `HasPBTO` supporting double structural recursion.
+- **two-sided-grothendieck-equivalence**: complete the
+  `CategoryTheory.Equivalence` between
+  `twoSidedGrothendieckCovContra` and
+  `twoSidedGrothendieckContraCov` in
+  `GebLean/Utilities/Grothendieck.lean`, beyond the object-level
+  `twoSidedGrothendieckObjEquiv`, the symmetric
+  constructor / destructor namespaces, and the primitive
+  `forwardObj` / `forwardMap` / `backwardObj` / `backwardMap`
+  functions. The remaining items are the `forward` and
+  `backward` Cat functors with `map_id` and `map_comp`,
+  `unitIso` and `counitIso`, and the assembled
+  `twoSidedGrothendieckEquivalence`. The `w_fiber` sub-goal of
+  the functor laws requires motive-dependent `eqToHom` rewrites
+  across three nested `Grothendieck` plus `Opposite` layers;
+  three resumption strategies are recorded (bicategorical
+  `Pseudofunctor` plus `StrongTrans` framework, an explicit
+  intermediate "direct" form factoring the equivalence through
+  a third presentation, or a hom-set bijection
+  `∀ H x y, (x ⟶ y) ≃ (forwardObj x ⟶ forwardObj y)` weaker
+  than `Equivalence`).
