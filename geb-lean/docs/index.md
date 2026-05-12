@@ -249,7 +249,14 @@ and gaps are filled in as workstreams complete.
   classifiers in the edge category, the Hermida-Reddy-Robinson
   reflexive graph category with identity-extension property
   and jointly monic span projections distinguishing parametric
-  functors from merely natural ones, the constructive
+  functors from merely natural ones, the `Subfunctor`-based
+  presentation of `PshRel` and `YonedaRel` as subobjects of
+  `pshProdPresheaf P Q` (replacing the earlier
+  `Skeleton (PshProdOver P Q)` formulation), with
+  `pshRelId` / `pshRelComp` / `pshRelGraph` / `pshRelDagger` /
+  `pshRelRelated` and the downstream
+  `pshBarrLiftRel` / `pshArrowRel` / `functorYonedaRelLift`
+  composites, the constructive
   `WSubfunctor` analogue of `Subfunctor` carrying
   `Subsingleton` membership witnesses, the corresponding
   `WSieve` presheaf and `wPshClassifierData` /
