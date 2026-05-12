@@ -363,3 +363,11 @@ present repository.** Listed here so the work is not lost.
   `FunctorFromConnGrothendieckData` characterisations of
   functors to and from the connected Grothendieck
   construction.
+- **reflective-subcategory-conjectures**: prove the
+  conjectured additional preservation properties of the
+  `LFunctor ⊣ PhiFunctor` reflective adjunction documented
+  in `GebLean/CatJudgmentAdjunction.lean` § `PreservationInstances`:
+  binary-coproduct preservation by `PhiFunctor`, binary-product
+  preservation by `LFunctor`, and exponential preservation by
+  `PhiFunctor` (conditional on product preservation, via the
+  exponential-ideal characterisation).
