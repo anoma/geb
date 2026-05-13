@@ -51,7 +51,11 @@ reminders:
 
 - `lean4:golf` and `lean4:review` ran on changed Lean code;
 - line-by-line user diff review of every change about to be
-  pushed.
+  pushed;
+- the push target is `origin`, not `upstream`. Upstream
+  receives commits only via PRs opened from origin (see
+  `.claude/rules/fork-upstream-flow.md` and
+  `docs/superpowers/specs/2026-05-12-fork-upstream-flow-design.md`).
 
 ## Hook-script conventions
 
