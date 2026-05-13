@@ -24,20 +24,12 @@ defaults:
 jobs:
   build:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
       - uses: actions/checkout@v5
       - uses: leanprover/lean-action@v1
         with:
           lake-package-directory: geb-lean
-      - uses: leanprover-community/docgen-action@v1
-        if: github.event_name != 'push' || github.ref == 'refs/heads/main'
-        with:
-          lake_package_directory: geb-lean
-          homepage: pages-site
 
   axiom_check:
     runs-on: ubuntu-latest
