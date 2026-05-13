@@ -58,7 +58,7 @@ narrative.
 | Brainstorm | `superpowers:brainstorming` |
 | Spec | author at `docs/superpowers/specs/` on topic branch |
 | Adversarial review (spec) | fresh-context subagent per round, looped to convergence (zero blocker/serious/minor); see process |
-| Plan | `superpowers:writing-plans` at `plans/` |
+| Plan | `superpowers:writing-plans` at `docs/superpowers/plans/` |
 | Adversarial review (plan) | fresh-context subagent per round, looped to convergence (zero blocker/serious/minor); see process |
 | Execute | `superpowers:subagent-driven-development` |
 | Lean code | `lean4:*` (incl. `prove`, `golf`, `refactor`) |
@@ -88,7 +88,8 @@ unrestricted.
   assertions and Plausible property tests.
 - `docs/` — research and process documentation; see
   `docs/index.md`.
-- `plans/` — workstream plans, one per dated topic.
+- `docs/superpowers/plans/` — workstream plans, one per
+  dated topic; parallel to `docs/superpowers/specs/`.
 - `.claude/rules/` — area-scoped rules.
 - `scripts/` — local lints and helpers (e.g.
   `check-axioms.sh`).
@@ -113,9 +114,10 @@ non-allowlisted axioms in CI and pre-push.
 Each workstream's spec, plan, and code co-evolve on the same
 topic branch. Specs live at
 `docs/superpowers/specs/<date>-<topic>-design.md`; plans at
-`plans/<date>-<topic>-plan.md`. Adversarial-review iterations
-and self-review fixes are commits on the same branch. The
-merge-commit cutover lands them on `main`.
+`docs/superpowers/plans/<date>-<topic>-plan.md`.
+Adversarial-review iterations and self-review fixes are
+commits on the same branch. The merge-commit cutover lands
+them on `main`.
 
 ## GebLean-specific disciplines
 
@@ -195,4 +197,4 @@ warrant new skills.
 | `docs/index.md` | Workstream-by-workstream narrative |
 | `docs/lean-resources.md` | mathlib and CSLib link list |
 | `docs/superpowers/specs/2026-05-09-process-bootstrap-monorepo-design.md` | Refactor spec |
-| `plans/2026-05-09-process-bootstrap-monorepo-plan.md` | Refactor plan |
+| `docs/superpowers/plans/2026-05-09-process-bootstrap-monorepo-plan.md` | Refactor plan |

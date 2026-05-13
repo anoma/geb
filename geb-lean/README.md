@@ -50,15 +50,16 @@ that this README is a thin index over it. The entry points are:
   the mathematical theories formalised here.
 - [`docs/superpowers/specs/2026-05-09-process-bootstrap-monorepo-design.md`](docs/superpowers/specs/2026-05-09-process-bootstrap-monorepo-design.md)
   — design spec for the 2026-05-09 process refactor.
-- [`plans/2026-05-09-process-bootstrap-monorepo-plan.md`](plans/2026-05-09-process-bootstrap-monorepo-plan.md)
+- [`docs/superpowers/plans/2026-05-09-process-bootstrap-monorepo-plan.md`](docs/superpowers/plans/2026-05-09-process-bootstrap-monorepo-plan.md)
   — the task-level plan executing that spec.
 - [`TODO.md`](TODO.md) — short-horizon list of pending work
   outside the scope of any active spec/plan.
 
 Workstream-specific specs live under
 [`docs/superpowers/specs/`](docs/superpowers/specs); their
-plans live under [`plans/`](plans). The topological index links
-to each active workstream by name.
+plans live under
+[`docs/superpowers/plans/`](docs/superpowers/plans). The
+topological index links to each active workstream by name.
 
 ## Index of project processes
 
@@ -92,8 +93,8 @@ The development flow used in this subproject:
    relevant to the area being touched.
 3. Brainstorm a workstream and write a spec under
    `docs/superpowers/specs/<date>-<topic>.md`, then a plan
-   under `plans/<date>-<topic>-plan.md`. Both are tracked
-   with adversarial review cycles.
+   under `docs/superpowers/plans/<date>-<topic>-plan.md`.
+   Both are tracked with adversarial review cycles.
 4. Implement the plan on a topic branch named
    `feat/<topic>`, `fix/<topic>`, or `chore/<topic>`. Use jj
    as the primary VCS; the colocated git repository is the
