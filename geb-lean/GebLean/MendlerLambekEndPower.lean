@@ -4234,8 +4234,8 @@ equivalence: converts a conventional algebra for
 `ImpredicativeGExtFunctor G` to a Mendler algebra.
 The Mendler family at `(A, γ)` is `churchLift ≫ str`:
 embed `G(A,A)` into the impredicative GExt object
-via the Church encoding and compose with the algebra
-structure map. -/
+via the Church encoding and compose with the
+algebra structure map. -/
 def impCeil
     (twInner : ∀ (pt Y : C),
       HasTerminalWedge (ihomPowerProf G pt Y))
