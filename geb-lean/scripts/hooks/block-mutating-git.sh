@@ -53,12 +53,44 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-# jj git stripping: if .jj/ exists, allow jj-mediated git interop outright.
+# jj git stripping: if .jj/ exists, allow jj-mediated git interop outright —
+# EXCEPT for `jj git push --remote upstream` (and equals-form), which is
+# denied because upstream receives commits only via PRs opened from origin.
+# See docs/superpowers/specs/2026-05-12-fork-upstream-flow-design.md
+# § Invariants and § Op 4. The `-r` short form is NOT matched: in jj 0.41
+# `-r` resolves to `--revisions`, not `--remote`; matching it here would
+# produce a false positive on a revset literally named `upstream`.
 # ---------------------------------------------------------------------------
 
 if jj root > /dev/null 2>&1; then
-  # If the first token is "jj" and the second is "git", pass through.
   if [[ "${tokens[0]:-}" == "jj" && "${tokens[1]:-}" == "git" ]]; then
+    if [[ "${tokens[2]:-}" == "push" ]]; then
+      # Scan tokens[3..] for an upstream-selecting `--remote` argument.
+      i=3
+      while [[ $i -lt ${#tokens[@]} ]]; do
+        tok="${tokens[i]}"
+        next="${tokens[i+1]:-}"
+        if [[ "$tok" == "--remote" && "$next" == "upstream" ]]; then
+          {
+            printf 'block-mutating-git: blocked `jj git push --remote upstream`\n'
+            printf '  reason: upstream receives commits only via PRs opened from origin\n'
+            printf '  see: docs/superpowers/specs/2026-05-12-fork-upstream-flow-design.md\n'
+            printf '  use: gh pr create --repo anoma/geb --base main --head rokopt:<branch>\n'
+          } >&2
+          exit 2
+        fi
+        if [[ "$tok" == "--remote=upstream" ]]; then
+          {
+            printf 'block-mutating-git: blocked `jj git push --remote=upstream`\n'
+            printf '  reason: upstream receives commits only via PRs opened from origin\n'
+            printf '  see: docs/superpowers/specs/2026-05-12-fork-upstream-flow-design.md\n'
+            printf '  use: gh pr create --repo anoma/geb --base main --head rokopt:<branch>\n'
+          } >&2
+          exit 2
+        fi
+        i=$((i+1))
+      done
+    fi
     exit 0
   fi
 fi
