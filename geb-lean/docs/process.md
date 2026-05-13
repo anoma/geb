@@ -18,6 +18,35 @@ CI workflows that touch `geb-lean` live at the parent
 `geb/.github/workflows/`. The pre-push hook is `geb-lean`-scoped:
 it builds and tests only `geb-lean` artefacts.
 
+## Fork–upstream relationship
+
+The local working copy is a clone of the fork at
+`rokopt/geb` ("origin"), itself a fork of the canonical
+repository at `anoma/geb` ("upstream"). Both are
+administered by the same operator. Daily work pushes to
+the fork; upstream receives commits only through merged
+pull requests opened from the fork.
+
+### Remote roles
+
+| Remote | URL | Role |
+| --- | --- | --- |
+| origin | `ssh://git@github.com/rokopt/geb` | Daily fork; push target for topic branches. |
+| upstream | `git@github.com:anoma/geb.git` | Canonical repository; PR target only. |
+
+### Invariants
+
+The fork-first push rule, the no-direct-push-to-upstream
+rule, the merge-commit-strategy-on-synchronising-PRs
+rule, the append-only-on-both-default-branches rule, and
+the lockstep-after-merge rule are recorded in directive
+form in `.claude/rules/fork-upstream-flow.md`. The
+mechanical denial of direct upstream pushes lives in
+`scripts/hooks/block-mutating-git.sh`.
+
+The full design and reasoning are at
+`docs/superpowers/specs/2026-05-12-fork-upstream-flow-design.md`.
+
 ## Phase-driven workflow
 
 Each chunk of work passes through brainstorm, spec, plan, and
@@ -198,8 +227,16 @@ to git via self-exclusion; the project does not need to add
 narrower targets.
 
 A new developer onboards with this exact sequence, run from the
-parent `geb/` root. Per-repo configuration is set before the
-first `jj git fetch --remote origin` so the fetch applies the
+parent `geb/` root. The sequence assumes the working copy was
+created by `git clone ssh://git@github.com/rokopt/geb.git geb`,
+which registers `origin` as a git remote pointing at
+`rokopt/geb` and places `geb/` as the parent of `geb-lean/`. If
+`origin` is absent, register it with `git remote add origin
+ssh://git@github.com/rokopt/geb` before continuing. Users who
+prefer `jj git clone --colocate` arrive at an equivalent state
+but skip step 1 (`jj git init --colocate`) and continue from
+step 2. Per-repo configuration is set before the first
+`jj git fetch --remote origin` so the fetch applies the
 `fetch-tags` pattern:
 
 1. `jj git init --colocate`.
@@ -207,6 +244,10 @@ first `jj git fetch --remote origin` so the fetch applies the
    - `jj config set --repo git.private-commits 'conflicts()'`
    - `jj config set --repo remotes.origin.fetch-tags
      'glob:cutover-*'`
+   - `jj config set --repo remotes.upstream.fetch-tags
+     'glob:cutover-*'` (recommended; mirrors the origin
+     entry for a later cutover-tag propagation. Not
+     enforced by `check-jj-setup.sh`.)
 3. Per-developer signing and identity (user-level, not
    per-repo):
    - `jj config set --user user.name '<name>'`
@@ -216,7 +257,11 @@ first `jj git fetch --remote origin` so the fetch applies the
    - `jj config set --user signing.key '<key id>'`
 4. `jj git fetch --remote origin` to mirror bookmarks into jj's
    view.
-5. `bash geb-lean/scripts/check-jj-setup.sh` to verify the
+5. `gh repo set-default rokopt/geb` to direct `gh` default-base
+   commands at the fork. See
+   `docs/superpowers/specs/2026-05-12-fork-upstream-flow-design.md`
+   § Per-clone `gh` configuration for rationale and reversal.
+6. `bash geb-lean/scripts/check-jj-setup.sh` to verify the
    configuration.
 
 The `remotes.origin.fetch-tags` setting is documented as
