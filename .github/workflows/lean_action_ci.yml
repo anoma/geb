@@ -23,14 +23,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: leanprover/lean-action@v1
         with:
           lake-package-directory: geb-lean
-          script: |
-            lake build
-            lake test
       - uses: leanprover-community/docgen-action@v1
+        with:
+          lake_package_directory: geb-lean
 
   axiom_check:
     runs-on: ubuntu-latest
