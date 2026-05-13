@@ -18,6 +18,35 @@ CI workflows that touch `geb-lean` live at the parent
 `geb/.github/workflows/`. The pre-push hook is `geb-lean`-scoped:
 it builds and tests only `geb-lean` artefacts.
 
+## Fork–upstream relationship
+
+The local working copy is a clone of the fork at
+`rokopt/geb` ("origin"), itself a fork of the canonical
+repository at `anoma/geb` ("upstream"). Both are
+administered by the same operator. Daily work pushes to
+the fork; upstream receives commits only through merged
+pull requests opened from the fork.
+
+### Remote roles
+
+| Remote | URL | Role |
+| --- | --- | --- |
+| origin | `ssh://git@github.com/rokopt/geb` | Daily fork; push target for topic branches. |
+| upstream | `git@github.com:anoma/geb.git` | Canonical repository; PR target only. |
+
+### Invariants
+
+The fork-first push rule, the no-direct-push-to-upstream
+rule, the merge-commit-strategy-on-synchronising-PRs
+rule, the append-only-on-both-default-branches rule, and
+the lockstep-after-merge rule are recorded in directive
+form in `.claude/rules/fork-upstream-flow.md`. The
+mechanical denial of direct upstream pushes lives in
+`scripts/hooks/block-mutating-git.sh`.
+
+The full design and reasoning are at
+`docs/superpowers/specs/2026-05-12-fork-upstream-flow-design.md`.
+
 ## Phase-driven workflow
 
 Each chunk of work passes through brainstorm, spec, plan, and
@@ -44,15 +73,100 @@ kept in sync.
 
 ## Adversarial review of specs and plans
 
-Specs and plans are reviewed in a fresh-context adversarial pass
-before user approval, distinct from the author's self-review.
-The adversarial reviewer reads only the artefact under review
-plus its cited sources, and produces a numbered list of
-defects. Authoring iterates against the review until convergence.
-The procedure is the same for spec documents and plan documents.
-Adversarial reviews must themselves be markdownlint-clean, since
-they are committed to the tree alongside the artefacts they
-review.
+Specs and plans pass through fresh-context adversarial review
+until convergence, distinct from the author's self-review.
+
+### Reviewer protocol
+
+A reviewer is a new general-purpose `Agent` invocation per
+round — never `SendMessage` to a continuing agent — that reads
+the artefact at the given path, its cited sources, and any
+additional file or read-only remote resource needed to verify
+a factual claim the artefact makes. Each round's reviewer is
+fresh so that it is not anchored to the previous round's
+findings or to the author's framing of fixes. The procedure
+is the same for spec documents and plan documents.
+
+The reviewer may invoke read-only operations to verify
+claims: file reads, read-only `git` (e.g. `git remote -v`,
+`git log`), read-only `jj` (e.g. `jj git remote list`,
+`jj config list`), read-only `gh` (e.g. `gh api <path>`,
+`gh repo set-default --view`), tool `--help` invocations,
+and read-only MCP queries. The reviewer must not invoke
+mutating operations of any kind: no commits, pushes, fetches
+that alter the working copy, file writes, `gh` write commands,
+or shell commands that mutate filesystem state outside the
+working copy. The reviewer's output is the only artefact it
+creates; the author is responsible for writing it to disk.
+
+### Defect categorisation
+
+Every defect the reviewer reports is one of four severities:
+
+| Severity | Definition | Examples |
+| --- | --- | --- |
+| Blocker | The artefact cannot be implemented as written, or if implemented would violate a project hard rule (`CLAUDE.md` § Hard rules). | A factual error in a command form; a precondition that makes an operation fail in a real case; a direct contradiction with a project rule. |
+| Serious | The artefact admits an interpretation that produces a wrong result, or omits a case that is in scope. | Ambiguity readable two ways; missing handling of a flow the artefact implicitly requires; under-specification that forces the implementer to guess. |
+| Minor | Imprecise prose, redundancy, or organisation that does not affect implementability. | A heading that duplicates information; an inefficient ordering of bullets; a citation that could be more specific. |
+| Cosmetic-taste | Typography, line wrapping, register-list word choice, or other surface concerns that do not affect meaning. | Markdownlint violations; whitespace; choice between two equally clear phrasings. |
+
+The reviewer assigns exactly one severity per defect. Severity
+labels follow the same definitions across rounds and across
+workstreams.
+
+### Author response
+
+For every finding, the author records a one-line response in
+the defect's entry, choosing one of:
+
+- **fix**: applied inline to the artefact, with the corrected
+  text or a pointer to the resulting edit. The author re-runs
+  markdownlint and the register sweep on the artefact after
+  the fix.
+- **defer-with-rationale**: recorded as explicit out-of-scope,
+  with a one-sentence reason. Blocker- and serious-severity
+  findings cannot be deferred without a recorded out-of-scope
+  rationale (and that rationale must itself withstand a later
+  adversarial review).
+- **reject-as-cosmetic-taste**: limited to cosmetic-taste
+  findings; the response sentence states why the surface
+  concern is not adopted.
+
+Minor and cosmetic-taste findings may be fixed, deferred, or
+rejected at the author's discretion subject to the convergence
+criterion below.
+
+### Convergence criterion
+
+A round **converges** when its reviewer reports zero blocker,
+zero serious, and zero minor findings. Cosmetic-taste findings
+are not a barrier to convergence and may remain open at
+termination. This criterion is stricter than the analogous one
+in `geb-mathlib`'s process (which allows minors to remain at
+convergence); the additional strictness is a deliberate
+divergence to ensure geb-lean artefacts reach `geb-mathlib`-
+candidate quality before they leave their topic branch.
+
+### Loop
+
+After each round, the author applies responses, and a new
+fresh-context reviewer is dispatched for the next round. Each
+round is recorded in a numbered review file alongside the
+artefact (e.g.
+`docs/superpowers/specs/<topic>.review-1.md`,
+`docs/superpowers/specs/<topic>.review-2.md`). The loop
+terminates when a round meets the convergence criterion. The
+terminating round's review file is the convergence record.
+
+### Formatting
+
+Adversarial review files are markdownlint-clean against
+`.markdownlint-cli2.jsonc` (line length 80; tables and fenced
+code blocks exempt) and follow the register rules in
+`.claude/rules/markdown-writing.md`. The author edits the
+reviewer's output as needed to meet these constraints; this
+editing is not a substantive change to the findings and does
+not require re-dispatch.
 
 ## Order of artefact production
 
@@ -113,8 +227,16 @@ to git via self-exclusion; the project does not need to add
 narrower targets.
 
 A new developer onboards with this exact sequence, run from the
-parent `geb/` root. Per-repo configuration is set before the
-first `jj git fetch --remote origin` so the fetch applies the
+parent `geb/` root. The sequence assumes the working copy was
+created by `git clone ssh://git@github.com/rokopt/geb.git geb`,
+which registers `origin` as a git remote pointing at
+`rokopt/geb` and places `geb/` as the parent of `geb-lean/`. If
+`origin` is absent, register it with `git remote add origin
+ssh://git@github.com/rokopt/geb` before continuing. Users who
+prefer `jj git clone --colocate` arrive at an equivalent state
+but skip step 1 (`jj git init --colocate`) and continue from
+step 2. Per-repo configuration is set before the first
+`jj git fetch --remote origin` so the fetch applies the
 `fetch-tags` pattern:
 
 1. `jj git init --colocate`.
@@ -122,6 +244,10 @@ first `jj git fetch --remote origin` so the fetch applies the
    - `jj config set --repo git.private-commits 'conflicts()'`
    - `jj config set --repo remotes.origin.fetch-tags
      'glob:cutover-*'`
+   - `jj config set --repo remotes.upstream.fetch-tags
+     'glob:cutover-*'` (recommended; mirrors the origin
+     entry for a later cutover-tag propagation. Not
+     enforced by `check-jj-setup.sh`.)
 3. Per-developer signing and identity (user-level, not
    per-repo):
    - `jj config set --user user.name '<name>'`
@@ -131,7 +257,11 @@ first `jj git fetch --remote origin` so the fetch applies the
    - `jj config set --user signing.key '<key id>'`
 4. `jj git fetch --remote origin` to mirror bookmarks into jj's
    view.
-5. `bash geb-lean/scripts/check-jj-setup.sh` to verify the
+5. `gh repo set-default rokopt/geb` to direct `gh` default-base
+   commands at the fork. See
+   `docs/superpowers/specs/2026-05-12-fork-upstream-flow-design.md`
+   § Per-clone `gh` configuration for rationale and reversal.
+6. `bash geb-lean/scripts/check-jj-setup.sh` to verify the
    configuration.
 
 The `remotes.origin.fetch-tags` setting is documented as

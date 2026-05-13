@@ -50,15 +50,16 @@ that this README is a thin index over it. The entry points are:
   the mathematical theories formalised here.
 - [`docs/superpowers/specs/2026-05-09-process-bootstrap-monorepo-design.md`](docs/superpowers/specs/2026-05-09-process-bootstrap-monorepo-design.md)
   — design spec for the 2026-05-09 process refactor.
-- [`plans/2026-05-09-process-bootstrap-monorepo-plan.md`](plans/2026-05-09-process-bootstrap-monorepo-plan.md)
+- [`docs/superpowers/plans/2026-05-09-process-bootstrap-monorepo-plan.md`](docs/superpowers/plans/2026-05-09-process-bootstrap-monorepo-plan.md)
   — the task-level plan executing that spec.
 - [`TODO.md`](TODO.md) — short-horizon list of pending work
   outside the scope of any active spec/plan.
 
 Workstream-specific specs live under
 [`docs/superpowers/specs/`](docs/superpowers/specs); their
-plans live under [`plans/`](plans). The topological index links
-to each active workstream by name.
+plans live under
+[`docs/superpowers/plans/`](docs/superpowers/plans). The
+topological index links to each active workstream by name.
 
 ## Index of project processes
 
@@ -84,16 +85,20 @@ under `.claude/rules/`. Their roles:
 
 The development flow used in this subproject:
 
-1. Clone the parent monorepo at
-   <https://github.com/anoma/geb>; `geb-lean/` is a
-   subdirectory.
+1. Clone the fork at <https://github.com/rokopt/geb>
+   (single-developer entry path) or the canonical
+   repository at <https://github.com/anoma/geb>
+   (external-contributor entry path); `geb-lean/` is a
+   subdirectory in either case. The flow recorded in
+   [`.claude/rules/fork-upstream-flow.md`](.claude/rules/fork-upstream-flow.md)
+   assumes the fork.
 2. Read [`CLAUDE.md`](CLAUDE.md) for the repository-wide
    instructions, then the rule files under `.claude/rules/`
    relevant to the area being touched.
 3. Brainstorm a workstream and write a spec under
    `docs/superpowers/specs/<date>-<topic>.md`, then a plan
-   under `plans/<date>-<topic>-plan.md`. Both are tracked
-   with adversarial review cycles.
+   under `docs/superpowers/plans/<date>-<topic>-plan.md`.
+   Both are tracked with adversarial review cycles.
 4. Implement the plan on a topic branch named
    `feat/<topic>`, `fix/<topic>`, or `chore/<topic>`. Use jj
    as the primary VCS; the colocated git repository is the
@@ -114,6 +119,15 @@ in `CLAUDE.md` and `.claude/rules/`.
 This subproject is the active development home for the Lean
 formalisation of Geb. Two pointers to related repositories:
 
+- The canonical repository for this monorepo is
+  `anoma/geb`. The local working copy is a clone of the
+  fork at `rokopt/geb`. Daily work pushes to the fork;
+  upstream receives commits only through merged pull
+  requests opened from the fork. The flow's invariants,
+  operations, and mechanical enforcement are recorded in
+  [`.claude/rules/fork-upstream-flow.md`](.claude/rules/fork-upstream-flow.md);
+  the design spec is at
+  [`docs/superpowers/specs/2026-05-12-fork-upstream-flow-design.md`](docs/superpowers/specs/2026-05-12-fork-upstream-flow-design.md).
 - `geb-mathlib` is the eventual upstream destination for
   results developed here. Material formalised in `geb-lean`
   that reaches a stable, peer-reviewable form is intended for

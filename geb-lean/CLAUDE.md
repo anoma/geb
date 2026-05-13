@@ -24,10 +24,17 @@ narrative.
 
 ## Hard rules — must not violate
 
-- No `git push` without user line-by-line review. The same
+- No `jj git push` to `origin` without user
+  line-by-line review. No direct push to `upstream` at
+  all; `upstream` receives commits only through merged
+  pull requests opened from `origin`. The same
   human-gate rule applies to `gh` write operations
   (`gh pr create`, `gh pr merge`, `gh release create`,
-  `gh issue create`, `gh issue close`, etc.).
+  `gh issue create`, `gh issue close`, etc.). The
+  mechanical denial of direct upstream pushes lives in
+  `scripts/hooks/block-mutating-git.sh`; see
+  `.claude/rules/fork-upstream-flow.md` and
+  `docs/superpowers/specs/2026-05-12-fork-upstream-flow-design.md`.
 - No raw mutating `git` subcommands; the PreToolUse hook
   enforces a closed-allowlist default-deny policy. Use `jj`.
 - No LLM-drafted text in user-facing channels (PR descriptions,
@@ -36,8 +43,13 @@ narrative.
   names, emails, or autobiographical details.
 - No `noncomputable`, no `axiom`; minimise `Classical` (see
   Constructive-only Lean code below).
-- Specs and plans are adversarially reviewed before user review;
-  see `docs/process.md` § Adversarial review of specs and plans.
+- Specs and plans pass through fresh-context adversarial review
+  looped to convergence before user review. Convergence requires
+  zero blocker, zero serious, and zero minor findings (only
+  cosmetic-taste may remain). Each round's reviewer is a new
+  `Agent` invocation reading only the artefact and its cited
+  sources. See `docs/process.md` § Adversarial review of specs
+  and plans for the full protocol.
 - No `admit` anywhere — ever.
 - No `sorry` in any commit. (`sorry` is a permitted transient
   working tool between commits; committed code must build under
@@ -52,9 +64,9 @@ narrative.
 | --- | --- |
 | Brainstorm | `superpowers:brainstorming` |
 | Spec | author at `docs/superpowers/specs/` on topic branch |
-| Adversarial review (spec) | dispatched subagent; see process |
-| Plan | `superpowers:writing-plans` at `plans/` |
-| Adversarial review (plan) | dispatched subagent |
+| Adversarial review (spec) | fresh-context subagent per round, looped to convergence (zero blocker/serious/minor); see process |
+| Plan | `superpowers:writing-plans` at `docs/superpowers/plans/` |
+| Adversarial review (plan) | fresh-context subagent per round, looped to convergence (zero blocker/serious/minor); see process |
 | Execute | `superpowers:subagent-driven-development` |
 | Lean code | `lean4:*` (incl. `prove`, `golf`, `refactor`) |
 | Mathlib search | Loogle, `lean_leansearch`, `lean_loogle` |
@@ -83,7 +95,8 @@ unrestricted.
   assertions and Plausible property tests.
 - `docs/` — research and process documentation; see
   `docs/index.md`.
-- `plans/` — workstream plans, one per dated topic.
+- `docs/superpowers/plans/` — workstream plans, one per
+  dated topic; parallel to `docs/superpowers/specs/`.
 - `.claude/rules/` — area-scoped rules.
 - `scripts/` — local lints and helpers (e.g.
   `check-axioms.sh`).
@@ -108,9 +121,10 @@ non-allowlisted axioms in CI and pre-push.
 Each workstream's spec, plan, and code co-evolve on the same
 topic branch. Specs live at
 `docs/superpowers/specs/<date>-<topic>-design.md`; plans at
-`plans/<date>-<topic>-plan.md`. Adversarial-review iterations
-and self-review fixes are commits on the same branch. The
-merge-commit cutover lands them on `main`.
+`docs/superpowers/plans/<date>-<topic>-plan.md`.
+Adversarial-review iterations and self-review fixes are
+commits on the same branch. The merge-commit cutover lands
+them on `main`.
 
 ## GebLean-specific disciplines
 
@@ -190,4 +204,6 @@ warrant new skills.
 | `docs/index.md` | Workstream-by-workstream narrative |
 | `docs/lean-resources.md` | mathlib and CSLib link list |
 | `docs/superpowers/specs/2026-05-09-process-bootstrap-monorepo-design.md` | Refactor spec |
-| `plans/2026-05-09-process-bootstrap-monorepo-plan.md` | Refactor plan |
+| `docs/superpowers/plans/2026-05-09-process-bootstrap-monorepo-plan.md` | Refactor plan |
+| `.claude/rules/fork-upstream-flow.md` | Working-time rules for fork–upstream flow |
+| `docs/superpowers/specs/2026-05-12-fork-upstream-flow-design.md` | Design spec for fork–upstream flow |
