@@ -24,10 +24,17 @@ narrative.
 
 ## Hard rules — must not violate
 
-- No `git push` without user line-by-line review. The same
+- No `jj git push` to `origin` without user
+  line-by-line review. No direct push to `upstream` at
+  all; `upstream` receives commits only through merged
+  pull requests opened from `origin`. The same
   human-gate rule applies to `gh` write operations
   (`gh pr create`, `gh pr merge`, `gh release create`,
-  `gh issue create`, `gh issue close`, etc.).
+  `gh issue create`, `gh issue close`, etc.). The
+  mechanical denial of direct upstream pushes lives in
+  `scripts/hooks/block-mutating-git.sh`; see
+  `.claude/rules/fork-upstream-flow.md` and
+  `docs/superpowers/specs/2026-05-12-fork-upstream-flow-design.md`.
 - No raw mutating `git` subcommands; the PreToolUse hook
   enforces a closed-allowlist default-deny policy. Use `jj`.
 - No LLM-drafted text in user-facing channels (PR descriptions,
@@ -198,3 +205,5 @@ warrant new skills.
 | `docs/lean-resources.md` | mathlib and CSLib link list |
 | `docs/superpowers/specs/2026-05-09-process-bootstrap-monorepo-design.md` | Refactor spec |
 | `docs/superpowers/plans/2026-05-09-process-bootstrap-monorepo-plan.md` | Refactor plan |
+| `.claude/rules/fork-upstream-flow.md` | Working-time rules for fork–upstream flow |
+| `docs/superpowers/specs/2026-05-12-fork-upstream-flow-design.md` | Design spec for fork–upstream flow |
