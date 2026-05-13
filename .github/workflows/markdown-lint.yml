@@ -12,6 +12,9 @@ on:
       - 'geb-lean/.markdownlint-cli2.jsonc'
   workflow_dispatch:
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
 jobs:
   markdown-lint:
     runs-on: ubuntu-latest
