@@ -10,6 +10,7 @@ on:
     paths:
       - 'geb-lean/**/*.md'
       - 'geb-lean/.markdownlint-cli2.jsonc'
+  workflow_dispatch:
 
 jobs:
   markdown-lint:
