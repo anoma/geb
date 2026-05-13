@@ -19,7 +19,7 @@ Subject to:
 - Identity preservation: φ₁(a, id_{φ₀(a)}) = id_a
 - Composition preservation: φ₁(a, v ∘ u) = φ₁(a', v) ∘ φ₁(a, u)
 
-There is asymmetry in that that objects go "forward" while morphisms go
+There is asymmetry in that objects go "forward" while morphisms go
 "backward" relative to the object assignment.
 
 ### The Category Cof
