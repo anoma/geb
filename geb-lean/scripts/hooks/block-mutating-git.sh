@@ -333,12 +333,16 @@ case "$subcommand" in
         exit 0
         ;;
       1)
-        # `git fetch origin` — only the literal remote name "origin" is allowed.
-        if [[ "${positionals[0]}" == "origin" ]]; then
-          exit 0
-        fi
-        deny "only 'git fetch origin' is on the allowlist; other remotes are blocked" \
-             "jj git fetch --remote origin"
+        # `git fetch origin` or `git fetch upstream` — both literal
+        # remote names are on the allowlist. The two-positional
+        # `refs/pull/*/head:*` form below remains restricted to origin.
+        case "${positionals[0]}" in
+          origin|upstream)
+            exit 0
+            ;;
+        esac
+        deny "only 'git fetch origin' and 'git fetch upstream' are on the allowlist; other remotes are blocked" \
+             "jj git fetch --remote <origin|upstream>"
         ;;
       2)
         # `git fetch origin refs/pull/*/head:*`
