@@ -60,6 +60,10 @@ cat <<'EOF'
 Confirm before pushing:
   - lean4:golf and lean4:review ran on changed Lean code.
   - User reviewed the diff line-by-line.
+  - The push target is `origin`, not `upstream`. Upstream
+    receives commits only via PRs from origin
+    (see docs/superpowers/specs/2026-05-12-fork-upstream-flow-design.md
+     § Operations).
 EOF
 
 printf '\npre-push: all mechanical steps passed.\n'
