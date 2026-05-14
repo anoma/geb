@@ -68,12 +68,13 @@ under `.claude/rules/`. Their roles:
 
 - [`CLAUDE.md`](CLAUDE.md) — repository-wide instructions for
   AI assistants and human contributors. Always loaded.
-- [`.claude/rules/lean-disciplines.md`](.claude/rules/lean-disciplines.md)
-  — hole-marking, constructive-only Lean, build hygiene, and
-  related disciplines that apply across all Lean development.
 - [`.claude/rules/lean-coding.md`](.claude/rules/lean-coding.md)
-  — path-scoped coding conventions for `.lean` files: naming,
-  layout, typeclass and structure idioms, proof-style guidance.
+  — Lean disciplines (hole marking, constructive-only,
+  literature citation, bottom-up named composites,
+  non-negotiable interfaces) together with source-editing
+  conventions (build discipline, comment and docstring rules,
+  Lean idioms, `lean4` skill mapping, universe and variable
+  hygiene, no copyright headers). Always loaded.
 - [`.claude/rules/markdown-writing.md`](.claude/rules/markdown-writing.md)
   — register, line length, and formatting conventions for
   every committed Markdown file.
