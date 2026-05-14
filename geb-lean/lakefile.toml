@@ -4,6 +4,8 @@ keywords = ["math"]
 defaultTargets = ["GebLean"]
 testDriver = "GebLeanTests"
 lintDriver = "batteries/runLinter"
+# Promotes warning-class diagnostics (including `declaration uses 'sorry'`)
+# to build errors at the Lean kernel level.
 moreLeanArgs = ["-DwarningAsError=true"]
 
 [leanOptions]

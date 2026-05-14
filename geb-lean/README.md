@@ -1,146 +1,112 @@
 # geb-lean
 
-`geb-lean` is a subproject of the `geb/` monorepo. It hosts the
-Lean 4 formalisation of the categorical structures underlying
-the Geb programming language. For the broader project — including
-the Common Lisp reference implementation, the original Idris and
-Agda artefacts, and the user-facing manual — see
-[`../README.md`](../README.md). The licence under which both the
-parent project and this subproject are distributed is recorded
-at [`../LICENSE`](../LICENSE).
-
-## Status
-
-Active experimentation; process refactor of 2026-05-09 in
-effect. The conventions, directory layout, and contribution
-flow described below reflect that refactor and supersede earlier
-arrangements. The Lean library itself continues to grow as the
-formalisation programme advances.
+`geb-lean` is a subproject of the `geb/` monorepo, hosting a
+Lean 4 + mathlib experimental formalisation of Geb — a
+categorical programming language whose first-class notions
+include "programming language" itself. The curated counterpart
+`geb-mathlib` holds material meeting upstream contribution
+standards. For the broader project — including the Common Lisp
+reference implementation, the original Idris and Agda artefacts,
+and the user-facing manual — see [`../README.md`](../README.md).
 
 ## Dependencies
 
-The Lean toolchain is pinned in [`lean-toolchain`](lean-toolchain).
-External library pins are recorded in
-[`lake-manifest.json`](lake-manifest.json) and declared in
-[`lakefile.toml`](lakefile.toml). The two upstream libraries on
-which this project depends are mathlib4 and CSLib; both are
-required for the project to build and test.
+- [mathlib4](https://github.com/leanprover-community/mathlib4).
+- [cslib](https://github.com/leanprover/cslib).
+- Lean 4 toolchain (see `lean-toolchain`).
+
+See `lakefile.toml` for the full dependency declaration.
 
 ## Licence
 
-Distributed under the GNU General Public License version 3. The
-licence text is in [`../LICENSE`](../LICENSE) at the parent
-monorepo root. The same licence covers all files in this
-subdirectory unless an individual file declares otherwise.
+[GNU General Public License version 3](../LICENSE), at the
+parent monorepo root.
 
-## Index of project documentation
+## Documentation
 
-The documentation tree under [`docs/`](docs) is organised so
-that this README is a thin index over it. The entry points are:
+- [`docs/index.md`](docs/index.md) — topological narrative of
+  implemented mathematical content.
+- [`docs/process.md`](docs/process.md) — process rationale and
+  decision history.
+- [`docs/lean-resources.md`](docs/lean-resources.md) — Lean
+  library and mathematical reference catalog.
 
-- [`docs/index.md`](docs/index.md) — topological index of
-  formalised workstreams: paths, mathematical content,
-  dependencies among workstreams, and pointers into
-  `docs/research/` and `docs/superpowers/specs/`.
-- [`docs/process.md`](docs/process.md) — rationale for the
-  conventions in `CLAUDE.md` and `.claude/rules/`, with
-  cross-references to the spec that introduced them.
-- [`docs/lean-resources.md`](docs/lean-resources.md) — curated
-  pointers into mathlib4, CSLib, and external Lean material on
-  the mathematical theories formalised here.
-- [`docs/superpowers/specs/2026-05-09-process-bootstrap-monorepo-design.md`](docs/superpowers/specs/2026-05-09-process-bootstrap-monorepo-design.md)
-  — design spec for the 2026-05-09 process refactor.
-- [`docs/superpowers/plans/2026-05-09-process-bootstrap-monorepo-plan.md`](docs/superpowers/plans/2026-05-09-process-bootstrap-monorepo-plan.md)
-  — the task-level plan executing that spec.
-- [`TODO.md`](TODO.md) — short-horizon list of pending work
-  outside the scope of any active spec/plan.
+## Process
 
-Workstream-specific specs live under
-[`docs/superpowers/specs/`](docs/superpowers/specs); their
-plans live under
-[`docs/superpowers/plans/`](docs/superpowers/plans). The
-topological index links to each active workstream by name.
+The contributor-binding rules live in
+[`CLAUDE.md`](CLAUDE.md). Path-scoped conditional rules live in
+[`.claude/rules/`](.claude/rules/):
 
-## Index of project processes
+- `lean-coding.md` — applies to all `.lean` files.
+- `markdown-writing.md` — applies to all `.md` files.
+- `ci-and-workflow.md` — applies to `.github/workflows/` and
+  `scripts/`.
+- `fork-upstream-flow.md` — fork–upstream invariants, always
+  loaded.
 
-The process and rule files live at the top of this directory and
-under `.claude/rules/`. Their roles:
+## Contributing
 
-- [`CLAUDE.md`](CLAUDE.md) — repository-wide instructions for
-  AI assistants and human contributors. Always loaded.
-- [`.claude/rules/lean-disciplines.md`](.claude/rules/lean-disciplines.md)
-  — hole-marking, constructive-only Lean, build hygiene, and
-  related disciplines that apply across all Lean development.
-- [`.claude/rules/lean-coding.md`](.claude/rules/lean-coding.md)
-  — path-scoped coding conventions for `.lean` files: naming,
-  layout, typeclass and structure idioms, proof-style guidance.
-- [`.claude/rules/markdown-writing.md`](.claude/rules/markdown-writing.md)
-  — register, line length, and formatting conventions for
-  every committed Markdown file.
-- [`.claude/rules/ci-and-workflow.md`](.claude/rules/ci-and-workflow.md)
-  — conventions for CI and workflow files governing the
-  geb-lean subdirectory.
+### Setup
 
-## Contribution pointers
+Suggested steps to run after cloning the parent `geb/`
+repository. The jj configuration below is recommended local
+config; the project does not run config commands on a
+contributor's behalf.
 
-The development flow used in this subproject:
+1. Install `jj` via your preferred package manager.
+2. Initialise jj's colocated mode at the parent `geb/` root:
+   `jj git init --colocate`.
+3. Apply the recommended local jj configuration. See
+   [`docs/process.md`](docs/process.md) § `jj` colocated mode
+   for the full sequence, including the fetch-tags pattern for
+   cutover-tag mirroring and the fork-specific remote setup.
+4. Configure your per-developer `~/.config/jj/config.toml`
+   `[signing]` block (`behavior = "own"`,
+   `backend = "gpg"` or `"ssh"`, `key = "..."`) so commits are
+   signed.
+5. Install the Lean toolchain via `elan` (the toolchain version
+   is read from `lean-toolchain`).
+6. Run `lake exe cache get` then `lake build` to verify the
+   build chain.
+7. Install `doctoc` to enable pre-push TOC regeneration of
+   committed Markdown:
+   `npm install -g doctoc` (or your preferred install path).
+   The pre-push checklist skips the TOC check when `doctoc` is
+   missing rather than failing, so this step is recommended but
+   not blocking.
+8. Run `bash scripts/check-jj-setup.sh` to verify the
+   configuration.
 
-1. Clone the fork at <https://github.com/rokopt/geb>
-   (single-developer entry path) or the canonical
-   repository at <https://github.com/anoma/geb>
-   (external-contributor entry path); `geb-lean/` is a
-   subdirectory in either case. The flow recorded in
-   [`.claude/rules/fork-upstream-flow.md`](.claude/rules/fork-upstream-flow.md)
-   assumes the fork.
-2. Read [`CLAUDE.md`](CLAUDE.md) for the repository-wide
-   instructions, then the rule files under `.claude/rules/`
-   relevant to the area being touched.
-3. Brainstorm a workstream and write a spec under
-   `docs/superpowers/specs/<date>-<topic>.md`, then a plan
-   under `docs/superpowers/plans/<date>-<topic>-plan.md`.
-   Both are tracked with adversarial review cycles.
-4. Implement the plan on a topic branch named
-   `feat/<topic>`, `fix/<topic>`, or `chore/<topic>`. Use jj
-   as the primary VCS; the colocated git repository is the
-   integration channel for GitHub.
-5. Run `lake build` and `lake test` after every edit; fix the
-   first error first.
-6. Open a pull request against `main`. Commits use the
-   mathlib commit-message form: a short imperative subject
-   line of the form `kind(scope): summary`, optional body,
-   no trailing punctuation in the subject.
+### Working
 
-The reasoning behind these conventions is in
-[`docs/process.md`](docs/process.md); the mechanical rules are
-in `CLAUDE.md` and `.claude/rules/`.
+1. Read `CLAUDE.md` from top to bottom; the rules there bind every
+   contribution.
+2. Pick a workstream from `TODO.md` (or propose a new one and
+   brainstorm a spec following the process described in
+   `docs/process.md`).
+3. Develop on a topic branch (`feat/<topic>`, `fix/<topic>`, etc.);
+   use `jj` (the working VCS).
+4. Run `scripts/pre-push.sh` and have a contributor (or yourself)
+   review the diff line-by-line before pushing.
 
-## Pointers to upstream and sibling projects
+## Upstream destination: geb-mathlib
 
-This subproject is the active development home for the Lean
-formalisation of Geb. Two pointers to related repositories:
+Material formalised in `geb-lean` that reaches a stable,
+peer-reviewable form is intended for migration into
+`geb-mathlib`, the curated counterpart repository, where it
+joins the broader mathlib ecosystem under mathlib's contribution
+process. The literature-citation discipline recorded in
+[`CLAUDE.md`](CLAUDE.md) supports that migration: every
+transcribed function, definition, and theorem carries a citation
+to its source that survives the move.
 
-- The canonical repository for this monorepo is
-  `anoma/geb`. The local working copy is a clone of the
-  fork at `rokopt/geb`. Daily work pushes to the fork;
-  upstream receives commits only through merged pull
-  requests opened from the fork. The flow's invariants,
-  operations, and mechanical enforcement are recorded in
-  [`.claude/rules/fork-upstream-flow.md`](.claude/rules/fork-upstream-flow.md);
-  the design spec is at
-  [`docs/superpowers/specs/2026-05-12-fork-upstream-flow-design.md`](docs/superpowers/specs/2026-05-12-fork-upstream-flow-design.md).
-- `geb-mathlib` is the eventual upstream destination for
-  results developed here. Material formalised in `geb-lean`
-  that reaches a stable, peer-reviewable form is intended for
-  migration into `geb-mathlib`, where it joins the broader
-  mathlib ecosystem under mathlib's contribution process. The
-  literature-citation discipline recorded in
-  [`CLAUDE.md`](CLAUDE.md) supports that migration: every
-  transcribed function, definition, and theorem carries a
-  citation to its source that survives the move.
-- The library dependencies — mathlib4 at
-  <https://github.com/leanprover-community/mathlib4> and
-  CSLib at <https://github.com/leanprover/cslib> — supply the
-  ambient mathematical infrastructure on which the
-  formalisation rests. Pinned versions are recorded in
-  `lake-manifest.json`; bumps are made deliberately and in
-  step with `lean-toolchain`.
+## Fork–upstream relationship
+
+The local working copy is a clone of the fork at
+[`rokopt/geb`](https://github.com/rokopt/geb); the canonical
+repository is [`anoma/geb`](https://github.com/anoma/geb).
+Daily work pushes to the fork; upstream receives commits only
+through merged pull requests opened from the fork. The flow's
+invariants, operations, and mechanical enforcement are recorded
+in
+[`.claude/rules/fork-upstream-flow.md`](.claude/rules/fork-upstream-flow.md).

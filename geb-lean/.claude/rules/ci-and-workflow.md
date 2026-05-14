@@ -6,81 +6,93 @@ paths:
 
 # CI and workflow conventions
 
-This rule applies to CI and workflow files inside the geb-lean
-subdirectory. Parent-level workflow files at
-`geb/.github/workflows/` are outside the geb-lean project's
-`paths:` scope; when editing those files, load
-`geb-lean/docs/process.md` § CI as the reference.
-
-## Workflow conventions
+Applies to GitHub Actions workflow files and scripts.
 
 The `lean_action_ci.yml` and `markdown-lint.yml` workflows live
 at the parent `geb/.github/workflows/` level and are
-path-filtered to `geb-lean/**`. The `update.yml` and
+path-filtered to `geb-lean/**`; the `update.yml` and
 `create-release.yml` workflows remain inert at
-`geb-lean/.github/workflows/` as forward prep.
+`geb-lean/.github/workflows/`. The rules in this file apply to
+both locations.
 
-Third-party action references are SHA-pinned where the security
-gain warrants the maintenance cost; major-version pinning is
-acceptable for actions whose maintainers have a
-release-discipline track record.
+## Commit-message convention (mathlib-derived)
 
-## Pre-push checklist
+```text
+<type>(<optional-scope>): <subject>
 
-`scripts/pre-push.sh` runs the following commands:
+<body>
 
-- `bash scripts/check-jj-setup.sh`
-- `lake test` (builds `GebLean` and `GebLeanTests`; explicit
-  `lake build` is omitted as redundant against current lakefile
-  targets)
-- `lake lint`
-- `markdownlint-cli2 --config .markdownlint-cli2.jsonc
-  --no-globs '**/*.md'`
-- `bash scripts/check-axioms.sh GebLean/ GebLeanTests/`
-  (a non-allowlisted axiom dependency fails the push; CI repeats
-  the check via the `axiom_check` job in
-  `geb/.github/workflows/lean_action_ci.yml`)
+<footers>
+```
 
-The single-quotes around `'**/*.md'` are load-bearing — without
-them, the shell would expand the glob before
-`markdownlint-cli2` sees it, defeating `--no-globs`. The same
-applies wherever a glob is passed: always quote the glob
-argument.
+Types: `feat | fix | doc | style | refactor | test | chore | perf | ci`.
+Imperative present tense, no capital, no trailing period. Subject
+under 72 characters when possible.
 
-The script additionally surfaces user-driven gates as
-reminders:
-
-- `lean4:golf` and `lean4:review` ran on changed Lean code;
-- line-by-line user diff review of every change about to be
-  pushed;
-- the push target is `origin`, not `upstream`. Upstream
-  receives commits only via PRs opened from origin (see
-  `.claude/rules/fork-upstream-flow.md` and
-  `docs/superpowers/specs/2026-05-12-fork-upstream-flow-design.md`).
-
-## Hook-script conventions
-
-Scripts under `scripts/hooks/*.sh` exit 0 by default; explicit
-blocks exit 2 with a stderr message. `block-mutating-git.sh`
-blocks raw mutating `git` and translates blocked commands to
-their `jj` equivalents in stderr. `check-signing-key.sh` warms
-the gpg-agent or ssh-agent at session start.
-
-## Commit-message convention
-
-Adopt mathlib's `<type>(<optional-scope>): <subject>` form
-(`feat | fix | doc | style | refactor | test | chore | perf |
-ci`), imperative present, no capital, no period.
+Documented footers: `Closes #123, #456`, `BREAKING CHANGE: ...`,
+`- [ ] depends on: #XXXX`. Mathlib's published convention does not
+include `Moves:` or `Deletions:`, so nor does ours.
 
 The commit-message type is `doc:` (singular, mathlib-mandated)
 while the topic-branch prefix for documentation work is
 `docs/<topic>` (plural, project-local convention adopted from
-`geb-mathlib`). The two forms are deliberately distinct and
-used in distinct contexts (`git commit -m "doc: ..."` vs branch
-name `docs/<topic>`). Consistency with `geb-mathlib` and
-mathlib motivates the convention even though this repository
-does not currently target mathlib upstream.
+`geb-mathlib`). The two forms are deliberately distinct and used
+in distinct contexts (`git commit -m "doc: ..."` vs branch name
+`docs/<topic>`).
 
-The convention applies forward from the cutover commit (see
-`docs/process.md` § Branch model); pre-cutover commits remain
-in their original forms (mixed style, per `git log`).
+## Pre-push checklist
+
+Run by `scripts/pre-push.sh`:
+
+1. `bash scripts/check-jj-setup.sh` passes.
+2. `lake test` succeeds locally (builds `GebLean` and
+   `GebLeanTests` via the test driver's dependency graph;
+   explicit `lake build` is redundant against current lakefile
+   targets).
+3. `lake lint` quiet.
+4. `doctoc --check '**/*.md'` quiet (skipped if `doctoc` is not
+   installed).
+5. `markdownlint-cli2 '**/*.md'` quiet.
+6. `bash scripts/check-axioms.sh GebLean/ GebLeanTests/` quiet.
+   A non-allowlisted axiom dependency fails the push; CI repeats
+   the check via the `axiom_check` job in
+   `geb/.github/workflows/lean_action_ci.yml`.
+7. User-driven gate reminders surfaced as prompts: `lean4:golf`
+   and `lean4:review` ran on changed Lean code; line-by-line
+   user diff review of every change about to be pushed; the
+   push target is `origin`, not `upstream`. Upstream receives
+   commits only via PRs opened from origin (see
+   `.claude/rules/fork-upstream-flow.md`).
+
+The single-quotes around `'**/*.md'` are load-bearing — without
+them, the shell would expand the glob before
+`markdownlint-cli2` (or `doctoc`) sees it. The same applies
+wherever a glob is passed: always quote the glob argument.
+
+## Hook-script conventions
+
+Hook scripts in `scripts/hooks/` follow Claude Code's hook contract
+(verified against
+`https://code.claude.com/docs/en/hooks-overview` and
+`https://code.claude.com/docs/en/hooks-reference`):
+
+- Read JSON from stdin when invoked.
+- Exit 0 to allow; exit 2 to hard-block (with stderr message). For
+  PreToolUse hooks that prefer to surface the decision to the user,
+  exit 0 with a `hookSpecificOutput.permissionDecision` JSON
+  document on stdout (e.g., `permissionDecision: "ask"`); other
+  non-zero exits are errors.
+- Smoke-test in `scripts/hooks/tests/test-<hook>.sh`; CI runs the
+  smoke tests.
+
+`scripts/hooks/block-mutating-git.sh` blocks raw mutating `git`
+and translates blocked commands to their `jj` equivalents in
+stderr. `scripts/hooks/check-signing-key.sh` warms the gpg-agent
+or ssh-agent at session start.
+
+## Action pinning policy
+
+All third-party actions in `.github/workflows/*.yml` are pinned to
+a specific commit SHA, with the SHA followed by a comment naming
+the corresponding tag for human readers. Update via review of the
+upstream action's release notes (Dependabot-style).
