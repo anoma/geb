@@ -199,7 +199,7 @@ their constructive API (`mk`, `lift`, `ind`, `sound`); `Quot.out`
 and `Quotient.out` are excluded because they require
 `Classical.choice`. The `scripts/check-axioms.sh` script flags
 non-allowlisted axioms in pre-push and CI. The full statement
-of this rule lives in `.claude/rules/lean-disciplines.md`.
+of this rule lives in `.claude/rules/lean-coding.md`.
 
 ## `main` / `integration` / topic-branch model
 
@@ -389,7 +389,7 @@ research documents in `docs/research/`. Original-content
 workstreams (the broader categorical-foundations material) are
 not bound by this discipline; citations are encouraged where
 applicable but not required. The rule lives in
-`.claude/rules/lean-disciplines.md`.
+`.claude/rules/lean-coding.md`.
 
 ## Bottom-up named-composite discipline
 
@@ -402,7 +402,7 @@ a proposed construct cannot be expressed as a composition of
 the target's generators, that absence is a signal not to add
 the construct. The discipline preserves the equivalence by
 construction at every incremental step. The rule lives in
-`.claude/rules/lean-disciplines.md`.
+`.claude/rules/lean-coding.md`.
 
 ## Non-negotiable interfaces
 
@@ -417,7 +417,7 @@ implementation does not close, the corrective moves are
 strengthening supporting infrastructure, re-examining the
 proof strategy, or surfacing the obstruction for discussion —
 not weakening the interface. The rule lives in
-`.claude/rules/lean-disciplines.md`.
+`.claude/rules/lean-coding.md`.
 
 ## Relationship to geb-mathlib
 

@@ -82,7 +82,7 @@ value-laden adjectives (`key`, `important`, `core`, `complex`,
 and similar). The full word list and prose-tone rules live in
 `.claude/rules/markdown-writing.md` (loaded unconditionally).
 Detailed Lean-specific style rules live in
-`.claude/rules/lean-coding.md` (loaded for `**/*.lean`). The
+`.claude/rules/lean-coding.md` (loaded unconditionally). The
 register binds repository content; conversational chat is
 unrestricted.
 
@@ -129,8 +129,12 @@ them on `main`.
 ## GebLean-specific disciplines
 
 Substantive prose for these rules lives in
-`.claude/rules/lean-disciplines.md` (unconditionally loaded).
-This list is the human-readable index.
+`.claude/rules/lean-coding.md` (unconditionally loaded). The
+same file also carries the source-editing rules (build
+discipline, comment and docstring rules, Lean idioms, `lean4`
+skill mapping, universe and variable hygiene, no copyright
+headers). This list is the human-readable index of the
+project-shaping disciplines:
 
 - **Literature-citation discipline** (transcription
   workstreams): every planned and implemented function,
@@ -146,14 +150,9 @@ This list is the human-readable index.
   interfaces are fixed by the external mathematical source.
   Implementation strategy may change; interface may not.
 
-## Cross-reference to file-edit-only Lean rules
-
-Build discipline, mathlib comment / docstring rules, Lean
-idioms, and other rules that apply only when editing `.lean`
-source live in `.claude/rules/lean-coding.md` (scoped via
-`paths: ["**/*.lean"]`). That file loads automatically when
-Claude reads a `.lean` file. CI and workflow rules live in
-`.claude/rules/ci-and-workflow.md`.
+CI and workflow rules live in
+`.claude/rules/ci-and-workflow.md` (scoped to
+`.github/workflows/**` and `scripts/**`).
 
 ## Tooling
 
