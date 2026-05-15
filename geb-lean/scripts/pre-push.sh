@@ -9,11 +9,11 @@
 # pre-push.sh before every push" rule is recorded in CLAUDE.md and
 # docs/process.md.
 #
-# The script halts on the first failed mechanical step. Steps 1–5 are
-# mechanical checks; step 6 prints reminders for user-driven gates that
+# The script halts on the first failed mechanical step. Steps 1–6 are
+# mechanical checks; step 7 prints reminders for user-driven gates that
 # cannot be mechanised.
 #
-# See docs/process.md § Pre-push checklist.
+# See .claude/rules/ci-and-workflow.md § Pre-push checklist.
 
 set -euo pipefail
 
@@ -35,33 +35,45 @@ bash scripts/check-jj-setup.sh
 step "Step 2: lake test"
 lake test
 
-# Step 3: lint (depends on lintDriver = \"batteries/runLinter\" in lakefile.toml).
+# Step 3: lint (depends on lintDriver = "batteries/runLinter" in lakefile.toml).
 step "Step 3: lake lint"
 lake lint
 
-# Step 4: markdown lint.
+# Step 4: doctoc TOC check.
+#
+# The rule (auto-maintained TOCs in `.md` files with multiple `##`
+# headings) lives in .claude/rules/markdown-writing.md § Tables of
+# contents. Skipped if doctoc is not installed.
+step "Step 4: doctoc --check '**/*.md'"
+if command -v doctoc >/dev/null 2>&1; then
+  doctoc --check '**/*.md' \
+    || { echo "doctoc TOCs out of date; run 'doctoc \"**/*.md\"' and re-commit." >&2; exit 1; }
+else
+  echo "doctoc not installed; skipping TOC check." >&2
+fi
+
+# Step 5: markdown lint.
 #
 # The single quotes around '**/*.md' are load-bearing: without them,
 # the shell expands the glob before markdownlint-cli2 sees it,
 # defeating --no-globs.
-step "Step 4: markdownlint-cli2"
+step "Step 5: markdownlint-cli2"
 markdownlint-cli2 --config .markdownlint-cli2.jsonc --no-globs '**/*.md'
 
-# Step 5: axiom check (fail-mode; flipped from informational at Milestone B
-# item B5). A non-allowlisted axiom dependency now fails the push.
-step "Step 5: scripts/check-axioms.sh"
+# Step 6: axiom check. A non-allowlisted axiom dependency fails the
+# push.
+step "Step 6: scripts/check-axioms.sh"
 bash scripts/check-axioms.sh GebLean/ GebLeanTests/
 
-# Step 6: user-driven gates (reminders, not mechanical checks).
-step "Step 6: user-driven gates (reminders)"
+# Step 7: user-driven gates (reminders, not mechanical checks).
+step "Step 7: user-driven gates (reminders)"
 cat <<'EOF'
 Confirm before pushing:
   - lean4:golf and lean4:review ran on changed Lean code.
   - User reviewed the diff line-by-line.
   - The push target is `origin`, not `upstream`. Upstream
     receives commits only via PRs from origin
-    (see docs/superpowers/specs/2026-05-12-fork-upstream-flow-design.md
-     § Operations).
+    (see .claude/rules/fork-upstream-flow.md § Operations).
 EOF
 
 printf '\npre-push: all mechanical steps passed.\n'

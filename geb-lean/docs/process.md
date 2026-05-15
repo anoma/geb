@@ -1,91 +1,153 @@
 # geb-lean process and conventions
 
-This file is the rationale layer for the conventions that govern
-work in `geb-lean/`. The mechanical rules live in `CLAUDE.md` and
-in path-scoped files under `.claude/rules/`. Each section below
-links those rule files to the reasoning behind them and to the
-spec at
-`docs/superpowers/specs/2026-05-09-process-bootstrap-monorepo-design.md`.
+This document records *why* each rule in `CLAUDE.md` and
+`.claude/rules/*.md` exists. The rules themselves live in those
+files; this document explains the motivation behind each. Read it
+when you need to understand the reason for a rule, propose a
+change, or weigh how to apply a rule in an unfamiliar situation.
+
+## Sections
+
+- [geb-lean process and conventions](#geb-lean-process-and-conventions)
+  - [Sections](#sections)
+  - [Repository structure](#repository-structure)
+  - [Code is cost](#code-is-cost)
+  - [Document only the persistent](#document-only-the-persistent)
+  - [Illustrate only with the archetypal](#illustrate-only-with-the-archetypal)
+  - [Avoid colloquialisms and metaphors](#avoid-colloquialisms-and-metaphors)
+  - [Documentation under `docs/`](#documentation-under-docs)
+  - [Adversarial review](#adversarial-review)
+  - [Verify agent claims](#verify-agent-claims)
+  - [main and integration](#main-and-integration)
+  - [Markdownlint discipline](#markdownlint-discipline)
+  - [No LLM-drafted user-facing text](#no-llm-drafted-user-facing-text)
+  - [Generic user references](#generic-user-references)
+  - [Fork–upstream relationship](#forkupstream-relationship)
+  - [Phase-driven workflow](#phase-driven-workflow)
+  - [`jj` colocated mode](#jj-colocated-mode)
+  - [Process self-update mechanism](#process-self-update-mechanism)
+  - [Literature-citation discipline](#literature-citation-discipline)
+  - [Bottom-up named-composite discipline](#bottom-up-named-composite-discipline)
+  - [Non-negotiable interfaces](#non-negotiable-interfaces)
+  - [Relationship to geb-mathlib](#relationship-to-geb-mathlib)
+  - [No per-file copyright or author headers](#no-per-file-copyright-or-author-headers)
 
 ## Repository structure
 
-`geb-lean/` is a subdirectory of the `geb/` monorepo, not a
-standalone repository. The version-control root, hooks, CI
-workflows that touch `geb-lean`, and the parent `LICENSE` all
-live one directory up. `jj` is colocated at the parent `geb/`
-root. Repository-scoped hooks live at `geb-lean/scripts/hooks/`.
-CI workflows that touch `geb-lean` live at the parent
-`geb/.github/workflows/`. The pre-push hook is `geb-lean`-scoped:
-it builds and tests only `geb-lean` artefacts.
+The repo is laid out narrow-and-deep: every directory has either a
+small number of subdirectories or a small number of source modules,
+with one indexing `.lean` file per directory. The path is itself
+documentation. This policy resembles mathlib's.
 
-## Fork–upstream relationship
+## Code is cost
 
-The local working copy is a clone of the fork at
-`rokopt/geb` ("origin"), itself a fork of the canonical
-repository at `anoma/geb` ("upstream"). Both are
-administered by the same operator. Daily work pushes to
-the fork; upstream receives commits only through merged
-pull requests opened from the fork.
+Every committed byte must be justified by a return greater than
+its cost. Cost has several components:
 
-### Remote roles
+- **Reader time and cognitive capacity.** Anyone reading the
+  codebase — human or AI — pays attention to every file, every
+  line, every comment.
+- **Drift and obsolescence.** Code falls out of sync with the
+  rest of the codebase as surrounding things change. Comments
+  are particularly susceptible, being unverified by compilation.
+- **Dependence pressure.** Code that depends on something else
+  freezes that thing in place: changing the dependency requires
+  changing the dependent. The more code depends on a given thing,
+  the harder that thing is to change.
+- **Process overhead.** Every line lengthens build time, commit
+  diffs, code-review time, search results, and AI-context
+  consumption.
 
-| Remote | URL | Role |
-| --- | --- | --- |
-| origin | `ssh://git@github.com/rokopt/geb` | Daily fork; push target for topic branches. |
-| upstream | `git@github.com:anoma/geb.git` | Canonical repository; PR target only. |
+## Document only the persistent
 
-### Invariants
+A direct corollary of "Code is cost". Comments and committed text
+should describe what is enduring about the code as it is — its
+purpose, contracts, and non-obvious external constraints.
+They should not describe transient process artifacts such as:
 
-The fork-first push rule, the no-direct-push-to-upstream
-rule, the merge-commit-strategy-on-synchronising-PRs
-rule, the append-only-on-both-default-branches rule, and
-the lockstep-after-merge rule are recorded in directive
-form in `.claude/rules/fork-upstream-flow.md`. The
-mechanical denial of direct upstream pushes lives in
-`scripts/hooks/block-mutating-git.sh`.
+- **History.** "Previously this used X; now it uses Y."
+  "Refactored from a different shape." How the code arrived at
+  its current form belongs in commit messages, not in the code.
+- **Testing process.** "Verified by testing." "This caused a
+  build failure that was fixed by...." How something was
+  discovered belongs in the project-internal findings log,
+  not in the code.
+- **Project-management artifacts.** "Required by spec § X.Y."
+  Tasks and plan numbers are ephemeral — they exist during a
+  discrete project phase and lose meaning afterward; readers of
+  the code should not need to consult an external document just
+  to understand the comments.
+- **In-progress notes.** "TODO: rewrite this when we have time."
+  "Try this approach if X fails." Active work belongs in
+  `TODO.md` or the workstream's spec/plan, not in code comments.
 
-The full design and reasoning are at
-`docs/superpowers/specs/2026-05-12-fork-upstream-flow-design.md`.
+What's persistent and worth documenting:
 
-## Phase-driven workflow
+- The code's purpose at the namespace / module / declaration
+  level (its contract).
+- Non-obvious external constraints.
+- Cross-references to specific external documentation (mathlib's
+  contribute pages, jj's documentation), where the cross-reference
+  saves a reader from re-deriving the constraint.
 
-Each chunk of work passes through brainstorm, spec, plan, and
-execute phases. Skills load on demand at the phase they apply
-to (`superpowers:brainstorming`, `superpowers:writing-plans`,
-`superpowers:executing-plans`, the `lean4:*` family, and so on);
-`CLAUDE.md` and the unscoped `.claude/rules/*.md` files load at
-session start. Three MCP servers attach at the
-session level rather than per-skill:
+The principle is: when this codebase is years old, the comments
+should still read as useful context. Anything that won't survive
+that test belongs elsewhere.
 
-- `arxiv-mcp-server` — search, download, and read papers when a
-  workstream cites external mathematical sources.
-  Upstream: <https://github.com/blazickjp/arxiv-mcp-server>.
-- `memory` — graph-shaped scratchpad that persists session-level
-  observations across restarts.
-  Upstream:
-  <https://github.com/modelcontextprotocol/servers/tree/main/src/memory>.
-- `MCP Solver` — constraint and SAT solving via Python bindings,
-  used for combinatorial side-conditions.
-  Upstream: <https://github.com/szeider/mcp-solver>.
+## Illustrate only with the archetypal
 
-The same list appears in `CLAUDE.md` § Tooling; the two must be
-kept in sync.
+A corollary of "Document only the persistent". When a rule or
+explanation needs an illustration, the example should be
+archetypal — a timeless mathematical or physical concept that
+cannot become obsolete. Incidental examples (a particular task,
+test artifact, or transient project state) consume reader
+attention with trivialities and rot as the codebase evolves; an
+archetypal example continues to teach the rule years later.
 
-## Adversarial review of specs and plans
+## Avoid colloquialisms and metaphors
 
-Specs and plans pass through fresh-context adversarial review
-until convergence, distinct from the author's self-review.
+Only standard technical terms are precise and universal enough
+for our purposes. The rule binds all committed text; the rule
+statement lives in `CLAUDE.md` § Style guidelines.  Examples
+(where not specific technical terms) include "land", "gap",
+and "gate".
+
+## Documentation under `docs/`
+
+`docs/index.md` is the project's reader-facing description: the
+directory layout and a topological narrative of the implemented
+content. Each entry covers the source-tree paths it touches, the
+central concepts it introduces, and its dependencies (other
+entries here, or specific external modules). Documentation is
+updated in concert with any code change that introduces new
+content appropriate to document, such as the formalisation of a
+new mathematical concept.
+
+`docs/process.md` (this file) contains the rationale for each
+rule that binds development; `docs/lean-resources.md` catalogues
+external library and mathematical references organised by topic.
+Both are reader-facing alongside `docs/index.md`.
+
+## Adversarial review
+
+Specs and plans go through fresh-context adversarial review until
+convergence (no blockers, no serious findings). The reviewer is a
+NEW general-purpose `Agent` invocation per round (not
+`SendMessage` to a continuing agent), reading only the artifact at
+the given path. Findings are categorised blocker / serious / minor
+/ cosmetic-taste; the author responds in writing to every finding
+(fix / defer with rationale / reject as cosmetic-taste). The
+discipline catches bugs the author cannot see; the fresh context
+ensures the reviewer is not subject to the author's blind spots.
 
 ### Reviewer protocol
 
-A reviewer is a new general-purpose `Agent` invocation per
-round — never `SendMessage` to a continuing agent — that reads
-the artefact at the given path, its cited sources, and any
-additional file or read-only remote resource needed to verify
-a factual claim the artefact makes. Each round's reviewer is
-fresh so that it is not anchored to the previous round's
-findings or to the author's framing of fixes. The procedure
-is the same for spec documents and plan documents.
+The reviewer reads the artefact at the given path, its cited
+sources, and any additional file or read-only remote resource
+needed to verify a factual claim the artefact makes. Each
+round's reviewer is fresh so that it is not anchored to the
+previous round's findings or to the author's framing of fixes.
+The procedure is the same for spec documents and plan documents.
 
 The reviewer may invoke read-only operations to verify
 claims: file reads, read-only `git` (e.g. `git remote -v`,
@@ -105,7 +167,7 @@ Every defect the reviewer reports is one of four severities:
 
 | Severity | Definition | Examples |
 | --- | --- | --- |
-| Blocker | The artefact cannot be implemented as written, or if implemented would violate a project hard rule (`CLAUDE.md` § Hard rules). | A factual error in a command form; a precondition that makes an operation fail in a real case; a direct contradiction with a project rule. |
+| Blocker | The artefact cannot be implemented as written, or if implemented would violate a project rule (`CLAUDE.md` § Rules). | A factual error in a command form; a precondition that makes an operation fail in a real case; a direct contradiction with a project rule. |
 | Serious | The artefact admits an interpretation that produces a wrong result, or omits a case that is in scope. | Ambiguity readable two ways; missing handling of a flow the artefact implicitly requires; under-specification that forces the implementer to guess. |
 | Minor | Imprecise prose, redundancy, or organisation that does not affect implementability. | A heading that duplicates information; an inefficient ordering of bullets; a citation that could be more specific. |
 | Cosmetic-taste | Typography, line wrapping, register-list word choice, or other surface concerns that do not affect meaning. | Markdownlint violations; whitespace; choice between two equally clear phrasings. |
@@ -133,19 +195,13 @@ the defect's entry, choosing one of:
   concern is not adopted.
 
 Minor and cosmetic-taste findings may be fixed, deferred, or
-rejected at the author's discretion subject to the convergence
-criterion below.
+rejected at the author's discretion.
 
 ### Convergence criterion
 
-A round **converges** when its reviewer reports zero blocker,
-zero serious, and zero minor findings. Cosmetic-taste findings
-are not a barrier to convergence and may remain open at
-termination. This criterion is stricter than the analogous one
-in `geb-mathlib`'s process (which allows minors to remain at
-convergence); the additional strictness is a deliberate
-divergence to ensure geb-lean artefacts reach `geb-mathlib`-
-candidate quality before they leave their topic branch.
+A round **converges** when its reviewer reports zero blocker and
+zero serious findings. Minor and cosmetic-taste findings are not
+a barrier to convergence and may remain open at termination.
 
 ### Loop
 
@@ -168,7 +224,109 @@ reviewer's output as needed to meet these constraints; this
 editing is not a substantive change to the findings and does
 not require re-dispatch.
 
-## Order of artefact production
+## Verify agent claims
+
+Any factual claim about an external system (mathlib, Lean,
+third-party tools, jj, GitHub conventions, library APIs) is
+provisional until verified against authoritative sources.
+Committed artifacts include the citation alongside the claim.
+Adversarial reviewers explicitly check for unverified claims. AI-agent memory
+is unreliable for facts about external systems; verification at
+use time keeps committed content trustworthy.
+
+## main and integration
+
+`main` is append-only stable history; never force-pushed. Topic
+branches are merged without force-pushing.
+`integration` is the regenerated fan-in merge view of `main` plus
+active topic branches; force-pushed (lease-protected by default)
+as topic-branch tips move. The split keeps `main` fork-friendly
+(clones never see force-pushed history) while giving us a single
+working view of all in-flight work.
+
+Topic branches use prefix-by-purpose names (`feat/`, `fix/`,
+`refactor/`, `chore/`, `docs/`, `bump/`) and carry their
+workstream's spec, plan, and code together until the branch lands
+on `main`.
+
+## Markdownlint discipline
+
+Every Markdown document passes `markdownlint-cli2` against
+`.markdownlint-cli2.jsonc` (shared with VSCode extension).
+`.remember/` is intentionally not excluded; non-compliant remember
+output is edited locally. The discipline keeps documentation
+uniformly readable; sharing the config with VSCode means the
+editor catches violations as we type.
+
+The config's `ignores` array (e.g. `.session/**`,
+`docs/superpowers/plans/**`, etc.) suppresses files in glob
+expansion AND in explicit-path arguments. To lint a single file
+that lives in an ignored directory, use the `:` literal-path
+prefix documented by `markdownlint-cli2 --help`:
+
+```sh
+markdownlint-cli2 ':.session/README.md'
+```
+
+The leading `:` marks the argument as a literal path that
+bypasses both the config's `globs` and `ignores` matching;
+`--no-globs` alone does not bypass `ignores` (it suppresses
+only the `globs` key).
+
+## No LLM-drafted user-facing text
+
+PR descriptions, GitHub issue/PR comments are user-authored.
+Mathlib's policy is unconditional ("use your own words").
+Multi-layered enforcement: hard rule in `CLAUDE.md`, pre-push
+reminder in `scripts/pre-push.sh`, PR template checkbox,
+user-review-before-push gate. The redundancy is intentional.
+Claude may produce drafts marked "for paraphrasing"; the posted
+text is the user's own writing.
+
+## Generic user references
+
+"the user" / "they" / "them" generically in committed text. No
+first names, email, or autobiographical detail. Committed content
+should make sense to any contributor; specific identities make it
+read as a single author's project. Per-developer local state,
+including user-level `jj config` for `user.name`, `user.email`,
+and `signing.*`, lives outside the repository per jj 0.38+'s
+config-location model and is exempt from this rule.
+
+## Fork–upstream relationship
+
+The local working copy is a clone of the fork at
+`rokopt/geb` ("origin"), itself a fork of the canonical
+repository at `anoma/geb` ("upstream"). Both are
+administered by the same operator. Daily work pushes to
+the fork; upstream receives commits only through merged
+pull requests opened from the fork.
+
+### Remote roles
+
+| Remote | URL | Role |
+| --- | --- | --- |
+| origin | `ssh://git@github.com/rokopt/geb` | Daily fork; push target for topic branches. |
+| upstream | `git@github.com:anoma/geb.git` | Canonical repository; PR target only. |
+
+### Invariants
+
+The fork-first push rule, the no-direct-push-to-upstream
+rule, the merge-commit-strategy-on-synchronising-PRs
+rule, the append-only-on-both-default-branches rule, and
+the lockstep-after-merge rule are recorded in directive
+form in `.claude/rules/fork-upstream-flow.md`. The
+mechanical denial of direct upstream pushes lives in
+`scripts/hooks/block-mutating-git.sh`.
+
+## Phase-driven workflow
+
+Each chunk of work passes through brainstorm, spec, plan, and
+execute phases. Skills load on demand at the phase they apply
+to (`superpowers:brainstorming`, `superpowers:writing-plans`,
+`superpowers:executing-plans`, the `lean4:*` family, and so on);
+`CLAUDE.md` and the unscoped `.claude/rules/*.md` files load at
+session start.
 
 Each workstream proceeds: brainstorm, then spec, then spec
 self-review, then spec adversarial review (looped to
@@ -179,43 +337,30 @@ plans co-evolve with code on the same topic branch; the
 brainstorm output, spec, plan, and review iterations are all
 commits on that branch.
 
-## Verify agent claims against authoritative sources
+Three MCP servers attach at the session level rather than
+per-skill:
 
-When an agent (sub-agent or otherwise) reports a fact about the
-codebase, the build state, or the literature, the receiving
-party verifies it directly against the named source before
-acting. Build claims are verified by re-running `lake build` and
-`lake test`; literature claims are verified by reading the cited
-passage; codebase claims are verified by reading the named file.
-This rule applies symmetrically to claims made by Claude and
-claims made by the user.
-
-## Constructive-only Lean code
-
-Committed Lean code does not import or `open` `Classical`, does
-not use the `classical` tactic attribute, and does not use
-`noncomputable` or `axiom`. `Quotient` and `Quot` are used via
-their constructive API (`mk`, `lift`, `ind`, `sound`); `Quot.out`
-and `Quotient.out` are excluded because they require
-`Classical.choice`. The `scripts/check-axioms.sh` script flags
-non-allowlisted axioms in pre-push and CI. The full statement
-of this rule lives in `.claude/rules/lean-disciplines.md`.
-
-## `main` / `integration` / topic-branch model
-
-`main` is append-only and protected: history is never rewritten,
-and direct pushes are forbidden. `integration` is a regenerated
-fan-in view rebuilt from the active topic branches; it is not a
-source of truth and may be reset. Topic branches use
-prefix-by-purpose names (`feat/`, `fix/`, `refactor/`, `chore/`,
-`docs/`, `bump/`) and carry their workstream's spec, plan, and
-code together until the branch lands on `main`.
-
-The 2026-05-10 process bootstrap cutover is at commit
-`3cdbc55f6ede525ca2cd358244c65c879626e1bd` on main,
-tagged `cutover-2026-05-10`.
+- `arxiv-mcp-server` — search, download, and read papers when a
+  workstream cites external mathematical sources.
+  Upstream: <https://github.com/blazickjp/arxiv-mcp-server>.
+- `memory` — graph-shaped scratchpad that persists session-level
+  observations across restarts.
+  Upstream:
+  <https://github.com/modelcontextprotocol/servers/tree/main/src/memory>.
+- `MCP Solver` — constraint and SAT solving via Python bindings,
+  used for combinatorial side-conditions.
+  Upstream: <https://github.com/szeider/mcp-solver>.
 
 ## `jj` colocated mode
+
+`geb-lean/` is a subdirectory of the `geb/` monorepo, not a
+standalone repository. The version-control root, hooks, CI
+workflows that touch `geb-lean`, and the parent `LICENSE` all
+live one directory up. Repository-scoped hooks live at
+`geb-lean/scripts/hooks/`. CI workflows that touch `geb-lean`
+live at the parent `geb/.github/workflows/`. The pre-push hook
+is `geb-lean`-scoped: it builds and tests only `geb-lean`
+artefacts.
 
 `jj` runs in colocated mode at the parent `geb/` root, not at
 `geb-lean/`. A single `jj git init --colocate` step at the
@@ -258,9 +403,7 @@ step 2. Per-repo configuration is set before the first
 4. `jj git fetch --remote origin` to mirror bookmarks into jj's
    view.
 5. `gh repo set-default rokopt/geb` to direct `gh` default-base
-   commands at the fork. See
-   `docs/superpowers/specs/2026-05-12-fork-upstream-flow-design.md`
-   § Per-clone `gh` configuration for rationale and reversal.
+   commands at the fork.
 6. `bash geb-lean/scripts/check-jj-setup.sh` to verify the
    configuration.
 
@@ -271,60 +414,6 @@ setting, the explicit fallback is to add
 to the on-boarding sequence in place of step 4's tag-mirroring
 behaviour. The repository assumes jj 0.41+.
 
-## Comment and docstring style
-
-Comments and docstrings describe the code as it stands. They
-do not narrate the development history, refer to prior states
-of the code, or announce work yet to be done; that material
-belongs in commit messages, review threads, and the `.session/`
-directory. Mathematical context that is not visible from the
-code itself is appropriate, and so are pointers to other parts
-of the codebase or to literature. The full register rule lives
-in `.claude/rules/markdown-writing.md` and applies to comments
-in code by reference.
-
-## Markdownlint discipline
-
-Every committed `.md` file passes `markdownlint-cli2` against
-`.markdownlint-cli2.jsonc`. The pre-push hook runs the same
-check locally before a push completes; CI repeats it. Tables and
-fenced code blocks are exempt from the 80-character line limit
-via `MD013` configuration; all other prose obeys it. The
-authoritative statement is in `.claude/rules/markdown-writing.md`.
-
-The config's `ignores` array (e.g. `.session/**`,
-`docs/superpowers/plans/**`, etc.) suppresses files in glob
-expansion AND in explicit-path arguments. To lint a single file
-that lives in an ignored directory, use the `:` literal-path
-prefix documented by `markdownlint-cli2 --help`:
-
-```sh
-markdownlint-cli2 ':.session/README.md'
-```
-
-The leading `:` marks the argument as a literal path that
-bypasses both the config's `globs` and `ignores` matching;
-`--no-globs` alone does not bypass `ignores` (it suppresses
-only the `globs` key).
-
-## No LLM-drafted user-facing text
-
-Pull request descriptions, GitHub issue and comment threads, and
-any other external-facing message are authored by the user.
-Claude may produce drafts marked "for paraphrasing"; the posted
-text is the user's own writing. This rule preserves the user's
-voice in public communication and avoids attributing
-hallucinations to the project.
-
-## Generic user references
-
-Committed prose refers to "the user", "they", or "them"; it does
-not embed first names, email addresses, or autobiographical
-material. Per-developer local state, including user-level `jj
-config` for `user.name`, `user.email`, and `signing.*`, lives
-outside the repository per jj 0.38+'s config-location model and
-is exempt from this rule.
-
 ## Process self-update mechanism
 
 When a session uncovers a missing rule, an underspecified
@@ -334,44 +423,6 @@ the workstream that uncovered it. Rule edits are reviewed by
 the same brainstorm-spec-plan-execute pipeline as Lean code
 edits. The rationale layer here is updated in lock-step with
 the rule text it explains.
-
-## Workstream triage method
-
-The repository's source of truth for active and deferred work
-is `TODO.md` at the repository root. Pre-cutover work was
-tracked under `.session/workstreams/*.md`; that directory is
-in transitional retirement and is removed at the end of the
-triage migration. Each `.session/workstreams/<name>.md` entry
-is classified with exactly one label:
-
-| Label | Meaning | Disposition |
-| --- | --- | --- |
-| `live` | Active or paused with intent to resume | Migrated to `TODO.md` § Active in geb-lean. |
-| `live-deferred-to-geb-mathlib` | Real work better done after migration to the curated repository | Migrated to `TODO.md` § To be done in geb-mathlib. |
-| `completed` | Finished and merged | Material described in `docs/index.md` if not already; `.session/` entry deleted. |
-| `superseded` | Started a direction later abandoned in favour of another approach | `.session/` entry deleted. Notes on *why* superseded captured in the surviving approach's spec or plan if non-obvious. |
-| `abandoned` | Explored and decided not to pursue | `.session/` entry deleted. |
-| `unclear` | Cannot be classified from content alone | Surfaced for explicit user decision; not auto-classified. |
-
-The same scheme applies to the Claude-harness task list,
-most of which rolls up into "child of workstream X (live)"
-or "completed" once workstream-level classifications are
-fixed.
-
-The per-file procedure: read the entry; cross-reference
-against version-control history for any commits referencing
-the topic; cross-reference against current source-tree state
-and the harness task list. Before deletion, search for inbound
-references across `docs/superpowers/`, `docs/`, `README.md`,
-and `CLAUDE.md`; either update each reference to point at the
-new home (`TODO.md`, `docs/index.md`, the relevant
-`docs/superpowers/specs/<file>`, etc.) or migrate the
-referenced content first. Propose a classification with a
-one-sentence justification, surface to the user, and on
-confirmation perform the disposition.
-
-Triage is human-paced and auditable: each file gets a brief
-surface-and-confirm rather than bulk auto-classification.
 
 ## Literature-citation discipline
 
@@ -388,8 +439,8 @@ Citations are specific (e.g.
 research documents in `docs/research/`. Original-content
 workstreams (the broader categorical-foundations material) are
 not bound by this discipline; citations are encouraged where
-applicable but not required. The rule lives in
-`.claude/rules/lean-disciplines.md`.
+applicable but not required. The rule lives in `CLAUDE.md`
+§ Rules.
 
 ## Bottom-up named-composite discipline
 
@@ -402,7 +453,7 @@ a proposed construct cannot be expressed as a composition of
 the target's generators, that absence is a signal not to add
 the construct. The discipline preserves the equivalence by
 construction at every incremental step. The rule lives in
-`.claude/rules/lean-disciplines.md`.
+`.claude/rules/lean-coding.md`.
 
 ## Non-negotiable interfaces
 
@@ -417,24 +468,22 @@ implementation does not close, the corrective moves are
 strengthening supporting infrastructure, re-examining the
 proof strategy, or surfacing the obstruction for discussion —
 not weakening the interface. The rule lives in
-`.claude/rules/lean-disciplines.md`.
+`.claude/rules/lean-coding.md`.
 
 ## Relationship to geb-mathlib
 
 `geb-mathlib` is a separate repository for content that meets
-mathlib's contribution standards (see its specification at
-`docs/superpowers/specs/2026-05-04-geb-mathlib-bootstrap-design.md`).
-`geb-lean` is the experimentation counterpart: original
-research, exploratory category theory, and material that is not
-yet upstreamable. `TODO.md` entries marked "to be done in
-geb-mathlib" denote material that is intended for the curated
-repository once it stabilises here; migration happens by
-extracting the stabilised module to `geb-mathlib`, replacing the
-local copy with an import, and removing the `TODO.md` entry.
-This repository does not adopt a `Mathlib/` versus `Internal/`
-split: `geb-mathlib` plays the curated role, so a sub-tree
-boundary inside `geb-lean` would duplicate that distinction
-without adding information.
+mathlib's contribution standards. `geb-lean` is the
+experimentation counterpart: original research, exploratory
+category theory, and material that is not yet upstreamable.
+`TODO.md` entries marked "to be done in geb-mathlib" denote
+material that is intended for the curated repository once it
+stabilises here; migration happens by extracting the stabilised
+module to `geb-mathlib`, replacing the local copy with an import,
+and removing the `TODO.md` entry. This repository does not adopt
+a `Mathlib/` versus `Internal/` split: `geb-mathlib` plays the
+curated role, so a sub-tree boundary inside `geb-lean` would
+duplicate that distinction without adding information.
 
 ## No per-file copyright or author headers
 

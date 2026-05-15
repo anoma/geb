@@ -1,13 +1,27 @@
-# Topological Index of GebLean Workstreams
+# geb-lean documentation
 
-A reader-oriented map of the major mathematical content
-implemented in `GebLean/`. Each entry lists the workstream's
-name, the source-tree paths it occupies, the central
+This index combines a directory layout for the source tree with
+a topological narrative of the formalised mathematical content.
+The directory layout below describes the namespace structure;
+the workstream sections that follow describe each major area,
+listing the source-tree paths it occupies, the central
 mathematical concepts it formalises, the dependencies it has on
-other entries below, and (where applicable) pointers into
+other entries, and (where applicable) pointers into
 `docs/research/` and `docs/superpowers/specs/`. The index is
 adequate rather than exhaustive: every major area is reachable,
 and gaps are filled in as workstreams complete.
+
+## Directory structure
+
+The repository is laid out narrow-and-deep, with one indexing
+`.lean` file per directory.
+
+- `GebLean/` — root namespace, hosting the Lean source for the
+  formalisation.
+- `GebLean/Utilities/` — shared helpers used across the library.
+- `GebLeanTests/` — test library, structured as `lake test`
+  targets including `#guard` assertions and Plausible property
+  tests.
 
 ## Quivers, semicategories, acyclic categories
 
