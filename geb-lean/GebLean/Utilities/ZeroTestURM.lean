@@ -40,6 +40,10 @@ rather than a zero-test jump (level 1 in K^sim). See spec
   instruction array.
 - `URMState.runFor`: step-counted iteration of `step`;
   past the halt state, self-loops.
+- `URMState.init`: initial state from input vector `v`
+  via constructive `List.find?` lookup; PC starts at 0;
+  registers default to 0 with inputs placed at
+  `P.inputRegs i`.
 
 ## Main statements
 
@@ -193,6 +197,31 @@ theorem URMState.runFor_add
     change URMState.runFor P (URMState.step P s) (m + n)
       = URMState.runFor P (URMState.runFor P (URMState.step P s) m) n
     exact ih (URMState.step P s)
+
+/-- Initial state for program `P` with input vector `v`:
+PC = 0; registers default to 0, with input slots `i`
+placed at `P.inputRegs i`.
+
+Uses Lean core's `List.find?` over `List.finRange
+P.numInputs` (constructive search returning
+`Option (Fin P.numInputs)`) rather than
+`Classical.choose`, per the constructive discipline.
+`P.inputRegs_inj` ensures the returned `some i` value is
+unique when it exists; when `r` is not in `P.inputRegs`'
+image, `find?` returns `none` and the register defaults
+to 0.
+
+The choice `pc := 0` shifts Tourlakis's 1-indexed
+`I(0) = 1` to 0-indexed `I(0) = 0`.  The shift is
+consistent across all later constructions. -/
+def URMState.init (P : URMProgram)
+    (v : Fin P.numInputs → ℕ) : URMState P where
+  pc := 0
+  regs := fun r =>
+    match (List.finRange P.numInputs).find?
+        (fun i => decide (P.inputRegs i = r)) with
+    | some i => v i
+    | none   => 0
 
 end ZeroTestURM
 
