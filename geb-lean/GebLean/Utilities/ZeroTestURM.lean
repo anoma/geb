@@ -29,6 +29,10 @@ rather than a zero-test jump (level 1 in K^sim). See spec
 
 - `URMInstr`: the five-instruction inductive type,
   parameterised by a register count `r : ℕ`.
+- `URMProgram`: program structure carrying instruction
+  array, register count, input register assignment
+  (with injectivity invariant), and output register
+  (with disjoint-from-inputs invariant).
 
 ## References
 
@@ -69,6 +73,40 @@ inductive URMInstr (r : ℕ) : Type
   PC and registers unchanged when executed (self-loop). -/
   | stop : URMInstr r
   deriving Repr, DecidableEq, Inhabited
+
+/-- A URM program: instruction array plus
+input/output register convention.
+
+Per Tourlakis 2018 §0.1.0.37 (p. 15): "V_1 is the output
+variable while the V_i, for i = 2, …, n+1, are input
+variables." `outputReg` and `inputRegs` make this
+convention explicit; the two structural invariants
+`inputRegs_inj` and `outputReg_not_input` are
+independent (distinct input slots map to distinct
+registers; the output register is disjoint from every
+input register).
+
+PC labels range over `{0, …, instrs.size − 1}`. PC ≥
+`instrs.size` is the implicit halt state (Tourlakis
+p. 15: stop "continues forever 'trivially', without
+changing either the V_i or the instruction number"). -/
+@[ext] structure URMProgram where
+  /-- Number of registers. -/
+  numRegs : ℕ
+  /-- Number of inputs. -/
+  numInputs : ℕ
+  /-- Program instructions, indexed by PC. -/
+  instrs : Array (URMInstr numRegs)
+  /-- The output register (Tourlakis V_1 convention). -/
+  outputReg : Fin numRegs
+  /-- Input register assignment: input slot `i` writes
+  to register `inputRegs i`. -/
+  inputRegs : Fin numInputs → Fin numRegs
+  /-- Distinct input slots map to distinct registers. -/
+  inputRegs_inj : Function.Injective inputRegs
+  /-- The output register is disjoint from every input
+  register. -/
+  outputReg_not_input : ∀ i, inputRegs i ≠ outputReg
 
 end ZeroTestURM
 
