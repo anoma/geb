@@ -38,6 +38,14 @@ rather than a zero-test jump (level 1 in K^sim). See spec
 - `URMState.step`: one-step transition per Tourlakis
   2018 §0.1.0.37 (p. 16). Self-loops past end of
   instruction array.
+- `URMState.runFor`: step-counted iteration of `step`;
+  past the halt state, self-loops.
+
+## Main statements
+
+- `URMState.runFor_zero`, `URMState.runFor_succ`,
+  `URMState.runFor_add`: reduction lemmas for `runFor`;
+  the first two are `@[simp]`.
 
 ## References
 
@@ -148,6 +156,43 @@ def URMState.step (P : URMProgram) (s : URMState P) :
           regs := s.regs }
     | URMInstr.stop => s
   else s
+
+/-- Run the URM for `n` steps starting from `s`.
+Constructive (no `Classical.choose`); `n` steps past
+the halt state self-loop (Tourlakis p. 15).
+
+`P` is explicit (matching spec §4.2). -/
+def URMState.runFor (P : URMProgram) (s : URMState P) :
+    ℕ → URMState P
+  | 0 => s
+  | n + 1 => URMState.runFor P (URMState.step P s) n
+
+/-- Reduction lemma: zero-step execution returns the
+initial state. -/
+@[simp] theorem URMState.runFor_zero
+    (P : URMProgram) (s : URMState P) :
+    URMState.runFor P s 0 = s := rfl
+
+/-- Reduction lemma: `runFor (n+1)` peels one step at
+the front. -/
+@[simp] theorem URMState.runFor_succ
+    (P : URMProgram) (s : URMState P) (n : ℕ) :
+    URMState.runFor P s (n + 1)
+      = URMState.runFor P (URMState.step P s) n := rfl
+
+/-- Step-additivity: running for `m + n` steps equals
+running for `m`, then continuing `n` more from there. -/
+theorem URMState.runFor_add
+    (P : URMProgram) (s : URMState P) (m n : ℕ) :
+    URMState.runFor P s (m + n)
+      = URMState.runFor P (URMState.runFor P s m) n := by
+  induction m generalizing s with
+  | zero => simp only [Nat.zero_add, URMState.runFor]
+  | succ m ih =>
+    rw [Nat.add_right_comm m 1 n, Nat.add_one]
+    change URMState.runFor P (URMState.step P s) (m + n)
+      = URMState.runFor P (URMState.runFor P (URMState.step P s) m) n
+    exact ih (URMState.step P s)
 
 end ZeroTestURM
 
