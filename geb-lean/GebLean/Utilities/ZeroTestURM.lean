@@ -33,6 +33,11 @@ rather than a zero-test jump (level 1 in K^sim). See spec
   array, register count, input register assignment
   (with injectivity invariant), and output register
   (with disjoint-from-inputs invariant).
+- `URMState`: machine state (PC + registers), indexed by
+  the program whose registers it tracks.
+- `URMState.step`: one-step transition per Tourlakis
+  2018 §0.1.0.37 (p. 16). Self-loops past end of
+  instruction array.
 
 ## References
 
@@ -107,6 +112,42 @@ changing either the V_i or the instruction number"). -/
   /-- The output register is disjoint from every input
   register. -/
   outputReg_not_input : ∀ i, inputRegs i ≠ outputReg
+
+/-- Machine state during URM execution: PC and register
+contents.  Indexed by the program whose registers are
+being tracked (the `numRegs` field of `P` fixes the
+register-vector arity). -/
+@[ext]
+structure URMState (P : URMProgram) where
+  /-- Program counter (0-indexed; Tourlakis's I(0) = 1
+  is mapped to 0 here). -/
+  pc : ℕ
+  /-- Register contents, indexed by `Fin P.numRegs`. -/
+  regs : Fin P.numRegs → ℕ
+
+/-- One step of URM execution.  Pattern-matches on the
+instruction at the current PC and updates state per
+Tourlakis 2018 §0.1.0.37 (p. 16).  Past the end of the
+instruction array, `step` is the identity (matching the
+stop self-loop convention). -/
+def URMState.step (P : URMProgram) (s : URMState P) :
+    URMState P :=
+  if h : s.pc < P.instrs.size then
+    match P.instrs[s.pc]'h with
+    | URMInstr.assign i c =>
+        { pc := s.pc + 1
+          regs := Function.update s.regs i c }
+    | URMInstr.inc i =>
+        { pc := s.pc + 1
+          regs := Function.update s.regs i (s.regs i + 1) }
+    | URMInstr.dec i =>
+        { pc := s.pc + 1
+          regs := Function.update s.regs i (s.regs i - 1) }
+    | URMInstr.jumpZ i l₁ l₂ =>
+        { pc := if s.regs i = 0 then l₁ else l₂
+          regs := s.regs }
+    | URMInstr.stop => s
+  else s
 
 end ZeroTestURM
 
