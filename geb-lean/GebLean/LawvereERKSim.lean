@@ -44,6 +44,11 @@ register.
   multiplicative accumulator (initial value 1) updated
   via Tourlakis 2018 p. 19's R^XY_Z nested-loop
   template.
+- `compileER`: the top-level recursive driver
+  `{a : ℕ} → ERMor1 a → URMProgram a`. Dispatches to
+  the per-constructor combinators via `compileERFrag`
+  and forgets the reserved-zero convention via
+  `.toURMProgram`.
 
 ## References
 
@@ -1317,6 +1322,29 @@ def compileFrag_bprod {k : ℕ}
     lastInstr_isStop :=
       URMInstrRaw.toBoundedArray_back?_of_last_stopR hBound
         hLastStopR }
+
+/-- Recursive driver: emit a `CompiledFragment a` for
+each `ERMor1 a` constructor by dispatching to the
+per-constructor combinators. -/
+def compileERFrag : {a : ℕ} → ERMor1 a → CompiledFragment a
+  | _, .zero => compileFrag_zero
+  | _, .succ => compileFrag_succ
+  | _, .proj i => compileFrag_proj i
+  | _, .sub => compileFrag_sub
+  | _, .comp f gs =>
+      compileFrag_comp (compileERFrag f)
+        (fun i => compileERFrag (gs i))
+  | _, .bsum f => compileFrag_bsum (compileERFrag f)
+  | _, .bprod f => compileFrag_bprod (compileERFrag f)
+
+/-- The top-level ER → URM compiler. Returns a
+`URMProgram a` (arity-indexed per Task 0's refactor)
+whose execution on input `v : Fin a → ℕ` produces
+`e.interp v` in the output register. Spec §5; Tourlakis
+2018 §0.1.0.37 (pp. 15–16) URM semantics; Tourlakis
+2018 pp. 19–21 per-template constructions. -/
+def compileER {a : ℕ} (e : ERMor1 a) : URMProgram a :=
+  (compileERFrag e).toURMProgram
 
 end LawvereERKSim
 
