@@ -149,6 +149,61 @@ def CompiledFragment.zeroReg {a : ℕ}
     (F : CompiledFragment a) : Fin F.numRegs :=
   ⟨0, F.numRegs_pos⟩
 
+/-- Encode unconditional `goto l` as Tourlakis's
+informal shorthand (p. 19): two-target zero-test jump on
+the reserved-zero register `V_z` (= register 0). Both
+branches go to `l`, so the jump is unconditional.
+
+Returns a single raw instruction. -/
+def URMRaw.goto (l : ℕ) : URMInstrRaw :=
+  .jumpZR 0 l l
+
+/-- Destructive transfer `V_dst ← V_dst + V_src;
+V_src ← 0`. Body of Tourlakis 2018 p. 19's M program for
+`λx.x`, generalised to arbitrary `src` and `dst` and
+omitting the trailing `stop`. Emits exactly 4 raw
+instructions starting at PC offset `pcBase`; exit PC is
+`pcBase + 4`.
+
+Returns the instruction list. The caller is responsible
+for placing the returned instructions at `pcBase` in the
+overall fragment. -/
+def URMRaw.transferLoop (pcBase src dst : ℕ) :
+    List URMInstrRaw :=
+  [ .jumpZR src (pcBase + 4) (pcBase + 1),
+    .decR src,
+    .incR dst,
+    URMRaw.goto pcBase ]
+
+/-- Number of raw instructions emitted by
+`transferLoop`. -/
+def URMRaw.transferLoopLen : ℕ := 4
+
+/-- Preserving transfer `V_dst ← V_dst + V_src;
+V_src unchanged`. Two destructive-transfer loops via a
+tmp register; spec §5.1 register-allocation discipline.
+Emits exactly 9 raw instructions starting at PC offset
+`pcBase`; exit PC is `pcBase + 9`. -/
+def URMRaw.preservingTransfer
+    (pcBase src dst tmp : ℕ) : List URMInstrRaw :=
+  -- Loop 1: V_src consumed; V_dst, V_tmp accumulate.
+  -- PCs pcBase..pcBase+4 (5 instructions):
+  [ .jumpZR src (pcBase + 5) (pcBase + 1),  -- pcBase
+    .decR src,                              -- pcBase+1
+    .incR dst,                              -- pcBase+2
+    .incR tmp,                              -- pcBase+3
+    URMRaw.goto pcBase,                     -- pcBase+4
+  -- Loop 2: V_tmp consumed; V_src restored.
+  -- PCs pcBase+5..pcBase+8 (4 instructions):
+    .jumpZR tmp (pcBase + 9) (pcBase + 6),  -- pcBase+5
+    .decR tmp,                              -- pcBase+6
+    .incR src,                              -- pcBase+7
+    URMRaw.goto (pcBase + 5) ]              -- pcBase+8
+
+/-- Number of raw instructions emitted by
+`preservingTransfer`. -/
+def URMRaw.preservingTransferLen : ℕ := 9
+
 end LawvereERKSim
 
 end GebLean
