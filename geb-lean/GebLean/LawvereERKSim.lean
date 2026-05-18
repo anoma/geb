@@ -30,6 +30,11 @@ register.
   `compileFrag_proj`, `compileFrag_sub`: atomic
   per-ER-constructor fragment combinators (no
   sub-fragment composition).
+- `compileFrag_comp`: compositional combinator for
+  `ERMor1.comp f gs` — glues sub-fragments via
+  register-space injection (`URMInstr.reindex`),
+  PC-shifting (`URMInstr.shiftPC`), and destructive
+  output→input transfer between sub-fragments.
 
 ## References
 
@@ -387,6 +392,347 @@ def compileFrag_sub : CompiledFragment 2 :=
         (fun i => Fin.cases ?_ (fun j => j.elim0) i) p <;>
         intro h <;> revert h <;> decide
     zeroReg_not_output := by decide }
+
+/-- Re-index the register references of a `URMInstr r`
+through an injection `f : Fin r → Fin r'`. PC labels are
+left unchanged (caller is responsible for PC-shifting
+separately). Spec §5.1.2. -/
+def URMInstr.reindex {r r' : ℕ} (f : Fin r → Fin r') :
+    URMInstr r → URMInstr r'
+  | .assign i c => .assign (f i) c
+  | .inc i => .inc (f i)
+  | .dec i => .dec (f i)
+  | .jumpZ i l₁ l₂ => .jumpZ (f i) l₁ l₂
+  | .stop => .stop
+
+/-- Shift the PC labels of a `URMInstr r` by a constant
+`Δ`. Register references are unchanged. Spec §5.1.2. -/
+def URMInstr.shiftPC {r : ℕ} (Δ : ℕ) :
+    URMInstr r → URMInstr r
+  | .assign i c => .assign i c
+  | .inc i => .inc i
+  | .dec i => .dec i
+  | .jumpZ i l₁ l₂ => .jumpZ i (l₁ + Δ) (l₂ + Δ)
+  | .stop => .stop
+
+/-- Convert a typed `URMInstr r` to its raw form,
+discarding the bound proof on register indices. Used by
+`compileFrag_comp` to splice sub-fragment instructions
+into the raw-list emission pipeline. -/
+def toRawOfBounded {r : ℕ} : URMInstr r → URMInstrRaw
+  | .assign i c => .assignR i.val c
+  | .inc i => .incR i.val
+  | .dec i => .decR i.val
+  | .jumpZ i l₁ l₂ => .jumpZR i.val l₁ l₂
+  | .stop => .stopR
+
+/-- Register bound of `toRawOfBounded ins` is at most
+`r` — every register index in `ins` is a `Fin r`, so its
+`Nat`-form `+1` is at most `r`-bounded by the `Fin` proof.
+We state the bound as `≤ r` (so callers can chain). -/
+theorem regBound_toRawOfBounded_le {r : ℕ} (ins : URMInstr r) :
+    (toRawOfBounded ins).regBound ≤ r := by
+  cases ins
+  · exact Fin.isLt _
+  · exact Fin.isLt _
+  · exact Fin.isLt _
+  · exact Fin.isLt _
+  · exact Nat.zero_le _
+
+/-- Reindex and PC-shift a sub-fragment's instructions in
+one go at the raw level: emit a `URMInstrRaw` with
+register indices shifted by `regOffset` and PC labels
+shifted by `pcShift`. -/
+def URMInstrRaw.reindexShift (regOffset pcShift : ℕ) :
+    URMInstrRaw → URMInstrRaw
+  | .assignR i c => .assignR (regOffset + i) c
+  | .incR i => .incR (regOffset + i)
+  | .decR i => .decR (regOffset + i)
+  | .jumpZR i l₁ l₂ =>
+      .jumpZR (regOffset + i) (pcShift + l₁) (pcShift + l₂)
+  | .stopR => .stopR
+
+/-- `URMInstrRaw.reindexShift` bumps the register bound by
+at most `regOffset`. -/
+theorem URMInstrRaw.regBound_reindexShift_le
+    (regOffset pcShift : ℕ) (ins : URMInstrRaw) :
+    (URMInstrRaw.reindexShift regOffset pcShift ins).regBound
+      ≤ regOffset + ins.regBound := by
+  cases ins <;>
+    simp only [URMInstrRaw.reindexShift, URMInstrRaw.regBound] <;>
+    omega
+
+/-- Cumulative register count of the first `n`
+sub-fragments. Used by `compileFrag_comp` to lay out
+disjoint register blocks. -/
+def gsPrefixSum {k a : ℕ}
+    (frag_gs : Fin k → CompiledFragment a) :
+    ℕ → ℕ
+  | 0 => 0
+  | n + 1 =>
+    gsPrefixSum frag_gs n
+      + (if h : n < k then (frag_gs ⟨n, h⟩).numRegs else 0)
+
+/-- The block size contributed by `frag_gs i` to the
+prefix sum equals `(frag_gs i).numRegs`. -/
+theorem gsPrefixSum_succ_eq {k a : ℕ}
+    (frag_gs : Fin k → CompiledFragment a) (i : Fin k) :
+    gsPrefixSum frag_gs (i.val + 1)
+      = gsPrefixSum frag_gs i.val + (frag_gs i).numRegs := by
+  change gsPrefixSum frag_gs i.val
+      + (if h : i.val < k then (frag_gs ⟨i.val, h⟩).numRegs else 0)
+    = gsPrefixSum frag_gs i.val + (frag_gs i).numRegs
+  simp only [i.isLt, dite_true, Fin.eta]
+
+/-- `gsPrefixSum` is monotone. -/
+theorem gsPrefixSum_mono {k a : ℕ}
+    (frag_gs : Fin k → CompiledFragment a) {n m : ℕ}
+    (h : n ≤ m) :
+    gsPrefixSum frag_gs n ≤ gsPrefixSum frag_gs m := by
+  induction h with
+  | refl => exact Nat.le_refl _
+  | step _ ih =>
+    refine Nat.le_trans ih ?_
+    change gsPrefixSum frag_gs _
+      ≤ gsPrefixSum frag_gs _ + (if h : _ < k then _ else 0)
+    split <;> omega
+
+/-- Boundedness lemma for `preservingTransfer`: every
+emitted raw instruction has register bound at most
+`max(src, dst, tmp) + 1`. -/
+theorem boundedBy_preservingTransfer (r pcBase src dst tmp : ℕ)
+    (hsrc : src + 1 ≤ r) (hdst : dst + 1 ≤ r)
+    (htmp : tmp + 1 ≤ r) :
+    URMInstrRaw.boundedBy r
+      (URMRaw.preservingTransfer pcBase src dst tmp) := by
+  intro ins hmem
+  simp only [URMRaw.preservingTransfer, URMRaw.goto,
+    List.mem_cons, List.not_mem_nil,
+    or_false] at hmem
+  rcases hmem with h | h | h | h | h | h | h | h | h <;>
+    (rw [h]; simp only [URMInstrRaw.regBound]; omega)
+
+/-- Boundedness lemma for `transferLoop`. -/
+theorem boundedBy_transferLoop (r pcBase src dst : ℕ)
+    (hsrc : src + 1 ≤ r) (hdst : dst + 1 ≤ r) :
+    URMInstrRaw.boundedBy r
+      (URMRaw.transferLoop pcBase src dst) := by
+  intro ins hmem
+  simp only [URMRaw.transferLoop, URMRaw.goto,
+    List.mem_cons, List.not_mem_nil,
+    or_false] at hmem
+  rcases hmem with h | h | h | h <;>
+    (rw [h]; simp only [URMInstrRaw.regBound]; omega)
+
+/-- Bound on `URMInstrRaw.reindexShift`. -/
+theorem regBound_reindexShift_le_offset_add
+    (regOffset pcShift bound : ℕ)
+    (ins : URMInstrRaw) (h : ins.regBound ≤ bound) :
+    (URMInstrRaw.reindexShift regOffset pcShift ins).regBound
+      ≤ regOffset + bound := by
+  cases ins <;>
+    simp only [URMInstrRaw.reindexShift, URMInstrRaw.regBound] <;>
+    (revert h; simp only [URMInstrRaw.regBound]; omega)
+
+/-- Block at offset `pcBase` for sub-fragment `i`:
+input-wiring preamble (`a` copies of `preservingTransfer`
+moving outer input `j` into the reindexed slot of
+`(frag_gs i).inputRegs j`), then `gs i`'s instructions
+(minus trailing stop) reindexed and PC-shifted, then a
+destructive `transferLoop` wiring `gs i`'s output into
+`f`'s `i`-th input slot. -/
+def compileFrag_comp_subBlock {k a : ℕ}
+    (frag_f : CompiledFragment k)
+    (frag_gs : Fin k → CompiledFragment a)
+    (gsBase fBase tmpReg : ℕ) (i : Fin k) (pcBase : ℕ) :
+    List URMInstrRaw :=
+  let bodyBase : ℕ := pcBase + 9 * a
+  let trBase : ℕ :=
+    bodyBase + ((frag_gs i).instrs.size - 1)
+  let inputCopies : List URMInstrRaw :=
+    (List.finRange a).flatMap fun j =>
+      URMRaw.preservingTransfer
+        (pcBase + 9 * j.val)
+        (2 + j.val)
+        (gsBase + ((frag_gs i).inputRegs j).val)
+        tmpReg
+  let body : List URMInstrRaw :=
+    (frag_gs i).instrs.pop.toList.map fun ins =>
+      URMInstrRaw.reindexShift gsBase bodyBase (toRawOfBounded ins)
+  let transfer : List URMInstrRaw :=
+    URMRaw.transferLoop trBase
+      (gsBase + ((frag_gs i).outputReg).val)
+      (fBase + (frag_f.inputRegs i).val)
+  inputCopies ++ body ++ transfer
+
+/-- Boundedness lemma for `compileFrag_comp_subBlock`:
+each emitted raw instruction has register bound at most
+`nR`, given arithmetic bounds linking `gsBase`, `fBase`,
+`tmpReg`, the sub-fragment's register count, and `f`'s
+register count. -/
+theorem boundedBy_compileFrag_comp_subBlock {k a : ℕ}
+    (frag_f : CompiledFragment k)
+    (frag_gs : Fin k → CompiledFragment a)
+    (gsBase fBase tmpReg nR : ℕ) (i : Fin k) (pcBase : ℕ)
+    (hGsBlock : gsBase + (frag_gs i).numRegs ≤ fBase)
+    (hFBlock : fBase + frag_f.numRegs = tmpReg)
+    (hTmp : tmpReg < nR) (ha : a ≤ fBase) :
+    URMInstrRaw.boundedBy nR
+      (compileFrag_comp_subBlock frag_f frag_gs
+        gsBase fBase tmpReg i pcBase) := by
+  unfold compileFrag_comp_subBlock
+  -- bound facts shared across all three sub-lists
+  have hOut : gsBase + ((frag_gs i).outputReg).val + 1 ≤ nR := by
+    have hO : ((frag_gs i).outputReg).val < (frag_gs i).numRegs :=
+      (frag_gs i).outputReg.isLt
+    omega
+  have hFIn : fBase + (frag_f.inputRegs i).val + 1 ≤ nR := by
+    have hI : (frag_f.inputRegs i).val < frag_f.numRegs :=
+      (frag_f.inputRegs i).isLt
+    omega
+  have hTmpR : tmpReg + 1 ≤ nR := by omega
+  intro ins hmem
+  simp only [List.mem_append, List.mem_flatMap,
+    List.mem_map] at hmem
+  rcases hmem with ((⟨j, _, hj⟩) | ⟨ins', _, heq⟩) | hT
+  · -- inputCopies branch
+    have hJa : j.val + 1 ≤ a := j.isLt
+    have hSrc : (2 + j.val) + 1 ≤ nR := by omega
+    have hDst : (gsBase + ((frag_gs i).inputRegs j).val) + 1 ≤ nR := by
+      have hI : ((frag_gs i).inputRegs j).val < (frag_gs i).numRegs :=
+        ((frag_gs i).inputRegs j).isLt
+      omega
+    exact boundedBy_preservingTransfer nR _ _ _ _ hSrc hDst hTmpR ins hj
+  · -- body branch
+    rw [← heq]
+    have hb : (toRawOfBounded ins').regBound ≤ (frag_gs i).numRegs :=
+      regBound_toRawOfBounded_le ins'
+    have hr := regBound_reindexShift_le_offset_add gsBase
+      (pcBase + 9 * a) (frag_gs i).numRegs (toRawOfBounded ins') hb
+    omega
+  · -- transfer branch
+    exact boundedBy_transferLoop nR _ _ _ hOut hFIn ins hT
+
+/-- Fragment for `ERMor1.comp f gs`. Spec §5.1.2:
+sequentially run each sub-URM `gs i` (after a
+preserving-transfer preamble that copies outer inputs into
+`gs i`'s input slots), destructively transfer its output
+into `f`'s `i`-th input slot via `transferLoop`, then run
+`f`'s URM (whose own trailing `stop` becomes the outer
+fragment's halt instruction). Tourlakis 2018 p. 21
+"concatenate M_g and M_f".
+
+Design choice: each sub-fragment is allocated a disjoint
+register block of size `(frag_gs i).numRegs` (so its
+internal zero register, distinct from the outer zero
+register, is initialised by its own first-instruction
+`assign 0 0` once reindexed). One shared scratch register
+at slot `numRegs - 1` services every `preservingTransfer`
+input-wiring step. `f`'s block sits immediately after the
+last `gs i` block. -/
+def compileFrag_comp {k a : ℕ}
+    (frag_f : CompiledFragment k)
+    (frag_gs : Fin k → CompiledFragment a) :
+    CompiledFragment a :=
+  let totalGsRegs : ℕ := gsPrefixSum frag_gs k
+  let fBase : ℕ := 2 + a + totalGsRegs
+  let tmpReg : ℕ := fBase + frag_f.numRegs
+  let nR : ℕ := tmpReg + 1
+  let gsBase : Fin k → ℕ :=
+    fun i => 2 + a + gsPrefixSum frag_gs i.val
+  -- Cumulative PC offset before block `i`. The whole
+  -- emission begins with one `assign 0 0` at PC 0, so
+  -- block `i`'s base PC is `1 + Σ_{j < i} (per-block
+  -- length)`; this is encoded inline by threading
+  -- `pcBase` through a `List.foldl` rather than as a
+  -- separate prefix-sum function.
+  let blockLen : Fin k → ℕ := fun i =>
+    9 * a + ((frag_gs i).instrs.size - 1) + 4
+  let pcBase : Fin k → ℕ := fun i =>
+    1 + ((List.finRange k).filter
+        (fun j => decide (j.val < i.val))).foldr
+      (fun j acc => acc + blockLen j) 0
+  let subBlocks : List URMInstrRaw :=
+    (List.finRange k).flatMap fun i =>
+      compileFrag_comp_subBlock frag_f frag_gs
+        (gsBase i) fBase tmpReg i (pcBase i)
+  let fPcBase : ℕ :=
+    1 + (List.finRange k).foldr
+      (fun j acc => acc + blockLen j) 0
+  let fBody : List URMInstrRaw :=
+    frag_f.instrs.toList.map fun ins =>
+      URMInstrRaw.reindexShift fBase fPcBase (toRawOfBounded ins)
+  let rawList : List URMInstrRaw :=
+    (.assignR 0 0) :: (subBlocks ++ fBody)
+  -- Shared arithmetic bounds.
+  have hTmpLt : tmpReg < nR := by simp only [nR]; omega
+  have hFBlockEq : fBase + frag_f.numRegs = tmpReg := by
+    simp only [tmpReg]
+  have ha_le : a ≤ fBase := by
+    simp only [fBase]; omega
+  have hGsBlock : ∀ i : Fin k,
+      gsBase i + (frag_gs i).numRegs ≤ fBase := by
+    intro i
+    have hmono : gsPrefixSum frag_gs (i.val + 1)
+        ≤ gsPrefixSum frag_gs k :=
+      gsPrefixSum_mono frag_gs i.isLt
+    have hsucc :
+        gsPrefixSum frag_gs (i.val + 1)
+          = gsPrefixSum frag_gs i.val + (frag_gs i).numRegs :=
+      gsPrefixSum_succ_eq frag_gs i
+    simp only [gsBase, fBase, totalGsRegs]
+    omega
+  have hBound : URMInstrRaw.boundedBy nR rawList := by
+    intro ins hmem
+    have hmem' : ins = (.assignR 0 0 : URMInstrRaw)
+        ∨ ins ∈ subBlocks ++ fBody := List.mem_cons.mp hmem
+    rcases hmem' with hAssign | hmem
+    · -- `assignR 0 0` (head of rawList)
+      rw [hAssign]; simp only [URMInstrRaw.regBound]
+      simp only [nR, tmpReg, fBase]; omega
+    rcases List.mem_append.mp hmem with hSub | hF
+    · -- sub-block branch
+      rcases List.mem_flatMap.mp hSub with ⟨i, _, hi⟩
+      exact boundedBy_compileFrag_comp_subBlock frag_f frag_gs
+        (gsBase i) fBase tmpReg nR i (pcBase i)
+        (hGsBlock i) hFBlockEq hTmpLt ha_le ins hi
+    · -- f-body branch
+      rcases List.mem_map.mp hF with ⟨ins', _, heq⟩
+      rw [← heq]
+      have hb : (toRawOfBounded ins').regBound ≤ frag_f.numRegs :=
+        regBound_toRawOfBounded_le ins'
+      have hr := regBound_reindexShift_le_offset_add fBase
+        fPcBase frag_f.numRegs (toRawOfBounded ins') hb
+      omega
+  { numRegs := nR
+    numRegs_pos := by
+      simp only [nR]; omega
+    inputRegs := fun j => ⟨2 + j.val, by
+      have : j.val < a := j.isLt
+      simp only [nR, tmpReg, fBase]; omega⟩
+    outputReg := ⟨1, by
+      simp only [nR, tmpReg, fBase]; omega⟩
+    instrs := URMInstrRaw.toBoundedArray nR rawList hBound
+    inputRegs_inj := by
+      intro p q hpq
+      apply Fin.ext
+      have h : (2 + p.val : ℕ) = (2 + q.val : ℕ) :=
+        congrArg Fin.val hpq
+      omega
+    outputReg_not_input := by
+      intro p hp
+      have h : (2 + p.val : ℕ) = (1 : ℕ) :=
+        congrArg Fin.val hp
+      omega
+    zeroReg_not_input := by
+      intro p hp
+      have h : (2 + p.val : ℕ) = (0 : ℕ) :=
+        congrArg Fin.val hp
+      omega
+    zeroReg_not_output := by
+      intro h
+      have h' : (0 : ℕ) = (1 : ℕ) := congrArg Fin.val h
+      omega }
 
 end LawvereERKSim
 
