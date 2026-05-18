@@ -1396,6 +1396,95 @@ def compileER_runtime : {a : ℕ} → ERMor1 a →
       40 + 10 * bound +
         ((List.range bound).map perIter).foldl (· + ·) 0
 
+/-- Correctness of `compileER` on `.zero`: running for at
+least 3 steps from `init` produces output register = 0. -/
+private theorem compileER_runFor_zero
+    (v : Fin 0 → ℕ) (t' : ℕ)
+    (ht' : compileER_runtime (.zero : ERMor1 0) v ≤ t') :
+    (URMState.runFor (compileER ERMor1.zero)
+        (URMState.init (compileER ERMor1.zero) v) t').regs
+        (compileER ERMor1.zero).outputReg
+      = ERMor1.zero.interp v := by
+  -- runtime = 3; write t' = 3 + (t' - 3).
+  have h3 : 3 ≤ t' := ht'
+  obtain ⟨sl, rfl⟩ : ∃ sl, t' = 3 + sl :=
+    ⟨t' - 3, by omega⟩
+  -- Split runFor (3 + sl) = runFor sl after 3 steps.
+  rw [URMState.runFor_add]
+  -- Compute the state after 3 steps by unfolding step
+  -- three times.  All three instruction lookups discharge
+  -- by `decide`, since the program is a literal #[…]
+  -- array.
+  set P : URMProgram 0 := compileER ERMor1.zero
+  set s0 : URMState P := URMState.init P v
+  -- Step 1: assign ⟨0, _⟩ 0.
+  have hs1 : URMState.step P s0 =
+      { pc := 1, regs := Function.update s0.regs ⟨0, by decide⟩ 0 } := by
+    simp only [URMState.step, s0, URMState.init,
+      P, compileER, compileERFrag, compileFrag_zero]
+    rfl
+  -- Run for sl steps after 3 hops via runFor_stop, since
+  -- the third instruction is `.stop`.
+  -- Build the state after 3 hops directly.
+  set s3 : URMState P :=
+    { pc := 2
+      regs := Function.update
+        (Function.update s0.regs ⟨0, by decide⟩ 0)
+        ⟨1, by decide⟩ 0 }
+  have h_three :
+      URMState.runFor P s0 3 = s3 := by
+    rw [show (3 : ℕ) = 2 + 1 from rfl, URMState.runFor_add,
+      show (2 : ℕ) = 1 + 1 from rfl, URMState.runFor_add]
+    -- Now have runFor P (runFor P (runFor P s0 1) 1) 1
+    -- Each individual step computes by `rfl`-like simp.
+    simp only [URMState.runFor_succ, URMState.runFor_zero]
+    -- Step 1
+    rw [show URMState.step P s0 =
+        { pc := 1, regs :=
+            Function.update s0.regs ⟨0, by decide⟩ 0 } from hs1]
+    -- Step 2: assign ⟨1, _⟩ 0.
+    have hs2 :
+        URMState.step P
+          { pc := 1
+            regs := Function.update s0.regs ⟨0, by decide⟩ 0 } =
+        { pc := 2
+          regs := Function.update
+            (Function.update s0.regs ⟨0, by decide⟩ 0)
+            ⟨1, by decide⟩ 0 } := by
+      simp only [URMState.step, P, compileER, compileERFrag,
+        compileFrag_zero]
+      rfl
+    rw [hs2]
+    -- Step 3: stop at PC 2.
+    change URMState.step P
+        { pc := 2
+          regs := Function.update
+            (Function.update s0.regs ⟨0, by decide⟩ 0)
+            ⟨1, by decide⟩ 0 } = s3
+    simp only [URMState.step, P, compileER, compileERFrag,
+      compileFrag_zero, s3]
+    rfl
+  rw [h_three]
+  -- Slack steps from s3 (PC = 2 = stop instruction) are
+  -- absorbed by `runFor_stop`.
+  have h_pc : s3.pc < P.instrs.size := by
+    change 2 < P.instrs.size
+    simp only [P, compileER, compileERFrag, compileFrag_zero]
+    decide
+  have h_stop : P.instrs[s3.pc]'h_pc = URMInstr.stop := by
+    change P.instrs[(2 : ℕ)]'h_pc = URMInstr.stop
+    simp only [P, compileER, compileERFrag, compileFrag_zero]
+    rfl
+  rw [URMState.runFor_stop P s3 sl h_pc h_stop]
+  -- Read off register 1 = output reg.
+  change s3.regs (compileER ERMor1.zero).outputReg = _
+  -- outputReg = ⟨1, _⟩, and regs ⟨1, _⟩ = 0 via the
+  -- second Function.update.
+  change Function.update (Function.update s0.regs ⟨0, by decide⟩ 0)
+      ⟨1, by decide⟩ 0 (compileER ERMor1.zero).outputReg = _
+  simp only [P, compileER, compileERFrag, compileFrag_zero]
+  rfl
+
 end LawvereERKSim
 
 end GebLean
