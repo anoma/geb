@@ -29,10 +29,11 @@ rather than a zero-test jump (level 1 in K^sim). See spec
 
 - `URMInstr`: the five-instruction inductive type,
   parameterised by a register count `r : ℕ`.
-- `URMProgram`: program structure carrying instruction
-  array, register count, input register assignment
-  (with injectivity invariant), and output register
-  (with disjoint-from-inputs invariant).
+- `URMProgram`: arity-indexed (by `numInputs`) program
+  structure carrying instruction array, register count,
+  input register assignment (with injectivity
+  invariant), and output register (with
+  disjoint-from-inputs invariant).
 - `URMState`: machine state (PC + registers), indexed by
   the program whose registers it tracks.
 - `URMState.step`: one-step transition per Tourlakis
@@ -107,11 +108,9 @@ PC labels range over `{0, …, instrs.size − 1}`. PC ≥
 `instrs.size` is the implicit halt state (Tourlakis
 p. 15: stop "continues forever 'trivially', without
 changing either the V_i or the instruction number"). -/
-@[ext] structure URMProgram where
+@[ext] structure URMProgram (numInputs : ℕ) where
   /-- Number of registers. -/
   numRegs : ℕ
-  /-- Number of inputs. -/
-  numInputs : ℕ
   /-- Program instructions, indexed by PC. -/
   instrs : Array (URMInstr numRegs)
   /-- The output register (Tourlakis V_1 convention). -/
@@ -130,7 +129,7 @@ contents.  Indexed by the program whose registers are
 being tracked (the `numRegs` field of `P` fixes the
 register-vector arity). -/
 @[ext]
-structure URMState (P : URMProgram) where
+structure URMState {a : ℕ} (P : URMProgram a) where
   /-- Program counter (0-indexed; Tourlakis's I(0) = 1
   is mapped to 0 here). -/
   pc : ℕ
@@ -142,7 +141,7 @@ instruction at the current PC and updates state per
 Tourlakis 2018 §0.1.0.37 (p. 16).  Past the end of the
 instruction array, `step` is the identity (matching the
 stop self-loop convention). -/
-def URMState.step (P : URMProgram) (s : URMState P) :
+def URMState.step {a : ℕ} (P : URMProgram a) (s : URMState P) :
     URMState P :=
   if h : s.pc < P.instrs.size then
     match P.instrs[s.pc]'h with
@@ -166,28 +165,28 @@ Constructive (no `Classical.choose`); `n` steps past
 the halt state self-loop (Tourlakis p. 15).
 
 `P` is explicit (matching spec §4.2). -/
-def URMState.runFor (P : URMProgram) (s : URMState P) :
+def URMState.runFor {a : ℕ} (P : URMProgram a) (s : URMState P) :
     ℕ → URMState P
   | 0 => s
   | n + 1 => URMState.runFor P (URMState.step P s) n
 
 /-- Reduction lemma: zero-step execution returns the
 initial state. -/
-@[simp] theorem URMState.runFor_zero
-    (P : URMProgram) (s : URMState P) :
+@[simp] theorem URMState.runFor_zero {a : ℕ}
+    (P : URMProgram a) (s : URMState P) :
     URMState.runFor P s 0 = s := rfl
 
 /-- Reduction lemma: `runFor (n+1)` peels one step at
 the front. -/
-@[simp] theorem URMState.runFor_succ
-    (P : URMProgram) (s : URMState P) (n : ℕ) :
+@[simp] theorem URMState.runFor_succ {a : ℕ}
+    (P : URMProgram a) (s : URMState P) (n : ℕ) :
     URMState.runFor P s (n + 1)
       = URMState.runFor P (URMState.step P s) n := rfl
 
 /-- Step-additivity: running for `m + n` steps equals
 running for `m`, then continuing `n` more from there. -/
-theorem URMState.runFor_add
-    (P : URMProgram) (s : URMState P) (m n : ℕ) :
+theorem URMState.runFor_add {a : ℕ}
+    (P : URMProgram a) (s : URMState P) (m n : ℕ) :
     URMState.runFor P s (m + n)
       = URMState.runFor P (URMState.runFor P s m) n := by
   induction m generalizing s with
@@ -214,11 +213,11 @@ to 0.
 The choice `pc := 0` shifts Tourlakis's 1-indexed
 `I(0) = 1` to 0-indexed `I(0) = 0`.  The shift is
 consistent across all later constructions. -/
-def URMState.init (P : URMProgram)
-    (v : Fin P.numInputs → ℕ) : URMState P where
+def URMState.init {a : ℕ} (P : URMProgram a)
+    (v : Fin a → ℕ) : URMState P where
   pc := 0
   regs := fun r =>
-    match (List.finRange P.numInputs).find?
+    match (List.finRange a).find?
         (fun i => decide (P.inputRegs i = r)) with
     | some i => v i
     | none   => 0
