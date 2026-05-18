@@ -846,7 +846,7 @@ unfolding does not happen automatically, replace
 `⟨i, h⟩` with `⟨i, Nat.lt_of_succ_le h⟩` (explicit lemma
 invocation).
 
-- [ ] **Step 2.4: Define `URMInstr.fromRawList`**
+- [ ] **Step 2.4: Define `URMInstrRaw.toBoundedArray`**
 
 The bound proof on a per-instruction basis is not
 discharged automatically by `cases ins <;> simp <;>
@@ -860,15 +860,15 @@ hypothesis pointwise via `List.attach`.
 ```lean
 /-- All raw instructions in a list have register bound
 ≤ `r`. -/
-def URMRaw.boundedBy (r : ℕ) (l : List URMInstrRaw) :
+def URMInstrRaw.boundedBy (r : ℕ) (l : List URMInstrRaw) :
     Prop :=
   ∀ ins ∈ l, URMInstrRaw.regBound ins ≤ r
 
-/-- Batch-convert a `URMRaw.boundedBy r`-witnessed list
+/-- Batch-convert a `URMInstrRaw.boundedBy r`-witnessed list
 of raw instructions to an `Array (URMInstr r)`. Uses
 `List.attach` to carry the membership proof pointwise. -/
-def URMInstr.fromRawList (r : ℕ) (l : List URMInstrRaw)
-    (h : URMRaw.boundedBy r l) :
+def URMInstrRaw.toBoundedArray (r : ℕ) (l : List URMInstrRaw)
+    (h : URMInstrRaw.boundedBy r l) :
     Array (URMInstr r) :=
   (l.attach.map (fun ⟨ins, hmem⟩ =>
     URMInstrRaw.toBounded r ins (h ins hmem))).toArray
@@ -879,9 +879,9 @@ def URMInstr.fromRawList (r : ℕ) (l : List URMInstrRaw)
 membership proof `hmem : ins ∈ l` and feeds it into the
 list-level boundedness witness `h`.
 
-Atomic combinators in Task 5 use `URMInstr.fromRawList`
+Atomic combinators in Task 5 use `URMInstrRaw.toBoundedArray`
 with an explicit list-level bound proof (one
-`URMRaw.boundedBy 4 rawList` per combinator, dispatched
+`URMInstrRaw.boundedBy 4 rawList` per combinator, dispatched
 by case analysis over the concrete instruction list).
 The composite combinators in Tasks 6, 7, 8 produce
 their boundedness proofs by composition: a sub-fragment
@@ -909,7 +909,7 @@ Mirror URMInstr with ℕ-indexed registers as URMInstrRaw;
 convert to URMInstr r via URMInstrRaw.toBounded given a
 per-instruction register-bound proof; batch-convert
 boundedness-witnessed lists to URMInstr-arrays via
-URMInstr.fromRawList over List.attach.  Use the raw form
+URMInstrRaw.toBoundedArray over List.attach.  Use the raw form
 in per-constructor combinators to emit instructions
 before the final numRegs is known.
 
@@ -1237,7 +1237,7 @@ def compileFrag_succ : CompiledFragment 1 :=
       :: (URMRaw.preservingTransfer 1 2 1 3
           ++ [.incR 1, .stopR])
   -- numRegs = 4 (registers 0..3 used).
-  have hBound : URMRaw.boundedBy 4 rawList := by
+  have hBound : URMInstrRaw.boundedBy 4 rawList := by
     -- The list is concrete (1 + 9 + 2 = 12 instructions);
     -- every register index in {0, 1, 2, 3} is < 4.
     -- Unfold membership through the let-binding, then
@@ -1254,7 +1254,7 @@ def compileFrag_succ : CompiledFragment 1 :=
     numRegs_pos := by decide
     inputRegs := fun _ => ⟨2, by decide⟩
     outputReg := ⟨1, by decide⟩
-    instrs := URMInstr.fromRawList 4 rawList hBound
+    instrs := URMInstrRaw.toBoundedArray 4 rawList hBound
     inputRegs_inj := by
       intro i j _
       exact Subsingleton.elim _ _
@@ -1287,7 +1287,7 @@ each raw instruction in `rawList` has `regBound ≤ 4`
 If `cases ins <;>
           simp only [URMInstrRaw.regBound] <;> omega`
 does not elaborate (because `simp` does not fully unfold
-The `URMRaw.boundedBy 4 rawList` proof obligation
+The `URMInstrRaw.boundedBy 4 rawList` proof obligation
 discharges over the concrete instruction list by
 unfolding `rawList`, unfolding the
 `preservingTransfer`/`goto` helpers, applying
@@ -1300,7 +1300,7 @@ If the `rcases` chain becomes inconvenient (the count of
 `rfl`s must match the unfolded list length), the
 implementer can switch to a single-line
 `by intro ins hmem; revert hmem; decide` provided
-`URMRaw.boundedBy 4 rawList` reduces to a decidable
+`URMInstrRaw.boundedBy 4 rawList` reduces to a decidable
 proposition in Lean's kernel (which it does when
 `rawList` is a closed term and `URMInstrRaw` has
 decidable equality, both of which hold here).
@@ -1328,7 +1328,7 @@ def compileFrag_proj {k : ℕ} (i : Fin k) :
     (.assignR 0 0)
       :: ((URMRaw.preservingTransfer 1 (2 + i.val) 1 (2 + k))
           ++ [.stopR])
-  have hBound : URMRaw.boundedBy (k + 3) rawList := by
+  have hBound : URMInstrRaw.boundedBy (k + 3) rawList := by
     intro ins hmem
     simp only [rawList, URMRaw.preservingTransfer,
       URMRaw.goto, List.mem_cons, List.mem_append,
@@ -1342,7 +1342,7 @@ def compileFrag_proj {k : ℕ} (i : Fin k) :
     numRegs_pos := by omega
     inputRegs := fun j => ⟨2 + j.val, by omega⟩
     outputReg := ⟨1, by omega⟩
-    instrs := URMInstr.fromRawList (k + 3) rawList hBound
+    instrs := URMInstrRaw.toBoundedArray (k + 3) rawList hBound
     inputRegs_inj := by
       intro p q hpq
       have : (⟨2 + p.val, by omega⟩ : Fin (k + 3))
@@ -1448,7 +1448,7 @@ def compileFrag_sub : CompiledFragment 2 :=
                .decR 1,
                URMRaw.goto 14,
                .stopR ])
-  have hBound : URMRaw.boundedBy 6 rawList := by
+  have hBound : URMInstrRaw.boundedBy 6 rawList := by
     intro ins hmem
     simp only [rawList, URMRaw.preservingTransfer,
       URMRaw.transferLoop, URMRaw.goto,
@@ -1464,7 +1464,7 @@ def compileFrag_sub : CompiledFragment 2 :=
       Fin.cases (⟨2, by decide⟩ : Fin 6)
         (Fin.cases (⟨3, by decide⟩ : Fin 6) Fin.elim0)
     outputReg := ⟨1, by decide⟩
-    instrs := URMInstr.fromRawList 6 rawList hBound
+    instrs := URMInstrRaw.toBoundedArray 6 rawList hBound
     inputRegs_inj := by
       intro p q hpq
       -- `Fin 2` has values `0` and `1`; case-split both;
@@ -2458,8 +2458,8 @@ compileER_runFor
 ```
 
 Additional emission/internal helpers introduced by this
-plan (`URMInstrRaw.regBound`, `URMRaw.boundedBy`,
-`URMInstr.fromRawList`, `URMInstr.reindex`,
+plan (`URMInstrRaw.regBound`, `URMInstrRaw.boundedBy`,
+`URMInstrRaw.toBoundedArray`, `URMInstr.reindex`,
 `URMInstr.shiftPC`, `URMRaw.goto`,
 `URMRaw.transferLoop`, `URMRaw.transferLoopLen`,
 `URMRaw.preservingTransfer`,

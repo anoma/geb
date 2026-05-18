@@ -94,15 +94,17 @@ def URMInstrRaw.toBounded
 
 /-- All raw instructions in a list have register bound
 ≤ `r`. -/
-def URMRaw.boundedBy (r : ℕ) (l : List URMInstrRaw) :
+def URMInstrRaw.boundedBy (r : ℕ) (l : List URMInstrRaw) :
     Prop :=
   ∀ ins ∈ l, URMInstrRaw.regBound ins ≤ r
 
-/-- Batch-convert a `URMRaw.boundedBy r`-witnessed list
-of raw instructions to an `Array (URMInstr r)`. Uses
-`List.attach` to carry the membership proof pointwise. -/
-def URMInstr.fromRawList (r : ℕ) (l : List URMInstrRaw)
-    (h : URMRaw.boundedBy r l) :
+/-- Batch-convert a `URMInstrRaw.boundedBy r`-witnessed
+list of raw instructions to an `Array (URMInstr r)`.
+Uses `List.attach` to carry the membership proof
+pointwise. -/
+def URMInstrRaw.toBoundedArray (r : ℕ)
+    (l : List URMInstrRaw)
+    (h : URMInstrRaw.boundedBy r l) :
     Array (URMInstr r) :=
   (l.attach.map (fun ⟨ins, hmem⟩ =>
     URMInstrRaw.toBounded r ins (h ins hmem))).toArray
