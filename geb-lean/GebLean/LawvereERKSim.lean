@@ -731,8 +731,10 @@ def compileFrag_comp {k a : ℕ}
     inputRegs := fun j => ⟨2 + j.val, by
       have : j.val < a := j.isLt
       simp only [nR, tmpReg, fBase]; omega⟩
-    outputReg := ⟨1, by
-      simp only [nR, tmpReg, fBase]; omega⟩
+    outputReg := ⟨fBase + frag_f.outputReg.val, by
+      have hO : frag_f.outputReg.val < frag_f.numRegs :=
+        frag_f.outputReg.isLt
+      simp only [nR, tmpReg]; omega⟩
     instrs := URMInstrRaw.toBoundedArray nR rawList hBound
     inputRegs_inj := by
       intro p q hpq
@@ -742,8 +744,10 @@ def compileFrag_comp {k a : ℕ}
       omega
     outputReg_not_input := by
       intro p hp
-      have h : (2 + p.val : ℕ) = (1 : ℕ) :=
+      have hp_lt : p.val < a := p.isLt
+      have h : (2 + p.val : ℕ) = (fBase + frag_f.outputReg.val : ℕ) :=
         congrArg Fin.val hp
+      simp only [fBase] at h
       omega
     zeroReg_not_input := by
       intro p hp
@@ -752,7 +756,9 @@ def compileFrag_comp {k a : ℕ}
       omega
     zeroReg_not_output := by
       intro h
-      have h' : (0 : ℕ) = (1 : ℕ) := congrArg Fin.val h
+      have h' : (0 : ℕ) = (fBase + frag_f.outputReg.val : ℕ) :=
+        congrArg Fin.val h
+      simp only [fBase] at h'
       omega
     lastInstr_isStop :=
       URMInstrRaw.toBoundedArray_back?_of_last_stopR hBound
@@ -766,25 +772,26 @@ private def bsum_prologueSrc (k : ℕ) (s : Fin (k + 1)) : ℕ :=
   if s.val = 0 then k + 4 else s.val + 2
 
 /-- Per-slot block of the `compileFrag_bsum` per-iteration
-prologue: zero f's `s`-th input register, then copy the
-outer register at `bsum_prologueSrc k s` into f's `s`-th
-input register (reindexed by `fBase`), using `tmp1` as
-scratch. The leading `assignR` zeroes the destination
-before `preservingTransfer` adds to it, so the destination
-holds the current iteration's source value rather than
-accumulating across iterations. Emitted at PC offset
-`prologueBase + 10 * s.val`; emits exactly 10 raw
-instructions. -/
+prologue: copy the outer register at `bsum_prologueSrc k s`
+into f's `s`-th input register (reindexed by `fBase`),
+using `tmp1` as scratch. Each iteration's prologue is
+preceded by a zero-sweep over all of f's reindexed registers
+(`bsum_zeroSweep` below), so `preservingTransfer`'s additive
+write produces the current iteration's source value rather
+than accumulating across iterations; the zero-sweep also
+flushes any internal scratches that nested combinators
+inside `frag_f` may have left in f's register block.
+Emitted at PC offset `prologueBase + 9 * s.val`; emits
+exactly 9 raw instructions. -/
 private def bsum_prologueBlock {k : ℕ}
     (frag_f : CompiledFragment (k + 1))
     (fBase tmp1 prologueBase : ℕ) (s : Fin (k + 1)) :
     List URMInstrRaw :=
-  .assignR (fBase + (frag_f.inputRegs s).val) 0
-    :: URMRaw.preservingTransfer
-        (prologueBase + 10 * s.val + 1)
-        (bsum_prologueSrc k s)
-        (fBase + (frag_f.inputRegs s).val)
-        tmp1
+  URMRaw.preservingTransfer
+    (prologueBase + 9 * s.val)
+    (bsum_prologueSrc k s)
+    (fBase + (frag_f.inputRegs s).val)
+    tmp1
 
 /-- Boundedness lemma for `bsum_prologueBlock`: every
 emitted raw instruction has register bound at most `nR`,
@@ -799,11 +806,38 @@ private theorem boundedBy_bsum_prologueBlock {k : ℕ}
     (hTmp : tmp1 + 1 ≤ nR) :
     URMInstrRaw.boundedBy nR
       (bsum_prologueBlock frag_f fBase tmp1 prologueBase s) := by
+  intro ins hpT
+  simp only [bsum_prologueBlock] at hpT
+  exact boundedBy_preservingTransfer nR _ _ _ _ hSrc hDst hTmp ins hpT
+
+/-- Zero-sweep over all of f's reindexed registers
+(`frag_f.numRegs` `assignR` instructions emitting
+`assignR (fBase + r) 0` for `r ∈ [0, frag_f.numRegs)`).
+Run at the start of each `compileFrag_bsum` iteration's
+prologue to flush f's entire register block; this ensures
+nested combinators inside `frag_f` whose internal scratches
+accumulate additively (e.g. `compileFrag_comp`'s gs-input
+slots) start each iteration from zero. -/
+private def bsum_zeroSweep {k : ℕ}
+    (frag_f : CompiledFragment (k + 1)) (fBase : ℕ) :
+    List URMInstrRaw :=
+  (List.finRange frag_f.numRegs).map fun r =>
+    (.assignR (fBase + r.val) 0 : URMInstrRaw)
+
+/-- Boundedness lemma for `bsum_zeroSweep`: every emitted
+instruction targets a register inside `nR`, given
+`fBase + frag_f.numRegs ≤ nR`. -/
+private theorem boundedBy_bsum_zeroSweep {k : ℕ}
+    (frag_f : CompiledFragment (k + 1)) (fBase nR : ℕ)
+    (hBlock : fBase + frag_f.numRegs ≤ nR) :
+    URMInstrRaw.boundedBy nR (bsum_zeroSweep frag_f fBase) := by
   intro ins hmem
-  simp only [bsum_prologueBlock, List.mem_cons] at hmem
-  rcases hmem with h | hpT
-  · rw [h]; simp only [URMInstrRaw.regBound]; exact hDst
-  · exact boundedBy_preservingTransfer nR _ _ _ _ hSrc hDst hTmp ins hpT
+  simp only [bsum_zeroSweep, List.mem_map] at hmem
+  rcases hmem with ⟨r, _, heq⟩
+  rw [← heq]
+  simp only [URMInstrRaw.regBound]
+  have hr : r.val < frag_f.numRegs := r.isLt
+  omega
 
 /-- Fragment for `ERMor1.bsum f`. Spec §5.1, §5.1.1.
 Outer Loop with iteration-counter register `V_i`
@@ -843,12 +877,15 @@ def compileFrag_bsum {k : ℕ}
   --   4..12 : preservingTransfer 4 vBoundIn vX tmp2  (9 instrs)
   --   13 : jumpZR vX exitPC bodyStartPC          (loop top)
   --   14 : decR vX                                (body start)
-  --   15..(15 + 10*(k+1) - 1) : per-iter prologue, k+1 blocks
-  --     of (assignR dst 0; preservingTransfer) — 10 instrs each;
-  --     the leading `assignR` zeroes the destination so
-  --     `preservingTransfer`'s additive write produces the
-  --     current iteration's source value, not an accumulation.
-  --   bodyPCBase = 15 + 10*(k+1) :
+  --   15..(15 + frag_f.numRegs - 1) : zero-sweep over f's block
+  --     (`frag_f.numRegs` `assignR (fBase + r) 0` instructions);
+  --     flushes f's reindexed register block at the start of each
+  --     iteration so internal scratches of nested combinators
+  --     inside f do not accumulate across iterations.
+  --   (15 + frag_f.numRegs)..(bodyPCBase - 1) : per-iter prologue,
+  --     k+1 blocks of `preservingTransfer` (9 instrs each)
+  --     copying outer sources into f's input slots.
+  --   bodyPCBase = 15 + frag_f.numRegs + 9 * (k + 1) :
   --     f's body (frag_f.instrs.size - 1 instrs, reindexed and PC-shifted)
   --   bodyPCBase + fBodyLen .. + 3 : transferLoop f-out → vAcc (4 instrs)
   --   bodyPCBase + fBodyLen + 4 : incR vI
@@ -856,8 +893,9 @@ def compileFrag_bsum {k : ℕ}
   --   exitPC = bodyPCBase + fBodyLen + 6 : stopR
   let topPC : ℕ := 13
   let bodyStartPC : ℕ := 14
-  let prologueBase : ℕ := 15
-  let bodyPCBase : ℕ := 15 + 10 * (k + 1)
+  let zeroSweepBase : ℕ := 15
+  let prologueBase : ℕ := 15 + frag_f.numRegs
+  let bodyPCBase : ℕ := 15 + frag_f.numRegs + 9 * (k + 1)
   let fBodyLen : ℕ := frag_f.instrs.size - 1
   let trBase : ℕ := bodyPCBase + fBodyLen
   let incIPC : ℕ := trBase + 4
@@ -872,6 +910,8 @@ def compileFrag_bsum {k : ℕ}
   let loopTop : List URMInstrRaw :=
     [ .jumpZR vX exitPC bodyStartPC,
       .decR vX ]
+  let zeroSweep : List URMInstrRaw :=
+    bsum_zeroSweep frag_f fBase
   let prologue : List URMInstrRaw :=
     (List.finRange (k + 1)).flatMap fun s =>
       bsum_prologueBlock frag_f fBase tmp1 prologueBase s
@@ -884,8 +924,8 @@ def compileFrag_bsum {k : ℕ}
   let epilogue : List URMInstrRaw :=
     [ .incR vI, URMRaw.goto topPC, .stopR ]
   let rawList : List URMInstrRaw :=
-    prelude ++ loopTop ++ prologue ++ fBody ++ accUpdate
-      ++ epilogue
+    prelude ++ loopTop ++ zeroSweep ++ prologue ++ fBody
+      ++ accUpdate ++ epilogue
   -- Shared boundedness facts.
   have hAcc : vAcc + 1 ≤ nR := by
     simp only [vAcc, nR, fBase]; omega
@@ -959,12 +999,18 @@ def compileFrag_bsum {k : ℕ}
     · rw [h]; simp only [URMInstrRaw.regBound]; exact hVI
     · rw [h]; simp only [URMInstrRaw.regBound]; omega
     · rw [h]; simp only [URMInstrRaw.regBound]; omega
+  have hZeroSweepBound : URMInstrRaw.boundedBy nR zeroSweep := by
+    have hBlock : fBase + frag_f.numRegs ≤ nR := by
+      simp only [nR]; omega
+    exact boundedBy_bsum_zeroSweep frag_f fBase nR hBlock
   have hBound : URMInstrRaw.boundedBy nR rawList := by
     intro ins hmem
     simp only [rawList, List.mem_append] at hmem
-    rcases hmem with ((((hP | hL) | hPr) | hF) | hA) | hE
+    rcases hmem with
+      (((((hP | hL) | hZ) | hPr) | hF) | hA) | hE
     · exact hPreludeBound ins hP
     · exact hLoopTopBound ins hL
+    · exact hZeroSweepBound ins hZ
     · exact hPrologueBound ins hPr
     · exact hFBodyBound ins hF
     · exact hAccUpdateBound ins hA
