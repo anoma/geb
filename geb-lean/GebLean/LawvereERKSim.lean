@@ -31,10 +31,10 @@ register.
   per-ER-constructor fragment combinators (no
   sub-fragment composition).
 - `compileFrag_comp`: compositional combinator for
-  `ERMor1.comp f gs` — glues sub-fragments via
-  register-space injection (`URMInstr.reindex`),
-  PC-shifting (`URMInstr.shiftPC`), and destructive
-  output→input transfer between sub-fragments.
+  `ERMor1.comp f gs` — glues sub-fragments via raw-level
+  register-space injection and PC-shifting (fused into
+  `URMInstrRaw.reindexShift`) and destructive output→input
+  transfer between sub-fragments.
 
 ## References
 
@@ -127,6 +127,23 @@ def URMInstrRaw.toBoundedArray (r : ℕ)
   (l.attach.map (fun ⟨ins, hmem⟩ =>
     URMInstrRaw.toBounded r ins (h ins hmem))).toArray
 
+/-- If a raw instruction list ends with `.stopR`, then its
+bounded-array form ends with `.stop`. Used by combinators
+to discharge `CompiledFragment.lastInstr_isStop`. -/
+private theorem URMInstrRaw.toBoundedArray_back?_of_last_stopR
+    {r : ℕ} {l : List URMInstrRaw}
+    (h : URMInstrRaw.boundedBy r l)
+    (hl : l.getLast? = some .stopR) :
+    (URMInstrRaw.toBoundedArray r l h).back? = some .stop := by
+  rw [List.getLast?_eq_some_iff] at hl
+  obtain ⟨l', hl'⟩ := hl
+  subst hl'
+  unfold URMInstrRaw.toBoundedArray
+  rw [List.back?_toArray, List.attach_append]
+  simp only [List.map_append, List.map_cons, List.map_nil,
+    List.attach_cons, List.attach_nil, List.getLast?_concat]
+  rfl
+
 /-- A compiled URM fragment for a sub-expression of arity
 `a`. Compositional building block: per-ER-constructor
 combinators (`compileFrag_*`) glue sub-fragments into
@@ -154,6 +171,10 @@ defensively initialising it. -/
   register. -/
   zeroReg_not_output : (⟨0, numRegs_pos⟩ : Fin numRegs)
     ≠ outputReg
+  /-- The last instruction is the halt instruction. Used
+  by combinators that drop a trailing `.stop` to splice
+  sub-fragments together. -/
+  lastInstr_isStop : instrs.back? = some .stop
 
 /-- The reserved-zero register `⟨0, F.numRegs_pos⟩`. -/
 def CompiledFragment.zeroReg {a : ℕ}
@@ -238,6 +259,7 @@ def compileFrag_zero : CompiledFragment 0 where
     intro i _
     exact Fin.elim0 i
   zeroReg_not_output := by decide
+  lastInstr_isStop := by decide
 
 /-- Fragment for `ERMor1.succ`. Tourlakis 2018 p. 19
 N-template (M plus one increment); spec §5.1 succ
@@ -269,7 +291,11 @@ def compileFrag_succ : CompiledFragment 1 :=
     zeroReg_not_input := by
       intro _ h
       exact absurd (congrArg Fin.val h) (by decide)
-    zeroReg_not_output := by decide }
+    zeroReg_not_output := by decide
+    lastInstr_isStop :=
+      URMInstrRaw.toBoundedArray_back?_of_last_stopR hBound
+        (by simp [rawList, URMRaw.preservingTransfer,
+          URMRaw.goto]) }
 
 /-- Fragment for `ERMor1.proj i`. Spec §5.1 proj
 template. Preserving-transfer from input slot `i`'s
@@ -318,7 +344,11 @@ def compileFrag_proj {k : ℕ} (i : Fin k) :
     zeroReg_not_output := by
       intro h
       have h' : (0 : ℕ) = (1 : ℕ) := congrArg Fin.val h
-      omega }
+      omega
+    lastInstr_isStop :=
+      URMInstrRaw.toBoundedArray_back?_of_last_stopR hBound
+        (by simp [rawList, URMRaw.preservingTransfer,
+          URMRaw.goto]) }
 
 /-- Input register assignment for `compileFrag_sub`:
 slot 0 → register 2, slot 1 → register 3. Built via
@@ -391,29 +421,11 @@ def compileFrag_sub : CompiledFragment 2 :=
       refine Fin.cases ?_
         (fun i => Fin.cases ?_ (fun j => j.elim0) i) p <;>
         intro h <;> revert h <;> decide
-    zeroReg_not_output := by decide }
-
-/-- Re-index the register references of a `URMInstr r`
-through an injection `f : Fin r → Fin r'`. PC labels are
-left unchanged (caller is responsible for PC-shifting
-separately). Spec §5.1.2. -/
-def URMInstr.reindex {r r' : ℕ} (f : Fin r → Fin r') :
-    URMInstr r → URMInstr r'
-  | .assign i c => .assign (f i) c
-  | .inc i => .inc (f i)
-  | .dec i => .dec (f i)
-  | .jumpZ i l₁ l₂ => .jumpZ (f i) l₁ l₂
-  | .stop => .stop
-
-/-- Shift the PC labels of a `URMInstr r` by a constant
-`Δ`. Register references are unchanged. Spec §5.1.2. -/
-def URMInstr.shiftPC {r : ℕ} (Δ : ℕ) :
-    URMInstr r → URMInstr r
-  | .assign i c => .assign i c
-  | .inc i => .inc i
-  | .dec i => .dec i
-  | .jumpZ i l₁ l₂ => .jumpZ i (l₁ + Δ) (l₂ + Δ)
-  | .stop => .stop
+    zeroReg_not_output := by decide
+    lastInstr_isStop :=
+      URMInstrRaw.toBoundedArray_back?_of_last_stopR hBound
+        (by simp [rawList, URMRaw.preservingTransfer,
+          URMRaw.transferLoop, URMRaw.goto]) }
 
 /-- Convert a typed `URMInstr r` to its raw form,
 discarding the bound proof on register indices. Used by
@@ -452,20 +464,10 @@ def URMInstrRaw.reindexShift (regOffset pcShift : ℕ) :
       .jumpZR (regOffset + i) (pcShift + l₁) (pcShift + l₂)
   | .stopR => .stopR
 
-/-- `URMInstrRaw.reindexShift` bumps the register bound by
-at most `regOffset`. -/
-theorem URMInstrRaw.regBound_reindexShift_le
-    (regOffset pcShift : ℕ) (ins : URMInstrRaw) :
-    (URMInstrRaw.reindexShift regOffset pcShift ins).regBound
-      ≤ regOffset + ins.regBound := by
-  cases ins <;>
-    simp only [URMInstrRaw.reindexShift, URMInstrRaw.regBound] <;>
-    omega
-
 /-- Cumulative register count of the first `n`
 sub-fragments. Used by `compileFrag_comp` to lay out
 disjoint register blocks. -/
-def gsPrefixSum {k a : ℕ}
+private def gsPrefixSum {k a : ℕ}
     (frag_gs : Fin k → CompiledFragment a) :
     ℕ → ℕ
   | 0 => 0
@@ -475,7 +477,7 @@ def gsPrefixSum {k a : ℕ}
 
 /-- The block size contributed by `frag_gs i` to the
 prefix sum equals `(frag_gs i).numRegs`. -/
-theorem gsPrefixSum_succ_eq {k a : ℕ}
+private theorem gsPrefixSum_succ_eq {k a : ℕ}
     (frag_gs : Fin k → CompiledFragment a) (i : Fin k) :
     gsPrefixSum frag_gs (i.val + 1)
       = gsPrefixSum frag_gs i.val + (frag_gs i).numRegs := by
@@ -485,7 +487,7 @@ theorem gsPrefixSum_succ_eq {k a : ℕ}
   simp only [i.isLt, dite_true, Fin.eta]
 
 /-- `gsPrefixSum` is monotone. -/
-theorem gsPrefixSum_mono {k a : ℕ}
+private theorem gsPrefixSum_mono {k a : ℕ}
     (frag_gs : Fin k → CompiledFragment a) {n m : ℕ}
     (h : n ≤ m) :
     gsPrefixSum frag_gs n ≤ gsPrefixSum frag_gs m := by
@@ -541,7 +543,7 @@ moving outer input `j` into the reindexed slot of
 (minus trailing stop) reindexed and PC-shifted, then a
 destructive `transferLoop` wiring `gs i`'s output into
 `f`'s `i`-th input slot. -/
-def compileFrag_comp_subBlock {k a : ℕ}
+private def compileFrag_comp_subBlock {k a : ℕ}
     (frag_f : CompiledFragment k)
     (frag_gs : Fin k → CompiledFragment a)
     (gsBase fBase tmpReg : ℕ) (i : Fin k) (pcBase : ℕ) :
@@ -570,7 +572,7 @@ each emitted raw instruction has register bound at most
 `nR`, given arithmetic bounds linking `gsBase`, `fBase`,
 `tmpReg`, the sub-fragment's register count, and `f`'s
 register count. -/
-theorem boundedBy_compileFrag_comp_subBlock {k a : ℕ}
+private theorem boundedBy_compileFrag_comp_subBlock {k a : ℕ}
     (frag_f : CompiledFragment k)
     (frag_gs : Fin k → CompiledFragment a)
     (gsBase fBase tmpReg nR : ℕ) (i : Fin k) (pcBase : ℕ)
@@ -704,6 +706,21 @@ def compileFrag_comp {k a : ℕ}
       have hr := regBound_reindexShift_le_offset_add fBase
         fPcBase frag_f.numRegs (toRawOfBounded ins') hb
       omega
+  have hFInstrsLast : frag_f.instrs.toList.getLast?
+      = some (URMInstr.stop : URMInstr frag_f.numRegs) := by
+    rw [Array.getLast?_toList]; exact frag_f.lastInstr_isStop
+  have hFBodyLast : fBody.getLast? = some .stopR := by
+    simp only [fBody, List.getLast?_map, hFInstrsLast,
+      Option.map_some]
+    rfl
+  have hFBodyNe : fBody ≠ [] := by
+    intro he; rw [he] at hFBodyLast; simp at hFBodyLast
+  have hLastStopR : rawList.getLast? = some .stopR := by
+    have hSubFLast :
+        (subBlocks ++ fBody).getLast? = some .stopR :=
+      List.getLast?_append_of_ne_nil _ hFBodyNe ▸ hFBodyLast
+    simp only [rawList, List.getLast?_cons, hSubFLast,
+      Option.getD_some]
   { numRegs := nR
     numRegs_pos := by
       simp only [nR]; omega
@@ -732,7 +749,10 @@ def compileFrag_comp {k a : ℕ}
     zeroReg_not_output := by
       intro h
       have h' : (0 : ℕ) = (1 : ℕ) := congrArg Fin.val h
-      omega }
+      omega
+    lastInstr_isStop :=
+      URMInstrRaw.toBoundedArray_back?_of_last_stopR hBound
+        hLastStopR }
 
 end LawvereERKSim
 
