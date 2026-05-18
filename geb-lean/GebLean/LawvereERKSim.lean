@@ -162,6 +162,44 @@ private theorem URMInstrRaw.toBoundedArray_back?_of_last_stopR
     List.attach_cons, List.attach_nil, List.getLast?_concat]
   rfl
 
+/-- The size of `toBoundedArray r l h` equals `l.length`. -/
+private theorem URMInstrRaw.toBoundedArray_size
+    (r : ℕ) (l : List URMInstrRaw)
+    (h : URMInstrRaw.boundedBy r l) :
+    (URMInstrRaw.toBoundedArray r l h).size = l.length := by
+  unfold URMInstrRaw.toBoundedArray
+  rw [List.size_toArray, List.length_map, List.length_attach]
+
+/-- Indexing `toBoundedArray r l h` at `i < l.length`
+yields `toBounded` applied to the `i`-th raw element. -/
+private theorem URMInstrRaw.toBoundedArray_getElem
+    (r : ℕ) (l : List URMInstrRaw)
+    (h : URMInstrRaw.boundedBy r l)
+    (i : ℕ) (hi : i < (URMInstrRaw.toBoundedArray r l h).size) :
+    (URMInstrRaw.toBoundedArray r l h)[i] =
+      URMInstrRaw.toBounded r (l[i]'(by
+        rw [URMInstrRaw.toBoundedArray_size] at hi; exact hi))
+        (h _ (List.getElem_mem (by
+          rw [URMInstrRaw.toBoundedArray_size] at hi; exact hi))) := by
+  unfold URMInstrRaw.toBoundedArray
+  rw [List.getElem_toArray, List.getElem_map,
+    List.getElem_attach]
+
+/-- `getElem?` form of `toBoundedArray_getElem`: at any
+`i < l.length`, the bounded array yields
+`some (toBounded …)`. -/
+private theorem URMInstrRaw.toBoundedArray_getElem?
+    (r : ℕ) (l : List URMInstrRaw)
+    (h : URMInstrRaw.boundedBy r l)
+    (i : ℕ) (hi : i < l.length) :
+    (URMInstrRaw.toBoundedArray r l h)[i]? =
+      some (URMInstrRaw.toBounded r (l[i]'hi)
+        (h _ (List.getElem_mem hi))) := by
+  have hsize : i < (URMInstrRaw.toBoundedArray r l h).size := by
+    rw [URMInstrRaw.toBoundedArray_size]; exact hi
+  rw [Array.getElem?_eq_getElem hsize,
+    URMInstrRaw.toBoundedArray_getElem]
+
 /-- A compiled URM fragment for a sub-expression of arity
 `a`. Compositional building block: per-ER-constructor
 combinators (`compileFrag_*`) glue sub-fragments into
