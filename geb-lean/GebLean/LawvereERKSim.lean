@@ -1953,6 +1953,152 @@ private theorem compileER_runFor_zero
   simp only [P, compileER, compileERFrag, compileFrag_zero]
   rfl
 
+/-- Correctness of `compileER` on `.succ`: running for at
+least `12 + 10 * v 0` steps from `init` produces output
+register = `(v 0).succ`. Traces the 12-instruction
+`compileFrag_succ` program: assignR zeroReg, then 9-step
+`preservingTransfer` of input into output, then incR
+output, then stopR. -/
+private theorem compileER_runFor_succ
+    (v : Fin 1 → ℕ) (t' : ℕ)
+    (ht' : compileER_runtime (.succ : ERMor1 1) v ≤ t') :
+    (URMState.runFor (compileER ERMor1.succ)
+        (URMState.init (compileER ERMor1.succ) v) t').regs
+        (compileER ERMor1.succ).outputReg
+      = ERMor1.succ.interp v := by
+  -- Abbreviations for the program and register Fins.
+  set P : URMProgram 1 := compileER ERMor1.succ with hP
+  set s0 : URMState P := URMState.init P v with hs0
+  -- The runtime is 12 + 10 * v 0; the actual trace uses
+  -- 9 * v 0 + 5 steps (1 assign + (9 * v 0 + 2) transfer
+  -- + 1 inc + 1 stop).  Slack = t' - (9 * v 0 + 5).
+  have hrt : compileER_runtime (.succ : ERMor1 1) v = 12 + 10 * v 0 :=
+    rfl
+  obtain ⟨slack, rfl⟩ : ∃ sl, t' = (9 * v 0 + 5) + sl :=
+    ⟨t' - (9 * v 0 + 5), by rw [hrt] at ht'; omega⟩
+  -- Five Fins of `P.numRegs = 4`.
+  set zReg : Fin P.numRegs := ⟨0, by decide⟩ with hzReg
+  set dst  : Fin P.numRegs := ⟨1, by decide⟩ with hdst
+  set src  : Fin P.numRegs := ⟨2, by decide⟩ with hsrc
+  set tmp  : Fin P.numRegs := ⟨3, by decide⟩ with htmp
+  -- Inputs.
+  have h_inputReg : P.inputRegs 0 = src := rfl
+  -- s0.regs values.
+  have hs0_src : s0.regs src = v 0 := by
+    -- (List.finRange 1).find? returns some 0 since
+    -- inputRegs 0 = src.
+    change (URMState.init P v).regs src = v 0
+    rfl
+  have hs0_zReg : s0.regs zReg = 0 := by
+    change (URMState.init P v).regs zReg = 0
+    rfl
+  have hs0_dst : s0.regs dst = 0 := by
+    change (URMState.init P v).regs dst = 0
+    rfl
+  have hs0_tmp : s0.regs tmp = 0 := by
+    change (URMState.init P v).regs tmp = 0
+    rfl
+  have hs0_pc : s0.pc = 0 := rfl
+  -- Disjointness of the four Fins.
+  have h_disj_sd : src ≠ dst := by
+    intro h; exact absurd (congrArg Fin.val h) (by decide)
+  have h_disj_st : src ≠ tmp := by
+    intro h; exact absurd (congrArg Fin.val h) (by decide)
+  have h_disj_dt : dst ≠ tmp := by
+    intro h; exact absurd (congrArg Fin.val h) (by decide)
+  have h_disj_zs : zReg ≠ src := by
+    intro h; exact absurd (congrArg Fin.val h) (by decide)
+  have h_disj_zd : zReg ≠ dst := by
+    intro h; exact absurd (congrArg Fin.val h) (by decide)
+  have h_disj_zt : zReg ≠ tmp := by
+    intro h; exact absurd (congrArg Fin.val h) (by decide)
+  -- Instruction-presence hypotheses for preservingTransfer
+  -- at PCs 1..9; each one is a literal-array `getElem?`
+  -- equality that reduces by `rfl`.
+  have H : preservingTransferInstrs P 1 src dst tmp zReg := by
+    refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩ <;> rfl
+  -- t' = (9 * v 0 + 5) + slack.
+  --   = 1 + (9 * v 0 + 2) + 1 + 1 + slack.
+  -- Step 1 (PC 0): assignR 0 0; s0 → s1 with PC = 1 and
+  -- regs zReg = 0 (no change).
+  have h_split : 9 * v 0 + 5 + slack
+      = 1 + ((9 * v 0 + 2) + (1 + (1 + slack))) := by omega
+  rw [h_split, URMState.runFor_add]
+  -- Compute the first step.
+  have h_step0 : URMState.step P s0 =
+      { pc := 1
+        regs := Function.update s0.regs zReg 0 } := by
+    have h_pc : (0 : ℕ) < P.instrs.size := by decide
+    have h_eq : P.instrs[(0 : ℕ)]'h_pc = .assign zReg 0 := rfl
+    simp only [URMState.step, hs0_pc, dif_pos h_pc, h_eq]
+  set s1 : URMState P :=
+      { pc := 1
+        regs := Function.update s0.regs zReg 0 } with hs1
+  have h_first : URMState.runFor P s0 1 = s1 := by
+    change URMState.runFor P (URMState.step P s0) 0 = _
+    rw [URMState.runFor_zero, h_step0]
+  rw [h_first]
+  -- s1's register values.
+  have hs1_pc : s1.pc = 1 := rfl
+  have hs1_zReg : s1.regs zReg = 0 := by
+    change Function.update s0.regs zReg 0 zReg = 0
+    rw [Function.update_self]
+  have hs1_src : s1.regs src = v 0 := by
+    change Function.update s0.regs zReg 0 src = v 0
+    rw [Function.update_of_ne (Ne.symm h_disj_zs), hs0_src]
+  have hs1_dst : s1.regs dst = 0 := by
+    change Function.update s0.regs zReg 0 dst = 0
+    rw [Function.update_of_ne (Ne.symm h_disj_zd), hs0_dst]
+  have hs1_tmp : s1.regs tmp = 0 := by
+    change Function.update s0.regs zReg 0 tmp = 0
+    rw [Function.update_of_ne (Ne.symm h_disj_zt), hs0_tmp]
+  -- Step 2: preservingTransfer block for `9 * v 0 + 2`
+  -- steps.
+  rw [URMState.runFor_add]
+  obtain ⟨pt_pc, pt_dst, pt_src, pt_tmp, pt_z, pt_oth⟩ :=
+    preservingTransfer_correct P 1 src dst tmp zReg
+      h_disj_sd h_disj_st h_disj_dt h_disj_zs h_disj_zd h_disj_zt
+      H s1 hs1_pc hs1_zReg hs1_tmp (v 0) hs1_src
+  set s2 : URMState P := URMState.runFor P s1 (9 * v 0 + 2)
+    with hs2
+  -- s2's values.
+  have hs2_pc : s2.pc = 10 := by
+    have h10 : (1 : ℕ) + 9 = 10 := by omega
+    rw [← h10]; exact pt_pc
+  have hs2_dst : s2.regs dst = v 0 := by
+    rw [pt_dst, hs1_dst]; omega
+  -- Step 3: incR dst at PC 10.
+  rw [URMState.runFor_add]
+  have h_step2 : URMState.step P s2 =
+      { pc := 11
+        regs := Function.update s2.regs dst (s2.regs dst + 1) } := by
+    have h_pc : (10 : ℕ) < P.instrs.size := by decide
+    have h_eq : P.instrs[(10 : ℕ)]'h_pc = .inc dst := rfl
+    simp only [URMState.step, hs2_pc, dif_pos h_pc, h_eq]
+  set s3 : URMState P :=
+      { pc := 11
+        regs := Function.update s2.regs dst (s2.regs dst + 1) }
+    with hs3
+  have h_third : URMState.runFor P s2 1 = s3 := by
+    change URMState.runFor P (URMState.step P s2) 0 = _
+    rw [URMState.runFor_zero, h_step2]
+  rw [h_third]
+  have hs3_pc : s3.pc = 11 := rfl
+  have hs3_dst : s3.regs dst = v 0 + 1 := by
+    change Function.update s2.regs dst (s2.regs dst + 1) dst = v 0 + 1
+    rw [Function.update_self, hs2_dst]
+  -- Step 4: stopR at PC 11.  The remaining `1 + slack`
+  -- steps are absorbed by `runFor_stop`.
+  have h_pc11 : s3.pc < P.instrs.size := by
+    rw [hs3_pc]; decide
+  have h_stop : P.instrs[s3.pc]'h_pc11 = URMInstr.stop := by
+    change P.instrs[(11 : ℕ)]'(hs3_pc ▸ h_pc11) = URMInstr.stop
+    rfl
+  rw [URMState.runFor_stop P s3 (1 + slack) h_pc11 h_stop]
+  -- Read off output register.
+  change s3.regs dst = _
+  rw [hs3_dst, ERMor1.interp_succ]
+
 end LawvereERKSim
 
 end GebLean
