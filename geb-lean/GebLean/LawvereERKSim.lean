@@ -49,6 +49,10 @@ register.
   the per-constructor combinators via `compileERFrag`
   and forgets the reserved-zero convention via
   `.toURMProgram`.
+- `compileER_runtime`: ℕ-valued runtime witness defined
+  by structural recursion on `e`; sufficient step count
+  for `URMState.runFor (compileER e) v` to halt with
+  output register holding `e.interp v`.
 
 ## References
 
@@ -1345,6 +1349,52 @@ whose execution on input `v : Fin a → ℕ` produces
 2018 pp. 19–21 per-template constructions. -/
 def compileER {a : ℕ} (e : ERMor1 a) : URMProgram a :=
   (compileERFrag e).toURMProgram
+
+/-- Runtime witness: a step count sufficient for
+`URMState.runFor (compileER e) v` to reach a state where
+the output register holds `e.interp v`. Structural
+recursion on `e`; per-template costs match the spec §5.2
+shape. Tourlakis 2018 §0.1.0.42 (p. 18) `f ∈ E^n` is
+URM-computable within time `t ∈ E^n`. -/
+def compileER_runtime : {a : ℕ} → ERMor1 a →
+    (Fin a → ℕ) → ℕ
+  | _, .zero, _ => 3
+  | _, .succ, v => 12 + 10 * v 0
+  | _, .proj i, v => 11 + 10 * v i
+  | _, .sub, v => 20 + 10 * v 0 + 10 * v 1
+  | _, .comp (k := k) f gs, v =>
+      let inner : Fin k → ℕ := fun i => (gs i).interp v
+      let glue : ℕ :=
+        ((List.finRange k).map
+          (fun i => compileER_runtime (gs i) v
+            + 4 + 5 * inner i)).foldl (· + ·) 0
+      glue + compileER_runtime f inner + 2
+  | _, .bsum (k := k) f, v =>
+      let bound : ℕ := v 0
+      let perIter : ℕ → ℕ := fun i =>
+        let ctx_f : Fin (k + 1) → ℕ :=
+          Fin.cons i (Fin.tail v)
+        let outerSum : ℕ :=
+          ((List.finRange k).map (Fin.tail v)).foldl
+            (· + ·) 0
+        compileER_runtime f ctx_f
+        + 50 + 10 * (i + outerSum)
+        + 5 * f.interp ctx_f
+      30 + 10 * bound +
+        ((List.range bound).map perIter).foldl (· + ·) 0
+  | _, .bprod (k := k) f, v =>
+      let bound : ℕ := v 0
+      let perIter : ℕ → ℕ := fun i =>
+        let ctx_f : Fin (k + 1) → ℕ :=
+          Fin.cons i (Fin.tail v)
+        let outerSum : ℕ :=
+          ((List.finRange k).map (Fin.tail v)).foldl
+            (· + ·) 0
+        compileER_runtime f ctx_f
+        + 60 + 10 * (i + outerSum)
+        + 5 * f.interp ctx_f
+      40 + 10 * bound +
+        ((List.range bound).map perIter).foldl (· + ·) 0
 
 end LawvereERKSim
 
