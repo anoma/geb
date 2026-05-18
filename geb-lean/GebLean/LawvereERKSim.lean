@@ -1864,6 +1864,143 @@ private theorem preservingTransfer_correct {a : ℕ}
         rw [l2_tmp, h_tmp0]
       · rw [l2_oth r hrs hrt, l1_oth r hrs hrd hrt]
 
+/-- Hypothesis bundle for `transferLoop_correct`: the four
+instruction-lookup equalities at PCs `pcBase..pcBase+3`
+matching the raw layout of `URMRaw.transferLoop`. The
+`zReg` parameter holds the reserved-zero register used by
+`URMRaw.goto`; it is required to be the register at index
+`0` so the trailing `goto` compiles to a zero-test on
+`zReg`. -/
+private structure transferLoopInstrs {a : ℕ}
+    (P : URMProgram a) (pcBase : ℕ)
+    (src dst zReg : Fin P.numRegs) : Prop where
+  h0 : P.instrs[pcBase]? =
+    some (.jumpZ src (pcBase + 4) (pcBase + 1))
+  h1 : P.instrs[pcBase + 1]? = some (.dec src)
+  h2 : P.instrs[pcBase + 2]? = some (.inc dst)
+  h3 : P.instrs[pcBase + 3]? = some (.jumpZ zReg pcBase pcBase)
+
+/-- Correctness of the `URMRaw.transferLoop` 4-instruction
+block. Running for `4 * n + 1` steps from a state with
+`pc = pcBase`, `V_src = n`, and the reserved-zero register
+`V_zReg = 0` yields a state with `pc = pcBase + 4`,
+`V_dst += n`, `V_src = 0` (destructively consumed),
+`V_zReg = 0`, and all other registers unchanged. The
+instruction-presence hypothesis bundles the four lookup
+equalities at offsets `0..3`. -/
+private theorem transferLoop_correct {a : ℕ}
+    (P : URMProgram a) (pcBase : ℕ)
+    (src dst zReg : Fin P.numRegs)
+    (h_disj_sd : src ≠ dst) (h_disj_zs : zReg ≠ src)
+    (h_disj_zd : zReg ≠ dst)
+    (H : transferLoopInstrs P pcBase src dst zReg)
+    (s : URMState P) (h_pc : s.pc = pcBase)
+    (h_z : s.regs zReg = 0)
+    (n : ℕ) (h_src : s.regs src = n) :
+    let s' := URMState.runFor P s (4 * n + 1)
+    s'.pc = pcBase + 4 ∧
+    s'.regs dst = s.regs dst + n ∧
+    s'.regs src = 0 ∧
+    s'.regs zReg = 0 ∧
+    ∀ r, r ≠ dst → r ≠ src → r ≠ zReg →
+      s'.regs r = s.regs r := by
+  simp only []
+  induction n generalizing s with
+  | zero =>
+    -- 1 step: jumpZ src (pcBase+4) (pcBase+1).  V_src = 0,
+    -- so PC → pcBase+4.
+    have hstep : (4 * 0 + 1 : ℕ) = 0 + 1 := rfl
+    rw [hstep, URMState.runFor_succ, URMState.runFor_zero,
+      URMState.step_of_getElem?_jumpZ P s pcBase src
+        (pcBase + 4) (pcBase + 1) h_pc H.h0]
+    have hsrc_eq : s.regs src = 0 := h_src
+    simp only [hsrc_eq, ↓reduceIte]
+    refine ⟨trivial, ?_, trivial, h_z, fun _ _ _ _ => trivial⟩
+    show s.regs dst = s.regs dst + 0
+    omega
+  | succ n ih =>
+    -- Peel 4 steps: jumpZ (to pcBase+1), dec src, inc dst,
+    -- goto pcBase.  Then apply ih on the resulting state
+    -- with V_src = n.
+    have h4n : 4 * (n + 1) + 1 = 4 + (4 * n + 1) := by omega
+    rw [h4n, URMState.runFor_add]
+    set s4 : URMState P :=
+      { pc := pcBase
+        regs := Function.update
+          (Function.update s.regs src (s.regs src - 1))
+          dst ((Function.update s.regs src (s.regs src - 1)) dst + 1) }
+      with hs4_def
+    have h_src_ne : s.regs src ≠ 0 := by rw [h_src]; omega
+    have h_four : URMState.runFor P s 4 = s4 := by
+      change URMState.runFor P s (3 + 1) = _
+      rw [URMState.runFor_succ,
+        URMState.step_of_getElem?_jumpZ P s pcBase src
+          (pcBase + 4) (pcBase + 1) h_pc H.h0]
+      simp only [h_src_ne, ↓reduceIte]
+      set s1 : URMState P :=
+        { pc := pcBase + 1, regs := s.regs } with hs1_def
+      have hs1_pc : s1.pc = pcBase + 1 := rfl
+      change URMState.runFor P s1 (2 + 1) = _
+      rw [URMState.runFor_succ,
+        URMState.step_of_getElem?_dec P s1 (pcBase + 1) src hs1_pc H.h1]
+      set s2 : URMState P :=
+        { pc := s1.pc + 1
+          regs := Function.update s1.regs src (s1.regs src - 1) } with hs2_def
+      have hs2_pc : s2.pc = pcBase + 2 := by
+        change s1.pc + 1 = pcBase + 2; rw [hs1_pc]
+      change URMState.runFor P s2 (1 + 1) = _
+      rw [URMState.runFor_succ,
+        URMState.step_of_getElem?_inc P s2 (pcBase + 2) dst hs2_pc H.h2]
+      set s3 : URMState P :=
+        { pc := s2.pc + 1
+          regs := Function.update s2.regs dst (s2.regs dst + 1) } with hs3_def
+      have hs3_pc : s3.pc = pcBase + 3 := by
+        change s2.pc + 1 = pcBase + 3; rw [hs2_pc]
+      change URMState.runFor P s3 (0 + 1) = _
+      rw [URMState.runFor_succ, URMState.runFor_zero,
+        URMState.step_of_getElem?_jumpZ P s3 (pcBase + 3) zReg
+          pcBase pcBase hs3_pc H.h3]
+      have hs3_z : s3.regs zReg = 0 := by
+        change Function.update s2.regs dst _ zReg = 0
+        rw [Function.update_of_ne h_disj_zd]
+        change Function.update s1.regs src _ zReg = 0
+        rw [Function.update_of_ne h_disj_zs]
+        exact h_z
+      simp only [hs3_z, ↓reduceIte]
+      rfl
+    rw [h_four]
+    have hs4_pc : s4.pc = pcBase := rfl
+    have hs4_z : s4.regs zReg = 0 := by
+      change Function.update (Function.update s.regs src
+        (s.regs src - 1)) dst _ zReg = 0
+      rw [Function.update_of_ne h_disj_zd]
+      rw [Function.update_of_ne h_disj_zs]
+      exact h_z
+    have hs4_src : s4.regs src = n := by
+      change Function.update (Function.update s.regs src
+        (s.regs src - 1)) dst _ src = n
+      rw [Function.update_of_ne h_disj_sd]
+      rw [Function.update_self]
+      omega
+    have hs4_dst : s4.regs dst = s.regs dst + 1 := by
+      change Function.update (Function.update s.regs src
+        (s.regs src - 1)) dst _ dst = _
+      rw [Function.update_self]
+      rw [Function.update_of_ne h_disj_sd.symm]
+    have hs4_other : ∀ r, r ≠ dst → r ≠ src →
+        s4.regs r = s.regs r := by
+      intro r hrd hrs
+      change Function.update (Function.update s.regs src
+        (s.regs src - 1)) dst _ r = _
+      rw [Function.update_of_ne hrd]
+      rw [Function.update_of_ne hrs]
+    obtain ⟨ih_pc, ih_dst, ih_src, ih_z, ih_oth⟩ :=
+      ih s4 hs4_pc hs4_z hs4_src
+    refine ⟨ih_pc, ?_, ih_src, ih_z, ?_⟩
+    · rw [ih_dst, hs4_dst]; omega
+    · intro r hrd hrs hrz
+      rw [ih_oth r hrd hrs hrz, hs4_other r hrd hrs]
+
 /-- Correctness of `compileER` on `.zero`: running for at
 least 3 steps from `init` produces output register = 0. -/
 private theorem compileER_runFor_zero
