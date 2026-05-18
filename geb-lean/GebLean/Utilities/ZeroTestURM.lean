@@ -51,6 +51,10 @@ rather than a zero-test jump (level 1 in K^sim). See spec
 - `URMState.runFor_zero`, `URMState.runFor_succ`,
   `URMState.runFor_add`: reduction lemmas for `runFor`;
   the first two are `@[simp]`.
+- `URMState.runFor_halted_invariant`: past the end of
+  the instruction array, `runFor` is the identity.
+- `URMState.runFor_stop`: at a `stop` instruction,
+  `runFor` is the identity.
 
 ## References
 
@@ -196,6 +200,33 @@ theorem URMState.runFor_add {a : ℕ}
     change URMState.runFor P (URMState.step P s) (m + n)
       = URMState.runFor P (URMState.runFor P (URMState.step P s) m) n
     exact ih (URMState.step P s)
+
+/-- If the PC is past the end of the instruction array,
+`runFor` is the identity for any step count. -/
+theorem URMState.runFor_halted_invariant {a : ℕ}
+    (P : URMProgram a) (s : URMState P) (n : ℕ)
+    (h : s.pc ≥ P.instrs.size) :
+    URMState.runFor P s n = s := by
+  induction n with
+  | zero => rfl
+  | succ n ih =>
+    have hstep : URMState.step P s = s := by
+      simp only [URMState.step, dif_neg (Nat.not_lt_of_ge h)]
+    rw [URMState.runFor_succ, hstep, ih]
+
+/-- If the instruction at the current PC is `stop`,
+`runFor` is the identity for any step count. -/
+theorem URMState.runFor_stop {a : ℕ}
+    (P : URMProgram a) (s : URMState P) (n : ℕ)
+    (h_pc : s.pc < P.instrs.size)
+    (h_stop : P.instrs[s.pc]'h_pc = URMInstr.stop) :
+    URMState.runFor P s n = s := by
+  induction n with
+  | zero => rfl
+  | succ n ih =>
+    have hstep : URMState.step P s = s := by
+      simp only [URMState.step, dif_pos h_pc, h_stop]
+    rw [URMState.runFor_succ, hstep, ih]
 
 /-- Initial state for program `P` with input vector `v`:
 PC = 0; registers default to 0, with input slots `i`
