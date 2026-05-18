@@ -2,7 +2,6 @@ import GebLean.LawvereER
 import GebLean.Utilities.ZeroTestURM
 import Mathlib.Data.Fintype.Basic
 import Mathlib.Tactic.FinCases
-import Mathlib.Tactic.IntervalCases
 
 /-!
 # erToK: ER → K^sim_2 via zero-test URM simulation
@@ -298,22 +297,23 @@ def compileFrag_proj {k : ℕ} (i : Fin k) :
     inputRegs_inj := by
       intro p q hpq
       apply Fin.ext
-      have h := congrArg Fin.val hpq
-      simp at h
+      have h : (2 + p.val : ℕ) = (2 + q.val : ℕ) :=
+        congrArg Fin.val hpq
       omega
     outputReg_not_input := by
       intro p hp
-      have h := congrArg Fin.val hp
-      simp at h
+      have h : (2 + p.val : ℕ) = (1 : ℕ) :=
+        congrArg Fin.val hp
       omega
     zeroReg_not_input := by
       intro p hp
-      have h := congrArg Fin.val hp
-      simp at h
+      have h : (2 + p.val : ℕ) = (0 : ℕ) :=
+        congrArg Fin.val hp
+      omega
     zeroReg_not_output := by
       intro h
-      have h' := congrArg Fin.val h
-      simp at h' }
+      have h' : (0 : ℕ) = (1 : ℕ) := congrArg Fin.val h
+      omega }
 
 /-- Input register assignment for `compileFrag_sub`:
 slot 0 → register 2, slot 1 → register 3. Built via
@@ -360,14 +360,32 @@ def compileFrag_sub : CompiledFragment 2 :=
       intro p q hpq
       -- `p, q : Fin 2` each lie in {0, 1}; the slot-to-
       -- register function is injective on those values.
-      fin_cases p <;> fin_cases q <;>
-        first | rfl | (exfalso; exact absurd hpq (by decide))
+      -- Use `Fin.cases` (Lean-core eliminator) for a
+      -- constructive case-split avoiding mathlib's
+      -- `fin_cases` (which pulls in `Classical.choice`).
+      apply Fin.ext
+      have h := congrArg Fin.val hpq
+      revert h
+      refine Fin.cases ?_
+        (fun i => Fin.cases ?_ (fun j => j.elim0) i) p <;>
+        refine Fin.cases ?_
+          (fun i => Fin.cases ?_ (fun j => j.elim0) i) q <;>
+        intro h <;>
+        (first | rfl | (exfalso; revert h; decide))
     outputReg_not_input := by
       intro p hp
-      fin_cases p <;> exact absurd hp (by decide)
+      have h := congrArg Fin.val hp
+      revert h
+      refine Fin.cases ?_
+        (fun i => Fin.cases ?_ (fun j => j.elim0) i) p <;>
+        intro h <;> revert h <;> decide
     zeroReg_not_input := by
       intro p hp
-      fin_cases p <;> exact absurd hp (by decide)
+      have h := congrArg Fin.val hp
+      revert h
+      refine Fin.cases ?_
+        (fun i => Fin.cases ?_ (fun j => j.elim0) i) p <;>
+        intro h <;> revert h <;> decide
     zeroReg_not_output := by decide }
 
 end LawvereERKSim
