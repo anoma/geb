@@ -1486,6 +1486,374 @@ private theorem URMState.step_of_getElem?_inc {a : ℕ}
   obtain ⟨hk, h_eq⟩ := getElem_of_getElem?_some P.instrs k _ h_instr
   simp only [URMState.step, h_pc, dif_pos hk, h_eq]
 
+/-- One step from a state at PC `pcBase + k` whose
+instruction lookup is hypothesised via `[…]?` to be an
+assign. -/
+private theorem URMState.step_of_getElem?_assign {a : ℕ}
+    (P : URMProgram a) (s : URMState P) (k : ℕ)
+    (i : Fin P.numRegs) (c : ℕ)
+    (h_pc : s.pc = k)
+    (h_instr : P.instrs[k]? = some (.assign i c)) :
+    URMState.step P s =
+      { pc := s.pc + 1
+        regs := Function.update s.regs i c } := by
+  obtain ⟨hk, h_eq⟩ := getElem_of_getElem?_some P.instrs k _ h_instr
+  simp only [URMState.step, h_pc, dif_pos hk, h_eq]
+
+/-- One step from a state at PC `pcBase + k` whose
+instruction lookup is hypothesised via `[…]?` to be a
+stop. The step is the identity. -/
+private theorem URMState.step_of_getElem?_stop {a : ℕ}
+    (P : URMProgram a) (s : URMState P) (k : ℕ)
+    (h_pc : s.pc = k)
+    (h_instr : P.instrs[k]? = some .stop) :
+    URMState.step P s = s := by
+  obtain ⟨hk, h_eq⟩ := getElem_of_getElem?_some P.instrs k _ h_instr
+  simp only [URMState.step, h_pc, dif_pos hk, h_eq]
+
+/-! ### Program-embedding lemmas
+
+The following helpers state that a sub-fragment's
+execution (standalone) corresponds to its execution
+inside a larger program after `URMInstrRaw.reindexShift`
+has been applied to its raw instructions. The shape is
+parameterised by an embedded prefix length `L` (so
+combinators that splice in `frag.instrs.pop` — dropping
+the trailing stop — can use `L = frag.instrs.size - 1`,
+while combinators that keep the stop use `L = frag.instrs.size`).
+
+Used by `compileER_runFor_{comp,bsum,bprod}` to apply
+the inductive hypothesis to a sub-fragment's run after
+register-space injection and PC shifting. -/
+
+/-- Predicate: `P_big`'s instructions at PCs
+`pcOffset..pcOffset+L` encode the first `L` instructions
+of `frag` reindex-shifted by `regOffset` (registers) and
+`pcOffset` (jump targets). The flat `∀ i hi hL hR, …`
+shape avoids nested `∧` so dependent proof obligations
+inside the instruction-lookup equation can be discharged
+locally. -/
+private structure ProgramEmbedsFragment {a b : ℕ}
+    (P_big : URMProgram b) (frag : CompiledFragment a)
+    (regOffset pcOffset L : ℕ) : Prop where
+  hL : L ≤ frag.instrs.size
+  hReg : regOffset + frag.numRegs ≤ P_big.numRegs
+  hInstr : ∀ (i : ℕ) (hi : i < L),
+    P_big.instrs[pcOffset + i]? =
+      some (URMInstrRaw.toBounded P_big.numRegs
+        (URMInstrRaw.reindexShift regOffset pcOffset
+          (toRawOfBounded
+            (frag.instrs[i]'(Nat.lt_of_lt_of_le hi hL))))
+        (Nat.le_trans
+          (regBound_reindexShift_le_offset_add regOffset pcOffset
+            frag.numRegs _
+            (regBound_toRawOfBounded_le _))
+          hReg))
+
+/-- States match under embedding: `s_big`'s PC is the
+shifted form of `s_frag`'s PC, and registers in the
+embedded block match. Other registers of `s_big` are
+unconstrained. -/
+private def StateEmbedsFrag {a b : ℕ}
+    {P_big : URMProgram b} {frag : CompiledFragment a}
+    (s_big : URMState P_big) (s_frag : URMState frag.toURMProgram)
+    (regOffset pcOffset : ℕ)
+    (hReg : regOffset + frag.numRegs ≤ P_big.numRegs) : Prop :=
+  s_big.pc = pcOffset + s_frag.pc ∧
+  ∀ (j : ℕ) (hj : j < frag.numRegs),
+    s_big.regs ⟨regOffset + j,
+        Nat.lt_of_lt_of_le (Nat.add_lt_add_left hj _) hReg⟩
+      = s_frag.regs ⟨j, hj⟩
+
+/-- Per-step simulation: under the embedding, one step
+from a matching state lands on a matching state, provided
+`s_frag.pc < L` (the embedded region covers the current
+instruction). -/
+private theorem stateEmbedsFrag_step {a b : ℕ}
+    (P_big : URMProgram b) (frag : CompiledFragment a)
+    (regOffset pcOffset L : ℕ)
+    (h_emb_prog :
+      ProgramEmbedsFragment P_big frag regOffset pcOffset L)
+    (s_big : URMState P_big) (s_frag : URMState frag.toURMProgram)
+    (h_match :
+      StateEmbedsFrag s_big s_frag regOffset pcOffset
+        h_emb_prog.hReg)
+    (h_pc_in : s_frag.pc < L) :
+    StateEmbedsFrag (URMState.step P_big s_big)
+        (URMState.step frag.toURMProgram s_frag)
+        regOffset pcOffset h_emb_prog.hReg := by
+  obtain ⟨hL, hReg, hInstr⟩ := h_emb_prog
+  obtain ⟨h_pc, h_regs⟩ := h_match
+  have hfrag_lt : s_frag.pc < frag.instrs.size :=
+    Nat.lt_of_lt_of_le h_pc_in hL
+  -- P_big's instruction at s_big.pc via the embedding.
+  have h_big_instr_raw :
+      P_big.instrs[s_big.pc]? =
+        some (URMInstrRaw.toBounded P_big.numRegs
+          (URMInstrRaw.reindexShift regOffset pcOffset
+            (toRawOfBounded (frag.instrs[s_frag.pc]'hfrag_lt)))
+          (Nat.le_trans
+            (regBound_reindexShift_le_offset_add regOffset
+              pcOffset frag.numRegs _
+              (regBound_toRawOfBounded_le _))
+            hReg)) := by
+    rw [h_pc]
+    exact hInstr s_frag.pc h_pc_in
+  -- Pointwise Fin equality / inequality helpers.
+  have h_fin_idx : ∀ (j : ℕ) (hj : j < frag.numRegs)
+      (i : Fin frag.numRegs), j = i.val →
+      (⟨regOffset + j,
+        Nat.lt_of_lt_of_le (Nat.add_lt_add_left hj _) hReg⟩ :
+        Fin P_big.numRegs) =
+      ⟨regOffset + i.val,
+        Nat.lt_of_lt_of_le (Nat.add_lt_add_left i.isLt _) hReg⟩ := by
+    intro j hj i hji
+    apply Fin.ext; change regOffset + j = regOffset + i.val
+    omega
+  -- Case-split on frag's current instruction.
+  match hcase : frag.instrs[s_frag.pc]'hfrag_lt with
+  | .assign i c =>
+    -- frag step: pc + 1, regs := update s_frag.regs i c
+    have h_frag_step :
+        URMState.step frag.toURMProgram s_frag =
+          { pc := s_frag.pc + 1
+            regs := Function.update s_frag.regs i c } := by
+      simp only [URMState.step, dif_pos hfrag_lt, hcase]
+    have hi_lt : i.val < frag.numRegs := i.isLt
+    have h_big_idx_lt : regOffset + i.val < P_big.numRegs :=
+      Nat.lt_of_lt_of_le (Nat.add_lt_add_left hi_lt _) hReg
+    have h_big_instr :
+        P_big.instrs[s_big.pc]? =
+          some (.assign ⟨regOffset + i.val, h_big_idx_lt⟩ c) := by
+      rw [h_big_instr_raw]
+      congr 1
+      rw [hcase]
+      rfl
+    have h_big_step :
+        URMState.step P_big s_big =
+          { pc := s_big.pc + 1
+            regs := Function.update s_big.regs
+              ⟨regOffset + i.val, h_big_idx_lt⟩ c } :=
+      URMState.step_of_getElem?_assign P_big s_big s_big.pc _ c
+        rfl h_big_instr
+    refine ⟨?_, ?_⟩
+    · rw [h_big_step, h_frag_step, h_pc]
+      simp [Nat.add_assoc]
+    · intro j hj
+      rw [h_big_step, h_frag_step]
+      simp only [Function.update_apply]
+      by_cases hji : j = i.val
+      · have h_big_eq := h_fin_idx j hj i hji
+        have h_frag_eq : (⟨j, hj⟩ : Fin frag.numRegs) = i :=
+          Fin.ext hji
+        simp [h_big_eq, h_frag_eq]
+      · have h_big_ne :
+            (⟨regOffset + j,
+              Nat.lt_of_lt_of_le (Nat.add_lt_add_left hj _)
+                hReg⟩ : Fin P_big.numRegs) ≠
+            ⟨regOffset + i.val, h_big_idx_lt⟩ := by
+          intro he
+          apply hji
+          have : regOffset + j = regOffset + i.val :=
+            congrArg Fin.val he
+          omega
+        have h_frag_ne : (⟨j, hj⟩ : Fin frag.numRegs) ≠ i := by
+          intro he; apply hji; exact congrArg Fin.val he
+        simp [h_big_ne, h_frag_ne, h_regs j hj]
+  | .inc i =>
+    have h_frag_step :
+        URMState.step frag.toURMProgram s_frag =
+          { pc := s_frag.pc + 1
+            regs := Function.update s_frag.regs i
+              (s_frag.regs i + 1) } := by
+      simp only [URMState.step, dif_pos hfrag_lt, hcase]
+    have hi_lt : i.val < frag.numRegs := i.isLt
+    have h_big_idx_lt : regOffset + i.val < P_big.numRegs :=
+      Nat.lt_of_lt_of_le (Nat.add_lt_add_left hi_lt _) hReg
+    have h_big_instr :
+        P_big.instrs[s_big.pc]? =
+          some (.inc ⟨regOffset + i.val, h_big_idx_lt⟩) := by
+      rw [h_big_instr_raw]
+      congr 1
+      rw [hcase]
+      rfl
+    have h_regs_at_i :
+        s_big.regs ⟨regOffset + i.val, h_big_idx_lt⟩
+          = s_frag.regs i := h_regs i.val hi_lt
+    have h_big_step :
+        URMState.step P_big s_big =
+          { pc := s_big.pc + 1
+            regs := Function.update s_big.regs
+              ⟨regOffset + i.val, h_big_idx_lt⟩
+              (s_big.regs ⟨regOffset + i.val, h_big_idx_lt⟩
+                + 1) } :=
+      URMState.step_of_getElem?_inc P_big s_big s_big.pc _
+        rfl h_big_instr
+    refine ⟨?_, ?_⟩
+    · rw [h_big_step, h_frag_step, h_pc]
+      simp [Nat.add_assoc]
+    · intro j hj
+      rw [h_big_step, h_frag_step]
+      simp only [Function.update_apply]
+      by_cases hji : j = i.val
+      · have h_big_eq := h_fin_idx j hj i hji
+        have h_frag_eq : (⟨j, hj⟩ : Fin frag.numRegs) = i :=
+          Fin.ext hji
+        simp [h_big_eq, h_frag_eq, h_regs_at_i]
+      · have h_big_ne :
+            (⟨regOffset + j,
+              Nat.lt_of_lt_of_le (Nat.add_lt_add_left hj _)
+                hReg⟩ : Fin P_big.numRegs) ≠
+            ⟨regOffset + i.val, h_big_idx_lt⟩ := by
+          intro he
+          apply hji
+          have : regOffset + j = regOffset + i.val :=
+            congrArg Fin.val he
+          omega
+        have h_frag_ne : (⟨j, hj⟩ : Fin frag.numRegs) ≠ i := by
+          intro he; apply hji; exact congrArg Fin.val he
+        simp [h_big_ne, h_frag_ne, h_regs j hj]
+  | .dec i =>
+    have h_frag_step :
+        URMState.step frag.toURMProgram s_frag =
+          { pc := s_frag.pc + 1
+            regs := Function.update s_frag.regs i
+              (s_frag.regs i - 1) } := by
+      simp only [URMState.step, dif_pos hfrag_lt, hcase]
+    have hi_lt : i.val < frag.numRegs := i.isLt
+    have h_big_idx_lt : regOffset + i.val < P_big.numRegs :=
+      Nat.lt_of_lt_of_le (Nat.add_lt_add_left hi_lt _) hReg
+    have h_big_instr :
+        P_big.instrs[s_big.pc]? =
+          some (.dec ⟨regOffset + i.val, h_big_idx_lt⟩) := by
+      rw [h_big_instr_raw]
+      congr 1
+      rw [hcase]
+      rfl
+    have h_regs_at_i :
+        s_big.regs ⟨regOffset + i.val, h_big_idx_lt⟩
+          = s_frag.regs i := h_regs i.val hi_lt
+    have h_big_step :
+        URMState.step P_big s_big =
+          { pc := s_big.pc + 1
+            regs := Function.update s_big.regs
+              ⟨regOffset + i.val, h_big_idx_lt⟩
+              (s_big.regs ⟨regOffset + i.val, h_big_idx_lt⟩
+                - 1) } :=
+      URMState.step_of_getElem?_dec P_big s_big s_big.pc _
+        rfl h_big_instr
+    refine ⟨?_, ?_⟩
+    · rw [h_big_step, h_frag_step, h_pc]
+      simp [Nat.add_assoc]
+    · intro j hj
+      rw [h_big_step, h_frag_step]
+      simp only [Function.update_apply]
+      by_cases hji : j = i.val
+      · have h_big_eq := h_fin_idx j hj i hji
+        have h_frag_eq : (⟨j, hj⟩ : Fin frag.numRegs) = i :=
+          Fin.ext hji
+        simp [h_big_eq, h_frag_eq, h_regs_at_i]
+      · have h_big_ne :
+            (⟨regOffset + j,
+              Nat.lt_of_lt_of_le (Nat.add_lt_add_left hj _)
+                hReg⟩ : Fin P_big.numRegs) ≠
+            ⟨regOffset + i.val, h_big_idx_lt⟩ := by
+          intro he
+          apply hji
+          have : regOffset + j = regOffset + i.val :=
+            congrArg Fin.val he
+          omega
+        have h_frag_ne : (⟨j, hj⟩ : Fin frag.numRegs) ≠ i := by
+          intro he; apply hji; exact congrArg Fin.val he
+        simp [h_big_ne, h_frag_ne, h_regs j hj]
+  | .jumpZ i l₁ l₂ =>
+    have h_frag_step :
+        URMState.step frag.toURMProgram s_frag =
+          { pc := if s_frag.regs i = 0 then l₁ else l₂
+            regs := s_frag.regs } := by
+      simp only [URMState.step, dif_pos hfrag_lt, hcase]
+    have hi_lt : i.val < frag.numRegs := i.isLt
+    have h_big_idx_lt : regOffset + i.val < P_big.numRegs :=
+      Nat.lt_of_lt_of_le (Nat.add_lt_add_left hi_lt _) hReg
+    have h_big_instr :
+        P_big.instrs[s_big.pc]? =
+          some (.jumpZ ⟨regOffset + i.val, h_big_idx_lt⟩
+            (pcOffset + l₁) (pcOffset + l₂)) := by
+      rw [h_big_instr_raw]
+      congr 1
+      rw [hcase]
+      rfl
+    have h_regs_at_i :
+        s_big.regs ⟨regOffset + i.val, h_big_idx_lt⟩
+          = s_frag.regs i := h_regs i.val hi_lt
+    have h_big_step :
+        URMState.step P_big s_big =
+          { pc := if s_big.regs ⟨regOffset + i.val, h_big_idx_lt⟩ = 0
+                  then pcOffset + l₁ else pcOffset + l₂
+            regs := s_big.regs } :=
+      URMState.step_of_getElem?_jumpZ P_big s_big s_big.pc _
+        _ _ rfl h_big_instr
+    refine ⟨?_, ?_⟩
+    · rw [h_big_step, h_frag_step]
+      simp only [h_regs_at_i]
+      by_cases hi0 : s_frag.regs i = 0
+      · simp [hi0]
+      · simp [hi0]
+    · intro j hj
+      rw [h_big_step, h_frag_step]
+      exact h_regs j hj
+  | .stop =>
+    have h_frag_step :
+        URMState.step frag.toURMProgram s_frag = s_frag := by
+      simp only [URMState.step, dif_pos hfrag_lt, hcase]
+    have h_big_instr : P_big.instrs[s_big.pc]? = some .stop := by
+      rw [h_big_instr_raw]
+      congr 1
+      rw [hcase]
+      rfl
+    have h_big_step : URMState.step P_big s_big = s_big :=
+      URMState.step_of_getElem?_stop P_big s_big s_big.pc
+        rfl h_big_instr
+    rw [h_big_step, h_frag_step]
+    exact ⟨h_pc, h_regs⟩
+
+/-- Multi-step embedding: if `s_frag`'s PC stays `< L`
+during the first `T` steps, then `T` steps of `P_big`
+mirror `T` steps of `frag` (state matches via the
+embedding). -/
+private theorem stateEmbedsFrag_runFor {a b : ℕ}
+    (P_big : URMProgram b) (frag : CompiledFragment a)
+    (regOffset pcOffset L : ℕ)
+    (h_emb_prog :
+      ProgramEmbedsFragment P_big frag regOffset pcOffset L)
+    (s_big : URMState P_big) (s_frag : URMState frag.toURMProgram)
+    (h_match :
+      StateEmbedsFrag s_big s_frag regOffset pcOffset
+        h_emb_prog.hReg)
+    (T : ℕ)
+    (h_in_range : ∀ k, k < T →
+      (URMState.runFor frag.toURMProgram s_frag k).pc < L) :
+    StateEmbedsFrag (URMState.runFor P_big s_big T)
+        (URMState.runFor frag.toURMProgram s_frag T)
+        regOffset pcOffset h_emb_prog.hReg := by
+  induction T generalizing s_big s_frag with
+  | zero => exact h_match
+  | succ T ih =>
+    have h0 : s_frag.pc < L := by
+      have := h_in_range 0 (Nat.succ_pos T)
+      simpa [URMState.runFor] using this
+    have h_step :=
+      stateEmbedsFrag_step P_big frag regOffset pcOffset L
+        h_emb_prog s_big s_frag h_match h0
+    rw [URMState.runFor_succ, URMState.runFor_succ]
+    refine ih (URMState.step P_big s_big)
+      (URMState.step frag.toURMProgram s_frag) h_step ?_
+    intro k hk
+    have hk1 : k + 1 < T + 1 := Nat.succ_lt_succ hk
+    have := h_in_range (k + 1) hk1
+    simp only [URMState.runFor] at this
+    exact this
+
 /-- Hypothesis bundle for `preservingTransfer_correct`:
 the nine instruction-lookup equalities at PCs `pcBase..pcBase+8`
 matching the raw layout of `URMRaw.preservingTransfer`. The
