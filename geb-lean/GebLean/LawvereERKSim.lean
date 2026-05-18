@@ -2099,6 +2099,236 @@ private theorem compileER_runFor_succ
   change s3.regs dst = _
   rw [hs3_dst, ERMor1.interp_succ]
 
+/-- Auxiliary: `(List.finRange a).find?` over an injective
+predicate keyed by `inputRegs` returns the input slot whose
+register matches. Phrased over a generic injective `f` to
+keep the induction clean. Constructive: built bottom-up from
+`List.finRange_succ` and `List.find?_cons`. -/
+private theorem List.find?_finRange_inputRegs
+    {a : ℕ} {β : Type*} [DecidableEq β]
+    (f : Fin a → β) (hf : Function.Injective f) (i : Fin a) :
+    (List.finRange a).find? (fun j => decide (f j = f i)) = some i := by
+  induction a with
+  | zero => exact i.elim0
+  | succ a' ih =>
+    rw [List.finRange_succ, List.find?_cons]
+    by_cases h0 : i = 0
+    · subst h0
+      simp
+    · -- i is some Fin.succ i'.
+      have h_dec :
+          decide (f 0 = f i) = false := by
+        simp only [decide_eq_false_iff_not]
+        intro heq; exact h0 (hf heq).symm
+      rw [h_dec]
+      -- Recurse on `(List.finRange a').map Fin.succ`.
+      obtain ⟨i', rfl⟩ : ∃ i', i = Fin.succ i' := ⟨i.pred h0, (i.succ_pred h0).symm⟩
+      rw [List.find?_map]
+      have h_rec :
+          (List.finRange a').find?
+              ((fun j => decide (f j = f i'.succ)) ∘ Fin.succ) = some i' := by
+        have := ih (f ∘ Fin.succ)
+          (fun x y hxy => Fin.succ_injective _ (hf hxy)) i'
+        simp only [Function.comp] at this ⊢
+        exact this
+      rw [h_rec]
+      rfl
+
+/-- The `init` register at any input slot's image returns
+the corresponding input value. Generalises the single-slot
+`rfl` reduction used in `compileER_runFor_succ` to programs
+with more than one input. Constructive. -/
+private theorem URMState.init_regs_inputRegs {a : ℕ}
+    (P : URMProgram a) (v : Fin a → ℕ) (i : Fin a) :
+    (URMState.init P v).regs (P.inputRegs i) = v i := by
+  change
+    (match (List.finRange a).find?
+        (fun j => decide (P.inputRegs j = P.inputRegs i)) with
+      | some j => v j
+      | none   => 0) = v i
+  rw [List.find?_finRange_inputRegs P.inputRegs P.inputRegs_inj i]
+
+/-- Correctness of `compileER` on `.proj i`: running for at
+least `11 + 10 * v i` steps from `init` produces output
+register = `v i`. Traces the 11-instruction
+`compileFrag_proj i` program: assignR zeroReg, then 9-step
+`preservingTransfer` of input slot `i` into output, then
+stopR. -/
+private theorem compileER_runFor_proj {k : ℕ} (i : Fin k)
+    (v : Fin k → ℕ) (t' : ℕ)
+    (ht' : compileER_runtime (.proj i : ERMor1 k) v ≤ t') :
+    (URMState.runFor (compileER (ERMor1.proj i))
+        (URMState.init (compileER (ERMor1.proj i)) v) t').regs
+        (compileER (ERMor1.proj i)).outputReg
+      = (ERMor1.proj i).interp v := by
+  -- Abbreviations for the program and register Fins.
+  set P : URMProgram k := compileER (ERMor1.proj i) with hP
+  set s0 : URMState P := URMState.init P v with hs0
+  -- The runtime is 11 + 10 * v i; the actual trace uses
+  -- 9 * v i + 3 steps (1 assign + (9 * v i + 2) transfer
+  -- + 1 stop).  Slack = t' - (9 * v i + 3).
+  have hrt : compileER_runtime (.proj i : ERMor1 k) v = 11 + 10 * v i :=
+    rfl
+  obtain ⟨slack, rfl⟩ : ∃ sl, t' = (9 * v i + 3) + sl :=
+    ⟨t' - (9 * v i + 3), by rw [hrt] at ht'; omega⟩
+  -- Four Fins of `P.numRegs = k + 3`.
+  have hi : i.val < k := i.isLt
+  set zReg : Fin P.numRegs := ⟨0, by change 0 < k + 3; omega⟩ with hzReg
+  set dst  : Fin P.numRegs := ⟨1, by change 1 < k + 3; omega⟩ with hdst
+  set src  : Fin P.numRegs := ⟨2 + i.val, by change 2 + i.val < k + 3; omega⟩
+    with hsrc
+  set tmp  : Fin P.numRegs := ⟨2 + k, by change 2 + k < k + 3; omega⟩ with htmp
+  -- Inputs.
+  have h_inputReg : P.inputRegs i = src := rfl
+  -- s0.regs values.
+  have hs0_src : s0.regs src = v i := by
+    change (URMState.init P v).regs (P.inputRegs i) = v i
+    exact URMState.init_regs_inputRegs P v i
+  have hs0_zReg : s0.regs zReg = 0 := by
+    change (URMState.init P v).regs zReg = 0
+    -- zReg is not in the image of inputRegs; find? returns none.
+    change (match (List.finRange k).find?
+        (fun j => decide (P.inputRegs j = zReg)) with
+      | some j => v j
+      | none   => 0) = 0
+    have h_none : (List.finRange k).find?
+        (fun j => decide (P.inputRegs j = zReg)) = none := by
+      apply List.find?_eq_none.mpr
+      intro j _
+      simp only [Bool.not_eq_true, decide_eq_false_iff_not]
+      intro h
+      have : (2 + j.val : ℕ) = 0 := congrArg Fin.val h
+      omega
+    rw [h_none]
+  have hs0_dst : s0.regs dst = 0 := by
+    change (URMState.init P v).regs dst = 0
+    change (match (List.finRange k).find?
+        (fun j => decide (P.inputRegs j = dst)) with
+      | some j => v j
+      | none   => 0) = 0
+    have h_none : (List.finRange k).find?
+        (fun j => decide (P.inputRegs j = dst)) = none := by
+      apply List.find?_eq_none.mpr
+      intro j _
+      simp only [Bool.not_eq_true, decide_eq_false_iff_not]
+      intro h
+      have : (2 + j.val : ℕ) = 1 := congrArg Fin.val h
+      omega
+    rw [h_none]
+  have hs0_tmp : s0.regs tmp = 0 := by
+    change (URMState.init P v).regs tmp = 0
+    change (match (List.finRange k).find?
+        (fun j => decide (P.inputRegs j = tmp)) with
+      | some j => v j
+      | none   => 0) = 0
+    have h_none : (List.finRange k).find?
+        (fun j => decide (P.inputRegs j = tmp)) = none := by
+      apply List.find?_eq_none.mpr
+      intro j hj
+      simp only [Bool.not_eq_true, decide_eq_false_iff_not]
+      intro h
+      have : (2 + j.val : ℕ) = 2 + k := congrArg Fin.val h
+      have hjlt : j.val < k := j.isLt
+      omega
+    rw [h_none]
+  have hs0_pc : s0.pc = 0 := rfl
+  -- Disjointness of the four Fins.
+  have h_disj_sd : src ≠ dst := by
+    intro h
+    have : (2 + i.val : ℕ) = 1 := congrArg Fin.val h
+    omega
+  have h_disj_st : src ≠ tmp := by
+    intro h
+    have : (2 + i.val : ℕ) = 2 + k := congrArg Fin.val h
+    omega
+  have h_disj_dt : dst ≠ tmp := by
+    intro h
+    have : (1 : ℕ) = 2 + k := congrArg Fin.val h
+    omega
+  have h_disj_zs : zReg ≠ src := by
+    intro h
+    have : (0 : ℕ) = 2 + i.val := congrArg Fin.val h
+    omega
+  have h_disj_zd : zReg ≠ dst := by
+    intro h
+    have : (0 : ℕ) = 1 := congrArg Fin.val h
+    omega
+  have h_disj_zt : zReg ≠ tmp := by
+    intro h
+    have : (0 : ℕ) = 2 + k := congrArg Fin.val h
+    omega
+  -- Instruction-presence hypotheses for preservingTransfer
+  -- at PCs 1..9; each one is a literal-array `getElem?`
+  -- equality that reduces by `rfl`.
+  have H : preservingTransferInstrs P 1 src dst tmp zReg := by
+    refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩ <;> rfl
+  -- t' = (9 * v i + 3) + slack.
+  --   = 1 + ((9 * v i + 2) + slack).  The trailing `slack`
+  -- includes the final `stop` step at PC 10 and absorbs
+  -- via `runFor_stop`.
+  have h_split : 9 * v i + 3 + slack
+      = 1 + ((9 * v i + 2) + slack) := by omega
+  rw [h_split, URMState.runFor_add]
+  -- Program size is 11 (independent of i).
+  have h_size : P.instrs.size = 11 := rfl
+  -- Step 1 (PC 0): assignR 0 0; s0 → s1 with PC = 1 and
+  -- regs zReg = 0 (no change).
+  have h_step0 : URMState.step P s0 =
+      { pc := 1
+        regs := Function.update s0.regs zReg 0 } := by
+    have h_pc : (0 : ℕ) < P.instrs.size := by rw [h_size]; decide
+    have h_eq : P.instrs[(0 : ℕ)]'h_pc = .assign zReg 0 := rfl
+    simp only [URMState.step, hs0_pc, dif_pos h_pc, h_eq]
+  set s1 : URMState P :=
+      { pc := 1
+        regs := Function.update s0.regs zReg 0 } with hs1
+  have h_first : URMState.runFor P s0 1 = s1 := by
+    change URMState.runFor P (URMState.step P s0) 0 = _
+    rw [URMState.runFor_zero, h_step0]
+  rw [h_first]
+  -- s1's register values.
+  have hs1_pc : s1.pc = 1 := rfl
+  have hs1_zReg : s1.regs zReg = 0 := by
+    change Function.update s0.regs zReg 0 zReg = 0
+    rw [Function.update_self]
+  have hs1_src : s1.regs src = v i := by
+    change Function.update s0.regs zReg 0 src = v i
+    rw [Function.update_of_ne (Ne.symm h_disj_zs), hs0_src]
+  have hs1_dst : s1.regs dst = 0 := by
+    change Function.update s0.regs zReg 0 dst = 0
+    rw [Function.update_of_ne (Ne.symm h_disj_zd), hs0_dst]
+  have hs1_tmp : s1.regs tmp = 0 := by
+    change Function.update s0.regs zReg 0 tmp = 0
+    rw [Function.update_of_ne (Ne.symm h_disj_zt), hs0_tmp]
+  -- Step 2: preservingTransfer block for `9 * v i + 2` steps.
+  rw [URMState.runFor_add]
+  obtain ⟨pt_pc, pt_dst, _pt_src, _pt_tmp, _pt_z, _pt_oth⟩ :=
+    preservingTransfer_correct P 1 src dst tmp zReg
+      h_disj_sd h_disj_st h_disj_dt h_disj_zs h_disj_zd h_disj_zt
+      H s1 hs1_pc hs1_zReg hs1_tmp (v i) hs1_src
+  set s2 : URMState P := URMState.runFor P s1 (9 * v i + 2)
+    with hs2
+  -- s2's values.
+  have hs2_pc : s2.pc = 10 := by
+    have h10 : (1 : ℕ) + 9 = 10 := by omega
+    rw [← h10]; exact pt_pc
+  have hs2_dst : s2.regs dst = v i := by
+    rw [pt_dst, hs1_dst]; omega
+  -- Step 3: stopR at PC 10.  The remaining `slack` steps
+  -- are absorbed by `runFor_stop`.
+  have h_pc10 : s2.pc < P.instrs.size := by
+    rw [hs2_pc, h_size]; decide
+  have h_stop : P.instrs[s2.pc]'h_pc10 = URMInstr.stop := by
+    -- `s2.pc = 10`; transport along this to read off the
+    -- stop instruction at PC 10.
+    revert h_pc10
+    rw [hs2_pc]
+    intro _; rfl
+  rw [URMState.runFor_stop P s2 slack h_pc10 h_stop]
+  -- Read off output register.
+  change s2.regs dst = _
+  rw [hs2_dst, ERMor1.interp_proj]
+
 end LawvereERKSim
 
 end GebLean
