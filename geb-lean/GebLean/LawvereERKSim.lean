@@ -765,21 +765,26 @@ receive the outer parameter at register `s.val + 2`. -/
 private def bsum_prologueSrc (k : ℕ) (s : Fin (k + 1)) : ℕ :=
   if s.val = 0 then k + 4 else s.val + 2
 
-/-- Per-slot preservingTransfer block of the
-`compileFrag_bsum` per-iteration prologue: copy the outer
-register at `bsum_prologueSrc k s` into f's `s`-th input
-register (reindexed by `fBase`), using `tmp1` as
-scratch. Emitted at PC offset
-`prologueBase + 9 * s.val`. -/
+/-- Per-slot block of the `compileFrag_bsum` per-iteration
+prologue: zero f's `s`-th input register, then copy the
+outer register at `bsum_prologueSrc k s` into f's `s`-th
+input register (reindexed by `fBase`), using `tmp1` as
+scratch. The leading `assignR` zeroes the destination
+before `preservingTransfer` adds to it, so the destination
+holds the current iteration's source value rather than
+accumulating across iterations. Emitted at PC offset
+`prologueBase + 10 * s.val`; emits exactly 10 raw
+instructions. -/
 private def bsum_prologueBlock {k : ℕ}
     (frag_f : CompiledFragment (k + 1))
     (fBase tmp1 prologueBase : ℕ) (s : Fin (k + 1)) :
     List URMInstrRaw :=
-  URMRaw.preservingTransfer
-    (prologueBase + 9 * s.val)
-    (bsum_prologueSrc k s)
-    (fBase + (frag_f.inputRegs s).val)
-    tmp1
+  .assignR (fBase + (frag_f.inputRegs s).val) 0
+    :: URMRaw.preservingTransfer
+        (prologueBase + 10 * s.val + 1)
+        (bsum_prologueSrc k s)
+        (fBase + (frag_f.inputRegs s).val)
+        tmp1
 
 /-- Boundedness lemma for `bsum_prologueBlock`: every
 emitted raw instruction has register bound at most `nR`,
@@ -794,8 +799,11 @@ private theorem boundedBy_bsum_prologueBlock {k : ℕ}
     (hTmp : tmp1 + 1 ≤ nR) :
     URMInstrRaw.boundedBy nR
       (bsum_prologueBlock frag_f fBase tmp1 prologueBase s) := by
-  unfold bsum_prologueBlock
-  exact boundedBy_preservingTransfer nR _ _ _ _ hSrc hDst hTmp
+  intro ins hmem
+  simp only [bsum_prologueBlock, List.mem_cons] at hmem
+  rcases hmem with h | hpT
+  · rw [h]; simp only [URMInstrRaw.regBound]; exact hDst
+  · exact boundedBy_preservingTransfer nR _ _ _ _ hSrc hDst hTmp ins hpT
 
 /-- Fragment for `ERMor1.bsum f`. Spec §5.1, §5.1.1.
 Outer Loop with iteration-counter register `V_i`
@@ -835,8 +843,12 @@ def compileFrag_bsum {k : ℕ}
   --   4..12 : preservingTransfer 4 vBoundIn vX tmp2  (9 instrs)
   --   13 : jumpZR vX exitPC bodyStartPC          (loop top)
   --   14 : decR vX                                (body start)
-  --   15..(15 + 9*(k+1) - 1) : per-iter prologue, k+1 preservingTransfer blocks
-  --   bodyPCBase = 15 + 9*(k+1) :
+  --   15..(15 + 10*(k+1) - 1) : per-iter prologue, k+1 blocks
+  --     of (assignR dst 0; preservingTransfer) — 10 instrs each;
+  --     the leading `assignR` zeroes the destination so
+  --     `preservingTransfer`'s additive write produces the
+  --     current iteration's source value, not an accumulation.
+  --   bodyPCBase = 15 + 10*(k+1) :
   --     f's body (frag_f.instrs.size - 1 instrs, reindexed and PC-shifted)
   --   bodyPCBase + fBodyLen .. + 3 : transferLoop f-out → vAcc (4 instrs)
   --   bodyPCBase + fBodyLen + 4 : incR vI
@@ -845,7 +857,7 @@ def compileFrag_bsum {k : ℕ}
   let topPC : ℕ := 13
   let bodyStartPC : ℕ := 14
   let prologueBase : ℕ := 15
-  let bodyPCBase : ℕ := 15 + 9 * (k + 1)
+  let bodyPCBase : ℕ := 15 + 10 * (k + 1)
   let fBodyLen : ℕ := frag_f.instrs.size - 1
   let trBase : ℕ := bodyPCBase + fBodyLen
   let incIPC : ℕ := trBase + 4
