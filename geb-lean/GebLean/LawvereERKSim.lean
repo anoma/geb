@@ -10905,6 +10905,337 @@ private theorem compileFrag_comp_subBlocks_partial_step
         rw [h_runFor_split]
         exact h_bound
 
+/-- Filter-snoc identity: filtering `List.finRange k'` by `(·.val < n+1)`
+equals filtering by `(·.val < n)` followed by `⟨n, hn⟩`. Reused
+from the `compileFrag_comp_pcOf_succ` proof skeleton; extracted here
+so the outer iteration's runtime-bound bookkeeping can unfold the
+per-step contribution. -/
+private theorem compileFrag_comp_finRange_filter_lt_succ
+    : ∀ (k' : ℕ) (n : ℕ) (hn : n < k'),
+      (List.finRange k').filter (fun j : Fin k' => decide (j.val < n + 1))
+        = (List.finRange k').filter (fun j => decide (j.val < n))
+            ++ [⟨n, hn⟩] := by
+  intro k' n hn
+  induction k' generalizing n with
+  | zero => exact absurd hn (Nat.not_lt_zero _)
+  | succ k'' ih =>
+    match n, hn with
+    | 0, hn =>
+      have h_filter_lt_one :
+          (List.finRange (k'' + 1)).filter
+              (fun j : Fin (k'' + 1) => decide (j.val < 0 + 1))
+            = [⟨0, hn⟩] := by
+        rw [List.finRange_succ, List.filter_cons]
+        have h_true :
+            decide ((0 : Fin (k'' + 1)).val < 0 + 1) = true :=
+          decide_eq_true (Nat.succ_pos _)
+        rw [if_pos h_true]
+        have h_tail_nil :
+            (List.map Fin.succ (List.finRange k'')).filter
+                (fun j : Fin (k'' + 1) => decide (j.val < 0 + 1))
+              = [] := by
+          rw [List.filter_map]
+          have h_pred :
+              ((fun j : Fin (k'' + 1) => decide (j.val < 0 + 1)) ∘ Fin.succ)
+                = (fun _ : Fin k'' => false) := by
+            funext y
+            change decide (y.val + 1 < 0 + 1) = false
+            exact decide_eq_false (by omega)
+          rw [h_pred]
+          induction (List.finRange k'') with
+          | nil => rfl
+          | cons _ tl ih_in =>
+            rw [List.filter_cons]
+            simp only [Bool.false_eq_true, ↓reduceIte]
+            exact ih_in
+        rw [h_tail_nil]
+        rfl
+      have h_filter_lt_zero :
+          (List.finRange (k'' + 1)).filter
+              (fun j : Fin (k'' + 1) => decide (j.val < 0))
+            = [] := by
+        generalize (List.finRange (k'' + 1)) = l
+        induction l with
+        | nil => rfl
+        | cons hd tl ih_in =>
+          rw [List.filter_cons]
+          have h_false : decide (hd.val < 0) = false :=
+            decide_eq_false (Nat.not_lt_zero _)
+          rw [if_neg (by rw [h_false]; decide)]
+          exact ih_in
+      rw [h_filter_lt_one, h_filter_lt_zero]
+      rfl
+    | n + 1, hn =>
+      have hn' : n < k'' := Nat.lt_of_succ_lt_succ hn
+      rw [List.finRange_succ]
+      rw [List.filter_cons]
+      rw [List.filter_cons]
+      have h_lhs :
+          decide ((0 : Fin (k'' + 1)).val < n + 1 + 1) = true :=
+        decide_eq_true (Nat.succ_pos _)
+      have h_rhs :
+          decide ((0 : Fin (k'' + 1)).val < n + 1) = true :=
+        decide_eq_true (Nat.succ_pos _)
+      rw [if_pos h_lhs, if_pos h_rhs]
+      rw [List.filter_map, List.filter_map]
+      have h_pred_lhs :
+          ((fun j : Fin (k'' + 1) => decide (j.val < n + 1 + 1)) ∘ Fin.succ)
+            = (fun y : Fin k'' => decide (y.val < n + 1)) := by
+        funext y
+        change decide (y.val + 1 < n + 1 + 1) = decide (y.val < n + 1)
+        rcases Nat.lt_or_ge y.val (n + 1) with h | h
+        · rw [decide_eq_true h, decide_eq_true (by omega : y.val + 1 < n + 1 + 1)]
+        · rw [decide_eq_false (by omega : ¬ y.val < n + 1),
+              decide_eq_false (by omega : ¬ y.val + 1 < n + 1 + 1)]
+      have h_pred_rhs :
+          ((fun j : Fin (k'' + 1) => decide (j.val < n + 1)) ∘ Fin.succ)
+            = (fun y : Fin k'' => decide (y.val < n)) := by
+        funext y
+        change decide (y.val + 1 < n + 1) = decide (y.val < n)
+        rcases Nat.lt_or_ge y.val n with h | h
+        · rw [decide_eq_true h, decide_eq_true (by omega : y.val + 1 < n + 1)]
+        · rw [decide_eq_false (by omega : ¬ y.val < n),
+              decide_eq_false (by omega : ¬ y.val + 1 < n + 1)]
+      rw [h_pred_lhs, h_pred_rhs]
+      have h_ih := ih n hn'
+      -- We need `(filter (· < n+1) (finRange k'')).map Fin.succ` related to a snoc.
+      -- Use `List.map_append` after applying ih to inner filter result.
+      have h_map_filter :
+          ((List.finRange k'').filter (fun y => decide (y.val < n + 1))).map
+              (fun y : Fin k'' => (Fin.succ y : Fin (k'' + 1)))
+            = ((List.finRange k'').filter (fun y => decide (y.val < n))).map
+                (fun y : Fin k'' => (Fin.succ y : Fin (k'' + 1)))
+              ++ [⟨n + 1, hn⟩] := by
+        rw [h_ih, List.map_append]
+        rfl
+      have h_goal :
+          (⟨0, by omega⟩ : Fin (k'' + 1)) ::
+            ((List.finRange k'').filter
+                (fun y => decide (y.val < n + 1))).map
+                (fun y : Fin k'' => (Fin.succ y : Fin (k'' + 1)))
+            = (⟨0, by omega⟩ : Fin (k'' + 1)) ::
+                ((List.finRange k'').filter
+                    (fun y => decide (y.val < n))).map
+                    (fun y : Fin k'' => (Fin.succ y : Fin (k'' + 1)))
+                ++ [⟨n + 1, hn⟩] := by
+        rw [h_map_filter]; rfl
+      exact h_goal
+
+/-- Strengthened outer iteration: for every `m ≤ k`, there exists a
+combined step count `T_m` after which `compileFrag_comp_partial_invariant`
+holds at `m` and the PC is strictly below `compileFrag_comp_pcOf … m`
+throughout. The bound `T_m ≤ 1 + ∑_{i ∈ finRange k, i.val < m} (...)` is
+expressed via a filtered `foldl`; specialising `m := k` recovers the
+unfiltered `foldl` since every `i : Fin k` satisfies `i.val < k`. -/
+private theorem compileFrag_comp_subBlocks_partial_aux
+    {k a : ℕ}
+    (frag_f : CompiledFragment k)
+    (gs : Fin k → ERMor1 a)
+    (ih_gs : ∀ (i : Fin k) (v' : Fin a → ℕ),
+      ∃ T0 : ℕ,
+        T0 ≤ compileER_runtime (gs i) v' ∧
+        (URMState.runFor (compileER (gs i))
+              (URMState.init (compileER (gs i)) v') T0).pc
+            = (compileER (gs i)).instrs.size - 1 ∧
+        (URMState.runFor (compileER (gs i))
+              (URMState.init (compileER (gs i)) v') T0).regs
+            (compileER (gs i)).outputReg
+          = (gs i).interp v' ∧
+        (∀ k' < T0,
+          (URMState.runFor (compileER (gs i))
+              (URMState.init (compileER (gs i)) v') k').pc
+            < (compileER (gs i)).instrs.size - 1))
+    (v : Fin a → ℕ)
+    (m : ℕ) (hmk : m ≤ k) :
+    ∃ T_m : ℕ,
+      T_m ≤ 1 + (((List.finRange k).filter
+            (fun i => decide (i.val < m))).map
+          (fun i => (9 * vPrefixSum v a + 2 * a)
+                     + compileER_runtime (gs i) v
+                     + (4 * (gs i).interp v + 1))).foldl (· + ·) 0 ∧
+      compileFrag_comp_partial_invariant frag_f gs v m hmk
+        (URMState.runFor
+          (compileFrag_comp frag_f (fun i => compileERFrag (gs i))).toURMProgram
+          (URMState.init
+            (compileFrag_comp frag_f (fun i => compileERFrag (gs i))).toURMProgram
+            v)
+          T_m) ∧
+      (∀ k' < T_m,
+        (URMState.runFor
+          (compileFrag_comp frag_f (fun i => compileERFrag (gs i))).toURMProgram
+          (URMState.init
+            (compileFrag_comp frag_f (fun i => compileERFrag (gs i))).toURMProgram
+            v)
+          k').pc
+          < compileFrag_comp_pcOf (fun i => compileERFrag (gs i)) m) := by
+  let frag_gs : Fin k → CompiledFragment a :=
+    fun i => compileERFrag (gs i)
+  let outer : URMProgram a :=
+    (compileFrag_comp frag_f frag_gs).toURMProgram
+  let sInit : URMState outer := URMState.init outer v
+  induction m with
+  | zero =>
+    refine ⟨1, ?_, ?_, ?_⟩
+    · -- Bound: filter (·.val < 0) on finRange k is []; foldl 0; bound = 1.
+      have h_filter_empty :
+          ((List.finRange k).filter (fun i : Fin k => decide (i.val < 0)))
+            = [] := by
+        induction (List.finRange k) with
+        | nil => rfl
+        | cons hd tl ih_in =>
+          rw [List.filter_cons]
+          have h_false : decide (hd.val < 0) = false :=
+            decide_eq_false (Nat.not_lt_zero _)
+          rw [if_neg (by rw [h_false]; decide)]
+          exact ih_in
+      rw [h_filter_empty]
+      simp
+    · exact compileFrag_comp_subBlocks_partial_base frag_f gs v
+    · -- Strict PC bound at k' = 0: PC = 0 < 1 = pcOf 0.
+      intro k' hk'
+      have hk'_eq : k' = 0 := by omega
+      subst hk'_eq
+      change (URMState.init outer v).pc
+        < compileFrag_comp_pcOf frag_gs 0
+      rw [compileFrag_comp_pcOf_zero]
+      change (0 : ℕ) < 1
+      exact Nat.zero_lt_one
+  | succ m ih_m =>
+    have hmk' : m ≤ k := Nat.le_of_succ_le hmk
+    have hm_lt : m < k := hmk
+    obtain ⟨T_m, hT_m_bound, h_inv_m, h_strict_m⟩ := ih_m hmk'
+    let m' : Fin k := ⟨m, hm_lt⟩
+    let sPre : URMState outer := URMState.runFor outer sInit T_m
+    let T1 : ℕ := 9 * vPrefixSum v a + 2 * a
+    let T2 : ℕ := 4 * (gs m').interp v + 1
+    obtain ⟨T0, hT0_le, h_inv_succ, h_strict_step⟩ :=
+      compileFrag_comp_subBlocks_partial_step
+        frag_f gs v m' (ih_gs m') sPre h_inv_m
+    refine ⟨T_m + (T1 + T0 + T2), ?_, ?_, ?_⟩
+    · -- Bound: T_m + (T1+T0+T2) ≤ 1 + foldl (filter (· < m+1)).
+      -- Unfold filter at m+1 as filter (· < m) ++ [⟨m, hm_lt⟩].
+      have h_filter_snoc :=
+        compileFrag_comp_finRange_filter_lt_succ k m hm_lt
+      rw [h_filter_snoc]
+      rw [List.map_append, List.map_cons, List.map_nil]
+      -- foldl on append-singleton: (l ++ [x]).foldl (· + ·) 0 = l.foldl ... + x.
+      have h_foldl_snoc : ∀ (l : List ℕ) (x : ℕ),
+          (l ++ [x]).foldl (· + ·) 0 = l.foldl (· + ·) 0 + x := by
+        intro l x
+        rw [List.foldl_append]
+        change l.foldl (· + ·) 0 + x = _
+        rfl
+      rw [h_foldl_snoc]
+      -- T0 ≤ compileER_runtime (gs m') v gives the per-step contribution.
+      have hT0_le' : T0 ≤ compileER_runtime (gs m') v := hT0_le
+      -- `m'` and `⟨m, hm_lt⟩` are definitionally identical; the step
+      -- contribution in the post-rewrite goal mentions the latter, while
+      -- `hT0_le'` mentions the former.  Equate them as plain `Nat`s so
+      -- omega sees a single atom.
+      have h_interp_eq :
+          (gs m').interp v = (gs ⟨m, hm_lt⟩).interp v := rfl
+      have h_rt_eq :
+          compileER_runtime (gs m') v
+            = compileER_runtime (gs ⟨m, hm_lt⟩) v := rfl
+      omega
+    · -- partial_invariant at m+1 via runFor_add.
+      change compileFrag_comp_partial_invariant frag_f gs v (m + 1) hmk
+        (URMState.runFor outer sInit (T_m + (T1 + T0 + T2)))
+      rw [URMState.runFor_add]
+      exact h_inv_succ
+    · -- Strict PC bound on the combined interval.
+      intro k' hk'
+      rcases Nat.lt_or_ge k' T_m with h_lo | h_hi
+      · -- k' < T_m: IH gives < pcOf m; lift to < pcOf (m+1).
+        have h_bound := h_strict_m k' h_lo
+        refine Nat.lt_of_lt_of_le h_bound ?_
+        rw [compileFrag_comp_pcOf_succ frag_gs m hm_lt]
+        -- `frag_gs = fun i => compileERFrag (gs i)` definitionally; equate
+        -- the two `pcOf` atoms so omega sees a single variable.
+        have h_pcOf_eq :
+            compileFrag_comp_pcOf (fun i => compileERFrag (gs i)) m
+              = compileFrag_comp_pcOf frag_gs m := rfl
+        omega
+      · -- T_m ≤ k' < T_m + (T1+T0+T2): use _step's strict bound.
+        let k'' : ℕ := k' - T_m
+        have hk''_lt : k'' < T1 + T0 + T2 := by
+          change k' - T_m < T1 + T0 + T2; omega
+        have h_split : k' = T_m + k'' := by
+          change k' = T_m + (k' - T_m); omega
+        have h_runFor_split :
+            URMState.runFor outer sInit k'
+              = URMState.runFor outer sPre k'' := by
+          rw [h_split, URMState.runFor_add]
+        rw [h_runFor_split]
+        exact h_strict_step k'' hk''_lt
+
+/-- The outer iteration of `compileFrag_comp`'s sub-block trace:
+threads `compileFrag_comp_subBlocks_partial_base` (the m=0 base
+case via the leading `assignR 0 0`) and
+`compileFrag_comp_subBlocks_partial_step` (the m → m+1 advance) up
+to m = k.  Produces `compileFrag_comp_partial_invariant @ k` (the
+state after all k sub-blocks of `compileFrag_comp`'s gs-phase
+have executed) and a global PC strict bound `<
+compileFrag_comp_pcOf frag_gs k` (= `fPcBase`, the start of f's
+body) throughout the iteration.
+
+This is the conjunctive structural-induction over m that the
+final `compileER_pre_stop_correct_comp` (comp.3.b) consumes
+before threading f's body and the trailing stop. -/
+private theorem compileFrag_comp_subBlocks_partial
+    {k a : ℕ}
+    (frag_f : CompiledFragment k)
+    (gs : Fin k → ERMor1 a)
+    (ih_gs : ∀ (i : Fin k) (v' : Fin a → ℕ),
+      ∃ T0 : ℕ,
+        T0 ≤ compileER_runtime (gs i) v' ∧
+        (URMState.runFor (compileER (gs i))
+              (URMState.init (compileER (gs i)) v') T0).pc
+            = (compileER (gs i)).instrs.size - 1 ∧
+        (URMState.runFor (compileER (gs i))
+              (URMState.init (compileER (gs i)) v') T0).regs
+            (compileER (gs i)).outputReg
+          = (gs i).interp v' ∧
+        (∀ k' < T0,
+          (URMState.runFor (compileER (gs i))
+              (URMState.init (compileER (gs i)) v') k').pc
+            < (compileER (gs i)).instrs.size - 1))
+    (v : Fin a → ℕ) :
+    ∃ T_total : ℕ,
+      T_total ≤ 1 + ((List.finRange k).map
+        (fun i => (9 * vPrefixSum v a + 2 * a)
+                   + compileER_runtime (gs i) v
+                   + (4 * (gs i).interp v + 1))).foldl (· + ·) 0 ∧
+      compileFrag_comp_partial_invariant frag_f gs v k (Nat.le_refl k)
+        (URMState.runFor
+          (compileFrag_comp frag_f (fun i => compileERFrag (gs i))).toURMProgram
+          (URMState.init
+            (compileFrag_comp frag_f (fun i => compileERFrag (gs i))).toURMProgram
+            v)
+          T_total) ∧
+      (∀ k' < T_total,
+        (URMState.runFor
+          (compileFrag_comp frag_f (fun i => compileERFrag (gs i))).toURMProgram
+          (URMState.init
+            (compileFrag_comp frag_f (fun i => compileERFrag (gs i))).toURMProgram
+            v)
+          k').pc
+          < compileFrag_comp_pcOf (fun i => compileERFrag (gs i)) k)
+  := by
+  obtain ⟨T_total, hT_bound, h_inv, h_strict⟩ :=
+    compileFrag_comp_subBlocks_partial_aux frag_f gs ih_gs v k (Nat.le_refl k)
+  refine ⟨T_total, ?_, h_inv, h_strict⟩
+  -- The filtered foldl at m=k equals the unfiltered foldl: every
+  -- `i : Fin k` satisfies `i.val < k`.
+  have h_filter_id :
+      (List.finRange k).filter (fun i : Fin k => decide (i.val < k))
+        = List.finRange k := by
+    apply List.filter_eq_self.mpr
+    intro i _
+    exact decide_eq_true i.isLt
+  rw [h_filter_id] at hT_bound
+  exact hT_bound
+
 end LawvereERKSim
 
 end GebLean
