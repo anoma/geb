@@ -8,6 +8,10 @@
 - [What is landed](#what-is-landed)
   - [Tasks 0-10 (compiler infrastructure)](#tasks-0-10-compiler-infrastructure)
   - [Task 11 — landed sub-tasks](#task-11--landed-sub-tasks)
+    - [Session 1 (through 2026-05-18, ending at phase i.1)](#session-1-through-2026-05-18-ending-at-phase-i1)
+    - [Session 4 (2026-05-19, file split landed)](#session-4-2026-05-19-file-split-landed)
+    - [Session 3 (2026-05-19, Task 11e.7 wrap-up)](#session-3-2026-05-19-task-11e7-wrap-up)
+    - [Session 2 (2026-05-19, finishing the comp story)](#session-2-2026-05-19-finishing-the-comp-story)
   - [Cumulative output](#cumulative-output)
 - [What remains](#what-remains)
   - [Task 11e.6.a.iii-bsum, -bprod — bsum/bprod pre-stop](#task-11e6aiii-bsum--bprod--bsumbprod-pre-stop)
@@ -190,6 +194,28 @@ this handoff doc to integrate the session-2 progress.
   `compileFrag_comp_subBlocks_partial_phase_i1`. Commit
   `7c8dfb56`.
 
+#### Session 4 (2026-05-19, file split landed)
+
+- **File split (followup item 9)**: extracted the
+  11,943-line monolith `GebLean/LawvereERKSim.lean` into
+  five topical submodules under `GebLean/LawvereERKSim/`
+  plus a pure-import index. Layered design: Compiler →
+  Embedding → Loops → {Atoms, Comp}. Two minor
+  dependency-forced deviations from the spec recorded:
+  `compileFrag_comp_subBlock_length` and
+  `flatMap_finRange_split` moved into `Compiler.lean`
+  (Loops's dischargers consume them); `Comp.lean` imports
+  `Atoms` instead of `Loops` because it references
+  `URMState.init_regs_inputRegs`. Spec/plan converged via
+  three rounds of adversarial review (43 defects across
+  rounds, all resolved). SDD execution: 7 implementer
+  subagent runs + 7 spec reviewers + 7 code-quality
+  reviewers + Task 1 + Task 7 + Task 8 done inline. All
+  spec §7 flagship `lean_verify` checks return
+  `[propext, Quot.sound]` only. Final per-file sizes:
+  index 38, Compiler 1606, Embedding 898, Loops 2538,
+  Atoms 1635, Comp 5444. Commits `3e8319cb..6bdbbad5`.
+
 #### Session 3 (2026-05-19, Task 11e.7 wrap-up)
 
 - **11e.7**: `compileER_pre_stop_to_runFor` — a generic,
@@ -272,8 +298,9 @@ Analogous pre-stop chain for `compileFrag_bsum` and
 `compileFrag_bprod`. Each likely sub-subdivides into:
 outer-loop induction; per-iteration zero-sweep, prologue,
 f-body, and accumulator-update phases. Estimated 3000-4000
-LOC each across ~6-10 sub-sub-sub-tasks. **File split
-(followup item 9) should land before bsum begins.**
+LOC each across ~6-10 sub-sub-sub-tasks. New work lands in
+new `GebLean/LawvereERKSim/BSum.lean` and `BProd.lean`
+submodules (file split landed in Session 4).
 
 ### Tasks 11f, 11g — bsum/bprod runFor wrap-ups
 
@@ -303,11 +330,11 @@ implementation.
 ### Followup branch (post-T2)
 
 Tracked as task #654. Accumulated across phase i.1/i.2/i.3,
-comp.2.ind, comp.3.a, comp.3.b reviews. The most urgent
-item is the **file split** before bsum begins; trajectory
-projects 18000-19000 lines if everything stays in one file.
+comp.2.ind, comp.3.a, comp.3.b reviews, plus file-split SDD
+reviews.
 
-Other items:
+Items 1-8 are the original followups; items 9-13 are new
+items surfaced during the file-split work:
 
 1. Rename `gsPrefixSum_mono`'s `{n m : ℕ}` binders to
    `{n n' : ℕ}` so inlined `h_aux_mono` in phases i.1, i.2,
@@ -327,7 +354,44 @@ Other items:
    and `h_foldl_map_eq` to top-level helpers.
 8. Extract `compileFrag_comp_size` and
    `compileFrag_comp_pcOf_top` for bsum/bprod reuse.
-9. **File split** (urgent before bsum).
+9. **File split**: DONE in Session 4 (see above).
+10. Move `URMState.init_regs_inputRegs` from `Atoms.lean`
+    to `Embedding.lean` so `Comp.lean` can import `Loops`
+    rather than `Atoms`, restoring spec §3.1's parallel
+    Atoms/Comp DAG.
+11. Re-evaluate `private` promotions across submodules
+    once bsum and bprod extractions absorb the remaining
+    consumers, restoring `private` where no inter-file
+    consumer remains. Two known cases at file-split
+    landing:
+    (a) `Loops.lean` has 10 declarations promoted to public
+        (3 hypothesis-bundle structures plus 7 correctness/
+        PC-bound theorems), each with at least one current
+        cross-file consumer — restore `private` only if a
+        future task removes that consumer.
+    (b) `Embedding.lean` has 6 declarations pre-emptively
+        promoted to public without current cross-file
+        consumers (`getElem_of_getElem?_some`,
+        `stateEmbedsFrag_step`,
+        `stateEmbedsFrag_step_outside_preserved`,
+        `compileER_runFor_pc_le_size`,
+        `fragment_runFor_pc_le_size`,
+        `stateEmbedsFrag_step_tail`). Final reviewer flagged
+        these as Important; either restore `private` now or
+        confirm they are needed by bsum/bprod tasks and
+        keep public.
+12. Audit the `## Main definitions` / `## Main statements`
+    sections in each submodule docstring against the
+    file's actual public surface (Task 2 review flagged
+    `Compiler.lean` listing `private` decls in
+    `## Main statements`; same pattern may exist elsewhere).
+13. Add `/-! ### ... -/` section markers to `Comp.lean`
+    around the six logical phases (length, k=0, sub-block,
+    m-step, outer iteration, assembly, runFor wrapper) for
+    navigability of the 5444-line file.
+14. After Task 11h lands, consider adding a `Top.lean`
+    submodule for the top-level structural induction and
+    re-evaluate the index file's responsibilities.
 
 ## Resolved design for 11e.7 (option a-bridge)
 
@@ -475,28 +539,28 @@ collects the `≤ t'` conclusions via the corresponding
 
 ## Resumption recipe
 
-1. `lake build GebLean.LawvereERKSim` — should be clean.
+1. `lake build` (whole tree) — should be clean.
 
-2. **File split (#654 item 9)** is the next priority before
-   any bsum/bprod work. Current size is ~11940 lines;
-   adding bsum (~3000-4000 LOC) + bprod (~3000-4000 LOC)
-   without a split projects past 18000 lines.
+2. New work for bsum lands in
+   `GebLean/LawvereERKSim/BSum.lean` (file split landed in
+   Session 4). Start with bsum pre-stop (~3000–4000 LOC
+   across ~6-10 sub-tasks); sub-divide before dispatching.
 
-3. Then bsum pre-stop (~3000-4000 LOC across ~6-10
-   sub-tasks). Sub-divide before dispatching.
+3. Then bprod pre-stop in
+   `GebLean/LawvereERKSim/BProd.lean`.
 
-4. Then bprod pre-stop.
+4. Then 11f, 11g (bsum/bprod runFor wrappers via the
+   shared bridge `compileER_pre_stop_to_runFor` in
+   `Embedding.lean`).
 
-5. Then 11f, 11g (bsum/bprod runFor wrappers via the
-   shared bridge `compileER_pre_stop_to_runFor`).
-
-6. Then 11h (top-level structural induction in `≤ t'`
+5. Then 11h (top-level structural induction in `≤ t'`
    form, dispatching to `compileER_runFor_*` per
-   constructor).
+   constructor). Add a new `GebLean/LawvereERKSim/Top.lean`
+   submodule for this.
 
-7. Then Task 12 (axiom audit + manual lint).
+6. Then Task 12 (axiom audit + manual lint).
 
-8. Then the final holistic code-quality review per the
+7. Then the final holistic code-quality review per the
    original SDD plan.
 
 ## References
