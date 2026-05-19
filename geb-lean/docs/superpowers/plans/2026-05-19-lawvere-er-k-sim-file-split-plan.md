@@ -224,6 +224,25 @@ form is unsupported in this project's lake version, fall
 back to `lake build` (whole tree) in subsequent isolation
 builds — document this in a comment on the relevant task.
 
+- [ ] **Step 7: Verify no test references the monolith's private declarations**
+
+```bash
+grep -rn "LawvereERKSim" GebLeanTests/ 2>&1 | tail -20
+```
+
+Expected: zero matches, or only matches in test files
+that import `GebLean.LawvereERKSim` as a whole module
+(no by-name references to currently-`private`
+declarations). If a `private`-prefixed declaration is
+named in a test, document the consumer and confirm the
+promotion in Tasks 2–6 will not change test behaviour.
+
+This verification justifies deferring `lake test` to
+Task 7 Step 3 (rather than running it per-task in
+Tasks 2–6 Step 8). Tests do not import any of the
+monolith's `private` declarations by name, so the
+refactor is test-neutral by construction.
+
 No commit at this task — it is verification only.
 
 ---
@@ -465,23 +484,27 @@ jj new
   ranges, add forwarding import).
 
 Source ranges (spec §4 row Embedding.lean): four
-non-contiguous sub-ranges in the monolith.
+non-contiguous sub-ranges in the monolith. Sub-range
+starts are docstring-leading-`/--` lines; the
+declaration's `theorem` keyword sits a few lines later.
 
 - Main Section B block: 1474–2137 (step lemmas,
   `ProgramEmbedsFragment`, `StateEmbedsFrag`,
   `stateEmbedsFrag_*` family, PC-in-range lemmas).
-- `URMState.init_regs_zero_outside_inputs`: line 5210
-  (single declaration, ~25 lines spanning the docstring +
-  body; the surrounding proj helpers
-  `List.find?_finRange_inputRegs` and
-  `URMState.init_regs_inputRegs` stay in Atoms.lean —
-  Task 5).
-- Tail-variant lemmas: lines 5866–5944
-  (`stateEmbedsFrag_step_tail`,
-  `stateEmbedsFrag_runFor_tail`). Anchor:
+- `URMState.init_regs_zero_outside_inputs`: lines
+  5201–5232 (docstring starts at 5201; the `private
+  theorem` keyword sits at 5210). Surrounding proj
+  helpers `List.find?_finRange_inputRegs` (theorem at
+  5157) and `URMState.init_regs_inputRegs` (theorem at
+  5191) stay in Atoms.lean (Task 5).
+- Tail-variant lemmas: 5854–5932
+  (`stateEmbedsFrag_step_tail` docstring at 5854,
+  theorem at 5866; `stateEmbedsFrag_runFor_tail`
+  docstring/theorem around 5900–5903). Anchor:
   `/-- Variant of \`stateEmbedsFrag_step\` for the case where`.
-- Bridge: lines 11821–11895
-  (`compileER_pre_stop_to_runFor`). Anchor:
+- Bridge: 11821–11895
+  (`compileER_pre_stop_to_runFor` docstring at 11821,
+  theorem at 11830). Anchor:
   `/-- Generic bridge from the existential pre-stop form`.
 
 The general-k wrapper `compileER_runFor_comp` at lines
@@ -565,75 +588,39 @@ sed -n '1474,2137p' GebLean/LawvereERKSim.lean > /tmp/emb_main.lean
 This captures: `getElem_of_getElem?_some` through
 `fragment_runFor_pc_le_size`.
 
-- [ ] **Step 3: Extract `URMState.init_regs_zero_outside_inputs` (line 5210)**
-
-Locate the exact line range using the anchor:
+- [ ] **Step 3: Extract `URMState.init_regs_zero_outside_inputs` (lines 5201–5232)**
 
 ```bash
-grep -n "^private theorem URMState.init_regs_zero_outside_inputs" GebLean/LawvereERKSim.lean
+sed -n '5201,5232p' GebLean/LawvereERKSim.lean > /tmp/emb_init_zero.lean
 ```
 
-Expected: `5210:private theorem URMState.init_regs_zero_outside_inputs`.
+Verify the extract begins with the docstring `/-- For a
+\`URMProgram\` whose \`inputRegs\` maps slot \`j\``
+(line 5201) and the next declaration after the extract
+is `compileER_runFor_proj` (its docstring starts at line
+5233).
 
-Find its docstring start (a few lines earlier) and its
-body end (the next blank line before `private theorem
-compileER_runFor_proj`):
+- [ ] **Step 4: Extract tail variants (lines 5854–5932)**
 
 ```bash
-sed -n '5203,5237p' GebLean/LawvereERKSim.lean
+sed -n '5854,5932p' GebLean/LawvereERKSim.lean > /tmp/emb_tail.lean
 ```
 
-Extract the precise range (typically 5203–5236, but
-confirm visually that the next declaration line begins
-with `private theorem compileER_runFor_proj`):
-
-```bash
-sed -n 'START,ENDp' GebLean/LawvereERKSim.lean > /tmp/emb_init_zero.lean
-```
-
-- [ ] **Step 4: Extract tail variants (lines 5866–5944)**
-
-Locate via anchor:
-
-```bash
-grep -n "^private theorem stateEmbedsFrag_step_tail\|^private theorem stateEmbedsFrag_runFor_tail" GebLean/LawvereERKSim.lean
-```
-
-Expected:
-
-- `5866:private theorem stateEmbedsFrag_step_tail`
-- `5903:private theorem stateEmbedsFrag_runFor_tail`
-
-Find the docstring start (a few lines before 5866) and
-the body end (one line before line 5945, which begins
-`/-- k=0 special case of \`compileER_runFor_comp\``).
-Extract:
-
-```bash
-sed -n '5854,5944p' GebLean/LawvereERKSim.lean > /tmp/emb_tail.lean
-```
-
-Confirm with `sed -n '5944,5946p'` that line 5945 begins
-the k=0 wrapper's docstring (not part of this extract).
+Verify the extract begins with the docstring `/-- Variant
+of \`stateEmbedsFrag_step\`` (line 5854) and the next
+declaration after the extract is
+`compileER_runFor_comp_k_zero` (docstring starts at 5933).
 
 - [ ] **Step 5: Extract the bridge (lines 11821–11895)**
-
-Locate via anchor:
-
-```bash
-grep -n "^private theorem compileER_pre_stop_to_runFor" GebLean/LawvereERKSim.lean
-```
-
-Expected: `11830:private theorem compileER_pre_stop_to_runFor`.
-
-The docstring begins at line 11821 (`/-- Generic bridge
-from the existential pre-stop form`); the body ends one
-line before line 11896 (`/-- Output-only \`≤ t'\` form\``).
-Extract:
 
 ```bash
 sed -n '11821,11895p' GebLean/LawvereERKSim.lean > /tmp/emb_bridge.lean
 ```
+
+Verify the extract begins with the docstring `/-- Generic
+bridge from the existential pre-stop form` (line 11821)
+and the next declaration after the extract is
+`compileER_runFor_comp` (docstring starts at 11896).
 
 - [ ] **Step 6: Assemble `Embedding.lean`**
 
@@ -682,10 +669,9 @@ Use `Edit` to remove each range, in reverse order:
 1. Delete bridge range (original 11821–11895; new
    coordinates after Task 2 delta = subtract 1398 from
    original).
-2. Delete tail variants range (original 5854–5944).
+2. Delete tail variants range (original 5854–5932).
 3. Delete `init_regs_zero_outside_inputs` range
-   (original 5203–5236, or whatever the Step 3 extract
-   range was).
+   (original 5201–5232).
 4. Delete Section B main block (original 1474–2137).
 
 - [ ] **Step 9: Add forwarding import to the monolith**
@@ -737,11 +723,11 @@ jj new
   ranges, add forwarding import).
 
 Source ranges (spec §4 row Loops.lean): three
-non-contiguous monolith sub-ranges. The three blocks are
-non-contiguous because `compileER_runFor_*` (Section D)
-and atom pre-stop work were appended later.
+non-contiguous monolith sub-ranges. Sub-range starts are
+docstring-leading-`/--` lines; theorem keywords sit a
+few lines later.
 
-- `preservingTransfer`/`transferLoop` block: 2956–4915.
+- `preservingTransfer`/`transferLoop` block: 2956–4916.
   Includes the two `compileFrag_comp`-specific
   dischargers
   (`PreservingTransferInstrs_compileFrag_comp_inputCopies`
@@ -749,16 +735,17 @@ and atom pre-stop work were appended later.
   at 4187) — these stay in Loops because they consume the
   `preservingTransferInstrs` / `transferLoopInstrs`
   private structures (spec §5.3).
-- `subInnerLoop` block: 5414–5853 (specifically
-  5414–5664 for the `subInnerLoop_correct` material;
-  5665–5853 is the `compileER_runFor_sub` declaration
-  which goes to Atoms — exclude it from this Task 4
-  range).
-- Non-contiguous PC-bound cluster: 6321–6606
-  (`preservingTransfer_loop2_pc_strict_bound` at 6326,
+- `subInnerLoop` block: 5414–5654 (the
+  `compileER_runFor_sub` docstring starts at 5655 and
+  goes to Atoms, Task 5).
+- Non-contiguous PC-bound cluster: 6321–6602
+  (`preservingTransfer_loop2_pc_strict_bound` docstring
+  at 6321 theorem at 6326,
   `preservingTransfer_correct_pc_strict_bound` at 6423,
   `subInnerLoop_correct_pc_strict_bound` at 6463,
-  `preservingTransfer_correct_pc_bound` at 6561).
+  `preservingTransfer_correct_pc_bound` at 6561; ends
+  at 6602, just before `vPrefixSum`'s docstring at 6603
+  which goes to Comp).
 
 Anchors (re-derive current line numbers at execution time
 after Tasks 2–3 deletions):
@@ -886,11 +873,12 @@ Expected: clean. Likely fix-ups:
 
 Three deletions, in reverse line-number order:
 
-1. PC-bound cluster (original 6321–6606).
-2. `subInnerLoop` block (original 5414–5664; the
-   sub-runFor at 5665+ stays for Task 5).
+1. PC-bound cluster (original 6321–6602).
+2. `subInnerLoop` block (original 5414–5654; the
+   `compileER_runFor_sub` docstring at 5655+ stays for
+   Task 5).
 3. `preservingTransfer`/`transferLoop` block (original
-   2956–4915).
+   2956–4916).
 
 Use the `Read` tool to compute current line numbers via
 anchors after Tasks 2–3 deletions.
@@ -1029,19 +1017,30 @@ open GebLean.ZeroTestURM
 
 - [ ] **Step 2: Extract the five Section D sub-ranges**
 
-In monolith source order:
+In monolith source order (sub-range starts are docstring
+`/--` lines):
 
-1. zero+succ block: extract lines 4917–5156 (covers
-   `compileER_runFor_zero` and `compileER_runFor_succ`).
+1. zero+succ block: extract lines 4917–5151 (covers
+   `compileER_runFor_zero` docstring 4917, theorem 4919;
+   `compileER_runFor_succ` docstring ~5008, theorem 5012).
 2. proj helpers (find? + init_regs_inputRegs): extract
-   lines 5157–5209.
-3. `compileER_runFor_proj`: extract lines 5237–5413
-   (this skips the 5210–5236 `init_regs_zero_outside_inputs`
-   range that goes to Embedding).
-4. sub `_runFor`: extract lines 5654–5853.
-5. zero atom pre-stop: extract lines 6199–6325.
+   lines 5152–5200 (covers `List.find?_finRange_inputRegs`
+   docstring at 5152; ends before
+   `URMState.init_regs_zero_outside_inputs` docstring at
+   5201 which goes to Embedding).
+3. `compileER_runFor_proj`: extract lines 5233–5413
+   (docstring starts at 5233, theorem at 5239).
+4. sub `_runFor`: extract lines 5655–5853 (docstring
+   starts at 5655, theorem at 5663).
+5. zero atom pre-stop: extract lines 6199–6320
+   (`compileER_pre_stop_correct_atom_zero` docstring
+   starts at 6199, theorem at 6208; ends at 6320 just
+   before `preservingTransfer_loop2_pc_strict_bound`'s
+   docstring at 6321 which goes to Loops).
 6. succ + proj + sub atom pre-stop: extract lines
-   7209–8023.
+   7209–8023 (`_atom_succ` docstring 7209 theorem 7215;
+   `_atom_proj` docstring ~7450 theorem 7456; `_atom_sub`
+   docstring ~7678 theorem 7684).
 
 Use one `sed` extraction per range; append all six in
 order to `Atoms.lean` using the `Read`/`Write` tools.
@@ -1077,11 +1076,11 @@ Six deletions, in reverse line-number order. Use the
 numbers. Original monolith ranges:
 
 1. 7209–8023 (succ+proj+sub pre-stop).
-2. 6199–6325 (zero pre-stop).
-3. 5654–5853 (sub `_runFor`).
-4. 5237–5413 (proj `_runFor`).
-5. 5157–5209 (proj helpers).
-6. 4917–5156 (zero+succ `_runFor`).
+2. 6199–6320 (zero pre-stop).
+3. 5655–5853 (sub `_runFor`).
+4. 5233–5413 (proj `_runFor`).
+5. 5152–5200 (proj helpers).
+6. 4917–5151 (zero+succ `_runFor`).
 
 - [ ] **Step 6: Add forwarding import to the monolith**
 
@@ -1142,12 +1141,13 @@ anchors at execution time after Tasks 2–5 deletions.
   `ProgramEmbedsFragment_compileFrag_comp_fBody` (2225),
   `flatMap_finRange_split` (2425),
   `ProgramEmbedsFragment_compileFrag_comp_gsBody` (2536).
-- k=0 wrapper: 5945–6198. Contains
-  `compileER_runFor_comp_k_zero` (5946). The
-  immediately-preceding range 5866–5944 is tail variants
-  (Embedding, Task 3), not Comp.
-- Sub-block phase correctness: 6607–7208. Contains
-  `vPrefixSum` (6607), `vPrefixSum_succ` (6614),
+- k=0 wrapper: 5933–6198. Contains
+  `compileER_runFor_comp_k_zero` (docstring at 5933,
+  theorem at 5946). The immediately-preceding range
+  5854–5932 is tail variants (Embedding, Task 3).
+- Sub-block phase correctness: 6603–7208. Contains
+  `vPrefixSum` (docstring at 6603, def at 6607),
+  `vPrefixSum_succ` (6614),
   `inputCopies_disj` (6627, private structure),
   `inputCopies_prefix_correct` (6653),
   `inputCopies_prefix_pc_strict_bound` (6785),
@@ -1167,6 +1167,9 @@ anchors at execution time after Tasks 2–5 deletions.
   invariant 8-clause structure, the three phase
   preservation lemmas, the induction-glue step,
   the outer iteration, and `compileER_pre_stop_correct_comp`.
+  Ends at 11820 (one line before
+  `compileER_pre_stop_to_runFor`'s docstring at 11821,
+  which belongs to Embedding).
 - Section F wrapper: 11896–11940. Contains
   `compileER_runFor_comp` (general k).
 
@@ -1273,8 +1276,8 @@ open GebLean.ZeroTestURM
 In monolith source order:
 
 1. Length / embedding setup: lines 2138–2955.
-2. k=0 wrapper: lines 5945–6198.
-3. Sub-block phase correctness: lines 6607–7208.
+2. k=0 wrapper: lines 5933–6198.
+3. Sub-block phase correctness: lines 6603–7208.
 4. m-step partial invariant + assembly: lines
    8024–11820.
 5. General-k runFor wrapper: lines 11896–11940.
@@ -1315,8 +1318,8 @@ Five deletions, in reverse line-number order:
 
 1. 11896–11940 (general-k runFor wrapper).
 2. 8024–11820 (m-step partial invariant + assembly).
-3. 6607–7208 (sub-block phase correctness).
-4. 5945–6198 (k=0 wrapper).
+3. 6603–7208 (sub-block phase correctness).
+4. 5933–6198 (k=0 wrapper).
 5. 2138–2955 (length / embedding setup).
 
 Use the `Read` tool with anchors to compute current line

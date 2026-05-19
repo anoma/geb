@@ -10,10 +10,10 @@
 - [4 Survey: line ranges in the current monolith](#4-survey-line-ranges-in-the-current-monolith)
 - [5 Per-submodule contents](#5-per-submodule-contents)
   - [5.1 `Compiler.lean` (Section A)](#51-compilerlean-section-a)
-  - [5.2 `Embedding.lean` (Section B + the bridge from Section F)](#52-embeddinglean-section-b--the-bridge-from-section-f)
-  - [5.3 `Loops.lean` (Section C)](#53-loopslean-section-c)
-  - [5.4 `Atoms.lean` (Section D)](#54-atomslean-section-d)
-  - [5.5 `Comp.lean` (Section E + Section F's comp wrapper)](#55-complean-section-e--section-fs-comp-wrapper)
+  - [5.2 `Embedding.lean` (Section B parts + the bridge)](#52-embeddinglean-section-b-parts--the-bridge)
+  - [5.3 `Loops.lean` (Section C parts)](#53-loopslean-section-c-parts)
+  - [5.4 `Atoms.lean` (Section D parts)](#54-atomslean-section-d-parts)
+  - [5.5 `Comp.lean` (Section E parts + the comp runFor wrapper)](#55-complean-section-e-parts--the-comp-runfor-wrapper)
   - [5.6 `GebLean/LawvereERKSim.lean` (index)](#56-gebleanlawvereerksimlean-index)
 - [6 Mechanical procedure](#6-mechanical-procedure)
   - [6.1 Visibility adjustments](#61-visibility-adjustments)
@@ -79,11 +79,11 @@ correctness so each can grow independently.
 ```text
 GebLean/LawvereERKSim.lean              pure index, ~50 LOC
 GebLean/LawvereERKSim/
-├── Compiler.lean    ~1450 LOC          Section A
-├── Embedding.lean    ~770 LOC          Section B + Section F bridge
-├── Loops.lean       ~2500 LOC          Section C
+├── Compiler.lean    ~1400 LOC          Section A
+├── Embedding.lean    ~800 LOC          Section B + tail variants + bridge
+├── Loops.lean       ~2750 LOC          Section C + non-contiguous PC bounds
 ├── Atoms.lean       ~2000 LOC          Section D
-└── Comp.lean        ~3500 LOC          Section E + comp runFor wrapper
+└── Comp.lean        ~5000 LOC          Section E + comp runFor wrapper
 ```
 
 Future submodules (out of scope here; placed during their
@@ -119,231 +119,342 @@ self-contained at the namespace level (nested
 ## 4 Survey: line ranges in the current monolith
 
 Line numbers refer to commit `a1ff2ff7`
-(`GebLean/LawvereERKSim.lean`, 11,943 lines).
+(`GebLean/LawvereERKSim.lean`, 11,943 lines). Sub-ranges
+within a section are *non-contiguous* — they are
+intermixed in the monolith because later proof work was
+appended after earlier work. The split recontiguates each
+section's content into its target submodule.
 
-| Section | Line range | LOC | Contents |
-| --- | --- | --- | --- |
-| A | 1–1473 | ~1450 | `URMInstrRaw`, `boundedBy`, `toBounded`, `toBoundedArray`, `CompiledFragment`, `URMRaw.{goto,transferLoop,preservingTransfer}`, `compileFrag_{zero,succ,proj,sub,comp,bsum,bprod}`, `compileERFrag`, `compileER`, `compileER_runtime` |
-| B | 1474–2137 | ~700 | `step_of_getElem?_{jumpZ,dec,inc,assign,stop}`, `ProgramEmbedsFragment`, `StateEmbedsFrag`, `stateEmbedsFrag_{step,runFor}` and `_tail`/`_outside_preserved` variants, `URMProgram.WellBounded`, `runFor_pc_le_size`, `compileER_runFor_pc_le_size`, `fragment_runFor_pc_le_size` |
-| C | 2956–4915, 5414–5853 | ~2500 | `preservingTransfer_correct` and its `_loop1`/`_loop2` helpers; `transferLoop_correct`; `subInnerLoop_correct`; per-step and strict PC bounds for all three |
-| D | 4917–5853, 6199–8023 | ~2000 | `compileER_runFor_{zero,succ,proj,sub}`; atom pre-stop lemmas `compileER_pre_stop_correct_{zero,succ,proj,sub}`; `List.find?_finRange_inputRegs`, `URMState.init_regs_inputRegs` |
-| E | 2138–2955, 5854–6198, 6321–7208, 8024–11820 | ~5000 | Length lemmas (`compileFrag_comp_subBlock_length`, `subBlocks_length`, `foldr_acc_add_eq_sum_map`); f-body and gs-body embedding setup; `compileFrag_comp_subBlock_{inputCopies,gsBody,outputTransfer}_correct` and strict PC bounds; `compileER_runFor_comp_k_zero`; `vPrefixSum`, `inputCopies_disj`, `disj_triple_for_reg`; `compileFrag_comp_partial_invariant` 8-clause structure; `compileFrag_comp_phase_i{1,2}_post`; `compileFrag_comp_subBlocks_partial_{base,phase_i1,phase_i2,phase_i3,step,aux,partial}`; outer iteration; `compileER_pre_stop_correct_comp`; `vPrefixSum_eq_foldl_finRange` and `_aux`; `compileER_runFor_comp` (general k) |
-| F | 11821–11940 | ~120 | `compileER_pre_stop_to_runFor` (the constructor-agnostic bridge); also placed in `Embedding.lean`, since the comp-specific wrapper `compileER_runFor_comp` rides into `Comp.lean` |
+| Submodule | Source sub-ranges | Approx LOC |
+| --- | --- | --- |
+| Compiler.lean | 76–1473 | ~1400 |
+| Embedding.lean | 1474–2137, 5201–5232, 5854–5932, 11821–11895 | ~800 |
+| Loops.lean | 2956–4916, 5414–5654, 6321–6602 | ~2750 |
+| Atoms.lean | 4917–5200, 5233–5413, 5655–5853, 6199–6320, 7209–8023 | ~2000 |
+| Comp.lean | 2138–2955, 5933–6198, 6603–7208, 8024–11820, 11896–11940 | ~5000 |
 
-Section line numbers reflect the *origin* of declarations.
-Some sections are non-contiguous in the monolith because
-later additions (atom pre-stop, comp m-step machinery)
-landed after the loop-correctness work; the split
-recontiguates each section's content into its target
-submodule.
+Each sub-range start equals the line of the leading
+`/--` of the first declaration in the sub-range (so the
+docstring travels with the declaration). Each sub-range
+end equals the line just before the next sub-range or
+section's leading `/--` (typically a blank line).
+
+Notable non-contiguities:
+
+- `stateEmbedsFrag_step_tail` (5866) and
+  `stateEmbedsFrag_runFor_tail` (5903) sit between the
+  proj-runFor block and the comp-k=0 wrapper but belong
+  with the rest of `stateEmbedsFrag_*` lemmas in
+  Embedding.lean.
+- `URMState.init_regs_zero_outside_inputs` (5210) sits
+  among the proj helpers but is used by comp; belongs in
+  Embedding.lean.
+- Four loop strict-PC-bound theorems sit at 6321–6606
+  (post atom-pre-stop work) but belong with their
+  corresponding loop correctness theorems in Loops.lean:
+  `preservingTransfer_loop2_pc_strict_bound` (6326),
+  `preservingTransfer_correct_pc_strict_bound` (6423),
+  `subInnerLoop_correct_pc_strict_bound` (6463),
+  `preservingTransfer_correct_pc_bound` (6561).
+- Two `compileFrag_comp`-specific instruction-presence
+  dischargers sit *inside* the loops-correctness range
+  but operate on `compileFrag_comp_subBlock`'s layout:
+  `PreservingTransferInstrs_compileFrag_comp_inputCopies`
+  (2990–3564) and
+  `TransferLoopInstrs_compileFrag_comp_outputTransfer`
+  (4187–4593). They consume the `preservingTransferInstrs`
+  and `transferLoopInstrs` private structures defined in
+  Loops; they stay in Loops.lean so those structures
+  remain file-private (see §5.3).
+
+The monolith carries one significant directive at the
+file level: `open GebLean.ZeroTestURM` on line 80. Every
+submodule must include this `open` clause after its
+namespace declarations.
 
 ## 5 Per-submodule contents
 
+Each declaration list below is empirically verified
+against the monolith at commit `a1ff2ff7`. Names exactly
+match the monolith's `theorem` / `def` / `structure`
+identifiers.
+
 ### 5.1 `Compiler.lean` (Section A)
 
-```text
--- Imports
+Imports and header (in this order):
+
+```lean
 import GebLean.LawvereER
 import GebLean.Utilities.ZeroTestURM
 import Mathlib.Data.Fintype.Basic
 import Mathlib.Tactic.FinCases
 
+/-! module docstring -/
+
 namespace GebLean
 namespace LawvereERKSim
+
+open GebLean.ZeroTestURM
 ```
 
-Declarations, in source order: `URMInstrRaw`,
-`URMInstrRaw.maxReg`, `URMInstrRaw.toBounded`,
-`URMInstrRaw.toBounded_congr`,
-`URMInstrRaw.boundedBy`, `URMInstrRaw.toBoundedArray`,
-`URMInstrRaw.lastInstr_isStop_of_concat`,
-`URMInstrRaw.toBoundedArray_size`,
-`URMInstrRaw.toBoundedArray_getElem`,
-`URMInstrRaw.toBoundedArray_getElem?`,
-`CompiledFragment` structure (with `numRegs_pos`,
-`zeroReg_not_input`, `zeroReg_not_output`,
-`lastInstr_isStop`), `CompiledFragment.zeroReg`,
-`URMRaw.goto`, `URMRaw.transferLoop`,
-`URMRaw.transferLoop.size`,
-`URMRaw.preservingTransfer`,
-`URMRaw.preservingTransfer.size`,
-`compileFrag_zero`, `compileFrag_succ`,
-`compileFrag_proj`, `compileFrag_sub_inputRegs`,
-`compileFrag_sub_inputRegs_zero`,
-`compileFrag_sub_inputRegs_one`,
-`compileFrag_sub`,
-`URMInstr.toRawOfBounded`,
-`URMInstrRaw.reindexShift`,
-`gsPrefixSum`, `gsBlockSize`, `gsPrefixSum_mono`,
-`URMInstrRaw.preservingTransfer.reindexShift_bounded`,
-`URMInstrRaw.transferLoop.reindexShift_bounded`,
-`URMInstrRaw.reindexShift_bounded`,
-`compileFrag_comp_subBlock`,
-`compileFrag_comp_subBlock_bounded`,
-`compileFrag_comp`,
-`bsum_prologueSrc`,
-`bsum_prologueBlock`,
-`bsum_prologueBlock_bounded`,
-`bsum_zeroSweep`,
-`bsum_zeroSweep_bounded`,
-`compileFrag_bsum`,
-`compileFrag_bprod`,
-`compileERFrag`,
-`compileER`,
-`compileER_numRegs_bound`,
-`compileER_runtime`.
+Declarations, in source order (line numbers attached):
 
-Visibility: declarations that the monolith marks
-`private` and that no other section references stay
-`private`. Declarations marked `private` that *are*
-referenced from `Embedding.lean`, `Loops.lean`,
-`Atoms.lean`, or `Comp.lean` are promoted to non-`private`
-during the move (audited per-declaration in the plan; the
-spec lists no such cases pre-emptively because Lean's
-elaborator will surface them as build failures during the
-split).
+- `URMInstrRaw` (92, inductive).
+- `URMInstrRaw.regBound` (110, def).
+- `URMInstrRaw.toBounded` (121, def).
+- `URMInstrRaw.toBounded_congr` (136, private theorem).
+- `URMInstrRaw.boundedBy` (144, def).
+- `URMInstrRaw.toBoundedArray` (152, def).
+- `URMInstrRaw.toBoundedArray_back?_of_last_stopR` (162,
+  private theorem).
+- `URMInstrRaw.toBoundedArray_size` (177, private theorem).
+- `URMInstrRaw.toBoundedArray_getElem` (186, private theorem).
+- `URMInstrRaw.toBoundedArray_getElem?` (202, private theorem).
+- `CompiledFragment` (structure, ~lines 213–245, with fields
+  `numRegs_pos`, `zeroReg_not_input`, `zeroReg_not_output`,
+  `lastInstr_isStop`).
+- `CompiledFragment.zeroReg` (247, def).
+- `URMRaw.goto` (257, def).
+- `URMRaw.transferLoop` (270, def).
+- `URMRaw.transferLoopLen` (279, def).
+- `URMRaw.preservingTransfer` (286, def).
+- `URMRaw.preservingTransferLen` (304, def).
+- `compileFrag_zero` (310, def).
+- `compileFrag_succ` (335, def).
+- `compileFrag_proj` (370, def).
+- `compileFrag_sub_inputRegs` (423, def).
+- `compileFrag_sub` (439, def).
+- `toRawOfBounded` (501, def).
+- `regBound_toRawOfBounded_le` (512, theorem).
+- `URMInstrRaw.reindexShift` (525, def).
+- `gsPrefixSum` (537, private def).
+- `gsPrefixSum_succ_eq` (547, private theorem).
+- `gsPrefixSum_mono` (557, private theorem).
+- `boundedBy_preservingTransfer` (572, theorem).
+- `boundedBy_transferLoop` (585, theorem).
+- `regBound_reindexShift_le_offset_add` (597, theorem).
+- `compileFrag_comp_subBlock` (613, private def).
+- `boundedBy_compileFrag_comp_subBlock` (642, private theorem).
+- `compileFrag_comp` (702, def).
+- `bsum_prologueSrc` (834, private def).
+- `bsum_prologueBlock` (849, private def).
+- `boundedBy_bsum_prologueBlock` (864, private theorem).
+- `bsum_zeroSweep` (884, private def).
+- `boundedBy_bsum_zeroSweep` (893, private theorem).
+- `compileFrag_bsum` (914, def).
+- `compileFrag_bprod` (1127, def).
+- `compileERFrag` (1382, def).
+- `compileER` (1399, def).
+- `compileER_numRegs` (1407, def).
+- `compileER_runtime` (1427, def).
 
-### 5.2 `Embedding.lean` (Section B + the bridge from Section F)
+### 5.2 `Embedding.lean` (Section B parts + the bridge)
 
-```text
+Imports:
+
+```lean
 import GebLean.LawvereERKSim.Compiler
 ```
 
-Declarations:
-`URMState.runFor_halted_invariant`,
-`URMState.runFor_stop`,
-`getElem_of_getElem?`,
-`step_of_getElem?_jumpZ`,
-`step_of_getElem?_dec`,
-`step_of_getElem?_inc`,
-`step_of_getElem?_assign`,
-`step_of_getElem?_stop`,
-`ProgramEmbedsFragment`,
-`StateEmbedsFrag`,
-`stateEmbedsFrag_step`,
-`stateEmbedsFrag_step_tail`,
-`stateEmbedsFrag_runFor`,
-`stateEmbedsFrag_runFor_tail`,
-`stateEmbedsFrag_step_outside_preserved`,
-`stateEmbedsFrag_runFor_outside_preserved`,
-`URMProgram.WellBounded`,
-`URMProgram.WellBounded.runFor_pc_le_size`,
-`compileER_runFor_pc_le_size`,
-`fragment_runFor_pc_le_size`,
-`compileER_pre_stop_to_runFor` (the bridge — placed here
-because it depends only on `Compiler.lean` and
-`URMState.runFor_{add,stop}`).
+Plus `open GebLean.ZeroTestURM` after the namespace
+declarations.
 
-### 5.3 `Loops.lean` (Section C)
+Declarations (with monolith line numbers; all are
+`private theorem` unless noted):
 
-```text
+- `getElem_of_getElem?_some` (1478).
+- `URMState.step_of_getElem?_jumpZ` (1493).
+- `URMState.step_of_getElem?_dec` (1504).
+- `URMState.step_of_getElem?_inc` (1515).
+- `URMState.step_of_getElem?_assign` (1529).
+- `URMState.step_of_getElem?_stop` (1543).
+- `ProgramEmbedsFragment` (1573, private structure).
+- `StateEmbedsFrag` (1594, private def).
+- `stateEmbedsFrag_step` (1609).
+- `stateEmbedsFrag_runFor` (1861).
+- `stateEmbedsFrag_step_outside_preserved` (1897).
+- `stateEmbedsFrag_runFor_outside_preserved` (2039).
+- `compileER_runFor_pc_le_size` (2109).
+- `fragment_runFor_pc_le_size` (2130).
+- `URMState.init_regs_zero_outside_inputs` (5210, moved
+  from the Section D proj-helpers cluster because the
+  Comp-side phase-i.1 work uses it).
+- `stateEmbedsFrag_step_tail` (5866, moved from the
+  middle of the monolith).
+- `stateEmbedsFrag_runFor_tail` (5903, moved similarly).
+- `compileER_pre_stop_to_runFor` (11830, the
+  constructor-agnostic bridge from the existential
+  pre-stop form to the output-only `≤ t'` form).
+
+The bridge depends on `URMState.runFor_add`,
+`URMState.runFor_stop`, and
+`CompiledFragment.lastInstr_isStop`. The first two are
+upstream declarations in
+`GebLean/Utilities/ZeroTestURM.lean`; the third is in
+`Compiler.lean`. No new transitive imports are required.
+
+### 5.3 `Loops.lean` (Section C parts)
+
+Imports:
+
+```lean
 import GebLean.LawvereERKSim.Embedding
 ```
 
-Declarations:
-`preservingTransferInstrs`,
-`preservingTransfer_loop1`,
-`preservingTransfer_loop1_pc_bound`,
-`preservingTransfer_loop2`,
-`preservingTransfer_loop2_pc_bound`,
-`preservingTransfer_loop2_pc_strict_bound`,
-`preservingTransfer_hyps`,
-`preservingTransfer_correct`,
-`preservingTransfer_correct_pc_bound`,
-`preservingTransfer_correct_pc_strict_bound`,
-`transferLoop_hyps`,
-`transferLoop_correct`,
-`transferLoop_correct_pc_bound`,
-`transferLoop_correct_pc_strict_bound`,
-`subInnerLoop_hyps`,
-`subInnerLoop_correct`,
-`subInnerLoop_correct_pc_bound`,
-`subInnerLoop_correct_pc_strict_bound`.
+Plus `open GebLean.ZeroTestURM`.
 
-The three "correct" theorems and their PC-bound siblings
-group together; per-loop helpers (`_loop1`/`_loop2` for
-`preservingTransfer`) stay adjacent to the loop they
-support.
+Declarations (with monolith line numbers):
 
-### 5.4 `Atoms.lean` (Section D)
+- `preservingTransferInstrs` (2962, private structure).
+- `PreservingTransferInstrs_compileFrag_comp_inputCopies`
+  (2990, private theorem).
+- `preservingTransfer_loop1` (3565, private theorem).
+- `preservingTransfer_loop1_pc_bound` (3741, private theorem).
+- `preservingTransfer_loop2` (3872, private theorem).
+- `preservingTransfer_loop2_pc_bound` (3983, private theorem).
+- `preservingTransfer_correct` (4107, private theorem).
+- `transferLoopInstrs` (4164, private structure).
+- `TransferLoopInstrs_compileFrag_comp_outputTransfer`
+  (4187, private theorem).
+- `transferLoop_correct` (4594, private theorem).
+- `transferLoop_correct_pc_bound` (4714, private theorem).
+- `transferLoop_correct_pc_strict_bound` (4824, private theorem).
+- `subInnerLoopInstrs` (5419, private structure).
+- `subInnerLoop_correct` (5436, private theorem).
+- `subInnerLoop_correct_pc_bound` (5554, private theorem).
+- `preservingTransfer_loop2_pc_strict_bound` (6326,
+  private theorem, moved from the post-atom-pre-stop
+  cluster).
+- `preservingTransfer_correct_pc_strict_bound` (6423,
+  same).
+- `subInnerLoop_correct_pc_strict_bound` (6463, same).
+- `preservingTransfer_correct_pc_bound` (6561, same).
 
-```text
+The two `compileFrag_comp`-specific dischargers
+(`PreservingTransferInstrs_compileFrag_comp_inputCopies`,
+`TransferLoopInstrs_compileFrag_comp_outputTransfer`)
+stay in this submodule because they consume the
+`preservingTransferInstrs` and `transferLoopInstrs`
+private structures defined here. Moving the dischargers
+to `Comp.lean` would require promoting those structures
+to non-`private`, weakening encapsulation for no
+semantic gain. The Loops submodule therefore hosts both
+loop correctness theorems and the per-comp-layout
+instruction-presence dischargers; this is acknowledged
+in the module docstring.
+
+### 5.4 `Atoms.lean` (Section D parts)
+
+Imports:
+
+```lean
 import GebLean.LawvereERKSim.Loops
 ```
 
-Declarations, grouped per constructor:
+Plus `open GebLean.ZeroTestURM`.
 
-- `compileER_runFor_zero`.
-- `compileER_runFor_succ`.
-- `List.find?_finRange_inputRegs`,
-  `URMState.init_regs_inputRegs`,
-  `compileER_runFor_proj`.
-- `compileER_runFor_sub`.
-- `compileER_pre_stop_correct_atom_zero`.
-- `compileER_pre_stop_correct_succ`.
-- `compileER_pre_stop_correct_proj`.
-- `compileER_pre_stop_correct_sub`.
+Declarations (all `private theorem` with monolith line
+numbers; the four pre-stop lemmas use the `_atom_` infix
+per the monolith's actual naming):
 
-The `_runFor_*` lemmas precede the `_pre_stop_correct_*`
-lemmas because the latter were added later in the
-monolith; preserving that order avoids reshuffling proof
-context.
+- `compileER_runFor_zero` (4919).
+- `compileER_runFor_succ` (5012).
+- `List.find?_finRange_inputRegs` (5157).
+- `URMState.init_regs_inputRegs` (5191).
+- `compileER_runFor_proj` (5239).
+- `compileER_runFor_sub` (5663).
+- `compileER_pre_stop_correct_atom_zero` (6208).
+- `compileER_pre_stop_correct_atom_succ` (7215).
+- `compileER_pre_stop_correct_atom_proj` (7456).
+- `compileER_pre_stop_correct_atom_sub` (7684).
 
-### 5.5 `Comp.lean` (Section E + Section F's comp wrapper)
+The proj helpers `List.find?_finRange_inputRegs` and
+`URMState.init_regs_inputRegs` are used only by
+`compileER_runFor_proj` and stay file-local to Atoms.
 
-```text
+### 5.5 `Comp.lean` (Section E parts + the comp runFor wrapper)
+
+Imports:
+
+```lean
 import GebLean.LawvereERKSim.Loops
 ```
 
-Declarations, in monolith order:
+Plus `open GebLean.ZeroTestURM`.
 
-Length / embedding lemmas:
-`compileFrag_comp_subBlock_length`,
-`compileFrag_comp_subBlocks_length`,
-`foldr_acc_add_eq_sum_map`,
-`flatMap_finRange_split`,
-`URMState.init_regs_zero_outside_inputs`,
-`ProgramEmbedsFragment_compileFrag_comp_fBody`,
-`ProgramEmbedsFragment_compileFrag_comp_gsBody`.
+Declarations, grouped, with monolith line numbers (all
+`private` unless noted):
 
-Sub-block phase lemmas:
-`compileFrag_comp_subBlock_inputCopies_correct`,
-`compileFrag_comp_subBlock_gsBody_correct`,
-`compileFrag_comp_subBlock_outputTransfer_correct`,
-`vPrefixSum`,
-`vPrefixSum_succ`,
-`inputCopies_disj`,
-`disj_triple_for_reg`,
-`compileFrag_comp_subBlock_inputCopies_pc_strict_bound`,
-`compileFrag_comp_subBlock_gsBody_pc_strict_bound`,
-`compileFrag_comp_subBlock_outputTransfer_pc_strict_bound`.
+Length / embedding setup:
 
-k=0 case wrapper:
-`compileER_runFor_comp_k_zero`.
+- `compileFrag_comp_subBlock_length` (2145, theorem).
+- `foldr_acc_add_eq_sum_map` (2183, theorem).
+- `compileFrag_comp_subBlocks_length` (2196, theorem).
+- `ProgramEmbedsFragment_compileFrag_comp_fBody` (2225,
+  theorem).
+- `flatMap_finRange_split` (2425, theorem).
+- `ProgramEmbedsFragment_compileFrag_comp_gsBody` (2536,
+  theorem).
 
-m-step partial invariant:
-`compileFrag_comp_partial_invariant`,
-`compileFrag_comp_pcOf`,
-`compileFrag_comp_pcOf_zero`,
-`compileFrag_comp_pcOf_succ`,
-`compileFrag_comp_subBlocks_partial_base`,
-`compileFrag_comp_phase_i1_post`,
-`compileFrag_comp_subBlocks_partial_phase_i1`,
-`compileFrag_comp_subBlocks_partial_phase_i1_pc_strict_bound`,
-`compileFrag_comp_phase_i2_post`,
-`compileFrag_comp_subBlocks_partial_phase_i2`,
-`compileFrag_comp_subBlocks_partial_phase_i3`,
-`compileFrag_comp_subBlocks_partial_step`.
+k=0 wrapper:
+
+- `compileER_runFor_comp_k_zero` (5946, theorem).
+
+Sub-block phase correctness:
+
+- `vPrefixSum` (6607, def).
+- `vPrefixSum_succ` (6614, theorem).
+- `inputCopies_disj` (6627, structure).
+- `inputCopies_prefix_correct` (6653, theorem).
+- `inputCopies_prefix_pc_strict_bound` (6785, theorem).
+- `compileFrag_comp_subBlock_inputCopies_correct` (6878,
+  theorem).
+- `compileFrag_comp_subBlock_inputCopies_pc_strict_bound`
+  (6914, theorem).
+- `compileFrag_comp_subBlock_gsBody_correct` (6949,
+  theorem). (No `gsBody_pc_strict_bound` exists in the
+  monolith; the gsBody case derives its strict PC bound
+  from the structural IH on `gs m`.)
+- `compileFrag_comp_subBlock_outputTransfer_correct`
+  (7160, theorem).
+- `compileFrag_comp_subBlock_outputTransfer_pc_strict_bound`
+  (7191, theorem).
+
+m-step partial invariant and induction:
+
+- `compileFrag_comp_pcOf` (8038, def).
+- `compileFrag_comp_pcOf_zero` (8047, theorem).
+- `compileFrag_comp_pcOf_succ` (8070, theorem).
+- `compileFrag_comp_partial_invariant` (8237, structure).
+- `compileFrag_comp_subBlocks_partial_base` (8358,
+  theorem).
+- `compileFrag_comp_phase_i1_post` (8533, structure).
+- `compileFrag_comp_subBlocks_partial_phase_i1` (8689,
+  theorem).
+- `compileFrag_comp_phase_i2_post` (9267, structure).
+- `compileFrag_comp_subBlocks_partial_phase_i2` (9402,
+  theorem).
+- `compileFrag_comp_subBlocks_partial_phase_i3` (9958,
+  theorem).
+- `compileFrag_comp_subBlocks_partial_phase_i1_pc_strict_bound`
+  (10587, theorem).
+- `compileFrag_comp_subBlocks_partial_step` (10772,
+  theorem).
 
 Outer iteration and assembly:
-`compileFrag_comp_finRange_filter_lt_succ`,
-`compileFrag_comp_subBlocks_partial_aux`,
-`compileFrag_comp_subBlocks_partial`,
-`vPrefixSum_eq_foldl_finRange_aux`,
-`vPrefixSum_eq_foldl_finRange`,
-`compileER_pre_stop_correct_comp`,
-`compileER_runFor_comp` (general k wrapper, via the
-bridge in `Embedding.lean`).
+
+- `compileFrag_comp_finRange_filter_lt_succ` (10913,
+  theorem).
+- `compileFrag_comp_subBlocks_partial_aux` (11030,
+  theorem).
+- `compileFrag_comp_subBlocks_partial` (11185, theorem).
+- `vPrefixSum_eq_foldl_finRange_aux` (11244, theorem).
+- `vPrefixSum_eq_foldl_finRange` (11288, theorem).
+- `compileER_pre_stop_correct_comp` (11339, theorem).
+- `compileER_runFor_comp` (11901, theorem; general-k
+  `≤ t'` wrapper; composes
+  `compileER_pre_stop_correct_comp` with the bridge
+  `compileER_pre_stop_to_runFor` from Embedding).
 
 ### 5.6 `GebLean/LawvereERKSim.lean` (index)
 
