@@ -111,5 +111,139 @@ private theorem bsum_exitPC_eq_size_pred {k : ℕ}
   rw [bsum_trBase, bsum_bodyPCBase]
   omega
 
+/-- Per-iteration zero-sweep correctness for `compileFrag_bsum`: running
+the URM for `numRegs_f` steps from a state at `pcBase` through a
+contiguous block of `assignR (fBase + r) 0` instructions advances the
+PC to `pcBase + numRegs_f`, writes `0` to every register
+`⟨fBase + r, _⟩` in the swept range, and leaves all other registers
+unchanged. The instruction-presence hypothesis `hSweep` packages the
+in-range witness alongside the `getElem?` equation. -/
+private theorem compileFrag_bsum_zeroSweep_correct
+    {a : ℕ}
+    (P : URMProgram a) (pcBase fBase : ℕ)
+    (numRegs_f : ℕ)
+    (hSweep : ∀ r : Fin numRegs_f,
+      ∃ h : fBase + r.val < P.numRegs,
+        P.instrs[pcBase + r.val]?
+          = some (URMInstr.assign ⟨fBase + r.val, h⟩ 0))
+    (s : URMState P) (h_pc : s.pc = pcBase) :
+    let s' := URMState.runFor P s numRegs_f
+    s'.pc = pcBase + numRegs_f ∧
+    (∀ r : Fin numRegs_f,
+      ∀ h : fBase + r.val < P.numRegs,
+        s'.regs ⟨fBase + r.val, h⟩ = 0) ∧
+    (∀ q : Fin P.numRegs,
+      (∀ r : Fin numRegs_f, q.val ≠ fBase + r.val) →
+      s'.regs q = s.regs q) := by
+  simp only []
+  induction numRegs_f with
+  | zero =>
+    refine ⟨?_, ?_, ?_⟩
+    · rw [URMState.runFor_zero, h_pc]; omega
+    · intro r; exact r.elim0
+    · intros _ _; rw [URMState.runFor_zero]
+  | succ n ih =>
+    -- IH for the first `n` registers (use the original `pcBase`).
+    have hSweep_n : ∀ r : Fin n,
+        ∃ h : fBase + r.val < P.numRegs,
+          P.instrs[pcBase + r.val]?
+            = some (URMInstr.assign ⟨fBase + r.val, h⟩ 0) := by
+      intro r
+      exact hSweep ⟨r.val, Nat.lt_succ_of_lt r.isLt⟩
+    obtain ⟨ih_pc, ih_zero, ih_other⟩ := ih hSweep_n
+    -- Peel one step at the end: runFor (n + 1) = step ∘ runFor n.
+    rw [show n + 1 = n + 1 from rfl, URMState.runFor_add]
+    set s1 : URMState P := URMState.runFor P s n with hs1_def
+    have hs1_pc : s1.pc = pcBase + n := ih_pc
+    -- Instruction at PC `pcBase + n` is `assign ⟨fBase + n, _⟩ 0`.
+    obtain ⟨h_lt, h_instr⟩ := hSweep ⟨n, Nat.lt_succ_self n⟩
+    -- One assign step transition.
+    have h_step :
+        URMState.step P s1 =
+          { pc := s1.pc + 1
+            regs := Function.update s1.regs ⟨fBase + n, h_lt⟩ 0 } :=
+      URMState.step_of_getElem?_assign P s1 (pcBase + n)
+        ⟨fBase + n, h_lt⟩ 0 hs1_pc h_instr
+    -- Compute s2 := runFor P s1 1.
+    have hs2_eq :
+        URMState.runFor P s1 1
+          = { pc := s1.pc + 1
+              regs := Function.update s1.regs ⟨fBase + n, h_lt⟩ 0 } := by
+      rw [show (1 : ℕ) = 0 + 1 from rfl, URMState.runFor_succ,
+        URMState.runFor_zero, h_step]
+    rw [hs2_eq]
+    refine ⟨?_, ?_, ?_⟩
+    · -- pc = pcBase + (n + 1).
+      change s1.pc + 1 = pcBase + (n + 1)
+      rw [hs1_pc]; omega
+    · -- All swept registers are zero.
+      intro r h
+      by_cases hr : r.val = n
+      · -- Last register: just written by the peeled step.
+        have hreg_eq : (⟨fBase + r.val, h⟩ : Fin P.numRegs)
+            = ⟨fBase + n, h_lt⟩ := by
+          apply Fin.ext
+          change fBase + r.val = fBase + n
+          omega
+        rw [hreg_eq]
+        change Function.update s1.regs ⟨fBase + n, h_lt⟩ 0
+          ⟨fBase + n, h_lt⟩ = 0
+        rw [Function.update_self]
+      · -- Earlier registers: r.val < n, unaffected by the peeled step.
+        have hr_lt : r.val < n := by
+          have hr_succ : r.val < n + 1 := r.isLt
+          omega
+        have hne : (⟨fBase + r.val, h⟩ : Fin P.numRegs)
+            ≠ ⟨fBase + n, h_lt⟩ := by
+          intro heq
+          have : fBase + r.val = fBase + n := congrArg Fin.val heq
+          omega
+        change Function.update s1.regs ⟨fBase + n, h_lt⟩ 0
+          ⟨fBase + r.val, h⟩ = 0
+        rw [Function.update_of_ne hne]
+        exact ih_zero ⟨r.val, hr_lt⟩ h
+    · -- Other registers preserved.
+      intro q h_ne
+      have hne_last : q ≠ ⟨fBase + n, h_lt⟩ := by
+        intro heq
+        have hval : q.val = fBase + n := congrArg Fin.val heq
+        have h_ne_n : q.val ≠ fBase + (⟨n, Nat.lt_succ_self n⟩ : Fin (n + 1)).val :=
+          h_ne ⟨n, Nat.lt_succ_self n⟩
+        change q.val ≠ fBase + n at h_ne_n
+        exact h_ne_n hval
+      change Function.update s1.regs ⟨fBase + n, h_lt⟩ 0 q = s.regs q
+      rw [Function.update_of_ne hne_last]
+      apply ih_other
+      intro r
+      exact h_ne ⟨r.val, Nat.lt_succ_of_lt r.isLt⟩
+
+/-- Per-step strict PC bound for `compileFrag_bsum_zeroSweep_correct`:
+during the `numRegs_f` zero-sweep steps, the intermediate PC stays
+strictly less than `pcBase + numRegs_f`. -/
+private theorem compileFrag_bsum_zeroSweep_pc_strict_bound
+    {a : ℕ} (P : URMProgram a) (pcBase fBase : ℕ)
+    (numRegs_f : ℕ)
+    (hSweep : ∀ r : Fin numRegs_f,
+      ∃ h : fBase + r.val < P.numRegs,
+        P.instrs[pcBase + r.val]?
+          = some (URMInstr.assign ⟨fBase + r.val, h⟩ 0))
+    (s : URMState P) (h_pc : s.pc = pcBase)
+    (k' : ℕ) (h_k' : k' < numRegs_f) :
+    (URMState.runFor P s k').pc < pcBase + numRegs_f := by
+  -- Strengthened invariant: after k' < numRegs_f steps the PC is exactly
+  -- pcBase + k', so it is strictly less than pcBase + numRegs_f.
+  suffices h_pc_eq : (URMState.runFor P s k').pc = pcBase + k' by
+    rw [h_pc_eq]; omega
+  -- Restrict `hSweep` to the first `k'` registers.
+  have hSweep_k : ∀ r : Fin k',
+      ∃ h : fBase + r.val < P.numRegs,
+        P.instrs[pcBase + r.val]?
+          = some (URMInstr.assign ⟨fBase + r.val, h⟩ 0) := by
+    intro r
+    exact hSweep ⟨r.val, Nat.lt_trans r.isLt h_k'⟩
+  obtain ⟨pc_eq, _, _⟩ :=
+    compileFrag_bsum_zeroSweep_correct P pcBase fBase k' hSweep_k s h_pc
+  exact pc_eq
+
 end LawvereERKSim
 end GebLean
