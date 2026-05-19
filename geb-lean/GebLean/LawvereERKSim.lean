@@ -5416,6 +5416,337 @@ private theorem preservingTransfer_correct_pc_bound {a : ℕ}
       hs1_tmp k' h_k'
     exact h_l2.2
 
+/-- Sum of `v` over a prefix `Fin m` of `Fin a` (`m ≤ a`).
+Used to express the partial step count after processing
+the first `m` input-copy preservingTransfer blocks of
+`compileFrag_comp_subBlock`'s Phase i.1. -/
+private def vPrefixSum {a : ℕ} (v : Fin a → ℕ) : ℕ → ℕ
+  | 0 => 0
+  | n + 1 =>
+    vPrefixSum v n + (if h : n < a then v ⟨n, h⟩ else 0)
+
+/-- `vPrefixSum` unfolding at successor: drops the
+defensive `dite` when the index is in-range. -/
+private theorem vPrefixSum_succ {a : ℕ} (v : Fin a → ℕ)
+    (n : ℕ) (h : n < a) :
+    vPrefixSum v (n + 1)
+      = vPrefixSum v n + v ⟨n, h⟩ := by
+  change vPrefixSum v n + _ = _
+  rw [dif_pos h]
+
+/-- Bundle of disjointness predicates among the registers
+participating in Phase i.1's `a` input-copies of
+`compileFrag_comp_subBlock`. The "src" registers (one per
+outer input slot) and "dst" registers (one per `gs i`'s
+reindexed input slot) are indexed by `Fin a`; `tmp` and
+`zReg` are shared across all copies. -/
+private structure inputCopies_disj {a : ℕ}
+    (P : URMProgram a)
+    (zReg tmp : Fin P.numRegs)
+    (srcs dsts : Fin a → Fin P.numRegs) : Prop where
+  z_src : ∀ j : Fin a, zReg ≠ srcs j
+  z_dst : ∀ j : Fin a, zReg ≠ dsts j
+  z_tmp : zReg ≠ tmp
+  src_dst : ∀ j : Fin a, srcs j ≠ dsts j
+  src_tmp : ∀ j : Fin a, srcs j ≠ tmp
+  dst_tmp : ∀ j : Fin a, dsts j ≠ tmp
+  src_inj : ∀ j₁ j₂ : Fin a, j₁ ≠ j₂ → srcs j₁ ≠ srcs j₂
+  dst_inj : ∀ j₁ j₂ : Fin a, j₁ ≠ j₂ → dsts j₁ ≠ dsts j₂
+  -- Cross-disjointness: srcs and dsts use disjoint register
+  -- blocks (outer-inputs vs gs i's reindexed inputs).
+  src_dst_cross : ∀ j₁ j₂ : Fin a, srcs j₁ ≠ dsts j₂
+
+/-- Phase i.1 inductive correctness over the first `m`
+input-copy blocks (`m ≤ a`): after `9 * Σ_{j<m} v_j + 2 * m`
+steps from a state where outer inputs hold `v`, the
+program's PC is `pcBase + 9 * m`, the first `m` `gs i`
+input slots have been populated, the outer inputs and
+tmp/zReg are preserved, all other registers (in
+particular, `gs i`'s remaining input slots and its
+output/scratch) are unchanged from the pre-state. The
+per-step strict PC bound `< pcBase + 9 * m` is bundled
+separately. -/
+private theorem inputCopies_prefix_correct {a : ℕ}
+    (P : URMProgram a) (pcBase : ℕ) (m : ℕ) (hm : m ≤ a)
+    (zReg tmp : Fin P.numRegs)
+    (srcs dsts : Fin a → Fin P.numRegs)
+    (h_disj : inputCopies_disj P zReg tmp srcs dsts)
+    (H : ∀ j : Fin a,
+      preservingTransferInstrs P (pcBase + 9 * j.val)
+        (srcs j) (dsts j) tmp zReg)
+    (v : Fin a → ℕ)
+    (s : URMState P) (h_pc : s.pc = pcBase)
+    (h_z : s.regs zReg = 0) (h_tmp0 : s.regs tmp = 0)
+    (h_srcs : ∀ j : Fin a, s.regs (srcs j) = v j)
+    (h_dsts0 : ∀ j : Fin a, s.regs (dsts j) = 0) :
+    let totalSteps : ℕ := 9 * vPrefixSum v m + 2 * m
+    let s' := URMState.runFor P s totalSteps
+    s'.pc = pcBase + 9 * m ∧
+    s'.regs zReg = 0 ∧
+    s'.regs tmp = 0 ∧
+    (∀ j : Fin a, j.val < m → s'.regs (dsts j) = v j) ∧
+    (∀ j : Fin a, m ≤ j.val → s'.regs (dsts j) = 0) ∧
+    (∀ j : Fin a, s'.regs (srcs j) = v j) ∧
+    (∀ r : Fin P.numRegs,
+        (∀ j : Fin a, r ≠ dsts j) → r ≠ tmp →
+        s'.regs r = s.regs r) := by
+  simp only []
+  induction m with
+  | zero =>
+    -- 0 steps: state unchanged.
+    have h0 : 9 * vPrefixSum v 0 + 2 * 0 = 0 := by
+      change 9 * 0 + 2 * 0 = 0; omega
+    rw [h0, URMState.runFor_zero]
+    refine ⟨?_, h_z, h_tmp0, ?_, ?_, h_srcs, ?_⟩
+    · rw [h_pc]; change pcBase = pcBase + 0; omega
+    · intro j hj; omega
+    · intro j _; exact h_dsts0 j
+    · intros; rfl
+  | succ m ih =>
+    have hm' : m < a := hm
+    have hm'' : m ≤ a := Nat.le_of_succ_le hm
+    have h_vps : vPrefixSum v (m + 1)
+        = vPrefixSum v m + v ⟨m, hm'⟩ :=
+      vPrefixSum_succ v m hm'
+    have h_steps :
+        9 * vPrefixSum v (m + 1) + 2 * (m + 1)
+          = (9 * vPrefixSum v m + 2 * m)
+            + (9 * v ⟨m, hm'⟩ + 2) := by
+      rw [h_vps]; omega
+    rw [h_steps, URMState.runFor_add]
+    -- Apply IH to get state after prefix m.
+    obtain ⟨ih_pc, ih_z, ih_tmp, ih_dsts_lt, ih_dsts_ge,
+        ih_srcs, ih_other⟩ := ih hm''
+    set s1 : URMState P := URMState.runFor P s
+        (9 * vPrefixSum v m + 2 * m) with hs1_def
+    have hs1_pc : s1.pc = pcBase + 9 * m := ih_pc
+    have hs1_z : s1.regs zReg = 0 := ih_z
+    have hs1_tmp : s1.regs tmp = 0 := ih_tmp
+    have hs1_src_m : s1.regs (srcs ⟨m, hm'⟩) = v ⟨m, hm'⟩ :=
+      ih_srcs ⟨m, hm'⟩
+    have hs1_dst_m : s1.regs (dsts ⟨m, hm'⟩) = 0 :=
+      ih_dsts_ge ⟨m, hm'⟩ (Nat.le_refl m)
+    -- Apply preservingTransfer_correct for block m.
+    have hH_m := H ⟨m, hm'⟩
+    -- Bring instruction-presence to pc = pcBase + 9 * m (the
+    -- block's pcBase).  Note hH_m's pcBase is `pcBase + 9 * m`.
+    obtain ⟨pt_pc, pt_dst, pt_src, pt_tmp, pt_z, pt_oth⟩ :=
+      preservingTransfer_correct P (pcBase + 9 * m)
+        (srcs ⟨m, hm'⟩) (dsts ⟨m, hm'⟩) tmp zReg
+        (h_disj.src_dst ⟨m, hm'⟩) (h_disj.src_tmp ⟨m, hm'⟩)
+        (h_disj.dst_tmp ⟨m, hm'⟩) (h_disj.z_src ⟨m, hm'⟩)
+        (h_disj.z_dst ⟨m, hm'⟩) h_disj.z_tmp
+        hH_m s1 hs1_pc hs1_z hs1_tmp (v ⟨m, hm'⟩) hs1_src_m
+    set s2 : URMState P :=
+        URMState.runFor P s1 (9 * v ⟨m, hm'⟩ + 2) with hs2_def
+    -- Now establish all post-conditions for s2.
+    have hs2_pc : s2.pc = pcBase + 9 * (m + 1) := by
+      have h_pc_arith : (pcBase + 9 * m) + 9 = pcBase + 9 * (m + 1) := by
+        omega
+      rw [← h_pc_arith]; exact pt_pc
+    have hs2_z : s2.regs zReg = 0 := pt_z
+    have hs2_tmp : s2.regs tmp = 0 := pt_tmp
+    have hs2_dst_m : s2.regs (dsts ⟨m, hm'⟩) = v ⟨m, hm'⟩ := by
+      rw [pt_dst, hs1_dst_m, Nat.zero_add]
+    have hs2_src_m : s2.regs (srcs ⟨m, hm'⟩) = v ⟨m, hm'⟩ := pt_src
+    -- For other registers, pt_oth says they are preserved
+    -- unless `r = dsts ⟨m, hm'⟩`.
+    have hs2_srcs : ∀ j : Fin a, s2.regs (srcs j) = v j := by
+      intro j
+      rw [pt_oth (srcs j) (h_disj.src_dst_cross j ⟨m, hm'⟩)]
+      exact ih_srcs j
+    have hs2_dsts_lt : ∀ j : Fin a, j.val < m + 1 →
+        s2.regs (dsts j) = v j := by
+      intro j hj
+      by_cases hjeq : j = ⟨m, hm'⟩
+      · subst hjeq; exact hs2_dst_m
+      · have h_ne : (dsts j) ≠ (dsts ⟨m, hm'⟩) :=
+          h_disj.dst_inj j ⟨m, hm'⟩ hjeq
+        rw [pt_oth (dsts j) h_ne]
+        have hjm : j.val < m := by
+          rcases Nat.lt_or_ge j.val m with hlt | hge
+          · exact hlt
+          · -- j.val = m would give j = ⟨m, hm'⟩.
+            exfalso; apply hjeq
+            apply Fin.ext
+            change j.val = m
+            have hj_lt : j.val < m + 1 := hj
+            omega
+        exact ih_dsts_lt j hjm
+    have hs2_dsts_ge : ∀ j : Fin a, m + 1 ≤ j.val →
+        s2.regs (dsts j) = 0 := by
+      intro j hj
+      have h_ne : (dsts j) ≠ (dsts ⟨m, hm'⟩) := by
+        apply h_disj.dst_inj
+        intro he
+        have : j.val = m := congrArg Fin.val he
+        omega
+      rw [pt_oth (dsts j) h_ne]
+      exact ih_dsts_ge j (Nat.le_of_succ_le hj)
+    have hs2_other : ∀ r : Fin P.numRegs,
+        (∀ j : Fin a, r ≠ dsts j) → r ≠ tmp →
+        s2.regs r = s.regs r := by
+      intro r h_ne_dst h_ne_tmp
+      rw [pt_oth r (h_ne_dst ⟨m, hm'⟩)]
+      exact ih_other r h_ne_dst h_ne_tmp
+    refine ⟨hs2_pc, hs2_z, hs2_tmp, hs2_dsts_lt, hs2_dsts_ge,
+      hs2_srcs, hs2_other⟩
+
+/-- Per-step strict PC bound for `inputCopies_prefix_correct`:
+during the `9 * vPrefixSum v m + 2 * m` steps of the first
+`m` input-copy blocks, the intermediate PC stays strictly
+less than `pcBase + 9 * m + 1` (in fact `≤ pcBase + 9 * m`
+after each full block, with intermediate strict bound
+`< pcBase + 9 * (m_running + 1)` during block `m_running`). -/
+private theorem inputCopies_prefix_pc_strict_bound {a : ℕ}
+    (P : URMProgram a) (pcBase : ℕ) (m : ℕ) (hm : m ≤ a)
+    (zReg tmp : Fin P.numRegs)
+    (srcs dsts : Fin a → Fin P.numRegs)
+    (h_disj : inputCopies_disj P zReg tmp srcs dsts)
+    (H : ∀ j : Fin a,
+      preservingTransferInstrs P (pcBase + 9 * j.val)
+        (srcs j) (dsts j) tmp zReg)
+    (v : Fin a → ℕ)
+    (s : URMState P) (h_pc : s.pc = pcBase)
+    (h_z : s.regs zReg = 0) (h_tmp0 : s.regs tmp = 0)
+    (h_srcs : ∀ j : Fin a, s.regs (srcs j) = v j)
+    (h_dsts0 : ∀ j : Fin a, s.regs (dsts j) = 0)
+    (k : ℕ) (h_k : k < 9 * vPrefixSum v m + 2 * m) :
+    (URMState.runFor P s k).pc < pcBase + 9 * m := by
+  induction m with
+  | zero =>
+    -- vPrefixSum v 0 = 0, so 9 * 0 + 2 * 0 = 0, contradiction with h_k.
+    exfalso
+    change k < 9 * 0 + 2 * 0 at h_k
+    omega
+  | succ m ih =>
+    have hm' : m < a := hm
+    have hm'' : m ≤ a := Nat.le_of_succ_le hm
+    have h_vps : vPrefixSum v (m + 1)
+        = vPrefixSum v m + v ⟨m, hm'⟩ :=
+      vPrefixSum_succ v m hm'
+    have h_steps :
+        9 * vPrefixSum v (m + 1) + 2 * (m + 1)
+          = (9 * vPrefixSum v m + 2 * m)
+            + (9 * v ⟨m, hm'⟩ + 2) := by
+      rw [h_vps]; omega
+    by_cases hkLe : k < 9 * vPrefixSum v m + 2 * m
+    · -- k is in the prefix; PC < pcBase + 9 * m ≤ pcBase + 9 * (m + 1).
+      have h_ih := ih hm'' hkLe
+      have h_le : pcBase + 9 * m ≤ pcBase + 9 * (m + 1) := by
+        have : 9 * m ≤ 9 * (m + 1) := by omega
+        omega
+      omega
+    · -- k ≥ prefix; split.
+      have hkGe : 9 * vPrefixSum v m + 2 * m ≤ k :=
+        Nat.le_of_not_lt hkLe
+      obtain ⟨k', hk'⟩ : ∃ k', k = (9 * vPrefixSum v m + 2 * m) + k' :=
+        ⟨k - (9 * vPrefixSum v m + 2 * m), by omega⟩
+      subst hk'
+      -- k' < 9 * v ⟨m, hm'⟩ + 2.
+      have h_k' : k' < 9 * v ⟨m, hm'⟩ + 2 := by
+        rw [h_steps] at h_k; omega
+      rw [URMState.runFor_add]
+      -- Get state after prefix m via correctness.
+      obtain ⟨ih_pc, ih_z, ih_tmp, _, ih_dsts_ge, ih_srcs, _⟩ :=
+        inputCopies_prefix_correct P pcBase m hm'' zReg tmp
+          srcs dsts h_disj H v s h_pc h_z h_tmp0 h_srcs h_dsts0
+      set s1 : URMState P :=
+          URMState.runFor P s (9 * vPrefixSum v m + 2 * m) with hs1_def
+      have hs1_pc : s1.pc = pcBase + 9 * m := ih_pc
+      have hs1_z : s1.regs zReg = 0 := ih_z
+      have hs1_tmp : s1.regs tmp = 0 := ih_tmp
+      have hs1_src_m : s1.regs (srcs ⟨m, hm'⟩) = v ⟨m, hm'⟩ :=
+        ih_srcs ⟨m, hm'⟩
+      -- Use the strict variant for the inner part.
+      have h_pc_strict := preservingTransfer_correct_pc_strict_bound P
+        (pcBase + 9 * m) (srcs ⟨m, hm'⟩) (dsts ⟨m, hm'⟩) tmp zReg
+        (h_disj.src_dst ⟨m, hm'⟩) (h_disj.src_tmp ⟨m, hm'⟩)
+        (h_disj.dst_tmp ⟨m, hm'⟩) (h_disj.z_src ⟨m, hm'⟩)
+        (h_disj.z_dst ⟨m, hm'⟩) h_disj.z_tmp
+        (H ⟨m, hm'⟩) s1 hs1_pc hs1_z hs1_tmp
+        (v ⟨m, hm'⟩) hs1_src_m k' h_k'
+      -- h_pc_strict: (runFor P s1 k').pc ≤ pcBase + 9*m + 8.
+      have h_le' : pcBase + 9 * m + 8 < pcBase + 9 * (m + 1) := by
+        have : 9 * (m + 1) = 9 * m + 9 := by omega
+        omega
+      omega
+
+/-- Phase i.1 helper for `compileFrag_comp_subBlock`: running
+the full `a` input-copies (each a `preservingTransfer` block
+moving outer input `j` into the appropriate `gs i` input
+slot) for `9 * vPrefixSum v a + 2 * a` steps produces a
+state where (1) the PC is past the input-copies block at
+`pcBase + 9 * a`, (2) every `gs i` input slot (one per
+outer input) holds the corresponding outer-input value,
+(3) all outer inputs and tmp/zReg are preserved, (4) all
+other registers are unchanged from the pre-state. Per-step
+strict PC bound is the companion lemma
+`compileFrag_comp_subBlock_inputCopies_pc_strict_bound`.
+
+This lemma is the abstract Phase i.1 result: instantiating
+its `srcs`/`dsts`/`H` parameters with the specific register
+maps and instruction-presence facts from
+`compileFrag_comp_subBlock i pcBase` (built via the
+flatMap-indexing infrastructure from
+`ProgramEmbedsFragment_compileFrag_comp_gsBody`) gives the
+sub-block-specific Phase i.1 helper. -/
+private theorem compileFrag_comp_subBlock_inputCopies_correct
+    {a : ℕ}
+    (P : URMProgram a) (pcBase : ℕ)
+    (zReg tmp : Fin P.numRegs)
+    (srcs dsts : Fin a → Fin P.numRegs)
+    (h_disj : inputCopies_disj P zReg tmp srcs dsts)
+    (H : ∀ j : Fin a,
+      preservingTransferInstrs P (pcBase + 9 * j.val)
+        (srcs j) (dsts j) tmp zReg)
+    (v : Fin a → ℕ)
+    (s : URMState P) (h_pc : s.pc = pcBase)
+    (h_z : s.regs zReg = 0) (h_tmp0 : s.regs tmp = 0)
+    (h_srcs : ∀ j : Fin a, s.regs (srcs j) = v j)
+    (h_dsts0 : ∀ j : Fin a, s.regs (dsts j) = 0) :
+    let totalSteps : ℕ := 9 * vPrefixSum v a + 2 * a
+    let s' := URMState.runFor P s totalSteps
+    s'.pc = pcBase + 9 * a ∧
+    s'.regs zReg = 0 ∧
+    s'.regs tmp = 0 ∧
+    (∀ j : Fin a, s'.regs (dsts j) = v j) ∧
+    (∀ j : Fin a, s'.regs (srcs j) = v j) ∧
+    (∀ r : Fin P.numRegs,
+        (∀ j : Fin a, r ≠ dsts j) → r ≠ tmp →
+        s'.regs r = s.regs r) := by
+  obtain ⟨pc_eq, z_eq, tmp_eq, dsts_lt, _, srcs_eq, oth_eq⟩ :=
+    inputCopies_prefix_correct P pcBase a (Nat.le_refl a)
+      zReg tmp srcs dsts h_disj H v s h_pc h_z h_tmp0 h_srcs h_dsts0
+  refine ⟨pc_eq, z_eq, tmp_eq, ?_, srcs_eq, oth_eq⟩
+  intro j; exact dsts_lt j j.isLt
+
+/-- Per-step strict PC bound for
+`compileFrag_comp_subBlock_inputCopies_correct`: for
+`k < 9 * vPrefixSum v a + 2 * a`, the intermediate PC stays
+strictly less than `pcBase + 9 * a` (i.e., remains inside
+the input-copies block).  Direct specialization of
+`inputCopies_prefix_pc_strict_bound` at `m = a`. -/
+private theorem compileFrag_comp_subBlock_inputCopies_pc_strict_bound
+    {a : ℕ}
+    (P : URMProgram a) (pcBase : ℕ)
+    (zReg tmp : Fin P.numRegs)
+    (srcs dsts : Fin a → Fin P.numRegs)
+    (h_disj : inputCopies_disj P zReg tmp srcs dsts)
+    (H : ∀ j : Fin a,
+      preservingTransferInstrs P (pcBase + 9 * j.val)
+        (srcs j) (dsts j) tmp zReg)
+    (v : Fin a → ℕ)
+    (s : URMState P) (h_pc : s.pc = pcBase)
+    (h_z : s.regs zReg = 0) (h_tmp0 : s.regs tmp = 0)
+    (h_srcs : ∀ j : Fin a, s.regs (srcs j) = v j)
+    (h_dsts0 : ∀ j : Fin a, s.regs (dsts j) = 0)
+    (k : ℕ) (h_k : k < 9 * vPrefixSum v a + 2 * a) :
+    (URMState.runFor P s k).pc < pcBase + 9 * a :=
+  inputCopies_prefix_pc_strict_bound P pcBase a (Nat.le_refl a)
+    zReg tmp srcs dsts h_disj H v s h_pc h_z h_tmp0 h_srcs
+    h_dsts0 k h_k
+
 /-- Pre-stop PC and output for the `.succ` atom.  After
 `9 * v 0 + 4` steps the program reaches `pc = 11` (the stop
 instruction at `size - 1`) with the output register holding
