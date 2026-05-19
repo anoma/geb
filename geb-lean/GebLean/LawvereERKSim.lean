@@ -8321,9 +8321,14 @@ private structure compileFrag_comp_partial_invariant
           gsPrefixSum (fun j => compileERFrag (gs j)) k
           + frag_f.numRegs + 1
         omega⟩ = 0
-  /-- `f`'s body block is entirely `0`: every register at
-  outer index `fBase + r` for `r < frag_f.numRegs`. -/
+  /-- `f`'s body block is `0` outside the input slots already
+  filled by completed iterations: every register at outer
+  index `fBase + r` for `r < frag_f.numRegs`, provided `r`
+  is not the image of `frag_f.inputRegs i` for any processed
+  `i` (`i.val < m`). At `m = 0` the hypothesis is vacuous and
+  the clause reduces to "f's body is entirely 0". -/
   f_body_zero : ∀ (r : Fin frag_f.numRegs),
+    (∀ i : Fin k, i.val < m → r ≠ frag_f.inputRegs i) →
     s.regs ⟨2 + a +
         gsPrefixSum (fun j => compileERFrag (gs j)) k
         + r.val, by
@@ -8486,8 +8491,9 @@ private theorem compileFrag_comp_subBlocks_partial_base
     right; right
     change 2 + a ≤ 2 + a + gsPrefixSum frag_gs i.val + r.val
     omega
-  · -- f_body_zero: same pattern, index = fBase + r.val ≥ 2 + a.
-    intro r
+  · -- f_body_zero: index = fBase + r.val ≥ 2 + a; hypothesis on
+    -- exception set is vacuous at m = 0.
+    intro r _
     have hpos : 0 < 2 + a + totalGsRegs + r.val := by omega
     rw [h_regs_off_zero _ _ hpos]
     change (URMState.init P v).regs _ = 0
