@@ -36,6 +36,11 @@ absolute PCs at which each segment begins and ends.
   of the input-copies correctness and per-step strict PC bound lemmas
   from `Comp.lean` (the bsum per-iteration prologue is structurally
   identical to comp's input-copies phase).
+- `compileFrag_bsum_accUpdate_correct`,
+  `compileFrag_bsum_accUpdate_pc_strict_bound`: bsum-flavoured aliases
+  of `transferLoop_correct` and `transferLoop_correct_pc_strict_bound`
+  from `Loops.lean` (the bsum per-iteration accumulator-update block
+  is a `transferLoop` from f's output register into the accumulator).
 
 ## References
 
@@ -312,6 +317,54 @@ private theorem compileFrag_bsum_prologue_pc_strict_bound
   compileFrag_comp_subBlock_inputCopies_pc_strict_bound
     P pcBase zReg tmp srcs dsts h_disj H v s h_pc h_z h_tmp0
     h_srcs h_dsts0 k h_k
+
+/-- Per-iteration accumulator-update correctness for `compileFrag_bsum`:
+running the URM through the 4-instruction `transferLoop` block at
+`pcBase` destructively transfers `vSrc` units from `src` (f's output
+register) into `dst` (the accumulator), advances the PC to `pcBase + 4`,
+zeros `src`, leaves the reserved zero register `zReg` at `0`, and
+preserves every other register. Bsum-flavoured alias of
+`transferLoop_correct`. -/
+private theorem compileFrag_bsum_accUpdate_correct
+    {a : ℕ}
+    (P : URMProgram a) (pcBase : ℕ)
+    (src dst zReg : Fin P.numRegs)
+    (h_disj_sd : src ≠ dst) (h_disj_zs : zReg ≠ src)
+    (h_disj_zd : zReg ≠ dst)
+    (H : transferLoopInstrs P pcBase src dst zReg)
+    (vSrc : ℕ)
+    (s : URMState P) (h_pc : s.pc = pcBase)
+    (h_z : s.regs zReg = 0)
+    (h_src : s.regs src = vSrc) :
+    let s' := URMState.runFor P s (4 * vSrc + 1)
+    s'.pc = pcBase + 4 ∧
+    s'.regs dst = s.regs dst + vSrc ∧
+    s'.regs src = 0 ∧
+    s'.regs zReg = 0 ∧
+    ∀ r, r ≠ dst → r ≠ src → r ≠ zReg →
+      s'.regs r = s.regs r :=
+  transferLoop_correct P pcBase src dst zReg h_disj_sd h_disj_zs
+    h_disj_zd H s h_pc h_z vSrc h_src
+
+/-- Per-step strict PC bound for `compileFrag_bsum_accUpdate_correct`:
+during the `4 * vSrc` steps strictly before the final exit step, the
+intermediate PC is at most `pcBase + 3`. Bsum-flavoured alias of
+`transferLoop_correct_pc_strict_bound`. -/
+private theorem compileFrag_bsum_accUpdate_pc_strict_bound
+    {a : ℕ}
+    (P : URMProgram a) (pcBase : ℕ)
+    (src dst zReg : Fin P.numRegs)
+    (h_disj_sd : src ≠ dst) (h_disj_zs : zReg ≠ src)
+    (h_disj_zd : zReg ≠ dst)
+    (H : transferLoopInstrs P pcBase src dst zReg)
+    (vSrc : ℕ)
+    (s : URMState P) (h_pc : s.pc = pcBase)
+    (h_z : s.regs zReg = 0)
+    (h_src : s.regs src = vSrc)
+    (k : ℕ) (h_k : k ≤ 4 * vSrc) :
+    (URMState.runFor P s k).pc ≤ pcBase + 3 :=
+  transferLoop_correct_pc_strict_bound P pcBase src dst zReg
+    h_disj_sd h_disj_zs h_disj_zd H s h_pc h_z vSrc h_src k h_k
 
 end LawvereERKSim
 end GebLean
