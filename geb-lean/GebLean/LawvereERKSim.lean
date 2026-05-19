@@ -4454,6 +4454,128 @@ private theorem compileER_runFor_comp_k_zero {a : ℕ}
   rw [h_interp_eq]
   exact h_ih
 
+/-- Pre-stop trace lemma for `compileER ERMor1.zero`. After
+`T0 = 2` steps from `init`, the program reaches PC = 2 =
+`(compileER ERMor1.zero).instrs.size - 1` (the stop
+instruction), the output register holds `0 =
+ERMor1.zero.interp v`, and for every earlier step count
+`k < 2`, the PC is `0` or `1`, hence strictly less than
+`size - 1`. Atom case of `compileER_pre_stop_correct`;
+the compositional cases (comp/bsum/bprod) and the
+remaining atoms (succ/proj/sub) are deferred. -/
+private theorem compileER_pre_stop_correct_atom_zero
+    (v : Fin 0 → ℕ) :
+    ∃ T0 : ℕ,
+      T0 ≤ compileER_runtime (.zero : ERMor1 0) v ∧
+      ((URMState.init (compileER ERMor1.zero) v).runFor
+            (compileER ERMor1.zero) T0).pc
+          = (compileER ERMor1.zero).instrs.size - 1 ∧
+      ((URMState.init (compileER ERMor1.zero) v).runFor
+            (compileER ERMor1.zero) T0).regs
+          (compileER ERMor1.zero).outputReg
+        = ERMor1.zero.interp v ∧
+      (∀ k < T0,
+        ((URMState.init (compileER ERMor1.zero) v).runFor
+            (compileER ERMor1.zero) k).pc
+          < (compileER ERMor1.zero).instrs.size - 1) := by
+  -- The atom program has size 3, stop at PC = 2.
+  -- T0 = 2: at step 2 the program reaches the stop and the
+  -- output register V_1 has been written with 0.
+  refine ⟨2, ?_, ?_, ?_, ?_⟩
+  · -- 2 ≤ runtime = 3.
+    change (2 : ℕ) ≤ 3; decide
+  · -- After 2 steps, PC = 2 = size - 1.
+    set P : URMProgram 0 := compileER ERMor1.zero with hP
+    set s0 : URMState P := URMState.init P v with hs0
+    -- Step 0 (PC 0): assign ⟨0, _⟩ 0; PC → 1.
+    have h_step0 : URMState.step P s0 =
+        { pc := 1
+          regs := Function.update s0.regs ⟨0, by decide⟩ 0 } := by
+      simp only [URMState.step, s0, URMState.init, P,
+        compileER, compileERFrag, compileFrag_zero]
+      rfl
+    set s1 : URMState P :=
+      { pc := 1
+        regs := Function.update s0.regs ⟨0, by decide⟩ 0 }
+    -- Step 1 (PC 1): assign ⟨1, _⟩ 0; PC → 2.
+    have h_step1 : URMState.step P s1 =
+        { pc := 2
+          regs := Function.update s1.regs ⟨1, by decide⟩ 0 } := by
+      simp only [URMState.step, P, compileER, compileERFrag,
+        compileFrag_zero]
+      rfl
+    -- runFor P s0 2 = step (step s0).
+    have h_two : URMState.runFor P s0 2 =
+        { pc := 2
+          regs := Function.update s1.regs ⟨1, by decide⟩ 0 } := by
+      change URMState.runFor P (URMState.step P s0) 1 = _
+      rw [h_step0]
+      change URMState.runFor P (URMState.step P s1) 0 = _
+      rw [URMState.runFor_zero, h_step1]
+    rw [h_two]
+    -- size = 3, size - 1 = 2.
+    change (2 : ℕ) = (3 : ℕ) - 1
+    rfl
+  · -- After 2 steps, output register holds 0 = .zero.interp v.
+    set P : URMProgram 0 := compileER ERMor1.zero with hP
+    set s0 : URMState P := URMState.init P v with hs0
+    have h_step0 : URMState.step P s0 =
+        { pc := 1
+          regs := Function.update s0.regs ⟨0, by decide⟩ 0 } := by
+      simp only [URMState.step, s0, URMState.init, P,
+        compileER, compileERFrag, compileFrag_zero]
+      rfl
+    set s1 : URMState P :=
+      { pc := 1
+        regs := Function.update s0.regs ⟨0, by decide⟩ 0 }
+    have h_step1 : URMState.step P s1 =
+        { pc := 2
+          regs := Function.update s1.regs ⟨1, by decide⟩ 0 } := by
+      simp only [URMState.step, P, compileER, compileERFrag,
+        compileFrag_zero]
+      rfl
+    have h_two : URMState.runFor P s0 2 =
+        { pc := 2
+          regs := Function.update s1.regs ⟨1, by decide⟩ 0 } := by
+      change URMState.runFor P (URMState.step P s0) 1 = _
+      rw [h_step0]
+      change URMState.runFor P (URMState.step P s1) 0 = _
+      rw [URMState.runFor_zero, h_step1]
+    rw [h_two]
+    -- outputReg = ⟨1, _⟩; the second update writes 0 there.
+    change Function.update s1.regs ⟨1, by decide⟩ 0
+        (compileER ERMor1.zero).outputReg = _
+    simp only [P, compileER, compileERFrag, compileFrag_zero]
+    rfl
+  · -- For k < 2, the PC after k steps is k itself, < 2.
+    intro k hk
+    set P : URMProgram 0 := compileER ERMor1.zero with hP
+    set s0 : URMState P := URMState.init P v with hs0
+    -- Case-split on k = 0 or k = 1.
+    match k, hk with
+    | 0, _ =>
+      -- k = 0: PC = 0 < 2.
+      change s0.pc < (compileER ERMor1.zero).instrs.size - 1
+      change (0 : ℕ) < 3 - 1
+      decide
+    | 1, _ =>
+      -- k = 1: PC after one step = 1 < 2.
+      have h_step0 : URMState.step P s0 =
+          { pc := 1
+            regs := Function.update s0.regs ⟨0, by decide⟩ 0 } := by
+        simp only [URMState.step, s0, URMState.init, P,
+          compileER, compileERFrag, compileFrag_zero]
+        rfl
+      have h_one : URMState.runFor P s0 1 =
+          { pc := 1
+            regs := Function.update s0.regs ⟨0, by decide⟩ 0 } := by
+        change URMState.runFor P (URMState.step P s0) 0 = _
+        rw [URMState.runFor_zero, h_step0]
+      rw [h_one]
+      change (1 : ℕ) < (compileER ERMor1.zero).instrs.size - 1
+      change (1 : ℕ) < 3 - 1
+      decide
+
 end LawvereERKSim
 
 end GebLean
