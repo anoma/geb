@@ -1399,6 +1399,25 @@ whose execution on input `v : Fin a → ℕ` produces
 def compileER {a : ℕ} (e : ERMor1 a) : URMProgram a :=
   (compileERFrag e).toURMProgram
 
+/-- Structural upper bound for `(compileERFrag e).numRegs`.
+Mirrors `compileERFrag`'s recursion so the `bsum`/`bprod`
+per-iteration zero-sweep cost (`frag_f.numRegs` `assignR`
+instructions per iteration) can be folded into
+`compileER_runtime` without exposing the compiled fragment. -/
+def compileER_numRegs : {a : ℕ} → ERMor1 a → ℕ
+  | _, .zero => 2
+  | _, .succ => 4
+  | a, .proj _ => a + 3
+  | _, .sub => 6
+  | a, .comp (k := k) f gs =>
+      2 + a
+        + ((List.finRange k).map
+            (fun i => compileER_numRegs (gs i))).foldl
+          (· + ·) 0
+        + compileER_numRegs f + 1
+  | _, .bsum (k := k) f => k + 7 + compileER_numRegs f
+  | _, .bprod (k := k) f => k + 9 + compileER_numRegs f
+
 /-- Runtime witness: a step count sufficient for
 `URMState.runFor (compileER e) v` to reach a state where
 the output register holds `e.interp v`. Structural
@@ -1411,15 +1430,19 @@ def compileER_runtime : {a : ℕ} → ERMor1 a →
   | _, .succ, v => 12 + 10 * v 0
   | _, .proj i, v => 11 + 10 * v i
   | _, .sub, v => 20 + 10 * v 0 + 10 * v 1
-  | _, .comp (k := k) f gs, v =>
+  | a, .comp (k := k) f gs, v =>
       let inner : Fin k → ℕ := fun i => (gs i).interp v
+      let v_total : ℕ :=
+        ((List.finRange a).map v).foldl (· + ·) 0
       let glue : ℕ :=
         ((List.finRange k).map
           (fun i => compileER_runtime (gs i) v
-            + 4 + 5 * inner i)).foldl (· + ·) 0
+            + 4 + 5 * inner i
+            + 9 * v_total + 2 * a)).foldl (· + ·) 0
       glue + compileER_runtime f inner + 2
   | _, .bsum (k := k) f, v =>
       let bound : ℕ := v 0
+      let nRegs_f : ℕ := compileER_numRegs f
       let perIter : ℕ → ℕ := fun i =>
         let ctx_f : Fin (k + 1) → ℕ :=
           Fin.cons i (Fin.tail v)
@@ -1429,10 +1452,12 @@ def compileER_runtime : {a : ℕ} → ERMor1 a →
         compileER_runtime f ctx_f
         + 50 + 10 * (i + outerSum)
         + 5 * f.interp ctx_f
+        + nRegs_f
       30 + 10 * bound +
         ((List.range bound).map perIter).foldl (· + ·) 0
   | _, .bprod (k := k) f, v =>
       let bound : ℕ := v 0
+      let nRegs_f : ℕ := compileER_numRegs f
       let perIter : ℕ → ℕ := fun i =>
         let ctx_f : Fin (k + 1) → ℕ :=
           Fin.cons i (Fin.tail v)
@@ -1442,6 +1467,7 @@ def compileER_runtime : {a : ℕ} → ERMor1 a →
         compileER_runtime f ctx_f
         + 60 + 10 * (i + outerSum)
         + 5 * f.interp ctx_f
+        + nRegs_f
       40 + 10 * bound +
         ((List.range bound).map perIter).foldl (· + ·) 0
 
