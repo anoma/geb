@@ -8061,6 +8061,150 @@ private theorem compileFrag_comp_pcOf_zero {k a : ℕ}
       rfl
   rw [h_filter, List.foldr_nil]
 
+/-- `compileFrag_comp_pcOf` at a successor: shifts up by the
+`m`-th block length. Constructive proof that decomposes
+`(List.finRange k).filter (· .val < m + 1)` as
+`(List.finRange k).filter (· .val < m) ++ [⟨m, hm_lt⟩]`
+and uses that `foldr` of `acc + g j` over a snoc adds `g y` at
+the outer level. Avoids `List.nodup_finRange` and `Classical`. -/
+private theorem compileFrag_comp_pcOf_succ
+    {k a : ℕ}
+    (frag_gs : Fin k → CompiledFragment a)
+    (m : ℕ) (hm_lt : m < k) :
+    compileFrag_comp_pcOf frag_gs (m + 1)
+      = compileFrag_comp_pcOf frag_gs m
+          + (9 * a + ((frag_gs ⟨m, hm_lt⟩).instrs.size - 1) + 4) := by
+  -- The block-length function used inside `compileFrag_comp_pcOf`.
+  set blockLen : Fin k → ℕ :=
+    fun i => 9 * a + ((frag_gs i).instrs.size - 1) + 4 with hblockLen
+  -- Step 1: `filter (· .val < m+1) (finRange k)` equals
+  -- `filter (· .val < m) (finRange k) ++ [⟨m, hm_lt⟩]`.
+  have h_filter_snoc : ∀ (k' : ℕ) (n : ℕ) (hn : n < k'),
+      (List.finRange k').filter (fun j : Fin k' => decide (j.val < n + 1))
+        = (List.finRange k').filter (fun j => decide (j.val < n))
+            ++ [⟨n, hn⟩] := by
+    intro k' n hn
+    induction k' generalizing n with
+    | zero => exact absurd hn (Nat.not_lt_zero _)
+    | succ k'' ih =>
+      match n, hn with
+      | 0, hn =>
+        -- filter (· < 1) on `finRange (k''+1)` is `[⟨0, _⟩]`;
+        -- filter (· < 0) is `[]`. Prove both by single induction.
+        have h_filter_lt_one :
+            (List.finRange (k'' + 1)).filter
+                (fun j : Fin (k'' + 1) => decide (j.val < 0 + 1))
+              = [⟨0, hn⟩] := by
+          rw [List.finRange_succ, List.filter_cons]
+          have h_true :
+              decide ((0 : Fin (k'' + 1)).val < 0 + 1) = true :=
+            decide_eq_true (Nat.succ_pos _)
+          rw [if_pos h_true]
+          have h_tail_nil :
+              (List.map Fin.succ (List.finRange k'')).filter
+                  (fun j : Fin (k'' + 1) => decide (j.val < 0 + 1))
+                = [] := by
+            rw [List.filter_map]
+            have h_pred :
+                ((fun j : Fin (k'' + 1) => decide (j.val < 0 + 1)) ∘ Fin.succ)
+                  = (fun _ : Fin k'' => false) := by
+              funext y
+              change decide (y.val + 1 < 0 + 1) = false
+              exact decide_eq_false (by omega)
+            rw [h_pred]
+            induction (List.finRange k'') with
+            | nil => rfl
+            | cons _ tl ih_in =>
+              rw [List.filter_cons]
+              simp only [Bool.false_eq_true, ↓reduceIte]
+              exact ih_in
+          rw [h_tail_nil]
+          rfl
+        have h_filter_lt_zero :
+            (List.finRange (k'' + 1)).filter
+                (fun j : Fin (k'' + 1) => decide (j.val < 0))
+              = [] := by
+          generalize (List.finRange (k'' + 1)) = l
+          induction l with
+          | nil => rfl
+          | cons hd tl ih_in =>
+            rw [List.filter_cons]
+            have h_false : decide (hd.val < 0) = false :=
+              decide_eq_false (Nat.not_lt_zero _)
+            rw [if_neg (by rw [h_false]; decide)]
+            exact ih_in
+        rw [h_filter_lt_one, h_filter_lt_zero]
+        rfl
+      | n + 1, hn =>
+        have hn' : n < k'' := Nat.lt_of_succ_lt_succ hn
+        -- Peel head 0 of `finRange (k''+1)`, recurse on tail.
+        rw [List.finRange_succ]
+        rw [List.filter_cons]
+        rw [List.filter_cons]
+        -- Head value 0 satisfies both predicates (since n+1 ≥ 1 and n+2 ≥ 1).
+        have h_lhs :
+            decide ((0 : Fin (k'' + 1)).val < n + 1 + 1) = true :=
+          decide_eq_true (Nat.succ_pos _)
+        have h_rhs :
+            decide ((0 : Fin (k'' + 1)).val < n + 1) = true :=
+          decide_eq_true (Nat.succ_pos _)
+        rw [if_pos h_lhs, if_pos h_rhs]
+        -- Filter on `map Fin.succ`: reduce to filter on `finRange k''`.
+        rw [List.filter_map, List.filter_map]
+        have h_pred_lhs :
+            ((fun j : Fin (k'' + 1) => decide (j.val < n + 1 + 1)) ∘ Fin.succ)
+              = (fun y : Fin k'' => decide (y.val < n + 1)) := by
+          funext y
+          change decide (y.val + 1 < n + 1 + 1) = decide (y.val < n + 1)
+          rcases Nat.lt_or_ge y.val (n + 1) with h | h
+          · rw [decide_eq_true h, decide_eq_true (Nat.succ_lt_succ h)]
+          · rw [decide_eq_false (Nat.not_lt.mpr h),
+              decide_eq_false (Nat.not_lt.mpr (Nat.succ_le_succ h))]
+        have h_pred_rhs :
+            ((fun j : Fin (k'' + 1) => decide (j.val < n + 1)) ∘ Fin.succ)
+              = (fun y : Fin k'' => decide (y.val < n)) := by
+          funext y
+          change decide (y.val + 1 < n + 1) = decide (y.val < n)
+          rcases Nat.lt_or_ge y.val n with h | h
+          · rw [decide_eq_true h, decide_eq_true (Nat.succ_lt_succ h)]
+          · rw [decide_eq_false (Nat.not_lt.mpr h),
+              decide_eq_false (Nat.not_lt.mpr (Nat.succ_le_succ h))]
+        rw [h_pred_lhs, h_pred_rhs]
+        -- Apply IH on `finRange k''`.
+        rw [ih n hn']
+        -- Now both sides should align after pushing `Fin.succ` through.
+        rw [List.map_append]
+        have h_succ_eq :
+            (List.map Fin.succ [(⟨n, hn'⟩ : Fin k'')])
+              = [(⟨n + 1, hn⟩ : Fin (k'' + 1))] := by
+          change [Fin.succ ⟨n, hn'⟩] = [⟨n + 1, hn⟩]
+          rfl
+        rw [h_succ_eq]
+        rfl
+  -- Step 2: foldr over snoc with accumulator-add pattern.
+  have h_foldr_snoc : ∀ (xs : List (Fin k)) (y : Fin k),
+      (xs ++ [y]).foldr (fun j acc => acc + blockLen j) 0
+        = xs.foldr (fun j acc => acc + blockLen j) 0 + blockLen y := by
+    intro xs y
+    induction xs with
+    | nil =>
+      change (0 + blockLen y) = 0 + blockLen y
+      rfl
+    | cons hd tl ih =>
+      change ((hd :: (tl ++ [y])).foldr _ 0) = _
+      rw [List.foldr_cons, List.foldr_cons, ih]
+      omega
+  -- Assemble.
+  change 1 + ((List.finRange k).filter
+        (fun j => decide (j.val < m + 1))).foldr
+        (fun j acc => acc + blockLen j) 0
+      = (1 + ((List.finRange k).filter
+            (fun j => decide (j.val < m))).foldr
+            (fun j acc => acc + blockLen j) 0)
+        + blockLen ⟨m, hm_lt⟩
+  rw [h_filter_snoc k m hm_lt, h_foldr_snoc]
+  omega
+
 /-- Post-state invariant after processing the leading
 `assignR 0 0` plus the first `m` sub-blocks of
 `compileFrag_comp frag_f (fun i => compileERFrag (gs i))`.
