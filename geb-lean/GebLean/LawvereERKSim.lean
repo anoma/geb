@@ -2975,6 +2975,587 @@ private structure preservingTransferInstrs {a : ℕ}
   h8 : P.instrs[pcBase + 8]? =
     some (.jumpZ zReg (pcBase + 5) (pcBase + 5))
 
+/-- For `compileFrag_comp`'s `i`-th sub-block, `j`-th
+input-copy preservingTransfer: at PCs
+`pcBase_i + 9 * j ..  pcBase_i + 9 * j + 8`, the outer
+program's instructions match the nine raw instructions of
+`URMRaw.preservingTransfer (pcBase_i + 9 * j.val) (2 + j.val)
+(gsBase_i + ((frag_gs i).inputRegs j).val) tmpReg`, after
+`URMInstrRaw.toBounded` conversion. The four register
+arguments (`src`, `dst`, `tmp`, `zReg`) match those used
+inside `compileFrag_comp_subBlock`'s input-copy preamble.
+Parallels `ProgramEmbedsFragment_compileFrag_comp_gsBody`
+for Phase i.2 (gs body); this lemma covers Phase i.1
+(input-copies preamble). -/
+private theorem PreservingTransferInstrs_compileFrag_comp_inputCopies
+    {k a : ℕ}
+    (frag_f : CompiledFragment k)
+    (frag_gs : Fin k → CompiledFragment a)
+    (i : Fin k) (j : Fin a) :
+    let outer := (compileFrag_comp frag_f frag_gs).toURMProgram
+    let blockLen : Fin k → ℕ := fun i =>
+      9 * a + ((frag_gs i).instrs.size - 1) + 4
+    let pcBase_i : ℕ :=
+      1 + ((List.finRange k).filter
+          (fun n => decide (n.val < i.val))).foldr
+        (fun n acc => acc + blockLen n) 0
+    let gsBase_i : ℕ := 2 + a + gsPrefixSum frag_gs i.val
+    let tmpReg : ℕ :=
+      2 + a + gsPrefixSum frag_gs k + frag_f.numRegs
+    ∃ (h_src : 2 + j.val < outer.numRegs)
+      (h_dst : gsBase_i + ((frag_gs i).inputRegs j).val
+                 < outer.numRegs)
+      (h_tmp : tmpReg < outer.numRegs)
+      (h_z : 0 < outer.numRegs),
+      preservingTransferInstrs outer (pcBase_i + 9 * j.val)
+        ⟨2 + j.val, h_src⟩
+        ⟨gsBase_i + ((frag_gs i).inputRegs j).val, h_dst⟩
+        ⟨tmpReg, h_tmp⟩
+        ⟨0, h_z⟩ := by
+  intro outer blockLen pcBase_i gsBase_i tmpReg
+  -- Auxiliaries matching the constructor of compileFrag_comp.
+  let totalGsRegs : ℕ := gsPrefixSum frag_gs k
+  let fBase : ℕ := 2 + a + totalGsRegs
+  let nR : ℕ := tmpReg + 1
+  let gsBase : Fin k → ℕ :=
+    fun j => 2 + a + gsPrefixSum frag_gs j.val
+  let pcBase : Fin k → ℕ := fun j =>
+    1 + ((List.finRange k).filter
+        (fun n => decide (n.val < j.val))).foldr
+      (fun n acc => acc + blockLen n) 0
+  let subBlocks : List URMInstrRaw :=
+    (List.finRange k).flatMap fun n =>
+      compileFrag_comp_subBlock frag_f frag_gs
+        (gsBase n) fBase tmpReg n (pcBase n)
+  let fPcBase : ℕ :=
+    1 + (List.finRange k).foldr
+      (fun j acc => acc + blockLen j) 0
+  let fBody : List URMInstrRaw :=
+    frag_f.instrs.toList.map fun ins =>
+      URMInstrRaw.reindexShift fBase fPcBase (toRawOfBounded ins)
+  let rawList : List URMInstrRaw :=
+    (.assignR 0 0) :: (subBlocks ++ fBody)
+  -- Bound facts.
+  have h_a_le_fBase : a ≤ fBase := by
+    change a ≤ 2 + a + totalGsRegs; omega
+  have h_jLt : j.val + 1 ≤ a := j.isLt
+  have h_src_lt : 2 + j.val < nR := by
+    change 2 + j.val < tmpReg + 1
+    change 2 + j.val < (fBase + frag_f.numRegs) + 1
+    omega
+  have h_gsBlock_i : gsBase i + (frag_gs i).numRegs ≤ fBase := by
+    have hmono : gsPrefixSum frag_gs (i.val + 1)
+        ≤ gsPrefixSum frag_gs k :=
+      gsPrefixSum_mono frag_gs i.isLt
+    have hsucc :
+        gsPrefixSum frag_gs (i.val + 1)
+          = gsPrefixSum frag_gs i.val + (frag_gs i).numRegs :=
+      gsPrefixSum_succ_eq frag_gs i
+    change 2 + a + gsPrefixSum frag_gs i.val
+        + (frag_gs i).numRegs ≤ 2 + a + totalGsRegs
+    change _ ≤ gsPrefixSum frag_gs k at hmono
+    omega
+  have h_dst_lt :
+      gsBase_i + ((frag_gs i).inputRegs j).val < nR := by
+    have hI : ((frag_gs i).inputRegs j).val < (frag_gs i).numRegs :=
+      ((frag_gs i).inputRegs j).isLt
+    have h_gsBlock_i' :
+        2 + a + gsPrefixSum frag_gs i.val + (frag_gs i).numRegs
+          ≤ fBase := h_gsBlock_i
+    change 2 + a + gsPrefixSum frag_gs i.val
+        + ((frag_gs i).inputRegs j).val < tmpReg + 1
+    change _ < (fBase + frag_f.numRegs) + 1
+    omega
+  have h_tmp_lt : tmpReg < nR := by
+    change tmpReg < tmpReg + 1; omega
+  have h_z_lt : 0 < nR := by
+    change 0 < tmpReg + 1; omega
+  have h_numRegs_eq : outer.numRegs = nR := rfl
+  refine ⟨h_src_lt, h_dst_lt, h_tmp_lt, h_z_lt, ?_⟩
+  -- Sub-block at i: split subBlocks via flatMap_finRange_split.
+  obtain ⟨pre, suf, h_subBlocks_split, h_pre_len⟩ :=
+    flatMap_finRange_split k
+      (fun n => compileFrag_comp_subBlock frag_f frag_gs
+        (gsBase n) fBase tmpReg n (pcBase n)) i
+  have h_pre_len_eq :
+      pre.length = pcBase_i - 1 := by
+    rw [h_pre_len]
+    change _ = (1 + ((List.finRange k).filter
+        (fun n => decide (n.val < i.val))).foldr
+      (fun n acc => acc + blockLen n) 0) - 1
+    have h_each : ∀ n : Fin k,
+        (compileFrag_comp_subBlock frag_f frag_gs
+          (gsBase n) fBase tmpReg n (pcBase n)).length
+          = blockLen n :=
+      fun n => compileFrag_comp_subBlock_length
+        frag_f frag_gs (gsBase n) fBase tmpReg n (pcBase n)
+    have h_foldr_eq :
+        ((List.finRange k).filter
+            (fun n => decide (n.val < i.val))).foldr
+          (fun n acc => acc +
+            (compileFrag_comp_subBlock frag_f frag_gs
+              (gsBase n) fBase tmpReg n (pcBase n)).length) 0
+          = ((List.finRange k).filter
+              (fun n => decide (n.val < i.val))).foldr
+            (fun n acc => acc + blockLen n) 0 := by
+      induction (List.filter (fun n : Fin k =>
+          decide (n.val < i.val)) (List.finRange k)) with
+      | nil => rfl
+      | cons hd tl ih_inner =>
+        simp only [List.foldr_cons, ih_inner, h_each hd]
+    rw [h_foldr_eq]
+    omega
+  -- Sub-block i = inputCopies_i ++ body_i ++ transfer_i.
+  set sb_i : List URMInstrRaw :=
+    compileFrag_comp_subBlock frag_f frag_gs
+      (gsBase i) fBase tmpReg i (pcBase i) with h_sb_i
+  let bodyBase_i : ℕ := pcBase i + 9 * a
+  let body_i : List URMInstrRaw :=
+    (frag_gs i).instrs.pop.toList.map fun ins =>
+      URMInstrRaw.reindexShift (gsBase i) bodyBase_i
+        (toRawOfBounded ins)
+  let inputCopies_i : List URMInstrRaw :=
+    (List.finRange a).flatMap fun j' =>
+      URMRaw.preservingTransfer
+        (pcBase i + 9 * j'.val)
+        (2 + j'.val)
+        (gsBase i + ((frag_gs i).inputRegs j').val)
+        tmpReg
+  let transfer_i : List URMInstrRaw :=
+    URMRaw.transferLoop
+      (bodyBase_i + ((frag_gs i).instrs.size - 1))
+      (gsBase i + ((frag_gs i).outputReg).val)
+      (fBase + (frag_f.inputRegs i).val)
+  have h_sb_i_eq : sb_i = inputCopies_i ++ body_i ++ transfer_i := by
+    rw [h_sb_i]; rfl
+  have h_subBlocks_full :
+      subBlocks = pre ++ inputCopies_i ++ body_i
+        ++ transfer_i ++ suf := by
+    change _ = ((pre ++ inputCopies_i) ++ body_i)
+        ++ transfer_i ++ suf
+    rw [show ((pre ++ inputCopies_i) ++ body_i) ++ transfer_i
+        = pre ++ (inputCopies_i ++ body_i ++ transfer_i) by
+      simp [List.append_assoc]]
+    rw [← h_sb_i_eq]
+    exact h_subBlocks_split
+  -- Within inputCopies_i, split at j via flatMap_finRange_split.
+  obtain ⟨pre_j, suf_j, h_inputCopies_split, h_pre_j_len⟩ :=
+    flatMap_finRange_split a
+      (fun j' : Fin a =>
+        URMRaw.preservingTransfer
+          (pcBase i + 9 * j'.val)
+          (2 + j'.val)
+          (gsBase i + ((frag_gs i).inputRegs j').val)
+          tmpReg) j
+  have h_each_pt_len : ∀ j' : Fin a,
+      (URMRaw.preservingTransfer
+        (pcBase i + 9 * j'.val) (2 + j'.val)
+        (gsBase i + ((frag_gs i).inputRegs j').val)
+        tmpReg).length = 9 := fun _ => rfl
+  have h_pre_j_len_eq : pre_j.length = 9 * j.val := by
+    rw [h_pre_j_len]
+    have h_foldr_const :
+        ((List.finRange a).filter
+            (fun n => decide (n.val < j.val))).foldr
+          (fun j' acc => acc +
+            (URMRaw.preservingTransfer
+              (pcBase i + 9 * j'.val) (2 + j'.val)
+              (gsBase i + ((frag_gs i).inputRegs j').val)
+              tmpReg).length) 0
+          = ((List.finRange a).filter
+              (fun n => decide (n.val < j.val))).foldr
+            (fun _ acc => acc + 9) 0 := by
+      induction (List.filter (fun n : Fin a =>
+          decide (n.val < j.val)) (List.finRange a)) with
+      | nil => rfl
+      | cons hd tl ih_inner =>
+        simp only [List.foldr_cons, ih_inner, h_each_pt_len hd]
+    rw [h_foldr_const]
+    -- Filter `(· .val < j.val)` over `List.finRange a` has
+    -- length `j.val` (since j.val < a); foldr of constant +9
+    -- yields 9 * j.val.  Prove both inline.
+    have h_foldr_const_9 : ∀ (l : List (Fin a)),
+        l.foldr (fun _ acc => acc + 9) 0 = 9 * l.length := by
+      intro l
+      induction l with
+      | nil => rfl
+      | cons _ tl ih_inner =>
+        simp only [List.foldr_cons, List.length_cons, ih_inner]
+        omega
+    have h_filter_len :
+        ((List.finRange a).filter
+          (fun n => decide (n.val < j.val))).length = j.val := by
+      -- Generalise: for any `m ≤ a'`, the filter on `finRange a'`
+      -- of the predicate `(· .val < m)` has length `m`.  Induct
+      -- on `a'` with `m` generalised; case-split on `m` after
+      -- peeling the head of `finRange (a''+1)`.
+      suffices h_aux : ∀ (a' m : ℕ) (_ : m ≤ a'),
+          ((List.finRange a').filter
+            (fun n => decide (n.val < m))).length = m by
+        exact h_aux a j.val (Nat.le_of_lt j.isLt)
+      intro a' m hm
+      induction a' generalizing m with
+      | zero =>
+        have : m = 0 := Nat.le_zero.mp hm
+        subst this
+        rfl
+      | succ a'' ih_aux =>
+        rw [List.finRange_succ, List.filter_cons]
+        -- Goal: (if decide ((0 : Fin (a''+1)).val < m) = true
+        --   then 0 :: filter ... else filter ...).length = m.
+        by_cases hm_pos : 0 < m
+        · -- m > 0, write m = m''+1.
+          obtain ⟨m'', rfl⟩ := Nat.exists_eq_succ_of_ne_zero
+            (Nat.pos_iff_ne_zero.mp hm_pos)
+          have hm' : m'' ≤ a'' := Nat.le_of_succ_le_succ hm
+          have h_true : decide ((0 : Fin (a'' + 1)).val < m'' + 1) = true := by
+            change decide (0 < m'' + 1) = true
+            exact decide_eq_true (Nat.succ_pos _)
+          rw [if_pos h_true]
+          rw [List.length_cons, List.filter_map]
+          have h_pred :
+              ((fun n : Fin (a'' + 1) => decide (n.val < m'' + 1)) ∘ Fin.succ)
+                = (fun y : Fin a'' => decide (y.val < m'')) := by
+            funext y
+            change decide (y.val + 1 < m'' + 1) = decide (y.val < m'')
+            by_cases h : y.val < m''
+            · rw [decide_eq_true h, decide_eq_true (Nat.succ_lt_succ h)]
+            · rw [decide_eq_false h,
+                decide_eq_false (by intro hc; exact h (Nat.lt_of_succ_lt_succ hc))]
+          rw [h_pred, List.length_map, ih_aux m'' hm']
+        · -- m = 0.
+          have hm_zero : m = 0 := Nat.le_zero.mp (Nat.not_lt.mp hm_pos)
+          subst hm_zero
+          have h_false : decide ((0 : Fin (a'' + 1)).val < 0) = false :=
+            decide_eq_false (Nat.not_lt_zero _)
+          rw [if_neg (by rw [h_false]; exact Bool.false_ne_true)]
+          rw [List.filter_map]
+          have h_pred :
+              ((fun n : Fin (a'' + 1) => decide (n.val < 0)) ∘ Fin.succ)
+                = fun _ : Fin a'' => false := by
+            funext y
+            change decide (y.val + 1 < 0) = false
+            exact decide_eq_false (Nat.not_lt_zero _)
+          rw [h_pred, List.length_map]
+          -- (filter (fun _ => false) l).length = 0 for any l.
+          have h_empty : ∀ (l : List (Fin a'')),
+              (l.filter (fun _ => false)).length = 0 := by
+            intro l
+            induction l with
+            | nil => rfl
+            | cons _ tl ih_in =>
+              rw [List.filter_cons]
+              simp only [Bool.false_eq_true, ↓reduceIte]
+              exact ih_in
+          exact h_empty _
+    rw [h_foldr_const_9, h_filter_len]
+  -- Length facts for navigation.
+  have h_inputCopies_i_len : inputCopies_i.length = 9 * a := by
+    change ((List.finRange a).flatMap _).length = _
+    rw [List.length_flatMap]
+    rw [List.map_congr_left (fun j' _ => h_each_pt_len j')]
+    rw [show (fun _ : Fin a => 9)
+        = Function.const (Fin a) 9 from rfl,
+      List.map_const, List.sum_replicate_nat,
+      List.length_finRange]
+    exact Nat.mul_comm a 9
+  have h_body_i_len : body_i.length = (frag_gs i).instrs.size - 1 := by
+    change ((frag_gs i).instrs.pop.toList.map _).length = _
+    rw [List.length_map, Array.length_toList, Array.size_pop]
+  have h_pcBase_eq_pcBase_i : pcBase i = pcBase_i := rfl
+  -- Concrete preservingTransfer block at position j inside
+  -- inputCopies_i.
+  let pt_j : List URMInstrRaw :=
+    URMRaw.preservingTransfer
+      (pcBase i + 9 * j.val) (2 + j.val)
+      (gsBase i + ((frag_gs i).inputRegs j).val) tmpReg
+  have h_pt_j_len : pt_j.length = 9 := rfl
+  have h_inputCopies_full :
+      inputCopies_i = pre_j ++ pt_j ++ suf_j := by
+    change (List.finRange a).flatMap _ = _
+    exact h_inputCopies_split
+  -- Outer instrs = toBoundedArray of rawList; bound witness.
+  have hBoundOuter : URMInstrRaw.boundedBy nR rawList := by
+    intro ins hmem
+    have hmem' : ins = (.assignR 0 0 : URMInstrRaw)
+        ∨ ins ∈ subBlocks ++ fBody := List.mem_cons.mp hmem
+    rcases hmem' with hAssign | hmem
+    · rw [hAssign]; simp only [URMInstrRaw.regBound]
+      change 0 + 1 ≤ nR
+      change 0 + 1 ≤ (fBase + frag_f.numRegs) + 1
+      have h_fBase_pos : 0 < fBase := by
+        change 0 < 2 + a + totalGsRegs; omega
+      omega
+    rcases List.mem_append.mp hmem with hSub | hF
+    · rcases List.mem_flatMap.mp hSub with ⟨n, _, hn⟩
+      have hGsBlock : gsBase n + (frag_gs n).numRegs ≤ fBase := by
+        have hmono : gsPrefixSum frag_gs (n.val + 1)
+            ≤ gsPrefixSum frag_gs k :=
+          gsPrefixSum_mono frag_gs n.isLt
+        have hsucc :
+            gsPrefixSum frag_gs (n.val + 1)
+              = gsPrefixSum frag_gs n.val + (frag_gs n).numRegs :=
+          gsPrefixSum_succ_eq frag_gs n
+        change 2 + a + gsPrefixSum frag_gs n.val
+            + (frag_gs n).numRegs ≤ 2 + a + totalGsRegs
+        change _ ≤ gsPrefixSum frag_gs k at hmono
+        omega
+      have hFBlock : fBase + frag_f.numRegs = tmpReg := rfl
+      have hTmp : tmpReg < nR := by change tmpReg < tmpReg + 1; omega
+      exact boundedBy_compileFrag_comp_subBlock frag_f frag_gs
+        (gsBase n) fBase tmpReg nR n (pcBase n)
+        hGsBlock hFBlock hTmp h_a_le_fBase ins hn
+    · rcases List.mem_map.mp hF with ⟨ins', _, heq⟩
+      rw [← heq]
+      have hb : (toRawOfBounded ins').regBound ≤ frag_f.numRegs :=
+        regBound_toRawOfBounded_le ins'
+      have hr := regBound_reindexShift_le_offset_add fBase
+        fPcBase frag_f.numRegs (toRawOfBounded ins') hb
+      change _ ≤ (fBase + frag_f.numRegs) + 1
+      omega
+  have h_outer_instrs :
+      outer.instrs = URMInstrRaw.toBoundedArray nR rawList
+          hBoundOuter := rfl
+  -- rawList length.
+  have h_fBody_len : fBody.length = frag_f.instrs.size := by
+    change (frag_f.instrs.toList.map _).length = _
+    rw [List.length_map, Array.length_toList]
+  have h_raw_len : rawList.length
+      = 1 + subBlocks.length + fBody.length := by
+    change (URMInstrRaw.assignR 0 0 :: (subBlocks ++ fBody)).length
+      = 1 + subBlocks.length + fBody.length
+    rw [List.length_cons, List.length_append]; omega
+  have h_subBlocks_len_eq : subBlocks.length
+      = pre.length + sb_i.length + suf.length := by
+    change ((List.finRange k).flatMap fun n =>
+        compileFrag_comp_subBlock frag_f frag_gs
+          (gsBase n) fBase tmpReg n (pcBase n)).length
+      = _
+    rw [h_subBlocks_split]
+    simp [List.length_append, Nat.add_assoc]
+  have h_sb_i_len : sb_i.length
+      = inputCopies_i.length + body_i.length + transfer_i.length := by
+    rw [h_sb_i_eq]
+    rw [List.length_append, List.length_append]
+  -- Position-in-rawList helper: for d ∈ {0..8}, the rawList
+  -- at PC pcBase_i + 9*j.val + d equals pt_j[d].
+  have h_pcBase_i_pos : 1 ≤ pcBase_i := by
+    change 1 ≤ 1 + _; omega
+  have h_pos_lt_subBlocks : ∀ d : ℕ, d < 9 →
+      pre.length + (pre_j.length + d) < subBlocks.length := by
+    intro d hd
+    rw [h_subBlocks_len_eq, h_sb_i_len, h_inputCopies_i_len,
+      h_body_i_len, h_pre_j_len_eq]
+    have h_jLt' : j.val < a := j.isLt
+    omega
+  -- The instruction lookup at position pre.length + pre_j.length
+  -- + d inside rawList = pt_j[d].
+  have h_lookup_pt :
+      ∀ (d : ℕ) (hd : d < 9),
+      let pos : ℕ := pre.length + (pre_j.length + d)
+      have h_pos_in_sub : pos < subBlocks.length :=
+        h_pos_lt_subBlocks d hd
+      have h_idx_lt : 1 + pos < rawList.length := by
+        rw [h_raw_len]; omega
+      rawList[1 + pos]'h_idx_lt
+        = pt_j[d]'(by rw [h_pt_j_len]; exact hd) := by
+    intro d hd pos h_pos_in_sub h_idx_lt
+    -- Peel the leading assignR 0 0.
+    have h_idx_lt'' : pos < (subBlocks ++ fBody).length := by
+      rw [List.length_append]; omega
+    have h_idx_lt''' :
+        pos + 1 < (URMInstrRaw.assignR 0 0 :: (subBlocks ++ fBody)
+            : List URMInstrRaw).length := by
+      rw [List.length_cons, List.length_append]; omega
+    have h_arith : 1 + pos = pos + 1 := by omega
+    have h_step1 :
+        rawList[1 + pos]'h_idx_lt
+          = (subBlocks ++ fBody)[pos]'h_idx_lt'' := by
+      change ((URMInstrRaw.assignR 0 0 ::
+          (subBlocks ++ fBody) : List URMInstrRaw))[1 + pos]'_
+        = _
+      have h_step1a :
+          ((URMInstrRaw.assignR 0 0 ::
+              (subBlocks ++ fBody) : List URMInstrRaw))[1 + pos]'h_idx_lt
+            = ((URMInstrRaw.assignR 0 0 ::
+              (subBlocks ++ fBody) : List URMInstrRaw))[pos + 1]'h_idx_lt''' := by
+        congr 1
+      rw [h_step1a]
+      exact List.getElem_cons_succ (URMInstrRaw.assignR 0 0)
+        (subBlocks ++ fBody) pos h_idx_lt'''
+    rw [h_step1]
+    -- Step into subBlocks via getElem_append_left.
+    rw [List.getElem_append_left h_pos_in_sub]
+    -- Substitute subBlocks via h_subBlocks_full.
+    have h_pos_lt_full :
+        pos < (pre ++ inputCopies_i ++ body_i ++ transfer_i ++ suf).length := by
+      have := h_subBlocks_full
+      rw [this] at h_pos_in_sub
+      exact h_pos_in_sub
+    have h_step2 :
+        subBlocks[pos]'h_pos_in_sub
+          = (pre ++ inputCopies_i ++ body_i ++ transfer_i ++ suf)[pos]'h_pos_lt_full := by
+      congr 1
+    rw [h_step2]
+    -- Now navigate the append structure.
+    have h_jLt' : j.val < a := j.isLt
+    have h_pos_lt_4 :
+        pos < (pre ++ inputCopies_i ++ body_i ++ transfer_i).length := by
+      rw [List.length_append, List.length_append, List.length_append,
+        h_body_i_len, h_inputCopies_i_len]
+      change pre.length + (pre_j.length + d) < _
+      rw [h_pre_j_len_eq]
+      omega
+    rw [List.getElem_append_left h_pos_lt_4]
+    have h_pos_lt_3 :
+        pos < (pre ++ inputCopies_i ++ body_i).length := by
+      rw [List.length_append, List.length_append,
+        h_body_i_len, h_inputCopies_i_len]
+      change pre.length + (pre_j.length + d) < _
+      rw [h_pre_j_len_eq]
+      omega
+    rw [List.getElem_append_left h_pos_lt_3]
+    have h_pos_lt_2 :
+        pos < (pre ++ inputCopies_i).length := by
+      rw [List.length_append, h_inputCopies_i_len]
+      change pre.length + (pre_j.length + d) < _
+      rw [h_pre_j_len_eq]
+      omega
+    rw [List.getElem_append_left h_pos_lt_2]
+    -- (pre ++ inputCopies_i)[pos] with pos ≥ pre.length.
+    have h_pos_ge_pre : pre.length ≤ pos := by
+      change pre.length ≤ pre.length + (pre_j.length + d); omega
+    rw [List.getElem_append_right h_pos_ge_pre]
+    -- inputCopies_i[pos - pre.length].
+    have h_idx_eq : pos - pre.length = pre_j.length + d := by
+      change pre.length + (pre_j.length + d) - pre.length = _
+      omega
+    have h_pos2_lt :
+        pos - pre.length < inputCopies_i.length := by
+      rw [h_idx_eq, h_inputCopies_i_len, h_pre_j_len_eq]
+      have h_jLt' : j.val < a := j.isLt
+      omega
+    have h_step3 :
+        inputCopies_i[pos - pre.length]'h_pos2_lt
+          = inputCopies_i[pre_j.length + d]'(by
+              rw [h_inputCopies_i_len, h_pre_j_len_eq]
+              have h_jLt' : j.val < a := j.isLt
+              omega) := by
+      congr 1
+    rw [h_step3]
+    -- Substitute inputCopies_i via h_inputCopies_full.
+    have h_pos2_lt_full :
+        pre_j.length + d < (pre_j ++ pt_j ++ suf_j).length := by
+      rw [List.length_append, List.length_append, h_pt_j_len]
+      omega
+    have h_pre_j_plus_d_lt_ic :
+        pre_j.length + d < inputCopies_i.length := by
+      rw [h_inputCopies_i_len, h_pre_j_len_eq]
+      omega
+    have h_step4 :
+        inputCopies_i[pre_j.length + d]'h_pre_j_plus_d_lt_ic
+          = (pre_j ++ pt_j ++ suf_j)[pre_j.length + d]'h_pos2_lt_full := by
+      congr 1
+    rw [h_step4]
+    have h_pos3_lt :
+        pre_j.length + d < (pre_j ++ pt_j).length := by
+      rw [List.length_append, h_pt_j_len]
+      omega
+    rw [List.getElem_append_left h_pos3_lt]
+    have h_pos3_ge : pre_j.length ≤ pre_j.length + d := by omega
+    rw [List.getElem_append_right h_pos3_ge]
+    -- pt_j[pre_j.length + d - pre_j.length] = pt_j[d].
+    have h_d_eq : pre_j.length + d - pre_j.length = d := by omega
+    have h_d_lt : pre_j.length + d - pre_j.length < pt_j.length := by
+      rw [h_d_eq, h_pt_j_len]; exact hd
+    have h_step5 :
+        pt_j[pre_j.length + d - pre_j.length]'h_d_lt
+          = pt_j[d]'(by rw [h_pt_j_len]; exact hd) := by
+      congr 1
+    exact h_step5
+  -- General getElem? equality at pcBase_i + 9*j.val + d.
+  have h_pcBase_j_eq : pcBase_i + 9 * j.val
+      = 1 + (pre.length + pre_j.length) := by
+    rw [h_pre_len_eq, h_pre_j_len_eq]
+    have : 1 ≤ pcBase_i := h_pcBase_i_pos
+    omega
+  -- Membership proof for `pt_j[d] ∈ rawList`, used to feed
+  -- `hBoundOuter` inside `toBoundedArray_getElem?`.
+  have h_pt_d_in_rawList : ∀ (d : ℕ) (hd : d < 9),
+      (pt_j[d]'(by rw [h_pt_j_len]; exact hd)) ∈ rawList := by
+    intro d hd
+    have h_mem_pt :
+        pt_j[d]'(by rw [h_pt_j_len]; exact hd) ∈ pt_j :=
+      List.getElem_mem _
+    have h_mem_ic :
+        pt_j[d]'(by rw [h_pt_j_len]; exact hd) ∈ inputCopies_i := by
+      rw [h_inputCopies_full]
+      exact List.mem_append.mpr
+        (Or.inl (List.mem_append.mpr (Or.inr h_mem_pt)))
+    have h_mem_sb_i :
+        pt_j[d]'(by rw [h_pt_j_len]; exact hd) ∈ sb_i := by
+      rw [h_sb_i_eq]
+      exact List.mem_append.mpr
+        (Or.inl (List.mem_append.mpr (Or.inl h_mem_ic)))
+    have h_mem_subBlocks :
+        pt_j[d]'(by rw [h_pt_j_len]; exact hd) ∈ subBlocks := by
+      change pt_j[d]'_ ∈ (List.finRange k).flatMap _
+      exact List.mem_flatMap.mpr
+        ⟨i, List.mem_finRange _, h_mem_sb_i⟩
+    exact List.mem_cons.mpr
+      (Or.inr (List.mem_append.mpr (Or.inl h_mem_subBlocks)))
+  have h_outerInstr_lookup :
+      ∀ (d : ℕ) (hd : d < 9),
+        outer.instrs[pcBase_i + 9 * j.val + d]?
+          = some (URMInstrRaw.toBounded nR
+              (pt_j[d]'(by rw [h_pt_j_len]; exact hd))
+              (hBoundOuter _ (h_pt_d_in_rawList d hd))) := by
+    intro d hd
+    have h_pos_lt : pre.length + (pre_j.length + d) < subBlocks.length :=
+      h_pos_lt_subBlocks d hd
+    have h_idx_lt : 1 + (pre.length + (pre_j.length + d)) < rawList.length := by
+      rw [h_raw_len]; omega
+    -- pcBase_i + 9*j.val + d = 1 + (pre.length + (pre_j.length + d)).
+    have h_pcs_eq : pcBase_i + 9 * j.val + d
+        = 1 + (pre.length + (pre_j.length + d)) := by
+      rw [h_pcBase_j_eq]; omega
+    have h_idx_lt_outer :
+        pcBase_i + 9 * j.val + d < rawList.length := by
+      rw [h_pcs_eq]; exact h_idx_lt
+    -- Reduce via toBoundedArray_getElem?.
+    change (URMInstrRaw.toBoundedArray nR rawList hBoundOuter)[
+        pcBase_i + 9 * j.val + d]? = _
+    rw [URMInstrRaw.toBoundedArray_getElem? nR rawList hBoundOuter
+        (pcBase_i + 9 * j.val + d) h_idx_lt_outer]
+    -- Show the raw equality.
+    have h_raw_eq :
+        rawList[pcBase_i + 9 * j.val + d]'h_idx_lt_outer
+          = pt_j[d]'(by rw [h_pt_j_len]; exact hd) := by
+      have h_step :
+          rawList[pcBase_i + 9 * j.val + d]'h_idx_lt_outer
+            = rawList[1 + (pre.length + (pre_j.length + d))]'h_idx_lt := by
+        congr 1
+      rw [h_step]
+      exact h_lookup_pt d hd
+    apply congrArg some
+    exact URMInstrRaw.toBounded_congr nR h_raw_eq _ _
+  -- Now build the preservingTransferInstrs witness using the
+  -- nine concrete entries of pt_j.  Each h_inst_d follows by
+  -- specialising h_outerInstr_lookup at d and matching the
+  -- raw entry to the toBounded form expected by the structure.
+  refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+  all_goals (
+    first
+      | exact h_outerInstr_lookup 0 (by decide)
+      | exact h_outerInstr_lookup 1 (by decide)
+      | exact h_outerInstr_lookup 2 (by decide)
+      | exact h_outerInstr_lookup 3 (by decide)
+      | exact h_outerInstr_lookup 4 (by decide)
+      | exact h_outerInstr_lookup 5 (by decide)
+      | exact h_outerInstr_lookup 6 (by decide)
+      | exact h_outerInstr_lookup 7 (by decide)
+      | exact h_outerInstr_lookup 8 (by decide))
+
 /-- Inner loop 1 of `URMRaw.preservingTransfer`: while
 `V_src > 0`, body decrements `V_src` and increments
 `V_dst`, `V_tmp`. After `5 * m + 1` steps starting from
