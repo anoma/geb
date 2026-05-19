@@ -4083,6 +4083,351 @@ private theorem compileER_runFor_sub
   change s4.regs dst = _
   rw [hs4_dst, ERMor1.interp_sub]
 
+/-- Variant of `stateEmbedsFrag_step` for the case where
+the embedded region is the tail of the outer program
+(i.e., `pcOffset + L = P_big.instrs.size`). With this
+condition, even at `s_frag.pc = L` (just past the embedded
+region) the outer's `step` is identity (PC past the array
+end) and so is the fragment's `step` (PC past its array
+end), so the embedding is preserved.
+
+This avoids the strict `s_frag.pc < L` precondition of
+`stateEmbedsFrag_step`, accepting `s_frag.pc ≤ L` instead.
+Used in `compileER_runFor_comp_k_zero` where the f-body
+embedded region is the suffix of the outer program. -/
+private theorem stateEmbedsFrag_step_tail {a b : ℕ}
+    (P_big : URMProgram b) (frag : CompiledFragment a)
+    (regOffset pcOffset L : ℕ)
+    (h_emb_prog :
+      ProgramEmbedsFragment P_big frag regOffset pcOffset L)
+    (h_tail : pcOffset + L = P_big.instrs.size)
+    (h_L_eq : L = frag.instrs.size)
+    (s_big : URMState P_big) (s_frag : URMState frag.toURMProgram)
+    (h_match :
+      StateEmbedsFrag s_big s_frag regOffset pcOffset
+        h_emb_prog.hReg)
+    (h_pc_le : s_frag.pc ≤ L) :
+    StateEmbedsFrag (URMState.step P_big s_big)
+        (URMState.step frag.toURMProgram s_frag)
+        regOffset pcOffset h_emb_prog.hReg := by
+  rcases Nat.lt_or_eq_of_le h_pc_le with h_lt | h_eq
+  · exact stateEmbedsFrag_step P_big frag regOffset pcOffset L
+      h_emb_prog s_big s_frag h_match h_lt
+  · -- s_frag.pc = L; both sides' step are identities (PC past end).
+    obtain ⟨h_pc, h_regs⟩ := h_match
+    have h_frag_step :
+        URMState.step frag.toURMProgram s_frag = s_frag := by
+      simp only [URMState.step]
+      rw [dif_neg]
+      rw [h_eq, h_L_eq]
+      exact Nat.lt_irrefl _
+    have h_big_step : URMState.step P_big s_big = s_big := by
+      simp only [URMState.step]
+      rw [dif_neg]
+      rw [h_pc, h_eq, h_tail]
+      exact Nat.lt_irrefl _
+    rw [h_big_step, h_frag_step]
+    exact ⟨h_pc, h_regs⟩
+
+/-- Multi-step variant of `stateEmbedsFrag_step_tail`,
+matching `stateEmbedsFrag_runFor` but with the
+weaker `pc_le L` precondition (instead of `pc < L`). -/
+private theorem stateEmbedsFrag_runFor_tail {a b : ℕ}
+    (P_big : URMProgram b) (frag : CompiledFragment a)
+    (regOffset pcOffset L : ℕ)
+    (h_emb_prog :
+      ProgramEmbedsFragment P_big frag regOffset pcOffset L)
+    (h_tail : pcOffset + L = P_big.instrs.size)
+    (h_L_eq : L = frag.instrs.size)
+    (h_well : frag.toURMProgram.WellBounded)
+    (s_big : URMState P_big) (s_frag : URMState frag.toURMProgram)
+    (h_match :
+      StateEmbedsFrag s_big s_frag regOffset pcOffset
+        h_emb_prog.hReg)
+    (h_pc_le : s_frag.pc ≤ L) (T : ℕ) :
+    StateEmbedsFrag (URMState.runFor P_big s_big T)
+        (URMState.runFor frag.toURMProgram s_frag T)
+        regOffset pcOffset h_emb_prog.hReg := by
+  induction T generalizing s_big s_frag with
+  | zero => exact h_match
+  | succ T ih =>
+    have h_step := stateEmbedsFrag_step_tail P_big frag regOffset
+      pcOffset L h_emb_prog h_tail h_L_eq s_big s_frag h_match h_pc_le
+    rw [URMState.runFor_succ, URMState.runFor_succ]
+    refine ih (URMState.step P_big s_big)
+      (URMState.step frag.toURMProgram s_frag) h_step ?_
+    -- PC stays ≤ L after one step (by well-boundedness applied
+    -- to frag.toURMProgram, transporting L = frag.instrs.size).
+    rw [h_L_eq]
+    exact URMState.step_pc_le_size frag.toURMProgram s_frag h_well
+      (h_L_eq ▸ h_pc_le)
+
+/-- k=0 special case of `compileER_runFor_comp`: when
+`.comp f gs` has no sub-fragments (`gs = Fin.elim0`),
+the outer program reduces to a leading `assignR 0 0`
+followed by f's body (reindexed and PC-shifted into the
+outer's register space). Running for at least the comp
+runtime produces `f.interp` at the outer output register.
+
+This validates the embedding infrastructure
+(`ProgramEmbedsFragment`, `stateEmbedsFrag_runFor_tail`,
+`ProgramEmbedsFragment_compileFrag_comp_fBody`) and the
+PC-bound lemma on the simplest compositional case; the
+general-k case (separate task) extends the same skeleton
+with per-sub-block prologue analyses. -/
+private theorem compileER_runFor_comp_k_zero {a : ℕ}
+    (f : ERMor1 0)
+    (ih_f : ∀ (v : Fin 0 → ℕ) (t' : ℕ),
+      compileER_runtime f v ≤ t' →
+      (URMState.runFor (compileER f)
+          (URMState.init (compileER f) v) t').regs
+          (compileER f).outputReg
+        = f.interp v)
+    (h_well_f : (compileER f).WellBounded)
+    (v : Fin a → ℕ) (t' : ℕ)
+    (ht' : compileER_runtime (.comp f Fin.elim0 : ERMor1 a) v ≤ t') :
+    (URMState.runFor (compileER (.comp f Fin.elim0))
+        (URMState.init (compileER (.comp f Fin.elim0)) v) t').regs
+        (compileER (.comp f Fin.elim0)).outputReg
+      = (.comp f Fin.elim0 : ERMor1 a).interp v := by
+  -- Abbreviations matching `compileFrag_comp`'s constructor with k=0.
+  -- `compileER (.comp f Fin.elim0)` unfolds to `outerFrag.toURMProgram`
+  -- with `frag_gs := fun i => compileERFrag (Fin.elim0 i)`; we use
+  -- `Fin.elim0` directly via funext over the empty domain.
+  have h_gs_eq : (fun i : Fin 0 => compileERFrag ((Fin.elim0 i : ERMor1 a)))
+      = (Fin.elim0 : Fin 0 → CompiledFragment a) := by
+    funext i; exact i.elim0
+  set frag_f : CompiledFragment 0 := compileERFrag f with hfrag_f
+  set frag_gs : Fin 0 → CompiledFragment a := Fin.elim0 with hfrag_gs
+  set outerFrag : CompiledFragment a :=
+    compileFrag_comp frag_f frag_gs with houterFrag
+  set P : URMProgram a := outerFrag.toURMProgram with hP_def
+  -- Replace the goal's `compileER (f.comp Fin.elim0)` with `P` and the
+  -- comp's `interp` with its unfolded form to align with our abbreviations.
+  change (URMState.runFor P (URMState.init P v) t').regs
+      outerFrag.outputReg = _
+  set s0 : URMState P := URMState.init P v with hs0_def
+  -- Layout (k=0): totalGsRegs = 0, fBase = 2 + a, fPcBase = 1.
+  set fBase : ℕ := 2 + a with hfBase_def
+  -- Outer instrs size = 1 + frag_f.instrs.size.
+  have h_fsize_pos : 0 < frag_f.instrs.size := by
+    have hb := frag_f.lastInstr_isStop
+    rcases Nat.eq_zero_or_pos frag_f.instrs.size with h_eq | h_pos
+    · -- Contradiction from back? = some when size = 0.
+      exfalso
+      rw [Array.back?] at hb
+      have h_none : frag_f.instrs[frag_f.instrs.size - 1]? = none := by
+        apply Array.getElem?_eq_none
+        omega
+      rw [h_none] at hb
+      cases hb
+    · exact h_pos
+  -- Helper: toBoundedArray's size equals the source list's length.
+  have h_toBdArr_size : ∀ (r : ℕ) (l : List URMInstrRaw)
+      (hb : URMInstrRaw.boundedBy r l),
+      (URMInstrRaw.toBoundedArray r l hb).size = l.length := by
+    intro r l hb
+    change ((l.attach.map _).toArray).size = _
+    rw [List.size_toArray, List.length_map, List.length_attach]
+  have h_outer_size : P.instrs.size = 1 + frag_f.instrs.size := by
+    change (compileFrag_comp frag_f frag_gs).instrs.size
+      = 1 + frag_f.instrs.size
+    rw [show (compileFrag_comp frag_f frag_gs).instrs
+        = URMInstrRaw.toBoundedArray _ _ _ from rfl,
+      h_toBdArr_size]
+    -- rawList length = 1 + (subBlocks ++ fBody).length.
+    -- subBlocks = (List.finRange 0).flatMap _ = []; fBody.length = frag_f.instrs.size.
+    change ((URMInstrRaw.assignR 0 0 :: ([] ++ frag_f.instrs.toList.map
+        (fun ins => URMInstrRaw.reindexShift (2 + a + 0) (1 + 0)
+          (toRawOfBounded ins)))) : List URMInstrRaw).length
+      = 1 + frag_f.instrs.size
+    rw [List.length_cons, List.nil_append, List.length_map,
+      Array.length_toList]
+    omega
+  -- Runtime: comp k=0 reduces to compileER_runtime f Fin.elim0 + 2.
+  have h_runtime :
+      compileER_runtime (.comp f Fin.elim0 : ERMor1 a) v
+        = compileER_runtime f Fin.elim0 + 2 := by
+    change (((List.finRange 0).map _).foldl (· + ·) 0
+        + compileER_runtime f _ + 2) = _
+    rw [List.finRange_zero, List.map_nil, List.foldl_nil,
+      Nat.zero_add]
+    -- Replace `inner = fun i => Fin.elim0 i.interp v` with `Fin.elim0`.
+    have h_inner_eq :
+        (fun i : Fin 0 => (Fin.elim0 i : ERMor1 a).interp v)
+          = Fin.elim0 := by
+      funext i; exact i.elim0
+    rw [h_inner_eq]
+  -- Bound on t': t' ≥ 1 + compileER_runtime f Fin.elim0 + 1.
+  -- Split t' = 1 + (compileER_runtime f Fin.elim0 + slack') where
+  -- slack' = t' - 1 - compileER_runtime f Fin.elim0 ≥ 1 (so the IH's
+  -- step count compileER_runtime f Fin.elim0 ≤ runtime f + slack').
+  rw [h_runtime] at ht'
+  obtain ⟨slack, hslack⟩ : ∃ sl,
+      t' = 1 + (compileER_runtime f Fin.elim0 + sl) :=
+    ⟨t' - (1 + compileER_runtime f Fin.elim0), by omega⟩
+  subst hslack
+  -- Split runFor (1 + (T + slack)) = runFor 1 then runFor (T + slack).
+  rw [URMState.runFor_add]
+  -- Step 0: assignR 0 0 at PC 0. Outer's first instruction.
+  have hs0_pc : s0.pc = 0 := rfl
+  have h_pc0_lt : (0 : ℕ) < P.instrs.size := by
+    rw [h_outer_size]; omega
+  -- Outer's instrs[0] = .assign ⟨0, _⟩ 0 (the leading `assignR 0 0`).
+  have h_outer_at_0 : P.instrs[(0 : ℕ)]? =
+      some (URMInstr.assign
+        ⟨0, outerFrag.numRegs_pos⟩ 0) :=
+    rfl
+  -- Compute s1 = step P s0.
+  have h_step0 :
+      URMState.step P s0 =
+        { pc := 1
+          regs := Function.update s0.regs
+            ⟨0, outerFrag.numRegs_pos⟩
+            0 } :=
+    URMState.step_of_getElem?_assign P s0 0
+      ⟨0, outerFrag.numRegs_pos⟩ 0
+      hs0_pc h_outer_at_0
+  set s1 : URMState P :=
+    { pc := 1
+      regs := Function.update s0.regs
+        ⟨0, outerFrag.numRegs_pos⟩ 0 }
+    with hs1_def
+  have h_runFor_1 : URMState.runFor P s0 1 = s1 := by
+    change URMState.runFor P (URMState.step P s0) 0 = _
+    rw [URMState.runFor_zero, h_step0]
+  rw [h_runFor_1]
+  -- Embedding: at PC offset 1, register offset 2 + a, the outer
+  -- program contains the reindex-shifted f-body. Get this via
+  -- `ProgramEmbedsFragment_compileFrag_comp_fBody` specialised at k=0.
+  have h_emb_prog :
+      ProgramEmbedsFragment P frag_f fBase 1 frag_f.instrs.size := by
+    -- The general lemma sets fPcBase = 1 + foldr over List.finRange k.
+    -- For k=0, foldr over [] = 0, so fPcBase = 1.
+    have h := ProgramEmbedsFragment_compileFrag_comp_fBody
+      frag_f frag_gs
+    -- Lemma gives totalGsRegs = gsPrefixSum frag_gs 0 = 0, so
+    -- its fBase is 2 + a + 0 = 2 + a = our fBase.
+    -- Its fPcBase = 1 + foldr [] = 1. Match by `rfl`/conv.
+    change ProgramEmbedsFragment P frag_f (2 + a + 0) (1 + 0)
+      frag_f.instrs.size
+    exact h
+  -- StateEmbedsFrag s1 (init frag_f) fBase 1.
+  set f_init : URMState frag_f.toURMProgram :=
+    URMState.init frag_f.toURMProgram Fin.elim0 with hf_init_def
+  -- f_init's regs are all 0 (no inputs).
+  have hf_init_regs_zero : ∀ (j : ℕ) (hj : j < frag_f.numRegs),
+      f_init.regs ⟨j, hj⟩ = 0 := by
+    intro j hj
+    change (match (List.finRange 0).find?
+        (fun i => decide (frag_f.toURMProgram.inputRegs i = ⟨j, hj⟩)) with
+      | some i => Fin.elim0 i
+      | none   => 0) = 0
+    rw [List.finRange_zero]; rfl
+  -- Outer's inputRegs map slot j to register 2 + j.val.
+  have h_outer_inputRegs : ∀ (j : Fin a),
+      (P.inputRegs j).val = 2 + j.val := fun _ => rfl
+  -- State-embedding at s1.
+  have h_state_emb :
+      StateEmbedsFrag s1 f_init fBase 1 h_emb_prog.hReg := by
+    refine ⟨?_, ?_⟩
+    · -- s1.pc = 1 + f_init.pc; f_init.pc = 0.
+      change (1 : ℕ) = 1 + 0; rfl
+    · intro j hj
+      -- s1.regs ⟨fBase + j, _⟩ = f_init.regs ⟨j, hj⟩ = 0.
+      rw [hf_init_regs_zero j hj]
+      change Function.update s0.regs
+          ⟨0, outerFrag.numRegs_pos⟩ 0
+          ⟨fBase + j, _⟩ = 0
+      have h_ne :
+          (⟨fBase + j, by
+            have : fBase + j < fBase + frag_f.numRegs :=
+              Nat.add_lt_add_left hj _
+            exact Nat.lt_of_lt_of_le this h_emb_prog.hReg⟩
+            : Fin P.numRegs)
+          ≠ ⟨0, outerFrag.numRegs_pos⟩ := by
+        intro he
+        have : fBase + j = 0 := congrArg Fin.val he
+        change 2 + a + j = 0 at this
+        omega
+      rw [Function.update_of_ne h_ne]
+      change (URMState.init P v).regs ⟨fBase + j, _⟩ = 0
+      apply URMState.init_regs_zero_outside_inputs P v h_outer_inputRegs
+      right; right
+      change 2 + a ≤ fBase + j; change 2 + a ≤ 2 + a + j; omega
+  -- The embedded region is the tail of the outer program:
+  -- 1 + frag_f.instrs.size = P.instrs.size.
+  have h_tail : 1 + frag_f.instrs.size = P.instrs.size := by
+    rw [h_outer_size]
+  -- Apply stateEmbedsFrag_runFor_tail for T + slack steps.
+  -- f_init's pc = 0 ≤ frag_f.instrs.size.
+  have h_pc_init_le : f_init.pc ≤ frag_f.instrs.size := by
+    change (0 : ℕ) ≤ frag_f.instrs.size; exact Nat.zero_le _
+  have h_emb_after :
+      StateEmbedsFrag (URMState.runFor P s1
+          (compileER_runtime f Fin.elim0 + slack))
+        (URMState.runFor frag_f.toURMProgram f_init
+          (compileER_runtime f Fin.elim0 + slack))
+        fBase 1 h_emb_prog.hReg :=
+    stateEmbedsFrag_runFor_tail P frag_f fBase 1 frag_f.instrs.size
+      h_emb_prog h_tail rfl h_well_f s1 f_init h_state_emb
+      h_pc_init_le (compileER_runtime f Fin.elim0 + slack)
+  -- Read off the outer's output register.
+  -- outerFrag.outputReg = ⟨fBase + frag_f.outputReg.val, _⟩ (by defn).
+  -- s_outer.regs outerFrag.outputReg = s_frag.regs frag_f.outputReg
+  -- (= f.interp Fin.elim0 by IH).
+  obtain ⟨_, h_regs_after⟩ := h_emb_after
+  have h_out_val :
+      (URMState.runFor P s1
+          (compileER_runtime f Fin.elim0 + slack)).regs
+        outerFrag.outputReg
+      = (URMState.runFor frag_f.toURMProgram f_init
+          (compileER_runtime f Fin.elim0 + slack)).regs
+        frag_f.outputReg := by
+    -- outerFrag.outputReg.val = fBase + frag_f.outputReg.val.
+    have h_outIdx :
+        outerFrag.outputReg
+          = (⟨fBase + frag_f.outputReg.val, by
+              have : fBase + frag_f.outputReg.val
+                  < fBase + frag_f.numRegs :=
+                Nat.add_lt_add_left frag_f.outputReg.isLt _
+              exact Nat.lt_of_lt_of_le this h_emb_prog.hReg⟩
+            : Fin P.numRegs) := by
+      apply Fin.ext; rfl
+    rw [h_outIdx]
+    have hj : frag_f.outputReg.val < frag_f.numRegs :=
+      frag_f.outputReg.isLt
+    have h_eq := h_regs_after frag_f.outputReg.val hj
+    -- Convert frag_f.outputReg.val with isLt to frag_f.outputReg.
+    have h_frag_idx :
+        (⟨frag_f.outputReg.val, hj⟩ : Fin frag_f.numRegs)
+          = frag_f.outputReg := Fin.ext rfl
+    rw [h_frag_idx] at h_eq
+    exact h_eq
+  -- Apply the IH: frag_f's output register holds `f.interp Fin.elim0`
+  -- after `compileER_runtime f Fin.elim0 + slack` steps (which is ≥
+  -- the standalone runtime). `frag_f.toURMProgram = compileER f` and
+  -- `f_init = URMState.init (compileER f) Fin.elim0`.
+  have h_ih := ih_f Fin.elim0
+    (compileER_runtime f Fin.elim0 + slack) (by omega)
+  -- Connect h_ih to h_out_val.
+  change (URMState.runFor P s1 _).regs outerFrag.outputReg
+    = _
+  rw [h_out_val]
+  -- h_ih: (URMState.init (compileER f) Fin.elim0).runFor t).regs
+  --       (compileER f).outputReg = f.interp Fin.elim0.
+  -- frag_f.toURMProgram = compileER f (defn of compileER).
+  -- f_init = URMState.init frag_f.toURMProgram Fin.elim0.
+  -- Convert outer's interp to f.interp Fin.elim0.
+  have h_interp_eq :
+      (.comp f Fin.elim0 : ERMor1 a).interp v = f.interp Fin.elim0 := by
+    change f.interp (fun i => (Fin.elim0 i : ERMor1 a).interp v)
+      = f.interp Fin.elim0
+    congr 1
+    funext i; exact i.elim0
+  rw [h_interp_eq]
+  exact h_ih
+
 end LawvereERKSim
 
 end GebLean
