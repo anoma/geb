@@ -163,10 +163,24 @@ constructively). Build clean. Axiom hygiene clean
 - **11e.6.a.iii-comp.2.inv-prereq**:
   `compileFrag_comp_pcOf_succ` (constructive,
   Classical-free). Commit `e66f7681`.
+- **f_body_zero clause correction**: weaken
+  `compileFrag_comp_partial_invariant.f_body_zero` from
+  "all of f's body is 0" to "f's body off filled inputs is
+  0" (the original was self-contradictory once
+  `f_input_slots` activates at `m ≥ 1`). Base case proof
+  retains its content via a vacuous added hypothesis.
+  Commit `3ddd7280`.
+- **11e.6.a.iii-comp.2.inv-phase_i1**:
+  `compileFrag_comp_phase_i1_post` (10-clause post-state)
+  and `compileFrag_comp_subBlocks_partial_phase_i1`
+  preservation lemma. Instantiates
+  `compileFrag_comp_subBlock_inputCopies_correct` with
+  outer-input registers as srcs and gs m's reindexed
+  inputs as dsts. Commit `7c8dfb56`.
 
 ### Cumulative session output
 
-Approximately 44 commits, ~12000 LOC of correctness
+Approximately 46 commits, ~12700 LOC of correctness
 proof + infrastructure. All build clean. Axiom hygiene
 clean (`[propext, Quot.sound]` only on every
 declaration; `scripts/check-axioms.sh` passes).
@@ -176,10 +190,18 @@ declaration; `scripts/check-axioms.sh` passes).
 ### Task 11e.6.a.iii — compositional pre-stop correctness
 
 - **11e.6.a.iii-comp.2.inv**: three preserves-under-phase
-  lemmas
-  (`compileFrag_comp_subBlocks_partial_phase_i1`, `_i2`,
-  `_i3`). ~250 LOC each. The `pcOf_succ` foundation is
-  in place.
+  lemmas. The first (`_phase_i1`) is now landed (commit
+  `7c8dfb56`, ~750 LOC including the post-state structure).
+  The remaining two:
+  - `_phase_i2`: takes `phase_i1_post @ m` plus the
+    structural IH `ih_gs_i` for `gs m`; produces
+    `∃ T0, T0 ≤ compileER_runtime (gs m) v ∧
+    phase_i2_post @ m (runFor s T0) ∧ <pc strict bound>`.
+    Wraps `compileFrag_comp_subBlock_gsBody_correct`.
+  - `_phase_i3`: takes `phase_i2_post @ m`; produces
+    `partial_invariant @ (m + 1)` after 4*(gs m).interp v + 1
+    steps. Wraps
+    `compileFrag_comp_subBlock_outputTransfer_correct`.
 - **11e.6.a.iii-comp.2.ind**: induction-glue lemma
   composing the three phase preservations across
   `m → m + 1`. ~150-200 LOC.
@@ -270,25 +292,52 @@ T2 implementation.
    is the formalization tax on his "essentially concatenate
    M_g and M_f" type sentences.
 
+8. **`set` re-elaborates function parameter types**. When
+   a `set X := Y` would change the displayed type of an
+   existing parameter (because `Y` appears in that
+   parameter's type), Lean creates a fresh copy of the
+   parameter under the original name and renames the old
+   one to `name✝`. This silently breaks subsequent
+   `exact`/`show` against destructured hypotheses, since
+   they reference the old, now-renamed parameter. For
+   phase-preservation lemmas, use `let` (no auto-fold) for
+   the abbreviations whose RHS appears in the input state's
+   type. The cost is omega's loss of syntactic identity
+   across `frag_gs i` vs `compileERFrag (gs i)`; restore
+   it with explicit `have h_eq : ... = ... := rfl` bridges
+   before each `omega` call.
+
+9. **Field-projection over destructure for partial
+   invariants**. `obtain ⟨..⟩ := h_inv` introduces fresh
+   bindings that can carry stale parameter-shadow names
+   into hypothesis types; `h_inv.fieldName` evaluates
+   per-projection and produces types matching the current
+   parameter binding.
+
 ## Resumption recipe
 
-1. Check `jj log -r '0914f03b..@-'` — confirm 44 commits
-   from `5c16a133` (T1 refactor) through `e66f7681`
-   (pcOf_succ).
+1. Check `jj log -r '0914f03b..@-'` — confirm 46 commits
+   from `5c16a133` (T1 refactor) through `7c8dfb56`
+   (phase i.1 preservation).
 
 2. `lake build GebLean.LawvereERKSim` — should be clean.
 
-3. Dispatch `compileFrag_comp_subBlocks_partial_phase_i1`
-   (Phase i.1 preservation) — first of three preserves
-   lemmas. Implementer-template: build the
-   pre-state-to-post-state argument using
-   `compileFrag_comp_subBlock_inputCopies_correct`
-   (existing helper) with the `preservingTransferInstrs`
-   discharged by `PreservingTransferInstrs_compileFrag_comp_inputCopies`
-   (existing helper). Repackage the 8 invariant clauses.
+3. Phase i.1 lemma is now landed. Dispatch
+   `compileFrag_comp_subBlocks_partial_phase_i2` next.
+   Implementer-template: define
+   `compileFrag_comp_phase_i2_post` (drop `gs_m_inputs`
+   and `gs_m_other_zero` from `phase_i1_post`, add
+   `gs_m_output` for `(gs m).interp v` at the output reg,
+   keep everything else). Take the structural IH
+   `ih_gs_i` (about `compileER (gs m)`); wrap
+   `compileFrag_comp_subBlock_gsBody_correct`. The
+   conclusion is existential in `T0 ≤ compileER_runtime
+   (gs m) v`, with a PC strict bound up to
+   `pcOf m + 9*a + (frag_gs m).instrs.size - 1`.
 
-4. Then Phase i.3, then Phase i.2 (most complex due to
-   embedding + outside-preserved), then comp.2.ind glue.
+4. Then Phase i.3 (wrap
+   `compileFrag_comp_subBlock_outputTransfer_correct`),
+   then comp.2.ind glue.
 
 5. Then comp.3 (final pre-stop), then comp.k>0 case of
    `compileER_runFor_comp` (≈ 11e.7).
