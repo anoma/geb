@@ -814,7 +814,7 @@ def compileFrag_comp {k a : ℕ}
 slot `s : Fin (k + 1)`. Slot 0 receives the iteration
 index `V_i` (located at register `k + 4`); slots `1..k`
 receive the outer parameter at register `s.val + 2`. -/
-private def bsum_prologueSrc (k : ℕ) (s : Fin (k + 1)) : ℕ :=
+def bsum_prologueSrc (k : ℕ) (s : Fin (k + 1)) : ℕ :=
   if s.val = 0 then k + 4 else s.val + 2
 
 /-- Per-slot block of the `compileFrag_bsum` per-iteration
@@ -829,7 +829,7 @@ flushes any internal scratches that nested combinators
 inside `frag_f` may have left in f's register block.
 Emitted at PC offset `prologueBase + 9 * s.val`; emits
 exactly 9 raw instructions. -/
-private def bsum_prologueBlock {k : ℕ}
+def bsum_prologueBlock {k : ℕ}
     (frag_f : CompiledFragment (k + 1))
     (fBase tmp1 prologueBase : ℕ) (s : Fin (k + 1)) :
     List URMInstrRaw :=
@@ -844,7 +844,7 @@ emitted raw instruction has register bound at most `nR`,
 given arithmetic facts placing `bsum_prologueSrc k s`,
 `fBase + (frag_f.inputRegs s).val`, and `tmp1` inside
 `nR`. -/
-private theorem boundedBy_bsum_prologueBlock {k : ℕ}
+theorem boundedBy_bsum_prologueBlock {k : ℕ}
     (frag_f : CompiledFragment (k + 1))
     (fBase tmp1 prologueBase nR : ℕ) (s : Fin (k + 1))
     (hSrc : bsum_prologueSrc k s + 1 ≤ nR)
@@ -873,7 +873,7 @@ def bsum_zeroSweep {k : ℕ}
 /-- Boundedness lemma for `bsum_zeroSweep`: every emitted
 instruction targets a register inside `nR`, given
 `fBase + frag_f.numRegs ≤ nR`. -/
-private theorem boundedBy_bsum_zeroSweep {k : ℕ}
+theorem boundedBy_bsum_zeroSweep {k : ℕ}
     (frag_f : CompiledFragment (k + 1)) (fBase nR : ℕ)
     (hBlock : fBase + frag_f.numRegs ≤ nR) :
     URMInstrRaw.boundedBy nR (bsum_zeroSweep frag_f fBase) := by

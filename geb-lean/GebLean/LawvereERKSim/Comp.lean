@@ -102,7 +102,7 @@ program's instructions are the `reindexShift`-mapped
 raw form of `frag_f.instrs`. The values of `fBase` and
 `fPcBase` are those used by the constructor of
 `compileFrag_comp` (see `def compileFrag_comp`). -/
-private theorem ProgramEmbedsFragment_compileFrag_comp_fBody
+theorem ProgramEmbedsFragment_compileFrag_comp_fBody
     {k a : ℕ}
     (frag_f : CompiledFragment k)
     (frag_gs : Fin k → CompiledFragment a) :

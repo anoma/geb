@@ -41,6 +41,14 @@ absolute PCs at which each segment begins and ends.
   of `transferLoop_correct` and `transferLoop_correct_pc_strict_bound`
   from `Loops.lean` (the bsum per-iteration accumulator-update block
   is a `transferLoop` from f's output register into the accumulator).
+- `ProgramEmbedsFragment_compileFrag_bsum_fBody`: f-body embedding
+  witness; at PCs `bsum_bodyPCBase frag_f ..
+  bsum_bodyPCBase frag_f + (frag_f.instrs.size - 1)`, the outer
+  program's instructions are the `reindexShift`-mapped raw form of
+  `frag_f.instrs.pop`. Mirrors
+  `ProgramEmbedsFragment_compileFrag_comp_gsBody` in `Comp.lean`,
+  reflecting that the bsum f-body excludes `frag_f`'s trailing stop
+  instruction (dropped via `.pop` when emitting the body).
 
 ## References
 
@@ -365,6 +373,414 @@ private theorem compileFrag_bsum_accUpdate_pc_strict_bound
     (URMState.runFor P s k).pc ≤ pcBase + 3 :=
   transferLoop_correct_pc_strict_bound P pcBase src dst zReg
     h_disj_sd h_disj_zs h_disj_zd H s h_pc h_z vSrc h_src k h_k
+
+/-- For `compileFrag_bsum`'s f-body embedding: at PCs
+`bsum_bodyPCBase frag_f .. bsum_bodyPCBase frag_f
++ (frag_f.instrs.size - 1)`, the outer program's instructions are
+the `reindexShift`-mapped raw form of `frag_f.instrs.pop`. The
+values of `fBase = k + 7` and `bsum_bodyPCBase frag_f
+= 15 + frag_f.numRegs + 9 * (k + 1)` are those used by the
+constructor of `compileFrag_bsum`; the embedded length excludes
+`frag_f`'s trailing stop instruction (dropped via `.pop` when
+emitting the f-body). -/
+private theorem ProgramEmbedsFragment_compileFrag_bsum_fBody
+    {k : ℕ}
+    (frag_f : CompiledFragment (k + 1)) :
+    ProgramEmbedsFragment
+      (compileFrag_bsum frag_f).toURMProgram
+      frag_f
+      (k + 7)
+      (15 + frag_f.numRegs + 9 * (k + 1))
+      (frag_f.instrs.size - 1) := by
+  -- Abbreviations matching the constructor of compileFrag_bsum.
+  let vAcc : ℕ := 1
+  let vBoundIn : ℕ := 2
+  let vX : ℕ := k + 3
+  let vI : ℕ := k + 4
+  let tmp1 : ℕ := k + 5
+  let tmp2 : ℕ := k + 6
+  let fBase : ℕ := k + 7
+  let nR : ℕ := fBase + frag_f.numRegs
+  let topPC : ℕ := 13
+  let bodyStartPC : ℕ := 14
+  let prologueBase : ℕ := 15 + frag_f.numRegs
+  let bodyPCBase : ℕ := 15 + frag_f.numRegs + 9 * (k + 1)
+  let fBodyLen : ℕ := frag_f.instrs.size - 1
+  let trBase : ℕ := bodyPCBase + fBodyLen
+  let exitPC : ℕ := trBase + 6
+  let prelude : List URMInstrRaw :=
+    [ .assignR 0 0,
+      .assignR vAcc 0,
+      .assignR vX 0,
+      .assignR vI 0 ]
+        ++ URMRaw.preservingTransfer 4 vBoundIn vX tmp2
+  let loopTop : List URMInstrRaw :=
+    [ .jumpZR vX exitPC bodyStartPC,
+      .decR vX ]
+  let zeroSweep : List URMInstrRaw :=
+    bsum_zeroSweep frag_f fBase
+  let prologue : List URMInstrRaw :=
+    (List.finRange (k + 1)).flatMap fun s =>
+      bsum_prologueBlock frag_f fBase tmp1 prologueBase s
+  let fBody : List URMInstrRaw :=
+    frag_f.instrs.pop.toList.map fun ins =>
+      URMInstrRaw.reindexShift fBase bodyPCBase (toRawOfBounded ins)
+  let accUpdate : List URMInstrRaw :=
+    URMRaw.transferLoop trBase
+      (fBase + frag_f.outputReg.val) vAcc
+  let epilogue : List URMInstrRaw :=
+    [ .incR vI, URMRaw.goto topPC, .stopR ]
+  let rawList : List URMInstrRaw :=
+    prelude ++ loopTop ++ zeroSweep ++ prologue ++ fBody
+      ++ accUpdate ++ epilogue
+  -- Segment lengths.
+  have h_prelude_len : prelude.length = 13 := by
+    change ([URMInstrRaw.assignR 0 0, URMInstrRaw.assignR vAcc 0,
+        URMInstrRaw.assignR vX 0, URMInstrRaw.assignR vI 0]
+        ++ URMRaw.preservingTransfer 4 vBoundIn vX tmp2).length = 13
+    simp only [List.length_append, List.length_cons, List.length_nil,
+      URMRaw.preservingTransfer, URMRaw.goto]
+  have h_loopTop_len : loopTop.length = 2 := by
+    change ([URMInstrRaw.jumpZR vX exitPC bodyStartPC,
+      URMInstrRaw.decR vX] : List URMInstrRaw).length = 2
+    simp only [List.length_cons, List.length_nil]
+  have h_zeroSweep_len : zeroSweep.length = frag_f.numRegs := by
+    change ((List.finRange frag_f.numRegs).map _).length = _
+    rw [List.length_map, List.length_finRange]
+  have h_prologueBlock_len : ∀ s : Fin (k + 1),
+      (bsum_prologueBlock frag_f fBase tmp1 prologueBase s).length
+        = 9 := by
+    intro _
+    simp only [bsum_prologueBlock, URMRaw.preservingTransfer,
+      URMRaw.goto, List.length_cons, List.length_nil]
+  have h_prologue_len : prologue.length = 9 * (k + 1) := by
+    change ((List.finRange (k + 1)).flatMap _).length = _
+    rw [List.length_flatMap, List.map_congr_left
+      (fun s _ => h_prologueBlock_len s)]
+    rw [List.map_const', List.length_finRange,
+      List.sum_replicate_nat, Nat.mul_comm]
+  have h_fBody_len : fBody.length = frag_f.instrs.size - 1 := by
+    change (frag_f.instrs.pop.toList.map _).length = _
+    rw [List.length_map, Array.length_toList, Array.size_pop]
+  have h_accUpdate_len : accUpdate.length = 4 := by
+    simp only [accUpdate, URMRaw.transferLoop, URMRaw.goto,
+      List.length_cons, List.length_nil]
+  have h_epilogue_len : epilogue.length = 3 := by
+    simp only [epilogue, URMRaw.goto, List.length_cons,
+      List.length_nil]
+  -- Total length of rawList.
+  have h_raw_len : rawList.length
+      = prelude.length + loopTop.length + zeroSweep.length
+        + prologue.length + fBody.length + accUpdate.length
+        + epilogue.length := by
+    change (prelude ++ loopTop ++ zeroSweep ++ prologue ++ fBody
+      ++ accUpdate ++ epilogue).length = _
+    simp only [List.length_append]
+  -- Offset to f-body start.
+  have h_offset_eq : prelude.length + loopTop.length
+      + zeroSweep.length + prologue.length = bodyPCBase := by
+    rw [h_prelude_len, h_loopTop_len, h_zeroSweep_len, h_prologue_len]
+  -- outer.numRegs = nR (definitional).
+  let outer : URMProgram (k + 1) := (compileFrag_bsum frag_f).toURMProgram
+  have hReg : fBase + frag_f.numRegs ≤ outer.numRegs := by
+    change fBase + frag_f.numRegs ≤ nR
+    change fBase + frag_f.numRegs ≤ fBase + frag_f.numRegs
+    omega
+  have hL : frag_f.instrs.size - 1 ≤ frag_f.instrs.size := Nat.sub_le _ _
+  refine ⟨hL, hReg, ?_⟩
+  intro i hi
+  have hi' : i < frag_f.instrs.size :=
+    Nat.lt_of_lt_of_le hi hL
+  -- The boundedness witness used by compileFrag_bsum.
+  -- We extract it via outer.instrs = toBoundedArray nR rawList hBound;
+  -- since the let-bindings are definitional, both sides are the same
+  -- array up to proof-irrelevance of the boundedness witness.
+  have hBoundOuter : URMInstrRaw.boundedBy nR rawList := by
+    -- We need a boundedness witness for our locally-named rawList.
+    -- It exists by the same construction as inside compileFrag_bsum.
+    -- Reconstruct via the per-segment boundedness facts.
+    have hAcc : vAcc + 1 ≤ nR := by
+      change vAcc + 1 ≤ fBase + frag_f.numRegs
+      have : 0 < frag_f.numRegs := frag_f.numRegs_pos
+      change 1 + 1 ≤ k + 7 + frag_f.numRegs
+      omega
+    have hBoundIn : vBoundIn + 1 ≤ nR := by
+      change 2 + 1 ≤ k + 7 + frag_f.numRegs
+      have : 0 < frag_f.numRegs := frag_f.numRegs_pos
+      omega
+    have hVX : vX + 1 ≤ nR := by
+      change k + 3 + 1 ≤ k + 7 + frag_f.numRegs
+      have : 0 < frag_f.numRegs := frag_f.numRegs_pos
+      omega
+    have hVI : vI + 1 ≤ nR := by
+      change k + 4 + 1 ≤ k + 7 + frag_f.numRegs
+      have : 0 < frag_f.numRegs := frag_f.numRegs_pos
+      omega
+    have hTmp1 : tmp1 + 1 ≤ nR := by
+      change k + 5 + 1 ≤ k + 7 + frag_f.numRegs
+      have : 0 < frag_f.numRegs := frag_f.numRegs_pos
+      omega
+    have hTmp2 : tmp2 + 1 ≤ nR := by
+      change k + 6 + 1 ≤ k + 7 + frag_f.numRegs
+      have : 0 < frag_f.numRegs := frag_f.numRegs_pos
+      omega
+    have hFOut : fBase + frag_f.outputReg.val + 1 ≤ nR := by
+      have : frag_f.outputReg.val < frag_f.numRegs :=
+        frag_f.outputReg.isLt
+      change fBase + frag_f.outputReg.val + 1 ≤ fBase + frag_f.numRegs
+      omega
+    have hPrologueSrc : ∀ s : Fin (k + 1),
+        bsum_prologueSrc k s + 1 ≤ nR := by
+      intro s
+      have hs : s.val < k + 1 := s.isLt
+      simp only [bsum_prologueSrc, nR, fBase]
+      split <;> omega
+    have hFIn : ∀ s : Fin (k + 1),
+        fBase + (frag_f.inputRegs s).val + 1 ≤ nR := by
+      intro s
+      have : (frag_f.inputRegs s).val < frag_f.numRegs :=
+        (frag_f.inputRegs s).isLt
+      change fBase + (frag_f.inputRegs s).val + 1
+          ≤ fBase + frag_f.numRegs
+      omega
+    have hPreludeBound : URMInstrRaw.boundedBy nR prelude := by
+      intro ins hmem
+      simp only [prelude, List.mem_append, List.mem_cons,
+        List.not_mem_nil, or_false] at hmem
+      rcases hmem with (h | h | h | h) | hpT
+      · rw [h]; simp only [URMInstrRaw.regBound]; omega
+      · rw [h]; simp only [URMInstrRaw.regBound]; exact hAcc
+      · rw [h]; simp only [URMInstrRaw.regBound]; exact hVX
+      · rw [h]; simp only [URMInstrRaw.regBound]; exact hVI
+      · exact boundedBy_preservingTransfer nR _ _ _ _
+          hBoundIn hVX hTmp2 ins hpT
+    have hLoopTopBound : URMInstrRaw.boundedBy nR loopTop := by
+      intro ins hmem
+      simp only [loopTop, List.mem_cons, List.not_mem_nil,
+        or_false] at hmem
+      rcases hmem with h | h <;>
+        (rw [h]; simp only [URMInstrRaw.regBound]; exact hVX)
+    have hZeroSweepBound : URMInstrRaw.boundedBy nR zeroSweep := by
+      have hBlock : fBase + frag_f.numRegs ≤ nR := Nat.le_refl _
+      exact boundedBy_bsum_zeroSweep frag_f fBase nR hBlock
+    have hPrologueBound : URMInstrRaw.boundedBy nR prologue := by
+      intro ins hmem
+      simp only [prologue, List.mem_flatMap] at hmem
+      rcases hmem with ⟨s, _, hs⟩
+      exact boundedBy_bsum_prologueBlock frag_f fBase tmp1
+        prologueBase nR s (hPrologueSrc s) (hFIn s) hTmp1 ins hs
+    have hFBodyBound : URMInstrRaw.boundedBy nR fBody := by
+      intro ins hmem
+      simp only [fBody, List.mem_map] at hmem
+      rcases hmem with ⟨ins', _, heq⟩
+      rw [← heq]
+      have hb : (toRawOfBounded ins').regBound ≤ frag_f.numRegs :=
+        regBound_toRawOfBounded_le ins'
+      have hr := regBound_reindexShift_le_offset_add fBase
+        bodyPCBase frag_f.numRegs (toRawOfBounded ins') hb
+      change _ ≤ fBase + frag_f.numRegs
+      omega
+    have hAccUpdateBound : URMInstrRaw.boundedBy nR accUpdate :=
+      boundedBy_transferLoop nR _ _ _ hFOut hAcc
+    have hEpilogueBound : URMInstrRaw.boundedBy nR epilogue := by
+      intro ins hmem
+      simp only [epilogue, URMRaw.goto, List.mem_cons,
+        List.not_mem_nil, or_false] at hmem
+      rcases hmem with h | h | h
+      · rw [h]; simp only [URMInstrRaw.regBound]; exact hVI
+      · rw [h]; simp only [URMInstrRaw.regBound]; omega
+      · rw [h]; simp only [URMInstrRaw.regBound]; omega
+    intro ins hmem
+    simp only [rawList, List.mem_append] at hmem
+    rcases hmem with
+      (((((hP | hL') | hZ) | hPr) | hF) | hA) | hE
+    · exact hPreludeBound ins hP
+    · exact hLoopTopBound ins hL'
+    · exact hZeroSweepBound ins hZ
+    · exact hPrologueBound ins hPr
+    · exact hFBodyBound ins hF
+    · exact hAccUpdateBound ins hA
+    · exact hEpilogueBound ins hE
+  -- outer.instrs is definitionally toBoundedArray nR rawList hBoundOuter.
+  -- Index of bodyPCBase + i in rawList.
+  have h_idx_lt : bodyPCBase + i < rawList.length := by
+    rw [h_raw_len, h_prelude_len, h_loopTop_len, h_zeroSweep_len,
+      h_prologue_len, h_fBody_len, h_accUpdate_len, h_epilogue_len]
+    change 15 + frag_f.numRegs + 9 * (k + 1) + i
+      < 13 + 2 + frag_f.numRegs + 9 * (k + 1)
+        + (frag_f.instrs.size - 1) + 4 + 3
+    omega
+  -- Reduce outer.instrs[bodyPCBase + i]? to toBoundedArray's lookup.
+  change (URMInstrRaw.toBoundedArray nR rawList hBoundOuter)[
+      bodyPCBase + i]?
+    = some (URMInstrRaw.toBounded nR
+        (URMInstrRaw.reindexShift fBase bodyPCBase
+          (toRawOfBounded (frag_f.instrs[i]'hi'))) _)
+  rw [URMInstrRaw.toBoundedArray_getElem? nR rawList hBoundOuter
+      (bodyPCBase + i) h_idx_lt]
+  -- Establish the raw equality:
+  --   rawList[bodyPCBase + i] = reindexShift fBase bodyPCBase
+  --     (toRawOfBounded frag_f.instrs[i]).
+  have h_raw_eq :
+      rawList[bodyPCBase + i]'h_idx_lt
+        = URMInstrRaw.reindexShift fBase bodyPCBase
+          (toRawOfBounded (frag_f.instrs[i]'hi')) := by
+    -- Step 1: rewrite the index in the form
+    --   (prelude.length + loopTop.length + zeroSweep.length
+    --     + prologue.length) + i, so the segment skip is via
+    --   `getElem_append_right` four times.
+    -- rawList = ((((((prelude ++ loopTop) ++ zeroSweep) ++ prologue)
+    --   ++ fBody) ++ accUpdate) ++ epilogue).
+    -- For the first append peel:
+    --   prefix length = prelude.length + loopTop.length
+    --     + zeroSweep.length + prologue.length + fBody.length
+    --     + accUpdate.length;
+    --   our index bodyPCBase + i < that prefix length.
+    have h_in_prefix6 :
+        bodyPCBase + i
+          < ((((((prelude ++ loopTop) ++ zeroSweep) ++ prologue)
+              ++ fBody) ++ accUpdate)).length := by
+      simp only [List.length_append]
+      rw [h_prelude_len, h_loopTop_len, h_zeroSweep_len,
+        h_prologue_len, h_fBody_len, h_accUpdate_len]
+      change 15 + frag_f.numRegs + 9 * (k + 1) + i
+        < 13 + 2 + frag_f.numRegs + 9 * (k + 1)
+          + (frag_f.instrs.size - 1) + 4
+      omega
+    have h_in_prefix5 :
+        bodyPCBase + i
+          < (((((prelude ++ loopTop) ++ zeroSweep) ++ prologue)
+              ++ fBody)).length := by
+      simp only [List.length_append]
+      rw [h_prelude_len, h_loopTop_len, h_zeroSweep_len,
+        h_prologue_len, h_fBody_len]
+      change 15 + frag_f.numRegs + 9 * (k + 1) + i
+        < 13 + 2 + frag_f.numRegs + 9 * (k + 1)
+          + (frag_f.instrs.size - 1)
+      omega
+    -- Peel epilogue.
+    have h_step1 :
+        rawList[bodyPCBase + i]'h_idx_lt
+          = ((((((prelude ++ loopTop) ++ zeroSweep) ++ prologue)
+                ++ fBody) ++ accUpdate))[bodyPCBase + i]'h_in_prefix6 := by
+      change (((((((prelude ++ loopTop) ++ zeroSweep) ++ prologue)
+            ++ fBody) ++ accUpdate) ++ epilogue))[bodyPCBase + i]'h_idx_lt
+        = _
+      rw [List.getElem_append_left h_in_prefix6]
+    rw [h_step1]
+    -- Peel accUpdate.
+    have h_step2 :
+        ((((((prelude ++ loopTop) ++ zeroSweep) ++ prologue)
+              ++ fBody) ++ accUpdate))[bodyPCBase + i]'h_in_prefix6
+          = (((((prelude ++ loopTop) ++ zeroSweep) ++ prologue)
+                ++ fBody))[bodyPCBase + i]'h_in_prefix5 := by
+      rw [List.getElem_append_left h_in_prefix5]
+    rw [h_step2]
+    -- Peel fBody: index ≥ (prelude++loopTop++zeroSweep++prologue).length.
+    have h_pref4_le :
+        ((((prelude ++ loopTop) ++ zeroSweep) ++ prologue)).length
+          ≤ bodyPCBase + i := by
+      simp only [List.length_append]
+      rw [h_prelude_len, h_loopTop_len, h_zeroSweep_len,
+        h_prologue_len]
+      change 13 + 2 + frag_f.numRegs + 9 * (k + 1)
+        ≤ 15 + frag_f.numRegs + 9 * (k + 1) + i
+      omega
+    -- The "prefix4" is prelude++loopTop++zeroSweep++prologue;
+    -- its length equals bodyPCBase via h_offset_eq, so the index
+    -- inside fBody simplifies to i.
+    set prefix4 : List URMInstrRaw :=
+      prelude ++ loopTop ++ zeroSweep ++ prologue with h_prefix4_def
+    have h_prefix4_len : prefix4.length = bodyPCBase := by
+      change (prelude ++ loopTop ++ zeroSweep ++ prologue).length
+        = bodyPCBase
+      simp only [List.length_append]
+      exact h_offset_eq
+    have h_pref4_le' : prefix4.length ≤ bodyPCBase + i := by
+      rw [h_prefix4_len]; omega
+    have h_idx_in_fBody :
+        bodyPCBase + i - prefix4.length < fBody.length := by
+      rw [h_prefix4_len, h_fBody_len]
+      have h_sub : bodyPCBase + i - bodyPCBase = i := by omega
+      rw [h_sub]; exact hi
+    have h_step3 :
+        ((prefix4 ++ fBody))[bodyPCBase + i]'(by
+            rw [List.length_append, h_prefix4_len, h_fBody_len]
+            omega)
+          = fBody[bodyPCBase + i - prefix4.length]'h_idx_in_fBody := by
+      rw [List.getElem_append_right h_pref4_le']
+    -- The original h_in_prefix5 indexes prelude++loopTop++zeroSweep
+    -- ++prologue++fBody; that's prefix4 ++ fBody.
+    have h_step3' :
+        (((((prelude ++ loopTop) ++ zeroSweep) ++ prologue)
+              ++ fBody))[bodyPCBase + i]'h_in_prefix5
+          = fBody[bodyPCBase + i - prefix4.length]'h_idx_in_fBody := by
+      exact h_step3
+    rw [h_step3']
+    -- Simplify the index inside fBody to i.
+    have h_idx_eq : bodyPCBase + i - prefix4.length = i := by
+      rw [h_prefix4_len]; omega
+    have h_i_lt_fBody : i < fBody.length := by
+      rw [h_fBody_len]; exact hi
+    have h_step4 :
+        fBody[bodyPCBase + i - prefix4.length]'h_idx_in_fBody
+          = fBody[i]'h_i_lt_fBody := by
+      congr 1
+    rw [h_step4]
+    -- fBody[i] = (frag_f.instrs.pop.toList.map _)[i]
+    --         = reindexShift fBase bodyPCBase
+    --             (toRawOfBounded frag_f.instrs.pop.toList[i]).
+    change (frag_f.instrs.pop.toList.map (fun ins =>
+        URMInstrRaw.reindexShift fBase bodyPCBase
+          (toRawOfBounded ins)))[i]'_
+      = _
+    rw [List.getElem_map]
+    -- Reduce frag_f.instrs.pop.toList[i] to frag_f.instrs[i] via
+    --   pop.toList = dropLast, then dropLast[i] = toList[i] for
+    --   i < size - 1, then toList[i] = instrs[i].
+    have h_i_lt_pop : i < frag_f.instrs.pop.toList.length := by
+      rw [Array.length_toList, Array.size_pop]; exact hi
+    have h_i_lt_dl : i < frag_f.instrs.toList.dropLast.length := by
+      rw [List.length_dropLast, Array.length_toList]; exact hi
+    have h_i_lt_tl : i < frag_f.instrs.toList.length := by
+      rw [Array.length_toList]; exact hi'
+    have h_step_a :
+        frag_f.instrs.pop.toList[i]'h_i_lt_pop
+          = frag_f.instrs.toList.dropLast[i]'h_i_lt_dl := by
+      have h_pop_to_dl :
+          frag_f.instrs.pop.toList = frag_f.instrs.toList.dropLast :=
+        Array.toList_pop
+      have hopt : frag_f.instrs.pop.toList[i]?
+          = frag_f.instrs.toList.dropLast[i]? := by
+        rw [h_pop_to_dl]
+      rw [List.getElem?_eq_getElem h_i_lt_pop,
+        List.getElem?_eq_getElem h_i_lt_dl] at hopt
+      exact Option.some_injective _ hopt
+    have h_step_b :
+        frag_f.instrs.toList.dropLast[i]'h_i_lt_dl
+          = frag_f.instrs.toList[i]'h_i_lt_tl := by
+      have h_dl_getElem? :
+          frag_f.instrs.toList.dropLast[i]?
+            = frag_f.instrs.toList[i]? := by
+        rw [List.getElem?_dropLast]
+        have h_cond : i < frag_f.instrs.toList.length - 1 := by
+          rw [Array.length_toList]; exact hi
+        rw [if_pos h_cond]
+      rw [List.getElem?_eq_getElem h_i_lt_dl,
+        List.getElem?_eq_getElem h_i_lt_tl] at h_dl_getElem?
+      exact Option.some_injective _ h_dl_getElem?
+    have h_step_c :
+        frag_f.instrs.toList[i]'h_i_lt_tl
+          = frag_f.instrs[i]'hi' :=
+      Array.getElem_toList hi'
+    have h_pop_eq :
+        frag_f.instrs.pop.toList[i]'h_i_lt_pop
+          = frag_f.instrs[i]'hi' := by
+      rw [h_step_a, h_step_b, h_step_c]
+    rw [h_pop_eq]
+  -- Push through `toBounded` and `some`.
+  apply congrArg some
+  exact URMInstrRaw.toBounded_congr nR h_raw_eq _ _
 
 end LawvereERKSim
 end GebLean
