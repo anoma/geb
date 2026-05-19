@@ -5747,6 +5747,211 @@ private theorem compileFrag_comp_subBlock_inputCopies_pc_strict_bound
     zReg tmp srcs dsts h_disj H v s h_pc h_z h_tmp0 h_srcs
     h_dsts0 k h_k
 
+/-- Phase i.2 helper for `compileFrag_comp`'s `i`-th
+sub-block: running `frag_gs i`'s embedded body for `T0_i`
+steps (the pre-stop step count from the inductive
+hypothesis on `gs i`) advances the PC from `gsPcBase_i` to
+`gsPcBase_i + (frag_gs i).instrs.size - 1` (the start of
+Phase i.3's output-transfer block), places `(gs i).interp
+v_outer` in the outer register at `gsBase_i + (frag_gs
+i).outputReg.val`, and leaves outer registers outside
+the `gs i`-block (in particular, the other `gs j`-blocks
+and `f`'s block and the outer inputs/zReg) unchanged.
+
+The IH `ih_gs_i` is at the `ERMor1` level and refers to
+`compileER (gs i)`; the hypothesis `frag_gs_i_eq :
+frag_gs i = compileERFrag (gs i)` bridges to the
+URM-level fragment used by the outer's embedding. -/
+private theorem compileFrag_comp_subBlock_gsBody_correct
+    {k a : ℕ}
+    (frag_f : CompiledFragment k)
+    (frag_gs : Fin k → CompiledFragment a)
+    (i : Fin k) (gs : Fin k → ERMor1 a)
+    (frag_gs_i_eq : frag_gs i = compileERFrag (gs i))
+    (ih_gs_i : ∀ (v' : Fin a → ℕ),
+      ∃ T0 : ℕ,
+        T0 ≤ compileER_runtime (gs i) v' ∧
+        (URMState.runFor (compileER (gs i))
+              (URMState.init (compileER (gs i)) v') T0).pc
+            = (compileER (gs i)).instrs.size - 1 ∧
+        (URMState.runFor (compileER (gs i))
+              (URMState.init (compileER (gs i)) v') T0).regs
+            (compileER (gs i)).outputReg
+          = (gs i).interp v' ∧
+        (∀ k' < T0,
+          (URMState.runFor (compileER (gs i))
+              (URMState.init (compileER (gs i)) v') k').pc
+            < (compileER (gs i)).instrs.size - 1))
+    (v : Fin a → ℕ)
+    (s_pre : URMState (compileFrag_comp frag_f frag_gs).toURMProgram)
+    (h_pre_pc :
+      let outer := (compileFrag_comp frag_f frag_gs).toURMProgram
+      let blockLen : Fin k → ℕ := fun j =>
+        9 * a + ((frag_gs j).instrs.size - 1) + 4
+      let gsPcBase_i : ℕ :=
+        1 + ((List.finRange k).filter
+            (fun j => decide (j.val < i.val))).foldr
+          (fun j acc => acc + blockLen j) 0
+          + 9 * a
+      s_pre.pc = gsPcBase_i ∧
+      ((True : Prop) ∧ True) ∧ True ∧ outer.numRegs = outer.numRegs)
+    (h_pre_regs_in :
+      let gsBase_i : ℕ := 2 + a + gsPrefixSum frag_gs i.val
+      ∀ (r : Fin (frag_gs i).numRegs),
+        s_pre.regs ⟨gsBase_i + r.val, by
+          have hmono : gsPrefixSum frag_gs (i.val + 1)
+              ≤ gsPrefixSum frag_gs k :=
+            gsPrefixSum_mono frag_gs i.isLt
+          have hsucc :
+              gsPrefixSum frag_gs (i.val + 1)
+                = gsPrefixSum frag_gs i.val + (frag_gs i).numRegs :=
+            gsPrefixSum_succ_eq frag_gs i
+          have hrLt : r.val < (frag_gs i).numRegs := r.isLt
+          change gsBase_i + r.val < _
+          change 2 + a + gsPrefixSum frag_gs i.val + r.val
+            < (2 + a + gsPrefixSum frag_gs k + frag_f.numRegs) + 1
+          omega⟩
+          = (URMState.init (frag_gs i).toURMProgram v).regs r) :
+    let outer := (compileFrag_comp frag_f frag_gs).toURMProgram
+    let blockLen : Fin k → ℕ := fun j =>
+      9 * a + ((frag_gs j).instrs.size - 1) + 4
+    let gsPcBase_i : ℕ :=
+      1 + ((List.finRange k).filter
+          (fun j => decide (j.val < i.val))).foldr
+        (fun j acc => acc + blockLen j) 0
+        + 9 * a
+    let gsBase_i : ℕ := 2 + a + gsPrefixSum frag_gs i.val
+    ∃ T0 : ℕ,
+      T0 ≤ compileER_runtime (gs i) v ∧
+      (URMState.runFor outer s_pre T0).pc
+          = gsPcBase_i + ((frag_gs i).instrs.size - 1) ∧
+      (URMState.runFor outer s_pre T0).regs
+          ⟨gsBase_i + ((frag_gs i).outputReg).val, by
+            have hmono : gsPrefixSum frag_gs (i.val + 1)
+                ≤ gsPrefixSum frag_gs k :=
+              gsPrefixSum_mono frag_gs i.isLt
+            have hsucc :
+                gsPrefixSum frag_gs (i.val + 1)
+                  = gsPrefixSum frag_gs i.val + (frag_gs i).numRegs :=
+              gsPrefixSum_succ_eq frag_gs i
+            have hrLt : ((frag_gs i).outputReg).val < (frag_gs i).numRegs :=
+              ((frag_gs i).outputReg).isLt
+            change 2 + a + gsPrefixSum frag_gs i.val
+                + ((frag_gs i).outputReg).val
+              < (2 + a + gsPrefixSum frag_gs k + frag_f.numRegs) + 1
+            omega⟩
+        = (gs i).interp v ∧
+      (∀ k' < T0,
+        (URMState.runFor outer s_pre k').pc
+          < gsPcBase_i + ((frag_gs i).instrs.size - 1)) := by
+  intro outer blockLen gsPcBase_i gsBase_i
+  -- Notation matching the embedding lemma.
+  obtain ⟨h_pre_pc_eq, _⟩ := h_pre_pc
+  -- Embedding lemma at slot i.
+  have h_emb_prog :
+      ProgramEmbedsFragment outer (frag_gs i) gsBase_i gsPcBase_i
+        ((frag_gs i).instrs.size - 1) :=
+    ProgramEmbedsFragment_compileFrag_comp_gsBody
+      frag_f frag_gs i
+  -- Reformulate the IH at the URM level of `(frag_gs i).toURMProgram`.
+  -- `compileER (gs i) = (compileERFrag (gs i)).toURMProgram = (frag_gs i).toURMProgram`,
+  -- using `frag_gs_i_eq.symm`.  Cast the IH directly.
+  have ih_frag : ∀ (v' : Fin a → ℕ),
+      ∃ T0 : ℕ,
+        T0 ≤ compileER_runtime (gs i) v' ∧
+        (URMState.runFor (frag_gs i).toURMProgram
+            (URMState.init (frag_gs i).toURMProgram v') T0).pc
+            = (frag_gs i).instrs.size - 1 ∧
+        (URMState.runFor (frag_gs i).toURMProgram
+            (URMState.init (frag_gs i).toURMProgram v') T0).regs
+            (frag_gs i).outputReg
+          = (gs i).interp v' ∧
+        (∀ k' < T0,
+          (URMState.runFor (frag_gs i).toURMProgram
+              (URMState.init (frag_gs i).toURMProgram v') k').pc
+            < (frag_gs i).instrs.size - 1) := by
+    intro v'
+    -- Use frag_gs_i_eq to convert `frag_gs i` ↦ `compileERFrag (gs i)`
+    -- in the conclusion, which then matches the IH directly.
+    rw [frag_gs_i_eq]
+    -- Goal: ∃ T0, T0 ≤ runtime ∧ pc-eq ∧ out-eq ∧ strict, all
+    -- with (compileERFrag (gs i)).toURMProgram = compileER (gs i).
+    -- This is exactly ih_gs_i v' (up to def-eq of compileER).
+    exact ih_gs_i v'
+  -- The init state of `(frag_gs i).toURMProgram` at input `v`.
+  set f_init : URMState (frag_gs i).toURMProgram :=
+    URMState.init (frag_gs i).toURMProgram v with hf_init_def
+  -- State-embedding at s_pre.
+  have h_state_emb :
+      StateEmbedsFrag s_pre f_init gsBase_i gsPcBase_i
+        h_emb_prog.hReg := by
+    refine ⟨?_, ?_⟩
+    · -- s_pre.pc = gsPcBase_i + 0 = gsPcBase_i.
+      change s_pre.pc = gsPcBase_i + 0
+      rw [Nat.add_zero]; exact h_pre_pc_eq
+    · intro j hj
+      exact h_pre_regs_in ⟨j, hj⟩
+  -- Apply the reformulated IH.
+  obtain ⟨T0, hT0_le, h_pc_T0, h_out_T0, h_strict⟩ := ih_frag v
+  -- Express T0's runFor over the embedded fragment.
+  set f_T0 : URMState (frag_gs i).toURMProgram :=
+    URMState.runFor (frag_gs i).toURMProgram f_init T0 with hf_T0_def
+  have h_f_T0_pc : f_T0.pc = (frag_gs i).instrs.size - 1 :=
+    h_pc_T0
+  have h_f_T0_out :
+      f_T0.regs (frag_gs i).outputReg = (gs i).interp v :=
+    h_out_T0
+  -- Per-step strict PC bound on the fragment side.
+  have h_f_strict :
+      ∀ k' < T0, (URMState.runFor (frag_gs i).toURMProgram
+        f_init k').pc < (frag_gs i).instrs.size - 1 :=
+    h_strict
+  -- Apply stateEmbedsFrag_runFor: the IH-provided per-step PC bound
+  -- on the fragment side gives `s_frag.pc < L` for the first T0 steps.
+  have h_emb_after :
+      StateEmbedsFrag (URMState.runFor outer s_pre T0)
+          (URMState.runFor (frag_gs i).toURMProgram f_init T0)
+          gsBase_i gsPcBase_i h_emb_prog.hReg :=
+    stateEmbedsFrag_runFor outer (frag_gs i)
+      gsBase_i gsPcBase_i ((frag_gs i).instrs.size - 1)
+      h_emb_prog s_pre f_init h_state_emb T0 h_f_strict
+  obtain ⟨h_pc_after, h_regs_after⟩ := h_emb_after
+  -- Conclusion.
+  refine ⟨T0, hT0_le, ?_, ?_, ?_⟩
+  · -- PC after T0 steps = gsPcBase_i + ((frag_gs i).instrs.size - 1).
+    rw [h_pc_after]
+    change gsPcBase_i + f_T0.pc = _
+    rw [h_f_T0_pc]
+  · -- Output register.
+    have houtLt : ((frag_gs i).outputReg).val < (frag_gs i).numRegs :=
+      ((frag_gs i).outputReg).isLt
+    have h_eq := h_regs_after ((frag_gs i).outputReg).val houtLt
+    -- Convert (⟨outputReg.val, isLt⟩ : Fin (frag_gs i).numRegs) to
+    -- (frag_gs i).outputReg.
+    have h_frag_idx :
+        (⟨((frag_gs i).outputReg).val, houtLt⟩ : Fin (frag_gs i).numRegs)
+          = (frag_gs i).outputReg := Fin.ext rfl
+    rw [h_frag_idx] at h_eq
+    rw [h_eq]; change f_T0.regs (frag_gs i).outputReg = _
+    exact h_f_T0_out
+  · -- Per-step strict PC bound on outer side, derived from
+    -- the embedding + fragment-side strict bound.
+    intro k' hk'
+    have h_emb_k' :
+        StateEmbedsFrag (URMState.runFor outer s_pre k')
+            (URMState.runFor (frag_gs i).toURMProgram f_init k')
+            gsBase_i gsPcBase_i h_emb_prog.hReg := by
+      refine stateEmbedsFrag_runFor outer (frag_gs i)
+        gsBase_i gsPcBase_i ((frag_gs i).instrs.size - 1)
+        h_emb_prog s_pre f_init h_state_emb k' ?_
+      intro k'' hk''
+      exact h_f_strict k'' (Nat.lt_trans hk'' hk')
+    obtain ⟨h_pc_k', _⟩ := h_emb_k'
+    rw [h_pc_k']
+    have h_frag_k' :=
+      h_f_strict k' hk'
+    omega
+
 /-- Pre-stop PC and output for the `.succ` atom.  After
 `9 * v 0 + 4` steps the program reaches `pc = 11` (the stop
 instruction at `size - 1`) with the output register holding
