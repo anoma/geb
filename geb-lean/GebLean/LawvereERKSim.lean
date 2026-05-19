@@ -11896,6 +11896,53 @@ private theorem compileER_pre_stop_to_runFor {a : ℕ}
   rw [URMState.runFor_stop (compileER e) sT0 (t' - T0) h_pc_lt h_stop]
   exact h_output
 
+/-- `compileER_runFor` correctness for `.comp f gs` at general
+`k`. Specialises `compileER_pre_stop_correct_comp` via the
+shared bridge `compileER_pre_stop_to_runFor` to the
+output-only `≤ t'` form, matching the shape of
+`compileER_runFor_comp_k_zero`. The inductive hypotheses for
+`f` and the `gs i` are stated in pre-stop form, the same form
+they appear in `compileER_pre_stop_correct_comp`'s caller
+context. -/
+private theorem compileER_runFor_comp {k a : ℕ}
+    (f : ERMor1 k) (gs : Fin k → ERMor1 a)
+    (ih_f : ∀ (v' : Fin k → ℕ),
+      ∃ T0 : ℕ,
+        T0 ≤ compileER_runtime f v' ∧
+        (URMState.runFor (compileER f)
+              (URMState.init (compileER f) v') T0).pc
+            = (compileER f).instrs.size - 1 ∧
+        (URMState.runFor (compileER f)
+              (URMState.init (compileER f) v') T0).regs
+            (compileER f).outputReg
+          = f.interp v' ∧
+        (∀ k' < T0,
+          (URMState.runFor (compileER f)
+              (URMState.init (compileER f) v') k').pc
+            < (compileER f).instrs.size - 1))
+    (ih_gs : ∀ (i : Fin k) (v' : Fin a → ℕ),
+      ∃ T0 : ℕ,
+        T0 ≤ compileER_runtime (gs i) v' ∧
+        (URMState.runFor (compileER (gs i))
+              (URMState.init (compileER (gs i)) v') T0).pc
+            = (compileER (gs i)).instrs.size - 1 ∧
+        (URMState.runFor (compileER (gs i))
+              (URMState.init (compileER (gs i)) v') T0).regs
+            (compileER (gs i)).outputReg
+          = (gs i).interp v' ∧
+        (∀ k' < T0,
+          (URMState.runFor (compileER (gs i))
+              (URMState.init (compileER (gs i)) v') k').pc
+            < (compileER (gs i)).instrs.size - 1))
+    (v : Fin a → ℕ) (t' : ℕ)
+    (ht' : compileER_runtime (.comp f gs : ERMor1 a) v ≤ t') :
+    (URMState.runFor (compileER (.comp f gs : ERMor1 a))
+        (URMState.init (compileER (.comp f gs : ERMor1 a)) v) t').regs
+        (compileER (.comp f gs : ERMor1 a)).outputReg
+      = (.comp f gs : ERMor1 a).interp v :=
+  compileER_pre_stop_to_runFor _ v t' ht'
+    (compileER_pre_stop_correct_comp f gs ih_f ih_gs v)
+
 end LawvereERKSim
 
 end GebLean
