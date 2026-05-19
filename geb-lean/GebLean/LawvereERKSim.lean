@@ -128,6 +128,17 @@ def URMInstrRaw.toBounded
   | .jumpZR i l₁ l₂, h => .jumpZ ⟨i, h⟩ l₁ l₂
   | .stopR, _ => .stop
 
+/-- Congruence of `toBounded` along an equality on the raw
+instruction. The boundedness witnesses are
+proof-irrelevant for fixed `r` and matching raw instructions,
+so the result equality follows by transporting the proof
+across the raw equality. -/
+private theorem URMInstrRaw.toBounded_congr (r : ℕ)
+    {ins ins' : URMInstrRaw} (h_raw : ins = ins')
+    (h : ins.regBound ≤ r) (h' : ins'.regBound ≤ r) :
+    URMInstrRaw.toBounded r ins h = URMInstrRaw.toBounded r ins' h' := by
+  subst h_raw; rfl
+
 /-- All raw instructions in a list have register bound
 ≤ `r`. -/
 def URMInstrRaw.boundedBy (r : ℕ) (l : List URMInstrRaw) :
@@ -1908,6 +1919,287 @@ private theorem fragment_runFor_pc_le_size {a : ℕ}
       ≤ frag.instrs.size :=
   URMState.runFor_pc_le_size frag.toURMProgram s h_well h_pc n
 
+/-! ### Length lemmas for `compileFrag_comp` -/
+
+/-- Length of one `compileFrag_comp_subBlock`: `9 * a`
+input-copy instructions (`a` invocations of
+`preservingTransfer`), plus `(frag_gs i).instrs.size - 1`
+body instructions (the dropped trailing stop), plus 4
+`transferLoop` instructions. -/
+private theorem compileFrag_comp_subBlock_length {k a : ℕ}
+    (frag_f : CompiledFragment k)
+    (frag_gs : Fin k → CompiledFragment a)
+    (gsBase fBase tmpReg : ℕ) (i : Fin k) (pcBase : ℕ) :
+    (compileFrag_comp_subBlock frag_f frag_gs
+        gsBase fBase tmpReg i pcBase).length
+      = 9 * a + ((frag_gs i).instrs.size - 1) + 4 := by
+  unfold compileFrag_comp_subBlock
+  simp only [List.length_append, List.length_flatMap,
+    List.length_map, Array.length_toList, Array.size_pop]
+  -- Sum of constant `9` over `List.finRange a` equals `9 * a`.
+  have h_inputCopies :
+      (List.map (fun j : Fin a =>
+        (URMRaw.preservingTransfer (pcBase + 9 * j.val)
+          (2 + j.val) (gsBase + ((frag_gs i).inputRegs j).val)
+          tmpReg).length) (List.finRange a)).sum
+        = 9 * a := by
+    have h_each : ∀ j : Fin a,
+        (URMRaw.preservingTransfer (pcBase + 9 * j.val)
+          (2 + j.val) (gsBase + ((frag_gs i).inputRegs j).val)
+          tmpReg).length = 9 := fun _ => rfl
+    rw [List.map_congr_left (fun j _ => h_each j)]
+    rw [show (fun _ : Fin a => 9)
+        = Function.const (Fin a) 9 from rfl,
+      List.map_const, List.sum_replicate_nat,
+      List.length_finRange]
+    exact Nat.mul_comm a 9
+  -- `transferLoop` has length 4.
+  have h_transfer :
+      (URMRaw.transferLoop
+        ((pcBase + 9 * a) + ((frag_gs i).instrs.size - 1))
+        (gsBase + ((frag_gs i).outputReg).val)
+        (fBase + (frag_f.inputRegs i).val)).length = 4 := rfl
+  rw [h_inputCopies, h_transfer]
+
+/-- Sum of per-block lengths over `List.finRange k`,
+expressed via `foldr (acc + blockLen j)`. Matches the
+`fPcBase` definition in `compileFrag_comp`. -/
+private theorem foldr_acc_add_eq_sum_map
+    {α : Type*} (l : List α) (f : α → ℕ) :
+    l.foldr (fun j acc => acc + f j) 0
+      = (l.map f).sum := by
+  induction l with
+  | nil => rfl
+  | cons hd tl ih =>
+    simp only [List.foldr_cons, List.map_cons, List.sum_cons, ih]
+    omega
+
+/-- Total length of the `subBlocks` list in
+`compileFrag_comp`: the sum of per-block lengths via
+`foldr`. -/
+private theorem compileFrag_comp_subBlocks_length {k a : ℕ}
+    (frag_f : CompiledFragment k)
+    (frag_gs : Fin k → CompiledFragment a)
+    (gsBase : Fin k → ℕ) (fBase tmpReg : ℕ)
+    (pcBase : Fin k → ℕ) :
+    let blockLen : Fin k → ℕ := fun i =>
+      9 * a + ((frag_gs i).instrs.size - 1) + 4
+    ((List.finRange k).flatMap fun i =>
+        compileFrag_comp_subBlock frag_f frag_gs
+          (gsBase i) fBase tmpReg i (pcBase i)).length
+      = (List.finRange k).foldr
+          (fun j acc => acc + blockLen j) 0 := by
+  intro blockLen
+  rw [List.length_flatMap]
+  have h_each : ∀ i : Fin k,
+      (compileFrag_comp_subBlock frag_f frag_gs
+        (gsBase i) fBase tmpReg i (pcBase i)).length
+        = blockLen i :=
+    fun i => compileFrag_comp_subBlock_length
+      frag_f frag_gs (gsBase i) fBase tmpReg i (pcBase i)
+  rw [List.map_congr_left (fun i _ => h_each i)]
+  rw [foldr_acc_add_eq_sum_map (List.finRange k) blockLen]
+
+/-- For `compileFrag_comp`'s f-body embedding: at PCs
+`fPcBase..fPcBase + frag_f.instrs.size`, the outer
+program's instructions are the `reindexShift`-mapped
+raw form of `frag_f.instrs`. The values of `fBase` and
+`fPcBase` are those used by the constructor of
+`compileFrag_comp` (see `def compileFrag_comp`). -/
+private theorem ProgramEmbedsFragment_compileFrag_comp_fBody
+    {k a : ℕ}
+    (frag_f : CompiledFragment k)
+    (frag_gs : Fin k → CompiledFragment a) :
+    let outer := (compileFrag_comp frag_f frag_gs).toURMProgram
+    let totalGsRegs : ℕ := gsPrefixSum frag_gs k
+    let fBase : ℕ := 2 + a + totalGsRegs
+    let blockLen : Fin k → ℕ := fun i =>
+      9 * a + ((frag_gs i).instrs.size - 1) + 4
+    let fPcBase : ℕ :=
+      1 + (List.finRange k).foldr
+        (fun j acc => acc + blockLen j) 0
+    ProgramEmbedsFragment outer frag_f fBase fPcBase
+      frag_f.instrs.size := by
+  intro outer totalGsRegs fBase blockLen fPcBase
+  -- Auxiliaries matching the constructor.
+  let tmpReg : ℕ := fBase + frag_f.numRegs
+  let nR : ℕ := tmpReg + 1
+  let gsBase : Fin k → ℕ :=
+    fun i => 2 + a + gsPrefixSum frag_gs i.val
+  let pcBase : Fin k → ℕ := fun i =>
+    1 + ((List.finRange k).filter
+        (fun j => decide (j.val < i.val))).foldr
+      (fun j acc => acc + blockLen j) 0
+  let subBlocks : List URMInstrRaw :=
+    (List.finRange k).flatMap fun i =>
+      compileFrag_comp_subBlock frag_f frag_gs
+        (gsBase i) fBase tmpReg i (pcBase i)
+  let fBody : List URMInstrRaw :=
+    frag_f.instrs.toList.map fun ins =>
+      URMInstrRaw.reindexShift fBase fPcBase (toRawOfBounded ins)
+  let rawList : List URMInstrRaw :=
+    (.assignR 0 0) :: (subBlocks ++ fBody)
+  -- subBlocks.length + 1 = fPcBase.
+  have h_subBlocks_len : subBlocks.length + 1 = fPcBase := by
+    have h := compileFrag_comp_subBlocks_length frag_f frag_gs
+      gsBase fBase tmpReg pcBase
+    change subBlocks.length =
+      (List.finRange k).foldr (fun j acc => acc + blockLen j) 0 at h
+    change subBlocks.length + 1 = 1 +
+      (List.finRange k).foldr (fun j acc => acc + blockLen j) 0
+    omega
+  -- fBody length matches frag_f.instrs.size.
+  have h_fBody_len : fBody.length = frag_f.instrs.size := by
+    change (frag_f.instrs.toList.map _).length = _
+    rw [List.length_map, Array.length_toList]
+  -- outer.numRegs = nR (definitional).
+  have hReg : fBase + frag_f.numRegs ≤ outer.numRegs := by
+    change fBase + frag_f.numRegs ≤ nR
+    change fBase + frag_f.numRegs ≤ (fBase + frag_f.numRegs) + 1
+    omega
+  refine ⟨Nat.le_refl _, hReg, ?_⟩
+  intro i hi
+  -- Convert outer.instrs[fPcBase + i]? to the rawList lookup.
+  -- rawList.length = 1 + subBlocks.length + fBody.length.
+  have h_raw_len : rawList.length
+      = 1 + subBlocks.length + fBody.length := by
+    change (URMInstrRaw.assignR 0 0 :: (subBlocks ++ fBody)).length
+      = 1 + subBlocks.length + fBody.length
+    rw [List.length_cons, List.length_append]; omega
+  have h_idx_lt : fPcBase + i < rawList.length := by
+    rw [h_raw_len, h_fBody_len]; omega
+  -- The boundedness witness used by compileFrag_comp.
+  have hBoundOuter : URMInstrRaw.boundedBy nR rawList := by
+    -- Extract via outer's instrs field.
+    intro ins hmem
+    have hmem' : ins = (.assignR 0 0 : URMInstrRaw)
+        ∨ ins ∈ subBlocks ++ fBody := List.mem_cons.mp hmem
+    rcases hmem' with hAssign | hmem
+    · rw [hAssign]; simp only [URMInstrRaw.regBound]
+      change 0 + 1 ≤ nR
+      change 0 + 1 ≤ (fBase + frag_f.numRegs) + 1
+      have h_fBase_pos : 0 < fBase := by
+        change 0 < 2 + a + totalGsRegs; omega
+      omega
+    rcases List.mem_append.mp hmem with hSub | hF
+    · rcases List.mem_flatMap.mp hSub with ⟨j, _, hj⟩
+      have hGsBlock : gsBase j + (frag_gs j).numRegs ≤ fBase := by
+        have hmono : gsPrefixSum frag_gs (j.val + 1)
+            ≤ gsPrefixSum frag_gs k :=
+          gsPrefixSum_mono frag_gs j.isLt
+        have hsucc :
+            gsPrefixSum frag_gs (j.val + 1)
+              = gsPrefixSum frag_gs j.val + (frag_gs j).numRegs :=
+          gsPrefixSum_succ_eq frag_gs j
+        change 2 + a + gsPrefixSum frag_gs j.val
+            + (frag_gs j).numRegs ≤ 2 + a + totalGsRegs
+        change _ ≤ gsPrefixSum frag_gs k at hmono
+        omega
+      have hFBlock : fBase + frag_f.numRegs = tmpReg := rfl
+      have hTmp : tmpReg < nR := by change tmpReg < tmpReg + 1; omega
+      have ha : a ≤ fBase := by
+        change a ≤ 2 + a + totalGsRegs; omega
+      exact boundedBy_compileFrag_comp_subBlock frag_f frag_gs
+        (gsBase j) fBase tmpReg nR j (pcBase j)
+        hGsBlock hFBlock hTmp ha ins hj
+    · rcases List.mem_map.mp hF with ⟨ins', _, heq⟩
+      rw [← heq]
+      have hb : (toRawOfBounded ins').regBound ≤ frag_f.numRegs :=
+        regBound_toRawOfBounded_le ins'
+      have hr := regBound_reindexShift_le_offset_add fBase
+        fPcBase frag_f.numRegs (toRawOfBounded ins') hb
+      change _ ≤ (fBase + frag_f.numRegs) + 1
+      omega
+  -- Identify outer.instrs with toBoundedArray of rawList.
+  have h_outer_instrs :
+      outer.instrs = URMInstrRaw.toBoundedArray nR rawList
+          hBoundOuter := by
+    -- Both are defined as toBoundedArray with the same rawList;
+    -- the boundedness witness is proof-irrelevant.
+    rfl
+  -- Reduce outer.instrs[fPcBase + i]? via toBoundedArray_getElem?.
+  -- Replace outer.numRegs with nR via change (they are
+  -- definitionally equal).
+  change (URMInstrRaw.toBoundedArray nR rawList hBoundOuter)[fPcBase + i]?
+    = some (URMInstrRaw.toBounded nR
+        (URMInstrRaw.reindexShift fBase fPcBase
+          (toRawOfBounded (frag_f.instrs[i]'hi))) _)
+  rw [URMInstrRaw.toBoundedArray_getElem? nR rawList hBoundOuter
+      (fPcBase + i) h_idx_lt]
+  -- Establish the raw equality
+  -- rawList[fPcBase + i] = reindexShift fBase fPcBase
+  --   (toRawOfBounded frag_f.instrs[i]),
+  -- then push it through `toBounded` (boundedness-irrelevant)
+  -- and `some`.
+  have h_raw_eq :
+      rawList[fPcBase + i]'h_idx_lt
+        = URMInstrRaw.reindexShift fBase fPcBase
+          (toRawOfBounded (frag_f.instrs[i]'hi)) := by
+    -- Replace `fPcBase + i` by `subBlocks.length + 1 + i` so the
+    -- cons-head and the append-left side both go away by indexing.
+    have h_eq : fPcBase + i = subBlocks.length + 1 + i := by omega
+    have h_idx_lt' : subBlocks.length + 1 + i < rawList.length := by
+      rw [h_raw_len, h_fBody_len]
+      omega
+    have h_step1 :
+        rawList[fPcBase + i]'h_idx_lt
+          = rawList[subBlocks.length + 1 + i]'h_idx_lt' := by
+      congr 1
+    rw [h_step1]
+    -- rawList = assignR :: (subBlocks ++ fBody).
+    -- Index = (subBlocks.length + i) + 1; cons-succ peels assignR.
+    have h_step2 :
+        rawList[subBlocks.length + 1 + i]'h_idx_lt'
+          = (subBlocks ++ fBody)[subBlocks.length + i]'(by
+              rw [List.length_append, h_fBody_len]
+              omega) := by
+      change ((URMInstrRaw.assignR 0 0 ::
+          (subBlocks ++ fBody) : List URMInstrRaw))[
+            subBlocks.length + 1 + i]'_
+        = _
+      have h_arith : subBlocks.length + 1 + i = (subBlocks.length + i) + 1 := by
+        omega
+      have h_idx_lt'' : (subBlocks.length + i) + 1
+          < (URMInstrRaw.assignR 0 0 :: (subBlocks ++ fBody)
+              : List URMInstrRaw).length := by
+        rw [List.length_cons, List.length_append, h_fBody_len]
+        omega
+      have h_step2a :
+          ((URMInstrRaw.assignR 0 0 ::
+              (subBlocks ++ fBody) : List URMInstrRaw))[
+              subBlocks.length + 1 + i]'h_idx_lt'
+            = ((URMInstrRaw.assignR 0 0 ::
+              (subBlocks ++ fBody) : List URMInstrRaw))[
+              (subBlocks.length + i) + 1]'h_idx_lt'' := by
+        congr 1
+      rw [h_step2a]
+      exact List.getElem_cons_succ (URMInstrRaw.assignR 0 0)
+        (subBlocks ++ fBody) (subBlocks.length + i) h_idx_lt''
+    rw [h_step2]
+    -- (subBlocks ++ fBody)[subBlocks.length + i] = fBody[i].
+    rw [List.getElem_append_right (by omega)]
+    have h_idx_eq : subBlocks.length + i - subBlocks.length = i := by
+      omega
+    have h_idx_lt''' :
+        subBlocks.length + i - subBlocks.length < fBody.length := by
+      rw [h_idx_eq, h_fBody_len]; exact hi
+    have h_step3 :
+        fBody[subBlocks.length + i - subBlocks.length]'h_idx_lt'''
+          = fBody[i]'(by rw [h_fBody_len]; exact hi) := by
+      congr 1
+    rw [h_step3]
+    -- fBody[i] = (frag_f.instrs.toList.map _)[i] = reindexShift...
+    change (frag_f.instrs.toList.map (fun ins =>
+        URMInstrRaw.reindexShift fBase fPcBase
+          (toRawOfBounded ins)))[i]'_
+      = _
+    rw [List.getElem_map]
+    congr 1
+  -- Push h_raw_eq through `toBounded` via the congruence helper,
+  -- then through `some` and through `outer.numRegs = nR`.
+  apply congrArg some
+  exact URMInstrRaw.toBounded_congr nR h_raw_eq _ _
+
 /-- Hypothesis bundle for `preservingTransfer_correct`:
 the nine instruction-lookup equalities at PCs `pcBase..pcBase+8`
 matching the raw layout of `URMRaw.preservingTransfer`. The
@@ -2706,6 +2998,38 @@ private theorem URMState.init_regs_inputRegs {a : ℕ}
       | some j => v j
       | none   => 0) = v i
   rw [List.find?_finRange_inputRegs P.inputRegs P.inputRegs_inj i]
+
+/-- For a `URMProgram` whose `inputRegs` maps slot `j` to
+register index `2 + j.val`, the registers outside the
+input image (specifically register 0, register 1, and
+registers `≥ 2 + a`) are 0 in the `init` state.
+Used by `compileER_runFor_comp` (and its `bsum`/`bprod`
+analogues) to align the outer program's `URMState.init`
+with the zero-initialised register block of an embedded
+sub-fragment, whose register block lies above
+`2 + a`. -/
+private theorem URMState.init_regs_zero_outside_inputs {a : ℕ}
+    (P : URMProgram a) (v : Fin a → ℕ)
+    (h_inputs : ∀ j : Fin a, (P.inputRegs j).val = 2 + j.val)
+    (r : Fin P.numRegs)
+    (h_outside : r.val = 0 ∨ r.val = 1 ∨ r.val ≥ 2 + a) :
+    (URMState.init P v).regs r = 0 := by
+  change
+    (match (List.finRange a).find?
+        (fun j => decide (P.inputRegs j = r)) with
+      | some j => v j
+      | none   => 0) = 0
+  have h_none : (List.finRange a).find?
+      (fun j => decide (P.inputRegs j = r)) = none := by
+    apply List.find?_eq_none.mpr
+    intro j _
+    simp only [Bool.not_eq_true, decide_eq_false_iff_not]
+    intro h
+    have hval : (P.inputRegs j).val = r.val := congrArg Fin.val h
+    rw [h_inputs j] at hval
+    have hjlt : j.val < a := j.isLt
+    rcases h_outside with hr | hr | hr <;> omega
+  rw [h_none]
 
 /-- Correctness of `compileER` on `.proj i`: running for at
 least `11 + 10 * v i` steps from `init` produces output
