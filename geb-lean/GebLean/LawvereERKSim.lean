@@ -9248,6 +9248,703 @@ private theorem compileFrag_comp_subBlocks_partial_phase_i1
       Fin.ext rfl
     rw [h_idx_eq]; exact h_tmp_post
 
+/-- Post-state predicate after Phase i.2 (`gs m`'s body) of the
+`m`-th sub-block.  Drops `gs_m_inputs` and `gs_m_other_zero`
+from `compileFrag_comp_phase_i1_post` (`gs m`'s body has
+consumed its inputs and may have written arbitrary scratch
+values inside its block) and adds `gs_m_output` carrying
+`(gs m).interp v` at `gs m`'s reindexed output register. All
+other clauses (`pc_eq`, `zReg_zero`, `outer_inputs`,
+`f_input_slots`, `gs_outputs_zero`, `gs_blocks_untouched`,
+`f_body_zero`, `tmp_zero`) are preserved from Phase i.1 by
+the outside-the-fragment register-preservation guarantee of
+the sub-block embedding.
+
+The `pc_eq` clause places PC at
+`compileFrag_comp_pcOf frag_gs m.val + 9 * a +
+((compileERFrag (gs m)).instrs.size - 1)` — the trailing
+`.stop` instruction at the end of `gs m`'s embedded body. -/
+private structure compileFrag_comp_phase_i2_post
+    {k a : ℕ}
+    (frag_f : CompiledFragment k)
+    (gs : Fin k → ERMor1 a)
+    (v : Fin a → ℕ)
+    (m : Fin k)
+    (s : URMState
+      (compileFrag_comp frag_f (fun i => compileERFrag (gs i))).toURMProgram)
+    : Prop where
+  /-- PC at the trailing `.stop` of `gs m`'s embedded body. -/
+  pc_eq : s.pc = compileFrag_comp_pcOf
+    (fun i => compileERFrag (gs i)) m.val + 9 * a
+    + ((compileERFrag (gs m)).instrs.size - 1)
+  /-- `V_z` (register 0) holds 0. -/
+  zReg_zero : s.regs ⟨0,
+    (compileFrag_comp frag_f
+      (fun i => compileERFrag (gs i))).numRegs_pos⟩ = 0
+  /-- Outer input slots `2..2 + a - 1` hold the input vector. -/
+  outer_inputs : ∀ (j : Fin a),
+    s.regs ⟨2 + j.val, by
+      have hj : j.val < a := j.isLt
+      change _ < 2 + a +
+        gsPrefixSum (fun i => compileERFrag (gs i)) k
+        + frag_f.numRegs + 1
+      omega⟩ = v j
+  /-- For each processed `i < m`, `f`'s `i`-th input slot
+  holds `(gs i).interp v`. -/
+  f_input_slots : ∀ (i : Fin k), i.val < m.val →
+    s.regs ⟨2 + a +
+        gsPrefixSum (fun i => compileERFrag (gs i)) k
+        + (frag_f.inputRegs i).val, by
+      have hI : (frag_f.inputRegs i).val < frag_f.numRegs :=
+        (frag_f.inputRegs i).isLt
+      change _ < 2 + a +
+        gsPrefixSum (fun i => compileERFrag (gs i)) k
+        + frag_f.numRegs + 1
+      omega⟩ = (gs i).interp v
+  /-- For each processed `i < m`, `gs i`'s output register
+  is 0. -/
+  gs_outputs_zero : ∀ (i : Fin k), i.val < m.val →
+    s.regs ⟨2 + a +
+        gsPrefixSum (fun j => compileERFrag (gs j)) i.val
+        + ((compileERFrag (gs i)).outputReg).val, by
+      have hO : ((compileERFrag (gs i)).outputReg).val
+          < (compileERFrag (gs i)).numRegs :=
+        ((compileERFrag (gs i)).outputReg).isLt
+      have hmono :
+          gsPrefixSum (fun j => compileERFrag (gs j)) (i.val + 1)
+            ≤ gsPrefixSum (fun j => compileERFrag (gs j)) k :=
+        gsPrefixSum_mono _ i.isLt
+      have hsucc :
+          gsPrefixSum (fun j => compileERFrag (gs j)) (i.val + 1)
+            = gsPrefixSum (fun j => compileERFrag (gs j)) i.val
+              + (compileERFrag (gs i)).numRegs :=
+        gsPrefixSum_succ_eq _ i
+      change _ < 2 + a +
+        gsPrefixSum (fun j => compileERFrag (gs j)) k
+        + frag_f.numRegs + 1
+      omega⟩ = 0
+  /-- `gs m`'s reindexed output register holds `(gs m).interp v`. -/
+  gs_m_output : s.regs ⟨2 + a +
+      gsPrefixSum (fun i => compileERFrag (gs i)) m.val
+      + ((compileERFrag (gs m)).outputReg).val, by
+    have hO : ((compileERFrag (gs m)).outputReg).val
+        < (compileERFrag (gs m)).numRegs :=
+      ((compileERFrag (gs m)).outputReg).isLt
+    have hmono :
+        gsPrefixSum (fun i => compileERFrag (gs i)) (m.val + 1)
+          ≤ gsPrefixSum (fun i => compileERFrag (gs i)) k :=
+      gsPrefixSum_mono _ m.isLt
+    have hsucc :
+        gsPrefixSum (fun i => compileERFrag (gs i)) (m.val + 1)
+          = gsPrefixSum (fun i => compileERFrag (gs i)) m.val
+            + (compileERFrag (gs m)).numRegs :=
+      gsPrefixSum_succ_eq _ m
+    change _ < 2 + a +
+      gsPrefixSum (fun i => compileERFrag (gs i)) k
+      + frag_f.numRegs + 1
+    omega⟩ = (gs m).interp v
+  /-- For each unprocessed `i > m` (strict), every register
+  in `gs i`'s block is 0. -/
+  gs_blocks_untouched : ∀ (i : Fin k), m.val < i.val →
+    ∀ (r : Fin (compileERFrag (gs i)).numRegs),
+      s.regs ⟨2 + a +
+          gsPrefixSum (fun j => compileERFrag (gs j)) i.val
+          + r.val, by
+        have hr : r.val < (compileERFrag (gs i)).numRegs := r.isLt
+        have hmono :
+            gsPrefixSum (fun j => compileERFrag (gs j)) (i.val + 1)
+              ≤ gsPrefixSum (fun j => compileERFrag (gs j)) k :=
+          gsPrefixSum_mono _ i.isLt
+        have hsucc :
+            gsPrefixSum (fun j => compileERFrag (gs j)) (i.val + 1)
+              = gsPrefixSum (fun j => compileERFrag (gs j)) i.val
+                + (compileERFrag (gs i)).numRegs :=
+          gsPrefixSum_succ_eq _ i
+        change _ < 2 + a +
+          gsPrefixSum (fun j => compileERFrag (gs j)) k
+          + frag_f.numRegs + 1
+        omega⟩ = 0
+  /-- `f`'s body block is 0 outside the input slots already
+  filled by completed iterations. -/
+  f_body_zero : ∀ (r : Fin frag_f.numRegs),
+    (∀ i : Fin k, i.val < m.val → r ≠ frag_f.inputRegs i) →
+    s.regs ⟨2 + a +
+        gsPrefixSum (fun j => compileERFrag (gs j)) k
+        + r.val, by
+      have hr : r.val < frag_f.numRegs := r.isLt
+      change _ < 2 + a +
+        gsPrefixSum (fun j => compileERFrag (gs j)) k
+        + frag_f.numRegs + 1
+      omega⟩ = 0
+  /-- The shared scratch register `tmpReg = fBase +
+  frag_f.numRegs` is 0. -/
+  tmp_zero : s.regs ⟨2 + a +
+      gsPrefixSum (fun j => compileERFrag (gs j)) k
+      + frag_f.numRegs, by
+    change _ < 2 + a +
+      gsPrefixSum (fun j => compileERFrag (gs j)) k
+      + frag_f.numRegs + 1
+    omega⟩ = 0
+
+/-- Phase i.2 preservation lemma: from
+`compileFrag_comp_phase_i1_post @ m` plus the structural IH on
+`gs m`, there exists some `T0 ≤ compileER_runtime (gs m) v` such
+that running `gs m`'s body for `T0` steps lands the state in
+`compileFrag_comp_phase_i2_post @ m`, with PC strictly bounded by
+the `gs m` fragment's trailing-stop PC on every intermediate
+step.  The proof instantiates
+`compileFrag_comp_subBlock_gsBody_correct` at `i := m`, deriving
+the alignment to `URMState.init (frag_gs m).toURMProgram v` from
+Phase i.1's `gs_m_inputs` and `gs_m_other_zero` clauses via case
+analysis on `URMState.init`'s `find?` reduction.  The
+unchanged-outside-the-block clauses are re-derived through
+`stateEmbedsFrag_runFor_outside_preserved`. -/
+private theorem compileFrag_comp_subBlocks_partial_phase_i2
+    {k a : ℕ}
+    (frag_f : CompiledFragment k)
+    (gs : Fin k → ERMor1 a)
+    (v : Fin a → ℕ)
+    (m : Fin k)
+    (ih_gs_m : ∀ (v' : Fin a → ℕ),
+      ∃ T0 : ℕ,
+        T0 ≤ compileER_runtime (gs m) v' ∧
+        (URMState.runFor (compileER (gs m))
+              (URMState.init (compileER (gs m)) v') T0).pc
+            = (compileER (gs m)).instrs.size - 1 ∧
+        (URMState.runFor (compileER (gs m))
+              (URMState.init (compileER (gs m)) v') T0).regs
+            (compileER (gs m)).outputReg
+          = (gs m).interp v' ∧
+        (∀ k' < T0,
+          (URMState.runFor (compileER (gs m))
+              (URMState.init (compileER (gs m)) v') k').pc
+            < (compileER (gs m)).instrs.size - 1))
+    (sPre : URMState
+      (compileFrag_comp frag_f (fun i => compileERFrag (gs i))).toURMProgram)
+    (h_i1 : compileFrag_comp_phase_i1_post frag_f gs v m sPre) :
+    ∃ T0 : ℕ,
+      T0 ≤ compileER_runtime (gs m) v ∧
+      compileFrag_comp_phase_i2_post frag_f gs v m
+        (URMState.runFor
+          (compileFrag_comp frag_f (fun i => compileERFrag (gs i))).toURMProgram
+          sPre T0) ∧
+      (∀ k' < T0,
+        (URMState.runFor
+          (compileFrag_comp frag_f (fun i => compileERFrag (gs i))).toURMProgram
+          sPre k').pc
+          < compileFrag_comp_pcOf (fun i => compileERFrag (gs i)) m.val
+            + 9 * a + ((compileERFrag (gs m)).instrs.size - 1)) := by
+  -- Abbreviations matching `compileFrag_comp`.
+  let frag_gs : Fin k → CompiledFragment a :=
+    fun i => compileERFrag (gs i)
+  let outerFrag : CompiledFragment a :=
+    compileFrag_comp frag_f frag_gs
+  let P : URMProgram a := outerFrag.toURMProgram
+  let totalGsRegs : ℕ := gsPrefixSum frag_gs k
+  let fBase : ℕ := 2 + a + totalGsRegs
+  let tmpReg : ℕ := fBase + frag_f.numRegs
+  let gsBase_m : ℕ := 2 + a + gsPrefixSum frag_gs m.val
+  let pcBase_m : ℕ := compileFrag_comp_pcOf frag_gs m.val
+  let gsPcBase_m : ℕ := pcBase_m + 9 * a
+  -- Outer numRegs equals `tmpReg + 1`.
+  have h_numRegs_eq : P.numRegs = tmpReg + 1 := rfl
+  have h_numRegs_pos : 0 < P.numRegs := outerFrag.numRegs_pos
+  -- Layout facts.
+  have h_gsBlock_m :
+      gsBase_m + (frag_gs m).numRegs ≤ fBase := by
+    have hmono : gsPrefixSum frag_gs (m.val + 1)
+        ≤ gsPrefixSum frag_gs k :=
+      gsPrefixSum_mono frag_gs m.isLt
+    have hsucc :
+        gsPrefixSum frag_gs (m.val + 1)
+          = gsPrefixSum frag_gs m.val + (frag_gs m).numRegs :=
+      gsPrefixSum_succ_eq frag_gs m
+    change 2 + a + gsPrefixSum frag_gs m.val
+        + (frag_gs m).numRegs ≤ 2 + a + totalGsRegs
+    change _ ≤ gsPrefixSum frag_gs k at hmono
+    omega
+  have h_gsBase_m_ge : 2 + a ≤ gsBase_m := by
+    change 2 + a ≤ 2 + a + gsPrefixSum frag_gs m.val; omega
+  have h_tmp_lt : tmpReg < P.numRegs := by
+    rw [h_numRegs_eq]; omega
+  let tmpFin : Fin P.numRegs := ⟨tmpReg, h_tmp_lt⟩
+  -- frag_gs m and compileERFrag (gs m) are definitionally equal.
+  have frag_gs_m_eq : frag_gs m = compileERFrag (gs m) := rfl
+  -- Phase i.1 hypotheses.
+  have h_pc_pre : sPre.pc = pcBase_m + 9 * a := h_i1.pc_eq
+  -- Pre-state register values inside `gs m`'s block agree with
+  -- `URMState.init (frag_gs m).toURMProgram v`.
+  have h_pre_regs_in :
+      ∀ (r : Fin (frag_gs m).numRegs),
+        sPre.regs ⟨gsBase_m + r.val, by
+          have hmono : gsPrefixSum frag_gs (m.val + 1)
+              ≤ gsPrefixSum frag_gs k :=
+            gsPrefixSum_mono frag_gs m.isLt
+          have hsucc :
+              gsPrefixSum frag_gs (m.val + 1)
+                = gsPrefixSum frag_gs m.val + (frag_gs m).numRegs :=
+            gsPrefixSum_succ_eq frag_gs m
+          have hrLt : r.val < (frag_gs m).numRegs := r.isLt
+          change gsBase_m + r.val < _
+          change 2 + a + gsPrefixSum frag_gs m.val + r.val
+            < (2 + a + gsPrefixSum frag_gs k + frag_f.numRegs) + 1
+          omega⟩
+          = (URMState.init (frag_gs m).toURMProgram v).regs r := by
+    intro r
+    -- Reduce RHS via `URMState.init`'s definitional unfolding.
+    change _ =
+      (match (List.finRange a).find?
+          (fun j => decide ((frag_gs m).inputRegs j = r)) with
+        | some j => v j
+        | none   => 0)
+    cases hFind :
+        (List.finRange a).find?
+          (fun j => decide ((frag_gs m).inputRegs j = r)) with
+    | none =>
+      -- `r` is not in `inputRegs`'s image: phase_i1's gs_m_other_zero applies.
+      have h_not_input : ∀ j : Fin a, r ≠ (frag_gs m).inputRegs j := by
+        intro j hj
+        have h_mem : j ∈ List.finRange a := List.mem_finRange j
+        have h_dec : decide ((frag_gs m).inputRegs j = r) = true :=
+          decide_eq_true hj.symm
+        have h_ex := List.find?_eq_none.mp hFind j h_mem
+        rw [h_dec] at h_ex
+        exact absurd h_ex (by decide)
+      exact h_i1.gs_m_other_zero r h_not_input
+    | some j =>
+      -- `r = inputRegs j`: phase_i1's gs_m_inputs applies.
+      have h_eq : (frag_gs m).inputRegs j = r := by
+        have h_some := List.find?_some hFind
+        have : decide ((frag_gs m).inputRegs j = r) = true := h_some
+        exact of_decide_eq_true this
+      have h_rval : r.val = ((compileERFrag (gs m)).inputRegs j).val :=
+        (congrArg Fin.val h_eq).symm
+      -- Use h_i1.gs_m_inputs j, then identify the Fin index.
+      have h_inputs := h_i1.gs_m_inputs j
+      -- Both Fin indices have `.val = gsBase_m + r.val` so they're equal by Fin.ext.
+      have h_idx_eq :
+          (⟨2 + a +
+              gsPrefixSum (fun i => compileERFrag (gs i)) m.val
+              + ((compileERFrag (gs m)).inputRegs j).val, by
+            have hI : ((compileERFrag (gs m)).inputRegs j).val
+                < (compileERFrag (gs m)).numRegs :=
+              ((compileERFrag (gs m)).inputRegs j).isLt
+            have hmono :
+                gsPrefixSum (fun i => compileERFrag (gs i)) (m.val + 1)
+                  ≤ gsPrefixSum (fun i => compileERFrag (gs i)) k :=
+              gsPrefixSum_mono _ m.isLt
+            have hsucc :
+                gsPrefixSum (fun i => compileERFrag (gs i)) (m.val + 1)
+                  = gsPrefixSum (fun i => compileERFrag (gs i)) m.val
+                    + (compileERFrag (gs m)).numRegs :=
+              gsPrefixSum_succ_eq _ m
+            change _ < 2 + a +
+              gsPrefixSum (fun i => compileERFrag (gs i)) k
+              + frag_f.numRegs + 1
+            omega⟩ : Fin P.numRegs)
+          = ⟨gsBase_m + r.val, by
+            have hmono : gsPrefixSum frag_gs (m.val + 1)
+                ≤ gsPrefixSum frag_gs k :=
+              gsPrefixSum_mono frag_gs m.isLt
+            have hsucc :
+                gsPrefixSum frag_gs (m.val + 1)
+                  = gsPrefixSum frag_gs m.val + (frag_gs m).numRegs :=
+              gsPrefixSum_succ_eq frag_gs m
+            have hrLt : r.val < (frag_gs m).numRegs := r.isLt
+            change gsBase_m + r.val < _
+            change 2 + a + gsPrefixSum frag_gs m.val + r.val
+              < (2 + a + gsPrefixSum frag_gs k + frag_f.numRegs) + 1
+            omega⟩ := by
+        apply Fin.ext
+        change 2 + a + gsPrefixSum frag_gs m.val
+            + ((compileERFrag (gs m)).inputRegs j).val
+          = 2 + a + gsPrefixSum frag_gs m.val + r.val
+        omega
+      rw [h_idx_eq] at h_inputs
+      exact h_inputs
+  -- Embedding of `frag_gs m`'s body inside the outer program.
+  have h_emb_prog :
+      ProgramEmbedsFragment P (frag_gs m) gsBase_m gsPcBase_m
+        ((frag_gs m).instrs.size - 1) :=
+    ProgramEmbedsFragment_compileFrag_comp_gsBody frag_f frag_gs m
+  set f_init : URMState (frag_gs m).toURMProgram :=
+    URMState.init (frag_gs m).toURMProgram v
+  have h_state_emb :
+      StateEmbedsFrag sPre f_init gsBase_m gsPcBase_m h_emb_prog.hReg := by
+    refine ⟨?_, ?_⟩
+    · change sPre.pc = gsPcBase_m + 0
+      rw [Nat.add_zero]; exact h_pc_pre
+    · intro j hj
+      exact h_pre_regs_in ⟨j, hj⟩
+  -- IH for `gs m` at input `v`, recast to `(frag_gs m).toURMProgram`.
+  -- `compileER (gs m)` = `(compileERFrag (gs m)).toURMProgram`
+  -- = `(frag_gs m).toURMProgram` (all defeq).
+  have ih_frag : ∃ T0 : ℕ,
+      T0 ≤ compileER_runtime (gs m) v ∧
+      (URMState.runFor (frag_gs m).toURMProgram
+          f_init T0).pc = (frag_gs m).instrs.size - 1 ∧
+      (URMState.runFor (frag_gs m).toURMProgram
+          f_init T0).regs (frag_gs m).outputReg = (gs m).interp v ∧
+      (∀ k' < T0,
+        (URMState.runFor (frag_gs m).toURMProgram
+            f_init k').pc < (frag_gs m).instrs.size - 1) := ih_gs_m v
+  obtain ⟨T0, hT0_le, h_pc_inner, h_out_inner, h_f_strict⟩ := ih_frag
+  -- State embedding after `T0` steps.
+  have h_emb_after :
+      StateEmbedsFrag (URMState.runFor P sPre T0)
+          (URMState.runFor (frag_gs m).toURMProgram f_init T0)
+          gsBase_m gsPcBase_m h_emb_prog.hReg :=
+    stateEmbedsFrag_runFor P (frag_gs m)
+      gsBase_m gsPcBase_m ((frag_gs m).instrs.size - 1)
+      h_emb_prog sPre f_init h_state_emb T0 h_f_strict
+  obtain ⟨h_pc_after, h_regs_after⟩ := h_emb_after
+  -- Outside-the-block register preservation after T0 steps.
+  have h_outside_preserved :
+      ∀ (r : Fin P.numRegs),
+        r.val < gsBase_m ∨ gsBase_m + (frag_gs m).numRegs ≤ r.val →
+        (URMState.runFor P sPre T0).regs r = sPre.regs r := by
+    intro r h_out
+    exact stateEmbedsFrag_runFor_outside_preserved P (frag_gs m)
+      sPre f_init gsBase_m gsPcBase_m ((frag_gs m).instrs.size - 1)
+      h_emb_prog h_state_emb T0 h_f_strict r h_out
+  -- Bind phase_i1 hypotheses for later subgoals.
+  have h_zReg_pre := h_i1.zReg_zero
+  have h_outer_inputs_pre := h_i1.outer_inputs
+  have h_f_input_slots_pre := h_i1.f_input_slots
+  have h_gs_outputs_zero_pre := h_i1.gs_outputs_zero
+  have h_gs_blocks_untouched_pre := h_i1.gs_blocks_untouched
+  have h_f_body_zero_pre := h_i1.f_body_zero
+  have h_tmp_pre := h_i1.tmp_zero
+  refine ⟨T0, hT0_le, ?_, ?_⟩
+  · -- compileFrag_comp_phase_i2_post.
+    refine
+      { pc_eq := ?_
+        zReg_zero := ?_
+        outer_inputs := ?_
+        f_input_slots := ?_
+        gs_outputs_zero := ?_
+        gs_m_output := ?_
+        gs_blocks_untouched := ?_
+        f_body_zero := ?_
+        tmp_zero := ?_ }
+    · -- pc_eq: PC after T0 = gsPcBase_m + (size - 1) = pcBase_m + 9*a + (size - 1).
+      rw [h_pc_after, h_pc_inner]
+    · -- zReg_zero: register 0 < gsBase_m.
+      let z : Fin P.numRegs := ⟨0, h_numRegs_pos⟩
+      have h_out : z.val < gsBase_m ∨ gsBase_m + (frag_gs m).numRegs ≤ z.val := by
+        left; change 0 < gsBase_m
+        have : 2 + a ≤ gsBase_m := h_gsBase_m_ge
+        omega
+      have h_pres := h_outside_preserved z h_out
+      have h_idx_eq :
+          (⟨0, (compileFrag_comp frag_f
+              (fun i => compileERFrag (gs i))).numRegs_pos⟩ : Fin P.numRegs)
+            = z :=
+        Fin.ext rfl
+      rw [h_idx_eq, h_pres]; exact h_zReg_pre
+    · -- outer_inputs: each `2 + j.val < 2 + a ≤ gsBase_m`.
+      intro j
+      let r : Fin P.numRegs := ⟨2 + j.val, by
+        have hj : j.val < a := j.isLt
+        rw [h_numRegs_eq]; change 2 + j.val < tmpReg + 1
+        change _ < ((2 + a + totalGsRegs) + frag_f.numRegs) + 1
+        omega⟩
+      have h_out : r.val < gsBase_m ∨ gsBase_m + (frag_gs m).numRegs ≤ r.val := by
+        left
+        have hj : j.val < a := j.isLt
+        change 2 + j.val < 2 + a + gsPrefixSum frag_gs m.val
+        omega
+      have h_pres := h_outside_preserved r h_out
+      have h_idx_eq :
+          (⟨2 + j.val, by
+            have hj : j.val < a := j.isLt
+            change _ < 2 + a +
+              gsPrefixSum (fun i => compileERFrag (gs i)) k
+              + frag_f.numRegs + 1
+            omega⟩ : Fin P.numRegs) = r :=
+        Fin.ext rfl
+      rw [h_idx_eq, h_pres]
+      exact h_outer_inputs_pre j
+    · -- f_input_slots i (i.val < m.val).
+      intro i hi
+      have hI : (frag_f.inputRegs i).val < frag_f.numRegs :=
+        (frag_f.inputRegs i).isLt
+      let r : Fin P.numRegs :=
+        ⟨2 + a + totalGsRegs + (frag_f.inputRegs i).val, by
+          rw [h_numRegs_eq]
+          change _ < ((2 + a + totalGsRegs) + frag_f.numRegs) + 1
+          omega⟩
+      have h_out : r.val < gsBase_m ∨ gsBase_m + (frag_gs m).numRegs ≤ r.val := by
+        right
+        have h_le : gsBase_m + (frag_gs m).numRegs ≤ fBase := h_gsBlock_m
+        change (2 + a + gsPrefixSum frag_gs m.val) + (frag_gs m).numRegs
+            ≤ 2 + a + totalGsRegs + (frag_f.inputRegs i).val
+        change _ ≤ 2 + a + totalGsRegs at h_le
+        omega
+      have h_pres := h_outside_preserved r h_out
+      have h_idx_eq :
+          (⟨2 + a +
+              gsPrefixSum (fun i => compileERFrag (gs i)) k
+              + (frag_f.inputRegs i).val, by
+            have hI' : (frag_f.inputRegs i).val < frag_f.numRegs :=
+              (frag_f.inputRegs i).isLt
+            change _ < 2 + a +
+              gsPrefixSum (fun i => compileERFrag (gs i)) k
+              + frag_f.numRegs + 1
+            omega⟩ : Fin P.numRegs) = r :=
+        Fin.ext rfl
+      rw [h_idx_eq, h_pres]
+      exact h_f_input_slots_pre i hi
+    · -- gs_outputs_zero i (i.val < m.val).
+      intro i hi
+      have hO : ((compileERFrag (gs i)).outputReg).val
+          < (compileERFrag (gs i)).numRegs :=
+        ((compileERFrag (gs i)).outputReg).isLt
+      have h_aux_mono : ∀ (n n' : ℕ), n ≤ n' →
+          gsPrefixSum frag_gs n ≤ gsPrefixSum frag_gs n' := by
+        intro n n' h
+        induction h with
+        | refl => exact Nat.le_refl _
+        | step h_le ih =>
+          rename_i n''
+          refine Nat.le_trans ih ?_
+          change gsPrefixSum frag_gs n'' ≤ gsPrefixSum frag_gs n''
+              + (if h : n'' < k then (frag_gs ⟨n'', h⟩).numRegs else 0)
+          omega
+      have hsucc_i : gsPrefixSum frag_gs (i.val + 1)
+          = gsPrefixSum frag_gs i.val + (frag_gs i).numRegs :=
+        gsPrefixSum_succ_eq frag_gs i
+      have hmono_top : gsPrefixSum frag_gs (i.val + 1)
+          ≤ gsPrefixSum frag_gs k :=
+        gsPrefixSum_mono frag_gs i.isLt
+      have hO_frag : ((compileERFrag (gs i)).outputReg).val
+          < (frag_gs i).numRegs := hO
+      let r : Fin P.numRegs :=
+        ⟨2 + a + gsPrefixSum frag_gs i.val
+          + ((compileERFrag (gs i)).outputReg).val, by
+          rw [h_numRegs_eq]
+          change _ < ((2 + a + totalGsRegs) + frag_f.numRegs) + 1
+          change _ ≤ gsPrefixSum frag_gs k at hmono_top
+          omega⟩
+      have h_out : r.val < gsBase_m ∨ gsBase_m + (frag_gs m).numRegs ≤ r.val := by
+        left
+        -- For i.val < m.val: gsPrefixSum frag_gs (i+1) ≤ gsPrefixSum frag_gs m.val.
+        have h_i_lt_m : i.val + 1 ≤ m.val := hi
+        have h_mono_le :
+            gsPrefixSum frag_gs (i.val + 1)
+              ≤ gsPrefixSum frag_gs m.val :=
+          h_aux_mono _ _ h_i_lt_m
+        change 2 + a + gsPrefixSum frag_gs i.val
+            + ((compileERFrag (gs i)).outputReg).val
+          < 2 + a + gsPrefixSum frag_gs m.val
+        omega
+      have h_pres := h_outside_preserved r h_out
+      have h_idx_eq :
+          (⟨2 + a +
+              gsPrefixSum (fun j => compileERFrag (gs j)) i.val
+              + ((compileERFrag (gs i)).outputReg).val,
+            by
+              have hO' : ((compileERFrag (gs i)).outputReg).val
+                  < (compileERFrag (gs i)).numRegs :=
+                ((compileERFrag (gs i)).outputReg).isLt
+              have hmono' :
+                  gsPrefixSum (fun j => compileERFrag (gs j)) (i.val + 1)
+                    ≤ gsPrefixSum (fun j => compileERFrag (gs j)) k :=
+                gsPrefixSum_mono _ i.isLt
+              have hsucc' :
+                  gsPrefixSum (fun j => compileERFrag (gs j)) (i.val + 1)
+                    = gsPrefixSum (fun j => compileERFrag (gs j)) i.val
+                      + (compileERFrag (gs i)).numRegs :=
+                gsPrefixSum_succ_eq _ i
+              change _ < 2 + a +
+                gsPrefixSum (fun j => compileERFrag (gs j)) k
+                + frag_f.numRegs + 1
+              omega⟩ : Fin P.numRegs) = r :=
+        Fin.ext rfl
+      rw [h_idx_eq, h_pres]
+      exact h_gs_outputs_zero_pre i hi
+    · -- gs_m_output: gs m's reindexed outputReg holds (gs m).interp v.
+      have hOutLt : ((frag_gs m).outputReg).val < (frag_gs m).numRegs :=
+        ((frag_gs m).outputReg).isLt
+      have h_inner_idx :
+          (⟨((frag_gs m).outputReg).val, hOutLt⟩ : Fin (frag_gs m).numRegs)
+            = (frag_gs m).outputReg := Fin.ext rfl
+      have h_eq := h_regs_after ((frag_gs m).outputReg).val hOutLt
+      rw [h_inner_idx] at h_eq
+      have h_idx_eq :
+          (⟨2 + a +
+              gsPrefixSum (fun i => compileERFrag (gs i)) m.val
+              + ((compileERFrag (gs m)).outputReg).val, by
+            have hO : ((compileERFrag (gs m)).outputReg).val
+                < (compileERFrag (gs m)).numRegs :=
+              ((compileERFrag (gs m)).outputReg).isLt
+            have hmono :
+                gsPrefixSum (fun i => compileERFrag (gs i)) (m.val + 1)
+                  ≤ gsPrefixSum (fun i => compileERFrag (gs i)) k :=
+              gsPrefixSum_mono _ m.isLt
+            have hsucc :
+                gsPrefixSum (fun i => compileERFrag (gs i)) (m.val + 1)
+                  = gsPrefixSum (fun i => compileERFrag (gs i)) m.val
+                    + (compileERFrag (gs m)).numRegs :=
+              gsPrefixSum_succ_eq _ m
+            change _ < 2 + a +
+              gsPrefixSum (fun i => compileERFrag (gs i)) k
+              + frag_f.numRegs + 1
+            omega⟩ : Fin P.numRegs)
+          = ⟨gsBase_m + ((frag_gs m).outputReg).val, by
+            have hmono : gsPrefixSum frag_gs (m.val + 1)
+                ≤ gsPrefixSum frag_gs k :=
+              gsPrefixSum_mono frag_gs m.isLt
+            have hsucc :
+                gsPrefixSum frag_gs (m.val + 1)
+                  = gsPrefixSum frag_gs m.val + (frag_gs m).numRegs :=
+              gsPrefixSum_succ_eq frag_gs m
+            rw [h_numRegs_eq]
+            change gsBase_m + ((frag_gs m).outputReg).val < tmpReg + 1
+            change _ < ((2 + a + totalGsRegs) + frag_f.numRegs) + 1
+            change _ ≤ gsPrefixSum frag_gs k at hmono
+            change 2 + a + gsPrefixSum frag_gs m.val
+                + ((frag_gs m).outputReg).val < _
+            omega⟩ :=
+        Fin.ext rfl
+      rw [h_idx_eq, h_eq]
+      change (URMState.runFor (frag_gs m).toURMProgram f_init T0).regs
+          (frag_gs m).outputReg = (gs m).interp v
+      exact h_out_inner
+    · -- gs_blocks_untouched (m.val < i.val).
+      intro i hi r
+      have hr : r.val < (compileERFrag (gs i)).numRegs := r.isLt
+      have h_aux_mono : ∀ (n n' : ℕ), n ≤ n' →
+          gsPrefixSum frag_gs n ≤ gsPrefixSum frag_gs n' := by
+        intro n n' h
+        induction h with
+        | refl => exact Nat.le_refl _
+        | step h_le ih =>
+          rename_i n''
+          refine Nat.le_trans ih ?_
+          change gsPrefixSum frag_gs n'' ≤ gsPrefixSum frag_gs n''
+              + (if h : n'' < k then (frag_gs ⟨n'', h⟩).numRegs else 0)
+          omega
+      have hmono_top : gsPrefixSum frag_gs (i.val + 1)
+          ≤ gsPrefixSum frag_gs k :=
+        gsPrefixSum_mono frag_gs i.isLt
+      have hsucc_i : gsPrefixSum frag_gs (i.val + 1)
+          = gsPrefixSum frag_gs i.val + (frag_gs i).numRegs :=
+        gsPrefixSum_succ_eq frag_gs i
+      have hr_frag : r.val < (frag_gs i).numRegs := hr
+      let R : Fin P.numRegs :=
+        ⟨2 + a + gsPrefixSum frag_gs i.val + r.val, by
+          rw [h_numRegs_eq]
+          change _ < ((2 + a + totalGsRegs) + frag_f.numRegs) + 1
+          change _ ≤ gsPrefixSum frag_gs k at hmono_top
+          omega⟩
+      have h_above :
+          gsPrefixSum frag_gs m.val + (frag_gs m).numRegs
+            ≤ gsPrefixSum frag_gs i.val := by
+        have h_step :
+            gsPrefixSum frag_gs (m.val + 1)
+              = gsPrefixSum frag_gs m.val + (frag_gs m).numRegs :=
+          gsPrefixSum_succ_eq frag_gs m
+        have := h_aux_mono (m.val + 1) i.val hi
+        omega
+      have h_out : R.val < gsBase_m ∨ gsBase_m + (frag_gs m).numRegs ≤ R.val := by
+        right
+        change (2 + a + gsPrefixSum frag_gs m.val) + (frag_gs m).numRegs
+            ≤ 2 + a + gsPrefixSum frag_gs i.val + r.val
+        omega
+      have h_pres := h_outside_preserved R h_out
+      have h_idx_eq :
+          (⟨2 + a +
+              gsPrefixSum (fun j => compileERFrag (gs j)) i.val
+              + r.val, by
+            have hr' : r.val < (compileERFrag (gs i)).numRegs := r.isLt
+            have hmono' :
+                gsPrefixSum (fun j => compileERFrag (gs j)) (i.val + 1)
+                  ≤ gsPrefixSum (fun j => compileERFrag (gs j)) k :=
+              gsPrefixSum_mono _ i.isLt
+            have hsucc' :
+                gsPrefixSum (fun j => compileERFrag (gs j)) (i.val + 1)
+                  = gsPrefixSum (fun j => compileERFrag (gs j)) i.val
+                    + (compileERFrag (gs i)).numRegs :=
+              gsPrefixSum_succ_eq _ i
+            change _ < 2 + a +
+              gsPrefixSum (fun j => compileERFrag (gs j)) k
+              + frag_f.numRegs + 1
+            omega⟩ : Fin P.numRegs) = R :=
+        Fin.ext rfl
+      rw [h_idx_eq, h_pres]
+      exact h_gs_blocks_untouched_pre i hi r
+    · -- f_body_zero.
+      intro r h_not_input
+      have hr : r.val < frag_f.numRegs := r.isLt
+      let R : Fin P.numRegs :=
+        ⟨2 + a + totalGsRegs + r.val, by
+          rw [h_numRegs_eq]
+          change _ < ((2 + a + totalGsRegs) + frag_f.numRegs) + 1
+          omega⟩
+      have h_out : R.val < gsBase_m ∨ gsBase_m + (frag_gs m).numRegs ≤ R.val := by
+        right
+        have h_le : gsBase_m + (frag_gs m).numRegs ≤ fBase := h_gsBlock_m
+        change (2 + a + gsPrefixSum frag_gs m.val) + (frag_gs m).numRegs
+            ≤ 2 + a + totalGsRegs + r.val
+        change _ ≤ 2 + a + totalGsRegs at h_le
+        omega
+      have h_pres := h_outside_preserved R h_out
+      have h_idx_eq :
+          (⟨2 + a +
+              gsPrefixSum (fun j => compileERFrag (gs j)) k
+              + r.val, by
+            have hr' : r.val < frag_f.numRegs := r.isLt
+            change _ < 2 + a +
+              gsPrefixSum (fun j => compileERFrag (gs j)) k
+              + frag_f.numRegs + 1
+            omega⟩ : Fin P.numRegs) = R :=
+        Fin.ext rfl
+      rw [h_idx_eq, h_pres]
+      exact h_f_body_zero_pre r h_not_input
+    · -- tmp_zero.
+      have h_out : tmpFin.val < gsBase_m ∨ gsBase_m + (frag_gs m).numRegs ≤ tmpFin.val := by
+        right
+        have h_le : gsBase_m + (frag_gs m).numRegs ≤ fBase := h_gsBlock_m
+        change _ ≤ 2 + a + totalGsRegs at h_le
+        change (2 + a + gsPrefixSum frag_gs m.val) + (frag_gs m).numRegs
+            ≤ (2 + a + totalGsRegs) + frag_f.numRegs
+        omega
+      have h_pres := h_outside_preserved tmpFin h_out
+      have h_idx_eq :
+          (⟨2 + a +
+              gsPrefixSum (fun j => compileERFrag (gs j)) k
+              + frag_f.numRegs, by
+            change _ < 2 + a +
+              gsPrefixSum (fun j => compileERFrag (gs j)) k
+              + frag_f.numRegs + 1
+            omega⟩ : Fin P.numRegs) = tmpFin :=
+        Fin.ext rfl
+      rw [h_idx_eq, h_pres]
+      exact h_tmp_pre
+  · -- Per-step strict PC bound on the outer side.
+    intro k' hk'
+    -- Build state embedding at step k' (k' < T0).
+    have h_f_strict_k' :
+        ∀ k'' < k', (URMState.runFor (frag_gs m).toURMProgram
+          f_init k'').pc < (frag_gs m).instrs.size - 1 := by
+      intro k'' hk''
+      exact h_f_strict k'' (Nat.lt_trans hk'' hk')
+    have h_emb_k' :
+        StateEmbedsFrag (URMState.runFor P sPre k')
+            (URMState.runFor (frag_gs m).toURMProgram f_init k')
+            gsBase_m gsPcBase_m h_emb_prog.hReg :=
+      stateEmbedsFrag_runFor P (frag_gs m)
+        gsBase_m gsPcBase_m ((frag_gs m).instrs.size - 1)
+        h_emb_prog sPre f_init h_state_emb k' h_f_strict_k'
+    obtain ⟨h_pc_k', _⟩ := h_emb_k'
+    rw [h_pc_k']
+    have h_frag_k' := h_f_strict k' hk'
+    have h_size_eq : (frag_gs m).instrs.size = (compileERFrag (gs m)).instrs.size := rfl
+    change gsPcBase_m + _ < pcBase_m + 9 * a + _
+    change pcBase_m + 9 * a + _ < pcBase_m + 9 * a + _
+    omega
+
 end LawvereERKSim
 
 end GebLean
