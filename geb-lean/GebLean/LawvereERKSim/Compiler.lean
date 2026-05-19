@@ -45,6 +45,10 @@ in sibling submodules under `GebLean/LawvereERKSim/`.
 - `boundedBy_preservingTransfer`, `boundedBy_transferLoop`,
   `boundedBy_compileFrag_comp_subBlock`, `boundedBy_bsum_prologueBlock`,
   `boundedBy_bsum_zeroSweep`: per-emission-helper register-bound theorems.
+- `compileFrag_comp_subBlock_length`: instruction-count breakdown of
+  `compileFrag_comp_subBlock`'s three phases.
+- `flatMap_finRange_split`: locates the i-th sub-block inside
+  `(List.finRange k).flatMap f` for `compileFrag_comp` indexing.
 
 ## References
 
@@ -1450,6 +1454,153 @@ def compileER_runtime : {a : ℕ} → ERMor1 a →
       40 + 10 * bound +
         ((List.range bound).map perIter).foldl (· + ·) 0
 
+/-- Length of one `compileFrag_comp_subBlock`: `9 * a`
+input-copy instructions (`a` invocations of
+`preservingTransfer`), plus `(frag_gs i).instrs.size - 1`
+body instructions (the dropped trailing stop), plus 4
+`transferLoop` instructions. -/
+theorem compileFrag_comp_subBlock_length {k a : ℕ}
+    (frag_f : CompiledFragment k)
+    (frag_gs : Fin k → CompiledFragment a)
+    (gsBase fBase tmpReg : ℕ) (i : Fin k) (pcBase : ℕ) :
+    (compileFrag_comp_subBlock frag_f frag_gs
+        gsBase fBase tmpReg i pcBase).length
+      = 9 * a + ((frag_gs i).instrs.size - 1) + 4 := by
+  unfold compileFrag_comp_subBlock
+  simp only [List.length_append, List.length_flatMap,
+    List.length_map, Array.length_toList, Array.size_pop]
+  -- Sum of constant `9` over `List.finRange a` equals `9 * a`.
+  have h_inputCopies :
+      (List.map (fun j : Fin a =>
+        (URMRaw.preservingTransfer (pcBase + 9 * j.val)
+          (2 + j.val) (gsBase + ((frag_gs i).inputRegs j).val)
+          tmpReg).length) (List.finRange a)).sum
+        = 9 * a := by
+    have h_each : ∀ j : Fin a,
+        (URMRaw.preservingTransfer (pcBase + 9 * j.val)
+          (2 + j.val) (gsBase + ((frag_gs i).inputRegs j).val)
+          tmpReg).length = 9 := fun _ => rfl
+    rw [List.map_congr_left (fun j _ => h_each j)]
+    rw [show (fun _ : Fin a => 9)
+        = Function.const (Fin a) 9 from rfl,
+      List.map_const, List.sum_replicate_nat,
+      List.length_finRange]
+    exact Nat.mul_comm a 9
+  -- `transferLoop` has length 4.
+  have h_transfer :
+      (URMRaw.transferLoop
+        ((pcBase + 9 * a) + ((frag_gs i).instrs.size - 1))
+        (gsBase + ((frag_gs i).outputReg).val)
+        (fBase + (frag_f.inputRegs i).val)).length = 4 := rfl
+  rw [h_inputCopies, h_transfer]
+
+/-- Splitting `(List.finRange k).flatMap f` around a chosen
+index `i : Fin k`: there exist prefix and suffix lists with
+the whole equal to `prefix ++ f i ++ suffix`, and the prefix
+length equals the foldr over predecessors of `i`. Used to
+locate the `i`-th sub-block inside `subBlocks` of
+`compileFrag_comp`. -/
+theorem flatMap_finRange_split {α : Type*}
+    (k : ℕ) (f : Fin k → List α) (i : Fin k) :
+    ∃ pre suf : List α,
+      (List.finRange k).flatMap f = pre ++ f i ++ suf ∧
+      pre.length = ((List.finRange k).filter
+        (fun j => decide (j.val < i.val))).foldr
+          (fun j acc => acc + (f j).length) 0 := by
+  -- Strengthen the statement so we can substitute i.val cleanly.
+  suffices h_strong : ∀ (k : ℕ) (f : Fin k → List α) (n : ℕ)
+      (hn : n < k),
+      ∃ pre suf : List α,
+        (List.finRange k).flatMap f
+          = pre ++ f ⟨n, hn⟩ ++ suf ∧
+        pre.length = ((List.finRange k).filter
+          (fun j => decide (j.val < n))).foldr
+            (fun j acc => acc + (f j).length) 0 by
+    obtain ⟨pre, suf, h_eq, h_len⟩ := h_strong k f i.val i.isLt
+    refine ⟨pre, suf, ?_, h_len⟩
+    have hi_eq : i = ⟨i.val, i.isLt⟩ := rfl
+    rw [hi_eq.symm] at h_eq
+    exact h_eq
+  clear i k f
+  intro k f n hn
+  induction k generalizing n with
+  | zero => exact absurd hn (Nat.not_lt_zero _)
+  | succ k' ih =>
+    match n, hn with
+    | 0, hn =>
+      refine ⟨[], (List.map (Fin.succ) (List.finRange k')).flatMap f,
+        ?_, ?_⟩
+      · rw [List.finRange_succ, List.flatMap_cons, List.nil_append]
+        rfl
+      · rw [List.length_nil, List.finRange_succ]
+        -- Filter on (· .val < 0) over Fin (k'+1) is empty.
+        have h_filter_all :
+            ((0 :: List.map Fin.succ (List.finRange k')) :
+                List (Fin (k' + 1))).filter
+                (fun j => decide (j.val < 0))
+              = [] := by
+          induction (0 :: List.map Fin.succ (List.finRange k') :
+              List (Fin (k' + 1))) with
+          | nil => rfl
+          | cons hd tl ih_inner =>
+            rw [List.filter_cons]
+            have h_dec : decide (hd.val < 0) = false :=
+              decide_eq_false (Nat.not_lt_zero _)
+            rw [if_neg (by rw [h_dec]; decide)]
+            exact ih_inner
+        rw [h_filter_all]
+        rfl
+    | n + 1, hn =>
+      have hn' : n < k' := Nat.lt_of_succ_lt_succ hn
+      obtain ⟨pre, suf, h_eq, h_len⟩ :=
+        ih (fun y => f y.succ) n hn'
+      have h0_lt : (0 : ℕ) < k' + 1 := Nat.succ_pos _
+      refine ⟨f ⟨0, h0_lt⟩ ++ pre, suf, ?_, ?_⟩
+      · rw [List.finRange_succ, List.flatMap_cons]
+        have h_flatmap_map :
+            (List.map (Fin.succ) (List.finRange k')).flatMap f
+              = (List.finRange k').flatMap (fun y => f y.succ) :=
+          List.flatMap_map _ _ _
+        rw [h_flatmap_map, h_eq]
+        -- f ⟨n, hn'⟩.succ = f ⟨n + 1, hn⟩
+        have h_succ_eq : (⟨n, hn'⟩ : Fin k').succ = ⟨n + 1, hn⟩ := by
+          apply Fin.ext; rfl
+        change f ⟨0, h0_lt⟩
+            ++ (pre ++ f (⟨n, hn'⟩ : Fin k').succ ++ suf)
+          = (f ⟨0, h0_lt⟩ ++ pre) ++ f ⟨n + 1, hn⟩ ++ suf
+        rw [h_succ_eq]
+        simp only [List.append_assoc]
+      · rw [List.length_append, h_len, List.finRange_succ]
+        have h_filter_eq :
+            ((0 :: List.map Fin.succ (List.finRange k')) :
+                List (Fin (k' + 1))).filter
+                (fun j => decide (j.val < n + 1))
+              = 0 :: List.map Fin.succ
+                  ((List.finRange k').filter
+                    (fun y => decide (y.val < n))) := by
+          rw [List.filter_cons]
+          have h_zero_lt : decide ((0 : Fin (k' + 1)).val < n + 1) = true :=
+            decide_eq_true (Nat.succ_pos _)
+          rw [if_pos h_zero_lt]
+          congr 1
+          rw [List.filter_map]
+          -- Filter is on a `map`; first establish predicate equivalence.
+          have h_pred_eq :
+              ((fun j : Fin (k' + 1) =>
+                  decide (j.val < n + 1)) ∘ Fin.succ)
+                = (fun y : Fin k' => decide (y.val < n)) := by
+            funext y
+            change decide (y.val + 1 < n + 1) = decide (y.val < n)
+            rcases Nat.lt_or_ge y.val n with h | h
+            · rw [decide_eq_true (Nat.succ_lt_succ h),
+                decide_eq_true h]
+            · rw [decide_eq_false (Nat.not_lt.mpr (Nat.succ_le_succ h)),
+                decide_eq_false (Nat.not_lt.mpr h)]
+          rw [h_pred_eq]
+        rw [h_filter_eq, List.foldr_cons, List.foldr_map]
+        have h_f_eq : f 0 = f ⟨0, h0_lt⟩ := rfl
+        rw [h_f_eq]
+        omega
 
 end LawvereERKSim
 end GebLean
