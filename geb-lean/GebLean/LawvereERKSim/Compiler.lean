@@ -157,7 +157,7 @@ private theorem URMInstrRaw.toBoundedArray_back?_of_last_stopR
   rfl
 
 /-- The size of `toBoundedArray r l h` equals `l.length`. -/
-private theorem URMInstrRaw.toBoundedArray_size
+theorem URMInstrRaw.toBoundedArray_size
     (r : ℕ) (l : List URMInstrRaw)
     (h : URMInstrRaw.boundedBy r l) :
     (URMInstrRaw.toBoundedArray r l h).size = l.length := by
@@ -1101,6 +1101,86 @@ def compileFrag_bsum {k : ℕ}
     lastInstr_isStop :=
       URMInstrRaw.toBoundedArray_back?_of_last_stopR hBound
         hLastStopR }
+
+/-- Total size of `compileFrag_bsum`'s emitted instruction
+array, expressed as the sum of segment lengths
+`prelude (13) + loopTop (2) + zeroSweep (frag_f.numRegs)
++ prologue (9 * (k + 1)) + fBody (frag_f.instrs.size - 1)
++ accUpdate (4) + epilogue (3)`. The PC-layout constants
+`bsum_trBase`, `bsum_incIPC`, `bsum_gotoTopPC`, and
+`bsum_exitPC` (in `BSum.lean`) are derived from this
+identity. -/
+theorem compileFrag_bsum_size {k : ℕ}
+    (frag_f : CompiledFragment (k + 1)) :
+    (compileFrag_bsum frag_f).instrs.size
+      = 15 + frag_f.numRegs + 9 * (k + 1)
+        + (frag_f.instrs.size - 1) + 4 + 3 := by
+  rw [show (compileFrag_bsum frag_f).instrs
+      = URMInstrRaw.toBoundedArray _ _ _ from rfl,
+    URMInstrRaw.toBoundedArray_size]
+  -- The `let`-bindings inside `compileFrag_bsum` are reducible;
+  -- expand `rawList` into the explicit append form.
+  change (([URMInstrRaw.assignR 0 0, URMInstrRaw.assignR 1 0,
+      URMInstrRaw.assignR (k + 3) 0, URMInstrRaw.assignR (k + 4) 0]
+        ++ URMRaw.preservingTransfer 4 2 (k + 3) (k + 6))
+      ++ [URMInstrRaw.jumpZR (k + 3)
+            (15 + frag_f.numRegs + 9 * (k + 1)
+              + (frag_f.instrs.size - 1) + 6) 14,
+          URMInstrRaw.decR (k + 3)]
+      ++ bsum_zeroSweep frag_f (k + 7)
+      ++ ((List.finRange (k + 1)).flatMap fun s =>
+            URMRaw.preservingTransfer
+              (15 + frag_f.numRegs + 9 * s.val)
+              (if s.val = 0 then k + 4 else s.val + 2)
+              (k + 7 + (frag_f.inputRegs s).val) (k + 5))
+      ++ (frag_f.instrs.pop.toList.map fun ins =>
+            URMInstrRaw.reindexShift (k + 7)
+              (15 + frag_f.numRegs + 9 * (k + 1))
+              (toRawOfBounded ins))
+      ++ URMRaw.transferLoop
+          (15 + frag_f.numRegs + 9 * (k + 1)
+            + (frag_f.instrs.size - 1))
+          (k + 7 + (frag_f.outputReg).val) 1
+      ++ [URMInstrRaw.incR (k + 4),
+          URMRaw.goto 13, URMInstrRaw.stopR]).length = _
+  -- Sum up segment lengths.
+  have h_prologue_block_len : ∀ s : Fin (k + 1),
+      (URMRaw.preservingTransfer
+          (15 + frag_f.numRegs + 9 * (s.val : ℕ))
+          (if (s.val : ℕ) = 0 then k + 4 else (s.val : ℕ) + 2)
+          (k + 7 + ((frag_f.inputRegs s).val : ℕ)) (k + 5)).length
+        = 9 := by
+    intro _
+    simp only [URMRaw.preservingTransfer, URMRaw.goto,
+      List.length_cons, List.length_nil]
+  have h_prologue_len :
+      ((List.finRange (k + 1)).flatMap fun s =>
+          URMRaw.preservingTransfer
+            (15 + frag_f.numRegs + 9 * (s.val : ℕ))
+            (if (s.val : ℕ) = 0 then k + 4 else (s.val : ℕ) + 2)
+            (k + 7 + ((frag_f.inputRegs s).val : ℕ))
+            (k + 5)).length
+        = 9 * (k + 1) := by
+    rw [List.length_flatMap, List.map_congr_left
+      (fun s _ => h_prologue_block_len s)]
+    rw [List.map_const', List.length_finRange,
+      List.sum_replicate_nat, Nat.mul_comm]
+  have h_prelude_pT_len : (URMRaw.preservingTransfer 4 2 (k + 3)
+      (k + 6)).length = 9 := by
+    simp only [URMRaw.preservingTransfer, URMRaw.goto,
+      List.length_cons, List.length_nil]
+  have h_accUpdate_len :
+      (URMRaw.transferLoop
+          (15 + frag_f.numRegs + 9 * (k + 1)
+            + (frag_f.instrs.size - 1))
+          (k + 7 + (frag_f.outputReg).val) 1).length = 4 := by
+    simp only [URMRaw.transferLoop, URMRaw.goto,
+      List.length_cons, List.length_nil]
+  simp only [bsum_zeroSweep,
+    List.length_append, List.length_cons, List.length_nil,
+    List.length_map, List.length_finRange,
+    Array.length_toList, Array.size_pop,
+    h_prologue_len, h_prelude_pT_len, h_accUpdate_len]
 
 /-- Fragment for `ERMor1.bprod f`. Spec §5.1, §5.1.1.
 Mirrors `compileFrag_bsum` with a multiplicative

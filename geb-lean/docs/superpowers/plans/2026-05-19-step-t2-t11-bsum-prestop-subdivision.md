@@ -926,6 +926,20 @@ post-T2 followup branch (task #654):
    `Embedding.lean` before `BSum.lean` lands, so `BSum.lean`
    imports `Loops` rather than `Atoms` (handoff followup
    item 10).
+7. Minor items raised by the bsum.0 code-quality review:
+   (a) hoist `length_preservingTransfer` /
+   `length_transferLoop` helpers from `compileFrag_bsum_size`'s
+   inline `have` blocks into `Loops.lean` if bprod's parallel
+   size lemma `compileFrag_bprod_size` reuses them;
+   (b) trim development-history phrasing from
+   `bsum_exitPC_eq_size_pred`'s docstring once the lemma's
+   final shape stabilises;
+   (c) consider `abbrev` rather than `def` for the three
+   unparameterised PC constants (`bsum_topPC`,
+   `bsum_bodyStartPC`, `bsum_zeroSweepBase`) if `bsum_topPC`
+   appears in `simp only` lists in later sub-tasks;
+   (d) add a rationale comment to `bsum_trBase` explaining the
+   `bodyPCBase + (frag_f.instrs.size - 1)` decomposition.
 
 ## References
 
