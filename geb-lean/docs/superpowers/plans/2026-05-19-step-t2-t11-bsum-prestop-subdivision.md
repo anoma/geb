@@ -1,6 +1,31 @@
 # Step T2 Task 11e.6.a.iii-bsum — pre-stop sub-division
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+
+- [Summary](#summary)
+- [Top-level statement](#top-level-statement)
+- [Register and PC layout recap](#register-and-pc-layout-recap)
+- [Sub-task DAG](#sub-task-dag)
+- [Sub-task list](#sub-task-list)
+  - [Sub-task 11e.6.a.iii-bsum.0 — PC-bound infrastructure](#sub-task-11e6aiii-bsum0--pc-bound-infrastructure)
+  - [Sub-task 11e.6.a.iii-bsum.1.a — zero-sweep sub-block correctness](#sub-task-11e6aiii-bsum1a--zero-sweep-sub-block-correctness)
+  - [Sub-task 11e.6.a.iii-bsum.1.b — prologue sub-block correctness](#sub-task-11e6aiii-bsum1b--prologue-sub-block-correctness)
+  - [Sub-task 11e.6.a.iii-bsum.1.c — accumulator-update sub-block correctness](#sub-task-11e6aiii-bsum1c--accumulator-update-sub-block-correctness)
+  - [Sub-task 11e.6.a.iii-bsum.1.d — f-body embedding](#sub-task-11e6aiii-bsum1d--f-body-embedding)
+  - [Sub-task 11e.6.a.iii-bsum.2 — partial invariant and base case](#sub-task-11e6aiii-bsum2--partial-invariant-and-base-case)
+  - [Sub-task 11e.6.a.iii-bsum.3.phase_i0 — zero-sweep preservation](#sub-task-11e6aiii-bsum3phase_i0--zero-sweep-preservation)
+  - [Sub-task 11e.6.a.iii-bsum.3.phase_i1 — prologue preservation](#sub-task-11e6aiii-bsum3phase_i1--prologue-preservation)
+  - [Sub-task 11e.6.a.iii-bsum.3.phase_i2 — f-body preservation](#sub-task-11e6aiii-bsum3phase_i2--f-body-preservation)
+  - [Sub-task 11e.6.a.iii-bsum.3.phase_i3 — accUpdate + incR + goto](#sub-task-11e6aiii-bsum3phase_i3--accupdate--incr--goto)
+  - [Sub-task 11e.6.a.iii-bsum.4 — induction glue (i to i + 1)](#sub-task-11e6aiii-bsum4--induction-glue-i-to-i--1)
+  - [Sub-task 11e.6.a.iii-bsum.5 — outer iteration (i = 0 to v 0)](#sub-task-11e6aiii-bsum5--outer-iteration-i--0-to-v-0)
+  - [Sub-task 11e.6.a.iii-bsum.6 — final assembly](#sub-task-11e6aiii-bsum6--final-assembly)
+- [Inductive variable](#inductive-variable)
+- [Cross-references and IH form](#cross-references-and-ih-form)
+- [Followup items](#followup-items)
+- [References](#references)
+
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 ## Summary
@@ -394,12 +419,19 @@ private theorem ProgramEmbedsFragment_compileFrag_bsum_fBody
       frag_f
       (k + 7)
       (15 + frag_f.numRegs + 9 * (k + 1))
-      frag_f.instrs.size
+      (frag_f.instrs.size - 1)
 ```
 
 The constants are: `fBase = k + 7`, `bodyPCBase = 15 +
 frag_f.numRegs + 9 * (k + 1)`, embedded-program length
-`frag_f.instrs.size`.
+`frag_f.instrs.size - 1`. The trailing `- 1` accounts for
+`compileFrag_bsum`'s f-body being emitted from
+`frag_f.instrs.pop.toList.map ...` (Compiler.lean line 965), which
+drops the trailing stop instruction. This matches the comp
+analogue `ProgramEmbedsFragment_compileFrag_comp_gsBody`'s use of
+`(frag_gs i).instrs.size - 1`. Initial sub-division text used
+`frag_f.instrs.size`; that was an error corrected during bsum.1.d
+implementation.
 
 Inputs: `ProgramEmbedsFragment` (Embedding.lean), the
 `compileFrag_bsum` definition (Compiler.lean lines 897-1100),
@@ -721,7 +753,7 @@ invariant: either weaken `fBody_zero` to "f's body is in some
 arbitrary state" (and have phase i.0 strengthen it) or move the
 invariant boundary to after phase i.0.
 
-### Sub-task 11e.6.a.iii-bsum.4 — induction glue (i → i + 1)
+### Sub-task 11e.6.a.iii-bsum.4 — induction glue (i to i + 1)
 
 Signature:
 
