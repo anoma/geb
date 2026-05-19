@@ -3,18 +3,20 @@
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
+- [Execution mode for the next session](#execution-mode-for-the-next-session)
 - [Session summary](#session-summary)
 - [What is landed](#what-is-landed)
   - [Tasks 0-10 (compiler infrastructure)](#tasks-0-10-compiler-infrastructure)
   - [Task 11 — landed sub-tasks](#task-11--landed-sub-tasks)
-  - [Cumulative session output](#cumulative-session-output)
+  - [Cumulative output](#cumulative-output)
 - [What remains](#what-remains)
-  - [Task 11e.6.a.iii — compositional pre-stop correctness](#task-11e6aiii--compositional-pre-stop-correctness)
-  - [Task 11e.7](#task-11e7)
-  - [Tasks 11f, 11g](#tasks-11f-11g)
-  - [Task 11h](#task-11h)
-  - [Task 12](#task-12)
+  - [Task 11e.6.a.iii-bsum, -bprod — bsum/bprod pre-stop](#task-11e6aiii-bsum--bprod--bsumbprod-pre-stop)
+  - [Tasks 11f, 11g — bsum/bprod runFor wrap-ups](#tasks-11f-11g--bsumbprod-runfor-wrap-ups)
+  - [Task 11h — top-level structural induction](#task-11h--top-level-structural-induction)
+  - [Task 12 — axiom audit](#task-12--axiom-audit)
   - [Final holistic code-quality review](#final-holistic-code-quality-review)
+  - [Followup branch (post-T2)](#followup-branch-post-t2)
+- [Resolved design for 11e.7 (option a-bridge)](#resolved-design-for-11e7-option-a-bridge)
 - [Patterns learned (lessons for resumption)](#patterns-learned-lessons-for-resumption)
 - [Resumption recipe](#resumption-recipe)
 - [References](#references)
@@ -25,21 +27,52 @@ Resumption guide for a future session picking up T11
 (compileER_runFor correctness theorem) where the present
 session paused.
 
+## Execution mode for the next session
+
+The next session resumes execution against the plan at
+`docs/superpowers/plans/2026-05-17-step-t2-er-to-urm-compiler.md`
+using the **`superpowers:subagent-driven-development`**
+skill. The plan was produced by
+`superpowers:writing-plans` and converged through five
+adversarial-review rounds; remaining sub-tasks are listed
+in this handoff's [Resumption recipe](#resumption-recipe)
+and reproduced as discrete TodoWrite items.
+
+For each sub-task, dispatch a fresh implementer subagent
+with a self-contained brief (do not let the subagent read
+the plan file; paste the relevant task text into the
+prompt). Then run the spec-compliance reviewer subagent
+and the code-quality reviewer subagent, looping until both
+pass. Lemma signatures and structure-clause shapes
+declared in this handoff and in the plan are non-negotiable
+(per the project's "Non-negotiable interfaces for
+formalising pre-existing objects" rule); subagents may
+adjust internal proof tactics freely.
+
 ## Session summary
 
-A multi-day SDD execution of T2 completed Tasks 0-10
+A multi-session SDD execution of T2 completed Tasks 0-10
 (compileER + compileER_runtime + 7 per-constructor
-combinators) plus substantial groundwork on Task 11
-(compileER_runFor structural correctness theorem). The
-present session ended with all four atom cases proven,
-the compositional-case infrastructure built, and the comp
-m-step induction base case landed. The comp m-step
-induction step, comp final assembly, bsum/bprod
-pre-stop correctness, and top-level assembly remain.
+combinators), the four atom cases of Task 11, the
+compositional-case infrastructure, and the full comp pre-stop
+correctness chain (phases i.1, i.2, i.3, m-step induction
+glue, outer iteration, and final assembly). The present
+session ended with `compileER_pre_stop_correct_comp` landed,
+closing the comp pre-stop story. Remaining: 11e.7 (the comp
+runFor `≤ t'` wrap-up), bsum/bprod pre-stop chains, their
+runFor wrap-ups, Task 11h top-level structural induction,
+and Task 12 axiom audit.
 
-Current `@-`: commit `e66f7681` (compileFrag_comp_pcOf_succ
-constructively). Build clean. Axiom hygiene clean
-(`[propext, Quot.sound]` only on all new declarations).
+Current `@-`: commit `99d5fd91` (comp.3.b
+`compileER_pre_stop_correct_comp`). Build clean. Axiom
+hygiene clean (`[propext, Quot.sound]` only on all new
+declarations; verified via `mcp__lean-lsp__lean_verify`).
+Source: `GebLean/LawvereERKSim.lean`, 11823 lines.
+
+Sibling head `pnlwkzms f29a83bf` (the previous-session
+in-progress doc edit) is preserved across all session-2
+commits via jj auto-rebase. The current session is updating
+this handoff doc to integrate the session-2 progress.
 
 ## What is landed
 
@@ -74,6 +107,8 @@ constructively). Build clean. Axiom hygiene clean
   Commit `b340590e`; runtime patched in `1642bfb5`.
 
 ### Task 11 — landed sub-tasks
+
+#### Session 1 (through 2026-05-18, ending at phase i.1)
 
 - **11a**: T1 helpers `URMState.runFor_halted_invariant`
   and `URMState.runFor_stop`; `compileER_runFor_zero`.
@@ -129,125 +164,230 @@ constructively). Build clean. Axiom hygiene clean
   Commit `743f0bda`.
 - **11e.6.a.iii-comp.0**: `transferLoop_correct_pc_strict_bound`.
   Commit `cd32d580`.
-- **11e.6.a.iii-comp.1.a**: abstract Phase i.1 helper
-  `compileFrag_comp_subBlock_inputCopies_correct` +
-  `vPrefixSum`, `inputCopies_disj`,
-  `inputCopies_prefix_correct`,
-  `compileFrag_comp_subBlock_inputCopies_pc_strict_bound`.
-  Commit `0c08e3ce`.
-- **11e.6.a.iii-comp.1.b**: abstract Phase i.2 helper
-  `compileFrag_comp_subBlock_gsBody_correct`.
-  Commit `b5c05d41`.
-- **11e.6.a.iii-comp.1.c**: abstract Phase i.3 helper
-  `compileFrag_comp_subBlock_outputTransfer_correct` +
-  `_pc_strict_bound`. Commit `a78d27f2`.
+- **11e.6.a.iii-comp.1.a-c**: three abstract sub-block
+  phase helpers (`compileFrag_comp_subBlock_{inputCopies,
+  gsBody, outputTransfer}_correct`), `vPrefixSum`,
+  `inputCopies_disj`, and their `_pc_strict_bound`
+  counterparts. Commits `0c08e3ce`, `b5c05d41`, `a78d27f2`.
 - **Outside-preserved helpers**:
   `stateEmbedsFrag_step_outside_preserved` +
   `stateEmbedsFrag_runFor_outside_preserved`.
   Commit `8947b0ac`.
-- **11e.6.a.iii-comp.2.pre1**:
-  `PreservingTransferInstrs_compileFrag_comp_inputCopies`
-  — discharges the 9*a instruction-presence equalities
-  for Phase i.1 inside compileFrag_comp. Commit
-  `e52a9601`.
-- **11e.6.a.iii-comp.2.pre2**:
-  `TransferLoopInstrs_compileFrag_comp_outputTransfer`
-  — discharges the 4 instruction-presence equalities
-  for Phase i.3 inside compileFrag_comp. Commit
-  `8f410639`.
+- **11e.6.a.iii-comp.2.pre1, pre2**: instruction-presence
+  dischargers for Phase i.1 and Phase i.3. Commits
+  `e52a9601`, `8f410639`.
 - **11e.6.a.iii-comp.2.base**:
-  `compileFrag_comp_partial_invariant` (8-clause
-  structure) + `compileFrag_comp_subBlocks_partial_base`
-  (m = 0 case) + `compileFrag_comp_pcOf` +
-  `compileFrag_comp_pcOf_zero`. Commit `b9f4dc47`.
+  `compileFrag_comp_partial_invariant` (8-clause structure),
+  `compileFrag_comp_subBlocks_partial_base` (m=0 case),
+  `compileFrag_comp_pcOf`, `_zero`. Commit `b9f4dc47`.
 - **11e.6.a.iii-comp.2.inv-prereq**:
-  `compileFrag_comp_pcOf_succ` (constructive,
-  Classical-free). Commit `e66f7681`.
-- **f_body_zero clause correction**: weaken
-  `compileFrag_comp_partial_invariant.f_body_zero` from
-  "all of f's body is 0" to "f's body off filled inputs is
-  0" (the original was self-contradictory once
-  `f_input_slots` activates at `m ≥ 1`). Base case proof
-  retains its content via a vacuous added hypothesis.
-  Commit `3ddd7280`.
+  `compileFrag_comp_pcOf_succ` (constructive). Commit
+  `e66f7681`.
+- **f_body_zero clause correction**: weaken to "off filled
+  inputs". Commit `3ddd7280`.
 - **11e.6.a.iii-comp.2.inv-phase_i1**:
-  `compileFrag_comp_phase_i1_post` (10-clause post-state)
-  and `compileFrag_comp_subBlocks_partial_phase_i1`
-  preservation lemma. Instantiates
-  `compileFrag_comp_subBlock_inputCopies_correct` with
-  outer-input registers as srcs and gs m's reindexed
-  inputs as dsts. Commit `7c8dfb56`.
+  `compileFrag_comp_phase_i1_post` (10-clause) and
+  `compileFrag_comp_subBlocks_partial_phase_i1`. Commit
+  `7c8dfb56`.
 
-### Cumulative session output
+#### Session 3 (2026-05-19, Task 11e.7 wrap-up)
 
-Approximately 46 commits, ~12700 LOC of correctness
-proof + infrastructure. All build clean. Axiom hygiene
-clean (`[propext, Quot.sound]` only on every
-declaration; `scripts/check-axioms.sh` passes).
+- **11e.7**: `compileER_pre_stop_to_runFor` — a generic,
+  constructor-agnostic bridge from the existential pre-stop
+  form (∃ T0 ≤ runtime ∧ PC = size-1 ∧ output correct) to
+  the output-only `≤ t'` form, plus `compileER_runFor_comp`
+  (the comp wrapper). The bridge uses `URMState.runFor_add`
+  to split `t' = T0 + (t' - T0)` and `URMState.runFor_stop`
+  to absorb slack at the stop instruction at `size - 1`
+  (discharged via `CompiledFragment.lastInstr_isStop`).
+  Bridge is reusable by 11f (bsum) and 11g (bprod). Commits
+  `nozsnnzwruvn`, `rskrmpzkuqnt`, `ysonuwwvpkox` (the third
+  is a code-quality follow-up that drops the unused strict-
+  PC conjunct from the bridge's `h_pre`, sweeps two dead
+  `with` bindings, rephrases the wrapper docstring, and adds
+  a comment clarifying the `generalize`-`subst` shuffle).
+
+#### Session 2 (2026-05-19, finishing the comp story)
+
+- **11e.6.a.iii-comp.2.inv-phase_i2**:
+  `compileFrag_comp_phase_i2_post` (9-clause post-state,
+  drops `gs_m_inputs`/`gs_m_other_zero`, adds
+  `gs_m_output`) and `compileFrag_comp_subBlocks_partial_phase_i2`.
+  Threads the structural IH `ih_gs_m` (existential form)
+  and wraps `compileFrag_comp_subBlock_gsBody_correct`.
+  Conclusion existential in `T0 ≤ compileER_runtime (gs m) v`
+  with PC strict bound up to `pcOf m + 9*a + (size - 1)`.
+  Commit `7608ee31` (after followup fix of a dead `with
+  hf_init_def` binding).
+- **11e.6.a.iii-comp.2.inv-phase_i3**:
+  `compileFrag_comp_subBlocks_partial_phase_i3`. No
+  intermediate `phase_i3_post` — the conclusion is
+  `partial_invariant @ (m.val + 1)` directly. Wraps
+  `compileFrag_comp_subBlock_outputTransfer_correct` and
+  its `_pc_strict_bound` counterpart. Deterministic step
+  count `4 * (gs m).interp v + 1`. Commit `2cca954b`.
+- **11e.6.a.iii-comp.2.ind**:
+  `compileFrag_comp_subBlocks_partial_step` — the
+  induction-glue lemma threading phases i.1, i.2, i.3
+  across a single `m → m + 1` advance. Plus the extracted
+  helper `compileFrag_comp_subBlocks_partial_phase_i1_pc_strict_bound`
+  (~170 LOC; mirrors phase i.1's preservation setup but
+  concludes the strict PC bound from
+  `compileFrag_comp_subBlock_inputCopies_pc_strict_bound`).
+  Commit `54f8b256`.
+- **11e.6.a.iii-comp.3.a**:
+  `compileFrag_comp_subBlocks_partial` — the outer
+  iteration from m=0 to m=k via induction on m. Plus
+  helpers `compileFrag_comp_subBlocks_partial_aux`
+  (strengthened `∀ m ≤ k` form) and
+  `compileFrag_comp_finRange_filter_lt_succ` (filter-snoc
+  identity on `List.finRange`). Conclusion existential in
+  `T_total ≤ 1 + ∑_{i<k} (T1+runtime_i+T2)` with strict PC
+  bound `< compileFrag_comp_pcOf frag_gs k = fPcBase`.
+  Commit `58a3c1dc`.
+- **11e.6.a.iii-comp.3.b**:
+  `compileER_pre_stop_correct_comp` — the final comp
+  pre-stop assembly. Composes comp.3.a's outer iteration
+  with the f-body embedding (Task 11e.2-3's
+  `ProgramEmbedsFragment_compileFrag_comp_fBody`) and the
+  structural IH on f. Plus bridge helpers
+  `vPrefixSum_eq_foldl_finRange` and `_aux` that connect
+  comp.3.a's bound shape to `compileER_runtime` for comp's
+  `v_total` term. Commit `99d5fd91`.
+
+### Cumulative output
+
+Approximately 55 commits, ~14500 LOC of correctness proof +
+infrastructure. `GebLean/LawvereERKSim.lean` is ~11940 lines.
+All build clean. Axiom hygiene clean
+(`[propext, Quot.sound]` only on every declaration; verified
+via `mcp__lean-lsp__lean_verify` per-declaration and
+`scripts/check-axioms.sh` over the whole file).
 
 ## What remains
 
-### Task 11e.6.a.iii — compositional pre-stop correctness
+### Task 11e.6.a.iii-bsum, -bprod — bsum/bprod pre-stop
 
-- **11e.6.a.iii-comp.2.inv**: three preserves-under-phase
-  lemmas. The first (`_phase_i1`) is now landed (commit
-  `7c8dfb56`, ~750 LOC including the post-state structure).
-  The remaining two:
-  - `_phase_i2`: takes `phase_i1_post @ m` plus the
-    structural IH `ih_gs_i` for `gs m`; produces
-    `∃ T0, T0 ≤ compileER_runtime (gs m) v ∧
-    phase_i2_post @ m (runFor s T0) ∧ <pc strict bound>`.
-    Wraps `compileFrag_comp_subBlock_gsBody_correct`.
-  - `_phase_i3`: takes `phase_i2_post @ m`; produces
-    `partial_invariant @ (m + 1)` after 4*(gs m).interp v + 1
-    steps. Wraps
-    `compileFrag_comp_subBlock_outputTransfer_correct`.
-- **11e.6.a.iii-comp.2.ind**: induction-glue lemma
-  composing the three phase preservations across
-  `m → m + 1`. ~150-200 LOC.
-- **11e.6.a.iii-comp.3**: final
-  `compileER_pre_stop_correct_comp` assembling
-  `compileFrag_comp_subBlocks_partial` at `m = k` +
-  f-body embedding + trailing stop step + global PC
-  bound assembly. ~600-900 LOC.
-- **11e.6.a.iii-bsum**: analogous pre-stop chain for
-  `compileFrag_bsum`. Likely sub-subdivides into:
-  outer-loop induction; per-iteration zero-sweep +
-  prologue + f-body + accumulator-update phases.
-  Estimated 3000-4000 LOC across ~6-10 sub-sub-sub-tasks.
-- **11e.6.a.iii-bprod**: analogous for `compileFrag_bprod`.
-  Estimated similar magnitude to bsum.
+Analogous pre-stop chain for `compileFrag_bsum` and
+`compileFrag_bprod`. Each likely sub-subdivides into:
+outer-loop induction; per-iteration zero-sweep, prologue,
+f-body, and accumulator-update phases. Estimated 3000-4000
+LOC each across ~6-10 sub-sub-sub-tasks. **File split
+(followup item 9) should land before bsum begins.**
 
-### Task 11e.7
+### Tasks 11f, 11g — bsum/bprod runFor wrap-ups
 
-`compileER_runFor_comp` from `compileER_pre_stop_correct_comp`
-plus slack absorption. ~100-200 LOC. Straightforward once
-the pre-stop lemma is in place.
+Analogues of 11e.7 for bsum and bprod. Each small once the
+corresponding pre-stop lemma exists. ~100-200 LOC each.
 
-### Tasks 11f, 11g
+### Task 11h — top-level structural induction
 
-Analogues of 11e.7 for `bsum` and `bprod`. Each is
-similarly small once the corresponding pre-stop lemma
-exists. ~100-200 LOC each.
-
-### Task 11h
-
-Top-level `compileER_runFor` by structural induction on
-`e` dispatching to per-constructor correctness lemmas
+`compileER_runFor` by structural induction on `e`
+dispatching to per-constructor `_runFor_*` lemmas
 (zero/succ/proj/sub/comp/bsum/bprod). ~50-100 LOC.
 
-### Task 12
+### Task 12 — axiom audit
 
-Axiom audit + manual lint pass over the entire
-`GebLean/LawvereERKSim.lean`. The implementer-flagged
-defect with `scripts/check-axioms.sh` not seeing nested
-namespaces is documented but unresolved upstream.
+Manual lint pass over the entire `GebLean/LawvereERKSim.lean`.
+The implementer-flagged defect with `scripts/check-axioms.sh`
+not seeing nested namespaces is documented but unresolved
+upstream — `mcp__lean-lsp__lean_verify` is the per-declaration
+authoritative tool.
 
 ### Final holistic code-quality review
 
 Per the original SDD plan, after all 13 tasks land:
-dispatch a final fresh-context reviewer over the entire
-T2 implementation.
+dispatch a final fresh-context reviewer over the entire T2
+implementation.
+
+### Followup branch (post-T2)
+
+Tracked as task #654. Accumulated across phase i.1/i.2/i.3,
+comp.2.ind, comp.3.a, comp.3.b reviews. The most urgent
+item is the **file split** before bsum begins; trajectory
+projects 18000-19000 lines if everything stays in one file.
+
+Other items:
+
+1. Rename `gsPrefixSum_mono`'s `{n m : ℕ}` binders to
+   `{n n' : ℕ}` so inlined `h_aux_mono` in phases i.1, i.2,
+   i.3 can be replaced.
+2. Extract `fin_pack` helpers per register family.
+3. Extract `disj_triple_for_reg` helper.
+4. Extract `compileFrag_comp_subBlocks_partial_phase_i1_setup`
+   shared between phase i.1 preservation and the strict-bound
+   helper (~140 LOC dedup).
+5. Sweep dead `with hf_init_def` at lines 6085 and 7067.
+6. Replace inline `h_filter_snoc` block in
+   `compileFrag_comp_pcOf_succ` with the new
+   `compileFrag_comp_finRange_filter_lt_succ`.
+7. comp.3.b cleanups: dead `have` deletion, docstring
+   rephrase on `vPrefixSum_eq_foldl_finRange_aux`,
+   `h_compEq`/`h_initEq` triple dedup, promote `h_foldl_le`
+   and `h_foldl_map_eq` to top-level helpers.
+8. Extract `compileFrag_comp_size` and
+   `compileFrag_comp_pcOf_top` for bsum/bprod reuse.
+9. **File split** (urgent before bsum).
+
+## Resolved design for 11e.7 (option a-bridge)
+
+The existing `compileER_runFor_*` lemmas (`_zero`, `_succ`,
+`_proj`, `_sub`, `_comp_k_zero`) are in the `≤ t'` form
+(output-only conclusion, slack absorbed). The existing
+`compileER_pre_stop_correct_*` atom lemmas plus
+`compileER_pre_stop_correct_comp` are in the *existential*
+form (∃ T0 ≤ runtime, with PC = size-1, output = interp,
+strict PC bound on earlier steps).
+
+Resolved at session-3 start: **option (a-bridge)**. The
+existential and `≤ t'` forms are bridged by a single shared
+helper that does not depend on the constructor:
+
+```lean
+private theorem compileER_pre_stop_to_runFor {a : ℕ}
+    (e : ERMor1 a) (v : Fin a → ℕ) (t' : ℕ)
+    (ht' : compileER_runtime e v ≤ t')
+    (h_pre : ∃ T0 : ℕ,
+      T0 ≤ compileER_runtime e v ∧
+      (URMState.runFor (compileER e)
+            (URMState.init (compileER e) v) T0).pc
+          = (compileER e).instrs.size - 1 ∧
+      (URMState.runFor (compileER e)
+            (URMState.init (compileER e) v) T0).regs
+          (compileER e).outputReg
+        = e.interp v ∧
+      (∀ k' < T0,
+        (URMState.runFor (compileER e)
+            (URMState.init (compileER e) v) k').pc
+          < (compileER e).instrs.size - 1)) :
+    (URMState.runFor (compileER e)
+        (URMState.init (compileER e) v) t').regs
+        (compileER e).outputReg
+      = e.interp v
+```
+
+Proof sketch: write `t' = T0 + (t' - T0)`; apply
+`URMState.runFor_add` then `URMState.runFor_stop` at PC
+`size - 1` (which is `URMInstr.stop` by
+`CompiledFragment.lastInstr_isStop`).
+
+11e.7 (`compileER_runFor_comp` general k) becomes a thin
+wrapper: invoke `compileER_pre_stop_correct_comp` to obtain
+the existential, then `compileER_pre_stop_to_runFor`. 11f,
+11g (bsum, bprod) follow the same wrapper pattern once
+their pre-stop lemmas land. The four existing atom
+`compileER_runFor_*` lemmas (zero/succ/proj/sub) are kept as
+landed (no rewrite cost); Task 11h dispatches structurally
+in the `≤ t'` form over all 7 constructors.
+
+The bridge approach also collapses the IH-shape mismatch
+inside 11e.7: 11e.7 takes IHs on f and gs in existential
+form (matching comp.3.b's signature exactly); the user-
+facing `compileER_runFor_comp` conclusion is the `≤ t'`
+form. Task 11h supplies the existential-form IHs to 11e.7
+via the per-constructor `_pre_stop_correct_*` lemmas, then
+collects the `≤ t'` conclusions via the corresponding
+`_runFor_*` lemmas.
 
 ## Patterns learned (lessons for resumption)
 
@@ -255,106 +395,117 @@ T2 implementation.
    Use Lean-core `Fin.cases` eliminator or explicit
    `match p, q with | ⟨0, _⟩, ⟨0, _⟩ => …` for `Fin n`
    case-splits. Same applies to `List.nodup_finRange` and
-   `List.filter_eq_nil_iff` — both Classical-dependent;
-   constructive alternatives needed.
+   `List.filter_eq_nil_iff` — both Classical-dependent.
 
-2. **`URMInstrRaw.toBoundedArray`** definitionally reduces
+2. **`by_cases` can pull `Classical.choice`** depending on
+   the decidability instances in scope. For three-way PC
+   interval splits in compositional proofs, use
+   `Nat.lt_or_ge a b` with `rcases ... with h | h`. Verified
+   constructively across phase i.1/i.2/i.3, comp.2.ind,
+   comp.3.a, comp.3.b.
+
+3. **`URMInstrRaw.toBoundedArray`** definitionally reduces
    on concrete `rawList` values. The 9 `rfl`-form
    instruction-presence equalities work out by definitional
-   reduction; no explicit indexing-lemma invocation needed.
+   reduction.
 
-3. **`Function.update`** commutation requires explicit
+4. **`Function.update`** commutation requires explicit
    per-pair disjointness in `Fin numRegs`. Discharge via
    `congrArg Fin.val + omega` (clean, no `simp`).
 
-4. **`runFor_succ` peeling** doesn't generalize past
+5. **`runFor_succ` peeling** doesn't generalize past
    "concrete step count" arguments. For bounded
-   correctness theorems, use `runFor_add` to split
-   `t' = (prefix) + slack` and `runFor_stop` for slack
+   correctness theorems, use `URMState.runFor_add` to split
+   intervals and `URMState.runFor_stop` for slack
    absorption.
 
-5. **`stateEmbedsFrag_runFor` strict precondition**
+6. **`stateEmbedsFrag_runFor` strict precondition**
    (`∀ k < T, .pc < L`) is the central tightness in
    compositional proofs. The pre-stop lemma chain
    (compileER_pre_stop_correct) is built specifically to
-   discharge it.
+   discharge it. The non-tail variant suffices when the IH
+   provides the strict bound; the `_tail` variant is for
+   embedded programs that end at the outer's tail without
+   an IH-provided strict bound.
 
-6. **Disjoint register blocks** for sub-fragments
+7. **Disjoint register blocks** for sub-fragments
    (compileFrag_comp's design) simplify the embedding
    bounds proof at the cost of slightly more registers.
-   Chosen by Task 6's implementer; documented in the
-   commit message.
 
-7. **Architecture diverges from Tourlakis at granularity,
+8. **Architecture diverges from Tourlakis at granularity,
    not at structure**. We follow his structural induction
    over ER constructors but trace per-instruction; he
    argues semantically per program. The depth-of-subdivision
    is the formalization tax on his "essentially concatenate
    M_g and M_f" type sentences.
 
-8. **`set` re-elaborates function parameter types**. When
-   a `set X := Y` would change the displayed type of an
-   existing parameter (because `Y` appears in that
-   parameter's type), Lean creates a fresh copy of the
-   parameter under the original name and renames the old
-   one to `name✝`. This silently breaks subsequent
-   `exact`/`show` against destructured hypotheses, since
-   they reference the old, now-renamed parameter. For
-   phase-preservation lemmas, use `let` (no auto-fold) for
-   the abbreviations whose RHS appears in the input state's
-   type. The cost is omega's loss of syntactic identity
-   across `frag_gs i` vs `compileERFrag (gs i)`; restore
-   it with explicit `have h_eq : ... = ... := rfl` bridges
-   before each `omega` call.
+9. **`set` re-elaborates function parameter types**. Prefer
+   `let` over `set` when the abbreviation's RHS appears in
+   an existing parameter's type. The cost is omega's loss
+   of syntactic identity across `frag_gs i` vs
+   `compileERFrag (gs i)`; restore via explicit `have h_eq
+   : ... := rfl` bridges before each `omega`. Verified
+   across all session-2 lemmas.
 
-9. **Field-projection over destructure for partial
-   invariants**. `obtain ⟨..⟩ := h_inv` introduces fresh
-   bindings that can carry stale parameter-shadow names
-   into hypothesis types; `h_inv.fieldName` evaluates
-   per-projection and produces types matching the current
-   parameter binding.
+10. **Field-projection over destructure for partial
+    invariants**. `obtain ⟨..⟩ := h_inv` introduces fresh
+    bindings that can carry stale parameter-shadow names;
+    `h_inv.fieldName` evaluates per-projection.
+
+11. **`List.find?` case-split via `generalize` + `match`**
+    is the constructive alternative to `∃ j, P j` plus
+    `Classical.em`. Phase i.2 used this for the
+    `inputRegs` membership test; comp.3.b reused the
+    pattern.
+
+12. **Dead `with name` bindings** in `set`-based
+    abbreviations: phase i.2 inherited a dead `with
+    hf_init_def` from `subBlock_gsBody_correct`. Code
+    quality review caught it; pre-existing copies remain
+    at lines 6085 and 7067 (deferred to followup #654).
+
+13. **IH-form mismatch in compositional vs. `≤ t'` lemmas**
+    was surfaced when designing 11e.7 and resolved via the
+    bridge `compileER_pre_stop_to_runFor`: compositional
+    `_pre_stop_correct_*` lemmas take and return existential
+    pre-stop form; the bridge is the single, constructor-
+    agnostic mechanism for producing the `≤ t'` form from
+    any pre-stop existential. Future `_runFor_*` wrappers
+    (bsum, bprod) reuse the same bridge.
 
 ## Resumption recipe
 
-1. Check `jj log -r '0914f03b..@-'` — confirm 46 commits
-   from `5c16a133` (T1 refactor) through `7c8dfb56`
-   (phase i.1 preservation).
+1. `lake build GebLean.LawvereERKSim` — should be clean.
 
-2. `lake build GebLean.LawvereERKSim` — should be clean.
+2. **File split (#654 item 9)** is the next priority before
+   any bsum/bprod work. Current size is ~11940 lines;
+   adding bsum (~3000-4000 LOC) + bprod (~3000-4000 LOC)
+   without a split projects past 18000 lines.
 
-3. Phase i.1 lemma is now landed. Dispatch
-   `compileFrag_comp_subBlocks_partial_phase_i2` next.
-   Implementer-template: define
-   `compileFrag_comp_phase_i2_post` (drop `gs_m_inputs`
-   and `gs_m_other_zero` from `phase_i1_post`, add
-   `gs_m_output` for `(gs m).interp v` at the output reg,
-   keep everything else). Take the structural IH
-   `ih_gs_i` (about `compileER (gs m)`); wrap
-   `compileFrag_comp_subBlock_gsBody_correct`. The
-   conclusion is existential in `T0 ≤ compileER_runtime
-   (gs m) v`, with a PC strict bound up to
-   `pcOf m + 9*a + (frag_gs m).instrs.size - 1`.
+3. Then bsum pre-stop (~3000-4000 LOC across ~6-10
+   sub-tasks). Sub-divide before dispatching.
 
-4. Then Phase i.3 (wrap
-   `compileFrag_comp_subBlock_outputTransfer_correct`),
-   then comp.2.ind glue.
+4. Then bprod pre-stop.
 
-5. Then comp.3 (final pre-stop), then comp.k>0 case of
-   `compileER_runFor_comp` (≈ 11e.7).
+5. Then 11f, 11g (bsum/bprod runFor wrappers via the
+   shared bridge `compileER_pre_stop_to_runFor`).
 
-6. Repeat for bsum (likely sub-subdivides like comp).
+6. Then 11h (top-level structural induction in `≤ t'`
+   form, dispatching to `compileER_runFor_*` per
+   constructor).
 
-7. Repeat for bprod (likely the same pattern).
+7. Then Task 12 (axiom audit + manual lint).
 
-8. Top-level assembly (11h).
-
-9. Axiom audit (Task 12).
+8. Then the final holistic code-quality review per the
+   original SDD plan.
 
 ## References
 
 - Spec:
   `docs/superpowers/specs/2026-05-16-er-to-k-via-cslib-urm-design.md`.
-- Plan:
+- Plan (binding for next-session execution):
   `docs/superpowers/plans/2026-05-17-step-t2-er-to-urm-compiler.md`.
+- Execution skill (binding for next session):
+  `superpowers:subagent-driven-development`.
 - Source: `GebLean/LawvereERKSim.lean` (current size
-  ~8400 lines).
+  ~11940 lines).
