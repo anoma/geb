@@ -11818,6 +11818,84 @@ private theorem compileER_pre_stop_correct_comp
         exact this
       omega
 
+/-- Generic bridge from the existential pre-stop form to the
+output-only `≤ t'` form. Given the pre-stop witness for a
+compiled program `compileER e` reaching its terminal `.stop`
+at step `T0`, running for any `t' ≥ compileER_runtime e v`
+produces the same output value. Constructor-agnostic: shared
+by `compileER_runFor_comp`, and by future `bsum` / `bprod`
+analogues, so each connective's wrapper reduces to invoking
+its `compileER_pre_stop_correct_*` lemma and applying this
+bridge. -/
+private theorem compileER_pre_stop_to_runFor {a : ℕ}
+    (e : ERMor1 a) (v : Fin a → ℕ) (t' : ℕ)
+    (ht' : compileER_runtime e v ≤ t')
+    (h_pre : ∃ T0 : ℕ,
+      T0 ≤ compileER_runtime e v ∧
+      (URMState.runFor (compileER e)
+            (URMState.init (compileER e) v) T0).pc
+          = (compileER e).instrs.size - 1 ∧
+      (URMState.runFor (compileER e)
+            (URMState.init (compileER e) v) T0).regs
+          (compileER e).outputReg
+        = e.interp v ∧
+      (∀ k' < T0,
+        (URMState.runFor (compileER e)
+            (URMState.init (compileER e) v) k').pc
+          < (compileER e).instrs.size - 1)) :
+    (URMState.runFor (compileER e)
+        (URMState.init (compileER e) v) t').regs
+        (compileER e).outputReg
+      = e.interp v := by
+  obtain ⟨T0, hT0_bound, h_pc_eq, h_output, _h_strict⟩ := h_pre
+  -- Split `t' = T0 + (t' - T0)` using `T0 ≤ runtime ≤ t'`.
+  set frag : CompiledFragment a := compileERFrag e with hfrag
+  -- `(compileER e).instrs.size > 0` from `lastInstr_isStop`.
+  have h_size_pos : 0 < (compileER e).instrs.size := by
+    have hb := frag.lastInstr_isStop
+    rcases Nat.eq_zero_or_pos (compileER e).instrs.size with h_eq | h_pos
+    · exfalso
+      rw [Array.back?] at hb
+      have h_none : frag.instrs[frag.instrs.size - 1]? = none := by
+        apply Array.getElem?_eq_none
+        change (compileER e).instrs.size - 1 ≥ (compileER e).instrs.size
+        omega
+      rw [h_none] at hb
+      cases hb
+    · exact h_pos
+  -- Set up the post-`T0` state for `runFor_stop`.
+  set sT0 : URMState (compileER e) :=
+    URMState.runFor (compileER e)
+      (URMState.init (compileER e) v) T0 with hsT0
+  -- Establish the size-1 form for indexing first, then transport
+  -- `pc = size - 1` through both the bound and the value.
+  have h_pred_lt : (compileER e).instrs.size - 1 < (compileER e).instrs.size := by
+    omega
+  have h_stop_last :
+      (compileER e).instrs[(compileER e).instrs.size - 1]'h_pred_lt
+        = URMInstr.stop := by
+    have hb := frag.lastInstr_isStop
+    rw [Array.back?] at hb
+    obtain ⟨_, h_eq_last⟩ := getElem_of_getElem? hb
+    exact h_eq_last
+  have h_pc_lt : sT0.pc < (compileER e).instrs.size := h_pc_eq ▸ h_pred_lt
+  have h_stop : (compileER e).instrs[sT0.pc]'h_pc_lt = URMInstr.stop := by
+    -- Generalize the `pc` projection so we can `subst` away its
+    -- value alongside the `h_pc_lt` bound it appears in.
+    revert h_pc_lt
+    generalize sT0.pc = pcVal at h_pc_eq
+    intro h_pc_lt
+    subst h_pc_eq
+    exact h_stop_last
+  -- Run `t' = T0 + (t' - T0)` steps; the tail is absorbed by `runFor_stop`.
+  have h_t'_eq : t' = T0 + (t' - T0) := by omega
+  rw [h_t'_eq, URMState.runFor_add]
+  change (URMState.runFor (compileER e) sT0 (t' - T0)).regs
+      (compileER e).outputReg
+    = e.interp v
+  rw [URMState.runFor_stop (compileER e) sT0 (t' - T0) h_pc_lt h_stop]
+  exact h_output
+
 end LawvereERKSim
 
 end GebLean
