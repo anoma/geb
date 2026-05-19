@@ -995,7 +995,7 @@ private theorem compileER_runFor_comp_k_zero {a : ℕ}
 Used to express the partial step count after processing
 the first `m` input-copy preservingTransfer blocks of
 `compileFrag_comp_subBlock`'s Phase i.1. -/
-private def vPrefixSum {a : ℕ} (v : Fin a → ℕ) : ℕ → ℕ
+def vPrefixSum {a : ℕ} (v : Fin a → ℕ) : ℕ → ℕ
   | 0 => 0
   | n + 1 =>
     vPrefixSum v n + (if h : n < a then v ⟨n, h⟩ else 0)
@@ -1015,7 +1015,7 @@ participating in Phase i.1's `a` input-copies of
 outer input slot) and "dst" registers (one per `gs i`'s
 reindexed input slot) are indexed by `Fin a`; `tmp` and
 `zReg` are shared across all copies. -/
-private structure inputCopies_disj {a : ℕ}
+structure inputCopies_disj {a : ℕ}
     (P : URMProgram a)
     (zReg tmp : Fin P.numRegs)
     (srcs dsts : Fin a → Fin P.numRegs) : Prop where
@@ -1266,7 +1266,7 @@ maps and instruction-presence facts from
 flatMap-indexing infrastructure from
 `ProgramEmbedsFragment_compileFrag_comp_gsBody`) gives the
 sub-block-specific Phase i.1 helper. -/
-private theorem compileFrag_comp_subBlock_inputCopies_correct
+theorem compileFrag_comp_subBlock_inputCopies_correct
     {a : ℕ}
     (P : URMProgram a) (pcBase : ℕ)
     (zReg tmp : Fin P.numRegs)
@@ -1302,7 +1302,7 @@ private theorem compileFrag_comp_subBlock_inputCopies_correct
 strictly less than `pcBase + 9 * a` (i.e., remains inside
 the input-copies block).  Direct specialization of
 `inputCopies_prefix_pc_strict_bound` at `m = a`. -/
-private theorem compileFrag_comp_subBlock_inputCopies_pc_strict_bound
+theorem compileFrag_comp_subBlock_inputCopies_pc_strict_bound
     {a : ℕ}
     (P : URMProgram a) (pcBase : ℕ)
     (zReg tmp : Fin P.numRegs)

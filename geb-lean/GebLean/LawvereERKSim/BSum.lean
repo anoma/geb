@@ -1,4 +1,4 @@
-import GebLean.LawvereERKSim.Atoms
+import GebLean.LawvereERKSim.Comp
 
 /-!
 # LawvereERKSim — bsum PC-layout infrastructure
@@ -28,6 +28,14 @@ absolute PCs at which each segment begins and ends.
 
 - `bsum_exitPC_eq_size_pred`: the exit PC is one less than the size of
   the emitted instruction array.
+- `compileFrag_bsum_zeroSweep_correct`,
+  `compileFrag_bsum_zeroSweep_pc_strict_bound`: per-iteration
+  zero-sweep correctness and per-step strict PC bound.
+- `compileFrag_bsum_prologue_correct`,
+  `compileFrag_bsum_prologue_pc_strict_bound`: bsum-flavoured aliases
+  of the input-copies correctness and per-step strict PC bound lemmas
+  from `Comp.lean` (the bsum per-iteration prologue is structurally
+  identical to comp's input-copies phase).
 
 ## References
 
@@ -244,6 +252,66 @@ private theorem compileFrag_bsum_zeroSweep_pc_strict_bound
   obtain ⟨pc_eq, _, _⟩ :=
     compileFrag_bsum_zeroSweep_correct P pcBase fBase k' hSweep_k s h_pc
   exact pc_eq
+
+/-- Per-iteration prologue correctness for `compileFrag_bsum`:
+running the URM through `a` consecutive `preservingTransfer` blocks
+copies the outer source registers `srcs` into the destination
+registers `dsts`, advances the PC to `pcBase + 9 * a`, and preserves
+`tmp`, `zReg`, the source registers, and all other registers outside
+the destination block. Bsum-flavoured alias of
+`compileFrag_comp_subBlock_inputCopies_correct`. -/
+private theorem compileFrag_bsum_prologue_correct
+    {a : ℕ}
+    (P : URMProgram a) (pcBase : ℕ)
+    (zReg tmp : Fin P.numRegs)
+    (srcs dsts : Fin a → Fin P.numRegs)
+    (h_disj : inputCopies_disj P zReg tmp srcs dsts)
+    (H : ∀ j : Fin a,
+      preservingTransferInstrs P (pcBase + 9 * j.val)
+        (srcs j) (dsts j) tmp zReg)
+    (v : Fin a → ℕ)
+    (s : URMState P) (h_pc : s.pc = pcBase)
+    (h_z : s.regs zReg = 0) (h_tmp0 : s.regs tmp = 0)
+    (h_srcs : ∀ j : Fin a, s.regs (srcs j) = v j)
+    (h_dsts0 : ∀ j : Fin a, s.regs (dsts j) = 0) :
+    let totalSteps : ℕ := 9 * vPrefixSum v a + 2 * a
+    let s' := URMState.runFor P s totalSteps
+    s'.pc = pcBase + 9 * a ∧
+    s'.regs zReg = 0 ∧
+    s'.regs tmp = 0 ∧
+    (∀ j : Fin a, s'.regs (dsts j) = v j) ∧
+    (∀ j : Fin a, s'.regs (srcs j) = v j) ∧
+    (∀ r : Fin P.numRegs,
+        (∀ j : Fin a, r ≠ dsts j) → r ≠ tmp →
+        s'.regs r = s.regs r) :=
+  compileFrag_comp_subBlock_inputCopies_correct
+    P pcBase zReg tmp srcs dsts h_disj H v s h_pc h_z h_tmp0
+    h_srcs h_dsts0
+
+/-- Per-step strict PC bound for `compileFrag_bsum_prologue_correct`:
+during the `9 * vPrefixSum v a + 2 * a` prologue steps, the
+intermediate PC stays strictly less than `pcBase + 9 * a`.
+Bsum-flavoured alias of
+`compileFrag_comp_subBlock_inputCopies_pc_strict_bound`. -/
+private theorem compileFrag_bsum_prologue_pc_strict_bound
+    {a : ℕ}
+    (P : URMProgram a) (pcBase : ℕ)
+    (zReg tmp : Fin P.numRegs)
+    (srcs dsts : Fin a → Fin P.numRegs)
+    (h_disj : inputCopies_disj P zReg tmp srcs dsts)
+    (H : ∀ j : Fin a,
+      preservingTransferInstrs P (pcBase + 9 * j.val)
+        (srcs j) (dsts j) tmp zReg)
+    (v : Fin a → ℕ)
+    (s : URMState P) (h_pc : s.pc = pcBase)
+    (h_z : s.regs zReg = 0) (h_tmp0 : s.regs tmp = 0)
+    (h_srcs : ∀ j : Fin a, s.regs (srcs j) = v j)
+    (h_dsts0 : ∀ j : Fin a, s.regs (dsts j) = 0)
+    (k : ℕ) (h_k : k < 9 * vPrefixSum v a + 2 * a) :
+    (URMState.runFor P s k).pc < pcBase + 9 * a :=
+  compileFrag_comp_subBlock_inputCopies_pc_strict_bound
+    P pcBase zReg tmp srcs dsts h_disj H v s h_pc h_z h_tmp0
+    h_srcs h_dsts0 k h_k
 
 end LawvereERKSim
 end GebLean

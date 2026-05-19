@@ -898,11 +898,22 @@ threads through via this prologue.
 Items observed during sub-division that belong on the
 post-T2 followup branch (task #654):
 
-1. Extract `compileFrag_comp_subBlock_inputCopies_correct`
-   into `Loops.lean` (or `Embedding.lean`) under the
-   constructor-agnostic name `preservingTransfer_block_correct`;
-   share between comp and bsum. The current bsum.1.b aliases
-   the comp lemma; the followup migrates the shared helper.
+1. Extract the now-shared input-copies helpers
+   (`inputCopies_disj`,
+   `compileFrag_comp_subBlock_inputCopies_correct`,
+   `compileFrag_comp_subBlock_inputCopies_pc_strict_bound`)
+   from `Comp.lean` into `Loops.lean` (or a new
+   `SharedInputCopies.lean` submodule) under
+   constructor-agnostic names (e.g. `inputCopies_correct`,
+   `inputCopies_pc_strict_bound`); the current
+   `compileFrag_comp_*` prefix is misleading once bsum and
+   bprod also consume them. Bsum's `prologue` wrappers were
+   landed in sub-task 11e.6.a.iii-bsum.1.b as thin aliases
+   over the comp helpers (which were un-`private`d for that
+   purpose). The followup migrates the shared helpers to a
+   neutral location and renames; bsum's `prologue_correct` /
+   `prologue_pc_strict_bound` wrappers then realias the
+   renamed helpers, and bprod consumes them too.
 2. Extract `compileFrag_bsum_pcOf` and its layout constants
    into a parallel of `compileFrag_comp_pcOf` even though
    bsum's per-iteration PC layout is trivial (every iteration
