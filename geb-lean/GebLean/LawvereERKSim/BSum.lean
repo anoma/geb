@@ -782,5 +782,456 @@ private theorem ProgramEmbedsFragment_compileFrag_bsum_fBody
   apply congrArg some
   exact URMInstrRaw.toBounded_congr nR h_raw_eq _ _
 
+/-- Partial-iteration invariant for `compileFrag_bsum`. Describes
+the state at the top of the outer loop (PC = 13) after `i` complete
+iterations (with `i ≤ v 0`). Mirrors `compileFrag_comp_partial_invariant`
+in `Comp.lean`, adapted to bsum's register layout
+(`V_z = ⟨0, _⟩`, `V_acc = ⟨1, _⟩`, outer inputs at slots
+`2..k+2`, `V_x = ⟨k+3, _⟩`, `V_i = ⟨k+4, _⟩`, scratch
+`tmp1 = ⟨k+5, _⟩`, `tmp2 = ⟨k+6, _⟩`, f's reindexed register
+block at slots `k+7 .. k+7 + frag_f.numRegs - 1`). The structure
+carries the running value of `i` and proofs about every register
+class. -/
+private structure compileFrag_bsum_partial_invariant
+    {k : ℕ}
+    (frag_f : CompiledFragment (k + 1))
+    (f : ERMor1 (k + 1))
+    (v : Fin (k + 1) → ℕ)
+    (i : ℕ) (hi : i ≤ v 0)
+    (s : URMState (compileFrag_bsum frag_f).toURMProgram)
+    : Prop where
+  /-- `i ≤ v 0`, packaged for downstream consumers. -/
+  hi_le : i ≤ v 0 := hi
+  /-- PC sits at the loop-top instruction (absolute PC 13). -/
+  pc_eq : s.pc = 13
+  /-- `V_z` (register 0) holds `0`. -/
+  zReg_zero : s.regs ⟨0, (compileFrag_bsum frag_f).numRegs_pos⟩ = 0
+  /-- Outer input slots `2..k+2` hold the input vector. -/
+  outer_inputs : ∀ (j : Fin (k + 1)),
+    s.regs ⟨2 + j.val, by
+      have hj : j.val < k + 1 := j.isLt
+      change 2 + j.val < k + 7 + frag_f.numRegs
+      have : 0 < frag_f.numRegs := frag_f.numRegs_pos
+      omega⟩ = v j
+  /-- `V_x` (register `k + 3`) holds `v 0 - i`, the remaining
+  iteration count. -/
+  vX_eq : s.regs ⟨k + 3, by
+    change k + 3 < k + 7 + frag_f.numRegs
+    have : 0 < frag_f.numRegs := frag_f.numRegs_pos
+    omega⟩ = v 0 - i
+  /-- `V_i` (register `k + 4`) holds the iteration counter `i`. -/
+  vI_eq : s.regs ⟨k + 4, by
+    change k + 4 < k + 7 + frag_f.numRegs
+    have : 0 < frag_f.numRegs := frag_f.numRegs_pos
+    omega⟩ = i
+  /-- Scratch register `tmp1` (register `k + 5`) is `0`. -/
+  tmp1_zero : s.regs ⟨k + 5, by
+    change k + 5 < k + 7 + frag_f.numRegs
+    have : 0 < frag_f.numRegs := frag_f.numRegs_pos
+    omega⟩ = 0
+  /-- Scratch register `tmp2` (register `k + 6`) is `0`. -/
+  tmp2_zero : s.regs ⟨k + 6, by
+    change k + 6 < k + 7 + frag_f.numRegs
+    have : 0 < frag_f.numRegs := frag_f.numRegs_pos
+    omega⟩ = 0
+  /-- The accumulator (register 1) holds the partial sum
+  `Σ_{j < i} f.interp (j :: tail v)`. -/
+  acc_eq : s.regs ⟨1, by
+    change 1 < k + 7 + frag_f.numRegs
+    have : 0 < frag_f.numRegs := frag_f.numRegs_pos
+    omega⟩
+      = natBSum i (fun j => f.interp (Fin.cons j (Fin.tail v)))
+  /-- f's reindexed register block (outer registers
+  `k + 7 .. k + 7 + frag_f.numRegs - 1`) is uniformly `0`. -/
+  fBody_zero : ∀ r : Fin frag_f.numRegs,
+    s.regs ⟨(k + 7) + r.val, by
+      have hr : r.val < frag_f.numRegs := r.isLt
+      change (k + 7) + r.val < k + 7 + frag_f.numRegs
+      omega⟩ = 0
+
+/-- Base case of the bsum outer-iteration induction: after running
+the prelude of `compileFrag_bsum`
+(`assignR 0 0; assignR vAcc 0; assignR vX 0; assignR vI 0;`
+`preservingTransfer 4 vBoundIn vX tmp2`) for `6 + 9 * (v 0)` URM
+steps from `URMState.init outer v`, the partial invariant holds
+at `i = 0`. The four `assignR` instructions occupy PCs `0..3`,
+each consuming one URM step; the `preservingTransfer` block at
+PC 4 consumes `9 * (v 0) + 2` further steps, leaving the PC at
+`13 = 4 + 9` (the loop-top instruction) with `V_x = v 0 - 0`,
+`V_i = 0`, accumulator `0`, scratches `0`, outer inputs
+preserved, and f's reindexed block untouched at `0`. -/
+private theorem compileFrag_bsum_partial_base
+    {k : ℕ}
+    (f : ERMor1 (k + 1))
+    (v : Fin (k + 1) → ℕ) :
+    let outer := (compileFrag_bsum (compileERFrag f)).toURMProgram
+    let s_init := URMState.init outer v
+    compileFrag_bsum_partial_invariant (compileERFrag f) f v 0
+      (Nat.zero_le _)
+      (URMState.runFor outer s_init (6 + 9 * (v 0))) := by
+  intro outer s_init
+  -- Abbreviations.
+  set frag_f : CompiledFragment (k + 1) := compileERFrag f
+  set outerFrag : CompiledFragment (k + 1) :=
+    compileFrag_bsum frag_f
+  set P : URMProgram (k + 1) := outerFrag.toURMProgram
+  set s0 : URMState P := URMState.init P v
+  -- Outer numRegs equals `(k + 7) + frag_f.numRegs`.
+  have h_numRegs_eq : P.numRegs = (k + 7) + frag_f.numRegs := rfl
+  have h_numRegs_pos : 0 < P.numRegs := outerFrag.numRegs_pos
+  -- Boundedness witnesses for the named registers.
+  have h_z_lt : 0 < P.numRegs := h_numRegs_pos
+  have h_acc_lt : 1 < P.numRegs := by
+    rw [h_numRegs_eq]
+    have : 0 < frag_f.numRegs := frag_f.numRegs_pos; omega
+  have h_bIn_lt : 2 < P.numRegs := by
+    rw [h_numRegs_eq]
+    have : 0 < frag_f.numRegs := frag_f.numRegs_pos; omega
+  have h_vX_lt : k + 3 < P.numRegs := by
+    rw [h_numRegs_eq]
+    have : 0 < frag_f.numRegs := frag_f.numRegs_pos; omega
+  have h_vI_lt : k + 4 < P.numRegs := by
+    rw [h_numRegs_eq]
+    have : 0 < frag_f.numRegs := frag_f.numRegs_pos; omega
+  have h_tmp2_lt : k + 6 < P.numRegs := by
+    rw [h_numRegs_eq]
+    have : 0 < frag_f.numRegs := frag_f.numRegs_pos; omega
+  -- Fin-wrapped register handles.
+  set rZ : Fin P.numRegs := ⟨0, h_z_lt⟩
+  set rAcc : Fin P.numRegs := ⟨1, h_acc_lt⟩
+  set rBoundIn : Fin P.numRegs := ⟨2, h_bIn_lt⟩
+  set rVX : Fin P.numRegs := ⟨k + 3, h_vX_lt⟩
+  set rVI : Fin P.numRegs := ⟨k + 4, h_vI_lt⟩
+  set rTmp2 : Fin P.numRegs := ⟨k + 6, h_tmp2_lt⟩
+  -- Outer's `inputRegs` maps slot `j` to outer register `2 + j.val`.
+  have h_outer_inputRegs : ∀ (j : Fin (k + 1)),
+      (P.inputRegs j).val = 2 + j.val := fun _ => rfl
+  -- Prelude instruction lookups at PCs 0..3 (each `assignR`).
+  have h_outer_at_0 : P.instrs[(0 : ℕ)]? = some (URMInstr.assign rZ 0) := rfl
+  have h_outer_at_1 : P.instrs[(1 : ℕ)]? = some (URMInstr.assign rAcc 0) := rfl
+  have h_outer_at_2 : P.instrs[(2 : ℕ)]? = some (URMInstr.assign rVX 0) := rfl
+  have h_outer_at_3 : P.instrs[(3 : ℕ)]? = some (URMInstr.assign rVI 0) := rfl
+  -- preservingTransferInstrs at PC 4 with src=vBoundIn, dst=vX, tmp=tmp2,
+  -- zReg=⟨0, _⟩.
+  have H_pT : preservingTransferInstrs P 4 rBoundIn rVX rTmp2 rZ := by
+    refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩ <;> rfl
+  -- Disjointness of the four register handles.
+  have h_disj_sd : rBoundIn ≠ rVX := by
+    intro h
+    have : (2 : ℕ) = k + 3 := congrArg Fin.val h; omega
+  have h_disj_st : rBoundIn ≠ rTmp2 := by
+    intro h
+    have : (2 : ℕ) = k + 6 := congrArg Fin.val h; omega
+  have h_disj_dt : rVX ≠ rTmp2 := by
+    intro h
+    have : (k + 3 : ℕ) = k + 6 := congrArg Fin.val h; omega
+  have h_disj_zs : rZ ≠ rBoundIn := by
+    intro h
+    have : (0 : ℕ) = 2 := congrArg Fin.val h; omega
+  have h_disj_zd : rZ ≠ rVX := by
+    intro h
+    have : (0 : ℕ) = k + 3 := congrArg Fin.val h; omega
+  have h_disj_zt : rZ ≠ rTmp2 := by
+    intro h
+    have : (0 : ℕ) = k + 6 := congrArg Fin.val h; omega
+  -- Step 1 (PC 0): assignR 0 0.  s0 → s1.
+  have hs0_pc : s0.pc = 0 := rfl
+  have h_step0 :
+      URMState.step P s0 =
+        { pc := 1
+          regs := Function.update s0.regs rZ 0 } := by
+    have h := URMState.step_of_getElem?_assign P s0 0 rZ 0 hs0_pc h_outer_at_0
+    rw [h]
+    have : s0.pc + 1 = 1 := by rw [hs0_pc]
+    rw [this]
+  set s1 : URMState P :=
+      { pc := 1
+        regs := Function.update s0.regs rZ 0 }
+  have h_runFor_1 : URMState.runFor P s0 1 = s1 := by
+    change URMState.runFor P (URMState.step P s0) 0 = _
+    rw [URMState.runFor_zero, h_step0]
+  -- Step 2 (PC 1): assignR vAcc 0.  s1 → s2.
+  have hs1_pc : s1.pc = 1 := rfl
+  have h_step1 :
+      URMState.step P s1 =
+        { pc := 2
+          regs := Function.update s1.regs rAcc 0 } := by
+    have h := URMState.step_of_getElem?_assign P s1 1 rAcc 0 hs1_pc h_outer_at_1
+    rw [h]
+  set s2 : URMState P :=
+      { pc := 2
+        regs := Function.update s1.regs rAcc 0 }
+  -- Step 3 (PC 2): assignR vX 0.  s2 → s3.
+  have hs2_pc : s2.pc = 2 := rfl
+  have h_step2 :
+      URMState.step P s2 =
+        { pc := 3
+          regs := Function.update s2.regs rVX 0 } := by
+    have h := URMState.step_of_getElem?_assign P s2 2 rVX 0 hs2_pc h_outer_at_2
+    rw [h]
+  set s3 : URMState P :=
+      { pc := 3
+        regs := Function.update s2.regs rVX 0 }
+  -- Step 4 (PC 3): assignR vI 0.  s3 → s4.
+  have hs3_pc : s3.pc = 3 := rfl
+  have h_step3 :
+      URMState.step P s3 =
+        { pc := 4
+          regs := Function.update s3.regs rVI 0 } := by
+    have h := URMState.step_of_getElem?_assign P s3 3 rVI 0 hs3_pc h_outer_at_3
+    rw [h]
+  set s4 : URMState P :=
+      { pc := 4
+        regs := Function.update s3.regs rVI 0 }
+  -- runFor P s0 4 = s4.
+  have h_runFor_4 : URMState.runFor P s0 4 = s4 := by
+    have h_eq : (4 : ℕ) = 1 + 1 + 1 + 1 := by omega
+    rw [h_eq]
+    rw [URMState.runFor_add, URMState.runFor_add, URMState.runFor_add]
+    rw [h_runFor_1]
+    -- runFor P s1 1 = s2.
+    have h_runFor_s1_1 : URMState.runFor P s1 1 = s2 := by
+      change URMState.runFor P (URMState.step P s1) 0 = _
+      rw [URMState.runFor_zero, h_step1]
+    rw [h_runFor_s1_1]
+    -- runFor P s2 1 = s3.
+    have h_runFor_s2_1 : URMState.runFor P s2 1 = s3 := by
+      change URMState.runFor P (URMState.step P s2) 0 = _
+      rw [URMState.runFor_zero, h_step2]
+    rw [h_runFor_s2_1]
+    -- runFor P s3 1 = s4.
+    change URMState.runFor P (URMState.step P s3) 0 = _
+    rw [URMState.runFor_zero, h_step3]
+  -- s4 register values.
+  have hs4_pc : s4.pc = 4 := rfl
+  -- The four updated registers are pairwise distinct (rZ, rAcc, rVX, rVI).
+  have h_ne_rZ_rAcc : rZ ≠ rAcc := by
+    intro h; have : (0 : ℕ) = 1 := congrArg Fin.val h; omega
+  have h_ne_rZ_rVX : rZ ≠ rVX := by
+    intro h; have : (0 : ℕ) = k + 3 := congrArg Fin.val h; omega
+  have h_ne_rZ_rVI : rZ ≠ rVI := by
+    intro h; have : (0 : ℕ) = k + 4 := congrArg Fin.val h; omega
+  have h_ne_rAcc_rVX : rAcc ≠ rVX := by
+    intro h; have : (1 : ℕ) = k + 3 := congrArg Fin.val h; omega
+  have h_ne_rAcc_rVI : rAcc ≠ rVI := by
+    intro h; have : (1 : ℕ) = k + 4 := congrArg Fin.val h; omega
+  have h_ne_rVX_rVI : rVX ≠ rVI := by
+    intro h; have : (k + 3 : ℕ) = k + 4 := congrArg Fin.val h; omega
+  -- Compute s4.regs at each named register.
+  have hs4_rZ : s4.regs rZ = 0 := by
+    change Function.update s3.regs rVI 0 rZ = 0
+    rw [Function.update_of_ne h_ne_rZ_rVI]
+    change Function.update s2.regs rVX 0 rZ = 0
+    rw [Function.update_of_ne h_ne_rZ_rVX]
+    change Function.update s1.regs rAcc 0 rZ = 0
+    rw [Function.update_of_ne h_ne_rZ_rAcc]
+    change Function.update s0.regs rZ 0 rZ = 0
+    rw [Function.update_self]
+  have hs4_rAcc : s4.regs rAcc = 0 := by
+    change Function.update s3.regs rVI 0 rAcc = 0
+    rw [Function.update_of_ne h_ne_rAcc_rVI]
+    change Function.update s2.regs rVX 0 rAcc = 0
+    rw [Function.update_of_ne h_ne_rAcc_rVX]
+    change Function.update s1.regs rAcc 0 rAcc = 0
+    rw [Function.update_self]
+  have hs4_rVX : s4.regs rVX = 0 := by
+    change Function.update s3.regs rVI 0 rVX = 0
+    rw [Function.update_of_ne h_ne_rVX_rVI]
+    change Function.update s2.regs rVX 0 rVX = 0
+    rw [Function.update_self]
+  have hs4_rVI : s4.regs rVI = 0 := by
+    change Function.update s3.regs rVI 0 rVI = 0
+    rw [Function.update_self]
+  -- For registers other than rZ/rAcc/rVX/rVI, s4 agrees with s0.
+  have hs4_other : ∀ r : Fin P.numRegs,
+      r ≠ rZ → r ≠ rAcc → r ≠ rVX → r ≠ rVI →
+      s4.regs r = s0.regs r := by
+    intro r hZ hAcc hVX hVI
+    change Function.update s3.regs rVI 0 r = _
+    rw [Function.update_of_ne hVI]
+    change Function.update s2.regs rVX 0 r = _
+    rw [Function.update_of_ne hVX]
+    change Function.update s1.regs rAcc 0 r = _
+    rw [Function.update_of_ne hAcc]
+    change Function.update s0.regs rZ 0 r = _
+    rw [Function.update_of_ne hZ]
+  -- s4 at vBoundIn = v 0 (since vBoundIn is outer input 0, and rZ/rAcc/rVX/rVI
+  -- are not equal to rBoundIn).
+  have h_ne_BIn_rZ : rBoundIn ≠ rZ := by
+    intro h; have : (2 : ℕ) = 0 := congrArg Fin.val h; omega
+  have h_ne_BIn_rAcc : rBoundIn ≠ rAcc := by
+    intro h; have : (2 : ℕ) = 1 := congrArg Fin.val h; omega
+  have h_ne_BIn_rVI : rBoundIn ≠ rVI := by
+    intro h; have : (2 : ℕ) = k + 4 := congrArg Fin.val h; omega
+  have hs0_rBoundIn : s0.regs rBoundIn = v 0 := by
+    have h_eq : (P.inputRegs 0 : Fin P.numRegs) = rBoundIn := by
+      apply Fin.ext; exact h_outer_inputRegs 0
+    change (URMState.init P v).regs rBoundIn = v 0
+    rw [← h_eq]
+    exact URMState.init_regs_inputRegs P v 0
+  have hs4_rBoundIn : s4.regs rBoundIn = v 0 := by
+    rw [hs4_other rBoundIn h_ne_BIn_rZ h_ne_BIn_rAcc h_disj_sd h_ne_BIn_rVI]
+    exact hs0_rBoundIn
+  have hs4_rTmp2 : s4.regs rTmp2 = 0 := by
+    have h_ne_T2_rZ : rTmp2 ≠ rZ := by
+      intro h; have : (k + 6 : ℕ) = 0 := congrArg Fin.val h; omega
+    have h_ne_T2_rAcc : rTmp2 ≠ rAcc := by
+      intro h; have : (k + 6 : ℕ) = 1 := congrArg Fin.val h; omega
+    have h_ne_T2_rVI : rTmp2 ≠ rVI := by
+      intro h; have : (k + 6 : ℕ) = k + 4 := congrArg Fin.val h; omega
+    rw [hs4_other rTmp2 h_ne_T2_rZ h_ne_T2_rAcc h_disj_dt.symm h_ne_T2_rVI]
+    -- s0.regs rTmp2 = 0 (init outside inputs).
+    change (URMState.init P v).regs rTmp2 = 0
+    apply URMState.init_regs_zero_outside_inputs P v h_outer_inputRegs
+    right; right
+    change 2 + (k + 1) ≤ k + 6; omega
+  -- Now apply preservingTransfer_correct at pcBase = 4.
+  rw [show 6 + 9 * (v 0) = 4 + (9 * (v 0) + 2) by omega, URMState.runFor_add,
+    h_runFor_4]
+  obtain ⟨pt_pc, pt_dst, pt_src, pt_tmp, pt_z, pt_oth⟩ :=
+    preservingTransfer_correct P 4 rBoundIn rVX rTmp2 rZ
+      h_disj_sd h_disj_st h_disj_dt h_disj_zs h_disj_zd h_disj_zt
+      H_pT s4 hs4_pc hs4_rZ hs4_rTmp2 (v 0) hs4_rBoundIn
+  set s5 : URMState P := URMState.runFor P s4 (9 * (v 0) + 2)
+  -- s5 register values.
+  have hs5_pc : s5.pc = 13 := by
+    have : (4 + 9 : ℕ) = 13 := by omega
+    rw [← this]; exact pt_pc
+  have hs5_rVX : s5.regs rVX = v 0 := by
+    rw [pt_dst, hs4_rVX]; omega
+  have hs5_rBoundIn : s5.regs rBoundIn = v 0 := by
+    rw [pt_src]
+  have hs5_rTmp2 : s5.regs rTmp2 = 0 := pt_tmp
+  have hs5_rZ : s5.regs rZ = 0 := pt_z
+  -- Other registers (those ≠ rVX) preserved from s4.
+  have hs5_other_of_ne_rVX : ∀ r : Fin P.numRegs, r ≠ rVX →
+      s5.regs r = s4.regs r := pt_oth
+  -- Discharge each invariant clause.
+  refine
+    { hi_le := Nat.zero_le _
+      pc_eq := ?_
+      zReg_zero := ?_
+      outer_inputs := ?_
+      vX_eq := ?_
+      vI_eq := ?_
+      tmp1_zero := ?_
+      tmp2_zero := ?_
+      acc_eq := ?_
+      fBody_zero := ?_ }
+  · -- PC = 13.
+    exact hs5_pc
+  · -- V_z = 0.
+    exact hs5_rZ
+  · -- Outer inputs preserved: s5.regs ⟨2 + j.val, _⟩ = v j.
+    intro j
+    -- ⟨2 + j.val, _⟩ ≠ rVX since 2 + j.val ≤ k + 2 < k + 3.
+    have hj : j.val < k + 1 := j.isLt
+    have h_ne_rVX :
+        (⟨2 + j.val, by
+          change 2 + j.val < k + 7 + frag_f.numRegs
+          have : 0 < frag_f.numRegs := frag_f.numRegs_pos; omega⟩ :
+          Fin P.numRegs) ≠ rVX := by
+      intro h
+      have : (2 + j.val : ℕ) = k + 3 := congrArg Fin.val h
+      omega
+    rw [hs5_other_of_ne_rVX _ h_ne_rVX]
+    -- And s4.regs ⟨2 + j.val, _⟩ = s0.regs ⟨2 + j.val, _⟩ since
+    -- 2 + j.val ∉ {0, 1, k+3, k+4}.
+    have h_ne_rZ :
+        (⟨2 + j.val, by
+          change 2 + j.val < k + 7 + frag_f.numRegs
+          have : 0 < frag_f.numRegs := frag_f.numRegs_pos; omega⟩ :
+          Fin P.numRegs) ≠ rZ := by
+      intro h; have : (2 + j.val : ℕ) = 0 := congrArg Fin.val h; omega
+    have h_ne_rAcc :
+        (⟨2 + j.val, by
+          change 2 + j.val < k + 7 + frag_f.numRegs
+          have : 0 < frag_f.numRegs := frag_f.numRegs_pos; omega⟩ :
+          Fin P.numRegs) ≠ rAcc := by
+      intro h; have : (2 + j.val : ℕ) = 1 := congrArg Fin.val h; omega
+    have h_ne_rVI :
+        (⟨2 + j.val, by
+          change 2 + j.val < k + 7 + frag_f.numRegs
+          have : 0 < frag_f.numRegs := frag_f.numRegs_pos; omega⟩ :
+          Fin P.numRegs) ≠ rVI := by
+      intro h; have : (2 + j.val : ℕ) = k + 4 := congrArg Fin.val h; omega
+    rw [hs4_other _ h_ne_rZ h_ne_rAcc h_ne_rVX h_ne_rVI]
+    -- s0.regs ⟨2 + j.val, _⟩ = v j via P.inputRegs j.
+    have h_eq : (P.inputRegs j : Fin P.numRegs)
+        = ⟨2 + j.val, by
+          change 2 + j.val < k + 7 + frag_f.numRegs
+          have : 0 < frag_f.numRegs := frag_f.numRegs_pos; omega⟩ := by
+      apply Fin.ext; exact h_outer_inputRegs j
+    change s0.regs _ = v j
+    rw [← h_eq]
+    exact URMState.init_regs_inputRegs P v j
+  · -- V_x = v 0 - 0 = v 0.
+    change s5.regs rVX = v 0 - 0
+    rw [hs5_rVX]; omega
+  · -- V_i = 0.
+    change s5.regs rVI = 0
+    have h_ne_rVI_rVX : rVI ≠ rVX := h_ne_rVX_rVI.symm
+    rw [hs5_other_of_ne_rVX rVI h_ne_rVI_rVX]
+    exact hs4_rVI
+  · -- tmp1 = 0.
+    have h_tmp1_lt : k + 5 < P.numRegs := by
+      rw [h_numRegs_eq]
+      have : 0 < frag_f.numRegs := frag_f.numRegs_pos; omega
+    set rTmp1 : Fin P.numRegs := ⟨k + 5, h_tmp1_lt⟩
+    change s5.regs rTmp1 = 0
+    have h_ne_rTmp1_rVX : rTmp1 ≠ rVX := by
+      intro h; have : (k + 5 : ℕ) = k + 3 := congrArg Fin.val h; omega
+    rw [hs5_other_of_ne_rVX rTmp1 h_ne_rTmp1_rVX]
+    have h_ne_rTmp1_rZ : rTmp1 ≠ rZ := by
+      intro h; have : (k + 5 : ℕ) = 0 := congrArg Fin.val h; omega
+    have h_ne_rTmp1_rAcc : rTmp1 ≠ rAcc := by
+      intro h; have : (k + 5 : ℕ) = 1 := congrArg Fin.val h; omega
+    have h_ne_rTmp1_rVI : rTmp1 ≠ rVI := by
+      intro h; have : (k + 5 : ℕ) = k + 4 := congrArg Fin.val h; omega
+    rw [hs4_other rTmp1 h_ne_rTmp1_rZ h_ne_rTmp1_rAcc h_ne_rTmp1_rVX
+      h_ne_rTmp1_rVI]
+    change (URMState.init P v).regs rTmp1 = 0
+    apply URMState.init_regs_zero_outside_inputs P v h_outer_inputRegs
+    right; right
+    change 2 + (k + 1) ≤ k + 5; omega
+  · -- tmp2 = 0.
+    exact hs5_rTmp2
+  · -- Accumulator = natBSum 0 ... = 0.
+    change s5.regs rAcc = natBSum 0 _
+    have h_ne_rAcc_rVX' : rAcc ≠ rVX := h_ne_rAcc_rVX
+    rw [hs5_other_of_ne_rVX rAcc h_ne_rAcc_rVX']
+    rw [hs4_rAcc]
+    rfl
+  · -- f's reindexed block is all 0.
+    intro r
+    have hr : r.val < frag_f.numRegs := r.isLt
+    have h_idx_lt : (k + 7) + r.val < P.numRegs := by
+      rw [h_numRegs_eq]; omega
+    set rBlock : Fin P.numRegs := ⟨(k + 7) + r.val, h_idx_lt⟩
+    change s5.regs rBlock = 0
+    have h_ne_rBlock_rVX : rBlock ≠ rVX := by
+      intro h
+      have : ((k + 7) + r.val : ℕ) = k + 3 := congrArg Fin.val h
+      omega
+    rw [hs5_other_of_ne_rVX rBlock h_ne_rBlock_rVX]
+    have h_ne_rBlock_rZ : rBlock ≠ rZ := by
+      intro h
+      have : ((k + 7) + r.val : ℕ) = 0 := congrArg Fin.val h
+      omega
+    have h_ne_rBlock_rAcc : rBlock ≠ rAcc := by
+      intro h
+      have : ((k + 7) + r.val : ℕ) = 1 := congrArg Fin.val h
+      omega
+    have h_ne_rBlock_rVI : rBlock ≠ rVI := by
+      intro h
+      have : ((k + 7) + r.val : ℕ) = k + 4 := congrArg Fin.val h
+      omega
+    rw [hs4_other rBlock h_ne_rBlock_rZ h_ne_rBlock_rAcc h_ne_rBlock_rVX
+      h_ne_rBlock_rVI]
+    change (URMState.init P v).regs rBlock = 0
+    apply URMState.init_regs_zero_outside_inputs P v h_outer_inputRegs
+    right; right
+    change 2 + (k + 1) ≤ (k + 7) + r.val; omega
+
 end LawvereERKSim
 end GebLean
