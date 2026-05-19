@@ -5952,6 +5952,76 @@ private theorem compileFrag_comp_subBlock_gsBody_correct
       h_f_strict k' hk'
     omega
 
+/-- Phase i.3 helper for `compileFrag_comp`'s `i`-th
+sub-block: running the destructive output-transfer
+`transferLoop` for `4 * n + 1` steps (where `n` is the
+value held by the source register at the start of the
+block) advances the PC by `4` to the start of the next
+sub-block (or to `fPcBase` if `i = k - 1`), zeroes the
+source register (`gs i`'s output, at
+`gsBase_i + (frag_gs i).outputReg.val`), adds `n` to the
+destination register (`f`'s `i`-th input slot, at
+`fBase + (frag_f.inputRegs i).val`), and leaves all
+other registers (including `zReg`) unchanged from the
+pre-state.
+
+This lemma is the abstract Phase i.3 result: instantiating
+its `src`/`dst`/`zReg`/`H` parameters with the specific
+register maps and instruction-presence facts from
+`compileFrag_comp_subBlock i pcBase` (the four
+`transferLoop` raw instructions emitted at offsets
+`pcBase + 9 * a + (frag_gs i).instrs.size - 1` and the
+following three PCs) gives the sub-block-specific Phase
+i.3 helper. Direct wrapper over `transferLoop_correct`. -/
+private theorem compileFrag_comp_subBlock_outputTransfer_correct
+    {a : ℕ}
+    (P : URMProgram a) (pcBase : ℕ)
+    (src dst zReg : Fin P.numRegs)
+    (h_disj_sd : src ≠ dst) (h_disj_zs : zReg ≠ src)
+    (h_disj_zd : zReg ≠ dst)
+    (H : transferLoopInstrs P pcBase src dst zReg)
+    (s : URMState P) (h_pc : s.pc = pcBase)
+    (h_z : s.regs zReg = 0)
+    (n : ℕ) (h_src : s.regs src = n)
+    (h_dst0 : s.regs dst = 0) :
+    let s' := URMState.runFor P s (4 * n + 1)
+    s'.pc = pcBase + 4 ∧
+    s'.regs dst = n ∧
+    s'.regs src = 0 ∧
+    s'.regs zReg = 0 ∧
+    (∀ r : Fin P.numRegs, r ≠ dst → r ≠ src → r ≠ zReg →
+      s'.regs r = s.regs r) := by
+  obtain ⟨pc_eq, dst_eq, src_eq, z_eq, oth_eq⟩ :=
+    transferLoop_correct P pcBase src dst zReg
+      h_disj_sd h_disj_zs h_disj_zd H s h_pc h_z n h_src
+  refine ⟨pc_eq, ?_, src_eq, z_eq, oth_eq⟩
+  rw [dst_eq, h_dst0]; omega
+
+/-- Per-step strict PC bound for
+`compileFrag_comp_subBlock_outputTransfer_correct`: for
+`k < 4 * n + 1` (i.e., strictly before the final exit
+step), the intermediate PC stays at most `pcBase + 3` —
+strictly less than `pcBase + 4` (the start of the next
+sub-block). Direct specialization of
+`transferLoop_correct_pc_strict_bound`. -/
+private theorem compileFrag_comp_subBlock_outputTransfer_pc_strict_bound
+    {a : ℕ}
+    (P : URMProgram a) (pcBase : ℕ)
+    (src dst zReg : Fin P.numRegs)
+    (h_disj_sd : src ≠ dst) (h_disj_zs : zReg ≠ src)
+    (h_disj_zd : zReg ≠ dst)
+    (H : transferLoopInstrs P pcBase src dst zReg)
+    (s : URMState P) (h_pc : s.pc = pcBase)
+    (h_z : s.regs zReg = 0)
+    (n : ℕ) (h_src : s.regs src = n)
+    (k : ℕ) (h_k : k < 4 * n + 1) :
+    (URMState.runFor P s k).pc < pcBase + 4 := by
+  have h_k' : k ≤ 4 * n := by omega
+  have h_le :=
+    transferLoop_correct_pc_strict_bound P pcBase src dst zReg
+      h_disj_sd h_disj_zs h_disj_zd H s h_pc h_z n h_src k h_k'
+  omega
+
 /-- Pre-stop PC and output for the `.succ` atom.  After
 `9 * v 0 + 4` steps the program reaches `pc = 11` (the stop
 instruction at `size - 1`) with the output register holding
