@@ -3,6 +3,7 @@ import GebLean.LawvereERKSim.Embedding
 import GebLean.LawvereERKSim.Loops
 import GebLean.LawvereERKSim.Atoms
 import GebLean.LawvereERKSim.Comp
+import GebLean.LawvereERKSim.BSum
 
 /-!
 # erToK: ER → K^sim_2 via zero-test URM simulation
