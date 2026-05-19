@@ -1854,6 +1854,60 @@ private theorem stateEmbedsFrag_runFor {a b : ℕ}
     simp only [URMState.runFor] at this
     exact this
 
+/-! ### PC-in-range for `compileER` outputs
+
+`stateEmbedsFrag_runFor` requires a `pc < L`
+hypothesis. The generic engine driving that hypothesis is
+`ZeroTestURM.URMState.runFor_pc_le_size`, which gives a
+`pc ≤ instrs.size` bound for any well-bounded program
+starting from a PC inside the array-or-halt region.
+
+The wrapper below specialises that generic lemma to
+`compileER`-produced URMs starting from
+`URMState.init (compileER e) v` (PC = 0). The
+well-boundedness obligation
+(`(compileER e).WellBounded`, i.e. every `jumpZ` target in
+the emitted instructions is at most `instrs.size`) is
+carried as an explicit hypothesis: the per-constructor
+discharge of that obligation is a separate compositional
+proof bundled with the corresponding
+`compileER_runFor_*` lemma. -/
+
+/-- For any well-bounded `compileER`-produced URM, running
+for any number of steps from its `URMState.init` state
+keeps the PC within `[0, instrs.size]`. Used by
+`compileER_runFor_{comp,bsum,bprod}` to discharge the
+`pc < L` precondition of `stateEmbedsFrag_runFor` after
+deriving the strict bound from the per-step layout. -/
+private theorem compileER_runFor_pc_le_size {a : ℕ}
+    (e : ERMor1 a) (v : Fin a → ℕ) (n : ℕ)
+    (h_well : (compileER e).WellBounded) :
+    ((URMState.init (compileER e) v).runFor
+        (compileER e) n).pc
+      ≤ (compileER e).instrs.size := by
+  apply URMState.runFor_pc_le_size (compileER e)
+    (URMState.init (compileER e) v) h_well
+  -- `URMState.init` has `pc = 0`, which is ≤ `instrs.size`.
+  change (0 : ℕ) ≤ (compileER e).instrs.size
+  exact Nat.zero_le _
+
+/-- For a well-bounded standalone fragment, running it for
+any number of steps from a state with PC inside the
+array-or-halt region keeps the PC ≤ `instrs.size`. This
+is the form consumed inside the inductive step of
+`compileER_runFor_comp`'s sub-fragment runs, where the
+fragment under analysis is a `compileERFrag` output and
+the starting state is its `URMState.init` (PC = 0) or a
+mid-execution state produced by a previous embedding
+step. -/
+private theorem fragment_runFor_pc_le_size {a : ℕ}
+    (frag : CompiledFragment a) (s : URMState frag.toURMProgram)
+    (h_well : frag.toURMProgram.WellBounded)
+    (h_pc : s.pc ≤ frag.instrs.size) (n : ℕ) :
+    (URMState.runFor frag.toURMProgram s n).pc
+      ≤ frag.instrs.size :=
+  URMState.runFor_pc_le_size frag.toURMProgram s h_well h_pc n
+
 /-- Hypothesis bundle for `preservingTransfer_correct`:
 the nine instruction-lookup equalities at PCs `pcBase..pcBase+8`
 matching the raw layout of `URMRaw.preservingTransfer`. The

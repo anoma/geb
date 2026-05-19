@@ -55,6 +55,13 @@ rather than a zero-test jump (level 1 in K^sim). See spec
   the instruction array, `runFor` is the identity.
 - `URMState.runFor_stop`: at a `stop` instruction,
   `runFor` is the identity.
+- `URMProgram.WellBounded`: every `jumpZ` target in the
+  program is at most `instrs.size`.
+- `URMState.step_pc_le_size`: one step of a well-bounded
+  program from a PC ≤ `instrs.size` keeps the PC
+  ≤ `instrs.size`.
+- `URMState.runFor_pc_le_size`: any step count from such
+  a starting state keeps the PC ≤ `instrs.size`.
 
 ## References
 
@@ -252,6 +259,91 @@ def URMState.init {a : ℕ} (P : URMProgram a)
         (fun i => decide (P.inputRegs i = r)) with
     | some i => v i
     | none   => 0
+
+/-- Well-bounded URM program: every `jumpZ` in
+`P.instrs` has both targets at most `P.instrs.size`.
+A PC equal to `P.instrs.size` is the implicit halt
+state, so this is the loosest bound that keeps execution
+inside the program-plus-halt region.
+
+The other four instructions (`assign`, `inc`, `dec`,
+`stop`) advance the PC by one or self-loop; the bound on
+their successor PC follows from `s.pc < P.instrs.size`
+alone, so they impose no extra obligation here. -/
+def URMProgram.WellBounded {a : ℕ} (P : URMProgram a) : Prop :=
+  ∀ (i : ℕ) (hi : i < P.instrs.size) (r : Fin P.numRegs) (l₁ l₂ : ℕ),
+    P.instrs[i]'hi = URMInstr.jumpZ r l₁ l₂ →
+      l₁ ≤ P.instrs.size ∧ l₂ ≤ P.instrs.size
+
+/-- One step of a well-bounded program from a state with
+`pc ≤ instrs.size` produces a state with
+`pc ≤ instrs.size`. -/
+theorem URMState.step_pc_le_size {a : ℕ}
+    (P : URMProgram a) (s : URMState P)
+    (h_well : P.WellBounded)
+    (h_pc : s.pc ≤ P.instrs.size) :
+    (URMState.step P s).pc ≤ P.instrs.size := by
+  by_cases hlt : s.pc < P.instrs.size
+  · -- PC inside the array: case-split on the instruction.
+    match hcase : P.instrs[s.pc]'hlt with
+    | URMInstr.assign i c =>
+      have : URMState.step P s =
+          { pc := s.pc + 1
+            regs := Function.update s.regs i c } := by
+        simp only [URMState.step, dif_pos hlt, hcase]
+      rw [this]
+      change s.pc + 1 ≤ P.instrs.size
+      omega
+    | URMInstr.inc i =>
+      have : URMState.step P s =
+          { pc := s.pc + 1
+            regs := Function.update s.regs i (s.regs i + 1) } := by
+        simp only [URMState.step, dif_pos hlt, hcase]
+      rw [this]
+      change s.pc + 1 ≤ P.instrs.size
+      omega
+    | URMInstr.dec i =>
+      have : URMState.step P s =
+          { pc := s.pc + 1
+            regs := Function.update s.regs i (s.regs i - 1) } := by
+        simp only [URMState.step, dif_pos hlt, hcase]
+      rw [this]
+      change s.pc + 1 ≤ P.instrs.size
+      omega
+    | URMInstr.jumpZ r l₁ l₂ =>
+      have hstep : URMState.step P s =
+          { pc := if s.regs r = 0 then l₁ else l₂
+            regs := s.regs } := by
+        simp only [URMState.step, dif_pos hlt, hcase]
+      have hbnd := h_well s.pc hlt r l₁ l₂ hcase
+      rw [hstep]
+      change (if s.regs r = 0 then l₁ else l₂) ≤ P.instrs.size
+      by_cases hz : s.regs r = 0
+      · simp only [hz, ↓reduceIte]; exact hbnd.1
+      · simp only [hz, ↓reduceIte]; exact hbnd.2
+    | URMInstr.stop =>
+      have : URMState.step P s = s := by
+        simp only [URMState.step, dif_pos hlt, hcase]
+      rw [this]; exact h_pc
+  · -- PC at or past the end: `step` is the identity.
+    have : URMState.step P s = s := by
+      simp only [URMState.step, dif_neg hlt]
+    rw [this]; exact h_pc
+
+/-- Any step count of a well-bounded program from a
+state with `pc ≤ instrs.size` keeps the PC
+≤ `instrs.size`. -/
+theorem URMState.runFor_pc_le_size {a : ℕ}
+    (P : URMProgram a) (s : URMState P)
+    (h_well : P.WellBounded)
+    (h_pc : s.pc ≤ P.instrs.size) (n : ℕ) :
+    (URMState.runFor P s n).pc ≤ P.instrs.size := by
+  induction n generalizing s with
+  | zero => exact h_pc
+  | succ n ih =>
+    rw [URMState.runFor_succ]
+    exact ih (URMState.step P s)
+      (URMState.step_pc_le_size P s h_well h_pc)
 
 end ZeroTestURM
 
