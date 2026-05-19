@@ -11838,18 +11838,14 @@ private theorem compileER_pre_stop_to_runFor {a : ℕ}
       (URMState.runFor (compileER e)
             (URMState.init (compileER e) v) T0).regs
           (compileER e).outputReg
-        = e.interp v ∧
-      (∀ k' < T0,
-        (URMState.runFor (compileER e)
-            (URMState.init (compileER e) v) k').pc
-          < (compileER e).instrs.size - 1)) :
+        = e.interp v) :
     (URMState.runFor (compileER e)
         (URMState.init (compileER e) v) t').regs
         (compileER e).outputReg
       = e.interp v := by
-  obtain ⟨T0, hT0_bound, h_pc_eq, h_output, _h_strict⟩ := h_pre
+  obtain ⟨T0, hT0_bound, h_pc_eq, h_output⟩ := h_pre
   -- Split `t' = T0 + (t' - T0)` using `T0 ≤ runtime ≤ t'`.
-  set frag : CompiledFragment a := compileERFrag e with hfrag
+  set frag : CompiledFragment a := compileERFrag e
   -- `(compileER e).instrs.size > 0` from `lastInstr_isStop`.
   have h_size_pos : 0 < (compileER e).instrs.size := by
     have hb := frag.lastInstr_isStop
@@ -11866,7 +11862,7 @@ private theorem compileER_pre_stop_to_runFor {a : ℕ}
   -- Set up the post-`T0` state for `runFor_stop`.
   set sT0 : URMState (compileER e) :=
     URMState.runFor (compileER e)
-      (URMState.init (compileER e) v) T0 with hsT0
+      (URMState.init (compileER e) v) T0
   -- Establish the size-1 form for indexing first, then transport
   -- `pc = size - 1` through both the bound and the value.
   have h_pred_lt : (compileER e).instrs.size - 1 < (compileER e).instrs.size := by
@@ -11880,8 +11876,9 @@ private theorem compileER_pre_stop_to_runFor {a : ℕ}
     exact h_eq_last
   have h_pc_lt : sT0.pc < (compileER e).instrs.size := h_pc_eq ▸ h_pred_lt
   have h_stop : (compileER e).instrs[sT0.pc]'h_pc_lt = URMInstr.stop := by
-    -- Generalize the `pc` projection so we can `subst` away its
-    -- value alongside the `h_pc_lt` bound it appears in.
+    -- `subst h_pc_eq` would fail because `h_pc_eq`'s LHS is the
+    -- projection `sT0.pc`, not a local variable; `generalize` plus
+    -- `revert`/`intro` re-shapes the goal so `subst` can fire.
     revert h_pc_lt
     generalize sT0.pc = pcVal at h_pc_eq
     intro h_pc_lt
@@ -11896,14 +11893,11 @@ private theorem compileER_pre_stop_to_runFor {a : ℕ}
   rw [URMState.runFor_stop (compileER e) sT0 (t' - T0) h_pc_lt h_stop]
   exact h_output
 
-/-- `compileER_runFor` correctness for `.comp f gs` at general
-`k`. Specialises `compileER_pre_stop_correct_comp` via the
-shared bridge `compileER_pre_stop_to_runFor` to the
-output-only `≤ t'` form, matching the shape of
-`compileER_runFor_comp_k_zero`. The inductive hypotheses for
-`f` and the `gs i` are stated in pre-stop form, the same form
-they appear in `compileER_pre_stop_correct_comp`'s caller
-context. -/
+/-- Output-only `≤ t'` form: for any `t' ≥
+`compileER_runtime (.comp f gs) v`, the compiled URM's output
+register after `t'` steps equals `(.comp f gs).interp v`.
+The pre-stop inductive hypotheses for `f` and each `gs i`
+take the form consumed by `compileER_pre_stop_correct_comp`. -/
 private theorem compileER_runFor_comp {k a : ℕ}
     (f : ERMor1 k) (gs : Fin k → ERMor1 a)
     (ih_f : ∀ (v' : Fin k → ℕ),
@@ -11939,9 +11933,10 @@ private theorem compileER_runFor_comp {k a : ℕ}
     (URMState.runFor (compileER (.comp f gs : ERMor1 a))
         (URMState.init (compileER (.comp f gs : ERMor1 a)) v) t').regs
         (compileER (.comp f gs : ERMor1 a)).outputReg
-      = (.comp f gs : ERMor1 a).interp v :=
-  compileER_pre_stop_to_runFor _ v t' ht'
-    (compileER_pre_stop_correct_comp f gs ih_f ih_gs v)
+      = (.comp f gs : ERMor1 a).interp v := by
+  obtain ⟨T0, hT0, h_pc, h_out, _⟩ :=
+    compileER_pre_stop_correct_comp f gs ih_f ih_gs v
+  exact compileER_pre_stop_to_runFor _ v t' ht' ⟨T0, hT0, h_pc, h_out⟩
 
 end LawvereERKSim
 
