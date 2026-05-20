@@ -1513,7 +1513,7 @@ def compileER_runtime : {a : ℕ} → ERMor1 a →
           ((List.finRange k).map (Fin.tail v)).foldl
             (· + ·) 0
         compileER_runtime f ctx_f
-        + 50 + 10 * (i + outerSum)
+        + 50 + 2 * (k + 1) + 10 * (i + outerSum)
         + 5 * f.interp ctx_f
         + nRegs_f
       30 + 10 * bound +
@@ -1528,7 +1528,7 @@ def compileER_runtime : {a : ℕ} → ERMor1 a →
           ((List.finRange k).map (Fin.tail v)).foldl
             (· + ·) 0
         compileER_runtime f ctx_f
-        + 60 + 10 * (i + outerSum)
+        + 60 + 2 * (k + 1) + 10 * (i + outerSum)
         + 5 * f.interp ctx_f
         + nRegs_f
       40 + 10 * bound +
