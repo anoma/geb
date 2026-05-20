@@ -8329,7 +8329,7 @@ the strict per-step PC bound holding on `[0, T0)`. Mirrors
 where `T_partial` is the outer-loop completion witness from
 `compileFrag_bprod_partial` and the trailing `+ 1` executes the final
 `jumpZR vX exitPC bodyStartPC` at `bprod_topPC` with `vX = 0`. -/
-private theorem compileER_pre_stop_correct_bprod
+theorem compileER_pre_stop_correct_bprod
     {k : ℕ}
     (f : ERMor1 (k + 1))
     (ih_f : ∀ (v' : Fin (k + 1) → ℕ),

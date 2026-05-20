@@ -4912,7 +4912,7 @@ Assembly:
 Reuses `compileFrag_comp_subBlocks_partial`,
 `ProgramEmbedsFragment_compileFrag_comp_fBody`,
 `stateEmbedsFrag_runFor`, `vPrefixSum_eq_foldl_finRange`. -/
-private theorem compileER_pre_stop_correct_comp
+theorem compileER_pre_stop_correct_comp
     {k a : ℕ}
     (f : ERMor1 k)
     (gs : Fin k → ERMor1 a)

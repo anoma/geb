@@ -4723,7 +4723,7 @@ final step discharges the loop-top `jumpZR vX exitPC bodyStartPC`
 instruction at `bsum_topPC = 13` via its zero-branch
 (`vX = v 0 - v 0 = 0` from the partial-invariant `vX_eq` clause at
 `i = v 0`). -/
-private theorem compileER_pre_stop_correct_bsum
+theorem compileER_pre_stop_correct_bsum
     {k : ℕ}
     (f : ERMor1 (k + 1))
     (ih_f : ∀ (v' : Fin (k + 1) → ℕ),

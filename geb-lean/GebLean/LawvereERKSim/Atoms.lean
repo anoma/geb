@@ -703,7 +703,7 @@ ERMor1.zero.interp v`, and for every earlier step count
 `size - 1`. Atom case of `compileER_pre_stop_correct`;
 the compositional cases (comp/bsum/bprod) and the
 remaining atoms (succ/proj/sub) are deferred. -/
-private theorem compileER_pre_stop_correct_atom_zero
+theorem compileER_pre_stop_correct_atom_zero
     (v : Fin 0 → ℕ) :
     ∃ T0 : ℕ,
       T0 ≤ compileER_runtime (.zero : ERMor1 0) v ∧
@@ -822,7 +822,7 @@ instruction at `size - 1`) with the output register holding
 `v 0 + 1 = ERMor1.succ.interp v`; for every earlier step
 count the PC is strictly less than `size - 1`. Atom case of
 `compileER_pre_stop_correct`. -/
-private theorem compileER_pre_stop_correct_atom_succ
+theorem compileER_pre_stop_correct_atom_succ
     (v : Fin 1 → ℕ) :
     ∃ T0 : ℕ,
       T0 ≤ compileER_runtime (.succ : ERMor1 1) v ∧
@@ -1063,7 +1063,7 @@ instruction at `size - 1`) with the output register holding
 `v i = (ERMor1.proj i).interp v`; for every earlier step
 count the PC is strictly less than `size - 1`. Atom case of
 `compileER_pre_stop_correct`. -/
-private theorem compileER_pre_stop_correct_atom_proj {k : ℕ}
+theorem compileER_pre_stop_correct_atom_proj {k : ℕ}
     (i : Fin k) (v : Fin k → ℕ) :
     ∃ T0 : ℕ,
       T0 ≤ compileER_runtime (.proj i : ERMor1 k) v ∧
@@ -1291,7 +1291,7 @@ private theorem compileER_pre_stop_correct_atom_proj {k : ℕ}
 holding `v 0 - v 1 = ERMor1.sub.interp v`; for every earlier
 step count the PC is strictly less than `size - 1`. Atom
 case of `compileER_pre_stop_correct`. -/
-private theorem compileER_pre_stop_correct_atom_sub
+theorem compileER_pre_stop_correct_atom_sub
     (v : Fin 2 → ℕ) :
     ∃ T0 : ℕ,
       T0 ≤ compileER_runtime (.sub : ERMor1 2) v ∧
