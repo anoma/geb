@@ -1111,8 +1111,10 @@ in `Comp.lean`, adapted to bsum's register layout
 `2..k+2`, `V_x = ⟨k+3, _⟩`, `V_i = ⟨k+4, _⟩`, scratch
 `tmp1 = ⟨k+5, _⟩`, `tmp2 = ⟨k+6, _⟩`, f's reindexed register
 block at slots `k+7 .. k+7 + frag_f.numRegs - 1`). The structure
-carries the running value of `i` and proofs about every register
-class. -/
+carries the running value of `i` and proofs about the outer
+scaffolding registers; f's reindexed block is not tracked
+(Phase i.0's zero-sweep re-establishes it at the start of each
+iteration). -/
 private structure compileFrag_bsum_partial_invariant
     {k : ℕ}
     (frag_f : CompiledFragment (k + 1))
@@ -1162,13 +1164,6 @@ private structure compileFrag_bsum_partial_invariant
     have : 0 < frag_f.numRegs := frag_f.numRegs_pos
     omega⟩
       = natBSum i (fun j => f.interp (Fin.cons j (Fin.tail v)))
-  /-- f's reindexed register block (outer registers
-  `k + 7 .. k + 7 + frag_f.numRegs - 1`) is uniformly `0`. -/
-  fBody_zero : ∀ r : Fin frag_f.numRegs,
-    s.regs ⟨(k + 7) + r.val, by
-      have hr : r.val < frag_f.numRegs := r.isLt
-      change (k + 7) + r.val < k + 7 + frag_f.numRegs
-      omega⟩ = 0
 
 /-- Base case of the bsum outer-iteration induction: after running
 the prelude of `compileFrag_bsum`
@@ -1437,8 +1432,7 @@ private theorem compileFrag_bsum_partial_base
       vI_eq := ?_
       tmp1_zero := ?_
       tmp2_zero := ?_
-      acc_eq := ?_
-      fBody_zero := ?_ }
+      acc_eq := ?_ }
   · -- PC = 13.
     exact hs5_pc
   · -- V_z = 0.
@@ -1523,36 +1517,6 @@ private theorem compileFrag_bsum_partial_base
     rw [hs5_other_of_ne_rVX rAcc h_ne_rAcc_rVX']
     rw [hs4_rAcc]
     rfl
-  · -- f's reindexed block is all 0.
-    intro r
-    have hr : r.val < frag_f.numRegs := r.isLt
-    have h_idx_lt : (k + 7) + r.val < P.numRegs := by
-      rw [h_numRegs_eq]; omega
-    set rBlock : Fin P.numRegs := ⟨(k + 7) + r.val, h_idx_lt⟩
-    change s5.regs rBlock = 0
-    have h_ne_rBlock_rVX : rBlock ≠ rVX := by
-      intro h
-      have : ((k + 7) + r.val : ℕ) = k + 3 := congrArg Fin.val h
-      omega
-    rw [hs5_other_of_ne_rVX rBlock h_ne_rBlock_rVX]
-    have h_ne_rBlock_rZ : rBlock ≠ rZ := by
-      intro h
-      have : ((k + 7) + r.val : ℕ) = 0 := congrArg Fin.val h
-      omega
-    have h_ne_rBlock_rAcc : rBlock ≠ rAcc := by
-      intro h
-      have : ((k + 7) + r.val : ℕ) = 1 := congrArg Fin.val h
-      omega
-    have h_ne_rBlock_rVI : rBlock ≠ rVI := by
-      intro h
-      have : ((k + 7) + r.val : ℕ) = k + 4 := congrArg Fin.val h
-      omega
-    rw [hs4_other rBlock h_ne_rBlock_rZ h_ne_rBlock_rAcc h_ne_rBlock_rVX
-      h_ne_rBlock_rVI]
-    change (URMState.init P v).regs rBlock = 0
-    apply URMState.init_regs_zero_outside_inputs P v h_outer_inputRegs
-    right; right
-    change 2 + (k + 1) ≤ (k + 7) + r.val; omega
 
 /-- Post-state predicate for Phase i.0 of one bsum iteration:
 the state immediately after executing the loop-top `jumpZR vX`
