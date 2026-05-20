@@ -67,6 +67,12 @@ absolute PCs at which each segment begins and ends.
   end of one iteration's prologue (PC = `15 + frag_f.numRegs
   + 9 * (k + 1)`) and the Phase i.1 preservation theorem from
   `compileFrag_bsum_phase_i0_post @ i`.
+- `compileFrag_bsum_phase_i2_post`,
+  `compileFrag_bsum_partial_phase_i2`: post-state predicate at the
+  end of one iteration's f-body (PC = `15 + frag_f.numRegs
+  + 9 * (k + 1) + (frag_f.instrs.size - 1)`) and the Phase i.2
+  preservation theorem from `compileFrag_bsum_phase_i1_post @ i`,
+  consuming the inductive hypothesis `ih_f` on `f`.
 - `compileFrag_bsum_accUpdateBlock_instr_at`: instruction-presence
   discharger for the per-iteration accumulator-update block plus the
   epilogue's `.incR vI` and `URMRaw.goto bsum_topPC`, packaging the
@@ -78,6 +84,12 @@ absolute PCs at which each segment begins and ends.
   `compileFrag_bsum_partial_invariant @ (i.val + 1)` after running
   the accumulator-update transferLoop, the `incR vI`, and the
   `goto topPC`.
+- `compileFrag_bsum_partial_step`,
+  `compileFrag_bsum_partial_aux`,
+  `compileFrag_bsum_partial`: induction glue from
+  `compileFrag_bsum_partial_invariant @ i.val` to `@ (i.val + 1)`,
+  the auxiliary `Fin (v 0)`-indexed accumulation, and the
+  outer-iteration witness at `i = v 0`.
 - `compileER_pre_stop_correct_bsum`: pre-stop correctness theorem for
   `.bsum f`. Given the inductive hypothesis on `f` in the standard
   pre-stop existential form, produces a `T0 ≤ compileER_runtime (.bsum f) v`
@@ -87,6 +99,9 @@ absolute PCs at which each segment begins and ends.
   below `instrs.size - 1`. Final step of the bsum pre-stop chain
   consumed by the bsum runFor wrapper via
   `compileER_pre_stop_to_runFor` (`Embedding.lean`).
+- `compileER_runFor_bsum`: `≤ t'`-form wrapper around
+  `compileER_pre_stop_correct_bsum`, exposing the bsum branch of the
+  top-level `compileER_runFor` correctness theorem.
 
 ## References
 
