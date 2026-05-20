@@ -1002,7 +1002,7 @@ def vPrefixSum {a : ℕ} (v : Fin a → ℕ) : ℕ → ℕ
 
 /-- `vPrefixSum` unfolding at successor: drops the
 defensive `dite` when the index is in-range. -/
-private theorem vPrefixSum_succ {a : ℕ} (v : Fin a → ℕ)
+theorem vPrefixSum_succ {a : ℕ} (v : Fin a → ℕ)
     (n : ℕ) (h : n < a) :
     vPrefixSum v (n + 1)
       = vPrefixSum v n + v ⟨n, h⟩ := by
@@ -4861,7 +4861,7 @@ private theorem vPrefixSum_eq_foldl_finRange_aux {a : ℕ}
 `v_total` (defined as a `foldl`) with `compileFrag_comp`'s
 per-iteration `vPrefixSum v a` constant, used in the
 runtime-bound calculation of `compileER_pre_stop_correct_comp`. -/
-private theorem vPrefixSum_eq_foldl_finRange {a : ℕ}
+theorem vPrefixSum_eq_foldl_finRange {a : ℕ}
     (v : Fin a → ℕ) :
     vPrefixSum v a = ((List.finRange a).map v).foldl (· + ·) 0 := by
   have h := vPrefixSum_eq_foldl_finRange_aux v a (Nat.le_refl a)
