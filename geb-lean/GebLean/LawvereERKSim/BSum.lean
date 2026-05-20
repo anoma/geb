@@ -4085,5 +4085,199 @@ private theorem compileFrag_bsum_partial_phase_i3
         change pcBase + 5 < pcBase + 6
         omega
 
+/-- Per-iteration induction glue: from
+`compileFrag_bsum_partial_invariant @ i.val`, there exists a combined
+step count `T0` after which `compileFrag_bsum_partial_invariant @
+(i.val + 1)` holds, and throughout these `T0` steps the intermediate
+PC stays strictly below `(compileFrag_bsum frag_f).instrs.size - 1`
+(= `bsum_exitPC frag_f`). The witness `T0` decomposes as `T1 + T2 +
+T3 + T4`: phase i.0 (`2 + numRegs_f`), phase i.1
+(`9 * vPrefixSum (Fin.cons i.val (Fin.tail v)) (k + 1) + 2 * (k + 1)`),
+phase i.2 (existential, `≤ compileER_runtime f (Fin.cons i.val
+(Fin.tail v))`), and phase i.3 (`4 * f.interp (Fin.cons i.val
+(Fin.tail v)) + 3`). The structural induction hypothesis on `f` is
+threaded into phase i.2; the other phases are deterministic. -/
+private theorem compileFrag_bsum_partial_step
+    {k : ℕ}
+    (f : ERMor1 (k + 1))
+    (ih_f : ∀ (v' : Fin (k + 1) → ℕ),
+      ∃ T0 : ℕ,
+        T0 ≤ compileER_runtime f v' ∧
+        (URMState.runFor (compileER f)
+              (URMState.init (compileER f) v') T0).pc
+            = (compileER f).instrs.size - 1 ∧
+        (URMState.runFor (compileER f)
+              (URMState.init (compileER f) v') T0).regs
+            (compileER f).outputReg
+          = f.interp v' ∧
+        (∀ k' < T0,
+          (URMState.runFor (compileER f)
+              (URMState.init (compileER f) v') k').pc
+            < (compileER f).instrs.size - 1))
+    (v : Fin (k + 1) → ℕ)
+    (i : Fin (v 0))
+    (sPre : URMState
+      (compileFrag_bsum (compileERFrag f)).toURMProgram)
+    (h_inv : compileFrag_bsum_partial_invariant
+              (compileERFrag f) f v i.val i.isLt.le sPre) :
+    ∃ T0 : ℕ,
+      T0 ≤ (2 + (compileERFrag f).numRegs)
+            + (9 * vPrefixSum (Fin.cons i.val (Fin.tail v)) (k + 1)
+                + 2 * (k + 1))
+            + compileER_runtime f (Fin.cons i.val (Fin.tail v))
+            + (4 * f.interp (Fin.cons i.val (Fin.tail v)) + 3)
+      ∧ compileFrag_bsum_partial_invariant (compileERFrag f) f v
+          (i.val + 1) (Nat.succ_le_of_lt i.isLt)
+          (URMState.runFor _ sPre T0)
+      ∧ (∀ k' < T0,
+          (URMState.runFor _ sPre k').pc
+            < (compileFrag_bsum (compileERFrag f)).instrs.size - 1) := by
+  let frag_f : CompiledFragment (k + 1) := compileERFrag f
+  let outer : URMProgram (k + 1) :=
+    (compileFrag_bsum frag_f).toURMProgram
+  let v_iter : Fin (k + 1) → ℕ := Fin.cons i.val (Fin.tail v)
+  let T1 : ℕ := 2 + frag_f.numRegs
+  let T2 : ℕ := 9 * vPrefixSum v_iter (k + 1) + 2 * (k + 1)
+  let T4 : ℕ := 4 * f.interp v_iter + 3
+  -- Rewrite the goal to use the local `let`-bindings.
+  change ∃ T0 : ℕ,
+      T0 ≤ T1 + T2 + compileER_runtime f v_iter + T4
+    ∧ compileFrag_bsum_partial_invariant frag_f f v
+        (i.val + 1) (Nat.succ_le_of_lt i.isLt)
+        (URMState.runFor outer sPre T0)
+    ∧ (∀ k' < T0,
+        (URMState.runFor outer sPre k').pc
+          < (compileFrag_bsum frag_f).instrs.size - 1)
+  -- Phase i.0: deterministic step count, partial @ i.val → phase_i0_post.
+  obtain ⟨h_i0_post, h_strict_i0⟩ :=
+    compileFrag_bsum_partial_phase_i0 f v i sPre h_inv
+  set s1 : URMState outer := URMState.runFor outer sPre T1
+  -- Phase i.1: deterministic step count, phase_i0_post → phase_i1_post.
+  obtain ⟨h_i1_post, h_strict_i1⟩ :=
+    compileFrag_bsum_partial_phase_i1 f v i s1 h_i0_post
+  set s2 : URMState outer := URMState.runFor outer s1 T2
+  -- Phase i.2: existential T3, phase_i1_post → phase_i2_post.
+  obtain ⟨T3, hT3_le, h_i2_post, h_strict_i2⟩ :=
+    compileFrag_bsum_partial_phase_i2 f ih_f v i s2 h_i1_post
+  set s3 : URMState outer := URMState.runFor outer s2 T3
+  -- Phase i.3: deterministic step count, phase_i2_post → partial @ (i.val + 1).
+  obtain ⟨h_inv_succ, h_strict_i3⟩ :=
+    compileFrag_bsum_partial_phase_i3 f v i s3 h_i2_post
+  -- Total step count.
+  refine ⟨T1 + T2 + T3 + T4, ?_, ?_, ?_⟩
+  · -- Bound: T1 + T2 + T3 + T4 ≤ T1 + T2 + compileER_runtime + T4.
+    have h_rt : T3 ≤ compileER_runtime f v_iter := hT3_le
+    omega
+  · -- compileFrag_bsum_partial_invariant @ (i.val + 1).
+    have h_compose :
+        URMState.runFor outer sPre (T1 + T2 + T3 + T4)
+          = URMState.runFor outer s3 T4 := by
+      change URMState.runFor outer sPre (T1 + T2 + T3 + T4)
+        = URMState.runFor outer
+            (URMState.runFor outer
+              (URMState.runFor outer
+                (URMState.runFor outer sPre T1) T2) T3) T4
+      rw [← URMState.runFor_add outer
+            (URMState.runFor outer
+              (URMState.runFor outer sPre T1) T2) T3 T4,
+          ← URMState.runFor_add outer
+            (URMState.runFor outer sPre T1) T2 (T3 + T4),
+          ← URMState.runFor_add outer sPre T1 (T2 + (T3 + T4))]
+      congr 1
+      omega
+    rw [h_compose]
+    exact h_inv_succ
+  · -- Per-step strict PC bound on the combined interval.
+    intro k' hk'
+    -- PC layout: bsum_prologueBase ≤ bsum_bodyPCBase ≤ bsum_trBase ≤ bsum_exitPC.
+    have h_exitPC_size :
+        bsum_exitPC frag_f
+          = (compileFrag_bsum frag_f).instrs.size - 1 :=
+      bsum_exitPC_eq_size_pred frag_f
+    -- Numeric expansion of bsum_exitPC.
+    have h_exitPC_expand :
+        (compileFrag_bsum frag_f).instrs.size - 1
+          = 15 + frag_f.numRegs + 9 * (k + 1)
+              + (frag_f.instrs.size - 1) + 6 := by
+      rw [← h_exitPC_size]
+      change bsum_trBase frag_f + 6 = _
+      change bsum_bodyPCBase frag_f + (frag_f.instrs.size - 1) + 6 = _
+      rfl
+    -- Phase i.0 strict bound: k' < T1.
+    rcases Nat.lt_or_ge k' T1 with h1 | h1
+    · have h_bound : (URMState.runFor outer sPre k').pc
+          < 15 + frag_f.numRegs := h_strict_i0 k' h1
+      -- h_bound: pc < 15 + frag_f.numRegs.
+      rw [h_exitPC_expand]
+      omega
+    · rcases Nat.lt_or_ge k' (T1 + T2) with h2 | h2
+      · -- Phase i.1 strict bound: T1 ≤ k' < T1 + T2.
+        let k'' : ℕ := k' - T1
+        have hk''_lt : k'' < T2 := by
+          change k' - T1 < T2; omega
+        have h_split : k' = T1 + k'' := by
+          change k' = T1 + (k' - T1); omega
+        have h_runFor_split :
+            URMState.runFor outer sPre k'
+              = URMState.runFor outer s1 k'' := by
+          rw [h_split, URMState.runFor_add]
+        have h_bound : (URMState.runFor outer s1 k'').pc
+            < 15 + frag_f.numRegs + 9 * (k + 1) := h_strict_i1 k'' hk''_lt
+        rw [h_runFor_split, h_exitPC_expand]
+        -- h_bound: pc < 15 + frag_f.numRegs + 9 * (k + 1).
+        omega
+      · rcases Nat.lt_or_ge k' (T1 + T2 + T3) with h3 | h3
+        · -- Phase i.2 strict bound: T1 + T2 ≤ k' < T1 + T2 + T3.
+          let k'' : ℕ := k' - T1 - T2
+          have hk''_lt : k'' < T3 := by
+            change k' - T1 - T2 < T3; omega
+          have h_split : k' = T1 + T2 + k'' := by
+            change k' = T1 + T2 + (k' - T1 - T2); omega
+          have h_runFor_split :
+              URMState.runFor outer sPre k'
+                = URMState.runFor outer s2 k'' := by
+            rw [h_split]
+            change URMState.runFor outer sPre (T1 + T2 + k'')
+              = URMState.runFor outer
+                  (URMState.runFor outer
+                    (URMState.runFor outer sPre T1) T2) k''
+            rw [← URMState.runFor_add outer
+                  (URMState.runFor outer sPre T1) T2 k'',
+                ← URMState.runFor_add outer sPre T1 (T2 + k'')]
+            congr 1
+            omega
+          have h_bound : (URMState.runFor outer s2 k'').pc
+              < 15 + frag_f.numRegs + 9 * (k + 1)
+                + (frag_f.instrs.size - 1) := h_strict_i2 k'' hk''_lt
+          rw [h_runFor_split, h_exitPC_expand]
+          -- h_bound: pc < 15 + frag_f.numRegs + 9 * (k + 1) + (instrs.size - 1).
+          omega
+        · -- Phase i.3 strict bound: T1 + T2 + T3 ≤ k' < T1 + T2 + T3 + T4.
+          let k'' : ℕ := k' - T1 - T2 - T3
+          have hk''_lt : k'' < T4 := by
+            change k' - T1 - T2 - T3 < T4; omega
+          have h_split : k' = T1 + T2 + T3 + k'' := by
+            change k' = T1 + T2 + T3 + (k' - T1 - T2 - T3); omega
+          have h_runFor_split :
+              URMState.runFor outer sPre k'
+                = URMState.runFor outer s3 k'' := by
+            rw [h_split]
+            change URMState.runFor outer sPre (T1 + T2 + T3 + k'')
+              = URMState.runFor outer
+                  (URMState.runFor outer
+                    (URMState.runFor outer
+                      (URMState.runFor outer sPre T1) T2) T3) k''
+            rw [← URMState.runFor_add outer
+                  (URMState.runFor outer
+                    (URMState.runFor outer sPre T1) T2) T3 k'',
+                ← URMState.runFor_add outer
+                  (URMState.runFor outer sPre T1) T2 (T3 + k''),
+                ← URMState.runFor_add outer sPre T1 (T2 + (T3 + k''))]
+            congr 1
+            omega
+          have h_bound := h_strict_i3 k'' hk''_lt
+          rw [h_runFor_split]
+          exact h_bound
+
 end LawvereERKSim
 end GebLean
