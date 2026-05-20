@@ -53,7 +53,7 @@ PCs of the inner-mul loop's boundaries within the accUpdate block.
   input slots) is structurally identical between `compileFrag_bsum`
   and `compileFrag_bprod`.
 - `compileFrag_bprod_accUpdate_prep_instr_at`: instruction-presence
-  discharger producing the two `transferLoopInstrs` witnesses for the
+  discharger producing the two `TransferLoopInstrs` witnesses for the
   prep segment (PCs `bprod_trBase frag_f + 0..7`) of
   `compileFrag_bprod`'s accumulator-update block.
 - `compileFrag_bprod_accUpdate_prep_correct`,
@@ -74,7 +74,7 @@ PCs of the inner-mul loop's boundaries within the accUpdate block.
   instruction-presence discharger for the inner-multiply body region
   (PCs `bprod_trBase frag_f + 8..19`), bundling the inner-top
   `jumpZR`, the `decR vFactor`, the nine-instruction
-  `preservingTransferInstrs` block, and the return-to-top
+  `PreservingTransferInstrs` block, and the return-to-top
   `URMRaw.goto`.
 - `compileFrag_bprod_mul_partial_step`: per-iteration step
   (`j → j + 1`) of the inner-mul partial invariant. Advances
@@ -109,7 +109,7 @@ PCs of the inner-mul loop's boundaries within the accUpdate block.
   `bprod_mul_resetPC`), and the reset `assignR` (advancing the PC to
   `bprod_incIPC`); land the live accumulator at `vAccIn * vFOut` and
   reset every scratch register touched by the block to `0`.
-- `ProgramEmbedsFragment_compileFrag_bprod_fBody`: the outer program
+- `programEmbedsFragment_compileFrag_bprod_fBody`: the outer program
   emitted by `compileFrag_bprod` embeds the first `frag_f.instrs.size
   - 1` instructions of `frag_f` at register offset `k + 10` and PC
   offset `16 + frag_f.numRegs + 9 * (k + 1)`. The embedded length
@@ -288,10 +288,10 @@ private theorem compileFrag_bprod_prologue_correct
     (zReg tmp : Fin (compileFrag_bprod frag_f).toURMProgram.numRegs)
     (srcs dsts : Fin (k + 1) →
       Fin (compileFrag_bprod frag_f).toURMProgram.numRegs)
-    (h_disj : inputCopies_disj
+    (h_disj : InputCopiesDisj
       (compileFrag_bprod frag_f).toURMProgram zReg tmp srcs dsts)
     (H : ∀ j : Fin (k + 1),
-      preservingTransferInstrs
+      PreservingTransferInstrs
         (compileFrag_bprod frag_f).toURMProgram
         (bprod_prologueBase frag_f + 9 * j.val)
         (srcs j) (dsts j) tmp zReg)
@@ -325,10 +325,10 @@ private theorem compileFrag_bprod_prologue_pc_strict_bound
     (zReg tmp : Fin (compileFrag_bprod frag_f).toURMProgram.numRegs)
     (srcs dsts : Fin (k + 1) →
       Fin (compileFrag_bprod frag_f).toURMProgram.numRegs)
-    (h_disj : inputCopies_disj
+    (h_disj : InputCopiesDisj
       (compileFrag_bprod frag_f).toURMProgram zReg tmp srcs dsts)
     (H : ∀ j : Fin (k + 1),
-      preservingTransferInstrs
+      PreservingTransferInstrs
         (compileFrag_bprod frag_f).toURMProgram
         (bprod_prologueBase frag_f + 9 * j.val)
         (srcs j) (dsts j) tmp zReg)
@@ -363,11 +363,11 @@ private theorem compileFrag_bprod_accUpdate_prep_instr_at
       (h_z : (0 : ℕ) < outer.numRegs)
       (h_fOut : (k + 10) + frag_f.outputReg.val < outer.numRegs)
       (h_factor : k + 8 < outer.numRegs),
-      transferLoopInstrs outer (bprod_trBase frag_f)
+      TransferLoopInstrs outer (bprod_trBase frag_f)
           ⟨1, h_acc⟩
           ⟨k + 7, h_accClone⟩
           ⟨0, h_z⟩
-        ∧ transferLoopInstrs outer (bprod_trBase frag_f + 4)
+        ∧ TransferLoopInstrs outer (bprod_trBase frag_f + 4)
             ⟨(k + 10) + frag_f.outputReg.val, h_fOut⟩
             ⟨k + 8, h_factor⟩
             ⟨0, h_z⟩ := by
@@ -746,56 +746,56 @@ private theorem compileFrag_bprod_accUpdate_prep_instr_at
       rw [List.length_append, h_accUpdate_len, h_epilogue_len]; decide)
       = URMInstrRaw.jumpZR 0 (trBase + 4) (trBase + 4) := rfl
   refine ⟨⟨?_, ?_, ?_, ?_⟩, ⟨?_, ?_, ?_, ?_⟩⟩
-  · -- transferLoopInstrs (first block).h0.
+  · -- TransferLoopInstrs (first block).h0.
     change outer.instrs[bprod_trBase frag_f + 0]? = _
     rw [show bprod_trBase frag_f + 0 = trBase + 0 from rfl]
     have h := h_outerInstr_lookup 0 (by decide)
     rw [h]
     apply congrArg some
     exact URMInstrRaw.toBounded_congr nR h_ae_0 _ _
-  · -- transferLoopInstrs (first block).h1.
+  · -- TransferLoopInstrs (first block).h1.
     change outer.instrs[bprod_trBase frag_f + 1]? = _
     rw [show bprod_trBase frag_f + 1 = trBase + 1 from rfl]
     have h := h_outerInstr_lookup 1 (by decide)
     rw [h]
     apply congrArg some
     exact URMInstrRaw.toBounded_congr nR h_ae_1 _ _
-  · -- transferLoopInstrs (first block).h2.
+  · -- TransferLoopInstrs (first block).h2.
     change outer.instrs[bprod_trBase frag_f + 2]? = _
     rw [show bprod_trBase frag_f + 2 = trBase + 2 from rfl]
     have h := h_outerInstr_lookup 2 (by decide)
     rw [h]
     apply congrArg some
     exact URMInstrRaw.toBounded_congr nR h_ae_2 _ _
-  · -- transferLoopInstrs (first block).h3.
+  · -- TransferLoopInstrs (first block).h3.
     change outer.instrs[bprod_trBase frag_f + 3]? = _
     rw [show bprod_trBase frag_f + 3 = trBase + 3 from rfl]
     have h := h_outerInstr_lookup 3 (by decide)
     rw [h]
     apply congrArg some
     exact URMInstrRaw.toBounded_congr nR h_ae_3 _ _
-  · -- transferLoopInstrs (second block).h0.
+  · -- TransferLoopInstrs (second block).h0.
     change outer.instrs[bprod_trBase frag_f + 4 + 0]? = _
     rw [show bprod_trBase frag_f + 4 + 0 = trBase + 4 from rfl]
     have h := h_outerInstr_lookup 4 (by decide)
     rw [show trBase + 4 = trBase + 4 from rfl, h]
     apply congrArg some
     exact URMInstrRaw.toBounded_congr nR h_ae_4 _ _
-  · -- transferLoopInstrs (second block).h1.
+  · -- TransferLoopInstrs (second block).h1.
     change outer.instrs[bprod_trBase frag_f + 4 + 1]? = _
     rw [show bprod_trBase frag_f + 4 + 1 = trBase + 5 from rfl]
     have h := h_outerInstr_lookup 5 (by decide)
     rw [h]
     apply congrArg some
     exact URMInstrRaw.toBounded_congr nR h_ae_5 _ _
-  · -- transferLoopInstrs (second block).h2.
+  · -- TransferLoopInstrs (second block).h2.
     change outer.instrs[bprod_trBase frag_f + 4 + 2]? = _
     rw [show bprod_trBase frag_f + 4 + 2 = trBase + 6 from rfl]
     have h := h_outerInstr_lookup 6 (by decide)
     rw [h]
     apply congrArg some
     exact URMInstrRaw.toBounded_congr nR h_ae_6 _ _
-  · -- transferLoopInstrs (second block).h3.
+  · -- TransferLoopInstrs (second block).h3.
     change outer.instrs[bprod_trBase frag_f + 4 + 3]? = _
     rw [show bprod_trBase frag_f + 4 + 3 = trBase + 7 from rfl]
     have h := h_outerInstr_lookup 7 (by decide)
@@ -1397,7 +1397,7 @@ private theorem compileFrag_bprod_mul_partial_base
   `bprod_mul_innerTopPC frag_f` (= `trBase + 8`);
 * `h_dec`: the `decR vFactor` instruction at `bprod_mul_innerBodyStartPC
   frag_f` (= `trBase + 9`);
-* `h_pT`: a `preservingTransferInstrs` bundle for the nine
+* `h_pT`: a `PreservingTransferInstrs` bundle for the nine
   `preservingTransfer (trBase + 10) vAccClone vAcc vMulTmp` instructions
   at PCs `trBase + 10..18`, with `src = ⟨k + 7, _⟩` (`vAccClone`),
   `dst = ⟨1, _⟩` (`vAcc`), `tmp = ⟨k + 9, _⟩` (`vMulTmp`), and
@@ -1424,7 +1424,7 @@ private theorem compileFrag_bprod_accUpdate_innerBody_instr_at
               (bprod_mul_innerBodyStartPC frag_f))
         ∧ outer.instrs[bprod_mul_innerBodyStartPC frag_f]?
             = some (URMInstr.dec ⟨k + 8, h_factor⟩)
-        ∧ preservingTransferInstrs outer (bprod_trBase frag_f + 10)
+        ∧ PreservingTransferInstrs outer (bprod_trBase frag_f + 10)
             ⟨k + 7, h_accClone⟩
             ⟨1, h_acc⟩
             ⟨k + 9, h_mulTmp⟩
@@ -1822,7 +1822,7 @@ private theorem compileFrag_bprod_accUpdate_innerBody_instr_at
     rw [h]
     apply congrArg some
     exact URMInstrRaw.toBounded_congr nR h_ae_9 _ _
-  · -- h_pT (preservingTransferInstrs at trBase + 10).
+  · -- h_pT (PreservingTransferInstrs at trBase + 10).
     refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
     · -- h0: PC pcBase = trBase + 10
       change outer.instrs[bprod_trBase frag_f + 10]? = _
@@ -3441,12 +3441,12 @@ values of `fBase = k + 10` and `bprod_bodyPCBase frag_f
 constructor of `compileFrag_bprod`; the embedded length excludes
 `frag_f`'s trailing stop instruction (dropped via `.pop` when
 emitting the f-body). Mirrors
-`ProgramEmbedsFragment_compileFrag_bsum_fBody`; the bprod prelude is
+`programEmbedsFragment_compileFrag_bsum_fBody`; the bprod prelude is
 14 instructions (vs bsum's 13, with the trailing `incR vAcc`
 initialising the multiplicative accumulator to 1), and the bprod
 accumulator-update block is 21 instructions (vs bsum's 4) for the
 Tourlakis 2018 p. 19 `R^XY_Z` template. -/
-private theorem ProgramEmbedsFragment_compileFrag_bprod_fBody
+private theorem programEmbedsFragment_compileFrag_bprod_fBody
     {k : ℕ}
     (frag_f : CompiledFragment (k + 1)) :
     ProgramEmbedsFragment
@@ -4035,9 +4035,9 @@ private theorem compileFrag_bprod_partial_base
   have h_outer_at_2 : P.instrs[(2 : ℕ)]? = some (URMInstr.assign rVX 0) := rfl
   have h_outer_at_3 : P.instrs[(3 : ℕ)]? = some (URMInstr.assign rVI 0) := rfl
   have h_outer_at_13 : P.instrs[(13 : ℕ)]? = some (URMInstr.inc rAcc) := rfl
-  -- preservingTransferInstrs at PC 4 with src=vBoundIn, dst=vX, tmp=tmp2,
+  -- PreservingTransferInstrs at PC 4 with src=vBoundIn, dst=vX, tmp=tmp2,
   -- zReg=⟨0, _⟩.
-  have H_pT : preservingTransferInstrs P 4 rBoundIn rVX rTmp2 rZ := by
+  have H_pT : PreservingTransferInstrs P 4 rBoundIn rVX rTmp2 rZ := by
     refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩ <;> rfl
   -- Disjointness witnesses for preservingTransfer_correct.
   have h_disj_sd : rBoundIn ≠ rVX := by
@@ -5203,7 +5203,7 @@ private theorem compileFrag_bprod_partial_phase_i0
 set_option maxHeartbeats 4000000 in
 -- The nine-fold `first | exact h_outerInstr_lookup d (by decide)` ladder
 -- below requires reducing `URMRaw.preservingTransfer ... [d]` against
--- `preservingTransferInstrs`'s nine field shapes; the unification cost
+-- `PreservingTransferInstrs`'s nine field shapes; the unification cost
 -- exceeds the default budget.
 /-- Per-slot prologue instruction-presence bundle for `compileFrag_bprod`:
 at PCs `bprod_prologueBase frag_f + 9 * s.val .. bprod_prologueBase frag_f
@@ -5224,7 +5224,7 @@ private theorem compileFrag_bprod_prologueBlock_instr_at
       (h_dst : (k + 10) + (frag_f.inputRegs s).val < outer.numRegs)
       (h_tmp : k + 5 < outer.numRegs)
       (h_z : 0 < outer.numRegs),
-      preservingTransferInstrs outer (bprod_prologueBase frag_f + 9 * s.val)
+      PreservingTransferInstrs outer (bprod_prologueBase frag_f + 9 * s.val)
         ⟨bsum_prologueSrc k s, h_src⟩
         ⟨(k + 10) + (frag_f.inputRegs s).val, h_dst⟩
         ⟨k + 5, h_tmp⟩
@@ -5751,7 +5751,7 @@ private theorem compileFrag_bprod_prologueBlock_instr_at
       exact h_lookup_pt d hd
     apply congrArg some
     exact URMInstrRaw.toBounded_congr nR h_raw_eq _ _
-  -- Now build the preservingTransferInstrs witness using the nine
+  -- Now build the PreservingTransferInstrs witness using the nine
   -- concrete entries of pt_s. Each h_inst_d follows by specialising
   -- h_outerInstr_lookup at d and matching the raw entry to the
   -- toBounded form expected by the structure.
@@ -5932,7 +5932,7 @@ private theorem compileFrag_bprod_partial_phase_i1
   let dsts : Fin (k + 1) → Fin P.numRegs :=
     fun j => ⟨(k + 10) + (frag_f.inputRegs j).val, h_dst_lt j⟩
   -- Disjointness bundle.
-  have h_disj : inputCopies_disj P zReg tmpFin srcs dsts := by
+  have h_disj : InputCopiesDisj P zReg tmpFin srcs dsts := by
     refine
       { z_src := ?_, z_dst := ?_, z_tmp := ?_,
         src_dst := ?_, src_tmp := ?_, dst_tmp := ?_,
@@ -5996,7 +5996,7 @@ private theorem compileFrag_bprod_partial_phase_i1
       split at h_val <;> omega
   -- Instruction-presence bundle from the helper.
   have h_H : ∀ (j : Fin (k + 1)),
-      preservingTransferInstrs P (pcBase + 9 * j.val)
+      PreservingTransferInstrs P (pcBase + 9 * j.val)
         (srcs j) (dsts j) tmpFin zReg := by
     intro j
     obtain ⟨_, _, _, _, hPT⟩ :=
@@ -6418,7 +6418,7 @@ such that running f's reindexed body for `T0` steps lands the state in
 `compileFrag_bprod_phase_i2_post @ i`. The accompanying strict PC bound
 states that during these `T0` steps the intermediate PC stays strictly
 less than `bprod_trBase frag_f`. The proof instantiates
-`ProgramEmbedsFragment_compileFrag_bprod_fBody` and packages
+`programEmbedsFragment_compileFrag_bprod_fBody` and packages
 `compileFrag_bprod_phase_i1_post`'s `f_inputs` and `f_other_zero` clauses
 into a `StateEmbedsFrag` witness matching `URMState.init (compileER f)
 (Fin.cons i.val (Fin.tail v))`; the IH then transports through
@@ -6467,7 +6467,7 @@ private theorem compileFrag_bprod_partial_phase_i2
   -- Program embedding of f's reindexed body inside the outer.
   have h_emb_prog :
       ProgramEmbedsFragment P frag_f fBase pcBase L :=
-    ProgramEmbedsFragment_compileFrag_bprod_fBody frag_f
+    programEmbedsFragment_compileFrag_bprod_fBody frag_f
   -- Pre-state hypotheses from `compileFrag_bprod_phase_i1_post`.
   have h_pc_pre : sPre.pc = pcBase := by
     have h := h_i1.pc_eq
@@ -7914,8 +7914,8 @@ private theorem compileFrag_bprod_prelude_pc_strict_bound
   have h_outer_at_2 : P.instrs[(2 : ℕ)]? = some (URMInstr.assign rVX 0) := rfl
   have h_outer_at_3 : P.instrs[(3 : ℕ)]? = some (URMInstr.assign rVI 0) := rfl
   have h_outer_at_13 : P.instrs[(13 : ℕ)]? = some (URMInstr.inc rAcc) := rfl
-  -- preservingTransferInstrs at PC 4.
-  have H_pT : preservingTransferInstrs P 4 rBoundIn rVX rTmp2 rZ := by
+  -- PreservingTransferInstrs at PC 4.
+  have H_pT : PreservingTransferInstrs P 4 rBoundIn rVX rTmp2 rZ := by
     refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩ <;> rfl
   -- Disjointness witnesses.
   have h_disj_sd : rBoundIn ≠ rVX := by

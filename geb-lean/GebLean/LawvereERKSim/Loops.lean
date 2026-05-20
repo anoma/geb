@@ -9,16 +9,16 @@ comp compilers: `URMRaw.transferLoop` (4n+1 steps), `URMRaw.preservingTransfer`
 "correct" theorem comes with per-step and strict per-step PC-bound siblings.
 
 Also includes two `compileFrag_comp`-specific instruction-presence dischargers
-(`PreservingTransferInstrs_compileFrag_comp_inputCopies`,
-`TransferLoopInstrs_compileFrag_comp_outputTransfer`) that exhibit
+(`preservingTransferInstrs_compileFrag_comp_inputCopies`,
+`transferLoopInstrs_compileFrag_comp_outputTransfer`) that exhibit
 `compileFrag_comp_subBlock`'s layout as instances of the loop patterns. The
-`preservingTransferInstrs`, `transferLoopInstrs`, and `subInnerLoopInstrs`
+`PreservingTransferInstrs`, `TransferLoopInstrs`, and `SubInnerLoopInstrs`
 structures are file-public because they appear in the signatures of downstream
 theorems in `Atoms.lean` and `Comp.lean`.
 
 ## Main definitions
 
-- `preservingTransferInstrs`, `transferLoopInstrs`, `subInnerLoopInstrs`:
+- `PreservingTransferInstrs`, `TransferLoopInstrs`, `SubInnerLoopInstrs`:
   packaged hypothesis bundles (structures) for each loop pattern.
 
 ## Main statements
@@ -32,8 +32,8 @@ theorems in `Atoms.lean` and `Comp.lean`.
   `transferLoop_correct_pc_strict_bound`.
 - `subInnerLoop_correct`, `subInnerLoop_correct_pc_bound`,
   `subInnerLoop_correct_pc_strict_bound`.
-- `PreservingTransferInstrs_compileFrag_comp_inputCopies`,
-  `TransferLoopInstrs_compileFrag_comp_outputTransfer`: comp-layout dischargers.
+- `preservingTransferInstrs_compileFrag_comp_inputCopies`,
+  `transferLoopInstrs_compileFrag_comp_outputTransfer`: comp-layout dischargers.
 
 ## References
 
@@ -53,7 +53,7 @@ matching the raw layout of `URMRaw.preservingTransfer`. The
 `zReg` parameter holds the reserved-zero register used by
 `URMRaw.goto`; `h_zReg` asserts its value is 0 so the
 `goto` jumps fire unconditionally. -/
-structure preservingTransferInstrs {a : ℕ}
+structure PreservingTransferInstrs {a : ℕ}
     (P : URMProgram a) (pcBase : ℕ)
     (src dst tmp zReg : Fin P.numRegs) : Prop where
   h0 : P.instrs[pcBase]? =
@@ -81,7 +81,7 @@ inside `compileFrag_comp_subBlock`'s input-copy preamble.
 Parallels `ProgramEmbedsFragment_compileFrag_comp_gsBody`
 for Phase i.2 (gs body); this lemma covers Phase i.1
 (input-copies preamble). -/
-theorem PreservingTransferInstrs_compileFrag_comp_inputCopies
+theorem preservingTransferInstrs_compileFrag_comp_inputCopies
     {k a : ℕ}
     (frag_f : CompiledFragment k)
     (frag_gs : Fin k → CompiledFragment a)
@@ -101,7 +101,7 @@ theorem PreservingTransferInstrs_compileFrag_comp_inputCopies
                  < outer.numRegs)
       (h_tmp : tmpReg < outer.numRegs)
       (h_z : 0 < outer.numRegs),
-      preservingTransferInstrs outer (pcBase_i + 9 * j.val)
+      PreservingTransferInstrs outer (pcBase_i + 9 * j.val)
         ⟨2 + j.val, h_src⟩
         ⟨gsBase_i + ((frag_gs i).inputRegs j).val, h_dst⟩
         ⟨tmpReg, h_tmp⟩
@@ -633,7 +633,7 @@ theorem PreservingTransferInstrs_compileFrag_comp_inputCopies
       exact h_lookup_pt d hd
     apply congrArg some
     exact URMInstrRaw.toBounded_congr nR h_raw_eq _ _
-  -- Now build the preservingTransferInstrs witness using the
+  -- Now build the PreservingTransferInstrs witness using the
   -- nine concrete entries of pt_j.  Each h_inst_d follows by
   -- specialising h_outerInstr_lookup at d and matching the
   -- raw entry to the toBounded form expected by the structure.
@@ -662,7 +662,7 @@ private theorem preservingTransfer_loop1 {a : ℕ}
     (h_disj_sd : src ≠ dst) (h_disj_st : src ≠ tmp)
     (h_disj_dt : dst ≠ tmp) (h_disj_zs : zReg ≠ src)
     (h_disj_zd : zReg ≠ dst) (h_disj_zt : zReg ≠ tmp)
-    (H : preservingTransferInstrs P pcBase src dst tmp zReg)
+    (H : PreservingTransferInstrs P pcBase src dst tmp zReg)
     (s : URMState P) (h_pc : s.pc = pcBase)
     (h_z : s.regs zReg = 0)
     (m : ℕ) (h_src : s.regs src = m) :
@@ -838,7 +838,7 @@ private theorem preservingTransfer_loop1_pc_bound {a : ℕ}
     (h_disj_sd : src ≠ dst) (h_disj_st : src ≠ tmp)
     (h_disj_zs : zReg ≠ src)
     (h_disj_zd : zReg ≠ dst) (h_disj_zt : zReg ≠ tmp)
-    (H : preservingTransferInstrs P pcBase src dst tmp zReg)
+    (H : PreservingTransferInstrs P pcBase src dst tmp zReg)
     (s : URMState P) (h_pc : s.pc = pcBase)
     (h_z : s.regs zReg = 0)
     (m : ℕ) (h_src : s.regs src = m)
@@ -968,7 +968,7 @@ private theorem preservingTransfer_loop2 {a : ℕ}
     (src dst tmp zReg : Fin P.numRegs)
     (h_disj_st : src ≠ tmp)
     (h_disj_zs : zReg ≠ src) (h_disj_zt : zReg ≠ tmp)
-    (H : preservingTransferInstrs P pcBase src dst tmp zReg)
+    (H : PreservingTransferInstrs P pcBase src dst tmp zReg)
     (s : URMState P) (h_pc : s.pc = pcBase + 5)
     (h_z : s.regs zReg = 0)
     (m : ℕ) (h_tmp : s.regs tmp = m) :
@@ -1079,7 +1079,7 @@ private theorem preservingTransfer_loop2_pc_bound {a : ℕ}
     (src dst tmp zReg : Fin P.numRegs)
     (h_disj_st : src ≠ tmp)
     (h_disj_zs : zReg ≠ src) (h_disj_zt : zReg ≠ tmp)
-    (H : preservingTransferInstrs P pcBase src dst tmp zReg)
+    (H : PreservingTransferInstrs P pcBase src dst tmp zReg)
     (s : URMState P) (h_pc : s.pc = pcBase + 5)
     (h_z : s.regs zReg = 0)
     (m : ℕ) (h_tmp : s.regs tmp = m)
@@ -1204,7 +1204,7 @@ theorem preservingTransfer_correct {a : ℕ}
     (h_disj_sd : src ≠ dst) (h_disj_st : src ≠ tmp)
     (h_disj_dt : dst ≠ tmp) (h_disj_zs : zReg ≠ src)
     (h_disj_zd : zReg ≠ dst) (h_disj_zt : zReg ≠ tmp)
-    (H : preservingTransferInstrs P pcBase src dst tmp zReg)
+    (H : PreservingTransferInstrs P pcBase src dst tmp zReg)
     (s : URMState P) (h_pc : s.pc = pcBase)
     (h_z : s.regs zReg = 0) (h_tmp0 : s.regs tmp = 0)
     (n : ℕ) (h_src : s.regs src = n) :
@@ -1255,7 +1255,7 @@ matching the raw layout of `URMRaw.transferLoop`. The
 `URMRaw.goto`; it is required to be the register at index
 `0` so the trailing `goto` compiles to a zero-test on
 `zReg`. -/
-structure transferLoopInstrs {a : ℕ}
+structure TransferLoopInstrs {a : ℕ}
     (P : URMProgram a) (pcBase : ℕ)
     (src dst zReg : Fin P.numRegs) : Prop where
   h0 : P.instrs[pcBase]? =
@@ -1275,10 +1275,10 @@ after `URMInstrRaw.toBounded` conversion. The three
 register arguments (`src`, `dst`, `zReg`) match those used
 inside `compileFrag_comp_subBlock`'s output-transfer
 trailing block. Parallels
-`PreservingTransferInstrs_compileFrag_comp_inputCopies`
+`preservingTransferInstrs_compileFrag_comp_inputCopies`
 for Phase i.1 (input-copies preamble); this lemma covers
 Phase i.3 (output-transfer trailing block). -/
-theorem TransferLoopInstrs_compileFrag_comp_outputTransfer
+theorem transferLoopInstrs_compileFrag_comp_outputTransfer
     {k a : ℕ}
     (frag_f : CompiledFragment k)
     (frag_gs : Fin k → CompiledFragment a)
@@ -1299,7 +1299,7 @@ theorem TransferLoopInstrs_compileFrag_comp_outputTransfer
       (h_dst : fBase + (frag_f.inputRegs i).val
                  < outer.numRegs)
       (h_z : 0 < outer.numRegs),
-      transferLoopInstrs outer transferBase
+      TransferLoopInstrs outer transferBase
         ⟨gsBase_i + ((frag_gs i).outputReg).val, h_src⟩
         ⟨fBase + (frag_f.inputRegs i).val, h_dst⟩
         ⟨0, h_z⟩ := by
@@ -1666,7 +1666,7 @@ theorem TransferLoopInstrs_compileFrag_comp_outputTransfer
       exact h_lookup_tl d hd
     apply congrArg some
     exact URMInstrRaw.toBounded_congr nR h_raw_eq _ _
-  -- Now build the transferLoopInstrs witness using the four
+  -- Now build the TransferLoopInstrs witness using the four
   -- concrete entries of transfer_i.  Each h_inst_d follows by
   -- specialising h_outerInstr_lookup at d.
   refine ⟨?_, ?_, ?_, ?_⟩
@@ -1690,7 +1690,7 @@ theorem transferLoop_correct {a : ℕ}
     (src dst zReg : Fin P.numRegs)
     (h_disj_sd : src ≠ dst) (h_disj_zs : zReg ≠ src)
     (h_disj_zd : zReg ≠ dst)
-    (H : transferLoopInstrs P pcBase src dst zReg)
+    (H : TransferLoopInstrs P pcBase src dst zReg)
     (s : URMState P) (h_pc : s.pc = pcBase)
     (h_z : s.regs zReg = 0)
     (n : ℕ) (h_src : s.regs src = n) :
@@ -1810,7 +1810,7 @@ theorem transferLoop_correct_pc_bound {a : ℕ}
     (src dst zReg : Fin P.numRegs)
     (h_disj_sd : src ≠ dst) (h_disj_zs : zReg ≠ src)
     (h_disj_zd : zReg ≠ dst)
-    (H : transferLoopInstrs P pcBase src dst zReg)
+    (H : TransferLoopInstrs P pcBase src dst zReg)
     (s : URMState P) (h_pc : s.pc = pcBase)
     (h_z : s.regs zReg = 0)
     (n : ℕ) (h_src : s.regs src = n)
@@ -1920,7 +1920,7 @@ theorem transferLoop_correct_pc_strict_bound {a : ℕ}
     (src dst zReg : Fin P.numRegs)
     (h_disj_sd : src ≠ dst) (h_disj_zs : zReg ≠ src)
     (h_disj_zd : zReg ≠ dst)
-    (H : transferLoopInstrs P pcBase src dst zReg)
+    (H : TransferLoopInstrs P pcBase src dst zReg)
     (s : URMState P) (h_pc : s.pc = pcBase)
     (h_z : s.regs zReg = 0)
     (n : ℕ) (h_src : s.regs src = n)
@@ -2013,7 +2013,7 @@ instruction-lookup equalities at PCs `pcBase..pcBase+3`
 matching the inner decrement loop of `compileFrag_sub`.
 Test on `src`; the body decrements both `src` and `dst`;
 the trailing `goto` returns to the test via `zReg`. -/
-structure subInnerLoopInstrs {a : ℕ}
+structure SubInnerLoopInstrs {a : ℕ}
     (P : URMProgram a) (pcBase : ℕ)
     (src dst zReg : Fin P.numRegs) : Prop where
   h0 : P.instrs[pcBase]? =
@@ -2035,7 +2035,7 @@ theorem subInnerLoop_correct {a : ℕ}
     (src dst zReg : Fin P.numRegs)
     (h_disj_sd : src ≠ dst) (h_disj_zs : zReg ≠ src)
     (h_disj_zd : zReg ≠ dst)
-    (H : subInnerLoopInstrs P pcBase src dst zReg)
+    (H : SubInnerLoopInstrs P pcBase src dst zReg)
     (s : URMState P) (h_pc : s.pc = pcBase)
     (h_z : s.regs zReg = 0)
     (n : ℕ) (h_src : s.regs src = n) :
@@ -2153,7 +2153,7 @@ private theorem subInnerLoop_correct_pc_bound {a : ℕ}
     (src dst zReg : Fin P.numRegs)
     (h_disj_sd : src ≠ dst) (h_disj_zs : zReg ≠ src)
     (h_disj_zd : zReg ≠ dst)
-    (H : subInnerLoopInstrs P pcBase src dst zReg)
+    (H : SubInnerLoopInstrs P pcBase src dst zReg)
     (s : URMState P) (h_pc : s.pc = pcBase)
     (h_z : s.regs zReg = 0)
     (n : ℕ) (h_src : s.regs src = n)
@@ -2259,7 +2259,7 @@ private theorem preservingTransfer_loop2_pc_strict_bound {a : ℕ}
     (src dst tmp zReg : Fin P.numRegs)
     (h_disj_st : src ≠ tmp)
     (h_disj_zs : zReg ≠ src) (h_disj_zt : zReg ≠ tmp)
-    (H : preservingTransferInstrs P pcBase src dst tmp zReg)
+    (H : PreservingTransferInstrs P pcBase src dst tmp zReg)
     (s : URMState P) (h_pc : s.pc = pcBase + 5)
     (h_z : s.regs zReg = 0)
     (m : ℕ) (h_tmp : s.regs tmp = m)
@@ -2357,7 +2357,7 @@ theorem preservingTransfer_correct_pc_strict_bound {a : ℕ}
     (h_disj_sd : src ≠ dst) (h_disj_st : src ≠ tmp)
     (h_disj_dt : dst ≠ tmp) (h_disj_zs : zReg ≠ src)
     (h_disj_zd : zReg ≠ dst) (h_disj_zt : zReg ≠ tmp)
-    (H : preservingTransferInstrs P pcBase src dst tmp zReg)
+    (H : PreservingTransferInstrs P pcBase src dst tmp zReg)
     (s : URMState P) (h_pc : s.pc = pcBase)
     (h_z : s.regs zReg = 0) (h_tmp0 : s.regs tmp = 0)
     (n : ℕ) (h_src : s.regs src = n)
@@ -2396,7 +2396,7 @@ theorem subInnerLoop_correct_pc_strict_bound {a : ℕ}
     (src dst zReg : Fin P.numRegs)
     (h_disj_sd : src ≠ dst) (h_disj_zs : zReg ≠ src)
     (h_disj_zd : zReg ≠ dst)
-    (H : subInnerLoopInstrs P pcBase src dst zReg)
+    (H : SubInnerLoopInstrs P pcBase src dst zReg)
     (s : URMState P) (h_pc : s.pc = pcBase)
     (h_z : s.regs zReg = 0)
     (n : ℕ) (h_src : s.regs src = n)
@@ -2495,7 +2495,7 @@ theorem preservingTransfer_correct_pc_bound {a : ℕ}
     (h_disj_sd : src ≠ dst) (h_disj_st : src ≠ tmp)
     (h_disj_dt : dst ≠ tmp) (h_disj_zs : zReg ≠ src)
     (h_disj_zd : zReg ≠ dst) (h_disj_zt : zReg ≠ tmp)
-    (H : preservingTransferInstrs P pcBase src dst tmp zReg)
+    (H : PreservingTransferInstrs P pcBase src dst tmp zReg)
     (s : URMState P) (h_pc : s.pc = pcBase)
     (h_z : s.regs zReg = 0) (h_tmp0 : s.regs tmp = 0)
     (n : ℕ) (h_src : s.regs src = n)

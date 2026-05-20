@@ -41,7 +41,7 @@ absolute PCs at which each segment begins and ends.
   of `transferLoop_correct` and `transferLoop_correct_pc_strict_bound`
   from `Loops.lean` (the bsum per-iteration accumulator-update block
   is a `transferLoop` from f's output register into the accumulator).
-- `ProgramEmbedsFragment_compileFrag_bsum_fBody`: f-body embedding
+- `programEmbedsFragment_compileFrag_bsum_fBody`: f-body embedding
   witness; at PCs `bsum_bodyPCBase frag_f ..
   bsum_bodyPCBase frag_f + (frag_f.instrs.size - 1)`, the outer
   program's instructions are the `reindexShift`-mapped raw form of
@@ -60,7 +60,7 @@ absolute PCs at which each segment begins and ends.
   `compileFrag_bsum_partial_invariant @ i.val`.
 - `compileFrag_bsum_prologueBlock_instr_at`: per-slot
   instruction-presence bundle for the per-iteration prologue,
-  producing a `preservingTransferInstrs` witness at each prologue
+  producing a `PreservingTransferInstrs` witness at each prologue
   slot.
 - `compileFrag_bsum_phase_i1_post`,
   `compileFrag_bsum_partial_phase_i1`: post-state predicate at the
@@ -71,7 +71,7 @@ absolute PCs at which each segment begins and ends.
   discharger for the per-iteration accumulator-update block plus the
   epilogue's `.incR vI` and `URMRaw.goto bsum_topPC`, packaging the
   six lookups at PCs `bsum_trBase frag_f .. bsum_gotoTopPC frag_f` as
-  a `transferLoopInstrs` witness alongside two raw `getElem?`
+  a `TransferLoopInstrs` witness alongside two raw `getElem?`
   equations.
 - `compileFrag_bsum_partial_phase_i3`: Phase i.3 preservation theorem
   from `compileFrag_bsum_phase_i2_post @ i`, transitioning to
@@ -316,9 +316,9 @@ theorem compileFrag_bsum_prologue_correct
     (P : URMProgram a) (pcBase : ℕ)
     (zReg tmp : Fin P.numRegs)
     (srcs dsts : Fin a → Fin P.numRegs)
-    (h_disj : inputCopies_disj P zReg tmp srcs dsts)
+    (h_disj : InputCopiesDisj P zReg tmp srcs dsts)
     (H : ∀ j : Fin a,
-      preservingTransferInstrs P (pcBase + 9 * j.val)
+      PreservingTransferInstrs P (pcBase + 9 * j.val)
         (srcs j) (dsts j) tmp zReg)
     (v : Fin a → ℕ)
     (s : URMState P) (h_pc : s.pc = pcBase)
@@ -349,9 +349,9 @@ theorem compileFrag_bsum_prologue_pc_strict_bound
     (P : URMProgram a) (pcBase : ℕ)
     (zReg tmp : Fin P.numRegs)
     (srcs dsts : Fin a → Fin P.numRegs)
-    (h_disj : inputCopies_disj P zReg tmp srcs dsts)
+    (h_disj : InputCopiesDisj P zReg tmp srcs dsts)
     (H : ∀ j : Fin a,
-      preservingTransferInstrs P (pcBase + 9 * j.val)
+      PreservingTransferInstrs P (pcBase + 9 * j.val)
         (srcs j) (dsts j) tmp zReg)
     (v : Fin a → ℕ)
     (s : URMState P) (h_pc : s.pc = pcBase)
@@ -377,7 +377,7 @@ private theorem compileFrag_bsum_accUpdate_correct
     (src dst zReg : Fin P.numRegs)
     (h_disj_sd : src ≠ dst) (h_disj_zs : zReg ≠ src)
     (h_disj_zd : zReg ≠ dst)
-    (H : transferLoopInstrs P pcBase src dst zReg)
+    (H : TransferLoopInstrs P pcBase src dst zReg)
     (vSrc : ℕ)
     (s : URMState P) (h_pc : s.pc = pcBase)
     (h_z : s.regs zReg = 0)
@@ -402,7 +402,7 @@ private theorem compileFrag_bsum_accUpdate_pc_strict_bound
     (src dst zReg : Fin P.numRegs)
     (h_disj_sd : src ≠ dst) (h_disj_zs : zReg ≠ src)
     (h_disj_zd : zReg ≠ dst)
-    (H : transferLoopInstrs P pcBase src dst zReg)
+    (H : TransferLoopInstrs P pcBase src dst zReg)
     (vSrc : ℕ)
     (s : URMState P) (h_pc : s.pc = pcBase)
     (h_z : s.regs zReg = 0)
@@ -421,7 +421,7 @@ values of `fBase = k + 7` and `bsum_bodyPCBase frag_f
 constructor of `compileFrag_bsum`; the embedded length excludes
 `frag_f`'s trailing stop instruction (dropped via `.pop` when
 emitting the f-body). -/
-private theorem ProgramEmbedsFragment_compileFrag_bsum_fBody
+private theorem programEmbedsFragment_compileFrag_bsum_fBody
     {k : ℕ}
     (frag_f : CompiledFragment (k + 1)) :
     ProgramEmbedsFragment
@@ -824,7 +824,7 @@ private theorem ProgramEmbedsFragment_compileFrag_bsum_fBody
 at PCs `15 .. 15 + frag_f.numRegs - 1`, the outer program's
 instruction is `assignR (k + 7 + r.val) 0`, expressed in bounded
 form as `URMInstr.assign ⟨k + 7 + r.val, _⟩ 0`. Mirrors the
-peeling style of `ProgramEmbedsFragment_compileFrag_bsum_fBody`,
+peeling style of `programEmbedsFragment_compileFrag_bsum_fBody`,
 specialised to the zero-sweep segment. -/
 private theorem compileFrag_bsum_zeroSweep_instr_at
     {k : ℕ}
@@ -1247,9 +1247,9 @@ private theorem compileFrag_bsum_partial_base
   have h_outer_at_1 : P.instrs[(1 : ℕ)]? = some (URMInstr.assign rAcc 0) := rfl
   have h_outer_at_2 : P.instrs[(2 : ℕ)]? = some (URMInstr.assign rVX 0) := rfl
   have h_outer_at_3 : P.instrs[(3 : ℕ)]? = some (URMInstr.assign rVI 0) := rfl
-  -- preservingTransferInstrs at PC 4 with src=vBoundIn, dst=vX, tmp=tmp2,
+  -- PreservingTransferInstrs at PC 4 with src=vBoundIn, dst=vX, tmp=tmp2,
   -- zReg=⟨0, _⟩.
-  have H_pT : preservingTransferInstrs P 4 rBoundIn rVX rTmp2 rZ := by
+  have H_pT : PreservingTransferInstrs P 4 rBoundIn rVX rTmp2 rZ := by
     refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩ <;> rfl
   -- Disjointness of the four register handles.
   have h_disj_sd : rBoundIn ≠ rVX := by
@@ -1913,7 +1913,7 @@ private theorem compileFrag_bsum_partial_phase_i0
 set_option maxHeartbeats 4000000 in
 -- The nine-fold `first | exact h_outerInstr_lookup d (by decide)` ladder
 -- below requires reducing `URMRaw.preservingTransfer ... [d]` against
--- `preservingTransferInstrs`'s nine field shapes; the unification cost
+-- `PreservingTransferInstrs`'s nine field shapes; the unification cost
 -- exceeds the default budget.
 /-- Per-slot prologue instruction-presence bundle for `compileFrag_bsum`:
 at PCs `15 + frag_f.numRegs + 9 * s.val .. 15 + frag_f.numRegs
@@ -1933,7 +1933,7 @@ private theorem compileFrag_bsum_prologueBlock_instr_at
       (h_dst : (k + 7) + (frag_f.inputRegs s).val < outer.numRegs)
       (h_tmp : k + 5 < outer.numRegs)
       (h_z : 0 < outer.numRegs),
-      preservingTransferInstrs outer (15 + frag_f.numRegs + 9 * s.val)
+      PreservingTransferInstrs outer (15 + frag_f.numRegs + 9 * s.val)
         ⟨bsum_prologueSrc k s, h_src⟩
         ⟨(k + 7) + (frag_f.inputRegs s).val, h_dst⟩
         ⟨k + 5, h_tmp⟩
@@ -2421,7 +2421,7 @@ private theorem compileFrag_bsum_prologueBlock_instr_at
       exact h_lookup_pt d hd
     apply congrArg some
     exact URMInstrRaw.toBounded_congr nR h_raw_eq _ _
-  -- Now build the preservingTransferInstrs witness using the nine
+  -- Now build the PreservingTransferInstrs witness using the nine
   -- concrete entries of pt_s.  Each h_inst_d follows by specialising
   -- h_outerInstr_lookup at d and matching the raw entry to the
   -- toBounded form expected by the structure.
@@ -2581,7 +2581,7 @@ private theorem compileFrag_bsum_partial_phase_i1
   let dsts : Fin (k + 1) → Fin P.numRegs :=
     fun j => ⟨(k + 7) + (frag_f.inputRegs j).val, h_dst_lt j⟩
   -- Disjointness bundle.
-  have h_disj : inputCopies_disj P zReg tmpFin srcs dsts := by
+  have h_disj : InputCopiesDisj P zReg tmpFin srcs dsts := by
     refine
       { z_src := ?_, z_dst := ?_, z_tmp := ?_,
         src_dst := ?_, src_tmp := ?_, dst_tmp := ?_,
@@ -2645,7 +2645,7 @@ private theorem compileFrag_bsum_partial_phase_i1
       split at h_val <;> omega
   -- Instruction-presence bundle from the helper.
   have h_H : ∀ (j : Fin (k + 1)),
-      preservingTransferInstrs P (pcBase + 9 * j.val)
+      PreservingTransferInstrs P (pcBase + 9 * j.val)
         (srcs j) (dsts j) tmpFin zReg := by
     intro j
     obtain ⟨_, _, _, _, hPT⟩ :=
@@ -2975,7 +2975,7 @@ running f's reindexed body for `T0` steps lands the state in
 states that during these `T0` steps the intermediate PC stays
 strictly less than `15 + frag_f.numRegs + 9 * (k + 1)
 + (frag_f.instrs.size - 1)`. The proof instantiates
-`ProgramEmbedsFragment_compileFrag_bsum_fBody` and packages
+`programEmbedsFragment_compileFrag_bsum_fBody` and packages
 `compileFrag_bsum_phase_i1_post`'s `f_inputs` and `f_other_zero`
 clauses into a `StateEmbedsFrag` witness matching
 `URMState.init (compileER f) (Fin.cons i.val (Fin.tail v))`; the IH
@@ -3026,7 +3026,7 @@ private theorem compileFrag_bsum_partial_phase_i2
   -- Program embedding of f's reindexed body inside the outer.
   have h_emb_prog :
       ProgramEmbedsFragment P frag_f fBase pcBase L :=
-    ProgramEmbedsFragment_compileFrag_bsum_fBody frag_f
+    programEmbedsFragment_compileFrag_bsum_fBody frag_f
   -- Pre-state hypotheses from `compileFrag_bsum_phase_i1_post`.
   have h_pc_pre : sPre.pc = pcBase := h_i1.pc_eq
   -- The init state of f's program at the iteration input vector.
@@ -3275,7 +3275,7 @@ frag_f + 5`, the outer program's instructions match the four raw
 entries of `URMRaw.transferLoop` (f-output → V_acc, with reserved
 zero register `0`), followed by `.incR vI` (= `⟨k + 4, _⟩`) at
 PC `bsum_incIPC` and `URMRaw.goto bsum_topPC = .jumpZR 0 13 13` at
-PC `bsum_gotoTopPC`. Packaged as a `transferLoopInstrs` witness for
+PC `bsum_gotoTopPC`. Packaged as a `TransferLoopInstrs` witness for
 the accUpdate block plus two raw `getElem?` equations for the
 epilogue prefix. Mirrors `compileFrag_bsum_zeroSweep_instr_at` and
 `compileFrag_bsum_prologueBlock_instr_at`, specialised to the
@@ -3288,7 +3288,7 @@ private theorem compileFrag_bsum_accUpdateBlock_instr_at
       (h_dst : (1 : ℕ) < outer.numRegs)
       (h_z : (0 : ℕ) < outer.numRegs)
       (h_vI : k + 4 < outer.numRegs),
-      transferLoopInstrs outer (bsum_trBase frag_f)
+      TransferLoopInstrs outer (bsum_trBase frag_f)
           ⟨(k + 7) + frag_f.outputReg.val, h_src⟩
           ⟨1, h_dst⟩
           ⟨0, h_z⟩
@@ -3622,28 +3622,28 @@ private theorem compileFrag_bsum_accUpdateBlock_instr_at
       = URMInstrRaw.jumpZR 0 13 13 := rfl
   -- Use each h_ae_d via toBounded_congr through the lookup.
   refine ⟨⟨?_, ?_, ?_, ?_⟩, ?_, ?_⟩
-  · -- transferLoopInstrs.h0.
+  · -- TransferLoopInstrs.h0.
     change outer.instrs[bsum_trBase frag_f + 0]? = _
     rw [show bsum_trBase frag_f + 0 = trBase + 0 from rfl]
     have h := h_outerInstr_lookup 0 (by decide)
     rw [h]
     apply congrArg some
     exact URMInstrRaw.toBounded_congr nR h_ae_0 _ _
-  · -- transferLoopInstrs.h1.
+  · -- TransferLoopInstrs.h1.
     change outer.instrs[bsum_trBase frag_f + 1]? = _
     rw [show bsum_trBase frag_f + 1 = trBase + 1 from rfl]
     have h := h_outerInstr_lookup 1 (by decide)
     rw [h]
     apply congrArg some
     exact URMInstrRaw.toBounded_congr nR h_ae_1 _ _
-  · -- transferLoopInstrs.h2.
+  · -- TransferLoopInstrs.h2.
     change outer.instrs[bsum_trBase frag_f + 2]? = _
     rw [show bsum_trBase frag_f + 2 = trBase + 2 from rfl]
     have h := h_outerInstr_lookup 2 (by decide)
     rw [h]
     apply congrArg some
     exact URMInstrRaw.toBounded_congr nR h_ae_2 _ _
-  · -- transferLoopInstrs.h3.
+  · -- TransferLoopInstrs.h3.
     change outer.instrs[bsum_trBase frag_f + 3]? = _
     rw [show bsum_trBase frag_f + 3 = trBase + 3 from rfl]
     have h := h_outerInstr_lookup 3 (by decide)
@@ -4357,8 +4357,8 @@ private theorem compileFrag_bsum_prelude_pc_strict_bound
   have h_outer_at_1 : P.instrs[(1 : ℕ)]? = some (URMInstr.assign rAcc 0) := rfl
   have h_outer_at_2 : P.instrs[(2 : ℕ)]? = some (URMInstr.assign rVX 0) := rfl
   have h_outer_at_3 : P.instrs[(3 : ℕ)]? = some (URMInstr.assign rVI 0) := rfl
-  -- preservingTransferInstrs at PC 4.
-  have H_pT : preservingTransferInstrs P 4 rBoundIn rVX rTmp2 rZ := by
+  -- PreservingTransferInstrs at PC 4.
+  have H_pT : PreservingTransferInstrs P 4 rBoundIn rVX rTmp2 rZ := by
     refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩ <;> rfl
   -- Disjointness of the four register handles for preservingTransfer.
   have h_disj_sd : rBoundIn ≠ rVX := by

@@ -13,7 +13,7 @@ iteration, and final pre-stop assembly for `compileFrag_comp f gs`. Plus the
 
 - `vPrefixSum`, `compileFrag_comp_pcOf`: prefix-sum helpers parametrising the
   m-step partial invariant.
-- `inputCopies_disj`, `compileFrag_comp_partial_invariant`,
+- `InputCopiesDisj`, `compileFrag_comp_partial_invariant`,
   `compileFrag_comp_phase_i1_post`, `compileFrag_comp_phase_i2_post`:
   packaged predicates threaded through the m-step machinery.
 
@@ -21,8 +21,8 @@ iteration, and final pre-stop assembly for `compileFrag_comp f gs`. Plus the
 
 - `foldr_acc_add_eq_sum_map`, `compileFrag_comp_subBlocks_length`: length
   arithmetic.
-- `ProgramEmbedsFragment_compileFrag_comp_fBody`,
-  `ProgramEmbedsFragment_compileFrag_comp_gsBody`: f-body and gs-body
+- `programEmbedsFragment_compileFrag_comp_fBody`,
+  `programEmbedsFragment_compileFrag_comp_gsBody`: f-body and gs-body
   embedding witnesses.
 - `compileFrag_comp_subBlock_{inputCopies,gsBody,outputTransfer}_correct`:
   per-phase correctness of the m-th sub-block, with `_pc_strict_bound`
@@ -102,7 +102,7 @@ program's instructions are the `reindexShift`-mapped
 raw form of `frag_f.instrs`. The values of `fBase` and
 `fPcBase` are those used by the constructor of
 `compileFrag_comp` (see `def compileFrag_comp`). -/
-theorem ProgramEmbedsFragment_compileFrag_comp_fBody
+theorem programEmbedsFragment_compileFrag_comp_fBody
     {k a : ℕ}
     (frag_f : CompiledFragment k)
     (frag_gs : Fin k → CompiledFragment a) :
@@ -305,7 +305,7 @@ of `compileFrag_comp` (see `def compileFrag_comp` and
 `compileFrag_comp_subBlock`); the embedded length excludes
 `frag_gs i`'s trailing stop instruction (dropped via `.pop`
 when emitting the sub-block body). -/
-private theorem ProgramEmbedsFragment_compileFrag_comp_gsBody
+private theorem programEmbedsFragment_compileFrag_comp_gsBody
     {k a : ℕ}
     (frag_f : CompiledFragment k)
     (frag_gs : Fin k → CompiledFragment a)
@@ -734,7 +734,7 @@ runtime produces `f.interp` at the outer output register.
 
 This validates the embedding infrastructure
 (`ProgramEmbedsFragment`, `stateEmbedsFrag_runFor_tail`,
-`ProgramEmbedsFragment_compileFrag_comp_fBody`) and the
+`programEmbedsFragment_compileFrag_comp_fBody`) and the
 PC-bound lemma on the simplest compositional case; the
 general-k case (separate task) extends the same skeleton
 with per-sub-block prologue analyses. -/
@@ -862,12 +862,12 @@ private theorem compileER_runFor_comp_k_zero {a : ℕ}
   rw [h_runFor_1]
   -- Embedding: at PC offset 1, register offset 2 + a, the outer
   -- program contains the reindex-shifted f-body. Get this via
-  -- `ProgramEmbedsFragment_compileFrag_comp_fBody` specialised at k=0.
+  -- `programEmbedsFragment_compileFrag_comp_fBody` specialised at k=0.
   have h_emb_prog :
       ProgramEmbedsFragment P frag_f fBase 1 frag_f.instrs.size := by
     -- The general lemma sets fPcBase = 1 + foldr over List.finRange k.
     -- For k=0, foldr over [] = 0, so fPcBase = 1.
-    have h := ProgramEmbedsFragment_compileFrag_comp_fBody
+    have h := programEmbedsFragment_compileFrag_comp_fBody
       frag_f frag_gs
     -- Lemma gives totalGsRegs = gsPrefixSum frag_gs 0 = 0, so
     -- its fBase is 2 + a + 0 = 2 + a = our fBase.
@@ -1015,7 +1015,7 @@ participating in Phase i.1's `a` input-copies of
 outer input slot) and "dst" registers (one per `gs i`'s
 reindexed input slot) are indexed by `Fin a`; `tmp` and
 `zReg` are shared across all copies. -/
-structure inputCopies_disj {a : ℕ}
+structure InputCopiesDisj {a : ℕ}
     (P : URMProgram a)
     (zReg tmp : Fin P.numRegs)
     (srcs dsts : Fin a → Fin P.numRegs) : Prop where
@@ -1045,9 +1045,9 @@ private theorem inputCopies_prefix_correct {a : ℕ}
     (P : URMProgram a) (pcBase : ℕ) (m : ℕ) (hm : m ≤ a)
     (zReg tmp : Fin P.numRegs)
     (srcs dsts : Fin a → Fin P.numRegs)
-    (h_disj : inputCopies_disj P zReg tmp srcs dsts)
+    (h_disj : InputCopiesDisj P zReg tmp srcs dsts)
     (H : ∀ j : Fin a,
-      preservingTransferInstrs P (pcBase + 9 * j.val)
+      PreservingTransferInstrs P (pcBase + 9 * j.val)
         (srcs j) (dsts j) tmp zReg)
     (v : Fin a → ℕ)
     (s : URMState P) (h_pc : s.pc = pcBase)
@@ -1177,9 +1177,9 @@ private theorem inputCopies_prefix_pc_strict_bound {a : ℕ}
     (P : URMProgram a) (pcBase : ℕ) (m : ℕ) (hm : m ≤ a)
     (zReg tmp : Fin P.numRegs)
     (srcs dsts : Fin a → Fin P.numRegs)
-    (h_disj : inputCopies_disj P zReg tmp srcs dsts)
+    (h_disj : InputCopiesDisj P zReg tmp srcs dsts)
     (H : ∀ j : Fin a,
-      preservingTransferInstrs P (pcBase + 9 * j.val)
+      PreservingTransferInstrs P (pcBase + 9 * j.val)
         (srcs j) (dsts j) tmp zReg)
     (v : Fin a → ℕ)
     (s : URMState P) (h_pc : s.pc = pcBase)
@@ -1264,16 +1264,16 @@ its `srcs`/`dsts`/`H` parameters with the specific register
 maps and instruction-presence facts from
 `compileFrag_comp_subBlock i pcBase` (built via the
 flatMap-indexing infrastructure from
-`ProgramEmbedsFragment_compileFrag_comp_gsBody`) gives the
+`programEmbedsFragment_compileFrag_comp_gsBody`) gives the
 sub-block-specific Phase i.1 helper. -/
 theorem compileFrag_comp_subBlock_inputCopies_correct
     {a : ℕ}
     (P : URMProgram a) (pcBase : ℕ)
     (zReg tmp : Fin P.numRegs)
     (srcs dsts : Fin a → Fin P.numRegs)
-    (h_disj : inputCopies_disj P zReg tmp srcs dsts)
+    (h_disj : InputCopiesDisj P zReg tmp srcs dsts)
     (H : ∀ j : Fin a,
-      preservingTransferInstrs P (pcBase + 9 * j.val)
+      PreservingTransferInstrs P (pcBase + 9 * j.val)
         (srcs j) (dsts j) tmp zReg)
     (v : Fin a → ℕ)
     (s : URMState P) (h_pc : s.pc = pcBase)
@@ -1307,9 +1307,9 @@ theorem compileFrag_comp_subBlock_inputCopies_pc_strict_bound
     (P : URMProgram a) (pcBase : ℕ)
     (zReg tmp : Fin P.numRegs)
     (srcs dsts : Fin a → Fin P.numRegs)
-    (h_disj : inputCopies_disj P zReg tmp srcs dsts)
+    (h_disj : InputCopiesDisj P zReg tmp srcs dsts)
     (H : ∀ j : Fin a,
-      preservingTransferInstrs P (pcBase + 9 * j.val)
+      PreservingTransferInstrs P (pcBase + 9 * j.val)
         (srcs j) (dsts j) tmp zReg)
     (v : Fin a → ℕ)
     (s : URMState P) (h_pc : s.pc = pcBase)
@@ -1426,7 +1426,7 @@ private theorem compileFrag_comp_subBlock_gsBody_correct
   have h_emb_prog :
       ProgramEmbedsFragment outer (frag_gs i) gsBase_i gsPcBase_i
         ((frag_gs i).instrs.size - 1) :=
-    ProgramEmbedsFragment_compileFrag_comp_gsBody
+    programEmbedsFragment_compileFrag_comp_gsBody
       frag_f frag_gs i
   -- Reformulate the IH at the URM level of `(frag_gs i).toURMProgram`.
   -- `compileER (gs i) = (compileERFrag (gs i)).toURMProgram = (frag_gs i).toURMProgram`,
@@ -1554,7 +1554,7 @@ private theorem compileFrag_comp_subBlock_outputTransfer_correct
     (src dst zReg : Fin P.numRegs)
     (h_disj_sd : src ≠ dst) (h_disj_zs : zReg ≠ src)
     (h_disj_zd : zReg ≠ dst)
-    (H : transferLoopInstrs P pcBase src dst zReg)
+    (H : TransferLoopInstrs P pcBase src dst zReg)
     (s : URMState P) (h_pc : s.pc = pcBase)
     (h_z : s.regs zReg = 0)
     (n : ℕ) (h_src : s.regs src = n)
@@ -1585,7 +1585,7 @@ private theorem compileFrag_comp_subBlock_outputTransfer_pc_strict_bound
     (src dst zReg : Fin P.numRegs)
     (h_disj_sd : src ≠ dst) (h_disj_zs : zReg ≠ src)
     (h_disj_zd : zReg ≠ dst)
-    (H : transferLoopInstrs P pcBase src dst zReg)
+    (H : TransferLoopInstrs P pcBase src dst zReg)
     (s : URMState P) (h_pc : s.pc = pcBase)
     (h_z : s.regs zReg = 0)
     (n : ℕ) (h_src : s.regs src = n)
@@ -2259,7 +2259,7 @@ with `srcs := outer's input registers` and
 `dsts := gs m's reindexed input registers`, discharging the
 disjointness and instruction-presence hypotheses from the
 sub-block layout via
-`PreservingTransferInstrs_compileFrag_comp_inputCopies`, and
+`preservingTransferInstrs_compileFrag_comp_inputCopies`, and
 re-derives the m-state's preserved clauses through the
 "other registers unchanged" conclusion. -/
 private theorem compileFrag_comp_subBlocks_partial_phase_i1
@@ -2333,7 +2333,7 @@ private theorem compileFrag_comp_subBlocks_partial_phase_i1
     fun j => ⟨gsBase_m + ((frag_gs m).inputRegs j).val,
             h_dst_lt j⟩
   -- Disjointness bundle.
-  have h_disj : inputCopies_disj P zReg tmpFin srcs dsts := by
+  have h_disj : InputCopiesDisj P zReg tmpFin srcs dsts := by
     refine
       { z_src := ?_, z_dst := ?_, z_tmp := ?_,
         src_dst := ?_, src_tmp := ?_, dst_tmp := ?_,
@@ -2401,11 +2401,11 @@ private theorem compileFrag_comp_subBlocks_partial_phase_i1
       omega
   -- Instruction-presence bundle: discharge each j via the helper.
   have h_H : ∀ (j : Fin a),
-      preservingTransferInstrs P (pcBase_m + 9 * j.val)
+      PreservingTransferInstrs P (pcBase_m + 9 * j.val)
         (srcs j) (dsts j) tmpFin zReg := by
     intro j
     obtain ⟨h_src, h_dst, h_tmp, h_z, hPT⟩ :=
-      PreservingTransferInstrs_compileFrag_comp_inputCopies
+      preservingTransferInstrs_compileFrag_comp_inputCopies
         frag_f frag_gs m j
     -- hPT'sPre Fin packs use proof terms `h_src`, `h_dst`, `h_tmp`,
     -- `h_z`; ours use `h_src_lt j` etc.  These are
@@ -3142,7 +3142,7 @@ private theorem compileFrag_comp_subBlocks_partial_phase_i2
   have h_emb_prog :
       ProgramEmbedsFragment P (frag_gs m) gsBase_m gsPcBase_m
         ((frag_gs m).instrs.size - 1) :=
-    ProgramEmbedsFragment_compileFrag_comp_gsBody frag_f frag_gs m
+    programEmbedsFragment_compileFrag_comp_gsBody frag_f frag_gs m
   set f_init : URMState (frag_gs m).toURMProgram :=
     URMState.init (frag_gs m).toURMProgram v
   have h_state_emb :
@@ -3529,8 +3529,8 @@ less than `compileFrag_comp_pcOf frag_gs (m.val + 1)` on every
 earlier step.  Wraps
 `compileFrag_comp_subBlock_outputTransfer_correct` and
 `compileFrag_comp_subBlock_outputTransfer_pc_strict_bound`; the
-`transferLoopInstrs` parameter is discharged by
-`TransferLoopInstrs_compileFrag_comp_outputTransfer`. -/
+`TransferLoopInstrs` parameter is discharged by
+`transferLoopInstrs_compileFrag_comp_outputTransfer`. -/
 private theorem compileFrag_comp_subBlocks_partial_phase_i3
     {k a : ℕ}
     (frag_f : CompiledFragment k)
@@ -3625,8 +3625,8 @@ private theorem compileFrag_comp_subBlocks_partial_phase_i3
     change (0 : ℕ) = fBase + (frag_f.inputRegs m).val at h_val
     change _ = (2 + a + totalGsRegs) + _ at h_val
     omega
-  -- Instruction-presence via TransferLoopInstrs_compileFrag_comp_outputTransfer.
-  have h_H_bundle := TransferLoopInstrs_compileFrag_comp_outputTransfer
+  -- Instruction-presence via transferLoopInstrs_compileFrag_comp_outputTransfer.
+  have h_H_bundle := transferLoopInstrs_compileFrag_comp_outputTransfer
     frag_f frag_gs m
   obtain ⟨h_src_lt', h_dst_lt', h_z_lt', H_raw⟩ := h_H_bundle
   -- Cast the packaged Fins to ours via Fin.ext.
@@ -3638,7 +3638,7 @@ private theorem compileFrag_comp_subBlocks_partial_phase_i3
         = dst := Fin.ext rfl
   have h_z_idx :
       (⟨0, h_z_lt'⟩ : Fin P.numRegs) = zReg := Fin.ext rfl
-  have H : transferLoopInstrs P pcBase_xfer src dst zReg := by
+  have H : TransferLoopInstrs P pcBase_xfer src dst zReg := by
     rw [← h_src_idx, ← h_dst_idx, ← h_z_idx]
     exact H_raw
   -- Pre-state hypotheses from h_i2.
@@ -4157,7 +4157,7 @@ of `gs m`'s body).
 
 Mirrors `compileFrag_comp_subBlocks_partial_phase_i1`'s setup:
 constructs the same `srcs`/`dsts` register packs, discharges
-the `inputCopies_disj` bundle and `preservingTransferInstrs`
+the `InputCopiesDisj` bundle and `PreservingTransferInstrs`
 hypotheses via the layout helpers, and applies
 `compileFrag_comp_subBlock_inputCopies_pc_strict_bound`. -/
 private theorem compileFrag_comp_subBlocks_partial_phase_i1_pc_strict_bound
@@ -4232,7 +4232,7 @@ private theorem compileFrag_comp_subBlocks_partial_phase_i1_pc_strict_bound
     fun j => ⟨gsBase_m + ((frag_gs m).inputRegs j).val,
             h_dst_lt j⟩
   -- Disjointness bundle: mirrors phase_i1 preservation lemma.
-  have h_disj : inputCopies_disj P zReg tmpFin srcs dsts := by
+  have h_disj : InputCopiesDisj P zReg tmpFin srcs dsts := by
     refine
       { z_src := ?_, z_dst := ?_, z_tmp := ?_,
         src_dst := ?_, src_tmp := ?_, dst_tmp := ?_,
@@ -4300,11 +4300,11 @@ private theorem compileFrag_comp_subBlocks_partial_phase_i1_pc_strict_bound
       omega
   -- Instruction-presence bundle.
   have h_H : ∀ (j : Fin a),
-      preservingTransferInstrs P (pcBase_m + 9 * j.val)
+      PreservingTransferInstrs P (pcBase_m + 9 * j.val)
         (srcs j) (dsts j) tmpFin zReg := by
     intro j
     obtain ⟨_, _, _, _, hPT⟩ :=
-      PreservingTransferInstrs_compileFrag_comp_inputCopies
+      preservingTransferInstrs_compileFrag_comp_inputCopies
         frag_f frag_gs m j
     exact hPT
   -- Pre-state hypotheses from the m-invariant.
@@ -4896,7 +4896,7 @@ Assembly:
    `partial_invariant @ k` after `T_gs ≤ 1 + Σ_i …` steps,
    PC at `fPcBase`, `f`'s input slots loaded with `inner i`
    and `f`'s body block otherwise zero.
-2. `ProgramEmbedsFragment_compileFrag_comp_fBody` exposes the
+2. `programEmbedsFragment_compileFrag_comp_fBody` exposes the
    `f`-body embedding inside the outer program.
 3. A `StateEmbedsFrag` witness from the partial invariant's
    `f_input_slots` + `f_body_zero` clauses, combined with
@@ -4910,7 +4910,7 @@ Assembly:
    shifted by `fPcBase`.
 
 Reuses `compileFrag_comp_subBlocks_partial`,
-`ProgramEmbedsFragment_compileFrag_comp_fBody`,
+`programEmbedsFragment_compileFrag_comp_fBody`,
 `stateEmbedsFrag_runFor`, `vPrefixSum_eq_foldl_finRange`. -/
 theorem compileER_pre_stop_correct_comp
     {k a : ℕ}
@@ -4999,7 +4999,7 @@ theorem compileER_pre_stop_correct_comp
   have h_emb_prog :
       ProgramEmbedsFragment outer frag_f fBase fPcBase
         frag_f.instrs.size := by
-    have h := ProgramEmbedsFragment_compileFrag_comp_fBody
+    have h := programEmbedsFragment_compileFrag_comp_fBody
       frag_f frag_gs
     exact h
   -- Step 3: state embedding at sPostGs / f_init.

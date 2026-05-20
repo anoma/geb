@@ -181,7 +181,7 @@ private theorem compileER_runFor_succ
   -- Instruction-presence hypotheses for preservingTransfer
   -- at PCs 1..9; each one is a literal-array `getElem?`
   -- equality that reduces by `rfl`.
-  have H : preservingTransferInstrs P 1 src dst tmp zReg := by
+  have H : PreservingTransferInstrs P 1 src dst tmp zReg := by
     refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩ <;> rfl
   -- t' = (9 * v 0 + 5) + slack.
   --   = 1 + (9 * v 0 + 2) + 1 + 1 + slack.
@@ -426,7 +426,7 @@ private theorem compileER_runFor_proj {k : ℕ} (i : Fin k)
   -- Instruction-presence hypotheses for preservingTransfer
   -- at PCs 1..9; each one is a literal-array `getElem?`
   -- equality that reduces by `rfl`.
-  have H : preservingTransferInstrs P 1 src dst tmp zReg := by
+  have H : PreservingTransferInstrs P 1 src dst tmp zReg := by
     refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩ <;> rfl
   -- t' = (9 * v i + 3) + slack.
   --   = 1 + ((9 * v i + 2) + slack).  The trailing `slack`
@@ -577,11 +577,11 @@ private theorem compileER_runFor_sub
   have h_disj_ts : tmp ≠ sReg := by
     intro h; exact absurd (congrArg Fin.val h) (by decide)
   -- Instruction-presence hypotheses.
-  have Hpt : preservingTransferInstrs P 1 xReg dst tmp zReg := by
+  have Hpt : PreservingTransferInstrs P 1 xReg dst tmp zReg := by
     refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩ <;> rfl
-  have Htl : transferLoopInstrs P 10 yReg sReg zReg := by
+  have Htl : TransferLoopInstrs P 10 yReg sReg zReg := by
     refine ⟨?_, ?_, ?_, ?_⟩ <;> rfl
-  have Hsi : subInnerLoopInstrs P 14 sReg dst zReg := by
+  have Hsi : SubInnerLoopInstrs P 14 sReg dst zReg := by
     refine ⟨?_, ?_, ?_, ?_⟩ <;> rfl
   -- t' = (9 * v 0 + 8 * v 1 + 5) + slack
   --    = 1 + (9 * v 0 + 2) + (4 * v 1 + 1) + (4 * v 1 + 1) + slack.
@@ -869,7 +869,7 @@ theorem compileER_pre_stop_correct_atom_succ
   have h_disj_zt : zReg ≠ tmp := by
     intro h; exact absurd (congrArg Fin.val h) (by decide)
   -- Instruction-presence hypotheses for preservingTransfer at PCs 1..9.
-  have H : preservingTransferInstrs P 1 src dst tmp zReg := by
+  have H : PreservingTransferInstrs P 1 src dst tmp zReg := by
     refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩ <;> rfl
   -- Program size is 12, so size - 1 = 11.
   have h_size : P.instrs.size = 12 := rfl
@@ -1162,7 +1162,7 @@ theorem compileER_pre_stop_correct_atom_proj {k : ℕ}
     intro h
     have : (0 : ℕ) = 2 + k := congrArg Fin.val h
     omega
-  have H : preservingTransferInstrs P 1 src dst tmp zReg := by
+  have H : PreservingTransferInstrs P 1 src dst tmp zReg := by
     refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩ <;> rfl
   have h_size : P.instrs.size = 11 := rfl
   refine ⟨9 * v i + 3, ?_, ?_, ?_, ?_⟩
@@ -1359,11 +1359,11 @@ theorem compileER_pre_stop_correct_atom_sub
     intro h; exact absurd (congrArg Fin.val h) (by decide)
   have h_disj_ts : tmp ≠ sReg := by
     intro h; exact absurd (congrArg Fin.val h) (by decide)
-  have Hpt : preservingTransferInstrs P 1 xReg dst tmp zReg := by
+  have Hpt : PreservingTransferInstrs P 1 xReg dst tmp zReg := by
     refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩ <;> rfl
-  have Htl : transferLoopInstrs P 10 yReg sReg zReg := by
+  have Htl : TransferLoopInstrs P 10 yReg sReg zReg := by
     refine ⟨?_, ?_, ?_, ?_⟩ <;> rfl
-  have Hsi : subInnerLoopInstrs P 14 sReg dst zReg := by
+  have Hsi : SubInnerLoopInstrs P 14 sReg dst zReg := by
     refine ⟨?_, ?_, ?_, ?_⟩ <;> rfl
   have h_size : P.instrs.size = 19 := rfl
   refine ⟨9 * v 0 + 8 * v 1 + 5, ?_, ?_, ?_, ?_⟩
