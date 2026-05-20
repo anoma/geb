@@ -8314,5 +8314,338 @@ private theorem compileFrag_bprod_partial
             < (compileFrag_bprod (compileERFrag f)).instrs.size - 1) :=
   compileFrag_bprod_partial_aux f ih_f v (v 0) (Nat.le_refl _)
 
+set_option maxHeartbeats 4000000 in
+-- The slack-arithmetic `omega` and foldl-monotonicity composition over
+-- the bprod per-iteration runtime exceed the elaborator's default
+-- budget when combined with the existential refinement against the
+-- partial-invariant witness.
+/-- Final assembly of `compileER (.bprod f)`'s pre-stop trace: given
+the pre-stop inductive hypothesis for `f`, there exists a step count
+`T0 ≤ compileER_runtime (.bprod f) v` after which the URM state has
+PC at `(compileER (.bprod f)).instrs.size - 1` (the terminating
+`.stopR`) and the output register holds `(.bprod f).interp v`, with
+the strict per-step PC bound holding on `[0, T0)`. Mirrors
+`compileER_pre_stop_correct_bsum`; the witness is `T_partial + 1`,
+where `T_partial` is the outer-loop completion witness from
+`compileFrag_bprod_partial` and the trailing `+ 1` executes the final
+`jumpZR vX exitPC bodyStartPC` at `bprod_topPC` with `vX = 0`. -/
+private theorem compileER_pre_stop_correct_bprod
+    {k : ℕ}
+    (f : ERMor1 (k + 1))
+    (ih_f : ∀ (v' : Fin (k + 1) → ℕ),
+      ∃ T0 : ℕ,
+        T0 ≤ compileER_runtime f v' ∧
+        (URMState.runFor (compileER f)
+              (URMState.init (compileER f) v') T0).pc
+            = (compileER f).instrs.size - 1 ∧
+        (URMState.runFor (compileER f)
+              (URMState.init (compileER f) v') T0).regs
+            (compileER f).outputReg
+          = f.interp v' ∧
+        (∀ k' < T0,
+          (URMState.runFor (compileER f)
+              (URMState.init (compileER f) v') k').pc
+            < (compileER f).instrs.size - 1))
+    (v : Fin (k + 1) → ℕ) :
+    ∃ T0 : ℕ,
+      T0 ≤ compileER_runtime (.bprod f : ERMor1 (k + 1)) v ∧
+      (URMState.runFor (compileER (.bprod f : ERMor1 (k + 1)))
+            (URMState.init
+              (compileER (.bprod f : ERMor1 (k + 1))) v) T0).pc
+          = (compileER (.bprod f : ERMor1 (k + 1))).instrs.size - 1 ∧
+      (URMState.runFor (compileER (.bprod f : ERMor1 (k + 1)))
+            (URMState.init
+              (compileER (.bprod f : ERMor1 (k + 1))) v) T0).regs
+          (compileER (.bprod f : ERMor1 (k + 1))).outputReg
+        = (.bprod f : ERMor1 (k + 1)).interp v ∧
+      (∀ k' < T0,
+        (URMState.runFor (compileER (.bprod f : ERMor1 (k + 1)))
+            (URMState.init
+              (compileER (.bprod f : ERMor1 (k + 1))) v) k').pc
+          < (compileER (.bprod f : ERMor1 (k + 1))).instrs.size - 1) := by
+  let frag_f : CompiledFragment (k + 1) := compileERFrag f
+  let outerFrag : CompiledFragment (k + 1) := compileFrag_bprod frag_f
+  let outer : URMProgram (k + 1) := outerFrag.toURMProgram
+  let s_init : URMState outer := URMState.init outer v
+  -- Step 1: invoke bprod outer-loop completion to obtain the partial-
+  -- invariant witness at i = v 0.
+  obtain ⟨T_partial, hT_partial_bound, h_inv, h_strict_partial⟩ :=
+    compileFrag_bprod_partial f ih_f v
+  set sPost : URMState outer := URMState.runFor outer s_init T_partial
+  -- Step 2: execute the final `jumpZR vX exitPC bodyStartPC` at PC 14.
+  -- At i = v 0, the partial invariant gives s.regs vX = v 0 - v 0 = 0,
+  -- so the jumpZ takes the zero branch to `exitPC`.
+  have h_numRegs_eq : outer.numRegs = (k + 10) + frag_f.numRegs := rfl
+  have h_vX_lt : k + 3 < outer.numRegs := by
+    rw [h_numRegs_eq]
+    have : 0 < frag_f.numRegs := frag_f.numRegs_pos
+    omega
+  let rVX : Fin outer.numRegs := ⟨k + 3, h_vX_lt⟩
+  let exitPC_lit : ℕ :=
+    16 + frag_f.numRegs + 9 * (k + 1) + (frag_f.instrs.size - 1) + 23
+  have h_at_14 : outer.instrs[(14 : ℕ)]?
+      = some (URMInstr.jumpZ rVX exitPC_lit 15) := rfl
+  have h_sPost_pc : sPost.pc = 14 := h_inv.pc_eq
+  have h_sPost_vX_zero : sPost.regs rVX = 0 := by
+    have h := h_inv.vX_eq
+    change sPost.regs rVX = v 0 - v 0 at h
+    rw [h]
+    omega
+  have h_step_final :
+      URMState.step outer sPost =
+        { pc := exitPC_lit
+          regs := sPost.regs } := by
+    have h := URMState.step_of_getElem?_jumpZ outer sPost 14 rVX
+      exitPC_lit 15 h_sPost_pc h_at_14
+    rw [h, if_pos h_sPost_vX_zero]
+  -- The final state after T_partial + 1 steps.
+  set sFinal : URMState outer :=
+    URMState.runFor outer s_init (T_partial + 1)
+  have h_runFor_step :
+      URMState.runFor outer sPost 1 = URMState.step outer sPost := rfl
+  have h_sFinal_decomp :
+      sFinal = URMState.step outer sPost := by
+    change URMState.runFor outer s_init (T_partial + 1) = _
+    rw [URMState.runFor_add]
+    exact h_runFor_step
+  -- exitPC_lit equals (compileFrag_bprod frag_f).instrs.size - 1.
+  have h_size : outerFrag.instrs.size
+      = 39 + frag_f.numRegs + 9 * (k + 1) + frag_f.instrs.size :=
+    compileFrag_bprod_size frag_f
+  have h_frag_size_pos : 0 < frag_f.instrs.size := by
+    have hb := frag_f.lastInstr_isStop
+    rcases Nat.eq_zero_or_pos frag_f.instrs.size with h_eq | h_pos
+    · exfalso
+      rw [Array.back?] at hb
+      have h_none : frag_f.instrs[frag_f.instrs.size - 1]? = none := by
+        apply Array.getElem?_eq_none; omega
+      rw [h_none] at hb
+      cases hb
+    · exact h_pos
+  have h_exitPC_eq_size_pred :
+      exitPC_lit = outerFrag.instrs.size - 1 := by
+    rw [h_size]
+    change 16 + frag_f.numRegs + 9 * (k + 1)
+        + (frag_f.instrs.size - 1) + 23
+      = 39 + frag_f.numRegs + 9 * (k + 1) + frag_f.instrs.size - 1
+    omega
+  -- Output register of `outer` is `⟨1, _⟩`.
+  have h_outputReg : outer.outputReg
+      = (⟨1, by
+        have : 0 < frag_f.numRegs := frag_f.numRegs_pos
+        change 1 < (k + 10) + frag_f.numRegs
+        omega⟩ : Fin outer.numRegs) := Fin.ext rfl
+  -- Final assembly: provide T0 = T_partial + 1.
+  refine ⟨T_partial + 1, ?_, ?_, ?_, ?_⟩
+  · -- Runtime bound: T_partial + 1 ≤ compileER_runtime (.bprod f) v.
+    have h_rt :
+        compileER_runtime (.bprod f : ERMor1 (k + 1)) v
+          = 40 + 10 * (v 0)
+            + ((List.range (v 0)).map
+                (fun j =>
+                  compileER_runtime f (Fin.cons j (Fin.tail v))
+                  + 60 + 2 * (k + 1) + 10 * (j +
+                    ((List.finRange k).map (Fin.tail v)).foldl
+                      (· + ·) 0)
+                  + 9 * natBProd j
+                      (fun i' => f.interp (Fin.cons i' (Fin.tail v)))
+                      * f.interp (Fin.cons j (Fin.tail v))
+                  + 4 * natBProd j
+                      (fun i' => f.interp (Fin.cons i' (Fin.tail v)))
+                  + 9 * f.interp (Fin.cons j (Fin.tail v))
+                  + compileER_numRegs f)).foldl (· + ·) 0 := rfl
+    rw [h_rt]
+    -- Foldl monotonicity over equal-length lists.
+    have h_foldl_le : ∀ {β : Type} (l : List β) (g₁ g₂ : β → ℕ)
+        (h_le : ∀ x ∈ l, g₁ x ≤ g₂ x) (acc₁ acc₂ : ℕ),
+        acc₁ ≤ acc₂ →
+        l.foldl (fun s x => s + g₁ x) acc₁
+          ≤ l.foldl (fun s x => s + g₂ x) acc₂ := by
+      intro β l
+      induction l with
+      | nil =>
+        intro _ _ _ _ _ h
+        exact h
+      | cons hd tl ih =>
+        intro g₁ g₂ h_le acc₁ acc₂ h_acc
+        change tl.foldl _ (acc₁ + g₁ hd)
+          ≤ tl.foldl _ (acc₂ + g₂ hd)
+        apply ih
+        · intro x hx; exact h_le x (List.mem_cons_of_mem _ hx)
+        · have h_hd := h_le hd (List.mem_cons_self)
+          omega
+    have h_foldl_map_eq : ∀ {β : Type} (l : List β) (g : β → ℕ)
+        (acc : ℕ),
+        (l.map g).foldl (· + ·) acc
+          = l.foldl (fun s x => s + g x) acc := by
+      intro β l
+      induction l with
+      | nil => intro _ _; rfl
+      | cons hd tl ih =>
+        intro g acc
+        change (tl.map g).foldl (· + ·) (acc + g hd)
+          = tl.foldl _ (acc + g hd)
+        exact ih g (acc + g hd)
+    rw [h_foldl_map_eq]
+    rw [h_foldl_map_eq] at hT_partial_bound
+    -- vPrefixSum (Fin.cons j (Fin.tail v)) (k+1) = j + outerSum.
+    have h_outerSum_eq :
+        ∀ j : ℕ,
+        vPrefixSum (Fin.cons j (Fin.tail v)) (k + 1)
+          = j + ((List.finRange k).map (Fin.tail v)).foldl
+              (· + ·) 0 := by
+      intro j
+      have h_vps_eq :
+          vPrefixSum (Fin.cons j (Fin.tail v)) (k + 1)
+            = j + vPrefixSum (Fin.tail v) k := by
+        have h_step :
+            ∀ n : ℕ, n ≤ k →
+              vPrefixSum (Fin.cons j (Fin.tail v)) (n + 1)
+                = j + vPrefixSum (Fin.tail v) n := by
+          intro n hn
+          induction n with
+          | zero =>
+            have h_pos : 0 < k + 1 := Nat.succ_pos k
+            have h_cons_zero :
+                (Fin.cons j (Fin.tail v) : Fin (k + 1) → ℕ)
+                  ⟨0, h_pos⟩ = j := by
+              change Fin.cons j (Fin.tail v) 0 = j
+              rfl
+            calc
+              vPrefixSum (Fin.cons j (Fin.tail v)) 1
+                  = vPrefixSum (Fin.cons j (Fin.tail v)) 0
+                    + (Fin.cons j (Fin.tail v)) ⟨0, h_pos⟩ :=
+                  vPrefixSum_succ (Fin.cons j (Fin.tail v)) 0 h_pos
+              _ = 0 + (Fin.cons j (Fin.tail v)) ⟨0, h_pos⟩ := rfl
+              _ = 0 + j := by rw [h_cons_zero]
+              _ = j + vPrefixSum (Fin.tail v) 0 := by
+                change 0 + j = j + 0
+                omega
+          | succ n' ih =>
+            have hn' : n' ≤ k := Nat.le_of_succ_le hn
+            have hn'_lt : n' < k := hn
+            have hn_lt : n' + 1 < k + 1 := Nat.succ_lt_succ hn'_lt
+            have h_ih := ih hn'
+            have h_cons_succ :
+                (Fin.cons j (Fin.tail v) : Fin (k + 1) → ℕ)
+                    ⟨n' + 1, hn_lt⟩
+                  = (Fin.tail v) ⟨n', hn'_lt⟩ := by
+              have h_eq : (⟨n' + 1, hn_lt⟩ : Fin (k + 1))
+                  = (⟨n', hn'_lt⟩ : Fin k).succ := by
+                apply Fin.ext; rfl
+              rw [h_eq, Fin.cons_succ]
+            calc
+              vPrefixSum (Fin.cons j (Fin.tail v)) (n' + 1 + 1)
+                  = vPrefixSum (Fin.cons j (Fin.tail v)) (n' + 1)
+                    + (Fin.cons j (Fin.tail v)) ⟨n' + 1, hn_lt⟩ :=
+                  vPrefixSum_succ (Fin.cons j (Fin.tail v))
+                    (n' + 1) hn_lt
+              _ = (j + vPrefixSum (Fin.tail v) n')
+                  + (Fin.tail v) ⟨n', hn'_lt⟩ := by
+                rw [h_ih, h_cons_succ]
+              _ = j + (vPrefixSum (Fin.tail v) n'
+                  + (Fin.tail v) ⟨n', hn'_lt⟩) := by omega
+              _ = j + vPrefixSum (Fin.tail v) (n' + 1) := by
+                rw [vPrefixSum_succ (Fin.tail v) n' hn'_lt]
+        exact h_step k (Nat.le_refl k)
+      have h_outerSum_eq_foldl :
+          vPrefixSum (Fin.tail v) k
+            = ((List.finRange k).map (Fin.tail v)).foldl (· + ·) 0 :=
+        vPrefixSum_eq_foldl_finRange (Fin.tail v)
+      rw [h_vps_eq, h_outerSum_eq_foldl]
+    -- Per-iteration ≤ comparison.
+    have h_numRegs_eq_f :
+        compileER_numRegs f = (compileERFrag f).numRegs :=
+      compileER_numRegs_eq_compileERFrag_numRegs f
+    have h_g_le : ∀ j ∈ List.range (v 0),
+        (2 + (compileERFrag f).numRegs)
+            + (9 * vPrefixSum (Fin.cons j (Fin.tail v)) (k + 1)
+                + 2 * (k + 1))
+            + compileER_runtime f (Fin.cons j (Fin.tail v))
+            + ((4 * natBProd j
+                  (fun i' => f.interp (Fin.cons i' (Fin.tail v))) + 1)
+                + (4 * f.interp (Fin.cons j (Fin.tail v)) + 1)
+                + f.interp (Fin.cons j (Fin.tail v))
+                    * (9 * natBProd j
+                        (fun i' => f.interp (Fin.cons i' (Fin.tail v)))
+                        + 5)
+                + 1 + 1 + 2)
+          ≤ compileER_runtime f (Fin.cons j (Fin.tail v))
+              + 60 + 2 * (k + 1) + 10 * (j +
+                ((List.finRange k).map (Fin.tail v)).foldl
+                  (· + ·) 0)
+              + 9 * natBProd j
+                  (fun i' => f.interp (Fin.cons i' (Fin.tail v)))
+                  * f.interp (Fin.cons j (Fin.tail v))
+              + 4 * natBProd j
+                  (fun i' => f.interp (Fin.cons i' (Fin.tail v)))
+              + 9 * f.interp (Fin.cons j (Fin.tail v))
+              + compileER_numRegs f := by
+      intro j _
+      have h_vps := h_outerSum_eq j
+      have h_nR := h_numRegs_eq_f
+      set A := natBProd j
+        (fun i' => f.interp (Fin.cons i' (Fin.tail v)))
+      set B := f.interp (Fin.cons j (Fin.tail v))
+      -- B * (9 * A + 5) = 9 * A * B + 5 * B; isolate `A * B` as an atom.
+      have h_mul_comm : B * (9 * A + 5) = 9 * (A * B) + 5 * B := by
+        rw [Nat.mul_add, Nat.mul_comm B (9 * A), Nat.mul_comm B 5,
+          Nat.mul_assoc]
+      have h_rhs_eq : 9 * A * B = 9 * (A * B) :=
+        Nat.mul_assoc 9 A B
+      rw [h_mul_comm, h_rhs_eq]
+      set C := A * B
+      omega
+    have h_main :=
+      h_foldl_le (List.range (v 0)) _ _ h_g_le 0 0 (Nat.le_refl 0)
+    -- Inline the `have A_j; have B_j` in `hT_partial_bound`'s foldl body
+    -- so omega sees the same atom as the LHS of `h_main`.
+    have h_partial_bound' :
+        T_partial ≤ (7 + 9 * (v 0)) + List.foldl
+          (fun s j =>
+            s + ((2 + (compileERFrag f).numRegs)
+              + (9 * vPrefixSum (Fin.cons j (Fin.tail v)) (k + 1)
+                  + 2 * (k + 1))
+              + compileER_runtime f (Fin.cons j (Fin.tail v))
+              + ((4 * natBProd j
+                    (fun i' => f.interp (Fin.cons i' (Fin.tail v))) + 1)
+                  + (4 * f.interp (Fin.cons j (Fin.tail v)) + 1)
+                  + f.interp (Fin.cons j (Fin.tail v))
+                      * (9 * natBProd j
+                          (fun i' => f.interp (Fin.cons i' (Fin.tail v)))
+                          + 5)
+                  + 1 + 1 + 2))) 0 (List.range (v 0)) :=
+      hT_partial_bound
+    -- Combine main bound with the constant slack.
+    omega
+  · -- PC after T_partial + 1 = (compileFrag_bprod frag_f).instrs.size - 1.
+    change sFinal.pc = (compileFrag_bprod frag_f).instrs.size - 1
+    rw [h_sFinal_decomp, h_step_final]
+    change exitPC_lit = (compileFrag_bprod frag_f).instrs.size - 1
+    exact h_exitPC_eq_size_pred
+  · -- Output register holds (.bprod f).interp v.
+    change sFinal.regs outer.outputReg = (.bprod f : ERMor1 (k + 1)).interp v
+    rw [h_sFinal_decomp, h_step_final, h_outputReg]
+    -- After the jumpZ, regs are unchanged. Use h_inv.acc_eq.
+    change sPost.regs ⟨1, _⟩ = (.bprod f : ERMor1 (k + 1)).interp v
+    have h_acc := h_inv.acc_eq
+    rw [h_acc]
+    -- natBProd (v 0) ... = (.bprod f).interp v.
+    rfl
+  · -- Strict PC bound on [0, T_partial + 1).
+    intro k' hk'
+    change (URMState.runFor outer s_init k').pc
+      < (compileFrag_bprod frag_f).instrs.size - 1
+    rcases Nat.lt_or_ge k' T_partial with h_lo | h_hi
+    · exact h_strict_partial k' h_lo
+    · -- k' = T_partial: PC = 14 < instrs.size - 1.
+      have h_k'_eq : k' = T_partial := by omega
+      rw [h_k'_eq]
+      change sPost.pc < (compileFrag_bprod frag_f).instrs.size - 1
+      rw [h_sPost_pc, ← h_exitPC_eq_size_pred]
+      change 14 < 16 + frag_f.numRegs + 9 * (k + 1)
+        + (frag_f.instrs.size - 1) + 23
+      omega
+
 end LawvereERKSim
 end GebLean
