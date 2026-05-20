@@ -532,6 +532,10 @@ with their values transferred to `V_acc_clone` and
 the f-body's non-output registers, even though they remain
 preserved; that fact is delegated to bprod.3.phase_i2's
 `f_other_zero` carry-over in the outer partial invariant.
+The correctness lemma's docstring should record this design
+decision so an implementer encountering the lemma in
+isolation understands why the f-body's non-output registers
+are not asserted preserved here.
 
 ### Sub-task 11e.6.a.iii-bprod.1.c.1 — inner mul partial invariant + base
 
@@ -681,16 +685,29 @@ private theorem compileFrag_bprod_mul_partial
       T0 = vFOut * (9 * vAccIn + 5) ∧
       compileFrag_bprod_mul_partial_invariant frag_f vAccIn vFOut
           vFOut (Nat.le_refl _) (URMState.runFor _ sPrep T0) ∧
+      (∀ q : Fin (compileFrag_bprod frag_f).numRegs,
+        q.val ≠ 1 → q.val ≠ k + 8 → q.val ≠ k + 9 →
+        (URMState.runFor _ sPrep T0).regs q = sPrep.regs q) ∧
       (∀ k' < T0, ...)
 ```
+
+Each of `compileFrag_bprod_mul_partial_step`,
+`compileFrag_bprod_mul_partial_aux`, and
+`compileFrag_bprod_mul_partial` carries an additional
+preservation conjunct in the same shape: the URM steps of the
+inner-mul block touch only `V_acc` (= 1), `V_factor` (= k+8),
+and `V_mul_tmp` (= k+9) — three registers, not four
+(`V_acc_clone` = k+7 is read-only inside the inner loop, since
+`preservingTransfer` preserves its source). The conjunct
+states preservation outside those three indices.
 
 Inputs: `compileFrag_bprod_mul_partial_base` (bprod.1.c.1),
 `compileFrag_bprod_mul_partial_step` (bprod.1.c.2).
 
-Outputs: outer-iteration outer loop (over `j ∈ [0, vFOut]`)
-and its `_partial` specialisation at `j = vFOut`. Mirrors
-bsum.5's `compileFrag_bsum_partial_aux` /
-`compileFrag_bsum_partial`.
+Outputs: outer-iteration outer loop (over `j ∈ [0, vFOut]`),
+its `_partial` specialisation at `j = vFOut`, and the
+preservation conjunct enumerated above. Mirrors bsum.5's
+`compileFrag_bsum_partial_aux` / `compileFrag_bsum_partial`.
 
 Estimated LOC: 350-450.
 
@@ -767,11 +784,19 @@ fully-expanded form in the lemma signature; downstream
 sub-tasks (bprod.3.phase_i3, bprod.4) substitute via
 `Nat.mul_add` / `Nat.add_mul` / `Nat.mul_comm` as needed.
 
-The `outside_preserved` clause threads through both
-prep and inner-mul phases. Use `outside_preserved` in 1.c.0's
-post combined with the inner-mul partial invariant's
-`outside_preserved` clause (which only touches the four
-mul-scratch registers).
+The preservation conjunct in the conclusion above lists five
+register exclusions (`V_acc`, `V_acc_clone`, `V_factor`,
+`V_mul_tmp`, and f-output). Its proof composes two
+preservation facts via `URMState.runFor_add`:
+the prep-phase preservation conjunct (from bprod.1.c.0's
+correctness lemma, which excludes `V_acc`, `V_acc_clone`,
+`V_factor`, and f-output) with the inner-mul-loop
+preservation conjunct (from bprod.1.c.3's
+`compileFrag_bprod_mul_partial`, which excludes `V_acc`,
+`V_factor`, and `V_mul_tmp`). The union of exclusions covers
+all five registers listed in the assembly conjunct; the
+intersection (`V_acc`) is the only register written by both
+phases, so the composition is straightforward.
 
 ### Sub-task 11e.6.a.iii-bprod.1.d — f-body embedding
 
@@ -1136,28 +1161,42 @@ the exit PC, which is the maximal in-program PC.
 
 Estimated LOC: 700-850. This is the largest single phase
 lemma in the bprod chain because the accumulator update
-re-establishes the twelve invariant clauses at `i.val + 1`,
-of which six re-establish via the accUpdate's output state,
-two via the epilogue's two instructions, and four carry over
-from phase_i2 unchanged:
+re-establishes the twelve invariant clauses at `i.val + 1`.
+The per-clause split is `2 + 5 + 5 = 12`: two via the
+epilogue's two URM instructions, five via the accUpdate's
+output state, and five via carry-over from phase_i2:
 
-- `pc_eq`: returns to `bprod_topPC` via the `goto`.
-- `vX_eq`: unchanged from phase_i2 (= `v 0 - i.val - 1`,
-  already decremented in phase_i0); carry-over.
+- `pc_eq`: returns to `bprod_topPC` via the `goto`
+  (epilogue).
 - `vI_eq`: incremented from `i.val` to `i.val + 1` by the
   `incR vI` epilogue step.
-- `acc_eq`: the multiplicative recurrence
-  `natBProd (i.val + 1) g = natBProd i.val g * g i.val`.
-  The new accumulator value is `A_i * B_i = natBProd i.val *
-  f.interp (Fin.cons i.val (Fin.tail v))`. Use
-  `natBProd_rec` (`LawvereERPrimrec.lean` line 21) or the
-  unfolding `natBProd (i + 1) g = natBProd i g * g i`.
-- `accClone_zero`, `factor_zero`, `mulTmp_zero`: all
-  re-established by the accUpdate's post-state.
-- `zReg_zero`, `outer_inputs`, `tmp1_zero`, `tmp2_zero`,
-  `hi_le`: carry-over from phase_i2 (the accUpdate touches
-  none of these registers; the preservation conjunct from
-  bprod.1.c.4 covers them).
+- `acc_eq`: re-established by the accUpdate via the
+  multiplicative recurrence `natBProd (i.val + 1) g =
+  natBProd i.val g * g i.val`. The new accumulator value is
+  `A_i * B_i = natBProd i.val * f.interp (Fin.cons i.val
+  (Fin.tail v))`. Use `natBProd_rec` (`LawvereERPrimrec.lean`
+  line 21) or the unfolding `natBProd (i + 1) g = natBProd i
+  g * g i`.
+- `accClone_zero`, `factor_zero`, `mulTmp_zero`,
+  `f-output zero` (a corollary of `factor_zero` and the
+  prep destructive copy): all re-established by the
+  accUpdate's output state. (`f-output zero` is itself not
+  an invariant clause but is needed for the next iteration's
+  phase_i0 zero-sweep to behave; it is supplied by the
+  accUpdate post-state.)
+- `vX_eq`, `zReg_zero`, `outer_inputs`, `tmp1_zero`,
+  `tmp2_zero`: carry-over from phase_i2 (the accUpdate
+  touches none of these registers; the preservation conjunct
+  from bprod.1.c.4 covers them). Note `hi_le` is a Prop
+  parameter carried via the structure's default value, not a
+  state-bearing clause; it does not count toward the 12-
+  clause split.
+
+The accUpdate's output state has `V_acc_clone = 0`,
+`V_factor = 0`, `V_mul_tmp = 0`, and the f-output register at
+0 — verified in bprod.1.c.4's conclusion. These four
+zero-state facts plus `acc_eq` constitute the five "via
+accUpdate" clauses listed above.
 
 A fresh segment-peeling helper
 `compileFrag_bprod_accUpdateBlock_instr_at` is needed (third
@@ -1192,7 +1231,7 @@ private theorem compileFrag_bprod_partial_step
             + compileER_runtime f (Fin.cons i.val (Fin.tail v))
             + ((4 * A_i + 1) + (4 * B_i + 1)
                 + B_i * (9 * A_i + 5) + 1 + 1 + 2) ∧
-      compileFrag_bprod_partial_invariant (compileERFrag f) v
+      compileFrag_bprod_partial_invariant (compileERFrag f) f v
           (i.val + 1) (Nat.succ_le_of_lt i.isLt)
         (URMState.runFor _ sPre T0) ∧
       (∀ k' < T0,
@@ -1214,9 +1253,11 @@ Notes: PC-window case split over four intervals
 phase_i1 = `[prologueBase, bodyPCBase)`,
 phase_i2 = `[bodyPCBase, trBase)`,
 phase_i3 = `[trBase, topPC)` via the goto's return).
-Each phase's strict bound relaxes to `bprod_exitPC - 1`.
-The conclusion is existential because phase_i2's T0 is
-from `ih_f`'s witness.
+Each phase's tight in-block strict PC bound is weakened to
+the step-level bound `< bprod_exitPC` (equivalently
+`< instrs.size - 1`) via transitivity with the phase's
+intra-block invariant. The conclusion is existential because
+phase_i2's T0 is from `ih_f`'s witness.
 
 ### Sub-task 11e.6.a.iii-bprod.5 — outer iteration (i = 0 to v 0)
 
@@ -1466,10 +1507,11 @@ post-T2 followup branch (task #654):
    `multiplicative_loop_correct` template that captures the
    inner-mul loop's bsum-shaped structure abstractly, with
    `vAccIn` / `vFOut` as parameters. The current bprod.1.c.0
-   through 1.c.4 chain is structurally a *miniature* bsum
-   pre-stop chain; the abstraction would reduce duplication
-   and clarify the multiplicative-as-iterated-additive
-   recurrence.
+   through 1.c.4 chain is structurally analogous to bsum's
+   pre-stop chain (jumpZR + decR + preservingTransfer + goto
+   over a counter `j`); the abstraction would reduce
+   duplication and clarify the multiplicative-as-iterated-
+   additive recurrence.
 4. Reconcile bprod's `incR vAcc` at PC 13 with the
    `compileER_runtime` outer constant `40 + 10 * bound` (vs
    bsum's `30 + 10 * bound`). The actual prelude delta over
