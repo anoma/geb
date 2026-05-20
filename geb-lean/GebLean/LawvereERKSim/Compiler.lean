@@ -1759,9 +1759,12 @@ def compileER_runtime : {a : ℕ} → ERMor1 a →
         let outerSum : ℕ :=
           ((List.finRange k).map (Fin.tail v)).foldl
             (· + ·) 0
+        let A_i : ℕ :=
+          natBProd i (fun j => f.interp (Fin.cons j (Fin.tail v)))
+        let B_i : ℕ := f.interp ctx_f
         compileER_runtime f ctx_f
         + 60 + 2 * (k + 1) + 10 * (i + outerSum)
-        + 5 * f.interp ctx_f
+        + 9 * A_i * B_i + 4 * A_i + 9 * B_i
         + nRegs_f
       40 + 10 * bound +
         ((List.range bound).map perIter).foldl (· + ·) 0
