@@ -221,13 +221,17 @@ Disjoint blocks for register-embedding purposes:
                        |
         +--------------+-------------+
         |              |             |
-[bprod.1.a            [bprod.1.b     [bprod.1.c.* accUpdate
- zeroSweep            prologue       (1.c.0 copy phase,
- _correct + bound]    _correct +     1.c.1 inner mul
- alias of bsum's]     bound]         partial inv + base,
-        |              |             1.c.2 inner mul step,
-        |              |             1.c.3 inner mul outer,
-        |              |             1.c.4 assembly + bound]
+[bprod.1.a            [bprod.1.b     [bprod.1.c.0 copy phase]
+ zeroSweep            prologue              |
+ _correct + bound]    _correct +     [bprod.1.c.1 inner mul
+ alias of bsum's]     bound]          partial inv + base]
+        |              |                    |
+        |              |             [bprod.1.c.2 inner mul step]
+        |              |                    |
+        |              |             [bprod.1.c.3 inner mul outer]
+        |              |                    |
+        |              |             [bprod.1.c.4 accUpdate
+        |              |              assembly + bound]
         +--------------+-------------+
                        |
               [bprod.1.d f-body embedding]
@@ -351,6 +355,11 @@ single largest divergence from bsum's PC layout (where the
 analogous block is 4 instructions); double-check the
 arithmetic during the size lemma's manual segment counting.
 
+The `bprod_trBase` definition uses `frag_f.instrs.size - 1`.
+This is safe because `lastInstr_isStop` (a
+`CompiledFragment` invariant) guarantees `frag_f.instrs.size
+≥ 1`; the `- 1` therefore cannot underflow.
+
 ### Sub-task 11e.6.a.iii-bprod.1.a — zero-sweep correctness alias
 
 Signatures: thin re-export of
@@ -471,12 +480,6 @@ private structure compileFrag_bprod_accUpdate_prep_post
     = 0
   factor_eq : s.regs ⟨k + 8, by ...⟩ = vFOut
   mulTmp_zero : s.regs ⟨k + 9, by ...⟩ = 0
-  outside_preserved : ∀ q : Fin _,
-    q.val ≠ 1 →
-    q.val ≠ k + 7 →
-    q.val ≠ k + 8 →
-    q.val ≠ (k + 10) + frag_f.outputReg.val →
-    s'.regs q = s_pre.regs q
 
 private theorem compileFrag_bprod_accUpdate_prep_correct
     {k : ℕ}
@@ -492,7 +495,13 @@ private theorem compileFrag_bprod_accUpdate_prep_correct
     (h_mulTmp_zero : sPre.regs ⟨k + 9, by ...⟩ = 0) :
     let totalSteps : ℕ := (4 * vAccIn + 1) + (4 * vFOut + 1)
     let s' := URMState.runFor _ sPre totalSteps
-    compileFrag_bprod_accUpdate_prep_post frag_f vAccIn vFOut s'
+    compileFrag_bprod_accUpdate_prep_post frag_f vAccIn vFOut s' ∧
+    (∀ q : Fin (compileFrag_bprod frag_f).numRegs,
+      q.val ≠ 1 →
+      q.val ≠ k + 7 →
+      q.val ≠ k + 8 →
+      q.val ≠ (k + 10) + frag_f.outputReg.val →
+      s'.regs q = sPre.regs q)
 
 private theorem compileFrag_bprod_accUpdate_prep_pc_strict_bound : ...
 ```
@@ -501,11 +510,15 @@ Inputs: `transferLoop_correct` and
 `transferLoop_correct_pc_strict_bound` (`Loops.lean`),
 applied twice with distinct register pairs. Instruction
 presence at `trBase`, `trBase + 4` via a fresh
-`compileFrag_bprod_accUpdate_instr_at` segment-peeling helper
-(modelled on bsum.3.phase_i0's
+`compileFrag_bprod_accUpdate_prep_instr_at` segment-peeling
+helper (modelled on bsum.3.phase_i0's
 `compileFrag_bsum_zeroSweep_instr_at`).
 
-Outputs: prep-phase post structure and correctness lemma.
+Outputs: prep-phase post structure and correctness lemma. The
+preservation property is a separate conjunct in the
+correctness lemma's conclusion, not a field of the structure
+(the structure cannot reference the pre-state as a
+free identifier).
 
 Estimated LOC: 400-500 (including the segment-peeling helper
 for instruction presence; ~250 LOC of mechanical proof on the
@@ -515,7 +528,7 @@ composition via `URMState.runFor_add`).
 Notes: the two prep transferLoops destroy `V_acc` and
 f's output respectively. The post-state has them both at 0,
 with their values transferred to `V_acc_clone` and
-`V_factor`. The `outside_preserved` clause does *not* mention
+`V_factor`. The preservation conjunct does *not* mention
 the f-body's non-output registers, even though they remain
 preserved; that fact is delegated to bprod.3.phase_i2's
 `f_other_zero` carry-over in the outer partial invariant.
@@ -539,10 +552,6 @@ private structure compileFrag_bprod_mul_partial_invariant
   factor_eq : s.regs ⟨k + 8, by ...⟩ = vFOut - j
   mulTmp_zero : s.regs ⟨k + 9, by ...⟩ = 0
   acc_eq : s.regs ⟨1, by ...⟩ = vAccIn * j
-  outside_preserved : ∀ q : Fin _,
-    q.val ≠ 1 → q.val ≠ k + 7 → q.val ≠ k + 8 →
-    q.val ≠ k + 9 →
-    s.regs q = sPrep.regs q
 
 private theorem compileFrag_bprod_mul_partial_base
     {k : ℕ}
@@ -558,7 +567,13 @@ private theorem compileFrag_bprod_mul_partial_base
 The invariant carries 7 clauses. At `j = 0`: `V_factor = B`
 (the unmodified copy), `V_acc = A * 0 = 0` (still 0 after
 the prep transferLoop destroyed it). At `j = B`: `V_factor =
-0`, `V_acc = A * B`.
+0`, `V_acc = A * B`. Preservation of the four mul-scratch
+registers' surroundings is *not* a clause of the structure;
+the inner-mul block touches only those four registers, so the
+caller-side preservation property is established by
+bprod.1.c.4 (accUpdate assembly) as a conjunct of the
+producing lemma's conclusion, mirroring the prep lemma's
+shape (sub-task 1.c.0).
 
 Inputs: the post-state from bprod.1.c.0 directly.
 
@@ -571,8 +586,7 @@ prep).
 
 Notes: use field-projection over destructure (Pattern 10).
 `acc_eq` at the base reduces to `0 = vAccIn * 0`, immediate
-from `Nat.mul_zero`. The `outside_preserved` clause is the
-identity carry-over from the prep post-state.
+from `Nat.mul_zero`.
 
 ### Sub-task 11e.6.a.iii-bprod.1.c.2 — inner mul step (j to j + 1)
 
@@ -683,7 +697,12 @@ Estimated LOC: 350-450.
 Notes: induction on `j : ℕ` with `∀ j ≤ vFOut` strengthening.
 Base case is `compileFrag_bprod_mul_partial_base` at `j = 0`
 (takes 0 URM steps); step case is
-`compileFrag_bprod_mul_partial_step` for `j.val + 1`.
+`compileFrag_bprod_mul_partial_step` for `j.val + 1`. The
+strict PC bound `< bprod_mul_resetPC frag_f` is the tight
+bound for the inner-mul loop in isolation; the consumer
+(bprod.1.c.4) strengthens it to `< bprod_incIPC frag_f` by
+composing the exit `jumpZR` and the reset `assignR` steps,
+both of which sit at PCs `< bprod_incIPC`.
 
 ### Sub-task 11e.6.a.iii-bprod.1.c.4 — accUpdate assembly
 
@@ -806,6 +825,7 @@ Signatures:
 private structure compileFrag_bprod_partial_invariant
     {k : ℕ}
     (frag_f : CompiledFragment (k + 1))
+    (f : ERMor1 (k + 1))
     (v : Fin (k + 1) → ℕ)
     (i : ℕ) (hi : i ≤ v 0)
     (s : URMState (compileFrag_bprod frag_f).toURMProgram)
@@ -832,12 +852,12 @@ private theorem compileFrag_bprod_partial_base
     (v : Fin (k + 1) → ℕ) :
     let outer := (compileFrag_bprod (compileERFrag f)).toURMProgram
     let s_init := URMState.init outer v
-    compileFrag_bprod_partial_invariant (compileERFrag f) v 0
+    compileFrag_bprod_partial_invariant (compileERFrag f) f v 0
       (Nat.zero_le _) (URMState.runFor outer s_init
-                         (6 + 9 * (v 0) + 1))
+                         (7 + 9 * (v 0)))
 ```
 
-The invariant carries 11 clauses (vs bsum's 9): three
+The invariant carries 12 clauses (vs bsum's 9): three
 additional zero-state clauses for the bprod-specific scratch
 registers `V_acc_clone`, `V_factor`, `V_mul_tmp`. The
 `fBody_zero` clause is *not* carried (per bsum's session-6
@@ -846,7 +866,7 @@ body; the next iteration's phase_i0 zero-sweep re-establishes
 the full block).
 
 The base-case run-time is the prelude's full length:
-`6 + 9 * (v 0) + 1` URM steps. This decomposes as:
+`7 + 9 * (v 0)` URM steps. This decomposes as:
 
 - 4 `assignR` steps (V_z, V_acc, V_x, V_i all to 0).
 - `preservingTransfer 4 vBoundIn vX tmp2`: takes
@@ -854,9 +874,7 @@ The base-case run-time is the prelude's full length:
   `V_x`.
 - 1 `incR vAcc` step (initialises accumulator to 1).
 
-Total: `4 + (9 * (v 0) + 2) + 1 = 7 + 9 * (v 0)`. The
-sub-division states it as `6 + 9 * (v 0) + 1` for clarity of
-the per-block decomposition.
+Total: `4 + (9 * (v 0) + 2) + 1 = 7 + 9 * (v 0)`.
 
 Inputs: `URMState.init_regs_zero_outside_inputs`
 (`Atoms.lean`), `URMState.runFor_zero` /
@@ -905,7 +923,7 @@ private theorem compileFrag_bprod_partial_phase_i0
     (sPre : URMState
       (compileFrag_bprod (compileERFrag f)).toURMProgram)
     (h_inv : compileFrag_bprod_partial_invariant
-              (compileERFrag f) v i.val i.isLt.le sPre) :
+              (compileERFrag f) f v i.val i.isLt.le sPre) :
     let T0 : ℕ := 2 + (compileERFrag f).numRegs
     compileFrag_bprod_phase_i0_post (compileERFrag f) f v i
       (URMState.runFor _ sPre T0) ∧
@@ -1086,11 +1104,12 @@ private theorem compileFrag_bprod_partial_phase_i3
     let T0 : ℕ :=
       ((4 * A_i + 1) + (4 * B_i + 1)
         + B_i * (9 * A_i + 5) + 1 + 1) + 2
-    compileFrag_bprod_partial_invariant (compileERFrag f) v
+    compileFrag_bprod_partial_invariant (compileERFrag f) f v
         (i.val + 1) (Nat.succ_le_of_lt i.isLt)
       (URMState.runFor _ sPre T0) ∧
     (∀ k' < T0,
-      (URMState.runFor _ sPre k').pc < bprod_topPC)
+      (URMState.runFor _ sPre k').pc
+        < (compileFrag_bprod (compileERFrag f)).instrs.size - 1)
 ```
 
 The `+ 2` accounts for `incR vI` and `goto topPC`. The
@@ -1107,15 +1126,26 @@ Outputs: phase-i.3 preservation lemma. No intermediate post
 structure (the conclusion is directly `partial_invariant @
 (i.val + 1)`).
 
+Note on the strict PC bound's upper limit: the accUpdate
+block executes at PCs in `[trBase, gotoTopPC]`, all of which
+are `> bprod_topPC = 14`. The final `goto topPC` step returns
+PC to `topPC`. The strict-PC-bound conclusion therefore
+cannot use `bprod_topPC` (intermediate PCs exceed it); it
+must use `(compileFrag_bprod (compileERFrag f)).instrs.size - 1`,
+the exit PC, which is the maximal in-program PC.
+
 Estimated LOC: 700-850. This is the largest single phase
 lemma in the bprod chain because the accumulator update
-re-establishes ALL the eleven invariant clauses at
-`i.val + 1`:
+re-establishes the twelve invariant clauses at `i.val + 1`,
+of which six re-establish via the accUpdate's output state,
+two via the epilogue's two instructions, and four carry over
+from phase_i2 unchanged:
 
-- `pc_eq`: returns to `bprod_topPC` via the goto.
+- `pc_eq`: returns to `bprod_topPC` via the `goto`.
 - `vX_eq`: unchanged from phase_i2 (= `v 0 - i.val - 1`,
-  already decremented in phase_i0).
-- `vI_eq`: incremented from `i.val` to `i.val + 1`.
+  already decremented in phase_i0); carry-over.
+- `vI_eq`: incremented from `i.val` to `i.val + 1` by the
+  `incR vI` epilogue step.
 - `acc_eq`: the multiplicative recurrence
   `natBProd (i.val + 1) g = natBProd i.val g * g i.val`.
   The new accumulator value is `A_i * B_i = natBProd i.val *
@@ -1124,9 +1154,10 @@ re-establishes ALL the eleven invariant clauses at
   unfolding `natBProd (i + 1) g = natBProd i g * g i`.
 - `accClone_zero`, `factor_zero`, `mulTmp_zero`: all
   re-established by the accUpdate's post-state.
-- Other clauses: carry-over from phase_i2's
-  `outside_preserved` for all registers untouched by the
-  accUpdate.
+- `zReg_zero`, `outer_inputs`, `tmp1_zero`, `tmp2_zero`,
+  `hi_le`: carry-over from phase_i2 (the accUpdate touches
+  none of these registers; the preservation conjunct from
+  bprod.1.c.4 covers them).
 
 A fresh segment-peeling helper
 `compileFrag_bprod_accUpdateBlock_instr_at` is needed (third
@@ -1150,7 +1181,7 @@ private theorem compileFrag_bprod_partial_step
     (sPre : URMState
       (compileFrag_bprod (compileERFrag f)).toURMProgram)
     (h_inv : compileFrag_bprod_partial_invariant
-              (compileERFrag f) v i.val i.isLt.le sPre) :
+              (compileERFrag f) f v i.val i.isLt.le sPre) :
     let A_i := natBProd i.val
       (fun j => f.interp (Fin.cons j.val (Fin.tail v)))
     let B_i := f.interp (Fin.cons i.val (Fin.tail v))
@@ -1198,10 +1229,21 @@ private theorem compileFrag_bprod_partial_aux
     (ih_f : ...)
     (v : Fin (k + 1) → ℕ)
     (i : ℕ) (hi : i ≤ v 0) :
+    let perIter : ℕ → ℕ := fun j =>
+      let A_j : ℕ :=
+        natBProd j
+          (fun i' => f.interp (Fin.cons i' (Fin.tail v)))
+      let B_j : ℕ := f.interp (Fin.cons j (Fin.tail v))
+      (2 + (compileERFrag f).numRegs)
+        + (9 * vPrefixSum (Fin.cons j (Fin.tail v)) (k + 1)
+            + 2 * (k + 1))
+        + compileER_runtime f (Fin.cons j (Fin.tail v))
+        + ((4 * A_j + 1) + (4 * B_j + 1)
+            + B_j * (9 * A_j + 5) + 1 + 1 + 2)
     ∃ T0 : ℕ,
-      T0 ≤ (6 + 9 * (v 0) + 1)
+      T0 ≤ (7 + 9 * (v 0))
             + ((List.range i).map perIter).foldl (· + ·) 0 ∧
-      compileFrag_bprod_partial_invariant (compileERFrag f) v
+      compileFrag_bprod_partial_invariant (compileERFrag f) f v
           i hi (URMState.runFor _ s_init T0) ∧
       (∀ k' < T0,
         (URMState.runFor _ s_init k').pc
@@ -1213,16 +1255,17 @@ private theorem compileFrag_bprod_partial
     (ih_f : ...)
     (v : Fin (k + 1) → ℕ) :
     ∃ T0 : ℕ,
-      T0 ≤ (6 + 9 * (v 0) + 1)
+      T0 ≤ (7 + 9 * (v 0))
             + ((List.range (v 0)).map perIter).foldl (· + ·) 0 ∧
-      compileFrag_bprod_partial_invariant (compileERFrag f) v
+      compileFrag_bprod_partial_invariant (compileERFrag f) f v
           (v 0) (Nat.le_refl _) (URMState.runFor _ s_init T0) ∧
       (∀ k' < T0, ...)
 ```
 
-where `perIter` matches the per-iter step-count bound
-established in bprod.4 (with all `A_i`, `B_i`, prologue-sum,
-etc. inlined for the specific `i`).
+`perIter` is the `let`-bound function shown in the
+`_aux` signature; its body is the per-iter step-count bound
+established in bprod.4, with `A_j = natBProd j (...)` and
+`B_j = f.interp (Fin.cons j (Fin.tail v))` inlined.
 
 Inputs: `compileFrag_bprod_partial_base` (bprod.2),
 `compileFrag_bprod_partial_step` (bprod.4). Mirrors
@@ -1237,10 +1280,25 @@ Outputs: outer-iteration outer loop. Final state is
 Estimated LOC: 450-550.
 
 Notes: induction on `i ≤ v 0`. Use `Nat.lt_or_ge` + `rcases`
-(Pattern 2). Also lands `compileFrag_bprod_prelude_pc_strict_bound`,
-a thin helper for the prelude's `7 + 9 * (v 0)` step-ladder
-strict PC bound (third copy of the prelude step ladder in the
-bprod chain, after partial_base; followup item to extract).
+(Pattern 2). Also lands
+`compileFrag_bprod_prelude_pc_strict_bound`, a thin helper for
+the prelude's `7 + 9 * (v 0)` step-ladder strict PC bound
+(second copy of the prelude step ladder in the bprod chain,
+after `compileFrag_bprod_partial_base`; followup item to
+extract). Its signature:
+
+```lean
+private theorem compileFrag_bprod_prelude_pc_strict_bound
+    {k : ℕ}
+    (f : ERMor1 (k + 1))
+    (v : Fin (k + 1) → ℕ)
+    (k' : ℕ) (hk' : k' < 7 + 9 * (v 0)) :
+    let outer :=
+      (compileFrag_bprod (compileERFrag f)).toURMProgram
+    let s_init := URMState.init outer v
+    (URMState.runFor outer s_init k').pc
+      < (compileFrag_bprod (compileERFrag f)).instrs.size - 1
+```
 
 ### Sub-task 11e.6.a.iii-bprod.6 — final assembly
 
@@ -1286,19 +1344,26 @@ because `A_i` grows multiplicatively across iterations.
 This is a latent specification defect inherited from Task 10's
 runtime design (which mirrored bsum's additive structure
 without accounting for multiplication's accumulating cost).
-The bprod implementer's first action in bprod.6 is to
-*propose a runtime correction*. Two candidate corrections,
-listed in order of minimality:
+
+**The runtime correction is a prerequisite to bprod.6 and
+should land as a separate commit before bprod.6 begins**
+(analogous to the bsum.6 session-6 commit `f8e7a28a` that
+patched the bsum/bprod per-iter `+ 2 * (k + 1)`). Two
+candidate corrections, listed in order of minimality:
 
 1. **Recursive multiplicative term**: change `5 * f.interp
-   ctx_f` to `9 * f.interp ctx_f * (natBProd i (...)) + 4 *
-   (natBProd i (...)) + 9 * f.interp ctx_f + 8`. This
-   embeds the actual cost shape directly. The cost: the
-   `compileER_runtime` formula now depends on `natBProd`,
-   creating a circular-looking dependency between the
-   runtime and the semantics; mitigate by inlining the
-   `natBProd` recursion's `i`-th value as
-   `bprod_acc_at_iter i v`.
+   ctx_f` to a sum that captures the actual cost shape. The
+   reviewer-recommended specific form is to rewrite the bprod
+   branch of `compileER_runtime` as a `List.range bound`-fold
+   whose per-iter cost references the running accumulator at
+   `i` directly, mirroring `natBProd`'s `Nat.rec` shape so the
+   slack arithmetic in bprod.5's induction step decomposes
+   cleanly. Letting `A_i := natBProd i (...)` and
+   `B := f.interp ctx_f`, the algebraic content of the
+   per-iter expression is
+   `9 * B * A_i + 4 * A_i + 9 * B + 8`; embedding it in a
+   fold-shape rather than an indexed `+` avoids the
+   `Nat.rec`-vs-`List.range`-fold mismatch.
 2. **Polynomial outer bound**: replace the per-iter expression
    entirely with a polynomial in `bound` and a global maximum
    of f's output. The cost: the bound becomes much looser
@@ -1307,14 +1372,21 @@ listed in order of minimality:
    induction step.
 
 Candidate 1 is the minimal correction and the recommended
-approach. After landing the runtime correction:
+approach. The implementer's checklist:
 
-1. Re-run `lake build` of `Compiler.lean` to ensure the
-   change compiles.
-2. Re-verify the `compileER_numRegs_eq_compileERFrag_numRegs`
-   theorem still type-checks (it does not depend on the
-   runtime, only on `numRegs`).
-3. Proceed with bprod.6's slack arithmetic using the corrected
+1. Author the runtime correction in `Compiler.lean`. Keep it
+   compatible with bprod.5's `_aux` `perIter` shape (the fold
+   structure must match).
+2. Run `lake build` and verify the change compiles cleanly
+   with no axiom regressions
+   (`mcp__lean-lsp__lean_verify compileER_runtime`).
+3. Re-verify `compileER_numRegs_eq_compileERFrag_numRegs`
+   still type-checks (it does not depend on the runtime,
+   only on `numRegs`).
+4. Commit the runtime correction as a `fix(ertok):` commit
+   on its own, separately from bprod.6's `feat(ertok):`
+   landing.
+5. Proceed with bprod.6's slack arithmetic using the corrected
    runtime; the structural-numRegs identity
    `compileER_numRegs_eq_compileERFrag_numRegs` closes the
    final piece exactly as it did for bsum.6.
@@ -1369,20 +1441,27 @@ post-T2 followup branch (task #654):
 1. Extract a shared `compileFrag_bprod_rawList_scaffold`
    helper (or `compileFrag_bprod_segment_at` parameterised by
    segment offset and extractor) to deduplicate ~70% overlap
-   across `compileFrag_bprod_zeroSweep_instr_at` (phase_i0),
-   `compileFrag_bprod_prologueBlock_instr_at` (phase_i1),
-   `compileFrag_bprod_accUpdateBlock_instr_at` (phase_i3),
-   and `compileFrag_bprod_accUpdate_innerBody_instr_at`
-   (bprod.1.c.2). Bsum's followup item 15 records the
-   analogous bsum scaffold; consider extracting both into a
-   shared `LawvereERKSim/SegmentPeeling.lean` (or extending
+   across the five segment-peeling helpers in the bprod
+   chain: `compileFrag_bprod_accUpdate_prep_instr_at`
+   (bprod.1.c.0), `compileFrag_bprod_accUpdate_innerBody_instr_at`
+   (bprod.1.c.2), `compileFrag_bprod_zeroSweep_instr_at`
+   (phase_i0), `compileFrag_bprod_prologueBlock_instr_at`
+   (phase_i1), and `compileFrag_bprod_accUpdateBlock_instr_at`
+   (phase_i3). Bsum's followup item 15 records the analogous
+   bsum scaffold; consider extracting both into a shared
+   `LawvereERKSim/SegmentPeeling.lean` (or extending
    `Loops.lean`) under constructor-agnostic names.
-2. Extract a shared `bprod_zeroSweep` (or rename
-   `bsum_zeroSweep` to a neutral name) once both bsum and
-   bprod consume it (bsum followup item 4). The current
-   choice — bprod's compiler imports `bsum_zeroSweep` from
-   `Compiler.lean` — is the minimal short-term solution but
-   leaves the misleading `bsum_` prefix on a shared helper.
+2. Phase the bsum-shared zero-sweep helper extraction in two
+   steps: first extract a constructor-agnostic alias in
+   `Loops.lean` (or a new shared submodule); next, leave
+   `bsum_zeroSweep` in `Compiler.lean` as a re-export so
+   existing bsum consumers keep building; finally, migrate
+   consumers to the new name incrementally. The current
+   short-term choice — bprod's compiler imports
+   `bsum_zeroSweep` from `Compiler.lean` directly — leaves
+   the misleading `bsum_` prefix on a helper that both
+   constructors consume; the phased migration corrects this
+   without breaking the bsum chain.
 3. Extract a shared `bprod_mul_partial` family or a
    `multiplicative_loop_correct` template that captures the
    inner-mul loop's bsum-shaped structure abstractly, with
@@ -1392,11 +1471,14 @@ post-T2 followup branch (task #654):
    and clarify the multiplicative-as-iterated-additive
    recurrence.
 4. Reconcile bprod's `incR vAcc` at PC 13 with the
-   `compileER_runtime` constant `40 + 10 * bound` (vs bsum's
-   `30 + 10 * bound`). The `+10` slack covers the additional
-   `incR vAcc` step (1 step) plus the per-iter epilogue
-   step-count difference. Document the constant choice in
-   the `compileER_runtime` docstring after bprod.6 lands.
+   `compileER_runtime` outer constant `40 + 10 * bound` (vs
+   bsum's `30 + 10 * bound`). The actual prelude delta over
+   bsum is 1 step (`incR vAcc`); the chosen `+ 10` is
+   loose-by-design (covering 1 prelude step plus 9 slots of
+   per-bound headroom that may or may not be needed). Verify
+   after bprod.6 whether the headroom is necessary or can be
+   trimmed; document the final choice in the
+   `compileER_runtime` docstring.
 5. Audit the `## Main definitions` / `## Main statements`
    sections of the new `BProd.lean` docstring against the
    actually-public surface (bsum followup item 12 records
@@ -1425,6 +1507,14 @@ post-T2 followup branch (task #654):
    bsum chain's `+ 50` → `+ 50 + 2 * (k + 1)` fix may have
    masked a similar latent issue; a holistic review during
    Task 12's axiom audit is recommended.
+10. Audit bprod's `fBody_zero` placement after both bprod
+    and the prior bsum chains have landed (paralleling the
+    bsum followup item 3). The current design drops
+    `fBody_zero` from the top-of-loop invariant per Pattern
+    18 (the next iteration's phase_i0 re-establishes it);
+    confirm this asymmetry against bsum's final landed
+    pattern and decide whether a normalised placement is
+    worth a refactor.
 
 ## References
 
@@ -1441,7 +1531,8 @@ post-T2 followup branch (task #654):
   (`compileFrag_bprod` lines 1190-1440;
   `bsum_prologueSrc` line 817; `bsum_prologueBlock` line 832;
   `bsum_zeroSweep` line 867;
-  `compileER_runtime` lines 1625-1639;
+  `compileER_runtime` lines 1594-1639 (full definition;
+  bprod branch at lines 1625-1639);
   `compileER_numRegs_eq_compileERFrag_numRegs` line 1542).
 - BSum model: `GebLean/LawvereERKSim/BSum.lean`
   (full bsum pre-stop chain landed in sessions 5-6, 5036
