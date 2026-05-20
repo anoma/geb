@@ -1230,7 +1230,6 @@ private theorem compileFrag_bprod_accUpdate_prep_pc_strict_bound
         zFin h_disj1_sd h_disj1_zs h_disj1_zd H1 sPre h_pc_P h_sPre_z
         vAccIn h_sPre_acc
     set sMid : URMState P := URMState.runFor P sPre (4 * vAccIn + 1)
-      with hsMid_def
     have hsMid_pc : sMid.pc = bprod_trBase frag_f + 4 := hA_pc
     have hsMid_z : sMid.regs zFin = 0 := hA_z
     have h_ne_fOut_accClone : fOutFin ≠ accCloneFin := by
