@@ -44,6 +44,14 @@ PCs of the inner-mul loop's boundaries within the accUpdate block.
   in. The per-iteration zero-sweep of f's reindexed register block is
   structurally identical between `compileFrag_bsum` and
   `compileFrag_bprod`.
+- `compileFrag_bprod_prologue_correct`,
+  `compileFrag_bprod_prologue_pc_strict_bound`: bprod-flavoured
+  aliases of `compileFrag_bsum_prologue_correct` and
+  `compileFrag_bsum_prologue_pc_strict_bound`, with the bprod-specific
+  PC base `bprod_prologueBase` plugged in. The per-iteration prologue
+  (`k + 1` `preservingTransfer` blocks copying outer sources into f's
+  input slots) is structurally identical between `compileFrag_bsum`
+  and `compileFrag_bprod`.
 
 ## References
 
@@ -202,6 +210,76 @@ private theorem compileFrag_bprod_zeroSweep_pc_strict_bound
       < bprod_zeroSweepBase + frag_f.numRegs :=
   compileFrag_bsum_zeroSweep_pc_strict_bound _ bprod_zeroSweepBase
     (k + 10) frag_f.numRegs hSweep s h_pc k' h_k'
+
+/-- Per-iteration prologue correctness for `compileFrag_bprod`:
+running the URM through `k + 1` consecutive `preservingTransfer`
+blocks starting at `bprod_prologueBase frag_f` copies the outer
+source registers `srcs` into the destination registers `dsts`,
+advances the PC to `bprod_prologueBase frag_f + 9 * (k + 1)`, and
+preserves `tmp`, `zReg`, the source registers, and all other
+registers outside the destination block. Bprod-flavoured alias of
+`compileFrag_bsum_prologue_correct`. -/
+private theorem compileFrag_bprod_prologue_correct
+    {k : ℕ}
+    (frag_f : CompiledFragment (k + 1))
+    (zReg tmp : Fin (compileFrag_bprod frag_f).toURMProgram.numRegs)
+    (srcs dsts : Fin (k + 1) →
+      Fin (compileFrag_bprod frag_f).toURMProgram.numRegs)
+    (h_disj : inputCopies_disj
+      (compileFrag_bprod frag_f).toURMProgram zReg tmp srcs dsts)
+    (H : ∀ j : Fin (k + 1),
+      preservingTransferInstrs
+        (compileFrag_bprod frag_f).toURMProgram
+        (bprod_prologueBase frag_f + 9 * j.val)
+        (srcs j) (dsts j) tmp zReg)
+    (v : Fin (k + 1) → ℕ)
+    (s : URMState (compileFrag_bprod frag_f).toURMProgram)
+    (h_pc : s.pc = bprod_prologueBase frag_f)
+    (h_z : s.regs zReg = 0) (h_tmp0 : s.regs tmp = 0)
+    (h_srcs : ∀ j : Fin (k + 1), s.regs (srcs j) = v j)
+    (h_dsts0 : ∀ j : Fin (k + 1), s.regs (dsts j) = 0) :
+    let totalSteps : ℕ := 9 * vPrefixSum v (k + 1) + 2 * (k + 1)
+    let s' := URMState.runFor _ s totalSteps
+    s'.pc = bprod_prologueBase frag_f + 9 * (k + 1) ∧
+    s'.regs zReg = 0 ∧
+    s'.regs tmp = 0 ∧
+    (∀ j : Fin (k + 1), s'.regs (dsts j) = v j) ∧
+    (∀ j : Fin (k + 1), s'.regs (srcs j) = v j) ∧
+    (∀ r : Fin _,
+        (∀ j : Fin (k + 1), r ≠ dsts j) → r ≠ tmp →
+        s'.regs r = s.regs r) :=
+  compileFrag_bsum_prologue_correct _ (bprod_prologueBase frag_f)
+    zReg tmp srcs dsts h_disj H v s h_pc h_z h_tmp0 h_srcs h_dsts0
+
+/-- Per-step strict PC bound for `compileFrag_bprod_prologue_correct`:
+during the `9 * vPrefixSum v (k + 1) + 2 * (k + 1)` prologue steps,
+the intermediate PC stays strictly less than
+`bprod_prologueBase frag_f + 9 * (k + 1)`. Bprod-flavoured alias of
+`compileFrag_bsum_prologue_pc_strict_bound`. -/
+private theorem compileFrag_bprod_prologue_pc_strict_bound
+    {k : ℕ}
+    (frag_f : CompiledFragment (k + 1))
+    (zReg tmp : Fin (compileFrag_bprod frag_f).toURMProgram.numRegs)
+    (srcs dsts : Fin (k + 1) →
+      Fin (compileFrag_bprod frag_f).toURMProgram.numRegs)
+    (h_disj : inputCopies_disj
+      (compileFrag_bprod frag_f).toURMProgram zReg tmp srcs dsts)
+    (H : ∀ j : Fin (k + 1),
+      preservingTransferInstrs
+        (compileFrag_bprod frag_f).toURMProgram
+        (bprod_prologueBase frag_f + 9 * j.val)
+        (srcs j) (dsts j) tmp zReg)
+    (v : Fin (k + 1) → ℕ)
+    (s : URMState (compileFrag_bprod frag_f).toURMProgram)
+    (h_pc : s.pc = bprod_prologueBase frag_f)
+    (h_z : s.regs zReg = 0) (h_tmp0 : s.regs tmp = 0)
+    (h_srcs : ∀ j : Fin (k + 1), s.regs (srcs j) = v j)
+    (h_dsts0 : ∀ j : Fin (k + 1), s.regs (dsts j) = 0)
+    (k' : ℕ) (h_k' : k' < 9 * vPrefixSum v (k + 1) + 2 * (k + 1)) :
+    (URMState.runFor _ s k').pc
+      < bprod_prologueBase frag_f + 9 * (k + 1) :=
+  compileFrag_bsum_prologue_pc_strict_bound _ (bprod_prologueBase frag_f)
+    zReg tmp srcs dsts h_disj H v s h_pc h_z h_tmp0 h_srcs h_dsts0 k' h_k'
 
 end LawvereERKSim
 end GebLean

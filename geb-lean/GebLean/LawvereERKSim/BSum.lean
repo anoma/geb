@@ -311,7 +311,7 @@ registers `dsts`, advances the PC to `pcBase + 9 * a`, and preserves
 `tmp`, `zReg`, the source registers, and all other registers outside
 the destination block. Bsum-flavoured alias of
 `compileFrag_comp_subBlock_inputCopies_correct`. -/
-private theorem compileFrag_bsum_prologue_correct
+theorem compileFrag_bsum_prologue_correct
     {a : ℕ}
     (P : URMProgram a) (pcBase : ℕ)
     (zReg tmp : Fin P.numRegs)
@@ -344,7 +344,7 @@ during the `9 * vPrefixSum v a + 2 * a` prologue steps, the
 intermediate PC stays strictly less than `pcBase + 9 * a`.
 Bsum-flavoured alias of
 `compileFrag_comp_subBlock_inputCopies_pc_strict_bound`. -/
-private theorem compileFrag_bsum_prologue_pc_strict_bound
+theorem compileFrag_bsum_prologue_pc_strict_bound
     {a : ℕ}
     (P : URMProgram a) (pcBase : ℕ)
     (zReg tmp : Fin P.numRegs)
