@@ -3709,7 +3709,6 @@ private theorem compileFrag_bsum_partial_phase_i3
       (URMState.runFor P sPre k').pc
         < (compileFrag_bsum frag_f).instrs.size - 1)
   have h_numRegs_eq : P.numRegs = (k + 7) + frag_f.numRegs := rfl
-  have h_numRegs_pos : 0 < P.numRegs := outerFrag.numRegs_pos
   -- Instruction-presence bundle.
   obtain ⟨h_src_lt, h_dst_lt, h_z_lt, h_vI_lt, H_acc, h_inc_at, h_goto_at⟩ :=
     compileFrag_bsum_accUpdateBlock_instr_at frag_f
