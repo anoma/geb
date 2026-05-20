@@ -96,6 +96,8 @@ private theorem compileFrag_comp_subBlocks_length {k a : ℕ}
   rw [List.map_congr_left (fun i _ => h_each i)]
   rw [foldr_acc_add_eq_sum_map (List.finRange k) blockLen]
 
+/-! ### Body program embeddings for `compileFrag_comp` -/
+
 /-- For `compileFrag_comp`'s f-body embedding: at PCs
 `fPcBase..fPcBase + frag_f.instrs.size`, the outer
 program's instructions are the `reindexShift`-mapped
@@ -725,6 +727,8 @@ private theorem programEmbedsFragment_compileFrag_comp_gsBody
   apply congrArg some
   exact URMInstrRaw.toBounded_congr nR h_raw_eq _ _
 
+/-! ### Outer correctness — `k = 0` case -/
+
 /-- k=0 special case of `compileER_runFor_comp`: when
 `.comp f gs` has no sub-fragments (`gs = Fin.elim0`),
 the outer program reduces to a leading `assignR 0 0`
@@ -990,6 +994,9 @@ private theorem compileER_runFor_comp_k_zero {a : ℕ}
     funext i; exact i.elim0
   rw [h_interp_eq]
   exact h_ih
+
+/-! ### Sub-block correctness lemmas (`vPrefixSum`, `inputCopies`,
+`gsBody`, `outputTransfer`) -/
 
 /-- Sum of `v` over a prefix `Fin m` of `Fin a` (`m ≤ a`).
 Used to express the partial step count after processing
@@ -4597,6 +4604,8 @@ private theorem compileFrag_comp_finRange_filter_lt_succ
         rw [h_map_filter]; rfl
       exact h_goal
 
+/-! ### Outer iteration over `k` sub-blocks -/
+
 /-- Strengthened outer iteration: for every `m ≤ k`, there exists a
 combined step count `T_m` after which `compileFrag_comp_partial_invariant`
 holds at `m` and the PC is strictly below `compileFrag_comp_pcOf … m`
@@ -4878,6 +4887,8 @@ theorem vPrefixSum_eq_foldl_finRange {a : ℕ}
     rw [h_fin]
   rw [h_map] at h
   exact h.symm
+
+/-! ### Final assembly: `compileER_pre_stop_correct_comp` -/
 
 /-- Comp case of the pre-stop correctness theorem.
 
@@ -5393,6 +5404,8 @@ theorem compileER_pre_stop_correct_comp
         rw [h_compEq, h_initEq] at this
         exact this
       omega
+
+/-! ### `runFor` wrapper: `compileER_runFor_comp` -/
 
 /-- Output-only `≤ t'` form: for any `t' ≥
 `compileER_runtime (.comp f gs) v`, the compiled URM's output
