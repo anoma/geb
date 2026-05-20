@@ -4763,7 +4763,7 @@ theorem compileER_pre_stop_correct_bsum
   -- Step 1: invoke bsum.5 to obtain the partial-invariant witness at i = v 0.
   obtain ⟨T_partial, hT_partial_bound, h_inv, h_strict_partial⟩ :=
     compileFrag_bsum_partial f ih_f v
-  set sPost : URMState outer := URMState.runFor outer s_init T_partial
+  let sPost : URMState outer := URMState.runFor outer s_init T_partial
   -- Step 2: execute the final `jumpZR vX exitPC bodyStartPC` at PC 13.
   -- At i = v 0, the partial invariant gives s.regs vX = v 0 - v 0 = 0, so
   -- the jumpZ takes the zero branch to `exitPC`.
@@ -4791,7 +4791,7 @@ theorem compileER_pre_stop_correct_bsum
       exitPC_lit 14 h_sPost_pc h_at_13
     rw [h, if_pos h_sPost_vX_zero]
   -- The final state after T_partial + 1 steps.
-  set sFinal : URMState outer :=
+  let sFinal : URMState outer :=
     URMState.runFor outer s_init (T_partial + 1)
   have h_runFor_step :
       URMState.runFor outer sPost 1 = URMState.step outer sPost := rfl
