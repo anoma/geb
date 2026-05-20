@@ -31,9 +31,6 @@ the output register. This file re-exports the seven submodules under
 - `BProd`: bprod PC-layout infrastructure for `compileFrag_bprod`, and
   the size-relation lemma `bprod_exitPC_eq_size_pred`.
 
-The future submodule `Top` (for the top-level structural induction
-`compileER_runFor`) follows once Task 11h lands.
-
 ## References
 
 - Tourlakis 2018 `PR-complexity-topics.pdf` §0.1.0.37 (URM kernel,
