@@ -13,10 +13,8 @@ Also includes two `compileFrag_comp`-specific instruction-presence dischargers
 `TransferLoopInstrs_compileFrag_comp_outputTransfer`) that exhibit
 `compileFrag_comp_subBlock`'s layout as instances of the loop patterns. The
 `preservingTransferInstrs`, `transferLoopInstrs`, and `subInnerLoopInstrs`
-structures are exposed beyond file scope because the still-monolithic
-atom-correctness and comp pre-stop theorems consume them as hypothesis-bundle
-types. Future tasks that complete the Atoms and Comp submodule extractions can
-restore `private` where no inter-file consumer remains.
+structures are file-public because they appear in the signatures of downstream
+theorems in `Atoms.lean` and `Comp.lean`.
 
 ## Main definitions
 

@@ -877,7 +877,7 @@ private theorem compileER_runFor_comp_k_zero {a : ℕ}
     exact h
   -- StateEmbedsFrag s1 (init frag_f) fBase 1.
   set f_init : URMState frag_f.toURMProgram :=
-    URMState.init frag_f.toURMProgram Fin.elim0 with hf_init_def
+    URMState.init frag_f.toURMProgram Fin.elim0
   -- f_init's regs are all 0 (no inputs).
   have hf_init_regs_zero : ∀ (j : ℕ) (hj : j < frag_f.numRegs),
       f_init.regs ⟨j, hj⟩ = 0 := by
@@ -1455,7 +1455,7 @@ private theorem compileFrag_comp_subBlock_gsBody_correct
     exact ih_gs_i v'
   -- The init state of `(frag_gs i).toURMProgram` at input `v`.
   set f_init : URMState (frag_gs i).toURMProgram :=
-    URMState.init (frag_gs i).toURMProgram v with hf_init_def
+    URMState.init (frag_gs i).toURMProgram v
   -- State-embedding at s_pre.
   have h_state_emb :
       StateEmbedsFrag s_pre f_init gsBase_i gsPcBase_i
