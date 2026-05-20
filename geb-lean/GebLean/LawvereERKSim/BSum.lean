@@ -177,7 +177,7 @@ PC to `pcBase + numRegs_f`, writes `0` to every register
 `⟨fBase + r, _⟩` in the swept range, and leaves all other registers
 unchanged. The instruction-presence hypothesis `hSweep` packages the
 in-range witness alongside the `getElem?` equation. -/
-private theorem compileFrag_bsum_zeroSweep_correct
+theorem compileFrag_bsum_zeroSweep_correct
     {a : ℕ}
     (P : URMProgram a) (pcBase fBase : ℕ)
     (numRegs_f : ℕ)
@@ -279,7 +279,7 @@ private theorem compileFrag_bsum_zeroSweep_correct
 /-- Per-step strict PC bound for `compileFrag_bsum_zeroSweep_correct`:
 during the `numRegs_f` zero-sweep steps, the intermediate PC stays
 strictly less than `pcBase + numRegs_f`. -/
-private theorem compileFrag_bsum_zeroSweep_pc_strict_bound
+theorem compileFrag_bsum_zeroSweep_pc_strict_bound
     {a : ℕ} (P : URMProgram a) (pcBase fBase : ℕ)
     (numRegs_f : ℕ)
     (hSweep : ∀ r : Fin numRegs_f,
