@@ -4,6 +4,7 @@ import GebLean.LawvereERKSim.Loops
 import GebLean.LawvereERKSim.Atoms
 import GebLean.LawvereERKSim.Comp
 import GebLean.LawvereERKSim.BSum
+import GebLean.LawvereERKSim.BProd
 
 /-!
 # erToK: ER → K^sim_2 via zero-test URM simulation
@@ -24,9 +25,18 @@ the output register. This file re-exports the five submodules under
   (both `_runFor_*` and `_pre_stop_correct_atom_*` forms).
 - `Comp`: comp m-step machinery, outer iteration, final pre-stop assembly,
   and the comp `_runFor` wrapper.
+- `BSum`: bsum PC-layout infrastructure, per-iteration phase preservation,
+  the outer iteration `i = 0 .. v 0` induction, and the bsum pre-stop
+  correctness theorem `compileER_pre_stop_correct_bsum`.
+- `BProd`: bprod PC-layout infrastructure for `compileFrag_bprod`,
+  analogous to `BSum`'s constants but adjusted for the 21-instruction
+  multiplicative accumulator update (Tourlakis 2018 R^XY_Z template)
+  and the additional `incR vAcc` prelude step. The forthcoming
+  per-iteration phase lemmas and pre-stop correctness theorem
+  `compileER_pre_stop_correct_bprod` will live here.
 
-Future submodules `BSum`, `BProd`, and `Top` (for the top-level structural
-induction `compileER_runFor`) follow once Tasks 11f, 11g, 11h land.
+The future submodule `Top` (for the top-level structural induction
+`compileER_runFor`) follows once Task 11h lands.
 
 ## References
 

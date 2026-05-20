@@ -1,0 +1,153 @@
+import GebLean.LawvereERKSim.BSum
+
+/-!
+# LawvereERKSim — bprod PC-layout infrastructure
+
+Named PC-layout constants for `compileFrag_bprod` and the size-reduction
+lemma the later bprod pre-stop sub-tasks consume. Mirrors `BSum.lean`'s
+PC-layout infrastructure block for `compileFrag_bsum`; differences come
+from the multiplicative accumulator update (Tourlakis 2018 p. 19's
+R^XY_Z template, 21 instructions vs bsum's 4) and the additional
+`incR vAcc` prelude step that initialises the multiplicative
+accumulator to 1.
+
+The raw instruction list of `compileFrag_bprod` is:
+
+```
+prelude ++ loopTop ++ zeroSweep ++ prologue ++ fBody
+  ++ accUpdate ++ epilogue
+```
+
+with lengths `14 + 2 + frag_f.numRegs + 9 * (k + 1)
++ (frag_f.instrs.size - 1) + 21 + 3`. The constants here name the
+absolute PCs at which each segment begins and ends, and the constants
+within the accUpdate block at the inner mul loop's boundaries.
+
+## Main definitions
+
+- `bprod_topPC`, `bprod_bodyStartPC`, `bprod_zeroSweepBase`,
+  `bprod_prologueBase`, `bprod_bodyPCBase`, `bprod_trBase`,
+  `bprod_mul_innerTopPC`, `bprod_mul_innerBodyStartPC`,
+  `bprod_mul_resetPC`, `bprod_incIPC`, `bprod_gotoTopPC`,
+  `bprod_exitPC`: absolute PCs of the segment boundaries of
+  `compileFrag_bprod`.
+
+## Main statements
+
+- `bprod_exitPC_eq_size_pred`: the exit PC is one less than the size
+  of the emitted instruction array.
+
+## References
+
+- Tourlakis 2018 `PR-complexity-topics.pdf` §0.1.0.37 (URM kernel);
+  pp. 19-21 R^XY_Z multiplication template.
+- Spec: `docs/superpowers/specs/2026-05-16-er-to-k-via-cslib-urm-design.md`
+  §5.1.1.
+- Sub-division plan:
+  `docs/superpowers/plans/2026-05-20-step-t2-t11-bprod-prestop-subdivision.md`,
+  sub-task 11e.6.a.iii-bprod.0.
+
+## Tags
+
+bprod, URM, PC layout, compiler
+-/
+
+namespace GebLean
+namespace LawvereERKSim
+
+open GebLean.ZeroTestURM
+
+/-- Absolute PC of `compileFrag_bprod`'s loop-top instruction
+(`.jumpZR vX exitPC bodyStartPC`). Constant across `k` and `frag_f`. -/
+private def bprod_topPC : ℕ := 14
+
+/-- Absolute PC of `compileFrag_bprod`'s body-start instruction
+(`.decR vX`). Constant across `k` and `frag_f`. -/
+private def bprod_bodyStartPC : ℕ := 15
+
+/-- Absolute PC of the first instruction of the per-iteration
+zero-sweep over f's reindexed register block in
+`compileFrag_bprod`. Constant across `k` and `frag_f`. -/
+private def bprod_zeroSweepBase : ℕ := 16
+
+/-- Absolute PC of the first instruction of the per-iteration
+prologue (`k + 1` `preservingTransfer` blocks copying outer sources
+into f's input slots) in `compileFrag_bprod`. -/
+private def bprod_prologueBase {k : ℕ}
+    (frag_f : CompiledFragment (k + 1)) : ℕ :=
+  16 + frag_f.numRegs
+
+/-- Absolute PC of the first instruction of f's reindexed body in
+`compileFrag_bprod`. -/
+private def bprod_bodyPCBase {k : ℕ}
+    (frag_f : CompiledFragment (k + 1)) : ℕ :=
+  16 + frag_f.numRegs + 9 * (k + 1)
+
+/-- Absolute PC of the first instruction of the accumulator-update
+block (21-instruction R^XY_Z multiplication template) in
+`compileFrag_bprod`. -/
+private def bprod_trBase {k : ℕ}
+    (frag_f : CompiledFragment (k + 1)) : ℕ :=
+  bprod_bodyPCBase frag_f + (frag_f.instrs.size - 1)
+
+/-- Absolute PC of the inner-mul loop's top instruction
+(`.jumpZR vFactor (trBase + 20) (trBase + 9)`) inside the
+accumulator-update block of `compileFrag_bprod`. -/
+private def bprod_mul_innerTopPC {k : ℕ}
+    (frag_f : CompiledFragment (k + 1)) : ℕ :=
+  bprod_trBase frag_f + 8
+
+/-- Absolute PC of the inner-mul loop's body-start instruction
+(`.decR vFactor`) inside the accumulator-update block of
+`compileFrag_bprod`. -/
+private def bprod_mul_innerBodyStartPC {k : ℕ}
+    (frag_f : CompiledFragment (k + 1)) : ℕ :=
+  bprod_trBase frag_f + 9
+
+/-- Absolute PC of the accumulator-update block's
+`.assignR vAccClone 0` reset instruction in `compileFrag_bprod`. -/
+private def bprod_mul_resetPC {k : ℕ}
+    (frag_f : CompiledFragment (k + 1)) : ℕ :=
+  bprod_trBase frag_f + 20
+
+/-- Absolute PC of `compileFrag_bprod`'s `.incR vI` instruction at the
+end of one iteration's body. -/
+private def bprod_incIPC {k : ℕ}
+    (frag_f : CompiledFragment (k + 1)) : ℕ :=
+  bprod_trBase frag_f + 21
+
+/-- Absolute PC of `compileFrag_bprod`'s `goto topPC` instruction at
+the end of one iteration's body. -/
+private def bprod_gotoTopPC {k : ℕ}
+    (frag_f : CompiledFragment (k + 1)) : ℕ :=
+  bprod_trBase frag_f + 22
+
+/-- Absolute PC of `compileFrag_bprod`'s terminating `.stopR`
+instruction; equal to one less than the size of the emitted
+instruction array. -/
+private def bprod_exitPC {k : ℕ}
+    (frag_f : CompiledFragment (k + 1)) : ℕ :=
+  bprod_trBase frag_f + 23
+
+/-- `bprod_exitPC frag_f` is one less than the size of the instruction
+array of `compileFrag_bprod frag_f`. Follows from
+`compileFrag_bprod_size` by arithmetic. -/
+private theorem bprod_exitPC_eq_size_pred {k : ℕ}
+    (frag_f : CompiledFragment (k + 1)) :
+    bprod_exitPC frag_f
+      = (compileFrag_bprod frag_f).instrs.size - 1 := by
+  have h_size_pos : 1 ≤ frag_f.instrs.size := by
+    have hb := frag_f.lastInstr_isStop
+    rcases Nat.eq_zero_or_pos frag_f.instrs.size with h | h
+    · exfalso
+      have hempty : frag_f.instrs = #[] := Array.size_eq_zero_iff.mp h
+      rw [hempty] at hb
+      cases hb
+    · exact h
+  rw [compileFrag_bprod_size]
+  change bprod_trBase frag_f + 23 = _
+  rw [bprod_trBase, bprod_bodyPCBase]
+  omega
+
+end LawvereERKSim
+end GebLean

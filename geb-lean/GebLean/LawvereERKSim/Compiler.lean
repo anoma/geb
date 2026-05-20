@@ -1439,6 +1439,127 @@ def compileFrag_bprod {k : ℕ}
       URMInstrRaw.toBoundedArray_back?_of_last_stopR hBound
         hLastStopR }
 
+/-- Total size of `compileFrag_bprod`'s emitted instruction
+array, expressed as the sum of segment lengths
+`prelude (14) + loopTop (2) + zeroSweep (frag_f.numRegs)
++ prologue (9 * (k + 1)) + fBody (frag_f.instrs.size - 1)
++ accUpdate (21) + epilogue (3)`. The PC-layout constants
+`bprod_trBase`, `bprod_mul_innerTopPC`,
+`bprod_mul_innerBodyStartPC`, `bprod_mul_resetPC`,
+`bprod_incIPC`, `bprod_gotoTopPC`, and `bprod_exitPC`
+(in `BProd.lean`) are derived from this identity. -/
+theorem compileFrag_bprod_size {k : ℕ}
+    (frag_f : CompiledFragment (k + 1)) :
+    (compileFrag_bprod frag_f).instrs.size
+      = 39 + frag_f.numRegs + 9 * (k + 1)
+        + frag_f.instrs.size := by
+  rw [show (compileFrag_bprod frag_f).instrs
+      = URMInstrRaw.toBoundedArray _ _ _ from rfl,
+    URMInstrRaw.toBoundedArray_size]
+  -- The `let`-bindings inside `compileFrag_bprod` are reducible;
+  -- expand `rawList` into the explicit append form.
+  change (([URMInstrRaw.assignR 0 0, URMInstrRaw.assignR 1 0,
+      URMInstrRaw.assignR (k + 3) 0, URMInstrRaw.assignR (k + 4) 0]
+        ++ URMRaw.preservingTransfer 4 2 (k + 3) (k + 6)
+        ++ [URMInstrRaw.incR 1])
+      ++ [URMInstrRaw.jumpZR (k + 3)
+            (16 + frag_f.numRegs + 9 * (k + 1)
+              + (frag_f.instrs.size - 1) + 23) 15,
+          URMInstrRaw.decR (k + 3)]
+      ++ bsum_zeroSweep frag_f (k + 10)
+      ++ ((List.finRange (k + 1)).flatMap fun s =>
+            URMRaw.preservingTransfer
+              (16 + frag_f.numRegs + 9 * s.val)
+              (if s.val = 0 then k + 4 else s.val + 2)
+              (k + 10 + (frag_f.inputRegs s).val) (k + 5))
+      ++ (frag_f.instrs.pop.toList.map fun ins =>
+            URMInstrRaw.reindexShift (k + 10)
+              (16 + frag_f.numRegs + 9 * (k + 1))
+              (toRawOfBounded ins))
+      ++ (URMRaw.transferLoop
+            (16 + frag_f.numRegs + 9 * (k + 1)
+              + (frag_f.instrs.size - 1)) 1 (k + 7)
+          ++ URMRaw.transferLoop
+              (16 + frag_f.numRegs + 9 * (k + 1)
+                + (frag_f.instrs.size - 1) + 4)
+              (k + 10 + (frag_f.outputReg).val) (k + 8)
+          ++ [URMInstrRaw.jumpZR (k + 8)
+                (16 + frag_f.numRegs + 9 * (k + 1)
+                  + (frag_f.instrs.size - 1) + 20)
+                (16 + frag_f.numRegs + 9 * (k + 1)
+                  + (frag_f.instrs.size - 1) + 9),
+              URMInstrRaw.decR (k + 8)]
+          ++ URMRaw.preservingTransfer
+              (16 + frag_f.numRegs + 9 * (k + 1)
+                + (frag_f.instrs.size - 1) + 10) (k + 7) 1 (k + 9)
+          ++ [URMRaw.goto
+                (16 + frag_f.numRegs + 9 * (k + 1)
+                  + (frag_f.instrs.size - 1) + 8),
+              URMInstrRaw.assignR (k + 7) 0])
+      ++ [URMInstrRaw.incR (k + 4),
+          URMRaw.goto 14, URMInstrRaw.stopR]).length = _
+  -- Sum up segment lengths.
+  have h_prologue_block_len : ∀ s : Fin (k + 1),
+      (URMRaw.preservingTransfer
+          (16 + frag_f.numRegs + 9 * (s.val : ℕ))
+          (if (s.val : ℕ) = 0 then k + 4 else (s.val : ℕ) + 2)
+          (k + 10 + ((frag_f.inputRegs s).val : ℕ)) (k + 5)).length
+        = 9 := by
+    intro _
+    simp only [URMRaw.preservingTransfer, URMRaw.goto,
+      List.length_cons, List.length_nil]
+  have h_prologue_len :
+      ((List.finRange (k + 1)).flatMap fun s =>
+          URMRaw.preservingTransfer
+            (16 + frag_f.numRegs + 9 * (s.val : ℕ))
+            (if (s.val : ℕ) = 0 then k + 4 else (s.val : ℕ) + 2)
+            (k + 10 + ((frag_f.inputRegs s).val : ℕ))
+            (k + 5)).length
+        = 9 * (k + 1) := by
+    rw [List.length_flatMap, List.map_congr_left
+      (fun s _ => h_prologue_block_len s)]
+    rw [List.map_const', List.length_finRange,
+      List.sum_replicate_nat, Nat.mul_comm]
+  have h_prelude_pT_len : (URMRaw.preservingTransfer 4 2 (k + 3)
+      (k + 6)).length = 9 := by
+    simp only [URMRaw.preservingTransfer, URMRaw.goto,
+      List.length_cons, List.length_nil]
+  have h_tr1_len :
+      (URMRaw.transferLoop
+          (16 + frag_f.numRegs + 9 * (k + 1)
+            + (frag_f.instrs.size - 1)) 1 (k + 7)).length = 4 := by
+    simp only [URMRaw.transferLoop, URMRaw.goto,
+      List.length_cons, List.length_nil]
+  have h_tr2_len :
+      (URMRaw.transferLoop
+          (16 + frag_f.numRegs + 9 * (k + 1)
+            + (frag_f.instrs.size - 1) + 4)
+          (k + 10 + (frag_f.outputReg).val) (k + 8)).length = 4 := by
+    simp only [URMRaw.transferLoop, URMRaw.goto,
+      List.length_cons, List.length_nil]
+  have h_innerPT_len :
+      (URMRaw.preservingTransfer
+          (16 + frag_f.numRegs + 9 * (k + 1)
+            + (frag_f.instrs.size - 1) + 10)
+          (k + 7) 1 (k + 9)).length = 9 := by
+    simp only [URMRaw.preservingTransfer, URMRaw.goto,
+      List.length_cons, List.length_nil]
+  have h_size_pos : 1 ≤ frag_f.instrs.size := by
+    have hb := frag_f.lastInstr_isStop
+    rcases Nat.eq_zero_or_pos frag_f.instrs.size with h | h
+    · exfalso
+      have hempty : frag_f.instrs = #[] := Array.size_eq_zero_iff.mp h
+      rw [hempty] at hb
+      cases hb
+    · exact h
+  simp only [bsum_zeroSweep,
+    List.length_append, List.length_cons, List.length_nil,
+    List.length_map, List.length_finRange,
+    Array.length_toList, Array.size_pop,
+    h_prologue_len, h_prelude_pT_len,
+    h_tr1_len, h_tr2_len, h_innerPT_len]
+  omega
+
 /-- Recursive driver: emit a `CompiledFragment a` for
 each `ERMor1 a` constructor by dispatching to the
 per-constructor combinators. -/
