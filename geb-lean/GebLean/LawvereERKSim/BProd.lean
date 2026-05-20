@@ -98,6 +98,17 @@ PCs of the inner-mul loop's boundaries within the accUpdate block.
   (register `k + 9`) retains its pre-state value. Threaded into
   the bprod.1.c.4 accumulator-update assembly as the
   inner-multiply postcondition.
+- `compileFrag_bprod_accUpdate_reset_instr_at`: instruction-presence
+  discharger producing the `URMInstr.assign ⟨k + 7, _⟩ 0` witness at
+  PC `bprod_mul_resetPC frag_f` (= `bprod_trBase frag_f + 20`).
+- `compileFrag_bprod_accUpdate_correct`,
+  `compileFrag_bprod_accUpdate_pc_strict_bound`: full multiplicative
+  `R^XY_Z` correctness and per-step strict PC bound for the
+  accumulator-update block of `compileFrag_bprod`. Compose the prep
+  segment, the inner-multiply loop, the exit `jumpZR` (taken to
+  `bprod_mul_resetPC`), and the reset `assignR` (advancing the PC to
+  `bprod_incIPC`); land the live accumulator at `vAccIn * vFOut` and
+  reset every scratch register touched by the block to `0`.
 
 ## References
 
@@ -2607,6 +2618,813 @@ private theorem compileFrag_bprod_mul_partial
           rw [h_runFor_split]
           exact h_strict_step k'' hk''_lt
   exact h_aux vFOut (Nat.le_refl _)
+
+set_option maxHeartbeats 800000 in
+-- Segment-decomposition discharger (boundedness reconstruction plus
+-- per-position lookup of `accUpdate ++ epilogue` at offset 20)
+-- exceeds the default `whnf` heartbeat budget.
+/-- Instruction-presence discharger for the inner-multiply reset
+instruction of `compileFrag_bprod`'s accumulator-update block: at PC
+`bprod_mul_resetPC frag_f` (= `bprod_trBase frag_f + 20`), the outer
+program holds the `URMInstr.assign ⟨k + 7, _⟩ 0` instruction that
+zeroes the accumulator clone after the inner-multiply loop exits.
+Mirrors the segment-decomposition pattern of
+`compileFrag_bprod_accUpdate_innerBody_instr_at`, specialised to a
+single instruction at offset `20` within `accUpdate ++ epilogue`. -/
+private theorem compileFrag_bprod_accUpdate_reset_instr_at
+    {k : ℕ}
+    (frag_f : CompiledFragment (k + 1)) :
+    let outer := (compileFrag_bprod frag_f).toURMProgram
+    ∃ h : k + 7 < outer.numRegs,
+      outer.instrs[bprod_mul_resetPC frag_f]?
+        = some (URMInstr.assign ⟨k + 7, h⟩ 0) := by
+  intro outer
+  let vAcc : ℕ := 1
+  let vBoundIn : ℕ := 2
+  let vX : ℕ := k + 3
+  let vI : ℕ := k + 4
+  let tmp1 : ℕ := k + 5
+  let tmp2 : ℕ := k + 6
+  let vAccClone : ℕ := k + 7
+  let vFactor : ℕ := k + 8
+  let vMulTmp : ℕ := k + 9
+  let fBase : ℕ := k + 10
+  let nR : ℕ := fBase + frag_f.numRegs
+  let topPC : ℕ := 14
+  let bodyStartPC : ℕ := 15
+  let prologueBase : ℕ := 16 + frag_f.numRegs
+  let bodyPCBase : ℕ := 16 + frag_f.numRegs + 9 * (k + 1)
+  let fBodyLen : ℕ := frag_f.instrs.size - 1
+  let trBase : ℕ := bodyPCBase + fBodyLen
+  let exitPC : ℕ := trBase + 23
+  let prelude : List URMInstrRaw :=
+    [ .assignR 0 0,
+      .assignR vAcc 0,
+      .assignR vX 0,
+      .assignR vI 0 ]
+        ++ URMRaw.preservingTransfer 4 vBoundIn vX tmp2
+        ++ [ .incR vAcc ]
+  let loopTop : List URMInstrRaw :=
+    [ .jumpZR vX exitPC bodyStartPC,
+      .decR vX ]
+  let zeroSweep : List URMInstrRaw :=
+    bsum_zeroSweep frag_f fBase
+  let prologue : List URMInstrRaw :=
+    (List.finRange (k + 1)).flatMap fun s =>
+      bsum_prologueBlock frag_f fBase tmp1 prologueBase s
+  let fBody : List URMInstrRaw :=
+    frag_f.instrs.pop.toList.map fun ins =>
+      URMInstrRaw.reindexShift fBase bodyPCBase (toRawOfBounded ins)
+  let accUpdate : List URMInstrRaw :=
+    URMRaw.transferLoop trBase vAcc vAccClone
+      ++ URMRaw.transferLoop (trBase + 4)
+          (fBase + frag_f.outputReg.val) vFactor
+      ++ [ .jumpZR vFactor (trBase + 20) (trBase + 9),
+           .decR vFactor ]
+      ++ URMRaw.preservingTransfer (trBase + 10)
+          vAccClone vAcc vMulTmp
+      ++ [ URMRaw.goto (trBase + 8),
+           .assignR vAccClone 0 ]
+  let epilogue : List URMInstrRaw :=
+    [ .incR vI, URMRaw.goto topPC, .stopR ]
+  let rawList : List URMInstrRaw :=
+    prelude ++ loopTop ++ zeroSweep ++ prologue ++ fBody
+      ++ accUpdate ++ epilogue
+  have h_prelude_len : prelude.length = 14 := by
+    change ([URMInstrRaw.assignR 0 0, URMInstrRaw.assignR vAcc 0,
+        URMInstrRaw.assignR vX 0, URMInstrRaw.assignR vI 0]
+        ++ URMRaw.preservingTransfer 4 vBoundIn vX tmp2
+        ++ [URMInstrRaw.incR vAcc]).length = 14
+    simp only [List.length_append, List.length_cons, List.length_nil,
+      URMRaw.preservingTransfer, URMRaw.goto]
+  have h_loopTop_len : loopTop.length = 2 := by
+    change ([URMInstrRaw.jumpZR vX exitPC bodyStartPC,
+      URMInstrRaw.decR vX] : List URMInstrRaw).length = 2
+    simp only [List.length_cons, List.length_nil]
+  have h_zeroSweep_len : zeroSweep.length = frag_f.numRegs := by
+    change ((List.finRange frag_f.numRegs).map _).length = _
+    rw [List.length_map, List.length_finRange]
+  have h_prologue_len : prologue.length = 9 * (k + 1) := by
+    change ((List.finRange (k + 1)).flatMap fun s =>
+        bsum_prologueBlock frag_f fBase tmp1 prologueBase s).length
+        = 9 * (k + 1)
+    have h_each : ∀ s : Fin (k + 1),
+        (bsum_prologueBlock frag_f fBase tmp1 prologueBase s).length = 9 :=
+      fun _ => rfl
+    have h_aux : ∀ (l : List (Fin (k + 1))),
+        (l.flatMap fun s =>
+            bsum_prologueBlock frag_f fBase tmp1 prologueBase s).length
+          = 9 * l.length := by
+      intro l
+      induction l with
+      | nil => rfl
+      | cons hd tl ih_in =>
+        rw [List.flatMap_cons, List.length_append, ih_in, h_each hd,
+          List.length_cons]
+        omega
+    rw [h_aux, List.length_finRange]
+  have h_fBody_len : fBody.length = frag_f.instrs.size - 1 := by
+    change (frag_f.instrs.pop.toList.map fun ins =>
+        URMInstrRaw.reindexShift fBase bodyPCBase
+          (toRawOfBounded ins)).length = _
+    rw [List.length_map, Array.length_toList, Array.size_pop]
+  have h_accUpdate_len : accUpdate.length = 21 := by
+    change (URMRaw.transferLoop trBase vAcc vAccClone
+        ++ URMRaw.transferLoop (trBase + 4)
+            (fBase + frag_f.outputReg.val) vFactor
+        ++ [URMInstrRaw.jumpZR vFactor (trBase + 20) (trBase + 9),
+            URMInstrRaw.decR vFactor]
+        ++ URMRaw.preservingTransfer (trBase + 10)
+            vAccClone vAcc vMulTmp
+        ++ [URMRaw.goto (trBase + 8),
+            URMInstrRaw.assignR vAccClone 0]).length = 21
+    simp only [URMRaw.transferLoop, URMRaw.preservingTransfer,
+      URMRaw.goto, List.length_append, List.length_cons,
+      List.length_nil]
+  have h_epilogue_len : epilogue.length = 3 := by
+    change ([URMInstrRaw.incR vI, URMRaw.goto topPC,
+      URMInstrRaw.stopR] : List URMInstrRaw).length = 3
+    simp only [List.length_cons, List.length_nil]
+  have h_numRegs_eq : outer.numRegs = nR := rfl
+  have h_accClone_lt : k + 7 < outer.numRegs := by
+    rw [h_numRegs_eq]
+    have : 0 < frag_f.numRegs := frag_f.numRegs_pos
+    change k + 7 < fBase + frag_f.numRegs; omega
+  refine ⟨h_accClone_lt, ?_⟩
+  -- Reconstruct the boundedness witness on rawList.
+  have hAcc : vAcc + 1 ≤ nR := by
+    change 1 + 1 ≤ k + 10 + frag_f.numRegs
+    have : 0 < frag_f.numRegs := frag_f.numRegs_pos; omega
+  have hBoundIn : vBoundIn + 1 ≤ nR := by
+    change 2 + 1 ≤ k + 10 + frag_f.numRegs
+    have : 0 < frag_f.numRegs := frag_f.numRegs_pos; omega
+  have hVX : vX + 1 ≤ nR := by
+    change k + 3 + 1 ≤ k + 10 + frag_f.numRegs
+    have : 0 < frag_f.numRegs := frag_f.numRegs_pos; omega
+  have hVI : vI + 1 ≤ nR := by
+    change k + 4 + 1 ≤ k + 10 + frag_f.numRegs
+    have : 0 < frag_f.numRegs := frag_f.numRegs_pos; omega
+  have hTmp1 : tmp1 + 1 ≤ nR := by
+    change k + 5 + 1 ≤ k + 10 + frag_f.numRegs
+    have : 0 < frag_f.numRegs := frag_f.numRegs_pos; omega
+  have hTmp2 : tmp2 + 1 ≤ nR := by
+    change k + 6 + 1 ≤ k + 10 + frag_f.numRegs
+    have : 0 < frag_f.numRegs := frag_f.numRegs_pos; omega
+  have hAccClone : vAccClone + 1 ≤ nR := by
+    change k + 7 + 1 ≤ k + 10 + frag_f.numRegs
+    have : 0 < frag_f.numRegs := frag_f.numRegs_pos; omega
+  have hFactor : vFactor + 1 ≤ nR := by
+    change k + 8 + 1 ≤ k + 10 + frag_f.numRegs
+    have : 0 < frag_f.numRegs := frag_f.numRegs_pos; omega
+  have hMulTmp : vMulTmp + 1 ≤ nR := by
+    change k + 9 + 1 ≤ k + 10 + frag_f.numRegs
+    have : 0 < frag_f.numRegs := frag_f.numRegs_pos; omega
+  have hFOut : fBase + frag_f.outputReg.val + 1 ≤ nR := by
+    have : frag_f.outputReg.val < frag_f.numRegs :=
+      frag_f.outputReg.isLt
+    change fBase + frag_f.outputReg.val + 1 ≤ fBase + frag_f.numRegs
+    omega
+  have hPrologueSrc : ∀ s : Fin (k + 1),
+      bsum_prologueSrc k s + 1 ≤ nR := by
+    intro s
+    have hs : s.val < k + 1 := s.isLt
+    simp only [bsum_prologueSrc, nR, fBase]
+    split <;> omega
+  have hFIn : ∀ s : Fin (k + 1),
+      fBase + (frag_f.inputRegs s).val + 1 ≤ nR := by
+    intro s
+    have : (frag_f.inputRegs s).val < frag_f.numRegs :=
+      (frag_f.inputRegs s).isLt
+    change fBase + (frag_f.inputRegs s).val + 1
+        ≤ fBase + frag_f.numRegs
+    omega
+  have hPreludeBound : URMInstrRaw.boundedBy nR prelude := by
+    intro ins hmem
+    simp only [prelude, List.mem_append, List.mem_cons,
+      List.not_mem_nil, or_false] at hmem
+    rcases hmem with ((h | h | h | h) | hpT) | h
+    · rw [h]; simp only [URMInstrRaw.regBound]; omega
+    · rw [h]; simp only [URMInstrRaw.regBound]; exact hAcc
+    · rw [h]; simp only [URMInstrRaw.regBound]; exact hVX
+    · rw [h]; simp only [URMInstrRaw.regBound]; exact hVI
+    · exact boundedBy_preservingTransfer nR _ _ _ _
+        hBoundIn hVX hTmp2 ins hpT
+    · rw [h]; simp only [URMInstrRaw.regBound]; exact hAcc
+  have hLoopTopBound : URMInstrRaw.boundedBy nR loopTop := by
+    intro ins hmem
+    simp only [loopTop, List.mem_cons, List.not_mem_nil,
+      or_false] at hmem
+    rcases hmem with h | h <;>
+      (rw [h]; simp only [URMInstrRaw.regBound]; exact hVX)
+  have hZeroSweepBound : URMInstrRaw.boundedBy nR zeroSweep := by
+    have hBlock : fBase + frag_f.numRegs ≤ nR := Nat.le_refl _
+    exact boundedBy_bsum_zeroSweep frag_f fBase nR hBlock
+  have hPrologueBound : URMInstrRaw.boundedBy nR prologue := by
+    intro ins hmem
+    simp only [prologue, List.mem_flatMap] at hmem
+    rcases hmem with ⟨s, _, hs⟩
+    exact boundedBy_bsum_prologueBlock frag_f fBase tmp1
+      prologueBase nR s (hPrologueSrc s) (hFIn s) hTmp1 ins hs
+  have hFBodyBound : URMInstrRaw.boundedBy nR fBody := by
+    intro ins hmem
+    simp only [fBody, List.mem_map] at hmem
+    rcases hmem with ⟨ins', _, heq⟩
+    rw [← heq]
+    have hb : (toRawOfBounded ins').regBound ≤ frag_f.numRegs :=
+      regBound_toRawOfBounded_le ins'
+    have hr := regBound_reindexShift_le_offset_add fBase
+      bodyPCBase frag_f.numRegs (toRawOfBounded ins') hb
+    change _ ≤ fBase + frag_f.numRegs
+    omega
+  have hAccUpdateBound : URMInstrRaw.boundedBy nR accUpdate := by
+    intro ins hmem
+    simp only [accUpdate, List.mem_append, List.mem_cons,
+      List.not_mem_nil, or_false] at hmem
+    rcases hmem with
+      ((((hTr1 | hTr2) | hOuter) | hInner) | hTail)
+    · exact boundedBy_transferLoop nR _ _ _
+        hAcc hAccClone ins hTr1
+    · exact boundedBy_transferLoop nR _ _ _
+        hFOut hFactor ins hTr2
+    · rcases hOuter with h | h
+      · rw [h]; simp only [URMInstrRaw.regBound]; exact hFactor
+      · rw [h]; simp only [URMInstrRaw.regBound]; exact hFactor
+    · exact boundedBy_preservingTransfer nR _ _ _ _
+        hAccClone hAcc hMulTmp ins hInner
+    · rcases hTail with h | h
+      · rw [h]; simp only [URMRaw.goto, URMInstrRaw.regBound]
+        omega
+      · rw [h]; simp only [URMInstrRaw.regBound]; exact hAccClone
+  have hEpilogueBound : URMInstrRaw.boundedBy nR epilogue := by
+    intro ins hmem
+    simp only [epilogue, URMRaw.goto, List.mem_cons,
+      List.not_mem_nil, or_false] at hmem
+    rcases hmem with h | h | h
+    · rw [h]; simp only [URMInstrRaw.regBound]; exact hVI
+    · rw [h]; simp only [URMInstrRaw.regBound]; omega
+    · rw [h]; simp only [URMInstrRaw.regBound]; omega
+  have hBoundOuter : URMInstrRaw.boundedBy nR rawList := by
+    intro ins hmem
+    simp only [rawList, List.mem_append] at hmem
+    rcases hmem with
+      (((((hP | hL') | hZ) | hPr) | hF) | hA) | hE
+    · exact hPreludeBound ins hP
+    · exact hLoopTopBound ins hL'
+    · exact hZeroSweepBound ins hZ
+    · exact hPrologueBound ins hPr
+    · exact hFBodyBound ins hF
+    · exact hAccUpdateBound ins hA
+    · exact hEpilogueBound ins hE
+  set preAc : List URMInstrRaw :=
+    prelude ++ loopTop ++ zeroSweep ++ prologue ++ fBody
+    with h_preAc_def
+  have h_preAc_len : preAc.length = trBase := by
+    rw [h_preAc_def]
+    simp only [List.length_append]
+    rw [h_prelude_len, h_loopTop_len, h_zeroSweep_len, h_prologue_len,
+      h_fBody_len]
+  -- The reset instruction is at offset 20 in accUpdate ++ epilogue.
+  have h_lookup_raw : ∀ (h_idx_lt : trBase + 20 < rawList.length),
+      rawList[trBase + 20]'h_idx_lt
+        = (accUpdate ++ epilogue)[(20 : ℕ)]'(by
+            rw [List.length_append, h_accUpdate_len, h_epilogue_len]
+            decide) := by
+    intro h_idx_lt
+    have h_rawList_split :
+        rawList = preAc ++ (accUpdate ++ epilogue) := by
+      change prelude ++ loopTop ++ zeroSweep ++ prologue ++ fBody
+        ++ accUpdate ++ epilogue = _
+      rw [h_preAc_def]
+      simp only [List.append_assoc]
+    have h_pref_le : preAc.length ≤ trBase + 20 := by
+      rw [h_preAc_len]; omega
+    have h_idx_lt' :
+        trBase + 20 < (preAc ++ (accUpdate ++ epilogue)).length := by
+      simp only [List.length_append]
+      rw [h_preAc_len, h_accUpdate_len, h_epilogue_len]
+      omega
+    have h_step1 :
+        rawList[trBase + 20]'h_idx_lt
+          = (preAc ++ (accUpdate ++ epilogue))[trBase + 20]'h_idx_lt' := by
+      congr 1
+    rw [h_step1, List.getElem_append_right h_pref_le]
+    have h_idx_eq : trBase + 20 - preAc.length = 20 := by
+      rw [h_preAc_len]; omega
+    congr 1
+  have h_ae_20 : (accUpdate ++ epilogue)[(20 : ℕ)]'(by
+      rw [List.length_append, h_accUpdate_len, h_epilogue_len]; decide)
+      = URMInstrRaw.assignR vAccClone 0 := rfl
+  have h_ae_20_in_rawList :
+      (accUpdate ++ epilogue)[(20 : ℕ)]'(by
+        rw [List.length_append, h_accUpdate_len, h_epilogue_len]; decide)
+        ∈ rawList := by
+    have h_mem_ae :
+        (accUpdate ++ epilogue)[(20 : ℕ)]'(by
+          rw [List.length_append, h_accUpdate_len, h_epilogue_len]; decide)
+          ∈ accUpdate ++ epilogue :=
+      List.getElem_mem _
+    rcases List.mem_append.mp h_mem_ae with hA | hE
+    · apply List.mem_append.mpr; left
+      apply List.mem_append.mpr; right; exact hA
+    · apply List.mem_append.mpr; right; exact hE
+  have h_idx_lt_outer : trBase + 20 < rawList.length := by
+    have h_raw_len : rawList.length = preAc.length + 21 + 3 := by
+      change (prelude ++ loopTop ++ zeroSweep ++ prologue ++ fBody
+        ++ accUpdate ++ epilogue).length = preAc.length + 21 + 3
+      rw [h_preAc_def]
+      simp only [List.length_append]
+      rw [h_accUpdate_len, h_epilogue_len]
+    rw [h_raw_len, h_preAc_len]; omega
+  change outer.instrs[bprod_mul_resetPC frag_f]? = _
+  rw [show bprod_mul_resetPC frag_f = trBase + 20 from rfl]
+  change (URMInstrRaw.toBoundedArray nR rawList hBoundOuter)[
+      trBase + 20]? = _
+  rw [URMInstrRaw.toBoundedArray_getElem? nR rawList hBoundOuter
+      (trBase + 20) h_idx_lt_outer]
+  have h_raw_eq := h_lookup_raw h_idx_lt_outer
+  have h_combined : rawList[trBase + 20]'h_idx_lt_outer
+      = URMInstrRaw.assignR vAccClone 0 := by
+    rw [h_raw_eq]; exact h_ae_20
+  apply congrArg some
+  exact URMInstrRaw.toBounded_congr nR h_combined _ _
+
+set_option maxHeartbeats 400000 in
+-- Four-phase composition (prep + inner-mul loop + jumpZR + assignR)
+-- triggers a large number of unfolding/whnf checks on the program's
+-- segment structure, exceeding the default heartbeat budget.
+/-- Full multiplicative `R^XY_Z` accumulator-update correctness for
+`compileFrag_bprod`: starting at `bprod_trBase frag_f` with the
+pre-state register witnesses, advancing
+`(4 * vAccIn + 1) + (4 * vFOut + 1) + vFOut * (9 * vAccIn + 5) + 1 + 1`
+URM steps lands the state at PC `bprod_incIPC frag_f` with the live
+accumulator (register `1`) holding the product `vAccIn * vFOut`, the
+destructive accumulator clone (register `k + 7`), the multiplicative
+factor (register `k + 8`), the reindexed `f`-output slot (register
+`(k + 10) + frag_f.outputReg.val`), and the inner-multiply scratch
+(register `k + 9`) all reset to `0`, and every other register
+preserved at its pre-state value. The four phases composed are: the
+prep segment (two `transferLoop` blocks), the inner-multiply loop
+(`vFOut` iterations of `9 * vAccIn + 5` steps), the exit `jumpZR
+vFactor` (taken to `bprod_mul_resetPC frag_f` since `V_factor = 0`),
+and the reset `assignR V_acc_clone 0` (advancing PC to
+`bprod_incIPC frag_f`). -/
+private theorem compileFrag_bprod_accUpdate_correct
+    {k : ℕ}
+    (frag_f : CompiledFragment (k + 1))
+    (vAccIn vFOut : ℕ)
+    (sPre : URMState (compileFrag_bprod frag_f).toURMProgram)
+    (h_pc : sPre.pc = bprod_trBase frag_f)
+    (h_zReg_zero : sPre.regs ⟨0,
+        (compileFrag_bprod frag_f).numRegs_pos⟩ = 0)
+    (h_acc : sPre.regs ⟨1, by
+      have : 0 < frag_f.numRegs := frag_f.numRegs_pos
+      change 1 < k + 10 + frag_f.numRegs; omega⟩ = vAccIn)
+    (h_acc_clone_zero : sPre.regs ⟨k + 7, by
+      have : 0 < frag_f.numRegs := frag_f.numRegs_pos
+      change k + 7 < k + 10 + frag_f.numRegs; omega⟩ = 0)
+    (h_fOut : sPre.regs ⟨(k + 10) + frag_f.outputReg.val, by
+      have hO : frag_f.outputReg.val < frag_f.numRegs :=
+        frag_f.outputReg.isLt
+      change (k + 10) + frag_f.outputReg.val
+        < k + 10 + frag_f.numRegs
+      omega⟩ = vFOut)
+    (h_factor_zero : sPre.regs ⟨k + 8, by
+      have : 0 < frag_f.numRegs := frag_f.numRegs_pos
+      change k + 8 < k + 10 + frag_f.numRegs; omega⟩ = 0)
+    (h_mulTmp_zero : sPre.regs ⟨k + 9, by
+      have : 0 < frag_f.numRegs := frag_f.numRegs_pos
+      change k + 9 < k + 10 + frag_f.numRegs; omega⟩ = 0) :
+    let totalSteps : ℕ :=
+      (4 * vAccIn + 1) + (4 * vFOut + 1)
+        + vFOut * (9 * vAccIn + 5) + 1 + 1
+    let s' := URMState.runFor _ sPre totalSteps
+    s'.pc = bprod_incIPC frag_f ∧
+    s'.regs ⟨1, by
+      have : 0 < frag_f.numRegs := frag_f.numRegs_pos
+      change 1 < k + 10 + frag_f.numRegs; omega⟩ = vAccIn * vFOut ∧
+    s'.regs ⟨k + 7, by
+      have : 0 < frag_f.numRegs := frag_f.numRegs_pos
+      change k + 7 < k + 10 + frag_f.numRegs; omega⟩ = 0 ∧
+    s'.regs ⟨k + 8, by
+      have : 0 < frag_f.numRegs := frag_f.numRegs_pos
+      change k + 8 < k + 10 + frag_f.numRegs; omega⟩ = 0 ∧
+    s'.regs ⟨(k + 10) + frag_f.outputReg.val, by
+      have hO : frag_f.outputReg.val < frag_f.numRegs :=
+        frag_f.outputReg.isLt
+      change (k + 10) + frag_f.outputReg.val
+        < k + 10 + frag_f.numRegs
+      omega⟩ = 0 ∧
+    s'.regs ⟨k + 9, by
+      have : 0 < frag_f.numRegs := frag_f.numRegs_pos
+      change k + 9 < k + 10 + frag_f.numRegs; omega⟩ = 0 ∧
+    (∀ r : Fin (compileFrag_bprod frag_f).toURMProgram.numRegs,
+        r.val ≠ 1 →
+        r.val ≠ k + 7 →
+        r.val ≠ k + 8 →
+        r.val ≠ k + 9 →
+        r.val ≠ (k + 10) + frag_f.outputReg.val →
+        s'.regs r = sPre.regs r) := by
+  let P : URMProgram (k + 1) := (compileFrag_bprod frag_f).toURMProgram
+  set T_prep : ℕ := (4 * vAccIn + 1) + (4 * vFOut + 1) with h_T_prep_def
+  set T_mul : ℕ := vFOut * (9 * vAccIn + 5) with h_T_mul_def
+  -- Phase 1: prep segment.
+  obtain ⟨h_prep_post, h_prep_pres⟩ :=
+    compileFrag_bprod_accUpdate_prep_correct frag_f vAccIn vFOut sPre
+      h_pc h_zReg_zero h_acc h_acc_clone_zero h_fOut h_factor_zero
+      h_mulTmp_zero
+  set sPrep : URMState P := URMState.runFor P sPre T_prep with h_sPrep_def
+  -- Phase 2: inner-multiply loop.
+  have h_sPrep_z : sPrep.regs ⟨0,
+      (compileFrag_bprod frag_f).numRegs_pos⟩ = 0 := by
+    -- zReg is preserved by the prep segment: index 0 is not in the
+    -- prep preservation exclusion list {1, k+7, k+8, fOut}.
+    have h_ne_1 : (0 : ℕ) ≠ 1 := by decide
+    have h_ne_kp7 : (0 : ℕ) ≠ k + 7 := by omega
+    have h_ne_kp8 : (0 : ℕ) ≠ k + 8 := by omega
+    have h_ne_fOut : (0 : ℕ) ≠ (k + 10) + frag_f.outputReg.val := by omega
+    have h_eq := h_prep_pres ⟨0, (compileFrag_bprod frag_f).numRegs_pos⟩
+      h_ne_1 h_ne_kp7 h_ne_kp8 h_ne_fOut
+    rw [h_eq]; exact h_zReg_zero
+  obtain ⟨T0, hT0_eq, h_inv_final, h_pres_mul, _h_strict_mul⟩ :=
+    compileFrag_bprod_mul_partial frag_f vAccIn vFOut sPrep h_sPrep_z
+      h_prep_post
+  have h_T0_eq_T_mul : T0 = T_mul := by rw [hT0_eq]
+  set sMul : URMState P := URMState.runFor P sPrep T0 with h_sMul_def
+  -- Phase 3: exit jumpZR.
+  obtain ⟨h_accClone_lt_reset, h_reset_instr⟩ :=
+    compileFrag_bprod_accUpdate_reset_instr_at frag_f
+  obtain ⟨h_acc_lt, h_accClone_lt_ib, h_z_lt, h_factor_lt,
+      h_mulTmp_lt, h_top, _h_dec, _h_pT, _h_goto⟩ :=
+    compileFrag_bprod_accUpdate_innerBody_instr_at frag_f
+  let factorFin : Fin P.numRegs := ⟨k + 8, h_factor_lt⟩
+  have h_sMul_pc : sMul.pc = bprod_mul_innerTopPC frag_f :=
+    h_inv_final.pc_eq
+  have h_sMul_factor : sMul.regs factorFin = 0 := by
+    have h_eq : (⟨k + 8, by
+        have : 0 < frag_f.numRegs := frag_f.numRegs_pos
+        change k + 8 < k + 10 + frag_f.numRegs; omega⟩
+        : Fin P.numRegs) = factorFin := Fin.ext rfl
+    rw [← h_eq, h_inv_final.factor_eq, Nat.sub_self]
+  have h_top' : P.instrs[bprod_mul_innerTopPC frag_f]?
+      = some (URMInstr.jumpZ factorFin
+          (bprod_mul_resetPC frag_f)
+          (bprod_mul_innerBodyStartPC frag_f)) := h_top
+  set sJ : URMState P :=
+    { pc := bprod_mul_resetPC frag_f
+      regs := sMul.regs } with h_sJ_def
+  have h_stepJ : URMState.runFor P sMul 1 = sJ := by
+    change URMState.runFor P sMul (0 + 1) = sJ
+    rw [URMState.runFor_succ,
+      URMState.runFor_zero,
+      URMState.step_of_getElem?_jumpZ P sMul
+        (bprod_mul_innerTopPC frag_f) factorFin
+        (bprod_mul_resetPC frag_f)
+        (bprod_mul_innerBodyStartPC frag_f) h_sMul_pc h_top']
+    simp only [h_sMul_factor, ↓reduceIte]
+    rfl
+  -- Phase 4: reset assignR.
+  let accCloneFin : Fin P.numRegs := ⟨k + 7, h_accClone_lt_reset⟩
+  have h_sJ_pc : sJ.pc = bprod_mul_resetPC frag_f := rfl
+  have h_reset' : P.instrs[bprod_mul_resetPC frag_f]?
+      = some (URMInstr.assign accCloneFin 0) := h_reset_instr
+  set sFin : URMState P :=
+    { pc := bprod_mul_resetPC frag_f + 1
+      regs := Function.update sJ.regs accCloneFin 0 } with h_sFin_def
+  have h_stepFin : URMState.runFor P sJ 1 = sFin := by
+    change URMState.runFor P sJ (0 + 1) = sFin
+    rw [URMState.runFor_succ,
+      URMState.runFor_zero,
+      URMState.step_of_getElem?_assign P sJ
+        (bprod_mul_resetPC frag_f) accCloneFin 0 h_sJ_pc h_reset']
+  -- Compose all four phases.
+  have h_compose :
+      URMState.runFor P sPre ((4 * vAccIn + 1) + (4 * vFOut + 1)
+          + vFOut * (9 * vAccIn + 5) + 1 + 1) = sFin := by
+    have h_split :
+        ((4 * vAccIn + 1) + (4 * vFOut + 1)
+          + vFOut * (9 * vAccIn + 5) + 1 + 1 : ℕ)
+            = T_prep + (T_mul + (1 + 1)) := by omega
+    rw [h_split, URMState.runFor_add]
+    change URMState.runFor P sPrep (T_mul + (1 + 1)) = sFin
+    rw [URMState.runFor_add]
+    have h_runFor_Tmul :
+        URMState.runFor P sPrep T_mul = sMul := by
+      change URMState.runFor P sPrep T_mul
+        = URMState.runFor P sPrep T0
+      rw [h_T0_eq_T_mul]
+    rw [h_runFor_Tmul, URMState.runFor_add]
+    change URMState.runFor P (URMState.runFor P sMul 1) 1 = sFin
+    rw [h_stepJ, h_stepFin]
+  change (URMState.runFor P sPre ((4 * vAccIn + 1) + (4 * vFOut + 1)
+      + vFOut * (9 * vAccIn + 5) + 1 + 1)).pc = bprod_incIPC frag_f ∧ _
+  rw [h_compose]
+  -- Conclude the 7 conjuncts.
+  let accFin : Fin P.numRegs := ⟨1, h_acc_lt⟩
+  let fOutFin : Fin P.numRegs :=
+    ⟨(k + 10) + frag_f.outputReg.val, by
+      have hO : frag_f.outputReg.val < frag_f.numRegs :=
+        frag_f.outputReg.isLt
+      change (k + 10) + frag_f.outputReg.val < k + 10 + frag_f.numRegs
+      omega⟩
+  let mulTmpFin : Fin P.numRegs := ⟨k + 9, h_mulTmp_lt⟩
+  let zFin : Fin P.numRegs := ⟨0, h_z_lt⟩
+  -- Disjointness lemmas.
+  have h_ne_accClone_acc : accCloneFin ≠ accFin := by
+    intro hh
+    have : (k + 7 : ℕ) = 1 := congrArg Fin.val hh; omega
+  have h_ne_accClone_factor : accCloneFin ≠ factorFin := by
+    intro hh
+    have : (k + 7 : ℕ) = k + 8 := congrArg Fin.val hh; omega
+  have h_ne_accClone_fOut : accCloneFin ≠ fOutFin := by
+    intro hh
+    have : (k + 7 : ℕ) = (k + 10) + frag_f.outputReg.val :=
+      congrArg Fin.val hh
+    omega
+  have h_ne_accClone_mulTmp : accCloneFin ≠ mulTmpFin := by
+    intro hh
+    have : (k + 7 : ℕ) = k + 9 := congrArg Fin.val hh; omega
+  -- Project sMul invariant facts.
+  have h_sMul_acc : sMul.regs accFin = vAccIn * vFOut := by
+    have h_eq : (⟨1, by
+        have : 0 < frag_f.numRegs := frag_f.numRegs_pos
+        change 1 < k + 10 + frag_f.numRegs; omega⟩
+        : Fin P.numRegs) = accFin := Fin.ext rfl
+    rw [← h_eq]; exact h_inv_final.acc_eq
+  have h_sMul_mulTmp : sMul.regs mulTmpFin = 0 := by
+    have h_eq : (⟨k + 9, by
+        have : 0 < frag_f.numRegs := frag_f.numRegs_pos
+        change k + 9 < k + 10 + frag_f.numRegs; omega⟩
+        : Fin P.numRegs) = mulTmpFin := Fin.ext rfl
+    rw [← h_eq]; exact h_inv_final.mulTmp_zero
+  -- For sMul.regs fOutFin, use prep_pres + mul_pres preservation.
+  -- prep: fOut was reset to 0 by prep (prep_post.fOut_zero); mul_pres
+  -- excludes only {1, k+8, k+9}, so fOut is preserved at 0.
+  have h_ne_fOut_acc : (fOutFin : Fin P.numRegs).val ≠ 1 := by
+    change (k + 10) + frag_f.outputReg.val ≠ 1; omega
+  have h_ne_fOut_factor : (fOutFin : Fin P.numRegs).val ≠ k + 8 := by
+    change (k + 10) + frag_f.outputReg.val ≠ k + 8; omega
+  have h_ne_fOut_mulTmp : (fOutFin : Fin P.numRegs).val ≠ k + 9 := by
+    change (k + 10) + frag_f.outputReg.val ≠ k + 9; omega
+  have h_sPrep_fOut : sPrep.regs fOutFin = 0 := by
+    have h_eq : (⟨(k + 10) + frag_f.outputReg.val, by
+        have hO : frag_f.outputReg.val < frag_f.numRegs :=
+          frag_f.outputReg.isLt
+        change (k + 10) + frag_f.outputReg.val
+          < k + 10 + frag_f.numRegs
+        omega⟩ : Fin P.numRegs) = fOutFin := Fin.ext rfl
+    rw [← h_eq]; exact h_prep_post.fOut_zero
+  have h_sMul_fOut : sMul.regs fOutFin = 0 := by
+    have h_pres :=
+      h_pres_mul fOutFin h_ne_fOut_acc h_ne_fOut_factor h_ne_fOut_mulTmp
+    rw [h_pres, h_sPrep_fOut]
+  -- For sMul.regs accCloneFin, use the partial invariant.
+  have h_sMul_accClone : sMul.regs accCloneFin = vAccIn := by
+    have h_eq : (⟨k + 7, by
+        have : 0 < frag_f.numRegs := frag_f.numRegs_pos
+        change k + 7 < k + 10 + frag_f.numRegs; omega⟩
+        : Fin P.numRegs) = accCloneFin := Fin.ext rfl
+    rw [← h_eq]; exact h_inv_final.acc_clone_eq
+  refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+  · -- pc.
+    change sFin.pc = bprod_incIPC frag_f
+    change bprod_mul_resetPC frag_f + 1 = bprod_incIPC frag_f
+    rfl
+  · -- acc = vAccIn * vFOut: preserved by jumpZR (no write) and assignR
+    -- (writes only accCloneFin).
+    change sFin.regs ⟨1, _⟩ = vAccIn * vFOut
+    change Function.update sJ.regs accCloneFin 0 ⟨1, h_acc_lt⟩
+      = vAccIn * vFOut
+    have h_acc_fin_eq : (⟨1, by
+        have : 0 < frag_f.numRegs := frag_f.numRegs_pos
+        change 1 < k + 10 + frag_f.numRegs; omega⟩
+        : Fin P.numRegs) = accFin := Fin.ext rfl
+    rw [Function.update_of_ne h_ne_accClone_acc.symm]
+    change sMul.regs accFin = vAccIn * vFOut
+    exact h_sMul_acc
+  · -- accClone = 0 from the assignR write.
+    change sFin.regs ⟨k + 7, _⟩ = 0
+    change Function.update sJ.regs accCloneFin 0 ⟨k + 7, h_accClone_lt_ib⟩
+      = 0
+    have h_accClone_fin_eq : (⟨k + 7, h_accClone_lt_ib⟩ : Fin P.numRegs)
+        = accCloneFin := Fin.ext rfl
+    rw [h_accClone_fin_eq, Function.update_self]
+  · -- factor = 0 from the partial invariant (preserved by jumpZR and
+    -- assignR).
+    change sFin.regs ⟨k + 8, _⟩ = 0
+    change Function.update sJ.regs accCloneFin 0 ⟨k + 8, h_factor_lt⟩
+      = 0
+    have h_factor_fin_eq : (⟨k + 8, h_factor_lt⟩ : Fin P.numRegs)
+        = factorFin := Fin.ext rfl
+    rw [h_factor_fin_eq,
+      Function.update_of_ne h_ne_accClone_factor.symm]
+    change sMul.regs factorFin = 0
+    exact h_sMul_factor
+  · -- fOut = 0 from prep (set to 0) and mul preservation.
+    change sFin.regs ⟨(k + 10) + frag_f.outputReg.val, _⟩ = 0
+    change Function.update sJ.regs accCloneFin 0
+        ⟨(k + 10) + frag_f.outputReg.val, _⟩ = 0
+    have h_fOut_fin_eq : (⟨(k + 10) + frag_f.outputReg.val, by
+        have hO : frag_f.outputReg.val < frag_f.numRegs :=
+          frag_f.outputReg.isLt
+        change (k + 10) + frag_f.outputReg.val
+          < k + 10 + frag_f.numRegs
+        omega⟩ : Fin P.numRegs) = fOutFin := Fin.ext rfl
+    rw [h_fOut_fin_eq,
+      Function.update_of_ne h_ne_accClone_fOut.symm]
+    change sMul.regs fOutFin = 0
+    exact h_sMul_fOut
+  · -- mulTmp = 0 from the partial invariant.
+    change sFin.regs ⟨k + 9, _⟩ = 0
+    change Function.update sJ.regs accCloneFin 0
+        ⟨k + 9, h_mulTmp_lt⟩ = 0
+    have h_mulTmp_fin_eq : (⟨k + 9, h_mulTmp_lt⟩ : Fin P.numRegs)
+        = mulTmpFin := Fin.ext rfl
+    rw [h_mulTmp_fin_eq,
+      Function.update_of_ne h_ne_accClone_mulTmp.symm]
+    change sMul.regs mulTmpFin = 0
+    exact h_sMul_mulTmp
+  · -- Preservation: compose prep_pres with mul_pres, then with the
+    -- jumpZR no-write and the assignR (which writes only accCloneFin).
+    intro r h_ne_1 h_ne_kp7 h_ne_kp8 h_ne_kp9 h_ne_fOut'
+    change sFin.regs r = sPre.regs r
+    change Function.update sJ.regs accCloneFin 0 r = sPre.regs r
+    have h_r_ne_accClone : r ≠ accCloneFin := by
+      intro hh
+      apply h_ne_kp7; exact congrArg Fin.val hh
+    rw [Function.update_of_ne h_r_ne_accClone]
+    change sMul.regs r = sPre.regs r
+    -- mul_pres: r ≠ 1, k+8, k+9 ⇒ sMul.regs r = sPrep.regs r.
+    have h_r_ne_acc : r.val ≠ 1 := h_ne_1
+    have h_r_ne_factor : r.val ≠ k + 8 := h_ne_kp8
+    have h_r_ne_mulTmp : r.val ≠ k + 9 := h_ne_kp9
+    have h_pres_step :=
+      h_pres_mul r h_r_ne_acc h_r_ne_factor h_r_ne_mulTmp
+    rw [h_pres_step]
+    -- prep_pres: r ≠ 1, k+7, k+8, fOut ⇒ sPrep.regs r = sPre.regs r.
+    have h_r_ne_fOut : r.val ≠ (k + 10) + frag_f.outputReg.val :=
+      h_ne_fOut'
+    exact h_prep_pres r h_ne_1 h_ne_kp7 h_ne_kp8 h_r_ne_fOut
+
+/-- Strict per-step PC bound for `compileFrag_bprod_accUpdate_correct`:
+during the `(4 * vAccIn + 1) + (4 * vFOut + 1) + vFOut * (9 * vAccIn
++ 5) + 1 + 1` accumulator-update steps, the intermediate PC stays
+strictly less than `bprod_incIPC frag_f` (= `bprod_mul_resetPC frag_f
++ 1`). Case-split across the four phases: prep (PC `< bprod_mul_innerTopPC`
+`< bprod_incIPC`), inner-multiply loop (PC `< bprod_mul_resetPC`
+`< bprod_incIPC`), exit jumpZR (PC = `bprod_mul_innerTopPC`
+`< bprod_incIPC`), and reset assignR (PC = `bprod_mul_resetPC`
+`< bprod_incIPC`). -/
+private theorem compileFrag_bprod_accUpdate_pc_strict_bound
+    {k : ℕ}
+    (frag_f : CompiledFragment (k + 1))
+    (vAccIn vFOut : ℕ)
+    (sPre : URMState (compileFrag_bprod frag_f).toURMProgram)
+    (h_pc : sPre.pc = bprod_trBase frag_f)
+    (h_zReg_zero : sPre.regs ⟨0,
+        (compileFrag_bprod frag_f).numRegs_pos⟩ = 0)
+    (h_acc : sPre.regs ⟨1, by
+      have : 0 < frag_f.numRegs := frag_f.numRegs_pos
+      change 1 < k + 10 + frag_f.numRegs; omega⟩ = vAccIn)
+    (h_acc_clone_zero : sPre.regs ⟨k + 7, by
+      have : 0 < frag_f.numRegs := frag_f.numRegs_pos
+      change k + 7 < k + 10 + frag_f.numRegs; omega⟩ = 0)
+    (h_fOut : sPre.regs ⟨(k + 10) + frag_f.outputReg.val, by
+      have hO : frag_f.outputReg.val < frag_f.numRegs :=
+        frag_f.outputReg.isLt
+      change (k + 10) + frag_f.outputReg.val
+        < k + 10 + frag_f.numRegs
+      omega⟩ = vFOut)
+    (h_factor_zero : sPre.regs ⟨k + 8, by
+      have : 0 < frag_f.numRegs := frag_f.numRegs_pos
+      change k + 8 < k + 10 + frag_f.numRegs; omega⟩ = 0)
+    (h_mulTmp_zero : sPre.regs ⟨k + 9, by
+      have : 0 < frag_f.numRegs := frag_f.numRegs_pos
+      change k + 9 < k + 10 + frag_f.numRegs; omega⟩ = 0)
+    (k' : ℕ)
+    (h_k' : k' < (4 * vAccIn + 1) + (4 * vFOut + 1)
+      + vFOut * (9 * vAccIn + 5) + 1 + 1) :
+    (URMState.runFor _ sPre k').pc < bprod_incIPC frag_f := by
+  let P : URMProgram (k + 1) := (compileFrag_bprod frag_f).toURMProgram
+  change (URMState.runFor P sPre k').pc < bprod_incIPC frag_f
+  set T_prep : ℕ := (4 * vAccIn + 1) + (4 * vFOut + 1) with h_T_prep_def
+  set T_mul : ℕ := vFOut * (9 * vAccIn + 5) with h_T_mul_def
+  -- Boundary constants.
+  have h_top_lt_inc : bprod_mul_innerTopPC frag_f < bprod_incIPC frag_f :=
+    by change bprod_trBase frag_f + 8 < bprod_trBase frag_f + 21; omega
+  have h_reset_lt_inc : bprod_mul_resetPC frag_f < bprod_incIPC frag_f :=
+    by change bprod_trBase frag_f + 20 < bprod_trBase frag_f + 21; omega
+  -- Phase boundaries.
+  rcases Nat.lt_or_ge k' T_prep with h_phase1 | h_phase1
+  · -- Prep phase: PC < bprod_mul_innerTopPC < bprod_incIPC.
+    have h_bd := compileFrag_bprod_accUpdate_prep_pc_strict_bound
+      frag_f vAccIn vFOut sPre h_pc h_zReg_zero h_acc h_acc_clone_zero
+      h_fOut h_factor_zero k' h_phase1
+    -- h_bd : pc < bprod_mul_innerTopPC < bprod_incIPC.
+    exact Nat.lt_trans h_bd h_top_lt_inc
+  · -- Compose with prep phase: sPrep := runFor P sPre T_prep.
+    obtain ⟨h_prep_post, h_prep_pres⟩ :=
+      compileFrag_bprod_accUpdate_prep_correct frag_f vAccIn vFOut sPre
+        h_pc h_zReg_zero h_acc h_acc_clone_zero h_fOut h_factor_zero
+        h_mulTmp_zero
+    set sPrep : URMState P := URMState.runFor P sPre T_prep with h_sPrep_def
+    have h_sPrep_z : sPrep.regs ⟨0,
+        (compileFrag_bprod frag_f).numRegs_pos⟩ = 0 := by
+      have h_ne_1 : (0 : ℕ) ≠ 1 := by decide
+      have h_ne_kp7 : (0 : ℕ) ≠ k + 7 := by omega
+      have h_ne_kp8 : (0 : ℕ) ≠ k + 8 := by omega
+      have h_ne_fOut : (0 : ℕ) ≠ (k + 10) + frag_f.outputReg.val := by
+        omega
+      have h_eq := h_prep_pres ⟨0, (compileFrag_bprod frag_f).numRegs_pos⟩
+        h_ne_1 h_ne_kp7 h_ne_kp8 h_ne_fOut
+      rw [h_eq]; exact h_zReg_zero
+    obtain ⟨T0, hT0_eq, h_inv_final, h_pres_mul, h_strict_mul⟩ :=
+      compileFrag_bprod_mul_partial frag_f vAccIn vFOut sPrep h_sPrep_z
+        h_prep_post
+    have h_T0_eq_T_mul : T0 = T_mul := by rw [hT0_eq]
+    rcases Nat.lt_or_ge k' (T_prep + T_mul) with h_phase2 | h_phase2
+    · -- Inner-mul phase.
+      let d : ℕ := k' - T_prep
+      have h_d_lt : d < T_mul := by change k' - T_prep < T_mul; omega
+      have h_split : k' = T_prep + d := by
+        change k' = T_prep + (k' - T_prep); omega
+      have h_runFor_split :
+          URMState.runFor P sPre k'
+            = URMState.runFor P sPrep d := by
+        rw [h_split, URMState.runFor_add]
+      rw [h_runFor_split]
+      have h_d_lt_T0 : d < T0 := by rw [h_T0_eq_T_mul]; exact h_d_lt
+      have h_bd := h_strict_mul d h_d_lt_T0
+      change (URMState.runFor P sPrep d).pc < bprod_incIPC frag_f
+      -- h_bd : pc < bprod_mul_resetPC < bprod_incIPC.
+      exact Nat.lt_trans h_bd h_reset_lt_inc
+    · -- Compose with inner-mul phase: sMul := runFor P sPrep T_mul.
+      set sMul : URMState P := URMState.runFor P sPrep T_mul with h_sMul_def
+      have h_runFor_sMul :
+          URMState.runFor P sPre (T_prep + T_mul) = sMul := by
+        rw [URMState.runFor_add]
+      have h_sMul_pc : sMul.pc = bprod_mul_innerTopPC frag_f := by
+        change (URMState.runFor P sPrep T_mul).pc
+          = bprod_mul_innerTopPC frag_f
+        have h_eq : URMState.runFor P sPrep T_mul
+            = URMState.runFor P sPrep T0 := by rw [h_T0_eq_T_mul]
+        rw [h_eq]; exact h_inv_final.pc_eq
+      have h_sMul_factor : sMul.regs ⟨k + 8, by
+          have : 0 < frag_f.numRegs := frag_f.numRegs_pos
+          change k + 8 < k + 10 + frag_f.numRegs; omega⟩ = 0 := by
+        have h_eq : URMState.runFor P sPrep T_mul
+            = URMState.runFor P sPrep T0 := by rw [h_T0_eq_T_mul]
+        change (URMState.runFor P sPrep T_mul).regs _ = 0
+        rw [h_eq]
+        have := h_inv_final.factor_eq
+        rw [this, Nat.sub_self]
+      rcases Nat.lt_or_ge k' (T_prep + T_mul + 1) with h_phase3 | h_phase3
+      · -- Exit jumpZR phase: k' = T_prep + T_mul (one step).
+        have h_k'_eq : k' = T_prep + T_mul := by omega
+        rw [h_k'_eq, h_runFor_sMul]
+        rw [h_sMul_pc]
+        exact h_top_lt_inc
+      · -- Reset assignR phase: k' = T_prep + T_mul + 1.
+        have h_k'_eq : k' = T_prep + T_mul + 1 := by omega
+        rw [h_k'_eq]
+        -- runFor P sPre (T_prep + T_mul + 1)
+        --   = step P (runFor P sPre (T_prep + T_mul))
+        --   = step P sMul.
+        -- We need to compute sJ.pc = bprod_mul_resetPC.
+        have h_split2 : T_prep + T_mul + 1 = (T_prep + T_mul) + 1 := by
+          omega
+        rw [h_split2, URMState.runFor_add, h_runFor_sMul]
+        -- Now: runFor P sMul 1
+        obtain ⟨h_acc_lt, _h_accClone_lt_ib, _h_z_lt, h_factor_lt,
+            _h_mulTmp_lt, h_top, _h_dec, _h_pT, _h_goto⟩ :=
+          compileFrag_bprod_accUpdate_innerBody_instr_at frag_f
+        let factorFin : Fin P.numRegs := ⟨k + 8, h_factor_lt⟩
+        have h_top' : P.instrs[bprod_mul_innerTopPC frag_f]?
+            = some (URMInstr.jumpZ factorFin
+                (bprod_mul_resetPC frag_f)
+                (bprod_mul_innerBodyStartPC frag_f)) := h_top
+        have h_sMul_factorFin : sMul.regs factorFin = 0 := by
+          have h_eq : (⟨k + 8, by
+              have : 0 < frag_f.numRegs := frag_f.numRegs_pos
+              change k + 8 < k + 10 + frag_f.numRegs; omega⟩
+              : Fin P.numRegs) = factorFin := Fin.ext rfl
+          rw [← h_eq]; exact h_sMul_factor
+        -- runFor P sMul 1 = { pc := bprod_mul_resetPC, regs := sMul.regs }.
+        have h_step1 :
+            URMState.runFor P sMul 1
+              = { pc := bprod_mul_resetPC frag_f
+                  regs := sMul.regs } := by
+          change URMState.runFor P sMul (0 + 1)
+            = { pc := bprod_mul_resetPC frag_f
+                regs := sMul.regs }
+          rw [URMState.runFor_succ, URMState.runFor_zero,
+            URMState.step_of_getElem?_jumpZ P sMul
+              (bprod_mul_innerTopPC frag_f) factorFin
+              (bprod_mul_resetPC frag_f)
+              (bprod_mul_innerBodyStartPC frag_f) h_sMul_pc h_top']
+          simp only [h_sMul_factorFin, ↓reduceIte]
+        change (URMState.runFor P sMul 1).pc < bprod_incIPC frag_f
+        rw [h_step1]
+        exact h_reset_lt_inc
 
 end LawvereERKSim
 end GebLean
