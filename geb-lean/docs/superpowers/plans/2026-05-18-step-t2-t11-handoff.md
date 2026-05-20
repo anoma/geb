@@ -1,5 +1,21 @@
 # Step T2 Task 11 — Partial-completion handoff
 
+> **Status (2026-05-20). T2 complete.** Task 11g (bprod runFor
+> wrapper), Task 11h (top-level structural induction in the new
+> `GebLean/LawvereERKSim/Top.lean` submodule), Task 12 (axiom
+> audit), and the final holistic code-quality review all landed.
+> The climactic theorem `compileER_runFor` is at
+> `GebLean/LawvereERKSim/Top.lean`. Every public declaration in
+> `GebLean/LawvereERKSim/*.lean` is `[propext, Quot.sound]`-only.
+>
+> The "What remains" section below is preserved for historical
+> reference; the items listed there have all landed. The
+> "Followup branch (post-T2)" section near the end of this
+> document remains live and authoritative — see the per-item
+> annotations there for which items have since landed and which
+> remain pending for the follow-up cleanup branch. The live
+> reconciled list lives in task #654's description.
+
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
@@ -575,6 +591,23 @@ Tracked as task #654. Accumulated across phase i.1/i.2/i.3,
 comp.2.ind, comp.3.a, comp.3.b reviews, plus file-split SDD
 reviews.
 
+> **Status (2026-05-20). Reconciled list.** Of the 22 items
+> below, three have landed during subsequent T2 sessions:
+> item 5 (dead `with hf_init_def`, landed in chore commit
+> `4677a7b5`), item 9 (file split, landed in session 4), and
+> item 14 (`Top.lean` submodule, landed in Task 11h commit
+> `30f570dd`). The remaining 19 items are open for the
+> follow-up cleanup branch, joined by three new findings from
+> the T2-final holistic review (see task #654's description
+> for the current curated list): renaming Prop-valued
+> structures `preservingTransferInstrs`/`transferLoopInstrs`/
+> `subInnerLoopInstrs`/`inputCopies_disj` to `UpperCamelCase`,
+> renaming theorems prefixed by a structure name to
+> `snake_case`, and the speculative bsum/bprod scaffold
+> factorisation. The live, deduplicated tracker lives in task
+> #654's description; the per-item annotations below remain as
+> the historical context for each item.
+
 Items 1-8 are the original comp-era followups; items 9-13 are
 file-split-era; items 14-22 are bsum-era (sessions 5-6):
 
@@ -586,7 +619,8 @@ file-split-era; items 14-22 are bsum-era (sessions 5-6):
 4. Extract `compileFrag_comp_subBlocks_partial_phase_i1_setup`
    shared between phase i.1 preservation and the strict-bound
    helper (~140 LOC dedup).
-5. Sweep dead `with hf_init_def` at lines 6085 and 7067.
+5. ~~Sweep dead `with hf_init_def` at lines 6085 and 7067.~~
+   **DONE in chore commit `4677a7b5` (2026-05-20).**
 6. Replace inline `h_filter_snoc` block in
    `compileFrag_comp_pcOf_succ` with the new
    `compileFrag_comp_finRange_filter_lt_succ`.
@@ -631,9 +665,13 @@ file-split-era; items 14-22 are bsum-era (sessions 5-6):
     around the six logical phases (length, k=0, sub-block,
     m-step, outer iteration, assembly, runFor wrapper) for
     navigability of the 5444-line file.
-14. After Task 11h lands, consider adding a `Top.lean`
+14. ~~After Task 11h lands, consider adding a `Top.lean`
     submodule for the top-level structural induction and
-    re-evaluate the index file's responsibilities.
+    re-evaluate the index file's responsibilities.~~
+    **DONE in Task 11h commit `30f570dd` (2026-05-20).**
+    `GebLean/LawvereERKSim/Top.lean` (100 LOC) contains both
+    `compileER_pre_stop_correct` and `compileER_runFor`; the
+    index `LawvereERKSim.lean` was updated to import it.
 15. Extract a shared `compileFrag_bsum_rawList_scaffold` lemma
     (or `compileFrag_bsum_segment_at` parameterised by segment
     offset and extractor) to deduplicate ~70% overlap across

@@ -1,5 +1,24 @@
 # Step T2 — ER → URM compiler — Implementation Plan
 
+> **Status (2026-05-20). T2 complete.** All thirteen tasks
+> (T2.0 through T2.12 plus the Final holistic review) landed
+> across several execution sessions. The climactic theorem
+> `compileER_runFor` lives at
+> `GebLean/LawvereERKSim/Top.lean`. Every public declaration
+> in `GebLean/LawvereERKSim/*.lean` is
+> `[propext, Quot.sound]`-only. `lake build` clean.
+>
+> Plan checkboxes (`- [ ]`) below were not updated incrementally;
+> task-level progress was tracked via the live task list and via
+> the per-phase handoff documents
+> (`docs/superpowers/plans/2026-05-18-step-t2-t11-handoff.md` and
+> the per-session execution handoffs under
+> `docs/superpowers/plans/2026-05-20-step-t2-t11-*.md`). A
+> post-T2 followup branch tracking deferred cleanups (naming
+> sweeps, structural extraction, `_pre_stop_correct_*` private
+> re-evaluation) is enumerated in the Task 11 handoff doc's
+> § "Followup branch (post-T2)".
+>
 > **For agentic workers:** REQUIRED SUB-SKILL: Use
 > superpowers:subagent-driven-development (recommended) or
 > superpowers:executing-plans to implement this plan

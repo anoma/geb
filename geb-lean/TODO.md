@@ -12,9 +12,17 @@ lands in `docs/index.md`.
 ### lawvere-elementary-recursive
 
 - **Status**: Phase 4g.2 in progress as the `LawvereNatBT`
-  sub-project; the `er-ksim2-equiv-via-urm` sub-project
-  (forward direction `kToER` complete through Step 5, reverse
-  direction `erToK` pending Step 6).
+  sub-project; the `er-ksim2-equiv-via-urm` sub-project has
+  the forward direction `kToER` complete through Step 5 and
+  the reverse direction `erToK` partially complete: the URM
+  kernel (T1, ≈ Step 7) and the ER → URM compiler with
+  correctness theorem `compileER_runFor` (T2, ≈ Steps 6+8)
+  have landed. T3 (K^sim simulator for URM, ≈ Step 9), T4
+  (`erToK`/`erToKFunctor` assembly, ≈ Step 10), and the
+  categorical iso (≈ Step 11) remain. A post-T2 follow-up
+  branch (task #654) tracks deferred cleanups (naming
+  sweeps, structural extraction, private-promotion
+  re-evaluation).
 - **Scope**: Continue Phase 4g.2 (the
   `LawvereERCat ≃ LawvereNatBTCat` three-stage equivalence
   via `LawvereNatBT0Cat` and `LawvereNatBTPureCat`), then
@@ -26,10 +34,14 @@ lands in `docs/index.md`.
   Steps 0-5 (master design, ER tupling, ER simultaneous
   bounded recursion, Tourlakis A-majorants, K^sim
   majorization, and the `kToERFunctor : LawvereKSimDCat 2 ⥤
-  LawvereERCat`) are complete. Step 6 begins the
-  RegisterMachine audit and the URM-side chain for the
-  reverse direction `erToK : ERMor1 a → KMor1 a` (master
-  design §4 + step 6).
+  LawvereERCat`) are complete. T1 (URM kernel in
+  `GebLean/Utilities/ZeroTestURM.lean`) and T2 (ER → URM
+  compiler in `GebLean/LawvereERKSim/{Compiler,Embedding,Loops,Atoms,Comp,BSum,BProd,Top}.lean`,
+  ≈ 28 000 LOC, `[propext, Quot.sound]`-only) are
+  complete. The next workstream is T3: a K^sim simulator
+  for the URM kernel, whose output combined with T2's
+  `compileER` will yield the `erToK` morphism (T4) and the
+  categorical iso (T5).
 - **Scope (natEq / elegant pairing arithmetic
   pipeline)**: Prove `natEq` transitivity and
   `elegantPair` injectivity so that `treeEqG_ββ` becomes

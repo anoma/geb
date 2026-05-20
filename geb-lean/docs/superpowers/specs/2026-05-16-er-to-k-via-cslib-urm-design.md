@@ -1,5 +1,19 @@
 # erToK via zero-test URM simulation — design
 
+> **Status (2026-05-20).** §4 (URM kernel) and §5 (ER → URM
+> compiler with `compileER_runtime` and `compileER_runFor`) are
+> implemented. T1 landed §4 in `GebLean/Utilities/ZeroTestURM.lean`;
+> T2 landed §5 in eight submodules under
+> `GebLean/LawvereERKSim/{Compiler,Embedding,Loops,Atoms,Comp,BSum,BProd,Top}.lean`
+> (≈ 28 000 LOC), re-exported via `GebLean/LawvereERKSim.lean`.
+> Every public declaration is `[propext, Quot.sound]`-only.
+> §6–§8 (K^sim simulator, runtime bound, erToK assembly) and §11
+> (categorical iso) remain forward-looking design; the next
+> workstream T3 will re-spec §6 against the actually-landed §4/§5
+> shapes. See
+> [`docs/research/2026-05-02-er-ksim2-equiv-via-urm-master-design.md`](../../research/2026-05-02-er-ksim2-equiv-via-urm-master-design.md)
+> § "Phase 2 partial-completion note" for cross-references.
+
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
