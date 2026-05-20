@@ -61,6 +61,15 @@ PCs of the inner-mul loop's boundaries within the accUpdate block.
   strict per-step PC bound for the two leading `transferLoop` blocks of
   the bprod accumulator-update segment (destructive transfers `V_acc →
   V_acc_clone` and `V_f_out → V_factor`).
+- `compileFrag_bprod_mul_partial_invariant`: per-iteration partial
+  invariant of the inner-mul loop (PC at `bprod_mul_innerTopPC`, factor
+  counted down to `vFOut - j`, accumulator equal to `vAccIn * j`, with
+  the destructive accumulator clone, the multiply scratch, and `zReg`
+  pinned to their fixed values).
+- `compileFrag_bprod_mul_partial_base`: base case (`j = 0`) of the
+  inner-mul partial invariant, obtained from
+  `compileFrag_bprod_accUpdate_prep_post` plus the caller-supplied
+  `zReg` witness.
 
 ## References
 
@@ -1255,6 +1264,85 @@ private theorem compileFrag_bprod_accUpdate_prep_pc_strict_bound
       rw [h_top_eq]; omega
     · -- d ≥ 4 * vFOut + 1; impossible since d < 4 * vFOut + 1.
       exfalso; omega
+
+/-- Per-iteration partial invariant of `compileFrag_bprod`'s
+inner-mul loop. At iteration index `j ≤ vFOut`, the PC sits at
+`bprod_mul_innerTopPC frag_f`, the destructive accumulator clone
+(register `k + 7`) still holds the input accumulator `vAccIn`, the
+multiplicative factor (register `k + 8`) has been counted down to
+`vFOut - j`, the inner multiply scratch (register `k + 9`) is `0`,
+the shared reserved-zero `zReg` (register `0`) is `0`, and the live
+accumulator (register `1`) holds the running product `vAccIn * j`.
+The base case (`j = 0`) is delivered by
+`compileFrag_bprod_mul_partial_base`; subsequent sub-tasks supply
+the inductive step and the outer iteration. -/
+private structure compileFrag_bprod_mul_partial_invariant
+    {k : ℕ}
+    (frag_f : CompiledFragment (k + 1))
+    (vAccIn vFOut : ℕ)
+    (j : ℕ) (hj : j ≤ vFOut)
+    (s : URMState (compileFrag_bprod frag_f).toURMProgram)
+    : Prop where
+  /-- The iteration index does not exceed the factor bound. -/
+  hj_le : j ≤ vFOut := hj
+  /-- PC sits at the inner-mul loop's top instruction. -/
+  pc_eq : s.pc = bprod_mul_innerTopPC frag_f
+  /-- The shared reserved-zero `zReg` (register `0`) is `0`. -/
+  zReg_zero : s.regs ⟨0,
+    (compileFrag_bprod frag_f).numRegs_pos⟩ = 0
+  /-- The destructive accumulator clone (register `k + 7`) holds
+  the input accumulator value. -/
+  acc_clone_eq : s.regs ⟨k + 7, by
+    have : 0 < frag_f.numRegs := frag_f.numRegs_pos
+    change k + 7 < k + 10 + frag_f.numRegs; omega⟩ = vAccIn
+  /-- The multiplicative factor (register `k + 8`) has been
+  counted down to `vFOut - j`. -/
+  factor_eq : s.regs ⟨k + 8, by
+    have : 0 < frag_f.numRegs := frag_f.numRegs_pos
+    change k + 8 < k + 10 + frag_f.numRegs; omega⟩ = vFOut - j
+  /-- The inner multiply scratch (register `k + 9`) is `0`. -/
+  mulTmp_zero : s.regs ⟨k + 9, by
+    have : 0 < frag_f.numRegs := frag_f.numRegs_pos
+    change k + 9 < k + 10 + frag_f.numRegs; omega⟩ = 0
+  /-- The live accumulator (register `1`) holds the running
+  product `vAccIn * j`. -/
+  acc_eq : s.regs ⟨1, by
+    have : 0 < frag_f.numRegs := frag_f.numRegs_pos
+    change 1 < k + 10 + frag_f.numRegs; omega⟩ = vAccIn * j
+
+/-- Base case (`j = 0`) of the inner-mul partial invariant of
+`compileFrag_bprod`. Takes the post-state of the accumulator-update
+prep segment plus the caller-supplied `h_sPrep_z` witness that
+`zReg` is `0`; the latter is required because
+`compileFrag_bprod_accUpdate_prep_post` does not carry the
+`zReg_zero` clause and the caller (the bprod.1.c.4 assembly)
+supplies it from the outer partial invariant. Zero URM steps:
+the result is a field-by-field projection from `h_post`
+specialised at `j = 0`. -/
+private theorem compileFrag_bprod_mul_partial_base
+    {k : ℕ}
+    (frag_f : CompiledFragment (k + 1))
+    (vAccIn vFOut : ℕ)
+    (sPrep : URMState (compileFrag_bprod frag_f).toURMProgram)
+    (h_sPrep_z : sPrep.regs ⟨0,
+        (compileFrag_bprod frag_f).numRegs_pos⟩ = 0)
+    (h_post : compileFrag_bprod_accUpdate_prep_post
+                frag_f vAccIn vFOut sPrep) :
+    compileFrag_bprod_mul_partial_invariant frag_f vAccIn vFOut
+      0 (Nat.zero_le _) sPrep := by
+  refine
+    { pc_eq := ?_
+      zReg_zero := ?_
+      acc_clone_eq := ?_
+      factor_eq := ?_
+      mulTmp_zero := ?_
+      acc_eq := ?_ }
+  · exact h_post.pc_eq
+  · exact h_sPrep_z
+  · exact h_post.acc_clone_eq
+  · rw [h_post.factor_eq, Nat.sub_zero]
+  · exact h_post.mulTmp_zero
+  · rw [h_post.acc_zero, Nat.mul_zero]
 
 end LawvereERKSim
 end GebLean
