@@ -5001,5 +5001,36 @@ private theorem compileER_pre_stop_correct_bsum
         + (frag_f.instrs.size - 1) + 6
       omega
 
+/-- `≤ t'`-form wrapper around `compileER_pre_stop_correct_bsum`,
+analogue of `compileER_runFor_comp`. Given the pre-stop inductive
+hypothesis for `f`, running `compileER (.bsum f)` for any
+`t' ≥ compileER_runtime (.bsum f) v` produces `(.bsum f).interp v`
+in the output register. -/
+private theorem compileER_runFor_bsum {k : ℕ}
+    (f : ERMor1 (k + 1))
+    (ih_f : ∀ (v' : Fin (k + 1) → ℕ),
+      ∃ T0 : ℕ,
+        T0 ≤ compileER_runtime f v' ∧
+        (URMState.runFor (compileER f)
+              (URMState.init (compileER f) v') T0).pc
+            = (compileER f).instrs.size - 1 ∧
+        (URMState.runFor (compileER f)
+              (URMState.init (compileER f) v') T0).regs
+            (compileER f).outputReg
+          = f.interp v' ∧
+        (∀ k' < T0,
+          (URMState.runFor (compileER f)
+              (URMState.init (compileER f) v') k').pc
+            < (compileER f).instrs.size - 1))
+    (v : Fin (k + 1) → ℕ) (t' : ℕ)
+    (ht' : compileER_runtime (.bsum f : ERMor1 (k + 1)) v ≤ t') :
+    (URMState.runFor (compileER (.bsum f : ERMor1 (k + 1)))
+        (URMState.init (compileER (.bsum f : ERMor1 (k + 1))) v) t').regs
+        (compileER (.bsum f : ERMor1 (k + 1))).outputReg
+      = (.bsum f : ERMor1 (k + 1)).interp v := by
+  obtain ⟨T0, hT0, h_pc, h_out, _⟩ :=
+    compileER_pre_stop_correct_bsum f ih_f v
+  exact compileER_pre_stop_to_runFor _ v t' ht' ⟨T0, hT0, h_pc, h_out⟩
+
 end LawvereERKSim
 end GebLean
