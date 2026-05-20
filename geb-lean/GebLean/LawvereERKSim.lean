@@ -11,7 +11,7 @@ import GebLean.LawvereERKSim.BProd
 
 The compiler half of the erToK construction: emit a `URMProgram` from an
 `ERMor1 a` term such that running the URM long enough produces `e.interp v` in
-the output register. This file re-exports the five submodules under
+the output register. This file re-exports the seven submodules under
 `GebLean/LawvereERKSim/`:
 
 - `Compiler`: raw and bounded instructions, fragment emission for each ER
@@ -28,12 +28,8 @@ the output register. This file re-exports the five submodules under
 - `BSum`: bsum PC-layout infrastructure, per-iteration phase preservation,
   the outer iteration `i = 0 .. v 0` induction, and the bsum pre-stop
   correctness theorem `compileER_pre_stop_correct_bsum`.
-- `BProd`: bprod PC-layout infrastructure for `compileFrag_bprod`,
-  analogous to `BSum`'s constants but adjusted for the 21-instruction
-  multiplicative accumulator update (Tourlakis 2018 R^XY_Z template)
-  and the additional `incR vAcc` prelude step. The forthcoming
-  per-iteration phase lemmas and pre-stop correctness theorem
-  `compileER_pre_stop_correct_bprod` will live here.
+- `BProd`: bprod PC-layout infrastructure for `compileFrag_bprod`, and
+  the size-relation lemma `bprod_exitPC_eq_size_pred`.
 
 The future submodule `Top` (for the top-level structural induction
 `compileER_runFor`) follows once Task 11h lands.

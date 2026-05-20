@@ -20,8 +20,8 @@ prelude ++ loopTop ++ zeroSweep ++ prologue ++ fBody
 
 with lengths `14 + 2 + frag_f.numRegs + 9 * (k + 1)
 + (frag_f.instrs.size - 1) + 21 + 3`. The constants here name the
-absolute PCs at which each segment begins and ends, and the constants
-within the accUpdate block at the inner mul loop's boundaries.
+absolute PCs at which each segment begins and ends, and the absolute
+PCs of the inner-mul loop's boundaries within the accUpdate block.
 
 ## Main definitions
 
@@ -136,14 +136,8 @@ private theorem bprod_exitPC_eq_size_pred {k : ℕ}
     (frag_f : CompiledFragment (k + 1)) :
     bprod_exitPC frag_f
       = (compileFrag_bprod frag_f).instrs.size - 1 := by
-  have h_size_pos : 1 ≤ frag_f.instrs.size := by
-    have hb := frag_f.lastInstr_isStop
-    rcases Nat.eq_zero_or_pos frag_f.instrs.size with h | h
-    · exfalso
-      have hempty : frag_f.instrs = #[] := Array.size_eq_zero_iff.mp h
-      rw [hempty] at hb
-      cases hb
-    · exact h
+  have h_size_pos : 1 ≤ frag_f.instrs.size :=
+    CompiledFragment.size_pos frag_f
   rw [compileFrag_bprod_size]
   change bprod_trBase frag_f + 23 = _
   rw [bprod_trBase, bprod_bodyPCBase]

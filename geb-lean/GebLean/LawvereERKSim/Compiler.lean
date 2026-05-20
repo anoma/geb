@@ -1102,6 +1102,19 @@ def compileFrag_bsum {k : ℕ}
       URMInstrRaw.toBoundedArray_back?_of_last_stopR hBound
         hLastStopR }
 
+/-- A `CompiledFragment`'s instruction array is non-empty: the
+`lastInstr_isStop` invariant requires a trailing `.stopR` instruction. -/
+theorem CompiledFragment.size_pos {n : ℕ}
+    (frag : CompiledFragment n) :
+    1 ≤ frag.instrs.size := by
+  have hb := frag.lastInstr_isStop
+  rcases Nat.eq_zero_or_pos frag.instrs.size with h | h
+  · exfalso
+    have hempty : frag.instrs = #[] := Array.size_eq_zero_iff.mp h
+    rw [hempty] at hb
+    cases hb
+  · exact h
+
 /-- Total size of `compileFrag_bsum`'s emitted instruction
 array, expressed as the sum of segment lengths
 `prelude (13) + loopTop (2) + zeroSweep (frag_f.numRegs)
@@ -1544,14 +1557,8 @@ theorem compileFrag_bprod_size {k : ℕ}
           (k + 7) 1 (k + 9)).length = 9 := by
     simp only [URMRaw.preservingTransfer, URMRaw.goto,
       List.length_cons, List.length_nil]
-  have h_size_pos : 1 ≤ frag_f.instrs.size := by
-    have hb := frag_f.lastInstr_isStop
-    rcases Nat.eq_zero_or_pos frag_f.instrs.size with h | h
-    · exfalso
-      have hempty : frag_f.instrs = #[] := Array.size_eq_zero_iff.mp h
-      rw [hempty] at hb
-      cases hb
-    · exact h
+  have h_size_pos : 1 ≤ frag_f.instrs.size :=
+    CompiledFragment.size_pos frag_f
   simp only [bsum_zeroSweep,
     List.length_append, List.length_cons, List.length_nil,
     List.length_map, List.length_finRange,
