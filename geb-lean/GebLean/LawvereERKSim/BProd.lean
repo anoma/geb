@@ -7624,5 +7624,223 @@ private theorem compileFrag_bprod_partial_phase_i3
         rw [hsB_pc]
         exact h_goto_lt_exit
 
+set_option maxHeartbeats 4000000 in
+-- Heartbeat bump justified by the four-way composition of phase
+-- preservation lemmas, each contributing both a state-equation and a
+-- strict PC bound discharged on a separate sub-interval.
+/-- Per-iteration induction glue for `compileFrag_bprod`: from
+`compileFrag_bprod_partial_invariant @ i.val`, there exists a combined
+step count `T0` after which `compileFrag_bprod_partial_invariant @
+(i.val + 1)` holds, and throughout these `T0` steps the intermediate
+PC stays strictly below `(compileFrag_bprod frag_f).instrs.size - 1`
+(= `bprod_exitPC frag_f`). The witness `T0` decomposes as `T1 + T2 +
+T3 + T4`: phase i.0 (`2 + numRegs_f`), phase i.1
+(`9 * vPrefixSum (Fin.cons i.val (Fin.tail v)) (k + 1) + 2 * (k + 1)`),
+phase i.2 (existential, `≤ compileER_runtime f (Fin.cons i.val
+(Fin.tail v))`), and phase i.3
+(`(4 * A_i + 1) + (4 * B_i + 1) + B_i * (9 * A_i + 5) + 1 + 1 + 2`),
+with `A_i = natBProd i.val (fun j => f.interp (Fin.cons j (Fin.tail v)))`
+and `B_i = f.interp (Fin.cons i.val (Fin.tail v))`. The structural
+induction hypothesis on `f` is threaded into phase i.2; the other
+phases are deterministic. -/
+private theorem compileFrag_bprod_partial_step
+    {k : ℕ}
+    (f : ERMor1 (k + 1))
+    (ih_f : ∀ (v' : Fin (k + 1) → ℕ),
+      ∃ T0 : ℕ,
+        T0 ≤ compileER_runtime f v' ∧
+        (URMState.runFor (compileER f)
+              (URMState.init (compileER f) v') T0).pc
+            = (compileER f).instrs.size - 1 ∧
+        (URMState.runFor (compileER f)
+              (URMState.init (compileER f) v') T0).regs
+            (compileER f).outputReg
+          = f.interp v' ∧
+        (∀ k' < T0,
+          (URMState.runFor (compileER f)
+              (URMState.init (compileER f) v') k').pc
+            < (compileER f).instrs.size - 1))
+    (v : Fin (k + 1) → ℕ)
+    (i : Fin (v 0))
+    (sPre : URMState
+      (compileFrag_bprod (compileERFrag f)).toURMProgram)
+    (h_inv : compileFrag_bprod_partial_invariant
+              (compileERFrag f) f v i.val i.isLt.le sPre) :
+    let A_i := natBProd i.val
+      (fun j => f.interp (Fin.cons j (Fin.tail v)))
+    let B_i := f.interp (Fin.cons i.val (Fin.tail v))
+    ∃ T0 : ℕ,
+      T0 ≤ (2 + (compileERFrag f).numRegs)
+            + (9 * vPrefixSum (Fin.cons i.val (Fin.tail v)) (k + 1)
+                + 2 * (k + 1))
+            + compileER_runtime f (Fin.cons i.val (Fin.tail v))
+            + ((4 * A_i + 1) + (4 * B_i + 1)
+                + B_i * (9 * A_i + 5) + 1 + 1 + 2)
+      ∧ compileFrag_bprod_partial_invariant (compileERFrag f) f v
+          (i.val + 1) (Nat.succ_le_of_lt i.isLt)
+          (URMState.runFor _ sPre T0)
+      ∧ (∀ k' < T0,
+          (URMState.runFor _ sPre k').pc
+            < (compileFrag_bprod (compileERFrag f)).instrs.size - 1) := by
+  intro A_i B_i
+  let frag_f : CompiledFragment (k + 1) := compileERFrag f
+  let outer : URMProgram (k + 1) :=
+    (compileFrag_bprod frag_f).toURMProgram
+  let v_iter : Fin (k + 1) → ℕ := Fin.cons i.val (Fin.tail v)
+  let T1 : ℕ := 2 + frag_f.numRegs
+  let T2 : ℕ := 9 * vPrefixSum v_iter (k + 1) + 2 * (k + 1)
+  let T4 : ℕ :=
+    (4 * A_i + 1) + (4 * B_i + 1) + B_i * (9 * A_i + 5) + 1 + 1 + 2
+  -- Rewrite the goal to use the local `let`-bindings.
+  change ∃ T0 : ℕ,
+      T0 ≤ T1 + T2 + compileER_runtime f v_iter + T4
+    ∧ compileFrag_bprod_partial_invariant frag_f f v
+        (i.val + 1) (Nat.succ_le_of_lt i.isLt)
+        (URMState.runFor outer sPre T0)
+    ∧ (∀ k' < T0,
+        (URMState.runFor outer sPre k').pc
+          < (compileFrag_bprod frag_f).instrs.size - 1)
+  -- Phase i.0: deterministic step count, partial @ i.val → phase_i0_post.
+  obtain ⟨h_i0_post, h_strict_i0⟩ :=
+    compileFrag_bprod_partial_phase_i0 f v i sPre h_inv
+  set s1 : URMState outer := URMState.runFor outer sPre T1
+  -- Phase i.1: deterministic step count, phase_i0_post → phase_i1_post.
+  obtain ⟨h_i1_post, h_strict_i1⟩ :=
+    compileFrag_bprod_partial_phase_i1 f v i s1 h_i0_post
+  set s2 : URMState outer := URMState.runFor outer s1 T2
+  -- Phase i.2: existential T3, phase_i1_post → phase_i2_post.
+  obtain ⟨T3, hT3_le, h_i2_post, h_strict_i2⟩ :=
+    compileFrag_bprod_partial_phase_i2 f ih_f v i s2 h_i1_post
+  set s3 : URMState outer := URMState.runFor outer s2 T3
+  -- Phase i.3: deterministic step count, phase_i2_post → partial @ (i.val + 1).
+  obtain ⟨h_inv_succ, h_strict_i3⟩ :=
+    compileFrag_bprod_partial_phase_i3 f v i s3 h_i2_post
+  -- Total step count.
+  refine ⟨T1 + T2 + T3 + T4, ?_, ?_, ?_⟩
+  · -- Bound: T1 + T2 + T3 + T4 ≤ T1 + T2 + compileER_runtime + T4.
+    have h_rt : T3 ≤ compileER_runtime f v_iter := hT3_le
+    omega
+  · -- compileFrag_bprod_partial_invariant @ (i.val + 1).
+    have h_compose :
+        URMState.runFor outer sPre (T1 + T2 + T3 + T4)
+          = URMState.runFor outer s3 T4 := by
+      change URMState.runFor outer sPre (T1 + T2 + T3 + T4)
+        = URMState.runFor outer
+            (URMState.runFor outer
+              (URMState.runFor outer
+                (URMState.runFor outer sPre T1) T2) T3) T4
+      rw [← URMState.runFor_add outer
+            (URMState.runFor outer
+              (URMState.runFor outer sPre T1) T2) T3 T4,
+          ← URMState.runFor_add outer
+            (URMState.runFor outer sPre T1) T2 (T3 + T4),
+          ← URMState.runFor_add outer sPre T1 (T2 + (T3 + T4))]
+      congr 1
+      omega
+    rw [h_compose]
+    exact h_inv_succ
+  · -- Per-step strict PC bound on the combined interval.
+    intro k' hk'
+    -- PC layout: prologueBase ≤ bodyPCBase ≤ trBase ≤ exitPC.
+    have h_exitPC_size :
+        bprod_exitPC frag_f
+          = (compileFrag_bprod frag_f).instrs.size - 1 :=
+      bprod_exitPC_eq_size_pred frag_f
+    have h_exitPC_trBase :
+        (compileFrag_bprod frag_f).instrs.size - 1
+          = bprod_trBase frag_f + 23 := by
+      rw [← h_exitPC_size]; rfl
+    have h_prologueBase_lt_exit :
+        bprod_prologueBase frag_f
+          < (compileFrag_bprod frag_f).instrs.size - 1 := by
+      rw [h_exitPC_trBase]
+      change 16 + frag_f.numRegs < bprod_trBase frag_f + 23
+      change 16 + frag_f.numRegs
+        < (16 + frag_f.numRegs + 9 * (k + 1)
+            + (frag_f.instrs.size - 1)) + 23
+      omega
+    have h_bodyPCBase_lt_exit :
+        bprod_bodyPCBase frag_f
+          < (compileFrag_bprod frag_f).instrs.size - 1 := by
+      rw [h_exitPC_trBase]
+      change 16 + frag_f.numRegs + 9 * (k + 1)
+        < (16 + frag_f.numRegs + 9 * (k + 1)
+            + (frag_f.instrs.size - 1)) + 23
+      omega
+    have h_trBase_lt_exit :
+        bprod_trBase frag_f
+          < (compileFrag_bprod frag_f).instrs.size - 1 := by
+      rw [h_exitPC_trBase]; omega
+    -- Phase i.0 window: k' < T1.
+    rcases Nat.lt_or_ge k' T1 with h1 | h1
+    · have h_bound : (URMState.runFor outer sPre k').pc
+          < bprod_prologueBase frag_f := h_strict_i0 k' h1
+      exact Nat.lt_trans h_bound h_prologueBase_lt_exit
+    · rcases Nat.lt_or_ge k' (T1 + T2) with h2 | h2
+      · -- Phase i.1 window: T1 ≤ k' < T1 + T2.
+        let k'' : ℕ := k' - T1
+        have hk''_lt : k'' < T2 := by
+          change k' - T1 < T2; omega
+        have h_split : k' = T1 + k'' := by
+          change k' = T1 + (k' - T1); omega
+        have h_runFor_split :
+            URMState.runFor outer sPre k'
+              = URMState.runFor outer s1 k'' := by
+          rw [h_split, URMState.runFor_add]
+        have h_bound : (URMState.runFor outer s1 k'').pc
+            < bprod_bodyPCBase frag_f := h_strict_i1 k'' hk''_lt
+        rw [h_runFor_split]
+        exact Nat.lt_trans h_bound h_bodyPCBase_lt_exit
+      · rcases Nat.lt_or_ge k' (T1 + T2 + T3) with h3 | h3
+        · -- Phase i.2 window: T1 + T2 ≤ k' < T1 + T2 + T3.
+          let k'' : ℕ := k' - T1 - T2
+          have hk''_lt : k'' < T3 := by
+            change k' - T1 - T2 < T3; omega
+          have h_split : k' = T1 + T2 + k'' := by
+            change k' = T1 + T2 + (k' - T1 - T2); omega
+          have h_runFor_split :
+              URMState.runFor outer sPre k'
+                = URMState.runFor outer s2 k'' := by
+            rw [h_split]
+            change URMState.runFor outer sPre (T1 + T2 + k'')
+              = URMState.runFor outer
+                  (URMState.runFor outer
+                    (URMState.runFor outer sPre T1) T2) k''
+            rw [← URMState.runFor_add outer
+                  (URMState.runFor outer sPre T1) T2 k'',
+                ← URMState.runFor_add outer sPre T1 (T2 + k'')]
+            congr 1
+            omega
+          have h_bound : (URMState.runFor outer s2 k'').pc
+              < bprod_trBase frag_f := h_strict_i2 k'' hk''_lt
+          rw [h_runFor_split]
+          exact Nat.lt_trans h_bound h_trBase_lt_exit
+        · -- Phase i.3 window: T1 + T2 + T3 ≤ k' < T1 + T2 + T3 + T4.
+          let k'' : ℕ := k' - T1 - T2 - T3
+          have hk''_lt : k'' < T4 := by
+            change k' - T1 - T2 - T3 < T4; omega
+          have h_split : k' = T1 + T2 + T3 + k'' := by
+            change k' = T1 + T2 + T3 + (k' - T1 - T2 - T3); omega
+          have h_runFor_split :
+              URMState.runFor outer sPre k'
+                = URMState.runFor outer s3 k'' := by
+            rw [h_split]
+            change URMState.runFor outer sPre (T1 + T2 + T3 + k'')
+              = URMState.runFor outer
+                  (URMState.runFor outer
+                    (URMState.runFor outer
+                      (URMState.runFor outer sPre T1) T2) T3) k''
+            rw [← URMState.runFor_add outer
+                  (URMState.runFor outer
+                    (URMState.runFor outer sPre T1) T2) T3 k'',
+                ← URMState.runFor_add outer
+                  (URMState.runFor outer sPre T1) T2 (T3 + k''),
+                ← URMState.runFor_add outer sPre T1 (T2 + (T3 + k''))]
+            congr 1
+            omega
+          have h_bound := h_strict_i3 k'' hk''_lt
+          rw [h_runFor_split]
+          exact h_bound
+
 end LawvereERKSim
 end GebLean
