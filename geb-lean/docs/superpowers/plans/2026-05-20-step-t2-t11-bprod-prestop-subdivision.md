@@ -360,6 +360,12 @@ This is safe because `lastInstr_isStop` (a
 `CompiledFragment` invariant) guarantees `frag_f.instrs.size
 ≥ 1`; the `- 1` therefore cannot underflow.
 
+The `bprod_exitPC` definition equals
+`(compileFrag_bprod frag_f).instrs.size - 1` by the size
+lemma `bprod_exitPC_eq_size_pred`; both bprod.3.phase_i3 and
+bprod.6 consume this equation when discharging the final
+`stopR` instruction lookup.
+
 ### Sub-task 11e.6.a.iii-bprod.1.a — zero-sweep correctness alias
 
 Signatures: thin re-export of
@@ -571,13 +577,14 @@ private theorem compileFrag_bprod_mul_partial_base
 The invariant carries 7 clauses. At `j = 0`: `V_factor = B`
 (the unmodified copy), `V_acc = A * 0 = 0` (still 0 after
 the prep transferLoop destroyed it). At `j = B`: `V_factor =
-0`, `V_acc = A * B`. Preservation of the four mul-scratch
-registers' surroundings is *not* a clause of the structure;
-the inner-mul block touches only those four registers, so the
-caller-side preservation property is established by
-bprod.1.c.4 (accUpdate assembly) as a conjunct of the
-producing lemma's conclusion, mirroring the prep lemma's
-shape (sub-task 1.c.0).
+0`, `V_acc = A * B`. Preservation of registers outside the
+three the inner-mul block writes (`V_acc`, `V_factor`,
+`V_mul_tmp`; `V_acc_clone` is read-only inside the loop
+because `preservingTransfer` preserves its source) is *not*
+a clause of the structure; the caller-side preservation
+property is established by bprod.1.c.4 (accUpdate assembly)
+as a conjunct of the producing lemma's conclusion, mirroring
+the prep lemma's shape (sub-task 1.c.0).
 
 Inputs: the post-state from bprod.1.c.0 directly.
 
@@ -1161,10 +1168,11 @@ the exit PC, which is the maximal in-program PC.
 
 Estimated LOC: 700-850. This is the largest single phase
 lemma in the bprod chain because the accumulator update
-re-establishes the twelve invariant clauses at `i.val + 1`.
-The per-clause split is `2 + 5 + 5 = 12`: two via the
-epilogue's two URM instructions, five via the accUpdate's
-output state, and five via carry-over from phase_i2:
+re-establishes the eleven data-bearing invariant clauses at
+`i.val + 1`. The per-clause split is `2 + 4 + 5 = 11`: two
+via the epilogue's two URM instructions, four via the
+accUpdate's output state, and five via carry-over from
+phase_i2:
 
 - `pc_eq`: returns to `bprod_topPC` via the `goto`
   (epilogue).
@@ -1177,26 +1185,25 @@ output state, and five via carry-over from phase_i2:
   (Fin.tail v))`. Use `natBProd_rec` (`LawvereERPrimrec.lean`
   line 21) or the unfolding `natBProd (i + 1) g = natBProd i
   g * g i`.
-- `accClone_zero`, `factor_zero`, `mulTmp_zero`,
-  `f-output zero` (a corollary of `factor_zero` and the
-  prep destructive copy): all re-established by the
-  accUpdate's output state. (`f-output zero` is itself not
-  an invariant clause but is needed for the next iteration's
-  phase_i0 zero-sweep to behave; it is supplied by the
-  accUpdate post-state.)
+- `accClone_zero`, `factor_zero`, `mulTmp_zero`: all
+  re-established by the accUpdate's output state. These
+  three zero-state facts plus `acc_eq` constitute the four
+  "via accUpdate" clauses.
 - `vX_eq`, `zReg_zero`, `outer_inputs`, `tmp1_zero`,
   `tmp2_zero`: carry-over from phase_i2 (the accUpdate
   touches none of these registers; the preservation conjunct
-  from bprod.1.c.4 covers them). Note `hi_le` is a Prop
-  parameter carried via the structure's default value, not a
-  state-bearing clause; it does not count toward the 12-
-  clause split.
+  from bprod.1.c.4 covers them).
 
-The accUpdate's output state has `V_acc_clone = 0`,
-`V_factor = 0`, `V_mul_tmp = 0`, and the f-output register at
-0 — verified in bprod.1.c.4's conclusion. These four
-zero-state facts plus `acc_eq` constitute the five "via
-accUpdate" clauses listed above.
+`hi_le` is a Prop parameter carried via the structure's
+default value, not a state-bearing clause; it does not
+count toward the 11-clause data-split.
+
+Phase_i3 also establishes `f-output zero` as a post-state
+fact (a corollary of `factor_zero` and the prep destructive
+copy): this is not an invariant clause but is consumed by
+the next iteration's phase_i0 zero-sweep. It is supplied as
+a separate post-state conjunct of phase_i3's conclusion,
+*outside* the partial invariant.
 
 A fresh segment-peeling helper
 `compileFrag_bprod_accUpdateBlock_instr_at` is needed (third
