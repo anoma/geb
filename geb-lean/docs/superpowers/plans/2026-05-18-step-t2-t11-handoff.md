@@ -10,14 +10,14 @@
   - [Task 11 — landed sub-tasks](#task-11--landed-sub-tasks)
     - [Session 1 (through 2026-05-18, ending at phase i.1)](#session-1-through-2026-05-18-ending-at-phase-i1)
     - [Session 5 (2026-05-19, bsum.0–bsum.1.d landed)](#session-5-2026-05-19-bsum0bsum1d-landed)
+    - [Session 6 (2026-05-20, bsum pre-stop chain complete + 11f wrapper)](#session-6-2026-05-20-bsum-pre-stop-chain-complete--11f-wrapper)
     - [Session 4 (2026-05-19, file split landed)](#session-4-2026-05-19-file-split-landed)
     - [Session 3 (2026-05-19, Task 11e.7 wrap-up)](#session-3-2026-05-19-task-11e7-wrap-up)
     - [Session 2 (2026-05-19, finishing the comp story)](#session-2-2026-05-19-finishing-the-comp-story)
   - [Cumulative output](#cumulative-output)
 - [What remains](#what-remains)
-  - [Task 11e.6.a.iii-bsum — bsum pre-stop (in progress)](#task-11e6aiii-bsum--bsum-pre-stop-in-progress)
   - [Task 11e.6.a.iii-bprod — bprod pre-stop](#task-11e6aiii-bprod--bprod-pre-stop)
-  - [Tasks 11f, 11g — bsum/bprod runFor wrap-ups](#tasks-11f-11g--bsumbprod-runfor-wrap-ups)
+  - [Task 11g — bprod runFor wrapper](#task-11g--bprod-runfor-wrapper)
   - [Task 11h — top-level structural induction](#task-11h--top-level-structural-induction)
   - [Task 12 — axiom audit](#task-12--axiom-audit)
   - [Final holistic code-quality review](#final-holistic-code-quality-review)
@@ -57,28 +57,44 @@ adjust internal proof tactics freely.
 
 ## Session summary
 
-A multi-session SDD execution of T2 completed Tasks 0-10
+A multi-session SDD execution of T2 has completed Tasks 0-10
 (compileER + compileER_runtime + 7 per-constructor
-combinators), the four atom cases of Task 11, the
-compositional-case infrastructure, and the full comp pre-stop
-correctness chain (phases i.1, i.2, i.3, m-step induction
-glue, outer iteration, and final assembly). The present
-session ended with `compileER_pre_stop_correct_comp` landed,
-closing the comp pre-stop story. Remaining: 11e.7 (the comp
-runFor `≤ t'` wrap-up), bsum/bprod pre-stop chains, their
-runFor wrap-ups, Task 11h top-level structural induction,
-and Task 12 axiom audit.
+combinators), the four atom cases of Task 11, the full comp
+pre-stop correctness chain through its `≤ t'` wrapper, the file
+split into six topical submodules under `GebLean/LawvereERKSim/`,
+the full bsum pre-stop correctness chain (14 sub-tasks: PC
+layout, three sub-block helpers, f-body embedding, partial
+invariant + base case, four per-iteration phase preservation
+lemmas, induction glue, outer iteration, final assembly), and
+the bsum `≤ t'` wrapper (Task 11f). Two latent specification
+bugs surfaced during the bsum slack-matching arithmetic and were
+fixed: Task 10's `compileER_runtime` had insufficient
+`+ 50`/`+ 60` per-iter constants for bsum/bprod (negative slack
+for arity > 22; fixed by adding `+ 2 * (k + 1)`), and Task 9's
+`compileER_numRegs (.bprod f)` was off-by-one (`k + 9` should
+have been `k + 10`; would have aliased `vMulTmp` with `fBase`).
 
-Current `@-`: commit `99d5fd91` (comp.3.b
-`compileER_pre_stop_correct_comp`). Build clean. Axiom
-hygiene clean (`[propext, Quot.sound]` only on all new
-declarations; verified via `mcp__lean-lsp__lean_verify`).
-Source: `GebLean/LawvereERKSim.lean`, 11823 lines.
+Remaining: bprod pre-stop chain (~3000-4000 LOC mirror of
+bsum, ~14 sub-tasks), 11g (bprod `≤ t'` wrapper), 11h
+(top-level structural induction), Task 12 (axiom audit), and
+the final holistic code-quality review.
 
-Sibling head `pnlwkzms f29a83bf` (the previous-session
-in-progress doc edit) is preserved across all session-2
-commits via jj auto-rebase. The current session is updating
-this handoff doc to integrate the session-2 progress.
+Current `@-`: commit `5bc623a1` (this docs commit, session-5
+session-progress notes, just rebased onto the bsum-chain tip
+to consolidate the previously-orphaned sibling head). The
+immediately-preceding code commit is `40b93026`
+(`compileER_runFor_bsum` wrapper, Task 11f). Build clean (1531
+jobs). Axiom hygiene clean (`[propext, Quot.sound]` only on
+every new declaration; verified via
+`mcp__lean-lsp__lean_verify`). Source: six submodules under
+`GebLean/LawvereERKSim/` totalling ~13260 lines (Compiler
+1790, Embedding 898, Loops 2538, Atoms 1635, Comp 5444, BSum
+5038) plus the 38-line index.
+
+No sibling heads remain after the session-6 rebase. The
+previously-orphaned `75d79e2f` (session-5 docs commit) was
+folded into the main chain at `5bc623a1` once the bsum chain
+had landed all the code it described.
 
 ## What is landed
 
@@ -260,6 +276,140 @@ return `[propext, Quot.sound]`. Build clean throughout.
 Final BSum.lean size: 786 lines. The followup-item list in the
 sub-division doc has grown; consolidate at session end.
 
+#### Session 6 (2026-05-20, bsum pre-stop chain complete + 11f wrapper)
+
+- **bsum.2 — partial invariant + base case**: 10-clause
+  `compileFrag_bsum_partial_invariant` (later refactored to 9
+  clauses; see phase_i3 below) and `compileFrag_bsum_partial_base`
+  for `i = 0` after the prelude's actual `6 + 9 * (v 0)` URM
+  steps. The sub-division doc's "13-step" base figure conflated
+  PC slots with URM steps: `preservingTransfer` occupies 9 PC
+  slots but executes as a loop of `9 * n + 2` URM steps where
+  `n = v 0` at entry. Correction applied during implementation.
+  +451 LOC. Commit `upytlpyq 2ace1546`.
+
+- **bsum.3.phase_i0 — zero-sweep preservation**: 2 control steps
+  (`jumpZR vX → bodyStart` plus `decR vX`) followed by
+  `frag_f.numRegs` zero-sweep `assignR` steps. T0 =
+  `2 + (compileERFrag f).numRegs`, closed-form, so the outer
+  `∃ T0` was dropped per the **adjudicated inlined-conjunction
+  convention** (applied uniformly to phase_i0/i1/i3 thereafter;
+  phase_i2 keeps the existential because its T0 comes from
+  `ih_f`). Added helper `compileFrag_bsum_zeroSweep_instr_at`
+  (~200 LOC) — symbolic-`r.val` instruction-presence over the
+  swept segment cannot be discharged by `rfl`. +684 LOC. Commit
+  `qrkxnlor 9da494eb`.
+
+- **bsum.3.phase_i1 — prologue preservation**: T0 equals
+  `9 * vPrefixSum (Fin.cons i.val (Fin.tail v)) (k + 1) + 2 * (k + 1)`
+  via `compileFrag_bsum_prologue_correct`. Added helper
+  `compileFrag_bsum_prologueBlock_instr_at` (~520 LOC) — second
+  instance of the segment-peeling pattern. Required per-declaration
+  `set_option maxHeartbeats 4000000 in` because the prologue's
+  source-map `bsum_prologueSrc k s = if s.val = 0 then k + 4 else s.val + 2`
+  has a conditional shape that inflates unifier cost (versus
+  comp's unconditional `2 + j.val`). +994 LOC. Commit
+  `zymxmqnu fb5a7494`.
+
+- **bsum.3.phase_i2 — f-body preservation**: Consumes `ih_f`,
+  so conclusion remains existential in `T0 ≤ compileER_runtime f
+  (Fin.cons i.val (Fin.tail v))`. Uses the existing
+  `ProgramEmbedsFragment_compileFrag_bsum_fBody` (bsum.1.d) via
+  `stateEmbedsFrag_runFor` + `_outside_preserved`. No new
+  `_instr_at` helper needed (the f-body embedding is structurally
+  singular). Surfaced the `URMState.init` reduction quirk: a
+  `let f_init := URMState.init ...` blocks reduction of
+  `f_init.regs r` to its underlying `match` form, so the
+  regs-equation lemma must be introduced with `URMState.init ...`
+  inline before the `let` binding. +375 LOC. Commit
+  `qrormswv 0e02db8a`.
+
+- **Refactor: drop `fBody_zero` from
+  `compileFrag_bsum_partial_invariant`**: phase_i2 establishes
+  only `f_output` (one register), not the full f-body block, so
+  the partial invariant cannot maintain `fBody_zero` across
+  iterations. The zero-sweep at the next iteration's phase_i0
+  re-establishes it. The sub-division plan's notes for phase_i3
+  explicitly anticipated this revision ("implementers should
+  adjust the invariant"). The field was dropped from the
+  structure; `compileFrag_bsum_partial_base`'s discharge
+  simplified. phase_i0 was independently verified to not depend
+  on the precondition's `fBody_zero` (it *establishes* the
+  post-state version via the zero-sweep). +5/-34 LOC. Commit
+  `ymnzntyr 32327610`.
+
+- **bsum.3.phase_i3 — accUpdate + incR + goto**: Composes the
+  4-instruction accUpdate `transferLoop` (`4 * f.interp(...) + 1`
+  URM steps) with `incR vI` + `goto topPC` (1 URM step each).
+  T0 = `4 * f.interp (Fin.cons i.val (Fin.tail v)) + 3`,
+  closed-form, inlined-conjunction. Direct conclusion is
+  `partial_invariant @ (i.val + 1)`. Added helper
+  `compileFrag_bsum_accUpdateBlock_instr_at` (~400 LOC) — third
+  instance of the segment-peeling pattern. +836 LOC. Commit
+  `tmpzvqwr 0e910ec1`.
+
+- **bsum.4 — induction glue (i → i+1)**: Composes the four
+  phase-preservation lemmas via `URMState.runFor_add`; the
+  conclusion is existential because phase_i2's T0 is from
+  `ih_f`. PC-window case split over four intervals, each phase's
+  strict bound relaxed to `bsum_exitPC`. Notably compact at +194
+  LOC (the four-phase contracts compose cleanly). Commit
+  `opykmsnx 8c1ba576`.
+
+- **bsum.5 — outer iteration (i = 0 → v 0)**: Strengthened
+  `compileFrag_bsum_partial_aux` (∀ i ≤ v 0) by induction on
+  `i : ℕ`; base case via `compileFrag_bsum_partial_base`, step
+  case via `compileFrag_bsum_partial_step`. Bound shape:
+  `(6 + 9 * (v 0)) + ((List.range i).map perIter).foldl (· + ·) 0`.
+  Added `compileFrag_bsum_prelude_pc_strict_bound` (a third copy
+  of the s0→s4 step ladder; ~75% overlap with `partial_base`).
+  Thin specialisation `compileFrag_bsum_partial` at i = v 0.
+  +424 LOC. Commit `mmsvvnoz b2c6d3c4`.
+
+- **Fix: bsum/bprod runtime per-iter prologue overhead**: Task
+  10's `compileER_runtime` had insufficient `+ 50` constant for
+  bsum perIter (and `+ 60` for bprod) — negative slack for
+  arity > 22. Added `+ 2 * (k + 1)` to both branches. The
+  defect surfaced only at the runtime-bound discharge in bsum.6;
+  no earlier proof exercised the bound symbolically over `k`.
+  Minimal correction (the `2 * (k + 1)` term comes from the
+  prologue's `+ 2` summand across `k + 1` slots). Commit
+  `vpxorvpw f8e7a28a`.
+
+- **Refactor: structural numRegs identity + bprod off-by-one**:
+  Added `compileER_numRegs_eq_compileERFrag_numRegs : ∀ {a}
+  (e : ERMor1 a), compileER_numRegs e = (compileERFrag e).numRegs`
+  by structural induction. Independently uncovered Task 9's
+  `compileER_numRegs (.bprod f)` off-by-one (`k + 9` → `k + 10`;
+  the original would have aliased `vMulTmp` at index `k + 9`
+  with `fBase` at the same index, corrupting f's first register).
+  Both fixes interlocked: the structural identity does not hold
+  under the original `k + 9`. +104 LOC. Commit `xxwysuvu b39b48e7`.
+
+- **bsum.6 — `compileER_pre_stop_correct_bsum` final
+  assembly**: Composes `compileFrag_bsum_partial` (i = v 0 at
+  loop top with V_x = 0) with the exit jumpZR step (taken via
+  zero branch to `bsum_exitPC`). Slack arithmetic against the
+  fixed `compileER_runtime` closed using the structural numRegs
+  identity. Un-`private`d `vPrefixSum_succ` and
+  `vPrefixSum_eq_foldl_finRange` in `Comp.lean` for cross-module
+  consumption (re-`private` candidate once
+  `h_outerSum_eq`-style helper migrates from BSum.lean to
+  Comp.lean). +298 LOC. Commit `wlsnlkvx f10bdb02`.
+
+- **11f — `compileER_runFor_bsum`**: 3-line wrapper composing
+  `compileER_pre_stop_correct_bsum` with the existing bridge
+  `compileER_pre_stop_to_runFor` (mirrors `compileER_runFor_comp`
+  at Comp.lean:5402). +33 LOC. Commit `zpoqzoxk 40b93026`.
+
+Cumulative session-6 output: 11 commits (9 feat + 1 fix + 1
+refactor), ~4252 LOC on BSum.lean (786 → 5038), +104 LOC on
+Compiler.lean, 2 privacy lifts in Comp.lean. All axiom checks
+`[propext, Quot.sound]` only. Build clean throughout. Two
+latent specification bugs fixed (compileER_runtime per-iter
+constants; bprod numRegs off-by-one) — exactly the value
+proposition of formal correctness proofs.
+
 #### Session 4 (2026-05-19, file split landed)
 
 - **File split (followup item 9)**: extracted the
@@ -349,70 +499,67 @@ sub-division doc has grown; consolidate at session end.
 
 ### Cumulative output
 
-Approximately 62 commits, ~15300 LOC of correctness proof +
+Approximately 74 commits, ~19550 LOC of correctness proof +
 infrastructure. `GebLean/LawvereERKSim/` six submodules total
-~13000 lines (Compiler 1686, Embedding 898, Loops 2538, Atoms
-1635, Comp 5444, BSum 786) plus the 38-line pure-import index.
+~13260 lines (Compiler 1790, Embedding 898, Loops 2538, Atoms
+1635, Comp 5444, BSum 5038) plus the 38-line pure-import index.
 All build clean. Axiom hygiene clean (`[propext, Quot.sound]`
 only on every declaration; verified via
 `mcp__lean-lsp__lean_verify` per-declaration).
 
 ## What remains
 
-### Task 11e.6.a.iii-bsum — bsum pre-stop (in progress)
-
-Sub-divided into 14 implementer-sized sub-tasks; see
-`docs/superpowers/plans/2026-05-19-step-t2-t11-bsum-prestop-subdivision.md`.
-
-Session 5 landed: sub-tasks bsum.0 (PC layout), bsum.1.a
-(zero-sweep), bsum.1.b (prologue alias), bsum.1.c (accumulator
-update alias), and bsum.1.d (f-body embedding). BSum.lean is now
-786 lines.
-
-Remaining sub-tasks (in dependency order):
-
-- **bsum.2** — partial invariant and base case (10-clause
-  `compileFrag_bsum_partial_invariant` structure plus
-  `compileFrag_bsum_partial_base` for `i = 0` after the prelude's
-  13-step initial run).
-- **bsum.3.phase_i0** — zero-sweep preservation.
-- **bsum.3.phase_i1** — prologue preservation (instantiates
-  bsum.1.b's wrapper).
-- **bsum.3.phase_i2** — f-body preservation (consumes the
-  structural IH on f).
-- **bsum.3.phase_i3** — accumulator-update + `incR` + `goto`
-  back to top.
-- **bsum.4** — induction glue (`i → i + 1`).
-- **bsum.5** — outer iteration (`i = 0` to `i = v 0`).
-- **bsum.6** — final assembly: `compileER_pre_stop_correct_bsum`
-  in the existential form, ready for the constructor-agnostic
-  `compileER_pre_stop_to_runFor` bridge.
-
 ### Task 11e.6.a.iii-bprod — bprod pre-stop
 
-Mirror of the bsum sub-division, with multiplicative accumulator
-in place of additive and the doubled-`transferLoop` for `R^XY_Z`.
-~3000-4000 LOC across ~14 sub-tasks. New work lands in
-`GebLean/LawvereERKSim/BProd.lean`. Sub-division to be drafted
-once bsum is complete (the sub-division will mostly track the
-bsum doc with the per-iteration phase adjustments).
+Mirror of the landed bsum chain, with multiplicative accumulator
+in place of additive and a doubled-`transferLoop` for the
+`R^XY_Z` register update. ~3000-4000 LOC across ~14 sub-tasks.
+New work lands in `GebLean/LawvereERKSim/BProd.lean`.
 
-### Tasks 11f, 11g — bsum/bprod runFor wrap-ups
+The bsum sub-division at
+`docs/superpowers/plans/2026-05-19-step-t2-t11-bsum-prestop-subdivision.md`
+is the template; the next session begins by drafting an analogous
+`docs/superpowers/plans/2026-05-20-step-t2-t11-bprod-prestop-subdivision.md`
+that mirrors the bsum doc with the per-iteration phase adjustments
+for the multiplicative case. Per the project's "Non-negotiable
+interfaces for formalising pre-existing objects" rule, lemma
+signatures should mirror the bsum versions exactly, substituting
+`.bprod` for `.bsum`, `natBProd` for `natBSum`, and the multi
+`transferLoop` pair for the additive single. Adversarial review
+of the bprod sub-division before SDD execution begins.
 
-Analogues of 11e.7 for bsum and bprod. Each small once the
-corresponding pre-stop lemma exists. ~100-200 LOC each.
+The infrastructure carried over from bsum:
+
+- `compileER_pre_stop_to_runFor` bridge (Embedding.lean) consumes
+  the standard pre-stop existential — bprod will produce the same
+  shape.
+- `compileER_numRegs_eq_compileERFrag_numRegs` (Compiler.lean
+  session 6) closes the slack-arithmetic gap for bprod's final
+  assembly the same way it did for bsum.
+- The corrected `compileER_runtime` for `.bprod` already carries
+  the `+ 2 * (k + 1)` per-iter constant (session-6 fix).
+- The bprod `numRegs = k + 10 + frag_f.numRegs` is now correct
+  (session-6 off-by-one fix).
+
+### Task 11g — bprod runFor wrapper
+
+3-line wrapper around the bridge once
+`compileER_pre_stop_correct_bprod` lands. ~30 LOC. Mirrors
+`compileER_runFor_bsum` (BSum.lean tail).
 
 ### Task 11h — top-level structural induction
 
 `compileER_runFor` by structural induction on `e`
 dispatching to per-constructor `_runFor_*` lemmas
-(zero/succ/proj/sub/comp/bsum/bprod). ~50-100 LOC.
+(zero/succ/proj/sub/comp/bsum/bprod). ~50-100 LOC. Consider
+landing in a new `GebLean/LawvereERKSim/Top.lean` submodule.
 
 ### Task 12 — axiom audit
 
-Manual lint pass over the entire `GebLean/LawvereERKSim.lean`.
-The implementer-flagged defect with `scripts/check-axioms.sh`
-not seeing nested namespaces is documented but unresolved
+Manual lint pass over every submodule under
+`GebLean/LawvereERKSim/`. The earlier-flagged defect with
+`scripts/check-axioms.sh` not seeing nested namespaces is
+documented but unresolved
 upstream — `mcp__lean-lsp__lean_verify` is the per-declaration
 authoritative tool.
 
@@ -428,8 +575,8 @@ Tracked as task #654. Accumulated across phase i.1/i.2/i.3,
 comp.2.ind, comp.3.a, comp.3.b reviews, plus file-split SDD
 reviews.
 
-Items 1-8 are the original followups; items 9-13 are new
-items surfaced during the file-split work:
+Items 1-8 are the original comp-era followups; items 9-13 are
+file-split-era; items 14-22 are bsum-era (sessions 5-6):
 
 1. Rename `gsPrefixSum_mono`'s `{n m : ℕ}` binders to
    `{n n' : ℕ}` so inlined `h_aux_mono` in phases i.1, i.2,
@@ -487,6 +634,57 @@ items surfaced during the file-split work:
 14. After Task 11h lands, consider adding a `Top.lean`
     submodule for the top-level structural induction and
     re-evaluate the index file's responsibilities.
+15. Extract a shared `compileFrag_bsum_rawList_scaffold` lemma
+    (or `compileFrag_bsum_segment_at` parameterised by segment
+    offset and extractor) to deduplicate ~70% overlap across
+    `compileFrag_bsum_zeroSweep_instr_at`,
+    `compileFrag_bsum_prologueBlock_instr_at`, and
+    `compileFrag_bsum_accUpdateBlock_instr_at` (each in BSum.lean
+    after their respective phase landings). The same scaffold
+    will be reused four-fold across the upcoming bprod chain.
+16. Extract a shared s0→s4 prelude step-ladder lemma between
+    `compileFrag_bsum_partial_base` (BSum.lean) and
+    `compileFrag_bsum_prelude_pc_strict_bound` (~75% duplication).
+17. Extract an `outside_preserved_at r h_outside` tactic-level
+    macro for the 5-line ritual (`let r / have h_out / have
+    h_pres / have h_idx_eq / rw + h.field`) that repeats 8 times
+    in phase_i2 lemmas across bsum and comp, and will repeat in
+    bprod's phase_i2.
+18. Extract `h_foldl_le`, `h_foldl_map_eq`, and `h_outerSum_eq`
+    helpers from their inline appearances in `BSum.lean`
+    (~4843+) and `Comp.lean` (~5272+) into a shared location
+    (Loops.lean or a new utilities slot in Comp.lean). After
+    `h_outerSum_eq` migrates out of BSum.lean, restore `private`
+    on `vPrefixSum_succ` and `vPrefixSum_eq_foldl_finRange` in
+    `Comp.lean`.
+19. Sweep dead bindings: `have h_eq` at BSum.lean:3078 (inside
+    phase_i2 destructuring), `have h_numRegs_pos` at
+    BSum.lean:3703 (inside phase_i3), and any further dead
+    `with` bindings in BSum.lean introduced after `set`-based
+    abbreviations.
+20. Update `BSum.lean`'s module docstring's `## Main statements`
+    section to include the session-6 additions
+    (`compileFrag_bsum_partial_phase_i2`,
+    `compileFrag_bsum_partial_step`,
+    `compileFrag_bsum_partial_aux`,
+    `compileFrag_bsum_partial`,
+    `compileER_pre_stop_correct_bsum`,
+    `compileER_runFor_bsum`,
+    `compileFrag_bsum_prelude_pc_strict_bound`). Per the
+    project convention, do **not** list private declarations
+    there; either restore the previously-listed private decls
+    to a separate section (e.g. `## Implementation notes`) or
+    promote the small subset that warrants public visibility.
+21. Replace the `set sPost := …`/`set sFinal := …` bindings in
+    `compileER_pre_stop_correct_bsum` (BSum.lean tail) with
+    plain `let` (Pattern 9): their RHSes are intermediate
+    states not referenced from any parameter type.
+22. `simp only [if_pos h]` was found to leak `sorryAx` into the
+    enclosing declaration's axiom set in the current
+    toolchain; `rw [if_pos h]` does not. Audit BSum.lean and
+    Comp.lean for `simp only [if_*]` occurrences and convert
+    each to `rw` to harden the axiom-hygiene story. See
+    `feedback_simp_if_pos_sorryAx_leak.md` in user memory.
 
 ## Resolved design for 11e.7 (option a-bridge)
 
@@ -653,43 +851,109 @@ collects the `≤ t'` conclusions via the corresponding
     matters, prefer surgical `rw` over `simp only` on
     layout/size lemmas.
 
+16. **Inlined-conjunction convention for closed-form T0**:
+    when a phase-preservation lemma's T0 is closed-form (a
+    function of parameters, not an existential witness), drop
+    the outer `∃ T0, T0 = const ∧ post ∧ pc_bound` wrapping
+    and write `post ∧ pc_bound` at `URMState.runFor _ sPre
+    const` directly. The existential carries no information
+    when T0 is determined; consumers find the inlined form
+    easier to consume (no `obtain` needed). Applied uniformly
+    to bsum phase_i0/i1/i3 and the bsum.4 glue's two
+    deterministic sub-terms. Phase_i2 keeps the existential
+    because its T0 comes from `ih_f`'s witness.
+
+17. **`let`-bound `URMState.init` blocks regs-projection
+    reduction**: `let f_init := URMState.init frag.toURMProgram
+    v` makes `f_init.regs r` opaque to the unifier; the
+    underlying `match`-form does not reduce through the `let`.
+    Workaround: introduce the regs-equation lemma with
+    `URMState.init ...` written inline (and `unfold URMState.init
+    ; simp only []` to beta-reduce the struct projection), then
+    bind `let f_init := ...` for subsequent
+    `stateEmbedsFrag_*` consumption. Comp's analogous proofs
+    avoid the issue because their `frag_gs i := compileERFrag
+    (gs i)` is a function applied to a parameter rather than a
+    fully-applied `URMState.init`. See
+    `feedback_urmstate_init_let_reduction.md` in user memory.
+
+18. **Partial-invariant boundary placement**: if a clause of
+    the loop's partial invariant cannot be carried across an
+    iteration boundary (because some intra-iteration phase
+    invalidates it and a later phase re-establishes it),
+    drop the clause from the invariant entirely and let the
+    next iteration's first phase re-establish it for its own
+    post-state. Surfaced for bsum's `fBody_zero`: phase_i2
+    only tracks `f_output`, not the full f-body; the next
+    iteration's phase_i0 zero-sweep restores the full block.
+    Cleaner than carrying a vacuous "or some state we don't
+    track" disjunction. Anticipated by the sub-division
+    plan's notes for phase_i3.
+
+19. **Closed-form T0 elaboration via `change` + type
+    ascription**: when chaining phase lemmas via
+    `URMState.runFor_add`, omega and the dispatched lemma
+    outputs need to share syntactic form. Use `let`-bound
+    abbreviations (`frag_f`, `outer`, `v_iter`, etc.), then
+    a `change` block immediately after introducing them to
+    rewrite the goal in `let`-bound form. Use a type-
+    ascribed `have h : T0 ≤ <fold> := ih_value` to force a
+    let-folded shape when the dispatched value carries the
+    unfolded form. Generalisation of the `URMState.init`
+    quirk above.
+
 ## Resumption recipe
 
-1. `lake build` (whole tree) — should be clean.
+1. `lake build` (whole tree) — should be clean. Run
+   `markdownlint-cli2 '**/*.md'` and `doctoc '**/*.md'
+   --check` to confirm doc state.
 
-2. **Continue bsum pre-stop** in
-   `GebLean/LawvereERKSim/BSum.lean`. Sub-tasks bsum.0,
-   bsum.1.{a,b,c,d} landed in Session 5. Next: bsum.2
-   (partial invariant + base case) — large structure
-   declaration plus the 13-step prelude base lemma. Then
-   bsum.3.{phase_i0, phase_i1, phase_i2, phase_i3} (four
-   per-iteration phase preservation lemmas), bsum.4
-   (induction glue), bsum.5 (outer iteration), bsum.6 (final
-   pre-stop assembly). The sub-division doc at
-   `docs/superpowers/plans/2026-05-19-step-t2-t11-bsum-prestop-subdivision.md`
-   has the lemma signatures and dependency DAG. One correction
-   recorded: bsum.1.d's signature uses
-   `frag_f.instrs.size - 1` (not the originally-stated
-   `frag_f.instrs.size`).
+2. **Draft the bprod pre-stop sub-division** at
+   `docs/superpowers/plans/2026-05-20-step-t2-t11-bprod-prestop-subdivision.md`
+   following the structure of the bsum sub-division at
+   `docs/superpowers/plans/2026-05-19-step-t2-t11-bsum-prestop-subdivision.md`,
+   adapted for the multiplicative case (`natBProd` for
+   `natBSum`, multiplicative accumulator, R^XY_Z's doubled
+   `transferLoop`, +1 register `vFactor`/`vMulTmp`). Bind
+   lemma signatures to the bsum versions where possible.
+   Adversarially review the bprod sub-division to convergence
+   before SDD execution begins. The bprod chain will land in
+   a new `GebLean/LawvereERKSim/BProd.lean` submodule.
 
-3. Then bprod pre-stop in
-   `GebLean/LawvereERKSim/BProd.lean`. Sub-divide first; the
-   structure largely mirrors bsum with multiplicative
-   accumulator and doubled `transferLoop` for R^XY_Z.
+3. **Execute bprod pre-stop** via
+   `superpowers:subagent-driven-development`, sub-task by
+   sub-task with fresh implementer + spec reviewer + code
+   reviewer per task. Carry the patterns learned during the
+   bsum chain (especially the inlined-conjunction
+   convention for closed-form T0 phases, the
+   `URMState.init` reduction quirk, the `simp only [if_pos]`
+   sorryAx leak, and the structural-numRegs identity that
+   closes the slack arithmetic in the final assembly).
+   Estimated ~3000-4000 LOC across ~14 sub-tasks.
 
-4. Then 11f, 11g (bsum/bprod runFor wrappers via the
-   shared bridge `compileER_pre_stop_to_runFor` in
-   `Embedding.lean`).
+4. **Task 11g** — `compileER_runFor_bprod` wrapper. 3-line
+   composition of `compileER_pre_stop_correct_bprod` with
+   `compileER_pre_stop_to_runFor`. Mirror of
+   `compileER_runFor_bsum` (BSum.lean tail).
 
-5. Then 11h (top-level structural induction in `≤ t'`
+5. **Task 11h** — top-level structural induction in `≤ t'`
    form, dispatching to `compileER_runFor_*` per
-   constructor). Add a new `GebLean/LawvereERKSim/Top.lean`
-   submodule for this.
+   constructor (zero/succ/proj/sub/comp/bsum/bprod). Land
+   in a new `GebLean/LawvereERKSim/Top.lean` submodule;
+   re-evaluate the index file's role.
 
-6. Then Task 12 (axiom audit + manual lint).
+6. **Task 12** — axiom audit + manual lint. Per-submodule
+   `mcp__lean-lsp__lean_verify` sweep is authoritative;
+   `scripts/check-axioms.sh` has a documented nested-namespace
+   defect.
 
-7. Then the final holistic code-quality review per the
-   original SDD plan.
+7. **Final holistic code-quality review** per the original
+   SDD plan. Single fresh-context reviewer over the entire
+   T2 implementation.
+
+8. **Followup branch** — task #654's accumulated items
+   (22 entries as of session 6). Address as a single
+   refactor branch after final review.
 
 ## References
 
@@ -697,7 +961,11 @@ collects the `≤ t'` conclusions via the corresponding
   `docs/superpowers/specs/2026-05-16-er-to-k-via-cslib-urm-design.md`.
 - Plan (binding for next-session execution):
   `docs/superpowers/plans/2026-05-17-step-t2-er-to-urm-compiler.md`.
+- bsum sub-division (template for bprod):
+  `docs/superpowers/plans/2026-05-19-step-t2-t11-bsum-prestop-subdivision.md`.
 - Execution skill (binding for next session):
   `superpowers:subagent-driven-development`.
-- Source: `GebLean/LawvereERKSim.lean` (current size
-  ~11940 lines).
+- Source: six submodules under `GebLean/LawvereERKSim/`
+  totalling ~13260 lines (Compiler 1790, Embedding 898,
+  Loops 2538, Atoms 1635, Comp 5444, BSum 5038) plus the
+  38-line `GebLean/LawvereERKSim.lean` index.
