@@ -1479,7 +1479,111 @@ def compileER_numRegs : {a : ℕ} → ERMor1 a → ℕ
           (· + ·) 0
         + compileER_numRegs f + 1
   | _, .bsum (k := k) f => k + 7 + compileER_numRegs f
-  | _, .bprod (k := k) f => k + 9 + compileER_numRegs f
+  | _, .bprod (k := k) f => k + 10 + compileER_numRegs f
+
+/-- Helper for the `comp` case of
+`compileER_numRegs_eq_compileERFrag_numRegs`: the foldl-sum of
+`compileER_numRegs ∘ gs` over `List.finRange n` agrees with
+`gsPrefixSum (compileERFrag ∘ gs) n`, for any `n ≤ k`. Allows
+the per-constructor IH on each `gs i` to be threaded into the
+prefix-sum form used by `compileFrag_comp.numRegs`. -/
+private theorem compileER_numRegs_foldl_eq_gsPrefixSum
+    {k a : ℕ} (gs : Fin k → ERMor1 a)
+    (h_gs : ∀ i : Fin k,
+      compileER_numRegs (gs i) = (compileERFrag (gs i)).numRegs)
+    (n : ℕ) (hn : n ≤ k) :
+    ((List.finRange n).map
+        (fun i : Fin n =>
+          compileER_numRegs
+            (gs ⟨i.val, Nat.lt_of_lt_of_le i.isLt hn⟩))).foldl
+        (· + ·) 0
+      = gsPrefixSum (fun i => compileERFrag (gs i)) n := by
+  induction n with
+  | zero => rfl
+  | succ n' ih =>
+    have hn' : n' ≤ k := Nat.le_of_succ_le hn
+    have hn'_lt : n' < k := hn
+    rw [List.finRange_succ_last, List.map_append, List.map_cons,
+      List.map_nil, List.foldl_append, List.foldl_cons,
+      List.foldl_nil]
+    have h_map_eq :
+        ((List.finRange n').map (Fin.castSucc)).map
+            (fun i : Fin (n' + 1) =>
+              compileER_numRegs
+                (gs ⟨i.val, Nat.lt_of_lt_of_le i.isLt hn⟩))
+          = (List.finRange n').map
+            (fun i : Fin n' =>
+              compileER_numRegs
+                (gs ⟨i.val, Nat.lt_of_lt_of_le i.isLt hn'⟩)) := by
+      rw [List.map_map]
+      apply List.map_congr_left
+      intro i _
+      change compileER_numRegs (gs ⟨i.val, _⟩)
+        = compileER_numRegs (gs ⟨i.val, _⟩)
+      rfl
+    rw [h_map_eq, ih hn']
+    change gsPrefixSum (fun i => compileERFrag (gs i)) n'
+        + compileER_numRegs (gs ⟨(Fin.last n').val, _⟩)
+      = gsPrefixSum (fun i => compileERFrag (gs i)) (n' + 1)
+    change gsPrefixSum (fun i => compileERFrag (gs i)) n'
+        + compileER_numRegs (gs ⟨n', _⟩)
+      = gsPrefixSum (fun i => compileERFrag (gs i)) n'
+        + (if h : n' < k then
+            (compileERFrag (gs ⟨n', h⟩)).numRegs else 0)
+    rw [dif_pos hn'_lt, h_gs ⟨n', hn'_lt⟩]
+
+/-- `compileER_numRegs` agrees with `(compileERFrag e).numRegs`
+on every `e : ERMor1 a`. Proved by induction on `e`; each
+per-constructor `numRegs` field of `compileFrag_*` matches the
+corresponding clause of `compileER_numRegs`. Allows callers to
+rewrite between the two forms when threading the IH-shaped
+runtime witness through the runtime-bound arithmetic of
+`compileER_pre_stop_correct_{bsum,bprod}`. -/
+theorem compileER_numRegs_eq_compileERFrag_numRegs {a : ℕ}
+    (e : ERMor1 a) :
+    compileER_numRegs e = (compileERFrag e).numRegs := by
+  induction e with
+  | zero => rfl
+  | succ => rfl
+  | proj _ => rfl
+  | sub => rfl
+  | comp f gs ih_f ih_gs =>
+    rename_i k a
+    change 2 + a + ((List.finRange k).map
+          (fun i => compileER_numRegs (gs i))).foldl
+        (· + ·) 0
+      + compileER_numRegs f + 1
+      = 2 + a + gsPrefixSum (fun i => compileERFrag (gs i)) k
+        + (compileERFrag f).numRegs + 1
+    rw [ih_f]
+    have h_sum :=
+      compileER_numRegs_foldl_eq_gsPrefixSum gs ih_gs k (Nat.le_refl k)
+    have h_eq :
+        (List.finRange k).map
+            (fun i : Fin k =>
+              compileER_numRegs
+                (gs ⟨i.val, Nat.lt_of_lt_of_le i.isLt (Nat.le_refl k)⟩))
+          = (List.finRange k).map
+            (fun i => compileER_numRegs (gs i)) := by
+      apply List.map_congr_left
+      intro i _
+      have h_fin : (⟨i.val, Nat.lt_of_lt_of_le i.isLt (Nat.le_refl k)⟩
+          : Fin k) = i := Fin.ext rfl
+      rw [h_fin]
+    rw [h_eq] at h_sum
+    rw [h_sum]
+  | bsum f ih =>
+    rename_i k
+    change k + 7 + compileER_numRegs f
+      = (compileFrag_bsum (compileERFrag f)).numRegs
+    rw [ih]
+    rfl
+  | bprod f ih =>
+    rename_i k
+    change k + 10 + compileER_numRegs f
+      = (compileFrag_bprod (compileERFrag f)).numRegs
+    rw [ih]
+    rfl
 
 /-- Runtime witness: a step count sufficient for
 `URMState.runFor (compileER e) v` to reach a state where
