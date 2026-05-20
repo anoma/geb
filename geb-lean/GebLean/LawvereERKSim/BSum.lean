@@ -2911,5 +2911,379 @@ private theorem compileFrag_bsum_partial_phase_i1
         h_s_srcs h_s_dsts k' hk'
     exact h_bound
 
+/-- Post-state predicate for Phase i.2 of one bsum iteration: the state
+immediately after f's reindexed body has executed to its trailing
+`stopR`. PC sits one past the prologue at
+`15 + frag_f.numRegs + 9 * (k + 1) + (frag_f.instrs.size - 1)`, the
+first instruction of the per-iteration accumulator-update transferLoop.
+The `f_output` clause records that f's reindexed output register holds
+`f.interp (Fin.cons i.val (Fin.tail v))`. All outer-scaffolding clauses
+(`hi_lt`, `zReg_zero`, `outer_inputs`, `vX_eq`, `vI_eq`, `tmp1_zero`,
+`tmp2_zero`, `acc_eq`) carry over verbatim from
+`compileFrag_bsum_phase_i1_post @ i`, since every outer-scaffolding
+register lives at an index `< k + 7` outside f's reindexed block
+`[k + 7, k + 7 + frag_f.numRegs)`. -/
+private structure compileFrag_bsum_phase_i2_post
+    {k : ℕ}
+    (frag_f : CompiledFragment (k + 1))
+    (f : ERMor1 (k + 1))
+    (v : Fin (k + 1) → ℕ)
+    (i : Fin (v 0))
+    (s : URMState (compileFrag_bsum frag_f).toURMProgram)
+    : Prop where
+  /-- `i.val < v 0`, packaged for downstream consumers. -/
+  hi_lt : i.val < v 0 := i.isLt
+  /-- PC sits one past f's reindexed body, at the start of the
+  per-iteration accumulator-update transferLoop. -/
+  pc_eq : s.pc = 15 + frag_f.numRegs + 9 * (k + 1)
+                  + (frag_f.instrs.size - 1)
+  /-- `V_z` (register 0) holds `0`. -/
+  zReg_zero : s.regs ⟨0, (compileFrag_bsum frag_f).numRegs_pos⟩ = 0
+  /-- Outer input slots `2..k+2` hold the input vector. -/
+  outer_inputs : ∀ (j : Fin (k + 1)),
+    s.regs ⟨2 + j.val, by
+      have hj : j.val < k + 1 := j.isLt
+      change 2 + j.val < k + 7 + frag_f.numRegs
+      have : 0 < frag_f.numRegs := frag_f.numRegs_pos
+      omega⟩ = v j
+  /-- `V_x` (register `k + 3`) still holds `v 0 - i.val - 1`. -/
+  vX_eq : s.regs ⟨k + 3, by
+    change k + 3 < k + 7 + frag_f.numRegs
+    have : 0 < frag_f.numRegs := frag_f.numRegs_pos
+    omega⟩ = v 0 - i.val - 1
+  /-- `V_i` (register `k + 4`) still holds the pre-iteration counter
+  `i.val`. -/
+  vI_eq : s.regs ⟨k + 4, by
+    change k + 4 < k + 7 + frag_f.numRegs
+    have : 0 < frag_f.numRegs := frag_f.numRegs_pos
+    omega⟩ = i.val
+  /-- Scratch register `tmp1` (register `k + 5`) is `0`. -/
+  tmp1_zero : s.regs ⟨k + 5, by
+    change k + 5 < k + 7 + frag_f.numRegs
+    have : 0 < frag_f.numRegs := frag_f.numRegs_pos
+    omega⟩ = 0
+  /-- Scratch register `tmp2` (register `k + 6`) is `0`. -/
+  tmp2_zero : s.regs ⟨k + 6, by
+    change k + 6 < k + 7 + frag_f.numRegs
+    have : 0 < frag_f.numRegs := frag_f.numRegs_pos
+    omega⟩ = 0
+  /-- The accumulator (register 1) still holds the pre-iteration
+  partial sum. -/
+  acc_eq : s.regs ⟨1, by
+    change 1 < k + 7 + frag_f.numRegs
+    have : 0 < frag_f.numRegs := frag_f.numRegs_pos
+    omega⟩
+      = natBSum i.val (fun j => f.interp (Fin.cons j (Fin.tail v)))
+  /-- f's reindexed output register holds
+  `f.interp (Fin.cons i.val (Fin.tail v))`, the iteration's f-value. -/
+  f_output : s.regs ⟨(k + 7) + frag_f.outputReg.val, by
+    have hO : frag_f.outputReg.val < frag_f.numRegs :=
+      frag_f.outputReg.isLt
+    change (k + 7) + frag_f.outputReg.val < k + 7 + frag_f.numRegs
+    omega⟩ = f.interp (Fin.cons i.val (Fin.tail v))
+
+/-- Phase i.2 preservation lemma: from `compileFrag_bsum_phase_i1_post
+@ i` plus the structural IH on `f` instantiated at the iteration input
+vector `Fin.cons i.val (Fin.tail v)`, there exists some
+`T0 ≤ compileER_runtime f (Fin.cons i.val (Fin.tail v))` such that
+running f's reindexed body for `T0` steps lands the state in
+`compileFrag_bsum_phase_i2_post @ i`. The accompanying strict PC bound
+states that during these `T0` steps the intermediate PC stays
+strictly less than `15 + frag_f.numRegs + 9 * (k + 1)
++ (frag_f.instrs.size - 1)`. The proof instantiates
+`ProgramEmbedsFragment_compileFrag_bsum_fBody` and packages
+`compileFrag_bsum_phase_i1_post`'s `f_inputs` and `f_other_zero`
+clauses into a `StateEmbedsFrag` witness matching
+`URMState.init (compileER f) (Fin.cons i.val (Fin.tail v))`; the IH
+then transports through `stateEmbedsFrag_runFor`, and the outer
+scaffolding's preservation through
+`stateEmbedsFrag_runFor_outside_preserved`. -/
+private theorem compileFrag_bsum_partial_phase_i2
+    {k : ℕ}
+    (f : ERMor1 (k + 1))
+    (ih_f : ∀ (v' : Fin (k + 1) → ℕ),
+      ∃ T0 : ℕ,
+        T0 ≤ compileER_runtime f v' ∧
+        (URMState.runFor (compileER f)
+              (URMState.init (compileER f) v') T0).pc
+            = (compileER f).instrs.size - 1 ∧
+        (URMState.runFor (compileER f)
+              (URMState.init (compileER f) v') T0).regs
+            (compileER f).outputReg
+          = f.interp v' ∧
+        (∀ k' < T0,
+          (URMState.runFor (compileER f)
+              (URMState.init (compileER f) v') k').pc
+            < (compileER f).instrs.size - 1))
+    (v : Fin (k + 1) → ℕ)
+    (i : Fin (v 0))
+    (sPre : URMState
+      (compileFrag_bsum (compileERFrag f)).toURMProgram)
+    (h_i1 : compileFrag_bsum_phase_i1_post (compileERFrag f) f v i sPre) :
+    ∃ T0 : ℕ,
+      T0 ≤ compileER_runtime f (Fin.cons i.val (Fin.tail v)) ∧
+      compileFrag_bsum_phase_i2_post (compileERFrag f) f v i
+        (URMState.runFor
+          (compileFrag_bsum (compileERFrag f)).toURMProgram sPre T0)
+      ∧ (∀ k' < T0,
+        (URMState.runFor
+          (compileFrag_bsum (compileERFrag f)).toURMProgram sPre k').pc
+          < 15 + (compileERFrag f).numRegs + 9 * (k + 1)
+            + ((compileERFrag f).instrs.size - 1)) := by
+  let frag_f : CompiledFragment (k + 1) := compileERFrag f
+  let outerFrag : CompiledFragment (k + 1) := compileFrag_bsum frag_f
+  let P : URMProgram (k + 1) := outerFrag.toURMProgram
+  let v_iter : Fin (k + 1) → ℕ := Fin.cons i.val (Fin.tail v)
+  let fBase : ℕ := k + 7
+  let pcBase : ℕ := 15 + frag_f.numRegs + 9 * (k + 1)
+  let L : ℕ := frag_f.instrs.size - 1
+  have h_numRegs_eq : P.numRegs = (k + 7) + frag_f.numRegs := rfl
+  have h_numRegs_pos : 0 < P.numRegs := outerFrag.numRegs_pos
+  -- Program embedding of f's reindexed body inside the outer.
+  have h_emb_prog :
+      ProgramEmbedsFragment P frag_f fBase pcBase L :=
+    ProgramEmbedsFragment_compileFrag_bsum_fBody frag_f
+  -- Pre-state hypotheses from `compileFrag_bsum_phase_i1_post`.
+  have h_pc_pre : sPre.pc = pcBase := h_i1.pc_eq
+  -- The init state of f's program at the iteration input vector.
+  -- Inline (no `let`) to avoid blocking `URMState.init`'s reduction.
+  -- Pre-state registers inside f's block match
+  -- `(URMState.init frag_f.toURMProgram v_iter).regs`.
+  have h_pre_regs_in :
+      ∀ (r : Fin frag_f.numRegs),
+        sPre.regs ⟨fBase + r.val, by
+          have hr : r.val < frag_f.numRegs := r.isLt
+          rw [h_numRegs_eq]; omega⟩
+          = (URMState.init frag_f.toURMProgram v_iter).regs r := by
+    intro r
+    -- Reduce RHS via `URMState.init`'s definitional unfolding,
+    -- then beta-reduce the struct projection.
+    unfold URMState.init
+    simp only []
+    cases hFind :
+        (List.finRange (k + 1)).find?
+          (fun j => decide (frag_f.inputRegs j = r)) with
+    | none =>
+      have h_not_input : ∀ j : Fin (k + 1), r ≠ frag_f.inputRegs j := by
+        intro j hj
+        have h_mem : j ∈ List.finRange (k + 1) := List.mem_finRange j
+        have h_dec :
+            decide (frag_f.inputRegs j = r) = true :=
+          decide_eq_true hj.symm
+        have h_ex := List.find?_eq_none.mp hFind j h_mem
+        rw [h_dec] at h_ex
+        exact absurd h_ex (by decide)
+      exact h_i1.f_other_zero r h_not_input
+    | some j =>
+      have h_eq : frag_f.inputRegs j = r := by
+        have h_some := List.find?_some hFind
+        have : decide (frag_f.inputRegs j = r) = true := h_some
+        exact of_decide_eq_true this
+      have h_inputs := h_i1.f_inputs j
+      have h_idx_eq :
+          (⟨fBase + (frag_f.inputRegs j).val, by
+            have hI : (frag_f.inputRegs j).val < frag_f.numRegs :=
+              (frag_f.inputRegs j).isLt
+            change (k + 7) + (frag_f.inputRegs j).val
+              < k + 7 + frag_f.numRegs
+            omega⟩ : Fin P.numRegs)
+            = ⟨fBase + r.val, by
+              have hr : r.val < frag_f.numRegs := r.isLt
+              rw [h_numRegs_eq]; omega⟩ := by
+        apply Fin.ext
+        change fBase + (frag_f.inputRegs j).val = fBase + r.val
+        omega
+      rw [h_idx_eq] at h_inputs
+      exact h_inputs
+  -- Now name the init state via `let` (after the regs-equation is
+  -- proven; `let` would block `URMState.init`'s reduction otherwise).
+  let f_init : URMState frag_f.toURMProgram :=
+    URMState.init frag_f.toURMProgram v_iter
+  -- State embedding at the pre-state.
+  have h_state_emb :
+      StateEmbedsFrag sPre f_init fBase pcBase h_emb_prog.hReg := by
+    refine ⟨?_, ?_⟩
+    · change sPre.pc = pcBase + 0
+      exact h_pc_pre.trans (Nat.add_zero _).symm
+    · intro j hj
+      exact h_pre_regs_in ⟨j, hj⟩
+  -- Instantiate the IH at the iteration input vector. `compileER f`
+  -- and `frag_f.toURMProgram` are definitionally equal; recast the
+  -- IH into `frag_f.toURMProgram` form for use with the embedding.
+  have ih_frag : ∃ T0 : ℕ,
+      T0 ≤ compileER_runtime f v_iter ∧
+      (URMState.runFor frag_f.toURMProgram f_init T0).pc
+          = frag_f.instrs.size - 1 ∧
+      (URMState.runFor frag_f.toURMProgram f_init T0).regs
+          frag_f.outputReg = f.interp v_iter ∧
+      (∀ k' < T0,
+        (URMState.runFor frag_f.toURMProgram f_init k').pc
+          < frag_f.instrs.size - 1) := ih_f v_iter
+  obtain ⟨T0, hT0_le, h_pc_inner, h_out_inner, h_f_strict⟩ := ih_frag
+  -- State embedding after T0 steps.
+  have h_emb_after :
+      StateEmbedsFrag (URMState.runFor P sPre T0)
+          (URMState.runFor frag_f.toURMProgram f_init T0)
+          fBase pcBase h_emb_prog.hReg :=
+    stateEmbedsFrag_runFor P frag_f fBase pcBase L
+      h_emb_prog sPre f_init h_state_emb T0 h_f_strict
+  obtain ⟨h_pc_after, h_regs_after⟩ := h_emb_after
+  -- Outside-the-block register preservation after T0 steps.
+  have h_outside_preserved :
+      ∀ (r : Fin P.numRegs),
+        r.val < fBase ∨ fBase + frag_f.numRegs ≤ r.val →
+        (URMState.runFor P sPre T0).regs r = sPre.regs r := by
+    intro r h_out
+    exact stateEmbedsFrag_runFor_outside_preserved P frag_f
+      sPre f_init fBase pcBase L h_emb_prog h_state_emb T0
+      h_f_strict r h_out
+  refine ⟨T0, hT0_le, ?_, ?_⟩
+  · -- Discharge each `compileFrag_bsum_phase_i2_post` clause.
+    refine
+      { hi_lt := i.isLt
+        pc_eq := ?_
+        zReg_zero := ?_
+        outer_inputs := ?_
+        vX_eq := ?_
+        vI_eq := ?_
+        tmp1_zero := ?_
+        tmp2_zero := ?_
+        acc_eq := ?_
+        f_output := ?_ }
+    · -- pc_eq: PC after T0 = pcBase + (frag_f.instrs.size - 1).
+      rw [h_pc_after, h_pc_inner]
+    · -- zReg_zero: register 0 is outside f's block (0 < k + 7).
+      let z : Fin P.numRegs := ⟨0, h_numRegs_pos⟩
+      have h_out : z.val < fBase ∨ fBase + frag_f.numRegs ≤ z.val := by
+        left; change 0 < k + 7; omega
+      have h_pres := h_outside_preserved z h_out
+      have h_idx_eq :
+          (⟨0, (compileFrag_bsum frag_f).numRegs_pos⟩ : Fin P.numRegs)
+            = z := Fin.ext rfl
+      rw [h_idx_eq, h_pres]; exact h_i1.zReg_zero
+    · -- outer_inputs: each `2 + j.val < k + 7` (since j.val < k + 1).
+      intro j
+      have hj : j.val < k + 1 := j.isLt
+      let r : Fin P.numRegs := ⟨2 + j.val, by
+        rw [h_numRegs_eq]
+        have : 0 < frag_f.numRegs := frag_f.numRegs_pos
+        omega⟩
+      have h_out : r.val < fBase ∨ fBase + frag_f.numRegs ≤ r.val := by
+        left; change 2 + j.val < k + 7; omega
+      have h_pres := h_outside_preserved r h_out
+      have h_idx_eq :
+          (⟨2 + j.val, by
+            change 2 + j.val < k + 7 + frag_f.numRegs
+            have : 0 < frag_f.numRegs := frag_f.numRegs_pos
+            omega⟩ : Fin P.numRegs) = r := Fin.ext rfl
+      rw [h_idx_eq, h_pres]; exact h_i1.outer_inputs j
+    · -- vX_eq: register `k + 3 < k + 7`.
+      let r : Fin P.numRegs := ⟨k + 3, by
+        rw [h_numRegs_eq]
+        have : 0 < frag_f.numRegs := frag_f.numRegs_pos; omega⟩
+      have h_out : r.val < fBase ∨ fBase + frag_f.numRegs ≤ r.val := by
+        left; change k + 3 < k + 7; omega
+      have h_pres := h_outside_preserved r h_out
+      have h_idx_eq :
+          (⟨k + 3, by
+            change k + 3 < k + 7 + frag_f.numRegs
+            have : 0 < frag_f.numRegs := frag_f.numRegs_pos
+            omega⟩ : Fin P.numRegs) = r := Fin.ext rfl
+      rw [h_idx_eq, h_pres]; exact h_i1.vX_eq
+    · -- vI_eq: register `k + 4 < k + 7`.
+      let r : Fin P.numRegs := ⟨k + 4, by
+        rw [h_numRegs_eq]
+        have : 0 < frag_f.numRegs := frag_f.numRegs_pos; omega⟩
+      have h_out : r.val < fBase ∨ fBase + frag_f.numRegs ≤ r.val := by
+        left; change k + 4 < k + 7; omega
+      have h_pres := h_outside_preserved r h_out
+      have h_idx_eq :
+          (⟨k + 4, by
+            change k + 4 < k + 7 + frag_f.numRegs
+            have : 0 < frag_f.numRegs := frag_f.numRegs_pos
+            omega⟩ : Fin P.numRegs) = r := Fin.ext rfl
+      rw [h_idx_eq, h_pres]; exact h_i1.vI_eq
+    · -- tmp1_zero: register `k + 5 < k + 7`.
+      let r : Fin P.numRegs := ⟨k + 5, by
+        rw [h_numRegs_eq]
+        have : 0 < frag_f.numRegs := frag_f.numRegs_pos; omega⟩
+      have h_out : r.val < fBase ∨ fBase + frag_f.numRegs ≤ r.val := by
+        left; change k + 5 < k + 7; omega
+      have h_pres := h_outside_preserved r h_out
+      have h_idx_eq :
+          (⟨k + 5, by
+            change k + 5 < k + 7 + frag_f.numRegs
+            have : 0 < frag_f.numRegs := frag_f.numRegs_pos
+            omega⟩ : Fin P.numRegs) = r := Fin.ext rfl
+      rw [h_idx_eq, h_pres]; exact h_i1.tmp1_zero
+    · -- tmp2_zero: register `k + 6 < k + 7`.
+      let r : Fin P.numRegs := ⟨k + 6, by
+        rw [h_numRegs_eq]
+        have : 0 < frag_f.numRegs := frag_f.numRegs_pos; omega⟩
+      have h_out : r.val < fBase ∨ fBase + frag_f.numRegs ≤ r.val := by
+        left; change k + 6 < k + 7; omega
+      have h_pres := h_outside_preserved r h_out
+      have h_idx_eq :
+          (⟨k + 6, by
+            change k + 6 < k + 7 + frag_f.numRegs
+            have : 0 < frag_f.numRegs := frag_f.numRegs_pos
+            omega⟩ : Fin P.numRegs) = r := Fin.ext rfl
+      rw [h_idx_eq, h_pres]; exact h_i1.tmp2_zero
+    · -- acc_eq: register `1 < k + 7`.
+      let r : Fin P.numRegs := ⟨1, by
+        rw [h_numRegs_eq]
+        have : 0 < frag_f.numRegs := frag_f.numRegs_pos; omega⟩
+      have h_out : r.val < fBase ∨ fBase + frag_f.numRegs ≤ r.val := by
+        left; change 1 < k + 7; omega
+      have h_pres := h_outside_preserved r h_out
+      have h_idx_eq :
+          (⟨1, by
+            change 1 < k + 7 + frag_f.numRegs
+            have : 0 < frag_f.numRegs := frag_f.numRegs_pos
+            omega⟩ : Fin P.numRegs) = r := Fin.ext rfl
+      rw [h_idx_eq, h_pres]; exact h_i1.acc_eq
+    · -- f_output: f's reindexed outputReg holds f.interp v_iter.
+      have hOutLt : frag_f.outputReg.val < frag_f.numRegs :=
+        frag_f.outputReg.isLt
+      have h_eq := h_regs_after frag_f.outputReg.val hOutLt
+      have h_inner_idx :
+          (⟨frag_f.outputReg.val, hOutLt⟩ : Fin frag_f.numRegs)
+            = frag_f.outputReg := Fin.ext rfl
+      rw [h_inner_idx] at h_eq
+      have h_idx_eq :
+          (⟨(k + 7) + frag_f.outputReg.val, by
+            have hO : frag_f.outputReg.val < frag_f.numRegs :=
+              frag_f.outputReg.isLt
+            change (k + 7) + frag_f.outputReg.val
+              < k + 7 + frag_f.numRegs
+            omega⟩ : Fin P.numRegs)
+            = ⟨fBase + frag_f.outputReg.val, by
+              have hO : frag_f.outputReg.val < frag_f.numRegs :=
+                frag_f.outputReg.isLt
+              rw [h_numRegs_eq]; omega⟩ := Fin.ext rfl
+      rw [h_idx_eq, h_eq]
+      exact h_out_inner
+  · -- Per-step strict PC bound on the outer side.
+    intro k' hk'
+    have h_f_strict_k' :
+        ∀ k'' < k',
+          (URMState.runFor frag_f.toURMProgram f_init k'').pc < L := by
+      intro k'' hk''
+      exact h_f_strict k'' (Nat.lt_trans hk'' hk')
+    have h_emb_k' :
+        StateEmbedsFrag (URMState.runFor P sPre k')
+            (URMState.runFor frag_f.toURMProgram f_init k')
+            fBase pcBase h_emb_prog.hReg :=
+      stateEmbedsFrag_runFor P frag_f fBase pcBase L
+        h_emb_prog sPre f_init h_state_emb k' h_f_strict_k'
+    obtain ⟨h_pc_k', _⟩ := h_emb_k'
+    have h_frag_k' :
+        (URMState.runFor frag_f.toURMProgram f_init k').pc < L :=
+      h_f_strict k' hk'
+    rw [h_pc_k']
+    change pcBase + (URMState.runFor frag_f.toURMProgram f_init k').pc
+        < pcBase + L
+    omega
+
 end LawvereERKSim
 end GebLean
