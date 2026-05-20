@@ -8474,20 +8474,8 @@ theorem compileER_pre_stop_correct_bprod
         · intro x hx; exact h_le x (List.mem_cons_of_mem _ hx)
         · have h_hd := h_le hd (List.mem_cons_self)
           omega
-    have h_foldl_map_eq : ∀ {β : Type} (l : List β) (g : β → ℕ)
-        (acc : ℕ),
-        (l.map g).foldl (· + ·) acc
-          = l.foldl (fun s x => s + g x) acc := by
-      intro β l
-      induction l with
-      | nil => intro _ _; rfl
-      | cons hd tl ih =>
-        intro g acc
-        change (tl.map g).foldl (· + ·) (acc + g hd)
-          = tl.foldl _ (acc + g hd)
-        exact ih g (acc + g hd)
-    rw [h_foldl_map_eq]
-    rw [h_foldl_map_eq] at hT_partial_bound
+    rw [List.foldl_map]
+    rw [List.foldl_map] at hT_partial_bound
     -- vPrefixSum (Fin.cons j (Fin.tail v)) (k+1) = j + outerSum.
     have h_outerSum_eq :
         ∀ j : ℕ,

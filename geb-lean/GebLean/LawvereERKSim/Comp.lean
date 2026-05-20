@@ -5246,23 +5246,9 @@ theorem compileER_pre_stop_correct_comp
         · intro x hx; exact h_le x (List.mem_cons_of_mem _ hx)
         · have h_hd := h_le hd (List.mem_cons_self)
           omega
-    -- Helper: foldl on `List.map g l` equals foldl on `l` with
-    -- summand `g`.
-    have h_foldl_map_eq : ∀ {β : Type} (l : List β) (g : β → ℕ)
-        (acc : ℕ),
-        (l.map g).foldl (· + ·) acc
-          = l.foldl (fun s x => s + g x) acc := by
-      intro β l
-      induction l with
-      | nil => intro _ _; rfl
-      | cons hd tl ih =>
-        intro g acc
-        change (tl.map g).foldl (· + ·) (acc + g hd)
-          = tl.foldl _ (acc + g hd)
-        exact ih g (acc + g hd)
     -- Apply both helpers.
-    rw [h_foldl_map_eq]
-    rw [h_foldl_map_eq] at hT_gs_bound
+    rw [List.foldl_map]
+    rw [List.foldl_map] at hT_gs_bound
     -- Now both sides are `foldl (s + g hd) 0 (List.finRange k)`;
     -- on LHS g = T_gs_summand + 1 (with leading 1), on RHS g =
     -- runtime_summand.  Apply h_foldl_le with the +2 + runtime f
