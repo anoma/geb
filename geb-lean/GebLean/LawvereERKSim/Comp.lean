@@ -2710,16 +2710,8 @@ private theorem compileFrag_comp_subBlocks_partial_phase_i1
     -- For m.val < i.val, gs i'sPre block sits at or above
     -- gsBase_{m+1} = gsBase_m + (frag_gs m).numRegs.
     have h_aux_mono : ∀ (n n' : ℕ), n ≤ n' →
-        gsPrefixSum frag_gs n ≤ gsPrefixSum frag_gs n' := by
-      intro n n' h
-      induction h with
-      | refl => exact Nat.le_refl _
-      | step h_le ih =>
-        rename_i n''
-        refine Nat.le_trans ih ?_
-        change gsPrefixSum frag_gs n'' ≤ gsPrefixSum frag_gs n''
-            + (if h : n'' < k then (frag_gs ⟨n'', h⟩).numRegs else 0)
-        omega
+        gsPrefixSum frag_gs n ≤ gsPrefixSum frag_gs n' :=
+      fun _ _ h => gsPrefixSum_mono frag_gs h
     have h_step :
         gsPrefixSum frag_gs (m.val + 1)
           = gsPrefixSum frag_gs m.val + (frag_gs m).numRegs :=
@@ -3284,16 +3276,8 @@ private theorem compileFrag_comp_subBlocks_partial_phase_i2
           < (compileERFrag (gs i)).numRegs :=
         ((compileERFrag (gs i)).outputReg).isLt
       have h_aux_mono : ∀ (n n' : ℕ), n ≤ n' →
-          gsPrefixSum frag_gs n ≤ gsPrefixSum frag_gs n' := by
-        intro n n' h
-        induction h with
-        | refl => exact Nat.le_refl _
-        | step h_le ih =>
-          rename_i n''
-          refine Nat.le_trans ih ?_
-          change gsPrefixSum frag_gs n'' ≤ gsPrefixSum frag_gs n''
-              + (if h : n'' < k then (frag_gs ⟨n'', h⟩).numRegs else 0)
-          omega
+          gsPrefixSum frag_gs n ≤ gsPrefixSum frag_gs n' :=
+        fun _ _ h => gsPrefixSum_mono frag_gs h
       have hsucc_i : gsPrefixSum frag_gs (i.val + 1)
           = gsPrefixSum frag_gs i.val + (frag_gs i).numRegs :=
         gsPrefixSum_succ_eq frag_gs i
@@ -3398,16 +3382,8 @@ private theorem compileFrag_comp_subBlocks_partial_phase_i2
       intro i hi r
       have hr : r.val < (compileERFrag (gs i)).numRegs := r.isLt
       have h_aux_mono : ∀ (n n' : ℕ), n ≤ n' →
-          gsPrefixSum frag_gs n ≤ gsPrefixSum frag_gs n' := by
-        intro n n' h
-        induction h with
-        | refl => exact Nat.le_refl _
-        | step h_le ih =>
-          rename_i n''
-          refine Nat.le_trans ih ?_
-          change gsPrefixSum frag_gs n'' ≤ gsPrefixSum frag_gs n''
-              + (if h : n'' < k then (frag_gs ⟨n'', h⟩).numRegs else 0)
-          omega
+          gsPrefixSum frag_gs n ≤ gsPrefixSum frag_gs n' :=
+        fun _ _ h => gsPrefixSum_mono frag_gs h
       have hmono_top : gsPrefixSum frag_gs (i.val + 1)
           ≤ gsPrefixSum frag_gs k :=
         gsPrefixSum_mono frag_gs i.isLt
@@ -3717,16 +3693,8 @@ private theorem compileFrag_comp_subBlocks_partial_phase_i3
     URMState.runFor P sPre (4 * (gs m).interp v + 1) with h_sPost_def
   -- Auxiliary `gsPrefixSum` monotonicity for any `n ≤ n'`.
   have h_aux_mono : ∀ (n n' : ℕ), n ≤ n' →
-      gsPrefixSum frag_gs n ≤ gsPrefixSum frag_gs n' := by
-    intro n n' h
-    induction h with
-    | refl => exact Nat.le_refl _
-    | step h_le ih =>
-      rename_i n''
-      refine Nat.le_trans ih ?_
-      change gsPrefixSum frag_gs n'' ≤ gsPrefixSum frag_gs n''
-          + (if h : n'' < k then (frag_gs ⟨n'', h⟩).numRegs else 0)
-      omega
+      gsPrefixSum frag_gs n ≤ gsPrefixSum frag_gs n' :=
+    fun _ _ h => gsPrefixSum_mono frag_gs h
   -- The successor PC formula.
   have h_pcOf_succ :
       compileFrag_comp_pcOf frag_gs (m.val + 1)
