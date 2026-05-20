@@ -49,7 +49,7 @@ open GebLean.ZeroTestURM
 plus the corresponding bound proof. Used to feed the
 `step` function's `dif_pos`/`match` form from a hypothesis
 stated with `[…]?`. -/
-theorem getElem_of_getElem?_some {α : Type*}
+private theorem getElem_of_getElem?_some {α : Type*}
     (xs : Array α) (k : ℕ) (a : α)
     (h : xs[k]? = some a) :
     ∃ hk : k < xs.size, xs[k]'hk = a := by
@@ -114,7 +114,7 @@ theorem URMState.step_of_getElem?_assign {a : ℕ}
 /-- One step from a state at PC `pcBase + k` whose
 instruction lookup is hypothesised via `[…]?` to be a
 stop. The step is the identity. -/
-theorem URMState.step_of_getElem?_stop {a : ℕ}
+private theorem URMState.step_of_getElem?_stop {a : ℕ}
     (P : URMProgram a) (s : URMState P) (k : ℕ)
     (h_pc : s.pc = k)
     (h_instr : P.instrs[k]? = some .stop) :
@@ -180,7 +180,7 @@ def StateEmbedsFrag {a b : ℕ}
 from a matching state lands on a matching state, provided
 `s_frag.pc < L` (the embedded region covers the current
 instruction). -/
-theorem stateEmbedsFrag_step {a b : ℕ}
+private theorem stateEmbedsFrag_step {a b : ℕ}
     (P_big : URMProgram b) (frag : CompiledFragment a)
     (regOffset pcOffset L : ℕ)
     (h_emb_prog :
@@ -468,7 +468,7 @@ theorem stateEmbedsFrag_runFor {a b : ℕ}
 /-- One step of `P_big` from a state matching `s_frag` at
 `s_frag.pc < L` preserves any register outside the embedded
 block `[regOffset, regOffset + frag.numRegs)`. -/
-theorem stateEmbedsFrag_step_outside_preserved
+private theorem stateEmbedsFrag_step_outside_preserved
     {a b : ℕ}
     (P_big : URMProgram b) (frag : CompiledFragment a)
     (s_big : URMState P_big) (s_frag : URMState frag.toURMProgram)
@@ -680,7 +680,7 @@ keeps the PC within `[0, instrs.size]`. Used by
 `compileER_runFor_{comp,bsum,bprod}` to discharge the
 `pc < L` precondition of `stateEmbedsFrag_runFor` after
 deriving the strict bound from the per-step layout. -/
-theorem compileER_runFor_pc_le_size {a : ℕ}
+private theorem compileER_runFor_pc_le_size {a : ℕ}
     (e : ERMor1 a) (v : Fin a → ℕ) (n : ℕ)
     (h_well : (compileER e).WellBounded) :
     ((URMState.init (compileER e) v).runFor
@@ -701,7 +701,7 @@ fragment under analysis is a `compileERFrag` output and
 the starting state is its `URMState.init` (PC = 0) or a
 mid-execution state produced by a previous embedding
 step. -/
-theorem fragment_runFor_pc_le_size {a : ℕ}
+private theorem fragment_runFor_pc_le_size {a : ℕ}
     (frag : CompiledFragment a) (s : URMState frag.toURMProgram)
     (h_well : frag.toURMProgram.WellBounded)
     (h_pc : s.pc ≤ frag.instrs.size) (n : ℕ) :
@@ -752,7 +752,7 @@ This avoids the strict `s_frag.pc < L` precondition of
 `stateEmbedsFrag_step`, accepting `s_frag.pc ≤ L` instead.
 Used in `compileER_runFor_comp_k_zero` where the f-body
 embedded region is the suffix of the outer program. -/
-theorem stateEmbedsFrag_step_tail {a b : ℕ}
+private theorem stateEmbedsFrag_step_tail {a b : ℕ}
     (P_big : URMProgram b) (frag : CompiledFragment a)
     (regOffset pcOffset L : ℕ)
     (h_emb_prog :
