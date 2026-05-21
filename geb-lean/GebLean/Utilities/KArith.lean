@@ -263,6 +263,67 @@ private lemma KMor1.cond_aux (n : ℕ) (p : Fin 2 → ℕ) :
 
 example : KMor1.cond.level = 1 := by decide
 
+/-- Constant-`c` morphism at arity 0, built by `c`-fold
+composition of `KMor1.succ` over `KMor1.zero`. Level 0.
+
+Tourlakis 2018 § 0.1.0.2 (p. 1): closure of `K_0 = {λx.x,
+λx.x+1}` under substitution yields all natural-number
+constants. GebLean's `KMor1.zero` is a separate constructor; the
+`succ ∘ zero` pattern realises the same level-0 closure
+principle. -/
+def KMor1.natK : ℕ → KMor1 0
+  | 0     => KMor1.zero
+  | c + 1 =>
+    KMor1.comp KMor1.succ (fun _ : Fin 1 => KMor1.natK c)
+
+/-- The interpretation of `KMor1.natK c` at the empty
+context is `c`. -/
+@[simp] theorem KMor1.interp_natK (c : ℕ) (ctx : Fin 0 → ℕ) :
+    (KMor1.natK c).interp ctx = c := by
+  induction c with
+  | zero => rfl
+  | succ c ih =>
+    simp only [KMor1.natK, KMor1.interp_comp, KMor1.interp_succ]
+    rw [ih]
+
+/-- `KMor1.natK c` has level 0 for every `c`. -/
+theorem KMor1.natK_level (c : ℕ) : (KMor1.natK c).level = 0 := by
+  induction c with
+  | zero => rfl
+  | succ c ih =>
+    change KMor1.level
+        (KMor1.comp KMor1.succ (fun _ : Fin 1 => KMor1.natK c)) = 0
+    unfold KMor1.level
+    have hsup :
+        Fin.maxOfNat 1 (fun _ : Fin 1 => (KMor1.natK c).level) ≤ 0 :=
+      Fin.maxOfNat_le (by intro _; rw [ih])
+    have hsucc : KMor1.level (KMor1.succ : KMor1 1) = 0 := rfl
+    -- Goal contains `fun i : Fin 1 ↦ ((fun _ ↦ natK c) i).level`,
+    -- which is beta-equal but not defeq to the bound in `hsup`;
+    -- `simp only []` beta-normalises both sides for `omega`.
+    simp only []
+    omega
+
+/-- The constant-`c` morphism at arity `n`, obtained by
+composing `KMor1.natK c` with the empty family `Fin.elim0`.
+Level 0. -/
+def KMor1.natK' (n c : ℕ) : KMor1 n :=
+  KMor1.comp (KMor1.natK c) Fin.elim0
+
+/-- The interpretation of `KMor1.natK' n c` at any context is
+`c`. -/
+@[simp] theorem KMor1.interp_natK' (n c : ℕ) (ctx : Fin n → ℕ) :
+    (KMor1.natK' n c).interp ctx = c := by
+  simp only [KMor1.natK', KMor1.interp_comp, KMor1.interp_natK]
+
+/-- `KMor1.natK' n c` has level 0 for every `n` and `c`. -/
+theorem KMor1.natK'_level (n c : ℕ) :
+    (KMor1.natK' n c).level = 0 := by
+  change KMor1.level (KMor1.comp (KMor1.natK c) Fin.elim0) = 0
+  unfold KMor1.level
+  rw [KMor1.natK_level]
+  rfl
+
 /-- Characteristic of the predicate `x ≠ 1` (Tourlakis
 predicate-as-zero convention): `notEq1(x) = 0` when `x ≠ 1`,
 `notEq1(x) = 1` when `x = 1`.
