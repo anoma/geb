@@ -968,10 +968,16 @@ theorem baseFamily_level {a : ℕ} (P : URMProgram a)
   · -- j = r.castSucc for some r : Fin P.numRegs
     intro r
     simp only [baseFamily, Fin.lastCases_castSucc]
+    -- Per round-4 finding R4-S7: discharge both arms with an
+    -- explicit `unfold KMor1.level; omega` rather than bare `rfl`.
+    -- `rfl` plausibly succeeds via `KMor1.level`'s definitional
+    -- clauses, but is fragile against future reduction-strategy
+    -- changes (e.g., the field becoming `@[reducible]` rather than
+    -- definitionally `0`).
     cases h : (List.finRange a).find?
         (fun i => decide (P.inputRegs i = r)) with
-    | some i => rfl
-    | none => rfl
+    | some i => unfold KMor1.level; omega
+    | none => unfold KMor1.level; omega
 ```
 
 - [ ] **Step 4.4: Build to verify.**
@@ -1057,7 +1063,15 @@ instruction:
 - `.stop` → unchanged (`I_prev`);
 - `.jumpZ i l₁ l₂` → `cond` on `v_i_prev` selecting `l₁` if 0,
   else `l₂`;
-- otherwise (`.assign`, `.inc`, `.dec`) → `I_prev + 1`. -/
+- `.assign`, `.inc`, `.dec` → `I_prev + 1`.
+
+Per round-4 finding R4-S3: enumerate all five constructors
+explicitly rather than via a wildcard `_` arm, matching the
+project precedent in `URMState.step`
+([`GebLean/Utilities/ZeroTestURM.lean:155`](../../GebLean/Utilities/ZeroTestURM.lean#L155)).
+This stabilises the definition against future `URMInstr`
+extensions and aligns with the case-equation propagation
+discharges in Steps 7.8 / 7.9. -/
 private def branches_pc {a : ℕ} (P : URMProgram a)
     (k : Fin P.instrs.size) :
     KMor1 (a + 1 + (P.numRegs + 1)) :=
@@ -1069,10 +1083,12 @@ private def branches_pc {a : ℕ} (P : URMProgram a)
         | ⟨0, _⟩ => v_j_prev P i
         | ⟨1, _⟩ => KMor1.natK' _ l₁
         | ⟨2, _⟩ => KMor1.natK' _ l₂)
-  | _ =>
-    -- .assign, .inc, .dec: PC + 1
-    KMor1.comp KMor1.succ
-      (fun _ : Fin 1 => I_prev P)
+  | URMInstr.assign _ _ =>
+    KMor1.comp KMor1.succ (fun _ : Fin 1 => I_prev P)
+  | URMInstr.inc _ =>
+    KMor1.comp KMor1.succ (fun _ : Fin 1 => I_prev P)
+  | URMInstr.dec _ =>
+    KMor1.comp KMor1.succ (fun _ : Fin 1 => I_prev P)
 ```
 
 - [ ] **Step 5.3: Add the per-instruction branch builders for
@@ -1437,6 +1453,50 @@ private theorem runFor_succ_init_back {a : ℕ}
   rw [URMState.runFor_zero]
 ```
 
+- [ ] **Step 7.1.5: Add the dispatcher-context evaluation
+  helper.**
+
+Per round-4 findings R4-B2, R4-S6, and R4-M3: the `simrecVec_succ`
+-produced dispatcher context evaluated at any slot in the
+"previous-component" range (`a + 1 ≤ slot < a + 1 + (P.numRegs + 1)`)
+reduces to the previous simrec component at the residue index
+`slot - (a + 1)`. This single helper replaces the three inline
+`dite`-reduction derivations that round 3 produced (one for
+`h_ctx_last_pc` and one for `h_ctx_ge` in each of Steps 7.8
+and 7.9), and supplies the per-register-component bridging
+that round 3 left implicit in Step 7.9's `.jumpZ` and `.stop`
+discharges.
+
+Insert below `runFor_succ_init_back`:
+
+```lean
+/-- The `simrecVec_succ`-produced dispatcher context, evaluated
+at any slot in the "previous-component" range
+(`a + 1 ≤ slot < a + 1 + (P.numRegs + 1)`), equals the previous
+simrec component at the residue index `slot - (a + 1)`. Used
+across both the PC and the register-`j` components in the step
+case of `simulate_step_match`. Per round-4 findings R4-B2,
+R4-S6, R4-M3. -/
+private lemma step_ctx_eval_simrec {a : ℕ} (P : URMProgram a)
+    (v : Fin a → ℕ) (y : ℕ)
+    (slot : ℕ) (h_slot_bound : slot < a + 1 + (P.numRegs + 1))
+    (h_slot_ge : a + 1 ≤ slot) :
+    (fun idx : Fin (a + 1 + (P.numRegs + 1)) =>
+       if h₁ : idx.val < a + 1 then
+         if h₂ : idx.val = 0 then (y : ℕ)
+         else v ⟨idx.val - 1, by omega⟩
+       else
+         KMor1.simrecVec (baseFamily P) (stepFamily P) v y
+           ⟨idx.val - (a + 1), by omega⟩)
+        ⟨slot, h_slot_bound⟩
+    = KMor1.simrecVec (baseFamily P) (stepFamily P) v y
+        ⟨slot - (a + 1), by omega⟩ := by
+  show (if h₁ : slot < a + 1 then _ else
+          KMor1.simrecVec (baseFamily P) (stepFamily P) v y
+            ⟨slot - (a + 1), by omega⟩) = _
+  rw [dif_neg (by omega)]
+```
+
 - [ ] **Step 7.2: Add `simulate_step_match` declaration with
   `by sorry` body.**
 
@@ -1483,7 +1543,13 @@ Replace the `sorry` body with:
       -- (URMState.runFor P (URMState.init P v) 0).pc
       --   = (URMState.init P v).pc = 0.
       rw [URMState.runFor_zero]
-      rfl
+      -- Per round-4 finding R4-S4: `(URMState.init P v).pc = 0` is
+      -- a structure-projection identity, but the projection
+      -- reduction does not always fire automatically against the
+      -- LHS shape `0`. Explicitly unfold `URMState.init` to expose
+      -- the `pc := 0` field before closing with `rfl`.
+      show (0 : ℕ) = (URMState.init P v).pc
+      unfold URMState.init
     · -- Register components at y = 0.
       intro j
       simp only [KMor1.simrecVec_zero, baseFamily,
@@ -1570,12 +1636,10 @@ structure is:
       -- produced by `KMor1.simrecVec_succ` at
       -- `LawvereKSimInterp.lean:193 – 209` (NOT a `Fin.cons` of two
       -- arguments). Compute its last-slot value once and reuse
-      -- across the in-bounds / past-end branches. The else-branch
-      -- of the dite fires because `(Fin.last (a + P.numRegs + 1)).val
-      -- = a + P.numRegs + 1 ≥ a + 1`, leaving
-      -- `KMor1.simrecVec _ _ _ y ⟨P.numRegs, _⟩
-      --   = KMor1.simrecVec _ _ _ y (Fin.last P.numRegs)`, which by
-      -- `ih_pc` equals `((URMState.init P v).runFor P y).pc`.
+      -- across the in-bounds / past-end branches. Per round-4
+      -- findings R4-B2 / R4-M3: derive the reduction from the
+      -- shared helper `step_ctx_eval_simrec` rather than re-deriving
+      -- the `dite`-reduction inline.
       have h_ctx_last_pc :
           (fun idx : Fin (a + 1 + (P.numRegs + 1)) =>
             if h₁ : idx.val < a + 1 then
@@ -1586,78 +1650,150 @@ structure is:
                 ⟨idx.val - (a + 1), by omega⟩)
               (Fin.last (a + P.numRegs + 1))
             = ((URMState.init P v).runFor P y).pc := by
-        -- Reduce the dite via `Fin.last`'s numeric form.
-        show (if h₁ : a + P.numRegs + 1 < a + 1 then _ else
-                KMor1.simrecVec (baseFamily P) (stepFamily P) v y
-                  ⟨a + P.numRegs + 1 - (a + 1), by omega⟩) = _
-        rw [dif_neg (by omega)]
-        have hidx : (⟨a + P.numRegs + 1 - (a + 1), by omega⟩ :
-              Fin (P.numRegs + 1)) = Fin.last P.numRegs := by
-          apply Fin.ext; simp [Fin.last]; omega
-        rw [hidx]
+        -- `Fin.last (a + P.numRegs + 1) = ⟨a + P.numRegs + 1, _⟩`
+        -- by `Fin.ext`; apply the helper at `slot := a + P.numRegs + 1`.
+        rw [show (Fin.last (a + P.numRegs + 1)
+                : Fin (a + 1 + (P.numRegs + 1)))
+              = ⟨a + P.numRegs + 1, by omega⟩
+              from by apply Fin.ext; simp [Fin.last]]
+        rw [step_ctx_eval_simrec P v y (a + P.numRegs + 1)
+              (by omega) (by omega)]
+        rw [show (⟨a + P.numRegs + 1 - (a + 1), by omega⟩
+                : Fin (P.numRegs + 1))
+              = Fin.last P.numRegs
+              from by apply Fin.ext; simp [Fin.last]; omega]
         exact ih_pc
       -- The dispatcher's match-vs-default split.
       by_cases h_inbounds :
           ((URMState.init P v).runFor P y).pc < P.instrs.size
       · -- In-bounds: pcDispatch_match fires at k = (runFor y).pc.
-        -- Per plan round-3 finding R3-S1: `set ... with hpc`
-        -- does not retroactively rewrite already-bound
-        -- hypotheses. Either invoke `set` BEFORE deriving
-        -- `h_ctx_last_pc` (so the RHS gets folded automatically)
-        -- or rewrite `h_ctx_last_pc` via `hpc.symm` afterward.
-        -- We adopt the latter form here to keep the bridging
-        -- derivation visually adjacent.
+        -- Per round-4 blocker R4-B1: mathlib's `set ... with hpc`
+        -- already runs `rewrite [show vale = a from rfl] at *`
+        -- (`Mathlib/Tactic/Set.lean:30 – 31`), substituting in all
+        -- hypotheses including `h_ctx_last_pc`. No subsequent
+        -- `rw [← hpc] at h_ctx_last_pc` is needed (the round-3 fix
+        -- that added that rewrite was built on an incorrect premise).
         set pcVal := ((URMState.init P v).runFor P y).pc with hpc
-        rw [← hpc] at h_ctx_last_pc
         -- Apply pcDispatch_match with the bridged hypothesis.
         rw [KMor1.interp_pcDispatch_match P.instrs.size
               (fun k => branches_pc P k) (I_prev P) _
               ⟨pcVal, h_inbounds⟩ h_ctx_last_pc]
-        -- Case-split on the instruction at pcVal. Per plan
-        -- round-3 finding R3-S2, the `cases h_instr` records
-        -- `h_instr : P.instrs[pcVal]'h_inbounds = URMInstr.<ctor>`
-        -- but does NOT directly rewrite the inner
-        -- `match P.instrs[⟨pcVal, h_inbounds⟩]'_ with …` inside
-        -- `branches_pc`'s body (the Fin-index proof object differs).
-        -- Use `simp only [branches_pc, h_instr, URMState.step,
-        -- dif_pos h_inbounds]` to propagate the case-equation
-        -- through both the K^sim and URM matches in one stroke.
-        -- The final `rw [h_ctx_last_pc]` (per R3-S7) bridges
-        -- the dispatcher's `dite`-ctx last-slot read to `pcVal`
-        -- before `ih_pc` can close.
+        -- Case-split on the instruction at pcVal. Per round-4
+        -- serious finding R4-S1: `simp only [branches_pc, h_instr]`
+        -- may fail to rewrite past the bound-proof-object
+        -- difference between `h_inbounds` and
+        -- `⟨pcVal, h_inbounds⟩.isLt` (the inner-match subject after
+        -- `branches_pc` unfolds). The likely path of `simp only` is
+        -- successful via `GetElem.getElem`'s proof-irrelevance, but
+        -- if it fails, the fallback is `subst h_instr` (if
+        -- substitution is permitted, i.e., the cased expression is
+        -- a local variable) or the explicit
+        -- `generalize h_instr : P.instrs[⟨pcVal, h_inbounds⟩.val]'_
+        -- = ins; cases ins with …` pattern.
+        --
+        -- Per round-4 serious finding R4-S5: the `dif_pos h_inbounds`
+        -- application is split out of the `simp only` invocation
+        -- (using a separate `rw` step) to defend against the
+        -- documented `simp only [if_pos h] / [dif_pos h]` sorryAx
+        -- leakage pattern (project memory
+        -- `feedback_simp_if_pos_sorryAx_leak.md`). The sequence is:
+        -- `simp only [URMState.step]` to expose the `dite`, then
+        -- `rw [dif_pos h_inbounds]` to select the in-bounds branch,
+        -- then `simp only [h_instr]` to push the instruction
+        -- case-equation through the inner match.
+        --
+        -- Per round-4 blocker R4-B2: the closing `rw [h_ctx_last_pc]`
+        -- of round 3 cannot fire because `h_ctx_last_pc`'s LHS uses
+        -- `Fin.last (a + P.numRegs + 1)` whereas the post-`simp`
+        -- goal has `⟨a + 1 + P.numRegs, _⟩` (from `I_prev`'s
+        -- deliberate explicit-index construction). Close via the
+        -- shared helper `step_ctx_eval_simrec` plus a `Fin.ext`
+        -- bridge to `Fin.last P.numRegs`, then `exact ih_pc`.
         cases h_instr : P.instrs[pcVal]'h_inbounds with
         | assign i c =>
           -- branches_pc returns succ ∘ I_prev (PC + 1).
           simp only [branches_pc, h_instr, KMor1.interp_comp,
             KMor1.interp_succ, I_prev, KMor1.interp_proj]
-          simp only [URMState.step, dif_pos h_inbounds, h_instr]
-          rw [h_ctx_last_pc]
+          simp only [URMState.step]
+          rw [dif_pos h_inbounds]
+          simp only [h_instr]
+          rw [step_ctx_eval_simrec P v y (a + 1 + P.numRegs)
+                (by omega) (by omega)]
+          rw [show (⟨a + 1 + P.numRegs - (a + 1), by omega⟩
+                  : Fin (P.numRegs + 1))
+                = Fin.last P.numRegs
+                from by apply Fin.ext; simp [Fin.last]; omega]
+          exact ih_pc
         | inc i =>
           simp only [branches_pc, h_instr, KMor1.interp_comp,
             KMor1.interp_succ, I_prev, KMor1.interp_proj]
-          simp only [URMState.step, dif_pos h_inbounds, h_instr]
-          rw [h_ctx_last_pc]
+          simp only [URMState.step]
+          rw [dif_pos h_inbounds]
+          simp only [h_instr]
+          rw [step_ctx_eval_simrec P v y (a + 1 + P.numRegs)
+                (by omega) (by omega)]
+          rw [show (⟨a + 1 + P.numRegs - (a + 1), by omega⟩
+                  : Fin (P.numRegs + 1))
+                = Fin.last P.numRegs
+                from by apply Fin.ext; simp [Fin.last]; omega]
+          exact ih_pc
         | dec i =>
           simp only [branches_pc, h_instr, KMor1.interp_comp,
             KMor1.interp_succ, I_prev, KMor1.interp_proj]
-          simp only [URMState.step, dif_pos h_inbounds, h_instr]
-          rw [h_ctx_last_pc]
+          simp only [URMState.step]
+          rw [dif_pos h_inbounds]
+          simp only [h_instr]
+          rw [step_ctx_eval_simrec P v y (a + 1 + P.numRegs)
+                (by omega) (by omega)]
+          rw [show (⟨a + 1 + P.numRegs - (a + 1), by omega⟩
+                  : Fin (P.numRegs + 1))
+                = Fin.last P.numRegs
+                from by apply Fin.ext; simp [Fin.last]; omega]
+          exact ih_pc
         | jumpZ i l₁ l₂ =>
           simp only [branches_pc, h_instr, KMor1.interp_comp,
             KMor1.interp_cond, v_j_prev, KMor1.interp_proj,
             KMor1.interp_natK']
-          simp only [URMState.step, dif_pos h_inbounds, h_instr]
+          simp only [URMState.step]
+          rw [dif_pos h_inbounds]
+          simp only [h_instr]
           -- URM side: pc := if regs i = 0 then l₁ else l₂.
           -- K^sim side: cond on v_i_prev (= regs i by ih_regs i).
           rw [ih_regs i]
-          -- Match the if-then-else shape on both sides.
+          -- Match the if-then-else shape on both sides. Per round-4
+          -- serious finding R4-S2: replace bare `simp` / `simp [h_zero]`
+          -- with a `simp only` whitelist to avoid pulling in the
+          -- entire default simp set (which on goals involving
+          -- `Fin.cons`, propositional `if`, and `Decidable`
+          -- instances can route through `Classical.choice`, per
+          -- project memory `feedback_mathlib_choice_in_functor_cat.md`).
+          -- The closing simp set is enumerated below; if at
+          -- execution any one of these names is missing or the
+          -- goal shape diverges, use `mcp__lean-lsp__lean_goal` to
+          -- inspect and extend the whitelist (do NOT fall back to
+          -- bare `simp`).
           by_cases h_zero : ((URMState.init P v).runFor P y).regs i = 0
-          · rw [h_zero]; simp
-          · rw [if_neg h_zero]; simp [h_zero]
+          · rw [h_zero]
+            simp only [KMor1.interp_cond, Fin.cons_zero, Fin.cons_succ,
+              if_pos rfl, decide_True, KMor1.interp_natK']
+          · rw [if_neg h_zero]
+            simp only [KMor1.interp_cond, Fin.cons_zero, Fin.cons_succ,
+              if_neg h_zero, decide_False, KMor1.interp_natK']
         | stop =>
           simp only [branches_pc, h_instr, I_prev, KMor1.interp_proj]
-          simp only [URMState.step, dif_pos h_inbounds, h_instr]
-          exact h_ctx_last_pc
+          simp only [URMState.step]
+          rw [dif_pos h_inbounds]
+          simp only [h_instr]
+          -- Per round-4 blocker R4-B2 and minor R4-M1: bridge the
+          -- `⟨a + 1 + P.numRegs, _⟩` form to `Fin.last P.numRegs`
+          -- via the shared helper.
+          rw [step_ctx_eval_simrec P v y (a + 1 + P.numRegs)
+                (by omega) (by omega)]
+          rw [show (⟨a + 1 + P.numRegs - (a + 1), by omega⟩
+                  : Fin (P.numRegs + 1))
+                = Fin.last P.numRegs
+                from by apply Fin.ext; simp [Fin.last]; omega]
+          exact ih_pc
       · -- Past-end: pcDispatch_default fires.
         push_neg at h_inbounds
         -- Lift the in-bounds hypothesis to the dispatcher's ge form
@@ -1686,33 +1822,38 @@ Note: the `h_ctx_last_pc` and `h_ctx_ge` `have` statements
 (per R2-B1) supply `pcDispatch_match`'s and `pcDispatch_default`'s
 context-slot hypotheses by reducing the `dite`-form context
 produced by `simrecVec_succ` (LawvereKSimInterp.lean:193 – 209)
-via `dif_neg (by omega)` plus `Fin.ext`-bridged indexing, then
-chaining with `ih_pc`. Use `mcp__lean-lsp__lean_goal` at each
-`rw` invocation to verify the exact step context shape and
-adjust if the elaborator displays it in a different but
-equivalent form.
+via the shared helper `step_ctx_eval_simrec` (added in Step 7.1.5
+per round-4 findings R4-B2 / R4-M3) plus a `Fin.ext`-bridge to
+`Fin.last P.numRegs`, then chaining with `ih_pc`. Use
+`mcp__lean-lsp__lean_goal` at each `rw` invocation to verify the
+exact step context shape and adjust if the elaborator displays it
+in a different but equivalent form.
 
 - [ ] **Step 7.9: Fill the register-`j` step case.**
 
 Replace the second `sorry` (the register-`j` component) with the
 following six-block structure mirroring Step 7.8 (one block per
-`URMInstr` constructor plus past-end). The S2 bridging
-(`show … simp only [Fin.last]`) is reused; the per-instruction
+`URMInstr` constructor plus past-end). The per-instruction
 discriminator is `by_cases h_eq : i.val = j.val`, matching
 `branches_j`'s shape and `Function.update`'s equality semantics
-on the URM side. Use `mcp__lean-lsp__lean_goal` at each
-subcase to confirm goal shape; the structure is fixed but the
-final `simp` / `rfl` discharges may need minor argument
-adjustments.
+on the URM side. The shared helper `step_ctx_eval_simrec`
+(Step 7.1.5) supplies both the `h_ctx_last_pc` reduction and the
+per-register-component bridging at `slot := a + 1 + j.val` (per
+round-4 findings R4-B2, R4-S6, R4-M3). The `set` /
+no-`rw [← hpc]` and split `simp` / `rw [dif_pos]` patterns
+mirror Step 7.8 (R4-B1 and R4-S5 respectively). Use
+`mcp__lean-lsp__lean_goal` at each subcase to confirm goal
+shape; the structure is fixed but the final `rfl` discharges
+may need minor argument adjustments.
 
 ```lean
       -- Set up the step context shape (mirrors Step 7.8).
       simp only [stepFamily, Fin.lastCases_castSucc]
       -- Bridging hypothesis: same dite-form last-slot reduction as
-      -- in Step 7.8 (per R2-B1). Re-derived rather than shared via
-      -- a top-level lemma because the two refine branches live in
-      -- independent tactic scopes; consider extracting a Task-7-prelude
-      -- helper if the inline form proves duplicative during execution.
+      -- in Step 7.8 (per R2-B1, R4-B2). Re-derived rather than
+      -- shared via a `have` outside the refine because the two
+      -- refine branches live in independent tactic scopes; the
+      -- shared computation lives in `step_ctx_eval_simrec`.
       have h_ctx_last_pc :
           (fun idx : Fin (a + 1 + (P.numRegs + 1)) =>
             if h₁ : idx.val < a + 1 then
@@ -1723,33 +1864,42 @@ adjustments.
                 ⟨idx.val - (a + 1), by omega⟩)
               (Fin.last (a + P.numRegs + 1))
             = ((URMState.init P v).runFor P y).pc := by
-        show (if h₁ : a + P.numRegs + 1 < a + 1 then _ else
-                KMor1.simrecVec (baseFamily P) (stepFamily P) v y
-                  ⟨a + P.numRegs + 1 - (a + 1), by omega⟩) = _
-        rw [dif_neg (by omega)]
-        have hidx : (⟨a + P.numRegs + 1 - (a + 1), by omega⟩ :
-              Fin (P.numRegs + 1)) = Fin.last P.numRegs := by
-          apply Fin.ext; simp [Fin.last]; omega
-        rw [hidx]
+        rw [show (Fin.last (a + P.numRegs + 1)
+                : Fin (a + 1 + (P.numRegs + 1)))
+              = ⟨a + P.numRegs + 1, by omega⟩
+              from by apply Fin.ext; simp [Fin.last]]
+        rw [step_ctx_eval_simrec P v y (a + P.numRegs + 1)
+              (by omega) (by omega)]
+        rw [show (⟨a + P.numRegs + 1 - (a + 1), by omega⟩
+                : Fin (P.numRegs + 1))
+              = Fin.last P.numRegs
+              from by apply Fin.ext; simp [Fin.last]; omega]
         exact ih_pc
       by_cases h_inbounds :
           ((URMState.init P v).runFor P y).pc < P.instrs.size
       · -- In-bounds: pcDispatch_match fires at k = (runFor y).pc.
+        -- Per round-4 blocker R4-B1: `set ... with hpc` already
+        -- substitutes in all hypotheses, so no `rw [← hpc] at
+        -- h_ctx_last_pc` is needed.
         set pcVal := ((URMState.init P v).runFor P y).pc with hpc
-        rw [← hpc] at h_ctx_last_pc  -- per R3-S1: fold RHS to pcVal
         rw [KMor1.interp_pcDispatch_match P.instrs.size
               (fun k => branches_j P j k) (v_j_prev P j) _
               ⟨pcVal, h_inbounds⟩ h_ctx_last_pc]
         cases h_instr : P.instrs[pcVal]'h_inbounds with
         | assign i c =>
-          -- Per R3-S2 / R3-S7: propagate `h_instr` through both
+          -- Per R3-S2 / R4-S1: propagate `h_instr` through both
           -- the K^sim match (inside `branches_j`) and the URM
           -- match (inside `URMState.step`) via `simp only`;
-          -- bridge the dispatcher's `dite`-ctx last-slot read
-          -- via `h_ctx_last_pc` where the K^sim side reads a
-          -- previous-component value.
+          -- bridge the dispatcher's `dite`-ctx slot-`a + 1 + j.val`
+          -- read via `step_ctx_eval_simrec` + `Fin.ext` to
+          -- `j.castSucc` where the K^sim side reads a
+          -- previous-component value (per R4-B2 / R4-S6).
+          -- Per R4-S5: split `dif_pos h_inbounds` out of `simp only`
+          -- into its own `rw`.
           simp only [branches_j, h_instr]
-          simp only [URMState.step, dif_pos h_inbounds, h_instr]
+          simp only [URMState.step]
+          rw [dif_pos h_inbounds]
+          simp only [h_instr]
           by_cases h_eq : i.val = j.val
           · -- Register j is the target: K^sim branch is natK' _ c;
             -- URM-side regs j = Function.update _ i c j = c.
@@ -1762,44 +1912,96 @@ adjustments.
             simp only [v_j_prev, KMor1.interp_proj]
             rw [Function.update_apply,
                 if_neg (fun h => h_eq (Fin.val_eq_of_eq h).symm)]
+            rw [step_ctx_eval_simrec P v y (a + 1 + j.val)
+                  (by omega) (by omega)]
+            rw [show (⟨a + 1 + j.val - (a + 1), by omega⟩
+                    : Fin (P.numRegs + 1))
+                  = j.castSucc
+                  from by apply Fin.ext; simp [Fin.castSucc]; omega]
             exact ih_regs j
         | inc i =>
           simp only [branches_j, h_instr]
-          simp only [URMState.step, dif_pos h_inbounds, h_instr]
+          simp only [URMState.step]
+          rw [dif_pos h_inbounds]
+          simp only [h_instr]
           by_cases h_eq : i.val = j.val
           · rw [if_pos h_eq]
             simp only [KMor1.interp_comp, KMor1.interp_succ,
               v_j_prev, KMor1.interp_proj]
             rw [Function.update_apply, if_pos (Fin.ext h_eq).symm]
+            rw [step_ctx_eval_simrec P v y (a + 1 + j.val)
+                  (by omega) (by omega)]
+            rw [show (⟨a + 1 + j.val - (a + 1), by omega⟩
+                    : Fin (P.numRegs + 1))
+                  = j.castSucc
+                  from by apply Fin.ext; simp [Fin.castSucc]; omega]
             rw [ih_regs j]
           · rw [if_neg h_eq]
             simp only [v_j_prev, KMor1.interp_proj]
             rw [Function.update_apply,
                 if_neg (fun h => h_eq (Fin.val_eq_of_eq h).symm)]
+            rw [step_ctx_eval_simrec P v y (a + 1 + j.val)
+                  (by omega) (by omega)]
+            rw [show (⟨a + 1 + j.val - (a + 1), by omega⟩
+                    : Fin (P.numRegs + 1))
+                  = j.castSucc
+                  from by apply Fin.ext; simp [Fin.castSucc]; omega]
             exact ih_regs j
         | dec i =>
           simp only [branches_j, h_instr]
-          simp only [URMState.step, dif_pos h_inbounds, h_instr]
+          simp only [URMState.step]
+          rw [dif_pos h_inbounds]
+          simp only [h_instr]
           by_cases h_eq : i.val = j.val
           · rw [if_pos h_eq]
             simp only [KMor1.interp_comp, KMor1.interp_pred,
               v_j_prev, KMor1.interp_proj]
             rw [Function.update_apply, if_pos (Fin.ext h_eq).symm]
+            rw [step_ctx_eval_simrec P v y (a + 1 + j.val)
+                  (by omega) (by omega)]
+            rw [show (⟨a + 1 + j.val - (a + 1), by omega⟩
+                    : Fin (P.numRegs + 1))
+                  = j.castSucc
+                  from by apply Fin.ext; simp [Fin.castSucc]; omega]
             rw [ih_regs j]
           · rw [if_neg h_eq]
             simp only [v_j_prev, KMor1.interp_proj]
             rw [Function.update_apply,
                 if_neg (fun h => h_eq (Fin.val_eq_of_eq h).symm)]
+            rw [step_ctx_eval_simrec P v y (a + 1 + j.val)
+                  (by omega) (by omega)]
+            rw [show (⟨a + 1 + j.val - (a + 1), by omega⟩
+                    : Fin (P.numRegs + 1))
+                  = j.castSucc
+                  from by apply Fin.ext; simp [Fin.castSucc]; omega]
             exact ih_regs j
         | jumpZ i l₁ l₂ =>
           -- jumpZ leaves all registers unchanged.
           simp only [branches_j, h_instr, v_j_prev, KMor1.interp_proj]
-          simp only [URMState.step, dif_pos h_inbounds, h_instr]
-          -- URM regs untouched; K^sim returns v_j_prev = ih_regs j.
+          simp only [URMState.step]
+          rw [dif_pos h_inbounds]
+          simp only [h_instr]
+          -- URM regs untouched; K^sim returns v_j_prev = ih_regs j
+          -- after bridging the dispatcher's slot-`a + 1 + j.val`
+          -- read to `j.castSucc` (per R4-B2 / R4-S6).
+          rw [step_ctx_eval_simrec P v y (a + 1 + j.val)
+                (by omega) (by omega)]
+          rw [show (⟨a + 1 + j.val - (a + 1), by omega⟩
+                  : Fin (P.numRegs + 1))
+                = j.castSucc
+                from by apply Fin.ext; simp [Fin.castSucc]; omega]
           exact ih_regs j
         | stop =>
           simp only [branches_j, h_instr, v_j_prev, KMor1.interp_proj]
-          simp only [URMState.step, dif_pos h_inbounds, h_instr]
+          simp only [URMState.step]
+          rw [dif_pos h_inbounds]
+          simp only [h_instr]
+          rw [step_ctx_eval_simrec P v y (a + 1 + j.val)
+                (by omega) (by omega)]
+          rw [show (⟨a + 1 + j.val - (a + 1), by omega⟩
+                  : Fin (P.numRegs + 1))
+                = j.castSucc
+                from by apply Fin.ext; simp [Fin.castSucc]; omega]
           exact ih_regs j
       · -- Past-end: pcDispatch_default fires; default is v_j_prev.
         push_neg at h_inbounds
@@ -1820,6 +2022,12 @@ adjustments.
         -- URM side: step returns s unchanged ⇒ regs j = ih_regs j.
         unfold URMState.step
         rw [dif_neg (Nat.not_lt_of_ge h_inbounds)]
+        rw [step_ctx_eval_simrec P v y (a + 1 + j.val)
+              (by omega) (by omega)]
+        rw [show (⟨a + 1 + j.val - (a + 1), by omega⟩
+                : Fin (P.numRegs + 1))
+              = j.castSucc
+              from by apply Fin.ext; simp [Fin.castSucc]; omega]
         exact ih_regs j
 ```
 
