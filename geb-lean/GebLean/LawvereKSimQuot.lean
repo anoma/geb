@@ -433,9 +433,7 @@ def KMorNQuo.comp_atDepth {n m k d : ℕ}
             intro i
             simp only [KMorN.comp, KMor1.level]
             refine Nat.max_le.mpr ⟨gr.rep_level i, ?_⟩
-            apply Finset.sup_le
-            intro j _
-            exact fr.rep_level j
+            exact Fin.maxOfNat_le (fun j => fr.rep_level j)
           rep_eq := by
             conv_rhs => rw [← fr.rep_eq, ← gr.rep_eq]
             rfl })

@@ -90,13 +90,10 @@ def KMor1.level0Shape :
         exact le_trans (le_max_left _ _) h
       have hgs : ∀ i, (gs i).level ≤ 0 := fun i => by
         unfold KMor1.level at h
-        have hsup : Finset.univ.sup
-            (fun j => (gs j).level) ≤ 0 :=
+        have hsup : Fin.maxOfNat _ (fun j => (gs j).level) ≤ 0 :=
           le_trans (le_max_right _ _) h
         exact le_trans
-          (Finset.le_sup
-            (f := fun j => (gs j).level)
-            (Finset.mem_univ i))
+          (Fin.le_maxOfNat (fun j => (gs j).level) i)
           hsup
       match KMor1.level0Shape f hf with
       | .const k_f       => .const k_f
@@ -130,13 +127,10 @@ theorem KMor1.level0Shape_interp :
         exact le_trans (le_max_left _ _) h
       have hgs : ∀ i, (gs i).level ≤ 0 := fun i => by
         unfold KMor1.level at h
-        have hsup : Finset.univ.sup
-            (fun j => (gs j).level) ≤ 0 :=
+        have hsup : Fin.maxOfNat _ (fun j => (gs j).level) ≤ 0 :=
           le_trans (le_max_right _ _) h
         exact le_trans
-          (Finset.le_sup
-            (f := fun j => (gs j).level)
-            (Finset.mem_univ i))
+          (Fin.le_maxOfNat (fun j => (gs j).level) i)
           hsup
       have hf_eq := KMor1.level0Shape_interp f hf
         (fun i => (gs i).interp ctx)
@@ -215,13 +209,10 @@ def KMor1.linearBound :
         exact le_trans (le_max_left _ _) h
       have hgs : ∀ i, (gs i).level ≤ 1 := fun i => by
         unfold KMor1.level at h
-        have hsup : Finset.univ.sup
-            (fun j => (gs j).level) ≤ 1 :=
+        have hsup : Fin.maxOfNat _ (fun j => (gs j).level) ≤ 1 :=
           le_trans (le_max_right _ _) h
         exact le_trans
-          (Finset.le_sup
-            (f := fun j => (gs j).level)
-            (Finset.mem_univ i))
+          (Fin.le_maxOfNat (fun j => (gs j).level) i)
           hsup
       if hcomp_0 : (KMor1.comp f gs).level ≤ 0 then
         (KMor1.level0Shape (KMor1.comp f gs) hcomp_0).linearBound
@@ -239,27 +230,21 @@ def KMor1.linearBound :
   | _, .simrec (a := _) (k := k) _ h_fam g_fam, hyp =>
       have hh : ∀ j, (h_fam j).level ≤ 0 := fun j => by
         unfold KMor1.level at hyp
-        have hsup : Finset.univ.sup
-            (fun l => (h_fam l).level) ≤ 0 := by
+        have hsup : Fin.maxOfNat _ (fun l => (h_fam l).level) ≤ 0 := by
           have := le_trans (le_max_left _ _)
             (Nat.le_of_succ_le_succ hyp)
           exact this
         exact le_trans
-          (Finset.le_sup
-            (f := fun l => (h_fam l).level)
-            (Finset.mem_univ j))
+          (Fin.le_maxOfNat (fun l => (h_fam l).level) j)
           hsup
       have hg : ∀ j, (g_fam j).level ≤ 0 := fun j => by
         unfold KMor1.level at hyp
-        have hsup : Finset.univ.sup
-            (fun l => (g_fam l).level) ≤ 0 := by
+        have hsup : Fin.maxOfNat _ (fun l => (g_fam l).level) ≤ 0 := by
           have := le_trans (le_max_right _ _)
             (Nat.le_of_succ_le_succ hyp)
           exact this
         exact le_trans
-          (Finset.le_sup
-            (f := fun l => (g_fam l).level)
-            (Finset.mem_univ j))
+          (Fin.le_maxOfNat (fun l => (g_fam l).level) j)
           hsup
       let h_shapes :
           Fin (k + 1) → ConstantOrShiftedProj _ :=
@@ -532,13 +517,10 @@ theorem KMor1.linearBound_dominates :
         exact le_trans (le_max_left _ _) h
       have hgs : ∀ i, (gs i).level ≤ 1 := fun i => by
         unfold KMor1.level at h
-        have hsup : Finset.univ.sup
-            (fun j => (gs j).level) ≤ 1 :=
+        have hsup : Fin.maxOfNat _ (fun j => (gs j).level) ≤ 1 :=
           le_trans (le_max_right _ _) h
         exact le_trans
-          (Finset.le_sup
-            (f := fun j => (gs j).level)
-            (Finset.mem_univ i))
+          (Fin.le_maxOfNat (fun j => (gs j).level) i)
           hsup
       by_cases hcomp_0 : (KMor1.comp f gs).level ≤ 0
       · -- level-0 case: delegate to level0Shape
@@ -644,27 +626,21 @@ theorem KMor1.linearBound_dominates :
   | _, .simrec (a := a) (k := k) i h_fam g_fam, hyp, ctx => by
       have hh : ∀ j, (h_fam j).level ≤ 0 := fun j => by
         unfold KMor1.level at hyp
-        have hsup : Finset.univ.sup
-            (fun l => (h_fam l).level) ≤ 0 := by
+        have hsup : Fin.maxOfNat _ (fun l => (h_fam l).level) ≤ 0 := by
           have := le_trans (le_max_left _ _)
             (Nat.le_of_succ_le_succ hyp)
           exact this
         exact le_trans
-          (Finset.le_sup
-            (f := fun l => (h_fam l).level)
-            (Finset.mem_univ j))
+          (Fin.le_maxOfNat (fun l => (h_fam l).level) j)
           hsup
       have hg : ∀ j, (g_fam j).level ≤ 0 := fun j => by
         unfold KMor1.level at hyp
-        have hsup : Finset.univ.sup
-            (fun l => (g_fam l).level) ≤ 0 := by
+        have hsup : Fin.maxOfNat _ (fun l => (g_fam l).level) ≤ 0 := by
           have := le_trans (le_max_right _ _)
             (Nat.le_of_succ_le_succ hyp)
           exact this
         exact le_trans
-          (Finset.le_sup
-            (f := fun l => (g_fam l).level)
-            (Finset.mem_univ j))
+          (Fin.le_maxOfNat (fun l => (g_fam l).level) j)
           hsup
       simp only [KMor1.linearBound, KMor1.interp_simrec]
       set max_base_const := Fin.foldr (k + 1) (fun l acc =>
@@ -981,13 +957,10 @@ theorem kToERDirect_interp_level_zero :
         exact le_trans (le_max_left _ _) h
       have hgs : ∀ i, (gs i).level ≤ 0 := fun i => by
         unfold KMor1.level at h
-        have hsup : Finset.univ.sup
-            (fun j => (gs j).level) ≤ 0 :=
+        have hsup : Fin.maxOfNat _ (fun j => (gs j).level) ≤ 0 :=
           le_trans (le_max_right _ _) h
         exact le_trans
-          (Finset.le_sup
-            (f := fun j => (gs j).level)
-            (Finset.mem_univ i))
+          (Fin.le_maxOfNat (fun j => (gs j).level) i)
           hsup
       have h_inner :
           (fun i => (kToERDirect (gs i)
@@ -1052,13 +1025,10 @@ private theorem kToERDirect_level0_towerHeight_ge_const :
         exact le_trans (le_max_left _ _) h
       have hgs : ∀ i, (gs i).level ≤ 0 := fun i => by
         unfold KMor1.level at h
-        have hsup : Finset.univ.sup
-            (fun j => (gs j).level) ≤ 0 :=
+        have hsup : Fin.maxOfNat _ (fun j => (gs j).level) ≤ 0 :=
           le_trans (le_max_right _ _) h
         exact le_trans
-          (Finset.le_sup
-            (f := fun j => (gs j).level)
-            (Finset.mem_univ i))
+          (Fin.le_maxOfNat (fun j => (gs j).level) i)
           hsup
       have ihf := kToERDirect_level0_towerHeight_ge_const f hf
       have ihgs := fun i =>
@@ -1871,13 +1841,10 @@ theorem KMor1.linearBoundLog_le_towerHeight :
         exact le_trans (le_max_left _ _) h
       have hgs : ∀ i, (gs i).level ≤ 1 := fun i => by
         unfold KMor1.level at h
-        have hsup : Finset.univ.sup
-            (fun j => (gs j).level) ≤ 1 :=
+        have hsup : Fin.maxOfNat _ (fun j => (gs j).level) ≤ 1 :=
           le_trans (le_max_right _ _) h
         exact le_trans
-          (Finset.le_sup
-            (f := fun j => (gs j).level)
-            (Finset.mem_univ i))
+          (Fin.le_maxOfNat (fun j => (gs j).level) i)
           hsup
       by_cases hcomp_0 : (KMor1.comp f gs).level ≤ 0
       · have h_lb_eq :
@@ -2043,27 +2010,21 @@ theorem KMor1.linearBoundLog_le_towerHeight :
   | _, .simrec (a := a') (k := k') i h_fam g_fam, h => by
       have hh : ∀ j, (h_fam j).level ≤ 0 := fun j => by
         unfold KMor1.level at h
-        have hsup : Finset.univ.sup
-            (fun l => (h_fam l).level) ≤ 0 := by
+        have hsup : Fin.maxOfNat _ (fun l => (h_fam l).level) ≤ 0 := by
           have := le_trans (le_max_left _ _)
             (Nat.le_of_succ_le_succ h)
           exact this
         exact le_trans
-          (Finset.le_sup
-            (f := fun l => (h_fam l).level)
-            (Finset.mem_univ j))
+          (Fin.le_maxOfNat (fun l => (h_fam l).level) j)
           hsup
       have hg : ∀ j, (g_fam j).level ≤ 0 := fun j => by
         unfold KMor1.level at h
-        have hsup : Finset.univ.sup
-            (fun l => (g_fam l).level) ≤ 0 := by
+        have hsup : Fin.maxOfNat _ (fun l => (g_fam l).level) ≤ 0 := by
           have := le_trans (le_max_right _ _)
             (Nat.le_of_succ_le_succ h)
           exact this
         exact le_trans
-          (Finset.le_sup
-            (f := fun l => (g_fam l).level)
-            (Finset.mem_univ j))
+          (Fin.le_maxOfNat (fun l => (g_fam l).level) j)
           hsup
       have hh_one : ∀ j, (h_fam j).level ≤ 1 := fun j =>
         Nat.le_succ_of_le (hh j)
@@ -2751,13 +2712,10 @@ private theorem kToERDirect_interp_level_one :
         exact le_trans (le_max_left _ _) h
       have hgs : ∀ i, (gs i).level ≤ 1 := fun i => by
         unfold KMor1.level at h
-        have hsup : Finset.univ.sup
-            (fun j => (gs j).level) ≤ 1 :=
+        have hsup : Fin.maxOfNat _ (fun j => (gs j).level) ≤ 1 :=
           le_trans (le_max_right _ _) h
         exact le_trans
-          (Finset.le_sup
-            (f := fun j => (gs j).level)
-            (Finset.mem_univ i))
+          (Fin.le_maxOfNat (fun j => (gs j).level) i)
           hsup
       have h_inner :
           (fun i => (kToERDirect (gs i)
@@ -2779,21 +2737,15 @@ private theorem kToERDirect_interp_level_one :
       by
         have h_h : ∀ l, (h_fam l).level ≤ 0 := fun l => by
           unfold KMor1.level at hyp
-          have hsup_le : Finset.univ.sup
-              (fun j => (h_fam j).level) ≤ 0 := by omega
+          have hsup_le : Fin.maxOfNat _ (fun j => (h_fam j).level) ≤ 0 := by omega
           exact le_trans
-            (Finset.le_sup
-              (f := fun j => (h_fam j).level)
-              (Finset.mem_univ l))
+            (Fin.le_maxOfNat (fun j => (h_fam j).level) l)
             hsup_le
         have h_g : ∀ l, (g_fam l).level ≤ 0 := fun l => by
           unfold KMor1.level at hyp
-          have hsup_le : Finset.univ.sup
-              (fun j => (g_fam j).level) ≤ 0 := by omega
+          have hsup_le : Fin.maxOfNat _ (fun j => (g_fam j).level) ≤ 0 := by omega
           exact le_trans
-            (Finset.le_sup
-              (f := fun j => (g_fam j).level)
-              (Finset.mem_univ l))
+            (Fin.le_maxOfNat (fun j => (g_fam j).level) l)
             hsup_le
         set h_ER : Fin (k + 1) → ERMor1 a :=
           fun l => kToERDirect (h_fam l)

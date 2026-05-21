@@ -631,9 +631,7 @@ def KMor1.majorize : {a : ℕ} → (f : KMor1 a) →
       have hgs : ∀ i, (gs i).level ≤ 2 := fun i => by
         unfold KMor1.level at h
         exact le_trans
-          (Finset.le_sup
-            (f := fun j => (gs j).level)
-            (Finset.mem_univ i))
+          (Fin.le_maxOfNat (fun j => (gs j).level) i)
           (le_trans (le_max_right _ _) h)
       let p_f  := KMor1.majorize f hf
       let r_g  := Fin.foldr _ (fun i acc =>
@@ -656,18 +654,14 @@ def KMor1.majorize : {a : ℕ} → (f : KMor1 a) →
         have := le_trans (le_max_left _ _)
           (Nat.le_of_succ_le_succ hyp)
         exact le_trans
-          (Finset.le_sup
-            (f := fun l => (h_fam l).level)
-            (Finset.mem_univ j)) this
+          (Fin.le_maxOfNat (fun l => (h_fam l).level) j) this
       have hg : ∀ j, (g_fam j).level ≤ 1 := by
         unfold KMor1.level at hyp
         intro j
         have := le_trans (le_max_right _ _)
           (Nat.le_of_succ_le_succ hyp)
         exact le_trans
-          (Finset.le_sup
-            (f := fun l => (g_fam l).level)
-            (Finset.mem_univ j)) this
+          (Fin.le_maxOfNat (fun l => (g_fam l).level) j) this
       let r_H := Fin.foldr _ (fun j acc =>
                    max acc
                      (KMor1.majorize_one (h_fam j) (hh j)).1) 0
@@ -756,9 +750,7 @@ theorem KMor1.majorize_by_A_two_iter :
       have hgs : ∀ i, (gs i).level ≤ 2 := fun i => by
         unfold KMor1.level at h
         exact le_trans
-          (Finset.le_sup
-            (f := fun j => (gs j).level)
-            (Finset.mem_univ i))
+          (Fin.le_maxOfNat (fun j => (gs j).level) i)
           (le_trans (le_max_right _ _) h)
       simp only [KMor1.majorize, KMor1.interp_comp]
       set p_f := KMor1.majorize f hf with hp_f
@@ -835,18 +827,14 @@ theorem KMor1.majorize_by_A_two_iter :
         have := le_trans (le_max_left _ _)
           (Nat.le_of_succ_le_succ hyp)
         exact le_trans
-          (Finset.le_sup
-            (f := fun l => (h_fam l).level)
-            (Finset.mem_univ j)) this
+          (Fin.le_maxOfNat (fun l => (h_fam l).level) j) this
       have hg : ∀ j, (g_fam j).level ≤ 1 := by
         unfold KMor1.level at hyp
         intro j
         have := le_trans (le_max_right _ _)
           (Nat.le_of_succ_le_succ hyp)
         exact le_trans
-          (Finset.le_sup
-            (f := fun l => (g_fam l).level)
-            (Finset.mem_univ j)) this
+          (Fin.le_maxOfNat (fun l => (g_fam l).level) j) this
       simp only [KMor1.majorize, KMor1.interp_simrec]
       change KMor1.simrecVec h_fam g_fam (Fin.tail v) (v 0) i
                ≤ _
