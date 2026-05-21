@@ -110,6 +110,181 @@ theorem KMor1.predIter_level (n k : ℕ) :
     simp only []
     omega
 
+/-- Auxiliary continuation for `KMor1.pcDispatch`: at offset
+`k`, test `KMor1.predIter n k = 0 ⇔ PC ≤ k`, select
+`branches ⟨0, _⟩` if so, else recurse at offset `k + 1` over
+`branches ∘ Fin.succ`. The recursive call sits at the *same*
+context as the surrounding `cond`; branches and default are
+never wrapped in a context-substituting `KMor1.comp`. -/
+private def KMor1.pcDispatchFrom {n : ℕ}
+    (k size : ℕ)
+    (branches : Fin size → KMor1 (n + 1))
+    (default : KMor1 (n + 1)) :
+    KMor1 (n + 1) :=
+  match size with
+  | 0 => default
+  | size' + 1 =>
+    KMor1.comp KMor1.cond
+      (fun i : Fin 3 => match i with
+        | ⟨0, _⟩ => KMor1.predIter n k
+        | ⟨1, _⟩ => branches ⟨0, by omega⟩
+        | ⟨2, _⟩ =>
+          KMor1.pcDispatchFrom (k + 1) size'
+            (fun j : Fin size' => branches j.succ) default)
+
+/-- The PC-dispatch combinator: given `size` branches keyed to
+specific PC values (the last context slot) and a `default` for
+PC values `≥ size`, return a `KMor1 (n + 1)` that interprets to
+`branches k` when PC = `k` (`k < size`), else `default`.
+
+Implementation defers to `KMor1.pcDispatchFrom 0 size`. -/
+def KMor1.pcDispatch {n : ℕ} (size : ℕ)
+    (branches : Fin size → KMor1 (n + 1))
+    (default : KMor1 (n + 1)) :
+    KMor1 (n + 1) :=
+  KMor1.pcDispatchFrom 0 size branches default
+
+private theorem KMor1.interp_pcDispatchFrom_match
+    {n : ℕ} (size : ℕ) (k : ℕ)
+    (branches : Fin size → KMor1 (n + 1))
+    (default : KMor1 (n + 1)) (ctx : Fin (n + 1) → ℕ)
+    (j : Fin size) (h : ctx (Fin.last n) = k + j.val) :
+    (KMor1.pcDispatchFrom k size branches default).interp ctx
+      = (branches j).interp ctx := by
+  induction size generalizing k with
+  | zero => exact Fin.elim0 j
+  | succ size' ih =>
+    simp only [KMor1.pcDispatchFrom, KMor1.interp_comp,
+      KMor1.interp_cond, KMor1.interp_predIter]
+    by_cases hj : j = ⟨0, by omega⟩
+    · rw [hj]
+      have hsub0 : ctx (Fin.last n) - k = 0 := by
+        rw [h, hj]; simp
+      rw [hsub0]; simp
+    · have hjpos : 0 < j.val := by
+        rcases j with ⟨v, hv⟩
+        rcases v with _ | v'
+        · exact absurd (Fin.ext rfl : (⟨0, by omega⟩ : Fin (size' + 1)) = ⟨0, hv⟩) hj
+        · simp
+      have hsub : ctx (Fin.last n) - k ≠ 0 := by
+        rw [h]; omega
+      rw [if_neg hsub]
+      have hpred : ctx (Fin.last n) = (k + 1) + (j.val - 1) := by
+        rw [h]; omega
+      have ih_applied :=
+        ih (k + 1) (fun j' : Fin size' => branches j'.succ)
+          ⟨j.val - 1, by omega⟩ hpred
+      rw [ih_applied]
+      change (branches _).interp ctx = (branches _).interp ctx
+      congr 2
+      apply Fin.ext
+      simp [Fin.succ]
+      omega
+
+private theorem KMor1.interp_pcDispatchFrom_default
+    {n : ℕ} (size : ℕ) (k : ℕ)
+    (branches : Fin size → KMor1 (n + 1))
+    (default : KMor1 (n + 1)) (ctx : Fin (n + 1) → ℕ)
+    (h : ctx (Fin.last n) ≥ k + size) :
+    (KMor1.pcDispatchFrom k size branches default).interp ctx
+      = default.interp ctx := by
+  induction size generalizing k with
+  | zero => simp [KMor1.pcDispatchFrom]
+  | succ size' ih =>
+    simp only [KMor1.pcDispatchFrom, KMor1.interp_comp,
+      KMor1.interp_cond, KMor1.interp_predIter]
+    have hsub : ctx (Fin.last n) - k ≠ 0 := by omega
+    rw [if_neg hsub]
+    apply ih
+    omega
+
+/-- When the PC slot equals `k.val` for some `k : Fin size`,
+`KMor1.pcDispatch` interprets as `branches k`. -/
+@[simp] theorem KMor1.interp_pcDispatch_match
+    {n : ℕ} (size : ℕ)
+    (branches : Fin size → KMor1 (n + 1))
+    (default : KMor1 (n + 1)) (ctx : Fin (n + 1) → ℕ)
+    (k : Fin size) (h : ctx (Fin.last n) = k.val) :
+    (KMor1.pcDispatch size branches default).interp ctx
+      = (branches k).interp ctx := by
+  unfold KMor1.pcDispatch
+  exact KMor1.interp_pcDispatchFrom_match size 0 branches default
+    ctx k (by rw [h]; omega)
+
+/-- When the PC slot is ≥ `size`, `KMor1.pcDispatch` interprets
+as `default`. -/
+@[simp] theorem KMor1.interp_pcDispatch_default
+    {n : ℕ} (size : ℕ)
+    (branches : Fin size → KMor1 (n + 1))
+    (default : KMor1 (n + 1)) (ctx : Fin (n + 1) → ℕ)
+    (h : ctx (Fin.last n) ≥ size) :
+    (KMor1.pcDispatch size branches default).interp ctx
+      = default.interp ctx := by
+  unfold KMor1.pcDispatch
+  exact KMor1.interp_pcDispatchFrom_default size 0 branches default
+    ctx (by omega)
+
+/-- Inner level lemma for `pcDispatchFrom`: when branches and
+default are level ≤ 1, the dispatcher is level ≤ 1. By
+induction on `size` with `k` and `branches` generalised. -/
+private theorem KMor1.pcDispatchFrom_level
+    {n : ℕ} (size : ℕ) (k : ℕ)
+    (branches : Fin size → KMor1 (n + 1))
+    (default : KMor1 (n + 1))
+    (h_branches : ∀ j, (branches j).level ≤ 1)
+    (h_default : default.level ≤ 1) :
+    (KMor1.pcDispatchFrom k size branches default).level ≤ 1 := by
+  induction size generalizing k with
+  | zero =>
+    change (default).level ≤ 1
+    exact h_default
+  | succ size' ih =>
+    have hpred : (KMor1.predIter n k).level ≤ 1 :=
+      KMor1.predIter_level n k
+    have hb0 : (branches ⟨0, by omega⟩).level ≤ 1 :=
+      h_branches _
+    have hrecur : (KMor1.pcDispatchFrom (k + 1) size'
+        (fun j : Fin size' => branches j.succ) default).level ≤ 1 :=
+      ih (k + 1) (fun j => branches j.succ)
+        (fun j => h_branches j.succ)
+    change max (KMor1.cond.level)
+           (Fin.maxOfNat 3 (fun i : Fin 3 =>
+             match i with
+             | ⟨0, _⟩ => (KMor1.predIter n k).level
+             | ⟨1, _⟩ => (branches ⟨0, by omega⟩).level
+             | ⟨2, _⟩ => (KMor1.pcDispatchFrom (k + 1) size'
+                 (fun j : Fin size' => branches j.succ) default).level))
+           ≤ 1
+    have hcond_level : (KMor1.cond : KMor1 3).level = 1 := by decide
+    have hsup :
+        Fin.maxOfNat 3 (fun i : Fin 3 =>
+          match i with
+          | ⟨0, _⟩ => (KMor1.predIter n k).level
+          | ⟨1, _⟩ => (branches ⟨0, by omega⟩).level
+          | ⟨2, _⟩ => (KMor1.pcDispatchFrom (k + 1) size'
+              (fun j => branches j.succ) default).level) ≤ 1 :=
+      Fin.maxOfNat_le (by
+        intro i
+        match i with
+        | ⟨0, _⟩ => exact hpred
+        | ⟨1, _⟩ => exact hb0
+        | ⟨2, _⟩ => exact hrecur)
+    rw [hcond_level]
+    exact Nat.max_le.mpr ⟨le_refl 1, hsup⟩
+
+/-- `KMor1.pcDispatch` is at level ≤ 1 when branches and
+default are level ≤ 1. -/
+theorem KMor1.pcDispatch_level
+    {n : ℕ} (size : ℕ)
+    (branches : Fin size → KMor1 (n + 1))
+    (default : KMor1 (n + 1))
+    (h_branches : ∀ j, (branches j).level ≤ 1)
+    (h_default : default.level ≤ 1) :
+    (KMor1.pcDispatch size branches default).level ≤ 1 := by
+  unfold KMor1.pcDispatch
+  exact KMor1.pcDispatchFrom_level size 0 branches default
+    h_branches h_default
+
 end GebLean
 
 namespace GebLean.KSimURMSimulator
