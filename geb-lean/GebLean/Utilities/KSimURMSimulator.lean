@@ -551,4 +551,401 @@ def simulate {a : ℕ} (P : URMProgram a) : KMor1 (a + 1) :=
     (baseFamily P)
     (stepFamily P)
 
+/-- Back-peel reduction for `URMState.runFor`: derived from the
+front-peel `runFor_succ` (`ZeroTestURM.lean:192`) and additivity
+`runFor_add` (`:199`). Inside the helper-lemma scope the `s`
+parameter is fully general — the helper itself does not hit the
+fixed-`s := init P v` trap. Only the consumer
+(`simulate_step_match`'s step case) is locked to that specific
+`s`, which is why `runFor_succ` (front-peel, `@[simp]`) is
+wrong-directional there and this back-peel form must be
+invoked explicitly. Placed directly under
+`namespace GebLean.KSimURMSimulator` (no `URMState`
+sub-namespace) so the fully qualified name is
+`GebLean.KSimURMSimulator.runFor_succ_init_back`, avoiding
+confusing parallelism with `GebLean.ZeroTestURM.URMState`. Per
+spec § 4.3. -/
+private theorem runFor_succ_init_back {a : ℕ}
+    (P : URMProgram a) (s : URMState P) (y : ℕ) :
+    URMState.runFor P s (y + 1)
+      = URMState.step P (URMState.runFor P s y) := by
+  rw [URMState.runFor_add P s y 1]
+  rw [URMState.runFor_succ P (URMState.runFor P s y) 0]
+  rw [URMState.runFor_zero]
+
+/-- The `simrecVec_succ`-produced dispatcher context, evaluated
+at any slot in the "previous-component" range
+(`a + 1 ≤ slot < a + 1 + (P.numRegs + 1)`), equals the previous
+simrec component at the residue index `slot - (a + 1)`. Used
+across both the PC and the register-`j` components in the step
+case of `simulate_step_match`. Per round-4 findings R4-B2,
+R4-S6, R4-M3.
+
+This helper is the sole site in T3 that couples directly to
+`KMor1.simrecVec_succ`'s `dite`-form context shape
+(`LawvereKSimInterp.lean:193 – 209`). If that lemma's shape
+changes (for example, the inner
+`if h₂ : idx.val = 0 then n else params ⟨…⟩` becomes a
+`match`), the body's `change` will need to be re-stated to match
+the new form. All call sites consume the helper through its
+declared signature only — per plan round-6 serious finding R6-S1. -/
+private lemma step_ctx_eval_simrec {a : ℕ} (P : URMProgram a)
+    (v : Fin a → ℕ) (y : ℕ)
+    (slot : ℕ) (h_slot_bound : slot < a + 1 + (P.numRegs + 1))
+    (h_slot_ge : a + 1 ≤ slot) :
+    (fun idx : Fin (a + 1 + (P.numRegs + 1)) =>
+       if h₁ : idx.val < a + 1 then
+         if h₂ : idx.val = 0 then (y : ℕ)
+         else v ⟨idx.val - 1, by omega⟩
+       else
+         KMor1.simrecVec (baseFamily P) (stepFamily P) v y
+           ⟨idx.val - (a + 1), by omega⟩)
+        ⟨slot, h_slot_bound⟩
+    = KMor1.simrecVec (baseFamily P) (stepFamily P) v y
+        ⟨slot - (a + 1), by omega⟩ := by
+  change (if h₁ : slot < a + 1 then _ else
+          KMor1.simrecVec (baseFamily P) (stepFamily P) v y
+            ⟨slot - (a + 1), by omega⟩) = _
+  rw [dif_neg (by omega)]
+
+-- AXIOM_ALLOW: Classical.choice (transitively via mathlib's
+-- Fin.lastCases_castSucc; see .claude/rules/lean-coding.md
+-- § Accepted exceptions).
+/-- The conjunctive vector invariant: at every time `y`, the
+simrec state vector at each component matches the URM state's
+corresponding field. The PC component is at index
+`Fin.last P.numRegs`; each register-`j` component is at index
+`j.castSucc` (for `j : Fin P.numRegs`).
+
+Per spec § 4.2. -/
+private theorem simulate_step_match {a : ℕ}
+    (P : URMProgram a) (v : Fin a → ℕ) (y : ℕ) :
+    KMor1.simrecVec (baseFamily P) (stepFamily P) v y
+        (Fin.last P.numRegs)
+      = ((URMState.init P v).runFor P y).pc
+    ∧ ∀ j : Fin P.numRegs,
+        KMor1.simrecVec (baseFamily P) (stepFamily P) v y
+            j.castSucc
+          = ((URMState.init P v).runFor P y).regs j := by
+  induction y with
+  | zero =>
+    refine ⟨?_, ?_⟩
+    · simp only [KMor1.simrecVec_zero, baseFamily,
+        Fin.lastCases_last, KMor1.interp_zero]
+      rw [URMState.runFor_zero]
+      unfold URMState.init
+      rfl
+    · intro j
+      simp only [KMor1.simrecVec_zero, baseFamily,
+        Fin.lastCases_castSucc]
+      rw [URMState.runFor_zero]
+      cases h : (List.finRange a).find?
+          (fun i => decide (P.inputRegs i = j)) with
+      | some i =>
+        simp only [KMor1.interp_proj]
+        unfold URMState.init
+        simp only [h]
+      | none =>
+        simp only [KMor1.interp_zero]
+        unfold URMState.init
+        simp only [h]
+  | succ y ih =>
+    obtain ⟨ih_pc, ih_regs⟩ := ih
+    rw [runFor_succ_init_back]
+    refine ⟨?_, ?_⟩
+    · -- PC component at y + 1.
+      rw [KMor1.simrecVec_succ]
+      simp only [stepFamily, Fin.lastCases_last]
+      have h_ctx_last_pc :
+          (fun idx : Fin (a + 1 + (P.numRegs + 1)) =>
+            if h₁ : idx.val < a + 1 then
+              if h₂ : idx.val = 0 then (y : ℕ)
+              else v ⟨idx.val - 1, by omega⟩
+            else
+              KMor1.simrecVec (baseFamily P) (stepFamily P) v y
+                ⟨idx.val - (a + 1), by omega⟩)
+              (Fin.last (a + 1 + P.numRegs))
+            = ((URMState.init P v).runFor P y).pc := by
+        rw [show (Fin.last (a + 1 + P.numRegs)
+                : Fin (a + 1 + (P.numRegs + 1)))
+              = ⟨a + 1 + P.numRegs, by omega⟩
+              from by apply Fin.ext; rfl]
+        rw [step_ctx_eval_simrec P v y (a + 1 + P.numRegs)
+              (by omega) (by omega)]
+        rw [show (⟨a + 1 + P.numRegs - (a + 1), by omega⟩
+                : Fin (P.numRegs + 1))
+              = Fin.last P.numRegs
+              from by apply Fin.ext; simp [Fin.last]]
+        exact ih_pc
+      by_cases h_inbounds :
+          ((URMState.init P v).runFor P y).pc < P.instrs.size
+      · set pcVal := ((URMState.init P v).runFor P y).pc with hpc
+        rw [KMor1.interp_pcDispatch_match P.instrs.size
+              (fun k => branches_pc P k) (I_prev P) _
+              ⟨pcVal, h_inbounds⟩ h_ctx_last_pc]
+        match h_instr : P.instrs[pcVal]'h_inbounds with
+        | URMInstr.assign i c =>
+          have h_instr2 : P.instrs[(⟨pcVal, h_inbounds⟩ : Fin _)]
+              = URMInstr.assign i c := h_instr
+          simp only [branches_pc, h_instr2, KMor1.interp_comp,
+            KMor1.interp_succ, I_prev, KMor1.interp_proj]
+          simp only [URMState.step]
+          rw [dif_pos h_inbounds]
+          rw [show P.instrs[(URMState.runFor P (URMState.init P v) y).pc]
+                = URMInstr.assign i c from h_instr]
+          rw [dif_neg (by omega : ¬ a + 1 + P.numRegs < a + 1)]
+          rw [show (⟨a + 1 + P.numRegs - (a + 1), by omega⟩
+                  : Fin (P.numRegs + 1))
+                = Fin.last P.numRegs
+                from by apply Fin.ext; simp [Fin.last]]
+          rw [ih_pc]
+        | URMInstr.inc i =>
+          have h_instr2 : P.instrs[(⟨pcVal, h_inbounds⟩ : Fin _)]
+              = URMInstr.inc i := h_instr
+          simp only [branches_pc, h_instr2, KMor1.interp_comp,
+            KMor1.interp_succ, I_prev, KMor1.interp_proj]
+          simp only [URMState.step]
+          rw [dif_pos h_inbounds]
+          rw [show P.instrs[(URMState.runFor P (URMState.init P v) y).pc]
+                = URMInstr.inc i from h_instr]
+          rw [dif_neg (by omega : ¬ a + 1 + P.numRegs < a + 1)]
+          rw [show (⟨a + 1 + P.numRegs - (a + 1), by omega⟩
+                  : Fin (P.numRegs + 1))
+                = Fin.last P.numRegs
+                from by apply Fin.ext; simp [Fin.last]]
+          rw [ih_pc]
+        | URMInstr.dec i =>
+          have h_instr2 : P.instrs[(⟨pcVal, h_inbounds⟩ : Fin _)]
+              = URMInstr.dec i := h_instr
+          simp only [branches_pc, h_instr2, KMor1.interp_comp,
+            KMor1.interp_succ, I_prev, KMor1.interp_proj]
+          simp only [URMState.step]
+          rw [dif_pos h_inbounds]
+          rw [show P.instrs[(URMState.runFor P (URMState.init P v) y).pc]
+                = URMInstr.dec i from h_instr]
+          rw [dif_neg (by omega : ¬ a + 1 + P.numRegs < a + 1)]
+          rw [show (⟨a + 1 + P.numRegs - (a + 1), by omega⟩
+                  : Fin (P.numRegs + 1))
+                = Fin.last P.numRegs
+                from by apply Fin.ext; simp [Fin.last]]
+          rw [ih_pc]
+        | URMInstr.jumpZ i l₁ l₂ =>
+          have h_instr2 : P.instrs[(⟨pcVal, h_inbounds⟩ : Fin _)]
+              = URMInstr.jumpZ i l₁ l₂ := h_instr
+          simp only [branches_pc, h_instr2, KMor1.interp_comp,
+            KMor1.interp_cond, v_j_prev, KMor1.interp_proj]
+          simp only [URMState.step]
+          rw [dif_pos h_inbounds]
+          rw [show P.instrs[(URMState.runFor P (URMState.init P v) y).pc]
+                = URMInstr.jumpZ i l₁ l₂ from h_instr]
+          rw [dif_neg (by omega : ¬ a + 1 + i.val < a + 1)]
+          rw [show (⟨a + 1 + i.val - (a + 1), by omega⟩
+                : Fin (P.numRegs + 1)) = i.castSucc
+                from by apply Fin.ext; simp [Fin.castSucc]]
+          rw [ih_regs i]
+          simp only [KMor1.natK', KMor1.interp_comp, KMor1.interp_natK]
+        | URMInstr.stop =>
+          have h_instr2 : P.instrs[(⟨pcVal, h_inbounds⟩ : Fin _)]
+              = URMInstr.stop := h_instr
+          simp only [branches_pc, h_instr2, I_prev, KMor1.interp_proj]
+          simp only [URMState.step]
+          rw [dif_pos h_inbounds]
+          rw [show P.instrs[(URMState.runFor P (URMState.init P v) y).pc]
+                = URMInstr.stop from h_instr]
+          rw [dif_neg (by omega : ¬ a + 1 + P.numRegs < a + 1)]
+          rw [show (⟨a + 1 + P.numRegs - (a + 1), by omega⟩
+                  : Fin (P.numRegs + 1))
+                = Fin.last P.numRegs
+                from by apply Fin.ext; simp [Fin.last]]
+          exact ih_pc
+      · push_neg at h_inbounds
+        have h_ctx_ge :
+            (fun idx : Fin (a + 1 + (P.numRegs + 1)) =>
+              if h₁ : idx.val < a + 1 then
+                if h₂ : idx.val = 0 then (y : ℕ)
+                else v ⟨idx.val - 1, by omega⟩
+              else
+                KMor1.simrecVec (baseFamily P) (stepFamily P) v y
+                  ⟨idx.val - (a + 1), by omega⟩)
+                (Fin.last (a + 1 + P.numRegs))
+              ≥ P.instrs.size := by
+          rw [h_ctx_last_pc]; exact h_inbounds
+        rw [KMor1.interp_pcDispatch_default P.instrs.size
+              (fun k => branches_pc P k) (I_prev P) _ h_ctx_ge]
+        simp only [I_prev, KMor1.interp_proj]
+        simp only [URMState.step]
+        rw [dif_neg (Nat.not_lt_of_ge h_inbounds)]
+        rw [dif_neg (by omega : ¬ a + 1 + P.numRegs < a + 1)]
+        rw [show (⟨a + 1 + P.numRegs - (a + 1), by omega⟩
+                : Fin (P.numRegs + 1))
+              = Fin.last P.numRegs
+              from by apply Fin.ext; simp [Fin.last]]
+        exact ih_pc
+    · -- Register-j component at y + 1.
+      intro j
+      rw [KMor1.simrecVec_succ]
+      simp only [stepFamily, Fin.lastCases_castSucc]
+      have h_ctx_last_pc :
+          (fun idx : Fin (a + 1 + (P.numRegs + 1)) =>
+            if h₁ : idx.val < a + 1 then
+              if h₂ : idx.val = 0 then (y : ℕ)
+              else v ⟨idx.val - 1, by omega⟩
+            else
+              KMor1.simrecVec (baseFamily P) (stepFamily P) v y
+                ⟨idx.val - (a + 1), by omega⟩)
+              (Fin.last (a + 1 + P.numRegs))
+            = ((URMState.init P v).runFor P y).pc := by
+        rw [show (Fin.last (a + 1 + P.numRegs)
+                : Fin (a + 1 + (P.numRegs + 1)))
+              = ⟨a + 1 + P.numRegs, by omega⟩
+              from by apply Fin.ext; rfl]
+        rw [step_ctx_eval_simrec P v y (a + 1 + P.numRegs)
+              (by omega) (by omega)]
+        rw [show (⟨a + 1 + P.numRegs - (a + 1), by omega⟩
+                : Fin (P.numRegs + 1))
+              = Fin.last P.numRegs
+              from by apply Fin.ext; simp [Fin.last]]
+        exact ih_pc
+      by_cases h_inbounds :
+          ((URMState.init P v).runFor P y).pc < P.instrs.size
+      · set pcVal := ((URMState.init P v).runFor P y).pc with hpc
+        rw [KMor1.interp_pcDispatch_match P.instrs.size
+              (fun k => branches_j P j k) (v_j_prev P j) _
+              ⟨pcVal, h_inbounds⟩ h_ctx_last_pc]
+        match h_instr : P.instrs[pcVal]'h_inbounds with
+        | URMInstr.assign i c =>
+          have h_instr2 : P.instrs[(⟨pcVal, h_inbounds⟩ : Fin _)]
+              = URMInstr.assign i c := h_instr
+          simp only [branches_j, h_instr2]
+          simp only [URMState.step]
+          rw [dif_pos h_inbounds]
+          rw [show P.instrs[(URMState.runFor P (URMState.init P v) y).pc]
+                = URMInstr.assign i c from h_instr]
+          by_cases h_eq : i.val = j.val
+          · rw [if_pos h_eq]
+            simp only [KMor1.natK', KMor1.interp_comp, KMor1.interp_natK]
+            rw [Function.update_apply, if_pos (Fin.ext h_eq).symm]
+          · rw [if_neg h_eq]
+            simp only [v_j_prev, KMor1.interp_proj]
+            rw [Function.update_apply,
+                if_neg (fun h => h_eq (Fin.val_eq_of_eq h).symm)]
+            rw [dif_neg (by omega : ¬ a + 1 + j.val < a + 1)]
+            rw [show (⟨a + 1 + j.val - (a + 1), by omega⟩
+                    : Fin (P.numRegs + 1))
+                  = j.castSucc
+                  from by apply Fin.ext; simp [Fin.castSucc]]
+            exact ih_regs j
+        | URMInstr.inc i =>
+          have h_instr2 : P.instrs[(⟨pcVal, h_inbounds⟩ : Fin _)]
+              = URMInstr.inc i := h_instr
+          simp only [branches_j, h_instr2]
+          simp only [URMState.step]
+          rw [dif_pos h_inbounds]
+          rw [show P.instrs[(URMState.runFor P (URMState.init P v) y).pc]
+                = URMInstr.inc i from h_instr]
+          by_cases h_eq : i.val = j.val
+          · rw [if_pos h_eq]
+            simp only [KMor1.interp_comp, KMor1.interp_succ,
+              v_j_prev, KMor1.interp_proj]
+            rw [Function.update_apply, if_pos (Fin.ext h_eq).symm]
+            rw [dif_neg (by omega : ¬ a + 1 + j.val < a + 1)]
+            rw [show (⟨a + 1 + j.val - (a + 1), by omega⟩
+                    : Fin (P.numRegs + 1))
+                  = j.castSucc
+                  from by apply Fin.ext; simp [Fin.castSucc]]
+            rw [ih_regs j]
+            rw [show i = j from Fin.ext h_eq]
+          · rw [if_neg h_eq]
+            simp only [v_j_prev, KMor1.interp_proj]
+            rw [Function.update_apply,
+                if_neg (fun h => h_eq (Fin.val_eq_of_eq h).symm)]
+            rw [dif_neg (by omega : ¬ a + 1 + j.val < a + 1)]
+            rw [show (⟨a + 1 + j.val - (a + 1), by omega⟩
+                    : Fin (P.numRegs + 1))
+                  = j.castSucc
+                  from by apply Fin.ext; simp [Fin.castSucc]]
+            exact ih_regs j
+        | URMInstr.dec i =>
+          have h_instr2 : P.instrs[(⟨pcVal, h_inbounds⟩ : Fin _)]
+              = URMInstr.dec i := h_instr
+          simp only [branches_j, h_instr2]
+          simp only [URMState.step]
+          rw [dif_pos h_inbounds]
+          rw [show P.instrs[(URMState.runFor P (URMState.init P v) y).pc]
+                = URMInstr.dec i from h_instr]
+          by_cases h_eq : i.val = j.val
+          · rw [if_pos h_eq]
+            simp only [KMor1.interp_comp, KMor1.interp_pred,
+              v_j_prev, KMor1.interp_proj]
+            rw [Function.update_apply, if_pos (Fin.ext h_eq).symm]
+            rw [dif_neg (by omega : ¬ a + 1 + j.val < a + 1)]
+            rw [show (⟨a + 1 + j.val - (a + 1), by omega⟩
+                    : Fin (P.numRegs + 1))
+                  = j.castSucc
+                  from by apply Fin.ext; simp [Fin.castSucc]]
+            rw [ih_regs j]
+            rw [show i = j from Fin.ext h_eq]
+            exact Nat.pred_eq_sub_one
+          · rw [if_neg h_eq]
+            simp only [v_j_prev, KMor1.interp_proj]
+            rw [Function.update_apply,
+                if_neg (fun h => h_eq (Fin.val_eq_of_eq h).symm)]
+            rw [dif_neg (by omega : ¬ a + 1 + j.val < a + 1)]
+            rw [show (⟨a + 1 + j.val - (a + 1), by omega⟩
+                    : Fin (P.numRegs + 1))
+                  = j.castSucc
+                  from by apply Fin.ext; simp [Fin.castSucc]]
+            exact ih_regs j
+        | URMInstr.jumpZ i l₁ l₂ =>
+          have h_instr2 : P.instrs[(⟨pcVal, h_inbounds⟩ : Fin _)]
+              = URMInstr.jumpZ i l₁ l₂ := h_instr
+          simp only [branches_j, h_instr2, v_j_prev, KMor1.interp_proj]
+          simp only [URMState.step]
+          rw [dif_pos h_inbounds]
+          rw [show P.instrs[(URMState.runFor P (URMState.init P v) y).pc]
+                = URMInstr.jumpZ i l₁ l₂ from h_instr]
+          rw [dif_neg (by omega : ¬ a + 1 + j.val < a + 1)]
+          rw [show (⟨a + 1 + j.val - (a + 1), by omega⟩
+                  : Fin (P.numRegs + 1))
+                = j.castSucc
+                from by apply Fin.ext; simp [Fin.castSucc]]
+          exact ih_regs j
+        | URMInstr.stop =>
+          have h_instr2 : P.instrs[(⟨pcVal, h_inbounds⟩ : Fin _)]
+              = URMInstr.stop := h_instr
+          simp only [branches_j, h_instr2, v_j_prev, KMor1.interp_proj]
+          simp only [URMState.step]
+          rw [dif_pos h_inbounds]
+          rw [show P.instrs[(URMState.runFor P (URMState.init P v) y).pc]
+                = URMInstr.stop from h_instr]
+          rw [dif_neg (by omega : ¬ a + 1 + j.val < a + 1)]
+          rw [show (⟨a + 1 + j.val - (a + 1), by omega⟩
+                  : Fin (P.numRegs + 1))
+                = j.castSucc
+                from by apply Fin.ext; simp [Fin.castSucc]]
+          exact ih_regs j
+      · push_neg at h_inbounds
+        have h_ctx_ge :
+            (fun idx : Fin (a + 1 + (P.numRegs + 1)) =>
+              if h₁ : idx.val < a + 1 then
+                if h₂ : idx.val = 0 then (y : ℕ)
+                else v ⟨idx.val - 1, by omega⟩
+              else
+                KMor1.simrecVec (baseFamily P) (stepFamily P) v y
+                  ⟨idx.val - (a + 1), by omega⟩)
+                (Fin.last (a + 1 + P.numRegs))
+              ≥ P.instrs.size := by
+          rw [h_ctx_last_pc]; exact h_inbounds
+        rw [KMor1.interp_pcDispatch_default P.instrs.size
+              (fun k => branches_j P j k) (v_j_prev P j) _ h_ctx_ge]
+        simp only [v_j_prev, KMor1.interp_proj]
+        simp only [URMState.step]
+        rw [dif_neg (Nat.not_lt_of_ge h_inbounds)]
+        rw [dif_neg (by omega : ¬ a + 1 + j.val < a + 1)]
+        rw [show (⟨a + 1 + j.val - (a + 1), by omega⟩
+                : Fin (P.numRegs + 1))
+              = j.castSucc
+              from by apply Fin.ext; simp [Fin.castSucc]]
+        exact ih_regs j
+
 end GebLean.KSimURMSimulator
