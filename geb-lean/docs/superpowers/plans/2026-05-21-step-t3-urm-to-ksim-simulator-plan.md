@@ -1500,7 +1500,7 @@ private lemma step_ctx_eval_simrec {a : ℕ} (P : URMProgram a)
 - [ ] **Step 7.2: Add `simulate_step_match` declaration with
   `by sorry` body.**
 
-Insert below `runFor_succ_init_back`:
+Insert below `step_ctx_eval_simrec`:
 
 ```lean
 /-- The conjunctive vector invariant: at every time `y`, the
