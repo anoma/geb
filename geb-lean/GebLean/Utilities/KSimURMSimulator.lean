@@ -536,4 +536,19 @@ theorem stepFamily_level {a : ℕ} (P : URMProgram a)
         rw [hv]; omega
     · rw [hv]; omega
 
+/-- The K^sim simulator for a URMProgram: a single
+`KMor1.simrec` with system size `P.numRegs + 1` (registers at
+indices `0..numRegs - 1`, PC at index `numRegs`), base family
+`baseFamily P`, step family `stepFamily P`, and output index
+`P.outputReg.castSucc`. Returns a morphism of arity `a + 1`:
+slot 0 carries the time bound `y`, slots `1..a` carry the
+input vector.
+
+Per spec § 3.1, § 3.2. -/
+def simulate {a : ℕ} (P : URMProgram a) : KMor1 (a + 1) :=
+  KMor1.simrec (a := a) (k := P.numRegs)
+    (i := P.outputReg.castSucc)
+    (baseFamily P)
+    (stepFamily P)
+
 end GebLean.KSimURMSimulator
