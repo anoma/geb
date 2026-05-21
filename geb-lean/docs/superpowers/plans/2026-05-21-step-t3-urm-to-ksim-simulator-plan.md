@@ -1786,40 +1786,17 @@ structure is:
                 : Fin (P.numRegs + 1)) = i.castSucc
                 from by apply Fin.ext; simp [Fin.castSucc]; omega]
           rw [ih_regs i]
-          -- Match the if-then-else shape on both sides. Per round-4
-          -- serious finding R4-S2: replace bare `simp` / `simp [h_zero]`
-          -- with a `simp only` whitelist to avoid pulling in the
-          -- entire default simp set (which on goals involving
-          -- `Fin.cons`, propositional `if`, and `Decidable`
-          -- instances can route through `Classical.choice`, per
-          -- project memory `feedback_mathlib_choice_in_functor_cat.md`).
-          -- The closing simp set is enumerated below; if at
-          -- execution any one of these names is missing or the
-          -- goal shape diverges, use `mcp__lean-lsp__lean_goal` to
-          -- inspect and extend the whitelist (do NOT fall back to
-          -- bare `simp`).
-          -- Per round-5 serious finding R5-S1: replace the prior
-          -- whitelist containing `Fin.cons_zero` / `Fin.cons_succ`
-          -- (which do not fire on the literal Fin 3 match arms
-          -- produced by `KMor1.interp_cond`) with a defensive form
-          -- that first unfolds `KMor1.interp_cond` and then
-          -- discharges the resulting `if`-`then`-`else` via
-          -- `if_pos h_zero` / `if_neg h_zero`. If at execution
-          -- `KMor1.interp_cond` produces a different shape
-          -- (e.g. `Fin.cases` or `Decidable.rec`), extend the
-          -- whitelist accordingly per `mcp__lean-lsp__lean_goal`.
-          -- Per plan round-7 serious finding R7-S2: the
-          -- `simp only [KMor1.interp_natK']` invocation in the
-          -- first simp only chain above already reduces
-          -- `natK' …` occurrences; further invocations after
-          -- the `by_cases` split are operationally noops and
-          -- emit `Simp made no progress`. Close via implicit
-          -- `rfl` after the `if_pos` / `if_neg` rewrite.
-          by_cases h_zero : ((URMState.init P v).runFor P y).regs i = 0
-          · simp only [KMor1.interp_cond]
-            rw [if_pos h_zero]
-          · simp only [KMor1.interp_cond]
-            rw [if_neg h_zero]
+          -- Per plan round-8 serious finding R8-S1: drop the
+          -- prior `by_cases h_zero` block. After the bridge and
+          -- `rw [ih_regs i]`, both sides reduce to the same
+          -- `if (URMState.runFor _ y).regs i = 0 then l₁ else l₂`
+          -- (URM via `URMState.step`'s `.jumpZ` arm's `pc` field;
+          -- K^sim via `KMor1.interp_cond`'s `@[simp]` rewrite to
+          -- the same `if` shape). Close by implicit `rfl`. If at
+          -- execution Lean displays the two `if` forms differently
+          -- (one via `Decidable.decide`, the other via the
+          -- decidability-instance unfolding), insert a single
+          -- `simp only [KMor1.interp_cond]` here (no `by_cases`).
         | stop =>
           simp only [branches_pc, h_instr, I_prev, KMor1.interp_proj]
           simp only [URMState.step]
@@ -1854,7 +1831,9 @@ structure is:
               (fun k => branches_pc P k) (I_prev P) _ h_ctx_ge]
         simp only [I_prev, KMor1.interp_proj]
         -- URM side: step returns s unchanged.
-        unfold URMState.step
+        -- Per R8-S3: use `simp only` for parity with the in-bounds
+        -- branches (both produce the same dite-form).
+        simp only [URMState.step]
         rw [dif_neg (Nat.not_lt_of_ge h_inbounds)]
         exact ih_pc
 ```
@@ -2090,7 +2069,9 @@ may need minor argument adjustments.
               (fun k => branches_j P j k) (v_j_prev P j) _ h_ctx_ge]
         simp only [v_j_prev, KMor1.interp_proj]
         -- URM side: step returns s unchanged ⇒ regs j = ih_regs j.
-        unfold URMState.step
+        -- Per R8-S3: use `simp only` for parity with the in-bounds
+        -- branches (both produce the same dite-form).
+        simp only [URMState.step]
         rw [dif_neg (Nat.not_lt_of_ge h_inbounds)]
         rw [step_ctx_eval_simrec P v y (a + 1 + j.val)
               (by omega) (by omega)]
