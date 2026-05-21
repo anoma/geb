@@ -338,4 +338,202 @@ theorem baseFamily_level {a : ℕ} (P : URMProgram a)
     | some i => unfold KMor1.level; omega
     | none => unfold KMor1.level; omega
 
+/-- Projection at the step context's last slot: the previous
+PC value. Level 0. The Fin index is pinned numerically as
+`⟨a + 1 + P.numRegs, _⟩` rather than `Fin.last …` because
+`Fin.last (a + P.numRegs + 1)` and `Fin (a + 1 + (P.numRegs + 1))`
+may fail to unify definitionally under Lean's `Nat.add` normal
+form; the explicit construction sidesteps that elaboration risk. -/
+private def I_prev {a : ℕ} (P : URMProgram a) :
+    KMor1 (a + 1 + (P.numRegs + 1)) :=
+  KMor1.proj ⟨a + 1 + P.numRegs, by omega⟩
+
+/-- Projection at slot `a + 1 + j.val` of the step context:
+the previous value of register `j`. Level 0. -/
+private def v_j_prev {a : ℕ} (P : URMProgram a)
+    (j : Fin P.numRegs) :
+    KMor1 (a + 1 + (P.numRegs + 1)) :=
+  KMor1.proj ⟨a + 1 + j.val, by
+    have := j.isLt
+    omega⟩
+
+/-- The PC-component step-family branch for instruction at
+PC = k. Returns the new PC value after executing the
+instruction:
+
+- `.stop` → unchanged (`I_prev`);
+- `.jumpZ i l₁ l₂` → `cond` on `v_i_prev` selecting `l₁` if 0,
+  else `l₂`;
+- `.assign`, `.inc`, `.dec` → `I_prev + 1`. -/
+private def branches_pc {a : ℕ} (P : URMProgram a)
+    (k : Fin P.instrs.size) :
+    KMor1 (a + 1 + (P.numRegs + 1)) :=
+  match P.instrs[k]'k.isLt with
+  | URMInstr.stop => I_prev P
+  | URMInstr.jumpZ i l₁ l₂ =>
+    KMor1.comp KMor1.cond
+      (fun ix : Fin 3 => match ix with
+        | ⟨0, _⟩ => v_j_prev P i
+        | ⟨1, _⟩ => KMor1.natK' _ l₁
+        | ⟨2, _⟩ => KMor1.natK' _ l₂)
+  | URMInstr.assign _ _ =>
+    KMor1.comp KMor1.succ (fun _ : Fin 1 => I_prev P)
+  | URMInstr.inc _ =>
+    KMor1.comp KMor1.succ (fun _ : Fin 1 => I_prev P)
+  | URMInstr.dec _ =>
+    KMor1.comp KMor1.succ (fun _ : Fin 1 => I_prev P)
+
+/-- The register-`j`-component step-family branch for
+instruction at PC = k. Returns the new register-`j` value
+after executing the instruction:
+
+- `.assign i c` if `i = j` → `c`; else `v_j_prev`.
+- `.inc i` if `i = j` → `v_j_prev + 1`; else `v_j_prev`.
+- `.dec i` if `i = j` → `pred v_j_prev`; else `v_j_prev`.
+- `.jumpZ`, `.stop` → `v_j_prev` (registers unchanged). -/
+private def branches_j {a : ℕ} (P : URMProgram a)
+    (j : Fin P.numRegs) (k : Fin P.instrs.size) :
+    KMor1 (a + 1 + (P.numRegs + 1)) :=
+  match P.instrs[k]'k.isLt with
+  | URMInstr.assign i c =>
+    if i.val = j.val then KMor1.natK' _ c else v_j_prev P j
+  | URMInstr.inc i =>
+    if i.val = j.val then
+      KMor1.comp KMor1.succ (fun _ : Fin 1 => v_j_prev P j)
+    else v_j_prev P j
+  | URMInstr.dec i =>
+    if i.val = j.val then
+      KMor1.comp KMor1.pred (fun _ : Fin 1 => v_j_prev P j)
+    else v_j_prev P j
+  | URMInstr.jumpZ _ _ _ => v_j_prev P j
+  | URMInstr.stop => v_j_prev P j
+
+/-- The step family for `simulate`'s simrec. By `Fin.lastCases`:
+the `Fin.last` case is the PC component (dispatched via
+`pcDispatch` over `branches_pc` with `default_pc := I_prev`);
+the `castSucc` case is a register-`j` component (dispatched via
+`pcDispatch` over `branches_j j` with `default_j := v_j_prev`).
+Each branch is at level ≤ 1 by inspection (cond, pred are
+level 1; succ, proj, natK' are level 0); the dispatcher's
+`pcDispatch_level` gives `stepFamily P i` at level ≤ 1.
+
+Per spec § 3.4. -/
+def stepFamily {a : ℕ} (P : URMProgram a) :
+    Fin (P.numRegs + 1) → KMor1 (a + 1 + (P.numRegs + 1)) :=
+  Fin.lastCases
+    (KMor1.pcDispatch P.instrs.size
+      (fun k => branches_pc P k)
+      (I_prev P))
+    (fun j : Fin P.numRegs =>
+      KMor1.pcDispatch P.instrs.size
+        (fun k => branches_j P j k)
+        (v_j_prev P j))
+
+-- AXIOM_ALLOW: Classical.choice (transitively via mathlib's
+-- Fin.lastCases_castSucc; see .claude/rules/lean-coding.md
+-- § Accepted exceptions).
+/-- Every step-family component is at level ≤ 1. Each branch
+and the default are at level ≤ 1 by inspection; the dispatcher's
+`KMor1.pcDispatch_level` gives the result. -/
+theorem stepFamily_level {a : ℕ} (P : URMProgram a)
+    (j : Fin (P.numRegs + 1)) :
+    (stepFamily P j).level ≤ 1 := by
+  -- Common abbreviations for branch reasoning.
+  have hsucc : (KMor1.succ : KMor1 1).level = 0 := rfl
+  have hpred : (KMor1.pred : KMor1 1).level = 1 := by decide
+  have hcond : (KMor1.cond : KMor1 3).level = 1 := by decide
+  have hI : (I_prev P).level = 0 := by unfold I_prev KMor1.level; rfl
+  refine Fin.lastCases ?_ ?_ j
+  · -- j = Fin.last P.numRegs
+    simp only [stepFamily, Fin.lastCases_last]
+    apply KMor1.pcDispatch_level
+    · intro k
+      unfold branches_pc
+      match hi : P.instrs[k]'k.isLt with
+      | URMInstr.assign i c =>
+        simp only [KMor1.level]
+        have hsup :
+            Fin.maxOfNat 1 (fun _ : Fin 1 => (I_prev P).level)
+              ≤ 1 :=
+          Fin.maxOfNat_le (by intro _; rw [hI]; omega)
+        omega
+      | URMInstr.inc i =>
+        simp only [KMor1.level]
+        have hsup :
+            Fin.maxOfNat 1 (fun _ : Fin 1 => (I_prev P).level)
+              ≤ 1 :=
+          Fin.maxOfNat_le (by intro _; rw [hI]; omega)
+        omega
+      | URMInstr.dec i =>
+        simp only [KMor1.level]
+        have hsup :
+            Fin.maxOfNat 1 (fun _ : Fin 1 => (I_prev P).level)
+              ≤ 1 :=
+          Fin.maxOfNat_le (by intro _; rw [hI]; omega)
+        omega
+      | URMInstr.jumpZ i l₁ l₂ =>
+        simp only [KMor1.level]
+        have hv : (v_j_prev P i).level = 0 := by
+          unfold v_j_prev KMor1.level; rfl
+        have hsup :
+            Fin.maxOfNat 3 (fun ix : Fin 3 =>
+              (match ix with
+                | (⟨0, _⟩ : Fin 3) => v_j_prev P i
+                | ⟨1, _⟩ => KMor1.natK' _ l₁
+                | ⟨2, _⟩ => KMor1.natK' _ l₂).level) ≤ 1 :=
+          Fin.maxOfNat_le (by
+            intro ix
+            match ix with
+            | ⟨0, _⟩ => rw [hv]; omega
+            | ⟨1, _⟩ => rw [KMor1.natK'_level]; omega
+            | ⟨2, _⟩ => rw [KMor1.natK'_level]; omega)
+        omega
+      | URMInstr.stop =>
+        rw [hI]; omega
+    · rw [hI]; omega
+  · intro r
+    have hv : (v_j_prev P r).level = 0 := by
+      unfold v_j_prev KMor1.level; rfl
+    simp only [stepFamily, Fin.lastCases_castSucc]
+    apply KMor1.pcDispatch_level
+    · intro k
+      unfold branches_j
+      match hi : P.instrs[k]'k.isLt with
+      | URMInstr.assign i c =>
+        dsimp only
+        by_cases h : i.val = r.val
+        · rw [if_pos h]
+          have := KMor1.natK'_level (a + 1 + (P.numRegs + 1)) c
+          omega
+        · rw [if_neg h, hv]; omega
+      | URMInstr.inc i =>
+        dsimp only
+        by_cases h : i.val = r.val
+        · rw [if_pos h]
+          simp only [KMor1.level]
+          have hsup :
+              Fin.maxOfNat 1 (fun _ : Fin 1 => (v_j_prev P r).level)
+                ≤ 1 :=
+            Fin.maxOfNat_le (by intro _; rw [hv]; omega)
+          omega
+        · rw [if_neg h, hv]; omega
+      | URMInstr.dec i =>
+        dsimp only
+        by_cases h : i.val = r.val
+        · rw [if_pos h]
+          simp only [KMor1.level]
+          have hsup :
+              Fin.maxOfNat 1 (fun _ : Fin 1 => (v_j_prev P r).level)
+                ≤ 1 :=
+            Fin.maxOfNat_le (by intro _; rw [hv]; omega)
+          omega
+        · rw [if_neg h, hv]; omega
+      | URMInstr.jumpZ i l₁ l₂ =>
+        dsimp only
+        rw [hv]; omega
+      | URMInstr.stop =>
+        dsimp only
+        rw [hv]; omega
+    · rw [hv]; omega
+
 end GebLean.KSimURMSimulator
