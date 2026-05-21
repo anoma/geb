@@ -132,13 +132,12 @@ Run: `bash scripts/check-axioms.sh GebLean.LawvereERKSim.compileER_runFor`
 
 Expected: axiom set is `[propext, Quot.sound]` only.
 
-- [ ] **Step 0.3: Note the starting commit hash.**
+- [ ] **Step 0.3: Confirm the plan commit is at HEAD.**
 
-Run: `jj log -r @- --no-graph --limit 1`
+Run: `jj log -r 'description(glob:"docs(ertok)*plan*")' --no-graph --limit 3`
 
-Expected: shows the spec's last commit
-(`docs(ertok): apply T3 spec round-4 responses; adv review
-converged` or any superseding chore commit).
+Expected: the most recent matching commit's description
+includes the phrase "implementation plan" and references T3.
 
 If any of the above fails, halt: investigate before
 proceeding. T3 should land on a clean baseline.
@@ -160,12 +159,20 @@ with `Fin.elim0`.
 
 - [ ] **Step 1.1: Locate the insertion point.**
 
-Run: `grep -n "KMor1.cond\|KMor1.notEq1" GebLean/Utilities/KArith.lean | head -10`
+Run (from the project root
+`/home/terence/git-workspaces/geb/geb-lean`):
+
+```bash
+grep -n "KMor1.cond\|KMor1.notEq1" \
+  /home/terence/git-workspaces/geb/geb-lean/GebLean/Utilities/KArith.lean \
+  | head -10
+```
 
 Expected: shows `def KMor1.cond` at line 222 and the
-`example : KMor1.cond.level = 1` block ending around line 270.
-Insert new declarations after the `KMor1.cond` block and before
-any later existing declaration.
+`example : KMor1.cond.level = 1` example at line 264; `def
+KMor1.notEq1` at line 278 with its docstring starting at line
+266. Insert new declarations between line 264 and line 266
+(after the `cond` example, before the `notEq1` docstring).
 
 - [ ] **Step 1.2: Add `KMor1.natK` definition.**
 
@@ -218,15 +225,25 @@ theorem KMor1.natK_level (c : ℕ) : (KMor1.natK c).level = 0 := by
   induction c with
   | zero => rfl
   | succ c ih =>
-    simp only [KMor1.natK, KMor1.level, Finset.univ.sup, ih]
-    rfl
+    unfold KMor1.natK KMor1.level
+    -- comp succ (fun _ => natK c) at level max succ.level
+    -- (Finset.univ.sup (fun _ : Fin 1 => (natK c).level)).
+    -- succ.level = 0 (by KMor1.level's .succ case); the sup
+    -- over a singleton family is the family's only value,
+    -- which by IH is 0.
+    rw [show (KMor1.succ).level = 0 from rfl]
+    rw [Finset.sup_apply_eq_image]  -- if needed
+    simp [ih]
 ```
 
-Note: the inner `simp only` reduces `(comp succ ...).level`
-to `max succ.level (sup [natK c].level) = max 0 0 = 0`. If the
-proof breaks, replace the `simp only` line with explicit
-unfolds (`unfold KMor1.level`) and a `decide` on the final
-arithmetic.
+Note: if `Finset.sup_apply_eq_image` is not the right lemma,
+use `mcp__lean-lsp__lean_local_search` for "Finset.sup" on a
+`Fin 1 →` family and substitute the correct lemma name. The
+canonical reduction is `Finset.univ.sup (f : Fin 1 → ℕ) =
+f ⟨0, _⟩` since `Finset.univ` on `Fin 1` is the singleton
+`{⟨0, _⟩}`. Last-resort fallback: `decide` after `rfl`-style
+reductions, which is constructively legal since `Fin 1` is
+decidable.
 
 - [ ] **Step 1.6: Add `KMor1.natK'` lifted variant.**
 
@@ -248,13 +265,20 @@ def KMor1.natK' (n c : ℕ) : KMor1 n :=
 /-- `KMor1.natK' n c` has level 0 for every `n` and `c`. -/
 theorem KMor1.natK'_level (n c : ℕ) :
     (KMor1.natK' n c).level = 0 := by
-  simp only [KMor1.natK', KMor1.level, KMor1.natK_level]
-  rfl
+  unfold KMor1.natK' KMor1.level
+  rw [KMor1.natK_level]
+  -- comp (natK c) Fin.elim0 at level max (natK c).level
+  -- (Finset.univ.sup over Fin.elim0). The Fin 0 family yields
+  -- Finset.sup ∅ = 0.
+  simp [Finset.univ_eq_empty_of_isEmpty, Finset.sup_empty]
 ```
 
 Note: the `Finset.univ.sup` over `Fin 0 → KMor1 n` (the
 `Fin.elim0` family) is `0` because `Finset.univ` on `Fin 0` is
-the empty finset and `Finset.sup ∅ f = ⊥ = 0` in `ℕ`.
+the empty finset and `Finset.sup ∅ f = ⊥ = 0` in `ℕ`. If the
+displayed `simp` lemma names are wrong, use
+`mcp__lean-lsp__lean_local_search` for "Finset.univ" plus
+"Fin 0" or "isEmpty" to find the exact reduction.
 
 - [ ] **Step 1.7: Build to verify all five new declarations
   compile.**
