@@ -1,7 +1,12 @@
 # Master design — ER ↔ K^sim_2 categorical equivalence via URM simulation
 
 > **Status.** Phase 1 (kToER, steps 0-5) complete. Phase 2 (erToK,
-> steps 6-10) and Phase 3 (categorical iso, step 11) remain open.
+> steps 6-10) partially complete: the URM kernel and the ER → URM
+> compiler with its correctness theorem `compileER_runFor` have
+> landed (Steps 6-8 covered by workstreams T1 and T2; see "Phase 2
+> partial-completion note" below). Phase 2 Steps 9-10 (K^sim
+> simulator and `erToK` assembly) and Phase 3 (categorical iso,
+> step 11) remain open.
 >
 > Steps 0-5 closed `K^sim_2 ⊆ ER` via the structural-induction
 > Path 2 of §3:
@@ -40,6 +45,52 @@
 > approvals; no `sorry`, `admit`, `Classical`, `noncomputable`,
 > or `axiom` appears on the load-bearing path.
 >
+> **Phase 2 partial-completion note.** The original Phase 2
+> decomposition (Steps 6 RegisterMachine audit / 7 URMConcrete /
+> 8 ER → URM compiler with `URMComputes`/`urmSeq`/`urmIf`/`urmLoop`)
+> was superseded during specification by a fragment-based,
+> arity-indexed `URMProgram` architecture targeting a Tourlakis-style
+> zero-test URM directly. The replacement is captured in two binding
+> documents authored under `docs/superpowers/`:
+>
+> - Spec:
+>   [`docs/superpowers/specs/2026-05-16-er-to-k-via-cslib-urm-design.md`](../superpowers/specs/2026-05-16-er-to-k-via-cslib-urm-design.md)
+>   (the spec for the zero-test URM kernel, the fragment-based
+>   compiler, and `compileER_runFor`).
+> - Plan:
+>   [`docs/superpowers/plans/2026-05-17-step-t2-er-to-urm-compiler.md`](../superpowers/plans/2026-05-17-step-t2-er-to-urm-compiler.md)
+>   (the T2 implementation plan, 13 tasks).
+>
+> Two execution workstreams have landed against those documents:
+>
+> - **T1 — URM kernel** (≈ Step 7). `URMInstr a`, `URMProgram`,
+>   `URMState`, `URMState.step`, `URMState.runFor` with
+>   `runFor_zero`/`runFor_succ`/`runFor_add`, and `URMState.init` —
+>   all in `GebLean/Utilities/ZeroTestURM.lean`. Constructive,
+>   axiom-clean.
+> - **T2 — ER → URM compiler + correctness** (≈ Steps 6+8). The
+>   fragment-based `compileER : ERMor1 a → URMProgram a`,
+>   `compileER_runtime : ERMor1 a → (Fin a → ℕ) → ℕ`, and the
+>   climactic correctness theorem `compileER_runFor`. The
+>   implementation lives in eight submodules under
+>   `GebLean/LawvereERKSim/{Compiler,Embedding,Loops,Atoms,Comp,BSum,BProd,Top}.lean`
+>   (≈ 28 000 LOC total), re-exported via the index file
+>   `GebLean/LawvereERKSim.lean`. Every public declaration is
+>   `[propext, Quot.sound]`-only (no `Classical.choice`,
+>   no `sorryAx`). Step 6's planned `RegisterMachine.lean` audit
+>   was rendered moot by the fresh-kernel approach; the existing
+>   `GebLean/Utilities/RegisterMachine.lean` is no longer on the
+>   load-bearing path for `erToK`.
+>
+> Phase 2's remaining work is Steps 9–10: a K^sim simulator for
+> the URM kernel and the `erToK` / `erToKFunctor` assembly. The
+> next workstream after T2 will be T3 (K^sim simulator). A
+> post-T2 followup branch tracking deferred cleanups (naming
+> sweeps, structural extraction, `_pre_stop_correct_*` private
+> re-evaluation) is enumerated in
+> [`docs/superpowers/plans/2026-05-18-step-t2-t11-handoff.md`](../superpowers/plans/2026-05-18-step-t2-t11-handoff.md)
+> § Followup branch (post-T2).
+>
 > **Position in the project.** Supersedes the direct-translation
 > `kToER` strategy (preserved as renamed `kToERDirect` /
 > `kToERNDirect` infrastructure with proven level-0 and level-1
@@ -54,10 +105,14 @@
 > via structural induction) describes Path 2 as it was
 > implemented; the entities named in §3.1–§3.5 now exist in the
 > Lean codebase, and the prose has been left in its design-time
-> voice with status banners at each subsection. §4–§9 (URM
-> kernel, combinators, catalogues, simulator, compiler, runtime
-> bound) and §10–§11 (functors, iso) remain forward-looking
-> design for the not-yet-started erToK side.
+> voice with status banners at each subsection. §4 (URM kernel)
+> and the compiler-side of §5–§6 are superseded for the
+> `erToK` chain by the T1/T2 spec/plan referenced in the
+> partial-completion note above; the design-time prose is left
+> intact for historical reference but is not the binding
+> description of the landed code. §7–§9 (K^sim simulator,
+> runtime bound) and §10–§11 (functors, iso) remain
+> forward-looking design for Steps 9–11 (workstreams T3, T4, T5).
 
 ---
 
@@ -497,39 +552,60 @@ LawvereKSimDCat 2 ⥤ LawvereERCat`, functor laws.
 
 ### Steps 6–10 — erToK side (URM simulation)
 
-**Status: not started.** The descriptions below remain
-forward-looking design.
+**Status: partially complete.** Steps 6–8 landed via workstreams
+T1 and T2 (see "Phase 2 partial-completion note" at the top of
+this document). Steps 9–10 remain forward-looking design and will
+be re-specified once T3 brainstorming begins.
 
 #### Step 6 — `RegisterMachine.lean` audit and gap-fill
 
-**Status: pending.**
+**Status: superseded.**
 
-Audit existing `GebLean/Utilities/RegisterMachine.lean` (166
-lines) for sufficiency relative to §4 below. Likely outcome:
-small additive lemmas. Near-empty cycle.
+T1 built a fresh arity-indexed `URMProgram` kernel in
+`GebLean/Utilities/ZeroTestURM.lean` rather than auditing the
+older `GebLean/Utilities/RegisterMachine.lean`. The existing
+`RegisterMachine.lean` is no longer on the `erToK` load-bearing
+path; it remains in place for other (non-`erToK`) uses but is
+not consumed by the erToK chain.
 
 #### Step 7 — `URMConcrete.lean`
 
-**Status: pending.**
+**Status: complete (workstream T1).**
 
-Define `URMInstr` (Tourlakis's six primitives), `URMProgram`,
-`toRegisterMachine`, the `URMComputes` structure (§4.4), and
-the composition combinators `urmSeq`, `urmIf`, `urmLoop` (§5)
-with both stepBound arithmetic and tower-witness arithmetic.
+T1 defined `URMInstr a`, `URMProgram`, `URMState`,
+`URMState.step`, `URMState.runFor` (with `runFor_zero`,
+`runFor_succ`, `runFor_add` reduction lemmas), and
+`URMState.init` — all in `GebLean/Utilities/ZeroTestURM.lean`.
+Two architectural divergences from the original Step 7
+sketch:
+
+- `URMComputes` structure: not built. The runtime witness is a
+  direct `compileER_runtime : ERMor1 a → (Fin a → ℕ) → ℕ`
+  function defined in T2; the correctness theorem
+  `compileER_runFor` is stated in `≤ t'` output-equality form
+  rather than packaged as a stepBound + tower-witness sigma type.
+- `urmSeq` / `urmIf` / `urmLoop` combinators: replaced by
+  fragment-level emission helpers (`emitInstrs`,
+  `URMRaw.transferLoop`, `URMRaw.preservingTransfer`) in
+  `GebLean/LawvereERKSim/Compiler.lean` and `Loops.lean`.
 
 #### Step 8 — ER → URM compiler
 
-**Status: pending.**
+**Status: complete (workstream T2).**
 
-Catalogue `URMSubroutinesER.lean`: URM subroutines
-emulating each `ERMor1` constructor (`zero`, `succ`, `proj`,
-`sub`, `comp`, `bsum`, `bprod`), each with `URMComputes`.
-Compiler `compileER : ERMor1 a → URMProgram` as a one-line
-`match`.
+T2 landed `compileER : ERMor1 a → URMProgram a` (fragment-based,
+arity-indexed), `compileER_runtime` (the runtime witness), and
+the climactic correctness theorem `compileER_runFor` (by
+structural induction over `ERMor1`, in
+`GebLean/LawvereERKSim/Top.lean`). The per-ER-constructor
+subroutines that the original Step 8 sketch placed under
+`URMSubroutinesER.lean` are inlined as `compileFrag_*`
+combinators across the eight `GebLean/LawvereERKSim/`
+submodules; the consolidating fact is `compileER_runFor`.
 
 #### Step 9 — K^sim simulator for URM and runtime bound
 
-**Status: pending.**
+**Status: pending (next workstream — T3).**
 
 Catalogue `KSimSubroutinesURM.lean`: K^sim subroutines
 emulating each URM primitive instruction. Per-URM simulator
@@ -605,12 +681,12 @@ Longest serial chain on the kToER side: 0 → 1 → 2 → 3 → 4 →
 | 3 | kToER | small | complete | A_one + iters + aliasing |
 | 4 | kToER | substantial | complete | majorization theorem |
 | 5 | kToER | medium | complete | structural induction + functor |
-| 6 | erToK | empty/small | pending | RegisterMachine audit |
-| 7 | erToK | substantial | pending | URM kernel + URMComputes |
-| 8 | erToK | substantial | pending | ER → URM compiler + catalogue |
-| 9 | erToK | substantial | pending | K^sim simulator + bound |
-| 10 | erToK | medium | pending | erToK composition + functor |
-| 11 | both | small | pending | strict iso packaging |
+| 6 | erToK | empty/small | superseded | rendered moot by fresh-kernel approach in T1; `Utilities/RegisterMachine.lean` not on `erToK` load-bearing path |
+| 7 | erToK | substantial | complete (T1) | URM kernel in `GebLean/Utilities/ZeroTestURM.lean`; no `URMComputes` structure (replaced by direct `compileER_runtime` + `compileER_runFor`) |
+| 8 | erToK | substantial | complete (T2) | ER → URM compiler + correctness in `GebLean/LawvereERKSim/{Compiler,Embedding,Loops,Atoms,Comp,BSum,BProd,Top}.lean` |
+| 9 | erToK | substantial | pending (T3) | K^sim simulator + bound |
+| 10 | erToK | medium | pending (T4) | erToK composition + functor |
+| 11 | both | small | pending (T5) | strict iso packaging |
 
 ---
 
