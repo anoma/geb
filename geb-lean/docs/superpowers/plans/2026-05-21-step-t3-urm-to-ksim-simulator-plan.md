@@ -1808,13 +1808,18 @@ structure is:
           -- `KMor1.interp_cond` produces a different shape
           -- (e.g. `Fin.cases` or `Decidable.rec`), extend the
           -- whitelist accordingly per `mcp__lean-lsp__lean_goal`.
+          -- Per plan round-7 serious finding R7-S2: the
+          -- `simp only [KMor1.interp_natK']` invocation in the
+          -- first simp only chain above already reduces
+          -- `natK' …` occurrences; further invocations after
+          -- the `by_cases` split are operationally noops and
+          -- emit `Simp made no progress`. Close via implicit
+          -- `rfl` after the `if_pos` / `if_neg` rewrite.
           by_cases h_zero : ((URMState.init P v).runFor P y).regs i = 0
           · simp only [KMor1.interp_cond]
             rw [if_pos h_zero]
-            simp only [KMor1.interp_natK']
           · simp only [KMor1.interp_cond]
             rw [if_neg h_zero]
-            simp only [KMor1.interp_natK']
         | stop =>
           simp only [branches_pc, h_instr, I_prev, KMor1.interp_proj]
           simp only [URMState.step]
@@ -1979,12 +1984,12 @@ may need minor argument adjustments.
             -- Per round-5 blocker R5-B2: URM-side is
             -- `s.regs i + 1`, K-side is `s.regs j + 1`. Bridge
             -- `i` to `j` via the `h_eq : i.val = j.val` witness.
-            -- Per plan round-6 serious finding R6-S2: rewrite in
-            -- all hypotheses too (the URM-side propagated `i` may
-            -- appear in `Function.update`-derived hypotheses; `at *`
-            -- is harmless and defends against the elaborator
-            -- substituting `i ↦ j` only partially).
-            rw [show i = j from Fin.ext h_eq] at *
+            -- Rewrite `i ↦ j` in the goal only (per plan round-7
+            -- serious finding R7-S1: the prior `at *` form
+            -- over-broadens, rewriting `h_eq : i.val = j.val` to a
+            -- degenerate `j.val = j.val` and tripping the
+            -- unusedHypothesis linter).
+            rw [show i = j from Fin.ext h_eq]
           · rw [if_neg h_eq]
             simp only [v_j_prev, KMor1.interp_proj]
             rw [Function.update_apply,
@@ -2015,12 +2020,12 @@ may need minor argument adjustments.
             rw [ih_regs j]
             -- Per round-5 blocker R5-B2: bridge `i` to `j` —
             -- URM-side is `s.regs i - 1`, K-side is `s.regs j - 1`.
-            -- Per plan round-6 serious finding R6-S2: rewrite in
-            -- all hypotheses too (the URM-side propagated `i` may
-            -- appear in `Function.update`-derived hypotheses; `at *`
-            -- is harmless and defends against the elaborator
-            -- substituting `i ↦ j` only partially).
-            rw [show i = j from Fin.ext h_eq] at *
+            -- Rewrite `i ↦ j` in the goal only (per plan round-7
+            -- serious finding R7-S1: the prior `at *` form
+            -- over-broadens, rewriting `h_eq : i.val = j.val` to a
+            -- degenerate `j.val = j.val` and tripping the
+            -- unusedHypothesis linter).
+            rw [show i = j from Fin.ext h_eq]
           · rw [if_neg h_eq]
             simp only [v_j_prev, KMor1.interp_proj]
             rw [Function.update_apply,
@@ -2033,13 +2038,19 @@ may need minor argument adjustments.
                   from by apply Fin.ext; simp [Fin.castSucc]; omega]
             exact ih_regs j
         | jumpZ i l₁ l₂ =>
-          -- jumpZ leaves all registers unchanged. Per plan round-6
-          -- serious finding R6-S3: omit the redundant URM-side
-          -- chain (simp only [URMState.step]; rw [dif_pos h_inbounds];
-          -- simp only [h_instr]) — `.jumpZ`'s `regs` field is
-          -- untouched, so the URM-side is already
-          -- `(runFor y).regs j` after the `cases h_instr` substitution.
+          -- jumpZ leaves all registers unchanged. Per plan round-7
+          -- blocker R7-B1: restore the URM-side chain (round 6's
+          -- R6-S3 incorrectly stripped it on the assumption that
+          -- `URMState.step P s`'s `.regs j` projection reduces
+          -- definitionally; in landed Lean
+          -- `URMState.step` is `if h : s.pc < P.instrs.size then …
+          -- else s`, whose outer `if` is not eliminated until the
+          -- proof tactically commits to one branch — so the chain
+          -- is operationally necessary to expose `s.regs j`).
           simp only [branches_j, h_instr, v_j_prev, KMor1.interp_proj]
+          simp only [URMState.step]
+          rw [dif_pos h_inbounds]
+          simp only [h_instr]
           -- K^sim returns v_j_prev = ih_regs j after bridging the
           -- dispatcher's slot-`a + 1 + j.val` read to `j.castSucc`
           -- (per R4-B2 / R4-S6).
