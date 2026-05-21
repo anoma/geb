@@ -292,4 +292,50 @@ namespace GebLean.KSimURMSimulator
 open GebLean.ZeroTestURM
 open GebLean
 
+/-- The base family for `simulate`'s simrec at time `y = 0`,
+mirroring `URMState.init` syntactically. By `Fin.lastCases`:
+the `Fin.last` case is the PC component (`KMor1.zero`, since
+`URMState.init`'s `pc := 0`); the `castSucc` case is a register
+component for `r : Fin P.numRegs`, which performs the same
+`List.find?` lookup as `URMState.init`'s `regs` field and
+returns the corresponding `KMor1.proj` for an input slot, or
+`KMor1.zero` otherwise.
+
+In the `some i` branch, `i : Fin a` is the input slot index
+returned by `List.find?` (distinct from the outer-scope
+register index `r : Fin P.numRegs`); `KMor1.proj i` then has
+type `KMor1 a`, matching the `baseFamily` return type.
+
+Per spec § 3.3. -/
+def baseFamily {a : ℕ} (P : URMProgram a) :
+    Fin (P.numRegs + 1) → KMor1 a :=
+  Fin.lastCases
+    (KMor1.zero : KMor1 a)
+    (fun r : Fin P.numRegs =>
+      match (List.finRange a).find?
+            (fun i => decide (P.inputRegs i = r)) with
+      | some i => KMor1.proj i
+      | none   => KMor1.zero)
+
+-- AXIOM_ALLOW: Classical.choice (transitively via mathlib's
+-- Fin.lastCases_castSucc / Fin.reverseInduction.go; project
+-- policy accepts this exception per .claude/rules/lean-coding.md
+-- § Accepted exceptions).
+/-- Every base-family component is at level 0 (each is
+`KMor1.zero` or `KMor1.proj _`). -/
+theorem baseFamily_level {a : ℕ} (P : URMProgram a)
+    (j : Fin (P.numRegs + 1)) :
+    (baseFamily P j).level = 0 := by
+  refine Fin.lastCases ?_ ?_ j
+  · -- j = Fin.last P.numRegs
+    simp only [baseFamily, Fin.lastCases_last]
+    rfl
+  · -- j = r.castSucc for some r : Fin P.numRegs
+    intro r
+    simp only [baseFamily, Fin.lastCases_castSucc]
+    cases h : (List.finRange a).find?
+        (fun i => decide (P.inputRegs i = r)) with
+    | some i => unfold KMor1.level; omega
+    | none => unfold KMor1.level; omega
+
 end GebLean.KSimURMSimulator
