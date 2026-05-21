@@ -130,11 +130,10 @@ output is the value of `P.outputReg` after `y` steps from
 - recursion variable: `y` (slot 0 of the outer context);
 - parameters: `v` (slots `1..a`);
 - system size: `P.numRegs + 1`;
-- component layout: components `0, …, numRegs − 1` are register
-  values `regs 0, …, regs (numRegs − 1)` (component `j` ↔
-  register `j`, for `j : Fin P.numRegs`); component `numRegs`
-  (the last component, accessed via `Fin.last P.numRegs`) is
-  the PC;
+- component layout: for each `j : Fin P.numRegs`, the component
+  at simrec index `j.castSucc : Fin (P.numRegs + 1)` holds
+  register `j`'s value; the component at simrec index
+  `Fin.last P.numRegs : Fin (P.numRegs + 1)` holds the PC;
 - output index: `P.outputReg.castSucc : Fin (P.numRegs + 1)`.
 
 Placing the PC at the last component aligns the previous-PC
@@ -180,18 +179,18 @@ def stepFamily {a : ℕ} (P : URMProgram a) :
 ```
 
 Per `KMor1.interp_simrec_eq_simrecVec`, the step context for one
-`stepFamily j` call has arity `a + 1 + (P.numRegs + 1)`. The
-previous-component slots are placed at `slot = a + 1 + i` for
-component index `i : Fin (P.numRegs + 1)`. Combined with § 3.2's
-component layout (registers at indices `0..numRegs − 1`, PC at
-index `numRegs`):
+`stepFamily j` call has arity `a + 1 + (P.numRegs + 1) =
+a + numRegs + 2`. The previous-component slots are placed at
+`slot = a + 1 + i` for component index `i : Fin (P.numRegs + 1)`.
+Combined with § 3.2's component layout (registers at indices
+`0..numRegs − 1`, PC at index `numRegs`):
 
 | slot | meaning |
 | --- | --- |
 | `0` | current iteration counter `m` (unused) |
 | `1..a` | input vector `v` (used only as input slot reference) |
 | `a + 1 + j` for `j : Fin P.numRegs` | previous register value `v_j_prev` |
-| `a + 1 + numRegs` (the last slot, `Fin.last (a + numRegs + 1)`) | previous PC value `I_prev` |
+| `a + 1 + numRegs` (the last slot, `Fin.last (a + numRegs + 1) : Fin (a + numRegs + 2)`) | previous PC value `I_prev` |
 
 Helper projections (each is `KMor1.proj …` at level 0):
 
@@ -235,83 +234,98 @@ Every branch and every default is at level ≤ 1 (`cond`, `pred` are
 level 1; `succ`, `proj`, `natK'` are level 0). By
 `pcDispatch_level` (§ 3.5), each `stepFamily P j` is at level ≤ 1.
 
-Note on `pcDispatch`'s argument: in the displayed branches, the
-inner combinators (`cond`, `succ ∘ I_prev`, etc.) are
-`KMor1 (a + 1 + (P.numRegs + 1))`-typed but `pcDispatch` expects
-`KMor1 n` branches and applies them to the context with the last
-slot stripped. Each branch term written above implicitly uses
-`KMor1.comp` over the first `a + 1 + P.numRegs` slots; the K^sim
-realisation is mechanical and is spelled out at the level of the
-formal definition rather than in the pseudocode above.
+The dispatcher is instantiated with `n := a + numRegs + 1` so its
+return type `KMor1 (n + 1)` matches the step context arity
+`a + numRegs + 2`. Branches and default are typed at the same
+arity `n + 1`, so each may read any context slot directly (no
+lift required); in particular, `I_prev` and each `v_j_prev`
+project at the appropriate slot of the full step context.
 
 ### 3.5 PC-dispatch helper `KMor1.pcDispatch`
 
 ```lean
 def KMor1.pcDispatch {n : ℕ} (size : ℕ)
-    (branches : Fin size → KMor1 n) (default : KMor1 n) :
+    (branches : Fin size → KMor1 (n + 1))
+    (default : KMor1 (n + 1)) :
     KMor1 (n + 1)
 ```
 
-Implementation is a nested `cond` chain reading the last context
-slot (`PC := ctx (Fin.last n)`), constructed by structural
-recursion on `size` in the *bottom-up* direction (test
-`PC = 0` first):
+Branches and default share the dispatcher's output arity `n + 1`,
+giving each access to all context slots (including the last slot,
+which carries the PC value being dispatched on). Branches may
+ignore the PC slot if they choose, but the `default` term reads
+the PC slot to realise the past-end self-loop (`default_pc :=
+I_prev` in § 3.4).
 
-- Base case `size = 0`: return `default` lifted from arity `n` to
-  arity `n + 1` by dropping the last slot. In K^sim, this lift is
-  `KMor1.comp default (fun i : Fin n => KMor1.proj
-  (Fin.castSucc i))` (level = `default.level`).
-- Recursive case `size + 1`: test `cond(PC, branches ⟨0, _⟩,
-  recur)` where `recur := pcDispatch size (branches ∘ Fin.succ)
-  default` pre-composed with a slot-replacement substituting
-  `pred(PC)` for the PC slot. In K^sim, the slot-replacement
-  precomposition is `KMor1.comp recur shift` where
-  `shift : Fin (n + 1) → KMor1 (n + 1)` sends
-  `i = Fin.last n ↦ KMor1.comp KMor1.pred
-  (fun _ : Fin 1 => KMor1.proj (Fin.last n))` and
-  `i = Fin.castSucc j ↦ KMor1.proj (Fin.castSucc j)` for
+Implementation is a nested `cond` chain reading the last context
+slot (`PC := KMor1.proj (Fin.last n)`), constructed by structural
+recursion on `size` in the bottom-up direction (test `PC = 0`
+first):
+
+- Base case `size = 0`: return `default` directly (no lift).
+- Recursive case `size + 1`: build
+  `cond(PC, branches ⟨0, _⟩, recur)` where
+  `recur := KMor1.comp (pcDispatch size (branches ∘ Fin.succ)
+  default) shift` and `shift : Fin (n + 1) → KMor1 (n + 1)`
+  substitutes `pred(PC)` for the PC slot:
+  `shift (Fin.last n) := KMor1.comp KMor1.pred
+  (fun _ : Fin 1 => KMor1.proj (Fin.last n))`, and
+  `shift (Fin.castSucc j) := KMor1.proj (Fin.castSucc j)` for
   `j : Fin n`.
 
 The bottom-up form is correct because each `cond(pred^k(PC), …,
-…)` test reads `pred^k(PC) = 0` ⇔ `PC ≤ k` (cf. Tourlakis
-§ 0.1.0.20 p. 7 establishing `λx.x ≤ a ∈ K^sim_{1,*}`). Inside
-the nested chain, by the time the `k`-th test is reached, every
-earlier test has fallen through (so `PC ≥ k`); combined with
-`PC ≤ k` from the current test, this yields `PC = k` and
-correctly selects `branches ⟨k, _⟩`. A top-down realisation
-testing `pred^{size-1}(PC) = 0` at the outermost `cond` does
-*not* select `branches PC`, because `pred^k(PC) = 0` ⇔
-`PC ≤ k` admits all `PC ≤ k`, not just `PC = k`; the bottom-up
-realisation avoids this trap by virtue of the "earlier tests
-have fallen through" invariant.
+…)` test reads `pred^k(PC) = 0 ⇔ PC ≤ k` (cf. Tourlakis
+§ 0.1.0.20 p. 7 establishing `λx.x ≤ a ∈ K_{1,*}` and
+§ 0.1.0.8 p. 3 giving `K_1 ⊆ K^sim_1`). Inside the nested
+chain, by the time the `k`-th test is reached, every earlier
+test has fallen through (so `PC ≥ k`); combined with `PC ≤ k`
+from the current test, this yields `PC = k` and correctly
+selects `branches ⟨k, _⟩`. A top-down realisation testing
+`pred^{size-1}(PC) = 0` at the outermost `cond` does not select
+`branches PC`, because `pred^k(PC) = 0 ⇔ PC ≤ k` admits all
+`PC ≤ k`, not just `PC = k`; the bottom-up realisation avoids
+this trap by the "earlier tests have fallen through" invariant.
 
 Key lemmas:
 
 ```lean
 @[simp] theorem KMor1.interp_pcDispatch_match
-    {n size : ℕ} (branches : Fin size → KMor1 n)
-    (default : KMor1 n) (ctx : Fin (n + 1) → ℕ)
+    {n size : ℕ} (branches : Fin size → KMor1 (n + 1))
+    (default : KMor1 (n + 1)) (ctx : Fin (n + 1) → ℕ)
     (k : Fin size) (h : ctx (Fin.last n) = k.val) :
     (KMor1.pcDispatch size branches default).interp ctx
-      = (branches k).interp (Fin.init ctx)
+      = (branches k).interp ctx
 
 @[simp] theorem KMor1.interp_pcDispatch_default
-    {n size : ℕ} (branches : Fin size → KMor1 n)
-    (default : KMor1 n) (ctx : Fin (n + 1) → ℕ)
+    {n size : ℕ} (branches : Fin size → KMor1 (n + 1))
+    (default : KMor1 (n + 1)) (ctx : Fin (n + 1) → ℕ)
     (h : ctx (Fin.last n) ≥ size) :
     (KMor1.pcDispatch size branches default).interp ctx
-      = default.interp (Fin.init ctx)
+      = default.interp ctx
 
-theorem KMor1.pcDispatch_level {n : ℕ} (size : ℕ)
-    (branches : Fin size → KMor1 n) (default : KMor1 n)
+theorem KMor1.pcDispatch_level {n size : ℕ}
+    (branches : Fin size → KMor1 (n + 1))
+    (default : KMor1 (n + 1))
     (h_branches : ∀ k, (branches k).level ≤ 1)
     (h_default : default.level ≤ 1) :
     (KMor1.pcDispatch size branches default).level ≤ 1
 ```
 
-The `+ 1` from `cond` does not raise level beyond 1 because the
-`cond` is itself level 1 and is composed with level-1 children
-under `comp` (which takes `max` without adding).
+Level analysis (by induction on `size`):
+
+- Base case `pcDispatch 0 _ default = default` at level
+  `default.level ≤ 1`.
+- Recursive case `size + 1`: the slot-substitution `shift`'s
+  `Fin.last` component is `KMor1.comp pred [proj (Fin.last n)]`
+  at level 1; the other components are `proj` at level 0;
+  `KMor1.comp recur shift` is at level
+  `max (recur.level) (max-of-shift-levels) = max (≤ 1) 1 = 1`.
+  The outer `KMor1.comp cond [proj, branches[0], recur-shifted]`
+  is at level `max (cond.level) (max-of-children) = max 1 1 = 1`.
+  Inductive step preserves the bound. The `+ 1` from `cond` does
+  not raise level beyond 1 because `cond` is itself level 1 and
+  is composed with level-≤-1 children under `comp` (which takes
+  `max` without adding).
 
 ### 3.6 Constant helper `KMor1.natK`
 
@@ -349,10 +363,10 @@ theorem simulate_interp {a : ℕ} (P : URMProgram a)
       = ((URMState.init P v).runFor y).regs P.outputReg
 ```
 
-Total over `URMProgram a`; no `WellBounded` precondition. The K^sim
-side's `default_pc = I_prev` matches `URMState.step`'s past-end
-self-loop, and `runFor`'s post-halt invariant
-(`URMState.runFor_halted_invariant`,
+Holds for every `URMProgram a`; no `WellBounded` precondition is
+required. The K^sim side's `default_pc := I_prev` matches
+`URMState.step`'s past-end self-loop, and `runFor`'s post-halt
+invariant (`URMState.runFor_halted_invariant`,
 `GebLean/Utilities/ZeroTestURM.lean:213`) follows from the same
 identity.
 
@@ -388,14 +402,30 @@ By induction on `y`.
 
 **Base case `y = 0`.** Both sides reduce by `simrecVec_zero` and
 `runFor_zero` to the same `baseFamily P` / `URMState.init P v`
-definitions. The PC component reduces to `0 = 0`; each register
-component reduces to the same `List.find?` lookup that
-`URMState.init` uses; closed by `rfl` after `simp` chains.
+definitions. The PC component reduces by `interp_zero` to `0`,
+which equals `(URMState.init P v).pc = 0`. For each register
+component, case-split on the `Option (Fin a)` result of
+`(List.finRange a).find? (fun i => decide (P.inputRegs i = r))`:
+in the `some i` branch, both sides reduce by `interp_proj` and
+the `URMState.init` register definition to `v i`; in the `none`
+branch, both reduce by `interp_zero` to `0`. The case-split is
+explicit (not closed by `rfl` alone), but each case closes after
+the relevant `simp` chain.
 
-**Step case `y + 1`.** Both sides peel one iteration:
+**Step case `y + 1`.** The URM side requires the back-peel
+reduction `runFor (init P v) (y + 1) = step (runFor (init P v) y)`.
+This is derived from `URMState.runFor_succ` (`:192`, front-peel)
+and `URMState.runFor_add` (`:199`) by the chain:
+`runFor s 1 = runFor (step s) 0 = step s` (by `runFor_succ` at
+`n = 0`); then `runFor s (y + 1) = runFor (runFor s y) 1
+= step (runFor s y)` (by `runFor_add` and the previous step).
+Citing only `runFor_succ` is insufficient because the fixed
+`s := URMState.init P v` is incompatible with `runFor_succ`'s
+front-peel rewrite.
 
-- URM side: `URMState.runFor_succ` gives
-  `runFor (y + 1) = step (runFor y)`.
+After the back-peel reduction:
+
+- URM side: `runFor (y + 1) = step (runFor y)`.
 - K^sim side: `simrecVec_succ` gives the one-iteration unfolding
   through `stepFamily P j`.
 
@@ -550,8 +580,13 @@ that `KMor1.pcDispatch` is fully qualified
 `GebLean.lean` (re-export change):
 
 ```lean
-public import GebLean.Utilities.KSimURMSimulator
+import GebLean.Utilities.KSimURMSimulator
 ```
+
+Plain `import` (not `public import`) matches the existing
+`GebLean.lean` re-export pattern; the cited Lean source files do
+not declare `module` at top, so `public import` would have no
+extra effect.
 
 ### 6.4 Naming conventions
 
@@ -626,8 +661,9 @@ internal task split (refined further during plan writing):
 4. **T3-Task-4.** `simulate` (the assembly) plus the auxiliary
    helper projections `I_prev`, `v_j_prev`. Approximately 30 LOC.
 5. **T3-Task-5.** `simulate_step_match` (the conjunctive
-   induction). Approximately 100 LOC, with case-by-case
-   instruction discharge.
+   induction). Approximately 150–250 LOC, with case-by-case
+   instruction discharge plus per-instruction `Function.update`
+   propagation between the K^sim and URM sides.
 6. **T3-Task-6.** `simulate_interp` and `simulate_level`.
    Approximately 30 LOC.
 7. **T3-Task-7.** Axiom audit (`scripts/check-axioms.sh` on each
@@ -635,14 +671,14 @@ internal task split (refined further during plan writing):
    `markdownlint-cli2`). Approximately 10 LOC.
 
 Two adversarial-review rounds expected on the plan; two more
-expected on the implementation as it lands. Total approximate LOC:
-340.
+expected on the implementation as it lands. Total approximate
+LOC: 400–500.
 
 ## 10 Adversarial-review punch list
 
 The round-N adversary verifies each claim and reports findings in
-`.review-N.md`. Most important obligation: every named construction
-in §§ 3 – 6 carries a citation (Tourlakis location or
+`.review-N.md`. Primary obligation: every named construction in
+§§ 3 – 6 carries a citation (Tourlakis location or
 `File.lean:line`), and every cited claim is verifiable at the cited
 source.
 
@@ -662,7 +698,7 @@ source.
 | 10.12 | Naming conventions per mathlib `naming.html` and `.claude/rules/lean-coding.md`. | Verify `def`s in `lowerCamelCase`, theorems in `snake_case`, namespace in `UpperCamelCase`. Re-fetch `naming.html` each round. |
 | 10.13 | Documentation conventions per mathlib `doc.html`. | Verify module docstring has required sections; verify every public `def` / `structure` / `theorem` has a `/-- … -/` docstring; verify no history references inside docstrings. |
 | 10.14 | LOC estimate plausibility. | Sketch each helper's expected size against § 9; flag if the approximately 340 LOC total appears off by more than 2 ×. |
-| 10.15 | Tourlakis 2018 § 0.1.0.37 transcription fidelity. | Tabulate § 6.1 of the master spec (the Tourlakis simulation lemma's `v_i` and `I` recursion equations) against `stepFamily` of this spec; flag any mismatch. The master spec is the intermediate-binding for what § 0.1.0.37 says. |
+| 10.15 | Tourlakis 2018 § 0.1.0.37 transcription fidelity. | Tabulate master design § 7 (and Tourlakis § 0.1.0.37 pp. 15–16, the literal source of the simulation lemma's `v_i` and `I` recursion equations) against `stepFamily` of this spec; flag any mismatch. |
 
 ## 11 Citations
 
@@ -684,10 +720,10 @@ source.
 - § 0.1.0.17(6) p. 6 — `switch ∈ K_1`. Grounds `cond` (= `switch`)
   as level 1, used inside `pcDispatch` and `stepFamily`'s `.jumpZ`
   branch.
-- § 0.1.0.20 p. 7 — `λx.x ≤ a, λx.x < a, λx.x = a ∈
-  K^sim_{1,*}` (the predicate sub-class of `K^sim_1`, per
-  Tourlakis § 0.1.0.18–§ 0.1.0.20's predicate-on-`K^sim_n`
-  closure principle). Grounds the level-1 inequality
+- § 0.1.0.20 p. 7 — `λx.x ≤ a, λx.x < a, λx.x = a ∈ K_{1,*}`
+  (predicate sub-class of `K_1`, Corollary 0.1.0.20). Chained
+  with Proposition § 0.1.0.8 p. 3 (`K_n ⊆ K^sim_n`) to reach
+  `K^sim_{1,*}`. Grounds the level-1 inequality
   `pred^k(I) = 0 ⇔ I ≤ k`, which is the test `pcDispatch`'s
   bottom-up `cond` chain uses; the chain's nested-fall-through
   structure (§ 3.5) converts the inequality at the `k`-th level
