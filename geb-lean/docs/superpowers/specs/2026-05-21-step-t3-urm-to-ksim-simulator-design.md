@@ -1,9 +1,10 @@
 # T3 — URM → K^sim simulator — design
 
-Re-spec of master design §6 (master design at
-`docs/research/2026-05-02-er-ksim2-equiv-via-urm-master-design.md`;
-T1/T2 spec at
-`docs/superpowers/specs/2026-05-16-er-to-k-via-cslib-urm-design.md`)
+Re-spec of master design §7 ("The simulator (erToK side)", lines
+1902–1943 of
+`docs/research/2026-05-02-er-ksim2-equiv-via-urm-master-design.md`)
+and the parallel §6 of the T1/T2 spec at
+`docs/superpowers/specs/2026-05-16-er-to-k-via-cslib-urm-design.md`,
 against the actually-landed T1 (`GebLean/Utilities/ZeroTestURM.lean`)
 and T2 (`GebLean/LawvereERKSim/` submodules) shapes. T3 builds a
 K^sim simulator for arbitrary `URMProgram a` and proves it
@@ -61,14 +62,16 @@ T3 produces:
   `interp_pcDispatch_default`, and `pcDispatch_level`. The
   dispatch chain stays at level 1 when branches and default are
   level ≤ 1.
-- `simulate : URMProgram a → KMor1 (1 + a)`.
+- `simulate : URMProgram a → KMor1 (a + 1)`.
 - `simulate_interp`: simulator output equals `URMState.runFor`
   output projected at `outputReg`.
 - `simulate_level`: `(simulate P).level ≤ 2`.
 
-The runtime bound (`boundExprK`), the `erToK` assembly, the
-`erToKFunctor`, and the strict iso are out of scope; they belong
-to T4, T5, and T6 respectively. See § 8.
+The runtime bound (`boundExprK`; master design § 9) and the
+level-2 K^sim composites it consumes (`maxK`, `maxOver`,
+`pow2_iter`) are deferred to T4; the `erToK` assembly and the
+`erToKFunctor` (master design § 10) are deferred to T5; the
+strict iso (master design § 11) is deferred to T6. See § 8.
 
 ## 2 Inputs (binding T1/T2 artifacts)
 
@@ -90,7 +93,7 @@ to these would require re-spec.
 | `KMor1.simrecVec_zero` / `_succ` (`@[simp]`) | `GebLean/LawvereKSimInterp.lean:180`, `:193` | Peel one iteration of the `simrec` recursion. |
 | `KMor1.cond` (Tourlakis `switch`, level 1) | `GebLean/Utilities/KArith.lean:222` | Inner combinator of `pcDispatch`. |
 | `KMor1.interp_cond` (`@[simp]`) | `GebLean/Utilities/KArith.lean:249` | Reduces `pcDispatch`'s nested `cond` chain. |
-| `KMor1.pred` (level 1) | `GebLean/Utilities/KArith.lean:44` | Used both inside `pcDispatch` (`pred^k(I)` tests `I = k`) and inside `stepFamily` (`.dec` branch). |
+| `KMor1.pred` (level 1) | `GebLean/Utilities/KArith.lean:44` | Used both inside `pcDispatch` (`pred^k(I) = 0` ⇔ `I ≤ k`, threaded into the bottom-up `cond` chain) and inside `stepFamily` (`.dec` branch). |
 
 T3 does not depend on `LawvereER*`, `LawvereERKSim/*`,
 `LawvereKSimER*`, `LawvereKSimMajorization*`, or any CSLib URM
@@ -101,7 +104,7 @@ module. See § 6.2.
 ### 3.1 Public signature
 
 ```lean
-def simulate {a : ℕ} (P : URMProgram a) : KMor1 (1 + a)
+def simulate {a : ℕ} (P : URMProgram a) : KMor1 (a + 1)
 
 theorem simulate_interp {a : ℕ} (P : URMProgram a)
     (y : ℕ) (v : Fin a → ℕ) :
@@ -112,10 +115,13 @@ theorem simulate_level {a : ℕ} (P : URMProgram a) :
     (simulate P).level ≤ 2
 ```
 
-The simulator's context arity is `1 + a`: slot 0 carries the
+The simulator's context arity is `a + 1`: slot 0 carries the
 time bound `y`, slots `1..a` carry the input vector `v`. The
 output is the value of `P.outputReg` after `y` steps from
-`URMState.init P v`.
+`URMState.init P v`. The arity `a + 1` matches
+`KMor1.simrec`'s return type (`KMor1 (a + 1)`,
+`LawvereKSim.lean:50`) definitionally; `Fin.cons y v` has type
+`Fin (a + 1) → ℕ`.
 
 ### 3.2 `simrec` system shape
 
@@ -124,10 +130,16 @@ output is the value of `P.outputReg` after `y` steps from
 - recursion variable: `y` (slot 0 of the outer context);
 - parameters: `v` (slots `1..a`);
 - system size: `P.numRegs + 1`;
-- component layout: component `0` is the PC; components
-  `1, …, numRegs` are register values `regs 0, …,
-  regs (numRegs − 1)` (component `j + 1` ↔ register `j`);
-- output index: `P.outputReg.succ : Fin (P.numRegs + 1)`.
+- component layout: components `0, …, numRegs − 1` are register
+  values `regs 0, …, regs (numRegs − 1)` (component `j` ↔
+  register `j`, for `j : Fin P.numRegs`); component `numRegs`
+  (the last component, accessed via `Fin.last P.numRegs`) is
+  the PC;
+- output index: `P.outputReg.castSucc : Fin (P.numRegs + 1)`.
+
+Placing the PC at the last component aligns the previous-PC
+step-context slot with the last slot of the step context, which
+is the slot `KMor1.pcDispatch` (§ 3.5) reads.
 
 Picking `Fin.cons y v` as the input convention matches
 `interp_simrec`'s context-splitting (`ctx 0` for the recursion
@@ -135,23 +147,30 @@ variable; `Fin.succ` projection for parameters).
 
 ### 3.3 Base family `baseFamily`
 
+Mirrors `URMState.init` syntactically, with the component layout
+of § 3.2. The mathlib-idiomatic destructuring is via
+`Fin.lastCases`: the PC component is `Fin.last P.numRegs`; each
+register component is `(j : Fin P.numRegs).castSucc`.
+
 ```lean
 def baseFamily {a : ℕ} (P : URMProgram a) :
-    Fin (P.numRegs + 1) → KMor1 a
-  | ⟨0,        _⟩ => KMor1.zero
-  | ⟨j + 1, hj⟩  =>
-      let r : Fin P.numRegs := ⟨j, by omega⟩
+    Fin (P.numRegs + 1) → KMor1 a :=
+  Fin.lastCases
+    -- PC component: initial value 0
+    (KMor1.zero : KMor1 a)
+    -- Register component for `r : Fin P.numRegs`
+    (fun r =>
       match (List.finRange a).find?
             (fun i => decide (P.inputRegs i = r)) with
       | some i => KMor1.proj i
-      | none   => KMor1.zero
+      | none   => KMor1.zero)
 ```
 
-Mirrors `URMState.init` syntactically: component `0` is `KMor1.zero`
-(initial PC = 0); component `j + 1` for register `j` reproduces
-`URMState.init`'s register-vector definition, using the same
-`List.find?` lookup. Every leaf is `zero` or `proj`, so each
-`baseFamily P j` is at level 0.
+In the `some i` branch, `i : Fin a` is the input slot index
+returned by `List.find?` (distinct from the outer-scope register
+index `r : Fin P.numRegs`); `KMor1.proj i` then has type
+`KMor1 a`, matching the `baseFamily` return type. Every leaf is
+`zero` or `proj`, so each `baseFamily P j` is at level 0.
 
 ### 3.4 Step family `stepFamily`
 
@@ -160,27 +179,35 @@ def stepFamily {a : ℕ} (P : URMProgram a) :
     Fin (P.numRegs + 1) → KMor1 (a + 1 + (P.numRegs + 1))
 ```
 
-Per `KMor1.interp_simrec_eq_simrecVec`, the step context layout
-for one `stepFamily j` call is:
+Per `KMor1.interp_simrec_eq_simrecVec`, the step context for one
+`stepFamily j` call has arity `a + 1 + (P.numRegs + 1)`. The
+previous-component slots are placed at `slot = a + 1 + i` for
+component index `i : Fin (P.numRegs + 1)`. Combined with § 3.2's
+component layout (registers at indices `0..numRegs − 1`, PC at
+index `numRegs`):
 
 | slot | meaning |
 | --- | --- |
 | `0` | current iteration counter `m` (unused) |
 | `1..a` | input vector `v` (used only as input slot reference) |
-| `a + 1` | previous PC value `I_prev` |
-| `a + 2..a + 1 + numRegs` | previous register values `v_0_prev, …, v_{numRegs−1}_prev` |
+| `a + 1 + j` for `j : Fin P.numRegs` | previous register value `v_j_prev` |
+| `a + 1 + numRegs` (the last slot, `Fin.last (a + numRegs + 1)`) | previous PC value `I_prev` |
 
 Helper projections (each is `KMor1.proj …` at level 0):
 
-- `I_prev : KMor1 (a + 1 + (P.numRegs + 1))`
-  — slot `a + 1`.
 - `v_j_prev : Fin P.numRegs → KMor1 (a + 1 + (P.numRegs + 1))`
-  — slot `a + 2 + j.val`.
+  — slot `a + 1 + j.val`.
+- `I_prev : KMor1 (a + 1 + (P.numRegs + 1))`
+  — last slot (`a + 1 + numRegs`).
 
-Component `0` (PC):
+The PC slot's coincidence with the last context slot is the
+alignment that lets `pcDispatch` (§ 3.5) read it directly.
+
+PC component (= `Fin.last P.numRegs`):
 
 ```text
-stepFamily P ⟨0, _⟩ := pcDispatch P.instrs.size branches_pc default_pc
+stepFamily P (Fin.last P.numRegs) :=
+  pcDispatch P.instrs.size branches_pc default_pc
 
 branches_pc k := match P.instrs[k]'_ with
   | .stop          => I_prev                            -- identity
@@ -189,10 +216,12 @@ branches_pc k := match P.instrs[k]'_ with
 default_pc       := I_prev                              -- past-end self-loop
 ```
 
-Component `j + 1` (register `j`, for each `j : Fin P.numRegs`):
+Register-`j` component (= `j.castSucc`, for each
+`j : Fin P.numRegs`):
 
 ```text
-stepFamily P (j + 1) := pcDispatch P.instrs.size branches_j default_j
+stepFamily P j.castSucc :=
+  pcDispatch P.instrs.size branches_j default_j
 
 branches_j k := match P.instrs[k]'_ with
   | .assign i c  => if i.val = j.val then natK' _ c     else v_j_prev
@@ -206,6 +235,15 @@ Every branch and every default is at level ≤ 1 (`cond`, `pred` are
 level 1; `succ`, `proj`, `natK'` are level 0). By
 `pcDispatch_level` (§ 3.5), each `stepFamily P j` is at level ≤ 1.
 
+Note on `pcDispatch`'s argument: in the displayed branches, the
+inner combinators (`cond`, `succ ∘ I_prev`, etc.) are
+`KMor1 (a + 1 + (P.numRegs + 1))`-typed but `pcDispatch` expects
+`KMor1 n` branches and applies them to the context with the last
+slot stripped. Each branch term written above implicitly uses
+`KMor1.comp` over the first `a + 1 + P.numRegs` slots; the K^sim
+realisation is mechanical and is spelled out at the level of the
+formal definition rather than in the pseudocode above.
+
 ### 3.5 PC-dispatch helper `KMor1.pcDispatch`
 
 ```lean
@@ -214,21 +252,38 @@ def KMor1.pcDispatch {n : ℕ} (size : ℕ)
     KMor1 (n + 1)
 ```
 
-Implemented as the nested `cond` chain on `pred^k(PC)` (where
-`PC = ctx (Fin.last n)` is the last context slot), recursively on
-`size`:
+Implementation is a nested `cond` chain reading the last context
+slot (`PC := ctx (Fin.last n)`), constructed by structural
+recursion on `size` in the *bottom-up* direction (test
+`PC = 0` first):
 
-```text
-pcDispatch 0     _        default := default ∘ Fin.init
-pcDispatch (k+1) branches default :=
-  cond ∘ ⟨pred^k(PC), branches ⟨k, _⟩, pcDispatch k (branches ∘ castSucc) default⟩
-```
+- Base case `size = 0`: return `default` lifted from arity `n` to
+  arity `n + 1` by dropping the last slot. In K^sim, this lift is
+  `KMor1.comp default (fun i : Fin n => KMor1.proj
+  (Fin.castSucc i))` (level = `default.level`).
+- Recursive case `size + 1`: test `cond(PC, branches ⟨0, _⟩,
+  recur)` where `recur := pcDispatch size (branches ∘ Fin.succ)
+  default` pre-composed with a slot-replacement substituting
+  `pred(PC)` for the PC slot. In K^sim, the slot-replacement
+  precomposition is `KMor1.comp recur shift` where
+  `shift : Fin (n + 1) → KMor1 (n + 1)` sends
+  `i = Fin.last n ↦ KMor1.comp KMor1.pred
+  (fun _ : Fin 1 => KMor1.proj (Fin.last n))` and
+  `i = Fin.castSucc j ↦ KMor1.proj (Fin.castSucc j)` for
+  `j : Fin n`.
 
-The implementation choice between this top-down form (peeling the
-highest `k`) and a bottom-up form (peeling `k = 0` first) is left
-to implementation; either form yields the same interpretation and
-level. The spec fixes the *interpretation* lemmas, not the recursion
-direction.
+The bottom-up form is correct because each `cond(pred^k(PC), …,
+…)` test reads `pred^k(PC) = 0` ⇔ `PC ≤ k` (cf. Tourlakis
+§ 0.1.0.20 p. 7 establishing `λx.x ≤ a ∈ K^sim_{1,*}`). Inside
+the nested chain, by the time the `k`-th test is reached, every
+earlier test has fallen through (so `PC ≥ k`); combined with
+`PC ≤ k` from the current test, this yields `PC = k` and
+correctly selects `branches ⟨k, _⟩`. A top-down realisation
+testing `pred^{size-1}(PC) = 0` at the outermost `cond` does
+*not* select `branches PC`, because `pred^k(PC) = 0` ⇔
+`PC ≤ k` admits all `PC ≤ k`, not just `PC = k`; the bottom-up
+realisation avoids this trap by virtue of the "earlier tests
+have fallen through" invariant.
 
 Key lemmas:
 
@@ -303,23 +358,29 @@ identity.
 
 ### 4.2 Conjunctive vector invariant
 
-The induction goes through the conjunctive form
+The induction goes through the conjunctive form (using § 3.2's
+component layout: PC at `Fin.last P.numRegs`, registers at
+`j.castSucc` for `j : Fin P.numRegs`):
 
 ```lean
 private theorem simulate_step_match {a : ℕ}
     (P : URMProgram a) (v : Fin a → ℕ) (y : ℕ) :
-    KMor1.simrecVec (baseFamily P) (stepFamily P) v y ⟨0, _⟩
+    KMor1.simrecVec (baseFamily P) (stepFamily P) v y
+        (Fin.last P.numRegs)
       = ((URMState.init P v).runFor y).pc
     ∧ ∀ j : Fin P.numRegs,
-        KMor1.simrecVec (baseFamily P) (stepFamily P) v y j.succ
+        KMor1.simrecVec (baseFamily P) (stepFamily P) v y
+            j.castSucc
           = ((URMState.init P v).runFor y).regs j
 ```
 
-The conjunction is necessary: each `stepFamily P j` reads the
-previous values of *every* component (e.g. the PC's `jumpZ` branch
-reads `v_i_prev`; each register's `branches_j k` for `k` a `jumpZ`
-reads the PC), so the inductive hypothesis must cover the full
-component vector.
+The conjunction is necessary because the PC step family
+(`stepFamily P (Fin.last P.numRegs)`) reads previous register
+values via the `.jumpZ` branch's `v_i_prev`. Each register-`j`
+step family reads only the previous PC (for `pcDispatch`'s test)
+and the previous register `j`; it does not read other registers'
+previous values. The joint IH is therefore forced by the PC's
+cross-component read, not by every step family's read pattern.
 
 ### 4.3 Proof outline
 
@@ -358,9 +419,10 @@ expressions over `regs j` and `pc`.
 ### 4.4 Surfacing `simulate_interp` from `simulate_step_match`
 
 Project `simulate_step_match`'s register-component clause at
-`j = P.outputReg`; combine with `interp_simrec`'s unfolding of
-`simulate P` at the public-facing context; close by `rfl`. No
-additional lemmas required.
+`j = P.outputReg` (the simrec output index is
+`P.outputReg.castSucc` per § 3.2); combine with `interp_simrec`'s
+unfolding of `simulate P` at the public-facing context; close by
+`rfl`. No additional lemmas required.
 
 ## 5 Level analysis
 
@@ -397,7 +459,7 @@ no other level bumps occur.
 The simulator lives under `Utilities/` (not under the
 `LawvereERKSim/` submodule tree) because its inputs and outputs are
 independent of `LawvereER`: it consumes `URMProgram a` (from
-`Utilities/ZeroTestURM.lean`) and produces `KMor1 (1 + a)` (from
+`Utilities/ZeroTestURM.lean`) and produces `KMor1 (a + 1)` (from
 `LawvereKSim.lean`). T5 will be the joining point: it imports both
 `LawvereERKSim` (compiler) and `Utilities/KSimURMSimulator`
 (simulator), composing them through `boundExprK e` (T4).
@@ -435,33 +497,55 @@ theorem KMor1.natK'_level (n c : ℕ) : (KMor1.natK' n c).level = 0
 
 ```text
 imports                                  -- per § 6.2
-module docstring                         -- with citations to § 11
-namespace GebLean.KSimURMSimulator
-open GebLean.ZeroTestURM
-open GebLean
 
--- 1. PC-dispatch helper
+/-!
+# Title
+brief summary
+## Main definitions
+## Main statements
+## Notation              -- (omit if none)
+## Implementation notes  -- (omit if none)
+## References            -- citations per § 11
+## Tags
+-/
+
+-- KMor1 namespace extensions (declared inside `namespace GebLean`
+-- to match the existing `KMor1.cond` pattern in `KArith.lean`).
+namespace GebLean
 def KMor1.pcDispatch ...
 @[simp] theorem KMor1.interp_pcDispatch_match ...
 @[simp] theorem KMor1.interp_pcDispatch_default ...
 theorem KMor1.pcDispatch_level ...
+end GebLean
 
--- 2. Base and step families
+-- Simulator definitions (under a fresh namespace).
+namespace GebLean.KSimURMSimulator
+open GebLean.ZeroTestURM
+open GebLean
+
+-- 1. Base and step families
 def baseFamily {a : ℕ} (P : URMProgram a) : ...
 def stepFamily {a : ℕ} (P : URMProgram a) : ...
 
--- 3. The simulator
-def simulate {a : ℕ} (P : URMProgram a) : KMor1 (1 + a)
+-- 2. The simulator
+def simulate {a : ℕ} (P : URMProgram a) : KMor1 (a + 1)
 
--- 4. Correctness
+-- 3. Correctness
 private theorem simulate_step_match ...
 theorem simulate_interp ...
 
--- 5. Level
+-- 4. Level
 theorem simulate_level ...
 
 end GebLean.KSimURMSimulator
 ```
+
+The module docstring follows mathlib `doc.html`'s prescribed
+section ordering verbatim. The `KMor1.*` helpers and the
+simulator-specific definitions sit in different namespaces so
+that `KMor1.pcDispatch` is fully qualified
+`GebLean.KMor1.pcDispatch`, matching `GebLean.KMor1.cond` at
+`KArith.lean:222`.
 
 `GebLean.lean` (re-export change):
 
@@ -479,11 +563,15 @@ Per mathlib `naming.html` and `.claude/rules/lean-coding.md`:
   `simulate_step_match`, `interp_pcDispatch_match`,
   `interp_pcDispatch_default`, `pcDispatch_level`, `interp_natK`,
   `interp_natK'`, `natK_level`, `natK'_level`.
-- Namespace `GebLean.KSimURMSimulator` parallels
+- Namespace placement (per § 6.3): `KMor1.pcDispatch`, `KMor1.natK`,
+  `KMor1.natK'` are declared inside `namespace GebLean` directly,
+  yielding `GebLean.KMor1.pcDispatch` etc.; this matches the
+  existing `KMor1.cond`, `KMor1.pred`, `KMor1.add` pattern in
+  `KArith.lean`. The simulator-specific definitions
+  (`baseFamily`, `stepFamily`, `simulate`, `simulate_step_match`,
+  `simulate_interp`, `simulate_level`) are declared inside
+  `namespace GebLean.KSimURMSimulator`, paralleling
   `GebLean.LawvereERKSim`.
-- `KMor1.pcDispatch`, `KMor1.natK`, `KMor1.natK'` extend the
-  existing `KMor1.cond`, `KMor1.pred`, `KMor1.add` etc. pattern in
-  `KArith.lean`.
 
 ## 7 Constructive discipline
 
@@ -501,20 +589,22 @@ Per mathlib `naming.html` and `.claude/rules/lean-coding.md`:
 
 ## 8 Out of scope (defers to T4 / T5 / T6)
 
-- **`boundExprK` and runtime domination.** Master design §7.
-  Deferred to T4.
+- **`boundExprK` and runtime domination.** Master design § 9
+  ("The runtime-bound function (erToK side)"). Deferred to T4.
 - **`KMor1.maxK`, `KMor1.maxOver`, `KMor1.pow2_iter`.** The three
-  level-2 K^sim composites that the master spec § 3.1 listed
-  alongside `natK`. Their only consumer is T4's `boundExprK`;
+  level-2 K^sim composites listed alongside `natK` in the T1/T2
+  spec's § 3.1. Their only consumer is T4's `boundExprK`;
   deferred to T4.
-- **`erToK : ERMor1 a → KMor1 a`.** Master design § 8.1.
-  Composition `KMor1.comp (simulate (compileER e))
+- **`erToK : ERMor1 a → KMor1 a`.** Master design § 10 ("The
+  functors and interp-preservation"). Composition
+  `KMor1.comp (simulate (compileER e))
   (Fin.cons (boundExprK e) (fun i => KMor1.proj i))`. Deferred to
   T5.
 - **`erToK_level`, `erToK_interp`, `erToKN`, `erToKN_interp`,
-  `erToKFunctor`.** Master design § 8.2 – § 8.4. Deferred to T5.
+  `erToKFunctor`.** Master design § 10. Deferred to T5.
 - **Strict categorical iso `LawvereERCat ≌ LawvereKSimDCat 2`.**
-  Master design § 11. Deferred to T6.
+  Master design § 11 ("The categorical isomorphism"). Deferred
+  to T6.
 
 T3 does not import `LawvereERKSim/Compiler.lean` or any consumer of
 it. The simulator is total on every `URMProgram a`; the compiler's
@@ -578,18 +668,30 @@ source.
 
 ### 11.1 External (Tourlakis 2018, `PR-complexity-topics.pdf`)
 
-- § 0.1.0.2 p. 1 — definition of `K_0` (initial functions). Grounds
-  `natK` as a `c`-fold composition of `succ` with `zero`, both at
-  level 0.
+- § 0.1.0.2 p. 1 — definition of `K_0` (Axt–Heinemann hierarchy
+  initial set, closure of `{λx.x, λx.x+1}` under substitution).
+  Grounds the level-0 closure principle under which composing
+  `KMor1.succ` (level 0) with `KMor1.zero` (level 0) `c`-fold
+  yields a level-0 morphism. The specific `succ ∘ zero` constant
+  pattern is the internal `KArith.lean` precedent set by
+  `KMor1.one` at `KArith.lean:31`, not Tourlakis's definition
+  (Tourlakis's `K_0` does not contain a closed `zero`; constants
+  arise from substitution on `λx.x` and `λx.x+1`). The level-0
+  placement of `natK` is sound by the closure principle.
 - § 0.1.0.17(4) p. 6 — `λx.x ∸ 1 ∈ K_1`. Grounds `pred` as level 1,
   used in `stepFamily`'s `.dec` branch and (in `pred^k`) inside
   `pcDispatch`.
 - § 0.1.0.17(6) p. 6 — `switch ∈ K_1`. Grounds `cond` (= `switch`)
   as level 1, used inside `pcDispatch` and `stepFamily`'s `.jumpZ`
   branch.
-- § 0.1.0.20 p. 7 — `λx.x = a ∈ K^sim_{1,*}`. Grounds the level-1
-  predicate `pred^k(I) = 0 ⇔ I = k`, which is the dispatch
-  primitive `pcDispatch` uses.
+- § 0.1.0.20 p. 7 — `λx.x ≤ a, λx.x < a, λx.x = a ∈
+  K^sim_{1,*}` (the predicate sub-class of `K^sim_1`, per
+  Tourlakis § 0.1.0.18–§ 0.1.0.20's predicate-on-`K^sim_n`
+  closure principle). Grounds the level-1 inequality
+  `pred^k(I) = 0 ⇔ I ≤ k`, which is the test `pcDispatch`'s
+  bottom-up `cond` chain uses; the chain's nested-fall-through
+  structure (§ 3.5) converts the inequality at the `k`-th level
+  into the equality `I = k`.
 - § 0.1.0.37 pp. 15 – 16 — **simulation lemma.** The transcription
   source for `baseFamily` and `stepFamily`. The joint recursion
   on `(v_i, I)` is the inductive hypothesis of `simulate_step_match`.
