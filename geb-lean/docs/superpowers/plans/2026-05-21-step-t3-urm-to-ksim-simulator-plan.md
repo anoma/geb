@@ -1723,7 +1723,10 @@ structure is:
                   : Fin (P.numRegs + 1))
                 = Fin.last P.numRegs
                 from by apply Fin.ext; simp [Fin.last]; omega]
-          exact ih_pc
+          -- Per round-5 blocker R5-B1: both sides carry a trailing
+          -- `+ 1`; `ih_pc` lacks it. Rewriting under the `+ 1`
+          -- closes via the implicit `rfl`.
+          rw [ih_pc]
         | inc i =>
           simp only [branches_pc, h_instr, KMor1.interp_comp,
             KMor1.interp_succ, I_prev, KMor1.interp_proj]
@@ -1736,7 +1739,8 @@ structure is:
                   : Fin (P.numRegs + 1))
                 = Fin.last P.numRegs
                 from by apply Fin.ext; simp [Fin.last]; omega]
-          exact ih_pc
+          -- Per round-5 blocker R5-B1: see `.assign` comment above.
+          rw [ih_pc]
         | dec i =>
           simp only [branches_pc, h_instr, KMor1.interp_comp,
             KMor1.interp_succ, I_prev, KMor1.interp_proj]
@@ -1749,7 +1753,8 @@ structure is:
                   : Fin (P.numRegs + 1))
                 = Fin.last P.numRegs
                 from by apply Fin.ext; simp [Fin.last]; omega]
-          exact ih_pc
+          -- Per round-5 blocker R5-B1: see `.assign` comment above.
+          rw [ih_pc]
         | jumpZ i l₁ l₂ =>
           simp only [branches_pc, h_instr, KMor1.interp_comp,
             KMor1.interp_cond, v_j_prev, KMor1.interp_proj,
@@ -1772,13 +1777,23 @@ structure is:
           -- goal shape diverges, use `mcp__lean-lsp__lean_goal` to
           -- inspect and extend the whitelist (do NOT fall back to
           -- bare `simp`).
+          -- Per round-5 serious finding R5-S1: replace the prior
+          -- whitelist containing `Fin.cons_zero` / `Fin.cons_succ`
+          -- (which do not fire on the literal Fin 3 match arms
+          -- produced by `KMor1.interp_cond`) with a defensive form
+          -- that first unfolds `KMor1.interp_cond` and then
+          -- discharges the resulting `if`-`then`-`else` via
+          -- `if_pos h_zero` / `if_neg h_zero`. If at execution
+          -- `KMor1.interp_cond` produces a different shape
+          -- (e.g. `Fin.cases` or `Decidable.rec`), extend the
+          -- whitelist accordingly per `mcp__lean-lsp__lean_goal`.
           by_cases h_zero : ((URMState.init P v).runFor P y).regs i = 0
-          · rw [h_zero]
-            simp only [KMor1.interp_cond, Fin.cons_zero, Fin.cons_succ,
-              if_pos rfl, decide_True, KMor1.interp_natK']
-          · rw [if_neg h_zero]
-            simp only [KMor1.interp_cond, Fin.cons_zero, Fin.cons_succ,
-              if_neg h_zero, decide_False, KMor1.interp_natK']
+          · simp only [KMor1.interp_cond]
+            rw [if_pos h_zero]
+            simp only [KMor1.interp_natK']
+          · simp only [KMor1.interp_cond]
+            rw [if_neg h_zero]
+            simp only [KMor1.interp_natK']
         | stop =>
           simp only [branches_pc, h_instr, I_prev, KMor1.interp_proj]
           simp only [URMState.step]
@@ -1903,6 +1918,10 @@ may need minor argument adjustments.
           by_cases h_eq : i.val = j.val
           · -- Register j is the target: K^sim branch is natK' _ c;
             -- URM-side regs j = Function.update _ i c j = c.
+            -- Per round-5 S2: no `step_ctx_eval_simrec` bridge is
+            -- needed in this sub-case — both K-side and URM-side
+            -- reduce to the literal `c` with no `simrecVec`
+            -- occurrence and no `i`-vs-`j` register reference.
             rw [if_pos h_eq]
             simp only [KMor1.interp_natK']
             rw [Function.update_apply, if_pos (Fin.ext h_eq).symm]
@@ -1936,6 +1955,10 @@ may need minor argument adjustments.
                   = j.castSucc
                   from by apply Fin.ext; simp [Fin.castSucc]; omega]
             rw [ih_regs j]
+            -- Per round-5 blocker R5-B2: URM-side is
+            -- `s.regs i + 1`, K-side is `s.regs j + 1`. Bridge
+            -- `i` to `j` via the `h_eq : i.val = j.val` witness.
+            rw [show i = j from Fin.ext h_eq]
           · rw [if_neg h_eq]
             simp only [v_j_prev, KMor1.interp_proj]
             rw [Function.update_apply,
@@ -1964,6 +1987,9 @@ may need minor argument adjustments.
                   = j.castSucc
                   from by apply Fin.ext; simp [Fin.castSucc]; omega]
             rw [ih_regs j]
+            -- Per round-5 blocker R5-B2: bridge `i` to `j` —
+            -- URM-side is `s.regs i - 1`, K-side is `s.regs j - 1`.
+            rw [show i = j from Fin.ext h_eq]
           · rw [if_neg h_eq]
             simp only [v_j_prev, KMor1.interp_proj]
             rw [Function.update_apply,
