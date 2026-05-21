@@ -91,6 +91,8 @@ to these would require re-spec.
 | `KMor1.level` | `GebLean/LawvereKSim.lean:105` | Used to discharge `simulate_level`. |
 | `KMor1.interp_simrec` (`@[simp]`) | `GebLean/LawvereKSimInterp.lean:162` | Public reduction lemma for `simulate_interp`. |
 | `KMor1.simrecVec_zero` / `_succ` (`@[simp]`) | `GebLean/LawvereKSimInterp.lean:180`, `:193` | Peel one iteration of the `simrec` recursion. |
+| `KMor1.interp_zero` (`@[simp]`) | `GebLean/LawvereKSimInterp.lean:86` | Reduces `baseFamily`'s PC component and `none`-branch register components. |
+| `KMor1.interp_proj` (`@[simp]`) | `GebLean/LawvereKSimInterp.lean:98` | Reduces `baseFamily`'s `some i` branch and `stepFamily`'s helper projections. |
 | `KMor1.cond` (Tourlakis `switch`, level 1) | `GebLean/Utilities/KArith.lean:222` | Inner combinator of `pcDispatch`. |
 | `KMor1.interp_cond` (`@[simp]`) | `GebLean/Utilities/KArith.lean:249` | Reduces `pcDispatch`'s nested `cond` chain. |
 | `KMor1.pred` (level 1) | `GebLean/Utilities/KArith.lean:44` | Used both inside `pcDispatch` (`pred^k(I) = 0` ⇔ `I ≤ k`, threaded into the bottom-up `cond` chain) and inside `stepFamily` (`.dec` branch). |
@@ -168,8 +170,9 @@ def baseFamily {a : ℕ} (P : URMProgram a) :
 In the `some i` branch, `i : Fin a` is the input slot index
 returned by `List.find?` (distinct from the outer-scope register
 index `r : Fin P.numRegs`); `KMor1.proj i` then has type
-`KMor1 a`, matching the `baseFamily` return type. Every leaf is
-`zero` or `proj`, so each `baseFamily P j` is at level 0.
+`KMor1 a`, matching the `baseFamily` return type. Each subterm
+is `KMor1.zero` or `KMor1.proj _`, so each `baseFamily P j` is
+at level 0.
 
 ### 3.4 Step family `stepFamily`
 
@@ -236,10 +239,14 @@ level 1; `succ`, `proj`, `natK'` are level 0). By
 
 The dispatcher is instantiated with `n := a + numRegs + 1` so its
 return type `KMor1 (n + 1)` matches the step context arity
-`a + numRegs + 2`. Branches and default are typed at the same
-arity `n + 1`, so each may read any context slot directly (no
-lift required); in particular, `I_prev` and each `v_j_prev`
-project at the appropriate slot of the full step context.
+`a + numRegs + 2`. Explicitly,
+`n + 1 = a + 1 + (numRegs + 1) = a + numRegs + 2`, so
+`n = a + numRegs + 1`. Branches and default are typed at the
+same arity `n + 1`, so each may read any context slot directly
+(no lift required); in particular, `I_prev` and each `v_j_prev`
+project at the appropriate slot of the full step context, and
+their interpretations remain at the unshifted step context
+throughout (per § 3.5's non-substituting recursion).
 
 ### 3.5 PC-dispatch helper `KMor1.pcDispatch`
 
@@ -257,34 +264,71 @@ ignore the PC slot if they choose, but the `default` term reads
 the PC slot to realise the past-end self-loop (`default_pc :=
 I_prev` in § 3.4).
 
-Implementation is a nested `cond` chain reading the last context
-slot (`PC := KMor1.proj (Fin.last n)`), constructed by structural
-recursion on `size` in the bottom-up direction (test `PC = 0`
-first):
+Implementation is a flat fold of `cond` tests on iterated
+predecessors of the PC slot, with **no substitution** applied
+to branches or default. Let `PC := KMor1.proj (Fin.last n)`
+and let `predIter k : KMor1 (n + 1)` be the `k`-fold
+composition of `KMor1.pred` over `PC`:
 
-- Base case `size = 0`: return `default` directly (no lift).
-- Recursive case `size + 1`: build
-  `cond(PC, branches ⟨0, _⟩, recur)` where
-  `recur := KMor1.comp (pcDispatch size (branches ∘ Fin.succ)
-  default) shift` and `shift : Fin (n + 1) → KMor1 (n + 1)`
-  substitutes `pred(PC)` for the PC slot:
-  `shift (Fin.last n) := KMor1.comp KMor1.pred
-  (fun _ : Fin 1 => KMor1.proj (Fin.last n))`, and
-  `shift (Fin.castSucc j) := KMor1.proj (Fin.castSucc j)` for
-  `j : Fin n`.
+```text
+predIter 0       := PC
+predIter (k + 1) := KMor1.comp KMor1.pred
+                      (fun _ : Fin 1 => predIter k)
+```
 
-The bottom-up form is correct because each `cond(pred^k(PC), …,
-…)` test reads `pred^k(PC) = 0 ⇔ PC ≤ k` (cf. Tourlakis
-§ 0.1.0.20 p. 7 establishing `λx.x ≤ a ∈ K_{1,*}` and
-§ 0.1.0.8 p. 3 giving `K_1 ⊆ K^sim_1`). Inside the nested
-chain, by the time the `k`-th test is reached, every earlier
-test has fallen through (so `PC ≥ k`); combined with `PC ≤ k`
-from the current test, this yields `PC = k` and correctly
-selects `branches ⟨k, _⟩`. A top-down realisation testing
-`pred^{size-1}(PC) = 0` at the outermost `cond` does not select
-`branches PC`, because `pred^k(PC) = 0 ⇔ PC ≤ k` admits all
-`PC ≤ k`, not just `PC = k`; the bottom-up realisation avoids
-this trap by the "earlier tests have fallen through" invariant.
+`predIter k` evaluates to `pred^k (ctx (Fin.last n))` and has
+level 1 for `k ≥ 1`, level 0 for `k = 0` (since
+`KMor1.pred.level = 1` and `KMor1.comp` takes `max`).
+
+The dispatcher is then defined by recursion on `size`, building
+the chain from the outside in. Critically, each `cond` sits at
+the same context as its siblings; branches and default are
+never wrapped in a context-substituting `KMor1.comp` along the
+way:
+
+```text
+pcDispatch 0           branches default := default
+
+pcDispatch (size + 1) branches default :=
+  KMor1.comp KMor1.cond
+    (fun i : Fin 3 => match i with
+      | ⟨0, _⟩ => predIter 0             -- test PC = 0
+      | ⟨1, _⟩ => branches ⟨0, _⟩        -- selected if PC = 0
+      | ⟨2, _⟩ => pcDispatchFrom 1 size
+                    (branches ∘ Fin.succ) default)
+```
+
+where `pcDispatchFrom k size branches default` is the auxiliary
+"test `predIter k`, then `predIter (k + 1)`, etc." continuation:
+
+```text
+pcDispatchFrom k 0           branches default := default
+
+pcDispatchFrom k (size + 1) branches default :=
+  KMor1.comp KMor1.cond
+    (fun i : Fin 3 => match i with
+      | ⟨0, _⟩ => predIter k             -- test pred^k(PC) = 0
+      | ⟨1, _⟩ => branches ⟨0, _⟩        -- selected if PC = k
+      | ⟨2, _⟩ => pcDispatchFrom (k + 1) size
+                    (branches ∘ Fin.succ) default)
+```
+
+The branches and default appear inside `cond` without any
+context-substituting `KMor1.comp` wrapping; their interpretation
+contexts are identical to the surrounding context. The fall-
+through semantics: `cond(predIter k, branches ⟨k, _⟩, rest)`
+selects `branches ⟨k, _⟩` exactly when `pred^k(PC) = 0`
+(i.e. `PC ≤ k`), and falls through to `rest` otherwise (i.e.
+`PC > k`). Inside the chain, by the time the `k`-th test is
+reached, every earlier test has fallen through (so `PC ≥ k`);
+combined with `PC ≤ k` from the current test, this yields
+`PC = k` and the correct selection of `branches ⟨k, _⟩`.
+
+Tourlakis citation: § 0.1.0.20 p. 7 establishes
+`λx.x ≤ a ∈ K_{1,*}` (predicate-on-`K_1` sub-class); chained
+with § 0.1.0.8 p. 3 (`K_1 ⊆ K^sim_1`), `pred^k(I) = 0 ⇔ I ≤ k`
+sits at level 1, which is what `cond`'s test slot consumes
+without bumping the surrounding level.
 
 Key lemmas:
 
@@ -311,21 +355,33 @@ theorem KMor1.pcDispatch_level {n size : ℕ}
     (KMor1.pcDispatch size branches default).level ≤ 1
 ```
 
-Level analysis (by induction on `size`):
+Both `interp_pcDispatch_match` and `interp_pcDispatch_default`
+are `@[simp]` but conditionally so: their hypotheses
+(`ctx (Fin.last n) = k.val` or `ctx (Fin.last n) ≥ size`)
+must be in the local proof context for the rewrite to fire. In
+the `simulate_step_match` step case (§ 4.3), these hypotheses
+arise from the case-split on the instruction at the previous
+PC: each branch of the case-split fixes the previous PC value
+to a specific `k.val` (in-bounds) or witnesses `≥ size`
+(past-end), and the corresponding simp lemma applies.
 
-- Base case `pcDispatch 0 _ default = default` at level
+Level analysis (by induction on `size`, simultaneously over
+`pcDispatch` and `pcDispatchFrom k`):
+
+- Base case `pcDispatch 0 _ default = default` and
+  `pcDispatchFrom k 0 _ default = default` at level
   `default.level ≤ 1`.
-- Recursive case `size + 1`: the slot-substitution `shift`'s
-  `Fin.last` component is `KMor1.comp pred [proj (Fin.last n)]`
-  at level 1; the other components are `proj` at level 0;
-  `KMor1.comp recur shift` is at level
-  `max (recur.level) (max-of-shift-levels) = max (≤ 1) 1 = 1`.
-  The outer `KMor1.comp cond [proj, branches[0], recur-shifted]`
-  is at level `max (cond.level) (max-of-children) = max 1 1 = 1`.
-  Inductive step preserves the bound. The `+ 1` from `cond` does
-  not raise level beyond 1 because `cond` is itself level 1 and
-  is composed with level-≤-1 children under `comp` (which takes
-  `max` without adding).
+- Recursive case: `predIter k` is at level ≤ 1 (level 0 for
+  `k = 0`, level 1 for `k ≥ 1`); each branch is at level ≤ 1
+  by hypothesis; the recursive `pcDispatchFrom (k + 1) size`
+  call is at level ≤ 1 by induction. The outer
+  `KMor1.comp KMor1.cond [predIter k, branches[0], recur]` is at
+  level `max (KMor1.cond.level) (max-of-children-levels) =
+  max 1 1 = 1`. Inductive step preserves the bound.
+
+Branches and default appear inside `cond` without any
+context-substituting `KMor1.comp` wrapping; their levels enter
+the maximum directly, with no shift-induced bump.
 
 ### 3.6 Constant helper `KMor1.natK`
 
@@ -421,7 +477,11 @@ and `URMState.runFor_add` (`:199`) by the chain:
 = step (runFor s y)` (by `runFor_add` and the previous step).
 Citing only `runFor_succ` is insufficient because the fixed
 `s := URMState.init P v` is incompatible with `runFor_succ`'s
-front-peel rewrite.
+front-peel rewrite. Note: `runFor_succ` is `@[simp]` in the
+front-peel direction; the back-peel form derived above is not
+`@[simp]` and must be invoked manually inside the step case,
+since adding `runFor_succ` to a `simp` set under the fixed
+`s := init P v` would rewrite the wrong direction.
 
 After the back-peel reduction:
 
@@ -672,7 +732,7 @@ internal task split (refined further during plan writing):
 
 Two adversarial-review rounds expected on the plan; two more
 expected on the implementation as it lands. Total approximate
-LOC: 400–500.
+LOC: 360–500.
 
 ## 10 Adversarial-review punch list
 
@@ -699,6 +759,7 @@ source.
 | 10.13 | Documentation conventions per mathlib `doc.html`. | Verify module docstring has required sections; verify every public `def` / `structure` / `theorem` has a `/-- … -/` docstring; verify no history references inside docstrings. |
 | 10.14 | LOC estimate plausibility. | Sketch each helper's expected size against § 9; flag if the approximately 340 LOC total appears off by more than 2 ×. |
 | 10.15 | Tourlakis 2018 § 0.1.0.37 transcription fidelity. | Tabulate master design § 7 (and Tourlakis § 0.1.0.37 pp. 15–16, the literal source of the simulation lemma's `v_i` and `I` recursion equations) against `stepFamily` of this spec; flag any mismatch. |
+| 10.16 | `pcDispatch` interpretation correctness under its recursion. | Trace the recursive case of `pcDispatch (size + 1)` and `pcDispatchFrom k (size + 1)` (§ 3.5) under `KMor1.interp`; confirm that `interp_pcDispatch_match` and `interp_pcDispatch_default` are provable as stated. Specifically: that branches' and default's interpretation contexts inside the dispatcher remain identical to the surrounding context (no PC-slot substitution by the recursion structure). |
 
 ## 11 Citations
 
@@ -751,6 +812,10 @@ source.
 - `GebLean/LawvereKSim.lean:34` — `KMor1` inductive.
 - `GebLean/LawvereKSim.lean:50` — `KMor1.simrec` constructor.
 - `GebLean/LawvereKSim.lean:105` — `KMor1.level` recursion.
+- `GebLean/LawvereKSimInterp.lean:86` — `KMor1.interp_zero`
+  (`@[simp]`).
+- `GebLean/LawvereKSimInterp.lean:98` — `KMor1.interp_proj`
+  (`@[simp]`).
 - `GebLean/LawvereKSimInterp.lean:162` — `KMor1.interp_simrec` (the
   public `@[simp]` lemma).
 - `GebLean/LawvereKSimInterp.lean:180` — `KMor1.simrecVec_zero`.
