@@ -267,18 +267,27 @@ I_prev` in § 3.4).
 Implementation is a flat fold of `cond` tests on iterated
 predecessors of the PC slot, with **no substitution** applied
 to branches or default. Let `PC := KMor1.proj (Fin.last n)`
-and let `predIter k : KMor1 (n + 1)` be the `k`-fold
+and define a standalone `private def` for the `k`-fold
 composition of `KMor1.pred` over `PC`:
 
-```text
-predIter 0       := PC
-predIter (k + 1) := KMor1.comp KMor1.pred
-                      (fun _ : Fin 1 => predIter k)
+```lean
+private def KMor1.predIter (n k : ℕ) : KMor1 (n + 1) :=
+  match k with
+  | 0     => KMor1.proj (Fin.last n)
+  | k + 1 => KMor1.comp KMor1.pred
+               (fun _ : Fin 1 => KMor1.predIter n k)
+
+@[simp] theorem KMor1.interp_predIter
+    (n k : ℕ) (ctx : Fin (n + 1) → ℕ) :
+    (KMor1.predIter n k).interp ctx = ctx (Fin.last n) ∸ k
+
+theorem KMor1.predIter_level (n k : ℕ) :
+    (KMor1.predIter n k).level ≤ 1
 ```
 
-`predIter k` evaluates to `pred^k (ctx (Fin.last n))` and has
-level 1 for `k ≥ 1`, level 0 for `k = 0` (since
-`KMor1.pred.level = 1` and `KMor1.comp` takes `max`).
+`KMor1.predIter n k` has level 1 for `k ≥ 1`, level 0 for
+`k = 0` (since `KMor1.pred.level = 1` and `KMor1.comp` takes
+`max`).
 
 The dispatcher is then defined by recursion on `size`, building
 the chain from the outside in. Critically, each `cond` sits at
@@ -298,16 +307,21 @@ pcDispatch (size + 1) branches default :=
                     (branches ∘ Fin.succ) default)
 ```
 
-where `pcDispatchFrom k size branches default` is the auxiliary
-"test `predIter k`, then `predIter (k + 1)`, etc." continuation:
+where `pcDispatchFrom k size branches default` is a `private`
+auxiliary "test `predIter k`, then `predIter (k + 1)`, etc."
+continuation:
 
 ```text
+private def KMor1.pcDispatchFrom {n : ℕ} (k size : ℕ)
+    (branches : Fin size → KMor1 (n + 1))
+    (default : KMor1 (n + 1)) : KMor1 (n + 1)
+
 pcDispatchFrom k 0           branches default := default
 
 pcDispatchFrom k (size + 1) branches default :=
   KMor1.comp KMor1.cond
     (fun i : Fin 3 => match i with
-      | ⟨0, _⟩ => predIter k             -- test pred^k(PC) = 0
+      | ⟨0, _⟩ => KMor1.predIter n k     -- test pred^k(PC) = 0
       | ⟨1, _⟩ => branches ⟨0, _⟩        -- selected if PC = k
       | ⟨2, _⟩ => pcDispatchFrom (k + 1) size
                     (branches ∘ Fin.succ) default)
@@ -366,18 +380,28 @@ to a specific `k.val` (in-bounds) or witnesses `≥ size`
 (past-end), and the corresponding simp lemma applies.
 
 Level analysis (by induction on `size`, simultaneously over
-`pcDispatch` and `pcDispatchFrom k`):
+`pcDispatch` and `pcDispatchFrom k`, with `k` *universally
+quantified* in the inductive hypothesis on `pcDispatchFrom`):
 
 - Base case `pcDispatch 0 _ default = default` and
   `pcDispatchFrom k 0 _ default = default` at level
   `default.level ≤ 1`.
-- Recursive case: `predIter k` is at level ≤ 1 (level 0 for
-  `k = 0`, level 1 for `k ≥ 1`); each branch is at level ≤ 1
-  by hypothesis; the recursive `pcDispatchFrom (k + 1) size`
-  call is at level ≤ 1 by induction. The outer
-  `KMor1.comp KMor1.cond [predIter k, branches[0], recur]` is at
-  level `max (KMor1.cond.level) (max-of-children-levels) =
+- Recursive case: `KMor1.predIter n k` is at level ≤ 1
+  (level 0 for `k = 0`, level 1 for `k ≥ 1`); each branch is at
+  level ≤ 1 by hypothesis; the recursive `pcDispatchFrom
+  (k + 1) size` call is at level ≤ 1 by induction (the
+  universal quantification of `k` lets the IH apply at
+  `k + 1`). The outer `KMor1.comp KMor1.cond [predIter n k,
+  branches[0], recur]` is at level
+  `max (KMor1.cond.level) (max-of-children-levels) =
   max 1 1 = 1`. Inductive step preserves the bound.
+
+The proofs of `interp_pcDispatch_match`,
+`interp_pcDispatch_default`, and `pcDispatch_level` all use
+the same `size`-induction shape with `k` and `branches`
+generalised. The recursive call's `branches ∘ Fin.succ` is
+consumed by the IH's branch-family parameter, which the
+universal quantification accommodates.
 
 Branches and default appear inside `cond` without any
 context-substituting `KMor1.comp` wrapping; their levels enter
@@ -530,8 +554,11 @@ Breakdown:
   `succ`, `proj`, `natK'` — has level ≤ 1). By
   `pcDispatch_level`, `(stepFamily P j).level ≤ 1`. So
   `Finset.univ.sup (fun j => (stepFamily P j).level) ≤ 1`.
-- The `KMor1.level`'s `simrec` clause adds 1 to the max of base
-  and step sups: `max 0 1 + 1 = 2`.
+- The `KMor1.level`'s `.simrec` clause
+  (`LawvereKSim.lean:111`) is
+  `max (Finset.univ.sup (·.level over h))
+   (Finset.univ.sup (·.level over g)) + 1`. With `sup_h = 0`
+  and `sup_g ≤ 1`, this yields `max 0 1 + 1 = 2`.
 
 No `KMor1.eq` (level 2) or `KMor1.raise` appears in the term, so
 no other level bumps occur.
@@ -602,6 +629,10 @@ brief summary
 -- KMor1 namespace extensions (declared inside `namespace GebLean`
 -- to match the existing `KMor1.cond` pattern in `KArith.lean`).
 namespace GebLean
+private def KMor1.predIter ...
+@[simp] theorem KMor1.interp_predIter ...
+theorem KMor1.predIter_level ...
+private def KMor1.pcDispatchFrom ...
 def KMor1.pcDispatch ...
 @[simp] theorem KMor1.interp_pcDispatch_match ...
 @[simp] theorem KMor1.interp_pcDispatch_default ...
@@ -712,9 +743,14 @@ internal task split (refined further during plan writing):
 
 1. **T3-Task-1.** `KMor1.natK` and `KMor1.natK'` plus interp/level
    lemmas in `Utilities/KArith.lean`. Approximately 30 LOC.
-2. **T3-Task-2.** `KMor1.pcDispatch` plus `interp_pcDispatch_match`,
+2. **T3-Task-2.** `KMor1.predIter` (private), its `@[simp]`
+   interp lemma, its level lemma; `KMor1.pcDispatch` plus
+   `pcDispatchFrom` (private), `interp_pcDispatch_match`,
    `interp_pcDispatch_default`, `pcDispatch_level` in
-   `Utilities/KSimURMSimulator.lean`. Approximately 80 LOC.
+   `Utilities/KSimURMSimulator.lean`. Approximately 120–150
+   LOC (the joint induction over `pcDispatchFrom` with `k`
+   generalised, plus the conditional-simp semantics, push the
+   per-task size above the initial 80 LOC estimate).
 3. **T3-Task-3.** `baseFamily` and `stepFamily` in
    `Utilities/KSimURMSimulator.lean`. Approximately 60 LOC
    (most of the size is in the per-instruction branches).
@@ -777,23 +813,30 @@ source.
   placement of `natK` is sound by the closure principle.
 - § 0.1.0.17(4) p. 6 — `λx.x ∸ 1 ∈ K_1`. Grounds `pred` as level 1,
   used in `stepFamily`'s `.dec` branch and (in `pred^k`) inside
-  `pcDispatch`.
+  `pcDispatch`. Tourlakis's `∸` is truncated decrement, matching
+  Lean's `Nat.sub` clamped at zero; `KMor1.pred` realises
+  `λx.x ∸ 1` as defined.
 - § 0.1.0.17(6) p. 6 — `switch ∈ K_1`. Grounds `cond` (= `switch`)
   as level 1, used inside `pcDispatch` and `stepFamily`'s `.jumpZ`
   branch.
 - § 0.1.0.20 p. 7 — `λx.x ≤ a, λx.x < a, λx.x = a ∈ K_{1,*}`
-  (predicate sub-class of `K_1`, Corollary 0.1.0.20). Chained
-  with Proposition § 0.1.0.8 p. 3 (`K_n ⊆ K^sim_n`) to reach
-  `K^sim_{1,*}`. Grounds the level-1 inequality
-  `pred^k(I) = 0 ⇔ I ≤ k`, which is the test `pcDispatch`'s
-  bottom-up `cond` chain uses; the chain's nested-fall-through
-  structure (§ 3.5) converts the inequality at the `k`-th level
-  into the equality `I = k`.
+  (the predicate sub-class of `K_1`). Chained with § 0.1.0.8
+  (`K_n ⊆ K^sim_n`, p. 3) for the `K^sim_{1,*}` containment.
+  Grounds the level-1 inequality `pred^k(PC) = 0 ⇔ PC ≤ k`,
+  which is the test `pcDispatch`'s bottom-up `cond` chain uses;
+  the chain's nested-fall-through structure (§ 3.5) converts
+  the inequality at the `k`-th level into the equality
+  `PC = k`.
 - § 0.1.0.37 pp. 15 – 16 — **simulation lemma.** The transcription
   source for `baseFamily` and `stepFamily`. The joint recursion
   on `(v_i, I)` is the inductive hypothesis of `simulate_step_match`.
   The conclusion "All the simulating functions are in K^sim_2" is
-  the source of `simulate_level`.
+  the source of `simulate_level`. Note: Tourlakis's I-recursion
+  (p. 16) has "otherwise = I + 1"; this spec follows the prose
+  immediately preceding § 0.1.0.37 ("computation continues
+  forever trivially, without changing either the V_i or the
+  instruction number") and the landed `URMState.step`'s
+  past-end `else s` self-loop, which matches the prose.
 
 ### 11.2 Internal repository references
 
