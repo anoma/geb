@@ -1476,7 +1476,16 @@ at any slot in the "previous-component" range
 simrec component at the residue index `slot - (a + 1)`. Used
 across both the PC and the register-`j` components in the step
 case of `simulate_step_match`. Per round-4 findings R4-B2,
-R4-S6, R4-M3. -/
+R4-S6, R4-M3.
+
+This helper is the sole site in T3 that couples directly to
+`KMor1.simrecVec_succ`'s `dite`-form context shape
+(`LawvereKSimInterp.lean:193 – 209`). If that lemma's shape
+changes (for example, the inner
+`if h₂ : idx.val = 0 then n else params ⟨…⟩` becomes a
+`match`), the body's `show` will need to be re-stated to match
+the new form. All call sites consume the helper through its
+declared signature only — per plan round-6 serious finding R6-S1. -/
 private lemma step_ctx_eval_simrec {a : ℕ} (P : URMProgram a)
     (v : Fin a → ℕ) (y : ℕ)
     (slot : ℕ) (h_slot_bound : slot < a + 1 + (P.numRegs + 1))
@@ -1764,6 +1773,18 @@ structure is:
           simp only [h_instr]
           -- URM side: pc := if regs i = 0 then l₁ else l₂.
           -- K^sim side: cond on v_i_prev (= regs i by ih_regs i).
+          -- Per plan round-6 blocker R6-B1: the K-side's
+          -- `v_i_prev` projection reads the dispatcher's
+          -- `dite`-ctx at slot `a + 1 + i.val`; bridge to
+          -- `simrecVec _ _ y i.castSucc` via `step_ctx_eval_simrec`
+          -- + `Fin.ext`, mirroring Step 7.9's `.jumpZ` block.
+          -- Without this bridge `rw [ih_regs i]` cannot find an
+          -- instance of its LHS pattern in the goal.
+          rw [step_ctx_eval_simrec P v y (a + 1 + i.val) (by omega)
+              (by omega)]
+          rw [show (⟨a + 1 + i.val - (a + 1), by omega⟩
+                : Fin (P.numRegs + 1)) = i.castSucc
+                from by apply Fin.ext; simp [Fin.castSucc]; omega]
           rw [ih_regs i]
           -- Match the if-then-else shape on both sides. Per round-4
           -- serious finding R4-S2: replace bare `simp` / `simp [h_zero]`
@@ -1958,7 +1979,12 @@ may need minor argument adjustments.
             -- Per round-5 blocker R5-B2: URM-side is
             -- `s.regs i + 1`, K-side is `s.regs j + 1`. Bridge
             -- `i` to `j` via the `h_eq : i.val = j.val` witness.
-            rw [show i = j from Fin.ext h_eq]
+            -- Per plan round-6 serious finding R6-S2: rewrite in
+            -- all hypotheses too (the URM-side propagated `i` may
+            -- appear in `Function.update`-derived hypotheses; `at *`
+            -- is harmless and defends against the elaborator
+            -- substituting `i ↦ j` only partially).
+            rw [show i = j from Fin.ext h_eq] at *
           · rw [if_neg h_eq]
             simp only [v_j_prev, KMor1.interp_proj]
             rw [Function.update_apply,
@@ -1989,7 +2015,12 @@ may need minor argument adjustments.
             rw [ih_regs j]
             -- Per round-5 blocker R5-B2: bridge `i` to `j` —
             -- URM-side is `s.regs i - 1`, K-side is `s.regs j - 1`.
-            rw [show i = j from Fin.ext h_eq]
+            -- Per plan round-6 serious finding R6-S2: rewrite in
+            -- all hypotheses too (the URM-side propagated `i` may
+            -- appear in `Function.update`-derived hypotheses; `at *`
+            -- is harmless and defends against the elaborator
+            -- substituting `i ↦ j` only partially).
+            rw [show i = j from Fin.ext h_eq] at *
           · rw [if_neg h_eq]
             simp only [v_j_prev, KMor1.interp_proj]
             rw [Function.update_apply,
@@ -2002,14 +2033,16 @@ may need minor argument adjustments.
                   from by apply Fin.ext; simp [Fin.castSucc]; omega]
             exact ih_regs j
         | jumpZ i l₁ l₂ =>
-          -- jumpZ leaves all registers unchanged.
+          -- jumpZ leaves all registers unchanged. Per plan round-6
+          -- serious finding R6-S3: omit the redundant URM-side
+          -- chain (simp only [URMState.step]; rw [dif_pos h_inbounds];
+          -- simp only [h_instr]) — `.jumpZ`'s `regs` field is
+          -- untouched, so the URM-side is already
+          -- `(runFor y).regs j` after the `cases h_instr` substitution.
           simp only [branches_j, h_instr, v_j_prev, KMor1.interp_proj]
-          simp only [URMState.step]
-          rw [dif_pos h_inbounds]
-          simp only [h_instr]
-          -- URM regs untouched; K^sim returns v_j_prev = ih_regs j
-          -- after bridging the dispatcher's slot-`a + 1 + j.val`
-          -- read to `j.castSucc` (per R4-B2 / R4-S6).
+          -- K^sim returns v_j_prev = ih_regs j after bridging the
+          -- dispatcher's slot-`a + 1 + j.val` read to `j.castSucc`
+          -- (per R4-B2 / R4-S6).
           rw [step_ctx_eval_simrec P v y (a + 1 + j.val)
                 (by omega) (by omega)]
           rw [show (⟨a + 1 + j.val - (a + 1), by omega⟩
