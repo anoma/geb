@@ -1,16 +1,27 @@
 # erToK via zero-test URM simulation — design
 
-> **Status (2026-05-20).** §4 (URM kernel) and §5 (ER → URM
-> compiler with `compileER_runtime` and `compileER_runFor`) are
-> implemented. T1 landed §4 in `GebLean/Utilities/ZeroTestURM.lean`;
-> T2 landed §5 in eight submodules under
-> `GebLean/LawvereERKSim/{Compiler,Embedding,Loops,Atoms,Comp,BSum,BProd,Top}.lean`
-> (≈ 28 000 LOC), re-exported via `GebLean/LawvereERKSim.lean`.
-> Every public declaration is `[propext, Quot.sound]`-only.
-> §6–§8 (K^sim simulator, runtime bound, erToK assembly) and §11
+> **Status (2026-05-22).** §4 (URM kernel, T1), §5 (ER → URM
+> compiler with `compileER_runFor`, T2), and §6 (K^sim
+> simulator with `simulate`, `simulate_interp`,
+> `simulate_level`, T3) are implemented. T1 landed §4 in
+> `GebLean/Utilities/ZeroTestURM.lean`; T2 landed §5 in eight
+> submodules under `GebLean/LawvereERKSim/{Compiler,Embedding,Loops,Atoms,Comp,BSum,BProd,Top}.lean`
+> (≈ 28 000 LOC), re-exported via `GebLean/LawvereERKSim.lean`;
+> T3 landed §6 in `GebLean/Utilities/KSimURMSimulator.lean`
+> (re-exported via `GebLean.lean`) with the constructive
+> `KMor1.level` refactor in `GebLean/LawvereKSim.lean`. Of T3's
+> 19 public declarations, 14 are `[propext, Quot.sound]`-only;
+> 5 (`baseFamily_level`, `stepFamily_level`,
+> `simulate_step_match`, `simulate_interp`, `simulate_level`)
+> carry transitive `Classical.choice` through mathlib's
+> `Fin.lastCases_castSucc`, suppressed via AXIOM_ALLOW
+> annotations per `.claude/rules/lean-coding.md` § Accepted
+> exceptions. §7–§8 (runtime bound, erToK assembly) and §11
 > (categorical iso) remain forward-looking design; the next
-> workstream T3 will re-spec §6 against the actually-landed §4/§5
-> shapes. See
+> workstream T4 will re-spec §7 against the actually-landed
+> §4/§5/§6 shapes. The post-T3 handoff at
+> [`docs/superpowers/plans/2026-05-22-post-t3-handoff.md`](../plans/2026-05-22-post-t3-handoff.md)
+> seeds T4's design phase. See
 > [`docs/research/2026-05-02-er-ksim2-equiv-via-urm-master-design.md`](../../research/2026-05-02-er-ksim2-equiv-via-urm-master-design.md)
 > § "Phase 2 partial-completion note" for cross-references.
 

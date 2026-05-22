@@ -82,14 +82,19 @@
 >   `GebLean/Utilities/RegisterMachine.lean` is no longer on the
 >   load-bearing path for `erToK`.
 >
-> Phase 2's remaining work is Steps 9–10: a K^sim simulator for
-> the URM kernel and the `erToK` / `erToKFunctor` assembly. The
-> next workstream after T2 will be T3 (K^sim simulator). A
-> post-T2 followup branch tracking deferred cleanups (naming
-> sweeps, structural extraction, `_pre_stop_correct_*` private
-> re-evaluation) is enumerated in
+> Phase 2's remaining work after T3 is Step 10: the `erToK` /
+> `erToKFunctor` assembly. The workstream after T2 was T3 (K^sim
+> simulator), which landed on 2026-05-22 (PR #22, merge commit
+> `db059ef4`) as `simulate : URMProgram a → KMor1 (a + 1)`
+> together with `simulate_interp` and `simulate_level ≤ 2`, in
+> `GebLean/Utilities/KSimURMSimulator.lean` (re-exported via
+> `GebLean.lean`). A post-T2 followup branch tracking deferred
+> cleanups (naming sweeps, structural extraction,
+> `_pre_stop_correct_*` private re-evaluation) is enumerated in
 > [`docs/superpowers/plans/2026-05-18-step-t2-t11-handoff.md`](../superpowers/plans/2026-05-18-step-t2-t11-handoff.md)
-> § Followup branch (post-T2).
+> § Followup branch (post-T2). The post-T3 handoff seeding T4
+> brainstorming is at
+> [`docs/superpowers/plans/2026-05-22-post-t3-handoff.md`](../superpowers/plans/2026-05-22-post-t3-handoff.md).
 >
 > **Position in the project.** Supersedes the direct-translation
 > `kToER` strategy (preserved as renamed `kToERDirect` /
@@ -110,9 +115,12 @@
 > `erToK` chain by the T1/T2 spec/plan referenced in the
 > partial-completion note above; the design-time prose is left
 > intact for historical reference but is not the binding
-> description of the landed code. §7–§9 (K^sim simulator,
-> runtime bound) and §10–§11 (functors, iso) remain
-> forward-looking design for Steps 9–11 (workstreams T3, T4, T5).
+> description of the landed code. §6 (K^sim simulator) was
+> re-specified and landed by T3 (see
+> [`docs/superpowers/specs/2026-05-21-step-t3-urm-to-ksim-simulator-design.md`](../superpowers/specs/2026-05-21-step-t3-urm-to-ksim-simulator-design.md)).
+> §7–§8 (runtime bound, erToK assembly) and §10–§11 (functors,
+> iso) remain forward-looking design for Steps 10–11
+> (workstreams T4, T5).
 
 ---
 
@@ -553,9 +561,12 @@ LawvereKSimDCat 2 ⥤ LawvereERCat`, functor laws.
 ### Steps 6–10 — erToK side (URM simulation)
 
 **Status: partially complete.** Steps 6–8 landed via workstreams
-T1 and T2 (see "Phase 2 partial-completion note" at the top of
-this document). Steps 9–10 remain forward-looking design and will
-be re-specified once T3 brainstorming begins.
+T1 and T2, and Step 9 landed via workstream T3 on 2026-05-22 (see
+"Phase 2 partial-completion note" at the top of this document).
+Step 9's K^sim simulator was re-specified by T3 in
+[`docs/superpowers/specs/2026-05-21-step-t3-urm-to-ksim-simulator-design.md`](../superpowers/specs/2026-05-21-step-t3-urm-to-ksim-simulator-design.md).
+Step 10 remains forward-looking design and will be re-specified
+once T4 brainstorming begins.
 
 #### Step 6 — `RegisterMachine.lean` audit and gap-fill
 
@@ -605,7 +616,22 @@ submodules; the consolidating fact is `compileER_runFor`.
 
 #### Step 9 — K^sim simulator for URM and runtime bound
 
-**Status: pending (next workstream — T3).**
+**Status: complete (landed 2026-05-22 via PR #22).**
+
+Landed as `simulate : URMProgram a → KMor1 (a + 1)` together with
+`simulate_interp : (simulate P).interp (Fin.cons y v) = ((URMState.init P v).runFor P y).regs P.outputReg`
+and `simulate_level : (simulate P).level ≤ 2`, in
+`GebLean/Utilities/KSimURMSimulator.lean` (re-exported via
+`GebLean.lean`). Supporting `KMor1.natK` / `KMor1.natK'`
+constant helpers landed in `GebLean/Utilities/KArith.lean`; a
+prerequisite refactor replaced `Finset.univ.sup` in `KMor1.level`
+with a constructive `Fin.maxOfNat` helper to keep
+`Classical.choice` out of the level-bound machinery. The post-T3
+handoff at
+[`docs/superpowers/plans/2026-05-22-post-t3-handoff.md`](../superpowers/plans/2026-05-22-post-t3-handoff.md)
+captures the actually-landed surface and seeds T4 brainstorming.
+The legacy prose below records the original design-time sketch.
+
 
 Catalogue `KSimSubroutinesURM.lean`: K^sim subroutines
 emulating each URM primitive instruction. Per-URM simulator
@@ -684,7 +710,7 @@ Longest serial chain on the kToER side: 0 → 1 → 2 → 3 → 4 →
 | 6 | erToK | empty/small | superseded | rendered moot by fresh-kernel approach in T1; `Utilities/RegisterMachine.lean` not on `erToK` load-bearing path |
 | 7 | erToK | substantial | complete (T1) | URM kernel in `GebLean/Utilities/ZeroTestURM.lean`; no `URMComputes` structure (replaced by direct `compileER_runtime` + `compileER_runFor`) |
 | 8 | erToK | substantial | complete (T2) | ER → URM compiler + correctness in `GebLean/LawvereERKSim/{Compiler,Embedding,Loops,Atoms,Comp,BSum,BProd,Top}.lean` |
-| 9 | erToK | substantial | pending (T3) | K^sim simulator + bound |
+| 9 | erToK | substantial | partial (T3 complete; T4 pending — runtime bound) | K^sim simulator landed (`simulate`, `simulate_interp`, `simulate_level`); runtime bound still pending |
 | 10 | erToK | medium | pending (T4) | erToK composition + functor |
 | 11 | both | small | pending (T5) | strict iso packaging |
 
