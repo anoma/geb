@@ -31,8 +31,10 @@
   - [§7.2 Level theorem](#72-level-theorem)
   - [§7.3 Interpretation theorem](#73-interpretation-theorem)
 - [§8 Piece 5 — `erToKFunctor`](#8-piece-5--ertokfunctor)
-  - [§8.1 Definition](#81-definition)
-  - [§8.2 Functor laws](#82-functor-laws)
+  - [§8.1 Multi-output extension `erToKN`](#81-multi-output-extension-ertokn)
+  - [§8.2 Morphism component `erToKFunctor_map`](#82-morphism-component-ertokfunctor_map)
+  - [§8.3 Functor laws](#83-functor-laws)
+  - [§8.4 Functor assembly](#84-functor-assembly)
 - [§9 File organisation](#9-file-organisation)
 - [§10 Dependency DAG](#10-dependency-dag)
 - [§11 Axiom budget](#11-axiom-budget)
@@ -155,7 +157,7 @@ T4 delivers five pieces:
    together with a joint Nat-level bound theorem
    bounding both `compileER_runtime e v` (runtime) and
    `e.interp v` (value) by the same
-   `tower mu_e (Fin.maxOfNat v + offset_e)`. Bounding both
+   `tower mu_e (Fin.maxOfNat _ v + offset_e)`. Bounding both
    quantities with the same tower height is the operational
    shortcut that absorbs comp's runtime-of-`f`-at-value-of-`gs`
    recursion (Tourlakis 0.1.0.42's substitution case requires
@@ -176,10 +178,14 @@ T4 delivers five pieces:
    `Fin.cons (boundExprK e) projections`; with
    `erToK_level ≤ 2` and `erToK_interp`. This is §7.
 
-5. **`erToKFunctor : LawvereERCat ⥤ LawvereKSimDCat 2`**
-   induced by `erToK`, with `map_id` and `map_comp`
-   discharged through `erToK_interp` modulo the K^sim
-   semantic-equality quotient. This is §8.
+5. **Multi-output extension and functor**: `erToKN :
+   ERMorN n m → KMorN n m` (componentwise application of
+   `erToK`); `erToKFunctor : LawvereERCat ⥤
+   LawvereKSimDCat 2` lifting through the ER quotient via
+   `Quotient.liftOn` and packaging with the depth-2
+   witness on the K side. Mirrors the existing
+   `kToERFunctor` at `GebLean/LawvereKSimER.lean:474`. This
+   is §8.
 
 Bypassed (relative to a strictly Tourlakis-faithful
 transcription): an explicit ER-side runtime function
@@ -222,7 +228,7 @@ for nested-tower absorption).
 
 `mu_e` is the unified tower height bounding both runtime
 (`compileER_runtime e v`) and value (`e.interp v`) by
-`tower mu_e (Fin.maxOfNat v + offset_e)`.
+`tower mu_e (Fin.maxOfNat _ v + offset_e)`.
 
 | Constructor | `compileER_runtime` shape | Value shape | `mu_e` | `offset_e` |
 | --- | --- | --- | --- | --- |
@@ -230,23 +236,23 @@ for nested-tower absorption).
 | `succ` | `12 + 10·v 0` | `v 0 + 1` | `2` | `≤ 16` |
 | `proj i` | `11 + 10·v i` | `v i` | `2` | `≤ 16` |
 | `sub` | `20 + 10·v 0 + 10·v 1` | `v 0 ∸ v 1` | `2` | `≤ 24` |
-| `comp f gs` | `Σ_i (rt(gs i) + 4 + 5·val(gs i) + 9·v_total + 2·a) + rt(f at gs_interp) + 2` | `f.interp (gs.interp v)` | `mu_f + Fin.maxOfNat (fun i => mu_{gs i}) + 2` | `offset_f + Fin.maxOfNat (fun i => offset_{gs i}) + 4·a + 8` |
+| `comp f gs` | `Σ_i (rt(gs i) + 4 + 5·val(gs i) + 9·v_total + 2·a) + rt(f at gs_interp) + 2` | `f.interp (gs.interp v)` | `mu_f + Fin.maxOfNat k (fun i => mu_{gs i}) + 6` | `offset_f + Fin.maxOfNat k (fun i => offset_{gs i}) + 4·a + 8` |
 | `bsum f` | `30 + 10·v 0 + Σ_{i<v 0} perIter_f(i)` | `Σ_{j<v 0} f.interp (Fin.cons j (Fin.tail v))` | `mu_f + 2` | `offset_f + 32` |
-| `bprod f` | `40 + 10·v 0 + Σ_{i<v 0} (perIter_f(i) + 9·A_i·B_i + …)` | `Π_{j<v 0} f.interp (Fin.cons j (Fin.tail v))` | `mu_f + 3` | `offset_f + 44` |
+| `bprod f` | `40 + 10·v 0 + Σ_{i<v 0} (perIter_f(i) + 9·A_i·B_i + …)` | `Π_{j<v 0} f.interp (Fin.cons j (Fin.tail v))` | `mu_f + 7` | `offset_f + 44` |
 
 Increment rationale (each tied to a specific Tower lemma):
 
 - **Atoms** (`zero`, `succ`, `proj`, `sub`): runtime is
-  linear-in-`Fin.maxOfNat v`; value is bounded by
-  `Fin.maxOfNat v + 1` (or 0 for `zero`). Need `mu = 2`
-  because the linear coefficient (10) must be absorbed:
-  `10 · (Fin.maxOfNat v + offset) ≤ tower 2 (Fin.maxOfNat
-  v + offset)` via two applications of
-  `mul_tower_le_tower_add_two` from `Tower.lean:101` (each
-  application costs `+ 2` per the lemma; one would suffice
-  for the value side but two are needed for the runtime).
-  `mu = 0` for `zero` because the runtime and value are
-  both constants.
+  linear-in-`Fin.maxOfNat _ v`; value is bounded by
+  `Fin.maxOfNat _ v + 1` (or 0 for `zero`). Need `mu = 2`
+  because the linear coefficient (10) must be absorbed.
+  Writing `m := Fin.maxOfNat _ v + offset` with `m ≥ 10`
+  (via offset ≥ 16), we have
+  `10 · m ≤ m · m = m · tower 0 m ≤ tower 2 m` by a single
+  application of `mul_tower_le_tower_add_two` from
+  `Tower.lean:101` (the lemma adds `+ 2` to absorb a single
+  multiplicative `m`-factor). `mu = 0` for `zero` because
+  the runtime and value are both constants.
 - **`comp f gs`**: per Tourlakis 0.1.0.42's substitution
   case (`PR-complexity-topics.pdf` p. 20), the runtime is
   `t_g + t_f(g(y⃗))`. Here `t_g`'s contribution is the
@@ -254,46 +260,89 @@ Increment rationale (each tied to a specific Tower lemma):
   is `rt(f at gs_interp)`. Crucially, `t_f(g(y⃗))` requires
   a *value* bound on `g(y⃗) = (gs i).interp v`; by IH on
   `gs i`, this is bounded by
-  `tower mu_{gs i} (Fin.maxOfNat v + offset_{gs i})`,
+  `tower mu_{gs i} (Fin.maxOfNat _ v + offset_{gs i})`,
   which (folding over `i`) is at most
-  `tower mu_g (Fin.maxOfNat v + offset_g)`, where
-  `mu_g := Fin.maxOfNat_i mu_{gs i}` and
-  `offset_g := Fin.maxOfNat_i offset_{gs i}`.
-  The nested tower
-  `tower mu_f (tower mu_{gs} m + offset_f) ≤ tower (mu_f + mu_{gs}) m`
-  (via `tower_comp` in `Tower.lean`) absorbs the
-  substitution. The additional `+ 2` increment handles two
-  extra factors: (a) the `v_total = Σ_i v i ≤ a · Fin.maxOfNat v`
-  multiplicative term in `glue`, absorbed by one
-  application of `mul_tower_le_tower_add_two` (with `a`
-  itself bounded by `tower 0 a` for sufficient offset);
-  (b) the value bound's own composition, already captured
-  by `mu_f + mu_{gs}`, but the runtime needs an additional
-  level above the value bound. The `4·a + 8` offset
-  accounts for the per-subterm overhead
-  (`4 + 5·val + 9·v_total + 2·a`) plus glue's additive
-  constants.
+  `tower mu_g (Fin.maxOfNat _ v + offset_g)`, where
+  `mu_g := Fin.maxOfNat k (fun i => mu_{gs i})` and
+  `offset_g := Fin.maxOfNat k (fun i => offset_{gs i})`.
+  The nested tower absorbs into a single tower of
+  additive height in three discrete steps:
+  (i) Inner-offset absorption: `Tower.tower_comp`
+  (`Tower.lean:51`) is an equality
+  `tower j (tower k x) = tower (j + k) x` with no offset
+  inside, so the `+ offset_f` term inside the outer
+  `tower mu_f (...)` must first be folded into a tower
+  level. Writing `m := Fin.maxOfNat _ v + offset_e` and
+  `X := tower mu_g m`, we have `X + offset_f ≤ X + m ≤ 2X
+  ≤ m · X = m · tower 0 X ≤ tower 2 X = tower (mu_g + 2)
+  m` (one `mul_tower_le_tower_add_two`).
+  (ii) `tower_comp` then gives
+  `tower mu_f (tower (mu_g + 2) m) = tower (mu_f + mu_g + 2) m`,
+  bounding `rt(f at gs_interp)`.
+  (iii) Outer glue: `glue` includes `9 · v_total` where
+  `v_total = Σ_i v i ≤ a · Fin.maxOfNat _ v ≤ m · m` (for
+  `offset_e ≥ a`). The constant `9` is absorbed by
+  recognising `9 ≤ m` (offset_e ≥ 8 ensures `m ≥ 8`,
+  bumped to ≥ 9 by including the per-subterm `4·a + 8`
+  with `a ≥ 1`; for `a = 0` comp degenerates and the case
+  is trivial). Then `9 · m · m ≤ m · m · m`, and
+  `m · m · m ≤ m · tower 2 m ≤ tower 4 m` by two
+  `mul_tower_le_tower_add_two` applications. So
+  `9 · v_total ≤ tower (mu_f + mu_g + 6) m` (using
+  `tower 4 m ≤ tower (mu_f + mu_g + 6) m` by
+  `tower_mono_left`). The `glue + rt(f) + 2`
+  sum-of-two-tower-bounded-terms (where `rt(f) ≤ tower
+  (mu_f + mu_g + 2) m` from step (ii)) is dominated by
+  `2 · tower (mu_f + mu_g + 6) m ≤ m · tower (mu_f + mu_g + 6) m
+  ≤ tower (mu_f + mu_g + 6) m` — but the recipe's `+ 4`
+  suffices because the `+ 2` slack between step (ii)'s
+  `mu_f + mu_g + 2` and step (iii)'s `mu_f + mu_g + 6`
+  margin handles the sum-of-pairs absorption without
+  needing the additional `+ 2`. (The exact tightness
+  depends on the precise discharge during implementation;
+  the `+ 4` increment is the upper bound the spec
+  commits to.)
+  The `4·a + 8` offset accounts for the per-subterm
+  overhead (`4 + 5·val + 9·v_total + 2·a`) plus glue's
+  additive constants.
 - **`bsum f`**: per Tourlakis 0.1.0.42's bounded-recursion
   case (`PR-complexity-topics.pdf` p. 21), the runtime is
   `t_h + O(Σ_{i<x} t_g(i, y⃗, f(i, y⃗)))`. For us, this is
   `30 + 10·v 0 + Σ_{i<v 0} perIter_f(i)`. By IH on `f`,
-  `perIter_f(i) ≤ tower mu_f (Fin.maxOfNat v + offset_f)`
+  `perIter_f(i) ≤ tower mu_f (Fin.maxOfNat _ v + offset_f)`
   (modulo the inner constants, which the offset absorbs).
   The outer `Σ_{i<v 0}` is a `v 0`-fold sum, bounded by
-  `v 0 · tower mu_f m ≤ (Fin.maxOfNat v + offset) · tower
+  `v 0 · tower mu_f m ≤ (Fin.maxOfNat _ v + offset) · tower
   mu_f m ≤ tower (mu_f + 2) m` via
-  `mul_tower_le_tower_add_two` (with `m = Fin.maxOfNat v +
+  `mul_tower_le_tower_add_two` (with `m = Fin.maxOfNat _ v +
   offset ≥ 2`). Hence `mu = mu_f + 2`. The value bound is
   the same shape: `natBSum v_0 (f.interp ∘ …) ≤ v_0 ·
   tower mu_f m ≤ tower (mu_f + 2) m`.
-- **`bprod f`**: same outer-loop load as bsum (+ 2), plus
-  an extra `+ 1` for the running product. The value
-  `natBProd v_0 (f.interp ∘ …)` is `Π_{j<v_0} f.interp_j ≤
-  (tower mu_f m)^{v_0}`. The Nat identity `T^k ≤ 2^(k ·
-  T)` (for `T ≥ 1`) gives `(tower mu_f m)^{v_0} ≤
-  2^(v_0 · tower mu_f m) ≤ 2^(tower (mu_f + 2) m) = tower
-  (mu_f + 3) m`. The runtime's `A_i · B_i` term inherits
-  the same `mu_f + 3` bound. Hence `mu = mu_f + 3`.
+- **`bprod f`**: value bound and runtime bound require
+  different increments; the recipe carries the larger of
+  the two (the runtime). The value
+  `natBProd v_0 (f.interp ∘ …) = Π_{j<v_0} f.interp_j ≤
+  (tower mu_f m)^{v_0} ≤ (tower mu_f m)^m`, and by
+  `Tower.tower_pow_le_tower_add_three` (`Tower.lean:120`)
+  this is `≤ tower (mu_f + 3) m`. So the value bound
+  needs `+ 3`. The runtime contains
+  `Σ_{i<v 0} 9·A_i·B_i` where
+  `A_i · B_i ≤ natBProd (i+1) (f.interp ∘ …) ≤ tower (mu_f + 3) m`.
+  Writing `T := tower (mu_f + 3) m`, the outer sum is
+  `Σ_{i<v 0} 9·T ≤ 9·v_0·T ≤ 9·m·T`. The constant
+  factor `9` is absorbed by recognising `9 ≤ m` (the
+  spec offset 44 ensures `m ≥ 44`), giving
+  `9·m·T ≤ m·m·T = m·(m·T)`. Then
+  `m·T ≤ tower (mu_f + 5) m` by one
+  `mul_tower_le_tower_add_two`, and
+  `m·(m·T) ≤ m·tower (mu_f + 5) m ≤ tower (mu_f + 7) m`
+  by a second `mul_tower_le_tower_add_two`. Total runtime
+  increment: `+ 7`. The recipe carries
+  `mu = mu_f + 7`, dominating both value (which only
+  needs `+ 3`) and runtime. The remaining sub-terms
+  `4·A_i + 9·B_i + nRegs_f` in `perIter_f(i)` are
+  dominated by `A_i · B_i` (since `B_i ≥ 1` whenever
+  `A_i · B_i > 0`).
 
 The precise Nat constants in the offset column (the `16`,
 `24`, `4·a + 8`, `32`, `44`) are derived but
@@ -302,18 +351,26 @@ implementation-flexible per
 § Non-negotiable interfaces (Lean-side flexibility around
 the literature contract). The literature-fixed content is
 the increment table for `mu_e` (the tower height) — `+ 2`
-at atoms, `+ mu_{gs} + 2` at comp, `+ 2` at bsum, `+ 3` at
+at atoms, `+ mu_{gs} + 2` at comp, `+ 2` at bsum, `+ 5` at
 bprod. Constants may shrink during implementation if
 tighter Tower lemmas prove out, but must not grow without
-revising the spec.
+revising the spec. Specifically: comp's `+ 6`, bsum's
+`+ 2`, and bprod's `+ 7` are explicit upper bounds; the
+proof may discharge with smaller margins if a
+`const_mul_tower_le_tower_add_two`-style lemma absorbs
+constant factors at a cheaper cost than the
+`9 ≤ m` route used above. Such a lemma is not currently
+in `Tower.lean`; adding it is a possible plan-stage
+refinement.
 
-`Fin.maxOfNat_i` denotes constructive folding of a finite
-family of `ℕ` via `Fin.maxOfNat`-style induction
-(see `GebLean/LawvereKSim.lean:106` for the T3 helper).
-This keeps the `[propext, Quot.sound]`-only axiom profile;
+`Fin.maxOfNat` here takes the family directly (since
+`Fin.maxOfNat (n : ℕ) (g : Fin n → ℕ) : ℕ` already accepts
+a `Fin n → ℕ`-shaped folder); call sites write
+`Fin.maxOfNat k (fun i => …)` with the arity explicit. This
+keeps the `[propext, Quot.sound]`-only axiom profile;
 mathlib's `Finset.univ.sup` is not used.
 
-For the `Fin.maxOfNat v` portion of the bound input: this
+For the `Fin.maxOfNat _ v` portion of the bound input: this
 replaces the kToER side's `vMax` (which is `private` to
 `LawvereKSimMajorization.lean` and additionally uses
 `Finset.univ.sup`, transitively pulling
@@ -327,7 +384,7 @@ level-≤ 2 K^sim morphism.
 
 The recipe discharges a conjunctive inductive theorem
 bounding both the URM-runtime and the ER-value of `e` by
-the same `tower mu_e (Fin.maxOfNat v + offset_e)`. Bounding
+the same `tower mu_e (Fin.maxOfNat _ v + offset_e)`. Bounding
 both quantities together is structurally required by comp's
 case: the runtime of `comp f gs` contains
 `compileER_runtime f inner` evaluated at
@@ -341,10 +398,10 @@ theorem boundExprKParams_dominates :
     {a : ℕ} → (e : ERMor1 a) → (v : Fin a → ℕ) →
     compileER_runtime e v ≤
         tower (boundExprKParams e).1
-              (Fin.maxOfNat v + (boundExprKParams e).2) ∧
+              (Fin.maxOfNat _ v + (boundExprKParams e).2) ∧
     e.interp v ≤
         tower (boundExprKParams e).1
-              (Fin.maxOfNat v + (boundExprKParams e).2)
+              (Fin.maxOfNat _ v + (boundExprKParams e).2)
 ```
 
 Proof: structural induction on `e`. The conjunctive shape
@@ -359,7 +416,7 @@ specialised `inner` vector.
 - `comp f gs` applies `Tower.tower_comp` to absorb
   `tower mu_f (tower mu_{gs} m + offset_f) ≤ tower (mu_f +
   mu_{gs}) m`, then `mul_tower_le_tower_add_two` for the
-  `v_total = Σ v i ≤ a · Fin.maxOfNat v` factor.
+  `v_total = Σ v i ≤ a · Fin.maxOfNat _ v` factor.
 - `bsum f` applies `mul_tower_le_tower_add_two` for the
   outer `v 0`-fold sum, giving the `+ 2` increment.
 - `bprod f` applies the same `+ 2` for the outer sum plus
@@ -418,12 +475,15 @@ The `a`-ary maximum over the input vector. Recursive:
 
 ```lean
 @[simp] theorem KMor1.interp_maxOver (a : ℕ) (v : Fin a → ℕ) :
-    (KMor1.maxOver a).interp v = Fin.maxOfNat v
+    (KMor1.maxOver a).interp v = Fin.maxOfNat _ v
 ```
 
-`Fin.maxOfNat : {n : ℕ} → (Fin n → ℕ) → ℕ` is the
+`Fin.maxOfNat : (n : ℕ) → (Fin n → ℕ) → ℕ` is the
 constructive maximum helper introduced by T3 in
-`GebLean/LawvereKSim.lean:106`. This composite realises that
+`GebLean/LawvereKSim.lean:106` (`n` explicit; call sites
+write `Fin.maxOfNat _ v` to let Lean infer it from the
+type of `v`, matching the codebase pattern at
+`KSimURMSimulator.lean:978`). This composite realises that
 exact Nat function in K^sim. The spec does not reuse
 `LawvereKSimMajorization.lean`'s `vMax` because it is
 declared `private` (file-local) and additionally uses
@@ -431,7 +491,7 @@ declared `private` (file-local) and additionally uses
 pulls `Classical.choice` through mathlib's `Finset`/`Multiset`/
 lattice machinery and would break T4's `[propext,
 Quot.sound]`-only axiom budget on every theorem that
-chains through `Fin.maxOfNat`.
+chains through `Fin.maxOfNat _`.
 
 ### §5.3 `KMor1.pow2_iter`
 
@@ -482,38 +542,40 @@ def boundExprK : {a : ℕ} → ERMor1 a → KMor1 a := fun e =>
       KMor1.comp KMor1.add
         (fun i : Fin 2 =>
           match i with
-          | 0 => KMor1.maxOver a
-          | 1 => KMor1.natK' a p.2))
+          | ⟨0, _⟩ => KMor1.maxOver a
+          | ⟨1, _⟩ => KMor1.natK' a p.2))
 ```
 
-The inner morphism family uses `match i with | 0 => … | 1
-=> …` to dispatch over `Fin 2`, mirroring the project's
-established pattern (e.g.,
-`KSimURMSimulator.lean:399 branches_j`) and avoiding the
-`DecidableEq (Fin 2)` instance lookup that `if i = 0`
-would require.
+The inner morphism family uses the explicit-witness form
+`match i with | ⟨0, _⟩ => … | ⟨1, _⟩ => …` over `Fin 2`,
+mirroring the established codebase convention (e.g.
+`KArith.lean:537-543` and `KSimURMSimulator.lean:128-133`).
+This avoids the `DecidableEq (Fin 2)` instance lookup that
+`if i = 0` would require and avoids the literal-pattern
+syntax (`| 0 =>`) which is less robust under instance
+changes.
 
-Reading: `(maxOver a) v = Fin.maxOfNat v` and
+Reading: `(maxOver a) v = Fin.maxOfNat _ v` and
 `(natK' a offset) v = offset`, so the inner `add`
-composition produces `Fin.maxOfNat v + offset`. Feeding that
-into `pow2_iter mu` produces `tower mu (Fin.maxOfNat v +
+composition produces `Fin.maxOfNat _ v + offset`. Feeding that
+into `pow2_iter mu` produces `tower mu (Fin.maxOfNat _ v +
 offset)`.
 
 ### §6.2 Alternatives considered and rejected
 
 - **Augmented-arity** uses
   `pow2_iter mu ∘ maxOver (a+1) ∘ Fin.cons (natK' 0 offset) projections`.
-  This computes `tower mu (Nat.max offset (Fin.maxOfNat v))`,
+  This computes `tower mu (Nat.max offset (Fin.maxOfNat _ v))`,
   which is mathematically tighter than the spec's
-  `tower mu (Fin.maxOfNat v + offset)` (since
-  `Nat.max offset (Fin.maxOfNat v) ≤ offset + Fin.maxOfNat v`,
+  `tower mu (Fin.maxOfNat _ v + offset)` (since
+  `Nat.max offset (Fin.maxOfNat _ v) ≤ offset + Fin.maxOfNat _ v`,
   monotonicity of `tower` in its second argument gives the
   inequality). Rejected on proof-shape grounds: the
   kToER-side `KMor1.majorize` carries an explicit
   `(r, offset)` pair whose offset is *added* to the max in
   the bound shape; the bsum/bprod increment proofs in §4
   rely on `mul_tower_le_tower_add_two`, which is stated in
-  terms of `m = Fin.maxOfNat v + offset` (an additive
+  terms of `m = Fin.maxOfNat _ v + offset` (an additive
   form). The augmented-arity shape would require restating
   those Tower lemmas in `Nat.max` form, with no semantic
   gain.
@@ -533,7 +595,7 @@ theorem boundExprK_interp
     {a : ℕ} (e : ERMor1 a) (v : Fin a → ℕ) :
     (boundExprK e).interp v
       = tower (boundExprKParams e).1
-              (Fin.maxOfNat v + (boundExprKParams e).2)
+              (Fin.maxOfNat _ v + (boundExprKParams e).2)
 
 theorem boundExprK_dominates
     {a : ℕ} (e : ERMor1 a) (v : Fin a → ℕ) :
@@ -617,39 +679,123 @@ with `s := (boundExprK e).interp v`.
 
 ## §8 Piece 5 — `erToKFunctor`
 
-### §8.1 Definition
+T4's functor maps the multi-output ER quotient category
+`LawvereERCat` (hom = `ERMorNQuo n m`) to the depth-2 K^sim
+quotient category `LawvereKSimDCat 2` (hom = `KSimMor 2 n m`,
+a structure with a `KMorNQuo n m` field plus a depth-2
+witness). The single-output `erToK` from §7 lifts to a
+multi-output `erToKN` componentwise, passes through the ER
+quotient via `Quotient.liftOn`, and packages with the
+depth-2 witness on the K side. The construction mirrors the
+forward functor `kToERFunctor` at
+`GebLean/LawvereKSimER.lean:474`.
+
+### §8.1 Multi-output extension `erToKN`
 
 ```lean
-def erToKFunctor : LawvereERCat ⥤ LawvereKSimDCat 2 where
-  obj n   := n
-  map ⟦e⟧ := ⟦⟨erToK e, erToK_level e⟩⟧
-  map_id  := /- via erToK_interp on the identity -/
-  map_comp := /- via erToK_interp on composition -/
+def erToKN {n m : ℕ} (e : ERMorN n m) : KMorN n m :=
+  fun j => erToK (e j)
+
+theorem erToKN_interp {n m : ℕ} (e : ERMorN n m)
+    (v : Fin n → ℕ) (j : Fin m) :
+    (erToKN e j).interp v = (e j).interp v :=
+  erToK_interp (e j) v
+
+theorem erToKN_level {n m : ℕ} (e : ERMorN n m)
+    (j : Fin m) : (erToKN e j).level ≤ 2 :=
+  erToK_level (e j)
+
+theorem erToKN_compat_extEq {n m : ℕ}
+    {e₁ e₂ : ERMorN n m}
+    (he : ∀ v j, (e₁ j).interp v = (e₂ j).interp v) :
+    ∀ v j, (erToKN e₁ j).interp v
+            = (erToKN e₂ j).interp v := by
+  intro v j
+  rw [erToKN_interp, erToKN_interp]
+  exact he v j
 ```
 
-The morphism component lifts an equivalence class `⟦e⟧` (ER
-modulo semantic equality) to the corresponding class in
-`LawvereKSimDCat 2` (level-≤ 2 K^sim modulo semantic
-equality). The lift is well-defined because semantic
-equality `e₁.interp v = e₂.interp v` implies
-`(erToK e₁).interp v = (erToK e₂).interp v` by
-`erToK_interp` on both sides.
+`erToKN` is componentwise application of `erToK`. The
+interp lemma is a thin wrapper over §7's `erToK_interp`;
+the level lemma is a thin wrapper over §7's `erToK_level`;
+the extEq-compat lemma is what
+`Quotient.liftOn` will consume to discharge
+well-definedness.
 
-### §8.2 Functor laws
+### §8.2 Morphism component `erToKFunctor_map`
 
-`map_id n`: `erToK (𝟙 n)` and `𝟙 n` in K^sim are both equal
-to the identity at arity `n` modulo semantic equality.
-Discharged by `erToK_interp` applied to the all-projections
-identity, plus K^sim quotient `sound`.
+```lean
+def erToKFunctor_map {n m : ℕ}
+    (e : ERMorNQuo n m) : KSimMor 2 n m :=
+  Quotient.liftOn e
+    (fun rec => ⟨Quotient.mk (kMorNSetoid n m) (erToKN rec),
+                 /- depth-2 witness via erToKN_level -/⟩)
+    (fun e₁ e₂ h => by
+      /- KSimMor equality via depth-witness Quotient.sound +
+         erToKN_compat_extEq -/
+      sorry)
+```
 
-`map_comp e e'`: `erToK (e ≫ e')` and `erToK e ≫ erToK e'`
-are both equal to `(e ≫ e').interp` modulo semantic equality.
-Discharged by `erToK_interp` on each side and K^sim quotient
-`sound`.
+The lift produces a `KSimMor 2 n m` value, which packages:
 
-The functor laws collapse to consequences of `erToK_interp`
-in the quotient. This mirrors the proof structure used for
-`kToERFunctor`.
+- a `KMorNQuo n m` term (the quotient class of `erToKN
+  rec`), and
+- a depth-2 witness `KMorNQuo.atDepth 2 _`, discharged by
+  the per-component level lemma `erToKN_level`.
+
+Well-definedness of the lift (the `Quotient.sound`
+obligation) uses `erToKN_compat_extEq`: two ER families
+that agree pointwise produce K^sim families that agree
+pointwise.
+
+### §8.3 Functor laws
+
+```lean
+theorem erToKFunctor_map_id (n : LawvereERCat) :
+    erToKFunctor_map
+        (CategoryTheory.CategoryStruct.id
+          (obj := LawvereERCat) n)
+      = CategoryTheory.CategoryStruct.id
+          (obj := LawvereKSimDCat 2)
+          (n : LawvereKSimDCat 2)
+
+theorem erToKFunctor_map_comp {n m k : ℕ}
+    (e : ERMorNQuo n m) (f : ERMorNQuo m k) :
+    erToKFunctor_map
+        (CategoryTheory.CategoryStruct.comp
+          (obj := LawvereERCat) e f)
+      = CategoryTheory.CategoryStruct.comp
+          (obj := LawvereKSimDCat 2)
+          (erToKFunctor_map e) (erToKFunctor_map f)
+```
+
+Both proofs are by `Quotient.inductionOn` (or
+`inductionOn₂`) over the ER quotient witnesses, reducing
+to a `Quotient.sound` step on the K side that
+`erToKN_compat_extEq` discharges. `map_id` uses
+`erToK_interp` on `ERMor1.proj` to recognise the all-
+projections identity. `map_comp` uses `erToK_interp` on
+both sides of `e ≫ f` to recognise the composition; the
+nested `KMor1.comp` interp identity follows from `erToK`'s
+construction (the simulator applied to the compiled
+composition equals the value of the composition). This
+mirrors `kToERFunctor_map_comp` at
+`LawvereKSimER.lean:427-468` in proof shape.
+
+### §8.4 Functor assembly
+
+```lean
+def erToKFunctor : CategoryTheory.Functor
+    LawvereERCat (LawvereKSimDCat 2) where
+  obj n     := n
+  map       := erToKFunctor_map
+  map_id    := erToKFunctor_map_id
+  map_comp  := erToKFunctor_map_comp
+```
+
+The `obj n := n` is identity by def-unfolding
+(`LawvereERCat = ℕ` and `LawvereKSimDCat 2 = ℕ`), matching
+the `kToERFunctor` shape at `LawvereKSimER.lean:476`.
 
 ## §9 File organisation
 
@@ -663,7 +809,7 @@ in the quotient. This mirrors the proof structure used for
 | `GebLean/Utilities/ERAMajorants.lean` | exists (Step 3) | unchanged; `tower` Nat function and `A_two_iter` closed-form interp consumed |
 | `GebLean/LawvereERKSim/RuntimeBound.lean` | new | `boundExprKParams`, `boundExprKParams_dominates`, `boundExprK`, `boundExprK_level`, `boundExprK_interp`, `boundExprK_dominates` |
 | `GebLean/LawvereERKSim/ErToK.lean` | new | `erToK`, `erToK_level`, `erToK_interp` |
-| `GebLean/LawvereERKSim/ErToKFunctor.lean` | new | `erToKFunctor` with `map_id`, `map_comp` |
+| `GebLean/LawvereERKSim/ErToKFunctor.lean` | new | `erToKN`, `erToKN_interp`, `erToKN_level`, `erToKN_compat_extEq`, `erToKFunctor_map`, `erToKFunctor`, `erToKFunctor_map_id`, `erToKFunctor_map_comp` |
 | `GebLean/LawvereERKSim.lean` | exists (index) | `public import` the three new modules |
 | `GebLean.lean` | exists (top index) | `erToKFunctor` enters the public surface |
 | `GebLeanTests/Utilities/KArith.lean` | exists | + `#guard` tests on small inputs for the three new composites |
@@ -812,9 +958,9 @@ Out of scope (not anyone's job for this transcription):
 | KArith composites (§5) | ~300 |
 | `RuntimeBound.lean` (§4, §6) | ~600 |
 | `ErToK.lean` (§7) | ~150 |
-| `ErToKFunctor.lean` (§8) | ~200 |
+| `ErToKFunctor.lean` (§8, incl. multi-output passage mirroring kToERFunctor) | ~350 |
 | Tests (§12) | ~80 |
-| Total | ~1330 |
+| Total | ~1480 |
 
 Comparable to T3 (~1000 LOC) and well below T2 (~12 kLOC).
 One workstream; no further split anticipated.
