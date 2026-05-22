@@ -471,6 +471,34 @@ def KMor1.monus : KMor1 2 := KMor1.swap KMor1.monusSwapped
 
 example : KMor1.monus.level = 2 := by decide
 
+/-- Binary maximum of two natural-number inputs, as a
+`K^sim` morphism. Defined via truncated subtraction:
+`max x y = (x ∸ y) + y`. Closed form: `(maxK).interp v =
+Nat.max (v 0) (v 1)`. Level ≤ 2 (composition of
+`KMor1.add` at level 1 with `KMor1.monus` at level 2 and
+projections at level 0). -/
+def KMor1.maxK : KMor1 2 :=
+  KMor1.comp KMor1.add
+    (fun i : Fin 2 =>
+      match i with
+      | ⟨0, _⟩ => KMor1.comp KMor1.monus (fun j : Fin 2 =>
+                    match j with
+                    | ⟨0, _⟩ => KMor1.proj ⟨0, by decide⟩
+                    | ⟨1, _⟩ => KMor1.proj ⟨1, by decide⟩)
+      | ⟨1, _⟩ => KMor1.proj ⟨1, by decide⟩)
+
+/-- Interpretation of `maxK`: `Nat.max (ctx 0) (ctx 1)`. -/
+@[simp] theorem KMor1.interp_maxK (v : Fin 2 → ℕ) :
+    KMor1.maxK.interp v = Nat.max (v 0) (v 1) := by
+  simp only [KMor1.maxK, KMor1.interp_comp,
+    KMor1.interp_add, KMor1.interp_monus,
+    KMor1.interp_proj]
+  change v 0 - v 1 + v 1 = max (v 0) (v 1)
+  omega
+
+example : KMor1.maxK.level = 2 := by decide
+theorem KMor1.maxK_level : KMor1.maxK.level ≤ 2 := by decide
+
 /-- Sign function: `signum(0) = 0`, `signum(n+1) = 1`. Equivalent
 to the level-1 composite `isZero ∘ isZero`: `isZero(n) = 1 - sgn n`,
 so `isZero (isZero n) = sgn n`. Used to normalize `eq`'s {0, ≥1}-
