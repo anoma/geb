@@ -207,6 +207,26 @@ Avoid `Quotient.out` / `Quot.out`; both require `Classical.choice`.
 Use the constructive `Quotient` / `Quot` API
 (`mk` / `lift` / `ind` / `sound`) instead.
 
+#### Accepted exceptions
+
+The following mathlib-sourced `Classical.choice` dependencies
+are accepted; declarations that transitively depend on them
+must carry an `-- AXIOM_ALLOW: Classical.choice (rationale)`
+comment immediately above the declaration (or inside its
+`/-- … -/` docstring). The `scripts/check-axioms.sh` audit
+suppresses these from the failure output.
+
+- `Fin.lastCases_castSucc` (and `Fin.reverseInduction_castSucc`):
+  the mathlib equation lemma for `Fin.lastCases` on the
+  `castSucc` branch carries `Classical.choice` through
+  `Fin.reverseInduction.go`. Used in `LawvereBTInterp.lean`,
+  `LawvereBTEq.lean`, `Tupling.lean`, `ERTupling.lean`, and
+  the T3 `KSimURMSimulator.lean` simulator. A project-local
+  axiom-clean replacement would require either upstream-fixing
+  `Fin.reverseInduction.go` or restructuring all callers to
+  avoid the equation form; deemed not worth the cost for an
+  upstream proof-engineering technicality.
+
 ### Proof guidelines
 
 - **First errors first.** When `lake build` reports multiple

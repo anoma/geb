@@ -98,6 +98,47 @@ def KMorN.comp {n m k : ℕ}
     (f : KMorN m k) (g : KMorN n m) : KMorN n k :=
   fun i => KMor1.comp (f i) g
 
+/-- Constructive `max`-fold over a `Fin n`-indexed family of
+naturals; replaces `Finset.univ.sup` in `KMor1.level` and
+`KMorN.levelN` to keep the axiom set at `[propext, Quot.sound]`.
+Mathlib's `Finset.sup` transitively pulls in `Classical.choice`;
+`Fin.foldr` is constructive Lean-core machinery. -/
+def Fin.maxOfNat (n : ℕ) (f : Fin n → ℕ) : ℕ :=
+  Fin.foldr n (fun i acc => max acc (f i)) 0
+
+/-- Each entry of a `Fin n → ℕ` family is bounded by the
+`Fin.maxOfNat` fold.  Constructive replacement for
+`Finset.le_sup` applied to `Finset.univ`.  Uses
+`Nat.le_max_left`/`Nat.le_max_right` to avoid mathlib's
+`le_max_left`, which transitively pulls in `Classical.choice`
+through unbundled order-typeclass machinery. -/
+theorem Fin.le_maxOfNat {n : ℕ} (f : Fin n → ℕ) (j : Fin n) :
+    f j ≤ Fin.maxOfNat n f := by
+  unfold Fin.maxOfNat
+  induction n with
+  | zero => exact j.elim0
+  | succ n' ih =>
+      simp only [Fin.foldr_succ]
+      refine Fin.cases ?_ ?_ j
+      · exact Nat.le_max_right _ _
+      · intro j'
+        exact Nat.le_trans
+          (ih (fun l => f l.succ) j') (Nat.le_max_left _ _)
+
+/-- If every entry of a `Fin n → ℕ` family is bounded by
+`c`, so is the `Fin.maxOfNat` fold.  Constructive replacement
+for `Finset.sup_le`. -/
+theorem Fin.maxOfNat_le {n : ℕ} {f : Fin n → ℕ} {c : ℕ}
+    (h : ∀ j : Fin n, f j ≤ c) : Fin.maxOfNat n f ≤ c := by
+  unfold Fin.maxOfNat
+  induction n with
+  | zero => exact Nat.zero_le _
+  | succ n' ih =>
+      simp only [Fin.foldr_succ]
+      refine Nat.max_le.mpr ⟨?_, ?_⟩
+      · exact ih (fun j => h j.succ)
+      · exact h ⟨0, Nat.succ_pos _⟩
+
 /-- Structural level of a `KMor1` term per design
 principle P2: `simrec` and `raise` each add one to
 the maximum-children level; `comp` takes the maximum
@@ -108,16 +149,16 @@ def KMor1.level : {n : ℕ} → KMor1 n → ℕ
   | _, .proj _      => 0
   | _, .comp f gs   =>
       max (KMor1.level f)
-        (Finset.univ.sup (fun i => (gs i).level))
+        (Fin.maxOfNat _ (fun i => (gs i).level))
   | _, .simrec _ h g =>
-      max (Finset.univ.sup (fun i => (h i).level))
-          (Finset.univ.sup (fun i => (g i).level)) + 1
+      max (Fin.maxOfNat _ (fun i => (h i).level))
+          (Fin.maxOfNat _ (fun i => (g i).level)) + 1
   | _, .raise f      => f.level + 1
 
 /-- Level of a multi-output `KMorN` family: the
 maximum level over the family. -/
 def KMorN.levelN {n m : ℕ} (f : KMorN n m) : ℕ :=
-  Finset.univ.sup (fun i => (f i).level)
+  Fin.maxOfNat _ (fun i => (f i).level)
 
 /-- Single-output (non-simultaneous) primitive recursion at arity
 `a + 1`.  The base `h : KMor1 a` returns the value at recursion

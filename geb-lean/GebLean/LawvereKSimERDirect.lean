@@ -58,32 +58,25 @@ def kToERDirect : {a : ℕ} → (f : KMor1 a) → f.level ≤ 2 →
         exact le_trans (le_max_left _ _) h
       have hgs : ∀ i, (gs i).level ≤ 2 := fun i => by
         unfold KMor1.level at h
-        have hsup : Finset.univ.sup
-            (fun j => (gs j).level) ≤ 2 :=
+        have hsup : Fin.maxOfNat _ (fun j => (gs j).level) ≤ 2 :=
           le_trans (le_max_right _ _) h
         exact le_trans
-          (Finset.le_sup
-            (f := fun j => (gs j).level)
-            (Finset.mem_univ i))
+          (Fin.le_maxOfNat (fun j => (gs j).level) i)
           hsup
       exact ERMor1.comp (kToERDirect f hf)
         (fun i => kToERDirect (gs i) (hgs i))
   | _, .simrec (a := a) (k := k) i h g, hyp => by
       have hh : ∀ j, (h j).level ≤ 1 := fun j => by
         unfold KMor1.level at hyp
-        have hsup_le : Finset.univ.sup
-            (fun j => (h j).level) ≤ 1 := by omega
+        have hsup_le : Fin.maxOfNat _ (fun j => (h j).level) ≤ 1 := by omega
         exact le_trans
-          (Finset.le_sup (f := fun j => (h j).level)
-            (Finset.mem_univ j))
+          (Fin.le_maxOfNat (fun j => (h j).level) j)
           hsup_le
       have hg_lvl : ∀ j, (g j).level ≤ 1 := fun j => by
         unfold KMor1.level at hyp
-        have hsup_le : Finset.univ.sup
-            (fun j => (g j).level) ≤ 1 := by omega
+        have hsup_le : Fin.maxOfNat _ (fun j => (g j).level) ≤ 1 := by omega
         exact le_trans
-          (Finset.le_sup (f := fun j => (g j).level)
-            (Finset.mem_univ j))
+          (Fin.le_maxOfNat (fun j => (g j).level) j)
           hsup_le
       have h_le_2 : ∀ j, (h j).level ≤ 2 := fun j =>
         le_trans (hh j) (by norm_num)

@@ -38,14 +38,14 @@ private def addK : KMor1 2 :=
         ![KMor1.proj 2])
 
 example : (kToER addK
-              (by simp [addK, KMor1.level])).interp ![3, 5]
+              (by unfold addK; decide)).interp ![3, 5]
             = addK.interp ![3, 5] :=
-  kToER_interp addK (by simp [addK, KMor1.level]) ![3, 5]
+  kToER_interp addK (by unfold addK; decide) ![3, 5]
 
 example : (kToER addK
-              (by simp [addK, KMor1.level])).interp ![0, 7]
+              (by unfold addK; decide)).interp ![0, 7]
             = addK.interp ![0, 7] :=
-  kToER_interp addK (by simp [addK, KMor1.level]) ![0, 7]
+  kToER_interp addK (by unfold addK; decide) ![0, 7]
 
 -- Tier 3 — kToERFunctor sanity.
 
