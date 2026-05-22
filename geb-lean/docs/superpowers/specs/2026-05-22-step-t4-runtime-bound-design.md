@@ -294,14 +294,9 @@ Increment rationale (each tied to a specific Tower lemma):
   sum-of-two-tower-bounded-terms (where `rt(f) ≤ tower
   (mu_f + mu_g + 2) m` from step (ii)) is dominated by
   `2 · tower (mu_f + mu_g + 6) m ≤ m · tower (mu_f + mu_g + 6) m
-  ≤ tower (mu_f + mu_g + 6) m` — but the recipe's `+ 4`
-  suffices because the `+ 2` slack between step (ii)'s
-  `mu_f + mu_g + 2` and step (iii)'s `mu_f + mu_g + 6`
-  margin handles the sum-of-pairs absorption without
-  needing the additional `+ 2`. (The exact tightness
-  depends on the precise discharge during implementation;
-  the `+ 4` increment is the upper bound the spec
-  commits to.)
+  ≤ tower (mu_f + mu_g + 6) m` — the `+ 6` increment in
+  the recipe accommodates both the constant-9 absorption
+  in step (iii) and the sum-of-pairs absorption.
   The `4·a + 8` offset accounts for the per-subterm
   overhead (`4 + 5·val + 9·v_total + 2·a`) plus glue's
   additive constants.
@@ -413,16 +408,19 @@ specialised `inner` vector.
   `omega` plus `Tower.mul_tower_le_tower_add_two`
   (`Tower.lean:101`) applied twice to absorb the linear
   coefficient `10`.
-- `comp f gs` applies `Tower.tower_comp` to absorb
-  `tower mu_f (tower mu_{gs} m + offset_f) ≤ tower (mu_f +
-  mu_{gs}) m`, then `mul_tower_le_tower_add_two` for the
-  `v_total = Σ v i ≤ a · Fin.maxOfNat _ v` factor.
+- `comp f gs` applies (i) `mul_tower_le_tower_add_two` for
+  the inner-offset absorption (`+ 2`), (ii) `Tower.tower_comp`
+  for the nested-tower equality, and (iii) two further
+  `mul_tower_le_tower_add_two` applications for the outer
+  `9 · v_total ≤ m · m · m` absorption, totalling
+  `mu_f + mu_{gs} + 6` (see §4.2 for full chain).
 - `bsum f` applies `mul_tower_le_tower_add_two` for the
   outer `v 0`-fold sum, giving the `+ 2` increment.
-- `bprod f` applies the same `+ 2` for the outer sum plus
-  the running-product Nat identity `T^k ≤ 2^(k · T)` plus
-  `mul_tower_le_tower_add_two` for the resulting exponent,
-  totalling `+ 3`.
+- `bprod f` applies `tower_pow_le_tower_add_three` for the
+  running-product value bound and two
+  `mul_tower_le_tower_add_two` applications for the outer
+  `9 · v 0` runtime absorption, totalling `mu_f + 7` (see
+  §4.2 for full chain).
 
 Anticipated AXIOM_ALLOW points: the `bsum` and `bprod`
 cases reduce `perIter`'s `ctx_f = Fin.cons i (Fin.tail v)`
