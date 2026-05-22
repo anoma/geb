@@ -948,4 +948,39 @@ private theorem simulate_step_match {a : ℕ}
               from by apply Fin.ext; simp [Fin.castSucc]]
         exact ih_regs j
 
+-- AXIOM_ALLOW: Classical.choice (transitively via mathlib's
+-- Fin.lastCases_castSucc through simulate_step_match; see
+-- .claude/rules/lean-coding.md § Accepted exceptions).
+/-- The K^sim simulator's output at time `y` and input `v`
+equals the value of `P.outputReg` after `y` URM steps from
+`URMState.init P v`. Holds for every `URMProgram a`; no
+`WellBounded` precondition required. Per spec § 4.1. -/
+theorem simulate_interp {a : ℕ} (P : URMProgram a)
+    (y : ℕ) (v : Fin a → ℕ) :
+    (simulate P).interp (Fin.cons y v)
+      = ((URMState.init P v).runFor P y).regs P.outputReg := by
+  simp only [simulate, KMor1.interp_simrec, Fin.cons_zero,
+    Fin.cons_succ]
+  exact (simulate_step_match P v y).2 P.outputReg
+
+-- AXIOM_ALLOW: Classical.choice (transitively via mathlib's
+-- Fin.lastCases_castSucc through baseFamily_level /
+-- stepFamily_level; see .claude/rules/lean-coding.md
+-- § Accepted exceptions).
+/-- The K^sim simulator is at level ≤ 2. By `KMor1.level`'s
+`.simrec` clause, the level is `max sup_h sup_g + 1` where
+`sup_h ≤ 0` (each base-family component is level 0 per
+`baseFamily_level`) and `sup_g ≤ 1` (each step-family
+component is level ≤ 1 per `stepFamily_level`). Per spec § 5. -/
+theorem simulate_level {a : ℕ} (P : URMProgram a) :
+    (simulate P).level ≤ 2 := by
+  unfold simulate
+  change max (Fin.maxOfNat _ (fun i => (baseFamily P i).level))
+             (Fin.maxOfNat _ (fun i => (stepFamily P i).level))
+         + 1 ≤ 2
+  apply Nat.add_le_add_right
+  apply max_le
+  · exact Fin.maxOfNat_le (by intro i; rw [baseFamily_level]; omega)
+  · exact Fin.maxOfNat_le (fun i => stepFamily_level P i)
+
 end GebLean.KSimURMSimulator
