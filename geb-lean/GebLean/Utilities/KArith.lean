@@ -1,5 +1,6 @@
 import GebLean.LawvereKSim
 import GebLean.LawvereKSimInterp
+import GebLean.Utilities.Tower
 
 /-!
 # K^sim-Derived Arithmetic
@@ -712,6 +713,53 @@ private lemma KMor1.pow2_aux (n : ℕ) :
   exact KMor1.pow2_aux (ctx 0)
 
 example : KMor1.pow2.level = 2 := by decide
+
+/-- `r`-fold composition of `KMor1.pow2`. `pow2_iter 0` is the
+arity-1 projection at slot 0 (i.e., the identity on `ℕ`);
+`pow2_iter (r + 1)` composes `KMor1.pow2` with `pow2_iter r`.
+Closed form: `(pow2_iter r).interp v = tower r (v 0)`, the
+height-`r` tower of twos applied to the input. Level ≤ 2. -/
+def KMor1.pow2_iter : (r : ℕ) → KMor1 1
+  | 0     => KMor1.proj ⟨0, by decide⟩
+  | r + 1 =>
+      KMor1.comp KMor1.pow2 (fun _ : Fin 1 => KMor1.pow2_iter r)
+
+/-- Interpretation of `pow2_iter r`: `tower r (v 0)`. -/
+@[simp] theorem KMor1.interp_pow2_iter :
+    ∀ (r : ℕ) (v : Fin 1 → ℕ),
+      (KMor1.pow2_iter r).interp v = tower r (v 0) := by
+  intro r
+  induction r with
+  | zero =>
+      intro v
+      simp [KMor1.pow2_iter, KMor1.interp_proj, tower]
+  | succ n ih =>
+      intro v
+      simp only [KMor1.pow2_iter, KMor1.interp_comp,
+        KMor1.interp_pow2]
+      rw [ih]
+      simp [tower]
+
+example : (KMor1.pow2_iter 3).level ≤ 2 := by decide
+
+/-- `KMor1.pow2_iter r` has level ≤ 2 for every `r`. -/
+theorem KMor1.pow2_iter_level :
+    ∀ r, (KMor1.pow2_iter r).level ≤ 2 := by
+  intro r
+  induction r with
+  | zero =>
+      change KMor1.level (KMor1.pow2_iter 0) ≤ 2
+      unfold KMor1.pow2_iter
+      decide
+  | succ n ih =>
+      change KMor1.level
+          (KMor1.comp KMor1.pow2
+            (fun _ : Fin 1 => KMor1.pow2_iter n)) ≤ 2
+      unfold KMor1.level
+      refine Nat.max_le.mpr ⟨?_, ?_⟩
+      · -- pow2.level = 2.
+        decide
+      · exact Fin.maxOfNat_le (fun _ => ih)
 
 /-- Base family for `modAux`: `f₀(0, y) = 0`, `f₁(0, y) = pred(y)`. -/
 private def KMor1.modAux_h : Fin 2 → KMor1 1 := fun i =>

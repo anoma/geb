@@ -64,6 +64,11 @@ open GebLean
 #guard KMor1.pow2.interp ![1] == 2
 #guard KMor1.pow2.interp ![4] == 16
 
+#guard (KMor1.pow2_iter 0).interp ![5] == 5
+#guard (KMor1.pow2_iter 1).interp ![3] == 8
+#guard (KMor1.pow2_iter 2).interp ![2] == 16
+#guard (KMor1.pow2_iter 3).interp ![1] == 16
+
 #guard KMor1.mod.interp ![0, 5] == 0
 #guard KMor1.mod.interp ![5, 1] == 0
 #guard KMor1.mod.interp ![5, 5] == 0
