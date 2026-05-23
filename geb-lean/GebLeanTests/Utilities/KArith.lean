@@ -42,6 +42,11 @@ open GebLean
 #guard (KMor1.maxK).interp ![3, 5] == 5
 #guard (KMor1.maxK).interp ![7, 2] == 7
 
+#guard (KMor1.maxOver 4).interp ![3, 5, 2, 4] == 5
+#guard (KMor1.maxOver 4).interp ![7, 2, 1, 4] == 7
+#guard (KMor1.maxOver 1).interp ![9] == 9
+#guard (KMor1.maxOver 0).interp Fin.elim0 == 0
+
 #guard (KMor1.swap KMor1.add).interp ![3, 7] == 10
 #guard (KMor1.swap KMor1.monus).interp ![3, 5] == 2
 #guard (KMor1.swap KMor1.monus).interp ![5, 3] == 0
