@@ -5,6 +5,20 @@
 > `superpowers:executing-plans` to implement this plan
 > task-by-task. Steps use checkbox (`- [ ]`) syntax for
 > tracking.
+>
+> **Status (2026-05-23):** Tasks 0–4 committed on
+> `feat/ertok-runtime-bound`. Tasks 5–8 in progress — atoms
+> done in working copy, `comp`/`bsum`/`bprod` cases of
+> `boundExprKParams_dominates` remain. Recipe was amended in
+> five rounds of adversarial review (see §4.2 of the spec for
+> the binding form; mu values bumped for bsum and bprod,
+> offsets augmented with `k` and `compileER_numRegs f` where
+> needed). The continuation handoff at
+> [`2026-05-23-step-t4-tasks-5-8-handoff.md`](2026-05-23-step-t4-tasks-5-8-handoff.md)
+> is the binding entry point for the follow-up session — it
+> describes the working-copy state, the helper infrastructure
+> already present, the per-case chain specifications, and the
+> subagent-driven-development plan.
 
 **Goal:** assemble `erToK : ERMor1 a → KMor1 a` of level ≤ 2
 with `(erToK e).interp v = e.interp v`, and package it as
@@ -722,13 +736,13 @@ def boundExprKParams : {a : ℕ} → ERMor1 a → ℕ × ℕ
                     (fun i => (boundExprKParams (gs i)).1)
       let o_g  := Fin.maxOfNat k
                     (fun i => (boundExprKParams (gs i)).2)
-      (p_f.1 + mu_g + 6, p_f.2 + o_g + 4 * a + 8)
-  | _, .bsum f  =>
+      (p_f.1 + mu_g + 6, p_f.2 + o_g + 4 * a + k + 8)
+  | _, .bsum (k := k) f  =>
       let p_f := boundExprKParams f
-      (p_f.1 + 2, p_f.2 + 32)
-  | _, .bprod f =>
+      (p_f.1 + 6, p_f.2 + k + LawvereERKSim.compileER_numRegs f + 32)
+  | _, .bprod (k := k) f =>
       let p_f := boundExprKParams f
-      (p_f.1 + 7, p_f.2 + 44)
+      (p_f.1 + 9, p_f.2 + k + LawvereERKSim.compileER_numRegs f + 44)
 ```
 
 - [ ] **Step 4: `lake build`**
@@ -753,8 +767,10 @@ jj describe -m 'feat(ertok): scaffold RuntimeBound; add boundExprKParams
 
 Per-ER-constructor recipe returning (mu_e, offset_e). Recipe
 table per spec §4.2: zero (0,3); succ/proj/sub (2,16-24);
-comp (mu_f + max mu_gs + 6, ...); bsum (mu_f+2, +32);
-bprod (mu_f+7, +44). Constructive (Fin.maxOfNat from T3).
+comp (mu_f + max mu_gs + 6, offset_f + max offset_gs + 4·a + k + 8);
+bsum (mu_f+6, offset_f + k + compileER_numRegs f + 32);
+bprod (mu_f+9, offset_f + k + compileER_numRegs f + 44).
+Constructive (Fin.maxOfNat from T3).
 Spec §4.1, §4.2.'
 jj new
 ```
@@ -938,7 +954,7 @@ comp proof outline.
       set m := Fin.maxOfNat _ v +
         ((boundExprKParams f).2 +
          Fin.maxOfNat _ (fun i => (boundExprKParams (gs i)).2)
-         + 4 * a + 8)
+         + 4 * a + k + 8)
       set mu_f := (boundExprKParams f).1
       set mu_g := Fin.maxOfNat _
                     (fun i => (boundExprKParams (gs i)).1)
@@ -1062,12 +1078,17 @@ Before refining into the conjunction, derive:
               + 4 + 5 * (gs i).interp v
               + 9 * ((List.finRange a).map v).foldl (· + ·) 0
               + 2 * a)).foldl (· + ·) 0
-            ≤ tower (mu_f + mu_g + 5) m := by
+            ≤ tower (mu_g + 6) m := by
         -- Each summand: rt(gs i) ≤ tower mu_g m (by IH-gs),
         -- (gs i).interp v ≤ tower mu_g m (by h_inner_val),
-        -- v_total = Σ_j v j ≤ a · Fin.maxOfNat _ v ≤ m · m,
-        -- the `+ 4 + 2·a` constants are ≤ m for offset ≥ 4·a + 8.
-        -- Σ over i (k summands) introduces another `· m` factor,
+        -- v_total = Σ_j v j ≤ a · Fin.maxOfNat _ v ≤ m · m
+        -- (since `a ≤ m` from the `4·a + k + 8` portion of offset),
+        -- the `+ 4 + 2·a` constants are ≤ m for offset ≥ 4·a + k + 8.
+        -- Σ over i (k summands): the `k`-fold loop count is bounded
+        -- by `k ≤ m` (from the explicit `+ k` term in the offset),
+        -- absorbing the k-fold via `mul_tower_le_tower_add_two`
+        -- as `k · tower (mu_g + 4) m ≤ m · tower (mu_g + 4) m
+        -- ≤ tower (mu_g + 6) m`.
         -- absorbed by mul_tower_le_tower_add_two.
         sorry
 ```
@@ -1084,41 +1105,19 @@ final bound**
           ((List.finRange k).map ...).foldl (· + ·) 0
             + compileER_runtime f (fun i => (gs i).interp v) + 2
             ≤ tower (mu_f + mu_g + 6) m := by
-        -- h_glue: glue ≤ tower (mu_f + mu_g + 5) m
-        -- h_f_rt: rt(f, inner) ≤ tower (mu_f + mu_g + 2) m
-        -- glue + rt(f, inner) + 2 ≤ 2 · tower (mu_f + mu_g + 5) m
-        -- ≤ m · tower (mu_f + mu_g + 5) m ≤ tower (mu_f + mu_g + 7) m
-        -- But the recipe carries +6, not +7. The implementer must check
-        -- whether the bound discharges at +6 (via tighter absorption
-        -- chains) or whether the recipe needs to be revised to +7.
+        -- Per spec §4.2 comp rationale (post-amendment):
+        -- glue ≤ tower (mu_g + 6) m and rt(f) ≤
+        -- tower (mu_f + mu_g + 2) m. For `mu_f ≥ 2`, both
+        -- ≤ tower (mu_f + mu_g + 4) m. The sum-of-three step
+        -- closes as glue + rt(f) + 2 ≤ 3·tower (mu_f + mu_g
+        -- + 4) m ≤ m·tower (mu_f + mu_g + 4) m ≤ tower
+        -- (mu_f + mu_g + 6) m via one
+        -- `mul_tower_le_tower_add_two`. The `+ k` offset
+        -- addition ensures `k ≤ m`, enabling the inner
+        -- `k · tower (mu_g + 4) m ≤ m · tower (mu_g + 4) m
+        -- ≤ tower (mu_g + 6) m` step in the glue bound.
         sorry
 ```
-
-**Note for implementer:** the comp arithmetic chain is the
-most intricate part of T4. Round-3 plan adversarial review
-(R-S3) flagged that the `glue`'s per-`i` summand contains a
-`9 · v_total` factor; the outer fold produces `k · 9 ·
-v_total` (not `9 · v_total`), requiring an additional
-multiplicative-by-`k`/`m` absorption step beyond what spec
-§4.2 §(iii) describes explicitly. The spec's `+ 6`
-increment is an upper-bound estimate that the recipe
-*should* satisfy, but the precise chain absorbing
-`k · 9 · v_total` over the outer fold has not been
-verified at the spec stage. The implementer should:
-
-1. Verify the chain at execution time by writing out the
-   inequality `glue ≤ tower (mu_f + mu_g + 6) m` step by
-   step, applying `mul_tower_le_tower_add_two` for each
-   multiplicative-by-`m` step.
-2. If `+ 6` proves insufficient (e.g., the chain
-   genuinely needs `+ 7` or `+ 8`), escalate to user
-   review before bumping the recipe. The increment is
-   listed in spec §4.2 as Lean-side flexible (concrete
-   constants may flex), but a recipe increase requires
-   spec amendment per
-   [`.claude/rules/lean-coding.md`](../../.claude/rules/lean-coding.md)
-   § Non-negotiable interfaces. Do not silently change the
-   recipe.
 
 - [ ] **Step 7: Value bound conjunct**
 
@@ -1175,11 +1174,12 @@ axiom audit and commit until Task 8 completes.
   | bsum f ih_f =>
       simp only [compileER_runtime, ERMor1.interp_bsum,
         boundExprKParams]
-      set m := Fin.maxOfNat _ v + ((boundExprKParams f).2 + 32)
+      set m := Fin.maxOfNat _ v +
+        ((boundExprKParams f).2 + k + LawvereERKSim.compileER_numRegs f + 32)
       set mu_f := (boundExprKParams f).1
       -- Goal:
-      -- (30 + 10·v 0 + Σ_{i<v 0} perIter_f(i) ≤ tower (mu_f + 2) m)
-      -- ∧ (natBSum (v 0) (f.interp ∘ ctx_f) ≤ tower (mu_f + 2) m)
+      -- (30 + 10·v 0 + Σ_{i<v 0} perIter_f(i) ≤ tower (mu_f + 6) m)
+      -- ∧ (natBSum (v 0) (f.interp ∘ ctx_f) ≤ tower (mu_f + 6) m)
       sorry
 ```
 
@@ -1234,10 +1234,10 @@ in its `/-- … -/` docstring per the rule).
 ```lean
       have h_sum :
           ((List.range (v 0)).map (fun i => perIter_f i))
-            .foldl (· + ·) 0 ≤ tower (mu_f + 2) m := by
+            .foldl (· + ·) 0 ≤ tower (mu_f + 6) m := by
         -- Σ_{i<v 0} perIter_f i ≤ v 0 · tower mu_f m
         --   ≤ m · tower mu_f m            (v 0 ≤ m)
-        --   ≤ tower (mu_f + 2) m          (mul_tower_le_tower_add_two)
+        --   ≤ tower (mu_f + 6) m          (mul_tower_le_tower_add_two)
         sorry
 ```
 
@@ -1248,8 +1248,8 @@ in its `/-- … -/` docstring per the rule).
           30 + 10 * v 0 +
             ((List.range (v 0)).map (fun i => perIter_f i))
               .foldl (· + ·) 0
-            ≤ tower (mu_f + 2) m := by
-        -- 30 + 10 v 0 ≤ 10 · m + 30 ≤ tower 2 m ≤ tower (mu_f + 2) m
+            ≤ tower (mu_f + 6) m := by
+        -- 30 + 10 v 0 ≤ 10 · m + 30 ≤ tower 2 m ≤ tower (mu_f + 6) m
         -- Sum h_sum.
         sorry
 ```
@@ -1260,10 +1260,10 @@ in its `/-- … -/` docstring per the rule).
       have h_value :
           natBSum (v 0)
             (fun j => f.interp (Fin.cons j (Fin.tail v)))
-            ≤ tower (mu_f + 2) m := by
+            ≤ tower (mu_f + 6) m := by
         -- natBSum (v 0) g ≤ v 0 · (max over j of g j)
         --   ≤ m · tower mu_f m
-        --   ≤ tower (mu_f + 2) m
+        --   ≤ tower (mu_f + 6) m
         sorry
 ```
 
@@ -1295,11 +1295,12 @@ warnings on bprod and the sub-proofs.
   | bprod f ih_f =>
       simp only [compileER_runtime, ERMor1.interp_bprod,
         boundExprKParams]
-      set m := Fin.maxOfNat _ v + ((boundExprKParams f).2 + 44)
+      set m := Fin.maxOfNat _ v +
+        ((boundExprKParams f).2 + k + LawvereERKSim.compileER_numRegs f + 44)
       set mu_f := (boundExprKParams f).1
       -- Goal:
-      -- runtime ≤ tower (mu_f + 7) m
-      -- ∧ natBProd (v 0) (f.interp ∘ ctx_f) ≤ tower (mu_f + 7) m
+      -- runtime ≤ tower (mu_f + 9) m
+      -- ∧ natBProd (v 0) (f.interp ∘ ctx_f) ≤ tower (mu_f + 9) m
       sorry
 ```
 
@@ -1356,12 +1357,23 @@ tower (mu_f + 7) m`**
               f.interp (Fin.cons i (Fin.tail v)))))
               .foldl (· + ·) 0
             ≤ tower (mu_f + 7) m := by
-        -- 9·v 0·T ≤ 9·m·T (v 0 ≤ m)
-        --        ≤ m·m·T   (9 ≤ m, since m ≥ 44)
+        -- Let T := A_i · B_i ≤ tower (mu_f + 3) m via h_A_B.
+        -- The 9 factor pulls out of the fold (e.g. via
+        -- `List.sum_map_mul_left` or an explicit fold lemma):
+        -- Σ_i 9·(A_i·B_i) = 9·Σ_i (A_i·B_i).
+        -- Σ_i (A_i·B_i) ≤ v 0·T ≤ m·T (v 0 ≤ m).
+        -- So Σ_i 9·(A_i·B_i) ≤ 9·m·T ≤ m·m·T (9 ≤ m, since
+        -- m ≥ 44 from the bprod offset additive constant).
         --        = m·(m·T) ≤ m·tower (mu_f + 5) m
-        --                  (mul_tower_le_tower_add_two on m·T)
+        --                  (mul_tower_le_tower_add_two on m·T,
+        --                   taking mu_f+3 to mu_f+5)
         --        ≤ tower (mu_f + 7) m
-        --                  (mul_tower_le_tower_add_two again)
+        --                  (mul_tower_le_tower_add_two on
+        --                   m·tower (mu_f + 5) m, taking
+        --                   mu_f+5 to mu_f+7).
+        -- The final lift from mu_f+7 to mu_f+9 happens in
+        -- h_runtime (Step 7) via the cross-parts combining
+        -- mul step.
         sorry
 ```
 
@@ -1375,6 +1387,11 @@ tower (mu_f + 7) m`**
               + 10 * (i + outerSum)
               + 9 * (A_i * B_i + small_terms)
               + nRegs_f) ≤ tower (mu_f + 7) m := by
+        -- Per-iter naturally lands at mu_f + 7: parts at
+        -- tower (mu_f + 5) m (9·A_i·B_i and 4·A_i) plus
+        -- smaller IH and overhead contributions all combine
+        -- under tower (mu_f + 7) m via one mul step from
+        -- their sum.
         sorry
 ```
 
@@ -1385,7 +1402,7 @@ tower (mu_f + 7) m`**
 
 ```lean
       have h_runtime : (40 + 10 * v 0 + Σ perIter) ≤
-          tower (mu_f + 7) m := by
+          tower (mu_f + 9) m := by
         sorry
 ```
 
@@ -1396,13 +1413,13 @@ tower (mu_f + 7) m`**
       have h_value :
           natBProd (v 0)
             (fun j => f.interp (Fin.cons j (Fin.tail v)))
-            ≤ tower (mu_f + 7) m := by
+            ≤ tower (mu_f + 9) m := by
         have h3 := h_running_prod (v 0) (le_refl _)
         exact h3.trans
           (Tower.tower_mono_left (by omega) _)
 ```
 
-(The value only needs `+ 3`, but the recipe carries `+ 7`
+(The value only needs `+ 3`, but the recipe carries `+ 9`
 to dominate the runtime; the value conjunct lifts via
 `tower_mono_left`.)
 
@@ -1440,11 +1457,13 @@ ERMor1 with all four atom cases + comp + bsum + bprod.
   coefficient.
 - Comp: inner-offset absorption (+2), tower_comp, outer
   v_total absorption (+4), totalling mu_f + mu_g + 6.
-- Bsum: outer v 0-fold sum via mul_tower_le_tower_add_two,
-  totalling mu_f + 2.
+- Bsum: four mul_tower_le_tower_add_two steps (IH-sum,
+  5·IH-sum, per-iter overhead m³-bound, final collapse),
+  totalling mu_f + 6.
 - Bprod: tower_pow_le_tower_add_three for the running
-  product (+3) plus two mul_tower_le_tower_add_two for the
-  constant-9 outer-sum absorption (+4), totalling mu_f + 7.
+  product (+3) plus six per-iter contribution bounds and
+  a final mul_tower_le_tower_add_two collapse, totalling
+  mu_f + 9.
 
 Carries AXIOM_ALLOW: Classical.choice annotation on the
 bsum and bprod cases (Fin.lastCases_castSucc via simp on
