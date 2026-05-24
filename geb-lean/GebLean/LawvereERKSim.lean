@@ -8,6 +8,7 @@ import GebLean.LawvereERKSim.BProd
 import GebLean.LawvereERKSim.Top
 import GebLean.LawvereERKSim.RuntimeBound
 import GebLean.LawvereERKSim.ErToK
+import GebLean.LawvereERKSim.ErToKFunctor
 
 /-!
 # erToK: ER → K^sim_2 via zero-test URM simulation
@@ -41,6 +42,9 @@ the output register. This file re-exports the submodules under
   `erToK_level` (level ≤ 2) and `erToK_interp` (interp-faithfulness),
   realising the ⊇ direction of Tourlakis 2018 Corollary 0.1.0.44
   at `n = 2`.
+- `ErToKFunctor`: multi-output ER-to-K^sim translator `erToKN`
+  with per-slot `erToKN_interp` / `erToKN_level` and the
+  ext-eq compatibility lemma `erToKN_compat_extEq`.
 
 ## References
 
