@@ -24,6 +24,9 @@ the quotient category level, producing the functor
 - `erToKN_level` : level ≤ 2 per output slot.
 - `erToKN_compat_extEq` : extensionally-equal ER families
   produce extensionally-equal K^sim families.
+- `erToKFunctor_map_id` : `erToKFunctor_map` preserves identities.
+- `erToKFunctor_map_comp` : `erToKFunctor_map` preserves
+  composition.
 
 ## References
 
@@ -105,5 +108,67 @@ def erToKFunctor_map {n m : ℕ}
       funext j
       exact erToKN_compat_extEq
         (fun v' j' => congr_fun (h v') j') v j)
+
+-- AXIOM_ALLOW: Classical.choice (transitively via `erToK_interp`;
+-- see .claude/rules/lean-coding.md § Accepted exceptions).
+/-- Functor law: `erToKFunctor_map` preserves identities.
+The `𝟙 n` morphism in `LawvereERCat` has representative
+`ERMorN.id n`; its erToKN-translation componentwise equals
+`KMorN.id n` (since `erToK (ERMor1.proj i) = KMor1.proj i`
+modulo `interp`). -/
+theorem erToKFunctor_map_id (n : LawvereERCat) :
+    erToKFunctor_map
+        (CategoryTheory.CategoryStruct.id
+          (obj := LawvereERCat) n)
+      = CategoryTheory.CategoryStruct.id
+          (obj := LawvereKSimDCat 2)
+          (n : LawvereKSimDCat 2) := by
+  apply KSimMor.ext
+  apply Quotient.sound
+  intro v
+  funext i
+  change (erToKN (ERMorN.id n) i).interp v
+      = (KMorN.id n i).interp v
+  rw [erToKN_interp]
+  rfl
+
+-- AXIOM_ALLOW: Classical.choice (transitively via `erToK_interp`;
+-- see .claude/rules/lean-coding.md § Accepted exceptions).
+/-- Functor law: `erToKFunctor_map` preserves composition.
+On raw representatives, `ERMorN.comp e f` slotwise equals
+`ERMor1.comp (f j) e`; `erToK` is interp-faithful, and
+`KMor1.comp` on the K^sim side composes the translated
+heads with the translated tail componentwise. -/
+theorem erToKFunctor_map_comp {n m k : ℕ}
+    (e : ERMorNQuo n m) (f : ERMorNQuo m k) :
+    erToKFunctor_map
+        (CategoryTheory.CategoryStruct.comp
+          (obj := LawvereERCat) e f)
+      = CategoryTheory.CategoryStruct.comp
+          (obj := LawvereKSimDCat 2)
+          (erToKFunctor_map e) (erToKFunctor_map f) := by
+  apply KSimMor.ext
+  refine Quotient.inductionOn₂
+    (motive := fun (e : ERMorNQuo n m) (f : ERMorNQuo m k) =>
+      (erToKFunctor_map
+          (CategoryTheory.CategoryStruct.comp
+            (obj := LawvereERCat) e f)).hom
+        = (CategoryTheory.CategoryStruct.comp
+            (obj := LawvereKSimDCat 2)
+            (erToKFunctor_map e) (erToKFunctor_map f)).hom)
+    e f ?_
+  intro er fr
+  apply Quotient.sound
+  intro v
+  funext j
+  change (erToKN (ERMorN.comp er fr) j).interp v
+      = (KMorN.comp (erToKN fr) (erToKN er) j).interp v
+  rw [erToKN_interp]
+  simp only [ERMorN.comp, KMorN.comp,
+    ERMor1.interp_comp, KMor1.interp_comp]
+  rw [← erToK_interp (fr j)]
+  congr 1
+  funext i
+  exact (erToKN_interp er v i).symm
 
 end GebLean
