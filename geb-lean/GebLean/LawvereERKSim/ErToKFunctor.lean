@@ -17,6 +17,10 @@ the quotient category level, producing the functor
 - `erToKFunctor_map` : morphism component of the forward
   functor `LawvereERCat ⥤ LawvereKSimDCat 2`, lifting
   `ERMorNQuo n m` to `KSimMor 2 n m`.
+- `erToKFunctor` : the forward functor
+  `LawvereERCat ⥤ LawvereKSimDCat 2` assembled from
+  `erToKFunctor_map`, `erToKFunctor_map_id`, and
+  `erToKFunctor_map_comp`.
 
 ## Main statements
 
@@ -170,5 +174,16 @@ theorem erToKFunctor_map_comp {n m k : ℕ}
   congr 1
   funext i
   exact (erToKN_interp er v i).symm
+
+/-- The forward functor of the categorical equivalence
+`LawvereERCat ≌ LawvereKSimDCat 2` — reverse of `kToERFunctor`.
+Master design §3.5; ⊇ direction of Tourlakis 2018 Cor.
+0.1.0.44 at `n = 2`. -/
+def erToKFunctor : CategoryTheory.Functor
+    LawvereERCat (LawvereKSimDCat 2) where
+  obj n     := n
+  map       := erToKFunctor_map
+  map_id    := erToKFunctor_map_id
+  map_comp  := erToKFunctor_map_comp
 
 end GebLean
