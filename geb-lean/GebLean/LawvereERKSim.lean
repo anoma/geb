@@ -7,6 +7,7 @@ import GebLean.LawvereERKSim.BSum
 import GebLean.LawvereERKSim.BProd
 import GebLean.LawvereERKSim.Top
 import GebLean.LawvereERKSim.RuntimeBound
+import GebLean.LawvereERKSim.ErToK
 
 /-!
 # erToK: ER → K^sim_2 via zero-test URM simulation
@@ -36,6 +37,10 @@ the output register. This file re-exports the submodules under
   the user-facing `compileER_runFor` output-equality theorem.
 - `RuntimeBound`: per-ER-constructor recipe `boundExprKParams`
   realising Tourlakis 2018 Corollary 0.1.0.27 specialised to `compileER`.
+- `ErToK`: single-output ER-to-K^sim translator `erToK`, with
+  `erToK_level` (level ≤ 2) and `erToK_interp` (interp-faithfulness),
+  realising the ⊇ direction of Tourlakis 2018 Corollary 0.1.0.44
+  at `n = 2`.
 
 ## References
 
