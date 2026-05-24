@@ -44,7 +44,11 @@ the output register. This file re-exports the submodules under
   at `n = 2`.
 - `ErToKFunctor`: multi-output ER-to-K^sim translator `erToKN`
   with per-slot `erToKN_interp` / `erToKN_level` and the
-  ext-eq compatibility lemma `erToKN_compat_extEq`.
+  ext-eq compatibility lemma `erToKN_compat_extEq`; the
+  morphism component `erToKFunctor_map`, functor laws
+  `erToKFunctor_map_id` and `erToKFunctor_map_comp`, and the
+  assembled functor
+  `erToKFunctor : LawvereERCat ⥤ LawvereKSimDCat 2`.
 
 ## References
 

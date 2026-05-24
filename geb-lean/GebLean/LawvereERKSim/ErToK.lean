@@ -19,6 +19,21 @@ runtime-bound recipe from `RuntimeBound.lean`.
 - `erToK_level` : level ≤ 2 for every input ER morphism.
 - `erToK_interp` : interp-faithfulness.
 
+## Implementation notes
+
+`#guard`-based runtime evaluation of `(erToK e).interp v` is not
+viable at the Lean kernel level, even on atom inputs such as
+`ERMor1.succ` or `ERMor1.zero`: the simulator unfolds to
+`URMState.runFor` iterated `(boundExprK e).interp v` times, where
+`boundExprK` yields a `tower mu_e (Fin.maxOfNat _ v + offset_e)`
+value. For `succ` the recipe gives `tower 2 (max v + 16) =
+2 ^ (2 ^ (max v + 16))`, exceeding practical kernel-reduction
+budgets. Correctness rests on `erToK_interp` at the `lake build`
+typechecker level; runtime tests for `erToK` are intentionally
+omitted from `GebLeanTests/`. Same rationale as the K-arithmetic
+composites' `#guard`s in `GebLeanTests/Utilities/KArith.lean`
+not extending to `comp`/`bsum`/`bprod`.
+
 ## References
 
 - Tourlakis 2018, *Topics in PR Complexity*, §0.1.0.44.
