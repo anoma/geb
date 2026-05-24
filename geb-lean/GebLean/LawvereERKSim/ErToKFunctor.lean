@@ -1,4 +1,6 @@
 import GebLean.LawvereERKSim.ErToK
+import GebLean.LawvereERQuot
+import GebLean.LawvereKSimQuot
 
 /-!
 # `ErToKFunctor` — multi-output ER-to-K^sim translator and functor
@@ -12,6 +14,9 @@ the quotient category level, producing the functor
 ## Main definitions
 
 - `erToKN` : multi-output ER-to-K^sim translator.
+- `erToKFunctor_map` : morphism component of the forward
+  functor `LawvereERCat ⥤ LawvereKSimDCat 2`, lifting
+  `ERMorNQuo n m` to `KSimMor 2 n m`.
 
 ## Main statements
 
@@ -72,5 +77,33 @@ theorem erToKN_compat_extEq {n m : ℕ}
   intro v j
   rw [erToKN_interp, erToKN_interp]
   exact he v j
+
+-- AXIOM_ALLOW: Classical.choice (transitively via
+-- `erToKN_compat_extEq`; see .claude/rules/lean-coding.md
+-- § Accepted exceptions).
+/-- Morphism component of the forward functor.  Lifts an
+`ERMorNQuo n m` (an equivalence class of `ERMorN n m`
+families under ext-equality) to a `KSimMor 2 n m` whose
+`hom` is the class of `erToKN`-translated family and whose
+`depth_witness` is the canonical level-≤-2 raw witness
+furnished by `erToKN_level`.  Well-definedness of the lift
+reduces (via `KSimMor.ext`) to extensional equality of
+`erToKN` images, discharged by `erToKN_compat_extEq`. -/
+def erToKFunctor_map {n m : ℕ}
+    (e : ERMorNQuo n m) : KSimMor 2 n m :=
+  Quotient.liftOn e
+    (fun rec =>
+      { hom := Quotient.mk (kMorNSetoid n m) (erToKN rec),
+        depth_witness := Quotient.mk _
+          { rep := erToKN rec,
+            rep_level := fun i => erToKN_level rec i,
+            rep_eq := rfl } })
+    (fun e₁ e₂ h => by
+      apply KSimMor.ext
+      apply Quotient.sound
+      intro v
+      funext j
+      exact erToKN_compat_extEq
+        (fun v' j' => congr_fun (h v') j') v j)
 
 end GebLean
