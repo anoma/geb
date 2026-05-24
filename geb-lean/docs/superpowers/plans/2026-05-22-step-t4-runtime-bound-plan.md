@@ -6,19 +6,20 @@
 > task-by-task. Steps use checkbox (`- [ ]`) syntax for
 > tracking.
 >
-> **Status (2026-05-23):** Tasks 0–4 committed on
-> `feat/ertok-runtime-bound`. Tasks 5–8 in progress — atoms
-> done in working copy, `comp`/`bsum`/`bprod` cases of
-> `boundExprKParams_dominates` remain. Recipe was amended in
-> five rounds of adversarial review (see §4.2 of the spec for
-> the binding form; mu values bumped for bsum and bprod,
-> offsets augmented with `k` and `compileER_numRegs f` where
-> needed). The continuation handoff at
-> [`2026-05-23-step-t4-tasks-5-8-handoff.md`](2026-05-23-step-t4-tasks-5-8-handoff.md)
-> is the binding entry point for the follow-up session — it
-> describes the working-copy state, the helper infrastructure
-> already present, the per-case chain specifications, and the
-> subagent-driven-development plan.
+> **Status (2026-05-23):** Tasks 0–8 committed on
+> `feat/ertok-runtime-bound`. The recipe was amended in five
+> rounds of adversarial review during Task 5–8 execution (see
+> §4.2 of the spec for the binding form; mu values bumped for
+> bsum and bprod, offsets augmented with `k` and
+> `compileER_numRegs f` where needed). The Tasks 5–8 SDD
+> session landed `boundExprKParams_dominates` as one joint
+> commit at `3e1dd99`. Tasks 9–15 plus the holistic final
+> review remain. The continuation handoff at
+> [`2026-05-23-step-t4-tasks-9-15-handoff.md`](2026-05-23-step-t4-tasks-9-15-handoff.md)
+> is the binding entry point for the next session. The earlier
+> handoff [`2026-05-23-step-t4-tasks-5-8-handoff.md`](2026-05-23-step-t4-tasks-5-8-handoff.md)
+> is retained as a historical artifact of the recipe-amendment
+> convergence.
 
 **Goal:** assemble `erToK : ERMor1 a → KMor1 a` of level ≤ 2
 with `(erToK e).interp v = e.interp v`, and package it as
