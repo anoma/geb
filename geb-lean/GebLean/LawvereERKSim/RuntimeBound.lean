@@ -21,12 +21,19 @@ structural recursion. The result is consumed downstream by the
 
 - `boundExprKParams` : `ERMor1 a → ℕ × ℕ` — the per-ER-constructor
   recipe returning the tower height `mu_e` and offset `offset_e`.
+- `boundExprK` : `ERMor1 a → KMor1 a` — the level-≤ 2 `K`-morphism
+  computing the runtime bound `tower mu_e (Fin.maxOfNat _ v + offset_e)`
+  at every context `v`.
 
 ## Main statements
 
-- `boundExprKParams_dominates` (forthcoming) — joint runtime+value
-  bound: `compileER_runtime e v ≤ tower mu_e (Fin.maxOfNat _ v + offset_e)`
+- `boundExprKParams_dominates` — joint runtime+value bound:
+  `compileER_runtime e v ≤ tower mu_e (Fin.maxOfNat _ v + offset_e)`
   and `e.interp v ≤ tower mu_e (Fin.maxOfNat _ v + offset_e)`.
+- `boundExprK_level` — `(boundExprK e).level ≤ 2`.
+- `boundExprK_interp` — `(boundExprK e).interp v` equals
+  `tower (boundExprKParams e).1 (Fin.maxOfNat _ v + (boundExprKParams e).2)`.
+- `boundExprK_dominates` — `compileER_runtime e v ≤ (boundExprK e).interp v`.
 
 ## References
 
@@ -1676,5 +1683,73 @@ theorem boundExprKParams_dominates {a : ℕ} (e : ERMor1 a) :
               ≤ tower (muF + 3) m :=
           h_A_le_tower_muF_3 (v 0) (Nat.le_refl _)
         exact h_val_bound.trans (tower_mono_left (by omega) m)
+
+/-- The level-≤ 2 `K`-morphism realising the runtime bound from
+`boundExprKParams`: composes `KMor1.pow2_iter mu_e` with the
+single-output addition of `KMor1.maxOver a` and the constant
+`KMor1.natK' a offset_e`. Closed form:
+`(boundExprK e).interp v = tower mu_e (Fin.maxOfNat _ v + offset_e)`. -/
+def boundExprK : {a : ℕ} → ERMor1 a → KMor1 a := fun e =>
+  let p := boundExprKParams e
+  KMor1.comp
+    (KMor1.pow2_iter p.1)
+    (fun _ : Fin 1 =>
+      KMor1.comp KMor1.add
+        (fun i : Fin 2 =>
+          match i with
+          | ⟨0, _⟩ => KMor1.maxOver _
+          | ⟨1, _⟩ => KMor1.natK' _ p.2))
+
+/-- `boundExprK e` has structural level at most 2. The outer
+`pow2_iter` and `maxOver` summand each have level ≤ 2; `add` has
+level 1; `natK'` has level 0; `comp` takes the maximum without
+adding. -/
+theorem boundExprK_level {a : ℕ} (e : ERMor1 a) :
+    (boundExprK e).level ≤ 2 := by
+  -- Outer comp: level = max (pow2_iter.level) (maxOfNat over the singleton).
+  unfold boundExprK
+  change max ((KMor1.pow2_iter (boundExprKParams e).1).level)
+      (Fin.maxOfNat 1 (fun _ : Fin 1 =>
+        (KMor1.comp KMor1.add
+          (fun i : Fin 2 =>
+            match i with
+            | ⟨0, _⟩ => KMor1.maxOver a
+            | ⟨1, _⟩ => KMor1.natK' a (boundExprKParams e).2)).level)) ≤ 2
+  refine Nat.max_le.mpr ⟨KMor1.pow2_iter_level _, ?_⟩
+  refine Fin.maxOfNat_le (fun _ => ?_)
+  -- Inner comp: max add.level (maxOfNat over the per-index branches).
+  change max KMor1.add.level
+      (Fin.maxOfNat 2 (fun i : Fin 2 =>
+        ((match i with
+          | ⟨0, _⟩ => KMor1.maxOver a
+          | ⟨1, _⟩ => KMor1.natK' a (boundExprKParams e).2) : KMor1 a).level)) ≤ 2
+  refine Nat.max_le.mpr ⟨by decide, ?_⟩
+  refine Fin.maxOfNat_le (fun i => ?_)
+  match i with
+  | ⟨0, _⟩ => exact KMor1.maxOver_level _
+  | ⟨1, _⟩ => rw [KMor1.natK'_level]; exact Nat.zero_le _
+
+/-- Interpretation of `boundExprK e` at context `v`: the tower of
+height `mu_e := (boundExprKParams e).1` over the offset-shifted
+maximum `Fin.maxOfNat _ v + (boundExprKParams e).2`. Mechanical
+unfold via the `@[simp]` interp lemmas for `pow2_iter`, `add`,
+`maxOver`, and `natK'`. -/
+theorem boundExprK_interp {a : ℕ} (e : ERMor1 a) (v : Fin a → ℕ) :
+    (boundExprK e).interp v
+      = tower (boundExprKParams e).1
+              (Fin.maxOfNat _ v + (boundExprKParams e).2) := by
+  unfold boundExprK
+  simp only [KMor1.interp_comp, KMor1.interp_pow2_iter,
+    KMor1.interp_add, KMor1.interp_maxOver, KMor1.interp_natK']
+
+/-- Runtime side of the joint bound, expressed as a `K`-morphism
+interpretation: the URM step count of `compileER e` at `v` is
+dominated by `(boundExprK e).interp v`. Combines
+`boundExprK_interp` with the first conjunct of
+`boundExprKParams_dominates`. -/
+theorem boundExprK_dominates {a : ℕ} (e : ERMor1 a) (v : Fin a → ℕ) :
+    LawvereERKSim.compileER_runtime e v ≤ (boundExprK e).interp v := by
+  rw [boundExprK_interp]
+  exact (boundExprKParams_dominates e v).1
 
 end GebLean
