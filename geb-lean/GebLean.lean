@@ -41,6 +41,7 @@ import GebLean.LawvereBTPrimrec
 import GebLean.LawvereBTQuot
 import GebLean.LawvereER
 import GebLean.LawvereERArith
+import GebLean.LawvereERKSim
 import GebLean.LawvereERPrimrec
 import GebLean.LawvereERBool
 import GebLean.LawvereERBound
