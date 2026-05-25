@@ -153,9 +153,9 @@ with `Fin.elim0`.
 
 **Files:**
 
-- Modify: `GebLean/Utilities/KArith.lean` (append after the
-  existing `KMor1.cond` block, around line 270; before
-  `KMor1.notEq1` at line 278 if present).
+- Modify: `GebLean/Utilities/KArith.lean` (append between
+  line 264, the end of the `cond` example, and line 266, the
+  start of the `notEq1` docstring).
 
 - [ ] **Step 1.1: Locate the insertion point.**
 
@@ -225,25 +225,28 @@ theorem KMor1.natK_level (c : ℕ) : (KMor1.natK c).level = 0 := by
   induction c with
   | zero => rfl
   | succ c ih =>
-    unfold KMor1.natK KMor1.level
-    -- comp succ (fun _ => natK c) at level max succ.level
-    -- (Finset.univ.sup (fun _ : Fin 1 => (natK c).level)).
-    -- succ.level = 0 (by KMor1.level's .succ case); the sup
-    -- over a singleton family is the family's only value,
-    -- which by IH is 0.
-    rw [show (KMor1.succ).level = 0 from rfl]
-    rw [Finset.sup_apply_eq_image]  -- if needed
-    simp [ih]
+    -- natK (c+1) = comp succ (fun _ : Fin 1 => natK c). By
+    -- `KMor1.level`'s `.comp` clause, this is
+    -- `max succ.level (Finset.univ.sup (fun _ => (natK c).level))`.
+    -- `succ.level = 0` (rfl); the Fin 1 sup is bounded by 0 via
+    -- `Finset.sup_le` plus `ih`; the outer max closes by `omega`.
+    show KMor1.level
+        (KMor1.comp KMor1.succ (fun _ : Fin 1 => KMor1.natK c)) = 0
+    unfold KMor1.level
+    have hsup :
+        Finset.univ.sup (fun _ : Fin 1 => (KMor1.natK c).level) ≤ 0 := by
+      apply Finset.sup_le
+      intro _ _
+      rw [ih]
+    omega
 ```
 
-Note: if `Finset.sup_apply_eq_image` is not the right lemma,
-use `mcp__lean-lsp__lean_local_search` for "Finset.sup" on a
-`Fin 1 →` family and substitute the correct lemma name. The
-canonical reduction is `Finset.univ.sup (f : Fin 1 → ℕ) =
-f ⟨0, _⟩` since `Finset.univ` on `Fin 1` is the singleton
-`{⟨0, _⟩}`. Last-resort fallback: `decide` after `rfl`-style
-reductions, which is constructively legal since `Fin 1` is
-decidable.
+Note: the proof relies on three mathlib lemmas: `Finset.sup_le`
+(verified by `mcp__lean-lsp__lean_local_search` against
+`Mathlib.Data.Finset.Lattice.Fold`); `KMor1.level`'s `.succ`
+case reduces `KMor1.succ.level` to `0` definitionally; and
+`omega` discharges the `max 0 hsup ≤ 0 → max 0 hsup = 0` shape
+constructively.
 
 - [ ] **Step 1.6: Add `KMor1.natK'` lifted variant.**
 
@@ -265,20 +268,22 @@ def KMor1.natK' (n c : ℕ) : KMor1 n :=
 /-- `KMor1.natK' n c` has level 0 for every `n` and `c`. -/
 theorem KMor1.natK'_level (n c : ℕ) :
     (KMor1.natK' n c).level = 0 := by
-  unfold KMor1.natK' KMor1.level
-  rw [KMor1.natK_level]
-  -- comp (natK c) Fin.elim0 at level max (natK c).level
-  -- (Finset.univ.sup over Fin.elim0). The Fin 0 family yields
-  -- Finset.sup ∅ = 0.
-  simp [Finset.univ_eq_empty_of_isEmpty, Finset.sup_empty]
+  -- natK' n c = comp (natK c) Fin.elim0. By `KMor1.level`'s
+  -- `.comp` clause, this is `max (natK c).level (Finset.univ.sup
+  -- (fun i : Fin 0 => …))`. The `Fin 0` instance of `Finset.univ`
+  -- is empty (`Finset.univ_eq_empty`); `Finset.sup_empty` then
+  -- collapses the sup to `⊥ = 0`; `(natK c).level = 0` by
+  -- `KMor1.natK_level`; the outer `max 0 0 = 0`.
+  show KMor1.level (KMor1.comp (KMor1.natK c) Fin.elim0) = 0
+  unfold KMor1.level
+  rw [KMor1.natK_level, show (Finset.univ : Finset (Fin 0)) = ∅
+    from Finset.univ_eq_empty, Finset.sup_empty]
 ```
 
-Note: the `Finset.univ.sup` over `Fin 0 → KMor1 n` (the
-`Fin.elim0` family) is `0` because `Finset.univ` on `Fin 0` is
-the empty finset and `Finset.sup ∅ f = ⊥ = 0` in `ℕ`. If the
-displayed `simp` lemma names are wrong, use
-`mcp__lean-lsp__lean_local_search` for "Finset.univ" plus
-"Fin 0" or "isEmpty" to find the exact reduction.
+Note: `Finset.univ_eq_empty` (verified via `lean_local_search`,
+from `Mathlib.Data.Finset.Basic`) carries an `IsEmpty` instance
+inferred from `Fin 0`'s emptiness. `Finset.sup_empty` is the
+standard sup-of-empty lemma in the same module.
 
 - [ ] **Step 1.7: Build to verify all five new declarations
   compile.**
@@ -313,8 +318,8 @@ introduce KMor1.natK : ℕ → KMor1 0 built by c-fold composition of
 KMor1.succ over KMor1.zero, plus KMor1.natK' n c : KMor1 n via
 KMor1.comp with Fin.elim0. interp simp lemmas and level=0 lemmas
 included. Per spec § 3.6; precedent KMor1.one at KArith.lean:31.
-[propext, Quot.sound]-only axiom hygiene confirmed on all six
-new public declarations."
+audit [propext, Quot.sound]-only axiom hygiene on all six new
+public declarations."
 jj new -m ""
 ```
 
@@ -399,8 +404,6 @@ URM, K^sim, simulator, simrec, Tourlakis
 
 namespace GebLean
 
-open GebLean.ZeroTestURM
-
 end GebLean
 
 namespace GebLean.KSimURMSimulator
@@ -412,7 +415,29 @@ end GebLean.KSimURMSimulator
 ```
 
 (The two `namespace … end namespace` skeletons are placeholders;
-later tasks fill them with the relevant declarations.)
+later tasks fill them with the relevant declarations. The single
+`open GebLean.ZeroTestURM` inside `namespace GebLean.KSimURMSimulator`
+serves all consumers in Tasks 4 – 8; the outer `namespace GebLean`
+block carries only the `KMor1.*` extensions in Tasks 2 – 3 and
+does not require `open`. Duplicate `open`s removed per plan
+round-3 finding R3-M2.)
+
+**File-layout reference (per R3-S5):**
+
+| Task | Content | Namespace |
+| --- | --- | --- |
+| 2 (`predIter`) | `KMor1.predIter`, `interp_predIter`, `predIter_level` | `GebLean` |
+| 3 (`pcDispatch`) | `KMor1.pcDispatchFrom`, `KMor1.pcDispatch`, the four interp / level lemmas | `GebLean` |
+| 4 (`baseFamily`) | `baseFamily`, `baseFamily_level` | `GebLean.KSimURMSimulator` |
+| 5 (`stepFamily`) | `I_prev`, `v_j_prev`, `branches_pc`, `branches_j`, `stepFamily`, `stepFamily_level` | `GebLean.KSimURMSimulator` |
+| 6 (`simulate`) | `simulate` | `GebLean.KSimURMSimulator` |
+| 7 (correctness) | `runFor_succ_init_back`, `simulate_step_match` | `GebLean.KSimURMSimulator` |
+| 8 (public theorems) | `simulate_interp`, `simulate_level` | `GebLean.KSimURMSimulator` |
+
+The implementer inserts Task 2 – 3 content between the first
+`namespace GebLean` and `end GebLean`; Task 4 – 8 content between
+`namespace GebLean.KSimURMSimulator` and
+`end GebLean.KSimURMSimulator`.
 
 - [ ] **Step 2.2: Build to verify the skeleton compiles.**
 
@@ -476,21 +501,31 @@ theorem KMor1.predIter_level (n k : ℕ) :
     (KMor1.predIter n k).level ≤ 1 := by
   induction k with
   | zero =>
-    simp only [KMor1.predIter, KMor1.level]
+    -- predIter n 0 = proj (Fin.last n); proj.level = 0 ≤ 1.
+    show KMor1.level (KMor1.proj (Fin.last n)) ≤ 1
+    unfold KMor1.level
+    omega
   | succ k ih =>
-    simp only [KMor1.predIter, KMor1.level, Finset.univ.sup]
-    -- comp pred [predIter k] at level max pred.level (predIter k).level
-    -- = max 1 (≤ 1) = 1.
-    cases h : (KMor1.predIter n k).level with
-    | zero => omega
-    | succ m => omega
+    -- predIter n (k+1) = comp pred (fun _ : Fin 1 => predIter n k).
+    -- level = max pred.level (Finset.univ.sup (fun _ => (predIter n k).level))
+    --       = max 1 (≤ 1) = 1.
+    show KMor1.level
+        (KMor1.comp KMor1.pred (fun _ : Fin 1 => KMor1.predIter n k))
+        ≤ 1
+    unfold KMor1.level
+    have hsup :
+        Finset.univ.sup (fun _ : Fin 1 => (KMor1.predIter n k).level) ≤ 1 := by
+      apply Finset.sup_le
+      intro _ _
+      exact ih
+    omega
 ```
 
-Note: if `Finset.univ.sup` does not reduce cleanly, replace
-the `simp only` with `unfold KMor1.level Finset.univ.sup` plus
-a `by_cases`/`omega` close on the `max` term. The `cases h`
-plus `omega` are belt-and-suspenders for the level-bound
-argument.
+Note: replaces the round-2-flagged `simp only [Finset.univ.sup]`
+(dot-notation-as-simp-arg) with explicit `unfold KMor1.level`
+plus `Finset.sup_le` discharge. `KMor1.pred.level = 1` reduces
+through `unfold KMor1.level`'s `.pred` clause; `omega` closes
+the resulting `max 1 hsup ≤ 1` shape using `hsup`.
 
 - [ ] **Step 2.7: Build to verify.**
 
@@ -608,91 +643,11 @@ Run: `lake build GebLean.Utilities.KSimURMSimulator`
 
 Expected: clean build.
 
-- [ ] **Step 3.5: Add the `pcDispatchFrom` interp lemma
-  (private, used by `pcDispatch`'s simp lemmas).**
-
-Insert below `KMor1.pcDispatch`:
-
-```lean
-/-- Inner correctness lemma: `pcDispatchFrom k size` selects
-`branches j` when the PC value equals `k + j.val`
-(for `j : Fin size`), else `default`. Used to derive the public
-`interp_pcDispatch_match` and `interp_pcDispatch_default`. -/
-private theorem KMor1.interp_pcDispatchFrom
-    {n : ℕ} (k size : ℕ)
-    (branches : Fin size → KMor1 (n + 1))
-    (default : KMor1 (n + 1)) (ctx : Fin (n + 1) → ℕ) :
-    (KMor1.pcDispatchFrom k size branches default).interp ctx
-      = if h : ctx (Fin.last n) < k + size then
-          (branches ⟨ctx (Fin.last n) - k, by
-            have : k ≤ ctx (Fin.last n) := by
-              -- For this branch to fire correctly when used by
-              -- pcDispatch's outer simp lemmas, k = 0 and PC < size
-              -- (so k ≤ PC trivially); the general statement
-              -- requires the additional hypothesis k ≤ PC, which
-              -- the caller-side simp lemmas instantiate.
-              sorry  -- replace via induction in step 3.6
-            omega⟩).interp ctx
-        else default.interp ctx := by
-  sorry  -- replace in step 3.6
-```
-
-Note: this intermediate form is awkward because of the
-"distance from offset" arithmetic. Step 3.6 replaces it with a
-cleaner statement keyed to the specific `pcDispatch` use case
-(`k = 0` in the public lemmas).
-
-- [ ] **Step 3.6: Replace with the actual interp_pcDispatchFrom
-  lemma and prove by induction on `size` with `k`, `branches`
-  generalised.**
-
-Replace the body of `KMor1.interp_pcDispatchFrom` with:
-
-```lean
-private theorem KMor1.interp_pcDispatchFrom
-    {n : ℕ} (size : ℕ) (k : ℕ)
-    (branches : Fin size → KMor1 (n + 1))
-    (default : KMor1 (n + 1)) (ctx : Fin (n + 1) → ℕ) :
-    (KMor1.pcDispatchFrom k size branches default).interp ctx
-      = if h : ∃ j : Fin size, ctx (Fin.last n) = k + j.val then
-          (branches h.choose).interp ctx
-        else default.interp ctx := by
-  induction size generalizing k branches with
-  | zero =>
-    simp only [KMor1.pcDispatchFrom]
-    rw [dif_neg (by
-      intro ⟨j, _⟩; exact Fin.elim0 j)]
-  | succ size' ih =>
-    simp only [KMor1.pcDispatchFrom, KMor1.interp_comp,
-      KMor1.interp_cond, KMor1.interp_predIter]
-    by_cases h0 : ctx (Fin.last n) = k
-    · -- PC = k: outer cond's test (PC ∸ k = 0) fires, select branches ⟨0, _⟩.
-      rw [h0]
-      simp only [Nat.sub_self, ↓reduceIte]
-      rw [dif_pos ⟨⟨0, by omega⟩, by simp⟩]
-      congr 1
-      -- The branch index `h.choose` for the existential proof equals ⟨0, _⟩.
-      sorry  -- replace via Classical.choose_spec / direct construction
-    · -- PC ≠ k: outer cond falls through to pcDispatchFrom (k+1) size'.
-      have hsub : ctx (Fin.last n) ∸ k ≠ 0 := by
-        intro he
-        apply h0
-        omega
-      simp only [Nat.sub_eq_zero_iff_le, hsub.symm.le_iff_lt] at hsub
-      sorry  -- replace by applying ih at (k+1) and equating the existentials
-```
-
-Note: this proof is intricate and may need refactoring. The
-honest decomposition is to state and prove TWO separate inner
-lemmas keyed to the dichotomy: a match case and a default case,
-each conditioned on the relevant hypothesis. Step 3.7 replaces
-the existential-flavoured statement with that decomposition.
-
-- [ ] **Step 3.7: Refactor to two inner lemmas
+- [ ] **Step 3.5: Add two inner lemmas
   (`pcDispatchFrom_match`, `pcDispatchFrom_default`) with
   explicit hypotheses.**
 
-Replace the entire `interp_pcDispatchFrom` block with:
+Insert below `KMor1.pcDispatch`:
 
 ```lean
 private theorem KMor1.interp_pcDispatchFrom_match
@@ -720,10 +675,10 @@ private theorem KMor1.interp_pcDispatchFrom_match
         · simp
       have hsub : ctx (Fin.last n) - k ≠ 0 := by
         rw [h]; omega
-      have hreduce : (if ctx (Fin.last n) - k = 0 then _ else _)
-        = _ := by
-        rw [if_neg hsub]
-      rw [hreduce]
+      -- Per plan round-3 finding R3-B1: discharge the `if`-branch
+      -- selection directly via `rw [if_neg hsub]` on the open goal,
+      -- rather than via a metavariable-laden `have` block.
+      rw [if_neg hsub]
       -- Now apply ih to the recursive call.
       have hpred : ctx (Fin.last n) = (k + 1) + (j.val - 1) := by
         rw [h]; omega
@@ -754,7 +709,7 @@ private theorem KMor1.interp_pcDispatchFrom_default
     omega
 ```
 
-- [ ] **Step 3.8: Build to verify.**
+- [ ] **Step 3.6: Build to verify.**
 
 Run: `lake build GebLean.Utilities.KSimURMSimulator`
 
@@ -763,7 +718,7 @@ Expected: clean build. If any of the auxiliary lemmas fails
 `mcp__lean-lsp__lean_goal` to inspect the goal state at the
 failure point and adjust.
 
-- [ ] **Step 3.9: Add the public `interp_pcDispatch_match` simp
+- [ ] **Step 3.7: Add the public `interp_pcDispatch_match` simp
   lemma.**
 
 Insert below `interp_pcDispatchFrom_default`:
@@ -783,7 +738,7 @@ Insert below `interp_pcDispatchFrom_default`:
     ctx k (by rw [h]; rfl)
 ```
 
-- [ ] **Step 3.10: Add the public `interp_pcDispatch_default`
+- [ ] **Step 3.8: Add the public `interp_pcDispatch_default`
   simp lemma.**
 
 Insert below `interp_pcDispatch_match`:
@@ -803,7 +758,7 @@ as `default`. -/
     ctx (by omega)
 ```
 
-- [ ] **Step 3.11: Add the `pcDispatch_level` lemma.**
+- [ ] **Step 3.9: Add the `pcDispatch_level` lemma.**
 
 Insert below `interp_pcDispatch_default`:
 
@@ -819,12 +774,11 @@ private theorem KMor1.pcDispatchFrom_level
     (h_default : default.level ≤ 1) :
     (KMor1.pcDispatchFrom k size branches default).level ≤ 1 := by
   induction size generalizing k branches with
-  | zero => simpa [KMor1.pcDispatchFrom] using h_default
+  | zero =>
+    -- pcDispatchFrom k 0 branches default = default.
+    show (default).level ≤ 1
+    exact h_default
   | succ size' ih =>
-    simp only [KMor1.pcDispatchFrom, KMor1.level]
-    -- comp cond [predIter, branches[0], recur] at level
-    -- max cond.level (max predIter.level (max b0.level recur.level))
-    -- = max 1 (max 1 (max ≤1 ≤1)) = 1.
     have hpred : (KMor1.predIter n k).level ≤ 1 :=
       KMor1.predIter_level n k
     have hb0 : (branches ⟨0, by omega⟩).level ≤ 1 :=
@@ -833,33 +787,48 @@ private theorem KMor1.pcDispatchFrom_level
         (fun j : Fin size' => branches j.succ) default).level ≤ 1 :=
       ih (k + 1) (fun j => branches j.succ)
         (fun j => h_branches j.succ)
-    -- KMor1.cond.level = 1; max with level-≤-1 children stays ≤ 1.
+    -- Pin the goal to its `KMor1.level`-of-`.comp`-of-`.cond`
+    -- normal form via `change`, which preserves the inner
+    -- `(KMor1.pcDispatchFrom (k+1) size' …).level` slot as an
+    -- opaque ≤-1 bound from `hrecur` (rather than recursively
+    -- unfolding it, as `simp only [KMor1.level]` would do — per
+    -- plan round-2 finding R2-S3).
+    change max (KMor1.cond.level)
+           (Finset.univ.sup (fun i : Fin 3 =>
+             match i with
+             | ⟨0, _⟩ => (KMor1.predIter n k).level
+             | ⟨1, _⟩ => (branches ⟨0, by omega⟩).level
+             | ⟨2, _⟩ => (KMor1.pcDispatchFrom (k + 1) size'
+                 (fun j : Fin size' => branches j.succ) default).level))
+           ≤ 1
     have hcond_level : (KMor1.cond : KMor1 3).level = 1 := by decide
-    -- The sup over Fin 3 of the family's levels.
-    have hsup : Finset.univ.sup (fun i : Fin 3 =>
-        match i with
-        | ⟨0, _⟩ => (KMor1.predIter n k).level
-        | ⟨1, _⟩ => (branches ⟨0, by omega⟩).level
-        | ⟨2, _⟩ => (KMor1.pcDispatchFrom (k + 1) size'
-            (fun j => branches j.succ) default).level) ≤ 1 := by
+    have hsup :
+        Finset.univ.sup (fun i : Fin 3 =>
+          match i with
+          | ⟨0, _⟩ => (KMor1.predIter n k).level
+          | ⟨1, _⟩ => (branches ⟨0, by omega⟩).level
+          | ⟨2, _⟩ => (KMor1.pcDispatchFrom (k + 1) size'
+              (fun j => branches j.succ) default).level) ≤ 1 := by
       apply Finset.sup_le
       intro i _
-      fin_cases i <;> [exact hpred; exact hb0; exact hrecur]
+      -- Lean-core `match` discharge per project memory
+      -- `feedback_fin_cases_pulls_classical_choice.md`.
+      match i with
+      | ⟨0, _⟩ => exact hpred
+      | ⟨1, _⟩ => exact hb0
+      | ⟨2, _⟩ => exact hrecur
     rw [hcond_level]
-    exact Nat.le_of_eq_of_le (max_eq_right hsup) hsup  -- or omega-style closure
+    exact Nat.max_le.mpr ⟨le_refl 1, hsup⟩
 ```
 
-Note: the final step's `max 1 hsup ≤ 1` may need
-`Nat.max_le` plus the hypothesis bounds. If the displayed
-`Nat.le_of_eq_of_le` line fails, replace with:
+Note: `change` is preferred over `simp only [KMor1.level]` here
+because `simp only` would recursively descend into the inner
+`(KMor1.pcDispatchFrom (k+1) size' …).level` and unfold it,
+defeating the opaque-bound reasoning via `hrecur`. The `change`
+relies on `pcDispatchFrom`'s `.succ` equation and `KMor1.level`'s
+`.comp` equation as `rfl`-equalities at the top level only.
 
-```lean
-    omega  -- if the goal is purely arithmetic
-```
-
-or unfold `max` manually and case-split.
-
-- [ ] **Step 3.12: Add the public `pcDispatch_level` lemma.**
+- [ ] **Step 3.10: Add the public `pcDispatch_level` lemma.**
 
 Insert below `pcDispatchFrom_level`:
 
@@ -878,13 +847,13 @@ theorem KMor1.pcDispatch_level
     h_branches h_default
 ```
 
-- [ ] **Step 3.13: Build to verify.**
+- [ ] **Step 3.11: Build to verify.**
 
 Run: `lake build GebLean.Utilities.KSimURMSimulator`
 
 Expected: clean build.
 
-- [ ] **Step 3.14: Axiom audit on the three public
+- [ ] **Step 3.12: Axiom audit on the three public
   declarations.**
 
 ```bash
@@ -895,12 +864,12 @@ bash scripts/check-axioms.sh GebLean.KMor1.pcDispatch_level
 
 Expected for each: `[propext, Quot.sound]` only.
 
-If `Classical.choice` appears, the `fin_cases` tactic (Step
-3.11) is the likely cause; replace with explicit
-`match`/`omega` discharge per the project memory at
+If `Classical.choice` appears, suspect a stray mathlib
+`fin_cases` tactic and replace with explicit `match` /
+Lean-core `Fin.cases` per the project memory at
 [`feedback_fin_cases_pulls_classical_choice.md`](../../.claude/projects/-home-terence-git-workspaces-geb/memory/feedback_fin_cases_pulls_classical_choice.md).
 
-- [ ] **Step 3.15: Commit Task 3.**
+- [ ] **Step 3.13: Commit Task 3.**
 
 ```bash
 jj describe -m "feat(ertok): add KMor1.pcDispatch and its inner lemmas
@@ -914,8 +883,8 @@ inner lemmas, plus the public @[simp] interp_pcDispatch_match /
 _default and pcDispatch_level. per spec § 3.5. branches and
 default share arity (n + 1) so each may read the PC slot
 directly; the recursion is a flat fold with no
-context-substitution wrapper. [propext, Quot.sound]-only axiom
-hygiene confirmed on all three public declarations."
+context-substitution wrapper. audit [propext, Quot.sound]-only
+axiom hygiene on all three public declarations."
 jj new -m ""
 ```
 
@@ -983,25 +952,33 @@ Insert below `baseFamily`:
 theorem baseFamily_level {a : ℕ} (P : URMProgram a)
     (j : Fin (P.numRegs + 1)) :
     (baseFamily P j).level = 0 := by
-  -- Case-split on Fin.lastCases.
-  rcases Fin.lastCases_eq_last_or_castSucc j with hL | ⟨r, hR⟩
+  -- Project-idiomatic Fin.lastCases case-split: per
+  -- `GebLean/LawvereBTInterp.lean:625, 627, 637, 668, 669`, the
+  -- pattern is `refine Fin.lastCases ?_ ?_ j` followed by
+  -- `simp only [Fin.lastCases_last]` / `[Fin.lastCases_castSucc]`
+  -- (per plan round-3 finding R3-S4). The `induction j using
+  -- Fin.lastCases with | last | cast` syntax is not used in this
+  -- project; the eliminator's binding rules for that form depend
+  -- on whether `Fin.lastCases` is tagged `@[elab_as_elim]`, which
+  -- is not guaranteed across mathlib revisions.
+  refine Fin.lastCases ?_ ?_ j
   · -- j = Fin.last P.numRegs
-    subst hL; simp [baseFamily, Fin.lastCases_last]
+    simp only [baseFamily, Fin.lastCases_last]
+    rfl
   · -- j = r.castSucc for some r : Fin P.numRegs
-    subst hR
+    intro r
     simp only [baseFamily, Fin.lastCases_castSucc]
-    cases (List.finRange a).find?
+    -- Per round-4 finding R4-S7: discharge both arms with an
+    -- explicit `unfold KMor1.level; omega` rather than bare `rfl`.
+    -- `rfl` plausibly succeeds via `KMor1.level`'s definitional
+    -- clauses, but is fragile against future reduction-strategy
+    -- changes (e.g., the field becoming `@[reducible]` rather than
+    -- definitionally `0`).
+    cases h : (List.finRange a).find?
         (fun i => decide (P.inputRegs i = r)) with
-    | some i => rfl
-    | none => rfl
+    | some i => unfold KMor1.level; omega
+    | none => unfold KMor1.level; omega
 ```
-
-Note: `Fin.lastCases_eq_last_or_castSucc` may be a different
-name in current mathlib. If not present, use
-`Fin.lastCases_last` and `Fin.lastCases_castSucc` directly on
-`j` after a `rcases j.eq_last_or_castSucc` (or similar) — check
-mathlib via `mcp__lean-lsp__lean_local_search` for the exact
-name.
 
 - [ ] **Step 4.4: Build to verify.**
 
@@ -1028,7 +1005,7 @@ KMor1 a, mirroring URMState.init: PC component (Fin.last) is
 KMor1.zero; register components (Fin.castSucc) use the same
 List.find? lookup as URMState.init's regs field. include
 baseFamily_level showing every component is at level 0. per
-spec § 3.3. [propext, Quot.sound]-only axiom hygiene confirmed."
+spec § 3.3. audit [propext, Quot.sound]-only axiom hygiene."
 jj new -m ""
 ```
 
@@ -1054,10 +1031,14 @@ Insert below `baseFamily_level`:
 
 ```lean
 /-- Projection at the step context's last slot: the previous
-PC value. Level 0. -/
+PC value. Level 0. The Fin index is pinned numerically as
+`⟨a + 1 + P.numRegs, _⟩` rather than `Fin.last …` because
+`Fin.last (a + P.numRegs + 1)` and `Fin (a + 1 + (P.numRegs + 1))`
+may fail to unify definitionally under Lean's `Nat.add` normal
+form; the explicit construction sidesteps that elaboration risk. -/
 private def I_prev {a : ℕ} (P : URMProgram a) :
     KMor1 (a + 1 + (P.numRegs + 1)) :=
-  KMor1.proj (Fin.last (a + P.numRegs + 1))
+  KMor1.proj ⟨a + 1 + P.numRegs, by omega⟩
 
 /-- Projection at slot `a + 1 + j.val` of the step context:
 the previous value of register `j`. Level 0. -/
@@ -1068,11 +1049,6 @@ private def v_j_prev {a : ℕ} (P : URMProgram a)
     have := j.isLt
     omega⟩
 ```
-
-Note: the `Fin.last (a + P.numRegs + 1)` index lives in
-`Fin (a + 1 + (P.numRegs + 1)) = Fin (a + P.numRegs + 2)`; the
-literal `Fin.last (a + P.numRegs + 1)` constructs this. Verify
-with `mcp__lean-lsp__lean_goal` if the type does not match.
 
 - [ ] **Step 5.2: Add the per-instruction branch builders for
   the PC component.**
@@ -1087,7 +1063,15 @@ instruction:
 - `.stop` → unchanged (`I_prev`);
 - `.jumpZ i l₁ l₂` → `cond` on `v_i_prev` selecting `l₁` if 0,
   else `l₂`;
-- otherwise (`.assign`, `.inc`, `.dec`) → `I_prev + 1`. -/
+- `.assign`, `.inc`, `.dec` → `I_prev + 1`.
+
+Per round-4 finding R4-S3: enumerate all five constructors
+explicitly rather than via a wildcard `_` arm, matching the
+project precedent in `URMState.step`
+([`GebLean/Utilities/ZeroTestURM.lean:155`](../../GebLean/Utilities/ZeroTestURM.lean#L155)).
+This stabilises the definition against future `URMInstr`
+extensions and aligns with the case-equation propagation
+discharges in Steps 7.8 / 7.9. -/
 private def branches_pc {a : ℕ} (P : URMProgram a)
     (k : Fin P.instrs.size) :
     KMor1 (a + 1 + (P.numRegs + 1)) :=
@@ -1099,10 +1083,12 @@ private def branches_pc {a : ℕ} (P : URMProgram a)
         | ⟨0, _⟩ => v_j_prev P i
         | ⟨1, _⟩ => KMor1.natK' _ l₁
         | ⟨2, _⟩ => KMor1.natK' _ l₂)
-  | _ =>
-    -- .assign, .inc, .dec: PC + 1
-    KMor1.comp KMor1.succ
-      (fun _ : Fin 1 => I_prev P)
+  | URMInstr.assign _ _ =>
+    KMor1.comp KMor1.succ (fun _ : Fin 1 => I_prev P)
+  | URMInstr.inc _ =>
+    KMor1.comp KMor1.succ (fun _ : Fin 1 => I_prev P)
+  | URMInstr.dec _ =>
+    KMor1.comp KMor1.succ (fun _ : Fin 1 => I_prev P)
 ```
 
 - [ ] **Step 5.3: Add the per-instruction branch builders for
@@ -1183,34 +1169,144 @@ and the default are at level ≤ 1 by inspection; the dispatcher's
 theorem stepFamily_level {a : ℕ} (P : URMProgram a)
     (j : Fin (P.numRegs + 1)) :
     (stepFamily P j).level ≤ 1 := by
-  -- Case-split on Fin.lastCases.
-  rcases Fin.lastCases_eq_last_or_castSucc j with hL | ⟨r, hR⟩
-  · subst hL
+  -- Project-idiomatic Fin.lastCases case-split (per
+  -- GebLean/LawvereBTInterp.lean:625, 627, 637, 668, 669): use
+  -- `refine Fin.lastCases ?_ ?_ j`, not `induction j using
+  -- Fin.lastCases with | last | cast` (per R3-S4).
+  refine Fin.lastCases ?_ ?_ j
+  · -- j = Fin.last P.numRegs
     simp only [stepFamily, Fin.lastCases_last]
     apply KMor1.pcDispatch_level
     · intro k
-      -- Each branches_pc k is level ≤ 1: stop = I_prev (level 0),
-      -- jumpZ = comp cond [...] (level 1), default = comp succ [I_prev] (level 0).
+      -- Each branches_pc k is level ≤ 1. One explicit cases per
+      -- URMInstr constructor, closed via the
+      -- `unfold KMor1.level` + `Finset.sup_le` + `omega` pattern
+      -- (per plan round-2 finding R2-S5: `simp` with constructor
+      -- arguments is not deterministic).
       unfold branches_pc
-      split <;> simp [KMor1.level, I_prev, v_j_prev, KMor1.natK'_level] <;>
-        decide
+      cases hi : P.instrs[k]'k.isLt with
+      | assign i c =>
+        -- Returns `comp succ (fun _ => I_prev P)`. level = max 0 0 = 0.
+        show KMor1.level
+            (KMor1.comp KMor1.succ (fun _ : Fin 1 => I_prev P)) ≤ 1
+        unfold KMor1.level I_prev
+        have hsup :
+            Finset.univ.sup (fun _ : Fin 1 =>
+              (KMor1.proj (⟨a + 1 + P.numRegs, by omega⟩ :
+                  Fin (a + 1 + (P.numRegs + 1)))).level) ≤ 1 := by
+          apply Finset.sup_le; intro _ _; exact Nat.zero_le _
+        omega
+      | inc i =>
+        show KMor1.level
+            (KMor1.comp KMor1.succ (fun _ : Fin 1 => I_prev P)) ≤ 1
+        unfold KMor1.level I_prev
+        have hsup :
+            Finset.univ.sup (fun _ : Fin 1 =>
+              (KMor1.proj (⟨a + 1 + P.numRegs, by omega⟩ :
+                  Fin (a + 1 + (P.numRegs + 1)))).level) ≤ 1 := by
+          apply Finset.sup_le; intro _ _; exact Nat.zero_le _
+        omega
+      | dec i =>
+        show KMor1.level
+            (KMor1.comp KMor1.succ (fun _ : Fin 1 => I_prev P)) ≤ 1
+        unfold KMor1.level I_prev
+        have hsup :
+            Finset.univ.sup (fun _ : Fin 1 =>
+              (KMor1.proj (⟨a + 1 + P.numRegs, by omega⟩ :
+                  Fin (a + 1 + (P.numRegs + 1)))).level) ≤ 1 := by
+          apply Finset.sup_le; intro _ _; exact Nat.zero_le _
+        omega
+      | jumpZ i l₁ l₂ =>
+        -- Returns `comp cond [v_j_prev P i, natK' _ l₁, natK' _ l₂]`.
+        -- level = max cond.level (sup …) = max 1 0 = 1.
+        show KMor1.level
+            (KMor1.comp KMor1.cond
+              (fun ix : Fin 3 => match ix with
+                | ⟨0, _⟩ => v_j_prev P i
+                | ⟨1, _⟩ => KMor1.natK' _ l₁
+                | ⟨2, _⟩ => KMor1.natK' _ l₂)) ≤ 1
+        unfold KMor1.level
+        have hcond : (KMor1.cond : KMor1 3).level = 1 := by decide
+        have hsup :
+            Finset.univ.sup (fun ix : Fin 3 =>
+              (match ix with
+                | ⟨0, _⟩ => v_j_prev P i
+                | ⟨1, _⟩ => KMor1.natK' _ l₁
+                | ⟨2, _⟩ => KMor1.natK' _ l₂).level) ≤ 1 := by
+          apply Finset.sup_le; intro ix _
+          match ix with
+          | ⟨0, _⟩ => unfold v_j_prev KMor1.level; omega
+          | ⟨1, _⟩ => rw [KMor1.natK'_level]; omega
+          | ⟨2, _⟩ => rw [KMor1.natK'_level]; omega
+        rw [hcond]; omega
+      | stop =>
+        -- Returns `I_prev P`; level = 0.
+        unfold I_prev KMor1.level; omega
     · -- default = I_prev (level 0).
-      unfold I_prev; simp [KMor1.level]
-  · subst hR
+      unfold I_prev KMor1.level; omega
+  · -- j = r.castSucc for some r : Fin P.numRegs
+    intro r
     simp only [stepFamily, Fin.lastCases_castSucc]
     apply KMor1.pcDispatch_level
     · intro k
       unfold branches_j
-      split <;> split <;>
-        simp [KMor1.level, v_j_prev, KMor1.natK'_level,
-          KMor1.pred, KMor1.succ] <;> decide
-    · unfold v_j_prev; simp [KMor1.level]
+      cases hi : P.instrs[k]'k.isLt with
+      | assign i c =>
+        by_cases h : i.val = r.val
+        · -- Branch returns `natK' _ c`; level = 0 by natK'_level.
+          rw [if_pos h, KMor1.natK'_level]; omega
+        · -- Branch returns `v_j_prev P r`; level = 0 by proj.
+          rw [if_neg h]
+          unfold v_j_prev KMor1.level; omega
+      | inc i =>
+        by_cases h : i.val = r.val
+        · -- branch returns `comp succ (fun _ => v_j_prev P r)`.
+          -- level = max succ.level (sup of singleton family) = max 0 0 = 0.
+          rw [if_pos h]
+          show KMor1.level
+              (KMor1.comp KMor1.succ
+                (fun _ : Fin 1 => v_j_prev P r)) ≤ 1
+          unfold KMor1.level v_j_prev
+          have hsup :
+              Finset.univ.sup (fun _ : Fin 1 =>
+                (KMor1.proj (⟨a + 1 + r.val, by omega⟩ :
+                    Fin (a + 1 + (P.numRegs + 1)))).level) ≤ 1 := by
+            apply Finset.sup_le; intro _ _; exact Nat.zero_le _
+          omega
+        · rw [if_neg h]
+          unfold v_j_prev KMor1.level; omega
+      | dec i =>
+        by_cases h : i.val = r.val
+        · -- branch returns `comp pred (fun _ => v_j_prev P r)`.
+          -- level = max pred.level (sup of singleton family) = max 1 0 = 1.
+          rw [if_pos h]
+          show KMor1.level
+              (KMor1.comp KMor1.pred
+                (fun _ : Fin 1 => v_j_prev P r)) ≤ 1
+          unfold KMor1.level v_j_prev
+          have hsup :
+              Finset.univ.sup (fun _ : Fin 1 =>
+                (KMor1.proj (⟨a + 1 + r.val, by omega⟩ :
+                    Fin (a + 1 + (P.numRegs + 1)))).level) ≤ 1 := by
+            apply Finset.sup_le; intro _ _; exact Nat.zero_le _
+          omega
+        · rw [if_neg h]
+          unfold v_j_prev KMor1.level; omega
+      | jumpZ i l₁ l₂ =>
+        -- Returns `v_j_prev P r`; level = 0.
+        unfold v_j_prev KMor1.level; omega
+      | stop =>
+        unfold v_j_prev KMor1.level; omega
+    · -- default = v_j_prev P r; level = 0.
+      unfold v_j_prev KMor1.level; omega
 ```
 
-Note: the inner `split <;> simp <;> decide` chains are
-best-effort; if they fail, decompose into explicit `cases`
-on `P.instrs[k]` plus `unfold KMor1.level` plus targeted
-arithmetic. Inspect goal state via `mcp__lean-lsp__lean_goal`.
+Note: the explicit per-constructor `cases hi : P.instrs[k]`
+discharge sidesteps the `split <;> split <;> simp <;> decide`
+brittleness flagged in plan round 1. Each per-instruction block
+is ~3 – 5 LOC; total ~40 LOC for `branches_pc` and ~50 LOC for
+`branches_j`. Inspect each goal state via
+`mcp__lean-lsp__lean_goal` if `decide` or `omega` does not close.
 
 - [ ] **Step 5.7: Build to verify.**
 
@@ -1240,7 +1336,7 @@ pcDispatch over branches_pc with default_pc := I_prev;
 register components dispatch via pcDispatch over branches_j j
 with default_j := v_j_prev. include stepFamily_level showing
 every component is at level ≤ 1. per spec § 3.4.
-[propext, Quot.sound]-only axiom hygiene confirmed."
+audit [propext, Quot.sound]-only axiom hygiene."
 jj new -m ""
 ```
 
@@ -1302,7 +1398,7 @@ KMor1.simrec with system size P.numRegs + 1 (registers at
 indices 0..numRegs - 1, PC at index numRegs), base family
 baseFamily P, step family stepFamily P, output index
 P.outputReg.castSucc. per spec § 3.1, § 3.2.
-[propext, Quot.sound]-only axiom hygiene confirmed."
+audit [propext, Quot.sound]-only axiom hygiene."
 jj new -m ""
 ```
 
@@ -1329,24 +1425,91 @@ Insert below `simulate`:
 ```lean
 /-- Back-peel reduction for `URMState.runFor`: derived from the
 front-peel `runFor_succ` (`ZeroTestURM.lean:192`) and additivity
-`runFor_add` (`:199`). The fixed `s := URMState.init P v` makes
-this the form needed inside the simulate_step_match induction;
-`runFor_succ` itself (front-peel) is `@[simp]` in the wrong
-direction for that purpose. Per spec § 4.3. -/
-private theorem URMState.runFor_succ_back {a : ℕ}
+`runFor_add` (`:199`). Inside the helper-lemma scope the `s`
+parameter is fully general — the helper itself does not hit the
+fixed-`s := init P v` trap. Only the consumer
+(`simulate_step_match`'s step case) is locked to that specific
+`s`, which is why `runFor_succ` (front-peel, `@[simp]`) is
+wrong-directional there and this back-peel form must be
+invoked explicitly. Placed directly under
+`namespace GebLean.KSimURMSimulator` (no `URMState`
+sub-namespace) so the fully qualified name is
+`GebLean.KSimURMSimulator.runFor_succ_init_back`, avoiding
+confusing parallelism with `GebLean.ZeroTestURM.URMState`. Per
+spec § 4.3. -/
+private theorem runFor_succ_init_back {a : ℕ}
     (P : URMProgram a) (s : URMState P) (y : ℕ) :
     URMState.runFor P s (y + 1)
       = URMState.step P (URMState.runFor P s y) := by
   -- runFor s (y + 1) = runFor (runFor s y) 1 (by runFor_add)
   --                  = step (runFor s y)     (by runFor_succ at n = 0)
-  rw [URMState.runFor_add P s y 1, URMState.runFor_succ,
-      URMState.runFor_zero]
+  -- The rewrite chain pins each rewrite to a specific subterm via
+  -- explicit arguments, avoiding the round-2-flagged
+  -- generic-`y`-rewrite-site ambiguity that `rw` would otherwise
+  -- expose if multiple `runFor _ (· + 1)` patterns exist in the
+  -- goal for arbitrary `y`.
+  rw [URMState.runFor_add P s y 1]
+  rw [URMState.runFor_succ P (URMState.runFor P s y) 0]
+  rw [URMState.runFor_zero]
+```
+
+- [ ] **Step 7.1.5: Add the dispatcher-context evaluation
+  helper.**
+
+Per round-4 findings R4-B2, R4-S6, and R4-M3: the `simrecVec_succ`
+-produced dispatcher context evaluated at any slot in the
+"previous-component" range (`a + 1 ≤ slot < a + 1 + (P.numRegs + 1)`)
+reduces to the previous simrec component at the residue index
+`slot - (a + 1)`. This single helper replaces the three inline
+`dite`-reduction derivations that round 3 produced (one for
+`h_ctx_last_pc` and one for `h_ctx_ge` in each of Steps 7.8
+and 7.9), and supplies the per-register-component bridging
+that round 3 left implicit in Step 7.9's `.jumpZ` and `.stop`
+discharges.
+
+Insert below `runFor_succ_init_back`:
+
+```lean
+/-- The `simrecVec_succ`-produced dispatcher context, evaluated
+at any slot in the "previous-component" range
+(`a + 1 ≤ slot < a + 1 + (P.numRegs + 1)`), equals the previous
+simrec component at the residue index `slot - (a + 1)`. Used
+across both the PC and the register-`j` components in the step
+case of `simulate_step_match`. Per round-4 findings R4-B2,
+R4-S6, R4-M3.
+
+This helper is the sole site in T3 that couples directly to
+`KMor1.simrecVec_succ`'s `dite`-form context shape
+(`LawvereKSimInterp.lean:193 – 209`). If that lemma's shape
+changes (for example, the inner
+`if h₂ : idx.val = 0 then n else params ⟨…⟩` becomes a
+`match`), the body's `show` will need to be re-stated to match
+the new form. All call sites consume the helper through its
+declared signature only — per plan round-6 serious finding R6-S1. -/
+private lemma step_ctx_eval_simrec {a : ℕ} (P : URMProgram a)
+    (v : Fin a → ℕ) (y : ℕ)
+    (slot : ℕ) (h_slot_bound : slot < a + 1 + (P.numRegs + 1))
+    (h_slot_ge : a + 1 ≤ slot) :
+    (fun idx : Fin (a + 1 + (P.numRegs + 1)) =>
+       if h₁ : idx.val < a + 1 then
+         if h₂ : idx.val = 0 then (y : ℕ)
+         else v ⟨idx.val - 1, by omega⟩
+       else
+         KMor1.simrecVec (baseFamily P) (stepFamily P) v y
+           ⟨idx.val - (a + 1), by omega⟩)
+        ⟨slot, h_slot_bound⟩
+    = KMor1.simrecVec (baseFamily P) (stepFamily P) v y
+        ⟨slot - (a + 1), by omega⟩ := by
+  show (if h₁ : slot < a + 1 then _ else
+          KMor1.simrecVec (baseFamily P) (stepFamily P) v y
+            ⟨slot - (a + 1), by omega⟩) = _
+  rw [dif_neg (by omega)]
 ```
 
 - [ ] **Step 7.2: Add `simulate_step_match` declaration with
   `by sorry` body.**
 
-Insert below `URMState.runFor_succ_back`:
+Insert below `step_ctx_eval_simrec`:
 
 ```lean
 /-- The conjunctive vector invariant: at every time `y`, the
@@ -1386,26 +1549,42 @@ Replace the `sorry` body with:
     · -- PC component at y = 0.
       simp only [KMor1.simrecVec_zero, baseFamily,
         Fin.lastCases_last, KMor1.interp_zero]
-      -- (runFor 0).pc = (init P v).pc = 0.
-      rfl
+      -- (URMState.runFor P (URMState.init P v) 0).pc
+      --   = (URMState.init P v).pc = 0.
+      rw [URMState.runFor_zero]
+      -- Per round-4 finding R4-S4: `(URMState.init P v).pc = 0` is
+      -- a structure-projection identity, but the projection
+      -- reduction does not always fire automatically against the
+      -- LHS shape `0`. Explicitly unfold `URMState.init` to expose
+      -- the `pc := 0` field before closing with `rfl`.
+      show (0 : ℕ) = (URMState.init P v).pc
+      unfold URMState.init
     · -- Register components at y = 0.
       intro j
       simp only [KMor1.simrecVec_zero, baseFamily,
         Fin.lastCases_castSucc]
+      rw [URMState.runFor_zero]
       -- baseFamily P j.castSucc unfolds to the match on
       -- List.find?; URMState.init's regs field unfolds to the
-      -- same match. Case-split on the find?-result.
+      -- same match. Case-split on the find?-result. Per project
+      -- memory `feedback_urmstate_init_let_reduction.md`, the
+      -- `URMState.init` projection reduction is unreliable through
+      -- `simp only [URMState.init, h]` alone — use an explicit
+      -- `show … = (URMState.init P v).regs j; unfold URMState.init;
+      -- simp only [h]; rfl` reduction (round-2 finding R2-S6).
       cases h : (List.finRange a).find?
           (fun i => decide (P.inputRegs i = j)) with
       | some i =>
         simp only [KMor1.interp_proj]
-        -- URMState.init P v has regs r = match find? ... with
-        --   | some i => v i | none => 0
-        -- and h pins find? to some i, so regs j = v i.
-        simp only [URMState.init, h]
+        show v i = (URMState.init P v).regs j
+        unfold URMState.init
+        simp only [h]
       | none =>
-        simp only [KMor1.interp_zero, URMState.init, h]
-  | succ y ih => sorry  -- replace in step 7.5
+        simp only [KMor1.interp_zero]
+        show (0 : ℕ) = (URMState.init P v).regs j
+        unfold URMState.init
+        simp only [h]
+  | succ y ih => sorry  -- replace in step 7.6
 ```
 
 - [ ] **Step 7.5: Build to verify the base case.**
@@ -1422,7 +1601,7 @@ Replace the `| succ y ih => sorry` line with:
   | succ y ih =>
     obtain ⟨ih_pc, ih_regs⟩ := ih
     -- URM side: peel via back-peel reduction.
-    rw [URMState.runFor_succ_back]
+    rw [runFor_succ_init_back]
     -- K^sim side: peel via simrecVec_succ.
     refine ⟨?_, ?_⟩
     · -- PC component at y + 1.
@@ -1430,14 +1609,28 @@ Replace the `| succ y ih => sorry` line with:
       -- Now reduce the step-family PC component over the
       -- previous-iteration vector, which by ih matches the URM
       -- state at y.
-      sorry  -- replace in step 7.7
+      sorry  -- replace in step 7.8
     · -- Register-j component at y + 1.
       intro j
       rw [KMor1.simrecVec_succ]
-      sorry  -- replace in step 7.8
+      sorry  -- replace in step 7.9
 ```
 
-- [ ] **Step 7.7: Fill the PC step case.**
+- [ ] **Step 7.7: Intermediate build to verify the succ-case
+  skeleton.**
+
+Run: `lake build GebLean.Utilities.KSimURMSimulator`
+
+Expected: build with exactly two `sorry` warnings (one per
+branch of the conjunctive `refine ⟨?_, ?_⟩`). The structural
+skeleton type-checks; the two open sub-goals are the PC and
+register-`j` step cases, addressed in Steps 7.8 and 7.9.
+This intermediate build (per plan round-2 finding R2-S7)
+verifies the succ-case structure before the substantive
+case-analysis work; if the build fails here, fix the
+structural skeleton before proceeding to the case fills.
+
+- [ ] **Step 7.8: Fill the PC step case.**
 
 Replace the first `sorry` (the PC component) with a case-split
 on the instruction at `(runFor y).pc`. Use
@@ -1447,140 +1640,465 @@ structure is:
 ```lean
       -- Set up the step context shape.
       simp only [stepFamily, Fin.lastCases_last]
+      -- Bridging hypothesis (per plan round-2 finding R2-B1): the
+      -- dispatcher's interpretation context is the `dite`-form
+      -- produced by `KMor1.simrecVec_succ` at
+      -- `LawvereKSimInterp.lean:193 – 209` (NOT a `Fin.cons` of two
+      -- arguments). Compute its last-slot value once and reuse
+      -- across the in-bounds / past-end branches. Per round-4
+      -- findings R4-B2 / R4-M3: derive the reduction from the
+      -- shared helper `step_ctx_eval_simrec` rather than re-deriving
+      -- the `dite`-reduction inline.
+      have h_ctx_last_pc :
+          (fun idx : Fin (a + 1 + (P.numRegs + 1)) =>
+            if h₁ : idx.val < a + 1 then
+              if h₂ : idx.val = 0 then (y : ℕ)
+              else v ⟨idx.val - 1, by omega⟩
+            else
+              KMor1.simrecVec (baseFamily P) (stepFamily P) v y
+                ⟨idx.val - (a + 1), by omega⟩)
+              (Fin.last (a + P.numRegs + 1))
+            = ((URMState.init P v).runFor P y).pc := by
+        -- `Fin.last (a + P.numRegs + 1) = ⟨a + P.numRegs + 1, _⟩`
+        -- by `Fin.ext`; apply the helper at `slot := a + P.numRegs + 1`.
+        rw [show (Fin.last (a + P.numRegs + 1)
+                : Fin (a + 1 + (P.numRegs + 1)))
+              = ⟨a + P.numRegs + 1, by omega⟩
+              from by apply Fin.ext; simp [Fin.last]]
+        rw [step_ctx_eval_simrec P v y (a + P.numRegs + 1)
+              (by omega) (by omega)]
+        rw [show (⟨a + P.numRegs + 1 - (a + 1), by omega⟩
+                : Fin (P.numRegs + 1))
+              = Fin.last P.numRegs
+              from by apply Fin.ext; simp [Fin.last]; omega]
+        exact ih_pc
       -- The dispatcher's match-vs-default split.
       by_cases h_inbounds :
           ((URMState.init P v).runFor P y).pc < P.instrs.size
       · -- In-bounds: pcDispatch_match fires at k = (runFor y).pc.
+        -- Per round-4 blocker R4-B1: mathlib's `set ... with hpc`
+        -- already runs `rewrite [show vale = a from rfl] at *`
+        -- (`Mathlib/Tactic/Set.lean:30 – 31`), substituting in all
+        -- hypotheses including `h_ctx_last_pc`. No subsequent
+        -- `rw [← hpc] at h_ctx_last_pc` is needed (the round-3 fix
+        -- that added that rewrite was built on an incorrect premise).
         set pcVal := ((URMState.init P v).runFor P y).pc with hpc
-        -- After `simrecVec_succ` unfolding, the step context at the
-        -- last slot reads the previous PC = `simrecVec ... y
-        -- (Fin.last P.numRegs)`, which by `ih_pc` equals `pcVal`.
-        -- Use `mcp__lean-lsp__lean_goal` to inspect the exact step
-        -- context shape; `h_pc_eq` is then a literal restatement of
-        -- `ih_pc` after the substitution.
-        have h_pc_eq :
-            KMor1.simrecVec (baseFamily P) (stepFamily P) v y
-                (Fin.last P.numRegs)
-              = pcVal := ih_pc
-        -- Apply pcDispatch_match.
+        -- Apply pcDispatch_match with the bridged hypothesis.
         rw [KMor1.interp_pcDispatch_match P.instrs.size
               (fun k => branches_pc P k) (I_prev P) _
-              ⟨pcVal, h_inbounds⟩ h_pc_eq]
-        -- Now case-split on the instruction at pcVal.
+              ⟨pcVal, h_inbounds⟩ h_ctx_last_pc]
+        -- Case-split on the instruction at pcVal. Per round-4
+        -- serious finding R4-S1: `simp only [branches_pc, h_instr]`
+        -- may fail to rewrite past the bound-proof-object
+        -- difference between `h_inbounds` and
+        -- `⟨pcVal, h_inbounds⟩.isLt` (the inner-match subject after
+        -- `branches_pc` unfolds). The likely path of `simp only` is
+        -- successful via `GetElem.getElem`'s proof-irrelevance, but
+        -- if it fails, the fallback is `subst h_instr` (if
+        -- substitution is permitted, i.e., the cased expression is
+        -- a local variable) or the explicit
+        -- `generalize h_instr : P.instrs[⟨pcVal, h_inbounds⟩.val]'_
+        -- = ins; cases ins with …` pattern.
+        --
+        -- Per round-4 serious finding R4-S5: the `dif_pos h_inbounds`
+        -- application is split out of the `simp only` invocation
+        -- (using a separate `rw` step) to defend against the
+        -- documented `simp only [if_pos h] / [dif_pos h]` sorryAx
+        -- leakage pattern (project memory
+        -- `feedback_simp_if_pos_sorryAx_leak.md`). The sequence is:
+        -- `simp only [URMState.step]` to expose the `dite`, then
+        -- `rw [dif_pos h_inbounds]` to select the in-bounds branch,
+        -- then `simp only [h_instr]` to push the instruction
+        -- case-equation through the inner match.
+        --
+        -- Per round-4 blocker R4-B2: the closing `rw [h_ctx_last_pc]`
+        -- of round 3 cannot fire because `h_ctx_last_pc`'s LHS uses
+        -- `Fin.last (a + P.numRegs + 1)` whereas the post-`simp`
+        -- goal has `⟨a + 1 + P.numRegs, _⟩` (from `I_prev`'s
+        -- deliberate explicit-index construction). Close via the
+        -- shared helper `step_ctx_eval_simrec` plus a `Fin.ext`
+        -- bridge to `Fin.last P.numRegs`, then `exact ih_pc`.
         cases h_instr : P.instrs[pcVal]'h_inbounds with
         | assign i c =>
           -- branches_pc returns succ ∘ I_prev (PC + 1).
-          unfold branches_pc
-          rw [h_instr]
-          simp only [KMor1.interp_comp, KMor1.interp_succ,
-            I_prev, KMor1.interp_proj]
-          -- URM side: step performs `assign i c`, PC := pc + 1.
-          unfold URMState.step
-          rw [dif_pos h_inbounds, h_instr]
-          simp [ih_pc]
+          simp only [branches_pc, h_instr, KMor1.interp_comp,
+            KMor1.interp_succ, I_prev, KMor1.interp_proj]
+          simp only [URMState.step]
+          rw [dif_pos h_inbounds]
+          simp only [h_instr]
+          rw [step_ctx_eval_simrec P v y (a + 1 + P.numRegs)
+                (by omega) (by omega)]
+          rw [show (⟨a + 1 + P.numRegs - (a + 1), by omega⟩
+                  : Fin (P.numRegs + 1))
+                = Fin.last P.numRegs
+                from by apply Fin.ext; simp [Fin.last]; omega]
+          -- Per round-5 blocker R5-B1: both sides carry a trailing
+          -- `+ 1`; `ih_pc` lacks it. Rewriting under the `+ 1`
+          -- closes via the implicit `rfl`.
+          rw [ih_pc]
         | inc i =>
-          unfold branches_pc
-          rw [h_instr]
-          simp only [KMor1.interp_comp, KMor1.interp_succ,
-            I_prev, KMor1.interp_proj]
-          unfold URMState.step
-          rw [dif_pos h_inbounds, h_instr]
-          simp [ih_pc]
+          simp only [branches_pc, h_instr, KMor1.interp_comp,
+            KMor1.interp_succ, I_prev, KMor1.interp_proj]
+          simp only [URMState.step]
+          rw [dif_pos h_inbounds]
+          simp only [h_instr]
+          rw [step_ctx_eval_simrec P v y (a + 1 + P.numRegs)
+                (by omega) (by omega)]
+          rw [show (⟨a + 1 + P.numRegs - (a + 1), by omega⟩
+                  : Fin (P.numRegs + 1))
+                = Fin.last P.numRegs
+                from by apply Fin.ext; simp [Fin.last]; omega]
+          -- Per round-5 blocker R5-B1: see `.assign` comment above.
+          rw [ih_pc]
         | dec i =>
-          unfold branches_pc
-          rw [h_instr]
-          simp only [KMor1.interp_comp, KMor1.interp_succ,
-            I_prev, KMor1.interp_proj]
-          unfold URMState.step
-          rw [dif_pos h_inbounds, h_instr]
-          simp [ih_pc]
+          simp only [branches_pc, h_instr, KMor1.interp_comp,
+            KMor1.interp_succ, I_prev, KMor1.interp_proj]
+          simp only [URMState.step]
+          rw [dif_pos h_inbounds]
+          simp only [h_instr]
+          rw [step_ctx_eval_simrec P v y (a + 1 + P.numRegs)
+                (by omega) (by omega)]
+          rw [show (⟨a + 1 + P.numRegs - (a + 1), by omega⟩
+                  : Fin (P.numRegs + 1))
+                = Fin.last P.numRegs
+                from by apply Fin.ext; simp [Fin.last]; omega]
+          -- Per round-5 blocker R5-B1: see `.assign` comment above.
+          rw [ih_pc]
         | jumpZ i l₁ l₂ =>
-          unfold branches_pc
-          rw [h_instr]
-          simp only [KMor1.interp_comp, KMor1.interp_cond,
-            v_j_prev, KMor1.interp_proj, KMor1.interp_natK']
-          unfold URMState.step
-          rw [dif_pos h_inbounds, h_instr]
+          simp only [branches_pc, h_instr, KMor1.interp_comp,
+            KMor1.interp_cond, v_j_prev, KMor1.interp_proj,
+            KMor1.interp_natK']
+          simp only [URMState.step]
+          rw [dif_pos h_inbounds]
+          simp only [h_instr]
           -- URM side: pc := if regs i = 0 then l₁ else l₂.
           -- K^sim side: cond on v_i_prev (= regs i by ih_regs i).
+          -- Per plan round-6 blocker R6-B1: the K-side's
+          -- `v_i_prev` projection reads the dispatcher's
+          -- `dite`-ctx at slot `a + 1 + i.val`; bridge to
+          -- `simrecVec _ _ y i.castSucc` via `step_ctx_eval_simrec`
+          -- + `Fin.ext`, mirroring Step 7.9's `.jumpZ` block.
+          -- Without this bridge `rw [ih_regs i]` cannot find an
+          -- instance of its LHS pattern in the goal.
+          rw [step_ctx_eval_simrec P v y (a + 1 + i.val) (by omega)
+              (by omega)]
+          rw [show (⟨a + 1 + i.val - (a + 1), by omega⟩
+                : Fin (P.numRegs + 1)) = i.castSucc
+                from by apply Fin.ext; simp [Fin.castSucc]; omega]
           rw [ih_regs i]
-          -- Match the if-then-else shape on both sides.
-          by_cases h_zero : ((URMState.init P v).runFor P y).regs i = 0
-          · rw [h_zero]; simp
-          · rw [if_neg h_zero]; simp [h_zero]
+          -- Per plan round-8 serious finding R8-S1: drop the
+          -- prior `by_cases h_zero` block. After the bridge and
+          -- `rw [ih_regs i]`, both sides reduce to the same
+          -- `if (URMState.runFor _ y).regs i = 0 then l₁ else l₂`
+          -- (URM via `URMState.step`'s `.jumpZ` arm's `pc` field;
+          -- K^sim via `KMor1.interp_cond`'s `@[simp]` rewrite to
+          -- the same `if` shape). Close by implicit `rfl`. If at
+          -- execution Lean displays the two `if` forms differently
+          -- (one via `Decidable.decide`, the other via the
+          -- decidability-instance unfolding), insert a single
+          -- `simp only [KMor1.interp_cond]` here (no `by_cases`).
         | stop =>
-          unfold branches_pc
-          rw [h_instr]
-          simp only [I_prev, KMor1.interp_proj]
-          unfold URMState.step
-          rw [dif_pos h_inbounds, h_instr]
+          simp only [branches_pc, h_instr, I_prev, KMor1.interp_proj]
+          simp only [URMState.step]
+          rw [dif_pos h_inbounds]
+          simp only [h_instr]
+          -- Per round-4 blocker R4-B2 and minor R4-M1: bridge the
+          -- `⟨a + 1 + P.numRegs, _⟩` form to `Fin.last P.numRegs`
+          -- via the shared helper.
+          rw [step_ctx_eval_simrec P v y (a + 1 + P.numRegs)
+                (by omega) (by omega)]
+          rw [show (⟨a + 1 + P.numRegs - (a + 1), by omega⟩
+                  : Fin (P.numRegs + 1))
+                = Fin.last P.numRegs
+                from by apply Fin.ext; simp [Fin.last]; omega]
           exact ih_pc
       · -- Past-end: pcDispatch_default fires.
         push_neg at h_inbounds
-        -- The step context's last slot reads
-        -- `simrecVec ... y (Fin.last P.numRegs)`, which by
-        -- `ih_pc` equals `(runFor y).pc` and is `≥ P.instrs.size`
-        -- by `h_inbounds`.
-        have h_pc_ge :
-            KMor1.simrecVec (baseFamily P) (stepFamily P) v y
-                (Fin.last P.numRegs)
+        -- Lift the in-bounds hypothesis to the dispatcher's ge form
+        -- via the bridged `h_ctx_last_pc`.
+        have h_ctx_ge :
+            (fun idx : Fin (a + 1 + (P.numRegs + 1)) =>
+              if h₁ : idx.val < a + 1 then
+                if h₂ : idx.val = 0 then (y : ℕ)
+                else v ⟨idx.val - 1, by omega⟩
+              else
+                KMor1.simrecVec (baseFamily P) (stepFamily P) v y
+                  ⟨idx.val - (a + 1), by omega⟩)
+                (Fin.last (a + P.numRegs + 1))
               ≥ P.instrs.size := by
-          rw [ih_pc]; exact h_inbounds
+          rw [h_ctx_last_pc]; exact h_inbounds
         rw [KMor1.interp_pcDispatch_default P.instrs.size
-              (fun k => branches_pc P k) (I_prev P) _ h_pc_ge]
+              (fun k => branches_pc P k) (I_prev P) _ h_ctx_ge]
         simp only [I_prev, KMor1.interp_proj]
         -- URM side: step returns s unchanged.
-        unfold URMState.step
+        -- Per R8-S3: use `simp only` for parity with the in-bounds
+        -- branches (both produce the same dite-form).
+        simp only [URMState.step]
         rw [dif_neg (Nat.not_lt_of_ge h_inbounds)]
         exact ih_pc
 ```
 
-Note: the `h_pc_eq` and `h_pc_ge` `have` statements supply
-`pcDispatch_match`'s and `pcDispatch_default`'s context-slot
-hypotheses by reading the previous PC out of the simrec
-component vector via `ih_pc`. The step context's last slot
-(per `simrecVec_succ`'s layout, spec § 3.4) is precisely the
-previous-component value at index `Fin.last P.numRegs`, so
-the hypothesis form is a literal `ih_pc` after substitution.
-Use `mcp__lean-lsp__lean_goal` at each `rw` invocation to
-verify the exact step context shape and adjust if the
-elaborator displays it in a different but equivalent form.
+Note: the `h_ctx_last_pc` and `h_ctx_ge` `have` statements
+(per R2-B1) supply `pcDispatch_match`'s and `pcDispatch_default`'s
+context-slot hypotheses by reducing the `dite`-form context
+produced by `simrecVec_succ` (LawvereKSimInterp.lean:193 – 209)
+via the shared helper `step_ctx_eval_simrec` (added in Step 7.1.5
+per round-4 findings R4-B2 / R4-M3) plus a `Fin.ext`-bridge to
+`Fin.last P.numRegs`, then chaining with `ih_pc`. Use
+`mcp__lean-lsp__lean_goal` at each `rw` invocation to verify the
+exact step context shape and adjust if the elaborator displays it
+in a different but equivalent form.
 
-- [ ] **Step 7.8: Fill the register-`j` step case.**
+- [ ] **Step 7.9: Fill the register-`j` step case.**
 
-Replace the second `sorry` (the register-`j` component) with
-the same shape: `Fin.lastCases_castSucc` plus dispatcher match
-vs default, plus the five `URMInstr` cases. The only structural
-difference is that each branch returns either an updated
-register-`j` value or `v_j_prev` (unchanged). Mirror Step 7.7's
-shape with the per-instruction `if i.val = j.val` discriminator
-handling.
+Replace the second `sorry` (the register-`j` component) with the
+following six-block structure mirroring Step 7.8 (one block per
+`URMInstr` constructor plus past-end). The per-instruction
+discriminator is `by_cases h_eq : i.val = j.val`, matching
+`branches_j`'s shape and `Function.update`'s equality semantics
+on the URM side. The shared helper `step_ctx_eval_simrec`
+(Step 7.1.5) supplies both the `h_ctx_last_pc` reduction and the
+per-register-component bridging at `slot := a + 1 + j.val` (per
+round-4 findings R4-B2, R4-S6, R4-M3). The `set` /
+no-`rw [← hpc]` and split `simp` / `rw [dif_pos]` patterns
+mirror Step 7.8 (R4-B1 and R4-S5 respectively). Use
+`mcp__lean-lsp__lean_goal` at each subcase to confirm goal
+shape; the structure is fixed but the final `rfl` discharges
+may need minor argument adjustments.
 
 ```lean
-      -- (Pattern follows Step 7.7. Each instruction's branch
-      -- either updates register-j via Function.update equality
-      -- on the URM side, or leaves it via `regs j`.)
-      sorry  -- substantial; allocate ~80 LOC; verify via
-             -- mcp__lean-lsp__lean_goal at each subcase
+      -- Set up the step context shape (mirrors Step 7.8).
+      simp only [stepFamily, Fin.lastCases_castSucc]
+      -- Bridging hypothesis: same dite-form last-slot reduction as
+      -- in Step 7.8 (per R2-B1, R4-B2). Re-derived rather than
+      -- shared via a `have` outside the refine because the two
+      -- refine branches live in independent tactic scopes; the
+      -- shared computation lives in `step_ctx_eval_simrec`.
+      have h_ctx_last_pc :
+          (fun idx : Fin (a + 1 + (P.numRegs + 1)) =>
+            if h₁ : idx.val < a + 1 then
+              if h₂ : idx.val = 0 then (y : ℕ)
+              else v ⟨idx.val - 1, by omega⟩
+            else
+              KMor1.simrecVec (baseFamily P) (stepFamily P) v y
+                ⟨idx.val - (a + 1), by omega⟩)
+              (Fin.last (a + P.numRegs + 1))
+            = ((URMState.init P v).runFor P y).pc := by
+        rw [show (Fin.last (a + P.numRegs + 1)
+                : Fin (a + 1 + (P.numRegs + 1)))
+              = ⟨a + P.numRegs + 1, by omega⟩
+              from by apply Fin.ext; simp [Fin.last]]
+        rw [step_ctx_eval_simrec P v y (a + P.numRegs + 1)
+              (by omega) (by omega)]
+        rw [show (⟨a + P.numRegs + 1 - (a + 1), by omega⟩
+                : Fin (P.numRegs + 1))
+              = Fin.last P.numRegs
+              from by apply Fin.ext; simp [Fin.last]; omega]
+        exact ih_pc
+      by_cases h_inbounds :
+          ((URMState.init P v).runFor P y).pc < P.instrs.size
+      · -- In-bounds: pcDispatch_match fires at k = (runFor y).pc.
+        -- Per round-4 blocker R4-B1: `set ... with hpc` already
+        -- substitutes in all hypotheses, so no `rw [← hpc] at
+        -- h_ctx_last_pc` is needed.
+        set pcVal := ((URMState.init P v).runFor P y).pc with hpc
+        rw [KMor1.interp_pcDispatch_match P.instrs.size
+              (fun k => branches_j P j k) (v_j_prev P j) _
+              ⟨pcVal, h_inbounds⟩ h_ctx_last_pc]
+        cases h_instr : P.instrs[pcVal]'h_inbounds with
+        | assign i c =>
+          -- Per R3-S2 / R4-S1: propagate `h_instr` through both
+          -- the K^sim match (inside `branches_j`) and the URM
+          -- match (inside `URMState.step`) via `simp only`;
+          -- bridge the dispatcher's `dite`-ctx slot-`a + 1 + j.val`
+          -- read via `step_ctx_eval_simrec` + `Fin.ext` to
+          -- `j.castSucc` where the K^sim side reads a
+          -- previous-component value (per R4-B2 / R4-S6).
+          -- Per R4-S5: split `dif_pos h_inbounds` out of `simp only`
+          -- into its own `rw`.
+          simp only [branches_j, h_instr]
+          simp only [URMState.step]
+          rw [dif_pos h_inbounds]
+          simp only [h_instr]
+          by_cases h_eq : i.val = j.val
+          · -- Register j is the target: K^sim branch is natK' _ c;
+            -- URM-side regs j = Function.update _ i c j = c.
+            -- Per round-5 S2: no `step_ctx_eval_simrec` bridge is
+            -- needed in this sub-case — both K-side and URM-side
+            -- reduce to the literal `c` with no `simrecVec`
+            -- occurrence and no `i`-vs-`j` register reference.
+            rw [if_pos h_eq]
+            simp only [KMor1.interp_natK']
+            rw [Function.update_apply, if_pos (Fin.ext h_eq).symm]
+          · -- Register j is not the target: branch is v_j_prev;
+            -- URM-side regs j unchanged = ih_regs j.
+            rw [if_neg h_eq]
+            simp only [v_j_prev, KMor1.interp_proj]
+            rw [Function.update_apply,
+                if_neg (fun h => h_eq (Fin.val_eq_of_eq h).symm)]
+            rw [step_ctx_eval_simrec P v y (a + 1 + j.val)
+                  (by omega) (by omega)]
+            rw [show (⟨a + 1 + j.val - (a + 1), by omega⟩
+                    : Fin (P.numRegs + 1))
+                  = j.castSucc
+                  from by apply Fin.ext; simp [Fin.castSucc]; omega]
+            exact ih_regs j
+        | inc i =>
+          simp only [branches_j, h_instr]
+          simp only [URMState.step]
+          rw [dif_pos h_inbounds]
+          simp only [h_instr]
+          by_cases h_eq : i.val = j.val
+          · rw [if_pos h_eq]
+            simp only [KMor1.interp_comp, KMor1.interp_succ,
+              v_j_prev, KMor1.interp_proj]
+            rw [Function.update_apply, if_pos (Fin.ext h_eq).symm]
+            rw [step_ctx_eval_simrec P v y (a + 1 + j.val)
+                  (by omega) (by omega)]
+            rw [show (⟨a + 1 + j.val - (a + 1), by omega⟩
+                    : Fin (P.numRegs + 1))
+                  = j.castSucc
+                  from by apply Fin.ext; simp [Fin.castSucc]; omega]
+            rw [ih_regs j]
+            -- Per round-5 blocker R5-B2: URM-side is
+            -- `s.regs i + 1`, K-side is `s.regs j + 1`. Bridge
+            -- `i` to `j` via the `h_eq : i.val = j.val` witness.
+            -- Rewrite `i ↦ j` in the goal only (per plan round-7
+            -- serious finding R7-S1: the prior `at *` form
+            -- over-broadens, rewriting `h_eq : i.val = j.val` to a
+            -- degenerate `j.val = j.val` and tripping the
+            -- unusedHypothesis linter).
+            rw [show i = j from Fin.ext h_eq]
+          · rw [if_neg h_eq]
+            simp only [v_j_prev, KMor1.interp_proj]
+            rw [Function.update_apply,
+                if_neg (fun h => h_eq (Fin.val_eq_of_eq h).symm)]
+            rw [step_ctx_eval_simrec P v y (a + 1 + j.val)
+                  (by omega) (by omega)]
+            rw [show (⟨a + 1 + j.val - (a + 1), by omega⟩
+                    : Fin (P.numRegs + 1))
+                  = j.castSucc
+                  from by apply Fin.ext; simp [Fin.castSucc]; omega]
+            exact ih_regs j
+        | dec i =>
+          simp only [branches_j, h_instr]
+          simp only [URMState.step]
+          rw [dif_pos h_inbounds]
+          simp only [h_instr]
+          by_cases h_eq : i.val = j.val
+          · rw [if_pos h_eq]
+            simp only [KMor1.interp_comp, KMor1.interp_pred,
+              v_j_prev, KMor1.interp_proj]
+            rw [Function.update_apply, if_pos (Fin.ext h_eq).symm]
+            rw [step_ctx_eval_simrec P v y (a + 1 + j.val)
+                  (by omega) (by omega)]
+            rw [show (⟨a + 1 + j.val - (a + 1), by omega⟩
+                    : Fin (P.numRegs + 1))
+                  = j.castSucc
+                  from by apply Fin.ext; simp [Fin.castSucc]; omega]
+            rw [ih_regs j]
+            -- Per round-5 blocker R5-B2: bridge `i` to `j` —
+            -- URM-side is `s.regs i - 1`, K-side is `s.regs j - 1`.
+            -- Rewrite `i ↦ j` in the goal only (per plan round-7
+            -- serious finding R7-S1: the prior `at *` form
+            -- over-broadens, rewriting `h_eq : i.val = j.val` to a
+            -- degenerate `j.val = j.val` and tripping the
+            -- unusedHypothesis linter).
+            rw [show i = j from Fin.ext h_eq]
+          · rw [if_neg h_eq]
+            simp only [v_j_prev, KMor1.interp_proj]
+            rw [Function.update_apply,
+                if_neg (fun h => h_eq (Fin.val_eq_of_eq h).symm)]
+            rw [step_ctx_eval_simrec P v y (a + 1 + j.val)
+                  (by omega) (by omega)]
+            rw [show (⟨a + 1 + j.val - (a + 1), by omega⟩
+                    : Fin (P.numRegs + 1))
+                  = j.castSucc
+                  from by apply Fin.ext; simp [Fin.castSucc]; omega]
+            exact ih_regs j
+        | jumpZ i l₁ l₂ =>
+          -- jumpZ leaves all registers unchanged. Per plan round-7
+          -- blocker R7-B1: restore the URM-side chain (round 6's
+          -- R6-S3 incorrectly stripped it on the assumption that
+          -- `URMState.step P s`'s `.regs j` projection reduces
+          -- definitionally; in landed Lean
+          -- `URMState.step` is `if h : s.pc < P.instrs.size then …
+          -- else s`, whose outer `if` is not eliminated until the
+          -- proof tactically commits to one branch — so the chain
+          -- is operationally necessary to expose `s.regs j`).
+          simp only [branches_j, h_instr, v_j_prev, KMor1.interp_proj]
+          simp only [URMState.step]
+          rw [dif_pos h_inbounds]
+          simp only [h_instr]
+          -- K^sim returns v_j_prev = ih_regs j after bridging the
+          -- dispatcher's slot-`a + 1 + j.val` read to `j.castSucc`
+          -- (per R4-B2 / R4-S6).
+          rw [step_ctx_eval_simrec P v y (a + 1 + j.val)
+                (by omega) (by omega)]
+          rw [show (⟨a + 1 + j.val - (a + 1), by omega⟩
+                  : Fin (P.numRegs + 1))
+                = j.castSucc
+                from by apply Fin.ext; simp [Fin.castSucc]; omega]
+          exact ih_regs j
+        | stop =>
+          simp only [branches_j, h_instr, v_j_prev, KMor1.interp_proj]
+          simp only [URMState.step]
+          rw [dif_pos h_inbounds]
+          simp only [h_instr]
+          rw [step_ctx_eval_simrec P v y (a + 1 + j.val)
+                (by omega) (by omega)]
+          rw [show (⟨a + 1 + j.val - (a + 1), by omega⟩
+                  : Fin (P.numRegs + 1))
+                = j.castSucc
+                from by apply Fin.ext; simp [Fin.castSucc]; omega]
+          exact ih_regs j
+      · -- Past-end: pcDispatch_default fires; default is v_j_prev.
+        push_neg at h_inbounds
+        have h_ctx_ge :
+            (fun idx : Fin (a + 1 + (P.numRegs + 1)) =>
+              if h₁ : idx.val < a + 1 then
+                if h₂ : idx.val = 0 then (y : ℕ)
+                else v ⟨idx.val - 1, by omega⟩
+              else
+                KMor1.simrecVec (baseFamily P) (stepFamily P) v y
+                  ⟨idx.val - (a + 1), by omega⟩)
+                (Fin.last (a + P.numRegs + 1))
+              ≥ P.instrs.size := by
+          rw [h_ctx_last_pc]; exact h_inbounds
+        rw [KMor1.interp_pcDispatch_default P.instrs.size
+              (fun k => branches_j P j k) (v_j_prev P j) _ h_ctx_ge]
+        simp only [v_j_prev, KMor1.interp_proj]
+        -- URM side: step returns s unchanged ⇒ regs j = ih_regs j.
+        -- Per R8-S3: use `simp only` for parity with the in-bounds
+        -- branches (both produce the same dite-form).
+        simp only [URMState.step]
+        rw [dif_neg (Nat.not_lt_of_ge h_inbounds)]
+        rw [step_ctx_eval_simrec P v y (a + 1 + j.val)
+              (by omega) (by omega)]
+        rw [show (⟨a + 1 + j.val - (a + 1), by omega⟩
+                : Fin (P.numRegs + 1))
+              = j.castSucc
+              from by apply Fin.ext; simp [Fin.castSucc]; omega]
+        exact ih_regs j
 ```
 
-Mirror Step 7.7's structure for the register-`j` component;
-the URM-side `Function.update`'s `j = i.val` vs `j ≠ i.val`
-case-split discharges by Lean's `Function.update_apply` and
-the `if`-`then`-`else` shape on the K^sim side. Each instruction
-case takes ~12-15 LOC; total ~80 LOC for the register branch.
+Each per-instruction block is ~12 – 15 LOC; total ~80 LOC for
+the register-`j` branch (plus the past-end block). The
+`Function.update_apply` / `Fin.ext` rewrite pair is the canonical
+discharge for "register `j` equals register `i`" on the URM
+side, matching K^sim's `if i.val = j.val` discriminator.
 
-- [ ] **Step 7.9: Build to verify the full induction.**
+- [ ] **Step 7.10: Build to verify the full induction.**
 
 Run: `lake build GebLean.Utilities.KSimURMSimulator`
 
 Expected: clean build (zero `sorry` warnings, zero errors,
 zero warnings).
 
-- [ ] **Step 7.10: Axiom audit.**
+- [ ] **Step 7.11: Axiom audit.**
 
 ```bash
-bash scripts/check-axioms.sh GebLean.KSimURMSimulator.URMState.runFor_succ_back
+bash scripts/check-axioms.sh GebLean.KSimURMSimulator.runFor_succ_init_back
 bash scripts/check-axioms.sh GebLean.KSimURMSimulator.simulate_step_match
 ```
 
@@ -1595,7 +2113,7 @@ and
 replace with explicit `Nat.decEq`-using `if … then … else`
 constructs or core `Fin.cases` discriminations.
 
-- [ ] **Step 7.11: Commit Task 7.**
+- [ ] **Step 7.12: Commit Task 7.**
 
 ```bash
 jj describe -m "feat(ertok): add simulate_step_match conjunctive vector induction
@@ -1603,14 +2121,14 @@ jj describe -m "feat(ertok): add simulate_step_match conjunctive vector inductio
 introduce private theorem simulate_step_match : the conjunctive
 vector IH for simulate_interp's induction on y. covers PC and
 all numRegs registers component-by-component via Fin.lastCases.
-include private URMState.runFor_succ_back deriving the back-peel
+include private runFor_succ_init_back deriving the back-peel
 runFor s (y+1) = step (runFor s y) from front-peel runFor_succ
 (:192) and runFor_add (:199), since the fixed s := init P v
 makes the @[simp] front-peel rewrite wrong-direction. base case
 discharged by simrecVec_zero plus the find?-result case-split;
 step case case-by-case on the five URMInstr constructors plus
-past-end. per spec § 4.2, § 4.3. [propext, Quot.sound]-only
-axiom hygiene confirmed on both new declarations."
+past-end. per spec § 4.2, § 4.3. audit axiom hygiene as
+[propext, Quot.sound]-only on both new declarations."
 jj new -m ""
 ```
 
@@ -1640,27 +2158,16 @@ theorem simulate_interp {a : ℕ} (P : URMProgram a)
     (y : ℕ) (v : Fin a → ℕ) :
     (simulate P).interp (Fin.cons y v)
       = ((URMState.init P v).runFor P y).regs P.outputReg := by
-  -- Unfold `simulate` to its underlying simrec; reduce
-  -- `interp_simrec` to `simrecVec` over the public-facing
-  -- context (recvar = `Fin.cons y v 0 = y`; params = v).
-  simp only [simulate, KMor1.interp_simrec]
-  -- The output index is P.outputReg.castSucc; project
-  -- simulate_step_match's register clause at j := P.outputReg.
-  have h := (simulate_step_match P v y).2 P.outputReg
-  -- Match contexts: Fin.cons's slot 0 is y, and params at
-  -- Fin.succ j is v j.
-  convert h using 1
-  · -- Equating `simrecVec ... y P.outputReg.castSucc` on both sides.
-    rfl
-  · -- The parameter projection matches.
-    funext j
-    simp [Fin.cons, Fin.succ]
+  -- Per plan round-1 finding S5: replace the order-dependent
+  -- `convert ... using 1` with an explicit chain. `Fin.cons_zero`
+  -- and `Fin.cons_succ` are existing mathlib `@[simp]` lemmas
+  -- that handle the context-splitting deterministically; the
+  -- final `exact` closes against `simulate_step_match`'s register
+  -- clause projected at `j := P.outputReg`.
+  simp only [simulate, KMor1.interp_simrec, Fin.cons_zero,
+    Fin.cons_succ]
+  exact (simulate_step_match P v y).2 P.outputReg
 ```
-
-Note: the exact `convert ... using 1` arity and the
-`funext` discharge may need adjustment depending on
-`interp_simrec`'s exact unfolding. Use
-`mcp__lean-lsp__lean_goal` to inspect the goal shape.
 
 - [ ] **Step 8.2: Build to verify.**
 
@@ -1680,9 +2187,14 @@ Insert below `simulate_interp`:
 component is level ≤ 1 per `stepFamily_level`). Per spec § 5. -/
 theorem simulate_level {a : ℕ} (P : URMProgram a) :
     (simulate P).level ≤ 2 := by
+  -- Per plan round-2 finding R2-M5: pin the goal to its `.simrec`
+  -- normal form via `change` rather than `simp only [KMor1.level]`,
+  -- which would recursively descend into inner `.level` slots and
+  -- defeat the `baseFamily_level` / `stepFamily_level` bounds.
   unfold simulate
-  simp only [KMor1.level]
-  -- Reduce to: max sup_h sup_g + 1 ≤ 2.
+  change max (Finset.univ.sup (fun i => (baseFamily P i).level))
+             (Finset.univ.sup (fun i => (stepFamily P i).level))
+         + 1 ≤ 2
   apply Nat.add_le_add_right
   apply max_le
   · -- sup_h ≤ 1 (in fact = 0).
@@ -1723,8 +2235,8 @@ j := P.outputReg combined with interp_simrec's context split.
 introduce simulate_level : (simulate P).level ≤ 2 from
 baseFamily_level (sup = 0) and stepFamily_level (sup ≤ 1) via
 KMor1.level's .simrec clause max sup_h sup_g + 1. per spec §
-4.1, § 4.4, § 5. [propext, Quot.sound]-only axiom hygiene
-confirmed."
+4.1, § 4.4, § 5. audit [propext, Quot.sound]-only axiom
+hygiene."
 jj new -m ""
 ```
 
@@ -1838,7 +2350,11 @@ Run:
 ```bash
 lake build
 lake test
-markdownlint-cli2 'docs/**/*.md'
+markdownlint-cli2 \
+  'docs/superpowers/specs/2026-05-21-step-t3-urm-to-ksim-simulator-design.md' \
+  'docs/superpowers/specs/2026-05-21-step-t3-urm-to-ksim-simulator-design.review-*.md' \
+  'docs/superpowers/plans/2026-05-21-step-t3-urm-to-ksim-simulator-plan.md' \
+  'docs/superpowers/plans/2026-05-21-step-t3-urm-to-ksim-simulator-plan.review-*.md'
 jj log -r '..@-' --no-graph --limit 12
 ```
 

@@ -1,5 +1,6 @@
 import GebLean.LawvereKSim
 import GebLean.LawvereKSimInterp
+import GebLean.Utilities.Tower
 
 /-!
 # K^sim-Derived Arithmetic
@@ -263,6 +264,67 @@ private lemma KMor1.cond_aux (n : ℕ) (p : Fin 2 → ℕ) :
 
 example : KMor1.cond.level = 1 := by decide
 
+/-- Constant-`c` morphism at arity 0, built by `c`-fold
+composition of `KMor1.succ` over `KMor1.zero`. Level 0.
+
+Tourlakis 2018 § 0.1.0.2 (p. 1): closure of `K_0 = {λx.x,
+λx.x+1}` under substitution yields all natural-number
+constants. GebLean's `KMor1.zero` is a separate constructor; the
+`succ ∘ zero` pattern realises the same level-0 closure
+principle. -/
+def KMor1.natK : ℕ → KMor1 0
+  | 0     => KMor1.zero
+  | c + 1 =>
+    KMor1.comp KMor1.succ (fun _ : Fin 1 => KMor1.natK c)
+
+/-- The interpretation of `KMor1.natK c` at the empty
+context is `c`. -/
+@[simp] theorem KMor1.interp_natK (c : ℕ) (ctx : Fin 0 → ℕ) :
+    (KMor1.natK c).interp ctx = c := by
+  induction c with
+  | zero => rfl
+  | succ c ih =>
+    simp only [KMor1.natK, KMor1.interp_comp, KMor1.interp_succ]
+    rw [ih]
+
+/-- `KMor1.natK c` has level 0 for every `c`. -/
+theorem KMor1.natK_level (c : ℕ) : (KMor1.natK c).level = 0 := by
+  induction c with
+  | zero => rfl
+  | succ c ih =>
+    change KMor1.level
+        (KMor1.comp KMor1.succ (fun _ : Fin 1 => KMor1.natK c)) = 0
+    unfold KMor1.level
+    have hsup :
+        Fin.maxOfNat 1 (fun _ : Fin 1 => (KMor1.natK c).level) ≤ 0 :=
+      Fin.maxOfNat_le (by intro _; rw [ih])
+    have hsucc : KMor1.level (KMor1.succ : KMor1 1) = 0 := rfl
+    -- Goal contains `fun i : Fin 1 ↦ ((fun _ ↦ natK c) i).level`,
+    -- which is beta-equal but not defeq to the bound in `hsup`;
+    -- `simp only []` beta-normalises both sides for `omega`.
+    simp only []
+    omega
+
+/-- The constant-`c` morphism at arity `n`, obtained by
+composing `KMor1.natK c` with the empty family `Fin.elim0`.
+Level 0. -/
+def KMor1.natK' (n c : ℕ) : KMor1 n :=
+  KMor1.comp (KMor1.natK c) Fin.elim0
+
+/-- The interpretation of `KMor1.natK' n c` at any context is
+`c`. -/
+@[simp] theorem KMor1.interp_natK' (n c : ℕ) (ctx : Fin n → ℕ) :
+    (KMor1.natK' n c).interp ctx = c := by
+  simp only [KMor1.natK', KMor1.interp_comp, KMor1.interp_natK]
+
+/-- `KMor1.natK' n c` has level 0 for every `n` and `c`. -/
+theorem KMor1.natK'_level (n c : ℕ) :
+    (KMor1.natK' n c).level = 0 := by
+  change KMor1.level (KMor1.comp (KMor1.natK c) Fin.elim0) = 0
+  unfold KMor1.level
+  rw [KMor1.natK_level]
+  rfl
+
 /-- Characteristic of the predicate `x ≠ 1` (Tourlakis
 predicate-as-zero convention): `notEq1(x) = 0` when `x ≠ 1`,
 `notEq1(x) = 1` when `x = 1`.
@@ -410,6 +472,122 @@ def KMor1.monus : KMor1 2 := KMor1.swap KMor1.monusSwapped
 
 example : KMor1.monus.level = 2 := by decide
 
+/-- Binary maximum of two natural-number inputs, as a
+`K^sim` morphism. Defined via truncated subtraction:
+`max x y = (x ∸ y) + y`. Closed form: `(maxK).interp v =
+Nat.max (v 0) (v 1)`. Level ≤ 2 (composition of
+`KMor1.add` at level 1 with `KMor1.monus` at level 2 and
+projections at level 0). -/
+def KMor1.maxK : KMor1 2 :=
+  KMor1.comp KMor1.add
+    (fun i : Fin 2 =>
+      match i with
+      | ⟨0, _⟩ => KMor1.comp KMor1.monus (fun j : Fin 2 =>
+                    match j with
+                    | ⟨0, _⟩ => KMor1.proj ⟨0, by decide⟩
+                    | ⟨1, _⟩ => KMor1.proj ⟨1, by decide⟩)
+      | ⟨1, _⟩ => KMor1.proj ⟨1, by decide⟩)
+
+/-- Interpretation of `maxK`: `Nat.max (ctx 0) (ctx 1)`. -/
+@[simp] theorem KMor1.interp_maxK (v : Fin 2 → ℕ) :
+    KMor1.maxK.interp v = Nat.max (v 0) (v 1) := by
+  simp only [KMor1.maxK, KMor1.interp_comp,
+    KMor1.interp_add, KMor1.interp_monus,
+    KMor1.interp_proj]
+  change v 0 - v 1 + v 1 = max (v 0) (v 1)
+  omega
+
+example : KMor1.maxK.level = 2 := by decide
+theorem KMor1.maxK_level : KMor1.maxK.level ≤ 2 := by decide
+
+/-- N-ary maximum of an input vector, as a `K^sim` morphism of
+arity `a`. Recursive: `maxOver 0` is the constant-0 morphism;
+`maxOver (a + 1)` takes the max of slot 0 with `maxOver a`
+applied to the tail. Closed form:
+`(maxOver a).interp v = Fin.maxOfNat a v`. Level ≤ 2 (composition
+of `KMor1.maxK` with projections and `KMor1.zero`). -/
+def KMor1.maxOver : (a : ℕ) → KMor1 a
+  | 0     => KMor1.zero
+  | a + 1 =>
+      KMor1.comp KMor1.maxK
+        (fun i : Fin 2 =>
+          match i with
+          | ⟨0, _⟩ => KMor1.proj ⟨0, Nat.succ_pos a⟩
+          | ⟨1, _⟩ =>
+              KMor1.comp (KMor1.maxOver a)
+                (fun j : Fin a =>
+                  KMor1.proj ⟨j.val + 1, Nat.succ_lt_succ j.isLt⟩))
+
+/-- Interpretation of `maxOver`: `Fin.maxOfNat a v`. -/
+@[simp] theorem KMor1.interp_maxOver :
+    ∀ (a : ℕ) (v : Fin a → ℕ),
+      (KMor1.maxOver a).interp v = Fin.maxOfNat a v := by
+  intro a
+  induction a with
+  | zero =>
+      intro v
+      simp [KMor1.maxOver, KMor1.interp_zero, Fin.maxOfNat]
+  | succ n ih =>
+      intro v
+      simp only [KMor1.maxOver, KMor1.interp_comp,
+        KMor1.interp_maxK, KMor1.interp_proj]
+      rw [ih]
+      -- Goal: max (v 0) (Fin.maxOfNat n (v ∘ Fin.succ-like proj))
+      --     = Fin.maxOfNat (n+1) v.
+      -- RHS unfolds via Fin.foldr_succ to
+      --     max (Fin.foldr n ... 0) (v 0).
+      unfold Fin.maxOfNat
+      rw [Fin.foldr_succ]
+      -- Both sides now have the shape `max (v 0) (Fin.foldr n …)`
+      -- vs. `max (Fin.foldr n …) (v 0)`; close via `Nat.max_comm`
+      -- and reindexing of the proj-into-Fin.succ wrapper.
+      apply Nat.max_comm
+
+example : (KMor1.maxOver 4).level ≤ 2 := by decide
+
+/-- `KMor1.maxOver a` has level ≤ 2 for every arity `a`. -/
+theorem KMor1.maxOver_level :
+    ∀ a, (KMor1.maxOver a).level ≤ 2 := by
+  intro a
+  induction a with
+  | zero =>
+      -- `maxOver 0 = KMor1.zero`; level 0 ≤ 2.
+      change KMor1.level (KMor1.maxOver 0) ≤ 2
+      unfold KMor1.maxOver
+      decide
+  | succ n ih =>
+      change KMor1.level
+          (KMor1.comp KMor1.maxK
+            (fun i : Fin 2 =>
+              match i with
+              | ⟨0, _⟩ => KMor1.proj ⟨0, Nat.succ_pos n⟩
+              | ⟨1, _⟩ =>
+                  KMor1.comp (KMor1.maxOver n)
+                    (fun j : Fin n =>
+                      KMor1.proj ⟨j.val + 1,
+                        Nat.succ_lt_succ j.isLt⟩))) ≤ 2
+      unfold KMor1.level
+      refine Nat.max_le.mpr ⟨?_, ?_⟩
+      · exact KMor1.maxK_level
+      · apply Fin.maxOfNat_le
+        intro i
+        match i with
+        | ⟨0, _⟩ =>
+            -- `proj _` always has level 0.
+            change (0 : ℕ) ≤ 2
+            decide
+        | ⟨1, _⟩ =>
+            -- inner is comp (maxOver n) (proj …); level
+            --   = max ih (Fin.maxOfNat _ (proj_).level = 0).
+            change KMor1.level
+                (KMor1.comp (KMor1.maxOver n)
+                  (fun j : Fin n =>
+                    KMor1.proj
+                      ⟨j.val + 1, Nat.succ_lt_succ j.isLt⟩)) ≤ 2
+            unfold KMor1.level
+            refine Nat.max_le.mpr ⟨ih, ?_⟩
+            exact Fin.maxOfNat_le (fun _ => Nat.zero_le _)
+
 /-- Sign function: `signum(0) = 0`, `signum(n+1) = 1`. Equivalent
 to the level-1 composite `isZero ∘ isZero`: `isZero(n) = 1 - sgn n`,
 so `isZero (isZero n) = sgn n`. Used to normalize `eq`'s {0, ≥1}-
@@ -535,6 +713,53 @@ private lemma KMor1.pow2_aux (n : ℕ) :
   exact KMor1.pow2_aux (ctx 0)
 
 example : KMor1.pow2.level = 2 := by decide
+
+/-- `r`-fold composition of `KMor1.pow2`. `pow2_iter 0` is the
+arity-1 projection at slot 0 (i.e., the identity on `ℕ`);
+`pow2_iter (r + 1)` composes `KMor1.pow2` with `pow2_iter r`.
+Closed form: `(pow2_iter r).interp v = tower r (v 0)`, the
+height-`r` tower of twos applied to the input. Level ≤ 2. -/
+def KMor1.pow2_iter : (r : ℕ) → KMor1 1
+  | 0     => KMor1.proj ⟨0, by decide⟩
+  | r + 1 =>
+      KMor1.comp KMor1.pow2 (fun _ : Fin 1 => KMor1.pow2_iter r)
+
+/-- Interpretation of `pow2_iter r`: `tower r (v 0)`. -/
+@[simp] theorem KMor1.interp_pow2_iter :
+    ∀ (r : ℕ) (v : Fin 1 → ℕ),
+      (KMor1.pow2_iter r).interp v = tower r (v 0) := by
+  intro r
+  induction r with
+  | zero =>
+      intro v
+      simp [KMor1.pow2_iter, KMor1.interp_proj, tower]
+  | succ n ih =>
+      intro v
+      simp only [KMor1.pow2_iter, KMor1.interp_comp,
+        KMor1.interp_pow2]
+      rw [ih]
+      simp [tower]
+
+example : (KMor1.pow2_iter 3).level ≤ 2 := by decide
+
+/-- `KMor1.pow2_iter r` has level ≤ 2 for every `r`. -/
+theorem KMor1.pow2_iter_level :
+    ∀ r, (KMor1.pow2_iter r).level ≤ 2 := by
+  intro r
+  induction r with
+  | zero =>
+      change KMor1.level (KMor1.pow2_iter 0) ≤ 2
+      unfold KMor1.pow2_iter
+      decide
+  | succ n ih =>
+      change KMor1.level
+          (KMor1.comp KMor1.pow2
+            (fun _ : Fin 1 => KMor1.pow2_iter n)) ≤ 2
+      unfold KMor1.level
+      refine Nat.max_le.mpr ⟨?_, ?_⟩
+      · -- pow2.level = 2.
+        decide
+      · exact Fin.maxOfNat_le (fun _ => ih)
 
 /-- Base family for `modAux`: `f₀(0, y) = 0`, `f₁(0, y) = pred(y)`. -/
 private def KMor1.modAux_h : Fin 2 → KMor1 1 := fun i =>

@@ -310,6 +310,14 @@ check_file() {
         local bare
         bare=$(echo "$rest" | sed -E \
             's/^(theorem|lemma|def|instance|abbrev|example|structure|class|inductive) +([^ :(]+).*/\2/')
+        # Skip nameless declarations (the `example` form has no name;
+        # the sed leaves the line unchanged, producing a bare value
+        # that's either the keyword itself or empty — neither is a
+        # valid Lean declaration name. `example`s are test-only and
+        # don't carry committed axioms; type-check suffices.)
+        if [[ "$bare" == "example" ]] || [[ "$bare" == "$rest" ]]; then
+            continue
+        fi
         if [[ -n "$bare" ]]; then
             if [[ -n "$NAMESPACE" ]]; then
                 DECLARATIONS+=("$NAMESPACE.$bare")

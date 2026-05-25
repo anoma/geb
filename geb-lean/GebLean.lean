@@ -41,6 +41,7 @@ import GebLean.LawvereBTPrimrec
 import GebLean.LawvereBTQuot
 import GebLean.LawvereER
 import GebLean.LawvereERArith
+import GebLean.LawvereERKSim
 import GebLean.LawvereERPrimrec
 import GebLean.LawvereERBool
 import GebLean.LawvereERBound
@@ -159,6 +160,7 @@ import GebLean.Utilities.Fintype
 import GebLean.Utilities.Graph
 import GebLean.Utilities.Grothendieck
 import GebLean.Utilities.KArith
+import GebLean.Utilities.KSimURMSimulator
 import GebLean.Utilities.Opposites
 import GebLean.Utilities.OverCategoryEquiv
 import GebLean.Utilities.PowersAndCopowers

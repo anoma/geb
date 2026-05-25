@@ -39,9 +39,7 @@ def kToER : ∀ {a : ℕ} (f : KMor1 a), f.level ≤ 2 → ERMor1 a
         le_trans (le_max_left _ _) h
       have hgs : ∀ i, (gs i).level ≤ 2 := fun i =>
         le_trans
-          (Finset.le_sup
-            (f := fun j => (gs j).level)
-            (Finset.mem_univ i))
+          (Fin.le_maxOfNat (fun j => (gs j).level) i)
           (le_trans (le_max_right _ _) h)
       ERMor1.comp (kToER f hf)
         (fun i => kToER (gs i) (hgs i))
@@ -53,9 +51,7 @@ def kToER : ∀ {a : ℕ} (f : KMor1 a), f.level ≤ 2 → ERMor1 a
       have h_h : ∀ j, (h_fam j).level ≤ 2 := fun j => by
         have h1 : (h_fam j).level ≤ 1 :=
           le_trans
-            (Finset.le_sup
-              (f := fun l => (h_fam l).level)
-              (Finset.mem_univ j))
+            (Fin.le_maxOfNat (fun l => (h_fam l).level) j)
             (le_trans (le_max_left _ _)
               (Nat.le_of_succ_le_succ
                 (by unfold KMor1.level at hyp; exact hyp)))
@@ -63,9 +59,7 @@ def kToER : ∀ {a : ℕ} (f : KMor1 a), f.level ≤ 2 → ERMor1 a
       have h_g : ∀ j, (g_fam j).level ≤ 2 := fun j => by
         have h1 : (g_fam j).level ≤ 1 :=
           le_trans
-            (Finset.le_sup
-              (f := fun l => (g_fam l).level)
-              (Finset.mem_univ j))
+            (Fin.le_maxOfNat (fun l => (g_fam l).level) j)
             (le_trans (le_max_right _ _)
               (Nat.le_of_succ_le_succ
                 (by unfold KMor1.level at hyp; exact hyp)))
@@ -239,9 +233,7 @@ theorem kToER_interp_simrec
   have h_h : ∀ j, (h_fam j).level ≤ 2 := fun j => by
     have h1 : (h_fam j).level ≤ 1 :=
       le_trans
-        (Finset.le_sup
-          (f := fun l => (h_fam l).level)
-          (Finset.mem_univ j))
+        (Fin.le_maxOfNat (fun l => (h_fam l).level) j)
         (le_trans (le_max_left _ _)
           (Nat.le_of_succ_le_succ
             (by unfold KMor1.level at h; exact h)))
@@ -249,9 +241,7 @@ theorem kToER_interp_simrec
   have h_g : ∀ j, (g_fam j).level ≤ 2 := fun j => by
     have h1 : (g_fam j).level ≤ 1 :=
       le_trans
-        (Finset.le_sup
-          (f := fun l => (g_fam l).level)
-          (Finset.mem_univ j))
+        (Fin.le_maxOfNat (fun l => (g_fam l).level) j)
         (le_trans (le_max_right _ _)
           (Nat.le_of_succ_le_succ
             (by unfold KMor1.level at h; exact h)))
@@ -304,9 +294,7 @@ theorem kToER_interp :
         le_trans (le_max_left _ _) h
       have hgs : ∀ i, (gs i).level ≤ 2 := fun i =>
         le_trans
-          (Finset.le_sup
-            (f := fun j => (gs j).level)
-            (Finset.mem_univ i))
+          (Fin.le_maxOfNat (fun j => (gs j).level) i)
           (le_trans (le_max_right _ _) h)
       simp only [kToER, KMor1.interp_comp,
         ERMor1.interp_comp]
@@ -326,9 +314,7 @@ theorem kToER_interp :
       have h_h : ∀ j, (h_fam j).level ≤ 2 := fun j => by
         have h1 : (h_fam j).level ≤ 1 :=
           le_trans
-            (Finset.le_sup
-              (f := fun l => (h_fam l).level)
-              (Finset.mem_univ j))
+            (Fin.le_maxOfNat (fun l => (h_fam l).level) j)
             (le_trans (le_max_left _ _)
               (Nat.le_of_succ_le_succ
                 (by unfold KMor1.level at h; exact h)))
@@ -336,9 +322,7 @@ theorem kToER_interp :
       have h_g : ∀ j, (g_fam j).level ≤ 2 := fun j => by
         have h1 : (g_fam j).level ≤ 1 :=
           le_trans
-            (Finset.le_sup
-              (f := fun l => (g_fam l).level)
-              (Finset.mem_univ j))
+            (Fin.le_maxOfNat (fun l => (g_fam l).level) j)
             (le_trans (le_max_right _ _)
               (Nat.le_of_succ_le_succ
                 (by unfold KMor1.level at h; exact h)))
