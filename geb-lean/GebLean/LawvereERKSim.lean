@@ -6,13 +6,16 @@ import GebLean.LawvereERKSim.Comp
 import GebLean.LawvereERKSim.BSum
 import GebLean.LawvereERKSim.BProd
 import GebLean.LawvereERKSim.Top
+import GebLean.LawvereERKSim.RuntimeBound
+import GebLean.LawvereERKSim.ErToK
+import GebLean.LawvereERKSim.ErToKFunctor
 
 /-!
 # erToK: ER → K^sim_2 via zero-test URM simulation
 
 The compiler half of the erToK construction: emit a `URMProgram` from an
 `ERMor1 a` term such that running the URM long enough produces `e.interp v` in
-the output register. This file re-exports the eight submodules under
+the output register. This file re-exports the submodules under
 `GebLean/LawvereERKSim/`:
 
 - `Compiler`: raw and bounded instructions, fragment emission for each ER
@@ -33,6 +36,19 @@ the output register. This file re-exports the eight submodules under
   the size-relation lemma `bprod_exitPC_eq_size_pred`.
 - `Top`: structural-induction top-level `compileER_pre_stop_correct` and
   the user-facing `compileER_runFor` output-equality theorem.
+- `RuntimeBound`: per-ER-constructor recipe `boundExprKParams`
+  realising Tourlakis 2018 Corollary 0.1.0.27 specialised to `compileER`.
+- `ErToK`: single-output ER-to-K^sim translator `erToK`, with
+  `erToK_level` (level ≤ 2) and `erToK_interp` (interp-faithfulness),
+  realising the ⊇ direction of Tourlakis 2018 Corollary 0.1.0.44
+  at `n = 2`.
+- `ErToKFunctor`: multi-output ER-to-K^sim translator `erToKN`
+  with per-slot `erToKN_interp` / `erToKN_level` and the
+  ext-eq compatibility lemma `erToKN_compat_extEq`; the
+  morphism component `erToKFunctor_map`, functor laws
+  `erToKFunctor_map_id` and `erToKFunctor_map_comp`, and the
+  assembled functor
+  `erToKFunctor : LawvereERCat ⥤ LawvereKSimDCat 2`.
 
 ## References
 
