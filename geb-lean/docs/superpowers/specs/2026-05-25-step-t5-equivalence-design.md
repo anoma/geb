@@ -249,7 +249,7 @@ Six commits on the topic branch `feat/t5-equivalence` (or
 | T5.A.2 | `erToKFunctor_comp_kInterpFunctor` (functor-level strict equality) | ≈ 15 | `ErToKFunctor.lean` |
 | T5.B.1 | New `Equivalence.lean`; strict round-trip equalities `erToKFunctor_comp_kToERFunctor` and `kToERFunctor_comp_erToKFunctor` | ≈ 60 | `Equivalence.lean` |
 | T5.B.2 | Named natural isomorphisms `erToKKToErIso`, `kToErErToKIso` as `eqToIso` of T5.B.1 | ≈ 12 | `Equivalence.lean` |
-| T5.C | `erKSimEquiv` via `Equivalence.mk'`; two `IsEquivalence` instances (`erToKFunctor` and `kToERFunctor`) as projections of mathlib globals; umbrella update | ≈ 45 | `Equivalence.lean`, `LawvereERKSim.lean` |
+| T5.C | `erKSimEquiv` via `Equivalence.mk'`; two `IsEquivalence` instances (`erToKFunctor` and `kToERFunctor`) as projections of mathlib globals; umbrella update | ≈ 60 | `Equivalence.lean`, `LawvereERKSim.lean` |
 
 T5.0 produces no code commit; verification only. Commits start
 at T5.A.1.
