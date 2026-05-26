@@ -70,10 +70,14 @@ commit log:
 ## Topic branch
 
 All commits land on bookmark `feat/t5-equivalence` (already
-created and pointing at the spec convergence commit
-`75ecc025`). The implementer advances the bookmark after
-each `jj commit` via `jj bookmark move feat/t5-equivalence
---to @-`.
+created during the spec/plan phase). The implementer advances
+the bookmark after each `jj commit` via `jj bookmark move
+feat/t5-equivalence --to @-`. The umbrella docstring's
+`ErToKFunctor` bullet remains intentionally unchanged across
+the T5.A.1 / T5.A.2 commits; per spec §10 *Umbrella update*,
+the umbrella edit rides on T5.C, so the SDD subagent must not
+update the umbrella in T5.A.1 / T5.A.2 (doing so would break
+per-task scope discipline).
 
 ## Common verification commands
 
@@ -135,6 +139,18 @@ bash scripts/check-axioms.sh
 Expected: reports only `[propext, Quot.sound]` (the standard
 envelope, after AXIOM_ALLOW suppression).
 
+- [ ] **Step 2.5: Confirm baseline test suite is clean**
+
+Run:
+
+```bash
+lake test
+```
+
+Expected: succeeds with no failures. Surfaces any pre-existing
+test-suite breakage at the T5.0 boundary rather than at Task 5
+Step 7 (where it would have to halt mid-implementation).
+
 - [ ] **Step 3: Assemble the §6.3 proof-shape stub**
 
 Hold the following Lean snippet (do not yet write it to
@@ -181,7 +197,7 @@ end GebLean
 - [ ] **Step 4: Type-check the stub via the lean-lsp MCP**
 
 Call the `mcp__lean-lsp__lean_run_code` tool with the entire
-file content from Step 3 as the `code` parameter. The
+snippet content from Step 3 as the `code` parameter. The
 lean-lsp MCP runs the snippet against the project's mathlib
 pin and lakefile options, avoiding the `lake env lean`
 pitfall (which CLAUDE.md bans because it misses
@@ -190,12 +206,11 @@ pitfall (which CLAUDE.md bans because it misses
 Expected: no errors reported by the MCP. The `example` block
 elaborates, confirming the §6.3 proof shape typechecks.
 
-Alternative if the MCP is unavailable: temporarily place the
-stub at `GebLean/Scratch/T5Stubs.lean` (creating the
-`Scratch/` directory if it does not exist), add it to a
-local `lakefile.toml` `lean_lib` target, run `lake build`,
-then delete the file and lakefile entry. Do not commit any
-scratch artifact.
+If the lean-lsp MCP is unavailable in the SDD subagent's
+environment: HALT and surface that as a tooling-pre-condition
+issue. Do not attempt to substitute `lake env lean` (banned by
+CLAUDE.md) or to commit a scratch source file inside the
+project tree.
 
 If type-check fails: HALT. Do not proceed to T5.A.1. File a
 finding, revise the spec, dispatch a new adversarial-review
@@ -203,12 +218,12 @@ round.
 
 - [ ] **Step 5: Assemble the §6.7 instance stub**
 
-Append the following snippet to the buffer from Step 3 (the
-combined buffer is passed to lean-lsp in Step 6):
+Append the following snippet (verbatim, without an outer
+`namespace GebLean`/`end GebLean` wrapper — the buffer from
+Step 3 already opens that namespace and does not close it
+until the very end) to the in-memory buffer:
 
 ```lean
-namespace GebLean
-
 -- §6.7 instance-availability stub:
 -- Verifies that after defining the Equivalence via mk',
 -- the explicit instance forms elaborate.
@@ -230,38 +245,62 @@ section InstanceStub
     rw [← hF]
     exact myEquiv.isEquivalence_functor
 end InstanceStub
-
-end GebLean
 ```
 
-- [ ] **Step 6: Type-check the augmented stub**
+The Step 3 buffer ends with `end GebLean`; **remove that
+trailing line before appending** this snippet, and re-add a
+single `end GebLean` at the very end of the combined buffer.
+The result has one `namespace GebLean ... end GebLean` block
+wrapping both stubs.
+
+- [ ] **Step 6: Assemble the §6.1 motive-elaboration stub**
+
+Append the following snippet to the buffer immediately before
+the final `end GebLean`:
+
+```lean
+-- §6.1 motive-elaboration stub:
+-- Verifies that the spelled-out lift function inside the
+-- Quotient.inductionOn motive elaborates against the
+-- post-`unfold erToKFunctor_map` goal. The proof body is
+-- irrelevant (only motive elaboration matters); `sorry`
+-- inside a non-committed example is acceptable.
+example {n m : ℕ} (e : ERMorNQuo n m) :
+    (erToKFunctor_map e).hom.interp = e.interp := by
+  unfold erToKFunctor_map
+  refine Quotient.inductionOn
+    (motive := fun (e : ERMorNQuo n m) =>
+      KMorNQuo.interp
+        (Quotient.liftOn (s := erMorNSetoid n m) e
+          (fun rec =>
+            { hom := Quotient.mk (kMorNSetoid n m) (erToKN rec),
+              depth_witness := Quotient.mk _
+                { rep := erToKN rec,
+                  rep_level := fun i => erToKN_level rec i,
+                  rep_eq := rfl } })
+          _).hom
+      = ERMorNQuo.interp e) e ?_
+  intro rec
+  sorry
+```
+
+- [ ] **Step 7: Type-check the fully assembled stub**
 
 Re-invoke the `mcp__lean-lsp__lean_run_code` tool with the
-*combined* content (the §6.3 stub from Step 3 plus the §6.7
-section appended in Step 5).
+combined buffer (the §6.3 stub from Step 3, the §6.7 section
+appended in Step 5, and the §6.1 motive example appended in
+Step 6).
 
-Expected: no errors. Confirms that `Equivalence.mk'` is the
-correct constructor name with the four-arg + autoparam
-signature, and that the `isEquivalence_functor` projection
-form elaborates.
+Expected: no errors (a `sorry` warning on the §6.1 example
+is expected and acceptable — it is the proof-body placeholder,
+not a type-check failure). Confirms that
+`Equivalence.mk'` is the correct constructor name with the
+four-arg + autoparam signature, the `isEquivalence_functor`
+projection form elaborates, and the §6.1 motive's spelled-out
+lift function elaborates against the post-`unfold` goal.
 
-If it fails: HALT. Same handling as Step 4.
-
-- [ ] **Step 7: Clean up any scratch artifacts**
-
-If the lean-lsp MCP was used (the recommended path), no
-on-disk artifact remains; skip this step.
-
-If the alternative `GebLean/Scratch/T5Stubs.lean` path was
-used, remove the file and its `lakefile.toml` entry now:
-
-```bash
-rm GebLean/Scratch/T5Stubs.lean
-rmdir GebLean/Scratch  # if empty
-# manually revert the lakefile.toml lean_lib addition
-```
-
-The stub has served its purpose. No artifact is committed.
+If it fails (other than the `sorry` warning): HALT. Same
+handling as Step 4.
 
 - [ ] **Step 8: Confirm no working-copy changes**
 
@@ -485,9 +524,8 @@ jj commit -m 'feat(ertok): add erToKFunctor_comp_kInterp'
 jj bookmark move feat/t5-equivalence --to @-
 ```
 
-(Subject `add erToKFunctor_comp_kInterp` is 33 chars; with
-the `feat(ertok):` prefix plus separating space (13 chars),
-total 46 chars, well under the ≤ 72-char target.)
+Verify the subject fits within the ≤ 72-char target before
+running `jj commit`.
 
 ---
 
