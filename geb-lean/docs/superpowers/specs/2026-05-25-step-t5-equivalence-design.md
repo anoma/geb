@@ -19,7 +19,7 @@
   - [6.4 `kToERFunctor_comp_erToKFunctor`](#64-ktoerfunctor_comp_ertokfunctor)
   - [6.5 `erToKKToErIso` and `kToErErToKIso`](#65-ertokktoeriso-and-ktoerertokiso)
   - [6.6 `erKSimEquiv`](#66-erksimequiv)
-  - [6.7 `IsEquivalence` instances](#67-isequivalence-instances)
+  - [6.7 `IsEquivalence` typeclass availability](#67-isequivalence-typeclass-availability)
 - [7 Axiom budget](#7-axiom-budget)
 - [8 Test plan](#8-test-plan)
 - [9 Scope guardrails](#9-scope-guardrails)
@@ -50,26 +50,31 @@ LawvereERCat ≌ LawvereKSimDCat 2
 
 from the now-landed `erToKFunctor` (T4, PR #201) and the
 previously-landed `kToERFunctor` (kToER work). This is the
-categorical-equivalence statement of Tourlakis 2018 §0.1.0.44 at
-`n = 2`, the headline result the ER ↔ K^sim_2 workstream has
-been building toward.
+categorical-equivalence statement of Tourlakis 2018 Corollary
+0.1.0.44 at `n = 2`.
 
-The mathematical content T5 delivers is in fact strictly
-stronger than the master-spec §11 obligation: T5 proves the two
-round-trip composites
+T5 proves the two round-trip composites
 `erToKFunctor ⋙ kToERFunctor = 𝟙 LawvereERCat` and
 `kToERFunctor ⋙ erToKFunctor = 𝟙 (LawvereKSimDCat 2)` as
-strict equalities of functors (an isomorphism of categories,
-not merely a categorical equivalence). The natural isomorphisms
-the master spec requires are then derived as `eqToIso` of these
-strict equalities, and the `Equivalence` packaging consumes
-those isos.
+strict equalities of functors (theorem-level, conditional on
+the proof shapes in §6.3/§6.4 going through under the current
+mathlib pin). The natural isomorphisms the master spec requires
+are then `eqToIso` of these strict equalities; the
+`CategoryTheory.Equivalence` packaging consumes those isos via
+the raw structure constructor `Equivalence.mk'` (see §6.6) so
+that the stored `unitIso` and `counitIso` are the user-supplied
+`eqToIso`s, not the adjointified forms that the smart
+constructor `Equivalence.mk` would produce.
 
-The proof technique that makes the strict-equality strengthening
-free is faithfulness of the two interpretation functors
+The proof technique that yields the strict-equality strengthening
+without additional proof effort beyond what faithfulness supplies
+is faithfulness of the two interpretation functors
 `erInterpFunctor` and `kInterpFunctor`, combined with the two
 landed functor-level interp-preservation equalities. Section 6
-gives the recipe.
+gives the recipe. T5.0 (baseline verification) includes a
+type-check of a stub form of §6.3's proof shape so that the
+spec's "strict equality" claim is verified before T5-B proper
+begins.
 
 T5 decomposes into three sub-phases, executed in order:
 
@@ -88,9 +93,12 @@ T5 decomposes into three sub-phases, executed in order:
   Two strict functor equalities for the round-trip composites,
   proved via faithfulness; their `eqToIso` images supply the
   natural isomorphisms the master spec calls for.
-- **T5-C — Equivalence packaging.** The `CategoryTheory.Equivalence`
-  term plus `Functor.IsEquivalence` typeclass instances for
-  both functors.
+- **T5-C — Equivalence packaging.** The
+  `CategoryTheory.Equivalence` term via the raw structure
+  constructor `Equivalence.mk'`. Mathlib's global instances on
+  `Equivalence` supply `Functor.IsEquivalence` for both functors
+  through typeclass search (no explicit named instances; see
+  §6.7).
 
 ## 2 Inputs and prerequisites
 
@@ -119,15 +127,15 @@ Binding inputs for the T5 spec and implementation phases:
 - T4 landed surface as documented in
   [`docs/superpowers/plans/2026-05-25-post-t4-handoff.md`](../plans/2026-05-25-post-t4-handoff.md)
   § T4 actually-landed surface.
-- Tourlakis 2018, *Topics in PR Complexity*, §0.1.0.44 (the
-  equivalence statement):
+- Tourlakis 2018, *Topics in PR Complexity*, Corollary 0.1.0.44
+  (the equivalence statement):
   [`.claude/docs/arithmetic-hierarchies/PR-complexity-topics.pdf`](../../../.claude/docs/arithmetic-hierarchies/PR-complexity-topics.pdf).
 - Bottom-up named-composite discipline rule:
   [`.claude/rules/lean-coding.md`](../../../.claude/rules/lean-coding.md)
   § Bottom-up named-composite discipline for categorical
   equivalences.
 
-T5 transcribes Tourlakis §0.1.0.44 as a categorical equivalence
+T5 transcribes Tourlakis Corollary 0.1.0.44 as a categorical equivalence
 at `n = 2`; T5 itself introduces no novel mathematics, only
 categorical packaging of already-landed proofs.
 
@@ -139,7 +147,7 @@ adds an import to the umbrella.
 | File | Change | Approx LOC delta |
 | --- | --- | --- |
 | `GebLean/LawvereERKSim/ErToKFunctor.lean` | Add `import GebLean.LawvereKSimDCatInterp`; add T5-A's two theorems at end of `namespace GebLean` | +35 |
-| `GebLean/LawvereERKSim/Equivalence.lean` (new) | T5-B and T5-C content: strict round-trip equalities, their `eqToIso` natural isomorphisms, and the `Equivalence` packaging plus `IsEquivalence` instances | ≈ 140 |
+| `GebLean/LawvereERKSim/Equivalence.lean` (new) | T5-B and T5-C content: strict round-trip equalities, their `eqToIso` natural isomorphisms, and the `Equivalence` packaging via `Equivalence.mk'` | ≈ 110 |
 | `GebLean/LawvereERKSim.lean` (umbrella) | Add `import GebLean.LawvereERKSim.Equivalence`; extend the module docstring's bulleted submodule list to mention `Equivalence` | +6 |
 
 No other file is touched. No `lakefile.toml` change. No CI or
@@ -147,22 +155,13 @@ script change.
 
 The new module `GebLean/LawvereERKSim/Equivalence.lean` follows
 the project's mandatory module-docstring template (see
-§ Documentation in `.claude/rules/lean-coding.md`):
-
-```text
-/-!
-# Equivalence — categorical equivalence LawvereERCat ≌ LawvereKSimDCat 2
-...
-## Main definitions
-...
-## Main statements
-...
-## References
-...
-## Tags
-...
--/
-```
+§ Documentation in `.claude/rules/lean-coding.md`). The module
+docstring's sections will be: `# Title`, brief summary,
+`## Main definitions`, `## Main statements`, `## Implementation
+notes` (commits to the `Equivalence.mk'` constructor choice and
+the `cat_disch` triangle discharge per §6.6), `## References`,
+and `## Tags`. The optional `## Notation` section is omitted as
+no new notation is introduced.
 
 The `Equivalence.lean` module sits at the same level as
 `ErToK.lean` and `ErToKFunctor.lean` under
@@ -210,12 +209,14 @@ The two equalities are `theorem`s; the two isomorphisms are
 | Name | Type |
 | --- | --- |
 | `erKSimEquiv` | `LawvereERCat ≌ LawvereKSimDCat 2` |
-| `instance` | `erToKFunctor.IsEquivalence` |
-| `instance` | `kToERFunctor.IsEquivalence` |
 
-`erKSimEquiv` is a `def`; the two `IsEquivalence` instances are
-anonymous `instance` declarations referring to
-`erKSimEquiv.isEquivalence_functor` and the symmetric form.
+`erKSimEquiv` is a `def`. No explicit `IsEquivalence` instances
+are emitted: mathlib's global `Equivalence.isEquivalence_functor`
+and `Equivalence.isEquivalence_inverse` instances (at
+`Mathlib/CategoryTheory/Equivalence.lean:630` and `:632`) supply
+`erToKFunctor.IsEquivalence` and `kToERFunctor.IsEquivalence`
+through Lean's typeclass search applied to `erKSimEquiv`. See §6.7
+for the verification that this elaboration succeeds.
 
 ### 4.4 Naming rationale
 
@@ -239,15 +240,20 @@ Six commits on the topic branch `feat/t5-equivalence` (or
 
 | Task | Deliverable | Approx LOC | File(s) |
 | --- | --- | --- | --- |
-| T5.0 | Baseline verification: `lake build`, `scripts/check-axioms.sh`, `markdownlint-cli2`, doctoc-check clean on fresh branch | 0 | — |
+| T5.0 | Baseline verification: `lake build`, `scripts/check-axioms.sh`, `markdownlint-cli2`, doctoc-check, plus stub type-check of §6.3's proof shape and §6.7's typeclass-search assumption — all clean on fresh branch | 0 | — |
 | T5.A.1 | `erToKFunctor_map_interp` (quotient-level interp preservation) | ≈ 18 | `ErToKFunctor.lean` |
 | T5.A.2 | `erToKFunctor_comp_kInterpFunctor` (functor-level strict equality) | ≈ 15 | `ErToKFunctor.lean` |
 | T5.B.1 | New `Equivalence.lean`; strict round-trip equalities `erToKFunctor_comp_kToERFunctor` and `kToERFunctor_comp_erToKFunctor` | ≈ 60 | `Equivalence.lean` |
 | T5.B.2 | Named natural isomorphisms `erToKKToErIso`, `kToErErToKIso` as `eqToIso` of T5.B.1 | ≈ 12 | `Equivalence.lean` |
-| T5.C | `erKSimEquiv`; `instance erToKFunctor.IsEquivalence`; `instance kToERFunctor.IsEquivalence`; umbrella update | ≈ 60 | `Equivalence.lean`, `LawvereERKSim.lean` |
+| T5.C | `erKSimEquiv` via `Equivalence.mk'`; umbrella update | ≈ 30 | `Equivalence.lean`, `LawvereERKSim.lean` |
 
 T5.0 produces no code commit; verification only. Commits start
 at T5.A.1.
+
+LOC estimates above include docstring, AXIOM_ALLOW comment,
+signature, and proof body. The post-T4 handoff's smaller "Lean
+lines" figures (T5-A.1 ≈ 15, T5-A.2 ≈ 10) count only the proof
+body; the spec's envelope is canonical.
 
 Critical path: T5.0 → T5.A.1 → T5.A.2 → T5.B.1 → T5.B.2 → T5.C.
 T5.B.1 depends on both T5.A.2 (the ER → K functor equality)
@@ -281,9 +287,34 @@ theorem erToKFunctor_map_interp {n m : ℕ}
 ```
 
 Mirror: `kToERFunctor_map_interp` at
-`LawvereKSimER.lean:488–520`. The motive-shape detail (the
-`Quotient.liftOn` placeholders) is identical to the mirror's
-form, with K/ER swapped.
+`LawvereKSimER.lean:488–520`. The proof shape mirrors the K-side
+structurally, with three asymmetries:
+
+- The mirror destructures `f : KSimMor 2 n m` via `rcases f
+  with ⟨fh, fdw⟩` and applies `Quotient.inductionOn` to the
+  depth-witness `fdw`, because `KSimMor` is a sigma over a
+  depth witness. T5-A.1 applies `Quotient.inductionOn` directly
+  to `e : ERMorNQuo n m`, since `LawvereERCat`'s morphisms are
+  a bare quotient (no depth witness wrapping).
+- The mirror's RHS extracts `.hom.interp` from `f : KSimMor 2`;
+  the spec's signature places `.hom.interp` on the LHS, from
+  `(erToKFunctor_map e).hom : KMorNQuo n m`. Both sides have
+  the same type `(Fin n → ℕ) → (Fin m → ℕ)`; the dot-notation
+  resolution `.hom.interp` uses `KSimMor.hom` then
+  `KMorNQuo.interp` (defined at
+  `LawvereKSimDCatInterp.lean:25`).
+- The mirror's inner `change` reduces to comparing two
+  `ERMor1`-level interps; T5-A.1's inner `change` compares two
+  `KMor1`-level interps via `erToKN`, since `erToKN rec` returns
+  `KMorN n m` (not `ERMorN n m`).
+
+The motive's `Quotient.liftOn (s := erMorNSetoid n m) e _ _`
+form leaves two underscores (the lift function and the
+well-definedness proof). T5.0 baseline includes a stub
+type-check that this elaborates against the post-`unfold` goal;
+if Lean's elaborator cannot infer the underscores from the
+motive's expected type, the implementation spells them out
+explicitly, as the mirror does at `LawvereKSimER.lean:497–501`.
 
 ### 6.2 `erToKFunctor_comp_kInterpFunctor`
 
@@ -302,7 +333,10 @@ theorem erToKFunctor_comp_kInterpFunctor :
 Mirror: `kToERFunctor_comp_erInterpFunctor` at
 `LawvereKSimER.lean:538–547`. The obj equality `(_ ⥤ _).obj n =
 n` is `rfl` for both functors (both are identity on objects);
-this collapses `Functor.ext`'s `eqToHom` transports trivially.
+this collapses `Functor.ext`'s `eqToHom` transports to `𝟙 _`,
+which `simp only [eqToHom_refl, Category.id_comp,
+Category.comp_id]` discharges before the inner `change`/`rw`
+chain begins.
 
 ### 6.3 `erToKFunctor_comp_kToERFunctor`
 
@@ -382,51 +416,84 @@ def kToErErToKIso :
 
 ### 6.6 `erKSimEquiv`
 
+Mathlib's `CategoryTheory.Equivalence` (at
+`Mathlib/CategoryTheory/Equivalence.lean:85–105`) is declared
+with `where mk' ::`, exposing two constructors:
+
+- `Equivalence.mk'` (the raw structure constructor): takes the
+  four data fields plus the triangle identity
+  `functor_unitIso_comp` as an autoparam defaulting to
+  `by cat_disch`. Stores the user-supplied `unitIso` and
+  `counitIso` verbatim.
+- `Equivalence.mk` (the smart constructor at line 351): takes
+  the same four data fields without the triangle, and stores
+  `adjointifyη η ε` in the `unitIso` slot. This corrects the
+  user-supplied unit so that the triangle identity holds by
+  construction, but the stored `unitIso` differs from the input.
+
+T5 uses `Equivalence.mk'` so that
+`erKSimEquiv.unitIso = erToKKToErIso.symm` and
+`erKSimEquiv.counitIso = kToErErToKIso` definitionally. This
+preserves the strict-equality strengthening at the packaging
+level (downstream `rfl`-rewrites against `erKSimEquiv.unitIso`
+collapse to `eqToIso _ |>.symm` directly).
+
 ```lean
 def erKSimEquiv : LawvereERCat ≌ LawvereKSimDCat 2 :=
-  CategoryTheory.Equivalence.mk
+  CategoryTheory.Equivalence.mk'
     erToKFunctor
     kToERFunctor
     erToKKToErIso.symm
     kToErErToKIso
 ```
 
-The `Equivalence.mk` signature in mathlib takes:
-`(F : C ⥤ D) (G : D ⥤ C) (η : 𝟙 C ≅ F ⋙ G) (ε : G ⋙ F ≅ 𝟙 D)`
-plus an autoparam `functor_unitIso_comp : ∀ X, F.map (η.hom.app X)
-≫ ε.hom.app (F.obj X) = 𝟙 (F.obj X) := by aesop_cat`.
+The triangle identity is discharged by the `cat_disch`
+autoparam. Tracing the reduction: `erToKKToErIso.symm.hom.app X`
+is `(eqToIso erToKFunctor_comp_kToERFunctor).symm.hom.app X`,
+which by `eqToIso_symm` and `eqToIso_hom` is
+`eqToHom (h.symm)` for `h : 𝟙 X = (erToKFunctor ⋙
+kToERFunctor).obj X` derived from
+`erToKFunctor_comp_kToERFunctor.symm`. Both
+`(erToKFunctor ⋙ kToERFunctor).obj X = X` and
+`(kToERFunctor ⋙ erToKFunctor).obj X = X` are `rfl` (both
+functors are identity on objects), so `h` is `rfl` and
+`eqToHom rfl = 𝟙 X`. Similarly `kToErErToKIso.hom.app
+(erToKFunctor.obj X) = 𝟙 (erToKFunctor.obj X)`. The triangle
+LHS reduces to `erToKFunctor.map (𝟙 X) ≫ 𝟙 _ =
+𝟙 _ ≫ 𝟙 _ = 𝟙 _`, closed by `cat_disch`.
 
-The triangle identity is expected to reduce trivially:
-`η.hom.app X` and `ε.hom.app X` are both `eqToHom rfl = 𝟙 X`
-(both obj equalities `(erToKFunctor ⋙ kToERFunctor).obj X = X`
-and `(kToERFunctor ⋙ erToKFunctor).obj X = X` are `rfl`), so the
-composite reduces to `𝟙 X ≫ 𝟙 X = 𝟙 X` by `Category.id_comp`.
-`aesop_cat` is expected to close this; if not, the manual
-discharge is `intro X; simp` or `intro X; dsimp; rfl`.
+If implementation finds that `cat_disch` does not close it under
+the current mathlib pin, the manual discharge is
+`(by intro X; simp [eqToIso_symm, eqToIso_hom, eqToHom_refl])`
+or `(by intro X; dsimp; rfl)` provided as an explicit fifth
+argument to `Equivalence.mk'`.
 
-The implementation phase verifies the autoparam closes; if a
-manual discharge is needed, it is added as a `(by ...)`
-argument to `Equivalence.mk`.
+### 6.7 `IsEquivalence` typeclass availability
 
-### 6.7 `IsEquivalence` instances
+Mathlib provides two global `instance`s at
+`Mathlib/CategoryTheory/Equivalence.lean:630` and `:632`:
 
 ```lean
-instance : erToKFunctor.IsEquivalence :=
-  erKSimEquiv.isEquivalence_functor
-
-instance : kToERFunctor.IsEquivalence :=
-  erKSimEquiv.symm.isEquivalence_functor
+instance isEquivalence_functor (e : C ≌ D) : e.functor.IsEquivalence
+instance isEquivalence_inverse (e : C ≌ D) : e.inverse.IsEquivalence
 ```
 
-Each is a one-liner. The mathlib accessor name
-`isEquivalence_functor` versus `isEquivalenceFunctor` (or any
-similar variant under mathlib's current pin) is verified during
-T5.C implementation; the dispatch structure is fixed.
+Since `erKSimEquiv.functor` and `erKSimEquiv.inverse` reduce
+definitionally to `erToKFunctor` and `kToERFunctor` respectively
+(by the `Equivalence.mk'` field-storage in §6.6), Lean's typeclass
+search finds `IsEquivalence erToKFunctor` and
+`IsEquivalence kToERFunctor` automatically from the existence of
+`erKSimEquiv`.
 
-The K-side instance routes through `erKSimEquiv.symm` (the
-`Equivalence` reverses by swapping `functor` and `inverse`),
-producing the `IsEquivalence` for `kToERFunctor` from the same
-packaging.
+T5 therefore does **not** emit explicit named instances; the
+global instances suffice. T5.0 baseline verifies this assumption
+by checking that `example : erToKFunctor.IsEquivalence :=
+inferInstance` and the dual elaborate cleanly. If typeclass
+search fails to unfold `erKSimEquiv.functor` to `erToKFunctor`
+under the current mathlib pin (unlikely, but unverified at spec
+time), T5.C falls back to two explicit one-liner instances
+`instance : erToKFunctor.IsEquivalence := inferInstanceAs _` or
+similar — but the spec's default is no explicit instances.
 
 ## 7 Axiom budget
 
@@ -444,7 +511,6 @@ exceptions.
 | `kToERFunctor_comp_erToKFunctor` | yes | symmetric |
 | `erToKKToErIso`, `kToErErToKIso` | yes (each) | `eqToIso` of strict equalities |
 | `erKSimEquiv` | yes | both isos |
-| `instance erToKFunctor.IsEquivalence`, `instance kToERFunctor.IsEquivalence` | yes (each) | `erKSimEquiv` |
 
 The AXIOM_ALLOW comment immediately precedes each declaration
 (or sits inside its `/-- … -/` docstring), matching the
@@ -465,10 +531,10 @@ Expected post-T5 `scripts/check-axioms.sh` envelope:
 `[propext, Quot.sound]` — no Classical.choice visible in CI
 output after suppression. T5 introduces no new axiom beyond
 what `erToK_interp` already brings: `CategoryTheory.Equivalence`,
-`eqToIso`, `Faithful.map_injective`, and the `IsEquivalence`
-typeclass have no Classical.choice content of their own
-(verified by the mirror's clean envelope on
-`LawvereKSimER.lean`).
+`eqToIso`, `Faithful.map_injective`, and the mathlib global
+`isEquivalence_functor` / `isEquivalence_inverse` instances have
+no Classical.choice content of their own (verified by the
+mirror's clean envelope on `LawvereKSimER.lean`).
 
 ## 8 Test plan
 
@@ -541,12 +607,16 @@ Explicitly out of T5:
   commits total (T5.0 baseline produces no code change and
   hence no commit; commits start at T5.A.1).
 - **Commit message conventions.** All-lowercase subject;
-  imperative present tense; no trailing period; ≤ 72 chars.
+  imperative present tense; no trailing period; ≤ 72 chars
+  (subject including prefix). The scope `(ertok)` is used for
+  T5.A commits (which extend `ErToKFunctor.lean`, an `ertok`-
+  scoped file); `(equivalence)` is used for T5.B and T5.C
+  commits (which create and populate `Equivalence.lean`).
   Suggested subjects:
-  - T5.A.1: `feat(equivalence): add erToKFunctor_map_interp`
-  - T5.A.2: `feat(equivalence): add erToKFunctor_comp_kInterpFunctor`
+  - T5.A.1: `feat(ertok): add erToKFunctor_map_interp`
+  - T5.A.2: `feat(ertok): add erToKFunctor_comp_kInterp`
   - T5.B.1: `feat(equivalence): add round-trip strict equalities`
-  - T5.B.2: `feat(equivalence): add eqToIso natural isomorphisms`
+  - T5.B.2: `feat(equivalence): add eqToIso natural isos`
   - T5.C: `feat(equivalence): package LawvereERCat ≌ LawvereKSimDCat 2`
 - **Verification before each commit.**
   1. `lake build` succeeds.
@@ -554,8 +624,10 @@ Explicitly out of T5:
   3. `markdownlint-cli2 '**/*.md'` clean if any `.md` changed.
   4. `doctoc '**/*.md'` regenerated where any `.md` with more
      than one `##` heading changed.
-  5. `lake test` succeeds (only formality at this layer; no new
-     tests in T5 per §8).
+  5. `lake test` succeeds (the pre-T5 test suite runs unchanged;
+     §8 commits T5 to add no new tests, so this check safeguards
+     against accidental breakage of existing tests, not against
+     new T5 content).
 - **Umbrella update.** After T5.B.1 creates
   `Equivalence.lean`, the umbrella file
   `GebLean/LawvereERKSim.lean` adds
@@ -626,7 +698,7 @@ identifier; verify that the two `rw`s commute with the surface
 
 Claim: every named construction carries at least one citation
 in its docstring — to the mirror lemma, to the master spec, to
-Tourlakis 2018 §0.1.0.44, or to the post-T4 handoff.
+Tourlakis 2018 Corollary 0.1.0.44, or to the post-T4 handoff.
 
 Adversary obligation: enumerate every declaration in §4;
 confirm a citation will appear in its `/-- … -/` block; flag
@@ -659,15 +731,15 @@ any divergence and propose the correct invocation.
 
 ### 11.7 Scope guardrails complete
 
-Claim: §9 enumerates everything that could reasonably creep
-into T5 but should not, with a clear "out of scope" framing.
+Claim: §9 enumerates the candidate scope creeps into T5 and
+their disposition (in / out / follow-up).
 
-Adversary obligation: brainstorm three plausible scope creeps
-not currently in §9 (e.g., adding NatTrans lemmas, transferring
-limits along the equivalence, adding simp lemmas for the
-round-trip composites); flag whether they should be added to
-the guardrails list, deferred to a follow-up, or are already
-implicit.
+Adversary obligation: list three additional plausible scope
+creeps not currently in §9 (e.g., adding NatTrans lemmas,
+transferring limits along the equivalence, adding simp lemmas
+for the round-trip composites); for each, indicate whether it
+should be added to the guardrails list, deferred to a follow-up,
+or is already implicit.
 
 ### 11.8 Triangle identity assumption verified
 
@@ -708,7 +780,7 @@ compare against §5; flag any estimate off by more than 50%.
 
 ## 12 References
 
-- Tourlakis 2018, *Topics in PR Complexity*, §0.1.0.44:
+- Tourlakis 2018, *Topics in PR Complexity*, Corollary 0.1.0.44:
   [`.claude/docs/arithmetic-hierarchies/PR-complexity-topics.pdf`](../../../.claude/docs/arithmetic-hierarchies/PR-complexity-topics.pdf).
 - Master research design:
   [`docs/research/2026-05-02-er-ksim2-equiv-via-urm-master-design.md`](../../research/2026-05-02-er-ksim2-equiv-via-urm-master-design.md).
