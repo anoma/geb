@@ -1,20 +1,19 @@
+# GebLean Tests
+
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
-- [GebLean Tests](#geblean-tests)
-  - [Running Tests](#running-tests)
-  - [Test Structure](#test-structure)
-  - [Writing Tests](#writing-tests)
-    - [Using `#guard`](#using-guard)
-    - [Using Plausible (Property-Based Testing)](#using-plausible-property-based-testing)
-    - [Using LSpec (Optional)](#using-lspec-optional)
-  - [Test Guidelines](#test-guidelines)
-  - [Testing Strategy by Type](#testing-strategy-by-type)
+- [Running Tests](#running-tests)
+- [Test Structure](#test-structure)
+- [Writing Tests](#writing-tests)
+  - [Using `#guard`](#using-guard)
+  - [Using Plausible (Property-Based Testing)](#using-plausible-property-based-testing)
+  - [Using LSpec (Optional)](#using-lspec-optional)
+- [Test Guidelines](#test-guidelines)
+- [Testing Strategy by Type](#testing-strategy-by-type)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
-
-# GebLean Tests
 
 This directory contains tests for the GebLean library.
 

@@ -1,36 +1,35 @@
+# Paranatural Topos Research
+
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
-- [Paranatural Topos Research](#paranatural-topos-research)
-  - [Question (historical)](#question-historical)
-  - [Background](#background)
-    - [Profunctors with natural transformations](#profunctors-with-natural-transformations)
-    - [Profunctors with paranatural transformations](#profunctors-with-paranatural-transformations)
-    - [Reduction to natural transformations](#reduction-to-natural-transformations)
-  - [Literature Survey](#literature-survey)
-    - [Paranatural transformations do not form a topos](#paranatural-transformations-do-not-form-a-topos)
-    - [Neumann's di-Yoneda lemma](#neumanns-di-yoneda-lemma)
-    - [Twisted arrow categories and ends](#twisted-arrow-categories-and-ends)
-    - [The full subcategory I of identity arrows](#the-full-subcategory-i-of-identity-arrows)
-    - [Kan extension formula](#kan-extension-formula)
-    - [Alternative: inclusion into copresheaves](#alternative-inclusion-into-copresheaves)
-    - [Tambara modules as presheaves](#tambara-modules-as-presheaves)
-    - [Factorization categories as reflective subcategories](#factorization-categories-as-reflective-subcategories)
-    - [Mathlib infrastructure](#mathlib-infrastructure)
-  - [Analysis](#analysis)
-    - [Limits in the paranatural category](#limits-in-the-paranatural-category)
-    - [Colimits in the paranatural category](#colimits-in-the-paranatural-category)
-    - [Cartesian closure](#cartesian-closure)
-    - [The diagonalization monad](#the-diagonalization-monad)
-    - [Connections to formalized infrastructure](#connections-to-formalized-infrastructure)
-  - [Open Questions](#open-questions)
-  - [Experimental Strategy](#experimental-strategy)
-  - [References](#references)
+- [Question (historical)](#question-historical)
+- [Background](#background)
+  - [Profunctors with natural transformations](#profunctors-with-natural-transformations)
+  - [Profunctors with paranatural transformations](#profunctors-with-paranatural-transformations)
+  - [Reduction to natural transformations](#reduction-to-natural-transformations)
+- [Literature Survey](#literature-survey)
+  - [Paranatural transformations do not form a topos](#paranatural-transformations-do-not-form-a-topos)
+  - [Neumann's di-Yoneda lemma](#neumanns-di-yoneda-lemma)
+  - [Twisted arrow categories and ends](#twisted-arrow-categories-and-ends)
+  - [The full subcategory I of identity arrows](#the-full-subcategory-i-of-identity-arrows)
+  - [Kan extension formula](#kan-extension-formula)
+  - [Alternative: inclusion into copresheaves](#alternative-inclusion-into-copresheaves)
+  - [Tambara modules as presheaves](#tambara-modules-as-presheaves)
+  - [Factorization categories as reflective subcategories](#factorization-categories-as-reflective-subcategories)
+  - [Mathlib infrastructure](#mathlib-infrastructure)
+- [Analysis](#analysis)
+  - [Limits in the paranatural category](#limits-in-the-paranatural-category)
+  - [Colimits in the paranatural category](#colimits-in-the-paranatural-category)
+  - [Cartesian closure](#cartesian-closure)
+  - [The diagonalization monad](#the-diagonalization-monad)
+  - [Connections to formalized infrastructure](#connections-to-formalized-infrastructure)
+- [Open Questions](#open-questions)
+- [Experimental Strategy](#experimental-strategy)
+- [References](#references)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
-
-# Paranatural Topos Research
 
 > **Resolved.** The answer is: `PshRelEdge C` is a
 > quasitopos (separated presheaves in the presheaf

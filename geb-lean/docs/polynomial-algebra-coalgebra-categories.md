@@ -1,114 +1,113 @@
+# Algebras and Coalgebras for Polynomial Functors
+
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
-- [Algebras and Coalgebras for Polynomial Functors](#algebras-and-coalgebras-for-polynomial-functors)
-  - [Properties of the Forgetful Functor](#properties-of-the-forgetful-functor)
-    - [Copresheaf Equivalence](#copresheaf-equivalence)
-  - [1. Initial and Terminal Objects](#1-initial-and-terminal-objects)
-    - [1.1 Algebras](#11-algebras)
-      - [1.1.1 General Case](#111-general-case)
-      - [1.1.2 Example: P(X) = A + X^2](#112-example-px--a--x%5E2)
-    - [1.2 Coalgebras](#12-coalgebras)
-      - [1.2.1 General Case](#121-general-case)
-      - [1.2.2 Example: P(X) = A + X^2](#122-example-px--a--x%5E2)
-  - [2. Free Monads and Cofree Comonads](#2-free-monads-and-cofree-comonads)
-    - [2.1 Algebras (The Free Monad)](#21-algebras-the-free-monad)
-      - [2.1.1 General Case](#211-general-case)
-      - [2.1.2 Example: P(X) = A + X^2](#212-example-px--a--x%5E2)
-    - [2.2 Coalgebras (The Cofree Comonad)](#22-coalgebras-the-cofree-comonad)
-      - [2.2.1 General Case](#221-general-case)
-      - [2.2.2 Example: P(X) = A + X^2](#222-example-px--a--x%5E2)
-  - [3. Binary Products](#3-binary-products)
-    - [3.1 Algebras](#31-algebras)
-      - [3.1.1 General Case](#311-general-case)
-      - [3.1.2 Example: P(X) = A + X^2](#312-example-px--a--x%5E2)
-    - [3.2 Coalgebras](#32-coalgebras)
-      - [3.2.1 General Case](#321-general-case)
-      - [3.2.2 Example: P(X) = A + X^2](#322-example-px--a--x%5E2)
-  - [4. Binary Coproducts](#4-binary-coproducts)
-    - [4.1 Algebras](#41-algebras)
-      - [4.1.1 General Case](#411-general-case)
-      - [4.1.2 Example: P(X) = A + X^2](#412-example-px--a--x%5E2)
-    - [4.2 Coalgebras](#42-coalgebras)
-      - [4.2.1 General Case](#421-general-case)
-      - [4.2.2 Example: P(X) = A + X^2](#422-example-px--a--x%5E2)
-  - [5. Equalizers](#5-equalizers)
-    - [5.1 Algebras](#51-algebras)
-      - [5.1.1 General Case](#511-general-case)
-      - [5.1.2 Example: P(X) = A + X^2](#512-example-px--a--x%5E2)
-    - [5.2 Coalgebras](#52-coalgebras)
-      - [5.2.1 General Case](#521-general-case)
-      - [5.2.2 Example: P(X) = A + X^2](#522-example-px--a--x%5E2)
-  - [6. Coequalizers](#6-coequalizers)
-    - [6.1 Algebras](#61-algebras)
-      - [6.1.1 General Case](#611-general-case)
-      - [6.1.2 Example: P(X) = A + X^2](#612-example-px--a--x%5E2)
-    - [6.2 Coalgebras](#62-coalgebras)
-      - [6.2.1 General Case](#621-general-case)
-      - [6.2.2 Example: P(X) = A + X^2](#622-example-px--a--x%5E2)
-  - [7. Pullbacks](#7-pullbacks)
-    - [7.1 Algebras](#71-algebras)
-      - [7.1.1 General Case](#711-general-case)
-      - [7.1.2 Example: P(X) = A + X^2](#712-example-px--a--x%5E2)
-    - [7.2 Coalgebras](#72-coalgebras)
-      - [7.2.1 General Case](#721-general-case)
-      - [7.2.2 Example: P(X) = A + X^2](#722-example-px--a--x%5E2)
-  - [8. Pushouts](#8-pushouts)
-    - [8.1 Algebras](#81-algebras)
-      - [8.1.1 General Case](#811-general-case)
-      - [8.1.2 Example: P(X) = A + X^2](#812-example-px--a--x%5E2)
-    - [8.2 Coalgebras](#82-coalgebras)
-      - [8.2.1 General Case](#821-general-case)
-      - [8.2.2 Example: P(X) = A + X^2](#822-example-px--a--x%5E2)
-  - [9. Topos Structure (Coalgebras Only)](#9-topos-structure-coalgebras-only)
-    - [9.1 Subobject Classifier (Omega)](#91-subobject-classifier-omega)
-      - [9.1.1 General Case](#911-general-case)
-      - [9.1.2 Example: P(X) = A + X^2](#912-example-px--a--x%5E2)
-    - [9.2 Exponentials (Y^X)](#92-exponentials-y%5Ex)
-      - [9.2.1 General Case](#921-general-case)
-      - [9.2.2 Example: P(X) = A + X^2](#922-example-px--a--x%5E2)
-  - [10. Requirements on the Base Category](#10-requirements-on-the-base-category)
-    - [10.1 Construction-by-Construction Requirements](#101-construction-by-construction-requirements)
-    - [10.2 M-Type Construction Requirements](#102-m-type-construction-requirements)
-      - [10.2.1 Finitary vs. Infinitary Polynomials](#1021-finitary-vs-infinitary-polynomials)
-      - [10.2.2 The Approximation Construction](#1022-the-approximation-construction)
-      - [10.2.3 Summary for P(X) = A + X^2](#1023-summary-for-px--a--x%5E2)
-    - [10.3 Finitary Topos Requirements](#103-finitary-topos-requirements)
-  - [11. Candidate Base Categories](#11-candidate-base-categories)
-    - [11.1 PER(T): Partial Equivalence Relations](#111-pert-partial-equivalence-relations)
-      - [11.1.1 Categorical Properties](#1111-categorical-properties)
-      - [11.1.2 Relationship to Realizability Toposes](#1112-relationship-to-realizability-toposes)
-      - [11.1.3 Tree Calculus as PCA](#1113-tree-calculus-as-pca)
-    - [11.2 Parametric Relations (Reynolds/Wadler)](#112-parametric-relations-reynoldswadler)
-      - [11.2.1 Structure in the Codebase](#1121-structure-in-the-codebase)
-      - [11.2.2 Categorical Properties](#1122-categorical-properties)
-      - [11.2.3 Functions as Graphs of Relations](#1123-functions-as-graphs-of-relations)
-    - [11.3 The Hybrid Approach](#113-the-hybrid-approach)
-    - [11.4 Self-Representation](#114-self-representation)
-    - [11.5 Comparison](#115-comparison)
-    - [11.6 Open Questions](#116-open-questions)
-  - [12. Concrete Descriptions of Two Topoi](#12-concrete-descriptions-of-two-topoi)
-    - [12.1 The Realizability Topos RT(T)](#121-the-realizability-topos-rtt)
-      - [12.1.1 Assemblies](#1211-assemblies)
-      - [12.1.2 Concrete Structure](#1212-concrete-structure)
-      - [12.1.3 Internal Logic](#1213-internal-logic)
-    - [12.2 The Coalgebra Topos P-Coalg(1 + X^2)](#122-the-coalgebra-topos-p-coalg1--x%5E2)
-      - [12.2.1 Objects and Morphisms](#1221-objects-and-morphisms)
-      - [12.2.2 Terminal Coalgebra](#1222-terminal-coalgebra)
-      - [12.2.3 Subobject Classifier](#1223-subobject-classifier)
-      - [12.2.4 Internal Logic](#1224-internal-logic)
-      - [12.2.5 Copresheaf Perspective](#1225-copresheaf-perspective)
-    - [12.3 Comparison](#123-comparison)
-    - [12.4 The Lambda-Bialgebra Bridge](#124-the-lambda-bialgebra-bridge)
-      - [12.4.1 The Distributive Law](#1241-the-distributive-law)
-      - [12.4.2 Bridging the Two Topoi](#1242-bridging-the-two-topoi)
-      - [12.4.3 Reconciliation](#1243-reconciliation)
-  - [References](#references)
+- [Properties of the Forgetful Functor](#properties-of-the-forgetful-functor)
+  - [Copresheaf Equivalence](#copresheaf-equivalence)
+- [1. Initial and Terminal Objects](#1-initial-and-terminal-objects)
+  - [1.1 Algebras](#11-algebras)
+    - [1.1.1 General Case](#111-general-case)
+    - [1.1.2 Example: P(X) = A + X_2](#112-example-px--a--x_2)
+  - [1.2 Coalgebras](#12-coalgebras)
+    - [1.2.1 General Case](#121-general-case)
+    - [1.2.2 Example: P(X) = A + X_2](#122-example-px--a--x_2)
+- [2. Free Monads and Cofree Comonads](#2-free-monads-and-cofree-comonads)
+  - [2.1 Algebras (The Free Monad)](#21-algebras-the-free-monad)
+    - [2.1.1 General Case](#211-general-case)
+    - [2.1.2 Example: P(X) = A + X_2](#212-example-px--a--x_2)
+  - [2.2 Coalgebras (The Cofree Comonad)](#22-coalgebras-the-cofree-comonad)
+    - [2.2.1 General Case](#221-general-case)
+    - [2.2.2 Example: P(X) = A + X_2](#222-example-px--a--x_2)
+- [3. Binary Products](#3-binary-products)
+  - [3.1 Algebras](#31-algebras)
+    - [3.1.1 General Case](#311-general-case)
+    - [3.1.2 Example: P(X) = A + X_2](#312-example-px--a--x_2)
+  - [3.2 Coalgebras](#32-coalgebras)
+    - [3.2.1 General Case](#321-general-case)
+    - [3.2.2 Example: P(X) = A + X_2](#322-example-px--a--x_2)
+- [4. Binary Coproducts](#4-binary-coproducts)
+  - [4.1 Algebras](#41-algebras)
+    - [4.1.1 General Case](#411-general-case)
+    - [4.1.2 Example: P(X) = A + X_2](#412-example-px--a--x_2)
+  - [4.2 Coalgebras](#42-coalgebras)
+    - [4.2.1 General Case](#421-general-case)
+    - [4.2.2 Example: P(X) = A + X_2](#422-example-px--a--x_2)
+- [5. Equalizers](#5-equalizers)
+  - [5.1 Algebras](#51-algebras)
+    - [5.1.1 General Case](#511-general-case)
+    - [5.1.2 Example: P(X) = A + X_2](#512-example-px--a--x_2)
+  - [5.2 Coalgebras](#52-coalgebras)
+    - [5.2.1 General Case](#521-general-case)
+    - [5.2.2 Example: P(X) = A + X_2](#522-example-px--a--x_2)
+- [6. Coequalizers](#6-coequalizers)
+  - [6.1 Algebras](#61-algebras)
+    - [6.1.1 General Case](#611-general-case)
+    - [6.1.2 Example: P(X) = A + X_2](#612-example-px--a--x_2)
+  - [6.2 Coalgebras](#62-coalgebras)
+    - [6.2.1 General Case](#621-general-case)
+    - [6.2.2 Example: P(X) = A + X_2](#622-example-px--a--x_2)
+- [7. Pullbacks](#7-pullbacks)
+  - [7.1 Algebras](#71-algebras)
+    - [7.1.1 General Case](#711-general-case)
+    - [7.1.2 Example: P(X) = A + X_2](#712-example-px--a--x_2)
+  - [7.2 Coalgebras](#72-coalgebras)
+    - [7.2.1 General Case](#721-general-case)
+    - [7.2.2 Example: P(X) = A + X_2](#722-example-px--a--x_2)
+- [8. Pushouts](#8-pushouts)
+  - [8.1 Algebras](#81-algebras)
+    - [8.1.1 General Case](#811-general-case)
+    - [8.1.2 Example: P(X) = A + X_2](#812-example-px--a--x_2)
+  - [8.2 Coalgebras](#82-coalgebras)
+    - [8.2.1 General Case](#821-general-case)
+    - [8.2.2 Example: P(X) = A + X_2](#822-example-px--a--x_2)
+- [9. Topos Structure (Coalgebras Only)](#9-topos-structure-coalgebras-only)
+  - [9.1 Subobject Classifier (Omega)](#91-subobject-classifier-omega)
+    - [9.1.1 General Case](#911-general-case)
+    - [9.1.2 Example: P(X) = A + X_2](#912-example-px--a--x_2)
+  - [9.2 Exponentials (Y_X)](#92-exponentials-y_x)
+    - [9.2.1 General Case](#921-general-case)
+    - [9.2.2 Example: P(X) = A + X_2](#922-example-px--a--x_2)
+- [10. Requirements on the Base Category](#10-requirements-on-the-base-category)
+  - [10.1 Construction-by-Construction Requirements](#101-construction-by-construction-requirements)
+  - [10.2 M-Type Construction Requirements](#102-m-type-construction-requirements)
+    - [10.2.1 Finitary vs. Infinitary Polynomials](#1021-finitary-vs-infinitary-polynomials)
+    - [10.2.2 The Approximation Construction](#1022-the-approximation-construction)
+    - [10.2.3 Summary for P(X) = A + X_2](#1023-summary-for-px--a--x_2)
+  - [10.3 Finitary Topos Requirements](#103-finitary-topos-requirements)
+- [11. Candidate Base Categories](#11-candidate-base-categories)
+  - [11.1 PER(T): Partial Equivalence Relations](#111-pert-partial-equivalence-relations)
+    - [11.1.1 Categorical Properties](#1111-categorical-properties)
+    - [11.1.2 Relationship to Realizability Toposes](#1112-relationship-to-realizability-toposes)
+    - [11.1.3 Tree Calculus as PCA](#1113-tree-calculus-as-pca)
+  - [11.2 Parametric Relations (Reynolds/Wadler)](#112-parametric-relations-reynoldswadler)
+    - [11.2.1 Structure in the Codebase](#1121-structure-in-the-codebase)
+    - [11.2.2 Categorical Properties](#1122-categorical-properties)
+    - [11.2.3 Functions as Graphs of Relations](#1123-functions-as-graphs-of-relations)
+  - [11.3 The Hybrid Approach](#113-the-hybrid-approach)
+  - [11.4 Self-Representation](#114-self-representation)
+  - [11.5 Comparison](#115-comparison)
+  - [11.6 Open Questions](#116-open-questions)
+- [12. Concrete Descriptions of Two Topoi](#12-concrete-descriptions-of-two-topoi)
+  - [12.1 The Realizability Topos RT(T)](#121-the-realizability-topos-rtt)
+    - [12.1.1 Assemblies](#1211-assemblies)
+    - [12.1.2 Concrete Structure](#1212-concrete-structure)
+    - [12.1.3 Internal Logic](#1213-internal-logic)
+  - [12.2 The Coalgebra Topos P-Coalg(1 + X_2)](#122-the-coalgebra-topos-p-coalg1--x_2)
+    - [12.2.1 Objects and Morphisms](#1221-objects-and-morphisms)
+    - [12.2.2 Terminal Coalgebra](#1222-terminal-coalgebra)
+    - [12.2.3 Subobject Classifier](#1223-subobject-classifier)
+    - [12.2.4 Internal Logic](#1224-internal-logic)
+    - [12.2.5 Copresheaf Perspective](#1225-copresheaf-perspective)
+  - [12.3 Comparison](#123-comparison)
+  - [12.4 The Lambda-Bialgebra Bridge](#124-the-lambda-bialgebra-bridge)
+    - [12.4.1 The Distributive Law](#1241-the-distributive-law)
+    - [12.4.2 Bridging the Two Topoi](#1242-bridging-the-two-topoi)
+    - [12.4.3 Reconciliation](#1243-reconciliation)
+- [References](#references)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
-
-# Algebras and Coalgebras for Polynomial Functors
 
 Let **Set** denote the category of sets and functions.
 Let P: **Set** -> **Set** be an accessible polynomial
@@ -195,7 +194,7 @@ The initial algebra (W, alpha: P(W) -> W) satisfies
 `alpha` is an isomorphism (Lambek's lemma). W is the
 type of well-founded P-trees (W-type).
 
-#### 1.1.2 Example: P(X) = A + X^2
+#### 1.1.2 Example: P(X) = A + X_2
 
 - **Terminal algebra:** The carrier is `{*}`. The
   structure map `A + {*}^2 -> {*}` sends every element
@@ -224,7 +223,7 @@ has a terminal object. The terminal coalgebra
 isomorphism (dual of Lambek's lemma). Z is the type of
 all (finite and infinite) P-trees (M-type).
 
-#### 1.2.2 Example: P(X) = A + X^2
+#### 1.2.2 Example: P(X) = A + X_2
 
 - **Initial coalgebra:** The carrier is the empty set.
 - **Terminal coalgebra:** Z is the set of all finite
@@ -251,7 +250,7 @@ as the initial algebra of the modified endofunctor
 `P_Y(X) = Y + P(X)`. The monad `U . F` on **Set** is
 the free monad of P.
 
-#### 2.1.2 Example: P(X) = A + X^2
+#### 2.1.2 Example: P(X) = A + X_2
 
 The modified functor is `P_Y(X) = Y + A + X^2`. Its
 initial algebra F(Y) is the set of finite binary trees
@@ -273,7 +272,7 @@ as the terminal coalgebra of the modified endofunctor
 `P^Y(X) = Y x P(X)`. The comonad `U . G` on **Set**
 is the cofree comonad of P.
 
-#### 2.2.2 Example: P(X) = A + X^2
+#### 2.2.2 Example: P(X) = A + X_2
 
 The modified functor is `P^Y(X) = Y x (A + X^2)`. Its
 terminal coalgebra G(Y) is the set of finite and
@@ -303,7 +302,7 @@ structure map defined componentwise:
 for `p` in `P(S_1 x S_2)`, where `pi_i` are the
 projections.
 
-#### 3.1.2 Example: P(X) = A + X^2
+#### 3.1.2 Example: P(X) = A + X_2
 
 The product algebra has carrier `S_1 x S_2`. The
 structure map `A + (S_1 x S_2)^2 -> S_1 x S_2` acts
@@ -351,7 +350,7 @@ Under the copresheaf equivalence
 `P-Coalg ~ Set^C`, this product corresponds to the
 pointwise product of the corresponding copresheaves.
 
-#### 3.2.2 Example: P(X) = A + X^2
+#### 3.2.2 Example: P(X) = A + X_2
 
 The product of `(C_1, gamma_1)` and `(C_2, gamma_2)`
 has carrier `R = {(c_1, c_2) | !_1(c_1) = !_2(c_2)}`
@@ -402,7 +401,7 @@ leaves in `S_1 + S_2`, where any subtree that lies
 entirely within `S_1` (resp. `S_2`) is identified with
 its evaluation under `alpha_1` (resp. `alpha_2`).
 
-#### 4.1.2 Example: P(X) = A + X^2
+#### 4.1.2 Example: P(X) = A + X_2
 
 The free algebra `F(S_1 + S_2)` consists of finite
 binary trees with leaves in `A + S_1 + S_2`. The
@@ -435,7 +434,7 @@ union). The structure map
 Under the copresheaf equivalence, this corresponds
 to the pointwise coproduct of copresheaves.
 
-#### 4.2.2 Example: P(X) = A + X^2
+#### 4.2.2 Example: P(X) = A + X_2
 
 The carrier is `C_1 + C_2`. The structure map acts as:
 
@@ -471,7 +470,7 @@ and similarly for g. Since `P(f . incl) = P(g . incl)`
 `f(alpha_1(P(incl)(p))) = g(alpha_1(P(incl)(p)))`, so
 `alpha_1(P(incl)(p))` is in E.
 
-#### 5.1.2 Example: P(X) = A + X^2
+#### 5.1.2 Example: P(X) = A + X_2
 
 E is the subset of `S_1` on which f and g agree. If
 `s` in E and `alpha_1(inr(s, s'))` is defined for
@@ -512,7 +511,7 @@ the equalizer: for `c` in E,
 the equalizer of `P(f)` and `P(g)`, which equals
 `P(E)` since P preserves equalizers.
 
-#### 5.2.2 Example: P(X) = A + X^2
+#### 5.2.2 Example: P(X) = A + X_2
 
 E is the subset of `C_1` on which f and g agree. If
 `c` in E and `gamma_1(c) = inr(c_l, c_r)`, then since
@@ -548,7 +547,7 @@ The quotient `S_2 / ~` inherits a P-algebra structure
 because `~` is a congruence: `alpha_2` descends to a
 well-defined map `P(S_2 / ~) -> S_2 / ~`.
 
-#### 6.1.2 Example: P(X) = A + X^2
+#### 6.1.2 Example: P(X) = A + X_2
 
 The congruence `~` must be closed under the binary
 operation: if `x ~ y`, then for any `z` in `S_2`,
@@ -574,7 +573,7 @@ coalgebra structure descends to Q: the map
 `Q -> P(Q)` via `P(pi)`, where `pi: C_2 -> Q` is the
 quotient projection.
 
-#### 6.2.2 Example: P(X) = A + X^2
+#### 6.2.2 Example: P(X) = A + X_2
 
 The state space `C_2` is partitioned by `~`. If
 `c ~ d`, then since f and g are coalgebra morphisms
@@ -608,7 +607,7 @@ pullback of algebra homomorphisms
 `S_1 x_{S_3} S_2 = {(x, y) in S_1 x S_2 | f(x) = g(y)}`
 with componentwise algebra structure.
 
-#### 7.1.2 Example: P(X) = A + X^2
+#### 7.1.2 Example: P(X) = A + X_2
 
 The pullback algebra consists of pairs `(t_1, t_2)`
 from `S_1` and `S_2` satisfying `f(t_1) = g(t_2)` in
@@ -642,7 +641,7 @@ gamma_3(g(c_2)) = P(g)(gamma_2(c_2))`. Since P
 preserves the pullback, `(gamma_1(c_1), gamma_2(c_2))`
 determines an element of `P(C_1 x_{C_3} C_2)`.
 
-#### 7.2.2 Example: P(X) = A + X^2
+#### 7.2.2 Example: P(X) = A + X_2
 
 The pullback coalgebra pairs states `(c_1, c_2)` with
 `f(c_1) = g(c_2)` in `C_3`. If
@@ -673,7 +672,7 @@ Equivalently, it is the quotient of the coproduct
 algebra by the smallest P-congruence identifying
 `inl(f(s))` with `inr(g(s))` for all `s` in `S_1`.
 
-#### 8.1.2 Example: P(X) = A + X^2
+#### 8.1.2 Example: P(X) = A + X_2
 
 The pushout is the quotient of the coproduct algebra
 of `S_2` and `S_3` (which contains elements of both
@@ -697,7 +696,7 @@ equal to the set-theoretic pushout: the quotient of
 The coalgebra structure descends from the coproduct
 coalgebra on `C_2 + C_3`.
 
-#### 8.2.2 Example: P(X) = A + X^2
+#### 8.2.2 Example: P(X) = A + X_2
 
 The carrier is `(C_2 + C_3) / ~` where
 `inl(f(c)) ~ inr(g(c))` for `c` in `C_1`. The
@@ -743,7 +742,7 @@ closed under postcomposition. The cosieves on C
 encode the possible "truth-value patterns" on the
 tree of observations, subject to a closure condition.
 
-#### 9.1.2 Example: P(X) = A + X^2
+#### 9.1.2 Example: P(X) = A + X_2
 
 The carrier of Omega consists of binary trees (elements
 of the terminal coalgebra Z) in which every tree
@@ -777,7 +776,7 @@ corresponding state in the unfolding belongs to S.
 The cosieve condition is satisfied because S is a
 subcoalgebra (closed under transitions).
 
-### 9.2 Exponentials (Y^X)
+### 9.2 Exponentials (Y_X)
 
 #### 9.2.1 General Case
 
@@ -794,7 +793,7 @@ where `h_c` is the representable copresheaf at c, and
 An element of `(Y^X)(c)` is a natural transformation
 from the copresheaf `h_c x X` to Y.
 
-#### 9.2.2 Example: P(X) = A + X^2
+#### 9.2.2 Example: P(X) = A + X_2
 
 A state `f` of the exponential coalgebra `Y^X` encodes
 a mapping from states of X to states of Y that is
@@ -944,7 +943,7 @@ For infinitary polynomials, the children function
 would be a function from an infinite type, requiring
 genuine exponentials in E.
 
-#### 10.2.3 Summary for P(X) = A + X^2
+#### 10.2.3 Summary for P(X) = A + X_2
 
 The M-type construction for the binary product
 polynomial requires E to have:
@@ -1258,7 +1257,7 @@ This gives a constructive logic (no excluded middle)
 with a computational interpretation: every proof of
 existence comes with a program that computes a witness.
 
-### 12.2 The Coalgebra Topos P-Coalg(1 + X^2)
+### 12.2 The Coalgebra Topos P-Coalg(1 + X_2)
 
 For `P(X) = 1 + X^2`, the category P-**Coalg**
 consists of deterministic binary branching transition

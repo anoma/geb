@@ -1,47 +1,46 @@
+# Categories as Copresheaves on CategoryJudgments
+
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
-- [Categories as Copresheaves on CategoryJudgments](#categories-as-copresheaves-on-categoryjudgments)
-  - [The CategoryJudgments Index Category](#the-categoryjudgments-index-category)
-  - [Embedding Categories into Copresheaves](#embedding-categories-into-copresheaves)
-    - [Object assignments](#object-assignments)
-    - [Morphism assignments](#morphism-assignments)
-    - [Verification of commutativity](#verification-of-commutativity)
-  - [The Functor Cat → [J, Type]](#the-functor-cat-%E2%86%92-j-type)
-  - [What Copresheaves Miss: The Gap Between [J, Type] and Cat](#what-copresheaves-miss-the-gap-between-j-type-and-cat)
-    - [1. Identity uniqueness (F(Id) ≅ F(Obj))](#1-identity-uniqueness-fid-%E2%89%85-fobj)
-    - [2. Composition totality (F(Comp) is the pullback)](#2-composition-totality-fcomp-is-the-pullback)
-    - [3. Associativity (equalizer condition)](#3-associativity-equalizer-condition)
-    - [4. Unit laws (equalizer conditions)](#4-unit-laws-equalizer-conditions)
-  - [Characterizing the Image](#characterizing-the-image)
-  - [Relationship to Quivers and the Walking Arrows](#relationship-to-quivers-and-the-walking-arrows)
-  - [The Reflection Functor [J, Type] → Cat](#the-reflection-functor-j-type-%E2%86%92-cat)
-    - [Construction of L(F)](#construction-of-lf)
-      - [Step 1: Extract the quiver](#step-1-extract-the-quiver)
-      - [Step 2: Form the free category](#step-2-form-the-free-category)
-      - [Step 3: Quotient by identity and composition relations](#step-3-quotient-by-identity-and-composition-relations)
-    - [Category laws are automatic](#category-laws-are-automatic)
-    - [Functoriality](#functoriality)
-    - [The adjunction L ⊣ Φ](#the-adjunction-l-%E2%8A%A3-%CF%86)
-    - [Round-trip properties](#round-trip-properties)
-    - [Characterization via the adjunction](#characterization-via-the-adjunction)
-  - [Identity as a Natural Transformation](#identity-as-a-natural-transformation)
-  - [Why Cat is Not a Topos](#why-cat-is-not-a-topos)
-  - [Implementation Design Decisions](#implementation-design-decisions)
-    - [Copresheaf representation](#copresheaf-representation)
-    - [Free category (FreeMor) representation](#free-category-freemor-representation)
-    - [Quotient structure](#quotient-structure)
-    - [Category representation](#category-representation)
-    - [Implementation phases](#implementation-phases)
-  - [References](#references)
-  - [Mathematical Context](#mathematical-context)
-    - [Related Constructions](#related-constructions)
-    - [Potential Applications](#potential-applications)
+- [The CategoryJudgments Index Category](#the-categoryjudgments-index-category)
+- [Embedding Categories into Copresheaves](#embedding-categories-into-copresheaves)
+  - [Object assignments](#object-assignments)
+  - [Morphism assignments](#morphism-assignments)
+  - [Verification of commutativity](#verification-of-commutativity)
+- [The Functor Cat -> [J, Type]](#the-functor-cat---j-type)
+- [What Copresheaves Miss: The Gap Between [J, Type] and Cat](#what-copresheaves-miss-the-gap-between-j-type-and-cat)
+  - [1. Identity uniqueness (F(Id) iso F(Obj))](#1-identity-uniqueness-fid-iso-fobj)
+  - [2. Composition totality (F(Comp) is the pullback)](#2-composition-totality-fcomp-is-the-pullback)
+  - [3. Associativity (equalizer condition)](#3-associativity-equalizer-condition)
+  - [4. Unit laws (equalizer conditions)](#4-unit-laws-equalizer-conditions)
+- [Characterizing the Image](#characterizing-the-image)
+- [Relationship to Quivers and the Walking Arrows](#relationship-to-quivers-and-the-walking-arrows)
+- [The Reflection Functor [J, Type] -> Cat](#the-reflection-functor-j-type---cat)
+  - [Construction of L(F)](#construction-of-lf)
+    - [Step 1: Extract the quiver](#step-1-extract-the-quiver)
+    - [Step 2: Form the free category](#step-2-form-the-free-category)
+    - [Step 3: Quotient by identity and composition relations](#step-3-quotient-by-identity-and-composition-relations)
+  - [Category laws are automatic](#category-laws-are-automatic)
+  - [Functoriality](#functoriality)
+  - [The adjunction L -| Phi](#the-adjunction-l---phi)
+  - [Round-trip properties](#round-trip-properties)
+  - [Characterization via the adjunction](#characterization-via-the-adjunction)
+- [Identity as a Natural Transformation](#identity-as-a-natural-transformation)
+- [Why Cat is Not a Topos](#why-cat-is-not-a-topos)
+- [Implementation Design Decisions](#implementation-design-decisions)
+  - [Copresheaf representation](#copresheaf-representation)
+  - [Free category (FreeMor) representation](#free-category-freemor-representation)
+  - [Quotient structure](#quotient-structure)
+  - [Category representation](#category-representation)
+  - [Implementation phases](#implementation-phases)
+- [References](#references)
+- [Mathematical Context](#mathematical-context)
+  - [Related Constructions](#related-constructions)
+  - [Potential Applications](#potential-applications)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
-
-# Categories as Copresheaves on CategoryJudgments
 
 This document describes the relationship between the category `Cat` of small
 categories and the copresheaf category `[CategoryJudgments, Type]`.
@@ -137,7 +136,7 @@ The commutativity relations in J are satisfied:
 - `F(composite) ≫ F(dom) = F(compositeDom)`: src(f ≫ g) = src(f)
 - `F(composite) ≫ F(cod) = F(compositeCod)`: tgt(f ≫ g) = tgt(g)
 
-## The Functor Cat → [J, Type]
+## The Functor Cat -> [J, Type]
 
 The construction above defines a functor from Cat to the copresheaf category:
 
@@ -158,7 +157,7 @@ This functor is:
 A general copresheaf F : J → Type has the right "shape" but may fail to be
 an actual category in several ways:
 
-### 1. Identity uniqueness (F(Id) ≅ F(Obj))
+### 1. Identity uniqueness (F(Id) iso F(Obj))
 
 For an actual category, each object has exactly one identity morphism. In
 the copresheaf, this means F(Id) should be isomorphic to F(Obj) via F(idObj).
@@ -234,7 +233,7 @@ A copresheaf F : W → Type gives:
 CategoryJudgments extends this by adding Id and Comp objects with their
 morphisms, encoding the additional structure needed for categories.
 
-## The Reflection Functor [J, Type] → Cat
+## The Reflection Functor [J, Type] -> Cat
 
 The embedding Φ : Cat → [J, Type] has a left adjoint L : [J, Type] → Cat.
 This makes Cat a **reflective subcategory** of [J, Type].
@@ -338,7 +337,7 @@ This respects the quotient because naturality ensures:
 - Composition witnesses map to composition witnesses
 - Category axioms are preserved structurally
 
-### The adjunction L ⊣ Φ
+### The adjunction L -| Phi
 
 **Claim**: L is left adjoint to Φ.
 

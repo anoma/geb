@@ -5,24 +5,24 @@
 
 - [Summary](#summary)
 - [Round-2 fix verifications](#round-2-fix-verifications)
-  - [B1' (multi-output functor) — fixed](#b1-multi-output-functor--fixed)
-  - [B2' (bprod increment) — not fixed](#b2-bprod-increment--not-fixed)
-  - [B3' (Fin.maxOfNat call sites) — fixed](#b3-finmaxofnat-call-sites--fixed)
-  - [S1' (tower_comp absorption) — fixed](#s1-tower_comp-absorption--fixed)
-  - [S2' (rationale b) — fixed](#s2-rationale-b--fixed)
-  - [S3' (atom one application) — fixed](#s3-atom-one-application--fixed)
-  - [S4' (Fin.maxOfNat_i undefined) — fixed](#s4-finmaxofnat_i-undefined--fixed)
-  - [S5' (tower_pow_le_tower_add_three citation) — fixed](#s5-tower_pow_le_tower_add_three-citation--fixed)
-  - [N1 (explicit-witness Fin match) — fixed](#n1-explicit-witness-fin-match--fixed)
+  - [B1' (multi-output functor) -- fixed](#b1-multi-output-functor----fixed)
+  - [B2' (bprod increment) -- not fixed](#b2-bprod-increment----not-fixed)
+  - [B3' (Fin.maxOfNat call sites) -- fixed](#b3-finmaxofnat-call-sites----fixed)
+  - [S1' (tower_comp absorption) -- fixed](#s1-tower_comp-absorption----fixed)
+  - [S2' (rationale b) -- fixed](#s2-rationale-b----fixed)
+  - [S3' (atom one application) -- fixed](#s3-atom-one-application----fixed)
+  - [S4' (Fin.maxOfNat_i undefined) -- fixed](#s4-finmaxofnat_i-undefined----fixed)
+  - [S5' (tower_pow_le_tower_add_three citation) -- fixed](#s5-tower_pow_le_tower_add_three-citation----fixed)
+  - [N1 (explicit-witness Fin match) -- fixed](#n1-explicit-witness-fin-match----fixed)
 - [Residual blockers](#residual-blockers)
   - [B2'(r3). bprod runtime increment `+ 5` still under-counts the constant 9](#b2r3-bprod-runtime-increment--5-still-under-counts-the-constant-9)
 - [Residual serious](#residual-serious)
 - [New issues](#new-issues)
-  - [N1(r3). §8.2 pseudo-Lean contains a literal `sorry` and bracket-comment placeholders](#n1r3-82-pseudo-lean-contains-a-literal-sorry-and-bracket-comment-placeholders)
+  - [N1(r3). 8.2 pseudo-Lean contains a literal `sorry` and bracket-comment placeholders](#n1r3-82-pseudo-lean-contains-a-literal-sorry-and-bracket-comment-placeholders)
   - [N2(r3). comp `9·v_total` term needs explicit constant-absorption step](#n2r3-comp-9v_total-term-needs-explicit-constant-absorption-step)
 - [Minor](#minor)
   - [M1(r3). AXIOM_ALLOW underscore-escape still inconsistent](#m1r3-axiom_allow-underscore-escape-still-inconsistent)
-  - [M2(r3). §5.2 line 444 informal `Fin.maxOfNat (v : Fin 0 → ℕ) = 0` is ill-typed](#m2r3-52-line-444-informal-finmaxofnat-v--fin-0-%E2%86%92-%E2%84%95--0-is-ill-typed)
+  - [M2(r3). 5.2 line 444 informal `Fin.maxOfNat (v : Fin 0 -> Nat) = 0` is ill-typed](#m2r3-52-line-444-informal-finmaxofnat-v--fin-0---nat--0-is-ill-typed)
   - [M3(r3). erToKN_compat_extEq precondition shape vs setoid relation](#m3r3-ertokn_compat_exteq-precondition-shape-vs-setoid-relation)
 - [Methodology](#methodology)
 
@@ -35,7 +35,7 @@ CONVERGED.**
 
 ## Round-2 fix verifications
 
-### B1' (multi-output functor) — fixed
+### B1' (multi-output functor) -- fixed
 
 The revised §8 (lines 652–770) now provides the full multi-output
 passage:
@@ -83,7 +83,7 @@ equality.
 Status: **fixed** structurally. See N1(r3) for a minor
 spec-form concern about the literal `sorry` placeholder.
 
-### B2' (bprod increment) — not fixed
+### B2' (bprod increment) -- not fixed
 
 Round-2 reported `mu_f + 3` insufficient for bprod's runtime
 sum `Σ_{i < v 0} 9·A_i·B_i` (Compiler.lean:1762–1769) and
@@ -109,7 +109,7 @@ Status: **not fixed.** The fix as applied (the change from
 itself made — both elided the factor 9. The correct increment
 is `+ 7` (see B2'(r3)).
 
-### B3' (Fin.maxOfNat call sites) — fixed
+### B3' (Fin.maxOfNat call sites) -- fixed
 
 The actual signature
 `def Fin.maxOfNat (n : ℕ) (f : Fin n → ℕ) : ℕ`
@@ -125,7 +125,7 @@ Both forms compile.
 
 Status: **fixed.**
 
-### S1' (tower_comp absorption) — fixed
+### S1' (tower_comp absorption) -- fixed
 
 The revised §4.2 rationale for `comp` (lines 269–289) now spells
 out the inner-offset absorption explicitly as a three-step
@@ -144,32 +144,32 @@ argument:
 equality, no offset inside). Status: **fixed.** See N2(r3) for
 a related sub-finding about the factor `9` in step (iii).
 
-### S2' (rationale b) — fixed
+### S2' (rationale b) -- fixed
 
 The hand-wavey "additional level above value" wording from
 round 2 is gone. The new rationale concretely names
 `mul_tower_le_tower_add_two` for the `v_total ≤ a · Fin.maxOfNat
 _ v` absorption (line 282–284, 391). Status: **fixed.**
 
-### S3' (atom one application) — fixed
+### S3' (atom one application) -- fixed
 
 The revised §4.2 atom rationale (lines 252–253) now reads
 "by a single application of `mul_tower_le_tower_add_two`",
 correctly stating the chain
 `10 · m ≤ m · m = m · tower 0 m ≤ tower 2 m`. Status: **fixed.**
 
-### S4' (Fin.maxOfNat_i undefined) — fixed
+### S4' (Fin.maxOfNat_i undefined) -- fixed
 
 The notation `Fin.maxOfNat_i` from round 2 is gone. Call sites
 now use the explicit form `Fin.maxOfNat k (fun i => …)`
 (lines 233, 239, 266, 267). Status: **fixed.**
 
-### S5' (tower_pow_le_tower_add_three citation) — fixed
+### S5' (tower_pow_le_tower_add_three citation) -- fixed
 
 `tower_pow_le_tower_add_three` is now cited in the bprod
 rationale (lines 309–313). Status: **fixed.**
 
-### N1 (explicit-witness Fin match) — fixed
+### N1 (explicit-witness Fin match) -- fixed
 
 §6.1 (lines 516–518) now uses
 `match i with | ⟨0, _⟩ => … | ⟨1, _⟩ => …`, matching the
@@ -278,7 +278,7 @@ error round-2's review made; the author applied the requested
 
 ## New issues
 
-### N1(r3). §8.2 pseudo-Lean contains a literal `sorry` and bracket-comment placeholders
+### N1(r3). 8.2 pseudo-Lean contains a literal `sorry` and bracket-comment placeholders
 
 §8.2 (line 707–708) presents the `Quotient.sound` step as
 
@@ -393,7 +393,7 @@ the other. Recommendation: drop the escape (use
 `AXIOM_ALLOW` uniformly), matching the existing
 `KSimURMSimulator.lean` annotation style.
 
-### M2(r3). §5.2 line 444 informal `Fin.maxOfNat (v : Fin 0 → ℕ) = 0` is ill-typed
+### M2(r3). 5.2 line 444 informal `Fin.maxOfNat (v : Fin 0 -> Nat) = 0` is ill-typed
 
 Line 444:
 

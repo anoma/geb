@@ -1,23 +1,22 @@
+# Higher Categorical Structure via Product Categories
+
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
-- [Higher Categorical Structure via Product Categories](#higher-categorical-structure-via-product-categories)
-  - [The Question](#the-question)
-  - [The Pattern](#the-pattern)
-  - [Analysis](#analysis)
-    - [Two Distinct Generalizations](#two-distinct-generalizations)
-    - [The Cubical Path: [J^n, Type]](#the-cubical-path-j%5En-type)
-    - [The Globular Path: [J_n, Type]](#the-globular-path-j_n-type)
-    - [Relationship to Simplicial Sets](#relationship-to-simplicial-sets)
-    - [The n = 2 Case in Detail](#the-n--2-case-in-detail)
-    - [Natural Transformations and C × J](#natural-transformations-and-c-%C3%97-j)
-    - [Conclusions](#conclusions)
-  - [References](#references)
+- [The Question](#the-question)
+- [The Pattern](#the-pattern)
+- [Analysis](#analysis)
+  - [Two Distinct Generalizations](#two-distinct-generalizations)
+  - [The Cubical Path: [J_n, Type]](#the-cubical-path-j_n-type)
+  - [The Globular Path: [J_n, Type]](#the-globular-path-j_n-type)
+  - [Relationship to Simplicial Sets](#relationship-to-simplicial-sets)
+  - [The n = 2 Case in Detail](#the-n--2-case-in-detail)
+  - [Natural Transformations and C x J](#natural-transformations-and-c-x-j)
+  - [Conclusions](#conclusions)
+- [References](#references)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
-
-# Higher Categorical Structure via Product Categories
 
 This document investigates whether iterated products of the judgment category J
 provide a natural home for n-categorical and ∞-categorical structure.
@@ -69,7 +68,7 @@ categorical structure:
 - Source/target maps between adjacent levels
 - Matches the standard globular definition of n-category
 
-### The Cubical Path: [J^n, Type]
+### The Cubical Path: [J_n, Type]
 
 For [J × J, Type], the 16 objects can be interpreted as:
 
@@ -163,7 +162,7 @@ A copresheaf X : J_2 → Type encodes:
 
 This directly matches the standard definition of (strict) 2-category.
 
-### Natural Transformations and C × J
+### Natural Transformations and C x J
 
 For natural transformations between functors F, G : C → Cat:
 

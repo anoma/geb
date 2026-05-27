@@ -1,29 +1,28 @@
+# Lawvere Theory of Elementary Recursive Functions
+
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
-- [Lawvere Theory of Elementary Recursive Functions](#lawvere-theory-of-elementary-recursive-functions)
-  - [Overview](#overview)
-  - [Motivation](#motivation)
-  - [Relation to the LawvereBT Development](#relation-to-the-lawverebt-development)
-  - [Proposed Module Layout](#proposed-module-layout)
-  - [Construction Plan](#construction-plan)
-    - [Phase 1: Inductive term for elementary recursive functions](#phase-1-inductive-term-for-elementary-recursive-functions)
-    - [Phase 2: Extensional-equality quotient](#phase-2-extensional-equality-quotient)
-    - [Phase 3: Lawvere theory and interpretation functor](#phase-3-lawvere-theory-and-interpretation-functor)
-    - [Phase 4: Finite-limit structure as definable subobjects](#phase-4-finite-limit-structure-as-definable-subobjects)
-    - [Boolean convention](#boolean-convention)
-    - [Phase 5: Internal categorical development](#phase-5-internal-categorical-development)
-      - [Stage 1: `BTMor1`-analogue as a decidable subobject](#stage-1-btmor1-analogue-as-a-decidable-subobject)
-      - [Stage 2: Internal-category structure on the subobject](#stage-2-internal-category-structure-on-the-subobject)
-      - [Transport via elementary-function-preserving functors](#transport-via-elementary-function-preserving-functors)
-  - [Design Decisions](#design-decisions)
-  - [Open Design Questions](#open-design-questions)
-  - [References](#references)
+- [Overview](#overview)
+- [Motivation](#motivation)
+- [Relation to the LawvereBT Development](#relation-to-the-lawverebt-development)
+- [Proposed Module Layout](#proposed-module-layout)
+- [Construction Plan](#construction-plan)
+  - [Phase 1: Inductive term for elementary recursive functions](#phase-1-inductive-term-for-elementary-recursive-functions)
+  - [Phase 2: Extensional-equality quotient](#phase-2-extensional-equality-quotient)
+  - [Phase 3: Lawvere theory and interpretation functor](#phase-3-lawvere-theory-and-interpretation-functor)
+  - [Phase 4: Finite-limit structure as definable subobjects](#phase-4-finite-limit-structure-as-definable-subobjects)
+  - [Boolean convention](#boolean-convention)
+  - [Phase 5: Internal categorical development](#phase-5-internal-categorical-development)
+    - [Stage 1: `BTMor1`-analogue as a decidable subobject](#stage-1-btmor1-analogue-as-a-decidable-subobject)
+    - [Stage 2: Internal-category structure on the subobject](#stage-2-internal-category-structure-on-the-subobject)
+    - [Transport via elementary-function-preserving functors](#transport-via-elementary-function-preserving-functors)
+- [Design Decisions](#design-decisions)
+- [Open Design Questions](#open-design-questions)
+- [References](#references)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
-
-# Lawvere Theory of Elementary Recursive Functions
 
 ## Overview
 
@@ -62,11 +61,11 @@ level 3, and the Wikipedia article "Elementary recursive
 function") form a strictly smaller class that nonetheless
 permits:
 
-* encoding and decoding of Cantor/Szudzik pairings (and thus
+- encoding and decoding of Cantor/Szudzik pairings (and thus
   encoding binary trees via a Goedel encoding);
-* iterating over paired natural numbers (and thus over trees)
+- iterating over paired natural numbers (and thus over trees)
   at a bounded tower height, which is what a typechecker needs;
-* multiplication, cut-off subtraction, integer division, and
+- multiplication, cut-off subtraction, integer division, and
   bounded sums and products.
 
 Friedman's grand conjecture (see the "Elementary function
@@ -121,14 +120,14 @@ elementary recursive functions on natural numbers, transcribing
 the standard definition from the Wikipedia article "Elementary
 recursive function".  The basis is
 
-* `0` (zero);
-* `succ` (successor);
-* `proj` (projections);
-* `sub` (cut-off subtraction);
-* `comp` (composition);
-* `bsum` (bounded summation
+- `0` (zero);
+- `succ` (successor);
+- `proj` (projections);
+- `sub` (cut-off subtraction);
+- `comp` (composition);
+- `bsum` (bounded summation
   `Σ_{i < n} f(i, \vec{x})`);
-* `bprod` (bounded product
+- `bprod` (bounded product
   `Π_{i < n} f(i, \vec{x})`).
 
 The motivation for transcribing the Wikipedia formulation
@@ -151,9 +150,9 @@ recursive functions under extensional equality of their
 standard interpretations.  Two presentations of the quotient
 are possible, mirroring the choice made for `LawvereBT`:
 
-* a direct setoid with relation
+- a direct setoid with relation
   `r f g := ∀ ctx, interp f ctx = interp g ctx`, or
-* a congruence relation presented by an equational theory,
+- a congruence relation presented by an equational theory,
   proved sound and complete with respect to extensional
   equality.
 
@@ -169,20 +168,20 @@ Rather than freely adjoining equalizers via
 `GebLean/EqualizerCompletion.lean`, the finite-limit category
 is built as the category of *decidable ER-subobjects*:
 
-* **Objects.** Pairs `(n, p)` with `n : ℕ` and
+- **Objects.** Pairs `(n, p)` with `n : ℕ` and
   `p : ERMor1 n` whose standard interpretation lands in
   `{0, 1}`, modulo extensional equality of predicates.
-* **Morphisms** `(n, p) -> (m, q)`.  Equivalence classes of
+- **Morphisms** `(n, p) -> (m, q)`.  Equivalence classes of
   `ERMorN n m`-tuples `f` respecting membership, that is,
   `∀ ctx, p.interp ctx = 1 -> q.interp (f.interp ctx) = 1`.
   The setoid on morphisms identifies two tuples when they
   agree pointwise on every context satisfying `p`, allowing
   them to differ off the subobject without becoming distinct
   morphisms.
-* **Finite products.** `(n, p) × (m, q) = (n + m, p ⊓ q)`
+- **Finite products.** `(n, p) × (m, q) = (n + m, p ⊓ q)`
   with `⊓` the Boolean conjunction (ER-definable as product
   of `{0, 1}`-valued functions).  Terminal object `(0, 1)`.
-* **Equalizers.** For parallel `f, g : (n, p) -> (m, q)`,
+- **Equalizers.** For parallel `f, g : (n, p) -> (m, q)`,
   the equalizer is
   `(n, p ⊓ λ ctx. ⊓ᵢ eq(fᵢ(ctx), gᵢ(ctx)))`
   where `eq(x, y) = (1 ⊖ (x ⊖ y)) · (1 ⊖ (y ⊖ x))` is the
@@ -191,7 +190,7 @@ is built as the category of *decidable ER-subobjects*:
   (expressible via derived `bprod`).  Membership in the
   equalizer is decidable because the combined predicate is
   itself ER.
-* **Finite limits.** Obtained from finite products and
+- **Finite limits.** Obtained from finite products and
   equalizers via the standard construction.
 
 The correctness argument is direct rather than via a free-
@@ -269,16 +268,16 @@ a term is already inside the category.
 
 Upgrade `X` to an internal category in `LawvereTreeERLexCat`:
 
-* `C₀`: an object of arities (either `(ℕ, 1)`, `(BT, 1)`
+- `C₀`: an object of arities (either `(ℕ, 1)`, `(BT, 1)`
   directly, or a decidable subobject cutting out
   arity-consistency data);
-* `C₁`: the subobject `X` constructed in Stage 1, reused
+- `C₁`: the subobject `X` constructed in Stage 1, reused
   verbatim;
-* `src, tgt : X -> C₀`: tree-ER morphisms reading off the
+- `src, tgt : X -> C₀`: tree-ER morphisms reading off the
   input and output arities of a term in `X`;
-* `id : C₀ -> X`: tree-ER morphism building the identity
+- `id : C₀ -> X`: tree-ER morphism building the identity
   tuple of projections at a given arity;
-* `comp : X ×_{C₀} X -> X`: tree-ER morphism performing
+- `comp : X ×_{C₀} X -> X`: tree-ER morphism performing
   substitution of term tuples, with domain the
   source/target pullback that Phase 4g.4 makes available
   as a finite limit in `LawvereTreeERLexCat`.
@@ -329,12 +328,12 @@ having to switch categories.
    Derived functions already expected to be present as
    definable terms (not as generators):
 
-   * Boolean conditionals on `i = 0` via
+   - Boolean conditionals on `i = 0` via
      `sub(succ(zero), i)` (the indicator `1 ⊖ i`).
-   * Multiplication `mul(x, y) = bsum(proj_y)(x, y)`.
-   * Exponentiation with base `y`:
+   - Multiplication `mul(x, y) = bsum(proj_y)(x, y)`.
+   - Exponentiation with base `y`:
      `exp(y, n) = bprod(proj_y)(n, y)`.
-   * Addition `add(x, y) = bsum(g)(succ(x), y)` where
+   - Addition `add(x, y) = bsum(g)(succ(x), y)` where
      `g(i, y) = bprod(proj_y)(sub(succ(zero), i))`
      (the conditional `if i = 0 then y else 1`).
 
@@ -421,17 +420,17 @@ elementary recursive functions).
 
 ## References
 
-* Wikipedia, "Elementary recursive function":
+- Wikipedia, "Elementary recursive function":
   <https://en.wikipedia.org/wiki/Elementary_recursive_function#Definition>
-* Wikipedia, "Grzegorczyk hierarchy":
+- Wikipedia, "Grzegorczyk hierarchy":
   <https://en.wikipedia.org/wiki/Grzegorczyk_hierarchy>
-* Wikipedia, "Elementary function arithmetic" (Friedman's
+- Wikipedia, "Elementary function arithmetic" (Friedman's
   grand conjecture section):
   <https://en.wikipedia.org/wiki/Elementary_function_arithmetic#Friedman's_grand_conjecture>
-* nLab, "natural numbers object" (parameterized NNO):
+- nLab, "natural numbers object" (parameterized NNO):
   <https://ncatlab.org/nlab/show/natural+numbers+object#withparams>
-* `docs/equalizer-completion.md` — free equalizer completion
+- `docs/equalizer-completion.md` — free equalizer completion
   of a finite-product category.
-* `docs/tree-calculus.md` — reflective tree-calculus
+- `docs/tree-calculus.md` — reflective tree-calculus
   computation, illustrating excess strength beyond what is
   needed for typechecking.
