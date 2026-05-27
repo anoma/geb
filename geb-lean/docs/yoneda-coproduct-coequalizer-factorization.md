@@ -33,14 +33,14 @@ not a Grothendieck construction in the same direct sense.
 
 ### The Distinction
 
-* **Fam(C) is a Grothendieck Construction:**
+- **Fam(C) is a Grothendieck Construction:**
 The free coproduct completion **Fam(C)** is the total category of the
 functor *F*: **Set**ᵒᵖ → **Cat** that sends a set *I* to the product
 category *C*ᴵ. It is a category fibred over **Set**.
-* **Logic:** Coproducts are sums indexed by discrete sets. Therefore,
+- **Logic:** Coproducts are sums indexed by discrete sets. Therefore,
 the completion creates a structure fibred over the category of index sets.
 
-* **PSh(C) is a Functor Category:**
+- **PSh(C) is a Functor Category:**
 The free cocompletion **PSh(C)** involves **all** colimits (sums +
 quotients). Since general colimits are indexed by categories (diagrams)
 rather than just sets, **PSh(C)** acts as the "universe" containing these
@@ -106,10 +106,10 @@ a presentation looks like this:
 
 > *X*₁ ⇉ *X*₀
 
-* **X₀ (Generators):** A sum of representables representing the elements.
-* **X₁ (Relations):** A sum of representables representing the equations
+- **X₀ (Generators):** A sum of representables representing the elements.
+- **X₁ (Relations):** A sum of representables representing the equations
 or "gluing instructions."
-* **The Arrows:** The source and target maps indicating which elements
+- **The Arrows:** The source and target maps indicating which elements
 are equivalent.
 
 ### Morphisms: Commutative Squares
@@ -131,10 +131,10 @@ Theorem:
 
 > ∐ *y*(dom *u*) ⇉ ∐ *y*(*c*) ↠ *P*
 
-* The right term is the sum of representables for all elements in *P*.
-* The left term is the sum of representables for all morphisms acting on
+- The right term is the sum of representables for all elements in *P*.
+- The left term is the sum of representables for all morphisms acting on
 those elements.
-* The coequalizer forces the structural relations of the presheaf.
+- The coequalizer forces the structural relations of the presheaf.
 
 ## 4. Connection to Projective Covers and Literature
 
@@ -154,10 +154,10 @@ of **Fam(C)**, **Fam(C)** forms a projective cover of **PSh(C)**.
 This factorization mirrors the construction of algebraic categories from
 theories:
 
-* **C (Theory):** The generators and basic operations.
-* **Fam(C) (Free Algebra):** The formation of "words" or terms (operations
+- **C (Theory):** The generators and basic operations.
+- **Fam(C) (Free Algebra):** The formation of "words" or terms (operations
 without equations).
-* **PSh(C) (Algebra):** The result of enforcing equations (relations) upon
+- **PSh(C) (Algebra):** The result of enforcing equations (relations) upon
 the free algebra.
 
 In the literature, this is most often found in the study of **Accessible

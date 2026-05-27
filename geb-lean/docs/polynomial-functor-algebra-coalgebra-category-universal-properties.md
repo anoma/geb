@@ -101,10 +101,10 @@ of P. By Lambek's Lemma, alpha is an isomorphism.
 
 #### 1.1.2 Example: P(X) = A + X^2
 
-* **Terminal Algebra:** The underlying set is {*}. The
+- **Terminal Algebra:** The underlying set is {*}. The
   operations are defined trivially: leaf(a) = \* for all
   a in A, and node(\*, \*) = \*.
-* **Initial Algebra:** W is the set of all strictly finite
+- **Initial Algebra:** W is the set of all strictly finite
   binary trees with leaves labeled by A. The isomorphism
   W = A + W^2 dictates that every tree in W is uniquely
   either a distinct leaf a in A or a node joining two
@@ -126,10 +126,10 @@ By Lambek's dual lemma, zeta is an isomorphism.
 
 #### 1.2.2 Example: P(X) = A + X^2
 
-* **Initial Coalgebra:** The underlying set is {}. It
+- **Initial Coalgebra:** The underlying set is {}. It
   represents a degenerate state machine with an empty
   state space.
-* **Terminal Coalgebra:** Z is the set of all finite and
+- **Terminal Coalgebra:** Z is the set of all finite and
   infinite binary trees with leaves labeled by A. It
   constitutes the maximal state space of all valid binary
   unfoldings over A.
@@ -197,8 +197,8 @@ operates component-wise.
 The product algebra has the underlying set S1 x S2.
 Evaluation occurs in parallel:
 
-* leaf(a) = (leaf1(a), leaf2(a))
-* node((x1, x2), (y1, y2)) = (node1(x1, y1), node2(x2, y2))
+- leaf(a) = (leaf1(a), leaf2(a))
+- node((x1, x2), (y1, y2)) = (node1(x1, y1), node2(x2, y2))
 
 ### 3.2 Coalgebras
 

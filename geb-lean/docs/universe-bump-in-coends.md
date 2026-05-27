@@ -272,8 +272,8 @@ structure RestrictedCowedge
 
 The apex `pt : D` is an object of `D`; there is no universe
 constraint forcing `pt` to be constructed via Sigma or Pi. The
-_definition_ of restricted cowedges does not require a higher
-universe level, but the _construction_ of an initial one
+*definition* of restricted cowedges does not require a higher
+universe level, but the *construction* of an initial one
 quantifies over `C` and bumps the universe.
 
 ## 7. The Chain of Equivalences

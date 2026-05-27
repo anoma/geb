@@ -29,8 +29,8 @@ $H : \mathcal{C}^{\text{op}} \times \mathcal{C} \to \text{Set}$ a
 **difunctor to Set**. An **$H$-restricted $G$-cowedge** (or cowedge from
 $G$) is a pair $(C, \Phi)$ consisting of:
 
-* An object $C$ of $\mathcal{C}$ (the carrier/summit).
-* A **dinatural transformation** $\Phi$ between the difunctors $H$ and
+- An object $C$ of $\mathcal{C}$ (the carrier/summit).
+- A **dinatural transformation** $\Phi$ between the difunctors $H$ and
   $G/C$.
 
 This $\Phi$ is defined as a family of functions $\{\Phi_A\}_{A \in
@@ -89,9 +89,9 @@ With these definitions established, the collection of $H$-restricted
 $G$-cowedges and the homomorphisms between them form the category
 **$\text{Cow}_G^H$**:
 
-* **Identities:** The identity morphism for an object $(C, \Phi)$ is the
+- **Identities:** The identity morphism for an object $(C, \Phi)$ is the
   identity arrow $\text{id}_C$ of the base category.
-* **Composition:** Composition of homomorphisms is inherited from the
+- **Composition:** Composition of homomorphisms is inherited from the
   composition of arrows in the base category $\mathcal{C}$.
 
 ---
@@ -122,12 +122,12 @@ $$
 The restricted coend satisfies three fundamental laws derived from its
 initiality:
 
-* **Cancellation:** For any $H$-restricted $G$-cowedge $(C, \Phi)$:
+- **Cancellation:** For any $H$-restricted $G$-cowedge $(C, \Phi)$:
   $$\forall A, a \in H(A, A) \cdot [\Phi]_G^H \circ
   (\text{inj}_G^H)_A(a) = \Phi_A(a)$$
-* **Reflection:**
+- **Reflection:**
   $$\text{id}_{\Sigma(H, G)} = [\text{inj}_G^H]_G^H$$
-* **Fusion:** For any $H$-restricted $G$-cowedges $(C, \Phi)$ and
+- **Fusion:** For any $H$-restricted $G$-cowedges $(C, \Phi)$ and
   $(D, \Psi)$ and an arrow $h : C \to D$:
   $$(\forall A, a \in H(A, A) \cdot h \circ \Phi_A(a) = \Psi_A(a))
   \implies h \circ [\Phi]_G^H = [\Psi]_G^H$$
@@ -139,11 +139,11 @@ initiality:
 Vene explains that **ordinary coends** are a special case of this
 construction.
 
-* If $H$ is the **constant terminal functor** $1$ (which sends everything
+- If $H$ is the **constant terminal functor** $1$ (which sends everything
   to a singleton set), a **1-restricted $G$-cowedge** is exactly a family
   of arrows $\Phi_A : G(A, A) \to C$ that makes the standard coend
   diagram commute.
-* Consequently, the **1-restricted $G$-coend** is isomorphic to the
+- Consequently, the **1-restricted $G$-coend** is isomorphic to the
   **ordinary coend** $\int^A G(A, A)$.
 
 ---

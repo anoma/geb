@@ -96,7 +96,7 @@ so that `CLAUDE.md` itself can stay short.
 - Constructive discipline: importing CSLib is fine in the same
   sense that importing mathlib is fine, but the project rule that
   bans `Classical`, `noncomputable`, and `axiom` applies to any
-  _transitive_ axiom dependency too: a GebLean term that depends
+  *transitive* axiom dependency too: a GebLean term that depends
   on a CSLib (or mathlib) lemma using `Classical.choice` will
   surface that axiom under `#print axioms`. For results that must
   remain constructive, run `#print axioms` and refactor if a
