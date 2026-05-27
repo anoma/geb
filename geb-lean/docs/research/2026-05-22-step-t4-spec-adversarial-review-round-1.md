@@ -16,7 +16,7 @@
   - [S5. bsum/bprod side condition does not discharge the identity](#s5-bsumbprod-side-condition-does-not-discharge-the-identity)
   - [S6. §6.2 rejection of augmented-arity is mathematically wrong](#s6-62-rejection-of-augmented-arity-is-mathematically-wrong)
   - [S7. AXIOM\_ALLOW deferral defeats the spec gate](#s7-axiom_allow-deferral-defeats-the-spec-gate)
-  - [S8. `comp` `v_total = Σ v i` is not absorbed by `vMax`](#s8-comp-v_total--σ-v-i-is-not-absorbed-by-vmax)
+  - [S8. `comp` `v_total = Σ v i` is not absorbed by `vMax`](#s8-comp-v_total--%CF%83-v-i-is-not-absorbed-by-vmax)
 - [Minor](#minor)
   - [M1. Page-citation precision](#m1-page-citation-precision)
   - [M2. §5.2 `maxOver 0` left "or whatever"](#m2-52-maxover-0-left-or-whatever)
