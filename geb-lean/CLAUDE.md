@@ -32,6 +32,15 @@ active topic branches.
   find code worth refactoring outside the current branch's scope,
   create a separate branch for it rather than bundling it with
   unrelated work.
+- **Pre-commit Lean triad.** Before any commit that touches a
+  `.lean` file, run `bash scripts/pre-commit.sh` (`lake test` and
+  `lake lint`; `lake build` is currently subsumed by `lake test`'s
+  dependency graph per `scripts/pre-push.sh`'s rationale). This
+  catches lint regressions at commit time rather than push time.
+  `scripts/pre-push.sh` remains the full superset (markdownlint,
+  doctoc, axiom check, user-driven gates) and is mandatory before
+  every push. See `.claude/rules/ci-and-workflow.md` § Pre-commit
+  checklist.
 - **Generic user references in committed text.** "the user" /
   "they" / "them"; no first names, email, or autobiographical
   detail.
@@ -85,7 +94,7 @@ active topic branches.
 | Executing-plan | `superpowers:executing-plans` (or `superpowers:subagent-driven-development`) | phase-relevant Lean skills |
 | Lean code work | `lean4` umbrella (sub-skills below) | `lean-lsp`, `serena` MCPs |
 | Mathlib search | `lean-lsp` (`leansearch`, `loogle`, `local_search`, `hammer_premise`) | — |
-| Pre-commit | `superpowers:verification-before-completion` | — |
+| Pre-commit | `superpowers:verification-before-completion` | `scripts/pre-commit.sh` (`.lean`-touching commits) |
 | Receiving review | `superpowers:receiving-code-review` | — |
 
 `lean4` sub-skill mapping by activity (drafting, proving, filling
@@ -160,7 +169,9 @@ revision.
   code.
 - `scripts/check-axioms.sh` (vendored from `lean4-skills` with
   `Classical.choice` excluded from the allowlist) is part of the
-  pre-commit / pre-push checklist and runs in CI.
+  pre-push checklist and runs in CI. The lighter pre-commit
+  checklist (`scripts/pre-commit.sh`) does not run the axiom
+  check; see Rules above.
 
 ## `sorry`, `admit`, and underscores
 
