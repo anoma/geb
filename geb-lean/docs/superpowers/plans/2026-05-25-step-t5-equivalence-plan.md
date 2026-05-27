@@ -305,7 +305,7 @@ T5.0 produces no code commit by design.
 
 Spec reference: §4.1, §6.1, §7.
 
-- [ ] **Step 1: Add the kInterpFunctor import**
+- [ ] **Step 1: Add the interp-functor imports**
 
 Open `GebLean/LawvereERKSim/ErToKFunctor.lean`. The current
 imports are:
@@ -316,18 +316,22 @@ import GebLean.LawvereERQuot
 import GebLean.LawvereKSimQuot
 ```
 
-Insert one new import line at the end of the import block:
+Insert two new import lines at the end of the import block:
 
 ```lean
 import GebLean.LawvereERKSim.ErToK
 import GebLean.LawvereERQuot
 import GebLean.LawvereKSimQuot
+import GebLean.LawvereERInterp
 import GebLean.LawvereKSimDCatInterp
 ```
 
-The new import gives access to `KMorNQuo.interp` (which is
-used in the new theorem's signature via `.hom.interp`
-dot-notation).
+The two new imports give access to `ERMorNQuo.interp` (from
+`LawvereERInterp`) and `KMorNQuo.interp` (from
+`LawvereKSimDCatInterp`), both used by the new theorem's
+signature via `.hom.interp` dot-notation and `e.interp`
+respectively. Neither import is transitively pulled in by the
+existing import block.
 
 - [ ] **Step 2: Verify the import-only change builds**
 

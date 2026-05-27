@@ -149,7 +149,7 @@ adds an import to the umbrella.
 
 | File | Change | Approx LOC delta |
 | --- | --- | --- |
-| `GebLean/LawvereERKSim/ErToKFunctor.lean` | Add `import GebLean.LawvereKSimDCatInterp`; add T5-A's two theorems at end of `namespace GebLean` | +35 |
+| `GebLean/LawvereERKSim/ErToKFunctor.lean` | Add `import GebLean.LawvereERInterp` and `import GebLean.LawvereKSimDCatInterp`; add T5-A's two theorems at end of `namespace GebLean` | +35 |
 | `GebLean/LawvereERKSim/Equivalence.lean` (new) | T5-B and T5-C content: strict round-trip equalities, their `eqToIso` natural isomorphisms, the `Equivalence` packaging via `Equivalence.mk'`, and two explicit `IsEquivalence` instances | ≈ 130 |
 | `GebLean/LawvereERKSim.lean` (umbrella) | Add `import GebLean.LawvereERKSim.Equivalence`; extend the module docstring's bulleted submodule list to mention `Equivalence` | +6 |
 
