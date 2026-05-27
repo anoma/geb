@@ -107,10 +107,9 @@ doctoc '**/*.md'                     # regenerate TOCs
 
 **Files:**
 
-- No on-disk artifact when the lean-lsp MCP is used
-  (recommended). Fallback path uses a temporary
-  `GebLean/Scratch/T5Stubs.lean` deleted before the task
-  completes; nothing is committed either way.
+- No on-disk artifact. T5.0 verifies the spec's stubs via
+  `mcp__lean-lsp__lean_run_code`; nothing is written under the
+  project tree. If the MCP is unavailable, HALT per Step 4.
 
 This task does not produce a commit. It verifies that the
 spec's three load-bearing assumptions about mathlib's API
@@ -170,26 +169,33 @@ namespace GebLean
 open CategoryTheory
 
 -- §6.3 proof-shape stub:
--- Verifies that the faithfulness + change/rw chain typechecks.
+-- Verifies that the Functor.hext + hcongr_hom + faithfulness
+-- chain typechecks.
 example
     (erToKFunctor_comp_kInterpFunctor :
       erToKFunctor ⋙ kInterpFunctor = erInterpFunctor) :
     erToKFunctor ⋙ kToERFunctor = 𝟭 LawvereERCat := by
-  refine CategoryTheory.Functor.ext (fun _ => rfl) ?_
+  refine CategoryTheory.Functor.hext (fun _ => rfl) ?_
   intro n m e
-  simp only [CategoryTheory.Functor.id_obj,
-    CategoryTheory.Functor.comp_obj,
-    eqToHom_refl, Category.comp_id, Category.id_comp,
-    CategoryTheory.Functor.id_map,
-    CategoryTheory.Functor.comp_map]
+  apply heq_of_eq
   apply erInterpFunctor.map_injective
-  change (kToERFunctor ⋙ erInterpFunctor).map
-            (erToKFunctor.map e)
+  change erInterpFunctor.map
+            (kToERFunctor.map (erToKFunctor.map e))
        = erInterpFunctor.map e
-  rw [kToERFunctor_comp_erInterpFunctor]
-  change (erToKFunctor ⋙ kInterpFunctor).map e
-       = erInterpFunctor.map e
-  rw [erToKFunctor_comp_kInterpFunctor]
+  have h1 :
+      erInterpFunctor.map (kToERFunctor.map (erToKFunctor.map e))
+        = kInterpFunctor.map (erToKFunctor.map e) :=
+    eq_of_heq
+      (CategoryTheory.Functor.hcongr_hom
+        kToERFunctor_comp_erInterpFunctor
+        (erToKFunctor.map e))
+  have h2 :
+      kInterpFunctor.map (erToKFunctor.map e)
+        = erInterpFunctor.map e :=
+    eq_of_heq
+      (CategoryTheory.Functor.hcongr_hom
+        erToKFunctor_comp_kInterpFunctor e)
+  rw [h1, h2]
 
 end GebLean
 ```
@@ -265,6 +271,10 @@ the final `end GebLean`:
 -- post-`unfold erToKFunctor_map` goal. The proof body is
 -- irrelevant (only motive elaboration matters); `sorry`
 -- inside a non-committed example is acceptable.
+-- Note: the anonymous constructor `{ hom := ..., depth_witness
+-- := ... }` requires the explicit type ascription
+-- `(... : KSimMor 2 n m)` because the motive position does not
+-- propagate an expected type to the inner constructor block.
 example {n m : ℕ} (e : ERMorNQuo n m) :
     (erToKFunctor_map e).hom.interp = e.interp := by
   unfold erToKFunctor_map
@@ -273,11 +283,11 @@ example {n m : ℕ} (e : ERMorNQuo n m) :
       KMorNQuo.interp
         (Quotient.liftOn (s := erMorNSetoid n m) e
           (fun rec =>
-            { hom := Quotient.mk (kMorNSetoid n m) (erToKN rec),
-              depth_witness := Quotient.mk _
-                { rep := erToKN rec,
-                  rep_level := fun i => erToKN_level rec i,
-                  rep_eq := rfl } })
+            ({ hom := Quotient.mk (kMorNSetoid n m) (erToKN rec),
+               depth_witness := Quotient.mk _
+                 { rep := erToKN rec,
+                   rep_level := fun i => erToKN_level rec i,
+                   rep_eq := rfl } } : KSimMor 2 n m))
           _).hom
       = ERMorNQuo.interp e) e ?_
   intro rec
@@ -406,11 +416,11 @@ theorem erToKFunctor_map_interp {n m : ℕ}
       KMorNQuo.interp
         (Quotient.liftOn (s := erMorNSetoid n m) e
           (fun rec =>
-            { hom := Quotient.mk (kMorNSetoid n m) (erToKN rec),
-              depth_witness := Quotient.mk _
-                { rep := erToKN rec,
-                  rep_level := fun i => erToKN_level rec i,
-                  rep_eq := rfl } })
+            ({ hom := Quotient.mk (kMorNSetoid n m) (erToKN rec),
+               depth_witness := Quotient.mk _
+                 { rep := erToKN rec,
+                   rep_level := fun i => erToKN_level rec i,
+                   rep_eq := rfl } } : KSimMor 2 n m))
           _).hom
       = ERMorNQuo.interp e) e ?_
   intro rec
@@ -657,29 +667,36 @@ Insert before `end GebLean`:
 -- .claude/rules/lean-coding.md § Accepted exceptions).
 /-- Strict functor equality for the ER → K → ER round-trip:
 `erToKFunctor ⋙ kToERFunctor = 𝟭 LawvereERCat`. Proof uses
-faithfulness of `erInterpFunctor` plus the two functor-level
-interp-preservation equalities to collapse the round-trip
-composite to the identity functor. Both functors are identity
-on objects, so `CategoryTheory.Functor.ext`'s `eqToHom`
-transports reduce to `𝟙 _` and disappear under
-`simp only [Category.id_comp, Category.comp_id]`. -/
+faithfulness of `erInterpFunctor` plus `Functor.hcongr_hom`
+applied to the two functor-level interp-preservation
+equalities. The proof routes through `Functor.hext` (the
+heterogeneous-equality variant of `Functor.ext`) to avoid
+`eqToHom` transports on the morphism side; since both functors
+are identity on objects, the `HEq` reduces to plain `Eq` via
+`heq_of_eq`. -/
 theorem erToKFunctor_comp_kToERFunctor :
     erToKFunctor ⋙ kToERFunctor = 𝟭 LawvereERCat := by
-  refine CategoryTheory.Functor.ext (fun _ => rfl) ?_
+  refine CategoryTheory.Functor.hext (fun _ => rfl) ?_
   intro n m e
-  simp only [CategoryTheory.Functor.id_obj,
-    CategoryTheory.Functor.comp_obj,
-    eqToHom_refl, Category.comp_id, Category.id_comp,
-    CategoryTheory.Functor.id_map,
-    CategoryTheory.Functor.comp_map]
+  apply heq_of_eq
   apply erInterpFunctor.map_injective
-  change (kToERFunctor ⋙ erInterpFunctor).map
-            (erToKFunctor.map e)
+  change erInterpFunctor.map
+            (kToERFunctor.map (erToKFunctor.map e))
        = erInterpFunctor.map e
-  rw [kToERFunctor_comp_erInterpFunctor]
-  change (erToKFunctor ⋙ kInterpFunctor).map e
-       = erInterpFunctor.map e
-  rw [erToKFunctor_comp_kInterpFunctor]
+  have h1 :
+      erInterpFunctor.map (kToERFunctor.map (erToKFunctor.map e))
+        = kInterpFunctor.map (erToKFunctor.map e) :=
+    eq_of_heq
+      (CategoryTheory.Functor.hcongr_hom
+        kToERFunctor_comp_erInterpFunctor
+        (erToKFunctor.map e))
+  have h2 :
+      kInterpFunctor.map (erToKFunctor.map e)
+        = erInterpFunctor.map e :=
+    eq_of_heq
+      (CategoryTheory.Functor.hcongr_hom
+        erToKFunctor_comp_kInterpFunctor e)
+  rw [h1, h2]
 ```
 
 - [ ] **Step 4: Verify the theorem builds**
@@ -707,26 +724,32 @@ Insert after the previous theorem and before `end GebLean`:
 /-- Strict functor equality for the K → ER → K round-trip:
 `kToERFunctor ⋙ erToKFunctor = 𝟭 (LawvereKSimDCat 2)`.
 Symmetric to `erToKFunctor_comp_kToERFunctor`, using
-faithfulness of `kInterpFunctor` instead of `erInterpFunctor`.
-The two functor-level interp-preservation equalities are
-applied in the reverse order from §6.3. -/
+faithfulness of `kInterpFunctor` instead of `erInterpFunctor`,
+and `Functor.hcongr_hom` of the two interp-preservation
+equalities in the opposite order. -/
 theorem kToERFunctor_comp_erToKFunctor :
     kToERFunctor ⋙ erToKFunctor = 𝟭 (LawvereKSimDCat 2) := by
-  refine CategoryTheory.Functor.ext (fun _ => rfl) ?_
+  refine CategoryTheory.Functor.hext (fun _ => rfl) ?_
   intro n m f
-  simp only [CategoryTheory.Functor.id_obj,
-    CategoryTheory.Functor.comp_obj,
-    eqToHom_refl, Category.comp_id, Category.id_comp,
-    CategoryTheory.Functor.id_map,
-    CategoryTheory.Functor.comp_map]
+  apply heq_of_eq
   apply kInterpFunctor.map_injective
-  change (erToKFunctor ⋙ kInterpFunctor).map
-            (kToERFunctor.map f)
+  change kInterpFunctor.map
+            (erToKFunctor.map (kToERFunctor.map f))
        = kInterpFunctor.map f
-  rw [erToKFunctor_comp_kInterpFunctor]
-  change (kToERFunctor ⋙ erInterpFunctor).map f
-       = kInterpFunctor.map f
-  rw [kToERFunctor_comp_erInterpFunctor]
+  have h1 :
+      kInterpFunctor.map (erToKFunctor.map (kToERFunctor.map f))
+        = erInterpFunctor.map (kToERFunctor.map f) :=
+    eq_of_heq
+      (CategoryTheory.Functor.hcongr_hom
+        erToKFunctor_comp_kInterpFunctor
+        (kToERFunctor.map f))
+  have h2 :
+      erInterpFunctor.map (kToERFunctor.map f)
+        = kInterpFunctor.map f :=
+    eq_of_heq
+      (CategoryTheory.Functor.hcongr_hom
+        kToERFunctor_comp_erInterpFunctor f)
+  rw [h1, h2]
 ```
 
 - [ ] **Step 6: Verify both theorems build**

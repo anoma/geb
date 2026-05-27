@@ -306,11 +306,11 @@ theorem erToKFunctor_map_interp {n m : ℕ}
       KMorNQuo.interp
         (Quotient.liftOn (s := erMorNSetoid n m) e
           (fun rec =>
-            { hom := Quotient.mk (kMorNSetoid n m) (erToKN rec),
-              depth_witness := Quotient.mk _
-                { rep := erToKN rec,
-                  rep_level := fun i => erToKN_level rec i,
-                  rep_eq := rfl } })
+            ({ hom := Quotient.mk (kMorNSetoid n m) (erToKN rec),
+               depth_witness := Quotient.mk _
+                 { rep := erToKN rec,
+                   rep_level := fun i => erToKN_level rec i,
+                   rep_eq := rfl } } : KSimMor 2 n m))
           _).hom
       = ERMorNQuo.interp e) e ?_
   intro rec
@@ -382,33 +382,47 @@ chain begins.
 
 ```lean
 theorem erToKFunctor_comp_kToERFunctor :
-    erToKFunctor ⋙ kToERFunctor = 𝟙 LawvereERCat := by
-  refine CategoryTheory.Functor.ext (fun _ => rfl) ?_
+    erToKFunctor ⋙ kToERFunctor = 𝟭 LawvereERCat := by
+  refine CategoryTheory.Functor.hext (fun _ => rfl) ?_
   intro n m e
-  simp only [CategoryTheory.Functor.id_obj,
-    CategoryTheory.Functor.comp_obj,
-    eqToHom_refl, Category.comp_id, Category.id_comp,
-    CategoryTheory.Functor.id_map,
-    CategoryTheory.Functor.comp_map]
-  -- goal: kToERFunctor.map (erToKFunctor.map e) = e
+  apply heq_of_eq
   apply erInterpFunctor.map_injective
-  -- goal: erInterpFunctor.map (kToERFunctor.map
-  --         (erToKFunctor.map e)) = erInterpFunctor.map e
-  change (kToERFunctor ⋙ erInterpFunctor).map
-            (erToKFunctor.map e)
+  change erInterpFunctor.map
+            (kToERFunctor.map (erToKFunctor.map e))
        = erInterpFunctor.map e
-  rw [kToERFunctor_comp_erInterpFunctor]
-  change (erToKFunctor ⋙ kInterpFunctor).map e
-       = erInterpFunctor.map e
-  rw [erToKFunctor_comp_kInterpFunctor]
+  have h1 :
+      erInterpFunctor.map (kToERFunctor.map (erToKFunctor.map e))
+        = kInterpFunctor.map (erToKFunctor.map e) :=
+    eq_of_heq
+      (CategoryTheory.Functor.hcongr_hom
+        kToERFunctor_comp_erInterpFunctor
+        (erToKFunctor.map e))
+  have h2 :
+      kInterpFunctor.map (erToKFunctor.map e)
+        = erInterpFunctor.map e :=
+    eq_of_heq
+      (CategoryTheory.Functor.hcongr_hom
+        erToKFunctor_comp_kInterpFunctor e)
+  rw [h1, h2]
 ```
 
-The two `change` steps exploit `Functor.comp_map`'s definitional
-equality: `(F ⋙ G).map f` reduces to `G.map (F.map f)` by `rfl`,
-so each `change` is type-checking sugar. This lets the
-`rw [kToERFunctor_comp_erInterpFunctor]` rewrite the *functor*
-equality on a *map* term without invoking `Functor.congr_hom`
-(which would introduce unwanted `eqToHom` transports).
+The proof routes through `CategoryTheory.Functor.hext` (the
+heterogeneous-equality variant of `Functor.ext`) rather than
+`Functor.ext`. The reason: `Functor.ext` with `h_obj := fun _ =>
+rfl` still leaves `eqToHom`-laden goals on the morphism side
+because the obj-side proofs are not literally `Eq.refl` after
+beta-reduction; `simp [eqToHom_refl, Category.id_comp,
+Category.comp_id]` cannot collapse them. `Functor.hext`
+delivers a `HEq` obligation on maps; since obj-agreement is
+`rfl`, the `HEq` reduces to plain equality via `heq_of_eq`
+without any `eqToHom` introduction.
+
+`CategoryTheory.Functor.hcongr_hom` is mathlib's HEq companion
+of `Functor.congr_hom`: it takes a functor equality `F = G` and
+a morphism `f`, producing `F.map f ≍ G.map f`. Wrapped with
+`eq_of_heq` (applicable here because the obj parts of `F` and
+`G` agree by `rfl` on `f`'s endpoints), each `hcongr_hom`
+yields an ordinary `Eq` rewrite that composes cleanly via `rw`.
 
 Faithfulness of `erInterpFunctor` (instance at
 `LawvereERInterp.lean:80`) is consumed via `map_injective`. The
@@ -420,26 +434,35 @@ proof closes because, after the two `rw`s, the goal reduces to
 
 ```lean
 theorem kToERFunctor_comp_erToKFunctor :
-    kToERFunctor ⋙ erToKFunctor = 𝟙 (LawvereKSimDCat 2) := by
-  refine CategoryTheory.Functor.ext (fun _ => rfl) ?_
+    kToERFunctor ⋙ erToKFunctor = 𝟭 (LawvereKSimDCat 2) := by
+  refine CategoryTheory.Functor.hext (fun _ => rfl) ?_
   intro n m f
-  simp only [CategoryTheory.Functor.id_obj,
-    CategoryTheory.Functor.comp_obj,
-    eqToHom_refl, Category.comp_id, Category.id_comp,
-    CategoryTheory.Functor.id_map,
-    CategoryTheory.Functor.comp_map]
+  apply heq_of_eq
   apply kInterpFunctor.map_injective
-  change (erToKFunctor ⋙ kInterpFunctor).map (kToERFunctor.map f)
+  change kInterpFunctor.map
+            (erToKFunctor.map (kToERFunctor.map f))
        = kInterpFunctor.map f
-  rw [erToKFunctor_comp_kInterpFunctor]
-  change (kToERFunctor ⋙ erInterpFunctor).map f
-       = kInterpFunctor.map f
-  rw [kToERFunctor_comp_erInterpFunctor]
+  have h1 :
+      kInterpFunctor.map (erToKFunctor.map (kToERFunctor.map f))
+        = erInterpFunctor.map (kToERFunctor.map f) :=
+    eq_of_heq
+      (CategoryTheory.Functor.hcongr_hom
+        erToKFunctor_comp_kInterpFunctor
+        (kToERFunctor.map f))
+  have h2 :
+      erInterpFunctor.map (kToERFunctor.map f)
+        = kInterpFunctor.map f :=
+    eq_of_heq
+      (CategoryTheory.Functor.hcongr_hom
+        kToERFunctor_comp_erInterpFunctor f)
+  rw [h1, h2]
 ```
 
 Symmetric to 6.3 with `er` and `k` swapped. Consumes
 faithfulness of `kInterpFunctor` (instance at
-`LawvereKSimDCatInterp.lean:84`).
+`LawvereKSimDCatInterp.lean:84`), and `Functor.hcongr_hom`
+applied to the two functor-level interp-preservation equalities
+in the opposite order from §6.3.
 
 ### 6.5 `erToKKToErIso` and `kToErErToKIso`
 
@@ -731,16 +754,21 @@ mirror counterpart; flag any divergence in proof shape.
 ### 11.3 Faithfulness chain sound
 
 Claim: §6.3 and §6.4's proof of strict round-trip equality via
-`Faithful.map_injective` + `Functor.comp_map`'s definitional
-equality + the two functor-level interp-preservation equalities
+`Functor.hext` + `Faithful.map_injective` + `Functor.hcongr_hom`
+applied to the two functor-level interp-preservation equalities
 is complete and produces an axiom-clean proof.
 
 Adversary obligation: trace the proof steps line-by-line;
-verify that `Functor.comp_map` is `rfl` in Lean 4 (it is — see
-mathlib `CategoryTheory.Functor.Basic`); verify that
-`Faithful.map_injective` is the correct member-of-typeclass
-identifier; verify that the two `rw`s commute with the surface
-`(F ⋙ G).map _` rewriting; flag any gap.
+verify that `CategoryTheory.Functor.hext` is the correct
+heterogeneous-equality `Functor.ext` variant under the current
+mathlib pin; verify that `CategoryTheory.Functor.hcongr_hom`
+exists and has the signature
+`(h : F = G) (f : X ⟶ Y) → F.map f ≍ G.map f`; verify that
+the `eq_of_heq` wrapping is sound (it is because the obj-parts
+of `F` and `G` agree by `rfl` on `f`'s endpoints, so the HEq
+reduces to plain Eq); flag any gap. The fully verified working
+proofs are recorded in `.review-2.md` and its follow-up
+.review-3.md`.
 
 ### 11.4 Citations complete
 
