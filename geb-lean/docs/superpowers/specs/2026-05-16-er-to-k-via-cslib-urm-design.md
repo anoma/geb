@@ -1,27 +1,36 @@
 # erToK via zero-test URM simulation — design
 
-> **Status (2026-05-22).** §4 (URM kernel, T1), §5 (ER → URM
-> compiler with `compileER_runFor`, T2), and §6 (K^sim
-> simulator with `simulate`, `simulate_interp`,
-> `simulate_level`, T3) are implemented. T1 landed §4 in
+> **Status (2026-05-25).** §4 (URM kernel, T1), §5 (ER → URM
+> compiler with `compileER_runFor`, T2), §6 (K^sim simulator
+> with `simulate`, `simulate_interp`, `simulate_level`, T3),
+> and §7–§8 (runtime bound, `erToK` assembly, `erToKFunctor`,
+> T4) are implemented. T1 landed §4 in
 > `GebLean/Utilities/ZeroTestURM.lean`; T2 landed §5 in eight
 > submodules under `GebLean/LawvereERKSim/{Compiler,Embedding,Loops,Atoms,Comp,BSum,BProd,Top}.lean`
 > (≈ 28 000 LOC), re-exported via `GebLean/LawvereERKSim.lean`;
 > T3 landed §6 in `GebLean/Utilities/KSimURMSimulator.lean`
 > (re-exported via `GebLean.lean`) with the constructive
-> `KMor1.level` refactor in `GebLean/LawvereKSim.lean`. Of T3's
-> 19 public declarations, 14 are `[propext, Quot.sound]`-only;
-> 5 (`baseFamily_level`, `stepFamily_level`,
-> `simulate_step_match`, `simulate_interp`, `simulate_level`)
-> carry transitive `Classical.choice` through mathlib's
-> `Fin.lastCases_castSucc`, suppressed via AXIOM_ALLOW
-> annotations per `.claude/rules/lean-coding.md` § Accepted
-> exceptions. §7–§8 (runtime bound, erToK assembly) and §11
-> (categorical iso) remain forward-looking design; the next
-> workstream T4 will re-spec §7 against the actually-landed
-> §4/§5/§6 shapes. The post-T3 handoff at
-> [`docs/superpowers/plans/2026-05-22-post-t3-handoff.md`](../plans/2026-05-22-post-t3-handoff.md)
-> seeds T4's design phase. See
+> `KMor1.level` refactor in `GebLean/LawvereKSim.lean`; T4
+> landed §7–§8 in `GebLean/LawvereERKSim/RuntimeBound.lean`
+> (`boundExprKParams`, `boundExprKParams_dominates`,
+> `boundExprK`, `boundExprK_level`, `boundExprK_interp`,
+> `boundExprK_dominates`),
+> `GebLean/LawvereERKSim/ErToK.lean` (`erToK`, `erToK_level`,
+> `erToK_interp`), and `GebLean/LawvereERKSim/ErToKFunctor.lean`
+> (`erToKN`, `erToKN_interp`, `erToKN_level`,
+> `erToKN_compat_extEq`, `erToKFunctor_map`,
+> `erToKFunctor_map_id`, `erToKFunctor_map_comp`,
+> `erToKFunctor : LawvereERCat ⥤ LawvereKSimDCat 2`). The T3
+> AXIOM_ALLOW exception propagates transitively to the T4
+> declarations whose proofs route through `simulate_interp` /
+> `simulate_level`; the static-analysis suppression covers
+> them per `.claude/rules/lean-coding.md` § Accepted
+> exceptions. §11 (categorical iso) is the remaining
+> forward-looking design and is the scope of T5, the final
+> phase of the ER ↔ K^sim_2 equivalence project. The post-T4
+> handoff at
+> [`docs/superpowers/plans/2026-05-25-post-t4-handoff.md`](../plans/2026-05-25-post-t4-handoff.md)
+> seeds T5's brainstorming phase. See
 > [`docs/research/2026-05-02-er-ksim2-equiv-via-urm-master-design.md`](../../research/2026-05-02-er-ksim2-equiv-via-urm-master-design.md)
 > § "Phase 2 partial-completion note" for cross-references.
 
@@ -949,30 +958,60 @@ categorical-iso spec composes them.
 Replacing master-design steps 6–10:
 
 - **Step T1 — URM kernel.** `Utilities/ZeroTestURM.lean`.
-  Inductive type, semantics, runFor, init. ≈ 100 Lean
-  lines. One review round expected.
+  Inductive type, semantics, runFor, init. Complete (≈ 100
+  Lean lines).
 - **Step T2 — Per-ER-constructor compiler templates and
   correctness.** `compileER` and `compileER_runFor` in
-  `LawvereERKSim.lean`. The bulk of new template work
-  lives here. ≈ 400–600 Lean lines. Two to three review
-  rounds expected.
-- **Step T3 — K^sim simulator.** `simulate` and
-  `simulate_interp`, plus the four supporting K^sim
-  composites of §3.1 (`natK`, `maxK`, `maxOver`,
-  `pow2_iter`). ≈ 300–500 Lean lines. Two review rounds
-  expected.
-- **Step T4 — Runtime bound.** `boundExprK` and
-  `boundExprK_dominates`. ≈ 200–300 Lean lines. One to
-  two review rounds expected.
-- **Step T5 — `erToK` assembly + functor.** `erToK`,
-  `erToK_interp`, `erToK_level`, `erToKN`,
-  `erToKFunctor`. ≈ 150–250 Lean lines. One review round
-  expected.
+  `LawvereERKSim.lean`. Complete (≈ 28 000 Lean lines
+  across eight submodules; significantly above the original
+  400–600 estimate due to per-template invariant proofs).
+- **Step T3 — K^sim simulator.** `simulate`,
+  `simulate_interp`, and `simulate_level` in
+  `Utilities/KSimURMSimulator.lean`, plus the supporting
+  composites `KMor1.natK`, `natK'`, `predIter`,
+  `pcDispatchFrom`, `pcDispatch`, `baseFamily`,
+  `stepFamily`. Complete (≈ 1 000 Lean lines).
+- **Step T4 — Runtime bound, `erToK` assembly, and
+  functor.** `boundExprKParams`,
+  `boundExprKParams_dominates`, `boundExprK`,
+  `boundExprK_level`, `boundExprK_interp`,
+  `boundExprK_dominates` in `RuntimeBound.lean`; `erToK`,
+  `erToK_level`, `erToK_interp` in `ErToK.lean`; `erToKN`,
+  `erToKN_interp`, `erToKN_level`, `erToKN_compat_extEq`,
+  `erToKFunctor_map`, `erToKFunctor_map_id`,
+  `erToKFunctor_map_comp`, `erToKFunctor` in
+  `ErToKFunctor.lean`. Complete (≈ 2 500 Lean lines).
+  Absorbs the original step decomposition's separate "T4
+  runtime bound" and "T5 erToK assembly + functor"; the
+  spec at
+  [`2026-05-22-step-t4-runtime-bound-design.md`](2026-05-22-step-t4-runtime-bound-design.md)
+  is binding.
+- **Step T5 — Categorical equivalence.** Strict equality
+  `erToKFunctor ⋙ kInterpFunctor = erInterpFunctor`
+  (functor-level interp preservation; ER → K analog of the
+  landed `kToERFunctor_comp_erInterpFunctor` at
+  `LawvereKSimER.lean:538`); supporting
+  `erToKFunctor_map_interp`
+  (quotient-level interp preservation; ER → K analog of
+  `kToERFunctor_map_interp` at `LawvereKSimER.lean:488`);
+  natural isomorphisms `kToERFunctor ⋙ erToKFunctor ≅
+  𝟭 _` and `erToKFunctor ⋙ kToERFunctor ≅ 𝟭 _`; and the
+  packaged equivalence `LawvereERCat ≌ LawvereKSimDCat 2`
+  (Tourlakis 2018 Corollary 0.1.0.44 at `n = 2`), assembled
+  via `Equivalence.mk'` with an explicit triangle-discharge
+  fifth argument, plus two explicit `Functor.IsEquivalence`
+  instances on `erToKFunctor` and `kToERFunctor`.
+  Complete (≈ 230 Lean lines in
+  `LawvereERKSim/Equivalence.lean` plus 35 lines extending
+  `LawvereERKSim/ErToKFunctor.lean`; spec at
+  [`2026-05-25-step-t5-equivalence-design.md`](2026-05-25-step-t5-equivalence-design.md)
+  is binding; landed on `feat/t5-equivalence`, pending PR).
+  The final phase of the ER ↔ K^sim_2 equivalence project.
 
 Critical path: T1 → T2 → T4 → T5; T3 parallels T2 but
 precedes T4 (since T4 consumes the K^sim composites
-`pow2_iter`, `maxOver` built in T3). The strict iso
-(master design §11) is its own subsequent spec.
+`pow2_iter`, `maxOver` built in T3). T5 consumes T4's
+`erToKFunctor` and the pre-existing `kToERFunctor`.
 
 ## 12 Adversarial-review punch list
 
