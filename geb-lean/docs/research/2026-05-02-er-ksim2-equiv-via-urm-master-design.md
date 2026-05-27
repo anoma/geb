@@ -1,12 +1,20 @@
 # Master design — ER ↔ K^sim_2 categorical equivalence via URM simulation
 
-> **Status.** Phase 1 (kToER, steps 0-5) complete. Phase 2 (erToK,
-> steps 6-10) partially complete: the URM kernel and the ER → URM
-> compiler with its correctness theorem `compileER_runFor` have
-> landed (Steps 6-8 covered by workstreams T1 and T2; see "Phase 2
-> partial-completion note" below). Phase 2 Steps 9-10 (K^sim
-> simulator and `erToK` assembly) and Phase 3 (categorical iso,
-> step 11) remain open.
+> **Status.** Complete end-to-end. Phase 1 (kToER, steps 0-5)
+> landed via the original kToER cycle. Phase 2 (erToK, steps 6-10)
+> landed via workstreams T1 (URM kernel,
+> `Utilities/ZeroTestURM.lean`), T2 (ER → URM compiler in
+> `LawvereERKSim/*.lean`), T3 (K^sim simulator,
+> `Utilities/KSimURMSimulator.lean`), and T4 (`erToK` /
+> `erToKFunctor` assembly in
+> `LawvereERKSim/{RuntimeBound,ErToK,ErToKFunctor}.lean`,
+> PR #201). Phase 3 (step 11: categorical equivalence
+> `LawvereERCat ≌ LawvereKSimDCat 2` via `Equivalence.mk'`) landed
+> via workstream T5 in `LawvereERKSim/Equivalence.lean` (on topic
+> branch `feat/t5-equivalence`, pending PR). Axiom envelope is
+> `[propext, Quot.sound]` after AXIOM_ALLOW suppression of the
+> standing `Fin.lastCases_castSucc`-routed Classical.choice
+> exception.
 >
 > Steps 0-5 closed `K^sim_2 ⊆ ER` via the structural-induction
 > Path 2 of §3:

@@ -335,8 +335,25 @@ The repository is laid out narrow-and-deep, with one indexing
   `GebLean/LawvereERArith.lean`,
   `GebLean/LawvereERBound.lean`,
   `GebLean/LawvereERBoundComputable.lean`,
+  `GebLean/LawvereERInterp.lean`,
   `GebLean/LawvereERPolynomialBound.lean`,
+  `GebLean/LawvereERPrimrec.lean`,
+  `GebLean/LawvereERQuot.lean`,
+  `GebLean/LawvereERKSim.lean`,
+  `GebLean/LawvereERKSim/Compiler.lean`,
+  `GebLean/LawvereERKSim/Embedding.lean`,
+  `GebLean/LawvereERKSim/Loops.lean`,
+  `GebLean/LawvereERKSim/Atoms.lean`,
+  `GebLean/LawvereERKSim/Comp.lean`,
+  `GebLean/LawvereERKSim/BSum.lean`,
+  `GebLean/LawvereERKSim/BProd.lean`,
+  `GebLean/LawvereERKSim/Top.lean`,
+  `GebLean/LawvereERKSim/RuntimeBound.lean`,
+  `GebLean/LawvereERKSim/ErToK.lean`,
+  `GebLean/LawvereERKSim/ErToKFunctor.lean`,
+  `GebLean/LawvereERKSim/Equivalence.lean`,
   `GebLean/Utilities/KArith.lean`,
+  `GebLean/Utilities/KSimURMSimulator.lean`,
   `GebLean/Utilities/ERArith.lean`,
   `GebLean/Utilities/ERTreeArith.lean`,
   `GebLean/Utilities/ERAMajorants.lean`,
@@ -349,18 +366,32 @@ The repository is laid out narrow-and-deep, with one indexing
   `GebLean/Utilities/SzudzikSeq.lean`,
   `GebLean/Utilities/KSimSzudzikSimrec.lean`,
   `GebLean/Utilities/RegisterMachine.lean`,
+  `GebLean/Utilities/ZeroTestURM.lean`,
   `GebLean/Utilities/ComputationalComplexity.lean`,
   `GebLean/NatElegantPair.lean`.
 - **Central concepts**: Tourlakis's K^sim hierarchy presented
   as a Lawvere category with simultaneous-recursion
   constructors, the elementary-recursive Lawvere category
-  `LawvereERCat`, the `kToER` functor witnessing
-  `K^sim_2 ⊆ ER`, polynomial bound infrastructure and
-  Tourlakis A-majorants establishing tower-bounded growth,
-  Szudzik-pair packing of multi-output simrec, the KArith
-  library of K-side arithmetic. Citations: Tourlakis 2018,
-  Wagner-Wong on URM simulation, the Wikipedia
-  elementary-recursive article (see
+  `LawvereERCat`, the `kToERFunctor : LawvereKSimDCat 2 ⥤
+  LawvereERCat` witnessing `K^sim_2 ⊆ ER`, polynomial bound
+  infrastructure and Tourlakis A-majorants establishing
+  tower-bounded growth, Szudzik-pair packing of multi-output
+  simrec, the KArith library of K-side arithmetic; the
+  reverse direction `erToKFunctor : LawvereERCat ⥤
+  LawvereKSimDCat 2` via URM simulation (`ZeroTestURM`
+  kernel, `compileER` ER → URM compiler, `KSimURMSimulator`
+  K^sim simulator of the URM, runtime bound `boundExprK`);
+  the packaged categorical equivalence `erKSimEquiv :
+  LawvereERCat ≌ LawvereKSimDCat 2` (Tourlakis 2018
+  Corollary 0.1.0.44 at `n = 2`), assembled via
+  `Equivalence.mk'` with `Functor.hext` +
+  `Functor.hcongr_hom` + faithfulness round-trip proofs and
+  two explicit `Functor.IsEquivalence` instances. Axiom
+  envelope `[propext, Quot.sound]` after AXIOM_ALLOW
+  suppression of the standing `Fin.lastCases_castSucc`
+  exception. Citations: Tourlakis 2018, Wagner-Wong on URM
+  simulation, the Wikipedia elementary-recursive article
+  (see
   `docs/research/2026-04-30-ksim-polynomial-bound-references.md`,
   `docs/research/2026-05-02-er-ksim2-equiv-via-urm-master-design.md`).
   Specs:
@@ -369,7 +400,13 @@ The repository is laid out narrow-and-deep, with one indexing
   `docs/superpowers/specs/2026-05-03-step-3-er-tourlakis-A-majorants-design.md`,
   `docs/superpowers/specs/2026-05-03-step-4-ksim-majorization-design.md`,
   `docs/superpowers/specs/2026-05-03-step-5-ksim-to-er-functor-design.md`,
-  `docs/superpowers/specs/2026-05-05-karith-design.md`.
+  `docs/superpowers/specs/2026-05-05-karith-design.md`,
+  `docs/superpowers/specs/2026-05-16-er-to-k-via-cslib-urm-design.md`
+  (master ER-to-K spec covering T1-T4),
+  `docs/superpowers/specs/2026-05-21-step-t3-urm-to-ksim-simulator-design.md`,
+  `docs/superpowers/specs/2026-05-22-step-t4-runtime-bound-design.md`,
+  `docs/superpowers/specs/2026-05-25-step-t5-equivalence-design.md`
+  (T5 categorical equivalence).
 - **Dependencies**:
   [polynomial / W- / M-types and PFunctors](#polynomial--w---m-types-and-pfunctors)
   for the Lawvere-categorical setting;

@@ -995,10 +995,18 @@ Replacing master-design steps 6–10:
   (quotient-level interp preservation; ER → K analog of
   `kToERFunctor_map_interp` at `LawvereKSimER.lean:488`);
   natural isomorphisms `kToERFunctor ⋙ erToKFunctor ≅
-  𝟙 _` and `erToKFunctor ⋙ kToERFunctor ≅ 𝟙 _`; and the
-  packaged equivalence `LawvereERCat ≌ LawvereKSimDCat 2`.
-  Pending. The final phase of the ER ↔ K^sim_2 equivalence
-  project.
+  𝟭 _` and `erToKFunctor ⋙ kToERFunctor ≅ 𝟭 _`; and the
+  packaged equivalence `LawvereERCat ≌ LawvereKSimDCat 2`
+  (Tourlakis 2018 Corollary 0.1.0.44 at `n = 2`), assembled
+  via `Equivalence.mk'` with an explicit triangle-discharge
+  fifth argument, plus two explicit `Functor.IsEquivalence`
+  instances on `erToKFunctor` and `kToERFunctor`.
+  Complete (≈ 230 Lean lines in
+  `LawvereERKSim/Equivalence.lean` plus 35 lines extending
+  `LawvereERKSim/ErToKFunctor.lean`; spec at
+  [`2026-05-25-step-t5-equivalence-design.md`](2026-05-25-step-t5-equivalence-design.md)
+  is binding; landed on `feat/t5-equivalence`, pending PR).
+  The final phase of the ER ↔ K^sim_2 equivalence project.
 
 Critical path: T1 → T2 → T4 → T5; T3 parallels T2 but
 precedes T4 (since T4 consumes the K^sim composites

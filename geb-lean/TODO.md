@@ -12,17 +12,26 @@ lands in `docs/index.md`.
 ### lawvere-elementary-recursive
 
 - **Status**: Phase 4g.2 in progress as the `LawvereNatBT`
-  sub-project; the `er-ksim2-equiv-via-urm` sub-project has
-  the forward direction `kToER` complete through Step 5 and
-  the reverse direction `erToK` partially complete: the URM
-  kernel (T1, ≈ Step 7) and the ER → URM compiler with
-  correctness theorem `compileER_runFor` (T2, ≈ Steps 6+8)
-  have landed. T3 (K^sim simulator for URM, ≈ Step 9), T4
-  (`erToK`/`erToKFunctor` assembly, ≈ Step 10), and the
-  categorical iso (≈ Step 11) remain. A post-T2 follow-up
-  branch (task #654) tracks deferred cleanups (naming
-  sweeps, structural extraction, private-promotion
-  re-evaluation).
+  sub-project; the `er-ksim2-equiv-via-urm` sub-project is
+  complete end-to-end. Both directions of the equivalence
+  have landed: forward `kToER` (Steps 0-5, including
+  `kToERFunctor`), and reverse `erToK` via the URM-simulation
+  route (T1 URM kernel `Utilities/ZeroTestURM.lean`, T2 ER →
+  URM compiler in `LawvereERKSim/{Compiler,Embedding,Loops,Atoms,Comp,BSum,BProd,Top}.lean`,
+  T3 K^sim simulator `Utilities/KSimURMSimulator.lean`, T4
+  `erToK` / `erToKFunctor` assembly in
+  `LawvereERKSim/{RuntimeBound,ErToK,ErToKFunctor}.lean`).
+  The categorical packaging (T5) lands the equivalence
+  `erKSimEquiv : LawvereERCat ≌ LawvereKSimDCat 2` in
+  `LawvereERKSim/Equivalence.lean` (Tourlakis 2018 Corollary
+  0.1.0.44 at `n = 2`), built via `Equivalence.mk'` plus two
+  explicit `Functor.IsEquivalence` instances. T1-T4 merged
+  on `main`; T5 on `feat/t5-equivalence` pending PR. Axiom
+  envelope is `[propext, Quot.sound]` after AXIOM_ALLOW
+  suppression of the standing `Fin.lastCases_castSucc`
+  exception. A post-T2 follow-up branch (task #654) tracks
+  deferred cleanups (naming sweeps, structural extraction,
+  private-promotion re-evaluation).
 - **Scope**: Continue Phase 4g.2 (the
   `LawvereERCat ≃ LawvereNatBTCat` three-stage equivalence
   via `LawvereNatBT0Cat` and `LawvereNatBTPureCat`), then
@@ -30,18 +39,27 @@ lands in `docs/index.md`.
   Lex-level parity) and Phase 5 (internal-category
   structure inside `LawvereTreeERLexCat`). The
   `er-ksim2-equiv-via-urm` sub-project formalises the
-  categorical equivalence `LawvereKSimDCat 2 ≌ LawvereERCat`;
-  Steps 0-5 (master design, ER tupling, ER simultaneous
-  bounded recursion, Tourlakis A-majorants, K^sim
-  majorization, and the `kToERFunctor : LawvereKSimDCat 2 ⥤
-  LawvereERCat`) are complete. T1 (URM kernel in
-  `GebLean/Utilities/ZeroTestURM.lean`) and T2 (ER → URM
-  compiler in `GebLean/LawvereERKSim/{Compiler,Embedding,Loops,Atoms,Comp,BSum,BProd,Top}.lean`,
-  ≈ 28 000 LOC, `[propext, Quot.sound]`-only) are
-  complete. The next workstream is T3: a K^sim simulator
-  for the URM kernel, whose output combined with T2's
-  `compileER` will yield the `erToK` morphism (T4) and the
-  categorical iso (T5).
+  categorical equivalence `LawvereERCat ≌ LawvereKSimDCat 2`
+  (Tourlakis 2018 Corollary 0.1.0.44 at `n = 2`) and is now
+  complete end-to-end: Steps 0-5 (master design, ER tupling,
+  ER simultaneous bounded recursion, Tourlakis A-majorants,
+  K^sim majorization, `kToERFunctor : LawvereKSimDCat 2 ⥤
+  LawvereERCat`), T1 (URM kernel,
+  `GebLean/Utilities/ZeroTestURM.lean`), T2 (ER → URM
+  compiler in
+  `GebLean/LawvereERKSim/{Compiler,Embedding,Loops,Atoms,Comp,BSum,BProd,Top}.lean`,
+  ≈ 28 000 LOC), T3 (K^sim simulator,
+  `GebLean/Utilities/KSimURMSimulator.lean`), T4 (`erToK` /
+  `erToKFunctor` assembly in
+  `GebLean/LawvereERKSim/{RuntimeBound,ErToK,ErToKFunctor}.lean`),
+  and T5 (categorical packaging in
+  `GebLean/LawvereERKSim/Equivalence.lean`: strict
+  round-trip equalities via `Functor.hext` + faithfulness,
+  natural isomorphisms via `eqToIso`, `erKSimEquiv` via
+  `Equivalence.mk'`, two `Functor.IsEquivalence` instances).
+  T1-T4 are merged on `main`; T5 is on `feat/t5-equivalence`
+  pending PR. The whole sub-project's axiom envelope is
+  `[propext, Quot.sound]` after AXIOM_ALLOW suppression.
 - **Scope (natEq / elegant pairing arithmetic
   pipeline)**: Prove `natEq` transitivity and
   `elegantPair` injectivity so that `treeEqG_ββ` becomes
