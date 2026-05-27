@@ -1,40 +1,39 @@
+# Wedge weight factorization and TypeExpr copresheaves
+
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
-- [Wedge weight factorization and TypeExpr copresheaves](#wedge-weight-factorization-and-typeexpr-copresheaves)
-  - [Summary](#summary)
-  - [1. Factorization characterization of wedgeWeight](#1-factorization-characterization-of-wedgeweight)
-    - [1.1. Definition recap](#11-definition-recap)
-    - [1.2. General factorization characterization](#12-general-factorization-characterization)
-    - [1.3. Specialization to AlgProf F](#13-specialization-to-algprof-f)
-    - [1.4. Specialization to CoalgProf F](#14-specialization-to-coalgprof-f)
-  - [2. Identity twisted arrows and surjectivity](#2-identity-twisted-arrows-and-surjectivity)
-  - [3. Natural transformations from wedgeWeight to profunctorOnTwistedArrow](#3-natural-transformations-from-wedgeweight-to-profunctorontwistedarrow)
-  - [4. TypeExpr as a copresheaf](#4-typeexpr-as-a-copresheaf)
-    - [4.1. Motivation](#41-motivation)
-    - [4.2. Proposed recursive copresheaf](#42-proposed-recursive-copresheaf)
-    - [4.3. Comparison with wedgeWeight](#43-comparison-with-wedgeweight)
-    - [4.4. TypeExpr weight vs. parametric families](#44-typeexpr-weight-vs-parametric-families)
-  - [5. Dual characterization: cowedgeWeight](#5-dual-characterization-cowedgeweight)
-    - [5.1. Definition](#51-definition)
-    - [5.2. Factorization characterization](#52-factorization-characterization)
-    - [5.3. Relationship to cowedge equivalence](#53-relationship-to-cowedge-equivalence)
-  - [6. Formalization plan](#6-formalization-plan)
-    - [Step 1: Factorization description at general twisted arrows](#step-1-factorization-description-at-general-twisted-arrows)
-    - [Step 2: Define typeExprWeight recursively](#step-2-define-typeexprweight-recursively)
-    - [Step 3: Comparison natural transformation](#step-3-comparison-natural-transformation)
-  - [7. Composition analysis of relInterp (RelInterpComposition.lean)](#7-composition-analysis-of-relinterp-relinterpcompositionlean)
-    - [7.1. Motivation](#71-motivation)
-    - [7.2. Arrow-free types and graph relations](#72-arrow-free-types-and-graph-relations)
-    - [7.3. Arrow case: conditional composition](#73-arrow-case-conditional-composition)
-    - [7.4. Counterexample: decomposition fails for `X -> X`](#74-counterexample-decomposition-fails-for-x---x)
-    - [7.5. Structural characterization](#75-structural-characterization)
-    - [7.6. Implications for ParamDiagElem](#76-implications-for-paramdiagelem)
+- [Summary](#summary)
+- [1. Factorization characterization of wedgeWeight](#1-factorization-characterization-of-wedgeweight)
+  - [1.1. Definition recap](#11-definition-recap)
+  - [1.2. General factorization characterization](#12-general-factorization-characterization)
+  - [1.3. Specialization to AlgProf F](#13-specialization-to-algprof-f)
+  - [1.4. Specialization to CoalgProf F](#14-specialization-to-coalgprof-f)
+- [2. Identity twisted arrows and surjectivity](#2-identity-twisted-arrows-and-surjectivity)
+- [3. Natural transformations from wedgeWeight to profunctorOnTwistedArrow](#3-natural-transformations-from-wedgeweight-to-profunctorontwistedarrow)
+- [4. TypeExpr as a copresheaf](#4-typeexpr-as-a-copresheaf)
+  - [4.1. Motivation](#41-motivation)
+  - [4.2. Proposed recursive copresheaf](#42-proposed-recursive-copresheaf)
+  - [4.3. Comparison with wedgeWeight](#43-comparison-with-wedgeweight)
+  - [4.4. TypeExpr weight vs. parametric families](#44-typeexpr-weight-vs-parametric-families)
+- [5. Dual characterization: cowedgeWeight](#5-dual-characterization-cowedgeweight)
+  - [5.1. Definition](#51-definition)
+  - [5.2. Factorization characterization](#52-factorization-characterization)
+  - [5.3. Relationship to cowedge equivalence](#53-relationship-to-cowedge-equivalence)
+- [6. Formalization plan](#6-formalization-plan)
+  - [Step 1: Factorization description at general twisted arrows](#step-1-factorization-description-at-general-twisted-arrows)
+  - [Step 2: Define typeExprWeight recursively](#step-2-define-typeexprweight-recursively)
+  - [Step 3: Comparison natural transformation](#step-3-comparison-natural-transformation)
+- [7. Composition analysis of relInterp (RelInterpComposition.lean)](#7-composition-analysis-of-relinterp-relinterpcompositionlean)
+  - [7.1. Motivation](#71-motivation)
+  - [7.2. Arrow-free types and graph relations](#72-arrow-free-types-and-graph-relations)
+  - [7.3. Arrow case: conditional composition](#73-arrow-case-conditional-composition)
+  - [7.4. Counterexample: decomposition fails for `X -> X`](#74-counterexample-decomposition-fails-for-x---x)
+  - [7.5. Structural characterization](#75-structural-characterization)
+  - [7.6. Implications for ParamDiagElem](#76-implications-for-paramdiagelem)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
-
-# Wedge weight factorization and TypeExpr copresheaves
 
 ## Summary
 

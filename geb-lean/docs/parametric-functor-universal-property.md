@@ -1,21 +1,20 @@
+# Universal Property of ParametricFunctor
+
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
-- [Universal Property of ParametricFunctor](#universal-property-of-parametricfunctor)
-  - [Context](#context)
-  - [The question](#the-question)
-    - [Motivation](#motivation)
-    - [What ParametricCopresheaf "does"](#what-parametriccopresheaf-does)
-    - [Possible formulations](#possible-formulations)
-      - [As a "diagonal completion"](#as-a-diagonal-completion)
-      - [As a "relational cocompletion"](#as-a-relational-cocompletion)
-      - [As a "parametricity classifier"](#as-a-parametricity-classifier)
-    - [Related questions](#related-questions)
+- [Context](#context)
+- [The question](#the-question)
+  - [Motivation](#motivation)
+  - [What ParametricCopresheaf "does"](#what-parametriccopresheaf-does)
+  - [Possible formulations](#possible-formulations)
+    - [As a "diagonal completion"](#as-a-diagonal-completion)
+    - [As a "relational cocompletion"](#as-a-relational-cocompletion)
+    - [As a "parametricity classifier"](#as-a-parametricity-classifier)
+  - [Related questions](#related-questions)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
-
-# Universal Property of ParametricFunctor
 
 > **Superseded.** This document describes universal
 > properties of the type-level `RelSpanObj`-based

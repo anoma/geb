@@ -1,32 +1,31 @@
+# Restricted and Weighted (Co)Wedges: A Three-Level Hierarchy
+
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
-- [Restricted and Weighted (Co)Wedges: A Three-Level Hierarchy](#restricted-and-weighted-cowedges-a-three-level-hierarchy)
-  - [Overview](#overview)
-  - [The Hierarchy](#the-hierarchy)
-  - [Profunctor Definitions](#profunctor-definitions)
-    - [For Restricted (Co)Wedges](#for-restricted-cowedges)
-    - [For Strong Restricted (Co)Wedges](#for-strong-restricted-cowedges)
-    - [For Weighted (Co)Wedges](#for-weighted-cowedges)
-  - [Equivalences](#equivalences)
-    - [RestrictedWedge ≌ Wedge](#restrictedwedge-%E2%89%8C-wedge)
-    - [RestrictedCowedge ≌ Cowedge](#restrictedcowedge-%E2%89%8C-cowedge)
-    - [StrongRestrictedWedge ≌ Wedge](#strongrestrictedwedge-%E2%89%8C-wedge)
-    - [StrongRestrictedCowedge ≌ Cowedge](#strongrestrictedcowedge-%E2%89%8C-cowedge)
-    - [WeightedWedge ≌ Wedge](#weightedwedge-%E2%89%8C-wedge)
-    - [WeightedCowedge ≌ Cowedge](#weightedcowedge-%E2%89%8C-cowedge)
-  - [Universal Properties](#universal-properties)
-    - [StructureIntegral as Terminal StrongRestrictedWedge](#structureintegral-as-terminal-strongrestrictedwedge)
-    - [CostructureIntegral as Initial StrongRestrictedCowedge](#costructureintegral-as-initial-strongrestrictedcowedge)
-  - [Relationships Between Levels](#relationships-between-levels)
-    - [Restriction vs Strong Restriction](#restriction-vs-strong-restriction)
-    - [Weighted vs Strong Restricted](#weighted-vs-strong-restricted)
-  - [References](#references)
+- [Overview](#overview)
+- [The Hierarchy](#the-hierarchy)
+- [Profunctor Definitions](#profunctor-definitions)
+  - [For Restricted (Co)Wedges](#for-restricted-cowedges)
+  - [For Strong Restricted (Co)Wedges](#for-strong-restricted-cowedges)
+  - [For Weighted (Co)Wedges](#for-weighted-cowedges)
+- [Equivalences](#equivalences)
+  - [RestrictedWedge iso Wedge](#restrictedwedge-iso-wedge)
+  - [RestrictedCowedge iso Cowedge](#restrictedcowedge-iso-cowedge)
+  - [StrongRestrictedWedge iso Wedge](#strongrestrictedwedge-iso-wedge)
+  - [StrongRestrictedCowedge iso Cowedge](#strongrestrictedcowedge-iso-cowedge)
+  - [WeightedWedge iso Wedge](#weightedwedge-iso-wedge)
+  - [WeightedCowedge iso Cowedge](#weightedcowedge-iso-cowedge)
+- [Universal Properties](#universal-properties)
+  - [StructureIntegral as Terminal StrongRestrictedWedge](#structureintegral-as-terminal-strongrestrictedwedge)
+  - [CostructureIntegral as Initial StrongRestrictedCowedge](#costructureintegral-as-initial-strongrestrictedcowedge)
+- [Relationships Between Levels](#relationships-between-levels)
+  - [Restriction vs Strong Restriction](#restriction-vs-strong-restriction)
+  - [Weighted vs Strong Restricted](#weighted-vs-strong-restricted)
+- [References](#references)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
-
-# Restricted and Weighted (Co)Wedges: A Three-Level Hierarchy
 
 This document describes how restricted and weighted (co)wedges relate to
 standard (co)wedges via categorical equivalences.
@@ -84,7 +83,7 @@ Given `W : CoTwistedArrow C ⥤ Type v` and `G : CoTwistedArrow C ⥤ Type v`:
 
 ## Equivalences
 
-### RestrictedWedge ≌ Wedge
+### RestrictedWedge iso Wedge
 
 ```lean
 restrictedWedgePowerEquiv :
@@ -94,7 +93,7 @@ restrictedWedgePowerEquiv :
 The family `∀ I, H(I,I) → (pt → G(I,I))` corresponds to legs
 `∀ I, pt → (H(I,I) → G(I,I))` via function swap.
 
-### RestrictedCowedge ≌ Cowedge
+### RestrictedCowedge iso Cowedge
 
 ```lean
 restrictedCowedgeCopowerEquiv :
@@ -104,28 +103,28 @@ restrictedCowedgeCopowerEquiv :
 The family `∀ I, H(I,I) → (G(I,I) → pt)` corresponds to legs
 `∀ I, H(I,I) × G(I,I) → pt` via currying.
 
-### StrongRestrictedWedge ≌ Wedge
+### StrongRestrictedWedge iso Wedge
 
 ```lean
 strongRestrictedWedgeEquiv :
   StrongRestrictedWedge G H ≌ Wedge (diagElemProf G H)
 ```
 
-### StrongRestrictedCowedge ≌ Cowedge
+### StrongRestrictedCowedge iso Cowedge
 
 ```lean
 strongRestrictedCowedgeEquiv :
   StrongRestrictedCowedge G H ≌ Cowedge (diagElemProf G H)
 ```
 
-### WeightedWedge ≌ Wedge
+### WeightedWedge iso Wedge
 
 ```lean
 weightedWedgeWedgeEquiv :
   WeightedWedge W G ≌ Wedge (powerWeightedProfunctor W G)
 ```
 
-### WeightedCowedge ≌ Cowedge
+### WeightedCowedge iso Cowedge
 
 ```lean
 weightedCowedgeCowedgeEquiv :

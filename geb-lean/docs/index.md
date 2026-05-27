@@ -1,22 +1,21 @@
+# geb-lean documentation
+
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
-- [geb-lean documentation](#geb-lean-documentation)
-  - [Directory structure](#directory-structure)
-  - [Quivers, semicategories, acyclic categories](#quivers-semicategories-acyclic-categories)
-  - [Category-judgment encodings](#category-judgment-encodings)
-  - [Polynomial / W- / M-types and PFunctors](#polynomial--w---m-types-and-pfunctors)
-  - [Profunctors and end machinery](#profunctors-and-end-machinery)
-  - [Internal-presheaf Grothendieck equivalence](#internal-presheaf-grothendieck-equivalence)
-  - [PshRelEdge and edge-of-presheaf machinery](#pshreledge-and-edge-of-presheaf-machinery)
-  - [Tree calculus Phase 2](#tree-calculus-phase-2)
-  - [K^sim hierarchy and ER ↔ K^sim_2 equivalence](#k%5Esim-hierarchy-and-er--k%5Esim_2-equivalence)
-  - [CSLib integration](#cslib-integration)
+- [Directory structure](#directory-structure)
+- [Quivers, semicategories, acyclic categories](#quivers-semicategories-acyclic-categories)
+- [Category-judgment encodings](#category-judgment-encodings)
+- [Polynomial / W- / M-types and PFunctors](#polynomial--w---m-types-and-pfunctors)
+- [Profunctors and end machinery](#profunctors-and-end-machinery)
+- [Internal-presheaf Grothendieck equivalence](#internal-presheaf-grothendieck-equivalence)
+- [PshRelEdge and edge-of-presheaf machinery](#pshreledge-and-edge-of-presheaf-machinery)
+- [Tree calculus Phase 2](#tree-calculus-phase-2)
+- [K_sim hierarchy and ER <-> K_sim_2 equivalence](#k_sim-hierarchy-and-er---k_sim_2-equivalence)
+- [CSLib integration](#cslib-integration)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
-
-# geb-lean documentation
 
 This index combines a directory layout for the source tree with
 a topological narrative of the formalised mathematical content.
@@ -339,7 +338,7 @@ The repository is laid out narrow-and-deep, with one indexing
   for the bialgebraic GSOS layer. Spec:
   `docs/superpowers/specs/2026-03-22-tree-calculus-phase2-design.md`.
 
-## K^sim hierarchy and ER ↔ K^sim_2 equivalence
+## K_sim hierarchy and ER <-> K_sim_2 equivalence
 
 - **Source-tree paths**: `GebLean/LawvereKSim.lean`,
   `GebLean/LawvereKSimDCatInterp.lean`,
@@ -446,7 +445,7 @@ The repository is laid out narrow-and-deep, with one indexing
   `Classical.choice` exposure when constructive code depends
   on CSLib lemmas.
 - **Dependencies**: orthogonal infrastructure consumed by
-  [K^sim hierarchy and ER ↔ K^sim_2 equivalence](#ksim-hierarchy-and-er--ksim_2-equivalence)
+  [K_sim hierarchy and ER <-> K_sim_2 equivalence](#k_sim-hierarchy-and-er---k_sim_2-equivalence)
   (URM simulation lemmas) and
   [tree calculus phase 2](#tree-calculus-phase-2) (LTS
   layer for reduction). Spec:

@@ -1,22 +1,21 @@
+# Generic Embedding of Essentially Algebraic Theories
+
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
-- [Generic Embedding of Essentially Algebraic Theories](#generic-embedding-of-essentially-algebraic-theories)
-  - [The Question](#the-question)
-  - [Proposed Ingredients](#proposed-ingredients)
-  - [Analysis](#analysis)
-    - [The Structure of J_T](#the-structure-of-j_t)
-    - [The Polynomial Endofunctor P_T](#the-polynomial-endofunctor-p_t)
-    - [Decomposition: L_T = Quotient ∘ Completion](#decomposition-l_t--quotient-%E2%88%98-completion)
-    - [Relationship to Gabriel-Ulmer Duality](#relationship-to-gabriel-ulmer-duality)
-    - [Relationship to Finite Limit Sketches](#relationship-to-finite-limit-sketches)
-    - [Computability Property](#computability-property)
-  - [References](#references)
+- [The Question](#the-question)
+- [Proposed Ingredients](#proposed-ingredients)
+- [Analysis](#analysis)
+  - [The Structure of J_T](#the-structure-of-j_t)
+  - [The Polynomial Endofunctor P_T](#the-polynomial-endofunctor-p_t)
+  - [Decomposition: L_T = Quotient o Completion](#decomposition-l_t--quotient-o-completion)
+  - [Relationship to Gabriel-Ulmer Duality](#relationship-to-gabriel-ulmer-duality)
+  - [Relationship to Finite Limit Sketches](#relationship-to-finite-limit-sketches)
+  - [Computability Property](#computability-property)
+- [References](#references)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
-
-# Generic Embedding of Essentially Algebraic Theories
 
 This document investigates whether the CategoryJudgments construction can be
 generalized to embed ANY essentially algebraic theory into a copresheaf category.
@@ -100,7 +99,7 @@ For each n-ary operation f : S₁ × ... × Sₙ → S₀:
 P_T-algebras (before equations) are "pre-models" of T with all operations but
 without the equations enforced.
 
-### Decomposition: L_T = Quotient ∘ Completion
+### Decomposition: L_T = Quotient o Completion
 
 The left adjoint L_T decomposes as:
 

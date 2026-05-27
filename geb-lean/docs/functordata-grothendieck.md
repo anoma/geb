@@ -1,44 +1,43 @@
+# FunctorData, Grothendieck, and Iterated Schemas
+
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
-- [FunctorData, Grothendieck, and Iterated Schemas](#functordata-grothendieck-and-iterated-schemas)
-  - [Overview](#overview)
-  - [Part 1: FunctorData and the flattening equivalence](#part-1-functordata-and-the-flattening-equivalence)
-    - [J as a schema for categorical structure](#j-as-a-schema-for-categorical-structure)
-    - [FunctorData-valued functors as copresheaves](#functordata-valued-functors-as-copresheaves)
-    - [The reflective embedding](#the-reflective-embedding)
-  - [Part 2: Generalized Grothendieck construction](#part-2-generalized-grothendieck-construction)
-    - [The construction](#the-construction)
-    - [Connection to PshInternalCat](#connection-to-pshinternalcat)
-  - [Part 3: Iterated schemas and n-fold structure](#part-3-iterated-schemas-and-n-fold-structure)
-    - [Internal categories in J-copresheaves](#internal-categories-in-j-copresheaves)
-    - [The iteration](#the-iteration)
-    - [Reflective tower](#reflective-tower)
-    - [The fixed point: J^ω](#the-fixed-point-j%5E%CF%89)
-  - [Part 4: Comparison with established approaches](#part-4-comparison-with-established-approaches)
-    - [n-fold categories and multisimplicial sets](#n-fold-categories-and-multisimplicial-sets)
-    - [Globular vs cubical/product approach](#globular-vs-cubicalproduct-approach)
-    - [The ω-fold limit](#the-%CF%89-fold-limit)
-  - [Part 5: Avenues for investigation](#part-5-avenues-for-investigation)
-    - [A. Implement `toFunctorDataFunctor`](#a-implement-tofunctordatafunctor)
-    - [B. Formalize the currying equivalence](#b-formalize-the-currying-equivalence)
-    - [C. Formalize the double schema](#c-formalize-the-double-schema)
-    - [D. Formalize the n-fold iteration](#d-formalize-the-n-fold-iteration)
-    - [E. Investigate the Segal condition analogue](#e-investigate-the-segal-condition-analogue)
-    - [F. Explore the fixed point `J^ω`](#f-explore-the-fixed-point-j%5E%CF%89)
-    - [G. Compare with the globular approach](#g-compare-with-the-globular-approach)
-    - [H. Connections (exchange laws)](#h-connections-exchange-laws)
-  - [References](#references)
-    - [Internal to this project](#internal-to-this-project)
-    - [External: n-fold categories and multisimplicial sets](#external-n-fold-categories-and-multisimplicial-sets)
-    - [External: globular approach](#external-globular-approach)
-    - [External: cubical-globular comparison](#external-cubical-globular-comparison)
-    - [Mathlib](#mathlib)
+- [Overview](#overview)
+- [Part 1: FunctorData and the flattening equivalence](#part-1-functordata-and-the-flattening-equivalence)
+  - [J as a schema for categorical structure](#j-as-a-schema-for-categorical-structure)
+  - [FunctorData-valued functors as copresheaves](#functordata-valued-functors-as-copresheaves)
+  - [The reflective embedding](#the-reflective-embedding)
+- [Part 2: Generalized Grothendieck construction](#part-2-generalized-grothendieck-construction)
+  - [The construction](#the-construction)
+  - [Connection to PshInternalCat](#connection-to-pshinternalcat)
+- [Part 3: Iterated schemas and n-fold structure](#part-3-iterated-schemas-and-n-fold-structure)
+  - [Internal categories in J-copresheaves](#internal-categories-in-j-copresheaves)
+  - [The iteration](#the-iteration)
+  - [Reflective tower](#reflective-tower)
+  - [The fixed point: J_omega](#the-fixed-point-j_omega)
+- [Part 4: Comparison with established approaches](#part-4-comparison-with-established-approaches)
+  - [n-fold categories and multisimplicial sets](#n-fold-categories-and-multisimplicial-sets)
+  - [Globular vs cubical/product approach](#globular-vs-cubicalproduct-approach)
+  - [The omega-fold limit](#the-omega-fold-limit)
+- [Part 5: Avenues for investigation](#part-5-avenues-for-investigation)
+  - [A. Implement `toFunctorDataFunctor`](#a-implement-tofunctordatafunctor)
+  - [B. Formalize the currying equivalence](#b-formalize-the-currying-equivalence)
+  - [C. Formalize the double schema](#c-formalize-the-double-schema)
+  - [D. Formalize the n-fold iteration](#d-formalize-the-n-fold-iteration)
+  - [E. Investigate the Segal condition analogue](#e-investigate-the-segal-condition-analogue)
+  - [F. Explore the fixed point `J_omega`](#f-explore-the-fixed-point-j_omega)
+  - [G. Compare with the globular approach](#g-compare-with-the-globular-approach)
+  - [H. Connections (exchange laws)](#h-connections-exchange-laws)
+- [References](#references)
+  - [Internal to this project](#internal-to-this-project)
+  - [External: n-fold categories and multisimplicial sets](#external-n-fold-categories-and-multisimplicial-sets)
+  - [External: globular approach](#external-globular-approach)
+  - [External: cubical-globular comparison](#external-cubical-globular-comparison)
+  - [Mathlib](#mathlib)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
-
-# FunctorData, Grothendieck, and Iterated Schemas
 
 ## Overview
 
@@ -287,7 +286,7 @@ categorical structure.  The innermost subcategory
 (`n-FoldCat`) consists of the actual n-fold categories
 in the sense of Ehresmann.
 
-### The fixed point: J^ω
+### The fixed point: J_omega
 
 The fixed-point equation for the iteration
 `S ↦ [J, S]` is `S ≅ [J, S]`.  Setting
@@ -402,7 +401,7 @@ with an additional *weak globularity condition*
 (homotopy pullback conditions) that makes them
 equivalent to Tamsamani-Simpson weak n-categories.
 
-### The ω-fold limit
+### The omega-fold limit
 
 The iteration `Cat₀ = Set`, `Catₙ₊₁ = Cat(Catₙ)`
 produces n-fold categories.  The limit in the globular
@@ -459,7 +458,7 @@ iterated `PhiFunctor`: a copresheaf on `Jⁿ` satisfies
 the condition iff it lies in the (iterated) image of
 `Φⁿ`.
 
-### F. Explore the fixed point `J^ω`
+### F. Explore the fixed point `J_omega`
 
 Define `J^ω` as a category (the countable product) and
 study the copresheaf topos `[J^ω, Type]`.  Prove the

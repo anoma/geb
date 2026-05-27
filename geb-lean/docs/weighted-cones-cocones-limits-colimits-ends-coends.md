@@ -1,24 +1,23 @@
+# Weighted limits reduce to ordinary limits via the category of elements
+
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
-- [Weighted limits reduce to ordinary limits via the category of elements](#weighted-limits-reduce-to-ordinary-limits-via-the-category-of-elements)
-  - [The precise theorem for weighted limits](#the-precise-theorem-for-weighted-limits)
-    - [**{W, F} ≅ lim(F ∘ π : El(W) → C)**](#w-f-%E2%89%85-limf-%E2%88%98-%CF%80--elw-%E2%86%92-c)
-    - [**W * F ≅ colim(F ∘ π : El(W) → C)**](#w--f-%E2%89%85-colimf-%E2%88%98-%CF%80--elw-%E2%86%92-c)
-  - [Ends as limits over twisted arrow categories](#ends-as-limits-over-twisted-arrow-categories)
-    - [**∫_c P(c, c) ≅ {Hom_C, P}**](#%E2%88%AB_c-pc-c-%E2%89%85-hom_c-p)
-    - [**∫_c P(c, c) ≅ lim(P ∘ π : Tw(C) → D)**](#%E2%88%AB_c-pc-c-%E2%89%85-limp-%E2%88%98-%CF%80--twc-%E2%86%92-d)
-    - [**∫^c P(c, c) ≅ colim(P ∘ π' : Tw(C^op)^op → D)**](#%E2%88%AB%5Ec-pc-c-%E2%89%85-colimp-%E2%88%98-%CF%80--twc%5Eop%5Eop-%E2%86%92-d)
-  - [Why this reduction only works for V = Set](#why-this-reduction-only-works-for-v--set)
-  - [The equivalence of weighted cones and ordinary cones](#the-equivalence-of-weighted-cones-and-ordinary-cones)
-  - [References and locations](#references-and-locations)
-  - [Collage construction for profunctors](#collage-construction-for-profunctors)
-  - [Conclusion](#conclusion)
+- [The precise theorem for weighted limits](#the-precise-theorem-for-weighted-limits)
+  - [**{W, F} iso lim(F o pi : El(W) -> C)**](#w-f-iso-limf-o-pi--elw---c)
+  - [**W * F iso colim(F o pi : El(W) -> C)**](#w--f-iso-colimf-o-pi--elw---c)
+- [Ends as limits over twisted arrow categories](#ends-as-limits-over-twisted-arrow-categories)
+  - [**int_c P(c, c) iso {Hom_C, P}**](#int_c-pc-c-iso-hom_c-p)
+  - [**int_c P(c, c) iso lim(P o pi : Tw(C) -> D)**](#int_c-pc-c-iso-limp-o-pi--twc---d)
+  - [**int_c P(c, c) iso colim(P o pi' : Tw(C_op)_op -> D)**](#int_c-pc-c-iso-colimp-o-pi--twc_op_op---d)
+- [Why this reduction only works for V = Set](#why-this-reduction-only-works-for-v--set)
+- [The equivalence of weighted cones and ordinary cones](#the-equivalence-of-weighted-cones-and-ordinary-cones)
+- [References and locations](#references-and-locations)
+- [Collage construction for profunctors](#collage-construction-for-profunctors)
+- [Conclusion](#conclusion)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
-
-# Weighted limits reduce to ordinary limits via the category of elements
 
 The central result sought is well-established in enriched category theory:
 for Set-weighted limits, **{W, F} ≅ lim(F ∘ π)** where π : El(W) → J is the
@@ -38,7 +37,7 @@ sends (j, w) to j.
 
 The fundamental isomorphism states:
 
-### **{W, F} ≅ lim(F ∘ π : El(W) → C)**
+### **{W, F} iso lim(F o pi : El(W) -> C)**
 
 where the left side is the W-weighted limit of F, characterized by
 C(A, {W, F}) ≅ [J, **Set**](W, C(A, F−)), and the right side is the ordinary
@@ -49,7 +48,7 @@ cone over F ∘ π.
 The **dual statement for weighted colimits** follows the same pattern.
 For W : J^op → **Set** and F : J → C, the weighted colimit satisfies:
 
-### **W * F ≅ colim(F ∘ π : El(W) → C)**
+### **W * F iso colim(F o pi : El(W) -> C)**
 
 This result is foundational: Wikipedia's article on the category of elements
 explicitly notes its appearance "in the proof that every weighted
@@ -74,17 +73,17 @@ directions.
 The **end** ∫_c P(c, c) for a bifunctor P : C^op × C → D is the
 **Hom_C-weighted limit** of P:
 
-### **∫_c P(c, c) ≅ {Hom_C, P}**
+### **int_c P(c, c) iso {Hom_C, P}**
 
 Applying the general reduction theorem:
 
-### **∫_c P(c, c) ≅ lim(P ∘ π : Tw(C) → D)**
+### **int_c P(c, c) iso lim(P o pi : Tw(C) -> D)**
 
 where the functor P' = P ∘ π sends an object (f : a → b) ∈ Tw(C) to
 P(a, b) ∈ D. Loregian's "Coend Calculus" (Section 1.2) provides the clearest
 modern exposition of this formula. The dual statement for **coends** is:
 
-### **∫^c P(c, c) ≅ colim(P ∘ π' : Tw(C^op)^op → D)**
+### **int_c P(c, c) iso colim(P o pi' : Tw(C_op)_op -> D)**
 
 ## Why this reduction only works for V = Set
 

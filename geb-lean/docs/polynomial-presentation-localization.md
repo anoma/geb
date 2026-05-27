@@ -1,44 +1,43 @@
+# Polynomial Presentation Localization
+
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
-- [Polynomial Presentation Localization](#polynomial-presentation-localization)
-  - [Overview](#overview)
-  - [Background](#background)
-    - [The Density Formula](#the-density-formula)
-    - [The Presentation Category](#the-presentation-category)
-    - [The Evaluation Functor Problem](#the-evaluation-functor-problem)
-  - [The Localization Approach](#the-localization-approach)
-    - [Morphism Equivalence Relation](#morphism-equivalence-relation)
-    - [The Quotient Category](#the-quotient-category)
-    - [Properties of the Quotient](#properties-of-the-quotient)
-  - [The Density Presentation Functor](#the-density-presentation-functor)
-    - [Construction for Objects](#construction-for-objects)
-    - [Construction for Morphisms](#construction-for-morphisms)
-    - [The Density Isomorphism](#the-density-isomorphism)
-  - [The Equivalence](#the-equivalence)
-    - [Statement](#statement)
-    - [Counit: `E ∘ S ≅ Id`](#counit-e-%E2%88%98-s-%E2%89%85-id)
-    - [Unit: `S ∘ E ≅ Id`](#unit-s-%E2%88%98-e-%E2%89%85-id)
-  - [Implementation Notes](#implementation-notes)
-    - [Using Lean's Quot](#using-leans-quot)
-    - [Composition Well-Definedness](#composition-well-definedness)
-    - [Category Instance](#category-instance)
-  - [Relationship to Existing Literature](#relationship-to-existing-literature)
-  - [Constructivity Analysis](#constructivity-analysis)
-    - [Non-constructivity of quotients](#non-constructivity-of-quotients)
-    - [Constructive Alternative: Setoid-Valued Copresheaves](#constructive-alternative-setoid-valued-copresheaves)
-      - [Setoid-Valued Evaluation](#setoid-valued-evaluation)
-      - [Setoid Density Presentation](#setoid-density-presentation)
-      - [Constructive Inverse](#constructive-inverse)
-      - [The Constructive Equivalence](#the-constructive-equivalence)
-    - [Relationship to Type-Valued Copresheaves](#relationship-to-type-valued-copresheaves)
-    - [Derived Properties](#derived-properties)
-  - [References](#references)
+- [Overview](#overview)
+- [Background](#background)
+  - [The Density Formula](#the-density-formula)
+  - [The Presentation Category](#the-presentation-category)
+  - [The Evaluation Functor Problem](#the-evaluation-functor-problem)
+- [The Localization Approach](#the-localization-approach)
+  - [Morphism Equivalence Relation](#morphism-equivalence-relation)
+  - [The Quotient Category](#the-quotient-category)
+  - [Properties of the Quotient](#properties-of-the-quotient)
+- [The Density Presentation Functor](#the-density-presentation-functor)
+  - [Construction for Objects](#construction-for-objects)
+  - [Construction for Morphisms](#construction-for-morphisms)
+  - [The Density Isomorphism](#the-density-isomorphism)
+- [The Equivalence](#the-equivalence)
+  - [Statement](#statement)
+  - [Counit: `E o S iso Id`](#counit-e-o-s-iso-id)
+  - [Unit: `S o E iso Id`](#unit-s-o-e-iso-id)
+- [Implementation Notes](#implementation-notes)
+  - [Using Lean's Quot](#using-leans-quot)
+  - [Composition Well-Definedness](#composition-well-definedness)
+  - [Category Instance](#category-instance)
+- [Relationship to Existing Literature](#relationship-to-existing-literature)
+- [Constructivity Analysis](#constructivity-analysis)
+  - [Non-constructivity of quotients](#non-constructivity-of-quotients)
+  - [Constructive Alternative: Setoid-Valued Copresheaves](#constructive-alternative-setoid-valued-copresheaves)
+    - [Setoid-Valued Evaluation](#setoid-valued-evaluation)
+    - [Setoid Density Presentation](#setoid-density-presentation)
+    - [Constructive Inverse](#constructive-inverse)
+    - [The Constructive Equivalence](#the-constructive-equivalence)
+  - [Relationship to Type-Valued Copresheaves](#relationship-to-type-valued-copresheaves)
+  - [Derived Properties](#derived-properties)
+- [References](#references)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
-
-# Polynomial Presentation Localization
 
 This document describes the localization approach for establishing an
 equivalence between the category of polynomial presentations and the
@@ -181,14 +180,14 @@ representables indexed by the category of elements is a colimit cocone.
 The functors `E : PolyPresentationLoc D ⥤ (D ⥤ Type)` and
 `S : (D ⥤ Type) ⥤ PolyPresentationLoc D` form an adjoint equivalence.
 
-### Counit: `E ∘ S ≅ Id`
+### Counit: `E o S iso Id`
 
 For `F : D ⥤ Type`:
 
 - `E(S(F)) = densityPresentation(F).toCopresheaf`
 - By the density theorem, this is isomorphic to `F`
 
-### Unit: `S ∘ E ≅ Id`
+### Unit: `S o E iso Id`
 
 For `X : PolyPresentation D`:
 
