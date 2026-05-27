@@ -32,7 +32,7 @@
   - [11.5 Axiom budget table sound](#115-axiom-budget-table-sound)
   - [11.6 Mathlib API names verified](#116-mathlib-api-names-verified)
   - [11.7 Scope guardrails complete](#117-scope-guardrails-complete)
-  - [11.8 Triangle identity assumption verified](#118-triangle-identity-assumption-verified)
+  - [11.8 Triangle identity discharge verified](#118-triangle-identity-discharge-verified)
   - [11.9 No development-history references in docstrings](#119-no-development-history-references-in-docstrings)
   - [11.10 LOC estimates plausible](#1110-loc-estimates-plausible)
 - [12 References](#12-references)
@@ -261,18 +261,19 @@ semantics:
   `/tmp/t5-equivalence-stubs.lean` (or equivalent), outside the
   committed Lean source tree.
 - The stub contains: one `example` block implementing §6.3's
-  proof shape against a placeholder pair of functors with the
-  same interface as `erToKFunctor` / `kToERFunctor`; one
-  `example` block instantiating §6.7's two explicit instance
-  declarations against a placeholder `Equivalence` value; one
-  `example` block for §6.1's `Quotient.inductionOn`
-  motive-elaboration shape.
+  proof shape against axiomatised placeholders for the two
+  functor-level interp-preservation equalities; one `example`
+  block for §6.1's `Quotient.inductionOn` motive-elaboration
+  shape. (The §6.7 instance declarations are not stubbed
+  separately because they are one-liners against the concrete
+  `erKSimEquiv` value; their elaboration is verified directly
+  at T5.C `lake build` time.)
 - If any `example` fails to elaborate, T5.0 reports the
   divergence and the implementation phase pauses. The spec is
-  revised (a `.review-3.md` or follow-up adversarial round is
-  dispatched) before any T5.A / T5.B / T5.C commit lands. T5.0
-  does not patch the spec mid-flight; the implementer does not
-  attempt local workarounds.
+  revised (a follow-up adversarial round is dispatched) before
+  any T5.A / T5.B / T5.C commit lands. T5.0 does not patch the
+  spec mid-flight; the implementer does not attempt local
+  workarounds.
 - The scratch file is not committed; it lives only as a check
   artifact for the T5.0 baseline run.
 
@@ -501,6 +502,15 @@ preserves the strict-equality strengthening at the packaging
 level (downstream `rfl`-rewrites against `erKSimEquiv.unitIso`
 collapse to `eqToIso _ |>.symm` directly).
 
+The triangle identity is supplied as an explicit fifth
+argument rather than left to the `cat_disch` autoparam: under
+the current mathlib pin, `cat_disch` (which dispatches to
+`aesop_cat`) cannot reduce `eqToIso _ |>.symm.hom.app X` to
+`𝟙 _` because the relevant unfold lemmas (`eqToIso.hom`,
+`eqToIso.inv`) are not in `aesop_cat`'s safe-rules set. The
+working discharge invokes `simp` with the two natural-iso
+definitions and the two `Iso`-projection lemmas:
+
 ```lean
 def erKSimEquiv : LawvereERCat ≌ LawvereKSimDCat 2 :=
   CategoryTheory.Equivalence.mk'
@@ -508,28 +518,24 @@ def erKSimEquiv : LawvereERCat ≌ LawvereKSimDCat 2 :=
     kToERFunctor
     erToKKToErIso.symm
     kToErErToKIso
+    (by intro X;
+        simp [erToKKToErIso, kToErErToKIso,
+              eqToIso.hom, eqToIso.inv])
 ```
 
-The triangle identity is discharged by the `cat_disch`
-autoparam. Tracing the reduction: `erToKKToErIso.symm.hom.app X`
-is `(eqToIso erToKFunctor_comp_kToERFunctor).symm.hom.app X`,
-which by `eqToIso_symm` and `eqToIso_hom`
-(`Mathlib/CategoryTheory/EqToHom.lean`) is `eqToHom h.symm` for
-`h : (𝟭 LawvereERCat).obj X = (erToKFunctor ⋙ kToERFunctor).obj X`
-derived from `erToKFunctor_comp_kToERFunctor`. Both
-`(erToKFunctor ⋙ kToERFunctor).obj X = X` and
-`(kToERFunctor ⋙ erToKFunctor).obj X = X` are `rfl` (both
-functors are identity on objects), so `h` is `rfl` and
-`eqToHom rfl = 𝟙 X`. Similarly `kToErErToKIso.hom.app
-(erToKFunctor.obj X) = 𝟙 (erToKFunctor.obj X)`. The triangle
-LHS reduces to `erToKFunctor.map (𝟙 X) ≫ 𝟙 _ =
-𝟙 _ ≫ 𝟙 _ = 𝟙 _`, closed by `cat_disch`.
-
-If implementation finds that `cat_disch` does not close it under
-the current mathlib pin, the manual discharge is
-`(by intro X; simp [eqToIso_symm, eqToIso_hom, eqToHom_refl])`
-or `(by intro X; dsimp; rfl)` provided as an explicit fifth
-argument to `Equivalence.mk'`.
+Tracing the discharge: `simp` unfolds `erToKKToErIso` and
+`kToErErToKIso` (the two `def`-bound natural isos from §6.5)
+to their `eqToIso _ |>.symm` and `eqToIso _` forms. The
+`eqToIso.hom` and `eqToIso.inv` lemmas (at
+`Mathlib/CategoryTheory/EqToHom.lean:197` and `:201`
+respectively, *with* the dot prefix) reduce the `.hom.app X`
+projections to `eqToHom (Functor.congr_obj _ X)` and
+`eqToHom (Functor.congr_obj _ X).symm`. Since both functors
+are identity on objects (`(erToKFunctor ⋙ kToERFunctor).obj X
+= X` and dual are both `rfl`), the `eqToHom`s reduce to
+`𝟙 _`. The triangle LHS becomes
+`erToKFunctor.map (𝟙 X) ≫ 𝟙 _ = 𝟙 _ ≫ 𝟙 _ = 𝟙 _`, closed by
+mathlib's standard category simp set. MCP-verified.
 
 ### 6.7 `IsEquivalence` instances
 
@@ -823,21 +829,27 @@ for the round-trip composites); for each, indicate whether it
 should be added to the guardrails list, deferred to a follow-up,
 or is already implicit.
 
-### 11.8 Triangle identity assumption verified
+### 11.8 Triangle identity discharge verified
 
-Claim: `cat_disch` will close the `functor_unitIso_comp`
-autoparam in `Equivalence.mk'` because both unit and counit
-isomorphism components reduce to `𝟙 _`.
+Claim: the explicit fifth argument
+`(by intro X; simp [erToKKToErIso, kToErErToKIso,
+eqToIso.hom, eqToIso.inv])` discharges the
+`functor_unitIso_comp` obligation in `Equivalence.mk'`. The
+`cat_disch` autoparam alone is insufficient because mathlib's
+`aesop_cat`-based safe-rules set does not unfold
+`eqToIso.hom` / `eqToIso.inv` on `eqToIso _ |>.symm`-shaped
+inputs.
 
-Adversary obligation: verify the claim by tracing
-`erToKKToErIso.symm.hom.app X` and
-`kToErErToKIso.hom.app (erToKFunctor.obj X)` to `eqToHom rfl =
-𝟙 _` step-by-step. If the trace finds that `cat_disch` may not
-close it (e.g., due to unfolding control of `eqToIso` or
-`Equivalence.mk'` autoparam elaboration), the spec must commit
-explicitly to a manual fifth argument
-(`(by intro X; simp [eqToIso_symm, eqToIso_hom, eqToHom_refl])`
-or `(by intro X; dsimp; rfl)`), not as a fallback.
+Adversary obligation: verify under the current mathlib pin
+via `mcp__lean-lsp__lean_run_code` that the explicit
+fifth-argument form closes the triangle in a stand-in
+elaboration with axiomatised
+`erToKFunctor_comp_kToERFunctor` and
+`kToERFunctor_comp_erToKFunctor`. If `aesop_cat`'s safe-rules
+set has expanded under a newer pin so that `cat_disch` alone
+suffices, the spec can be amended to drop the explicit fifth
+argument — but the default position is that the explicit
+discharge is load-bearing.
 
 ### 11.9 No development-history references in docstrings
 

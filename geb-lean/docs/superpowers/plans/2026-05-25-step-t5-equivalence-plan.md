@@ -222,47 +222,14 @@ If type-check fails: HALT. Do not proceed to T5.A.1. File a
 finding, revise the spec, dispatch a new adversarial-review
 round.
 
-- [ ] **Step 5: Assemble the §6.7 instance stub**
+- [ ] **Step 5: Assemble the §6.1 motive-elaboration stub**
 
-Append the following snippet (verbatim, without an outer
-`namespace GebLean`/`end GebLean` wrapper — the buffer from
-Step 3 already opens that namespace and does not close it
-until the very end) to the in-memory buffer:
-
-```lean
--- §6.7 instance-availability stub:
--- Verifies that after defining the Equivalence via mk',
--- the explicit instance forms elaborate.
-section InstanceStub
-  variable
-    (F : LawvereERCat ⥤ LawvereKSimDCat 2)
-    (G : LawvereKSimDCat 2 ⥤ LawvereERCat)
-    (η : 𝟭 LawvereERCat ≅ F ⋙ G)
-    (ε : G ⋙ F ≅ 𝟭 (LawvereKSimDCat 2))
-
-  example : LawvereERCat ≌ LawvereKSimDCat 2 :=
-    CategoryTheory.Equivalence.mk' F G η ε
-
-  example
-      (myEquiv : LawvereERCat ≌ LawvereKSimDCat 2)
-      (hF : myEquiv.functor = F)
-      (hG : myEquiv.inverse = G) :
-      F.IsEquivalence := by
-    rw [← hF]
-    exact myEquiv.isEquivalence_functor
-end InstanceStub
-```
-
-The Step 3 buffer ends with `end GebLean`; **remove that
-trailing line before appending** this snippet, and re-add a
-single `end GebLean` at the very end of the combined buffer.
-The result has one `namespace GebLean ... end GebLean` block
-wrapping both stubs.
-
-- [ ] **Step 6: Assemble the §6.1 motive-elaboration stub**
-
-Append the following snippet to the buffer immediately before
-the final `end GebLean`:
+Append the following snippet to the buffer from Step 3
+immediately before the final `end GebLean` (i.e., remove the
+trailing `end GebLean` from Step 3's buffer, append this
+snippet, then re-add a single `end GebLean` at the very end —
+yielding one `namespace GebLean … end GebLean` block wrapping
+both stubs):
 
 ```lean
 -- §6.1 motive-elaboration stub:
@@ -294,25 +261,28 @@ example {n m : ℕ} (e : ERMorNQuo n m) :
   sorry
 ```
 
-- [ ] **Step 7: Type-check the fully assembled stub**
+- [ ] **Step 6: Type-check the fully assembled stub**
 
 Re-invoke the `mcp__lean-lsp__lean_run_code` tool with the
-combined buffer (the §6.3 stub from Step 3, the §6.7 section
-appended in Step 5, and the §6.1 motive example appended in
-Step 6).
+combined buffer (the §6.3 stub from Step 3 and the §6.1
+motive example appended in Step 5).
 
-Expected: no errors (a `sorry` warning on the §6.1 example
-is expected and acceptable — it is the proof-body placeholder,
-not a type-check failure). Confirms that
-`Equivalence.mk'` is the correct constructor name with the
-four-arg + autoparam signature, the `isEquivalence_functor`
-projection form elaborates, and the §6.1 motive's spelled-out
-lift function elaborates against the post-`unfold` goal.
+Expected: no errors (a `sorry` warning on the §6.1 example is
+expected and acceptable — it is the proof-body placeholder,
+not a type-check failure). Confirms that the §6.3 proof shape
+elaborates (the `Functor.hext + hcongr_hom` chain) and the
+§6.1 motive's spelled-out lift function with the
+`(... : KSimMor 2 n m)` ascription elaborates against the
+post-`unfold` goal.
+
+`Equivalence.mk'` and the explicit `IsEquivalence` instances
+are not separately stubbed at T5.0; they are verified
+directly via `lake build` when T5.C lands.
 
 If it fails (other than the `sorry` warning): HALT. Same
 handling as Step 4.
 
-- [ ] **Step 8: Confirm no working-copy changes**
+- [ ] **Step 7: Confirm no working-copy changes**
 
 Run:
 
@@ -882,16 +852,22 @@ structure constructor) so that the stored `unitIso` and
 smart constructor `Equivalence.mk` at
 `Mathlib/CategoryTheory/Equivalence.lean:351` would replace
 the unit by `adjointifyη η ε`). The `functor_unitIso_comp`
-autoparam is discharged by `cat_disch` because both unit and
-counit component applications reduce to `𝟙 _` (both functors
-are identity on objects, so `eqToIso _ |>.hom.app X =
-eqToHom rfl = 𝟙 X`). -/
+obligation is discharged by an explicit fifth argument
+(the `cat_disch` autoparam alone is insufficient: it cannot
+unfold `eqToIso.hom` / `eqToIso.inv` on the
+`eqToIso _ |>.symm`-shaped unit). The `simp` set unfolds the
+two natural-iso definitions and the two `Iso`-projection
+lemmas, reducing the triangle to `𝟙 ≫ 𝟙 = 𝟙` via mathlib's
+standard category simp set. -/
 def erKSimEquiv : LawvereERCat ≌ LawvereKSimDCat 2 :=
   CategoryTheory.Equivalence.mk'
     erToKFunctor
     kToERFunctor
     erToKKToErIso.symm
     kToErErToKIso
+    (by intro X;
+        simp [erToKKToErIso, kToErErToKIso,
+              eqToIso.hom, eqToIso.inv])
 ```
 
 - [ ] **Step 2: Verify the equivalence builds**
@@ -902,11 +878,12 @@ Run:
 lake build
 ```
 
-Expected: builds successfully. If `cat_disch` fails to close
-the triangle identity, the spec's §6.6 commits to a manual
-fallback `(by intro X; simp [eqToIso_symm, eqToIso_hom,
-eqToHom_refl])` as an explicit fifth argument; apply it and
-re-build.
+Expected: builds successfully. The explicit fifth-argument
+discharge (`by intro X; simp [erToKKToErIso, kToErErToKIso,
+eqToIso.hom, eqToIso.inv]`) is the load-bearing recipe per
+spec §6.6; it has been MCP-verified against axiomatised
+strict equalities. If under a newer mathlib pin the discharge
+fails for unexpected reasons, halt and consult the spec.
 
 - [ ] **Step 3: Add the two explicit `IsEquivalence` instances**
 
