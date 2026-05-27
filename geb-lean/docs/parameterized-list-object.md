@@ -1,3 +1,30 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [Parameterized List Objects and Their Relationship to PBTOs](#parameterized-list-objects-and-their-relationship-to-pbtos)
+  - [Motivation and Context](#motivation-and-context)
+    - [Background: Parameterized NNOs and PBTOs](#background-parameterized-nnos-and-pbtos)
+    - [Primitive Recursive Arithmetic and the Grzegorczyk Hierarchy](#primitive-recursive-arithmetic-and-the-grzegorczyk-hierarchy)
+    - [Trees as Lists of Trees](#trees-as-lists-of-trees)
+  - [Definitions](#definitions)
+    - [Is/Has Factoring Pattern](#ishas-factoring-pattern)
+    - [Parameterized Snoclist Object (PSO)](#parameterized-snoclist-object-pso)
+    - [Parameterized (Cons-)List Object (PLO)](#parameterized-cons-list-object-plo)
+    - [Relationship to PNNO](#relationship-to-pnno)
+    - [PSTO and PLTO](#psto-and-plto)
+  - [Correspondence Between PBTO, PSTO, and PLTO](#correspondence-between-pbto-psto-and-plto)
+    - [PBTO implies PSTO](#pbto-implies-psto)
+    - [PSTO implies PBTO](#psto-implies-pbto)
+    - [PSTO implies PLTO (and vice versa)](#psto-implies-plto-and-vice-versa)
+  - [References](#references)
+    - [Category Theory](#category-theory)
+    - [Tree Calculus](#tree-calculus)
+    - [Computability](#computability)
+  - [File Structure](#file-structure)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 # Parameterized List Objects and Their Relationship to PBTOs
 
 ## Motivation and Context

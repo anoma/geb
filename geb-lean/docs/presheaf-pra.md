@@ -1,3 +1,22 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [Polynomial Functors Between Presheaf Categories (Parametric Right Adjoints)](#polynomial-functors-between-presheaf-categories-parametric-right-adjoints)
+  - [Mathematical Definition](#mathematical-definition)
+  - [Relationship to Polynomial Functors Between Slices](#relationship-to-polynomial-functors-between-slices)
+  - [Equivalent Characterizations](#equivalent-characterizations)
+    - [LCCC Decomposition](#lccc-decomposition)
+    - [Discrete Fibration Form](#discrete-fibration-form)
+  - [Implementation in GebLean](#implementation-in-geblean)
+    - [Representation](#representation)
+    - [Source Files](#source-files)
+    - [Existing Infrastructure Used](#existing-infrastructure-used)
+  - [Discrete-Category Equivalence](#discrete-category-equivalence)
+  - [Mathematical References](#mathematical-references)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 # Polynomial Functors Between Presheaf Categories (Parametric Right Adjoints)
 
 ## Mathematical Definition

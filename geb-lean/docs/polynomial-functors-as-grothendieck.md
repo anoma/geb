@@ -1,3 +1,34 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [Polynomial Functors as Double Grothendieck Constructions](#polynomial-functors-as-double-grothendieck-constructions)
+  - [Overview](#overview)
+  - [Polynomial Functors as Spans](#polynomial-functors-as-spans)
+  - [The Double Grothendieck Structure](#the-double-grothendieck-structure)
+    - [First Layer: Position Grothendieck (p : E → I)](#first-layer-position-grothendieck-p--e-%E2%86%92-i)
+    - [Second Layer: Direction Grothendieck (d : E → X)](#second-layer-direction-grothendieck-d--e-%E2%86%92-x)
+  - [Universal Properties: functorFrom and functorTo](#universal-properties-functorfrom-and-functorto)
+    - [Introduction Rules (functorTo)](#introduction-rules-functorto)
+    - [Elimination Rules (functorFrom)](#elimination-rules-functorfrom)
+  - [Polynomial Functors: Double Universal Property](#polynomial-functors-double-universal-property)
+    - [Generic functorFrom for Polynomials](#generic-functorfrom-for-polynomials)
+    - [Generic functorTo for Polynomials](#generic-functorto-for-polynomials)
+    - [Generic functorBetween for Polynomials](#generic-functorbetween-for-polynomials)
+  - [The Evaluation Functor as Composition](#the-evaluation-functor-as-composition)
+  - [Implications for Our Formalization](#implications-for-our-formalization)
+    - [Eliminate Low-Level Proofs](#eliminate-low-level-proofs)
+    - [Universal Interface for Polynomial Operations](#universal-interface-for-polynomial-operations)
+    - [Automatic Naturality](#automatic-naturality)
+    - [Composition and Reuse](#composition-and-reuse)
+  - [The Free Monad Monad Example](#the-free-monad-monad-example)
+  - [Relationship to Existing Work](#relationship-to-existing-work)
+    - [Grothendieck.lean](#grothendiecklean)
+    - [PolyAdjunctions.lean](#polyadjunctionslean)
+  - [Summary](#summary)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 # Polynomial Functors as Double Grothendieck Constructions
 
 ## Overview

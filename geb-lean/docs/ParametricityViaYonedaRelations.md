@@ -1,3 +1,35 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [Parametricity via Yoneda Relations](#parametricity-via-yoneda-relations)
+  - [Overview](#overview)
+  - [Sources](#sources)
+  - [Reynolds/Wadler Parametricity](#reynoldswadler-parametricity)
+    - [The relational interpretation of types](#the-relational-interpretation-of-types)
+    - [Specialization to functions](#specialization-to-functions)
+    - [Full relational parametricity vs. functional parametricity](#full-relational-parametricity-vs-functional-parametricity)
+  - [Paranaturality (our existing formalization)](#paranaturality-our-existing-formalization)
+    - [Definition](#definition)
+    - [Equivalence with span-based parametricity](#equivalence-with-span-based-parametricity)
+    - [Relations and spans](#relations-and-spans)
+    - [Where paranaturality is correct](#where-paranaturality-is-correct)
+  - [The Divergence](#the-divergence)
+    - [Neumann's example](#neumanns-example)
+    - [Formal separation](#formal-separation)
+    - [What we know and don't know](#what-we-know-and-dont-know)
+  - [The Yoneda Relation Double Category](#the-yoneda-relation-double-category)
+    - [Structure](#structure)
+    - [How it relates to Reynolds](#how-it-relates-to-reynolds)
+    - [Limits and colimits in the double category](#limits-and-colimits-in-the-double-category)
+  - [Toward a definition of parametricity](#toward-a-definition-of-parametricity)
+    - [The idea](#the-idea)
+    - [What must be defined](#what-must-be-defined)
+    - [Test cases for correctness](#test-cases-for-correctness)
+    - [Function-space relation lifting](#function-space-relation-lifting)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 # Parametricity via Yoneda Relations
 
 > **Partially superseded.** The analysis of the

@@ -1,3 +1,39 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [Wedges and cones via the twisted-arrow category](#wedges-and-cones-via-the-twisted-arrow-category)
+  - [1. Conventions for a profunctor](#1-conventions-for-a-profunctor)
+  - [2. The twisted-arrow category Tw(C) and the forgetful functor π](#2-the-twisted-arrow-category-twc-and-the-forgetful-functor-%CF%80)
+    - [2.1 Objects](#21-objects)
+    - [2.2 Morphisms](#22-morphisms)
+    - [2.3 The forgetful functor](#23-the-forgetful-functor)
+  - [3. Wedges for P and cones for P′ = P ∘ π](#3-wedges-for-p-and-cones-for-p%E2%80%B2--p-%E2%88%98-%CF%80)
+  - [4. Wedges for P](#4-wedges-for-p)
+  - [5. Cones for P′](#5-cones-for-p%E2%80%B2)
+  - [6. From a wedge to a cone](#6-from-a-wedge-to-a-cone)
+    - [6.1 Naturality in Tw(C)](#61-naturality-in-twc)
+    - [6.2 On morphisms](#62-on-morphisms)
+  - [7. From a cone to a wedge](#7-from-a-cone-to-a-wedge)
+    - [7.1 The wedge equation from cone naturality](#71-the-wedge-equation-from-cone-naturality)
+    - [7.2 On morphisms](#72-on-morphisms)
+  - [8. They are inverse on the nose](#8-they-are-inverse-on-the-nose)
+    - [8.1 G ∘ F = id on Wdg(P)](#81-g-%E2%88%98-f--id-on-wdgp)
+    - [8.2 F ∘ G = id on Cone(P′)](#82-f-%E2%88%98-g--id-on-conep%E2%80%B2)
+  - [9. Dual: cowedges for P and cocones for P″ : Tw(Cᵒᵖ)ᵒᵖ → Set](#9-dual-cowedges-for-p-and-cocones-for-p%E2%80%B3--twc%E1%B5%92%E1%B5%96%E1%B5%92%E1%B5%96-%E2%86%92-set)
+    - [9.1 Cowedges for P](#91-cowedges-for-p)
+    - [9.2 The diagram P″](#92-the-diagram-p%E2%80%B3)
+    - [9.3 Cocones for P″](#93-cocones-for-p%E2%80%B3)
+  - [10. Cowedge ↔ cocone (explicitly)](#10-cowedge--cocone-explicitly)
+    - [10.1 From a cowedge to a cocone](#101-from-a-cowedge-to-a-cocone)
+    - [10.2 From a cocone to a cowedge](#102-from-a-cocone-to-a-cowedge)
+    - [10.3 They are inverse on the nose](#103-they-are-inverse-on-the-nose)
+  - [11. Summary dictionary](#11-summary-dictionary)
+    - [Wedge side](#wedge-side)
+    - [Cowedge side](#cowedge-side)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 # Wedges and cones via the twisted-arrow category
 
 This note spells out, componentwise and symbolically, the correspondence between:

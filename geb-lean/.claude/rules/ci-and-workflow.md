@@ -40,6 +40,23 @@ while the topic-branch prefix for documentation work is
 in distinct contexts (`git commit -m "doc: ..."` vs branch name
 `docs/<topic>`).
 
+## Pre-commit checklist
+
+Run by `scripts/pre-commit.sh` before any commit that touches a
+`.lean` file:
+
+1. `lake test` succeeds (builds `GebLean` and `GebLeanTests` via
+   the test driver's dependency graph; explicit `lake build` is
+   redundant against current lakefile targets — see § Pre-push
+   checklist below).
+2. `lake lint` quiet.
+
+The script is scoped to `.lean`-touching commits: for commits
+that touch only Markdown, scripts, or other non-Lean files it is
+not required, since the Lean triad's outputs cannot change. The
+full pre-push superset below remains mandatory before every push,
+regardless of which file types changed.
+
 ## Pre-push checklist
 
 Run by `scripts/pre-push.sh`:

@@ -1,3 +1,25 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [Universal properties, categories of elements, and comma categories](#universal-properties-categories-of-elements-and-comma-categories)
+  - [Universal properties via categories of elements](#universal-properties-via-categories-of-elements)
+    - [Representability as a universal property](#representability-as-a-universal-property)
+    - [The category of elements](#the-category-of-elements)
+    - [Representability ⇔ existence of an initial/terminal element-object](#representability-%E2%87%94-existence-of-an-initialterminal-element-object)
+  - [Universal morphisms, comma categories, and categories of elements](#universal-morphisms-comma-categories-and-categories-of-elements)
+    - [Universal morphisms as initial/terminal objects in comma categories](#universal-morphisms-as-initialterminal-objects-in-comma-categories)
+    - [`(X ↓ F)` is a category of elements of a copresheaf](#x-%E2%86%93-f-is-a-category-of-elements-of-a-copresheaf)
+    - [`(F ↓ X)` is a category of elements of a presheaf](#f-%E2%86%93-x-is-a-category-of-elements-of-a-presheaf)
+    - [Summary in one line](#summary-in-one-line)
+  - [Mathlib references](#mathlib-references)
+    - [Category of elements](#category-of-elements)
+    - [Comma categories and structured arrows](#comma-categories-and-structured-arrows)
+    - [Representable functors and the Yoneda lemma](#representable-functors-and-the-yoneda-lemma)
+    - [Initial and terminal objects](#initial-and-terminal-objects)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 # Universal properties, categories of elements, and comma categories
 
 This note records two closely related “universality patterns”:

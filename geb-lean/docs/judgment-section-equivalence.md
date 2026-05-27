@@ -1,3 +1,37 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [Judgment Sections and the Bicategorical Structure of Cat](#judgment-sections-and-the-bicategorical-structure-of-cat)
+  - [Overview](#overview)
+  - [The Judgment Category](#the-judgment-category)
+  - [Judgment Sections](#judgment-sections)
+  - [Morphisms of Judgment Sections](#morphisms-of-judgment-sections)
+    - [Definition](#definition)
+    - [Category Structure](#category-structure)
+    - [Categorical Equivalence](#categorical-equivalence)
+  - [The Bicategorical Structure of Cat](#the-bicategorical-structure-of-cat)
+    - [The 1-Categorical Collapse](#the-1-categorical-collapse)
+    - [Recovering 2-Cells via Cat-Enrichment](#recovering-2-cells-via-cat-enrichment)
+    - [JudgmentUniverse and 2-Cells](#judgmentuniverse-and-2-cells)
+  - [Connection to Polynomial Presentations](#connection-to-polynomial-presentations)
+    - [The Equivalence Chain](#the-equivalence-chain)
+    - [Setoid Structure as Pre-2-Cells](#setoid-structure-as-pre-2-cells)
+    - [Unified View](#unified-view)
+  - [Construction Approaches](#construction-approaches)
+    - [Approach 1: Currying + L](#approach-1-currying--l)
+    - [Approach 2: Enriched Hom-Categories](#approach-2-enriched-hom-categories)
+  - [Implementation Path](#implementation-path)
+    - [Phase 1: Category of Judgment Sections](#phase-1-category-of-judgment-sections)
+    - [Phase 2: Functor Category Connection](#phase-2-functor-category-connection)
+    - [Phase 3: 2-Categorical Structure](#phase-3-2-categorical-structure)
+    - [Phase 4: Polynomial Presentation Connection](#phase-4-polynomial-presentation-connection)
+  - [References](#references)
+    - [Internal](#internal)
+    - [External](#external)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 # Judgment Sections and the Bicategorical Structure of Cat
 
 This document describes the relationship between judgment sections, category

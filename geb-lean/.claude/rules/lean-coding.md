@@ -184,6 +184,17 @@ upstream licences' requirements.
   (it forces a full mathlib rebuild). Never use `lake env lean`
   (it fails to pick up options from `lakefile.toml` and produces
   spurious errors).
+- Before any commit that touches a `.lean` file, run
+  `bash scripts/pre-commit.sh`. The script runs `lake test`
+  (which subsumes `lake build` against current lakefile targets)
+  followed by `lake lint`. Catching `lake lint` regressions at
+  commit time rather than push time keeps the linter from
+  silently accumulating debt between pushes.
+- `scripts/pre-push.sh` is the full superset (`pre-commit.sh`'s
+  Lean triad, plus `doctoc --check`, `markdownlint-cli2`,
+  `scripts/check-axioms.sh`, and user-driven-gate reminders) and
+  is mandatory before every push, regardless of which file types
+  changed.
 - In a fresh worktree, run `lake exe cache get` before the first
   `lake build` to pull mathlib's precompiled artifacts. Without
   this, lake falls back to building mathlib from source (hours of

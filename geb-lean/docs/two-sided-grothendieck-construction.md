@@ -1,3 +1,22 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [Two-sided Grothendieck constructions](#two-sided-grothendieck-constructions)
+  - [Lucyshyn-Wright’s explicit two-sided Grothendieck construction](#lucyshyn-wrights-explicit-two-sided-grothendieck-construction)
+    - [Objects](#objects)
+    - [Morphisms](#morphisms)
+    - [Composition](#composition)
+  - [Relation to Stefanich’s “cartesian then cocartesian” composite](#relation-to-stefanichs-cartesian-then-cocartesian-composite)
+  - [Code References](#code-references)
+    - [Grothendieck Construction](#grothendieck-construction)
+    - [Product Categories and Opposite Conventions](#product-categories-and-opposite-conventions)
+    - [Lax and Oplax Natural Transformations](#lax-and-oplax-natural-transformations)
+    - [Implementation Strategy for Two-Sided Construction](#implementation-strategy-for-two-sided-construction)
+    - [Relation to Connected Grothendieck](#relation-to-connected-grothendieck)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 # Two-sided Grothendieck constructions
 
 Lucyshyn-Wright, in *Bifold Algebras and Commutants*, Def. 7.1,

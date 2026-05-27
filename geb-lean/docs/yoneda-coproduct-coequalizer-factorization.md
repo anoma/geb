@@ -1,3 +1,24 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [The Yoneda Embedding and Free Cocompletions](#the-yoneda-embedding-and-free-cocompletions)
+  - [1. Is the Yoneda Embedding a Grothendieck Construction?](#1-is-the-yoneda-embedding-a-grothendieck-construction)
+    - [The Distinction](#the-distinction)
+    - [The Deep Connection](#the-deep-connection)
+  - [2. Factorization: Coproducts and Coequalizers](#2-factorization-coproducts-and-coequalizers)
+    - [The Fundamental Formula](#the-fundamental-formula)
+    - [The Factorization Chain](#the-factorization-chain)
+  - [3. The Free Coequalizer Completion in Detail](#3-the-free-coequalizer-completion-in-detail)
+    - [Objects: Presentations](#objects-presentations)
+    - [Morphisms: Commutative Squares](#morphisms-commutative-squares)
+    - [The Canonical Presentation (Density)](#the-canonical-presentation-density)
+  - [4. Connection to Projective Covers and Literature](#4-connection-to-projective-covers-and-literature)
+    - [Regular Projective Covers](#regular-projective-covers)
+    - [The Algebraic Analogy](#the-algebraic-analogy)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 # The Yoneda Embedding and Free Cocompletions
 
 This document details the structural relationship between the Yoneda
