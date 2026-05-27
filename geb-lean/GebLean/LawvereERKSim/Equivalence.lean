@@ -155,4 +155,28 @@ theorem kToERFunctor_comp_erToKFunctor :
         kToERFunctor_comp_erInterpFunctor f)
   rw [h1, h2]
 
+-- AXIOM_ALLOW: Classical.choice (transitively via
+-- `erToKFunctor_comp_kToERFunctor`; see
+-- .claude/rules/lean-coding.md § Accepted exceptions).
+/-- Natural isomorphism witnessing the ER → K → ER round-trip
+collapse: `erToKFunctor ⋙ kToERFunctor ≅ 𝟭 LawvereERCat`.
+Defined as `eqToIso` of the strict functor equality
+`erToKFunctor_comp_kToERFunctor`; supplies the `unitIso`
+slot (post-`.symm`) of `erKSimEquiv`. -/
+def erToKKToErIso :
+    erToKFunctor ⋙ kToERFunctor ≅ 𝟭 LawvereERCat :=
+  eqToIso erToKFunctor_comp_kToERFunctor
+
+-- AXIOM_ALLOW: Classical.choice (transitively via
+-- `kToERFunctor_comp_erToKFunctor`; see
+-- .claude/rules/lean-coding.md § Accepted exceptions).
+/-- Natural isomorphism witnessing the K → ER → K round-trip
+collapse: `kToERFunctor ⋙ erToKFunctor ≅ 𝟭 (LawvereKSimDCat 2)`.
+Defined as `eqToIso` of the strict functor equality
+`kToERFunctor_comp_erToKFunctor`; supplies the `counitIso`
+slot of `erKSimEquiv`. -/
+def kToErErToKIso :
+    kToERFunctor ⋙ erToKFunctor ≅ 𝟭 (LawvereKSimDCat 2) :=
+  eqToIso kToERFunctor_comp_erToKFunctor
+
 end GebLean
