@@ -1,3 +1,31 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [Restricted and Weighted (Co)Wedges: A Three-Level Hierarchy](#restricted-and-weighted-cowedges-a-three-level-hierarchy)
+  - [Overview](#overview)
+  - [The Hierarchy](#the-hierarchy)
+  - [Profunctor Definitions](#profunctor-definitions)
+    - [For Restricted (Co)Wedges](#for-restricted-cowedges)
+    - [For Strong Restricted (Co)Wedges](#for-strong-restricted-cowedges)
+    - [For Weighted (Co)Wedges](#for-weighted-cowedges)
+  - [Equivalences](#equivalences)
+    - [RestrictedWedge ≌ Wedge](#restrictedwedge-%E2%89%8C-wedge)
+    - [RestrictedCowedge ≌ Cowedge](#restrictedcowedge-%E2%89%8C-cowedge)
+    - [StrongRestrictedWedge ≌ Wedge](#strongrestrictedwedge-%E2%89%8C-wedge)
+    - [StrongRestrictedCowedge ≌ Cowedge](#strongrestrictedcowedge-%E2%89%8C-cowedge)
+    - [WeightedWedge ≌ Wedge](#weightedwedge-%E2%89%8C-wedge)
+    - [WeightedCowedge ≌ Cowedge](#weightedcowedge-%E2%89%8C-cowedge)
+  - [Universal Properties](#universal-properties)
+    - [StructureIntegral as Terminal StrongRestrictedWedge](#structureintegral-as-terminal-strongrestrictedwedge)
+    - [CostructureIntegral as Initial StrongRestrictedCowedge](#costructureintegral-as-initial-strongrestrictedcowedge)
+  - [Relationships Between Levels](#relationships-between-levels)
+    - [Restriction vs Strong Restriction](#restriction-vs-strong-restriction)
+    - [Weighted vs Strong Restricted](#weighted-vs-strong-restricted)
+  - [References](#references)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 # Restricted and Weighted (Co)Wedges: A Three-Level Hierarchy
 
 This document describes how restricted and weighted (co)wedges relate to

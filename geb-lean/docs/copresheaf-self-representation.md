@@ -1,3 +1,36 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [Copresheaf Self-Representation](#copresheaf-self-representation)
+  - [The Problem](#the-problem)
+  - [The Universe Copresheaf](#the-universe-copresheaf)
+    - [General Construction](#general-construction)
+    - [Copresheaves as Sections](#copresheaves-as-sections)
+    - [Universe Polymorphism](#universe-polymorphism)
+  - [The Judgment Universe Copresheaf](#the-judgment-universe-copresheaf)
+    - [Structured Universe](#structured-universe)
+    - [Functoriality](#functoriality)
+    - [Self-Representation](#self-representation)
+  - [Internal Category Structure](#internal-category-structure)
+    - [Objects and Morphisms](#objects-and-morphisms)
+    - [Naturality](#naturality)
+  - [Connection to CatJudgmentAdjunction](#connection-to-catjudgmentadjunction)
+    - [The Adjunction](#the-adjunction)
+    - [Internal Expression](#internal-expression)
+  - [Implementation Strategy](#implementation-strategy)
+    - [Phase 1: Universe Copresheaf](#phase-1-universe-copresheaf)
+    - [Phase 2: Judgment Universe](#phase-2-judgment-universe)
+    - [Phase 3: Internal Category](#phase-3-internal-category)
+    - [Phase 4: Adjunction Internalization](#phase-4-adjunction-internalization)
+  - [Generalization](#generalization)
+    - [Arbitrary Base Categories](#arbitrary-base-categories)
+    - [Enriched Setting](#enriched-setting)
+    - [Topos-Theoretic Perspective](#topos-theoretic-perspective)
+  - [References](#references)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 # Copresheaf Self-Representation
 
 This document describes how to represent the copresheaf topos [J, Type] as an

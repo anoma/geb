@@ -1,3 +1,41 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [Strict Double Categories in GebLean](#strict-double-categories-in-geblean)
+  - [Overview](#overview)
+  - [Structure Hierarchy](#structure-hierarchy)
+    - [Type Families](#type-families)
+    - [Operations](#operations)
+    - [Laws](#laws)
+    - [Data](#data)
+  - [Double Functors](#double-functors)
+  - [Natural Transformations](#natural-transformations)
+    - [Vertical Transformations](#vertical-transformations)
+    - [Horizontal Transformations](#horizontal-transformations)
+    - [Composition of Transformations](#composition-of-transformations)
+    - [Category Axioms for Transformation Composition](#category-axioms-for-transformation-composition)
+  - [Double Functor Composition](#double-functor-composition)
+  - [Universe Polymorphism](#universe-polymorphism)
+  - [The Interchange Law](#the-interchange-law)
+  - [Companions and Conjoints](#companions-and-conjoints)
+    - [Companions](#companions)
+    - [Conjoints](#conjoints)
+    - [Companion vs Conjoint](#companion-vs-conjoint)
+    - [Example: Identity Morphisms](#example-identity-morphisms)
+    - [Composition of Companions and Conjoints](#composition-of-companions-and-conjoints)
+    - [Companion-Conjoint Adjunction](#companion-conjoint-adjunction)
+      - [Triangle Identities](#triangle-identities)
+  - [Modifications](#modifications)
+    - [Vertical Modifications](#vertical-modifications)
+    - [Horizontal Modifications](#horizontal-modifications)
+  - [Future Extensions](#future-extensions)
+    - [Tabulators](#tabulators)
+    - [Weak Double Categories](#weak-double-categories)
+  - [References](#references)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 # Strict Double Categories in GebLean
 
 This document describes the design and implementation of strict double

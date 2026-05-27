@@ -1,3 +1,20 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [Comprehensive Factorization System](#comprehensive-factorization-system)
+  - [References](#references)
+  - [Mathematical Description](#mathematical-description)
+    - [Version 1: (Final, Discrete Fibration)](#version-1-final-discrete-fibration)
+    - [Version 2: (Initial, Discrete Opfibration)](#version-2-initial-discrete-opfibration)
+  - [Mathlib Availability](#mathlib-availability)
+    - [Available in mathlib](#available-in-mathlib)
+    - [Requires our own definitions](#requires-our-own-definitions)
+  - [Discrete Fibration Definition](#discrete-fibration-definition)
+  - [Application to Weighted Cones](#application-to-weighted-cones)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 # Comprehensive Factorization System
 
 ## References

@@ -1,3 +1,38 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [Retrofunctors and Potential Copresheaf Embeddings](#retrofunctors-and-potential-copresheaf-embeddings)
+  - [Background](#background)
+    - [Retrofunctors Defined](#retrofunctors-defined)
+    - [The Category Cof](#the-category-cof)
+    - [Polynomial Characterization](#polynomial-characterization)
+  - [Analysis: Can Cof Embed into Copresheaves?](#analysis-can-cof-embed-into-copresheaves)
+    - [The Challenge](#the-challenge)
+    - [Approach 1: Dual (Presheaf) Direction](#approach-1-dual-presheaf-direction)
+    - [Approach 2: Extended Index Category](#approach-2-extended-index-category)
+    - [Approach 3: Two-Stage Construction](#approach-3-two-stage-construction)
+    - [Approach 4: Poly(1,1) as a Structured Index](#approach-4-poly11-as-a-structured-index)
+  - [Comparison Table](#comparison-table)
+  - [Theoretical Obstacles](#theoretical-obstacles)
+    - [The Dependent Type Problem](#the-dependent-type-problem)
+    - [The Lack of "Walking Retrofunctor"](#the-lack-of-walking-retrofunctor)
+  - [Possible Directions](#possible-directions)
+    - [1. Internal Categories in Type](#1-internal-categories-in-type)
+    - [2. Twisted Arrow / Two-Sided Grothendieck](#2-twisted-arrow--two-sided-grothendieck)
+    - [3. Double Categories](#3-double-categories)
+    - [4. Accept Non-Copresheaf Characterization](#4-accept-non-copresheaf-characterization)
+  - [Applying the CategoryJudgments Methodology](#applying-the-categoryjudgments-methodology)
+    - [The Original Methodology](#the-original-methodology)
+    - [Application to Retrofunctors](#application-to-retrofunctors)
+    - [Proposed RetrofunctorJudgments](#proposed-retrofunctorjudgments)
+    - [What This Embeds](#what-this-embeds)
+    - [Cof as Essentially Algebraic](#cof-as-essentially-algebraic)
+  - [Conclusion](#conclusion)
+  - [References](#references)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 # Retrofunctors and Potential Copresheaf Embeddings
 
 This document analyzes whether the category Cof (categories with retrofunctors

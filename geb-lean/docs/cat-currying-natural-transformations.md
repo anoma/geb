@@ -1,3 +1,20 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [Currying in `Cat` at the level of natural transformations](#currying-in-cat-at-the-level-of-natural-transformations)
+  - [The curry and uncurry functors](#the-curry-and-uncurry-functors)
+    - [On objects](#on-objects)
+  - [The induced bijection on natural transformations](#the-induced-bijection-on-natural-transformations)
+    - [From uncurried to curried: `Φ`](#from-uncurried-to-curried-%CF%86)
+    - [From curried to uncurried: `Ψ`](#from-curried-to-uncurried-%CF%88)
+  - [These correspondences are inverse](#these-correspondences-are-inverse)
+  - [The stronger statement: an isomorphism of functor categories](#the-stronger-statement-an-isomorphism-of-functor-categories)
+  - [“Vice versa”: from curried forms to uncurried forms](#vice-versa-from-curried-forms-to-uncurried-forms)
+  - [2-categorical phrasing](#2-categorical-phrasing)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 # Currying in `Cat` at the level of natural transformations
 
 Let `A`, `B`, `C` be (small) categories.  Write `A × B` for the cartesian

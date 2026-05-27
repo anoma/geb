@@ -1,3 +1,46 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [Categories as Copresheaves on CategoryJudgments](#categories-as-copresheaves-on-categoryjudgments)
+  - [The CategoryJudgments Index Category](#the-categoryjudgments-index-category)
+  - [Embedding Categories into Copresheaves](#embedding-categories-into-copresheaves)
+    - [Object assignments](#object-assignments)
+    - [Morphism assignments](#morphism-assignments)
+    - [Verification of commutativity](#verification-of-commutativity)
+  - [The Functor Cat → [J, Type]](#the-functor-cat-%E2%86%92-j-type)
+  - [What Copresheaves Miss: The Gap Between [J, Type] and Cat](#what-copresheaves-miss-the-gap-between-j-type-and-cat)
+    - [1. Identity uniqueness (F(Id) ≅ F(Obj))](#1-identity-uniqueness-fid-%E2%89%85-fobj)
+    - [2. Composition totality (F(Comp) is the pullback)](#2-composition-totality-fcomp-is-the-pullback)
+    - [3. Associativity (equalizer condition)](#3-associativity-equalizer-condition)
+    - [4. Unit laws (equalizer conditions)](#4-unit-laws-equalizer-conditions)
+  - [Characterizing the Image](#characterizing-the-image)
+  - [Relationship to Quivers and the Walking Arrows](#relationship-to-quivers-and-the-walking-arrows)
+  - [The Reflection Functor [J, Type] → Cat](#the-reflection-functor-j-type-%E2%86%92-cat)
+    - [Construction of L(F)](#construction-of-lf)
+      - [Step 1: Extract the quiver](#step-1-extract-the-quiver)
+      - [Step 2: Form the free category](#step-2-form-the-free-category)
+      - [Step 3: Quotient by identity and composition relations](#step-3-quotient-by-identity-and-composition-relations)
+    - [Category laws are automatic](#category-laws-are-automatic)
+    - [Functoriality](#functoriality)
+    - [The adjunction L ⊣ Φ](#the-adjunction-l-%E2%8A%A3-%CF%86)
+    - [Round-trip properties](#round-trip-properties)
+    - [Characterization via the adjunction](#characterization-via-the-adjunction)
+  - [Identity as a Natural Transformation](#identity-as-a-natural-transformation)
+  - [Why Cat is Not a Topos](#why-cat-is-not-a-topos)
+  - [Implementation Design Decisions](#implementation-design-decisions)
+    - [Copresheaf representation](#copresheaf-representation)
+    - [Free category (FreeMor) representation](#free-category-freemor-representation)
+    - [Quotient structure](#quotient-structure)
+    - [Category representation](#category-representation)
+    - [Implementation phases](#implementation-phases)
+  - [References](#references)
+  - [Mathematical Context](#mathematical-context)
+    - [Related Constructions](#related-constructions)
+    - [Potential Applications](#potential-applications)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 # Categories as Copresheaves on CategoryJudgments
 
 This document describes the relationship between the category `Cat` of small

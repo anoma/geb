@@ -1,3 +1,26 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [PLang Category Judgments](#plang-category-judgments)
+  - [Overview](#overview)
+  - [Structure](#structure)
+  - [Universe Levels](#universe-levels)
+  - [Incremental Construction](#incremental-construction)
+  - [Relationship to the Adjunction](#relationship-to-the-adjunction)
+    - [Universe Requirements](#universe-requirements)
+    - [Mathlib Requirement](#mathlib-requirement)
+    - [Reflective Embedding Requirement](#reflective-embedding-requirement)
+  - [Planned Generalization](#planned-generalization)
+  - [Implementation Plan](#implementation-plan)
+    - [Phase 1: Equal-Universe Intermediate (Current)](#phase-1-equal-universe-intermediate-current)
+    - [Phase 2: Universe Generalization (Required)](#phase-2-universe-generalization-required)
+    - [Alternative: Direct Approach](#alternative-direct-approach)
+  - [Implementation Notes](#implementation-notes)
+  - [References](#references)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 # PLang Category Judgments
 
 This document describes the PLang formulation of category-judgment copresheaves

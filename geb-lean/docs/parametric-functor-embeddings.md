@@ -1,3 +1,24 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [Embeddings Into and Out of ParametricCopresheaf](#embeddings-into-and-out-of-parametriccopresheaf)
+  - [Definition](#definition)
+  - [Embeddings into ParametricCopresheaf](#embeddings-into-parametriccopresheaf)
+    - [Covariant endofunctors (fully faithful)](#covariant-endofunctors-fully-faithful)
+    - [Contravariant functors (fully faithful)](#contravariant-functors-fully-faithful)
+    - [Type expressions (fully faithful)](#type-expressions-fully-faithful)
+    - [Profunctors with natural morphisms (neither)](#profunctors-with-natural-morphisms-neither)
+    - [Profunctors with paranatural morphisms (faithful)](#profunctors-with-paranatural-morphisms-faithful)
+  - [Embeddings out of ParametricCopresheaf](#embeddings-out-of-parametriccopresheaf)
+    - [Into profunctors: no natural functor](#into-profunctors-no-natural-functor)
+    - [Into EndoProf: no natural functor](#into-endoprof-no-natural-functor)
+    - [Into twisted-arrow copresheaves: no natural functor](#into-twisted-arrow-copresheaves-no-natural-functor)
+  - [Structural explanation](#structural-explanation)
+  - [Summary table](#summary-table)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 # Embeddings Into and Out of ParametricCopresheaf
 
 > **Superseded.** This document describes the type-level

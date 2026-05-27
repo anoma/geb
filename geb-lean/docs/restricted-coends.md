@@ -1,3 +1,16 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [Restricted Coends in Categorical Programming](#restricted-coends-in-categorical-programming)
+  - [1. Formal Definition of a Restricted Cowedge](#1-formal-definition-of-a-restricted-cowedge)
+  - [2. Formal Definition of a Restricted Coend](#2-formal-definition-of-a-restricted-coend)
+  - [3. Calculational Laws](#3-calculational-laws)
+  - [4. Relationship to Ordinary Coends](#4-relationship-to-ordinary-coends)
+  - [5. Implementation in Functional Programming](#5-implementation-in-functional-programming)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 # Restricted Coends in Categorical Programming
 
 Based on **Varmo Vene's thesis** (2000), the concept of a **restricted

@@ -1,3 +1,42 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [(Co)End Formulas and Universal Properties Research](#coend-formulas-and-universal-properties-research)
+  - [Overview](#overview)
+  - [Well-Known Formula Correspondences](#well-known-formula-correspondences)
+    - [WeightedWedge/Cowedge = Weighted (Co)Limits](#weightedwedgecowedge--weighted-colimits)
+    - [StrongRestrictedWedge/Cowedge = (Co)Limits over Category of Elements](#strongrestrictedwedgecowedge--colimits-over-category-of-elements)
+    - [RestrictedWedge/Cowedge = Vene's Restricted (Co)Ends](#restrictedwedgecowedge--venes-restricted-coends)
+    - [Kan Extension Connection](#kan-extension-connection)
+  - [Open Research Questions](#open-research-questions)
+    - [Q1: Kan Extensions, Adjoints, and Initial Algebras (FORMALIZED)](#q1-kan-extensions-adjoints-and-initial-algebras-formalized)
+    - [Q2: Transfer of Terminality/Initiality Across Inclusions](#q2-transfer-of-terminalityinitiality-across-inclusions)
+      - [Formalized: Fully Faithful Case](#formalized-fully-faithful-case)
+      - [Non-Full Case: Condition on Profunctors](#non-full-case-condition-on-profunctors)
+        - [Identified Condition: Weight Maps Jointly Surjective](#identified-condition-weight-maps-jointly-surjective)
+      - [Counterexample: WalkingParallelPair](#counterexample-walkingparallelpair)
+      - [Formalized Counterexample: Initial Cowedges Differ](#formalized-counterexample-initial-cowedges-differ)
+      - [Summary](#summary)
+      - [Implication: Weighted (Co)Ends Do Not Capture Initial Algebras](#implication-weighted-coends-do-not-capture-initial-algebras)
+    - [Q3: 2-Categorical Structure from Composability](#q3-2-categorical-structure-from-composability)
+  - [Relationships Between Universal Objects](#relationships-between-universal-objects)
+    - [Hierarchy of Inclusions and Universal Properties](#hierarchy-of-inclusions-and-universal-properties)
+    - [Comparison Maps (Task #46)](#comparison-maps-task-46)
+      - [Analysis](#analysis)
+      - [Counterexample: WalkingParallelPair with Constant Profunctor](#counterexample-walkingparallelpair-with-constant-profunctor)
+      - [When Do They Coincide?](#when-do-they-coincide)
+  - [Implementation Status](#implementation-status)
+    - [Completed](#completed)
+    - [To Implement](#to-implement)
+  - [References](#references)
+    - [Primary Sources](#primary-sources)
+    - [nLab References](#nlab-references)
+    - [Additional Resources](#additional-resources)
+  - [Related Files](#related-files)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 # (Co)End Formulas and Universal Properties Research
 
 This document tracks research on the categorical semantics of restricted
