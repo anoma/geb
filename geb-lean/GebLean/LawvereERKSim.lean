@@ -9,6 +9,7 @@ import GebLean.LawvereERKSim.Top
 import GebLean.LawvereERKSim.RuntimeBound
 import GebLean.LawvereERKSim.ErToK
 import GebLean.LawvereERKSim.ErToKFunctor
+import GebLean.LawvereERKSim.Equivalence
 
 /-!
 # erToK: ER → K^sim_2 via zero-test URM simulation
@@ -46,9 +47,20 @@ the output register. This file re-exports the submodules under
   with per-slot `erToKN_interp` / `erToKN_level` and the
   ext-eq compatibility lemma `erToKN_compat_extEq`; the
   morphism component `erToKFunctor_map`, functor laws
-  `erToKFunctor_map_id` and `erToKFunctor_map_comp`, and the
+  `erToKFunctor_map_id` and `erToKFunctor_map_comp`, the
   assembled functor
-  `erToKFunctor : LawvereERCat ⥤ LawvereKSimDCat 2`.
+  `erToKFunctor : LawvereERCat ⥤ LawvereKSimDCat 2`, the
+  morphism-level interp preservation
+  `erToKFunctor_map_interp`, and the functor-level interp
+  equality `erToKFunctor_comp_kInterpFunctor`.
+- `Equivalence`: strict functor equalities for the
+  round-trip composites
+  `erToKFunctor ⋙ kToERFunctor = 𝟭 LawvereERCat` and dual;
+  their `eqToIso` natural isomorphisms `erToKKToErIso` and
+  `kToErErToKIso`; the packaged equivalence
+  `erKSimEquiv : LawvereERCat ≌ LawvereKSimDCat 2` via
+  `Equivalence.mk'`; explicit `IsEquivalence` instances on
+  `erToKFunctor` and `kToERFunctor`.
 
 ## References
 

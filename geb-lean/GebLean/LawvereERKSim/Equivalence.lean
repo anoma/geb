@@ -179,4 +179,56 @@ def kToErErToKIso :
     kToERFunctor ⋙ erToKFunctor ≅ 𝟭 (LawvereKSimDCat 2) :=
   eqToIso kToERFunctor_comp_erToKFunctor
 
+-- AXIOM_ALLOW: Classical.choice (transitively via
+-- `erToKKToErIso` and `kToErErToKIso`; see
+-- .claude/rules/lean-coding.md § Accepted exceptions).
+/-- The packaged categorical equivalence
+`LawvereERCat ≌ LawvereKSimDCat 2` (Tourlakis 2018 Corollary
+0.1.0.44 at `n = 2`). Built via `Equivalence.mk'` (the raw
+record constructor) so that the stored `unitIso` and
+`counitIso` are the supplied `eqToIso`s verbatim (the smart
+constructor `Equivalence.mk` at
+`Mathlib/CategoryTheory/Equivalence.lean:351` would replace
+the unit by `adjointifyη η ε`). The `functor_unitIso_comp`
+obligation is discharged by an explicit fifth argument
+(the `cat_disch` autoparam alone is insufficient: it cannot
+unfold `eqToIso.hom` / `eqToIso.inv` on the
+`eqToIso _ |>.symm`-shaped unit). The `simp` set unfolds the
+two natural-iso definitions and the two `Iso`-projection
+lemmas, reducing the triangle to `𝟙 ≫ 𝟙 = 𝟙` via mathlib's
+standard category simp set. -/
+def erKSimEquiv : LawvereERCat ≌ LawvereKSimDCat 2 :=
+  CategoryTheory.Equivalence.mk'
+    erToKFunctor
+    kToERFunctor
+    erToKKToErIso.symm
+    kToErErToKIso
+    (by intro X; simp [erToKKToErIso, kToErErToKIso])
+
+-- AXIOM_ALLOW: Classical.choice (transitively via
+-- `erKSimEquiv`; see .claude/rules/lean-coding.md
+-- § Accepted exceptions).
+/-- Explicit `IsEquivalence` instance for `erToKFunctor`.
+Mathlib's global instance
+`Equivalence.isEquivalence_functor` supplies
+`IsEquivalence e.functor` for any `e : C ≌ D`; this instance
+pre-applies it to `erKSimEquiv` so that typeclass search
+on `erToKFunctor.IsEquivalence` succeeds (search cannot
+bridge from a `def`-bound `Equivalence` value to a
+named-functor `IsEquivalence` goal via unification). -/
+instance erToKFunctorIsEquivalence :
+    erToKFunctor.IsEquivalence :=
+  erKSimEquiv.isEquivalence_functor
+
+-- AXIOM_ALLOW: Classical.choice (transitively via
+-- `erKSimEquiv`; see .claude/rules/lean-coding.md
+-- § Accepted exceptions).
+/-- Explicit `IsEquivalence` instance for `kToERFunctor`.
+Symmetric to the `erToKFunctor` instance, projecting via
+`Equivalence.isEquivalence_inverse` (which supplies
+`IsEquivalence e.inverse`). -/
+instance kToERFunctorIsEquivalence :
+    kToERFunctor.IsEquivalence :=
+  erKSimEquiv.isEquivalence_inverse
+
 end GebLean
