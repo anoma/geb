@@ -481,6 +481,33 @@ The theorem sits between the previous theorem (which ends
 with `exact erToKN_interp rec ctx j`) and the `end GebLean`
 line.
 
+- [ ] **Step 1.5: Update the module docstring's
+  `## Main statements` section**
+
+Open the module docstring at the top of
+`GebLean/LawvereERKSim/ErToKFunctor.lean`. The existing
+`## Main statements` section lists `erToKN_interp`,
+`erToKN_level`, `erToKN_compat_extEq`, `erToKFunctor_map_id`,
+`erToKFunctor_map_comp` (the T4 surface). Append two new
+bullets — one for the T5.A.1 theorem just landed, one for the
+T5.A.2 theorem this task is adding:
+
+```text
+- `erToKFunctor_map_interp` : the K^sim-quotient
+  interpretation of `erToKFunctor_map e` agrees with the
+  ER-quotient interpretation of `e` (morphism-level interp
+  preservation; mirror at `LawvereKSimER.lean:488`).
+- `erToKFunctor_comp_kInterpFunctor` : the strict functor
+  equality `erToKFunctor ⋙ kInterpFunctor = erInterpFunctor`
+  (functor-level interp preservation; mirror at
+  `LawvereKSimER.lean:538`).
+```
+
+This update is folded into T5.A.2 (rather than T5.A.1)
+because T5.A.2 is the last task to touch this file in the T5
+sequence; landing both bullets together keeps the module
+docstring coherent with the full T5-A surface.
+
 - [ ] **Step 2: Verify the theorem builds**
 
 Run:
