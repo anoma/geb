@@ -20,6 +20,7 @@ env:
 defaults:
   run:
     working-directory: geb-lean
+    shell: bash
 
 jobs:
   build:
@@ -30,12 +31,6 @@ jobs:
       - uses: leanprover/lean-action@v1
         with:
           lake-package-directory: geb-lean
-
-  axiom_check:
-    runs-on: ubuntu-latest
-    needs: [build]
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
       - name: Run axiom check
         run: |
           bash scripts/check-axioms.sh \
