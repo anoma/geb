@@ -54,8 +54,8 @@ categorical-equivalence statement of Tourlakis 2018 Corollary
 0.1.0.44 at `n = 2`.
 
 T5 proves the two round-trip composites
-`erToKFunctor ⋙ kToERFunctor = 𝟙 LawvereERCat` and
-`kToERFunctor ⋙ erToKFunctor = 𝟙 (LawvereKSimDCat 2)` as
+`erToKFunctor ⋙ kToERFunctor = 𝟭 LawvereERCat` and
+`kToERFunctor ⋙ erToKFunctor = 𝟭 (LawvereKSimDCat 2)` as
 strict equalities of functors (theorem-level, conditional on
 the proof shapes in §6.3/§6.4 going through under the current
 mathlib pin). The natural isomorphisms the master spec requires
@@ -200,10 +200,10 @@ Both are `theorem`s. Both mirror their kToER counterparts:
 
 | Name | Type |
 | --- | --- |
-| `erToKFunctor_comp_kToERFunctor` | `erToKFunctor ⋙ kToERFunctor = 𝟙 LawvereERCat` |
-| `kToERFunctor_comp_erToKFunctor` | `kToERFunctor ⋙ erToKFunctor = 𝟙 (LawvereKSimDCat 2)` |
-| `erToKKToErIso` | `erToKFunctor ⋙ kToERFunctor ≅ 𝟙 LawvereERCat` |
-| `kToErErToKIso` | `kToERFunctor ⋙ erToKFunctor ≅ 𝟙 (LawvereKSimDCat 2)` |
+| `erToKFunctor_comp_kToERFunctor` | `erToKFunctor ⋙ kToERFunctor = 𝟭 LawvereERCat` |
+| `kToERFunctor_comp_erToKFunctor` | `kToERFunctor ⋙ erToKFunctor = 𝟭 (LawvereKSimDCat 2)` |
+| `erToKKToErIso` | `erToKFunctor ⋙ kToERFunctor ≅ 𝟭 LawvereERCat` |
+| `kToErErToKIso` | `kToERFunctor ⋙ erToKFunctor ≅ 𝟭 (LawvereKSimDCat 2)` |
 
 The two equalities are `theorem`s; the two isomorphisms are
 `def`s (each a one-line `eqToIso` of its corresponding equality).
@@ -469,11 +469,11 @@ in the opposite order from §6.3.
 ### 6.5 `erToKKToErIso` and `kToErErToKIso`
 
 ```lean
-def erToKKToErIso : erToKFunctor ⋙ kToERFunctor ≅ 𝟙 LawvereERCat :=
+def erToKKToErIso : erToKFunctor ⋙ kToERFunctor ≅ 𝟭 LawvereERCat :=
   eqToIso erToKFunctor_comp_kToERFunctor
 
 def kToErErToKIso :
-    kToERFunctor ⋙ erToKFunctor ≅ 𝟙 (LawvereKSimDCat 2) :=
+    kToERFunctor ⋙ erToKFunctor ≅ 𝟭 (LawvereKSimDCat 2) :=
   eqToIso kToERFunctor_comp_erToKFunctor
 ```
 
