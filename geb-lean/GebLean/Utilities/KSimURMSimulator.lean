@@ -199,8 +199,11 @@ private theorem KMor1.interp_pcDispatchFrom_default
     omega
 
 /-- When the PC slot equals `k.val` for some `k : Fin size`,
-`KMor1.pcDispatch` interprets as `branches k`. -/
-@[simp] theorem KMor1.interp_pcDispatch_match
+`KMor1.pcDispatch` interprets as `branches k`. Not a `simp`
+lemma: `simp` cannot infer `k` from the LHS, since `k` appears
+only in the hypothesis and conclusion. Invoked explicitly via
+`rw`. -/
+theorem KMor1.interp_pcDispatch_match
     {n : ℕ} (size : ℕ)
     (branches : Fin size → KMor1 (n + 1))
     (default : KMor1 (n + 1)) (ctx : Fin (n + 1) → ℕ)
