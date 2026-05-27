@@ -8,8 +8,8 @@
 - [Statement](#statement)
 - [The Cofree Category](#the-cofree-category)
 - [The Equivalence: Two-Step Decomposition](#the-equivalence-two-step-decomposition)
-  - [Step A: Functor-Coalgebras ≌ Comonad-Coalgebras](#step-a-functor-coalgebras-%E2%89%8C-comonad-coalgebras)
-  - [Step B: Comonad-Coalgebras ≌ Copresheaves](#step-b-comonad-coalgebras-%E2%89%8C-copresheaves)
+  - [Step A: Functor-Coalgebras iso Comonad-Coalgebras](#step-a-functor-coalgebras-iso-comonad-coalgebras)
+  - [Step B: Comonad-Coalgebras iso Copresheaves](#step-b-comonad-coalgebras-iso-copresheaves)
 - [Connection to Our Infrastructure](#connection-to-our-infrastructure)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -60,7 +60,7 @@ In our codebase, this is `polyCofreeMPoly P` with:
 
 ## The Equivalence: Two-Step Decomposition
 
-### Step A: Functor-Coalgebras ≌ Comonad-Coalgebras
+### Step A: Functor-Coalgebras iso Comonad-Coalgebras
 
 For an adjunction `L ⊣ R` with induced comonad
 `D = R ∘ L`, the comparison functor `K` from the
@@ -91,7 +91,7 @@ holds because:
 3. The cofree coalgebra construction preserves the
    relevant limits
 
-### Step B: Comonad-Coalgebras ≌ Copresheaves
+### Step B: Comonad-Coalgebras iso Copresheaves
 
 A D-coalgebra is `(A, k : A → D(A))` where `D` is
 the cofree comonad.  By `polyCofreeComonadIso`:

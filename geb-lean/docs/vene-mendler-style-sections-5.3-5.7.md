@@ -16,7 +16,7 @@
   - [Corollary 5.12 (Laws for restricted coends)](#corollary-512-laws-for-restricted-coends)
   - [Example 5.3 (Coends)](#example-53-coends)
 - [5.5 Mendler-style inductive types reduced to conventional inductive types](#55-mendler-style-inductive-types-reduced-to-conventional-inductive-types)
-  - [The functor G^e](#the-functor-g%5Ee)
+  - [The functor G_e](#the-functor-g_e)
   - [Definition 5.12 (Floor translation)](#definition-512-floor-translation)
   - [Definition 5.13 (Ceiling translation)](#definition-513-ceiling-translation)
   - [Proposition 5.13](#proposition-513)
@@ -30,7 +30,7 @@
   - [Corollary 5.21](#corollary-521)
 - [5.6 Mendler-style inductive types in Haskell](#56-mendler-style-inductive-types-in-haskell)
   - [Restricted coends in Haskell](#restricted-coends-in-haskell)
-  - [The G^e functor](#the-g%5Ee-functor)
+  - [The G_e functor](#the-g_e-functor)
   - [Mendler-style inductive types](#mendler-style-inductive-types)
 - [5.7 Related work](#57-related-work)
 
@@ -190,7 +190,7 @@ reduce to conventional inductive types.
 Let G : C^op x C -> C be an endodifunctor. Assume for any object C of C,
 there exists an Id^i/C-restricted G-coend (Sigma(Id^i/C, G), inj_G^{Id^i/C}).
 
-### The functor G^e
+### The functor G_e
 
 Define an endofunctor **G^e** on C:
 
@@ -332,7 +332,7 @@ caseRCE :: (forall a. h a -> g a -> c) -> RCoEnd h g -> c
 caseRCE phi (InjRCE ha ga) = phi ha ga
 ```
 
-### The G^e functor
+### The G_e functor
 
 ```haskell
 newtype Fun c a = Fun (a -> c)

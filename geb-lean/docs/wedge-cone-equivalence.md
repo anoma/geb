@@ -5,13 +5,13 @@
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
 - [1. Conventions for a profunctor](#1-conventions-for-a-profunctor)
-- [2. The twisted-arrow category Tw(C) and the forgetful functor π](#2-the-twisted-arrow-category-twc-and-the-forgetful-functor-%CF%80)
+- [2. The twisted-arrow category Tw(C) and the forgetful functor pi](#2-the-twisted-arrow-category-twc-and-the-forgetful-functor-pi)
   - [2.1 Objects](#21-objects)
   - [2.2 Morphisms](#22-morphisms)
   - [2.3 The forgetful functor](#23-the-forgetful-functor)
-- [3. Wedges for P and cones for P′ = P ∘ π](#3-wedges-for-p-and-cones-for-p%E2%80%B2--p-%E2%88%98-%CF%80)
+- [3. Wedges for P and cones for P' = P o pi](#3-wedges-for-p-and-cones-for-p--p-o-pi)
 - [4. Wedges for P](#4-wedges-for-p)
-- [5. Cones for P′](#5-cones-for-p%E2%80%B2)
+- [5. Cones for P'](#5-cones-for-p)
 - [6. From a wedge to a cone](#6-from-a-wedge-to-a-cone)
   - [6.1 Naturality in Tw(C)](#61-naturality-in-twc)
   - [6.2 On morphisms](#62-on-morphisms)
@@ -19,13 +19,13 @@
   - [7.1 The wedge equation from cone naturality](#71-the-wedge-equation-from-cone-naturality)
   - [7.2 On morphisms](#72-on-morphisms)
 - [8. They are inverse on the nose](#8-they-are-inverse-on-the-nose)
-  - [8.1 G ∘ F = id on Wdg(P)](#81-g-%E2%88%98-f--id-on-wdgp)
-  - [8.2 F ∘ G = id on Cone(P′)](#82-f-%E2%88%98-g--id-on-conep%E2%80%B2)
-- [9. Dual: cowedges for P and cocones for P″ : Tw(Cᵒᵖ)ᵒᵖ → Set](#9-dual-cowedges-for-p-and-cocones-for-p%E2%80%B3--twc%E1%B5%92%E1%B5%96%E1%B5%92%E1%B5%96-%E2%86%92-set)
+  - [8.1 G o F = id on Wdg(P)](#81-g-o-f--id-on-wdgp)
+  - [8.2 F o G = id on Cone(P')](#82-f-o-g--id-on-conep)
+- [9. Dual: cowedges for P and cocones for P'' : Tw(C_op)_op -> Set](#9-dual-cowedges-for-p-and-cocones-for-p--twc_op_op---set)
   - [9.1 Cowedges for P](#91-cowedges-for-p)
-  - [9.2 The diagram P″](#92-the-diagram-p%E2%80%B3)
-  - [9.3 Cocones for P″](#93-cocones-for-p%E2%80%B3)
-- [10. Cowedge ↔ cocone (explicitly)](#10-cowedge--cocone-explicitly)
+  - [9.2 The diagram P''](#92-the-diagram-p)
+  - [9.3 Cocones for P''](#93-cocones-for-p)
+- [10. Cowedge <-> cocone (explicitly)](#10-cowedge---cocone-explicitly)
   - [10.1 From a cowedge to a cocone](#101-from-a-cowedge-to-a-cocone)
   - [10.2 From a cocone to a cowedge](#102-from-a-cocone-to-a-cowedge)
   - [10.3 They are inverse on the nose](#103-they-are-inverse-on-the-nose)
@@ -65,7 +65,7 @@ P(1, v) : P(c, d) → P(c, d′).
 
 ---
 
-## 2. The twisted-arrow category Tw(C) and the forgetful functor π
+## 2. The twisted-arrow category Tw(C) and the forgetful functor pi
 
 A concrete presentation of Tw(C):
 
@@ -119,7 +119,7 @@ by:
 
 ---
 
-## 3. Wedges for P and cones for P′ = P ∘ π
+## 3. Wedges for P and cones for P' = P o pi
 
 Define the derived functor:
 
@@ -169,7 +169,7 @@ Let Wdg(P) denote the category of wedges for P.
 
 ---
 
-## 5. Cones for P′
+## 5. Cones for P'
 
 A cone on P′ with apex X is a natural transformation:
 
@@ -359,7 +359,7 @@ G : Cone(P′) → Wdg(P).
 
 ## 8. They are inverse on the nose
 
-### 8.1 G ∘ F = id on Wdg(P)
+### 8.1 G o F = id on Wdg(P)
 
 Start with a wedge (X, ω), build λ via:
 
@@ -373,7 +373,7 @@ Then restrict back:
 (GF)(ω)_c = λ_{1_c} = P(1_c, 1) ∘ ω_c = ω_c.
 ```
 
-### 8.2 F ∘ G = id on Cone(P′)
+### 8.2 F o G = id on Cone(P')
 
 Start with a cone (X, λ), restrict to ω_c = λ_{1_c}, then rebuild:
 
@@ -393,7 +393,7 @@ Therefore Wdg(P) and Cone(P′) are isomorphic categories (with these explicit c
 
 ---
 
-## 9. Dual: cowedges for P and cocones for P″ : Tw(Cᵒᵖ)ᵒᵖ → Set
+## 9. Dual: cowedges for P and cocones for P'' : Tw(C_op)_op -> Set
 
 This section is the dual correspondence, arranged so that the component
 equations match the naturality equations for a cocone.
@@ -423,7 +423,7 @@ h ∘ β_c = β′_c    for all objects c.
 
 Let CoWdg(P) denote the category of cowedges for P.
 
-### 9.2 The diagram P″
+### 9.2 The diagram P''
 
 Define:
 
@@ -469,7 +469,7 @@ P″(u, v) = P(v, u) : P(d, c) → P(d′, c′).
 (Here the pair (v, u) appears because P is contravariant in the first slot
 and covariant in the second slot, and P″ is arranged to land on P(d, c).)
 
-### 9.3 Cocones for P″
+### 9.3 Cocones for P''
 
 A cocone on P″ with apex X is a natural transformation:
 
@@ -489,7 +489,7 @@ Let Cocone(P″) denote the category of cocones on P″.
 
 ---
 
-## 10. Cowedge ↔ cocone (explicitly)
+## 10. Cowedge <-> cocone (explicitly)
 
 ### 10.1 From a cowedge to a cocone
 

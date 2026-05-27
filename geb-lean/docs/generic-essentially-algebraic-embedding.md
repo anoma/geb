@@ -9,7 +9,7 @@
 - [Analysis](#analysis)
   - [The Structure of J_T](#the-structure-of-j_t)
   - [The Polynomial Endofunctor P_T](#the-polynomial-endofunctor-p_t)
-  - [Decomposition: L_T = Quotient ∘ Completion](#decomposition-l_t--quotient-%E2%88%98-completion)
+  - [Decomposition: L_T = Quotient o Completion](#decomposition-l_t--quotient-o-completion)
   - [Relationship to Gabriel-Ulmer Duality](#relationship-to-gabriel-ulmer-duality)
   - [Relationship to Finite Limit Sketches](#relationship-to-finite-limit-sketches)
   - [Computability Property](#computability-property)
@@ -99,7 +99,7 @@ For each n-ary operation f : S₁ × ... × Sₙ → S₀:
 P_T-algebras (before equations) are "pre-models" of T with all operations but
 without the equations enforced.
 
-### Decomposition: L_T = Quotient ∘ Completion
+### Decomposition: L_T = Quotient o Completion
 
 The left adjoint L_T decomposes as:
 

@@ -51,7 +51,7 @@
   - [7.4 The relational span category PshRelSpanObj C](#74-the-relational-span-category-pshrelspanobj-c)
   - [7.5 The copresheaf topos PshParametricPresheaf C](#75-the-copresheaf-topos-pshparametricpresheaf-c)
   - [7.6 Comparison](#76-comparison)
-  - [7.7 PSh(C x I^op) as an ambient topos](#77-pshc-x-i%5Eop-as-an-ambient-topos)
+  - [7.7 PSh(C x I_op) as an ambient topos](#77-pshc-x-i_op-as-an-ambient-topos)
   - [7.8 The subobject classifier and fibration](#78-the-subobject-classifier-and-fibration)
 - [8. Type formers as edge category operations](#8-type-formers-as-edge-category-operations)
   - [8.1 Products](#81-products)
@@ -75,7 +75,7 @@
   - [10.2 Equivalences with the type level](#102-equivalences-with-the-type-level)
   - [10.3 Syntax layers (TypeExpr / PshTypeExpr)](#103-syntax-layers-typeexpr--pshtypeexpr)
 - [11. Open questions and future work](#11-open-questions-and-future-work)
-  - [Q1: PSh(C x I^op) vs PshParametricPresheaf C](#q1-pshc-x-i%5Eop-vs-pshparametricpresheaf-c)
+  - [Q1: PSh(C x I_op) vs PshParametricPresheaf C](#q1-pshc-x-i_op-vs-pshparametricpresheaf-c)
   - [Q2: Lattice enrichment and variance](#q2-lattice-enrichment-and-variance)
   - [Q3: Yoneda extension of parametric structure](#q3-yoneda-extension-of-parametric-structure)
   - [Q4: Internal Heyting algebra and directed type theory (deferred)](#q4-internal-heyting-algebra-and-directed-type-theory-deferred)
@@ -1315,7 +1315,7 @@ morphisms between them. `PshParametricPresheaf C`
 assigns interpretations to all relations
 simultaneously (a copresheaf on the span category).
 
-### 7.7 PSh(C x I^op) as an ambient topos
+### 7.7 PSh(C x I_op) as an ambient topos
 
 `PSh(C x I^op)` is the category of "spans of
 presheaves on C" (without the joint monomorphism
@@ -1800,7 +1800,7 @@ future work on the syntax layer.
 
 ## 11. Open questions and future work
 
-### Q1: PSh(C x I^op) vs PshParametricPresheaf C
+### Q1: PSh(C x I_op) vs PshParametricPresheaf C
 
 `PSh(C x I^op)` handles one span at a time.
 `PshParametricPresheaf C` handles all relations

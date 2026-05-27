@@ -12,32 +12,32 @@
   - [Equivalent characterizations](#equivalent-characterizations)
   - [Required theorems](#required-theorems)
 - [Design Principles](#design-principles)
-  - [P1 — Non-dependent term type](#p1--non-dependent-term-type)
-  - [P2 — Minimal-level assignment](#p2--minimal-level-assignment)
-  - [P3 — Explicit `raise` constructor](#p3--explicit-raise-constructor)
-  - [P4 — Depth restriction via quotient image](#p4--depth-restriction-via-quotient-image)
-  - [P5 — Most-general induction principle first](#p5--most-general-induction-principle-first)
-  - [P6 — Layered recursion schemes](#p6--layered-recursion-schemes)
-  - [P7 — Lawvere-theory shape](#p7--lawvere-theory-shape)
-  - [P8 — `simrec` lives in `KMor1` with output index](#p8--simrec-lives-in-kmor1-with-output-index)
-  - [P9 — KMorN-to-KMor1 collapse via pairing](#p9--kmorn-to-kmor1-collapse-via-pairing)
-  - [P10 — Interpret-and-verify discipline](#p10--interpret-and-verify-discipline)
+  - [P1 -- Non-dependent term type](#p1----non-dependent-term-type)
+  - [P2 -- Minimal-level assignment](#p2----minimal-level-assignment)
+  - [P3 -- Explicit `raise` constructor](#p3----explicit-raise-constructor)
+  - [P4 -- Depth restriction via quotient image](#p4----depth-restriction-via-quotient-image)
+  - [P5 -- Most-general induction principle first](#p5----most-general-induction-principle-first)
+  - [P6 -- Layered recursion schemes](#p6----layered-recursion-schemes)
+  - [P7 -- Lawvere-theory shape](#p7----lawvere-theory-shape)
+  - [P8 -- `simrec` lives in `KMor1` with output index](#p8----simrec-lives-in-kmor1-with-output-index)
+  - [P9 -- KMorN-to-KMor1 collapse via pairing](#p9----kmorn-to-kmor1-collapse-via-pairing)
+  - [P10 -- Interpret-and-verify discipline](#p10----interpret-and-verify-discipline)
 - [Lean Structural Design](#lean-structural-design)
   - [File layout](#file-layout)
   - [Generator inventory for `KMor1`](#generator-inventory-for-kmor1)
   - [Level computation](#level-computation)
   - [Interpretation](#interpretation)
   - [Quotient by extensional equality](#quotient-by-extensional-equality)
-- [Phase 1 — The K^sim Hierarchy as a Category](#phase-1--the-k%5Esim-hierarchy-as-a-category)
+- [Phase 1 -- The K_sim Hierarchy as a Category](#phase-1----the-k_sim-hierarchy-as-a-category)
   - [1.1 Deliverables](#11-deliverables)
   - [1.2 Term language](#12-term-language)
   - [1.3 Interpretation](#13-interpretation)
   - [1.4 Extensional-equality quotient](#14-extensional-equality-quotient)
   - [1.5 Lawvere-theory product structure](#15-lawvere-theory-product-structure)
-  - [1.6 K^sim_d realization](#16-k%5Esim_d-realization)
+  - [1.6 K_sim_d realization](#16-k_sim_d-realization)
   - [1.7 Tests](#17-tests)
   - [1.8 Open issues for the Phase-1 implementation](#18-open-issues-for-the-phase-1-implementation)
-- [Phase 2 — K^sim_2 ≌ LawvereER](#phase-2--k%5Esim_2-%E2%89%8C-lawvereer)
+- [Phase 2 -- K_sim_2 iso LawvereER](#phase-2----k_sim_2-iso-lawvereer)
   - [2.1 Theorem statement](#21-theorem-statement)
   - [2.2 Strategy](#22-strategy)
   - [2.3 Forward translation `kToER`](#23-forward-translation-ktoer)
@@ -55,7 +55,7 @@
   - [2.6 Categorical packaging](#26-categorical-packaging)
   - [2.7 Worked examples](#27-worked-examples)
   - [2.8 Open issues for the Phase-2 implementation](#28-open-issues-for-the-phase-2-implementation)
-- [Phase 3 — ⋃_n K^sim_n ⊆ Primrec](#phase-3--%E2%8B%83_n-k%5Esim_n-%E2%8A%86-primrec)
+- [Phase 3 -- Union_n K_sim_n subseteq Primrec](#phase-3----union_n-k_sim_n-subseteq-primrec)
   - [3.1 Theorem statement](#31-theorem-statement)
   - [3.2 Encoding the input vector](#32-encoding-the-input-vector)
   - [3.3 Translation `kToPrimrec`](#33-translation-ktoprimrec)
@@ -70,16 +70,16 @@
   - [Lean infrastructure](#lean-infrastructure)
   - [Project context](#project-context)
   - [External context (consulted)](#external-context-consulted)
-- [Appendix A — Closure proofs via URM simulation](#appendix-a--closure-proofs-via-urm-simulation)
+- [Appendix A -- Closure proofs via URM simulation](#appendix-a----closure-proofs-via-urm-simulation)
   - [A.0 Why a naive transcription fails](#a0-why-a-naive-transcription-fails)
   - [A.1 Overview](#a1-overview)
   - [A.2 The concrete URM](#a2-the-concrete-urm)
-  - [A.3 The K^sim simulator term](#a3-the-k%5Esim-simulator-term)
-  - [A.4 The compiler ER → URM](#a4-the-compiler-er-%E2%86%92-urm)
-  - [A.5 The runtime bound `A_2^e ∈ K_2^sim`](#a5-the-runtime-bound-a_2%5Ee-%E2%88%88-k_2%5Esim)
+  - [A.3 The K_sim simulator term](#a3-the-k_sim-simulator-term)
+  - [A.4 The compiler ER -> URM](#a4-the-compiler-er---urm)
+  - [A.5 The runtime bound `A_2_e in K_2_sim`](#a5-the-runtime-bound-a_2_e-in-k_2_sim)
   - [A.6 The composite `erToK`](#a6-the-composite-ertok)
   - [A.7 Theorems 2.4.A and 2.4.B as corollaries](#a7-theorems-24a-and-24b-as-corollaries)
-  - [A.8 Generalisation to K_n^sim = E^{n+1}](#a8-generalisation-to-k_n%5Esim--e%5En1)
+  - [A.8 Generalisation to K_n_sim = E_{n+1}](#a8-generalisation-to-k_n_sim--e_n1)
   - [A.9 Implementation note: file layout](#a9-implementation-note-file-layout)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -245,26 +245,26 @@ These principles govern the Lean formalization choices.  They
 follow from the project conventions in `CLAUDE.md` and from
 the design discussion that produced this document.
 
-### P1 — Non-dependent term type
+### P1 -- Non-dependent term type
 
 `KMor1` is *not* dependently indexed by recursion depth.
 Depth is recovered via a structural function
 `level : KMor1 n → ℕ`, not encoded into the type.
 
-### P2 — Minimal-level assignment
+### P2 -- Minimal-level assignment
 
 `level` is structural and returns the minimum level
 inhabited by the term: zero for atomic constructors,
 recursive maxima for compositions, and structural
 increments for `simrec` and `raise`.
 
-### P3 — Explicit `raise` constructor
+### P3 -- Explicit `raise` constructor
 
 Level-bumping is a syntactic operation of the term language,
 not implicit subsumption.  A term of structural level k is
 moved to level k+1 only by an explicit `raise` constructor.
 
-### P4 — Depth restriction via quotient image
+### P4 -- Depth restriction via quotient image
 
 The category K^sim_d is realized as the full subcategory of
 the extensional-equality quotient `KMor1.QuotCat` whose
@@ -296,19 +296,19 @@ is also defined; it is used to *state* closure lemmas
 the closure under …") but does not itself carry the K^sim_d
 category structure.
 
-### P5 — Most-general induction principle first
+### P5 -- Most-general induction principle first
 
 For each new structure, the Prop-induction principle
 (non-recursive hypotheses) is defined first.  All subsequent
 recursion schemes for that structure are derived from it.
 
-### P6 — Layered recursion schemes
+### P6 -- Layered recursion schemes
 
 Sophisticated recursion schemes are built on top of the
 primary induction principle.  Consumers of the structure
 do not write structural recursion directly.
 
-### P7 — Lawvere-theory shape
+### P7 -- Lawvere-theory shape
 
 The morphism category follows the existing `ERMor1` /
 `ERMorN` pattern:
@@ -321,7 +321,7 @@ The morphism category follows the existing `ERMor1` /
 The objects of the Lawvere theory are the natural numbers,
 each `n` representing the product object ℕ^n.
 
-### P8 — `simrec` lives in `KMor1` with output index
+### P8 -- `simrec` lives in `KMor1` with output index
 
 The `simrec` constructor has shape
 
@@ -339,7 +339,7 @@ vector.  This mirrors classical mathematical presentations
 (which describe the system but treat each f_i individually) and
 keeps the Lawvere-theory shape parallel to `ERMor1`.
 
-### P9 — KMorN-to-KMor1 collapse via pairing
+### P9 -- KMorN-to-KMor1 collapse via pairing
 
 At level ≥ 2 the K^sim hierarchy contains a primitive-recursive
 pairing function and its inverses; consequently, for d ≥ 2,
@@ -350,7 +350,7 @@ the Lawvere-theory wrapper as a presentation convenience at
 levels where it is essential (depth 0 and 1) and as a
 notational convenience above.
 
-### P10 — Interpret-and-verify discipline
+### P10 -- Interpret-and-verify discipline
 
 Every named composite written in either `ERMor1`/`ERMorN`
 or `KMor1`/`KMorN` is accompanied, in the same module, by
@@ -442,7 +442,7 @@ the morphisms of `KSimMor d` are exactly the quotient
 classes admitting at least one level-≤-d syntactic
 representative.
 
-## Phase 1 — The K^sim Hierarchy as a Category
+## Phase 1 -- The K_sim Hierarchy as a Category
 
 Phase 1 lands the foundational structures: the term
 language `KMor1`/`KMorN`, the level function, the
@@ -534,7 +534,7 @@ from concatenation in `KMorN`.  The product-universal
 property is proved by reducing to extensional equality at
 the function level, mirroring the `LawvereER` proof.
 
-### 1.6 K^sim_d realization
+### 1.6 K_sim_d realization
 
 The depth-restricted full subcategory `KSimMor d` is
 defined per P4: morphisms are quotient classes admitting
@@ -583,7 +583,7 @@ composite whose `level` is computed and `@[simp]`-tagged.
   as a propositional sub-property of `KMor1.QuotCat`, is
   left to the Phase-1 implementation plan.
 
-## Phase 2 — K^sim_2 ≌ LawvereER
+## Phase 2 -- K_sim_2 iso LawvereER
 
 This section develops the bidirectional translation in full
 mathematical detail.  Phase 2 is the central deliverable of
@@ -993,7 +993,7 @@ on representative cases.
   artifacts), Phase 2 falls back to producing only an
   `Equivalence` instance.
 
-## Phase 3 — ⋃_n K^sim_n ⊆ Primrec
+## Phase 3 -- Union_n K_sim_n subseteq Primrec
 
 Phase 3 establishes that every K^sim morphism, at any
 depth, interprets to a primitive-recursive function in the
@@ -1200,7 +1200,7 @@ Following `LawvereERPrimrec`'s pattern,
 - Bauer, *Primitive recursive functions in Agda* (gist) —
   stylistic precedent for the arity-indexed inductive shape.
 
-## Appendix A — Closure proofs via URM simulation
+## Appendix A -- Closure proofs via URM simulation
 
 Theorems 2.4.A (`bsum` closure) and 2.4.B (`bprod` closure)
 are corollaries of a stronger result: the entire ER class
@@ -1304,7 +1304,7 @@ The denotation of a URM program at runtime bound `n` is
 — the value of the output register after running the
 machine for `n` steps from the initial register vector.
 
-### A.3 The K^sim simulator term
+### A.3 The K_sim simulator term
 
 For a URM program `prog` with `r` registers and `s`
 instructions, define
@@ -1393,7 +1393,7 @@ time bound, using `run_succ` from
 `RegisterMachine.lean` and the per-instruction
 correctness lemmas (one per `URMInstr` constructor).
 
-### A.4 The compiler ER → URM
+### A.4 The compiler ER -> URM
 
 Define `compile : ERMor1 a → URMProgram` by structural
 recursion on the ER expression.  The compiler reserves a
@@ -1480,7 +1480,7 @@ states that, given a runtime budget at least the URM's
 runtime bound, the URM's output register holds the value
 of the ER expression's interpretation.
 
-### A.5 The runtime bound `A_2^e ∈ K_2^sim`
+### A.5 The runtime bound `A_2_e in K_2_sim`
 
 Throughout this subsection and §A.6–A.8, **`e` denotes
 the input ER expression** being translated by `erToK` —
@@ -1623,7 +1623,7 @@ the same extensional-equality class as `bsumK f`. ∎
 Proof.  Symmetric, with `bprod` substituted for `bsum`
 in the appeal to §A.6. ∎
 
-### A.8 Generalisation to K_n^sim = E^{n+1}
+### A.8 Generalisation to K_n_sim = E_{n+1}
 
 The same URM-simulation construction works for any n ≥ 2,
 giving K_n^sim = E^{n+1} as function classes (Tourlakis

@@ -15,7 +15,7 @@
   - [3.3 Summary table](#33-summary-table)
 - [4. Approaches Considered](#4-approaches-considered)
   - [4.1 Density reduction (co-Yoneda)](#41-density-reduction-co-yoneda)
-  - [4.2 Generalize target to D ≠ C](#42-generalize-target-to-d-%E2%89%A0-c)
+  - [4.2 Generalize target to D != C](#42-generalize-target-to-d--c)
   - [4.3 Generalize impredicative characterization](#43-generalize-impredicative-characterization)
   - [4.4 Twisted arrow category / colimit formulation](#44-twisted-arrow-category--colimit-formulation)
   - [4.5 Slice category approach](#45-slice-category-approach)
@@ -180,7 +180,7 @@ the "reduced" coend over `PUnit` has only one component
 `pt × G(*, *)`, which cannot equal the full restricted coend
 `∫^{A : Type v} (A → pt) × G(A, A)`.
 
-### 4.2 Generalize target to D ≠ C
+### 4.2 Generalize target to D != C
 
 **Idea:** Allow `HasAllHomToProfCoends` to produce `GExtFunctor`
 landing in a larger universe: `GExtFunctor G : C ⥤ D` where

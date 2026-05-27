@@ -7,8 +7,8 @@
 - [Overview](#overview)
 - [Polynomial Functors as Spans](#polynomial-functors-as-spans)
 - [The Double Grothendieck Structure](#the-double-grothendieck-structure)
-  - [First Layer: Position Grothendieck (p : E → I)](#first-layer-position-grothendieck-p--e-%E2%86%92-i)
-  - [Second Layer: Direction Grothendieck (d : E → X)](#second-layer-direction-grothendieck-d--e-%E2%86%92-x)
+  - [First Layer: Position Grothendieck (p : E -> I)](#first-layer-position-grothendieck-p--e---i)
+  - [Second Layer: Direction Grothendieck (d : E -> X)](#second-layer-direction-grothendieck-d--e---x)
 - [Universal Properties: functorFrom and functorTo](#universal-properties-functorfrom-and-functorto)
   - [Introduction Rules (functorTo)](#introduction-rules-functorto)
   - [Elimination Rules (functorFrom)](#elimination-rules-functorfrom)
@@ -51,7 +51,7 @@ This span induces a functor `P* : Type/I → Type/X` (the evaluation functor).
 The evaluation can be understood as a composition of two Grothendieck
 constructions:
 
-### First Layer: Position Grothendieck (p : E → I)
+### First Layer: Position Grothendieck (p : E -> I)
 
 The position functor `p : E → I` gives a Grothendieck construction:
 
@@ -61,7 +61,7 @@ The position functor `p : E → I` gives a Grothendieck construction:
 
 This creates the slice category structure over `I`.
 
-### Second Layer: Direction Grothendieck (d : E → X)
+### Second Layer: Direction Grothendieck (d : E -> X)
 
 The direction functor `d : E → X` gives another Grothendieck construction:
 

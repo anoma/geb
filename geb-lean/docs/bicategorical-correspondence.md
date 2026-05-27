@@ -9,8 +9,8 @@
   - [At the 1-Categorical Level](#at-the-1-categorical-level)
   - [The Missing Dimension](#the-missing-dimension)
 - [Analysis of the Correspondence](#analysis-of-the-correspondence)
-  - [Functors Under Φ](#functors-under-%CF%86)
-  - [Natural Transformations Under Φ](#natural-transformations-under-%CF%86)
+  - [Functors Under Phi](#functors-under-phi)
+  - [Natural Transformations Under Phi](#natural-transformations-under-phi)
   - [The Collapse](#the-collapse)
 - [Recovering 2-Categorical Structure](#recovering-2-categorical-structure)
   - [Option 1: Cat-Valued Copresheaves](#option-1-cat-valued-copresheaves)
@@ -23,14 +23,14 @@
 - [Implications for the Adjunction](#implications-for-the-adjunction)
   - [Current State](#current-state)
   - [Potential 2-Categorical Extension](#potential-2-categorical-extension)
-  - [Construction Sketch for Φ'](#construction-sketch-for-%CF%86)
+  - [Construction Sketch for Phi'](#construction-sketch-for-phi)
   - [Alternative: Non-Discrete Target](#alternative-non-discrete-target)
 - [Constructing Cat-Valued Copresheaves via Currying](#constructing-cat-valued-copresheaves-via-currying)
   - [`Cat`-valued copresheaves from reflector](#cat-valued-copresheaves-from-reflector)
   - [The Currying Equivalence](#the-currying-equivalence)
   - [Combined Construction](#combined-construction)
   - [Application to 2-Categorical Embedding](#application-to-2-categorical-embedding)
-  - [The Product Category J × J](#the-product-category-j-%C3%97-j)
+  - [The Product Category J x J](#the-product-category-j-x-j)
   - [Proposed Construction for Ψ](#proposed-construction-for-%CF%88)
   - [Why This Might Work](#why-this-might-work)
   - [Verification Questions](#verification-questions)
@@ -83,7 +83,7 @@ transformations between functors in Cat have no direct correspondent.
 
 ## Analysis of the Correspondence
 
-### Functors Under Φ
+### Functors Under Phi
 
 For F : C → D, the induced Φ(F) : Φ(C) → Φ(D) is a natural transformation
 with components:
@@ -95,7 +95,7 @@ with components:
 Φ(F)_Comp: Comp_C → Comp_D (induced on composable pairs)
 ```
 
-### Natural Transformations Under Φ
+### Natural Transformations Under Phi
 
 For a natural transformation α : F ⇒ G between F, G : C → D, we have:
 
@@ -215,7 +215,7 @@ A 2-adjunction L' ⊣ Φ' between 2-Cat and [J, Cat] would:
 2. **Require 2-functoriality**: L' and Φ' must be 2-functors
 3. **Triangle identities**: Become 2-categorical (involve modifications)
 
-### Construction Sketch for Φ'
+### Construction Sketch for Phi'
 
 For a category C, define Φ'(C) : J → Cat:
 
@@ -275,7 +275,7 @@ For Φ' : Cat → [J, Cat], construct as follows:
 
 where L_* denotes post-composition with L.
 
-### The Product Category J × J
+### The Product Category J x J
 
 The product J × J has 16 objects (pairs from {Obj, Mor, Id, Comp}²):
 

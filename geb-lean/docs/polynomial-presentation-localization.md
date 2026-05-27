@@ -19,8 +19,8 @@
   - [The Density Isomorphism](#the-density-isomorphism)
 - [The Equivalence](#the-equivalence)
   - [Statement](#statement)
-  - [Counit: `E ∘ S ≅ Id`](#counit-e-%E2%88%98-s-%E2%89%85-id)
-  - [Unit: `S ∘ E ≅ Id`](#unit-s-%E2%88%98-e-%E2%89%85-id)
+  - [Counit: `E o S iso Id`](#counit-e-o-s-iso-id)
+  - [Unit: `S o E iso Id`](#unit-s-o-e-iso-id)
 - [Implementation Notes](#implementation-notes)
   - [Using Lean's Quot](#using-leans-quot)
   - [Composition Well-Definedness](#composition-well-definedness)
@@ -180,14 +180,14 @@ representables indexed by the category of elements is a colimit cocone.
 The functors `E : PolyPresentationLoc D ⥤ (D ⥤ Type)` and
 `S : (D ⥤ Type) ⥤ PolyPresentationLoc D` form an adjoint equivalence.
 
-### Counit: `E ∘ S ≅ Id`
+### Counit: `E o S iso Id`
 
 For `F : D ⥤ Type`:
 
 - `E(S(F)) = densityPresentation(F).toCopresheaf`
 - By the density theorem, this is isomorphic to `F`
 
-### Unit: `S ∘ E ≅ Id`
+### Unit: `S o E iso Id`
 
 For `X : PolyPresentation D`:
 

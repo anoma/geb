@@ -16,18 +16,18 @@
   - [Internal categories in J-copresheaves](#internal-categories-in-j-copresheaves)
   - [The iteration](#the-iteration)
   - [Reflective tower](#reflective-tower)
-  - [The fixed point: J^ω](#the-fixed-point-j%5E%CF%89)
+  - [The fixed point: J_omega](#the-fixed-point-j_omega)
 - [Part 4: Comparison with established approaches](#part-4-comparison-with-established-approaches)
   - [n-fold categories and multisimplicial sets](#n-fold-categories-and-multisimplicial-sets)
   - [Globular vs cubical/product approach](#globular-vs-cubicalproduct-approach)
-  - [The ω-fold limit](#the-%CF%89-fold-limit)
+  - [The omega-fold limit](#the-omega-fold-limit)
 - [Part 5: Avenues for investigation](#part-5-avenues-for-investigation)
   - [A. Implement `toFunctorDataFunctor`](#a-implement-tofunctordatafunctor)
   - [B. Formalize the currying equivalence](#b-formalize-the-currying-equivalence)
   - [C. Formalize the double schema](#c-formalize-the-double-schema)
   - [D. Formalize the n-fold iteration](#d-formalize-the-n-fold-iteration)
   - [E. Investigate the Segal condition analogue](#e-investigate-the-segal-condition-analogue)
-  - [F. Explore the fixed point `J^ω`](#f-explore-the-fixed-point-j%5E%CF%89)
+  - [F. Explore the fixed point `J_omega`](#f-explore-the-fixed-point-j_omega)
   - [G. Compare with the globular approach](#g-compare-with-the-globular-approach)
   - [H. Connections (exchange laws)](#h-connections-exchange-laws)
 - [References](#references)
@@ -286,7 +286,7 @@ categorical structure.  The innermost subcategory
 (`n-FoldCat`) consists of the actual n-fold categories
 in the sense of Ehresmann.
 
-### The fixed point: J^ω
+### The fixed point: J_omega
 
 The fixed-point equation for the iteration
 `S ↦ [J, S]` is `S ≅ [J, S]`.  Setting
@@ -401,7 +401,7 @@ with an additional *weak globularity condition*
 (homotopy pullback conditions) that makes them
 equivalent to Tamsamani-Simpson weak n-categories.
 
-### The ω-fold limit
+### The omega-fold limit
 
 The iteration `Cat₀ = Set`, `Catₙ₊₁ = Cat(Catₙ)`
 produces n-fold categories.  The limit in the globular
@@ -458,7 +458,7 @@ iterated `PhiFunctor`: a copresheaf on `Jⁿ` satisfies
 the condition iff it lies in the (iterated) image of
 `Φⁿ`.
 
-### F. Explore the fixed point `J^ω`
+### F. Explore the fixed point `J_omega`
 
 Define `J^ω` as a category (the countable product) and
 study the copresheaf topos `[J^ω, Type]`.  Prove the

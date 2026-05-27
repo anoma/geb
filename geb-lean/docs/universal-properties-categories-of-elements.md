@@ -7,11 +7,11 @@
 - [Universal properties via categories of elements](#universal-properties-via-categories-of-elements)
   - [Representability as a universal property](#representability-as-a-universal-property)
   - [The category of elements](#the-category-of-elements)
-  - [Representability ⇔ existence of an initial/terminal element-object](#representability-%E2%87%94-existence-of-an-initialterminal-element-object)
+  - [Representability <=> existence of an initial/terminal element-object](#representability--existence-of-an-initialterminal-element-object)
 - [Universal morphisms, comma categories, and categories of elements](#universal-morphisms-comma-categories-and-categories-of-elements)
   - [Universal morphisms as initial/terminal objects in comma categories](#universal-morphisms-as-initialterminal-objects-in-comma-categories)
-  - [`(X ↓ F)` is a category of elements of a copresheaf](#x-%E2%86%93-f-is-a-category-of-elements-of-a-copresheaf)
-  - [`(F ↓ X)` is a category of elements of a presheaf](#f-%E2%86%93-x-is-a-category-of-elements-of-a-presheaf)
+  - [`(X down F)` is a category of elements of a copresheaf](#x-down-f-is-a-category-of-elements-of-a-copresheaf)
+  - [`(F down X)` is a category of elements of a presheaf](#f-down-x-is-a-category-of-elements-of-a-presheaf)
   - [Summary in one line](#summary-in-one-line)
 - [Mathlib references](#mathlib-references)
   - [Category of elements](#category-of-elements)
@@ -69,7 +69,7 @@ Riehl notes how taking opposites relates "category of elements of a
 representable" to slice/coslice-like constructions, which is a useful
 sanity check for the variance bookkeeping.
 
-### Representability ⇔ existence of an initial/terminal element-object
+### Representability <=> existence of an initial/terminal element-object
 
 A theorem relating representablility to categories of elements
 (Riehl, Prop. 2.4.4) is:
@@ -128,7 +128,7 @@ A **universal morphism from `X` to `F`** is exactly an **initial object**
 in `(X ↓ F)`, and a **universal morphism from `F` to `X`** is exactly a
 **terminal object** in `(F ↓ X)`. ([Wikipedia][1])
 
-### `(X ↓ F)` is a category of elements of a copresheaf
+### `(X down F)` is a category of elements of a copresheaf
 
 Define a copresheaf (covariant Set-valued functor)
 
@@ -171,7 +171,7 @@ Under this identification:
   **initial element-object** of the copresheaf `c ↦ D(X, F(c))`.
   ([Wikipedia][1])
 
-### `(F ↓ X)` is a category of elements of a presheaf
+### `(F down X)` is a category of elements of a presheaf
 
 Define a presheaf (contravariant Set-valued functor)
 

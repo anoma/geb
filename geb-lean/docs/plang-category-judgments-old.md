@@ -8,9 +8,9 @@
 - [Structure](#structure)
 - [Universe Levels](#universe-levels)
 - [Incremental Construction](#incremental-construction)
-- [The Adjunction: Cat ⊣ CatJudgCopr](#the-adjunction-cat-%E2%8A%A3-catjudgcopr)
-  - [Embedding Functor Phi: Cat → CatJudgCopr](#embedding-functor-phi-cat-%E2%86%92-catjudgcopr)
-  - [Reflection Functor L: CatJudgCopr → Cat](#reflection-functor-l-catjudgcopr-%E2%86%92-cat)
+- [The Adjunction: Cat -| CatJudgCopr](#the-adjunction-cat---catjudgcopr)
+  - [Embedding Functor Phi: Cat -> CatJudgCopr](#embedding-functor-phi-cat---catjudgcopr)
+  - [Reflection Functor L: CatJudgCopr -> Cat](#reflection-functor-l-catjudgcopr---cat)
   - [Unit and Counit](#unit-and-counit)
   - [Triangle Identities](#triangle-identities)
 - [Connection to PolyPresentation](#connection-to-polypresentation)
@@ -107,11 +107,11 @@ CatJudgCopr       -- combine identity and composition
 Each layer is a sigma type extending the previous, allowing operations to
 be defined at intermediate stages.
 
-## The Adjunction: Cat ⊣ CatJudgCopr
+## The Adjunction: Cat -| CatJudgCopr
 
 The adjunction consists of two functors:
 
-### Embedding Functor Phi: Cat → CatJudgCopr
+### Embedding Functor Phi: Cat -> CatJudgCopr
 
 Given a category C with `C : Type u` and `Category.{v} C`:
 
@@ -145,7 +145,7 @@ maps components via:
 - idMap = F.obj
 - compMap = λ ⟨a, b, c, f, g⟩ => ⟨F.obj a, F.obj b, F.obj c, F.map f, F.map g⟩
 
-### Reflection Functor L: CatJudgCopr → Cat
+### Reflection Functor L: CatJudgCopr -> Cat
 
 Given a CatJudgCopr s, construct a category via quotienting:
 

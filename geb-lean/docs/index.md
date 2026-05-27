@@ -12,7 +12,7 @@
 - [Internal-presheaf Grothendieck equivalence](#internal-presheaf-grothendieck-equivalence)
 - [PshRelEdge and edge-of-presheaf machinery](#pshreledge-and-edge-of-presheaf-machinery)
 - [Tree calculus Phase 2](#tree-calculus-phase-2)
-- [K^sim hierarchy and ER ↔ K^sim_2 equivalence](#k%5Esim-hierarchy-and-er--k%5Esim_2-equivalence)
+- [K_sim hierarchy and ER <-> K_sim_2 equivalence](#k_sim-hierarchy-and-er---k_sim_2-equivalence)
 - [CSLib integration](#cslib-integration)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -338,7 +338,7 @@ The repository is laid out narrow-and-deep, with one indexing
   for the bialgebraic GSOS layer. Spec:
   `docs/superpowers/specs/2026-03-22-tree-calculus-phase2-design.md`.
 
-## K^sim hierarchy and ER ↔ K^sim_2 equivalence
+## K_sim hierarchy and ER <-> K_sim_2 equivalence
 
 - **Source-tree paths**: `GebLean/LawvereKSim.lean`,
   `GebLean/LawvereKSimDCatInterp.lean`,
@@ -445,7 +445,7 @@ The repository is laid out narrow-and-deep, with one indexing
   `Classical.choice` exposure when constructive code depends
   on CSLib lemmas.
 - **Dependencies**: orthogonal infrastructure consumed by
-  [K^sim hierarchy and ER ↔ K^sim_2 equivalence](#ksim-hierarchy-and-er--ksim_2-equivalence)
+  [K_sim hierarchy and ER <-> K_sim_2 equivalence](#k_sim-hierarchy-and-er---k_sim_2-equivalence)
   (URM simulation lemmas) and
   [tree calculus phase 2](#tree-calculus-phase-2) (LTS
   layer for reduction). Spec:

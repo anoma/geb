@@ -7,13 +7,13 @@
 - [1. Preliminaries](#1-preliminaries)
   - [1.1 The arrow category `Arr(C)`](#11-the-arrow-category-arrc)
   - [1.2 The twisted-arrow category `Tw(C)`](#12-the-twisted-arrow-category-twc)
-- [2. Input Data: A Functor `F : Tw(C) → Cat`](#2-input-data-a-functor-f--twc-%E2%86%92-cat)
+- [2. Input Data: A Functor `F : Tw(C) -> Cat`](#2-input-data-a-functor-f--twc---cat)
 - [3. Output: A Category `E(F)` Over `Arr(C)`](#3-output-a-category-ef-over-arrc)
 - [4. Objects of `E(F)`](#4-objects-of-ef)
 - [5. Morphisms in `E(F)`](#5-morphisms-in-ef)
 - [6. Identity Morphisms](#6-identity-morphisms)
 - [7. Composition of Morphisms](#7-composition-of-morphisms)
-- [8. Functoriality of the Assignment `F ↦ E(F)`](#8-functoriality-of-the-assignment-f-%E2%86%A6-ef)
+- [8. Functoriality of the Assignment `F |-> E(F)`](#8-functoriality-of-the-assignment-f---ef)
 - [9. Summary](#9-summary)
 - [10. Code References](#10-code-references)
   - [10.1 Arrow Category](#101-arrow-category)
@@ -25,9 +25,9 @@
     - [10.5.2 Decomposition into Two Grothendieck Constructions](#1052-decomposition-into-two-grothendieck-constructions)
     - [10.5.3 Implementation Steps in Lean](#1053-implementation-steps-in-lean)
     - [10.5.4 Advantages of This Approach](#1054-advantages-of-this-approach)
-- [11. The Presheaf Variant: Functors `Tw(C)^op → Cat`](#11-the-presheaf-variant-functors-twc%5Eop-%E2%86%92-cat)
+- [11. The Presheaf Variant: Functors `Tw(C)_op -> Cat`](#11-the-presheaf-variant-functors-twc_op---cat)
   - [11.1 Input Data](#111-input-data)
-  - [11.2 Formulation via `Tw(C^op)`](#112-formulation-via-twc%5Eop)
+  - [11.2 Formulation via `Tw(C_op)`](#112-formulation-via-twc_op)
   - [11.3 Objects](#113-objects)
   - [11.4 Morphisms](#114-morphisms)
   - [11.5 Nested Grothendieck Decomposition](#115-nested-grothendieck-decomposition)
@@ -96,7 +96,7 @@ functor `F : Tw(C) → Cat` is given.
 
 ---
 
-## 2. Input Data: A Functor `F : Tw(C) → Cat`
+## 2. Input Data: A Functor `F : Tw(C) -> Cat`
 
 Given `F`, denote the category assigned to an arrow `f : a → b` by `F(f)`.
 
@@ -254,7 +254,7 @@ Thus `E(F)` is a well-defined category and `π_F : E(F) → Arr(C)` is a functor
 
 ---
 
-## 8. Functoriality of the Assignment `F ↦ E(F)`
+## 8. Functoriality of the Assignment `F |-> E(F)`
 
 Given a natural transformation
 
@@ -498,7 +498,7 @@ and G_b = ι_b ⋙ F : (Over b)^op → Cat
 
 ---
 
-## 11. The Presheaf Variant: Functors `Tw(C)^op → Cat`
+## 11. The Presheaf Variant: Functors `Tw(C)_op -> Cat`
 
 The construction above uses a covariant functor `F : Tw(C) → Cat` (a copresheaf
 on twisted arrows). There is a dual construction for presheaves on twisted
@@ -510,7 +510,7 @@ A **presheaf on twisted arrows** is a functor `G : Tw(C)^op → Cat`. This
 assigns to each arrow `f : a → b` in `C` a category `G(f)`, with functorial
 transport in the opposite direction from copresheaves.
 
-### 11.2 Formulation via `Tw(C^op)`
+### 11.2 Formulation via `Tw(C_op)`
 
 The twisted arrow category `Tw(C)` is self-dual: there is an equivalence
 `Tw(C^op) ≃ Tw(C)` (implemented as `twistedArrowIsoTwistedArrowOp'`). This
