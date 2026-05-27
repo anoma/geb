@@ -581,10 +581,12 @@ because `mk` calls `adjointifyη η ε` on the user-supplied
 unit, replacing it with an adjointified form. Using `mk'`
 preserves `erKSimEquiv.unitIso = erToKKToErIso.symm` and
 `erKSimEquiv.counitIso = kToErErToKIso` definitionally. The
-triangle identity `functor_unitIso_comp` is discharged by the
-`cat_disch` autoparam (both unit and counit component
-applications reduce to `eqToHom rfl = 𝟙 _` since both
-functors are identity on objects).
+triangle identity `functor_unitIso_comp` is discharged by an
+explicit fifth argument `(by intro X; simp [erToKKToErIso,
+kToErErToKIso])` — the `cat_disch` autoparam alone is
+insufficient here because it cannot unfold the two `def`-bound
+natural isomorphisms `erToKKToErIso` and `kToErErToKIso` (each
+defined via `eqToIso`).
 
 The explicit `IsEquivalence` instances (rather than relying
 on typeclass search through the mathlib globals) are
@@ -865,9 +867,7 @@ def erKSimEquiv : LawvereERCat ≌ LawvereKSimDCat 2 :=
     kToERFunctor
     erToKKToErIso.symm
     kToErErToKIso
-    (by intro X;
-        simp [erToKKToErIso, kToErErToKIso,
-              eqToIso.hom, eqToIso.inv])
+    (by intro X; simp [erToKKToErIso, kToErErToKIso])
 ```
 
 - [ ] **Step 2: Verify the equivalence builds**
@@ -879,11 +879,13 @@ lake build
 ```
 
 Expected: builds successfully. The explicit fifth-argument
-discharge (`by intro X; simp [erToKKToErIso, kToErErToKIso,
-eqToIso.hom, eqToIso.inv]`) is the load-bearing recipe per
-spec §6.6; it has been MCP-verified against axiomatised
-strict equalities. If under a newer mathlib pin the discharge
-fails for unexpected reasons, halt and consult the spec.
+discharge (`by intro X; simp [erToKKToErIso, kToErErToKIso]`)
+is the load-bearing recipe per spec §6.6; it has been
+MCP-verified against axiomatised strict equalities and is the
+minimal simp set (adding `eqToIso.hom` or `eqToIso.inv` would
+trigger `unusedSimpArgs` warnings). If under a newer mathlib
+pin the discharge fails for unexpected reasons, halt and
+consult the spec.
 
 - [ ] **Step 3: Add the two explicit `IsEquivalence` instances**
 

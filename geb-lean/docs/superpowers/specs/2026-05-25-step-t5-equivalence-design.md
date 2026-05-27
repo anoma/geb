@@ -162,7 +162,8 @@ the project's mandatory module-docstring template (see
 docstring's sections will be: `# Title`, brief summary,
 `## Main definitions`, `## Main statements`, `## Implementation
 notes` (commits to the `Equivalence.mk'` constructor choice and
-the `cat_disch` triangle discharge per §6.6), `## References`,
+the explicit triangle-discharge `simp` recipe per §6.6),
+`## References`,
 and `## Tags`. The optional `## Notation` section is omitted as
 no new notation is introduced.
 
@@ -244,7 +245,7 @@ Six commits on the topic branch `feat/t5-equivalence` (or
 
 | Task | Deliverable | Approx LOC | File(s) |
 | --- | --- | --- | --- |
-| T5.0 | Baseline verification: `lake build`, `scripts/check-axioms.sh`, `markdownlint-cli2`, doctoc-check, plus stub type-check of §6.3's proof shape and §6.7's typeclass-search assumption — all clean on fresh branch | 0 | — |
+| T5.0 | Baseline verification: `lake build`, `scripts/check-axioms.sh`, `markdownlint-cli2`, doctoc-check, plus stub type-check of §6.3's proof shape and §6.1's motive-elaboration shape — all clean on fresh branch | 0 | — |
 | T5.A.1 | `erToKFunctor_map_interp` (quotient-level interp preservation) | ≈ 18 | `ErToKFunctor.lean` |
 | T5.A.2 | `erToKFunctor_comp_kInterpFunctor` (functor-level strict equality) | ≈ 15 | `ErToKFunctor.lean` |
 | T5.B.1 | New `Equivalence.lean`; strict round-trip equalities `erToKFunctor_comp_kToERFunctor` and `kToERFunctor_comp_erToKFunctor` | ≈ 60 | `Equivalence.lean` |
@@ -518,24 +519,21 @@ def erKSimEquiv : LawvereERCat ≌ LawvereKSimDCat 2 :=
     kToERFunctor
     erToKKToErIso.symm
     kToErErToKIso
-    (by intro X;
-        simp [erToKKToErIso, kToErErToKIso,
-              eqToIso.hom, eqToIso.inv])
+    (by intro X; simp [erToKKToErIso, kToErErToKIso])
 ```
 
 Tracing the discharge: `simp` unfolds `erToKKToErIso` and
 `kToErErToKIso` (the two `def`-bound natural isos from §6.5)
-to their `eqToIso _ |>.symm` and `eqToIso _` forms. The
-`eqToIso.hom` and `eqToIso.inv` lemmas (at
-`Mathlib/CategoryTheory/EqToHom.lean:197` and `:201`
-respectively, *with* the dot prefix) reduce the `.hom.app X`
-projections to `eqToHom (Functor.congr_obj _ X)` and
-`eqToHom (Functor.congr_obj _ X).symm`. Since both functors
-are identity on objects (`(erToKFunctor ⋙ kToERFunctor).obj X
-= X` and dual are both `rfl`), the `eqToHom`s reduce to
-`𝟙 _`. The triangle LHS becomes
+to their `eqToIso _ |>.symm` and `eqToIso _` forms; mathlib's
+default `simp` set then reduces the `.hom.app X` projections
+through `Iso.symm`, `eqToIso`, and `eqToHom` chains to `𝟙 _`,
+because both functors are identity on objects (so
+`(erToKFunctor ⋙ kToERFunctor).obj X = X` and dual are `rfl`).
+The triangle LHS becomes
 `erToKFunctor.map (𝟙 X) ≫ 𝟙 _ = 𝟙 _ ≫ 𝟙 _ = 𝟙 _`, closed by
-mathlib's standard category simp set. MCP-verified.
+mathlib's standard category simp set. MCP-verified to be the
+minimal simp set: adding `eqToIso.hom` or `eqToIso.inv`
+triggers `unusedSimpArgs` linter warnings.
 
 ### 6.7 `IsEquivalence` instances
 
@@ -832,13 +830,12 @@ or is already implicit.
 ### 11.8 Triangle identity discharge verified
 
 Claim: the explicit fifth argument
-`(by intro X; simp [erToKKToErIso, kToErErToKIso,
-eqToIso.hom, eqToIso.inv])` discharges the
-`functor_unitIso_comp` obligation in `Equivalence.mk'`. The
-`cat_disch` autoparam alone is insufficient because mathlib's
-`aesop_cat`-based safe-rules set does not unfold
-`eqToIso.hom` / `eqToIso.inv` on `eqToIso _ |>.symm`-shaped
-inputs.
+`(by intro X; simp [erToKKToErIso, kToErErToKIso])`
+discharges the `functor_unitIso_comp` obligation in
+`Equivalence.mk'`. The `cat_disch` autoparam alone is
+insufficient because mathlib's `aesop_cat`-based safe-rules
+set does not unfold the two `def`-bound natural isomorphisms
+`erToKKToErIso` and `kToErErToKIso`.
 
 Adversary obligation: verify under the current mathlib pin
 via `mcp__lean-lsp__lean_run_code` that the explicit
