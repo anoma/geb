@@ -72,6 +72,8 @@ depth-2 witness on the K side, mirroring `kToERFunctor` at
 - [Task 13: `erToKFunctor_map_id` and `erToKFunctor_map_comp`](#task-13-ertokfunctor_map_id-and-ertokfunctor_map_comp)
 - [Task 14: `erToKFunctor` assembly](#task-14-ertokfunctor-assembly)
 - [Task 15: Re-export, axiom audit, final lint sweep, tests](#task-15-re-export-axiom-audit-final-lint-sweep-tests)
+- [Closeout — what success looks like](#closeout--what-success-looks-like)
+- [References](#references)
 
 <!-- END doctoc -->
 

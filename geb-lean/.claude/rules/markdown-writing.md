@@ -24,9 +24,13 @@ touches Markdown.
 Every committed Markdown document with more than one `##`
 heading carries an auto-maintained table of contents at the top.
 We use `doctoc` (`<!-- START doctoc -->` / `<!-- END doctoc -->`
-markers). The pre-push checklist regenerates the TOCs
-(`doctoc '**/*.md'`); CI verifies the TOC is up to date
-(`doctoc --check`).
+markers). The pre-push checklist verifies the in-place TOCs are
+up to date (`doctoc --dryrun --update-only .`, which exits
+non-zero if any existing TOC would change and skips files
+without markers); regenerate locally with
+`doctoc --update-only .` and re-commit. To add a TOC to a file
+that doesn't yet have one, run `doctoc <file>` once to insert the
+markers, then commit.
 
 ## Link conventions
 

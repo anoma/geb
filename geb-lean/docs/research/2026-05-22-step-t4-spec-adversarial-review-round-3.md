@@ -22,7 +22,7 @@
   - [N2(r3). comp `9·v_total` term needs explicit constant-absorption step](#n2r3-comp-9v_total-term-needs-explicit-constant-absorption-step)
 - [Minor](#minor)
   - [M1(r3). AXIOM_ALLOW underscore-escape still inconsistent](#m1r3-axiom_allow-underscore-escape-still-inconsistent)
-  - [M2(r3). §5.2 line 444 informal `Fin.maxOfNat (v : Fin 0 → ℕ) = 0` is ill-typed](#m2r3-52-line-444-informal-finmaxofnat-v--fin-0--ℕ--0-is-ill-typed)
+  - [M2(r3). §5.2 line 444 informal `Fin.maxOfNat (v : Fin 0 → ℕ) = 0` is ill-typed](#m2r3-52-line-444-informal-finmaxofnat-v--fin-0-%E2%86%92-%E2%84%95--0-is-ill-typed)
   - [M3(r3). erToKN_compat_extEq precondition shape vs setoid relation](#m3r3-ertokn_compat_exteq-precondition-shape-vs-setoid-relation)
 - [Methodology](#methodology)
 

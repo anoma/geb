@@ -1,13 +1,17 @@
 # Step T2 Task 11 — session-3 execution handoff
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
-<!-- DON'T EDIT THIS SECTION, INSTEAD PUT IT BACK BY RE-RUNNING doctoc -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
 - [Session-2 summary](#session-2-summary)
 - [Landed commits](#landed-commits)
 - [Patterns surfaced during session 2](#patterns-surfaced-during-session-2)
 - [Open followup items](#open-followup-items)
 - [Remaining work for Task 11](#remaining-work-for-task-11)
+  - [Task 11g — bprod runFor wrapper (~30 LOC)](#task-11g--bprod-runfor-wrapper-30-loc)
+  - [Task 11h — top-level structural induction (~50-100 LOC)](#task-11h--top-level-structural-induction-50-100-loc)
+  - [Task 12 — axiom audit (~no LOC, manual pass)](#task-12--axiom-audit-no-loc-manual-pass)
+  - [Final holistic code-quality review (~no LOC, manual pass)](#final-holistic-code-quality-review-no-loc-manual-pass)
 - [Per-task workflow (unchanged)](#per-task-workflow-unchanged)
 - [Operational rules (unchanged)](#operational-rules-unchanged)
 - [Definition of done](#definition-of-done)
