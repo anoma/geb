@@ -1,6 +1,8 @@
 import GebLean.LawvereERKSim.ErToK
 import GebLean.LawvereERQuot
 import GebLean.LawvereKSimQuot
+import GebLean.LawvereERInterp
+import GebLean.LawvereKSimDCatInterp
 
 /-!
 # `ErToKFunctor` — multi-output ER-to-K^sim translator and functor
@@ -185,5 +187,37 @@ def erToKFunctor : CategoryTheory.Functor
   map       := erToKFunctor_map
   map_id    := erToKFunctor_map_id
   map_comp  := erToKFunctor_map_comp
+
+-- AXIOM_ALLOW: Classical.choice (transitively via
+-- `erToKN_interp` → `erToK_interp`; see
+-- .claude/rules/lean-coding.md § Accepted exceptions).
+/-- Morphism-level interpretation preservation: the
+K^sim-quotient interpretation of `erToKFunctor_map e` agrees
+with the ER-quotient interpretation of `e`.  Mirror:
+`kToERFunctor_map_interp` at `LawvereKSimER.lean:488–520`,
+with K and ER swapped; the proof asymmetry is that
+`LawvereERCat`'s morphisms are a bare quotient (no depth
+witness wrapping), so `Quotient.inductionOn` applies directly
+to `e` rather than to a depth-witness component. -/
+theorem erToKFunctor_map_interp {n m : ℕ}
+    (e : ERMorNQuo n m) :
+    (erToKFunctor_map e).hom.interp = e.interp := by
+  unfold erToKFunctor_map
+  refine Quotient.inductionOn
+    (motive := fun (e : ERMorNQuo n m) =>
+      KMorNQuo.interp
+        (Quotient.liftOn (s := erMorNSetoid n m) e
+          (fun rec =>
+            ({ hom := Quotient.mk (kMorNSetoid n m) (erToKN rec),
+               depth_witness := Quotient.mk _
+                 { rep := erToKN rec,
+                   rep_level := fun i => erToKN_level rec i,
+                   rep_eq := rfl } } : KSimMor 2 n m))
+          _).hom
+      = ERMorNQuo.interp e) e ?_
+  intro rec
+  funext ctx; funext j
+  change (erToKN rec j).interp ctx = (rec j).interp ctx
+  exact erToKN_interp rec ctx j
 
 end GebLean
