@@ -1,20 +1,19 @@
+# Arrow-Span and Arrow-Cospan Adjunctions
+
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
-- [Arrow-Span and Arrow-Cospan Adjunctions](#arrow-span-and-arrow-cospan-adjunctions)
-  - [Overview](#overview)
-  - [The Pushout (Span) Side](#the-pushout-span-side)
-    - [Interpretation: functionalizing relations](#interpretation-functionalizing-relations)
-  - [The Pullback (Cospan) Side](#the-pullback-cospan-side)
-    - [Interpretation: tabulating correspondences](#interpretation-tabulating-correspondences)
-  - [Duality](#duality)
-  - [Connection to Subobject Classification](#connection-to-subobject-classification)
-  - [Presheaf Instantiation](#presheaf-instantiation)
+- [Overview](#overview)
+- [The Pushout (Span) Side](#the-pushout-span-side)
+  - [Interpretation: functionalizing relations](#interpretation-functionalizing-relations)
+- [The Pullback (Cospan) Side](#the-pullback-cospan-side)
+  - [Interpretation: tabulating correspondences](#interpretation-tabulating-correspondences)
+- [Duality](#duality)
+- [Connection to Subobject Classification](#connection-to-subobject-classification)
+- [Presheaf Instantiation](#presheaf-instantiation)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
-
-# Arrow-Span and Arrow-Cospan Adjunctions
 
 ## Overview
 

@@ -1,28 +1,27 @@
+# Novelty Analysis: Reflective Inclusion of Cat into Finite Copresheaves
+
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
-- [Novelty Analysis: Reflective Inclusion of Cat into Finite Copresheaves](#novelty-analysis-reflective-inclusion-of-cat-into-finite-copresheaves)
-  - [The Construction](#the-construction)
-  - [Comparison to Known Constructions](#comparison-to-known-constructions)
-    - [Nerve-Realization Adjunction](#nerve-realization-adjunction)
-    - [Essentially Algebraic Theories](#essentially-algebraic-theories)
-    - [Walking Structures](#walking-structures)
-    - [Polynomial Functors](#polynomial-functors)
-  - [Novel Aspects](#novel-aspects)
-    - [1. Finiteness of the Index Category](#1-finiteness-of-the-index-category)
-    - [2. Explicit Reflectivity](#2-explicit-reflectivity)
-    - [3. Copresheaf (Covariant) Direction](#3-copresheaf-covariant-direction)
-    - [4. Direct Type-Theoretic Presentation](#4-direct-type-theoretic-presentation)
-  - [Mathematical Characterization](#mathematical-characterization)
-    - [CategoryJudgments as a Sketch](#categoryjudgments-as-a-sketch)
-    - [Relationship to 2-Monads](#relationship-to-2-monads)
-  - [Conclusion](#conclusion)
-  - [References](#references)
+- [The Construction](#the-construction)
+- [Comparison to Known Constructions](#comparison-to-known-constructions)
+  - [Nerve-Realization Adjunction](#nerve-realization-adjunction)
+  - [Essentially Algebraic Theories](#essentially-algebraic-theories)
+  - [Walking Structures](#walking-structures)
+  - [Polynomial Functors](#polynomial-functors)
+- [Novel Aspects](#novel-aspects)
+  - [1. Finiteness of the Index Category](#1-finiteness-of-the-index-category)
+  - [2. Explicit Reflectivity](#2-explicit-reflectivity)
+  - [3. Copresheaf (Covariant) Direction](#3-copresheaf-covariant-direction)
+  - [4. Direct Type-Theoretic Presentation](#4-direct-type-theoretic-presentation)
+- [Mathematical Characterization](#mathematical-characterization)
+  - [CategoryJudgments as a Sketch](#categoryjudgments-as-a-sketch)
+  - [Relationship to 2-Monads](#relationship-to-2-monads)
+- [Conclusion](#conclusion)
+- [References](#references)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
-
-# Novelty Analysis: Reflective Inclusion of Cat into Finite Copresheaves
 
 This document analyzes the mathematical novelty of the reflective adjunction
 L ⊣ Φ between Cat and the copresheaf category [J, Type], where J is the

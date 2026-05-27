@@ -1,26 +1,25 @@
+# Functor Characterization for Connected Grothendieck Constructions
+
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
-- [Functor Characterization for Connected Grothendieck Constructions](#functor-characterization-for-connected-grothendieck-constructions)
-  - [Background](#background)
-  - [The Diagonal Construction](#the-diagonal-construction)
-  - [FunctorToConnGrothendieckData](#functortoconngrothendieckdata)
-    - [Components](#components)
-    - [Construction](#construction)
-    - [Extraction](#extraction)
-    - [Round-trip Theorems](#round-trip-theorems)
-  - [FunctorFromConnGrothendieckData](#functorfromconngrothendieckdata)
-    - [Structure](#structure)
-    - [Alternative Formulation](#alternative-formulation)
-  - [FunctorBetweenConnGrothendieckData](#functorbetweenconngrothendieckdata)
-    - [Same Base Category (C = C)](#same-base-category-c--c)
-    - [Different Base Categories](#different-base-categories)
-  - [Implementation Notes](#implementation-notes)
+- [Background](#background)
+- [The Diagonal Construction](#the-diagonal-construction)
+- [FunctorToConnGrothendieckData](#functortoconngrothendieckdata)
+  - [Components](#components)
+  - [Construction](#construction)
+  - [Extraction](#extraction)
+  - [Round-trip Theorems](#round-trip-theorems)
+- [FunctorFromConnGrothendieckData](#functorfromconngrothendieckdata)
+  - [Structure](#structure)
+  - [Alternative Formulation](#alternative-formulation)
+- [FunctorBetweenConnGrothendieckData](#functorbetweenconngrothendieckdata)
+  - [Same Base Category (C = C)](#same-base-category-c--c)
+  - [Different Base Categories](#different-base-categories)
+- [Implementation Notes](#implementation-notes)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
-
-# Functor Characterization for Connected Grothendieck Constructions
 
 This document describes the introduction and elimination rules for functors
 to, from, and between connected Grothendieck constructions.

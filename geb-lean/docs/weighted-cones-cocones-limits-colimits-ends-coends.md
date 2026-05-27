@@ -1,24 +1,23 @@
+# Weighted limits reduce to ordinary limits via the category of elements
+
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
-- [Weighted limits reduce to ordinary limits via the category of elements](#weighted-limits-reduce-to-ordinary-limits-via-the-category-of-elements)
-  - [The precise theorem for weighted limits](#the-precise-theorem-for-weighted-limits)
-    - [**{W, F} ≅ lim(F ∘ π : El(W) → C)**](#w-f-%E2%89%85-limf-%E2%88%98-%CF%80--elw-%E2%86%92-c)
-    - [**W * F ≅ colim(F ∘ π : El(W) → C)**](#w--f-%E2%89%85-colimf-%E2%88%98-%CF%80--elw-%E2%86%92-c)
-  - [Ends as limits over twisted arrow categories](#ends-as-limits-over-twisted-arrow-categories)
-    - [**∫_c P(c, c) ≅ {Hom_C, P}**](#%E2%88%AB_c-pc-c-%E2%89%85-hom_c-p)
-    - [**∫_c P(c, c) ≅ lim(P ∘ π : Tw(C) → D)**](#%E2%88%AB_c-pc-c-%E2%89%85-limp-%E2%88%98-%CF%80--twc-%E2%86%92-d)
-    - [**∫^c P(c, c) ≅ colim(P ∘ π' : Tw(C^op)^op → D)**](#%E2%88%AB%5Ec-pc-c-%E2%89%85-colimp-%E2%88%98-%CF%80--twc%5Eop%5Eop-%E2%86%92-d)
-  - [Why this reduction only works for V = Set](#why-this-reduction-only-works-for-v--set)
-  - [The equivalence of weighted cones and ordinary cones](#the-equivalence-of-weighted-cones-and-ordinary-cones)
-  - [References and locations](#references-and-locations)
-  - [Collage construction for profunctors](#collage-construction-for-profunctors)
-  - [Conclusion](#conclusion)
+- [The precise theorem for weighted limits](#the-precise-theorem-for-weighted-limits)
+  - [**{W, F} ≅ lim(F ∘ π : El(W) → C)**](#w-f-%E2%89%85-limf-%E2%88%98-%CF%80--elw-%E2%86%92-c)
+  - [**W * F ≅ colim(F ∘ π : El(W) → C)**](#w--f-%E2%89%85-colimf-%E2%88%98-%CF%80--elw-%E2%86%92-c)
+- [Ends as limits over twisted arrow categories](#ends-as-limits-over-twisted-arrow-categories)
+  - [**∫_c P(c, c) ≅ {Hom_C, P}**](#%E2%88%AB_c-pc-c-%E2%89%85-hom_c-p)
+  - [**∫_c P(c, c) ≅ lim(P ∘ π : Tw(C) → D)**](#%E2%88%AB_c-pc-c-%E2%89%85-limp-%E2%88%98-%CF%80--twc-%E2%86%92-d)
+  - [**∫^c P(c, c) ≅ colim(P ∘ π' : Tw(C^op)^op → D)**](#%E2%88%AB%5Ec-pc-c-%E2%89%85-colimp-%E2%88%98-%CF%80--twc%5Eop%5Eop-%E2%86%92-d)
+- [Why this reduction only works for V = Set](#why-this-reduction-only-works-for-v--set)
+- [The equivalence of weighted cones and ordinary cones](#the-equivalence-of-weighted-cones-and-ordinary-cones)
+- [References and locations](#references-and-locations)
+- [Collage construction for profunctors](#collage-construction-for-profunctors)
+- [Conclusion](#conclusion)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
-
-# Weighted limits reduce to ordinary limits via the category of elements
 
 The central result sought is well-established in enriched category theory:
 for Set-weighted limits, **{W, F} ≅ lim(F ∘ π)** where π : El(W) → J is the

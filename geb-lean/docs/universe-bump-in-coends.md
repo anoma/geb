@@ -1,36 +1,35 @@
+# Universe Bump in (Co)end Constructions
+
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
-- [Universe Bump in (Co)end Constructions](#universe-bump-in-coend-constructions)
-  - [1. Restricted coends](#1-restricted-coends)
-  - [2. The universe inconsistency](#2-the-universe-inconsistency)
-    - [2.1 How typeCoend works](#21-how-typecoend-works)
-    - [2.2 Where the restriction appears](#22-where-the-restriction-appears)
-    - [2.3 Application to C = Type v](#23-application-to-c--type-v)
-  - [3. The Bump Is Symmetric](#3-the-bump-is-symmetric)
-    - [3.1 Ends](#31-ends)
-    - [3.2 Nat trans (impredicative characterization)](#32-nat-trans-impredicative-characterization)
-    - [3.3 Summary table](#33-summary-table)
-  - [4. Approaches Considered](#4-approaches-considered)
-    - [4.1 Density reduction (co-Yoneda)](#41-density-reduction-co-yoneda)
-    - [4.2 Generalize target to D ≠ C](#42-generalize-target-to-d-%E2%89%A0-c)
-    - [4.3 Generalize impredicative characterization](#43-generalize-impredicative-characterization)
-    - [4.4 Twisted arrow category / colimit formulation](#44-twisted-arrow-category--colimit-formulation)
-    - [4.5 Slice category approach](#45-slice-category-approach)
-  - [5. Existing Pattern: sliceProfunctorPoly](#5-existing-pattern-sliceprofunctorpoly)
-  - [6. What RestrictedCowedge Does Not Require](#6-what-restrictedcowedge-does-not-require)
-  - [7. The Chain of Equivalences](#7-the-chain-of-equivalences)
-  - [8. Open Questions](#8-open-questions)
-  - [9. File Reference](#9-file-reference)
-    - [EndsAndCoends.lean](#endsandcoendslean)
-    - [Weighted.lean](#weightedlean)
-    - [WeightedAlg.lean](#weightedalglean)
-    - [RestrictedCoendAsColimit.lean](#restrictedcoendascolimitlean)
+- [1. Restricted coends](#1-restricted-coends)
+- [2. The universe inconsistency](#2-the-universe-inconsistency)
+  - [2.1 How typeCoend works](#21-how-typecoend-works)
+  - [2.2 Where the restriction appears](#22-where-the-restriction-appears)
+  - [2.3 Application to C = Type v](#23-application-to-c--type-v)
+- [3. The Bump Is Symmetric](#3-the-bump-is-symmetric)
+  - [3.1 Ends](#31-ends)
+  - [3.2 Nat trans (impredicative characterization)](#32-nat-trans-impredicative-characterization)
+  - [3.3 Summary table](#33-summary-table)
+- [4. Approaches Considered](#4-approaches-considered)
+  - [4.1 Density reduction (co-Yoneda)](#41-density-reduction-co-yoneda)
+  - [4.2 Generalize target to D ≠ C](#42-generalize-target-to-d-%E2%89%A0-c)
+  - [4.3 Generalize impredicative characterization](#43-generalize-impredicative-characterization)
+  - [4.4 Twisted arrow category / colimit formulation](#44-twisted-arrow-category--colimit-formulation)
+  - [4.5 Slice category approach](#45-slice-category-approach)
+- [5. Existing Pattern: sliceProfunctorPoly](#5-existing-pattern-sliceprofunctorpoly)
+- [6. What RestrictedCowedge Does Not Require](#6-what-restrictedcowedge-does-not-require)
+- [7. The Chain of Equivalences](#7-the-chain-of-equivalences)
+- [8. Open Questions](#8-open-questions)
+- [9. File Reference](#9-file-reference)
+  - [EndsAndCoends.lean](#endsandcoendslean)
+  - [Weighted.lean](#weightedlean)
+  - [WeightedAlg.lean](#weightedalglean)
+  - [RestrictedCoendAsColimit.lean](#restrictedcoendascolimitlean)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
-
-# Universe Bump in (Co)end Constructions
 
 This document analyzes why instantiating `HasAllHomToProfCoends`
 for `Type v` (and more generally for presheaf categories `E ⥤ Type v`)

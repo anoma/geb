@@ -1,27 +1,26 @@
+# The Free Equalizer Completion of a Category with Finite Products
+
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
-- [The Free Equalizer Completion of a Category with Finite Products](#the-free-equalizer-completion-of-a-category-with-finite-products)
-  - [Overview](#overview)
-  - [Preliminary: coreflexive pairs suffice](#preliminary-coreflexive-pairs-suffice)
-  - [Objects](#objects)
-    - [Correlation with our codebase](#correlation-with-our-codebase)
-  - [The equivalence relation on hom-sets](#the-equivalence-relation-on-hom-sets)
-    - [Correlation with mathlib](#correlation-with-mathlib)
-  - [Premorphisms](#premorphisms)
-  - [Morphisms](#morphisms)
-    - [Closure under composition](#closure-under-composition)
-    - [Identity](#identity)
-  - [The embedding functor](#the-embedding-functor)
-    - [Correlation with the embedding functor](#correlation-with-the-embedding-functor)
-  - [Finite limits](#finite-limits)
-  - [Dualization](#dualization)
-  - [References](#references)
+- [Overview](#overview)
+- [Preliminary: coreflexive pairs suffice](#preliminary-coreflexive-pairs-suffice)
+- [Objects](#objects)
+  - [Correlation with our codebase](#correlation-with-our-codebase)
+- [The equivalence relation on hom-sets](#the-equivalence-relation-on-hom-sets)
+  - [Correlation with mathlib](#correlation-with-mathlib)
+- [Premorphisms](#premorphisms)
+- [Morphisms](#morphisms)
+  - [Closure under composition](#closure-under-composition)
+  - [Identity](#identity)
+- [The embedding functor](#the-embedding-functor)
+  - [Correlation with the embedding functor](#correlation-with-the-embedding-functor)
+- [Finite limits](#finite-limits)
+- [Dualization](#dualization)
+- [References](#references)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
-
-# The Free Equalizer Completion of a Category with Finite Products
 
 Transcription of the construction from Bunge & Carboni,
 "The Symmetric Topos," *Journal of Pure and Applied Algebra*

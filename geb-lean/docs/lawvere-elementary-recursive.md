@@ -1,29 +1,28 @@
+# Lawvere Theory of Elementary Recursive Functions
+
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
-- [Lawvere Theory of Elementary Recursive Functions](#lawvere-theory-of-elementary-recursive-functions)
-  - [Overview](#overview)
-  - [Motivation](#motivation)
-  - [Relation to the LawvereBT Development](#relation-to-the-lawverebt-development)
-  - [Proposed Module Layout](#proposed-module-layout)
-  - [Construction Plan](#construction-plan)
-    - [Phase 1: Inductive term for elementary recursive functions](#phase-1-inductive-term-for-elementary-recursive-functions)
-    - [Phase 2: Extensional-equality quotient](#phase-2-extensional-equality-quotient)
-    - [Phase 3: Lawvere theory and interpretation functor](#phase-3-lawvere-theory-and-interpretation-functor)
-    - [Phase 4: Finite-limit structure as definable subobjects](#phase-4-finite-limit-structure-as-definable-subobjects)
-    - [Boolean convention](#boolean-convention)
-    - [Phase 5: Internal categorical development](#phase-5-internal-categorical-development)
-      - [Stage 1: `BTMor1`-analogue as a decidable subobject](#stage-1-btmor1-analogue-as-a-decidable-subobject)
-      - [Stage 2: Internal-category structure on the subobject](#stage-2-internal-category-structure-on-the-subobject)
-      - [Transport via elementary-function-preserving functors](#transport-via-elementary-function-preserving-functors)
-  - [Design Decisions](#design-decisions)
-  - [Open Design Questions](#open-design-questions)
-  - [References](#references)
+- [Overview](#overview)
+- [Motivation](#motivation)
+- [Relation to the LawvereBT Development](#relation-to-the-lawverebt-development)
+- [Proposed Module Layout](#proposed-module-layout)
+- [Construction Plan](#construction-plan)
+  - [Phase 1: Inductive term for elementary recursive functions](#phase-1-inductive-term-for-elementary-recursive-functions)
+  - [Phase 2: Extensional-equality quotient](#phase-2-extensional-equality-quotient)
+  - [Phase 3: Lawvere theory and interpretation functor](#phase-3-lawvere-theory-and-interpretation-functor)
+  - [Phase 4: Finite-limit structure as definable subobjects](#phase-4-finite-limit-structure-as-definable-subobjects)
+  - [Boolean convention](#boolean-convention)
+  - [Phase 5: Internal categorical development](#phase-5-internal-categorical-development)
+    - [Stage 1: `BTMor1`-analogue as a decidable subobject](#stage-1-btmor1-analogue-as-a-decidable-subobject)
+    - [Stage 2: Internal-category structure on the subobject](#stage-2-internal-category-structure-on-the-subobject)
+    - [Transport via elementary-function-preserving functors](#transport-via-elementary-function-preserving-functors)
+- [Design Decisions](#design-decisions)
+- [Open Design Questions](#open-design-questions)
+- [References](#references)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
-
-# Lawvere Theory of Elementary Recursive Functions
 
 ## Overview
 

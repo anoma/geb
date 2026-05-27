@@ -1,30 +1,29 @@
+# Enriched Hom Unification
+
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
-- [Enriched Hom Unification](#enriched-hom-unification)
-  - [The Cat-Enriched Hom-Functor](#the-cat-enriched-hom-functor)
-  - [Derivation Hierarchy](#derivation-hierarchy)
-  - [FamilyCat as Enriched Hom](#familycat-as-enriched-hom)
-  - [Grothendieck as Category of Elements](#grothendieck-as-category-of-elements)
-  - [Twisted Arrow Categories](#twisted-arrow-categories)
-  - [Polynomial Functors as Double Grothendieck](#polynomial-functors-as-double-grothendieck)
-  - [The Enrichment Hierarchy](#the-enrichment-hierarchy)
-    - [Level 1: Set-Enriched (1-Categorical)](#level-1-set-enriched-1-categorical)
-    - [Level 2: Cat-Enriched (2-Categorical)](#level-2-cat-enriched-2-categorical)
-    - [Level 3: Copresheaf-Enriched (Judgment-Sensitive)](#level-3-copresheaf-enriched-judgment-sensitive)
-  - [Intro/Elim Rules as Universal Properties](#introelim-rules-as-universal-properties)
-  - [Connection to Adjunctions](#connection-to-adjunctions)
-    - [The Sigma-BaseChange-Pi Triple](#the-sigma-basechange-pi-triple)
-    - [The Cat-Copresheaf Adjunction](#the-cat-copresheaf-adjunction)
-  - [Implications for Development](#implications-for-development)
-    - [Grothendieck Refactoring](#grothendieck-refactoring)
-    - [Unification of Codebase](#unification-of-codebase)
-  - [References](#references)
+- [The Cat-Enriched Hom-Functor](#the-cat-enriched-hom-functor)
+- [Derivation Hierarchy](#derivation-hierarchy)
+- [FamilyCat as Enriched Hom](#familycat-as-enriched-hom)
+- [Grothendieck as Category of Elements](#grothendieck-as-category-of-elements)
+- [Twisted Arrow Categories](#twisted-arrow-categories)
+- [Polynomial Functors as Double Grothendieck](#polynomial-functors-as-double-grothendieck)
+- [The Enrichment Hierarchy](#the-enrichment-hierarchy)
+  - [Level 1: Set-Enriched (1-Categorical)](#level-1-set-enriched-1-categorical)
+  - [Level 2: Cat-Enriched (2-Categorical)](#level-2-cat-enriched-2-categorical)
+  - [Level 3: Copresheaf-Enriched (Judgment-Sensitive)](#level-3-copresheaf-enriched-judgment-sensitive)
+- [Intro/Elim Rules as Universal Properties](#introelim-rules-as-universal-properties)
+- [Connection to Adjunctions](#connection-to-adjunctions)
+  - [The Sigma-BaseChange-Pi Triple](#the-sigma-basechange-pi-triple)
+  - [The Cat-Copresheaf Adjunction](#the-cat-copresheaf-adjunction)
+- [Implications for Development](#implications-for-development)
+  - [Grothendieck Refactoring](#grothendieck-refactoring)
+  - [Unification of Codebase](#unification-of-codebase)
+- [References](#references)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
-
-# Enriched Hom Unification
 
 This document describes how the categorical constructions in this codebase
 unify under the Cat-enriched hom-bifunctor.

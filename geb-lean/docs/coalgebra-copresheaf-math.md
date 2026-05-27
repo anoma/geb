@@ -1,19 +1,18 @@
+# Coalgebra-Copresheaf Equivalence: Mathematical Findings
+
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
-- [Coalgebra-Copresheaf Equivalence: Mathematical Findings](#coalgebra-copresheaf-equivalence-mathematical-findings)
-  - [Sources](#sources)
-  - [Statement](#statement)
-  - [The Cofree Category](#the-cofree-category)
-  - [The Equivalence: Two-Step Decomposition](#the-equivalence-two-step-decomposition)
-    - [Step A: Functor-Coalgebras ≌ Comonad-Coalgebras](#step-a-functor-coalgebras-%E2%89%8C-comonad-coalgebras)
-    - [Step B: Comonad-Coalgebras ≌ Copresheaves](#step-b-comonad-coalgebras-%E2%89%8C-copresheaves)
-  - [Connection to Our Infrastructure](#connection-to-our-infrastructure)
+- [Sources](#sources)
+- [Statement](#statement)
+- [The Cofree Category](#the-cofree-category)
+- [The Equivalence: Two-Step Decomposition](#the-equivalence-two-step-decomposition)
+  - [Step A: Functor-Coalgebras ≌ Comonad-Coalgebras](#step-a-functor-coalgebras-%E2%89%8C-comonad-coalgebras)
+  - [Step B: Comonad-Coalgebras ≌ Copresheaves](#step-b-comonad-coalgebras-%E2%89%8C-copresheaves)
+- [Connection to Our Infrastructure](#connection-to-our-infrastructure)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
-
-# Coalgebra-Copresheaf Equivalence: Mathematical Findings
 
 ## Sources
 

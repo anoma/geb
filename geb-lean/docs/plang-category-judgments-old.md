@@ -1,29 +1,28 @@
+# PLang Category Judgments
+
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
-- [PLang Category Judgments](#plang-category-judgments)
-  - [Overview](#overview)
-  - [Structure](#structure)
-  - [Universe Levels](#universe-levels)
-  - [Incremental Construction](#incremental-construction)
-  - [The Adjunction: Cat ⊣ CatJudgCopr](#the-adjunction-cat-%E2%8A%A3-catjudgcopr)
-    - [Embedding Functor Phi: Cat → CatJudgCopr](#embedding-functor-phi-cat-%E2%86%92-catjudgcopr)
-    - [Reflection Functor L: CatJudgCopr → Cat](#reflection-functor-l-catjudgcopr-%E2%86%92-cat)
-    - [Unit and Counit](#unit-and-counit)
-    - [Triangle Identities](#triangle-identities)
-  - [Connection to PolyPresentation](#connection-to-polypresentation)
-  - [Planned Generalization](#planned-generalization)
-  - [Implementation Notes](#implementation-notes)
-  - [Implementation Status](#implementation-status)
-    - [Completed](#completed)
-    - [Remaining](#remaining)
-  - [Files](#files)
-  - [References](#references)
+- [Overview](#overview)
+- [Structure](#structure)
+- [Universe Levels](#universe-levels)
+- [Incremental Construction](#incremental-construction)
+- [The Adjunction: Cat ⊣ CatJudgCopr](#the-adjunction-cat-%E2%8A%A3-catjudgcopr)
+  - [Embedding Functor Phi: Cat → CatJudgCopr](#embedding-functor-phi-cat-%E2%86%92-catjudgcopr)
+  - [Reflection Functor L: CatJudgCopr → Cat](#reflection-functor-l-catjudgcopr-%E2%86%92-cat)
+  - [Unit and Counit](#unit-and-counit)
+  - [Triangle Identities](#triangle-identities)
+- [Connection to PolyPresentation](#connection-to-polypresentation)
+- [Planned Generalization](#planned-generalization)
+- [Implementation Notes](#implementation-notes)
+- [Implementation Status](#implementation-status)
+  - [Completed](#completed)
+  - [Remaining](#remaining)
+- [Files](#files)
+- [References](#references)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
-
-# PLang Category Judgments
 
 This document describes the PLang formulation of category-judgment copresheaves
 in `GebLean/PLang/CatJudgment.lean`.
