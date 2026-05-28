@@ -60,6 +60,60 @@
 #      content has already been validated; the script restricts its
 #      real-error scan to errors at the marker line or after, where
 #      only the appended `#print axioms` commands live.
+#   7. `#print axioms` output parser rewritten for Lean 4's actual
+#      output format.  Lean 4 emits each result on a single line
+#      (with optional bracketed-list line-wrap):
+#          'X' depends on axioms: [a, b, c]
+#          'X' depends on axioms: [propext,
+#           Quot.sound]
+#          'X' does not depend on any axioms
+#      The upstream `^<name> depends on axioms:` header regex never
+#      matched (Lean quotes the name) and the upstream fallback
+#      regex `^[[:space:]]*([a-zA-Z0-9_.]+)[[:space:]]*$` for axiom
+#      lines spuriously matched error-message body text (Lean's
+#      `Application type mismatch:`-style multi-line diagnostics put
+#      bare type names on their own indented lines).  The new parser
+#      is a bracket-state machine that only accepts the two canonical
+#      header forms above, accumulating wrapped list content until
+#      the closing `]`; error-message bodies, prose, and other noise
+#      are ignored entirely.  Side benefit: `_private.<mod>.<n>.`
+#      mangling that Lean adds when `#print axioms` is invoked on a
+#      `private` declaration is stripped before attribution.
+#   8. Real-error detection extended to the leading-`error:` form
+#      (`error: <file>:<line>:<col>: <msg>`).  The upstream awk
+#      filter required the word `error` to appear *after* the
+#      `:<line>:<col>:` segment, which matches the trailing-form
+#      diagnostics Lean emits when called from `lake env lean` but
+#      not the leading-form diagnostics it emits for kernel-level
+#      type errors (e.g., `Application type mismatch`, `type expected`).
+#      A file whose own content fails to compile with leading-form
+#      errors would otherwise fall through to the tolerant path with
+#      `lake env lean` exiting non-zero, no parseable axiom output,
+#      and no detected real error — silently passing the check
+#      while spurious error-body content fed the old axiom-line
+#      regex.  The new awk filter triggers on any line containing
+#      `error` together with a `:<digits>:` line-number marker,
+#      regardless of order.
+#   9. Real-error detection is unified across pre- and post-marker
+#      output, with the union of absorbed forms checked in one
+#      pass.  Earlier the script split errors into pre-marker and
+#      post-marker buckets with disjoint absorbed-pattern sets;
+#      that combined with a "no axiom output parsed → real error"
+#      promotion misclassified healthy multi-namespace files (the
+#      single-namespace heuristic above qualifies declarations
+#      under the wrong prefix, producing absorbed `unknown
+#      constant` errors for every appended `#print axioms`; no
+#      axiom output → real error fired even though `lake build`
+#      already accepted the file).  The unified filter absorbs
+#      both classes — appended-command unknowns (`unknown
+#      identifier`, `unknown constant`, `maximum number of
+#      errors`) and `lake env lean`'s spurious lakefile-options
+#      diagnostics (`unsolved goals`, `failed to synthesize`,
+#      `Tactic ... failed`) — and flags anything else (e.g.,
+#      `Application type mismatch`, `invalid field notation`).
+#      "No axiom output parsed" is surfaced as a soft warning
+#      ("declarations unaddressable under inferred namespace"),
+#      not a hard failure.
 #
 # Usage:
 #   ./check-axioms.sh <file-or-dir-or-pattern> [--verbose]
@@ -110,7 +164,10 @@ BLUE='\033[0;34m'
 NC='\033[0m'
 
 # Standard acceptable axioms (Classical.choice is intentionally excluded).
+# Anchored as a full-string match below so e.g. `propextX` does not
+# collide with `propext`.
 STANDARD_AXIOMS="propext|quot.sound|Quot.sound"
+STANDARD_AXIOMS_REGEX="^(${STANDARD_AXIOMS})\$"
 
 # Global counter for unique marker filenames (avoids basename collisions).
 MARKER_COUNT=0
@@ -307,6 +364,148 @@ get_axiom_allows() {
 }
 
 # ---------------------------------------------------------------------------
+# strip_private_prefix: remove the `_private.<module-path>.<n>.` prefix
+# Lean adds to declarations declared with the `private` keyword when
+# their internal name surfaces in `#print axioms` output.  The
+# module-path is dot-separated and contains no whitespace; `<n>` is
+# the private-numbering discriminator (typically 0).
+# ---------------------------------------------------------------------------
+strip_private_prefix() {
+    echo "$1" | sed -E 's/^_private\.[^[:space:]]+\.[0-9]+\.//'
+}
+
+# ---------------------------------------------------------------------------
+# process_axiom_list: process the comma-separated axiom names extracted
+# from inside the `[ ... ]` of a `#print axioms` line.  Reports each
+# non-standard axiom (after AXIOM_ALLOW suppression).  Reads/writes
+# globals declared in check_file's scope: DECLARATIONS, DECL_LINE_NUMS,
+# BACKUP_FILE, VERBOSE, HAS_CUSTOM, CUSTOM_AXIOM_COUNT.
+# ---------------------------------------------------------------------------
+process_axiom_list() {
+    local decl="$1"
+    local list="$2"
+    local IFS=','
+    local raw axiom
+    local -a parts
+    read -ra parts <<< "$list"
+    for raw in "${parts[@]}"; do
+        axiom=$(echo "$raw" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+        [[ -z "$axiom" ]] && continue
+        if [[ "$axiom" =~ $STANDARD_AXIOMS_REGEX ]]; then
+            if [[ "$VERBOSE" == "--verbose" ]]; then
+                echo -e "    ${GREEN}✓${NC} $axiom (standard)"
+            fi
+            continue
+        fi
+        # Locate source line for the AXIOM_ALLOW lookup.  Match either
+        # against the bare-name attribution we appended `#print axioms`
+        # for, or against the corresponding `<NAMESPACE>.<bare>` form.
+        local src_line=0 i
+        for (( i=0; i<${#DECLARATIONS[@]}; i++ )); do
+            if [[ "${DECLARATIONS[$i]}" == "$decl" ]]; then
+                src_line="${DECL_LINE_NUMS[$i]}"
+                break
+            fi
+        done
+        local allowed=false
+        if [[ $src_line -gt 0 ]]; then
+            while IFS= read -r allowed_axiom; do
+                if [[ "$allowed_axiom" == "$axiom" ]]; then
+                    allowed=true
+                    break
+                fi
+            done < <(get_axiom_allows "$BACKUP_FILE" "$src_line")
+        fi
+        if [[ "$allowed" == true ]]; then
+            if [[ "$VERBOSE" == "--verbose" ]]; then
+                echo -e \
+                    "    ${YELLOW}~${NC}" \
+                    "$axiom (allowed via AXIOM_ALLOW)"
+            fi
+        else
+            echo -e \
+                "  ${RED}⚠ $decl" \
+                "uses non-standard axiom: $axiom${NC}"
+            HAS_CUSTOM=true
+            ((++CUSTOM_AXIOM_COUNT))
+        fi
+    done
+}
+
+# ---------------------------------------------------------------------------
+# parse_axiom_output: parse Lean 4's `#print axioms` emissions from
+# the accumulated `lake env lean` OUTPUT.  Lean 4's canonical forms:
+#
+#     'X' depends on axioms: [a, b, c]
+#     'X' depends on axioms: [propext,
+#      Quot.sound]
+#     'X' does not depend on any axioms
+#
+# This parser is a small state machine over the bracketed list: a
+# `depends on axioms:` header opens the list, and the list closes on
+# the next `]` (which may appear on the same line or on a continuation
+# line that Lean wrapped to).  Lines that don't match either canonical
+# header form are ignored — error-message body text, prose, and noise
+# cannot be misread as axiom dependencies.
+#
+# Reads OUTPUT; writes globals HAS_CUSTOM, PARSED_ANY, CUSTOM_AXIOM_COUNT
+# (in check_file's scope).
+# ---------------------------------------------------------------------------
+parse_axiom_output() {
+    local in_list=false
+    local current_decl=""
+    local list_buf=""
+    local line rest inner
+
+    while IFS= read -r line; do
+        if [[ "$in_list" == true ]]; then
+            list_buf="${list_buf} ${line}"
+            if [[ "$line" == *"]"* ]]; then
+                inner="${list_buf%%\]*}"
+                process_axiom_list "$current_decl" "$inner"
+                in_list=false
+                current_decl=""
+                list_buf=""
+            fi
+            continue
+        fi
+
+        if [[ "$line" =~ \
+            ^\'([^\']+)\'[[:space:]]+depends[[:space:]]+on[[:space:]]+axioms:[[:space:]]*(.*)$ ]]
+        then
+            current_decl=$(strip_private_prefix "${BASH_REMATCH[1]}")
+            PARSED_ANY=true
+            if [[ "$VERBOSE" == "--verbose" ]]; then
+                echo -e "  ${BLUE}${current_decl}:${NC}"
+            fi
+            rest="${BASH_REMATCH[2]}"
+            rest="${rest#\[}"
+            if [[ "$rest" == *"]"* ]]; then
+                inner="${rest%%\]*}"
+                process_axiom_list "$current_decl" "$inner"
+                current_decl=""
+            else
+                in_list=true
+                list_buf="$rest"
+            fi
+            continue
+        fi
+
+        if [[ "$line" =~ \
+            ^\'([^\']+)\'[[:space:]]+does[[:space:]]+not[[:space:]]+depend[[:space:]]+on[[:space:]]+any[[:space:]]+axioms ]]
+        then
+            current_decl=$(strip_private_prefix "${BASH_REMATCH[1]}")
+            PARSED_ANY=true
+            if [[ "$VERBOSE" == "--verbose" ]]; then
+                echo -e "  ${BLUE}${current_decl}:${NC} (no axioms)"
+            fi
+            current_decl=""
+            continue
+        fi
+    done <<< "$OUTPUT"
+}
+
+# ---------------------------------------------------------------------------
 # check_file: process one .lean file
 # ---------------------------------------------------------------------------
 check_file() {
@@ -383,6 +582,20 @@ check_file() {
 
     echo -e "  ${GREEN}Found ${#DECLARATIONS[@]} declarations${NC}"
 
+    # Early return when no named declarations remain after the
+    # bare-name extraction (e.g., the only matches were anonymous
+    # `example` blocks).  Files of that shape carry no committed
+    # axioms to check; running `#print axioms` against them would
+    # append no commands, and treating a `lake env lean` failure
+    # there as a real error would misattribute the file's own
+    # unrelated diagnostics to the axiom audit.
+    if [[ ${#DECLARATIONS[@]} -eq 0 ]]; then
+        echo -e \
+            "  ${YELLOW}No named declarations to check${NC}"
+        echo
+        return 0
+    fi
+
     # Create backup and track it with a marker file for SIGINT safety.
     local BACKUP_FILE="${FILE}.axiom_check_backup"
     ((++MARKER_COUNT))
@@ -406,125 +619,76 @@ check_file() {
         echo "#print axioms $decl" >> "$FILE"
     done
 
-    # Run Lean.
+    # Run Lean.  Capture exit status without aborting under
+    # `set -e` so the parser can run regardless of lake env lean's
+    # outcome (post-marker errors from the appended `#print axioms`
+    # commands are routinely tolerable; see § Local modifications,
+    # items 4 and 6).
     local HAS_CUSTOM=false
-    if OUTPUT=$(lake env lean "$FILE" 2>&1); then
-        local CURRENT_DECL=""
+    local PARSED_ANY=false
+    local LAKE_EXIT=0
+    OUTPUT=$(lake env lean "$FILE" 2>&1) || LAKE_EXIT=$?
 
-        while IFS= read -r line; do
-            if [[ "$line" =~ \
-                ^([a-zA-Z0-9_.]+)[[:space:]]+depends[[:space:]]+on[[:space:]]+axioms: ]]; then
-                CURRENT_DECL="${BASH_REMATCH[1]}"
-                if [[ "$VERBOSE" == "--verbose" ]]; then
-                    echo -e "  ${BLUE}$CURRENT_DECL:${NC}"
-                fi
-            elif [[ "$line" =~ \
-                ^[[:space:]]*([a-zA-Z0-9_.]+)[[:space:]]*$ ]]; then
-                axiom="${BASH_REMATCH[1]}"
-                if [[ -n "$axiom" \
-                    && ! "$axiom" =~ ^[[:space:]]*$ ]]; then
-                    if [[ ! "$axiom" =~ $STANDARD_AXIOMS ]]; then
-                        # Look up the source line for CURRENT_DECL.
-                        local src_line=0
-                        local i
-                        for (( i=0; i<${#DECLARATIONS[@]}; i++ )); do
-                            if [[ "${DECLARATIONS[$i]}" \
-                                == "$CURRENT_DECL" ]]; then
-                                src_line="${DECL_LINE_NUMS[$i]}"
-                                break
-                            fi
-                        done
-                        # Collect AXIOM_ALLOW annotations.
-                        local allowed=false
-                        if [[ $src_line -gt 0 ]]; then
-                            while IFS= read -r allowed_axiom; do
-                                if [[ "$allowed_axiom" == "$axiom" ]]; then
-                                    allowed=true
-                                    break
-                                fi
-                            done < <(get_axiom_allows "$BACKUP_FILE" \
-                                "$src_line")
-                        fi
-                        if [[ "$allowed" == true ]]; then
-                            if [[ "$VERBOSE" == "--verbose" ]]; then
-                                echo -e \
-                                    "    ${YELLOW}~${NC}" \
-                                    "$axiom (allowed via AXIOM_ALLOW)"
-                            fi
-                        else
-                            echo -e \
-                                "  ${RED}⚠ $CURRENT_DECL" \
-                                "uses non-standard axiom: $axiom${NC}"
-                            HAS_CUSTOM=true
-                            ((++CUSTOM_AXIOM_COUNT))
-                        fi
-                    elif [[ "$VERBOSE" == "--verbose" ]]; then
-                        echo -e "    ${GREEN}✓${NC} $axiom (standard)"
-                    fi
-                fi
-            fi
-        done <<< "$OUTPUT"
+    # Always parse: the new parser only matches Lean's canonical
+    # `'X' depends on axioms:` / `'X' does not depend on any axioms`
+    # forms, so noise — including pre-marker diagnostics from lake
+    # env lean ignoring `lakefile.toml` `leanOptions` — is ignored
+    # by construction.
+    parse_axiom_output
 
-        if [[ "$HAS_CUSTOM" == false ]]; then
-            echo -e \
-                "  ${GREEN}✓ All declarations use only standard axioms${NC}"
-        else
-            ((++FILES_WITH_CUSTOM))
-        fi
+    # Detect real (non-absorbed, post-marker) errors.
+    local MARKER_LINE
+    MARKER_LINE=$(grep -nF -- "$MARKER" "$FILE" \
+        | head -1 | cut -d: -f1)
 
-        ((TOTAL_DECLARATIONS+=${#DECLARATIONS[@]}))
-        ((++TOTAL_FILES))
-
-        cleanup_file
-        echo
-        return 0
-    else
-        # Check if errors are ONLY unknownIdentifier in our appended region.
-        local MARKER_LINE
-        MARKER_LINE=$(grep -nF -- "$MARKER" "$FILE" \
-            | head -1 | cut -d: -f1)
-
-        # Decide whether to treat the file's `lake env lean` failure as
-        # a real error or as the tolerable unknown-identifier cascade
-        # produced by our appended `#print axioms` commands.
+    local HAS_REAL_ERROR=false
+    if [[ $LAKE_EXIT -ne 0 ]]; then
+        # Detect real-error diagnostics anywhere in the output by
+        # filtering against the union of absorbed forms.  Lean
+        # emits two diagnostic shapes with `:<line>:<col>:`
+        # location markers:
+        #   * `<file>:<N>:<M>: error: <msg>` (trailing-form)
+        #   * `error: <file>:<N>:<M>: <msg>` (leading-form, used
+        #     for kernel-level type errors)
+        # Both shapes contain the substring `error` and a
+        # `:<digits>:<digits>:` location marker.  We extract every
+        # such diagnostic line and filter out:
         #
-        # Only post-marker errors matter: the file's own pre-marker
-        # content is built by `lake build` (which precedes every call
-        # to this script via the CI workflow, `pre-push.sh`, and
-        # `pre-commit.sh`), so any pre-marker error here is necessarily
-        # a `lake env lean` artefact (it ignores `lakefile.toml`
-        # `leanOptions`).  Filter to post-marker errors, then flag
-        # only those that do not match the absorbed forms.  Lean's
-        # `maximum number of errors (N; from option `maxErrors`)
-        # reached, exiting` cap message is absorbed alongside the
-        # unknown-identifier forms because it is a consequence of the
-        # unknown-identifier cascade (when the first `namespace`
-        # directive in the file does not scope every top-level
-        # declaration — see § Limitations).
-        local HAS_REAL_ERROR=false
-        local post_marker_errors
-        if [[ -n "$MARKER_LINE" ]]; then
-            post_marker_errors=$(echo "$OUTPUT" \
-                | awk -v marker="$MARKER_LINE" '
-                    /:[0-9]+:[0-9]+:.*error/ {
-                        if (match($0, /:[0-9]+:/)) {
-                            n = substr($0, RSTART+1, RLENGTH-2) + 0
-                            if (n >= marker) print
-                        }
-                    }')
-        else
-            post_marker_errors=$(echo "$OUTPUT" \
-                | grep -E ':[0-9]+:[0-9]+:.*error' || true)
-        fi
-        # `grep -c >/dev/null` (rather than `grep -qvE`) consumes all
-        # input; `-q` short-circuits and leaves the upstream pipe with
-        # SIGPIPE (141), which `set -o pipefail` then surfaces as a
-        # non-zero pipeline exit and miscategorises the file.
+        #   * Post-marker forms expected from the appended `#print
+        #     axioms` commands when their qualifier is wrong
+        #     (`unknown identifier`, `unknown constant`, the
+        #     `maximum number of errors` cascade cap).  These are
+        #     routine when the file uses multiple namespaces and
+        #     the single-namespace heuristic above qualifies some
+        #     declarations under the wrong prefix.
+        #
+        #   * Pre-marker spurious diagnostics that `lake env lean`
+        #     emits because it ignores `lakefile.toml`'s
+        #     `leanOptions` (`unsolved goals`, `failed to
+        #     synthesize`, `Tactic ... failed`).  These appear on
+        #     files that `lake build` accepts cleanly; the file's
+        #     own content is already gated by `lake build` upstream
+        #     of this script.
+        #
+        # Anything that survives both filters is treated as a real
+        # error and fails the file.  This catches genuine
+        # compilation failures (type mismatches, invalid field
+        # notation, etc.) regardless of whether they appear before
+        # or after the marker.
+        local lean_diag_errors
+        lean_diag_errors=$(echo "$OUTPUT" \
+            | grep -E ':[0-9]+:[0-9]+:.*error|error.*:[0-9]+:[0-9]+:' \
+            || true)
+        # `grep -c >/dev/null` (rather than `grep -qvE`) consumes
+        # all input; `-q` short-circuits and leaves the upstream
+        # pipe with SIGPIPE (141), which `set -o pipefail` then
+        # surfaces as a non-zero pipeline exit and miscategorises
+        # the file.
         local unabsorbed_count
-        if [[ -n "$post_marker_errors" ]]; then
-            unabsorbed_count=$(echo "$post_marker_errors" \
+        if [[ -n "$lean_diag_errors" ]]; then
+            unabsorbed_count=$(echo "$lean_diag_errors" \
                 | grep -cvE \
-                    'unknownIdentifier|unknown identifier|unknown constant|maximum number of errors' \
+                    'unknownIdentifier|unknown identifier|unknown constant|maximum number of errors|unsolved goals|failed to synthesize|Tactic .* failed' \
                 || true)
         else
             unabsorbed_count=0
@@ -532,100 +696,48 @@ check_file() {
         if [[ "$unabsorbed_count" -gt 0 ]]; then
             HAS_REAL_ERROR=true
         fi
-
-        # If no real (non-absorbed, post-marker) error was detected,
-        # take the tolerant path: parse whatever `#print axioms`
-        # output the run did produce.  The upstream `lake env lean`
-        # invocation may have exited non-zero solely because of
-        # pre-marker spurious diagnostics (see § Local modifications,
-        # item 6) while the appended `#print axioms` commands
-        # produced valid output that we can still account for.
-        if [[ "$HAS_REAL_ERROR" == false ]]
-        then
-            echo -e \
-                "  ${YELLOW}⚠ Some declarations not accessible" \
-                "(private/local)${NC}"
-
-            local CURRENT_DECL=""
-            local PARSED_ANY=false
-
-            while IFS= read -r line; do
-                if [[ "$line" =~ \
-                    ^([a-zA-Z0-9_.]+)[[:space:]]+depends[[:space:]]+on[[:space:]]+axioms: ]]; then
-                    CURRENT_DECL="${BASH_REMATCH[1]}"
-                    PARSED_ANY=true
-                    if [[ "$VERBOSE" == "--verbose" ]]; then
-                        echo -e "  ${BLUE}$CURRENT_DECL:${NC}"
-                    fi
-                elif [[ "$line" =~ \
-                    ^[[:space:]]*([a-zA-Z0-9_.]+)[[:space:]]*$ ]]; then
-                    axiom="${BASH_REMATCH[1]}"
-                    if [[ -n "$axiom" \
-                        && ! "$axiom" =~ ^[[:space:]]*$ ]]; then
-                        if [[ ! "$axiom" =~ $STANDARD_AXIOMS ]]; then
-                            local src_line=0
-                            local i
-                            for (( i=0; i<${#DECLARATIONS[@]}; i++ )); do
-                                if [[ "${DECLARATIONS[$i]}" \
-                                    == "$CURRENT_DECL" ]]; then
-                                    src_line="${DECL_LINE_NUMS[$i]}"
-                                    break
-                                fi
-                            done
-                            local allowed=false
-                            if [[ $src_line -gt 0 ]]; then
-                                while IFS= read -r allowed_axiom; do
-                                    if [[ "$allowed_axiom" \
-                                        == "$axiom" ]]; then
-                                        allowed=true
-                                        break
-                                    fi
-                                done < <(get_axiom_allows \
-                                    "$BACKUP_FILE" "$src_line")
-                            fi
-                            if [[ "$allowed" == true ]]; then
-                                if [[ "$VERBOSE" == "--verbose" ]]; then
-                                    echo -e \
-                                        "    ${YELLOW}~${NC}" \
-                                        "$axiom (allowed via AXIOM_ALLOW)"
-                                fi
-                            else
-                                echo -e \
-                                    "  ${RED}⚠ $CURRENT_DECL" \
-                                    "uses non-standard axiom: $axiom${NC}"
-                                HAS_CUSTOM=true
-                                ((++CUSTOM_AXIOM_COUNT))
-                            fi
-                        elif [[ "$VERBOSE" == "--verbose" ]]; then
-                            echo -e "    ${GREEN}✓${NC} $axiom (standard)"
-                        fi
-                    fi
-                fi
-            done <<< "$OUTPUT"
-
-            if [[ "$PARSED_ANY" == true ]]; then
-                if [[ "$HAS_CUSTOM" == false ]]; then
-                    echo -e \
-                        "  ${GREEN}✓ Accessible declarations use" \
-                        "only standard axioms${NC}"
-                else
-                    ((++FILES_WITH_CUSTOM))
-                fi
-                ((TOTAL_DECLARATIONS+=${#DECLARATIONS[@]}))
-                ((++TOTAL_FILES))
-            fi
-
-            cleanup_file
-            echo
-            return 0
-        else
-            echo -e "  ${RED}Error running Lean${NC}" >&2
-            echo "$OUTPUT" | grep "error" | head -10 | sed 's/^/  /' >&2
-            cleanup_file
-            echo
-            return 1
-        fi
     fi
+
+    if [[ "$HAS_REAL_ERROR" == true ]]; then
+        echo -e "  ${RED}Error running Lean${NC}" >&2
+        echo "$OUTPUT" \
+            | grep -E 'error' \
+            | head -10 | sed 's/^/  /' >&2
+        cleanup_file
+        echo
+        return 1
+    fi
+
+    if [[ "$PARSED_ANY" == false ]]; then
+        # No `'X' depends on axioms:` lines were produced for any
+        # of the appended `#print axioms` commands.  In practice
+        # this happens when the file uses multiple namespaces and
+        # the single-namespace heuristic above qualifies every
+        # declaration under the wrong prefix, producing absorbed
+        # `unknown constant` errors for each `#print axioms`
+        # invocation.  Surface as a soft warning rather than a
+        # hard error: `lake build` (which precedes this script in
+        # CI / `pre-push.sh` / `pre-commit.sh`) has already
+        # validated the file's content, so we know the file
+        # compiles; the audit just couldn't address its
+        # declarations.
+        echo -e \
+            "  ${YELLOW}⚠ Declarations unaddressable under" \
+            "inferred namespace; not audited${NC}"
+    elif [[ "$HAS_CUSTOM" == false ]]; then
+        echo -e \
+            "  ${GREEN}✓ All declarations use only" \
+            "standard axioms${NC}"
+    else
+        ((++FILES_WITH_CUSTOM))
+    fi
+
+    ((TOTAL_DECLARATIONS+=${#DECLARATIONS[@]}))
+    ((++TOTAL_FILES))
+
+    cleanup_file
+    echo
+    return 0
 }
 
 # ---------------------------------------------------------------------------
