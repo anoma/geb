@@ -44,8 +44,8 @@ active topic branches.
 - **Generic user references in committed text.** "the user" /
   "they" / "them"; no first names, email, or autobiographical
   detail.
-- **No `noncomputable` anywhere; minimise `Classical`.** See
-  Constructive-only Lean code below.
+- **No `noncomputable` anywhere; `Classical.choice` accepted in
+  proofs.** See Constructive-only Lean code below.
 - **Code is cost.** Every committed byte must be justified by a
   return greater than its overhead (reader time, AI context, build
   time, freezing surrounding code in place). Code that meets the
@@ -164,12 +164,28 @@ revision.
 
 ## Constructive-only Lean code
 
-- No `noncomputable` anywhere.
-- Minimise `Classical`; flag/justify each invocation in our own
-  code.
-- `scripts/check-axioms.sh` (vendored from `lean4-skills` with
-  `Classical.choice` excluded from the allowlist) is part of the
-  pre-push checklist and runs in CI. The lighter pre-commit
+- No `noncomputable` anywhere. This is the operative constructive
+  guarantee: Lean forces `noncomputable` on any definition whose
+  body uses `Classical.choice`, and `lake build` (under
+  `-DwarningAsError`) rejects it. Every Geb computational object
+  therefore executes, and no `Classical.choice` reaches executable
+  content.
+- `Classical.choice` is accepted in proofs. Mathlib is classical
+  from its foundations up — even the primitives this project
+  builds on carry it (`Nat.unpair_left_le` / `Nat.unpair_pair`
+  underpinning Gödel numbering; `NatTrans.id` / `Functor.comp` via
+  `aesop_cat`; `Fin.lastCases_castSucc`) — so forbidding it is
+  unachievable while building on mathlib. Because the
+  `noncomputable` ban confines all `Classical.choice` to proofs,
+  where it has no bearing on computation, accepting it costs the
+  project nothing it can actually keep. Ground-up per-axiom
+  vetting (including `Classical.choice`) is the job of the
+  public-facing `geb-mathlib` port, where the line-by-line rebuild
+  makes that discipline tractable from the start.
+- `scripts/check-axioms.sh` (vendored from `lean4-skills`) is part
+  of the pre-push checklist and runs in CI. It rejects `sorryAx`
+  and any non-standard axiom; `propext`, `Quot.sound`, and
+  `Classical.choice` are accepted. The lighter pre-commit
   checklist (`scripts/pre-commit.sh`) does not run the axiom
   check; see Rules above.
 
