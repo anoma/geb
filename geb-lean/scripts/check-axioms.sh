@@ -12,9 +12,23 @@
 #    against the on-disk path above with the same version string 4.4.9.)
 #
 # Local modifications vs. upstream:
-#   1. Allowlist reduced: STANDARD_AXIOMS covers only propext, Quot.sound,
-#      and quot.sound — Classical.choice is NOT in the allowlist here, so
-#      transitive dependencies on Classical.choice are flagged.
+#   1. Classical.choice policy: STANDARD_AXIOMS includes Classical.choice
+#      (matching upstream lean4-skills).  Although this is a
+#      constructive-only project, Classical.choice is accepted here because
+#      mathlib is classical from its foundations up — even the primitives
+#      this project relies on carry it in their proofs (e.g.
+#      Nat.unpair_left_le / Nat.unpair_pair underpinning Gödel numbering,
+#      NatTrans.id / Functor.comp via aesop_cat, Fin.lastCases_castSucc).
+#      Forbidding Classical.choice is therefore unachievable while building
+#      on mathlib.  The computational guarantee is enforced separately and
+#      independently by the project-wide ban on `noncomputable` (which
+#      `lake build` enforces under -DwarningAsError): any Classical.choice
+#      reaching executable content would force `noncomputable` and fail the
+#      build, so every Classical.choice usage is confined to proofs, where
+#      it has no bearing on what Geb's computational objects compute.
+#      Strict per-axiom vetting (including Classical.choice, from the ground
+#      up) is the job of the public-facing geb-mathlib port.  sorryAx and
+#      all other non-standard axioms remain fatal.
 #   2. AXIOM_ALLOW annotation scanning: if a declaration is immediately
 #      preceded (with no intervening blank lines) by one or more -- comments
 #      and/or a /-- … -/ docstring containing lines of the form
@@ -163,10 +177,12 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m'
 
-# Standard acceptable axioms (Classical.choice is intentionally excluded).
-# Anchored as a full-string match below so e.g. `propextX` does not
-# collide with `propext`.
-STANDARD_AXIOMS="propext|quot.sound|Quot.sound"
+# Standard acceptable axioms.  Classical.choice is included: see
+# § Local modifications item 1 for the rationale (mathlib is classical
+# from its foundations; the `noncomputable` ban is the independent
+# computational guarantee).  Anchored as a full-string match below so
+# e.g. `propextX` does not collide with `propext`.
+STANDARD_AXIOMS="propext|quot.sound|Quot.sound|Classical.choice"
 STANDARD_AXIOMS_REGEX="^(${STANDARD_AXIOMS})\$"
 
 # Global counter for unique marker filenames (avoids basename collisions).
@@ -780,6 +796,8 @@ echo -e "${YELLOW}Standard axioms (acceptable):${NC}"
 echo "  • propext (propositional extensionality)"
 echo "  • quot.sound (quotient soundness)"
 echo "  • Quot.sound (quotient soundness, capitalized variant)"
+echo "  • Classical.choice (mathlib is classical at its foundations;"
+echo "    the noncomputable ban confines it to proofs — see script header)"
 
 if [[ $FILES_WITH_CUSTOM -gt 0 ]]; then
     echo
