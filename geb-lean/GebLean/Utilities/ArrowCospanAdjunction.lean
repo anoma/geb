@@ -40,7 +40,7 @@ def arrowCospanInclusion
   obj f := cospan f.hom (𝟙 f.right)
   map {f g} sq :=
     cospanHomMk sq.right sq.left sq.right
-      (by simp)
+      sq.w.symm
       (by simp)
   map_id f := by
     apply NatTrans.ext
@@ -208,7 +208,20 @@ def arrowCospanAdjUnit
         (pullbacks _).isLimit.fac]
       dsimp [arrowCospanAdjUnitCone]
       match j with
-      | .one | .left | .right => simp
+      | .one =>
+        simp only [← Category.assoc,
+          (pullbacks _).isLimit.fac]
+        dsimp [arrowCospanAdjUnitCone]
+        exact sq.w
+      | .left =>
+        simp only [← Category.assoc,
+          (pullbacks _).isLimit.fac]
+        simp
+      | .right =>
+        simp only [← Category.assoc,
+          (pullbacks _).isLimit.fac]
+        dsimp [arrowCospanAdjUnitCone]
+        exact sq.w
     · simp [arrowCospanAdjUnitApp,
         cospanArrowCoreflector]
 
@@ -293,13 +306,30 @@ theorem arrowCospanAdj_left_triangle
     𝟙 _ := by
   ext j
   match j with
-  | .one | .left | .right =>
+  | .one | .right =>
     simp [arrowCospanAdjUnitApp,
       arrowCospanAdjCounitApp,
-      arrowCospanAdjUnitCone,
       arrowCospanInclusion,
       cospanArrowCoreflector]
+  | .left =>
+    dsimp [arrowCospanAdjUnitApp,
+      arrowCospanAdjCounitApp,
+      arrowCospanInclusion,
+      cospanArrowCoreflector]
+    exact (pullbacks _).isLimit.fac
+      (arrowCospanAdjUnitCone f)
+      WalkingCospan.left
 
+-- `linter.flexible` is locally disabled for
+-- `arrowCospanAdj_right_triangle`: the proof
+-- relies on `simp` (not `simp only`) to drive the
+-- `(pullbacks _).isLimit.fac` rewrite after unfolding
+-- `arrowCospanAdjUnitCone`.  `IsLimit.fac` is not
+-- `@[simp]`-tagged but is reachable from `simp`'s
+-- matcher via the lifted-cone projection, so the
+-- linter's `simp only [...]` rewrite suggestion is
+-- not equivalent.
+set_option linter.flexible false in
 /-- The right triangle identity:
 `unit (coreflector S) ≫ coreflector.map
 (counit S) = 𝟙`. -/
@@ -323,16 +353,12 @@ theorem arrowCospanAdj_right_triangle
     rw [Category.id_comp,
       Category.assoc,
       (pullbacks S).isLimit.fac]
-    simp only [NatTrans.comp_app]
-    rw [← Category.assoc,
-      (pullbacks _).isLimit.fac]
-    dsimp [arrowCospanAdjUnitCone]
+    simp [arrowCospanAdjUnitCone]
     match j with
     | .one =>
       exact (pullbacks S).cone.w
         WalkingCospan.Hom.inr
-    | .left =>
-      simp only [Category.id_comp]
+    | .left => simp
     | .right => simp
   · simp [arrowCospanAdjUnitApp,
       arrowCospanAdjCounitApp,
@@ -353,29 +379,30 @@ def arrowCospanAdj
     counit := arrowCospanAdjCounit pullbacks
     left_triangle := by
       apply NatTrans.ext; funext f
-      simp only [NatTrans.comp_app,
-        Functor.whiskerRight_app,
-        Functor.whiskerLeft_app,
-        Functor.associator,
-        Category.id_comp]
-      convert arrowCospanAdj_left_triangle
-        pullbacks f using 1
+      have h := arrowCospanAdj_left_triangle pullbacks f
+      simpa [arrowCospanAdjUnit, arrowCospanAdjCounit]
+        using h
     right_triangle := by
       apply NatTrans.ext; funext S
-      simp only [NatTrans.comp_app,
-        Functor.whiskerRight_app,
-        Functor.whiskerLeft_app,
-        Functor.associator,
-        Category.id_comp]
-      convert arrowCospanAdj_right_triangle
-        pullbacks S using 1
+      have h := arrowCospanAdj_right_triangle pullbacks S
+      simpa [arrowCospanAdjUnit, arrowCospanAdjCounit]
+        using h
   }
 
 /-- `Arrow C` is a coreflective subcategory of
 `WalkingCospan ⥤ C` via the arrow-cospan
 inclusion, given an explicit limit cone
-assignment. -/
-instance arrowCospanCoreflective
+assignment.
+
+This is a `@[reducible] def` rather than an
+`instance`: the explicit `pullbacks` argument is
+not inferable from
+`Coreflective (arrowCospanInclusion C)`, so
+typeclass resolution cannot synthesise it.  Call
+sites that have a chosen `pullbacks` family in
+scope can promote this to a local `instance` via
+`local instance := arrowCospanCoreflective ...`. -/
+@[reducible] def arrowCospanCoreflective
     (pullbacks :
       (S : WalkingCospan ⥤ C) → LimitCone S) :
     Coreflective (arrowCospanInclusion C) where

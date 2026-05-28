@@ -138,6 +138,7 @@ import GebLean.RelSpanDiagram
 import GebLean.RestrictedCoendAsColimit
 import GebLean.Semicategory
 import GebLean.Utilities
+import GebLean.Utilities.ArrowCospanAdjunction
 import GebLean.Utilities.ArrowSpanAdjunction
 import GebLean.Utilities.Category
 import GebLean.Utilities.ConnectedComponents
