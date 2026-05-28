@@ -22,6 +22,44 @@
 #      and every axiom flagged for that declaration appears in the collected
 #      AXIOM_ALLOW set, the declaration is suppressed from the failure
 #      output.  See spec comment in the AXIOM_ALLOW scanning section below.
+#   3. Bare-name extraction widened: the stop set is `[^ :({[,`+`]+`
+#      (adding `{`, `[`, `,`, and backtick to the upstream `[^ :(]+`),
+#      and a trailing dot is stripped after extraction.  Without these,
+#      anonymous instances `instance {V : ...}` extracted as bare `{V`,
+#      universe-annotated declarations `def Foo.bar.{u, v}` extracted
+#      as `Foo.bar.{u,`, and prose lines inside `/-- ... -/` or
+#      `/-! ... -/` docstrings that happen to begin with a Lean keyword
+#      (``structure maps, one per constructor.``,
+#      ``abbrev `FunctorBetween…` form gets stuck on``) yielded
+#      malformed bare names; the resulting `#print axioms ...` lines
+#      triggered Lean parse errors that the script's tolerant fallback
+#      did not absorb.
+#   4. Ignorable-error patterns widened to include Lean's
+#      `maximum number of errors (N; from option `maxErrors`) reached,
+#      exiting` cap message, which is emitted as a consequence of
+#      cascading unknown-identifier errors (when a file's first
+#      `namespace` directive does not actually scope every top-level
+#      declaration in the file — a known limitation of the
+#      first-namespace-only heuristic above).
+#   5. SIGPIPE-safe matching against the absorbed-error / tolerant
+#      patterns: the upstream `... | grep -q PATTERN` pipelines closed
+#      stdin on first match and let the upstream `echo "$OUTPUT"`
+#      exit with SIGPIPE (141); under the script's `set -o pipefail`,
+#      the pipeline then evaluated to non-zero, the `if` body was
+#      skipped, and the script reported a spurious "Error running
+#      Lean".  Both pipelines are rewritten to use `grep -c …
+#      >/dev/null`, which consumes all input.
+#   6. Real-error detection scoped to post-marker errors: the upstream
+#      logic flagged any pre-marker error as a "real" file-compilation
+#      failure, but `lake env lean` ignores `lakefile.toml`
+#      `leanOptions`, so it produces spurious pre-marker diagnostics
+#      (`unsolved goals`, `failed to synthesize`, `Tactic ... failed`,
+#      etc.) on files that compile cleanly via `lake build`.  Because
+#      every caller of this script runs `lake build` first (CI
+#      workflow, `pre-push.sh`, `pre-commit.sh`), the file's own
+#      content has already been validated; the script restricts its
+#      real-error scan to errors at the marker line or after, where
+#      only the appended `#print axioms` commands live.
 #
 # Usage:
 #   ./check-axioms.sh <file-or-dir-or-pattern> [--verbose]
@@ -308,8 +346,23 @@ check_file() {
         local rest
         rest=$(echo "$entry" | cut -d: -f2-)
         local bare
+        # The stop set excludes whitespace, the characters that begin
+        # implicit/explicit/instance arguments, type ascription, and
+        # universe annotations (` :({[`), and the punctuation that
+        # appears when prose inside `/-- ... -/` or `/-! ... -/`
+        # docstrings happens to begin with a Lean keyword: `,` (e.g.,
+        # ``structure maps, one per constructor.``) and backtick
+        # (e.g., ``abbrev `FunctorBetween…` form gets stuck on``).
+        # In every such case the resulting bare name is either left
+        # equal to the input line (sed substitution fails, and the
+        # declaration is skipped) or yields a stem like `maps` whose
+        # qualified form `<namespace>.maps` triggers a tolerable
+        # unknown-constant error rather than a Lean parse failure.
         bare=$(echo "$rest" | sed -E \
-            's/^(theorem|lemma|def|instance|abbrev|example|structure|class|inductive) +([^ :(]+).*/\2/')
+            's/^(theorem|lemma|def|instance|abbrev|example|structure|class|inductive) +([^ :({[,`]+).*/\2/')
+        # Strip a trailing dot that survives from `def Foo.bar.{u, v}`
+        # extractions (we stop at `{`, leaving the connecting dot).
+        bare="${bare%.}"
         # Skip nameless declarations (the `example` form has no name;
         # the sed leaves the line unchanged, producing a bare value
         # that's either the keyword itself or empty — neither is a
@@ -431,29 +484,63 @@ check_file() {
         MARKER_LINE=$(grep -nF -- "$MARKER" "$FILE" \
             | head -1 | cut -d: -f1)
 
+        # Decide whether to treat the file's `lake env lean` failure as
+        # a real error or as the tolerable unknown-identifier cascade
+        # produced by our appended `#print axioms` commands.
+        #
+        # Only post-marker errors matter: the file's own pre-marker
+        # content is built by `lake build` (which precedes every call
+        # to this script via the CI workflow, `pre-push.sh`, and
+        # `pre-commit.sh`), so any pre-marker error here is necessarily
+        # a `lake env lean` artefact (it ignores `lakefile.toml`
+        # `leanOptions`).  Filter to post-marker errors, then flag
+        # only those that do not match the absorbed forms.  Lean's
+        # `maximum number of errors (N; from option `maxErrors`)
+        # reached, exiting` cap message is absorbed alongside the
+        # unknown-identifier forms because it is a consequence of the
+        # unknown-identifier cascade (when the first `namespace`
+        # directive in the file does not scope every top-level
+        # declaration — see § Limitations).
         local HAS_REAL_ERROR=false
-        while IFS= read -r error_line; do
-            if [[ "$error_line" =~ :([0-9]+):[0-9]+:.*error ]]; then
-                local err_lineno="${BASH_REMATCH[1]}"
-                if [[ -n "$MARKER_LINE" \
-                    && "$err_lineno" -lt "$MARKER_LINE" ]]; then
-                    HAS_REAL_ERROR=true
-                    break
-                fi
-            fi
-        done < <(echo "$OUTPUT" | grep -E ':[0-9]+:[0-9]+:.*error')
-
-        if echo "$OUTPUT" \
-            | grep -E ':[0-9]+:[0-9]+:.*error' \
-            | grep -qvE \
-                'unknownIdentifier|unknown identifier|unknown constant'; then
+        local post_marker_errors
+        if [[ -n "$MARKER_LINE" ]]; then
+            post_marker_errors=$(echo "$OUTPUT" \
+                | awk -v marker="$MARKER_LINE" '
+                    /:[0-9]+:[0-9]+:.*error/ {
+                        if (match($0, /:[0-9]+:/)) {
+                            n = substr($0, RSTART+1, RLENGTH-2) + 0
+                            if (n >= marker) print
+                        }
+                    }')
+        else
+            post_marker_errors=$(echo "$OUTPUT" \
+                | grep -E ':[0-9]+:[0-9]+:.*error' || true)
+        fi
+        # `grep -c >/dev/null` (rather than `grep -qvE`) consumes all
+        # input; `-q` short-circuits and leaves the upstream pipe with
+        # SIGPIPE (141), which `set -o pipefail` then surfaces as a
+        # non-zero pipeline exit and miscategorises the file.
+        local unabsorbed_count
+        if [[ -n "$post_marker_errors" ]]; then
+            unabsorbed_count=$(echo "$post_marker_errors" \
+                | grep -cvE \
+                    'unknownIdentifier|unknown identifier|unknown constant|maximum number of errors' \
+                || true)
+        else
+            unabsorbed_count=0
+        fi
+        if [[ "$unabsorbed_count" -gt 0 ]]; then
             HAS_REAL_ERROR=true
         fi
 
-        if [[ "$HAS_REAL_ERROR" == false ]] \
-            && echo "$OUTPUT" \
-                | grep -q \
-                    'unknownIdentifier\|unknown identifier\|unknown constant'
+        # If no real (non-absorbed, post-marker) error was detected,
+        # take the tolerant path: parse whatever `#print axioms`
+        # output the run did produce.  The upstream `lake env lean`
+        # invocation may have exited non-zero solely because of
+        # pre-marker spurious diagnostics (see § Local modifications,
+        # item 6) while the appended `#print axioms` commands
+        # produced valid output that we can still account for.
+        if [[ "$HAS_REAL_ERROR" == false ]]
         then
             echo -e \
                 "  ${YELLOW}⚠ Some declarations not accessible" \
