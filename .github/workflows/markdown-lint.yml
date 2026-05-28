@@ -6,10 +6,12 @@ on:
     paths:
       - 'geb-lean/**/*.md'
       - 'geb-lean/.markdownlint-cli2.jsonc'
+      - '.github/workflows/markdown-lint.yml'
   pull_request:
     paths:
       - 'geb-lean/**/*.md'
       - 'geb-lean/.markdownlint-cli2.jsonc'
+      - '.github/workflows/markdown-lint.yml'
   workflow_dispatch:
 
 env:
