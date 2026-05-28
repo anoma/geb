@@ -210,33 +210,41 @@ upstream licences' requirements.
 
 ### Constructive-only
 
-No `noncomputable`. Minimise `Classical`, accepting it only
-when we can confirm that a mathlib concept that we are reusing
-is responsible.
+No `noncomputable`. This is the operative constructive guarantee:
+Lean forces `noncomputable` on any definition whose body uses
+`Classical.choice`, so the project-wide ban (enforced by
+`lake build` under `-DwarningAsError`) confines `Classical.choice`
+to proofs and keeps every computational object executable.
 
-Avoid `Quotient.out` / `Quot.out`; both require `Classical.choice`.
-Use the constructive `Quotient` / `Quot` API
-(`mk` / `lift` / `ind` / `sound`) instead.
+`Classical.choice` is accepted in proofs. Mathlib is classical
+from its foundations up — even the arithmetic primitives this
+project builds on carry it (`Nat.unpair_left_le` /
+`Nat.unpair_pair` underpinning Gödel numbering; `NatTrans.id` /
+`Functor.comp` via `aesop_cat`; `Fin.lastCases_castSucc`) — so
+forbidding it is unachievable while building on mathlib, and the
+`noncomputable` ban already secures the only guarantee that
+affects computation. Ground-up per-axiom vetting (including
+`Classical.choice`) is the job of the public-facing `geb-mathlib`
+port. See `CLAUDE.md` § Constructive-only Lean code.
 
-#### Accepted exceptions
+Prefer the constructive `Quotient` / `Quot` API
+(`mk` / `lift` / `ind` / `sound`); `Quotient.out` / `Quot.out`
+are `noncomputable` and therefore banned anyway.
 
-The following mathlib-sourced `Classical.choice` dependencies
-are accepted; declarations that transitively depend on them
-must carry an `-- AXIOM_ALLOW: Classical.choice (rationale)`
-comment immediately above the declaration (or inside its
-`/-- … -/` docstring). The `scripts/check-axioms.sh` audit
-suppresses these from the failure output.
+#### Axiom audit and the `AXIOM_ALLOW` mechanism
 
-- `Fin.lastCases_castSucc` (and `Fin.reverseInduction_castSucc`):
-  the mathlib equation lemma for `Fin.lastCases` on the
-  `castSucc` branch carries `Classical.choice` through
-  `Fin.reverseInduction.go`. Used in `LawvereBTInterp.lean`,
-  `LawvereBTEq.lean`, `Tupling.lean`, `ERTupling.lean`, and
-  the T3 `KSimURMSimulator.lean` simulator. A project-local
-  axiom-clean replacement would require either upstream-fixing
-  `Fin.reverseInduction.go` or restructuring all callers to
-  avoid the equation form; deemed not worth the cost for an
-  upstream proof-engineering technicality.
+`scripts/check-axioms.sh` accepts `propext`, `Quot.sound`, and
+`Classical.choice`; it rejects `sorryAx` and any other
+non-standard axiom. Because `Classical.choice` is accepted
+project-wide, it no longer needs per-declaration annotation. The
+`-- AXIOM_ALLOW: <axiom> (rationale)` mechanism (a comment
+immediately above a declaration or inside its `/-- … -/`
+docstring, which suppresses that axiom from the failure output)
+remains available should the project ever need to allow a
+*different* non-standard axiom on an individual basis. Any
+`-- AXIOM_ALLOW: Classical.choice` comments predating this policy
+(e.g. in `KSimURMSimulator.lean`) are now redundant and may be
+removed when those files are next touched.
 
 ### Proof guidelines
 
