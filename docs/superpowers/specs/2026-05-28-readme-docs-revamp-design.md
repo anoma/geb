@@ -119,29 +119,63 @@ Each numbered item is realized as one or more commits under the commit
 granularity principle below. Items are ordered so that every commit
 reads as a pure move, a pure deletion, or a pure skeleton creation.
 
+Before moving the root `README`/`README.md`, confirm what links into
+them so no other file's reference is silently broken. Verified inbound
+references at spec time: no CI workflow, no `geb.asd` entry, and no
+`src/` file links to the root README files; `geb-lean/README.md`,
+`geb-idris/README.md`, and `geb-agda/README.md` link to `../README.md`
+(which the new root index satisfies) rather than to the moving file's
+new location. The plan repeats this check, including a grep of
+`geb-idris/docs/*.md` and `geb-lean/docs/*.md` for root-README links,
+immediately before the move.
+
 1. Relocate the generated Common Lisp manual. Move the root `README.md`
    to `docs/common-lisp/manual.md`. This commit contains no other
    change, so version control records a pure rename. At this point the
-   repository root has no `README.md`.
+   repository root has no `README.md`. The relocated file is frozen
+   generator output: its body retains relative links written for the
+   repository root, including a live link to `geb-lean/README.md`
+   (the manually inserted pointer from commit `8693ed61`) that no longer
+   resolves from `docs/common-lisp/`, alongside pre-existing dead links
+   (`./tests/cover-index.html`, `./tests/report.html`). These stale
+   links are accepted, not repaired: `manual.md` is not authored or
+   linted here (see Markdownlint and doctoc), and a future regeneration
+   (Change 4) emits correct links for the new location. Repairing them
+   in this commit would forfeit the pure-rename property.
 2. Relocate the Common Lisp documentation sources. Move
-   `docs/documentation.lisp`, `docs/glossery.lisp`, `docs/package.lisp`,
-   and `docs/maintainers-guide.org` into `docs/common-lisp/`. Update
+   `docs/documentation.lisp`, `docs/glossery.lisp` (sic; the filename
+   is misspelled in the tree), `docs/package.lisp`, and
+   `docs/maintainers-guide.org` into `docs/common-lisp/`. Update
    `geb.asd`: the `geb/documentation` system's `:pathname "docs/"`
    becomes `:pathname "docs/common-lisp/"`. The move and its single
-   reference update form one conceptual operation.
+   reference update form one conceptual operation. The three `.lisp`
+   files are ASDF components loaded `:serial`; moving them together
+   preserves their load order (`package` defines the `geb-docs/docs`
+   package that `glossery` and `documentation` enter). The
+   `maintainers-guide.org` file is not an ASDF component, so moving it
+   has no build effect.
 3. Delete the redundant plain-text `README`. The markdown manual at
    `docs/common-lisp/manual.md` supersedes it.
 4. Retarget the generator. In
    `docs/common-lisp/documentation.lisp`, rewrite `build-docs` so the
    markdown output is written to `docs/common-lisp/manual.md` via an
    explicit stream (`mgl-pax:document` into a `with-open-file` target)
-   and the `:plain` README output is dropped. This is a behavior-
-   preserving relocation of the output target, not a change to document
-   content. The generator is not rerun in this step.
+   and the `:plain` README output is dropped; redirect the companion
+   `update-asdf-system-html-docs` `:target-dir` from `docs/` to
+   `docs/common-lisp/` for consistency. The rewrite is intended to
+   reproduce the existing markdown rendering at the new path, not to
+   change document content. Equivalence to the previous
+   `update-asdf-system-readmes` output is unverified at authoring time
+   because the generator is not rerun in this step; the rewrite may need
+   to pass `:pages` and a `:source-uri-fn` (as the HTML call does) to
+   reproduce cross-reference and source-link rendering. Confirming the
+   output matches is deferred to the next time the generator is run (a
+   follow-up, since the Common Lisp build is not exercised here).
 5. Create `geb-idris/docs/index.md`. A skeleton index listing the four
    existing Idris documentation files with one-line navigational labels
    derived from their existing titles, plus pointers to
    `../README.md` and `../EXAMPLES.md`. No new explanatory content.
+   (`../README.md` and `../EXAMPLES.md` are confirmed present.)
 6. Create the root `README.md`. A hand-authored file: a short, dry
    identity statement (what Geb is; active development is Lean, then
    Idris; Common Lisp and Agda are original efforts) followed by a
@@ -177,10 +211,16 @@ than misattributing it against a freshly created same-named file.
 
 which writes `README.md` and `README` to the ASDF system root. The
 replacement writes a single markdown file to `docs/common-lisp/manual.md`
-through `mgl-pax:document` and an explicit output stream, leaving the
-HTML-documentation call (`update-asdf-system-html-docs`) unchanged. The
-rendered document content is identical; only the output path and the
-dropped plain-text format differ.
+through `mgl-pax:document` and an explicit output stream, and points the
+HTML-documentation call (`update-asdf-system-html-docs`) `:target-dir`
+at `docs/common-lisp/`. The intent is that the rendered markdown is the
+same document at a new path, with the plain-text format dropped.
+`update-asdf-system-readmes` is a wrapper whose internal rendering setup
+(page configuration, source-link function) is not reproduced by a bare
+`mgl-pax:document` call; the rewrite may therefore need to pass `:pages`
+and a `:source-uri-fn` to match. Because the generator is not rerun in
+this step, the output is not verified here; verifying that the regenerated
+`manual.md` matches expectations is a follow-up.
 
 ## Markdownlint and doctoc
 
@@ -210,6 +250,11 @@ dropped plain-text format differ.
   `geb-lean/scripts/pre-push.sh` doctoc and markdownlint coverage to
   parent-level markdown, with a markdownlint configuration scoped to the
   monorepo root and an ignore entry for `docs/common-lisp/`.
+- `geb-lean/README.md` describes `../README.md` as "the user-facing
+  manual"; after this step the root file is an index and the manual has
+  moved to `docs/common-lisp/manual.md`. The link stays valid; only the
+  surrounding prose drifts. Reconciling it belongs to the later
+  content-authoring phase, where `geb-lean` documentation is edited.
 
 ## References
 
