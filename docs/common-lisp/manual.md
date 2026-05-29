@@ -1,12 +1,7 @@
 <a id="x-28GEB-DOCS-2FDOCS-3A-40INDEX-20MGL-PAX-3ASECTION-29"></a>
+<a id="GEB-DOCS%2FDOCS:@INDEX%20MGL-PAX:SECTION"></a>
 
 # The GEB Manual
-
-The Lean formalisation of this project lives in `geb-lean/`;
-see [`geb-lean/README.md`](geb-lean/README.md). The material
-below documents the original implementation; the geb-lean
-subproject is the active development home for the Lean
-formalisation of this project.
 
 ## Table of Contents
 
@@ -86,6 +81,7 @@ formalisation of this project.
 Welcome to the GEB project.
 
 <a id="x-28GEB-DOCS-2FDOCS-3A-40LINKS-20MGL-PAX-3ASECTION-29"></a>
+<a id="GEB-DOCS%2FDOCS:@LINKS%20MGL-PAX:SECTION"></a>
 
 ## 1 Links
 
@@ -100,6 +96,7 @@ Maintainers: please read the [maintainers guide](https://github.com/anoma/geb/bl
 
 
 <a id="x-28GEB-DOCS-2FDOCS-3A-40COVERAGE-20MGL-PAX-3ASECTION-29"></a>
+<a id="GEB-DOCS%2FDOCS:@COVERAGE%20MGL-PAX:SECTION"></a>
 
 ### 1.1 code coverage
 
@@ -125,12 +122,14 @@ Currently they are manually generated, and thus for a more accurate assessment s
 
 
 <a id="x-28GEB-DOCS-2FDOCS-3A-40GETTING-STARTED-20MGL-PAX-3ASECTION-29"></a>
+<a id="GEB-DOCS%2FDOCS:@GETTING-STARTED%20MGL-PAX:SECTION"></a>
 
 ## 2 Getting Started
 
 Welcome to the GEB Project!
 
 <a id="x-28GEB-DOCS-2FDOCS-3A-40INSTALLATION-20MGL-PAX-3ASECTION-29"></a>
+<a id="GEB-DOCS%2FDOCS:@INSTALLATION%20MGL-PAX:SECTION"></a>
 
 ### 2.1 installation
 
@@ -139,7 +138,7 @@ This project uses [common lisp](https://common-lisp.net/), so a few
 
 1. [lisp with quicklisp](https://lisp-lang.org/learn/getting-started/).
 
-2. [Emacs](https://en.wikipedia.org/wiki/Emacs) along with one of the following:
+2. a) [Emacs](https://en.wikipedia.org/wiki/Emacs) along with one of the following:
 
     - [sly](https://github.com/joaotavora/sly)
 
@@ -149,8 +148,15 @@ This project uses [common lisp](https://common-lisp.net/), so a few
 
         - [slime user manual](http://www.chiark.greenend.org.uk/doc/slime/slime.pdf)
 
+3. b) [Spacemacs](https://github.com/syl20bnr/spacemacs) along with:
+
+    - [slime](https://github.com/slime/slime) via 
+      [the common-lisplayer](https://www.spacemacs.org/layers/+lang/common-lisp/README.html)
+      based on [sblc](https://www.sbcl.org/)
+
 
 <a id="x-28GEB-DOCS-2FDOCS-3A-40LOADING-20MGL-PAX-3ASECTION-29"></a>
+<a id="GEB-DOCS%2FDOCS:@LOADING%20MGL-PAX:SECTION"></a>
 
 ### 2.2 loading
 
@@ -168,8 +174,13 @@ Now that we have an environment setup, we can load the project, this
     - For Emacs, this is simply calling either `M-x sly` or `M-x slime`
        if you are using either [sly](https://github.com/joaotavora/sly) or [slime](https://github.com/slime/slime)
 
+    - For Spacemacs, this is (also) `M-x slime` besides alternative key bindings
+
 2. From Emacs: open `geb.asd` and press `C-ck` (`sly-compile-and-load-file`, or
    `swank-compile-and-load-file` if you are using swank).
+
+3. From Spacemacs: open `geb.asd` and press `C-c C-k` (invoking
+   `slime-compile-and-load-file`).
 
 Now that we have the file open, we can now load the system by
 writing:
@@ -190,6 +201,7 @@ writing:
 
 
 <a id="x-28GEB-2EENTRY-3A-40GEB-ENTRY-20MGL-PAX-3ASECTION-29"></a>
+<a id="GEB.ENTRY:@GEB-ENTRY%20MGL-PAX:SECTION"></a>
 
 ### 2.3 Geb as a binary
 
@@ -276,14 +288,17 @@ function with name foo and arguments x1...xn prints an equality as
 foo x1 ... xn = y
 
 <a id="x-28GEB-2EENTRY-3ACOMPILE-DOWN-20FUNCTION-29"></a>
+<a id="GEB.ENTRY:COMPILE-DOWN%20FUNCTION"></a>
 
 - [function] **COMPILE-DOWN** *&KEY VAMPIR STLC ENTRY LIBRARY TEST (STREAM \*STANDARD-OUTPUT\*)*
 
 <a id="x-28GEB-DOCS-2FDOCS-3A-40GLOSSARY-20MGL-PAX-3ASECTION-29"></a>
+<a id="GEB-DOCS%2FDOCS:@GLOSSARY%20MGL-PAX:SECTION"></a>
 
 ## 3 Glossary
 
 <a id="x-28GEB-DOCS-2FDOCS-3A-40CLOSED-TYPE-20MGL-PAX-3AGLOSSARY-TERM-29"></a>
+<a id="GEB-DOCS%2FDOCS:@CLOSED-TYPE%20MGL-PAX:GLOSSARY-TERM"></a>
 
 - [glossary-term] **closed type**
 
@@ -339,6 +354,7 @@ foo x1 ... xn = y
     the trade offs and usage in the code-base read the section [Open Types versus Closed Types][a920].
 
 <a id="x-28GEB-DOCS-2FDOCS-3A-40OPEN-TYPE-20MGL-PAX-3AGLOSSARY-TERM-29"></a>
+<a id="GEB-DOCS%2FDOCS:@OPEN-TYPE%20MGL-PAX:GLOSSARY-TERM"></a>
 
 - [glossary-term] **open type**
 
@@ -369,6 +385,7 @@ foo x1 ... xn = y
     [Open Types versus Closed Types][a920].
 
 <a id="x-28GEB-DOCS-2FDOCS-3A-40CLOS-20MGL-PAX-3AGLOSSARY-TERM-29"></a>
+<a id="GEB-DOCS%2FDOCS:@CLOS%20MGL-PAX:GLOSSARY-TERM"></a>
 
 - [glossary-term] **Common Lisp Object System (CLOS)**
 
@@ -377,6 +394,7 @@ foo x1 ... xn = y
     helps it facilitate extensions.
 
 <a id="x-28GEB-DOCS-2FDOCS-3A-40ORIGINAL-EFFORTS-20MGL-PAX-3ASECTION-29"></a>
+<a id="GEB-DOCS%2FDOCS:@ORIGINAL-EFFORTS%20MGL-PAX:SECTION"></a>
 
 ## 4 Original Efforts
 
@@ -387,6 +405,7 @@ to this, we have plenty of code not in Common Lisp that ought to be
 a good read.
 
 <a id="x-28GEB-DOCS-2FDOCS-3A-40IDRIS-20MGL-PAX-3ASECTION-29"></a>
+<a id="GEB-DOCS%2FDOCS:@IDRIS%20MGL-PAX:SECTION"></a>
 
 ### 4.1 Geb's Idris Code
 
@@ -400,6 +419,7 @@ treasure trove of interesting information surrounding category
 theory.
 
 <a id="x-28GEB-DOCS-2FDOCS-3A-40AGDA-20MGL-PAX-3ASECTION-29"></a>
+<a id="GEB-DOCS%2FDOCS:@AGDA%20MGL-PAX:SECTION"></a>
 
 ### 4.2 Geb's Agda Code
 
@@ -414,6 +434,7 @@ while [Geb's Agda Code][29b7] serves as the mathematical formalism proving vario
 conjectures about GEB
 
 <a id="x-28GEB-DOCS-2FDOCS-3A-40MODEL-20MGL-PAX-3ASECTION-29"></a>
+<a id="GEB-DOCS%2FDOCS:@MODEL%20MGL-PAX:SECTION"></a>
 
 ## 5 Categorical Model
 
@@ -536,26 +557,31 @@ covers the background we need in 60 short pages.
 
 
 <a id="x-28GEB-DOCS-2FDOCS-3A-40MORPHISMS-20MGL-PAX-3ASECTION-29"></a>
+<a id="GEB-DOCS%2FDOCS:@MORPHISMS%20MGL-PAX:SECTION"></a>
 
 ### 5.1 Morphisms
 
 
 <a id="x-28GEB-DOCS-2FDOCS-3A-40OBJECTS-20MGL-PAX-3ASECTION-29"></a>
+<a id="GEB-DOCS%2FDOCS:@OBJECTS%20MGL-PAX:SECTION"></a>
 
 ### 5.2 Objects
 
 
 <a id="x-28GEB-DOCS-2FDOCS-3A-40YONEDA-LEMMA-20MGL-PAX-3ASECTION-29"></a>
+<a id="GEB-DOCS%2FDOCS:@YONEDA-LEMMA%20MGL-PAX:SECTION"></a>
 
 ### 5.3 The Yoneda Lemma
 
 
 <a id="x-28GEB-DOCS-2FDOCS-3A-40POLY-SETS-20MGL-PAX-3ASECTION-29"></a>
+<a id="GEB-DOCS%2FDOCS:@POLY-SETS%20MGL-PAX:SECTION"></a>
 
 ### 5.4 Poly in Sets
 
 
 <a id="x-28GEB-DOCS-2FDOCS-3A-40IDIOMS-20MGL-PAX-3ASECTION-29"></a>
+<a id="GEB-DOCS%2FDOCS:@IDIOMS%20MGL-PAX:SECTION"></a>
 
 ## 6 Project Idioms and Conventions
 
@@ -573,6 +599,7 @@ The subsections will outline many idioms that can be found throughout
 the codebase.
 
 <a id="x-28GEB-2ESPECS-3A-40GEB-SPECS-20MGL-PAX-3ASECTION-29"></a>
+<a id="GEB.SPECS:@GEB-SPECS%20MGL-PAX:SECTION"></a>
 
 ### 6.1 Spec Files, Main Files and Project Layout
 
@@ -606,6 +633,7 @@ in `geb.poly`, giving the module `geb.poly` a convenient interface for
 all functions that operate on `geb.poly`.
 
 <a id="x-28GEB-DOCS-2FDOCS-3A-40OPEN-CLOSED-20MGL-PAX-3ASECTION-29"></a>
+<a id="GEB-DOCS%2FDOCS:@OPEN-CLOSED%20MGL-PAX:SECTION"></a>
 
 ### 6.2 Open Types versus Closed Types
 
@@ -713,6 +741,7 @@ sets that the base object has and give CI errors if they are not
 fulfilled, thus enforcing closed behavior when warranted.
 
 <a id="x-28GEB-DOCS-2FDOCS-3A-40-3CTYPES-3E-20MGL-PAX-3ASECTION-29"></a>
+<a id="GEB-DOCS%2FDOCS:@%3CTYPES%3E%20MGL-PAX:SECTION"></a>
 
 ### 6.3 ≺Types≻
 
@@ -721,6 +750,7 @@ one sees a type like GEB:<SUBSTOBJ> it is the open version of
 [`GEB:SUBSTOBJ`][3173]. Read [Open Types versus Closed Types][a920] for information on how to use them.
 
 <a id="x-28GEB-3A-40GEB-20MGL-PAX-3ASECTION-29"></a>
+<a id="GEB:@GEB%20MGL-PAX:SECTION"></a>
 
 ## 7 The Geb Model
 
@@ -729,6 +759,7 @@ Everything here relates directly to the underlying machinery of
 GEB, or to abstractions that help extend it.
 
 <a id="x-28GEB-2EMIXINS-3A-40MIXINS-CAT-20MGL-PAX-3ASECTION-29"></a>
+<a id="GEB.MIXINS:@MIXINS-CAT%20MGL-PAX:SECTION"></a>
 
 ### 7.1 The Categorical Interface
 
@@ -737,6 +768,7 @@ This covers the main Categorical interface required to be used and
 contained in various data structures
 
 <a id="x-28GEB-2EMIXINS-3ACAT-OBJ-20CLASS-29"></a>
+<a id="GEB.MIXINS:CAT-OBJ%20CLASS"></a>
 
 - [class] **CAT-OBJ**
 
@@ -744,6 +776,7 @@ contained in various data structures
     extensions
 
 <a id="x-28GEB-2EMIXINS-3ACAT-MORPH-20CLASS-29"></a>
+<a id="GEB.MIXINS:CAT-MORPH%20CLASS"></a>
 
 - [class] **CAT-MORPH**
 
@@ -751,18 +784,21 @@ contained in various data structures
     extensions
 
 <a id="x-28GEB-2EMIXINS-3ADOM-20GENERIC-FUNCTION-29"></a>
+<a id="GEB.MIXINS:DOM%20GENERIC-FUNCTION"></a>
 
-- [generic-function] **DOM** *X*
+- [generic-function] **DOM** *CAT-MORPH*
 
     Grabs the domain of the morphism. Returns a [`CAT-OBJ`][74bd]
 
 <a id="x-28GEB-2EMIXINS-3ACODOM-20GENERIC-FUNCTION-29"></a>
+<a id="GEB.MIXINS:CODOM%20GENERIC-FUNCTION"></a>
 
-- [generic-function] **CODOM** *X*
+- [generic-function] **CODOM** *CAT-MORPH*
 
     Grabs the codomain of the morphism. Returns a [`CAT-OBJ`][74bd]
 
 <a id="x-28GEB-2EMIXINS-3ACURRY-PROD-20GENERIC-FUNCTION-29"></a>
+<a id="GEB.MIXINS:CURRY-PROD%20GENERIC-FUNCTION"></a>
 
 - [generic-function] **CURRY-PROD** *CAT-MORPH CAT-LEFT CAT-RIGHT*
 
@@ -775,6 +811,7 @@ contained in various data structures
     Use [`GEB.MAIN:CURRY`][2cbc] instead.
 
 <a id="x-28GEB-2EGENERICS-3A-40GENERICS-20MGL-PAX-3ASECTION-29"></a>
+<a id="GEB.GENERICS:@GENERICS%20MGL-PAX:SECTION"></a>
 
 ### 7.2 Geneircs
 
@@ -789,6 +826,7 @@ The main documentation for the functionality is given here, with
 examples often given in the specific methods
 
 <a id="x-28GEB-2EGENERICS-3AGAPPLY-20GENERIC-FUNCTION-29"></a>
+<a id="GEB.GENERICS:GAPPLY%20GENERIC-FUNCTION"></a>
 
 - [generic-function] **GAPPLY** *MORPHISM OBJECT*
 
@@ -816,6 +854,7 @@ examples often given in the specific methods
 
 
 <a id="x-28GEB-2EGENERICS-3AWELL-DEFP-CAT-20GENERIC-FUNCTION-29"></a>
+<a id="GEB.GENERICS:WELL-DEFP-CAT%20GENERIC-FUNCTION"></a>
 
 - [generic-function] **WELL-DEFP-CAT** *MORPHISM*
 
@@ -825,6 +864,7 @@ examples often given in the specific methods
     to the codomain of MCADR
 
 <a id="x-28GEB-2EGENERICS-3AMAYBE-20GENERIC-FUNCTION-29"></a>
+<a id="GEB.GENERICS:MAYBE%20GENERIC-FUNCTION"></a>
 
 - [generic-function] **MAYBE** *OBJECT*
 
@@ -833,6 +873,7 @@ examples often given in the specific methods
     of so1([`0`][5cfe] [`1`][f4ba])
 
 <a id="x-28GEB-2EGENERICS-3ASO-HOM-OBJ-20GENERIC-FUNCTION-29"></a>
+<a id="GEB.GENERICS:SO-HOM-OBJ%20GENERIC-FUNCTION"></a>
 
 - [generic-function] **SO-HOM-OBJ** *OBJECT1 OBJECT2*
 
@@ -840,6 +881,7 @@ examples often given in the specific methods
     (so-hom-obj X Y) representing a set of functions from X to Y
 
 <a id="x-28GEB-2EGENERICS-3ASO-EVAL-20GENERIC-FUNCTION-29"></a>
+<a id="GEB.GENERICS:SO-EVAL%20GENERIC-FUNCTION"></a>
 
 - [generic-function] **SO-EVAL** *OBJECT1 OBJECT2*
 
@@ -847,6 +889,7 @@ examples often given in the specific methods
     (prod (so-hom-obj X Y) X) -> Y
 
 <a id="x-28GEB-2EGENERICS-3AWIDTH-20GENERIC-FUNCTION-29"></a>
+<a id="GEB.GENERICS:WIDTH%20GENERIC-FUNCTION"></a>
 
 - [generic-function] **WIDTH** *OBJECT*
 
@@ -854,6 +897,7 @@ examples often given in the specific methods
     width corresponds the object part of the to-seqn functor.
 
 <a id="x-28GEB-2EGENERICS-3ATO-CIRCUIT-20GENERIC-FUNCTION-29"></a>
+<a id="GEB.GENERICS:TO-CIRCUIT%20GENERIC-FUNCTION"></a>
 
 - [generic-function] **TO-CIRCUIT** *MORPHISM NAME*
 
@@ -861,30 +905,35 @@ examples often given in the specific methods
     the output circuit.
 
 <a id="x-28GEB-2EGENERICS-3ATO-BITC-20GENERIC-FUNCTION-29"></a>
+<a id="GEB.GENERICS:TO-BITC%20GENERIC-FUNCTION"></a>
 
 - [generic-function] **TO-BITC** *MORPHISM*
 
     Turns a given `MORPHISM` into a \[[`GEB.BITC.SPEC:BITC`][e017]\]
 
 <a id="x-28GEB-2EGENERICS-3ATO-SEQN-20GENERIC-FUNCTION-29"></a>
+<a id="GEB.GENERICS:TO-SEQN%20GENERIC-FUNCTION"></a>
 
 - [generic-function] **TO-SEQN** *MORPHISM*
 
     Turns a given `MORPHISM` into a \[[`GEB.SEQN.SPEC:SEQN`][a0cd]\]
 
 <a id="x-28GEB-2EGENERICS-3ATO-POLY-20GENERIC-FUNCTION-29"></a>
+<a id="GEB.GENERICS:TO-POLY%20GENERIC-FUNCTION"></a>
 
 - [generic-function] **TO-POLY** *MORPHISM*
 
     Turns a given `MORPHISM` into a \[[`GEB.POLY.SPEC:POLY`][8bf3]\]
 
 <a id="x-28GEB-2EGENERICS-3ATO-CAT-20GENERIC-FUNCTION-29"></a>
+<a id="GEB.GENERICS:TO-CAT%20GENERIC-FUNCTION"></a>
 
 - [generic-function] **TO-CAT** *CONTEXT TERM*
 
     Turns a `MORPHISM` with a context into Geb's Core category
 
 <a id="x-28GEB-2EGENERICS-3ATO-VAMPIR-20GENERIC-FUNCTION-29"></a>
+<a id="GEB.GENERICS:TO-VAMPIR%20GENERIC-FUNCTION"></a>
 
 - [generic-function] **TO-VAMPIR** *MORPHISM VALUES CONSTRAINTS*
 
@@ -899,6 +948,7 @@ examples often given in the specific methods
     The `CONSTRAINTS` represent constraints that get creating
 
 <a id="x-28GEB-2ESPEC-3A-40GEB-CATEGORIES-20MGL-PAX-3ASECTION-29"></a>
+<a id="GEB.SPEC:@GEB-CATEGORIES%20MGL-PAX:SECTION"></a>
 
 ### 7.3 Core Category
 
@@ -917,6 +967,7 @@ A good example of this category at work can be found within the
 [Booleans][399c] section.
 
 <a id="x-28GEB-2ESPEC-3A-40GEB-SUBSTMU-20MGL-PAX-3ASECTION-29"></a>
+<a id="GEB.SPEC:@GEB-SUBSTMU%20MGL-PAX:SECTION"></a>
 
 #### 7.3.1 Subst Obj
 
@@ -926,10 +977,12 @@ category. Note that [`SUBSTOBJ`][3173] refers to the
 to the \[[open type][4a87]\] that allows for user extension.
 
 <a id="x-28GEB-2ESPEC-3ASUBSTOBJ-20TYPE-29"></a>
+<a id="GEB.SPEC:SUBSTOBJ%20TYPE"></a>
 
 - [type] **SUBSTOBJ**
 
 <a id="x-28GEB-2ESPEC-3A-3CSUBSTOBJ-3E-20CLASS-29"></a>
+<a id="GEB.SPEC:%3CSUBSTOBJ%3E%20CLASS"></a>
 
 - [class] **\<SUBSTOBJ>** *[\<SUBSTMORPH>][db35] [DIRECT-POINTWISE-MIXIN][e2b0] [META-MIXIN][4529] [CAT-OBJ][74bd]*
 
@@ -948,6 +1001,7 @@ type substobj = so0
 
 
 <a id="x-28GEB-2ESPEC-3APROD-20CLASS-29"></a>
+<a id="GEB.SPEC:PROD%20CLASS"></a>
 
 - [class] **PROD** *[\<SUBSTOBJ>][fb79]*
 
@@ -972,6 +1026,7 @@ type substobj = so0
     Here we create a product of two \[[`GEB-BOOL:BOOL`][0ad4]\] types.
 
 <a id="x-28GEB-2ESPEC-3ACOPROD-20CLASS-29"></a>
+<a id="GEB.SPEC:COPROD%20CLASS"></a>
 
 - [class] **COPROD** *[\<SUBSTOBJ>][fb79]*
 
@@ -997,6 +1052,7 @@ type substobj = so0
     values.
 
 <a id="x-28GEB-2ESPEC-3ASO0-20CLASS-29"></a>
+<a id="GEB.SPEC:SO0%20CLASS"></a>
 
 - [class] **SO0** *[\<SUBSTOBJ>][fb79]*
 
@@ -1017,6 +1073,7 @@ type substobj = so0
     `
 
 <a id="x-28GEB-2ESPEC-3ASO1-20CLASS-29"></a>
+<a id="GEB.SPEC:SO1%20CLASS"></a>
 
 - [class] **SO1** *[\<SUBSTOBJ>][fb79]*
 
@@ -1053,22 +1110,27 @@ type substobj = so0
 The [Accessors][cc51] specific to [Subst Obj][c1b3]
 
 <a id="x-28GEB-2EUTILS-3AMCAR-20-28MGL-PAX-3AACCESSOR-20GEB-2ESPEC-3APROD-29-29"></a>
+<a id="GEB.UTILS:MCAR%20%28MGL-PAX:ACCESSOR%20GEB.SPEC:PROD%29"></a>
 
 - [accessor] **MCAR** *PROD (:MCAR)*
 
 <a id="x-28GEB-2EUTILS-3AMCADR-20-28MGL-PAX-3AACCESSOR-20GEB-2ESPEC-3APROD-29-29"></a>
+<a id="GEB.UTILS:MCADR%20%28MGL-PAX:ACCESSOR%20GEB.SPEC:PROD%29"></a>
 
 - [accessor] **MCADR** *PROD (:MCADR)*
 
 <a id="x-28GEB-2EUTILS-3AMCAR-20-28MGL-PAX-3AACCESSOR-20GEB-2ESPEC-3ACOPROD-29-29"></a>
+<a id="GEB.UTILS:MCAR%20%28MGL-PAX:ACCESSOR%20GEB.SPEC:COPROD%29"></a>
 
 - [accessor] **MCAR** *COPROD (:MCAR)*
 
 <a id="x-28GEB-2EUTILS-3AMCADR-20-28MGL-PAX-3AACCESSOR-20GEB-2ESPEC-3ACOPROD-29-29"></a>
+<a id="GEB.UTILS:MCADR%20%28MGL-PAX:ACCESSOR%20GEB.SPEC:COPROD%29"></a>
 
 - [accessor] **MCADR** *COPROD (:MCADR)*
 
 <a id="x-28GEB-2ESPEC-3A-40GEB-SUBSTMORPH-20MGL-PAX-3ASECTION-29"></a>
+<a id="GEB.SPEC:@GEB-SUBSTMORPH%20MGL-PAX:SECTION"></a>
 
 #### 7.3.2 Subst Morph
 
@@ -1078,12 +1140,14 @@ category. Note that [`SUBSTMORPH`][57dc] refers to the
 to the \[[open type][4a87]\] that allows for user extension.
 
 <a id="x-28GEB-2ESPEC-3ASUBSTMORPH-20TYPE-29"></a>
+<a id="GEB.SPEC:SUBSTMORPH%20TYPE"></a>
 
 - [type] **SUBSTMORPH**
 
     The morphisms of the [`SUBSTMORPH`][57dc] category
 
 <a id="x-28GEB-2ESPEC-3A-3CSUBSTMORPH-3E-20CLASS-29"></a>
+<a id="GEB.SPEC:%3CSUBSTMORPH%3E%20CLASS"></a>
 
 - [class] **\<SUBSTMORPH>** *[DIRECT-POINTWISE-MIXIN][e2b0] [META-MIXIN][4529] [CAT-MORPH][a7af]*
 
@@ -1113,6 +1177,7 @@ we can view this as automatically lifting a [`SUBSTOBJ`][3173] into a
 [`SUBSTMORPH`][57dc]
 
 <a id="x-28GEB-2ESPEC-3ACOMP-20CLASS-29"></a>
+<a id="GEB.SPEC:COMP%20CLASS"></a>
 
 - [class] **COMP** *[\<SUBSTMORPH>][db35]*
 
@@ -1161,6 +1226,7 @@ we can view this as automatically lifting a [`SUBSTOBJ`][3173] into a
 
 
 <a id="x-28GEB-2ESPEC-3ACASE-20CLASS-29"></a>
+<a id="GEB.SPEC:CASE%20CLASS"></a>
 
 - [class] **CASE** *[\<SUBSTMORPH>][db35]*
 
@@ -1194,6 +1260,7 @@ we can view this as automatically lifting a [`SUBSTOBJ`][3173] into a
     then give us True, otherwise flip the value of the boolean coming in.
 
 <a id="x-28GEB-2ESPEC-3AINIT-20CLASS-29"></a>
+<a id="GEB.SPEC:INIT%20CLASS"></a>
 
 - [class] **INIT** *[\<SUBSTMORPH>][db35]*
 
@@ -1219,6 +1286,7 @@ we can view this as automatically lifting a [`SUBSTOBJ`][3173] into a
     In this example we are creating a unit value out of void.
 
 <a id="x-28GEB-2ESPEC-3ATERMINAL-20CLASS-29"></a>
+<a id="GEB.SPEC:TERMINAL%20CLASS"></a>
 
 - [class] **TERMINAL** *[\<SUBSTMORPH>][db35]*
 
@@ -1257,6 +1325,7 @@ we can view this as automatically lifting a [`SUBSTOBJ`][3173] into a
     The fourth example is taking a \[`GEB-BOOL:BOOL`\] and returning \[[`GEB-BOOL:TRUE`][f022]\].
 
 <a id="x-28GEB-2ESPEC-3APAIR-20CLASS-29"></a>
+<a id="GEB.SPEC:PAIR%20CLASS"></a>
 
 - [class] **PAIR** *[\<SUBSTMORPH>][db35]*
 
@@ -1288,12 +1357,14 @@ we can view this as automatically lifting a [`SUBSTOBJ`][3173] into a
     projects back the `GEB-BOOL:BOOL` field as the second values.
 
 <a id="x-28GEB-2ESPEC-3ADISTRIBUTE-20CLASS-29"></a>
+<a id="GEB.SPEC:DISTRIBUTE%20CLASS"></a>
 
 - [class] **DISTRIBUTE** *[\<SUBSTMORPH>][db35]*
 
     The distributive law
 
 <a id="x-28GEB-2ESPEC-3AINJECT-LEFT-20CLASS-29"></a>
+<a id="GEB.SPEC:INJECT-LEFT%20CLASS"></a>
 
 - [class] **INJECT-LEFT** *[\<SUBSTMORPH>][db35]*
 
@@ -1328,6 +1399,7 @@ we can view this as automatically lifting a [`SUBSTOBJ`][3173] into a
     otherwise flip the value of the boolean coming in.
 
 <a id="x-28GEB-2ESPEC-3AINJECT-RIGHT-20CLASS-29"></a>
+<a id="GEB.SPEC:INJECT-RIGHT%20CLASS"></a>
 
 - [class] **INJECT-RIGHT** *[\<SUBSTMORPH>][db35]*
 
@@ -1362,6 +1434,7 @@ we can view this as automatically lifting a [`SUBSTOBJ`][3173] into a
     then give us True, otherwise flip the value of the boolean coming in.
 
 <a id="x-28GEB-2ESPEC-3APROJECT-LEFT-20CLASS-29"></a>
+<a id="GEB.SPEC:PROJECT-LEFT%20CLASS"></a>
 
 - [class] **PROJECT-LEFT** *[\<SUBSTMORPH>][db35]*
 
@@ -1392,6 +1465,7 @@ we can view this as automatically lifting a [`SUBSTOBJ`][3173] into a
     ([`GEB-BOOL:BOOL`][0ad4] [×][06c6] [`SO1`][5cfe] [×][06c6] \[`GEB-BOOL:BOOL`\])
 
 <a id="x-28GEB-2ESPEC-3APROJECT-RIGHT-20CLASS-29"></a>
+<a id="GEB.SPEC:PROJECT-RIGHT%20CLASS"></a>
 
 - [class] **PROJECT-RIGHT** *[\<SUBSTMORPH>][db35]*
 
@@ -1423,102 +1497,123 @@ we can view this as automatically lifting a [`SUBSTOBJ`][3173] into a
     ([`GEB-BOOL:BOOL`][0ad4] [×][06c6] [`SO1`][5cfe] [×][06c6] \[`GEB-BOOL:BOOL`\])
 
 <a id="x-28GEB-2ESPEC-3AFUNCTOR-20CLASS-29"></a>
+<a id="GEB.SPEC:FUNCTOR%20CLASS"></a>
 
 - [class] **FUNCTOR** *[\<SUBSTMORPH>][db35]*
 
 The [Accessors][cc51] specific to [Subst Morph][d2d1]
 
 <a id="x-28GEB-2EUTILS-3AMCAR-20-28MGL-PAX-3AACCESSOR-20GEB-2ESPEC-3ACOMP-29-29"></a>
+<a id="GEB.UTILS:MCAR%20%28MGL-PAX:ACCESSOR%20GEB.SPEC:COMP%29"></a>
 
 - [accessor] **MCAR** *COMP (:MCAR)*
 
     The first composed morphism
 
 <a id="x-28GEB-2EUTILS-3AMCADR-20-28MGL-PAX-3AACCESSOR-20GEB-2ESPEC-3ACOMP-29-29"></a>
+<a id="GEB.UTILS:MCADR%20%28MGL-PAX:ACCESSOR%20GEB.SPEC:COMP%29"></a>
 
 - [accessor] **MCADR** *COMP (:MCADR)*
 
     the second morphism
 
 <a id="x-28GEB-2EUTILS-3AOBJ-20-28MGL-PAX-3AACCESSOR-20GEB-2ESPEC-3AINIT-29-29"></a>
+<a id="GEB.UTILS:OBJ%20%28MGL-PAX:ACCESSOR%20GEB.SPEC:INIT%29"></a>
 
 - [accessor] **OBJ** *INIT (:OBJ)*
 
 <a id="x-28GEB-2EUTILS-3AOBJ-20-28MGL-PAX-3AACCESSOR-20GEB-2ESPEC-3AINIT-29-29"></a>
+<a id="GEB.UTILS:OBJ%20%28MGL-PAX:ACCESSOR%20GEB.SPEC:INIT%29"></a>
 
 - [accessor] **OBJ** *INIT (:OBJ)*
 
 <a id="x-28GEB-2EUTILS-3AMCAR-20-28MGL-PAX-3AACCESSOR-20GEB-2ESPEC-3ACASE-29-29"></a>
+<a id="GEB.UTILS:MCAR%20%28MGL-PAX:ACCESSOR%20GEB.SPEC:CASE%29"></a>
 
 - [accessor] **MCAR** *CASE (:MCAR)*
 
     The morphism that gets applied on the left coproduct
 
 <a id="x-28GEB-2EUTILS-3AMCADR-20-28MGL-PAX-3AACCESSOR-20GEB-2ESPEC-3ACASE-29-29"></a>
+<a id="GEB.UTILS:MCADR%20%28MGL-PAX:ACCESSOR%20GEB.SPEC:CASE%29"></a>
 
 - [accessor] **MCADR** *CASE (:MCADR)*
 
     The morphism that gets applied on the right coproduct
 
 <a id="x-28GEB-2EUTILS-3AMCAR-20-28MGL-PAX-3AACCESSOR-20GEB-2ESPEC-3APAIR-29-29"></a>
+<a id="GEB.UTILS:MCAR%20%28MGL-PAX:ACCESSOR%20GEB.SPEC:PAIR%29"></a>
 
 - [accessor] **MCAR** *PAIR (:MCAR)*
 
     The left morphism
 
 <a id="x-28GEB-2EUTILS-3AMCDR-20-28MGL-PAX-3AACCESSOR-20GEB-2ESPEC-3APAIR-29-29"></a>
+<a id="GEB.UTILS:MCDR%20%28MGL-PAX:ACCESSOR%20GEB.SPEC:PAIR%29"></a>
 
 - [accessor] **MCDR** *PAIR (:MCDR)*
 
     The right morphism
 
 <a id="x-28GEB-2EUTILS-3AMCAR-20-28MGL-PAX-3AACCESSOR-20GEB-2ESPEC-3ADISTRIBUTE-29-29"></a>
+<a id="GEB.UTILS:MCAR%20%28MGL-PAX:ACCESSOR%20GEB.SPEC:DISTRIBUTE%29"></a>
 
 - [accessor] **MCAR** *DISTRIBUTE (:MCAR)*
 
 <a id="x-28GEB-2EUTILS-3AMCADR-20-28MGL-PAX-3AACCESSOR-20GEB-2ESPEC-3ADISTRIBUTE-29-29"></a>
+<a id="GEB.UTILS:MCADR%20%28MGL-PAX:ACCESSOR%20GEB.SPEC:DISTRIBUTE%29"></a>
 
 - [accessor] **MCADR** *DISTRIBUTE (:MCADR)*
 
 <a id="x-28GEB-2EUTILS-3AMCADDR-20-28MGL-PAX-3AACCESSOR-20GEB-2ESPEC-3ADISTRIBUTE-29-29"></a>
+<a id="GEB.UTILS:MCADDR%20%28MGL-PAX:ACCESSOR%20GEB.SPEC:DISTRIBUTE%29"></a>
 
 - [accessor] **MCADDR** *DISTRIBUTE (:MCADDR)*
 
 <a id="x-28GEB-2EUTILS-3AMCAR-20-28MGL-PAX-3AACCESSOR-20GEB-2ESPEC-3AINJECT-LEFT-29-29"></a>
+<a id="GEB.UTILS:MCAR%20%28MGL-PAX:ACCESSOR%20GEB.SPEC:INJECT-LEFT%29"></a>
 
 - [accessor] **MCAR** *INJECT-LEFT (:MCAR)*
 
 <a id="x-28GEB-2EUTILS-3AMCADR-20-28MGL-PAX-3AACCESSOR-20GEB-2ESPEC-3AINJECT-LEFT-29-29"></a>
+<a id="GEB.UTILS:MCADR%20%28MGL-PAX:ACCESSOR%20GEB.SPEC:INJECT-LEFT%29"></a>
 
 - [accessor] **MCADR** *INJECT-LEFT (:MCADR)*
 
 <a id="x-28GEB-2EUTILS-3AMCAR-20-28MGL-PAX-3AACCESSOR-20GEB-2ESPEC-3AINJECT-RIGHT-29-29"></a>
+<a id="GEB.UTILS:MCAR%20%28MGL-PAX:ACCESSOR%20GEB.SPEC:INJECT-RIGHT%29"></a>
 
 - [accessor] **MCAR** *INJECT-RIGHT (:MCAR)*
 
 <a id="x-28GEB-2EUTILS-3AMCADR-20-28MGL-PAX-3AACCESSOR-20GEB-2ESPEC-3AINJECT-RIGHT-29-29"></a>
+<a id="GEB.UTILS:MCADR%20%28MGL-PAX:ACCESSOR%20GEB.SPEC:INJECT-RIGHT%29"></a>
 
 - [accessor] **MCADR** *INJECT-RIGHT (:MCADR)*
 
 <a id="x-28GEB-2EUTILS-3AMCAR-20-28MGL-PAX-3AACCESSOR-20GEB-2ESPEC-3APROJECT-LEFT-29-29"></a>
+<a id="GEB.UTILS:MCAR%20%28MGL-PAX:ACCESSOR%20GEB.SPEC:PROJECT-LEFT%29"></a>
 
 - [accessor] **MCAR** *PROJECT-LEFT (:MCAR)*
 
 <a id="x-28GEB-2EUTILS-3AMCADR-20-28MGL-PAX-3AACCESSOR-20GEB-2ESPEC-3APROJECT-LEFT-29-29"></a>
+<a id="GEB.UTILS:MCADR%20%28MGL-PAX:ACCESSOR%20GEB.SPEC:PROJECT-LEFT%29"></a>
 
 - [accessor] **MCADR** *PROJECT-LEFT (:MCADR)*
 
 <a id="x-28GEB-2EUTILS-3AMCAR-20-28MGL-PAX-3AACCESSOR-20GEB-2ESPEC-3APROJECT-RIGHT-29-29"></a>
+<a id="GEB.UTILS:MCAR%20%28MGL-PAX:ACCESSOR%20GEB.SPEC:PROJECT-RIGHT%29"></a>
 
 - [accessor] **MCAR** *PROJECT-RIGHT (:MCAR)*
 
 <a id="x-28GEB-2EUTILS-3AMCADR-20-28MGL-PAX-3AACCESSOR-20GEB-2ESPEC-3APROJECT-RIGHT-29-29"></a>
+<a id="GEB.UTILS:MCADR%20%28MGL-PAX:ACCESSOR%20GEB.SPEC:PROJECT-RIGHT%29"></a>
 
 - [accessor] **MCADR** *PROJECT-RIGHT (:MCADR)*
 
     Right projection (product elimination)
 
 <a id="x-28GEB-2ESPEC-3A-40GEB-REALIZED-20MGL-PAX-3ASECTION-29"></a>
+<a id="GEB.SPEC:@GEB-REALIZED%20MGL-PAX:SECTION"></a>
 
 #### 7.3.3 Realized Subst Objs
 
@@ -1544,6 +1639,7 @@ type realized-object = so0
 
 
 <a id="x-28GEB-2ESPEC-3AREALIZED-OBJECT-20TYPE-29"></a>
+<a id="GEB.SPEC:REALIZED-OBJECT%20TYPE"></a>
 
 - [type] **REALIZED-OBJECT**
 
@@ -1556,22 +1652,27 @@ type realized-object = so0
     Lastly [`SO1`][5cfe] and [`SO0`][5c7c] represent the proper class
 
 <a id="x-28GEB-2ESPEC-3ALEFT-20CLASS-29"></a>
+<a id="GEB.SPEC:LEFT%20CLASS"></a>
 
 - [class] **LEFT** *[DIRECT-POINTWISE-MIXIN][e2b0]*
 
 <a id="x-28GEB-2ESPEC-3ARIGHT-20CLASS-29"></a>
+<a id="GEB.SPEC:RIGHT%20CLASS"></a>
 
 - [class] **RIGHT** *[DIRECT-POINTWISE-MIXIN][e2b0]*
 
 <a id="x-28GEB-2ESPEC-3ALEFT-20FUNCTION-29"></a>
+<a id="GEB.SPEC:LEFT%20FUNCTION"></a>
 
 - [function] **LEFT** *OBJ*
 
 <a id="x-28GEB-2ESPEC-3ARIGHT-20FUNCTION-29"></a>
+<a id="GEB.SPEC:RIGHT%20FUNCTION"></a>
 
 - [function] **RIGHT** *OBJ*
 
 <a id="x-28GEB-2EUTILS-3A-40GEB-ACCESSORS-20MGL-PAX-3ASECTION-29"></a>
+<a id="GEB.UTILS:@GEB-ACCESSORS%20MGL-PAX:SECTION"></a>
 
 ### 7.4 Accessors
 
@@ -1581,87 +1682,100 @@ defined, where the names are not known, then these accessors are
 likely to be used. They may even augment existing classes.
 
 <a id="x-28GEB-2EUTILS-3AMCAR-20GENERIC-FUNCTION-29"></a>
+<a id="GEB.UTILS:MCAR%20GENERIC-FUNCTION"></a>
 
-- [generic-function] **MCAR** *X*
+- [generic-function] **MCAR** *OBJ*
 
     Can be seen as calling [`CAR`][d5a2] on a generic CLOS
     [object](http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_o.htm#object)
 
 <a id="x-28GEB-2EUTILS-3AMCADR-20GENERIC-FUNCTION-29"></a>
+<a id="GEB.UTILS:MCADR%20GENERIC-FUNCTION"></a>
 
-- [generic-function] **MCADR** *X*
+- [generic-function] **MCADR** *OBJ*
 
     like [`MCAR`][f1ce] but for the [`CADR`][caea]
 
 <a id="x-28GEB-2EUTILS-3AMCADDR-20GENERIC-FUNCTION-29"></a>
+<a id="GEB.UTILS:MCADDR%20GENERIC-FUNCTION"></a>
 
-- [generic-function] **MCADDR** *X*
+- [generic-function] **MCADDR** *OBJ*
 
     like [`MCAR`][f1ce] but for the [`CADDR`][57e1]
 
 <a id="x-28GEB-2EUTILS-3AMCADDDR-20GENERIC-FUNCTION-29"></a>
+<a id="GEB.UTILS:MCADDDR%20GENERIC-FUNCTION"></a>
 
 - [generic-function] **MCADDDR** *OBJ*
 
     like [`MCAR`][f1ce] but for the [`CADDDR`][47d6]
 
 <a id="x-28GEB-2EUTILS-3AMCDR-20GENERIC-FUNCTION-29"></a>
+<a id="GEB.UTILS:MCDR%20GENERIC-FUNCTION"></a>
 
-- [generic-function] **MCDR** *X*
+- [generic-function] **MCDR** *OBJ*
 
     Similar to [`MCAR`][f1ce], however acts like a [`CDR`][e012] for
     \[classes\] that we wish to view as a [`SEQUENCE`][ae23]
 
 <a id="x-28GEB-2EUTILS-3AOBJ-20GENERIC-FUNCTION-29"></a>
+<a id="GEB.UTILS:OBJ%20GENERIC-FUNCTION"></a>
 
-- [generic-function] **OBJ** *X*
+- [generic-function] **OBJ** *OBJ*
 
     Grabs the underlying
     [object](http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_o.htm#object)
 
 <a id="x-28GEB-2EUTILS-3ANAME-20GENERIC-FUNCTION-29"></a>
+<a id="GEB.UTILS:NAME%20GENERIC-FUNCTION"></a>
 
-- [generic-function] **NAME** *X*
+- [generic-function] **NAME** *OBJ*
 
     the name of the given
     [object](http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_o.htm#object)
 
 <a id="x-28GEB-2EUTILS-3AFUNC-20GENERIC-FUNCTION-29"></a>
+<a id="GEB.UTILS:FUNC%20GENERIC-FUNCTION"></a>
 
-- [generic-function] **FUNC** *X*
+- [generic-function] **FUNC** *OBJ*
 
     the function of the
     [object](http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_o.htm#object)
 
 <a id="x-28GEB-2EUTILS-3APREDICATE-20GENERIC-FUNCTION-29"></a>
+<a id="GEB.UTILS:PREDICATE%20GENERIC-FUNCTION"></a>
 
-- [generic-function] **PREDICATE** *X*
+- [generic-function] **PREDICATE** *OBJ*
 
     the `PREDICATE` of the
     [object](http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_o.htm#object)
 
 <a id="x-28GEB-2EUTILS-3ATHEN-20GENERIC-FUNCTION-29"></a>
+<a id="GEB.UTILS:THEN%20GENERIC-FUNCTION"></a>
 
-- [generic-function] **THEN** *X*
+- [generic-function] **THEN** *OBJ*
 
     the then branch of the
     [object](http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_o.htm#object)
 
 <a id="x-28GEB-2EUTILS-3AELSE-20GENERIC-FUNCTION-29"></a>
+<a id="GEB.UTILS:ELSE%20GENERIC-FUNCTION"></a>
 
-- [generic-function] **ELSE** *X*
+- [generic-function] **ELSE** *OBJ*
 
     the then branch of the
     [object](http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_o.htm#object)
 
 <a id="x-28GEB-2EUTILS-3ACODE-20GENERIC-FUNCTION-29"></a>
+<a id="GEB.UTILS:CODE%20GENERIC-FUNCTION"></a>
 
-- [generic-function] **CODE** *X*
+- [generic-function] **CODE** *OBJ*
 
     the code of the
     [object](http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_o.htm#object)
 
 <a id="x-28GEB-2ESPEC-3A-40GEB-CONSTRUCTORS-20MGL-PAX-3ASECTION-29"></a>
+<a id="GEB.SPEC:@GEB-CONSTRUCTORS%20MGL-PAX:SECTION"></a>
 
 ### 7.5 Constructors
 
@@ -1670,12 +1784,14 @@ The API for creating GEB terms. All the functions and variables
 here relate to instantiating a term
 
 <a id="x-28GEB-2ESPEC-3A-2ASO0-2A-20VARIABLE-29"></a>
+<a id="GEB.SPEC:*SO0*%20VARIABLE"></a>
 
 - [variable] **\*SO0\*** *s-0*
 
     The Initial Object
 
 <a id="x-28GEB-2ESPEC-3A-2ASO1-2A-20VARIABLE-29"></a>
+<a id="GEB.SPEC:*SO1*%20VARIABLE"></a>
 
 - [variable] **\*SO1\*** *s-1*
 
@@ -1684,64 +1800,77 @@ here relate to instantiating a term
 More Ergonomic API variants for [`*SO0*`][e982] and [`*SO1*`][b960]
 
 <a id="x-28GEB-2ESPEC-3ASO0-20MGL-PAX-3ASYMBOL-MACRO-29"></a>
+<a id="GEB.SPEC:SO0%20MGL-PAX:SYMBOL-MACRO"></a>
 
 - [symbol-macro] **SO0**
 
 <a id="x-28GEB-2ESPEC-3ASO1-20MGL-PAX-3ASYMBOL-MACRO-29"></a>
+<a id="GEB.SPEC:SO1%20MGL-PAX:SYMBOL-MACRO"></a>
 
 - [symbol-macro] **SO1**
 
 <a id="x-28GEB-2ESPEC-3AALIAS-20MGL-PAX-3AMACRO-29"></a>
+<a id="GEB.SPEC:ALIAS%20MGL-PAX:MACRO"></a>
 
 - [macro] **ALIAS** *NAME OBJ*
 
 <a id="x-28GEB-2ESPEC-3AMAKE-ALIAS-20FUNCTION-29"></a>
+<a id="GEB.SPEC:MAKE-ALIAS%20FUNCTION"></a>
 
 - [function] **MAKE-ALIAS** *&KEY NAME OBJ*
 
 <a id="x-28GEB-2ESPEC-3AHAS-ALIASP-20FUNCTION-29"></a>
+<a id="GEB.SPEC:HAS-ALIASP%20FUNCTION"></a>
 
 - [function] **HAS-ALIASP** *OBJ*
 
 <a id="x-28GEB-2ESPEC-3A-3C-LEFT-20FUNCTION-29"></a>
+<a id="GEB.SPEC:%3C-LEFT%20FUNCTION"></a>
 
 - [function] **\<-LEFT** *MCAR MCADR*
 
     projects left constructor
 
 <a id="x-28GEB-2ESPEC-3A-3C-RIGHT-20FUNCTION-29"></a>
+<a id="GEB.SPEC:%3C-RIGHT%20FUNCTION"></a>
 
 - [function] **\<-RIGHT** *MCAR MCADR*
 
     projects right constructor
 
 <a id="x-28GEB-2ESPEC-3A--3ELEFT-20FUNCTION-29"></a>
+<a id="GEB.SPEC:-%3ELEFT%20FUNCTION"></a>
 
 - [function] **->LEFT** *MCAR MCADR*
 
     injects left constructor
 
 <a id="x-28GEB-2ESPEC-3A--3ERIGHT-20FUNCTION-29"></a>
+<a id="GEB.SPEC:-%3ERIGHT%20FUNCTION"></a>
 
 - [function] **->RIGHT** *MCAR MCADR*
 
     injects right constructor
 
 <a id="x-28GEB-2ESPEC-3AMCASE-20FUNCTION-29"></a>
+<a id="GEB.SPEC:MCASE%20FUNCTION"></a>
 
 - [function] **MCASE** *MCAR MCADR*
 
 <a id="x-28GEB-2ESPEC-3AMAKE-FUNCTOR-20FUNCTION-29"></a>
+<a id="GEB.SPEC:MAKE-FUNCTOR%20FUNCTION"></a>
 
 - [function] **MAKE-FUNCTOR** *&KEY OBJ FUNC*
 
 <a id="x-28GEB-3A-40GEB-API-20MGL-PAX-3ASECTION-29"></a>
+<a id="GEB:@GEB-API%20MGL-PAX:SECTION"></a>
 
 ### 7.6 API
 
 Various forms and structures built on-top of [Core Category][cb9e]
 
 <a id="x-28GEB-2EGENERICS-3AGAPPLY-20-28METHOD-20NIL-20-28GEB-2ESPEC-3A-3CSUBSTMORPH-3E-20T-29-29-29"></a>
+<a id="GEB.GENERICS:GAPPLY%20%28METHOD%20NIL%20%28GEB.SPEC:%3CSUBSTMORPH%3E%20T%29%29"></a>
 
 - [method] **GAPPLY** *(MORPH \<SUBSTMORPH>) OBJECT*
 
@@ -1786,6 +1915,7 @@ Various forms and structures built on-top of [Core Category][cb9e]
 
 
 <a id="x-28GEB-2EGENERICS-3AGAPPLY-20-28METHOD-20NIL-20-28GEB-2EEXTENSION-2ESPEC-3AOPAQUE-MORPH-20T-29-29-29"></a>
+<a id="GEB.GENERICS:GAPPLY%20%28METHOD%20NIL%20%28GEB.EXTENSION.SPEC:OPAQUE-MORPH%20T%29%29"></a>
 
 - [method] **GAPPLY** *(MORPH OPAQUE-MORPH) OBJECT*
 
@@ -1800,6 +1930,7 @@ Various forms and structures built on-top of [Core Category][cb9e]
     `
 
 <a id="x-28GEB-2EGENERICS-3AGAPPLY-20-28METHOD-20NIL-20-28GEB-2EEXTENSION-2ESPEC-3AOPAQUE-20T-29-29-29"></a>
+<a id="GEB.GENERICS:GAPPLY%20%28METHOD%20NIL%20%28GEB.EXTENSION.SPEC:OPAQUE%20T%29%29"></a>
 
 - [method] **GAPPLY** *(MORPH OPAQUE) OBJECT*
 
@@ -1810,18 +1941,22 @@ Various forms and structures built on-top of [Core Category][cb9e]
     is likely just an object
 
 <a id="x-28GEB-2EGENERICS-3AWELL-DEFP-CAT-20-28METHOD-20NIL-20-28GEB-2ESPEC-3A-3CSUBSTMORPH-3E-29-29-29"></a>
+<a id="GEB.GENERICS:WELL-DEFP-CAT%20%28METHOD%20NIL%20%28GEB.SPEC:%3CSUBSTMORPH%3E%29%29"></a>
 
 - [method] **WELL-DEFP-CAT** *(MORPH \<SUBSTMORPH>)*
 
 <a id="x-28GEB-2EGENERICS-3AWELL-DEFP-CAT-20-28METHOD-20NIL-20-28GEB-2EEXTENSION-2ESPEC-3A-3CNATMORPH-3E-29-29-29"></a>
+<a id="GEB.GENERICS:WELL-DEFP-CAT%20%28METHOD%20NIL%20%28GEB.EXTENSION.SPEC:%3CNATMORPH%3E%29%29"></a>
 
 - [method] **WELL-DEFP-CAT** *(MORPH \<NATMORPH>)*
 
 <a id="x-28GEB-2EGENERICS-3AWELL-DEFP-CAT-20-28METHOD-20NIL-20-28GEB-2EEXTENSION-2ESPEC-3A-3CNATOBJ-3E-29-29-29"></a>
+<a id="GEB.GENERICS:WELL-DEFP-CAT%20%28METHOD%20NIL%20%28GEB.EXTENSION.SPEC:%3CNATOBJ%3E%29%29"></a>
 
 - [method] **WELL-DEFP-CAT** *(MORPH \<NATOBJ>)*
 
 <a id="x-28GEB-BOOL-3A-40GEB-BOOL-20MGL-PAX-3ASECTION-29"></a>
+<a id="GEB-BOOL:@GEB-BOOL%20MGL-PAX:SECTION"></a>
 
 #### 7.6.1 Booleans
 
@@ -1845,38 +1980,47 @@ We likewise define it with coproducts
 The functions given work on this.
 
 <a id="x-28GEB-BOOL-3ATRUE-20MGL-PAX-3ASYMBOL-MACRO-29"></a>
+<a id="GEB-BOOL:TRUE%20MGL-PAX:SYMBOL-MACRO"></a>
 
 - [symbol-macro] **TRUE**
 
 <a id="x-28GEB-BOOL-3AFALSE-20MGL-PAX-3ASYMBOL-MACRO-29"></a>
+<a id="GEB-BOOL:FALSE%20MGL-PAX:SYMBOL-MACRO"></a>
 
 - [symbol-macro] **FALSE**
 
 <a id="x-28GEB-BOOL-3AFALSE-OBJ-20MGL-PAX-3ASYMBOL-MACRO-29"></a>
+<a id="GEB-BOOL:FALSE-OBJ%20MGL-PAX:SYMBOL-MACRO"></a>
 
 - [symbol-macro] **FALSE-OBJ**
 
 <a id="x-28GEB-BOOL-3ATRUE-OBJ-20MGL-PAX-3ASYMBOL-MACRO-29"></a>
+<a id="GEB-BOOL:TRUE-OBJ%20MGL-PAX:SYMBOL-MACRO"></a>
 
 - [symbol-macro] **TRUE-OBJ**
 
 <a id="x-28GEB-BOOL-3ABOOL-20MGL-PAX-3ASYMBOL-MACRO-29"></a>
+<a id="GEB-BOOL:BOOL%20MGL-PAX:SYMBOL-MACRO"></a>
 
 - [symbol-macro] **BOOL**
 
 <a id="x-28GEB-BOOL-3ANOT-20MGL-PAX-3ASYMBOL-MACRO-29"></a>
+<a id="GEB-BOOL:NOT%20MGL-PAX:SYMBOL-MACRO"></a>
 
 - [symbol-macro] **NOT**
 
 <a id="x-28GEB-BOOL-3AAND-20MGL-PAX-3ASYMBOL-MACRO-29"></a>
+<a id="GEB-BOOL:AND%20MGL-PAX:SYMBOL-MACRO"></a>
 
 - [symbol-macro] **AND**
 
 <a id="x-28GEB-BOOL-3AOR-20MGL-PAX-3ASYMBOL-MACRO-29"></a>
+<a id="GEB-BOOL:OR%20MGL-PAX:SYMBOL-MACRO"></a>
 
 - [symbol-macro] **OR**
 
 <a id="x-28GEB-LIST-3A-40GEB-LIST-20MGL-PAX-3ASECTION-29"></a>
+<a id="GEB-LIST:@GEB-LIST%20MGL-PAX:SECTION"></a>
 
 #### 7.6.2 Lists
 
@@ -1907,42 +2051,52 @@ We likewise define it with coproducts, with the recursive type being opaque
 The functions given work on this.
 
 <a id="x-28GEB-LIST-3A-2ANIL-2A-20VARIABLE-29"></a>
+<a id="GEB-LIST:*NIL*%20VARIABLE"></a>
 
 - [variable] **\*NIL\*** *NIL*
 
 <a id="x-28GEB-LIST-3A-2ACONS-TYPE-2A-20VARIABLE-29"></a>
+<a id="GEB-LIST:*CONS-TYPE*%20VARIABLE"></a>
 
 - [variable] **\*CONS-TYPE\*** *CONS*
 
 <a id="x-28GEB-LIST-3A-2ALIST-2A-20VARIABLE-29"></a>
+<a id="GEB-LIST:*LIST*%20VARIABLE"></a>
 
 - [variable] **\*LIST\*** *LIST*
 
 <a id="x-28GEB-LIST-3A-2ACAR-2A-20VARIABLE-29"></a>
+<a id="GEB-LIST:*CAR*%20VARIABLE"></a>
 
 - [variable] **\*CAR\*** *CAR*
 
 <a id="x-28GEB-LIST-3A-2ACONS-2A-20VARIABLE-29"></a>
+<a id="GEB-LIST:*CONS*%20VARIABLE"></a>
 
 - [variable] **\*CONS\*** *CONS-Μ*
 
 <a id="x-28GEB-LIST-3A-2ACDR-2A-20VARIABLE-29"></a>
+<a id="GEB-LIST:*CDR*%20VARIABLE"></a>
 
 - [variable] **\*CDR\*** *CDR*
 
 <a id="x-28GEB-LIST-3ACONS--3ELIST-20MGL-PAX-3ASYMBOL-MACRO-29"></a>
+<a id="GEB-LIST:CONS-%3ELIST%20MGL-PAX:SYMBOL-MACRO"></a>
 
 - [symbol-macro] **CONS->LIST**
 
 <a id="x-28GEB-LIST-3ANIL--3ELIST-20MGL-PAX-3ASYMBOL-MACRO-29"></a>
+<a id="GEB-LIST:NIL-%3ELIST%20MGL-PAX:SYMBOL-MACRO"></a>
 
 - [symbol-macro] **NIL->LIST**
 
 <a id="x-28GEB-LIST-3A-2ACANONICAL-CONS-TYPE-2A-20VARIABLE-29"></a>
+<a id="GEB-LIST:*CANONICAL-CONS-TYPE*%20VARIABLE"></a>
 
 - [variable] **\*CANONICAL-CONS-TYPE\*** *CONS*
 
 <a id="x-28GEB-2ETRANS-3A-40GEB-TRANSLATION-20MGL-PAX-3ASECTION-29"></a>
+<a id="GEB.TRANS:@GEB-TRANSLATION%20MGL-PAX:SECTION"></a>
 
 #### 7.6.3 Translation Functions
 
@@ -1951,40 +2105,48 @@ These cover various conversions from [Subst Morph][d2d1] and [Subst Obj][c1b3]
 into other categorical data structures.
 
 <a id="x-28GEB-2EGENERICS-3ATO-POLY-20-28METHOD-20NIL-20-28GEB-2ESPEC-3A-3CSUBSTOBJ-3E-29-29-29"></a>
+<a id="GEB.GENERICS:TO-POLY%20%28METHOD%20NIL%20%28GEB.SPEC:%3CSUBSTOBJ%3E%29%29"></a>
 
 - [method] **TO-POLY** *(OBJ \<SUBSTOBJ>)*
 
 <a id="x-28GEB-2EGENERICS-3ATO-POLY-20-28METHOD-20NIL-20-28GEB-2ESPEC-3A-3CSUBSTMORPH-3E-29-29-29"></a>
+<a id="GEB.GENERICS:TO-POLY%20%28METHOD%20NIL%20%28GEB.SPEC:%3CSUBSTMORPH%3E%29%29"></a>
 
 - [method] **TO-POLY** *(OBJ \<SUBSTMORPH>)*
 
 <a id="x-28GEB-2EGENERICS-3ATO-CIRCUIT-20-28METHOD-20NIL-20-28GEB-2ESPEC-3A-3CSUBSTMORPH-3E-20T-29-29-29"></a>
+<a id="GEB.GENERICS:TO-CIRCUIT%20%28METHOD%20NIL%20%28GEB.SPEC:%3CSUBSTMORPH%3E%20T%29%29"></a>
 
 - [method] **TO-CIRCUIT** *(OBJ \<SUBSTMORPH>) NAME*
 
     Turns a [Subst Morph][d2d1] to a Vamp-IR Term
 
 <a id="x-28GEB-2EGENERICS-3ATO-BITC-20-28METHOD-20NIL-20-28GEB-2ESPEC-3A-3CSUBSTMORPH-3E-29-29-29"></a>
+<a id="GEB.GENERICS:TO-BITC%20%28METHOD%20NIL%20%28GEB.SPEC:%3CSUBSTMORPH%3E%29%29"></a>
 
 - [method] **TO-BITC** *(OBJ \<SUBSTMORPH>)*
 
 <a id="x-28GEB-2EGENERICS-3ATO-SEQN-20-28METHOD-20NIL-20-28GEB-2ESPEC-3A-3CSUBSTOBJ-3E-29-29-29"></a>
+<a id="GEB.GENERICS:TO-SEQN%20%28METHOD%20NIL%20%28GEB.SPEC:%3CSUBSTOBJ%3E%29%29"></a>
 
 - [method] **TO-SEQN** *(OBJ \<SUBSTOBJ>)*
 
     Preserves identity morphims
 
 <a id="x-28GEB-2EGENERICS-3ATO-SEQN-20-28METHOD-20NIL-20-28GEB-2EEXTENSION-2ESPEC-3A-3CNATOBJ-3E-29-29-29"></a>
+<a id="GEB.GENERICS:TO-SEQN%20%28METHOD%20NIL%20%28GEB.EXTENSION.SPEC:%3CNATOBJ%3E%29%29"></a>
 
 - [method] **TO-SEQN** *(OBJ GEB.EXTENSION.SPEC:\<NATOBJ>)*
 
 <a id="x-28GEB-2EGENERICS-3ATO-SEQN-20-28METHOD-20NIL-20-28GEB-2ESPEC-3ACOMP-29-29-29"></a>
+<a id="GEB.GENERICS:TO-SEQN%20%28METHOD%20NIL%20%28GEB.SPEC:COMP%29%29"></a>
 
 - [method] **TO-SEQN** *(OBJ COMP)*
 
     Preserves composition
 
 <a id="x-28GEB-2EGENERICS-3ATO-SEQN-20-28METHOD-20NIL-20-28GEB-2ESPEC-3AINIT-29-29-29"></a>
+<a id="GEB.GENERICS:TO-SEQN%20%28METHOD%20NIL%20%28GEB.SPEC:INIT%29%29"></a>
 
 - [method] **TO-SEQN** *(OBJ INIT)*
 
@@ -1993,6 +2155,7 @@ into other categorical data structures.
     as domain and codomain can be of differing lengths
 
 <a id="x-28GEB-2EGENERICS-3ATO-SEQN-20-28METHOD-20NIL-20-28GEB-2ESPEC-3ATERMINAL-29-29-29"></a>
+<a id="GEB.GENERICS:TO-SEQN%20%28METHOD%20NIL%20%28GEB.SPEC:TERMINAL%29%29"></a>
 
 - [method] **TO-SEQN** *(OBJ TERMINAL)*
 
@@ -2000,6 +2163,7 @@ into other categorical data structures.
     i.e. to nothing
 
 <a id="x-28GEB-2EGENERICS-3ATO-SEQN-20-28METHOD-20NIL-20-28GEB-2ESPEC-3AINJECT-LEFT-29-29-29"></a>
+<a id="GEB.GENERICS:TO-SEQN%20%28METHOD%20NIL%20%28GEB.SPEC:INJECT-LEFT%29%29"></a>
 
 - [method] **TO-SEQN** *(OBJ INJECT-LEFT)*
 
@@ -2007,6 +2171,7 @@ into other categorical data structures.
     and then inserting as padded bits if necessary
 
 <a id="x-28GEB-2EGENERICS-3ATO-SEQN-20-28METHOD-20NIL-20-28GEB-2ESPEC-3AINJECT-RIGHT-29-29-29"></a>
+<a id="GEB.GENERICS:TO-SEQN%20%28METHOD%20NIL%20%28GEB.SPEC:INJECT-RIGHT%29%29"></a>
 
 - [method] **TO-SEQN** *(OBJ INJECT-RIGHT)*
 
@@ -2014,6 +2179,7 @@ into other categorical data structures.
     and then inserting as padded bits if necessary
 
 <a id="x-28GEB-2EGENERICS-3ATO-SEQN-20-28METHOD-20NIL-20-28GEB-2ESPEC-3ACASE-29-29-29"></a>
+<a id="GEB.GENERICS:TO-SEQN%20%28METHOD%20NIL%20%28GEB.SPEC:CASE%29%29"></a>
 
 - [method] **TO-SEQN** *(OBJ CASE)*
 
@@ -2022,18 +2188,21 @@ into other categorical data structures.
     with
 
 <a id="x-28GEB-2EGENERICS-3ATO-SEQN-20-28METHOD-20NIL-20-28GEB-2ESPEC-3APROJECT-LEFT-29-29-29"></a>
+<a id="GEB.GENERICS:TO-SEQN%20%28METHOD%20NIL%20%28GEB.SPEC:PROJECT-LEFT%29%29"></a>
 
 - [method] **TO-SEQN** *(OBJ PROJECT-LEFT)*
 
     Takes a list of an even length and cuts the right half
 
 <a id="x-28GEB-2EGENERICS-3ATO-SEQN-20-28METHOD-20NIL-20-28GEB-2ESPEC-3APROJECT-RIGHT-29-29-29"></a>
+<a id="GEB.GENERICS:TO-SEQN%20%28METHOD%20NIL%20%28GEB.SPEC:PROJECT-RIGHT%29%29"></a>
 
 - [method] **TO-SEQN** *(OBJ PROJECT-RIGHT)*
 
     Takes a list of an even length and cuts the left half
 
 <a id="x-28GEB-2EGENERICS-3ATO-SEQN-20-28METHOD-20NIL-20-28GEB-2ESPEC-3APAIR-29-29-29"></a>
+<a id="GEB.GENERICS:TO-SEQN%20%28METHOD%20NIL%20%28GEB.SPEC:PAIR%29%29"></a>
 
 - [method] **TO-SEQN** *(OBJ PAIR)*
 
@@ -2041,6 +2210,7 @@ into other categorical data structures.
     on corresponding entries
 
 <a id="x-28GEB-2EGENERICS-3ATO-SEQN-20-28METHOD-20NIL-20-28GEB-2ESPEC-3ADISTRIBUTE-29-29-29"></a>
+<a id="GEB.GENERICS:TO-SEQN%20%28METHOD%20NIL%20%28GEB.SPEC:DISTRIBUTE%29%29"></a>
 
 - [method] **TO-SEQN** *(OBJ DISTRIBUTE)*
 
@@ -2049,48 +2219,56 @@ into other categorical data structures.
     get ((A x B) + (A x C)) as times appends sequences
 
 <a id="x-28GEB-2EGENERICS-3ATO-SEQN-20-28METHOD-20NIL-20-28GEB-2EEXTENSION-2ESPEC-3ANAT-DIV-29-29-29"></a>
+<a id="GEB.GENERICS:TO-SEQN%20%28METHOD%20NIL%20%28GEB.EXTENSION.SPEC:NAT-DIV%29%29"></a>
 
 - [method] **TO-SEQN** *(OBJ GEB.EXTENSION.SPEC:NAT-DIV)*
 
     Division is interpreted as divition
 
 <a id="x-28GEB-2EGENERICS-3ATO-SEQN-20-28METHOD-20NIL-20-28GEB-2EEXTENSION-2ESPEC-3ANAT-CONST-29-29-29"></a>
+<a id="GEB.GENERICS:TO-SEQN%20%28METHOD%20NIL%20%28GEB.EXTENSION.SPEC:NAT-CONST%29%29"></a>
 
 - [method] **TO-SEQN** *(OBJ GEB.EXTENSION.SPEC:NAT-CONST)*
 
     A choice of a natural number is the same exact choice in SeqN
 
 <a id="x-28GEB-2EGENERICS-3ATO-SEQN-20-28METHOD-20NIL-20-28GEB-2EEXTENSION-2ESPEC-3ANAT-INJ-29-29-29"></a>
+<a id="GEB.GENERICS:TO-SEQN%20%28METHOD%20NIL%20%28GEB.EXTENSION.SPEC:NAT-INJ%29%29"></a>
 
 - [method] **TO-SEQN** *(OBJ GEB.EXTENSION.SPEC:NAT-INJ)*
 
     Injection of bit-sizes is interpreted in the same maner in SeqN
 
 <a id="x-28GEB-2EGENERICS-3ATO-SEQN-20-28METHOD-20NIL-20-28GEB-2EEXTENSION-2ESPEC-3AONE-BIT-TO-BOOL-29-29-29"></a>
+<a id="GEB.GENERICS:TO-SEQN%20%28METHOD%20NIL%20%28GEB.EXTENSION.SPEC:ONE-BIT-TO-BOOL%29%29"></a>
 
 - [method] **TO-SEQN** *(OBJ GEB.EXTENSION.SPEC:ONE-BIT-TO-BOOL)*
 
     Iso interpreted in an evident manner
 
 <a id="x-28GEB-2EGENERICS-3ATO-SEQN-20-28METHOD-20NIL-20-28GEB-2EEXTENSION-2ESPEC-3ANAT-DECOMPOSE-29-29-29"></a>
+<a id="GEB.GENERICS:TO-SEQN%20%28METHOD%20NIL%20%28GEB.EXTENSION.SPEC:NAT-DECOMPOSE%29%29"></a>
 
 - [method] **TO-SEQN** *(OBJ GEB.EXTENSION.SPEC:NAT-DECOMPOSE)*
 
     Decomposition is interpreted on the nose
 
 <a id="x-28GEB-2EGENERICS-3ATO-SEQN-20-28METHOD-20NIL-20-28GEB-2EEXTENSION-2ESPEC-3ANAT-EQ-29-29-29"></a>
+<a id="GEB.GENERICS:TO-SEQN%20%28METHOD%20NIL%20%28GEB.EXTENSION.SPEC:NAT-EQ%29%29"></a>
 
 - [method] **TO-SEQN** *(OBJ GEB.EXTENSION.SPEC:NAT-EQ)*
 
     Equality predicate is interpreted on the nose
 
 <a id="x-28GEB-2EGENERICS-3ATO-SEQN-20-28METHOD-20NIL-20-28GEB-2EEXTENSION-2ESPEC-3ANAT-LT-29-29-29"></a>
+<a id="GEB.GENERICS:TO-SEQN%20%28METHOD%20NIL%20%28GEB.EXTENSION.SPEC:NAT-LT%29%29"></a>
 
 - [method] **TO-SEQN** *(OBJ GEB.EXTENSION.SPEC:NAT-LT)*
 
     Equality predicate is interpreted on the nose
 
 <a id="x-28GEB-2EMAIN-3A-40GEB-UTILITY-20MGL-PAX-3ASECTION-29"></a>
+<a id="GEB.MAIN:@GEB-UTILITY%20MGL-PAX:SECTION"></a>
 
 #### 7.6.4 Utility
 
@@ -2098,24 +2276,28 @@ into other categorical data structures.
 Various utility functions on top of [Core Category][cb9e]
 
 <a id="x-28GEB-2ESPEC-3APAIR-TO-LIST-20FUNCTION-29"></a>
+<a id="GEB.SPEC:PAIR-TO-LIST%20FUNCTION"></a>
 
 - [function] **PAIR-TO-LIST** *PAIR &OPTIONAL ACC*
 
     converts excess pairs to a list format
 
 <a id="x-28GEB-2ESPEC-3ASAME-TYPE-TO-LIST-20FUNCTION-29"></a>
+<a id="GEB.SPEC:SAME-TYPE-TO-LIST%20FUNCTION"></a>
 
 - [function] **SAME-TYPE-TO-LIST** *PAIR TYPE &OPTIONAL ACC*
 
     converts the given type to a list format
 
 <a id="x-28GEB-2EMAIN-3ACLEAVE-20FUNCTION-29"></a>
+<a id="GEB.MAIN:CLEAVE%20FUNCTION"></a>
 
 - [function] **CLEAVE** *V1 &REST VALUES*
 
     Applies each morphism to the object in turn.
 
 <a id="x-28GEB-2EMAIN-3ACONST-20FUNCTION-29"></a>
+<a id="GEB.MAIN:CONST%20FUNCTION"></a>
 
 - [function] **CONST** *F X*
 
@@ -2148,10 +2330,12 @@ Various utility functions on top of [Core Category][cb9e]
 
 
 <a id="x-28GEB-2EMAIN-3ACOMMUTES-20FUNCTION-29"></a>
+<a id="GEB.MAIN:COMMUTES%20FUNCTION"></a>
 
 - [function] **COMMUTES** *X Y*
 
 <a id="x-28GEB-2EMAIN-3ACOMMUTES-LEFT-20FUNCTION-29"></a>
+<a id="GEB.MAIN:COMMUTES-LEFT%20FUNCTION"></a>
 
 - [function] **COMMUTES-LEFT** *MORPH*
 
@@ -2171,36 +2355,44 @@ Various utility functions on top of [Core Category][cb9e]
     `
 
 <a id="x-28GEB-2EMAIN-3A-21--3E-20FUNCTION-29"></a>
+<a id="GEB.MAIN:%21-%3E%20FUNCTION"></a>
 
 - [function] **!->** *A B*
 
 <a id="x-28GEB-2EGENERICS-3ASO-EVAL-20-28METHOD-20NIL-20-28GEB-2EEXTENSION-2ESPEC-3A-3CNATOBJ-3E-20T-29-29-29"></a>
+<a id="GEB.GENERICS:SO-EVAL%20%28METHOD%20NIL%20%28GEB.EXTENSION.SPEC:%3CNATOBJ%3E%20T%29%29"></a>
 
 - [method] **SO-EVAL** *(X \<NATOBJ>) Y*
 
 <a id="x-28GEB-2EGENERICS-3ASO-EVAL-20-28METHOD-20NIL-20-28GEB-2ESPEC-3A-3CSUBSTOBJ-3E-20T-29-29-29"></a>
+<a id="GEB.GENERICS:SO-EVAL%20%28METHOD%20NIL%20%28GEB.SPEC:%3CSUBSTOBJ%3E%20T%29%29"></a>
 
 - [method] **SO-EVAL** *(X \<SUBSTOBJ>) Y*
 
 <a id="x-28GEB-2EGENERICS-3ASO-HOM-OBJ-20-28METHOD-20NIL-20-28GEB-2EEXTENSION-2ESPEC-3A-3CNATOBJ-3E-20T-29-29-29"></a>
+<a id="GEB.GENERICS:SO-HOM-OBJ%20%28METHOD%20NIL%20%28GEB.EXTENSION.SPEC:%3CNATOBJ%3E%20T%29%29"></a>
 
 - [method] **SO-HOM-OBJ** *(X \<NATOBJ>) Z*
 
 <a id="x-28GEB-2EGENERICS-3ASO-HOM-OBJ-20-28METHOD-20NIL-20-28GEB-2ESPEC-3A-3CSUBSTOBJ-3E-20T-29-29-29"></a>
+<a id="GEB.GENERICS:SO-HOM-OBJ%20%28METHOD%20NIL%20%28GEB.SPEC:%3CSUBSTOBJ%3E%20T%29%29"></a>
 
 - [method] **SO-HOM-OBJ** *(X \<SUBSTOBJ>) Z*
 
 <a id="x-28GEB-2EMAIN-3ASO-CARD-ALG-20GENERIC-FUNCTION-29"></a>
+<a id="GEB.MAIN:SO-CARD-ALG%20GENERIC-FUNCTION"></a>
 
 - [generic-function] **SO-CARD-ALG** *OBJ*
 
     Gets the cardinality of the given object, returns a [`FIXNUM`][3cde]
 
 <a id="x-28GEB-2EMAIN-3ASO-CARD-ALG-20-28METHOD-20NIL-20-28GEB-2ESPEC-3A-3CSUBSTOBJ-3E-29-29-29"></a>
+<a id="GEB.MAIN:SO-CARD-ALG%20%28METHOD%20NIL%20%28GEB.SPEC:%3CSUBSTOBJ%3E%29%29"></a>
 
 - [method] **SO-CARD-ALG** *(OBJ \<SUBSTOBJ>)*
 
 <a id="x-28GEB-2EMAIN-3ACURRY-20FUNCTION-29"></a>
+<a id="GEB.MAIN:CURRY%20FUNCTION"></a>
 
 - [function] **CURRY** *F*
 
@@ -2227,6 +2419,7 @@ Various utility functions on top of [Core Category][cb9e]
 
 
 <a id="x-28GEB-2EMAIN-3ACOPROD-MOR-20FUNCTION-29"></a>
+<a id="GEB.MAIN:COPROD-MOR%20FUNCTION"></a>
 
 - [function] **COPROD-MOR** *F G*
 
@@ -2235,6 +2428,7 @@ Various utility functions on top of [Core Category][cb9e]
     That is, the morphism part of the coproduct functor Geb x Geb → Geb
 
 <a id="x-28GEB-2EMAIN-3APROD-MOR-20FUNCTION-29"></a>
+<a id="GEB.MAIN:PROD-MOR%20FUNCTION"></a>
 
 - [function] **PROD-MOR** *F G*
 
@@ -2243,6 +2437,7 @@ Various utility functions on top of [Core Category][cb9e]
     This is the morphism part of the product functor Geb x Geb → Geb
 
 <a id="x-28GEB-2EMAIN-3AUNCURRY-20FUNCTION-29"></a>
+<a id="GEB.MAIN:UNCURRY%20FUNCTION"></a>
 
 - [function] **UNCURRY** *Y Z F*
 
@@ -2250,6 +2445,7 @@ Various utility functions on top of [Core Category][cb9e]
     produces an uncurried version f' : x × y → z of said morphism
 
 <a id="x-28GEB-2EMAIN-3ATEXT-NAME-20GENERIC-FUNCTION-29"></a>
+<a id="GEB.MAIN:TEXT-NAME%20GENERIC-FUNCTION"></a>
 
 - [generic-function] **TEXT-NAME** *MORPH*
 
@@ -2258,6 +2454,7 @@ Various utility functions on top of [Core Category][cb9e]
 These utilities are on top of \[[`CAT-OBJ`][74bd]\]
 
 <a id="x-28GEB-2EGENERICS-3AMAYBE-20-28METHOD-20NIL-20-28GEB-2ESPEC-3A-3CSUBSTOBJ-3E-29-29-29"></a>
+<a id="GEB.GENERICS:MAYBE%20%28METHOD%20NIL%20%28GEB.SPEC:%3CSUBSTOBJ%3E%29%29"></a>
 
 - [method] **MAYBE** *(OBJ \<SUBSTOBJ>)*
 
@@ -2273,10 +2470,12 @@ These utilities are on top of \[[`CAT-OBJ`][74bd]\]
     and \[`SO0`([`0`][5c7c] [`1`][7088])\] into Maybe \[`SO0`\]
 
 <a id="x-28GEB-2EGENERICS-3AMAYBE-20-28METHOD-20NIL-20-28GEB-2EEXTENSION-2ESPEC-3A-3CNATOBJ-3E-29-29-29"></a>
+<a id="GEB.GENERICS:MAYBE%20%28METHOD%20NIL%20%28GEB.EXTENSION.SPEC:%3CNATOBJ%3E%29%29"></a>
 
 - [method] **MAYBE** *(OBJ \<NATOBJ>)*
 
 <a id="x-28GEB-3A-40GEB-EXAMPLES-20MGL-PAX-3ASECTION-29"></a>
+<a id="GEB:@GEB-EXAMPLES%20MGL-PAX:SECTION"></a>
 
 ### 7.7 Examples
 
@@ -2297,6 +2496,7 @@ with GEB:
 
 
 <a id="x-28GEB-2EEXTENSION-2ESPEC-3A-40GEB-EXTENSIONS-20MGL-PAX-3ASECTION-29"></a>
+<a id="GEB.EXTENSION.SPEC:@GEB-EXTENSIONS%20MGL-PAX:SECTION"></a>
 
 ## 8 Extension Sets for Categories
 
@@ -2311,6 +2511,7 @@ Common Sub expressions represent repeat logic that can be found
 throughout any piece of code
 
 <a id="x-28GEB-2EEXTENSION-2ESPEC-3ACOMMON-SUB-EXPRESSION-20CLASS-29"></a>
+<a id="GEB.EXTENSION.SPEC:COMMON-SUB-EXPRESSION%20CLASS"></a>
 
 - [class] **COMMON-SUB-EXPRESSION** *[DIRECT-POINTWISE-MIXIN][e2b0] [META-MIXIN][4529] [CAT-MORPH][a7af]*
 
@@ -2324,6 +2525,7 @@ throughout any piece of code
     sub-expressions and places the appropriate names.
 
 <a id="x-28GEB-2EEXTENSION-2ESPEC-3AMAKE-COMMON-SUB-EXPRESSION-20FUNCTION-29"></a>
+<a id="GEB.EXTENSION.SPEC:MAKE-COMMON-SUB-EXPRESSION%20FUNCTION"></a>
 
 - [function] **MAKE-COMMON-SUB-EXPRESSION** *&KEY OBJ NAME*
 
@@ -2332,6 +2534,7 @@ morphisms where their implementation hide the specifics of what
 types they are operating over
 
 <a id="x-28GEB-2EEXTENSION-2ESPEC-3AOPAQUE-20CLASS-29"></a>
+<a id="GEB.EXTENSION.SPEC:OPAQUE%20CLASS"></a>
 
 - [class] **OPAQUE** *[CAT-OBJ][74bd] [META-MIXIN][4529]*
 
@@ -2339,12 +2542,14 @@ types they are operating over
     details of what kind of [`GEB:SUBSTOBJ`][3173] I am.
 
 <a id="x-28GEB-2EEXTENSION-2ESPEC-3AREFERENCE-20CLASS-29"></a>
+<a id="GEB.EXTENSION.SPEC:REFERENCE%20CLASS"></a>
 
 - [class] **REFERENCE** *[CAT-OBJ][74bd] [CAT-MORPH][a7af] [DIRECT-POINTWISE-MIXIN][e2b0] [META-MIXIN][4529]*
 
     I represent a reference to an [`OPAQUE`][2fc2] identifier.
 
 <a id="x-28GEB-2EEXTENSION-2ESPEC-3AOPAQUE-MORPH-20CLASS-29"></a>
+<a id="GEB.EXTENSION.SPEC:OPAQUE-MORPH%20CLASS"></a>
 
 - [class] **OPAQUE-MORPH** *[CAT-MORPH][a7af] [META-MIXIN][4529]*
 
@@ -2352,44 +2557,53 @@ types they are operating over
     [`OPAQUE`][2fc2] that we know intimate details of
 
 <a id="x-28GEB-2EUTILS-3ACODE-20-28MGL-PAX-3AACCESSOR-20GEB-2EEXTENSION-2ESPEC-3AOPAQUE-MORPH-29-29"></a>
+<a id="GEB.UTILS:CODE%20%28MGL-PAX:ACCESSOR%20GEB.EXTENSION.SPEC:OPAQUE-MORPH%29"></a>
 
 - [accessor] **CODE** *OPAQUE-MORPH (:CODE)*
 
     the code that represents the underlying morphsism
 
 <a id="x-28GEB-2EMIXINS-3ADOM-20-28MGL-PAX-3AACCESSOR-20GEB-2EEXTENSION-2ESPEC-3AOPAQUE-MORPH-29-29"></a>
+<a id="GEB.MIXINS:DOM%20%28MGL-PAX:ACCESSOR%20GEB.EXTENSION.SPEC:OPAQUE-MORPH%29"></a>
 
 - [accessor] **DOM** *OPAQUE-MORPH (:DOM)*
 
     The dom of the opaque morph
 
 <a id="x-28GEB-2EMIXINS-3ACODOM-20-28MGL-PAX-3AACCESSOR-20GEB-2EEXTENSION-2ESPEC-3AOPAQUE-MORPH-29-29"></a>
+<a id="GEB.MIXINS:CODOM%20%28MGL-PAX:ACCESSOR%20GEB.EXTENSION.SPEC:OPAQUE-MORPH%29"></a>
 
 - [accessor] **CODOM** *OPAQUE-MORPH (:CODOM)*
 
     The codom of the opaque morph
 
 <a id="x-28GEB-2EUTILS-3ACODE-20-28MGL-PAX-3AACCESSOR-20GEB-2EEXTENSION-2ESPEC-3AOPAQUE-29-29"></a>
+<a id="GEB.UTILS:CODE%20%28MGL-PAX:ACCESSOR%20GEB.EXTENSION.SPEC:OPAQUE%29"></a>
 
 - [accessor] **CODE** *OPAQUE (:CODE)*
 
 <a id="x-28GEB-2EUTILS-3ANAME-20-28MGL-PAX-3AACCESSOR-20GEB-2EEXTENSION-2ESPEC-3AOPAQUE-29-29"></a>
+<a id="GEB.UTILS:NAME%20%28MGL-PAX:ACCESSOR%20GEB.EXTENSION.SPEC:OPAQUE%29"></a>
 
 - [accessor] **NAME** *OPAQUE (:NAME)*
 
 <a id="x-28GEB-2EUTILS-3ANAME-20-28MGL-PAX-3AACCESSOR-20GEB-2EEXTENSION-2ESPEC-3AREFERENCE-29-29"></a>
+<a id="GEB.UTILS:NAME%20%28MGL-PAX:ACCESSOR%20GEB.EXTENSION.SPEC:REFERENCE%29"></a>
 
 - [accessor] **NAME** *REFERENCE (:NAME)*
 
 <a id="x-28GEB-2EEXTENSION-2ESPEC-3AREFERENCE-20FUNCTION-29"></a>
+<a id="GEB.EXTENSION.SPEC:REFERENCE%20FUNCTION"></a>
 
 - [function] **REFERENCE** *NAME*
 
 <a id="x-28GEB-2EEXTENSION-2ESPEC-3AOPAQUE-MORPH-20FUNCTION-29"></a>
+<a id="GEB.EXTENSION.SPEC:OPAQUE-MORPH%20FUNCTION"></a>
 
 - [function] **OPAQUE-MORPH** *CODE &KEY (DOM (DOM CODE)) (CODOM (CODOM CODE))*
 
 <a id="x-28GEB-2EEXTENSION-2ESPEC-3AOPAQUE-20FUNCTION-29"></a>
+<a id="GEB.EXTENSION.SPEC:OPAQUE%20FUNCTION"></a>
 
 - [function] **OPAQUE** *NAME CODE*
 
@@ -2398,10 +2612,12 @@ with additional constructors standing in for bt-sequence representation of
 natural numbers along with basic operation relating to those.
 
 <a id="x-28GEB-2EEXTENSION-2ESPEC-3ANATOBJ-20TYPE-29"></a>
+<a id="GEB.EXTENSION.SPEC:NATOBJ%20TYPE"></a>
 
 - [type] **NATOBJ**
 
 <a id="x-28GEB-2EEXTENSION-2ESPEC-3A-3CNATOBJ-3E-20CLASS-29"></a>
+<a id="GEB.EXTENSION.SPEC:%3CNATOBJ%3E%20CLASS"></a>
 
 - [class] **\<NATOBJ>** *[DIRECT-POINTWISE-MIXIN][e2b0] [META-MIXIN][4529] [CAT-OBJ][74bd] [CAT-MORPH][a7af]*
 
@@ -2409,6 +2625,7 @@ natural numbers along with basic operation relating to those.
     [SUBSTOBJ][1f37] adding to Geb bit representation of natural numbers.
 
 <a id="x-28GEB-2EEXTENSION-2ESPEC-3ANAT-WIDTH-20CLASS-29"></a>
+<a id="GEB.EXTENSION.SPEC:NAT-WIDTH%20CLASS"></a>
 
 - [class] **NAT-WIDTH** *[\<NATOBJ>][b4e6]*
 
@@ -2427,18 +2644,22 @@ natural numbers along with basic operation relating to those.
     are to consder.
 
 <a id="x-28GEB-2EEXTENSION-2ESPEC-3ANUM-20-28MGL-PAX-3AACCESSOR-20GEB-2EEXTENSION-2ESPEC-3ANAT-WIDTH-29-29"></a>
+<a id="GEB.EXTENSION.SPEC:NUM%20%28MGL-PAX:ACCESSOR%20GEB.EXTENSION.SPEC:NAT-WIDTH%29"></a>
 
 - [accessor] **NUM** *NAT-WIDTH (:NUM)*
 
 <a id="x-28GEB-2EEXTENSION-2ESPEC-3ANAT-WIDTH-20FUNCTION-29"></a>
+<a id="GEB.EXTENSION.SPEC:NAT-WIDTH%20FUNCTION"></a>
 
 - [function] **NAT-WIDTH** *NUM*
 
 <a id="x-28GEB-2EEXTENSION-2ESPEC-3ANATMORPH-20TYPE-29"></a>
+<a id="GEB.EXTENSION.SPEC:NATMORPH%20TYPE"></a>
 
 - [type] **NATMORPH**
 
 <a id="x-28GEB-2EEXTENSION-2ESPEC-3A-3CNATMORPH-3E-20CLASS-29"></a>
+<a id="GEB.EXTENSION.SPEC:%3CNATMORPH%3E%20CLASS"></a>
 
 - [class] **\<NATMORPH>** *[DIRECT-POINTWISE-MIXIN][e2b0] [META-MIXIN][4529] [CAT-MORPH][a7af]*
 
@@ -2447,6 +2668,7 @@ natural numbers along with basic operation relating to those.
     of natural numbers
 
 <a id="x-28GEB-2EEXTENSION-2ESPEC-3ANAT-ADD-20CLASS-29"></a>
+<a id="GEB.EXTENSION.SPEC:NAT-ADD%20CLASS"></a>
 
 - [class] **NAT-ADD** *[\<NATMORPH>][ccfb]*
 
@@ -2461,6 +2683,7 @@ natural numbers along with basic operation relating to those.
     ` 
 
 <a id="x-28GEB-2EEXTENSION-2ESPEC-3ANAT-MULT-20CLASS-29"></a>
+<a id="GEB.EXTENSION.SPEC:NAT-MULT%20CLASS"></a>
 
 - [class] **NAT-MULT** *[\<NATMORPH>][ccfb]*
 
@@ -2475,6 +2698,7 @@ natural numbers along with basic operation relating to those.
     ` 
 
 <a id="x-28GEB-2EEXTENSION-2ESPEC-3ANAT-SUB-20CLASS-29"></a>
+<a id="GEB.EXTENSION.SPEC:NAT-SUB%20CLASS"></a>
 
 - [class] **NAT-SUB** *[\<NATMORPH>][ccfb]*
 
@@ -2489,6 +2713,7 @@ natural numbers along with basic operation relating to those.
     ` 
 
 <a id="x-28GEB-2EEXTENSION-2ESPEC-3ANAT-DIV-20CLASS-29"></a>
+<a id="GEB.EXTENSION.SPEC:NAT-DIV%20CLASS"></a>
 
 - [class] **NAT-DIV** *[\<NATMORPH>][ccfb]*
 
@@ -2503,6 +2728,7 @@ natural numbers along with basic operation relating to those.
     ` 
 
 <a id="x-28GEB-2EEXTENSION-2ESPEC-3ANAT-CONST-20CLASS-29"></a>
+<a id="GEB.EXTENSION.SPEC:NAT-CONST%20CLASS"></a>
 
 - [class] **NAT-CONST** *[\<NATMORPH>][ccfb]*
 
@@ -2518,6 +2744,7 @@ natural numbers along with basic operation relating to those.
     ` 
 
 <a id="x-28GEB-2EEXTENSION-2ESPEC-3ANAT-INJ-20CLASS-29"></a>
+<a id="GEB.EXTENSION.SPEC:NAT-INJ%20CLASS"></a>
 
 - [class] **NAT-INJ** *[\<NATMORPH>][ccfb]*
 
@@ -2534,6 +2761,7 @@ natural numbers along with basic operation relating to those.
     (nat-width num) -> (nat-width (1 + num))
 
 <a id="x-28GEB-2EEXTENSION-2ESPEC-3ANAT-CONCAT-20CLASS-29"></a>
+<a id="GEB.EXTENSION.SPEC:NAT-CONCAT%20CLASS"></a>
 
 - [class] **NAT-CONCAT** *[\<NATMORPH>][ccfb]*
 
@@ -2553,6 +2781,7 @@ natural numbers along with basic operation relating to those.
     take x^m + y
 
 <a id="x-28GEB-2EEXTENSION-2ESPEC-3AONE-BIT-TO-BOOL-20CLASS-29"></a>
+<a id="GEB.EXTENSION.SPEC:ONE-BIT-TO-BOOL%20CLASS"></a>
 
 - [class] **ONE-BIT-TO-BOOL** *[\<NATMORPH>][ccfb]*
 
@@ -2560,6 +2789,7 @@ natural numbers along with basic operation relating to those.
     false and #*1 to true
 
 <a id="x-28GEB-2EEXTENSION-2ESPEC-3ANAT-DECOMPOSE-20CLASS-29"></a>
+<a id="GEB.EXTENSION.SPEC:NAT-DECOMPOSE%20CLASS"></a>
 
 - [class] **NAT-DECOMPOSE** *[\<NATMORPH>][ccfb]*
 
@@ -2567,6 +2797,7 @@ natural numbers along with basic operation relating to those.
     splitting a natural number into the last and all but last collection of bits
 
 <a id="x-28GEB-2EEXTENSION-2ESPEC-3ANAT-EQ-20CLASS-29"></a>
+<a id="GEB.EXTENSION.SPEC:NAT-EQ%20CLASS"></a>
 
 - [class] **NAT-EQ** *[\<NATMORPH>][ccfb]*
 
@@ -2574,6 +2805,7 @@ natural numbers along with basic operation relating to those.
     which evaluated to true iff both inputs are the same
 
 <a id="x-28GEB-2EEXTENSION-2ESPEC-3ANAT-LT-20CLASS-29"></a>
+<a id="GEB.EXTENSION.SPEC:NAT-LT%20CLASS"></a>
 
 - [class] **NAT-LT** *[\<NATMORPH>][ccfb]*
 
@@ -2581,6 +2813,7 @@ natural numbers along with basic operation relating to those.
     which evaluated to true iff the first input is less than the second
 
 <a id="x-28GEB-2EEXTENSION-2ESPEC-3ANAT-MOD-20CLASS-29"></a>
+<a id="GEB.EXTENSION.SPEC:NAT-MOD%20CLASS"></a>
 
 - [class] **NAT-MOD** *[\<NATMORPH>][ccfb]*
 
@@ -2589,130 +2822,162 @@ natural numbers along with basic operation relating to those.
     projection of a pari
 
 <a id="x-28GEB-2EEXTENSION-2ESPEC-3ANUM-20-28MGL-PAX-3AACCESSOR-20GEB-2EEXTENSION-2ESPEC-3ANAT-ADD-29-29"></a>
+<a id="GEB.EXTENSION.SPEC:NUM%20%28MGL-PAX:ACCESSOR%20GEB.EXTENSION.SPEC:NAT-ADD%29"></a>
 
 - [accessor] **NUM** *NAT-ADD (:NUM)*
 
 <a id="x-28GEB-2EEXTENSION-2ESPEC-3ANUM-20-28MGL-PAX-3AACCESSOR-20GEB-2EEXTENSION-2ESPEC-3ANAT-MULT-29-29"></a>
+<a id="GEB.EXTENSION.SPEC:NUM%20%28MGL-PAX:ACCESSOR%20GEB.EXTENSION.SPEC:NAT-MULT%29"></a>
 
 - [accessor] **NUM** *NAT-MULT (:NUM)*
 
 <a id="x-28GEB-2EEXTENSION-2ESPEC-3ANUM-20-28MGL-PAX-3AACCESSOR-20GEB-2EEXTENSION-2ESPEC-3ANAT-SUB-29-29"></a>
+<a id="GEB.EXTENSION.SPEC:NUM%20%28MGL-PAX:ACCESSOR%20GEB.EXTENSION.SPEC:NAT-SUB%29"></a>
 
 - [accessor] **NUM** *NAT-SUB (:NUM)*
 
 <a id="x-28GEB-2EEXTENSION-2ESPEC-3ANUM-20-28MGL-PAX-3AACCESSOR-20GEB-2EEXTENSION-2ESPEC-3ANAT-DIV-29-29"></a>
+<a id="GEB.EXTENSION.SPEC:NUM%20%28MGL-PAX:ACCESSOR%20GEB.EXTENSION.SPEC:NAT-DIV%29"></a>
 
 - [accessor] **NUM** *NAT-DIV (:NUM)*
 
 <a id="x-28GEB-2EEXTENSION-2ESPEC-3ANUM-20-28MGL-PAX-3AACCESSOR-20GEB-2EEXTENSION-2ESPEC-3ANAT-CONST-29-29"></a>
+<a id="GEB.EXTENSION.SPEC:NUM%20%28MGL-PAX:ACCESSOR%20GEB.EXTENSION.SPEC:NAT-CONST%29"></a>
 
 - [accessor] **NUM** *NAT-CONST (:NUM)*
 
 <a id="x-28GEB-2EEXTENSION-2ESPEC-3APOS-20-28MGL-PAX-3AACCESSOR-20GEB-2EEXTENSION-2ESPEC-3ANAT-CONST-29-29"></a>
+<a id="GEB.EXTENSION.SPEC:POS%20%28MGL-PAX:ACCESSOR%20GEB.EXTENSION.SPEC:NAT-CONST%29"></a>
 
 - [accessor] **POS** *NAT-CONST (:POS)*
 
 <a id="x-28GEB-2EEXTENSION-2ESPEC-3ANUM-20-28MGL-PAX-3AACCESSOR-20GEB-2EEXTENSION-2ESPEC-3ANAT-INJ-29-29"></a>
+<a id="GEB.EXTENSION.SPEC:NUM%20%28MGL-PAX:ACCESSOR%20GEB.EXTENSION.SPEC:NAT-INJ%29"></a>
 
 - [accessor] **NUM** *NAT-INJ (:NUM)*
 
 <a id="x-28GEB-2EEXTENSION-2ESPEC-3ANUM-LEFT-20-28MGL-PAX-3AACCESSOR-20GEB-2EEXTENSION-2ESPEC-3ANAT-CONCAT-29-29"></a>
+<a id="GEB.EXTENSION.SPEC:NUM-LEFT%20%28MGL-PAX:ACCESSOR%20GEB.EXTENSION.SPEC:NAT-CONCAT%29"></a>
 
 - [accessor] **NUM-LEFT** *NAT-CONCAT (:NUM-LEFT)*
 
 <a id="x-28GEB-2EEXTENSION-2ESPEC-3ANUM-RIGHT-20-28MGL-PAX-3AACCESSOR-20GEB-2EEXTENSION-2ESPEC-3ANAT-CONCAT-29-29"></a>
+<a id="GEB.EXTENSION.SPEC:NUM-RIGHT%20%28MGL-PAX:ACCESSOR%20GEB.EXTENSION.SPEC:NAT-CONCAT%29"></a>
 
 - [accessor] **NUM-RIGHT** *NAT-CONCAT (:NUM-RIGHT)*
 
 <a id="x-28GEB-2EEXTENSION-2ESPEC-3ANUM-20-28MGL-PAX-3AACCESSOR-20GEB-2EEXTENSION-2ESPEC-3ANAT-DECOMPOSE-29-29"></a>
+<a id="GEB.EXTENSION.SPEC:NUM%20%28MGL-PAX:ACCESSOR%20GEB.EXTENSION.SPEC:NAT-DECOMPOSE%29"></a>
 
 - [accessor] **NUM** *NAT-DECOMPOSE (:NUM)*
 
 <a id="x-28GEB-2EEXTENSION-2ESPEC-3ANUM-20-28MGL-PAX-3AACCESSOR-20GEB-2EEXTENSION-2ESPEC-3ANAT-EQ-29-29"></a>
+<a id="GEB.EXTENSION.SPEC:NUM%20%28MGL-PAX:ACCESSOR%20GEB.EXTENSION.SPEC:NAT-EQ%29"></a>
 
 - [accessor] **NUM** *NAT-EQ (:NUM)*
 
 <a id="x-28GEB-2EEXTENSION-2ESPEC-3ANUM-20-28MGL-PAX-3AACCESSOR-20GEB-2EEXTENSION-2ESPEC-3ANAT-LT-29-29"></a>
+<a id="GEB.EXTENSION.SPEC:NUM%20%28MGL-PAX:ACCESSOR%20GEB.EXTENSION.SPEC:NAT-LT%29"></a>
 
 - [accessor] **NUM** *NAT-LT (:NUM)*
 
 <a id="x-28GEB-2EEXTENSION-2ESPEC-3ANUM-20-28MGL-PAX-3AACCESSOR-20GEB-2EEXTENSION-2ESPEC-3ANAT-MOD-29-29"></a>
+<a id="GEB.EXTENSION.SPEC:NUM%20%28MGL-PAX:ACCESSOR%20GEB.EXTENSION.SPEC:NAT-MOD%29"></a>
 
 - [accessor] **NUM** *NAT-MOD (:NUM)*
 
 <a id="x-28GEB-2EEXTENSION-2ESPEC-3ANAT-ADD-20FUNCTION-29"></a>
+<a id="GEB.EXTENSION.SPEC:NAT-ADD%20FUNCTION"></a>
 
 - [function] **NAT-ADD** *NUM*
 
 <a id="x-28GEB-2EEXTENSION-2ESPEC-3ANAT-MULT-20FUNCTION-29"></a>
+<a id="GEB.EXTENSION.SPEC:NAT-MULT%20FUNCTION"></a>
 
 - [function] **NAT-MULT** *NUM*
 
 <a id="x-28GEB-2EEXTENSION-2ESPEC-3ANAT-SUB-20FUNCTION-29"></a>
+<a id="GEB.EXTENSION.SPEC:NAT-SUB%20FUNCTION"></a>
 
 - [function] **NAT-SUB** *NUM*
 
 <a id="x-28GEB-2EEXTENSION-2ESPEC-3ANAT-DIV-20FUNCTION-29"></a>
+<a id="GEB.EXTENSION.SPEC:NAT-DIV%20FUNCTION"></a>
 
 - [function] **NAT-DIV** *NUM*
 
 <a id="x-28GEB-2EEXTENSION-2ESPEC-3ANAT-CONST-20FUNCTION-29"></a>
+<a id="GEB.EXTENSION.SPEC:NAT-CONST%20FUNCTION"></a>
 
 - [function] **NAT-CONST** *NUM POS*
 
 <a id="x-28GEB-2EEXTENSION-2ESPEC-3ANAT-INJ-20FUNCTION-29"></a>
+<a id="GEB.EXTENSION.SPEC:NAT-INJ%20FUNCTION"></a>
 
 - [function] **NAT-INJ** *NUM*
 
 <a id="x-28GEB-2EEXTENSION-2ESPEC-3ANAT-CONCAT-20FUNCTION-29"></a>
+<a id="GEB.EXTENSION.SPEC:NAT-CONCAT%20FUNCTION"></a>
 
 - [function] **NAT-CONCAT** *NUM-LEFT NUM-RIGHT*
 
 <a id="x-28GEB-2EEXTENSION-2ESPEC-3AONE-BIT-TO-BOOL-20FUNCTION-29"></a>
+<a id="GEB.EXTENSION.SPEC:ONE-BIT-TO-BOOL%20FUNCTION"></a>
 
 - [function] **ONE-BIT-TO-BOOL**
 
 <a id="x-28GEB-2EEXTENSION-2ESPEC-3ANAT-DECOMPOSE-20FUNCTION-29"></a>
+<a id="GEB.EXTENSION.SPEC:NAT-DECOMPOSE%20FUNCTION"></a>
 
 - [function] **NAT-DECOMPOSE** *NUM*
 
 <a id="x-28GEB-2EEXTENSION-2ESPEC-3ANAT-EQ-20FUNCTION-29"></a>
+<a id="GEB.EXTENSION.SPEC:NAT-EQ%20FUNCTION"></a>
 
 - [function] **NAT-EQ** *NUM*
 
 <a id="x-28GEB-2EEXTENSION-2ESPEC-3ANAT-LT-20FUNCTION-29"></a>
+<a id="GEB.EXTENSION.SPEC:NAT-LT%20FUNCTION"></a>
 
 - [function] **NAT-LT** *NUM*
 
 <a id="x-28GEB-2EEXTENSION-2ESPEC-3ANAT-MOD-20FUNCTION-29"></a>
+<a id="GEB.EXTENSION.SPEC:NAT-MOD%20FUNCTION"></a>
 
 - [function] **NAT-MOD** *NUM*
 
 <a id="x-28GEB-2EEXTENSION-2ESPEC-3ANUM-20GENERIC-FUNCTION-29"></a>
+<a id="GEB.EXTENSION.SPEC:NUM%20GENERIC-FUNCTION"></a>
 
 - [generic-function] **NUM** *OBJ*
 
 <a id="x-28GEB-2EEXTENSION-2ESPEC-3APOS-20GENERIC-FUNCTION-29"></a>
+<a id="GEB.EXTENSION.SPEC:POS%20GENERIC-FUNCTION"></a>
 
 - [generic-function] **POS** *OBJ*
 
 <a id="x-28GEB-2EEXTENSION-2ESPEC-3ANUM-LEFT-20GENERIC-FUNCTION-29"></a>
+<a id="GEB.EXTENSION.SPEC:NUM-LEFT%20GENERIC-FUNCTION"></a>
 
 - [generic-function] **NUM-LEFT** *OBJ*
 
 <a id="x-28GEB-2EEXTENSION-2ESPEC-3ANUM-RIGHT-20GENERIC-FUNCTION-29"></a>
+<a id="GEB.EXTENSION.SPEC:NUM-RIGHT%20GENERIC-FUNCTION"></a>
 
 - [generic-function] **NUM-RIGHT** *OBJ*
 
 <a id="x-28GEB-2EEXTENSION-2ESPEC-3A-2AONE-BIT-TO-BOOL-2A-20VARIABLE-29"></a>
+<a id="GEB.EXTENSION.SPEC:*ONE-BIT-TO-BOOL*%20VARIABLE"></a>
 
-- [variable] **\*ONE-BIT-TO-BOOL\*** *\#\<ONE-BIT-TO-BOOL #x302007E62DDD>*
+- [variable] **\*ONE-BIT-TO-BOOL\*** *\#\<ONE-BIT-TO-BOOL {1003BD20B3}>*
 
 <a id="x-28GEB-2EEXTENSION-2ESPEC-3AONE-BIT-TO-BOOL-20MGL-PAX-3ASYMBOL-MACRO-29"></a>
+<a id="GEB.EXTENSION.SPEC:ONE-BIT-TO-BOOL%20MGL-PAX:SYMBOL-MACRO"></a>
 
 - [symbol-macro] **ONE-BIT-TO-BOOL**
 
 <a id="x-28GEB-GUI-3A-40GEB-GUI-MANUAL-20MGL-PAX-3ASECTION-29"></a>
+<a id="GEB-GUI:@GEB-GUI-MANUAL%20MGL-PAX:SECTION"></a>
 
 ## 9 The GEB GUI
 
@@ -2721,6 +2986,7 @@ This section covers the suite of tools that help visualize geb
 objects and make the system nice to work with
 
 <a id="x-28GEB-GUI-3A-40GEB-VISUALIZER-20MGL-PAX-3ASECTION-29"></a>
+<a id="GEB-GUI:@GEB-VISUALIZER%20MGL-PAX:SECTION"></a>
 
 ### 9.1 Visualizer
 
@@ -2733,18 +2999,21 @@ if the visualizer gets a [Subst Obj][c1b3], then it shows the data
 layout of the term, showing what kind of data 
 
 <a id="x-28GEB-GUI-3AVISUALIZE-20FUNCTION-29"></a>
+<a id="GEB-GUI:VISUALIZE%20FUNCTION"></a>
 
 - [function] **VISUALIZE** *OBJECT &OPTIONAL (ASYNC T)*
 
     Visualizes both [Subst Obj][c1b3] and [Subst Morph][d2d1] objects
 
 <a id="x-28GEB-GUI-3AKILL-RUNNING-20FUNCTION-29"></a>
+<a id="GEB-GUI:KILL-RUNNING%20FUNCTION"></a>
 
 - [function] **KILL-RUNNING**
 
     Kills all threads and open gui objects created by [`VISUALIZE`][ada5]
 
 <a id="x-28GEB-GUI-3A-40VISAULIZER-AID-20MGL-PAX-3ASECTION-29"></a>
+<a id="GEB-GUI:@VISAULIZER-AID%20MGL-PAX:SECTION"></a>
 
 #### 9.1.1 Aiding the Visualizer
 
@@ -2753,6 +3022,7 @@ simply placing `ALIAS` around the object, this will place it
 in a box with a name to better identify it in the graphing procedure.
 
 <a id="x-28GEB-GUI-3A-40GEB-EXPORTER-20MGL-PAX-3ASECTION-29"></a>
+<a id="GEB-GUI:@GEB-EXPORTER%20MGL-PAX:SECTION"></a>
 
 ### 9.2 Export Visualizer
 
@@ -2760,6 +3030,7 @@ This works like the normal visualizer except it exports it to a
 file to be used by other projects or perhaps in papers
 
 <a id="x-28GEB-GUI-3ASVG-20FUNCTION-29"></a>
+<a id="GEB-GUI:SVG%20FUNCTION"></a>
 
 - [function] **SVG** *OBJECT PATH &KEY (DEFAULT-VIEW (MAKE-INSTANCE 'SHOW-VIEW))*
 
@@ -2776,6 +3047,7 @@ file to be used by other projects or perhaps in papers
 
 
 <a id="x-28GEB-GUI-2EGRAPHING-3A-40GRAPHING-MANUAL-20MGL-PAX-3ASECTION-29"></a>
+<a id="GEB-GUI.GRAPHING:@GRAPHING-MANUAL%20MGL-PAX:SECTION"></a>
 
 ### 9.3 The GEB Graphizer
 
@@ -2783,6 +3055,7 @@ file to be used by other projects or perhaps in papers
 This section covers the GEB Graph representation
 
 <a id="x-28GEB-GUI-2ECORE-3A-40GRAPHING-CORE-20MGL-PAX-3ASECTION-29"></a>
+<a id="GEB-GUI.CORE:@GRAPHING-CORE%20MGL-PAX:SECTION"></a>
 
 #### 9.3.1 The GEB Graphizer Core
 
@@ -2793,6 +3066,7 @@ object into a format for a graphing backend.
 The core types that facilittate the functionality
 
 <a id="x-28GEB-GUI-2ECORE-3ANOTE-20TYPE-29"></a>
+<a id="GEB-GUI.CORE:NOTE%20TYPE"></a>
 
 - [type] **NOTE**
 
@@ -2835,6 +3109,7 @@ The core types that facilittate the functionality
     Note at the end is not prepended by any special information
 
 <a id="x-28GEB-GUI-2ECORE-3ANODE-20CLASS-29"></a>
+<a id="GEB-GUI.CORE:NODE%20CLASS"></a>
 
 - [class] **NODE** *[META-MIXIN][4529]*
 
@@ -2847,24 +3122,29 @@ The core types that facilittate the functionality
     that goes to it in the meta table and recovering the note.
 
 <a id="x-28GEB-GUI-2ECORE-3ANODE-NOTE-20CLASS-29"></a>
+<a id="GEB-GUI.CORE:NODE-NOTE%20CLASS"></a>
 
 - [class] **NODE-NOTE**
 
 <a id="x-28GEB-GUI-2ECORE-3ASQUASH-NOTE-20CLASS-29"></a>
+<a id="GEB-GUI.CORE:SQUASH-NOTE%20CLASS"></a>
 
 - [class] **SQUASH-NOTE**
 
     This note should be squashed into another note and or node.
 
 <a id="x-28GEB-GUI-2ECORE-3AMAKE-NOTE-20FUNCTION-29"></a>
+<a id="GEB-GUI.CORE:MAKE-NOTE%20FUNCTION"></a>
 
 - [function] **MAKE-NOTE** *&REST INITARGS &KEY FROM NOTE VALUE &ALLOW-OTHER-KEYS*
 
 <a id="x-28GEB-GUI-2ECORE-3AMAKE-SQUASH-20FUNCTION-29"></a>
+<a id="GEB-GUI.CORE:MAKE-SQUASH%20FUNCTION"></a>
 
 - [function] **MAKE-SQUASH** *&REST INITARGS &KEY VALUE &ALLOW-OTHER-KEYS*
 
 <a id="x-28GEB-GUI-2ECORE-3AGRAPHIZE-20GENERIC-FUNCTION-29"></a>
+<a id="GEB-GUI.CORE:GRAPHIZE%20GENERIC-FUNCTION"></a>
 
 - [generic-function] **GRAPHIZE** *MORPH NOTES*
 
@@ -2876,23 +3156,26 @@ The core types that facilittate the functionality
     without children, along with saying where it came from. This is to be
     stored in parent of the `NOTE`
     
-    If the `NOTE` is a :CONTINUE `NOTE`, then the computation is continued at
+    If the `NOTE` is a `:CONTINUE` `NOTE`, then the computation is continued at
     the spot.
     
     The parent field is to set the note on the parent if the `NOTE` is going
     to be merged
 
 <a id="x-28GEB-GUI-2ECORE-3AVALUE-20GENERIC-FUNCTION-29"></a>
+<a id="GEB-GUI.CORE:VALUE%20GENERIC-FUNCTION"></a>
 
-- [generic-function] **VALUE** *X*
+- [generic-function] **VALUE** *OBJECT*
 
 <a id="x-28GEB-GUI-2ECORE-3ACONS-NOTE-20FUNCTION-29"></a>
+<a id="GEB-GUI.CORE:CONS-NOTE%20FUNCTION"></a>
 
 - [function] **CONS-NOTE** *NOTE NOTES*
 
     Adds a note to the notes list.
 
 <a id="x-28GEB-GUI-2ECORE-3AAPPLY-NOTE-20FUNCTION-29"></a>
+<a id="GEB-GUI.CORE:APPLY-NOTE%20FUNCTION"></a>
 
 - [function] **APPLY-NOTE** *NOTE-TO-BE-ON NOTE*
 
@@ -2906,20 +3189,24 @@ The core types that facilittate the functionality
     as that is the proper `NODE` to continue from
 
 <a id="x-28GEB-GUI-2ECORE-3AREPRESENTATION-20GENERIC-FUNCTION-29"></a>
+<a id="GEB-GUI.CORE:REPRESENTATION%20GENERIC-FUNCTION"></a>
 
-- [generic-function] **REPRESENTATION** *X*
+- [generic-function] **REPRESENTATION** *OBJECT*
 
 <a id="x-28GEB-GUI-2ECORE-3ACHILDREN-20GENERIC-FUNCTION-29"></a>
+<a id="GEB-GUI.CORE:CHILDREN%20GENERIC-FUNCTION"></a>
 
-- [generic-function] **CHILDREN** *X*
+- [generic-function] **CHILDREN** *OBJECT*
 
 <a id="x-28GEB-GUI-2ECORE-3ADETERMINE-TEXT-AND-OBJECT-FROM-NODE-20FUNCTION-29"></a>
+<a id="GEB-GUI.CORE:DETERMINE-TEXT-AND-OBJECT-FROM-NODE%20FUNCTION"></a>
 
 - [function] **DETERMINE-TEXT-AND-OBJECT-FROM-NODE** *FROM TO*
 
     Helps lookup the text from the node
 
 <a id="x-28GEB-GUI-2ECORE-3ANOTERIZE-CHILDREN-20FUNCTION-29"></a>
+<a id="GEB-GUI.CORE:NOTERIZE-CHILDREN%20FUNCTION"></a>
 
 - [function] **NOTERIZE-CHILDREN** *NODE FUNC*
 
@@ -2929,12 +3216,14 @@ The core types that facilittate the functionality
     child in the list
 
 <a id="x-28GEB-GUI-2ECORE-3ANOTORIZE-CHILDREN-WITH-INDEX-SCHEMA-20FUNCTION-29"></a>
+<a id="GEB-GUI.CORE:NOTORIZE-CHILDREN-WITH-INDEX-SCHEMA%20FUNCTION"></a>
 
 - [function] **NOTORIZE-CHILDREN-WITH-INDEX-SCHEMA** *PREFIX NODE*
 
     Notorizes the node with a prefix appended with the subscripted number
 
 <a id="x-28GEB-GUI-2EGRAPHING-2EPASSES-3A-40PASS-MANUAL-20MGL-PAX-3ASECTION-29"></a>
+<a id="GEB-GUI.GRAPHING.PASSES:@PASS-MANUAL%20MGL-PAX:SECTION"></a>
 
 #### 9.3.2 The GEB Graphizer Passes
 
@@ -2943,6 +3232,7 @@ This changes how the graph is visualized, simplifying the graph in
 ways that are intuitive to the user
 
 <a id="x-28GEB-GUI-2EGRAPHING-2EPASSES-3APASSES-20FUNCTION-29"></a>
+<a id="GEB-GUI.GRAPHING.PASSES:PASSES%20FUNCTION"></a>
 
 - [function] **PASSES** *NODE*
 
@@ -2951,6 +3241,7 @@ ways that are intuitive to the user
     only display it in a more bearable way
 
 <a id="x-28GEB-2ESEQN-3A-40SEQN-MANUAL-20MGL-PAX-3ASECTION-29"></a>
+<a id="GEB.SEQN:@SEQN-MANUAL%20MGL-PAX:SECTION"></a>
 
 ## 10 Seqn Specification
 
@@ -2959,15 +3250,18 @@ This covers a GEB view of multibit sequences. In particular this type will
 be used in translating GEB's view of multibit sequences into Vampir
 
 <a id="x-28GEB-2ESEQN-2ESPEC-3A-40SEQN-20MGL-PAX-3ASECTION-29"></a>
+<a id="GEB.SEQN.SPEC:@SEQN%20MGL-PAX:SECTION"></a>
 
 ### 10.1 Seqn Types
 
 ###### \[in package GEB.SEQN.SPEC\]
 <a id="x-28GEB-2ESEQN-2ESPEC-3ASEQN-20TYPE-29"></a>
+<a id="GEB.SEQN.SPEC:SEQN%20TYPE"></a>
 
 - [type] **SEQN**
 
 <a id="x-28GEB-2ESEQN-2ESPEC-3A-3CSEQN-3E-20CLASS-29"></a>
+<a id="GEB.SEQN.SPEC:%3CSEQN%3E%20CLASS"></a>
 
 - [class] **\<SEQN>** *[DIRECT-POINTWISE-MIXIN][e2b0] [CAT-MORPH][a7af]*
 
@@ -2986,6 +3280,7 @@ be used in translating GEB's view of multibit sequences into Vampir
     as (seqwidth bool) = (1, max(0, 0)) 
 
 <a id="x-28GEB-2ESEQN-2ESPEC-3ACOMPOSITION-20CLASS-29"></a>
+<a id="GEB.SEQN.SPEC:COMPOSITION%20CLASS"></a>
 
 - [class] **COMPOSITION** *[\<SEQN>][a364]*
 
@@ -2994,6 +3289,7 @@ be used in translating GEB's view of multibit sequences into Vampir
     compose g f : (a1,...,an) -> (c1,...,cn)
 
 <a id="x-28GEB-2ESEQN-2ESPEC-3AID-20CLASS-29"></a>
+<a id="GEB.SEQN.SPEC:ID%20CLASS"></a>
 
 - [class] **ID** *[\<SEQN>][a364]*
 
@@ -3001,6 +3297,7 @@ be used in translating GEB's view of multibit sequences into Vampir
     id (x1,...,xn) : (x1,....,xn) -> (x1,...,xn)
 
 <a id="x-28GEB-2ESEQN-2ESPEC-3APARALLEL-SEQ-20CLASS-29"></a>
+<a id="GEB.SEQN.SPEC:PARALLEL-SEQ%20CLASS"></a>
 
 - [class] **PARALLEL-SEQ** *[\<SEQN>][a364]*
 
@@ -3008,6 +3305,7 @@ be used in translating GEB's view of multibit sequences into Vampir
     parallel f g : (a1,...,an, b1,...bm) -> (x1,...,xk,y1,...,yl)
 
 <a id="x-28GEB-2ESEQN-2ESPEC-3AFORK-SEQ-20CLASS-29"></a>
+<a id="GEB.SEQN.SPEC:FORK-SEQ%20CLASS"></a>
 
 - [class] **FORK-SEQ** *[\<SEQN>][a364]*
 
@@ -3015,6 +3313,7 @@ be used in translating GEB's view of multibit sequences into Vampir
     inputs (`MCAR`). fork (a1, ...., an) -> (a1,...,an, a1,..., an)
 
 <a id="x-28GEB-2ESEQN-2ESPEC-3ADROP-NIL-20CLASS-29"></a>
+<a id="GEB.SEQN.SPEC:DROP-NIL%20CLASS"></a>
 
 - [class] **DROP-NIL** *[\<SEQN>][a364]*
 
@@ -3022,6 +3321,7 @@ be used in translating GEB's view of multibit sequences into Vampir
     the terminal object drop-nil (x1, ..., xn) : (x1,...,xn) -> (0)
 
 <a id="x-28GEB-2ESEQN-2ESPEC-3AREMOVE-RIGHT-20CLASS-29"></a>
+<a id="GEB.SEQN.SPEC:REMOVE-RIGHT%20CLASS"></a>
 
 - [class] **REMOVE-RIGHT** *[\<SEQN>][a364]*
 
@@ -3029,6 +3329,7 @@ be used in translating GEB's view of multibit sequences into Vampir
     remove (x1,...,xn) : (x1,...,xn, 0) -> (x1,...,xn)
 
 <a id="x-28GEB-2ESEQN-2ESPEC-3AREMOVE-LEFT-20CLASS-29"></a>
+<a id="GEB.SEQN.SPEC:REMOVE-LEFT%20CLASS"></a>
 
 - [class] **REMOVE-LEFT** *[\<SEQN>][a364]*
 
@@ -3036,6 +3337,7 @@ be used in translating GEB's view of multibit sequences into Vampir
     remove (x1,...,xn) : (0, x1,...,xn) -> (x1,...,xn)
 
 <a id="x-28GEB-2ESEQN-2ESPEC-3ADROP-WIDTH-20CLASS-29"></a>
+<a id="GEB.SEQN.SPEC:DROP-WIDTH%20CLASS"></a>
 
 - [class] **DROP-WIDTH** *[\<SEQN>][a364]*
 
@@ -3055,6 +3357,7 @@ be used in translating GEB's view of multibit sequences into Vampir
     xi-yi bits) to the left after the decomposition by range xi
 
 <a id="x-28GEB-2ESEQN-2ESPEC-3AINJ-LENGTH-LEFT-20CLASS-29"></a>
+<a id="GEB.SEQN.SPEC:INJ-LENGTH-LEFT%20CLASS"></a>
 
 - [class] **INJ-LENGTH-LEFT** *[\<SEQN>][a364]*
 
@@ -3068,6 +3371,7 @@ be used in translating GEB's view of multibit sequences into Vampir
     So what gets injected is the left part
 
 <a id="x-28GEB-2ESEQN-2ESPEC-3AINJ-LENGTH-RIGHT-20CLASS-29"></a>
+<a id="GEB.SEQN.SPEC:INJ-LENGTH-RIGHT%20CLASS"></a>
 
 - [class] **INJ-LENGTH-RIGHT** *[\<SEQN>][a364]*
 
@@ -3081,6 +3385,7 @@ be used in translating GEB's view of multibit sequences into Vampir
     What gets injected is the right part
 
 <a id="x-28GEB-2ESEQN-2ESPEC-3AINJ-SIZE-20CLASS-29"></a>
+<a id="GEB.SEQN.SPEC:INJ-SIZE%20CLASS"></a>
 
 - [class] **INJ-SIZE** *[\<SEQN>][a364]*
 
@@ -3092,6 +3397,7 @@ be used in translating GEB's view of multibit sequences into Vampir
     Just a special case of drop-width
 
 <a id="x-28GEB-2ESEQN-2ESPEC-3ABRANCH-SEQ-20CLASS-29"></a>
+<a id="GEB.SEQN.SPEC:BRANCH-SEQ%20CLASS"></a>
 
 - [class] **BRANCH-SEQ** *[\<SEQN>][a364]*
 
@@ -3101,6 +3407,7 @@ be used in translating GEB's view of multibit sequences into Vampir
     f on 0 entry and g on 1
 
 <a id="x-28GEB-2ESEQN-2ESPEC-3ASHIFT-FRONT-20CLASS-29"></a>
+<a id="GEB.SEQN.SPEC:SHIFT-FRONT%20CLASS"></a>
 
 - [class] **SHIFT-FRONT** *[\<SEQN>][a364]*
 
@@ -3109,6 +3416,7 @@ be used in translating GEB's view of multibit sequences into Vampir
     shift-front (x1,...,xn) k : (x1,...,xk,...,xn) -> (xk, x1,..., x\_k-1, x\_k+1,...,xn)
 
 <a id="x-28GEB-2ESEQN-2ESPEC-3AZERO-BIT-20CLASS-29"></a>
+<a id="GEB.SEQN.SPEC:ZERO-BIT%20CLASS"></a>
 
 - [class] **ZERO-BIT** *[\<SEQN>][a364]*
 
@@ -3116,6 +3424,7 @@ be used in translating GEB's view of multibit sequences into Vampir
     zero: (0) -> (1)
 
 <a id="x-28GEB-2ESEQN-2ESPEC-3AONE-BIT-20CLASS-29"></a>
+<a id="GEB.SEQN.SPEC:ONE-BIT%20CLASS"></a>
 
 - [class] **ONE-BIT** *[\<SEQN>][a364]*
 
@@ -3123,6 +3432,7 @@ be used in translating GEB's view of multibit sequences into Vampir
     one: (0) -> (1)
 
 <a id="x-28GEB-2ESEQN-2ESPEC-3ASEQN-ADD-20CLASS-29"></a>
+<a id="GEB.SEQN.SPEC:SEQN-ADD%20CLASS"></a>
 
 - [class] **SEQN-ADD** *[\<SEQN>][a364]*
 
@@ -3130,6 +3440,7 @@ be used in translating GEB's view of multibit sequences into Vampir
     of [`MCAR`][f1ce] width. seqn-add n : (n, n) -> (n)
 
 <a id="x-28GEB-2ESEQN-2ESPEC-3ASEQN-SUBTRACT-20CLASS-29"></a>
+<a id="GEB.SEQN.SPEC:SEQN-SUBTRACT%20CLASS"></a>
 
 - [class] **SEQN-SUBTRACT** *[\<SEQN>][a364]*
 
@@ -3137,6 +3448,7 @@ be used in translating GEB's view of multibit sequences into Vampir
     of [`MCAR`][f1ce] width. seqn-subtract n : (n, n) -> (n)
 
 <a id="x-28GEB-2ESEQN-2ESPEC-3ASEQN-MULTIPLY-20CLASS-29"></a>
+<a id="GEB.SEQN.SPEC:SEQN-MULTIPLY%20CLASS"></a>
 
 - [class] **SEQN-MULTIPLY** *[\<SEQN>][a364]*
 
@@ -3144,6 +3456,7 @@ be used in translating GEB's view of multibit sequences into Vampir
     of [`MCAR`][f1ce] width. seqn-multiply n : (n, n) -> (n)
 
 <a id="x-28GEB-2ESEQN-2ESPEC-3ASEQN-DIVIDE-20CLASS-29"></a>
+<a id="GEB.SEQN.SPEC:SEQN-DIVIDE%20CLASS"></a>
 
 - [class] **SEQN-DIVIDE** *[\<SEQN>][a364]*
 
@@ -3151,6 +3464,7 @@ be used in translating GEB's view of multibit sequences into Vampir
     numbers of [`MCAR`][f1ce] width. seqn-divide n : (n, n) -> (n)
 
 <a id="x-28GEB-2ESEQN-2ESPEC-3ASEQN-NAT-20CLASS-29"></a>
+<a id="GEB.SEQN.SPEC:SEQN-NAT%20CLASS"></a>
 
 - [class] **SEQN-NAT** *[\<SEQN>][a364]*
 
@@ -3158,6 +3472,7 @@ be used in translating GEB's view of multibit sequences into Vampir
     seqn-nat n m = (0) -> (n)
 
 <a id="x-28GEB-2ESEQN-2ESPEC-3ASEQN-CONCAT-20CLASS-29"></a>
+<a id="GEB.SEQN.SPEC:SEQN-CONCAT%20CLASS"></a>
 
 - [class] **SEQN-CONCAT** *[\<SEQN>][a364]*
 
@@ -3168,6 +3483,7 @@ be used in translating GEB's view of multibit sequences into Vampir
     seqn-concat n m = (n, m) -> (n+m)
 
 <a id="x-28GEB-2ESEQN-2ESPEC-3ASEQN-DECOMPOSE-20CLASS-29"></a>
+<a id="GEB.SEQN.SPEC:SEQN-DECOMPOSE%20CLASS"></a>
 
 - [class] **SEQN-DECOMPOSE** *[\<SEQN>][a364]*
 
@@ -3177,6 +3493,7 @@ be used in translating GEB's view of multibit sequences into Vampir
     bit to the left part of the codomain and the rest of the bits to the right
 
 <a id="x-28GEB-2ESEQN-2ESPEC-3ASEQN-EQ-20CLASS-29"></a>
+<a id="GEB.SEQN.SPEC:SEQN-EQ%20CLASS"></a>
 
 - [class] **SEQN-EQ** *[\<SEQN>][a364]*
 
@@ -3186,6 +3503,7 @@ be used in translating GEB's view of multibit sequences into Vampir
     equal
 
 <a id="x-28GEB-2ESEQN-2ESPEC-3ASEQN-LT-20CLASS-29"></a>
+<a id="GEB.SEQN.SPEC:SEQN-LT%20CLASS"></a>
 
 - [class] **SEQN-LT** *[\<SEQN>][a364]*
 
@@ -3195,6 +3513,7 @@ be used in translating GEB's view of multibit sequences into Vampir
     one is less than the second
 
 <a id="x-28GEB-2ESEQN-2ESPEC-3ASEQN-MOD-20CLASS-29"></a>
+<a id="GEB.SEQN.SPEC:SEQN-MOD%20CLASS"></a>
 
 - [class] **SEQN-MOD** *[\<SEQN>][a364]*
 
@@ -3204,6 +3523,7 @@ be used in translating GEB's view of multibit sequences into Vampir
     modulo of the first integer by the second
 
 <a id="x-28GEB-2ESEQN-2ESPEC-3A-40SEQN-CONSTRUCTORS-20MGL-PAX-3ASECTION-29"></a>
+<a id="GEB.SEQN.SPEC:@SEQN-CONSTRUCTORS%20MGL-PAX:SECTION"></a>
 
 ### 10.2 Seqn Constructors
 
@@ -3211,106 +3531,132 @@ be used in translating GEB's view of multibit sequences into Vampir
 Every accessor for each of the classes making up seqn
 
 <a id="x-28GEB-2ESEQN-2ESPEC-3ACOMPOSITION-20FUNCTION-29"></a>
+<a id="GEB.SEQN.SPEC:COMPOSITION%20FUNCTION"></a>
 
 - [function] **COMPOSITION** *MCAR MCADR*
 
 <a id="x-28GEB-2ESEQN-2ESPEC-3AID-20FUNCTION-29"></a>
+<a id="GEB.SEQN.SPEC:ID%20FUNCTION"></a>
 
 - [function] **ID** *MCAR*
 
 <a id="x-28GEB-2ESEQN-2ESPEC-3AFORK-SEQ-20FUNCTION-29"></a>
+<a id="GEB.SEQN.SPEC:FORK-SEQ%20FUNCTION"></a>
 
 - [function] **FORK-SEQ** *MCAR*
 
 <a id="x-28GEB-2ESEQN-2ESPEC-3APARALLEL-SEQ-20FUNCTION-29"></a>
+<a id="GEB.SEQN.SPEC:PARALLEL-SEQ%20FUNCTION"></a>
 
 - [function] **PARALLEL-SEQ** *MCAR MCADR*
 
 <a id="x-28GEB-2ESEQN-2ESPEC-3ADROP-NIL-20FUNCTION-29"></a>
+<a id="GEB.SEQN.SPEC:DROP-NIL%20FUNCTION"></a>
 
 - [function] **DROP-NIL** *MCAR*
 
 <a id="x-28GEB-2ESEQN-2ESPEC-3AREMOVE-RIGHT-20FUNCTION-29"></a>
+<a id="GEB.SEQN.SPEC:REMOVE-RIGHT%20FUNCTION"></a>
 
 - [function] **REMOVE-RIGHT** *MCAR*
 
 <a id="x-28GEB-2ESEQN-2ESPEC-3AREMOVE-LEFT-20FUNCTION-29"></a>
+<a id="GEB.SEQN.SPEC:REMOVE-LEFT%20FUNCTION"></a>
 
 - [function] **REMOVE-LEFT** *MCAR*
 
 <a id="x-28GEB-2ESEQN-2ESPEC-3ADROP-WIDTH-20FUNCTION-29"></a>
+<a id="GEB.SEQN.SPEC:DROP-WIDTH%20FUNCTION"></a>
 
 - [function] **DROP-WIDTH** *MCAR MCADR*
 
 <a id="x-28GEB-2ESEQN-2ESPEC-3AINJ-LENGTH-LEFT-20FUNCTION-29"></a>
+<a id="GEB.SEQN.SPEC:INJ-LENGTH-LEFT%20FUNCTION"></a>
 
 - [function] **INJ-LENGTH-LEFT** *MCAR MCADR*
 
 <a id="x-28GEB-2ESEQN-2ESPEC-3AINJ-LENGTH-RIGHT-20FUNCTION-29"></a>
+<a id="GEB.SEQN.SPEC:INJ-LENGTH-RIGHT%20FUNCTION"></a>
 
 - [function] **INJ-LENGTH-RIGHT** *MCAR MCADR*
 
 <a id="x-28GEB-2ESEQN-2ESPEC-3AINJ-SIZE-20FUNCTION-29"></a>
+<a id="GEB.SEQN.SPEC:INJ-SIZE%20FUNCTION"></a>
 
 - [function] **INJ-SIZE** *MCAR MCADR*
 
 <a id="x-28GEB-2ESEQN-2ESPEC-3ABRANCH-SEQ-20FUNCTION-29"></a>
+<a id="GEB.SEQN.SPEC:BRANCH-SEQ%20FUNCTION"></a>
 
 - [function] **BRANCH-SEQ** *MCAR MCADR*
 
 <a id="x-28GEB-2ESEQN-2ESPEC-3ASHIFT-FRONT-20FUNCTION-29"></a>
+<a id="GEB.SEQN.SPEC:SHIFT-FRONT%20FUNCTION"></a>
 
 - [function] **SHIFT-FRONT** *MCAR MCADR*
 
 <a id="x-28GEB-2ESEQN-2ESPEC-3AZERO-BIT-20MGL-PAX-3ASYMBOL-MACRO-29"></a>
+<a id="GEB.SEQN.SPEC:ZERO-BIT%20MGL-PAX:SYMBOL-MACRO"></a>
 
 - [symbol-macro] **ZERO-BIT**
 
 <a id="x-28GEB-2ESEQN-2ESPEC-3AONE-BIT-20MGL-PAX-3ASYMBOL-MACRO-29"></a>
+<a id="GEB.SEQN.SPEC:ONE-BIT%20MGL-PAX:SYMBOL-MACRO"></a>
 
 - [symbol-macro] **ONE-BIT**
 
 <a id="x-28GEB-2ESEQN-2ESPEC-3ASEQN-ADD-20FUNCTION-29"></a>
+<a id="GEB.SEQN.SPEC:SEQN-ADD%20FUNCTION"></a>
 
 - [function] **SEQN-ADD** *MCAR*
 
 <a id="x-28GEB-2ESEQN-2ESPEC-3ASEQN-SUBTRACT-20FUNCTION-29"></a>
+<a id="GEB.SEQN.SPEC:SEQN-SUBTRACT%20FUNCTION"></a>
 
 - [function] **SEQN-SUBTRACT** *MCAR*
 
 <a id="x-28GEB-2ESEQN-2ESPEC-3ASEQN-MULTIPLY-20FUNCTION-29"></a>
+<a id="GEB.SEQN.SPEC:SEQN-MULTIPLY%20FUNCTION"></a>
 
 - [function] **SEQN-MULTIPLY** *MCAR*
 
 <a id="x-28GEB-2ESEQN-2ESPEC-3ASEQN-DIVIDE-20FUNCTION-29"></a>
+<a id="GEB.SEQN.SPEC:SEQN-DIVIDE%20FUNCTION"></a>
 
 - [function] **SEQN-DIVIDE** *MCAR*
 
 <a id="x-28GEB-2ESEQN-2ESPEC-3ASEQN-NAT-20FUNCTION-29"></a>
+<a id="GEB.SEQN.SPEC:SEQN-NAT%20FUNCTION"></a>
 
 - [function] **SEQN-NAT** *MCAR MCADR*
 
 <a id="x-28GEB-2ESEQN-2ESPEC-3ASEQN-CONCAT-20FUNCTION-29"></a>
+<a id="GEB.SEQN.SPEC:SEQN-CONCAT%20FUNCTION"></a>
 
 - [function] **SEQN-CONCAT** *MCAR MCADR*
 
 <a id="x-28GEB-2ESEQN-2ESPEC-3ASEQN-DECOMPOSE-20FUNCTION-29"></a>
+<a id="GEB.SEQN.SPEC:SEQN-DECOMPOSE%20FUNCTION"></a>
 
 - [function] **SEQN-DECOMPOSE** *MCAR*
 
 <a id="x-28GEB-2ESEQN-2ESPEC-3ASEQN-EQ-20FUNCTION-29"></a>
+<a id="GEB.SEQN.SPEC:SEQN-EQ%20FUNCTION"></a>
 
 - [function] **SEQN-EQ** *MCAR*
 
 <a id="x-28GEB-2ESEQN-2ESPEC-3ASEQN-LT-20FUNCTION-29"></a>
+<a id="GEB.SEQN.SPEC:SEQN-LT%20FUNCTION"></a>
 
 - [function] **SEQN-LT** *MCAR*
 
 <a id="x-28GEB-2ESEQN-2ESPEC-3ASEQN-MOD-20FUNCTION-29"></a>
+<a id="GEB.SEQN.SPEC:SEQN-MOD%20FUNCTION"></a>
 
 - [function] **SEQN-MOD** *MCAR*
 
 <a id="x-28GEB-2ESEQN-2EMAIN-3A-40SEQN-API-20MGL-PAX-3ASECTION-29"></a>
+<a id="GEB.SEQN.MAIN:@SEQN-API%20MGL-PAX:SECTION"></a>
 
 ### 10.3 seqn api
 
@@ -3318,12 +3664,14 @@ Every accessor for each of the classes making up seqn
 this covers the seqn api
 
 <a id="x-28GEB-2ESEQN-2EMAIN-3AFILL-IN-20FUNCTION-29"></a>
+<a id="GEB.SEQN.MAIN:FILL-IN%20FUNCTION"></a>
 
 - [function] **FILL-IN** *NUM SEQ*
 
     Fills in extra inputs on the right with 0-oes
 
 <a id="x-28GEB-2ESEQN-2EMAIN-3APROD-LIST-20FUNCTION-29"></a>
+<a id="GEB.SEQN.MAIN:PROD-LIST%20FUNCTION"></a>
 
 - [function] **PROD-LIST** *L1 L2*
 
@@ -3337,6 +3685,7 @@ this covers the seqn api
 
 
 <a id="x-28GEB-2ESEQN-2EMAIN-3ASEQ-MAX-FILL-20FUNCTION-29"></a>
+<a id="GEB.SEQN.MAIN:SEQ-MAX-FILL%20FUNCTION"></a>
 
 - [function] **SEQ-MAX-FILL** *SEQ1 SEQ2*
 
@@ -3344,14 +3693,17 @@ this covers the seqn api
     where necessary and takes their pointwise product
 
 <a id="x-28GEB-2EGENERICS-3AWIDTH-20-28METHOD-20NIL-20-28GEB-2ESPEC-3A-3CSUBSTOBJ-3E-29-29-29"></a>
+<a id="GEB.GENERICS:WIDTH%20%28METHOD%20NIL%20%28GEB.SPEC:%3CSUBSTOBJ%3E%29%29"></a>
 
 - [method] **WIDTH** *(OBJ \<SUBSTOBJ>)*
 
 <a id="x-28GEB-2EGENERICS-3AWIDTH-20-28METHOD-20NIL-20-28GEB-2EEXTENSION-2ESPEC-3A-3CNATOBJ-3E-29-29-29"></a>
+<a id="GEB.GENERICS:WIDTH%20%28METHOD%20NIL%20%28GEB.EXTENSION.SPEC:%3CNATOBJ%3E%29%29"></a>
 
 - [method] **WIDTH** *(OBJ \<NATOBJ>)*
 
 <a id="x-28GEB-2ESEQN-2EMAIN-3AINJ-COPROD-PARALLEL-20FUNCTION-29"></a>
+<a id="GEB.SEQN.MAIN:INJ-COPROD-PARALLEL%20FUNCTION"></a>
 
 - [function] **INJ-COPROD-PARALLEL** *OBJ COPR*
 
@@ -3361,10 +3713,12 @@ this covers the seqn api
     taken during the width operation without filling in of the smaller object
 
 <a id="x-28GEB-2ESEQN-2EMAIN-3AZERO-LIST-20FUNCTION-29"></a>
+<a id="GEB.SEQN.MAIN:ZERO-LIST%20FUNCTION"></a>
 
 - [function] **ZERO-LIST** *LENGTH*
 
 <a id="x-28GEB-2EMIXINS-3ADOM-20-28METHOD-20NIL-20-28GEB-2ESEQN-2ESPEC-3A-3CSEQN-3E-29-29-29"></a>
+<a id="GEB.MIXINS:DOM%20%28METHOD%20NIL%20%28GEB.SEQN.SPEC:%3CSEQN%3E%29%29"></a>
 
 - [method] **DOM** *(X \<SEQN>)*
 
@@ -3372,6 +3726,7 @@ this covers the seqn api
     For a less formal description consult the specs file
 
 <a id="x-28GEB-2ESEQN-2EMAIN-3ACOD-20-28METHOD-20NIL-20-28GEB-2ESEQN-2ESPEC-3A-3CSEQN-3E-29-29-29"></a>
+<a id="GEB.SEQN.MAIN:COD%20%28METHOD%20NIL%20%28GEB.SEQN.SPEC:%3CSEQN%3E%29%29"></a>
 
 - [method] **COD** *(X \<SEQN>)*
 
@@ -3379,10 +3734,12 @@ this covers the seqn api
     For a less formal description consult the specs file
 
 <a id="x-28GEB-2EGENERICS-3AWELL-DEFP-CAT-20-28METHOD-20NIL-20-28GEB-2ESEQN-2ESPEC-3A-3CSEQN-3E-29-29-29"></a>
+<a id="GEB.GENERICS:WELL-DEFP-CAT%20%28METHOD%20NIL%20%28GEB.SEQN.SPEC:%3CSEQN%3E%29%29"></a>
 
 - [method] **WELL-DEFP-CAT** *(MORPH \<SEQN>)*
 
 <a id="x-28GEB-2EGENERICS-3AGAPPLY-20-28METHOD-20NIL-20-28GEB-2ESEQN-2ESPEC-3A-3CSEQN-3E-20T-29-29-29"></a>
+<a id="GEB.GENERICS:GAPPLY%20%28METHOD%20NIL%20%28GEB.SEQN.SPEC:%3CSEQN%3E%20T%29%29"></a>
 
 - [method] **GAPPLY** *(MORPHISM \<SEQN>) VECTOR*
 
@@ -3391,6 +3748,7 @@ this covers the seqn api
     is capable of successfully evaluating all compiled terms
 
 <a id="x-28GEB-2ESEQN-2ETRANS-3A-40SEQB-TRANS-20MGL-PAX-3ASECTION-29"></a>
+<a id="GEB.SEQN.TRANS:@SEQB-TRANS%20MGL-PAX:SECTION"></a>
 
 ### 10.4 Seqn Transformations
 
@@ -3398,6 +3756,7 @@ this covers the seqn api
 This covers transformation functions from
 
 <a id="x-28GEB-2EGENERICS-3ATO-CIRCUIT-20-28METHOD-20NIL-20-28GEB-2ESEQN-2ESPEC-3A-3CSEQN-3E-20T-29-29-29"></a>
+<a id="GEB.GENERICS:TO-CIRCUIT%20%28METHOD%20NIL%20%28GEB.SEQN.SPEC:%3CSEQN%3E%20T%29%29"></a>
 
 - [method] **TO-CIRCUIT** *(MORPHISM \<SEQN>) NAME*
 
@@ -3406,6 +3765,7 @@ This covers transformation functions from
     and skip 0es, making non-zero entries into wires
 
 <a id="x-28GEB-2ESEQN-2ETRANS-3ATEST-CALL-20FUNCTION-29"></a>
+<a id="GEB.SEQN.TRANS:TEST-CALL%20FUNCTION"></a>
 
 - [function] **TEST-CALL** *CIRCUIT*
 
@@ -3413,12 +3773,14 @@ This covers transformation functions from
     an equality as foo in1 ... in2 = out
 
 <a id="x-28GEB-2EGENERICS-3ATO-VAMPIR-20-28METHOD-20NIL-20-28GEB-2ESEQN-2ESPEC-3AID-20T-20T-29-29-29"></a>
+<a id="GEB.GENERICS:TO-VAMPIR%20%28METHOD%20NIL%20%28GEB.SEQN.SPEC:ID%20T%20T%29%29"></a>
 
 - [method] **TO-VAMPIR** *(OBJ ID) INPUTS CONSTRAINTS*
 
     Given a tuple (x1,...,xn) does nothing with it
 
 <a id="x-28GEB-2EGENERICS-3ATO-VAMPIR-20-28METHOD-20NIL-20-28GEB-2ESEQN-2ESPEC-3ACOMPOSITION-20T-20T-29-29-29"></a>
+<a id="GEB.GENERICS:TO-VAMPIR%20%28METHOD%20NIL%20%28GEB.SEQN.SPEC:COMPOSITION%20T%20T%29%29"></a>
 
 - [method] **TO-VAMPIR** *(OBJ COMPOSITION) INPUTS CONSTRAINTS*
 
@@ -3426,36 +3788,42 @@ This covers transformation functions from
     inputs and then feed them as entries to compiled [`MCAR`][f1ce]
 
 <a id="x-28GEB-2EGENERICS-3ATO-VAMPIR-20-28METHOD-20NIL-20-28GEB-2ESEQN-2ESPEC-3APARALLEL-SEQ-20T-20T-29-29-29"></a>
+<a id="GEB.GENERICS:TO-VAMPIR%20%28METHOD%20NIL%20%28GEB.SEQN.SPEC:PARALLEL-SEQ%20T%20T%29%29"></a>
 
 - [method] **TO-VAMPIR** *(OBJ PARALLEL-SEQ) INPUTS CONSTRAINTS*
 
     Compile [`MCAR`][f1ce] and [`MCADR`][cc87] and then append the tuples
 
 <a id="x-28GEB-2EGENERICS-3ATO-VAMPIR-20-28METHOD-20NIL-20-28GEB-2ESEQN-2ESPEC-3AFORK-SEQ-20T-20T-29-29-29"></a>
+<a id="GEB.GENERICS:TO-VAMPIR%20%28METHOD%20NIL%20%28GEB.SEQN.SPEC:FORK-SEQ%20T%20T%29%29"></a>
 
 - [method] **TO-VAMPIR** *(OBJ FORK-SEQ) INPUTS CONSTRAINTS*
 
     Given a tuple (x1,...,xn) copies it twice
 
 <a id="x-28GEB-2EGENERICS-3ATO-VAMPIR-20-28METHOD-20NIL-20-28GEB-2ESEQN-2ESPEC-3ADROP-NIL-20T-20T-29-29-29"></a>
+<a id="GEB.GENERICS:TO-VAMPIR%20%28METHOD%20NIL%20%28GEB.SEQN.SPEC:DROP-NIL%20T%20T%29%29"></a>
 
 - [method] **TO-VAMPIR** *(OBJ DROP-NIL) INPUTS CONSTRAINTS*
 
     Drops everything by producing nothing
 
 <a id="x-28GEB-2EGENERICS-3ATO-VAMPIR-20-28METHOD-20NIL-20-28GEB-2ESEQN-2ESPEC-3AREMOVE-RIGHT-20T-20T-29-29-29"></a>
+<a id="GEB.GENERICS:TO-VAMPIR%20%28METHOD%20NIL%20%28GEB.SEQN.SPEC:REMOVE-RIGHT%20T%20T%29%29"></a>
 
 - [method] **TO-VAMPIR** *(OBJ REMOVE-RIGHT) INPUTS CONSTRAINTS*
 
     We do not have nul inputs so does nothing
 
 <a id="x-28GEB-2EGENERICS-3ATO-VAMPIR-20-28METHOD-20NIL-20-28GEB-2ESEQN-2ESPEC-3AREMOVE-LEFT-20T-20T-29-29-29"></a>
+<a id="GEB.GENERICS:TO-VAMPIR%20%28METHOD%20NIL%20%28GEB.SEQN.SPEC:REMOVE-LEFT%20T%20T%29%29"></a>
 
 - [method] **TO-VAMPIR** *(OBJ REMOVE-LEFT) INPUTS CONSTRAINTS*
 
     We do not have nul inputs so does nothing
 
 <a id="x-28GEB-2EGENERICS-3ATO-VAMPIR-20-28METHOD-20NIL-20-28GEB-2ESEQN-2ESPEC-3ADROP-WIDTH-20T-20T-29-29-29"></a>
+<a id="GEB.GENERICS:TO-VAMPIR%20%28METHOD%20NIL%20%28GEB.SEQN.SPEC:DROP-WIDTH%20T%20T%29%29"></a>
 
 - [method] **TO-VAMPIR** *(OBJ DROP-WIDTH) INPUTS CONSTRAINTS*
 
@@ -3464,6 +3832,7 @@ This covers transformation functions from
     checks here and simply project
 
 <a id="x-28GEB-2EGENERICS-3ATO-VAMPIR-20-28METHOD-20NIL-20-28GEB-2ESEQN-2ESPEC-3AINJ-LENGTH-LEFT-20T-20T-29-29-29"></a>
+<a id="GEB.GENERICS:TO-VAMPIR%20%28METHOD%20NIL%20%28GEB.SEQN.SPEC:INJ-LENGTH-LEFT%20T%20T%29%29"></a>
 
 - [method] **TO-VAMPIR** *(OBJ INJ-LENGTH-LEFT) INPUTS CONSTRAINTS*
 
@@ -3471,6 +3840,7 @@ This covers transformation functions from
     0-es in the outputs otherwise ignore
 
 <a id="x-28GEB-2EGENERICS-3ATO-VAMPIR-20-28METHOD-20NIL-20-28GEB-2ESEQN-2ESPEC-3AINJ-LENGTH-RIGHT-20T-20T-29-29-29"></a>
+<a id="GEB.GENERICS:TO-VAMPIR%20%28METHOD%20NIL%20%28GEB.SEQN.SPEC:INJ-LENGTH-RIGHT%20T%20T%29%29"></a>
 
 - [method] **TO-VAMPIR** *(OBJ INJ-LENGTH-RIGHT) INPUTS CONSTRAINTS*
 
@@ -3478,6 +3848,7 @@ This covers transformation functions from
     0-es in the outputs 
 
 <a id="x-28GEB-2EGENERICS-3ATO-VAMPIR-20-28METHOD-20NIL-20-28GEB-2ESEQN-2ESPEC-3AINJ-SIZE-20T-20T-29-29-29"></a>
+<a id="GEB.GENERICS:TO-VAMPIR%20%28METHOD%20NIL%20%28GEB.SEQN.SPEC:INJ-SIZE%20T%20T%29%29"></a>
 
 - [method] **TO-VAMPIR** *(OBJ INJ-SIZE) INPUTS CONSTRAINTS*
 
@@ -3485,6 +3856,7 @@ This covers transformation functions from
     width than the codomain so we simply project
 
 <a id="x-28GEB-2EGENERICS-3ATO-VAMPIR-20-28METHOD-20NIL-20-28GEB-2ESEQN-2ESPEC-3ABRANCH-SEQ-20T-20T-29-29-29"></a>
+<a id="GEB.GENERICS:TO-VAMPIR%20%28METHOD%20NIL%20%28GEB.SEQN.SPEC:BRANCH-SEQ%20T%20T%29%29"></a>
 
 - [method] **TO-VAMPIR** *(OBJ BRANCH-SEQ) INPUTS CONSTRAINTS*
 
@@ -3492,6 +3864,7 @@ This covers transformation functions from
     branching. If 0 run the [`MCAR`][f1ce], if 1 run the [`MCADR`][cc87]
 
 <a id="x-28GEB-2EGENERICS-3ATO-VAMPIR-20-28METHOD-20NIL-20-28GEB-2ESEQN-2ESPEC-3ASHIFT-FRONT-20T-20T-29-29-29"></a>
+<a id="GEB.GENERICS:TO-VAMPIR%20%28METHOD%20NIL%20%28GEB.SEQN.SPEC:SHIFT-FRONT%20T%20T%29%29"></a>
 
 - [method] **TO-VAMPIR** *(OBJ SHIFT-FRONT) INPUTS CONSTRAINTS*
 
@@ -3500,38 +3873,47 @@ This covers transformation functions from
     removed already and hence we cannot count as usual
 
 <a id="x-28GEB-2EGENERICS-3ATO-VAMPIR-20-28METHOD-20NIL-20-28GEB-2ESEQN-2ESPEC-3AZERO-BIT-20T-20T-29-29-29"></a>
+<a id="GEB.GENERICS:TO-VAMPIR%20%28METHOD%20NIL%20%28GEB.SEQN.SPEC:ZERO-BIT%20T%20T%29%29"></a>
 
 - [method] **TO-VAMPIR** *(OBJ ZERO-BIT) INPUTS CONSTRAINTS*
 
 <a id="x-28GEB-2EGENERICS-3ATO-VAMPIR-20-28METHOD-20NIL-20-28GEB-2ESEQN-2ESPEC-3AONE-BIT-20T-20T-29-29-29"></a>
+<a id="GEB.GENERICS:TO-VAMPIR%20%28METHOD%20NIL%20%28GEB.SEQN.SPEC:ONE-BIT%20T%20T%29%29"></a>
 
 - [method] **TO-VAMPIR** *(OBJ ONE-BIT) INPUTS CONSTRAINTS*
 
 <a id="x-28GEB-2EGENERICS-3ATO-VAMPIR-20-28METHOD-20NIL-20-28GEB-2ESEQN-2ESPEC-3ASEQN-ADD-20T-20T-29-29-29"></a>
+<a id="GEB.GENERICS:TO-VAMPIR%20%28METHOD%20NIL%20%28GEB.SEQN.SPEC:SEQN-ADD%20T%20T%29%29"></a>
 
 - [method] **TO-VAMPIR** *(OBJ SEQN-ADD) INPUTS CONSTRAINTS*
 
 <a id="x-28GEB-2EGENERICS-3ATO-VAMPIR-20-28METHOD-20NIL-20-28GEB-2ESEQN-2ESPEC-3ASEQN-SUBTRACT-20T-20T-29-29-29"></a>
+<a id="GEB.GENERICS:TO-VAMPIR%20%28METHOD%20NIL%20%28GEB.SEQN.SPEC:SEQN-SUBTRACT%20T%20T%29%29"></a>
 
 - [method] **TO-VAMPIR** *(OBJ SEQN-SUBTRACT) INPUTS CONSTRAINTS*
 
 <a id="x-28GEB-2EGENERICS-3ATO-VAMPIR-20-28METHOD-20NIL-20-28GEB-2ESEQN-2ESPEC-3ASEQN-MULTIPLY-20T-20T-29-29-29"></a>
+<a id="GEB.GENERICS:TO-VAMPIR%20%28METHOD%20NIL%20%28GEB.SEQN.SPEC:SEQN-MULTIPLY%20T%20T%29%29"></a>
 
 - [method] **TO-VAMPIR** *(OBJ SEQN-MULTIPLY) INPUTS CONSTRAINTS*
 
 <a id="x-28GEB-2EGENERICS-3ATO-VAMPIR-20-28METHOD-20NIL-20-28GEB-2ESEQN-2ESPEC-3ASEQN-DIVIDE-20T-20T-29-29-29"></a>
+<a id="GEB.GENERICS:TO-VAMPIR%20%28METHOD%20NIL%20%28GEB.SEQN.SPEC:SEQN-DIVIDE%20T%20T%29%29"></a>
 
 - [method] **TO-VAMPIR** *(OBJ SEQN-DIVIDE) INPUTS CONSTRAINTS*
 
 <a id="x-28GEB-2EGENERICS-3ATO-VAMPIR-20-28METHOD-20NIL-20-28GEB-2ESEQN-2ESPEC-3ASEQN-NAT-20T-20T-29-29-29"></a>
+<a id="GEB.GENERICS:TO-VAMPIR%20%28METHOD%20NIL%20%28GEB.SEQN.SPEC:SEQN-NAT%20T%20T%29%29"></a>
 
 - [method] **TO-VAMPIR** *(OBJ SEQN-NAT) INPUTS CONSTRAINTS*
 
 <a id="x-28GEB-2EGENERICS-3ATO-VAMPIR-20-28METHOD-20NIL-20-28GEB-2ESEQN-2ESPEC-3ASEQN-CONCAT-20T-20T-29-29-29"></a>
+<a id="GEB.GENERICS:TO-VAMPIR%20%28METHOD%20NIL%20%28GEB.SEQN.SPEC:SEQN-CONCAT%20T%20T%29%29"></a>
 
 - [method] **TO-VAMPIR** *(OBJ SEQN-CONCAT) INPUTS CONSTRAINTS*
 
 <a id="x-28GEB-2EBITC-3A-40BITC-MANUAL-20MGL-PAX-3ASECTION-29"></a>
+<a id="GEB.BITC:@BITC-MANUAL%20MGL-PAX:SECTION"></a>
 
 ## 11 Bits (Boolean Circuit) Specification
 
@@ -3540,28 +3922,33 @@ This covers a GEB view of Boolean Circuits. In particular this type will
 be used in translating GEB's view of Boolean Circuits into Vampir
 
 <a id="x-28GEB-2EBITC-2ESPEC-3A-40BITC-20MGL-PAX-3ASECTION-29"></a>
+<a id="GEB.BITC.SPEC:@BITC%20MGL-PAX:SECTION"></a>
 
 ### 11.1 Bits Types
 
 ###### \[in package GEB.BITC.SPEC\]
-This section covers the types of things one can find in the \[`BIT`([`0`][2282] [`1`][01b6])s\]
+This section covers the types of things one can find in the \[`BIT`([`0`][01b6] [`1`][2282])s\]
 constructors
 
 <a id="x-28GEB-2EBITC-2ESPEC-3ABITC-20TYPE-29"></a>
+<a id="GEB.BITC.SPEC:BITC%20TYPE"></a>
 
 - [type] **BITC**
 
 <a id="x-28GEB-2EBITC-2ESPEC-3A-3CBITC-3E-20CLASS-29"></a>
+<a id="GEB.BITC.SPEC:%3CBITC%3E%20CLASS"></a>
 
 - [class] **\<BITC>** *[DIRECT-POINTWISE-MIXIN][e2b0] [CAT-MORPH][a7af]*
 
 <a id="x-28GEB-2EBITC-2ESPEC-3ACOMPOSE-20CLASS-29"></a>
+<a id="GEB.BITC.SPEC:COMPOSE%20CLASS"></a>
 
 - [class] **COMPOSE** *[\<BITC>][26d4]*
 
     composes the [`MCAR`][f1ce] and the [`MCADR`][cc87]
 
 <a id="x-28GEB-2EBITC-2ESPEC-3AFORK-20CLASS-29"></a>
+<a id="GEB.BITC.SPEC:FORK%20CLASS"></a>
 
 - [class] **FORK** *[\<BITC>][26d4]*
 
@@ -3569,6 +3956,7 @@ constructors
     inputs (`MCAR`).
 
 <a id="x-28GEB-2EBITC-2ESPEC-3APARALLEL-20CLASS-29"></a>
+<a id="GEB.BITC.SPEC:PARALLEL%20CLASS"></a>
 
 - [class] **PARALLEL** *[\<BITC>][26d4]*
 
@@ -3591,6 +3979,7 @@ constructors
     and d where the \[`MCAR`\] and \[`MCADR`\] run on subvectors of the input.
 
 <a id="x-28GEB-2EBITC-2ESPEC-3ASWAP-20CLASS-29"></a>
+<a id="GEB.BITC.SPEC:SWAP%20CLASS"></a>
 
 - [class] **SWAP** *[\<BITC>][26d4]*
 
@@ -3608,6 +3997,7 @@ constructors
 
 
 <a id="x-28GEB-2EBITC-2ESPEC-3AONE-20CLASS-29"></a>
+<a id="GEB.BITC.SPEC:ONE%20CLASS"></a>
 
 - [class] **ONE** *[\<BITC>][26d4]*
 
@@ -3615,6 +4005,7 @@ constructors
     with only 1 in it.
 
 <a id="x-28GEB-2EBITC-2ESPEC-3AZERO-20CLASS-29"></a>
+<a id="GEB.BITC.SPEC:ZERO%20CLASS"></a>
 
 - [class] **ZERO** *[\<BITC>][26d4]*
 
@@ -3622,18 +4013,21 @@ constructors
     it.
 
 <a id="x-28GEB-2EBITC-2ESPEC-3AIDENT-20CLASS-29"></a>
+<a id="GEB.BITC.SPEC:IDENT%20CLASS"></a>
 
 - [class] **IDENT** *[\<BITC>][26d4]*
 
     \[`IDENT`\] represents the identity
 
 <a id="x-28GEB-2EBITC-2ESPEC-3ADROP-20CLASS-29"></a>
+<a id="GEB.BITC.SPEC:DROP%20CLASS"></a>
 
 - [class] **DROP** *[\<BITC>][26d4]*
 
     \[`DROP`\] represents the unique morphism from n to 0.
 
 <a id="x-28GEB-2EBITC-2ESPEC-3ABRANCH-20CLASS-29"></a>
+<a id="GEB.BITC.SPEC:BRANCH%20CLASS"></a>
 
 - [class] **BRANCH** *[\<BITC>][26d4]*
 
@@ -3657,6 +4051,7 @@ constructors
     \[`MCAR`\] is ran, however if the bit is `1`, then the \[`MCADR`\] is ran.
 
 <a id="x-28GEB-2EBITC-2ESPEC-3A-40BITC-CONSTRUCTORS-20MGL-PAX-3ASECTION-29"></a>
+<a id="GEB.BITC.SPEC:@BITC-CONSTRUCTORS%20MGL-PAX:SECTION"></a>
 
 ### 11.2 Bits (Boolean Circuit) Constructors
 
@@ -3664,56 +4059,66 @@ constructors
 Every accessor for each of the [`CLASS`][1f37]'s found here are from [Accessors][cc51]
 
 <a id="x-28GEB-2EBITC-2ESPEC-3ACOMPOSE-20FUNCTION-29"></a>
+<a id="GEB.BITC.SPEC:COMPOSE%20FUNCTION"></a>
 
 - [function] **COMPOSE** *MCAR MCADR &REST ARGS*
 
     Creates a multiway constructor for \[`COMPOSE`\]
 
 <a id="x-28GEB-2EBITC-2ESPEC-3AFORK-20FUNCTION-29"></a>
+<a id="GEB.BITC.SPEC:FORK%20FUNCTION"></a>
 
 - [function] **FORK** *MCAR*
 
     `FORK` ARG1
 
 <a id="x-28GEB-2EBITC-2ESPEC-3APARALLEL-20FUNCTION-29"></a>
+<a id="GEB.BITC.SPEC:PARALLEL%20FUNCTION"></a>
 
 - [function] **PARALLEL** *MCAR MCADR &REST ARGS*
 
     Creates a multiway constructor for \[`PARALLEL`\]
 
 <a id="x-28GEB-2EBITC-2ESPEC-3ASWAP-20FUNCTION-29"></a>
+<a id="GEB.BITC.SPEC:SWAP%20FUNCTION"></a>
 
 - [function] **SWAP** *MCAR MCADR*
 
     swap ARG1 and ARG2
 
 <a id="x-28GEB-2EBITC-2ESPEC-3AONE-20MGL-PAX-3ASYMBOL-MACRO-29"></a>
+<a id="GEB.BITC.SPEC:ONE%20MGL-PAX:SYMBOL-MACRO"></a>
 
 - [symbol-macro] **ONE**
 
 <a id="x-28GEB-2EBITC-2ESPEC-3AZERO-20MGL-PAX-3ASYMBOL-MACRO-29"></a>
+<a id="GEB.BITC.SPEC:ZERO%20MGL-PAX:SYMBOL-MACRO"></a>
 
 - [symbol-macro] **ZERO**
 
 <a id="x-28GEB-2EBITC-2ESPEC-3AIDENT-20FUNCTION-29"></a>
+<a id="GEB.BITC.SPEC:IDENT%20FUNCTION"></a>
 
 - [function] **IDENT** *MCAR*
 
     ident ARG1
 
 <a id="x-28GEB-2EBITC-2ESPEC-3ADROP-20FUNCTION-29"></a>
+<a id="GEB.BITC.SPEC:DROP%20FUNCTION"></a>
 
 - [function] **DROP** *MCAR*
 
     drop ARG1
 
 <a id="x-28GEB-2EBITC-2ESPEC-3ABRANCH-20FUNCTION-29"></a>
+<a id="GEB.BITC.SPEC:BRANCH%20FUNCTION"></a>
 
 - [function] **BRANCH** *MCAR MCADR*
 
     branch with ARG1 or ARG2
 
 <a id="x-28GEB-2EBITC-2EMAIN-3A-40BITC-API-20MGL-PAX-3ASECTION-29"></a>
+<a id="GEB.BITC.MAIN:@BITC-API%20MGL-PAX:SECTION"></a>
 
 ### 11.3 Bits (Boolean Circuit) API
 
@@ -3721,6 +4126,7 @@ Every accessor for each of the [`CLASS`][1f37]'s found here are from [Accessors]
 This covers the Bits (Boolean Circuit) API
 
 <a id="x-28GEB-2EGENERICS-3AGAPPLY-20-28METHOD-20NIL-20-28GEB-2EBITC-2ESPEC-3A-3CBITC-3E-20BIT-VECTOR-29-29-29"></a>
+<a id="GEB.GENERICS:GAPPLY%20%28METHOD%20NIL%20%28GEB.BITC.SPEC:%3CBITC%3E%20BIT-VECTOR%29%29"></a>
 
 - [method] **GAPPLY** *(MORPHISM \<BITC>) (OBJECT BIT-VECTOR)*
 
@@ -3747,6 +4153,7 @@ This covers the Bits (Boolean Circuit) API
 
 
 <a id="x-28GEB-2EGENERICS-3AGAPPLY-20-28METHOD-20NIL-20-28GEB-2EBITC-2ESPEC-3A-3CBITC-3E-20LIST-29-29-29"></a>
+<a id="GEB.GENERICS:GAPPLY%20%28METHOD%20NIL%20%28GEB.BITC.SPEC:%3CBITC%3E%20LIST%29%29"></a>
 
 - [method] **GAPPLY** *(MORPHISM \<BITC>) (OBJECT LIST)*
 
@@ -3770,18 +4177,21 @@ This covers the Bits (Boolean Circuit) API
 
 
 <a id="x-28GEB-2EMIXINS-3ADOM-20-28METHOD-20NIL-20-28GEB-2EBITC-2ESPEC-3A-3CBITC-3E-29-29-29"></a>
+<a id="GEB.MIXINS:DOM%20%28METHOD%20NIL%20%28GEB.BITC.SPEC:%3CBITC%3E%29%29"></a>
 
 - [method] **DOM** *(X \<BITC>)*
 
     Gives the length of the bit vector the \[[`<BITC>`][26d4]\] moprhism takes
 
 <a id="x-28GEB-2EMIXINS-3ACODOM-20-28METHOD-20NIL-20-28GEB-2EBITC-2ESPEC-3A-3CBITC-3E-29-29-29"></a>
+<a id="GEB.MIXINS:CODOM%20%28METHOD%20NIL%20%28GEB.BITC.SPEC:%3CBITC%3E%29%29"></a>
 
 - [method] **CODOM** *(X \<BITC>)*
 
     Gives the length of the bit vector the \[[`<BITC>`][26d4]\] morphism returns
 
 <a id="x-28GEB-2EBITC-2ETRANS-3A-40BITC-TRANS-20MGL-PAX-3ASECTION-29"></a>
+<a id="GEB.BITC.TRANS:@BITC-TRANS%20MGL-PAX:SECTION"></a>
 
 ### 11.4 Bits (Boolean Circuit) Transformations
 
@@ -3789,22 +4199,26 @@ This covers the Bits (Boolean Circuit) API
 This covers transformation functions from
 
 <a id="x-28GEB-2EGENERICS-3ATO-CIRCUIT-20-28METHOD-20NIL-20-28GEB-2EBITC-2ESPEC-3A-3CBITC-3E-20T-29-29-29"></a>
+<a id="GEB.GENERICS:TO-CIRCUIT%20%28METHOD%20NIL%20%28GEB.BITC.SPEC:%3CBITC%3E%20T%29%29"></a>
 
 - [method] **TO-CIRCUIT** *(MORPHISM \<BITC>) NAME*
 
     Turns a [`BITC`][e017] term into a Vamp-IR Gate with the given name
 
 <a id="x-28GEB-2EGENERICS-3ATO-VAMPIR-20-28METHOD-20NIL-20-28GEB-2EBITC-2ESPEC-3ACOMPOSE-20T-20T-29-29-29"></a>
+<a id="GEB.GENERICS:TO-VAMPIR%20%28METHOD%20NIL%20%28GEB.BITC.SPEC:COMPOSE%20T%20T%29%29"></a>
 
 - [method] **TO-VAMPIR** *(OBJ COMPOSE) VALUES CONSTRAINTS*
 
 <a id="x-28GEB-2EGENERICS-3ATO-VAMPIR-20-28METHOD-20NIL-20-28GEB-2EBITC-2ESPEC-3AFORK-20T-20T-29-29-29"></a>
+<a id="GEB.GENERICS:TO-VAMPIR%20%28METHOD%20NIL%20%28GEB.BITC.SPEC:FORK%20T%20T%29%29"></a>
 
 - [method] **TO-VAMPIR** *(OBJ FORK) VALUES CONSTRAINTS*
 
     Copy input n input bits into 2\*n output bits
 
 <a id="x-28GEB-2EGENERICS-3ATO-VAMPIR-20-28METHOD-20NIL-20-28GEB-2EBITC-2ESPEC-3APARALLEL-20T-20T-29-29-29"></a>
+<a id="GEB.GENERICS:TO-VAMPIR%20%28METHOD%20NIL%20%28GEB.BITC.SPEC:PARALLEL%20T%20T%29%29"></a>
 
 - [method] **TO-VAMPIR** *(OBJ PARALLEL) VALUES CONSTRAINTS*
 
@@ -3812,36 +4226,42 @@ This covers transformation functions from
     concat the results from car and cadr
 
 <a id="x-28GEB-2EGENERICS-3ATO-VAMPIR-20-28METHOD-20NIL-20-28GEB-2EBITC-2ESPEC-3ASWAP-20T-20T-29-29-29"></a>
+<a id="GEB.GENERICS:TO-VAMPIR%20%28METHOD%20NIL%20%28GEB.BITC.SPEC:SWAP%20T%20T%29%29"></a>
 
 - [method] **TO-VAMPIR** *(OBJ SWAP) VALUES CONSTRAINTS*
 
     Turn n + m bits into m + n bits by swapping
 
 <a id="x-28GEB-2EGENERICS-3ATO-VAMPIR-20-28METHOD-20NIL-20-28GEB-2EBITC-2ESPEC-3AONE-20T-20T-29-29-29"></a>
+<a id="GEB.GENERICS:TO-VAMPIR%20%28METHOD%20NIL%20%28GEB.BITC.SPEC:ONE%20T%20T%29%29"></a>
 
 - [method] **TO-VAMPIR** *(OBJ ONE) VALUES CONSTRAINTS*
 
     Produce a bitvector of length 1 containing 1
 
 <a id="x-28GEB-2EGENERICS-3ATO-VAMPIR-20-28METHOD-20NIL-20-28GEB-2EBITC-2ESPEC-3AZERO-20T-20T-29-29-29"></a>
+<a id="GEB.GENERICS:TO-VAMPIR%20%28METHOD%20NIL%20%28GEB.BITC.SPEC:ZERO%20T%20T%29%29"></a>
 
 - [method] **TO-VAMPIR** *(OBJ ZERO) VALUES CONSTRAINTS*
 
     Produce a bitvector of length 1 containing 0
 
 <a id="x-28GEB-2EGENERICS-3ATO-VAMPIR-20-28METHOD-20NIL-20-28GEB-2EBITC-2ESPEC-3AIDENT-20T-20T-29-29-29"></a>
+<a id="GEB.GENERICS:TO-VAMPIR%20%28METHOD%20NIL%20%28GEB.BITC.SPEC:IDENT%20T%20T%29%29"></a>
 
 - [method] **TO-VAMPIR** *(OBJ IDENT) VALUES CONSTRAINTS*
 
     turn n bits into n bits by doing nothing
 
 <a id="x-28GEB-2EGENERICS-3ATO-VAMPIR-20-28METHOD-20NIL-20-28GEB-2EBITC-2ESPEC-3ADROP-20T-20T-29-29-29"></a>
+<a id="GEB.GENERICS:TO-VAMPIR%20%28METHOD%20NIL%20%28GEB.BITC.SPEC:DROP%20T%20T%29%29"></a>
 
 - [method] **TO-VAMPIR** *(OBJ DROP) VALUES CONSTRAINTS*
 
     turn n bits into an empty bitvector
 
 <a id="x-28GEB-2EGENERICS-3ATO-VAMPIR-20-28METHOD-20NIL-20-28GEB-2EBITC-2ESPEC-3ABRANCH-20T-20T-29-29-29"></a>
+<a id="GEB.GENERICS:TO-VAMPIR%20%28METHOD%20NIL%20%28GEB.BITC.SPEC:BRANCH%20T%20T%29%29"></a>
 
 - [method] **TO-VAMPIR** *(OBJ BRANCH) VALUES CONSTRAINTS*
 
@@ -3852,6 +4272,7 @@ This covers transformation functions from
     If its 1, run g on the remaining bits.
 
 <a id="x-28GEB-2EPOLY-3A-40POLY-MANUAL-20MGL-PAX-3ASECTION-29"></a>
+<a id="GEB.POLY:@POLY-MANUAL%20MGL-PAX:SECTION"></a>
 
 ## 12 Polynomial Specification
 
@@ -3860,6 +4281,7 @@ This covers a GEB view of Polynomials. In particular this type will
 be used in translating GEB's view of Polynomials into Vampir
 
 <a id="x-28GEB-2EPOLY-2ESPEC-3A-40POLY-20MGL-PAX-3ASECTION-29"></a>
+<a id="GEB.POLY.SPEC:@POLY%20MGL-PAX:SECTION"></a>
 
 ### 12.1 Polynomial Types
 
@@ -3868,44 +4290,54 @@ This section covers the types of things one can find in the \[[`POLY`][8bf3]\]
 constructors
 
 <a id="x-28GEB-2EPOLY-2ESPEC-3APOLY-20TYPE-29"></a>
+<a id="GEB.POLY.SPEC:POLY%20TYPE"></a>
 
 - [type] **POLY**
 
 <a id="x-28GEB-2EPOLY-2ESPEC-3A-3CPOLY-3E-20CLASS-29"></a>
+<a id="GEB.POLY.SPEC:%3CPOLY%3E%20CLASS"></a>
 
 - [class] **\<POLY>** *[GEB.MIXINS:DIRECT-POINTWISE-MIXIN][e2b0]*
 
 <a id="x-28GEB-2EPOLY-2ESPEC-3AIDENT-20CLASS-29"></a>
+<a id="GEB.POLY.SPEC:IDENT%20CLASS"></a>
 
 - [class] **IDENT** *[\<POLY>][b4a6]*
 
     The Identity Element
 
 <a id="x-28GEB-2EPOLY-2ESPEC-3A-2B-20CLASS-29"></a>
+<a id="GEB.POLY.SPEC:+%20CLASS"></a>
 
 - [class] **+** *[\<POLY>][b4a6]*
 
 <a id="x-28GEB-2EPOLY-2ESPEC-3A-2A-20CLASS-29"></a>
+<a id="GEB.POLY.SPEC:*%20CLASS"></a>
 
 - [class] **\*** *[\<POLY>][b4a6]*
 
 <a id="x-28GEB-2EPOLY-2ESPEC-3A-2F-20CLASS-29"></a>
+<a id="GEB.POLY.SPEC:%2F%20CLASS"></a>
 
 - [class] **/** *[\<POLY>][b4a6]*
 
 <a id="x-28GEB-2EPOLY-2ESPEC-3A--20CLASS-29"></a>
+<a id="GEB.POLY.SPEC:-%20CLASS"></a>
 
 - [class] **-** *[\<POLY>][b4a6]*
 
 <a id="x-28GEB-2EPOLY-2ESPEC-3AMOD-20CLASS-29"></a>
+<a id="GEB.POLY.SPEC:MOD%20CLASS"></a>
 
 - [class] **MOD** *[\<POLY>][b4a6]*
 
 <a id="x-28GEB-2EPOLY-2ESPEC-3ACOMPOSE-20CLASS-29"></a>
+<a id="GEB.POLY.SPEC:COMPOSE%20CLASS"></a>
 
 - [class] **COMPOSE** *[\<POLY>][b4a6]*
 
 <a id="x-28GEB-2EPOLY-2ESPEC-3AIF-ZERO-20CLASS-29"></a>
+<a id="GEB.POLY.SPEC:IF-ZERO%20CLASS"></a>
 
 - [class] **IF-ZERO** *[\<POLY>][b4a6]*
 
@@ -3913,6 +4345,7 @@ constructors
     not-equal takes second branch
 
 <a id="x-28GEB-2EPOLY-2ESPEC-3AIF-LT-20CLASS-29"></a>
+<a id="GEB.POLY.SPEC:IF-LT%20CLASS"></a>
 
 - [class] **IF-LT** *[\<POLY>][b4a6]*
 
@@ -3920,6 +4353,7 @@ constructors
     \[[`THEN`][bfa9]\] branch is taken, otherwise the \[[`ELSE`][365a]\] branch is taken.
 
 <a id="x-28GEB-2EPOLY-2EMAIN-3A-40POLY-API-20MGL-PAX-3ASECTION-29"></a>
+<a id="GEB.POLY.MAIN:@POLY-API%20MGL-PAX:SECTION"></a>
 
 ### 12.2 Polynomial API
 
@@ -3927,6 +4361,7 @@ constructors
 This covers the polynomial API
 
 <a id="x-28GEB-2EGENERICS-3AGAPPLY-20-28METHOD-20NIL-20-28GEB-2EPOLY-2ESPEC-3A-3CPOLY-3E-20T-29-29-29"></a>
+<a id="GEB.GENERICS:GAPPLY%20%28METHOD%20NIL%20%28GEB.POLY.SPEC:%3CPOLY%3E%20T%29%29"></a>
 
 - [method] **GAPPLY** *(MORPHISM POLY:\<POLY>) OBJECT*
 
@@ -3953,6 +4388,7 @@ This covers the polynomial API
 
 
 <a id="x-28GEB-2EGENERICS-3AGAPPLY-20-28METHOD-20NIL-20-28INTEGER-20T-29-29-29"></a>
+<a id="GEB.GENERICS:GAPPLY%20%28METHOD%20NIL%20%28INTEGER%20T%29%29"></a>
 
 - [method] **GAPPLY** *(MORPHISM INTEGER) OBJECT*
 
@@ -3972,6 +4408,7 @@ This covers the polynomial API
 
 
 <a id="x-28GEB-2EPOLY-2ESPEC-3A-40POLY-CONSTRUCTORS-20MGL-PAX-3ASECTION-29"></a>
+<a id="GEB.POLY.SPEC:@POLY-CONSTRUCTORS%20MGL-PAX:SECTION"></a>
 
 ### 12.3 Polynomial Constructors
 
@@ -3979,46 +4416,54 @@ This covers the polynomial API
 Every accessor for each of the [`CLASS`][1f37]'s found here are from [Accessors][cc51]
 
 <a id="x-28GEB-2EPOLY-2ESPEC-3AIDENT-20MGL-PAX-3ASYMBOL-MACRO-29"></a>
+<a id="GEB.POLY.SPEC:IDENT%20MGL-PAX:SYMBOL-MACRO"></a>
 
 - [symbol-macro] **IDENT**
 
 <a id="x-28GEB-2EPOLY-2ESPEC-3A-2B-20FUNCTION-29"></a>
+<a id="GEB.POLY.SPEC:+%20FUNCTION"></a>
 
 - [function] **+** *MCAR MCADR &REST ARGS*
 
     Creates a multiway constructor for \[+\]
 
 <a id="x-28GEB-2EPOLY-2ESPEC-3A-2A-20FUNCTION-29"></a>
+<a id="GEB.POLY.SPEC:*%20FUNCTION"></a>
 
 - [function] **\*** *MCAR MCADR &REST ARGS*
 
     Creates a multiway constructor for \[\*\]
 
 <a id="x-28GEB-2EPOLY-2ESPEC-3A-2F-20FUNCTION-29"></a>
+<a id="GEB.POLY.SPEC:%2F%20FUNCTION"></a>
 
 - [function] **/** *MCAR MCADR &REST ARGS*
 
     Creates a multiway constructor for \[/\]
 
 <a id="x-28GEB-2EPOLY-2ESPEC-3A--20FUNCTION-29"></a>
+<a id="GEB.POLY.SPEC:-%20FUNCTION"></a>
 
 - [function] **-** *MCAR MCADR &REST ARGS*
 
     Creates a multiway constructor for \[-\]
 
 <a id="x-28GEB-2EPOLY-2ESPEC-3AMOD-20FUNCTION-29"></a>
+<a id="GEB.POLY.SPEC:MOD%20FUNCTION"></a>
 
 - [function] **MOD** *MCAR MCADR*
 
     `MOD` ARG1 by ARG2
 
 <a id="x-28GEB-2EPOLY-2ESPEC-3ACOMPOSE-20FUNCTION-29"></a>
+<a id="GEB.POLY.SPEC:COMPOSE%20FUNCTION"></a>
 
 - [function] **COMPOSE** *MCAR MCADR &REST ARGS*
 
     Creates a multiway constructor for \[`COMPOSE`\]
 
 <a id="x-28GEB-2EPOLY-2ESPEC-3AIF-ZERO-20FUNCTION-29"></a>
+<a id="GEB.POLY.SPEC:IF-ZERO%20FUNCTION"></a>
 
 - [function] **IF-ZERO** *PRED THEN ELSE*
 
@@ -4026,12 +4471,14 @@ Every accessor for each of the [`CLASS`][1f37]'s found here are from [Accessors]
     the \[`ELSE`\] branch
 
 <a id="x-28GEB-2EPOLY-2ESPEC-3AIF-LT-20FUNCTION-29"></a>
+<a id="GEB.POLY.SPEC:IF-LT%20FUNCTION"></a>
 
 - [function] **IF-LT** *MCAR MCADR THEN ELSE*
 
     Checks if the \[`MCAR`\] is less than the \[`MCADR`\] and chooses the appropriate branch
 
 <a id="x-28GEB-2EPOLY-2ETRANS-3A-40POLY-TRANS-20MGL-PAX-3ASECTION-29"></a>
+<a id="GEB.POLY.TRANS:@POLY-TRANS%20MGL-PAX:SECTION"></a>
 
 ### 12.4 Polynomial Transformations
 
@@ -4039,64 +4486,76 @@ Every accessor for each of the [`CLASS`][1f37]'s found here are from [Accessors]
 This covers transformation functions from
 
 <a id="x-28GEB-2EGENERICS-3ATO-CIRCUIT-20-28METHOD-20NIL-20-28GEB-2EPOLY-2ESPEC-3A-3CPOLY-3E-20T-29-29-29"></a>
+<a id="GEB.GENERICS:TO-CIRCUIT%20%28METHOD%20NIL%20%28GEB.POLY.SPEC:%3CPOLY%3E%20T%29%29"></a>
 
 - [method] **TO-CIRCUIT** *(MORPHISM \<POLY>) NAME*
 
     Turns a [`POLY`][8bf3] term into a Vamp-IR Gate with the given name
 
 <a id="x-28GEB-2EGENERICS-3ATO-VAMPIR-20-28METHOD-20NIL-20-28INTEGER-20T-20T-29-29-29"></a>
+<a id="GEB.GENERICS:TO-VAMPIR%20%28METHOD%20NIL%20%28INTEGER%20T%20T%29%29"></a>
 
 - [method] **TO-VAMPIR** *(OBJ INTEGER) VALUE LET-VARS*
 
     Numbers act like a constant function, ignoring input
 
 <a id="x-28GEB-2EGENERICS-3ATO-VAMPIR-20-28METHOD-20NIL-20-28GEB-2EPOLY-2ESPEC-3AIDENT-20T-20T-29-29-29"></a>
+<a id="GEB.GENERICS:TO-VAMPIR%20%28METHOD%20NIL%20%28GEB.POLY.SPEC:IDENT%20T%20T%29%29"></a>
 
 - [method] **TO-VAMPIR** *(OBJ IDENT) VALUE LET-VARS*
 
     Identity acts as the identity function
 
 <a id="x-28GEB-2EGENERICS-3ATO-VAMPIR-20-28METHOD-20NIL-20-28GEB-2EPOLY-2ESPEC-3A-2B-20T-20T-29-29-29"></a>
+<a id="GEB.GENERICS:TO-VAMPIR%20%28METHOD%20NIL%20%28GEB.POLY.SPEC:+%20T%20T%29%29"></a>
 
 - [method] **TO-VAMPIR** *(OBJ +) VALUE LET-VARS*
 
     Propagates the value and adds them
 
 <a id="x-28GEB-2EGENERICS-3ATO-VAMPIR-20-28METHOD-20NIL-20-28GEB-2EPOLY-2ESPEC-3A-2A-20T-20T-29-29-29"></a>
+<a id="GEB.GENERICS:TO-VAMPIR%20%28METHOD%20NIL%20%28GEB.POLY.SPEC:*%20T%20T%29%29"></a>
 
 - [method] **TO-VAMPIR** *(OBJ \*) VALUE LET-VARS*
 
     Propagates the value and times them
 
 <a id="x-28GEB-2EGENERICS-3ATO-VAMPIR-20-28METHOD-20NIL-20-28GEB-2EPOLY-2ESPEC-3A--20T-20T-29-29-29"></a>
+<a id="GEB.GENERICS:TO-VAMPIR%20%28METHOD%20NIL%20%28GEB.POLY.SPEC:-%20T%20T%29%29"></a>
 
 - [method] **TO-VAMPIR** *(OBJ -) VALUE LET-VARS*
 
     Propagates the value and subtracts them
 
 <a id="x-28GEB-2EGENERICS-3ATO-VAMPIR-20-28METHOD-20NIL-20-28GEB-2EPOLY-2ESPEC-3A-2F-20T-20T-29-29-29"></a>
+<a id="GEB.GENERICS:TO-VAMPIR%20%28METHOD%20NIL%20%28GEB.POLY.SPEC:%2F%20T%20T%29%29"></a>
 
 - [method] **TO-VAMPIR** *(OBJ /) VALUE LET-VARS*
 
 <a id="x-28GEB-2EGENERICS-3ATO-VAMPIR-20-28METHOD-20NIL-20-28GEB-2EPOLY-2ESPEC-3ACOMPOSE-20T-20T-29-29-29"></a>
+<a id="GEB.GENERICS:TO-VAMPIR%20%28METHOD%20NIL%20%28GEB.POLY.SPEC:COMPOSE%20T%20T%29%29"></a>
 
 - [method] **TO-VAMPIR** *(OBJ COMPOSE) VALUE LET-VARS*
 
 <a id="x-28GEB-2EGENERICS-3ATO-VAMPIR-20-28METHOD-20NIL-20-28GEB-2EPOLY-2ESPEC-3AIF-ZERO-20T-20T-29-29-29"></a>
+<a id="GEB.GENERICS:TO-VAMPIR%20%28METHOD%20NIL%20%28GEB.POLY.SPEC:IF-ZERO%20T%20T%29%29"></a>
 
 - [method] **TO-VAMPIR** *(OBJ IF-ZERO) VALUE LET-VARS*
 
     The [`PREDICATE`][8da6] that comes in must be 1 or 0 for the formula to work out.
 
 <a id="x-28GEB-2EGENERICS-3ATO-VAMPIR-20-28METHOD-20NIL-20-28GEB-2EPOLY-2ESPEC-3AIF-LT-20T-20T-29-29-29"></a>
+<a id="GEB.GENERICS:TO-VAMPIR%20%28METHOD%20NIL%20%28GEB.POLY.SPEC:IF-LT%20T%20T%29%29"></a>
 
 - [method] **TO-VAMPIR** *(OBJ IF-LT) VALUE LET-VARS*
 
 <a id="x-28GEB-2EGENERICS-3ATO-VAMPIR-20-28METHOD-20NIL-20-28GEB-2EPOLY-2ESPEC-3AMOD-20T-20T-29-29-29"></a>
+<a id="GEB.GENERICS:TO-VAMPIR%20%28METHOD%20NIL%20%28GEB.POLY.SPEC:MOD%20T%20T%29%29"></a>
 
 - [method] **TO-VAMPIR** *(OBJ MOD) VALUE LET-VARS*
 
 <a id="x-28GEB-2ELAMBDA-3A-40STLC-20MGL-PAX-3ASECTION-29"></a>
+<a id="GEB.LAMBDA:@STLC%20MGL-PAX:SECTION"></a>
 
 ## 13 The Simply Typed Lambda Calculus model
 
@@ -4169,6 +4628,7 @@ MAIN>
 
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3A-40LAMBDA-SPECS-20MGL-PAX-3ASECTION-29"></a>
+<a id="GEB.LAMBDA.SPEC:@LAMBDA-SPECS%20MGL-PAX:SECTION"></a>
 
 ### 13.1 Lambda Specification
 
@@ -4177,6 +4637,7 @@ This covers the various the abstract data type that is the simply
 typed lambda calculus within GEB. The class presents untyped [`STLC`][e373] terms.
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ASTLC-20TYPE-29"></a>
+<a id="GEB.LAMBDA.SPEC:STLC%20TYPE"></a>
 
 - [type] **STLC**
 
@@ -4185,6 +4646,7 @@ typed lambda calculus within GEB. The class presents untyped [`STLC`][e373] term
     represented as [SUBSTOBJ][3173].
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3A-3CSTLC-3E-20CLASS-29"></a>
+<a id="GEB.LAMBDA.SPEC:%3CSTLC%3E%20CLASS"></a>
 
 - [class] **\<STLC>** *[DIRECT-POINTWISE-MIXIN][e2b0] [META-MIXIN][4529] [CAT-OBJ][74bd]*
 
@@ -4193,6 +4655,7 @@ typed lambda calculus within GEB. The class presents untyped [`STLC`][e373] term
     unit types as well as coproduct, product, and function types.
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3AABSURD-20CLASS-29"></a>
+<a id="GEB.LAMBDA.SPEC:ABSURD%20CLASS"></a>
 
 - [class] **ABSURD** *[\<STLC>][b36a]*
 
@@ -4221,6 +4684,7 @@ typed lambda calculus within GEB. The class presents untyped [`STLC`][e373] term
     $$\Gamma \vdash \text{(absurd tcod term) : tcod}$$
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3AUNIT-20CLASS-29"></a>
+<a id="GEB.LAMBDA.SPEC:UNIT%20CLASS"></a>
 
 - [class] **UNIT** *[\<STLC>][b36a]*
 
@@ -4244,6 +4708,7 @@ typed lambda calculus within GEB. The class presents untyped [`STLC`][e373] term
     $$\Gamma \dashv \text{(unit) : so1}$$
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ALEFT-20CLASS-29"></a>
+<a id="GEB.LAMBDA.SPEC:LEFT%20CLASS"></a>
 
 - [class] **LEFT** *[\<STLC>][b36a]*
 
@@ -4274,6 +4739,7 @@ typed lambda calculus within GEB. The class presents untyped [`STLC`][e373] term
     $$\Gamma \dashv \text{(left rty term) : (coprod (ttype term) rty)}$$
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ARIGHT-20CLASS-29"></a>
+<a id="GEB.LAMBDA.SPEC:RIGHT%20CLASS"></a>
 
 - [class] **RIGHT** *[\<STLC>][b36a]*
 
@@ -4303,6 +4769,7 @@ typed lambda calculus within GEB. The class presents untyped [`STLC`][e373] term
     $$\Gamma \dashv \text{(right lty term) : (coprod lty (ttype term))}$$
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ACASE-ON-20CLASS-29"></a>
+<a id="GEB.LAMBDA.SPEC:CASE-ON%20CLASS"></a>
 
 - [class] **CASE-ON** *[\<STLC>][b36a]*
 
@@ -4336,6 +4803,7 @@ typed lambda calculus within GEB. The class presents untyped [`STLC`][e373] term
     usual type theory if context was read from right to left.
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3APAIR-20CLASS-29"></a>
+<a id="GEB.LAMBDA.SPEC:PAIR%20CLASS"></a>
 
 - [class] **PAIR** *[\<STLC>][b36a]*
 
@@ -4363,6 +4831,7 @@ typed lambda calculus within GEB. The class presents untyped [`STLC`][e373] term
     $$\Gamma \vdash \text{(pair ltm rtm) : (ttype (pair ltm rtm))}$$
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3AFST-20CLASS-29"></a>
+<a id="GEB.LAMBDA.SPEC:FST%20CLASS"></a>
 
 - [class] **FST** *[\<STLC>][b36a]*
 
@@ -4387,6 +4856,7 @@ typed lambda calculus within GEB. The class presents untyped [`STLC`][e373] term
     on a term of a product type.
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ASND-20CLASS-29"></a>
+<a id="GEB.LAMBDA.SPEC:SND%20CLASS"></a>
 
 - [class] **SND** *[\<STLC>][b36a]*
 
@@ -4411,6 +4881,7 @@ typed lambda calculus within GEB. The class presents untyped [`STLC`][e373] term
     on a term of a product type.
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ALAMB-20CLASS-29"></a>
+<a id="GEB.LAMBDA.SPEC:LAMB%20CLASS"></a>
 
 - [class] **LAMB** *[\<STLC>][b36a]*
 
@@ -4486,6 +4957,7 @@ typed lambda calculus within GEB. The class presents untyped [`STLC`][e373] term
     usual type theory if context was read from right to left.
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3AAPP-20CLASS-29"></a>
+<a id="GEB.LAMBDA.SPEC:APP%20CLASS"></a>
 
 - [class] **APP** *[\<STLC>][b36a]*
 
@@ -4538,6 +5010,7 @@ typed lambda calculus within GEB. The class presents untyped [`STLC`][e373] term
     in the codomain counted from the left.
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3AINDEX-20CLASS-29"></a>
+<a id="GEB.LAMBDA.SPEC:INDEX%20CLASS"></a>
 
 - [class] **INDEX** *[\<STLC>][b36a]*
 
@@ -4566,6 +5039,7 @@ typed lambda calculus within GEB. The class presents untyped [`STLC`][e373] term
     type-theoretic notation.
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3AERR-20CLASS-29"></a>
+<a id="GEB.LAMBDA.SPEC:ERR%20CLASS"></a>
 
 - [class] **ERR** *[\<STLC>][b36a]*
 
@@ -4582,6 +5056,7 @@ typed lambda calculus within GEB. The class presents untyped [`STLC`][e373] term
     have [`TTYPE`][134c] a possibly empty accessor.
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3APLUS-20CLASS-29"></a>
+<a id="GEB.LAMBDA.SPEC:PLUS%20CLASS"></a>
 
 - [class] **PLUS** *[\<STLC>][b36a]*
 
@@ -4603,6 +5078,7 @@ typed lambda calculus within GEB. The class presents untyped [`STLC`][e373] term
     Vamp-IR code will not verify.
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ATIMES-20CLASS-29"></a>
+<a id="GEB.LAMBDA.SPEC:TIMES%20CLASS"></a>
 
 - [class] **TIMES** *[\<STLC>][b36a]*
 
@@ -4624,6 +5100,7 @@ typed lambda calculus within GEB. The class presents untyped [`STLC`][e373] term
     Vamp-IR code will not verify.
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3AMINUS-20CLASS-29"></a>
+<a id="GEB.LAMBDA.SPEC:MINUS%20CLASS"></a>
 
 - [class] **MINUS** *[\<STLC>][b36a]*
 
@@ -4644,6 +5121,7 @@ typed lambda calculus within GEB. The class presents untyped [`STLC`][e373] term
     below zero, the corresponding Vamp-IR code will not verify.
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ADIVIDE-20CLASS-29"></a>
+<a id="GEB.LAMBDA.SPEC:DIVIDE%20CLASS"></a>
 
 - [class] **DIVIDE** *[\<STLC>][b36a]*
 
@@ -4662,6 +5140,7 @@ typed lambda calculus within GEB. The class presents untyped [`STLC`][e373] term
 
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ABIT-CHOICE-20CLASS-29"></a>
+<a id="GEB.LAMBDA.SPEC:BIT-CHOICE%20CLASS"></a>
 
 - [class] **BIT-CHOICE** *[\<STLC>][b36a]*
 
@@ -4683,6 +5162,7 @@ typed lambda calculus within GEB. The class presents untyped [`STLC`][e373] term
     our type-check, as both numbers ought to be of exact same bit-width.
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ALAMB-EQ-20CLASS-29"></a>
+<a id="GEB.LAMBDA.SPEC:LAMB-EQ%20CLASS"></a>
 
 - [class] **LAMB-EQ** *[\<STLC>][b36a]*
 
@@ -4693,6 +5173,7 @@ typed lambda calculus within GEB. The class presents untyped [`STLC`][e373] term
     will be associated with the 0 input and the second branch with 1.
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ALAMB-LT-20CLASS-29"></a>
+<a id="GEB.LAMBDA.SPEC:LAMB-LT%20CLASS"></a>
 
 - [class] **LAMB-LT** *[\<STLC>][b36a]*
 
@@ -4703,6 +5184,7 @@ typed lambda calculus within GEB. The class presents untyped [`STLC`][e373] term
     will be associated with the 0 input and the second branch with 1.
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3AMODULO-20CLASS-29"></a>
+<a id="GEB.LAMBDA.SPEC:MODULO%20CLASS"></a>
 
 - [class] **MODULO** *[\<STLC>][b36a]*
 
@@ -4722,422 +5204,508 @@ typed lambda calculus within GEB. The class presents untyped [`STLC`][e373] term
     meaning that we take ltm mod rtm
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3AABSURD-20FUNCTION-29"></a>
+<a id="GEB.LAMBDA.SPEC:ABSURD%20FUNCTION"></a>
 
 - [function] **ABSURD** *TCOD TERM &KEY (TTYPE NIL)*
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3AUNIT-20FUNCTION-29"></a>
+<a id="GEB.LAMBDA.SPEC:UNIT%20FUNCTION"></a>
 
 - [function] **UNIT** *&KEY (TTYPE NIL)*
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ALEFT-20FUNCTION-29"></a>
+<a id="GEB.LAMBDA.SPEC:LEFT%20FUNCTION"></a>
 
 - [function] **LEFT** *RTY TERM &KEY (TTYPE NIL)*
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ARIGHT-20FUNCTION-29"></a>
+<a id="GEB.LAMBDA.SPEC:RIGHT%20FUNCTION"></a>
 
 - [function] **RIGHT** *LTY TERM &KEY (TTYPE NIL)*
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ACASE-ON-20FUNCTION-29"></a>
+<a id="GEB.LAMBDA.SPEC:CASE-ON%20FUNCTION"></a>
 
 - [function] **CASE-ON** *ON LTM RTM &KEY (TTYPE NIL)*
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3APAIR-20FUNCTION-29"></a>
+<a id="GEB.LAMBDA.SPEC:PAIR%20FUNCTION"></a>
 
 - [function] **PAIR** *LTM RTM &KEY (TTYPE NIL)*
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3AFST-20FUNCTION-29"></a>
+<a id="GEB.LAMBDA.SPEC:FST%20FUNCTION"></a>
 
 - [function] **FST** *TERM &KEY (TTYPE NIL)*
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ASND-20FUNCTION-29"></a>
+<a id="GEB.LAMBDA.SPEC:SND%20FUNCTION"></a>
 
 - [function] **SND** *TERM &KEY (TTYPE NIL)*
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ALAMB-20FUNCTION-29"></a>
+<a id="GEB.LAMBDA.SPEC:LAMB%20FUNCTION"></a>
 
 - [function] **LAMB** *TDOM TERM &KEY (TTYPE NIL)*
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3AAPP-20FUNCTION-29"></a>
+<a id="GEB.LAMBDA.SPEC:APP%20FUNCTION"></a>
 
 - [function] **APP** *FUN TERM &KEY (TTYPE NIL)*
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3AINDEX-20FUNCTION-29"></a>
+<a id="GEB.LAMBDA.SPEC:INDEX%20FUNCTION"></a>
 
 - [function] **INDEX** *POS &KEY (TTYPE NIL)*
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3AERR-20FUNCTION-29"></a>
+<a id="GEB.LAMBDA.SPEC:ERR%20FUNCTION"></a>
 
 - [function] **ERR** *TTYPE*
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3APLUS-20FUNCTION-29"></a>
+<a id="GEB.LAMBDA.SPEC:PLUS%20FUNCTION"></a>
 
 - [function] **PLUS** *LTM RTM &KEY (TTYPE NIL)*
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ATIMES-20FUNCTION-29"></a>
+<a id="GEB.LAMBDA.SPEC:TIMES%20FUNCTION"></a>
 
 - [function] **TIMES** *LTM RTM &KEY (TTYPE NIL)*
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3AMINUS-20FUNCTION-29"></a>
+<a id="GEB.LAMBDA.SPEC:MINUS%20FUNCTION"></a>
 
 - [function] **MINUS** *LTM RTM &KEY (TTYPE NIL)*
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ADIVIDE-20FUNCTION-29"></a>
+<a id="GEB.LAMBDA.SPEC:DIVIDE%20FUNCTION"></a>
 
 - [function] **DIVIDE** *LTM RTM &KEY (TTYPE NIL)*
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ABIT-CHOICE-20FUNCTION-29"></a>
+<a id="GEB.LAMBDA.SPEC:BIT-CHOICE%20FUNCTION"></a>
 
 - [function] **BIT-CHOICE** *BITV &KEY (TTYPE NIL)*
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ALAMB-EQ-20FUNCTION-29"></a>
+<a id="GEB.LAMBDA.SPEC:LAMB-EQ%20FUNCTION"></a>
 
 - [function] **LAMB-EQ** *LTM RTM &KEY (TTYPE NIL)*
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ALAMB-LT-20FUNCTION-29"></a>
+<a id="GEB.LAMBDA.SPEC:LAMB-LT%20FUNCTION"></a>
 
 - [function] **LAMB-LT** *LTM RTM &KEY (TTYPE NIL)*
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3AABSURD-20FUNCTION-29"></a>
+<a id="GEB.LAMBDA.SPEC:ABSURD%20FUNCTION"></a>
 
 - [function] **ABSURD** *TCOD TERM &KEY (TTYPE NIL)*
 
 Accessors of [`ABSURD`][4710]
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ATCOD-20-28MGL-PAX-3AACCESSOR-20GEB-2ELAMBDA-2ESPEC-3AABSURD-29-29"></a>
+<a id="GEB.LAMBDA.SPEC:TCOD%20%28MGL-PAX:ACCESSOR%20GEB.LAMBDA.SPEC:ABSURD%29"></a>
 
 - [accessor] **TCOD** *ABSURD (:TCOD)*
 
     An arbitrary type
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ATERM-20-28MGL-PAX-3AACCESSOR-20GEB-2ELAMBDA-2ESPEC-3AABSURD-29-29"></a>
+<a id="GEB.LAMBDA.SPEC:TERM%20%28MGL-PAX:ACCESSOR%20GEB.LAMBDA.SPEC:ABSURD%29"></a>
 
 - [accessor] **TERM** *ABSURD (:TERM)*
 
     A term of the empty type
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ATTYPE-20-28MGL-PAX-3AACCESSOR-20GEB-2ELAMBDA-2ESPEC-3AABSURD-29-29"></a>
+<a id="GEB.LAMBDA.SPEC:TTYPE%20%28MGL-PAX:ACCESSOR%20GEB.LAMBDA.SPEC:ABSURD%29"></a>
 
 - [accessor] **TTYPE** *ABSURD (:TTYPE = NIL)*
 
 Accessors of [`UNIT`][0433]
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ATTYPE-20-28MGL-PAX-3AACCESSOR-20GEB-2ELAMBDA-2ESPEC-3AUNIT-29-29"></a>
+<a id="GEB.LAMBDA.SPEC:TTYPE%20%28MGL-PAX:ACCESSOR%20GEB.LAMBDA.SPEC:UNIT%29"></a>
 
 - [accessor] **TTYPE** *UNIT (:TTYPE = NIL)*
 
 Accessors of [`LEFT`][56b3]
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ARTY-20-28MGL-PAX-3AACCESSOR-20GEB-2ELAMBDA-2ESPEC-3ALEFT-29-29"></a>
+<a id="GEB.LAMBDA.SPEC:RTY%20%28MGL-PAX:ACCESSOR%20GEB.LAMBDA.SPEC:LEFT%29"></a>
 
 - [accessor] **RTY** *LEFT (:RTY)*
 
     Right argument of coproduct type
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ATERM-20-28MGL-PAX-3AACCESSOR-20GEB-2ELAMBDA-2ESPEC-3ALEFT-29-29"></a>
+<a id="GEB.LAMBDA.SPEC:TERM%20%28MGL-PAX:ACCESSOR%20GEB.LAMBDA.SPEC:LEFT%29"></a>
 
 - [accessor] **TERM** *LEFT (:TERM)*
 
     Term of the left argument of coproduct type
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ATTYPE-20-28MGL-PAX-3AACCESSOR-20GEB-2ELAMBDA-2ESPEC-3ALEFT-29-29"></a>
+<a id="GEB.LAMBDA.SPEC:TTYPE%20%28MGL-PAX:ACCESSOR%20GEB.LAMBDA.SPEC:LEFT%29"></a>
 
 - [accessor] **TTYPE** *LEFT (:TTYPE = NIL)*
 
 Accessors of [`RIGHT`][48fc]
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ALTY-20-28MGL-PAX-3AACCESSOR-20GEB-2ELAMBDA-2ESPEC-3ARIGHT-29-29"></a>
+<a id="GEB.LAMBDA.SPEC:LTY%20%28MGL-PAX:ACCESSOR%20GEB.LAMBDA.SPEC:RIGHT%29"></a>
 
 - [accessor] **LTY** *RIGHT (:LTY)*
 
     Left argument of coproduct type
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ATERM-20-28MGL-PAX-3AACCESSOR-20GEB-2ELAMBDA-2ESPEC-3ARIGHT-29-29"></a>
+<a id="GEB.LAMBDA.SPEC:TERM%20%28MGL-PAX:ACCESSOR%20GEB.LAMBDA.SPEC:RIGHT%29"></a>
 
 - [accessor] **TERM** *RIGHT (:TERM)*
 
     Term of the right argument of coproduct type
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ATTYPE-20-28MGL-PAX-3AACCESSOR-20GEB-2ELAMBDA-2ESPEC-3ARIGHT-29-29"></a>
+<a id="GEB.LAMBDA.SPEC:TTYPE%20%28MGL-PAX:ACCESSOR%20GEB.LAMBDA.SPEC:RIGHT%29"></a>
 
 - [accessor] **TTYPE** *RIGHT (:TTYPE = NIL)*
 
 Accessors of [`CASE-ON`][3f9d]
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3AON-20-28MGL-PAX-3AACCESSOR-20GEB-2ELAMBDA-2ESPEC-3ACASE-ON-29-29"></a>
+<a id="GEB.LAMBDA.SPEC:ON%20%28MGL-PAX:ACCESSOR%20GEB.LAMBDA.SPEC:CASE-ON%29"></a>
 
 - [accessor] **ON** *CASE-ON (:ON)*
 
     Term of coproduct type
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ALTM-20-28MGL-PAX-3AACCESSOR-20GEB-2ELAMBDA-2ESPEC-3ACASE-ON-29-29"></a>
+<a id="GEB.LAMBDA.SPEC:LTM%20%28MGL-PAX:ACCESSOR%20GEB.LAMBDA.SPEC:CASE-ON%29"></a>
 
 - [accessor] **LTM** *CASE-ON (:LTM)*
 
     Term in context of left argument of coproduct type
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ARTM-20-28MGL-PAX-3AACCESSOR-20GEB-2ELAMBDA-2ESPEC-3ACASE-ON-29-29"></a>
+<a id="GEB.LAMBDA.SPEC:RTM%20%28MGL-PAX:ACCESSOR%20GEB.LAMBDA.SPEC:CASE-ON%29"></a>
 
 - [accessor] **RTM** *CASE-ON (:RTM)*
 
     Term in context of right argument of coproduct type
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ATTYPE-20-28MGL-PAX-3AACCESSOR-20GEB-2ELAMBDA-2ESPEC-3ACASE-ON-29-29"></a>
+<a id="GEB.LAMBDA.SPEC:TTYPE%20%28MGL-PAX:ACCESSOR%20GEB.LAMBDA.SPEC:CASE-ON%29"></a>
 
 - [accessor] **TTYPE** *CASE-ON (:TTYPE = NIL)*
 
 Accessors of [`PAIR`][5dae]
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ALTM-20-28MGL-PAX-3AACCESSOR-20GEB-2ELAMBDA-2ESPEC-3APAIR-29-29"></a>
+<a id="GEB.LAMBDA.SPEC:LTM%20%28MGL-PAX:ACCESSOR%20GEB.LAMBDA.SPEC:PAIR%29"></a>
 
 - [accessor] **LTM** *PAIR (:LTM)*
 
     Term of left argument of the product type
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ARTM-20-28MGL-PAX-3AACCESSOR-20GEB-2ELAMBDA-2ESPEC-3APAIR-29-29"></a>
+<a id="GEB.LAMBDA.SPEC:RTM%20%28MGL-PAX:ACCESSOR%20GEB.LAMBDA.SPEC:PAIR%29"></a>
 
 - [accessor] **RTM** *PAIR (:RTM)*
 
     Term of right argument of the product type
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ATTYPE-20-28MGL-PAX-3AACCESSOR-20GEB-2ELAMBDA-2ESPEC-3APAIR-29-29"></a>
+<a id="GEB.LAMBDA.SPEC:TTYPE%20%28MGL-PAX:ACCESSOR%20GEB.LAMBDA.SPEC:PAIR%29"></a>
 
 - [accessor] **TTYPE** *PAIR (:TTYPE = NIL)*
 
 Accessors of [`FST`][b4a5]
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ATERM-20-28MGL-PAX-3AACCESSOR-20GEB-2ELAMBDA-2ESPEC-3AFST-29-29"></a>
+<a id="GEB.LAMBDA.SPEC:TERM%20%28MGL-PAX:ACCESSOR%20GEB.LAMBDA.SPEC:FST%29"></a>
 
 - [accessor] **TERM** *FST (:TERM)*
 
     Term of product type
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ATTYPE-20-28MGL-PAX-3AACCESSOR-20GEB-2ELAMBDA-2ESPEC-3AFST-29-29"></a>
+<a id="GEB.LAMBDA.SPEC:TTYPE%20%28MGL-PAX:ACCESSOR%20GEB.LAMBDA.SPEC:FST%29"></a>
 
 - [accessor] **TTYPE** *FST (:TTYPE = NIL)*
 
 Accessors of [`SND`][0424]
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ATERM-20-28MGL-PAX-3AACCESSOR-20GEB-2ELAMBDA-2ESPEC-3ASND-29-29"></a>
+<a id="GEB.LAMBDA.SPEC:TERM%20%28MGL-PAX:ACCESSOR%20GEB.LAMBDA.SPEC:SND%29"></a>
 
 - [accessor] **TERM** *SND (:TERM)*
 
     Term of product type
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ATTYPE-20-28MGL-PAX-3AACCESSOR-20GEB-2ELAMBDA-2ESPEC-3ASND-29-29"></a>
+<a id="GEB.LAMBDA.SPEC:TTYPE%20%28MGL-PAX:ACCESSOR%20GEB.LAMBDA.SPEC:SND%29"></a>
 
 - [accessor] **TTYPE** *SND (:TTYPE = NIL)*
 
 Accessors of [`LAMB`][8cde]
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ATDOM-20-28MGL-PAX-3AACCESSOR-20GEB-2ELAMBDA-2ESPEC-3ALAMB-29-29"></a>
+<a id="GEB.LAMBDA.SPEC:TDOM%20%28MGL-PAX:ACCESSOR%20GEB.LAMBDA.SPEC:LAMB%29"></a>
 
 - [accessor] **TDOM** *LAMB (:TDOM)*
 
     Domain of the lambda term
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ATERM-20-28MGL-PAX-3AACCESSOR-20GEB-2ELAMBDA-2ESPEC-3ALAMB-29-29"></a>
+<a id="GEB.LAMBDA.SPEC:TERM%20%28MGL-PAX:ACCESSOR%20GEB.LAMBDA.SPEC:LAMB%29"></a>
 
 - [accessor] **TERM** *LAMB (:TERM)*
 
     Term of the codomain mapped to given a variable of tdom
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ATTYPE-20-28MGL-PAX-3AACCESSOR-20GEB-2ELAMBDA-2ESPEC-3ALAMB-29-29"></a>
+<a id="GEB.LAMBDA.SPEC:TTYPE%20%28MGL-PAX:ACCESSOR%20GEB.LAMBDA.SPEC:LAMB%29"></a>
 
 - [accessor] **TTYPE** *LAMB (:TTYPE = NIL)*
 
 Accessors of [`APP`][04f2]
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3AFUN-20-28MGL-PAX-3AACCESSOR-20GEB-2ELAMBDA-2ESPEC-3AAPP-29-29"></a>
+<a id="GEB.LAMBDA.SPEC:FUN%20%28MGL-PAX:ACCESSOR%20GEB.LAMBDA.SPEC:APP%29"></a>
 
 - [accessor] **FUN** *APP (:FUN)*
 
     Term of exponential type
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ATERM-20-28MGL-PAX-3AACCESSOR-20GEB-2ELAMBDA-2ESPEC-3AAPP-29-29"></a>
+<a id="GEB.LAMBDA.SPEC:TERM%20%28MGL-PAX:ACCESSOR%20GEB.LAMBDA.SPEC:APP%29"></a>
 
 - [accessor] **TERM** *APP (:TERM)*
 
     List of Terms of the domain
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ATTYPE-20-28MGL-PAX-3AACCESSOR-20GEB-2ELAMBDA-2ESPEC-3AAPP-29-29"></a>
+<a id="GEB.LAMBDA.SPEC:TTYPE%20%28MGL-PAX:ACCESSOR%20GEB.LAMBDA.SPEC:APP%29"></a>
 
 - [accessor] **TTYPE** *APP (:TTYPE = NIL)*
 
 Accessors of [`INDEX`][5b8b]
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3APOS-20-28MGL-PAX-3AACCESSOR-20GEB-2ELAMBDA-2ESPEC-3AINDEX-29-29"></a>
+<a id="GEB.LAMBDA.SPEC:POS%20%28MGL-PAX:ACCESSOR%20GEB.LAMBDA.SPEC:INDEX%29"></a>
 
 - [accessor] **POS** *INDEX (:POS)*
 
     Position of type
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ATTYPE-20-28MGL-PAX-3AACCESSOR-20GEB-2ELAMBDA-2ESPEC-3AINDEX-29-29"></a>
+<a id="GEB.LAMBDA.SPEC:TTYPE%20%28MGL-PAX:ACCESSOR%20GEB.LAMBDA.SPEC:INDEX%29"></a>
 
 - [accessor] **TTYPE** *INDEX (:TTYPE = NIL)*
 
 Accessor of [`ERR`][3a9f]
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ATTYPE-20-28MGL-PAX-3AACCESSOR-20GEB-2ELAMBDA-2ESPEC-3AERR-29-29"></a>
+<a id="GEB.LAMBDA.SPEC:TTYPE%20%28MGL-PAX:ACCESSOR%20GEB.LAMBDA.SPEC:ERR%29"></a>
 
 - [accessor] **TTYPE** *ERR (:TTYPE = NIL)*
 
 Accessors of [`PLUS`][47b2]
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ALTM-20-28MGL-PAX-3AACCESSOR-20GEB-2ELAMBDA-2ESPEC-3APLUS-29-29"></a>
+<a id="GEB.LAMBDA.SPEC:LTM%20%28MGL-PAX:ACCESSOR%20GEB.LAMBDA.SPEC:PLUS%29"></a>
 
 - [accessor] **LTM** *PLUS (:LTM)*
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ARTM-20-28MGL-PAX-3AACCESSOR-20GEB-2ELAMBDA-2ESPEC-3APLUS-29-29"></a>
+<a id="GEB.LAMBDA.SPEC:RTM%20%28MGL-PAX:ACCESSOR%20GEB.LAMBDA.SPEC:PLUS%29"></a>
 
 - [accessor] **RTM** *PLUS (:RTM)*
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ATTYPE-20-28MGL-PAX-3AACCESSOR-20GEB-2ELAMBDA-2ESPEC-3APLUS-29-29"></a>
+<a id="GEB.LAMBDA.SPEC:TTYPE%20%28MGL-PAX:ACCESSOR%20GEB.LAMBDA.SPEC:PLUS%29"></a>
 
 - [accessor] **TTYPE** *PLUS (:TTYPE = NIL)*
 
 Accessors of [`TIMES`][4296]
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ALTM-20-28MGL-PAX-3AACCESSOR-20GEB-2ELAMBDA-2ESPEC-3ATIMES-29-29"></a>
+<a id="GEB.LAMBDA.SPEC:LTM%20%28MGL-PAX:ACCESSOR%20GEB.LAMBDA.SPEC:TIMES%29"></a>
 
 - [accessor] **LTM** *TIMES (:LTM)*
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ARTM-20-28MGL-PAX-3AACCESSOR-20GEB-2ELAMBDA-2ESPEC-3ATIMES-29-29"></a>
+<a id="GEB.LAMBDA.SPEC:RTM%20%28MGL-PAX:ACCESSOR%20GEB.LAMBDA.SPEC:TIMES%29"></a>
 
 - [accessor] **RTM** *TIMES (:RTM)*
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ATTYPE-20-28MGL-PAX-3AACCESSOR-20GEB-2ELAMBDA-2ESPEC-3ATIMES-29-29"></a>
+<a id="GEB.LAMBDA.SPEC:TTYPE%20%28MGL-PAX:ACCESSOR%20GEB.LAMBDA.SPEC:TIMES%29"></a>
 
 - [accessor] **TTYPE** *TIMES (:TTYPE = NIL)*
 
 Accessors of [`MINUS`][5965]
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ALTM-20-28MGL-PAX-3AACCESSOR-20GEB-2ELAMBDA-2ESPEC-3AMINUS-29-29"></a>
+<a id="GEB.LAMBDA.SPEC:LTM%20%28MGL-PAX:ACCESSOR%20GEB.LAMBDA.SPEC:MINUS%29"></a>
 
 - [accessor] **LTM** *MINUS (:LTM)*
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ARTM-20-28MGL-PAX-3AACCESSOR-20GEB-2ELAMBDA-2ESPEC-3AMINUS-29-29"></a>
+<a id="GEB.LAMBDA.SPEC:RTM%20%28MGL-PAX:ACCESSOR%20GEB.LAMBDA.SPEC:MINUS%29"></a>
 
 - [accessor] **RTM** *MINUS (:RTM)*
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ATTYPE-20-28MGL-PAX-3AACCESSOR-20GEB-2ELAMBDA-2ESPEC-3AMINUS-29-29"></a>
+<a id="GEB.LAMBDA.SPEC:TTYPE%20%28MGL-PAX:ACCESSOR%20GEB.LAMBDA.SPEC:MINUS%29"></a>
 
 - [accessor] **TTYPE** *MINUS (:TTYPE = NIL)*
 
 Accessors of [`DIVIDE`][e5d1]
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ALTM-20-28MGL-PAX-3AACCESSOR-20GEB-2ELAMBDA-2ESPEC-3ADIVIDE-29-29"></a>
+<a id="GEB.LAMBDA.SPEC:LTM%20%28MGL-PAX:ACCESSOR%20GEB.LAMBDA.SPEC:DIVIDE%29"></a>
 
 - [accessor] **LTM** *DIVIDE (:LTM)*
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ARTM-20-28MGL-PAX-3AACCESSOR-20GEB-2ELAMBDA-2ESPEC-3ADIVIDE-29-29"></a>
+<a id="GEB.LAMBDA.SPEC:RTM%20%28MGL-PAX:ACCESSOR%20GEB.LAMBDA.SPEC:DIVIDE%29"></a>
 
 - [accessor] **RTM** *DIVIDE (:RTM)*
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ATTYPE-20-28MGL-PAX-3AACCESSOR-20GEB-2ELAMBDA-2ESPEC-3ADIVIDE-29-29"></a>
+<a id="GEB.LAMBDA.SPEC:TTYPE%20%28MGL-PAX:ACCESSOR%20GEB.LAMBDA.SPEC:DIVIDE%29"></a>
 
 - [accessor] **TTYPE** *DIVIDE (:TTYPE = NIL)*
 
 Accessors of [`BIT-CHOICE`][a6e2]
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ABITV-20-28MGL-PAX-3AACCESSOR-20GEB-2ELAMBDA-2ESPEC-3ABIT-CHOICE-29-29"></a>
+<a id="GEB.LAMBDA.SPEC:BITV%20%28MGL-PAX:ACCESSOR%20GEB.LAMBDA.SPEC:BIT-CHOICE%29"></a>
 
 - [accessor] **BITV** *BIT-CHOICE (:BITV)*
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ATTYPE-20-28MGL-PAX-3AACCESSOR-20GEB-2ELAMBDA-2ESPEC-3ABIT-CHOICE-29-29"></a>
+<a id="GEB.LAMBDA.SPEC:TTYPE%20%28MGL-PAX:ACCESSOR%20GEB.LAMBDA.SPEC:BIT-CHOICE%29"></a>
 
 - [accessor] **TTYPE** *BIT-CHOICE (:TTYPE = NIL)*
 
 Accessors of [`LAMB-EQ`][2994]
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ALTM-20-28MGL-PAX-3AACCESSOR-20GEB-2ELAMBDA-2ESPEC-3ALAMB-EQ-29-29"></a>
+<a id="GEB.LAMBDA.SPEC:LTM%20%28MGL-PAX:ACCESSOR%20GEB.LAMBDA.SPEC:LAMB-EQ%29"></a>
 
 - [accessor] **LTM** *LAMB-EQ (:LTM)*
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ARTM-20-28MGL-PAX-3AACCESSOR-20GEB-2ELAMBDA-2ESPEC-3ALAMB-EQ-29-29"></a>
+<a id="GEB.LAMBDA.SPEC:RTM%20%28MGL-PAX:ACCESSOR%20GEB.LAMBDA.SPEC:LAMB-EQ%29"></a>
 
 - [accessor] **RTM** *LAMB-EQ (:RTM)*
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ATTYPE-20-28MGL-PAX-3AACCESSOR-20GEB-2ELAMBDA-2ESPEC-3ALAMB-EQ-29-29"></a>
+<a id="GEB.LAMBDA.SPEC:TTYPE%20%28MGL-PAX:ACCESSOR%20GEB.LAMBDA.SPEC:LAMB-EQ%29"></a>
 
 - [accessor] **TTYPE** *LAMB-EQ (:TTYPE = NIL)*
 
 Accessors of [`LAMB-LT`][0874]
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ALTM-20-28MGL-PAX-3AACCESSOR-20GEB-2ELAMBDA-2ESPEC-3ALAMB-LT-29-29"></a>
+<a id="GEB.LAMBDA.SPEC:LTM%20%28MGL-PAX:ACCESSOR%20GEB.LAMBDA.SPEC:LAMB-LT%29"></a>
 
 - [accessor] **LTM** *LAMB-LT (:LTM)*
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ARTM-20-28MGL-PAX-3AACCESSOR-20GEB-2ELAMBDA-2ESPEC-3ALAMB-LT-29-29"></a>
+<a id="GEB.LAMBDA.SPEC:RTM%20%28MGL-PAX:ACCESSOR%20GEB.LAMBDA.SPEC:LAMB-LT%29"></a>
 
 - [accessor] **RTM** *LAMB-LT (:RTM)*
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ATTYPE-20-28MGL-PAX-3AACCESSOR-20GEB-2ELAMBDA-2ESPEC-3ALAMB-LT-29-29"></a>
+<a id="GEB.LAMBDA.SPEC:TTYPE%20%28MGL-PAX:ACCESSOR%20GEB.LAMBDA.SPEC:LAMB-LT%29"></a>
 
 - [accessor] **TTYPE** *LAMB-LT (:TTYPE = NIL)*
 
 Accessors of [`MODULO`][36e5]
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ALTM-20-28MGL-PAX-3AACCESSOR-20GEB-2ELAMBDA-2ESPEC-3AMODULO-29-29"></a>
+<a id="GEB.LAMBDA.SPEC:LTM%20%28MGL-PAX:ACCESSOR%20GEB.LAMBDA.SPEC:MODULO%29"></a>
 
 - [accessor] **LTM** *MODULO (:LTM)*
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ARTM-20-28MGL-PAX-3AACCESSOR-20GEB-2ELAMBDA-2ESPEC-3AMODULO-29-29"></a>
+<a id="GEB.LAMBDA.SPEC:RTM%20%28MGL-PAX:ACCESSOR%20GEB.LAMBDA.SPEC:MODULO%29"></a>
 
 - [accessor] **RTM** *MODULO (:RTM)*
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ATTYPE-20-28MGL-PAX-3AACCESSOR-20GEB-2ELAMBDA-2ESPEC-3AMODULO-29-29"></a>
+<a id="GEB.LAMBDA.SPEC:TTYPE%20%28MGL-PAX:ACCESSOR%20GEB.LAMBDA.SPEC:MODULO%29"></a>
 
 - [accessor] **TTYPE** *MODULO (:TTYPE = NIL)*
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ATCOD-20GENERIC-FUNCTION-29"></a>
+<a id="GEB.LAMBDA.SPEC:TCOD%20GENERIC-FUNCTION"></a>
 
-- [generic-function] **TCOD** *X*
+- [generic-function] **TCOD** *OBJ*
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ATDOM-20GENERIC-FUNCTION-29"></a>
+<a id="GEB.LAMBDA.SPEC:TDOM%20GENERIC-FUNCTION"></a>
 
-- [generic-function] **TDOM** *X*
+- [generic-function] **TDOM** *OBJ*
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ATERM-20GENERIC-FUNCTION-29"></a>
+<a id="GEB.LAMBDA.SPEC:TERM%20GENERIC-FUNCTION"></a>
 
-- [generic-function] **TERM** *X*
+- [generic-function] **TERM** *OBJ*
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ARTY-20GENERIC-FUNCTION-29"></a>
+<a id="GEB.LAMBDA.SPEC:RTY%20GENERIC-FUNCTION"></a>
 
-- [generic-function] **RTY** *X*
+- [generic-function] **RTY** *OBJ*
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ALTY-20GENERIC-FUNCTION-29"></a>
+<a id="GEB.LAMBDA.SPEC:LTY%20GENERIC-FUNCTION"></a>
 
-- [generic-function] **LTY** *X*
+- [generic-function] **LTY** *OBJ*
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ALTM-20GENERIC-FUNCTION-29"></a>
+<a id="GEB.LAMBDA.SPEC:LTM%20GENERIC-FUNCTION"></a>
 
-- [generic-function] **LTM** *X*
+- [generic-function] **LTM** *OBJ*
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ARTM-20GENERIC-FUNCTION-29"></a>
+<a id="GEB.LAMBDA.SPEC:RTM%20GENERIC-FUNCTION"></a>
 
-- [generic-function] **RTM** *X*
+- [generic-function] **RTM** *OBJ*
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3AON-20GENERIC-FUNCTION-29"></a>
+<a id="GEB.LAMBDA.SPEC:ON%20GENERIC-FUNCTION"></a>
 
-- [generic-function] **ON** *X*
+- [generic-function] **ON** *OBJ*
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3AFUN-20GENERIC-FUNCTION-29"></a>
+<a id="GEB.LAMBDA.SPEC:FUN%20GENERIC-FUNCTION"></a>
 
-- [generic-function] **FUN** *X*
+- [generic-function] **FUN** *OBJ*
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3APOS-20GENERIC-FUNCTION-29"></a>
+<a id="GEB.LAMBDA.SPEC:POS%20GENERIC-FUNCTION"></a>
 
-- [generic-function] **POS** *X*
+- [generic-function] **POS** *OBJ*
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ATTYPE-20GENERIC-FUNCTION-29"></a>
+<a id="GEB.LAMBDA.SPEC:TTYPE%20GENERIC-FUNCTION"></a>
 
-- [generic-function] **TTYPE** *X*
+- [generic-function] **TTYPE** *OBJ*
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ABITV-20GENERIC-FUNCTION-29"></a>
+<a id="GEB.LAMBDA.SPEC:BITV%20GENERIC-FUNCTION"></a>
 
-- [generic-function] **BITV** *X*
+- [generic-function] **BITV** *OBJ*
 
 <a id="x-28GEB-2ELAMBDA-2EMAIN-3A-40LAMBDA-API-20MGL-PAX-3ASECTION-29"></a>
+<a id="GEB.LAMBDA.MAIN:@LAMBDA-API%20MGL-PAX:SECTION"></a>
 
 ### 13.2 Main functionality
 
@@ -5145,6 +5713,7 @@ Accessors of [`MODULO`][36e5]
 This covers the main API for the [`STLC`][e373] module
 
 <a id="x-28GEB-2ELAMBDA-2EMAIN-3AANN-TERM1-20GENERIC-FUNCTION-29"></a>
+<a id="GEB.LAMBDA.MAIN:ANN-TERM1%20GENERIC-FUNCTION"></a>
 
 - [generic-function] **ANN-TERM1** *CTX TTERM*
 
@@ -5184,6 +5753,7 @@ This covers the main API for the [`STLC`][e373] module
     the context on the left as well. For more info check [`LAMB`][8cde]
 
 <a id="x-28GEB-2ELAMBDA-2EMAIN-3AINDEX-CHECK-20FUNCTION-29"></a>
+<a id="GEB.LAMBDA.MAIN:INDEX-CHECK%20FUNCTION"></a>
 
 - [function] **INDEX-CHECK** *I CTX*
 
@@ -5192,6 +5762,7 @@ This covers the main API for the [`STLC`][e373] module
     from the left starting with 0.
 
 <a id="x-28GEB-2ELAMBDA-2EMAIN-3AFUN-TO-HOM-20FUNCTION-29"></a>
+<a id="GEB.LAMBDA.MAIN:FUN-TO-HOM%20FUNCTION"></a>
 
 - [function] **FUN-TO-HOM** *T1*
 
@@ -5207,6 +5778,7 @@ This covers the main API for the [`STLC`][e373] module
 
 
 <a id="x-28GEB-2ELAMBDA-2EMAIN-3AANN-TERM2-20FUNCTION-29"></a>
+<a id="GEB.LAMBDA.MAIN:ANN-TERM2%20FUNCTION"></a>
 
 - [function] **ANN-TERM2** *TTERM*
 
@@ -5216,6 +5788,7 @@ This covers the main API for the [`STLC`][e373] module
     [`SUBSTOBJ`][3173] objects.
 
 <a id="x-28GEB-2ELAMBDA-2EMAIN-3AANNOTATED-TERM-20FUNCTION-29"></a>
+<a id="GEB.LAMBDA.MAIN:ANNOTATED-TERM%20FUNCTION"></a>
 
 - [function] **ANNOTATED-TERM** *CTX TERM*
 
@@ -5227,6 +5800,7 @@ This covers the main API for the [`STLC`][e373] module
     which is a pure [`SUBSTOBJ`][3173]
 
 <a id="x-28GEB-2ELAMBDA-2EMAIN-3ATYPE-OF-TERM-W-FUN-20FUNCTION-29"></a>
+<a id="GEB.LAMBDA.MAIN:TYPE-OF-TERM-W-FUN%20FUNCTION"></a>
 
 - [function] **TYPE-OF-TERM-W-FUN** *CTX TTERM*
 
@@ -5237,6 +5811,7 @@ This covers the main API for the [`STLC`][e373] module
     occurrences of [`SO-HOM-OBJ`][b5cf] replaced by [`FUN-TYPE`][8dcc].
 
 <a id="x-28GEB-2ELAMBDA-2EMAIN-3ATYPE-OF-TERM-20FUNCTION-29"></a>
+<a id="GEB.LAMBDA.MAIN:TYPE-OF-TERM%20FUNCTION"></a>
 
 - [function] **TYPE-OF-TERM** *CTX TTERM*
 
@@ -5247,6 +5822,7 @@ This covers the main API for the [`STLC`][e373] module
     which is a pure [`SUBSTOBJ`][3173].
 
 <a id="x-28GEB-2ELAMBDA-2EMAIN-3AWELL-DEFP-20GENERIC-FUNCTION-29"></a>
+<a id="GEB.LAMBDA.MAIN:WELL-DEFP%20GENERIC-FUNCTION"></a>
 
 - [generic-function] **WELL-DEFP** *CTX TTERM*
 
@@ -5259,6 +5835,7 @@ This covers the main API for the [`STLC`][e373] module
     nil
 
 <a id="x-28GEB-2ELAMBDA-2EMAIN-3AFUN-TYPE-20CLASS-29"></a>
+<a id="GEB.LAMBDA.MAIN:FUN-TYPE%20CLASS"></a>
 
 - [class] **FUN-TYPE** *[DIRECT-POINTWISE-MIXIN][e2b0] [CAT-OBJ][74bd]*
 
@@ -5270,16 +5847,19 @@ This covers the main API for the [`STLC`][e373] module
     pointwise.
 
 <a id="x-28GEB-2ELAMBDA-2EMAIN-3AFUN-TYPE-20FUNCTION-29"></a>
+<a id="GEB.LAMBDA.MAIN:FUN-TYPE%20FUNCTION"></a>
 
 - [function] **FUN-TYPE** *MCAR MCADR*
 
 <a id="x-28GEB-2ELAMBDA-2EMAIN-3AERRORP-20FUNCTION-29"></a>
+<a id="GEB.LAMBDA.MAIN:ERRORP%20FUNCTION"></a>
 
 - [function] **ERRORP** *TTERM*
 
     Evaluates to true iff the term has an error subterm.
 
 <a id="x-28GEB-2ELAMBDA-2EMAIN-3AREDUCER-20FUNCTION-29"></a>
+<a id="GEB.LAMBDA.MAIN:REDUCER%20FUNCTION"></a>
 
 - [function] **REDUCER** *TTERM*
 
@@ -5288,14 +5868,17 @@ This covers the main API for the [`STLC`][e373] module
     lambda and app terms are  1-argument
 
 <a id="x-28GEB-2EUTILS-3AMCAR-20-28MGL-PAX-3AACCESSOR-20GEB-2ELAMBDA-2EMAIN-3AFUN-TYPE-29-29"></a>
+<a id="GEB.UTILS:MCAR%20%28MGL-PAX:ACCESSOR%20GEB.LAMBDA.MAIN:FUN-TYPE%29"></a>
 
 - [accessor] **MCAR** *FUN-TYPE (:MCAR)*
 
 <a id="x-28GEB-2EUTILS-3AMCADR-20-28MGL-PAX-3AACCESSOR-20GEB-2ELAMBDA-2EMAIN-3AFUN-TYPE-29-29"></a>
+<a id="GEB.UTILS:MCADR%20%28MGL-PAX:ACCESSOR%20GEB.LAMBDA.MAIN:FUN-TYPE%29"></a>
 
 - [accessor] **MCADR** *FUN-TYPE (:MCADR)*
 
 <a id="x-28GEB-2ELAMBDA-2ETRANS-3A-40STLC-CONVERSION-20MGL-PAX-3ASECTION-29"></a>
+<a id="GEB.LAMBDA.TRANS:@STLC-CONVERSION%20MGL-PAX:SECTION"></a>
 
 ### 13.3 Transition Functions
 
@@ -5311,6 +5894,7 @@ Thus if the \[[`<STLC>`][b36a]\] term contains free variables, then call
 any other transition functions
 
 <a id="x-28GEB-2EGENERICS-3ATO-CAT-20-28METHOD-20NIL-20-28T-20GEB-2ELAMBDA-2ESPEC-3A-3CSTLC-3E-29-29-29"></a>
+<a id="GEB.GENERICS:TO-CAT%20%28METHOD%20NIL%20%28T%20GEB.LAMBDA.SPEC:%3CSTLC%3E%29%29"></a>
 
 - [method] **TO-CAT** *CONTEXT (TTERM \<STLC>)*
 
@@ -5319,6 +5903,7 @@ any other transition functions
     according to the term model interpretation of [`STLC`][e373]
 
 <a id="x-28GEB-2EGENERICS-3ATO-POLY-20-28METHOD-20NIL-20-28GEB-2ELAMBDA-2ESPEC-3A-3CSTLC-3E-29-29-29"></a>
+<a id="GEB.GENERICS:TO-POLY%20%28METHOD%20NIL%20%28GEB.LAMBDA.SPEC:%3CSTLC%3E%29%29"></a>
 
 - [method] **TO-POLY** *(OBJ \<STLC>)*
 
@@ -5331,6 +5916,7 @@ any other transition functions
     calling me
 
 <a id="x-28GEB-2EGENERICS-3ATO-BITC-20-28METHOD-20NIL-20-28GEB-2ELAMBDA-2ESPEC-3A-3CSTLC-3E-29-29-29"></a>
+<a id="GEB.GENERICS:TO-BITC%20%28METHOD%20NIL%20%28GEB.LAMBDA.SPEC:%3CSTLC%3E%29%29"></a>
 
 - [method] **TO-BITC** *(OBJ \<STLC>)*
 
@@ -5343,6 +5929,7 @@ any other transition functions
     calling me
 
 <a id="x-28GEB-2EGENERICS-3ATO-SEQN-20-28METHOD-20NIL-20-28GEB-2ELAMBDA-2ESPEC-3A-3CSTLC-3E-29-29-29"></a>
+<a id="GEB.GENERICS:TO-SEQN%20%28METHOD%20NIL%20%28GEB.LAMBDA.SPEC:%3CSTLC%3E%29%29"></a>
 
 - [method] **TO-SEQN** *(OBJ \<STLC>)*
 
@@ -5355,6 +5942,7 @@ any other transition functions
     calling me
 
 <a id="x-28GEB-2EGENERICS-3ATO-CIRCUIT-20-28METHOD-20NIL-20-28GEB-2ELAMBDA-2ESPEC-3A-3CSTLC-3E-20T-29-29-29"></a>
+<a id="GEB.GENERICS:TO-CIRCUIT%20%28METHOD%20NIL%20%28GEB.LAMBDA.SPEC:%3CSTLC%3E%20T%29%29"></a>
 
 - [method] **TO-CIRCUIT** *(OBJ \<STLC>) NAME*
 
@@ -5367,12 +5955,14 @@ any other transition functions
     calling me
 
 <a id="x-28GEB-2ELAMBDA-2ETRANS-3A-40UTILITY-20MGL-PAX-3ASECTION-29"></a>
+<a id="GEB.LAMBDA.TRANS:@UTILITY%20MGL-PAX:SECTION"></a>
 
 #### 13.3.1 Utility Functionality
 
 These are utility functions relating to translating lambda terms to other types
 
 <a id="x-28GEB-2ELAMBDA-2ETRANS-3ASTLC-CTX-TO-MU-20FUNCTION-29"></a>
+<a id="GEB.LAMBDA.TRANS:STLC-CTX-TO-MU%20FUNCTION"></a>
 
 - [function] **STLC-CTX-TO-MU** *CONTEXT*
 
@@ -5390,12 +5980,14 @@ These are utility functions relating to translating lambda terms to other types
 
 
 <a id="x-28GEB-2ELAMBDA-2ETRANS-3ASO-HOM-20FUNCTION-29"></a>
+<a id="GEB.LAMBDA.TRANS:SO-HOM%20FUNCTION"></a>
 
 - [function] **SO-HOM** *DOM COD*
 
     Computes the hom-object of two \[[`SUBSTMORPH`][57dc]\]s
 
 <a id="x-28GEB-2EMIXINS-3A-40MIXINS-20MGL-PAX-3ASECTION-29"></a>
+<a id="GEB.MIXINS:@MIXINS%20MGL-PAX:SECTION"></a>
 
 ## 14 Mixins
 
@@ -5405,6 +5997,7 @@ project. Overall all these offer various services to the rest of the
 project
 
 <a id="x-28GEB-2EMIXINS-3A-40POINTWISE-20MGL-PAX-3ASECTION-29"></a>
+<a id="GEB.MIXINS:@POINTWISE%20MGL-PAX:SECTION"></a>
 
 ### 14.1 Pointwise Mixins
 
@@ -5416,6 +6009,7 @@ checking if two objects are [`EQUAL`][3fb5]-able adhoc. The pointwise API,
 however, derives the behavior and naturally allows such idioms
 
 <a id="x-28GEB-2EMIXINS-3APOINTWISE-MIXIN-20CLASS-29"></a>
+<a id="GEB.MIXINS:POINTWISE-MIXIN%20CLASS"></a>
 
 - [class] **POINTWISE-MIXIN**
 
@@ -5427,6 +6021,7 @@ due to this we can instead compare only the slots defined directly
 in our class
 
 <a id="x-28GEB-2EMIXINS-3ADIRECT-POINTWISE-MIXIN-20CLASS-29"></a>
+<a id="GEB.MIXINS:DIRECT-POINTWISE-MIXIN%20CLASS"></a>
 
 - [class] **DIRECT-POINTWISE-MIXIN** *[POINTWISE-MIXIN][445d]*
 
@@ -5437,6 +6032,7 @@ in our class
     Further all `DIRECT-POINTWISE-MIXIN`'s are \[`POINTWISE-MIXIN`\]'s
 
 <a id="x-28GEB-2EMIXINS-3A-40POINTWISE-API-20MGL-PAX-3ASECTION-29"></a>
+<a id="GEB.MIXINS:@POINTWISE-API%20MGL-PAX:SECTION"></a>
 
 ### 14.2 Pointwise API
 
@@ -5451,6 +6047,7 @@ operations on classes that make them as useful for generic data
 traversal as `LIST`([`0`][79d8] [`1`][6d9f])'s are
 
 <a id="x-28GEB-2EMIXINS-3ATO-POINTWISE-LIST-20GENERIC-FUNCTION-29"></a>
+<a id="GEB.MIXINS:TO-POINTWISE-LIST%20GENERIC-FUNCTION"></a>
 
 - [generic-function] **TO-POINTWISE-LIST** *OBJ*
 
@@ -5458,6 +6055,7 @@ traversal as `LIST`([`0`][79d8] [`1`][6d9f])'s are
     the [`KEYWORD`][077a] slot-name next to their value.
 
 <a id="x-28GEB-2EMIXINS-3AOBJ-EQUALP-20GENERIC-FUNCTION-29"></a>
+<a id="GEB.MIXINS:OBJ-EQUALP%20GENERIC-FUNCTION"></a>
 
 - [generic-function] **OBJ-EQUALP** *OBJECT1 OBJECT2*
 
@@ -5467,6 +6065,7 @@ traversal as `LIST`([`0`][79d8] [`1`][6d9f])'s are
     stronger pointer quality
 
 <a id="x-28GEB-2EMIXINS-3APOINTWISE-SLOTS-20GENERIC-FUNCTION-29"></a>
+<a id="GEB.MIXINS:POINTWISE-SLOTS%20GENERIC-FUNCTION"></a>
 
 - [generic-function] **POINTWISE-SLOTS** *OBJ*
 
@@ -5474,14 +6073,17 @@ traversal as `LIST`([`0`][79d8] [`1`][6d9f])'s are
     rather than the class
 
 <a id="x-28GEB-2EMIXINS-3AMAP-POINTWISE-20FUNCTION-29"></a>
+<a id="GEB.MIXINS:MAP-POINTWISE%20FUNCTION"></a>
 
 - [function] **MAP-POINTWISE** *FUNCTION OBJ*
 
 <a id="x-28GEB-2EMIXINS-3AREDUCE-POINTWISE-20FUNCTION-29"></a>
+<a id="GEB.MIXINS:REDUCE-POINTWISE%20FUNCTION"></a>
 
 - [function] **REDUCE-POINTWISE** *FUNCTION OBJ INITIAL*
 
 <a id="x-28GEB-2EMIXINS-3A-40MIXIN-EXAMPLES-20MGL-PAX-3ASECTION-29"></a>
+<a id="GEB.MIXINS:@MIXIN-EXAMPLES%20MGL-PAX:SECTION"></a>
 
 ### 14.3 Mixins Examples
 
@@ -5498,6 +6100,7 @@ Let's see some example uses of [`POINTWISE-MIXIN`][445d]:
 
 
 <a id="x-28GEB-2EMIXINS-3A-40METADATA-20MGL-PAX-3ASECTION-29"></a>
+<a id="GEB.MIXINS:@METADATA%20MGL-PAX:SECTION"></a>
 
 ### 14.4 Metadata Mixin
 
@@ -5511,6 +6114,7 @@ For this task we offer the [`META-MIXIN`][4529] which will allow
 metadata to be stored for any type that uses its service.
 
 <a id="x-28GEB-2EMIXINS-3AMETA-MIXIN-20CLASS-29"></a>
+<a id="GEB.MIXINS:META-MIXIN%20CLASS"></a>
 
 - [class] **META-MIXIN**
 
@@ -5522,6 +6126,7 @@ For working with the structure it is best to have operations to treat
 it like an ordinary hashtable
 
 <a id="x-28GEB-2EMIXINS-3AMETA-INSERT-20FUNCTION-29"></a>
+<a id="GEB.MIXINS:META-INSERT%20FUNCTION"></a>
 
 - [function] **META-INSERT** *OBJECT KEY VALUE &KEY WEAK*
 
@@ -5535,6 +6140,7 @@ it like an ordinary hashtable
     The :weak keyword specifies if the pointer stored in the value is weak
 
 <a id="x-28GEB-2EMIXINS-3AMETA-LOOKUP-20FUNCTION-29"></a>
+<a id="GEB.MIXINS:META-LOOKUP%20FUNCTION"></a>
 
 - [function] **META-LOOKUP** *OBJECT KEY*
 
@@ -5542,6 +6148,7 @@ it like an ordinary hashtable
     look past weak pointers if they exist
 
 <a id="x-28GEB-2EMIXINS-3A-40MIXIN-PERFORMANCE-20MGL-PAX-3ASECTION-29"></a>
+<a id="GEB.MIXINS:@MIXIN-PERFORMANCE%20MGL-PAX:SECTION"></a>
 
 #### 14.4.1 Performance
 
@@ -5587,6 +6194,7 @@ storage inside metadata be separated into volatile and stable
 storage.
 
 <a id="x-28GEB-2EUTILS-3A-40GEB-UTILS-MANUAL-20MGL-PAX-3ASECTION-29"></a>
+<a id="GEB.UTILS:@GEB-UTILS-MANUAL%20MGL-PAX:SECTION"></a>
 
 ## 15 Geb Utilities
 
@@ -5595,6 +6203,7 @@ The Utilities package provides general utility functionality that is
 used throughout the GEB codebase
 
 <a id="x-28GEB-2EUTILS-3ALIST-OF-20TYPE-29"></a>
+<a id="GEB.UTILS:LIST-OF%20TYPE"></a>
 
 - [type] **LIST-OF** *TY*
 
@@ -5650,12 +6259,14 @@ used throughout the GEB codebase
 
 
 <a id="x-28GEB-2EUTILS-3ASYMBOL-TO-KEYWORD-20FUNCTION-29"></a>
+<a id="GEB.UTILS:SYMBOL-TO-KEYWORD%20FUNCTION"></a>
 
 - [function] **SYMBOL-TO-KEYWORD** *SYMBOL*
 
     Turns a \[symbol\] into a \[keyword\]
 
 <a id="x-28GEB-2EUTILS-3AMUFFLE-PACKAGE-VARIANCE-20MGL-PAX-3AMACRO-29"></a>
+<a id="GEB.UTILS:MUFFLE-PACKAGE-VARIANCE%20MGL-PAX:MACRO"></a>
 
 - [macro] **MUFFLE-PACKAGE-VARIANCE** *&REST PACKAGE-DECLARATIONS*
 
@@ -5680,6 +6291,7 @@ used throughout the GEB codebase
 
 
 <a id="x-28GEB-2EUTILS-3ASUBCLASS-RESPONSIBILITY-20FUNCTION-29"></a>
+<a id="GEB.UTILS:SUBCLASS-RESPONSIBILITY%20FUNCTION"></a>
 
 - [function] **SUBCLASS-RESPONSIBILITY** *OBJ*
 
@@ -5687,10 +6299,12 @@ used throughout the GEB codebase
     responsibility. Inspired from Smalltalk
 
 <a id="x-28GEB-2EUTILS-3ASHALLOW-COPY-OBJECT-20FUNCTION-29"></a>
+<a id="GEB.UTILS:SHALLOW-COPY-OBJECT%20FUNCTION"></a>
 
 - [function] **SHALLOW-COPY-OBJECT** *ORIGINAL*
 
 <a id="x-28GEB-2EUTILS-3ACOPY-INSTANCE-20GENERIC-FUNCTION-29"></a>
+<a id="GEB.UTILS:COPY-INSTANCE%20GENERIC-FUNCTION"></a>
 
 - [generic-function] **COPY-INSTANCE** *OBJECT &REST INITARGS &KEY &ALLOW-OTHER-KEYS*
 
@@ -5704,6 +6318,7 @@ used throughout the GEB codebase
     [`REINITIALIZE-INSTANCE`][1c95] is called to update the copy with `INITARGS`.
 
 <a id="x-28GEB-2EUTILS-3AMAKE-PATTERN-20MGL-PAX-3AMACRO-29"></a>
+<a id="GEB.UTILS:MAKE-PATTERN%20MGL-PAX:MACRO"></a>
 
 - [macro] **MAKE-PATTERN** *OBJECT-NAME &REST CONSTRUCTOR-NAMES*
 
@@ -5727,24 +6342,28 @@ used throughout the GEB codebase
 
 
 <a id="x-28GEB-2EUTILS-3ANUMBER-TO-DIGITS-20FUNCTION-29"></a>
+<a id="GEB.UTILS:NUMBER-TO-DIGITS%20FUNCTION"></a>
 
 - [function] **NUMBER-TO-DIGITS** *NUMBER &OPTIONAL REM*
 
     turns an [`INTEGER`][9b122] into a list of its digits
 
 <a id="x-28GEB-2EUTILS-3ADIGIT-TO-UNDER-20FUNCTION-29"></a>
+<a id="GEB.UTILS:DIGIT-TO-UNDER%20FUNCTION"></a>
 
 - [function] **DIGIT-TO-UNDER** *DIGIT*
 
     Turns a digit into a subscript string version of the number
 
 <a id="x-28GEB-2EUTILS-3ANUMBER-TO-UNDER-20FUNCTION-29"></a>
+<a id="GEB.UTILS:NUMBER-TO-UNDER%20FUNCTION"></a>
 
 - [function] **NUMBER-TO-UNDER** *INDEX*
 
     Turns an [`INTEGER`][9b122] into a subscripted [`STRING`][b93c]
 
 <a id="x-28GEB-2EUTILS-3AAPPLY-N-20FUNCTION-29"></a>
+<a id="GEB.UTILS:APPLY-N%20FUNCTION"></a>
 
 - [function] **APPLY-N** *TIMES F INITIAL*
 
@@ -5757,6 +6376,7 @@ used throughout the GEB codebase
 
 
 <a id="x-28GEB-2EUTILS-3A-40GEB-ACCESSORS-20MGL-PAX-3ASECTION-29"></a>
+<a id="GEB.UTILS:@GEB-ACCESSORS%20MGL-PAX:SECTION"></a>
 
 ### 15.1 Accessors
 
@@ -5765,87 +6385,100 @@ defined, where the names are not known, then these accessors are
 likely to be used. They may even augment existing classes.
 
 <a id="x-28GEB-2EUTILS-3AMCAR-20GENERIC-FUNCTION-29"></a>
+<a id="GEB.UTILS:MCAR%20GENERIC-FUNCTION"></a>
 
-- [generic-function] **MCAR** *X*
+- [generic-function] **MCAR** *OBJ*
 
     Can be seen as calling [`CAR`][d5a2] on a generic CLOS
     [object](http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_o.htm#object)
 
 <a id="x-28GEB-2EUTILS-3AMCADR-20GENERIC-FUNCTION-29"></a>
+<a id="GEB.UTILS:MCADR%20GENERIC-FUNCTION"></a>
 
-- [generic-function] **MCADR** *X*
+- [generic-function] **MCADR** *OBJ*
 
     like [`MCAR`][f1ce] but for the [`CADR`][caea]
 
 <a id="x-28GEB-2EUTILS-3AMCADDR-20GENERIC-FUNCTION-29"></a>
+<a id="GEB.UTILS:MCADDR%20GENERIC-FUNCTION"></a>
 
-- [generic-function] **MCADDR** *X*
+- [generic-function] **MCADDR** *OBJ*
 
     like [`MCAR`][f1ce] but for the [`CADDR`][57e1]
 
 <a id="x-28GEB-2EUTILS-3AMCADDDR-20GENERIC-FUNCTION-29"></a>
+<a id="GEB.UTILS:MCADDDR%20GENERIC-FUNCTION"></a>
 
 - [generic-function] **MCADDDR** *OBJ*
 
     like [`MCAR`][f1ce] but for the [`CADDDR`][47d6]
 
 <a id="x-28GEB-2EUTILS-3AMCDR-20GENERIC-FUNCTION-29"></a>
+<a id="GEB.UTILS:MCDR%20GENERIC-FUNCTION"></a>
 
-- [generic-function] **MCDR** *X*
+- [generic-function] **MCDR** *OBJ*
 
     Similar to [`MCAR`][f1ce], however acts like a [`CDR`][e012] for
     \[classes\] that we wish to view as a [`SEQUENCE`][ae23]
 
 <a id="x-28GEB-2EUTILS-3AOBJ-20GENERIC-FUNCTION-29"></a>
+<a id="GEB.UTILS:OBJ%20GENERIC-FUNCTION"></a>
 
-- [generic-function] **OBJ** *X*
+- [generic-function] **OBJ** *OBJ*
 
     Grabs the underlying
     [object](http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_o.htm#object)
 
 <a id="x-28GEB-2EUTILS-3ANAME-20GENERIC-FUNCTION-29"></a>
+<a id="GEB.UTILS:NAME%20GENERIC-FUNCTION"></a>
 
-- [generic-function] **NAME** *X*
+- [generic-function] **NAME** *OBJ*
 
     the name of the given
     [object](http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_o.htm#object)
 
 <a id="x-28GEB-2EUTILS-3AFUNC-20GENERIC-FUNCTION-29"></a>
+<a id="GEB.UTILS:FUNC%20GENERIC-FUNCTION"></a>
 
-- [generic-function] **FUNC** *X*
+- [generic-function] **FUNC** *OBJ*
 
     the function of the
     [object](http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_o.htm#object)
 
 <a id="x-28GEB-2EUTILS-3APREDICATE-20GENERIC-FUNCTION-29"></a>
+<a id="GEB.UTILS:PREDICATE%20GENERIC-FUNCTION"></a>
 
-- [generic-function] **PREDICATE** *X*
+- [generic-function] **PREDICATE** *OBJ*
 
     the `PREDICATE` of the
     [object](http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_o.htm#object)
 
 <a id="x-28GEB-2EUTILS-3ATHEN-20GENERIC-FUNCTION-29"></a>
+<a id="GEB.UTILS:THEN%20GENERIC-FUNCTION"></a>
 
-- [generic-function] **THEN** *X*
+- [generic-function] **THEN** *OBJ*
 
     the then branch of the
     [object](http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_o.htm#object)
 
 <a id="x-28GEB-2EUTILS-3AELSE-20GENERIC-FUNCTION-29"></a>
+<a id="GEB.UTILS:ELSE%20GENERIC-FUNCTION"></a>
 
-- [generic-function] **ELSE** *X*
+- [generic-function] **ELSE** *OBJ*
 
     the then branch of the
     [object](http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_o.htm#object)
 
 <a id="x-28GEB-2EUTILS-3ACODE-20GENERIC-FUNCTION-29"></a>
+<a id="GEB.UTILS:CODE%20GENERIC-FUNCTION"></a>
 
-- [generic-function] **CODE** *X*
+- [generic-function] **CODE** *OBJ*
 
     the code of the
     [object](http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_o.htm#object)
 
 <a id="x-28GEB-TEST-3A-40GEB-TEST-MANUAL-20MGL-PAX-3ASECTION-29"></a>
+<a id="GEB-TEST:@GEB-TEST-MANUAL%20MGL-PAX:SECTION"></a>
 
 ## 16 Testing
 
@@ -5858,6 +6491,7 @@ Please read the
 features and how to better lay out future tests
 
 <a id="x-28GEB-TEST-3ARUN-TESTS-20FUNCTION-29"></a>
+<a id="GEB-TEST:RUN-TESTS%20FUNCTION"></a>
 
 - [function] **RUN-TESTS** *&KEY (INTERACTIVE? NIL) (SUMMARY? NIL) (PLAIN? T) (DESIGNATORS '(GEB-TEST-SUITE))*
 
@@ -5876,12 +6510,14 @@ features and how to better lay out future tests
 
 
 <a id="x-28GEB-TEST-3ARUN-TESTS-ERROR-20FUNCTION-29"></a>
+<a id="GEB-TEST:RUN-TESTS-ERROR%20FUNCTION"></a>
 
 - [function] **RUN-TESTS-ERROR**
 
 <a id="x-28GEB-TEST-3ACODE-COVERAGE-20FUNCTION-29"></a>
+<a id="GEB-TEST:CODE-COVERAGE%20FUNCTION"></a>
 
-- [function] **CODE-COVERAGE** *&OPTIONAL PATH*
+- [function] **CODE-COVERAGE** *&OPTIONAL (PATH NIL)*
 
     generates code coverage, for CCL the coverage can be found at
     
@@ -5891,228 +6527,225 @@ features and how to better lay out future tests
     
     simply run this function to generate a fresh one
 
-  [0171]: #x-28GEB-2ELAMBDA-2ESPEC-3ATERM-20GENERIC-FUNCTION-29 "GEB.LAMBDA.SPEC:TERM GENERIC-FUNCTION"
+  [0171]: #GEB.LAMBDA.SPEC:TERM%20GENERIC-FUNCTION "GEB.LAMBDA.SPEC:TERM GENERIC-FUNCTION"
   [01b6]: http://www.lispworks.com/documentation/HyperSpec/Body/f_bt_sb.htm "BIT (MGL-PAX:CLHS FUNCTION)"
-  [0251]: #x-28GEB-2EPOLY-2EMAIN-3A-40POLY-API-20MGL-PAX-3ASECTION-29 "Polynomial API"
+  [0251]: #GEB.POLY.MAIN:@POLY-API%20MGL-PAX:SECTION "Polynomial API"
   [02ad]: http://www.lispworks.com/documentation/HyperSpec/Body/s_if.htm "IF (MGL-PAX:CLHS MGL-PAX:MACRO)"
-  [0424]: #x-28GEB-2ELAMBDA-2ESPEC-3ASND-20CLASS-29 "GEB.LAMBDA.SPEC:SND CLASS"
-  [0433]: #x-28GEB-2ELAMBDA-2ESPEC-3AUNIT-20CLASS-29 "GEB.LAMBDA.SPEC:UNIT CLASS"
-  [04f2]: #x-28GEB-2ELAMBDA-2ESPEC-3AAPP-20CLASS-29 "GEB.LAMBDA.SPEC:APP CLASS"
-  [0609]: #x-28GEB-2ELAMBDA-2ETRANS-3A-40UTILITY-20MGL-PAX-3ASECTION-29 "Utility Functionality"
-  [06c6]: #x-28GEB-2ESPEC-3APROD-20CLASS-29 "GEB.SPEC:PROD CLASS"
-  [06e0]: #x-28GEB-2ESPEC-3APROJECT-RIGHT-20CLASS-29 "GEB.SPEC:PROJECT-RIGHT CLASS"
+  [0424]: #GEB.LAMBDA.SPEC:SND%20CLASS "GEB.LAMBDA.SPEC:SND CLASS"
+  [0433]: #GEB.LAMBDA.SPEC:UNIT%20CLASS "GEB.LAMBDA.SPEC:UNIT CLASS"
+  [04f2]: #GEB.LAMBDA.SPEC:APP%20CLASS "GEB.LAMBDA.SPEC:APP CLASS"
+  [0609]: #GEB.LAMBDA.TRANS:@UTILITY%20MGL-PAX:SECTION "Utility Functionality"
+  [06c6]: #GEB.SPEC:PROD%20CLASS "GEB.SPEC:PROD CLASS"
+  [06e0]: #GEB.SPEC:PROJECT-RIGHT%20CLASS "GEB.SPEC:PROJECT-RIGHT CLASS"
   [077a]: http://www.lispworks.com/documentation/HyperSpec/Body/t_kwd.htm "KEYWORD (MGL-PAX:CLHS TYPE)"
-  [0874]: #x-28GEB-2ELAMBDA-2ESPEC-3ALAMB-LT-20CLASS-29 "GEB.LAMBDA.SPEC:LAMB-LT CLASS"
+  [0874]: #GEB.LAMBDA.SPEC:LAMB-LT%20CLASS "GEB.LAMBDA.SPEC:LAMB-LT CLASS"
   [0895]: http://www.lispworks.com/documentation/HyperSpec/Body/f_typep.htm "TYPEP (MGL-PAX:CLHS FUNCTION)"
-  [0959]: #x-28GEB-2ESEQN-3A-40SEQN-MANUAL-20MGL-PAX-3ASECTION-29 "Seqn Specification"
-  [0ad4]: #x-28GEB-BOOL-3ABOOL-20MGL-PAX-3ASYMBOL-MACRO-29 "GEB-BOOL:BOOL MGL-PAX:SYMBOL-MACRO"
-  [0dfe]: #x-28GEB-2ESPEC-3A-3C-RIGHT-20FUNCTION-29 "GEB.SPEC:<-RIGHT FUNCTION"
-  [0e00]: #x-28GEB-DOCS-2FDOCS-3A-40YONEDA-LEMMA-20MGL-PAX-3ASECTION-29 "The Yoneda Lemma"
-  [0eb6]: #x-28GEB-2EEXTENSION-2ESPEC-3ANATMORPH-20TYPE-29 "GEB.EXTENSION.SPEC:NATMORPH TYPE"
-  [0efa]: #x-28GEB-2EEXTENSION-2ESPEC-3A-40GEB-EXTENSIONS-20MGL-PAX-3ASECTION-29 "Extension Sets for Categories"
-  [0f3e]: #x-28GEB-2EPOLY-2ETRANS-3A-40POLY-TRANS-20MGL-PAX-3ASECTION-29 "Polynomial Transformations"
-  [134c]: #x-28GEB-2ELAMBDA-2ESPEC-3ATTYPE-20GENERIC-FUNCTION-29 "GEB.LAMBDA.SPEC:TTYPE GENERIC-FUNCTION"
-  [15a3]: #x-28GEB-2ELAMBDA-2ESPEC-3ALTY-20GENERIC-FUNCTION-29 "GEB.LAMBDA.SPEC:LTY GENERIC-FUNCTION"
-  [1ae1]: #x-28GEB-2EEXTENSION-2ESPEC-3ANAT-MULT-20CLASS-29 "GEB.EXTENSION.SPEC:NAT-MULT CLASS"
-  [1b98]: #x-28GEB-GUI-2EGRAPHING-3A-40GRAPHING-MANUAL-20MGL-PAX-3ASECTION-29 "The GEB Graphizer"
-  [1c91]: #x-28GEB-LIST-3A-40GEB-LIST-20MGL-PAX-3ASECTION-29 "Lists"
+  [0959]: #GEB.SEQN:@SEQN-MANUAL%20MGL-PAX:SECTION "Seqn Specification"
+  [0ad4]: #GEB-BOOL:BOOL%20MGL-PAX:SYMBOL-MACRO "GEB-BOOL:BOOL MGL-PAX:SYMBOL-MACRO"
+  [0dfe]: #GEB.SPEC:%3C-RIGHT%20FUNCTION "GEB.SPEC:<-RIGHT FUNCTION"
+  [0e00]: #GEB-DOCS%2FDOCS:@YONEDA-LEMMA%20MGL-PAX:SECTION "The Yoneda Lemma"
+  [0eb6]: #GEB.EXTENSION.SPEC:NATMORPH%20TYPE "GEB.EXTENSION.SPEC:NATMORPH TYPE"
+  [0efa]: #GEB.EXTENSION.SPEC:@GEB-EXTENSIONS%20MGL-PAX:SECTION "Extension Sets for Categories"
+  [0f3e]: #GEB.POLY.TRANS:@POLY-TRANS%20MGL-PAX:SECTION "Polynomial Transformations"
+  [134c]: #GEB.LAMBDA.SPEC:TTYPE%20GENERIC-FUNCTION "GEB.LAMBDA.SPEC:TTYPE GENERIC-FUNCTION"
+  [15a3]: #GEB.LAMBDA.SPEC:LTY%20GENERIC-FUNCTION "GEB.LAMBDA.SPEC:LTY GENERIC-FUNCTION"
+  [1ae1]: #GEB.EXTENSION.SPEC:NAT-MULT%20CLASS "GEB.EXTENSION.SPEC:NAT-MULT CLASS"
+  [1b98]: #GEB-GUI.GRAPHING:@GRAPHING-MANUAL%20MGL-PAX:SECTION "The GEB Graphizer"
+  [1c91]: #GEB-LIST:@GEB-LIST%20MGL-PAX:SECTION "Lists"
   [1c95]: http://www.lispworks.com/documentation/HyperSpec/Body/f_reinit.htm "REINITIALIZE-INSTANCE (MGL-PAX:CLHS GENERIC-FUNCTION)"
   [1f37]: http://www.lispworks.com/documentation/HyperSpec/Body/t_class.htm "CLASS (MGL-PAX:CLHS CLASS)"
-  [1fbc]: #x-28GEB-GUI-2ECORE-3ACHILDREN-20GENERIC-FUNCTION-29 "GEB-GUI.CORE:CHILDREN GENERIC-FUNCTION"
-  [20e7]: #x-28GEB-2ESEQN-2ESPEC-3A-40SEQN-20MGL-PAX-3ASECTION-29 "Seqn Types"
-  [2172]: #x-28GEB-2EBITC-2ESPEC-3A-40BITC-20MGL-PAX-3ASECTION-29 "Bits Types"
-  [2276]: #x-28GEB-2EUTILS-3ASUBCLASS-RESPONSIBILITY-20FUNCTION-29 "GEB.UTILS:SUBCLASS-RESPONSIBILITY FUNCTION"
+  [1fbc]: #GEB-GUI.CORE:CHILDREN%20GENERIC-FUNCTION "GEB-GUI.CORE:CHILDREN GENERIC-FUNCTION"
+  [20e7]: #GEB.SEQN.SPEC:@SEQN%20MGL-PAX:SECTION "Seqn Types"
+  [2172]: #GEB.BITC.SPEC:@BITC%20MGL-PAX:SECTION "Bits Types"
+  [2276]: #GEB.UTILS:SUBCLASS-RESPONSIBILITY%20FUNCTION "GEB.UTILS:SUBCLASS-RESPONSIBILITY FUNCTION"
   [2282]: http://www.lispworks.com/documentation/HyperSpec/Body/t_bit.htm "BIT (MGL-PAX:CLHS TYPE)"
-  [25f0]: #x-28GEB-DOCS-2FDOCS-3A-40GLOSSARY-20MGL-PAX-3ASECTION-29 "Glossary"
-  [26d4]: #x-28GEB-2EBITC-2ESPEC-3A-3CBITC-3E-20CLASS-29 "GEB.BITC.SPEC:<BITC> CLASS"
-  [2882]: #x-28GEB-2ESPEC-3A-3C-LEFT-20FUNCTION-29 "GEB.SPEC:<-LEFT FUNCTION"
-  [2994]: #x-28GEB-2ELAMBDA-2ESPEC-3ALAMB-EQ-20CLASS-29 "GEB.LAMBDA.SPEC:LAMB-EQ CLASS"
-  [29b7]: #x-28GEB-DOCS-2FDOCS-3A-40AGDA-20MGL-PAX-3ASECTION-29 "Geb's Agda Code"
-  [2ad4]: #x-28GEB-2ESPEC-3A-40GEB-CONSTRUCTORS-20MGL-PAX-3ASECTION-29 "Constructors"
-  [2c8c]: #x-28GEB-2ELAMBDA-2ESPEC-3ATDOM-20GENERIC-FUNCTION-29 "GEB.LAMBDA.SPEC:TDOM GENERIC-FUNCTION"
-  [2cbc]: #x-28GEB-2EMAIN-3ACURRY-20FUNCTION-29 "GEB.MAIN:CURRY FUNCTION"
-  [2eb9]: #x-28GEB-2EGENERICS-3ATO-POLY-20GENERIC-FUNCTION-29 "GEB.GENERICS:TO-POLY GENERIC-FUNCTION"
-  [2ebc]: #x-28GEB-2EBITC-2ETRANS-3A-40BITC-TRANS-20MGL-PAX-3ASECTION-29 "Bits (Boolean Circuit) Transformations"
-  [2fc2]: #x-28GEB-2EEXTENSION-2ESPEC-3AOPAQUE-20CLASS-29 "GEB.EXTENSION.SPEC:OPAQUE CLASS"
-  [2fcf]: #x-28GEB-2EMIXINS-3A-40POINTWISE-API-20MGL-PAX-3ASECTION-29 "Pointwise API"
+  [25f0]: #GEB-DOCS%2FDOCS:@GLOSSARY%20MGL-PAX:SECTION "Glossary"
+  [26d4]: #GEB.BITC.SPEC:%3CBITC%3E%20CLASS "GEB.BITC.SPEC:<BITC> CLASS"
+  [2882]: #GEB.SPEC:%3C-LEFT%20FUNCTION "GEB.SPEC:<-LEFT FUNCTION"
+  [2994]: #GEB.LAMBDA.SPEC:LAMB-EQ%20CLASS "GEB.LAMBDA.SPEC:LAMB-EQ CLASS"
+  [29b7]: #GEB-DOCS%2FDOCS:@AGDA%20MGL-PAX:SECTION "Geb's Agda Code"
+  [2ad4]: #GEB.SPEC:@GEB-CONSTRUCTORS%20MGL-PAX:SECTION "Constructors"
+  [2c8c]: #GEB.LAMBDA.SPEC:TDOM%20GENERIC-FUNCTION "GEB.LAMBDA.SPEC:TDOM GENERIC-FUNCTION"
+  [2cbc]: #GEB.MAIN:CURRY%20FUNCTION "GEB.MAIN:CURRY FUNCTION"
+  [2eb9]: #GEB.GENERICS:TO-POLY%20GENERIC-FUNCTION "GEB.GENERICS:TO-POLY GENERIC-FUNCTION"
+  [2ebc]: #GEB.BITC.TRANS:@BITC-TRANS%20MGL-PAX:SECTION "Bits (Boolean Circuit) Transformations"
+  [2fc2]: #GEB.EXTENSION.SPEC:OPAQUE%20CLASS "GEB.EXTENSION.SPEC:OPAQUE CLASS"
+  [2fcf]: #GEB.MIXINS:@POINTWISE-API%20MGL-PAX:SECTION "Pointwise API"
   [2ff3]: http://www.lispworks.com/documentation/HyperSpec/Body/f_equalp.htm "EQUALP (MGL-PAX:CLHS FUNCTION)"
   [311a]: http://www.lispworks.com/documentation/HyperSpec/Body/s_the.htm "THE (MGL-PAX:CLHS MGL-PAX:MACRO)"
-  [315f]: #x-28GEB-2ESPEC-3AALIAS-20MGL-PAX-3AMACRO-29 "GEB.SPEC:ALIAS MGL-PAX:MACRO"
-  [3173]: #x-28GEB-2ESPEC-3ASUBSTOBJ-20TYPE-29 "GEB.SPEC:SUBSTOBJ TYPE"
-  [34d0]: #x-28GEB-2ELAMBDA-2ESPEC-3A-40LAMBDA-SPECS-20MGL-PAX-3ASECTION-29 "Lambda Specification"
-  [365a]: #x-28GEB-2EUTILS-3AELSE-20GENERIC-FUNCTION-29 "GEB.UTILS:ELSE GENERIC-FUNCTION"
-  [3686]: #x-28GEB-DOCS-2FDOCS-3A-40ORIGINAL-EFFORTS-20MGL-PAX-3ASECTION-29 "Original Efforts"
-  [36e5]: #x-28GEB-2ELAMBDA-2ESPEC-3AMODULO-20CLASS-29 "GEB.LAMBDA.SPEC:MODULO CLASS"
-  [399c]: #x-28GEB-BOOL-3A-40GEB-BOOL-20MGL-PAX-3ASECTION-29 "Booleans"
-  [3a47]: #x-28GEB-2EEXTENSION-2ESPEC-3ANAT-WIDTH-20CLASS-29 "GEB.EXTENSION.SPEC:NAT-WIDTH CLASS"
-  [3a9f]: #x-28GEB-2ELAMBDA-2ESPEC-3AERR-20CLASS-29 "GEB.LAMBDA.SPEC:ERR CLASS"
+  [315f]: #GEB.SPEC:ALIAS%20MGL-PAX:MACRO "GEB.SPEC:ALIAS MGL-PAX:MACRO"
+  [3173]: #GEB.SPEC:SUBSTOBJ%20TYPE "GEB.SPEC:SUBSTOBJ TYPE"
+  [34d0]: #GEB.LAMBDA.SPEC:@LAMBDA-SPECS%20MGL-PAX:SECTION "Lambda Specification"
+  [365a]: #GEB.UTILS:ELSE%20GENERIC-FUNCTION "GEB.UTILS:ELSE GENERIC-FUNCTION"
+  [3686]: #GEB-DOCS%2FDOCS:@ORIGINAL-EFFORTS%20MGL-PAX:SECTION "Original Efforts"
+  [36e5]: #GEB.LAMBDA.SPEC:MODULO%20CLASS "GEB.LAMBDA.SPEC:MODULO CLASS"
+  [399c]: #GEB-BOOL:@GEB-BOOL%20MGL-PAX:SECTION "Booleans"
+  [3a47]: #GEB.EXTENSION.SPEC:NAT-WIDTH%20CLASS "GEB.EXTENSION.SPEC:NAT-WIDTH CLASS"
+  [3a9f]: #GEB.LAMBDA.SPEC:ERR%20CLASS "GEB.LAMBDA.SPEC:ERR CLASS"
   [3cde]: http://www.lispworks.com/documentation/HyperSpec/Body/t_fixnum.htm "FIXNUM (MGL-PAX:CLHS TYPE)"
-  [3d47]: #x-28GEB-DOCS-2FDOCS-3A-40GETTING-STARTED-20MGL-PAX-3ASECTION-29 "Getting Started"
-  [3d67]: #x-28GEB-2EEXTENSION-2ESPEC-3ANAT-SUB-20CLASS-29 "GEB.EXTENSION.SPEC:NAT-SUB CLASS"
-  [3f85]: #x-28GEB-2ELAMBDA-2ESPEC-3APOS-20GENERIC-FUNCTION-29 "GEB.LAMBDA.SPEC:POS GENERIC-FUNCTION"
-  [3f9d]: #x-28GEB-2ELAMBDA-2ESPEC-3ACASE-ON-20CLASS-29 "GEB.LAMBDA.SPEC:CASE-ON CLASS"
+  [3d47]: #GEB-DOCS%2FDOCS:@GETTING-STARTED%20MGL-PAX:SECTION "Getting Started"
+  [3d67]: #GEB.EXTENSION.SPEC:NAT-SUB%20CLASS "GEB.EXTENSION.SPEC:NAT-SUB CLASS"
+  [3f85]: #GEB.LAMBDA.SPEC:POS%20GENERIC-FUNCTION "GEB.LAMBDA.SPEC:POS GENERIC-FUNCTION"
+  [3f9d]: #GEB.LAMBDA.SPEC:CASE-ON%20CLASS "GEB.LAMBDA.SPEC:CASE-ON CLASS"
   [3fb5]: http://www.lispworks.com/documentation/HyperSpec/Body/f_equal.htm "EQUAL (MGL-PAX:CLHS FUNCTION)"
-  [4044]: #x-28GEB-DOCS-2FDOCS-3A-40COVERAGE-20MGL-PAX-3ASECTION-29 "code coverage"
-  [414c]: #x-28GEB-2EBITC-2ESPEC-3ABRANCH-20CLASS-29 "GEB.BITC.SPEC:BRANCH CLASS"
-  [417f]: #x-28GEB-TEST-3ACODE-COVERAGE-20FUNCTION-29 "GEB-TEST:CODE-COVERAGE FUNCTION"
-  [4296]: #x-28GEB-2ELAMBDA-2ESPEC-3ATIMES-20CLASS-29 "GEB.LAMBDA.SPEC:TIMES CLASS"
-  [445d]: #x-28GEB-2EMIXINS-3APOINTWISE-MIXIN-20CLASS-29 "GEB.MIXINS:POINTWISE-MIXIN CLASS"
-  [4529]: #x-28GEB-2EMIXINS-3AMETA-MIXIN-20CLASS-29 "GEB.MIXINS:META-MIXIN CLASS"
-  [455b]: #x-28GEB-2EMIXINS-3A-40MIXIN-PERFORMANCE-20MGL-PAX-3ASECTION-29 "Performance"
-  [4659]: #x-28GEB-2EBITC-2EMAIN-3A-40BITC-API-20MGL-PAX-3ASECTION-29 "Bits (Boolean Circuit) API"
-  [46bc]: #x-28GEB-2EBITC-2ESPEC-3APARALLEL-20CLASS-29 "GEB.BITC.SPEC:PARALLEL CLASS"
-  [4710]: #x-28GEB-2ELAMBDA-2ESPEC-3AABSURD-20CLASS-29 "GEB.LAMBDA.SPEC:ABSURD CLASS"
-  [47b2]: #x-28GEB-2ELAMBDA-2ESPEC-3APLUS-20CLASS-29 "GEB.LAMBDA.SPEC:PLUS CLASS"
+  [4044]: #GEB-DOCS%2FDOCS:@COVERAGE%20MGL-PAX:SECTION "code coverage"
+  [414c]: #GEB.BITC.SPEC:BRANCH%20CLASS "GEB.BITC.SPEC:BRANCH CLASS"
+  [417f]: #GEB-TEST:CODE-COVERAGE%20FUNCTION "GEB-TEST:CODE-COVERAGE FUNCTION"
+  [4296]: #GEB.LAMBDA.SPEC:TIMES%20CLASS "GEB.LAMBDA.SPEC:TIMES CLASS"
+  [445d]: #GEB.MIXINS:POINTWISE-MIXIN%20CLASS "GEB.MIXINS:POINTWISE-MIXIN CLASS"
+  [4529]: #GEB.MIXINS:META-MIXIN%20CLASS "GEB.MIXINS:META-MIXIN CLASS"
+  [455b]: #GEB.MIXINS:@MIXIN-PERFORMANCE%20MGL-PAX:SECTION "Performance"
+  [4659]: #GEB.BITC.MAIN:@BITC-API%20MGL-PAX:SECTION "Bits (Boolean Circuit) API"
+  [46bc]: #GEB.BITC.SPEC:PARALLEL%20CLASS "GEB.BITC.SPEC:PARALLEL CLASS"
+  [4710]: #GEB.LAMBDA.SPEC:ABSURD%20CLASS "GEB.LAMBDA.SPEC:ABSURD CLASS"
+  [47b2]: #GEB.LAMBDA.SPEC:PLUS%20CLASS "GEB.LAMBDA.SPEC:PLUS CLASS"
   [47d6]: http://www.lispworks.com/documentation/HyperSpec/Body/f_car_c.htm "CADDDR (MGL-PAX:CLHS FUNCTION)"
-  [48fc]: #x-28GEB-2ELAMBDA-2ESPEC-3ARIGHT-20CLASS-29 "GEB.LAMBDA.SPEC:RIGHT CLASS"
-  [4938]: #x-28GEB-2EMIXINS-3A-40MIXIN-EXAMPLES-20MGL-PAX-3ASECTION-29 "Mixins Examples"
-  [49d4]: #x-28GEB-2EMAIN-3A-40GEB-UTILITY-20MGL-PAX-3ASECTION-29 "Utility"
-  [4a87]: #x-28GEB-DOCS-2FDOCS-3A-40OPEN-TYPE-20MGL-PAX-3AGLOSSARY-TERM-29 "open type"
-  [4d36]: #x-28GEB-2ESEQN-2EMAIN-3A-40SEQN-API-20MGL-PAX-3ASECTION-29 "seqn api"
+  [48fc]: #GEB.LAMBDA.SPEC:RIGHT%20CLASS "GEB.LAMBDA.SPEC:RIGHT CLASS"
+  [4938]: #GEB.MIXINS:@MIXIN-EXAMPLES%20MGL-PAX:SECTION "Mixins Examples"
+  [49d4]: #GEB.MAIN:@GEB-UTILITY%20MGL-PAX:SECTION "Utility"
+  [4a87]: #GEB-DOCS%2FDOCS:@OPEN-TYPE%20MGL-PAX:GLOSSARY-TERM "open type"
+  [4d36]: #GEB.SEQN.MAIN:@SEQN-API%20MGL-PAX:SECTION "seqn api"
   [4dee]: http://www.lispworks.com/documentation/HyperSpec/Body/t_number.htm "NUMBER (MGL-PAX:CLHS CLASS)"
   [4df2]: http://www.lispworks.com/documentation/HyperSpec/Body/t_nil.htm "NIL (MGL-PAX:CLHS TYPE)"
-  [4ffa]: #x-28GEB-2EUTILS-3A-40GEB-UTILS-MANUAL-20MGL-PAX-3ASECTION-29 "Geb Utilities"
-  [56b3]: #x-28GEB-2ELAMBDA-2ESPEC-3ALEFT-20CLASS-29 "GEB.LAMBDA.SPEC:LEFT CLASS"
-  [57dc]: #x-28GEB-2ESPEC-3ASUBSTMORPH-20TYPE-29 "GEB.SPEC:SUBSTMORPH TYPE"
+  [4ffa]: #GEB.UTILS:@GEB-UTILS-MANUAL%20MGL-PAX:SECTION "Geb Utilities"
+  [56b3]: #GEB.LAMBDA.SPEC:LEFT%20CLASS "GEB.LAMBDA.SPEC:LEFT CLASS"
+  [57dc]: #GEB.SPEC:SUBSTMORPH%20TYPE "GEB.SPEC:SUBSTMORPH TYPE"
   [57e1]: http://www.lispworks.com/documentation/HyperSpec/Body/f_car_c.htm "CADDR (MGL-PAX:CLHS FUNCTION)"
-  [58a9]: #x-28GEB-2EMIXINS-3ATO-POINTWISE-LIST-20GENERIC-FUNCTION-29 "GEB.MIXINS:TO-POINTWISE-LIST GENERIC-FUNCTION"
-  [5965]: #x-28GEB-2ELAMBDA-2ESPEC-3AMINUS-20CLASS-29 "GEB.LAMBDA.SPEC:MINUS CLASS"
-  [5ae3]: #x-28GEB-2ESPEC-3APROJECT-LEFT-20CLASS-29 "GEB.SPEC:PROJECT-LEFT CLASS"
-  [5b8b]: #x-28GEB-2ELAMBDA-2ESPEC-3AINDEX-20CLASS-29 "GEB.LAMBDA.SPEC:INDEX CLASS"
-  [5c7c]: #x-28GEB-2ESPEC-3ASO0-20CLASS-29 "GEB.SPEC:SO0 CLASS"
-  [5cfe]: #x-28GEB-2ESPEC-3ASO1-20CLASS-29 "GEB.SPEC:SO1 CLASS"
-  [5d7c]: #x-28GEB-2ESPEC-3ACASE-20CLASS-29 "GEB.SPEC:CASE CLASS"
-  [5dae]: #x-28GEB-2ELAMBDA-2ESPEC-3APAIR-20CLASS-29 "GEB.LAMBDA.SPEC:PAIR CLASS"
+  [58a9]: #GEB.MIXINS:TO-POINTWISE-LIST%20GENERIC-FUNCTION "GEB.MIXINS:TO-POINTWISE-LIST GENERIC-FUNCTION"
+  [5965]: #GEB.LAMBDA.SPEC:MINUS%20CLASS "GEB.LAMBDA.SPEC:MINUS CLASS"
+  [5ae3]: #GEB.SPEC:PROJECT-LEFT%20CLASS "GEB.SPEC:PROJECT-LEFT CLASS"
+  [5b8b]: #GEB.LAMBDA.SPEC:INDEX%20CLASS "GEB.LAMBDA.SPEC:INDEX CLASS"
+  [5c7c]: #GEB.SPEC:SO0%20CLASS "GEB.SPEC:SO0 CLASS"
+  [5cfe]: #GEB.SPEC:SO1%20CLASS "GEB.SPEC:SO1 CLASS"
+  [5d7c]: #GEB.SPEC:CASE%20CLASS "GEB.SPEC:CASE CLASS"
+  [5dae]: #GEB.LAMBDA.SPEC:PAIR%20CLASS "GEB.LAMBDA.SPEC:PAIR CLASS"
   [5f51]: http://www.lispworks.com/documentation/HyperSpec/Body/t_bt_vec.htm "BIT-VECTOR (MGL-PAX:CLHS CLASS)"
-  [603e]: #x-28GEB-GUI-3A-40VISAULIZER-AID-20MGL-PAX-3ASECTION-29 "Aiding the Visualizer"
-  [6228]: #x-28GEB-3A-40GEB-API-20MGL-PAX-3ASECTION-29 "API"
-  [6444]: #x-28GEB-2ESPEC-3ALEFT-20CLASS-29 "GEB.SPEC:LEFT CLASS"
-  [65a4]: #x-28GEB-2EGENERICS-3AMAYBE-20GENERIC-FUNCTION-29 "GEB.GENERICS:MAYBE GENERIC-FUNCTION"
+  [603e]: #GEB-GUI:@VISAULIZER-AID%20MGL-PAX:SECTION "Aiding the Visualizer"
+  [6228]: #GEB:@GEB-API%20MGL-PAX:SECTION "API"
+  [6444]: #GEB.SPEC:LEFT%20CLASS "GEB.SPEC:LEFT CLASS"
+  [65a4]: #GEB.GENERICS:MAYBE%20GENERIC-FUNCTION "GEB.GENERICS:MAYBE GENERIC-FUNCTION"
   [6832]: http://www.lispworks.com/documentation/HyperSpec/Body/m_defmet.htm "DEFMETHOD (MGL-PAX:CLHS MGL-PAX:MACRO)"
-  [6b63]: #x-28GEB-2EBITC-3A-40BITC-MANUAL-20MGL-PAX-3ASECTION-29 "Bits (Boolean Circuit) Specification"
+  [6b63]: #GEB.BITC:@BITC-MANUAL%20MGL-PAX:SECTION "Bits (Boolean Circuit) Specification"
   [6d9f]: http://www.lispworks.com/documentation/HyperSpec/Body/f_list_.htm "LIST (MGL-PAX:CLHS FUNCTION)"
-  [6f67]: #x-28GEB-GUI-3A-40GEB-GUI-MANUAL-20MGL-PAX-3ASECTION-29 "The GEB GUI"
-  [7088]: #x-28GEB-2ESPEC-3ASO0-20MGL-PAX-3ASYMBOL-MACRO-29 "GEB.SPEC:SO0 MGL-PAX:SYMBOL-MACRO"
-  [70c0]: #x-28GEB-2ELAMBDA-2ESPEC-3ATCOD-20GENERIC-FUNCTION-29 "GEB.LAMBDA.SPEC:TCOD GENERIC-FUNCTION"
-  [71e9]: #x-28GEB-GUI-2ECORE-3A-40GRAPHING-CORE-20MGL-PAX-3ASECTION-29 "The GEB Graphizer Core"
-  [723a]: #x-28GEB-2EMIXINS-3A-40MIXINS-20MGL-PAX-3ASECTION-29 "Mixins"
-  [73be]: #x-28GEB-2ESPEC-3AREALIZED-OBJECT-20TYPE-29 "GEB.SPEC:REALIZED-OBJECT TYPE"
-  [74bd]: #x-28GEB-2EMIXINS-3ACAT-OBJ-20CLASS-29 "GEB.MIXINS:CAT-OBJ CLASS"
+  [6f67]: #GEB-GUI:@GEB-GUI-MANUAL%20MGL-PAX:SECTION "The GEB GUI"
+  [7088]: #GEB.SPEC:SO0%20MGL-PAX:SYMBOL-MACRO "GEB.SPEC:SO0 MGL-PAX:SYMBOL-MACRO"
+  [70c0]: #GEB.LAMBDA.SPEC:TCOD%20GENERIC-FUNCTION "GEB.LAMBDA.SPEC:TCOD GENERIC-FUNCTION"
+  [71e9]: #GEB-GUI.CORE:@GRAPHING-CORE%20MGL-PAX:SECTION "The GEB Graphizer Core"
+  [723a]: #GEB.MIXINS:@MIXINS%20MGL-PAX:SECTION "Mixins"
+  [73be]: #GEB.SPEC:REALIZED-OBJECT%20TYPE "GEB.SPEC:REALIZED-OBJECT TYPE"
+  [74bd]: #GEB.MIXINS:CAT-OBJ%20CLASS "GEB.MIXINS:CAT-OBJ CLASS"
   [79d8]: http://www.lispworks.com/documentation/HyperSpec/Body/t_list.htm "LIST (MGL-PAX:CLHS CLASS)"
-  [7b9d]: #x-28GEB-2EEXTENSION-2ESPEC-3ANAT-DIV-20CLASS-29 "GEB.EXTENSION.SPEC:NAT-DIV CLASS"
-  [7c57]: #x-28GEB-2ELAMBDA-2ESPEC-3AON-20GENERIC-FUNCTION-29 "GEB.LAMBDA.SPEC:ON GENERIC-FUNCTION"
-  [8311]: #x-28GEB-DOCS-2FDOCS-3A-40IDRIS-20MGL-PAX-3ASECTION-29 "Geb's Idris Code"
-  [8387]: #x-28GEB-2ESPEC-3AINJECT-LEFT-20CLASS-29 "GEB.SPEC:INJECT-LEFT CLASS"
-  [8496]: #x-28GEB-2EEXTENSION-2ESPEC-3ANAT-INJ-20CLASS-29 "GEB.EXTENSION.SPEC:NAT-INJ CLASS"
-  [862c]: #x-28GEB-2EEXTENSION-2ESPEC-3ANUM-20GENERIC-FUNCTION-29 "GEB.EXTENSION.SPEC:NUM GENERIC-FUNCTION"
+  [7b9d]: #GEB.EXTENSION.SPEC:NAT-DIV%20CLASS "GEB.EXTENSION.SPEC:NAT-DIV CLASS"
+  [7c57]: #GEB.LAMBDA.SPEC:ON%20GENERIC-FUNCTION "GEB.LAMBDA.SPEC:ON GENERIC-FUNCTION"
+  [8311]: #GEB-DOCS%2FDOCS:@IDRIS%20MGL-PAX:SECTION "Geb's Idris Code"
+  [8387]: #GEB.SPEC:INJECT-LEFT%20CLASS "GEB.SPEC:INJECT-LEFT CLASS"
+  [8496]: #GEB.EXTENSION.SPEC:NAT-INJ%20CLASS "GEB.EXTENSION.SPEC:NAT-INJ CLASS"
+  [862c]: #GEB.EXTENSION.SPEC:NUM%20GENERIC-FUNCTION "GEB.EXTENSION.SPEC:NUM GENERIC-FUNCTION"
   [868b]: http://www.lispworks.com/documentation/HyperSpec/Body/f_alloca.htm "ALLOCATE-INSTANCE (MGL-PAX:CLHS GENERIC-FUNCTION)"
-  [874b]: #x-28GEB-2ESPEC-3ATERMINAL-20CLASS-29 "GEB.SPEC:TERMINAL CLASS"
-  [8932]: #x-28GEB-DOCS-2FDOCS-3A-40CLOSED-TYPE-20MGL-PAX-3AGLOSSARY-TERM-29 "closed type"
-  [8be5]: #x-28GEB-2ESPEC-3ACOPROD-20CLASS-29 "GEB.SPEC:COPROD CLASS"
-  [8bf3]: #x-28GEB-2EPOLY-2ESPEC-3APOLY-20TYPE-29 "GEB.POLY.SPEC:POLY TYPE"
-  [8cde]: #x-28GEB-2ELAMBDA-2ESPEC-3ALAMB-20CLASS-29 "GEB.LAMBDA.SPEC:LAMB CLASS"
-  [8da6]: #x-28GEB-2EUTILS-3APREDICATE-20GENERIC-FUNCTION-29 "GEB.UTILS:PREDICATE GENERIC-FUNCTION"
-  [8dcc]: #x-28GEB-2ELAMBDA-2EMAIN-3AFUN-TYPE-20CLASS-29 "GEB.LAMBDA.MAIN:FUN-TYPE CLASS"
-  [8e11]: #x-28GEB-2ESPEC-3AINIT-20CLASS-29 "GEB.SPEC:INIT CLASS"
-  [8eb0]: #x-28GEB-2EENTRY-3A-40GEB-ENTRY-20MGL-PAX-3ASECTION-29 "Geb as a binary"
-  [8fa5]: #x-28GEB-DOCS-2FDOCS-3A-40INSTALLATION-20MGL-PAX-3ASECTION-29 "installation"
-  [925b]: #x-28GEB-DOCS-2FDOCS-3A-40POLY-SETS-20MGL-PAX-3ASECTION-29 "Poly in Sets"
-  [9300]: #x-28GEB-2EMIXINS-3A-40METADATA-20MGL-PAX-3ASECTION-29 "Metadata Mixin"
-  [94a8]: #x-28GEB-2EPOLY-3A-40POLY-MANUAL-20MGL-PAX-3ASECTION-29 "Polynomial Specification"
-  [9728]: #x-28GEB-2EMIXINS-3ADOM-20GENERIC-FUNCTION-29 "GEB.MIXINS:DOM GENERIC-FUNCTION"
-  [9b12]: #x-28GEB-2EEXTENSION-2ESPEC-3ANAT-ADD-20CLASS-29 "GEB.EXTENSION.SPEC:NAT-ADD CLASS"
+  [874b]: #GEB.SPEC:TERMINAL%20CLASS "GEB.SPEC:TERMINAL CLASS"
+  [8932]: #GEB-DOCS%2FDOCS:@CLOSED-TYPE%20MGL-PAX:GLOSSARY-TERM "closed type"
+  [8be5]: #GEB.SPEC:COPROD%20CLASS "GEB.SPEC:COPROD CLASS"
+  [8bf3]: #GEB.POLY.SPEC:POLY%20TYPE "GEB.POLY.SPEC:POLY TYPE"
+  [8cde]: #GEB.LAMBDA.SPEC:LAMB%20CLASS "GEB.LAMBDA.SPEC:LAMB CLASS"
+  [8da6]: #GEB.UTILS:PREDICATE%20GENERIC-FUNCTION "GEB.UTILS:PREDICATE GENERIC-FUNCTION"
+  [8dcc]: #GEB.LAMBDA.MAIN:FUN-TYPE%20CLASS "GEB.LAMBDA.MAIN:FUN-TYPE CLASS"
+  [8e11]: #GEB.SPEC:INIT%20CLASS "GEB.SPEC:INIT CLASS"
+  [8eb0]: #GEB.ENTRY:@GEB-ENTRY%20MGL-PAX:SECTION "Geb as a binary"
+  [8fa5]: #GEB-DOCS%2FDOCS:@INSTALLATION%20MGL-PAX:SECTION "installation"
+  [925b]: #GEB-DOCS%2FDOCS:@POLY-SETS%20MGL-PAX:SECTION "Poly in Sets"
+  [9300]: #GEB.MIXINS:@METADATA%20MGL-PAX:SECTION "Metadata Mixin"
+  [94a8]: #GEB.POLY:@POLY-MANUAL%20MGL-PAX:SECTION "Polynomial Specification"
+  [9728]: #GEB.MIXINS:DOM%20GENERIC-FUNCTION "GEB.MIXINS:DOM GENERIC-FUNCTION"
+  [9b12]: #GEB.EXTENSION.SPEC:NAT-ADD%20CLASS "GEB.EXTENSION.SPEC:NAT-ADD CLASS"
   [9b122]: http://www.lispworks.com/documentation/HyperSpec/Body/t_intege.htm "INTEGER (MGL-PAX:CLHS CLASS)"
   [9b43]: http://www.lispworks.com/documentation/HyperSpec/Body/m_defpkg.htm "DEFPACKAGE (MGL-PAX:CLHS MGL-PAX:MACRO)"
-  [9bc5]: #x-28GEB-DOCS-2FDOCS-3A-40LINKS-20MGL-PAX-3ASECTION-29 "Links"
-  [9bcb]: #x-28GEB-TEST-3A-40GEB-TEST-MANUAL-20MGL-PAX-3ASECTION-29 "Testing"
-  [9f9c]: #x-28GEB-2ESPECS-3A-40GEB-SPECS-20MGL-PAX-3ASECTION-29 "Spec Files, Main Files and Project Layout"
-  [a0cd]: #x-28GEB-2ESEQN-2ESPEC-3ASEQN-20TYPE-29 "GEB.SEQN.SPEC:SEQN TYPE"
-  [a17b]: #x-28GEB-3A-40GEB-EXAMPLES-20MGL-PAX-3ASECTION-29 "Examples"
-  [a300]: #x-28GEB-DOCS-2FDOCS-3A-40-3CTYPES-3E-20MGL-PAX-3ASECTION-29 "≺Types≻"
-  [a364]: #x-28GEB-2ESEQN-2ESPEC-3A-3CSEQN-3E-20CLASS-29 "GEB.SEQN.SPEC:<SEQN> CLASS"
-  [a6e2]: #x-28GEB-2ELAMBDA-2ESPEC-3ABIT-CHOICE-20CLASS-29 "GEB.LAMBDA.SPEC:BIT-CHOICE CLASS"
-  [a7af]: #x-28GEB-2EMIXINS-3ACAT-MORPH-20CLASS-29 "GEB.MIXINS:CAT-MORPH CLASS"
-  [a7d5]: #x-28GEB-DOCS-2FDOCS-3A-40LOADING-20MGL-PAX-3ASECTION-29 "loading"
+  [9bc5]: #GEB-DOCS%2FDOCS:@LINKS%20MGL-PAX:SECTION "Links"
+  [9bcb]: #GEB-TEST:@GEB-TEST-MANUAL%20MGL-PAX:SECTION "Testing"
+  [9f9c]: #GEB.SPECS:@GEB-SPECS%20MGL-PAX:SECTION "Spec Files, Main Files and Project Layout"
+  [a0cd]: #GEB.SEQN.SPEC:SEQN%20TYPE "GEB.SEQN.SPEC:SEQN TYPE"
+  [a17b]: #GEB:@GEB-EXAMPLES%20MGL-PAX:SECTION "Examples"
+  [a300]: #GEB-DOCS%2FDOCS:@%3CTYPES%3E%20MGL-PAX:SECTION "≺Types≻"
+  [a364]: #GEB.SEQN.SPEC:%3CSEQN%3E%20CLASS "GEB.SEQN.SPEC:<SEQN> CLASS"
+  [a6e2]: #GEB.LAMBDA.SPEC:BIT-CHOICE%20CLASS "GEB.LAMBDA.SPEC:BIT-CHOICE CLASS"
+  [a7af]: #GEB.MIXINS:CAT-MORPH%20CLASS "GEB.MIXINS:CAT-MORPH CLASS"
+  [a7d5]: #GEB-DOCS%2FDOCS:@LOADING%20MGL-PAX:SECTION "loading"
   [a843]: http://www.lispworks.com/documentation/HyperSpec/Body/t_std_ob.htm "STANDARD-OBJECT (MGL-PAX:CLHS CLASS)"
-  [a84b]: #x-28GEB-2EGENERICS-3A-40GENERICS-20MGL-PAX-3ASECTION-29 "Geneircs"
-  [a920]: #x-28GEB-DOCS-2FDOCS-3A-40OPEN-CLOSED-20MGL-PAX-3ASECTION-29 "Open Types versus Closed Types"
-  [abea]: #x-28GEB-2ELAMBDA-2ESPEC-3ARTY-20GENERIC-FUNCTION-29 "GEB.LAMBDA.SPEC:RTY GENERIC-FUNCTION"
-  [ac2d]: #x-28GEB-2ELAMBDA-2EMAIN-3AANN-TERM1-20GENERIC-FUNCTION-29 "GEB.LAMBDA.MAIN:ANN-TERM1 GENERIC-FUNCTION"
-  [ada5]: #x-28GEB-GUI-3AVISUALIZE-20FUNCTION-29 "GEB-GUI:VISUALIZE FUNCTION"
-  [ada9]: #x-28GEB-DOCS-2FDOCS-3A-40MORPHISMS-20MGL-PAX-3ASECTION-29 "Morphisms"
+  [a84b]: #GEB.GENERICS:@GENERICS%20MGL-PAX:SECTION "Geneircs"
+  [a920]: #GEB-DOCS%2FDOCS:@OPEN-CLOSED%20MGL-PAX:SECTION "Open Types versus Closed Types"
+  [abea]: #GEB.LAMBDA.SPEC:RTY%20GENERIC-FUNCTION "GEB.LAMBDA.SPEC:RTY GENERIC-FUNCTION"
+  [ac2d]: #GEB.LAMBDA.MAIN:ANN-TERM1%20GENERIC-FUNCTION "GEB.LAMBDA.MAIN:ANN-TERM1 GENERIC-FUNCTION"
+  [ada5]: #GEB-GUI:VISUALIZE%20FUNCTION "GEB-GUI:VISUALIZE FUNCTION"
+  [ada9]: #GEB-DOCS%2FDOCS:@MORPHISMS%20MGL-PAX:SECTION "Morphisms"
   [ae23]: http://www.lispworks.com/documentation/HyperSpec/Body/t_seq.htm "SEQUENCE (MGL-PAX:CLHS CLASS)"
-  [af14]: #x-28GEB-2EUTILS-3AMCDR-20GENERIC-FUNCTION-29 "GEB.UTILS:MCDR GENERIC-FUNCTION"
-  [af38]: #x-28GEB-2EEXTENSION-2ESPEC-3ANAT-CONCAT-20CLASS-29 "GEB.EXTENSION.SPEC:NAT-CONCAT CLASS"
-  [b0d9]: #x-28GEB-2EGENERICS-3ATO-CIRCUIT-20GENERIC-FUNCTION-29 "GEB.GENERICS:TO-CIRCUIT GENERIC-FUNCTION"
-  [b36a]: #x-28GEB-2ELAMBDA-2ESPEC-3A-3CSTLC-3E-20CLASS-29 "GEB.LAMBDA.SPEC:<STLC> CLASS"
-  [b4a5]: #x-28GEB-2ELAMBDA-2ESPEC-3AFST-20CLASS-29 "GEB.LAMBDA.SPEC:FST CLASS"
-  [b4a6]: #x-28GEB-2EPOLY-2ESPEC-3A-3CPOLY-3E-20CLASS-29 "GEB.POLY.SPEC:<POLY> CLASS"
-  [b4e6]: #x-28GEB-2EEXTENSION-2ESPEC-3A-3CNATOBJ-3E-20CLASS-29 "GEB.EXTENSION.SPEC:<NATOBJ> CLASS"
-  [b5cf]: #x-28GEB-2EGENERICS-3ASO-HOM-OBJ-20GENERIC-FUNCTION-29 "GEB.GENERICS:SO-HOM-OBJ GENERIC-FUNCTION"
+  [af14]: #GEB.UTILS:MCDR%20GENERIC-FUNCTION "GEB.UTILS:MCDR GENERIC-FUNCTION"
+  [af38]: #GEB.EXTENSION.SPEC:NAT-CONCAT%20CLASS "GEB.EXTENSION.SPEC:NAT-CONCAT CLASS"
+  [b0d9]: #GEB.GENERICS:TO-CIRCUIT%20GENERIC-FUNCTION "GEB.GENERICS:TO-CIRCUIT GENERIC-FUNCTION"
+  [b36a]: #GEB.LAMBDA.SPEC:%3CSTLC%3E%20CLASS "GEB.LAMBDA.SPEC:<STLC> CLASS"
+  [b4a5]: #GEB.LAMBDA.SPEC:FST%20CLASS "GEB.LAMBDA.SPEC:FST CLASS"
+  [b4a6]: #GEB.POLY.SPEC:%3CPOLY%3E%20CLASS "GEB.POLY.SPEC:<POLY> CLASS"
+  [b4e6]: #GEB.EXTENSION.SPEC:%3CNATOBJ%3E%20CLASS "GEB.EXTENSION.SPEC:<NATOBJ> CLASS"
+  [b5cf]: #GEB.GENERICS:SO-HOM-OBJ%20GENERIC-FUNCTION "GEB.GENERICS:SO-HOM-OBJ GENERIC-FUNCTION"
   [b5ec]: http://www.lispworks.com/documentation/HyperSpec/Body/f_load.htm "LOAD (MGL-PAX:CLHS FUNCTION)"
-  [b76d]: #x-28GEB-2EPOLY-2ESPEC-3A-40POLY-CONSTRUCTORS-20MGL-PAX-3ASECTION-29 "Polynomial Constructors"
-  [b79a]: #x-28GEB-2ETRANS-3A-40GEB-TRANSLATION-20MGL-PAX-3ASECTION-29 "Translation Functions"
+  [b76d]: #GEB.POLY.SPEC:@POLY-CONSTRUCTORS%20MGL-PAX:SECTION "Polynomial Constructors"
+  [b79a]: #GEB.TRANS:@GEB-TRANSLATION%20MGL-PAX:SECTION "Translation Functions"
   [b93c]: http://www.lispworks.com/documentation/HyperSpec/Body/t_string.htm "STRING (MGL-PAX:CLHS CLASS)"
-  [b960]: #x-28GEB-2ESPEC-3A-2ASO1-2A-20VARIABLE-29 "GEB.SPEC:*SO1* VARIABLE"
-  [b9f3]: #x-28GEB-DOCS-2FDOCS-3A-40IDIOMS-20MGL-PAX-3ASECTION-29 "Project Idioms and Conventions"
-  [ba44]: #x-28GEB-2ESPEC-3A--3ERIGHT-20FUNCTION-29 "GEB.SPEC:->RIGHT FUNCTION"
-  [bb34]: #x-28GEB-2EGENERICS-3AGAPPLY-20GENERIC-FUNCTION-29 "GEB.GENERICS:GAPPLY GENERIC-FUNCTION"
-  [bd81]: #x-28GEB-2EPOLY-2ESPEC-3A-40POLY-20MGL-PAX-3ASECTION-29 "Polynomial Types"
-  [bfa9]: #x-28GEB-2EUTILS-3ATHEN-20GENERIC-FUNCTION-29 "GEB.UTILS:THEN GENERIC-FUNCTION"
-  [c111]: #x-28GEB-2EMIXINS-3AOBJ-EQUALP-20GENERIC-FUNCTION-29 "GEB.MIXINS:OBJ-EQUALP GENERIC-FUNCTION"
-  [c1b3]: #x-28GEB-2ESPEC-3A-40GEB-SUBSTMU-20MGL-PAX-3ASECTION-29 "Subst Obj"
-  [c1fb]: #x-28GEB-3A-40GEB-20MGL-PAX-3ASECTION-29 "The Geb Model"
-  [c275]: #x-28GEB-2ESPEC-3ARIGHT-20CLASS-29 "GEB.SPEC:RIGHT CLASS"
-  [c2e9]: #x-28GEB-DOCS-2FDOCS-3A-40MODEL-20MGL-PAX-3ASECTION-29 "Categorical Model"
-  [c3e8]: #x-28GEB-GUI-2ECORE-3ANODE-NOTE-20CLASS-29 "GEB-GUI.CORE:NODE-NOTE CLASS"
-  [c6cf]: #x-28GEB-GUI-3A-40GEB-VISUALIZER-20MGL-PAX-3ASECTION-29 "Visualizer"
-  [c798]: #x-28GEB-2EEXTENSION-2ESPEC-3ANATOBJ-20TYPE-29 "GEB.EXTENSION.SPEC:NATOBJ TYPE"
-  [c85a]: #x-28GEB-2ESEQN-2ETRANS-3A-40SEQB-TRANS-20MGL-PAX-3ASECTION-29 "Seqn Transformations"
+  [b960]: #GEB.SPEC:*SO1*%20VARIABLE "GEB.SPEC:*SO1* VARIABLE"
+  [b9f3]: #GEB-DOCS%2FDOCS:@IDIOMS%20MGL-PAX:SECTION "Project Idioms and Conventions"
+  [ba44]: #GEB.SPEC:-%3ERIGHT%20FUNCTION "GEB.SPEC:->RIGHT FUNCTION"
+  [bb34]: #GEB.GENERICS:GAPPLY%20GENERIC-FUNCTION "GEB.GENERICS:GAPPLY GENERIC-FUNCTION"
+  [bd81]: #GEB.POLY.SPEC:@POLY%20MGL-PAX:SECTION "Polynomial Types"
+  [bfa9]: #GEB.UTILS:THEN%20GENERIC-FUNCTION "GEB.UTILS:THEN GENERIC-FUNCTION"
+  [c111]: #GEB.MIXINS:OBJ-EQUALP%20GENERIC-FUNCTION "GEB.MIXINS:OBJ-EQUALP GENERIC-FUNCTION"
+  [c1b3]: #GEB.SPEC:@GEB-SUBSTMU%20MGL-PAX:SECTION "Subst Obj"
+  [c1fb]: #GEB:@GEB%20MGL-PAX:SECTION "The Geb Model"
+  [c275]: #GEB.SPEC:RIGHT%20CLASS "GEB.SPEC:RIGHT CLASS"
+  [c2e9]: #GEB-DOCS%2FDOCS:@MODEL%20MGL-PAX:SECTION "Categorical Model"
+  [c3e8]: #GEB-GUI.CORE:NODE-NOTE%20CLASS "GEB-GUI.CORE:NODE-NOTE CLASS"
+  [c6cf]: #GEB-GUI:@GEB-VISUALIZER%20MGL-PAX:SECTION "Visualizer"
+  [c798]: #GEB.EXTENSION.SPEC:NATOBJ%20TYPE "GEB.EXTENSION.SPEC:NATOBJ TYPE"
+  [c85a]: #GEB.SEQN.TRANS:@SEQB-TRANS%20MGL-PAX:SECTION "Seqn Transformations"
   [caea]: http://www.lispworks.com/documentation/HyperSpec/Body/f_car_c.htm "CADR (MGL-PAX:CLHS FUNCTION)"
-  [cb9e]: #x-28GEB-2ESPEC-3A-40GEB-CATEGORIES-20MGL-PAX-3ASECTION-29 "Core Category"
-  [cc51]: #x-28GEB-2EUTILS-3A-40GEB-ACCESSORS-20MGL-PAX-3ASECTION-29 "Accessors"
-  [cc87]: #x-28GEB-2EUTILS-3AMCADR-20GENERIC-FUNCTION-29 "GEB.UTILS:MCADR GENERIC-FUNCTION"
-  [cccf]: #x-28GEB-2ELAMBDA-2ESPEC-3AFUN-20GENERIC-FUNCTION-29 "GEB.LAMBDA.SPEC:FUN GENERIC-FUNCTION"
-  [ccfb]: #x-28GEB-2EEXTENSION-2ESPEC-3A-3CNATMORPH-3E-20CLASS-29 "GEB.EXTENSION.SPEC:<NATMORPH> CLASS"
-  [cd11]: #x-28GEB-2ESPEC-3AMCASE-20FUNCTION-29 "GEB.SPEC:MCASE FUNCTION"
-  [ce5b]: #x-28GEB-2ESPEC-3ACOMP-20CLASS-29 "GEB.SPEC:COMP CLASS"
-  [cf10]: #x-28GEB-2EBITC-2ESPEC-3AONE-20CLASS-29 "GEB.BITC.SPEC:ONE CLASS"
-  [d243]: #x-28GEB-2EGENERICS-3ATO-CAT-20GENERIC-FUNCTION-29 "GEB.GENERICS:TO-CAT GENERIC-FUNCTION"
-  [d2d1]: #x-28GEB-2ESPEC-3A-40GEB-SUBSTMORPH-20MGL-PAX-3ASECTION-29 "Subst Morph"
-  [d2d5]: #x-28GEB-2ELAMBDA-2EMAIN-3A-40LAMBDA-API-20MGL-PAX-3ASECTION-29 "Main functionality"
-  [d411]: #x-28GEB-2EEXTENSION-2ESPEC-3APOS-20GENERIC-FUNCTION-29 "GEB.EXTENSION.SPEC:POS GENERIC-FUNCTION"
+  [cb9e]: #GEB.SPEC:@GEB-CATEGORIES%20MGL-PAX:SECTION "Core Category"
+  [cc51]: #GEB.UTILS:@GEB-ACCESSORS%20MGL-PAX:SECTION "Accessors"
+  [cc87]: #GEB.UTILS:MCADR%20GENERIC-FUNCTION "GEB.UTILS:MCADR GENERIC-FUNCTION"
+  [cccf]: #GEB.LAMBDA.SPEC:FUN%20GENERIC-FUNCTION "GEB.LAMBDA.SPEC:FUN GENERIC-FUNCTION"
+  [ccfb]: #GEB.EXTENSION.SPEC:%3CNATMORPH%3E%20CLASS "GEB.EXTENSION.SPEC:<NATMORPH> CLASS"
+  [cd11]: #GEB.SPEC:MCASE%20FUNCTION "GEB.SPEC:MCASE FUNCTION"
+  [ce5b]: #GEB.SPEC:COMP%20CLASS "GEB.SPEC:COMP CLASS"
+  [cf10]: #GEB.BITC.SPEC:ONE%20CLASS "GEB.BITC.SPEC:ONE CLASS"
+  [d243]: #GEB.GENERICS:TO-CAT%20GENERIC-FUNCTION "GEB.GENERICS:TO-CAT GENERIC-FUNCTION"
+  [d2d1]: #GEB.SPEC:@GEB-SUBSTMORPH%20MGL-PAX:SECTION "Subst Morph"
+  [d2d5]: #GEB.LAMBDA.MAIN:@LAMBDA-API%20MGL-PAX:SECTION "Main functionality"
+  [d411]: #GEB.EXTENSION.SPEC:POS%20GENERIC-FUNCTION "GEB.EXTENSION.SPEC:POS GENERIC-FUNCTION"
   [d5a2]: http://www.lispworks.com/documentation/HyperSpec/Body/f_car_c.htm "CAR (MGL-PAX:CLHS FUNCTION)"
-  [d5d3]: #x-28GEB-2EMIXINS-3A-40POINTWISE-20MGL-PAX-3ASECTION-29 "Pointwise Mixins"
-  [d762]: #x-28GEB-2ELAMBDA-2ESPEC-3ARTM-20GENERIC-FUNCTION-29 "GEB.LAMBDA.SPEC:RTM GENERIC-FUNCTION"
-  [db35]: #x-28GEB-2ESPEC-3A-3CSUBSTMORPH-3E-20CLASS-29 "GEB.SPEC:<SUBSTMORPH> CLASS"
-  [db8f]: #x-28GEB-2ELAMBDA-3A-40STLC-20MGL-PAX-3ASECTION-29 "The Simply Typed Lambda Calculus model"
-  [dbe7]: #x-28GEB-DOCS-2FDOCS-3A-40OBJECTS-20MGL-PAX-3ASECTION-29 "Objects"
-  [dca9]: #x-28GEB-2ESPEC-3A-40GEB-REALIZED-20MGL-PAX-3ASECTION-29 "Realized Subst Objs"
-  [dfa2]: #x-28GEB-2ESPEC-3APAIR-20CLASS-29 "GEB.SPEC:PAIR CLASS"
+  [d5d3]: #GEB.MIXINS:@POINTWISE%20MGL-PAX:SECTION "Pointwise Mixins"
+  [d762]: #GEB.LAMBDA.SPEC:RTM%20GENERIC-FUNCTION "GEB.LAMBDA.SPEC:RTM GENERIC-FUNCTION"
+  [db35]: #GEB.SPEC:%3CSUBSTMORPH%3E%20CLASS "GEB.SPEC:<SUBSTMORPH> CLASS"
+  [db8f]: #GEB.LAMBDA:@STLC%20MGL-PAX:SECTION "The Simply Typed Lambda Calculus model"
+  [dbe7]: #GEB-DOCS%2FDOCS:@OBJECTS%20MGL-PAX:SECTION "Objects"
+  [dca9]: #GEB.SPEC:@GEB-REALIZED%20MGL-PAX:SECTION "Realized Subst Objs"
+  [dfa2]: #GEB.SPEC:PAIR%20CLASS "GEB.SPEC:PAIR CLASS"
   [e012]: http://www.lispworks.com/documentation/HyperSpec/Body/f_car_c.htm "CDR (MGL-PAX:CLHS FUNCTION)"
-  [e017]: #x-28GEB-2EBITC-2ESPEC-3ABITC-20TYPE-29 "GEB.BITC.SPEC:BITC TYPE"
-  [e2af]: #x-28GEB-2ESPEC-3A--3ELEFT-20FUNCTION-29 "GEB.SPEC:->LEFT FUNCTION"
-  [e2b0]: #x-28GEB-2EMIXINS-3ADIRECT-POINTWISE-MIXIN-20CLASS-29 "GEB.MIXINS:DIRECT-POINTWISE-MIXIN CLASS"
-  [e373]: #x-28GEB-2ELAMBDA-2ESPEC-3ASTLC-20TYPE-29 "GEB.LAMBDA.SPEC:STLC TYPE"
-  [e3e4]: #x-28GEB-2ELAMBDA-2ETRANS-3A-40STLC-CONVERSION-20MGL-PAX-3ASECTION-29 "Transition Functions"
-  [e429]: #x-28GEB-GUI-2EGRAPHING-2EPASSES-3A-40PASS-MANUAL-20MGL-PAX-3ASECTION-29 "The GEB Graphizer Passes"
-  [e5d1]: #x-28GEB-2ELAMBDA-2ESPEC-3ADIVIDE-20CLASS-29 "GEB.LAMBDA.SPEC:DIVIDE CLASS"
-  [e91b]: #x-28GEB-2EMIXINS-3A-40MIXINS-CAT-20MGL-PAX-3ASECTION-29 "The Categorical Interface"
-  [e947]: #x-28GEB-2ESPEC-3AINJECT-RIGHT-20CLASS-29 "GEB.SPEC:INJECT-RIGHT CLASS"
-  [e982]: #x-28GEB-2ESPEC-3A-2ASO0-2A-20VARIABLE-29 "GEB.SPEC:*SO0* VARIABLE"
-  [ecc6]: #x-28GEB-DOCS-2FDOCS-3A-40CLOS-20MGL-PAX-3AGLOSSARY-TERM-29 "Common Lisp Object System (CLOS)"
-  [ef6e]: #x-28GEB-GUI-2ECORE-3ANOTE-20TYPE-29 "GEB-GUI.CORE:NOTE TYPE"
-  [f022]: #x-28GEB-BOOL-3ATRUE-20MGL-PAX-3ASYMBOL-MACRO-29 "GEB-BOOL:TRUE MGL-PAX:SYMBOL-MACRO"
-  [f0f8]: #x-28GEB-GUI-3A-40GEB-EXPORTER-20MGL-PAX-3ASECTION-29 "Export Visualizer"
-  [f1ce]: #x-28GEB-2EUTILS-3AMCAR-20GENERIC-FUNCTION-29 "GEB.UTILS:MCAR GENERIC-FUNCTION"
-  [f1e6]: #x-28GEB-2EUTILS-3AOBJ-20GENERIC-FUNCTION-29 "GEB.UTILS:OBJ GENERIC-FUNCTION"
-  [f4ba]: #x-28GEB-2ESPEC-3ASO1-20MGL-PAX-3ASYMBOL-MACRO-29 "GEB.SPEC:SO1 MGL-PAX:SYMBOL-MACRO"
-  [f6b5]: #x-28GEB-2ESEQN-2ESPEC-3A-40SEQN-CONSTRUCTORS-20MGL-PAX-3ASECTION-29 "Seqn Constructors"
+  [e017]: #GEB.BITC.SPEC:BITC%20TYPE "GEB.BITC.SPEC:BITC TYPE"
+  [e2af]: #GEB.SPEC:-%3ELEFT%20FUNCTION "GEB.SPEC:->LEFT FUNCTION"
+  [e2b0]: #GEB.MIXINS:DIRECT-POINTWISE-MIXIN%20CLASS "GEB.MIXINS:DIRECT-POINTWISE-MIXIN CLASS"
+  [e373]: #GEB.LAMBDA.SPEC:STLC%20TYPE "GEB.LAMBDA.SPEC:STLC TYPE"
+  [e3e4]: #GEB.LAMBDA.TRANS:@STLC-CONVERSION%20MGL-PAX:SECTION "Transition Functions"
+  [e429]: #GEB-GUI.GRAPHING.PASSES:@PASS-MANUAL%20MGL-PAX:SECTION "The GEB Graphizer Passes"
+  [e5d1]: #GEB.LAMBDA.SPEC:DIVIDE%20CLASS "GEB.LAMBDA.SPEC:DIVIDE CLASS"
+  [e91b]: #GEB.MIXINS:@MIXINS-CAT%20MGL-PAX:SECTION "The Categorical Interface"
+  [e947]: #GEB.SPEC:INJECT-RIGHT%20CLASS "GEB.SPEC:INJECT-RIGHT CLASS"
+  [e982]: #GEB.SPEC:*SO0*%20VARIABLE "GEB.SPEC:*SO0* VARIABLE"
+  [ecc6]: #GEB-DOCS%2FDOCS:@CLOS%20MGL-PAX:GLOSSARY-TERM "Common Lisp Object System (CLOS)"
+  [ef6e]: #GEB-GUI.CORE:NOTE%20TYPE "GEB-GUI.CORE:NOTE TYPE"
+  [f022]: #GEB-BOOL:TRUE%20MGL-PAX:SYMBOL-MACRO "GEB-BOOL:TRUE MGL-PAX:SYMBOL-MACRO"
+  [f0f8]: #GEB-GUI:@GEB-EXPORTER%20MGL-PAX:SECTION "Export Visualizer"
+  [f1ce]: #GEB.UTILS:MCAR%20GENERIC-FUNCTION "GEB.UTILS:MCAR GENERIC-FUNCTION"
+  [f1e6]: #GEB.UTILS:OBJ%20GENERIC-FUNCTION "GEB.UTILS:OBJ GENERIC-FUNCTION"
+  [f4ba]: #GEB.SPEC:SO1%20MGL-PAX:SYMBOL-MACRO "GEB.SPEC:SO1 MGL-PAX:SYMBOL-MACRO"
+  [f6b5]: #GEB.SEQN.SPEC:@SEQN-CONSTRUCTORS%20MGL-PAX:SECTION "Seqn Constructors"
   [f97d]: http://www.lispworks.com/documentation/HyperSpec/Body/f_exp_e.htm "EXPT (MGL-PAX:CLHS FUNCTION)"
-  [fb79]: #x-28GEB-2ESPEC-3A-3CSUBSTOBJ-3E-20CLASS-29 "GEB.SPEC:<SUBSTOBJ> CLASS"
-  [fc10]: #x-28GEB-2EBITC-2ESPEC-3A-40BITC-CONSTRUCTORS-20MGL-PAX-3ASECTION-29 "Bits (Boolean Circuit) Constructors"
-  [fcda]: #x-28GEB-2ELAMBDA-2ESPEC-3ALTM-20GENERIC-FUNCTION-29 "GEB.LAMBDA.SPEC:LTM GENERIC-FUNCTION"
-  [ff98]: #x-28GEB-GUI-2ECORE-3ANODE-20CLASS-29 "GEB-GUI.CORE:NODE CLASS"
-
-* * *
-###### \[generated by [MGL-PAX](https://github.com/melisgl/mgl-pax)\]
+  [fb79]: #GEB.SPEC:%3CSUBSTOBJ%3E%20CLASS "GEB.SPEC:<SUBSTOBJ> CLASS"
+  [fc10]: #GEB.BITC.SPEC:@BITC-CONSTRUCTORS%20MGL-PAX:SECTION "Bits (Boolean Circuit) Constructors"
+  [fcda]: #GEB.LAMBDA.SPEC:LTM%20GENERIC-FUNCTION "GEB.LAMBDA.SPEC:LTM GENERIC-FUNCTION"
+  [ff98]: #GEB-GUI.CORE:NODE%20CLASS "GEB-GUI.CORE:NODE CLASS"
