@@ -146,10 +146,10 @@ generator output.
 Before moving the root `README`/`README.md`, confirm what links into
 them so no other file's reference is silently broken. Verified inbound
 references at spec time: no CI workflow, no `geb.asd` entry, and no
-`src/` file links to the root README files; `geb-lean/README.md`,
-`geb-idris/README.md`, and `geb-agda/README.md` link to `../README.md`
-(which the new root index satisfies) rather than to the moving file's
-new location. The plan repeats this check, including a grep of
+`src/` file links to the root README files; of the subproject READMEs,
+only `geb-lean/README.md` links to `../README.md` (which the new root
+index satisfies), and none link to the moving file's new location. The
+plan repeats this check, including a grep of
 `geb-idris/docs/*.md` and `geb-lean/docs/*.md` for root-README links,
 immediately before the move.
 
@@ -181,8 +181,9 @@ immediately before the move.
    markdown output is written to `docs/common-lisp/manual.md` via an
    explicit stream (`mgl-pax:document` into a `with-open-file` target)
    and the `:plain` README output is dropped; redirect the companion
-   `update-asdf-system-html-docs` `:target-dir` from `docs/` to
-   `docs/common-lisp/` for consistency. This commit changes the
+   `update-asdf-system-html-docs` `:target-dir` from `docs/` to a
+   dedicated `docs/common-lisp/html/` subdirectory, so the generated
+   HTML can be ignored wholesale. This commit changes the
    generator's output target, not the documents it renders. The
    regenerated output is committed in Change 5. The HTML output is not
    committed (no generated HTML is tracked under `docs/` today); the
@@ -248,7 +249,7 @@ which writes `README.md` and `README` to the ASDF system root. The
 replacement writes a single markdown file to `docs/common-lisp/manual.md`
 through `mgl-pax:document` and an explicit output stream, and points the
 HTML-documentation call (`update-asdf-system-html-docs`) `:target-dir`
-at `docs/common-lisp/`. The plain-text format is dropped.
+at `docs/common-lisp/html/`. The plain-text format is dropped.
 `update-asdf-system-readmes` is a wrapper whose internal rendering setup
 (page configuration, source-link function) a bare `mgl-pax:document`
 call does not reproduce by default; the rewrite passes whatever `:pages`

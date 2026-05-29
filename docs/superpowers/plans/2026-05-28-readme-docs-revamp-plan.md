@@ -113,11 +113,11 @@ grep -rIn --exclude-dir=.git --exclude-dir=.jj 'README' \
 ```
 
 Expected: the subproject `docs/` trees contain no links to the root
-README files. The three subproject `README.md` files link to
-`../README.md` (the new index satisfies this) and not to the moving
-file's new location. If any file links to the root README's *content*
-(rather than the path the new index occupies), note it before
-proceeding.
+README files. Of the subproject `README.md` files, only
+`geb-lean/README.md` links to `../README.md` (the new index satisfies
+this); it does not link to the moving file's new location. If any file
+links to the root README's *content* (rather than the path the new
+index occupies), note it before proceeding.
 
 ## Task 1: Relocate the generated Common Lisp manual (pure rename)
 
@@ -297,7 +297,7 @@ with:
   (mgl-pax:document
    @index
    :format :markdown
-   :pages `((:objects (,@index)
+   :pages `((:objects (, @index)
             :output (,(asdf:system-relative-pathname
                         :geb "docs/common-lisp/manual.md")
                      :if-exists :supersede :if-does-not-exist :create)
