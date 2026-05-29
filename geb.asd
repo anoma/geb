@@ -181,7 +181,7 @@
                :geb/test :pythonic-string-reader
                :geb/gui)
   :description "geb full documentation exploration"
-  :pathname "docs/"
+  :pathname "docs/common-lisp/"
   :serial t
   :components ((:file package)
                (:file glossery)
