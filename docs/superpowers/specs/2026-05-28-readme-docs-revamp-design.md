@@ -48,6 +48,9 @@ After this step:
 - The Common Lisp documentation generator, if rerun, writes to
   `docs/common-lisp/manual.md` rather than to the repository root, so a
   regeneration never overwrites the hand-authored root `README.md`.
+- The committed `docs/common-lisp/manual.md` equals the generator's
+  current output, validated in-session, so a documentation rebuild
+  produces no diff.
 - `geb-idris/docs/index.md` exists as a skeleton index of the existing
   Idris documentation files.
 - `geb-lean/docs/index.md` is unchanged, reachable from the root index.
@@ -62,6 +65,11 @@ After this step:
   parent-level (non-`geb-lean/`) markdown is out of scope; it is a
   separate concern recorded under Follow-ups.
 - No `.lean` files are touched; the Lean pre-commit triad does not apply.
+- The no-diff-on-rebuild property is validated once, in this session,
+  against the current mgl-pax. The mgl-pax version is not pinned, so a
+  future quicklisp update could change the rendering; guarding against
+  that (a pinned dependency and/or an automated rebuild-clean check) is
+  out of scope and recorded under Follow-ups.
 
 ## Current state
 
@@ -88,6 +96,20 @@ After this step:
 - Parent-level CI markdownlint (`.github/workflows/markdown-lint.yml`)
   lints only `geb-lean/**/*.md`. The markdownlint configuration lives at
   `geb-lean/.markdownlint-cli2.jsonc`.
+- The committed root `README`/`README.md` do not match what the current
+  generator emits: re-running `update-asdf-system-readmes` produces a
+  large diff (about 197 lines for `README.md`, 182 for `README`). The
+  causes are pre-existing and independent of this work: the manually
+  inserted `geb-lean` pointer (commit `8693ed61`) is not generator
+  output; `documentation.lisp` gained Spacemacs install instructions
+  after the last regeneration, so the committed output is stale relative
+  to its own source; and mgl-pax version drift renders generic-function
+  lambda lists differently (committed `**DOM** *X*`, current `**DOM**
+  *CAT-MORPH*`). A documentation rebuild therefore already rewrites the
+  committed files today. The Common Lisp toolchain is available in this
+  environment (Roswell SBCL 2.4.10 + quicklisp; `:geb`,
+  `:geb/documentation`, `:mgl-pax/navigate`, `:mgl-pax/document` all
+  load), so the generator can be run and its output validated.
 
 ## Target layout
 
@@ -96,7 +118,7 @@ README.md                          # hand-authored identity + index (replaces ge
 README                             # deleted (redundant plain-text generator output)
 docs/
   common-lisp/                     # relocated obsolete Common Lisp material
-    manual.md                      #   former root README.md (generated manual)
+    manual.md                      #   generated manual (root README.md renamed, then regenerated)
     documentation.lisp             #   moved from docs/
     glossery.lisp                  #   moved from docs/
     package.lisp                   #   moved from docs/
@@ -131,17 +153,13 @@ immediately before the move.
 
 1. Relocate the generated Common Lisp manual. Move the root `README.md`
    to `docs/common-lisp/manual.md`. This commit contains no other
-   change, so version control records a pure rename. At this point the
-   repository root has no `README.md`. The relocated file is frozen
-   generator output: its body retains relative links written for the
-   repository root, including a live link to `geb-lean/README.md`
-   (the manually inserted pointer from commit `8693ed61`) that no longer
-   resolves from `docs/common-lisp/`, alongside pre-existing dead links
-   (`./tests/cover-index.html`, `./tests/report.html`). These stale
-   links are accepted, not repaired: `manual.md` is not authored or
-   linted here (see Markdownlint and doctoc), and a future regeneration
-   (Change 4) emits correct links for the new location. Repairing them
-   in this commit would forfeit the pure-rename property.
+   change, so version control records a pure rename, preserving the
+   file's history under the new path. At this point the repository root
+   has no `README.md`. The relocated content is still the stale
+   committed output; Change 5 replaces it with freshly regenerated
+   output. Splitting the move (this commit) from the regeneration
+   (Change 5) keeps this commit a literal rename and isolates the
+   regeneration diff for review.
 2. Relocate the Common Lisp documentation sources. Move
    `docs/documentation.lisp`, `docs/glossery.lisp` (sic; the filename
    is misspelled in the tree), `docs/package.lisp`, and
@@ -162,21 +180,26 @@ immediately before the move.
    explicit stream (`mgl-pax:document` into a `with-open-file` target)
    and the `:plain` README output is dropped; redirect the companion
    `update-asdf-system-html-docs` `:target-dir` from `docs/` to
-   `docs/common-lisp/` for consistency. The rewrite is intended to
-   reproduce the existing markdown rendering at the new path, not to
-   change document content. Equivalence to the previous
-   `update-asdf-system-readmes` output is unverified at authoring time
-   because the generator is not rerun in this step; the rewrite may need
-   to pass `:pages` and a `:source-uri-fn` (as the HTML call does) to
-   reproduce cross-reference and source-link rendering. Confirming the
-   output matches is deferred to the next time the generator is run (a
-   follow-up, since the Common Lisp build is not exercised here).
-5. Create `geb-idris/docs/index.md`. A skeleton index listing the four
+   `docs/common-lisp/` for consistency. This commit changes the
+   generator's output target, not the documents it renders. The
+   regenerated output is committed in Change 5.
+5. Regenerate and validate. Run the retargeted `build-docs` to produce
+   `docs/common-lisp/manual.md`, and commit the regenerated bytes,
+   replacing the stale content moved in Change 1. Then re-run the
+   generator and confirm it leaves `manual.md` unchanged (zero diff), so
+   a subsequent rebuild is a no-op. This commit's diff is exactly the
+   current generator output; it reconciles the pre-existing staleness
+   recorded under Current state. If reproducing the rendering requires
+   passing `:pages` or a `:source-uri-fn` to `mgl-pax:document`, that is
+   part of the Change 4 rewrite, finalized here against observed output.
+   Validation is one-time and in-session: byte-stability across future
+   quicklisp or mgl-pax updates is not guarded (see Non-goals).
+6. Create `geb-idris/docs/index.md`. A skeleton index listing the four
    existing Idris documentation files with one-line navigational labels
    derived from their existing titles, plus pointers to
    `../README.md` and `../EXAMPLES.md`. No new explanatory content.
    (`../README.md` and `../EXAMPLES.md` are confirmed present.)
-6. Create the root `README.md`. A hand-authored file: a short, dry
+7. Create the root `README.md`. A hand-authored file: a short, dry
    identity statement (what Geb is; active development is Lean, then
    Idris; Common Lisp and Agda are original efforts) followed by a
    categorized index linking to:
@@ -213,14 +236,21 @@ which writes `README.md` and `README` to the ASDF system root. The
 replacement writes a single markdown file to `docs/common-lisp/manual.md`
 through `mgl-pax:document` and an explicit output stream, and points the
 HTML-documentation call (`update-asdf-system-html-docs`) `:target-dir`
-at `docs/common-lisp/`. The intent is that the rendered markdown is the
-same document at a new path, with the plain-text format dropped.
+at `docs/common-lisp/`. The plain-text format is dropped.
 `update-asdf-system-readmes` is a wrapper whose internal rendering setup
-(page configuration, source-link function) is not reproduced by a bare
-`mgl-pax:document` call; the rewrite may therefore need to pass `:pages`
-and a `:source-uri-fn` to match. Because the generator is not rerun in
-this step, the output is not verified here; verifying that the regenerated
-`manual.md` matches expectations is a follow-up.
+(page configuration, source-link function) a bare `mgl-pax:document`
+call does not reproduce by default; the rewrite passes whatever `:pages`
+and `:source-uri-fn` arguments are required so the emitted markdown is
+the document the wrapper would render, differing from the wrapper only
+in output path and dropped plain-text format. The exact arguments are
+fixed empirically in Change 5 by comparing against the wrapper's output.
+
+The generator runs under Roswell: `:geb`, `:geb/documentation`,
+`:mgl-pax/navigate`, and `:mgl-pax/document` are loaded (the last pulls
+`3bmd` for markdown rendering), then `build-docs` is invoked. Late
+symbol resolution (`uiop:find-symbol*`) is used when scripting the run,
+because a literal `mgl-pax:` symbol in a top-level form fails at read
+time before the package is loaded.
 
 ## Markdownlint and doctoc
 
@@ -229,7 +259,8 @@ this step, the output is not verified here; verifying that the regenerated
   `markdownlint-cli2` against `geb-lean/.markdownlint-cli2.jsonc`,
   verified locally.
 - `docs/common-lisp/manual.md` is generator output, not authored here;
-  it is not linted or reformatted.
+  it is not linted or reformatted. After Change 5 it equals the current
+  generator output, so a rebuild leaves it unchanged.
 - Authored documents with more than one `##` heading carry a doctoc
   table of contents, generated locally.
 
@@ -240,6 +271,9 @@ this step, the output is not verified here; verifying that the regenerated
   `docs/superpowers/plans/` at the monorepo root.
 - Spec and plan are adversarially reviewed before execution.
 - Execution proceeds commit-by-commit under the granularity principle.
+- The Common Lisp generator is run once during execution (Change 5) to
+  produce and validate `manual.md`; the run is scripted under Roswell as
+  described in Generator retargeting detail.
 - No `jj git push` occurs without line-by-line user review.
 
 ## Follow-ups (out of scope)
@@ -255,6 +289,9 @@ this step, the output is not verified here; verifying that the regenerated
   moved to `docs/common-lisp/manual.md`. The link stays valid; only the
   surrounding prose drifts. Reconciling it belongs to the later
   content-authoring phase, where `geb-lean` documentation is edited.
+- Pinning the mgl-pax version (a quicklisp dist pin or vendored copy)
+  and/or an automated check that regenerating `manual.md` yields no diff,
+  to guarantee rebuild reproducibility against future toolchain updates.
 
 ## References
 
