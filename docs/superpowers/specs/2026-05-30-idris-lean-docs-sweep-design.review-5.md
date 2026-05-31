@@ -45,7 +45,7 @@ defect found.
 ## Per-finding confirmation
 
 | # | Severity | Status | Where fixed |
-|---|----------|--------|-------------|
+| --- | --- | --- | --- |
 | 1 | MAJOR | Fixed | "The search is time-boxed." para, lines 374–384 |
 | 2 | MINOR | Fixed | Decision-tree framing 339–341; cat 1 precedence 346–350 |
 | 3 | MINOR | Fixed | Process step 3, lines 533–538 |

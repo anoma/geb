@@ -1,6 +1,15 @@
 # `<Area title>`
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+
+- [Purpose](#purpose)
+- [Mathematical context](#mathematical-context)
+- [Modules](#modules)
+- [Alternative formulations](#alternative-formulations)
+- [Dependencies](#dependencies)
+- [Pointers](#pointers)
+
 <!-- END doctoc -->
 
 ## Purpose

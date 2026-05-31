@@ -272,11 +272,13 @@ codebase predates that addition and builds its own.
   — the Street–Walters comprehensive factorization. Defines
   `IsDiscreteFibration`/`IsDiscreteOpfibration`; the intermediate
   presheaf `K(d) = ConnectedComponents(StructuredArrow d F)` and
-  its copresheaf dual; the comprehensive functor `eComp : C ⥤ Gr(K)`,
-  and `mComp : Gr(K) ⥤ D`; proves `eComp` is final and `mComp`
-  is a discrete fibration (`mComp_isDiscreteFibration`);
-  `comprehensiveFactorizationIso : F ≅ eComp ⋙ mComp`. Street and
-  Walters 1973; also Johnstone, *Sketches of an Elephant* B2.5.
+  its copresheaf dual; the comprehensive functor
+  `comprehensiveE : C ⥤ Gr(K)` and `comprehensiveM : Gr(K) ⥤ D`; proves
+  `comprehensiveE` final and `comprehensiveM` a discrete fibration
+  (`comprehensiveM_isDiscreteFibration`); and the strict factorization
+  `comprehensiveFactorization_comm : comprehensiveE ⋙ comprehensiveM = F`.
+  Street and Walters 1973; also Johnstone, *Sketches of an Elephant*
+  B2.5.
   Provenance: standard mathematics, first Lean formalization here
   — the comprehensive factorization theorem is in Street–Walters
   1973 and Johnstone; no prior Lean formalization found in mathlib
@@ -380,7 +382,7 @@ modules (assigned to the internal-presheaf area) supply the
 category-of-elements and Grothendieck-construction machinery used
 throughout.
 
-- [polynomial-functors area](../index.md#polynomial-functors) — for
+- [polynomial-functors area](polynomial-functors.md) — for
   `ProfAlg.lean` and the polynomial side of the parametric
   constructions.
 

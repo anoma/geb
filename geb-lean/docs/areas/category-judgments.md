@@ -255,13 +255,11 @@ proved equivalences between the formulations.
 
 ## Dependencies
 
-This area builds on the quivers / semicategories / acyclic-categories
-layer (free and cofree categories on a quiver, presentations by
-generators and relations), which supplies the underlying quiver and
-the free-morphism machinery that `L` quotients. That layer does not
-yet have its own area doc; see the
-[quivers, semicategories, acyclic categories](../index.md#quivers-semicategories-acyclic-categories)
-section of the documentation index.
+This area builds on the
+[quivers, semicategories, acyclic categories](quivers.md) layer (free
+and cofree categories on a quiver, presentations by generators and
+relations), which supplies the underlying quiver and the free-morphism
+machinery that `L` quotients.
 
 ## Pointers
 
@@ -270,7 +268,7 @@ section of the documentation index.
   essentially algebraic theories, walking structures, polynomial
   functors) and the respects in which it appears novel.
 - The
-  [Category-judgment encodings](../index.md#category-judgment-encodings)
+  [Category-judgment encodings](../index.md)
   section of the documentation index records the established narrative
   for this area, including the closure analysis of universal-property
   preservation under `L ⊣ Φ`.

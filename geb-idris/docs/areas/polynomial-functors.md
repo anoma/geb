@@ -256,7 +256,7 @@ W-types, and F-algebras it uses throughout.
 - The Idris formalization in this area is the predecessor of the
   Lean 4 continuation. The Lean work on profunctors and parametric
   right adjoints is discussed in
-  [`geb-lean/docs/areas/category-judgments.md`](../../geb-lean/docs/areas/category-judgments.md).
+  [`geb-lean/docs/areas/category-judgments.md`](../../../geb-lean/docs/areas/category-judgments.md).
   A dedicated Lean area doc for polynomial functors does not yet
   exist; this Idris area is the primary reference for that
   material.

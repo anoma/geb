@@ -112,9 +112,10 @@ via reachability W-types and free polynomial arenas over
   general knowledge.
 
 - [`src/LanguageDef/ADTCat.idr`](../../src/LanguageDef/ADTCat.idr)
-  — algebraic-datatype categories via polynomial functors. `BoolF`,
-  `PairF`, and `BinTree'F` are arenas (`PolyFunc` dependent pairs)
-  whose initial algebras via `PolyFuncMu` / `pfCata` give, respectively,
+  — algebraic-datatype categories via polynomial functors. `BoolF`
+  and `PairF` are arenas (`PolyFunc`) and `BinTree'F` is a
+  parameterized arena (`ParamPolyFunc`); their initial algebras via
+  `PolyFuncMu` / `pfCata` give, respectively,
   the Bool, product, and binary-tree types; `SexpXPos`/`SexpPosBase`
   begin an S-expression arena. The module establishes the pattern by
   which all user-defined recursive types in Geb are encoded as

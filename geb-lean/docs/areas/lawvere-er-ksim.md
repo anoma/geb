@@ -346,17 +346,17 @@ affects only how the `sim` constructor's bound is obtained.
 - The polynomial / W- / M-types and polynomial-functors layer
   supplies the Lawvere-categorical setting (finite-product
   categories of term-functions); see the
-  [polynomial / W- / M-types and PFunctors](../index.md#polynomial--w---m-types-and-pfunctors)
+  [polynomial / W- / M-types and PFunctors](polynomial-functors.md)
   section of the documentation index.
 - The tree-calculus phase-2 layer supplies the primitive-recursive
   substrate used by
   [`GebLean/LawvereTreeER.lean`](../../GebLean/LawvereTreeER.lean)
   and the tree-Gödel modules; see the
-  [tree calculus phase 2](../index.md#tree-calculus-phase-2)
+  [tree calculus phase 2](tree-calculus.md)
   section of the documentation index.
 - CSLib is a cross-cutting dependency: the URM machinery behind
   `erToKFunctor` consumes CSLib's computability formalisations; see
-  the [CSLib integration](../index.md#cslib-integration) section of
+  the [CSLib integration](../index.md#cslib) section of
   the documentation index.
 
 ## Pointers
@@ -398,7 +398,7 @@ Design specs (under `docs/superpowers/specs/`):
   packaged equivalence (T5).
 
 The
-[K_sim hierarchy and ER <-> K_sim_2 equivalence](../index.md#k_sim-hierarchy-and-er---k_sim_2-equivalence)
+[K_sim hierarchy and ER <-> K_sim_2 equivalence](../index.md)
 section of the documentation index records the established
 narrative, including the axiom envelope and the assembly of
 `erKSimEquiv`.

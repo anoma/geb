@@ -496,7 +496,7 @@ relations (PERs) on the BTO and its limit/colimit structure:
 This area builds on the quivers / semicategories / acyclic-categories
 layer (free and cofree categories on a quiver) and on the shared
 utilities layer (`GebLean/Utilities/`). See the
-[quivers, semicategories, acyclic categories](../index.md#quivers-semicategories-acyclic-categories)
+[quivers, semicategories, acyclic categories](quivers.md)
 section of the documentation index.
 
 ## Pointers
@@ -523,5 +523,3 @@ section of the documentation index.
   — primitive recursion and the Lawvere-BT theory.
 - [`docs/research/m-types-from-w-types-walkthrough.md`](../research/m-types-from-w-types-walkthrough.md)
   — M-types from W-types walkthrough.
-- [`docs/superpowers/specs/2026-05-30-idris-lean-docs-sweep-design.md`](../superpowers/specs/2026-05-30-idris-lean-docs-sweep-design.md)
-  — the docs-sweep spec that produced this area doc.
