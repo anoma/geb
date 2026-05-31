@@ -123,8 +123,10 @@ references where helpful.>
 ## Alternative formulations
 
 <Present only when this area, or the codebase across areas, formulates
-one concept more than once. Name each formulation, its module, and the
-respect in which the approaches differ. Other area docs link here
+one concept more than once. Lead with the single shared concept; then
+present the formulations as variations of that one concept (artifacts
+of exploring for a preferred form), naming each formulation, its
+module, and the respect in which it differs. Other area docs link here
 rather than restating.>
 
 ## Dependencies
@@ -362,6 +364,12 @@ user can object before authoring. Each has a chosen home above.
 
 Maintained and extended during authoring; described once in a home
 area's **Alternative formulations** section, cross-linked elsewhere.
+Each cluster is written **concept-first**: state the single shared
+mathematical concept, then present the repository's several
+formulations as variations of that one concept (artifacts of exploring
+for a preferred form), not as distinct constructions. See
+`geb-lean/docs/areas/category-judgments.md` (the calibration doc) for
+the worked exemplar.
 
 - Lean Lawvere-NatBT versions: `LawvereNatBT*` vs `LawvereNatBTV2*`
   (and `*V20`) — home A8.
