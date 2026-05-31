@@ -46,7 +46,7 @@ This is structurally parallel to the
 nerve–realization adjunction `τ₁ ⊣ N : Cat ⇆ [Δᵒᵖ, Set]`, differing
 in that the index category here is finite and the diagrams are
 covariant. The novelty analysis of the construction is recorded in
-[`docs/novelty-analysis.md`](../novelty-analysis.md).
+[`docs/research/novelty-analysis.md`](../research/novelty-analysis.md).
 
 ## Modules
 
@@ -265,7 +265,7 @@ section of the documentation index.
 
 ## Pointers
 
-- [`docs/novelty-analysis.md`](../novelty-analysis.md) — prior-art
+- [`docs/research/novelty-analysis.md`](../research/novelty-analysis.md) — prior-art
   comparison of the `L ⊣ Φ` reflective embedding (nerve–realization,
   essentially algebraic theories, walking structures, polynomial
   functors) and the respects in which it appears novel.
