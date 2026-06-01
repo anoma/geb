@@ -196,6 +196,18 @@ covariant. The novelty analysis of the construction is recorded in
   equivalence between two presentations of the same standard data
   (mathlib `CategoryTheory.Comma.Over`). Searched 2026-05-31, scope
   Mathlib (leansearch).
+- [`GebLean/LayeredEquivalence.lean`](../../GebLean/LayeredEquivalence.lean)
+  — a pedagogically-layered, two-object simplification of the
+  copresheaf/dependent-type correspondence, built on
+  `GebLean/Semicategory`. `DepData` and `CopresheafData` are the
+  dependent and copresheaf presentations of a two-sort (objects,
+  morphisms) structure, and `layer1Equivalence : DepData ≌
+  CopresheafData` is their equivalence, established layer by layer
+  rather than over the full four-sort index category `J`.
+  Provenance: novel mathematics — a simplified two-object variant of
+  the copresheaf/dependent correspondence specific to this project;
+  same antecedents as `DepCategoryJudgments.lean`. Searched
+  2026-05-31, scope Mathlib (leansearch), nLab.
 
 ## Alternative formulations
 

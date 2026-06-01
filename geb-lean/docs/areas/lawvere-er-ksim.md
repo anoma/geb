@@ -245,10 +245,6 @@ recursor and a Gödel numbering of trees.
 
 ### Equivalence assembly and miscellaneous
 
-- [`GebLean/LayeredEquivalence.lean`](../../GebLean/LayeredEquivalence.lean)
-  — a layered copresheaf/dependent-type equivalence (objects,
-  then morphisms) over a small judgment category; adjacent
-  infrastructure rather than ER/K^sim content (see Pointers).
 - [`GebLean/NatElegantPair.lean`](../../GebLean/NatElegantPair.lean)
   — Szudzik's elegant pairing `elegantPair` and `natSquare`, the
   packing primitive reused for multi-output recursion and tree

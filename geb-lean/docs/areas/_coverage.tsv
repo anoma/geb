@@ -80,7 +80,7 @@ geb-lean/GebLean/LawvereTreeER.lean	lawvere-er-ksim
 geb-lean/GebLean/LawvereTreeERArith.lean	lawvere-er-ksim
 geb-lean/GebLean/LawvereTreeERInterp.lean	lawvere-er-ksim
 geb-lean/GebLean/LawvereTreeERQuot.lean	lawvere-er-ksim
-geb-lean/GebLean/LayeredEquivalence.lean	lawvere-er-ksim
+geb-lean/GebLean/LayeredEquivalence.lean	category-judgments
 geb-lean/GebLean/MendlerLambekEndPower.lean	profunctors-ends
 geb-lean/GebLean/MendlerLambekPresheaf.lean	profunctors-ends
 geb-lean/GebLean/NatArith.lean	nno-arithmetic-topos

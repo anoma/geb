@@ -1,19 +1,12 @@
-# Dead-note candidates (awaiting sign-off)
+# Dead-note candidates (resolved: all kept)
 
 The 51 loose top-level `docs/*.md` notes were relocated to
-`docs/research/`. The default is to relocate and keep; this file lists
-notes that appear superseded or abandoned, for deletion **only on
-user sign-off**. Nothing here is deleted without approval.
+`docs/research/`. The default is to relocate and keep.
 
-## Candidates
+## Decision
 
-- `research/plang-category-judgments-old.md` — explicitly an older
-  version (`-old` suffix) of `research/plang-category-judgments.md`,
-  which remains. Superseded duplicate.
-
-## Kept (no deletion proposed)
-
-All other 50 relocated notes are retained: they are distinct research
-topics or analyses with no superseding duplicate identified at
-overview depth. Where a note informs an area, the area document cites
-it from `docs/research/`.
+All relocated notes are **kept**. This is an exploratory repository;
+retaining the full research history (including superseded versions) is
+intended. In particular `research/plang-category-judgments-old.md` is
+kept alongside `research/plang-category-judgments.md` despite being an
+older version. No note was deleted.
