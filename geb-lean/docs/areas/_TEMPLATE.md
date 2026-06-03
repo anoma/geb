@@ -24,9 +24,11 @@ references where helpful.>`
 ## Modules
 
 - [`<repo/relative/path>`](<../../relative/path>) — `<one-line role>`.
-  `<Up to three sentences naming the 1–3 headline declarations.>`
-  Provenance: `<category>` — `<citation>`; searched `<date>`, scope
-  `<list>`.
+  `<Name the main results, then give the provenance as plain prose:
+  cite the known mathematics the module transcribes (a citation
+  makes "not new" self-evident), and where the work is novel state
+  it as a negative, e.g. "we have found no prior Lean formalization
+  of this".>`
 
 ## Alternative formulations
 

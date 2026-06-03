@@ -47,12 +47,10 @@ adding declarations.
   dependent-pair helpers (`dpEq12`, `dpBimap`), and import aggregation
   for the Idris standard library. `Subset0` is the type other modules
   use to carry proof obligations at zero runtime cost, making it the
-  most-imported declaration in the area.
-  Provenance: category 2 (known concept, first formalization in this
-  Idris codebase) — `Subset0` is a variant of the standard `Subset`
-  type with erased predicate parameter; all other definitions are
-  standard functional-programming combinators. Searched 2026-05-31,
-  scope Idris2 standard library, general knowledge.
+  most-imported declaration in the area. `Subset0` is a variant of
+  the standard `Subset` type with erased predicate parameter; all
+  other definitions are standard functional-programming combinators;
+  we have found no prior Idris formalization of `Subset0`.
 
 - [`src/Library/IdrisCategories.idr`](../../src/Library/IdrisCategories.idr)
   — the categorical vocabulary over `Type`: `SCat` (the bundled
@@ -64,12 +62,11 @@ adding declarations.
   this is the largest module in the codebase; it also contains
   W-type algebras, polynomial endofunctors, Yoneda lemma instances,
   and the `FAlgObj`/`FreeMonad` types that `IdrisAlgebra` builds on.
-  Provenance: category 2 (known mathematics, formalized in this Idris
-  codebase) — all structures (slice categories, natural
-  transformations, profunctors, ends, polynomial functors, free monads)
-  are standard category theory (Mac Lane, *Categories for the Working
-  Mathematician*; nLab). Searched 2026-05-31, scope Idris2 standard
-  library, nLab, general knowledge.
+  These structures — slice categories, natural transformations,
+  profunctors, ends, polynomial functors, free monads — are standard
+  category theory (Mac Lane, *Categories for the Working
+  Mathematician*; nLab); we have found no prior Idris formalization
+  of them.
 
 - [`src/Library/IdrisAlgebra.idr`](../../src/Library/IdrisAlgebra.idr)
   — algebras and morphisms of `F`-algebras (`FAlgObj`, `FAlgMorph`,
@@ -79,20 +76,19 @@ adding declarations.
   `bnAlgObjToFreeIso`), and the category of free monads
   (`FreeMonadCatMorph`). The module specializes the general machinery
   to `BinNatF` (lists of booleans) as a running example.
-  Provenance: category 2 (known mathematics, formalized in this Idris
-  codebase) — F-algebra categories and the Eilenberg–Moore comparison
-  theorem are standard (Mac Lane, op. cit., VI.8; nLab,
+  F-algebra categories and the Eilenberg–Moore comparison theorem
+  are standard (Mac Lane, op. cit., VI.8; nLab,
   [algebra for an endofunctor](https://ncatlab.org/nlab/show/algebra+for+an+endofunctor#relation_to_algebras_over_a_monad),
-  prop. 3.1; Barr–Wells, *Toposes, Triples, and Theories*, §3.6).
-  Searched 2026-05-31, scope Idris2 standard library, nLab.
+  prop. 3.1; Barr–Wells, *Toposes, Triples, and Theories*, §3.6);
+  we have found no prior Idris formalization of them.
 
 - [`src/Library/CategoryTheory.idr`](../../src/Library/CategoryTheory.idr)
   — a stub module that imports `LanguageDef.FullLanguageDef` (and
   `Library.IdrisUtils`) and declares no new definitions; its purpose
   is to provide a single re-export point for category-theoretic
   consumers that need the full language definition.
-  Provenance: not applicable — no mathematical content; the module is
-  organizational infrastructure only.
+  Organizational infrastructure only; it carries no mathematical
+  content.
 
 ## Alternative formulations
 

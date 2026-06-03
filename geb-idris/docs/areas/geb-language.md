@@ -77,13 +77,10 @@ via reachability W-types and free polynomial arenas over
   `DDRMcpR`/left adjuncts, product introduction `DDRMprL`/right
   adjuncts, distributivity `DDRMdistrib`); `DigTObj`/`DigTMorph`
   sketches a digital-topos extension with exponentials.
-  Provenance: category 1 (novel — Geb's specific inductive topos
-  construction) — the closure under the six listed universal
-  properties with morphisms given by the resulting adjunctions is
-  Geb-specific; the individual constructions (products, coproducts,
-  equalizers) are standard (Johnstone, *Sketches of an Elephant*,
-  vol. I). Searched 2026-05-31, scope nLab, Geb notes hackmd,
-  general knowledge.
+  The closure under the six listed universal properties with
+  morphisms given by the resulting adjunctions is Geb-specific;
+  the individual constructions (products, coproducts, equalizers)
+  are standard (Johnstone, *Sketches of an Elephant*, vol. I).
 
 - [`src/LanguageDef/GebTopos.idr`](../../src/LanguageDef/GebTopos.idr)
   — internal Yoneda lemma utilities for categories specified by
@@ -92,11 +89,10 @@ via reachability W-types and free polynomial arenas over
   `ContravarToContravar`, `ContravarToCovar`); `YonedaHomSetRep` and
   `YonedaCatRep` assemble these into a Yoneda-representability datum
   for a whole category.
-  Provenance: category 2 (known mathematics, formalized in this Idris
-  codebase) — the Yoneda lemma and hom-representability are standard
-  (Mac Lane, *Categories for the Working Mathematician*, ch. III;
-  nLab, [Yoneda lemma](https://ncatlab.org/nlab/show/Yoneda+lemma)).
-  Searched 2026-05-31, scope nLab, general knowledge.
+  The Yoneda lemma and hom-representability are standard (Mac Lane,
+  *Categories for the Working Mathematician*, ch. III; nLab,
+  [Yoneda lemma](https://ncatlab.org/nlab/show/Yoneda+lemma)); we
+  have found no prior Idris formalization of this specific assembly.
 
 - [`src/LanguageDef/Theories.idr`](../../src/LanguageDef/Theories.idr)
   — categorical substrate structures intermediate between the core
@@ -105,11 +101,10 @@ via reachability W-types and free polynomial arenas over
   `CCP`) with conditional `CCif`, projection, and pairing morphisms;
   `MinMLCat`/`MinMLObj`/`MinMLMorph` sketch a mutually-recursive
   family of slice categories indexed by objects of `MinMLCat`.
-  Provenance: category 1 (novel — Geb's specific compilation-substrate
-  categories); `CompCatObj` corresponds to a fragment of the Alucard /
-  VampIR back-end described in the Geb README, not formalized
-  elsewhere. Searched 2026-05-31, scope nLab, Geb notes hackmd,
-  general knowledge.
+  `CompCatObj` corresponds to a fragment of the Alucard / VampIR
+  back-end described in the Geb README; the specific
+  compilation-substrate categories here are Geb-specific and are
+  not formalized elsewhere.
 
 - [`src/LanguageDef/ADTCat.idr`](../../src/LanguageDef/ADTCat.idr)
   — algebraic-datatype categories via polynomial functors. `BoolF`
@@ -120,12 +115,11 @@ via reachability W-types and free polynomial arenas over
   begin an S-expression arena. The module establishes the pattern by
   which all user-defined recursive types in Geb are encoded as
   polynomial-functor initial algebras.
-  Provenance: category 2 (known mathematics, formalized in this Idris
-  codebase) — polynomial-functor initial algebras as a model of
-  algebraic data types are standard (Abbott–Altenkirch–Ghani,
-  *Containers*, 2005; nLab,
-  [polynomial functor](https://ncatlab.org/nlab/show/polynomial+functor)).
-  Searched 2026-05-31, scope nLab, general knowledge.
+  Polynomial-functor initial algebras as a model of algebraic data
+  types are standard (Abbott–Altenkirch–Ghani, *Containers*, 2005;
+  nLab,
+  [polynomial functor](https://ncatlab.org/nlab/show/polynomial+functor));
+  we have found no prior Idris implementation of this encoding.
 
 - [`src/LanguageDef/Interpretation.idr`](../../src/LanguageDef/Interpretation.idr)
   — re-export stub for `UniversalCategory` (documented in the
@@ -133,14 +127,14 @@ via reachability W-types and free polynomial arenas over
   area); adds no declarations of its own. Its role is to provide a
   named boundary at which interpretation-layer consumers import the
   universal-category vocabulary.
-  Provenance: not applicable — no mathematical content; organizational
+  This module contains no mathematical content; it is organizational
   infrastructure only.
 
 - [`src/LanguageDef/Expression.idr`](../../src/LanguageDef/Expression.idr)
   — re-export stub for `Interpretation`; adds no declarations of its
   own. Its role is to provide a named boundary at which expression-layer
   consumers import the interpretation vocabulary transitively.
-  Provenance: not applicable — no mathematical content; organizational
+  This module contains no mathematical content; it is organizational
   infrastructure only.
 
 - [`src/LanguageDef/Geb.idr`](../../src/LanguageDef/Geb.idr)
@@ -151,12 +145,11 @@ via reachability W-types and free polynomial arenas over
   the initial algebra of a W-type polynomial endofunctor; `PolyFuncMu`
   and `PolyFuncMuPF` assemble reachable arenas into a polynomial
   functor whose positions and directions are the reachable ones.
-  Provenance: category 1 (novel — Geb's specific encoding of
-  reachability via W-type polynomial endofunctors and the
-  free-polynomial-arena construction); the W-type construction follows
-  the standard theory of W-types (Martin-Löf; Moerdijk–Palmgren,
-  *Wellfounded trees*, 2000) applied in a Geb-specific way. Searched
-  2026-05-31, scope nLab, general knowledge.
+  The W-type construction follows the standard theory of W-types
+  (Martin-Löf; Moerdijk–Palmgren, *Wellfounded trees*, 2000); the
+  specific encoding of reachability via W-type polynomial
+  endofunctors and the free-polynomial-arena construction is
+  Geb-specific.
 
 ## Alternative formulations
 

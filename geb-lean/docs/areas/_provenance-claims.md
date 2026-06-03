@@ -1,9 +1,9 @@
 # Strongest provenance claims, organized by result
 
 These are the strongest novelty claims in the `geb-lean`
-development: results tagged in the area docs as category 1 (novel
-mathematics) or category 2 (known mathematics, first
-machine-checked formalization anywhere). Each claim asserts a
+development: results that are either new mathematics, or the first
+machine-checked formalization (in any system) of known
+mathematics. Each claim asserts a
 negative — that no prior published result or formalization of the
 stated kind exists — which an online search cannot establish
 exhaustively. Every entry is therefore dated and scoped to the
@@ -76,10 +76,10 @@ presentation and adjunction in
 categories `(L ∘ −) ⊣ (Φ ∘ −) : [C, Cat] ⇄ [C, [J, Type]]` in
 `GebLean/CatValuedFunctor.lean`.
 
-**Status.** Category 1 (novel mathematics); the functor-category
-lift is category 2 (the lifting principle is standard, applied to
-this novel `Φ`). Searched 2026-05-31, scope Mathlib
-(leansearch/loogle), nLab, the cited literature; revisable.
+**Status.** Novel mathematics; the functor-category lift applies a
+standard lifting principle to this novel `Φ`. Searched 2026-05-31,
+scope Mathlib (leansearch/loogle), nLab, the cited literature;
+revisable.
 
 ## Dependently-typed presentation of `Cat`, equivalent to the copresheaf form
 
@@ -110,7 +110,7 @@ full-subcategory equivalence in `GebLean/DepCategoryCat.lean`
 `GebLean/DepCategoryAdjunction.lean`. A pedagogically simplified
 two-object variant is `GebLean/LayeredEquivalence.lean`.
 
-**Status.** Category 1 (novel mathematics). Searched 2026-05-31,
+**Status.** Novel mathematics. Searched 2026-05-31,
 scope Mathlib (leansearch/loogle), nLab; revisable.
 
 ## Categorical equivalence `LawvereERCat ≌ LawvereKSimDCat 2`
@@ -146,10 +146,10 @@ bound, translators, and the packaged equivalence are in the
 `Loops.lean`, `ErToK.lean`/`ErToKFunctor.lean`, and
 `Equivalence.lean`, where `erKSimEquiv` is assembled).
 
-**Status.** Category 1 for the categorical-equivalence packaging
-(`unverified`); category 2 for the first Lean formalization of the
-Tourlakis coincidence and the URM-simulation argument in this
-packaging. Searched 2026-05-31, scope Mathlib (leansearch/loogle),
+**Status.** The categorical-equivalence packaging is novel
+(`unverified`); the formalization of the Tourlakis coincidence and
+the URM-simulation argument in this packaging is the first in Lean.
+Searched 2026-05-31, scope Mathlib (leansearch/loogle),
 then the cited literature; revisable.
 
 ## Lawvere-category presentations of the ER and `K^sim` classes
@@ -184,10 +184,10 @@ modules; tree-native ER and tree Gödel numbering in
 `GebLean/LawvereNatBT*`/`GebLean/LawvereNatBTV2*` with the `m = 0`
 equivalence in `GebLean/LawvereERNatBTV2Equiv.lean`.
 
-**Status.** Category 1 for the Lawvere/tree-native packagings
-(`unverified`), built on category-2 components (the function
-classes and pairing function are known mathematics, first
-formalized in Lean here). Searched 2026-05-31, scope Mathlib
+**Status.** The Lawvere and tree-native packagings are novel
+(`unverified`), built on components that are themselves known
+mathematics first formalized in Lean here (the function classes and
+the pairing function). Searched 2026-05-31, scope Mathlib
 (leansearch/loogle), then the cited literature; revisable.
 
 ## Dialgebra-of-profunctor "hexagon" category
@@ -209,7 +209,7 @@ literature (including Loregian, *Coend Calculus*, 2021).
 hexagon-category module (`HexagonObj`, `ProfDialgebraProf`,
 `hexagonCatEquivDiagElem`).
 
-**Status.** Category 1 (novel mathematics, `unverified`). Searched
+**Status.** Novel mathematics (`unverified`). Searched
 2026-05-31, scope Mathlib (leansearch), nLab, Loregian 2021;
 revisable.
 
@@ -235,7 +235,7 @@ wedge-weight module (`wedgeWeightIdentityMap_injective`,
 `paranatWeightedLimitEquiv`, `diagApp` for `AlgProf`, `CoalgProf`,
 `HomProf`).
 
-**Status.** Category 1 (novel mathematics, `unverified`). Searched
+**Status.** Novel mathematics (`unverified`). Searched
 2026-05-31, scope Mathlib (leansearch), nLab; revisable.
 
 ## Paranatural-topos assembly functor and diagonal-determinedness
@@ -256,7 +256,7 @@ and
 **Formalized in.** [nno-arithmetic-topos](nno-arithmetic-topos.md),
 in `GebLean/ParanaturalTopos.lean`.
 
-**Status.** Category 1 (novel mathematics). Searched 2026-05-31,
+**Status.** Novel mathematics. Searched 2026-05-31,
 scope nLab, Mathlib (leansearch/loogle); revisable.
 
 ## Parametric-right-adjoint presheaf category
@@ -279,8 +279,10 @@ Background is in
 **Formalized in.** [nno-arithmetic-topos](nno-arithmetic-topos.md),
 in `GebLean/PresheafPRA.lean` and `GebLean/PresheafPRAUMorph.lean`.
 
-**Status.** Category 1/2 — known mathematics (category 3), with a
-novel formalization-level construction. Searched 2026-05-31, scope
+**Status.** The underlying parametric-right-adjoint theory is known
+mathematics; the bifunctor-assembled presheaf-category
+formalization and the Grothendieck-route limit construction are
+novel at the formalization level. Searched 2026-05-31, scope
 Mathlib (leansearch/loogle), nLab, Weber 2004, Gambino–Kock 2013;
 revisable.
 
@@ -314,7 +316,7 @@ formalizations.
 in the NNO-arithmetic, Cantor-retraction, PSO-interface, and
 PSTO-recursion modules of the area.
 
-**Status.** Category 2 — known mathematics, first machine-checked
-formalization anywhere (the categorical presentations are novel at
-the formalization level). Searched 2026-05-31, scope Mathlib
+**Status.** Known mathematics, first machine-checked formalization
+anywhere; the categorical presentations are novel at the
+formalization level. Searched 2026-05-31, scope Mathlib
 (leansearch/loogle), nLab, Lambek–Scott; revisable.

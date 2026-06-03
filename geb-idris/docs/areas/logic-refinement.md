@@ -73,12 +73,10 @@ anticipated but not yet present.
   no independent definitions at present. Its role is to provide
   the eventual logic substrate (propositional connectives,
   predicate-logic quantifiers) for the Geb language layer.
-  Provenance: category 2 (known concept, stub only) — first
-  formalization of propositional/predicate logic in this Idris
-  codebase; nearest antecedents are the standard Curry–Howard
-  correspondence and the internal logic of a topos
+  This is the first formalization of propositional/predicate logic
+  in this Idris codebase; nearest antecedents are the standard
+  Curry–Howard correspondence and the internal logic of a topos
   (Johnstone, *Sketches of an Elephant*, vol. I, §1.1).
-  Searched 2026-05-31, scope Idris2 standard library, nLab.
 
 - [`src/LanguageDef/QType.idr`](../../src/LanguageDef/QType.idr)
   — quotient types as pairs of a carrier type and a
@@ -88,12 +86,11 @@ anticipated but not yet present.
   a function with a proof of relation preservation; `impredCoeq`
   is the Church-encoded coequalizer; and `QTypeQT` makes `QType`
   itself a quotient type via `QTEquiv`.
-  Provenance: category 2 (known mathematics, formalized in this
-  Idris codebase) — impredicative coequalizers are standard in
-  intensional type theory; nearest reference is Hofmann,
-  *Extensional Concepts in Intensional Type Theory*, §4, and
-  nLab [quotient type](https://ncatlab.org/nlab/show/quotient+type).
-  Searched 2026-05-31, scope Idris2 standard library, nLab.
+  Impredicative coequalizers are standard in intensional type theory;
+  nearest reference is Hofmann, *Extensional Concepts in Intensional
+  Type Theory*, §4, and nLab
+  [quotient type](https://ncatlab.org/nlab/show/quotient+type). We
+  have found no prior Idris formalization of this construction.
 
 - [`src/LanguageDef/RQFin.idr`](../../src/LanguageDef/RQFin.idr)
   — finite sets with explicit refinements (equalizers) and
@@ -104,12 +101,11 @@ anticipated but not yet present.
   `RQTermObj` is the (free) terminal object. The module imports
   `QType` and `InternalCat` to build the categorical infrastructure
   of finite-set refinements.
-  Provenance: category 2 (known mathematics, formalized in this
-  Idris codebase) — equalizers and coequalizers in finite-set
-  categories are standard (Mac Lane, *Categories for the Working
-  Mathematician*, §V.2); the Lawvere-theory framing follows
-  Lawvere, *Functorial Semantics of Algebraic Theories*.
-  Searched 2026-05-31, scope Idris2 standard library, nLab.
+  Equalizers and coequalizers in finite-set categories are standard
+  (Mac Lane, *Categories for the Working Mathematician*, §V.2); the
+  Lawvere-theory framing follows Lawvere, *Functorial Semantics of
+  Algebraic Theories*. We have found no prior Idris formalization
+  of this refinement-type layer.
 
 - [`src/LanguageDef/RefinedADT.idr`](../../src/LanguageDef/RefinedADT.idr)
   — polynomial endofunctors and their arenas on a skeleton of
@@ -120,14 +116,12 @@ anticipated but not yet present.
   standard covariant polynomial arena and its lenses
   (morphisms); `RefinedExpCategory_Obj` packages a refined
   expression category object.
-  Provenance: category 2 (known mathematics, formalized in this
-  Idris codebase) — arenas and lenses as polynomial functors and
-  their natural transformations follow Spivak, *Polynomial
-  Functors: A General Theory of Interaction*, §2, and
-  Kock, *Polynomial Functors and Trees*; the ADT / substitution
-  layers are standard (nLab,
+  Arenas and lenses as polynomial functors and their natural
+  transformations follow Spivak, *Polynomial Functors: A General
+  Theory of Interaction*, §2, and Kock, *Polynomial Functors and
+  Trees*; the ADT / substitution layers are standard (nLab,
   [polynomial functor](https://ncatlab.org/nlab/show/polynomial+functor)).
-  Searched 2026-05-31, scope Idris2 standard library, nLab.
+  We have found no prior Idris formalization of this arena layer.
 
 - [`src/LanguageDef/Atom.idr`](../../src/LanguageDef/Atom.idr)
   — the three-layer enumerated atom sort used in Geb
@@ -138,13 +132,11 @@ anticipated but not yet present.
   atoms bounded by `IMPL_ATOM_SZ`; and `SyntaxAtom` is their
   coproduct. `OldAtom` is a legacy 32-element enumeration with a
   manually written `VectDecoder`/`NatEncoder` pair.
-  Provenance: category 2 (known concept, formalized in this
-  Idris codebase) — enumerated atom sorts with decidable
-  equality are standard (Pierce, *Types and Programming
-  Languages*, §11); the `VectDecoder`/`FinDecEncoding`
-  infrastructure reuses `Library.IdrisUtils` combinators.
-  Searched 2026-05-31, scope Idris2 standard library, general
-  knowledge.
+  Enumerated atom sorts with decidable equality are standard
+  (Pierce, *Types and Programming Languages*, §11); the
+  `VectDecoder`/`FinDecEncoding` infrastructure reuses
+  `Library.IdrisUtils` combinators. We have found no prior Idris
+  formalization of this three-layer atom sort.
 
 - [`src/LanguageDef/ComputationalEffects.idr`](../../src/LanguageDef/ComputationalEffects.idr)
   — placeholder module for the algebraic-effects layer; it
@@ -152,12 +144,11 @@ anticipated but not yet present.
   definitions at present. Its role is to provide the eventual
   treatment of computational effects (state, exceptions,
   nondeterminism) for the Geb language.
-  Provenance: category 2 (known concept, stub only) — algebraic
-  effects and effect handlers are a standard topic
+  Algebraic effects and effect handlers are a standard topic
   (Plotkin–Power, *Algebraic Operations and Generic Effects*,
   MSCS 2004; nLab,
   [algebraic effect](https://ncatlab.org/nlab/show/algebraic+effect)).
-  Searched 2026-05-31, scope Idris2 standard library, nLab.
+  We have found no prior Idris formalization of this effects layer.
 
 - [`src/LanguageDef/Embedded.idr`](../../src/LanguageDef/Embedded.idr)
   — placeholder module for the embedded-language layer; it
@@ -165,11 +156,10 @@ anticipated but not yet present.
   independent definitions at present. Its role is to provide the
   eventual mechanism for specifying languages embedded within
   Geb's core.
-  Provenance: category 2 (known concept, stub only) — embedded
-  languages and object/meta-language separation are standard
-  (Reynolds, *Definitional Interpreters for Higher-Order
-  Programming Languages*, 1972). Searched 2026-05-31, scope
-  Idris2 standard library, general knowledge.
+  Embedded languages and object/meta-language separation are
+  standard (Reynolds, *Definitional Interpreters for Higher-Order
+  Programming Languages*, 1972). We have found no prior Idris
+  formalization of this embedded-language layer.
 
 - [`src/LanguageDef/FullLanguageDef.idr`](../../src/LanguageDef/FullLanguageDef.idr)
   — the assembly capstone that re-exports all language layers
@@ -180,8 +170,8 @@ anticipated but not yet present.
   single module that downstream consumers (in particular
   `Library.CategoryTheory`) import to obtain the entire
   language definition.
-  Provenance: not applicable — no mathematical content; the
-  module is organizational infrastructure only.
+  The module contains no mathematical content; it is organizational
+  infrastructure only.
 
 ## Alternative formulations
 

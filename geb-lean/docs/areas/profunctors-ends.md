@@ -79,12 +79,11 @@ codebase predates that addition and builds its own.
   profunctors `constProfunctor`/`covProfunctor`/`contravProfunctor`;
   the `Collage` category of a profunctor; and the hom-bifunctor
   variants `homFromFunctorBifunctor`/`homToFunctorBifunctor`.
-  Provenance: standard mathematics, first Lean formalization in
-  this generality — profunctors are textbook (Loregian 2021;
-  nLab "profunctor"); the `D`-valued partial-map API and `Collage`
-  are original packaging over mathlib's
-  `CategoryTheory.Functor.Hom`. Searched 2026-05-31, scope
-  Mathlib (leansearch/loogle), nLab.
+  Profunctors are textbook (Loregian 2021; nLab "profunctor");
+  the `D`-valued partial-map API and `Collage` are original
+  packaging over mathlib's `CategoryTheory.Functor.Hom`, for
+  which we have found no prior Lean formalization in this
+  generality.
 
 - [`GebLean/Utilities/TwistedArrow.lean`](../../GebLean/Utilities/TwistedArrow.lean)
   — twisted-arrow and co-twisted-arrow categories. Defines
@@ -93,13 +92,11 @@ codebase predates that addition and builds its own.
   `ᵒᵖ'`; establishes `twistedArrowEquivTwistedArrowOp` (self-duality
   `Tw(C) ≌ Tw(Cᵒᵖ)`), the categorical isomorphism
   `(TwistedArrow C)ᵒᵖ ≅ CoTwistedArrow C`, and helper accessors
-  `twObjMk`/`twDom`/`twCod`/`twArr`/`twHomMk`. Provenance: standard
-  mathematics, first Lean formalization here — the twisted-arrow
+  `twObjMk`/`twDom`/`twCod`/`twArr`/`twHomMk`. The twisted-arrow
   category is described in Loregian 2021 §1; mathlib later added
-  `CategoryTheory.TwistedArrow` (post this code); no prior formalization
-  of the `CoTwistedArrow` and the `(TwistedArrow C)ᵒᵖ ≅ CoTwistedArrow C`
-  isomorphism found. Searched 2026-05-31, scope Mathlib
-  (leansearch/loogle), nLab.
+  `CategoryTheory.TwistedArrow` (post this code). We have found
+  no prior formalization of `CoTwistedArrow` or the
+  `(TwistedArrow C)ᵒᵖ ≅ CoTwistedArrow C` isomorphism.
 
 - [`GebLean/Utilities/EndsAndCoends.lean`](../../GebLean/Utilities/EndsAndCoends.lean)
   — computable ends and coends for `Type`-valued profunctors.
@@ -108,11 +105,10 @@ codebase predates that addition and builds its own.
   relation `typeCoendRel`; `typeEndWedge_isLimit` and
   `typeCoendCowedge_isColimit` show these coincide with mathlib's
   noncomputable constructions. Also defines `typeEndFunctor` and
-  `typeCoendFunctor`. Provenance: standard mathematics, first
-  computable Lean formalization — the end/coend theory is
-  classical (Mac Lane, Loregian 2021); mathlib's `end_`/`coend` are
-  noncomputable; the computable subtype/quotient implementations are
-  original. Searched 2026-05-31, scope Mathlib (leansearch/loogle).
+  `typeCoendFunctor`. The end/coend theory is classical (Mac Lane;
+  Loregian 2021); mathlib's `end_`/`coend` are noncomputable. The
+  computable subtype/quotient implementations are original; we
+  have found no prior computable Lean formalization.
 
 - [`GebLean/Utilities/PowersAndCopowers.lean`](../../GebLean/Utilities/PowersAndCopowers.lean)
   — type-indexed (co)powers for categories. The typeclass
@@ -120,12 +116,10 @@ codebase predates that addition and builds its own.
   injections, a universal `desc` map, and laws `fac`/`uniq`;
   functoriality in both argument positions via `mapVal`/`mapIdx`;
   dual `HasPowers` and `X ^. S`. Used throughout the area to
-  state end-power duality. Provenance: standard mathematics,
-  first Lean formalization here — type-indexed (co)powers are
-  described in Kelly, *Basic Concepts of Enriched Category Theory*
-  (1982), §3; no prior Lean formalization of the typeclass-bundled
-  form found. Searched 2026-05-31, scope Mathlib (leansearch),
-  nLab.
+  state end-power duality. Type-indexed (co)powers are described
+  in Kelly, *Basic Concepts of Enriched Category Theory* (1982),
+  §3; we have found no prior Lean formalization of the
+  typeclass-bundled form.
 
 - [`GebLean/Utilities/ConnectedComponents.lean`](../../GebLean/Utilities/ConnectedComponents.lean)
   — connected-component utilities. `connectedComponentsOpEquiv`
@@ -133,11 +127,10 @@ codebase predates that addition and builds its own.
   ConnectedComponents J`; `IsInhabitedConnected` is the
   data-level strengthening of `IsConnected` with an `Inhabited`
   instance rather than a mere `Nonempty`. Used by the
-  comprehensive-factorization construction. Provenance: standard
-  mathematics, first Lean formalization here — the op-equivalence
+  comprehensive-factorization construction. The op-equivalence
   of connected components is folklore; mathlib has `IsConnected`
-  but not the op-equivalence or `IsInhabitedConnected`. Searched
-  2026-05-31, scope Mathlib (leansearch/loogle).
+  but we have found no prior Lean formalization of the
+  op-equivalence or `IsInhabitedConnected`.
 
 - [`GebLean/Utilities/TwArrPresheaf.lean`](../../GebLean/Utilities/TwArrPresheaf.lean)
   — functor categories over the twisted-arrow category. Defines
@@ -145,11 +138,10 @@ codebase predates that addition and builds its own.
   `TwArrPresheaf`/`TwArrOpCopresheaf`/`TwArrOpPresheaf` variants;
   `sliceEquivTwArrCopresheaf : Over hom' ≌ TwArrCopresheaf C`
   via the slice–copresheaf equivalence; and the slice presheaf
-  induced by a `TwArrCopresheaf` via `slicePresheaf`. Provenance:
-  standard mathematics, first Lean formalization here — the
-  slice-over-hom equivalence to copresheaves on the twisted arrow
-  category is noted in Loregian 2021 §1; no prior Lean formalization
-  found. Searched 2026-05-31, scope Mathlib (leansearch), nLab.
+  induced by a `TwArrCopresheaf` via `slicePresheaf`. The
+  slice-over-hom equivalence to copresheaves on the twisted-arrow
+  category is noted in Loregian 2021 §1; we have found no prior
+  Lean formalization.
 
 - [`GebLean/Paranatural.lean`](../../GebLean/Paranatural.lean)
   — category of diagonal elements and paranatural transformations.
@@ -158,11 +150,9 @@ codebase predates that addition and builds its own.
   morphisms; `DiagElem.category` assembles the category of diagonal
   elements; `Paranat F G` is the type of paranatural transformations
   from `F` to `G`, with `Paranat.comp` and the `parana tCategory`.
-  Follows Definition 2.7 in Neumann 2023. Provenance: cat 2
-  (known mathematics, first Lean formalization) — paranatural
-  transformations appear in Neumann 2023 and Uustalu; no prior
-  Lean formalization found. Searched 2026-05-31, scope Mathlib
-  (leansearch), nLab.
+  Follows Definition 2.7 in Neumann 2023. Paranatural
+  transformations appear in Neumann 2023 and Uustalu; we have
+  found no prior Lean formalization.
 
 - [`GebLean/ParanatAlg.lean`](../../GebLean/ParanatAlg.lean)
   — paranatural transformations and initial algebras. Defines
@@ -174,11 +164,9 @@ codebase predates that addition and builds its own.
   initial algebra. Follows Neumann 2023 §4, citing Uustalu. Also
   defines `MendlerAlgebra G`, the restricted cowedge
   `RestrictedCowedge G W`, and `GExtFunctor G` (via restricted
-  coend). Provenance: cat 2 (known mathematics, first Lean
-  formalization) — the algebra-profunctor equivalence and
-  Mendler algebra formulation follow Vene 2000 §5 and Neumann
-  2023; no prior Lean formalization found in mathlib.
-  Searched 2026-05-31, scope Mathlib (leansearch), nLab.
+  coend). The algebra-profunctor equivalence and Mendler algebra
+  formulation follow Vene 2000 §5 and Neumann 2023; we have
+  found no prior Lean formalization in mathlib.
 
 - [`GebLean/HexagonCat.lean`](../../GebLean/HexagonCat.lean)
   — the hexagon category of bifunctor transformations.
@@ -188,13 +176,13 @@ codebase predates that addition and builds its own.
   also defines `ProfDialgebraProf P Q` (the profunctor
   `(a,b) ↦ P(b,a) ⟶ Q(a,b)`) and establishes
   `hexagonCatEquivDiagElem : HexagonObj P Q ≌ DiagElem
-  (ProfDialgebraProf P Q)`. Provenance: cat 1 (novel mathematics)
-  — the hexagon category and its identification with diagonal
-  elements of a profunctor-dialgebra profunctor are not in the
-  published literature; nearest antecedent is the dialgebra
-  category for ordinary functors (Uustalu, nLab "dialgebra").
-  Searched 2026-05-31, scope Mathlib (leansearch), nLab,
-  Loregian 2021. `unverified`.
+  (ProfDialgebraProf P Q)`. The hexagon category and its
+  identification with diagonal elements of a
+  profunctor-dialgebra profunctor are not in the published
+  literature; the nearest antecedent is the dialgebra category
+  for ordinary functors (Uustalu; nLab "dialgebra"); we have
+  found no prior treatment in the literature, including Loregian,
+  *Coend Calculus* (2021). (Unverified.)
 
 - [`GebLean/Weighted.lean`](../../GebLean/Weighted.lean)
   — weighted limits and colimits via the twisted-arrow category.
@@ -203,12 +191,10 @@ codebase predates that addition and builds its own.
   cones over this functor to wedge projections; and
   `cone_determined_by_wedge_components` shows a cone is determined
   by its diagonal components. Also defines `weightedCoconeDiagram`
-  and the `profPullback` of a profunctor along a functor. Provenance:
-  standard mathematics, first Lean formalization here — the
+  and the `profPullback` of a profunctor along a functor. The
   characterization of wedges as cones over the twisted-arrow
   category is in Loregian 2021 §1 and Riehl, "Weighted Limits
-  and Colimits" (2014); no prior Lean formalization found.
-  Searched 2026-05-31, scope Mathlib (leansearch/loogle), nLab.
+  and Colimits" (2014); we have found no prior Lean formalization.
 
 - [`GebLean/WeightedAlg.lean`](../../GebLean/WeightedAlg.lean)
   — Mendler–Lambek correspondence via restricted coends. Defines
@@ -217,9 +203,8 @@ codebase predates that addition and builds its own.
   paranatural transformations), `ConventionalAlgebra`, and
   `mendlerAlgPowerEndEquiv : MendlerAlgebra G ≌
   PowerEndMendlerAlgebra G`. Implements Theorem 5.19 of Vene 2000.
-  Provenance: cat 2 (known mathematics, first Lean formalization)
-  — follows Vene 2000 §5.3–5.7; no prior Lean formalization found.
-  Searched 2026-05-31, scope Mathlib (leansearch), nLab.
+  This follows Vene 2000 §5.3–5.7; we have found no prior Lean
+  formalization.
 
 - [`GebLean/DinaturalNumbers.lean`](../../GebLean/DinaturalNumbers.lean)
   — endo-paranatural transformations of the hom-profunctor on
@@ -227,12 +212,10 @@ codebase predates that addition and builds its own.
   `iterateN n f` iterates `f` exactly `n` times; `natToParanat`
   sends `n` to the "iterate n times" transformation; the round-trip
   bijection `paranatNatEquiv : Paranat HomProf HomProf ≃ ℕ` is the
-  main result. Provenance: cat 2 (known mathematics, first Lean
-  formalization) — the characterization of paranatural endo-
+  main result. The characterization of paranatural endo-
   transformations of the hom functor as `ℕ` is noted in Neumann
   2023 and attributed to the classical "Hom(Id,Id) ≅ ℕ" result
-  (Freyd–Scedrov); no prior Lean formalization found. Searched
-  2026-05-31, scope Mathlib (leansearch), nLab.
+  (Freyd–Scedrov); we have found no prior Lean formalization.
 
 - [`GebLean/ProfAlg.lean`](../../GebLean/ProfAlg.lean)
   — polynomial profunctors and their algebras. `PolyProf` packages
@@ -244,13 +227,11 @@ codebase predates that addition and builds its own.
   polynomial profunctor as a categorical profunctor. This module
   bridges the polynomial-functors area (which assigns the file
   there via dependency on `Polynomial.lean` and `PolyAlg.lean`)
-  with the profunctor layer. Provenance: cat 1/2 (known polynomial
-  functor theory extended to the profunctor setting) — polynomial
-  functors are standard (Gambino–Kock 2013; nLab "polynomial
-  functor"); the bivariate `PolyProf` formulation is original to
-  this codebase; no prior Lean formalization of polynomial
-  profunctors found. Searched 2026-05-31, scope Mathlib
-  (leansearch), nLab.
+  with the profunctor layer. Polynomial functors are standard
+  (Gambino–Kock 2013; nLab "polynomial functor"); the bivariate
+  `PolyProf` formulation, extending polynomial functor theory to
+  the profunctor setting, is original to this codebase; we have
+  found no prior Lean formalization of polynomial profunctors.
 
 - [`GebLean/Factorization.lean`](../../GebLean/Factorization.lean)
   — factorization categories and their relation to twisted arrows.
@@ -261,12 +242,11 @@ codebase predates that addition and builds its own.
   `TotalFactObj` (the total factorization category),
   `factorisationUnderOverEquiv`/`factorisationOverUnderEquiv`,
   and the reflective inclusion `factorisationToOverTw ⊣
-  overTwToFactorisation`. Provenance: standard mathematics —
-  the factorization category is classical (nLab "factorization
-  category"); the `Cat`-valued functor on twisted arrows and the
-  reflective embedding in `Over(twObjMk f)` are original
-  constructions; no prior Lean formalization of these combinings
-  found. Searched 2026-05-31, scope Mathlib (leansearch), nLab.
+  overTwToFactorisation`. The factorization category is classical
+  (nLab "factorization category"); the `Cat`-valued functor on
+  twisted arrows and the reflective embedding in `Over(twObjMk f)`
+  are original constructions; we have found no prior Lean
+  formalization of these combinations.
 
 - [`GebLean/ComprehensiveFactorization.lean`](../../GebLean/ComprehensiveFactorization.lean)
   — the Street–Walters comprehensive factorization. Defines
@@ -279,12 +259,10 @@ codebase predates that addition and builds its own.
   `comprehensiveFactorization_comm : comprehensiveE ⋙ comprehensiveM = F`.
   Street and Walters 1973; also Johnstone, *Sketches of an Elephant*
   B2.5.
-  Provenance: standard mathematics, first Lean formalization here
-  — the comprehensive factorization theorem is in Street–Walters
-  1973 and Johnstone; no prior Lean formalization found in mathlib
-  (which has `Functor.Final` and `Grothendieck` separately but
-  not the combined factorization). Searched 2026-05-31, scope
-  Mathlib (leansearch/loogle), nLab.
+  The comprehensive factorization theorem is in Street–Walters
+  1973 and Johnstone; we have found no prior Lean formalization
+  in mathlib (which has `Functor.Final` and `Grothendieck`
+  separately but not the combined factorization).
 
 - [`GebLean/ComprehensiveWeighted.lean`](../../GebLean/ComprehensiveWeighted.lean)
   — compatibility between the comprehensive factorization and
@@ -294,12 +272,10 @@ codebase predates that addition and builds its own.
   `weightedCoconeDiagram_eq` (the weighted cocone diagram equals
   `elementsPre_π W ⋙ G`); and `comprehensiveCoconeEquiv`
   (the equivalence between cocones for `F ⋙ G` and weighted
-  cocones over the comprehensive factorization). Provenance:
-  standard mathematics, first Lean formalization here — the
-  connection between the comprehensive factorization and colimit
-  formulas is noted in Street 1980 and Loregian 2021; no prior
-  Lean formalization found. Searched 2026-05-31, scope Mathlib
-  (leansearch), nLab.
+  cocones over the comprehensive factorization). The connection
+  between the comprehensive factorization and colimit formulas is
+  noted in Street 1980 and Loregian 2021; we have found no prior
+  Lean formalization.
 
 - [`GebLean/WedgeWeightComputation.lean`](../../GebLean/WedgeWeightComputation.lean)
   — concrete descriptions of the wedge weight functor. The wedge
@@ -308,13 +284,12 @@ codebase predates that addition and builds its own.
   sends diagonal elements to the wedge weight at identity twisted
   arrows; `wedgeWeightIdentityMap_injective` proves injectivity;
   concrete `diagApp` descriptions for `AlgProf`, `CoalgProf`, and
-  `HomProf`. Provenance: cat 1 (novel mathematics) — the wedge
-  weight construction and its role in representing paranatural
-  transformations via `paranatWeightedLimitEquiv` are not in the
-  standard literature on ends; nearest antecedents are the
-  weighted-limit characterization of ends (Kelly 1982, §3; Loregian
-  2021). Searched 2026-05-31, scope Mathlib (leansearch), nLab.
-  `unverified`.
+  `HomProf`. The wedge weight construction and its role in
+  representing paranatural transformations via
+  `paranatWeightedLimitEquiv` are not in the standard literature
+  on ends; the nearest antecedents are the weighted-limit
+  characterization of ends (Kelly 1982, §3; Loregian 2021).
+  (Unverified.)
 
 - [`GebLean/RestrictedCoendAsColimit.lean`](../../GebLean/RestrictedCoendAsColimit.lean)
   — restricted coends as colimits over the category of elements.
@@ -323,11 +298,9 @@ codebase predates that addition and builds its own.
   equivalent to `Over pt`; constructs the diagram functor
   `Over pt ⥤ C` sending `(A, f : A ⟶ pt)` to `G(A,A)`; and
   establishes the colimit formula `G^e(pt) ≅ colim_{Over pt} G(-,-)`.
-  Follows Kelly 1982 §3.4 and Vene 2000. Provenance: standard
-  mathematics, first Lean formalization here — the Kan extension/
-  colimit interpretation of restricted coends follows Kelly 1982;
-  no prior Lean formalization found. Searched 2026-05-31, scope
-  Mathlib (leansearch/loogle), nLab.
+  Follows Kelly 1982 §3.4 and Vene 2000. The Kan extension/colimit
+  interpretation of restricted coends follows Kelly 1982; we have
+  found no prior Lean formalization.
 
 - [`GebLean/MendlerLambekEndPower.lean`](../../GebLean/MendlerLambekEndPower.lean)
   — Mendler–Lambek equivalence via ends and powers.
@@ -337,11 +310,9 @@ codebase predates that addition and builds its own.
   the combined characterization `Hom(G^e(pt), Y) ≃ ∫_A
   Hom(G(A,A), Y^{A→pt})` is the main result, as
   `mendlerAlgPowerEndEquiv : MendlerAlgebra G ≌
-  PowerEndMendlerAlgebra G`. Provenance: standard mathematics,
-  first Lean formalization here — the end-power re-expression
-  of the Mendler–Lambek equivalence follows Vene 2000 §5 and
-  Kelly 1982 §3; no prior Lean formalization found. Searched
-  2026-05-31, scope Mathlib (leansearch/loogle), nLab.
+  PowerEndMendlerAlgebra G`. The end-power re-expression of the
+  Mendler–Lambek equivalence follows Vene 2000 §5 and Kelly 1982
+  §3; we have found no prior Lean formalization.
 
 - [`GebLean/MendlerLambekPresheaf.lean`](../../GebLean/MendlerLambekPresheaf.lean)
   — Mendler–Lambek equivalence for presheaf categories.
@@ -351,11 +322,9 @@ codebase predates that addition and builds its own.
   PowerEndMendlerAlgebra G` holds unconditionally, and
   `presheafMendlerLambekEndPowerEquiv : PowerEndMendlerAlgebra G
   ≌ ConventionalAlgebra (GExtFunctor G)` under
-  `HasAllHomToProfCoends G`. Provenance: standard mathematics,
-  first Lean formalization here — the presheaf-category
-  instantiation is implicit in Vene 2000; no prior Lean
-  formalization found. Searched 2026-05-31, scope Mathlib
-  (leansearch), nLab.
+  `HasAllHomToProfCoends G`. The presheaf-category instantiation
+  is implicit in Vene 2000; we have found no prior Lean
+  formalization.
 
 ## Alternative formulations
 

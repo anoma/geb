@@ -98,32 +98,31 @@ the simplicial identities follow from the comonad laws.
   `PolyFunctorBetweenCat` (polynomial functors `Over X → Over Y`),
   together with the equivalence `familySliceEquiv : FamilyCat Type Y
   ≃ Over Y` that underlies the W-type diagram presentation.
-  Provenance: known mathematics, first Lean formalization — polynomial
-  functor presentation via Grothendieck/family-slice equivalence
-  (Gambino–Kock 2013; Spivak–Niu 2024); mathlib has
-  `CategoryTheory.Limits.Over` and `Grothendieck` but not this
-  specific polynomial-functor category; searched 2026-05-31, scope
-  mathlib (leansearch/loogle), nLab.
+  The polynomial-functor presentation via the
+  Grothendieck/family-slice equivalence is standard (Gambino–Kock
+  2013; Spivak–Niu 2024); mathlib has `CategoryTheory.Limits.Over`
+  and `Grothendieck` but not this specific polynomial-functor
+  category, so we have found no prior Lean formalization of it.
 
 - [`GebLean/PolyAdjunctions.lean`](../../GebLean/PolyAdjunctions.lean)
   — position and monomial functors; adjunctions between polynomial
   functor categories and `Type`. `ccrPosFunctor` extracts positions;
   monomial functors embed `Type` into polynomial functors; free/cofree
   adjunctions and slice-based adjunctions are constructed.
-  Provenance: known mathematics, first Lean formalization — free/
-  forgetful and monomial-functor adjunctions standard in Spivak–Niu
-  2024; mathlib has `Adjunction` machinery but not these specific
-  functors; searched 2026-05-31, scope mathlib (leansearch).
+  The free/forgetful and monomial-functor adjunctions are standard
+  (Spivak–Niu 2024); mathlib has `Adjunction` machinery but not
+  these specific functors, so we have found no prior Lean
+  formalization of them.
 
 - [`GebLean/PolyUMorph.lean`](../../GebLean/PolyUMorph.lean) — limits
   and colimits in `PolyFunctorBetweenCat X Y`. `polyBetweenProd` and
   `polyBetweenCoprod` construct arbitrary-indexed products and
   coproducts of polynomial functors via position-tupling and
   fiber-coproduct constructions (Spivak–Niu 2024 §5.4).
-  Provenance: known mathematics, first Lean formalization — (co)product
-  formulas from Spivak–Niu 2024 §5.4; mathlib has
-  `CategoryTheory.Limits.Shapes.Products`; searched 2026-05-31, scope
-  mathlib (loogle).
+  The (co)product formulas are from Spivak–Niu 2024 §5.4; mathlib
+  has `CategoryTheory.Limits.Shapes.Products` but not this
+  polynomial-functor instantiation, so we have found no prior Lean
+  formalization of it.
 
 - [`GebLean/Utilities/PolyCombinators.lean`](../../GebLean/Utilities/PolyCombinators.lean)
   — combinators for the adjoint triple `Σ_f ⊣ f* ⊣ Π_f` induced by
@@ -131,11 +130,10 @@ the simplicial identities follow from the comonad laws.
   `polyDepProd` represent base change, dependent sum, and dependent
   product as polynomial functors; every polynomial decomposes as
   `Σ_t ∘ Π_p ∘ s*` for a suitable diagram (Gambino–Kock 2013).
-  Provenance: known mathematics, first Lean formalization — the
-  `Σ ⊣ f* ⊣ Π` adjoint triple and polynomial decomposition from
-  Gambino–Kock 2013; relevant mathlib material in
-  `CategoryTheory.Comma.Over.Pullback`; searched 2026-05-31, scope
-  mathlib (leansearch/loogle).
+  The `Σ ⊣ f* ⊣ Π` adjoint triple and the polynomial decomposition
+  are from Gambino–Kock 2013; relevant mathlib material exists in
+  `CategoryTheory.Comma.Over.Pullback`, but we have found no prior
+  Lean formalization of these specific combinators.
 
 ### Algebra and coalgebra of polynomial endofunctors
 
@@ -150,10 +148,10 @@ existence and combinators:
   `CategoryTheory.Endofunctor.Algebra`) and `PolyFix` (initial algebra
   carrier / W-type) are the headline declarations. `PolyCofixCarrier`
   and the cofree comonad are also constructed here.
-  Provenance: known mathematics, first Lean formalization — polynomial
-  algebra categories via mathlib `Endofunctor.Algebra`; W-types as
-  initial algebras (Abbott–Altenkirch–Ghani 2005; Gambino–Kock 2013);
-  searched 2026-05-31, scope mathlib (leansearch).
+  Polynomial algebra categories via mathlib `Endofunctor.Algebra`
+  and W-types as initial algebras are standard (Abbott–Altenkirch–
+  Ghani 2005; Gambino–Kock 2013); we have found no prior Lean
+  formalization of this polynomial-endofunctor instantiation.
 
 - [`GebLean/PolyAlgUMorph.lean`](../../GebLean/PolyAlgUMorph.lean)
   — algebra and coalgebra combinators: `algPullback`,
@@ -161,11 +159,10 @@ existence and combinators:
   `algEqRestrict`, `coalgCoeqExtend`, and their functor forms. These
   construct algebra/coalgebra instances for composite endofunctors
   from component data via the universal morphisms in `PolyUMorph`.
-  Provenance: known mathematics, first Lean formalization — algebra
-  pullback and coalgebra pushforward are standard (mathlib
+  Algebra pullback and coalgebra pushforward are standard (mathlib
   `CategoryTheory.Endofunctor.Algebra`); the specific combinator
-  families are formalized here; searched 2026-05-31, scope mathlib
-  (leansearch).
+  families assembled here have no prior Lean formalization we have
+  found.
 
 - [`GebLean/PolyLimits.lean`](../../GebLean/PolyLimits.lean) —
   `polyToOverFunctor` (evaluating a polynomial functor to a functor
@@ -173,11 +170,11 @@ existence and combinators:
   coproduct of representables preserves limits that commute with
   coproducts (preconnected index categories), using `ccrEvalIndex_const`
   and the `PreservesLimitsOfShape` instances.
-  Provenance: known mathematics, first Lean formalization — coproducts
-  of representables preserve connected limits (Yoneda + coproduct–
-  connected-limit commutation); mathlib has
-  `CategoryTheory.Limits.Preserves`; searched 2026-05-31, scope
-  mathlib (loogle).
+  The fact that coproducts of representables preserve connected
+  limits follows from Yoneda and coproduct–connected-limit
+  commutation; mathlib has `CategoryTheory.Limits.Preserves`, but
+  we have found no prior Lean formalization of this polynomial
+  instantiation.
 
 - [`GebLean/PolyFilteredColimits.lean`](../../GebLean/PolyFilteredColimits.lean)
   — finitary polynomial endofunctors preserve filtered colimits.
@@ -185,11 +182,10 @@ existence and combinators:
   `overFilteredFactor` and the `PreservesFilteredColimits` instance
   are the headline results, proved by the same layered decomposition
   as `PolyLimits.lean`.
-  Provenance: known mathematics, first Lean formalization — finitary
-  functors preserve filtered colimits (standard; see Adámek–Rosický,
-  *Locally Presentable and Accessible Categories* 1994); applied here
-  to polynomial functors; searched 2026-05-31, scope mathlib
-  (leansearch/loogle).
+  The fact that finitary functors preserve filtered colimits is
+  standard (Adámek–Rosický, *Locally Presentable and Accessible
+  Categories* 1994); we have found no prior Lean formalization of
+  this result applied to polynomial functors.
 
 - [`GebLean/PolyAlgColimits.lean`](../../GebLean/PolyAlgColimits.lean)
   — colimits in `PolyAlg P` for finitary `P`. Finitary polynomial
@@ -197,11 +193,10 @@ existence and combinators:
   fiber types allow lifting morphisms through coequalizer maps section
   by section); combined with `PolyFilteredColimits.lean` and standard
   machinery this yields `polyAlgHasColimitsOfSize`.
-  Provenance: known mathematics, first Lean formalization —
-  reflexive-coequalizer preservation by finitary functors is a standard
-  result (Barr–Wells; Kelly; mathlib
-  `CategoryTheory.Monad.Coequalizer`); the polynomial instantiation
-  is formalized here; searched 2026-05-31, scope mathlib (leansearch).
+  Reflexive-coequalizer preservation by finitary functors is
+  standard (Barr–Wells; Kelly; mathlib
+  `CategoryTheory.Monad.Coequalizer`); we have found no prior
+  Lean formalization of the polynomial instantiation.
 
 ### Polynomial presentations and copresheaf cover
 
@@ -210,10 +205,9 @@ existence and combinators:
   morphisms) and its category `PolyPresentationCat D`. Objects represent
   the copresheaf `coeq(eval(α), eval(β))`; morphisms are commuting
   squares.
-  Provenance: known mathematics, first Lean formalization — presentation
-  of copresheaves as coequalizers of polynomials is a consequence of
-  the density formula; Spivak–Niu 2024 §5; searched 2026-05-31, scope
-  mathlib (leansearch), Spivak–Niu.
+  Presentation of copresheaves as coequalizers of polynomials is a
+  consequence of the density formula (Spivak–Niu 2024 §5); we have
+  found no prior Lean formalization of this construction.
 
 - [`GebLean/PolyPresentationEquiv.lean`](../../GebLean/PolyPresentationEquiv.lean)
   — `polyPresentationLocEquiv : PolyPresentationLoc D ≌ (D ⥤ Type)`.
@@ -222,11 +216,10 @@ existence and combinators:
   density / co-Yoneda formula; the equivalence follows by combining
   this with the colimit decomposition of any colimit as a coequalizer
   of coproducts.
-  Provenance: known mathematics, first Lean formalization — the
-  density formula (co-Yoneda) is standard; this localization
+  The density formula (co-Yoneda) is standard and the localization
   equivalence is made explicit in Spivak–Niu 2024 §5; mathlib has
-  `CategoryTheory.Elements` and `Limits.Presheaf`; searched 2026-05-31,
-  scope mathlib (leansearch/loogle).
+  `CategoryTheory.Elements` and `Limits.Presheaf`, but we have found
+  no prior Lean formalization of this equivalence.
 
 - [`GebLean/PolyCover.lean`](../../GebLean/PolyCover.lean) —
   representables are projective in presheaf and copresheaf categories;
@@ -234,22 +227,21 @@ existence and combinators:
   cover of a (co)presheaf as a coproduct of representables;
   `EnoughProjectives (Cᵒᵖ ⥤ Type (max u w v))` is the headline
   instance.
-  Provenance: known mathematics, possibly first Lean formalization —
-  projectivity of representables and existence of enough projectives in
-  presheaf categories is standard (e.g., Mac Lane–Moerdijk,
+  Projectivity of representables and the existence of enough
+  projectives in presheaf categories are standard (Mac Lane–Moerdijk,
   *Sheaves in Geometry and Logic* 1992); mathlib has
-  `CategoryTheory.Preadditive.Projective` but not
-  `EnoughProjectives` for presheaf categories; searched 2026-05-31,
-  scope mathlib (leansearch), unverified.
+  `CategoryTheory.Preadditive.Projective` but not `EnoughProjectives`
+  for presheaf categories; we have found no prior Lean formalization
+  of this result (unverified).
 
 - [`GebLean/CopresheafCoverComonad.lean`](../../GebLean/CopresheafCoverComonad.lean)
   — `copresheafCoverFunctor` extends the cover construction to an
   endofunctor on `C ⥤ Type`; `copresheafCoverCounit` and
   `copresheafCoverComult` assemble it into a comonad.
-  Provenance: known mathematics, first Lean formalization — the
-  comonad structure on the projective cover is standard in homological
-  algebra (see also `../research/coalgebra-copresheaf-math.md`);
-  searched 2026-05-31, scope mathlib (leansearch/loogle).
+  The comonad structure on the projective cover is standard in
+  homological algebra (see also
+  `../research/coalgebra-copresheaf-math.md`); we have found no
+  prior Lean formalization of this construction.
 
 - [`GebLean/BarResolution.lean`](../../GebLean/BarResolution.lean) —
   `barResolution : C → SimplicialObject C` for a comonad `G` on `C`.
@@ -257,11 +249,10 @@ existence and combinators:
   decompose the simplicial structure; `barSimplexMap` and `barQuiverMap`
   handle the functoriality; the simplicial identities follow from
   comonad laws.
-  Provenance: known mathematics, first Lean formalization — the bar
-  resolution of a comonad is classical (Eilenberg–Moore; Mac Lane,
-  *Homology* 1963); mathlib has `AlgebraicTopology.SimplicialObject`
-  but not this comonad instance; searched 2026-05-31, scope mathlib
-  (leansearch).
+  The bar resolution of a comonad is classical (Eilenberg–Moore;
+  Mac Lane, *Homology* 1963); mathlib has
+  `AlgebraicTopology.SimplicialObject` but not this comonad
+  instance, so we have found no prior Lean formalization of it.
 
 ### Distributive laws and GSOS
 
@@ -271,20 +262,19 @@ existence and combinators:
   `P`. Constructed via the anamorphism / terminal coalgebra universal
   property (`polyCofixUnfold`); the distributive law axioms are
   verified.
-  Provenance: known mathematics, first Lean formalization — the
-  canonical distributive law between the free monad and cofree comonad
-  of a container is described in Turi–Plotkin ("Towards a mathematical
-  operational semantics", 1997) and related literature; searched
-  2026-05-31, scope mathlib (leansearch), Turi–Plotkin, unverified.
+  The canonical distributive law between the free monad and cofree
+  comonad of a container is described in Turi–Plotkin ("Towards a
+  mathematical operational semantics", 1997) and related literature;
+  we have found no prior Lean formalization of it (unverified).
 
 - [`GebLean/PolyGSOS.lean`](../../GebLean/PolyGSOS.lean) — GSOS rules
   as bialgebras for the distributive law of
   `PolyDistributiveLaw.lean`. Assembles `GSOSRule`-structured
   bialgebras from `PolyUMorph.lean` combinators, with supporting
   `@[simp]` lemmas for evaluation and reindexing.
-  Provenance: known mathematics, first Lean formalization — GSOS rules
-  as distributive-law bialgebras (Turi–Plotkin 1997; Bartels 2004);
-  searched 2026-05-31, scope mathlib (leansearch), unverified.
+  GSOS rules as distributive-law bialgebras are standard (Turi–
+  Plotkin 1997; Bartels 2004); we have found no prior Lean
+  formalization of this construction (unverified).
 
 ### Dependent and twisted polynomial functors
 
@@ -294,12 +284,12 @@ existence and combinators:
   elements of `J × id`. Also defines `ccrProdId` (the `× id` operation
   extending directions by `Unit`) and the resulting `DepPolyFunctor`
   structure.
-  Provenance: novel mathematics — the dependent polynomial functor over
-  `∫(J × id)` as defined here; nearest antecedents are dependent
-  polynomial functors in the sense of Gambino–Kock and the
-  twisted-arrow/category-of-elements construction; mathlib has
-  `CategoryTheory.Elements`; searched 2026-05-31, scope mathlib
-  (leansearch), nLab, unverified.
+  The dependent polynomial functor over `∫(J × id)` as defined here
+  has no identified antecedent in the literature; the nearest related
+  material is dependent polynomial functors in the sense of Gambino–
+  Kock and the twisted-arrow/category-of-elements construction
+  (mathlib has `CategoryTheory.Elements`); we have found no prior
+  Lean formalization of this specific construction (unverified).
 
 - [`GebLean/ParamPoly.lean`](../../GebLean/ParamPoly.lean) — parametric
   polymorphism for endoprofunctors: `ProfRelLift` (relation lifting
@@ -310,10 +300,9 @@ existence and combinators:
   `GebLean.YonedaRelDouble`, which are assigned to the
   profunctors-and-ends area; it is listed here because it is assigned
   to this area in the partition.
-  Provenance: known mathematics, first Lean formalization — relation
-  lifting and full parametricity (Wadler 1989; Neumann, "Paranatural
-  Category Theory"); searched 2026-05-31, scope mathlib (leansearch),
-  nLab.
+  Relation lifting and full parametricity are standard (Wadler 1989;
+  Neumann, "Paranatural Category Theory"); we have found no prior
+  Lean formalization of these specific declarations.
 
 ### Free completions
 
@@ -322,41 +311,38 @@ existence and combinators:
   completion) and its category `ParallelPairCat C`; morphisms are
   commuting squares. When `C` has coequalizer data, the completion
   inherits coequalizers computed pointwise.
-  Provenance: known mathematics, first Lean formalization — free
-  coequalizer completion is a standard categorical construction (see
-  Bunge–Carboni 1995 dual); mathlib has
-  `CategoryTheory.Limits.Shapes.Equalizers`; searched 2026-05-31,
-  scope mathlib (leansearch).
+  Free coequalizer completion is a standard categorical construction
+  (Bunge–Carboni 1995, dual); mathlib has
+  `CategoryTheory.Limits.Shapes.Equalizers`, but we have found no
+  prior Lean formalization of this completion.
 
 - [`GebLean/EqualizerCompletion.lean`](../../GebLean/EqualizerCompletion.lean)
   — `CoreflexivePairObj C` (coreflexive pairs; objects of the free
   equalizer completion following Pitts / Bunge–Carboni 1995) and the
   category `CoreflexivePairCat C`; morphisms are `CoreflexiveRelStep`-
   equivalence classes of premorphisms.
-  Provenance: known mathematics, first Lean formalization — the Pitts
-  free equalizer completion (Bunge–Carboni, *The Symmetric Topos*, JPAA
-  105, 1995 pp. 237–238); no prior Lean formalization found; searched
-  2026-05-31, scope mathlib (leansearch/loogle).
+  The Pitts free equalizer completion is from Bunge–Carboni,
+  *The Symmetric Topos*, JPAA 105, 1995 pp. 237–238; we have found
+  no prior Lean formalization of this construction.
 
 - [`GebLean/EqualizerCompletionLimits.lean`](../../GebLean/EqualizerCompletionLimits.lean)
   — the free equalizer completion of a category with chosen finite
   products has all finite limits: finite products are inherited
   pointwise and equalizers are freely adjoined; the headline instance
   is `HasFiniteLimits (CoreflexivePairCat C)`.
-  Provenance: known mathematics, first Lean formalization — limit
-  inheritance in the Pitts completion (Bunge–Carboni 1995); mathlib
-  has `CategoryTheory.Limits.Constructions.LimitsOfProductsAndEqualizers`;
-  searched 2026-05-31, scope mathlib (loogle).
+  Limit inheritance in the Pitts completion is from Bunge–Carboni
+  1995; mathlib has
+  `CategoryTheory.Limits.Constructions.LimitsOfProductsAndEqualizers`,
+  but we have found no prior Lean formalization of this instance.
 
 - [`GebLean/EqualizerCompletionPBTO.lean`](../../GebLean/EqualizerCompletionPBTO.lean)
   — parameterized binary tree objects are preserved by the free
   equalizer completion: naturality lemmas for `cfpMap` and `cfpLift`
   within `CoreflexivePairCat` that enable lifting the `HasPBTO`
   instance.
-  Provenance: known mathematics, first Lean formalization — PBTO
-  preservation under limit completions follows the general pattern for
-  finite-limit theories; no prior formalization found; searched
-  2026-05-31, scope mathlib (leansearch).
+  PBTO preservation under limit completions follows the general
+  pattern for finite-limit theories; we have found no prior
+  formalization of this instance.
 
 ### Lawvere theory of binary trees
 
@@ -369,11 +355,9 @@ recursion bound:
   (parameterized BTO), the syntactic Lawvere theory `LawvereBTCat`
   with objects `ℕ` and morphisms `BTMorN n m = Fin m → BTMor1 n`
   generated by projections, `leaf`, `branch`, and `fold`.
-  Provenance: cat 1/2 (novel formalization) — parameterized BTO
-  analogous to parameterized NNO (nLab "natural numbers object
-  §with params"; Lawvere 1964); no prior Lean formalization of this
-  specific theory found; searched 2026-05-31, scope mathlib
-  (leansearch), nLab.
+  The parameterized BTO is analogous to the parameterized NNO (nLab,
+  "natural numbers object §with params"; Lawvere 1964); we have found
+  no prior Lean formalization of this specific theory.
 
 - [`GebLean/LawvereBTEq.lean`](../../GebLean/LawvereBTEq.lean) —
   the equality proof polynomial for `BTMor1`: seven-component
@@ -381,37 +365,36 @@ recursion bound:
   for branch and fold, and the two computation rules
   (`btMorEqReflPoly` through `btMorEqFoldBranchPoly`), together with
   `btMorRel` (the generated congruence relation).
-  Provenance: cat 1/2 — the equality polynomial for this specific
-  syntactic theory; no prior formalization; searched 2026-05-31, scope
-  mathlib (leansearch), nLab.
+  The equality polynomial for this specific syntactic theory has no
+  prior formalization we have found.
 
 - [`GebLean/LawvereBTQuot.lean`](../../GebLean/LawvereBTQuot.lean) —
   `BTMorNQuo` (equivalence classes of `BTMorN` under pointwise
   `btMorRel`) and the category `LawvereBTQuotCat` with composition
   lifted via `Quotient.lift₂`; the category laws follow from the
   syntactic laws via `Quotient.ind`.
-  Provenance: cat 1/2 — quotient of the syntactic Lawvere-BT theory;
-  standard quotient construction applied to this specific theory;
-  searched 2026-05-31, scope mathlib (leansearch).
+  The quotient is a standard construction applied to the syntactic
+  Lawvere-BT theory; we have found no prior Lean formalization of
+  this specific quotient category.
 
 - [`GebLean/LawvereBTInterp.lean`](../../GebLean/LawvereBTInterp.lean)
   — the interpretation functor `interpFunctor : LawvereBTQuotCat ⥤
   Type u`; `BT.fold_leaf`, `BT.fold_node`, `BT.leaf_ne_node`, and
   `BTMorNQuo.interpU` with faithfulness of the functor (`lawvereBTQuotCat_isSeparator`).
-  Provenance: cat 1/2 — standard model-theoretic interpretation of a
-  Lawvere theory into `Type`; faithfulness is novel to this specific
-  theory; searched 2026-05-31, scope mathlib
-  (`CategoryTheory.Generator`).
+  Model-theoretic interpretation of a Lawvere theory into `Type`
+  is standard; the faithfulness result (`lawvereBTQuotCat_isSeparator`)
+  is specific to this theory and has no prior formalization we have
+  found.
 
 - [`GebLean/LawvereBTPrimrec.lean`](../../GebLean/LawvereBTPrimrec.lean)
   — every morphism in `LawvereBTQuotCat` computes a primitive
   recursive function (under a Gödel encoding `BT ↔ ℕ`) and
   `interpFunctor` is not full (the Ackermann function is not in the
   image, using `Computability.Ackermann`).
-  Provenance: cat 1/2 — primitive recursion bound for tree
-  catamorphisms is standard (cf. `../research/lawvere-elementary-recursive.md`);
-  non-fullness via Ackermann is novel to this formalization; searched
-  2026-05-31, scope mathlib (`Computability.Ackermann`).
+  The primitive recursion bound for tree catamorphisms is standard
+  (see `../research/lawvere-elementary-recursive.md`); the non-
+  fullness argument via `Computability.Ackermann` is specific to
+  this formalization and has no prior precedent we have found.
 
 - [`GebLean/LawvereBTEqCompletion.lean`](../../GebLean/LawvereBTEqCompletion.lean)
   — `LawvereBTLexCat` (the free equalizer completion of
@@ -419,9 +402,9 @@ recursion bound:
   `EqualizerCompletionLimits`); `lexInterpFunctor` extends
   `interpFunctor` to `LawvereBTLexCat` by sending coreflexive pairs
   to equalizers in `Type`.
-  Provenance: cat 1/2 — free equalizer completion applied to the
-  Lawvere-BT theory; `lexInterpFunctor` construction is novel; no
-  prior formalization; searched 2026-05-31, scope mathlib (leansearch).
+  Applying the free equalizer completion to the Lawvere-BT theory
+  and extending `interpFunctor` to `lexInterpFunctor` are novel to
+  this development; we have found no prior formalization.
 
 ### PER category on binary trees
 
@@ -433,36 +416,35 @@ relations (PERs) on the BTO and its limit/colimit structure:
   symmetry and transitivity), `PERHom` (relation-preserving maps,
   modulo pointwise equivalence on the source domain), and the
   `Category (PERCat C)` instance for any `HasPBTO C`.
-  Provenance: cat 1/2 — PER categories internal to a Lawvere theory
-  of trees; nearest antecedent is the Effective Topos / PER model of
-  type theory (Hyland 1982); no prior Lean formalization in this
-  internal setting; searched 2026-05-31, scope mathlib (leansearch),
-  nLab.
+  PER categories internal to a Lawvere theory of trees have their
+  nearest antecedent in the Effective Topos / PER model of type
+  theory (Hyland 1982); we have found no prior Lean formalization
+  of this construction in the internal setting.
 
 - [`GebLean/TreePERLimits.lean`](../../GebLean/TreePERLimits.lean) —
   finite limits in `PERCat`: `terminalPERRel` (constantly-leaf
   relation); product PERs encode pairs via `branch`; equalizer PERs
   restrict to the domain where two morphisms agree.
-  Provenance: cat 1/2 — limit constructions in a PER category follow
-  the standard pattern (Scott, Hyland); formalized here for the BTO
-  setting; searched 2026-05-31, scope mathlib (leansearch).
+  Limit constructions in a PER category follow the standard pattern
+  (Scott; Hyland); we have found no prior Lean formalization of
+  these constructions in the BTO setting.
 
 - [`GebLean/TreePERColimits.lean`](../../GebLean/TreePERColimits.lean)
   — finite colimits in `PERCat`: `initialPERRel` (constantly-false
   relation, empty domain); coproduct PERs dispatch on a tag stored in
   `branch`.
-  Provenance: cat 1/2 — coproduct and initial PER constructions; same
-  antecedents as `TreePERLimits.lean`; searched 2026-05-31, scope
-  mathlib (leansearch).
+  Coproduct and initial PER constructions follow the same antecedents
+  as `TreePERLimits.lean`; we have found no prior Lean formalization
+  in the BTO setting.
 
 - [`GebLean/TreePERLawvereBT.lean`](../../GebLean/TreePERLawvereBT.lean)
   — converse transitivity in `LawvereBTQuotCat`: quantified Prop-
   valued transitivity implies equational transitivity. The proof uses
   `lawvereBTQuotCat_isSeparator` (from `LawvereBTInterp`) to reduce
   to global elements, then case-splits via `lawvereBT_bool_dichotomy`.
-  Provenance: cat 1/2 — transitivity equivalence specific to the
-  `LawvereBTQuotCat` model; no prior formalization; searched
-  2026-05-31, scope mathlib (leansearch).
+  The transitivity equivalence is specific to the
+  `LawvereBTQuotCat` model; we have found no prior formalization
+  of this result.
 
 ### Free topos with binary tree object
 
@@ -473,11 +455,10 @@ relations (PERs) on the BTO and its limit/colimit structure:
   coproducts, exponentials, subobject classifier, natural numbers, and
   `bt`; morphisms generated by structural combinators; `BinTree` and
   `BinTree.fold` for the concrete tree type.
-  Provenance: cat 1/2 — the free elementary topos with a BTO is a
-  standard categorical concept (Lambek–Scott, *Introduction to Higher
-  Order Categorical Logic* 1986); this two-level syntactic
-  formalization is novel; searched 2026-05-31, scope mathlib
-  (leansearch), nLab.
+  The free elementary topos with a BTO is a standard categorical
+  concept (Lambek–Scott, *Introduction to Higher Order Categorical
+  Logic* 1986); this two-level syntactic formalization is specific
+  to the development and has no prior precedent we have found.
 
 ### Type as a PBTO model
 
@@ -486,10 +467,9 @@ relations (PERs) on the BTO and its limit/colimit structure:
   `BT` and `typeElim`), `HasBoolDichotomy`, and `HasTreeEq` instances;
   witnesses that the abstract typeclass interfaces are inhabited in a
   model distinct from `LawvereBTQuotCat`.
-  Provenance: known mathematics, first Lean formalization — the
-  standard set-theoretic model of the BTO theory; the typeclass
-  packaging is specific to this formalization; searched 2026-05-31,
-  scope mathlib (leansearch).
+  The set-theoretic model of the BTO theory is standard; the
+  typeclass packaging is specific to this formalization and has no
+  prior Lean precedent we have found.
 
 ## Dependencies
 

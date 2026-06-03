@@ -70,13 +70,11 @@ question.
   headline declarations; the file establishes that right-spine
   naturals form a commutative cancellative monoid under `natPlus`
   and that `natEq` is an equality test.
-  Provenance: known maths, novel categorical presentation — the
-  operations themselves are standard recursive-function-theory
+  The operations themselves are standard recursive-function-theory
   arithmetic; their realization as morphisms in an abstract
   PBTO-bearing category with the exact computation rules proved
-  here has not been found in the literature or in mathlib.
-  Searched 2026-05-31, scope Mathlib (leansearch/loogle), nLab,
-  Lambek–Scott.
+  here has not been found in the literature or in mathlib
+  (Lambek–Scott; nLab).
 
 - [`GebLean/NatNNO.lean`](../../GebLean/NatNNO.lean) — NNO
   recursion interface derived from the PBTO, and Cantor
@@ -85,12 +83,11 @@ question.
   uniqueness theorem; `cantorUnpair` and
   `cantorUnpair_cantorPair` establish the retraction
   `cantorUnpair ; cantorPair = toRSpineNat`.
-  Provenance: known maths (NNO universal property is standard;
-  Cantor pairing and unpairing are classical), novel
-  formalization — the derivation of the NNO interface from a PBTO
-  via right-spine normalization, and the categorical proof of the
-  retraction, have not been found in prior formalizations.
-  Searched 2026-05-31, scope Mathlib (leansearch/loogle), nLab.
+  The NNO universal property is standard and Cantor pairing and
+  unpairing are classical; the derivation of the NNO interface
+  from a PBTO via right-spine normalization, and the categorical
+  proof of the retraction, have not been found in prior
+  formalizations.
 
 - [`GebLean/PSO.lean`](../../GebLean/PSO.lean) — parameterized
   snoclist object (PSO): initial algebra of `X ↦ 1 + X × B`.
@@ -98,12 +95,11 @@ question.
   `elim_nil`, `elim_snoc`, and `elim_uniq`; `IsPSTO` is the
   self-referential specialization (`B = L`); `nnoToIsPSO` derives
   a `PSO cfpTerminal nno.N` instance from any NNO.
-  Provenance: known maths (parameterized list objects appear in
-  categorical type theory; Uustalu–Vene, *Primitive (co)recursion
-  and course-of-value (co)iteration*, 1999), first Lean
+  Parameterized list objects appear in categorical type theory
+  (Uustalu–Vene, *Primitive (co)recursion and course-of-value
+  (co)iteration*, 1999); we have found no prior Lean
   formalization of this precise `X ↦ 1 + X × B`-algebra
-  interface together with the NNO-to-PSO instance. Searched
-  2026-05-31, scope Mathlib (leansearch), nLab.
+  interface together with the NNO-to-PSO instance.
 
 - [`GebLean/PLO.lean`](../../GebLean/PLO.lean) — parameterized
   cons-list object (PLO): initial algebra of `X ↦ 1 + B × X`,
@@ -112,10 +108,9 @@ question.
   `IsPLTO` is the self-referential specialization; `ploParaElim`
   is a paramorphism whose step sees the element, raw tail, and
   recursive result simultaneously.
-  Provenance: known maths (parameterized list algebras; see PSO
-  note above), first Lean formalization of this cons-list variant
-  with the explicit paramorphism. Searched 2026-05-31, scope
-  Mathlib (leansearch), nLab.
+  Parameterized list algebras are known mathematics (see PSO note
+  above); we have found no prior Lean formalization of this
+  cons-list variant with the explicit paramorphism.
 
 - [`GebLean/PSTONat.lean`](../../GebLean/PSTONat.lean) — NNO
   recursion derived from the PSTO (snoclist-of-trees) rather than
@@ -123,12 +118,10 @@ question.
   `pstoToRSpineNat` is the normalization fold; the file's
   `nnoElim`-analogue derives `nnoElim_ℓ` and `nnoElim_s`
   computation rules for the PSTO-based recursion.
-  Provenance: known maths, novel formalization — the derivation of
-  NNO recursion from a PSTO by replacing every element with `nil`
-  is an instance of the general PSO-to-NNO reduction, but the
-  specific PSTO-based route has not been found formalized
-  elsewhere. Searched 2026-05-31, scope Mathlib (leansearch),
-  nLab.
+  The derivation of NNO recursion from a PSTO by replacing every
+  element with `nil` is an instance of the general PSO-to-NNO
+  reduction, but the specific PSTO-based route has not been found
+  formalized elsewhere.
 
 - [`GebLean/ParanaturalTopos.lean`](../../GebLean/ParanaturalTopos.lean)
   — investigation of topos structure on profunctor subcategories
@@ -142,10 +135,9 @@ question.
   product structures for endo-profunctors
   (`endoProfTerminal_isTerminal`, `endoProfBinaryFan_isLimit`) and
   a diagonal equalizer `diagEqualizer`.
-  Provenance: novel mathematics — the assembly-functor approach
-  and diagonal-determinedness condition for a paranatural topos do
-  not appear in prior literature or mathlib. Searched 2026-05-31,
-  scope nLab, Mathlib (leansearch/loogle); related background in
+  The assembly-functor approach and diagonal-determinedness
+  condition for a paranatural topos do not appear in prior
+  literature or mathlib; related background in
   [`docs/research/paranatural-topos-research.md`](../research/paranatural-topos-research.md)
   and
   [`docs/research/parametric-copresheaf-topos.md`](../research/parametric-copresheaf-topos.md).
@@ -158,11 +150,10 @@ question.
   (Iᵒᵖ ⥤ Type w)` from the hom-profunctor and a whiskering by
   `ccrPresheafCatFunctor`; `praPositions`, `praDirectionsAt`, and
   `praEvalAtFunctor` are the accessor maps.
-  Provenance: novel formalization — the Weber/Gambino–Kock PRA
-  theory is known mathematics (category 3); its formalization as a
-  bifunctor-assembled presheaf category is novel (category 1/2).
-  Searched 2026-05-31, scope Mathlib (leansearch/loogle), nLab,
-  Weber 2004, Gambino–Kock 2013; background in
+  The Weber/Gambino–Kock PRA theory is known mathematics (Weber
+  2004; Gambino–Kock 2013); its formalization as a
+  bifunctor-assembled presheaf category is plausibly novel,
+  with no prior formalization found; background in
   [`docs/research/presheaf-pra.md`](../research/presheaf-pra.md).
 
 - [`GebLean/PresheafPRADiscrete.lean`](../../GebLean/PresheafPRADiscrete.lean)
@@ -172,11 +163,10 @@ question.
   categories; `polyBetweenPresheafPRAEquiv` establishes that
   polynomial functors between presheaf categories on discrete
   categories correspond to PRAs via the over-presheaf equivalence.
-  Provenance: known maths (`Over X ≌ presheaves on discrete X` is
-  standard; mathlib has `piEquivalenceFunctorDiscrete`), first
-  Lean formalization of the composite `ccrMapEquiv` transport and
+  `Over X ≌ presheaves on discrete X` is standard and mathlib
+  has `piEquivalenceFunctorDiscrete`; we have found no prior Lean
+  formalization of the composite `ccrMapEquiv` transport and
   the polynomial-to-PRA equivalence in the discrete case.
-  Searched 2026-05-31, scope Mathlib (leansearch).
 
 - [`GebLean/PresheafPRAUMorph.lean`](../../GebLean/PresheafPRAUMorph.lean)
   — limits in `CoprodCovarRepCat C`, enabling presheaf PRA
@@ -187,12 +177,10 @@ question.
   `ccrLimFunctor` and `ccrConstLimAdj` package the limit as a
   functor with adjoint, and `praReassemble` realizes a PRA's
   positions-and-directions data inside the limit.
-  Provenance: novel formalization — the limit construction for
-  `CoprodCovarRepCat` via Grothendieck is specific to this setting
-  and has not been found in prior work; the underlying limit
-  techniques are standard mathlib material (category 3/4 for
-  techniques, category 1/2 for this application). Searched
-  2026-05-31, scope Mathlib (leansearch/loogle).
+  The limit construction for `CoprodCovarRepCat` via Grothendieck
+  is specific to this setting and has not been found in prior
+  work; the underlying limit techniques are standard mathlib
+  material.
 
 ## Alternative formulations
 

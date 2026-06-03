@@ -46,7 +46,7 @@ Yoneda lemmas), representable density, setoid categories, skeletons,
 sigma-type and transport lemmas, and small computable variants of
 standard limit notions. Each module transcribes or extends a
 well-established standard concept; novelty, where it exists, is
-recorded in the module's own provenance line.
+recorded in the module's own description.
 
 ## Modules
 
@@ -68,18 +68,17 @@ recorded in the module's own provenance line.
   `Arrow.idInclusion` (the fully faithful inclusion of `C` into its
   arrow category via identity arrows) is simultaneously reflective and
   coreflective, giving `Arrow.idInclusionTriple`.
-  Provenance: utility — standard adjoint triple on the arrow category
-  (mathlib `CategoryTheory.Comma.Arrow`); searched 2026-05-31, scope
-  Mathlib.
+  A standard adjoint triple on the arrow category
+  (mathlib `CategoryTheory.Comma.Arrow`).
 
 - [`GebLean/Utilities/ArrowCospanAdjunction.lean`](../../GebLean/Utilities/ArrowCospanAdjunction.lean)
   — the coreflective adjunction `arrowCospanInclusion C ⊣
   cospanArrowCoreflector` exhibiting `Arrow C` as a coreflective
   subcategory of the cospan-diagram category, parameterized by an
   explicit (constructive) choice of pullback cones.
-  Provenance: utility — standard adjunction dual to the
-  arrow-span adjunction; no prior Lean formalization of the explicit
-  constructive form found; searched 2026-05-31, scope Mathlib.
+  A standard adjunction dual to the arrow-span adjunction; we
+  have found no prior Lean formalization of the explicit
+  constructive form.
 
 ### Computable limits
 
@@ -89,8 +88,7 @@ recorded in the module's own provenance line.
   `HasChosenFiniteProducts`, `HasChosenEqualizers`, and
   `HasChosenFiniteLimits` carry chosen limit cones as data; each
   implies its mathlib counterpart via derivation instances.
-  Provenance: utility — constructive restatement of standard limit
-  existence; searched 2026-05-31, scope Mathlib.
+  A constructive restatement of standard limit existence.
 
 ### Dagger categories
 
@@ -98,8 +96,8 @@ recorded in the module's own provenance line.
   — the `DaggerCategory` typeclass: an involutive, identity-on-objects,
   contravariant endoperation on morphisms satisfying `dagger_id`,
   `dagger_comp`, and `dagger_involutive`.
-  Provenance: utility — standard concept; searched 2026-05-31, scope
-  Mathlib (no `DaggerCategory` in current mathlib found).
+  The dagger category is a standard concept; we have found no
+  `DaggerCategory` in current mathlib.
 
 ### Distributive laws
 
@@ -107,8 +105,8 @@ recorded in the module's own provenance line.
   — the `DistributiveLaw` structure for a monad `T` over a comonad `D`:
   a natural transformation `D ⋙ T ⟶ T ⋙ D` satisfying four
   coherence axioms (unit, multiplication, counit, comultiplication).
-  Provenance: utility — standard concept (Street 1972, Beck 1969);
-  searched 2026-05-31, scope Mathlib.
+  A standard distributive law of a monad over a comonad
+  (Beck 1969; Street 1972).
 
 ### Double categories
 
@@ -119,9 +117,9 @@ recorded in the module's own provenance line.
   and their laws (associativity, identity, interchange).
   `DoubleFunctorData` and `VertTransData` provide the corresponding
   notion of strict double functor and vertical transformation.
-  Provenance: utility — standard strict double categories (Ehresmann
-  1963, Grandis–Paré 1999); searched 2026-05-31, scope Mathlib (no
-  strict double category in current mathlib found).
+  Standard strict double categories (Ehresmann 1963;
+  Grandis–Paré 1999); we have found no strict double category
+  in current mathlib.
 
 ### Transport and equality lemmas
 
@@ -130,8 +128,7 @@ recorded in the module's own provenance line.
   sigma types, subtypes, and `Over`-category morphisms under equality
   and heterogeneous-equality hypotheses. Also defines the
   `intermediate_eq` tactic macro (`refine Eq.trans (b := _) ?_ ?_`).
-  Provenance: utility — standard transport bookkeeping; searched
-  2026-05-31, scope Mathlib.
+  Standard transport bookkeeping.
 
 ### Families and completions
 
@@ -144,9 +141,9 @@ recorded in the module's own provenance line.
   typeclasses with computable instances for `Over X`, and proves
   `ccrNewEvalCatFullyFaithful` (full faithfulness of evaluation for
   `CoprodCovarRepCat`).
-  Provenance: utility — standard free-completion constructions via
-  Grothendieck (nLab: free coproduct completion, Dirichlet functors,
-  polynomial functors); searched 2026-05-31, scope Mathlib.
+  Standard free-completion constructions via the Grothendieck
+  construction (nLab: free coproduct completion, Dirichlet
+  functors, polynomial functors).
 
 ### Finite types
 
@@ -154,8 +151,7 @@ recorded in the module's own provenance line.
   — `FintypeData`: a structure-based counterpart to the `Fintype`
   typeclass, bundling a `Finset` with the completeness property.
   `fintypeDataOfFintype` extracts data from a `Fintype` instance.
-  Provenance: utility — standard finite-type interface; searched
-  2026-05-31, scope Mathlib.
+  A standard finite-type interface.
 
 ### Graph span diagram category
 
@@ -164,8 +160,7 @@ recorded in the module's own provenance line.
   category with vertex-nodes and edge-nodes, with projections from
   each edge-node to its endpoints), and `graphSpanCollageIso` proving
   it isomorphic to the collage of `graphSpanProfunctor V E`.
-  Provenance: utility — standard collage / profunctor construction;
-  searched 2026-05-31, scope Mathlib.
+  A standard collage / profunctor construction.
 
 ### Opposite categories (`op'`)
 
@@ -176,9 +171,9 @@ recorded in the module's own provenance line.
   propositionally. Provides `opToOp'` / `op'ToOp`, `opIsoOp'`,
   `Cat.opFunctor'` (the strictly involutive endofunctor on `Cat`),
   and all derived functor-category isomorphisms and coercions.
-  Provenance: utility — standard opposite construction; definitional
-  involutivity is a local novelty over mathlib's `Opposite`; searched
-  2026-05-31, scope Mathlib.
+  The opposite-category construction is standard; the definitional
+  (not merely propositional) involutivity refines mathlib's
+  `Opposite`, for which we have found no prior formalization.
 
 ### Presheaves and copresheaves
 
@@ -191,10 +186,9 @@ recorded in the module's own provenance line.
   and for `C ⥤ Type` (`CoPshClassifier`); and covariant Yoneda
   equivalences (`coyonedaEquivOfNatIso`,
   `coyonedaNatIsoOfNatIso`, `uliftCoyonedaNatIsoOfNatIso`).
-  Provenance: utility — standard presheaf constructions and Yoneda
-  lemma; the subobject classifier transfer and universe-lifted
-  covariant Yoneda forms are first Lean formalizations; searched
-  2026-05-31, scope Mathlib.
+  Standard presheaf constructions and the Yoneda lemma; we have
+  found no prior Lean formalization of the subobject classifier
+  transfer or the universe-lifted covariant Yoneda forms.
 
 ### Representable density
 
@@ -204,10 +198,9 @@ recorded in the module's own provenance line.
   density of `uliftCoyoneda` and preservation of the density colimit
   by the separation adjunction `pshRelEdgeSepAdjunction`.
   `pshRelEdgeRepresentableIsDense` is the headline instance.
-  Provenance: utility — standard density theorem for representable
-  presheaves (Yoneda density); the application to the
-  `PshRelEdge` construction is specific to this codebase; searched
-  2026-05-31, scope Mathlib.
+  The standard density theorem for representable presheaves
+  (Yoneda density); the application to the `PshRelEdge`
+  construction is specific to this development.
 
 ### Setoid categories
 
@@ -217,8 +210,8 @@ recorded in the module's own provenance line.
   `forgetful` functors to `Type`. Also defines `SetoidNatTrans`,
   `SetoidNatIso`, and `SetoidEquivalence` (an up-to-setoid-relation
   analogue of a categorical equivalence).
-  Provenance: utility — standard setoid category; searched 2026-05-31,
-  scope Mathlib (no `SetoidCat` in current mathlib found).
+  The setoid category is a standard concept; we have found no
+  `SetoidCat` in current mathlib.
 
 ### Sigma type utilities
 
@@ -226,8 +219,7 @@ recorded in the module's own provenance line.
   — `sigmaTrivialSubtype` (equivalence from a doubly-indexed subtype to
   a fiber), and `simp` lemmas about `cast` on sigma types along family
   equalities (`sigma_cast_of_funEq`, `sigma_cast_fst_of_funEq`).
-  Provenance: utility — standard sigma-type bookkeeping; searched
-  2026-05-31, scope Mathlib.
+  Standard sigma-type bookkeeping.
 
 ### Skeletons
 
@@ -236,10 +228,10 @@ recorded in the module's own provenance line.
   := Quotient (isIsomorphicSetoid C)`, defined using only the
   constructive `Quotient` API. Provides `toSkeleton`, `Skeleton.lift`,
   and `Skeleton.lift₂`.
-  Provenance: utility — standard skeleton (isomorphism classes);
-  differs from mathlib's `CategoryTheory.Skeleton` which uses
-  `Quotient.out` (non-constructive); searched 2026-05-31, scope
-  Mathlib.
+  The skeleton (isomorphism classes) is a standard construction;
+  this formulation uses only the constructive `Quotient` API,
+  unlike mathlib's `CategoryTheory.Skeleton` which uses
+  `Quotient.out` (non-constructive).
 
 ### Slice and coslice utilities
 
@@ -250,9 +242,8 @@ recorded in the module's own provenance line.
   `Dᵒᵖ'`, the functors `overOpMapFunctor` and
   `overCopresheafFunctor`, and the constructive self-product
   `overSelfProd` with its functor.
-  Provenance: utility — standard over/under category constructions
-  (mathlib `CategoryTheory.Comma.Over`); searched 2026-05-31, scope
-  Mathlib.
+  Standard over/under category constructions
+  (mathlib `CategoryTheory.Comma.Over`).
 
 ## Dependencies
 

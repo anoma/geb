@@ -60,13 +60,12 @@ in Lean against mathlib's `Grothendieck`.
   `catPshInternalEquiv` is the equivalence `Cat ≌ PshInternalCat
   (Discrete Unit)` exhibiting ordinary categories as the special
   case over the terminal site.
-  Provenance: cat 1/2 (unverified) — the monoid-in-spans encoding of
-  an internal category is well-known (Johnstone *Elephant* §B2;
-  Borceux *Handbook* vol. 2, ch. 8) but the direct Lean
-  formalisation over mathlib's `Mon_`, `PshSpanBicat`, and `Grothendieck`
-  machinery is novel to this project; no prior Lean
-  formalisation found. Searched 2026-05-31, scope Mathlib
-  (leansearch), nLab.
+  The monoid-in-spans encoding of an internal category is
+  well-known (Johnstone *Elephant* §B2; Borceux *Handbook*
+  vol. 2, ch. 8), but the direct Lean formalisation over
+  mathlib's `Mon_`, `PshSpanBicat`, and `Grothendieck` machinery
+  is novel to this project; we have found no prior Lean
+  formalisation. (Unverified.)
 
 - [`GebLean/PshInternalExternalize.lean`](../../GebLean/PshInternalExternalize.lean)
   — the externalisation of an internal category to a `Cᵒᵖ ⥤ Cat`
@@ -76,10 +75,10 @@ in Lean against mathlib's `Grothendieck`.
   functor `Cᵒᵖ ⥤ Cat`; and `externalizeNatTrans` extends the
   construction to internal functors, showing externalization is
   functorial.
-  Provenance: cat 1/2 (unverified) — externalisation of an internal
-  category is a classical construction (Johnstone *Elephant* §B2;
-  Borceux vol. 2, ch. 8) formalised here against mathlib for the
-  first time. Searched 2026-05-31, scope Mathlib (leansearch), nLab.
+  Externalisation of an internal category is a classical
+  construction (Johnstone *Elephant* §B2; Borceux vol. 2, ch. 8);
+  we have found no prior Lean formalisation against mathlib.
+  (Unverified.)
 
 - [`GebLean/PshInternalPresheaf.lean`](../../GebLean/PshInternalPresheaf.lean)
   — the notion of an internal presheaf on an internal category.
@@ -89,10 +88,10 @@ in Lean against mathlib's `Grothendieck`.
   `action_assoc` axioms; `PshInternalPresheafHom` and
   `PshInternalPresheaf.category` complete the category of internal
   presheaves.
-  Provenance: cat 1/2 (unverified) — internal presheaves / discrete
-  fibrations over internal categories are standard (Johnstone
-  *Elephant* §B2.3) but the Lean formalisation is project-original.
-  Searched 2026-05-31, scope Mathlib (leansearch), nLab.
+  Internal presheaves / discrete fibrations over internal categories
+  are standard (Johnstone *Elephant* §B2.3); the Lean formalisation
+  is project-original, and we have found no prior Lean
+  formalisation. (Unverified.)
 
 - [`GebLean/PshInternalGrothendieck.lean`](../../GebLean/PshInternalGrothendieck.lean)
   — the equivalence between internal presheaves and ordinary
@@ -101,12 +100,11 @@ in Lean against mathlib's `Grothendieck`.
   `X.groth ⥤ Type w`; `inverseFunctor` is the quasi-inverse;
   `pshInternalGrothendieckEquiv` packages them as a category
   equivalence `PshInternalPresheaf X ≌ (X.groth ⥤ Type w)`.
-  Provenance: cat 1/2 (unverified) — the equivalence is a special
-  case of the slice-presheaf adjunction / discrete-fibration
-  characterisation (Johnstone *Elephant* §B2.3; SGA4 Exp. I) but
-  this Lean proof is project-original; no prior mathlib formalization
-  found. Searched 2026-05-31, scope Mathlib (leansearch/loogle),
-  nLab.
+  The equivalence is a special case of the slice-presheaf
+  adjunction / discrete-fibration characterisation (Johnstone
+  *Elephant* §B2.3; SGA4 Exp. I); this Lean proof is
+  project-original, and we have found no prior mathlib
+  formalization. (Unverified.)
 
 - [`GebLean/Utilities/Elements.lean`](../../GebLean/Utilities/Elements.lean)
   — the contravariant category of elements and the slice-presheaf
@@ -116,11 +114,10 @@ in Lean against mathlib's `Grothendieck`.
   contravariant category of elements, with conversion functors
   between them; `sliceEquivPresheaf` packages the equivalence for
   presheaves.
-  Provenance: cat 4 — the equivalence `Over F ≌ PSh(Elts(F))` is
-  standard (MacLane–Moerdijk §I.5; nLab: category of elements) and
-  the covariant half `F.Elements` is already in mathlib
-  (`CategoryTheory.Elements`). Searched 2026-05-31, scope Mathlib
-  (leansearch), nLab.
+  The equivalence `Over F ≌ PSh(Elts(F))` is standard
+  (MacLane–Moerdijk §I.5; nLab: category of elements); the
+  covariant half `F.Elements` is already in mathlib
+  (`CategoryTheory.Elements`).
 
 - [`GebLean/Utilities/Grothendieck.lean`](../../GebLean/Utilities/Grothendieck.lean)
   — the contravariant Grothendieck construction. `GrothendieckContra`
@@ -130,11 +127,10 @@ in Lean against mathlib's `Grothendieck`.
   `gcDomFuncToGcContra`, `gcCodFuncToGcContra`, and
   `gcDomCodFuncToGcContra` for moving functors involving mathlib's
   covariant `Grothendieck` into the contravariant setting.
-  Provenance: cat 4 — the contravariant Grothendieck construction is
-  the opposite of the covariant one (nLab: Grothendieck construction;
-  mathlib `CategoryTheory.Grothendieck`); the transfer helpers are
-  bookkeeping over that standard construction. Searched 2026-05-31,
-  scope Mathlib (loogle), nLab.
+  The contravariant Grothendieck construction is the opposite of
+  the covariant one (nLab: Grothendieck construction; mathlib
+  `CategoryTheory.Grothendieck`); the transfer helpers are
+  bookkeeping over that standard construction.
 
 - [`GebLean/Utilities/ConnectedGrothendieck.lean`](../../GebLean/Utilities/ConnectedGrothendieck.lean)
   — the connected Grothendieck construction over the twisted-arrow
@@ -144,13 +140,12 @@ in Lean against mathlib's `Grothendieck`.
   in `Arr(C)` and a fibre morphism in the common diagonal category;
   the module assembles the full category structure including
   identity and composition.
-  Provenance: cat 1/2 (unverified) — the connected Grothendieck
-  construction generalises the two-sided Grothendieck construction to
-  twisted-arrow indexing; the construction is described in
+  The connected Grothendieck construction generalises the
+  two-sided Grothendieck construction to twisted-arrow indexing;
+  the construction is described in
   [`docs/research/connected-grothendieck-construction.md`](../research/connected-grothendieck-construction.md)
-  and appears novel to this project; no prior Lean
-  formalisation found. Searched 2026-05-31, scope Mathlib
-  (leansearch), nLab.
+  and appears novel to this project; we have found no prior Lean
+  formalisation. (Unverified.)
 
 ## Dependencies
 

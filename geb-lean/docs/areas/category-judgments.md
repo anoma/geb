@@ -57,22 +57,19 @@ covariant. The novelty analysis of the construction is recorded in
   `FinCategory Obj` instance; `FunctorData` packages a copresheaf as
   explicit sorts and projection maps, with `functorDataEquivCat`
   relating it to honest functors `Obj ⥤ C`.
-  Provenance: novel mathematics — nearest antecedents are walking
-  structures and the essentially-algebraic presentation of `Cat`
-  (Johnstone, *Sketches of an Elephant* II; Adámek–Rosický 1994); no
-  prior formalization of this finite-index copresheaf encoding found.
-  Searched 2026-05-31, scope Mathlib (leansearch), nLab, the cited
-  literature.
+  The nearest antecedents are walking structures and the
+  essentially-algebraic presentation of `Cat` (Johnstone, *Sketches of
+  an Elephant* II; Adámek–Rosický 1994); no prior formalization of
+  this finite-index copresheaf encoding has been found.
 - [`GebLean/DepCategoryJudgments.lean`](../../GebLean/DepCategoryJudgments.lean)
   — the dependently-typed presentation and its equivalence with the
   copresheaf presentation. `DepCategoryData` carries `objT`, `morT`,
   `idT`, `compT` as dependent sorts; `depCatToCopresheaf` /
   `copresheafToDepCat` and `depCatCopresheafEquiv` establish the
   equivalence with `CopresheafData` (copresheaves on `J`).
-  Provenance: novel mathematics — the dependent/copresheaf
-  correspondence specific to this `J`; nearest antecedent is the
-  general models-of-a-sketch reading. Searched 2026-05-31, scope
-  Mathlib (leansearch), nLab.
+  The dependent/copresheaf correspondence is specific to this `J`;
+  the nearest antecedent is the general models-of-a-sketch reading,
+  and we have found no prior formalization of this presentation.
 - [`GebLean/CatJudgmentAdjunction.lean`](../../GebLean/CatJudgmentAdjunction.lean)
   — the `L ⊣ Φ` reflective adjunction in `Type`-valued copresheaf
   form, and its universal-property preservation analysis. `LFunctor`
@@ -82,12 +79,10 @@ covariant. The novelty analysis of the construction is recorded in
   `phiFunctorPreservesInitial`, and `lToTerminalFunctor` record
   preservation results. The counit is an isomorphism
   (`catCopresheafCounitNatIso`).
-  Provenance: novel mathematics — the finite-index reflective
-  embedding of `Cat` into copresheaves; mathlib formalizes only the
-  infinite-index nerve analogue
-  (`CategoryTheory.instReflectiveSSetCatNerveFunctor`), confirming no
-  prior Lean formalization of this construction. Searched 2026-05-31,
-  scope Mathlib (leansearch/loogle), nLab.
+  This is the finite-index reflective embedding of `Cat` into
+  copresheaves; mathlib formalizes only the infinite-index nerve
+  analogue (`CategoryTheory.instReflectiveSSetCatNerveFunctor`),
+  confirming no prior Lean formalization of this construction.
 - [`GebLean/DepCategoryAdjunction.lean`](../../GebLean/DepCategoryAdjunction.lean)
   — the reflective adjunction realized through the dependent
   presentation, built from layered reflective inclusions.
@@ -95,71 +90,65 @@ covariant. The novelty analysis of the construction is recorded in
   per-property counits as isomorphisms (witness-subsingleton truncation
   and the existence/uniqueness/law layer), assembling the reflection of
   `Cat` inside `DepCategoryData`.
-  Provenance: novel mathematics — the staged reflective-inclusion
-  decomposition for this presentation; nearest antecedent is the
-  general theory of reflective subcategories (mathlib
-  `CategoryTheory.Reflective`). Searched 2026-05-31, scope Mathlib
-  (loogle), nLab.
+  The staged reflective-inclusion decomposition is specific to this
+  presentation; the nearest antecedent is the general theory of
+  reflective subcategories (mathlib `CategoryTheory.Reflective`), and
+  we have found no prior formalization of this decomposition.
 - [`GebLean/DepCategoryCat.lean`](../../GebLean/DepCategoryCat.lean)
   — the equivalence of `Cat` with the full subcategory of
   `DepCategoryData` cut out by the category-like conditions.
   `catToDepCategoryCatFunctor` is the embedding and
   `catDepCategoryCatEquiv` the equivalence; its full faithfulness is
   recorded via `catToDepCategoryCatFunctor.fullyFaithful`.
-  Provenance: novel mathematics — the characterization of `Cat` as a
-  full subcategory of this dependent presentation; nearest antecedent
-  is `Cat` as models of an essentially algebraic theory
-  (Adámek–Rosický 1994). Searched 2026-05-31, scope Mathlib
-  (leansearch), nLab.
+  The characterization of `Cat` as a full subcategory of this
+  dependent presentation is specific to this development; the nearest
+  antecedent is `Cat` as models of an essentially algebraic theory
+  (Adámek–Rosický 1994).
 - [`GebLean/PLang/CatJudgment.lean`](../../GebLean/PLang/CatJudgment.lean)
   — the universe-polymorphic copresheaf presentation used by the PLang
   formulations. Sorts and projections are layered as sigma types
   (`ObjMorObj`, `ObjMorCopr`, up to the full category-judgment
   copresheaf object), giving four independent universe parameters for
   the four component sorts.
-  Provenance: novel mathematics — universe-flexible repackaging of the
-  `J`-copresheaf data; same antecedents as
-  `CategoryJudgments.lean`. Searched 2026-05-31, scope Mathlib
-  (leansearch), nLab.
+  This is a universe-flexible repackaging of the `J`-copresheaf data
+  with the same antecedents as `CategoryJudgments.lean`; no prior
+  formalization of this universe-polymorphic form has been found.
 - [`GebLean/PLang/CatJudgGrothendieck.lean`](../../GebLean/PLang/CatJudgGrothendieck.lean)
   — the layered Grothendieck-construction presentation of
   category-judgment copresheaves. `CompWitGr` is the three-layer total
   category (quiver, then identity witnesses, then composition
   witnesses) assembled from `Grothendieck`/`GrothendieckContra'` of
   the quiver, identity-witness, and composition-witness functors.
-  Provenance: novel mathematics — Grothendieck-route presentation of
-  this copresheaf data; nearest antecedent is the standard
+  The Grothendieck-route presentation of this copresheaf data is
+  specific to this development; the nearest antecedent is the standard
   Grothendieck construction / category of elements (mathlib
-  `CategoryTheory.Grothendieck`). Searched 2026-05-31, scope Mathlib
-  (loogle), nLab.
+  `CategoryTheory.Grothendieck`), and we have found no prior
+  formalization of this layered presentation.
 - [`GebLean/PLang/CatJudgCoprAdjunction.lean`](../../GebLean/PLang/CatJudgCoprAdjunction.lean)
   — the `L ⊣ Φ` adjunction in the PLang copresheaf formulation.
   `LFunctorPLang` and `PhiFunctorPLang` are the functors;
   `counitNatTransPLang` and the `adjunctionAt` data assemble the
   pointwise reflection with the counit an isomorphism.
-  Provenance: novel mathematics — PLang-form instance of the
-  finite-index reflective embedding; same antecedents as
-  `CatJudgmentAdjunction.lean`, no prior Lean formalization found.
-  Searched 2026-05-31, scope Mathlib (leansearch/loogle), nLab.
+  This is the PLang-form instance of the finite-index reflective
+  embedding, with the same antecedents as `CatJudgmentAdjunction.lean`;
+  no prior Lean formalization of this instance has been found.
 - [`GebLean/PLang/CatJudgGrAdjunction.lean`](../../GebLean/PLang/CatJudgGrAdjunction.lean)
   — the `L ⊣ Φ` adjunction over the Grothendieck presentation
   `CompWitGr`. `PhiFunctor` and `LFunctor` between `Cat` and
   `CompWitGr` are packaged into `grAdjunction : L ⊣ Φ` with
   `phiReflective : Reflective Φ`; `phiFunctorFullyFaithful` records
   full faithfulness of the embedding.
-  Provenance: novel mathematics — Grothendieck-route instance of the
-  reflective embedding; same antecedents as
-  `CatJudgmentAdjunction.lean`. Searched 2026-05-31, scope Mathlib
-  (loogle), nLab.
+  This is the Grothendieck-route instance of the reflective embedding,
+  with the same antecedents as `CatJudgmentAdjunction.lean`; no prior
+  formalization of this route has been found.
 - [`GebLean/PLang/CatJudgmentAdjunction.lean`](../../GebLean/PLang/CatJudgmentAdjunction.lean)
   — the embedding `Φ` for the PLang formulation at flexible universe
   levels, with its counit. `PhiFunctor_PLang : Cat ⥤ CatJudgCopr` is
   the embedding, `LFunctor_PLang` the reflection, and `counitNT` the
   counit natural transformation `Φ ⋙ L ⟶ 𝟭 Cat`.
-  Provenance: novel mathematics — universe-flexible embedding for the
-  PLang copresheaf form; same antecedents as
-  `CatJudgmentAdjunction.lean`. Searched 2026-05-31, scope Mathlib
-  (leansearch), nLab.
+  This is the universe-flexible embedding for the PLang copresheaf
+  form, with the same antecedents as `CatJudgmentAdjunction.lean`;
+  no prior formalization of this universe-flexible form has been found.
 - [`GebLean/CatValuedFunctor.lean`](../../GebLean/CatValuedFunctor.lean)
   — the pointwise lift of `L ⊣ Φ` to functor categories.
   `phiWhiskering` post-composes with `PhiFunctor`;
@@ -167,11 +156,10 @@ covariant. The novelty analysis of the construction is recorded in
   `(L ∘ −) ⊣ (Φ ∘ −) : [C, Cat] ⇄ [C, [J, Type]]` and
   `phiWhiskering_reflective` records that the lift is reflective, via
   full faithfulness of whiskering and pointwise lifting of adjunctions.
-  Provenance: known maths, first Lean formalization — the lift uses
-  mathlib's `Functor.FullyFaithful.whiskeringRight` and
+  The lift uses mathlib's `Functor.FullyFaithful.whiskeringRight` and
   `Adjunction.whiskerRight`, applied to this novel `Φ`; the lifting
-  principle itself is standard. Searched 2026-05-31, scope Mathlib
-  (loogle).
+  principle itself is standard, and no prior Lean formalization of
+  this specific lift has been found.
 - [`GebLean/PLang.lean`](../../GebLean/PLang.lean)
   — re-export aggregator for the `PLang/` modules; no declarations of
   its own.
@@ -182,20 +170,18 @@ covariant. The novelty analysis of the construction is recorded in
   bundled operations and laws, with `categoryDataOfCategory` the
   reverse extraction; parallel `FunctorData`/`FunctorOfData` handle
   functors.
-  Provenance: known maths, first Lean formalization — an unbundled
-  restatement of the standard category/functor axioms (mathlib
-  `CategoryTheory.Category`, `Functor`). Searched 2026-05-31, scope
-  Mathlib (leansearch/loogle).
+  This is an unbundled restatement of the standard category/functor
+  axioms (mathlib `CategoryTheory.Category`, `Functor`); no prior Lean
+  formalization of this specific unbundled form has been found.
 - [`GebLean/Utilities/OverCategoryEquiv.lean`](../../GebLean/Utilities/OverCategoryEquiv.lean)
   — equivalences between the Over/Arrow-based and dependently-typed
   category structures of `Category.lean`. `CategoryData.toOverCategoryData`
   and `OverCategoryData.toCategoryData` convert between
   proof-irrelevant Over-based data and the dependent form, with
   matching functor-level and natural-transformation-level conversions.
-  Provenance: known maths, first Lean formalization — bookkeeping
-  equivalence between two presentations of the same standard data
-  (mathlib `CategoryTheory.Comma.Over`). Searched 2026-05-31, scope
-  Mathlib (leansearch).
+  This is a bookkeeping equivalence between two presentations of the
+  same standard data (mathlib `CategoryTheory.Comma.Over`); no prior
+  Lean formalization of this specific conversion has been found.
 - [`GebLean/LayeredEquivalence.lean`](../../GebLean/LayeredEquivalence.lean)
   — a pedagogically-layered, two-object simplification of the
   copresheaf/dependent-type correspondence, built on
@@ -204,10 +190,10 @@ covariant. The novelty analysis of the construction is recorded in
   morphisms) structure, and `layer1Equivalence : DepData ≌
   CopresheafData` is their equivalence, established layer by layer
   rather than over the full four-sort index category `J`.
-  Provenance: novel mathematics — a simplified two-object variant of
-  the copresheaf/dependent correspondence specific to this project;
-  same antecedents as `DepCategoryJudgments.lean`. Searched
-  2026-05-31, scope Mathlib (leansearch), nLab.
+  This is a simplified two-object variant of the copresheaf/dependent
+  correspondence specific to this project, with the same antecedents
+  as `DepCategoryJudgments.lean`; we have found no prior formalization
+  of this two-object form.
 
 ## Alternative formulations
 

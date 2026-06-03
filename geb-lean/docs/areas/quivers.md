@@ -71,12 +71,10 @@ abundant universe of functors*, 2021).
   `FinQuiverWitness` bundles `FintypeData` for vertices and each
   edge set; `FiniteQuiver` is the typeclass version; `FiniteQuiverCat`
   is the full subcategory of `Quiv` cut out by `IsFiniteQuiver`.
-  Provenance: 4 — known maths, existing Lean formalization; mathlib
-  formalizes `Quiv` and finite quivers indirectly via
+  Mathlib formalizes `Quiv` and finite quivers indirectly via
   `CategoryTheory.Category.Quiv` and `Fintype`; the explicit
   `FinQuiverWitness` bundling is a local convenience over those
-  mathlib primitives. Searched 2026-05-31, scope Mathlib
-  (leansearch), nLab.
+  mathlib primitives.
 
 - [`GebLean/Semicategory.lean`](../../GebLean/Semicategory.lean) —
   the `Semicategory` typeclass, `Semifunctor`, the bundled category
@@ -87,11 +85,9 @@ abundant universe of functors*, 2021).
   `liftToFunctor` lifts a `Semifunctor` to a functor between the
   identity-adjoined categories; `toCat` is the inclusion functor
   `SemicategoryCat ⥤ Cat`.
-  Provenance: 3 — known maths, first Lean formalization; semicategories
-  and the identity-adjunction construction are standard (Mitchell,
-  *Theory of Categories*, §I.2); no prior Lean or Coq formalization
-  of this exact typeclass and adjunction found. Searched 2026-05-31,
-  scope Mathlib (leansearch/loogle), nLab, Coq/Rocq stdlib.
+  Semicategories and the identity-adjunction construction are standard
+  (Mitchell, *Theory of Categories*, §I.2); no prior Lean or Coq
+  formalization of this exact typeclass and adjunction has been found.
 
 - [`GebLean/AcyclicQuiver.lean`](../../GebLean/AcyclicQuiver.lean) —
   acyclic quivers witnessed by a topological order on vertices, and
@@ -102,11 +98,9 @@ abundant universe of functors*, 2021).
   category of acyclic quivers with order-preserving prefunctors as
   morphisms; `no_cycles` establishes that any path from a vertex to
   itself must be `nil`.
-  Provenance: 3 — known maths, first Lean formalization; acyclic
-  quivers via topological ordering are standard graph theory
-  (Bang-Jensen–Gutin, *Digraphs*, §1.2); no prior Lean
-  formalization found. Searched 2026-05-31, scope Mathlib
-  (leansearch/loogle), nLab.
+  Acyclic quivers via topological ordering are standard graph theory
+  (Bang-Jensen–Gutin, *Digraphs*, §1.2); no prior Lean formalization
+  has been found.
 
 - [`GebLean/AcyclicCat.lean`](../../GebLean/AcyclicCat.lean) —
   acyclic categories, the bundled category `AcyclicCategoryCat`, and
@@ -118,12 +112,10 @@ abundant universe of functors*, 2021).
   `Semicategory.toCat`; `adjoinedId_edges_nonstrictly_increase`
   records that after identity adjunction each morphism either
   strictly increases or is an identity on equal vertices.
-  Provenance: 3 — known maths, first Lean formalization; acyclic
-  categories (also called acyclic directed categories or strict
+  Acyclic categories (also called acyclic directed categories or strict
   poset-enriched categories) appear in directed homology and
   combinatorics; no prior Lean formalization of the bundled category
-  and its inclusion into `Cat` found. Searched 2026-05-31, scope
-  Mathlib (leansearch/loogle), nLab.
+  and its inclusion into `Cat` has been found.
 
 - [`GebLean/CategoryPresentation.lean`](../../GebLean/CategoryPresentation.lean)
   — presentation of a category by generators and relations via
@@ -132,13 +124,10 @@ abundant universe of functors*, 2021).
   `HomRel` on `Paths generators`; `toCategory` forms the quotient
   via `CategoryTheory.Quotient`; `categoryToCategory` gives the
   resulting `Category` instance.
-  Provenance: 4 — known maths, existing Lean formalization; the
-  generators-and-relations construction is standard (Mac Lane,
-  *Categories for the Working Mathematician*, §II.7) and is
-  directly supported by mathlib's `CategoryTheory.Quotient`
-  and `Quiv.free`; this module is a thin wrapper packaging those
-  mathlib primitives. Searched 2026-05-31, scope Mathlib
-  (`CategoryTheory.Quotient`).
+  The generators-and-relations construction is standard (Mac Lane,
+  *Categories for the Working Mathematician*, §II.7) and is directly
+  supported by mathlib's `CategoryTheory.Quotient` and `Quiv.free`;
+  this module is a thin wrapper packaging those mathlib primitives.
 
 - [`GebLean/AcyclicPresentation.lean`](../../GebLean/AcyclicPresentation.lean)
   — specialization of `CategoryPresentation` to acyclic and finite
@@ -152,13 +141,10 @@ abundant universe of functors*, 2021).
   `finite_paths_in_finite_acyclic_quiver` derives `Fintype` for
   all paths between two vertices in such a quiver via
   `finsetPathsBounded` and `fintypePathsBounded`.
-  Provenance: 3 — known maths, first Lean formalization; the
-  path-length bound via topological ordering is standard (Bang-Jensen–
-  Gutin, *Digraphs*, §1.2); the constructive `Finset`-based path
-  enumeration following mathlib's `SimpleGraph.finsetWalkLength`
-  pattern is a new Lean development. Searched 2026-05-31, scope
-  Mathlib (leansearch, `SimpleGraph.Connectivity.WalkCounting`),
-  nLab.
+  The path-length bound via topological ordering is standard
+  (Bang-Jensen–Gutin, *Digraphs*, §1.2); the constructive
+  `Finset`-based path enumeration following mathlib's
+  `SimpleGraph.finsetWalkLength` pattern is a new Lean development.
 
 - [`GebLean/CofreeCategory.lean`](../../GebLean/CofreeCategory.lean)
   — the cofree category on a polynomial endofunctor, built from
@@ -172,13 +158,10 @@ abundant universe of functors*, 2021).
   positions in the source shape; `coalgCopresheaf` constructs the
   copresheaf `PolyCofreeCat P ⥤ Type u` associated to a
   `P`-coalgebra.
-  Provenance: 2 — known maths, first formalization anywhere; the
-  cofree category on a polynomial endofunctor and the equivalence
+  The cofree category on a polynomial endofunctor and the equivalence
   of coalgebras with copresheaves on it is treated in Adámek–Porst
-  (2004) and Spivak (2021, §3.3), but no prior Lean, Coq, Agda, or
-  Idris2 formalization has been found. Searched 2026-05-31, scope
-  Mathlib (leansearch/loogle), Agda standard library, Coq/Rocq
-  community, nLab.
+  (2004) and Spivak (2021, §3.3); no prior Lean, Coq, Agda, or
+  Idris2 formalization has been found.
 
 ## Alternative formulations
 

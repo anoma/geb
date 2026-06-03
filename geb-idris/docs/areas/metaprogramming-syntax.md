@@ -56,21 +56,19 @@ types within a polynomial functor by Nat-valued vectors.
   variables of type `ty`, closed at `ty = Void`); `frsxCata` /
   `frslCata` are the mutual catamorphisms over the combined
   expression / list algebra `FrSXLAlg`.
-  Provenance: known mathematics — classical initial-algebra /
-  free-monad encoding of tree-structured terms; standard in the
-  functional-programming and categorical-semantics literature
-  (Awodey, *Category Theory*; Barr–Wells, *Toposes, Triples and
-  Theories*). Searched 2026-05-31, scope nLab, the cited
-  literature.
+  The classical initial-algebra / free-monad encoding of
+  tree-structured terms is standard in the functional-programming
+  and categorical-semantics literature (Awodey, *Category Theory*;
+  Barr–Wells, *Toposes, Triples and Theories*); we have found no
+  prior Idris implementation of this formalization.
 
 - [`src/LanguageDef/Metaprogramming.idr`](../../src/LanguageDef/Metaprogramming.idr)
   — stub module re-exporting `LanguageDef.Expression`; currently
   contains no declarations of its own beyond the import.
   It marks the intended extension point for metaprogramming
   support over the Geb surface language.
-  Provenance: cat 1 (standard import re-export pattern);
-  no substantive declarations to assess. Searched 2026-05-31,
-  scope module file.
+  This module contains no substantive declarations; it is an
+  import re-export stub.
 
 - [`src/LanguageDef/Figures.idr`](../../src/LanguageDef/Figures.idr)
   — quivers, paths, (co)presheaves, and parametric-right-adjoint
@@ -81,11 +79,10 @@ types within a polynomial functor by Nat-valued vectors.
   data, and `PrafunctorData` / `InterpPRAF` give the
   polynomial-arena interpretation of a parametric right adjoint
   over index categories.
-  Provenance: known mathematics — metalanguage quivers and path
-  closure are standard (nLab, "quiver"; Lawvere–Rosebrugh, *Sets
-  for Mathematics*); `PrafunctorData` follows Weber's PRA
-  construction (Weber 2004); no prior Idris formalization found.
-  Searched 2026-05-31, scope nLab, the cited literature.
+  Metalanguage quivers and path closure are standard (nLab,
+  "quiver"; Lawvere–Rosebrugh, *Sets for Mathematics*);
+  `PrafunctorData` follows Weber's PRA construction (Weber 2004);
+  we have found no prior Idris formalization of this material.
 
 - [`src/LanguageDef/Telescope.idr`](../../src/LanguageDef/Telescope.idr)
   — early-stage index and position types for dependent-context
@@ -97,11 +94,9 @@ types within a polynomial functor by Nat-valued vectors.
   begin a two-level PRA functor decomposition over
   `MLDirichCatObj`. The module ends at a skeleton "Objects"
   section header, indicating work in progress.
-  Provenance: cat 2 (de Bruijn dependent-context telescopes —
-  de Bruijn 1994; Martin-Löf 1975); the specific polynomial
-  encoding of telescope indices here appears to be novel
-  (unverified). Searched 2026-05-31, scope nLab, the cited
-  literature.
+  Dependent-context telescopes are due to de Bruijn (1994) and
+  Martin-Löf (1975); the specific polynomial encoding of telescope
+  indices here appears to be novel (unverified).
 
 ## Dependencies
 

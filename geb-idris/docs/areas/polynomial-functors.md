@@ -56,12 +56,10 @@ active Lean 4 development; it is not under active development.
   `InterpPolyFunc` interprets it as an endofunctor; `PolyNatTrans`
   and `PolyNatTransComp` give the morphisms and composition of the
   `Poly` category; `CPFSliceObj` defines slice objects over a fixed
-  polynomial functor.
-  Provenance: category 2 (known mathematics, formalized in this
-  Idris codebase) — the `Poly` category and its natural
-  transformations are standard (Spivak–Niu, *Polynomial Functors*,
-  2022; nLab, polynomial functor). Searched 2026-05-31, scope
-  nLab, Spivak–Niu, general knowledge.
+  polynomial functor. The `Poly` category and its natural
+  transformations are standard mathematics (Spivak–Niu,
+  *Polynomial Functors*, 2022; nLab, polynomial functor); we have
+  found no prior Idris formalization of them.
 
 - [`src/LanguageDef/FinPoly.idr`](../../src/LanguageDef/FinPoly.idr)
   — finitary polynomial functors encoded via a fixed
@@ -70,12 +68,11 @@ active Lean 4 development; it is not under active development.
   finite-slice functors" development. `MaybeParProdMu` is the
   initial algebra; `MaybeParProdMuToNatPairPred` is a
   characterization of its elements as pair-predicate data.
-  Provenance: category 2 (known mathematics, formalized in this
-  Idris codebase) — finitary/bounded polynomial functors and their
-  free monads are standard (nLab, finitary monad; Barr–Wells,
+  Finitary/bounded polynomial functors and their free monads are
+  standard mathematics (nLab, finitary monad; Barr–Wells,
   *Toposes, Triples, and Theories*); the specific `MaybeParProdF`
-  encoding is a local definitional choice. Searched 2026-05-31,
-  scope nLab, general knowledge.
+  encoding is a local definitional choice; we have found no prior
+  Idris formalization of them.
 
 - [`src/LanguageDef/GenPolyFunc.idr`](../../src/LanguageDef/GenPolyFunc.idr)
   — aggregate import module and a characterization study of arrow
@@ -84,20 +81,19 @@ active Lean 4 development; it is not under active development.
   and polynomial functors as base-change morphisms; the `MLDirichF1`
   family develops PRA functors on `MLDirichCatObj` via
   coproducts-of-representables (Yoneda), with `InterpMLDirichF1` and
-  `MLDirichF1NT` its headline declarations.
-  Provenance: category 2 (known mathematics, formalized in this
-  Idris codebase) — PRA functors via coproducts of representables
-  follows Weber (op. cit.) and the nLab account of PRA functors;
-  the Yoneda-style `MLDirichF1NT` formula is standard. Searched
-  2026-05-31, scope nLab, Weber 2004, general knowledge.
+  `MLDirichF1NT` its headline declarations. PRA functors via
+  coproducts of representables follow Weber (op. cit.) and the
+  nLab account of PRA functors; the Yoneda-style `MLDirichF1NT`
+  formula is standard; we have found no prior Idris formalization
+  of them.
 
 - [`src/LanguageDef/HigherPolyCat.idr`](../../src/LanguageDef/HigherPolyCat.idr)
   — import aggregator only (8 lines); re-exports
   `InternalCat`, `SliceFuncCat`, `SlicePolyCat`, and
   `SlicePolyUMorph` under a single name for consumers that
   need the full slice-polynomial stack. No declarations of its
-  own.
-  Provenance: not applicable — no mathematical content.
+  own. Organizational infrastructure only; it carries no
+  mathematical content.
 
 - [`src/LanguageDef/PolyIndTypes.idr`](../../src/LanguageDef/PolyIndTypes.idr)
   — inductive-inductive type definitions expressed in terms of
@@ -106,12 +102,10 @@ active Lean 4 development; it is not under active development.
   `FinIndIndF1` and `FinIndF2Assign` encode the shapes of
   finitely-generated inductive-inductive specifications as lists of
   constructor records; `InterpFI1` interprets the first layer as
-  a polynomial functor.
-  Provenance: category 2 (known mathematics, formalized in this
-  Idris codebase) — the polynomial-functor semantics of
-  inductive-inductive types follows Altenkirch–Morris (op. cit.);
-  nLab, inductive-inductive type. Searched 2026-05-31, scope
-  nLab, Altenkirch–Morris 2011, general knowledge.
+  a polynomial functor. The polynomial-functor semantics of
+  inductive-inductive types follows Altenkirch–Morris (op. cit.)
+  and nLab (inductive-inductive type); we have found no prior
+  Idris formalization of them.
 
 - [`src/LanguageDef/SliceFuncCat.idr`](../../src/LanguageDef/SliceFuncCat.idr)
   — the slice-category adjoint triple (dependent sum ⊣ base change
@@ -119,11 +113,10 @@ active Lean 4 development; it is not under active development.
   and `SlicePiF` are the three functors; `SliceSigmaPiFR` and
   `SliceSigmaPiFL` are the composite right-adjoint (base change
   then Pi) and left-adjoint (base change then Sigma) used in the
-  PRA decomposition of slice-polynomial functors.
-  Provenance: category 2 (known mathematics, formalized in this
-  Idris codebase) — the adjoint triple is standard slice-category
-  theory (Johnstone, *Sketches of an Elephant* A1.5; nLab,
-  dependent product). Searched 2026-05-31, scope nLab, Johnstone.
+  PRA decomposition of slice-polynomial functors. The adjoint
+  triple is standard slice-category theory (Johnstone,
+  *Sketches of an Elephant* A1.5; nLab, dependent product); we
+  have found no prior Idris formalization of it.
 
 - [`src/LanguageDef/SlicePolyCat.idr`](../../src/LanguageDef/SlicePolyCat.idr)
   — the central dependent-polynomial-functor module. `SPFData dom
@@ -131,12 +124,10 @@ active Lean 4 development; it is not under active development.
   family `spfdDir`) is the arena type for slice-polynomial
   functors; `InterpSPFData` is its PRA interpretation; `SPFnt` is
   the natural-transformation type; `SPFDcat` assembles these into
-  a category signature.
-  Provenance: category 2 (known mathematics, formalized in this
-  Idris codebase) — dependent polynomial functors as PRA functors
-  on slice categories follow Gambino–Kock (op. cit.) and Weber
-  (op. cit.); the arena encoding is a local Idris choice. Searched
-  2026-05-31, scope Gambino–Kock 2013, Weber 2004, nLab.
+  a category signature. Dependent polynomial functors as PRA
+  functors on slice categories follow Gambino–Kock (op. cit.)
+  and Weber (op. cit.); the arena encoding is a local Idris
+  choice; we have found no prior Idris formalization of them.
 
 - [`src/LanguageDef/SlicePolyUMorph.idr`](../../src/LanguageDef/SlicePolyUMorph.idr)
   — limits and colimits of slice-polynomial diagrams.
@@ -144,11 +135,10 @@ active Lean 4 development; it is not under active development.
   `SPFData`-indexed diagram in a slice category; `SPFDColimitMonad`
   and `SPFDLimitComonad` are the associated monad and comonad
   arising from the colimit–diagonal–limit adjoint triple.
-  Provenance: category 2 (known mathematics, formalized in this
-  Idris codebase) — limits/colimits of diagrams in slice categories
-  are standard (Johnstone op. cit.; nLab, colimit); the
-  diagonal–Sigma–Pi adjoint triple for slice categories is standard.
-  Searched 2026-05-31, scope nLab, general knowledge.
+  Limits and colimits of diagrams in slice categories are
+  standard (Johnstone op. cit.; nLab, colimit), as is the
+  diagonal–Sigma–Pi adjoint triple for slice categories; we
+  have found no prior Idris formalization of them.
 
 - [`src/LanguageDef/PolySliceCat.idr`](../../src/LanguageDef/PolySliceCat.idr)
   — the slice category of polynomial functors over a fixed base
@@ -156,20 +146,18 @@ active Lean 4 development; it is not under active development.
   functor with a natural transformation to `p`; `CPFSliceMorph` is
   the slice-morphism type (with commutativity proof); `PFSliceMorph`
   is a proof-free alternative whose domain object is determined
-  by the commutativity condition.
-  Provenance: category 2 (known mathematics, formalized in this
-  Idris codebase) — slice categories of a category are standard
-  (Mac Lane, *Categories for the Working Mathematician*, II.6);
-  the specific slice structure over `Poly` is described in
-  Spivak–Niu (op. cit., §§3–4). Searched 2026-05-31, scope
-  Spivak–Niu, nLab, general knowledge.
+  by the commutativity condition. Slice categories of a category
+  are standard (Mac Lane, *Categories for the Working
+  Mathematician*, II.6); the specific slice structure over `Poly`
+  is described in Spivak–Niu (op. cit., §§3–4); we have found no
+  prior Idris formalization of this slice structure.
 
 - [`src/LanguageDef/SlPolyImpred.idr`](../../src/LanguageDef/SlPolyImpred.idr)
   — import aggregator only (6 lines); re-exports
   `SlicePolyCat` and `SlicePolyUMorph` for consumers that need
   the slice-polynomial-with-limits package. No declarations of
-  its own.
-  Provenance: not applicable — no mathematical content.
+  its own. Organizational infrastructure only; it carries no
+  mathematical content.
 
 - [`src/LanguageDef/DisliceCat.idr`](../../src/LanguageDef/DisliceCat.idr)
   — the dislice category over a bundle `cat : CBundleObj`.
@@ -179,11 +167,10 @@ active Lean 4 development; it is not under active development.
   (`cdsmId`) and composition (`cdsmComp`) complete the category.
   The module also provides an arena-style presentation
   (`ADisliceObj`, `ADisliceMorph`) parallel to the categorical one.
-  Provenance: category 1 (novel, unverified) — a "dislice
-  category" generalized from both slice and coslice categories via
-  factorizations of a bundle is not a standard term; nLab does not
-  have a dedicated article and no prior formalization was found.
-  Searched 2026-05-31, scope nLab, general knowledge; `unverified`.
+  A "dislice category" generalized from both slice and coslice
+  categories via factorizations of a bundle is not a standard term;
+  nLab does not have a dedicated article, and we have found no prior
+  formalization of this construction.
 
 - [`src/LanguageDef/DislicePolyCat.idr`](../../src/LanguageDef/DislicePolyCat.idr)
   — polynomial functors between dislice categories. `ADSLbc`,
@@ -191,23 +178,20 @@ active Lean 4 development; it is not under active development.
   simultaneous dibase change as functors on the arena-style
   dislice category; `ADSLsigma` is the dependent-sum functor from
   a slice of a dislice category to the corresponding dislice
-  category.
-  Provenance: category 1 (novel, unverified) — polynomial functors
-  between dislice categories; no prior account found. Searched
-  2026-05-31, scope nLab, general knowledge; `unverified`.
+  category. Polynomial functors between dislice categories are
+  not a standard term; we have found no prior account of this
+  construction.
 
 - [`src/LanguageDef/SlicePolyDialg.idr`](../../src/LanguageDef/SlicePolyDialg.idr)
   — algebras, coalgebras, and dialgebras of slice-polynomial
   functors. `SPAlg`, `SPCoalg`, and `SPDialg` bundle a carrier
   slice object with the respective structure map; `SPAlgMap` and
   `SPDialgComm` provide morphisms and commutativity conditions for
-  each.
-  Provenance: category 2 (known mathematics, formalized in this
-  Idris codebase) — algebras and coalgebras of an endofunctor are
-  standard (nLab, algebra for an endofunctor; Barr–Wells op. cit.
-  §3); dialgebras are described in Hagino, *A Categorical
-  Programming Language* (1987) and on nLab. Searched 2026-05-31,
-  scope nLab, Hagino 1987, general knowledge.
+  each. Algebras and coalgebras of an endofunctor are standard
+  (nLab, algebra for an endofunctor; Barr–Wells op. cit. §3);
+  dialgebras are described in Hagino, *A Categorical Programming
+  Language* (1987) and on nLab; we have found no prior Idris
+  formalization of them.
 
 - [`src/LanguageDef/SlicePolyDifunc.idr`](../../src/LanguageDef/SlicePolyDifunc.idr)
   — the difunctorial and closure structure of slice-polynomial
@@ -217,12 +201,10 @@ active Lean 4 development; it is not under active development.
   via a generalized closure construction; later sections handle
   the composition of `Poly`-slice functors (pullback, Pi,
   dependent sum) and the simplified formula for
-  polynomial-functor composition `Poly → Poly`.
-  Provenance: category 2 (known mathematics, formalized in this
-  Idris codebase) — local Cartesian closure of `Poly` and
-  composition of polynomial functors are described in Spivak–Niu
-  (op. cit., §§3–4) and Gambino–Kock (op. cit.). Searched
-  2026-05-31, scope Spivak–Niu, Gambino–Kock, nLab.
+  polynomial-functor composition `Poly → Poly`. Local Cartesian
+  closure of `Poly` and composition of polynomial functors are
+  described in Spivak–Niu (op. cit., §§3–4) and Gambino–Kock
+  (op. cit.); we have found no prior Idris formalization of them.
 
 ## Alternative formulations
 

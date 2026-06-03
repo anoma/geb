@@ -63,12 +63,11 @@ three-module cluster.
   (`TypeRQuivSL`) and compositional quivers (`TypeCQuivComp`) add
   self-loops and composition assignments; `ProquivVE` and `DiquivVE`
   provide the collage-shaped proquiver and its symmetric variant.
-  Provenance: category 2 (known concept, formalized in this Idris
-  codebase) — directed multigraphs and their enriched generalizations
-  are standard (Mac Lane, op. cit.; nLab,
+  Directed multigraphs and their enriched generalizations are standard
+  (Mac Lane, op. cit.; nLab,
   [quiver](https://ncatlab.org/nlab/show/quiver)); the `FinSet`-enriched
-  variants are straightforward specializations. Searched 2026-05-31,
-  scope Idris2 standard library, nLab, general knowledge.
+  variants are straightforward specializations. We have found no prior
+  Idris formalization of these enriched quiver levels.
 
 - [`src/LanguageDef/FinCat.idr`](../../src/LanguageDef/FinCat.idr)
   — the `FinSet`-as-interface layer: `FinSetObjF` (the object-shape
@@ -76,12 +75,11 @@ three-module cluster.
   terminal, and binary coproduct) and `FinSetTermF` (the morphism-shape
   functor). Both are packaged as `FreeMonad`/`Mu`/`Nu` types via the
   `IdrisCategories` algebra machinery, supplying the building blocks
-  for objects and terms of `FinSet`. Provenance: category 2 (known
-  concept, formalized in this Idris codebase) — finite sets and
-  their categorical presentation are standard (nLab,
+  for objects and terms of `FinSet`. Finite sets and their categorical
+  presentation are standard (nLab,
   [FinSet](https://ncatlab.org/nlab/show/FinSet)); the algebraic
-  packaging via initial algebras follows `IdrisCategories`. Searched
-  2026-05-31, scope nLab, general knowledge.
+  packaging via initial algebras follows `IdrisCategories`. We have
+  found no prior Idris formalization of this layer.
 
 - [`src/LanguageDef/FinCatPRA.idr`](../../src/LanguageDef/FinCatPRA.idr)
   — S-expression representation of finite sets (`FinSetAtom`,
@@ -91,12 +89,11 @@ three-module cluster.
   distinguished instance showing the single-arrow category as a
   `[1]`-forest. The `PRA` in the name refers to the parametric right
   adjoint structure the forest category is designed to index.
-  Provenance: category 2 (known concepts, formalized in this Idris
-  codebase) — the walking-arrow and forest index categories are
-  standard sketches; PRA structure follows Weber (2004, op. cit.);
-  the S-expression representation is a project-specific encoding
-  whose decidable validity checker appears novel. Searched 2026-05-31,
-  scope nLab, Weber (2004).
+  The walking-arrow and forest index categories are standard sketches;
+  PRA structure follows Weber (2004, op. cit.); the S-expression
+  representation is a project-specific encoding whose decidable
+  validity checker appears novel. We have found no prior Idris
+  formalization of these constructions.
 
 - [`src/LanguageDef/Adjunctions.idr`](../../src/LanguageDef/Adjunctions.idr)
   — adjunction combinators over diagram categories: `AdjObjF` (a
@@ -106,11 +103,10 @@ three-module cluster.
   `RACounitP`/`RACApplyHom` (the dual right-adjoint counit data).
   Several holes remain (`?ObjApplyRel_rel_hole`,
   `?lauApply_hole`), marking this module as a partial
-  sketch. Provenance: category 2 (known concepts, partially formalized
-  in this Idris codebase) — units and counits of adjunctions are
-  standard (Mac Lane, op. cit., IV.1); this particular diagram-adjunction
-  encoding is project-specific and unverified. Searched 2026-05-31,
-  scope nLab, general knowledge.
+  sketch. Units and counits of adjunctions are standard (Mac Lane,
+  op. cit., IV.1); this particular diagram-adjunction encoding is
+  project-specific and unverified. We have found no prior Idris
+  formalization of this diagram-adjunction encoding.
 
 - [`src/LanguageDef/UniversalCategory.idr`](../../src/LanguageDef/UniversalCategory.idr)
   — universal-category templates via algebraic signatures: `MagmaF`
@@ -120,11 +116,10 @@ three-module cluster.
   The module also contains a long design commentary explaining how Geb
   constructs categories by axiomatizing universal properties rather
   than defining structures and proving they satisfy laws.
-  Provenance: category 2 (known concepts, formalized in this Idris
-  codebase) — magmas, monoids, and polynomial algebras are standard
-  algebraic structures; the Geb-specific categorical-inversion
-  philosophy described in the commentary is novel context. Searched
-  2026-05-31, scope nLab, general knowledge.
+  Magmas, monoids, and polynomial algebras are standard algebraic
+  structures; the Geb-specific categorical-inversion philosophy
+  described in the commentary is novel context. We have found no
+  prior Idris formalization of this packaging.
 
 - [`src/LanguageDef/DiagramCat.idr`](../../src/LanguageDef/DiagramCat.idr)
   — a category-sort index (`CatSortObj` with constructors `CSOobj`,
@@ -133,12 +128,11 @@ three-module cluster.
   plus variably-parameterized type families (`VPTSig`, `VPTEFunc`,
   `VPTFunc`). The composition `csmComp` and equality `csmEq` have
   open holes, marking this as a partial development.
-  Provenance: category 2 (known concept, partially formalized) — the
-  sort-index for a category presentation is an instance of the
+  The sort-index for a category presentation is an instance of the
   essentially-algebraic theory of categories (Adámek–Rosický,
   *Locally Presentable and Accessible Categories*, 1994); this
-  specific dependent-type encoding is project-specific.
-  Searched 2026-05-31, scope nLab, Adámek–Rosický.
+  specific dependent-type encoding is project-specific. We have
+  found no prior Idris formalization of this encoding.
 
 - [`src/LanguageDef/SpanCospan.idr`](../../src/LanguageDef/SpanCospan.idr)
   — spans (`SpanObj` with fields `spCodL`, `spCodR`, `spDom`) and
@@ -148,11 +142,10 @@ three-module cluster.
   Spans and cospans are represented as fibrations rather than as
   explicit diagram functors, making commutativity conditions
   automatic from the dependent typing.
-  Provenance: category 2 (known concept, formalized in this Idris
-  codebase) — spans and cospans are standard category theory (nLab,
+  Spans and cospans are standard category theory (nLab,
   [span](https://ncatlab.org/nlab/show/span)); the dependent-type
-  fibration encoding is a standard Idris/Agda idiom. Searched
-  2026-05-31, scope nLab, general knowledge.
+  fibration encoding is a standard Idris/Agda idiom. We have found
+  no prior Idris formalization of this particular fibration encoding.
 
 - [`src/LanguageDef/HelixCat.idr`](../../src/LanguageDef/HelixCat.idr)
   — the helix category: `HelixObj` (a four-component record
@@ -162,10 +155,10 @@ three-module cluster.
   `hmDomCoasn`/`hmCodPolyArr`/`hmDomDirichArr`. The helix object
   represents a twisted-arrow morphism from a `Copoly → Poly` arrow to
   a `Codirich → Dirich` arrow, parameterized over the connecting
-  morphisms. Provenance: category 1 (novel, unverified) — the
-  helix-object shape is not a standard named construction; it appears
-  to be a project-specific structure organizing polynomial and
-  Dirichlet data. Searched 2026-05-31, scope nLab, general knowledge.
+  morphisms. The helix-object shape is not a standard named
+  construction; it appears to be a project-specific structure
+  organizing polynomial and Dirichlet data, with no prior Idris
+  formalization found.
 
 - [`src/LanguageDef/RopeCat.idr`](../../src/LanguageDef/RopeCat.idr)
   — the rope category: `MLRope` (a `mlrPos : Type` with a
@@ -175,10 +168,9 @@ three-module cluster.
   (`imlrDirich`, `imlrPoly`, `imlrCodirich`, `imlrCopoly`) and
   the functor action `InterpMLRmap`. Ropes are polynomial-functor-style
   tetrafunctors on helix objects.
-  Provenance: category 1 (novel, unverified) — the rope/tetrafunctor
-  construction is project-specific; it is not a standard named
-  category-theoretic structure. Searched 2026-05-31, scope nLab,
-  general knowledge.
+  The rope/tetrafunctor construction is project-specific; it is not
+  a standard named category-theoretic structure, and we have found
+  no prior Idris formalization of it.
 
 - [`src/LanguageDef/NatPrefixCat.idr`](../../src/LanguageDef/NatPrefixCat.idr)
   — natural numbers as bounded-set objects, in two representations:
@@ -188,12 +180,11 @@ three-module cluster.
   `u2a2u_correct`/`a2u2a_correct`. The bounded-natural-number category
   (`BNCatObj = Nat`, `VBNCLM`, `bncLMA`) interprets each natural number
   as a finite set and list-encoded functions as morphisms.
-  Provenance: category 2 (known concept, formalized in this Idris
-  codebase) — bounded natural numbers as finite sets and their
-  polynomial-circuit morphisms are standard combinatorial category
-  theory (nLab, [FinSet](https://ncatlab.org/nlab/show/FinSet));
-  the dual unary/arithmetic representation is a project-specific
-  convenience. Searched 2026-05-31, scope nLab, general knowledge.
+  Bounded natural numbers as finite sets and their polynomial-circuit
+  morphisms are standard combinatorial category theory (nLab,
+  [FinSet](https://ncatlab.org/nlab/show/FinSet)); the dual
+  unary/arithmetic representation is a project-specific convenience.
+  We have found no prior Idris formalization of this layer.
 
 - [`src/LanguageDef/MLQuivCat.idr`](../../src/LanguageDef/MLQuivCat.idr)
   — quivers organized as a category: `TQuivObj` (a vertex type `tqV`
@@ -202,11 +193,10 @@ three-module cluster.
   presheaves (`TQPresheaf`) and copresheaves (`TQCopresheaf`) on
   quivers and their morphism-map components
   (`TypeQuivPreshfMmap`, `TypeQuivCopreshfMmap`).
-  Provenance: category 2 (known concept, formalized in this Idris
-  codebase) — the category of quivers and quiver morphisms, and
-  (co)presheaves on quivers, are standard (nLab,
-  [quiver](https://ncatlab.org/nlab/show/quiver)). Searched 2026-05-31,
-  scope nLab, general knowledge.
+  The category of quivers and quiver morphisms, and (co)presheaves
+  on quivers, are standard (nLab,
+  [quiver](https://ncatlab.org/nlab/show/quiver)). We have found no
+  prior Idris formalization of this quiver-category layer.
 
 - [`src/LanguageDef/MLQuivUniv.idr`](../../src/LanguageDef/MLQuivUniv.idr)
   — universal properties of quivers: initial (`TypeQuivInit`),
@@ -217,11 +207,11 @@ three-module cluster.
   functor). The Kan-extension profunctor `TypeQuivKanExtProf` is
   shared by both directions because extending along the constant
   functor makes `1 × P` and `P ^ 1` isomorphic to `P`.
-  Provenance: category 2 (known concept, formalized in this Idris
-  codebase) — initial/terminal/coproduct objects and Kan extensions
-  are standard (Mac Lane, op. cit.; nLab,
-  [Kan extension](https://ncatlab.org/nlab/show/Kan+extension)).
-  Searched 2026-05-31, scope nLab, general knowledge.
+  Initial/terminal/coproduct objects and Kan extensions are standard
+  (Mac Lane, op. cit.; nLab,
+  [Kan extension](https://ncatlab.org/nlab/show/Kan+extension)). We
+  have found no prior Idris formalization of this quiver-universal
+  layer.
 
 - [`src/LanguageDef/MLQuivPoly.idr`](../../src/LanguageDef/MLQuivPoly.idr)
   — quivers internal to the polynomial-functor category: `PolyQuiv`
@@ -229,10 +219,9 @@ three-module cluster.
   PolyFunc`). This stub is the point of entry for polynomial functors
   on quivers; at 28 lines it records the definition without further
   development.
-  Provenance: category 1 (novel, unverified) — quivers internal to
-  the polynomial-functor category are not a standard named
-  construction; the combination is project-specific. Searched
-  2026-05-31, scope nLab, general knowledge.
+  Quivers internal to the polynomial-functor category are not a
+  standard named construction; the combination is project-specific,
+  and we have found no prior Idris formalization of it.
 
 ## Alternative formulations
 
