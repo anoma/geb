@@ -160,6 +160,10 @@ active Lean 4 development; it is not under active development.
   (`cdsmId`) and composition (`cdsmComp`) complete the category.
   The module also provides an arena-style presentation
   (`ADisliceObj`, `ADisliceMorph`) parallel to the categorical one.
+  The name *dislice* was coined here, before the construction was
+  recognized as the standard *factorization category* (nLab,
+  "factorization category"); the Lean port formalizes it, more
+  generally, in the profunctors-and-ends area's `Factorization.lean`.
 
 - [`src/LanguageDef/DislicePolyCat.idr`](../../src/LanguageDef/DislicePolyCat.idr)
   — polynomial functors between dislice categories. `ADSLbc`,
@@ -222,11 +226,13 @@ W-types, and F-algebras it uses throughout.
   construction from single walking-arrow copresheaves to arbitrary
   finite two-level DAGs; relevant to `GenPolyFunc.idr`.
 - The Idris formalization in this area is the predecessor of the
-  Lean 4 continuation. The Lean work on profunctors and parametric
-  right adjoints is discussed in
-  [`geb-lean/docs/areas/category-judgments.md`](../../../geb-lean/docs/areas/category-judgments.md).
-  A dedicated Lean area doc for polynomial functors does not yet
-  exist; this Idris area is the primary reference for that
-  material.
+  Lean 4 continuation, which has dedicated area docs for this
+  material: polynomial functors (including between slice categories)
+  in
+  [`geb-lean/docs/areas/polynomial-functors.md`](../../../geb-lean/docs/areas/polynomial-functors.md),
+  and parametric right adjoints between presheaf categories in
+  [`geb-lean/docs/areas/nno-arithmetic-topos.md`](../../../geb-lean/docs/areas/nno-arithmetic-topos.md).
+  The factorization (formerly *dislice*) category is formalized in
+  the profunctors-and-ends area's `Factorization.lean`.
 - This codebase is not under active development; the Lean 4 port
   in `geb-lean/` is the continuation.

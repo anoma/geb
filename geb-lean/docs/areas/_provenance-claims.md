@@ -262,6 +262,46 @@ in `GebLean/ParanaturalTopos.lean`.
 **Status.** Novel mathematics. Searched 2026-05-31,
 scope nLab, Mathlib (leansearch/loogle); revisable.
 
+## Polynomial functors between arbitrary slice categories, with the Spivak–Niu operations
+
+**Result.** `PolyFunctorBetweenCat X Y` formalizes polynomial
+functors between arbitrary slice categories (`Over X → Over Y`), not
+merely polynomial endofunctors of `Type`, together with a broad range
+of the operations of Spivak–Niu's *Polynomial Functors*: composition,
+products and coproducts, the `Σ_f ⊣ f* ⊣ Π_f` adjoint triple, the
+density / copresheaf-presentation equivalence
+`PolyPresentationLoc D ≌ (D ⥤ Type)`, and the limit and colimit
+structure of the algebra and coalgebra categories. The
+parametric-right-adjoint generalization to arbitrary presheaf
+categories is recorded separately (the
+parametric-right-adjoint presheaf-category entry below).
+
+**Context.** None of this mathematics is novel: polynomial functors
+and their categories are standard (Gambino–Kock, *Polynomial functors
+and polynomial monads*, 2013; Spivak–Niu, *Polynomial Functors*, 2024;
+nLab, "polynomial functor"). Only the formalization in a formal
+programming language, at this generality, is in question. Lean already
+formalizes polynomial functors in two more restricted forms —
+mathlib's container-style `PFunctor` / `MvPFunctor` over `Type`, and
+the `Poly` library's univariate and multivariate theory within a
+locally Cartesian closed framework (<https://github.com/sinhp/Poly>) —
+but neither exposes polynomial functors between arbitrary slice
+categories, and we have not found the breadth of Spivak–Niu operations
+realized here in any Lean or Idris formalization.
+
+**Formalized in.** [polynomial-functors](polynomial-functors.md):
+`PolyFunctorBetweenCat` in `GebLean/Polynomial.lean`, with the
+operations distributed across the area's modules (`PolyAdjunctions`,
+`PolyUMorph`, `Utilities/PolyCombinators`, the `PolyPresentation*` and
+`PolyAlg*` modules). The Idris predecessor develops the same material
+(`geb-idris/docs/areas/polynomial-functors.md`).
+
+**Status.** Known mathematics; the formalization at this generality
+appears to be a first in any formal programming language. Searched
+2026-05-31, re-checked 2026-06-04, scope Mathlib (leansearch/loogle),
+the `Poly` library (<https://github.com/sinhp/Poly>), nLab, and the
+cited literature; revisable.
+
 ## Parametric-right-adjoint presheaf category
 
 **Result.** Parametric right adjoints (PRAs) in the

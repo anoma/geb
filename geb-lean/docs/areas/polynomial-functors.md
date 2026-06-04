@@ -88,6 +88,20 @@ produces a simplicial object `B_n = G^{n+1}(X)` with face maps
 applying the counit and degeneracy maps applying comultiplication;
 the simplicial identities follow from the comonad laws.
 
+Polynomial functors are not novel to this development. Mathlib
+formalizes them as containers over `Type` (`Data.PFunctor`,
+`MvPFunctor`), and the `Poly` library
+(<https://github.com/sinhp/Poly>) formalizes the univariate and
+multivariate theory within a locally Cartesian closed framework.
+What we have not found formalized in Lean or Idris is the generality
+realized here: polynomial functors between arbitrary slice categories
+(`PolyFunctorBetweenCat`), and — more general still — parametric
+right adjoints between arbitrary presheaf categories (the
+[NNO, arithmetic, and topos area](nno-arithmetic-topos.md)'s
+`PresheafPRA`), together with the range of operations transcribed
+from Spivak–Niu. This claim is consolidated, with its search scope,
+in [`_provenance-claims.md`](_provenance-claims.md).
+
 ## Modules
 
 ### Core polynomial functor infrastructure
