@@ -53,9 +53,11 @@ those treatments present `Cat` theoretically rather than
 exhibiting a concrete finite index category together with an
 explicit reflective adjunction and counit isomorphism. Mathlib
 formalizes only the infinite-index nerve analogue
-(`CategoryTheory.instReflectiveSSetCatNerveFunctor`). No prior
-formalization of this finite-index copresheaf encoding or its
-reflective adjunction was found. The full prior-art analysis
+(`CategoryTheory.instReflectiveSSetCatNerveFunctor`). No
+mathematical construction corresponding to this finite-index
+copresheaf encoding and its reflective adjunction was found in the
+literature, let alone a machine-checked formalization or one in
+Lean. The full prior-art analysis
 (nerve–realization, essentially algebraic theories, walking
 structures, polynomial functors) is at
 [`docs/research/novelty-analysis.md`](../research/novelty-analysis.md).
@@ -99,7 +101,8 @@ copresheaf result above; its nearest antecedent is the general
 subcategories (mathlib `CategoryTheory.Reflective`). The specific
 dependent/copresheaf correspondence for this `J`, the
 full-subcategory characterization, and the staged reflective-
-inclusion decomposition were not found formalized elsewhere.
+inclusion decomposition were not found in the literature,
+formalized or otherwise.
 
 **Formalized in.**
 [category-judgments](category-judgments.md). The dependent
