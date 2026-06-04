@@ -74,6 +74,9 @@ and a structural tower bound, the latter realises ER computation
 directly over binary trees using the tree-calculus primitive
 recursor and a Gödel numbering of trees.
 
+Except where a construction is noted below as new, we have found
+no prior Lean formalization of the material in this area.
+
 ## Modules
 
 ### ER (elementary-recursive) Lawvere category
@@ -417,22 +420,17 @@ of that search.
   plausibly novel (`unverified`).
 - K^sim hierarchy (`LawvereKSim*`): the K^sim hierarchy and the
   level-2 coincidence with ER are Tourlakis 2012 (Corollary
-  0.1.0.44 at `n = 2`). These are known mathematics; no prior
-  Lean formalization of the hierarchy or its Lawvere packaging
-  was found. The categorical packaging is plausibly novel
-  (`unverified`).
+  0.1.0.44 at `n = 2`). These are known mathematics. The
+  categorical packaging is plausibly novel (`unverified`).
 - ER ≌ K^sim_2 categorical equivalence (`erKSimEquiv`,
   `kToERFunctor`/`erToKFunctor`): the set-level equality of the
   two function classes is Tourlakis 2012. Casting it as a
   categorical equivalence of Lawvere categories is plausibly
   novel (`unverified`); the underlying URM-simulation argument
   (Wagner-Wong; Cutland, *Computability*, CUP 1980) is known
-  mathematics with no prior Lean formalization found in this
-  packaging.
+  mathematics.
 - Gödel System T (`LawvereGodelT*`): System T is standard (Gödel
   1958; the level/tower analysis follows Beckmann-Weiermann).
-  The typed-term formalization with reduction here found no prior
-  Lean equivalent at the searched scope.
 - Tree-native ER and tree-Gödel (`LawvereTreeER*`, `TreeGoedel`,
   `TreeEqGoedel`, `TreeLogic`, `NatElegantPair`): elementary
   recursion realised over binary trees via the tree-calculus
@@ -440,8 +438,7 @@ of that search.
   pairing (Szudzik, *An Elegant Pairing Function*, 2006). The
   pairing function and ER are known mathematics; the tree-native
   ER category and tree Gödel numbering are plausibly novel
-  (`unverified`), built on components that are themselves known
-  mathematics first formalized in Lean here.
+  (`unverified`).
 - NatBT theories (`LawvereNatBT*`, `LawvereNatBTV2*`): the
   two-sort Lawvere theory of naturals and binary trees is a
   bespoke construction of this development (`unverified`); the
@@ -450,5 +447,4 @@ of that search.
   recursion, packing, and register-machine machinery (Szudzik
   pairing, simultaneous recursion, the URM model). These are
   known mathematics, serving as supporting infrastructure for the
-  above; declarations of independent interest are known
-  mathematics first formalized in Lean here.
+  above.

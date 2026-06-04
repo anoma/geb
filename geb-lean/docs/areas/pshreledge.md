@@ -85,8 +85,7 @@ distinguishing it from an arbitrary identity section.
   category structure), and `pshBarrLiftRel` (the Barr extension of
   an endofunctor to relations). The presheaf-level double category of
   relations has its nearest antecedent in Wadler (1989) and the
-  categorical account of the Barr extension; we have found no prior
-  Lean formalization of it.
+  categorical account of the Barr extension.
 
 - [`GebLean/RelDouble.lean`](../../GebLean/RelDouble.lean) —
   type-level double category of relations (see
@@ -95,8 +94,7 @@ distinguishing it from an arbitrary identity section.
   type-level analogues of the constructions in `PshRelDouble.lean`.
   This module is the pointwise (type-level) specialization of
   Wadler (1989); the `Type`-valued case is the special case of
-  `PSh(Discrete Unit)`. We have found no prior Lean formalization
-  of it.
+  `PSh(Discrete Unit)`.
 
 - [`GebLean/YonedaRelDouble.lean`](../../GebLean/YonedaRelDouble.lean)
   — Yoneda-relations double category (see
@@ -109,7 +107,7 @@ distinguishing it from an arbitrary identity section.
   product functor.
   The Yoneda-relations version of the double category has its
   nearest antecedent in the correspondence between spans on Yoneda
-  and profunctors; we have found no prior Lean formalization of it.
+  and profunctors.
 
 ### `PshRelEdge` family
 
@@ -125,9 +123,7 @@ needed for orientation.
   - `pshRelEdgeCurry` / `pshRelEdgeUncurry`: the currying
     isomorphism, witnessed constructively.
   The cartesian-closed structure follows Wadler (1989) Section 2
-  and the standard internal-hom in functor categories; we have
-  found no prior Lean formalization of the presheaf-edge
-  cc-structure.
+  and the standard internal-hom in functor categories.
 
 - [`GebLean/PshRelEdgeLimits.lean`](../../GebLean/PshRelEdgeLimits.lean)
   — finite limits and colimits in `PshRelEdge C`.
@@ -137,8 +133,7 @@ needed for orientation.
   - `pshRelEdgeEqualizer` / `pshRelEdgeCoequalizer`: (co)equalizers.
   The finite limit/colimit constructions for the edge category
   have their antecedents in the general existence results for
-  presheaf toposes; we have found no prior Lean formalization
-  of them.
+  presheaf toposes.
 
 - [`GebLean/PshRelEdgeIdentPreservation.lean`](../../GebLean/PshRelEdgeIdentPreservation.lean)
   — identity-extension property (IEP). Proves that
@@ -147,8 +142,7 @@ needed for orientation.
   coproducts, coequalizers).
   The IEP follows Reynolds (1983) and Hermida–Reddy–Robinson
   (2014, Proposition 6.3); the colimit-preservation extension
-  appears to be novel at this level of generality. We have found
-  no prior Lean formalization of it.
+  appears to be novel at this level of generality.
 
 - [`GebLean/PshRelEdgeSOClassifier.lean`](../../GebLean/PshRelEdgeSOClassifier.lean)
   — strong subobject classifier. Establishes that `PshRelEdge C` is a
@@ -159,7 +153,7 @@ needed for orientation.
   The quasitopos structure of the double category of relations is
   standard; mathlib has the subobject classifier for `PSh(C)`
   (`CategoryTheory.Topos.Classifier`) but not this edge-level
-  extension, which we have found no prior Lean formalization of.
+  extension.
 
 - [`GebLean/PshRelEdgeInclusion.lean`](../../GebLean/PshRelEdgeInclusion.lean)
   — inclusion of `PshRelEdge C` into `PSh(C × I^op)`. Constructs the
@@ -168,8 +162,7 @@ needed for orientation.
   adjunction `pshRelEdgeSepFunctor ⊣ pshRelEdgeInclusionFunctor`,
   where the separation reflector replaces a span by its image.
   The separation-reflection adjunction has its nearest antecedent
-  in the general theory of sheaves and separated presheaves; we
-  have found no prior Lean formalization of it.
+  in the general theory of sheaves and separated presheaves.
 
 - [`GebLean/PshRelEdgeSeparation.lean`](../../GebLean/PshRelEdgeSeparation.lean)
   — separated-span characterization of `PshRelEdge C`. Introduces
@@ -178,8 +171,7 @@ needed for orientation.
   the full subcategory of separated spans in `WalkingSpan ⥤ PSh(C)`).
   The separated-presheaf characterization
   `PshRelEdge C ≅ Sep_J(C × I^op)` is standard; mathlib has
-  separated presheaves for sites but not this span form, which
-  we have found no prior Lean formalization of.
+  separated presheaves for sites but not this span form.
 
 - [`GebLean/PshRelEdgeFunctionalize.lean`](../../GebLean/PshRelEdgeFunctionalize.lean)
   — functionalization reflector. Constructs
@@ -188,8 +180,7 @@ needed for orientation.
   `pshRelEdgeFunctionalizeAdj : functionalize ⊣ graph`, establishing
   `PshRelEdge C` as a reflective subcategory of `Arrow(PSh(C))`.
   The functionalization adjunction via pushout has its nearest
-  antecedent in image-factorization in a regular category; we
-  have found no prior Lean formalization of it.
+  antecedent in image-factorization in a regular category.
 
 - [`GebLean/PshRelEdgeGraphRestriction.lean`](../../GebLean/PshRelEdgeGraphRestriction.lean)
   — restriction to graph relations. Establishes that the
@@ -213,7 +204,7 @@ needed for orientation.
   factors as `pshTruthLabelFunctor ⋙ pshOverOmegaEdgeFunctor`.
   The factorization of the identity section through `Over Ω` is
   standard; mathlib has the sieve classifier but not this
-  factorization, which we have found no prior Lean formalization of.
+  factorization.
 
 - [`GebLean/PshRelEdgeReflectiveChain.lean`](../../GebLean/PshRelEdgeReflectiveChain.lean)
   — the full reflective chain. Assembles the pairwise inclusions and
@@ -222,8 +213,8 @@ needed for orientation.
   with `Reflective` instances (`pshRelEdgeFromPshAdj`,
   `pshSpanFromArrowAdj`, `pshSpanFromPshAdj`) built by `Reflective.comp`.
   The individual steps of the reflective chain are known, but
-  this exact four-level chain with presheaf pushouts does not
-  appear to have been formalized previously.
+  we have found no such construction in the literature for this
+  exact four-level chain with presheaf pushouts.
 
 ### Relational span diagrams and bicategory
 
@@ -233,8 +224,7 @@ needed for orientation.
   and its category structure, establishing the collage presentation of
   `relSpanProfunctor`.
   The collage / category of elements of a profunctor at the type
-  level is standard; we have found no prior Lean formalization
-  of it.
+  level is standard.
 
 - [`GebLean/PshRelSpanDiagram.lean`](../../GebLean/PshRelSpanDiagram.lean)
   — presheaf-level relational span category. Lifts `RelSpanObj` to
@@ -243,8 +233,7 @@ needed for orientation.
   `pshContravariantEmbedding`, and `yonedaConstEmbedding` into
   `PshParametricFunctor C D`.
   The presheaf collage has its antecedent in the general
-  two-sided Grothendieck construction; we have found no prior
-  Lean formalization of it.
+  two-sided Grothendieck construction.
 
 - [`GebLean/PshSpanBicategory.lean`](../../GebLean/PshSpanBicategory.lean)
   — bicategory of spans in `PSh(C)`. Introduces `PshSpanBicat C`
@@ -254,8 +243,7 @@ needed for orientation.
   `WalkingSpan ⥤ PSh(C)`.
   The span bicategory in a cartesian category is standard; mathlib
   has `CategoryTheory.Bicategory.Basic` but not the instantiation
-  to presheaf spans, which we have found no prior Lean
-  formalization of.
+  to presheaf spans.
 
 ### Type expressions and relational interpretation
 
@@ -267,8 +255,6 @@ needed for orientation.
   relational interpretation of Wadler (1989); `PshTypeAbs` and
   `pshTypeAbsRel` formalize the relational interpretation of
   `∀X. T(X)`.
-  The presheaf generalization of Wadler's relational interpretation
-  has no prior Lean formalization known to the development.
   `pshTypeAbsRel` is `unverified`.
 
 - [`GebLean/RelInterpComposition.lean`](../../GebLean/RelInterpComposition.lean)
@@ -280,8 +266,7 @@ needed for orientation.
   contravariant arrow types.
   The composition/decomposition analysis of graph relations is
   standard; the failure for arrow types is the standard observation
-  about parametricity and higher-order types. We have found no
-  prior Lean formalization of this analysis.
+  about parametricity and higher-order types.
 
 ### Utility modules
 
@@ -292,8 +277,7 @@ needed for orientation.
   full faithfulness; `spanArrowReflector` is the left adjoint via
   pushout.
   The standard arrow–span reflective adjunction has its antecedent
-  in the general theory of reflective subcategories; we have
-  found no prior Lean formalization of it.
+  in the general theory of reflective subcategories.
 
 - [`GebLean/Utilities/ReflexiveGraph.lean`](../../GebLean/Utilities/ReflexiveGraph.lean)
   — reflexive-graph category data. `ReflexiveGraphData V E` packages
@@ -301,16 +285,13 @@ needed for orientation.
   the two retraction equalities `ident ⋙ src = 𝟭 V` and
   `ident ⋙ tgt = 𝟭 V`.
   The abstract data of a reflexive graph has antecedents in
-  Hermida–Reddy–Robinson (2014) and standard graph-category theory;
-  we have found no prior Lean formalization of it.
+  Hermida–Reddy–Robinson (2014) and standard graph-category theory.
 
 - [`GebLean/Utilities/SpanFamily.lean`](../../GebLean/Utilities/SpanFamily.lean)
   — span-family data and morphisms. `SpanFamilyData` packages vertex
   objects, edge objects, and two projection families; `SpanFamilyHom`
   is the morphism structure satisfying the two naturality conditions;
   `SpanFamily` abbreviates `GraphSpanObj V E ⥤ D`.
-  The unpacked functor data for graph-span diagrams has no prior
-  Lean formalization known to the development.
 
 - [`GebLean/Utilities/WSubfunctor.lean`](../../GebLean/Utilities/WSubfunctor.lean)
   — witnessed subfunctors. `WSubfunctor F` is a constructive variant
@@ -320,7 +301,7 @@ needed for orientation.
   `WSubfunctor.toSubfunctor` forgets back to propositional membership.
   The constructive (witness-carrying) counterpart of `Subfunctor`
   is not in mathlib, which has `Subfunctor.Basic` but not the
-  witnessed form; we have found no prior Lean formalization of it.
+  witnessed form.
 
 ## Alternative formulations
 

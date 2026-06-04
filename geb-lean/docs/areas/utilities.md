@@ -76,9 +76,7 @@ recorded in the module's own description.
   cospanArrowCoreflector` exhibiting `Arrow C` as a coreflective
   subcategory of the cospan-diagram category, parameterized by an
   explicit (constructive) choice of pullback cones.
-  A standard adjunction dual to the arrow-span adjunction; we
-  have found no prior Lean formalization of the explicit
-  constructive form.
+  A standard adjunction dual to the arrow-span adjunction.
 
 ### Computable limits
 
@@ -96,8 +94,7 @@ recorded in the module's own description.
   — the `DaggerCategory` typeclass: an involutive, identity-on-objects,
   contravariant endoperation on morphisms satisfying `dagger_id`,
   `dagger_comp`, and `dagger_involutive`.
-  The dagger category is a standard concept; we have found no
-  `DaggerCategory` in current mathlib.
+  The dagger category is a standard concept.
 
 ### Distributive laws
 
@@ -118,8 +115,7 @@ recorded in the module's own description.
   `DoubleFunctorData` and `VertTransData` provide the corresponding
   notion of strict double functor and vertical transformation.
   Standard strict double categories (Ehresmann 1963;
-  Grandis–Paré 1999); we have found no strict double category
-  in current mathlib.
+  Grandis–Paré 1999).
 
 ### Transport and equality lemmas
 
@@ -171,9 +167,6 @@ recorded in the module's own description.
   propositionally. Provides `opToOp'` / `op'ToOp`, `opIsoOp'`,
   `Cat.opFunctor'` (the strictly involutive endofunctor on `Cat`),
   and all derived functor-category isomorphisms and coercions.
-  The opposite-category construction is standard; the definitional
-  (not merely propositional) involutivity refines mathlib's
-  `Opposite`, for which we have found no prior formalization.
 
 ### Presheaves and copresheaves
 
@@ -186,9 +179,7 @@ recorded in the module's own description.
   and for `C ⥤ Type` (`CoPshClassifier`); and covariant Yoneda
   equivalences (`coyonedaEquivOfNatIso`,
   `coyonedaNatIsoOfNatIso`, `uliftCoyonedaNatIsoOfNatIso`).
-  Standard presheaf constructions and the Yoneda lemma; we have
-  found no prior Lean formalization of the subobject classifier
-  transfer or the universe-lifted covariant Yoneda forms.
+  Standard presheaf constructions and the Yoneda lemma.
 
 ### Representable density
 
@@ -210,8 +201,7 @@ recorded in the module's own description.
   `forgetful` functors to `Type`. Also defines `SetoidNatTrans`,
   `SetoidNatIso`, and `SetoidEquivalence` (an up-to-setoid-relation
   analogue of a categorical equivalence).
-  The setoid category is a standard concept; we have found no
-  `SetoidCat` in current mathlib.
+  The setoid category is a standard concept.
 
 ### Sigma type utilities
 

@@ -68,8 +68,7 @@ types.
   characterizes trees of bounded depth as exactly those whose
   encoding is at most the code of the perfect tree of that depth.
   The Gödel/Cantor tree-pairing and `Nat.pair` are known
-  mathematics available in mathlib; we have found no prior Lean
-  formalization of the labeled-alphabet generalization.
+  mathematics available in mathlib.
 
 - [`GebLean/PLang/IndexedEAT.lean`](../../GebLean/PLang/IndexedEAT.lean)
   — essentially algebraic theories indexed by a type `X`,
@@ -81,9 +80,7 @@ types.
   property of a quotient algebra.
   Essentially algebraic theories are known mathematics
   (Adámek–Rosický, *Locally Presentable and Accessible
-  Categories* 1994; Johnstone, *Sketches of an Elephant* II);
-  we have found no prior Lean formalization of this
-  indexed-polynomial presentation.
+  Categories* 1994; Johnstone, *Sketches of an Elephant* II).
 
 - [`GebLean/PLang/JudgmentUniverse.lean`](../../GebLean/PLang/JudgmentUniverse.lean)
   — the judgment category `JudgmentLevel` (objects: `obj`,
@@ -92,10 +89,10 @@ types.
   level to the corresponding copresheaf category.  Morphisms in
   `JudgmentLevel` represent forgetful relations between levels of
   categorical structure.
-  This specific three-object index category organising the
-  forgetful hierarchy has no prior formalization found; the
-  nearest antecedent in mathlib is the walking-quiver and
-  walking-category structures. `unverified`
+  For this specific three-object index category organising the
+  forgetful hierarchy, we have found no such construction in the
+  literature; the nearest antecedent in mathlib is the
+  walking-quiver and walking-category structures. `unverified`
 
 - [`GebLean/PLang/Syntax.lean`](../../GebLean/PLang/Syntax.lean)
   — the product polynomial endofunctor `polyProd` on `Over X`
@@ -104,8 +101,7 @@ types.
   associated evaluation functors and `Type`-specializations.
   `polyProd` is the standard "product" polynomial over a slice
   category; the free-monad construction reuses `polyFreeFunctor`
-  from the polynomial-functors area; we have found no prior Lean
-  formalization of this presentation.
+  from the polynomial-functors area.
 
 - [`GebLean/PLang/TermCat.lean`](../../GebLean/PLang/TermCat.lean)
   — stub module for the term category constructed from binary
@@ -164,8 +160,7 @@ types.
   products; `GSOSRule` is the structure carrying a natural
   transformation `Sigma(X × B(X)) → B(T(X))`.
   The abstract GSOS rule is known mathematics (Turi–Plotkin LICS
-  1997); we have found no prior Lean formalization of this
-  abstract formulation.
+  1997).
 
 - [`GebLean/Utilities/LambdaBialgebra.lean`](../../GebLean/Utilities/LambdaBialgebra.lean)
   — lambda-bialgebra for a distributive law `T ∘ D ⟹ D ∘ T`:
@@ -177,7 +172,7 @@ types.
   components.
   Lambda-bialgebras for a distributive law are known mathematics
   (Turi–Plotkin LICS 1997; Power–Watanabe distributive laws for
-  bialgebras); we have found no prior Lean formalization.
+  bialgebras).
 
 ## Dependencies
 

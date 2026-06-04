@@ -50,7 +50,7 @@ adding declarations.
   most-imported declaration in the area. `Subset0` is a variant of
   the standard `Subset` type with erased predicate parameter; all
   other definitions are standard functional-programming combinators;
-  we have found no prior Idris formalization of `Subset0`.
+  we have found no such construction in the literature.
 
 - [`src/Library/IdrisCategories.idr`](../../src/Library/IdrisCategories.idr)
   — the categorical vocabulary over `Type`: `SCat` (the bundled
@@ -65,8 +65,7 @@ adding declarations.
   These structures — slice categories, natural transformations,
   profunctors, ends, polynomial functors, free monads — are standard
   category theory (Mac Lane, *Categories for the Working
-  Mathematician*; nLab); we have found no prior Idris formalization
-  of them.
+  Mathematician*; nLab).
 
 - [`src/Library/IdrisAlgebra.idr`](../../src/Library/IdrisAlgebra.idr)
   — algebras and morphisms of `F`-algebras (`FAlgObj`, `FAlgMorph`,
@@ -79,8 +78,7 @@ adding declarations.
   F-algebra categories and the Eilenberg–Moore comparison theorem
   are standard (Mac Lane, op. cit., VI.8; nLab,
   [algebra for an endofunctor](https://ncatlab.org/nlab/show/algebra+for+an+endofunctor#relation_to_algebras_over_a_monad),
-  prop. 3.1; Barr–Wells, *Toposes, Triples, and Theories*, §3.6);
-  we have found no prior Idris formalization of them.
+  prop. 3.1; Barr–Wells, *Toposes, Triples, and Theories*, §3.6).
 
 - [`src/Library/CategoryTheory.idr`](../../src/Library/CategoryTheory.idr)
   — a stub module that imports `LanguageDef.FullLanguageDef` (and

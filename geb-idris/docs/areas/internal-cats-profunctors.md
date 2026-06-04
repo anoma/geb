@@ -62,9 +62,7 @@ of ends developed in
   `IntCatSig` bundles them; `IntCatEqSig`, `Isomorphism`, and
   `MorCongF` add a morphism-equality structure and congruence algebra.
   Internal categories in `Set` are standard mathematics (Johnstone,
-  *Sketches of an Elephant*, vol. I); we have found no prior
-  formalization of this module's signature style in any proof
-  assistant.
+  *Sketches of an Elephant*, vol. I).
 
 - [`src/LanguageDef/InternalHigherCat.idr`](../../src/LanguageDef/InternalHigherCat.idr)
   — re-export aggregator lifting `InternalCat`, `SlicePolyCat`, and
@@ -81,8 +79,7 @@ of ends developed in
   profunctor axioms. Also contains identity laws for `TypeMor`
   (`typeIdL`, `typeIdR`, `typeAssoc`).
   Profunctors are standard category theory (Loregian,
-  *Coend Calculus*, §1); we have found no prior internal-profunctor
-  formalization in Idris 2.
+  *Coend Calculus*, §1).
 
 - [`src/LanguageDef/Diprofunctor.idr`](../../src/LanguageDef/Diprofunctor.idr)
   — the category of polynomial diprofunctors: objects as arenas
@@ -92,9 +89,6 @@ of ends developed in
   and `DiProArMonComp'` assemble a monoidal structure; the
   `InterpDPRtwMap` lifts dipolynomial interpretation through
   twisted-arrow presheaves.
-  Polynomial diprofunctors as a distinct arena category are, to the
-  development's knowledge, novel; we have found no prior treatment in
-  the nLab or Spivak polynomial-functor literature.
 
 - [`src/LanguageDef/IntArena.idr`](../../src/LanguageDef/IntArena.idr)
   — arenas on internal categories: `IntArena c = CSliceObj c`, a
@@ -102,8 +96,7 @@ of ends developed in
   `iaObj`, and specializations `MLArena`; documents the four
   family/cofamily categories built from arenas.
   Arenas as slice objects are standard (Spivak, *Polynomial Functors*,
-  §2); we have found no prior Idris 2 formalization of this
-  construction.
+  §2).
 
 The following eight modules define the four family and cofamily
 categories (universal families = free cartesian monoidal completion;
@@ -171,9 +164,6 @@ type; the categories differ only in their morphism definitions.
   `PBundleMor` gives the morphism type as an iterated existential
   family morphism. Supports parameterized adjunctions and
   bundle-level constructions.
-  Parameterized-bundle objects as iterated existential families are,
-  to the development's knowledge, novel; we have found no prior
-  treatment in the nLab or Spivak literature.
 
 - [`src/LanguageDef/IntTwistedArrowCat.idr`](../../src/LanguageDef/IntTwistedArrowCat.idr)
   — polynomial functors indexed by twisted-arrow categories.
@@ -181,19 +171,12 @@ type; the categories differ only in their morphism definitions.
   functor whose directions split into contravariant and covariant
   parts per position; `InterpPTw` interprets it as a
   `TwArrCoprSig`-valued functor.
-  The twisted-arrow category is standard (nLab); the arena-style
-  polynomial encoding of functors indexed by it is specific to this
-  development, and we have found no prior treatment of this
-  combination.
 
 - [`src/LanguageDef/IntDisheafCat.idr`](../../src/LanguageDef/IntDisheafCat.idr)
   — sheaf-like constructions on polynomial categories. Defines
   `PolyPolyCat`, `PolyUnivCat`, `DirichDirichCat`, `PolyUnivCat`
   as iterated family/cofamily categories; proves a polynomial
   double-Yoneda lemma via `PolyDoubleYo` and `PolyAppFunc`.
-  The polynomial double-Yoneda lemma formulated here is, to the
-  development's knowledge, novel; we have found no prior treatment in
-  the Spivak polynomial-functor literature or the nLab.
 
 - [`src/LanguageDef/MLDirichCat.idr`](../../src/LanguageDef/MLDirichCat.idr)
   — Dirichlet functors in Idris's metalanguage. `MLDirichCatObj` is
@@ -202,7 +185,7 @@ type; the categories differ only in their morphism definitions.
   gives the contravariant set-valued interpretation `(i : pos **
   x -> dir i)`.
   Dirichlet functors are standard (Spivak, *Polynomial Functors*,
-  §3); we have found no prior Idris 2 formalization of them.
+  §3).
 
 - [`src/LanguageDef/MLBundleCat.idr`](../../src/LanguageDef/MLBundleCat.idr)
   — covariant fiber bundles over `Type`. `ABundleObj` is an
@@ -219,10 +202,6 @@ type; the categories differ only in their morphism definitions.
   `TwistPairMor` and the equivalences `TwistPairToArr` /
   `TwistArrToPair` relate it to the standard `TwArrObj`
   presentation; `MLTwPobj` is the record form.
-  The dependent-pair ("twisted-pair") formulation of the
-  twisted-arrow category is, to the development's knowledge, novel;
-  we have found no prior treatment in the nLab twisted-arrow
-  literature.
 
 - [`src/LanguageDef/SlPolyIntCat.idr`](../../src/LanguageDef/SlPolyIntCat.idr)
   — embedding of internal categories into dependent polynomial
@@ -241,9 +220,6 @@ type; the categories differ only in their morphism definitions.
   corresponding right-map give the dinatural action. The source
   notes the analogy with polynomial vs. Dirichlet: same arenas,
   different morphisms.
-  Dipolynomial functors as a distinct arena-based difunctor category
-  are, to the development's knowledge, novel; we have found no prior
-  treatment in Spivak or Loregian.
 
 - [`src/LanguageDef/MLDiPolyFunc.idr`](../../src/LanguageDef/MLDiPolyFunc.idr)
   — metalanguage specialization of `DiPolyFunc` to `c = Type`.
@@ -259,8 +235,7 @@ type; the categories differ only in their morphism definitions.
   `MLPolyF1` and `InterpMLPolyF1` are the metalanguage
   specialization.
   PRA functors are standard (Weber, *Familial 2-functors and
-  parametric right adjoints*, 2007; nLab); we have found no prior
-  Idris 2 formalization of them.
+  parametric right adjoints*, 2007; nLab).
 
 - [`src/LanguageDef/PolyProfunctor.idr`](../../src/LanguageDef/PolyProfunctor.idr)
   — polynomial profunctors as profunctors on dependent-pair
@@ -268,9 +243,6 @@ type; the categories differ only in their morphism definitions.
   domain data; `SubstObjMuPosPos` / `SubstObjMuPosDir` develop a
   worked example of the polynomial-profunctor representation for
   the substitution-object morphism signature.
-  Polynomial profunctors and their arena representations are, to the
-  development's knowledge, novel; we have found no prior treatment
-  in the nLab, Spivak, or Loregian.
 
 - [`src/LanguageDef/PolyProfEnd.idr`](../../src/LanguageDef/PolyProfEnd.idr)
   — sections of polynomial functors as ends. `PolySection pf` is
@@ -282,9 +254,7 @@ type; the categories differ only in their morphism definitions.
   the identity profunctor.
   Ends as sections are standard (Loregian, *Coend Calculus*, §1.2;
   see also
-  [`docs/profunctor-end-characterization.md`](../profunctor-end-characterization.md));
-  we have found no prior Idris formalization of this end
-  characterization.
+  [`docs/profunctor-end-characterization.md`](../profunctor-end-characterization.md)).
 
 ## Alternative formulations
 

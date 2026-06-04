@@ -59,8 +59,7 @@ types within a polynomial functor by Nat-valued vectors.
   The classical initial-algebra / free-monad encoding of
   tree-structured terms is standard in the functional-programming
   and categorical-semantics literature (Awodey, *Category Theory*;
-  Barr–Wells, *Toposes, Triples and Theories*); we have found no
-  prior Idris implementation of this formalization.
+  Barr–Wells, *Toposes, Triples and Theories*).
 
 - [`src/LanguageDef/Metaprogramming.idr`](../../src/LanguageDef/Metaprogramming.idr)
   — stub module re-exporting `LanguageDef.Expression`; currently
@@ -81,8 +80,7 @@ types within a polynomial functor by Nat-valued vectors.
   over index categories.
   Metalanguage quivers and path closure are standard (nLab,
   "quiver"; Lawvere–Rosebrugh, *Sets for Mathematics*);
-  `PrafunctorData` follows Weber's PRA construction (Weber 2004);
-  we have found no prior Idris formalization of this material.
+  `PrafunctorData` follows Weber's PRA construction (Weber 2004).
 
 - [`src/LanguageDef/Telescope.idr`](../../src/LanguageDef/Telescope.idr)
   — early-stage index and position types for dependent-context
@@ -95,8 +93,7 @@ types within a polynomial functor by Nat-valued vectors.
   `MLDirichCatObj`. The module ends at a skeleton "Objects"
   section header, indicating work in progress.
   Dependent-context telescopes are due to de Bruijn (1994) and
-  Martin-Löf (1975); the specific polynomial encoding of telescope
-  indices here appears to be novel (unverified).
+  Martin-Löf (1975).
 
 ## Dependencies
 

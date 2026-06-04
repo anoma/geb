@@ -61,6 +61,9 @@ paranatural transformations carry topos structure, developing an
 assembly functor and diagonal-determinedness condition toward that
 question.
 
+Except where a construction is noted below as new, we have found
+no prior Lean formalization of the material in this area.
+
 ## Modules
 
 - [`GebLean/NatArith.lean`](../../GebLean/NatArith.lean) —
@@ -71,10 +74,7 @@ question.
   naturals form a commutative cancellative monoid under `natPlus`
   and that `natEq` is an equality test.
   The operations themselves are standard recursive-function-theory
-  arithmetic; their realization as morphisms in an abstract
-  PBTO-bearing category with the exact computation rules proved
-  here has not been found in the literature or in mathlib
-  (Lambek–Scott; nLab).
+  arithmetic (Lambek–Scott; nLab).
 
 - [`GebLean/NatNNO.lean`](../../GebLean/NatNNO.lean) — NNO
   recursion interface derived from the PBTO, and Cantor
@@ -84,10 +84,7 @@ question.
   `cantorUnpair_cantorPair` establish the retraction
   `cantorUnpair ; cantorPair = toRSpineNat`.
   The NNO universal property is standard and Cantor pairing and
-  unpairing are classical; the derivation of the NNO interface
-  from a PBTO via right-spine normalization, and the categorical
-  proof of the retraction, have not been found in prior
-  formalizations.
+  unpairing are classical.
 
 - [`GebLean/PSO.lean`](../../GebLean/PSO.lean) — parameterized
   snoclist object (PSO): initial algebra of `X ↦ 1 + X × B`.
@@ -97,9 +94,7 @@ question.
   a `PSO cfpTerminal nno.N` instance from any NNO.
   Parameterized list objects appear in categorical type theory
   (Uustalu–Vene, *Primitive (co)recursion and course-of-value
-  (co)iteration*, 1999); we have found no prior Lean
-  formalization of this precise `X ↦ 1 + X × B`-algebra
-  interface together with the NNO-to-PSO instance.
+  (co)iteration*, 1999).
 
 - [`GebLean/PLO.lean`](../../GebLean/PLO.lean) — parameterized
   cons-list object (PLO): initial algebra of `X ↦ 1 + B × X`,
@@ -109,8 +104,7 @@ question.
   is a paramorphism whose step sees the element, raw tail, and
   recursive result simultaneously.
   Parameterized list algebras are known mathematics (see PSO note
-  above); we have found no prior Lean formalization of this
-  cons-list variant with the explicit paramorphism.
+  above).
 
 - [`GebLean/PSTONat.lean`](../../GebLean/PSTONat.lean) — NNO
   recursion derived from the PSTO (snoclist-of-trees) rather than
@@ -120,8 +114,7 @@ question.
   computation rules for the PSTO-based recursion.
   The derivation of NNO recursion from a PSTO by replacing every
   element with `nil` is an instance of the general PSO-to-NNO
-  reduction, but the specific PSTO-based route has not been found
-  formalized elsewhere.
+  reduction.
 
 - [`GebLean/ParanaturalTopos.lean`](../../GebLean/ParanaturalTopos.lean)
   — investigation of topos structure on profunctor subcategories
@@ -152,8 +145,8 @@ question.
   `praEvalAtFunctor` are the accessor maps.
   The Weber/Gambino–Kock PRA theory is known mathematics (Weber
   2004; Gambino–Kock 2013); its formalization as a
-  bifunctor-assembled presheaf category is plausibly novel,
-  with no prior formalization found; background in
+  bifunctor-assembled presheaf category is plausibly novel;
+  background in
   [`docs/research/presheaf-pra.md`](../research/presheaf-pra.md).
 
 - [`GebLean/PresheafPRADiscrete.lean`](../../GebLean/PresheafPRADiscrete.lean)
@@ -164,9 +157,7 @@ question.
   polynomial functors between presheaf categories on discrete
   categories correspond to PRAs via the over-presheaf equivalence.
   `Over X ≌ presheaves on discrete X` is standard and mathlib
-  has `piEquivalenceFunctorDiscrete`; we have found no prior Lean
-  formalization of the composite `ccrMapEquiv` transport and
-  the polynomial-to-PRA equivalence in the discrete case.
+  has `piEquivalenceFunctorDiscrete`.
 
 - [`GebLean/PresheafPRAUMorph.lean`](../../GebLean/PresheafPRAUMorph.lean)
   — limits in `CoprodCovarRepCat C`, enabling presheaf PRA
@@ -178,9 +169,8 @@ question.
   functor with adjoint, and `praReassemble` realizes a PRA's
   positions-and-directions data inside the limit.
   The limit construction for `CoprodCovarRepCat` via Grothendieck
-  is specific to this setting and has not been found in prior
-  work; the underlying limit techniques are standard mathlib
-  material.
+  is specific to this setting; the underlying limit techniques are
+  standard mathlib material.
 
 ## Alternative formulations
 

@@ -89,8 +89,7 @@ anticipated but not yet present.
   Impredicative coequalizers are standard in intensional type theory;
   nearest reference is Hofmann, *Extensional Concepts in Intensional
   Type Theory*, §4, and nLab
-  [quotient type](https://ncatlab.org/nlab/show/quotient+type). We
-  have found no prior Idris formalization of this construction.
+  [quotient type](https://ncatlab.org/nlab/show/quotient+type).
 
 - [`src/LanguageDef/RQFin.idr`](../../src/LanguageDef/RQFin.idr)
   — finite sets with explicit refinements (equalizers) and
@@ -104,8 +103,7 @@ anticipated but not yet present.
   Equalizers and coequalizers in finite-set categories are standard
   (Mac Lane, *Categories for the Working Mathematician*, §V.2); the
   Lawvere-theory framing follows Lawvere, *Functorial Semantics of
-  Algebraic Theories*. We have found no prior Idris formalization
-  of this refinement-type layer.
+  Algebraic Theories*.
 
 - [`src/LanguageDef/RefinedADT.idr`](../../src/LanguageDef/RefinedADT.idr)
   — polynomial endofunctors and their arenas on a skeleton of
@@ -121,7 +119,6 @@ anticipated but not yet present.
   Theory of Interaction*, §2, and Kock, *Polynomial Functors and
   Trees*; the ADT / substitution layers are standard (nLab,
   [polynomial functor](https://ncatlab.org/nlab/show/polynomial+functor)).
-  We have found no prior Idris formalization of this arena layer.
 
 - [`src/LanguageDef/Atom.idr`](../../src/LanguageDef/Atom.idr)
   — the three-layer enumerated atom sort used in Geb
@@ -135,8 +132,7 @@ anticipated but not yet present.
   Enumerated atom sorts with decidable equality are standard
   (Pierce, *Types and Programming Languages*, §11); the
   `VectDecoder`/`FinDecEncoding` infrastructure reuses
-  `Library.IdrisUtils` combinators. We have found no prior Idris
-  formalization of this three-layer atom sort.
+  `Library.IdrisUtils` combinators.
 
 - [`src/LanguageDef/ComputationalEffects.idr`](../../src/LanguageDef/ComputationalEffects.idr)
   — placeholder module for the algebraic-effects layer; it
@@ -148,7 +144,6 @@ anticipated but not yet present.
   (Plotkin–Power, *Algebraic Operations and Generic Effects*,
   MSCS 2004; nLab,
   [algebraic effect](https://ncatlab.org/nlab/show/algebraic+effect)).
-  We have found no prior Idris formalization of this effects layer.
 
 - [`src/LanguageDef/Embedded.idr`](../../src/LanguageDef/Embedded.idr)
   — placeholder module for the embedded-language layer; it
@@ -158,8 +153,7 @@ anticipated but not yet present.
   Geb's core.
   Embedded languages and object/meta-language separation are
   standard (Reynolds, *Definitional Interpreters for Higher-Order
-  Programming Languages*, 1972). We have found no prior Idris
-  formalization of this embedded-language layer.
+  Programming Languages*, 1972).
 
 - [`src/LanguageDef/FullLanguageDef.idr`](../../src/LanguageDef/FullLanguageDef.idr)
   — the assembly capstone that re-exports all language layers

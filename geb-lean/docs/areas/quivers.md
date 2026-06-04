@@ -86,8 +86,7 @@ abundant universe of functors*, 2021).
   identity-adjoined categories; `toCat` is the inclusion functor
   `SemicategoryCat ⥤ Cat`.
   Semicategories and the identity-adjunction construction are standard
-  (Mitchell, *Theory of Categories*, §I.2); no prior Lean or Coq
-  formalization of this exact typeclass and adjunction has been found.
+  (Mitchell, *Theory of Categories*, §I.2).
 
 - [`GebLean/AcyclicQuiver.lean`](../../GebLean/AcyclicQuiver.lean) —
   acyclic quivers witnessed by a topological order on vertices, and
@@ -99,8 +98,7 @@ abundant universe of functors*, 2021).
   morphisms; `no_cycles` establishes that any path from a vertex to
   itself must be `nil`.
   Acyclic quivers via topological ordering are standard graph theory
-  (Bang-Jensen–Gutin, *Digraphs*, §1.2); no prior Lean formalization
-  has been found.
+  (Bang-Jensen–Gutin, *Digraphs*, §1.2).
 
 - [`GebLean/AcyclicCat.lean`](../../GebLean/AcyclicCat.lean) —
   acyclic categories, the bundled category `AcyclicCategoryCat`, and
@@ -114,8 +112,7 @@ abundant universe of functors*, 2021).
   strictly increases or is an identity on equal vertices.
   Acyclic categories (also called acyclic directed categories or strict
   poset-enriched categories) appear in directed homology and
-  combinatorics; no prior Lean formalization of the bundled category
-  and its inclusion into `Cat` has been found.
+  combinatorics.
 
 - [`GebLean/CategoryPresentation.lean`](../../GebLean/CategoryPresentation.lean)
   — presentation of a category by generators and relations via
@@ -142,9 +139,7 @@ abundant universe of functors*, 2021).
   all paths between two vertices in such a quiver via
   `finsetPathsBounded` and `fintypePathsBounded`.
   The path-length bound via topological ordering is standard
-  (Bang-Jensen–Gutin, *Digraphs*, §1.2); the constructive
-  `Finset`-based path enumeration following mathlib's
-  `SimpleGraph.finsetWalkLength` pattern is a new Lean development.
+  (Bang-Jensen–Gutin, *Digraphs*, §1.2).
 
 - [`GebLean/CofreeCategory.lean`](../../GebLean/CofreeCategory.lean)
   — the cofree category on a polynomial endofunctor, built from
@@ -160,8 +155,7 @@ abundant universe of functors*, 2021).
   `P`-coalgebra.
   The cofree category on a polynomial endofunctor and the equivalence
   of coalgebras with copresheaves on it is treated in Adámek–Porst
-  (2004) and Spivak (2021, §3.3); no prior Lean, Coq, Agda, or
-  Idris2 formalization has been found.
+  (2004) and Spivak (2021, §3.3).
 
 ## Alternative formulations
 

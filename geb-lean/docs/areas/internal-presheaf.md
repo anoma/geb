@@ -64,8 +64,7 @@ in Lean against mathlib's `Grothendieck`.
   well-known (Johnstone *Elephant* §B2; Borceux *Handbook*
   vol. 2, ch. 8), but the direct Lean formalisation over
   mathlib's `Mon_`, `PshSpanBicat`, and `Grothendieck` machinery
-  is novel to this project; we have found no prior Lean
-  formalisation. (Unverified.)
+  is novel to this project. (Unverified.)
 
 - [`GebLean/PshInternalExternalize.lean`](../../GebLean/PshInternalExternalize.lean)
   — the externalisation of an internal category to a `Cᵒᵖ ⥤ Cat`
@@ -76,8 +75,7 @@ in Lean against mathlib's `Grothendieck`.
   construction to internal functors, showing externalization is
   functorial.
   Externalisation of an internal category is a classical
-  construction (Johnstone *Elephant* §B2; Borceux vol. 2, ch. 8);
-  we have found no prior Lean formalisation against mathlib.
+  construction (Johnstone *Elephant* §B2; Borceux vol. 2, ch. 8).
   (Unverified.)
 
 - [`GebLean/PshInternalPresheaf.lean`](../../GebLean/PshInternalPresheaf.lean)
@@ -90,8 +88,7 @@ in Lean against mathlib's `Grothendieck`.
   presheaves.
   Internal presheaves / discrete fibrations over internal categories
   are standard (Johnstone *Elephant* §B2.3); the Lean formalisation
-  is project-original, and we have found no prior Lean
-  formalisation. (Unverified.)
+  is project-original. (Unverified.)
 
 - [`GebLean/PshInternalGrothendieck.lean`](../../GebLean/PshInternalGrothendieck.lean)
   — the equivalence between internal presheaves and ordinary
@@ -103,8 +100,7 @@ in Lean against mathlib's `Grothendieck`.
   The equivalence is a special case of the slice-presheaf
   adjunction / discrete-fibration characterisation (Johnstone
   *Elephant* §B2.3; SGA4 Exp. I); this Lean proof is
-  project-original, and we have found no prior mathlib
-  formalization. (Unverified.)
+  project-original. (Unverified.)
 
 - [`GebLean/Utilities/Elements.lean`](../../GebLean/Utilities/Elements.lean)
   — the contravariant category of elements and the slice-presheaf
@@ -144,8 +140,8 @@ in Lean against mathlib's `Grothendieck`.
   two-sided Grothendieck construction to twisted-arrow indexing;
   the construction is described in
   [`docs/research/connected-grothendieck-construction.md`](../research/connected-grothendieck-construction.md)
-  and appears novel to this project; we have found no prior Lean
-  formalisation. (Unverified.)
+  and appears novel to this project; we have found no such
+  construction in the literature.
 
 ## Dependencies
 

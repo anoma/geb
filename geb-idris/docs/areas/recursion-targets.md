@@ -58,8 +58,7 @@ Urbit as a minimal substrate for a deterministic operating system.
   the free/forgetful adjunction.
   `BinTreeMu` as initial algebra / free monad of the product monad
   is standard (Barr–Wells, *Toposes, Triples, and Theories*, §4;
-  nLab, [free monad](https://ncatlab.org/nlab/show/free+monad));
-  we have found no prior Idris implementation of this formalization.
+  nLab, [free monad](https://ncatlab.org/nlab/show/free+monad)).
 
 - [`src/LanguageDef/TreeCalculus.idr`](../../src/LanguageDef/TreeCalculus.idr)
   — Jay's tree calculus over unlabeled binary trees. `NatTree` is the
@@ -71,9 +70,8 @@ Urbit as a minimal substrate for a deterministic operating system.
   `NatTreeToRNSExp` establish an isomorphism between `NatTree` and the
   type of unlabeled S-expressions, matching Jay's specification.
   Tree calculus is due to Barry Jay (*Reflective Programs in Tree
-  Calculus*, arXiv:2108.00969, 2021); the Idris encoding is an
-  independent formalization. See also the cross-reference note in
-  Pointers.
+  Calculus*, arXiv:2108.00969, 2021). See also the cross-reference
+  note in Pointers.
 
 - [`src/LanguageDef/Nock.idr`](../../src/LanguageDef/Nock.idr)
   — the Nock combinator machine. `Noun` (atoms and cells) and
@@ -83,9 +81,7 @@ Urbit as a minimal substrate for a deterministic operating system.
   is the fuel-limited evaluator; `slot` is the axis-addressing
   function on nouns.
   Nock is specified by the Urbit project
-  (<https://urbit.org/docs/nock/>); this is an independent
-  formalization; we have found no prior Idris implementation of
-  it.
+  (<https://urbit.org/docs/nock/>).
 
 ## Alternative formulations
 

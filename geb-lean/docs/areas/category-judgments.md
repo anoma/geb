@@ -46,8 +46,8 @@ This is structurally parallel to the
 nerve–realization adjunction `τ₁ ⊣ N : Cat ⇆ [Δᵒᵖ, Set]`, differing
 in that the index category here is finite. We have not found a
 mathematical construction corresponding to this adjunction anywhere
-in the literature, let alone a machine-checked formalization or one
-in Lean.
+in the literature (let alone a machine-checked formalization or one
+specifically in Lean).
 See [`docs/research/novelty-analysis.md`](../research/novelty-analysis.md).
 
 ## Modules

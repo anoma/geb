@@ -58,8 +58,7 @@ active Lean 4 development; it is not under active development.
   `Poly` category; `CPFSliceObj` defines slice objects over a fixed
   polynomial functor. The `Poly` category and its natural
   transformations are standard mathematics (Spivak–Niu,
-  *Polynomial Functors*, 2022; nLab, polynomial functor); we have
-  found no prior Idris formalization of them.
+  *Polynomial Functors*, 2022; nLab, polynomial functor).
 
 - [`src/LanguageDef/FinPoly.idr`](../../src/LanguageDef/FinPoly.idr)
   — finitary polynomial functors encoded via a fixed
@@ -71,8 +70,7 @@ active Lean 4 development; it is not under active development.
   Finitary/bounded polynomial functors and their free monads are
   standard mathematics (nLab, finitary monad; Barr–Wells,
   *Toposes, Triples, and Theories*); the specific `MaybeParProdF`
-  encoding is a local definitional choice; we have found no prior
-  Idris formalization of them.
+  encoding is a local definitional choice.
 
 - [`src/LanguageDef/GenPolyFunc.idr`](../../src/LanguageDef/GenPolyFunc.idr)
   — aggregate import module and a characterization study of arrow
@@ -84,8 +82,7 @@ active Lean 4 development; it is not under active development.
   `MLDirichF1NT` its headline declarations. PRA functors via
   coproducts of representables follow Weber (op. cit.) and the
   nLab account of PRA functors; the Yoneda-style `MLDirichF1NT`
-  formula is standard; we have found no prior Idris formalization
-  of them.
+  formula is standard.
 
 - [`src/LanguageDef/HigherPolyCat.idr`](../../src/LanguageDef/HigherPolyCat.idr)
   — import aggregator only (8 lines); re-exports
@@ -104,8 +101,7 @@ active Lean 4 development; it is not under active development.
   constructor records; `InterpFI1` interprets the first layer as
   a polynomial functor. The polynomial-functor semantics of
   inductive-inductive types follows Altenkirch–Morris (op. cit.)
-  and nLab (inductive-inductive type); we have found no prior
-  Idris formalization of them.
+  and nLab (inductive-inductive type).
 
 - [`src/LanguageDef/SliceFuncCat.idr`](../../src/LanguageDef/SliceFuncCat.idr)
   — the slice-category adjoint triple (dependent sum ⊣ base change
@@ -115,8 +111,7 @@ active Lean 4 development; it is not under active development.
   then Pi) and left-adjoint (base change then Sigma) used in the
   PRA decomposition of slice-polynomial functors. The adjoint
   triple is standard slice-category theory (Johnstone,
-  *Sketches of an Elephant* A1.5; nLab, dependent product); we
-  have found no prior Idris formalization of it.
+  *Sketches of an Elephant* A1.5; nLab, dependent product).
 
 - [`src/LanguageDef/SlicePolyCat.idr`](../../src/LanguageDef/SlicePolyCat.idr)
   — the central dependent-polynomial-functor module. `SPFData dom
@@ -127,7 +122,7 @@ active Lean 4 development; it is not under active development.
   a category signature. Dependent polynomial functors as PRA
   functors on slice categories follow Gambino–Kock (op. cit.)
   and Weber (op. cit.); the arena encoding is a local Idris
-  choice; we have found no prior Idris formalization of them.
+  choice.
 
 - [`src/LanguageDef/SlicePolyUMorph.idr`](../../src/LanguageDef/SlicePolyUMorph.idr)
   — limits and colimits of slice-polynomial diagrams.
@@ -137,8 +132,7 @@ active Lean 4 development; it is not under active development.
   arising from the colimit–diagonal–limit adjoint triple.
   Limits and colimits of diagrams in slice categories are
   standard (Johnstone op. cit.; nLab, colimit), as is the
-  diagonal–Sigma–Pi adjoint triple for slice categories; we
-  have found no prior Idris formalization of them.
+  diagonal–Sigma–Pi adjoint triple for slice categories.
 
 - [`src/LanguageDef/PolySliceCat.idr`](../../src/LanguageDef/PolySliceCat.idr)
   — the slice category of polynomial functors over a fixed base
@@ -149,8 +143,7 @@ active Lean 4 development; it is not under active development.
   by the commutativity condition. Slice categories of a category
   are standard (Mac Lane, *Categories for the Working
   Mathematician*, II.6); the specific slice structure over `Poly`
-  is described in Spivak–Niu (op. cit., §§3–4); we have found no
-  prior Idris formalization of this slice structure.
+  is described in Spivak–Niu (op. cit., §§3–4).
 
 - [`src/LanguageDef/SlPolyImpred.idr`](../../src/LanguageDef/SlPolyImpred.idr)
   — import aggregator only (6 lines); re-exports
@@ -167,10 +160,6 @@ active Lean 4 development; it is not under active development.
   (`cdsmId`) and composition (`cdsmComp`) complete the category.
   The module also provides an arena-style presentation
   (`ADisliceObj`, `ADisliceMorph`) parallel to the categorical one.
-  A "dislice category" generalized from both slice and coslice
-  categories via factorizations of a bundle is not a standard term;
-  nLab does not have a dedicated article, and we have found no prior
-  formalization of this construction.
 
 - [`src/LanguageDef/DislicePolyCat.idr`](../../src/LanguageDef/DislicePolyCat.idr)
   — polynomial functors between dislice categories. `ADSLbc`,
@@ -178,9 +167,7 @@ active Lean 4 development; it is not under active development.
   simultaneous dibase change as functors on the arena-style
   dislice category; `ADSLsigma` is the dependent-sum functor from
   a slice of a dislice category to the corresponding dislice
-  category. Polynomial functors between dislice categories are
-  not a standard term; we have found no prior account of this
-  construction.
+  category.
 
 - [`src/LanguageDef/SlicePolyDialg.idr`](../../src/LanguageDef/SlicePolyDialg.idr)
   — algebras, coalgebras, and dialgebras of slice-polynomial
@@ -190,8 +177,7 @@ active Lean 4 development; it is not under active development.
   each. Algebras and coalgebras of an endofunctor are standard
   (nLab, algebra for an endofunctor; Barr–Wells op. cit. §3);
   dialgebras are described in Hagino, *A Categorical Programming
-  Language* (1987) and on nLab; we have found no prior Idris
-  formalization of them.
+  Language* (1987) and on nLab.
 
 - [`src/LanguageDef/SlicePolyDifunc.idr`](../../src/LanguageDef/SlicePolyDifunc.idr)
   — the difunctorial and closure structure of slice-polynomial
@@ -204,7 +190,7 @@ active Lean 4 development; it is not under active development.
   polynomial-functor composition `Poly → Poly`. Local Cartesian
   closure of `Poly` and composition of polynomial functors are
   described in Spivak–Niu (op. cit., §§3–4) and Gambino–Kock
-  (op. cit.); we have found no prior Idris formalization of them.
+  (op. cit.).
 
 ## Alternative formulations
 

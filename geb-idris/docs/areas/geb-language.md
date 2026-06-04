@@ -91,8 +91,7 @@ via reachability W-types and free polynomial arenas over
   for a whole category.
   The Yoneda lemma and hom-representability are standard (Mac Lane,
   *Categories for the Working Mathematician*, ch. III; nLab,
-  [Yoneda lemma](https://ncatlab.org/nlab/show/Yoneda+lemma)); we
-  have found no prior Idris formalization of this specific assembly.
+  [Yoneda lemma](https://ncatlab.org/nlab/show/Yoneda+lemma)).
 
 - [`src/LanguageDef/Theories.idr`](../../src/LanguageDef/Theories.idr)
   — categorical substrate structures intermediate between the core
@@ -102,9 +101,7 @@ via reachability W-types and free polynomial arenas over
   `MinMLCat`/`MinMLObj`/`MinMLMorph` sketch a mutually-recursive
   family of slice categories indexed by objects of `MinMLCat`.
   `CompCatObj` corresponds to a fragment of the Alucard / VampIR
-  back-end described in the Geb README; the specific
-  compilation-substrate categories here are Geb-specific and are
-  not formalized elsewhere.
+  back-end described in the Geb README.
 
 - [`src/LanguageDef/ADTCat.idr`](../../src/LanguageDef/ADTCat.idr)
   — algebraic-datatype categories via polynomial functors. `BoolF`
@@ -118,8 +115,7 @@ via reachability W-types and free polynomial arenas over
   Polynomial-functor initial algebras as a model of algebraic data
   types are standard (Abbott–Altenkirch–Ghani, *Containers*, 2005;
   nLab,
-  [polynomial functor](https://ncatlab.org/nlab/show/polynomial+functor));
-  we have found no prior Idris implementation of this encoding.
+  [polynomial functor](https://ncatlab.org/nlab/show/polynomial+functor)).
 
 - [`src/LanguageDef/Interpretation.idr`](../../src/LanguageDef/Interpretation.idr)
   — re-export stub for `UniversalCategory` (documented in the
@@ -148,8 +144,9 @@ via reachability W-types and free polynomial arenas over
   The W-type construction follows the standard theory of W-types
   (Martin-Löf; Moerdijk–Palmgren, *Wellfounded trees*, 2000); the
   specific encoding of reachability via W-type polynomial
-  endofunctors and the free-polynomial-arena construction is
-  Geb-specific.
+  endofunctors and the free-polynomial-arena construction is a new
+  construction; we have found no such construction in the
+  literature.
 
 ## Alternative formulations
 
