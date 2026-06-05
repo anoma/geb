@@ -13,16 +13,16 @@
 
 ## Purpose
 
-This area provides the logic, refinement-type, effect, and
-embedded-language substrate on which the Geb language definition
-rests, together with the umbrella module that assembles the full
-Geb language from all of its constituent layers. The substrate
+This area collects the logic, refinement-type, effect, and
+embedded-language explorations of the Idris-2 predecessor
+implementation, together with the umbrella module that draws its
+constituent layers into a single importable surface. The material
 runs from the ground-level atom sort (the leaves of Geb
 s-expressions) through quotient types, finite refinement types,
-refined algebraic data types, propositional logic support, a
-computational-effects layer, and an embedded-language layer, with
-`FullLanguageDef` drawing these together into a single importable
-surface.
+refined algebraic data types, and placeholder logic, effect, and
+embedded-language layers. Like the rest of the Idris codebase it is
+early exploratory architecture, largely superseded by the Lean
+continuation under `geb-lean/`; several of its modules remain stubs.
 
 ## Mathematical context
 
@@ -51,7 +51,7 @@ endofunctors on a skeleton of `FinSet` are represented as arenas
 the morphisms between arenas (Spivak, *Polynomial Functors: A General
 Theory of Interaction*, §2). The module extends this through zeroth-
 and higher-order ADTs, substitution categories, and refined
-expression categories, providing the substrate for Geb's type
+expression categories, exploring a substrate for a Geb type
 language.
 
 *Atoms* (`Atom`): a three-layer enumerated sort (core atoms,
@@ -72,8 +72,7 @@ anticipated but not yet present.
   no independent definitions at present. Its role is to provide
   the eventual logic substrate (propositional connectives,
   predicate-logic quantifiers) for the Geb language layer.
-  This is the first formalization of propositional/predicate logic
-  in this Idris codebase; nearest antecedents are the standard
+  The eventual logic substrate would follow the standard
   Curry–Howard correspondence and the internal logic of a topos
   (Johnstone, *Sketches of an Elephant*, vol. I, §1.1).
 
