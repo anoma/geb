@@ -6,7 +6,6 @@
 - [Purpose](#purpose)
 - [Mathematical context](#mathematical-context)
 - [Modules](#modules)
-- [Alternative formulations](#alternative-formulations)
 - [Dependencies](#dependencies)
 - [Pointers](#pointers)
 
@@ -82,11 +81,6 @@ Urbit as a minimal substrate for a deterministic operating system.
   function on nouns.
   Nock is specified by the Urbit project
   (<https://urbit.org/docs/nock/>).
-
-## Alternative formulations
-
-None. Each module formalizes a distinct computation model; there are
-no competing formulations of the same concept within this area.
 
 ## Dependencies
 

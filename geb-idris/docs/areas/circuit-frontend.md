@@ -6,7 +6,6 @@
 - [Purpose](#purpose)
 - [Mathematical context](#mathematical-context)
 - [Modules](#modules)
-- [Alternative formulations](#alternative-formulations)
 - [Dependencies](#dependencies)
 - [Pointers](#pointers)
 
@@ -72,10 +71,6 @@ library, and geb-language areas.
 
 The source narrative for this area is
 [`README.md`](../../README.md).
-
-## Alternative formulations
-
-None.
 
 ## Dependencies
 

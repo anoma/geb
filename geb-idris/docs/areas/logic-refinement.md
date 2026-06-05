@@ -6,7 +6,6 @@
 - [Purpose](#purpose)
 - [Mathematical context](#mathematical-context)
 - [Modules](#modules)
-- [Alternative formulations](#alternative-formulations)
 - [Dependencies](#dependencies)
 - [Pointers](#pointers)
 
@@ -166,12 +165,6 @@ anticipated but not yet present.
   language definition.
   The module contains no mathematical content; it is organizational
   infrastructure only.
-
-## Alternative formulations
-
-None. Each module occupies a distinct layer of the substrate;
-there are no competing formulations of the same concept within
-this area.
 
 ## Dependencies
 

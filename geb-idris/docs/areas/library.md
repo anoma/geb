@@ -6,7 +6,6 @@
 - [Purpose](#purpose)
 - [Mathematical context](#mathematical-context)
 - [Modules](#modules)
-- [Alternative formulations](#alternative-formulations)
 - [Dependencies](#dependencies)
 - [Pointers](#pointers)
 
@@ -87,11 +86,6 @@ adding declarations.
   consumers that need the full language definition.
   Organizational infrastructure only; it carries no mathematical
   content.
-
-## Alternative formulations
-
-None. Each module serves a distinct layer; there are no competing
-formulations of the same concept within this area.
 
 ## Dependencies
 
