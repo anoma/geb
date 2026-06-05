@@ -62,9 +62,8 @@ in Lean against mathlib's `Grothendieck`.
   case over the terminal site.
   The monoid-in-spans encoding of an internal category is
   well-known (Johnstone *Elephant* §B2; Borceux *Handbook*
-  vol. 2, ch. 8), but the direct Lean formalisation over
-  mathlib's `Mon_`, `PshSpanBicat`, and `Grothendieck` machinery
-  is novel to this project. (Unverified.)
+  vol. 2, ch. 8), but we are not aware of another Lean formalisation over
+  mathlib's `Mon_`, `PshSpanBicat`, and `Grothendieck` machinery.
 
 - [`GebLean/PshInternalExternalize.lean`](../../GebLean/PshInternalExternalize.lean)
   — the externalisation of an internal category to a `Cᵒᵖ ⥤ Cat`
@@ -76,7 +75,6 @@ in Lean against mathlib's `Grothendieck`.
   functorial.
   Externalisation of an internal category is a classical
   construction (Johnstone *Elephant* §B2; Borceux vol. 2, ch. 8).
-  (Unverified.)
 
 - [`GebLean/PshInternalPresheaf.lean`](../../GebLean/PshInternalPresheaf.lean)
   — the notion of an internal presheaf on an internal category.
@@ -88,7 +86,7 @@ in Lean against mathlib's `Grothendieck`.
   presheaves.
   Internal presheaves / discrete fibrations over internal categories
   are standard (Johnstone *Elephant* §B2.3); the Lean formalisation
-  is project-original. (Unverified.)
+  might be the first.
 
 - [`GebLean/PshInternalGrothendieck.lean`](../../GebLean/PshInternalGrothendieck.lean)
   — the equivalence between internal presheaves and ordinary
@@ -99,8 +97,8 @@ in Lean against mathlib's `Grothendieck`.
   equivalence `PshInternalPresheaf X ≌ (X.groth ⥤ Type w)`.
   The equivalence is a special case of the slice-presheaf
   adjunction / discrete-fibration characterisation (Johnstone
-  *Elephant* §B2.3; SGA4 Exp. I); this Lean proof is
-  project-original. (Unverified.)
+  *Elephant* §B2.3; SGA4 Exp. I); this might be the first
+  Lean formalization.
 
 - [`GebLean/Utilities/Elements.lean`](../../GebLean/Utilities/Elements.lean)
   — the contravariant category of elements and the slice-presheaf
@@ -137,11 +135,13 @@ in Lean against mathlib's `Grothendieck`.
   the module assembles the full category structure including
   identity and composition.
   The connected Grothendieck construction generalises the
-  two-sided Grothendieck construction to twisted-arrow indexing;
+  two-sided Grothendieck construction (on a functor
+  `Cᵒᵖ × C ⥤ Cat`) to twisted-arrow indexing (`Tw(C) ⥤ Cat`);
   the construction is described in
   [`docs/research/connected-grothendieck-construction.md`](../research/connected-grothendieck-construction.md)
-  and appears novel to this project; we have found no such
-  construction in the literature.
+  and might be novel to this project (we have found no such
+  construction in the literature, although it comprises a composition
+  of well-known constructions).
 
 ## Dependencies
 
