@@ -61,9 +61,6 @@ paranatural transformations carry topos structure, developing an
 assembly functor and diagonal-determinedness condition toward that
 question.
 
-Except where a construction is noted below as new, we have found
-no prior Lean formalization of the material in this area.
-
 ## Modules
 
 - [`GebLean/NatArith.lean`](../../GebLean/NatArith.lean) —
@@ -128,12 +125,6 @@ no prior Lean formalization of the material in this area.
   product structures for endo-profunctors
   (`endoProfTerminal_isTerminal`, `endoProfBinaryFan_isLimit`) and
   a diagonal equalizer `diagEqualizer`.
-  The assembly-functor approach and diagonal-determinedness
-  condition for a paranatural topos do not appear in prior
-  literature or mathlib; related background in
-  [`docs/research/paranatural-topos-research.md`](../research/paranatural-topos-research.md)
-  and
-  [`docs/research/parametric-copresheaf-topos.md`](../research/parametric-copresheaf-topos.md).
 
 - [`GebLean/PresheafPRA.lean`](../../GebLean/PresheafPRA.lean) —
   the category of PRA polynomial functors between presheaf
@@ -144,10 +135,7 @@ no prior Lean formalization of the material in this area.
   `ccrPresheafCatFunctor`; `praPositions`, `praDirectionsAt`, and
   `praEvalAtFunctor` are the accessor maps.
   The Weber/Gambino–Kock PRA theory is known mathematics (Weber
-  2004; Gambino–Kock 2013); its formalization as a
-  bifunctor-assembled presheaf category is plausibly novel;
-  background in
-  [`docs/research/presheaf-pra.md`](../research/presheaf-pra.md).
+  2004; Gambino–Kock 2013).
 
 - [`GebLean/PresheafPRADiscrete.lean`](../../GebLean/PresheafPRADiscrete.lean)
   — the discrete-base specialization: `overDiscretePresheafEquiv`
@@ -202,6 +190,9 @@ This area builds on:
 
 ## Pointers
 
+- Related work: [`_provenance-claims.md`](_provenance-claims.md) —
+  the development's consolidated, dated provenance assessment for its
+  strongest results, including those of this area.
 - [`docs/research/presheaf-pra.md`](../research/presheaf-pra.md)
   — background on the PRA formula and Weber's characterization.
 - [`docs/research/paranatural-topos-research.md`](../research/paranatural-topos-research.md)
