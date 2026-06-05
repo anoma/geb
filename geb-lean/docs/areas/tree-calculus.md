@@ -16,8 +16,9 @@
 This area formalises the binary-tree calculus of Barry Jay as a
 polynomial-functor system, presenting the value type, reduction
 rules, and computation as an algebra–coalgebra (lambda-bialgebra)
-structure, and providing the abstract GSOS/bialgebraic layer that
-relates the two.  It supplies Geb with a computationally
+structure, expressed through the abstract GSOS/bialgebraic layer
+(in the polynomial-functors area) that relates the two.  It
+supplies Geb with a computationally
 executable model of a reflective programming language whose
 programs and data share a single tree type.
 
@@ -52,11 +53,9 @@ presentation for which no prior Lean formalisation is known.
 
 The area also includes supporting constructions: a finite-alphabet
 generalization of the binary-tree Gödel numbering (`BTα`,
-`equivBTnNat`), an indexed essentially algebraic theory layer
+`equivBTnNat`) and an indexed essentially algebraic theory layer
 (`IndexedEAT`, `EATModel`) sitting between the raw polynomial
-algebra and the tree-calculus models, and a judgment-universe
-organising the forgetful hierarchy from categories down to plain
-types.
+algebra and the tree-calculus models.
 
 ## Modules
 
@@ -81,18 +80,6 @@ types.
   Essentially algebraic theories are known mathematics
   (Adámek–Rosický, *Locally Presentable and Accessible
   Categories* 1994; Johnstone, *Sketches of an Elephant* II).
-
-- [`GebLean/PLang/JudgmentUniverse.lean`](../../GebLean/PLang/JudgmentUniverse.lean)
-  — the judgment category `JudgmentLevel` (objects: `obj`,
-  `quiv`, `cat`) and the judgment universe functor
-  `JudgmentUniverse : JudgmentLevel ⥤ Cat`, which maps each
-  level to the corresponding copresheaf category.  Morphisms in
-  `JudgmentLevel` represent forgetful relations between levels of
-  categorical structure.
-  For this specific three-object index category organising the
-  forgetful hierarchy, we have found no such construction in the
-  literature; the nearest antecedent in mathlib is the
-  walking-quiver and walking-category structures. `unverified`
 
 - [`GebLean/PLang/Syntax.lean`](../../GebLean/PLang/Syntax.lean)
   — the product polynomial endofunctor `polyProd` on `Over X`
@@ -152,28 +139,6 @@ types.
   follow Jay's Coq formalization, which is prior known
   mathematics.
 
-- [`GebLean/Utilities/GSOSRule.lean`](../../GebLean/Utilities/GSOSRule.lean)
-  — abstract GSOS rule in the sense of Turi–Plotkin,
-  parameterized by a signature endofunctor `Sigma`, a behavior
-  endofunctor `B`, a monad `T`, and chosen binary products.
-  `idBehaviorFunctor` builds `X ↦ X × B(X)` from chosen
-  products; `GSOSRule` is the structure carrying a natural
-  transformation `Sigma(X × B(X)) → B(T(X))`.
-  The abstract GSOS rule is known mathematics (Turi–Plotkin LICS
-  1997).
-
-- [`GebLean/Utilities/LambdaBialgebra.lean`](../../GebLean/Utilities/LambdaBialgebra.lean)
-  — lambda-bialgebra for a distributive law `T ∘ D ⟹ D ∘ T`:
-  an object with a compatible `T`-algebra and `D`-coalgebra
-  structure subject to a pentagonal compatibility condition.
-  `LambdaBialgebra` is the structure; `LambdaBialgebra.Hom`
-  packages simultaneous algebra and coalgebra homomorphisms;
-  `toMonadAlgebra` and `toComonadCoalgebra` extract the
-  components.
-  Lambda-bialgebras for a distributive law are known mathematics
-  (Turi–Plotkin LICS 1997; Power–Watanabe distributive laws for
-  bialgebras).
-
 ## Dependencies
 
 - Polynomial functors: `GebLean/Utilities/PolyCombinators.lean`
@@ -181,10 +146,12 @@ types.
   `PolyFix`, `PolyCofix`, `polyFixFoldAtWithProof`,
   `polyCofixUnfoldAt`, and `polyFreeFunctor`, which are the
   direct substrate for `polyValue`, `Value`, and `stepCoalg`.
-- Profunctors and ends (bialgebraic GSOS layer): the
-  distributive-law infrastructure in
-  `GebLean/Utilities/DistributiveLaw.lean`, imported by
-  `LambdaBialgebra.lean`, connects to the profunctors-ends area.
+- Polynomial functors (bialgebraic GSOS layer): the abstract GSOS
+  rule and lambda-bialgebra structures (`Utilities/GSOSRule.lean`,
+  `Utilities/LambdaBialgebra.lean`), documented in the
+  polynomial-functors area, supply the categorical
+  operational-semantics layer; they build on the distributive-law
+  infrastructure in `GebLean/Utilities/DistributiveLaw.lean`.
 
 ## Pointers
 

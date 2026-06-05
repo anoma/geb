@@ -95,7 +95,7 @@ geb-lean/GebLean/PLang/CatJudgGrothendieck.lean	category-judgments
 geb-lean/GebLean/PLang/CatJudgment.lean	category-judgments
 geb-lean/GebLean/PLang/CatJudgmentAdjunction.lean	category-judgments
 geb-lean/GebLean/PLang/IndexedEAT.lean	tree-calculus
-geb-lean/GebLean/PLang/JudgmentUniverse.lean	tree-calculus
+geb-lean/GebLean/PLang/JudgmentUniverse.lean	category-judgments
 geb-lean/GebLean/PLang/Syntax.lean	tree-calculus
 geb-lean/GebLean/PLang/TermCat.lean	tree-calculus
 geb-lean/GebLean/PLang/TreeCalcMeta.lean	tree-calculus
@@ -180,13 +180,13 @@ geb-lean/GebLean/Utilities/EndsAndCoends.lean	profunctors-ends
 geb-lean/GebLean/Utilities/Equalities.lean	utilities
 geb-lean/GebLean/Utilities/Families.lean	utilities
 geb-lean/GebLean/Utilities/Fintype.lean	utilities
-geb-lean/GebLean/Utilities/GSOSRule.lean	tree-calculus
+geb-lean/GebLean/Utilities/GSOSRule.lean	polynomial-functors
 geb-lean/GebLean/Utilities/Graph.lean	utilities
 geb-lean/GebLean/Utilities/Grothendieck.lean	internal-presheaf
 geb-lean/GebLean/Utilities/KArith.lean	lawvere-er-ksim
 geb-lean/GebLean/Utilities/KSimSzudzikSimrec.lean	lawvere-er-ksim
 geb-lean/GebLean/Utilities/KSimURMSimulator.lean	lawvere-er-ksim
-geb-lean/GebLean/Utilities/LambdaBialgebra.lean	tree-calculus
+geb-lean/GebLean/Utilities/LambdaBialgebra.lean	polynomial-functors
 geb-lean/GebLean/Utilities/Opposites.lean	utilities
 geb-lean/GebLean/Utilities/OverCategoryEquiv.lean	category-judgments
 geb-lean/GebLean/Utilities/PolyCombinators.lean	polynomial-functors

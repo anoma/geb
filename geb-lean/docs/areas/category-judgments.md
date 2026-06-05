@@ -155,6 +155,13 @@ See [`docs/research/novelty-analysis.md`](../research/novelty-analysis.md).
 - [`GebLean/PLang.lean`](../../GebLean/PLang.lean)
   — re-export aggregator for the `PLang/` modules; no declarations of
   its own.
+- [`GebLean/PLang/JudgmentUniverse.lean`](../../GebLean/PLang/JudgmentUniverse.lean)
+  — the judgment category `JudgmentLevel` (objects: `obj`, `quiv`,
+  `cat`) and the judgment universe functor
+  `JudgmentUniverse : JudgmentLevel ⥤ Cat`, sending each level to the
+  corresponding copresheaf category; morphisms in `JudgmentLevel`
+  represent the forgetful relations between levels of categorical
+  structure.
 - [`GebLean/Utilities/Category.lean`](../../GebLean/Utilities/Category.lean)
   — typeclass-free category, functor, and natural-transformation data
   used to state the adjunction without `eqToHom`/`heq` friction.

@@ -275,6 +275,26 @@ existence and combinators:
   GSOS rules as distributive-law bialgebras are standard (Turi–
   Plotkin 1997; Bartels 2004) (unverified).
 
+- [`GebLean/Utilities/GSOSRule.lean`](../../GebLean/Utilities/GSOSRule.lean)
+  — abstract GSOS rule in the sense of Turi–Plotkin, parameterized by
+  a signature endofunctor `Sigma`, a behavior endofunctor `B`, a monad
+  `T`, and chosen binary products. `idBehaviorFunctor` builds
+  `X ↦ X × B(X)` from chosen products; `GSOSRule` is the structure
+  carrying a natural transformation `Sigma(X × B(X)) → B(T(X))`.
+  The abstract GSOS rule is known mathematics (Turi–Plotkin LICS 1997).
+  Used by the tree-calculus area to give its operational semantics.
+
+- [`GebLean/Utilities/LambdaBialgebra.lean`](../../GebLean/Utilities/LambdaBialgebra.lean)
+  — lambda-bialgebra for a distributive law `T ∘ D ⟹ D ∘ T`: an
+  object with a compatible `T`-algebra and `D`-coalgebra structure
+  subject to a pentagonal compatibility condition. `LambdaBialgebra`
+  is the structure; `LambdaBialgebra.Hom` packages simultaneous
+  algebra and coalgebra homomorphisms; `toMonadAlgebra` and
+  `toComonadCoalgebra` extract the components.
+  Lambda-bialgebras for a distributive law are known mathematics
+  (Turi–Plotkin LICS 1997; Power–Watanabe distributive laws for
+  bialgebras).
+
 ### Dependent and twisted polynomial functors
 
 - [`GebLean/PolyTwCoprType.lean`](../../GebLean/PolyTwCoprType.lean)
