@@ -13,13 +13,14 @@
 
 ## Purpose
 
-This area provides the concrete syntactic layer of Geb: abstract
+This area collects the concrete-syntax and metaprogramming
+explorations of the Idris-2 predecessor implementation: abstract
 syntax trees for Geb terms (binary trees and S-expressions), the
 quiver- and (co)presheaf-figure infrastructure for describing
 diagram shapes, and an early-stage telescope framework for
-dependent contexts. It is the part of the codebase closest to
-surface syntax and metaprogramming support, sitting above the
-polynomial-functor and internal-category foundations.
+dependent contexts. These are early exploratory modules, largely
+superseded by the Lean continuation under `geb-lean/`; the telescope
+and metaprogramming layers in particular are partial.
 
 ## Mathematical context
 
