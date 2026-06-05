@@ -19,7 +19,6 @@
   - [K_sim_2 included in ER: majorization vs. direct Szudzik route](#k_sim_2-included-in-er-majorization-vs-direct-szudzik-route)
 - [Dependencies](#dependencies)
 - [Pointers](#pointers)
-- [Novelty notes](#novelty-notes)
 
 <!-- END doctoc -->
 
@@ -73,9 +72,6 @@ developments: the former is a typed term calculus with reduction
 and a structural tower bound, the latter realises ER computation
 directly over binary trees using the tree-calculus primitive
 recursor and a Gödel numbering of trees.
-
-Except where a construction is noted below as new, we have found
-no prior Lean formalization of the material in this area.
 
 ## Modules
 
@@ -360,6 +356,10 @@ affects only how the `sim` constructor's bound is obtained.
 
 ## Pointers
 
+- Related work: [`_provenance-claims.md`](_provenance-claims.md) —
+  the development's consolidated, dated provenance assessment for its
+  strongest results, including those of this area.
+
 Research notes (relocated under `docs/research/`):
 
 - [`docs/research/lawvere-elementary-recursive.md`](../research/lawvere-elementary-recursive.md)
@@ -401,50 +401,3 @@ The
 section of the documentation index records the established
 narrative, including the axiom envelope and the assembly of
 `erKSimEquiv`.
-
-## Novelty notes
-
-The notes below record the results of a novelty search (mathlib
-leansearch / loogle, then the cited literature); claims of "no
-prior formalization found" are conservative and reflect the scope
-of that search.
-
-- ER Lawvere category (`LawvereER*`, `LawvereERKSim/`'s ER side):
-  the elementary-recursive functions are standard
-  (Kalmár; Tourlakis, *Theory of Computation*, Wiley 2012). The
-  function class and its tower bound are known mathematics;
-  presenting them as a Lawvere category and proving the
-  ER-specific results (`erInterpFunctor_not_full`,
-  `tetration_not_ER`) in Lean is, to the search, a first
-  machine-checked formalization. The Lawvere packaging is
-  plausibly novel (`unverified`).
-- K^sim hierarchy (`LawvereKSim*`): the K^sim hierarchy and the
-  level-2 coincidence with ER are Tourlakis 2012 (Corollary
-  0.1.0.44 at `n = 2`). These are known mathematics. The
-  categorical packaging is plausibly novel (`unverified`).
-- ER ≌ K^sim_2 categorical equivalence (`erKSimEquiv`,
-  `kToERFunctor`/`erToKFunctor`): the set-level equality of the
-  two function classes is Tourlakis 2012. Casting it as a
-  categorical equivalence of Lawvere categories is plausibly
-  novel (`unverified`); the underlying URM-simulation argument
-  (Wagner-Wong; Cutland, *Computability*, CUP 1980) is known
-  mathematics.
-- Gödel System T (`LawvereGodelT*`): System T is standard (Gödel
-  1958; the level/tower analysis follows Beckmann-Weiermann).
-- Tree-native ER and tree-Gödel (`LawvereTreeER*`, `TreeGoedel`,
-  `TreeEqGoedel`, `TreeLogic`, `NatElegantPair`): elementary
-  recursion realised over binary trees via the tree-calculus
-  primitive recursor and a Gödel numbering built from Szudzik's
-  pairing (Szudzik, *An Elegant Pairing Function*, 2006). The
-  pairing function and ER are known mathematics; the tree-native
-  ER category and tree Gödel numbering are plausibly novel
-  (`unverified`).
-- NatBT theories (`LawvereNatBT*`, `LawvereNatBTV2*`): the
-  two-sort Lawvere theory of naturals and binary trees is a
-  bespoke construction of this development (`unverified`); the
-  `m = 0` equivalence with ER is proved internally.
-- Utility libraries (`GebLean/Utilities/`): standard arithmetic,
-  recursion, packing, and register-machine machinery (Szudzik
-  pairing, simultaneous recursion, the URM model). These are
-  known mathematics, serving as supporting infrastructure for the
-  above.
