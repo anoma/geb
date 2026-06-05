@@ -29,6 +29,32 @@ subfunctors of products, graphs of natural transformations are graph
 relations, and the identity-extension and free-theorem properties hold
 by construction.
 
+We have not been able to find another formulation of a notion of
+parametric polymorphism which applies uniformly to all categories --
+the original by Wadler, for example, applies to a specific
+polymorphic lambda calculus, and as far as we can tell, any other
+notion which depends on inductive preservation of parametricity
+by the specific constructors of the category also therefore
+requires constructor-specific definitions of parametric transformations.
+The formulation in this module provides a generic notion which
+appears to subsume, in particular, strong dinatural (AKA paranatural)
+transformations, by agreeing with them on transformations between
+dialgebras, while agreeing with Wadler's parametric polymorphism
+in the cases we know of where strong dinatural transformations
+do not.  Furthermore, it establishes a category of parametric
+transformations which for any category is a quasitopos, and which
+for any category has a reflective inclusion into a topos
+(see `PshRelSpanCat`) -- categories of strong dinatural transformations
+do not in general have nearly so many universal properties
+(for example, they are not guaranteed to be Cartesian closed,
+or to have equalizers).
+
+Having a uniform notion of parametric transformation also allows
+a form of development of recursive dual-variance data structures
+analogous to one performed using Mendler algebras, by substituting
+parametric transformations for dinatural or strong dinatural
+transformations.
+
 ## Mathematical context
 
 The construction traces to Reynolds's parametricity (1983) and its
@@ -62,10 +88,10 @@ pushout (for `PshRelEdge(C) ↪ Arrow(PSh(C))`), and the span-to-arrow
 pushout reflector.
 
 `PshRelEdge(C)` is a *quasitopos*: it has finite limits, finite
-colimits, and exponentials (making it cartesian closed), and a strong
-subobject classifier `(Ω, Ω, full)` where `Ω` is the sieve presheaf of
-`PSh(C)`. It is equivalently the full subcategory of separated spans in
-`WalkingSpan ⥤ PSh(C)`.
+colimits, and exponentials (making it cartesian closed), and a
+strong-subobject classifier `(Ω, Ω, full)` where `Ω` is the sieve
+presheaf of `PSh(C)`. It is equivalently the full subcategory of
+separated spans in `WalkingSpan ⥤ PSh(C)`.
 
 The reflexive-graph structure on the chain — vertex category `PSh(C)`,
 edge category `PshRelEdge(C)`, identity section
@@ -194,7 +220,7 @@ needed for orientation.
   The graph-restriction characterization and the Barr-embedding
   full faithfulness are implicit in Wadler (1989) Sections 3.1
   and 3.5, but the categorical formulation at presheaf level
-  appears novel (`unverified`).
+  is, to our knowledge, novel.
 
 - [`GebLean/PshRelEdgeOverOmega.lean`](../../GebLean/PshRelEdgeOverOmega.lean)
   — connection to the subobject classifier. Constructs
@@ -254,8 +280,9 @@ needed for orientation.
   is the profunctor interpretation; `fullRelInterp T R` is the full
   relational interpretation of Wadler (1989); `PshTypeAbs` and
   `pshTypeAbsRel` formalize the relational interpretation of
-  `∀X. T(X)`.
-  `pshTypeAbsRel` is `unverified`.
+  `∀X. T(X)`.  This formulation, however, is obsoleted by
+  the parametric-transformation formulation which uses spans
+  of presheaves rather than profunctors.
 
 - [`GebLean/RelInterpComposition.lean`](../../GebLean/RelInterpComposition.lean)
   — composition properties of `TypeExpr.relInterp`. Proves that the
