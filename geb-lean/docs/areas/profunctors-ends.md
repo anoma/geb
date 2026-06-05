@@ -166,6 +166,10 @@ codebase predates that addition and builds its own.
   `(a,b) ↦ P(b,a) ⟶ Q(a,b)`) and establishes
   `hexagonCatEquivDiagElem : HexagonObj P Q ≌ DiagElem
   (ProfDialgebraProf P Q)`.
+  This dialgebra-like category was an exploration of dual-variance
+  transformations (paranatural transformations); it is superseded by
+  the parametric-transformation approach (the polynomial-functors
+  area's `ParamPoly.lean`), which generalizes those notions.
 
 - [`GebLean/Weighted.lean`](../../GebLean/Weighted.lean)
   — weighted limits and colimits via the twisted-arrow category.
@@ -329,6 +333,9 @@ throughout.
 
 ## Pointers
 
+- [`_provenance-claims.md`](_provenance-claims.md) — the consolidated,
+  dated statement of this area's strongest novelty claim (the
+  wedge-weight construction representing paranatural transformations).
 - [`docs/research/coend-formulas-research.md`](../research/coend-formulas-research.md)
   — notes on coend calculus and the wedge/cowedge formalism.
 - [`docs/research/weighted-cones-cocones-limits-colimits-ends-coends.md`](../research/weighted-cones-cocones-limits-colimits-ends-coends.md)

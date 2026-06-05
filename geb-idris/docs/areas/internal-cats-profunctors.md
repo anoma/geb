@@ -225,8 +225,7 @@ type; the categories differ only in their morphism definitions.
   — metalanguage specialization of `DiPolyFunc` to `c = Type`.
   `MLPolyDiSig`, `InterpMLPolyDi`, `MLPDiagObj`, and `mlpdeEl` are
   the specializations; delegates all proofs to `DiPolyFunc`.
-  The novelty claim is the same as for `DiPolyFunc`; this module is
-  its metalanguage specialization.
+  This module is the metalanguage specialization of `DiPolyFunc`.
 
 - [`src/LanguageDef/PolyDifunc.idr`](../../src/LanguageDef/PolyDifunc.idr)
   — parametric right adjoint (PRA) endofunctors on polynomial
@@ -258,8 +257,8 @@ type; the categories differ only in their morphism definitions.
 
 ## Alternative formulations
 
-There is no single concept with multiple parallel formulations here in the
-sense of the template. However, note that the same arena data
+There is no single concept with multiple parallel formulations here.
+However, note that the same arena data
 `(pos : Type ** pos -> Type)` appears in four distinct roles:
 `IntUFamObj` (universal families, morphisms contravariant on index),
 `IntEFamObj` (existential families / Dirichlet functors, covariant),

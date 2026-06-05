@@ -193,29 +193,6 @@ mathematics first formalized in Lean here (the function classes and
 the pairing function). Searched 2026-05-31, scope Mathlib
 (leansearch/loogle), then the cited literature; revisable.
 
-## Dialgebra-of-profunctor "hexagon" category
-
-**Result.** For profunctors `P`, `Q` there is a "hexagon"
-category `HexagonObj P Q`, identified with the category of
-diagonal elements of the profunctor-dialgebra profunctor
-`ProfDialgebraProf P Q : (a, b) ↦ P(b, a) ⟶ Q(a, b)`, via
-`hexagonCatEquivDiagElem : HexagonObj P Q ≌ DiagElem
-(ProfDialgebraProf P Q)`.
-
-**Context.** The nearest antecedent is the dialgebra category for
-ordinary functors (Uustalu; nLab "dialgebra"). The hexagon
-category and its identification with diagonal elements of a
-profunctor-dialgebra profunctor were not found in the published
-literature (including Loregian, *Coend Calculus*, 2021).
-
-**Formalized in.** [profunctors-ends](profunctors-ends.md), in the
-hexagon-category module (`HexagonObj`, `ProfDialgebraProf`,
-`hexagonCatEquivDiagElem`).
-
-**Status.** Novel mathematics (`unverified`). Searched
-2026-05-31, scope Mathlib (leansearch), nLab, Loregian 2021;
-revisable.
-
 ## Wedge-weight construction representing paranatural transformations
 
 **Result.** A wedge-weight construction sends diagonal elements to
