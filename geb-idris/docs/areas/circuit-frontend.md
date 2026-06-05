@@ -17,8 +17,9 @@ This area records one specific application of Geb: the use of its
 categorical structure as a frontend for compiling user programs to
 arithmetic circuits (targeting VampIR/Alucard). It owns no dedicated
 source module; it documents an application framing that the original
-`README.md` introduced and that remains the primary narrative of the
-`geb-idris` codebase.
+`README.md` introduced and that was the primary narrative of the Idris-2
+predecessor codebase, now largely superseded by the Lean continuation
+under `geb-lean/`.
 
 ## Mathematical context
 
