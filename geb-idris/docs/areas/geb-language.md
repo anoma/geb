@@ -14,20 +14,23 @@
 
 ## Purpose
 
-This area assembles the Geb language as a typed, categorically-grounded
-system: the zeroth-order topos called "Programmer's FinSet" (initial
-and terminal objects, finite (co)products, (co)equalizers), the
+This area collects early architecture investigations, in the Idris-2
+predecessor implementation, toward a typed, categorically-grounded Geb
+language: the zeroth-order topos called "Programmer's FinSet" (initial
+and terminal objects, finite (co)products, (co)equalizers), an
 expression syntax and its interpretation into categorical semantics,
 the algebraic-datatype categories that model user-defined recursive
 types, and the foundational universal-property vocabulary from which
-all of these are derived. Together these modules form the core
-language of Geb as an executable, homoiconic, multi-category
-programming system.
+these are derived. These are among the oldest modules in the codebase
+and have been largely superseded; they record exploratory design
+rather than the current shape of Geb, whose active development
+continues in the Lean reformalization under `geb-lean/`.
 
 ## Mathematical context
 
-The Geb language rests on a zeroth-order topos: a category inductively
-defined as the smallest one closed under initial object, terminal
+These investigations rest on a zeroth-order topos: a category
+inductively defined as the smallest one closed under initial object,
+terminal
 object, finite products, finite coproducts, equalizers, and
 coequalizers. This is "Programmer's FinSet" (PFS) in the Geb notes
 (Geb hackmd, <https://hackmd.io/qxHXAuyYQuGMUYSZ_neuXA?view>); it is a
@@ -49,7 +52,7 @@ language; `Interpretation` and `Expression` are stubs that re-export
 that vocabulary.
 
 `ADTCat` encodes basic ADTs (booleans, pairs, binary trees,
-S-expressions) as polynomial functors (arenas), realizing Geb's
+S-expressions) as polynomial functors (arenas), modelling a
 user-defined-data tier via initial algebras of polynomial endofunctors.
 
 `Theories` explores categorical substrate structures — a computational
@@ -62,7 +65,7 @@ contravariant and covariant hom-representability types — needed to
 state and use the Yoneda lemma internally within a category specified
 by hom-slice data.
 
-`Geb` assembles the full language, connecting `QType` (a quotient-type
+`Geb` assembles these layers, connecting `QType` (a quotient-type
 layer for refined types) with `DiagramCat` (diagram-indexed categories)
 via reachability W-types and free polynomial arenas over
 `SlicePolyEndoFunc`.
@@ -144,9 +147,8 @@ via reachability W-types and free polynomial arenas over
   The W-type construction follows the standard theory of W-types
   (Martin-Löf; Moerdijk–Palmgren, *Wellfounded trees*, 2000); the
   specific encoding of reachability via W-type polynomial
-  endofunctors and the free-polynomial-arena construction is a new
-  construction; we have found no such construction in the
-  literature.
+  endofunctors and the free-polynomial-arena construction is
+  Geb-specific.
 
 ## Alternative formulations
 
