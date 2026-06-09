@@ -31,11 +31,11 @@ classifying map). Provide `Classifier (Type u)` and an
 `instance : HasClassifier (Type u)`.
 
 Additionally, relate the new classifier to this repository's
-presheaf classifier (`GebLean/Utilities/WSubfunctor.lean`):
-specialized to presheaves over the terminal category, the
-presheaf classifying object evaluates at the unique point to a
-type equivalent to `ULift.{u} Prop`, compatibly with the truth
-morphisms.
+presheaf classifier (`pshClassifierData` in
+`GebLean/Utilities/Presheaf.lean`): specialized to presheaves
+over the terminal category, the presheaf classifying object
+evaluates at the unique point to a type equivalent to
+`ULift.{u} Prop`, compatibly with the truth morphisms.
 
 This work transcribes the mathematical content of the
 subobject-classifier construction in
@@ -56,16 +56,26 @@ universal property in Lean (§3), with Lean's `Prop`.
 | Pullback-square proof | Transcription | [MM92] §I.4 elementary argument, via mathlib `Types.isPullback_iff` |
 | Uniqueness of classifying map | Transcription | [MM92] §I.4; unattained in the Idris source (§3) |
 | `Classifier (Type u)` packaging | Novel glue | mathlib `Classifier.mkOfTerminalΩ₀` |
-| Comparison with `wPshClassifier` at the terminal category | Novel glue | This repository's `WSubfunctor.lean` |
+| Comparison with `pshClassifierData` at the terminal category | Novel glue | This repository's `Presheaf.lean` |
 
 Prior art: the Lean 3 project `b-mehta/topos`
-(<https://github.com/b-mehta/topos>) constructed `Prop` as the
-classifier of `Type`; mathlib's `CategoryTheory.Topos.Classifier`
-ports the abstract structure from that project but no instance
-for `Type u`. As of the pinned mathlib revision, no mathlib or
-CSLib declaration connects `Prop` (or any other object) to
+(<https://github.com/b-mehta/topos>) defined the abstract
+subobject-classifier structure (`subobject_classifier.lean`) and
+a presheaf classifier (`applications/functor_category.lean`);
+its source contains no classifier instance for `Type u` and no
+use of `Prop` as a classifying object. mathlib's
+`CategoryTheory.Topos.Classifier` ports the abstract structure.
+As of the pinned mathlib revision, no mathlib or CSLib
+declaration connects `Prop` (or any other object) to
 `Classifier` for `Type u`; the construction here is new content
-relative to both libraries.
+relative to both libraries. A `Classifier (Type u)` is in
+principle derivable from this repository's `pshClassifierData`
+via mathlib's `Classifier.ofEquivalence` along
+`(Discrete PUnit)ᵒᵖ ⥤ Type u ≌ Type u`, but its classifying
+object would be the image of the sieve functor under the
+equivalence, not `ULift Prop`; the present construction's
+contribution is `ULift Prop` as the classifying object, with
+computable data and mathlib-only dependencies.
 
 ## 3 Background: obstruction and resolution
 
@@ -81,9 +91,12 @@ are absent.
 
 The missing pieces require, for subsingleton types `α β`
 that are equivalent, the type equality `α = β`. This is
-univalence restricted to mere propositions; it is independent
-of Idris's and Lean's type theories, so the construction cannot
-be completed for a subtype of `Type u` in either system. (Full
+univalence restricted to mere propositions; it is unprovable in
+Idris's and Lean's type theories (for Idris, independence
+follows from the set-theoretic and simplicial models; for Lean,
+unprovability suffices for this design and is what the
+set-theoretic model establishes), so the construction cannot be
+completed for a subtype of `Type u` in either system. (Full
 univalence for `Type u` is refutable in Lean, since Lean proves
 unique identity proofs; univalence restricted to subsingletons
 is merely unprovable.) Separately, [UF13] §10.1.4 notes that
@@ -113,15 +126,15 @@ place.
 | --- | --- |
 | `GebLean/Utilities/TypesClassifier.lean` | New module: core construction and comparison section |
 | `GebLean/Utilities.lean` | Add `import GebLean.Utilities.TypesClassifier` |
-| `GebLeanTests/TypesClassifier.lean` | New test module (`example`-based) |
-| `GebLeanTests.lean` | Add `import GebLeanTests.TypesClassifier` |
+| `GebLeanTests/Utilities/TypesClassifier.lean` | New test module (`example`-based) |
+| `GebLeanTests.lean` | Add `import GebLeanTests.Utilities.TypesClassifier` |
 
 The core construction depends only on mathlib. The comparison
-section depends on `GebLean.Utilities.WSubfunctor` (for
-`pshSieveFunctor` and `pshSieveTruth`); since imports are
-per-module, the comparison lives in the same module and the
-module imports both. If a later `geb-mathlib` port extracts the
-core, the comparison section stays behind.
+section depends on `GebLean.Utilities.Presheaf` (for
+`pshTerminal`, `pshSieveFunctor`, and `pshSieveTruth`); since
+imports are per-module, the comparison lives in the same module
+and the module imports both. If a later `geb-mathlib` port
+extracts the core, the comparison section is not ported.
 
 Estimated size: 120–180 lines core, 60–90 lines comparison,
 20–40 lines tests.
@@ -134,6 +147,12 @@ variable `u`.
 ### 5.1 Core construction
 
 ```lean
+/-- `PUnit` is terminal in `Type u`. Computable variant of
+mathlib's `noncomputable` `Limits.Types.isTerminalPUnit`. -/
+def typesIsTerminalPUnit :
+    Limits.IsTerminal (PUnit.{u + 1} : Type u) :=
+  Limits.IsTerminal.ofUnique _
+
 /-- The truth morphism: the point of `ULift Prop`
 selecting `True`. -/
 def typesTruth : PUnit.{u + 1} ⟶ ULift.{u} Prop :=
@@ -145,17 +164,17 @@ def typesCharMap {U X : Type u} (m : U ⟶ X) :
     X ⟶ ULift.{u} Prop :=
   fun x => ULift.up (∃ a, m a = x)
 
-theorem typesCharMap_apply_mem {U X : Type u} (m : U ⟶ X)
+theorem typesCharMap_apply_eq_true {U X : Type u} (m : U ⟶ X)
     (a : U) : typesCharMap m (m a) = ULift.up True
 
 theorem typesCharMap_isPullback {U X : Type u} (m : U ⟶ X)
     [Mono m] :
-    IsPullback m (Limits.Types.isTerminalPUnit.from U)
+    IsPullback m (typesIsTerminalPUnit.from U)
       (typesCharMap m) typesTruth
 
 theorem typesCharMap_unique {U X : Type u} (m : U ⟶ X)
     [Mono m] (χ' : X ⟶ ULift.{u} Prop)
-    (hχ' : IsPullback m (Limits.Types.isTerminalPUnit.from U)
+    (hχ' : IsPullback m (typesIsTerminalPUnit.from U)
       χ' typesTruth) :
     χ' = typesCharMap m
 
@@ -165,12 +184,19 @@ def typesClassifier : Classifier (Type u)
 instance typesHasClassifier : HasClassifier (Type u)
 ```
 
-`typesCharMap` and `typesCharMap_apply_mem` do not require
+`typesCharMap` and `typesCharMap_apply_eq_true` do not require
 `Mono m`; the hypothesis appears only where the universal
 property needs it. `typesClassifier` is assembled with
-`Classifier.mkOfTerminalΩ₀` from
-`Limits.Types.isTerminalPUnit` (current name; the lowercase
-`isTerminalPunit` is deprecated as of mathlib 2026-02-08).
+`Classifier.mkOfTerminalΩ₀` from `typesIsTerminalPUnit`.
+mathlib's `Limits.Types.isTerminalPUnit` (current name; the
+lowercase `isTerminalPunit` is deprecated as of mathlib
+2026-02-08) is `noncomputable` (it routes through the
+choice-based `⊤_ (Type u)`), and `IsTerminal` is data consumed
+by `mkOfTerminalΩ₀`'s `χ₀` field; using it would force
+`noncomputable def typesClassifier`, violating the project
+rule. `typesIsTerminalPUnit := IsTerminal.ofUnique _` is
+computable, following the precedent of
+`pshTerminalIsTerminal` in `Presheaf.lean`.
 
 `mkOfTerminalΩ₀` derives `mono_truth` via
 `IsTerminal.mono_from`, so no separate monomorphism lemma for
@@ -180,7 +206,9 @@ property needs it. `typesClassifier` is assembled with
 
 For `C := Discrete PUnit.{u + 1}` (so `C : Type u` with
 `Category.{u} C`, and presheaves `Cᵒᵖ ⥤ Type (max u u)
-= Type u`, matching `WClassifier`'s universe pattern):
+= Type u`, matching the `Type (max u v)` universe pattern of
+`pshSieveFunctor` and `pshClassifierData` in
+`Presheaf.lean`):
 
 ```lean
 /-- A sieve on an object of the terminal category is
@@ -202,11 +230,13 @@ computable. `sievePUnitEquiv_truth` states that the presheaf
 truth morphism (which selects the maximal sieve `⊤`)
 corresponds to `typesTruth` under the equivalence.
 
-The comparison stops at the pointed-object level. Transporting
-full classifier data across the equivalence
-`(Discrete PUnit)ᵒᵖ ⥤ Type u ≌ Type u` would require
-equivalence-transfer machinery for `Classifier` that mathlib
-does not provide; see §9.
+The comparison stops at the pointed-object level. mathlib's
+`Classifier.ofEquivalence` could transport `pshClassifierData`
+across `(Discrete PUnit)ᵒᵖ ⥤ Type u ≌ Type u`, but the
+transported classifying object is the equivalence-image of the
+sieve functor, not `ULift Prop`, so the transport neither
+replaces the direct construction nor adds to the pointwise
+cross-check; see §9.
 
 ### 5.3 Naming rationale
 
@@ -215,7 +245,7 @@ does not provide; see §9.
   `Types.*` lemma family for the category of types and the
   repository's `pshSieveFunctor`/`pshSieveTruth` precedent.
 - Theorem names follow mathlib conventions: conclusions named
-  (`_isPullback`, `_unique`, `_apply_mem`); data in
+  (`_isPullback`, `_unique`, `_apply_eq_true`); data in
   lowerCamelCase.
 - The `Equiv` (rather than `Iso`) form of `sievePUnitEquiv`
   follows mathlib's preference for `Equiv` between types;
@@ -223,15 +253,15 @@ does not provide; see §9.
 
 ## 6 Proof shapes
 
-- `typesCharMap_apply_mem`: `propext` upgrades
+- `typesCharMap_apply_eq_true`: `propext` upgrades
   `(∃ a', m a' = m a) ↔ True` (witness `a`) to an equality;
   `congrArg ULift.up` finishes. No `Mono` needed.
 - `typesCharMap_isPullback`: via `Types.isPullback_iff`
   (`Mathlib.CategoryTheory.Limits.Types.Pullbacks`), which
   reduces `IsPullback` in `Type u` to three elementwise
   clauses:
-  1. Commutativity: pointwise `typesCharMap_apply_mem` plus
-     `Subsingleton.elim` on the `PUnit` leg.
+  1. Commutativity: pointwise `typesCharMap_apply_eq_true`
+     plus `Subsingleton.elim` on the `PUnit` leg.
   2. Joint injectivity: `(mono_iff_injective m).mp`
      (`Mathlib.CategoryTheory.Types.Basic`).
   3. Existence: from `typesCharMap m x = typesTruth p`,
@@ -246,15 +276,20 @@ does not provide; see §9.
   follows from `(χ' x).down` by `propext` and `ULift.ext`.
   Backward: from `m a` and the commutativity leg `hχ'.w`
   evaluated at `a`.
-- `sievePUnitEquiv`: round trips by `Sieve.ext` (sieve side;
-  uses that `Hom` in `Discrete PUnit` is a subsingleton and
-  sieves are downward closed) and `ULift.ext` + `propext`
-  (`Prop` side).
+- `sievePUnitEquiv`: round trips by `Sieve.ext` (sieve side)
+  and `ULift.ext` + `propext` (`Prop` side). The sieve-side
+  step relating `S.arrows f` for arbitrary `f : Y ⟶ c` to
+  `S.arrows (𝟙 c)` first needs `Y = c` (from
+  `Subsingleton PUnit` and `Discrete.ext`; `f` and `𝟙 c`
+  inhabit different hom-sets until then) and an
+  `eqToHom`/`cases` transport, after which hom-subsingleton
+  elimination or downward closure closes the goal. The
+  transport is the expected cost center of this proof.
 - `sievePUnitEquiv_truth`: reduces to
   `(⊤ : Sieve c).arrows (𝟙 c) = True`; `propext` and
   triviality of `⊤`.
 
-If `Types.isPullback_iff` proves awkward in practice
+If `Types.isPullback_iff` does not apply directly
 (its mathlib proof uses `grind`; only the statement matters
 here), the fallback is a direct `PullbackCone.IsLimit.mk`
 construction; the elementwise content is identical.
@@ -263,7 +298,8 @@ construction; the elementwise content is identical.
 
 | Declaration | Expected axioms |
 | --- | --- |
-| `typesTruth`, `typesCharMap`, `sievePUnitEquiv` (data) | none beyond definitional |
+| `typesIsTerminalPUnit`, `typesTruth`, `typesCharMap` | none beyond definitional |
+| `sievePUnitEquiv` (carries `Prop`-valued round-trip fields; `#print axioms` reports per declaration) | `propext`, possibly `Quot.sound` |
 | Theorems and `typesClassifier`/instance | `propext`, `Quot.sound`, `Classical.choice` (proofs only, inherited from mathlib lemmas) |
 
 No `noncomputable` anywhere: all data fields are explicit
@@ -277,7 +313,8 @@ result as usual.
 
 ## 8 Test plan
 
-`GebLeanTests/TypesClassifier.lean`, `example`-based (no
+`GebLeanTests/Utilities/TypesClassifier.lean`, `example`-based
+(no
 `#guard` on `Prop`-valued data, per project policy):
 
 - `typesCharMap` of a concrete mono (e.g. the subtype
@@ -319,12 +356,18 @@ Excluded from this work:
   cited lemma; names verified against the pinned revision at
   design time: `CategoryTheory.mono_iff_injective`
   (`Mathlib/CategoryTheory/Types/Basic.lean`),
-  `Limits.Types.isTerminalPUnit`
-  (`Mathlib/CategoryTheory/Limits/Types/Products.lean`),
   `Types.isPullback_iff`, `Types.exists_of_isPullback`
   (`Mathlib/CategoryTheory/Limits/Types/Pullbacks.lean`),
-  `Classifier.mkOfTerminalΩ₀`
+  `Classifier.mkOfTerminalΩ₀`, `Classifier.ofEquivalence`
   (`Mathlib/CategoryTheory/Topos/Classifier.lean`).
+  `Limits.Types.isTerminalPUnit`
+  (`Mathlib/CategoryTheory/Limits/Types/Products.lean`) is
+  `noncomputable` and is referenced in §5.1 only as the name
+  not used.
+- Verify computability of every data-position dependency
+  before use (`#print axioms` plus absence of `noncomputable`
+  in the dependency's definition); §5.1's `typesIsTerminalPUnit`
+  exists because the mathlib counterpart fails this check.
 - Commit granularity: core construction and comparison
   section as separate commits; index-file and test wiring
   with their respective content commits.
@@ -343,6 +386,9 @@ Excluded from this work:
    ranges).
 5. Axiom budget table consistent with the constructive-only
    rule (no `noncomputable`; `Classical.choice` proofs-only).
+   In particular: every declaration consumed in a data
+   position (`mkOfTerminalΩ₀` arguments, `Equiv` data fields)
+   is computable at the pinned revision.
 6. Obstruction analysis (§3) mathematically accurate as
    stated (UIP vs univalence; independence claims).
 7. Scope guardrails complete; no scope creep into power
