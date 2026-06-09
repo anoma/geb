@@ -99,8 +99,9 @@ unique identity proofs, so models of full univalence such as
 the simplicial model do not apply to them), so the construction
 cannot be completed for a subtype of `Type u` in either system. (Full
 univalence for `Type u` is refutable in Lean, since Lean proves
-unique identity proofs; univalence restricted to subsingletons
-is merely unprovable.) Separately, [UF13] §10.1.4 notes that
+unique identity proofs; for univalence restricted to
+subsingletons, this design claims only unprovability, not
+independence.) Separately, [UF13] §10.1.4 notes that
 `Σ (X : 𝒰), isProp(X)` is as large as `𝒰`, so it is not an
 object of the category it would classify; Theorem 10.1.12
 therefore *assumes* a small type `Ω : 𝒰` of all mere
@@ -108,9 +109,10 @@ propositions (propositional resizing).
 
 Lean's `Prop` discharges both assumptions natively:
 
-- Impredicativity: `∃ a : U, m a = x : Prop` for `U : Type u`
-  at any `u`, so membership propositions land in `Prop`
-  regardless of universe. This is propositional resizing.
+- Impredicativity: `(∃ a, m a = x) : Prop` for `m` with domain
+  `U : Type u` at any `u`, so membership propositions land in
+  `Prop` regardless of universe. This is propositional
+  resizing.
 - `propext`: equivalent propositions are equal. This is
   univalence restricted to `Prop`.
 
@@ -306,7 +308,7 @@ construction; the elementwise content is identical.
 | --- | --- |
 | `typesTruth`, `typesCharMap` | none beyond definitional |
 | `typesIsTerminalPUnit` (computable; axioms enter only its `Prop`-valued `IsLimit` proof fields) | `propext`, `Quot.sound`, `Classical.choice` |
-| `sievePUnitEquiv` (carries `Prop`-valued round-trip fields; `#print axioms` reports per declaration) | `propext`, possibly `Quot.sound` |
+| `sievePUnitEquiv` (carries `Prop`-valued round-trip fields proved via `Sieve.ext`; `#print axioms` reports per declaration) | `propext`, `Quot.sound`, possibly `Classical.choice` (transport step) |
 | Theorems and `typesClassifier`/instance | `propext`, `Quot.sound`, `Classical.choice` (proofs only, inherited from mathlib lemmas) |
 
 No `noncomputable` anywhere: all data fields are explicit
@@ -391,9 +393,8 @@ Excluded from this work:
    `pshSieveFunctor`/`pshClassifierData`).
 3. Mathlib API names exist at the pinned revision with the
    stated signatures.
-4. Citations complete and accurate ([UF13] Thm 10.1.12 page
-   447 first edition; [MM92] §I.3–I.4; Idris source line
-   ranges).
+4. Citations complete and accurate ([UF13] Thm 10.1.12, first
+   edition; [MM92] §I.3–I.4; Idris source line ranges).
 5. Axiom budget table consistent with the constructive-only
    rule (no `noncomputable`; `Classical.choice` proofs-only).
    In particular: every declaration consumed in a data
