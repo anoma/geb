@@ -20,6 +20,10 @@ including the uniqueness clause.
   `PUnit` in `Type u`.
 - `GebLean.typesTruth`, `GebLean.typesCharMap`: the truth
   morphism and the characteristic map.
+- `GebLean.typesClassifier`: `Classifier (Type u)` with
+  classifying object `ULift Prop`.
+- `GebLean.typesHasClassifier`: the `HasClassifier (Type u)`
+  instance.
 
 ## Main statements
 
@@ -109,5 +113,23 @@ theorem typesCharMap_unique {U X : Type u} (m : U ⟶ X)
       rw [hw]
       exact trivial
   exact congrArg ULift.up (propext hiff)
+
+/-- `ULift Prop` is a subobject classifier for `Type u`.
+Impredicativity of `Prop` provides the propositional resizing
+hypothesized by [UF13] Theorem 10.1.12, and `propext` provides
+univalence restricted to propositions. -/
+def typesClassifier : Classifier (Type u) :=
+  Classifier.mkOfTerminalΩ₀
+    PUnit.{u + 1}
+    typesIsTerminalPUnit
+    (ULift.{u} Prop)
+    typesTruth
+    (χ := fun m _ => typesCharMap m)
+    (isPullback := fun m _ => typesCharMap_isPullback m)
+    (uniq := fun m _ χ' hχ' => typesCharMap_unique m χ' hχ')
+
+/-- `Type u` has a subobject classifier. -/
+instance typesHasClassifier : HasClassifier (Type u) :=
+  ⟨⟨typesClassifier⟩⟩
 
 end GebLean
