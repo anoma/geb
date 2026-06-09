@@ -1,5 +1,6 @@
 import Mathlib.CategoryTheory.Limits.Types.Pullbacks
 import Mathlib.CategoryTheory.Topos.Classifier
+import GebLean.Utilities.Presheaf
 
 /-!
 # Subobject classifier for `Type u` via `Prop`
@@ -24,6 +25,9 @@ including the uniqueness clause.
   classifying object `ULift Prop`.
 - `GebLean.typesHasClassifier`: the `HasClassifier (Type u)`
   instance.
+- `GebLean.sievePUnitEquiv`, `GebLean.sievePUnitEquiv_truth`:
+  comparison with the presheaf classifier of
+  `GebLean.Utilities.Presheaf` over the terminal category.
 
 ## Main statements
 
@@ -131,5 +135,33 @@ def typesClassifier : Classifier (Type u) :=
 /-- `Type u` has a subobject classifier. -/
 instance typesHasClassifier : HasClassifier (Type u) :=
   ⟨⟨typesClassifier⟩⟩
+
+/-- A sieve on an object of the terminal category is
+determined by whether it contains the identity. This compares
+the presheaf classifying object `pshSieveFunctor` at the
+terminal category with the `Type u` classifying object
+`ULift Prop`. -/
+def sievePUnitEquiv (c : Discrete PUnit.{u + 1}) :
+    Sieve c ≃ ULift.{u} Prop where
+  toFun S := ULift.up (S.arrows (𝟙 c))
+  invFun p :=
+    { arrows := fun _ _ => p.down
+      downward_closed := fun h _ => h }
+  left_inv S := by
+    obtain ⟨⟨⟩⟩ := c
+    ext Y f
+    obtain ⟨⟨⟩⟩ := Y
+    rw [Subsingleton.elim f (𝟙 _)]
+  right_inv p := rfl
+
+/-- The presheaf truth morphism (the maximal sieve at each
+stage) corresponds to `typesTruth` under `sievePUnitEquiv`. -/
+theorem sievePUnitEquiv_truth
+    (c : (Discrete PUnit.{u + 1})ᵒᵖ)
+    (x : (pshTerminal (Discrete PUnit.{u + 1})).obj c) :
+    sievePUnitEquiv c.unop
+      ((pshSieveTruth (Discrete PUnit.{u + 1})).app c x) =
+      typesTruth PUnit.unit :=
+  congrArg ULift.up (eq_true (Sieve.top_apply _))
 
 end GebLean
