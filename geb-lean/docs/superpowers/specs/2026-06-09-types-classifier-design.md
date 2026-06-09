@@ -92,11 +92,12 @@ are absent.
 The missing pieces require, for subsingleton types `α β`
 that are equivalent, the type equality `α = β`. This is
 univalence restricted to mere propositions; it is unprovable in
-Idris's and Lean's type theories (for Idris, independence
-follows from the set-theoretic and simplicial models; for Lean,
-unprovability suffices for this design and is what the
-set-theoretic model establishes), so the construction cannot be
-completed for a subtype of `Type u` in either system. (Full
+Idris's and Lean's type theories (for both systems,
+unprovability is what the set-theoretic model establishes, and
+unprovability suffices for this design; both systems prove
+unique identity proofs, so models of full univalence such as
+the simplicial model do not apply to them), so the construction
+cannot be completed for a subtype of `Type u` in either system. (Full
 univalence for `Type u` is refutable in Lean, since Lean proves
 unique identity proofs; univalence restricted to subsingletons
 is merely unprovable.) Separately, [UF13] §10.1.4 notes that
@@ -151,7 +152,8 @@ variable `u`.
 mathlib's `noncomputable` `Limits.Types.isTerminalPUnit`. -/
 def typesIsTerminalPUnit :
     Limits.IsTerminal (PUnit.{u + 1} : Type u) :=
-  Limits.IsTerminal.ofUnique _
+  Limits.IsTerminal.ofUniqueHom (fun _ _ => PUnit.unit)
+    (fun _ _ => funext fun _ => rfl)
 
 /-- The truth morphism: the point of `ULift Prop`
 selecting `True`. -/
@@ -194,9 +196,13 @@ lowercase `isTerminalPunit` is deprecated as of mathlib
 choice-based `⊤_ (Type u)`), and `IsTerminal` is data consumed
 by `mkOfTerminalΩ₀`'s `χ₀` field; using it would force
 `noncomputable def typesClassifier`, violating the project
-rule. `typesIsTerminalPUnit := IsTerminal.ofUnique _` is
-computable, following the precedent of
-`pshTerminalIsTerminal` in `Presheaf.lean`.
+rule. `typesIsTerminalPUnit` uses
+`IsTerminal.ofUniqueHom` with explicit witnesses, the form
+mathlib's own `SubobjectRepresentableBy.isTerminalΩ₀` uses;
+`IsTerminal.ofUnique _` does not elaborate here because
+typeclass resolution does not unfold `X ⟶ PUnit` to
+`X → PUnit` to find `Unique (X ⟶ PUnit)` (verified against
+the pinned revision). The definition is computable.
 
 `mkOfTerminalΩ₀` derives `mono_truth` via
 `IsTerminal.mono_from`, so no separate monomorphism lemma for
@@ -284,7 +290,7 @@ cross-check; see §9.
   inhabit different hom-sets until then) and an
   `eqToHom`/`cases` transport, after which hom-subsingleton
   elimination or downward closure closes the goal. The
-  transport is the expected cost center of this proof.
+  transport is the expected largest step of this proof.
 - `sievePUnitEquiv_truth`: reduces to
   `(⊤ : Sieve c).arrows (𝟙 c) = True`; `propext` and
   triviality of `⊤`.
@@ -298,7 +304,8 @@ construction; the elementwise content is identical.
 
 | Declaration | Expected axioms |
 | --- | --- |
-| `typesIsTerminalPUnit`, `typesTruth`, `typesCharMap` | none beyond definitional |
+| `typesTruth`, `typesCharMap` | none beyond definitional |
+| `typesIsTerminalPUnit` (computable; axioms enter only its `Prop`-valued `IsLimit` proof fields) | `propext`, `Quot.sound`, `Classical.choice` |
 | `sievePUnitEquiv` (carries `Prop`-valued round-trip fields; `#print axioms` reports per declaration) | `propext`, possibly `Quot.sound` |
 | Theorems and `typesClassifier`/instance | `propext`, `Quot.sound`, `Classical.choice` (proofs only, inherited from mathlib lemmas) |
 
@@ -339,9 +346,11 @@ Excluded from this work:
   classifier: unprovable universal property (§3); recorded as
   documentation only.
 - Equivalence-transfer of `Classifier` across
-  `PSh(1) ≌ Type u`: requires new general machinery; the
-  pointed comparison of §5.2 delivers the intended
-  cross-check.
+  `PSh(1) ≌ Type u`: composable from existing mathlib
+  declarations (`Classifier.ofEquivalence` and the
+  `Discrete PUnit` equivalences), but the transported
+  classifying object is not `ULift Prop`, and the pointed
+  comparison of §5.2 delivers the intended cross-check.
 - Topos-structure corollaries (cartesian closure, power
   objects, `IsTopos`-style packaging): out of scope.
 
@@ -378,7 +387,8 @@ Excluded from this work:
    commit messages); re-fetch the guides each round.
 2. Universe annotations correct (`PUnit.{u + 1}`,
    `ULift.{u} Prop`, `Discrete PUnit.{u + 1}`; comparison
-   universes match `WClassifier`'s `Type (max u v)` pattern).
+   universes match the `Type (max u v)` pattern of
+   `pshSieveFunctor`/`pshClassifierData`).
 3. Mathlib API names exist at the pinned revision with the
    stated signatures.
 4. Citations complete and accurate ([UF13] Thm 10.1.12 page
