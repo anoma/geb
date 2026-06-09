@@ -177,7 +177,7 @@ theorem typesCharMap_isPullback {U X : Type u} (m : U ⟶ X)
       (typesCharMap m) typesTruth
 
 theorem typesCharMap_unique {U X : Type u} (m : U ⟶ X)
-    [Mono m] (χ' : X ⟶ ULift.{u} Prop)
+    (χ' : X ⟶ ULift.{u} Prop)
     (hχ' : IsPullback m (typesIsTerminalPUnit.from U)
       χ' typesTruth) :
     χ' = typesCharMap m
@@ -188,9 +188,13 @@ def typesClassifier : Classifier (Type u)
 instance typesHasClassifier : HasClassifier (Type u)
 ```
 
-`typesCharMap` and `typesCharMap_apply_eq_true` do not require
-`Mono m`; the hypothesis appears only where the universal
-property needs it. `typesClassifier` is assembled with
+`typesCharMap`, `typesCharMap_apply_eq_true`, and
+`typesCharMap_unique` do not require `Mono m`: the first two
+never need it, and for `typesCharMap_unique` the pullback
+hypothesis suffices (the statement is more general without it,
+and the `unusedArguments` linter rejects the unused instance
+argument). The hypothesis appears only on
+`typesCharMap_isPullback`. `typesClassifier` is assembled with
 `Classifier.mkOfTerminalΩ₀` from `typesIsTerminalPUnit`.
 mathlib's `Limits.Types.isTerminalPUnit` (current name; the
 lowercase `isTerminalPunit` is deprecated as of mathlib
