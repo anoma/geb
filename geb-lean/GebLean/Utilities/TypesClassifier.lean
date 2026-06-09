@@ -25,6 +25,8 @@ including the uniqueness clause.
 
 - `GebLean.typesCharMap_apply_eq_true`: the characteristic map
   holds at image points.
+- `GebLean.typesCharMap_isPullback`: the classifying pullback
+  square.
 
 ## References
 
@@ -65,5 +67,22 @@ def typesCharMap {U X : Type u} (m : U ⟶ X) :
 theorem typesCharMap_apply_eq_true {U X : Type u} (m : U ⟶ X)
     (a : U) : typesCharMap m (m a) = ULift.up True :=
   congrArg ULift.up (eq_true ⟨a, rfl⟩)
+
+/-- The classifying pullback square: a monomorphism `m` is the
+pullback of `typesTruth` along its characteristic map. -/
+theorem typesCharMap_isPullback {U X : Type u} (m : U ⟶ X)
+    [Mono m] :
+    IsPullback m (typesIsTerminalPUnit.from U)
+      (typesCharMap m) typesTruth := by
+  rw [Limits.Types.isPullback_iff]
+  refine ⟨?_, ?_, ?_⟩
+  · funext a
+    simp only [types_comp_apply]
+    exact typesCharMap_apply_eq_true m a
+  · rintro a b ⟨hm, -⟩
+    exact (mono_iff_injective m).mp inferInstance hm
+  · intro x p hx
+    obtain ⟨a, ha⟩ := of_eq_true (congrArg ULift.down hx)
+    exact ⟨a, ha, Subsingleton.elim _ _⟩
 
 end GebLean
