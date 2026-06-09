@@ -27,6 +27,8 @@ including the uniqueness clause.
   holds at image points.
 - `GebLean.typesCharMap_isPullback`: the classifying pullback
   square.
+- `GebLean.typesCharMap_unique`: uniqueness of the classifying
+  map.
 
 ## References
 
@@ -84,5 +86,28 @@ theorem typesCharMap_isPullback {U X : Type u} (m : U ⟶ X)
   · intro x p hx
     obtain ⟨a, ha⟩ := of_eq_true (congrArg ULift.down hx)
     exact ⟨a, ha, Subsingleton.elim _ _⟩
+
+/-- Uniqueness of the classifying map: any map forming the
+classifying pullback square for `m` equals `typesCharMap m`. -/
+theorem typesCharMap_unique {U X : Type u} (m : U ⟶ X)
+    (χ' : X ⟶ ULift.{u} Prop)
+    (hχ' : IsPullback m (typesIsTerminalPUnit.from U)
+      χ' typesTruth) :
+    χ' = typesCharMap m := by
+  funext x
+  have hiff : (χ' x).down ↔ ∃ a, m a = x := by
+    constructor
+    · intro h
+      have hx : χ' x = typesTruth PUnit.unit :=
+        congrArg ULift.up (eq_true h)
+      obtain ⟨a, ha, -⟩ :=
+        Limits.Types.exists_of_isPullback hχ' x PUnit.unit hx
+      exact ⟨a, ha⟩
+    · rintro ⟨a, rfl⟩
+      have hw := congr_fun hχ'.w a
+      simp only [types_comp_apply] at hw
+      rw [hw]
+      exact trivial
+  exact congrArg ULift.up (propext hiff)
 
 end GebLean
