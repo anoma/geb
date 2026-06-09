@@ -97,7 +97,7 @@ improvise silently: check the goal with `lean_goal`
 (lean-lsp MCP), verify the cited lemma name with
 `lean_local_search`, and consult the spec's §6 fallbacks. The
 spec's §6 names one sanctioned fallback per proof; anything
-beyond that is a plan defect to report, not to patch around.
+beyond that is a plan defect to report, not to work around.
 
 ## Task 0: Baseline verification
 
@@ -156,10 +156,8 @@ including the uniqueness clause.
 
 ## Main definitions
 
-- `GebLean.typesClassifier`: `Classifier (Type u)` with
-  classifying object `ULift Prop`.
-- `GebLean.typesHasClassifier`: the `HasClassifier (Type u)`
-  instance.
+- `GebLean.typesTruth`, `GebLean.typesCharMap`: the truth
+  morphism and the characteristic map.
 
 ## References
 
@@ -447,7 +445,19 @@ cd /home/terence/git-workspaces/geb/geb-lean
 
 Spec reference: §5.1 (assembly), §7.
 
-- [ ] **Step 1: Add the classifier and instance**
+- [ ] **Step 1: Extend the module docstring**
+
+In the module docstring, append to the `## Main definitions`
+list:
+
+```text
+- `GebLean.typesClassifier`: `Classifier (Type u)` with
+  classifying object `ULift Prop`.
+- `GebLean.typesHasClassifier`: the `HasClassifier (Type u)`
+  instance.
+```
+
+- [ ] **Step 2: Add the classifier and instance**
 
 Insert before `end GebLean`:
 
@@ -483,9 +493,9 @@ Notes for the implementer:
 - The result must be a plain `def` — if Lean demands
   `noncomputable`, a data-position dependency is
   noncomputable, which is a defect to fix (spec §10), not to
-  mask with the keyword.
+  suppress with the keyword.
 
-- [ ] **Step 2: Build**
+- [ ] **Step 3: Build**
 
 ```bash
 lake build
@@ -494,7 +504,7 @@ lake build
 Expected: success, with no `noncomputable` anywhere in the
 module.
 
-- [ ] **Step 3: Verify axioms and data transparency**
+- [ ] **Step 4: Verify axioms and data transparency**
 
 - `lean_verify` on `GebLean.typesClassifier` and
   `GebLean.typesHasClassifier`: subset of
@@ -511,7 +521,7 @@ example : (typesClassifier : Classifier (Type u)).truth =
 Both must close by `rfl` (these recur as committed tests in
 Task 6).
 
-- [ ] **Step 4: Pre-commit checks and commit**
+- [ ] **Step 5: Pre-commit checks and commit**
 
 ```bash
 bash scripts/pre-commit.sh
@@ -804,7 +814,7 @@ Expected: all pass.
 - [ ] **Step 4: Confirm the branch state**
 
 ```bash
-cd /home/terence/git-workspaces/geb && jj st && jj log -r 'feat/types-classifier::@' --no-pager
+cd /home/terence/git-workspaces/geb && jj st && jj log -r 'main..feat/types-classifier' --no-pager
 ```
 
 Expected: clean working copy; the topic branch contains the
