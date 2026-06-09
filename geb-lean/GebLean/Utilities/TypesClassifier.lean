@@ -25,8 +25,8 @@ including the uniqueness clause.
   classifying object `ULift Prop`.
 - `GebLean.typesHasClassifier`: the `HasClassifier (Type u)`
   instance.
-- `GebLean.sievePUnitEquiv`, `GebLean.sievePUnitEquiv_truth`:
-  comparison with the presheaf classifier of
+- `GebLean.sievePUnitEquiv`: comparison of the classifying
+  objects, with the presheaf classifier of
   `GebLean.Utilities.Presheaf` over the terminal category.
 
 ## Main statements
@@ -37,6 +37,8 @@ including the uniqueness clause.
   square.
 - `GebLean.typesCharMap_unique`: uniqueness of the classifying
   map.
+- `GebLean.sievePUnitEquiv_truth`: compatibility of
+  `sievePUnitEquiv` with the truth morphisms.
 
 ## References
 
@@ -45,6 +47,10 @@ including the uniqueness clause.
   §10.1.4–10.1.5, Theorem 10.1.12.
 - [MM92] S. MacLane and I. Moerdijk, *Sheaves in Geometry and
   Logic*, Springer, 1992, §I.3–I.4.
+
+## Tags
+
+subobject classifier, topos, mere proposition
 -/
 
 open CategoryTheory

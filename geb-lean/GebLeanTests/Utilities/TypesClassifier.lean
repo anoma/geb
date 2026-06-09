@@ -18,7 +18,7 @@ example :
   typesCharMap_apply_eq_true _
     (⟨4, rfl⟩ : {n : Nat // n % 2 = 0})
 
--- ... and fails at a non-member.
+-- The characteristic map fails at a non-member.
 example :
     typesCharMap
       (Subtype.val : {n : Nat // n % 2 = 0} → Nat) 3 =
