@@ -730,7 +730,7 @@ and rerun until clean.
 **Files:**
 
 - Modify (only if a target moved): `README.md`
-- Create: `geb-lean/docs/areas/_provenance-claims.md`
+- Create: `geb-lean/docs/areas/possible-novelties.md`
 
 - [ ] **Step 1: Root README link check.** Confirm the root `README.md`
   links still resolve (no Idris/Lean index path moved). The Idris and
@@ -748,7 +748,7 @@ grep -nE '\]\([^)]*\.md\)' README.md
   the others; add any cluster discovered during authoring.
 
 - [ ] **Step 3: Collate category-1/2 provenance claims** into
-  `_provenance-claims.md` — every "novel" or "first formalization
+  `possible-novelties.md` — every "novel" or "first formalization
   anywhere" tag across all area docs, with its citation and search
   scope, for the user's review (these are the highest-stakes claims).
 

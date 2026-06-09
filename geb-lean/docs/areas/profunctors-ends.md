@@ -333,7 +333,7 @@ throughout.
 
 ## Pointers
 
-- [`_provenance-claims.md`](_provenance-claims.md) — the consolidated,
+- [`possible-novelties.md`](possible-novelties.md) — the consolidated,
   dated statement of this area's strongest novelty claim (the
   wedge-weight construction representing paranatural transformations).
 - [`docs/research/coend-formulas-research.md`](../research/coend-formulas-research.md)

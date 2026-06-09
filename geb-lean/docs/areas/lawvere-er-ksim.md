@@ -356,7 +356,7 @@ affects only how the `sim` constructor's bound is obtained.
 
 ## Pointers
 
-- Related work: [`_provenance-claims.md`](_provenance-claims.md) —
+- Related work: [`possible-novelties.md`](possible-novelties.md) —
   the development's consolidated, dated provenance assessment for its
   strongest results, including those of this area.
 

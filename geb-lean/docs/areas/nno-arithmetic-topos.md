@@ -190,7 +190,7 @@ This area builds on:
 
 ## Pointers
 
-- Related work: [`_provenance-claims.md`](_provenance-claims.md) —
+- Related work: [`possible-novelties.md`](possible-novelties.md) —
   the development's consolidated, dated provenance assessment for its
   strongest results, including those of this area.
 - [`docs/research/presheaf-pra.md`](../research/presheaf-pra.md)

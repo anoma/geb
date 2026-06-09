@@ -100,7 +100,7 @@ right adjoints between arbitrary presheaf categories (the
 [NNO, arithmetic, and topos area](nno-arithmetic-topos.md)'s
 `PresheafPRA`), together with the range of operations transcribed
 from Spivak–Niu. This claim is consolidated, with its search scope,
-in [`_provenance-claims.md`](_provenance-claims.md).
+in [`possible-novelties.md`](possible-novelties.md).
 
 ## Modules
 

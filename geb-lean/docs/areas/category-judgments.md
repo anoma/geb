@@ -261,7 +261,7 @@ machinery that `L` quotients.
   comparison of the `L ⊣ Φ` reflective embedding (nerve–realization,
   essentially algebraic theories, walking structures, polynomial
   functors) and the respects in which it appears novel.
-- [`_provenance-claims.md`](_provenance-claims.md) — the consolidated,
+- [`possible-novelties.md`](possible-novelties.md) — the consolidated,
   dated statement of this area's two strongest novelty claims (the
   reflective embedding `L ⊣ Φ` and the dependently-typed presentation
   of `Cat`).
