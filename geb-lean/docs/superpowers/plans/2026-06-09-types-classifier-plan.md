@@ -109,9 +109,9 @@ beyond that is a plan defect to report, not to patch around.
 cd /home/terence/git-workspaces/geb && jj st
 ```
 
-Expected: "The working copy has no changes." with parent commit
-on `feat/types-classifier` (description "(doc) Apply round-3
-adversarial-review fixes; record convergence").
+Expected: "The working copy has no changes." with the parent
+commit at the `feat/types-classifier` bookmark (the branch
+head; its description varies as review commits land).
 
 - [ ] **Step 2: Confirm baseline build and tests pass**
 
@@ -154,7 +154,7 @@ and `propext` plays the role of univalence restricted to
 propositions; together they discharge the universal property,
 including the uniqueness clause.
 
-## Main declarations
+## Main definitions
 
 - `GebLean.typesClassifier`: `Classifier (Type u)` with
   classifying object `ULift Prop`.
@@ -210,6 +210,14 @@ Notes for the implementer:
 - `IsTerminal.ofUnique _` must NOT be used here: typeclass
   resolution does not unfold `X ⟶ PUnit` to `X → PUnit`, so the
   `Unique` instance is not found (spec §5.1).
+- The file deliberately omits the `module` keyword of
+  `.claude/rules/lean-coding.md` § Lean 4 module system: no
+  existing `GebLean` source uses the module system, and a lone
+  module-system file would interact with the non-module
+  importers through visibility rules none of the surrounding
+  code is written for. Repository-wide module-system migration
+  is out of scope; this deviation is recorded here so the
+  executing agent does not adjudicate the conflict.
 
 - [ ] **Step 2: Wire the module into the Utilities index**
 
@@ -343,7 +351,7 @@ Then:
 
 ```bash
 cd /home/terence/git-workspaces/geb
-jj commit -m "feat(types-classifier): pullback square for typesCharMap"
+jj commit -m "feat(types-classifier): prove pullback square for typesCharMap"
 jj bookmark set feat/types-classifier -r @-
 cd /home/terence/git-workspaces/geb/geb-lean
 ```
@@ -425,7 +433,7 @@ Then:
 
 ```bash
 cd /home/terence/git-workspaces/geb
-jj commit -m "feat(types-classifier): uniqueness of typesCharMap"
+jj commit -m "feat(types-classifier): prove uniqueness of typesCharMap"
 jj bookmark set feat/types-classifier -r @-
 cd /home/terence/git-workspaces/geb/geb-lean
 ```
@@ -458,6 +466,7 @@ def typesClassifier : Classifier (Type u) :=
     (isPullback := fun m _ => typesCharMap_isPullback m)
     (uniq := fun m _ χ' hχ' => typesCharMap_unique m χ' hχ')
 
+/-- `Type u` has a subobject classifier. -/
 instance typesHasClassifier : HasClassifier (Type u) :=
   ⟨⟨typesClassifier⟩⟩
 ```
@@ -512,7 +521,7 @@ Then:
 
 ```bash
 cd /home/terence/git-workspaces/geb
-jj commit -m "feat(types-classifier): Classifier (Type u) via ULift Prop"
+jj commit -m "feat(types-classifier): assemble Classifier (Type u) via ULift Prop"
 jj bookmark set feat/types-classifier -r @-
 cd /home/terence/git-workspaces/geb/geb-lean
 ```
@@ -538,12 +547,11 @@ import GebLean.Utilities.Presheaf
 ```
 
 (`GebLean.Utilities.Presheaf` supplies `pshTerminal`,
-`pshSieveFunctor`, and `pshSieveTruth`; project imports follow
-mathlib imports.)
+`pshSieveFunctor`, and `pshSieveTruth`.)
 
 - [ ] **Step 2: Extend the module docstring**
 
-In the module docstring, append to the `## Main declarations`
+In the module docstring, append to the `## Main definitions`
 list:
 
 ```text
@@ -672,7 +680,8 @@ example :
     typesCharMap
       (Subtype.val : {n : Nat // n % 2 = 0} → Nat) 4 =
       ULift.up True :=
-  typesCharMap_apply_eq_true _ ⟨4, rfl⟩
+  typesCharMap_apply_eq_true _
+    (⟨4, rfl⟩ : {n : Nat // n % 2 = 0})
 
 -- ... and fails at a non-member.
 example :
@@ -680,7 +689,10 @@ example :
       (Subtype.val : {n : Nat // n % 2 = 0} → Nat) 3 =
       ULift.up False :=
   congrArg ULift.up (propext (iff_false_intro
-    fun ⟨a, ha⟩ => Nat.one_ne_zero (ha ▸ a.property)))
+    fun ⟨a, ha⟩ => Nat.one_ne_zero (by
+      have hp := a.property
+      rw [ha] at hp
+      exact hp)))
 
 -- `mkOfTerminalΩ₀` does not obscure the classifier data.
 example : (typesClassifier : Classifier (Type u)).Ω =
@@ -705,11 +717,18 @@ Notes for the implementer:
 
 - No `#guard` anywhere: the classifier's values are `Prop`s
   and are not kernel-reducible test subjects (spec §8).
+- The member example's witness carries a type ascription
+  because the morphism hole `_` leaves the subtype
+  undetermined when the anonymous constructor elaborates;
+  naming the morphism instead
+  (`typesCharMap_apply_eq_true Subtype.val …`) does not work
+  (the predicate is then inferred from the witness).
 - The non-member proof: `ha : a.val = 3` and
-  `a.property : a.val % 2 = 0` combine to a proof of
-  `3 % 2 = 0`, which is definitionally `1 = 0`, refuted by
-  `Nat.one_ne_zero`. If the `▸` motive fails, use
-  `by rw [ha] at hp` form with `hp := a.property` instead.
+  `a.property : a.val % 2 = 0` combine (by rewriting `ha`
+  into `a.property`) to a proof of `3 % 2 = 0`, which is
+  definitionally `1 = 0`, refuted by `Nat.one_ne_zero`. The
+  rewrite runs in a `by` block because `▸` cannot infer the
+  motive here.
 
 - [ ] **Step 2: Wire the test module into the test index**
 
@@ -742,7 +761,7 @@ Then:
 
 ```bash
 cd /home/terence/git-workspaces/geb
-jj commit -m "test(types-classifier): classifier evaluation and round trips"
+jj commit -m "test(types-classifier): add classifier evaluation and round-trip tests"
 jj bookmark set feat/types-classifier -r @-
 cd /home/terence/git-workspaces/geb/geb-lean
 ```
@@ -789,8 +808,8 @@ cd /home/terence/git-workspaces/geb && jj st && jj log -r 'feat/types-classifier
 ```
 
 Expected: clean working copy; the topic branch contains the
-spec/review commits plus the five implementation commits from
-Tasks 1–6.
+spec, plan, and review commits plus the six implementation
+commits from Tasks 1–6 (five `feat`, one `test`).
 
 ## Post-implementation
 
