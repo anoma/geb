@@ -104,8 +104,10 @@ Hook scripts in `scripts/hooks/` follow Claude Code's hook contract
 
 `scripts/hooks/block-mutating-git.sh` blocks raw mutating `git`
 and translates blocked commands to their `jj` equivalents in
-stderr. `scripts/hooks/check-signing-key.sh` warms the gpg-agent
-or ssh-agent at session start.
+stderr. `scripts/hooks/check-signing-key.sh` checks at session
+start that the configured signing key is usable (gpg-agent
+passphrase cache, or ssh-agent identities) and emits a hook-JSON
+note on a miss.
 
 ## Action pinning policy
 
