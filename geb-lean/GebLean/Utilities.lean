@@ -31,6 +31,7 @@ import GebLean.Utilities.SzudzikSeq
 import GebLean.Utilities.Tower
 import GebLean.Utilities.TwArrPresheaf
 import GebLean.Utilities.TwistedArrow
+import GebLean.Utilities.TypesClassifier
 import GebLean.Utilities.WSubfunctor
 
 /-!

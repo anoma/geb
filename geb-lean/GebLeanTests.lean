@@ -44,3 +44,4 @@ import GebLeanTests.Utilities.PresheafPRADirNat
 import GebLeanTests.Utilities.PresheafPRAEvalAtINat
 import GebLeanTests.Utilities.PresheafPRAEvalNat
 import GebLeanTests.Utilities.SimRec
+import GebLeanTests.Utilities.TypesClassifier
