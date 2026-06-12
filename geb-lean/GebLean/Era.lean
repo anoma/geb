@@ -142,6 +142,34 @@ inductive Derivable {B : Type} {ar : B → Nat} (defs : Defs B ar) :
       Derivable defs ⟨G.subst bump, H.subst (recArgs G)⟩ →
       Derivable defs ⟨F, G⟩
 
+/-! ### Derived equational rules
+Symmetry and transitivity follow from `refl` and `euclid`; instantiation (Goodstein's
+Sb1) and the congruences are instances of the merged `subst` rule. -/
+
+/-- Symmetry. -/
+theorem Derivable.symm {B : Type} {ar : B → Nat} {defs : Defs B ar} {n : Nat}
+    {a b : Tm B ar n} (h : Derivable defs ⟨a, b⟩) : Derivable defs ⟨b, a⟩ :=
+  .euclid h (.refl a)
+
+/-- Transitivity. -/
+theorem Derivable.trans {B : Type} {ar : B → Nat} {defs : Defs B ar} {n : Nat}
+    {a b c : Tm B ar n} (h₁ : Derivable defs ⟨a, b⟩) (h₂ : Derivable defs ⟨b, c⟩) :
+    Derivable defs ⟨a, c⟩ :=
+  .euclid h₁.symm h₂
+
+/-- Instantiation along a substitution tuple (Goodstein's Sb1). -/
+theorem Derivable.inst {B : Type} {ar : B → Nat} {defs : Defs B ar} {m n : Nat}
+    {F G : Tm B ar m} (σ : Fin m → Tm B ar n) (h : Derivable defs ⟨F, G⟩) :
+    Derivable defs ⟨F.subst σ, G.subst σ⟩ :=
+  .subst h fun _ => .refl _
+
+/-- Congruence for the successor. -/
+theorem Derivable.succ_congr {B : Type} {ar : B → Nat} {defs : Defs B ar} {n : Nat}
+    {t t' : Tm B ar n} (h : Derivable defs ⟨t, t'⟩) :
+    Derivable defs ⟨.succ t, .succ t'⟩ :=
+  Derivable.subst (F := (.succ (.var 0) : Tm B ar 1)) (G := .succ (.var 0))
+    (σ := fun _ => t) (σ' := fun _ => t') (.refl _) fun _ => h
+
 /-! ## The ERA instance: Mazzanti's basis -/
 
 /-- Mazzanti's composition basis for the Kalmár elementary functions E³:
@@ -461,5 +489,262 @@ example : Derivable eraDefs ⟨(.zero : ETm 1) +ᵉ .var 0, .var 0⟩ := by
   case stepG =>
     -- S x = S x
     exact Derivable.refl _
+
+/-! ## Consistency and closed-equation completeness
+
+Soundness yields consistency directly.  In the converse direction the calculus is
+complete for closed equations: every closed term is derivably equal to the numeral of
+its value, so a closed equation that holds in the standard model is derivable.  This is
+the exact boundary of completeness with respect to the standard model: derivability is
+recursively enumerable, while truth of equations in even one free variable is
+`Π⁰₁`-complete (the terms denote all Kalmár elementary functions, which suffice to encode
+bounded Turing-machine simulation), so true-but-underivable open equations exist; by
+Gödel's second incompleteness theorem, an arithmetization of `eraConsistent` itself is
+one. -/
+
+/-- Consistency: the closed equation `1 = 0` is not derivable. -/
+theorem eraConsistent : ¬Derivable eraDefs ⟨(one : ETm 0), .zero⟩ :=
+  fun h => Nat.one_ne_zero (eraSound h Fin.elim0)
+
+/-- The numeral `S^k 0`.  Generic in the basis: numerals use only the structural
+constructors. -/
+def Tm.numeral {B : Type} {ar : B → Nat} {n : Nat} : Nat → Tm B ar n
+  | 0 => .zero
+  | k + 1 => .succ (Tm.numeral k)
+
+/-- Every basis application over the (uniformly binary) Mazzanti basis is a `bin`. -/
+theorem app_eq_bin {n : Nat} (b : EraB) (ts : Fin (eraAr b) → ETm n) :
+    Tm.app b ts = bin b (ts ⟨0, Nat.succ_pos 1⟩) (ts ⟨1, Nat.lt_succ_self 1⟩) :=
+  congrArg (Tm.app b) (funext fun i =>
+    match i with
+    | ⟨0, _⟩ => rfl
+    | ⟨1, _⟩ => rfl
+    | ⟨_ + 2, h⟩ => absurd (Nat.lt_of_succ_lt_succ (Nat.lt_of_succ_lt_succ h))
+        (Nat.not_lt_zero _))
+
+/-- Congruence for a binary basis application. -/
+theorem bin_congr {defs : Defs EraB eraAr} (b : EraB) {n : Nat} {s s' t t' : ETm n}
+    (hs : Derivable defs ⟨s, s'⟩) (ht : Derivable defs ⟨t, t'⟩) :
+    Derivable defs ⟨bin b s t, bin b s' t'⟩ := by
+  have h := Derivable.subst (F := (bin b (.var 0) (.var 1) : ETm 2)) (G := bin b (.var 0) (.var 1))
+    (σ := fcons s fun _ => t) (σ' := fcons s' fun _ => t') (.refl _) fun i =>
+      match i with
+      | ⟨0, _⟩ => hs
+      | ⟨_ + 1, _⟩ => ht
+  simp only [Tm.subst, bin_subst] at h
+  exact h
+
+/-- A listed defining equation, instantiated along a substitution tuple. -/
+theorem derivable_def {m n : Nat} {e : EEqn m} (hax : ⟨m, e⟩ ∈ eraDefs)
+    (σ : Fin m → ETm n) : Derivable eraDefs ⟨e.lhs.subst σ, e.rhs.subst σ⟩ :=
+  (Derivable.ax hax).inst σ
+
+/-- `u + 0 = u`. -/
+theorem derivable_add_zero {n : Nat} (u : ETm n) : Derivable eraDefs ⟨u +ᵉ .zero, u⟩ := by
+  have h := derivable_def (m := 1) (e := ⟨(.var 0) +ᵉ .zero, .var 0⟩)
+    (by simp [eraDefs, axAdd0]) (fun _ => u)
+  simp only [Tm.subst, bin_subst] at h
+  exact h
+
+/-- `u + S v = S (u + v)`. -/
+theorem derivable_add_succ {n : Nat} (u v : ETm n) :
+    Derivable eraDefs ⟨u +ᵉ .succ v, .succ (u +ᵉ v)⟩ := by
+  have h := derivable_def (m := 2)
+    (e := ⟨(.var 0) +ᵉ .succ (.var 1), .succ ((.var 0) +ᵉ (.var 1))⟩)
+    (by simp [eraDefs, axAddS]) (fcons u fun _ => v)
+  simp only [Tm.subst, bin_subst] at h
+  exact h
+
+/-- `u ∸ 0 = u`. -/
+theorem derivable_sub_zero {n : Nat} (u : ETm n) : Derivable eraDefs ⟨u ∸ᵉ .zero, u⟩ := by
+  have h := derivable_def (m := 1) (e := ⟨(.var 0) ∸ᵉ .zero, .var 0⟩)
+    (by simp [eraDefs, axSub0]) (fun _ => u)
+  simp only [Tm.subst, bin_subst] at h
+  exact h
+
+/-- `u ∸ S v = (u ∸ v) ∸ 1`. -/
+theorem derivable_sub_succ {n : Nat} (u v : ETm n) :
+    Derivable eraDefs ⟨u ∸ᵉ .succ v, (u ∸ᵉ v) ∸ᵉ one⟩ := by
+  have h := derivable_def (m := 2)
+    (e := ⟨(.var 0) ∸ᵉ .succ (.var 1), ((.var 0) ∸ᵉ (.var 1)) ∸ᵉ one⟩)
+    (by simp [eraDefs, axSubS]) (fcons u fun _ => v)
+  simp only [Tm.subst, bin_subst] at h
+  exact h
+
+/-- `0 ∸ 1 = 0`. -/
+theorem derivable_pred_zero {n : Nat} : Derivable eraDefs ⟨(.zero : ETm n) ∸ᵉ one, .zero⟩ := by
+  have h := derivable_def (m := 0) (e := ⟨(.zero : ETm 0) ∸ᵉ one, .zero⟩)
+    (by simp [eraDefs, axPred0]) (Fin.elim0 : Fin 0 → ETm n)
+  simp only [Tm.subst, bin_subst] at h
+  exact h
+
+/-- `S u ∸ 1 = u`. -/
+theorem derivable_pred_succ {n : Nat} (u : ETm n) :
+    Derivable eraDefs ⟨.succ u ∸ᵉ one, u⟩ := by
+  have h := derivable_def (m := 1) (e := ⟨.succ (.var 0) ∸ᵉ one, .var 0⟩)
+    (by simp [eraDefs, axPredS]) (fun _ => u)
+  simp only [Tm.subst, bin_subst] at h
+  exact h
+
+/-- `u · 0 = 0`. -/
+theorem derivable_mul_zero {n : Nat} (u : ETm n) :
+    Derivable eraDefs ⟨u *ᵉ .zero, .zero⟩ := by
+  have h := derivable_def (m := 1) (e := ⟨(.var 0) *ᵉ .zero, .zero⟩)
+    (by simp [eraDefs, axMul0]) (fun _ => u)
+  simp only [Tm.subst, bin_subst] at h
+  exact h
+
+/-- `u · S v = u·v + u`. -/
+theorem derivable_mul_succ {n : Nat} (u v : ETm n) :
+    Derivable eraDefs ⟨u *ᵉ .succ v, (u *ᵉ v) +ᵉ u⟩ := by
+  have h := derivable_def (m := 2)
+    (e := ⟨(.var 0) *ᵉ .succ (.var 1), ((.var 0) *ᵉ (.var 1)) +ᵉ (.var 0)⟩)
+    (by simp [eraDefs, axMulS]) (fcons u fun _ => v)
+  simp only [Tm.subst, bin_subst] at h
+  exact h
+
+/-- `u ^ 0 = 1`. -/
+theorem derivable_pow_zero {n : Nat} (u : ETm n) :
+    Derivable eraDefs ⟨u ^ᵉ .zero, one⟩ := by
+  have h := derivable_def (m := 1) (e := ⟨(.var 0) ^ᵉ .zero, one⟩)
+    (by simp [eraDefs, axPow0]) (fun _ => u)
+  simp only [Tm.subst, bin_subst] at h
+  exact h
+
+/-- `u ^ S v = u^v · u`. -/
+theorem derivable_pow_succ {n : Nat} (u v : ETm n) :
+    Derivable eraDefs ⟨u ^ᵉ .succ v, (u ^ᵉ v) *ᵉ u⟩ := by
+  have h := derivable_def (m := 2)
+    (e := ⟨(.var 0) ^ᵉ .succ (.var 1), ((.var 0) ^ᵉ (.var 1)) *ᵉ (.var 0)⟩)
+    (by simp [eraDefs, axPowS]) (fcons u fun _ => v)
+  simp only [Tm.subst, bin_subst] at h
+  exact h
+
+/-- `u / 0 = 0`. -/
+theorem derivable_div_zero {n : Nat} (u : ETm n) :
+    Derivable eraDefs ⟨u /ᵉ .zero, .zero⟩ := by
+  have h := derivable_def (m := 1) (e := ⟨(.var 0) /ᵉ .zero, .zero⟩)
+    (by simp [eraDefs, axDivZ]) (fun _ => u)
+  simp only [Tm.subst, bin_subst] at h
+  exact h
+
+/-- `0 / S u = 0`. -/
+theorem derivable_zero_div {n : Nat} (u : ETm n) :
+    Derivable eraDefs ⟨(.zero : ETm n) /ᵉ .succ u, .zero⟩ := by
+  have h := derivable_def (m := 1) (e := ⟨(.zero : ETm 1) /ᵉ .succ (.var 0), .zero⟩)
+    (by simp [eraDefs, axDiv0]) (fun _ => u)
+  simp only [Tm.subst, bin_subst] at h
+  exact h
+
+/-- `S u / S v = u / S v + (1 ∸ (v ∸ (u ∸ S v · (u / S v))))`. -/
+theorem derivable_div_succ {n : Nat} (u v : ETm n) :
+    Derivable eraDefs ⟨.succ u /ᵉ .succ v,
+      (u /ᵉ .succ v) +ᵉ (one ∸ᵉ (v ∸ᵉ (u ∸ᵉ .succ v *ᵉ (u /ᵉ .succ v))))⟩ := by
+  have h := derivable_def (m := 2)
+    (e := ⟨.succ (.var 0) /ᵉ .succ (.var 1),
+      ((.var 0) /ᵉ .succ (.var 1)) +ᵉ
+        (one ∸ᵉ ((.var 1) ∸ᵉ ((.var 0) ∸ᵉ .succ (.var 1) *ᵉ ((.var 0) /ᵉ .succ (.var 1)))))⟩)
+    (by simp [eraDefs, axDivS]) (fcons u fun _ => v)
+  simp only [Tm.subst, bin_subst] at h
+  exact h
+
+/-! ### Numeral computation
+The defining equations compute every basis operation on numerals. -/
+
+/-- Numerals compute addition. -/
+theorem numeral_add {n : Nat} (a b : Nat) :
+    Derivable eraDefs ⟨(.numeral a : ETm n) +ᵉ .numeral b, .numeral (a + b)⟩ := by
+  induction b with
+  | zero => exact derivable_add_zero _
+  | succ b ih => exact (derivable_add_succ _ _).trans (Derivable.succ_congr ih)
+
+/-- Numerals compute the predecessor term `z ∸ 1`. -/
+theorem numeral_pred {n : Nat} (a : Nat) :
+    Derivable eraDefs ⟨(.numeral a : ETm n) ∸ᵉ one, .numeral (a - 1)⟩ := by
+  cases a with
+  | zero => exact derivable_pred_zero
+  | succ a => exact derivable_pred_succ _
+
+/-- Numerals compute truncated subtraction. -/
+theorem numeral_sub {n : Nat} (a b : Nat) :
+    Derivable eraDefs ⟨(.numeral a : ETm n) ∸ᵉ .numeral b, .numeral (a - b)⟩ := by
+  induction b with
+  | zero => exact derivable_sub_zero _
+  | succ b ih =>
+      exact (derivable_sub_succ _ _).trans
+        ((bin_congr .tsub ih (.refl one)).trans (numeral_pred _))
+
+/-- Numerals compute multiplication. -/
+theorem numeral_mul {n : Nat} (a b : Nat) :
+    Derivable eraDefs ⟨(.numeral a : ETm n) *ᵉ .numeral b, .numeral (a * b)⟩ := by
+  induction b with
+  | zero => exact derivable_mul_zero _
+  | succ b ih =>
+      exact (derivable_mul_succ _ _).trans
+        ((bin_congr .add ih (.refl _)).trans (numeral_add _ _))
+
+/-- Numerals compute exponentiation. -/
+theorem numeral_pow {n : Nat} (a b : Nat) :
+    Derivable eraDefs ⟨(.numeral a : ETm n) ^ᵉ .numeral b, .numeral (a ^ b)⟩ := by
+  induction b with
+  | zero => exact derivable_pow_zero _
+  | succ b ih =>
+      exact (derivable_pow_succ _ _).trans
+        ((bin_congr .mul ih (.refl _)).trans (numeral_mul _ _))
+
+/-- Numerals compute division, through the remainder-increment recurrence and
+`succ_div_succ`. -/
+theorem numeral_div {n : Nat} (a b : Nat) :
+    Derivable eraDefs ⟨(.numeral a : ETm n) /ᵉ .numeral b, .numeral (a / b)⟩ := by
+  cases b with
+  | zero =>
+      rw [Nat.div_zero]
+      exact derivable_div_zero _
+  | succ y =>
+      induction a with
+      | zero =>
+          rw [Nat.zero_div]
+          exact derivable_zero_div _
+      | succ x ih =>
+          rw [succ_div_succ]
+          -- evaluate the remainder-increment term numeral-by-numeral, innermost first
+          have hprod := (bin_congr .mul (.refl (.succ (.numeral y))) ih).trans
+            (numeral_mul (y + 1) (x / (y + 1)))
+          have hrem := (bin_congr .tsub (.refl (.numeral x)) hprod).trans
+            (numeral_sub x ((y + 1) * (x / (y + 1))))
+          have hgap := (bin_congr .tsub (.refl (.numeral y)) hrem).trans
+            (numeral_sub y (x - (y + 1) * (x / (y + 1))))
+          have hincr := (bin_congr .tsub (.refl one) hgap).trans
+            (numeral_sub 1 (y - (x - (y + 1) * (x / (y + 1)))))
+          exact (derivable_div_succ (.numeral x) (.numeral y)).trans
+            ((bin_congr .add ih hincr).trans
+              (numeral_add (x / (y + 1)) (1 - (y - (x - (y + 1) * (x / (y + 1)))))))
+
+/-- Numeral normalization: every closed term is derivably equal to the numeral of its
+value. -/
+theorem closed_term_numeral (t : ETm 0) :
+    Derivable eraDefs ⟨t, .numeral (t.eval eraInterp Fin.elim0)⟩ := by
+  induction t with
+  | var i => exact i.elim0
+  | zero => exact .refl _
+  | succ t ih => exact Derivable.succ_congr ih
+  | app b ts ih =>
+      rw [app_eq_bin b ts]
+      cases b with
+      | add => exact (bin_congr .add (ih _) (ih _)).trans (numeral_add _ _)
+      | tsub => exact (bin_congr .tsub (ih _) (ih _)).trans (numeral_sub _ _)
+      | mul => exact (bin_congr .mul (ih _) (ih _)).trans (numeral_mul _ _)
+      | div => exact (bin_congr .div (ih _) (ih _)).trans (numeral_div _ _)
+      | pow => exact (bin_congr .pow (ih _) (ih _)).trans (numeral_pow _ _)
+
+/-- Completeness for closed equations: a closed equation that holds in the standard
+model is derivable.  With `eraSound`, derivability of a closed equation coincides with
+its truth in the standard model. -/
+theorem eraClosedComplete {s t : ETm 0}
+    (h : ∀ ρ : Fin 0 → Nat, s.eval eraInterp ρ = t.eval eraInterp ρ) :
+    Derivable eraDefs ⟨s, t⟩ := by
+  have hs := closed_term_numeral s
+  rw [h Fin.elim0] at hs
+  exact hs.trans (closed_term_numeral t).symm
 
 end Era
