@@ -24,15 +24,10 @@ step "Step 1: scripts/check-jj-setup.sh"
 bash scripts/check-jj-setup.sh
 
 # Step 2: build and test.
-#
-# `lake test` builds the GebLean and GebLeanTests libraries via the
-# test driver's dependency graph, so a separate `lake build` would be
-# redundant given current lakefile targets.
-#
-# If a subsequent lakefile addition introduces a target outside the
-# test driver's dependency graph, add `lake build` explicitly before
-# `lake test`.
-step "Step 2: lake test"
+step "Step 2a: lake build"
+lake build
+
+step "Step 2b: lake test"
 lake test
 
 # Step 3: lint (depends on lintDriver = "batteries/runLinter" in lakefile.toml).
