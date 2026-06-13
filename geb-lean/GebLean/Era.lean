@@ -705,6 +705,244 @@ theorem pow2_unique (g : Nat → Nat)
   | zero => simpa using h0
   | succ x ih => rw [hS x, ih, Nat.pow_succ]; omega
 
+/-- Categoricity of the remainder: a function with `g x 0 = x`, the below-divisor
+equation `g x (x + (y + 1)) = x`, and the divisor-subtraction equation
+`g (x + y) y = g x y` equals `(· % ·)`.  The `x < y + 1` case matches
+`Nat.mod_eq_of_lt`; the `x ≥ y + 1` case peels one divisor by `hadd` and recurses by
+strong induction on the dividend. -/
+theorem mod_unique (g : Nat → Nat → Nat)
+    (h0 : ∀ x, g x 0 = x)
+    (hlt : ∀ x y, g x (x + (y + 1)) = x)
+    (hadd : ∀ x y, g (x + y) y = g x y) :
+    ∀ x y, g x y = x % y := by
+  intro x y
+  cases y with
+  | zero => rw [h0 x, Nat.mod_zero]
+  | succ y =>
+    induction x using Nat.strongRecOn with
+    | ind x ih =>
+      rcases Nat.lt_or_ge x (y + 1) with hxlt | hxge
+      · -- the dividend is below the divisor: it is its own remainder
+        obtain ⟨k, hk⟩ : ∃ k, y + 1 = x + (k + 1) := ⟨y - x, by omega⟩
+        rw [hk, hlt x k, Nat.mod_eq_of_lt (by omega)]
+      · -- the dividend dominates the divisor: peel one divisor and recurse
+        obtain ⟨z, hz⟩ : ∃ z, x = z + (y + 1) := ⟨x - (y + 1), by omega⟩
+        have hlt' : z < x := by omega
+        rw [hz, hadd z (y + 1), ih z hlt', Nat.add_mod_right]
+
+/-- Categoricity of division: a function with `g x 0 = 0`, `g 0 (y + 1) = 0`, and the
+successor-quotient recurrence `g (x + 1) (y + 1) = g x (y + 1) + (1 - (y - x % (y + 1)))`
+equals `(· / ·)`.  The step case rewrites by the recurrence, the induction hypothesis,
+and `succ_div_succ`. -/
+theorem div_unique (g : Nat → Nat → Nat)
+    (hz : ∀ x, g x 0 = 0) (h0 : ∀ y, g 0 (y + 1) = 0)
+    (hS : ∀ x y, g (x + 1) (y + 1)
+            = g x (y + 1) + (1 - (y - x % (y + 1)))) :
+    ∀ x y, g x y = x / y := by
+  intro x y
+  cases y with
+  | zero => rw [hz x, Nat.div_zero]
+  | succ y =>
+    induction x with
+    | zero => rw [h0 y, Nat.zero_div]
+    | succ x ih => rw [hS x y, ih, succ_div_succ]
+
+/-! ### The capstone: categoricity of the whole interpretation
+
+The seven per-operation categoricity lemmas combine into a single statement: `eraInterp`
+is the unique interpretation of the basis satisfying the eighteen defining equations.
+The seven evaluation lemmas below turn the abstract argument tuple of each smart
+constructor into an explicit head/tail `fcons`, so an axiom's `Tm.eval` reduces to the
+`Nat`-level recursion equation each `*_unique` lemma consumes. -/
+
+/-- Evaluating an `eadd` term: reduces to the addition symbol applied to the evaluated
+head and tail. -/
+theorem eadd_eval {n : Nat} (I : (b : EraB) → (Fin (eraAr b) → Nat) → Nat)
+    (s t : ETm n) (ρ : Fin n → Nat) :
+    (s +ᵉ t).eval I ρ = I .add (fcons (s.eval I ρ) (fcons (t.eval I ρ) Fin.elim0)) := by
+  simp only [eadd, Tm.eval]
+  congr 1
+  funext i
+  rcases i with ⟨_ | _ | n, hi⟩ <;> simp only [eraAr] at hi <;> first | rfl | omega
+
+/-- Evaluating an `emod` term. -/
+theorem emod_eval {n : Nat} (I : (b : EraB) → (Fin (eraAr b) → Nat) → Nat)
+    (s t : ETm n) (ρ : Fin n → Nat) :
+    (s %ᵉ t).eval I ρ = I .mod (fcons (s.eval I ρ) (fcons (t.eval I ρ) Fin.elim0)) := by
+  simp only [emod, Tm.eval]
+  congr 1
+  funext i
+  rcases i with ⟨_ | _ | n, hi⟩ <;> simp only [eraAr] at hi <;> first | rfl | omega
+
+/-- Evaluating an `etsub` term. -/
+theorem etsub_eval {n : Nat} (I : (b : EraB) → (Fin (eraAr b) → Nat) → Nat)
+    (s t : ETm n) (ρ : Fin n → Nat) :
+    (s ∸ᵉ t).eval I ρ = I .tsub (fcons (s.eval I ρ) (fcons (t.eval I ρ) Fin.elim0)) := by
+  simp only [etsub, Tm.eval]
+  congr 1
+  funext i
+  rcases i with ⟨_ | _ | n, hi⟩ <;> simp only [eraAr] at hi <;> first | rfl | omega
+
+/-- Evaluating an `emul` term. -/
+theorem emul_eval {n : Nat} (I : (b : EraB) → (Fin (eraAr b) → Nat) → Nat)
+    (s t : ETm n) (ρ : Fin n → Nat) :
+    (s *ᵉ t).eval I ρ = I .mul (fcons (s.eval I ρ) (fcons (t.eval I ρ) Fin.elim0)) := by
+  simp only [emul, Tm.eval]
+  congr 1
+  funext i
+  rcases i with ⟨_ | _ | n, hi⟩ <;> simp only [eraAr] at hi <;> first | rfl | omega
+
+/-- Evaluating an `ediv` term. -/
+theorem ediv_eval {n : Nat} (I : (b : EraB) → (Fin (eraAr b) → Nat) → Nat)
+    (s t : ETm n) (ρ : Fin n → Nat) :
+    (s /ᵉ t).eval I ρ = I .div (fcons (s.eval I ρ) (fcons (t.eval I ρ) Fin.elim0)) := by
+  simp only [ediv, Tm.eval]
+  congr 1
+  funext i
+  rcases i with ⟨_ | _ | n, hi⟩ <;> simp only [eraAr] at hi <;> first | rfl | omega
+
+/-- Evaluating an `epow` term. -/
+theorem epow_eval {n : Nat} (I : (b : EraB) → (Fin (eraAr b) → Nat) → Nat)
+    (s t : ETm n) (ρ : Fin n → Nat) :
+    (s ^ᵉ t).eval I ρ = I .pow (fcons (s.eval I ρ) (fcons (t.eval I ρ) Fin.elim0)) := by
+  simp only [epow, Tm.eval]
+  congr 1
+  funext i
+  rcases i with ⟨_ | _ | n, hi⟩ <;> simp only [eraAr] at hi <;> first | rfl | omega
+
+/-- Evaluating an `epow2` term: reduces to the base-two-exponentiation symbol applied to
+the evaluated argument. -/
+theorem epow2_eval {n : Nat} (I : (b : EraB) → (Fin (eraAr b) → Nat) → Nat)
+    (t : ETm n) (ρ : Fin n → Nat) :
+    (epow2 t).eval I ρ = I .pow2 (fcons (t.eval I ρ) Fin.elim0) := by
+  simp only [epow2, Tm.eval]
+  congr 1
+  funext i
+  rcases i with ⟨_ | n, hi⟩ <;> simp only [eraAr] at hi <;> first | rfl | omega
+
+/-- Categoricity of the standard interpretation: `eraInterp` is the unique interpretation
+of the basis under which all eighteen defining equations hold.  Each arm extracts the
+operation's recursion equations from `hI` and feeds them to the matching `*_unique`
+lemma, in dependency order. -/
+theorem eraInterp_unique
+    (I : (b : EraB) → (Fin (eraAr b) → Nat) → Nat)
+    (hI : ∀ d ∈ eraDefs, ∀ ρ : Fin d.1 → Nat,
+            d.2.lhs.eval I ρ = d.2.rhs.eval I ρ) :
+    I = eraInterp := by
+  -- addition
+  have hAdd0 : ∀ x, I .add (fcons x (fcons 0 Fin.elim0)) = x := fun x => by
+    have h := hI axAdd0 (by simp [eraDefs]) (fcons x Fin.elim0)
+    simpa only [axAdd0, eadd_eval, Tm.eval, fcons] using h
+  have hAddS : ∀ x y, I .add (fcons x (fcons (y + 1) Fin.elim0))
+      = I .add (fcons x (fcons y Fin.elim0)) + 1 := fun x y => by
+    have h := hI axAddS (by simp [eraDefs]) (fcons x (fcons y Fin.elim0))
+    simpa only [axAddS, eadd_eval, Tm.eval, fcons] using h
+  have eAdd : ∀ x y, I .add (fcons x (fcons y Fin.elim0)) = x + y :=
+    add_unique _ hAdd0 hAddS
+  -- truncated subtraction
+  have hSub0 : ∀ x, I .tsub (fcons x (fcons 0 Fin.elim0)) = x := fun x => by
+    have h := hI axSub0 (by simp [eraDefs]) (fcons x Fin.elim0)
+    simpa only [axSub0, etsub_eval, Tm.eval, fcons] using h
+  have hSubS : ∀ x y, I .tsub (fcons x (fcons (y + 1) Fin.elim0))
+      = I .tsub (fcons (I .tsub (fcons x (fcons y Fin.elim0))) (fcons 1 Fin.elim0)) :=
+    fun x y => by
+      have h := hI axSubS (by simp [eraDefs]) (fcons x (fcons y Fin.elim0))
+      simpa only [axSubS, etsub_eval, one, Tm.eval, fcons] using h
+  have hPred0 : I .tsub (fcons 0 (fcons 1 Fin.elim0)) = 0 := by
+    have h := hI axPred0 (by simp [eraDefs]) Fin.elim0
+    simpa only [axPred0, etsub_eval, one, Tm.eval, fcons] using h
+  have hPredS : ∀ x, I .tsub (fcons (x + 1) (fcons 1 Fin.elim0)) = x := fun x => by
+    have h := hI axPredS (by simp [eraDefs]) (fcons x Fin.elim0)
+    simpa only [axPredS, etsub_eval, one, Tm.eval, fcons] using h
+  have eSub : ∀ x y, I .tsub (fcons x (fcons y Fin.elim0)) = x - y :=
+    sub_unique _ hSub0 hSubS hPred0 hPredS
+  -- multiplication
+  have hMul0 : ∀ x, I .mul (fcons x (fcons 0 Fin.elim0)) = 0 := fun x => by
+    have h := hI axMul0 (by simp [eraDefs]) (fcons x Fin.elim0)
+    simpa only [axMul0, emul_eval, Tm.eval, fcons] using h
+  have hMulS : ∀ x y, I .mul (fcons x (fcons (y + 1) Fin.elim0))
+      = I .mul (fcons x (fcons y Fin.elim0)) + x := fun x y => by
+    have h := hI axMulS (by simp [eraDefs]) (fcons x (fcons y Fin.elim0))
+    simp only [axMulS, emul_eval, eadd_eval, Tm.eval, fcons] at h
+    rw [eAdd] at h
+    exact h
+  have eMul : ∀ x y, I .mul (fcons x (fcons y Fin.elim0)) = x * y :=
+    mul_unique _ hMul0 hMulS
+  -- exponentiation
+  have hPow0 : ∀ x, I .pow (fcons x (fcons 0 Fin.elim0)) = 1 := fun x => by
+    have h := hI axPow0 (by simp [eraDefs]) (fcons x Fin.elim0)
+    simpa only [axPow0, epow_eval, one, Tm.eval, fcons] using h
+  have hPowS : ∀ x y, I .pow (fcons x (fcons (y + 1) Fin.elim0))
+      = I .pow (fcons x (fcons y Fin.elim0)) * x := fun x y => by
+    have h := hI axPowS (by simp [eraDefs]) (fcons x (fcons y Fin.elim0))
+    simp only [axPowS, epow_eval, emul_eval, Tm.eval, fcons] at h
+    rw [eMul] at h
+    exact h
+  have ePow : ∀ x y, I .pow (fcons x (fcons y Fin.elim0)) = x ^ y :=
+    pow_unique _ hPow0 hPowS
+  -- base-two exponentiation
+  have hPow2Z : I .pow2 (fcons 0 Fin.elim0) = 1 := by
+    have h := hI axPow2Z (by simp [eraDefs]) Fin.elim0
+    simpa only [axPow2Z, epow2_eval, one, Tm.eval, fcons] using h
+  have hPow2S : ∀ x, I .pow2 (fcons (x + 1) Fin.elim0)
+      = I .pow2 (fcons x Fin.elim0) + I .pow2 (fcons x Fin.elim0) := fun x => by
+    have h := hI axPow2S (by simp [eraDefs]) (fcons x Fin.elim0)
+    simp only [axPow2S, epow2_eval, eadd_eval, Tm.eval, fcons] at h
+    rw [eAdd] at h
+    exact h
+  have ePow2 : ∀ x, I .pow2 (fcons x Fin.elim0) = 2 ^ x :=
+    pow2_unique _ hPow2Z hPow2S
+  -- remainder
+  have hMod0 : ∀ x, I .mod (fcons x (fcons 0 Fin.elim0)) = x := fun x => by
+    have h := hI axMod0 (by simp [eraDefs]) (fcons x Fin.elim0)
+    simpa only [axMod0, emod_eval, Tm.eval, fcons] using h
+  have hModLt : ∀ x y, I .mod (fcons x (fcons (x + (y + 1)) Fin.elim0)) = x := fun x y => by
+    have h := hI axModLt (by simp [eraDefs]) (fcons x (fcons y Fin.elim0))
+    simp only [axModLt, emod_eval, eadd_eval, Tm.eval, fcons] at h
+    rw [eAdd] at h
+    exact h
+  have hModAdd : ∀ x y, I .mod (fcons (x + y) (fcons y Fin.elim0))
+      = I .mod (fcons x (fcons y Fin.elim0)) := fun x y => by
+    have h := hI axModAdd (by simp [eraDefs]) (fcons x (fcons y Fin.elim0))
+    simp only [axModAdd, emod_eval, eadd_eval, Tm.eval, fcons] at h
+    rw [eAdd] at h
+    exact h
+  have eMod : ∀ x y, I .mod (fcons x (fcons y Fin.elim0)) = x % y :=
+    mod_unique _ hMod0 hModLt hModAdd
+  -- division
+  have hDivZ : ∀ x, I .div (fcons x (fcons 0 Fin.elim0)) = 0 := fun x => by
+    have h := hI axDivZ (by simp [eraDefs]) (fcons x Fin.elim0)
+    simpa only [axDivZ, ediv_eval, Tm.eval, fcons] using h
+  have hDiv0 : ∀ y, I .div (fcons 0 (fcons (y + 1) Fin.elim0)) = 0 := fun y => by
+    have h := hI axDiv0 (by simp [eraDefs]) (fcons y Fin.elim0)
+    simpa only [axDiv0, ediv_eval, Tm.eval, fcons] using h
+  have hDivS : ∀ x y, I .div (fcons (x + 1) (fcons (y + 1) Fin.elim0))
+      = I .div (fcons x (fcons (y + 1) Fin.elim0))
+        + (1 - (y - I .mod (fcons x (fcons (y + 1) Fin.elim0)))) := fun x y => by
+    have h := hI axDivS (by simp [eraDefs]) (fcons x (fcons y Fin.elim0))
+    simp only [axDivS, ediv_eval, eadd_eval, etsub_eval, emod_eval, one, Tm.eval, fcons] at h
+    rw [eAdd, eSub, eSub] at h
+    exact h
+  have eDiv : ∀ x y, I .div (fcons x (fcons y Fin.elim0)) = x / y :=
+    div_unique _ hDivZ hDiv0 (fun x y => by rw [hDivS x y, eMod x (y + 1)])
+  -- assemble: each arm reduces `I b v` to the pinned function at the components of `v`
+  funext b v
+  -- a binary tuple is its first two components consed onto the empty tail
+  have hv2 : ∀ (w : Fin 2 → Nat),
+      w = fcons (w ⟨0, by omega⟩) (fcons (w ⟨1, by omega⟩) Fin.elim0) := fun w =>
+    funext fun i => by rcases i with ⟨_ | _ | n, hi⟩ <;> first | rfl | omega
+  -- a unary tuple is its first component consed onto the empty tail
+  have hv1 : ∀ (w : Fin 1 → Nat), w = fcons (w ⟨0, by omega⟩) Fin.elim0 := fun w =>
+    funext fun i => by rcases i with ⟨_ | n, hi⟩ <;> first | rfl | omega
+  cases b <;> simp only [eraInterp]
+  · rw [hv2 v]; exact eAdd _ _
+  · rw [hv2 v]; exact eMod _ _
+  · rw [hv1 v]; exact ePow2 _
+  · rw [hv2 v]; exact eSub _ _
+  · rw [hv2 v]; exact eMul _ _
+  · rw [hv2 v]; exact eDiv _ _
+  · rw [hv2 v]; exact ePow _ _
+
 /-! ## The additive flip `0 + u = u` via `uniq`.
 The defining equation gives only `u + 0 = u`; the flipped identity needs
 induction.  Take F := 0 + x, G := x, step functional H := S(previous), then
