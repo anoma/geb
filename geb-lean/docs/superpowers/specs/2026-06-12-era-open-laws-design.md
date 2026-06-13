@@ -25,6 +25,10 @@
   - [7.7 The recovery equation](#77-the-recovery-equation)
 - [8 Approaches explored and rejected](#8-approaches-explored-and-rejected)
 - [9 Acceptance criteria](#9-acceptance-criteria)
+- [9a Design revision: restore truncated subtraction as a primitive](#9a-design-revision-restore-truncated-subtraction-as-a-primitive)
+  - [Basis and axioms](#basis-and-axioms)
+  - [Consequence: the impasse dissolves](#consequence-the-impasse-dissolves)
+  - [The redundancy theorem](#the-redundancy-theorem)
 - [10 Scope guardrails](#10-scope-guardrails)
 - [11 References](#11-references)
 
@@ -442,20 +446,95 @@ premise (the `esub` doubling recursion) closes the circle. The
 seven domination-dependent statements await the user decision
 recorded in that report; the axiom set was not extended.
 
+## 9a Design revision: restore truncated subtraction as a primitive
+
+Decided 2026-06-12 after the domination impasse (§9, the
+impasse report). The minimal three-element basis is faithful to
+the substitution-basis literature (Marchenkov 2007; [PSS26])
+for *expressibility* — every Kalmár-elementary function is a
+composition term over `{+, mod, 2^x}` — but is in tension with
+Goodstein's logic-free *proof* calculus, which draws its power
+from each operation carrying its own recursion equations as
+axioms. Eliminating `∸` as a function silently eliminated the
+order relation it encoded (`a ≤ b ⟺ a ∸ b = 0`), and order is
+not equationally recoverable from the three basis recursions
+without the witness-circularity of §2–§4 of the impasse report.
+
+Resolution: keep the basis finite and close to minimal, but
+restore truncated subtraction as a fourth primitive with its
+natural recursion axioms, while leaving multiplication, division,
+and two-variable exponentiation derived (unlike the
+pre-reduction five-primitive basis at `daab65a9`). The basis
+becomes `{x+y, x mod y, 2^x, x ∸ y}`.
+
+### Basis and axioms
+
+- `EraB` gains a constructor `tsub` of arity 2; `∸ᵉ` denotes the
+  primitive application.
+- Four defining equations, verbatim from `daab65a9`:
+  `x ∸ 0 = x` (`axSub0`), `x ∸ S y = (x ∸ y) ∸ 1` (`axSubS`),
+  `0 ∸ 1 = 0` (`axPred0`), `S x ∸ 1 = x` (`axPredS`).
+- `eraInterp` interprets `tsub` as `Nat` truncated subtraction;
+  `eraDefs_sound` discharges the four equations by `omega`. The
+  generic soundness, consistency, and closed-completeness
+  theorems generalize unchanged (they quantify over `defs`).
+
+### Consequence: the impasse dissolves
+
+With `∸` primitive, Goodstein's 1954 development applies: the
+recovery equation (17) `a + (b ∸ a) = b + (a ∸ b)` is derived
+from the `∸` recursion axioms, the `+` axioms, `uniq`, and
+`ext_succ`; domination then follows by induction. The four
+subtraction-cluster deliverables become axiom instances
+(`derivable_sub_zero`, `derivable_sub_succ`,
+`derivable_pred_zero`, `derivable_pred_succ`). `pow_zero` lands
+once domination is available (§7.6). The multiplicative cluster
+(`mul_succ`, `pow_succ`, `div_succ`) carries a separate
+squaring↔multiplication bootstrap (§7.5) that domination does
+not by itself break, since multiplication remains derived through
+the `esq`/`edmul` chain; those three are derived where the
+bootstrap permits and otherwise reported.
+
+### The redundancy theorem
+
+The former `esub` body — the Mazzanti mod-expression — is
+retained as a named `def subFormula` over `{+, mod, 2^x}`. The
+object-language theorem
+
+```text
+Derivable eraDefs ⟨x ∸ᵉ y, subFormula x y⟩
+```
+
+is proved (its proof needs only domination, now derivable, and
+no multiplication). It expresses the redundancy of `∸` as a
+*basis* element — it equals a composition over the other three —
+while the four `∸` axioms witness that `∸` is *not* redundant as
+part of the axioms: the composition's correctness is provable
+only once `∸`'s recursion is assumed. `subFormula` also remains
+available to rewrite the primitive into its closed form (and
+back) via the redundancy theorem where a proof benefits.
+
+The derived operations (`esq` uses only `+/mod/2^x`; `edmul`,
+`ediv`, `epow`) are re-pointed so `∸ᵉ` is the primitive
+throughout; `subFormula` is used solely for the redundancy
+theorem and as an optional rewrite target.
+
 ## 10 Scope guardrails
 
-- No new axioms, no change to `eraDefs`, no change to the
-  `Derivable` rules.
+- The `Derivable` rules are unchanged; the only axiom-set change
+  is the §9a restoration of the four `∸` equations (sound in the
+  standard model, discharged in `eraDefs_sound`).
 - No mathlib import into `Era.lean`.
 - The eleven statements are fixed by the pre-reduction interface;
   weakening them to ease implementation is excluded
   (non-negotiable-interface rule of
   `.claude/rules/lean-coding.md`).
 - Statement-preserving strengthening of supporting lemmas (e.g.
-  proving a law at general `defs` containing the seven equations,
+  proving a law at general `defs` containing the basis equations,
   or at a general exponent as in §7.2) is permitted.
-- Goodstein's (17) and the induction schemata I₁–I₃ are out of
-  scope unless Phase 4a makes one of them load-bearing.
+- Goodstein's (17) and the induction schemata I₁–I₃ are in scope
+  under §9a as the route to domination and the redundancy
+  theorem.
 
 ## 11 References
 
