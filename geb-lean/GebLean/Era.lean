@@ -1108,4 +1108,54 @@ theorem derivable_succ_add {n : Nat} (u v : ETm n) :
   simp only [Tm.subst, eadd_subst, fcons] at h
   exact h
 
+/-- `u + v = v + u` (Goodstein 1954 (8)).  By `uniq` on the recursion variable;
+the step uses `derivable_succ_add`. -/
+theorem derivable_add_comm {n : Nat} (u v : ETm n) :
+    Derivable eraDefs ⟨u +ᵉ v, v +ᵉ u⟩ := by
+  have base : Derivable eraDefs
+      ⟨(.var 1 : ETm 2) +ᵉ .var 0, (.var 0) +ᵉ (.var 1)⟩ := by
+    refine Derivable.uniq (H := .succ (.var 1)) ?base ?stepF ?stepG
+    case base =>
+      have h := (derivable_add_zero (.var 0 : ETm 1)).trans
+        (derivable_zero_add (.var 0 : ETm 1)).symm
+      simp only [Tm.subst, eadd_subst] at h ⊢
+      exact h
+    case stepF =>
+      have h := derivable_add_succ (.var 1 : ETm 2) (.var 0)
+      simp only [Tm.subst, eadd_subst] at h ⊢
+      exact h
+    case stepG =>
+      have h := derivable_succ_add (.var 0 : ETm 2) (.var 1)
+      simp only [Tm.subst, eadd_subst] at h ⊢
+      exact h
+  have h := base.inst (fcons v (fcons u Fin.elim0))
+  simp only [Tm.subst, eadd_subst, fcons] at h
+  exact h
+
+/-- `(u + v) + w = u + (v + w)` (Goodstein 1954 (10)).  By `uniq` on the
+recursion variable `w`. -/
+theorem derivable_add_assoc {n : Nat} (u v w : ETm n) :
+    Derivable eraDefs ⟨(u +ᵉ v) +ᵉ w, u +ᵉ (v +ᵉ w)⟩ := by
+  have base : Derivable eraDefs
+      ⟨((.var 2 : ETm 3) +ᵉ .var 1) +ᵉ .var 0, (.var 2) +ᵉ ((.var 1) +ᵉ (.var 0))⟩ := by
+    refine Derivable.uniq (H := .succ (.var 1)) ?base ?stepF ?stepG
+    case base =>
+      have h := (derivable_add_zero ((.var 1 : ETm 2) +ᵉ .var 0)).trans
+        (eadd_congr (.refl (.var 1)) (derivable_add_zero (.var 0 : ETm 2))).symm
+      simp only [Tm.subst, eadd_subst] at h ⊢
+      exact h
+    case stepF =>
+      have h := derivable_add_succ ((.var 2 : ETm 3) +ᵉ .var 1) (.var 0)
+      simp only [Tm.subst, eadd_subst] at h ⊢
+      exact h
+    case stepG =>
+      have h := (eadd_congr (.refl (.var 2))
+          (derivable_add_succ (.var 1 : ETm 3) (.var 0))).trans
+        (derivable_add_succ (.var 2 : ETm 3) ((.var 1) +ᵉ (.var 0)))
+      simp only [Tm.subst, eadd_subst] at h ⊢
+      exact h
+  have h := base.inst (fcons w (fcons v (fcons u Fin.elim0)))
+  simp only [Tm.subst, eadd_subst, fcons] at h
+  exact h
+
 end Era
