@@ -10,6 +10,7 @@
 - [5 Deliverable: the five redundancy theorems](#5-deliverable-the-five-redundancy-theorems)
 - [6 Method and disposition of the existing layer](#6-method-and-disposition-of-the-existing-layer)
 - [7 The recovery problem](#7-the-recovery-problem)
+  - [Outcome (recorded 2026-06-13)](#outcome-recorded-2026-06-13)
 - [8 Milestones](#8-milestones)
 - [9 File, bookmark, and naming](#9-file-bookmark-and-naming)
 - [10 Transcription versus novel](#10-transcription-versus-novel)
@@ -355,6 +356,38 @@ then the §3–§4 result (a sound, categorical, finite ERA) plus a
 documented obstruction; the spec is amended to record this and the
 bookmark merges that result. Recovery (M2) is the same problem the prior
 line did not resolve, and its budget is set with that in view.
+
+### Outcome (recorded 2026-06-13)
+
+The base result (M0a–M1b) is complete and verified: the seven-primitive
+basis, eighteen axioms, `eraDefs_sound`, and `eraInterp_unique` with its
+per-operation uniqueness lemmas, all axiom-clean. M2 (recovery) is not
+obtained, and the terminal contingency above is invoked: the redundancy
+section (E1–E5) does not land.
+
+The obstruction is now characterized more sharply than the prior line
+had it. Approaches 2 (direct domination) and 1 (the symmetric `max`
+identity) both reduce to the single fact
+`succ_sub_split : S a ∸ b = (a ∸ b) + (1 ∸ (b ∸ a))`. Basis truncated
+subtraction recurses only on the subtrahend (`x ∸ S y = (x ∸ y) ∸ 1`);
+there is no recursion principle for successor-on-the-minuend (`S a ∸ b`).
+Every recovery/`max` formulation simultaneously contains a term with the
+recursion variable in the minuend and one in the subtrahend (the
+indicator `1 ∸ (b ∸ a)`), so no single-variable `uniq` step functional
+exists — confirmed for `uniq` on the first argument, on the second, and
+nested; `ext_succ` is extensionality, not induction, so it does not help.
+Recovery is therefore not reachable from `uniq` alone; it requires
+two-variable / bounded recursion (Approach 3, Goodstein's bounded-sum
+development), which is deferred as a separate sub-project (shared
+infrastructure with the future `ERMor1`-equivalence work, per §4 and
+§12).
+
+Seed by-products from the attempt (re-derivable when bounded recursion
+is available): `1 ∸ S v = 0`; the first-solution step lemma
+`S a + (d ∸ 1) = (a + d) + (1 ∸ d)`; and the witness term
+`b + (2^(a+b) ∸ ((a+b) + 1))` that would discharge
+`derivable_esubAt_of_add`'s `hdom` for `e := x + y`, `u := x` once
+recovery is in hand.
 
 ## 8 Milestones
 

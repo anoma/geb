@@ -31,10 +31,17 @@
   * convenience operations { x∸y, x·y, ⌊x/y⌋, xʸ } — Mazzanti's remaining operations
     (S. Mazzanti, "Plain Bases for Classes of Primitive Recursive Functions",
     MLQ 48:1 (2002) 93–104), each retained with its own recursion axioms.
-  Each convenience operation is redundant as a *basis* element: its `…Formula`
-  encoding (`subFormula`, `mulFormula`, `divFormula`, `powFormula`) derives it as a
-  term over the generators, following the derivation chain x², δ, x∸y, 2xy, ⌊x/y⌋,
-  x·y, xʸ.
+  Each convenience operation has a `…Formula` encoding (`subFormula`, `mulFormula`,
+  `divFormula`, `powFormula`): a term over the generators computing the same `Nat`
+  function (verified on numerals by the `numeral_…Formula` lemmas), following the
+  derivation chain x², δ, x∸y, 2xy, ⌊x/y⌋, x·y, xʸ.  The object-level redundancy
+  theorems — open `Derivable` equations identifying each primitive with its encoding,
+  which would recover the Prunescu–Sauras-Altuzarra–Shunia minimality result inside the
+  calculus — are deferred: they rest on an exponential-domination (recovery) fact that
+  is not reachable from the single-variable uniqueness rule `uniq` alone (the
+  obstruction is successor-on-the-minuend, `S a ∸ b`; recovery needs two-variable /
+  bounded recursion).  See
+  `docs/superpowers/specs/2026-06-13-era-rich-basis-design.md` § 7.
   Conventions match Lean's `Nat`:  x mod 0 = x,  x ∸ y = x - y,  x / 0 = 0,
   0 ^ 0 = 1.
 
@@ -1606,7 +1613,8 @@ theorem numeral_delta {n : Nat} (a b : Nat) :
 /-- The Mazzanti truncated-subtraction formula over `{+, mod, 2^x}`:
 `subFormula x y = ((2^(x+y) + x) mod (2^(x+y) + y)) mod (2^(x+y) + x)`.  It equals
 `x ∸ y` (Lemma 2 of arXiv:2505.23787); the object-language equality with the
-primitive `∸ᵉ` is `redundant_sub`. -/
+primitive `∸ᵉ` would be the deferred redundancy theorem
+`derivable_sub_eq_subFormula` (see the module docstring). -/
 def subFormula {n : Nat} (s t : ETm n) : ETm n :=
   ((epow2 (s +ᵉ t) +ᵉ s) %ᵉ (epow2 (s +ᵉ t) +ᵉ t)) %ᵉ (epow2 (s +ᵉ t) +ᵉ s)
 
@@ -2022,7 +2030,8 @@ theorem derivable_zero_divFormula {n : Nat} (u : ETm n) :
 `esubAt e s t` exposes the exponent of the `subFormula` unfolding as a separate
 argument, so that `subFormula s t = esubAt (s + t) s t` definitionally.  Two laws
 decide the value purely by term shape, given domination of the dividend by `2^e`;
-they are the engine of the redundancy theorem `redundant_sub`. -/
+they are the engine of the deferred redundancy theorem
+`derivable_sub_eq_subFormula`. -/
 
 /-- The `subFormula` unfolding with its exponent `e` exposed as a separate
 argument. -/
@@ -2080,9 +2089,13 @@ theorem derivable_esubAt_of_add {n : Nat} {e u v w p : ETm n}
 
 /-! ### Exponential domination
 
-With `∸` primitive, the order relation `a ≤ b ⟺ a ∸ b = 0` is available, and the
-domination `a ≤ 2^a` is derivable.  This discharges the `esubAt_of_add`
-hypothesis, unblocking `pow_zero` and the redundancy theorem `redundant_sub`. -/
+With `∸` primitive, the order relation `a ≤ b ⟺ a ∸ b = 0` is available.  The
+lemmas below establish partial domination facts (e.g. `1 ≤ 2^a`,
+`derivable_one_le_two_pow`).  The full witnessed strict domination that would
+discharge `derivable_esubAt_of_add`'s hypothesis — and hence the deferred
+redundancy theorems — is not reachable from the single-variable rule `uniq`
+alone (the obstruction is successor-on-the-minuend `S a ∸ b`; it needs
+two-variable / bounded recursion).  See the module docstring and spec § 7. -/
 
 /-- `a ∸ (b + c) = (a ∸ b) ∸ c` (Goodstein 1954, the iterated-predecessor law).
 By `uniq` on `c` with the predecessor step functional `prev ∸ 1`. -/
