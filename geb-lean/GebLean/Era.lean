@@ -176,6 +176,38 @@ theorem Derivable.succ_congr {B : Type} {ar : B → Nat} {defs : Defs B ar} {n :
   Derivable.subst (F := (.succ (.var 0) : Tm B ar 1)) (G := .succ (.var 0))
     (σ := fun _ => t) (σ' := fun _ => t') (.refl _) fun _ => h
 
+/-- Zero/successor extensionality (Goodstein 1954 E₃): two solutions agreeing at
+`0` and at every successor are equal.  Derived from `uniq` with the step
+functional `(F.subst bump)` re-indexed by the renaming that skips the
+previous-value slot, so that the step instance collapses to `F.subst bump` for
+both `F` and `G` (the slot the two `recArgs` tuples differ in is never read). -/
+theorem Derivable.ext_succ {B : Type} {ar : B → Nat} {defs : Defs B ar} {n : Nat}
+    {F G : Tm B ar (n + 1)}
+    (h0 : Derivable defs ⟨F.subst (sub0 .zero), G.subst (sub0 .zero)⟩)
+    (hS : Derivable defs ⟨F.subst bump, G.subst bump⟩) :
+    Derivable defs ⟨F, G⟩ := by
+  have key : ∀ X : Tm B ar (n + 1),
+      ((F.subst bump).subst
+          (fcons (.var 0) (fun i => .var i.succ.succ))).subst (recArgs X) =
+        F.subst bump := by
+    intro X
+    rw [Tm.subst_subst]
+    have hvar : (fun j => ((fcons (.var 0) (fun i => .var i.succ.succ) : Fin (n + 1) →
+          Tm B ar (n + 2)) j).subst (recArgs X)) = (Tm.var : Fin (n + 1) → Tm B ar (n + 1)) := by
+      funext j
+      match j with
+      | ⟨0, _⟩ => rfl
+      | ⟨_ + 1, _⟩ => rfl
+    rw [hvar, Tm.subst_id]
+  refine Derivable.uniq
+    (H := (F.subst bump).subst (fcons (.var 0) (fun i => .var i.succ.succ))) h0 ?stepF ?stepG
+  case stepF =>
+    rw [key F]
+    exact Derivable.refl _
+  case stepG =>
+    rw [key G]
+    exact hS.symm
+
 /-! ## The ERA instance: the minimal basis -/
 
 /-- The minimal substitution basis for the Kalmár elementary functions E³:
