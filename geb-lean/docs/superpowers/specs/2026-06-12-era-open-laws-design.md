@@ -213,10 +213,12 @@ the open-term squaring law (`esq t = t *ᵉ t`, mirroring
 `sq_identity`) consumes mod-of-multiple, whose step consumes
 `mul_succ`, whose derivation through `edmul` consumes the
 squaring law. One member must be entered from the template and
-domination layers alone. Order after entry: mod-of-multiple →
-`mul_succ` → multiplicative algebra (11), (14), (15), (15.1) as
-needed → `pow_zero` (§7.6, verified reduction) → `pow_mod_rep`
-transposition (§7.6) → `pow_succ` → `div_succ`.
+domination layers alone; the dependency order among the entry
+members is fixed by §7.5 (`mul_succ` before mod-of-multiple's
+step; the squaring law after mod-of-multiple). Order after the
+entry members: multiplicative algebra (11), (14), (15), (15.1)
+as needed → `pow_zero` (§7.6, verified reduction) →
+`pow_mod_rep` transposition (§7.6) → `pow_succ` → `div_succ`.
 
 ## 7 Shape conversions and domination
 
@@ -358,8 +360,8 @@ consumes the squaring law. Candidate route: derive `mul_succ`
 not through the squaring law but by mirroring `numeral_mul`'s
 composition at open terms with the `edmul` recursion
 `edmul u (Sv) = edmul u v +ᵉ u +ᵉ u` derived first — whose own
-site analysis is part of the obligation. If the entry resists,
-the staged exit of §9 applies.
+site analysis is part of the obligation. If no entry member is
+derivable, the staged exit of §9 applies.
 
 ### 7.6 Powers
 
