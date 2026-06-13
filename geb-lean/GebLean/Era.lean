@@ -433,34 +433,43 @@ theorem eraSound {n : Nat} {e : EEqn n} (h : Derivable eraDefs e)
     (ρ : Fin n → Nat) : e.lhs.eval eraInterp ρ = e.rhs.eval eraInterp ρ :=
   Derivable.sound eraInterp eraDefs_sound h ρ
 
-/-! ## A machine-checked example derivation: `0 + x = x` via `uniq`.
-(The defining equation gives only `x + 0 = x`; the flipped identity needs
-induction.)  Take F := 0 + x, G := x, step functional H := S(previous). -/
+/-! ## The additive flip `0 + u = u` via `uniq`.
+The defining equation gives only `u + 0 = u`; the flipped identity needs
+induction.  Take F := 0 + x, G := x, step functional H := S(previous), then
+instantiate the recursion variable with an arbitrary term. -/
 
-example : Derivable eraDefs ⟨(.zero : ETm 1) +ᵉ .var 0, .var 0⟩ := by
-  have hA0 : (⟨1, ⟨(.var 0 : ETm 1) +ᵉ .zero, .var 0⟩⟩ : (n : Nat) × EEqn n) ∈ eraDefs :=
-    .head _
-  have hAS : (⟨2, ⟨(.var 0 : ETm 2) +ᵉ .succ (.var 1),
-                   .succ ((.var 0) +ᵉ (.var 1))⟩⟩ : (n : Nat) × EEqn n) ∈ eraDefs :=
-    .tail _ (.head _)
-  refine Derivable.uniq (H := .succ (.var 1)) ?base ?stepF ?stepG
-  case base =>
-    -- 0 + 0 = 0 — instance of axiom `x + 0 = x` under x ↦ 0
-    have h := Derivable.subst (σ := fun _ => (.zero : ETm 0)) (σ' := fun _ => .zero)
-      (Derivable.ax hA0) (fun _ => Derivable.refl _)
-    simp only [Tm.subst, eadd_subst] at h ⊢
-    exact h
-  case stepF =>
-    -- 0 + S x = S (0 + x) — instance of `x + S y = S (x + y)` under x ↦ 0, y ↦ x
-    have h := Derivable.subst
-      (σ  := fcons (.zero : ETm 1) (fcons (.var 0) Fin.elim0))
-      (σ' := fcons (.zero : ETm 1) (fcons (.var 0) Fin.elim0))
-      (Derivable.ax hAS) (fun _ => Derivable.refl _)
-    simp only [Tm.subst, eadd_subst] at h ⊢
-    exact h
-  case stepG =>
-    -- S x = S x
-    exact Derivable.refl _
+/-- `0 + u = u` (Goodstein 1954 (6)); the additive flip of `derivable_add_zero`,
+by `uniq` over the recursion variable then instantiation.  The defining equation
+gives only `u + 0 = u`. -/
+theorem derivable_zero_add {n : Nat} (u : ETm n) :
+    Derivable eraDefs ⟨(.zero : ETm n) +ᵉ u, u⟩ := by
+  have base : Derivable eraDefs ⟨(.zero : ETm 1) +ᵉ .var 0, .var 0⟩ := by
+    have hA0 : (⟨1, ⟨(.var 0 : ETm 1) +ᵉ .zero, .var 0⟩⟩ : (n : Nat) × EEqn n) ∈ eraDefs :=
+      .head _
+    have hAS : (⟨2, ⟨(.var 0 : ETm 2) +ᵉ .succ (.var 1),
+                     .succ ((.var 0) +ᵉ (.var 1))⟩⟩ : (n : Nat) × EEqn n) ∈ eraDefs :=
+      .tail _ (.head _)
+    refine Derivable.uniq (H := .succ (.var 1)) ?base ?stepF ?stepG
+    case base =>
+      -- 0 + 0 = 0 — instance of axiom `x + 0 = x` under x ↦ 0
+      have h := Derivable.subst (σ := fun _ => (.zero : ETm 0)) (σ' := fun _ => .zero)
+        (Derivable.ax hA0) (fun _ => Derivable.refl _)
+      simp only [Tm.subst, eadd_subst] at h ⊢
+      exact h
+    case stepF =>
+      -- 0 + S x = S (0 + x) — instance of `x + S y = S (x + y)` under x ↦ 0, y ↦ x
+      have h := Derivable.subst
+        (σ  := fcons (.zero : ETm 1) (fcons (.var 0) Fin.elim0))
+        (σ' := fcons (.zero : ETm 1) (fcons (.var 0) Fin.elim0))
+        (Derivable.ax hAS) (fun _ => Derivable.refl _)
+      simp only [Tm.subst, eadd_subst] at h ⊢
+      exact h
+    case stepG =>
+      -- S x = S x
+      exact Derivable.refl _
+  have h := base.inst (fun _ => u)
+  simp only [Tm.subst, eadd_subst] at h
+  exact h
 
 /-! ## Consistency and closed-equation completeness
 
