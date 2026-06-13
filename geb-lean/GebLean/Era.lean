@@ -208,19 +208,27 @@ theorem Derivable.ext_succ {B : Type} {ar : B → Nat} {defs : Defs B ar} {n : N
     rw [key G]
     exact hS.symm
 
-/-! ## The ERA instance: the minimal basis -/
+/-! ## The ERA instance: the near-minimal basis -/
 
-/-- The minimal substitution basis for the Kalmár elementary functions E³:
-`{ x+y, x mod y, 2ˣ }` (Prunescu–Sauras-Altuzarra–Shunia, arXiv:2505.23787). -/
+/-- The basis `{ x+y, x mod y, 2ˣ, x ∸ y }`: the minimal substitution basis for
+the Kalmár elementary functions E³ (Prunescu–Sauras-Altuzarra–Shunia,
+arXiv:2505.23787) augmented with truncated subtraction.  Truncated subtraction is
+redundant as a *basis* element — `redundant_sub` derives it from the other three —
+but its recursion equations are retained as axioms, since the order relation they
+encode (`a ≤ b ⟺ a ∸ b = 0`) is not equationally recoverable from the other three
+recursions alone.  Multiplication, division, and two-variable exponentiation
+remain derived. -/
 inductive EraB : Type
-  | add | mod | exp2
+  | add | mod | exp2 | tsub
   deriving DecidableEq
 
-/-- Arities: addition and remainder are binary; base-two exponentiation is unary. -/
+/-- Arities: addition, remainder, and truncated subtraction are binary; base-two
+exponentiation is unary. -/
 def eraAr : EraB → Nat
   | .add => 2
   | .mod => 2
   | .exp2 => 1
+  | .tsub => 2
 
 /-- Terms over the minimal basis. -/
 abbrev ETm (n : Nat) := Tm EraB eraAr n
@@ -240,11 +248,18 @@ def emod {n : Nat} (s t : ETm n) : ETm n :=
 def eexp2 {n : Nat} (t : ETm n) : ETm n :=
   .app .exp2 (fcons t Fin.elim0)
 
+/-- Apply the truncated-subtraction symbol to two terms. -/
+def etsub {n : Nat} (s t : ETm n) : ETm n :=
+  .app .tsub (fcons s (fcons t Fin.elim0))
+
 /-- Addition. -/
 infixl:65 " +ᵉ " => eadd
 
 /-- Remainder (`x mod 0 = x`). -/
 infixl:70 " %ᵉ " => emod
+
+/-- Truncated subtraction (`x ∸ y = max (x - y) 0`). -/
+infixl:65 " ∸ᵉ " => etsub
 
 /-- The numeral 1. -/
 def one {n : Nat} : ETm n := .succ .zero
@@ -277,6 +292,16 @@ theorem eexp2_subst {n m : Nat} (t : ETm n) (σ : Fin n → ETm m) :
     match i with
     | ⟨0, _⟩ => rfl
     | ⟨_ + 1, h⟩ => absurd (Nat.lt_of_succ_lt_succ h) (Nat.not_lt_zero _))
+
+/-- Substitution commutes with truncated-subtraction application. -/
+theorem etsub_subst {n m : Nat} (s t : ETm n) (σ : Fin n → ETm m) :
+    (s ∸ᵉ t).subst σ = s.subst σ ∸ᵉ t.subst σ :=
+  congrArg (Tm.app EraB.tsub) (funext fun i =>
+    match i with
+    | ⟨0, _⟩ => rfl
+    | ⟨1, _⟩ => rfl
+    | ⟨_ + 2, h⟩ =>
+        absurd (Nat.lt_of_succ_lt_succ (Nat.lt_of_succ_lt_succ h)) (Nat.not_lt_zero _))
 
 /-! ### The seven defining equations, named
 Recursion equations for addition and base-two exponentiation; for the remainder, the
@@ -315,9 +340,26 @@ def axExp0 : (n : Nat) × EEqn n := ⟨0, ⟨eexp2 (.zero : ETm 0), one⟩⟩
 def axExpS : (n : Nat) × EEqn n :=
   ⟨1, ⟨eexp2 (.succ (.var 0)), eexp2 (.var 0) +ᵉ eexp2 (.var 0)⟩⟩
 
-/-- The axiom set of ERA: the seven defining equations, as a finite literal list. -/
+-- truncated subtraction (recursion on the 2nd argument, via the predecessor `∸ 1`)
+
+/-- `x ∸ 0 = x`. -/
+def axSub0 : (n : Nat) × EEqn n := ⟨1, ⟨(.var 0) ∸ᵉ .zero, .var 0⟩⟩
+
+/-- `x ∸ S y = (x ∸ y) ∸ 1`. -/
+def axSubS : (n : Nat) × EEqn n :=
+  ⟨2, ⟨(.var 0) ∸ᵉ .succ (.var 1), ((.var 0) ∸ᵉ (.var 1)) ∸ᵉ one⟩⟩
+
+/-- `0 ∸ 1 = 0`. -/
+def axPred0 : (n : Nat) × EEqn n := ⟨0, ⟨(.zero : ETm 0) ∸ᵉ one, .zero⟩⟩
+
+/-- `S x ∸ 1 = x`. -/
+def axPredS : (n : Nat) × EEqn n := ⟨1, ⟨.succ (.var 0) ∸ᵉ one, .var 0⟩⟩
+
+/-- The axiom set of ERA: the eleven defining equations, as a finite literal list.
+The seven `{+, mod, 2^x}` equations plus the four truncated-subtraction equations. -/
 def eraDefs : Defs EraB eraAr :=
-  [axAdd0, axAddS, axMod0, axModLt, axModAdd, axExp0, axExpS]
+  [axAdd0, axAddS, axMod0, axModLt, axModAdd, axExp0, axExpS,
+    axSub0, axSubS, axPred0, axPredS]
 
 /-! ## Standard semantics and soundness -/
 
@@ -330,12 +372,13 @@ def Tm.eval {B : Type} {ar : B → Nat} (I : (b : B) → (Fin (ar b) → Nat) �
   | .succ t   => (t.eval I ρ) + 1
   | .app b ts => I b (fun i => (ts i).eval I ρ)
 
-/-- The standard interpretation of the minimal basis (Lean's `Nat` operations have
-exactly the right conventions). -/
+/-- The standard interpretation of the basis (Lean's `Nat` operations have
+exactly the right conventions; `Nat` subtraction is already truncated). -/
 def eraInterp : (b : EraB) → (Fin (eraAr b) → Nat) → Nat
   | .add,  v => v ⟨0, by decide⟩ + v ⟨1, by decide⟩
   | .mod,  v => v ⟨0, by decide⟩ % v ⟨1, by decide⟩
   | .exp2, v => 2 ^ v ⟨0, by decide⟩
+  | .tsub, v => v ⟨0, by decide⟩ - v ⟨1, by decide⟩
 
 /-- Substitution-evaluation lemma (terms-as-morphisms functoriality). -/
 theorem Tm.eval_subst {B : Type} {ar : B → Nat}
@@ -441,15 +484,17 @@ theorem Derivable.sound {B : Type} {ar : B → Nat} {defs : Defs B ar}
       have hkey := key (ρ ⟨0, Nat.succ_pos m⟩) (fun i => ρ i.succ)
       rwa [fcons_eta ρ] at hkey
 
-/-- The seven defining equations hold of Lean's `Nat` operations. -/
+/-- The eleven defining equations hold of Lean's `Nat` operations. -/
 theorem eraDefs_sound : ∀ d ∈ eraDefs, ∀ ρ : Fin d.1 → Nat,
     d.2.lhs.eval eraInterp ρ = d.2.rhs.eval eraInterp ρ := by
   simp only [eraDefs, axAdd0, axAddS, axMod0, axModLt, axModAdd, axExp0, axExpS,
+    axSub0, axSubS, axPred0, axPredS,
     List.forall_mem_cons, List.not_mem_nil, false_implies, implies_true, and_true]
-  -- The addition equations are linear (`omega`); the remainder and exponentiation
-  -- equations are core `Nat` facts.
-  refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_⟩ <;>
-      intro ρ <;> simp only [Tm.eval, eadd, emod, eexp2, one, fcons, eraInterp] <;>
+  -- The additive and truncated-subtractive equations are linear (`omega`); the
+  -- remainder and exponentiation equations are core `Nat` facts.
+  refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩ <;>
+      intro ρ <;>
+      simp only [Tm.eval, eadd, emod, eexp2, etsub, one, fcons, eraInterp] <;>
     first
     | omega
     | exact Nat.mod_zero _
@@ -553,6 +598,16 @@ theorem app_exp2_eq {n : Nat} (ts : Fin (eraAr .exp2) → ETm n) :
     | ⟨0, _⟩ => rfl
     | ⟨_ + 1, h⟩ => absurd (Nat.lt_of_succ_lt_succ h) (Nat.not_lt_zero _))
 
+/-- A `tsub`-application is an `etsub` of its two components. -/
+theorem app_tsub_eq {n : Nat} (ts : Fin (eraAr .tsub) → ETm n) :
+    Tm.app EraB.tsub ts = ts ⟨0, Nat.succ_pos 1⟩ ∸ᵉ ts ⟨1, Nat.lt_succ_self 1⟩ :=
+  congrArg (Tm.app EraB.tsub) (funext fun i =>
+    match i with
+    | ⟨0, _⟩ => rfl
+    | ⟨1, _⟩ => rfl
+    | ⟨_ + 2, h⟩ => absurd (Nat.lt_of_succ_lt_succ (Nat.lt_of_succ_lt_succ h))
+        (Nat.not_lt_zero _))
+
 /-- Congruence for addition. -/
 theorem eadd_congr {defs : Defs EraB eraAr} {n : Nat} {s s' t t' : ETm n}
     (hs : Derivable defs ⟨s, s'⟩) (ht : Derivable defs ⟨t, t'⟩) :
@@ -586,6 +641,19 @@ theorem eexp2_congr {defs : Defs EraB eraAr} {n : Nat} {t t' : ETm n}
     (σ := fun _ => t) (σ' := fun _ => t') (.refl _) fun _ => h
   simp only [Tm.subst, eexp2_subst] at h2
   exact h2
+
+/-- Congruence for truncated subtraction. -/
+theorem etsub_congr {defs : Defs EraB eraAr} {n : Nat} {s s' t t' : ETm n}
+    (hs : Derivable defs ⟨s, s'⟩) (ht : Derivable defs ⟨t, t'⟩) :
+    Derivable defs ⟨s ∸ᵉ t, s' ∸ᵉ t'⟩ := by
+  have h := Derivable.subst (F := ((.var 0) ∸ᵉ (.var 1) : ETm 2))
+    (G := (.var 0) ∸ᵉ (.var 1))
+    (σ := fcons s fun _ => t) (σ' := fcons s' fun _ => t') (.refl _) fun i =>
+      match i with
+      | ⟨0, _⟩ => hs
+      | ⟨_ + 1, _⟩ => ht
+  simp only [Tm.subst, etsub_subst] at h
+  exact h
 
 /-- A listed defining equation, instantiated along a substitution tuple. -/
 theorem derivable_def {m n : Nat} {e : EEqn m} (hax : ⟨m, e⟩ ∈ eraDefs)
@@ -650,6 +718,39 @@ theorem derivable_exp2_succ {n : Nat} (u : ETm n) :
   simp only [Tm.subst, eexp2_subst, eadd_subst] at h
   exact h
 
+/-- `u ∸ 0 = u` (axiom `axSub0`). -/
+theorem derivable_sub_zero {n : Nat} (u : ETm n) :
+    Derivable eraDefs ⟨u ∸ᵉ .zero, u⟩ := by
+  have h := derivable_def (m := 1) (e := ⟨(.var 0) ∸ᵉ .zero, .var 0⟩)
+    (by simp [eraDefs, axSub0]) (fun _ => u)
+  simp only [Tm.subst, etsub_subst] at h
+  exact h
+
+/-- `u ∸ S v = (u ∸ v) ∸ 1` (axiom `axSubS`). -/
+theorem derivable_sub_succ {n : Nat} (u v : ETm n) :
+    Derivable eraDefs ⟨u ∸ᵉ .succ v, (u ∸ᵉ v) ∸ᵉ one⟩ := by
+  have h := derivable_def (m := 2)
+    (e := ⟨(.var 0) ∸ᵉ .succ (.var 1), ((.var 0) ∸ᵉ (.var 1)) ∸ᵉ one⟩)
+    (by simp [eraDefs, axSubS]) (fcons u fun _ => v)
+  simp only [Tm.subst, etsub_subst] at h
+  exact h
+
+/-- `0 ∸ 1 = 0` (axiom `axPred0`). -/
+theorem derivable_pred_zero {n : Nat} :
+    Derivable eraDefs ⟨(.zero : ETm n) ∸ᵉ one, .zero⟩ := by
+  have h := derivable_def (m := 0) (e := ⟨(.zero : ETm 0) ∸ᵉ one, .zero⟩)
+    (by simp [eraDefs, axPred0]) (Fin.elim0 : Fin 0 → ETm n)
+  simp only [Tm.subst, etsub_subst] at h
+  exact h
+
+/-- `S u ∸ 1 = u` (axiom `axPredS`). -/
+theorem derivable_pred_succ {n : Nat} (u : ETm n) :
+    Derivable eraDefs ⟨.succ u ∸ᵉ one, u⟩ := by
+  have h := derivable_def (m := 1) (e := ⟨.succ (.var 0) ∸ᵉ one, .var 0⟩)
+    (by simp [eraDefs, axPredS]) (fun _ => u)
+  simp only [Tm.subst, etsub_subst] at h
+  exact h
+
 /-! ### Numeral computation
 The defining equations compute every basis operation on numerals. -/
 
@@ -698,6 +799,24 @@ theorem numeral_mod {n : Nat} (a b : Nat) :
   termination_by a
   decreasing_by omega
 
+/-- Numerals compute the predecessor `∸ 1`. -/
+theorem numeral_pred {n : Nat} (a : Nat) :
+    Derivable eraDefs ⟨(.numeral a : ETm n) ∸ᵉ one, .numeral (a - 1)⟩ := by
+  cases a with
+  | zero => exact derivable_pred_zero
+  | succ k => exact derivable_pred_succ _
+
+/-- Numerals compute truncated subtraction, by recursion on the subtrahend through
+the primitive `∸` axioms. -/
+theorem numeral_sub {n : Nat} (a b : Nat) :
+    Derivable eraDefs ⟨(.numeral a : ETm n) ∸ᵉ .numeral b, .numeral (a - b)⟩ := by
+  induction b with
+  | zero => exact derivable_sub_zero _
+  | succ b ih =>
+      rw [show a - (b + 1) = (a - b) - 1 by omega]
+      exact (derivable_sub_succ _ _).trans
+        ((etsub_congr ih (.refl one)).trans (numeral_pred _))
+
 /-- Numeral normalization: every closed term is derivably equal to the numeral of its
 value. -/
 theorem closed_term_numeral (t : ETm 0) :
@@ -717,6 +836,9 @@ theorem closed_term_numeral (t : ETm 0) :
       | exp2 =>
           rw [app_exp2_eq ts]
           exact (eexp2_congr (ih _)).trans (numeral_exp2 _)
+      | tsub =>
+          rw [app_tsub_eq ts]
+          exact (etsub_congr (ih _) (ih _)).trans (numeral_sub _ _)
 
 /-- Completeness for closed equations: a closed equation that holds in the standard
 model is derivable.  With `eraSound`, derivability of a closed equation coincides with
@@ -862,11 +984,17 @@ theorem numeral_delta {n : Nat} (a b : Nat) :
     (numeral_exp2 _)
   exact (emod_congr hexp (.refl _)).trans (numeral_mod _ 2)
 
-/-- The truncated-subtraction identity (Lemma 2 of arXiv:2505.23787):
-`((2^(x+y) + x) mod (2^(x+y) + y)) mod (2^(x+y) + x) = x ∸ y`.  For `x ≥ y` the inner
-remainder is `x - y`, fixed by the outer one; for `x < y` the inner remainder is the
-outer modulus itself. -/
-theorem tsub_identity (x y : Nat) :
+/-- The Mazzanti truncated-subtraction formula over `{+, mod, 2^x}`:
+`subFormula x y = ((2^(x+y) + x) mod (2^(x+y) + y)) mod (2^(x+y) + x)`.  It equals
+`x ∸ y` (Lemma 2 of arXiv:2505.23787); the object-language equality with the
+primitive `∸ᵉ` is `redundant_sub`. -/
+def subFormula {n : Nat} (s t : ETm n) : ETm n :=
+  ((eexp2 (s +ᵉ t) +ᵉ s) %ᵉ (eexp2 (s +ᵉ t) +ᵉ t)) %ᵉ (eexp2 (s +ᵉ t) +ᵉ s)
+
+/-- `subFormula` computes truncated subtraction in `Nat` (Lemma 2 of
+arXiv:2505.23787).  For `x ≥ y` the inner remainder is `x - y`, fixed by the outer
+one; for `x < y` the inner remainder is the outer modulus itself. -/
+theorem subFormula_eval (x y : Nat) :
     ((2 ^ (x + y) + x) % (2 ^ (x + y) + y)) % (2 ^ (x + y) + x) = x - y := by
   have hx : x < 2 ^ (x + y) :=
     Nat.lt_of_lt_of_le Nat.lt_two_pow_self (Nat.pow_le_pow_right (by omega) (by omega))
@@ -884,33 +1012,6 @@ theorem tsub_identity (x y : Nat) :
       have h3 : (x - y) % (2 ^ (x + y) + x) = x - y := Nat.mod_eq_of_lt (by omega)
       rw [h1, Nat.add_mod_right, h2, ← h1, h3]
 
-/-- Truncated subtraction:
-`x ∸ y = ((2^(x+y) + x) mod (2^(x+y) + y)) mod (2^(x+y) + x)`. -/
-def esub {n : Nat} (s t : ETm n) : ETm n :=
-  ((eexp2 (s +ᵉ t) +ᵉ s) %ᵉ (eexp2 (s +ᵉ t) +ᵉ t)) %ᵉ (eexp2 (s +ᵉ t) +ᵉ s)
-
-/-- Truncated subtraction (derived). -/
-infixl:65 " ∸ᵉ " => esub
-
-/-- Congruence for truncated subtraction. -/
-theorem esub_congr {defs : Defs EraB eraAr} {n : Nat} {s s' t t' : ETm n}
-    (hs : Derivable defs ⟨s, s'⟩) (ht : Derivable defs ⟨t, t'⟩) :
-    Derivable defs ⟨s ∸ᵉ t, s' ∸ᵉ t'⟩ :=
-  emod_congr
-    (emod_congr (eadd_congr (eexp2_congr (eadd_congr hs ht)) hs)
-      (eadd_congr (eexp2_congr (eadd_congr hs ht)) ht))
-    (eadd_congr (eexp2_congr (eadd_congr hs ht)) hs)
-
-/-- Numerals compute truncated subtraction. -/
-theorem numeral_sub {n : Nat} (a b : Nat) :
-    Derivable eraDefs ⟨(.numeral a : ETm n) ∸ᵉ .numeral b, .numeral (a - b)⟩ := by
-  rw [← tsub_identity a b]
-  have hP := (eexp2_congr (numeral_add (n := n) a b)).trans (numeral_exp2 _)
-  have hL := (eadd_congr hP (.refl _)).trans (numeral_add _ a)
-  have hR := (eadd_congr hP (.refl _)).trans (numeral_add _ b)
-  exact (emod_congr ((emod_congr hL hR).trans (numeral_mod _ _)) hL).trans
-    (numeral_mod _ _)
-
 /-- The double-product identity: `(x + y)² ∸ (x² + y²) = 2xy`. -/
 theorem dmul_identity (x y : Nat) :
     (x + y) * (x + y) - (x * x + y * y) = 2 * (x * y) := by
@@ -925,13 +1026,13 @@ def edmul {n : Nat} (s t : ETm n) : ETm n := esq (s +ᵉ t) ∸ᵉ (esq s +ᵉ e
 theorem edmul_congr {defs : Defs EraB eraAr} {n : Nat} {s s' t t' : ETm n}
     (hs : Derivable defs ⟨s, s'⟩) (ht : Derivable defs ⟨t, t'⟩) :
     Derivable defs ⟨edmul s t, edmul s' t'⟩ :=
-  esub_congr (esq_congr (eadd_congr hs ht)) (eadd_congr (esq_congr hs) (esq_congr ht))
+  etsub_congr (esq_congr (eadd_congr hs ht)) (eadd_congr (esq_congr hs) (esq_congr ht))
 
 /-- Numerals compute the double product. -/
 theorem numeral_dmul {n : Nat} (a b : Nat) :
     Derivable eraDefs ⟨edmul (.numeral a : ETm n) (.numeral b), .numeral (2 * (a * b))⟩ := by
   rw [← dmul_identity a b]
-  exact (esub_congr ((esq_congr (numeral_add a b)).trans (numeral_sq _))
+  exact (etsub_congr ((esq_congr (numeral_add a b)).trans (numeral_sq _))
       ((eadd_congr (numeral_sq a) (numeral_sq b)).trans (numeral_add _ _))).trans
     (numeral_sub _ _)
 
@@ -973,18 +1074,18 @@ infixl:70 " /ᵉ " => ediv
 theorem ediv_congr {defs : Defs EraB eraAr} {n : Nat} {s s' t t' : ETm n}
     (hs : Derivable defs ⟨s, s'⟩) (ht : Derivable defs ⟨t, t'⟩) :
     Derivable defs ⟨s /ᵉ t, s' /ᵉ t'⟩ :=
-  emod_congr (edmul_congr (Derivable.succ_congr hs) (esub_congr hs (emod_congr hs ht)))
-    (esub_congr (edmul_congr (Derivable.succ_congr hs) ht) (.refl one))
+  emod_congr (edmul_congr (Derivable.succ_congr hs) (etsub_congr hs (emod_congr hs ht)))
+    (etsub_congr (edmul_congr (Derivable.succ_congr hs) ht) (.refl one))
 
 /-- Numerals compute division. -/
 theorem numeral_div {n : Nat} (a b : Nat) :
     Derivable eraDefs ⟨(.numeral a : ETm n) /ᵉ .numeral b, .numeral (a / b)⟩ := by
   rw [← div_identity a b]
-  have hsub := (esub_congr (.refl _) (numeral_mod (n := n) a b)).trans
+  have hsub := (etsub_congr (.refl _) (numeral_mod (n := n) a b)).trans
     (numeral_sub a (a % b))
   have hN := (edmul_congr (.refl (.succ (.numeral a))) hsub).trans
     (numeral_dmul (a + 1) (a - a % b))
-  have hM := (esub_congr (numeral_dmul (n := n) (a + 1) b) (.refl one)).trans
+  have hM := (etsub_congr (numeral_dmul (n := n) (a + 1) b) (.refl one)).trans
     (numeral_sub _ 1)
   exact (emod_congr hN hM).trans (numeral_mod _ _)
 
@@ -1060,7 +1161,7 @@ theorem epow_congr {defs : Defs EraB eraAr} {n : Nat} {s s' t t' : ETm n}
   emod_congr
     (eexp2_congr (emul_congr
       (eadd_congr (eadd_congr (emul_congr hs ht) hs) (.refl one)) ht))
-    (esub_congr (eexp2_congr
+    (etsub_congr (eexp2_congr
       (eadd_congr (eadd_congr (emul_congr hs ht) hs) (.refl one))) hs)
 
 /-- Numerals compute exponentiation. -/
@@ -1071,7 +1172,7 @@ theorem numeral_pow {n : Nat} (a b : Nat) :
       (numeral_add _ a)) (.refl one)).trans (numeral_add _ 1)
   have hN := (eexp2_congr ((emul_congr hk (.refl _)).trans (numeral_mul _ b))).trans
     (numeral_exp2 _)
-  have hM := (esub_congr ((eexp2_congr hk).trans (numeral_exp2 _)) (.refl _)).trans
+  have hM := (etsub_congr ((eexp2_congr hk).trans (numeral_exp2 _)) (.refl _)).trans
     (numeral_sub _ a)
   exact (emod_congr hN hM).trans (numeral_mod _ _)
 
@@ -1186,54 +1287,72 @@ theorem derivable_mod_self {n : Nat} (v : ETm n) :
   (emod_congr (derivable_zero_add v) (.refl v)).symm.trans
     ((derivable_mod_add .zero v).trans (derivable_zero_mod v))
 
-/-- `t ∸ t = 0`.  Both remainders of the `esub` unfolding collapse: the inner is
-`mod_self`, the outer is `zero_mod`; the divisor and dividend shapes coincide. -/
-theorem derivable_sub_self {n : Nat} (t : ETm n) :
-    Derivable eraDefs ⟨t ∸ᵉ t, .zero⟩ :=
-  (emod_congr (derivable_mod_self (eexp2 (t +ᵉ t) +ᵉ t)) (.refl _)).trans
-    (derivable_zero_mod (eexp2 (t +ᵉ t) +ᵉ t))
-
-/-- `0 ∸ w = 0`.  By `uniq` on `w` with the constant-zero step functional (an
-instance of extensionality, `Derivable.ext_succ`, since the right side is
-constant).  The zero case is `sub_self`; the successor case uses `axModLt` on the
-inner remainder, which matches only a successor-shaped divisor. -/
-theorem derivable_zero_sub {n : Nat} (w : ETm n) :
-    Derivable eraDefs ⟨(.zero : ETm n) ∸ᵉ w, .zero⟩ := by
-  have base : Derivable eraDefs ⟨(.zero : ETm 1) ∸ᵉ .var 0, .zero⟩ := by
-    refine Derivable.uniq (H := .zero) ?base ?stepF ?stepG
+/-- `S u ∸ S v = u ∸ v` (Goodstein 1954 (2)).  By `uniq` on `v` with the
+predecessor step functional `prev ∸ 1`. -/
+theorem derivable_sub_succ_succ {n : Nat} (u v : ETm n) :
+    Derivable eraDefs ⟨.succ u ∸ᵉ .succ v, u ∸ᵉ v⟩ := by
+  have base : Derivable eraDefs
+      ⟨(.succ (.var 1) : ETm 2) ∸ᵉ .succ (.var 0), (.var 1) ∸ᵉ (.var 0)⟩ := by
+    refine Derivable.uniq (H := .var 1 ∸ᵉ one) ?base ?stepF ?stepG
     case base =>
-      have h := derivable_sub_self (.zero : ETm 0)
-      simp only [esub, Tm.subst, eadd_subst, emod_subst, eexp2_subst] at h ⊢
+      have h := (((derivable_sub_succ (.succ (.var 0) : ETm 1) .zero).trans
+            (etsub_congr (derivable_sub_zero (.succ (.var 0))) (.refl one))).trans
+          (derivable_pred_succ (.var 0))).trans (derivable_sub_zero (.var 0)).symm
+      simp only [Tm.subst, etsub_subst] at h ⊢
       exact h
     case stepF =>
-      -- the exponent `eexp2 (0 + S x)` is written inline so it unifies with the goal
-      have hinner : Derivable eraDefs
-          ⟨(eexp2 ((.zero : ETm 1) +ᵉ .succ (.var 0)) +ᵉ .zero) %ᵉ
-              (eexp2 ((.zero : ETm 1) +ᵉ .succ (.var 0)) +ᵉ .succ (.var 0)),
-            eexp2 ((.zero : ETm 1) +ᵉ .succ (.var 0)) +ᵉ .zero⟩ :=
-        (emod_congr (.refl _)
-            (eadd_congr (derivable_add_zero
-                (eexp2 ((.zero : ETm 1) +ᵉ .succ (.var 0)))).symm
-              (.refl (.succ (.var 0))))).trans
-          (derivable_mod_lt (eexp2 ((.zero : ETm 1) +ᵉ .succ (.var 0)) +ᵉ .zero) (.var 0))
-      have h : Derivable eraDefs
-          ⟨((eexp2 ((.zero : ETm 1) +ᵉ .succ (.var 0)) +ᵉ .zero) %ᵉ
-                (eexp2 ((.zero : ETm 1) +ᵉ .succ (.var 0)) +ᵉ .succ (.var 0))) %ᵉ
-              (eexp2 ((.zero : ETm 1) +ᵉ .succ (.var 0)) +ᵉ .zero), .zero⟩ :=
-        (emod_congr hinner (.refl _)).trans
-          (derivable_mod_self (eexp2 ((.zero : ETm 1) +ᵉ .succ (.var 0)) +ᵉ .zero))
-      simp only [esub, Tm.subst, eadd_subst, emod_subst, eexp2_subst, bump, fcons] at h ⊢
+      have h := derivable_sub_succ (.succ (.var 1) : ETm 2) (.succ (.var 0))
+      simp only [Tm.subst, etsub_subst] at h ⊢
+      exact h
+    case stepG =>
+      have h := derivable_sub_succ (.var 1 : ETm 2) (.var 0)
+      simp only [Tm.subst, etsub_subst] at h ⊢
+      exact h
+  have h := base.inst (fcons v (fcons u Fin.elim0))
+  simp only [Tm.subst, etsub_subst, fcons] at h
+  exact h
+
+/-- `t ∸ t = 0` (Goodstein 1954 (3)).  By `uniq` on `t`, the step a successor
+descent `S t ∸ S t = t ∸ t` (`sub_succ_succ`) carried by the previous value. -/
+theorem derivable_sub_self {n : Nat} (t : ETm n) :
+    Derivable eraDefs ⟨t ∸ᵉ t, .zero⟩ := by
+  have base : Derivable eraDefs ⟨(.var 0 : ETm 1) ∸ᵉ .var 0, .zero⟩ := by
+    refine Derivable.uniq (H := .var 1) ?base ?stepF ?stepG
+    case base =>
+      have h := derivable_sub_zero (.zero : ETm 0)
+      simp only [Tm.subst, etsub_subst] at h ⊢
+      exact h
+    case stepF =>
+      have h := derivable_sub_succ_succ (.var 0 : ETm 1) (.var 0)
+      simp only [Tm.subst, etsub_subst] at h ⊢
       exact h
     case stepG =>
       exact Derivable.refl _
-  have h := base.inst (fun _ => w)
-  simp only [esub, Tm.subst, eadd_subst, emod_subst, eexp2_subst] at h
+  have h := base.inst (fun _ => t)
+  simp only [Tm.subst, etsub_subst] at h
   exact h
 
-/-- `0 ∸ 1 = 0` (predecessor of zero); the instance of `zero_sub` at `1`. -/
-theorem derivable_pred_zero {n : Nat} :
-    Derivable eraDefs ⟨(.zero : ETm n) ∸ᵉ one, .zero⟩ :=
-  derivable_zero_sub one
+/-- `0 ∸ w = 0` (Goodstein 1954 (4)).  By `uniq` on `w` with the predecessor step
+functional `prev ∸ 1`. -/
+theorem derivable_zero_sub {n : Nat} (w : ETm n) :
+    Derivable eraDefs ⟨(.zero : ETm n) ∸ᵉ w, .zero⟩ := by
+  have base : Derivable eraDefs ⟨(.zero : ETm 1) ∸ᵉ .var 0, .zero⟩ := by
+    refine Derivable.uniq (H := .var 1 ∸ᵉ one) ?base ?stepF ?stepG
+    case base =>
+      have h := derivable_sub_zero (.zero : ETm 0)
+      simp only [Tm.subst, etsub_subst] at h ⊢
+      exact h
+    case stepF =>
+      have h := derivable_sub_succ (.zero : ETm 1) (.var 0)
+      simp only [Tm.subst, etsub_subst] at h ⊢
+      exact h
+    case stepG =>
+      have h := (derivable_pred_zero (n := 1)).symm
+      simp only [Tm.subst, etsub_subst] at h ⊢
+      exact h
+  have h := base.inst (fun _ => w)
+  simp only [Tm.subst, etsub_subst] at h
+  exact h
 
 /-- `edmul t 0 = 0` (the double product `2·t·0`).  The squared first factor
 reduces by `add_zero`; the second `esq 0` is the numeral `0`; the remaining
@@ -1241,7 +1360,7 @@ reduces by `add_zero`; the second `esq 0` is the numeral `0`; the remaining
 theorem derivable_edmul_zero {n : Nat} (t : ETm n) :
     Derivable eraDefs ⟨edmul t .zero, .zero⟩ :=
   have hsq0 : Derivable eraDefs ⟨esq (.zero : ETm n), .zero⟩ := numeral_sq (n := n) 0
-  esub_congr (esq_congr (derivable_add_zero t))
+  etsub_congr (esq_congr (derivable_add_zero t))
       ((eadd_congr (.refl (esq t)) hsq0).trans (derivable_add_zero (esq t)))
     |>.trans (derivable_sub_self (esq t))
 
@@ -1258,12 +1377,12 @@ collapses to `0` (`edmul_zero`, `pred_zero`); the result is `0 mod 0 = 0`. -/
 theorem derivable_div_zero {n : Nat} (u : ETm n) :
     Derivable eraDefs ⟨u /ᵉ .zero, .zero⟩ :=
   have harg : Derivable eraDefs ⟨u ∸ᵉ (u %ᵉ .zero), .zero⟩ :=
-    (esub_congr (.refl u) (derivable_mod_zero u)).trans (derivable_sub_self u)
+    (etsub_congr (.refl u) (derivable_mod_zero u)).trans (derivable_sub_self u)
   have hdividend : Derivable eraDefs
       ⟨edmul (.succ u) (u ∸ᵉ (u %ᵉ .zero)), .zero⟩ :=
     (edmul_congr (.refl (.succ u)) harg).trans (derivable_edmul_zero (.succ u))
   have hdivisor : Derivable eraDefs ⟨edmul (.succ u) .zero ∸ᵉ one, .zero⟩ :=
-    (esub_congr (derivable_edmul_zero (.succ u)) (.refl one)).trans (derivable_zero_sub one)
+    (etsub_congr (derivable_edmul_zero (.succ u)) (.refl one)).trans (derivable_zero_sub one)
   (emod_congr hdividend hdivisor).trans (derivable_mod_zero .zero)
 
 /-- `0 / S u = 0`.  The dividend's inner remainder `0 mod S u` is `0`
@@ -1274,7 +1393,7 @@ theorem derivable_zero_div {n : Nat} (u : ETm n) :
     Derivable eraDefs ⟨(.zero : ETm n) /ᵉ .succ u, .zero⟩ :=
   have harg : Derivable eraDefs
       ⟨(.zero : ETm n) ∸ᵉ ((.zero : ETm n) %ᵉ .succ u), .zero⟩ :=
-    (esub_congr (.refl .zero) (derivable_zero_mod (.succ u))).trans
+    (etsub_congr (.refl .zero) (derivable_zero_mod (.succ u))).trans
       (derivable_sub_self .zero)
   have hdividend : Derivable eraDefs
       ⟨edmul (.succ .zero) ((.zero : ETm n) ∸ᵉ ((.zero : ETm n) %ᵉ .succ u)), .zero⟩ :=
@@ -1283,16 +1402,19 @@ theorem derivable_zero_div {n : Nat} (u : ETm n) :
 
 /-! ### The exponent-parametric subtraction template
 
-`esubAt e s t` exposes the exponent of the `esub` unfolding as a separate
-argument, so that `s ∸ t = esubAt (s + t) s t` definitionally.  Two laws decide
-the value purely by term shape, given domination of the dividend by `2^e`. -/
+`esubAt e s t` exposes the exponent of the `subFormula` unfolding as a separate
+argument, so that `subFormula s t = esubAt (s + t) s t` definitionally.  Two laws
+decide the value purely by term shape, given domination of the dividend by `2^e`;
+they are the engine of the redundancy theorem `redundant_sub`. -/
 
-/-- The `esub` unfolding with its exponent `e` exposed as a separate argument. -/
+/-- The `subFormula` unfolding with its exponent `e` exposed as a separate
+argument. -/
 def esubAt {n : Nat} (e s t : ETm n) : ETm n :=
   ((eexp2 e +ᵉ s) %ᵉ (eexp2 e +ᵉ t)) %ᵉ (eexp2 e +ᵉ s)
 
-/-- `esub` is `esubAt` at the canonical exponent `s + t`. -/
-theorem esub_eq_esubAt {n : Nat} (s t : ETm n) : s ∸ᵉ t = esubAt (s +ᵉ t) s t := rfl
+/-- `subFormula` is `esubAt` at the canonical exponent `s + t`. -/
+theorem subFormula_eq_esubAt {n : Nat} (s t : ETm n) :
+    subFormula s t = esubAt (s +ᵉ t) s t := rfl
 
 /-- `esubAt e u v = 0` when `v` exceeds `u` by a successor (`v = u + S d`).  The
 inner divisor is the dividend plus `S d`, closed by `axModLt`; the outer
