@@ -1075,4 +1075,37 @@ theorem numeral_pow {n : Nat} (a b : Nat) :
     (numeral_sub _ a)
   exact (emod_congr hN hM).trans (numeral_mod _ _)
 
+/-! ## Open-term recursion laws for the derived operations
+
+The recursion laws that were defining axioms before the basis reduction, now
+derived as theorems over the seven-equation basis.  Additive algebra
+(Goodstein 1954 (6)–(10)) comes first; the subtraction, multiplication,
+division, and exponentiation laws follow.  See
+`docs/superpowers/specs/2026-06-12-era-open-laws-design.md`. -/
+
+/-- `S u + v = S (u + v)` (`succ_add`); from Goodstein 1954's interchange (7)
+`u + S v = S u + v` and the defining `u + S v = S (u + v)`.  By `uniq` on the
+recursion variable then instantiation. -/
+theorem derivable_succ_add {n : Nat} (u v : ETm n) :
+    Derivable eraDefs ⟨.succ u +ᵉ v, .succ (u +ᵉ v)⟩ := by
+  have base : Derivable eraDefs
+      ⟨(.succ (.var 1) : ETm 2) +ᵉ .var 0, .succ ((.var 1) +ᵉ (.var 0))⟩ := by
+    refine Derivable.uniq (H := .succ (.var 1)) ?base ?stepF ?stepG
+    case base =>
+      have h := (derivable_add_zero (.succ (.var 0) : ETm 1)).trans
+        (Derivable.succ_congr (derivable_add_zero (.var 0 : ETm 1))).symm
+      simp only [Tm.subst, eadd_subst] at h ⊢
+      exact h
+    case stepF =>
+      have h := derivable_add_succ (.succ (.var 1) : ETm 2) (.var 0)
+      simp only [Tm.subst, eadd_subst] at h ⊢
+      exact h
+    case stepG =>
+      have h := Derivable.succ_congr (derivable_add_succ (.var 1 : ETm 2) (.var 0))
+      simp only [Tm.subst, eadd_subst] at h ⊢
+      exact h
+  have h := base.inst (fcons v (fcons u Fin.elim0))
+  simp only [Tm.subst, eadd_subst, fcons] at h
+  exact h
+
 end Era
