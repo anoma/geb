@@ -1158,4 +1158,32 @@ theorem derivable_add_assoc {n : Nat} (u v w : ETm n) :
   simp only [Tm.subst, eadd_subst, fcons] at h
   exact h
 
+/-- `0 mod v = 0`.  By `uniq` on `v` with the constant-zero step functional. -/
+theorem derivable_zero_mod {n : Nat} (v : ETm n) :
+    Derivable eraDefs ⟨(.zero : ETm n) %ᵉ v, .zero⟩ := by
+  have base : Derivable eraDefs ⟨(.zero : ETm 1) %ᵉ .var 0, .zero⟩ := by
+    refine Derivable.uniq (H := .zero) ?base ?stepF ?stepG
+    case base =>
+      have h := derivable_mod_zero (.zero : ETm 0)
+      simp only [Tm.subst, emod_subst] at h ⊢
+      exact h
+    case stepF =>
+      have h := (emod_congr (.refl (.zero : ETm 1))
+          (derivable_zero_add (.succ (.var 0))).symm).trans
+        (derivable_mod_lt (.zero : ETm 1) (.var 0))
+      simp only [Tm.subst, emod_subst] at h ⊢
+      exact h
+    case stepG =>
+      exact Derivable.refl _
+  have h := base.inst (fun _ => v)
+  simp only [Tm.subst, emod_subst] at h
+  exact h
+
+/-- `v mod v = 0`.  From the divisor-subtraction axiom at dividend `0`, with no
+induction. -/
+theorem derivable_mod_self {n : Nat} (v : ETm n) :
+    Derivable eraDefs ⟨v %ᵉ v, .zero⟩ :=
+  (emod_congr (derivable_zero_add v) (.refl v)).symm.trans
+    ((derivable_mod_add .zero v).trans (derivable_zero_mod v))
+
 end Era
