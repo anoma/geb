@@ -196,7 +196,9 @@ Verified proof sketches:
 - `derivable_zero_div`: rewrite the dividend's inner argument by
   `zero_mod` (`0 %ᵉ .succ u = 0`) under `esub_congr`, so the
   subtraction becomes the closed instance `0 ∸ᵉ 0` (`sub_self` at
-  `.zero`); then numerals.
+  `.zero`) and the dividend reduces by numerals to `.zero`; the
+  modulus stays open in `u`, and the outer remainder closes by
+  `zero_mod` under `emod_congr`.
 
 ### Phase 4a — the subtraction cluster
 
@@ -206,11 +208,14 @@ Order: domination instances (§7.3) → `sub_zero`, `pred_succ`
 
 ### Phase 4b — the multiplicative cluster
 
-Reachable only after Phase 4a. Order: squared domination
-instance and the `esq` successor law → `mul_succ` →
-left-successor law (11) → mod-of-multiple (§7.5) →
-multiplicative algebra (14), (15), (15.1) as needed →
-`pow_zero` (§7.6, verified reduction) → `pow_mod_rep`
+Reachable only after Phase 4a. Cluster entry is open (§7.5):
+the open-term squaring law (`esq t = t *ᵉ t`, mirroring
+`sq_identity`) consumes mod-of-multiple, whose step consumes
+`mul_succ`, whose derivation through `edmul` consumes the
+squaring law. One member must be entered from the template and
+domination layers alone. Order after entry: mod-of-multiple →
+`mul_succ` → multiplicative algebra (11), (14), (15), (15.1) as
+needed → `pow_zero` (§7.6, verified reduction) → `pow_mod_rep`
 transposition (§7.6) → `pow_succ` → `div_succ`.
 
 ## 7 Shape conversions and domination
@@ -252,14 +257,13 @@ decided purely by term shape, given domination hypotheses
   `eexp2 e +ᵉ v = w +ᵉ .succ (…)` from the domination hypothesis
   by additive algebra. Outer remainder: `axModLt` after
   exhibiting `eexp2 e +ᵉ u = w +ᵉ .succ (…)` likewise.
-- `esubAt_of_lt`: if `Derivable ⟨v, u +ᵉ .succ d⟩` and
-  `Derivable ⟨eexp2 e, v +ᵉ .succ p⟩` (the second hypothesis
-  to be dropped if unused), then `Derivable ⟨esubAt e u v, 0⟩`.
-  Inner remainder: the divisor is the dividend `+ᵉ .succ d` by
-  additive algebra, so `axModLt` applies and yields
-  `eexp2 e +ᵉ u`; the outer remainder is `mod_self`.
+- `esubAt_of_lt`: if `Derivable ⟨v, u +ᵉ .succ d⟩`, then
+  `Derivable ⟨esubAt e u v, 0⟩`. Inner remainder: the divisor is
+  the dividend `+ᵉ .succ d` by additive algebra, so `axModLt`
+  applies and yields `eexp2 e +ᵉ u`; the outer remainder is
+  `mod_self`. No domination hypothesis is consumed.
 
-These two laws absorb every `∸`-shaped modulus in the chain: a
+These two laws cover every `∸`-shaped modulus in the chain: a
 modulus `2^c ∸ x` with `2^c = d +ᵉ x +ᵉ .succ p` derivable
 converts to `d +ᵉ .succ p` by `esubAt_of_add`, after which the
 site is shape-decided. In particular Goodstein's (5)
@@ -271,11 +275,15 @@ site is shape-decided. In particular Goodstein's (5)
 
 The remaining inputs are domination instances
 `Derivable ⟨eexp2 e, a +ᵉ .succ t⟩` for specific exponents `e`
-and minorants `a`, namely:
+and minorants `a`. The schema members are stated at variable
+scope and consumed by instantiation (`Derivable.inst`), with
+compound terms — including `eexp2`-headed terms, as in §7.2's
+conversion and §7.6's `pow_zero` — substituted for the
+variables. The members:
 
-- the one-variable family: `e` a sum of variables and constants,
-  `a` a sub-sum of `e` (true in the standard model since
-  `x + 1 ≤ 2^x`);
+- the summand family: `e` a sum of distinct variables and
+  constants, `a` a sub-sum of `e` (true in the standard model
+  since `x + 1 ≤ 2^x`);
 - the squared instance for `esq`:
   `eexp2 e +ᵉ e = (e *ᵉ e) +ᵉ .succ t` (mirror of
   `mul_self_lt_two_pow_add`);
@@ -286,11 +294,11 @@ and minorants `a`, namely:
 Status: open. No derivation of any non-closed instance is
 verified. The witness `t` "is" `2^e ∸ .succ a`, but the `∸` laws
 are exactly what is being derived — the circularity recorded in
-§8. A candidate avenue: mod-expressible witnesses, e.g.
+§8. A candidate approach: mod-expressible witnesses, e.g.
 `t := eexp2 (.succ a') %ᵉ (eexp2 a' +ᵉ .succ a')` for
 `2^{Sa'} mod (2^{a'} + Sa') = 2^{a'} − Sa'`; the witness term
 exists, but deriving its defining equation is itself a mod fact
-of the same kind, so the avenue is unverified. This family is
+of the same kind, so the approach is unverified. This family is
 the workstream's central unresolved obligation; it is gated by
 the staged acceptance of §9.
 
@@ -312,13 +320,13 @@ With the template and domination instances available:
 - Cluster entry (open): Goodstein derives (1) from his axiom
   `a ∸ Sb = (a∸b) ∸ 1` and (2) from (1) plus `Sa ∸ 1 = a`
   ([Goo54] p. 249), and conversely `sub_succ` follows from (1)
-  and (2) by `uniq` with a parameter-using step functional
-  (`H := u ∸ᵉ v` weakened past the previous-value slot; the two
-  step premises close by (2)-then-(1) and by (1) plus
-  `pred_succ`). The three are thus mutually derivable, but no
-  member of {(1), (2), `sub_succ`} has a verified derivation
-  from the template alone: each candidate `uniq` step is an
-  instance of another member. Candidate attacks, in order:
+  and (2) by `uniq` on `u` with a parameter-using step
+  functional ignoring the previous-value slot (the F-premise
+  closes by (2), the G-premise by (1) plus `pred_succ`). The
+  three are thus mutually derivable, but no member of
+  {(1), (2), `sub_succ`} has a verified derivation from the
+  template alone: each candidate `uniq` step is an instance of
+  another member. Candidate routes, in order:
   (i) derive (2) directly at the `esubAt` level by E₃ on one
   variable with the other as parameter, using the template laws
   to evaluate both sides at `.zero` and at successors;
@@ -327,20 +335,31 @@ With the template and domination instances available:
   exponents), which would let inductions fix one exponent;
   (iii) transpose Goodstein's two-variable induction I₂
   ([Goo54] p. 253) — costly, as its derivation consumes (13),
-  (16), and (17). If all attacks fail, the staged exit of §9
+  (16), and (17). If all routes fail, the staged exit of §9
   applies.
 
 ### 7.5 Mod-of-multiple
 
-Object-level analogue of `Nat.mul_add_mod`:
-`(u *ᵉ m +ᵉ r) %ᵉ m = r %ᵉ m`, by `uniq` on the multiplier
-(stated at scope `n + 1` with the multiplier as variable 0 and
+Object-level analogue of `Nat.mul_add_mod`, stated with the
+multiplier as the second `*ᵉ`-argument (matching the
+multiplier-second form in which the three consuming identity
+proofs use it, after the `Nat.mul_comm` rewrite in
+`pow_identity`): `(m *ᵉ k +ᵉ r) %ᵉ m = r %ᵉ m`, by `uniq` on
+`k` (stated at scope `n + 1` with `k` as variable 0 and
 instantiated by `Derivable.inst`). Base: `mul_zero` plus
-`zero_add`. Step: the left-successor law (11)
-`Su *ᵉ m = u *ᵉ m +ᵉ m` plus `axModAdd` and additive algebra.
-(11) in turn is derived by `uniq` from `mul_zero` and `mul_succ`
-following [Goo54] p. 250, which is why Phase 4b orders
-`mul_succ` first.
+`zero_add`. Step: `mul_succ` (`m *ᵉ Sk = m *ᵉ k +ᵉ m`) plus
+`axModAdd` and additive algebra.
+
+The multiplicative cluster entry (Phase 4b) is open: the
+squaring law mirrors `sq_identity`, whose `key` step peels the
+open `∸`-shaped multiplier `2^n ∸ n` by exactly this law, whose
+step consumes `mul_succ`, whose derivation through `edmul`
+consumes the squaring law. Candidate route: derive `mul_succ`
+not through the squaring law but by mirroring `numeral_mul`'s
+composition at open terms with the `edmul` recursion
+`edmul u (Sv) = edmul u v +ᵉ u +ᵉ u` derived first — whose own
+site analysis is part of the obligation. If the entry resists,
+the staged exit of §9 applies.
 
 ### 7.6 Powers
 
@@ -393,9 +412,11 @@ Staged:
   including four of the eleven §4 statements (`pred_zero`,
   `mul_zero`, `div_zero`, `zero_div`).
 - Phase 4: the remaining seven §4 statements, verbatim. The
-  domination family (§7.3) and the cluster entry (§7.4) have no
+  domination family (§7.3), the subtraction cluster entry
+  (§7.4), and the multiplicative cluster entry (§7.5) have no
   verified derivation at spec time; if implementation reaches a
-  genuine impasse on either, the defined exit is to pause and
+  genuine impasse on any of the three, the defined exit is to
+  pause and
   report (stuck-and-ask template of
   `.claude/rules/lean-coding.md`) with the partial results
   committed and the obstruction documented — not to extend the
