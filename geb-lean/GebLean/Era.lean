@@ -1281,4 +1281,62 @@ theorem derivable_zero_div {n : Nat} (u : ETm n) :
     (edmul_congr (.refl (.succ .zero)) harg).trans (derivable_edmul_zero (.succ .zero))
   (emod_congr hdividend (.refl _)).trans (derivable_zero_mod _)
 
+/-! ### The exponent-parametric subtraction template
+
+`esubAt e s t` exposes the exponent of the `esub` unfolding as a separate
+argument, so that `s ∸ t = esubAt (s + t) s t` definitionally.  Two laws decide
+the value purely by term shape, given domination of the dividend by `2^e`. -/
+
+/-- The `esub` unfolding with its exponent `e` exposed as a separate argument. -/
+def esubAt {n : Nat} (e s t : ETm n) : ETm n :=
+  ((eexp2 e +ᵉ s) %ᵉ (eexp2 e +ᵉ t)) %ᵉ (eexp2 e +ᵉ s)
+
+/-- `esub` is `esubAt` at the canonical exponent `s + t`. -/
+theorem esub_eq_esubAt {n : Nat} (s t : ETm n) : s ∸ᵉ t = esubAt (s +ᵉ t) s t := rfl
+
+/-- `esubAt e u v = 0` when `v` exceeds `u` by a successor (`v = u + S d`).  The
+inner divisor is the dividend plus `S d`, closed by `axModLt`; the outer
+remainder is `mod_self`.  No domination hypothesis is consumed. -/
+theorem derivable_esubAt_of_lt {n : Nat} {e u v d : ETm n}
+    (hlt : Derivable eraDefs ⟨v, u +ᵉ .succ d⟩) :
+    Derivable eraDefs ⟨esubAt e u v, .zero⟩ :=
+  have hdiv : Derivable eraDefs ⟨eexp2 e +ᵉ v, (eexp2 e +ᵉ u) +ᵉ .succ d⟩ :=
+    (eadd_congr (.refl (eexp2 e)) hlt).trans (derivable_add_assoc (eexp2 e) u (.succ d)).symm
+  have hinner : Derivable eraDefs
+      ⟨(eexp2 e +ᵉ u) %ᵉ (eexp2 e +ᵉ v), eexp2 e +ᵉ u⟩ :=
+    (emod_congr (.refl (eexp2 e +ᵉ u)) hdiv).trans (derivable_mod_lt (eexp2 e +ᵉ u) d)
+  (emod_congr hinner (.refl (eexp2 e +ᵉ u))).trans (derivable_mod_self (eexp2 e +ᵉ u))
+
+/-- `esubAt e u v = w` when `u = w + v` and `2^e` exceeds `u` by a successor
+(`2^e = u + S p`).  The inner remainder rewrites `2^e + u` as `w + (2^e + v)` and
+peels one `2^e + v` by `axModAdd`, leaving `w` (below `2^e + v`); the outer
+remainder leaves `w` (below `2^e + u`).  Both domination sites are discharged by
+`hED`, which exhibits `2^e + Y = w + S (v + (p + Y))`. -/
+theorem derivable_esubAt_of_add {n : Nat} {e u v w p : ETm n}
+    (hsum : Derivable eraDefs ⟨u, w +ᵉ v⟩)
+    (hdom : Derivable eraDefs ⟨eexp2 e, u +ᵉ .succ p⟩) :
+    Derivable eraDefs ⟨esubAt e u v, w⟩ := by
+  have hED : ∀ Y : ETm n, Derivable eraDefs
+      ⟨eexp2 e +ᵉ Y, w +ᵉ .succ (v +ᵉ (p +ᵉ Y))⟩ := fun Y =>
+    (eadd_congr hdom (.refl Y)).trans
+      ((derivable_add_assoc u (.succ p) Y).trans
+        ((eadd_congr (.refl u) (derivable_succ_add p Y)).trans
+          ((derivable_add_succ u (p +ᵉ Y)).trans
+            ((Derivable.succ_congr (eadd_congr hsum (.refl (p +ᵉ Y)))).trans
+              ((Derivable.succ_congr (derivable_add_assoc w v (p +ᵉ Y))).trans
+                (derivable_add_succ w (v +ᵉ (p +ᵉ Y))).symm)))))
+  have hwv : Derivable eraDefs ⟨w %ᵉ (eexp2 e +ᵉ v), w⟩ :=
+    (emod_congr (.refl w) (hED v)).trans (derivable_mod_lt w (v +ᵉ (p +ᵉ v)))
+  have hwu : Derivable eraDefs ⟨w %ᵉ (eexp2 e +ᵉ u), w⟩ :=
+    (emod_congr (.refl w) (hED u)).trans (derivable_mod_lt w (v +ᵉ (p +ᵉ u)))
+  have hrearrange : Derivable eraDefs ⟨eexp2 e +ᵉ u, w +ᵉ (eexp2 e +ᵉ v)⟩ :=
+    (eadd_congr (.refl (eexp2 e)) hsum).trans
+      ((derivable_add_assoc (eexp2 e) w v).symm.trans
+        ((eadd_congr (derivable_add_comm (eexp2 e) w) (.refl v)).trans
+          (derivable_add_assoc w (eexp2 e) v)))
+  have hinner : Derivable eraDefs ⟨(eexp2 e +ᵉ u) %ᵉ (eexp2 e +ᵉ v), w⟩ :=
+    ((emod_congr hrearrange (.refl (eexp2 e +ᵉ v))).trans
+      (derivable_mod_add w (eexp2 e +ᵉ v))).trans hwv
+  exact (emod_congr hinner (.refl (eexp2 e +ᵉ u))).trans hwu
+
 end Era
