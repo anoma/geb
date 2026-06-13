@@ -1186,4 +1186,99 @@ theorem derivable_mod_self {n : Nat} (v : ETm n) :
   (emod_congr (derivable_zero_add v) (.refl v)).symm.trans
     ((derivable_mod_add .zero v).trans (derivable_zero_mod v))
 
+/-- `t ∸ t = 0`.  Both remainders of the `esub` unfolding collapse: the inner is
+`mod_self`, the outer is `zero_mod`; the divisor and dividend shapes coincide. -/
+theorem derivable_sub_self {n : Nat} (t : ETm n) :
+    Derivable eraDefs ⟨t ∸ᵉ t, .zero⟩ :=
+  (emod_congr (derivable_mod_self (eexp2 (t +ᵉ t) +ᵉ t)) (.refl _)).trans
+    (derivable_zero_mod (eexp2 (t +ᵉ t) +ᵉ t))
+
+/-- `0 ∸ w = 0`.  By `uniq` on `w` with the constant-zero step functional (an
+instance of extensionality, `Derivable.ext_succ`, since the right side is
+constant).  The zero case is `sub_self`; the successor case uses `axModLt` on the
+inner remainder, which matches only a successor-shaped divisor. -/
+theorem derivable_zero_sub {n : Nat} (w : ETm n) :
+    Derivable eraDefs ⟨(.zero : ETm n) ∸ᵉ w, .zero⟩ := by
+  have base : Derivable eraDefs ⟨(.zero : ETm 1) ∸ᵉ .var 0, .zero⟩ := by
+    refine Derivable.uniq (H := .zero) ?base ?stepF ?stepG
+    case base =>
+      have h := derivable_sub_self (.zero : ETm 0)
+      simp only [esub, Tm.subst, eadd_subst, emod_subst, eexp2_subst] at h ⊢
+      exact h
+    case stepF =>
+      -- the exponent `eexp2 (0 + S x)` is written inline so it unifies with the goal
+      have hinner : Derivable eraDefs
+          ⟨(eexp2 ((.zero : ETm 1) +ᵉ .succ (.var 0)) +ᵉ .zero) %ᵉ
+              (eexp2 ((.zero : ETm 1) +ᵉ .succ (.var 0)) +ᵉ .succ (.var 0)),
+            eexp2 ((.zero : ETm 1) +ᵉ .succ (.var 0)) +ᵉ .zero⟩ :=
+        (emod_congr (.refl _)
+            (eadd_congr (derivable_add_zero
+                (eexp2 ((.zero : ETm 1) +ᵉ .succ (.var 0)))).symm
+              (.refl (.succ (.var 0))))).trans
+          (derivable_mod_lt (eexp2 ((.zero : ETm 1) +ᵉ .succ (.var 0)) +ᵉ .zero) (.var 0))
+      have h : Derivable eraDefs
+          ⟨((eexp2 ((.zero : ETm 1) +ᵉ .succ (.var 0)) +ᵉ .zero) %ᵉ
+                (eexp2 ((.zero : ETm 1) +ᵉ .succ (.var 0)) +ᵉ .succ (.var 0))) %ᵉ
+              (eexp2 ((.zero : ETm 1) +ᵉ .succ (.var 0)) +ᵉ .zero), .zero⟩ :=
+        (emod_congr hinner (.refl _)).trans
+          (derivable_mod_self (eexp2 ((.zero : ETm 1) +ᵉ .succ (.var 0)) +ᵉ .zero))
+      simp only [esub, Tm.subst, eadd_subst, emod_subst, eexp2_subst, bump, fcons] at h ⊢
+      exact h
+    case stepG =>
+      exact Derivable.refl _
+  have h := base.inst (fun _ => w)
+  simp only [esub, Tm.subst, eadd_subst, emod_subst, eexp2_subst] at h
+  exact h
+
+/-- `0 ∸ 1 = 0` (predecessor of zero); the instance of `zero_sub` at `1`. -/
+theorem derivable_pred_zero {n : Nat} :
+    Derivable eraDefs ⟨(.zero : ETm n) ∸ᵉ one, .zero⟩ :=
+  derivable_zero_sub one
+
+/-- `edmul t 0 = 0` (the double product `2·t·0`).  The squared first factor
+reduces by `add_zero`; the second `esq 0` is the numeral `0`; the remaining
+`esq t ∸ esq t` is `sub_self`. -/
+theorem derivable_edmul_zero {n : Nat} (t : ETm n) :
+    Derivable eraDefs ⟨edmul t .zero, .zero⟩ :=
+  have hsq0 : Derivable eraDefs ⟨esq (.zero : ETm n), .zero⟩ := numeral_sq (n := n) 0
+  esub_congr (esq_congr (derivable_add_zero t))
+      ((eadd_congr (.refl (esq t)) hsq0).trans (derivable_add_zero (esq t)))
+    |>.trans (derivable_sub_self (esq t))
+
+/-- `u * 0 = 0`.  The double product `edmul u 0` is `0` (`edmul_zero`); the
+remaining `0 / 2` is the numeral `0`. -/
+theorem derivable_mul_zero {n : Nat} (u : ETm n) :
+    Derivable eraDefs ⟨u *ᵉ .zero, .zero⟩ :=
+  (ediv_congr (derivable_edmul_zero u) (.refl (.numeral 2))).trans
+    (numeral_div (n := n) 0 2)
+
+/-- `u / 0 = 0`.  The dividend's `edmul (S u) (u ∸ (u mod 0))` collapses to `0`
+(`mod_zero`, `sub_self`, `edmul_zero`); the divisor's `edmul (S u) 0 ∸ 1`
+collapses to `0` (`edmul_zero`, `pred_zero`); the result is `0 mod 0 = 0`. -/
+theorem derivable_div_zero {n : Nat} (u : ETm n) :
+    Derivable eraDefs ⟨u /ᵉ .zero, .zero⟩ :=
+  have harg : Derivable eraDefs ⟨u ∸ᵉ (u %ᵉ .zero), .zero⟩ :=
+    (esub_congr (.refl u) (derivable_mod_zero u)).trans (derivable_sub_self u)
+  have hdividend : Derivable eraDefs
+      ⟨edmul (.succ u) (u ∸ᵉ (u %ᵉ .zero)), .zero⟩ :=
+    (edmul_congr (.refl (.succ u)) harg).trans (derivable_edmul_zero (.succ u))
+  have hdivisor : Derivable eraDefs ⟨edmul (.succ u) .zero ∸ᵉ one, .zero⟩ :=
+    (esub_congr (derivable_edmul_zero (.succ u)) (.refl one)).trans (derivable_zero_sub one)
+  (emod_congr hdividend hdivisor).trans (derivable_mod_zero .zero)
+
+/-- `0 / S u = 0`.  The dividend's inner remainder `0 mod S u` is `0`
+(`zero_mod`), so its subtraction is `0 ∸ 0 = 0` (`sub_self`) and the double
+product is `0` (`edmul_zero`); the modulus stays open in `u` and the result is
+`0 mod (modulus) = 0` (`zero_mod`). -/
+theorem derivable_zero_div {n : Nat} (u : ETm n) :
+    Derivable eraDefs ⟨(.zero : ETm n) /ᵉ .succ u, .zero⟩ :=
+  have harg : Derivable eraDefs
+      ⟨(.zero : ETm n) ∸ᵉ ((.zero : ETm n) %ᵉ .succ u), .zero⟩ :=
+    (esub_congr (.refl .zero) (derivable_zero_mod (.succ u))).trans
+      (derivable_sub_self .zero)
+  have hdividend : Derivable eraDefs
+      ⟨edmul (.succ .zero) ((.zero : ETm n) ∸ᵉ ((.zero : ETm n) %ᵉ .succ u)), .zero⟩ :=
+    (edmul_congr (.refl (.succ .zero)) harg).trans (derivable_edmul_zero (.succ .zero))
+  (emod_congr hdividend (.refl _)).trans (derivable_zero_mod _)
+
 end Era
