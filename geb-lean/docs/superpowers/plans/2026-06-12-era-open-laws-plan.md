@@ -9,6 +9,51 @@
 > (determined by the spec) and the proof strategy, and the
 > worker fills the tactic script.
 
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+
+- [Reference documents](#reference-documents)
+- [Conventions for every task](#conventions-for-every-task)
+- [File structure](#file-structure)
+- [Phase 0 — infrastructure](#phase-0--infrastructure)
+  - [Task 0.1: name the additive flip `0 + x = x`](#task-01-name-the-additive-flip-0--x--x)
+  - [Task 0.2: zero/successor extensionality rule (E₃)](#task-02-zerosuccessor-extensionality-rule-e%E2%82%83)
+- [Phase 1 — additive algebra by `uniq`](#phase-1--additive-algebra-by-uniq)
+  - [Task 1.1: `succ_add` (Goodstein (7))](#task-11-succ_add-goodstein-7)
+  - [Task 1.2: `add_comm` (Goodstein (8))](#task-12-add_comm-goodstein-8)
+  - [Task 1.3: `add_assoc` (Goodstein (10))](#task-13-add_assoc-goodstein-10)
+- [Phase 2 — mod corollaries](#phase-2--mod-corollaries)
+  - [Task 2.1: `zero_mod`](#task-21-zero_mod)
+  - [Task 2.2: `mod_self`](#task-22-mod_self)
+- [Phase 3 — laws not requiring domination](#phase-3--laws-not-requiring-domination)
+  - [Task 3.1: `zero_sub` (E₃ split)](#task-31-zero_sub-e%E2%82%83-split)
+  - [Task 3.2: `sub_self`](#task-32-sub_self)
+  - [Task 3.3: `pred_zero` (deliverable 3 of 11)](#task-33-pred_zero-deliverable-3-of-11)
+  - [Task 3.4: `edmul_zero`](#task-34-edmul_zero)
+  - [Task 3.5: `mul_zero` (deliverable 5 of 11)](#task-35-mul_zero-deliverable-5-of-11)
+  - [Task 3.6: `div_zero` (deliverable 9 of 11)](#task-36-div_zero-deliverable-9-of-11)
+  - [Task 3.7: `zero_div` (deliverable 10 of 11)](#task-37-zero_div-deliverable-10-of-11)
+  - [Task 3.8: Phase 3 checkpoint](#task-38-phase-3-checkpoint)
+- [Phase 4a — the subtraction cluster](#phase-4a--the-subtraction-cluster)
+  - [Task 4a.1: the `esubAt` template definition](#task-4a1-the-esubat-template-definition)
+  - [Task 4a.2: the two shape-decided template laws](#task-4a2-the-two-shape-decided-template-laws)
+  - [Task 4a.3: the exponential-domination family (OPEN obligation)](#task-4a3-the-exponential-domination-family-open-obligation)
+  - [Task 4a.4: `sub_zero` (deliverable 1 of 11; verified reduction)](#task-4a4-sub_zero-deliverable-1-of-11-verified-reduction)
+  - [Task 4a.5: `pred_succ` (deliverable 4 of 11; verified reduction)](#task-4a5-pred_succ-deliverable-4-of-11-verified-reduction)
+  - [Task 4a.6: subtraction cluster entry — (1)/(2)/`sub_succ` (OPEN)](#task-4a6-subtraction-cluster-entry--12sub_succ-open)
+- [Phase 4b — the multiplicative cluster](#phase-4b--the-multiplicative-cluster)
+  - [Task 4b.1: multiplicative cluster entry (OPEN)](#task-4b1-multiplicative-cluster-entry-open)
+  - [Task 4b.2: multiplicative algebra as needed](#task-4b2-multiplicative-algebra-as-needed)
+  - [Task 4b.3: `pow_zero` (deliverable 7 of 11; verified reduction)](#task-4b3-pow_zero-deliverable-7-of-11-verified-reduction)
+  - [Task 4b.4: `pow_succ` and `div_succ` (deliverables 8, 11 of 11; OPEN depth)](#task-4b4-pow_succ-and-div_succ-deliverables-8-11-of-11-open-depth)
+- [Final verification](#final-verification)
+  - [Task F.1: full-suite green and axiom audit](#task-f1-full-suite-green-and-axiom-audit)
+  - [Task F.2: optional cleanup (spec §9)](#task-f2-optional-cleanup-spec-9)
+  - [Task F.3: documentation and handoff](#task-f3-documentation-and-handoff)
+- [Self-review notes](#self-review-notes)
+
+<!-- END doctoc -->
+
 **Goal:** Derive, as theorems over the unchanged seven-equation
 axiom set `eraDefs`, the eleven open-term recursion laws for the
 derived operations of the minimal-basis ERA in
@@ -190,8 +235,9 @@ proven.
 - [ ] **Step 1: state.**
 
 ```lean
-/-- `S u + v = S (u + v)` (Goodstein 1954 (7), combined with the
-defining `u + S v = S (u + v)`). -/
+/-- `S u + v = S (u + v)` (`succ_add`); from Goodstein 1954's
+interchange (7) `u + S v = S u + v` and the defining
+`u + S v = S (u + v)`. -/
 theorem derivable_succ_add {n : Nat} (u v : ETm n) :
     Derivable eraDefs ⟨.succ u +ᵉ v, .succ (u +ᵉ v)⟩ := by
   sorry
@@ -462,12 +508,12 @@ theorem derivable_mul_zero {n : Nat} (u : ETm n) :
 - [ ] **Step 2: prove** (spec §6 Phase 3): unfold
   `u *ᵉ 0 = edmul u 0 /ᵉ numeral 2`. Rewrite `edmul u 0` to `0`
   by `derivable_edmul_zero` under `ediv_congr`, giving
-  `0 /ᵉ numeral 2`; then `0 /ᵉ numeral 2 = 0` by
-  `derivable_zero_div` (Task 3.7) instantiated, or directly by
-  the numeral route `numeral_div 0 2`. To avoid a forward
-  dependence on Task 3.7, close via `numeral_div`/`numeral_mul`:
-  `0 /ᵉ numeral 2` with dividend `0` reduces by `numeral_div 0 2`
-  to `numeral 0 = .zero`. `lean4:prove`.
+  `.zero /ᵉ numeral 2`. Close by `numeral_div 0 2`: its statement
+  `(numeral 0) /ᵉ (numeral 2) = numeral (0 / 2)` is
+  `.zero /ᵉ numeral 2 = .zero` after `numeral 0 = .zero` (defeq)
+  and `0 / 2 = 0`. This route uses only the existing numeral
+  lemma, with no forward dependence on `zero_div` (Task 3.7).
+  `lean4:prove`.
 
 - [ ] **Step 3: build + axiom check.**
 
@@ -528,10 +574,11 @@ theorem derivable_zero_div {n : Nat} (u : ETm n) :
   `edmul (S 0) (0 ∸ᵉ (0 %ᵉ S u)) %ᵉ (edmul (S 0) (S u) ∸ᵉ one)`.
   Rewrite `0 %ᵉ S u` to `0` by `derivable_zero_mod` under
   `esub_congr`, so the dividend's subtraction is `0 ∸ᵉ 0`, closed
-  by `derivable_sub_self` (the `w = 0` case); the dividend then
-  reduces by numerals (`numeral_dmul`/`numeral_mul`) to `.zero`.
-  The modulus stays open in `u`; close the outer remainder by
-  `derivable_zero_mod` under `emod_congr`. `lean4:prove`.
+  by `derivable_sub_self` (the `w = 0` case); the dividend's
+  `edmul (S 0) 0` then reduces by `derivable_edmul_zero` (or
+  `numeral_dmul`) to `.zero`. The modulus stays open in `u`;
+  close the outer remainder by `derivable_zero_mod` under
+  `emod_congr`. `lean4:prove`.
 
 - [ ] **Step 3: build + axiom check.**
 
@@ -897,8 +944,10 @@ jj describe -m "feat(era): derive multiplicative algebra laws"
 
 **Files:** Modify `GebLean/Era.lean`.
 
-Spec §7.6: verified reduction (no `pow_mod_rep` needed), given
-domination.
+Depends on Task 4a.3 (domination) and Tasks 4b.1–4b.2
+(`mul_zero` is already from Phase 3; `esubAt_of_add` from
+Task 4a.2). Spec §7.6: verified reduction (no `pow_mod_rep`
+needed), given domination.
 
 - [ ] **Step 1: state (verbatim from spec §4).**
 
