@@ -1,4 +1,4 @@
-# Exponential-domination impasse — Era open-laws Phase 4
+# Exponential domination and the recovery kernel — Era open-laws Phase 4
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
@@ -8,7 +8,9 @@
 - [3 Empirical confirmation: base derives, the doubling step blocks](#3-empirical-confirmation-base-derives-the-doubling-step-blocks)
 - [4 Routes considered and excluded](#4-routes-considered-and-excluded)
 - [5 What is delivered](#5-what-is-delivered)
-- [6 Decision required](#6-decision-required)
+- [6 Update (2026-06-13): truncated subtraction restored](#6-update-2026-06-13-truncated-subtraction-restored)
+- [7 The obstruction sharpened: the recovery kernel](#7-the-obstruction-sharpened-the-recovery-kernel)
+- [8 Reframing: the difficulty is minimization cost](#8-reframing-the-difficulty-is-minimization-cost)
 
 <!-- END doctoc -->
 
@@ -155,24 +157,68 @@ laws reduce each of the remaining seven to domination instances,
 so domination is the single obligation standing between the
 current state and the full pre-reduction API.
 
-## 6 Decision required
+## 6 Update (2026-06-13): truncated subtraction restored
 
-The acceptance criteria (spec §9) stage Phase 4 behind the open
-obligation and direct a stuck-and-ask exit on genuine impasse,
-not an axiom extension. The impasse in §2–§4 is structural, not
-incidental. Options for the user:
+The decision taken was a variant of option 2: restore truncated
+subtraction as a fourth basis primitive with its four recursion
+axioms (spec §9a), rather than add a domination axiom. This
+delivered the four subtraction-cluster laws as axiom instances
+and Goodstein's subtraction development (`sub_succ_succ`,
+`sub_self`, `zero_sub`, `add_sub_cancel`) cleanly, plus the
+`∸`-order algebra `sub_add`, `add_sub_cancel_left`,
+`add_sub_add_left`, `self_sub_add`, `one_le_two_pow`.
 
-1. Accept the staged exit: four of eleven laws delivered, the
-   seven domination-dependent laws left as a documented open
-   obligation; close the branch as is.
-2. Authorize a minimal, separately-reviewed axiom for the
-   domination family (for example
-   `2^x = x +ᵉ .succ (eexp2 x ∸ᵉ .succ x)`, or the truncated
-   `S x ∸ᵉ S y = x ∸ᵉ y` ladder), reversing the
-   no-axiom-extension decision; the seven laws then follow by
-   the routes in the spec §7.4–§7.6.
-3. Reformulate the basis or the `esub` encoding so the witness
-   is expressible without `∸` (a research step beyond this
-   workstream's scope).
+## 7 The obstruction sharpened: the recovery kernel
 
-No further code is committed pending this decision.
+With `∸` primitive, the order algebra reduces the domination
+obstruction to a single named equation, the **recovery equation**
+
+```text
+b ∸ c = 0  →  b +ᵉ (c ∸ᵉ b) = c        (b ≤ c ⟹ c = b + (c − b)),
+```
+
+equivalently first-argument monotonicity of `∸`
+(`b ≤ Sb ⟹ b ∸ c ≤ Sb ∸ c`), equivalently Goodstein's recovery
+equation (17) `a + (b∸a) = b + (a∸b)`, equivalently
+commutativity of `max(a,b) = a + (b∸a)`. Four independent attacks
+(min/max closed forms with `min(a,b) = a ∸ (a∸b)`; the
+`min + (a∸b) = a` induction; the power-specific recovery by
+`uniq`; antisymmetry of the order) each reduce back to recovery.
+
+Recovery is not reachable from elementary `∸`-algebra: `S a ∸ᵉ b`
+has no equational reduction (it requires the case split
+`a < b` / `a ≥ b`, inexpressible in the logic-free calculus).
+Goodstein's only route to (17) telescopes
+`f(a,b) = f(a∸1, b∸1) + sg(a+b)` against the bounded sum
+`φ(n,a,b) = Σ_{k<n} sg((a∸k)+(b∸k)) = min(n, max(a,b))` and uses
+φ's manifest symmetry. While `min`, `max`, and `sg` are each
+closed terms over the basis, deriving the **equation** (17) this
+way still requires φ's telescoping recursion, whose own
+derivation hits the same first-argument-successor wall — the
+Marchenkov-`F(a,b)`-level machinery, and the original impasse one
+layer in.
+
+## 8 Reframing: the difficulty is minimization cost
+
+The eleven open laws are exactly the recursion axioms of the
+richer pre-reduction basis: the four `∸` laws are `tsub`'s
+axioms (now restored), and `mul_zero`/`mul_succ`,
+`pow_zero`/`pow_succ`, `div_zero`/`zero_div`/`div_succ` are the
+recursion axioms of primitive `·`, `^`, `⌊/⌋` in the five-element
+basis at `daab65a9`. Deriving them over `{+, mod, 2^x}` produces
+no new mathematical content; it re-derives, over a smaller basis,
+equations that were axioms when those operations were primitive.
+The only genuinely new content the minimal basis would buy is the
+redundancy/expressibility theorems — which are the
+Marchenkov/[PSS26] result, already established at the function
+level in the literature, and which themselves need domination.
+
+"Logic-free" requires a *finite* basis with finitely many
+defining equations, not a *minimal* one. The recommendation is
+therefore to adopt a convenient finite basis — restore `·`,
+`⌊/⌋`, `^` as primitives alongside `{+, mod, 2^x, ∸}` — under
+which all eleven laws are axioms, the impasse dissolves, and the
+file simplifies (the Mazzanti-formula derivation chain becomes
+unnecessary). The minimal-basis result is then cited as a
+function-level expressibility theorem (Marchenkov→PSS), optionally
+accompanied by object-level redundancy theorems where tractable.

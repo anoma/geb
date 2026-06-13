@@ -436,15 +436,26 @@ Staged:
 Optional cleanup if time permits: re-derive
 `numeral_sub/mul/div/pow` as corollaries of the open laws.
 
-Execution outcome (2026-06-12): Phases 0–3 and the §7.2
-`esubAt` template completed, committed, axiom-clean — four of
-the eleven statements delivered. The domination family (§7.3)
-reached the staged-exit impasse; the obstruction is documented
-in `2026-06-12-era-open-laws-domination-impasse.md`, which the
-`uniq` base case and F-step premise derive while the G-step
-premise (the `esub` doubling recursion) closes the circle. The
-seven domination-dependent statements await the user decision
-recorded in that report; the axiom set was not extended.
+Execution outcome (2026-06-12 to 06-13): Phases 0–3 and the §7.2
+`esubAt` template completed, then truncated subtraction restored
+as a basis primitive (§9a). Seven of the eleven statements are
+now theorems (the four subtraction-cluster laws as axiom
+instances; `mul_zero`, `div_zero`, `zero_div` derived), plus
+Goodstein's subtraction development and the `∸`-order algebra.
+The remaining four (`mul_succ`, `pow_zero`, `pow_succ`,
+`div_succ`) rest on exponential domination, which the order
+algebra reduces to the single **recovery equation**
+`b ≤ c ⟹ b + (c ∸ b) = c`; recovery is not reachable from
+elementary `∸`-algebra (it needs Goodstein's bounded-sum
+telescoping / two-variable induction). The full analysis,
+including the realization that the eleven laws are the recursion
+axioms of the richer pre-reduction basis and that the whole
+difficulty is minimization cost, is in
+`2026-06-12-era-open-laws-domination-impasse.md` §6–§8. The
+recorded recommendation is to adopt a convenient finite basis
+(restore `·`, `⌊/⌋`, `^` as primitives), under which all eleven
+laws are axioms and the impasse dissolves; "logic-free" requires
+finite, not minimal.
 
 ## 9a Design revision: restore truncated subtraction as a primitive
 
