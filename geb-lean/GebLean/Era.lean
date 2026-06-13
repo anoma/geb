@@ -1461,4 +1461,90 @@ theorem derivable_esubAt_of_add {n : Nat} {e u v w p : ETm n}
       (derivable_mod_add w (eexp2 e +ᵉ v))).trans hwv
   exact (emod_congr hinner (.refl (eexp2 e +ᵉ u))).trans hwu
 
+/-! ### Exponential domination
+
+With `∸` primitive, the order relation `a ≤ b ⟺ a ∸ b = 0` is available, and the
+domination `a ≤ 2^a` is derivable.  This discharges the `esubAt_of_add`
+hypothesis, unblocking `pow_zero` and the redundancy theorem `redundant_sub`. -/
+
+/-- `a ∸ (b + c) = (a ∸ b) ∸ c` (Goodstein 1954, the iterated-predecessor law).
+By `uniq` on `c` with the predecessor step functional `prev ∸ 1`. -/
+theorem derivable_sub_add {n : Nat} (a b c : ETm n) :
+    Derivable eraDefs ⟨a ∸ᵉ (b +ᵉ c), (a ∸ᵉ b) ∸ᵉ c⟩ := by
+  have base : Derivable eraDefs
+      ⟨(.var 2 : ETm 3) ∸ᵉ ((.var 1) +ᵉ (.var 0)), ((.var 2) ∸ᵉ (.var 1)) ∸ᵉ (.var 0)⟩ := by
+    refine Derivable.uniq (H := .var 1 ∸ᵉ one) ?base ?stepF ?stepG
+    case base =>
+      have h := (etsub_congr (.refl (.var 1 : ETm 2)) (derivable_add_zero (.var 0))).trans
+        (derivable_sub_zero ((.var 1 : ETm 2) ∸ᵉ (.var 0))).symm
+      simp only [Tm.subst, etsub_subst, eadd_subst] at h ⊢
+      exact h
+    case stepF =>
+      have h := (etsub_congr (.refl (.var 2 : ETm 3))
+          (derivable_add_succ (.var 1) (.var 0))).trans
+        (derivable_sub_succ (.var 2) ((.var 1) +ᵉ (.var 0)))
+      simp only [Tm.subst, etsub_subst, eadd_subst] at h ⊢
+      exact h
+    case stepG =>
+      have h := derivable_sub_succ ((.var 2 : ETm 3) ∸ᵉ (.var 1)) (.var 0)
+      simp only [Tm.subst, etsub_subst] at h ⊢
+      exact h
+  have h := base.inst (fcons c (fcons b (fcons a Fin.elim0)))
+  simp only [Tm.subst, etsub_subst, eadd_subst, fcons] at h
+  exact h
+
+/-- `a ∸ b = 0 → a ∸ (b + c) = 0` (monotonicity of the bound in the subtrahend). -/
+theorem derivable_sub_add_zero {n : Nat} {a b : ETm n} (c : ETm n)
+    (h : Derivable eraDefs ⟨a ∸ᵉ b, .zero⟩) :
+    Derivable eraDefs ⟨a ∸ᵉ (b +ᵉ c), .zero⟩ :=
+  (derivable_sub_add a b c).trans ((etsub_congr h (.refl c)).trans (derivable_zero_sub c))
+
+/-- `(a + b) ∸ b = a` (Goodstein 1954 (5)).  By `uniq` on `b`, the step a successor
+descent `(a + S b) ∸ S b = (a + b) ∸ b` carried by the previous value. -/
+theorem derivable_add_sub_cancel {n : Nat} (a b : ETm n) :
+    Derivable eraDefs ⟨(a +ᵉ b) ∸ᵉ b, a⟩ := by
+  have base : Derivable eraDefs ⟨((.var 1 : ETm 2) +ᵉ (.var 0)) ∸ᵉ (.var 0), .var 1⟩ := by
+    refine Derivable.uniq (H := .var 1) ?base ?stepF ?stepG
+    case base =>
+      have h := (etsub_congr (derivable_add_zero (.var 0 : ETm 1)) (.refl .zero)).trans
+        (derivable_sub_zero (.var 0))
+      simp only [Tm.subst, etsub_subst, eadd_subst] at h ⊢
+      exact h
+    case stepF =>
+      have h := (etsub_congr (derivable_add_succ (.var 1 : ETm 2) (.var 0))
+          (.refl (.succ (.var 0)))).trans
+        (derivable_sub_succ_succ ((.var 1) +ᵉ (.var 0)) (.var 0))
+      simp only [Tm.subst, etsub_subst, eadd_subst] at h ⊢
+      exact h
+    case stepG =>
+      exact Derivable.refl _
+  have h := base.inst (fcons b (fcons a Fin.elim0))
+  simp only [Tm.subst, etsub_subst, eadd_subst, fcons] at h
+  exact h
+
+/-- `1 ∸ 2^a = 0` (`2^a ≥ 1`).  By induction on `a`: the step peels one `2^a` by
+`sub_add` and closes by the inductive hypothesis and `zero_sub`. -/
+theorem derivable_one_le_two_pow {n : Nat} (a : ETm n) :
+    Derivable eraDefs ⟨one ∸ᵉ eexp2 a, .zero⟩ := by
+  have base : Derivable eraDefs ⟨one ∸ᵉ eexp2 (.var 0 : ETm 1), .zero⟩ := by
+    refine Derivable.uniq (H := (.var 1) ∸ᵉ eexp2 (.var 0)) ?base ?stepF ?stepG
+    case base =>
+      have h := (etsub_congr (.refl (one : ETm 0)) derivable_exp2_zero).trans
+        (derivable_sub_self one)
+      simp only [Tm.subst, etsub_subst, eexp2_subst] at h ⊢
+      exact h
+    case stepF =>
+      -- 1 ∸ 2^(S x) = 1 ∸ (2^x + 2^x) = (1 ∸ 2^x) ∸ 2^x
+      have h := (etsub_congr (.refl (one : ETm 1)) (derivable_exp2_succ (.var 0))).trans
+        (derivable_sub_add one (eexp2 (.var 0)) (eexp2 (.var 0)))
+      simp only [Tm.subst, etsub_subst, eexp2_subst] at h ⊢
+      exact h
+    case stepG =>
+      have h := (derivable_zero_sub (eexp2 (.var 0 : ETm 1))).symm
+      simp only [Tm.subst, etsub_subst, eexp2_subst] at h ⊢
+      exact h
+  have h := base.inst (fun _ => a)
+  simp only [Tm.subst, etsub_subst, eexp2_subst] at h
+  exact h
+
 end Era
