@@ -432,6 +432,16 @@ Staged:
 Optional cleanup if time permits: re-derive
 `numeral_sub/mul/div/pow` as corollaries of the open laws.
 
+Execution outcome (2026-06-12): Phases 0–3 and the §7.2
+`esubAt` template completed, committed, axiom-clean — four of
+the eleven statements delivered. The domination family (§7.3)
+reached the staged-exit impasse; the obstruction is documented
+in `2026-06-12-era-open-laws-domination-impasse.md`, which the
+`uniq` base case and F-step premise derive while the G-step
+premise (the `esub` doubling recursion) closes the circle. The
+seven domination-dependent statements await the user decision
+recorded in that report; the axiom set was not extended.
+
 ## 10 Scope guardrails
 
 - No new axioms, no change to `eraDefs`, no change to the
