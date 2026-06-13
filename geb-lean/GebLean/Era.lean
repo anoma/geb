@@ -641,6 +641,70 @@ theorem eraSound {n : Nat} {e : EEqn n} (h : Derivable eraDefs e)
     (ρ : Fin n → Nat) : e.lhs.eval eraInterp ρ = e.rhs.eval eraInterp ρ :=
   Derivable.sound eraInterp eraDefs_sound h ρ
 
+/-! ### Categoricity of the structural operations
+
+Each defining operation is pinned, at the `Nat` level, by its recursion equations:
+any `Nat`-valued function satisfying those equations equals the intended operation.
+These are pure `Nat` inductions, independent of the ERA `Derivable` calculus; the
+hypotheses mirror the arms of `eraInterp`. -/
+
+/-- Categoricity of addition: a function recursing on the right argument by
+`g x 0 = x` and `g x (y + 1) = g x y + 1` equals `(· + ·)`. -/
+theorem add_unique (g : Nat → Nat → Nat)
+    (h0 : ∀ x, g x 0 = x) (hS : ∀ x y, g x (y + 1) = g x y + 1) :
+    ∀ x y, g x y = x + y := by
+  intro x y
+  induction y with
+  | zero => simpa using h0 x
+  | succ y ih => rw [hS x y, ih]; omega
+
+/-- Categoricity of truncated subtraction: a function with the predecessor-style
+recursion `g x (y + 1) = g (g x y) 1` together with `g 0 1 = 0` and
+`g (x + 1) 1 = x` (so `g z 1 = z - 1`) and `g x 0 = x` equals `(· - ·)`. -/
+theorem sub_unique (g : Nat → Nat → Nat)
+    (h0 : ∀ x, g x 0 = x) (hS : ∀ x y, g x (y + 1) = g (g x y) 1)
+    (hp0 : g 0 1 = 0) (hpS : ∀ x, g (x + 1) 1 = x) :
+    ∀ x y, g x y = x - y := by
+  have pred : ∀ z, g z 1 = z - 1 := by
+    intro z
+    cases z with
+    | zero => simpa using hp0
+    | succ z => simpa using hpS z
+  intro x y
+  induction y with
+  | zero => simpa using h0 x
+  | succ y ih => rw [hS x y, pred (g x y), ih]; omega
+
+/-- Categoricity of multiplication: a function recursing by `g x 0 = 0` and
+`g x (y + 1) = g x y + x` equals `(· * ·)`. -/
+theorem mul_unique (g : Nat → Nat → Nat)
+    (h0 : ∀ x, g x 0 = 0) (hS : ∀ x y, g x (y + 1) = g x y + x) :
+    ∀ x y, g x y = x * y := by
+  intro x y
+  induction y with
+  | zero => simpa using h0 x
+  | succ y ih => rw [hS x y, ih, Nat.mul_succ]
+
+/-- Categoricity of exponentiation: a function recursing by `g x 0 = 1` and
+`g x (y + 1) = g x y * x` equals `(· ^ ·)`. -/
+theorem pow_unique (g : Nat → Nat → Nat)
+    (h0 : ∀ x, g x 0 = 1) (hS : ∀ x y, g x (y + 1) = g x y * x) :
+    ∀ x y, g x y = x ^ y := by
+  intro x y
+  induction y with
+  | zero => simpa using h0 x
+  | succ y ih => rw [hS x y, ih, Nat.pow_succ]
+
+/-- Categoricity of base-two exponentiation: a function recursing by `g 0 = 1` and
+`g (x + 1) = g x + g x` equals `(2 ^ ·)`. -/
+theorem pow2_unique (g : Nat → Nat)
+    (h0 : g 0 = 1) (hS : ∀ x, g (x + 1) = g x + g x) :
+    ∀ x, g x = 2 ^ x := by
+  intro x
+  induction x with
+  | zero => simpa using h0
+  | succ x ih => rw [hS x, ih, Nat.pow_succ]; omega
+
 /-! ## The additive flip `0 + u = u` via `uniq`.
 The defining equation gives only `u + 0 = u`; the flipped identity needs
 induction.  Take F := 0 + x, G := x, step functional H := S(previous), then
