@@ -1522,6 +1522,23 @@ theorem derivable_add_sub_cancel {n : Nat} (a b : ETm n) :
   simp only [Tm.subst, etsub_subst, eadd_subst, fcons] at h
   exact h
 
+/-- `(a + b) ∸ a = b`.  From `add_sub_cancel` and commutativity. -/
+theorem derivable_add_sub_cancel_left {n : Nat} (a b : ETm n) :
+    Derivable eraDefs ⟨(a +ᵉ b) ∸ᵉ a, b⟩ :=
+  (etsub_congr (derivable_add_comm a b) (.refl a)).trans (derivable_add_sub_cancel b a)
+
+/-- `(c + a) ∸ (c + b) = a ∸ b` (cancel a common addend). -/
+theorem derivable_add_sub_add_left {n : Nat} (a b c : ETm n) :
+    Derivable eraDefs ⟨(c +ᵉ a) ∸ᵉ (c +ᵉ b), a ∸ᵉ b⟩ :=
+  (derivable_sub_add (c +ᵉ a) c b).trans
+    (etsub_congr (derivable_add_sub_cancel_left c a) (.refl b))
+
+/-- `a ∸ (a + b) = 0` (`a ≤ a + b`). -/
+theorem derivable_self_sub_add {n : Nat} (a b : ETm n) :
+    Derivable eraDefs ⟨a ∸ᵉ (a +ᵉ b), .zero⟩ :=
+  (derivable_sub_add a a b).trans
+    ((etsub_congr (derivable_sub_self a) (.refl b)).trans (derivable_zero_sub b))
+
 /-- `1 ∸ 2^a = 0` (`2^a ≥ 1`).  By induction on `a`: the step peels one `2^a` by
 `sub_add` and closes by the inductive hypothesis and `zero_sub`. -/
 theorem derivable_one_le_two_pow {n : Nat} (a : ETm n) :
