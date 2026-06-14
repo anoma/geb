@@ -6,11 +6,17 @@ import GebLean.Utilities.ERArith
 # Era basis completeness bridge
 
 Relates the denotations of `Era` terms (`Tm.eval eraInterp`) to the
-Kalmár elementary functions as formalised by `ERMor1`
+elementary recursive functions as formalised by `ERMor1`
 (`GebLean/LawvereER.lean`).
+
+## Main definitions
+
+* `eraOpToER` — the `ERMor1` witness for each basis operation.
+* `erOfETm` — translation of an `Era` term to an `ERMor1` term.
 
 ## Main statements
 
+* `erOfETm_interp` — `erOfETm` denotes the same function as the term.
 * `era_sound_er` — every `ETm` denotes an `ERMor1` function
   (the inclusion `Era ⊆ E³`).
 
