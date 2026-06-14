@@ -1,6 +1,7 @@
 import GebLean.Era
 import GebLean.LawvereER
 import GebLean.Utilities.ERArith
+import GebLean.Utilities.EraBoundedSum
 
 /-!
 # Era basis completeness bridge
@@ -13,12 +14,15 @@ elementary recursive functions as formalised by `ERMor1`
 
 * `eraOpToER` — the `ERMor1` witness for each basis operation.
 * `erOfETm` — translation of an `Era` term to an `ERMor1` term.
+* `eraGeomSum` — the closed-form `ETm 2` for `Σ_{i<bound} q^i`.
 
 ## Main statements
 
 * `erOfETm_interp` — `erOfETm` denotes the same function as the term.
 * `era_sound_er` — every `ETm` denotes an `ERMor1` function
   (the inclusion `Era ⊆ E³`).
+* `eraGeomSum_eval` — raw evaluation of `eraGeomSum`.
+* `eraGeomSum_natBSum` — `eraGeomSum` agrees with `natBSum` when the base is at least `2`.
 
 ## References
 
@@ -97,5 +101,28 @@ theorem erOfETm_interp {n : ℕ} (t : ETm n) (ctx : Fin n → ℕ) :
 theorem era_sound_er {n : ℕ} (t : ETm n) :
     ∃ f : ERMor1 n, ∀ ctx, f.interp ctx = Tm.eval eraInterp t ctx :=
   ⟨erOfETm t, fun ctx => erOfETm_interp t ctx⟩
+
+/-- The geometric bounded sum `Σ_{i<bound} q^i` as a closed `Era` term:
+`(q^bound - 1) / (q - 1)`, with variable `0` the base and variable `1`
+the bound. -/
+def eraGeomSum : ETm 2 :=
+  ediv
+    (etsub (epow (.var 0) (.var 1)) (.succ .zero))
+    (etsub (.var 0) (.succ .zero))
+
+/-- Raw evaluation of `eraGeomSum`: the term computes `(q^bound - 1) / (q - 1)`. -/
+theorem eraGeomSum_eval (ctx : Fin 2 → ℕ) :
+    Tm.eval eraInterp eraGeomSum ctx =
+      (ctx 0 ^ ctx 1 - 1) / (ctx 0 - 1) := by
+  simp [eraGeomSum, ediv, etsub, epow, Tm.eval, eraInterp, fcons]
+
+/-- `eraGeomSum` computes the geometric bounded sum when the base is at
+least `2`. -/
+theorem eraGeomSum_natBSum (q bound : ℕ) (hq : 2 ≤ q) :
+    Tm.eval eraInterp eraGeomSum ![q, bound] =
+      natBSum bound (fun i => q ^ i) := by
+  rw [eraGeomSum_eval]
+  simp only [Matrix.cons_val_zero, Matrix.cons_val_one]
+  rw [natBSum_geom q bound hq]
 
 end GebLean.EraCompleteness
