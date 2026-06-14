@@ -1,0 +1,101 @@
+import GebLean.Era
+import GebLean.LawvereER
+import GebLean.Utilities.ERArith
+
+/-!
+# Era basis completeness bridge
+
+Relates the denotations of `Era` terms (`Tm.eval eraInterp`) to the
+elementary recursive functions as formalised by `ERMor1`
+(`GebLean/LawvereER.lean`).
+
+## Main definitions
+
+* `eraOpToER` — the `ERMor1` witness for each basis operation.
+* `erOfETm` — translation of an `Era` term to an `ERMor1` term.
+
+## Main statements
+
+* `erOfETm_interp` — `erOfETm` denotes the same function as the term.
+* `era_sound_er` — every `ETm` denotes an `ERMor1` function
+  (the inclusion `Era ⊆ E³`).
+
+## References
+
+* Prunescu, Sauras-Altuzarra, Shunia, arXiv:2505.23787.
+
+## Tags
+
+elementary recursive, substitution basis, completeness
+-/
+
+namespace GebLean.EraCompleteness
+
+open Era
+
+/-- The `ERMor1` term realising each basis operation. -/
+def eraOpToER : (b : EraB) → ERMor1 (eraAr b)
+  | .add  => ERMor1.addN
+  | .mod  => ERMor1.mod
+  | .pow2 => ERMor1.comp ERMor1.powN ![ERMor1.natN 1 2, ERMor1.proj (0 : Fin 1)]
+  | .tsub => ERMor1.sub
+  | .mul  => ERMor1.mulN
+  | .div  => ERMor1.div
+  | .pow  => ERMor1.powN
+
+/-- The `ERMor1` witness for each basis operation interprets to that operation's
+`Nat` semantics. -/
+theorem eraOpToER_interp (b : EraB) (ctx : Fin (eraAr b) → ℕ) :
+    (eraOpToER b).interp ctx = eraInterp b ctx := by
+  -- Each binary operation has arity-2 context; rewrite `ctx` to the explicit
+  -- two-element vector so the literal-vector interp lemmas apply.
+  have hctx2 : ∀ (c : Fin 2 → ℕ),
+      c = ![c ⟨0, by decide⟩, c ⟨1, by decide⟩] := by
+    intro c
+    funext i
+    match i with
+    | ⟨0, _⟩ => rfl
+    | ⟨1, _⟩ => rfl
+  cases b with
+  | add => rw [hctx2 ctx]; exact ERMor1.interp_addN _
+  | mod => rw [hctx2 ctx]; exact ERMor1.interp_mod _ _
+  | pow2 =>
+      change (ERMor1.comp ERMor1.powN
+          ![ERMor1.natN 1 2, ERMor1.proj (0 : Fin 1)]).interp ctx = 2 ^ ctx ⟨0, by decide⟩
+      rw [ERMor1.interp_comp]
+      simp only [ERMor1.interp_powN, ERMor1.interp_natN, ERMor1.interp_proj,
+        Matrix.cons_val_zero, Matrix.cons_val_one]
+      rfl
+  | tsub => rw [hctx2 ctx]; exact ERMor1.interp_sub _
+  | mul => rw [hctx2 ctx]; exact ERMor1.interp_mulN _
+  | div => rw [hctx2 ctx]; exact ERMor1.interp_div _ _
+  | pow => rw [hctx2 ctx]; exact ERMor1.interp_powN _
+
+/-- Translate an `Era` term to an `ERMor1` term of the same arity. -/
+def erOfETm {n : ℕ} : ETm n → ERMor1 n
+  | .var i    => ERMor1.proj i
+  | .zero     => ERMor1.natN n 0
+  | .succ t   => ERMor1.comp ERMor1.succ ![erOfETm t]
+  | .app b ts => ERMor1.comp (eraOpToER b) (fun i => erOfETm (ts i))
+
+/-- `erOfETm` denotes the same function as the Era term. -/
+theorem erOfETm_interp {n : ℕ} (t : ETm n) (ctx : Fin n → ℕ) :
+    (erOfETm t).interp ctx = Tm.eval eraInterp t ctx := by
+  induction t with
+  | var i => rfl
+  | zero => exact ERMor1.interp_natN n 0 ctx
+  | succ t ih =>
+      rw [erOfETm, ERMor1.interp_comp, ERMor1.interp_succ]
+      simp only [Matrix.cons_val_fin_one]
+      rw [ih]
+      rfl
+  | app b ts ih =>
+      rw [erOfETm, ERMor1.interp_comp, eraOpToER_interp]
+      exact congrArg (eraInterp b) (funext fun i => ih i)
+
+/-- Every `Era` term denotes an `ERMor1` (elementary) function. -/
+theorem era_sound_er {n : ℕ} (t : ETm n) :
+    ∃ f : ERMor1 n, ∀ ctx, f.interp ctx = Tm.eval eraInterp t ctx :=
+  ⟨erOfETm t, fun ctx => erOfETm_interp t ctx⟩
+
+end GebLean.EraCompleteness
