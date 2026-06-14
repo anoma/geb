@@ -65,4 +65,31 @@ theorem eraOpToER_interp (b : EraB) (ctx : Fin (eraAr b) → ℕ) :
   | div => rw [hctx2 ctx]; exact ERMor1.interp_div _ _
   | pow => rw [hctx2 ctx]; exact ERMor1.interp_powN _
 
+/-- Translate an `Era` term to an `ERMor1` term of the same arity. -/
+def erOfETm {n : ℕ} : ETm n → ERMor1 n
+  | .var i    => ERMor1.proj i
+  | .zero     => ERMor1.natN n 0
+  | .succ t   => ERMor1.comp ERMor1.succ ![erOfETm t]
+  | .app b ts => ERMor1.comp (eraOpToER b) (fun i => erOfETm (ts i))
+
+/-- `erOfETm` denotes the same function as the Era term. -/
+theorem erOfETm_interp {n : ℕ} (t : ETm n) (ctx : Fin n → ℕ) :
+    (erOfETm t).interp ctx = Tm.eval eraInterp t ctx := by
+  induction t with
+  | var i => rfl
+  | zero => exact ERMor1.interp_natN n 0 ctx
+  | succ t ih =>
+      rw [erOfETm, ERMor1.interp_comp, ERMor1.interp_succ]
+      simp only [Matrix.cons_val_fin_one]
+      rw [ih]
+      rfl
+  | app b ts ih =>
+      rw [erOfETm, ERMor1.interp_comp, eraOpToER_interp]
+      exact congrArg (eraInterp b) (funext fun i => ih i)
+
+/-- Every `Era` term denotes an `ERMor1` (elementary) function. -/
+theorem era_sound_er {n : ℕ} (t : ETm n) :
+    ∃ f : ERMor1 n, ∀ ctx, f.interp ctx = Tm.eval eraInterp t ctx :=
+  ⟨erOfETm t, fun ctx => erOfETm_interp t ctx⟩
+
 end GebLean.EraCompleteness
