@@ -20,6 +20,7 @@ digit-block indicator, each equated to a Mathlib reference function.
 * `centralBinomClosed` — the central binomial coefficient as a
   base-`2^(2n)` digit read-off of `(1 + 2^(2n))^(2n)`.
 * `hwClosed` — the binary Hamming weight as `ν₂(C(2n,n))` (Kummer).
+* `deltaBlock` — the digit-block indicator `δ a w = (2^w - 1)(2^w - a + 1)`.
 
 ## Main statements
 
@@ -27,6 +28,8 @@ digit-block indicator, each equated to a Mathlib reference function.
 * `centralBinomClosed_eq` — `centralBinomClosed n = Nat.centralBinom n`
   for `n ≥ 1`.
 * `hwClosed_eq` — `hwClosed n = (Nat.digits 2 n).sum` for `n ≥ 1`.
+* `hwClosed_deltaBlock` — `HW(δ a w) = 2w` if `a = 0`, else `w`, for
+  `a < 2^w`.
 
 ## References
 
@@ -210,5 +213,99 @@ theorem hwClosed_eq (n : ℕ) (hn : 1 ≤ n) :
     hwClosed n = (Nat.digits 2 n).sum := by
   rw [hwClosed, centralBinomClosed_eq n hn, nu2Closed_eq _ (Nat.centralBinom_pos n),
     padicValNat_centralBinom_two]
+
+private theorem sum_digits_two_succ (n : ℕ) :
+    (Nat.digits 2 n).sum = n % 2 + (Nat.digits 2 (n / 2)).sum := by
+  rcases Nat.eq_zero_or_pos n with h | h
+  · simp [h]
+  · rw [Nat.digits_def' (by norm_num) h]; simp
+
+private theorem sum_digits_two_add (w x y : ℕ) (hx : x < 2 ^ w) :
+    (Nat.digits 2 (x + 2 ^ w * y)).sum
+      = (Nat.digits 2 x).sum + (Nat.digits 2 y).sum := by
+  induction w generalizing x with
+  | zero => simp_all
+  | succ k ih =>
+    have hpow : (2 : ℕ) ^ (k + 1) * y = 2 * (2 ^ k * y) := by rw [pow_succ]; ring
+    rw [sum_digits_two_succ (x + 2 ^ (k + 1) * y), sum_digits_two_succ x, hpow]
+    set t := 2 ^ k * y with ht
+    have hmod : (x + 2 * t) % 2 = x % 2 := by omega
+    have hdiv : (x + 2 * t) / 2 = x / 2 + t := by omega
+    rw [hmod, hdiv]
+    have hxd : x / 2 < 2 ^ k := by omega
+    rw [ht, ih (x / 2) hxd]
+    omega
+
+private theorem sum_digits_two_compl (w m : ℕ) (hm : m < 2 ^ w) :
+    (Nat.digits 2 m).sum + (Nat.digits 2 (2 ^ w - 1 - m)).sum = w := by
+  induction w generalizing m with
+  | zero => interval_cases m; simp
+  | succ k ih =>
+    have hpow : 2 ^ (k + 1) = 2 * 2 ^ k := by rw [pow_succ]; ring
+    have hmdiv : m / 2 < 2 ^ k := by omega
+    have hc : 2 ^ (k + 1) - 1 - m = 2 * (2 ^ k - 1 - m / 2) + (1 - m % 2) := by
+      have := Nat.div_add_mod m 2
+      have hk1 : (1 : ℕ) ≤ 2 ^ k := Nat.one_le_two_pow
+      omega
+    rw [sum_digits_two_succ m, sum_digits_two_succ (2 ^ (k + 1) - 1 - m), hc]
+    rw [Nat.mul_add_mod, Nat.mul_add_div (by norm_num)]
+    have hmod : m % 2 < 2 := Nat.mod_lt _ (by norm_num)
+    have hsub : (1 - m % 2) / 2 = 0 := by omega
+    rw [hsub, Nat.add_zero]
+    have := ih (m / 2) hmdiv
+    omega
+
+/-- The digit-block indicator (arXiv:2407.12928, Lemma 3.1):
+`δ a w = (2^w - 1)(2^w - a + 1)`. -/
+def deltaBlock (a w : ℕ) : ℕ := (2 ^ w - 1) * (2 ^ w - a + 1)
+
+/-- `HW(δ a w) = 2w` when `a = 0`, else `w`, for `0 ≤ a < 2^w`. -/
+theorem hwClosed_deltaBlock {a w : ℕ} (ha : a < 2 ^ w) :
+    hwClosed (deltaBlock a w) = if a = 0 then 2 * w else w := by
+  rcases Nat.eq_zero_or_pos w with hw | hw
+  · -- `w = 0` forces `a = 0` and `deltaBlock = 0`
+    subst hw
+    have ha0 : a = 0 := by simpa using ha
+    subst ha0
+    rfl
+  · have hbig : (2 : ℕ) ^ w ≥ 2 := by
+      calc (2 : ℕ) ^ w ≥ 2 ^ 1 := Nat.pow_le_pow_right (by norm_num) hw
+        _ = 2 := by norm_num
+    by_cases ha0 : a = 0
+    · -- high-bit-only block: `δ 0 w = 2^(2w) - 1`, digit sum `2w`
+      subst ha0
+      have hd : deltaBlock 0 w = 2 ^ (2 * w) - 1 := by
+        have hpow : (2 : ℕ) ^ (2 * w) = 2 ^ w * 2 ^ w := by rw [two_mul, pow_add]
+        unfold deltaBlock
+        rw [Nat.sub_zero, hpow, Nat.sub_one_mul, Nat.mul_add, Nat.mul_one]
+        omega
+      have h1d : 1 ≤ deltaBlock 0 w := by
+        rw [hd]
+        have : (2 : ℕ) ^ (2 * w) ≥ 2 := by
+          calc (2 : ℕ) ^ (2 * w) ≥ 2 ^ 1 := Nat.pow_le_pow_right (by norm_num) (by omega)
+            _ = 2 := by norm_num
+        omega
+      rw [hwClosed_eq _ h1d, hd]
+      have hcompl := sum_digits_two_compl (2 * w) 0 (by positivity)
+      simp only [Nat.digits_zero, List.sum_nil, Nat.sub_zero, Nat.zero_add] at hcompl
+      rw [hcompl, if_pos rfl]
+    · -- two-block: `δ a w = (a-1) + 2^w * (2^w - a)`, digit sum `w`
+      have ha1 : 1 ≤ a := Nat.one_le_iff_ne_zero.mpr ha0
+      have hd : deltaBlock a w = (a - 1) + 2 ^ w * (2 ^ w - a) := by
+        have hmul : (2 : ℕ) ^ w * (2 ^ w - a + 1) = 2 ^ w * (2 ^ w - a) + 2 ^ w := by
+          rw [Nat.mul_add, Nat.mul_one]
+        unfold deltaBlock
+        rw [Nat.sub_one_mul, hmul]
+        omega
+      have hlow : a - 1 < 2 ^ w := by omega
+      have h1d : 1 ≤ deltaBlock a w := by
+        rw [hd]
+        have hpos : 1 ≤ 2 ^ w - a := by omega
+        have : 2 ^ w ≤ 2 ^ w * (2 ^ w - a) := Nat.le_mul_of_pos_right _ hpos
+        omega
+      rw [hwClosed_eq _ h1d, hd, sum_digits_two_add w (a - 1) (2 ^ w - a) hlow]
+      have hcompl := sum_digits_two_compl w (a - 1) hlow
+      have hcomp_eq : 2 ^ w - a = 2 ^ w - 1 - (a - 1) := by omega
+      rw [hcomp_eq, hcompl, if_neg ha0]
 
 end GebLean
