@@ -35,11 +35,16 @@ digit-block indicator, each equated to a Mathlib reference function.
 * `solCount_le_succ` — `solCount a b n ≤ n + 1` for `1 ≤ a, 1 ≤ b`.
 * `solCount_mul_eq_gcd_succ` — `solCount a b (a * b) = gcd a b + 1` for
   `1 ≤ a, 1 ≤ b` (the Prunescu–Shunia gcd linear-Diophantine count).
+* `solCount_eq_floor_mod` — the Prunescu–Shunia base-5 floor read-off
+  `⌊5^(a·b·(a·b+a+b)) / ((5^(a²·b)−1)(5^(a·b²)−1))⌋ % 5^(a·b)
+  = solCount a b (a·b)` for `1 ≤ a, 1 ≤ b`.
 
 ## References
 
 * Prunescu, Sauras-Altuzarra, arXiv:2407.12928 (the method; `ν_p`
   Theorem 2.1).
+* Prunescu, Shunia, arXiv:2411.06430 (the base-5 gcd closed form;
+  Theorem 4.1).
 
 ## Tags
 
@@ -1145,5 +1150,31 @@ private theorem gcd_num_lt_den_mul_digitSum_succ (a b : ℕ) (ha : 1 ≤ a)
     omega
   rw [Nat.mul_assoc]
   exact hexpand
+
+/-- The Euclidean quotient `⌊(5^(a·b))^(a·b+a+b) / ((5^(a·b))^a−1)·
+((5^(a·b))^b−1)⌋ = gcdDigitSum a b`, pinned by the two consecutive-multiple
+bounds via `Nat.div_eq_of_lt_le`. -/
+private theorem gcd_div_eq_digitSum (a b : ℕ) (ha : 1 ≤ a) (hb : 1 ≤ b) :
+    (5 ^ (a * b)) ^ (a * b + a + b)
+        / (((5 ^ (a * b)) ^ a - 1) * ((5 ^ (a * b)) ^ b - 1))
+      = gcdDigitSum a b := by
+  apply Nat.div_eq_of_lt_le
+  · linarith [gcd_den_mul_digitSum_le a b ha hb,
+      Nat.mul_comm (gcdDigitSum a b) (((5 ^ (a * b)) ^ a - 1) * ((5 ^ (a * b)) ^ b - 1))]
+  · linarith [gcd_num_lt_den_mul_digitSum_succ a b ha hb,
+      Nat.mul_comm (((5 ^ (a * b)) ^ a - 1) * ((5 ^ (a * b)) ^ b - 1)) (gcdDigitSum a b + 1)]
+
+/-- Prunescu–Shunia base-5 floor extraction: the units base-`5^(a·b)`
+digit of `⌊5^(a·b·(a·b+a+b)) / ((5^(a²·b)−1)(5^(a·b²)−1))⌋` is the
+linear-Diophantine count `solCount a b (a·b)`, for `1 ≤ a, 1 ≤ b`
+(arXiv:2411.06430, Theorem 4.1). -/
+theorem solCount_eq_floor_mod (a b : ℕ) (ha : 1 ≤ a) (hb : 1 ≤ b) :
+    (5 ^ (a * b * (a * b + a + b))
+        / ((5 ^ (a ^ 2 * b) - 1) * (5 ^ (a * b ^ 2) - 1)))
+        % 5 ^ (a * b)
+      = solCount a b (a * b) := by
+  rw [gcd_num_pow, gcd_dena_pow, gcd_denb_pow]
+  rw [gcd_div_eq_digitSum a b ha hb]
+  exact gcdDigitSum_mod a b ha hb
 
 end GebLean
