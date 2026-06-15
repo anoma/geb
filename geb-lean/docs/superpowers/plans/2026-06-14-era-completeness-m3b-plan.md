@@ -660,7 +660,7 @@ first dependency-critical sub-task after the ingredients (decision note
 
 - Create/extend: `GebLean/Utilities/EraDiophantine.lean`
 
-- [ ] **Step 1: reuse assessment.** `GebLean/Utilities/ERAMajorants.lean`
+- [x] **Step 1: reuse assessment.** `GebLean/Utilities/ERAMajorants.lean`
 provides the Tourlakis `A_one`/`A_one_iter`/`A_two_iter`/`towerER`
 majorant family, but typed for `ERMor1`, not `ETm` — so it does not
 directly give an `ETm`-summand majorant. Record (one line) that
@@ -668,7 +668,7 @@ directly give an `ETm`-summand majorant. Record (one line) that
 fresh; note whether the `PolyBound`/`towerER` magnitude bounds can be
 reused for the width estimate.
 
-- [ ] **Step 2: choose construction and define.** Two routes (record the
+- [x] **Step 2: choose construction and define.** Two routes (record the
 choice, as in Task 3.1): (A) structural recursion on `ETm` building a
 monotone majorant term; (B) the recurrence-paper Claim-2 recipe (replace
 every `tsub` by `add`, substitute the range bound for the loop index).
@@ -684,7 +684,7 @@ theorem eraMajorant_spec {n : ℕ} (t : ETm n) (ctx : Fin n → ℕ) :
   sorry
 ```
 
-- [ ] **Step 3:** build, prove, axiom-check, commit.
+- [x] **Step 3:** build, prove, axiom-check, commit.
 
 ```bash
 jj describe -m "feat(era): build the monotone ETm majorant for the engine
