@@ -138,4 +138,12 @@ theorem image_mixedRadix_cubePoints (k t : ℕ) :
   rw [Finset.card_range, Finset.card_image_of_injOn (mixedRadix_injOn k t),
     card_cubePoints]
 
+/-- Cube-sum factorisation (arXiv:2407.12928, Lemma 3.2): a sum over the
+cube of a product of per-coordinate weighted geometric terms factors into a
+product of single-variable sums. -/
+theorem cubeSum_factor (k : ℕ) (u : Fin k → ℕ) (vbase : Fin k → ℕ) (t : ℕ) :
+    (∑ a ∈ cubePoints k t, ∏ i, (a i) ^ (u i) * (vbase i) ^ (a i))
+      = ∏ i, (∑ j ∈ Finset.range t, j ^ (u i) * (vbase i) ^ j) := by
+  rw [cubePoints, Finset.prod_univ_sum]
+
 end GebLean.EraHypercube
