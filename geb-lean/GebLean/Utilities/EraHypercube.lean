@@ -23,6 +23,10 @@ tasks of the Era bounded-sum engine reindex a cube sum onto a flat
   `mixedRadix`, recovering a cube point from its positional index.
 * `packM k w t P` — the packed witness number that places the digit-block
   indicator `δ(P a, w)` at base-`2 ^ (2 * w)` position `mixedRadix k t a`.
+* `recSeq init step` — the first-order recurrence sequence `s 0 = init`,
+  `s (m + 1) = step m (s m)`.
+* `histCode init step A n` — the base-`A` positional code of the value
+  history `s 0, …, s n` of `recSeq init step`.
 
 ## Main statements
 
@@ -46,12 +50,21 @@ tasks of the Era bounded-sum engine reindex a cube sum onto a flat
 * `count_zeros_eq` — the count read-off (arXiv:2407.12928, Lemma 3.3 /
   Theorem 3.4): `HW(M) / w − tᵏ` equals the number of cube points where the
   value function vanishes.
+* `positional_readoff` — the positional read-off (arXiv:2606.09336,
+  Theorem 2): the top base-`A` digit of a bounded positional code is
+  recovered by floor division.
+* `recurrence_readoff` — the first-order recurrence read-off
+  (arXiv:2606.09336, Theorem 2, `k = 1`): an `A`-bounded recurrence's `n`-th
+  value is the top base-`A` digit of its history code.
 
 ## References
 
-* J. Prunescu and L. Sauras-Altuzarra, *An arithmetization of the Goodstein
-  process and a closed form for the `T(n)` length function*,
-  arXiv:2407.12928, Lemma 3.3.
+* M. Prunescu and L. Sauras-Altuzarra, *On the representation of
+  number-theoretic functions by arithmetic terms*, arXiv:2407.12928
+  (the `δ` indicator, cube-sum factorisation, and the count read-off).
+* G. Istrate, M. Prunescu and J. M. Shunia, *Undecidability, Chaos and
+  Universality in Arithmetic Terms*, arXiv:2606.09336 (Theorem 2, the
+  positional read-off of a bounded base-`A` recurrence code).
 
 ## Tags
 
@@ -344,5 +357,51 @@ theorem count_zeros_eq (k w t : ℕ) (hw : 0 < w)
       omega
     exact hsum
   rw [hsplit, Nat.mul_div_cancel _ hw, Nat.add_sub_cancel]
+
+/-- Positional read-off (arXiv:2606.09336, Theorem 2): the top base-`A`
+digit of a bounded positional code is recovered by floor division. -/
+theorem positional_readoff (A n : ℕ) (a : ℕ → ℕ) (hA : 0 < A)
+    (ha : ∀ k, k ≤ n → a k < A) :
+    (∑ k ∈ Finset.range (n + 1), a k * A ^ k) / A ^ n = a n := by
+  rw [Finset.sum_range_succ]
+  have hlow : (∑ k ∈ Finset.range n, a k * A ^ k) < A ^ n := by
+    induction n with
+    | zero => simp
+    | succ n ih =>
+      rw [Finset.sum_range_succ]
+      have hlt : (∑ k ∈ Finset.range n, a k * A ^ k) < A ^ n :=
+        ih (fun k hk => ha k (Nat.le_succ_of_le hk))
+      have htop : a n * A ^ n ≤ (A - 1) * A ^ n :=
+        Nat.mul_le_mul_right _ (Nat.le_sub_one_of_lt (ha n (Nat.le_succ n)))
+      calc
+        (∑ k ∈ Finset.range n, a k * A ^ k) + a n * A ^ n
+            < A ^ n + (A - 1) * A ^ n := Nat.add_lt_add_of_lt_of_le hlt htop
+        _ = A ^ (n + 1) := by
+              rw [pow_succ, Nat.sub_mul, Nat.one_mul, Nat.mul_comm (A ^ n) A]
+              have hle : A ^ n ≤ A * A ^ n := Nat.le_mul_of_pos_left _ hA
+              omega
+  rw [Nat.add_mul_div_right _ _ (Nat.pow_pos hA : 0 < A ^ n), Nat.div_eq_of_lt hlow,
+    Nat.zero_add]
+
+/-- A first-order recurrence sequence `s 0 = init`, `s (m + 1) = step m (s m)`. -/
+def recSeq (init : ℕ) (step : ℕ → ℕ → ℕ) : ℕ → ℕ
+  | 0 => init
+  | m + 1 => step m (recSeq init step m)
+
+/-- The base-`A` positional code of the value history `s 0, …, s n`, where
+`s = recSeq init step`. The `Era`-term realisation, packing the step's
+Diophantine encoding via the count engine, is `Phase 6`; this is the
+`ℕ`-level code. -/
+def histCode (init : ℕ) (step : ℕ → ℕ → ℕ) (A : ℕ) (n : ℕ) : ℕ :=
+  ∑ k ∈ Finset.range (n + 1), recSeq init step k * A ^ k
+
+/-- First-order recurrence read-off (arXiv:2606.09336, Theorem 2, `k = 1`):
+an `A`-bounded recurrence's `n`-th value is the top base-`A` digit of its
+history code. -/
+theorem recurrence_readoff (init : ℕ) (step : ℕ → ℕ → ℕ) (A : ℕ)
+    (n : ℕ) (hbound : ∀ j, j ≤ n → recSeq init step j < A) :
+    recSeq init step n = histCode init step A n / A ^ n := by
+  have hA : 0 < A := Nat.lt_of_le_of_lt (Nat.zero_le _) (hbound 0 (Nat.zero_le n))
+  exact (positional_readoff A n (recSeq init step) hA hbound).symm
 
 end GebLean.EraHypercube
