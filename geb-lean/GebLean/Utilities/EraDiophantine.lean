@@ -60,6 +60,9 @@ so it precedes both.
   division combinators on `DiophEnc`s (arXiv:2606.09336, Lemma 2 Case 3, the monus
   gadget, and the division gadget), each proved to satisfy `Encodes`
   (`diophMod_encodes`, `diophTsub_encodes`, `diophDiv_encodes`).
+* `diophOne`, `diophPow` — the constant-`1` and general-power combinators on
+  `DiophEnc`s, the latter a composition of existing combinators along Marchenkov's
+  identity `pow_eq_two_pow_mod`, proved to satisfy `Encodes` (`diophPow_encodes`).
 
 ## Main statements
 
@@ -96,6 +99,9 @@ so it precedes both.
 * `diophMod_encodes`, `diophTsub_encodes`, `diophDiv_encodes` — the `Encodes`
   correctness of the remainder, truncated-subtraction, and division combinators,
   each preserving `Encodes` from its two sub-encodings.
+* `diophPow_encodes` — the `Encodes` correctness of the general-power combinator,
+  obtained by chaining the `Encodes` lemmas of its constituent combinators along
+  `pow_eq_two_pow_mod`.
 
 ## Implementation notes
 
@@ -2242,5 +2248,34 @@ theorem diophDiv_encodes {n : ℕ} {sub1 sub2 : DiophEnc n} {g1 g2 : (Fin n → 
     have hdiv : g1 ρ / g2 ρ ≤ g1 ρ := Nat.div_le_self _ _
     simp only [diophDiv]
     omega
+
+/-- Transport `Encodes` along an equality of encoded functions. -/
+theorem DiophEnc.Encodes_congr {n : ℕ} {e : DiophEnc n} {g g' : (Fin n → ℕ) → ℕ}
+    (h : g = g') (he : e.Encodes g) : e.Encodes g' := h ▸ he
+
+/-- The constant-`1` combinator: the successor of the constant-zero encoding. -/
+def diophOne {n : ℕ} : DiophEnc n := diophSucc diophZero
+
+/-- The general-power combinator, encoding `fun ρ => g1 ρ ^ g2 ρ`. It is a
+composition of existing combinators along Marchenkov's identity
+`pow_eq_two_pow_mod`: writing `A := g1 * g2 + g1 + 1`, the power equals
+`2 ^ (A * g2) % (2 ^ A - g1)`, assembled from `diophMul`, `diophAdd`, `diophOne`,
+`diophPow2`, `diophTsub`, and `diophMod`. -/
+def diophPow {n : ℕ} (sub1 sub2 : DiophEnc n) : DiophEnc n :=
+  let A := diophAdd (diophAdd (diophMul sub1 sub2) sub1) diophOne
+  diophMod (diophPow2 (diophMul A sub2)) (diophTsub (diophPow2 A) sub1)
+
+/-- `diophPow sub1 sub2` encodes the pointwise power `fun ρ => g1 ρ ^ g2 ρ`,
+via Marchenkov's identity `pow_eq_two_pow_mod`. -/
+theorem diophPow_encodes {n : ℕ} {sub1 sub2 : DiophEnc n} {g1 g2 : (Fin n → ℕ) → ℕ}
+    (h1 : sub1.Encodes g1) (h2 : sub2.Encodes g2) :
+    (diophPow sub1 sub2).Encodes (fun ρ => g1 ρ ^ g2 ρ) := by
+  have hA := diophAdd_encodes (diophAdd_encodes (diophMul_encodes h1 h2) h1)
+    (diophSucc_encodes diophZero_encodes)
+  have hbody := diophMod_encodes (diophPow2_encodes (diophMul_encodes hA h2))
+    (diophTsub_encodes (diophPow2_encodes hA) h1)
+  refine DiophEnc.Encodes_congr ?_ hbody
+  funext ρ
+  exact (pow_eq_two_pow_mod (g1 ρ) (g2 ρ)).symm
 
 end GebLean
