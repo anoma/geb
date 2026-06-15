@@ -153,6 +153,15 @@ Commit per sub-lemma.
 
 **Files:** `GebLean/Utilities/ArithClosedForms.lean`
 
+> SUPERSEDED AND DONE. Phase G2 was executed under the dedicated
+> micro-plan `2026-06-15-era-gcd-g2-floor-extraction-plan.md`. Its
+> separate G2.1 (`gcd_floor_modEq_solCount`) and G2.2
+> (`solCount_eq_floor_mod`) below are subsumed by the single public
+> theorem `solCount_eq_floor_mod` proved there (the stronger exact
+> identity `num/den = gcdDigitSum a b` via the two-step `Bᵃ−1`/`Bᵇ−1`
+> reduction, the tooth-count bijection `gcd_tooth_count`, and the
+> carry-free comb split). G3 below consumes `solCount_eq_floor_mod`.
+
 Target the CONGRUENCE form (both reviewers' recommendation): proving
 `⌊…⌋ % 5^(ab) = solCount a b (ab)` factors into a `mod` congruence plus
 the window bound, which avoids materialising the whole base-`5^(ab)`
