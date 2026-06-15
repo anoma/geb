@@ -1,4 +1,7 @@
 import GebLean.Era
+import Mathlib.Data.Fin.Tuple.Basic
+import Mathlib.Algebra.BigOperators.Group.Finset.Basic
+import Mathlib.Data.Fintype.Fin
 
 /-!
 # The term-to-Diophantine reduction: the monotone `ETm` majorant
@@ -17,6 +20,12 @@ so it precedes both.
 
 * `eraMajorant` — a strictly dominating, monotone `ETm` majorant of a
   term, obtained by structural recursion.
+* `SimpleMonomial` — Expression (6) of arXiv:2407.12928: a simple
+  exponential monomial over `m` variables, with `SimpleMonomial.eval` its
+  natural-number denotation.
+* `SimpleSum`, `SosTerm`, `SosSystem` — the sum-of-squares atom algebra:
+  non-negative sums of monomials, squared-difference / product atoms, and
+  systems of atoms, with their `eval` denotations.
 
 ## Main statements
 
@@ -27,6 +36,9 @@ so it precedes both.
   monotone in every variable. Combined with `eraMajorant_spec`, this
   bounds `f i` for every `i` below a range bound `y` by the single value
   obtained by substituting `y` for the loop index.
+* `SosSystem.eval_eq_zero_iff`, `SosTerm.sqDist_eval_eq_zero_iff`,
+  `SosTerm.prod_eval_eq_zero_iff` — the zero-set characterisation of the
+  atom algebra.
 
 ## Implementation notes
 
@@ -54,11 +66,20 @@ domination and monotonicity are proved as two separate inductions: the
 former needs only itself, the latter needs the former solely for the
 `base ≥ 1` side condition of the `pow` case.
 
+Carrier-design choice (plan Phase 4, Task 4.1 Step 1): the Diophantine
+predicate is carried as typed `SosSystem` atoms (`sqDist` / `prod` over
+`SimpleSum`/`SimpleMonomial`), not as a raw `ETm` paired with a
+`Simple : ETm → Prop` predicate. The typed algebra makes non-negativity
+and the squared-distance / product zero-set structural, and is preferred
+over the raw-`ETm`-plus-`Simple`-predicate fallback.
+
 ## References
 
 * Prunescu, Sauras-Altuzarra, Shunia, arXiv:2505.23787 (the basis).
 * Istrate, Prunescu, Shunia, arXiv:2606.09336 (the recurrence-to-term
   metatheorem; the majorant supplies its witness bounds).
+* Prunescu, arXiv:2407.12928 (Expression (6): the simple exponential
+  monomial form of `SimpleMonomial`).
 
 ## Tags
 
@@ -154,5 +175,92 @@ theorem eraMajorant_mono {n : Nat} (t : ETm n) {ctx ctx' : Fin n → Nat}
         (Nat.pow_le_pow_right (eraMajorant_pos (ts ⟨0, by decide⟩) ctx')
           (ih ⟨1, by decide⟩))
       omega
+
+/-- A simple exponential monomial over `m` variables (arXiv:2407.12928,
+Expression (6)):
+`coeff · ∏ᵢ (expBase i) ^ ((expCoeff i) · xᵢ) · ∏ᵢ xᵢ ^ (polyExp i)`.
+The coefficient and the per-variable exponential bases and coefficients are
+`ETm m`-valued, so monomials compose with the Era term language; the
+per-variable polynomial exponents are constant naturals, and the value of a
+monomial is a natural number. -/
+structure SimpleMonomial (m : ℕ) where
+  /-- The leading coefficient. -/
+  coeff : ETm m
+  /-- The per-variable exponential base. -/
+  expBase : Fin m → ETm m
+  /-- The per-variable exponential coefficient, multiplying the variable in
+  the exponent. -/
+  expCoeff : Fin m → ETm m
+  /-- The per-variable constant polynomial exponent. -/
+  polyExp : Fin m → ℕ
+
+/-- The natural-number denotation of a simple monomial at a context `ρ`:
+`coeff · ∏ᵢ (expBase i) ^ ((expCoeff i) · ρ i) · ∏ᵢ (ρ i) ^ (polyExp i)`,
+with the `ETm`-valued fields evaluated by `Tm.eval eraInterp`. -/
+def SimpleMonomial.eval {m : ℕ} (mon : SimpleMonomial m) (ρ : Fin m → ℕ) : ℕ :=
+  Tm.eval eraInterp mon.coeff ρ
+    * (∏ i, Tm.eval eraInterp (mon.expBase i) ρ
+        ^ (Tm.eval eraInterp (mon.expCoeff i) ρ * ρ i))
+    * (∏ i, ρ i ^ mon.polyExp i)
+
+/-- A non-negative sum of simple monomials. -/
+abbrev SimpleSum (m : ℕ) := List (SimpleMonomial m)
+
+/-- The denotation of a simple sum: the sum of its monomials' values. -/
+def SimpleSum.eval {m : ℕ} (p : SimpleSum m) (ρ : Fin m → ℕ) : ℕ :=
+  (p.map (fun mon => mon.eval ρ)).sum
+
+/-- A sum-of-squares atom over `m` variables: either a symmetric truncated
+squared distance `(P − Q)² + (Q − P)²` between two simple sums (zero iff
+`P = Q`), or a product of two sub-systems (zero iff one sub-system is zero). -/
+inductive SosTerm (m : ℕ) where
+  /-- The symmetric truncated squared distance `(P − Q)² + (Q − P)²`. -/
+  | sqDist : SimpleSum m → SimpleSum m → SosTerm m
+  /-- The product of two sub-systems' denotations. -/
+  | prod : List (SosTerm m) → List (SosTerm m) → SosTerm m
+
+/-- A sum-of-squares system over `m` variables; its denotation is the sum
+over its atoms. -/
+abbrev SosSystem (m : ℕ) := List (SosTerm m)
+
+mutual
+/-- The denotation of a sum-of-squares atom at a context `ρ`. A `sqDist P Q`
+atom denotes the symmetric truncated squared distance
+`(P.eval ρ − Q.eval ρ)² + (Q.eval ρ − P.eval ρ)²` (the two terms make it zero
+exactly on equality, working around truncated subtraction); a `prod s t` atom
+denotes the product `SosSystem.eval s ρ · SosSystem.eval t ρ`. -/
+def SosTerm.eval {m : ℕ} (a : SosTerm m) (ρ : Fin m → ℕ) : ℕ :=
+  match a with
+  | .sqDist P Q =>
+    (P.eval ρ - Q.eval ρ) ^ 2 + (Q.eval ρ - P.eval ρ) ^ 2
+  | .prod s t => SosSystem.eval s ρ * SosSystem.eval t ρ
+--
+/-- The denotation of a sum-of-squares system at a context `ρ`: the sum of
+its atoms' denotations. -/
+def SosSystem.eval {m : ℕ} (s : SosSystem m) (ρ : Fin m → ℕ) : ℕ :=
+  match s with
+  | [] => 0
+  | a :: rest => SosTerm.eval a ρ + SosSystem.eval rest ρ
+end
+
+/-- A sum-of-squares system is zero exactly when each of its atoms is. -/
+theorem SosSystem.eval_eq_zero_iff {m : ℕ} (s : SosSystem m) (ρ : Fin m → ℕ) :
+    SosSystem.eval s ρ = 0 ↔ ∀ a ∈ s, SosTerm.eval a ρ = 0 := by
+  induction s with
+  | nil => simp [SosSystem.eval]
+  | cons a rest ih =>
+    rw [SosSystem.eval, Nat.add_eq_zero_iff, List.forall_mem_cons, ih]
+
+/-- A squared-distance atom is zero iff its two simple sums are equal. -/
+theorem SosTerm.sqDist_eval_eq_zero_iff {m : ℕ} (P Q : SimpleSum m) (ρ : Fin m → ℕ) :
+    SosTerm.eval (.sqDist P Q) ρ = 0 ↔ P.eval ρ = Q.eval ρ := by
+  simp only [SosTerm.eval, Nat.add_eq_zero_iff, Nat.pow_eq_zero,
+    Nat.sub_eq_zero_iff_le]
+  omega
+
+/-- A product atom is zero iff one of its two sub-systems is zero. -/
+theorem SosTerm.prod_eval_eq_zero_iff {m : ℕ} (s t : List (SosTerm m)) (ρ : Fin m → ℕ) :
+    SosTerm.eval (.prod s t) ρ = 0 ↔ SosSystem.eval s ρ = 0 ∨ SosSystem.eval t ρ = 0 := by
+  rw [SosTerm.eval, Nat.mul_eq_zero]
 
 end GebLean
