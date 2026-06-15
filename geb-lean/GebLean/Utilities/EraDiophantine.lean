@@ -35,6 +35,12 @@ so it precedes both.
   sub-encoding over `Fin (n + 1 + wSub)` into a compound layout over
   `Fin (n + 1 + wComp)` (inputs fixed, sub-output to a witness slot,
   sub-witnesses to a witness block), and the system re-indexing along it.
+* `DiophEnc.Encodes` — the correctness contract of a `DiophEnc n` for a
+  unary-output function: soundness, unique-witness completeness, and
+  witness boundedness.
+* `diophVar`, `diophZero`, `diophSucc` — the projection, constant-zero, and
+  successor combinators on `DiophEnc`s, each proved to satisfy `Encodes`
+  (`diophVar_encodes`, `diophZero_encodes`, `diophSucc_encodes`).
 
 ## Main statements
 
@@ -57,6 +63,9 @@ so it precedes both.
 * `spliceEmb_injective`, `SosSystem.eval_spliceWeaken` — injectivity of the
   splicing embedding (under a witness-block injectivity and slot-disjointness
   hypothesis) and the resulting re-indexing compatibility.
+* `diophVar_encodes`, `diophZero_encodes`, `diophSucc_encodes` — the
+  `Encodes` correctness of the projection, constant-zero, and successor
+  combinators (the last preserving `Encodes` from a sub-encoding).
 
 ## Implementation notes
 
@@ -353,6 +362,15 @@ theorem SosSystem.eval_eq_zero_iff {m : ℕ} (s : SosSystem m) (ρ : Fin m → �
   | cons a rest ih =>
     rw [SosSystem.eval, Nat.add_eq_zero_iff, List.forall_mem_cons, ih]
 
+/-- The denotation of a concatenated system is the sum of the parts'
+denotations. -/
+theorem SosSystem.eval_append {m : ℕ} (s t : SosSystem m) (ρ : Fin m → ℕ) :
+    SosSystem.eval (s ++ t) ρ = SosSystem.eval s ρ + SosSystem.eval t ρ := by
+  induction s with
+  | nil => simp only [List.nil_append, SosSystem.eval, Nat.zero_add]
+  | cons a rest ih =>
+    rw [List.cons_append, SosSystem.eval, SosSystem.eval, ih, Nat.add_assoc]
+
 /-- A squared-distance atom is zero iff its two simple sums are equal. -/
 theorem SosTerm.sqDist_eval_eq_zero_iff {m : ℕ} (P Q : SimpleSum m) (ρ : Fin m → ℕ) :
     SosTerm.eval (.sqDist P Q) ρ = 0 ↔ P.eval ρ = Q.eval ρ := by
@@ -629,5 +647,266 @@ context `Fin (n + 1 + e.witArity) → ℕ`. -/
 def DiophEnc.ctx {n : ℕ} (e : DiophEnc n) (ρ : Fin n → ℕ) (y : ℕ)
     (w : Fin e.witArity → ℕ) : Fin (n + 1 + e.witArity) → ℕ :=
   Fin.append (Fin.snoc ρ y) w
+
+/-- The simple monomial over `Fin m` whose value at `ρ` is exactly `ρ j`: the
+coefficient is the variable `j`, every exponential coefficient and every
+polynomial exponent is zero, so all product factors are `1`. -/
+def SimpleMonomial.var {m : ℕ} (j : Fin m) : SimpleMonomial m where
+  coeff := .var j
+  expBase := fun _ => .zero
+  expCoeff := fun _ => .zero
+  polyExp := fun _ => 0
+
+/-- The variable monomial evaluates to the value of its variable. -/
+@[simp]
+theorem SimpleMonomial.var_eval {m : ℕ} (j : Fin m) (ρ : Fin m → ℕ) :
+    (SimpleMonomial.var j).eval ρ = ρ j := by
+  simp only [SimpleMonomial.eval, SimpleMonomial.var, Tm.eval, Nat.zero_mul, Nat.pow_zero,
+    Finset.prod_const_one, Nat.mul_one]
+
+/-- The constant simple monomial over `Fin m` whose value at every `ρ` is `1`:
+the coefficient is `1` and all product factors are `1`. -/
+def SimpleMonomial.one {m : ℕ} : SimpleMonomial m where
+  coeff := Era.one
+  expBase := fun _ => .zero
+  expCoeff := fun _ => .zero
+  polyExp := fun _ => 0
+
+/-- The constant monomial evaluates to `1`. -/
+@[simp]
+theorem SimpleMonomial.one_eval {m : ℕ} (ρ : Fin m → ℕ) :
+    (SimpleMonomial.one (m := m)).eval ρ = 1 := by
+  simp only [SimpleMonomial.eval, SimpleMonomial.one, Era.one, Tm.eval, Nat.zero_mul,
+    Nat.pow_zero, Finset.prod_const_one, Nat.mul_one, Nat.zero_add]
+
+/-- `e` correctly encodes the unary-output function `g` on `n` inputs: the
+system vanishes only at the right output, has a unique witness there, and its
+witnesses respect the bounds. The three conjuncts are soundness (a vanishing
+assignment forces `y = g ρ`), completeness with uniqueness (at the correct
+output there is exactly one witness tuple), and boundedness (every vanishing
+witness lies below its bound). -/
+def DiophEnc.Encodes {n : ℕ} (e : DiophEnc n) (g : (Fin n → ℕ) → ℕ) : Prop :=
+  (∀ ρ y w, SosSystem.eval e.sys (e.ctx ρ y w) = 0 → y = g ρ) ∧
+  (∀ ρ, ∃! w, SosSystem.eval e.sys (e.ctx ρ (g ρ) w) = 0) ∧
+  (∀ ρ y w, SosSystem.eval e.sys (e.ctx ρ y w) = 0 →
+    ∀ i, w i < Tm.eval eraInterp (e.bound i) (Fin.snoc ρ y))
+
+/-- The encoding of the `i`-th projection `fun ρ => ρ i`: no witnesses, and a
+single squared-distance atom equating the input slot `i` to the output slot. -/
+def diophVar {n : ℕ} (i : Fin n) : DiophEnc n where
+  witArity := 0
+  sys := [.sqDist [SimpleMonomial.var (Fin.castAdd 0 i.castSucc)]
+    [SimpleMonomial.var (Fin.castAdd 0 (Fin.last n))]]
+  bound := Fin.elim0
+
+/-- `diophVar i` encodes the `i`-th projection. -/
+theorem diophVar_encodes {n : ℕ} (i : Fin n) :
+    (diophVar i).Encodes (fun ρ => ρ i) := by
+  refine ⟨?_, ?_, ?_⟩
+  · intro ρ y w hzero
+    rw [DiophEnc.ctx] at hzero
+    simp only [diophVar, SosSystem.eval, SosTerm.sqDist_eval_eq_zero_iff, SimpleSum.eval,
+      List.map_cons, List.map_nil, List.sum_cons, List.sum_nil, Nat.add_zero,
+      SimpleMonomial.var_eval, Fin.append_left, Fin.snoc_castSucc, Fin.snoc_last] at hzero
+    exact hzero.symm
+  · intro ρ
+    refine ⟨Fin.elim0, ?_, ?_⟩
+    · simp only [diophVar, DiophEnc.ctx, SosSystem.eval, SosTerm.sqDist_eval_eq_zero_iff,
+        SimpleSum.eval, List.map_cons, List.map_nil, List.sum_cons, List.sum_nil, Nat.add_zero,
+        SimpleMonomial.var_eval, Fin.append_left, Fin.snoc_castSucc, Fin.snoc_last]
+    · intro w _
+      exact funext (fun j => j.elim0)
+  · intro ρ y w _ j
+    exact j.elim0
+
+/-- The output-predecessor substitution on an `ETm (n + 1)` bound term: keeps
+the `n` inputs fixed and replaces the output variable `Fin.last n` by its
+truncated predecessor `(output) ∸ 1`. Used by `diophSucc` to re-point a
+sub-encoding's witness bounds from the sub-output `y₁` to the compound output
+`y = y₁ + 1`. -/
+def predSubst {n : ℕ} : Fin (n + 1) → ETm (n + 1) :=
+  Fin.snoc (fun i => .var i.castSucc) (.var (Fin.last n) ∸ᵉ Era.one)
+
+/-- Evaluating a term re-pointed by `predSubst` at `Fin.snoc ρ (y + 1)` equals
+evaluating the original at `Fin.snoc ρ y`: the inputs are unchanged and the
+output reads `(y + 1) ∸ 1 = y`. -/
+theorem eval_predSubst {n : ℕ} (t : ETm (n + 1)) (ρ : Fin n → ℕ) (y : ℕ) :
+    Tm.eval eraInterp (t.subst predSubst) (Fin.snoc ρ (y + 1)) =
+      Tm.eval eraInterp t (Fin.snoc ρ y) := by
+  rw [Tm.eval_subst]
+  congr 1
+  refine funext (fun i => ?_)
+  refine Fin.lastCases ?_ ?_ i
+  · simp only [predSubst, Fin.snoc_last, etsub, Tm.eval, eraInterp, Era.one, fcons,
+      Fin.snoc_last, Nat.add_sub_cancel]
+  · intro j
+    simp only [predSubst, Fin.snoc_castSucc, Tm.eval, Fin.snoc_castSucc]
+
+/-- The encoding of the constant-zero function `fun _ => 0`: no witnesses, and
+a single squared-distance atom equating the empty sum to the output slot, which
+vanishes exactly when the output is `0`. -/
+def diophZero {n : ℕ} : DiophEnc n where
+  witArity := 0
+  sys := [.sqDist [] [SimpleMonomial.var (Fin.castAdd 0 (Fin.last n))]]
+  bound := Fin.elim0
+
+/-- `diophZero` encodes the constant-zero function. -/
+theorem diophZero_encodes {n : ℕ} : (diophZero (n := n)).Encodes (fun _ => 0) := by
+  refine ⟨?_, ?_, ?_⟩
+  · intro ρ y w hzero
+    simp only [diophZero, DiophEnc.ctx, SosSystem.eval, SosTerm.sqDist_eval_eq_zero_iff,
+      SimpleSum.eval, List.map_cons, List.map_nil, List.sum_cons, List.sum_nil, Nat.add_zero,
+      SimpleMonomial.var_eval, Fin.append_left, Fin.snoc_last] at hzero
+    exact hzero.symm
+  · intro ρ
+    refine ⟨Fin.elim0, ?_, ?_⟩
+    · simp only [diophZero, DiophEnc.ctx, SosSystem.eval, SosTerm.sqDist_eval_eq_zero_iff,
+        SimpleSum.eval, List.map_cons, List.map_nil, List.sum_cons, List.sum_nil, Nat.add_zero,
+        SimpleMonomial.var_eval, Fin.append_left, Fin.snoc_last]
+    · intro w _
+      exact funext (fun j => j.elim0)
+  · intro ρ y w _ j
+    exact j.elim0
+
+/-- The witness embedding of `diophSucc`: send a sub-witness `k` to the same
+slot `k.castSucc` in the compound witness block, leaving the last slot for the
+new witness `y₁`. -/
+def succWitEmb {w : ℕ} : Fin w → Fin (w + 1) := Fin.castSucc
+
+/-- `succWitEmb` is injective. -/
+theorem succWitEmb_injective {w : ℕ} : Function.Injective (succWitEmb (w := w)) :=
+  Fin.castSucc_injective w
+
+/-- No sub-witness slot collides with the new `y₁` slot `Fin.last w`. -/
+theorem succWitEmb_ne_last {w : ℕ} (k : Fin w) : succWitEmb k ≠ Fin.last w :=
+  Fin.castSucc_lt_last k |>.ne
+
+/-- The encoding of `fun ρ => g ρ + 1` from an encoding `sub` of `g`. A new
+witness `y₁` holds the sub-output: `sub.sys` is spliced so its output becomes
+the `y₁` slot (the last witness) and its witnesses occupy the first
+`sub.witArity` slots; an added squared-distance atom forces `y₁ + 1 = y`. The
+new witness is bounded by the output `y`; each sub-witness bound is re-pointed
+through `predSubst`, so it reads the sub-output `y₁ = y ∸ 1`. -/
+def diophSucc {n : ℕ} (sub : DiophEnc n) : DiophEnc n where
+  witArity := sub.witArity + 1
+  sys :=
+    sub.sys.spliceWeaken (Fin.last sub.witArity) succWitEmb ++
+      [.sqDist
+        [SimpleMonomial.var (Fin.natAdd (n + 1) (Fin.last sub.witArity)),
+          SimpleMonomial.one]
+        [SimpleMonomial.var (Fin.castAdd (sub.witArity + 1) (Fin.last n))]]
+  bound := Fin.snoc (fun k => (sub.bound k).subst predSubst) (Tm.var (Fin.last n))
+
+/-- The compound context, precomposed with `diophSucc`'s splice embedding,
+recovers the sub-encoding's context: the inputs are unchanged, the sub-output
+reads the new `y₁` witness, and the sub-witnesses read the first witness block. -/
+theorem ctx_comp_succSpliceEmb {n : ℕ} (sub : DiophEnc n) (ρ : Fin n → ℕ) (y : ℕ)
+    (w : Fin (sub.witArity + 1) → ℕ) :
+    (DiophEnc.ctx (diophSucc sub) ρ y w) ∘ spliceEmb (Fin.last sub.witArity) succWitEmb =
+      sub.ctx ρ (w (Fin.last sub.witArity)) (fun k => w k.castSucc) := by
+  refine funext (fun a => ?_)
+  simp only [Function.comp_apply, DiophEnc.ctx, spliceEmb]
+  refine Fin.addCases ?_ ?_ a
+  · intro io
+    refine Fin.lastCases ?_ ?_ io
+    · simp only [Fin.addCases_left, Fin.lastCases_last, Fin.append_right, Fin.append_left,
+        Fin.snoc_last]
+    · intro j
+      simp only [Fin.addCases_left, Fin.lastCases_castSucc, Fin.append_left, Fin.snoc_castSucc]
+  · intro k
+    simp only [Fin.addCases_right, Fin.append_right, succWitEmb]
+
+/-- The `diophSucc sub` system vanishes at `ctx ρ y w` exactly when the
+sub-system vanishes at its recovered context and the new witness satisfies
+`y₁ + 1 = y`. -/
+theorem diophSucc_eval_eq_zero_iff {n : ℕ} (sub : DiophEnc n) (ρ : Fin n → ℕ) (y : ℕ)
+    (w : Fin (sub.witArity + 1) → ℕ) :
+    SosSystem.eval (diophSucc sub).sys ((diophSucc sub).ctx ρ y w) = 0 ↔
+      SosSystem.eval sub.sys (sub.ctx ρ (w (Fin.last sub.witArity))
+          (fun k => w k.castSucc)) = 0 ∧
+        w (Fin.last sub.witArity) + 1 = y := by
+  have hsplice :
+      SosSystem.eval ((diophSucc sub).sys) ((diophSucc sub).ctx ρ y w) =
+        SosSystem.eval sub.sys (sub.ctx ρ (w (Fin.last sub.witArity))
+            (fun k => w k.castSucc)) +
+          SosTerm.eval (.sqDist
+            [SimpleMonomial.var (Fin.natAdd (n + 1) (Fin.last sub.witArity)),
+              SimpleMonomial.one]
+            [SimpleMonomial.var (Fin.castAdd (sub.witArity + 1) (Fin.last n))])
+            ((diophSucc sub).ctx ρ y w) := by
+    change SosSystem.eval
+        (sub.sys.spliceWeaken (Fin.last sub.witArity) succWitEmb ++
+          [SosTerm.sqDist
+            [SimpleMonomial.var (Fin.natAdd (n + 1) (Fin.last sub.witArity)),
+              SimpleMonomial.one]
+            [SimpleMonomial.var (Fin.castAdd (sub.witArity + 1) (Fin.last n))]])
+        ((diophSucc sub).ctx ρ y w) = _
+    rw [SosSystem.eval_append, SosSystem.eval, SosSystem.eval,
+      SosSystem.eval_spliceWeaken sub.sys (Fin.last sub.witArity) succWitEmb
+        succWitEmb_injective succWitEmb_ne_last]
+    refine congrArg₂ (· + ·) ?_ (Nat.add_zero _)
+    exact congrArg (SosSystem.eval sub.sys) (ctx_comp_succSpliceEmb sub ρ y w)
+  rw [hsplice, Nat.add_eq_zero_iff, SosTerm.sqDist_eval_eq_zero_iff]
+  simp only [SimpleSum.eval, List.map_cons, List.map_nil, List.sum_cons, List.sum_nil,
+    Nat.add_zero, SimpleMonomial.var_eval, SimpleMonomial.one_eval, DiophEnc.ctx]
+  erw [Fin.append_right, Fin.append_left, Fin.snoc_last]
+
+/-- The `diophSucc` bound at the new `y₁` slot is the output variable. -/
+theorem diophSucc_bound_last {n : ℕ} (sub : DiophEnc n) :
+    (diophSucc sub).bound (Fin.last sub.witArity) = Tm.var (Fin.last n) := by
+  change (Fin.snoc (fun k => (sub.bound k).subst predSubst) (Tm.var (Fin.last n)) :
+      Fin (sub.witArity + 1) → ETm (n + 1)) (Fin.last sub.witArity) = Tm.var (Fin.last n)
+  rw [Fin.snoc_last]
+
+/-- The `diophSucc` bound at a sub-witness slot is the re-pointed sub-bound. -/
+theorem diophSucc_bound_castSucc {n : ℕ} (sub : DiophEnc n) (k : Fin sub.witArity) :
+    (diophSucc sub).bound (Fin.castSucc k) = (sub.bound k).subst predSubst := by
+  change (Fin.snoc (fun k => (sub.bound k).subst predSubst) (Tm.var (Fin.last n)) :
+      Fin (sub.witArity + 1) → ETm (n + 1)) (Fin.castSucc k) = (sub.bound k).subst predSubst
+  rw [Fin.snoc_castSucc]
+
+/-- `diophSucc sub` encodes `fun ρ => g ρ + 1` whenever `sub` encodes `g`. -/
+theorem diophSucc_encodes {n : ℕ} {sub : DiophEnc n} {g : (Fin n → ℕ) → ℕ}
+    (h : sub.Encodes g) : (diophSucc sub).Encodes (fun ρ => g ρ + 1) := by
+  obtain ⟨hsound, huniq, hbound⟩ := h
+  refine ⟨?_, ?_, ?_⟩
+  · intro ρ y w hzero
+    rw [diophSucc_eval_eq_zero_iff] at hzero
+    obtain ⟨hsub, hy⟩ := hzero
+    rw [hsound ρ (w (Fin.last sub.witArity)) (fun k => w k.castSucc) hsub] at hy
+    exact hy.symm
+  · intro ρ
+    obtain ⟨wsub, hwsub, hwsubuniq⟩ := huniq ρ
+    refine ⟨Fin.snoc wsub (g ρ), ?_, ?_⟩
+    · change (diophSucc sub).sys.eval ((diophSucc sub).ctx ρ (g ρ + 1) (Fin.snoc wsub (g ρ))) = 0
+      rw [diophSucc_eval_eq_zero_iff, Fin.snoc_last]
+      refine ⟨?_, rfl⟩
+      simp only [Fin.snoc_castSucc]
+      exact hwsub
+    · intro w' hw'
+      have hw'' : (diophSucc sub).sys.eval ((diophSucc sub).ctx ρ (g ρ + 1) w') = 0 := hw'
+      rw [diophSucc_eval_eq_zero_iff] at hw''
+      obtain ⟨hsub', hlast'⟩ := hw''
+      have hlast : w' (Fin.last sub.witArity) = g ρ := by omega
+      rw [hlast] at hsub'
+      have hinit : (fun k => w' k.castSucc) = wsub := hwsubuniq (fun k => w' k.castSucc) hsub'
+      refine funext (fun j => ?_)
+      refine Fin.lastCases ?_ ?_ j
+      · rw [Fin.snoc_last, hlast]
+      · intro k
+        rw [Fin.snoc_castSucc]
+        exact congrFun hinit k
+  · intro ρ y w hzero i
+    rw [diophSucc_eval_eq_zero_iff] at hzero
+    obtain ⟨hsub, hy⟩ := hzero
+    have hg : w (Fin.last sub.witArity) = g ρ :=
+      hsound ρ (w (Fin.last sub.witArity)) (fun k => w k.castSucc) hsub
+    have hyval : y = g ρ + 1 := by omega
+    refine Fin.lastCases ?_ ?_ i
+    · rw [diophSucc_bound_last, Tm.eval, Fin.snoc_last]
+      omega
+    · intro k
+      rw [diophSucc_bound_castSucc, hyval, eval_predSubst]
+      exact hbound ρ (g ρ) (fun k => w k.castSucc) (by rw [← hg]; exact hsub) k
 
 end GebLean
