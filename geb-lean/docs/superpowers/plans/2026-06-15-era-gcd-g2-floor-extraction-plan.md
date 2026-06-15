@@ -287,6 +287,46 @@ into 2–4 private `ℤ`-valued helper lemmas discovered during execution
 `R_nonneg` and `R_lt_den`). Re-checkpoint with the controller if the
 helper set grows beyond ~4 or the `ℤ` identity resists `ring`.
 
+### EXECUTION UPDATE (2026-06-15): verified two-step decomposition
+
+The direct 2D approach above stalls on the bound `0 ≤ R < den`: `R` is
+mixed-sign and the triangle-inequality bound `Σ |coef|·Bᵖ` strictly
+EXCEEDS `den = B^{a+b} − B^a − B^b + 1` (it equals `B^{a+b} − 1`), so
+`R < den` holds only by cancellation, not termwise. The viable route is
+the two-step (single-factor) reduction, NUMERICALLY VERIFIED end-to-end
+for `1 ≤ a,b ≤ 4` (incl. `a=1`, `b=1`, `a≠b`). Write `B := 5^(a·b)`,
+`E := a·b+a+b`, `dena := Bᵃ−1`, `denb := Bᵇ−1`, `r := E % a`,
+`q := E / a`, `P := gcdPComb a b = Bʳ·Σ_{i<q} B^{a·i}`, `S := gcdDigitSum a b`.
+
+Verified facts (all `true` on the grid): `num = dena·P + Bʳ`;
+`Bʳ < dena`; `denb·S ≤ P`; `P < denb·(S+1)`; `P / denb = S`;
+`num / den = S`.
+
+Decomposition (replaces the single Task 4 with 4a/4b/4c):
+
+- 4a (DONE, commit `84fd0f17…`): `gcdPComb` def, `gcd_num_split`
+  (`num = dena·P + Bʳ`, via `natGeomSum_mul` and `r + a·q = E`),
+  `gcd_rem_lt_dena` (`Bʳ < dena`). Clean geometric identities.
+- 4b (CRUX, remaining): `gcd_denb_mul_digitSum_le_pComb`
+  (`denb·S ≤ gcdPComb a b`) and `gcd_pComb_lt_denb_mul_digitSum_succ`
+  (`gcdPComb a b < denb·(S+1)`). Equivalent to `P / denb = S`. The comb
+  `P` (digits 0/1, spaced `a`) divided by `Bᵇ−1`: `P = denb·G + W` with
+  `W = Σ_{i<q} B^{(r+a·i) mod b}` (since `Bᵇ ≡ 1 mod denb`), so
+  `P/denb = G + ⌊W/denb⌋`; the residue `Rb = P − denb·S` is genuinely
+  NONNEGATIVE with base-`B` digits `< B` at positions `< b`. Connecting
+  `P/denb`'s digits to `s(n−k) = solCount a b (n−k)` uses the boundary-
+  complete (guarded) recurrence `s(m) = [a≤m]s(m−a) + [b≤m]s(m−b) −
+  [a+b≤m]s(m−a−b)` for `1 ≤ m` (extends `solCount_recurrence`, which
+  needs `a+b ≤ m`), equivalently the difference-invariance
+  `s(m) − [b≤m]s(m−b) = [a≤m]s(m−a) − [a+b≤m]s(m−a−b)`, telescoped over
+  `a`-steps. This is the Prunescu–Shunia combinatorial core (~150–200
+  lines); the dominant remaining cost.
+- 4c (remaining, mechanical): the two Task-4 target theorems
+  `gcd_den_mul_digitSum_le`, `gcd_num_lt_den_mul_digitSum_succ` from
+  4a+4b. `num = dena·P + Bʳ < dena·(P+1) ≤ dena·denb·(S+1)` (using
+  `Bʳ < dena` and `P+1 ≤ denb·(S+1)`); and
+  `den·S = dena·denb·S ≤ dena·P ≤ num` (using `denb·S ≤ P`).
+
 - [ ] **Step 3: numeric guard.**
 
 Temporary `#eval` (then delete) over `1 ≤ a,b ≤ 4` re-confirming
