@@ -17,10 +17,14 @@ digit-block indicator, each equated to a Mathlib reference function.
 ## Main definitions
 
 * `nu2Closed` — the slow, log-free `2`-adic valuation closed form.
+* `centralBinomClosed` — the central binomial coefficient as a
+  base-`2^(2n)` digit read-off of `(1 + 2^(2n))^(2n)`.
 
 ## Main statements
 
 * `nu2Closed_eq` — `nu2Closed n = padicValNat 2 n` for `n ≥ 1`.
+* `centralBinomClosed_eq` — `centralBinomClosed n = Nat.centralBinom n`
+  for `n ≥ 1`.
 
 ## References
 
@@ -112,5 +116,66 @@ theorem nu2Closed_eq (n : ℕ) (hn : 1 ≤ n) :
   rw [Nat.add_mul_div_right _ _ (by omega : 0 < base)]
   have h1div : (1 : ℕ) / base = 0 := Nat.div_eq_of_lt (by omega)
   omega
+
+private theorem ofDigits_ofFn (b : ℕ) (m : ℕ) (f : ℕ → ℕ) :
+    Nat.ofDigits b (List.ofFn (fun i : Fin m => f i)) =
+      ∑ i ∈ Finset.range m, f i * b ^ i := by
+  induction m with
+  | zero => simp
+  | succ k ih =>
+    rw [List.ofFn_succ', List.concat_eq_append, Nat.ofDigits_append]
+    simp only [Fin.val_castSucc, List.length_ofFn]
+    rw [ih, Finset.sum_range_succ]
+    simp [Nat.ofDigits_singleton, Fin.last, Nat.mul_comm]
+
+private theorem choose_two_mul_lt (n j : ℕ) (hn : 1 ≤ n) :
+    (2 * n).choose j < 2 ^ (2 * n) := by
+  have hk : 2 * n = (2 * n - 1) + 1 := by omega
+  have hle : (2 * n).choose j ≤ 2 ^ (2 * n - 1) := by
+    rw [hk]; exact Nat.choose_succ_le_two_pow (2 * n - 1) j
+  have hlt : 2 ^ (2 * n - 1) < 2 ^ (2 * n) :=
+    Nat.pow_lt_pow_right (by norm_num) (by omega)
+  exact lt_of_le_of_lt hle hlt
+
+/-- `C(2n,n)` as the arithmetic-term closed form
+`⌊(1+2^(2n))^(2n) / 2^(2n²)⌋ mod 2^(2n)` (arXiv:2407.12928). Agrees with
+`Nat.centralBinom` for `n ≥ 1`; degenerates to `0` at `n = 0`
+(`Nat.centralBinom 0 = 1`), handled separately. -/
+def centralBinomClosed (n : ℕ) : ℕ :=
+  ((1 + 2 ^ (2 * n)) ^ (2 * n) / 2 ^ (2 * n ^ 2)) % 2 ^ (2 * n)
+
+/-- The central-binomial closed form computes `Nat.centralBinom`: for
+`n ≥ 1`, `centralBinomClosed n = Nat.centralBinom n`. -/
+theorem centralBinomClosed_eq (n : ℕ) (hn : 1 ≤ n) :
+    centralBinomClosed n = Nat.centralBinom n := by
+  set b := 2 ^ (2 * n) with hb
+  set L := List.ofFn (fun j : Fin (2 * n + 1) => (2 * n).choose j) with hL
+  have hbpos : 0 < b := by rw [hb]; positivity
+  -- digits are all `< b`
+  have hdig : ∀ l ∈ L, l < b := by
+    intro l hmem
+    rw [hL, List.mem_ofFn] at hmem
+    obtain ⟨j, rfl⟩ := hmem
+    exact choose_two_mul_lt n j hn
+  -- expansion: `(1 + b) ^ (2n) = ofDigits b L`
+  have hexp : (1 + b) ^ (2 * n) = Nat.ofDigits b L := by
+    rw [hL, ofDigits_ofFn, add_comm 1 b, add_pow]
+    apply Finset.sum_congr rfl
+    intro j _
+    rw [one_pow, mul_one, Nat.cast_id, Nat.mul_comm]
+  -- `2 ^ (2 n²) = b ^ n`
+  have hpow : (2 : ℕ) ^ (2 * n ^ 2) = b ^ n := by
+    rw [hb, ← pow_mul]; ring_nf
+  rw [Nat.centralBinom_eq_two_mul_choose, centralBinomClosed, ← hb, hexp, hpow,
+    Nat.ofDigits_div_pow_eq_ofDigits_drop n hbpos L hdig,
+    Nat.ofDigits_mod_eq_head!]
+  -- the leading digit of `drop n L` is `C(2n, n)`
+  have hgE : L[n]? = some ((2 * n).choose n) := by
+    rw [hL, List.getElem?_ofFn, dif_pos (by omega)]
+  have hhead : (List.drop n L).head! = (2 * n).choose n := by
+    have h2 := List.head?_drop (l := L) (i := n)
+    rw [hgE] at h2
+    exact List.head!_of_head? h2
+  rw [hhead, Nat.mod_eq_of_lt (choose_two_mul_lt n n hn)]
 
 end GebLean
