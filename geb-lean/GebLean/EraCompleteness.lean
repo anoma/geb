@@ -17,6 +17,7 @@ elementary recursive functions as formalised by `ERMor1`
 * `erOfETm` — translation of an `Era` term to an `ERMor1` term.
 * `eraGeomSum` — the closed-form `ETm 2` for `Σ_{i<bound} q^i`.
 * `eraCentralBinom` — `centralBinomClosed` realised as an `ETm 1`.
+* `eraDelta` — `deltaBlock` realised as an `ETm 2`.
 
 ## Main statements
 
@@ -26,6 +27,7 @@ elementary recursive functions as formalised by `ERMor1`
 * `eraGeomSum_eval` — raw evaluation of `eraGeomSum`.
 * `eraGeomSum_natBSum` — `eraGeomSum` agrees with `natBSum` when the base is at least `2`.
 * `eraCentralBinom_eval` — `eraCentralBinom` evaluates to `centralBinomClosed`.
+* `eraDelta_eval` — `eraDelta` evaluates to `deltaBlock`.
 
 ## References
 
@@ -147,5 +149,18 @@ theorem eraCentralBinom_eval (n : ℕ) :
   simp [eraCentralBinom, centralBinomClosed, emod, ediv, emul, epow, epow2, eadd,
     Tm.eval, eraInterp, fcons]
   ring_nf
+
+/-- `deltaBlock` realised as an `Era` term (variable 0 = a, 1 = w). -/
+def eraDelta : ETm 2 :=
+  let a : ETm 2 := .var 0
+  let w : ETm 2 := .var 1
+  let pw := epow2 w
+  emul (etsub pw (.succ .zero)) (.succ (etsub pw a))
+
+/-- `eraDelta` evaluates to `deltaBlock`. -/
+theorem eraDelta_eval (a w : ℕ) :
+    Tm.eval eraInterp eraDelta ![a, w] = deltaBlock a w := by
+  simp [eraDelta, deltaBlock, emul, etsub, epow2, Tm.eval, eraInterp, fcons,
+    Matrix.cons_val_zero, Matrix.cons_val_one]
 
 end GebLean.EraCompleteness
