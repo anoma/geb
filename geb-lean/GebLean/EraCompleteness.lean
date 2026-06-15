@@ -20,6 +20,8 @@ elementary recursive functions as formalised by `ERMor1`
 * `eraDelta` — `deltaBlock` realised as an `ETm 2`.
 * `eraGcd` — `gcdClosed5` realised as an `ETm 2`.
 * `eraPow2Val` — `gcd(n, 2^n)` realised as an `ETm 1`.
+* `eraNu2` — `nu2Closed` (the slow `2`-adic valuation) realised as an `ETm 1`.
+* `eraSigma` — `hwClosed` (the binary Hamming weight) realised as an `ETm 1`.
 
 ## Main statements
 
@@ -32,6 +34,8 @@ elementary recursive functions as formalised by `ERMor1`
 * `eraDelta_eval` — `eraDelta` evaluates to `deltaBlock`.
 * `eraGcd_eval` — `eraGcd` evaluates to `Nat.gcd`.
 * `eraPow2Val_eval` — `eraPow2Val` evaluates to `Nat.gcd n (2 ^ n)`.
+* `eraNu2_eval` — `eraNu2` evaluates to `nu2Closed`.
+* `eraSigma_eval` — `eraSigma` evaluates to `hwClosed`.
 
 ## References
 
@@ -207,5 +211,44 @@ theorem eraPow2Val_eval (n : ℕ) (hn : 1 ≤ n) :
     · simp [Tm.eval]
     · simp [Tm.eval, eraInterp, epow2, fcons]
   rw [hctx, eraGcd_eval n (2 ^ n) hn (Nat.one_le_pow n 2 (by norm_num))]
+
+/-- The slow `2`-adic valuation `nu2Closed` realised as an `ETm 1`
+(variable `0 = n`), built around `eraPow2Val` (which evaluates to
+`Nat.gcd n (2^n)`). Mirrors `nu2Closed`'s arithmetic
+`gcd(n,2ⁿ)^(n+1) % base² / base` with `base = 2^(n+1) − 1`. -/
+def eraNu2 : ETm 1 :=
+  let n : ETm 1 := .var 0
+  let one : ETm 1 := .succ .zero
+  let two : ETm 1 := .succ (.succ .zero)
+  let base := etsub (epow2 (.succ n)) one
+  ediv (emod (epow eraPow2Val (.succ n)) (epow base two)) base
+
+/-- `eraNu2` evaluates to `nu2Closed`. -/
+theorem eraNu2_eval (n : ℕ) (hn : 1 ≤ n) :
+    Tm.eval eraInterp eraNu2 ![n] = nu2Closed n := by
+  have key := eraPow2Val_eval n hn
+  unfold nu2Closed
+  simp only [eraNu2, ediv, emod, epow, epow2, etsub, Tm.eval, eraInterp, fcons,
+    Matrix.cons_val_zero, key]
+
+/-- The binary Hamming weight `hwClosed = nu2Closed ∘ centralBinomClosed`
+realised as an `ETm 1` (variable `0 = n`): `eraNu2` composed with
+`eraCentralBinom` by substitution. -/
+def eraSigma : ETm 1 :=
+  eraNu2.subst ![eraCentralBinom]
+
+/-- `eraSigma` evaluates to `hwClosed`. -/
+theorem eraSigma_eval (n : ℕ) (hn : 1 ≤ n) :
+    Tm.eval eraInterp eraSigma ![n] = hwClosed n := by
+  have hcb : 1 ≤ centralBinomClosed n := by
+    rw [centralBinomClosed_eq n hn]; exact Nat.centralBinom_pos n
+  rw [eraSigma, Tm.eval_subst]
+  have hctx : (fun i => Tm.eval eraInterp (![eraCentralBinom] i) ![n])
+      = ![centralBinomClosed n] := by
+    funext i
+    refine i.cases ?_ (fun k => k.elim0)
+    simp [eraCentralBinom_eval]
+  rw [hctx]
+  exact eraNu2_eval (centralBinomClosed n) hcb
 
 end GebLean.EraCompleteness
