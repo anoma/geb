@@ -27,6 +27,14 @@ so it precedes both.
 * `SimpleSum`, `SosTerm`, `SosSystem` — the sum-of-squares atom algebra:
   non-negative sums of monomials, squared-difference / product atoms, and
   systems of atoms, with their `eval` denotations.
+* `Era.Tm.weaken`, `SimpleMonomial.weaken`, `SimpleSum.weaken`,
+  `SosTerm.weaken`, `SosSystem.weaken` — re-indexing of the atom algebra
+  along a variable map `f : Fin m → Fin m'`, lifting an `m`-variable
+  object to an `m'`-variable context.
+* `spliceEmb`, `SosSystem.spliceWeaken` — the variable embedding splicing a
+  sub-encoding over `Fin (n + 1 + wSub)` into a compound layout over
+  `Fin (n + 1 + wComp)` (inputs fixed, sub-output to a witness slot,
+  sub-witnesses to a witness block), and the system re-indexing along it.
 
 ## Main statements
 
@@ -40,6 +48,15 @@ so it precedes both.
 * `SosSystem.eval_eq_zero_iff`, `SosTerm.sqDist_eval_eq_zero_iff`,
   `SosTerm.prod_eval_eq_zero_iff` — the zero-set characterisation of the
   atom algebra.
+* `Era.Tm.eval_weaken`, `SimpleMonomial.eval_weaken`,
+  `SimpleSum.eval_weaken`, `SosTerm.eval_weaken`, `SosSystem.eval_weaken` —
+  re-indexing compatibility: evaluating a weakened object at `ρ'` equals
+  evaluating the original at `ρ' ∘ f` (the monomial, sum, term, and system
+  cases assume `Function.Injective f`, so each weakened variable has a
+  unique source).
+* `spliceEmb_injective`, `SosSystem.eval_spliceWeaken` — injectivity of the
+  splicing embedding (under a witness-block injectivity and slot-disjointness
+  hypothesis) and the resulting re-indexing compatibility.
 
 ## Implementation notes
 
@@ -67,6 +84,19 @@ domination and monotonicity are proved as two separate inductions: the
 former needs only itself, the latter needs the former solely for the
 `base ≥ 1` side condition of the `pow` case.
 
+Re-indexing computability (plan Phase 4, Task 4.4): `weaken` along a
+general `f : Fin m → Fin m'` is a `def`, so its body must execute without
+`Classical.choice`. The `ETm`-valued fields are renamed by
+`Era.Tm.weaken f` (substitution of `fun i => .var (f i)`). The
+per-target-index data of a weakened monomial reads off the source index
+`i` with `f i = j` via the computable finite search `preimage` (a
+`List.find?` over `List.finRange`), defaulting off the image of `f` to
+`.zero` / `0`; those off-image factors contribute `_ ^ 0 = 1` and so do
+not affect the value. The eval-compatibility proofs assume
+`Function.Injective f`, under which `preimage` recovers the unique source
+(`preimage_apply`), and re-index the `Finset.prod` over `Fin m'` to the
+product over `Fin m` by `Finset.prod_of_injOn`.
+
 Carrier-design choice (plan Phase 4, Task 4.1 Step 1): the Diophantine
 predicate is carried as typed `SosSystem` atoms (`sqDist` / `prod` over
 `SimpleSum`/`SimpleMonomial`), not as a raw `ETm` paired with a
@@ -86,6 +116,29 @@ over the raw-`ETm`-plus-`Simple`-predicate fallback.
 
 elementary recursive, majorant, monotone, Diophantine
 -/
+
+namespace Era
+
+/-- Re-index a term along a variable map `f : Fin m → Fin m'`, renaming each
+free variable `i` to `f i`. The special case `f = id` is the identity
+(`Tm.subst_id`); in general it is substitution of the variable-renaming
+tuple, so it executes without `Classical.choice`. -/
+def Tm.weaken {B : Type} {ar : B → Nat} {m m' : Nat} (f : Fin m → Fin m')
+    (t : Tm B ar m) : Tm B ar m' :=
+  t.subst (fun i => .var (f i))
+
+/-- Re-indexing compatibility for terms: evaluating `t.weaken f` at `ρ'`
+equals evaluating `t` at the precomposed context `ρ' ∘ f`. An instance of
+`Tm.eval_subst` at the variable-renaming tuple. -/
+theorem Tm.eval_weaken {B : Type} {ar : B → Nat}
+    (I : (b : B) → (Fin (ar b) → Nat) → Nat) {m m' : Nat} (f : Fin m → Fin m')
+    (t : Tm B ar m) (ρ' : Fin m' → Nat) :
+    (t.weaken f).eval I ρ' = t.eval I (ρ' ∘ f) := by
+  unfold Tm.weaken
+  rw [Tm.eval_subst]
+  rfl
+
+end Era
 
 namespace GebLean
 
@@ -311,6 +364,250 @@ theorem SosTerm.sqDist_eval_eq_zero_iff {m : ℕ} (P Q : SimpleSum m) (ρ : Fin 
 theorem SosTerm.prod_eval_eq_zero_iff {m : ℕ} (s t : List (SosTerm m)) (ρ : Fin m → ℕ) :
     SosTerm.eval (.prod s t) ρ = 0 ↔ SosSystem.eval s ρ = 0 ∨ SosSystem.eval t ρ = 0 := by
   rw [SosTerm.eval, Nat.mul_eq_zero]
+
+/-- The computable preimage search for re-indexing: the first source index
+`i` of `Fin m` with `f i = j`, or `none` when `j` is outside the image of
+`f`. Implemented by `List.find?` over `List.finRange`, so it executes
+without `Classical.choice`. -/
+def preimage {m m' : ℕ} (f : Fin m → Fin m') (j : Fin m') : Option (Fin m) :=
+  (List.finRange m).find? (fun i => decide (f i = j))
+
+/-- For an injective `f`, the preimage of `f i` is the unique source `i`. -/
+theorem preimage_apply {m m' : ℕ} {f : Fin m → Fin m'} (hf : Function.Injective f)
+    (i : Fin m) : preimage f (f i) = some i := by
+  unfold preimage
+  rw [List.find?_eq_some_iff_getElem]
+  refine ⟨by simp, i.val, ?_, ?_, ?_⟩
+  · rw [List.length_finRange]; exact i.isLt
+  · rw [List.getElem_finRange]; rfl
+  · intro j hj
+    rw [List.getElem_finRange]
+    simp only [Bool.not_eq_true', decide_eq_false_iff_not]
+    intro h
+    have heq := hf h
+    rw [Fin.ext_iff] at heq
+    simp only [Fin.val_cast] at heq
+    omega
+
+/-- The preimage is `none` for a target index outside the image of `f`. -/
+theorem preimage_eq_none {m m' : ℕ} {f : Fin m → Fin m'} {j : Fin m'}
+    (h : ∀ i, f i ≠ j) : preimage f j = none := by
+  unfold preimage
+  rw [List.find?_eq_none]
+  intro i _
+  simp only [decide_eq_true_eq]
+  exact h i
+
+/-- Re-index a simple monomial along a variable map `f : Fin m → Fin m'`.
+The coefficient and per-variable exponential bases and coefficients are
+renamed by `Era.Tm.weaken f`; each target index `j` reads the source data
+of the unique `i` with `f i = j` (`preimage`), defaulting off the image of
+`f` to `.zero` / `0`, whose factors then contribute `_ ^ 0 = 1`. -/
+def SimpleMonomial.weaken {m m' : ℕ} (mon : SimpleMonomial m) (f : Fin m → Fin m') :
+    SimpleMonomial m' where
+  coeff := mon.coeff.weaken f
+  expBase := fun j =>
+    match preimage f j with
+    | some i => (mon.expBase i).weaken f
+    | none => .zero
+  expCoeff := fun j =>
+    match preimage f j with
+    | some i => (mon.expCoeff i).weaken f
+    | none => .zero
+  polyExp := fun j =>
+    match preimage f j with
+    | some i => mon.polyExp i
+    | none => 0
+
+/-- Re-indexing compatibility for monomials: for injective `f`, evaluating
+`mon.weaken f` at `ρ'` equals evaluating `mon` at `ρ' ∘ f`. The off-image
+factors are `1`, and `Finset.prod_of_injOn` re-indexes the products over
+`Fin m'` to the products over `Fin m`. -/
+theorem SimpleMonomial.eval_weaken {m m' : ℕ} (mon : SimpleMonomial m)
+    (f : Fin m → Fin m') (hf : Function.Injective f) (ρ' : Fin m' → ℕ) :
+    (mon.weaken f).eval ρ' = mon.eval (ρ' ∘ f) := by
+  unfold SimpleMonomial.eval SimpleMonomial.weaken
+  congr 1
+  · congr 1
+    · exact Tm.eval_weaken eraInterp f mon.coeff ρ'
+    · refine (Finset.prod_of_injOn f (fun a _ b _ h => hf h) (fun _ _ => Finset.mem_univ _)
+        ?_ ?_).symm
+      · intro j _ hj
+        have hnone : preimage f j = none := by
+          apply preimage_eq_none
+          intro i hi
+          exact hj ⟨i, Finset.mem_univ i, hi⟩
+        simp only [hnone]
+        simp only [Tm.eval]
+        rw [Nat.zero_mul, Nat.pow_zero]
+      · intro i _
+        simp only [preimage_apply hf]
+        rw [Tm.eval_weaken, Tm.eval_weaken]
+        rfl
+  · refine (Finset.prod_of_injOn f (fun a _ b _ h => hf h) (fun _ _ => Finset.mem_univ _)
+      ?_ ?_).symm
+    · intro j _ hj
+      have hnone : preimage f j = none := by
+        apply preimage_eq_none
+        intro i hi
+        exact hj ⟨i, Finset.mem_univ i, hi⟩
+      simp only [hnone]
+      rw [Nat.pow_zero]
+    · intro i _
+      simp only [preimage_apply hf]
+      rfl
+
+/-- Re-index a simple sum along `f`, by re-indexing each monomial. -/
+def SimpleSum.weaken {m m' : ℕ} (p : SimpleSum m) (f : Fin m → Fin m') : SimpleSum m' :=
+  p.map (fun mon => mon.weaken f)
+
+/-- Re-indexing compatibility for sums: for injective `f`, evaluating
+`p.weaken f` at `ρ'` equals evaluating `p` at `ρ' ∘ f`. -/
+theorem SimpleSum.eval_weaken {m m' : ℕ} (p : SimpleSum m) (f : Fin m → Fin m')
+    (hf : Function.Injective f) (ρ' : Fin m' → ℕ) :
+    (p.weaken f).eval ρ' = p.eval (ρ' ∘ f) := by
+  unfold SimpleSum.eval SimpleSum.weaken
+  rw [List.map_map]
+  congr 1
+  apply List.map_congr_left
+  intro mon _
+  exact mon.eval_weaken f hf ρ'
+
+mutual
+/-- Re-index a sum-of-squares atom along `f`, recursing into its simple
+sums (for `sqDist`) or sub-systems (for `prod`). -/
+def SosTerm.weaken {m m' : ℕ} (a : SosTerm m) (f : Fin m → Fin m') : SosTerm m' :=
+  match a with
+  | .sqDist P Q => .sqDist (P.weaken f) (Q.weaken f)
+  | .prod s t => .prod (SosSystem.weaken s f) (SosSystem.weaken t f)
+--
+/-- Re-index a sum-of-squares system along `f`, by re-indexing each atom. -/
+def SosSystem.weaken {m m' : ℕ} (s : SosSystem m) (f : Fin m → Fin m') : SosSystem m' :=
+  match s with
+  | [] => []
+  | a :: rest => a.weaken f :: SosSystem.weaken rest f
+end
+
+mutual
+/-- Re-indexing compatibility for atoms: for injective `f`, evaluating
+`a.weaken f` at `ρ'` equals evaluating `a` at `ρ' ∘ f`. -/
+theorem SosTerm.eval_weaken {m m' : ℕ} (a : SosTerm m) (f : Fin m → Fin m')
+    (hf : Function.Injective f) (ρ' : Fin m' → ℕ) :
+    (a.weaken f).eval ρ' = a.eval (ρ' ∘ f) := by
+  match a with
+  | .sqDist P Q =>
+    simp only [SosTerm.weaken, SosTerm.eval, P.eval_weaken f hf ρ', Q.eval_weaken f hf ρ']
+  | .prod s t =>
+    simp only [SosTerm.weaken, SosTerm.eval, SosSystem.eval_weaken s f hf ρ',
+      SosSystem.eval_weaken t f hf ρ']
+--
+/-- Re-indexing compatibility for systems: for injective `f`, evaluating
+`s.weaken f` at `ρ'` equals evaluating `s` at `ρ' ∘ f`. -/
+theorem SosSystem.eval_weaken {m m' : ℕ} (s : SosSystem m) (f : Fin m → Fin m')
+    (hf : Function.Injective f) (ρ' : Fin m' → ℕ) :
+    (s.weaken f).eval ρ' = s.eval (ρ' ∘ f) := by
+  match s with
+  | [] => simp only [SosSystem.weaken, SosSystem.eval]
+  | a :: rest =>
+    simp only [SosSystem.weaken, SosSystem.eval, a.eval_weaken f hf ρ',
+      SosSystem.eval_weaken rest f hf ρ']
+end
+
+/-- The variable embedding splicing a sub-encoding's layout
+`Fin (n + 1 + wSub)` into a compound layout `Fin (n + 1 + wComp)`: the `n`
+inputs are fixed, the sub-output index `n` is sent to the compound witness
+slot `outSlot`, and the sub-witnesses are sent through `witEmb` into the
+compound witness block. Built from `Fin.addCases` / `Fin.lastCases`, so it
+executes. -/
+def spliceEmb {n wSub wComp : ℕ} (outSlot : Fin wComp) (witEmb : Fin wSub → Fin wComp) :
+    Fin (n + 1 + wSub) → Fin (n + 1 + wComp) :=
+  Fin.addCases
+    (Fin.lastCases (Fin.natAdd (n + 1) outSlot)
+      (fun i => Fin.castAdd wComp i.castSucc))
+    (fun k => Fin.natAdd (n + 1) (witEmb k))
+
+/-- Injectivity of `spliceEmb`: the inputs land in the input block and the
+sub-output and sub-witnesses land in the witness block, so the two never
+collide; within the witness block, injectivity follows from `witEmb` being
+injective and missing `outSlot`. -/
+theorem spliceEmb_injective {n wSub wComp : ℕ} (outSlot : Fin wComp)
+    (witEmb : Fin wSub → Fin wComp) (hwit : Function.Injective witEmb)
+    (hout : ∀ k, witEmb k ≠ outSlot) :
+    Function.Injective (spliceEmb (n := n) outSlot witEmb) := by
+  intro a b hab
+  unfold spliceEmb at hab
+  induction a using Fin.addCases with
+  | left ia =>
+    induction b using Fin.addCases with
+    | left ib =>
+      simp only [Fin.addCases_left] at hab
+      induction ia using Fin.lastCases with
+      | last =>
+        induction ib using Fin.lastCases with
+        | last => rfl
+        | cast jb =>
+          simp only [Fin.lastCases_last, Fin.lastCases_castSucc] at hab
+          rw [Fin.ext_iff] at hab
+          simp only [Fin.val_natAdd, Fin.val_castAdd, Fin.val_castSucc] at hab
+          omega
+      | cast ja =>
+        induction ib using Fin.lastCases with
+        | last =>
+          simp only [Fin.lastCases_last, Fin.lastCases_castSucc] at hab
+          rw [Fin.ext_iff] at hab
+          simp only [Fin.val_natAdd, Fin.val_castAdd, Fin.val_castSucc] at hab
+          omega
+        | cast jb =>
+          simp only [Fin.lastCases_castSucc] at hab
+          have := Fin.castAdd_injective _ _ hab
+          rw [Fin.castSucc_inj] at this
+          rw [this]
+    | right kb =>
+      simp only [Fin.addCases_left, Fin.addCases_right] at hab
+      induction ia using Fin.lastCases with
+      | last =>
+        simp only [Fin.lastCases_last] at hab
+        have := Fin.natAdd_injective _ _ hab
+        exact absurd this.symm (hout kb)
+      | cast ja =>
+        simp only [Fin.lastCases_castSucc] at hab
+        rw [Fin.ext_iff] at hab
+        simp only [Fin.val_castAdd, Fin.val_castSucc, Fin.val_natAdd] at hab
+        omega
+  | right ka =>
+    induction b using Fin.addCases with
+    | left ib =>
+      simp only [Fin.addCases_left, Fin.addCases_right] at hab
+      induction ib using Fin.lastCases with
+      | last =>
+        simp only [Fin.lastCases_last] at hab
+        have := Fin.natAdd_injective _ _ hab
+        exact absurd this (hout ka)
+      | cast jb =>
+        simp only [Fin.lastCases_castSucc] at hab
+        rw [Fin.ext_iff] at hab
+        simp only [Fin.val_castAdd, Fin.val_castSucc, Fin.val_natAdd] at hab
+        omega
+    | right kb =>
+      simp only [Fin.addCases_right] at hab
+      have := Fin.natAdd_injective _ _ hab
+      rw [hwit this]
+
+/-- Splice a sub-encoding's system over `Fin (n + 1 + wSub)` into the
+compound layout `Fin (n + 1 + wComp)`, by re-indexing along `spliceEmb`. -/
+def SosSystem.spliceWeaken {n wSub wComp : ℕ} (s : SosSystem (n + 1 + wSub))
+    (outSlot : Fin wComp) (witEmb : Fin wSub → Fin wComp) : SosSystem (n + 1 + wComp) :=
+  s.weaken (spliceEmb outSlot witEmb)
+
+/-- Re-indexing compatibility for the splice: under the embedding's
+injectivity hypotheses, evaluating the spliced system at `ρ'` equals
+evaluating the sub-system at `ρ' ∘ spliceEmb …`. An instance of
+`SosSystem.eval_weaken`. -/
+theorem SosSystem.eval_spliceWeaken {n wSub wComp : ℕ} (s : SosSystem (n + 1 + wSub))
+    (outSlot : Fin wComp) (witEmb : Fin wSub → Fin wComp) (hwit : Function.Injective witEmb)
+    (hout : ∀ k, witEmb k ≠ outSlot) (ρ' : Fin (n + 1 + wComp) → ℕ) :
+    (s.spliceWeaken outSlot witEmb).eval ρ' = s.eval (ρ' ∘ spliceEmb outSlot witEmb) :=
+  s.eval_weaken (spliceEmb outSlot witEmb) (spliceEmb_injective outSlot witEmb hwit hout) ρ'
 
 /-- A bounded, unique-witness, sum-of-squares Diophantine encoding of an
 `ETm n` term's graph `t.eval ρ = y` (arXiv:2606.09336, Lemma 2). System
