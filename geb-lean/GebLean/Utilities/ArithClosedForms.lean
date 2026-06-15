@@ -447,4 +447,153 @@ theorem solCount_mul_eq_gcd_succ (a b : ℕ) (ha : 1 ≤ a) (hb : 1 ≤ b) :
     · simp only; rw [← hx]
     · simp only; rw [← hy]
 
+/-- Inclusion–exclusion recurrence for the linear-Diophantine count:
+for `1 ≤ a, 1 ≤ b` and `a + b ≤ m`,
+`solCount a b m + solCount a b (m − a − b)
+  = solCount a b (m − a) + solCount a b (m − b)`. The coefficientwise
+content of `(1 − tᵃ)(1 − tᵇ)·Σ solCount a b m · tᵐ = 1`. -/
+private theorem solCount_recurrence (a b m : ℕ) (ha : 1 ≤ a) (hb : 1 ≤ b)
+    (hm : a + b ≤ m) :
+    solCount a b m + solCount a b (m - a - b)
+      = solCount a b (m - a) + solCount a b (m - b) := by
+  set S := (Finset.range (m + 1) ×ˢ Finset.range (m + 1)).filter
+    (fun p => a * p.1 + b * p.2 = m) with hS
+  set Sx := S.filter (fun p => 1 ≤ p.1) with hSx
+  set Sy := S.filter (fun p => 1 ≤ p.2) with hSy
+  have hmemS : ∀ p : ℕ × ℕ, p ∈ S ↔
+      (p.1 < m + 1 ∧ p.2 < m + 1) ∧ a * p.1 + b * p.2 = m := by
+    intro p
+    rw [hS, Finset.mem_filter, Finset.mem_product, Finset.mem_range,
+      Finset.mem_range]
+  have hmemSx : ∀ p : ℕ × ℕ, p ∈ Sx ↔ p ∈ S ∧ 1 ≤ p.1 := by
+    intro p; rw [hSx, Finset.mem_filter]
+  have hmemSy : ∀ p : ℕ × ℕ, p ∈ Sy ↔ p ∈ S ∧ 1 ≤ p.2 := by
+    intro p; rw [hSy, Finset.mem_filter]
+  -- `Sx ∪ Sy = S`: no solution has `x = 0 ∧ y = 0` for `m ≥ a + b > 0`.
+  have hunion : Sx ∪ Sy = S := by
+    apply Finset.Subset.antisymm
+    · intro p hp
+      rw [Finset.mem_union, hmemSx, hmemSy] at hp
+      rcases hp with h | h
+      · exact h.1
+      · exact h.1
+    · intro p hp
+      rw [Finset.mem_union, hmemSx, hmemSy]
+      have heq := ((hmemS p).mp hp).2
+      rcases Nat.eq_zero_or_pos p.1 with hx0 | hx0
+      · rcases Nat.eq_zero_or_pos p.2 with hy0 | hy0
+        · exfalso; rw [hx0, hy0] at heq; omega
+        · exact Or.inr ⟨hp, hy0⟩
+      · exact Or.inl ⟨hp, hx0⟩
+  -- card identity from `card_union_add_card_inter`.
+  have hincl : S.card + (Sx ∩ Sy).card = Sx.card + Sy.card := by
+    rw [← hunion]; exact Finset.card_union_add_card_inter Sx Sy
+  -- `card Sx = solCount a b (m - a)`.
+  have hSxcard : Sx.card = solCount a b (m - a) := by
+    rw [solCount]
+    apply Finset.card_nbij' (fun p => (p.1 - 1, p.2)) (fun p => (p.1 + 1, p.2))
+    · intro p hp
+      simp only [Finset.mem_coe, hmemSx, hmemS] at hp
+      simp only [Finset.mem_coe, Finset.mem_filter, Finset.mem_product,
+        Finset.mem_range]
+      obtain ⟨⟨-, heq⟩, hx1⟩ := hp
+      have hax : a ≤ a * p.1 := Nat.le_mul_of_pos_right a hx1
+      have heq' : a * (p.1 - 1) + b * p.2 = m - a := by
+        have : a * (p.1 - 1) = a * p.1 - a := by rw [Nat.mul_sub, Nat.mul_one]
+        omega
+      exact ⟨mem_solCount_box a b (m - a) (p.1 - 1) p.2 ha hb heq', heq'⟩
+    · intro p hp
+      simp only [Finset.mem_coe, Finset.mem_filter, Finset.mem_product,
+        Finset.mem_range] at hp
+      simp only [Finset.mem_coe, hmemSx, hmemS]
+      obtain ⟨-, heq⟩ := hp
+      have heq' : a * (p.1 + 1) + b * p.2 = m := by rw [Nat.mul_add, Nat.mul_one]; omega
+      exact ⟨⟨mem_solCount_box a b m (p.1 + 1) p.2 ha hb heq', heq'⟩, by omega⟩
+    · intro p hp
+      simp only [Finset.mem_coe, hmemSx, hmemS] at hp
+      obtain ⟨-, hx1⟩ := hp
+      apply Prod.ext
+      · simp only; omega
+      · simp only
+    · intro p _
+      apply Prod.ext
+      · simp only; omega
+      · simp only
+  -- `card Sy = solCount a b (m - b)`.
+  have hSycard : Sy.card = solCount a b (m - b) := by
+    rw [solCount]
+    apply Finset.card_nbij' (fun p => (p.1, p.2 - 1)) (fun p => (p.1, p.2 + 1))
+    · intro p hp
+      simp only [Finset.mem_coe, hmemSy, hmemS] at hp
+      simp only [Finset.mem_coe, Finset.mem_filter, Finset.mem_product,
+        Finset.mem_range]
+      obtain ⟨⟨-, heq⟩, hy1⟩ := hp
+      have hby : b ≤ b * p.2 := Nat.le_mul_of_pos_right b hy1
+      have heq' : a * p.1 + b * (p.2 - 1) = m - b := by
+        have : b * (p.2 - 1) = b * p.2 - b := by rw [Nat.mul_sub, Nat.mul_one]
+        omega
+      exact ⟨mem_solCount_box a b (m - b) p.1 (p.2 - 1) ha hb heq', heq'⟩
+    · intro p hp
+      simp only [Finset.mem_coe, Finset.mem_filter, Finset.mem_product,
+        Finset.mem_range] at hp
+      simp only [Finset.mem_coe, hmemSy, hmemS]
+      obtain ⟨-, heq⟩ := hp
+      have heq' : a * p.1 + b * (p.2 + 1) = m := by rw [Nat.mul_add, Nat.mul_one]; omega
+      exact ⟨⟨mem_solCount_box a b m p.1 (p.2 + 1) ha hb heq', heq'⟩, by omega⟩
+    · intro p hp
+      simp only [Finset.mem_coe, hmemSy, hmemS] at hp
+      obtain ⟨-, hy1⟩ := hp
+      apply Prod.ext
+      · simp only
+      · simp only; omega
+    · intro p _
+      apply Prod.ext
+      · simp only
+      · simp only; omega
+  -- `card (Sx ∩ Sy) = solCount a b (m - a - b)`.
+  have hmemInter : ∀ p : ℕ × ℕ, p ∈ Sx ∩ Sy ↔
+      ((p.1 < m + 1 ∧ p.2 < m + 1) ∧ a * p.1 + b * p.2 = m)
+        ∧ 1 ≤ p.1 ∧ 1 ≤ p.2 := by
+    intro p
+    rw [Finset.mem_inter, hmemSx, hmemSy, hmemS]
+    tauto
+  have hintercard : (Sx ∩ Sy).card = solCount a b (m - a - b) := by
+    rw [solCount]
+    apply Finset.card_nbij' (fun p => (p.1 - 1, p.2 - 1))
+      (fun p => (p.1 + 1, p.2 + 1))
+    · intro p hp
+      simp only [Finset.mem_coe, hmemInter] at hp
+      simp only [Finset.mem_coe, Finset.mem_filter, Finset.mem_product,
+        Finset.mem_range]
+      obtain ⟨⟨-, heq⟩, hx1, hy1⟩ := hp
+      have hax0 : a ≤ a * p.1 := Nat.le_mul_of_pos_right a hx1
+      have hby0 : b ≤ b * p.2 := Nat.le_mul_of_pos_right b hy1
+      have heq' : a * (p.1 - 1) + b * (p.2 - 1) = m - a - b := by
+        have hax : a * (p.1 - 1) = a * p.1 - a := by rw [Nat.mul_sub, Nat.mul_one]
+        have hby : b * (p.2 - 1) = b * p.2 - b := by rw [Nat.mul_sub, Nat.mul_one]
+        omega
+      exact ⟨mem_solCount_box a b (m - a - b) (p.1 - 1) (p.2 - 1) ha hb heq', heq'⟩
+    · intro p hp
+      simp only [Finset.mem_coe, Finset.mem_filter, Finset.mem_product,
+        Finset.mem_range] at hp
+      simp only [Finset.mem_coe, hmemInter]
+      obtain ⟨-, heq⟩ := hp
+      have heq' : a * (p.1 + 1) + b * (p.2 + 1) = m := by
+        rw [Nat.mul_add, Nat.mul_one, Nat.mul_add, Nat.mul_one]; omega
+      exact ⟨⟨mem_solCount_box a b m (p.1 + 1) (p.2 + 1) ha hb heq', heq'⟩,
+        by omega, by omega⟩
+    · intro p hp
+      simp only [Finset.mem_coe, hmemInter] at hp
+      obtain ⟨-, hx1, hy1⟩ := hp
+      apply Prod.ext
+      · simp only; omega
+      · simp only; omega
+    · intro p _
+      apply Prod.ext
+      · simp only; omega
+      · simp only; omega
+  have hScard : S.card = solCount a b m := by rw [hS, solCount]
+  rw [hSxcard, hSycard, hintercard, hScard] at hincl
+  exact hincl
+
 end GebLean
