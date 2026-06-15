@@ -317,10 +317,26 @@ Decomposition (replaces the single Task 4 with 4a/4b/4c):
   `P/denb`'s digits to `s(n−k) = solCount a b (n−k)` uses the boundary-
   complete (guarded) recurrence `s(m) = [a≤m]s(m−a) + [b≤m]s(m−b) −
   [a+b≤m]s(m−a−b)` for `1 ≤ m` (extends `solCount_recurrence`, which
-  needs `a+b ≤ m`), equivalently the difference-invariance
-  `s(m) − [b≤m]s(m−b) = [a≤m]s(m−a) − [a+b≤m]s(m−a−b)`, telescoped over
-  `a`-steps. This is the Prunescu–Shunia combinatorial core (~150–200
-  lines); the dominant remaining cost.
+  needs `a+b ≤ m`). The dominant remaining cost.
+
+  REFINED (carry-free) decomposition, NUMERICALLY VERIFIED for
+  `1 ≤ a,b ≤ 4` (incl. `a=1`,`b=1`,`a≠b`). Let
+`g B b c := B^(c%b)·Σ_{l<c/b} B^(b·l)` (the per-tooth quotient, so
+  `B^c = denb·(g B b c) + B^(c%b)`); `W := Σ_{i<q} B^((r+a·i)%b)`;
+  `G := Σ_{i<q} (g B b (r+a·i))`. Then:
+  - (i) comb split `gcdPComb a b = denb·G + W` — geometric, from the
+    per-tooth `B^c = denb·g + B^(c mod b)` summed.
+  - (ii) no-carry `W < denb` — each digit `w_j = #{i<q : (r+a·i) ≡ j
+    (mod b)} ≤ q < B`, and `q ≤ b+1`, so `W < Bᵇ − 1`. Hence
+    `gcdPComb a b / denb = G` and `gcdPComb a b % denb = W` (no carry).
+  - (iii) THE CORE: `gcdDigitSum a b = G` (i.e. `S = G`). Coefficient-
+    wise (base `B`): `solCount a b (n−e) = #{i<q : r+a·i ≡ e (mod b)
+    ∧ r+a·i > e}` for `0 ≤ e ≤ n` (and `0` for `e > n`). This 2D-count
+    = 1D-modular-count identity is the irreducible Prunescu–Shunia
+    core (~100–200 lines); provable via the guarded recurrence /
+    difference-invariance over `a`-steps, or a direct counting bijection.
+  Given (i)–(iii): `denb·S = denb·G ≤ gcdPComb a b` and
+  `gcdPComb a b = denb·G + W < denb·G + denb = denb·(S+1)` (4b targets).
 - 4c (remaining, mechanical): the two Task-4 target theorems
   `gcd_den_mul_digitSum_le`, `gcd_num_lt_den_mul_digitSum_succ` from
   4a+4b. `num = dena·P + Bʳ < dena·(P+1) ≤ dena·denb·(S+1)` (using
