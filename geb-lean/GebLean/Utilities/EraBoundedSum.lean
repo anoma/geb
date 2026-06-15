@@ -3,6 +3,7 @@ import Mathlib.Algebra.BigOperators.Group.Finset.Basic
 import Mathlib.Algebra.Ring.GeomSum
 import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.Ring
+import Mathlib.Tactic.Zify
 
 /-!
 # `natBSum` bridge and geometric closed form
@@ -20,6 +21,9 @@ geometric closed form `Σ_{i<n} q^i = (q^n − 1)/(q − 1)`.
   identity, cleared of division.
 * `natLinGeomSum_eq` — the linear-weighted geometric closed form for
   `2 ≤ q` and `2 ≤ n`.
+* `natSqGeomSum_mul` — the square-weighted geometric progression
+  identity, cleared of division, for `2 ≤ q` and `2 ≤ n`.
+* `natSqGeomSum_zero`, `natSqGeomSum_one` — base cases at `n = 0` and `n = 1`.
 
 ## References
 
@@ -161,5 +165,66 @@ theorem natLinGeomSum_eq (q n : ℕ) (hq : 2 ≤ q) (hn : 2 ≤ n) :
   have hclear : (n - 1) * q ^ (n + 1) - n * q ^ n + q =
       (∑ i ∈ Finset.range n, i * q ^ i) * (q - 1) ^ 2 := by omega
   rw [hclear, Nat.mul_div_cancel _ hpos]
+
+-- Private helpers: convert ℕ-truncated-subtraction coefficients to ℤ.
+private lemma cast_coeff_sq (m : ℕ) (hm : 2 ≤ m) :
+    ((2 * m ^ 2 - 2 * m - 1 : ℕ) : ℤ) = 2 * (m : ℤ) ^ 2 - 2 * m - 1 := by
+  have h1 : 2 * m ≤ 2 * m ^ 2 := by nlinarith
+  have h2 : 1 ≤ 2 * m ^ 2 - 2 * m := Nat.le_sub_of_add_le (by nlinarith)
+  rw [show 2 * m ^ 2 - 2 * m - 1 = (2 * m ^ 2 - 2 * m) - 1 from by omega,
+      Nat.cast_sub h2, Nat.cast_sub h1]
+  push_cast; ring
+
+private lemma cast_coeff_sq_succ (m : ℕ) (hm : 2 ≤ m) :
+    ((2 * (m + 1) ^ 2 - 2 * (m + 1) - 1 : ℕ) : ℤ) = 2 * (m : ℤ) ^ 2 + 2 * m - 1 := by
+  have h1 : 2 * (m + 1) ≤ 2 * (m + 1) ^ 2 := by nlinarith
+  have h2 : 1 ≤ 2 * (m + 1) ^ 2 - 2 * (m + 1) := Nat.le_sub_of_add_le (by nlinarith)
+  rw [show 2 * (m + 1) ^ 2 - 2 * (m + 1) - 1 = (2 * (m + 1) ^ 2 - 2 * (m + 1)) - 1 from by omega,
+      Nat.cast_sub h2, Nat.cast_sub h1]
+  push_cast; ring
+
+/-- Square-weighted geometric sum at `n = 0`: the empty sum is `0`. -/
+theorem natSqGeomSum_zero (q : ℕ) :
+    ∑ i ∈ Finset.range 0, i ^ 2 * q ^ i = 0 := by simp
+
+/-- Square-weighted geometric sum at `n = 1`: the only term `0² · q⁰ = 0`. -/
+theorem natSqGeomSum_one (q : ℕ) :
+    ∑ i ∈ Finset.range 1, i ^ 2 * q ^ i = 0 := by simp
+
+/-- Square-weighted geometric sum `Σ_{i<n} i²·qⁱ`, cleared and additive,
+for `2 ≤ q` and `2 ≤ n`. `G₂` re-indexed to `Finset.range n`. -/
+theorem natSqGeomSum_mul (q n : ℕ) (hq : 2 ≤ q) (hn : 2 ≤ n) :
+    (∑ i ∈ Finset.range n, i ^ 2 * q ^ i) * (q - 1) ^ 3
+        + (2 * n ^ 2 - 2 * n - 1) * q ^ (n + 1) + q ^ 2 + q =
+      (n - 1) ^ 2 * q ^ (n + 2) + n ^ 2 * q ^ n := by
+  induction n with
+  | zero => omega
+  | succ m ih =>
+    by_cases hm2 : 2 ≤ m
+    · -- inductive step: m ≥ 2
+      have ihm := ih hm2
+      rw [Finset.sum_range_succ, show m + 1 - 1 = m from by omega]
+      -- lift to ℤ; `zify` handles `(q-1)^3` and `(m-1)^2` given positivity bounds,
+      -- but not the ℕ-truncated-subtraction coefficients; those are rewritten separately
+      zify [show 1 ≤ q from by omega, show 1 ≤ m from by omega,
+            Nat.one_le_pow m q (by omega),
+            Nat.one_le_pow (m + 1) q (by omega),
+            Nat.one_le_pow (m + 2) q (by omega),
+            Nat.one_le_pow (m + 3) q (by omega)] at ihm ⊢
+      rw [cast_coeff_sq m hm2] at ihm
+      rw [cast_coeff_sq_succ m hm2]
+      -- Expand the new degree-3 term and match against the IH
+      have hcube : (m : ℤ) ^ 2 * (q : ℤ) ^ m * ((q : ℤ) - 1) ^ 3 =
+          (m : ℤ) ^ 2 * ((q : ℤ) ^ (m + 1 + 2) - 3 * (q : ℤ) ^ (m + 1 + 1) +
+            3 * (q : ℤ) ^ (m + 1) - (q : ℤ) ^ m) := by ring
+      have hpow_eq : (q : ℤ) ^ (m + 2) = (q : ℤ) ^ (m + 1 + 1) := by ring_nf
+      rw [show ((m : ℤ) - 1) ^ 2 = (m : ℤ) ^ 2 - 2 * m + 1 from by ring, hpow_eq] at ihm
+      linarith [hcube]
+    · -- base case: m < 2 and m + 1 ≥ 2, so m = 1
+      have hm1 : m = 1 := by omega
+      subst hm1
+      simp only [Finset.sum_range_succ, Finset.sum_range_zero, zero_add]
+      zify [show 1 ≤ q from by omega]
+      push_cast; ring
 
 end GebLean
