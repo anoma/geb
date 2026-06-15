@@ -19,6 +19,10 @@ tasks of the Era bounded-sum engine reindex a cube sum onto a flat
 * `cubePoints k t` — the side-`t` cube `{0, …, t − 1}^k` as a `Finset` of
   total functions `Fin k → ℕ`.
 * `mixedRadix k t a` — the base-`t` positional index of a cube point `a`.
+* `mixedRadixInv k t n` — the base-`t` digit-extraction inverse of
+  `mixedRadix`, recovering a cube point from its positional index.
+* `packM k w t P` — the packed witness number that places the digit-block
+  indicator `δ(P a, w)` at base-`2 ^ (2 * w)` position `mixedRadix k t a`.
 
 ## Main statements
 
@@ -33,6 +37,15 @@ tasks of the Era bounded-sum engine reindex a cube sum onto a flat
 * `hw_pack_additive` — the binary digit sum of a base-`2 ^ (2 * w)`
   block-packed number is the sum of the per-block digit sums (the no-carry
   step of arXiv:2407.12928, Lemma 3.3).
+* `mixedRadixInv_mixedRadix` — `mixedRadixInv` left-inverts `mixedRadix` on
+  the cube.
+* `deltaBlock_pos_lt` — the digit-block indicator is a positive value below
+  `2 ^ (2 * w)`, so it occupies one base-`2 ^ (2 * w)` block.
+* `packM_digitsum_eq` — the binary digit sum of the packed witness equals
+  `2w` per vanishing cube point and `w` per non-vanishing point.
+* `count_zeros_eq` — the count read-off (arXiv:2407.12928, Lemma 3.3 /
+  Theorem 3.4): `HW(M) / w − tᵏ` equals the number of cube points where the
+  value function vanishes.
 
 ## References
 
@@ -190,5 +203,146 @@ theorem cubeSum_factor (k : ℕ) (u : Fin k → ℕ) (vbase : Fin k → ℕ) (t 
     (∑ a ∈ cubePoints k t, ∏ i, (a i) ^ (u i) * (vbase i) ^ (a i))
       = ∏ i, (∑ j ∈ Finset.range t, j ^ (u i) * (vbase i) ^ j) := by
   rw [cubePoints, Finset.prod_univ_sum]
+
+/-- The packed witness number of arXiv:2407.12928, Lemma 3.3: place the
+digit-block indicator `δ(P a, w)` at base-`2 ^ (2 * w)` position `v(a)` for
+every cube point `a`, where `v = mixedRadix k t` enumerates the cube. -/
+def packM (k w t : ℕ) (P : (Fin k → ℕ) → ℕ) : ℕ :=
+  ∑ a ∈ cubePoints k t, 2 ^ (2 * w * mixedRadix k t a) * deltaBlock (P a) w
+
+/-- Block range of the digit-block indicator: for `0 < w` and `a < 2 ^ w`,
+`δ(a, w)` is a positive value below `2 ^ (2 * w)`, so it fits in one
+base-`2 ^ (2 * w)` block. -/
+theorem deltaBlock_pos_lt {a w : ℕ} (hw : 0 < w) (ha : a < 2 ^ w) :
+    0 < GebLean.deltaBlock a w ∧ GebLean.deltaBlock a w < 2 ^ (2 * w) := by
+  have hbig : (2 : ℕ) ≤ 2 ^ w := by
+    calc (2 : ℕ) = 2 ^ 1 := (pow_one 2).symm
+      _ ≤ 2 ^ w := Nat.pow_le_pow_right (by norm_num) hw
+  have hfac2hi : 2 ^ w - a + 1 ≤ 2 ^ w + 1 := by omega
+  have hpow : (2 : ℕ) ^ (2 * w) = 2 ^ w * 2 ^ w := by rw [two_mul, pow_add]
+  refine ⟨?_, ?_⟩
+  · unfold GebLean.deltaBlock
+    exact Nat.mul_pos (by omega) (by omega)
+  · unfold GebLean.deltaBlock
+    rw [hpow]
+    calc (2 ^ w - 1) * (2 ^ w - a + 1) ≤ (2 ^ w - 1) * (2 ^ w + 1) :=
+          Nat.mul_le_mul_left _ hfac2hi
+      _ = 2 ^ w * 2 ^ w - 1 := by
+          rw [Nat.sub_one_mul, Nat.mul_add, Nat.mul_one]; omega
+      _ < 2 ^ w * 2 ^ w := by
+          have : 1 ≤ 2 ^ w * 2 ^ w := Nat.one_le_iff_ne_zero.mpr (by positivity)
+          omega
+
+/-- The base-`t` digit-extraction inverse of `mixedRadix`:
+`mixedRadixInv k t n i = n / t ^ i % t` recovers the `i`-th coordinate. -/
+def mixedRadixInv (k t n : ℕ) : Fin k → ℕ := fun i => n / t ^ (i : ℕ) % t
+
+/-- `mixedRadixInv` left-inverts `mixedRadix` on the cube: the base-`t`
+digit extraction recovers a cube point from its positional index. -/
+theorem mixedRadixInv_mixedRadix {k t : ℕ} {a : Fin k → ℕ} (ha : ∀ i, a i < t) :
+    mixedRadixInv k t (mixedRadix k t a) = a := by
+  induction k with
+  | zero => funext i; exact i.elim0
+  | succ k ih =>
+    have ht : 0 < t := Nat.lt_of_le_of_lt (Nat.zero_le _) (ha 0)
+    have hrec : mixedRadix (k + 1) t a = a 0 + t * mixedRadix k t (Fin.tail a) :=
+      mixedRadix_succ k t a
+    have htail : mixedRadixInv k t (mixedRadix k t (Fin.tail a)) = Fin.tail a :=
+      ih (fun i => ha i.succ)
+    funext i
+    refine Fin.cases ?_ ?_ i
+    · simp only [mixedRadixInv, hrec]
+      rw [Fin.val_zero, pow_zero, Nat.div_one, Nat.add_mul_mod_self_left,
+        Nat.mod_eq_of_lt (ha 0)]
+    · intro j
+      have hdiv : mixedRadix (k + 1) t a / t ^ ((j.succ : Fin (k + 1)) : ℕ)
+          = mixedRadix k t (Fin.tail a) / t ^ (j : ℕ) := by
+        rw [hrec]
+        have hjval : ((j.succ : Fin (k + 1)) : ℕ) = (j : ℕ) + 1 := by simp
+        have hinner : (a 0 + t * mixedRadix k t (Fin.tail a)) / t
+            = mixedRadix k t (Fin.tail a) := by
+          rw [Nat.add_mul_div_left _ _ ht, Nat.div_eq_of_lt (ha 0), Nat.zero_add]
+        rw [hjval, pow_succ, Nat.mul_comm (t ^ (j : ℕ)) t, ← Nat.div_div_eq_div_mul,
+          hinner]
+      simp only [mixedRadixInv, hdiv]
+      have := congrFun htail j
+      simpa only [mixedRadixInv, Fin.tail] using this
+
+/-- The carry-free digit-sum read-off (arXiv:2407.12928, Lemma 3.3): the
+binary digit sum of the packed witness equals the per-block contribution
+`2w` at vanishing cube points and `w` elsewhere. -/
+theorem packM_digitsum_eq (k w t : ℕ) (hw : 0 < w)
+    (P : (Fin k → ℕ) → ℕ) (hP : ∀ a ∈ cubePoints k t, P a < 2 ^ w) :
+    (Nat.digits 2 (packM k w t P)).sum
+      = ∑ a ∈ cubePoints k t, (if P a = 0 then 2 * w else w) := by
+  -- the block value, reindexed by the base-`t` digit-extraction inverse
+  set g : ℕ → ℕ := fun n => deltaBlock (P (mixedRadixInv k t n)) w with hg_def
+  -- every flat index below `t ^ k` is the image of a cube point
+  have hgbnd : ∀ n, n < t ^ k → g n < 2 ^ (2 * w) := by
+    intro n hn
+    have hmem : n ∈ Finset.range (t ^ k) := Finset.mem_range.mpr hn
+    rw [← image_mixedRadix_cubePoints k t, Finset.mem_image] at hmem
+    obtain ⟨a, ha, hav⟩ := hmem
+    have hacube : ∀ i, a i < t := mem_cubePoints.mp ha
+    have hinv : mixedRadixInv k t n = a := by
+      rw [← hav]; exact mixedRadixInv_mixedRadix hacube
+    have hPlt : P (mixedRadixInv k t n) < 2 ^ w := by rw [hinv]; exact hP a ha
+    exact (deltaBlock_pos_lt hw hPlt).2
+  -- the packed witness in `hw_pack_additive`'s flat block-sum shape
+  have hpack : packM k w t P = ∑ i ∈ Finset.range (t ^ k), 2 ^ (2 * w * i) * g i := by
+    rw [← image_mixedRadix_cubePoints k t,
+      Finset.sum_image (mixedRadix_injOn k t), packM]
+    refine Finset.sum_congr rfl fun a ha => ?_
+    have hacube : ∀ i, a i < t := mem_cubePoints.mp ha
+    rw [hg_def]
+    simp only [mixedRadixInv_mixedRadix hacube]
+  rw [hpack, hw_pack_additive w (t ^ k) g hgbnd]
+  -- reindex the per-block digit sums back onto the cube
+  rw [← image_mixedRadix_cubePoints k t, Finset.sum_image (mixedRadix_injOn k t)]
+  refine Finset.sum_congr rfl fun a ha => ?_
+  have hacube : ∀ i, a i < t := mem_cubePoints.mp ha
+  have hPa : P a < 2 ^ w := hP a ha
+  rw [hg_def]
+  simp only [mixedRadixInv_mixedRadix hacube]
+  rw [← GebLean.hwClosed_eq _ (deltaBlock_pos_lt hw hPa).1,
+    GebLean.hwClosed_deltaBlock hPa]
+
+/-- The count read-off (arXiv:2407.12928, Lemma 3.3 / Theorem 3.4):
+`HW(M)/w − tᵏ` equals the number of cube points where `P` vanishes. -/
+theorem count_zeros_eq (k w t : ℕ) (hw : 0 < w)
+    (P : (Fin k → ℕ) → ℕ) (hP : ∀ a ∈ cubePoints k t, P a < 2 ^ w) :
+    (Nat.digits 2 (packM k w t P)).sum / w - t ^ k
+      = ((cubePoints k t).filter (fun a => P a = 0)).card := by
+  set d := ((cubePoints k t).filter (fun a => P a = 0)).card with hd_def
+  have hdle : d ≤ t ^ k := by
+    rw [hd_def, ← card_cubePoints k t]
+    exact Finset.card_filter_le _ _
+  -- the digit sum splits over the vanishing-point filter and its complement
+  have hsplit : (Nat.digits 2 (packM k w t P)).sum = (d + t ^ k) * w := by
+    rw [packM_digitsum_eq k w t hw P hP]
+    rw [← Finset.sum_filter_add_sum_filter_not (cubePoints k t) (fun a => P a = 0)]
+    have hpos : ∑ a ∈ (cubePoints k t).filter (fun a => P a = 0),
+        (if P a = 0 then 2 * w else w) = d * (2 * w) := by
+      rw [Finset.sum_congr rfl (fun a ha => by
+        rw [if_pos (Finset.mem_filter.mp ha).2])]
+      rw [Finset.sum_const, hd_def, smul_eq_mul]
+    have hneg : ∑ a ∈ (cubePoints k t).filter (fun a => ¬ P a = 0),
+        (if P a = 0 then 2 * w else w) = (t ^ k - d) * w := by
+      rw [Finset.sum_congr rfl (fun a ha => by
+        rw [if_neg (Finset.mem_filter.mp ha).2])]
+      have hcard : ((cubePoints k t).filter (fun a => ¬ P a = 0)).card = t ^ k - d := by
+        have := Finset.card_filter_add_card_filter_not
+          (s := cubePoints k t) (fun a => P a = 0)
+        rw [card_cubePoints, ← hd_def] at this
+        omega
+      rw [Finset.sum_const, smul_eq_mul, hcard]
+    rw [hpos, hneg]
+    have hsum : d * (2 * w) + (t ^ k - d) * w = (d + t ^ k) * w := by
+      have hdw : d * w ≤ t ^ k * w := Nat.mul_le_mul_right w hdle
+      rw [Nat.sub_mul, Nat.add_mul, Nat.mul_comm d (2 * w), Nat.two_mul, Nat.add_mul,
+        Nat.mul_comm w d]
+      omega
+    exact hsum
+  rw [hsplit, Nat.mul_div_cancel _ hw, Nat.add_sub_cancel]
 
 end GebLean.EraHypercube
