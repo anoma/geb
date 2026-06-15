@@ -1,4 +1,5 @@
 import GebLean.LawvereER
+import GebLean.Utilities.EraBoundedSum
 import Mathlib.NumberTheory.Padics.PadicVal.Basic
 import Mathlib.Data.Nat.Choose.Central
 import Mathlib.Data.Nat.Choose.Factorization
@@ -647,5 +648,79 @@ private theorem gcd_dena_pow (a b : ℕ) :
 private theorem gcd_denb_pow (a b : ℕ) :
     5 ^ (a * b ^ 2) = (5 ^ (a * b)) ^ b := by
   rw [← pow_mul]; congr 1; ring
+
+/-- The base-`5^(a·b)` comb `P = 5^((a·b+a+b) mod a) · Σ_{i<(a·b+a+b)/a} (5^(a·b))^(a·i)`,
+the exact quotient `⌊5^(a·b·(a·b+a+b)) / (5^(a²·b)−1)⌋` written in base `5^(a·b)`. -/
+private def gcdPComb (a b : ℕ) : ℕ :=
+  (5 ^ (a * b)) ^ ((a * b + a + b) % a) *
+    ∑ i ∈ Finset.range ((a * b + a + b) / a), (5 ^ (a * b)) ^ (a * i)
+
+/-- Two-step division identity: `(5^(a·b))^(a·b+a+b) = ((5^(a·b))^a − 1) · P + (5^(a·b))^r`,
+where `P = gcdPComb a b` and `r = (a·b+a+b) % a`. -/
+private theorem gcd_num_split (a b : ℕ) (ha : 1 ≤ a) (hb : 1 ≤ b) :
+    (5 ^ (a * b)) ^ (a * b + a + b)
+      = ((5 ^ (a * b)) ^ a - 1) * gcdPComb a b
+          + (5 ^ (a * b)) ^ ((a * b + a + b) % a) := by
+  simp only [gcdPComb]
+  -- Set B := 5^(a*b), E := a*b+a+b, q := E/a, r := E%a
+  set B := 5 ^ (a * b) with hBdef
+  set E := a * b + a + b with hEdef
+  set q := E / a with hqdef
+  set r := E % a with hrdef
+  -- r + a * q = E
+  have hEqr : r + a * q = E := by
+    have hdm : a * q + r = E := by
+      rw [hqdef, hrdef, hEdef]; exact Nat.div_add_mod (a * b + a + b) a
+    linarith
+  have hab : 1 ≤ a * b := Nat.one_le_iff_ne_zero.mpr (Nat.mul_ne_zero (by omega) (by omega))
+  have hB1 : 1 ≤ B := Nat.one_le_pow _ _ (by omega)
+  have hBa : 1 ≤ B ^ a := Nat.one_le_pow _ _ hB1
+  have hBaq_ge : 1 ≤ (B ^ a) ^ q := Nat.one_le_pow _ _ hBa
+  -- Rewrite summands: B^(a*i) = (B^a)^i
+  have hstep : ∀ i : ℕ, B ^ (a * i) = (B ^ a) ^ i := fun i => pow_mul B a i
+  simp_rw [hstep]
+  -- (B^a - 1) * ∑ i<q, (B^a)^i = (B^a)^q - 1
+  have hprod : (B ^ a - 1) * ∑ i ∈ Finset.range q, (B ^ a) ^ i = (B ^ a) ^ q - 1 := by
+    have hg := natGeomSum_mul (B ^ a) q hBa
+    linarith [Nat.mul_comm (∑ i ∈ Finset.range q, (B ^ a) ^ i) (B ^ a - 1)]
+  -- Rewrite lhs: B^E = B^(r + a*q) = B^r * (B^a)^q
+  conv_lhs => rw [← hEqr, pow_add, pow_mul]
+  -- Goal: B^r * (B^a)^q = (B^a-1)*(B^r * ∑ i<q, (B^a)^i) + B^r
+  -- Simplify rhs: (B^a-1)*(B^r*S) = B^r*((B^a-1)*S) = B^r*((B^a)^q - 1)
+  rw [show (B ^ a - 1) * (B ^ r * ∑ i ∈ Finset.range q, (B ^ a) ^ i) =
+      B ^ r * ((B ^ a) ^ q - 1) from by
+    rw [← Nat.mul_assoc, Nat.mul_comm (B ^ a - 1) (B ^ r), Nat.mul_assoc, hprod]]
+  -- Goal: B^r * (B^a)^q = B^r * ((B^a)^q - 1) + B^r
+  nth_rw 1 [← Nat.sub_add_cancel (Nat.le_mul_of_pos_right (B ^ r)
+    (by linarith [hBaq_ge] : 0 < (B ^ a) ^ q)), Nat.mul_sub_one]
+
+/-- The remainder is strictly less than the denominator factor:
+`(5^(a·b))^((a·b+a+b) % a) < (5^(a·b))^a − 1`. -/
+private theorem gcd_rem_lt_dena (a b : ℕ) (ha : 1 ≤ a) (hb : 1 ≤ b) :
+    (5 ^ (a * b)) ^ ((a * b + a + b) % a) < (5 ^ (a * b)) ^ a - 1 := by
+  set B := 5 ^ (a * b) with hBdef
+  set r := (a * b + a + b) % a with hrdef
+  have hr : r < a := Nat.mod_lt _ (by omega)
+  have hB1 : 1 ≤ B := Nat.one_le_pow _ _ (by omega)
+  -- B ≥ 5 since a*b ≥ 1 (a,b ≥ 1)
+  have hB5 : 5 ≤ B := by
+    rw [hBdef]
+    calc (5 : ℕ) = 5 ^ 1 := (pow_one 5).symm
+      _ ≤ 5 ^ (a * b) := Nat.pow_le_pow_right (by omega) (by nlinarith)
+  -- B^r ≤ B^(a-1) since r ≤ a-1
+  have hBr_le : B ^ r ≤ B ^ (a - 1) := Nat.pow_le_pow_right hB1 (by omega)
+  -- B^(a-1) ≥ 1
+  have hBa1 : 1 ≤ B ^ (a - 1) := Nat.one_le_pow _ _ hB1
+  -- B^a = B^(a-1) * B (since a = (a-1)+1)
+  have hBa_eq : B ^ a = B ^ (a - 1) * B := by
+    conv_lhs => rw [show a = a - 1 + 1 by omega]
+    rw [pow_succ]
+  -- B^(a-1) < B^a - 1
+  have hBa1_lt : B ^ (a - 1) < B ^ a - 1 := by
+    rw [hBa_eq]
+    have h5 : B ^ (a - 1) * 5 ≤ B ^ (a - 1) * B := Nat.mul_le_mul_left _ hB5
+    have hge : 1 ≤ B ^ (a - 1) * B := Nat.le_trans hBa1 (Nat.le_mul_of_pos_right _ (by linarith))
+    omega
+  linarith
 
 end GebLean
