@@ -2,6 +2,7 @@ import GebLean.Era
 import Mathlib.Data.Fin.Tuple.Basic
 import Mathlib.Algebra.BigOperators.Group.Finset.Basic
 import Mathlib.Data.Fintype.Fin
+import Mathlib.Data.Nat.ModEq
 
 /-!
 # The term-to-Diophantine reduction: the monotone `ETm` majorant
@@ -175,6 +176,54 @@ theorem eraMajorant_mono {n : Nat} (t : ETm n) {ctx ctx' : Fin n → Nat}
         (Nat.pow_le_pow_right (eraMajorant_pos (ts ⟨0, by decide⟩) ctx')
           (ih ⟨1, by decide⟩))
       omega
+
+/-- The base-`2` envelope bound underlying Marchenkov's identity:
+`a ^ b + a < 2 ^ (a * b + a + 1)`. It supplies both `a < 2 ^ (a * b + a + 1)`
+(so the modulus `2 ^ (a * b + a + 1) - a` is positive) and the strict bound
+`a ^ b < 2 ^ (a * b + a + 1) - a` that makes the residue exact. The proof
+chains `a ^ b ≤ 2 ^ (a * b)` (from `a < 2 ^ a`) with `2 ^ (a * b + a + 1) =
+2 ^ (a * b + a) + 2 ^ (a * b + a)`. -/
+private lemma pow_add_lt_two_pow (a b : ℕ) : a ^ b + a < 2 ^ (a * b + a + 1) := by
+  have h1 : a ^ b ≤ 2 ^ (a * b) := by
+    calc a ^ b ≤ (2 ^ a) ^ b := Nat.pow_le_pow_left (Nat.le_of_lt Nat.lt_two_pow_self) b
+      _ = 2 ^ (a * b) := by rw [← Nat.pow_mul]
+  have h2 : a < 2 ^ a := Nat.lt_two_pow_self
+  have h3 : 2 ^ (a * b) ≤ 2 ^ (a * b + a) :=
+    Nat.pow_le_pow_right (by decide) (Nat.le_add_right _ _)
+  have h4 : 2 ^ a ≤ 2 ^ (a * b + a) :=
+    Nat.pow_le_pow_right (by decide) (Nat.le_add_left _ _)
+  have h5 : 2 ^ (a * b + a + 1) = 2 ^ (a * b + a) + 2 ^ (a * b + a) := by
+    rw [Nat.pow_succ, Nat.mul_two]
+  omega
+
+/-- Marchenkov's identity (arXiv:2407.12928, eq. (4); arXiv:2606.09336
+§ 3): a variable-base, variable-exponent power as a base-2 power modulo a
+term. Valid for all `a b : ℕ`, including `0 ^ 0 = 1`. -/
+theorem pow_eq_two_pow_mod (a b : ℕ) :
+    a ^ b = 2 ^ ((a * b + a + 1) * b) % (2 ^ (a * b + a + 1) - a) := by
+  have hcrux : a ^ b + a < 2 ^ (a * b + a + 1) := pow_add_lt_two_pow a b
+  set M := a * b + a + 1 with hM
+  have haM : a < 2 ^ M := by omega
+  rcases Nat.eq_zero_or_pos b with hb | hb
+  · subst hb
+    have hM0 : M = a + 1 := by omega
+    rw [hM0]
+    simp only [Nat.mul_zero, Nat.pow_zero]
+    have hp : 2 ^ a + 2 ^ a = 2 ^ (a + 1) := by rw [Nat.pow_succ, Nat.mul_two]
+    have h2a : a < 2 ^ a := Nat.lt_two_pow_self
+    rw [Nat.mod_eq_of_lt]
+    omega
+  · have hbase : 2 ^ M ≡ a [MOD 2 ^ M - a] := by
+      have hsac : (2 ^ M - a) + a = 2 ^ M := Nat.sub_add_cancel (Nat.le_of_lt haM)
+      calc 2 ^ M = (2 ^ M - a) + a := hsac.symm
+        _ ≡ 0 + a [MOD 2 ^ M - a] :=
+          Nat.ModEq.add_right a (Nat.modEq_zero_iff_dvd.mpr (dvd_refl _))
+        _ = a := by rw [Nat.zero_add]
+    have key : 2 ^ (M * b) ≡ a ^ b [MOD 2 ^ M - a] := by
+      calc 2 ^ (M * b) = (2 ^ M) ^ b := by rw [Nat.pow_mul]
+        _ ≡ a ^ b [MOD 2 ^ M - a] := hbase.pow b
+    have hlt : a ^ b < 2 ^ M - a := by omega
+    rw [key, Nat.mod_eq_of_lt hlt]
 
 /-- A simple exponential monomial over `m` variables (arXiv:2407.12928,
 Expression (6)):
