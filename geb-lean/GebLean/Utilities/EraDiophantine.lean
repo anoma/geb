@@ -263,4 +263,25 @@ theorem SosTerm.prod_eval_eq_zero_iff {m : ℕ} (s t : List (SosTerm m)) (ρ : F
     SosTerm.eval (.prod s t) ρ = 0 ↔ SosSystem.eval s ρ = 0 ∨ SosSystem.eval t ρ = 0 := by
   rw [SosTerm.eval, Nat.mul_eq_zero]
 
+/-- A bounded, unique-witness, sum-of-squares Diophantine encoding of an
+`ETm n` term's graph `t.eval ρ = y` (arXiv:2606.09336, Lemma 2). System
+variables: the `n` inputs, then the output `y` at index `n`, then
+`witArity` witnesses. "Sum of squares" and "simple" are structural
+(`SosSystem`). -/
+structure DiophEnc (n : ℕ) where
+  /-- The number of witness variables, beyond the `n` inputs and output. -/
+  witArity : ℕ
+  /-- The sum-of-squares system over the `n` inputs, the output, and the
+  witnesses, whose zero set is the term's graph. -/
+  sys : SosSystem (n + 1 + witArity)
+  /-- The per-witness bound: an `ETm (n + 1)` over the inputs and output that
+  strictly dominates the witness, making the witness unique. -/
+  bound : Fin witArity → ETm (n + 1)
+
+/-- Assemble inputs `ρ`, output `y`, and witnesses `w` into the system's
+context `Fin (n + 1 + e.witArity) → ℕ`. -/
+def DiophEnc.ctx {n : ℕ} (e : DiophEnc n) (ρ : Fin n → ℕ) (y : ℕ)
+    (w : Fin e.witArity → ℕ) : Fin (n + 1 + e.witArity) → ℕ :=
+  Fin.append (Fin.snoc ρ y) w
+
 end GebLean
