@@ -23,6 +23,7 @@ digit-block indicator, each equated to a Mathlib reference function.
 * `hwClosed` — the binary Hamming weight as `ν₂(C(2n,n))` (Kummer).
 * `deltaBlock` — the digit-block indicator `δ a w = (2^w - 1)(2^w - a + 1)`.
 * `solCount` — the number of `(x, y) ∈ ℕ²` with `a·x + b·y = n`.
+* `gcdClosed5` — the Prunescu–Shunia base-5 gcd closed form.
 
 ## Main statements
 
@@ -38,6 +39,7 @@ digit-block indicator, each equated to a Mathlib reference function.
 * `solCount_eq_floor_mod` — the Prunescu–Shunia base-5 floor read-off
   `⌊5^(a·b·(a·b+a+b)) / ((5^(a²·b)−1)(5^(a·b²)−1))⌋ % 5^(a·b)
   = solCount a b (a·b)` for `1 ≤ a, 1 ≤ b`.
+* `gcdClosed5_eq` — `gcdClosed5 a b = Nat.gcd a b` for `1 ≤ a, 1 ≤ b`.
 
 ## References
 
@@ -1176,5 +1178,18 @@ theorem solCount_eq_floor_mod (a b : ℕ) (ha : 1 ≤ a) (hb : 1 ≤ b) :
   rw [gcd_num_pow, gcd_dena_pow, gcd_denb_pow]
   rw [gcd_div_eq_digitSum a b ha hb]
   exact gcdDigitSum_mod a b ha hb
+
+/-- Prunescu–Shunia base-5 gcd closed form (arXiv:2411.06430, Theorem 4.1):
+`gcdClosed5 a b = Nat.gcd a b` for `1 ≤ a, 1 ≤ b` (`gcdClosed5_eq`). -/
+def gcdClosed5 (a b : ℕ) : ℕ :=
+  (5 ^ (a * b * (a * b + a + b)) / ((5 ^ (a ^ 2 * b) - 1) * (5 ^ (a * b ^ 2) - 1))
+    % 5 ^ (a * b)) - 1
+
+/-- The base-5 closed form computes `Nat.gcd`: `gcdClosed5 a b = Nat.gcd a b`
+for `1 ≤ a, 1 ≤ b`. -/
+theorem gcdClosed5_eq (a b : ℕ) (ha : 1 ≤ a) (hb : 1 ≤ b) :
+    gcdClosed5 a b = Nat.gcd a b := by
+  rw [gcdClosed5, solCount_eq_floor_mod a b ha hb, solCount_mul_eq_gcd_succ a b ha hb]
+  omega
 
 end GebLean

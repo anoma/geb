@@ -10,6 +10,7 @@ import GebLean.Utilities.LambdaBialgebra
 import GebLean.Utilities.EndsAndCoends
 import GebLean.Utilities.Equalities
 import GebLean.Utilities.EraBoundedSum
+import GebLean.Utilities.EraDiophantine
 import GebLean.Utilities.Families
 import GebLean.Utilities.Fintype
 import GebLean.Utilities.Graph
