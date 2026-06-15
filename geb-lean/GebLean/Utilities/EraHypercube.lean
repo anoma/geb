@@ -1,3 +1,4 @@
+import GebLean.Utilities.ArithClosedForms
 import Mathlib.Data.Fintype.Pi
 import Mathlib.Data.Fintype.BigOperators
 import Mathlib.Algebra.BigOperators.Fin
@@ -27,6 +28,11 @@ tasks of the Era bounded-sum engine reindex a cube sum onto a flat
 * `image_mixedRadix_cubePoints` — the image of the cube under `mixedRadix`
   is exactly `Finset.range (t ^ k)`: the enumeration is a bijection of the
   cube onto the flat index range.
+* `pack_lt` — a base-`2 ^ (2 * w)` block-packed number with each block below
+  `2 ^ (2 * w)` is below `2 ^ (2 * w * N)`.
+* `hw_pack_additive` — the binary digit sum of a base-`2 ^ (2 * w)`
+  block-packed number is the sum of the per-block digit sums (the no-carry
+  step of arXiv:2407.12928, Lemma 3.3).
 
 ## References
 
@@ -137,6 +143,45 @@ theorem image_mixedRadix_cubePoints (k t : ℕ) :
   refine Finset.eq_of_subset_of_card_le hsub ?_
   rw [Finset.card_range, Finset.card_image_of_injOn (mixedRadix_injOn k t),
     card_cubePoints]
+
+/-- Geometric bound on a base-`2 ^ (2 * w)` block sum: if each block value
+`g i` is below `2 ^ (2 * w)`, the packed number occupies fewer than `N` blocks,
+hence `∑_{i < N} 2 ^ (2 * w * i) * g i < 2 ^ (2 * w * N)`. -/
+theorem pack_lt (w N : ℕ) (g : ℕ → ℕ) (hg : ∀ i, i < N → g i < 2 ^ (2 * w)) :
+    (∑ i ∈ Finset.range N, 2 ^ (2 * w * i) * g i) < 2 ^ (2 * w * N) := by
+  induction N with
+  | zero => simp
+  | succ N ih =>
+    rw [Finset.sum_range_succ]
+    have hlow : (∑ i ∈ Finset.range N, 2 ^ (2 * w * i) * g i) < 2 ^ (2 * w * N) :=
+      ih (fun i hi => hg i (Nat.lt_succ_of_lt hi))
+    have htop : 2 ^ (2 * w * N) * g N + 2 ^ (2 * w * N)
+        ≤ 2 ^ (2 * w * N) * 2 ^ (2 * w) := by
+      have := Nat.mul_le_mul_left (2 ^ (2 * w * N))
+        (Nat.succ_le_of_lt (hg N (Nat.lt_succ_self N)))
+      rw [Nat.mul_succ] at this
+      omega
+    have hpow : 2 ^ (2 * w * (N + 1)) = 2 ^ (2 * w * N) * 2 ^ (2 * w) := by
+      rw [← pow_add]; ring_nf
+    rw [hpow]
+    omega
+
+/-- Hamming-weight additivity over non-overlapping base-`2 ^ (2 * w)` blocks:
+if `g i < 2 ^ (2 * w)` for every `i < N`, the binary digit sum of the packed
+number is the sum of the per-block digit sums. -/
+theorem hw_pack_additive (w N : ℕ) (g : ℕ → ℕ)
+    (hg : ∀ i, i < N → g i < 2 ^ (2 * w)) :
+    (Nat.digits 2 (∑ i ∈ Finset.range N, 2 ^ (2 * w * i) * g i)).sum
+      = ∑ i ∈ Finset.range N, (Nat.digits 2 (g i)).sum := by
+  induction N with
+  | zero => simp
+  | succ N ih =>
+    rw [Finset.sum_range_succ, Finset.sum_range_succ]
+    set L := ∑ i ∈ Finset.range N, 2 ^ (2 * w * i) * g i
+    have hLlt : L < 2 ^ (2 * w * N) :=
+      pack_lt w N g (fun i hi => hg i (Nat.lt_succ_of_lt hi))
+    rw [GebLean.sum_digits_two_add (2 * w * N) L (g N) hLlt]
+    rw [ih (fun i hi => hg i (Nat.lt_succ_of_lt hi))]
 
 /-- Cube-sum factorisation (arXiv:2407.12928, Lemma 3.2): a sum over the
 cube of a product of per-coordinate weighted geometric terms factors into a
