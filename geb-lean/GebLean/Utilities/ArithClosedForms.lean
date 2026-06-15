@@ -19,12 +19,14 @@ digit-block indicator, each equated to a Mathlib reference function.
 * `nu2Closed` — the slow, log-free `2`-adic valuation closed form.
 * `centralBinomClosed` — the central binomial coefficient as a
   base-`2^(2n)` digit read-off of `(1 + 2^(2n))^(2n)`.
+* `hwClosed` — the binary Hamming weight as `ν₂(C(2n,n))` (Kummer).
 
 ## Main statements
 
 * `nu2Closed_eq` — `nu2Closed n = padicValNat 2 n` for `n ≥ 1`.
 * `centralBinomClosed_eq` — `centralBinomClosed n = Nat.centralBinom n`
   for `n ≥ 1`.
+* `hwClosed_eq` — `hwClosed n = (Nat.digits 2 n).sum` for `n ≥ 1`.
 
 ## References
 
@@ -177,5 +179,36 @@ theorem centralBinomClosed_eq (n : ℕ) (hn : 1 ≤ n) :
     rw [hgE] at h2
     exact List.head!_of_head? h2
   rw [hhead, Nat.mod_eq_of_lt (choose_two_mul_lt n n hn)]
+
+private theorem sum_digits_two_mul (n : ℕ) :
+    (Nat.digits 2 (2 * n)).sum = (Nat.digits 2 n).sum := by
+  rcases Nat.eq_zero_or_pos n with hn | hn
+  · simp [hn]
+  · rw [Nat.digits_base_mul (by norm_num) hn]; simp
+
+/-- Kummer's theorem at `p = 2`: the `2`-adic valuation of the central
+binomial coefficient equals the binary digit sum,
+`ν₂(C(2n,n)) = S₂(n)`. -/
+theorem padicValNat_centralBinom_two (n : ℕ) :
+    padicValNat 2 (Nat.centralBinom n) = (Nat.digits 2 n).sum := by
+  have hp : Fact (Nat.Prime 2) := ⟨Nat.prime_two⟩
+  have hkummer := sub_one_mul_padicValNat_choose_eq_sub_sum_digits
+    (p := 2) (k := n) (n := 2 * n) (by omega)
+  rw [Nat.centralBinom_eq_two_mul_choose]
+  have hsub : 2 * n - n = n := by omega
+  rw [hsub] at hkummer
+  rw [sum_digits_two_mul] at hkummer
+  omega
+
+/-- Binary Hamming weight (digit sum) `σ`, as `ν₂(C(2n,n))` (Kummer),
+using the slow log-free `ν₂`. -/
+def hwClosed (n : ℕ) : ℕ := nu2Closed (centralBinomClosed n)
+
+/-- The Hamming-weight closed form computes the binary digit sum: for
+`n ≥ 1`, `hwClosed n = (Nat.digits 2 n).sum`. -/
+theorem hwClosed_eq (n : ℕ) (hn : 1 ≤ n) :
+    hwClosed n = (Nat.digits 2 n).sum := by
+  rw [hwClosed, centralBinomClosed_eq n hn, nu2Closed_eq _ (Nat.centralBinom_pos n),
+    padicValNat_centralBinom_two]
 
 end GebLean
