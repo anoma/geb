@@ -862,4 +862,288 @@ private theorem gcd_tooth_count (a b e : ℕ) (ha : 1 ≤ a) (hb : 1 ≤ b)
     change q - 1 - (q - 1 - i) = i
     omega
 
+/-- The comb quotient `G = Σ_{i<q} B^((r+a·i) mod b)·Σ_{l<(r+a·i)/b} B^(b·l)`,
+the exact quotient of `gcdPComb a b` by `(5^(a·b))^b − 1` in base `5^(a·b)`. -/
+private def gcdGSum (a b : ℕ) : ℕ :=
+  ∑ i ∈ Finset.range ((a * b + a + b) / a),
+    (5 ^ (a * b)) ^ (((a * b + a + b) % a + a * i) % b) *
+      ∑ l ∈ Finset.range (((a * b + a + b) % a + a * i) / b),
+        (5 ^ (a * b)) ^ (b * l)
+
+/-- The carry-free residue `W = Σ_{i<q} B^((r+a·i) mod b)`. -/
+private def gcdWSum (a b : ℕ) : ℕ :=
+  ∑ i ∈ Finset.range ((a * b + a + b) / a),
+    (5 ^ (a * b)) ^ (((a * b + a + b) % a + a * i) % b)
+
+/-- Per-tooth base-`B` expansion: `B^c = (B^b − 1)·(B^(c%b)·Σ_{l<c/b} B^(b·l)) + B^(c%b)`. -/
+private theorem gcd_tooth_split (B b c : ℕ) (hB : 1 ≤ B) :
+    B ^ c = (B ^ b - 1) * (B ^ (c % b) * ∑ l ∈ Finset.range (c / b), B ^ (b * l))
+      + B ^ (c % b) := by
+  have hBb : 1 ≤ B ^ b := Nat.one_le_pow _ _ hB
+  have hstep : ∀ l : ℕ, B ^ (b * l) = (B ^ b) ^ l := fun l => pow_mul B b l
+  simp_rw [hstep]
+  have hg : (B ^ b - 1) * ∑ l ∈ Finset.range (c / b), (B ^ b) ^ l = (B ^ b) ^ (c / b) - 1 := by
+    have h := natGeomSum_mul (B ^ b) (c / b) hBb
+    linarith [Nat.mul_comm (∑ l ∈ Finset.range (c / b), (B ^ b) ^ l) (B ^ b - 1)]
+  have hcdiv : (B ^ b) ^ (c / b) = B ^ (b * (c / b)) := (pow_mul B b (c / b)).symm
+  have hsum : c % b + b * (c / b) = c := Nat.mod_add_div c b
+  have hBcb : 1 ≤ (B ^ b) ^ (c / b) := Nat.one_le_pow _ _ hBb
+  rw [show (B ^ b - 1) * (B ^ (c % b) * ∑ l ∈ Finset.range (c / b), (B ^ b) ^ l) =
+      B ^ (c % b) * ((B ^ b - 1) * ∑ l ∈ Finset.range (c / b), (B ^ b) ^ l) from by ring,
+    hg, Nat.mul_sub_one, hcdiv, ← pow_add, hsum]
+  have hBc : B ^ (c % b) ≤ B ^ c := Nat.pow_le_pow_right hB (by omega)
+  omega
+
+/-- Comb split: `P = (B^b − 1)·G + W`, where `B := 5^(a·b)`,
+`G := gcdGSum a b`, `W := gcdWSum a b`. -/
+private theorem gcd_pComb_split (a b : ℕ) (_ha : 1 ≤ a) (_hb : 1 ≤ b) :
+    gcdPComb a b
+      = ((5 ^ (a * b)) ^ b - 1) * gcdGSum a b + gcdWSum a b := by
+  set B := 5 ^ (a * b) with hBdef
+  set E := a * b + a + b with hEdef
+  set q := E / a with hqdef
+  set r := E % a with hrdef
+  have hB1 : 1 ≤ B := Nat.one_le_pow _ _ (by omega)
+  -- Rewrite P as Σ_{i<q} B^(r + a*i)
+  have hP : gcdPComb a b = ∑ i ∈ Finset.range q, B ^ (r + a * i) := by
+    simp only [gcdPComb, ← hBdef, ← hEdef, ← hqdef, ← hrdef, Finset.mul_sum]
+    exact Finset.sum_congr rfl (fun i _ => by rw [pow_add])
+  rw [hP, gcdGSum, gcdWSum]
+  simp only [← hBdef, ← hEdef, ← hqdef, ← hrdef]
+  rw [Finset.mul_sum, ← Finset.sum_add_distrib]
+  exact Finset.sum_congr rfl (fun i _ => gcd_tooth_split B b (r + a * i) hB1)
+
+/-- `2·b + 2 < 5^b` for `1 ≤ b`. -/
+private theorem two_mul_add_two_lt_five_pow (b : ℕ) (hb : 1 ≤ b) :
+    2 * b + 2 < 5 ^ b := by
+  induction b with
+  | zero => omega
+  | succ m ih =>
+    rcases Nat.eq_zero_or_pos m with hm | hm
+    · subst hm; norm_num
+    · have := ih hm
+      have h5m : 1 ≤ (5 : ℕ) ^ m := Nat.one_le_pow _ _ (by omega)
+      rw [pow_succ]; nlinarith
+
+/-- Arithmetic core of the no-carry bound: from `W ≤ q·P`, `q ≤ B − 2`,
+`1 ≤ P`, and `Bb = P·B`, conclude `W < Bb − 1`. -/
+private theorem wSum_bound_arith (W q P B Bb : ℕ) (hW : W ≤ q * P) (hq : q ≤ B - 2)
+    (hP : 1 ≤ P) (hBb : Bb = P * B) (hB : 2 ≤ B) : W < Bb - 1 := by
+  have h1 : q * P ≤ (B - 2) * P := Nat.mul_le_mul_right _ hq
+  have h2 : (B - 2) * P = P * B - 2 * P := by rw [Nat.sub_mul]; ring_nf
+  have h3 : 2 * P ≤ P * B := by nlinarith
+  have h4 : 2 ≤ 2 * P := by omega
+  omega
+
+/-- No-carry bound: `W < (5^(a·b))^b − 1`. -/
+private theorem gcd_wSum_lt_denb (a b : ℕ) (ha : 1 ≤ a) (hb : 1 ≤ b) :
+    gcdWSum a b < (5 ^ (a * b)) ^ b - 1 := by
+  set B := 5 ^ (a * b) with hBdef
+  set q := (a * b + a + b) / a with hqdef
+  set r := (a * b + a + b) % a with hrdef
+  have hB1 : 1 ≤ B := Nat.one_le_pow _ _ (by omega)
+  -- each summand ≤ B^(b-1)
+  have hterm : ∀ i ∈ Finset.range q, B ^ ((r + a * i) % b) ≤ B ^ (b - 1) := by
+    intro i _
+    exact Nat.pow_le_pow_right hB1 (by have := Nat.mod_lt (r + a * i) hb; omega)
+  -- W ≤ q * B^(b-1)
+  have hWle : gcdWSum a b ≤ q * B ^ (b - 1) := by
+    rw [gcdWSum, ← hBdef, ← hqdef, ← hrdef]
+    calc ∑ i ∈ Finset.range q, B ^ ((r + a * i) % b)
+        ≤ ∑ _i ∈ Finset.range q, B ^ (b - 1) := Finset.sum_le_sum hterm
+      _ = q * B ^ (b - 1) := by rw [Finset.sum_const, Finset.card_range, smul_eq_mul]
+  -- q ≤ 2*b+1
+  have hq_le : q ≤ 2 * b + 1 := by
+    rw [hqdef]
+    apply Nat.div_le_of_le_mul
+    nlinarith [ha, hb]
+  -- B ≥ 5^b and 2*b+2 < 5^b ≤ B, so q ≤ B - 2
+  have h5b : (5 : ℕ) ^ b ≤ B := by
+    rw [hBdef]; exact Nat.pow_le_pow_right (by omega) (by nlinarith [ha, hb])
+  have hlt5b : 2 * b + 2 < 5 ^ b := two_mul_add_two_lt_five_pow b hb
+  have hqB : q ≤ B - 2 := by omega
+  have hBb_eq : B ^ b = B ^ (b - 1) * B := by
+    conv_lhs => rw [show b = b - 1 + 1 by omega]
+    rw [pow_succ]
+  have hB2 : 2 ≤ B := by omega
+  exact wSum_bound_arith _ q (B ^ (b - 1)) B (B ^ b) hWle hqB
+    (Nat.one_le_pow _ _ hB1) hBb_eq hB2
+
+/-- Flattened comb quotient: `G = Σ_{(i,l)} B^((r+a·i)%b + b·l)` over the
+sigma `Σ_{i<q} (range ((r+a·i)/b))`. -/
+private theorem gcdGSum_flat (a b : ℕ) :
+    gcdGSum a b
+      = ∑ x ∈ (Finset.range ((a * b + a + b) / a)).sigma
+          (fun i => Finset.range (((a * b + a + b) % a + a * i) / b)),
+        (5 ^ (a * b)) ^ (((a * b + a + b) % a + a * x.1) % b + b * x.2) := by
+  rw [gcdGSum]
+  have hnest : ∀ i, (5 ^ (a * b)) ^ (((a * b + a + b) % a + a * i) % b) *
+      ∑ l ∈ Finset.range (((a * b + a + b) % a + a * i) / b), (5 ^ (a * b)) ^ (b * l)
+      = ∑ l ∈ Finset.range (((a * b + a + b) % a + a * i) / b),
+          (5 ^ (a * b)) ^ (((a * b + a + b) % a + a * i) % b + b * l) := by
+    intro i
+    rw [Finset.mul_sum]
+    exact Finset.sum_congr rfl (fun l _ => by rw [← pow_add])
+  simp_rw [hnest]
+  rw [Finset.sum_sigma']
+
+/-- The reindex: `gcdDigitSum a b = gcdGSum a b`. -/
+private theorem gcd_digitSum_eq_gSum (a b : ℕ) (ha : 1 ≤ a) (hb : 1 ≤ b) :
+    gcdDigitSum a b = gcdGSum a b := by
+  rw [gcdGSum_flat, gcdDigitSum]
+  set E := a * b + a + b with hEdef
+  set n := a * b with hndef
+  set q := E / a with hqdef
+  set r := E % a with hrdef
+  set B := 5 ^ (a * b) with hBdef
+  set s := (Finset.range q).sigma (fun i => Finset.range ((r + a * i) / b)) with hsdef
+  set g : (_ : ℕ) × ℕ → ℕ := fun x => (r + a * x.1) % b + b * x.2 with hgdef
+  -- r + a*q = E
+  have hEqr : r + a * q = E := by
+    have hdm : a * q + r = E := by
+      rw [hqdef, hrdef]; exact Nat.div_add_mod E a
+    omega
+  -- maps_to: each exponent lands in range (n+1)
+  have hmaps : ∀ x ∈ s, g x ∈ Finset.range (n + 1) := by
+    intro x hx
+    rw [hsdef, Finset.mem_sigma, Finset.mem_range, Finset.mem_range] at hx
+    obtain ⟨hi, hl⟩ := hx
+    rw [Finset.mem_range, hgdef]
+    change (r + a * x.1) % b + b * x.2 < n + 1
+    set t := r + a * x.1 with htdef
+    set m := t / b with hmdef
+    -- g x ≤ t - b
+    have hmod : t % b + b * m = t := Nat.mod_add_div t b
+    have hbl : b * x.2 + b ≤ b * m := by
+      have hx2 : x.2 + 1 ≤ m := by omega
+      calc b * x.2 + b = b * (x.2 + 1) := by ring
+        _ ≤ b * m := Nat.mul_le_mul_left b hx2
+    have hgle : t % b + b * x.2 ≤ t - b := by omega
+    -- t ≤ n + b via a*x.1 ≤ a*q - a and r + a*q = n + a + b
+    have hile : x.1 + 1 ≤ q := by omega
+    have haiq : a * x.1 + a ≤ a * q := by
+      calc a * x.1 + a = a * (x.1 + 1) := by ring
+        _ ≤ a * q := Nat.mul_le_mul_left a hile
+    have hEqr' : r + a * q = n + a + b := by rw [hEqr, hEdef]
+    have htn : t ≤ n + b := by rw [htdef]; omega
+    omega
+  -- fiberwise regrouping
+  have hfib := Finset.sum_fiberwise_of_maps_to (s := s) (t := Finset.range (n + 1))
+    hmaps (f := fun x => B ^ (g x))
+  rw [← hfib]
+  apply Finset.sum_congr rfl
+  intro e he
+  simp only [Finset.mem_range] at he
+  -- inner fiber sum: B^(g x) = B^e on the fiber, so sum = card * B^e
+  have hinner : ∑ x ∈ s with g x = e, B ^ (g x)
+      = (s.filter (fun x => g x = e)).card * B ^ e := by
+    rw [Finset.sum_congr rfl (fun x hx => by
+      simp only [Finset.mem_filter] at hx; rw [hx.2])]
+    rw [Finset.sum_const, smul_eq_mul]
+  rw [hinner]
+  -- fiber card = solCount a b (n - e)
+  have hcard : (s.filter (fun x => g x = e)).card = solCount a b (n - e) := by
+    rw [← gcd_tooth_count a b e ha hb (by omega)]
+    rw [← hqdef, ← hrdef]
+    apply Finset.card_nbij' (fun x => x.1)
+      (fun i => (⟨i, (e - (r + a * i) % b) / b⟩ : (_ : ℕ) × ℕ))
+    · -- forward maps into tooth-index set
+      intro x hx
+      rw [hsdef, Finset.coe_filter, Set.mem_setOf_eq, Finset.mem_sigma, Finset.mem_range,
+        Finset.mem_range] at hx
+      obtain ⟨⟨hi, hl⟩, hge⟩ := hx
+      rw [Finset.coe_filter, Set.mem_setOf_eq, Finset.mem_range]
+      rw [hgdef] at hge
+      simp only at hge
+      set t := r + a * x.1 with htdef
+      -- e = t%b + b*x.2, so e ≡ t (mod b) and e < t
+      have hmod : t % b + b * (t / b) = t := Nat.mod_add_div t b
+      have hx2 : x.2 + 1 ≤ t / b := by omega
+      have hebmod : e % b = t % b := by
+        rw [← hge, Nat.add_mul_mod_self_left, Nat.mod_mod]
+      refine ⟨hi, hebmod.symm, ?_⟩
+      have : b * (x.2 + 1) ≤ b * (t / b) := Nat.mul_le_mul_left b hx2
+      rw [Nat.mul_add, Nat.mul_one] at this
+      omega
+    · -- inverse maps into fiber
+      intro i hi
+      rw [Finset.coe_filter, Set.mem_setOf_eq, Finset.mem_range] at hi
+      obtain ⟨hiq, hmod, hge⟩ := hi
+      rw [hsdef, Finset.coe_filter, Set.mem_setOf_eq, Finset.mem_sigma, Finset.mem_range,
+        Finset.mem_range]
+      set t := r + a * i with htdef
+      -- l = (e - t%b)/b; t%b ≤ e and b ∣ (e - t%b)
+      have htmod : t % b + b * (t / b) = t := Nat.mod_add_div t b
+      have he_split : e % b + b * (e / b) = e := Nat.mod_add_div e b
+      have hle : t % b ≤ e := by omega
+      have hb_dvd : b ∣ (e - t % b) := by
+        rw [hmod]; exact Dvd.intro (e / b) (by omega)
+      have hetm : e = t % b + b * ((e - t % b) / b) := by
+        rw [Nat.mul_div_cancel' hb_dvd]; omega
+      refine ⟨⟨hiq, ?_⟩, ?_⟩
+      · -- (e - t%b)/b < t/b
+        have : b * ((e - t % b) / b) < b * (t / b) := by omega
+        exact Nat.lt_of_mul_lt_mul_left this
+      · rw [hgdef]; simp only [← htdef]; omega
+    · -- left inverse on fiber
+      intro x hx
+      rw [hsdef, Finset.coe_filter, Set.mem_setOf_eq, Finset.mem_sigma, Finset.mem_range,
+        Finset.mem_range] at hx
+      obtain ⟨⟨hi, hl⟩, hge⟩ := hx
+      rw [hgdef] at hge
+      simp only at hge
+      set t := r + a * x.1 with htdef
+      -- recover x.2 = (e - t%b)/b
+      apply Sigma.ext
+      · rfl
+      · have hval : (e - t % b) / b = x.2 := by
+          rw [← hge, Nat.add_sub_cancel_left, Nat.mul_div_cancel_left _ hb]
+        simp only
+        exact heq_of_eq hval
+    · -- right inverse on tooth-index set
+      intro i _
+      rfl
+  rw [hcard]
+
+/-- Combined identity: `B^(a·b+a+b) = dena·(denb·S + W) + B^r`, where
+`B := 5^(a·b)`, `dena := B^a − 1`, `denb := B^b − 1`, `S := gcdDigitSum a b`,
+`W := gcdWSum a b`, `r := (a·b+a+b) % a`. -/
+private theorem gcd_num_eq_den_digitSum (a b : ℕ) (ha : 1 ≤ a) (hb : 1 ≤ b) :
+    (5 ^ (a * b)) ^ (a * b + a + b)
+      = ((5 ^ (a * b)) ^ a - 1)
+          * (((5 ^ (a * b)) ^ b - 1) * gcdDigitSum a b + gcdWSum a b)
+        + (5 ^ (a * b)) ^ ((a * b + a + b) % a) := by
+  rw [gcd_num_split a b ha hb, gcd_pComb_split a b ha hb, gcd_digitSum_eq_gSum a b ha hb]
+
+/-- Lower Euclidean bound: `dena·denb·S ≤ B^(a·b+a+b)`. -/
+private theorem gcd_den_mul_digitSum_le (a b : ℕ) (ha : 1 ≤ a) (hb : 1 ≤ b) :
+    ((5 ^ (a * b)) ^ a - 1) * ((5 ^ (a * b)) ^ b - 1) * gcdDigitSum a b
+      ≤ (5 ^ (a * b)) ^ (a * b + a + b) := by
+  rw [gcd_num_eq_den_digitSum a b ha hb, Nat.mul_assoc, Nat.mul_add]
+  omega
+
+/-- Upper Euclidean bound: `B^(a·b+a+b) < dena·denb·(S+1)`. -/
+private theorem gcd_num_lt_den_mul_digitSum_succ (a b : ℕ) (ha : 1 ≤ a)
+    (hb : 1 ≤ b) :
+    (5 ^ (a * b)) ^ (a * b + a + b)
+      < ((5 ^ (a * b)) ^ a - 1) * ((5 ^ (a * b)) ^ b - 1)
+          * (gcdDigitSum a b + 1) := by
+  rw [gcd_num_eq_den_digitSum a b ha hb]
+  set dena := (5 ^ (a * b)) ^ a - 1 with hdena
+  set denb := (5 ^ (a * b)) ^ b - 1 with hdenb
+  set S := gcdDigitSum a b with hS
+  have hbr : (5 ^ (a * b)) ^ ((a * b + a + b) % a) < dena := gcd_rem_lt_dena a b ha hb
+  have hW : gcdWSum a b < denb := gcd_wSum_lt_denb a b ha hb
+  -- dena·(denb·S + W) + B^r < dena·(denb·S + denb) = dena·denb·(S+1)
+  have hWdvd : dena * gcdWSum a b + dena ≤ dena * denb := by
+    rw [← Nat.mul_succ]
+    exact Nat.mul_le_mul_left dena (by omega)
+  have hexpand : dena * (denb * S + gcdWSum a b)
+      + (5 ^ (a * b)) ^ ((a * b + a + b) % a)
+      < dena * (denb * (S + 1)) := by
+    rw [Nat.mul_add, Nat.mul_add, Nat.mul_one, Nat.mul_add]
+    omega
+  rw [Nat.mul_assoc]
+  exact hexpand
+
 end GebLean
