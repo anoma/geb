@@ -21,6 +21,7 @@ digit-block indicator, each equated to a Mathlib reference function.
   base-`2^(2n)` digit read-off of `(1 + 2^(2n))^(2n)`.
 * `hwClosed` — the binary Hamming weight as `ν₂(C(2n,n))` (Kummer).
 * `deltaBlock` — the digit-block indicator `δ a w = (2^w - 1)(2^w - a + 1)`.
+* `solCount` — the number of `(x, y) ∈ ℕ²` with `a·x + b·y = n`.
 
 ## Main statements
 
@@ -30,6 +31,9 @@ digit-block indicator, each equated to a Mathlib reference function.
 * `hwClosed_eq` — `hwClosed n = (Nat.digits 2 n).sum` for `n ≥ 1`.
 * `hwClosed_deltaBlock` — `HW(δ a w) = 2w` if `a = 0`, else `w`, for
   `a < 2^w`.
+* `solCount_le_succ` — `solCount a b n ≤ n + 1` for `1 ≤ a, 1 ≤ b`.
+* `solCount_mul_eq_gcd_succ` — `solCount a b (a * b) = gcd a b + 1` for
+  `1 ≤ a, 1 ≤ b` (the Prunescu–Shunia gcd linear-Diophantine count).
 
 ## References
 
@@ -307,5 +311,140 @@ theorem hwClosed_deltaBlock {a w : ℕ} (ha : a < 2 ^ w) :
       have hcompl := sum_digits_two_compl w (a - 1) hlow
       have hcomp_eq : 2 ^ w - a = 2 ^ w - 1 - (a - 1) := by omega
       rw [hcomp_eq, hcompl, if_neg ha0]
+
+/-- The number of `(x, y) ∈ ℕ²` with `a·x + b·y = n`. Finite for
+`1 ≤ a, 1 ≤ b` (every solution lies in the `(n+1)×(n+1)` box). -/
+def solCount (a b n : ℕ) : ℕ :=
+  ((Finset.range (n + 1) ×ˢ Finset.range (n + 1)).filter
+    (fun p => a * p.1 + b * p.2 = n)).card
+
+private theorem mem_solCount_box (a b n x y : ℕ) (ha : 1 ≤ a) (hb : 1 ≤ b)
+    (h : a * x + b * y = n) : x < n + 1 ∧ y < n + 1 := by
+  have hx : x ≤ a * x := Nat.le_mul_of_pos_left x ha
+  have hy : y ≤ b * y := Nat.le_mul_of_pos_left y hb
+  omega
+
+/-- For `1 ≤ a, 1 ≤ b`, the solution count of `a·x + b·y = n` is at most
+`n + 1`: the map `(x, y) ↦ (a·x, b·y)` injects the solutions into
+`Finset.antidiagonal n`. Equality holds at `a = b = 1`. -/
+theorem solCount_le_succ (a b n : ℕ) (ha : 1 ≤ a) (hb : 1 ≤ b) :
+    solCount a b n ≤ n + 1 := by
+  rw [solCount, ← Finset.Nat.card_antidiagonal n]
+  apply Finset.card_le_card_of_injOn (fun p => (a * p.1, b * p.2))
+  · intro p hp
+    simp only [Finset.coe_filter, Set.mem_setOf_eq] at hp
+    simp only [Finset.mem_coe, Finset.mem_antidiagonal]
+    exact hp.2
+  · intro p hp q hq hpq
+    simp only [Finset.coe_filter, Set.mem_setOf_eq,
+      Finset.mem_product, Finset.mem_range] at hp hq
+    simp only [Prod.mk.injEq] at hpq
+    have h1 : p.1 = q.1 := Nat.eq_of_mul_eq_mul_left ha hpq.1
+    have h2 : p.2 = q.2 := Nat.eq_of_mul_eq_mul_left hb hpq.2
+    exact Prod.ext h1 h2
+
+/-- The Prunescu–Shunia gcd linear-Diophantine count: for `1 ≤ a, 1 ≤ b`,
+the number of `(x, y) ∈ ℕ²` with `a·x + b·y = a·b` equals
+`gcd a b + 1`. With `d = gcd a b`, the solutions are exactly
+`(b - (b/d)·t, (a/d)·t)` for `t = 0, …, d`. -/
+theorem solCount_mul_eq_gcd_succ (a b : ℕ) (ha : 1 ≤ a) (hb : 1 ≤ b) :
+    solCount a b (a * b) = Nat.gcd a b + 1 := by
+  set d := Nat.gcd a b with hd
+  have hdpos : 1 ≤ d := Nat.gcd_pos_of_pos_left b ha
+  have hda : d ∣ a := Nat.gcd_dvd_left a b
+  have hdb : d ∣ b := Nat.gcd_dvd_right a b
+  set a' := a / d with ha'
+  set b' := b / d with hb'
+  have hada : d * a' = a := Nat.mul_div_cancel' hda
+  have hbdb : d * b' = b := Nat.mul_div_cancel' hdb
+  have ha'pos : 1 ≤ a' := by
+    rcases Nat.eq_zero_or_pos a' with h | h
+    · rw [h, Nat.mul_zero] at hada; omega
+    · exact h
+  have hb'pos : 1 ≤ b' := by
+    rcases Nat.eq_zero_or_pos b' with h | h
+    · rw [h, Nat.mul_zero] at hbdb; omega
+    · exact h
+  -- a * b' = a' * b = a*b / d
+  have hcross : a * b' = b * a' := by
+    rw [← hada, ← hbdb]; ring
+  -- key equation: for t ≤ d, the forward map lands in the solution set
+  have hbt : ∀ t : ℕ, t ≤ d → b' * t ≤ b := by
+    intro t ht
+    have : b' * t ≤ b' * d := Nat.mul_le_mul_left b' ht
+    rw [Nat.mul_comm b' d, hbdb] at this; exact this
+  have hsol : ∀ t : ℕ, t ≤ d →
+      a * (b - b' * t) + b * (a' * t) = a * b := by
+    intro t ht
+    have hle := hbt t ht
+    have h1 : a * (b - b' * t) = a * b - a * (b' * t) := Nat.mul_sub a b (b' * t)
+    have h2 : a * (b' * t) = b * (a' * t) := by
+      rw [← Nat.mul_assoc, ← Nat.mul_assoc, hcross]
+    have h3 : a * (b' * t) ≤ a * b := Nat.mul_le_mul_left a hle
+    omega
+  have hcop : a'.Coprime b' := Nat.coprime_div_gcd_div_gcd (by omega)
+  -- characterization: every solution is `(b - b'*t, a'*t)` for some `t ≤ d`
+  have hchar : ∀ x y : ℕ, a * x + b * y = a * b →
+      a' ∣ y ∧ y / a' ≤ d ∧ x = b - b' * (y / a') ∧ y = a' * (y / a') := by
+    intro x y hxy
+    -- reduce by d : a'*x + b'*y = a'*b
+    have hred : a' * x + b' * y = a' * b := by
+      have hmul : d * (a' * x + b' * y) = d * (a' * b) := by
+        have e : d * (a' * x + b' * y) = a * x + b * y := by
+          rw [Nat.mul_add, ← Nat.mul_assoc, ← Nat.mul_assoc, hada, hbdb]
+        have e2 : d * (a' * b) = a * b := by
+          rw [← Nat.mul_assoc, hada]
+        rw [e, e2, hxy]
+      exact Nat.eq_of_mul_eq_mul_left (by omega) hmul
+    -- a' ∣ b'*y, hence a' ∣ y by coprimality
+    have hdvd : a' ∣ b' * y := by
+      have hsum : a' ∣ a' * x + b' * y := by rw [hred]; exact Dvd.intro b rfl
+      exact (Nat.dvd_add_right (Dvd.intro x rfl)).mp hsum
+    have hay : a' ∣ y := hcop.dvd_of_dvd_mul_left hdvd
+    set t := y / a' with htdef
+    have hyt : y = a' * t := (Nat.mul_div_cancel' hay).symm
+    -- substitute: a'*x + b'*a'*t = a'*b ⇒ x + b'*t = b
+    have hxbt : x + b' * t = b := by
+      have hstep : a' * (x + b' * t) = a' * b := by
+        rw [Nat.mul_add]
+        have hre : b' * y = a' * (b' * t) := by
+          rw [hyt]; ring
+        rw [hre] at hred; exact hred
+      exact Nat.eq_of_mul_eq_mul_left (by omega) hstep
+    have htd : t ≤ d := by
+      have : b' * t ≤ b := by omega
+      have h2 : b' * t ≤ b' * d := by rw [Nat.mul_comm b' d, hbdb]; omega
+      exact Nat.le_of_mul_le_mul_left h2 (by omega)
+    exact ⟨hay, htd, by omega, hyt⟩
+  rw [solCount, ← Finset.card_range (d + 1)]
+  symm
+  apply Finset.card_nbij' (fun t => (b - b' * t, a' * t)) (fun p => p.2 / a')
+  · -- MapsTo i : range (d+1) → solutions
+    intro t ht
+    simp only [Finset.coe_range, Set.mem_Iio] at ht
+    simp only [Finset.coe_filter, Set.mem_setOf_eq, Finset.mem_product,
+      Finset.mem_range]
+    have heq := hsol t (by omega)
+    obtain ⟨hx, hy⟩ := mem_solCount_box a b (a * b) (b - b' * t) (a' * t) ha hb heq
+    exact ⟨⟨hx, hy⟩, heq⟩
+  · -- MapsTo j : solutions → range (d+1)
+    intro p hp
+    simp only [Finset.coe_filter, Set.mem_setOf_eq, Finset.mem_product,
+      Finset.mem_range] at hp
+    simp only [Finset.coe_range, Set.mem_Iio]
+    obtain ⟨-, htd, -, -⟩ := hchar p.1 p.2 hp.2
+    omega
+  · -- left_inv : j (i t) = t for t ∈ range (d+1)
+    intro t ht
+    simp only [Finset.coe_range, Set.mem_Iio] at ht
+    simp only [Nat.mul_div_cancel_left t (by omega : 0 < a')]
+  · -- right_inv : i (j p) = p for solutions p
+    intro p hp
+    simp only [Finset.coe_filter, Set.mem_setOf_eq, Finset.mem_product,
+      Finset.mem_range] at hp
+    obtain ⟨-, -, hx, hy⟩ := hchar p.1 p.2 hp.2
+    apply Prod.ext
+    · simp only; rw [← hx]
+    · simp only; rw [← hy]
 
 end GebLean
