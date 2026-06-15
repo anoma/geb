@@ -56,9 +56,10 @@ so it precedes both.
   with the binary block weakened along `binExtEmb`, the local-aware data assembly,
   per-witness bound map, and five-way slot recursor (slot embeddings
   `binExtWitEmb1`/`binExtOutSlot1`/`binExtWitEmb2`/`binExtOutSlot2`/`binExtLocalSlot`).
-* `diophMod`, `diophTsub` — the remainder and truncated-subtraction combinators on
-  `DiophEnc`s (arXiv:2606.09336, Lemma 2 Case 3 and the monus gadget), each proved
-  to satisfy `Encodes` (`diophMod_encodes`, `diophTsub_encodes`).
+* `diophMod`, `diophTsub`, `diophDiv` — the remainder, truncated-subtraction, and
+  division combinators on `DiophEnc`s (arXiv:2606.09336, Lemma 2 Case 3, the monus
+  gadget, and the division gadget), each proved to satisfy `Encodes`
+  (`diophMod_encodes`, `diophTsub_encodes`, `diophDiv_encodes`).
 
 ## Main statements
 
@@ -92,9 +93,9 @@ so it precedes both.
   each preserving `Encodes` from its sub-encodings.
 * `binExtSplicedSys_eval` — the additive evaluation of the extended binary spliced
   system into its two sub-systems.
-* `diophMod_encodes`, `diophTsub_encodes` — the `Encodes` correctness of the
-  remainder and truncated-subtraction combinators, each preserving `Encodes` from
-  its two sub-encodings.
+* `diophMod_encodes`, `diophTsub_encodes`, `diophDiv_encodes` — the `Encodes`
+  correctness of the remainder, truncated-subtraction, and division combinators,
+  each preserving `Encodes` from its two sub-encodings.
 
 ## Implementation notes
 
@@ -2017,6 +2018,229 @@ theorem diophMod_encodes {n : ℕ} {sub1 sub2 : DiophEnc n} {g1 g2 : (Fin n → 
     have := hval1 ρ
     have hmod : g1 ρ % g2 ρ ≤ g1 ρ := Nat.mod_le _ _
     simp only [diophMod]
+    omega
+
+/-- The encoding of `fun ρ => g1 ρ / g2 ρ` (natural-number division, with the
+`Nat.div` convention `g1 / 0 = 0`) from encodings `sub1` of `g1` and `sub2` of
+`g2`. Beyond the two sub-outputs `y₁`, `y₂`, two local witnesses `r` and `y₃` hold
+the remainder `y₁ % y₂` and the predecessor slack `y₂ ∸ (r + 1)`. The gadget is a
+single product atom of two bracket sub-systems: the first bracket (`branchA`)
+encodes the division-with-remainder branch `y · y₂ + r = y₁ ∧ y₂ = r + y₃ + 1`
+(so `r < y₂`), valid when `y₂ ≠ 0`; the second (`branchB`) encodes the branch
+`y₂ = 0 ∧ y = 0 ∧ r = 0 ∧ y₃ = 0`, valid when `y₂ = 0` (where `g1 / 0 = 0`). Both
+brackets pin `r` and `y₃`, which the product zero-set needs for uniqueness. Each
+sub-witness keeps its input-only sub-bound; `y₁` is bounded by `sub1.valBound`, and
+`y₂`, `r`, `y₃` by `sub2.valBound`. The value majorant is `sub1.valBound`. -/
+def diophDiv {n : ℕ} (sub1 sub2 : DiophEnc n) : DiophEnc n where
+  witArity := sub1.witArity + 1 + sub2.witArity + 1 + 2
+  sys :=
+    binExtSplicedSys sub1 sub2 2 ++
+      [.prod
+        [.sqDist
+          [SimpleMonomial.mulVars (Fin.castAdd (sub1.witArity + 1 + sub2.witArity + 1 + 2)
+              (Fin.last n)) (Fin.natAdd (n + 1) binExtOutSlot2),
+            SimpleMonomial.var (Fin.natAdd (n + 1) (binExtLocalSlot 0))]
+          [SimpleMonomial.var (Fin.natAdd (n + 1) binExtOutSlot1)],
+        .sqDist
+          [SimpleMonomial.var (Fin.natAdd (n + 1) binExtOutSlot2)]
+          [SimpleMonomial.var (Fin.natAdd (n + 1) (binExtLocalSlot 0)),
+            SimpleMonomial.var (Fin.natAdd (n + 1) (binExtLocalSlot 1)),
+            SimpleMonomial.one]]
+        [.sqDist
+          [SimpleMonomial.var (Fin.natAdd (n + 1) binExtOutSlot2)] [],
+        .sqDist
+          [SimpleMonomial.var (Fin.castAdd (sub1.witArity + 1 + sub2.witArity + 1 + 2)
+            (Fin.last n))] [],
+        .sqDist
+          [SimpleMonomial.var (Fin.natAdd (n + 1) (binExtLocalSlot 0))] [],
+        .sqDist
+          [SimpleMonomial.var (Fin.natAdd (n + 1) (binExtLocalSlot 1))] []]]
+  bound := binExtBound sub1 sub2 (Fin.cons sub2.valBound (fun _ => sub2.valBound))
+  valBound := sub1.valBound
+
+/-- The `diophDiv sub1 sub2` system vanishes at `ctx ρ y w` exactly when both
+sub-systems vanish at their recovered contexts and the witnesses satisfy the
+disjunction of the two bracket branches: either `y · y₂ + r = y₁ ∧ y₂ = r + y₃ + 1`
+(the `y₂ ≠ 0` branch) or `y₂ = 0 ∧ y = 0 ∧ r = 0 ∧ y₃ = 0` (the `y₂ = 0`
+branch). -/
+theorem diophDiv_eval_eq_zero_iff {n : ℕ} (sub1 sub2 : DiophEnc n) (ρ : Fin n → ℕ) (y : ℕ)
+    (w : Fin (sub1.witArity + 1 + sub2.witArity + 1 + 2) → ℕ) :
+    SosSystem.eval (diophDiv sub1 sub2).sys ((diophDiv sub1 sub2).ctx ρ y w) = 0 ↔
+      SosSystem.eval sub1.sys
+          (sub1.ctx ρ (w binExtOutSlot1) (fun j => w (binExtWitEmb1 j))) = 0 ∧
+        SosSystem.eval sub2.sys
+            (sub2.ctx ρ (w binExtOutSlot2) (fun j => w (binExtWitEmb2 j))) = 0 ∧
+          ((y * w binExtOutSlot2 + w (binExtLocalSlot 0) = w binExtOutSlot1 ∧
+              w binExtOutSlot2 = w (binExtLocalSlot 0) + w (binExtLocalSlot 1) + 1) ∨
+            (w binExtOutSlot2 = 0 ∧ y = 0 ∧ w (binExtLocalSlot 0) = 0 ∧
+              w (binExtLocalSlot 1) = 0)) := by
+  change SosSystem.eval
+      (binExtSplicedSys sub1 sub2 2 ++
+        [SosTerm.prod
+          [SosTerm.sqDist
+            [SimpleMonomial.mulVars (Fin.castAdd (sub1.witArity + 1 + sub2.witArity + 1 + 2)
+                (Fin.last n)) (Fin.natAdd (n + 1) binExtOutSlot2),
+              SimpleMonomial.var (Fin.natAdd (n + 1) (binExtLocalSlot 0))]
+            [SimpleMonomial.var (Fin.natAdd (n + 1) binExtOutSlot1)],
+          SosTerm.sqDist
+            [SimpleMonomial.var (Fin.natAdd (n + 1) binExtOutSlot2)]
+            [SimpleMonomial.var (Fin.natAdd (n + 1) (binExtLocalSlot 0)),
+              SimpleMonomial.var (Fin.natAdd (n + 1) (binExtLocalSlot 1)),
+              SimpleMonomial.one]]
+          [SosTerm.sqDist
+            [SimpleMonomial.var (Fin.natAdd (n + 1) binExtOutSlot2)] [],
+          SosTerm.sqDist
+            [SimpleMonomial.var (Fin.castAdd (sub1.witArity + 1 + sub2.witArity + 1 + 2)
+              (Fin.last n))] [],
+          SosTerm.sqDist
+            [SimpleMonomial.var (Fin.natAdd (n + 1) (binExtLocalSlot 0))] [],
+          SosTerm.sqDist
+            [SimpleMonomial.var (Fin.natAdd (n + 1) (binExtLocalSlot 1))] []]])
+      (Fin.append (Fin.snoc ρ y) w) = 0 ↔ _
+  rw [SosSystem.eval_append]
+  rw [binExtSplicedSys_eval sub1 sub2 2 ρ y w]
+  simp only [SosSystem.eval, Nat.add_zero, Nat.add_eq_zero_iff, SosTerm.prod_eval_eq_zero_iff,
+    SosTerm.sqDist_eval_eq_zero_iff, SimpleSum.eval, List.map_cons, List.map_nil, List.sum_cons,
+    List.sum_nil, SimpleMonomial.var_eval, SimpleMonomial.mulVars_eval,
+    SimpleMonomial.one_eval, Fin.append_right, Fin.append_left, Fin.snoc_last]
+  omega
+
+/-- Either bracket branch, together with `y₁ = g1` and `y₂ = g2`, forces
+`y = g1 / g2` (with the `Nat.div` convention `g1 / 0 = 0`). -/
+private theorem diophDiv_branch_div {y₁ y₂ y₃ r y : ℕ}
+    (h : (y * y₂ + r = y₁ ∧ y₂ = r + y₃ + 1) ∨
+      (y₂ = 0 ∧ y = 0 ∧ r = 0 ∧ y₃ = 0)) :
+    y = y₁ / y₂ := by
+  rcases h with ⟨he, hlt⟩ | ⟨h0, hy, _, _⟩
+  · have hrlt : r < y₂ := by omega
+    have hpos : 0 < y₂ := by omega
+    rw [← he, Nat.add_comm, Nat.add_mul_div_right _ _ hpos, Nat.div_eq_of_lt hrlt,
+      Nat.zero_add]
+  · rw [h0, hy, Nat.div_zero]
+
+/-- The `diophDiv` bound map. -/
+@[simp]
+theorem diophDiv_bound {n : ℕ} (sub1 sub2 : DiophEnc n) :
+    (diophDiv sub1 sub2).bound =
+      binExtBound sub1 sub2 (Fin.cons sub2.valBound (fun _ => sub2.valBound)) := rfl
+
+/-- `diophDiv sub1 sub2` encodes `fun ρ => g1 ρ / g2 ρ` whenever `sub1` encodes
+`g1` and `sub2` encodes `g2`. The two bracket branches reduce, via the
+division-with-remainder identity (`Nat.add_mul_div_right`, `Nat.div_eq_of_lt`) and
+the `g1 / 0 = 0` convention, to `y = g1 ρ / g2 ρ`, with the local witnesses
+`r = g1 ρ % g2 ρ` and `y₃ = g2 ρ ∸ (r + 1)` pinned by both brackets. -/
+theorem diophDiv_encodes {n : ℕ} {sub1 sub2 : DiophEnc n} {g1 g2 : (Fin n → ℕ) → ℕ}
+    (h1 : sub1.Encodes g1) (h2 : sub2.Encodes g2) :
+    (diophDiv sub1 sub2).Encodes (fun ρ => g1 ρ / g2 ρ) := by
+  obtain ⟨hsound1, huniq1, hbound1, hval1⟩ := h1
+  obtain ⟨hsound2, huniq2, hbound2, hval2⟩ := h2
+  refine ⟨?_, ?_, ?_, ?_⟩
+  · intro ρ y w hzero
+    rw [diophDiv_eval_eq_zero_iff] at hzero
+    obtain ⟨hz1, hz2, hbr⟩ := hzero
+    have e1 := hsound1 ρ (w binExtOutSlot1) (fun j => w (binExtWitEmb1 j)) hz1
+    have e2 := hsound2 ρ (w binExtOutSlot2) (fun j => w (binExtWitEmb2 j)) hz2
+    rw [e1, e2] at hbr
+    exact diophDiv_branch_div hbr
+  · intro ρ
+    obtain ⟨wsub1, hwsub1, hwsubuniq1⟩ := huniq1 ρ
+    obtain ⟨wsub2, hwsub2, hwsubuniq2⟩ := huniq2 ρ
+    refine ⟨binExtAssemble wsub1 (g1 ρ) wsub2 (g2 ρ)
+        (Fin.cons (if g2 ρ = 0 then 0 else g1 ρ % g2 ρ)
+          (fun _ => g2 ρ - (g1 ρ % g2 ρ) - 1)), ?_, ?_⟩
+    · change (diophDiv sub1 sub2).sys.eval
+        ((diophDiv sub1 sub2).ctx ρ (g1 ρ / g2 ρ)
+          (binExtAssemble wsub1 (g1 ρ) wsub2 (g2 ρ)
+            (Fin.cons (if g2 ρ = 0 then 0 else g1 ρ % g2 ρ)
+              (fun _ => g2 ρ - (g1 ρ % g2 ρ) - 1)))) = 0
+      rw [diophDiv_eval_eq_zero_iff]
+      simp only [binExtAssemble_witEmb1, binExtAssemble_outSlot1, binExtAssemble_witEmb2,
+        binExtAssemble_outSlot2, binExtAssemble_localSlot, Fin.cons_zero, Fin.cons_one]
+      refine ⟨hwsub1, hwsub2, ?_⟩
+      rcases Nat.eq_zero_or_pos (g2 ρ) with h0 | hpos
+      · right
+        rw [if_pos h0, h0, Nat.div_zero, Nat.mod_zero, Nat.zero_sub, Nat.zero_sub]
+        exact ⟨rfl, rfl, rfl, rfl⟩
+      · left
+        rw [if_neg (by omega : ¬ g2 ρ = 0)]
+        have hdm : g1 ρ / g2 ρ * g2 ρ + g1 ρ % g2 ρ = g1 ρ := by
+          rw [Nat.mul_comm, Nat.div_add_mod]
+        have hlt : g1 ρ % g2 ρ < g2 ρ := Nat.mod_lt _ hpos
+        refine ⟨by omega, by omega⟩
+    · intro w' hw'
+      have hw'' : (diophDiv sub1 sub2).sys.eval
+        ((diophDiv sub1 sub2).ctx ρ (g1 ρ / g2 ρ) w') = 0 := hw'
+      rw [diophDiv_eval_eq_zero_iff] at hw''
+      obtain ⟨hz1', hz2', hbr'⟩ := hw''
+      have hg1 : w' binExtOutSlot1 = g1 ρ :=
+        hsound1 ρ (w' binExtOutSlot1) (fun j => w' (binExtWitEmb1 j)) hz1'
+      have hg2 : w' binExtOutSlot2 = g2 ρ :=
+        hsound2 ρ (w' binExtOutSlot2) (fun j => w' (binExtWitEmb2 j)) hz2'
+      have he1 : (fun j => w' (binExtWitEmb1 j)) = wsub1 :=
+        hwsubuniq1 (fun j => w' (binExtWitEmb1 j)) (by rw [← hg1]; exact hz1')
+      have he2 : (fun j => w' (binExtWitEmb2 j)) = wsub2 :=
+        hwsubuniq2 (fun j => w' (binExtWitEmb2 j)) (by rw [← hg2]; exact hz2')
+      rw [hg1, hg2] at hbr'
+      have hrem : w' (binExtLocalSlot 0) = if g2 ρ = 0 then 0 else g1 ρ % g2 ρ := by
+        rcases hbr' with ⟨he, hlt⟩ | ⟨h0, _, hr, _⟩
+        · have hrlt : w' (binExtLocalSlot 0) < g2 ρ := by omega
+          have hmod : g1 ρ % g2 ρ = w' (binExtLocalSlot 0) := by
+            rw [← he, Nat.add_comm, Nat.add_mul_mod_self_right, Nat.mod_eq_of_lt hrlt]
+          rw [if_neg (by omega : ¬ g2 ρ = 0)]; omega
+        · rw [if_pos h0]; exact hr
+      have hslack : w' (binExtLocalSlot 1) = g2 ρ - (g1 ρ % g2 ρ) - 1 := by
+        rcases hbr' with ⟨he, hlt⟩ | ⟨h0, _, _, _⟩
+        · have hrlt : w' (binExtLocalSlot 0) < g2 ρ := by omega
+          have hmod : g1 ρ % g2 ρ = w' (binExtLocalSlot 0) := by
+            rw [← he, Nat.add_comm, Nat.add_mul_mod_self_right, Nat.mod_eq_of_lt hrlt]
+          rw [hmod]; omega
+        · rw [h0, Nat.mod_zero]; omega
+      refine funext (binExtLayoutCases (fun j => ?_) ?_ (fun j => ?_) ?_ (fun i => ?_))
+      · rw [binExtAssemble_witEmb1]; exact congrFun he1 j
+      · rw [binExtAssemble_outSlot1]; exact hg1
+      · rw [binExtAssemble_witEmb2]; exact congrFun he2 j
+      · rw [binExtAssemble_outSlot2]; exact hg2
+      · rw [binExtAssemble_localSlot]
+        refine Fin.cases ?_ (fun j => ?_) i
+        · rw [Fin.cons_zero]; exact hrem
+        · rw [Fin.cons_succ, Fin.fin_one_eq_zero j]; exact hslack
+  · intro ρ y w hzero i
+    rw [diophDiv_eval_eq_zero_iff] at hzero
+    obtain ⟨hz1, hz2, hbr⟩ := hzero
+    have hg1 : w binExtOutSlot1 = g1 ρ :=
+      hsound1 ρ (w binExtOutSlot1) (fun j => w (binExtWitEmb1 j)) hz1
+    have hg2 : w binExtOutSlot2 = g2 ρ :=
+      hsound2 ρ (w binExtOutSlot2) (fun j => w (binExtWitEmb2 j)) hz2
+    rw [hg1, hg2] at hbr
+    rw [diophDiv_bound]
+    induction i using binExtLayoutCases with
+    | hwit1 j =>
+      rw [binExtBound, binExtAssemble_witEmb1]
+      exact hbound1 ρ (g1 ρ) (fun j => w (binExtWitEmb1 j)) (by rw [← hg1]; exact hz1) j
+    | hout1 =>
+      rw [binExtBound, binExtAssemble_outSlot1, hg1]
+      exact hval1 ρ
+    | hwit2 j =>
+      rw [binExtBound, binExtAssemble_witEmb2]
+      exact hbound2 ρ (g2 ρ) (fun j => w (binExtWitEmb2 j)) (by rw [← hg2]; exact hz2) j
+    | hout2 =>
+      rw [binExtBound, binExtAssemble_outSlot2, hg2]
+      exact hval2 ρ
+    | hloc i =>
+      rw [binExtBound, binExtAssemble_localSlot]
+      refine Fin.cases ?_ (fun j => ?_) i
+      · rw [Fin.cons_zero]
+        have hle : w (binExtLocalSlot 0) ≤ g2 ρ := by
+          rcases hbr with ⟨_, hlt⟩ | ⟨_, _, hr, _⟩ <;> omega
+        exact Nat.lt_of_le_of_lt hle (hval2 ρ)
+      · rw [Fin.cons_succ, Fin.fin_one_eq_zero j]
+        have hle : w (binExtLocalSlot 1) ≤ g2 ρ := by
+          rcases hbr with ⟨_, hlt⟩ | ⟨_, _, _, hy3⟩ <;> omega
+        exact Nat.lt_of_le_of_lt hle (hval2 ρ)
+  · intro ρ
+    have := hval1 ρ
+    have hdiv : g1 ρ / g2 ρ ≤ g1 ρ := Nat.div_le_self _ _
+    simp only [diophDiv]
     omega
 
 end GebLean
