@@ -2,6 +2,7 @@ import GebLean.Era
 import GebLean.LawvereER
 import GebLean.Utilities.ERArith
 import GebLean.Utilities.EraBoundedSum
+import GebLean.Utilities.ArithClosedForms
 
 /-!
 # Era basis completeness bridge
@@ -15,6 +16,8 @@ elementary recursive functions as formalised by `ERMor1`
 * `eraOpToER` — the `ERMor1` witness for each basis operation.
 * `erOfETm` — translation of an `Era` term to an `ERMor1` term.
 * `eraGeomSum` — the closed-form `ETm 2` for `Σ_{i<bound} q^i`.
+* `eraCentralBinom` — `centralBinomClosed` realised as an `ETm 1`.
+* `eraDelta` — `deltaBlock` realised as an `ETm 2`.
 
 ## Main statements
 
@@ -23,6 +26,8 @@ elementary recursive functions as formalised by `ERMor1`
   (the inclusion `Era ⊆ E³`).
 * `eraGeomSum_eval` — raw evaluation of `eraGeomSum`.
 * `eraGeomSum_natBSum` — `eraGeomSum` agrees with `natBSum` when the base is at least `2`.
+* `eraCentralBinom_eval` — `eraCentralBinom` evaluates to `centralBinomClosed`.
+* `eraDelta_eval` — `eraDelta` evaluates to `deltaBlock`.
 
 ## References
 
@@ -124,5 +129,38 @@ theorem eraGeomSum_natBSum (q bound : ℕ) (hq : 2 ≤ q) :
   rw [eraGeomSum_eval]
   simp only [Matrix.cons_val_zero, Matrix.cons_val_one]
   rw [natBSum_geom q bound hq]
+
+/-- `centralBinomClosed` realised as an `Era` term (variable 0 = n).
+The term encodes `((1 + 2^(2n))^(2n) / 2^(2n²)) % 2^(2n)` with
+`twoN := n + n = 2n`, `epow2 twoN = 2^(2n)`,
+`epow2 (twoN *ᵉ var0) = 2^((2n)*n) = 2^(2n²)`. -/
+def eraCentralBinom : ETm 1 :=
+  let var0 : ETm 1 := .var 0
+  let twoN  := var0 +ᵉ var0
+  emod
+    (ediv
+      (epow (.succ (epow2 twoN)) twoN)
+      (epow2 (twoN *ᵉ var0)))
+    (epow2 twoN)
+
+/-- `eraCentralBinom` evaluates to `centralBinomClosed`. -/
+theorem eraCentralBinom_eval (n : ℕ) :
+    Tm.eval eraInterp eraCentralBinom ![n] = centralBinomClosed n := by
+  simp [eraCentralBinom, centralBinomClosed, emod, ediv, emul, epow, epow2, eadd,
+    Tm.eval, eraInterp, fcons]
+  ring_nf
+
+/-- `deltaBlock` realised as an `Era` term (variable 0 = a, 1 = w). -/
+def eraDelta : ETm 2 :=
+  let a : ETm 2 := .var 0
+  let w : ETm 2 := .var 1
+  let pw := epow2 w
+  emul (etsub pw (.succ .zero)) (.succ (etsub pw a))
+
+/-- `eraDelta` evaluates to `deltaBlock`. -/
+theorem eraDelta_eval (a w : ℕ) :
+    Tm.eval eraInterp eraDelta ![a, w] = deltaBlock a w := by
+  simp [eraDelta, deltaBlock, emul, etsub, epow2, Tm.eval, eraInterp, fcons,
+    Matrix.cons_val_zero, Matrix.cons_val_one]
 
 end GebLean.EraCompleteness
