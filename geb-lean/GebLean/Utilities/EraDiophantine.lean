@@ -41,6 +41,15 @@ so it precedes both.
 * `diophVar`, `diophZero`, `diophSucc` — the projection, constant-zero, and
   successor combinators on `DiophEnc`s, each proved to satisfy `Encodes`
   (`diophVar_encodes`, `diophZero_encodes`, `diophSucc_encodes`).
+* `binAssemble`, `binBound`, `binSplicedSys` — the binary-combine layout: the
+  four-block assembly of compound data, the per-witness bound map, and the
+  two-sub spliced system over the layout `Fin (w1 + 1 + w2 + 1)`, with slot
+  embeddings `binWitEmb1`/`binOutSlot1`/`binWitEmb2`/`binOutSlot2` and the case
+  recursor `binLayoutCases`.
+* `diophAdd`, `diophMul`, `diophPow2` — the addition, multiplication, and
+  base-`2` power combinators on `DiophEnc`s (arXiv:2606.09336, Lemma 2 Cases 2
+  and 1, and the multiplication gadget), each proved to satisfy `Encodes`
+  (`diophAdd_encodes`, `diophMul_encodes`, `diophPow2_encodes`).
 
 ## Main statements
 
@@ -66,6 +75,12 @@ so it precedes both.
 * `diophVar_encodes`, `diophZero_encodes`, `diophSucc_encodes` — the
   `Encodes` correctness of the projection, constant-zero, and successor
   combinators (the last preserving `Encodes` from a sub-encoding).
+* `append_snoc_comp_spliceEmb`, `binSplicedSys_eval` — the generic
+  context-recovery identity for a single splice and the additive evaluation of
+  the binary spliced system into its two sub-systems.
+* `diophAdd_encodes`, `diophMul_encodes`, `diophPow2_encodes` — the `Encodes`
+  correctness of the addition, multiplication, and base-`2` power combinators,
+  each preserving `Encodes` from its sub-encodings.
 
 ## Implementation notes
 
@@ -682,6 +697,69 @@ theorem SimpleMonomial.one_eval {m : ℕ} (ρ : Fin m → ℕ) :
   simp only [SimpleMonomial.eval, SimpleMonomial.one, Era.one, Tm.eval, Nat.zero_mul,
     Nat.pow_zero, Finset.prod_const_one, Nat.mul_one, Nat.zero_add]
 
+/-- The simple monomial over `Fin m` whose value at `ρ` is the product
+`ρ j * ρ k`: the coefficient is the term `var j * var k`, and every exponential
+coefficient and polynomial exponent is zero, so all product factors are `1`. -/
+def SimpleMonomial.mulVars {m : ℕ} (j k : Fin m) : SimpleMonomial m where
+  coeff := .var j *ᵉ .var k
+  expBase := fun _ => .zero
+  expCoeff := fun _ => .zero
+  polyExp := fun _ => 0
+
+/-- The product monomial evaluates to the product of its two variables. -/
+@[simp]
+theorem SimpleMonomial.mulVars_eval {m : ℕ} (j k : Fin m) (ρ : Fin m → ℕ) :
+    (SimpleMonomial.mulVars j k).eval ρ = ρ j * ρ k := by
+  simp only [SimpleMonomial.eval, SimpleMonomial.mulVars, emul_eval, eraInterp, fcons, Tm.eval,
+    Nat.zero_mul, Nat.pow_zero, Finset.prod_const_one, Nat.mul_one]
+
+/-- The simple monomial over `Fin m` whose value at `ρ` is `2 ^ ρ j`: a single
+exponential factor with constant base `2` and exponential coefficient `1` at slot
+`j` (Expression (6) of arXiv:2407.12928), all other data trivial. -/
+def SimpleMonomial.pow2Var {m : ℕ} (j : Fin m) : SimpleMonomial m where
+  coeff := Era.one
+  expBase := fun i => if i = j then .succ Era.one else .zero
+  expCoeff := fun i => if i = j then Era.one else .zero
+  polyExp := fun _ => 0
+
+/-- The base-`2` power monomial evaluates to `2 ^ ρ j`. -/
+@[simp]
+theorem SimpleMonomial.pow2Var_eval {m : ℕ} (j : Fin m) (ρ : Fin m → ℕ) :
+    (SimpleMonomial.pow2Var j).eval ρ = 2 ^ ρ j := by
+  rw [SimpleMonomial.eval]
+  have hprod : (∏ i, Tm.eval eraInterp ((SimpleMonomial.pow2Var j).expBase i) ρ
+      ^ (Tm.eval eraInterp ((SimpleMonomial.pow2Var j).expCoeff i) ρ * ρ i)) = 2 ^ ρ j := by
+    rw [Finset.prod_eq_single j]
+    · simp only [SimpleMonomial.pow2Var, if_true, Era.one, Tm.eval, Nat.zero_add, Nat.one_mul]
+    · intro i _ hi
+      simp only [SimpleMonomial.pow2Var, if_neg hi, Tm.eval, Nat.zero_mul, Nat.pow_zero]
+    · intro hj
+      exact absurd (Finset.mem_univ j) hj
+  rw [hprod]
+  simp only [SimpleMonomial.pow2Var, Era.one, Tm.eval, Nat.pow_zero, Finset.prod_const_one,
+    Nat.mul_one, Nat.zero_add, Nat.one_mul]
+
+/-- The compound context, precomposed with `spliceEmb outSlot witEmb`, recovers
+the sub-encoding's context: the `n` inputs are unchanged, the sub-output reads
+the compound witness slot `outSlot`, and the sub-witnesses read their slots
+through `witEmb`. This is the generic re-indexing identity behind every splice
+combinator. -/
+theorem append_snoc_comp_spliceEmb {n wSub wComp : ℕ} (ρ : Fin n → ℕ) (y : ℕ)
+    (w : Fin wComp → ℕ) (outSlot : Fin wComp) (witEmb : Fin wSub → Fin wComp) :
+    (Fin.append (Fin.snoc ρ y) w) ∘ spliceEmb outSlot witEmb =
+      Fin.append (Fin.snoc ρ (w outSlot)) (fun k => w (witEmb k)) := by
+  refine funext (fun a => ?_)
+  simp only [Function.comp_apply, spliceEmb]
+  refine Fin.addCases ?_ ?_ a
+  · intro io
+    refine Fin.lastCases ?_ ?_ io
+    · simp only [Fin.addCases_left, Fin.lastCases_last, Fin.append_right, Fin.append_left,
+        Fin.snoc_last]
+    · intro j
+      simp only [Fin.addCases_left, Fin.lastCases_castSucc, Fin.append_left, Fin.snoc_castSucc]
+  · intro k
+    simp only [Fin.addCases_right, Fin.append_right]
+
 /-- `e` correctly encodes the unary-output function `g` on `n` inputs: the
 system vanishes only at the right output, has a unique witness there, its
 witnesses respect the input-only bounds, and its value is dominated by the
@@ -903,5 +981,486 @@ theorem diophSucc_encodes {n : ℕ} {sub : DiophEnc n} {g : (Fin n → ℕ) → 
   · intro ρ
     simp only [diophSucc, Tm.eval]
     exact Nat.succ_lt_succ (hval ρ)
+
+/-- The first output slot `y₁` of a binary combine over witness arities `w1`,
+`w2`: the slot at index `w1` in the compound block `Fin (w1 + 1 + w2 + 1)`,
+holding the first sub-encoding's output. -/
+def binOutSlot1 {w1 w2 : ℕ} : Fin (w1 + 1 + w2 + 1) :=
+  Fin.castSucc (Fin.castAdd w2 (Fin.last w1))
+
+/-- The second output slot `y₂` of a binary combine: the last slot at index
+`w1 + 1 + w2` in the compound block, holding the second sub-encoding's output. -/
+def binOutSlot2 {w1 w2 : ℕ} : Fin (w1 + 1 + w2 + 1) :=
+  Fin.last (w1 + 1 + w2)
+
+/-- The first sub-encoding's witness embedding for a binary combine: a
+sub-witness `k` of `sub1` lands at index `k` (slots `0 .. w1 - 1`), below the
+`y₁` slot. -/
+def binWitEmb1 {w1 w2 : ℕ} (k : Fin w1) : Fin (w1 + 1 + w2 + 1) :=
+  Fin.castSucc (Fin.castAdd w2 k.castSucc)
+
+/-- The second sub-encoding's witness embedding for a binary combine: a
+sub-witness `k` of `sub2` lands at index `w1 + 1 + k` (slots `w1 + 1 .. w1 + w2`),
+between the `y₁` and `y₂` slots. -/
+def binWitEmb2 {w1 w2 : ℕ} (k : Fin w2) : Fin (w1 + 1 + w2 + 1) :=
+  Fin.castSucc (Fin.natAdd (w1 + 1) k)
+
+/-- `binWitEmb1` is injective: it composes the injective casts
+`Fin.castSucc`, `Fin.castAdd`, `Fin.castSucc`. -/
+theorem binWitEmb1_injective {w1 w2 : ℕ} :
+    Function.Injective (binWitEmb1 (w1 := w1) (w2 := w2)) := by
+  intro a b hab
+  rw [binWitEmb1, binWitEmb1, Fin.ext_iff] at hab
+  simp only [Fin.val_castSucc, Fin.val_castAdd] at hab
+  exact Fin.ext hab
+
+/-- No `binWitEmb1` slot collides with the `y₁` slot. -/
+theorem binWitEmb1_ne_outSlot1 {w1 w2 : ℕ} (k : Fin w1) :
+    binWitEmb1 (w2 := w2) k ≠ binOutSlot1 := by
+  rw [binWitEmb1, binOutSlot1, Ne, Fin.ext_iff]
+  simp only [Fin.val_castSucc, Fin.val_castAdd, Fin.val_last]
+  exact k.isLt.ne
+
+/-- `binWitEmb2` is injective. -/
+theorem binWitEmb2_injective {w1 w2 : ℕ} :
+    Function.Injective (binWitEmb2 (w1 := w1) (w2 := w2)) := by
+  intro a b hab
+  rw [binWitEmb2, binWitEmb2, Fin.ext_iff] at hab
+  simp only [Fin.val_castSucc, Fin.val_natAdd] at hab
+  exact Fin.ext (Nat.add_left_cancel hab)
+
+/-- No `binWitEmb2` slot collides with the `y₂` slot. -/
+theorem binWitEmb2_ne_outSlot2 {w1 w2 : ℕ} (k : Fin w2) :
+    binWitEmb2 (w1 := w1) k ≠ binOutSlot2 := by
+  rw [binWitEmb2, binOutSlot2, Ne, Fin.ext_iff]
+  simp only [Fin.val_castSucc, Fin.val_natAdd, Fin.val_last]
+  omega
+
+/-- Case analysis on a compound witness slot of a binary combine: every
+`i : Fin (w1 + 1 + w2 + 1)` is one of the four slot kinds — a `sub1`-witness
+`binWitEmb1 k`, the `y₁` slot `binOutSlot1`, a `sub2`-witness `binWitEmb2 k`, or
+the `y₂` slot `binOutSlot2`. -/
+theorem binLayoutCases {w1 w2 : ℕ} {motive : Fin (w1 + 1 + w2 + 1) → Prop}
+    (hwit1 : ∀ k, motive (binWitEmb1 k)) (hout1 : motive binOutSlot1)
+    (hwit2 : ∀ k, motive (binWitEmb2 k)) (hout2 : motive binOutSlot2)
+    (i : Fin (w1 + 1 + w2 + 1)) : motive i := by
+  refine Fin.lastCases hout2 (fun j => ?_) i
+  refine Fin.addCases (fun a => ?_) (fun b => hwit2 b) j
+  exact Fin.lastCases hout1 (fun k => hwit1 k) a
+
+/-- Assemble the four data of a binary combine — the `sub1`-witness data `f1`,
+the `y₁` datum `a1`, the `sub2`-witness data `f2`, and the `y₂` datum `a2` — into
+a single map over the compound layout `Fin (w1 + 1 + w2 + 1)`, by nesting
+`Fin.snoc`/`Fin.append`. Used both for the per-witness bound map (`α = ETm n`)
+and for the assembled witness tuple (`α = ℕ`). -/
+def binAssemble {α : Type} {w1 w2 : ℕ} (f1 : Fin w1 → α) (a1 : α) (f2 : Fin w2 → α)
+    (a2 : α) : Fin (w1 + 1 + w2 + 1) → α :=
+  Fin.snoc (Fin.append (Fin.snoc f1 a1) f2) a2
+
+/-- `binAssemble` at a `sub1`-witness slot reads `f1`. -/
+@[simp]
+theorem binAssemble_witEmb1 {α : Type} {w1 w2 : ℕ} (f1 : Fin w1 → α) (a1 : α)
+    (f2 : Fin w2 → α) (a2 : α) (k : Fin w1) :
+    binAssemble f1 a1 f2 a2 (binWitEmb1 k) = f1 k := by
+  rw [binAssemble, binWitEmb1, Fin.snoc_castSucc, Fin.append_left, Fin.snoc_castSucc]
+
+/-- `binAssemble` at the `y₁` slot reads `a1`. -/
+@[simp]
+theorem binAssemble_outSlot1 {α : Type} {w1 w2 : ℕ} (f1 : Fin w1 → α) (a1 : α)
+    (f2 : Fin w2 → α) (a2 : α) :
+    binAssemble f1 a1 f2 a2 binOutSlot1 = a1 := by
+  rw [binAssemble, binOutSlot1, Fin.snoc_castSucc, Fin.append_left, Fin.snoc_last]
+
+/-- `binAssemble` at a `sub2`-witness slot reads `f2`. -/
+@[simp]
+theorem binAssemble_witEmb2 {α : Type} {w1 w2 : ℕ} (f1 : Fin w1 → α) (a1 : α)
+    (f2 : Fin w2 → α) (a2 : α) (k : Fin w2) :
+    binAssemble f1 a1 f2 a2 (binWitEmb2 k) = f2 k := by
+  rw [binAssemble, binWitEmb2, Fin.snoc_castSucc, Fin.append_right]
+
+/-- `binAssemble` at the `y₂` slot reads `a2`. -/
+@[simp]
+theorem binAssemble_outSlot2 {α : Type} {w1 w2 : ℕ} (f1 : Fin w1 → α) (a1 : α)
+    (f2 : Fin w2 → α) (a2 : α) :
+    binAssemble f1 a1 f2 a2 binOutSlot2 = a2 := by
+  rw [binAssemble, binOutSlot2, Fin.snoc_last]
+
+/-- The per-witness bound map of a binary combine over `sub1`, `sub2`: each
+sub-witness keeps its own input-only bound, the `y₁` slot is bounded by
+`sub1.valBound`, and the `y₂` slot by `sub2.valBound`. -/
+def binBound {n : ℕ} (sub1 sub2 : DiophEnc n) :
+    Fin (sub1.witArity + 1 + sub2.witArity + 1) → ETm n :=
+  binAssemble sub1.bound sub1.valBound sub2.bound sub2.valBound
+
+/-- The spliced system of a binary combine over `sub1`, `sub2`: `sub1.sys`
+spliced with its output at the `y₁` slot and its witnesses below it, followed by
+`sub2.sys` spliced with its output at the `y₂` slot and its witnesses between the
+two output slots. The combinators append a single connecting atom. -/
+def binSplicedSys {n : ℕ} (sub1 sub2 : DiophEnc n) :
+    SosSystem (n + 1 + (sub1.witArity + 1 + sub2.witArity + 1)) :=
+  sub1.sys.spliceWeaken binOutSlot1 binWitEmb1 ++
+    sub2.sys.spliceWeaken binOutSlot2 binWitEmb2
+
+/-- The binary spliced system vanishes additively into the two sub-systems
+evaluated at their recovered contexts: the first reads its output from the `y₁`
+slot and its witnesses from the low block, the second from the `y₂` slot and the
+middle block. -/
+theorem binSplicedSys_eval {n : ℕ} (sub1 sub2 : DiophEnc n) (ρ : Fin n → ℕ) (y : ℕ)
+    (w : Fin (sub1.witArity + 1 + sub2.witArity + 1) → ℕ) :
+    SosSystem.eval (binSplicedSys sub1 sub2) (Fin.append (Fin.snoc ρ y) w) =
+      SosSystem.eval sub1.sys
+          (sub1.ctx ρ (w binOutSlot1) (fun k => w (binWitEmb1 k))) +
+        SosSystem.eval sub2.sys
+          (sub2.ctx ρ (w binOutSlot2) (fun k => w (binWitEmb2 k))) := by
+  rw [binSplicedSys, SosSystem.eval_append,
+    SosSystem.eval_spliceWeaken sub1.sys binOutSlot1 binWitEmb1
+      binWitEmb1_injective binWitEmb1_ne_outSlot1,
+    SosSystem.eval_spliceWeaken sub2.sys binOutSlot2 binWitEmb2
+      binWitEmb2_injective binWitEmb2_ne_outSlot2]
+  rw [DiophEnc.ctx, DiophEnc.ctx, append_snoc_comp_spliceEmb, append_snoc_comp_spliceEmb]
+
+/-- The encoding of `fun ρ => g1 ρ + g2 ρ` from encodings `sub1` of `g1` and
+`sub2` of `g2`. Two new witnesses `y₁`, `y₂` hold the two sub-outputs: `sub1.sys`
+and `sub2.sys` are spliced so their outputs become the `y₁` and `y₂` slots and
+their witnesses occupy disjoint blocks; an added squared-distance atom forces
+`y₁ + y₂ = y`. Each sub-witness keeps its input-only sub-bound; `y₁` is bounded
+by `sub1.valBound` and `y₂` by `sub2.valBound`. The value majorant is
+`sub1.valBound + sub2.valBound`. -/
+def diophAdd {n : ℕ} (sub1 sub2 : DiophEnc n) : DiophEnc n where
+  witArity := sub1.witArity + 1 + sub2.witArity + 1
+  sys :=
+    binSplicedSys sub1 sub2 ++
+      [.sqDist
+        [SimpleMonomial.var (Fin.natAdd (n + 1) binOutSlot1),
+          SimpleMonomial.var (Fin.natAdd (n + 1) binOutSlot2)]
+        [SimpleMonomial.var (Fin.castAdd (sub1.witArity + 1 + sub2.witArity + 1) (Fin.last n))]]
+  bound := binBound sub1 sub2
+  valBound := sub1.valBound +ᵉ sub2.valBound
+
+/-- The `diophAdd sub1 sub2` system vanishes at `ctx ρ y w` exactly when both
+sub-systems vanish at their recovered contexts and the two output witnesses
+satisfy `y₁ + y₂ = y`. -/
+theorem diophAdd_eval_eq_zero_iff {n : ℕ} (sub1 sub2 : DiophEnc n) (ρ : Fin n → ℕ) (y : ℕ)
+    (w : Fin (sub1.witArity + 1 + sub2.witArity + 1) → ℕ) :
+    SosSystem.eval (diophAdd sub1 sub2).sys ((diophAdd sub1 sub2).ctx ρ y w) = 0 ↔
+      SosSystem.eval sub1.sys (sub1.ctx ρ (w binOutSlot1) (fun k => w (binWitEmb1 k))) = 0 ∧
+        SosSystem.eval sub2.sys (sub2.ctx ρ (w binOutSlot2) (fun k => w (binWitEmb2 k))) = 0 ∧
+          w binOutSlot1 + w binOutSlot2 = y := by
+  change SosSystem.eval
+      (binSplicedSys sub1 sub2 ++
+        [SosTerm.sqDist
+          [SimpleMonomial.var (Fin.natAdd (n + 1) binOutSlot1),
+            SimpleMonomial.var (Fin.natAdd (n + 1) binOutSlot2)]
+          [SimpleMonomial.var
+            (Fin.castAdd (sub1.witArity + 1 + sub2.witArity + 1) (Fin.last n))]])
+      (Fin.append (Fin.snoc ρ y) w) = 0 ↔ _
+  rw [SosSystem.eval_append, binSplicedSys_eval]
+  simp only [SosSystem.eval, SosTerm.eval, SimpleSum.eval, List.map_cons, List.map_nil,
+    List.sum_cons, List.sum_nil, Nat.add_zero, SimpleMonomial.var_eval, Fin.append_right,
+    Fin.append_left, Fin.snoc_last]
+  rw [Nat.add_eq_zero_iff, Nat.add_eq_zero_iff, Nat.add_eq_zero_iff, Nat.pow_eq_zero,
+    Nat.pow_eq_zero, Nat.sub_eq_zero_iff_le, Nat.sub_eq_zero_iff_le]
+  omega
+
+/-- The `diophAdd` bound map is `binBound`. -/
+@[simp]
+theorem diophAdd_bound {n : ℕ} (sub1 sub2 : DiophEnc n) :
+    (diophAdd sub1 sub2).bound = binBound sub1 sub2 := rfl
+
+/-- `diophAdd sub1 sub2` encodes `fun ρ => g1 ρ + g2 ρ` whenever `sub1` encodes
+`g1` and `sub2` encodes `g2`. -/
+theorem diophAdd_encodes {n : ℕ} {sub1 sub2 : DiophEnc n} {g1 g2 : (Fin n → ℕ) → ℕ}
+    (h1 : sub1.Encodes g1) (h2 : sub2.Encodes g2) :
+    (diophAdd sub1 sub2).Encodes (fun ρ => g1 ρ + g2 ρ) := by
+  obtain ⟨hsound1, huniq1, hbound1, hval1⟩ := h1
+  obtain ⟨hsound2, huniq2, hbound2, hval2⟩ := h2
+  refine ⟨?_, ?_, ?_, ?_⟩
+  · intro ρ y w hzero
+    rw [diophAdd_eval_eq_zero_iff] at hzero
+    obtain ⟨hz1, hz2, hy⟩ := hzero
+    rw [hsound1 ρ (w binOutSlot1) (fun k => w (binWitEmb1 k)) hz1,
+      hsound2 ρ (w binOutSlot2) (fun k => w (binWitEmb2 k)) hz2] at hy
+    exact hy.symm
+  · intro ρ
+    obtain ⟨wsub1, hwsub1, hwsubuniq1⟩ := huniq1 ρ
+    obtain ⟨wsub2, hwsub2, hwsubuniq2⟩ := huniq2 ρ
+    refine ⟨binAssemble wsub1 (g1 ρ) wsub2 (g2 ρ), ?_, ?_⟩
+    · change (diophAdd sub1 sub2).sys.eval
+        ((diophAdd sub1 sub2).ctx ρ (g1 ρ + g2 ρ) (binAssemble wsub1 (g1 ρ) wsub2 (g2 ρ))) = 0
+      rw [diophAdd_eval_eq_zero_iff]
+      simp only [binAssemble_witEmb1, binAssemble_outSlot1, binAssemble_witEmb2,
+        binAssemble_outSlot2]
+      exact ⟨hwsub1, hwsub2, trivial⟩
+    · intro w' hw'
+      have hw'' : (diophAdd sub1 sub2).sys.eval
+        ((diophAdd sub1 sub2).ctx ρ (g1 ρ + g2 ρ) w') = 0 := hw'
+      rw [diophAdd_eval_eq_zero_iff] at hw''
+      obtain ⟨hz1', hz2', _⟩ := hw''
+      have hg1 : w' binOutSlot1 = g1 ρ :=
+        hsound1 ρ (w' binOutSlot1) (fun k => w' (binWitEmb1 k)) hz1'
+      have hg2 : w' binOutSlot2 = g2 ρ :=
+        hsound2 ρ (w' binOutSlot2) (fun k => w' (binWitEmb2 k)) hz2'
+      have he1 : (fun k => w' (binWitEmb1 k)) = wsub1 :=
+        hwsubuniq1 (fun k => w' (binWitEmb1 k)) (by rw [← hg1]; exact hz1')
+      have he2 : (fun k => w' (binWitEmb2 k)) = wsub2 :=
+        hwsubuniq2 (fun k => w' (binWitEmb2 k)) (by rw [← hg2]; exact hz2')
+      refine funext (binLayoutCases (fun k => ?_) ?_ (fun k => ?_) ?_)
+      · rw [binAssemble_witEmb1]; exact congrFun he1 k
+      · rw [binAssemble_outSlot1]; exact hg1
+      · rw [binAssemble_witEmb2]; exact congrFun he2 k
+      · rw [binAssemble_outSlot2]; exact hg2
+  · intro ρ y w hzero i
+    rw [diophAdd_eval_eq_zero_iff] at hzero
+    obtain ⟨hz1, hz2, hy⟩ := hzero
+    have hg1 : w binOutSlot1 = g1 ρ :=
+      hsound1 ρ (w binOutSlot1) (fun k => w (binWitEmb1 k)) hz1
+    have hg2 : w binOutSlot2 = g2 ρ :=
+      hsound2 ρ (w binOutSlot2) (fun k => w (binWitEmb2 k)) hz2
+    rw [diophAdd_bound]
+    induction i using binLayoutCases with
+    | hwit1 k =>
+      rw [binBound, binAssemble_witEmb1]
+      exact hbound1 ρ (g1 ρ) (fun k => w (binWitEmb1 k)) (by rw [← hg1]; exact hz1) k
+    | hout1 =>
+      rw [binBound, binAssemble_outSlot1, hg1]
+      exact hval1 ρ
+    | hwit2 k =>
+      rw [binBound, binAssemble_witEmb2]
+      exact hbound2 ρ (g2 ρ) (fun k => w (binWitEmb2 k)) (by rw [← hg2]; exact hz2) k
+    | hout2 =>
+      rw [binBound, binAssemble_outSlot2, hg2]
+      exact hval2 ρ
+  · intro ρ
+    simp only [diophAdd, eadd_eval, eraInterp, fcons]
+    exact Nat.add_lt_add (hval1 ρ) (hval2 ρ)
+
+/-- The encoding of `fun ρ => g1 ρ * g2 ρ` from encodings `sub1` of `g1` and
+`sub2` of `g2`. The binary splice is as for `diophAdd`: two new witnesses `y₁`,
+`y₂` hold the two sub-outputs, and an added squared-distance atom forces
+`y₁ * y₂ = y`. Each sub-witness keeps its input-only sub-bound; `y₁` is bounded
+by `sub1.valBound` and `y₂` by `sub2.valBound`. The value majorant is
+`sub1.valBound * sub2.valBound`. -/
+def diophMul {n : ℕ} (sub1 sub2 : DiophEnc n) : DiophEnc n where
+  witArity := sub1.witArity + 1 + sub2.witArity + 1
+  sys :=
+    binSplicedSys sub1 sub2 ++
+      [.sqDist
+        [SimpleMonomial.mulVars (Fin.natAdd (n + 1) binOutSlot1)
+          (Fin.natAdd (n + 1) binOutSlot2)]
+        [SimpleMonomial.var (Fin.castAdd (sub1.witArity + 1 + sub2.witArity + 1) (Fin.last n))]]
+  bound := binBound sub1 sub2
+  valBound := sub1.valBound *ᵉ sub2.valBound
+
+/-- The `diophMul sub1 sub2` system vanishes at `ctx ρ y w` exactly when both
+sub-systems vanish at their recovered contexts and the two output witnesses
+satisfy `y₁ * y₂ = y`. -/
+theorem diophMul_eval_eq_zero_iff {n : ℕ} (sub1 sub2 : DiophEnc n) (ρ : Fin n → ℕ) (y : ℕ)
+    (w : Fin (sub1.witArity + 1 + sub2.witArity + 1) → ℕ) :
+    SosSystem.eval (diophMul sub1 sub2).sys ((diophMul sub1 sub2).ctx ρ y w) = 0 ↔
+      SosSystem.eval sub1.sys (sub1.ctx ρ (w binOutSlot1) (fun k => w (binWitEmb1 k))) = 0 ∧
+        SosSystem.eval sub2.sys (sub2.ctx ρ (w binOutSlot2) (fun k => w (binWitEmb2 k))) = 0 ∧
+          w binOutSlot1 * w binOutSlot2 = y := by
+  change SosSystem.eval
+      (binSplicedSys sub1 sub2 ++
+        [SosTerm.sqDist
+          [SimpleMonomial.mulVars (Fin.natAdd (n + 1) binOutSlot1)
+            (Fin.natAdd (n + 1) binOutSlot2)]
+          [SimpleMonomial.var
+            (Fin.castAdd (sub1.witArity + 1 + sub2.witArity + 1) (Fin.last n))]])
+      (Fin.append (Fin.snoc ρ y) w) = 0 ↔ _
+  rw [SosSystem.eval_append, binSplicedSys_eval]
+  simp only [SosSystem.eval, SosTerm.eval, SimpleSum.eval, List.map_cons, List.map_nil,
+    List.sum_cons, List.sum_nil, Nat.add_zero, SimpleMonomial.mulVars_eval,
+    SimpleMonomial.var_eval, Fin.append_right, Fin.append_left, Fin.snoc_last]
+  rw [Nat.add_eq_zero_iff, Nat.add_eq_zero_iff, Nat.add_eq_zero_iff, Nat.pow_eq_zero,
+    Nat.pow_eq_zero, Nat.sub_eq_zero_iff_le, Nat.sub_eq_zero_iff_le]
+  omega
+
+/-- The `diophMul` bound map is `binBound`. -/
+@[simp]
+theorem diophMul_bound {n : ℕ} (sub1 sub2 : DiophEnc n) :
+    (diophMul sub1 sub2).bound = binBound sub1 sub2 := rfl
+
+/-- `diophMul sub1 sub2` encodes `fun ρ => g1 ρ * g2 ρ` whenever `sub1` encodes
+`g1` and `sub2` encodes `g2`. The value clause is strict monotonicity of `ℕ`
+multiplication (`Nat.mul_lt_mul''`) applied to the two strict value bounds. -/
+theorem diophMul_encodes {n : ℕ} {sub1 sub2 : DiophEnc n} {g1 g2 : (Fin n → ℕ) → ℕ}
+    (h1 : sub1.Encodes g1) (h2 : sub2.Encodes g2) :
+    (diophMul sub1 sub2).Encodes (fun ρ => g1 ρ * g2 ρ) := by
+  obtain ⟨hsound1, huniq1, hbound1, hval1⟩ := h1
+  obtain ⟨hsound2, huniq2, hbound2, hval2⟩ := h2
+  refine ⟨?_, ?_, ?_, ?_⟩
+  · intro ρ y w hzero
+    rw [diophMul_eval_eq_zero_iff] at hzero
+    obtain ⟨hz1, hz2, hy⟩ := hzero
+    rw [hsound1 ρ (w binOutSlot1) (fun k => w (binWitEmb1 k)) hz1,
+      hsound2 ρ (w binOutSlot2) (fun k => w (binWitEmb2 k)) hz2] at hy
+    exact hy.symm
+  · intro ρ
+    obtain ⟨wsub1, hwsub1, hwsubuniq1⟩ := huniq1 ρ
+    obtain ⟨wsub2, hwsub2, hwsubuniq2⟩ := huniq2 ρ
+    refine ⟨binAssemble wsub1 (g1 ρ) wsub2 (g2 ρ), ?_, ?_⟩
+    · change (diophMul sub1 sub2).sys.eval
+        ((diophMul sub1 sub2).ctx ρ (g1 ρ * g2 ρ) (binAssemble wsub1 (g1 ρ) wsub2 (g2 ρ))) = 0
+      rw [diophMul_eval_eq_zero_iff]
+      simp only [binAssemble_witEmb1, binAssemble_outSlot1, binAssemble_witEmb2,
+        binAssemble_outSlot2]
+      exact ⟨hwsub1, hwsub2, trivial⟩
+    · intro w' hw'
+      have hw'' : (diophMul sub1 sub2).sys.eval
+        ((diophMul sub1 sub2).ctx ρ (g1 ρ * g2 ρ) w') = 0 := hw'
+      rw [diophMul_eval_eq_zero_iff] at hw''
+      obtain ⟨hz1', hz2', _⟩ := hw''
+      have hg1 : w' binOutSlot1 = g1 ρ :=
+        hsound1 ρ (w' binOutSlot1) (fun k => w' (binWitEmb1 k)) hz1'
+      have hg2 : w' binOutSlot2 = g2 ρ :=
+        hsound2 ρ (w' binOutSlot2) (fun k => w' (binWitEmb2 k)) hz2'
+      have he1 : (fun k => w' (binWitEmb1 k)) = wsub1 :=
+        hwsubuniq1 (fun k => w' (binWitEmb1 k)) (by rw [← hg1]; exact hz1')
+      have he2 : (fun k => w' (binWitEmb2 k)) = wsub2 :=
+        hwsubuniq2 (fun k => w' (binWitEmb2 k)) (by rw [← hg2]; exact hz2')
+      refine funext (binLayoutCases (fun k => ?_) ?_ (fun k => ?_) ?_)
+      · rw [binAssemble_witEmb1]; exact congrFun he1 k
+      · rw [binAssemble_outSlot1]; exact hg1
+      · rw [binAssemble_witEmb2]; exact congrFun he2 k
+      · rw [binAssemble_outSlot2]; exact hg2
+  · intro ρ y w hzero i
+    rw [diophMul_eval_eq_zero_iff] at hzero
+    obtain ⟨hz1, hz2, hy⟩ := hzero
+    have hg1 : w binOutSlot1 = g1 ρ :=
+      hsound1 ρ (w binOutSlot1) (fun k => w (binWitEmb1 k)) hz1
+    have hg2 : w binOutSlot2 = g2 ρ :=
+      hsound2 ρ (w binOutSlot2) (fun k => w (binWitEmb2 k)) hz2
+    rw [diophMul_bound]
+    induction i using binLayoutCases with
+    | hwit1 k =>
+      rw [binBound, binAssemble_witEmb1]
+      exact hbound1 ρ (g1 ρ) (fun k => w (binWitEmb1 k)) (by rw [← hg1]; exact hz1) k
+    | hout1 =>
+      rw [binBound, binAssemble_outSlot1, hg1]
+      exact hval1 ρ
+    | hwit2 k =>
+      rw [binBound, binAssemble_witEmb2]
+      exact hbound2 ρ (g2 ρ) (fun k => w (binWitEmb2 k)) (by rw [← hg2]; exact hz2) k
+    | hout2 =>
+      rw [binBound, binAssemble_outSlot2, hg2]
+      exact hval2 ρ
+  · intro ρ
+    simp only [diophMul, emul_eval, eraInterp, fcons]
+    exact Nat.mul_lt_mul'' (hval1 ρ) (hval2 ρ)
+
+/-- The encoding of `fun ρ => 2 ^ g ρ` from an encoding `sub` of `g`. As in
+`diophSucc`, a new witness `y₁` holds the sub-output: `sub.sys` is spliced so its
+output becomes the `y₁` slot and its witnesses occupy the first `sub.witArity`
+slots; an added squared-distance atom forces `2 ^ y₁ = y`. The new witness `y₁`
+is bounded by `sub.valBound`; each sub-witness keeps its input-only sub-bound.
+The value majorant is `2 ^ sub.valBound`. -/
+def diophPow2 {n : ℕ} (sub : DiophEnc n) : DiophEnc n where
+  witArity := sub.witArity + 1
+  sys :=
+    sub.sys.spliceWeaken (Fin.last sub.witArity) succWitEmb ++
+      [.sqDist
+        [SimpleMonomial.pow2Var (Fin.natAdd (n + 1) (Fin.last sub.witArity))]
+        [SimpleMonomial.var (Fin.castAdd (sub.witArity + 1) (Fin.last n))]]
+  bound := Fin.snoc sub.bound sub.valBound
+  valBound := epow2 sub.valBound
+
+/-- The `diophPow2 sub` system vanishes at `ctx ρ y w` exactly when the
+sub-system vanishes at its recovered context and the new witness satisfies
+`2 ^ y₁ = y`. -/
+theorem diophPow2_eval_eq_zero_iff {n : ℕ} (sub : DiophEnc n) (ρ : Fin n → ℕ) (y : ℕ)
+    (w : Fin (sub.witArity + 1) → ℕ) :
+    SosSystem.eval (diophPow2 sub).sys ((diophPow2 sub).ctx ρ y w) = 0 ↔
+      SosSystem.eval sub.sys (sub.ctx ρ (w (Fin.last sub.witArity))
+          (fun k => w k.castSucc)) = 0 ∧
+        2 ^ w (Fin.last sub.witArity) = y := by
+  have hsplice :
+      SosSystem.eval ((diophPow2 sub).sys) ((diophPow2 sub).ctx ρ y w) =
+        SosSystem.eval sub.sys (sub.ctx ρ (w (Fin.last sub.witArity))
+            (fun k => w k.castSucc)) +
+          SosTerm.eval (.sqDist
+            [SimpleMonomial.pow2Var (Fin.natAdd (n + 1) (Fin.last sub.witArity))]
+            [SimpleMonomial.var (Fin.castAdd (sub.witArity + 1) (Fin.last n))])
+            ((diophPow2 sub).ctx ρ y w) := by
+    change SosSystem.eval
+        (sub.sys.spliceWeaken (Fin.last sub.witArity) succWitEmb ++
+          [SosTerm.sqDist
+            [SimpleMonomial.pow2Var (Fin.natAdd (n + 1) (Fin.last sub.witArity))]
+            [SimpleMonomial.var (Fin.castAdd (sub.witArity + 1) (Fin.last n))]])
+        ((diophPow2 sub).ctx ρ y w) = _
+    rw [SosSystem.eval_append, SosSystem.eval, SosSystem.eval,
+      SosSystem.eval_spliceWeaken sub.sys (Fin.last sub.witArity) succWitEmb
+        succWitEmb_injective succWitEmb_ne_last]
+    refine congrArg₂ (· + ·) ?_ (Nat.add_zero _)
+    exact congrArg (SosSystem.eval sub.sys) (ctx_comp_succSpliceEmb sub ρ y w)
+  rw [hsplice, Nat.add_eq_zero_iff, SosTerm.sqDist_eval_eq_zero_iff]
+  simp only [SimpleSum.eval, List.map_cons, List.map_nil, List.sum_cons, List.sum_nil,
+    Nat.add_zero, SimpleMonomial.pow2Var_eval, SimpleMonomial.var_eval, DiophEnc.ctx]
+  erw [Fin.append_right, Fin.append_left, Fin.snoc_last]
+
+/-- The `diophPow2` bound at the new `y₁` slot is the sub-encoding's value
+majorant. -/
+theorem diophPow2_bound_last {n : ℕ} (sub : DiophEnc n) :
+    (diophPow2 sub).bound (Fin.last sub.witArity) = sub.valBound := by
+  change (Fin.snoc sub.bound sub.valBound :
+      Fin (sub.witArity + 1) → ETm n) (Fin.last sub.witArity) = sub.valBound
+  rw [Fin.snoc_last]
+
+/-- The `diophPow2` bound at a sub-witness slot is the sub-encoding's bound. -/
+theorem diophPow2_bound_castSucc {n : ℕ} (sub : DiophEnc n) (k : Fin sub.witArity) :
+    (diophPow2 sub).bound (Fin.castSucc k) = sub.bound k := by
+  change (Fin.snoc sub.bound sub.valBound :
+      Fin (sub.witArity + 1) → ETm n) (Fin.castSucc k) = sub.bound k
+  rw [Fin.snoc_castSucc]
+
+/-- `diophPow2 sub` encodes `fun ρ => 2 ^ g ρ` whenever `sub` encodes `g`. The
+value clause uses `2 ^ g ρ < 2 ^ sub.valBound` from `g ρ < sub.valBound` and the
+strict monotonicity of `2 ^ ·`. -/
+theorem diophPow2_encodes {n : ℕ} {sub : DiophEnc n} {g : (Fin n → ℕ) → ℕ}
+    (h : sub.Encodes g) : (diophPow2 sub).Encodes (fun ρ => 2 ^ g ρ) := by
+  obtain ⟨hsound, huniq, hbound, hval⟩ := h
+  refine ⟨?_, ?_, ?_, ?_⟩
+  · intro ρ y w hzero
+    rw [diophPow2_eval_eq_zero_iff] at hzero
+    obtain ⟨hsub, hy⟩ := hzero
+    rw [hsound ρ (w (Fin.last sub.witArity)) (fun k => w k.castSucc) hsub] at hy
+    exact hy.symm
+  · intro ρ
+    obtain ⟨wsub, hwsub, hwsubuniq⟩ := huniq ρ
+    refine ⟨Fin.snoc wsub (g ρ), ?_, ?_⟩
+    · change (diophPow2 sub).sys.eval
+        ((diophPow2 sub).ctx ρ (2 ^ g ρ) (Fin.snoc wsub (g ρ))) = 0
+      rw [diophPow2_eval_eq_zero_iff, Fin.snoc_last]
+      refine ⟨?_, rfl⟩
+      simp only [Fin.snoc_castSucc]
+      exact hwsub
+    · intro w' hw'
+      have hw'' : (diophPow2 sub).sys.eval ((diophPow2 sub).ctx ρ (2 ^ g ρ) w') = 0 := hw'
+      rw [diophPow2_eval_eq_zero_iff] at hw''
+      obtain ⟨hsub', hlast'⟩ := hw''
+      have hlast : w' (Fin.last sub.witArity) = g ρ :=
+        Nat.pow_right_injective (Nat.le_refl 2) hlast'
+      rw [hlast] at hsub'
+      have hinit : (fun k => w' k.castSucc) = wsub := hwsubuniq (fun k => w' k.castSucc) hsub'
+      refine funext (fun j => ?_)
+      refine Fin.lastCases ?_ ?_ j
+      · rw [Fin.snoc_last, hlast]
+      · intro k
+        rw [Fin.snoc_castSucc]
+        exact congrFun hinit k
+  · intro ρ y w hzero i
+    rw [diophPow2_eval_eq_zero_iff] at hzero
+    obtain ⟨hsub, hy⟩ := hzero
+    have hg : w (Fin.last sub.witArity) = g ρ :=
+      hsound ρ (w (Fin.last sub.witArity)) (fun k => w k.castSucc) hsub
+    refine Fin.lastCases ?_ ?_ i
+    · rw [diophPow2_bound_last, hg]
+      exact hval ρ
+    · intro k
+      rw [diophPow2_bound_castSucc]
+      exact hbound ρ (g ρ) (fun k => w k.castSucc) (by rw [← hg]; exact hsub) k
+  · intro ρ
+    simp only [diophPow2, epow2_eval, eraInterp, fcons]
+    exact Nat.pow_lt_pow_right Nat.one_lt_two (hval ρ)
 
 end GebLean
