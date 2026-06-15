@@ -63,6 +63,8 @@ so it precedes both.
 * `diophOne`, `diophPow` — the constant-`1` and general-power combinators on
   `DiophEnc`s, the latter a composition of existing combinators along Marchenkov's
   identity `pow_eq_two_pow_mod`, proved to satisfy `Encodes` (`diophPow_encodes`).
+* `diophOf` — the term-to-Diophantine reduction: a `DiophEnc n` for every `ETm n`,
+  obtained by structural recursion dispatching each constructor to its combinator.
 
 ## Main statements
 
@@ -102,6 +104,12 @@ so it precedes both.
 * `diophPow_encodes` — the `Encodes` correctness of the general-power combinator,
   obtained by chaining the `Encodes` lemmas of its constituent combinators along
   `pow_eq_two_pow_mod`.
+* `diophOf_encodes` — the `Encodes` correctness of `diophOf`, by induction over the
+  term, each constructor case transporting the matching combinator's `Encodes`
+  lemma along `DiophEnc.Encodes_congr`.
+* `diophOf_graph_iff`, `diophOf_unique`, `diophOf_bound` — the reduction's graph
+  characterisation, witness uniqueness, and input-only witness boundedness,
+  unpacked from `diophOf_encodes`.
 
 ## Implementation notes
 
@@ -2277,5 +2285,95 @@ theorem diophPow_encodes {n : ℕ} {sub1 sub2 : DiophEnc n} {g1 g2 : (Fin n → 
   refine DiophEnc.Encodes_congr ?_ hbody
   funext ρ
   exact (pow_eq_two_pow_mod (g1 ρ) (g2 ρ)).symm
+
+/-- The term-to-Diophantine reduction: structurally recurse over an `ETm n`,
+dispatching each constructor to the matching combinator. The variable, zero, and
+successor terms map to `diophVar`, `diophZero`, and `diophSucc`; each basis
+application maps to the combinator for its operation, applied to the encodings of
+its argument terms. -/
+def diophOf {n : ℕ} : ETm n → DiophEnc n
+  | .var i => diophVar i
+  | .zero => diophZero
+  | .succ s => diophSucc (diophOf s)
+  | .app b ts => match b with
+    | .add => diophAdd (diophOf (ts ⟨0, by decide⟩)) (diophOf (ts ⟨1, by decide⟩))
+    | .mul => diophMul (diophOf (ts ⟨0, by decide⟩)) (diophOf (ts ⟨1, by decide⟩))
+    | .pow2 => diophPow2 (diophOf (ts ⟨0, by decide⟩))
+    | .tsub => diophTsub (diophOf (ts ⟨0, by decide⟩)) (diophOf (ts ⟨1, by decide⟩))
+    | .div => diophDiv (diophOf (ts ⟨0, by decide⟩)) (diophOf (ts ⟨1, by decide⟩))
+    | .mod => diophMod (diophOf (ts ⟨0, by decide⟩)) (diophOf (ts ⟨1, by decide⟩))
+    | .pow => diophPow (diophOf (ts ⟨0, by decide⟩)) (diophOf (ts ⟨1, by decide⟩))
+
+theorem diophOf_encodes {n : ℕ} (t : ETm n) :
+    (diophOf t).Encodes (Tm.eval eraInterp t) := by
+  induction t with
+  | var i => exact diophVar_encodes i
+  | zero => exact diophZero_encodes
+  | succ s ih =>
+    refine DiophEnc.Encodes_congr ?_ (diophSucc_encodes ih)
+    rfl
+  | app b ts ih =>
+    cases b with
+    | add =>
+      refine DiophEnc.Encodes_congr ?_
+        (diophAdd_encodes (ih ⟨0, by decide⟩) (ih ⟨1, by decide⟩))
+      rfl
+    | mul =>
+      refine DiophEnc.Encodes_congr ?_
+        (diophMul_encodes (ih ⟨0, by decide⟩) (ih ⟨1, by decide⟩))
+      rfl
+    | pow2 =>
+      refine DiophEnc.Encodes_congr ?_ (diophPow2_encodes (ih ⟨0, by decide⟩))
+      rfl
+    | tsub =>
+      refine DiophEnc.Encodes_congr ?_
+        (diophTsub_encodes (ih ⟨0, by decide⟩) (ih ⟨1, by decide⟩))
+      rfl
+    | div =>
+      refine DiophEnc.Encodes_congr ?_
+        (diophDiv_encodes (ih ⟨0, by decide⟩) (ih ⟨1, by decide⟩))
+      rfl
+    | mod =>
+      refine DiophEnc.Encodes_congr ?_
+        (diophMod_encodes (ih ⟨0, by decide⟩) (ih ⟨1, by decide⟩))
+      rfl
+    | pow =>
+      refine DiophEnc.Encodes_congr ?_
+        (diophPow_encodes (ih ⟨0, by decide⟩) (ih ⟨1, by decide⟩))
+      rfl
+
+/-- Graph characterisation of the reduction: the sum-of-squares system of
+`diophOf t` vanishes for some witness assignment at output `y` exactly when the
+term `t` evaluates to `y` under `eraInterp`. -/
+theorem diophOf_graph_iff {n : ℕ} (t : ETm n) (ρ : Fin n → ℕ) (y : ℕ) :
+    (∃ w, SosSystem.eval (diophOf t).sys ((diophOf t).ctx ρ y w) = 0) ↔
+      Tm.eval eraInterp t ρ = y := by
+  obtain ⟨hsound, hcomplete, _, _⟩ := diophOf_encodes t
+  constructor
+  · rintro ⟨w, hw⟩
+    exact (hsound ρ y w hw).symm
+  · rintro rfl
+    obtain ⟨w, hw, _⟩ := hcomplete ρ
+    exact ⟨w, hw⟩
+
+/-- Witness uniqueness of the reduction: at the correct output
+`y = Tm.eval eraInterp t ρ` there is exactly one witness assignment making the
+sum-of-squares system of `diophOf t` vanish. -/
+theorem diophOf_unique {n : ℕ} (t : ETm n) (ρ : Fin n → ℕ) (y : ℕ)
+    (hy : Tm.eval eraInterp t ρ = y) :
+    ∃! w, SosSystem.eval (diophOf t).sys ((diophOf t).ctx ρ y w) = 0 := by
+  obtain ⟨_, hcomplete, _, _⟩ := diophOf_encodes t
+  rw [← hy]
+  exact hcomplete ρ
+
+/-- Witness boundedness of the reduction: every witness assignment making the
+sum-of-squares system of `diophOf t` vanish has each component strictly below the
+corresponding input-only bound term, evaluated at the inputs `ρ`. -/
+theorem diophOf_bound {n : ℕ} (t : ETm n) (ρ : Fin n → ℕ) (y : ℕ)
+    (w : Fin (diophOf t).witArity → ℕ)
+    (hw : SosSystem.eval (diophOf t).sys ((diophOf t).ctx ρ y w) = 0) :
+    ∀ i, w i < Tm.eval eraInterp ((diophOf t).bound i) ρ := by
+  obtain ⟨_, _, hbound, _⟩ := diophOf_encodes t
+  exact hbound ρ y w hw
 
 end GebLean
