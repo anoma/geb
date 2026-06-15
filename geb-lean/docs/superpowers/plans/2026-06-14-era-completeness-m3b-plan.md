@@ -592,41 +592,23 @@ slow `ν₂`, so there is no back-dependency on Phase 5: every Phase-3
 
 - Modify: `GebLean/EraCompleteness.lean`
 
-The slow `ν₂` needs only `Nat.gcd n (2^n)`, which equals `2^(v₂ n)` — a
-power of two, not a general gcd. Realise this directly rather than
-transcribing the full Mazzanti gcd term (record the choice in a comment;
-this is the from-scratch ingredient, weighted toward the simpler
-option).
+SUPERSEDED — see the sub-plan
+`docs/superpowers/plans/2026-06-15-era-gcd-term-subplan.md`.
 
-- [ ] **Step 1: choose and define**
+Investigation (committed) disproved this task's original premise.
+Realising `2^(v₂ n) = gcd(n, 2^n)` as an `Era` *term* needs a
+basis-composition `gcd`: "option A" (`n / oddPart`, search-free) is
+PROVABLY unrealisable (exhaustive depth-≤3 basis search found no closed
+form for `2^(v₂ n)` or `oddPart`), and no power-of-2 shortcut exists. The
+only route is the general Prunescu–Shunia base-5 `gcd`-as-arithmetic-term
+(arXiv:2411.06430, Thm 4.1), a multi-hundred-line `ℕ` development. Note
+the *value* `gcd(n,2^n) = 2^(padicValNat 2 n)` is already proved
+(`gcd_pow_eq`, private in `ArithClosedForms.lean`); only the TERM needs
+the closed form.
 
-```lean
-/-- `2^(v₂ n)`, the largest power of two dividing `n` (= `gcd n (2^n)`),
-as an `Era` term in variable `0`. -/
-def eraPow2Val : ETm 1 := sorry  -- e.g. n / oddPart, or a closed form
-
-theorem eraPow2Val_eval (n : ℕ) :
-    Tm.eval eraInterp eraPow2Val ![n] = Nat.gcd n (2 ^ n) := by
-  sorry
-```
-
-Strategy: option A — realise the largest power of two dividing `n` as
-`n / odd(n)` where `odd(n)` is built search-free; option B — transcribe
-Mazzanti's base-2 gcd term specialised to `gcd n (2^n)`. Search Mathlib
-for an existing `gcd`-as-arithmetic-term first (`lean_leansearch`); none
-is expected. The `ℕ` identity `Nat.gcd n (2^n) = 2^(padicValNat 2 n)` is
-the correctness target — search for it
-(`Nat.gcd_pow`, `Nat.Coprime`, `pow_padicValNat_dvd`).
-
-- [ ] **Step 2:** build (with `sorry`), prove, numeric `eval` check via
-the lemma, axiom-check, commit.
-
-```bash
-jj describe -m "feat(era): realise the largest power-of-two divisor as an Era term
-
-Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
-jj new
-```
+`eraPow2Val` (and `eraGcd`) are built in the sub-plan (phases G1–G4),
+which delivers `eraPow2Val_eval : Tm.eval eraInterp eraPow2Val ![n] =
+Nat.gcd n (2^n)`. After the sub-plan lands, resume at Task 3.2.
 
 ### Task 3.2: `eraNu2`, `eraCentralBinom`, `eraSigma`
 
