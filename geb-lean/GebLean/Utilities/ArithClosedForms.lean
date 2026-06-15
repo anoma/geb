@@ -596,4 +596,38 @@ private theorem solCount_recurrence (a b m : ℕ) (ha : 1 ≤ a) (hb : 1 ≤ b)
   rw [hSxcard, hSycard, hintercard, hScard] at hincl
   exact hincl
 
+/-- Base-`5^(a·b)` digit sum encoding the linear-Diophantine counts:
+`S = Σ_{k=0}^{a·b} solCount a b (a·b − k) · (5^(a·b))^k`. Equals
+`⌊5^(a·b·(a·b+a+b)) / ((5^(a²·b)−1)(5^(a·b²)−1))⌋` (proved later). -/
+private def gcdDigitSum (a b : ℕ) : ℕ :=
+  ∑ k ∈ Finset.range (a * b + 1),
+    solCount a b (a * b - k) * (5 ^ (a * b)) ^ k
+
+/-- Each digit `solCount a b (a*b)` is strictly less than the base `5^(a*b)`,
+so digits do not overflow into adjacent positions in `gcdDigitSum`. -/
+private theorem solCount_mul_lt_base (a b : ℕ) (ha : 1 ≤ a) (hb : 1 ≤ b) :
+    solCount a b (a * b) < 5 ^ (a * b) := by
+  have h1 : solCount a b (a * b) ≤ a * b + 1 := solCount_le_succ a b (a * b) ha hb
+  have h2 : a * b < 2 ^ (a * b) := Nat.lt_two_pow_self
+  have h3 : a * b ≠ 0 := Nat.mul_ne_zero (by omega) (by omega)
+  have h4 : (2 : ℕ) ^ (a * b) < 5 ^ (a * b) :=
+    Nat.pow_lt_pow_left (by norm_num) h3
+  omega
+
+/-- The least-significant digit of `gcdDigitSum a b` in base `5^(a*b)` equals
+`solCount a b (a*b)`: every higher-indexed term is divisible by `5^(a*b)`. -/
+private theorem gcdDigitSum_mod (a b : ℕ) (ha : 1 ≤ a) (hb : 1 ≤ b) :
+    gcdDigitSum a b % 5 ^ (a * b) = solCount a b (a * b) := by
+  simp only [gcdDigitSum]
+  rw [Finset.sum_range_succ']
+  simp only [pow_zero, mul_one]
+  have hfactor : ∑ k ∈ Finset.range (a * b),
+      solCount a b (a * b - (k + 1)) * (5 ^ (a * b)) ^ (k + 1) =
+      5 ^ (a * b) * ∑ k ∈ Finset.range (a * b),
+      solCount a b (a * b - (k + 1)) * (5 ^ (a * b)) ^ k := by
+    rw [Finset.mul_sum]
+    congr 1; ext k; rw [pow_succ']; ring
+  rw [hfactor, Nat.add_comm, Nat.add_mul_mod_self_left]
+  exact Nat.mod_eq_of_lt (solCount_mul_lt_base a b ha hb)
+
 end GebLean
