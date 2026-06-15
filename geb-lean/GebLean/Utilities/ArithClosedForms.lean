@@ -723,4 +723,143 @@ private theorem gcd_rem_lt_dena (a b : ℕ) (ha : 1 ≤ a) (hb : 1 ≤ b) :
     omega
   linarith
 
+/-- The Prunescu–Shunia tooth-count identity: the number of comb teeth
+`r + a·i` (`i < q`, `r := (a·b+a+b) % a`, `q := (a·b+a+b) / a`) congruent
+to `e` mod `b` and exceeding `e` equals `solCount a b (a·b − e)`, for
+`e ≤ a·b`. The combinatorial heart of the base-5 gcd closed form. -/
+private theorem gcd_tooth_count (a b e : ℕ) (ha : 1 ≤ a) (hb : 1 ≤ b)
+    (he : e ≤ a * b) :
+    ((Finset.range ((a * b + a + b) / a)).filter
+        (fun i => ((a * b + a + b) % a + a * i) % b = e % b
+          ∧ e < (a * b + a + b) % a + a * i)).card
+      = solCount a b (a * b - e) := by
+  set E := a * b + a + b with hEdef
+  set n := a * b with hndef
+  set q := E / a with hqdef
+  set r := E % a with hrdef
+  have hEqr : r + a * q = E := by
+    have hdm : a * q + r = E := by
+      rw [hqdef, hrdef, hEdef]; exact Nat.div_add_mod (a * b + a + b) a
+    omega
+  have hr : r < a := by rw [hrdef]; exact Nat.mod_lt _ (by omega)
+  have hElo : a ≤ E := by rw [hEdef]; omega
+  have hq1 : 1 ≤ q := by
+    rw [hqdef]; exact Nat.one_le_div_iff (by omega) |>.mpr hElo
+  -- `a * x = E - a - t` form, for `t = r + a*i`, `x = q - 1 - i`, `i ≤ q-1`.
+  have haq : a * q = E - r := by omega
+  have han : a ≤ n := by rw [hndef]; exact Nat.le_mul_of_pos_right a hb
+  have hbn : b ≤ n := by rw [hndef]; exact Nat.le_mul_of_pos_left b ha
+  rw [solCount]
+  symm
+  apply Finset.card_nbij'
+    (fun p => q - 1 - p.1)
+    (fun i => (q - 1 - i, (r + a * i - e) / b - 1))
+  · -- MapsTo : solutions → tooth indices
+    intro p hp
+    simp only [Finset.coe_filter, Set.mem_setOf_eq, Finset.mem_product,
+      Finset.mem_range] at hp
+    simp only [Finset.coe_filter, Set.mem_setOf_eq, Finset.mem_range]
+    obtain ⟨⟨hx1, hx2⟩, hsolve⟩ := hp
+    -- a*p.1 ≤ n, so p.1 ≤ q-1
+    have haxle : a * p.1 ≤ n - e := by omega
+    have hxle : p.1 ≤ n := by
+      have : a * p.1 ≤ n := by omega
+      have := Nat.le_mul_of_pos_left p.1 ha
+      omega
+    -- p.1 ≤ q - 1 : a*p.1 ≤ n ≤ E - a = a*(q-1) ... use a*p.1 ≤ E-a-r ⟹ p.1 ≤ q-1
+    have hxq : p.1 ≤ q - 1 := by
+      by_contra hcon
+      push_neg at hcon
+      have : q ≤ p.1 := by omega
+      have hmul : a * q ≤ a * p.1 := Nat.mul_le_mul_left a this
+      have : n < a * q := by
+        have : n - e ≤ a * p.1 := by omega
+        -- but a*p.1 + b*p.2 = n - e ≤ n; and a*q = E - r = a*b+a+b-r ≥ n + a - r > n
+        omega
+      have hn_aq : n < a * q := by omega
+      have : a * q = E - r := haq
+      rw [hEdef] at this
+      omega
+    -- a*(q-1-p.1) + a*p.1 = a*(q-1), giving r + a*(q-1-p.1) = e + b*p.2 + b
+    have e1 : a * (q - 1 - p.1) = a * (q - 1) - a * p.1 := by rw [Nat.mul_sub]
+    have e2 : a * (q - 1) = a * q - a := by rw [Nat.mul_sub, Nat.mul_one]
+    have hple : a * p.1 ≤ a * (q - 1) := Nat.mul_le_mul_left a hxq
+    have hsplit : a * (q - 1 - p.1) + a * p.1 = a * (q - 1) := by omega
+    have ht : r + a * (q - 1 - p.1) = e + b * p.2 + b := by omega
+    refine ⟨by omega, ?_, ?_⟩
+    · rw [ht, show e + b * p.2 + b = e + b * (p.2 + 1) by ring,
+        Nat.add_mul_mod_self_left]
+    · rw [ht]; omega
+  · -- MapsTo : tooth indices → solutions
+    intro i hi
+    simp only [Finset.coe_filter, Set.mem_setOf_eq, Finset.mem_range] at hi
+    simp only [Finset.coe_filter, Set.mem_setOf_eq, Finset.mem_product,
+      Finset.mem_range]
+    obtain ⟨hiq, hmod, hlt⟩ := hi
+    set t := r + a * i with htdef
+    -- b ∣ (t - e), and t - e ≥ b
+    have hdvd : b ∣ (t - e) := by
+      have hcong : Nat.ModEq b t e := hmod
+      exact (Nat.modEq_iff_dvd' (le_of_lt hlt)).mp hcong.symm
+    have hbpos : 0 < t - e := by omega
+    have hble : b ≤ t - e := Nat.le_of_dvd hbpos hdvd
+    have hbdiv : b * ((t - e) / b) = t - e := Nat.mul_div_cancel' hdvd
+    have hyge : 1 ≤ (t - e) / b := by
+      rw [Nat.one_le_div_iff hb]; exact hble
+    -- b*((t-e)/b - 1) = (t - e) - b
+    have hby : b * ((t - e) / b - 1) = t - e - b := by
+      rw [Nat.mul_sub, Nat.mul_one, hbdiv]
+    -- a*(q-1-i) = E - a - t, via a*(q-1-i) + a*i = a*(q-1)
+    have hile : i ≤ q - 1 := by omega
+    have e1 : a * (q - 1 - i) = a * (q - 1) - a * i := by rw [Nat.mul_sub]
+    have e2 : a * (q - 1) = a * q - a := by rw [Nat.mul_sub, Nat.mul_one]
+    have hile' : a * i ≤ a * (q - 1) := Nat.mul_le_mul_left a hile
+    have hsplit : a * (q - 1 - i) + a * i = a * (q - 1) := by omega
+    -- the solution equation
+    have hsol : a * (q - 1 - i) + b * ((t - e) / b - 1) = n - e := by
+      rw [hby, htdef]
+      omega
+    obtain ⟨hbx, hby2⟩ :=
+      mem_solCount_box a b (n - e) (q - 1 - i) ((t - e) / b - 1) ha hb hsol
+    exact ⟨⟨hbx, hby2⟩, hsol⟩
+  · -- left_inv : (x, y) round trip on solutions
+    intro p hp
+    simp only [Finset.coe_filter, Set.mem_setOf_eq, Finset.mem_product,
+      Finset.mem_range] at hp
+    obtain ⟨⟨hx1, hx2⟩, hsolve⟩ := hp
+    -- recover p.1 ≤ q - 1
+    have hxq : p.1 ≤ q - 1 := by
+      by_contra hcon
+      push_neg at hcon
+      have hqle : q ≤ p.1 := by omega
+      have hmul : a * q ≤ a * p.1 := Nat.mul_le_mul_left a hqle
+      have : a * p.1 ≤ n - e := by omega
+      rw [haq, hEdef] at hmul
+      omega
+    set i := q - 1 - p.1 with hidef
+    -- q - 1 - i = p.1
+    have hfst : q - 1 - i = p.1 := by omega
+    -- a*i + a*p.1 = a*(q-1), so t - e = b*p.2 + b for t = r + a*i
+    have e1 : a * i = a * (q - 1) - a * p.1 := by rw [hidef, Nat.mul_sub]
+    have e2 : a * (q - 1) = a * q - a := by rw [Nat.mul_sub, Nat.mul_one]
+    have hple : a * p.1 ≤ a * (q - 1) := Nat.mul_le_mul_left a hxq
+    have hsplit : a * i + a * p.1 = a * (q - 1) := by omega
+    have hte : r + a * i - e = b * p.2 + b := by omega
+    have hydiv : (r + a * i - e) / b - 1 = p.2 := by
+      rw [hte]
+      have hdv : (b * p.2 + b) / b = p.2 + 1 := by
+        rw [show b * p.2 + b = b * (p.2 + 1) by ring, Nat.mul_div_cancel_left _ hb]
+      omega
+    apply Prod.ext
+    · change q - 1 - i = p.1
+      exact hfst
+    · change (r + a * i - e) / b - 1 = p.2
+      exact hydiv
+  · -- right_inv : (q-1-i) round trip on tooth indices
+    intro i hi
+    simp only [Finset.coe_filter, Set.mem_setOf_eq, Finset.mem_range] at hi
+    obtain ⟨hiq, -, -⟩ := hi
+    change q - 1 - (q - 1 - i) = i
+    omega
+
 end GebLean
