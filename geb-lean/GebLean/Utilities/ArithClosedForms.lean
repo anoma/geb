@@ -630,4 +630,22 @@ private theorem gcdDigitSum_mod (a b : ℕ) (ha : 1 ≤ a) (hb : 1 ≤ b) :
   rw [hfactor, Nat.add_comm, Nat.add_mul_mod_self_left]
   exact Nat.mod_eq_of_lt (solCount_mul_lt_base a b ha hb)
 
+/-- Closed-form numerator exponent in base `5^(a·b)`:
+`5^(a·b·(a·b+a+b)) = (5^(a·b))^(a·b+a+b)`. -/
+private theorem gcd_num_pow (a b : ℕ) :
+    5 ^ (a * b * (a * b + a + b)) = (5 ^ (a * b)) ^ (a * b + a + b) := by
+  rw [← pow_mul]
+
+/-- First denominator factor exponent in base `5^(a·b)`:
+`5^(a²·b) = (5^(a·b))^a`. -/
+private theorem gcd_dena_pow (a b : ℕ) :
+    5 ^ (a ^ 2 * b) = (5 ^ (a * b)) ^ a := by
+  rw [← pow_mul]; congr 1; ring
+
+/-- Second denominator factor exponent in base `5^(a·b)`:
+`5^(a·b²) = (5^(a·b))^b`. -/
+private theorem gcd_denb_pow (a b : ℕ) :
+    5 ^ (a * b ^ 2) = (5 ^ (a * b)) ^ b := by
+  rw [← pow_mul]; congr 1; ring
+
 end GebLean
