@@ -24,6 +24,10 @@ geometric closed form `Σ_{i<n} q^i = (q^n − 1)/(q − 1)`.
 * `natSqGeomSum_mul` — the square-weighted geometric progression
   identity, cleared of division, for `2 ≤ q` and `2 ≤ n`.
 * `natSqGeomSum_zero`, `natSqGeomSum_one` — base cases at `n = 0` and `n = 1`.
+* `natSqGeomSum_add` — the square-weighted additive identity (no truncating
+  subtraction), valid for `2 ≤ q` and all `n`.
+* `natSqGeomSum_eq` — the square-weighted geometric closed form for `2 ≤ q`
+  and all `n`.
 
 ## References
 
@@ -226,5 +230,51 @@ theorem natSqGeomSum_mul (q n : ℕ) (hq : 2 ≤ q) (hn : 2 ≤ n) :
       simp only [Finset.sum_range_succ, Finset.sum_range_zero, zero_add]
       zify [show 1 ≤ q from by omega]
       push_cast; ring
+
+/-- Square-weighted geometric sum, fully additive form valid for all `n` (no
+truncating coefficients on either side): `(Σ_{i<n} i²·qⁱ)·(q−1)³
++ 2n·q^{n+2} + 2n²·q^{n+1} + q² + q
+= n²·q^{n+2} + q^{n+2} + 2n·q^{n+1} + q^{n+1} + n²·qⁿ` for `2 ≤ q`. Holds at
+`n = 0, 1` as well as `n ≥ 2`. -/
+theorem natSqGeomSum_add (q n : ℕ) (hq : 2 ≤ q) :
+    (∑ i ∈ Finset.range n, i ^ 2 * q ^ i) * (q - 1) ^ 3
+        + 2 * n * q ^ (n + 2) + 2 * n ^ 2 * q ^ (n + 1) + q ^ 2 + q =
+      n ^ 2 * q ^ (n + 2) + q ^ (n + 2) + 2 * n * q ^ (n + 1) + q ^ (n + 1)
+        + n ^ 2 * q ^ n := by
+  match n, hq with
+  | 0, _ => simp
+  | 1, _ => simp; ring
+  | (m + 2), hq =>
+    set n := m + 2 with hn
+    have hge : 2 ≤ n := by omega
+    have hmul := natSqGeomSum_mul q n hq hge
+    -- lift to ℤ; `(n-1)²` and `(2n²-2n-1)` expand without truncation there.
+    have hcoeff : ((2 * n ^ 2 - 2 * n - 1 : ℕ) : ℤ) = 2 * (n : ℤ) ^ 2 - 2 * n - 1 := by
+      have h1 : 2 * n ≤ 2 * n ^ 2 := by nlinarith
+      have h2 : 1 ≤ 2 * n ^ 2 - 2 * n := Nat.le_sub_of_add_le (by nlinarith)
+      rw [show 2 * n ^ 2 - 2 * n - 1 = (2 * n ^ 2 - 2 * n) - 1 from by omega,
+          Nat.cast_sub h2, Nat.cast_sub h1]
+      push_cast; ring
+    have hpred : ((n - 1 : ℕ) : ℤ) = (n : ℤ) - 1 := by
+      rw [Nat.cast_sub (by omega)]; push_cast; ring
+    zify [show 1 ≤ q from by omega] at hmul ⊢
+    rw [hcoeff, hpred] at hmul
+    nlinarith [hmul]
+
+/-- Square-weighted geometric closed form:
+`Σ_{i<n} i²·qⁱ = (n²·q^{n+2} + q^{n+2} + 2n·q^{n+1} + q^{n+1} + n²·qⁿ
+− 2n·q^{n+2} − 2n²·q^{n+1} − q² − q)/(q−1)³` for `2 ≤ q` and all `n`. -/
+theorem natSqGeomSum_eq (q n : ℕ) (hq : 2 ≤ q) :
+    ∑ i ∈ Finset.range n, i ^ 2 * q ^ i =
+      (n ^ 2 * q ^ (n + 2) + q ^ (n + 2) + 2 * n * q ^ (n + 1) + q ^ (n + 1)
+          + n ^ 2 * q ^ n
+          - 2 * n * q ^ (n + 2) - 2 * n ^ 2 * q ^ (n + 1) - q ^ 2 - q) / (q - 1) ^ 3 := by
+  have hpos : 0 < (q - 1) ^ 3 := Nat.pow_pos (by omega)
+  have hadd := natSqGeomSum_add q n hq
+  have hclear : n ^ 2 * q ^ (n + 2) + q ^ (n + 2) + 2 * n * q ^ (n + 1) + q ^ (n + 1)
+        + n ^ 2 * q ^ n
+        - 2 * n * q ^ (n + 2) - 2 * n ^ 2 * q ^ (n + 1) - q ^ 2 - q =
+      (∑ i ∈ Finset.range n, i ^ 2 * q ^ i) * (q - 1) ^ 3 := by omega
+  rw [hclear, Nat.mul_div_cancel _ hpos]
 
 end GebLean
