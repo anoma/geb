@@ -245,4 +245,82 @@ theorem hitCount_eq_max_iff (init : ℕ) (step : ℕ → ℕ → ℕ) (A n : ℕ
       rw [recSeq] at h0
       exact h0
 
+/-- The number of ordered pairs `(ω₁, ω₂)` with `ω₁ < B`, `ω₂ < B` and
+`ω₁ + ω₂ + 1 = C` is `C`, provided `C ≤ B` (so the range contains every
+solution). arXiv:2606.09336, Claim 5: the `ω₁+ω₂+1` counting trick. -/
+theorem card_pairs_succ_sum (B C : ℕ) (hCB : C ≤ B) :
+    ((Finset.range B ×ˢ Finset.range B).filter (fun p => p.1 + p.2 + 1 = C)).card
+      = C := by
+  have hcard : ((Finset.range B ×ˢ Finset.range B).filter
+      (fun p => p.1 + p.2 + 1 = C)).card = (Finset.range C).card := by
+    refine Finset.card_nbij' (fun p => p.1) (fun i => (i, C - 1 - i)) ?_ ?_ ?_ ?_
+    · rintro p hp
+      simp only [Finset.coe_filter, Set.mem_setOf_eq, Finset.mem_product,
+        Finset.mem_range] at hp
+      simp only [Finset.coe_range, Set.mem_Iio]
+      omega
+    · rintro i hi
+      simp only [Finset.coe_range, Set.mem_Iio] at hi
+      simp only [Finset.coe_filter, Set.mem_setOf_eq, Finset.mem_product,
+        Finset.mem_range]
+      refine ⟨⟨Nat.lt_of_lt_of_le hi hCB, ?_⟩, ?_⟩
+      · omega
+      · omega
+    · rintro p hp
+      simp only [Finset.coe_filter, Set.mem_setOf_eq, Finset.mem_product,
+        Finset.mem_range] at hp
+      obtain ⟨⟨-, -⟩, hsum⟩ := hp
+      rw [Prod.ext_iff]
+      refine ⟨rfl, ?_⟩
+      change C - 1 - p.1 = p.2
+      omega
+    · rintro i hi
+      rfl
+  rw [hcard, Finset.card_range]
+
+/-- The `E₂` solution count (arXiv:2606.09336, Claim 5, `k = 1`): the
+number of pairs `(ω₁, ω₂)` in the square `[0, A^(n+1))²` whose induced code
+`x = ω₁ + ω₂ + 1` is a valid, bounded, maximal-hit trajectory code. -/
+def solCount (init : ℕ) (step : ℕ → ℕ → ℕ) (A n : ℕ) : ℕ :=
+  ((Finset.range (A ^ (n + 1)) ×ˢ Finset.range (A ^ (n + 1))).filter
+    (fun p => hitCount step A (p.1 + p.2 + 1) n = n
+      ∧ (p.1 + p.2 + 1) / A ^ 0 % A = init
+      ∧ p.1 + p.2 + 1 < A ^ (n + 1))).card
+
+/-- arXiv:2606.09336, Claim 5 (`k = 1`): the `E₂` solution count equals the
+history code. -/
+theorem solCount_eq_histCode (init : ℕ) (step : ℕ → ℕ → ℕ) (A n : ℕ)
+    (hbound : ∀ j, j ≤ n → recSeq init step j < A) :
+    solCount init step A n = histCode init step A n := by
+  have hA : 0 < A := Nat.lt_of_le_of_lt (Nat.zero_le _) (hbound 0 (Nat.zero_le n))
+  set H := histCode init step A n with hH
+  set t := A ^ (n + 1) with ht
+  have hHt : H < t := by
+    rw [hH, ht, histCode]
+    exact positional_partial_lt A (n + 1) (recSeq init step) hA
+      (fun k hk => hbound k (Nat.le_of_lt_succ hk))
+  have hpred : ∀ p : ℕ × ℕ,
+      (hitCount step A (p.1 + p.2 + 1) n = n
+        ∧ (p.1 + p.2 + 1) / A ^ 0 % A = init
+        ∧ p.1 + p.2 + 1 < t)
+        ↔ p.1 + p.2 + 1 = H := by
+    intro p
+    constructor
+    · rintro ⟨hcount, hinit, hlt⟩
+      exact (hitCount_eq_max_iff init step A n hbound (p.1 + p.2 + 1) hlt).mp
+        ⟨hcount, hinit⟩
+    · intro heq
+      have hlt : p.1 + p.2 + 1 < t := heq ▸ hHt
+      obtain ⟨hcount, hinit⟩ :=
+        (hitCount_eq_max_iff init step A n hbound (p.1 + p.2 + 1) hlt).mpr heq
+      exact ⟨hcount, hinit, hlt⟩
+  rw [solCount, ← ht]
+  rw [show (Finset.range t ×ˢ Finset.range t).filter
+        (fun p => hitCount step A (p.1 + p.2 + 1) n = n
+          ∧ (p.1 + p.2 + 1) / A ^ 0 % A = init
+          ∧ p.1 + p.2 + 1 < t)
+      = (Finset.range t ×ˢ Finset.range t).filter (fun p => p.1 + p.2 + 1 = H) from
+    Finset.filter_congr (fun p _ => by rw [hpred p])]
+  exact card_pairs_succ_sum t H (Nat.le_of_lt hHt)
+
 end GebLean.EraRecurrence
