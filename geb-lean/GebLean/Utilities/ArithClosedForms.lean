@@ -226,13 +226,18 @@ theorem hwClosed_eq (n : ℕ) (hn : 1 ≤ n) :
   rw [hwClosed, centralBinomClosed_eq n hn, nu2Closed_eq _ (Nat.centralBinom_pos n),
     padicValNat_centralBinom_two]
 
-private theorem sum_digits_two_succ (n : ℕ) :
+/-- Binary digit-sum recurrence: the digit sum of `n` is its least
+significant bit `n % 2` plus the digit sum of `n / 2`. -/
+theorem sum_digits_two_succ (n : ℕ) :
     (Nat.digits 2 n).sum = n % 2 + (Nat.digits 2 (n / 2)).sum := by
   rcases Nat.eq_zero_or_pos n with h | h
   · simp [h]
   · rw [Nat.digits_def' (by norm_num) h]; simp
 
-private theorem sum_digits_two_add (w x y : ℕ) (hx : x < 2 ^ w) :
+/-- No-carry binary digit-sum additivity: when `x < 2 ^ w`, the operands `x`
+and `2 ^ w * y` occupy disjoint binary digit ranges, so the digit sum of their
+sum is the sum of their digit sums. -/
+theorem sum_digits_two_add (w x y : ℕ) (hx : x < 2 ^ w) :
     (Nat.digits 2 (x + 2 ^ w * y)).sum
       = (Nat.digits 2 x).sum + (Nat.digits 2 y).sum := by
   induction w generalizing x with
