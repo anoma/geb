@@ -13,6 +13,7 @@ import GebLean.Utilities.EraBoundedSum
 import GebLean.Utilities.EraDiophantine
 import GebLean.Utilities.EraHypercube
 import GebLean.Utilities.EraRecurrence
+import GebLean.Utilities.EraSepReduce
 import GebLean.Utilities.Families
 import GebLean.Utilities.Fintype
 import GebLean.Utilities.Graph
