@@ -1,0 +1,155 @@
+import GebLean.EraCompleteness
+import GebLean.Utilities.EraHypercube
+import GebLean.Utilities.EraRecurrence
+import GebLean.Utilities.EraSepReduce
+
+/-!
+# The Section-4 count read-off as an `Era` term
+
+This module realises the count read-off of arXiv:2407.12928 (Lemma 3.3 /
+Theorem 3.4) — the number of cube points where a predicate vanishes equals
+`HW(packM) / w − tᵏ` — as an `Era` arithmetic term. The read-off layer is
+factored from the packed-witness construction: given a term `packMTerm`
+whose value is the packed witness `packM` of arXiv:2407.12928, Lemma 3.3,
+the combinator `eraCountOfPack packMTerm tTerm wTerm` evaluates to the count.
+
+The packed witness `packM k w t P` is a sum over the side-`t` cube and so is
+not itself an arithmetic term; the cube-sum factorisation of
+arXiv:2407.12928, Lemma 3.2 (`GebLean.EraHypercube.cubeSum_factor`) is what
+turns it into a closed term for a simple-exponential-polynomial predicate `P`
+of per-coordinate degree at most `2`. That factorisation (the construction of
+`packMTerm` from a degree-certified predicate) is a separate obligation; this
+module supplies the read-off that consumes its output.
+
+## Main definitions
+
+* `eraCountOfPack` — the read-off term `(HW(packMTerm) / w) − tᵏ`, with `HW`
+  the binary Hamming weight realised by `GebLean.EraCompleteness.eraSigma`.
+
+## Main statements
+
+* `deltaBlock_affine` — on the cube bound `P < 2 ^ w`, the digit-block
+  indicator is the affine form `δ(P, w) = (2^w − 1)(2^w + 1) − (2^w − 1) · P`,
+  the form consumed by the cube-sum factorisation of `packM`.
+* `one_le_packM` — the packed witness is positive when the cube is non-empty
+  (`0 < t`) and the block bound holds, so its Hamming weight is its binary
+  digit sum.
+* `eraCountOfPack_eval` — the read-off identity: `eraCountOfPack` evaluates to
+  the count of vanishing cube points, chaining `eraSigma_eval` (the Hamming
+  weight) with `count_zeros_eq` (the read-off of arXiv:2407.12928, Lemma 3.3).
+
+## Implementation notes
+
+The combinator is stated against a supplied packed-witness term `packMTerm`
+together with the hypothesis that it evaluates to `packM`. The cube-sum
+factorisation that constructs such a `packMTerm` from a degree-≤2 simple
+exponential polynomial predicate (arXiv:2407.12928, Eqs (7), (8)) is the
+remaining piece of the count combinator.
+
+## References
+
+* M. Prunescu and L. Sauras-Altuzarra, *On the representation of
+  number-theoretic functions by arithmetic terms*, arXiv:2407.12928,
+  Lemma 3.2 (cube-sum factorisation), Lemma 3.3 / Theorem 3.4 (the count
+  read-off), Eqs (7), (8) (the `δ` monomial expansion).
+* Local copy:
+  `/home/terence/wingeb/representation-number-theoretic-functions-arithmetic-terms.pdf`.
+
+## Tags
+
+elementary recursive, Diophantine, count, hypercube, arithmetic term
+-/
+
+namespace GebLean.EraHistCodeTerm
+
+open Era
+open GebLean.EraCompleteness
+open GebLean.EraHypercube
+
+/-- The digit-block indicator as an affine function of the predicate value on
+the cube bound: for `0 < w` and `a < 2 ^ w`,
+`δ(a, w) = (2^w − 1)(2^w + 1) − (2^w − 1) · a`. The truncated subtraction in
+`deltaBlock` is exact under `a < 2 ^ w`, giving the affine form whose two
+constant coefficients the cube-sum factorisation distributes over the
+separable monomials of `a` (arXiv:2407.12928, Eqs (7), (8)). -/
+theorem deltaBlock_affine {a w : ℕ} (ha : a < 2 ^ w) :
+    GebLean.deltaBlock a w = (2 ^ w - 1) * (2 ^ w + 1) - (2 ^ w - 1) * a := by
+  unfold GebLean.deltaBlock
+  have hfac : 2 ^ w - a + 1 = (2 ^ w + 1) - a := by omega
+  rw [hfac, Nat.mul_sub]
+
+/-- The packed witness is positive when the cube is non-empty and every block
+value fits, hence its binary digit sum is computed by the Hamming-weight
+closed form `hwClosed`. -/
+theorem one_le_packM {k w t : ℕ} (ht : 0 < t) (hw : 0 < w)
+    (P : (Fin k → ℕ) → ℕ) (hP : ∀ a ∈ cubePoints k t, P a < 2 ^ w) :
+    1 ≤ packM k w t P := by
+  have hne : (cubePoints k t).Nonempty := by
+    rw [← Finset.card_pos, card_cubePoints]
+    exact Nat.pow_pos ht
+  obtain ⟨a, ha⟩ := hne
+  rw [packM]
+  have hterm : 1 ≤ 2 ^ (2 * w * mixedRadix k t a) * GebLean.deltaBlock (P a) w := by
+    have hd := (deltaBlock_pos_lt hw (hP a ha)).1
+    have hpow : 0 < 2 ^ (2 * w * mixedRadix k t a) := Nat.pow_pos (by norm_num)
+    exact Nat.one_le_iff_ne_zero.mpr (Nat.mul_ne_zero hpow.ne' hd.ne')
+  refine le_trans hterm ?_
+  exact Finset.single_le_sum
+    (f := fun a => 2 ^ (2 * w * mixedRadix k t a) * GebLean.deltaBlock (P a) w)
+    (fun b _ => Nat.zero_le _) ha
+
+/-- The natural-number literal `k` as an `Era` term over any scope: `k`
+applications of `succ` to `zero`. -/
+def eraNumeral {p : ℕ} : ℕ → ETm p
+  | 0 => .zero
+  | k + 1 => .succ (eraNumeral k)
+
+/-- `eraNumeral k` evaluates to `k` in every context. -/
+@[simp]
+theorem eraNumeral_eval {p : ℕ} (k : ℕ) (ctx : Fin p → ℕ) :
+    Tm.eval eraInterp (eraNumeral k) ctx = k := by
+  induction k with
+  | zero => rfl
+  | succ k ih => rw [eraNumeral, Tm.eval, ih]
+
+/-- The Section-4 count read-off as an `Era` term, parameterised on a packed
+witness term `packMTerm` (whose value is the packed witness `packM` of
+arXiv:2407.12928, Lemma 3.3): `(HW(packMTerm) / w) − tᵏ`, with `HW` the binary
+Hamming weight realised by `eraSigma` and `tᵏ` the cube cardinality. -/
+def eraCountOfPack {p : ℕ} (k : ℕ) (packMTerm tTerm wTerm : ETm p) : ETm p :=
+  etsub (ediv (eraSigma.subst ![packMTerm]) wTerm) (epow tTerm (eraNumeral k))
+
+/-- The read-off identity (arXiv:2407.12928, Lemma 3.3 / Theorem 3.4):
+`eraCountOfPack packMTerm tTerm wTerm` evaluates to the count of cube points
+where `P` vanishes, provided `packMTerm` evaluates to the packed witness
+`packM k w t P`, the cube is non-empty, the modulus is positive, and the block
+bound holds on the cube. -/
+theorem eraCountOfPack_eval {p : ℕ} (k : ℕ) (packMTerm tTerm wTerm : ETm p)
+    (ctx : Fin p → ℕ) (P : (Fin k → ℕ) → ℕ)
+    (ht : 0 < Tm.eval eraInterp tTerm ctx)
+    (hw : 0 < Tm.eval eraInterp wTerm ctx)
+    (hP : ∀ a ∈ cubePoints k (Tm.eval eraInterp tTerm ctx),
+            P a < 2 ^ Tm.eval eraInterp wTerm ctx)
+    (hpack : Tm.eval eraInterp packMTerm ctx =
+      packM k (Tm.eval eraInterp wTerm ctx) (Tm.eval eraInterp tTerm ctx) P) :
+    Tm.eval eraInterp (eraCountOfPack k packMTerm tTerm wTerm) ctx =
+      ((cubePoints k (Tm.eval eraInterp tTerm ctx)).filter
+        (fun a => P a = 0)).card := by
+  set t := Tm.eval eraInterp tTerm ctx with ht_def
+  set w := Tm.eval eraInterp wTerm ctx with hw_def
+  have hpos : 1 ≤ packM k w t P := one_le_packM ht hw P hP
+  have hsigma : Tm.eval eraInterp (eraSigma.subst ![packMTerm]) ctx =
+      (Nat.digits 2 (packM k w t P)).sum := by
+    rw [Tm.eval_subst]
+    have hctx : (fun i => Tm.eval eraInterp (![packMTerm] i) ctx)
+        = ![packM k w t P] := by
+      funext i
+      refine i.cases ?_ (fun j => j.elim0)
+      simp only [Matrix.cons_val_zero, hpack]
+    rw [hctx, eraSigma_eval _ hpos, GebLean.hwClosed_eq _ hpos]
+  rw [eraCountOfPack]
+  simp only [etsub_eval, ediv_eval, epow_eval, eraNumeral_eval, hsigma, ← ht_def, ← hw_def,
+    eraInterp, fcons]
+  rw [count_zeros_eq k w t hw P hP]
+
+end GebLean.EraHistCodeTerm
