@@ -1,4 +1,5 @@
 import GebLean.Utilities.EraDiophantine
+import Mathlib.Algebra.BigOperators.Ring.Finset
 
 /-!
 # Per-coordinate degree certificate for the `diophOf` reduction
@@ -23,6 +24,10 @@ Lemma 3.5 chain-variable reduction of arXiv:2407.12928 is not needed.
   `SosTerm.PolyExpZero`, `SosSystem.PolyExpZero` — the structural predicate
   asserting that every monomial occurring in the object has an identically
   zero per-coordinate polynomial exponent.
+* `ZMonomial` — the signed simple-exponential monomial, the `ℤ`-valued
+  reflection of Expression (6) of arXiv:2407.12928 specialised to base `2`,
+  with `ZMonomial.eval` its `ℤ`-valued denotation and `ZMonomial.evalNat` its
+  unsigned `ℕ` magnitude.
 
 ## Main statements
 
@@ -39,6 +44,9 @@ Lemma 3.5 chain-variable reduction of arXiv:2407.12928 is not needed.
 * `diophOf_polyExp_le_one` — the headline certificate: every monomial
   occurring in `(diophOf t).sys` has per-coordinate polynomial exponent at
   most `1`.
+* `ZMonomial.evalNat_cast`, `ZMonomial.eval_eq` — the bridge between the
+  `ℤ`-valued `eval` and the `ℕ`-valued `evalNat`: the magnitude cast to `ℤ` is
+  the absolute value of `eval`, and `eval` is `evalNat` signed by `sign`.
 
 ## Implementation notes
 
@@ -60,6 +68,15 @@ The certificate is stated and proved as `polyExp i = 0` (`PolyExpZero`), the
 exact property that holds, and the `≤ 1` headline form `diophOf_polyExp_le_one`
 is derived from it. The `sqDist` squaring that the consuming factorisation
 applies raises the per-coordinate degree from this `≤ 1` to `≤ 2`.
+
+`ZMonomial` reflects Expression (6) of arXiv:2407.12928 with the single
+exponential base specialised to `2`: every exponential reachable from a
+`diophOf` atom has base `2`, so no per-variable base field is stored. This
+specialisation is a standing assumption of the reflection. Should a `diophOf`
+atom with a different exponential base be introduced, the base-`2` normal form
+no longer covers all atoms, and this phase must regain an `expBase` field on
+`ZMonomial` (mirroring `SimpleMonomial.expBase`) before the reflection is
+sound again.
 
 ## References
 
@@ -518,5 +535,57 @@ the stronger `diophOf_polyExpZero` shows the exponents are identically `0`. -/
 theorem diophOf_polyExp_le_one {n : ℕ} (t : ETm n) :
     (diophOf t).sys.PolyExpLeOne :=
   SosSystem.polyExpZero_polyExpLeOne (diophOf_polyExpZero t)
+
+/-- A signed simple-exponential monomial over `m` variables, the `ℤ`-valued
+reflection of arXiv:2407.12928, Expression (6) specialised to base `2`:
+`(-1)^sign · coeff · ∏ᵢ 2 ^ (expCoeff i · ρ i) · ∏ᵢ (ρ i) ^ (polyExp i)`.
+The single exponential base is `2`, so no per-variable base is stored. -/
+@[ext]
+structure ZMonomial (m : ℕ) where
+  /-- The sign of the monomial: `true` negates the unsigned magnitude. -/
+  sign : Bool
+  /-- The leading coefficient. -/
+  coeff : ETm m
+  /-- The per-variable exponential coefficient, multiplying the variable in the
+  base-`2` exponent. -/
+  expCoeff : Fin m → ETm m
+  /-- The per-variable constant polynomial exponent. -/
+  polyExp : Fin m → ℕ
+
+/-- The `ℤ`-valued denotation of a signed simple-exponential monomial at a
+context `ρ`: `(-1)^sign · coeff · ∏ᵢ 2 ^ ((expCoeff i) · ρ i) · ∏ᵢ (ρ i) ^
+(polyExp i)`, with the `ETm`-valued fields evaluated by `Tm.eval eraInterp` and
+the natural-number products cast into `ℤ`. -/
+def ZMonomial.eval {m : ℕ} (mon : ZMonomial m) (ρ : Fin m → ℕ) : ℤ :=
+  (if mon.sign then -1 else 1) *
+    ((Tm.eval eraInterp mon.coeff ρ
+      * (∏ i, 2 ^ (Tm.eval eraInterp (mon.expCoeff i) ρ * ρ i))
+      * (∏ i, ρ i ^ mon.polyExp i) : ℤ))
+
+/-- The unsigned natural-number magnitude of a signed simple-exponential
+monomial at a context `ρ`: the product `coeff · ∏ᵢ 2 ^ ((expCoeff i) · ρ i) ·
+∏ᵢ (ρ i) ^ (polyExp i)` with the sign factor dropped. -/
+def ZMonomial.evalNat {m : ℕ} (mon : ZMonomial m) (ρ : Fin m → ℕ) : ℕ :=
+  Tm.eval eraInterp mon.coeff ρ
+    * (∏ i, 2 ^ (Tm.eval eraInterp (mon.expCoeff i) ρ * ρ i))
+    * (∏ i, ρ i ^ mon.polyExp i)
+
+/-- The `ℤ`-valued `eval` equals the unsigned magnitude `evalNat` signed by
+`sign`: negated when `sign` is `true`, the magnitude itself otherwise. -/
+theorem ZMonomial.eval_eq {m : ℕ} (mon : ZMonomial m) (ρ : Fin m → ℕ) :
+    mon.eval ρ =
+      (if mon.sign then -(mon.evalNat ρ : ℤ) else (mon.evalNat ρ : ℤ)) := by
+  rw [ZMonomial.eval, ZMonomial.evalNat]
+  cases mon.sign
+  · simp only [Bool.false_eq_true, if_false, Nat.cast_mul, Nat.cast_prod, Nat.cast_pow,
+      Nat.cast_ofNat, one_mul]
+  · simp only [if_true, Nat.cast_mul, Nat.cast_prod, Nat.cast_pow, Nat.cast_ofNat, neg_one_mul]
+
+/-- The unsigned magnitude `evalNat` cast to `ℤ` is the absolute value of the
+signed `eval`: the sign factor is `±1`, so it contributes only the sign. -/
+theorem ZMonomial.evalNat_cast {m : ℕ} (mon : ZMonomial m) (ρ : Fin m → ℕ) :
+    (mon.evalNat ρ : ℤ) = |mon.eval ρ| := by
+  rw [ZMonomial.eval_eq]
+  cases mon.sign <;> simp [abs_of_nonneg]
 
 end GebLean
