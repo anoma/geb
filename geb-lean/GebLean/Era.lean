@@ -500,6 +500,25 @@ theorem Tm.eval_subst {B : Type} {ar : B → Nat}
   | succ t ih  => exact congrArg (· + 1) ih
   | app b ts ih => exact congrArg (I b) (funext fun i => ih i)
 
+/-- Re-index a term along a variable map `f : Fin m → Fin m'`, renaming each
+free variable `i` to `f i`. The special case `f = id` is the identity
+(`Tm.subst_id`); in general it is substitution of the variable-renaming
+tuple, so it executes without `Classical.choice`. -/
+def Tm.weaken {B : Type} {ar : B → Nat} {m m' : Nat} (f : Fin m → Fin m')
+    (t : Tm B ar m) : Tm B ar m' :=
+  t.subst (fun i => .var (f i))
+
+/-- Re-indexing compatibility for terms: evaluating `t.weaken f` at `ρ'`
+equals evaluating `t` at the precomposed context `ρ' ∘ f`. An instance of
+`Tm.eval_subst` at the variable-renaming tuple. -/
+theorem Tm.eval_weaken {B : Type} {ar : B → Nat}
+    (I : (b : B) → (Fin (ar b) → Nat) → Nat) {m m' : Nat} (f : Fin m → Fin m')
+    (t : Tm B ar m) (ρ' : Fin m' → Nat) :
+    (t.weaken f).eval I ρ' = t.eval I (ρ' ∘ f) := by
+  unfold Tm.weaken
+  rw [Tm.eval_subst]
+  rfl
+
 /-- Eta rule for `fcons`: a tuple is its head consed onto its tail.  Stated with an
 explicit `Fin.mk` head so that both match arms close by `rfl`. -/
 theorem fcons_eta {α : Sort u} {n : Nat} (ρ : Fin (n + 1) → α) :

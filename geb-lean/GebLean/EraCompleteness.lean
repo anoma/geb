@@ -16,6 +16,8 @@ elementary recursive functions as formalised by `ERMor1`
 * `eraOpToER` — the `ERMor1` witness for each basis operation.
 * `erOfETm` — translation of an `Era` term to an `ERMor1` term.
 * `eraGeomSum` — the closed-form `ETm 2` for `Σ_{i<bound} q^i`.
+* `eraLinGeomSum` — the closed-form `ETm 2` for `Σ_{i<n} i·qⁱ`.
+* `eraSqGeomSum` — the closed-form `ETm 2` for `Σ_{i<n} i²·qⁱ`.
 * `eraCentralBinom` — `centralBinomClosed` realised as an `ETm 1`.
 * `eraDelta` — `deltaBlock` realised as an `ETm 2`.
 * `eraGcd` — `gcdClosed5` realised as an `ETm 2`.
@@ -30,6 +32,8 @@ elementary recursive functions as formalised by `ERMor1`
   (the inclusion `Era ⊆ E³`).
 * `eraGeomSum_eval` — raw evaluation of `eraGeomSum`.
 * `eraGeomSum_natBSum` — `eraGeomSum` agrees with `natBSum` when the base is at least `2`.
+* `eraLinGeomSum_eval` — `eraLinGeomSum` agrees with `Σ_{i<n} i·qⁱ` for base `≥ 2`.
+* `eraSqGeomSum_eval` — `eraSqGeomSum` agrees with `Σ_{i<n} i²·qⁱ` for base `≥ 2`.
 * `eraCentralBinom_eval` — `eraCentralBinom` evaluates to `centralBinomClosed`.
 * `eraDelta_eval` — `eraDelta` evaluates to `deltaBlock`.
 * `eraGcd_eval` — `eraGcd` evaluates to `Nat.gcd`.
@@ -250,5 +254,80 @@ theorem eraSigma_eval (n : ℕ) (hn : 1 ≤ n) :
     simp [eraCentralBinom_eval]
   rw [hctx]
   exact eraNu2_eval (centralBinomClosed n) hcb
+
+/-- The linear-weighted geometric sum `Σ_{i<n} i·qⁱ` as a closed `Era` term
+(variable `0` = base, variable `1` = bound), for base `≥ 2`. The closed form is
+`(n·q^{n+1} + q − q^{n+1} − n·qⁿ)/(q−1)²`; the parenthesisation keeps every ℕ
+truncated subtraction exact for all `n`. -/
+def eraLinGeomSum : ETm 2 :=
+  ediv
+    (etsub
+      (etsub
+        (eadd (emul (.var 1) (epow (.var 0) (.succ (.var 1)))) (.var 0))
+        (epow (.var 0) (.succ (.var 1))))
+      (emul (.var 1) (epow (.var 0) (.var 1))))
+    (epow (etsub (.var 0) (.succ .zero)) (.succ (.succ .zero)))
+
+/-- Raw evaluation of `eraLinGeomSum`: the term computes
+`(n·q^{n+1} + q − q^{n+1} − n·qⁿ)/(q−1)²` for the context `![q, n]`. -/
+theorem eraLinGeomSum_eval_raw (q n : ℕ) :
+    Tm.eval eraInterp eraLinGeomSum ![q, n] =
+      (n * q ^ (n + 1) + q - q ^ (n + 1) - n * q ^ n) / (q - 1) ^ 2 := by
+  simp [eraLinGeomSum, ediv, eadd, etsub, emul, epow, Tm.eval, eraInterp, fcons]
+
+/-- `eraLinGeomSum` computes the linear-weighted geometric sum for base `≥ 2`. -/
+theorem eraLinGeomSum_eval (q n : ℕ) (hq : 2 ≤ q) :
+    Tm.eval eraInterp eraLinGeomSum ![q, n] = ∑ i ∈ Finset.range n, i * q ^ i := by
+  rw [eraLinGeomSum_eval_raw]
+  have hpos : 0 < (q - 1) ^ 2 := Nat.pow_pos (by omega)
+  have hmul := GebLean.natLinGeomSum_mul q n hq
+  have hclear : n * q ^ (n + 1) + q - q ^ (n + 1) - n * q ^ n =
+      (∑ i ∈ Finset.range n, i * q ^ i) * (q - 1) ^ 2 := by omega
+  rw [hclear, Nat.mul_div_cancel _ hpos]
+
+/-- The square-weighted geometric sum `Σ_{i<n} i²·qⁱ` as a closed `Era` term
+(variable `0` = base, variable `1` = bound), for base `≥ 2`. The closed form is
+`(n²·q^{n+2} + q^{n+2} + 2n·q^{n+1} + q^{n+1} + n²·qⁿ
+− 2n·q^{n+2} − 2n²·q^{n+1} − q² − q)/(q−1)³`; the additive prefix and the
+ordering of the subtractions keep every ℕ truncated subtraction exact for all
+`n`. -/
+def eraSqGeomSum : ETm 2 :=
+  let two : ETm 2 := .succ (.succ .zero)
+  let qPowN : ETm 2 := epow (.var 0) (.var 1)
+  let qPowN1 : ETm 2 := epow (.var 0) (.succ (.var 1))
+  let qPowN2 : ETm 2 := epow (.var 0) (.succ (.succ (.var 1)))
+  let nSq : ETm 2 := epow (.var 1) two
+  ediv
+    (etsub
+      (etsub
+        (etsub
+          (etsub
+            (eadd
+              (eadd
+                (eadd
+                  (eadd (emul nSq qPowN2) qPowN2)
+                  (emul (emul two (.var 1)) qPowN1))
+                qPowN1)
+              (emul nSq qPowN))
+            (emul (emul two (.var 1)) qPowN2))
+          (emul (emul two nSq) qPowN1))
+        (epow (.var 0) two))
+      (.var 0))
+    (epow (etsub (.var 0) (.succ .zero)) (.succ (.succ (.succ .zero))))
+
+/-- Raw evaluation of `eraSqGeomSum`: the term computes
+`(n²·q^{n+2} + q^{n+2} + 2n·q^{n+1} + q^{n+1} + n²·qⁿ
+− 2n·q^{n+2} − 2n²·q^{n+1} − q² − q)/(q−1)³` for the context `![q, n]`. -/
+theorem eraSqGeomSum_eval_raw (q n : ℕ) :
+    Tm.eval eraInterp eraSqGeomSum ![q, n] =
+      (n ^ 2 * q ^ (n + 2) + q ^ (n + 2) + 2 * n * q ^ (n + 1) + q ^ (n + 1)
+          + n ^ 2 * q ^ n
+          - 2 * n * q ^ (n + 2) - 2 * n ^ 2 * q ^ (n + 1) - q ^ 2 - q) / (q - 1) ^ 3 := by
+  simp [eraSqGeomSum, ediv, eadd, etsub, emul, epow, Tm.eval, eraInterp, fcons]
+
+/-- `eraSqGeomSum` computes the square-weighted geometric sum for base `≥ 2`. -/
+theorem eraSqGeomSum_eval (q n : ℕ) (hq : 2 ≤ q) :
+    Tm.eval eraInterp eraSqGeomSum ![q, n] = ∑ i ∈ Finset.range n, i ^ 2 * q ^ i := by
+  rw [eraSqGeomSum_eval_raw, GebLean.natSqGeomSum_eq q n hq]
 
 end GebLean.EraCompleteness

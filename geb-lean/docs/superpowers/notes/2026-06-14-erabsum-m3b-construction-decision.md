@@ -179,12 +179,17 @@ eraBSum  :  s(0)=0, s(m+1) = s(m) + f(m)   ⇒  Σ_{i<y} f(i)  = floor(H/A^y)
 eraBProd :  p(0)=1, p(m+1) = p(m) · f(m)   ⇒  Π_{i<y} f(i)  = floor(H/A^y)
 ```
 
-`eraBSum` also admits the direct 2-D form
-`Σ_{i<y} f(i) = #{ (i,w) : i<y, w<f(i) }` via § 4.2 (Theorem 3.4)
-without the positional-coding layer; `eraBProd` is not naturally a count
-and uses the recurrence engine. Building the general engine once yields
-both and positions Route-B `simrec` (a `k`-ary recurrence) for any later
-work, without committing to it here.
+Both `eraBSum` and `eraBProd` use the recurrence engine. A direct 2-D
+count `Σ_{i<y} f(i) = #{ (i,w) : i<y, w<f(i) }` was considered but is not
+used: it diverges from both source papers (which represent every bounded
+sum only through the recurrence metatheorem, never a lattice-point count),
+and its predicate `w < f(i)` is not separable for a general summand, so
+the packed number would not factorise via the cube-sum identity. Building
+the general engine once yields both formers and positions Route-B `simrec`
+(a `k`-ary recurrence) for any later work, without committing to it here.
+See the Phase 6-7 sub-plan
+(`docs/superpowers/plans/2026-06-16-era-completeness-phase6-7-subplan.md`)
+§ Route fidelity.
 
 ## 5 Numeric validation
 

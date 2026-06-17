@@ -170,29 +170,6 @@ over the raw-`ETm`-plus-`Simple`-predicate fallback.
 elementary recursive, majorant, monotone, Diophantine
 -/
 
-namespace Era
-
-/-- Re-index a term along a variable map `f : Fin m → Fin m'`, renaming each
-free variable `i` to `f i`. The special case `f = id` is the identity
-(`Tm.subst_id`); in general it is substitution of the variable-renaming
-tuple, so it executes without `Classical.choice`. -/
-def Tm.weaken {B : Type} {ar : B → Nat} {m m' : Nat} (f : Fin m → Fin m')
-    (t : Tm B ar m) : Tm B ar m' :=
-  t.subst (fun i => .var (f i))
-
-/-- Re-indexing compatibility for terms: evaluating `t.weaken f` at `ρ'`
-equals evaluating `t` at the precomposed context `ρ' ∘ f`. An instance of
-`Tm.eval_subst` at the variable-renaming tuple. -/
-theorem Tm.eval_weaken {B : Type} {ar : B → Nat}
-    (I : (b : B) → (Fin (ar b) → Nat) → Nat) {m m' : Nat} (f : Fin m → Fin m')
-    (t : Tm B ar m) (ρ' : Fin m' → Nat) :
-    (t.weaken f).eval I ρ' = t.eval I (ρ' ∘ f) := by
-  unfold Tm.weaken
-  rw [Tm.eval_subst]
-  rfl
-
-end Era
-
 namespace GebLean
 
 open Era

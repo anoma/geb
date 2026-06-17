@@ -19,6 +19,7 @@ import GebLean.EqualizerCompletionLimits
 import GebLean.EqualizerCompletionPBTO
 import GebLean.Era
 import GebLean.EraCompleteness
+import GebLean.EraHistCodeTerm
 import GebLean.Factorization
 import GebLean.FiniteQuiver
 import GebLean.FreeCoequalizerCompletion

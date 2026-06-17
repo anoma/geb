@@ -146,6 +146,19 @@ the open obligations.
 
 ## 5 The bounded-sum engine (Marchenkov § 5)
 
+> **Superseded construction (2026-06-16).** The Marchenkov 2007 digit-sum
+> `σ` method described in this section is not the one implemented. Both
+> bounded-sum and bounded-product engines are built by the
+> Istrate-Prunescu-Shunia recurrence-to-term metatheorem
+> (arXiv:2606.09336, Theorem 2), realised through the
+> Prunescu-Sauras-Altuzarra hypercube count (arXiv:2407.12928). See the
+> Phase 6-7 sub-plan
+> (`docs/superpowers/plans/2026-06-16-era-completeness-phase6-7-subplan.md`)
+> § Route fidelity and the decision note
+> (`docs/superpowers/notes/2026-06-14-erabsum-m3b-construction-decision.md`).
+> The binding *statements* of § 3, § 4, § 7, § 8, § 11, § 12 are unchanged;
+> only this section's construction narrative is superseded.
+
 `eraBSum` is the core. The functional content is a single `ℕ`-level
 construction; the `eval` lemma is its correctness.
 
@@ -213,6 +226,12 @@ The output is `eraBSum` with its `eval` lemma.
 
 ## 6 The bounded-product engine (via `pow2`)
 
+> **Superseded construction (2026-06-16).** Bounded product is not obtained
+> by the separate `2^x`-elimination described here (which would depend on
+> the untranslated Marchenkov 2003 monograph); it is the product instance
+> of the recurrence engine (§ 5 supersession note), eliminating that
+> dependency.
+
 Bounded product is not redeveloped from scratch. In the definition of
 `E³`, bounded multiplication is eliminable in favour of bounded
 summation once `2^x` is available — Marchenkov 2007, § 1 (p. 352):
@@ -239,6 +258,13 @@ is largely assembly of existing material and is included so the
 deliverable is the equivalence `Era ≃ E³`, not a single inclusion.
 
 ## 8 Corollary: the K-sim-2 hierarchy
+
+> **Construction note (2026-06-16).** The corollary is derived from the
+> term-level interp-faithfulness lemmas `erToK_interp` / `kToER_interp`
+> (the latter carrying its `level ≤ 2` premise), not by extracting an
+> equality from the categorical `erKSimEquiv` (which has no semantic
+> read-out). The corollary statement — the K-sim-2 function-class identity
+> — is unchanged.
 
 `era_complete` and `era_sound_er` give `Era ≃ E³` as denoted-function
 classes. `ERMor1` underlies `LawvereERCat`, and `erKSimEquiv :
