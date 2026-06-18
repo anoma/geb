@@ -1,4 +1,5 @@
 import GebLean.Utilities.EraDiophantine
+import Mathlib.Data.List.MinMax
 import Mathlib.Algebra.BigOperators.Ring.Finset
 import Mathlib.Algebra.BigOperators.Fin
 import Mathlib.Logic.Equiv.Fin.Basic
@@ -70,6 +71,17 @@ Lemma 3.5 chain-variable reduction of arXiv:2407.12928 is not needed.
   `finProdFinEquiv`); `cubeSlot c` is the cube coordinate `c`'s slot; `chainSlot
   c i` is the chain cell `(c, i)`'s slot; `castAddEmb` embeds the old scope
   `Fin (p + k)`.
+* `ZMonomial.varMon`, `ZMonomial.negVarMon`, `ZMonomial.mulVarMon` — the small signed
+  monomial constructors `x_j`, `−x_j`, and `x_j · x_{j'}` (the last for distinct slots)
+  out of which the chain equations are built.
+* `ZMonomial.maxCubeDegree` — the maximum cube-coordinate polynomial degree over a list
+  of monomials, the global chain length `h` of Lemma 3.5.
+* `chainEqList`, `chainEqs` — the chain-equation left side `S_{c,i}` (a two-monomial
+  signed difference) and the full squared chain-equation block (every `S_{c,i}²`).
+* `chainSub` — lower each cube slot's polynomial degree to `0`, depositing the removed
+  degree at the matching chain slot (the substitution `x_c^{i+1} ↦ y_{c,i+1}`).
+* `ChainHolds` — the sub-domain predicate `ρ (chainSlot c i) = ρ (cubeSlot c) ^ (i + 1)`
+  on which `chainSub` preserves the monomial denotation.
 
 ## Main statements
 
@@ -126,6 +138,18 @@ Lemma 3.5 chain-variable reduction of arXiv:2407.12928 is not needed.
 * `preimage_castAddEmb_apply`, `preimage_castAddEmb_chainSlot` — the `preimage`
   search recovers the source index of an embedded index and returns `none` on a
   chain slot.
+* `ZMonomial.varMon_eval`, `ZMonomial.negVarMon_eval`, `ZMonomial.mulVarMon_eval` — the
+  small constructors denote `ρ j`, `−ρ j`, and (for distinct slots) `ρ j · ρ j'`.
+* `ZMonomial.le_maxCubeDegree` — every monomial's cube-coordinate degree is at most
+  `ZMonomial.maxCubeDegree`.
+* `chainEqList_polyExp_le_one`, `chainEqs_degree` — each `chainEqList` monomial has
+  per-slot polynomial degree at most `1`, hence each `chainEqs` monomial at most `2`.
+* `chainSub_polyExp_cubeSlot`, `chainSub_polyExp_chainSlot`, `chainSub_polyExp_param`,
+  `chainSub_polyExp_le_one` — the per-slot behaviour of `chainSub` (cube → `0`, chain →
+  base plus a single deposit, parameter unchanged) and the resulting degree bound.
+* `chainSub_polyProd`, `chainSub_eval` — on the `ChainHolds` sub-domain, with cube
+  degrees bounded by the chain length, `chainSub` preserves the polynomial-factor
+  product, hence the whole monomial denotation.
 
 ## Implementation notes
 
@@ -1976,5 +2000,373 @@ theorem ZMonomial.weaken_list_eval {m m' : ℕ} (L : List (ZMonomial m))
   rw [List.map_map]
   exact congrArg List.sum
     (List.map_congr_left (fun mon _ => ZMonomial.weaken_eval mon f hf ρ'))
+
+/-- The single-variable signed monomial `x_j`: trivial sign, unit coefficient, no
+exponential factor, and polynomial exponent `1` at slot `j` and `0` elsewhere. Its
+denotation is the variable value `ρ j`. Used to build the linear chain equation
+`x_c − y_{c,1}`. -/
+def ZMonomial.varMon {m : ℕ} (j : Fin m) : ZMonomial m where
+  sign := false
+  coeff := Era.one
+  expCoeff := fun _ => .zero
+  polyExp := fun j' => if j' = j then 1 else 0
+
+/-- The denotation of `ZMonomial.varMon j` is the variable value `ρ j`: the unit
+coefficient and trivial exponential factor leave the polynomial product, which is
+`ρ j` because the exponent vector is the indicator of `j`. -/
+theorem ZMonomial.varMon_eval {m : ℕ} (j : Fin m) (ρ : Fin m → ℕ) :
+    (ZMonomial.varMon j).eval ρ = (ρ j : ℤ) := by
+  simp only [ZMonomial.eval, ZMonomial.varMon, Era.one, Tm.eval, Bool.false_eq_true, if_false,
+    Nat.zero_mul, pow_zero, Finset.prod_const_one, one_mul]
+  rw [Nat.cast_prod, Finset.prod_eq_single j]
+  · rw [if_pos rfl, pow_one]; push_cast; ring
+  · intro j' _ hj'; rw [if_neg hj', pow_zero, Nat.cast_one]
+  · intro h; exact absurd (Finset.mem_univ j) h
+
+/-- The negated single-variable signed monomial `−x_j`: `ZMonomial.varMon j` with the
+sign flipped to `true`. Its denotation is `−ρ j`. Used as the right summand of every
+chain equation. -/
+def ZMonomial.negVarMon {m : ℕ} (j : Fin m) : ZMonomial m :=
+  { ZMonomial.varMon j with sign := true }
+
+/-- The denotation of `ZMonomial.negVarMon j` is `−ρ j`: it negates the magnitude of
+`ZMonomial.varMon j`, whose denotation is `ρ j`. -/
+theorem ZMonomial.negVarMon_eval {m : ℕ} (j : Fin m) (ρ : Fin m → ℕ) :
+    (ZMonomial.negVarMon j).eval ρ = -(ρ j : ℤ) := by
+  have h := ZMonomial.varMon_eval j ρ
+  rw [ZMonomial.eval, ZMonomial.negVarMon, ZMonomial.varMon]
+  rw [ZMonomial.eval, ZMonomial.varMon] at h
+  dsimp only at h ⊢
+  rw [if_neg Bool.false_ne_true, one_mul] at h
+  rw [if_pos rfl, neg_one_mul, h]
+
+/-- The product signed monomial `x_j · x_{j'}` for distinct slots `j ≠ j'`: trivial
+sign, unit coefficient, no exponential factor, and polynomial exponent the sum of the
+indicators of `j` and `j'` (so degree `1` at each distinct slot). Its denotation, for
+`j ≠ j'`, is `ρ j · ρ j'`. Used to build the multiplicative chain equation
+`y_{c,i} · x_c − y_{c,i+1}`. -/
+def ZMonomial.mulVarMon {m : ℕ} (j j' : Fin m) : ZMonomial m where
+  sign := false
+  coeff := Era.one
+  expCoeff := fun _ => .zero
+  polyExp := fun s => (if s = j then 1 else 0) + (if s = j' then 1 else 0)
+
+/-- For distinct slots `j ≠ j'`, the denotation of `ZMonomial.mulVarMon j j'` is the
+product `ρ j · ρ j'`: the polynomial product picks out exponent `1` at each of the two
+distinct slots and `0` elsewhere. -/
+theorem ZMonomial.mulVarMon_eval {m : ℕ} (j j' : Fin m) (h : j ≠ j') (ρ : Fin m → ℕ) :
+    (ZMonomial.mulVarMon j j').eval ρ = (ρ j : ℤ) * ρ j' := by
+  simp only [ZMonomial.eval, ZMonomial.mulVarMon, Era.one, Tm.eval, Bool.false_eq_true, if_false,
+    Nat.zero_mul, pow_zero, Finset.prod_const_one, one_mul]
+  push_cast
+  rw [← Finset.prod_subset (Finset.subset_univ ({j, j'} : Finset (Fin m)))
+    (fun i _ hi => ?_), Finset.prod_pair h]
+  · rw [if_pos rfl, if_neg h, if_pos rfl, if_neg (Ne.symm h)]
+    simp only [Nat.add_zero, Nat.zero_add, pow_one, one_mul]
+  · rw [Finset.mem_insert, Finset.mem_singleton] at hi
+    push_neg at hi
+    rw [if_neg hi.1, if_neg hi.2, Nat.add_zero, pow_zero]
+
+/-- The maximum cube-coordinate polynomial degree over a list of monomials: the
+maximum of `mon.polyExp (Fin.natAdd p c)` over all monomials `mon ∈ L` and all cube
+coordinates `c : Fin k`. This is the paper's `h`, the global chain length, computed by
+folding `max` over the list and over `List.finRange k`. -/
+def ZMonomial.maxCubeDegree {p k : ℕ} (L : List (ZMonomial (p + k))) : ℕ :=
+  List.foldr max 0
+    (L.map (fun mon =>
+      List.foldr max 0 ((List.finRange k).map (fun c => mon.polyExp (Fin.natAdd p c)))))
+
+/-- Every monomial in the list, at every cube coordinate, has polynomial degree at most
+`ZMonomial.maxCubeDegree L`: the bound is the outer fold's `max` over the list (via
+`List.le_max_of_le'` at the membership witness) of the inner fold's `max` over the cube
+coordinates (again via `List.le_max_of_le'`, with `c ∈ List.finRange k`). -/
+theorem ZMonomial.le_maxCubeDegree {p k : ℕ} (L : List (ZMonomial (p + k)))
+    (mon : ZMonomial (p + k)) (hmon : mon ∈ L) (c : Fin k) :
+    mon.polyExp (Fin.natAdd p c) ≤ ZMonomial.maxCubeDegree L := by
+  refine List.le_max_of_le' 0 (List.mem_map_of_mem hmon) ?_
+  exact List.le_max_of_le' 0 (List.mem_map_of_mem (List.mem_finRange c)) (le_refl _)
+
+/-- The left side `S_{c,i}` of the chain equation for cube coordinate `c` and chain
+level `i`, as a two-monomial signed difference over the enlarged scope. For `i = 0` it is
+`x_c − y_{c,1} = [varMon (cubeSlot c), negVarMon (chainSlot c 0)]`; for `i = j + 1` it is
+`y_{c,i} · x_c − y_{c,i+1} = [mulVarMon (chainSlot c j) (cubeSlot c), negVarMon (chainSlot
+c i)]`, where `chainSlot c j` (with `j = i − 1`) holds `x_c^i`. The chain equation asserts
+`S_{c,i}` evaluates to `0`. -/
+def chainEqList {p k d : ℕ} (c : Fin k) (i : Fin d) : List (ZMonomial (p + k + k * d)) :=
+  match h : i.val with
+  | 0 => [ZMonomial.varMon (cubeSlot c), ZMonomial.negVarMon (chainSlot c i)]
+  | j + 1 =>
+    [ZMonomial.mulVarMon (chainSlot c ⟨j, by omega⟩) (cubeSlot c),
+      ZMonomial.negVarMon (chainSlot c i)]
+
+/-- The full squared chain-equation block over the enlarged scope `Fin (p + k + k * d)`:
+for every cube coordinate `c : Fin k` and chain level `i : Fin d`, the literal square
+`listMul (chainEqList c i) (chainEqList c i)` of the chain-equation left side `S_{c,i}`,
+all concatenated. Each `S_{c,i}²` is a sum-of-squares atom that vanishes exactly when the
+chain equation holds. -/
+def chainEqs {p k d : ℕ} : List (ZMonomial (p + k + k * d)) :=
+  (List.finRange k).flatMap (fun c => (List.finRange d).flatMap (fun i =>
+    ZMonomial.listMul (chainEqList c i) (chainEqList c i)))
+
+/-- The single-variable monomial has per-slot polynomial degree at most `1`: its
+exponent vector is the indicator of one slot. -/
+theorem ZMonomial.varMon_polyExp_le_one {m : ℕ} (j : Fin m) (s : Fin m) :
+    (ZMonomial.varMon j).polyExp s ≤ 1 := by
+  simp only [ZMonomial.varMon]; split <;> omega
+
+/-- The negated single-variable monomial has per-slot polynomial degree at most `1`: it
+shares `ZMonomial.varMon`'s exponent vector. -/
+theorem ZMonomial.negVarMon_polyExp_le_one {m : ℕ} (j : Fin m) (s : Fin m) :
+    (ZMonomial.negVarMon j).polyExp s ≤ 1 := by
+  simp only [ZMonomial.negVarMon, ZMonomial.varMon]; split <;> omega
+
+/-- For distinct slots `j ≠ j'`, the product monomial has per-slot polynomial degree at
+most `1`: its exponent vector sets exactly the two distinct slots `j` and `j'` to `1`, so
+no single slot reaches `2`. -/
+theorem ZMonomial.mulVarMon_polyExp_le_one {m : ℕ} (j j' : Fin m) (h : j ≠ j') (s : Fin m) :
+    (ZMonomial.mulVarMon j j').polyExp s ≤ 1 := by
+  simp only [ZMonomial.mulVarMon]
+  by_cases hj : s = j
+  · rw [if_pos hj, if_neg (by rw [hj]; exact h)]
+  · rw [if_neg hj]; split <;> omega
+
+/-- Every monomial of `chainEqList c i` has per-slot polynomial degree at most `1`: the
+left side `S_{c,i}` is built from `varMon`/`negVarMon` (indicator exponents) and
+`mulVarMon` at the two distinct slots `chainSlot c (i-1)` and `cubeSlot c` (distinct by
+`cubeSlot_ne_chainSlot`). -/
+theorem chainEqList_polyExp_le_one {p k d : ℕ} (c : Fin k) (i : Fin d)
+    (mon : ZMonomial (p + k + k * d)) (hmon : mon ∈ chainEqList c i) (s : Fin (p + k + k * d)) :
+    mon.polyExp s ≤ 1 := by
+  unfold chainEqList at hmon
+  split at hmon
+  · simp only [List.mem_cons, List.not_mem_nil, or_false] at hmon
+    rcases hmon with rfl | rfl
+    · exact ZMonomial.varMon_polyExp_le_one _ s
+    · exact ZMonomial.negVarMon_polyExp_le_one _ s
+  · simp only [List.mem_cons, List.not_mem_nil, or_false] at hmon
+    rcases hmon with rfl | rfl
+    · exact ZMonomial.mulVarMon_polyExp_le_one _ _
+        (fun heq => cubeSlot_ne_chainSlot c c _ heq.symm) s
+    · exact ZMonomial.negVarMon_polyExp_le_one _ s
+
+/-- A monomial of `ZMonomial.listMul L₁ L₂` is a product `a.mul b` of a member `a ∈ L₁`
+and a member `b ∈ L₂`: the list is the `flatMap` of the pairwise products. -/
+theorem ZMonomial.mem_listMul {m : ℕ} {L₁ L₂ : List (ZMonomial m)} {mon : ZMonomial m}
+    (hmon : mon ∈ ZMonomial.listMul L₁ L₂) :
+    ∃ a ∈ L₁, ∃ b ∈ L₂, mon = a.mul b := by
+  unfold ZMonomial.listMul at hmon
+  rw [List.mem_flatMap] at hmon
+  obtain ⟨a, ha, hb⟩ := hmon
+  rw [List.mem_map] at hb
+  obtain ⟨b, hb, rfl⟩ := hb
+  exact ⟨a, ha, b, hb, rfl⟩
+
+/-- Every monomial of `chainEqs` has per-slot polynomial degree at most `2`: each
+monomial is a product `a.mul b` of two `chainEqList` monomials (via
+`ZMonomial.mem_listMul`), whose exponents sum (`ZMonomial.mul`) and are each at most `1`
+(`chainEqList_polyExp_le_one`). -/
+theorem chainEqs_degree {p k d : ℕ} (mon : ZMonomial (p + k + k * d))
+    (hmon : mon ∈ (chainEqs : List (ZMonomial (p + k + k * d)))) (s : Fin (p + k + k * d)) :
+    mon.polyExp s ≤ 2 := by
+  unfold chainEqs at hmon
+  rw [List.mem_flatMap] at hmon
+  obtain ⟨c, _, hmon⟩ := hmon
+  rw [List.mem_flatMap] at hmon
+  obtain ⟨i, _, hmon⟩ := hmon
+  obtain ⟨a, ha, b, hb, rfl⟩ := ZMonomial.mem_listMul hmon
+  simp only [ZMonomial.mul]
+  have hab := chainEqList_polyExp_le_one c i a ha s
+  have hbb := chainEqList_polyExp_le_one c i b hb s
+  omega
+
+/-- Lower each cube slot's polynomial degree to `0`, depositing the removed degree at the
+matching chain slot. The sign, coefficient, and exponential coefficients are unchanged.
+The polynomial exponent at slot `j` is: `0` at a cube slot `cubeSlot c`; at a chain slot
+`chainSlot c i` (recovered from the trailing block by `finProdFinEquiv.symm`) the original
+exponent plus `1` when `mon`'s cube degree at `c` is exactly `i + 1` (the level this chain
+slot represents); and the original exponent at a parameter slot. Equivalently, a cube
+degree `e + 1` deposits at chain level `e`. This realises the substitution
+`x_c^{i+1} ↦ y_{c,i+1}` of arXiv:2407.12928, Lemma 3.5. -/
+def chainSub {p k d : ℕ} (mon : ZMonomial (p + k + k * d)) : ZMonomial (p + k + k * d) where
+  sign := mon.sign
+  coeff := mon.coeff
+  expCoeff := mon.expCoeff
+  polyExp := fun j =>
+    Fin.addCases
+      (fun j₁ : Fin (p + k) => Fin.addCases (fun _ : Fin p => mon.polyExp j)
+        (fun _ : Fin k => 0) j₁)
+      (fun j₂ : Fin (k * d) =>
+        mon.polyExp j
+          + (if mon.polyExp (cubeSlot (finProdFinEquiv.symm j₂).1)
+              = (finProdFinEquiv.symm j₂).2.val + 1 then 1 else 0))
+      j
+
+/-- `chainSub` zeroes every cube slot: the cube branch of the classification returns
+`0`. -/
+theorem chainSub_polyExp_cubeSlot {p k d : ℕ} (mon : ZMonomial (p + k + k * d)) (c : Fin k) :
+    (chainSub mon).polyExp (cubeSlot c) = 0 := by
+  simp only [chainSub, cubeSlot, Fin.addCases_left, Fin.addCases_right]
+
+/-- `chainSub` at a chain slot `chainSlot c i` keeps the original exponent and deposits an
+extra `1` when `mon`'s cube degree at `c` equals `i + 1`. The chain branch recovers `(c,
+i)` from the trailing block by `finProdFinEquiv.symm (chainIdx c i) = (c, i)`. -/
+theorem chainSub_polyExp_chainSlot {p k d : ℕ} (mon : ZMonomial (p + k + k * d))
+    (c : Fin k) (i : Fin d) :
+    (chainSub mon).polyExp (chainSlot c i)
+      = mon.polyExp (chainSlot c i)
+        + (if mon.polyExp (cubeSlot c) = i.val + 1 then 1 else 0) := by
+  simp only [chainSub, chainSlot, Fin.addCases_right]
+  rw [show finProdFinEquiv.symm (chainIdx c i) = (c, i) from by
+    rw [chainIdx, Equiv.symm_apply_apply]]
+
+/-- `chainSub` preserves the per-slot degree bound `≤ 1` for a monomial whose chain
+slots all carry exponent `0` (the weakened monomials produced by `SosSystem.toZ` along
+`castAddEmb`). Cube slots become `0`; a chain slot's exponent is `0` (by the hypothesis)
+plus at most `1` (the deposit); a parameter slot is unchanged, hence `≤ 1` by the input
+bound. -/
+theorem chainSub_polyExp_le_one {p k d : ℕ} (mon : ZMonomial (p + k + k * d))
+    (hbound : ∀ j, mon.polyExp j ≤ 1)
+    (hchain : ∀ (c : Fin k) (i : Fin d), mon.polyExp (chainSlot c i) = 0)
+    (j : Fin (p + k + k * d)) :
+    (chainSub mon).polyExp j ≤ 1 := by
+  simp only [chainSub]
+  induction j using Fin.addCases with
+  | left j₁ =>
+    rw [Fin.addCases_left]
+    induction j₁ using Fin.addCases with
+    | left pp => rw [Fin.addCases_left]; exact hbound _
+    | right c => rw [Fin.addCases_right]; exact Nat.zero_le 1
+  | right j₂ =>
+    rw [Fin.addCases_right]
+    have hcj : mon.polyExp (Fin.natAdd (p + k) j₂)
+        = mon.polyExp (chainSlot (finProdFinEquiv.symm j₂).1 (finProdFinEquiv.symm j₂).2) := by
+      rw [chainSlot, chainIdx, Equiv.apply_symm_apply]
+    rw [hcj, hchain]
+    split <;> omega
+
+/-- The chain-substitution predicate on a context: each chain slot `y_{c,i+1}` holds the
+power `x_c^{i+1}` of its cube coordinate. This is the sub-domain on which `chainSub`
+preserves the monomial denotation (`chainSub_eval`). -/
+def ChainHolds {p k d : ℕ} (ρ : Fin (p + k + k * d) → ℕ) : Prop :=
+  ∀ (c : Fin k) (i : Fin d), ρ (chainSlot c i) = ρ (cubeSlot c) ^ (i.val + 1)
+
+/-- The per-cube reconciliation of the chain-substitution: under `ChainHolds`, the chain
+block's deposit product for a fixed cube coordinate `c` collapses to the cube power
+`(ρ (cubeSlot c)) ^ (mon.polyExp (cubeSlot c))`, provided the cube degree fits the chain
+length (`≤ d`). When the degree is `0` every deposit vanishes and the product is `1`; when
+it is `e + 1 ≤ d` the single chain slot at level `e` contributes
+`ρ (chainSlot c ⟨e, _⟩) = ρ (cubeSlot c) ^ (e + 1)`. -/
+theorem chainSub_cube_prod {p k d : ℕ} (mon : ZMonomial (p + k + k * d))
+    (ρ : Fin (p + k + k * d) → ℕ) (hchain : ChainHolds ρ) (c : Fin k)
+    (hdeg : mon.polyExp (cubeSlot c) ≤ d) :
+    (∏ i : Fin d, (ρ (chainSlot c i)) ^ (if mon.polyExp (cubeSlot c) = i.val + 1 then 1 else 0))
+      = (ρ (cubeSlot c)) ^ (mon.polyExp (cubeSlot c)) := by
+  rcases Nat.eq_zero_or_pos (mon.polyExp (cubeSlot c)) with h0 | hpos
+  · rw [h0, pow_zero]
+    apply Finset.prod_eq_one
+    intro i _
+    rw [if_neg (by omega), pow_zero]
+  · obtain ⟨e, he⟩ := Nat.exists_eq_succ_of_ne_zero (n := mon.polyExp (cubeSlot c)) (by omega)
+    have hed : e < d := by omega
+    rw [Finset.prod_eq_single (⟨e, hed⟩ : Fin d)]
+    · rw [if_pos (by rw [he]), pow_one, hchain c ⟨e, hed⟩]
+      congr 1
+      have hv : (⟨e, hed⟩ : Fin d).val = e := rfl
+      omega
+    · intro i _ hi
+      rw [if_neg ?_, pow_zero]
+      intro hc
+      apply hi
+      apply Fin.ext
+      have hv : (⟨e, hed⟩ : Fin d).val = e := rfl
+      omega
+    · intro hcon; exact absurd (Finset.mem_univ _) hcon
+
+/-- `chainSub` leaves the polynomial exponent of a parameter slot unchanged: the
+parameter branch of the classification returns `mon.polyExp` at the slot. -/
+theorem chainSub_polyExp_param {p k d : ℕ} (mon : ZMonomial (p + k + k * d)) (pp : Fin p) :
+    (chainSub mon).polyExp (Fin.castAdd (k * d) (Fin.castAdd k pp))
+      = mon.polyExp (Fin.castAdd (k * d) (Fin.castAdd k pp)) := by
+  simp only [chainSub, Fin.addCases_left]
+
+/-- The polynomial-factor product is invariant under `chainSub` on the `ChainHolds`
+sub-domain, when the cube degrees fit the chain length. Splitting the product over the
+parameter, cube, and chain blocks (`Fin.prod_univ_add`): parameter factors are unchanged;
+the cube block of `chainSub` is `1` while `mon`'s cube block is matched by `chainSub`'s
+chain-block deposits (reindexed by `finProdFinEquiv` and reconciled per cube by
+`chainSub_cube_prod`); `mon`'s chain block is `1` by `hweak`. -/
+theorem chainSub_polyProd {p k d : ℕ} (mon : ZMonomial (p + k + k * d))
+    (ρ : Fin (p + k + k * d) → ℕ) (hchain : ChainHolds ρ)
+    (hweak : ∀ (c : Fin k) (i : Fin d), mon.polyExp (chainSlot c i) = 0)
+    (hdeg : ∀ c : Fin k, mon.polyExp (cubeSlot c) ≤ d) :
+    (∏ j, (ρ j) ^ ((chainSub mon).polyExp j)) = ∏ j, (ρ j) ^ (mon.polyExp j) := by
+  rw [Fin.prod_univ_add (a := p + k) (b := k * d)
+        (fun j => (ρ j) ^ ((chainSub mon).polyExp j)),
+    Fin.prod_univ_add (a := p + k) (b := k * d) (fun j => (ρ j) ^ (mon.polyExp j)),
+    Fin.prod_univ_add (a := p) (b := k)
+        (fun j₁ => (ρ (Fin.castAdd (k * d) j₁)) ^
+          ((chainSub mon).polyExp (Fin.castAdd (k * d) j₁))),
+    Fin.prod_univ_add (a := p) (b := k)
+        (fun j₁ => (ρ (Fin.castAdd (k * d) j₁)) ^ (mon.polyExp (Fin.castAdd (k * d) j₁)))]
+  -- the parameter blocks coincide; rewrite the cube, chain (mon), and chain (chainSub) blocks
+  have hparam : (∏ pp : Fin p,
+        (ρ (Fin.castAdd (k * d) (Fin.castAdd k pp))) ^
+          ((chainSub mon).polyExp (Fin.castAdd (k * d) (Fin.castAdd k pp))))
+      = ∏ pp : Fin p,
+        (ρ (Fin.castAdd (k * d) (Fin.castAdd k pp))) ^
+          (mon.polyExp (Fin.castAdd (k * d) (Fin.castAdd k pp))) :=
+    Finset.prod_congr rfl (fun pp _ => by rw [chainSub_polyExp_param])
+  have hcubeSub : (∏ c : Fin k,
+        (ρ (Fin.castAdd (k * d) (Fin.natAdd p c))) ^
+          ((chainSub mon).polyExp (Fin.castAdd (k * d) (Fin.natAdd p c)))) = 1 := by
+    apply Finset.prod_eq_one
+    intro c _
+    rw [show Fin.castAdd (k * d) (Fin.natAdd p c) = cubeSlot c from rfl,
+      chainSub_polyExp_cubeSlot, pow_zero]
+  have hchainMon : (∏ j₂ : Fin (k * d),
+        (ρ (Fin.natAdd (p + k) j₂)) ^ (mon.polyExp (Fin.natAdd (p + k) j₂))) = 1 := by
+    apply Finset.prod_eq_one
+    intro j₂ _
+    rw [show Fin.natAdd (p + k) j₂
+          = chainSlot (finProdFinEquiv.symm j₂).1 (finProdFinEquiv.symm j₂).2 from by
+        rw [chainSlot, chainIdx, Equiv.apply_symm_apply], hweak, pow_zero]
+  rw [hparam, hcubeSub, hchainMon, mul_one, mul_one]
+  -- remaining: chainSub chain block = mon cube block (the common param block cancels)
+  congr 1
+  rw [show (∏ j₂ : Fin (k * d),
+        (ρ (Fin.natAdd (p + k) j₂)) ^ ((chainSub mon).polyExp (Fin.natAdd (p + k) j₂)))
+      = ∏ q : Fin k × Fin d,
+        (ρ (chainSlot q.1 q.2)) ^ (if mon.polyExp (cubeSlot q.1) = q.2.val + 1 then 1 else 0)
+        from by
+      rw [← Equiv.prod_comp finProdFinEquiv
+        (fun j₂ => (ρ (Fin.natAdd (p + k) j₂)) ^
+          ((chainSub mon).polyExp (Fin.natAdd (p + k) j₂)))]
+      apply Finset.prod_congr rfl
+      intro q _
+      rw [show (finProdFinEquiv q : Fin (k * d)) = chainIdx q.1 q.2 from rfl,
+        show Fin.natAdd (p + k) (chainIdx q.1 q.2) = chainSlot q.1 q.2 from rfl,
+        chainSub_polyExp_chainSlot, hweak, Nat.zero_add]]
+  rw [Fintype.prod_prod_type
+    (fun q : Fin k × Fin d =>
+      (ρ (chainSlot q.1 q.2)) ^ (if mon.polyExp (cubeSlot q.1) = q.2.val + 1 then 1 else 0))]
+  apply Finset.prod_congr rfl
+  intro c _
+  exact chainSub_cube_prod mon ρ hchain c (hdeg c)
+
+/-- `chainSub` preserves the monomial denotation on the `ChainHolds` sub-domain, when
+the cube degrees fit the chain length and the monomial's chain slots all carry exponent
+`0`. The sign, coefficient, and exponential-coefficient factors are identical to those of
+`mon`; the polynomial-factor products agree by `chainSub_polyProd`, which moves each cube
+power to its matching chain slot using `ChainHolds`. This is the substitution correctness
+of arXiv:2407.12928, Lemma 3.5. The `hdeg` hypothesis (cube degree at most the chain
+length `d`) is met downstream by choosing `d ≥ ZMonomial.maxCubeDegree`. -/
+theorem chainSub_eval {p k d : ℕ} (mon : ZMonomial (p + k + k * d))
+    (ρ : Fin (p + k + k * d) → ℕ) (hchain : ChainHolds ρ)
+    (hweak : ∀ (c : Fin k) (i : Fin d), mon.polyExp (chainSlot c i) = 0)
+    (hdeg : ∀ c : Fin k, mon.polyExp (cubeSlot c) ≤ d) :
+    (chainSub mon).eval ρ = mon.eval ρ := by
+  unfold ZMonomial.eval
+  congr 2
+  exact congrArg Int.ofNat (chainSub_polyProd mon ρ hchain hweak hdeg)
 
 end GebLean
