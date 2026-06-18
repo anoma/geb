@@ -2945,4 +2945,539 @@ theorem sepReduce_unique {p k : ℕ} (s : SosSystem (p + k))
       rw [chainIdx, Equiv.apply_symm_apply]] at hkey
     exact hkey
 
+/-- Re-associate `Fin (p + k + f)` to `Fin (p + (k + f))`, grouping the original
+cube block `Fin k` and the chain block `Fin f` into one cube of width `k + f`.
+This matches the `k + f` non-parameter coordinates over which Corollary 3.6 of
+arXiv:2407.12928 factors: the `k` original cube coordinates together with the
+`f = k · d` chain coordinates of the Lemma 3.5 reduction. The re-association is
+the bijection `finCongr (Nat.add_assoc p k f)`, so `cubeRegroup` is
+value-faithful. -/
+def ZMonomial.cubeRegroup {p k f : ℕ} (mon : ZMonomial (p + k + f)) :
+    ZMonomial (p + (k + f)) :=
+  mon.weaken (finCongr (Nat.add_assoc p k f))
+
+/-- The regrouped monomial denotes faithfully: its `evalNat` at `ρ'` equals the
+original's `evalNat` at `ρ' ∘ finCongr (Nat.add_assoc p k f)`. Because the
+re-association is a bijection (`finCongr _`), the `ℤ`-valued `eval` agrees too,
+by `ZMonomial.weaken_eval`. -/
+theorem ZMonomial.cubeRegroup_eval {p k f : ℕ} (mon : ZMonomial (p + k + f))
+    (ρ' : Fin (p + (k + f)) → ℕ) :
+    mon.cubeRegroup.eval ρ' = mon.eval (ρ' ∘ finCongr (Nat.add_assoc p k f)) :=
+  ZMonomial.weaken_eval mon (finCongr (Nat.add_assoc p k f)) (finCongr _).injective ρ'
+
+/-- An `ETm` over `Fin n` is constant outside the image of `emb : Fin p → Fin n`
+when its `eraInterp`-denotation depends only on the slots in that image: any two
+contexts agreeing on `emb`'s image give the same value. The parameter block is the
+image of `emb`; the coefficient and exponential-coefficient terms of every reduced
+monomial of arXiv:2407.12928, Corollary 3.6 are constant outside the parameter
+block, which discharges `eraMonoCubeSum`'s separability hypotheses. The predicate
+is scope-agnostic, so it transports across the `Fin.castAdd`/`finCongr`
+re-indexings of the reduction. -/
+def ETm.ConstOnImage {p n : ℕ} (e : ETm n) (emb : Fin p → Fin n) : Prop :=
+  ∀ ρ ρ' : Fin n → ℕ, (∀ i, ρ (emb i) = ρ' (emb i)) →
+    Tm.eval eraInterp e ρ = Tm.eval eraInterp e ρ'
+
+/-- The constant `Tm.zero` depends on no slot, so it is constant outside any
+parameter block. -/
+theorem ETm.zero_constOnImage {p n : ℕ} (emb : Fin p → Fin n) :
+    ETm.ConstOnImage (Tm.zero : ETm n) emb :=
+  fun _ _ _ => rfl
+
+/-- The constant `Era.one` depends on no slot, so it is constant outside any
+parameter block. -/
+theorem ETm.one_constOnImage {p n : ℕ} (emb : Fin p → Fin n) :
+    ETm.ConstOnImage (Era.one : ETm n) emb :=
+  fun _ _ _ => rfl
+
+/-- A variable lying in the parameter block is constant outside it: its value is
+read off the agreeing slot. -/
+theorem ETm.var_constOnImage {p n : ℕ} (emb : Fin p → Fin n) (i : Fin p) :
+    ETm.ConstOnImage (Tm.var (emb i) : ETm n) emb := by
+  intro ρ ρ' hag
+  simp only [Tm.eval]
+  exact hag i
+
+/-- Constant-outside-the-block is closed under the term product `*ᵉ`. -/
+theorem ETm.mul_constOnImage {p n : ℕ} {e₁ e₂ : ETm n} {emb : Fin p → Fin n}
+    (h₁ : ETm.ConstOnImage e₁ emb) (h₂ : ETm.ConstOnImage e₂ emb) :
+    ETm.ConstOnImage (e₁ *ᵉ e₂) emb := by
+  intro ρ ρ' hag
+  rw [emul_eval, emul_eval, h₁ ρ ρ' hag, h₂ ρ ρ' hag]
+
+/-- Constant-outside-the-block is closed under the term sum `+ᵉ`. -/
+theorem ETm.add_constOnImage {p n : ℕ} {e₁ e₂ : ETm n} {emb : Fin p → Fin n}
+    (h₁ : ETm.ConstOnImage e₁ emb) (h₂ : ETm.ConstOnImage e₂ emb) :
+    ETm.ConstOnImage (e₁ +ᵉ e₂) emb := by
+  intro ρ ρ' hag
+  rw [eadd_eval, eadd_eval, h₁ ρ ρ' hag, h₂ ρ ρ' hag]
+
+/-- Constant-outside-the-block transports along any re-indexing. If `e` is
+constant outside the block `emb` and the re-indexing `g` sends the block `emb`
+onto `emb'` (`g (emb i) = emb' i`), then `e.weaken g` is constant outside `emb'`: by
+`Tm.eval_weaken`, evaluating `e.weaken g` at `ρ` is `e` at `ρ ∘ g`, and the
+agreement of `ρ`, `ρ'` on `emb'` lifts to agreement of `ρ ∘ g`, `ρ' ∘ g` on
+`emb`. -/
+theorem ETm.constOnImage_weaken {p n n' : ℕ} {e : ETm n} {emb : Fin p → Fin n}
+    (he : ETm.ConstOnImage e emb) (g : Fin n → Fin n') (emb' : Fin p → Fin n')
+    (hg : ∀ i, g (emb i) = emb' i) :
+    ETm.ConstOnImage (e.weaken g) emb' := by
+  intro ρ ρ' hag
+  rw [Tm.eval_weaken, Tm.eval_weaken]
+  refine he (ρ ∘ g) (ρ' ∘ g) (fun i => ?_)
+  simp only [Function.comp_apply, hg i]
+  exact hag i
+
+/-- The cube-degree-extraction residual is constant outside the parameter block:
+under the coefficient grammar, `ETm.extractCubeDegree` removes every
+cube-coordinate variable (replacing it by `Era.one`) and keeps only parameter
+variables, so the residual coefficient depends only on the parameter slots. By
+induction over the `IsVarProduct` grammar, using the `Era.one`,
+parameter-variable, and product closure lemmas with `emb = Fin.castAdd k`. -/
+theorem ETm.extractCubeDegree_fst_constOnImage {p k : ℕ} (e : ETm (p + k))
+    (he : ETm.IsVarProduct e) :
+    ETm.ConstOnImage (ETm.extractCubeDegree e).1 (Fin.castAdd k) := by
+  induction he with
+  | one => exact ETm.one_constOnImage _
+  | var j =>
+    induction j using Fin.addCases with
+    | left i =>
+      simp only [ETm.extractCubeDegree, Fin.addCases_left]
+      exact ETm.var_constOnImage (Fin.castAdd k) i
+    | right c =>
+      simp only [ETm.extractCubeDegree, Fin.addCases_right]
+      exact ETm.one_constOnImage _
+  | @mul ea eb _ _ iha ihb =>
+    have hred : (ETm.extractCubeDegree (ea *ᵉ eb)).1
+        = (ETm.extractCubeDegree ea).1 *ᵉ (ETm.extractCubeDegree eb).1 := rfl
+    rw [hred]
+    exact ETm.mul_constOnImage iha ihb
+
+/-- The reduced-monomial conclusion follows from constant-outside-the-block. If
+`e : ETm (p + (k + f))` is constant outside the parameter block `Fin.castAdd (k +
+f)`, then its denotation at an appended context `Fin.append ctx a` is independent
+of the trailing block `a`, the form `eraMonoCubeSum`'s separability hypotheses
+consume. The two appended contexts agree on the parameter block (`Fin.append_left`
+reads `ctx i`). -/
+theorem ETm.constOnImage_append_const {p k f : ℕ} {e : ETm (p + (k + f))}
+    (he : ETm.ConstOnImage e (Fin.castAdd (k + f))) (ctx : Fin p → ℕ)
+    (a a' : Fin (k + f) → ℕ) :
+    Tm.eval eraInterp e (Fin.append ctx a) = Tm.eval eraInterp e (Fin.append ctx a') :=
+  he (Fin.append ctx a) (Fin.append ctx a') (fun i => by
+    simp only [Fin.append_left])
+
+/-- The successor of a constant-outside-the-block term is constant outside the
+block: `Tm.eval` of `.succ e` is `Tm.eval e + 1`. -/
+theorem ETm.succ_constOnImage {p n : ℕ} {e : ETm n} {emb : Fin p → Fin n}
+    (he : ETm.ConstOnImage e emb) : ETm.ConstOnImage (Tm.succ e) emb := by
+  intro ρ ρ' hag
+  simp only [Tm.eval, he ρ ρ' hag]
+
+/-- The lift `SimpleMonomial.toZ` has a coefficient constant outside the parameter
+block when the source coefficient lies in the grammar: the lift's coefficient is
+the cube-degree-extraction residual `(extractCubeDegree mon.coeff).1`, which
+`ETm.extractCubeDegree_fst_constOnImage` shows is constant outside the parameter
+block. -/
+theorem SimpleMonomial.toZ_coeff_constOnImage {p k : ℕ} (mon : SimpleMonomial (p + k))
+    (hcoeff : mon.CoeffVarProduct) :
+    ETm.ConstOnImage mon.toZ.coeff (Fin.castAdd k) :=
+  ETm.extractCubeDegree_fst_constOnImage mon.coeff hcoeff
+
+/-- Every monomial of `SimpleSum.toZ` has a coefficient constant outside the
+parameter block when the source sum lies in the grammar: each lifted monomial is
+`SimpleMonomial.toZ` of a source monomial, handled by
+`SimpleMonomial.toZ_coeff_constOnImage`. -/
+theorem SimpleSum.toZ_coeff_constOnImage {p k : ℕ} (s : SimpleSum (p + k))
+    (hcoeff : s.CoeffVarProduct) :
+    ∀ mon ∈ s.toZ, ETm.ConstOnImage mon.coeff (Fin.castAdd k) := by
+  intro mon hmon
+  rw [SimpleSum.toZ, List.mem_map] at hmon
+  obtain ⟨mon₀, hmon₀, rfl⟩ := hmon
+  exact SimpleMonomial.toZ_coeff_constOnImage mon₀ (hcoeff mon₀ hmon₀)
+
+/-- The coefficient-constant property is preserved by the pairwise product list
+`ZMonomial.listMul`: each product monomial's coefficient is the product of the two
+factors' (by `ZMonomial.mul`), both constant outside the parameter block by the
+factor lists' properties. -/
+theorem ZMonomial.listMul_coeff_constOnImage {p k : ℕ}
+    (L₁ L₂ : List (ZMonomial (p + k)))
+    (h₁ : ∀ mon ∈ L₁, ETm.ConstOnImage mon.coeff (Fin.castAdd k))
+    (h₂ : ∀ mon ∈ L₂, ETm.ConstOnImage mon.coeff (Fin.castAdd k)) :
+    ∀ mon ∈ ZMonomial.listMul L₁ L₂, ETm.ConstOnImage mon.coeff (Fin.castAdd k) := by
+  intro mon hmon
+  obtain ⟨a, ha, b, hb, rfl⟩ := ZMonomial.mem_listMul hmon
+  exact ETm.mul_constOnImage (h₁ a ha) (h₂ b hb)
+
+/-- The coefficient-constant property is preserved by `ZMonomial.negDouble`: the
+coefficient is multiplied by the closed constant `2 = Era.one.succ`, which is
+constant outside any block. -/
+theorem ZMonomial.map_negDouble_coeff_constOnImage {p k : ℕ}
+    (L : List (ZMonomial (p + k)))
+    (h : ∀ mon ∈ L, ETm.ConstOnImage mon.coeff (Fin.castAdd k)) :
+    ∀ mon ∈ L.map ZMonomial.negDouble, ETm.ConstOnImage mon.coeff (Fin.castAdd k) := by
+  intro mon hmon
+  rw [List.mem_map] at hmon
+  obtain ⟨a, ha, rfl⟩ := hmon
+  exact ETm.mul_constOnImage (h a ha) (ETm.succ_constOnImage (ETm.one_constOnImage _))
+
+mutual
+/-- Every monomial of `SosTerm.toZ` has a coefficient constant outside the
+parameter block when the source atom lies in the grammar: the `sqDist` blocks are
+`listMul` products and `negDouble` images of `SimpleSum.toZ` lifts, the `prod`
+block a `listMul` of sub-system lifts, all handled by the corresponding
+coefficient-constant preservation lemmas. -/
+theorem SosTerm.toZ_coeff_constOnImage {p k : ℕ} (a : SosTerm (p + k))
+    (hcoeff : a.CoeffVarProduct) :
+    ∀ mon ∈ a.toZ, ETm.ConstOnImage mon.coeff (Fin.castAdd k) := by
+  match a with
+  | .sqDist P Q =>
+    obtain ⟨hP, hQ⟩ := hcoeff
+    rw [SosTerm.toZ]
+    intro mon hmon
+    rw [List.mem_append, List.mem_append] at hmon
+    rcases hmon with (hm | hm) | hm
+    · exact ZMonomial.listMul_coeff_constOnImage _ _
+        (SimpleSum.toZ_coeff_constOnImage P hP) (SimpleSum.toZ_coeff_constOnImage P hP) mon hm
+    · exact ZMonomial.listMul_coeff_constOnImage _ _
+        (SimpleSum.toZ_coeff_constOnImage Q hQ) (SimpleSum.toZ_coeff_constOnImage Q hQ) mon hm
+    · exact ZMonomial.map_negDouble_coeff_constOnImage _
+        (ZMonomial.listMul_coeff_constOnImage _ _
+          (SimpleSum.toZ_coeff_constOnImage P hP) (SimpleSum.toZ_coeff_constOnImage Q hQ)) mon hm
+  | .prod s t =>
+    obtain ⟨hs, ht⟩ := hcoeff
+    rw [SosTerm.toZ]
+    exact ZMonomial.listMul_coeff_constOnImage _ _
+      (SosSystem.toZ_coeff_constOnImage s hs) (SosSystem.toZ_coeff_constOnImage t ht)
+--
+/-- Every monomial of `SosSystem.toZ` has a coefficient constant outside the
+parameter block when the source system lies in the grammar: each atom's lift is
+concatenated, handled atom-wise by `SosTerm.toZ_coeff_constOnImage`. -/
+theorem SosSystem.toZ_coeff_constOnImage {p k : ℕ} (s : SosSystem (p + k))
+    (hcoeff : s.CoeffVarProduct) :
+    ∀ mon ∈ s.toZ, ETm.ConstOnImage mon.coeff (Fin.castAdd k) := by
+  match s with
+  | [] => intro mon hmon; rw [SosSystem.toZ] at hmon; simp at hmon
+  | a :: rest =>
+    obtain ⟨ha, hrest⟩ := hcoeff
+    rw [SosSystem.toZ]
+    intro mon hmon
+    rw [List.mem_append] at hmon
+    rcases hmon with hm | hm
+    · exact SosTerm.toZ_coeff_constOnImage a ha mon hm
+    · exact SosSystem.toZ_coeff_constOnImage rest hrest mon hm
+end
+
+/-- The lift `SimpleMonomial.toZ` has every exponential coefficient constant
+outside the parameter block when the source is base-paired: the lift carries each
+`expCoeff i` over verbatim, and base-pairedness makes it the closed constant
+`.zero` or `Era.one`, both constant outside any block. -/
+theorem SimpleMonomial.toZ_expCoeff_constOnImage {p k : ℕ} (mon : SimpleMonomial (p + k))
+    (hbase : mon.BasePaired) (j : Fin (p + k)) :
+    ETm.ConstOnImage (mon.toZ.expCoeff j) (Fin.castAdd k) := by
+  simp only [SimpleMonomial.toZ]
+  rcases hbase j with ⟨_, hc⟩ | ⟨_, hc⟩
+  · rw [hc]; exact ETm.zero_constOnImage _
+  · rw [hc]; exact ETm.one_constOnImage _
+
+/-- Every monomial of `SimpleSum.toZ` has every exponential coefficient constant
+outside the parameter block when the source sum is base-paired: each lifted
+monomial is `SimpleMonomial.toZ` of a source monomial, handled by
+`SimpleMonomial.toZ_expCoeff_constOnImage`. -/
+theorem SimpleSum.toZ_expCoeff_constOnImage {p k : ℕ} (s : SimpleSum (p + k))
+    (hbase : s.BasePaired) :
+    ∀ mon ∈ s.toZ, ∀ j, ETm.ConstOnImage (mon.expCoeff j) (Fin.castAdd k) := by
+  intro mon hmon j
+  rw [SimpleSum.toZ, List.mem_map] at hmon
+  obtain ⟨mon₀, hmon₀, rfl⟩ := hmon
+  exact SimpleMonomial.toZ_expCoeff_constOnImage mon₀ (hbase mon₀ hmon₀) j
+
+/-- The exponential-coefficient-constant property is preserved by the pairwise
+product list `ZMonomial.listMul`: each product monomial's exponential coefficient
+at a slot is the sum of the two factors' (by `ZMonomial.mul`), both constant
+outside the parameter block by the factor lists' properties. -/
+theorem ZMonomial.listMul_expCoeff_constOnImage {p k : ℕ}
+    (L₁ L₂ : List (ZMonomial (p + k)))
+    (h₁ : ∀ mon ∈ L₁, ∀ j, ETm.ConstOnImage (mon.expCoeff j) (Fin.castAdd k))
+    (h₂ : ∀ mon ∈ L₂, ∀ j, ETm.ConstOnImage (mon.expCoeff j) (Fin.castAdd k)) :
+    ∀ mon ∈ ZMonomial.listMul L₁ L₂, ∀ j,
+      ETm.ConstOnImage (mon.expCoeff j) (Fin.castAdd k) := by
+  intro mon hmon j
+  obtain ⟨a, ha, b, hb, rfl⟩ := ZMonomial.mem_listMul hmon
+  exact ETm.add_constOnImage (h₁ a ha j) (h₂ b hb j)
+
+/-- The exponential-coefficient-constant property is preserved by
+`ZMonomial.negDouble`: the exponential coefficients are carried over unchanged. -/
+theorem ZMonomial.map_negDouble_expCoeff_constOnImage {p k : ℕ}
+    (L : List (ZMonomial (p + k)))
+    (h : ∀ mon ∈ L, ∀ j, ETm.ConstOnImage (mon.expCoeff j) (Fin.castAdd k)) :
+    ∀ mon ∈ L.map ZMonomial.negDouble, ∀ j,
+      ETm.ConstOnImage (mon.expCoeff j) (Fin.castAdd k) := by
+  intro mon hmon j
+  rw [List.mem_map] at hmon
+  obtain ⟨a, ha, rfl⟩ := hmon
+  exact h a ha j
+
+mutual
+/-- Every monomial of `SosTerm.toZ` has every exponential coefficient constant
+outside the parameter block when the source atom is base-paired, by the same case
+analysis as `SosTerm.toZ_coeff_constOnImage`. -/
+theorem SosTerm.toZ_expCoeff_constOnImage {p k : ℕ} (a : SosTerm (p + k))
+    (hbase : a.BasePaired) :
+    ∀ mon ∈ a.toZ, ∀ j, ETm.ConstOnImage (mon.expCoeff j) (Fin.castAdd k) := by
+  match a with
+  | .sqDist P Q =>
+    obtain ⟨hP, hQ⟩ := hbase
+    rw [SosTerm.toZ]
+    intro mon hmon j
+    rw [List.mem_append, List.mem_append] at hmon
+    rcases hmon with (hm | hm) | hm
+    · exact ZMonomial.listMul_expCoeff_constOnImage _ _
+        (SimpleSum.toZ_expCoeff_constOnImage P hP) (SimpleSum.toZ_expCoeff_constOnImage P hP)
+        mon hm j
+    · exact ZMonomial.listMul_expCoeff_constOnImage _ _
+        (SimpleSum.toZ_expCoeff_constOnImage Q hQ) (SimpleSum.toZ_expCoeff_constOnImage Q hQ)
+        mon hm j
+    · exact ZMonomial.map_negDouble_expCoeff_constOnImage _
+        (ZMonomial.listMul_expCoeff_constOnImage _ _
+          (SimpleSum.toZ_expCoeff_constOnImage P hP) (SimpleSum.toZ_expCoeff_constOnImage Q hQ))
+        mon hm j
+  | .prod s t =>
+    obtain ⟨hs, ht⟩ := hbase
+    rw [SosTerm.toZ]
+    exact ZMonomial.listMul_expCoeff_constOnImage _ _
+      (SosSystem.toZ_expCoeff_constOnImage s hs) (SosSystem.toZ_expCoeff_constOnImage t ht)
+--
+/-- Every monomial of `SosSystem.toZ` has every exponential coefficient constant
+outside the parameter block when the source system is base-paired, handled
+atom-wise by `SosTerm.toZ_expCoeff_constOnImage`. -/
+theorem SosSystem.toZ_expCoeff_constOnImage {p k : ℕ} (s : SosSystem (p + k))
+    (hbase : s.BasePaired) :
+    ∀ mon ∈ s.toZ, ∀ j, ETm.ConstOnImage (mon.expCoeff j) (Fin.castAdd k) := by
+  match s with
+  | [] => intro mon hmon; rw [SosSystem.toZ] at hmon; simp at hmon
+  | a :: rest =>
+    obtain ⟨ha, hrest⟩ := hbase
+    rw [SosSystem.toZ]
+    intro mon hmon j
+    rw [List.mem_append] at hmon
+    rcases hmon with hm | hm
+    · exact SosTerm.toZ_expCoeff_constOnImage a ha mon hm j
+    · exact SosSystem.toZ_expCoeff_constOnImage rest hrest mon hm j
+end
+
+/-- The native parameter block of the enlarged scope `Fin (p + k + k * d)`: the
+composite `Fin.castAdd (k * d) ∘ Fin.castAdd k` embedding the `p` parameter slots
+past the cube and chain blocks. -/
+def paramEmb {p k d : ℕ} : Fin p → Fin (p + k + k * d) :=
+  (Fin.castAdd (k * d)) ∘ (Fin.castAdd k)
+
+/-- `chainSub` of a weakened source monomial has coefficient constant outside the
+native parameter block, when the source monomial's coefficient is: `chainSub`
+preserves the coefficient and `ZMonomial.weaken` re-indexes it by
+`Fin.castAdd (k * d)`, which sends the `Fin.castAdd k` block to the `paramEmb`
+block, so `ETm.constOnImage_weaken` transports the source's property. -/
+theorem chainSub_weaken_coeff_constOnImage {p k d : ℕ} (mon₀ : ZMonomial (p + k))
+    (h : ETm.ConstOnImage mon₀.coeff (Fin.castAdd k)) :
+    ETm.ConstOnImage (chainSub (mon₀.weaken (Fin.castAdd (k * d)))).coeff (paramEmb (d := d)) :=
+  ETm.constOnImage_weaken h (Fin.castAdd (k * d)) paramEmb (fun _ => rfl)
+
+/-- `chainSub` of a weakened source monomial has every exponential coefficient
+constant outside the native parameter block, when the source monomial's
+exponential coefficients are. `chainSub` preserves the exponential coefficients;
+`ZMonomial.weaken` reads slot `j` off its `preimage` under `Fin.castAdd (k * d)`,
+yielding either a weakening of a source exponential coefficient (transported by
+`ETm.constOnImage_weaken`, the `Fin.castAdd k` block landing in `paramEmb`) or the
+closed constant `.zero`. -/
+theorem chainSub_weaken_expCoeff_constOnImage {p k d : ℕ} (mon₀ : ZMonomial (p + k))
+    (h : ∀ i, ETm.ConstOnImage (mon₀.expCoeff i) (Fin.castAdd k)) (j : Fin (p + k + k * d)) :
+    ETm.ConstOnImage ((chainSub (mon₀.weaken (Fin.castAdd (k * d)))).expCoeff j)
+      (paramEmb (d := d)) := by
+  simp only [chainSub, ZMonomial.weaken]
+  cases hp : preimage (Fin.castAdd (k * d) : Fin (p + k) → Fin (p + k + k * d)) j with
+  | none => exact ETm.zero_constOnImage _
+  | some i =>
+    exact ETm.constOnImage_weaken (h i) (Fin.castAdd (k * d)) paramEmb (fun _ => rfl)
+
+/-- The substituted-predicate block `Psub` of the reduction (the
+`chainSub`-images of the `Fin.castAdd (k * d)`-weakenings of `SosSystem.toZ s`) has
+every monomial's coefficient constant outside the native parameter block, under
+the coefficient grammar: each member is `chainSub` of a weakened source monomial,
+whose coefficient property comes from `SosSystem.toZ_coeff_constOnImage` via
+`chainSub_weaken_coeff_constOnImage`. -/
+theorem sepReduce_psub_coeff_constOnImage {p k : ℕ} (s : SosSystem (p + k))
+    (hcoeff : s.CoeffVarProduct)
+    (mon : ZMonomial (p + k + k * max 1 (ZMonomial.maxCubeDegree (SosSystem.toZ s))))
+    (hmem : mon ∈ (((SosSystem.toZ s).map
+        (fun m => m.weaken (Fin.castAdd
+          (k * max 1 (ZMonomial.maxCubeDegree (SosSystem.toZ s)))))).map chainSub)) :
+    ETm.ConstOnImage mon.coeff (paramEmb) := by
+  rw [List.map_map, List.mem_map] at hmem
+  obtain ⟨mon₀, hmon₀, rfl⟩ := hmem
+  simp only [Function.comp_apply]
+  exact chainSub_weaken_coeff_constOnImage mon₀
+    (SosSystem.toZ_coeff_constOnImage s hcoeff mon₀ hmon₀)
+
+/-- The substituted-predicate block `Psub` of the reduction has every monomial's
+exponential coefficients constant outside the native parameter block, under the
+base-paired predicate: each member is `chainSub` of a weakened source monomial,
+whose exponential-coefficient property comes from
+`SosSystem.toZ_expCoeff_constOnImage` via
+`chainSub_weaken_expCoeff_constOnImage`. -/
+theorem sepReduce_psub_expCoeff_constOnImage {p k : ℕ} (s : SosSystem (p + k))
+    (hbase : s.BasePaired)
+    (mon : ZMonomial (p + k + k * max 1 (ZMonomial.maxCubeDegree (SosSystem.toZ s))))
+    (hmem : mon ∈ (((SosSystem.toZ s).map
+        (fun m => m.weaken (Fin.castAdd
+          (k * max 1 (ZMonomial.maxCubeDegree (SosSystem.toZ s)))))).map chainSub))
+    (j : Fin (p + k + k * max 1 (ZMonomial.maxCubeDegree (SosSystem.toZ s)))) :
+    ETm.ConstOnImage (mon.expCoeff j) (paramEmb) := by
+  rw [List.map_map, List.mem_map] at hmem
+  obtain ⟨mon₀, hmon₀, rfl⟩ := hmem
+  simp only [Function.comp_apply]
+  exact chainSub_weaken_expCoeff_constOnImage mon₀
+    (SosSystem.toZ_expCoeff_constOnImage s hbase mon₀ hmon₀) j
+
+/-- Every monomial of `chainEqList c i` has a constant coefficient: each of the
+two atoms (`varMon`, `negVarMon`, `mulVarMon`) has coefficient `Era.one`, which is
+constant outside any block. -/
+theorem chainEqList_coeff_constOnImage {p k d : ℕ} (c : Fin k) (i : Fin d)
+    (mon : ZMonomial (p + k + k * d)) (hmon : mon ∈ chainEqList c i)
+    (emb : Fin p → Fin (p + k + k * d)) :
+    ETm.ConstOnImage mon.coeff emb := by
+  unfold chainEqList at hmon
+  split at hmon <;>
+    · simp only [List.mem_cons, List.not_mem_nil, or_false] at hmon
+      rcases hmon with rfl | rfl <;>
+        exact ETm.one_constOnImage emb
+
+/-- Every monomial of `chainEqList c i` has every exponential coefficient
+constant: each atom's exponential coefficients are all `.zero`, constant outside
+any block. -/
+theorem chainEqList_expCoeff_constOnImage {p k d : ℕ} (c : Fin k) (i : Fin d)
+    (mon : ZMonomial (p + k + k * d)) (hmon : mon ∈ chainEqList c i)
+    (emb : Fin p → Fin (p + k + k * d)) (j : Fin (p + k + k * d)) :
+    ETm.ConstOnImage (mon.expCoeff j) emb := by
+  unfold chainEqList at hmon
+  split at hmon <;>
+    · simp only [List.mem_cons, List.not_mem_nil, or_false] at hmon
+      rcases hmon with rfl | rfl <;>
+        exact ETm.zero_constOnImage emb
+
+/-- Every monomial of `chainEqs` has a constant coefficient: each is a product of
+two `chainEqList` monomials (via `ZMonomial.mem_listMul`), whose coefficients are
+constant (`chainEqList_coeff_constOnImage`) and multiply by `ETm.mul_constOnImage`. -/
+theorem chainEqs_coeff_constOnImage {p k d : ℕ} (mon : ZMonomial (p + k + k * d))
+    (hmon : mon ∈ (chainEqs : List (ZMonomial (p + k + k * d))))
+    (emb : Fin p → Fin (p + k + k * d)) :
+    ETm.ConstOnImage mon.coeff emb := by
+  unfold chainEqs at hmon
+  rw [List.mem_flatMap] at hmon
+  obtain ⟨c, _, hmon⟩ := hmon
+  rw [List.mem_flatMap] at hmon
+  obtain ⟨i, _, hmon⟩ := hmon
+  obtain ⟨a, ha, b, hb, rfl⟩ := ZMonomial.mem_listMul hmon
+  exact ETm.mul_constOnImage (chainEqList_coeff_constOnImage c i a ha emb)
+    (chainEqList_coeff_constOnImage c i b hb emb)
+
+/-- Every monomial of `chainEqs` has every exponential coefficient constant: each
+is a product of two `chainEqList` monomials, whose exponential coefficients are
+constant (`chainEqList_expCoeff_constOnImage`) and add by `ETm.add_constOnImage`. -/
+theorem chainEqs_expCoeff_constOnImage {p k d : ℕ} (mon : ZMonomial (p + k + k * d))
+    (hmon : mon ∈ (chainEqs : List (ZMonomial (p + k + k * d))))
+    (emb : Fin p → Fin (p + k + k * d)) (j : Fin (p + k + k * d)) :
+    ETm.ConstOnImage (mon.expCoeff j) emb := by
+  unfold chainEqs at hmon
+  rw [List.mem_flatMap] at hmon
+  obtain ⟨c, _, hmon⟩ := hmon
+  rw [List.mem_flatMap] at hmon
+  obtain ⟨i, _, hmon⟩ := hmon
+  obtain ⟨a, ha, b, hb, rfl⟩ := ZMonomial.mem_listMul hmon
+  exact ETm.add_constOnImage (chainEqList_expCoeff_constOnImage c i a ha emb j)
+    (chainEqList_expCoeff_constOnImage c i b hb emb j)
+
+/-- Every monomial of the reduced system `(sepReduce s).2` has a coefficient
+constant outside the native parameter block, under the coefficient grammar. The
+`chainEqs` block is handled by `chainEqs_coeff_constOnImage`; the squared-predicate
+block `listMul Psub Psub` factors each monomial into a product of two `Psub`
+coefficients (`sepReduce_psub_coeff_constOnImage`) by `ETm.mul_constOnImage`. This
+is the parameter-onlyness of arXiv:2407.12928, Corollary 3.6 at the native scope. -/
+theorem sepReduce_coeff_constOnImage {p k : ℕ} (s : SosSystem (p + k))
+    (hcoeff : s.CoeffVarProduct) (mon : ZMonomial (p + k + (sepReduce s).1))
+    (hmem : mon ∈ (sepReduce s).2) :
+    ETm.ConstOnImage mon.coeff (paramEmb) := by
+  simp only [sepReduce] at hmem ⊢
+  rcases List.mem_append.mp hmem with hm | hm
+  · exact chainEqs_coeff_constOnImage mon hm paramEmb
+  · obtain ⟨a, ha, b, hb, rfl⟩ := ZMonomial.mem_listMul hm
+    exact ETm.mul_constOnImage (sepReduce_psub_coeff_constOnImage s hcoeff a ha)
+      (sepReduce_psub_coeff_constOnImage s hcoeff b hb)
+
+/-- Every monomial of the reduced system `(sepReduce s).2` has every exponential
+coefficient constant outside the native parameter block, under the base-paired
+predicate. The `chainEqs` block is handled by `chainEqs_expCoeff_constOnImage`;
+the squared-predicate block factors each monomial's slot exponential coefficient
+into a sum of two `Psub` slot exponential coefficients
+(`sepReduce_psub_expCoeff_constOnImage`) by `ETm.add_constOnImage`. -/
+theorem sepReduce_expCoeff_constOnImage {p k : ℕ} (s : SosSystem (p + k))
+    (hbase : s.BasePaired) (mon : ZMonomial (p + k + (sepReduce s).1))
+    (hmem : mon ∈ (sepReduce s).2) (j : Fin (p + k + (sepReduce s).1)) :
+    ETm.ConstOnImage (mon.expCoeff j) (paramEmb) := by
+  simp only [sepReduce] at hmem j ⊢
+  rcases List.mem_append.mp hmem with hm | hm
+  · exact chainEqs_expCoeff_constOnImage mon hm paramEmb j
+  · obtain ⟨a, ha, b, hb, rfl⟩ := ZMonomial.mem_listMul hm
+    exact ETm.add_constOnImage (sepReduce_psub_expCoeff_constOnImage s hbase a ha j)
+      (sepReduce_psub_expCoeff_constOnImage s hbase b hb j)
+
+/-- The regroup re-association carries the native parameter block to the regrouped
+parameter block: `finCongr (Nat.add_assoc p k f) (paramEmb i) = Fin.castAdd (k + f)
+i`. Both sides carry the value `i.val`, so they agree by `Fin.ext`. -/
+theorem finCongr_paramEmb {p k d : ℕ} (i : Fin p) :
+    finCongr (Nat.add_assoc p k (k * d)) (paramEmb i) = Fin.castAdd (k + k * d) i := by
+  apply Fin.ext
+  simp only [paramEmb, Function.comp_apply, finCongr_apply, Fin.val_cast, Fin.val_castAdd]
+
+/-- The three separability hypotheses of `ZMonomial.eraMonoCubeSum`
+(arXiv:2407.12928, Corollary 3.6) hold for every monomial of the regrouped reduced
+system `(mon.cubeRegroup)`, under the coefficient grammar and base-paired
+predicates. Each `mon.cubeRegroup` field is a `finCongr`-re-indexing of the native
+field, whose constancy outside the native parameter block
+(`sepReduce_coeff_constOnImage` / `sepReduce_expCoeff_constOnImage`) transports to
+the regrouped parameter block `Fin.castAdd (k + f)` by `ETm.constOnImage_weaken`
+(`finCongr_paramEmb`); `ETm.constOnImage_append_const` then specialises it to the
+appended-context separability form. The second and third conjuncts are the same
+fact at the parameter-block slots `Fin.castAdd (k + f) i` and the cube-block slots
+`Fin.natAdd p c`. -/
+theorem sepReduce_separable {p k : ℕ} (s : SosSystem (p + k))
+    (hcoeff : s.CoeffVarProduct) (hbase : s.BasePaired)
+    (ctx : Fin p → ℕ) (mon : ZMonomial (p + k + (sepReduce s).1))
+    (hmem : mon ∈ (sepReduce s).2) :
+    (∀ a a', Tm.eval eraInterp mon.cubeRegroup.coeff (Fin.append ctx a)
+        = Tm.eval eraInterp mon.cubeRegroup.coeff (Fin.append ctx a'))
+    ∧ (∀ (i : Fin p) a a',
+        Tm.eval eraInterp (mon.cubeRegroup.expCoeff (Fin.castAdd (k + (sepReduce s).1) i))
+          (Fin.append ctx a)
+        = Tm.eval eraInterp (mon.cubeRegroup.expCoeff (Fin.castAdd (k + (sepReduce s).1) i))
+          (Fin.append ctx a'))
+    ∧ (∀ (c : Fin (k + (sepReduce s).1)) a a',
+        Tm.eval eraInterp (mon.cubeRegroup.expCoeff (Fin.natAdd p c)) (Fin.append ctx a)
+        = Tm.eval eraInterp (mon.cubeRegroup.expCoeff (Fin.natAdd p c)) (Fin.append ctx a')) := by
+  -- the native field-constancy facts and their transport through the regroup
+  have hcoeffConst :
+      ETm.ConstOnImage mon.cubeRegroup.coeff (Fin.castAdd (k + (sepReduce s).1)) := by
+    simp only [ZMonomial.cubeRegroup, ZMonomial.weaken]
+    exact ETm.constOnImage_weaken (sepReduce_coeff_constOnImage s hcoeff mon hmem)
+      (finCongr (Nat.add_assoc p k (sepReduce s).1)) _ (fun i => finCongr_paramEmb i)
+  have hexpConst : ∀ j',
+      ETm.ConstOnImage (mon.cubeRegroup.expCoeff j') (Fin.castAdd (k + (sepReduce s).1)) := by
+    intro j'
+    simp only [ZMonomial.cubeRegroup, ZMonomial.weaken]
+    cases hp : preimage (finCongr (Nat.add_assoc p k (sepReduce s).1)) j' with
+    | none => exact ETm.zero_constOnImage _
+    | some i =>
+      exact ETm.constOnImage_weaken (sepReduce_expCoeff_constOnImage s hbase mon hmem i)
+        (finCongr (Nat.add_assoc p k (sepReduce s).1)) _ (fun i => finCongr_paramEmb i)
+  refine ⟨fun a a' => ETm.constOnImage_append_const hcoeffConst ctx a a',
+    fun i a a' => ETm.constOnImage_append_const (hexpConst _) ctx a a',
+    fun c a a' => ETm.constOnImage_append_const (hexpConst _) ctx a a'⟩
+
 end GebLean
