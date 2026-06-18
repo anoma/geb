@@ -1,5 +1,7 @@
 import GebLean.Utilities.EraDiophantine
 import Mathlib.Data.List.MinMax
+import Mathlib.Algebra.Order.BigOperators.Group.List
+import Mathlib.Algebra.Order.Ring.Int
 import Mathlib.Algebra.BigOperators.Ring.Finset
 import Mathlib.Algebra.BigOperators.Fin
 import Mathlib.Logic.Equiv.Fin.Basic
@@ -170,6 +172,19 @@ Lemma 3.5 chain-variable reduction of arXiv:2407.12928 is not needed.
   deposit, and parameter slots are unchanged.
 * `sepReduce_degree` — every monomial of the reduced system `(sepReduce s).2` has
   per-coordinate polynomial degree at most `2`, for any source system with `PolyExpZero`.
+* `List.sum_map_flatMap` — the sum of `f`-images over a `List.flatMap` equals the sum, over
+  the source list, of the per-element `f`-image sums.
+* `sepReduce_eval_split` — the eval-sum of the flat reduced list `(sepReduce s).2`
+  decomposes into the chain-equation squares plus the substituted-predicate square:
+  `∑_c ∑_i ((chainEqList c i)-eval-sum)² + (Psub-eval-sum)²`.
+* `sepReduce_eval_zero_imp` — a reduced-list eval-sum of `0` forces every chain-equation
+  eval-sum and the substituted-predicate eval-sum to vanish, by non-negativity of the
+  sum-of-squares decomposition.
+* `chainEqList_eval_zero`, `chainEqList_eval_succ` — the eval-sums of the base and step
+  chain equations: `ρ (cubeSlot c) − ρ (chainSlot c i)` and `ρ (chainSlot c ⟨j, _⟩) · ρ
+  (cubeSlot c) − ρ (chainSlot c i)`.
+* `chainEqs_zero_imp_chainHolds` — from "every chain equation evaluates to `0`" derive
+  `ChainHolds`, by induction on the chain level.
 
 ## Implementation notes
 
@@ -2556,5 +2571,181 @@ theorem sepReduce_degree {p k : ℕ} (s : SosSystem (p + k)) (hzero : s.PolyExpZ
     have := hbound a ha
     have := hbound b hb
     omega
+
+/-- The sum of `f`-images over a `List.flatMap` equals the sum, over the source
+list, of the per-element `f`-image sums. The summand list of `List.flatMap g L`
+is the concatenation of the `g a` for `a ∈ L`, so mapping `f` and summing
+distributes by `List.sum_append`. -/
+theorem _root_.List.sum_map_flatMap {α β γ : Type*} [AddCommMonoid γ]
+    (L : List α) (g : α → List β) (f : β → γ) :
+    (((L.flatMap g).map f).sum) = (L.map (fun a => ((g a).map f).sum)).sum := by
+  induction L with
+  | nil => simp only [List.flatMap_nil, List.map_nil, List.sum_nil]
+  | cons a rest ih =>
+    rw [List.flatMap_cons, List.map_append, List.sum_append, List.map_cons, List.sum_cons, ih]
+
+/-- The eval-sum of the flat reduced list `(sepReduce s).2` decomposes into the
+chain-equation squares plus the substituted-predicate square. Writing `d := max 1
+(ZMonomial.maxCubeDegree (SosSystem.toZ s))` and `Psub` for the substituted
+predicate list `((SosSystem.toZ s).map (·.weaken (Fin.castAdd (k * d)))).map
+chainSub`, the eval-sum equals `∑_c ∑_i ((chainEqList c i)-eval-sum)² +
+(Psub-eval-sum)²`. The `chainEqs` block splits off by `List.sum_append`; its
+double `List.flatMap` becomes the double `List.finRange` sum by
+`List.sum_map_flatMap`, with each `listMul (chainEqList c i) (chainEqList c i)`
+sub-sum turned into a square by `ZMonomial.listMul_eval`; the predicate block is a
+single `ZMonomial.listMul_eval`. -/
+theorem sepReduce_eval_split {p k : ℕ} (s : SosSystem (p + k))
+    (ρ : Fin (p + k + k * max 1 (ZMonomial.maxCubeDegree (SosSystem.toZ s))) → ℕ) :
+    (((sepReduce s).2).map (fun mon => mon.eval ρ)).sum
+      = ((List.finRange k).map (fun c =>
+          ((List.finRange (max 1 (ZMonomial.maxCubeDegree (SosSystem.toZ s)))).map
+            (fun i => (((chainEqList c i).map (fun mon => mon.eval ρ)).sum) ^ 2)).sum)).sum
+        + ((((SosSystem.toZ s).map
+            (fun mon => mon.weaken (Fin.castAdd
+              (k * max 1 (ZMonomial.maxCubeDegree (SosSystem.toZ s)))))).map chainSub).map
+            (fun mon => mon.eval ρ)).sum ^ 2 := by
+  simp only [sepReduce]
+  rw [List.map_append, List.sum_append]
+  congr 1
+  · rw [chainEqs, List.sum_map_flatMap]
+    congr 1
+    refine List.map_congr_left (fun c _ => ?_)
+    rw [List.sum_map_flatMap]
+    congr 1
+    refine List.map_congr_left (fun i _ => ?_)
+    rw [ZMonomial.listMul_eval, sq]
+  · rw [ZMonomial.listMul_eval, sq]
+
+/-- A reduced-list eval-sum of `0` forces every chain-equation eval-sum and the
+substituted-predicate eval-sum to vanish. By `sepReduce_eval_split` the eval-sum
+is `∑_c ∑_i ((chainEqList c i)-eval-sum)² + (Psub-eval-sum)²`, a sum of squares;
+each square is non-negative, so a total of `0` makes each square `0`
+(`List.all_zero_of_le_zero_le_of_sum_eq_zero`), and a square of `0` makes its base
+`0` (`pow_eq_zero_iff`). -/
+theorem sepReduce_eval_zero_imp {p k : ℕ} (s : SosSystem (p + k))
+    (ρ : Fin (p + k + k * max 1 (ZMonomial.maxCubeDegree (SosSystem.toZ s))) → ℕ)
+    (hzero : (((sepReduce s).2).map (fun mon => mon.eval ρ)).sum = 0) :
+    (∀ (c : Fin k) (i : Fin (max 1 (ZMonomial.maxCubeDegree (SosSystem.toZ s)))),
+        ((chainEqList c i).map (fun mon => mon.eval ρ)).sum = 0)
+      ∧ ((((SosSystem.toZ s).map
+          (fun mon => mon.weaken (Fin.castAdd
+            (k * max 1 (ZMonomial.maxCubeDegree (SosSystem.toZ s)))))).map chainSub).map
+          (fun mon => mon.eval ρ)).sum = 0 := by
+  rw [sepReduce_eval_split] at hzero
+  -- both summands of the eval-split are non-negative; a sum of `0` forces each to vanish
+  have hcb_nonneg : 0 ≤ ((List.finRange k).map (fun c =>
+      ((List.finRange (max 1 (ZMonomial.maxCubeDegree (SosSystem.toZ s)))).map
+        (fun i => (((chainEqList c i).map (fun mon => mon.eval ρ)).sum) ^ 2)).sum)).sum := by
+    refine List.sum_nonneg (fun x hx => ?_)
+    rw [List.mem_map] at hx
+    obtain ⟨c, _, rfl⟩ := hx
+    refine List.sum_nonneg (fun y hy => ?_)
+    rw [List.mem_map] at hy
+    obtain ⟨i, _, rfl⟩ := hy
+    exact sq_nonneg _
+  have hps_nonneg : 0 ≤ ((((SosSystem.toZ s).map
+      (fun mon => mon.weaken (Fin.castAdd
+        (k * max 1 (ZMonomial.maxCubeDegree (SosSystem.toZ s)))))).map chainSub).map
+      (fun mon => mon.eval ρ)).sum ^ 2 := sq_nonneg _
+  have hcb_zero : ((List.finRange k).map (fun c =>
+      ((List.finRange (max 1 (ZMonomial.maxCubeDegree (SosSystem.toZ s)))).map
+        (fun i => (((chainEqList c i).map (fun mon => mon.eval ρ)).sum) ^ 2)).sum)).sum = 0 := by
+    omega
+  have hps_zero : ((((SosSystem.toZ s).map
+      (fun mon => mon.weaken (Fin.castAdd
+        (k * max 1 (ZMonomial.maxCubeDegree (SosSystem.toZ s)))))).map chainSub).map
+      (fun mon => mon.eval ρ)).sum ^ 2 = 0 := by omega
+  refine ⟨fun c i => ?_, sq_eq_zero_iff.mp hps_zero⟩
+  -- each chain-equation square is zero, so its base eval-sum is zero
+  have hc : ((List.finRange (max 1 (ZMonomial.maxCubeDegree (SosSystem.toZ s)))).map
+      (fun i => (((chainEqList c i).map (fun mon => mon.eval ρ)).sum) ^ 2)).sum = 0 :=
+    List.all_zero_of_le_zero_le_of_sum_eq_zero
+      (fun x hx => by
+        rw [List.mem_map] at hx
+        obtain ⟨c', _, rfl⟩ := hx
+        refine List.sum_nonneg (fun y hy => ?_)
+        rw [List.mem_map] at hy
+        obtain ⟨i', _, rfl⟩ := hy
+        exact sq_nonneg _) hcb_zero (List.mem_map_of_mem (List.mem_finRange c))
+  have hsq : (((chainEqList c i).map (fun mon => mon.eval ρ)).sum) ^ 2 = 0 :=
+    List.all_zero_of_le_zero_le_of_sum_eq_zero
+      (fun y hy => by
+        rw [List.mem_map] at hy
+        obtain ⟨i', _, rfl⟩ := hy
+        exact sq_nonneg _) hc (List.mem_map_of_mem (List.mem_finRange i))
+  exact sq_eq_zero_iff.mp hsq
+
+/-- The eval-sum of the base chain equation `chainEqList c i` (when `i.val = 0`) is
+`ρ (cubeSlot c) − ρ (chainSlot c i)`: the list is `[varMon (cubeSlot c), negVarMon
+(chainSlot c i)]`, whose denotations are `ρ (cubeSlot c)` and `−ρ (chainSlot c i)`. -/
+theorem chainEqList_eval_zero {p k d : ℕ} (c : Fin k) (i : Fin d) (hi : i.val = 0)
+    (ρ : Fin (p + k + k * d) → ℕ) :
+    ((chainEqList c i).map (fun mon => mon.eval ρ)).sum
+      = (ρ (cubeSlot c) : ℤ) - (ρ (chainSlot c i) : ℤ) := by
+  unfold chainEqList
+  split
+  · simp only [List.map_cons, List.map_nil, List.sum_cons, List.sum_nil,
+      ZMonomial.varMon_eval, ZMonomial.negVarMon_eval]
+    ring
+  · rename_i h
+    omega
+
+/-- The eval-sum of the step chain equation `chainEqList c i` (when `i.val = j + 1`) is
+`ρ (chainSlot c ⟨j, _⟩) · ρ (cubeSlot c) − ρ (chainSlot c i)`: the list is
+`[mulVarMon (chainSlot c ⟨j, _⟩) (cubeSlot c), negVarMon (chainSlot c i)]`, whose
+denotations are the product (the two slots are distinct by `cubeSlot_ne_chainSlot`) and
+`−ρ (chainSlot c i)`. -/
+theorem chainEqList_eval_succ {p k d : ℕ} (c : Fin k) (i : Fin d) (j : ℕ)
+    (hi : i.val = j + 1) (hj : j < d) (ρ : Fin (p + k + k * d) → ℕ) :
+    ((chainEqList c i).map (fun mon => mon.eval ρ)).sum
+      = (ρ (chainSlot c ⟨j, hj⟩) : ℤ) * (ρ (cubeSlot c) : ℤ) - (ρ (chainSlot c i) : ℤ) := by
+  unfold chainEqList
+  split
+  · rename_i h
+    omega
+  · rename_i j' h
+    -- the match's index `j'` equals the lemma's `j`, so the two chain slots coincide
+    have hjj : j' = j := by omega
+    subst hjj
+    simp only [List.map_cons, List.map_nil, List.sum_cons, List.sum_nil,
+      ZMonomial.mulVarMon_eval _ _ (Ne.symm (cubeSlot_ne_chainSlot c c ⟨j', by omega⟩)),
+      ZMonomial.negVarMon_eval]
+    ring
+
+/-- From "every chain equation `S_{c,i}` evaluates to `0`" derive `ChainHolds`: each chain
+slot `y_{c,i+1}` holds the power `x_c^{i+1}` of its cube coordinate. The proof fixes `c`
+and inducts on `i.val`. The base equation (`i.val = 0`) gives `ρ (chainSlot c 0) = ρ
+(cubeSlot c) = ρ (cubeSlot c) ^ 1` by `chainEqList_eval_zero`; the step equation (`i.val =
+j + 1`) gives `ρ (chainSlot c i) = ρ (chainSlot c ⟨j, _⟩) · ρ (cubeSlot c)` by
+`chainEqList_eval_succ`, and with the induction hypothesis `ρ (chainSlot c ⟨j, _⟩) = ρ
+(cubeSlot c) ^ (j + 1)` this is `ρ (cubeSlot c) ^ (j + 2)`. Each ℤ-valued chain equation is
+an equality of ℕ-casts, recovered as an ℕ equality by `Nat.cast_injective`. -/
+theorem chainEqs_zero_imp_chainHolds {p k d : ℕ} (ρ : Fin (p + k + k * d) → ℕ)
+    (h : ∀ (c : Fin k) (i : Fin d),
+        ((chainEqList c i).map (fun mon => mon.eval ρ)).sum = 0) :
+    ChainHolds ρ := by
+  intro c i
+  -- induct on the value of `i`, reconstructing the `Fin d` element at each level
+  obtain ⟨iv, hiv⟩ := i
+  induction iv with
+  | zero =>
+    have heq := h c ⟨0, hiv⟩
+    rw [chainEqList_eval_zero c ⟨0, hiv⟩ rfl ρ] at heq
+    have : (ρ (chainSlot c ⟨0, hiv⟩) : ℤ) = (ρ (cubeSlot c) : ℤ) := by omega
+    have hnat : ρ (chainSlot c ⟨0, hiv⟩) = ρ (cubeSlot c) := Nat.cast_injective this
+    rw [hnat, pow_one]
+  | succ j ih =>
+    have hj : j < d := by omega
+    have heq := h c ⟨j + 1, hiv⟩
+    rw [chainEqList_eval_succ c ⟨j + 1, hiv⟩ j rfl hj ρ] at heq
+    have hcast : (ρ (chainSlot c ⟨j + 1, hiv⟩) : ℤ)
+        = (ρ (chainSlot c ⟨j, hj⟩) : ℤ) * (ρ (cubeSlot c) : ℤ) := by omega
+    have hnat : ρ (chainSlot c ⟨j + 1, hiv⟩)
+        = ρ (chainSlot c ⟨j, hj⟩) * ρ (cubeSlot c) := by
+      have := hcast
+      push_cast at this
+      exact Nat.cast_injective this
+    rw [hnat, ih hj]
+    ring
 
 end GebLean
