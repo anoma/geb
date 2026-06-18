@@ -51,6 +51,13 @@ Lemma 3.5 chain-variable reduction of arXiv:2407.12928 is not needed.
 * `SimpleMonomial.toZ`, `SimpleSum.toZ` — the lift of a `diophOf` monomial (and
   simple sum) over `Fin (p + k)` to the signed `ZMonomial` reflection, moving the
   cube-coordinate polynomial degree of the coefficient into the `polyExp` field.
+* `ZMonomial.listMul` — the list of all pairwise products of two `ZMonomial`
+  lists, the term-level distribution of `(∑ L₁) · (∑ L₂)`.
+* `ZMonomial.negDouble` — sign-flip and coefficient-doubling of a `ZMonomial`,
+  realising the `−2 P Q` cross-term of a truncated squared distance.
+* `SosTerm.toZ`, `SosSystem.toZ` — the lift of a `diophOf` sum-of-squares atom
+  (and system) over `Fin (p + k)` to a flat `ZMonomial` list: a `sqDist P Q` atom
+  expands to `P² + Q² − 2 P Q`, a `prod s t` atom to the pairwise product.
 
 ## Main statements
 
@@ -85,6 +92,16 @@ Lemma 3.5 chain-variable reduction of arXiv:2407.12928 is not needed.
   and base-paired predicates, the `ℤ`-valued denotation of the lift at an appended
   context `Fin.append ctx a` equals the natural-number `SimpleMonomial` (resp.
   `SimpleSum`) value cast to `ℤ`.
+* `ZMonomial.listMul_eval` — the pairwise-product list's denotation sum
+  factorises as the product of the two factors' denotation sums.
+* `ZMonomial.negDouble_eval` — the denotation of `negDouble mon` is
+  `−(2 · mon.eval ρ)`.
+* `SosTerm.cast_sqDist` — the truncated squared distance cast to `ℤ` is the honest
+  quadratic `x² + y² − 2 x y`.
+* `SosTerm.toZ_eval`, `SosSystem.toZ_eval` — under the coefficient-grammar and
+  base-paired predicates, the sum of the `ℤ`-valued denotations of the lift at an
+  appended context equals the natural-number `SosTerm` (resp. `SosSystem`) value
+  cast to `ℤ`.
 
 ## Implementation notes
 
@@ -1626,5 +1643,153 @@ theorem SimpleSum.toZ_eval {p k : ℕ} (s : SimpleSum (p + k))
       (hbase mon (List.mem_cons_self ..))]
     rw [ih (fun m hm => hcoeff m (List.mem_cons_of_mem _ hm))
       (fun m hm => hbase m (List.mem_cons_of_mem _ hm))]
+
+/-- The list of all pairwise products of two lists of signed simple-exponential
+monomials: for each `a ∈ L₁` and `b ∈ L₂` the product monomial `a.mul b`. This is
+the term-level distribution of `(∑ L₁) · (∑ L₂)`, used to realise both the
+cross-term of a `sqDist` square and the product of a `prod` atom as a single flat
+`ZMonomial` list. -/
+def ZMonomial.listMul {m : ℕ} (L₁ L₂ : List (ZMonomial m)) : List (ZMonomial m) :=
+  L₁.flatMap (fun a => L₂.map (fun b => a.mul b))
+
+/-- The pairwise-product list's denotation sum factorises: the sum of the
+`ℤ`-valued denotations of `ZMonomial.listMul L₁ L₂` is the product of the two
+factors' denotation sums. The per-element product is `ZMonomial.mul_eval`; the
+distribution over `L₂` is `List.sum_map_mul_left`; the recursion over `L₁` is the
+list-append split of `List.flatMap` on a cons. -/
+theorem ZMonomial.listMul_eval {m : ℕ} (L₁ L₂ : List (ZMonomial m)) (ρ : Fin m → ℕ) :
+    ((ZMonomial.listMul L₁ L₂).map (fun mon => mon.eval ρ)).sum
+      = (((L₁.map (fun mon => mon.eval ρ)).sum) * ((L₂.map (fun mon => mon.eval ρ)).sum)) := by
+  induction L₁ with
+  | nil => simp only [ZMonomial.listMul, List.flatMap_nil, List.map_nil, List.sum_nil, zero_mul]
+  | cons a rest ih =>
+    rw [ZMonomial.listMul, List.flatMap_cons, List.map_append, List.sum_append,
+      List.map_map, List.map_cons, List.sum_cons, add_mul]
+    rw [← ZMonomial.listMul, ih]
+    congr 1
+    rw [show ((fun mon => mon.eval ρ) ∘ fun b => a.mul b)
+        = (fun b => a.eval ρ * b.eval ρ) from by
+      funext b; simp only [Function.comp_apply]; exact ZMonomial.mul_eval a b ρ]
+    exact List.sum_map_mul_left L₂ (fun b => b.eval ρ) (a.eval ρ)
+
+/-- Negate and double a signed simple-exponential monomial: flip its sign and
+multiply its coefficient by the constant `2` (`Era.one.succ`). This realises the
+`−2 P Q` cross-term of a truncated squared distance `(P − Q)²`: applied to each
+member of `ZMonomial.listMul Pz Qz` it produces the doubled negative cross-terms. -/
+def ZMonomial.negDouble {m : ℕ} (mon : ZMonomial m) : ZMonomial m where
+  sign := !mon.sign
+  coeff := mon.coeff *ᵉ Era.one.succ
+  expCoeff := mon.expCoeff
+  polyExp := mon.polyExp
+
+/-- The denotation of `ZMonomial.negDouble mon` is `−(2 · mon.eval ρ)`: the sign
+flip contributes the negation and the coefficient times `2` contributes the
+doubling. -/
+theorem ZMonomial.negDouble_eval {m : ℕ} (mon : ZMonomial m) (ρ : Fin m → ℕ) :
+    (mon.negDouble).eval ρ = -(2 * mon.eval ρ) := by
+  obtain ⟨s, c, ec, p⟩ := mon
+  simp only [ZMonomial.eval, ZMonomial.negDouble, emul_eval, eraInterp, fcons, Era.one, Tm.eval]
+  cases s <;>
+    simp only [Bool.not_false, Bool.not_true, Bool.false_eq_true, if_false, if_true] <;>
+    push_cast <;>
+    ring
+
+/-- The truncated squared distance, cast to `ℤ`, is the honest quadratic: for any
+two naturals `x y`, `((x − y)² + (y − x)² : ℕ) : ℤ = x² + y² − 2 x y`, where the
+`ℕ` subtractions are truncated. Proved by `le_total`: in each ordering one
+truncated subtraction is `0` and the other is the honest difference, lifted by
+`Nat.cast_sub`. This is the `sqDist` ℕ→ℤ reconciliation underlying
+`SosTerm.toZ_eval`. -/
+theorem SosTerm.cast_sqDist {x y : ℕ} :
+    (((x - y) ^ 2 + (y - x) ^ 2 : ℕ) : ℤ) = (x : ℤ) ^ 2 + (y : ℤ) ^ 2 - 2 * x * y := by
+  rcases le_total x y with h | h
+  · rw [Nat.sub_eq_zero_of_le h]
+    push_cast [Nat.cast_sub h]
+    ring
+  · rw [Nat.sub_eq_zero_of_le h]
+    push_cast [Nat.cast_sub h]
+    ring
+
+mutual
+/-- Lift a sum-of-squares atom over `Fin (p + k)` to a list of signed
+simple-exponential `ZMonomial`s whose denotation sum equals the atom's
+natural-number value (cast to `ℤ`). A `sqDist P Q` atom expands to
+`P² + Q² − 2 P Q`: with `Pz := P.toZ`, `Qz := Q.toZ`, the list is
+`ZMonomial.listMul Pz Pz ++ ZMonomial.listMul Qz Qz ++ (ZMonomial.listMul Pz Qz).map negDouble`,
+the last block supplying the doubled negative cross-term. A `prod s t` atom expands
+to the pairwise product `ZMonomial.listMul (SosSystem.toZ s) (SosSystem.toZ t)`. -/
+def SosTerm.toZ {p k : ℕ} (a : SosTerm (p + k)) : List (ZMonomial (p + k)) :=
+  match a with
+  | .sqDist P Q =>
+    ZMonomial.listMul P.toZ P.toZ ++ ZMonomial.listMul Q.toZ Q.toZ ++
+      (ZMonomial.listMul P.toZ Q.toZ).map ZMonomial.negDouble
+  | .prod s t => ZMonomial.listMul (SosSystem.toZ s) (SosSystem.toZ t)
+--
+/-- Lift a sum-of-squares system over `Fin (p + k)` to a list of signed
+simple-exponential `ZMonomial`s by concatenating each atom's lift. -/
+def SosSystem.toZ {p k : ℕ} (s : SosSystem (p + k)) : List (ZMonomial (p + k)) :=
+  match s with
+  | [] => []
+  | a :: rest => a.toZ ++ SosSystem.toZ rest
+end
+
+mutual
+/-- The lifted atom agrees with the natural-number atom on the cube: the sum of
+the `ℤ`-valued denotations of `a.toZ` at the appended context equals the
+`SosTerm` value cast to `ℤ`. For `sqDist P Q` the three `listMul` blocks reflect
+`P²`, `Q²`, and `−2 P Q` (via `ZMonomial.listMul_eval`, `SimpleSum.toZ_eval`, and
+`ZMonomial.negDouble_eval`), reconciled to the truncated-subtraction value by
+`SosTerm.cast_sqDist`; for `prod s t` the single `listMul` block reflects the product
+by `ZMonomial.listMul_eval` and the sub-system induction hypotheses. -/
+theorem SosTerm.toZ_eval {p k : ℕ} (a : SosTerm (p + k))
+    (ctx : Fin p → ℕ) (a' : Fin k → ℕ)
+    (hcoeff : a.CoeffVarProduct) (hbase : a.BasePaired) :
+    ((a.toZ).map (fun mon => mon.eval (Fin.append ctx a'))).sum
+      = (SosTerm.eval a (Fin.append ctx a') : ℤ) := by
+  match a with
+  | .sqDist P Q =>
+    obtain ⟨hcP, hcQ⟩ := hcoeff
+    obtain ⟨hbP, hbQ⟩ := hbase
+    rw [SosTerm.toZ, SosTerm.eval, List.map_append, List.sum_append, List.map_append,
+      List.sum_append, ZMonomial.listMul_eval, ZMonomial.listMul_eval,
+      SimpleSum.toZ_eval P ctx a' hcP hbP, SimpleSum.toZ_eval Q ctx a' hcQ hbQ]
+    rw [List.map_map,
+      show ((fun mon => ZMonomial.eval mon (Fin.append ctx a')) ∘ ZMonomial.negDouble)
+          = (fun mon => -2 * mon.eval (Fin.append ctx a')) from by
+        funext mon
+        simp only [Function.comp_apply, ZMonomial.negDouble_eval]
+        ring]
+    rw [List.sum_map_mul_left (ZMonomial.listMul P.toZ Q.toZ)
+      (fun mon => mon.eval (Fin.append ctx a')) (-2),
+      ZMonomial.listMul_eval, SimpleSum.toZ_eval P ctx a' hcP hbP,
+      SimpleSum.toZ_eval Q ctx a' hcQ hbQ, SosTerm.cast_sqDist]
+    ring
+  | .prod s t =>
+    obtain ⟨hcs, hct⟩ := hcoeff
+    obtain ⟨hbs, hbt⟩ := hbase
+    rw [SosTerm.toZ, SosTerm.eval, ZMonomial.listMul_eval,
+      SosSystem.toZ_eval s ctx a' hcs hbs, SosSystem.toZ_eval t ctx a' hct hbt,
+      Nat.cast_mul]
+--
+/-- The lifted system agrees with the natural-number system on the cube: the sum
+of the `ℤ`-valued denotations of `s.toZ` at the appended context equals the
+`SosSystem` value cast to `ℤ`. Each atom's agreement is `SosTerm.toZ_eval`; the
+concatenation is the append split of `List.map`/`List.sum`. -/
+theorem SosSystem.toZ_eval {p k : ℕ} (s : SosSystem (p + k))
+    (ctx : Fin p → ℕ) (a : Fin k → ℕ)
+    (hcoeff : s.CoeffVarProduct) (hbase : s.BasePaired) :
+    ((s.toZ).map (fun mon => mon.eval (Fin.append ctx a))).sum
+      = (SosSystem.eval s (Fin.append ctx a) : ℤ) := by
+  match s with
+  | [] =>
+    rw [SosSystem.toZ, SosSystem.eval]
+    simp only [List.map_nil, List.sum_nil, Nat.cast_zero]
+  | b :: rest =>
+    obtain ⟨hcb, hcrest⟩ := hcoeff
+    obtain ⟨hbb, hbrest⟩ := hbase
+    rw [SosSystem.toZ, SosSystem.eval, List.map_append, List.sum_append,
+      SosTerm.toZ_eval b ctx a hcb hbb, SosSystem.toZ_eval rest ctx a hcrest hbrest,
+      Nat.cast_add]
+end
 
 end GebLean
