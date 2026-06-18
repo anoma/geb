@@ -25,6 +25,10 @@ module supplies the read-off that consumes its output.
 
 * `eraCountOfPack` — the read-off term `(HW(packMTerm) / w) − tᵏ`, with `HW`
   the binary Hamming weight realised by `GebLean.EraCompleteness.eraSigma`.
+* `ZMonomial.cubeConst`, `ZMonomial.cubeBase` — the parameter-only constant and
+  the per-cube-coordinate geometric base of the separable normal form of a
+  `ZMonomial (p + k)` whose cube coordinates are the last `k` slots, both
+  evaluated at the cube-zero reference context `Fin.append ctx 0`.
 
 ## Main statements
 
@@ -37,6 +41,12 @@ module supplies the read-off that consumes its output.
 * `eraCountOfPack_eval` — the read-off identity: `eraCountOfPack` evaluates to
   the count of vanishing cube points, chaining `eraSigma_eval` (the Hamming
   weight) with `count_zeros_eq` (the read-off of arXiv:2407.12928, Lemma 3.3).
+* `ZMonomial.cubeFactor` — the separable normal form: under the hypotheses that
+  the coefficient and every exponential-coefficient evaluation are independent of
+  the cube point, `evalNat (Fin.append ctx a)` factors as `cubeConst ctx` times
+  `∏ c, (a c) ^ polyExp (natAdd p c) · (cubeBase ctx c) ^ (a c)`, the summand
+  shape consumed by `GebLean.EraHypercube.cubeSum_factor` (arXiv:2407.12928,
+  Lemma 3.2).
 
 ## Implementation notes
 
@@ -153,3 +163,68 @@ theorem eraCountOfPack_eval {p : ℕ} (k : ℕ) (packMTerm tTerm wTerm : ETm p)
   rw [count_zeros_eq k w t hw P hP]
 
 end GebLean.EraHistCodeTerm
+
+namespace GebLean
+
+open Era
+
+/-- The parameter-only constant of the separable normal form of a
+`ZMonomial (p + k)` whose cube coordinates are the last `k` slots: the
+coefficient times the parameter-slot exponential and polynomial factors,
+evaluated at the cube-zero reference context `Fin.append ctx 0`. Under the
+separability hypotheses of `ZMonomial.cubeFactor` this value is independent of
+the cube point. -/
+def ZMonomial.cubeConst {p k : ℕ} (mon : ZMonomial (p + k)) (ctx : Fin p → ℕ) : ℕ :=
+  Tm.eval eraInterp mon.coeff (Fin.append ctx (fun _ => 0))
+    * (∏ i : Fin p, 2 ^ (Tm.eval eraInterp (mon.expCoeff (Fin.castAdd k i))
+          (Fin.append ctx (fun _ => 0)) * ctx i))
+    * (∏ i : Fin p, ctx i ^ mon.polyExp (Fin.castAdd k i))
+
+/-- The per-cube-coordinate geometric base of the separable normal form of a
+`ZMonomial (p + k)`: the base-`2` exponential at cube slot `c`, with the
+exponential coefficient evaluated at the cube-zero reference context. Under the
+separability hypotheses of `ZMonomial.cubeFactor` this value is independent of
+the cube point, matching the fixed `vbase` vector of
+`GebLean.EraHypercube.cubeSum_factor`. -/
+def ZMonomial.cubeBase {p k : ℕ} (mon : ZMonomial (p + k)) (ctx : Fin p → ℕ)
+    (c : Fin k) : ℕ :=
+  2 ^ Tm.eval eraInterp (mon.expCoeff (Fin.natAdd p c)) (Fin.append ctx (fun _ => 0))
+
+/-- Separable normal form of a `ZMonomial (p + k)` whose cube coordinates are the
+last `k` slots (`Fin.natAdd p c`). Under the separability hypotheses that the
+coefficient evaluation and every exponential-coefficient evaluation are
+independent of the cube point, the natural-number magnitude factors as the
+parameter-only constant `mon.cubeConst ctx` times the cube product
+`∏ c, (a c) ^ polyExp (natAdd p c) · (mon.cubeBase ctx c) ^ (a c)`. This is the
+summand shape consumed by `GebLean.EraHypercube.cubeSum_factor`, with
+`u c = mon.polyExp (Fin.natAdd p c)` and `vbase c = mon.cubeBase ctx c`. -/
+theorem ZMonomial.cubeFactor {p k : ℕ} (mon : ZMonomial (p + k)) (ctx : Fin p → ℕ)
+    (hcoeff : ∀ a a', Tm.eval eraInterp mon.coeff (Fin.append ctx a)
+        = Tm.eval eraInterp mon.coeff (Fin.append ctx a'))
+    (hparamExp : ∀ (i : Fin p) (a a'), Tm.eval eraInterp (mon.expCoeff (Fin.castAdd k i))
+          (Fin.append ctx a)
+        = Tm.eval eraInterp (mon.expCoeff (Fin.castAdd k i)) (Fin.append ctx a'))
+    (hcubeExp : ∀ (c : Fin k) (a a'), Tm.eval eraInterp (mon.expCoeff (Fin.natAdd p c))
+          (Fin.append ctx a)
+        = Tm.eval eraInterp (mon.expCoeff (Fin.natAdd p c)) (Fin.append ctx a'))
+    (a : Fin k → ℕ) :
+    mon.evalNat (Fin.append ctx a)
+      = mon.cubeConst ctx * ∏ c : Fin k,
+          (a c) ^ mon.polyExp (Fin.natAdd p c) * (mon.cubeBase ctx c) ^ (a c) := by
+  rw [ZMonomial.evalNat, ZMonomial.cubeConst, Fin.prod_univ_add, Fin.prod_univ_add]
+  simp only [Fin.append_left, Fin.append_right, ZMonomial.cubeBase]
+  rw [hcoeff a (fun _ => 0)]
+  have hparam : (∏ i : Fin p, 2 ^ (Tm.eval eraInterp (mon.expCoeff (Fin.castAdd k i))
+        (Fin.append ctx a) * ctx i))
+      = ∏ i : Fin p, 2 ^ (Tm.eval eraInterp (mon.expCoeff (Fin.castAdd k i))
+        (Fin.append ctx (fun _ => 0)) * ctx i) :=
+    Finset.prod_congr rfl (fun i _ => by rw [hparamExp i a (fun _ => 0)])
+  have hcube : (∏ c : Fin k, 2 ^ (Tm.eval eraInterp (mon.expCoeff (Fin.natAdd p c))
+        (Fin.append ctx a) * a c))
+      = ∏ c : Fin k, (2 ^ Tm.eval eraInterp (mon.expCoeff (Fin.natAdd p c))
+        (Fin.append ctx (fun _ => 0))) ^ (a c) :=
+    Finset.prod_congr rfl (fun c _ => by rw [hcubeExp c a (fun _ => 0), pow_mul])
+  rw [hparam, hcube, Finset.prod_mul_distrib]
+  ring
+
+end GebLean
