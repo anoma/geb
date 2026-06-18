@@ -175,6 +175,7 @@ end GebLean.EraHistCodeTerm
 namespace GebLean
 
 open Era
+open GebLean.EraHistCodeTerm (eraNumeral eraNumeral_eval)
 
 /-- The parameter-only constant of the separable normal form of a
 `ZMonomial (p + k)` whose cube coordinates are the last `k` slots: the
@@ -293,5 +294,261 @@ theorem ZMonomial.eraMonoCubeSum {p k : ℕ} (mon : ZMonomial (p + k)) (ctx : Fi
   refine congrArg (mon.cubeConst ctx * ·) ?_
   exact GebLean.EraHypercube.cubeSum_factor k (fun c => mon.polyExp (Fin.natAdd p c))
     (fun c => mon.cubeBase ctx c * 2 ^ (2 * w * t ^ (c : ℕ))) t
+
+open GebLean.EraCompleteness in
+/-- A finite product of `Era` terms: the right fold of multiplication with unit
+`Era.one`. Used with `List.ofFn` to realise `∏ c : Fin n` over an `Era`-term
+family. -/
+def eraListProd {p : ℕ} (L : List (ETm p)) : ETm p :=
+  L.foldr (· *ᵉ ·) Era.one
+
+/-- `eraListProd L` evaluates to the product of the evaluations of its factors. -/
+theorem eraListProd_eval {p : ℕ} (L : List (ETm p)) (ctx : Fin p → ℕ) :
+    Tm.eval eraInterp (eraListProd L) ctx
+      = (L.map (fun e => Tm.eval eraInterp e ctx)).prod := by
+  induction L with
+  | nil => simp [eraListProd, Era.one, Tm.eval]
+  | cons e L ih =>
+    rw [eraListProd, List.foldr_cons]
+    simp only [List.map_cons, List.prod_cons]
+    rw [← ih, eraListProd, emul, Tm.eval, eraInterp]
+    simp only [fcons]
+
+/-- Drop a cube-independent term to the parameter scope: substitute the `k`
+cube slots by `.zero`, keeping the `p` parameter slots as variables. -/
+def ETm.paramProject {p k : ℕ} (e : ETm (p + k)) : ETm p :=
+  e.subst (fun j => Fin.addCases (fun i : Fin p => (.var i : ETm p))
+    (fun _ : Fin k => .zero) j)
+
+/-- For a term whose value at the parameter context is independent of the cube
+point, `ETm.paramProject` evaluates to the original term's value at any cube
+point (with the cube slots filled by `Fin.append ctx a`). -/
+theorem ETm.paramProject_eval {p k : ℕ} (e : ETm (p + k)) (ctx : Fin p → ℕ)
+    (hindep : ∀ a a', Tm.eval eraInterp e (Fin.append ctx a)
+        = Tm.eval eraInterp e (Fin.append ctx a')) (a : Fin k → ℕ) :
+    Tm.eval eraInterp (ETm.paramProject e) ctx
+      = Tm.eval eraInterp e (Fin.append ctx a) := by
+  rw [ETm.paramProject, Tm.eval_subst]
+  have htuple : (fun j => Tm.eval eraInterp
+      (Fin.addCases (fun i : Fin p => (.var i : ETm p)) (fun _ : Fin k => .zero) j) ctx)
+      = Fin.append ctx (fun _ => 0) := by
+    funext j
+    refine Fin.addCases (fun i => ?_) (fun c => ?_) j
+    · rw [Fin.addCases_left, Fin.append_left, Tm.eval]
+    · rw [Fin.addCases_right, Fin.append_right, Tm.eval]
+  rw [htuple, hindep (fun _ => 0) a]
+
+open GebLean.EraCompleteness in
+/-- The parameter-only constant `mon.cubeConst` realised as an `ETm p`: the
+projected coefficient times the parameter-slot exponential and polynomial
+products (arXiv:2407.12928, Eq (8), the `α` factor). -/
+def cubeConstTerm {p k : ℕ} (mon : ZMonomial (p + k)) : ETm p :=
+  ETm.paramProject mon.coeff
+    *ᵉ eraListProd (List.ofFn (fun i : Fin p =>
+        eraNumeral 2 ^ᵉ (ETm.paramProject (mon.expCoeff (Fin.castAdd k i)) *ᵉ .var i)))
+    *ᵉ eraListProd (List.ofFn (fun i : Fin p =>
+        (.var i : ETm p) ^ᵉ eraNumeral (mon.polyExp (Fin.castAdd k i))))
+
+open GebLean.EraCompleteness in
+/-- The per-cube-coordinate geometric base `mon.cubeBase` (without the position
+weight) realised as an `ETm p`: the base-`2` exponential whose exponent is the
+projected cube-slot exponential coefficient (arXiv:2407.12928, Eq (8), the
+`vbase` factor). -/
+def cubeBaseTerm {p k : ℕ} (mon : ZMonomial (p + k)) (c : Fin k) : ETm p :=
+  eraNumeral 2 ^ᵉ ETm.paramProject (mon.expCoeff (Fin.natAdd p c))
+
+open GebLean.EraCompleteness in
+/-- `cubeConstTerm mon` evaluates to `mon.cubeConst ctx`, given that the
+coefficient and every parameter-slot exponential coefficient are independent of
+the cube point. -/
+theorem cubeConstTerm_eval {p k : ℕ} (mon : ZMonomial (p + k)) (ctx : Fin p → ℕ)
+    (hcoeff : ∀ a a', Tm.eval eraInterp mon.coeff (Fin.append ctx a)
+        = Tm.eval eraInterp mon.coeff (Fin.append ctx a'))
+    (hparamExp : ∀ (i : Fin p) (a a'),
+        Tm.eval eraInterp (mon.expCoeff (Fin.castAdd k i)) (Fin.append ctx a)
+          = Tm.eval eraInterp (mon.expCoeff (Fin.castAdd k i)) (Fin.append ctx a')) :
+    Tm.eval eraInterp (cubeConstTerm mon) ctx = mon.cubeConst ctx := by
+  rw [cubeConstTerm, ZMonomial.cubeConst]
+  simp only [emul, Tm.eval, eraInterp, fcons]
+  rw [eraListProd_eval, eraListProd_eval]
+  simp only [List.map_ofFn, Function.comp_def]
+  rw [List.prod_ofFn, List.prod_ofFn]
+  rw [ETm.paramProject_eval mon.coeff ctx hcoeff (fun _ => 0)]
+  congr 1
+  · congr 1
+    refine Finset.prod_congr rfl (fun i _ => ?_)
+    simp only [epow, Tm.eval, eraInterp, fcons]
+    rw [eraNumeral_eval, ETm.paramProject_eval _ ctx (hparamExp i) (fun _ => 0)]
+  · refine Finset.prod_congr rfl (fun i _ => ?_)
+    simp only [epow, Tm.eval, eraInterp, fcons]
+    rw [eraNumeral_eval]
+
+open GebLean.EraCompleteness in
+/-- `cubeBaseTerm mon c` evaluates to `mon.cubeBase ctx c`, given that the
+cube-slot exponential coefficient at `c` is independent of the cube point. -/
+theorem cubeBaseTerm_eval {p k : ℕ} (mon : ZMonomial (p + k)) (ctx : Fin p → ℕ)
+    (hcubeExp : ∀ (c : Fin k) (a a'),
+        Tm.eval eraInterp (mon.expCoeff (Fin.natAdd p c)) (Fin.append ctx a)
+          = Tm.eval eraInterp (mon.expCoeff (Fin.natAdd p c)) (Fin.append ctx a'))
+    (c : Fin k) :
+    Tm.eval eraInterp (cubeBaseTerm mon c) ctx = mon.cubeBase ctx c := by
+  rw [cubeBaseTerm, ZMonomial.cubeBase]
+  simp only [epow, Tm.eval, eraInterp, fcons]
+  rw [eraNumeral_eval, ETm.paramProject_eval _ ctx (hcubeExp c) (fun _ => 0)]
+
+open GebLean.EraCompleteness in
+/-- The weighted cube base of coordinate `c` as an `ETm p`:
+`mon.cubeBase ctx c · 2 ^ (2 · w · t ^ c)`, the geometric-sum base of the
+`c`-th inner sum (arXiv:2407.12928, Eq (8)). -/
+def cubeWeightedBaseTerm {p k : ℕ} (mon : ZMonomial (p + k)) (tTerm wTerm : ETm p)
+    (c : Fin k) : ETm p :=
+  cubeBaseTerm mon c
+    *ᵉ eraNumeral 2 ^ᵉ (eraNumeral 2 *ᵉ wTerm *ᵉ tTerm ^ᵉ eraNumeral (c : ℕ))
+
+open GebLean.EraCompleteness in
+/-- The `c`-th inner geometric-sum factor of `eraMonoTerm`, selected by the
+cube-coordinate polynomial exponent `mon.polyExp (Fin.natAdd p c)`: the
+unweighted (`u = 0`), linear (`u = 1`), or square-weighted (`u = 2`, also the
+fallback) geometric sum over the weighted base, realised by substituting the
+weighted base and the bound `tTerm` into `eraGeomSum`/`eraLinGeomSum`/
+`eraSqGeomSum` (arXiv:2407.12928, Eq (8), the inner sums `G_u`). -/
+def eraGFactor {p k : ℕ} (mon : ZMonomial (p + k)) (tTerm wTerm : ETm p)
+    (c : Fin k) : ETm p :=
+  match mon.polyExp (Fin.natAdd p c) with
+  | 0 => eraGeomSum.subst ![cubeWeightedBaseTerm mon tTerm wTerm c, tTerm]
+  | 1 => eraLinGeomSum.subst ![cubeWeightedBaseTerm mon tTerm wTerm c, tTerm]
+  | _ => eraSqGeomSum.subst ![cubeWeightedBaseTerm mon tTerm wTerm c, tTerm]
+
+open GebLean.EraCompleteness in
+/-- The unsigned per-monomial term `Aᵤ(m,k) = α · ∏_c G_{u_c}(vbase_c, t)` of
+arXiv:2407.12928, Eq (8): the parameter-only constant `cubeConstTerm mon` times
+the product over cube coordinates of the inner geometric-sum factors
+`eraGFactor`. Its evaluation is the weighted cube-sum of `mon` over the side-`t`
+cube (Cor 3.6). -/
+def eraMonoTerm {p k : ℕ} (mon : ZMonomial (p + k)) (tTerm wTerm : ETm p) : ETm p :=
+  cubeConstTerm mon
+    *ᵉ eraListProd (List.ofFn (fun c : Fin k => eraGFactor mon tTerm wTerm c))
+
+open GebLean.EraCompleteness in
+/-- `cubeWeightedBaseTerm mon tTerm wTerm c` evaluates to the weighted geometric
+base `mon.cubeBase ctx c · 2 ^ (2 · w · t ^ c)`, given that the cube-slot
+exponential coefficient at `c` is independent of the cube point. -/
+theorem cubeWeightedBaseTerm_eval {p k : ℕ} (mon : ZMonomial (p + k)) (ctx : Fin p → ℕ)
+    (tTerm wTerm : ETm p)
+    (hcubeExp : ∀ (c : Fin k) (a a'),
+        Tm.eval eraInterp (mon.expCoeff (Fin.natAdd p c)) (Fin.append ctx a)
+          = Tm.eval eraInterp (mon.expCoeff (Fin.natAdd p c)) (Fin.append ctx a'))
+    (c : Fin k) :
+    Tm.eval eraInterp (cubeWeightedBaseTerm mon tTerm wTerm c) ctx
+      = mon.cubeBase ctx c
+        * 2 ^ (2 * Tm.eval eraInterp wTerm ctx
+            * Tm.eval eraInterp tTerm ctx ^ (c : ℕ)) := by
+  rw [cubeWeightedBaseTerm]
+  simp only [epow, emul, Tm.eval, eraInterp, fcons, eraNumeral_eval]
+  rw [cubeBaseTerm_eval mon ctx hcubeExp c]
+
+open GebLean.EraCompleteness in
+/-- Positivity of the weighted geometric base: at least `2` when the bound `t`
+and modulus `w` are positive, so the `Era` geometric-sum evaluation lemmas
+apply. -/
+theorem two_le_cubeWeightedBase {p k : ℕ} (mon : ZMonomial (p + k)) (ctx : Fin p → ℕ)
+    (tTerm wTerm : ETm p) (ht : 0 < Tm.eval eraInterp tTerm ctx)
+    (hw : 0 < Tm.eval eraInterp wTerm ctx) (c : Fin k) :
+    2 ≤ mon.cubeBase ctx c
+      * 2 ^ (2 * Tm.eval eraInterp wTerm ctx
+          * Tm.eval eraInterp tTerm ctx ^ (c : ℕ)) := by
+  set t := Tm.eval eraInterp tTerm ctx
+  set w := Tm.eval eraInterp wTerm ctx
+  have hbase : 1 ≤ mon.cubeBase ctx c := by
+    rw [ZMonomial.cubeBase]
+    exact Nat.one_le_two_pow
+  have hexp : 1 ≤ 2 * w * t ^ (c : ℕ) := by
+    have : 0 < t ^ (c : ℕ) := Nat.pow_pos ht
+    calc 1 ≤ 2 * w := by omega
+      _ ≤ 2 * w * t ^ (c : ℕ) := Nat.le_mul_of_pos_right _ this
+  calc 2 = 1 * 2 ^ 1 := by norm_num
+    _ ≤ mon.cubeBase ctx c * 2 ^ (2 * w * t ^ (c : ℕ)) :=
+      Nat.mul_le_mul hbase (Nat.pow_le_pow_right (by norm_num) hexp)
+
+open GebLean.EraCompleteness in
+/-- The `c`-th geometric-sum factor evaluates to the `c`-th inner sum of the
+cube-sum factorisation: `∑ j ∈ range t, j ^ (polyExp) · (weighted base) ^ j`,
+for cube-coordinate degree at most `2` and positive bound and modulus
+(arXiv:2407.12928, Eq (8), the inner sums `G_u`). -/
+theorem eraGFactor_eval {p k : ℕ} (mon : ZMonomial (p + k)) (ctx : Fin p → ℕ)
+    (tTerm wTerm : ETm p) (c : Fin k) (hdeg : mon.polyExp (Fin.natAdd p c) ≤ 2)
+    (hcubeExp : ∀ (c : Fin k) (a a'),
+        Tm.eval eraInterp (mon.expCoeff (Fin.natAdd p c)) (Fin.append ctx a)
+          = Tm.eval eraInterp (mon.expCoeff (Fin.natAdd p c)) (Fin.append ctx a'))
+    (ht : 0 < Tm.eval eraInterp tTerm ctx) (hw : 0 < Tm.eval eraInterp wTerm ctx) :
+    Tm.eval eraInterp (eraGFactor mon tTerm wTerm c) ctx
+      = ∑ j ∈ Finset.range (Tm.eval eraInterp tTerm ctx),
+          j ^ mon.polyExp (Fin.natAdd p c)
+            * (mon.cubeBase ctx c
+                * 2 ^ (2 * Tm.eval eraInterp wTerm ctx
+                    * Tm.eval eraInterp tTerm ctx ^ (c : ℕ))) ^ j := by
+  set t := Tm.eval eraInterp tTerm ctx with ht_def
+  set V := mon.cubeBase ctx c
+    * 2 ^ (2 * Tm.eval eraInterp wTerm ctx * t ^ (c : ℕ)) with hV_def
+  have hV2 : 2 ≤ V := two_le_cubeWeightedBase mon ctx tTerm wTerm ht hw c
+  have hVeval : Tm.eval eraInterp (cubeWeightedBaseTerm mon tTerm wTerm c) ctx = V :=
+    cubeWeightedBaseTerm_eval mon ctx tTerm wTerm hcubeExp c
+  have hsub : ∀ (e : ETm 2),
+      Tm.eval eraInterp (e.subst ![cubeWeightedBaseTerm mon tTerm wTerm c, tTerm]) ctx
+        = Tm.eval eraInterp e ![V, t] := by
+    intro e
+    rw [Tm.eval_subst]
+    congr 1
+    funext i
+    refine i.cases ?_ (fun j => ?_)
+    · simpa using hVeval
+    · refine j.cases ?_ (fun l => l.elim0)
+      simp [ht_def]
+  -- branch on the cube-coordinate polynomial exponent (degree ≤ 2)
+  have hcases : mon.polyExp (Fin.natAdd p c) = 0 ∨ mon.polyExp (Fin.natAdd p c) = 1
+      ∨ mon.polyExp (Fin.natAdd p c) = 2 := by omega
+  rcases hcases with hu | hu | hu
+  · rw [eraGFactor, hu]
+    rw [hsub eraGeomSum, eraGeomSum_natBSum V t hV2, natBSum_eq_sum]
+    simp only [pow_zero, one_mul]
+  · rw [eraGFactor, hu]
+    rw [hsub eraLinGeomSum, eraLinGeomSum_eval V t hV2]
+    simp only [pow_one]
+  · rw [eraGFactor, hu]
+    rw [hsub eraSqGeomSum, eraSqGeomSum_eval V t hV2]
+
+open GebLean.EraCompleteness in
+/-- The unsigned per-monomial term evaluates to the weighted cube-sum of the
+monomial's magnitude over the side-`t` cube (arXiv:2407.12928, Cor 3.6,
+Eq (8)). The hypotheses are the cube-coordinate degree bound (`hdeg`), the three
+separability conjuncts of `EraSepReduce.sepReduce_separable` (`hcoeff`,
+`hparamExp`, `hcubeExp`), and positivity of the bound and modulus (`ht`, `hw`);
+they are the discharge-ready forms a `sepReduce`/`cubeRegroup` instantiation
+supplies. -/
+theorem eraMonoTerm_eval {p k : ℕ} (mon : ZMonomial (p + k)) (tTerm wTerm : ETm p)
+    (ctx : Fin p → ℕ) (hdeg : ∀ i, mon.polyExp i ≤ 2)
+    (hcoeff : ∀ a a', Tm.eval eraInterp mon.coeff (Fin.append ctx a)
+        = Tm.eval eraInterp mon.coeff (Fin.append ctx a'))
+    (hparamExp : ∀ (i : Fin p) (a a'),
+        Tm.eval eraInterp (mon.expCoeff (Fin.castAdd k i)) (Fin.append ctx a)
+          = Tm.eval eraInterp (mon.expCoeff (Fin.castAdd k i)) (Fin.append ctx a'))
+    (hcubeExp : ∀ (c : Fin k) (a a'),
+        Tm.eval eraInterp (mon.expCoeff (Fin.natAdd p c)) (Fin.append ctx a)
+          = Tm.eval eraInterp (mon.expCoeff (Fin.natAdd p c)) (Fin.append ctx a'))
+    (ht : 0 < Tm.eval eraInterp tTerm ctx) (hw : 0 < Tm.eval eraInterp wTerm ctx) :
+    Tm.eval eraInterp (eraMonoTerm mon tTerm wTerm) ctx
+      = ∑ a ∈ GebLean.EraHypercube.cubePoints k (Tm.eval eraInterp tTerm ctx),
+          2 ^ (2 * Tm.eval eraInterp wTerm ctx
+              * GebLean.EraHypercube.mixedRadix k (Tm.eval eraInterp tTerm ctx) a)
+            * mon.evalNat (Fin.append ctx a) := by
+  rw [mon.eraMonoCubeSum ctx (Tm.eval eraInterp wTerm ctx) (Tm.eval eraInterp tTerm ctx)
+    hcoeff hparamExp hcubeExp]
+  rw [eraMonoTerm, emul, Tm.eval, eraInterp]
+  simp only [fcons]
+  rw [cubeConstTerm_eval mon ctx hcoeff hparamExp, eraListProd_eval]
+  simp only [List.map_ofFn, Function.comp_def]
+  rw [List.prod_ofFn]
+  refine congrArg (mon.cubeConst ctx * ·) (Finset.prod_congr rfl (fun c _ => ?_))
+  exact eraGFactor_eval mon ctx tTerm wTerm c (hdeg _) hcubeExp ht hw
 
 end GebLean
