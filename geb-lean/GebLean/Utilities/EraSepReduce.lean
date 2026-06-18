@@ -185,6 +185,20 @@ Lemma 3.5 chain-variable reduction of arXiv:2407.12928 is not needed.
   (cubeSlot c) − ρ (chainSlot c i)`.
 * `chainEqs_zero_imp_chainHolds` — from "every chain equation evaluates to `0`" derive
   `ChainHolds`, by induction on the chain level.
+* `chainHolds_imp_chainEqList_zero` — the converse at the per-equation level: under
+  `ChainHolds`, every chain equation `S_{c,i}` evaluates to `0`.
+* `weaken_polyExp_cubeSlot`, `append_comp_castAdd`, `append_cubeSlot`, `append_chainSlot` —
+  the index bridges: a weakened monomial's cube-slot degree is the source's cube-coordinate
+  degree, the appended context precomposed with the old-scope embedding is the original
+  context, and the appended context reads the cube-coordinate value (resp. the chain value)
+  at a cube slot (resp. a chain slot).
+* `sepReduce_psub_eval` — on the `ChainHolds` sub-domain, the substituted-predicate eval-sum
+  equals the source system's value at `ρ` cast to `ℤ`, by `chainSub_eval`, `weaken_eval`,
+  and `SosSystem.toZ_eval`.
+* `sepReduce_sound`, `sepReduce_unique` — the correctness of the chain-variable reduction
+  (arXiv:2407.12928, Lemma 3.5): the reduced system's eval-sum vanishes at `Fin.append ρ b`
+  for some (resp. exactly one) chain witness `b` precisely when the source system vanishes
+  at `ρ`.
 
 ## Implementation notes
 
@@ -2747,5 +2761,188 @@ theorem chainEqs_zero_imp_chainHolds {p k d : ℕ} (ρ : Fin (p + k + k * d) →
       exact Nat.cast_injective this
     rw [hnat, ih hj]
     ring
+
+/-- A weakened source monomial's polynomial degree at a cube slot `cubeSlot c` is
+the source monomial's degree at the cube coordinate `Fin.natAdd p c`: the cube slot
+lies on the image of `Fin.castAdd (k * d)`, where `ZMonomial.weaken` reads the source
+exponent (by `preimage_castAddEmb_apply`). -/
+theorem weaken_polyExp_cubeSlot {p k d : ℕ} (mon₀ : ZMonomial (p + k)) (c : Fin k) :
+    (mon₀.weaken (Fin.castAdd (k * d))).polyExp (cubeSlot c)
+      = mon₀.polyExp (Fin.natAdd p c) := by
+  simp only [ZMonomial.weaken, cubeSlot,
+    show (Fin.castAdd (k * d) : Fin (p + k) → Fin (p + k + k * d)) = castAddEmb from rfl]
+  rw [preimage_castAddEmb_apply]
+
+/-- The appended context `Fin.append ρ b` precomposed with the old-scope embedding
+`Fin.castAdd (k * d)` is the original context `ρ`: `Fin.append`'s left block reads
+`ρ` on `Fin.castAdd`-indices (`Fin.append_left`). -/
+theorem append_comp_castAdd {p k d : ℕ} (ρ : Fin (p + k) → ℕ)
+    (b : Fin (k * d) → ℕ) :
+    (Fin.append ρ b) ∘ (Fin.castAdd (k * d)) = ρ := by
+  funext i
+  simp only [Function.comp_apply, Fin.append_left]
+
+/-- The appended context `Fin.append ρ b` at a cube slot `cubeSlot c` reads the
+cube-coordinate value `ρ (Fin.natAdd p c)`: the slot is a `Fin.castAdd`-index, so
+`Fin.append` reads the left block `ρ`. -/
+theorem append_cubeSlot {p k d : ℕ} (ρ : Fin (p + k) → ℕ) (b : Fin (k * d) → ℕ)
+    (c : Fin k) : (Fin.append ρ b) (cubeSlot c) = ρ (Fin.natAdd p c) := by
+  simp only [cubeSlot, Fin.append_left]
+
+/-- The appended context `Fin.append ρ b` at a chain slot `chainSlot c i` reads the
+chain value `b (chainIdx c i)`: the slot is a `Fin.natAdd`-index, so `Fin.append`
+reads the right block `b`. -/
+theorem append_chainSlot {p k d : ℕ} (ρ : Fin (p + k) → ℕ) (b : Fin (k * d) → ℕ)
+    (c : Fin k) (i : Fin d) :
+    (Fin.append ρ b) (chainSlot c i) = b (chainIdx c i) := by
+  simp only [chainSlot, Fin.append_right]
+
+/-- The converse of `chainEqs_zero_imp_chainHolds` at the level of a single chain
+equation: under `ChainHolds`, every chain equation `S_{c,i}` evaluates to `0`. The
+base equation (`i.val = 0`) is `ρ (cubeSlot c) − ρ (chainSlot c 0)`, zero because
+`ρ (chainSlot c 0) = ρ (cubeSlot c) ^ 1`; the step equation (`i.val = j + 1`) is
+`ρ (chainSlot c ⟨j, _⟩) · ρ (cubeSlot c) − ρ (chainSlot c i)`, zero because
+`ρ (chainSlot c i) = ρ (cubeSlot c) ^ (j + 2)` and
+`ρ (chainSlot c ⟨j, _⟩) = ρ (cubeSlot c) ^ (j + 1)`. -/
+theorem chainHolds_imp_chainEqList_zero {p k d : ℕ} (ρ : Fin (p + k + k * d) → ℕ)
+    (hCH : ChainHolds ρ) (c : Fin k) (i : Fin d) :
+    ((chainEqList c i).map (fun mon => mon.eval ρ)).sum = 0 := by
+  obtain ⟨iv, hiv⟩ := i
+  cases iv with
+  | zero =>
+    rw [chainEqList_eval_zero c ⟨0, hiv⟩ rfl ρ, hCH c ⟨0, hiv⟩, pow_one]
+    ring
+  | succ j =>
+    have hj : j < d := by omega
+    rw [chainEqList_eval_succ c ⟨j + 1, hiv⟩ j rfl hj ρ, hCH c ⟨j, hj⟩, hCH c ⟨j + 1, hiv⟩]
+    push_cast
+    ring
+
+/-- The substituted-predicate eval-sum equals the source system's value at `ρ`.
+On the `ChainHolds` sub-domain `Fin.append ρ b`, each substituted monomial
+`chainSub (mon.weaken (Fin.castAdd (k * d)))` denotes `mon.eval ρ`: `chainSub_eval`
+removes the substitution (its `hweak` from `ZMonomial.weaken_polyExp_chainSlot_zero`,
+its `hdeg` from `weaken_polyExp_cubeSlot` and `ZMonomial.le_maxCubeDegree`), and
+`ZMonomial.weaken_eval` reads the cube context off `ρ` (by `append_comp_castAdd`).
+The resulting `(SosSystem.toZ s)`-eval-sum at `ρ` is `SosSystem.eval s ρ` cast to
+`ℤ` (by `SosSystem.toZ_eval` at the canonical context split). -/
+theorem sepReduce_psub_eval {p k : ℕ} (s : SosSystem (p + k))
+    (hcoeff : s.CoeffVarProduct) (hbase : s.BasePaired)
+    (ρ : Fin (p + k) → ℕ)
+    (b : Fin (k * max 1 (ZMonomial.maxCubeDegree (SosSystem.toZ s))) → ℕ)
+    (hCH : ChainHolds (Fin.append ρ b)) :
+    ((((SosSystem.toZ s).map
+        (fun mon => mon.weaken (Fin.castAdd
+          (k * max 1 (ZMonomial.maxCubeDegree (SosSystem.toZ s)))))).map chainSub).map
+        (fun mon => mon.eval (Fin.append ρ b))).sum = (SosSystem.eval s ρ : ℤ) := by
+  rw [List.map_map, List.map_map]
+  -- each substituted monomial denotes the source monomial at `ρ`, by `chainSub_eval`
+  -- (substitution removed) and `weaken_eval` (cube context read off `ρ`)
+  rw [List.map_congr_left (l := SosSystem.toZ s)
+    (g := fun mon => mon.eval (Fin.append (ρ ∘ Fin.castAdd k) (ρ ∘ Fin.natAdd p)))
+    (fun mon hmon => ?_)]
+  · rw [SosSystem.toZ_eval s (ρ ∘ Fin.castAdd k) (ρ ∘ Fin.natAdd p) hcoeff hbase]
+    congr 2
+    funext i
+    induction i using Fin.addCases with
+    | left j => simp only [Fin.append_left, Function.comp_apply]
+    | right c => simp only [Fin.append_right, Function.comp_apply]
+  · simp only [Function.comp_apply]
+    rw [chainSub_eval _ (Fin.append ρ b) hCH
+      (fun c i => ZMonomial.weaken_polyExp_chainSlot_zero mon c i)
+      (fun c => ?_)]
+    · rw [ZMonomial.weaken_eval _ _ (Fin.castAdd_injective _ _), append_comp_castAdd]
+      congr 1
+      funext i
+      induction i using Fin.addCases with
+      | left j => simp only [Fin.append_left, Function.comp_apply]
+      | right c => simp only [Fin.append_right, Function.comp_apply]
+    · rw [weaken_polyExp_cubeSlot]
+      exact le_trans (ZMonomial.le_maxCubeDegree _ mon hmon c) (le_max_right _ _)
+
+/-- Soundness of the chain-variable reduction (arXiv:2407.12928, Lemma 3.5). A
+witness `b` zeroing the reduced system's eval-sum at `Fin.append ρ b` forces the
+source system to vanish at `ρ`. By `sepReduce_eval_zero_imp` the chain-equation
+eval-sums and the substituted-predicate eval-sum each vanish; the former give
+`ChainHolds (Fin.append ρ b)` (`chainEqs_zero_imp_chainHolds`), under which the
+substituted-predicate eval-sum is `SosSystem.eval s ρ` cast to `ℤ`
+(`sepReduce_psub_eval`); a cast of `0` makes the natural-number value `0`. -/
+theorem sepReduce_sound {p k : ℕ} (s : SosSystem (p + k))
+    (hcoeff : s.CoeffVarProduct) (hbase : s.BasePaired)
+    (ρ : Fin (p + k) → ℕ) (b : Fin (sepReduce s).1 → ℕ)
+    (hR : (((sepReduce s).2).map (fun mon => mon.eval (Fin.append ρ b))).sum = 0) :
+    SosSystem.eval s ρ = 0 := by
+  obtain ⟨hchainzero, hpsubzero⟩ := sepReduce_eval_zero_imp s (Fin.append ρ b) hR
+  have hCH : ChainHolds (Fin.append ρ b) :=
+    chainEqs_zero_imp_chainHolds (Fin.append ρ b) hchainzero
+  rw [sepReduce_psub_eval s hcoeff hbase ρ b hCH] at hpsubzero
+  exact Nat.cast_eq_zero.mp hpsubzero
+
+/-- Uniqueness of the chain-variable reduction (arXiv:2407.12928, Lemma 3.5). When
+the source system vanishes at `ρ`, the reduced system's eval-sum at `Fin.append ρ b`
+vanishes for exactly one chain witness `b`, namely the cube-power assignment
+`b₀ j = ρ (Fin.natAdd p (finProdFinEquiv.symm j).1) ^ ((finProdFinEquiv.symm j).2.val + 1)`.
+Existence: `b₀` satisfies `ChainHolds (Fin.append ρ b₀)` by construction
+(`append_chainSlot`/`append_cubeSlot`), so by `sepReduce_eval_split` the chain
+squares vanish (`chainHolds_imp_chainEqList_zero`) and the predicate square vanishes
+(`sepReduce_psub_eval` with `SosSystem.eval s ρ = 0`). Uniqueness: any zeroing
+witness `b'` gives `ChainHolds (Fin.append ρ b')` (`sepReduce_eval_zero_imp`,
+`chainEqs_zero_imp_chainHolds`), forcing `b' (chainIdx c i) = ρ (Fin.natAdd p c) ^
+(i + 1) = b₀ (chainIdx c i)`; every index is a `chainIdx` (`finProdFinEquiv` is a
+bijection), so `b' = b₀`. -/
+theorem sepReduce_unique {p k : ℕ} (s : SosSystem (p + k))
+    (hcoeff : s.CoeffVarProduct) (hbase : s.BasePaired)
+    (ρ : Fin (p + k) → ℕ) (hP : SosSystem.eval s ρ = 0) :
+    ∃! b : Fin (sepReduce s).1 → ℕ,
+      (((sepReduce s).2).map (fun mon => mon.eval (Fin.append ρ b))).sum = 0 := by
+  -- the cube-power witness, and the `ChainHolds` it satisfies
+  set b₀ : Fin (k * max 1 (ZMonomial.maxCubeDegree (SosSystem.toZ s))) → ℕ :=
+    fun j => ρ (Fin.natAdd p (finProdFinEquiv.symm j).1)
+      ^ ((finProdFinEquiv.symm j).2.val + 1) with hb₀
+  have hCH₀ : ChainHolds (Fin.append ρ b₀) := by
+    intro c i
+    rw [append_chainSlot, append_cubeSlot, hb₀]
+    simp only
+    rw [show finProdFinEquiv.symm (chainIdx c i) = (c, i) from by
+      rw [chainIdx, Equiv.symm_apply_apply]]
+  refine ⟨b₀, ?_, ?_⟩
+  · -- existence: the reduced eval-sum splits into vanishing chain and predicate squares
+    simp only []
+    rw [sepReduce_eval_split]
+    have hchain : ((List.finRange k).map (fun c =>
+        ((List.finRange (max 1 (ZMonomial.maxCubeDegree (SosSystem.toZ s)))).map
+          (fun i => (((chainEqList c i).map (fun mon => mon.eval (Fin.append ρ b₀))).sum)
+            ^ 2)).sum)).sum = 0 := by
+      refine List.sum_eq_zero (fun x hx => ?_)
+      rw [List.mem_map] at hx
+      obtain ⟨c, _, rfl⟩ := hx
+      refine List.sum_eq_zero (fun y hy => ?_)
+      rw [List.mem_map] at hy
+      obtain ⟨i, _, rfl⟩ := hy
+      rw [chainHolds_imp_chainEqList_zero (Fin.append ρ b₀) hCH₀ c i]
+      ring
+    have hpred : ((((SosSystem.toZ s).map
+        (fun mon => mon.weaken (Fin.castAdd
+          (k * max 1 (ZMonomial.maxCubeDegree (SosSystem.toZ s)))))).map chainSub).map
+        (fun mon => mon.eval (Fin.append ρ b₀))).sum ^ 2 = 0 := by
+      rw [sepReduce_psub_eval s hcoeff hbase ρ b₀ hCH₀, hP, Nat.cast_zero]
+      norm_num
+    -- `rw [hchain]` fails on the list-map lambda motive, so combine the two
+    -- zeroed summands additively via `congrArg₂`.
+    rw [show (0 : ℤ) = 0 + 0 from (add_zero 0).symm]
+    exact congrArg₂ (· + ·) hchain hpred
+  · -- uniqueness: any zeroing witness satisfies `ChainHolds`, fixing it to `b₀`
+    intro b' hb'
+    obtain ⟨hchainzero, _⟩ := sepReduce_eval_zero_imp s (Fin.append ρ b') hb'
+    have hCH' : ChainHolds (Fin.append ρ b') :=
+      chainEqs_zero_imp_chainHolds (Fin.append ρ b') hchainzero
+    funext j
+    rw [hb₀]
+    simp only
+    have hkey := hCH' (finProdFinEquiv.symm j).1 (finProdFinEquiv.symm j).2
+    rw [append_chainSlot, append_cubeSlot] at hkey
+    rw [show chainIdx (finProdFinEquiv.symm j).1 (finProdFinEquiv.symm j).2 = j from by
+      rw [chainIdx, Equiv.apply_symm_apply]] at hkey
+    exact hkey
 
 end GebLean
