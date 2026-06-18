@@ -551,4 +551,64 @@ theorem eraMonoTerm_eval {p k : ℕ} (mon : ZMonomial (p + k)) (tTerm wTerm : ET
   refine congrArg (mon.cubeConst ctx * ·) (Finset.prod_congr rfl (fun c _ => ?_))
   exact eraGFactor_eval mon ctx tTerm wTerm c (hdeg _) hcubeExp ht hw
 
+open GebLean.EraCompleteness in
+/-- The unit `ZMonomial (p + k)`: coefficient `Era.one`, all exponential
+coefficients `.zero`, all polynomial exponents `0`. Its magnitude is the constant
+`1` at every context, so its weighted cube-sum is the bare position-weight sum
+`∑_a 2 ^ (2 · w · v(a))` — the geometric factor of the Eq (7) constant
+(arXiv:2407.12928, Eq (7)). -/
+def unitCubeMon (p k : ℕ) : ZMonomial (p + k) where
+  sign := false
+  coeff := Era.one
+  expCoeff := fun _ => .zero
+  polyExp := fun _ => 0
+
+/-- The unit monomial's magnitude is `1` at every context. -/
+theorem unitCubeMon_evalNat (p k : ℕ) (ρ : Fin (p + k) → ℕ) :
+    (unitCubeMon p k).evalNat ρ = 1 := by
+  simp only [ZMonomial.evalNat, unitCubeMon, Era.one, Tm.eval, Nat.zero_mul, pow_zero,
+    Finset.prod_const_one, mul_one, Nat.zero_add]
+
+open GebLean.EraCompleteness in
+/-- The constant part `C(ε, k)` of the packed witness (arXiv:2407.12928, Eq (7)):
+`(2^w − 1) · (2^w − ε + 1) · ∑_a 2 ^ (2 · w · v(a))`, with the geometric factor
+`∑_a 2 ^ (2 · w · v(a))` realised by `eraMonoTerm` on the unit monomial. The two
+`a`-independent affine factors come from splitting the constant `ε` off the
+`δ`-affine form `(2^w − 1)(2^w + 1) − (2^w − 1)·P` of `deltaBlock_affine`. -/
+def eraConstPart {p : ℕ} (epsTerm tTerm wTerm : ETm p) (k : ℕ) : ETm p :=
+  ((eraNumeral 2 ^ᵉ wTerm) ∸ᵉ eraNumeral 1)
+    *ᵉ (((eraNumeral 2 ^ᵉ wTerm) ∸ᵉ epsTerm) +ᵉ eraNumeral 1)
+    *ᵉ eraMonoTerm (unitCubeMon p k) tTerm wTerm
+
+open GebLean.EraCompleteness in
+/-- `eraConstPart` evaluates to the Eq (7) constant `C(ε, k)` distributed over the
+side-`t` cube: `∑_a 2 ^ (2 · w · v(a)) · (2^w − 1) · (2^w − ε + 1)`
+(arXiv:2407.12928, Eq (7)). The two affine factors are `a`-independent, so they
+distribute into the cube-sum. The identity holds for the truncated subtraction
+`2^w − ε` unconditionally; the `ε ≤ 2^w` bound that makes this subtraction exact
+is supplied by the consumers in the packed-witness assembly (arXiv:2407.12928,
+Lemma 3.3), not needed here. -/
+theorem eraConstPart_eval {p : ℕ} (epsTerm tTerm wTerm : ETm p) (k : ℕ)
+    (ctx : Fin p → ℕ) (ht : 0 < Tm.eval eraInterp tTerm ctx)
+    (hw : 0 < Tm.eval eraInterp wTerm ctx) :
+    Tm.eval eraInterp (eraConstPart epsTerm tTerm wTerm k) ctx
+      = ∑ a ∈ GebLean.EraHypercube.cubePoints k (Tm.eval eraInterp tTerm ctx),
+          2 ^ (2 * Tm.eval eraInterp wTerm ctx
+                * GebLean.EraHypercube.mixedRadix k (Tm.eval eraInterp tTerm ctx) a)
+            * (2 ^ Tm.eval eraInterp wTerm ctx - 1)
+            * (2 ^ Tm.eval eraInterp wTerm ctx - Tm.eval eraInterp epsTerm ctx + 1) := by
+  set w := Tm.eval eraInterp wTerm ctx with hw_def
+  set eps := Tm.eval eraInterp epsTerm ctx with heps_def
+  have hmono : Tm.eval eraInterp (eraMonoTerm (unitCubeMon p k) tTerm wTerm) ctx
+      = ∑ a ∈ GebLean.EraHypercube.cubePoints k (Tm.eval eraInterp tTerm ctx),
+          2 ^ (2 * w * GebLean.EraHypercube.mixedRadix k (Tm.eval eraInterp tTerm ctx) a) := by
+    rw [eraMonoTerm_eval (unitCubeMon p k) tTerm wTerm ctx
+      (fun _ => Nat.zero_le _) (fun _ _ => rfl) (fun _ _ _ => rfl) (fun _ _ _ => rfl) ht hw]
+    exact Finset.sum_congr rfl (fun a _ => by rw [unitCubeMon_evalNat]; ring)
+  rw [eraConstPart]
+  simp only [emul, epow, etsub, eadd, Tm.eval, eraInterp, fcons, eraNumeral_eval,
+    ← hw_def, ← heps_def]
+  rw [hmono, Finset.mul_sum]
+  exact Finset.sum_congr rfl (fun a _ => by ring)
+
 end GebLean
