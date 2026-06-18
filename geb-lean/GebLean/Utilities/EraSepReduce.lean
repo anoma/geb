@@ -56,6 +56,9 @@ Lemma 3.5 chain-variable reduction of arXiv:2407.12928 is not needed.
   lists, the term-level distribution of `(∑ L₁) · (∑ L₂)`.
 * `ZMonomial.negDouble` — sign-flip and coefficient-doubling of a `ZMonomial`,
   realising the `−2 P Q` cross-term of a truncated squared distance.
+* `ZMonomial.weaken` — re-index a signed simple-exponential monomial along a
+  variable map `f`, renaming the coefficient and per-variable exponential
+  coefficients and reading each target slot off the `preimage` of `f`.
 * `SosTerm.toZ`, `SosSystem.toZ` — the lift of a `diophOf` sum-of-squares atom
   (and system) over `Fin (p + k)` to a flat `ZMonomial` list: a `sqDist P Q` atom
   expands to `P² + Q² − 2 P Q`, a `prod s t` atom to the pairwise product.
@@ -105,6 +108,9 @@ Lemma 3.5 chain-variable reduction of arXiv:2407.12928 is not needed.
   factorises as the product of the two factors' denotation sums.
 * `ZMonomial.negDouble_eval` — the denotation of `negDouble mon` is
   `−(2 · mon.eval ρ)`.
+* `ZMonomial.weaken_eval`, `ZMonomial.weaken_list_eval` — for injective `f`,
+  the denotation of `mon.weaken f` at `ρ'` equals that of `mon` at `ρ' ∘ f`,
+  with the list corollary summing termwise.
 * `SosTerm.cast_sqDist` — the truncated squared distance cast to `ℤ` is the honest
   quadratic `x² + y² − 2 x y`.
 * `SosTerm.toZ_eval`, `SosSystem.toZ_eval` — under the coefficient-grammar and
@@ -1904,5 +1910,71 @@ off the image of `castAddEmb`, by `castAddEmb_ne_chainSlot` and
 theorem preimage_castAddEmb_chainSlot {p k d : ℕ} (c : Fin k) (i : Fin d) :
     preimage (castAddEmb : Fin (p + k) → Fin (p + k + k * d)) (chainSlot c i) = none :=
   preimage_eq_none (fun j => castAddEmb_ne_chainSlot j c i)
+
+/-- Re-index a signed simple-exponential monomial along `f`. The coefficient
+and per-variable exponential coefficients are renamed by `Tm.weaken f`; each
+target slot reads the source data of its `preimage`, defaulting off the image
+to the trivial value. -/
+def ZMonomial.weaken {m m' : ℕ} (mon : ZMonomial m) (f : Fin m → Fin m') :
+    ZMonomial m' where
+  sign     := mon.sign
+  coeff    := mon.coeff.weaken f
+  expCoeff := fun j => match preimage f j with
+    | some i => (mon.expCoeff i).weaken f
+    | none   => .zero
+  polyExp  := fun j => match preimage f j with
+    | some i => mon.polyExp i
+    | none   => 0
+
+/-- Re-indexing compatibility for signed monomials: for injective `f`,
+evaluating `mon.weaken f` at `ρ'` equals evaluating `mon` at `ρ' ∘ f`. The sign
+is unchanged, the coefficient by `Tm.eval_weaken`, and the two `ℕ` products by
+`Finset.prod_of_injOn` over the image of `f` (off-image factors are
+`2 ^ (0 · ρ) = 1` and `_ ^ 0 = 1`), cast into `ℤ`. -/
+theorem ZMonomial.weaken_eval {m m' : ℕ} (mon : ZMonomial m)
+    (f : Fin m → Fin m') (hf : Function.Injective f) (ρ' : Fin m' → ℕ) :
+    (mon.weaken f).eval ρ' = mon.eval (ρ' ∘ f) := by
+  unfold ZMonomial.eval ZMonomial.weaken
+  congr 1
+  congr 1
+  · congr 1
+    · exact congrArg Int.ofNat (Tm.eval_weaken eraInterp f mon.coeff ρ')
+    · refine (Finset.prod_of_injOn f (fun a _ b _ h => hf h) (fun _ _ => Finset.mem_univ _)
+        ?_ ?_).symm
+      · intro j _ hj
+        have hnone : preimage f j = none := by
+          apply preimage_eq_none
+          intro i hi
+          exact hj ⟨i, Finset.mem_univ i, hi⟩
+        simp only [hnone]
+        simp only [Tm.eval]
+        rw [Nat.zero_mul, pow_zero]
+      · intro i _
+        simp only [preimage_apply hf]
+        rw [Tm.eval_weaken]
+        rfl
+  · refine congrArg Int.ofNat
+      (Finset.prod_of_injOn f (fun a _ b _ h => hf h) (fun _ _ => Finset.mem_univ _) ?_ ?_).symm
+    · intro j _ hj
+      have hnone : preimage f j = none := by
+        apply preimage_eq_none
+        intro i hi
+        exact hj ⟨i, Finset.mem_univ i, hi⟩
+      simp only [hnone]
+      rw [Nat.pow_zero]
+    · intro i _
+      simp only [preimage_apply hf]
+      rfl
+
+/-- Re-indexing compatibility for a list of signed monomials: for injective `f`,
+the sum of the re-indexed monomials' denotations at `ρ'` equals the sum of the
+originals' denotations at `ρ' ∘ f`. Termwise by `ZMonomial.weaken_eval`. -/
+theorem ZMonomial.weaken_list_eval {m m' : ℕ} (L : List (ZMonomial m))
+    (f : Fin m → Fin m') (hf : Function.Injective f) (ρ' : Fin m' → ℕ) :
+    ((L.map (fun mon => mon.weaken f)).map (fun mon => mon.eval ρ')).sum
+      = (L.map (fun mon => mon.eval (ρ' ∘ f))).sum := by
+  rw [List.map_map]
+  exact congrArg List.sum
+    (List.map_congr_left (fun mon _ => ZMonomial.weaken_eval mon f hf ρ'))
 
 end GebLean
