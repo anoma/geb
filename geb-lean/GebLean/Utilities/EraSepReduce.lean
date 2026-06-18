@@ -1,6 +1,7 @@
 import GebLean.Utilities.EraDiophantine
 import Mathlib.Algebra.BigOperators.Ring.Finset
 import Mathlib.Algebra.BigOperators.Fin
+import Mathlib.Logic.Equiv.Fin.Basic
 import Mathlib.Tactic.Ring
 
 /-!
@@ -58,6 +59,14 @@ Lemma 3.5 chain-variable reduction of arXiv:2407.12928 is not needed.
 * `SosTerm.toZ`, `SosSystem.toZ` — the lift of a `diophOf` sum-of-squares atom
   (and system) over `Fin (p + k)` to a flat `ZMonomial` list: a `sqDist P Q` atom
   expands to `P² + Q² − 2 P Q`, a `prod s t` atom to the pairwise product.
+* `chainIdx`, `cubeSlot`, `chainSlot`, `castAddEmb` — the index plumbing of the
+  Lemma 3.5 chain-variable reduction. The enlarged variable scope is
+  `Fin (p + k + k * d)`, with `p` parameter slots, `k` cube-coordinate slots, and
+  a trailing `k * d`-block of chain variables laid out as a `Fin k × Fin d`
+  rectangle. `chainIdx c i` is the rectangle's flat index (via mathlib's
+  `finProdFinEquiv`); `cubeSlot c` is the cube coordinate `c`'s slot; `chainSlot
+  c i` is the chain cell `(c, i)`'s slot; `castAddEmb` embeds the old scope
+  `Fin (p + k)`.
 
 ## Main statements
 
@@ -102,6 +111,15 @@ Lemma 3.5 chain-variable reduction of arXiv:2407.12928 is not needed.
   base-paired predicates, the sum of the `ℤ`-valued denotations of the lift at an
   appended context equals the natural-number `SosTerm` (resp. `SosSystem`) value
   cast to `ℤ`.
+* `chainIdx_val`, `chainIdx_injective` — the `finProdFinEquiv` flattening value
+  `i.val + d * c.val` and the injectivity of `chainIdx`.
+* `castAddEmb_injective`, `cubeSlot_injective`, `chainSlot_injective` — the index
+  helpers are injective.
+* `cubeSlot_ne_chainSlot`, `castAddEmb_ne_chainSlot` — cube slots and old-scope
+  embeddings are disjoint from chain slots.
+* `preimage_castAddEmb_apply`, `preimage_castAddEmb_chainSlot` — the `preimage`
+  search recovers the source index of an embedded index and returns `none` on a
+  chain slot.
 
 ## Implementation notes
 
@@ -1791,5 +1809,100 @@ theorem SosSystem.toZ_eval {p k : ℕ} (s : SosSystem (p + k))
       SosTerm.toZ_eval b ctx a hcb hbb, SosSystem.toZ_eval rest ctx a hcrest hbrest,
       Nat.cast_add]
 end
+
+/-- The rectangle index of the chain-variable block. The `k · d` new chain
+variables are laid out as a `Fin k × Fin d` rectangle; `chainIdx c i` is the
+flat index of the cell `(c, i)`, reusing mathlib's `finProdFinEquiv`. With
+`finProdFinEquiv`'s convention `(c, i) ↦ i.val + d · c.val`, the value of
+`chainIdx c i` is `i.val + d · c.val`. -/
+def chainIdx {k d : ℕ} (c : Fin k) (i : Fin d) : Fin (k * d) :=
+  finProdFinEquiv (c, i)
+
+/-- The value of `chainIdx c i` is `i.val + d · c.val`, the `finProdFinEquiv`
+flattening convention. -/
+theorem chainIdx_val {k d : ℕ} (c : Fin k) (i : Fin d) :
+    (chainIdx c i).val = i.val + d * c.val :=
+  finProdFinEquiv_apply_val (c, i)
+
+/-- `chainIdx` is injective: distinct rectangle cells receive distinct flat
+indices, as `finProdFinEquiv` is an equivalence. -/
+theorem chainIdx_injective {k d : ℕ} :
+    Function.Injective (fun p : Fin k × Fin d => chainIdx p.1 p.2) := by
+  intro p q h
+  exact finProdFinEquiv.injective h
+
+/-- The cube-coordinate slot of the enlarged scope `Fin (p + k + k * d)`: cube
+coordinate `c : Fin k` sits in the `k`-block following the `p` parameter slots,
+embedded past the chain block by `Fin.castAdd`. -/
+def cubeSlot {p k d : ℕ} (c : Fin k) : Fin (p + k + k * d) :=
+  Fin.castAdd (k * d) (Fin.natAdd p c)
+
+/-- The chain-variable slot of the enlarged scope `Fin (p + k + k * d)`: the
+chain cell `(c, i) : Fin k × Fin d` sits in the trailing `k * d`-block, at the
+rectangle index `chainIdx c i`. -/
+def chainSlot {p k d : ℕ} (c : Fin k) (i : Fin d) : Fin (p + k + k * d) :=
+  Fin.natAdd (p + k) (chainIdx c i)
+
+/-- The old-scope embedding into the enlarged scope `Fin (p + k + f)`: the
+identity on the first `p + k` indices, by `Fin.castAdd`. -/
+def castAddEmb {p k f : ℕ} : Fin (p + k) → Fin (p + k + f) := Fin.castAdd f
+
+/-- `castAddEmb` is injective, inherited from `Fin.castAdd_injective`. -/
+theorem castAddEmb_injective {p k f : ℕ} :
+    Function.Injective (castAddEmb : Fin (p + k) → Fin (p + k + f)) :=
+  Fin.castAdd_injective (p + k) f
+
+/-- `cubeSlot` is injective in the cube coordinate: it is the composite of the
+injective `Fin.natAdd p` and `Fin.castAdd (k * d)`. -/
+theorem cubeSlot_injective {p k d : ℕ} :
+    Function.Injective (cubeSlot : Fin k → Fin (p + k + k * d)) := by
+  intro c c' h
+  unfold cubeSlot at h
+  exact (Fin.natAdd_inj p).mp (Fin.castAdd_injective (p + k) (k * d) h)
+
+/-- `chainSlot` is injective in the chain cell: it is the composite of the
+injective `Fin.natAdd (p + k)` and `chainIdx`. -/
+theorem chainSlot_injective {p k d : ℕ} :
+    Function.Injective (fun q : Fin k × Fin d => chainSlot (p := p) q.1 q.2) := by
+  intro q q' h
+  unfold chainSlot at h
+  exact chainIdx_injective ((Fin.natAdd_inj (p + k)).mp h)
+
+/-- A cube slot and a chain slot are distinct: cube slots live in the
+`Fin.castAdd (k * d)` block of the first `p + k` indices, chain slots in the
+trailing `Fin.natAdd (p + k)` block, which are disjoint. -/
+theorem cubeSlot_ne_chainSlot {p k d : ℕ} (c : Fin k) (c' : Fin k) (i' : Fin d) :
+    cubeSlot (p := p) c ≠ chainSlot c' i' := by
+  unfold cubeSlot chainSlot
+  intro h
+  have hv := congrArg Fin.val h
+  rw [Fin.val_castAdd, Fin.val_natAdd, Fin.val_natAdd] at hv
+  have hlt : c.val < k := c.isLt
+  omega
+
+/-- A chain slot is never in the image of `castAddEmb`: `castAddEmb`'s image is
+exactly the first `p + k` indices, while a chain slot lies in the trailing
+`Fin.natAdd (p + k)` block. -/
+theorem castAddEmb_ne_chainSlot {p k d : ℕ} (j : Fin (p + k)) (c : Fin k) (i : Fin d) :
+    castAddEmb j ≠ chainSlot (d := d) c i := by
+  unfold castAddEmb chainSlot
+  intro h
+  have hv := congrArg Fin.val h
+  rw [Fin.val_castAdd, Fin.val_natAdd] at hv
+  have hlt : j.val < p + k := j.isLt
+  omega
+
+/-- The preimage of an embedded index under `castAddEmb` is its source index,
+by `preimage_apply` and the injectivity of `castAddEmb`. -/
+theorem preimage_castAddEmb_apply {p k f : ℕ} (j : Fin (p + k)) :
+    preimage (castAddEmb : Fin (p + k) → Fin (p + k + f)) (castAddEmb j) = some j :=
+  preimage_apply castAddEmb_injective j
+
+/-- The preimage of a chain slot under `castAddEmb` is `none`: chain slots lie
+off the image of `castAddEmb`, by `castAddEmb_ne_chainSlot` and
+`preimage_eq_none`. -/
+theorem preimage_castAddEmb_chainSlot {p k d : ℕ} (c : Fin k) (i : Fin d) :
+    preimage (castAddEmb : Fin (p + k) → Fin (p + k + k * d)) (chainSlot c i) = none :=
+  preimage_eq_none (fun j => castAddEmb_ne_chainSlot j c i)
 
 end GebLean
