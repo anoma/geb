@@ -1,5 +1,6 @@
 import GebLean.Utilities.EraDiophantine
 import Mathlib.Algebra.BigOperators.Ring.Finset
+import Mathlib.Tactic.Ring
 
 /-!
 # Per-coordinate degree certificate for the `diophOf` reduction
@@ -28,6 +29,10 @@ Lemma 3.5 chain-variable reduction of arXiv:2407.12928 is not needed.
   reflection of Expression (6) of arXiv:2407.12928 specialised to base `2`,
   with `ZMonomial.eval` its `ℤ`-valued denotation and `ZMonomial.evalNat` its
   unsigned `ℕ` magnitude.
+* `ZMonomial.mul` — the product of two signed simple-exponential monomials,
+  formed by sign exclusive-or, coefficient product, per-variable
+  exponential-coefficient sum (the shared base-`2` merge), and per-variable
+  polynomial-exponent sum.
 
 ## Main statements
 
@@ -47,6 +52,8 @@ Lemma 3.5 chain-variable reduction of arXiv:2407.12928 is not needed.
 * `ZMonomial.evalNat_cast`, `ZMonomial.eval_eq` — the bridge between the
   `ℤ`-valued `eval` and the `ℕ`-valued `evalNat`: the magnitude cast to `ℤ` is
   the absolute value of `eval`, and `eval` is `evalNat` signed by `sign`.
+* `ZMonomial.mul_eval` — the `ℤ`-valued denotation is multiplicative: the
+  denotation of `ZMonomial.mul` is the product of the denotations.
 
 ## Implementation notes
 
@@ -587,5 +594,43 @@ theorem ZMonomial.evalNat_cast {m : ℕ} (mon : ZMonomial m) (ρ : Fin m → ℕ
     (mon.evalNat ρ : ℤ) = |mon.eval ρ| := by
   rw [ZMonomial.eval_eq]
   cases mon.sign <;> simp [abs_of_nonneg]
+
+/-- The product of two signed simple-exponential monomials. The sign is the
+exclusive-or of the factor signs (`(-1)^a · (-1)^b = (-1)^(a ⊕ b)`); the
+coefficient is the term product; the per-variable exponential coefficient is the
+term sum (merging the shared base `2`: `2 ^ (c₁ ρ) · 2 ^ (c₂ ρ) = 2 ^ ((c₁ + c₂)
+ρ)`); and the per-variable polynomial exponent is the sum (`ρ ^ p₁ · ρ ^ p₂ = ρ ^
+(p₁ + p₂)`). -/
+def ZMonomial.mul {m : ℕ} (a b : ZMonomial m) : ZMonomial m where
+  sign := xor a.sign b.sign
+  coeff := a.coeff *ᵉ b.coeff
+  expCoeff := fun i => a.expCoeff i +ᵉ b.expCoeff i
+  polyExp := fun i => a.polyExp i + b.polyExp i
+
+/-- The `ℤ`-valued denotation is multiplicative: the denotation of the product
+monomial is the product of the denotations. The base-`2` exponentials merge by
+`pow_add`, the polynomial factors by `pow_add`, the coefficients by the `emul`
+evaluation lemma, and the signs by `(-1)^(a ⊕ b) = (-1)^a · (-1)^b`. -/
+theorem ZMonomial.mul_eval {m : ℕ} (a b : ZMonomial m) (ρ : Fin m → ℕ) :
+    (a.mul b).eval ρ = a.eval ρ * b.eval ρ := by
+  obtain ⟨sa, ca, eca, pa⟩ := a
+  obtain ⟨sb, cb, ecb, pb⟩ := b
+  simp only [ZMonomial.eval, ZMonomial.mul, emul_eval, eraInterp, fcons, eadd_eval]
+  have hexp : (∏ i, (2 : ℤ) ^ ((Tm.eval eraInterp (eca i) ρ
+        + Tm.eval eraInterp (ecb i) ρ) * ρ i))
+      = (∏ i, (2 : ℤ) ^ (Tm.eval eraInterp (eca i) ρ * ρ i))
+        * (∏ i, (2 : ℤ) ^ (Tm.eval eraInterp (ecb i) ρ * ρ i)) := by
+    rw [← Finset.prod_mul_distrib]
+    exact Finset.prod_congr rfl (fun i _ => by rw [add_mul, pow_add])
+  have hpoly : (∏ i, (ρ i : ℤ) ^ (pa i + pb i))
+      = (∏ i, (ρ i : ℤ) ^ pa i) * (∏ i, (ρ i : ℤ) ^ pb i) := by
+    rw [← Finset.prod_mul_distrib]
+    exact Finset.prod_congr rfl (fun i _ => pow_add _ _ _)
+  rw [hexp]
+  push_cast [hpoly]
+  cases sa <;> cases sb <;>
+    simp only [Bool.xor_false, Bool.xor_true, Bool.not_false, Bool.not_true,
+      Bool.false_eq_true, if_false, if_true] <;>
+    ring
 
 end GebLean
