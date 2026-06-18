@@ -1,5 +1,6 @@
 import GebLean.Utilities.EraDiophantine
 import Mathlib.Algebra.BigOperators.Ring.Finset
+import Mathlib.Algebra.BigOperators.Fin
 import Mathlib.Tactic.Ring
 
 /-!
@@ -47,6 +48,9 @@ Lemma 3.5 chain-variable reduction of arXiv:2407.12928 is not needed.
   monomial's per-slot exponential data is either trivial (`expBase = .zero`,
   `expCoeff = .zero`) or the base-`2` shape (`expBase = .succ Era.one`,
   `expCoeff = Era.one`).
+* `SimpleMonomial.toZ`, `SimpleSum.toZ` — the lift of a `diophOf` monomial (and
+  simple sum) over `Fin (p + k)` to the signed `ZMonomial` reflection, moving the
+  cube-coordinate polynomial degree of the coefficient into the `polyExp` field.
 
 ## Main statements
 
@@ -77,6 +81,10 @@ Lemma 3.5 chain-variable reduction of arXiv:2407.12928 is not needed.
   lies in the `ETm.IsVarProduct` grammar, by induction over the term `t`.
 * `diophOf_basePaired` — every monomial in `(diophOf t).sys` is base-paired, so
   each per-slot exponential factor is either `1` or `2 ^ ρ i`.
+* `SimpleMonomial.toZ_eval`, `SimpleSum.toZ_eval` — under the coefficient-grammar
+  and base-paired predicates, the `ℤ`-valued denotation of the lift at an appended
+  context `Fin.append ctx a` equals the natural-number `SimpleMonomial` (resp.
+  `SimpleSum`) value cast to `ℤ`.
 
 ## Implementation notes
 
@@ -1513,5 +1521,110 @@ theorem diophOf_basePaired {n : ℕ} (t : ETm n) : (diophOf t).sys.BasePaired :=
     | div => exact diophDiv_basePaired (ih ⟨0, by decide⟩) (ih ⟨1, by decide⟩)
     | mod => exact diophMod_basePaired (ih ⟨0, by decide⟩) (ih ⟨1, by decide⟩)
     | pow => exact diophPow_basePaired (ih ⟨0, by decide⟩) (ih ⟨1, by decide⟩)
+
+/-- Lift a single `diophOf` monomial over `Fin (p + k)` to a signed
+simple-exponential `ZMonomial`, moving the cube-coordinate polynomial degree of
+the coefficient into the `polyExp` field. The sign is positive (a `SimpleMonomial`
+denotes a natural number); the coefficient is the cube-degree-extraction residual
+`(mon.coeff.extractCubeDegree).1`; the exponential coefficient is carried over
+verbatim (the base-`2` specialisation of `ZMonomial` matches the base-paired
+shape of a `diophOf` monomial); and the polynomial exponent at each slot is the
+monomial's own `polyExp` plus the extracted cube degree, placed at the cube block
+`Fin.natAdd p c` and zero on the parameter block `Fin.castAdd k i` via
+`Fin.addCases`. -/
+def SimpleMonomial.toZ {p k : ℕ} (mon : SimpleMonomial (p + k)) : ZMonomial (p + k) where
+  sign := false
+  coeff := (ETm.extractCubeDegree mon.coeff).1
+  expCoeff := fun i => mon.expCoeff i
+  polyExp := fun i => mon.polyExp i +
+    Fin.addCases (motive := fun _ => ℕ) (fun _ => 0) (ETm.extractCubeDegree mon.coeff).2 i
+
+/-- The lift agrees with the natural-number monomial on the cube: the `ℤ`-valued
+denotation of `mon.toZ` at the appended context `Fin.append ctx a` equals the
+`SimpleMonomial` value cast to `ℤ`. The coefficient factor is reconciled by
+`ETm.extractCubeDegree_eval` (the cube-coordinate degree extracted into `polyExp`
+balances the residual coefficient); the polynomial-exponent product splits into
+the monomial's own polynomial factor times the extracted cube-coordinate
+monomial; and under `hbase` the base-paired exponential factors agree pointwise,
+since the trivial slot gives `0 ^ 0 = 2 ^ 0 = 1` and the base-`2` slot gives
+`2 ^ (expCoeff · ρ)` on both sides. -/
+theorem SimpleMonomial.toZ_eval {p k : ℕ} (mon : SimpleMonomial (p + k))
+    (ctx : Fin p → ℕ) (a : Fin k → ℕ)
+    (hcoeff : mon.CoeffVarProduct) (hbase : mon.BasePaired) :
+    mon.toZ.eval (Fin.append ctx a) = (mon.eval (Fin.append ctx a) : ℤ) := by
+  rw [ZMonomial.eval, SimpleMonomial.eval, SimpleMonomial.toZ]
+  simp only [Bool.false_eq_true, if_false, one_mul]
+  -- The exponential factor: base-paired slots agree pointwise with base `2`.
+  have hexp : (∏ i, (2 : ℤ)
+        ^ (Tm.eval eraInterp (mon.expCoeff i) (Fin.append ctx a) * (Fin.append ctx a) i))
+      = ((∏ i, Tm.eval eraInterp (mon.expBase i) (Fin.append ctx a)
+          ^ (Tm.eval eraInterp (mon.expCoeff i) (Fin.append ctx a)
+            * (Fin.append ctx a) i) : ℕ) : ℤ) := by
+    push_cast
+    refine Finset.prod_congr rfl (fun i _ => ?_)
+    rcases hbase i with ⟨hb, hc⟩ | ⟨hb, hc⟩
+    · rw [hb, hc]
+      simp only [Tm.eval, Nat.zero_mul, pow_zero]
+    · rw [hb, hc]
+      simp only [Era.one, Tm.eval]
+      norm_num
+  -- The polynomial-exponent factor splits into the own part and the cube part.
+  have hpoly : (∏ i, ((Fin.append ctx a) i : ℤ)
+        ^ (mon.polyExp i + Fin.addCases (motive := fun _ => ℕ) (fun _ => 0)
+            (ETm.extractCubeDegree mon.coeff).2 i))
+      = (∏ i, ((Fin.append ctx a) i : ℤ) ^ mon.polyExp i)
+        * (∏ c, (a c : ℤ) ^ ((ETm.extractCubeDegree mon.coeff).2 c)) := by
+    rw [show (∏ i, ((Fin.append ctx a) i : ℤ)
+          ^ (mon.polyExp i + Fin.addCases (motive := fun _ => ℕ) (fun _ => 0)
+              (ETm.extractCubeDegree mon.coeff).2 i))
+        = (∏ i, ((Fin.append ctx a) i : ℤ) ^ mon.polyExp i)
+          * (∏ i, ((Fin.append ctx a) i : ℤ)
+              ^ Fin.addCases (motive := fun _ => ℕ) (fun _ => 0)
+                  (ETm.extractCubeDegree mon.coeff).2 i) from by
+      rw [← Finset.prod_mul_distrib]
+      exact Finset.prod_congr rfl (fun i _ => pow_add _ _ _)]
+    congr 1
+    rw [Fin.prod_univ_add]
+    have hleft : (∏ i : Fin p, ((Fin.append ctx a) (Fin.castAdd k i) : ℤ)
+        ^ Fin.addCases (motive := fun _ => ℕ) (fun _ => 0)
+            (ETm.extractCubeDegree mon.coeff).2 (Fin.castAdd k i)) = 1 := by
+      refine Finset.prod_eq_one (fun i _ => ?_)
+      rw [Fin.addCases_left, pow_zero]
+    rw [hleft, one_mul]
+    refine Finset.prod_congr rfl (fun c _ => ?_)
+    rw [Fin.addCases_right, Fin.append_right]
+  rw [hexp]
+  push_cast
+  rw [hpoly]
+  -- The coefficient factor: extraction balances the cube-coordinate degree.
+  rw [ETm.extractCubeDegree_eval mon.coeff hcoeff ctx a]
+  push_cast
+  ring
+
+/-- Lift a simple sum over `Fin (p + k)` to a list of signed simple-exponential
+`ZMonomial`s, lifting each monomial with `SimpleMonomial.toZ`. -/
+def SimpleSum.toZ {p k : ℕ} (s : SimpleSum (p + k)) : List (ZMonomial (p + k)) :=
+  s.map SimpleMonomial.toZ
+
+/-- The lifted simple sum agrees with the natural-number simple sum on the cube:
+the sum of the `ℤ`-valued denotations of the lifted monomials at the appended
+context equals the `SimpleSum` value cast to `ℤ`. Each member's agreement is
+`SimpleMonomial.toZ_eval`, whose per-monomial hypotheses follow from the sum-level
+`CoeffVarProduct`/`BasePaired` predicates by membership. -/
+theorem SimpleSum.toZ_eval {p k : ℕ} (s : SimpleSum (p + k))
+    (ctx : Fin p → ℕ) (a : Fin k → ℕ)
+    (hcoeff : s.CoeffVarProduct) (hbase : s.BasePaired) :
+    ((s.toZ).map (fun mon => mon.eval (Fin.append ctx a))).sum
+      = (s.eval (Fin.append ctx a) : ℤ) := by
+  rw [SimpleSum.toZ, SimpleSum.eval]
+  induction s with
+  | nil => simp only [List.map_nil, List.sum_nil, Nat.cast_zero]
+  | cons mon rest ih =>
+    rw [List.map_cons, List.map_cons, List.sum_cons, List.map_cons, List.sum_cons,
+      Nat.cast_add]
+    rw [SimpleMonomial.toZ_eval mon ctx a (hcoeff mon (List.mem_cons_self ..))
+      (hbase mon (List.mem_cons_self ..))]
+    rw [ih (fun m hm => hcoeff m (List.mem_cons_of_mem _ hm))
+      (fun m hm => hbase m (List.mem_cons_of_mem _ hm))]
 
 end GebLean
