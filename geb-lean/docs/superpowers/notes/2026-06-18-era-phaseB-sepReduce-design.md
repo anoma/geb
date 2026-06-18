@@ -130,7 +130,7 @@ own task (B0) and name the two shared proof helpers.
 ```lean
 def sepReduce {p k : ℕ} (s : SosSystem (p+k)) : Σ f : ℕ, List (ZMonomial (p + k + f))
 
-theorem sepReduce_degree {p k : ℕ} (s : SosSystem (p+k)) :
+theorem sepReduce_degree {p k : ℕ} (s : SosSystem (p+k)) (hzero : s.PolyExpZero) :
     ∀ mon ∈ (sepReduce s).2, ∀ i, mon.polyExp i ≤ 2
 
 theorem sepReduce_sound {p k : ℕ} (s : SosSystem (p+k))
@@ -147,10 +147,15 @@ theorem sepReduce_unique {p k : ℕ} (s : SosSystem (p+k))
 ```
 
 The `hcoeff`/`hbase` hypotheses on `sound`/`unique` are the correction
-from the plan's sketch (needed to invoke `SosSystem.toZ_eval`); Phase E
-already threads these `diophOf` invariants, so they cost nothing
-downstream. Together `sound` (each `R`-zero `(ρ,b)` projects to an
-`s`-zero `ρ`) and `unique` (each `s`-zero `ρ` has exactly one `b`) give
+from the plan's sketch (needed to invoke `SosSystem.toZ_eval`); the
+`hzero : s.PolyExpZero` hypothesis on `sepReduce_degree` (and, as needed,
+on `sound`/`unique`) is a third such invariant — `SimpleMonomial.toZ`
+retains the source monomial's parameter-slot `polyExp`, so the degree
+bound is false without it. All three are `diophOf` invariants
+(`diophOf_polyExpZero`/`diophOf_coeffVarProduct`/`diophOf_basePaired`)
+discharged downstream, so they cost nothing. Together `sound` (each
+`R`-zero `(ρ,b)` projects to an `s`-zero `ρ`) and `unique` (each `s`-zero
+`ρ` has exactly one `b`) give
 the fibrewise bijection Phase E's count collapse consumes.
 
 ## Hardest steps (named for B4)
