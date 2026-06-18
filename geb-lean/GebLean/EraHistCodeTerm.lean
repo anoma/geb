@@ -47,6 +47,14 @@ module supplies the read-off that consumes its output.
   `∏ c, (a c) ^ polyExp (natAdd p c) · (cubeBase ctx c) ^ (a c)`, the summand
   shape consumed by `GebLean.EraHypercube.cubeSum_factor` (arXiv:2407.12928,
   Lemma 3.2).
+* `GebLean.EraHypercube.weight_mixedRadix_factor` — the base-`2 ^ (2 * w)`
+  position weight factors over cube coordinates:
+  `2 ^ (2 * w * mixedRadix k t a) = ∏ c, (2 ^ (2 * w * t ^ c)) ^ (a c)`.
+* `ZMonomial.eraMonoCubeSum` — the weighted cube-sum of a single separable
+  `ZMonomial`'s magnitude factors, via `GebLean.EraHypercube.cubeSum_factor`,
+  into `cubeConst ctx` times a product over cube coordinates of per-coordinate
+  inner geometric sums with bases `cubeBase ctx c · 2 ^ (2 * w * t ^ c)`
+  (arXiv:2407.12928, Lemma 3.2).
 
 ## Implementation notes
 
@@ -226,5 +234,64 @@ theorem ZMonomial.cubeFactor {p k : ℕ} (mon : ZMonomial (p + k)) (ctx : Fin p 
     Finset.prod_congr rfl (fun c _ => by rw [hcubeExp c a (fun _ => 0), pow_mul])
   rw [hparam, hcube, Finset.prod_mul_distrib]
   ring
+
+/-- The base-`2 ^ (2 * w)` weight of a cube point factors over coordinates: the
+`mixedRadix`-positioned weight `2 ^ (2 * w * mixedRadix k t a)` is the product
+over cube coordinates `c` of `(2 ^ (2 * w * t ^ c)) ^ (a c)`. This distributes
+the cube-sum weight into the per-coordinate geometric base
+`2 ^ (2 * w * t ^ c)` consumed by `GebLean.EraHypercube.cubeSum_factor`. -/
+theorem EraHypercube.weight_mixedRadix_factor (k w t : ℕ) (a : Fin k → ℕ) :
+    2 ^ (2 * w * EraHypercube.mixedRadix k t a)
+      = ∏ c : Fin k, (2 ^ (2 * w * t ^ (c : ℕ))) ^ (a c) := by
+  rw [EraHypercube.mixedRadix, Finset.mul_sum, ← Finset.prod_pow_eq_pow_sum]
+  refine Finset.prod_congr rfl (fun c _ => ?_)
+  rw [← pow_mul]
+  ring_nf
+
+/-- The weighted cube-sum of a single separable degree-`≤ 2` `ZMonomial`'s
+magnitude factors, via `GebLean.EraHypercube.cubeSum_factor`, into the
+parameter-only constant `mon.cubeConst ctx` times a product over cube
+coordinates of per-coordinate inner geometric sums. The base-`2 ^ (2 * w)`
+position weight `2 ^ (2 * w * mixedRadix k t a)` is absorbed into each
+coordinate's geometric base, giving inner bases
+`mon.cubeBase ctx c * 2 ^ (2 * w * t ^ c)` and inner exponents
+`mon.polyExp (Fin.natAdd p c)`. This is the natural-number identity the term
+realisation matches against the `Era` geometric-sum evaluation lemmas
+(arXiv:2407.12928, Lemma 3.2). -/
+theorem ZMonomial.eraMonoCubeSum {p k : ℕ} (mon : ZMonomial (p + k)) (ctx : Fin p → ℕ)
+    (w t : ℕ)
+    (hcoeff : ∀ a a', Tm.eval eraInterp mon.coeff (Fin.append ctx a)
+        = Tm.eval eraInterp mon.coeff (Fin.append ctx a'))
+    (hparamExp : ∀ (i : Fin p) (a a'), Tm.eval eraInterp (mon.expCoeff (Fin.castAdd k i))
+          (Fin.append ctx a)
+        = Tm.eval eraInterp (mon.expCoeff (Fin.castAdd k i)) (Fin.append ctx a'))
+    (hcubeExp : ∀ (c : Fin k) (a a'), Tm.eval eraInterp (mon.expCoeff (Fin.natAdd p c))
+          (Fin.append ctx a)
+        = Tm.eval eraInterp (mon.expCoeff (Fin.natAdd p c)) (Fin.append ctx a')) :
+    (∑ a ∈ GebLean.EraHypercube.cubePoints k t,
+        2 ^ (2 * w * GebLean.EraHypercube.mixedRadix k t a)
+          * mon.evalNat (Fin.append ctx a))
+      = mon.cubeConst ctx
+        * ∏ c : Fin k,
+            (∑ j ∈ Finset.range t,
+              j ^ mon.polyExp (Fin.natAdd p c)
+                * (mon.cubeBase ctx c * 2 ^ (2 * w * t ^ (c : ℕ))) ^ j) := by
+  -- substitute the weight factorisation and the monomial's separable normal form
+  have hsummand : ∀ a ∈ GebLean.EraHypercube.cubePoints k t,
+      2 ^ (2 * w * GebLean.EraHypercube.mixedRadix k t a) * mon.evalNat (Fin.append ctx a)
+        = mon.cubeConst ctx
+          * ∏ c : Fin k, (a c) ^ mon.polyExp (Fin.natAdd p c)
+              * (mon.cubeBase ctx c * 2 ^ (2 * w * t ^ (c : ℕ))) ^ (a c) := by
+    intro a _
+    rw [EraHypercube.weight_mixedRadix_factor,
+      mon.cubeFactor ctx hcoeff hparamExp hcubeExp a]
+    rw [mul_comm, mul_assoc, ← Finset.prod_mul_distrib]
+    refine congrArg (mon.cubeConst ctx * ·) (Finset.prod_congr rfl (fun c _ => ?_))
+    rw [mul_pow]
+    ring
+  rw [Finset.sum_congr rfl hsummand, ← Finset.mul_sum]
+  refine congrArg (mon.cubeConst ctx * ·) ?_
+  exact GebLean.EraHypercube.cubeSum_factor k (fun c => mon.polyExp (Fin.natAdd p c))
+    (fun c => mon.cubeBase ctx c * 2 ^ (2 * w * t ^ (c : ℕ))) t
 
 end GebLean
