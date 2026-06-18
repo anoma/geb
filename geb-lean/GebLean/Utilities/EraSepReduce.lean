@@ -82,6 +82,10 @@ Lemma 3.5 chain-variable reduction of arXiv:2407.12928 is not needed.
   degree at the matching chain slot (the substitution `x_c^{i+1} ↦ y_{c,i+1}`).
 * `ChainHolds` — the sub-domain predicate `ρ (chainSlot c i) = ρ (cubeSlot c) ^ (i + 1)`
   on which `chainSub` preserves the monomial denotation.
+* `sepReduce` — the reflect-then-reduce pipeline of Lemma 3.5: reflect `s` to the
+  `ZMonomial` list `SosSystem.toZ s`, weaken into the enlarged scope, apply `chainSub`,
+  and emit `chainEqs` together with the literal square of the reduced predicate, returned
+  as a dependent pair recording the `k * d` new variables.
 
 ## Main statements
 
@@ -144,12 +148,28 @@ Lemma 3.5 chain-variable reduction of arXiv:2407.12928 is not needed.
   `ZMonomial.maxCubeDegree`.
 * `chainEqList_polyExp_le_one`, `chainEqs_degree` — each `chainEqList` monomial has
   per-slot polynomial degree at most `1`, hence each `chainEqs` monomial at most `2`.
-* `chainSub_polyExp_cubeSlot`, `chainSub_polyExp_chainSlot`, `chainSub_polyExp_param`,
-  `chainSub_polyExp_le_one` — the per-slot behaviour of `chainSub` (cube → `0`, chain →
-  base plus a single deposit, parameter unchanged) and the resulting degree bound.
+* `chainSub_polyExp_cubeSlot`, `chainSub_polyExp_chainSlot`, `chainSub_polyExp_param` —
+  the per-slot behaviour of `chainSub` (cube → `0`, chain → base plus a single deposit,
+  parameter unchanged).
 * `chainSub_polyProd`, `chainSub_eval` — on the `ChainHolds` sub-domain, with cube
   degrees bounded by the chain length, `chainSub` preserves the polynomial-factor
   product, hence the whole monomial denotation.
+* `SimpleMonomial.toZ_polyExp_param_zero`, `SimpleSum.toZ_polyExp_param_zero`,
+  `SosTerm.toZ_polyExp_param_zero`, `SosSystem.toZ_polyExp_param_zero` — under
+  `PolyExpZero`, every lifted monomial carries polynomial degree `0` at every parameter
+  slot, since the cube-degree extraction deposits only at cube slots and the product and
+  doubling builders preserve the parameter degree.
+* `ZMonomial.listMul_polyExp_param_zero`, `ZMonomial.map_negDouble_polyExp_param_zero` —
+  the parameter-slot zero-degree property is preserved by the pairwise product list and by
+  `negDouble`.
+* `ZMonomial.weaken_polyExp_chainSlot_zero`, `ZMonomial.weaken_polyExp_param_zero` — a
+  weakened source monomial carries no polynomial degree at a chain slot, and none at a
+  parameter slot when the source has none there.
+* `chainSub_weaken_polyExp_le_one` — `chainSub` of a weakened source monomial has per-slot
+  polynomial degree at most `1`: cube slots collapse to `0`, chain slots are at most one
+  deposit, and parameter slots are unchanged.
+* `sepReduce_degree` — every monomial of the reduced system `(sepReduce s).2` has
+  per-coordinate polynomial degree at most `2`, for any source system with `PolyExpZero`.
 
 ## Implementation notes
 
@@ -2219,31 +2239,6 @@ theorem chainSub_polyExp_chainSlot {p k d : ℕ} (mon : ZMonomial (p + k + k * d
   rw [show finProdFinEquiv.symm (chainIdx c i) = (c, i) from by
     rw [chainIdx, Equiv.symm_apply_apply]]
 
-/-- `chainSub` preserves the per-slot degree bound `≤ 1` for a monomial whose chain
-slots all carry exponent `0` (the weakened monomials produced by `SosSystem.toZ` along
-`castAddEmb`). Cube slots become `0`; a chain slot's exponent is `0` (by the hypothesis)
-plus at most `1` (the deposit); a parameter slot is unchanged, hence `≤ 1` by the input
-bound. -/
-theorem chainSub_polyExp_le_one {p k d : ℕ} (mon : ZMonomial (p + k + k * d))
-    (hbound : ∀ j, mon.polyExp j ≤ 1)
-    (hchain : ∀ (c : Fin k) (i : Fin d), mon.polyExp (chainSlot c i) = 0)
-    (j : Fin (p + k + k * d)) :
-    (chainSub mon).polyExp j ≤ 1 := by
-  simp only [chainSub]
-  induction j using Fin.addCases with
-  | left j₁ =>
-    rw [Fin.addCases_left]
-    induction j₁ using Fin.addCases with
-    | left pp => rw [Fin.addCases_left]; exact hbound _
-    | right c => rw [Fin.addCases_right]; exact Nat.zero_le 1
-  | right j₂ =>
-    rw [Fin.addCases_right]
-    have hcj : mon.polyExp (Fin.natAdd (p + k) j₂)
-        = mon.polyExp (chainSlot (finProdFinEquiv.symm j₂).1 (finProdFinEquiv.symm j₂).2) := by
-      rw [chainSlot, chainIdx, Equiv.apply_symm_apply]
-    rw [hcj, hchain]
-    split <;> omega
-
 /-- The chain-substitution predicate on a context: each chain slot `y_{c,i+1}` holds the
 power `x_c^{i+1}` of its cube coordinate. This is the sub-domain on which `chainSub`
 preserves the monomial denotation (`chainSub_eval`). -/
@@ -2368,5 +2363,198 @@ theorem chainSub_eval {p k d : ℕ} (mon : ZMonomial (p + k + k * d))
   unfold ZMonomial.eval
   congr 2
   exact congrArg Int.ofNat (chainSub_polyProd mon ρ hchain hweak hdeg)
+
+/-- The reflect-then-reduce pipeline of arXiv:2407.12928, Lemma 3.5. Reflect the
+sum-of-squares system `s` to a signed `ZMonomial` list `L₀ := SosSystem.toZ s`,
+take the global chain length `d := max 1 (ZMonomial.maxCubeDegree L₀)` (the
+`max 1` guarding the all-linear case so chains are well-formed), and add
+`f := k * d` chain variables. Weaken `L₀` into the enlarged scope
+`Fin (p + k + k * d)` along `Fin.castAdd (k * d)`, apply `chainSub` to lower each
+cube slot's polynomial degree into the matching chain slot, and emit the chain
+equations `chainEqs` together with the literal square
+`ZMonomial.listMul Psub Psub` of the reduced predicate. The `Sigma` records the
+number `f = k * d` of new variables alongside the reduced list. -/
+def sepReduce {p k : ℕ} (s : SosSystem (p + k)) :
+    Σ f : ℕ, List (ZMonomial (p + k + f)) :=
+  let L₀ := SosSystem.toZ s
+  let d := max 1 (ZMonomial.maxCubeDegree L₀)
+  let L₁ := L₀.map (fun mon => mon.weaken (Fin.castAdd (k * d)))
+  let Psub := L₁.map chainSub
+  ⟨k * d, chainEqs ++ ZMonomial.listMul Psub Psub⟩
+
+/-- The lift `SimpleMonomial.toZ` carries no polynomial degree at a parameter
+slot when the source monomial has none: the cube-degree extraction deposits
+degree only at the cube block, so the parameter slot's exponent is the source
+monomial's, which `PolyExpZero` makes `0`. -/
+theorem SimpleMonomial.toZ_polyExp_param_zero {p k : ℕ} (mon : SimpleMonomial (p + k))
+    (h : mon.PolyExpZero) (i : Fin p) : mon.toZ.polyExp (Fin.castAdd k i) = 0 := by
+  simp only [SimpleMonomial.toZ, Fin.addCases_left, Nat.add_zero]
+  exact h _
+
+/-- Every monomial of `SimpleSum.toZ` carries no polynomial degree at a parameter
+slot when the source sum has `PolyExpZero`: each lifted monomial is
+`SimpleMonomial.toZ` of a source monomial, handled by
+`SimpleMonomial.toZ_polyExp_param_zero`. -/
+theorem SimpleSum.toZ_polyExp_param_zero {p k : ℕ} (s : SimpleSum (p + k))
+    (h : s.PolyExpZero) :
+    ∀ mon ∈ s.toZ, ∀ i : Fin p, mon.polyExp (Fin.castAdd k i) = 0 := by
+  intro mon hmon i
+  rw [SimpleSum.toZ, List.mem_map] at hmon
+  obtain ⟨mon₀, hmon₀, rfl⟩ := hmon
+  exact SimpleMonomial.toZ_polyExp_param_zero mon₀ (h mon₀ hmon₀) i
+
+/-- The parameter-slot zero-degree property is preserved by the pairwise product
+list `ZMonomial.listMul`: each product monomial's parameter exponent is the sum
+of the two factors' (by `ZMonomial.mul`), both `0` by the factor lists'
+properties. -/
+theorem ZMonomial.listMul_polyExp_param_zero {p k : ℕ}
+    (L₁ L₂ : List (ZMonomial (p + k)))
+    (h₁ : ∀ mon ∈ L₁, ∀ i : Fin p, mon.polyExp (Fin.castAdd k i) = 0)
+    (h₂ : ∀ mon ∈ L₂, ∀ i : Fin p, mon.polyExp (Fin.castAdd k i) = 0) :
+    ∀ mon ∈ ZMonomial.listMul L₁ L₂, ∀ i : Fin p, mon.polyExp (Fin.castAdd k i) = 0 := by
+  intro mon hmon i
+  obtain ⟨a, ha, b, hb, rfl⟩ := ZMonomial.mem_listMul hmon
+  simp only [ZMonomial.mul]
+  rw [h₁ a ha i, h₂ b hb i]
+
+/-- The parameter-slot zero-degree property is preserved by `ZMonomial.negDouble`:
+the doubling and sign-flip leave the polynomial exponents unchanged. -/
+theorem ZMonomial.map_negDouble_polyExp_param_zero {p k : ℕ}
+    (L : List (ZMonomial (p + k)))
+    (h : ∀ mon ∈ L, ∀ i : Fin p, mon.polyExp (Fin.castAdd k i) = 0) :
+    ∀ mon ∈ L.map ZMonomial.negDouble, ∀ i : Fin p, mon.polyExp (Fin.castAdd k i) = 0 := by
+  intro mon hmon i
+  rw [List.mem_map] at hmon
+  obtain ⟨a, ha, rfl⟩ := hmon
+  simp only [ZMonomial.negDouble]
+  exact h a ha i
+
+mutual
+/-- Every monomial of `SosTerm.toZ` carries no polynomial degree at a parameter
+slot when the source atom has `PolyExpZero`: the `sqDist` blocks are `listMul`
+products and `negDouble` images of `SimpleSum.toZ` lifts, the `prod` block a
+`listMul` of sub-system lifts, all handled by the corresponding parameter-zero
+preservation lemmas. -/
+theorem SosTerm.toZ_polyExp_param_zero {p k : ℕ} (a : SosTerm (p + k))
+    (h : a.PolyExpZero) :
+    ∀ mon ∈ a.toZ, ∀ i : Fin p, mon.polyExp (Fin.castAdd k i) = 0 := by
+  match a with
+  | .sqDist P Q =>
+    obtain ⟨hP, hQ⟩ := h
+    rw [SosTerm.toZ]
+    intro mon hmon i
+    rw [List.mem_append, List.mem_append] at hmon
+    rcases hmon with (hm | hm) | hm
+    · exact ZMonomial.listMul_polyExp_param_zero _ _
+        (SimpleSum.toZ_polyExp_param_zero P hP) (SimpleSum.toZ_polyExp_param_zero P hP) mon hm i
+    · exact ZMonomial.listMul_polyExp_param_zero _ _
+        (SimpleSum.toZ_polyExp_param_zero Q hQ) (SimpleSum.toZ_polyExp_param_zero Q hQ) mon hm i
+    · exact ZMonomial.map_negDouble_polyExp_param_zero _
+        (ZMonomial.listMul_polyExp_param_zero _ _
+          (SimpleSum.toZ_polyExp_param_zero P hP) (SimpleSum.toZ_polyExp_param_zero Q hQ)) mon hm i
+  | .prod s t =>
+    obtain ⟨hs, ht⟩ := h
+    rw [SosTerm.toZ]
+    exact ZMonomial.listMul_polyExp_param_zero _ _
+      (SosSystem.toZ_polyExp_param_zero s hs) (SosSystem.toZ_polyExp_param_zero t ht)
+--
+/-- Every monomial of `SosSystem.toZ` carries no polynomial degree at a parameter
+slot when the source system has `PolyExpZero`: each atom's lift is concatenated,
+handled atom-wise by `SosTerm.toZ_polyExp_param_zero`. -/
+theorem SosSystem.toZ_polyExp_param_zero {p k : ℕ} (s : SosSystem (p + k))
+    (h : s.PolyExpZero) :
+    ∀ mon ∈ s.toZ, ∀ i : Fin p, mon.polyExp (Fin.castAdd k i) = 0 := by
+  match s with
+  | [] => intro mon hmon; rw [SosSystem.toZ] at hmon; simp at hmon
+  | a :: rest =>
+    obtain ⟨ha, hrest⟩ := h
+    rw [SosSystem.toZ]
+    intro mon hmon i
+    rw [List.mem_append] at hmon
+    rcases hmon with hm | hm
+    · exact SosTerm.toZ_polyExp_param_zero a ha mon hm i
+    · exact SosSystem.toZ_polyExp_param_zero rest hrest mon hm i
+end
+
+/-- A weakened source monomial carries no polynomial degree at a chain slot: the
+chain slot lies off the image of `Fin.castAdd (k * d)`, where `ZMonomial.weaken`
+returns the trivial exponent `0` (by `preimage_castAddEmb_chainSlot`). -/
+theorem ZMonomial.weaken_polyExp_chainSlot_zero {p k d : ℕ} (mon₀ : ZMonomial (p + k))
+    (c : Fin k) (i : Fin d) :
+    (mon₀.weaken (Fin.castAdd (k * d))).polyExp (chainSlot c i) = 0 := by
+  simp only [ZMonomial.weaken,
+    show (Fin.castAdd (k * d) : Fin (p + k) → Fin (p + k + k * d)) = castAddEmb from rfl]
+  rw [preimage_castAddEmb_chainSlot]
+
+/-- A weakened source monomial carries no polynomial degree at a parameter slot
+when the source has none there: `ZMonomial.weaken` reads the parameter slot off
+the image of `Fin.castAdd (k * d)`, recovering the source exponent (by
+`preimage_castAddEmb_apply`), which the hypothesis makes `0`. -/
+theorem ZMonomial.weaken_polyExp_param_zero {p k d : ℕ} (mon₀ : ZMonomial (p + k))
+    (h0 : ∀ i : Fin p, mon₀.polyExp (Fin.castAdd k i) = 0) (pp : Fin p) :
+    (mon₀.weaken (Fin.castAdd (k * d))).polyExp (Fin.castAdd (k * d) (Fin.castAdd k pp)) = 0 := by
+  simp only [ZMonomial.weaken,
+    show (Fin.castAdd (k * d) : Fin (p + k) → Fin (p + k + k * d)) = castAddEmb from rfl]
+  rw [preimage_castAddEmb_apply]
+  exact h0 pp
+
+/-- `chainSub` applied to a weakened source monomial has per-slot polynomial
+degree at most `1`, when the source carries no parameter degree. `chainSub`
+zeroes cube slots; a chain slot is `0` (the weakened monomial, by
+`ZMonomial.weaken_polyExp_chainSlot_zero`) plus at most the single deposit; a
+parameter slot is unchanged, hence `0` (by
+`ZMonomial.weaken_polyExp_param_zero`). The arbitrary cube degree of the weakened
+monomial is collapsed by `chainSub`, so no input cube bound is required. -/
+theorem chainSub_weaken_polyExp_le_one {p k d : ℕ} (mon₀ : ZMonomial (p + k))
+    (h0 : ∀ i : Fin p, mon₀.polyExp (Fin.castAdd k i) = 0)
+    (j : Fin (p + k + k * d)) :
+    (chainSub (mon₀.weaken (Fin.castAdd (k * d)))).polyExp j ≤ 1 := by
+  induction j using Fin.addCases with
+  | left j₁ =>
+    induction j₁ using Fin.addCases with
+    | left pp =>
+      rw [chainSub_polyExp_param, ZMonomial.weaken_polyExp_param_zero mon₀ h0]
+      exact Nat.zero_le 1
+    | right c =>
+      have hc : (Fin.castAdd (k * d) (Fin.natAdd p c) : Fin (p + k + k * d)) = cubeSlot c := rfl
+      rw [hc, chainSub_polyExp_cubeSlot]
+      exact Nat.zero_le 1
+  | right j₂ =>
+    have hkey : (Fin.natAdd (p + k) j₂ : Fin (p + k + k * d))
+        = chainSlot (finProdFinEquiv.symm j₂).1 (finProdFinEquiv.symm j₂).2 := by
+      rw [chainSlot, chainIdx, Equiv.apply_symm_apply]
+    rw [hkey, chainSub_polyExp_chainSlot, ZMonomial.weaken_polyExp_chainSlot_zero]
+    split <;> omega
+
+/-- The reduced system `(sepReduce s).2` has per-coordinate polynomial degree at
+most `2`, for any source system with `PolyExpZero`. The `chainEqs` block is
+bounded by `chainEqs_degree`; the squared-predicate block `listMul Psub Psub` is
+a product (`ZMonomial.mul`) of two `Psub` monomials, each of which —
+a `chainSub` of a weakened source monomial — has per-slot degree at most `1`
+(`chainSub_weaken_polyExp_le_one`, whose parameter-degree premise is supplied by
+`SosSystem.toZ_polyExp_param_zero`), so the product is at most `1 + 1 = 2`. The
+`PolyExpZero` hypothesis is the parameter-degree input the squared block requires;
+for every `diophOf` system this hypothesis is discharged by `diophOf_polyExpZero`. -/
+theorem sepReduce_degree {p k : ℕ} (s : SosSystem (p + k)) (hzero : s.PolyExpZero) :
+    ∀ mon ∈ (sepReduce s).2, ∀ i, mon.polyExp i ≤ 2 := by
+  simp only [sepReduce]
+  intro mon hmon i
+  rcases List.mem_append.mp hmon with hm | hm
+  · exact chainEqs_degree mon hm i
+  · obtain ⟨a, ha, b, hb, rfl⟩ := ZMonomial.mem_listMul hm
+    simp only [ZMonomial.mul]
+    have hbound : ∀ w ∈ List.map chainSub
+        (List.map (fun mon => mon.weaken
+          (Fin.castAdd (k * max 1 (ZMonomial.maxCubeDegree s.toZ)))) s.toZ),
+        w.polyExp i ≤ 1 := by
+      intro w hw
+      rw [List.map_map, List.mem_map] at hw
+      obtain ⟨mon₀, hmon₀, rfl⟩ := hw
+      simp only [Function.comp_apply]
+      exact chainSub_weaken_polyExp_le_one mon₀
+        (SosSystem.toZ_polyExp_param_zero s hzero mon₀ hmon₀) i
+    have := hbound a ha
+    have := hbound b hb
+    omega
 
 end GebLean
