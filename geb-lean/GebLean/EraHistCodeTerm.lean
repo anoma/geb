@@ -2246,4 +2246,289 @@ theorem eraCountPred_eval {n : ℕ} (τ : ETm n) (ctx : Fin n → ℕ) :
   refine congrArg Finset.card (Finset.filter_congr (fun x _ => ?_))
   rw [reindexSys_eval]
 
+open GebLean.EraCompleteness in
+/-- The hit-count collapse of arXiv:2606.09336, Claim 3: the number of cube points
+of `eraHitCount_cubeCount` — moved input `j`, pinned output, and `diophOf`
+witnesses — at which the input-side re-indexed system of the hit-gap predicate
+vanishes equals `hitCount`, the number of indices `j < n = ctx 1` that hit for code
+`x = ctx 0`. The bijection sends a cube zero to its moved input `j`; its inverse
+sends a hitting index `j` to the cube point that pins the moved slot to `j`, the
+output slot to `0`, and the witness slots to the unique `diophOf` witness over
+`Fin.snoc ctx j` (selected through `diophOf_unique`). The forward map lands in
+`hitCount`'s filter by `reindexInputSys_eval_zero_iff` then
+`hitGapTm_eval_zero_iff`; the inverse lands in the cube by `eraHitBase_n`,
+`eraHitBase_pos`, and `diophOf_bound`/`eraHitBase_bound`, and is a re-indexed zero
+by `hW_zero`; the round trips identify the witness slots through `diophOf`
+witness uniqueness. The step and coding-base denotations are read off
+`Fin.snoc ctx (ctx 1)`, which agrees with `Fin.snoc ctx j` since neither reads the
+moved-input slot. -/
+theorem hitCube_card_eq_hitCount {k : ℕ} (stepTm : ETm (2 + k)) (ATerm : ETm (1 + k))
+    (ctx : Fin (2 + k) → ℕ) :
+    ((GebLean.EraHypercube.cubePoints (1 + 1 + (diophOf (hitGapTm stepTm ATerm)).witArity)
+        (Tm.eval eraInterp (eraHitBase stepTm ATerm) ctx)).filter
+        (fun a => SosSystem.eval (reindexInputSys (hitGapTm stepTm ATerm))
+          (Fin.append ctx a) = 0)).card
+      = GebLean.EraRecurrence.hitCount
+          (fun j v => Tm.eval eraInterp stepTm (hitGapStepCtx (Fin.snoc ctx (ctx 1)) j v))
+          (Tm.eval eraInterp ATerm (hitGapBaseCtx (Fin.snoc ctx (ctx 1)))) (ctx 0) (ctx 1) := by
+  set pred := hitGapTm stepTm ATerm with hpred
+  set w := (diophOf pred).witArity with hw
+  set B := Tm.eval eraInterp (eraHitBase stepTm ATerm) ctx with hB
+  -- slot abbreviations for the cube dimension `Fin (1 + 1 + w)`
+  set movedSlot : Fin (1 + 1 + w) := Fin.castAdd w (Fin.castAdd 1 (0 : Fin 1)) with hmovedSlot
+  set outSlot : Fin (1 + 1 + w) := Fin.castAdd w (Fin.last 1) with houtSlot
+  -- the hit-gap predicate at the moved-input-extended context, for a cube zero
+  have hpz_of_zero : ∀ a : Fin (1 + 1 + w) → ℕ,
+      SosSystem.eval (reindexInputSys pred) (Fin.append ctx a) = 0 →
+        Tm.eval eraInterp pred (Fin.snoc ctx (a movedSlot)) = 0 := by
+    intro a h0
+    rw [reindexInputSys_eval_zero_iff] at h0
+    obtain ⟨hsys, hout⟩ := h0
+    have hgraph := (diophOf_encodes pred).1
+      (Fin.append ctx (fun i => a (Fin.castAdd w (Fin.castAdd 1 i))))
+      (a (Fin.castAdd w (Fin.last 1)))
+      (fun i => a (Fin.natAdd (1 + 1) i)) hsys
+    rw [hout] at hgraph
+    have hsnoc := Fin.append_right_eq_snoc ctx
+      (fun i => a (Fin.castAdd w (Fin.castAdd 1 i)))
+    rw [hsnoc] at hgraph
+    exact hgraph.symm
+  -- the moved index of any cube zero is forced below the loop bound `n = ctx 1`
+  have hmoved_lt : ∀ a : Fin (1 + 1 + w) → ℕ,
+      SosSystem.eval (reindexInputSys pred) (Fin.append ctx a) = 0 → a movedSlot < ctx 1 := by
+    intro a h0
+    have hpz := hpz_of_zero a h0
+    have hjlt := ((hitGapTm_eval_zero_iff stepTm ATerm _).mp hpz).2
+    have h1 : (1 : Fin ((2 + k) + 1)) = Fin.castSucc (1 : Fin (2 + k)) := by
+      refine Fin.ext ?_
+      simp only [Fin.val_castSucc, Fin.val_one']
+      rw [Nat.one_mod_eq_one.mpr (by omega), Nat.one_mod_eq_one.mpr (by omega)]
+    rwa [Fin.snoc_last, h1, Fin.snoc_castSucc] at hjlt
+  -- the unique zeroing witness over a hitting index `j`, as a guarded total function
+  set ρj : ℕ → (Fin ((2 + k) + 1) → ℕ) := fun j => Fin.snoc ctx j with hρj
+  have huniq : ∀ j, Tm.eval eraInterp pred (ρj j) = 0 →
+      ∃! ww, SosSystem.eval (diophOf pred).sys ((diophOf pred).ctx (ρj j) 0 ww) = 0 :=
+    fun j hj => diophOf_unique pred (ρj j) 0 hj
+  set W : ℕ → Fin w → ℕ := fun j =>
+    if hj : Tm.eval eraInterp pred (ρj j) = 0 then Classical.choose (huniq j hj)
+    else fun _ => 0 with hW
+  -- the guarded witness zeros the `diophOf` system over a hitting index
+  have hW_zero : ∀ j, (hj : Tm.eval eraInterp pred (ρj j) = 0) →
+      SosSystem.eval (diophOf pred).sys ((diophOf pred).ctx (ρj j) 0 (W j)) = 0 := by
+    intro j hj
+    have : W j = Classical.choose (huniq j hj) := by rw [hW]; simp only [hj, dif_pos]
+    rw [this]
+    exact (Classical.choose_spec (huniq j hj)).1
+  -- the assembled inverse cube point: moved slot ↦ j, output slot ↦ 0, witness slot ↦ W j
+  set jinv : ℕ → (Fin (1 + 1 + w) → ℕ) :=
+    fun j => Fin.append (Fin.snoc (fun _ : Fin 1 => j) (0 : ℕ)) (W j) with hjinv
+  -- the ambient slots of `Fin.snoc ctx p` are read off `ctx`, independent of the moved value `p`
+  have hambmatch : ∀ (p : ℕ) (a : Fin k),
+      (Fin.snoc ctx p : Fin ((2 + k) + 1) → ℕ) (ambIdx a) = ctx ⟨2 + a, by omega⟩ := by
+    intro p a
+    have hamb : (ambIdx a : Fin ((2 + k) + 1))
+        = Fin.castSucc (⟨2 + a, by omega⟩ : Fin (2 + k)) := by
+      refine Fin.ext ?_
+      simp only [ambIdx, Fin.val_castSucc]
+    rw [hamb, Fin.snoc_castSucc]
+  -- the step denotation of `hitGapStepCtx (Fin.snoc ctx p)` is independent of `p`
+  have hstepmatch : ∀ (p j v : ℕ),
+      hitGapStepCtx (Fin.snoc ctx p) j v = hitGapStepCtx (Fin.snoc ctx (ctx 1)) j v := by
+    intro p j v
+    funext i
+    refine Fin.addCases (fun a => ?_) (fun a => ?_) i
+    · simp only [hitGapStepCtx, Fin.addCases_left]
+    · simp only [hitGapStepCtx, Fin.addCases_right, hambmatch]
+  -- the coding-base denotation of `hitGapBaseCtx (Fin.snoc ctx p)` is independent of `p`
+  have hbasematch : ∀ (p : ℕ),
+      hitGapBaseCtx (Fin.snoc ctx p) = hitGapBaseCtx (Fin.snoc ctx (ctx 1)) := by
+    intro p
+    funext i
+    refine Fin.addCases (fun a => ?_) (fun a => ?_) i
+    · have hsnoc1 : ∀ q : ℕ, (Fin.snoc ctx q : Fin ((2 + k) + 1) → ℕ) 1 = ctx 1 := by
+        intro q
+        have h1cast : (1 : Fin ((2 + k) + 1)) = Fin.castSucc (1 : Fin (2 + k)) := by
+          refine Fin.ext ?_
+          simp only [Fin.val_castSucc, Fin.val_one']
+          rw [Nat.one_mod_eq_one.mpr (by omega), Nat.one_mod_eq_one.mpr (by omega)]
+        rw [h1cast, Fin.snoc_castSucc]
+      simp only [hitGapBaseCtx, Fin.addCases_left, hsnoc1]
+    · simp only [hitGapBaseCtx, Fin.addCases_right, hambmatch]
+  -- the moved slot of the inverse point reads back the index `j`
+  have hjinv_moved : ∀ j, jinv j movedSlot = j := by
+    intro j
+    rw [hjinv, hmovedSlot]
+    simp only [Fin.append_left]
+    rw [show (Fin.castAdd 1 (0 : Fin 1) : Fin (1 + 1)) = Fin.castSucc (0 : Fin 1) from rfl,
+      Fin.snoc_castSucc]
+  -- the output slot of the inverse point is pinned to `0`
+  have hjinv_out : ∀ j, jinv j outSlot = 0 := by
+    intro j
+    rw [hjinv, houtSlot]
+    simp only [Fin.append_left, Fin.snoc_last]
+  -- the witness slots of the inverse point read back `W j`
+  have hjinv_wit : ∀ (j : ℕ) (i : Fin w), jinv j (Fin.natAdd (1 + 1) i) = W j i := by
+    intro j i
+    rw [hjinv]
+    simp only [Fin.append_right]
+  -- the moved-input-extended diophOf context of the inverse point
+  have hjinv_ctx : ∀ j,
+      reindexInputCtx pred ctx (jinv j) = (diophOf pred).ctx (Fin.snoc ctx j) 0 (W j) := by
+    intro j
+    rw [reindexInputCtx]
+    have hmoved : (fun i => jinv j (Fin.castAdd w (Fin.castAdd 1 i)))
+        = (fun _ : Fin 1 => j) := by
+      funext i
+      rw [hjinv]
+      simp only [Fin.append_left]
+      rw [show (Fin.castAdd 1 i : Fin (1 + 1)) = Fin.castSucc i from rfl, Fin.snoc_castSucc]
+    have hout : jinv j (Fin.castAdd w (Fin.last 1)) = 0 := hjinv_out j
+    have hwit : (fun i => jinv j (Fin.natAdd (1 + 1) i)) = W j := by
+      funext i
+      rw [hjinv]
+      simp only [Fin.append_right]
+    rw [hmoved, hout, hwit]
+    rw [Fin.append_right_eq_snoc ctx (fun _ : Fin 1 => j)]
+  -- the inverse point of a hitting index lies in the cube and is a re-indexed zero
+  have hjinv_mem : ∀ j, j < ctx 1 →
+      GebLean.EraRecurrence.hitsAt
+          (fun j v => Tm.eval eraInterp stepTm (hitGapStepCtx (Fin.snoc ctx (ctx 1)) j v))
+          (Tm.eval eraInterp ATerm (hitGapBaseCtx (Fin.snoc ctx (ctx 1)))) (ctx 0) j →
+        jinv j ∈ GebLean.EraHypercube.cubePoints (1 + 1 + w) B
+          ∧ SosSystem.eval (reindexInputSys pred) (Fin.append ctx (jinv j)) = 0 := by
+    intro j hjlt hhit
+    -- the hit-gap predicate vanishes at `Fin.snoc ctx j`, via the context match
+    have hpz : Tm.eval eraInterp pred (Fin.snoc ctx j) = 0 := by
+      refine (hitGapTm_eval_zero_iff stepTm ATerm (Fin.snoc ctx j)).mpr ⟨?_, ?_⟩
+      · have hx : (Fin.snoc ctx j : Fin ((2 + k) + 1) → ℕ) 0 = ctx 0 := by
+          have h0 : (0 : Fin ((2 + k) + 1)) = Fin.castSucc (0 : Fin (2 + k)) := rfl
+          rw [h0, Fin.snoc_castSucc]
+        have hjval : (Fin.snoc ctx j : Fin ((2 + k) + 1) → ℕ) (Fin.last (2 + k)) = j :=
+          Fin.snoc_last _ _
+        simp only [hstepmatch, hbasematch, hx, hjval]
+        exact hhit
+      · have hjval : (Fin.snoc ctx j : Fin ((2 + k) + 1) → ℕ) (Fin.last (2 + k)) = j :=
+          Fin.snoc_last _ _
+        have hn : (Fin.snoc ctx j : Fin ((2 + k) + 1) → ℕ) 1 = ctx 1 := by
+          have h1cast : (1 : Fin ((2 + k) + 1)) = Fin.castSucc (1 : Fin (2 + k)) := by
+            refine Fin.ext ?_
+            simp only [Fin.val_castSucc, Fin.val_one']
+            rw [Nat.one_mod_eq_one.mpr (by omega), Nat.one_mod_eq_one.mpr (by omega)]
+          rw [h1cast, Fin.snoc_castSucc]
+        rw [hjval, hn]
+        exact hjlt
+    have hpzρ : Tm.eval eraInterp pred (ρj j) = 0 := by rw [hρj]; exact hpz
+    -- the re-indexed system vanishes at the inverse point
+    have hzero : SosSystem.eval (reindexInputSys pred) (Fin.append ctx (jinv j)) = 0 := by
+      refine (reindexInputSys_eval_zero_iff pred ctx (jinv j)).mpr ⟨?_, hjinv_out j⟩
+      rw [hjinv_ctx j]
+      have := hW_zero j hpzρ
+      rw [hρj] at this
+      exact this
+    refine ⟨?_, hzero⟩
+    rw [GebLean.EraHypercube.mem_cubePoints]
+    intro c
+    refine Fin.addCases ?_ ?_ c
+    · intro io
+      refine Fin.lastCases ?_ ?_ io
+      · -- output slot: pinned to `0`, below `B` by positivity
+        have : jinv j (Fin.castAdd w (Fin.last 1)) = 0 := hjinv_out j
+        rw [this, hB]
+        exact eraHitBase_pos stepTm ATerm ctx
+      · intro io1
+        -- moved slot: `j < ctx 1 < B`
+        rw [Subsingleton.elim io1 (0 : Fin 1)]
+        change jinv j movedSlot < B
+        rw [hjinv_moved j, hB]
+        exact Nat.lt_trans hjlt (eraHitBase_n stepTm ATerm ctx)
+    · intro i
+      -- witness slot: `W j i < bound i (Fin.snoc ctx j) ≤ B`
+      have hval : jinv j (Fin.natAdd (1 + 1) i) = W j i := by
+        rw [hjinv]; simp only [Fin.append_right]
+      rw [hval, hB]
+      have hbi := diophOf_bound pred (Fin.snoc ctx j) 0 (W j)
+        (by rw [← hjinv_ctx j]; exact (reindexInputSys_eval_zero_iff pred ctx (jinv j)).mp hzero
+          |>.1) i
+      exact Nat.lt_of_lt_of_le hbi (eraHitBase_bound stepTm ATerm ctx i j (Nat.le_of_lt hjlt))
+  rw [GebLean.EraRecurrence.hitCount]
+  refine Finset.card_nbij' (fun a => a movedSlot) jinv ?_ ?_ ?_ ?_
+  · -- forward maps cube zeros to hitting indices below `n`
+    intro a ha
+    simp only [Finset.coe_filter, Set.mem_setOf_eq,
+      GebLean.EraHypercube.mem_cubePoints, Finset.mem_range] at ha ⊢
+    obtain ⟨_, ha_pred⟩ := ha
+    refine ⟨hmoved_lt a ha_pred, ?_⟩
+    have hpz := hpz_of_zero a ha_pred
+    have hhit := ((hitGapTm_eval_zero_iff stepTm ATerm (Fin.snoc ctx (a movedSlot))).mp hpz).1
+    have hx : (Fin.snoc ctx (a movedSlot) : Fin ((2 + k) + 1) → ℕ) 0 = ctx 0 := by
+      have h0 : (0 : Fin ((2 + k) + 1)) = Fin.castSucc (0 : Fin (2 + k)) := rfl
+      rw [h0, Fin.snoc_castSucc]
+    have hjval : (Fin.snoc ctx (a movedSlot) : Fin ((2 + k) + 1) → ℕ) (Fin.last (2 + k))
+        = a movedSlot := Fin.snoc_last _ _
+    simp only [hstepmatch, hbasematch, hx, hjval] at hhit
+    exact hhit
+  · -- inverse maps hitting indices to re-indexed cube zeros
+    intro j hj
+    simp only [Finset.coe_filter, Set.mem_setOf_eq, Finset.mem_range] at hj ⊢
+    obtain ⟨hjlt, hhit⟩ := hj
+    exact hjinv_mem j hjlt hhit
+  · -- left inverse: reassembling a cube zero from its moved index returns it
+    intro a ha
+    simp only [Finset.coe_filter, Set.mem_setOf_eq,
+      GebLean.EraHypercube.mem_cubePoints] at ha
+    obtain ⟨ha_mem, ha_pred⟩ := ha
+    -- uniqueness: the witnesses of `a` equal `W (a movedSlot)`
+    have hpzρ : Tm.eval eraInterp pred (ρj (a movedSlot)) = 0 := by
+      rw [hρj]; exact hpz_of_zero a ha_pred
+    have hsys_a : SosSystem.eval (diophOf pred).sys
+        (reindexInputCtx pred ctx a) = 0 :=
+      ((reindexInputSys_eval_zero_iff pred ctx a).mp ha_pred).1
+    have hout_a : a (Fin.castAdd w (Fin.last 1)) = 0 :=
+      ((reindexInputSys_eval_zero_iff pred ctx a).mp ha_pred).2
+    -- the diophOf context of `a` reads moved input `a movedSlot`, output `0`, witnesses of `a`
+    have ha_ctx : reindexInputCtx pred ctx a
+        = (diophOf pred).ctx (Fin.snoc ctx (a movedSlot)) 0
+            (fun i => a (Fin.natAdd (1 + 1) i)) := by
+      rw [reindexInputCtx, hout_a]
+      congr 1
+      rw [Fin.append_right_eq_snoc ctx (fun i => a (Fin.castAdd w (Fin.castAdd 1 i)))]
+    rw [ha_ctx] at hsys_a
+    -- both `a`'s witnesses and `W` zero the system at output `0`; uniqueness identifies them
+    obtain ⟨ww, _, hww⟩ := huniq (a movedSlot) hpzρ
+    have hwit_eq : (fun i => a (Fin.natAdd (1 + 1) i)) = W (a movedSlot) := by
+      rw [hww (fun i => a (Fin.natAdd (1 + 1) i)) (by rw [hρj]; exact hsys_a)]
+      rw [hww (W (a movedSlot)) (by rw [hρj]; exact hW_zero (a movedSlot) hpzρ)]
+    -- reassemble `a` from its three slot families
+    funext c
+    refine Fin.addCases ?_ ?_ c
+    · intro io
+      refine Fin.lastCases ?_ ?_ io
+      · change jinv (a movedSlot) outSlot = a (Fin.castAdd w (Fin.last 1))
+        rw [hjinv_out, hout_a]
+      · intro io1
+        rw [Subsingleton.elim io1 (0 : Fin 1)]
+        change jinv (a movedSlot) movedSlot = a movedSlot
+        rw [hjinv_moved]
+    · intro i
+      rw [hjinv_wit]
+      exact congrFun hwit_eq.symm i
+  · -- right inverse: the moved slot of the inverse point returns the index
+    intro j _
+    exact hjinv_moved j
+
+open GebLean.EraCompleteness in
+/-- The inner hit-counting identity of arXiv:2606.09336, Claim 3: `eraHitCount stepTm
+ATerm` evaluates to `hitCount`, the number of indices `j < n = ctx 1` that hit for
+code `x = ctx 0` with respect to the supplied recurrence step and coding base. It
+composes the count read-off `eraHitCount_cubeCount` (the cube-zero count of the
+input-side re-indexed system) with the hit-count collapse
+`hitCube_card_eq_hitCount`. -/
+theorem eraHitCount_eval {k : ℕ} (stepTm : ETm (2 + k)) (ATerm : ETm (1 + k))
+    (ctx : Fin (2 + k) → ℕ) :
+    Tm.eval eraInterp (eraHitCount stepTm ATerm) ctx
+      = GebLean.EraRecurrence.hitCount
+          (fun j v => Tm.eval eraInterp stepTm (hitGapStepCtx (Fin.snoc ctx (ctx 1)) j v))
+          (Tm.eval eraInterp ATerm (hitGapBaseCtx (Fin.snoc ctx (ctx 1)))) (ctx 0) (ctx 1) :=
+  (eraHitCount_cubeCount stepTm ATerm ctx).trans (hitCube_card_eq_hitCount stepTm ATerm ctx)
+
 end GebLean
