@@ -1012,4 +1012,193 @@ theorem eraCount_eval {p k : ℕ} (s : SosSystem (p + k)) (tTerm wTerm : ETm p)
     ctx P ht hw hP
     (packM_term_eval s tTerm wTerm ctx hzero hcoeff hbase ht hw hP)
 
+/-- The reindexing bridge for the enlarged cube of arXiv:2407.12928, Corollary 3.6:
+the regrouped monomial `mon.cubeRegroup` evaluated at the `Fin.append`-context that
+reads `ctx` on the `p` parameter slots, the original cube `x` on the next `k` slots,
+and the chain witness `b` on the last `f` slots equals the raw monomial `mon`
+evaluated at the left-associated `Fin.append (Fin.append ctx x) b`. It is
+`ZMonomial.cubeRegroup_eval` composed with the pure `Fin.append`/`finCongr`
+re-association `Fin.append_assoc`. -/
+theorem cubeRegroup_append_eq {p k f : ℕ} (mon : ZMonomial (p + k + f))
+    (ctx : Fin p → ℕ) (x : Fin k → ℕ) (b : Fin f → ℕ) :
+    mon.cubeRegroup.eval (Fin.append ctx (Fin.append x b))
+      = mon.eval (Fin.append (Fin.append ctx x) b) := by
+  rw [ZMonomial.cubeRegroup_eval]
+  congr 1
+  rw [Fin.append_assoc]
+  rfl
+
+/-- An appended cube point of arXiv:2407.12928, Corollary 3.6 lies in the enlarged
+side-`tθ` cube exactly when each block lies in its own cube: `Fin.append x b` is a
+point of `cubePoints (k + f) tθ` iff `x ∈ cubePoints k tθ` and `b ∈ cubePoints f tθ`.
+The forward direction reads the two blocks off `Fin.append_left`/`Fin.append_right`;
+the reverse direction splits an arbitrary index with `Fin.addCases`. -/
+theorem mem_cubePoints_append {k f tθ : ℕ} (x : Fin k → ℕ) (b : Fin f → ℕ) :
+    Fin.append x b ∈ GebLean.EraHypercube.cubePoints (k + f) tθ
+      ↔ x ∈ GebLean.EraHypercube.cubePoints k tθ
+        ∧ b ∈ GebLean.EraHypercube.cubePoints f tθ := by
+  simp only [GebLean.EraHypercube.mem_cubePoints]
+  constructor
+  · intro h
+    refine ⟨fun i => ?_, fun j => ?_⟩
+    · have := h (Fin.castAdd f i)
+      rwa [Fin.append_left] at this
+    · have := h (Fin.natAdd k j)
+      rwa [Fin.append_right] at this
+  · rintro ⟨hx, hb⟩ i
+    induction i using Fin.addCases with
+    | left i => rw [Fin.append_left]; exact hx i
+    | right j => rw [Fin.append_right]; exact hb j
+
+/-- Every point of an enlarged cube is the `Fin.append` of its two coordinate blocks:
+`a = Fin.append (a ∘ Fin.castAdd f) (a ∘ Fin.natAdd k)`. This is the splitting that,
+with `mem_cubePoints_append`, decomposes a point of `cubePoints (k + f) tθ` into its
+base-cube and chain-cube parts (arXiv:2407.12928, Corollary 3.6). -/
+theorem append_castAdd_natAdd {k f : ℕ} (a : Fin (k + f) → ℕ) :
+    Fin.append (a ∘ Fin.castAdd f) (a ∘ Fin.natAdd k) = a := by
+  funext i
+  induction i using Fin.addCases with
+  | left i => rw [Fin.append_left]; rfl
+  | right j => rw [Fin.append_right]; rfl
+
+/-- The enlarged side-`tθ` cube of arXiv:2407.12928, Corollary 3.6 is the image of the
+product of the base cube and the chain cube under `Fin.append`:
+`cubePoints (k + f) tθ = (cubePoints k tθ ×ˢ cubePoints f tθ).image (Fin.append ·.1 ·.2)`.
+The append map is injective on the product (its inverse is the
+`Fin.castAdd`/`Fin.natAdd` decomposition `append_castAdd_natAdd`), and its image is
+characterised by `mem_cubePoints_append`. This is the cube-product split consumed by
+the fibre collapse `reducedCount_eq`. -/
+theorem cubePoints_eq_image_append {k f tθ : ℕ} :
+    GebLean.EraHypercube.cubePoints (k + f) tθ
+      = (GebLean.EraHypercube.cubePoints k tθ ×ˢ
+          GebLean.EraHypercube.cubePoints f tθ).image (fun p => Fin.append p.1 p.2) := by
+  ext a
+  simp only [Finset.mem_image, Finset.mem_product]
+  constructor
+  · intro ha
+    refine ⟨(a ∘ Fin.castAdd f, a ∘ Fin.natAdd k), ⟨?_, ?_⟩, append_castAdd_natAdd a⟩
+    · exact ((mem_cubePoints_append _ _).mp
+        ((append_castAdd_natAdd a).symm ▸ ha)).1
+    · exact ((mem_cubePoints_append _ _).mp
+        ((append_castAdd_natAdd a).symm ▸ ha)).2
+  · rintro ⟨⟨x, b⟩, ⟨hx, hb⟩, rfl⟩
+    exact (mem_cubePoints_append x b).mpr ⟨hx, hb⟩
+
+/-- The enlarged side `θ` of arXiv:2407.12928, Corollary 3.6 as a concrete `Era`
+term over the parameter context: the majorant of `tTerm ^ d`, where
+`d = max 1 (ZMonomial.maxCubeDegree (SosSystem.toZ s))` is the chain depth of the
+Lemma 3.5 reduction (`(sepReduce s).1 = k · d`). Every Lemma 3.5 chain witness
+`(x c) ^ (i + 1)` with `x c < t` and `i + 1 ≤ d` is strictly below this value
+(`eraTheta_spec`), so the unique zeroing witness `b₀` of `sepReduce_unique` is a
+valid coordinate of the side-`θ` enlarged cube. -/
+def eraTheta {p k : ℕ} (s : SosSystem (p + k)) (tTerm : ETm p) : ETm p :=
+  eraMajorant (tTerm ^ᵉ eraNumeral (max 1 (ZMonomial.maxCubeDegree (SosSystem.toZ s))))
+
+/-- The chain-witness bound of arXiv:2407.12928, Corollary 3.6 (via Lemma 3.5).
+Every chain witness coordinate `(x c) ^ (i + 1)` produced by `sepReduce_unique` at
+`ρ = Fin.append ctx x` — where the cube coordinate `x c` is below `t` and the chain
+index `i` is below `d = max 1 (ZMonomial.maxCubeDegree (SosSystem.toZ s))` — is
+strictly below `Tm.eval eraInterp (eraTheta s tTerm) ctx`. The bound chains
+`(x c) ^ (i + 1) ≤ (x c) ^ d < t ^ d` with `eraMajorant_spec`. -/
+theorem eraTheta_spec {p k : ℕ} (s : SosSystem (p + k)) (tTerm : ETm p)
+    (ctx : Fin p → ℕ) (x : Fin k → ℕ)
+    (hx : ∀ c, x c < Tm.eval eraInterp tTerm ctx) (c : Fin k)
+    (i : Fin (max 1 (ZMonomial.maxCubeDegree (SosSystem.toZ s)))) :
+    x c ^ (i.val + 1) < Tm.eval eraInterp (eraTheta s tTerm) ctx := by
+  obtain ⟨iv, hiv⟩ := i
+  set t := Tm.eval eraInterp tTerm ctx with ht_def
+  have hid : iv + 1 ≤ max 1 (ZMonomial.maxCubeDegree (SosSystem.toZ s)) := hiv
+  have hd_pos : 0 < max 1 (ZMonomial.maxCubeDegree (SosSystem.toZ s)) :=
+    lt_of_lt_of_le Nat.zero_lt_one (le_max_left _ _)
+  have hpow_le : x c ^ (iv + 1)
+      ≤ x c ^ max 1 (ZMonomial.maxCubeDegree (SosSystem.toZ s)) := by
+    rcases Nat.eq_zero_or_pos (x c) with h0 | hpos
+    · rw [h0, Nat.zero_pow (by omega : 0 < iv + 1), Nat.zero_pow hd_pos]
+    · exact Nat.pow_le_pow_right hpos hid
+  have hlt : x c ^ max 1 (ZMonomial.maxCubeDegree (SosSystem.toZ s))
+      < t ^ max 1 (ZMonomial.maxCubeDegree (SosSystem.toZ s)) :=
+    Nat.pow_lt_pow_left (hx c) hd_pos.ne'
+  have hmaj : t ^ max 1 (ZMonomial.maxCubeDegree (SosSystem.toZ s))
+      < Tm.eval eraInterp (eraTheta s tTerm) ctx := by
+    rw [eraTheta]
+    have h := eraMajorant_spec
+      (tTerm ^ᵉ eraNumeral (max 1 (ZMonomial.maxCubeDegree (SosSystem.toZ s)))) ctx
+    rwa [epow_eval, eraInterp, eraNumeral_eval, ← ht_def] at h
+  exact lt_of_le_of_lt (le_trans hpow_le (le_of_lt hlt)) hmaj
+
+/-- A single cube point's monomial magnitude is bounded by the whole weighted
+cube-sum (arXiv:2407.12928, Cor 3.6, Eq (8)): for `a₀ ∈ cubePoints K t`,
+`mon.evalNat (Fin.append ctx a₀) ≤ ∑_a 2 ^ (2 · w · v(a)) · mon.evalNat (append ctx a)`,
+since each position weight is at least `1` and every summand is non-negative. -/
+theorem monoEvalNat_le_weightedSum {p K : ℕ} (mon : ZMonomial (p + K)) (ctx : Fin p → ℕ)
+    (w t : ℕ) (a₀ : Fin K → ℕ) (ha₀ : a₀ ∈ GebLean.EraHypercube.cubePoints K t) :
+    mon.evalNat (Fin.append ctx a₀)
+      ≤ ∑ a ∈ GebLean.EraHypercube.cubePoints K t,
+          2 ^ (2 * w * GebLean.EraHypercube.mixedRadix K t a)
+            * mon.evalNat (Fin.append ctx a) := by
+  refine le_trans ?_ (Finset.single_le_sum
+    (f := fun a => 2 ^ (2 * w * GebLean.EraHypercube.mixedRadix K t a)
+      * mon.evalNat (Fin.append ctx a))
+    (fun a _ => Nat.zero_le _) ha₀)
+  exact Nat.le_mul_of_pos_left _ (Nat.pow_pos (by norm_num))
+
+/-- The modulus-bound term `w` of arXiv:2407.12928, Corollary 3.6 (discharging the
+block bound `hP` of the count read-off): the sum, over the reduced monomials of
+`sepReduce s`, of the per-monomial weighted cube-sum terms `eraMonoTerm` at modulus
+`1`. Its value dominates the reduced predicate `Pred a` on the side-`t` enlarged
+cube (`eraW_spec`), so `Pred a < 2 ^ (eval eraW)` follows from `n < 2 ^ n`. The side
+`t` is `Tm.eval eraInterp tTerm ctx`; in the Phase-E assembly `tTerm` is the enlarged
+side term `eraTheta s tTerm₀`. -/
+def eraW {p k : ℕ} (s : SosSystem (p + k)) (tTerm : ETm p) : ETm p :=
+  eraListSum ((sepReduce s).2.map
+    (fun mon => eraMonoTerm mon.cubeRegroup tTerm (eraNumeral 1)))
+
+open GebLean.EraCompleteness in
+/-- The modulus bound of arXiv:2407.12928, Corollary 3.6: the reduced predicate
+`Pred a` at any point `a` of the side-`t` enlarged cube is strictly below
+`2 ^ (Tm.eval eraInterp (eraW s tTerm) ctx)`. The value bound `Pred a ≤ eval eraW`
+holds because `Pred a` is the `toNat` of the signed reduced eval-sum, hence at most
+the sum of the per-monomial magnitudes, each of which is bounded by its weighted
+cube-sum `eraMonoTerm` (`monoEvalNat_le_weightedSum`, `eraMonoTerm_eval_reduced`);
+`Nat.lt_two_pow_self` then gives the strict `2`-power bound. -/
+theorem eraW_spec {p k : ℕ} (s : SosSystem (p + k)) (tTerm : ETm p) (ctx : Fin p → ℕ)
+    (hzero : s.PolyExpZero) (hcoeff : s.CoeffVarProduct) (hbase : s.BasePaired)
+    (ht : 0 < Tm.eval eraInterp tTerm ctx)
+    (a : Fin (k + (sepReduce s).1) → ℕ)
+    (ha : a ∈ GebLean.EraHypercube.cubePoints (k + (sepReduce s).1)
+        (Tm.eval eraInterp tTerm ctx)) :
+    (((sepReduce s).2).map (fun (mon : ZMonomial (p + k + (sepReduce s).1)) =>
+        mon.cubeRegroup.eval (Fin.append ctx a))).sum.toNat
+      < 2 ^ Tm.eval eraInterp (eraW s tTerm) ctx := by
+  set t := Tm.eval eraInterp tTerm ctx with ht_def
+  -- the predicate value is bounded by the sum of per-monomial magnitudes
+  have hbound : (((sepReduce s).2).map (fun (mon : ZMonomial (p + k + (sepReduce s).1)) =>
+      mon.cubeRegroup.eval (Fin.append ctx a))).sum.toNat
+      ≤ Tm.eval eraInterp (eraW s tTerm) ctx := by
+    -- bound the toNat of the signed sum by the sum of magnitudes
+    have hsplit : (((sepReduce s).2).map (fun (mon : ZMonomial (p + k + (sepReduce s).1)) =>
+        mon.cubeRegroup.eval (Fin.append ctx a))).sum.toNat
+        ≤ ((sepReduce s).2.map (fun (mon : ZMonomial (p + k + (sepReduce s).1)) =>
+            mon.cubeRegroup.evalNat (Fin.append ctx a))).sum := by
+      rw [← Int.toNat_natCast ((sepReduce s).2.map
+          (fun (mon : ZMonomial (p + k + (sepReduce s).1)) =>
+            mon.cubeRegroup.evalNat (Fin.append ctx a))).sum]
+      refine Int.toNat_le_toNat ?_
+      rw [Nat.cast_list_sum, List.map_map]
+      refine List.sum_le_sum ?_
+      intro z _
+      simp only [Function.comp_apply]
+      rw [ZMonomial.evalNat_cast]
+      exact le_abs_self _
+    refine le_trans hsplit ?_
+    rw [eraW, eraListSum_eval, List.map_map]
+    refine List.sum_le_sum ?_
+    intro mon hmon
+    simp only [Function.comp_apply]
+    rw [eraMonoTerm_eval_reduced s tTerm (eraNumeral 1) ctx hzero hcoeff hbase ht
+      (by rw [eraNumeral_eval]; norm_num) mon hmon]
+    exact monoEvalNat_le_weightedSum mon.cubeRegroup ctx
+      (Tm.eval eraInterp (eraNumeral 1) ctx) t a ha
+  exact lt_of_le_of_lt hbound Nat.lt_two_pow_self
+
 end GebLean
