@@ -88,6 +88,10 @@ Lemma 3.5 chain-variable reduction of arXiv:2407.12928 is not needed.
   `ZMonomial` list `SosSystem.toZ s`, weaken into the enlarged scope, apply `chainSub`,
   and emit `chainEqs` together with the literal square of the reduced predicate, returned
   as a dependent pair recording the `k * d` new variables.
+* `ETm.ConstOnImage` — the scope-agnostic separability predicate: a term's evaluation
+  depends only on the slots in an embedding's image; it transports along `Tm.weaken`.
+* `ZMonomial.cubeRegroup` — re-associate a reduced monomial `ZMonomial (p + k + f)`
+  into the `p / (k + f)` count-cube split `ZMonomial (p + (k + f))` of Corollary 3.6.
 
 ## Main statements
 
@@ -199,6 +203,11 @@ Lemma 3.5 chain-variable reduction of arXiv:2407.12928 is not needed.
   (arXiv:2407.12928, Lemma 3.5): the reduced system's eval-sum vanishes at `Fin.append ρ b`
   for some (resp. exactly one) chain witness `b` precisely when the source system vanishes
   at `ρ`.
+* `ZMonomial.cubeRegroup_eval` — the regrouped monomial's denotation equals the original's
+  at the re-associated context, so `cubeRegroup` is value-faithful.
+* `sepReduce_separable` — every regrouped monomial of the reduced system satisfies the
+  three separability hypotheses (coefficient and exponential coefficients independent of
+  the cube point) that `ZMonomial.eraMonoCubeSum` requires, under the `diophOf` invariants.
 
 ## Implementation notes
 
