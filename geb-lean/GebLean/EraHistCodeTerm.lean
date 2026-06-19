@@ -2531,4 +2531,145 @@ theorem eraHitCount_eval {k : ℕ} (stepTm : ETm (2 + k)) (ATerm : ETm (1 + k))
           (Tm.eval eraInterp ATerm (hitGapBaseCtx (Fin.snoc ctx (ctx 1)))) (ctx 0) (ctx 1) :=
   (eraHitCount_cubeCount stepTm ATerm ctx).trans (hitCube_card_eq_hitCount stepTm ATerm ctx)
 
+/-- The ambient-parameter slot `1 + i` of the history-gap context `Fin (1 + k + 2)`,
+as a `Fin`. The history-gap context lays out `[n, ambient(k), ω₁, ω₂]`, so ambient
+parameter `i` lives at position `1 + i` (arXiv:2606.09336, Claim 5). -/
+def histAmbIdx {k : ℕ} (i : Fin k) : Fin (1 + k + 2) :=
+  ⟨1 + (i : ℕ), by omega⟩
+
+/-- The induced-code term `ω₁ + ω₂ + 1` of arXiv:2606.09336, Claim 5: the two
+counted inputs `ω₁, ω₂` occupy the last two slots of the history-gap context
+`Fin (1 + k + 2)` (positions `1 + k` and `1 + k + 1`), and the code is their sum
+plus one. -/
+def histXSum {k : ℕ} : ETm (1 + k + 2) :=
+  (Tm.var ⟨1 + k, by omega⟩ +ᵉ Tm.var ⟨1 + k + 1, by omega⟩) +ᵉ eraNumeral 1
+
+/-- The inner hit-count renaming for the history-gap predicate: the `2 + k` slots of
+the inner hit-counting term `eraHitCount stepTm ATerm` (code `x`, loop bound `n`,
+then the `k` ambient parameters) are sent into the history-gap context
+`[n, ambient(k), ω₁, ω₂]`. Slot `0` (`x`) maps to the induced code `ω₁ + ω₂ + 1`
+(`histXSum`); slot `1` (`n`) maps to variable `0`; ambient slot `2 + i` maps to
+variable `1 + i` (arXiv:2606.09336, Claim 5). -/
+def histHitSub {k : ℕ} : Fin (2 + k) → ETm (1 + k + 2) :=
+  Fin.addCases
+    (fun i : Fin 2 => if (i : ℕ) = 0 then histXSum else (Tm.var 0 : ETm (1 + k + 2)))
+    (fun i : Fin k => Tm.var (histAmbIdx i))
+
+/-- The coding-base renaming for the history-gap predicate: the `1 + k` slots of the
+coding-base term `ATerm` (loop bound `n` then the `k` ambient parameters) are sent
+into the history-gap context `[n, ambient(k), ω₁, ω₂]`. Slot `0` (`n`) maps to
+variable `0`; ambient slot `1 + i` maps to variable `1 + i` (arXiv:2606.09336,
+Claim 5). -/
+def histGapBaseSub {k : ℕ} : Fin (1 + k) → ETm (1 + k + 2) :=
+  Fin.addCases (fun _ : Fin 1 => (Tm.var 0 : ETm (1 + k + 2)))
+    (fun i : Fin k => Tm.var (histAmbIdx i))
+
+/-- The inner hit-count renamed context of the history-gap predicate: the inner
+hit-counting context `[x, n, ambient(k)]` of `eraHitCount` read off the history-gap
+context, with the code slot `x` set to the induced code `ω₁ + ω₂ + 1`, the loop
+bound `n` to `ctx 0`, and each ambient parameter to `ctx (histAmbIdx i)`
+(arXiv:2606.09336, Claim 5). -/
+def histHitCtx {k : ℕ} (ctx : Fin (1 + k + 2) → ℕ) : Fin (2 + k) → ℕ :=
+  Fin.addCases
+    (fun i : Fin 2 =>
+      if (i : ℕ) = 0 then (ctx ⟨1 + k, by omega⟩ + ctx ⟨1 + k + 1, by omega⟩ + 1)
+      else ctx 0)
+    (fun i : Fin k => ctx (histAmbIdx i))
+
+/-- The coding-base renamed context of the history-gap predicate: the coding-base
+context `[n, ambient(k)]` of `ATerm` read off the history-gap context, with the loop
+bound `n` set to `ctx 0` and each ambient parameter to `ctx (histAmbIdx i)`
+(arXiv:2606.09336, Claim 5). -/
+def histGapBaseCtx {k : ℕ} (ctx : Fin (1 + k + 2) → ℕ) : Fin (1 + k) → ℕ :=
+  Fin.addCases (fun _ : Fin 1 => ctx 0) (fun i : Fin k => ctx (histAmbIdx i))
+
+/-- The outer history-gap predicate of arXiv:2606.09336, Claim 5, as a pure `Era`
+arithmetic term over the context `[n, ambient(k), ω₁, ω₂]` (`n` the loop bound, `k`
+ambient parameters, `ω₁, ω₂` the two counted inputs). It evaluates to `0` exactly
+when the induced code `x = ω₁ + ω₂ + 1` is a valid, bounded, maximal-hit trajectory
+code: its hit count (realised by `eraHitCount`) is maximal (`= n`), its initial
+base-`A` digit is `init`, and it is below `A ^ (n + 1)`. The first truncated-subtraction
+pair `gap1` vanishes iff the inner hit count equals `n`; `gap2` vanishes iff
+`(ω₁ + ω₂ + 1) % A = init` (the `solCount` filter's `· / A ^ 0 % A` simplifies to
+`· % A` since `A ^ 0 = 1`); the range gap `gap3` vanishes iff `ω₁ + ω₂ + 1 < A ^ (n + 1)`.
+The coding base `A` and the step are supplied as the terms `ATerm` and `stepTm`, and
+the initial digit as `init`. -/
+def histGapTm {k : ℕ} (stepTm : ETm (2 + k)) (ATerm : ETm (1 + k)) (init : ℕ) :
+    ETm (1 + k + 2) :=
+  let hc : ETm (1 + k + 2) := (eraHitCount stepTm ATerm).subst histHitSub
+  let Asub : ETm (1 + k + 2) := ATerm.subst histGapBaseSub
+  let nVar : ETm (1 + k + 2) := Tm.var 0
+  let gap1 : ETm (1 + k + 2) := (hc ∸ᵉ nVar) +ᵉ (nVar ∸ᵉ hc)
+  let gap2 : ETm (1 + k + 2) :=
+    (histXSum %ᵉ Asub ∸ᵉ eraNumeral init) +ᵉ (eraNumeral init ∸ᵉ histXSum %ᵉ Asub)
+  let gap3 : ETm (1 + k + 2) := (histXSum +ᵉ eraNumeral 1) ∸ᵉ (Asub ^ᵉ (nVar +ᵉ eraNumeral 1))
+  (gap1 +ᵉ gap2) +ᵉ gap3
+
+/-- The outer history-gap predicate vanishes exactly at valid, bounded, maximal-hit
+trajectory codes (arXiv:2606.09336, Claim 5): `histGapTm stepTm ATerm init`
+evaluates to `0` at the context `[n, ambient(k), ω₁, ω₂]` iff the induced code
+`x = ω₁ + ω₂ + 1` (with `ω₁ = ctx ⟨1 + k⟩`, `ω₂ = ctx ⟨1 + k + 1⟩`) has inner hit
+count `n = ctx 0`, has initial base-`A` digit `init`, and is below `A ^ (n + 1)`.
+The inner hit count is `eraHitCount`'s denotation at the renamed context
+`histHitCtx ctx`; the step is `Tm.eval eraInterp stepTm` over
+`hitGapStepCtx (Fin.snoc (histHitCtx ctx) (histHitCtx ctx 1))` and the coding base is
+`Tm.eval eraInterp ATerm` over `hitGapBaseCtx (Fin.snoc (histHitCtx ctx) (histHitCtx ctx 1))`. -/
+theorem histGapTm_eval_zero_iff {k : ℕ} (stepTm : ETm (2 + k)) (ATerm : ETm (1 + k))
+    (init : ℕ) (ctx : Fin (1 + k + 2) → ℕ) :
+    Tm.eval eraInterp (histGapTm stepTm ATerm init) ctx = 0
+      ↔ (GebLean.EraRecurrence.hitCount
+            (fun j v => Tm.eval eraInterp stepTm
+              (hitGapStepCtx (Fin.snoc (histHitCtx ctx) (histHitCtx ctx 1)) j v))
+            (Tm.eval eraInterp ATerm
+              (hitGapBaseCtx (Fin.snoc (histHitCtx ctx) (histHitCtx ctx 1))))
+            (ctx ⟨1 + k, by omega⟩ + ctx ⟨1 + k + 1, by omega⟩ + 1) (ctx 0) = ctx 0
+          ∧ (ctx ⟨1 + k, by omega⟩ + ctx ⟨1 + k + 1, by omega⟩ + 1)
+              % Tm.eval eraInterp ATerm (histGapBaseCtx ctx) = init
+          ∧ ctx ⟨1 + k, by omega⟩ + ctx ⟨1 + k + 1, by omega⟩ + 1
+              < Tm.eval eraInterp ATerm (histGapBaseCtx ctx) ^ (ctx 0 + 1)) := by
+  have hhit : (fun i => Tm.eval eraInterp (histHitSub i) ctx) = histHitCtx (k := k) ctx := by
+    funext i
+    refine Fin.addCases (fun a => ?_) (fun a => ?_) i
+    · simp only [histHitSub, histHitCtx, Fin.addCases_left]
+      split
+      · simp only [histXSum, eadd_eval, eraNumeral_eval, eraInterp, fcons, Tm.eval]
+      · simp only [Tm.eval]
+    · simp only [histHitSub, histHitCtx, Fin.addCases_right, Tm.eval]
+  have hbase : (fun i => Tm.eval eraInterp (histGapBaseSub i) ctx)
+      = histGapBaseCtx (k := k) ctx := by
+    funext i
+    refine Fin.addCases (fun a => ?_) (fun a => ?_) i <;>
+      simp only [histGapBaseSub, histGapBaseCtx, Fin.addCases_left, Fin.addCases_right, Tm.eval]
+  have hAsub : Tm.eval eraInterp (ATerm.subst histGapBaseSub) ctx
+      = Tm.eval eraInterp ATerm (histGapBaseCtx ctx) := by
+    rw [Tm.eval_subst, hbase]
+  have hhc : Tm.eval eraInterp ((eraHitCount stepTm ATerm).subst histHitSub) ctx
+      = GebLean.EraRecurrence.hitCount
+          (fun j v => Tm.eval eraInterp stepTm
+            (hitGapStepCtx (Fin.snoc (histHitCtx ctx) (histHitCtx ctx 1)) j v))
+          (Tm.eval eraInterp ATerm
+            (hitGapBaseCtx (Fin.snoc (histHitCtx ctx) (histHitCtx ctx 1))))
+          (ctx ⟨1 + k, by omega⟩ + ctx ⟨1 + k + 1, by omega⟩ + 1) (ctx 0) := by
+    have e0 : (0 : Fin (2 + k)) = Fin.castAdd k (0 : Fin 2) := by
+      apply Fin.ext; simp
+    have e1 : (1 : Fin (2 + k)) = Fin.castAdd k (1 : Fin 2) := by
+      apply Fin.ext
+      simp only [Fin.val_castAdd, Fin.val_one']
+      rw [Nat.mod_eq_of_lt (by omega), Nat.mod_eq_of_lt (by omega)]
+    have h0 : histHitCtx (k := k) ctx 0
+        = ctx ⟨1 + k, by omega⟩ + ctx ⟨1 + k + 1, by omega⟩ + 1 := by
+      rw [histHitCtx, e0, Fin.addCases_left]
+      rfl
+    have h1 : histHitCtx (k := k) ctx 1 = ctx 0 := by
+      rw [histHitCtx, e1, Fin.addCases_left]
+      rfl
+    rw [Tm.eval_subst, hhit, eraHitCount_eval, h0, h1]
+  have hxsum : Tm.eval eraInterp (histXSum (k := k)) ctx
+      = ctx ⟨1 + k, by omega⟩ + ctx ⟨1 + k + 1, by omega⟩ + 1 := by
+    simp only [histXSum, eadd_eval, eraNumeral_eval, eraInterp, fcons, Tm.eval]
+  simp only [histGapTm, eadd_eval, etsub_eval, emod_eval, epow_eval, eraInterp, fcons,
+    eraNumeral_eval, hhc, hAsub, hxsum, Tm.eval]
+  rw [Nat.add_eq_zero_iff, Nat.add_eq_zero_iff]
+  omega
+
 end GebLean
