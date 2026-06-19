@@ -7,7 +7,8 @@
 - [Governing discipline (do not deviate)](#governing-discipline-do-not-deviate)
 - [Read these (the full scope, in order)](#read-these-the-full-scope-in-order)
 - [Done (committed, axiom-clean, both reviews passed)](#done-committed-axiom-clean-both-reviews-passed)
-- [Resume point (next work) — task list IDs](#resume-point-next-work--task-list-ids)
+- [Status: packM-as-term sub-project complete](#status-packm-as-term-sub-project-complete)
+- [Resume point (next work) — Task 6.4d onward](#resume-point-next-work--task-64d-onward)
 - [How to continue](#how-to-continue)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -88,40 +89,48 @@ line-by-line review). The bookmark `feat/era-packm-term` tracks the tip.
   `weight_mixedRadix_factor` (the ℕ cube-sum factorisation).
 - Term-construction design spike done; result recorded in the mapping
   note (the `k+f` count cube is paper-dictated by Cor 3.6, not a choice).
+- Phase C2t/D (term layer, in EraHistCodeTerm): C2t-gate `sepReduce_separable`
+  (#957, in EraSepReduce, with `ETm.ConstOnImage` and `ZMonomial.cubeRegroup`);
+  C2t-term `ETm.paramProject`/`cubeConstTerm`/`cubeBaseTerm`/`eraMonoTerm` (#958);
+  D1 `eraConstPart` (Eq 7, #959); D2 `packM_term` (Eq 8, signed partition + ℤ
+  non-underflow, #960); D3 `eraCount`/`eraCount_eval` (#961).
+- Phase E (count preservation, in EraHistCodeTerm): E1 `eraTheta`/`eraW` plus the
+  reindexing foundations `cubeRegroup_append_eq` and the cube-product split (#962);
+  E2 `reducedCount_eq` (Lemma-3.5 fibre collapse) + `predCount_side_eq` (shell
+  bridge, #963); E3 `eraCountPred`/`eraCountPred_eval` (the public combinator,
+  with the slot-moving `diophOf` reindex `reindexEmb`/`reindexCtx`/`reindexSys`,
+  #964). Each task: an implementer plus independent spec and quality reviews,
+  axiom-clean, committed; final whole-branch review passed (merge-ready after the
+  three documentation/cosmetic minors, since fixed).
 
-## Resume point (next work) — task list IDs
+## Status: packM-as-term sub-project complete
 
-Remaining is the term layer plus count preservation, all in
-`GebLean/EraHistCodeTerm.lean`, all transcription of P1 Eqs (7),(8) /
-Cor 3.6 with the representation plumbing the mapping note specifies:
+All of Task 6.4c is done. `eraCountPred τ : ETm n` realises, for any
+`diophOf`-encoded predicate `τ`, the count of vanishing (output slot plus
+witness) assignments of the Diophantine system as a constructive `Era`
+arithmetic term (`eraCountPred_eval`, arXiv:2407.12928 Corollary 3.6 /
+Theorem 3.4). Branch `feat/era-packm-term`, nine session commits
+`f32156c..30ac6fe` on top of the Phase A/B/C work; build clean, axiom-clean
+(`propext`/`Quot.sound`/`Classical.choice`), no `noncomputable`. Nothing is
+pushed (push needs user line-by-line review).
 
-1. C2t-gate (task #957): three pipeline-threaded predicates over
-   `(sepReduce s).2` — `coeff.IsVarProduct`, residual cube-free
-   (`extractCubeDegree.2 = 0`), cube-`expCoeff` `ctx`-independent —
-   discharging `eraMonoCubeSum`'s separability hypotheses. The gate.
-2. C2t-term (#958): `ETm.paramProject` (with eval; strengthen `coeff` to
-   `ETm p`), `cubeConstTerm`/`cubeBaseTerm`, `eraMonoTerm` (with eval).
-   Use the `k+f` cube via `(p+k)+f = p+(k+f)` re-association.
-3. D1 (#959): `eraConstPart` (Eq 7) with eval.
-4. D2 (#960): `packM_term` (Eq 8) — positive/negative `List.filter`
-   partition by `ZMonomial.sign` into minuend/subtrahend of one `etsub`;
-   prove `eval = packM` and non-underflow by descending a ℤ identity
-   from `packM ≥ 0`. Hardest proof of the phase.
-5. D3 (#961): `eraCount` with `eraCount_eval` — `eraCountOfPack k
-   packM_term tTerm wTerm`, count over the `k+f` cube.
-6. E1 (#962) `eraTheta`/`eraW` from `eraMajorant`; E2 (#963)
-   `reducedCount_eq` plus shell-empty bridge (`#{(a,b):R=0}=#{a:P=0}` via
-   `sepReduce_sound`/`unique`, then side `max(t,θ)` to side `t`); E3
-   (#964) `eraCountPred` (with eval, and the `diophOf`
-   `Fin (n+1+witArity)` index reconciliation) — closes parent Task 6.4c.
+## Resume point (next work) — Task 6.4d onward
 
-Then the parent Phase 6-7 plan resumes at 6.4d onward.
+The parent Phase 6-7 plan resumes at Task 6.4d. The one deferred obligation
+from this sub-project, to be discharged where 6.4d/6.4e consume the count:
+
+- The `solCount` corollary: collapse the `diophOf` unique-witness fibre (via
+  `diophOf_unique`, `EraDiophantine.lean`) so `eraCountPred_eval`'s count over
+  (output slot + witnesses) becomes a count over the output slot alone. The
+  route mirrors `reducedCount_eq`'s `card_nbij'` fibre argument with the
+  `diophOf` witness in place of the chain witness; `eraBaseBound`/
+  `reindexSys_coord_bound`/`reindexCtx` are reusable and no new reindex
+  machinery is needed. See task #964's report for the detailed sketch.
 
 ## How to continue
 
-Re-read the spec, plan, the two notes, and this file. Confirm the branch
-tip (`jj log -r feat/era-packm-term`). Start the next pending task (#957)
-via the subagent-driven loop: dispatch an implementer with the full task
-text plus the mapping-note paper anchor, then spec review, then quality
-review (all `lean-lsp`-free), then commit. Keep "first read the paper" as
-the discipline.
+Re-read the parent Phase 6-7 sub-plan and confirm the branch tip
+(`jj log -r feat/era-packm-term`; tip `30ac6fe5`). Resume at Task 6.4d via
+the subagent-driven loop: dispatch an implementer with the full task text plus
+the paper anchor, then spec review, then quality review (all `lean-lsp`-free),
+then commit. Keep "first read the paper" as the discipline.
