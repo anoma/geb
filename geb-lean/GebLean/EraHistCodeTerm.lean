@@ -1871,6 +1871,99 @@ theorem reindexInputSys_coord_bound {p r : ℕ} (pred : ETm (p + r)) (ctx : Fin 
   · intro i
     exact hwit i
 
+/-- The ambient-parameter slot `2 + i` of the hit-gap context `Fin ((2 + k) + 1)`,
+as a `Fin`. The hit-gap context lays out `[x, n, ambient(k), j]`, so ambient
+parameter `i` lives at position `2 + i`. -/
+def ambIdx {k : ℕ} (i : Fin k) : Fin ((2 + k) + 1) :=
+  ⟨2 + (i : ℕ), by omega⟩
+
+/-- The coding-base renaming for the hit-gap predicate: the `1 + k` slots of the
+coding-base term `ATerm` (loop bound `n` then the `k` ambient parameters) are sent
+into the hit-gap context `[x, n, ambient(k), j]`. Slot `0` (`n`) maps to variable
+`1`; ambient slot `1 + i` maps to variable `2 + i` (arXiv:2606.09336, Claim 3). -/
+def hitGapBaseSub {k : ℕ} : Fin (1 + k) → ETm ((2 + k) + 1) :=
+  Fin.addCases (fun _ : Fin 1 => (Tm.var 1 : ETm ((2 + k) + 1)))
+    (fun i : Fin k => Tm.var (ambIdx i))
+
+/-- The recurrence-step renaming for the hit-gap predicate: the `2 + k` slots of
+the step term `stepTm` (index `j`, value `v`, then the `k` ambient parameters) are
+sent into the hit-gap context. Slot `0` (`j`) maps to `jTerm`; slot `1` (`v`) maps
+to `digit` (the `j`-th base-`A` digit of `x`); ambient slot `2 + i` maps to
+variable `2 + i` (arXiv:2606.09336, Claim 3). -/
+def hitGapStepSub {k : ℕ} (jTerm digit : ETm ((2 + k) + 1)) :
+    Fin (2 + k) → ETm ((2 + k) + 1) :=
+  Fin.addCases
+    (fun i : Fin 2 => if (i : ℕ) = 0 then jTerm else digit)
+    (fun i : Fin k => Tm.var (ambIdx i))
+
+/-- The coding base `A` denotation of the hit-gap predicate: the coding-base term
+`ATerm` evaluated at the loop bound `n = ctx 1` together with the ambient
+parameters read off the hit-gap context (arXiv:2606.09336, Claim 3). -/
+def hitGapBaseCtx {k : ℕ} (ctx : Fin ((2 + k) + 1) → ℕ) : Fin (1 + k) → ℕ :=
+  Fin.addCases (fun _ : Fin 1 => ctx 1) (fun i : Fin k => ctx (ambIdx i))
+
+/-- The recurrence-step context of the hit-gap predicate: the index `j` and value
+`v` together with the ambient parameters read off the hit-gap context, in the slot
+order the step term `stepTm` expects (arXiv:2606.09336, Claim 3). -/
+def hitGapStepCtx {k : ℕ} (ctx : Fin ((2 + k) + 1) → ℕ) (j v : ℕ) : Fin (2 + k) → ℕ :=
+  Fin.addCases (fun i : Fin 2 => if (i : ℕ) = 0 then j else v)
+    (fun i : Fin k => ctx (ambIdx i))
+
+/-- The hit-gap predicate of arXiv:2606.09336, Claim 3, as a pure `Era` arithmetic
+term over the context `[x, n, ambient(k), j]` (`x` the code, `n` the loop bound, `k`
+ambient parameters, `j` the counted index). It evaluates to `0` exactly when index
+`j` hits for code `x` (consecutive base-`A` digits `a_j`, `a_{j+1}` satisfy
+`a_{j+1} = step j a_j`) and `j < n`. The two truncated-subtraction differences
+`(lhs ∸ rhs) + (rhs ∸ lhs)` vanish iff `lhs = rhs`, encoding the digit-step
+equation; the range gap `(j + 1) ∸ n` vanishes iff `j < n`. The coding base `A` and
+the step are supplied as the terms `ATerm` and `stepTm`. -/
+def hitGapTm {k : ℕ} (stepTm : ETm (2 + k)) (ATerm : ETm (1 + k)) :
+    ETm ((2 + k) + 1) :=
+  let Asub : ETm ((2 + k) + 1) := ATerm.subst hitGapBaseSub
+  let jVar : ETm ((2 + k) + 1) := Tm.var (Fin.last (2 + k))
+  let xVar : ETm ((2 + k) + 1) := Tm.var 0
+  let nVar : ETm ((2 + k) + 1) := Tm.var 1
+  let digit : ETm ((2 + k) + 1) := (xVar /ᵉ (Asub ^ᵉ jVar)) %ᵉ Asub
+  let lhs : ETm ((2 + k) + 1) := stepTm.subst (hitGapStepSub jVar digit)
+  let rhs : ETm ((2 + k) + 1) :=
+    (xVar /ᵉ (Asub ^ᵉ (jVar +ᵉ eraNumeral 1))) %ᵉ Asub
+  let gap : ETm ((2 + k) + 1) := (lhs ∸ᵉ rhs) +ᵉ (rhs ∸ᵉ lhs)
+  let rangeGap : ETm ((2 + k) + 1) := (jVar +ᵉ eraNumeral 1) ∸ᵉ nVar
+  gap +ᵉ rangeGap
+
+/-- The hit-gap predicate vanishes exactly at hitting indices below the loop
+bound (arXiv:2606.09336, Claim 3): `hitGapTm stepTm ATerm` evaluates to `0` at the
+context `[x, n, ambient(k), j]` iff index `j = ctx (Fin.last (2 + k))` hits for code
+`x = ctx 0` with respect to the supplied step and coding base, and `j < n = ctx 1`.
+The step is `fun j v => Tm.eval eraInterp stepTm (hitGapStepCtx ctx j v)` and the
+coding base is `Tm.eval eraInterp ATerm (hitGapBaseCtx ctx)`. -/
+theorem hitGapTm_eval_zero_iff {k : ℕ} (stepTm : ETm (2 + k)) (ATerm : ETm (1 + k))
+    (ctx : Fin ((2 + k) + 1) → ℕ) :
+    Tm.eval eraInterp (hitGapTm stepTm ATerm) ctx = 0
+      ↔ GebLean.EraRecurrence.hitsAt
+            (fun j v => Tm.eval eraInterp stepTm (hitGapStepCtx ctx j v))
+            (Tm.eval eraInterp ATerm (hitGapBaseCtx ctx))
+            (ctx 0) (ctx (Fin.last (2 + k)))
+        ∧ ctx (Fin.last (2 + k)) < ctx 1 := by
+  have hbase : (fun i => Tm.eval eraInterp (hitGapBaseSub i) ctx)
+      = hitGapBaseCtx (k := k) ctx := by
+    funext i
+    refine Fin.addCases (fun a => ?_) (fun a => ?_) i <;>
+      simp [hitGapBaseSub, hitGapBaseCtx, Tm.eval]
+  have hstep : ∀ jT dT : ETm ((2 + k) + 1),
+      (fun i => Tm.eval eraInterp (hitGapStepSub jT dT i) ctx)
+        = hitGapStepCtx ctx (Tm.eval eraInterp jT ctx) (Tm.eval eraInterp dT ctx) := by
+    intro jT dT
+    funext i
+    refine Fin.addCases (fun a => ?_) (fun a => ?_) i
+    · simp only [hitGapStepSub, hitGapStepCtx, Fin.addCases_left]
+      split <;> rfl
+    · simp only [hitGapStepSub, hitGapStepCtx, Fin.addCases_right, Tm.eval]
+  simp only [hitGapTm, eadd_eval, etsub_eval, ediv_eval, emod_eval, epow_eval, eraInterp,
+    fcons, eraNumeral_eval, Tm.eval_subst, hbase, hstep, Tm.eval]
+  rw [GebLean.EraRecurrence.hitsAt, Nat.add_eq_zero_iff]
+  omega
+
 open GebLean.EraCompleteness in
 /-- The Era-term witness counter of arXiv:2407.12928, Corollary 3.6 (via
 Theorem 3.4): for a `diophOf`-encoded predicate `τ`, the closed `Era` term whose
