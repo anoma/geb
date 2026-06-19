@@ -1,5 +1,7 @@
 import GebLean.EraHistCodeTerm
 import GebLean.LawvereERBound
+import GebLean.LawvereKSimER
+import GebLean.LawvereERKSim.ErToK
 
 /-!
 # `Era`-term completeness for the elementary functions
@@ -28,6 +30,8 @@ product majorant respectively.
 * `eraBSum_eval`, `eraBProd_eval` — the bounded-sum and bounded-product `eval`
   identities against `natBSum`/`natBProd`.
 * `era_complete` — every `ERMor1` function is the denotation of an `Era` term.
+* `era_of_ksim2`, `ksim2_of_era` — the two inclusions of the function-class
+  equality between `Era` terms and `K^sim` morphisms of level ≤ 2.
 
 ## References
 
@@ -445,5 +449,24 @@ theorem era_complete {n : ℕ} (f : ERMor1 n) :
     refine ⟨eraBProd tf, fun ctx => ?_⟩
     rw [eraBProd_eval, ERMor1.interp_bprod]
     exact congrArg _ (funext (fun i => htf _))
+
+/-- Every `K^sim` morphism of level ≤ 2 is the denotation of an `Era` term
+(arXiv:2606.09336, Theorem 2): composing the forward translation `kToER`
+(level-≤-2 `K^sim` to `ERMor1`) with `era_complete` yields an `Era` term `t`
+whose denotation agrees with `f.interp` at every context. -/
+theorem era_of_ksim2 {a : ℕ} (f : KMor1 a) (h : f.level ≤ 2) :
+    ∃ t : ETm a, ∀ v : Fin a → ℕ, Tm.eval eraInterp t v = f.interp v := by
+  obtain ⟨t, ht⟩ := era_complete (kToER f h)
+  exact ⟨t, fun v => (ht v).trans (kToER_interp f h v)⟩
+
+/-- Every `Era` term denotes a `K^sim` morphism of level ≤ 2
+(arXiv:2606.09336, Theorem 2): composing `era_sound_er` (`Era` term to
+`ERMor1`) with the backward translation `erToK` (`ERMor1` to level-≤-2
+`K^sim`, `erToK_level`) yields a `K^sim` morphism `erToK e` of level ≤ 2
+whose denotation agrees with the term's at every context. -/
+theorem ksim2_of_era {n : ℕ} (t : ETm n) :
+    ∃ f : KMor1 n, f.level ≤ 2 ∧ ∀ v : Fin n → ℕ, f.interp v = Tm.eval eraInterp t v := by
+  obtain ⟨e, he⟩ := GebLean.EraCompleteness.era_sound_er t
+  exact ⟨erToK e, erToK_level e, fun v => (erToK_interp e v).trans (he v)⟩
 
 end GebLean
