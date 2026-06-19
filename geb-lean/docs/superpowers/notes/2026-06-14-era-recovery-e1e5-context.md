@@ -14,6 +14,12 @@
 - [9 Literature map](#9-literature-map)
 - [10 Related documents](#10-related-documents)
 - [11 Where a future brainstorm should start](#11-where-a-future-brainstorm-should-start)
+- [12 Design-space synthesis (2026-06-19)](#12-design-space-synthesis-2026-06-19)
+  - [12.1 Three formulations of ERA](#121-three-formulations-of-era)
+  - [12.2 Redundancy versus recovery](#122-redundancy-versus-recovery)
+  - [12.3 Semantic versus object level — what is and is not proved](#123-semantic-versus-object-level--what-is-and-is-not-proved)
+  - [12.4 φ in full, and why not `max`](#124-%CF%86-in-full-and-why-not-max)
+  - [12.5 Designing a maximally-expressive finite basis (#3)](#125-designing-a-maximally-expressive-finite-basis-3)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -345,3 +351,158 @@ Marchenkov, PSS).
    with `φ` (certified elementary), derive `succ_sub_split` by `uniq`
    on the counter, obtain recovery via § 6, then E1–E5 via the
    existing `esubAt` machinery.
+
+## 12 Design-space synthesis (2026-06-19)
+
+A consolidated record of a clarifying discussion, framing the recovery /
+E1–E5 work (this note's subject) inside the broader question of *which*
+ERA basis one is formalising. Cross-references the detail above.
+
+### 12.1 Three formulations of ERA
+
+At least three distinct bases are worth separating:
+
+1. **Scheme basis (`ERMor1`-like).** Bounded sum and bounded product are
+   taken as *schemes* — operations parametrised by an arbitrary summand
+   *term* `g`. That is higher-order, hence an *infinite* basis (one
+   instance per summand shape), and powerful: bounded recursion of the
+   Kalmár-elementary functions is derivable from it. Essentially
+   `ERMor1` itself.
+2. **Minimal basis.** `{0, succ, projᵢ, +, x mod y, 2ˣ}` (Prunescu–
+   Sauras-Altuzarra–Shunia). Finite; fewest assumptions.
+3. **Maximally-expressive finite basis.** A *finite* basis chosen not for
+   minimality but to be as expressive — and as easy to write terms in —
+   as a finite first-order basis can be.
+
+The equivalence of any two is the same theorem and the same proof effort;
+the choice only affects how short terms are when a basis is taken *in
+isolation*.
+
+### 12.2 Redundancy versus recovery
+
+- **Redundancy** (the E1–E5 *goal*, § 2): the object-level `Derivable
+  eraDefs` equations identifying each rich-basis convenience primitive
+  with a `…Formula` encoding built only from the minimal generators —
+  `derivable_sub_eq_subFormula`, `derivable_two_mul_eq_edmul`,
+  `derivable_div_eq_divFormula`, `derivable_mul_eq_mulFormula`,
+  `derivable_pow_eq_powFormula` (M3–M7), plus pure-generator closure (M8).
+  Proving them shows each convenience primitive is *eliminable* as a basis
+  element — that the rich basis is non-minimal *inside the calculus*.
+- **Recovery** (the *lever*, § 3): the single order-arithmetic lemma every
+  E1–E5 proof rests on — Goodstein 1954 (17), `a + (b ∸ a) = b + (a ∸ b)`
+  (both sides `= max(a, b)`). It "recovers" a value from a truncated
+  difference; it is what lets `∸`, `mod`, and division be manipulated in
+  the logic-free calculus.
+
+Redundancy is the deliverable; recovery is the tool. The obstruction (M2)
+is that recovery's unconditional form forces the indicator `1 ∸ (b ∸ a)`,
+needing successor-on-the-minuend (`S a ∸ b`), for which basis `∸` has no
+recursion (it recurses only on its subtrahend). Verified (§ 6): recovery
+reduces to `succ_sub_split`, blocked behind Goodstein's φ.
+
+### 12.3 Semantic versus object level — what is and is not proved
+
+Two levels (§ 4): semantic (`Tm.eval` into `ℕ` — "the metalanguage") and
+object (`Derivable eraDefs` — the logic-free calculus). `eraSound` lifts
+object to semantic, so **any E1–E5 proved object-level discharges its
+semantic version for free**; the object-level statements are strictly
+stronger. The converse (semantic ⇒ object) is exactly what fails — that is
+the recovery obstruction.
+
+Status of the *redundancy* (as distinct from completeness):
+
+- The `…Formula` encodings exist as terms (`subFormula`, `edmul`,
+  `divFormula`, `mulFormula`, `powFormula`, `Era.lean`).
+- E1's *semantic* redundancy is proved and named: `subFormula_eval`
+  (`subFormula` equals truncated subtraction as a `ℕ` function, all
+  `x, y`).
+- E2–E5 semantic correctness is established only on **numerals**
+  (`numeral_dmul`, `numeral_mulFormula`, `numeral_divFormula`, …).
+- **No** object-level `derivable_*_eq_*Formula` exists.
+
+Crucially, `era_complete` + `era_sound_er` prove **completeness of the
+finite rich basis** (`Era ≃ E³` as denoted functions), *not* **minimality**.
+The completeness witnesses use the rich primitives directly (the `sub` case
+is `Tm.var 0 ∸ᵉ Tm.var 1`; `eraBSum` uses `/ᵉ`, `^ᵉ`). So the minimal
+sub-basis `{+, mod, 2ˣ}` has *not* been shown to suffice, at *either* level.
+The Mazzanti/PSAS minimality theorem is therefore *not* formalised; the
+encodings + `subFormula_eval` + the numeral lemmas are its ingredients, not
+the assembled result.
+
+### 12.4 φ in full, and why not `max`
+
+Goodstein's auxiliary (§ 7), in full:
+
+```text
+φ(n, a, b) = Σ_{k<n} sg((a ∸ k) + (b ∸ k))      =  min(n, max(a, b))
+```
+
+(`sg` = signum). The summand is `1` exactly when `k < max(a, b)`, so the
+sum counts up to `min(n, max(a, b))`; for `n ≥ max(a, b)` it delivers
+`max(a, b)`, the right-hand side of recovery.
+
+φ earns its place by **structure, not value**: it is a bounded *sum* whose
+single recursion variable (the counter `n`, appearing as `a ∸ n`, `b ∸ n`)
+sits in *subtrahend* position, so one `uniq` on `n` closes `succ_sub_split`
+and the successor-on-minuend wall is never touched.
+
+Adding `max` as a primitive instead does **not** help:
+
+- As an *axiom* (`max = a + (b ∸ a)` plus symmetry): symmetry of `max` *is*
+  recovery, so this *assumes* the result — eliminating the derivation
+  rather than shortening it, and `max`'s own object-level redundancy is
+  recovery again.
+- With its *natural recursion* (`max(S a, S b) = S max(a, b)`, …): an
+  irreducibly two-argument simultaneous descent, which the single-variable
+  calculus cannot take and which reintroduces the same wall.
+
+φ's non-obvious contribution is *linearisation* — collapsing the
+two-argument order fact `max` into a one-dimensional subtrahend-only count.
+`max` as a primitive does not inherit that trick; φ (Option 2, § 7) is the
+minimal *honest* addition that makes recovery *derivable* rather than
+*assumed*.
+
+### 12.5 Designing a maximally-expressive finite basis (#3)
+
+Goal: a *finite* basis in which bounded sum / bounded product are as short
+to write as possible. Two structural facts bound what is achievable.
+
+- **A finite basis cannot contain a scheme.** Bounded sum/product take an
+  arbitrary summand *term*; that is higher-order. So #3 can never make an
+  *arbitrary* bounded sum a single primitive application — only a short
+  *composition*. Any operator that does take a summand/predicate parameter
+  turns #3 back into #1.
+- **The construction reduces bounded sum to one keystone.** The
+  completeness engine factors as `bounded sum → recSeq → histCode →
+  #{Diophantine zeros} → HW(packM)/w − tᵏ`, where `packM` is a closed form
+  (cube-sum → product of geometric progressions). Everything outside the
+  read-off is `+ ∸ · / ^ mod 2ˣ`.
+
+Consequences for #3:
+
+- **φ does not help expressiveness.** It is one fixed bounded sum (the
+  recovery auxiliary), not a general tool; it belongs to the
+  recovery/redundancy (object) side, not the expressiveness side.
+- **The richest single fixed-arity addition is the Hamming weight `HW`**
+  (binary digit sum). Every count — hence bounded sum *and* bounded product
+  (same engine, `·` for `+`) — reduces to it. In the present basis `HW`
+  (`eraSigma`/`hwClosed`) sits atop a deep sub-tower (`ν₂` of the central
+  binomial, via Kummer); making `HW` primitive collapses that sub-tower and
+  turns the count read-off into a one-liner.
+- A pairing function (cheap sequence coding) and the already-present
+  `2ˣ`/`div`/`mod` are the supporting coding substrate.
+
+**The ceiling.** Even with `HW` primitive, a bounded sum of arbitrary `g`
+is *not* a one-liner: it still needs `diophOf g` (the Diophantine encoding
+of `g`'s graph), whose size dominates the term. The genuinely deep step is
+the *factorisation identity* `cubeSum_factor`, a theorem inside the
+equivalence proof — not a primitive. So fixed-arity additions (`HW` above
+all) shorten the *leaves*; nothing fixed-arity trivialises the *scheme*.
+
+A reasonable #3 "sweet spot" is therefore
+`{0, succ, projᵢ, +, ∸, ·, /, ^, mod, 2ˣ, HW, ⟨·,·⟩ + proj}` — the rich
+basis plus the counting/coding leaves — in which bounded sum/product are
+`HW`-of-a-closed-form-pack-of-`diophOf(g)`: short modulo the unavoidable
+encoding of `g`, with the deepest sub-towers gone. The equivalence to #1
+and the reduction to #2 remain the same unavoidable proofs; only term sizes
+in #3-in-isolation improve.
