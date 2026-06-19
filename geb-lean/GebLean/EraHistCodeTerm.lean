@@ -1578,6 +1578,215 @@ theorem reindexSys_coord_bound {n : ℕ} (τ : ETm n) (ctx : Fin n → ℕ)
   · intro i
     exact hwit i
 
+/-- The input-side re-indexing embedding of arXiv:2407.12928, Corollary 3.6: the
+sibling of `reindexEmb` that, additionally to the output, moves the `r` counted
+inputs of a `diophOf` encoding from the parameter side to the cube side. It keeps
+the `p` parameters in the input block, sends the `r` counted inputs to cube slots
+`0 … r-1`, the output index `p + r` to cube slot `r`, and witness `k` to cube slot
+`r + 1 + k`, realising `Fin ((p + r) + 1 + witArity) → Fin (p + (r + 1 + witArity))`.
+Built from `Fin.addCases` / `Fin.lastCases`, so it executes. -/
+def reindexInputEmb (p r witArity : ℕ) :
+    Fin ((p + r) + 1 + witArity) → Fin (p + (r + 1 + witArity)) :=
+  Fin.addCases
+    (Fin.lastCases (Fin.natAdd p (Fin.castAdd witArity (Fin.last r)))
+      (Fin.addCases
+        (fun ip => Fin.castAdd (r + 1 + witArity) ip)
+        (fun ir => Fin.natAdd p (Fin.castAdd witArity (Fin.castAdd 1 ir)))))
+    (fun k => Fin.natAdd p (Fin.natAdd (r + 1) k))
+
+/-- The input-side re-indexed context of arXiv:2407.12928, Corollary 3.6: read a
+cube point `a : Fin (r + 1 + witArity) → ℕ` (moved inputs, then output, then
+witnesses) together with the `p` parameters `ctx` into the `diophOf` encoding's
+context. The `diophOf` inputs are `ctx` extended by the moved inputs
+`a (castAdd … i)`; the output is `a (castAdd witArity (Fin.last r))`; the witnesses
+are `a (natAdd (r + 1) i)`. -/
+def reindexInputCtx {p r : ℕ} (pred : ETm (p + r)) (ctx : Fin p → ℕ)
+    (a : Fin (r + 1 + (diophOf pred).witArity) → ℕ) :
+    Fin ((p + r) + 1 + (diophOf pred).witArity) → ℕ :=
+  (diophOf pred).ctx
+    (Fin.append ctx (fun i => a (Fin.castAdd (diophOf pred).witArity (Fin.castAdd 1 i))))
+    (a (Fin.castAdd (diophOf pred).witArity (Fin.last r)))
+    (fun i => a (Fin.natAdd (r + 1) i))
+
+/-- Injectivity of `reindexInputEmb`: the `p` parameters land in the input block,
+while the `r` counted inputs, the output slot, and the witnesses land at distinct
+cube slots (`0 … r-1`, `r`, and `r + 1 + k`). -/
+theorem reindexInputEmb_injective (p r witArity : ℕ) :
+    Function.Injective (reindexInputEmb p r witArity) := by
+  intro a b hab
+  unfold reindexInputEmb at hab
+  induction a using Fin.addCases with
+  | left ia =>
+    induction b using Fin.addCases with
+    | left ib =>
+      simp only [Fin.addCases_left] at hab
+      induction ia using Fin.lastCases with
+      | last =>
+        induction ib using Fin.lastCases with
+        | last => rfl
+        | cast jb =>
+          induction jb using Fin.addCases with
+          | left ipb =>
+            simp only [Fin.lastCases_last, Fin.lastCases_castSucc, Fin.addCases_left,
+              Fin.ext_iff, Fin.val_natAdd, Fin.val_castAdd, Fin.val_last] at hab
+            omega
+          | right irb =>
+            simp only [Fin.lastCases_last, Fin.lastCases_castSucc, Fin.addCases_right,
+              Fin.ext_iff, Fin.val_natAdd, Fin.val_castAdd, Fin.val_last] at hab
+            omega
+      | cast ja =>
+        induction ja using Fin.addCases with
+        | left ipa =>
+          induction ib using Fin.lastCases with
+          | last =>
+            simp only [Fin.lastCases_last, Fin.lastCases_castSucc, Fin.addCases_left,
+              Fin.ext_iff, Fin.val_natAdd, Fin.val_castAdd, Fin.val_last] at hab
+            omega
+          | cast jb =>
+            induction jb using Fin.addCases with
+            | left ipb =>
+              simp only [Fin.lastCases_castSucc, Fin.addCases_left] at hab
+              rw [Fin.castAdd_injective _ _ hab]
+            | right irb =>
+              simp only [Fin.lastCases_castSucc, Fin.addCases_left, Fin.addCases_right,
+                Fin.ext_iff, Fin.val_castAdd, Fin.val_natAdd] at hab
+              omega
+        | right ira =>
+          induction ib using Fin.lastCases with
+          | last =>
+            simp only [Fin.lastCases_last, Fin.lastCases_castSucc, Fin.addCases_right,
+              Fin.ext_iff, Fin.val_natAdd, Fin.val_castAdd, Fin.val_last] at hab
+            omega
+          | cast jb =>
+            induction jb using Fin.addCases with
+            | left ipb =>
+              simp only [Fin.lastCases_castSucc, Fin.addCases_right, Fin.addCases_left,
+                Fin.ext_iff, Fin.val_castAdd, Fin.val_natAdd] at hab
+              omega
+            | right irb =>
+              simp only [Fin.lastCases_castSucc, Fin.addCases_right] at hab
+              have h := Fin.natAdd_injective _ _ hab
+              have h2 := Fin.castAdd_injective _ _ h
+              have h3 := Fin.castAdd_injective _ _ h2
+              rw [h3]
+    | right kb =>
+      simp only [Fin.addCases_left, Fin.addCases_right] at hab
+      induction ia using Fin.lastCases with
+      | last =>
+        simp only [Fin.lastCases_last, Fin.ext_iff, Fin.val_natAdd, Fin.val_castAdd,
+          Fin.val_last] at hab
+        omega
+      | cast ja =>
+        induction ja using Fin.addCases with
+        | left ipa =>
+          simp only [Fin.lastCases_castSucc, Fin.addCases_left, Fin.ext_iff, Fin.val_castAdd,
+            Fin.val_natAdd] at hab
+          omega
+        | right ira =>
+          simp only [Fin.lastCases_castSucc, Fin.addCases_right, Fin.ext_iff, Fin.val_natAdd,
+            Fin.val_castAdd] at hab
+          omega
+  | right ka =>
+    induction b using Fin.addCases with
+    | left ib =>
+      simp only [Fin.addCases_left, Fin.addCases_right] at hab
+      induction ib using Fin.lastCases with
+      | last =>
+        simp only [Fin.lastCases_last, Fin.ext_iff, Fin.val_natAdd, Fin.val_castAdd,
+          Fin.val_last] at hab
+        omega
+      | cast jb =>
+        induction jb using Fin.addCases with
+        | left ipb =>
+          simp only [Fin.lastCases_castSucc, Fin.addCases_left, Fin.ext_iff, Fin.val_castAdd,
+            Fin.val_natAdd] at hab
+          omega
+        | right irb =>
+          simp only [Fin.lastCases_castSucc, Fin.addCases_right, Fin.ext_iff, Fin.val_natAdd,
+            Fin.val_castAdd] at hab
+          omega
+    | right kb =>
+      simp only [Fin.addCases_right] at hab
+      have h := Fin.natAdd_injective _ _ hab
+      have h2 := Fin.natAdd_injective _ _ h
+      rw [h2]
+
+/-- The input-side re-indexing identity of arXiv:2407.12928, Corollary 3.6:
+precomposing the cube context `Fin.append ctx a` with `reindexInputEmb` recovers
+the `diophOf` context `reindexInputCtx`. The cube-side block of `Fin.append ctx a`
+is read at slots `0 … r-1` for the moved inputs, slot `r` for the output, and slots
+`r + 1 + i` for the witnesses. -/
+theorem append_comp_reindexInputEmb {p r : ℕ} (pred : ETm (p + r)) (ctx : Fin p → ℕ)
+    (a : Fin (r + 1 + (diophOf pred).witArity) → ℕ) :
+    (Fin.append ctx a) ∘ reindexInputEmb p r (diophOf pred).witArity
+      = reindexInputCtx pred ctx a := by
+  refine funext (fun z => ?_)
+  simp only [Function.comp_apply, reindexInputEmb, reindexInputCtx, DiophEnc.ctx]
+  refine Fin.addCases ?_ ?_ z
+  · intro io
+    refine Fin.lastCases ?_ ?_ io
+    · simp only [Fin.addCases_left, Fin.lastCases_last, Fin.append_right, Fin.append_left,
+        Fin.snoc_last]
+    · intro j
+      refine Fin.addCases ?_ ?_ j
+      · intro ip
+        simp only [Fin.addCases_left, Fin.lastCases_castSucc, Fin.append_left, Fin.snoc_castSucc]
+      · intro ir
+        simp only [Fin.addCases_left, Fin.addCases_right, Fin.lastCases_castSucc,
+          Fin.append_right, Fin.snoc_castSucc, Fin.append_left]
+  · intro i
+    simp only [Fin.addCases_right, Fin.append_right]
+
+/-- The input-side re-indexed system of arXiv:2407.12928, Corollary 3.6: the
+`diophOf` encoding's sum-of-squares system, weakened along `reindexInputEmb` so the
+moved inputs, the output slot, and the witnesses become the cube-side coordinates,
+with an appended `sqDist [output] []` atom pinning the output coordinate to `0`
+(the empty `SimpleSum` evaluates to `0`). The mirror image of the `diophZero` atom
+`sqDist [] [var]`. Phase E (`sepReduce`, `eraCount`) operates on this system. -/
+def reindexInputSys {p r : ℕ} (pred : ETm (p + r)) :
+    SosSystem (p + (r + 1 + (diophOf pred).witArity)) :=
+  (diophOf pred).sys.weaken (reindexInputEmb p r (diophOf pred).witArity)
+    ++ [SosTerm.sqDist
+        [SimpleMonomial.var (Fin.natAdd p (Fin.castAdd (diophOf pred).witArity (Fin.last r)))] []]
+
+/-- The input-side re-indexing bridge of arXiv:2407.12928, Corollary 3.6: evaluating
+the re-indexed system at the cube context `Fin.append ctx a` equals evaluating the
+original `diophOf` system at the re-indexed context `reindexInputCtx`, plus the pin
+atom's value (the square of the output coordinate `a outCubeIdx`). Composes
+`SosSystem.eval_append`, `SosSystem.eval_weaken` (the embedding `reindexInputEmb` is
+injective), and `append_comp_reindexInputEmb`. -/
+theorem reindexInputSys_eval {p r : ℕ} (pred : ETm (p + r)) (ctx : Fin p → ℕ)
+    (a : Fin (r + 1 + (diophOf pred).witArity) → ℕ) :
+    SosSystem.eval (reindexInputSys pred) (Fin.append ctx a)
+      = SosSystem.eval (diophOf pred).sys (reindexInputCtx pred ctx a)
+        + SosTerm.eval
+            (.sqDist
+              [SimpleMonomial.var
+                (Fin.natAdd p (Fin.castAdd (diophOf pred).witArity (Fin.last r)))] [])
+            (Fin.append ctx a) := by
+  rw [reindexInputSys, SosSystem.eval_append,
+    SosSystem.eval_weaken _ _ (reindexInputEmb_injective p r (diophOf pred).witArity),
+    append_comp_reindexInputEmb]
+  simp only [SosSystem.eval, Nat.add_zero]
+
+/-- The input-side re-indexing vanishing criterion of arXiv:2407.12928, Corollary
+3.6: the re-indexed system vanishes at the cube context exactly when the original
+`diophOf` system vanishes at the re-indexed context and the output coordinate
+`a outCubeIdx` is `0`, where `outCubeIdx := Fin.castAdd witArity (Fin.last r)` is the
+output position within the cube point `a`. From `reindexInputSys_eval`,
+`Nat.add_eq_zero_iff`, and `SosTerm.sqDist_eval_eq_zero_iff` (the empty `SimpleSum`
+evaluates to `0`, so the pin forces the output coordinate to `0`). -/
+theorem reindexInputSys_eval_zero_iff {p r : ℕ} (pred : ETm (p + r)) (ctx : Fin p → ℕ)
+    (a : Fin (r + 1 + (diophOf pred).witArity) → ℕ) :
+    SosSystem.eval (reindexInputSys pred) (Fin.append ctx a) = 0
+      ↔ SosSystem.eval (diophOf pred).sys (reindexInputCtx pred ctx a) = 0
+        ∧ a (Fin.castAdd (diophOf pred).witArity (Fin.last r)) = 0 := by
+  rw [reindexInputSys_eval, Nat.add_eq_zero_iff,
+    SosTerm.sqDist_eval_eq_zero_iff]
+  refine and_congr_right (fun _ => ?_)
+  simp only [SimpleSum.eval, List.map_cons, List.map_nil, List.sum_cons, List.sum_nil,
+    Nat.add_zero, SimpleMonomial.var_eval, Fin.append_right]
+
 open GebLean.EraCompleteness in
 /-- The Era-term witness counter of arXiv:2407.12928, Corollary 3.6 (via
 Theorem 3.4): for a `diophOf`-encoded predicate `τ`, the closed `Era` term whose
