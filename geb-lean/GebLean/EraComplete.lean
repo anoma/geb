@@ -1,4 +1,5 @@
 import GebLean.EraHistCodeTerm
+import GebLean.LawvereERBound
 
 /-!
 # `Era`-term completeness for the elementary functions
@@ -242,5 +243,171 @@ theorem eraBSum_eval {k : ℕ} (g : ETm (k + 1)) (ctx : Fin (k + 1) → ℕ) :
     eraRec_eval (eraBSumStep g) (eraBSumMajorant g) 0 ctx'
       (fun j hj => sumMajorant_bound g ctx' j (hbound0 ▸ hj)),
     recSeq_eq_natBSum, hbound0, hparam]
+
+/-- The step term of bounded product (arXiv:2606.09336, Theorem 2): over the step
+scope `[index, accumulator, ambient(k)]`, the accumulator (variable `1`) times the
+factor `g` re-indexed by `eraBSumSub` so that its loop slot reads the index and its
+parameters read the ambient slots. -/
+def eraBProdStep {k : ℕ} (g : ETm (k + 1)) : ETm (2 + k) :=
+  Tm.var 1 *ᵉ g.subst eraBSumSub
+
+/-- The product majorant term of bounded product (arXiv:2606.09336, Theorem 2): the
+coding base for the history code, over the scope `[bound, ambient(k)]`. With each
+factor strictly below the recast majorant `M` of `g`, every partial product over the
+loop bound `n = var 0` lies below `M ^ n * 2`, the trajectory bound `eraRec` needs. -/
+def eraBProdMajorant {k : ℕ} (g : ETm (k + 1)) : ETm (1 + k) :=
+  ((eraMajorant g).weaken (finCongr (Nat.add_comm k 1)) ^ᵉ Tm.var 0) *ᵉ eraNumeral 2
+
+/-- The wrapper step of bounded product (arXiv:2606.09336, Theorem 2): the step
+that `eraRec_eval` reads off `eraBProdStep g` multiplies, at loop index `i` and
+accumulator `s`, the factor `g` evaluated at `i` with the ambient parameters
+`fun j => ctx' ⟨1 + j⟩` read off the parameter context, recovering the running-product
+recurrence. -/
+theorem bprodStep_eval {k : ℕ} (g : ETm (k + 1)) (ctx' : Fin (1 + k) → ℕ) (i s : ℕ) :
+    Tm.eval eraInterp (eraBProdStep g)
+        (hitGapStepCtx (Fin.snoc (histHitCtx (Fin.append ctx' (fun _ : Fin 2 => 0)))
+          (histHitCtx (Fin.append ctx' (fun _ : Fin 2 => 0)) 1)) i s)
+      = s * Tm.eval eraInterp g
+          (Fin.cons i (fun j : Fin k => ctx' ⟨1 + (j : ℕ), by omega⟩)) := by
+  set ctxFull : Fin ((2 + k) + 1) → ℕ :=
+    Fin.snoc (histHitCtx (Fin.append ctx' (fun _ : Fin 2 => 0)))
+      (histHitCtx (Fin.append ctx' (fun _ : Fin 2 => 0)) 1) with hctxFull
+  have hslot0 : hitGapStepCtx ctxFull i s 0 = i := by
+    rw [show (0 : Fin (2 + k)) = Fin.castAdd k (0 : Fin 2) from rfl]
+    simp only [hitGapStepCtx, Fin.addCases_left, Fin.val_zero, if_pos]
+  have h1cast : (1 : Fin (2 + k)) = Fin.castAdd k (1 : Fin 2) := by
+    apply Fin.ext
+    simp only [Fin.val_castAdd, Fin.val_one']
+    rw [Nat.mod_eq_of_lt (by omega), Nat.mod_eq_of_lt (by omega)]
+  have hslot1 : hitGapStepCtx ctxFull i s 1 = s := by
+    rw [h1cast]
+    simp only [hitGapStepCtx, Fin.addCases_left, Fin.val_one, Nat.one_ne_zero, if_neg,
+      not_false_iff]
+  have hamb : ∀ j : Fin k, hitGapStepCtx ctxFull i s ⟨2 + (j : ℕ), by omega⟩
+      = ctx' ⟨1 + (j : ℕ), by omega⟩ := by
+    intro j
+    rw [show (⟨2 + (j : ℕ), by omega⟩ : Fin (2 + k)) = Fin.natAdd 2 j from by
+      apply Fin.ext; simp only [Fin.val_natAdd]]
+    simp only [hitGapStepCtx, Fin.addCases_right]
+    show ctxFull (ambIdx j) = ctx' ⟨1 + (j : ℕ), by omega⟩
+    rw [hctxFull, histHitSnoc_amb]
+  have hfun : (fun slot => Tm.eval eraInterp (eraBSumSub slot) (hitGapStepCtx ctxFull i s))
+      = Fin.cons i (fun j : Fin k => ctx' ⟨1 + (j : ℕ), by omega⟩) := by
+    funext slot
+    refine Fin.cases ?_ (fun j => ?_) slot
+    · simp only [eraBSumSub, Fin.cases_zero, Tm.eval, hslot0, Fin.cons_zero]
+    · simp only [eraBSumSub, Fin.cases_succ, Tm.eval, hamb, Fin.cons_succ]
+  rw [eraBProdStep, emul_eval, eraInterp, Tm.eval_subst]
+  simp only [fcons, Tm.eval, hslot1, hfun]
+
+/-- The wrapper recurrence of bounded product computes the bounded product
+(arXiv:2606.09336, Theorem 2): `recSeq 1 <wrapper-step> y`, the running product that
+`eraRec_eval` reads off `eraBProdStep g`, equals `natBProd y` of the factor `g`
+evaluated at each index with the ambient parameters read off `ctx'`. -/
+theorem recSeq_eq_natBProd {k : ℕ} (g : ETm (k + 1)) (ctx' : Fin (1 + k) → ℕ) (y : ℕ) :
+    GebLean.EraHypercube.recSeq 1
+        (fun i s => Tm.eval eraInterp (eraBProdStep g)
+          (hitGapStepCtx (Fin.snoc (histHitCtx (Fin.append ctx' (fun _ : Fin 2 => 0)))
+            (histHitCtx (Fin.append ctx' (fun _ : Fin 2 => 0)) 1)) i s)) y
+      = natBProd y
+          (fun i => Tm.eval eraInterp g
+            (Fin.cons i (fun j : Fin k => ctx' ⟨1 + (j : ℕ), by omega⟩))) := by
+  induction y with
+  | zero => rfl
+  | succ m ih =>
+    rw [GebLean.EraHypercube.recSeq, bprodStep_eval, ih]
+    rfl
+
+/-- The trajectory bound of bounded product (arXiv:2606.09336, Theorem 2): every
+partial product `recSeq 1 <wrapper-step> j` over a loop index `j ≤ ctx' 0` lies
+strictly below the product majorant `eraBProdMajorant g`. Each factor is strictly
+below the recast majorant `M` of `g` (`eraMajorant_spec`), monotone up to the loop
+bound at slot `0` (`eraMajorant_mono`); the product of `j ≤ ctx' 0` such factors is
+at most `M ^ j ≤ M ^ (ctx' 0)` (using `M ≥ 1` from `eraMajorant_pos`). -/
+theorem prodMajorant_bound {k : ℕ} (g : ETm (k + 1)) (ctx' : Fin (1 + k) → ℕ) (j : ℕ)
+    (hj : j ≤ ctx' 0) :
+    GebLean.EraHypercube.recSeq 1
+        (fun i s => Tm.eval eraInterp (eraBProdStep g)
+          (hitGapStepCtx (Fin.snoc (histHitCtx (Fin.append ctx' (fun _ : Fin 2 => 0)))
+            (histHitCtx (Fin.append ctx' (fun _ : Fin 2 => 0)) 1)) i s)) j
+      < Tm.eval eraInterp (eraBProdMajorant g) ctx' := by
+  set ctxM : Fin (k + 1) → ℕ := ctx' ∘ finCongr (Nat.add_comm k 1) with hctxM
+  set M : ℕ := Tm.eval eraInterp (eraMajorant g) ctxM with hM
+  -- the majorant term evaluates to `M ^ (ctx' 0) * 2`
+  have hmaj : Tm.eval eraInterp (eraBProdMajorant g) ctx' = M ^ (ctx' 0) * 2 := by
+    rw [eraBProdMajorant, emul_eval, eraInterp, epow_eval, eraInterp]
+    simp only [fcons, Tm.eval, eraNumeral_eval, Tm.eval_weaken]
+    rw [← hctxM, ← hM]
+  -- `M ≥ 1`, the positivity the product case requires
+  have hMpos : 1 ≤ M := eraMajorant_pos g ctxM
+  -- the factor at index `i`
+  set f : ℕ → ℕ := fun i => Tm.eval eraInterp g
+    (Fin.cons i (fun a : Fin k => ctx' ⟨1 + (a : ℕ), by omega⟩)) with hf
+  -- each factor below the loop bound is at most `M`
+  have hfi : ∀ i, i < ctx' 0 → f i ≤ M := by
+    intro i hi
+    have hspec : f i < Tm.eval eraInterp (eraMajorant g)
+        (Fin.cons i (fun a : Fin k => ctx' ⟨1 + (a : ℕ), by omega⟩)) :=
+      eraMajorant_spec g _
+    have hmono : Tm.eval eraInterp (eraMajorant g)
+        (Fin.cons i (fun a : Fin k => ctx' ⟨1 + (a : ℕ), by omega⟩)) ≤ M := by
+      rw [hM]
+      refine eraMajorant_mono g (fun slot => ?_)
+      refine Fin.cases ?_ (fun a => ?_) slot
+      · rw [Fin.cons_zero]
+        have : ctxM 0 = ctx' 0 := by rw [hctxM]; simp [finCongr]
+        rw [this]; omega
+      · rw [Fin.cons_succ]
+        have hctxMa : ctxM a.succ = ctx' ⟨1 + (a : ℕ), by omega⟩ := by
+          rw [hctxM]
+          simp only [Function.comp_apply, finCongr_apply]
+          congr 1
+          apply Fin.ext
+          simp only [_root_.Fin.val_cast, Fin.val_succ]
+          omega
+        rw [hctxMa]
+    omega
+  rw [recSeq_eq_natBProd, hmaj]
+  calc natBProd j f
+      ≤ M ^ j :=
+        natBProd_le_pow_max j f M (fun i hi => hfi i (Nat.lt_of_lt_of_le hi hj))
+    _ ≤ M ^ (ctx' 0) := Nat.pow_le_pow_right hMpos hj
+    _ < M ^ (ctx' 0) * 2 := by
+        have : 0 < M ^ (ctx' 0) := Nat.pow_pos hMpos
+        omega
+
+/-- Bounded product `∏_{i < bound} g i` as an `Era` arithmetic term
+(arXiv:2606.09336, Theorem 2, the bounded-product instance of the recurrence former):
+the `eraRec` instance whose step multiplies `g` evaluated at the loop index into the
+running accumulator, started from `1`, under the product majorant `eraBProdMajorant g`.
+The result is recast from `ETm (1 + k)` back to the factor scope `ETm (k + 1)`. -/
+def eraBProd {k : ℕ} (g : ETm (k + 1)) : ETm (k + 1) :=
+  (eraRec (eraBProdStep g) (eraBProdMajorant g) 1).weaken (finCongr (Nat.add_comm 1 k))
+
+/-- Bounded product `eval` identity (arXiv:2606.09336, Theorem 2): `eraBProd g`
+evaluates at `ctx` to `∏_{i < ctx 0} g i`, where `ctx 0` is the loop bound and
+`Fin.tail ctx` the ambient parameters, matching `natBProd`. The trajectory bound is
+discharged by `prodMajorant_bound`, the recurrence read-off by `eraRec_eval`, and the
+running-product identification by `recSeq_eq_natBProd`. -/
+theorem eraBProd_eval {k : ℕ} (g : ETm (k + 1)) (ctx : Fin (k + 1) → ℕ) :
+    Tm.eval eraInterp (eraBProd g) ctx
+      = natBProd (ctx 0)
+          (fun i => Tm.eval eraInterp g (Fin.cons i (Fin.tail ctx))) := by
+  set ctx' : Fin (1 + k) → ℕ := ctx ∘ finCongr (Nat.add_comm 1 k) with hctx'
+  -- the loop bound is preserved by the context recast
+  have hbound0 : ctx' 0 = ctx 0 := by rw [hctx']; simp [finCongr]
+  -- the ambient parameters of the recast context are `Fin.tail ctx`
+  have hparam : (fun a : Fin k => ctx' ⟨1 + (a : ℕ), by omega⟩) = Fin.tail ctx := by
+    funext a
+    rw [hctx', Fin.tail]
+    simp only [Function.comp_apply, finCongr_apply]
+    congr 1
+    apply Fin.ext
+    simp only [_root_.Fin.val_cast, Fin.val_succ]
+    omega
+  rw [eraBProd, Tm.eval_weaken, ← hctx',
+    eraRec_eval (eraBProdStep g) (eraBProdMajorant g) 1 ctx'
+      (fun j hj => prodMajorant_bound g ctx' j (hbound0 ▸ hj)),
+    recSeq_eq_natBProd, hbound0, hparam]
 
 end GebLean
