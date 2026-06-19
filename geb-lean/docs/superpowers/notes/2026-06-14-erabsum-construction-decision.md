@@ -1,5 +1,11 @@
 # eraBSum construction-choice decision
 
+> **Status (2026-06-19): SUPERSEDED.** The route-3 (raw Marchenkov σ)
+> choice recorded here was refined/replaced by
+> `docs/superpowers/notes/2026-06-14-erabsum-m3b-construction-decision.md`
+> (the Prunescu hypercube counting + recurrence-to-term engine), which is
+> the construction actually realised in M3b.
+
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 

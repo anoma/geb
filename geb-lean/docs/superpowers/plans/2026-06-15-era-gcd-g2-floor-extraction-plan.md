@@ -3,7 +3,7 @@
 > **For agentic workers:** REQUIRED SUB-SKILL: Use
 > superpowers:subagent-driven-development (recommended) or
 > superpowers:executing-plans to implement this plan task-by-task.
-> Steps use checkbox (`- [ ]`) syntax for tracking.
+> Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** prove the Prunescu–Shunia base-5 floor identity
 `⌊Bᴱ / ((Bᵃ−1)(Bᵇ−1))⌋ % B = solCount a b (a·b)` (with `B = 5^(a·b)`),
@@ -96,7 +96,7 @@ No change to `GebLean/EraCompleteness.lean` (that is sub-plan G3/G4).
 
 - Modify: `GebLean/Utilities/ArithClosedForms.lean` (after line ~449)
 
-- [ ] **Step 1: state and prove `solCount_recurrence`.**
+- [x] **Step 1: state and prove `solCount_recurrence`.**
 
 ```lean
 /-- Inclusion–exclusion recurrence for the linear-Diophantine count:
@@ -120,13 +120,13 @@ has `x ≥ 1 ∨ y ≥ 1` (else `m = 0 < a+b`). Reuse `mem_solCount_box`,
 `x = 0`), `Nat.sub_add_cancel`. Difficulty: medium-hard; budget
 `lean4:sorry-filler-deep`. Numeric guard first (temporary `#eval`).
 
-- [ ] **Step 2: verify.**
+- [x] **Step 2: verify.**
 
 Run: `lake build GebLean.Utilities.ArithClosedForms`
 Expected: builds; no `sorry`/underscore.
 Then `bash scripts/check-axioms.sh` clean.
 
-- [ ] **Step 3: commit.**
+- [x] **Step 3: commit.**
 
 `feat(era): prove the linear-Diophantine count recurrence`
 
@@ -138,7 +138,7 @@ Then `bash scripts/check-axioms.sh` clean.
 
 - Modify: `GebLean/Utilities/ArithClosedForms.lean`
 
-- [ ] **Step 1: define `gcdDigitSum` (the value `S`).**
+- [x] **Step 1: define `gcdDigitSum` (the value `S`).**
 
 ```lean
 /-- Base-`5^(a·b)` digit sum encoding the linear-Diophantine counts:
@@ -149,7 +149,7 @@ private def gcdDigitSum (a b : ℕ) : ℕ :=
     solCount a b (a * b - k) * (5 ^ (a * b)) ^ k
 ```
 
-- [ ] **Step 2: window bound `solCount a b (a·b) < 5^(a·b)`.**
+- [x] **Step 2: window bound `solCount a b (a·b) < 5^(a·b)`.**
 
 ```lean
 private theorem solCount_mul_lt_base (a b : ℕ) (ha : 1 ≤ a) (hb : 1 ≤ b) :
@@ -165,7 +165,7 @@ the pin — it is already used at `ArithClosedForms.lean:109`) so
 (`Nat.pow_lt_pow_left`, exponent `a·b ≥ 1` from `ha`,`hb`); chain with
 `omega`. Easy.
 
-- [ ] **Step 3: `gcdDigitSum_mod`.**
+- [x] **Step 3: `gcdDigitSum_mod`.**
 
 ```lean
 private theorem gcdDigitSum_mod (a b : ℕ) (ha : 1 ≤ a) (hb : 1 ≤ b) :
@@ -180,7 +180,7 @@ bound. Reuse `Finset.sum_range_succ'` (peel `k = 0`) or
 `Finset.range_eq_Ico` + factor `5^(a·b)` from `(5^(a·b))^k = 5^(a·b)·(…)`
 for `k ≥ 1`. Medium.
 
-- [ ] **Step 4: verify + commit.**
+- [x] **Step 4: verify + commit.**
 
 `lake build`, `check-axioms.sh`. Commit:
 `feat(era): define the gcd base-5 digit sum and window bound`.
@@ -193,7 +193,7 @@ for `k ≥ 1`. Medium.
 
 - Modify: `GebLean/Utilities/ArithClosedForms.lean`
 
-- [ ] **Step 1: the three exponent rewrites.**
+- [x] **Step 1: the three exponent rewrites.**
 
 ```lean
 private theorem gcd_num_pow (a b : ℕ) :
@@ -208,7 +208,7 @@ Strategy: each is `← pow_mul` after a `ring_nf`/`Nat.mul_comm` on the
 exponent (`a·b·(a·b+a+b) = (a·b)·(a·b+a+b)`, `a²·b = (a·b)·a`,
 `a·b² = (a·b)·b`). Trivial; bundle in one commit.
 
-- [ ] **Step 2: verify + commit.**
+- [x] **Step 2: verify + commit.**
 
 `feat(era): bridge gcd closed-form exponents to base 5^(ab)`.
 
@@ -224,7 +224,7 @@ The single hard piece. After Task 3, all statements use `B := 5^(a·b)`,
 `num := B^(a·b+a+b)`, `den := (B^a−1)(B^b−1)` (introduced by `set` over
 the bridged forms).
 
-- [ ] **Step 1: lower bound `den·S ≤ num`.**
+- [x] **Step 1: lower bound `den·S ≤ num`.**
 
 ```lean
 private theorem gcd_den_mul_digitSum_le (a b : ℕ) (ha : 1 ≤ a)
@@ -233,7 +233,7 @@ private theorem gcd_den_mul_digitSum_le (a b : ℕ) (ha : 1 ≤ a)
       ≤ (5 ^ (a * b)) ^ (a * b + a + b)
 ```
 
-- [ ] **Step 2: upper bound `num < den·(S+1)`.**
+- [x] **Step 2: upper bound `num < den·(S+1)`.**
 
 ```lean
 private theorem gcd_num_lt_den_mul_digitSum_succ (a b : ℕ) (ha : 1 ≤ a)
@@ -343,12 +343,12 @@ Decomposition (replaces the single Task 4 with 4a/4b/4c):
   `Bʳ < dena` and `P+1 ≤ denb·(S+1)`); and
   `den·S = dena·denb·S ≤ dena·P ≤ num` (using `denb·S ≤ P`).
 
-- [ ] **Step 3: numeric guard.**
+- [x] **Step 3: numeric guard.**
 
 Temporary `#eval` (then delete) over `1 ≤ a,b ≤ 4` re-confirming
 `den·S ≤ num` and `num < den·(S+1)` before trusting the proof shape.
 
-- [ ] **Step 4: verify + commit per helper.**
+- [x] **Step 4: verify + commit per helper.**
 
 `lake build`, `check-axioms.sh`. Commit(s):
 `feat(era): bound the gcd base-5 floor between consecutive multiples`.
@@ -361,7 +361,7 @@ Temporary `#eval` (then delete) over `1 ≤ a,b ≤ 4` re-confirming
 
 - Modify: `GebLean/Utilities/ArithClosedForms.lean`
 
-- [ ] **Step 1: the division identity.**
+- [x] **Step 1: the division identity.**
 
 ```lean
 private theorem gcd_div_eq_digitSum (a b : ℕ) (ha : 1 ≤ a) (hb : 1 ≤ b) :
@@ -377,7 +377,7 @@ the `k * n` (i.e. `S * den`) order. Then rewrite the bridged exponents
 (Task 3) so the goal matches the closed form's `5^(a²·b)` /
 `5^(a·b²)` / `5^(a·b·(a·b+a+b))` shapes.
 
-- [ ] **Step 2: the public extraction (supersedes G2.1+G2.2).**
+- [x] **Step 2: the public extraction (supersedes G2.1+G2.2).**
 
 ```lean
 /-- Prunescu–Shunia base-5 floor extraction: the units base-`5^(a·b)`
@@ -393,7 +393,7 @@ theorem solCount_eq_floor_mod (a b : ℕ) (ha : 1 ≤ a) (hb : 1 ≤ b) :
 Strategy: rewrite via Task 3 to base `B`, apply `gcd_div_eq_digitSum`
 (Step 1), then `gcdDigitSum_mod` (Task 2.3). One `rw` chain.
 
-- [ ] **Step 3: update the module docstring.**
+- [x] **Step 3: update the module docstring.**
 
 Add to `ArithClosedForms.lean`'s `## Main statements` section:
 
@@ -413,7 +413,7 @@ source, currently absent; required by the "cite the literature" rule):
 
 `gcdDigitSum` is `private`, so `## Main definitions` needs no change.
 
-- [ ] **Step 4: verify + commit.**
+- [x] **Step 4: verify + commit.**
 
 `lake build`, `lake lint`, `check-axioms.sh`. Commit:
 `feat(era): extract the gcd count as a base-5 floor digit`.
@@ -427,28 +427,28 @@ chains this with `solCount_mul_eq_gcd_succ` (G1.3) and a `Nat.add_sub`.
 
 ## Self-review checklist (run before execution)
 
-- [ ] `solCount_recurrence` is stated additively (no `ℕ`-subtraction
+- [x] `solCount_recurrence` is stated additively (no `ℕ`-subtraction
   underflow) and its hypothesis `a + b ≤ m` matches every call site in
   Task 4. (It is FALSE for `m < a+b`, e.g. `(a,b,m)=(1,1,1)`.)
-- [ ] Task 4's `R` is treated as a MIXED-SIGN `ℤ` quantity; the bounds
+- [x] Task 4's `R` is treated as a MIXED-SIGN `ℤ` quantity; the bounds
   `0 ≤ R` and `R < den` are proved over `ℤ`. No `ℕ`-valued
   `gcdRemainder` def, no per-digit/no-carry nonnegativity claim (the
   `B⁰` coefficient `−s(n)` is negative).
-- [ ] `gcdDigitSum`, the bounds, and `gcd_div_eq_digitSum` all use the
+- [x] `gcdDigitSum`, the bounds, and `gcd_div_eq_digitSum` all use the
   identical `den` expression `((5^(a·b))^a − 1)·((5^(a·b))^b − 1)`.
-- [ ] No fabricated mathlib names: Phase-0 sweep DONE — all present in
+- [x] No fabricated mathlib names: Phase-0 sweep DONE — all present in
   the pin with assumed signatures: `Nat.div_eq_of_lt_le`,
   `Nat.lt_pow_self`, `Nat.lt_two_pow_self`, `Nat.pow_lt_pow_left`,
   `Finset.sum_range_succ'`, `Finset.mul_sum`, `Nat.add_mul_mod_self_left`,
   `Nat.mul_sub`, `Nat.sub_mul`, `Finset.card_union_add_card_inter`,
   `Nat.div_div_eq_div_mul`, `Nat.mod_eq_of_lt`. (`Nat.lt_two_pow` is
   ABSENT — do not use it.)
-- [ ] Boundary cases `a = 1`, `b = 1` exercised by the Task 4.3 numeric
+- [x] Boundary cases `a = 1`, `b = 1` exercised by the Task 4.3 numeric
   guard and produce no `Finset.range` off-by-one.
-- [ ] `Era.lean` untouched; all new content in `ArithClosedForms.lean`.
-- [ ] Each commit: no `sorry`/`admit`/underscore; axiom-clean; ≤ 100
+- [x] `Era.lean` untouched; all new content in `ArithClosedForms.lean`.
+- [x] Each commit: no `sorry`/`admit`/underscore; axiom-clean; ≤ 100
   char lines; docstrings on `solCount_recurrence` and the public
   `solCount_eq_floor_mod`; pre-commit green; temporary `#eval`s deleted.
-- [ ] `solCount_eq_floor_mod` supersedes the parent sub-plan's separate
+- [x] `solCount_eq_floor_mod` supersedes the parent sub-plan's separate
   G2.1 (`gcd_floor_modEq_solCount`) and G2.2; update the parent sub-plan
   to point at it.

@@ -16,7 +16,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use
 > superpowers:subagent-driven-development to execute this sub-plan
-> task-by-task. Steps use checkbox (`- [ ]`) syntax.
+> task-by-task. Steps use checkbox (`- [x]`) syntax.
 
 **Goal:** realise `gcd` as a closed `Era` term and, from it,
 `2^(v₂ n) = gcd(n, 2^n)` as an `Era` term, unblocking `eraNu2`/`eraSigma`
@@ -85,7 +85,7 @@ verify (`lake build`/`lint`/`check-axioms`), controller commits.
 
 **Files:** `GebLean/Utilities/ArithClosedForms.lean`
 
-- [ ] **G1.1 — define the solution count (finite).**
+- [x] **G1.1 — define the solution count (finite).**
 
 ```lean
 /-- The number of `(x,y) ∈ ℕ²` with `a·x + b·y = n`. Finite for
@@ -107,7 +107,7 @@ For `1 ≤ a, 1 ≤ b`: `x ≤ a*x ≤ n` and `y ≤ b*y ≤ n` (`Nat.le_mul_of_
 so both `< n + 1`. This shows the `range (n+1)²` box captures every
 solution, so `solCount` counts them all.
 
-- [ ] **G1.2 — `s_{a,b}(n) ≤ n + 1` (carry bound).**
+- [x] **G1.2 — `s_{a,b}(n) ≤ n + 1` (carry bound).**
 
 ```lean
 theorem solCount_le_succ (a b n : ℕ) (ha : 1 ≤ a) (hb : 1 ≤ b) :
@@ -123,7 +123,7 @@ the window bound `solCount a b n < 5^n`). Strategy (Lemma 3.2): the map
 `Finset.Nat.card_antidiagonal`). Reuse: `Finset.card_le_card` of the
 injection. Medium difficulty.
 
-- [ ] **G1.3 — `s_{a,b}(ab) = gcd(a,b) + 1` (the Diophantine count).**
+- [x] **G1.3 — `s_{a,b}(ab) = gcd(a,b) + 1` (the Diophantine count).**
 
 ```lean
 theorem solCount_mul_eq_gcd_succ (a b : ℕ) (ha : 1 ≤ a) (hb : 1 ≤ b) :
@@ -169,7 +169,7 @@ digit list. If `Nat.ofDigits` is used, the base must be the SINGLE big
 base `B := 5^(ab)` end-to-end (the lemma `Nat.ofDigits_mod_eq_head!`
 extracts `% B`, NOT `% B^k`; do not mix base 5 with `% 5^(ab)`).
 
-- [ ] **G2.1 — the floor congruence.** The floor is congruent to the
+- [x] **G2.1 — the floor congruence.** The floor is congruent to the
 solution count modulo the window:
 
 ```lean
@@ -192,7 +192,7 @@ exponents to the `n = a*b` form (`ring`/`Nat.pow_add`/`pow_mul`). Reuse:
 `(c^m − 1) ∣ (c^(km) − 1)`, `Nat.ModEq` API. HARD — the convolution
 identity is the crux; budget `lean4:sorry-filler-deep`.
 
-- [ ] **G2.2 — the no-carry extraction.**
+- [x] **G2.2 — the no-carry extraction.**
 
 ```lean
 private theorem solCount_eq_floor_mod (a b : ℕ) (ha : 1 ≤ a) (hb : 1 ≤ b) :
@@ -217,7 +217,7 @@ G3/G4 shapes.
 
 **Files:** `GebLean/Utilities/ArithClosedForms.lean`
 
-- [ ] **G3.1 — define `gcdClosed5`** (the closed form above), with a
+- [x] **G3.1 — define `gcdClosed5`** (the closed form above), with a
 docstring.
 
 ```lean
@@ -227,7 +227,7 @@ def gcdClosed5 (a b : ℕ) : ℕ :=
     % 5 ^ (a*b)) − 1
 ```
 
-- [ ] **G3.2 — `gcdClosed5_eq`.**
+- [x] **G3.2 — `gcdClosed5_eq`.**
 
 ```lean
 theorem gcdClosed5_eq (a b : ℕ) (ha : 1 ≤ a) (hb : 1 ≤ b) :
@@ -250,7 +250,7 @@ Commit.
 
 **Files:** `GebLean/EraCompleteness.lean`
 
-- [ ] **G4.1 — `eraGcd : ETm 2`** mirroring `gcdClosed5` (variables 0=a,
+- [x] **G4.1 — `eraGcd : ETm 2`** mirroring `gcdClosed5` (variables 0=a,
 1=b), built from `epow`/`etsub`/`emul`/`ediv`/`emod` and the constant
 `5` (a `Tm.succ`-chain numeral) and `1`. Prove
 
@@ -266,7 +266,7 @@ exponents (`a*b*(a*b+a+b)` etc.) are built from `var0`,`var1` via
 `emul`/`eadd`/`epow`. The `eval` arithmetic-normalisation may need
 `ring_nf` for the exponent shapes.
 
-- [ ] **G4.2 — `eraPow2Val : ETm 1`** as `eraGcd` substituted at
+- [x] **G4.2 — `eraPow2Val : ETm 1`** as `eraGcd` substituted at
 `(var 0, epow2 (var 0))` (via `Tm.subst`/`sub0`), with
 
 ```lean
@@ -293,17 +293,17 @@ Commit per term. After G4, return to the M3b plan: `eraNu2`,
 
 ## Self-review checklist (run before execution)
 
-- [ ] Every sub-lemma signature is consistent across phases
+- [x] Every sub-lemma signature is consistent across phases
   (`solCount`, `gcdClosed5`, `eraGcd`, `eraPow2Val`).
-- [ ] No fabricated Mathlib names: confirm
+- [x] No fabricated Mathlib names: confirm
   `Finset.card_bij`/`card_nbij'`, `Finset.Nat.antidiagonal`,
   `Nat.gcd_dvd_left`/`right`, `Nat.div_mul_cancel`,
   `Nat.ofDigits_div_pow_eq_ofDigits_drop`,
   `Nat.ofDigits_mod_eq_head!`, `Nat.sub_one_mul` exist in the pin
   (Phase-0 sweep, as in the M3b plan).
-- [ ] `Era.lean` untouched; new content in `ArithClosedForms.lean` and
+- [x] `Era.lean` untouched; new content in `ArithClosedForms.lean` and
   `EraCompleteness.lean` only.
-- [ ] Each committed step: no `sorry`/`admit`/underscore; axiom-clean;
+- [x] Each committed step: no `sorry`/`admit`/underscore; axiom-clean;
   100-char; docstrings on public decls; pre-commit green.
-- [ ] `gcd(n,2^n)` is realised by SUBSTITUTION into the general `eraGcd`,
+- [x] `gcd(n,2^n)` is realised by SUBSTITUTION into the general `eraGcd`,
   not a separate specialised term (no power-of-2 shortcut exists).

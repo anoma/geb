@@ -16,7 +16,7 @@
 > **For agentic workers:** REQUIRED SUB-SKILL: Use
 > superpowers:subagent-driven-development (recommended) or
 > superpowers:executing-plans to implement this plan task-by-task. Steps
-> use checkbox (`- [ ]`) syntax for tracking.
+> use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Build the route-independent, search-free foundation of the
 bounded-sum engine — the `Finset` bridge for `natBSum` and the geometric
@@ -108,7 +108,7 @@ it to `∑ i ∈ Finset.range bound, f i` so Mathlib's big-operator and
 
 - Create: `GebLean/Utilities/EraBoundedSum.lean`
 
-- [ ] **Step 1: Create the module with header and namespace**
+- [x] **Step 1: Create the module with header and namespace**
 
 Mirror the header style of `GebLean/Utilities/ERArith.lean`
 (import-first, no copyright header, module docstring with the required
@@ -146,12 +146,12 @@ namespace GebLean
 end GebLean
 ```
 
-- [ ] **Step 2: Build the skeleton**
+- [x] **Step 2: Build the skeleton**
 
 Run: `lake build GebLean.Utilities.EraBoundedSum`
 Expected: builds with no errors (empty namespace).
 
-- [ ] **Step 3: State and prove the bridge lemma**
+- [x] **Step 3: State and prove the bridge lemma**
 
 Add inside the namespace:
 
@@ -173,14 +173,14 @@ reduces by `rfl` during execution; if the `Nat.rec` unfolding needs
 coaxing, introduce it as a local `have hstep : natBSum (b + 1) f =
 natBSum b f + f b := rfl` first.
 
-- [ ] **Step 4: Verify**
+- [x] **Step 4: Verify**
 
 Run: `lake build GebLean.Utilities.EraBoundedSum && lake lint`
 Run: `bash scripts/check-axioms.sh` (expect only `propext`,
 `Quot.sound`, `Classical.choice`)
 Expected: no errors; `natBSum_eq_sum` sorry-free.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 bash scripts/pre-commit.sh
@@ -203,7 +203,7 @@ ring lemma.
 
 - Modify: `GebLean/Utilities/EraBoundedSum.lean`
 
-- [ ] **Step 1: State and prove the geometric multiplication identity**
+- [x] **Step 1: State and prove the geometric multiplication identity**
 
 ```lean
 /-- `(Σ_{i<n} q^i) * (q - 1) = q ^ n - 1` over `ℕ`, for `1 ≤ q`. -/
@@ -222,7 +222,7 @@ discharge with `omega` after introducing the local facts
 load-bearing step; `omega` fails without `h1`). A `ℤ`-cast fallback
 (`push_cast`, `geom_sum_mul`) is available but unnecessary.
 
-- [ ] **Step 2: State and prove the closed form**
+- [x] **Step 2: State and prove the closed form**
 
 ```lean
 /-- Geometric closed form: `Σ_{i<n} q^i = (q^n - 1)/(q - 1)` for
@@ -238,7 +238,7 @@ since `2 ≤ q`, using `Nat.mul_div_cancel`. Verify the exact name
 (`Nat.mul_div_cancel` vs `Nat.mul_div_cancel_left`) and its argument
 order against the goal during execution.
 
-- [ ] **Step 3: State the `natBSum` form**
+- [x] **Step 3: State the `natBSum` form**
 
 ```lean
 /-- The geometric closed form in `natBSum` shape, for `2 ≤ q`. -/
@@ -247,14 +247,14 @@ theorem natBSum_geom (q bound : ℕ) (hq : 2 ≤ q) :
   rw [natBSum_eq_sum]; exact natGeomSum_eq q bound hq
 ```
 
-- [ ] **Step 4: Verify**
+- [x] **Step 4: Verify**
 
 Run: `lake build GebLean.Utilities.EraBoundedSum && lake lint`
 Run: `bash scripts/check-axioms.sh` (expect only `propext`,
 `Quot.sound`, `Classical.choice`)
 Expected: no errors; all three lemmas sorry-free.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 bash scripts/pre-commit.sh
@@ -276,12 +276,12 @@ Realise the closed form `(q^bound − 1)/(q − 1)` as an `Era` term
 
 - Modify: `GebLean/EraCompleteness.lean`
 
-- [ ] **Step 1: Add the utilities import**
+- [x] **Step 1: Add the utilities import**
 
 Add `import GebLean.Utilities.EraBoundedSum` to the import block of
 `GebLean/EraCompleteness.lean` (next to `import GebLean.LawvereER`).
 
-- [ ] **Step 2: Confirm the basis term-formers in scope**
+- [x] **Step 2: Confirm the basis term-formers in scope**
 
 `Era.lean` provides `eadd`, `emod`, `epow2` and the constructors; verify
 the exact helper names for `pow`, `tsub`, `div`, and the constant `1`
@@ -290,7 +290,7 @@ and the literal-one term). The `app`/`fcons` forms
 (`Tm.app .pow (fcons s (fcons t Fin.elim0))`, etc.) are the fallback if
 a named helper is absent. The constant `1` is `Tm.succ Tm.zero`.
 
-- [ ] **Step 3: Define the term**
+- [x] **Step 3: Define the term**
 
 ```lean
 /-- The geometric bounded sum `Σ_{i<bound} q^i` as a closed `Era` term:
@@ -305,12 +305,12 @@ def eraGeomSum : ETm 2 :=
 (Use whichever named helpers Step 2 confirms; the shape is
 `div (sub (pow v0 v1) 1) (sub v0 1)`.)
 
-- [ ] **Step 4: Build to confirm it elaborates**
+- [x] **Step 4: Build to confirm it elaborates**
 
 Run: `lake build GebLean.EraCompleteness`
 Expected: builds (total `def`, no `sorry`).
 
-- [ ] **Step 5: State and prove the raw `eval` lemma**
+- [x] **Step 5: State and prove the raw `eval` lemma**
 
 ```lean
 theorem eraGeomSum_eval (ctx : Fin 2 → ℕ) :
@@ -324,7 +324,7 @@ operations reduce to `Nat` `^`, `-`, `/`. Adjust the `simp` set during
 execution (it may need the helper-term unfolding lemmas, e.g. `ediv`,
 `epow`, `etsub`, and `fcons`/`Fin.cons` simp lemmas).
 
-- [ ] **Step 6: State and prove the `natBSum` agreement lemma**
+- [x] **Step 6: State and prove the `natBSum` agreement lemma**
 
 ```lean
 /-- `eraGeomSum` computes the geometric bounded sum when the base is at
@@ -345,7 +345,7 @@ only` reduces the vector indices (`![q, bound] 0 = q`,
 set was verified to close this; adjust if the pin's vector simp lemmas
 differ.
 
-- [ ] **Step 7: Verify**
+- [x] **Step 7: Verify**
 
 Run: `lake build GebLean.EraCompleteness && lake lint`
 Run: `bash scripts/check-axioms.sh` (expect only `propext`,
@@ -353,7 +353,7 @@ Run: `bash scripts/check-axioms.sh` (expect only `propext`,
 Expected: `eraGeomSum`, `eraGeomSum_eval`, `eraGeomSum_natBSum`
 sorry-free and axiom-clean.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 bash scripts/pre-commit.sh

@@ -35,7 +35,7 @@
 > **For agentic workers:** REQUIRED SUB-SKILL: Use
 > superpowers:subagent-driven-development (recommended) or
 > superpowers:executing-plans to implement this plan task-by-task. Steps
-> use checkbox (`- [ ]`) syntax for tracking.
+> use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Build the term-to-Diophantine reduction (`diophOf : ETm n →
 DiophEnc n`, the recurrence paper's Lemma 2) and the hypercube counting
@@ -296,7 +296,7 @@ has.
 
 **Files:** scratch only (no commit).
 
-- [ ] **Step 1: validate Identity (4) over a grid.** In a scratch `#eval`
+- [x] **Step 1: validate Identity (4) over a grid.** In a scratch `#eval`
   (plain `ℕ`), confirm `a ^ b = 2 ^ ((a*b+a+1)*b) % (2 ^ (a*b+a+1) - a)`
   for `a ∈ 0..29`, `b ∈ 0..14`, including `a = 0` (so `0^0 = 1`,
   `0^(b+1) = 0`) and `a = 1`.
@@ -309,7 +309,7 @@ has.
 Expected: `true`. If any cell fails, stop and re-examine the exponent
 before proceeding; the identity is load-bearing for the `pow` gadget.
 
-- [ ] **Step 2: validate the `sqDist`, `mod`, `tsub`, `div` gadget
+- [x] **Step 2: validate the `sqDist`, `mod`, `tsub`, `div` gadget
   encodings over `ℕ`.** Confirm that the symmetric squared distance is
   zero exactly on equality, and that the full `mod`/`tsub`/`div` gadgets
   (with truncated subtraction in every bracket) have no spurious zeros and
@@ -350,12 +350,12 @@ Remove all of Task 4.0 before any commit.
 - Modify: `GebLean/Utilities/EraDiophantine.lean` (add the
   `Mathlib.Data.Fin.Tuple.Basic` import here if not already present).
 
-- [ ] **Step 1: record the carrier-design choice** (one line in the
+- [x] **Step 1: record the carrier-design choice** (one line in the
   module docstring Implementation notes), as Phase 3.5 Step 2 recorded the
   majorant route: typed `SosSystem` atoms vs raw-`ETm`+`Simple`-predicate
   fallback.
 
-- [ ] **Step 2: define `SimpleMonomial` and its `eval`** (Expression (6),
+- [x] **Step 2: define `SimpleMonomial` and its `eval`** (Expression (6),
   arXiv:2407.12928): coefficient, per-variable exponential base and
   exponential coefficient, per-variable constant polynomial exponent.
 
@@ -375,7 +375,7 @@ Provide `SimpleMonomial.eval : SimpleMonomial m → (Fin m → ℕ) → ℕ`
 folding the products with `Finset.prod`. Numeric-check the `eval` shape on
 one hand-built monomial (`2^{x₀}`, `x₀ · x₁`).
 
-- [ ] **Step 3: define `SimpleSum`, `SosTerm`, `SosSystem` with `eval`.**
+- [x] **Step 3: define `SimpleSum`, `SosTerm`, `SosSystem` with `eval`.**
 
 ```lean
 /-- A non-negative sum of simple monomials. -/
@@ -397,7 +397,7 @@ mutually-recursive `SosTerm.eval`/`SosSystem.eval`:
 `prod s t ↦ SosSystem.eval s ρ * SosSystem.eval t ρ`;
 `SosSystem.eval s ρ := (s.map (fun a => SosTerm.eval a ρ)).sum`.
 
-- [ ] **Step 4: prove the zero-set characterisation.**
+- [x] **Step 4: prove the zero-set characterisation.**
 
 ```lean
 /-- A system is zero exactly when each atom is. -/
@@ -424,7 +424,7 @@ for `sqDist`, `Nat.add_eq_zero_iff` then `pow_eq_zero_iff`
 and `Nat.sub_eq_zero_iff_le` on both directions (`a ≤ b ∧ b ≤ a → a = b`);
 for `prod`, `Nat.mul_eq_zero`.
 
-- [ ] **Step 5: build, axiom-check, commit** (`feat(era): add the
+- [x] **Step 5: build, axiom-check, commit** (`feat(era): add the
 sum-of-squares atom algebra`).
 
 ### Task 4.2: the `DiophEnc` carrier and its context assembly
@@ -433,7 +433,7 @@ sum-of-squares atom algebra`).
 
 - Modify: `GebLean/Utilities/EraDiophantine.lean`
 
-- [ ] **Step 1: define `DiophEnc`.** Carry the witness arity, the system,
+- [x] **Step 1: define `DiophEnc`.** Carry the witness arity, the system,
   and the per-witness bound terms; correctness/uniqueness/bound are
   theorems about `diophOf` (Task 4.10), not fields. Fix the variable
   layout convention once: `n` inputs at `Fin n`, output `y` at index `n`,
@@ -453,7 +453,7 @@ structure DiophEnc (n : ℕ) where
   bound : Fin witArity → ETm (n + 1)
 ```
 
-- [ ] **Step 2: define the context assembly.** Combine inputs `ρ`, output
+- [x] **Step 2: define the context assembly.** Combine inputs `ρ`, output
   `y`, witnesses `w` into the system's context.
 
 ```lean
@@ -469,7 +469,7 @@ e.witArity) → ℕ`, which is defeq to the stated `Fin (n + 1 + e.witArity)`
 (verified during review). If reassociation ever fights elaboration,
 fall back to an explicit core `Fin.cases` definition.
 
-- [ ] **Step 3: build, axiom-check, commit** (`feat(era): define the
+- [x] **Step 3: build, axiom-check, commit** (`feat(era): define the
 DiophEnc carrier for term graphs`).
 
 ### Task 4.3: Identity (4) — the exponent reduction `pow_eq_two_pow_mod`
@@ -478,7 +478,7 @@ DiophEnc carrier for term graphs`).
 
 - Modify: `GebLean/Utilities/EraDiophantine.lean`
 
-- [ ] **Step 1: state** (validated numerically in Task 4.0):
+- [x] **Step 1: state** (validated numerically in Task 4.0):
 
 ```lean
 /-- Marchenkov's identity (arXiv:2407.12928, eq. (4); arXiv:2606.09336
@@ -489,7 +489,7 @@ theorem pow_eq_two_pow_mod (a b : ℕ) :
   sorry
 ```
 
-- [ ] **Step 2: prove.** Strategy: set `M = a * b + a + 1`, so `2 ^ M > a`
+- [x] **Step 2: prove.** Strategy: set `M = a * b + a + 1`, so `2 ^ M > a`
   (`2 ^ M ≥ M + 1 > a` from `a < a * b + a + 1`). Handle `b = 0` separately
   (`a ^ 0 = 1 = 2 ^ 0 % (2 ^ (a + 1) - a)` with `2 ^ (a + 1) - a ≥ 2`).
   For `b ≥ 1`: `2 ^ (M * b) = (2 ^ M) ^ b`, and `2 ^ M = (2 ^ M - a) + a`
@@ -501,7 +501,7 @@ theorem pow_eq_two_pow_mod (a b : ℕ) :
   search `Nat.ModEq`, `Nat.pow_mod`, `Nat.ModEq.pow`. Budget a
   `lean4:sorry-filler-deep` pass.
 
-- [ ] **Step 3: build, axiom-check, commit** (`feat(era): prove the
+- [x] **Step 3: build, axiom-check, commit** (`feat(era): prove the
 base-2 exponent reduction identity`).
 
 ### Task 4.4: `SosSystem` re-indexing and witness-extension helpers
@@ -514,7 +514,7 @@ plumbing once.
 
 - Modify: `GebLean/Utilities/EraDiophantine.lean`
 
-- [ ] **Step 1: define `weaken` along a variable re-indexing.** Provide
+- [x] **Step 1: define `weaken` along a variable re-indexing.** Provide
   `SimpleMonomial.weaken`/`SimpleSum.weaken`/`SosTerm.weaken`/
   `SosSystem.weaken` mapping a system over `m` variables to one over `m'`
   along `Fin m → Fin m'`, with the `eval` compatibility lemma
@@ -524,14 +524,14 @@ plumbing once.
   Strategy: structural `List.map`; the `eval` lemma is `Finset.prod`/
   `List.sum` plumbing (`Finset.prod_congr`).
 
-- [ ] **Step 2: define the output-repointing helper.** A sub-term `Bᵢ`'s
+- [x] **Step 2: define the output-repointing helper.** A sub-term `Bᵢ`'s
   encoding has its output at its own index `nᵢ`; in the compound it is
   re-pointed to a witness slot `yᵢ`. Provide a helper taking `diophOf Bᵢ`
   and a target witness index, returning the weakened system with `Bᵢ`'s
   output identified with that witness; state its `eval` compatibility
   lemma.
 
-- [ ] **Step 3: build, axiom-check, commit** (`feat(era): add
+- [x] **Step 3: build, axiom-check, commit** (`feat(era): add
 sum-of-squares re-indexing helpers`).
 
 ### Task 4.5: the base and structural cases (`var`, `zero`, `succ`)
@@ -544,20 +544,20 @@ Define `diophOf` incrementally; stub the `app` cases via one helper to be
 filled in Tasks 4.6–4.9. Build each case's local graph lemma as a
 `private` lemma, then assemble in Task 4.10. One declaration at a time.
 
-- [ ] **Step 1: `var i`** — `witArity = 0`, `sys = [sqDist [⟨xᵢ⟩] [⟨y⟩]]`
+- [x] **Step 1: `var i`** — `witArity = 0`, `sys = [sqDist [⟨xᵢ⟩] [⟨y⟩]]`
   (monomials for variable `i` and for the output slot `n`). Graph lemma:
   `SosSystem.eval (var-system) (ctx ρ y w) = 0 ↔ y = ρ i`, via
   `SosTerm.sqDist_eval_eq_zero_iff` (Task 4.1).
 
-- [ ] **Step 2: `zero`** — `sys = [sqDist [] [⟨y⟩]]` (`= y²`), lemma
+- [x] **Step 2: `zero`** — `sys = [sqDist [] [⟨y⟩]]` (`= y²`), lemma
   `… = 0 ↔ y = 0`.
 
-- [ ] **Step 3: `succ B₁`** — witnesses = `B₁`'s plus `y₁`; system =
+- [x] **Step 3: `succ B₁`** — witnesses = `B₁`'s plus `y₁`; system =
   weakened `sys(B₁)` (output → `y₁`) `++ [sqDist [⟨y₁⟩, ⟨1⟩] [⟨y⟩]]`;
   bound for `y₁` is `eraMajorant B₁`. Lemma: the graph holds iff
   `y = B₁.eval ρ + 1`, using the `B₁` IH and `Tm.eval`/`eraInterp`.
 
-- [ ] **Step 4: build, axiom-check, commit** (`feat(era): encode the
+- [x] **Step 4: build, axiom-check, commit** (`feat(era): encode the
 projection, zero, and successor cases`).
 
 ### Task 4.6: the `add`, `mul`, `pow2` cases
@@ -566,22 +566,22 @@ projection, zero, and successor cases`).
 
 - Modify: `GebLean/Utilities/EraDiophantine.lean`
 
-- [ ] **Step 1: `app add (B₁,B₂)`** — Lemma 2 Case 2. Witnesses: `B₁`'s,
+- [x] **Step 1: `app add (B₁,B₂)`** — Lemma 2 Case 2. Witnesses: `B₁`'s,
   `y₁`, `B₂`'s, `y₂`. System: weakened `sys(B₁)` `++` weakened `sys(B₂)`
   `++ [sqDist [⟨y₁⟩, ⟨y₂⟩] [⟨y⟩]]`. Bounds via `eraMajorant`. Graph lemma
   `↔ y = B₁.eval ρ + B₂.eval ρ` (via `eadd_eval`/`eraInterp`).
 
-- [ ] **Step 2: `app mul (B₁,B₂)`** — direct gadget. Add `sqDist [⟨y₁·y₂⟩]
+- [x] **Step 2: `app mul (B₁,B₂)`** — direct gadget. Add `sqDist [⟨y₁·y₂⟩]
   [⟨y⟩]`; `y₁·y₂` is one `SimpleMonomial` (the two witness variables,
   `polyExp = 1`). Bounds via `eraMajorant`. Graph lemma:
   `y = B₁.eval ρ * B₂.eval ρ`.
 
-- [ ] **Step 3: `app pow2 B₁`** (`2^{B₁}`) — Lemma 2 Case 1. Witnesses:
+- [x] **Step 3: `app pow2 B₁`** (`2^{B₁}`) — Lemma 2 Case 1. Witnesses:
   `B₁`'s, `y₁`. Add `sqDist [⟨2^{y₁}⟩] [⟨y⟩]`; `2^{y₁}` is a monomial
   (`expBase 2`, `expCoeff 1` at the `y₁` slot). Bound `y₁ < eraMajorant
   B₁`. Graph lemma `↔ y = 2 ^ (B₁.eval ρ)`.
 
-- [ ] **Step 4: build, axiom-check, commit** (`feat(era): encode the add,
+- [x] **Step 4: build, axiom-check, commit** (`feat(era): encode the add,
 mul, and base-2 power cases`).
 
 ### Task 4.7: the `mod` and `tsub` cases
@@ -590,7 +590,7 @@ mul, and base-2 power cases`).
 
 - Modify: `GebLean/Utilities/EraDiophantine.lean`
 
-- [ ] **Step 1: `app mod (B₁,B₂)`** — Lemma 2 Case 3, as a single `prod`
+- [x] **Step 1: `app mod (B₁,B₂)`** — Lemma 2 Case 3, as a single `prod`
   atom. Witnesses: `B₁`'s, `y₁`, `B₂`'s, `y₂`, `y₃`, `q`. Each of the
   source's signed brackets becomes a `sqDist` (symmetric squared
   distance), and the two brackets are combined with `prod`:
@@ -607,7 +607,7 @@ mul, and base-2 power cases`).
   bracket B; matches `Nat.mod`). Task 4.0 Step 2 is the authority for the
   exact bracket contents.
 
-- [ ] **Step 2: `app tsub (B₁,B₂)`** (`B₁ ∸ B₂ = y`) — a non-disjunctive
+- [x] **Step 2: `app tsub (B₁,B₂)`** (`B₁ ∸ B₂ = y`) — a non-disjunctive
   gadget (no `prod`), to keep the witness unique. Introduce one witness
   `s` (the opposite monus `y₂ ∸ y₁`) and assert `y + y₂ = y₁ + s` and
   `y · s = 0`: `[sqDist [⟨y⟩, ⟨y₂⟩] [⟨y₁⟩, ⟨s⟩], sqDist [⟨y·s⟩] []]` plus
@@ -620,7 +620,7 @@ mul, and base-2 power cases`).
   (`ℕ` monus). Numeric-check alongside the `mod` probe in Task 4.0,
   including a uniqueness scan over `s`.
 
-- [ ] **Step 3: build, axiom-check, commit** (`feat(era): encode the mod
+- [x] **Step 3: build, axiom-check, commit** (`feat(era): encode the mod
 and truncated-subtraction cases`).
 
 ### Task 4.8: the `div` case
@@ -629,7 +629,7 @@ and truncated-subtraction cases`).
 
 - Modify: `GebLean/Utilities/EraDiophantine.lean`
 
-- [ ] **Step 1: `app div (B₁,B₂)`** (`⌊B₁/B₂⌋ = y`) — the
+- [x] **Step 1: `app div (B₁,B₂)`** (`⌊B₁/B₂⌋ = y`) — the
   division-with-remainder `prod` gadget, parallel to `mod`. Branch A
   (`B₂ ≠ 0`): `[sqDist [⟨y·y₂⟩, ⟨r⟩] [⟨y₁⟩], sqDist [⟨y₂⟩] [⟨r⟩, ⟨y₃⟩,
   ⟨1⟩]]` (`y₁ = y·y₂ + r` and `y₂ = r + y₃ + 1`, i.e. `r < y₂`). Branch B
@@ -643,7 +643,7 @@ and truncated-subtraction cases`).
   (`/ 0 = 0` matches `Nat.div`). Numeric-check alongside Task 4.0,
   including a uniqueness scan over `r, y₃`.
 
-- [ ] **Step 2: build, axiom-check, commit** (`feat(era): encode the
+- [x] **Step 2: build, axiom-check, commit** (`feat(era): encode the
 division case`).
 
 ### Task 4.9: the `pow` case via Identity (4)
@@ -652,7 +652,7 @@ division case`).
 
 - Modify: `GebLean/Utilities/EraDiophantine.lean`
 
-- [ ] **Step 1: `app pow (B₁,B₂)`** (`B₁^{B₂} = y`). Do not write a new
+- [x] **Step 1: `app pow (B₁,B₂)`** (`B₁^{B₂} = y`). Do not write a new
   exponential gadget. Build the composite `ETm` witness
   `c := (epow2 ((B₁ *ᵉ B₂ +ᵉ B₁ +ᵉ one) *ᵉ B₂)) %ᵉ (epow2 (B₁ *ᵉ B₂ +ᵉ B₁
   +ᵉ one) ∸ᵉ B₁)` (smart constructors), whose `eval` equals `B₁^{B₂}.eval
@@ -664,7 +664,7 @@ division case`).
   hence `y`; the internal `2^{…} mod …` witnesses are bounded by `c`'s
   `pow2`/`mod` sub-majorants).
 
-- [ ] **Step 2: build, axiom-check, commit** (`feat(era): encode the
+- [x] **Step 2: build, axiom-check, commit** (`feat(era): encode the
 general power case via the exponent identity`).
 
 ### Task 4.10: assemble `diophOf` and prove the invariants
@@ -673,11 +673,11 @@ general power case via the exponent identity`).
 
 - Modify: `GebLean/Utilities/EraDiophantine.lean`
 
-- [ ] **Step 1: finalise `diophOf : ETm n → DiophEnc n`** by the
+- [x] **Step 1: finalise `diophOf : ETm n → DiophEnc n`** by the
   structural recursion whose per-case data is Tasks 4.5–4.9 (remove the
   stubs).
 
-- [ ] **Step 2: correctness + existence.**
+- [x] **Step 2: correctness + existence.**
 
 ```lean
 /-- Some witness tuple satisfies the system exactly when the term's value
@@ -692,7 +692,7 @@ Strategy: induction on `t` reusing each case's graph lemma; assemble the
 witness tuple from the sub-encodings' witnesses plus the local ones.
 `SosSystem.eval_eq_zero_iff` reduces each system to its atoms.
 
-- [ ] **Step 3: uniqueness.**
+- [x] **Step 3: uniqueness.**
 
 ```lean
 /-- When the graph holds, the satisfying witness tuple is unique. -/
@@ -706,7 +706,7 @@ Strategy: induction on `t`; each witness is determined (`yᵢ = Bᵢ.eval ρ`
 by the sub-IH; `q`, `r`, `y₃` by the `mod`/`div`/`tsub` brackets). Budget
 `lean4:sorry-filler-deep`; the heaviest single proof in Phase 4.
 
-- [ ] **Step 4: witness bounds.**
+- [x] **Step 4: witness bounds.**
 
 ```lean
 /-- Every satisfying witness respects its bound term. -/
@@ -721,7 +721,7 @@ Strategy: induction on `t`; each `yᵢ = Bᵢ.eval ρ < eval (eraMajorant Bᵢ)`
 by `eraMajorant_spec`; the local `q`/`r`/`y₃` are below the relevant
 first-argument majorant.
 
-- [ ] **Step 5: build, axiom-check, commit** (`feat(era): assemble the
+- [x] **Step 5: build, axiom-check, commit** (`feat(era): assemble the
 reduction with its invariants`). This closes Phase 4.
 
 ---
@@ -748,7 +748,7 @@ Module imports (verified available in the pin):
 - Create: `GebLean/Utilities/EraHypercube.lean` (module docstring +
   imports above).
 
-- [ ] **Step 1: define `cubePoints` and the index `v` as computable
+- [x] **Step 1: define `cubePoints` and the index `v` as computable
   functions.** Do **not** build an `Equiv` via `Fintype.equivFinOfCardEq`
   (it is `noncomputable`; project ban). Keep `v` a plain function and
   carry bijectivity as `Prop`s.
@@ -765,7 +765,7 @@ def mixedRadix (k t : ℕ) (a : Fin k → ℕ) : ℕ :=
   ∑ i, a i * t ^ (i : ℕ)
 ```
 
-- [ ] **Step 2: prove `mixedRadix` enumerates the cube.** State injectivity
+- [x] **Step 2: prove `mixedRadix` enumerates the cube.** State injectivity
   on `cubePoints` and the range bound `mixedRadix k t a < t ^ k` for
   `a ∈ cubePoints k t`, plus surjectivity onto `Finset.range (t ^ k)`.
   Strategy: base-`t` digit uniqueness; search `Nat.lt_base_pow_iff_digits`,
@@ -773,7 +773,7 @@ def mixedRadix (k t : ℕ) (a : Fin k → ℕ) : ℕ :=
   recovery; the count `(cubePoints k t).card = t ^ k`
   (`Fintype.card_piFinset` / `Finset.card`) gives surjectivity.
 
-- [ ] **Step 3: build, axiom-check, commit** (`feat(era): define the
+- [x] **Step 3: build, axiom-check, commit** (`feat(era): define the
 mixed-radix cube enumeration`).
 
 ### Task 5.2: the cube-sum factorisation through `G₀`/`G₁`/`G₂`
@@ -782,7 +782,7 @@ mixed-radix cube enumeration`).
 
 - Modify: `GebLean/Utilities/EraHypercube.lean`
 
-- [ ] **Step 1: state and prove Lemma 3.2 over `ℕ`** as pure
+- [x] **Step 1: state and prove Lemma 3.2 over `ℕ`** as pure
   distributivity (no `1 < vbase i` hypothesis is needed for the
   factorisation itself; it is needed only when connecting each factor to a
   `Gᵣ` closed form, which has a `(q − 1)` denominator).
@@ -808,7 +808,7 @@ most `2`), via `natGeomSum_eq` (`G₀`), `natLinGeomSum_eq` (`G₁`),
 `natSqGeomSum_mul` (`G₂`); these need `vbase i > 1` (true at the use,
 `vbase i = 2 ^ (2w) > 1`).
 
-- [ ] **Step 2: build, axiom-check, commit** (`feat(era): prove the
+- [x] **Step 2: build, axiom-check, commit** (`feat(era): prove the
 cube-sum factorisation`).
 
 ### Task 5.3: `HW`-additivity over disjoint blocks
@@ -817,7 +817,7 @@ cube-sum factorisation`).
 
 - Modify: `GebLean/Utilities/EraHypercube.lean`
 
-- [ ] **Step 1: secure the no-carry digit-sum lemma.** The needed fact is
+- [x] **Step 1: secure the no-carry digit-sum lemma.** The needed fact is
   `(Nat.digits 2 (x + 2 ^ w * y)).sum = (Nat.digits 2 x).sum +
   (Nat.digits 2 y).sum` for `x < 2 ^ w`. This already exists in
   `ArithClosedForms.lean` as `sum_digits_two_add` (line 235) but is
@@ -826,7 +826,7 @@ cube-sum factorisation`).
   re-prove it locally here. Default: (a), since the gcd sub-plan already
   proved it; this plan's Task 5.3 then only assembles the block iteration.
 
-- [ ] **Step 2: state and prove block additivity.**
+- [x] **Step 2: state and prove block additivity.**
 
 ```lean
 /-- Hamming-weight additivity over non-overlapping base-`2^(2w)` blocks:
@@ -848,7 +848,7 @@ List.replicate k 0 ++ b.digits m`), `Nat.digits_add_two_add_one`. Do not
 cite `Nat.digits_append` or `Nat.sum_digits_eq_sum_digits_add_sum_digits`
 (neither exists). Budget `lean4:sorry-filler-deep`.
 
-- [ ] **Step 3: build, axiom-check, commit** (`feat(era): prove
+- [x] **Step 3: build, axiom-check, commit** (`feat(era): prove
 Hamming-weight additivity over disjoint blocks`).
 
 ### Task 5.4: the packed number `M` and the count read-off
@@ -857,7 +857,7 @@ Hamming-weight additivity over disjoint blocks`).
 
 - Modify: `GebLean/Utilities/EraHypercube.lean`
 
-- [ ] **Step 1: define `packM` and the `δ`-block range lemma.**
+- [x] **Step 1: define `packM` and the `δ`-block range lemma.**
 
 ```lean
 /-- The packed number (arXiv:2407.12928, Lemma 3.3): `δ(P ā, w)` placed at
@@ -869,7 +869,7 @@ def packM (k w t : ℕ) (P : (Fin k → ℕ) → ℕ) : ℕ :=
 State the range lemma `deltaBlock a w < 2 ^ (2 * w)` for `a < 2 ^ w` (so
 `hw_pack_additive` applies); prove from `deltaBlock`'s definition.
 
-- [ ] **Step 2: state and prove the count identity.** With width `w`, side
+- [x] **Step 2: state and prove the count identity.** With width `w`, side
   `t`, and `P` valued in `{0,…,2^w − 1}` on the cube:
 
 ```lean
@@ -892,7 +892,7 @@ lemma gives `deltaBlock (P a) w < 2 ^ (2 * w)`), then
 `HW(M)/w − tᵏ = d` via `Nat.add_mul_div_left` and `Nat.add_sub_cancel`.
 `DecidablePred (fun a => P a = 0)` resolves automatically (`ℕ` `decEq`).
 
-- [ ] **Step 3: build, axiom-check, commit** (`feat(era): prove the
+- [x] **Step 3: build, axiom-check, commit** (`feat(era): prove the
 hypercube count read-off`).
 
 ### Task 5.5: positional coding and the recurrence read-off
@@ -901,7 +901,7 @@ hypercube count read-off`).
 
 - Modify: `GebLean/Utilities/EraHypercube.lean`
 
-- [ ] **Step 1: the positional read-off `⌊H/Aⁿ⌋`.** State and prove the
+- [x] **Step 1: the positional read-off `⌊H/Aⁿ⌋`.** State and prove the
   top-digit extraction (arXiv:2606.09336, Lemma 3 / Theorem 2 read-off).
 
 ```lean
@@ -918,7 +918,7 @@ Strategy: `Finset.sum_range_succ` splits off `k = n`; the low part
 `Nat.add_mul_div_left` + `Nat.div_eq_of_lt` give `aₙ`. (`hA : 0 < A` is
 the right hypothesis, including the `A = 1` edge.)
 
-- [ ] **Step 2: define `recSeq`/`histCode` and prove the recurrence
+- [x] **Step 2: define `recSeq`/`histCode` and prove the recurrence
   read-off.** Provide the sequence and its positional-code history, then
   the read-off; these are the objects Phase 6 reads off.
 
@@ -955,7 +955,7 @@ step's `diophOf` encoding (Phase 4) by `count_zeros_eq` (Task 5.4) — is
 deferred to Phase 6; this `ℕ`-level `histCode` is the specification it
 must meet.
 
-- [ ] **Step 3: build, axiom-check, commit** (`feat(era): prove the
+- [x] **Step 3: build, axiom-check, commit** (`feat(era): prove the
 first-order recurrence read-off`). This closes Phase 5.
 
 ---
@@ -980,39 +980,39 @@ Phases 6 and 7 remain as the M3b plan specifies (Tasks 6.1, 6.2, 7.1,
 
 ## Self-review checklist (run before adversarial review)
 
-- [ ] **Re-checkpoint coverage.** M3b Phase 4 Sub-lemmas 4.1–4.7 →
+- [x] **Re-checkpoint coverage.** M3b Phase 4 Sub-lemmas 4.1–4.7 →
   Tasks 4.0 (numeric pre-validation), 4.1 (atom algebra), 4.2 (`DiophEnc`),
   4.3 (Identity (4)), 4.4 (re-indexing helpers), 4.5–4.9 (cases),
   4.10 (invariants). M3b Phase 5 Sub-lemmas 5.1–5.5 → Tasks 5.1
   (enumeration), 5.2 (cube-sum), 5.3 (`HW`-additivity), 5.4 (count
   read-off), 5.5 (positional + recurrence).
-- [ ] **Soundness over `ℕ`.** Every graph gadget uses the symmetric
+- [x] **Soundness over `ℕ`.** Every graph gadget uses the symmetric
   squared-distance (`sqDist`) and product (`prod`) atoms, never a lone
   truncated bracket; Task 4.0 Step 2 numerically validates the `mod`/
   `tsub`/`div` gadgets for absence of spurious zeros.
-- [ ] **Witness uniqueness in disjunctive gadgets.** In every `prod`
+- [x] **Witness uniqueness in disjunctive gadgets.** In every `prod`
   two-branch gadget, each witness is constrained in *both* branches (else
   it is free when the other branch holds and `diophOf_unique` fails): `mod`
   and `div` branch B pin `q`/`y₃`/`r`; `tsub` avoids the hazard with a
   non-disjunctive encoding. Task 4.0 scans witness uniqueness.
-- [ ] **Imports/computability.** `Mathlib.Data.Fin.Tuple.Basic` added to
+- [x] **Imports/computability.** `Mathlib.Data.Fin.Tuple.Basic` added to
   `EraDiophantine.lean`; the Phase-5 imports listed; `mixedRadix` is a
   plain computable function (no `Fintype.equivFinOfCardEq`); no
   `noncomputable`.
-- [ ] **Lemma-name hygiene.** `Nat.ofDigits_append` (not
+- [x] **Lemma-name hygiene.** `Nat.ofDigits_append` (not
   `Nat.digits_append`); `Nat.add_eq_zero_iff` (not deprecated
   `Nat.add_eq_zero`); `List.sum_eq_zero_iff`; `Nat.pow_eq_zero` side
   condition discharged. `sum_digits_two_add` de-`private` decision recorded
   (Task 5.3 Step 1).
-- [ ] **Carrier and induction decisions** stated with rationale and a
+- [x] **Carrier and induction decisions** stated with rationale and a
   fallback (§ "Phase 4 architecture") for the reviews to adjudicate.
-- [ ] **De-cycling.** No `eraIlog2`/fast-`ν₂`/`⌊log₂⌋` term anywhere; `HW`
+- [x] **De-cycling.** No `eraIlog2`/fast-`ν₂`/`⌊log₂⌋` term anywhere; `HW`
   is `eraSigma` (slow `ν₂`). Tasks 5.4, 5.5 state the no-`log` dependency.
-- [ ] **Type consistency.** `diophOf : ETm n → DiophEnc n`; system arity
+- [x] **Type consistency.** `diophOf : ETm n → DiophEnc n`; system arity
   `n + 1 + witArity`; bound terms `Fin witArity → ETm (n + 1)`; all
   `eval`s over `eraInterp`. The Phase-6 `eval`-lemma RHS shape matches
   `ERMor1.interp_bsum`/`interp_bprod` verbatim.
-- [ ] **Commit subjects** under 72 characters, imperative, lowercase, no
+- [x] **Commit subjects** under 72 characters, imperative, lowercase, no
   trailing period.
-- [ ] **Markdownlint + doctoc.** `markdownlint-cli2` clean; doctoc TOC
+- [x] **Markdownlint + doctoc.** `markdownlint-cli2` clean; doctoc TOC
   refreshed before the first commit.

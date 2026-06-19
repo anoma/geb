@@ -26,7 +26,7 @@
 > **For agentic workers:** REQUIRED SUB-SKILL: Use
 > superpowers:subagent-driven-development (recommended) or
 > superpowers:executing-plans to implement this plan task-by-task. Steps
-> use checkbox (`- [ ]`) syntax for tracking.
+> use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Build the bounded-sum and bounded-product term formers
 `eraBSum`/`eraBProd` with their `eval` lemmas, then assemble
@@ -188,7 +188,7 @@ break (all in `EraDiophantine.lean`, which `open`s `Era`):
 is unaffected by the namespace move (method resolution is by type). Verify
 them in Step 3.
 
-- [ ] **Step 1: copy the two declarations into `Era.lean`.** Insert,
+- [x] **Step 1: copy the two declarations into `Era.lean`.** Insert,
   immediately after `Tm.eval_subst` (the substitution-evaluation lemma,
   currently the last `Tm.*` meta-theorem before the basis section), in the
   same namespace that contains `Tm.subst`/`Tm.eval_subst`:
@@ -214,12 +214,12 @@ theorem Tm.eval_weaken {B : Type} {ar : B → Nat}
   rfl
 ```
 
-- [ ] **Step 2: remove the originals** from
+- [x] **Step 2: remove the originals** from
   `GebLean/Utilities/EraDiophantine.lean` (the `def Tm.weaken …` and
   `theorem Tm.eval_weaken …` block, plus the enclosing `namespace Era` /
   `end Era` wrapper that encloses only them).
 
-- [ ] **Step 3: build the whole project** and confirm the in-file users
+- [x] **Step 3: build the whole project** and confirm the in-file users
   (`SimpleMonomial.weaken:470`, the `eval_weaken` proofs `:494`, `:507`)
   still resolve `Tm.weaken`/`Tm.eval_weaken` from `Era.lean`.
 
@@ -228,7 +228,7 @@ Expected: builds clean. If a `Tm.weaken` reference fails to resolve,
 confirm `Era.lean`'s namespace matches (`Era.Tm.weaken`) and that
 `EraDiophantine.lean` still `open`s `Era`.
 
-- [ ] **Step 4: pre-commit, axiom-check, commit the relocation.**
+- [x] **Step 4: pre-commit, axiom-check, commit the relocation.**
 
 Run: `bash scripts/pre-commit.sh`
 Run: `bash scripts/check-axioms.sh` (expect `propext`, `Quot.sound`,
@@ -241,14 +241,14 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
 jj new
 ```
 
-- [ ] **Step 5: reconcile the decision note.** In
+- [x] **Step 5: reconcile the decision note.** In
   `docs/superpowers/notes/2026-06-14-erabsum-m3b-construction-decision.md`
   § 4.3, replace the "`eraBSum` also admits the direct 2-D form … without
   the positional-coding layer" sentence with a one-line correction: the
   direct 2-D count is not used (it diverges from both papers and does not
   factorise for general summands); both formers use the recurrence engine.
 
-- [ ] **Step 6: reconcile the binding spec.** The companion spec
+- [x] **Step 6: reconcile the binding spec.** The companion spec
   (`docs/superpowers/specs/2026-06-14-era-completeness-bounded-sum-design.md`)
   § 5, § 6 still describe the superseded Marchenkov-2007 digit-sum
   construction and the 2003-monograph `2^x`-elimination, and § 8 frames the
@@ -265,7 +265,7 @@ jj new
   superseded. (Specs and plans co-evolve on-branch:
   `CLAUDE.md` § Specs and plans live on the feature branch.)
 
-- [ ] **Step 7: doctoc, markdownlint, commit the doc reconciliation.**
+- [x] **Step 7: doctoc, markdownlint, commit the doc reconciliation.**
 
 Run (refresh the spec's TOC, then lint both edited docs):
 
@@ -350,7 +350,7 @@ a = π(x, A, j, n)    ⟷  x = λ₁ + a·A^j + λ₂·A^(j+1) ∧ λ₁ < A^j �
                         (so a is the j-th base-A digit; π(x,A,n,n) = ⌊x/A^n⌋)
 ```
 
-- [ ] **Step 1: define the digit-extraction relation and prove the
+- [x] **Step 1: define the digit-extraction relation and prove the
   read-off.** Reuse Phase 5's `positional_readoff` for the top digit; for
   a general digit, define the predicate and prove it characterises
   `x / A^j % A`. Search first for an existing Mathlib `Nat.digits`/base-`A`
@@ -374,7 +374,7 @@ extract the digit from the witnessed decomposition; backward, supply
 `a < A` from the digit being a `% A`. This is a self-contained ℕ lemma;
 budget a `lean4:sorry-filler-deep` pass if the witness algebra is fiddly.
 
-- [ ] **Step 2: build, axiom-check, commit**
+- [x] **Step 2: build, axiom-check, commit**
   (`feat(era): transcribe the base-A digit-extraction predicate`).
 
 ### Task 6.2: the master trajectory relation and its solution count (Claims 3-4)
@@ -400,7 +400,7 @@ with `step` the recurrence function. Define the count `G` and prove
 Claim 4: the count equals its maximum `n` exactly when `x` is the true
 trajectory's code.
 
-- [ ] **Step 1: define the trajectory predicate and the per-index hit.**
+- [x] **Step 1: define the trajectory predicate and the per-index hit.**
 
 ```lean
 /-- The recurrence-instance predicate (arXiv:2606.09336, master relation,
@@ -428,7 +428,7 @@ instance (step : ℕ → ℕ → ℕ) (A x n : ℕ) :
   fun _ => Nat.decEq _ _
 ```
 
-- [ ] **Step 2: state and prove Claim 4** — the count is maximal iff `x`
+- [x] **Step 2: state and prove Claim 4** — the count is maximal iff `x`
   codes the genuine trajectory, and then `x = histCode`.
 
 ```lean
@@ -459,7 +459,7 @@ and its `j ≤ n` from `j < n` (membership in `Finset.range n`) — establish
 both before each `piDigit_iff` rewrite, since `hitsAt`'s `%`-form drops
 them.
 
-- [ ] **Step 3: build, axiom-check, commit**
+- [x] **Step 3: build, axiom-check, commit**
   (`feat(era): prove the trajectory code is the unique hit maximiser`).
 
 ### Task 6.3: the counting identity `#solutions(E₂) = histCode` (Claim 5)
@@ -473,7 +473,7 @@ re-expressed as a solution count via `x = ω₁ + ω₂ + 1`: since the
 maximal-hit equation has the unique solution `x = C`, the number of pairs
 `(ω₁, ω₂) ∈ ℕ²` with `ω₁ + ω₂ + 1 = C` is exactly `C`.
 
-- [ ] **Step 1: the pair-count identity (the Claim-5 core).**
+- [x] **Step 1: the pair-count identity (the Claim-5 core).**
 
 ```lean
 /-- The number of ordered pairs `(ω₁, ω₂) ∈ ℕ²` with `ω₁ + ω₂ + 1 = C`
@@ -489,7 +489,7 @@ over `Finset.range C`; use `Finset.card_filter`/a bijection to
 `Finset.range C` (`Finset.card_nbij'` with `p ↦ p.1`). Numeric-check the
 statement over `C ∈ 0..6` with a throwaway `#eval` first.
 
-- [ ] **Step 2: assemble `solCount_eq_histCode`** — the solution count of
+- [x] **Step 2: assemble `solCount_eq_histCode`** — the solution count of
   the combined system (maximal hits ∧ `ω₁+ω₂+1 = x`) equals `histCode`.
 
 ```lean
@@ -512,7 +512,7 @@ Finalise the left-hand count's exact `Finset` shape here (it ranges
 (using `histCode < A^(n+1)`, provable from `hbound` and the geometric
 bound, mirroring `positional_readoff`'s `hlow`).
 
-- [ ] **Step 3: build, axiom-check, commit**
+- [x] **Step 3: build, axiom-check, commit**
   (`feat(era): prove the E2 solution count equals the history code`).
 
 ### Task 6.4: `eraHistCode` — the history code as an `Era` term (RE-CHECKPOINT)
@@ -542,14 +542,14 @@ This realises `solCount_eq_histCode` as a term by `count_zeros_eq`: the
 count `#{… = 0}` over the cube equals `HW(packM)/w − tᵏ`, and `packM`,
 `HW = eraSigma`, `t`, `w` are all `Era` terms.
 
-- [ ] **Step 1: the predicate term `P_E₂`.** Build the `ETm` for the `E₂`
+- [x] **Step 1: the predicate term `P_E₂`.** Build the `ETm` for the `E₂`
   sum-of-squares predicate over the cube variables from `diophOf step`'s
   `SosSystem` plus the `piDigit`/`Code` gadgets, using `Tm.weaken`
   (Task 0) to splice the step encoding into the enlarged variable context.
   Prove its `eval` is `0` exactly on the counted set (reuse
   `diophOf_encodes`).
 
-- [ ] **Step 2: reduce `δ(P_E₂, w)` to simple-exponential-polynomial
+- [x] **Step 2: reduce `δ(P_E₂, w)` to simple-exponential-polynomial
   (SEP) form (arXiv:2407.12928, Lemma 3.5 / Corollary 3.6).** This is the
   bridge `cubeSum_factor` does *not* supply: `cubeSum_factor` consumes an
   *already-separated* monomial `∏ᵢ aᵢ^{uᵢ}·vᵢ^{aᵢ}`, but `δ(P_E₂, w)` after
@@ -581,7 +581,7 @@ theorem sep_reduce … : sorry := by
   transcribed in full, pause and report the enlarged scope before
   proceeding.
 
-- [ ] **Step 3: the packed number term `packM_term`.** With Step 2's SEP
+- [x] **Step 3: the packed number term `packM_term`.** With Step 2's SEP
   form, apply `cubeSum_factor` so the cube-sum of `δ(P_E₂, w)·base^(v(ā))`
   becomes a product of `G₀/G₁/G₂` closed-form terms
   (`eraGeomSum`/`natLinGeomSum`/`natSqGeomSum`, Phases 1, 3). Width `w`,
@@ -589,7 +589,7 @@ theorem sep_reduce … : sorry := by
   `P_E₂(ā) < 2^w` on the cube from the majorant bound and
   `eraMajorant_spec`/`_mono`.
 
-- [ ] **Step 4: `eraHistCode` and its `eval` lemma.** Define
+- [x] **Step 4: `eraHistCode` and its `eval` lemma.** Define
   `eraHistCode := etsub (ediv (eraSigma … packM_term) w_term) (epow t_term k_term)`
   (the `HW(M)/w − tᵏ` read-off as a term), and prove
   `eval eraHistCode ctx = histCode init step A n` by `count_zeros_eq`
@@ -597,7 +597,7 @@ theorem sep_reduce … : sorry := by
   `solCount_eq_histCode` (Task 6.3). This is the dominant proof; factor
   per the "factoring-out-lemmas" technique and budget the largest effort.
 
-- [ ] **Step 5: build, axiom-check, commit**
+- [x] **Step 5: build, axiom-check, commit**
   (`feat(era): realise the recurrence history code as an Era term`).
 
 ### Task 6.5: `eraBSum`
@@ -606,7 +606,7 @@ theorem sep_reduce … : sorry := by
 
 - Modify: `GebLean/EraCompleteness.lean`
 
-- [ ] **Step 1: the general former `eraRec`.** In `EraRecurrence.lean`,
+- [x] **Step 1: the general former `eraRec`.** In `EraRecurrence.lean`,
   package Task 6.4 into the recurrence-to-term former and its `eval` lemma
   (via `recurrence_readoff`). `eraRec` takes the bound `A` as a supplied
   `Era` term together with the `recurrence_readoff` hypothesis as a
@@ -630,7 +630,7 @@ theorem eraRec_eval …
   sum majorant `y·M` is needed (Step 2). For a *product* the analogous
   bound is `Mʸ` (Task 6.6).
 
-- [ ] **Step 2: build the sum-majorant term and its bound lemma.** The
+- [x] **Step 2: build the sum-majorant term and its bound lemma.** The
   partial sum is bounded by the loop bound times the pointwise majorant:
 
 ```lean
@@ -650,7 +650,7 @@ theorem sumMajorant_bound {k : ℕ} (t : ETm (k + 1)) (ctx : Fin (k + 1) → ℕ
   terms each `< M` is `< j·M + 1 ≤ y·M + 1` (`Finset.sum_lt_sum`/
   `Finset.sum_le_card_nsmul`). Budget a `lean4:sorry-filler-deep` pass.
 
-- [ ] **Step 3: define `eraBSum`** as the `eraRec` instance with
+- [x] **Step 3: define `eraBSum`** as the `eraRec` instance with
   `step m s = s + f m`, `init = 0` (so `recSeq = natBSum`), and `A` the
   Step-2 sum majorant:
 
@@ -660,7 +660,7 @@ The `s(m+1) = s(m) + f(m)` instance of the recurrence engine. -/
 def eraBSum {k : ℕ} (t : ETm (k + 1)) : ETm (k + 1) := sorry
 ```
 
-- [ ] **Step 4: the `eval` lemma (the deliverable).**
+- [x] **Step 4: the `eval` lemma (the deliverable).**
 
 ```lean
 theorem eraBSum_eval {k : ℕ} (t : ETm (k + 1)) (ctx : Fin (k + 1) → ℕ) :
@@ -677,7 +677,7 @@ prove `recSeq 0 (fun m s => s + f m) y = natBSum y f` by induction on `y`
 if helpful). Match `f i = Tm.eval eraInterp t (Fin.cons i (Fin.tail ctx))`
 exactly to the `interp_bsum` shape.
 
-- [ ] **Step 5: build, axiom-check, commit**
+- [x] **Step 5: build, axiom-check, commit**
   (`feat(era): define bounded summation as an Era term`).
 
 ### Task 6.6: `eraBProd`
@@ -686,7 +686,7 @@ exactly to the `interp_bsum` shape.
 
 - Modify: `GebLean/EraCompleteness.lean`
 
-- [ ] **Step 1: build the product-majorant term and its bound lemma.**
+- [x] **Step 1: build the product-majorant term and its bound lemma.**
   Unlike `eraBSum`, the running product `recSeq 1 (·*f·) j = ∏_{i<j} f(i)`
   is *not* bounded by the pointwise summand majorant `eraMajorant t` — it
   grows as `Mʸ` where `M` is that majorant. So the `recurrence_readoff`
@@ -713,7 +713,7 @@ theorem prodMajorant_bound {k : ℕ} (t : ETm (k + 1)) (ctx : Fin (k + 1) → �
   `eraMajorant_spec`; the product of `j ≤ y` factors each `< M` is `≤ M^j ≤
   M^y`; `< M^y·2` since `M ≥ 1`. Budget a `lean4:sorry-filler-deep` pass.
 
-- [ ] **Step 2: define `eraBProd`** as the `eraRec` instance with
+- [x] **Step 2: define `eraBProd`** as the `eraRec` instance with
   `step m s = s · f m`, `init = 1`, and `A` the Step-1 product majorant.
 
 ```lean
@@ -722,7 +722,7 @@ theorem prodMajorant_bound {k : ℕ} (t : ETm (k + 1)) (ctx : Fin (k + 1) → �
 def eraBProd {k : ℕ} (t : ETm (k + 1)) : ETm (k + 1) := sorry
 ```
 
-- [ ] **Step 3: the `eval` lemma.**
+- [x] **Step 3: the `eval` lemma.**
 
 ```lean
 theorem eraBProd_eval {k : ℕ} (t : ETm (k + 1)) (ctx : Fin (k + 1) → ℕ) :
@@ -736,7 +736,7 @@ Strategy: identical to Task 6.5 with the product step; `eraRec_eval`
 discharges the bound hypothesis via `prodMajorant_bound` (Step 1), then
 prove `recSeq 1 (fun m s => s * f m) y = natBProd y f` by induction on `y`.
 
-- [ ] **Step 4: build, axiom-check, commit**
+- [x] **Step 4: build, axiom-check, commit**
   (`feat(era): define bounded product as an Era term`).
 
 ---
@@ -749,7 +749,7 @@ prove `recSeq 1 (fun m s => s * f m) y = natBProd y f` by induction on `y`.
 
 - Modify: `GebLean/EraCompleteness.lean`
 
-- [ ] **Step 1: state.**
+- [x] **Step 1: state.**
 
 ```lean
 /-- Completeness: every `ERMor1` (elementary) function is the denotation
@@ -760,7 +760,7 @@ theorem era_complete {n : ℕ} (f : ERMor1 n) :
   sorry
 ```
 
-- [ ] **Step 2: prove by structural induction on `f`** (constructors
+- [x] **Step 2: prove by structural induction on `f`** (constructors
   `zero`, `succ`, `proj`, `sub`, `comp`, `bsum`, `bprod`):
 
 ```text
@@ -781,7 +781,7 @@ to the inductive witness; the `Fin.cons i (Fin.tail ctx)` shape is
 identical in `interp_bsum` and `eraBSum_eval`, so the IH applies directly.
 Reuse `erOfETm`/`eraOpToER` patterns already in `EraCompleteness.lean`.
 
-- [ ] **Step 3: build, axiom-check, commit**
+- [x] **Step 3: build, axiom-check, commit**
   (`feat(era): prove Era-term completeness for ERMor1`).
 
 ### Task 7.2: the K-sim-2 corollary
@@ -807,64 +807,64 @@ Note: `kToER_interp` is declared in source as a `∀`-quantified
 pattern-matching recursion (`LawvereKSimER.lean:285`); the signature above
 is its instantiated application form, which is what the corollary consumes.
 
-- [ ] **Step 1: pin the extraction.** Confirm `erToK_interp` and
+- [x] **Step 1: pin the extraction.** Confirm `erToK_interp` and
   `kToER_interp` (with its load-bearing `level ≤ 2` premise) give the
   `ERMor1` ↔ K-sim-2 function-class equality directly; `erKSimEquiv` is
   not needed. State the exact corollary signature in terms of the K-sim-2
   morphism `interp`.
 
-- [ ] **Step 2: state and prove the corollary** as a thin composition of
+- [x] **Step 2: state and prove the corollary** as a thin composition of
   `era_complete` + `era_sound_er` (`Era ≃ E³` as denoted functions) with
   the `ERMor1` ↔ K-sim-2 interp faithfulness. Implement no `K-sim` scheme
   over the basis (spec § 12). The exact statement (both inclusions, as
   function-class equality at `interp`) is finalised here from the available
   lemmas; keep it a composition, no new arithmetic.
 
-- [ ] **Step 3: build, axiom-check, commit**
+- [x] **Step 3: build, axiom-check, commit**
   (`feat(era): derive the K-sim-2 corollary`). This commit closes M3b.
 
 ---
 
 ## Self-review checklist (run before adversarial review)
 
-- [ ] **Spec coverage.** Companion spec § 3 (statements) → Tasks 7.1, 7.2;
+- [x] **Spec coverage.** Companion spec § 3 (statements) → Tasks 7.1, 7.2;
   § 4 (the two `eval` lemmas, the induction) → Tasks 6.5, 6.6, 7.1; § 7
   (soundness) → already `era_sound_er` (not redone); § 11 acceptance (no
   `sorry`/`admit`/underscore in commits, 100-char, axiom-clean, `Era.lean`
   only gains the two relocated `Tm` combinators) → per-task gates and
   Task 0; § 12 (`Era.lean` basis unmodified, no `K-sim` scheme) → Task 0
   changes only the term-combinator layer, Task 7.2 is composition-only.
-- [ ] **Superseded spec sections (construction narrative).** Spec § 5, § 6
+- [x] **Superseded spec sections (construction narrative).** Spec § 5, § 6
   (the Marchenkov digit-sum / `2^x`-elimination construction) are
   superseded by the recurrence engine (Phase 6); spec § 8's `erKSimEquiv`
   framing is superseded by the term-level `erToK_interp`/`kToER_interp`
   route (Task 7.2). Task 0 Step 6 records the supersession in the spec
   itself; the *statements* of § 3/§ 4/§ 7/§ 8/§ 11/§ 12 remain binding and
   unchanged.
-- [ ] **Route fidelity.** Both formers use the recurrence engine
+- [x] **Route fidelity.** Both formers use the recurrence engine
   (arXiv:2606.09336 Theorem 2); no direct 2-D count anywhere; the decision
   note is corrected (Task 0 Step 4).
-- [ ] **Transcription citations.** Tasks 6.1-6.4 cite the exact paper
+- [x] **Transcription citations.** Tasks 6.1-6.4 cite the exact paper
   claims/lemmas (Lemma 3; master relation; Claims 3-5; arXiv:2407.12928
   § 4 / Cor 3.6). The local PDF paths are in § References.
-- [ ] **Type consistency.** `eraBSum`/`eraBProd : ETm (k+1) → ETm (k+1)`;
+- [x] **Type consistency.** `eraBSum`/`eraBProd : ETm (k+1) → ETm (k+1)`;
   the `eval`-lemma RHS `natBSum (ctx 0) (fun i => Tm.eval … (Fin.cons i
   (Fin.tail ctx)))` matches `ERMor1.interp_bsum`/`interp_bprod` verbatim;
   `eraRec_eval`/`eraHistCode_eval` names consistent across Tasks 6.4-6.6;
   `recSeq`/`histCode`/`count_zeros_eq`/`cubeSum_factor` signatures used as
   quoted above.
-- [ ] **Computability.** `hitsAt` decidable; `hitCount` a plain
+- [x] **Computability.** `hitsAt` decidable; `hitCount` a plain
   `Finset.card`; `card_pairs_succ_sum` over explicit `Finset`s; no
   `noncomputable`, no `Classical` in computational content.
-- [ ] **De-cycling.** No `eraIlog2`/fast-`ν₂`/`⌊log₂⌋` term; `HW` is
+- [x] **De-cycling.** No `eraIlog2`/fast-`ν₂`/`⌊log₂⌋` term; `HW` is
   `eraSigma` (slow `ν₂`); the width `w` is an `eraMajorant`-derived term,
   not a logarithm.
-- [ ] **Lemma-name hygiene.** `Nat.add_eq_zero_iff` (not deprecated
+- [x] **Lemma-name hygiene.** `Nat.add_eq_zero_iff` (not deprecated
   `Nat.add_eq_zero`); `Finset.sum_range_succ`; `Nat.add_mul_div_left`;
   digit lemmas via `Nat.digits`/`Nat.ofDigits` checked against the pin.
-- [ ] **Commit subjects** under 72 characters, imperative, lowercase, no
+- [x] **Commit subjects** under 72 characters, imperative, lowercase, no
   trailing period.
-- [ ] **Markdownlint + doctoc.** `markdownlint-cli2` clean; run
+- [x] **Markdownlint + doctoc.** `markdownlint-cli2` clean; run
   `doctoc --update-only` on this file before the first commit (the TOC
   markers are present at the top).
 
