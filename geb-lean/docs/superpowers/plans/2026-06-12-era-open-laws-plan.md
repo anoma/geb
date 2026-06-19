@@ -1,5 +1,13 @@
 # Era open-term recursion laws implementation plan
 
+> **Status (2026-06-19): SUPERSEDED.** The minimal `{+, mod, 2^x}`
+> basis hit the successor-on-minuend domination impasse
+> (`docs/superpowers/specs/2026-06-12-era-open-laws-domination-impasse.md`)
+> and was replaced by the rich-basis pivot
+> (`docs/superpowers/plans/2026-06-13-era-rich-basis-plan.md`), which adds
+> `∸`/`·`/`/`/`^` as primitives. The checkboxes below were not completed
+> as written; this plan is retained for history.
+>
 > **For agentic workers:** REQUIRED SUB-SKILL: Use
 > superpowers:subagent-driven-development (recommended) or
 > superpowers:executing-plans to implement this plan

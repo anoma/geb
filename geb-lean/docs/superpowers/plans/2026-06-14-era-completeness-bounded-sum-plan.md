@@ -17,7 +17,7 @@
 > **For agentic workers:** REQUIRED SUB-SKILL: Use
 > superpowers:subagent-driven-development (recommended) or
 > superpowers:executing-plans to implement this plan task-by-task. Steps
-> use checkbox (`- [ ]`) syntax for tracking.
+> use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Establish the bridge module and the soundness direction
 `Era ⊆ E³` of basis adequacy, then resolve the bounded-sum construction
@@ -83,7 +83,7 @@ and the exact lemmas to use rather than guaranteed-final tactic scripts.
 - Modify: `GebLean.lean` (add one import line, alphabetical/position to
   match the existing block around `import GebLean.LawvereER`)
 
-- [ ] **Step 1: Create the module with header and namespace**
+- [x] **Step 1: Create the module with header and namespace**
 
 Mirror the header style of `GebLean/LawvereER.lean` (import-first, no
 copyright header, module docstring with the required sections). Content:
@@ -120,17 +120,17 @@ open Era
 end GebLean.EraCompleteness
 ```
 
-- [ ] **Step 2: Register the module**
+- [x] **Step 2: Register the module**
 
 Add `import GebLean.EraCompleteness` to `GebLean.lean` next to the other
 `GebLean.*` imports.
 
-- [ ] **Step 3: Build**
+- [x] **Step 3: Build**
 
 Run: `lake build GebLean.EraCompleteness`
 Expected: builds with no errors (empty namespace).
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 bash scripts/pre-commit.sh
@@ -155,7 +155,7 @@ composed with the constant `2` (`ERMor1.natN`) and `proj 0`.
 
 - Modify: `GebLean/EraCompleteness.lean`
 
-- [ ] **Step 1: Define the operation map**
+- [x] **Step 1: Define the operation map**
 
 ```lean
 /-- The `ERMor1` term realising each basis operation. -/
@@ -173,12 +173,12 @@ def eraOpToER : (b : EraB) → ERMor1 (eraAr b)
 case builds `2 ^ (ctx 0)`. Verify `ERMor1.natN`'s exact arity arguments
 against `interp_natN` at `ERArith.lean:82` during execution.)
 
-- [ ] **Step 2: Build to confirm it elaborates**
+- [x] **Step 2: Build to confirm it elaborates**
 
 Run: `lake build GebLean.EraCompleteness`
 Expected: builds (it is a total `def`, no `sorry`).
 
-- [ ] **Step 3: State and prove the correctness lemma**
+- [x] **Step 3: State and prove the correctness lemma**
 
 ```lean
 theorem eraOpToER_interp (b : EraB) (ctx : Fin (eraAr b) → ℕ) :
@@ -199,14 +199,14 @@ Strategy (a single `simp` does not close it; two known wrinkles):
   vector `![a, b]`, so in the `mod`/`div` cases rewrite
   `ctx = ![ctx 0, ctx 1]` (Fin-2 eta) before the lemma fires.
 
-- [ ] **Step 4: Verify**
+- [x] **Step 4: Verify**
 
 Run: `lake build GebLean.EraCompleteness && lake lint`
 Run: `bash scripts/check-axioms.sh` (expect only `propext`,
 `Quot.sound`, `Classical.choice`)
 Expected: no errors; `eraOpToER` and `eraOpToER_interp` are sorry-free.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 bash scripts/pre-commit.sh
@@ -225,7 +225,7 @@ existence) keeps the construction constructive.
 
 - Modify: `GebLean/EraCompleteness.lean`
 
-- [ ] **Step 1: Define the term translation**
+- [x] **Step 1: Define the term translation**
 
 ```lean
 /-- Translate an `Era` term to an `ERMor1` term of the same arity. -/
@@ -245,14 +245,14 @@ checker; if the equation compiler still does not infer termination here,
 add `termination_by t => sizeOf t` with a `decreasing_by` discharging
 `sizeOf (ts i) < sizeOf (Tm.app b ts)`.
 
-- [ ] **Step 2: Build to confirm it elaborates**
+- [x] **Step 2: Build to confirm it elaborates**
 
 Run: `lake build GebLean.EraCompleteness`
 Expected: builds, as `Tm.eval` does. If the equation compiler does not
 infer termination, apply the `termination_by`/`decreasing_by` note above,
 then build.
 
-- [ ] **Step 3: State and prove the agreement lemma**
+- [x] **Step 3: State and prove the agreement lemma**
 
 ```lean
 theorem erOfETm_interp {n : ℕ} (t : ETm n) (ctx : Fin n → ℕ) :
@@ -269,7 +269,7 @@ Goal: each case reduces both sides equationally; the `app` case uses
 (via `ERMor1.interp_comp` and `funext`). Fill exact rewrites during
 execution.
 
-- [ ] **Step 4: State the soundness corollary**
+- [x] **Step 4: State the soundness corollary**
 
 ```lean
 /-- Every `Era` term denotes an `ERMor1` (elementary) function. -/
@@ -278,7 +278,7 @@ theorem era_sound_er {n : ℕ} (t : ETm n) :
   ⟨erOfETm t, erOfETm_interp t⟩
 ```
 
-- [ ] **Step 5: Verify**
+- [x] **Step 5: Verify**
 
 Run: `lake build GebLean.EraCompleteness && lake lint`
 Run: `bash scripts/check-axioms.sh` (expect only `propext`,
@@ -286,7 +286,7 @@ Run: `bash scripts/check-axioms.sh` (expect only `propext`,
 Expected: `erOfETm`, `erOfETm_interp`, `era_sound_er` sorry-free and
 axiom-clean.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 bash scripts/pre-commit.sh
@@ -306,7 +306,7 @@ M2/M3 opening assessment (spec § 5 Library reuse, § 13).
 - Create: `docs/superpowers/notes/<date>-erabsum-construction-decision.md`
   (markdownlint-clean, with a doctoc TOC if it has more than one `##`).
 
-- [ ] **Step 1: Evaluate the Mathlib `Dioph` route**
+- [x] **Step 1: Evaluate the Mathlib `Dioph` route**
 
 Determine concretely whether `Mathlib.NumberTheory.Dioph` can yield a
 *constructive* bounded-sum `Era` term. Expected obstruction (spec § 5):
@@ -315,7 +315,7 @@ a computable term under the `noncomputable` ban; confirm this against the
 actual definitions (`Dioph`, `DiophFn`, `Dioph.pow_dioph`) and record the
 precise point of failure (or, if it transfers, how).
 
-- [ ] **Step 2: Probe a direct rich-basis closed form**
+- [x] **Step 2: Probe a direct rich-basis closed form**
 
 Attempt, in a throwaway module under `GebLean/`, a search-free `Era`
 term for a representative bounded sum (e.g. `Σ_{i<y} c`, then a
@@ -323,7 +323,7 @@ non-constant body), using `mod`, `div`, `pow2`, `pow` and the
 `mod (β − 1)` digit-extraction idea (spec § 13). Record whether the
 recursion/packing closes without a bounded search.
 
-- [ ] **Step 3: Scope the Marchenkov `σ` fallback**
+- [x] **Step 3: Scope the Marchenkov `σ` fallback**
 
 If neither route above closes, outline the Marchenkov § 4–§ 5 transcription
 against the available Mathlib support (`geom_sum_eq`, `Nat.bitIndices`,
@@ -331,7 +331,7 @@ against the available Mathlib support (`geom_sum_eq`, `Nat.bitIndices`,
 `ℕ`-identities are mathlib citations and which `Era`-term constructions
 are new.
 
-- [ ] **Step 4: Record the decision and delete the probe**
+- [x] **Step 4: Record the decision and delete the probe**
 
 Write the chosen construction, its lemma outline, and the magnitude
 estimate into the decision note; remove the throwaway probe module.
@@ -339,7 +339,7 @@ Acceptance: the note names one construction for `eraBSum` and lists its
 `Era`-term obligations and `eval` lemma, sufficient to drive a follow-on
 plan.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 markdownlint-cli2 docs/superpowers/notes/<date>-erabsum-construction-decision.md

@@ -1,9 +1,18 @@
 # Convenient rich-basis ERA — implementation plan
 
+> **Status (2026-06-19): PARTIAL.** Milestones M0a–M1b are complete and
+> merged (the rich basis, its eighteen axioms, soundness, and categoricity
+> `eraInterp_unique`). Milestones M2 (recovery gate) and M3–M8 (the E1–E5
+> object-level redundancy theorems and pure-generator closure) remain
+> deferred — they are the object-level *recovery* workstream, blocked on
+> bounded recursion (`succ_sub_split` via a Goodstein `φ`); see
+> `docs/superpowers/notes/2026-06-14-era-recovery-e1e5-context.md`. This is
+> independent of the now-complete semantic *completeness* work (M3a/M3b).
+>
 > **For agentic workers:** REQUIRED SUB-SKILL: Use
 > superpowers:subagent-driven-development (recommended) or
 > superpowers:executing-plans to implement this plan task-by-task.
-> Steps use checkbox (`- [ ]`) syntax for tracking.
+> Steps use checkbox (`- [x]`) syntax for tracking.
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
@@ -143,16 +152,16 @@ the `closed_term_numeral` `.exp2` case to `.pow2`. The defining
 equations are unchanged (`axPow2Z : 2^0 = 1`,
 `axPow2S : 2^(S x) = 2^x + 2^x`).
 
-- [ ] **Step 1: Apply the rename across the file.**
+- [x] **Step 1: Apply the rename across the file.**
   Use the rename table. The `EraB` constructor rename is the
   load-bearing one; the rest follow it.
 
-- [ ] **Step 2: Build green.**
+- [x] **Step 2: Build green.**
   Run: `lake build`
   Expected: no errors. (`lake build` is authoritative; do not use
   `lake env lean`.)
 
-- [ ] **Step 3: Commit M0a.**
+- [x] **Step 3: Commit M0a.**
   Run: `bash scripts/pre-commit.sh` then `scripts/check-axioms.sh`.
   Commit via `jj` with message `refactor(era): rename exp2 to pow2`.
 
@@ -170,7 +179,7 @@ green.
 
 ### Step group A — rename derived operations to encodings
 
-- [ ] **Step 1: Rename the derived defs and their lemmas.**
+- [x] **Step 1: Rename the derived defs and their lemmas.**
 
 ```text
 emul             → mulFormula
@@ -224,7 +233,7 @@ primitive once the notation is repointed.
 
 ### Step group B — add primitive constructors and notation
 
-- [ ] **Step 2: Extend `EraB` and `eraAr`.**
+- [x] **Step 2: Extend `EraB` and `eraAr`.**
 
 ```lean
 inductive EraB : Type
@@ -236,7 +245,7 @@ def eraAr : EraB → Nat
   | .mul => 2 | .div => 2 | .pow => 2
 ```
 
-- [ ] **Step 3: Add smart constructors, `subst` lemmas, congruence
+- [x] **Step 3: Add smart constructors, `subst` lemmas, congruence
   lemmas, and repoint the infix notation** for `mul`, `div`, `pow`,
   modeled exactly on the existing `etsub`/`etsub_subst`/`etsub_congr`
   pattern.
@@ -258,7 +267,7 @@ pointed to the now-renamed derived ops are removed by this repointing.
 
 ### Step group C — the seven new axioms and `eraDefs`
 
-- [ ] **Step 4: Add the seven convenience axioms.**
+- [x] **Step 4: Add the seven convenience axioms.**
 
 ```lean
 def axMul0 : (n : Nat) × EEqn n := ⟨1, ⟨(.var 0) *ᵉ .zero, .zero⟩⟩
@@ -278,7 +287,7 @@ def axDivS : (n : Nat) × EEqn n :=
 Note `axDivS` uses the primitive remainder `x mod S y` (the design
 refinement), not `daab65a9`'s spelled-out `x ∸ S y · (x / S y)`.
 
-- [ ] **Step 5: Assemble the eighteen-axiom `eraDefs`.**
+- [x] **Step 5: Assemble the eighteen-axiom `eraDefs`.**
 
 ```lean
 def eraDefs : Defs EraB eraAr :=
@@ -287,7 +296,7 @@ def eraDefs : Defs EraB eraAr :=
    axMul0, axMulS, axPow0, axPowS, axDivZ, axDiv0, axDivS]
 ```
 
-- [ ] **Step 6: Build green.**
+- [x] **Step 6: Build green.**
   Run: `lake build`
   Expected: no errors. Two membership-witness styles in the file react
   differently to the list growing to eighteen: the `derivable_def
@@ -297,7 +306,7 @@ def eraDefs : Defs EraB eraAr :=
   after the existing eleven and `axAdd0`/`axAddS` stay at positions 0/1,
   so the explicit chains survive; confirm at this build.
 
-- [ ] **Step 7: Update the module docstring.**
+- [x] **Step 7: Update the module docstring.**
   The head module docstring describes "the minimal three-element
   substitution basis `{x+y, x mod y, 2ˣ}`" with Mazzanti's operations
   "derived as terms over this basis"; after this milestone `mul`/`div`/
@@ -308,7 +317,7 @@ def eraDefs : Defs EraB eraAr :=
   modification of `daab65a9` (per spec §10 and the cite-the-literature
   rule). Re-run `lake build`.
 
-- [ ] **Step 8: Commit M0b.**
+- [x] **Step 8: Commit M0b.**
   `bash scripts/pre-commit.sh`; `scripts/check-axioms.sh`; commit via
   `jj` with `feat(era): add mul/div/pow primitives and recursion axioms`.
 
@@ -318,7 +327,7 @@ def eraDefs : Defs EraB eraAr :=
 
 **Files:** Modify `GebLean/Era.lean`.
 
-- [ ] **Step 1: Extend `eraInterp`.**
+- [x] **Step 1: Extend `eraInterp`.**
 
 ```lean
 def eraInterp : (b : EraB) → (Fin (eraAr b) → Nat) → Nat
@@ -331,7 +340,7 @@ def eraInterp : (b : EraB) → (Fin (eraAr b) → Nat) → Nat
   | .pow,  v => v ⟨0, by decide⟩ ^ v ⟨1, by decide⟩
 ```
 
-- [ ] **Step 2: Add the `Nat` lemma `succ_div_succ`** (transcribe from
+- [x] **Step 2: Add the `Nat` lemma `succ_div_succ`** (transcribe from
   `daab65a9`, lines 419–435), then adapt for the `mod`-form remainder.
 
 Strategy: `daab65a9`'s `succ_div_succ` proves the increment recurrence
@@ -354,7 +363,7 @@ theorem succ_div_succ (x y : Nat) :
   sorry
 ```
 
-- [ ] **Step 3: Extend `eraDefs_sound`** to discharge all eighteen
+- [x] **Step 3: Extend `eraDefs_sound`** to discharge all eighteen
   axioms.
 
 Strategy: keep the head's generator arms; add arms for the seven new
@@ -364,7 +373,7 @@ axioms. The `mul`/`pow` arms close by `Nat.mul_succ`/`Nat.pow_zero`/
 eighteen goals and the discharge `first | …` block with the new cases
 (model on `daab65a9`'s `eraDefs_sound`, lines 438–455).
 
-- [ ] **Step 4: Re-derive the primitive numeral lemmas.**
+- [x] **Step 4: Re-derive the primitive numeral lemmas.**
 
 ```lean
 theorem numeral_mul {n : Nat} (a b : Nat) :
@@ -386,7 +395,7 @@ Restate any encoding intermediates (`numeral_mulFormula`,
 `numeral_divFormula`) with explicit `…Formula` heads if a proof needs
 them.
 
-- [ ] **Step 5: Add the primitive recursion-law instances.** The
+- [x] **Step 5: Add the primitive recursion-law instances.** The
   redundancy proofs (M5/M6/M7) consume these as `uniq` base/step inputs;
   they are direct instantiations of the new axioms, modeled on the head's
   `derivable_sub_zero` (each is one `derivable_def` application plus a
@@ -415,7 +424,7 @@ theorem derivable_div_succ {n : Nat} (u v : ETm n) :
   they are distinct from the encoding zero-laws `derivable_mulFormula_zero`
   /`derivable_divFormula_zero`/`derivable_zero_divFormula` renamed in M0b.
 
-- [ ] **Step 6: Update `closed_term_numeral`** to cover the seven
+- [x] **Step 6: Update `closed_term_numeral`** to cover the seven
   constructors (`.add`, `.mod`, `.pow2`, `.tsub`, `.mul`, `.div`,
   `.pow`), one arm per constructor of the form:
 
@@ -424,11 +433,11 @@ theorem derivable_div_succ {n : Nat} (u v : ETm n) :
           exact (<op>_congr (ih _) (ih _)).trans (numeral_<op> _ _)
 ```
 
-- [ ] **Step 7: Build green; confirm no `sorry`.**
+- [x] **Step 7: Build green; confirm no `sorry`.**
   Run: `lake build`
   Expected: no errors, no `sorry` (replace the Step 2 `sorry`).
 
-- [ ] **Step 8: Commit M0c.**
+- [x] **Step 8: Commit M0c.**
   `bash scripts/pre-commit.sh`; `scripts/check-axioms.sh`; commit via
   `jj` with `feat(era): prove soundness and numeral computation for the
   rich basis`.
@@ -444,7 +453,7 @@ Each lemma: any `Nat`-valued function satisfying the operation's axioms
 equals the intended `Nat` operation, given dependency operations pinned.
 These are `Nat`-meta inductions, recovery-independent.
 
-- [ ] **Step 1: `add` uniqueness.**
+- [x] **Step 1: `add` uniqueness.**
 
 ```lean
 theorem add_unique (g : Nat → Nat → Nat)
@@ -454,7 +463,7 @@ theorem add_unique (g : Nat → Nat → Nat)
 
 Strategy: `intro x y; induction y` ; base `h0`; step `hS` + `ih`.
 
-- [ ] **Step 2: `tsub`/`pred` uniqueness.**
+- [x] **Step 2: `tsub`/`pred` uniqueness.**
 
 ```lean
 theorem sub_unique (g : Nat → Nat → Nat)
@@ -466,7 +475,7 @@ theorem sub_unique (g : Nat → Nat → Nat)
 Strategy: first prove `∀ z, g z 1 = z - 1` by `cases z` (hp0/hpS); then
 `induction y` using `hS` and that fact; close with `omega`.
 
-- [ ] **Step 3: `mul` uniqueness** (depends on `add` pinned).
+- [x] **Step 3: `mul` uniqueness** (depends on `add` pinned).
 
 ```lean
 theorem mul_unique (g : Nat → Nat → Nat)
@@ -476,7 +485,7 @@ theorem mul_unique (g : Nat → Nat → Nat)
 
 Strategy: `induction y`; step uses `hS`, `ih`, `Nat.mul_succ`.
 
-- [ ] **Step 4: `pow` uniqueness** (depends on `mul`).
+- [x] **Step 4: `pow` uniqueness** (depends on `mul`).
 
 ```lean
 theorem pow_unique (g : Nat → Nat → Nat)
@@ -486,7 +495,7 @@ theorem pow_unique (g : Nat → Nat → Nat)
 
 Strategy: `induction y`; step uses `hS`, `ih`, `Nat.pow_succ`.
 
-- [ ] **Step 5: `pow2` uniqueness** (depends on `add`).
+- [x] **Step 5: `pow2` uniqueness** (depends on `add`).
 
 ```lean
 theorem pow2_unique (g : Nat → Nat)
@@ -496,7 +505,7 @@ theorem pow2_unique (g : Nat → Nat)
 
 Strategy: `induction x`; step uses `hS`, `ih`, `Nat.pow_succ`, `omega`.
 
-- [ ] **Step 6: Build green; commit M1a.**
+- [x] **Step 6: Build green; commit M1a.**
   `lake build`; `bash scripts/pre-commit.sh`; `scripts/check-axioms.sh`;
   commit via `jj` with `feat(era): prove categoricity of the structural
   operations`.
@@ -507,7 +516,7 @@ Strategy: `induction x`; step uses `hS`, `ih`, `Nat.pow_succ`, `omega`.
 
 **Files:** Modify `GebLean/Era.lean`.
 
-- [ ] **Step 1: `mod` uniqueness** (depends on `add`).
+- [x] **Step 1: `mod` uniqueness** (depends on `add`).
 
 ```lean
 theorem mod_unique (g : Nat → Nat → Nat)
@@ -526,7 +535,7 @@ and apply `hlt`, matching `Nat.mod_eq_of_lt`. If `x ≥ y+1`, write
 hypothesis on `x-(y+1)`, matching `Nat.add_mod_right`. This mirrors the
 head's `numeral_mod` case split.
 
-- [ ] **Step 2: `div` uniqueness** (depends on `add`, `mod`, `tsub`).
+- [x] **Step 2: `div` uniqueness** (depends on `add`, `mod`, `tsub`).
 
 ```lean
 theorem div_unique (g : Nat → Nat → Nat)
@@ -539,7 +548,7 @@ theorem div_unique (g : Nat → Nat → Nat)
 Strategy: `cases y`; `0` by `hz`/`Nat.div_zero`. For `y+1`: induction on
 `x`; base `h0`/`Nat.zero_div`; step `hS` + `ih` + `succ_div_succ`.
 
-- [ ] **Step 3: Per-symbol axiom-extraction helpers.** For each symbol,
+- [x] **Step 3: Per-symbol axiom-extraction helpers.** For each symbol,
   state a helper that pulls its axiom equations out of `hI` into the
   pointwise `Nat` form the `*_unique` lemma expects (each axiom's `eval`
   unfolds through `Tm.eval`, the smart constructors, and `fcons`).
@@ -556,7 +565,7 @@ have haddS : ∀ x y,
 
   Run `lake build` after each symbol's helper.
 
-- [ ] **Step 4: Assemble `eraInterp_unique`.**
+- [x] **Step 4: Assemble `eraInterp_unique`.**
 
 ```lean
 theorem eraInterp_unique
@@ -571,7 +580,7 @@ theorem eraInterp_unique
   `mul`, `pow`, `pow2`, `mod`, `div`), and rewrite `v` to its components
   via `fcons` eta (`fcons_eta`).
 
-- [ ] **Step 5: Build green; commit M1b.**
+- [x] **Step 5: Build green; commit M1b.**
   `lake build`; `bash scripts/pre-commit.sh`; `scripts/check-axioms.sh`;
   commit via `jj` with `feat(era): prove the categoricity capstone
   eraInterp_unique`.

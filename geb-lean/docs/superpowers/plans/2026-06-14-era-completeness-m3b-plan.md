@@ -1,5 +1,12 @@
 # Era completeness M3b implementation plan
 
+> **Status (2026-06-19): COMPLETE.** All Phases 1–7 landed (the semantic
+> Era-completeness chain through `era_complete` + the K-sim-2 corollary).
+> Phases 4–7 and Task 6.4 were executed via the refinement sub-plans
+> (`phase4-5-subplan`, `phase6-7-subplan`, `task6.4-histcode-term-subplan`,
+> `packm-term-plan`, `task6.4de-faithful-count-revision`), not the inline
+> skeletons here; Task 3.1 was routed through the gcd-term-subplan.
+
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
@@ -36,7 +43,7 @@
 > **For agentic workers:** REQUIRED SUB-SKILL: Use
 > superpowers:subagent-driven-development (recommended) or
 > superpowers:executing-plans to implement this plan task-by-task. Steps
-> use checkbox (`- [ ]`) syntax for tracking.
+> use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Build the `eraBSum` and `eraBProd` term formers with their
 `eval` lemmas, then assemble `era_complete` (every `ERMor1` function is
@@ -191,7 +198,7 @@ These have interior `ℕ` truncation at small `n`, so state them additively
 
 - Modify: `GebLean/Utilities/EraBoundedSum.lean`
 
-- [ ] **Step 1: State the additive (ℕ-safe) identity**
+- [x] **Step 1: State the additive (ℕ-safe) identity**
 
 ```lean
 /-- Linear-weighted geometric sum `Σ_{i<n} i·qⁱ`, cleared of division
@@ -209,7 +216,7 @@ is equivalent over `ℤ` to `(n−1)·q^{n+1} − n·qⁿ + q` but avoids every
 `ℕ` subtraction, so it holds for all `n ≥ 0` and `omega` can close the
 step.
 
-- [ ] **Step 2: Numeric check FIRST (over `range 8`, incl. `n=0,1`)**
+- [x] **Step 2: Numeric check FIRST (over `range 8`, incl. `n=0,1`)**
 
 ```lean
 #eval (List.range 8).all (fun n =>
@@ -220,13 +227,13 @@ step.
 
 Expected: `true`. Remove before commit.
 
-- [ ] **Step 3: Build to confirm the statement elaborates**
+- [x] **Step 3: Build to confirm the statement elaborates**
 
 Run: `lake build GebLean.Utilities.EraBoundedSum`
 Expected: builds with a `declaration uses 'sorry'` warning, no
 elaboration errors.
 
-- [ ] **Step 4: Prove by induction on `n`**
+- [x] **Step 4: Prove by induction on `n`**
 
 Strategy: `induction n`; base `simp`. Step: `Finset.sum_range_succ`,
 `pow_succ`, the IH, then `omega` fed `Nat.one_le_pow` and the product
@@ -234,7 +241,7 @@ facts. The additive form keeps every term non-negative, so `omega`
 closes after the nonlinear atoms are supplied. Mirror
 `natGeomSum_mul`'s structure.
 
-- [ ] **Step 5: `/`-form corollary (for `n ≥ 1`, optional consumer
+- [x] **Step 5: `/`-form corollary (for `n ≥ 1`, optional consumer
 convenience)**
 
 ```lean
@@ -248,7 +255,7 @@ Strategy: derive from `natLinGeomSum_mul` by clearing; only stated for
 `n ≥ 1` so `(n − 1)` is exact. If the engine consumes the `_mul` form
 directly, this corollary may be dropped.
 
-- [ ] **Step 6: Verify axiom-clean and commit**
+- [x] **Step 6: Verify axiom-clean and commit**
 
 Run: `bash scripts/pre-commit.sh`
 Run: `bash scripts/check-axioms.sh` (expect `propext`, `Quot.sound`,
@@ -272,7 +279,7 @@ middle coefficient `2n²−2n−1` is negative for `n ≤ 1`, so the cleared
 
 - Modify: `GebLean/Utilities/EraBoundedSum.lean`
 
-- [ ] **Step 1: Numeric check FIRST (pin the constants, incl. small n)**
+- [x] **Step 1: Numeric check FIRST (pin the constants, incl. small n)**
 
 ```lean
 #eval (List.range 8).all (fun n =>
@@ -285,7 +292,7 @@ Expected: `true` for `n ≥ 2`; inspect `n = 0, 1` separately (the
 `2n²−2n−1` underflows in `ℕ` there). Adjust until the `n ≥ 2` cases all
 pass; remove before commit.
 
-- [ ] **Step 2: State the additive identity for `n ≥ 2`**
+- [x] **Step 2: State the additive identity for `n ≥ 2`**
 
 ```lean
 /-- Square-weighted geometric sum `Σ_{i<n} i²·qⁱ`, cleared and additive,
@@ -298,7 +305,7 @@ theorem natSqGeomSum_mul (q n : ℕ) (hq : 2 ≤ q) (hn : 2 ≤ n) :
   sorry
 ```
 
-- [ ] **Step 3: Base cases `n = 0, 1`**
+- [x] **Step 3: Base cases `n = 0, 1`**
 
 ```lean
 theorem natSqGeomSum_zero (q : ℕ) :
@@ -307,7 +314,7 @@ theorem natSqGeomSum_one (q : ℕ) :
     ∑ i ∈ Finset.range 1, i ^ 2 * q ^ i = 0 := by simp
 ```
 
-- [ ] **Step 4: Prove Step 2 by induction on `n` from `2`**
+- [x] **Step 4: Prove Step 2 by induction on `n` from `2`**
 
 Strategy: induct with the base at `n = 2` (compute directly) and the
 step via `Finset.sum_range_succ`, `pow_succ`, IH, `omega` with the
@@ -315,7 +322,7 @@ nonlinear atoms. The additive form keeps coefficients non-negative for
 `n ≥ 2`. Budget a `lean4:sorry-filler-deep` pass — this is materially
 harder than `G₁`.
 
-- [ ] **Step 5: build, axiom-check, commit**
+- [x] **Step 5: build, axiom-check, commit**
 
 ```bash
 jj describe -m "feat(era): prove the square-weighted geometric sum over naturals
@@ -339,7 +346,7 @@ where the closed form degenerates), and (Phase 3) an `Era` term. The
 
 - Create: `GebLean/Utilities/ArithClosedForms.lean`
 
-- [ ] **Step 1: Module docstring + imports**
+- [x] **Step 1: Module docstring + imports**
 
 ```lean
 import GebLean.LawvereER
@@ -385,7 +392,7 @@ elementary recursive, closed form, p-adic valuation, Hamming weight
 namespace GebLean
 ```
 
-- [ ] **Step 2: define the slow `ν₂`**
+- [x] **Step 2: define the slow `ν₂`**
 
 ```lean
 /-- The slow (log-free) `2`-adic valuation closed form
@@ -398,7 +405,7 @@ def nu2Closed (n : ℕ) : ℕ :=
   (Nat.gcd n (2 ^ n) ^ (n + 1) % base ^ 2) / base
 ```
 
-- [ ] **Step 3: numeric check (small `n` only — the slow form forms
+- [x] **Step 3: numeric check (small `n` only — the slow form forms
 `2ⁿ`)**
 
 ```lean
@@ -408,7 +415,7 @@ def nu2Closed (n : ℕ) : ℕ :=
 Expected: `true`. (`padicValNat 2` needs the `Fact (Nat.Prime 2)`
 instance `fact_prime_two`, available in Mathlib.) Remove before commit.
 
-- [ ] **Step 4: prove `nu2Closed n = padicValNat 2 n` for `n ≥ 1`**
+- [x] **Step 4: prove `nu2Closed n = padicValNat 2 n` for `n ≥ 1`**
 
 ```lean
 theorem nu2Closed_eq (n : ℕ) (hn : 1 ≤ n) :
@@ -425,7 +432,7 @@ binomial theorem, using `x < base` so `mod base²` isolates
 as a generic lemma `pow_succ_mod_sq (a x : ℕ) (h : x < a + 1) :
 (a + 1) ^ x % a ^ 2 = (1 + x * a) % a ^ 2` then specialise.
 
-- [ ] **Step 5: build, axiom-check, commit**
+- [x] **Step 5: build, axiom-check, commit**
 
 ```bash
 jj describe -m "feat(era): prove the slow 2-adic valuation closed form
@@ -440,7 +447,7 @@ jj new
 
 - Modify: `GebLean/Utilities/ArithClosedForms.lean`
 
-- [ ] **Step 1: define**
+- [x] **Step 1: define**
 
 ```lean
 /-- `C(2n,n)` as the arithmetic-term closed form
@@ -451,12 +458,12 @@ def centralBinomClosed (n : ℕ) : ℕ :=
   ((1 + 2 ^ (2 * n)) ^ (2 * n) / 2 ^ (2 * n ^ 2)) % 2 ^ (2 * n)
 ```
 
-- [ ] **Step 2: numeric check** for `n` in `1 .. 14`:
+- [x] **Step 2: numeric check** for `n` in `1 .. 14`:
 `centralBinomClosed n = Nat.centralBinom n`. Confirm separately that
 `centralBinomClosed 0 = 0 ≠ 1 = Nat.centralBinom 0`. Remove before
 commit.
 
-- [ ] **Step 3: prove `centralBinomClosed n = Nat.centralBinom n` for
+- [x] **Step 3: prove `centralBinomClosed n = Nat.centralBinom n` for
 `n ≥ 1`**
 
 ```lean
@@ -475,7 +482,7 @@ positive term), so `⌊·/2^(2n²)⌋ mod 2^(2n)` extracts the `j = n` digit
 `digit_extract (d : ℕ → ℕ) (b k : ℕ) (hfit : ∀ j, d j < b) :
 (Σ_j d j · b^j) / b^k % b = d k`.
 
-- [ ] **Step 4: build, axiom-check, commit**
+- [x] **Step 4: build, axiom-check, commit**
 
 ```bash
 jj describe -m "feat(era): prove the central binomial coefficient closed form
@@ -490,7 +497,7 @@ jj new
 
 - Modify: `GebLean/Utilities/ArithClosedForms.lean`
 
-- [ ] **Step 1: define (slow `ν₂` ∘ central binomial)**
+- [x] **Step 1: define (slow `ν₂` ∘ central binomial)**
 
 ```lean
 /-- Binary Hamming weight (digit sum) `σ`, as `ν₂(C(2n,n))` (Kummer),
@@ -498,13 +505,13 @@ using the slow log-free `ν₂`. -/
 def hwClosed (n : ℕ) : ℕ := nu2Closed (centralBinomClosed n)
 ```
 
-- [ ] **Step 2: numeric check** `hwClosed n = (Nat.digits 2 n).sum` for
+- [x] **Step 2: numeric check** `hwClosed n = (Nat.digits 2 n).sum` for
 `n` in `1 .. 10` (the slow `ν₂` on `C(2n,n)` is feasible only for small
 `n` — it forms a `~2·C(2n,n)`-bit number and stalls past `n ≈ 12`, so
 keep the probe range small; confirm `n = 0`
 gives digit sum `0`). Remove before commit.
 
-- [ ] **Step 3: prove `hwClosed n = (Nat.digits 2 n).sum` for `n ≥ 1`,
+- [x] **Step 3: prove `hwClosed n = (Nat.digits 2 n).sum` for `n ≥ 1`,
 plus `n = 0`**
 
 ```lean
@@ -526,7 +533,7 @@ from `sub_one_mul_padicValNat_choose_eq_sub_sum_digits` at `p = 2`,
 `S₂(2n) = S₂(n)`. Handle `n = 0` directly (`hwClosed 0` and digit sum
 both `0`).
 
-- [ ] **Step 4: build, axiom-check, commit**
+- [x] **Step 4: build, axiom-check, commit**
 
 ```bash
 jj describe -m "feat(era): prove the Hamming weight closed form via Kummer
@@ -541,7 +548,7 @@ jj new
 
 - Modify: `GebLean/Utilities/ArithClosedForms.lean`
 
-- [ ] **Step 1: define and state the indicator lemma**
+- [x] **Step 1: define and state the indicator lemma**
 
 ```lean
 /-- The digit-block indicator (arXiv:2407.12928, Lemma 3.1):
@@ -554,11 +561,11 @@ theorem hwClosed_deltaBlock {a w : ℕ} (ha : a < 2 ^ w) :
   sorry
 ```
 
-- [ ] **Step 2: numeric check** over `w ∈ 1 .. 6`, `a ∈ 0 .. 2^w − 1`
+- [x] **Step 2: numeric check** over `w ∈ 1 .. 6`, `a ∈ 0 .. 2^w − 1`
 (confirm `deltaBlock a w ≥ 1` so `hwClosed` is in its proven range, and
 `< 2^(2w)`). Remove before commit.
 
-- [ ] **Step 3: prove**
+- [x] **Step 3: prove**
 
 Strategy: via `hwClosed_eq` reduce to `(Nat.digits 2 (δ a w)).sum`. For
 `a = 0`: `δ = (2^w−1)(2^w+1) = 2^(2w)−1`, digit sum `2w`. For
@@ -566,7 +573,7 @@ Strategy: via `hwClosed_eq` reduce to `(Nat.digits 2 (δ a w)).sum`. For
 the `2w` bits split into two complementary runs summing to `w`. Fiddly;
 budget a `lean4:sorry-filler-deep` pass.
 
-- [ ] **Step 4: build, axiom-check, commit**
+- [x] **Step 4: build, axiom-check, commit**
 
 ```bash
 jj describe -m "feat(era): prove the digit-block indicator Hamming weight
@@ -620,20 +627,20 @@ Identical pattern each: a `def` mirroring the `ℕ` closed form, then an
 `eval` lemma reducing to the Phase-2 identity. One commit each. No
 `⌊log₂⌋` / `eraIlog2` is built (De-cycling).
 
-- [ ] **Step 1: `eraNu2 : ETm 1`** composing `eraPow2Val`, `epow`,
+- [x] **Step 1: `eraNu2 : ETm 1`** composing `eraPow2Val`, `epow`,
 `emod`, `ediv`, `etsub`, `epow2`; prove `eval eraNu2 ![n] = nu2Closed n`
 by reduction to `nu2Closed`'s definition (using `eraPow2Val_eval`).
 
-- [ ] **Step 2: `eraCentralBinom : ETm 1`** mirroring
+- [x] **Step 2: `eraCentralBinom : ETm 1`** mirroring
 `centralBinomClosed`; `eval = centralBinomClosed n`.
 
-- [ ] **Step 3: `eraSigma : ETm 1`** as `eraNu2 ∘ eraCentralBinom`
+- [x] **Step 3: `eraSigma : ETm 1`** as `eraNu2 ∘ eraCentralBinom`
 (substitution via `Tm.subst`/`sub0`); prove
 `eval eraSigma ![n] = hwClosed n` by `Tm.eval_subst` + the two `eval`
 lemmas. (The bridge to the digit sum is `hwClosed_eq`, used by
 consumers; `eraSigma`'s own `eval` lemma targets `hwClosed n`.)
 
-- [ ] **Step 4: per sub-task** build, axiom-check, commit (three
+- [x] **Step 4: per sub-task** build, axiom-check, commit (three
 commits, e.g. `feat(era): realise the 2-adic valuation as an Era term`).
 
 ### Task 3.3: `eraDelta` (the indicator term)
@@ -642,7 +649,7 @@ commits, e.g. `feat(era): realise the 2-adic valuation as an Era term`).
 
 - Modify: `GebLean/EraCompleteness.lean`
 
-- [ ] `eraDelta : ETm 2` (variable `0` = `a`, `1` = `w`) mirroring
+- [x] `eraDelta : ETm 2` (variable `0` = `a`, `1` = `w`) mirroring
 `deltaBlock`; `eval eraDelta ![a,w] = deltaBlock a w`. Build, prove
 (direct reduction), axiom-check, commit.
 
@@ -714,7 +721,7 @@ Diophantine system with the four invariants (arXiv:2606.09336, Lemma 2):
 sum-of-squares; simple (a simple exponential polynomial); unique
 witness; explicit arithmetic-term witness bounds.
 
-- [ ] **Sub-lemma 4.1: the carrier structure (all four invariants as
+- [x] **Sub-lemma 4.1: the carrier structure (all four invariants as
 fields).** Finalise the field types in the sub-plan; the four invariants
 are:
 
@@ -736,7 +743,7 @@ structure DiophEnc (n : ℕ) where
   bound_spec : Prop          -- finalise: solution witnesses < bound
 ```
 
-- [ ] **Sub-lemma 4.2: the Identity-(4) exponent reduction.** The
+- [x] **Sub-lemma 4.2: the Identity-(4) exponent reduction.** The
 device reducing variable-exponent cases (`mul`, `div`, `tsub`, `pow`) to
 base `2`:
 
@@ -751,7 +758,7 @@ theorem pow_eq_two_pow_mod (a b : ℕ) :
 Numeric-check first over `a ∈ 0..29`, `b ∈ 0..14` (validated in the
 gate probe), then prove.
 
-- [ ] **Sub-lemmas 4.3–4.6: the induction cases** (one per `ETm`
+- [x] **Sub-lemmas 4.3–4.6: the induction cases** (one per `ETm`
 constructor: `var`, `zero`, `succ`, and `app b` for each `b : EraB`).
 Build the `DiophEnc` from sub-encodings following the paper's Cases 1–3
 (projection; `2^B`; `B₁ + B₂`; `B₁ mod B₂`), extended to the full Era
@@ -759,7 +766,7 @@ basis (`tsub`, `mul`, `div`, `pow` via Sub-lemma 4.2). Each case
 preserves the four invariants; the witness bounds compose via
 `eraMajorant` (Phase 3.5).
 
-- [ ] **Sub-lemma 4.7: the top-level reduction** assembling
+- [x] **Sub-lemma 4.7: the top-level reduction** assembling
 `diophOf : ETm n → DiophEnc n` and its correctness theorem.
 
 Strategy notes for the sub-plan: this mirrors `Tm.eval_subst`'s
@@ -775,29 +782,29 @@ as the largest phase. Commit per sub-lemma.
 
 - Create: `GebLean/Utilities/EraHypercube.lean`
 
-- [ ] **Sub-lemma 5.1: `HW`-additivity over non-overlapping blocks.**
+- [x] **Sub-lemma 5.1: `HW`-additivity over non-overlapping blocks.**
 `(Nat.digits 2 (Σ blocks)).sum = Σ (Nat.digits 2 block).sum` when blocks
 occupy disjoint base-`2^(2w)` positions (recurrence paper Lemma 3.3); a
 base-`2^(2w)` place-value / no-carry argument.
 
-- [ ] **Sub-lemma 5.2: the mixed-radix enumeration bijection.** The map
+- [x] **Sub-lemma 5.2: the mixed-radix enumeration bijection.** The map
 `v(ā) = a₁ + a₂·t + ⋯ + a_k·t^(k−1)` is a bijection
 `{0,…,t−1}^k ≅ {0,…,t^k−1}` (a `Finset`/`Fin`-product digit expansion);
 isolate it, as the cube-sum factorisation depends on it.
 
-- [ ] **Sub-lemma 5.3: the packed number `M` and the cube-sum
+- [x] **Sub-lemma 5.3: the packed number `M` and the cube-sum
 factorisation** (method paper Lemma 3.2):
 `Σ_{ā∈cube} Πᵢ aᵢ^{uᵢ} vᵢ^{aᵢ} = Πᵢ G_{uᵢ}(vᵢ, t−1)`, reusing
 `natGeomSum_eq` (`G₀`), `natLinGeomSum_mul` (`G₁`), `natSqGeomSum_mul`
 (`G₂`).
 
-- [ ] **Sub-lemma 5.4: the count read-off**
+- [x] **Sub-lemma 5.4: the count read-off**
 `#{ā : P ā = 0} = (Nat.digits 2 (M …)).sum / w − t^k` (method paper
 Theorem 3.4 / Corollary 3.6), composing 5.1–5.3 and
 `hwClosed_deltaBlock`. The `HW` here is the slow-`ν₂` term — state the
 well-foundedness explicitly (no `⌊log₂⌋` dependency; no cycle).
 
-- [ ] **Sub-lemma 5.5: positional coding read-off**
+- [x] **Sub-lemma 5.5: positional coding read-off**
 `a(n) = ⌊H/Aⁿ⌋` and the recurrence metatheorem specialisation
 (recurrence paper Lemma 3, Theorem 2) for `k = 1`, consuming the Phase-4
 `DiophEnc` and the Phase-3.5 majorant `A`.
@@ -817,7 +824,7 @@ sub-lemma.
 
 ### Task 6.1: `eraBSum`
 
-- [ ] **Step 1: define**
+- [x] **Step 1: define**
 
 ```lean
 /-- Bounded summation as an `Era` term: variable `0` is the bound;
@@ -828,7 +835,7 @@ fixed by `eraMajorant` (Phase 3.5). -/
 def eraBSum {k : ℕ} (t : ETm (k + 1)) : ETm (k + 1) := sorry
 ```
 
-- [ ] **Step 2: the `eval` lemma (the deliverable)**
+- [x] **Step 2: the `eval` lemma (the deliverable)**
 
 ```lean
 theorem eraBSum_eval {k : ℕ} (t : ETm (k + 1)) (ctx : Fin (k + 1) → ℕ) :
@@ -845,15 +852,15 @@ read-off (Sub-lemma 5.4) applied to the `DiophEnc` of `t` (Phase 4),
 with the majorant fixing `w` (Phase 3.5). Reduce `eval (eraBSum t)` to
 that count via the Phase-5 `eval` lemmas.
 
-- [ ] **Step 3:** build, axiom-check, commit.
+- [x] **Step 3:** build, axiom-check, commit.
 
 ### Task 6.2: `eraBProd`
 
-- [ ] **Step 1: define** `eraBProd` via the recurrence engine
+- [x] **Step 1: define** `eraBProd` via the recurrence engine
 (Sub-lemma 5.5) with step `·` (`p(m+1) = p(m) · f(m)`), product majorant
 (Phase 3.5).
 
-- [ ] **Step 2: the `eval` lemma**
+- [x] **Step 2: the `eval` lemma**
 
 ```lean
 theorem eraBProd_eval {k : ℕ} (t : ETm (k + 1)) (ctx : Fin (k + 1) → ℕ) :
@@ -863,7 +870,7 @@ theorem eraBProd_eval {k : ℕ} (t : ETm (k + 1)) (ctx : Fin (k + 1) → ℕ) :
   sorry
 ```
 
-- [ ] **Step 3:** build, axiom-check, commit.
+- [x] **Step 3:** build, axiom-check, commit.
 
 ---
 
@@ -875,7 +882,7 @@ theorem eraBProd_eval {k : ℕ} (t : ETm (k + 1)) (ctx : Fin (k + 1) → ℕ) :
 
 ### Task 7.1: `era_complete`
 
-- [ ] **Step 1: state**
+- [x] **Step 1: state**
 
 ```lean
 /-- Completeness: every `ERMor1` (elementary) function is the denotation
@@ -886,7 +893,7 @@ theorem era_complete {n : ℕ} (f : ERMor1 n) :
   sorry
 ```
 
-- [ ] **Step 2: prove by structural induction on `f`**
+- [x] **Step 2: prove by structural induction on `f`**
 
 ```text
 zero      → ⟨Tm.zero, …⟩                       (ERMor1.interp_zero, eraInterp)
@@ -905,7 +912,7 @@ immediate from the `interp_*` and `*_eval` lemmas; `comp` uses
 inductive witness. The `Fin.cons i (Fin.tail ctx)` shape is identical in
 `ERMor1.interp_bsum` and `eraBSum_eval`, so the IH applies directly.
 
-- [ ] **Step 3:** build, axiom-check, commit.
+- [x] **Step 3:** build, axiom-check, commit.
 
 ### Task 7.2: the K-sim-2 corollary
 
@@ -917,24 +924,24 @@ interp-faithfulness** lemmas, not the categorical `erKSimEquiv`
 (`GebLean/LawvereKSimER.lean`, carrying an `f.level ≤ 2` premise that is
 load-bearing for the K-sim-2 statement).
 
-- [ ] **Step 1: pin the extraction.** Confirm `erToK_interp` and
+- [x] **Step 1: pin the extraction.** Confirm `erToK_interp` and
 `kToER_interp` (with its `level ≤ 2` premise) give the
 `ERMor1` ↔ `K-sim-2` function-class equality directly; assess whether
 `erKSimEquiv` is needed at all (likely not). State the exact corollary
 signature in terms of the K-sim-2 morphism `interp`.
 
-- [ ] **Step 2: state and prove the corollary** by composing
+- [x] **Step 2: state and prove the corollary** by composing
 `era_complete` + `era_sound_er` (giving `Era ≃ E³` as denoted functions)
 with the `ERMor1 ↔ K-sim-2` interp faithfulness. Keep it a thin
 composition; implement no `K-sim` scheme over the basis (spec § 12).
 
-- [ ] **Step 3:** build, axiom-check, commit. This commit closes M3b.
+- [x] **Step 3:** build, axiom-check, commit. This commit closes M3b.
 
 ---
 
 ## Self-review checklist (run before execution)
 
-- [ ] **Spec coverage.** Spec § 5 (bounded-sum engine) → Phases 1–6;
+- [x] **Spec coverage.** Spec § 5 (bounded-sum engine) → Phases 1–6;
   § 6 (bounded product via the engine, no separate `2^x`-elimination) →
   Task 6.2; § 4/§ 3 (the induction, the two `eval` lemmas) → Phases 6–7;
   § 7 (soundness) → already `era_sound_er` (not redone); § 8 (K-sim-2
@@ -943,17 +950,17 @@ composition; implement no `K-sim` scheme over the basis (spec § 12).
   `Era.lean` unmodified) → the per-task pre-commit + axiom-check gates
   and the file structure.
 
-- [ ] **`Era.lean` untouched** (spec § 12): all new content lives in
+- [x] **`Era.lean` untouched** (spec § 12): all new content lives in
   `Utilities/*` and `EraCompleteness.lean`.
 
-- [ ] **Type consistency.** `eraBSum`/`eraBProd : ETm (k+1) → ETm (k+1)`;
+- [x] **Type consistency.** `eraBSum`/`eraBProd : ETm (k+1) → ETm (k+1)`;
   the `eval`-lemma RHS `natBSum (ctx 0) (fun i => Tm.eval … (Fin.cons i
   (Fin.tail ctx)))` matches `ERMor1.interp_bsum` verbatim. Ingredient
   names consistent across phases (`nu2Closed`/`eraNu2`,
   `centralBinomClosed`/`eraCentralBinom`, `hwClosed`/`eraSigma`,
   `deltaBlock`/`eraDelta`, `natLinGeomSum_mul`/`natSqGeomSum_mul`).
 
-- [ ] **Mathlib name sweep (Phase-0 of execution).** Confirmed present
+- [x] **Mathlib name sweep (Phase-0 of execution).** Confirmed present
   in the pin: `Nat.pow_log_le_self` (arg `x ≠ 0`),
   `Nat.lt_pow_succ_log_self`, `Nat.centralBinom`, `Nat.centralBinom_pos`,
   `Nat.centralBinom_eq_two_mul_choose`, `padicValNat` (needs
