@@ -1360,4 +1360,270 @@ theorem predCount_side_eq {p k : ℕ} (s : SosSystem (p + k)) (ctx : Fin p → �
   · rintro ⟨hx, hzero⟩
     exact ⟨fun c => lt_of_lt_of_le (hx c) htθ, hzero⟩
 
+/-- The slot-moving re-indexing embedding of arXiv:2407.12928, Corollary 3.6:
+move the output slot of a `diophOf` encoding from the parameter side
+(`Fin.snoc`) to the cube side. It sends the `n` inputs to the input block, the
+output index `n` to the first cube slot, and witness `i` to cube slot `1 + i`,
+realising `Fin (n + 1 + witArity) → Fin (n + (1 + witArity))`. Built from
+`Fin.addCases` / `Fin.lastCases`, so it executes. -/
+def reindexEmb (n witArity : ℕ) :
+    Fin (n + 1 + witArity) → Fin (n + (1 + witArity)) :=
+  Fin.addCases
+    (Fin.lastCases (Fin.natAdd n (0 : Fin (1 + witArity)))
+      (fun j => Fin.castAdd (1 + witArity) j))
+    (fun i => Fin.natAdd n (Fin.natAdd 1 i))
+
+/-- The re-indexed context of arXiv:2407.12928, Corollary 3.6: read a cube point
+`a : Fin (1 + witArity) → ℕ` (output slot then witnesses) into the `diophOf`
+encoding's context, with the output value `a 0` placed on the `Fin.snoc`
+parameter side and the witnesses `a (1 + i)` on the append side. -/
+def reindexCtx {n : ℕ} (τ : ETm n) (ctx : Fin n → ℕ)
+    (a : Fin (1 + (diophOf τ).witArity) → ℕ) : Fin (n + 1 + (diophOf τ).witArity) → ℕ :=
+  (diophOf τ).ctx ctx (a 0) (fun i => a (Fin.natAdd 1 i))
+
+/-- Injectivity of `reindexEmb`: inputs land in the input block, while the output
+slot and the witnesses land at distinct cube slots (`0` and `1 + i`). -/
+theorem reindexEmb_injective (n witArity : ℕ) :
+    Function.Injective (reindexEmb n witArity) := by
+  intro a b hab
+  unfold reindexEmb at hab
+  induction a using Fin.addCases with
+  | left ia =>
+    induction b using Fin.addCases with
+    | left ib =>
+      simp only [Fin.addCases_left] at hab
+      induction ia using Fin.lastCases with
+      | last =>
+        induction ib using Fin.lastCases with
+        | last => rfl
+        | cast jb =>
+          simp only [Fin.lastCases_last, Fin.lastCases_castSucc, Fin.ext_iff, Fin.val_natAdd,
+            Fin.val_castAdd] at hab
+          omega
+      | cast ja =>
+        induction ib using Fin.lastCases with
+        | last =>
+          simp only [Fin.lastCases_last, Fin.lastCases_castSucc, Fin.ext_iff, Fin.val_natAdd,
+            Fin.val_castAdd] at hab
+          omega
+        | cast jb =>
+          simp only [Fin.lastCases_castSucc] at hab
+          rw [Fin.castAdd_injective _ _ hab]
+    | right kb =>
+      simp only [Fin.addCases_left, Fin.addCases_right] at hab
+      induction ia using Fin.lastCases with
+      | last =>
+        simp only [Fin.lastCases_last, Fin.ext_iff, Fin.val_natAdd] at hab
+        exfalso; simp only [Fin.val_zero] at hab; omega
+      | cast ja =>
+        simp only [Fin.lastCases_castSucc, Fin.ext_iff, Fin.val_natAdd, Fin.val_castAdd] at hab
+        omega
+  | right ka =>
+    induction b using Fin.addCases with
+    | left ib =>
+      simp only [Fin.addCases_left, Fin.addCases_right] at hab
+      induction ib using Fin.lastCases with
+      | last =>
+        simp only [Fin.lastCases_last, Fin.ext_iff, Fin.val_natAdd] at hab
+        exfalso; simp only [Fin.val_zero] at hab; omega
+      | cast jb =>
+        simp only [Fin.lastCases_castSucc, Fin.ext_iff, Fin.val_natAdd, Fin.val_castAdd] at hab
+        omega
+    | right kb =>
+      simp only [Fin.addCases_right] at hab
+      have h := Fin.natAdd_injective _ _ hab
+      have h2 := Fin.natAdd_injective _ _ h
+      rw [h2]
+
+/-- The re-indexing identity of arXiv:2407.12928, Corollary 3.6: precomposing the
+cube context `Fin.append ctx a` with `reindexEmb` recovers the `diophOf` context
+`reindexCtx`. The cube-side block of `Fin.append ctx a` is read at slot `0` for the
+output and at slots `1 + i` for the witnesses. -/
+theorem append_comp_reindexEmb {n : ℕ} (τ : ETm n) (ctx : Fin n → ℕ)
+    (a : Fin (1 + (diophOf τ).witArity) → ℕ) :
+    (Fin.append ctx a) ∘ reindexEmb n (diophOf τ).witArity = reindexCtx τ ctx a := by
+  refine funext (fun z => ?_)
+  simp only [Function.comp_apply, reindexEmb, reindexCtx, DiophEnc.ctx]
+  refine Fin.addCases ?_ ?_ z
+  · intro io
+    refine Fin.lastCases ?_ ?_ io
+    · simp only [Fin.addCases_left, Fin.lastCases_last, Fin.append_right, Fin.append_left,
+        Fin.snoc_last]
+    · intro j
+      simp only [Fin.addCases_left, Fin.lastCases_castSucc, Fin.append_left, Fin.snoc_castSucc]
+  · intro i
+    simp only [Fin.addCases_right, Fin.append_right]
+
+/-- The re-indexed system of arXiv:2407.12928, Corollary 3.6: the `diophOf`
+encoding's sum-of-squares system, weakened along `reindexEmb` so that the output
+slot and the witnesses become the cube-side coordinates a cube point ranges over.
+Phase E (`sepReduce`, `eraCount`) operates on this system. -/
+def reindexSys {n : ℕ} (τ : ETm n) : SosSystem (n + (1 + (diophOf τ).witArity)) :=
+  (diophOf τ).sys.weaken (reindexEmb n (diophOf τ).witArity)
+
+/-- The re-indexing bridge of arXiv:2407.12928, Corollary 3.6: evaluating the
+re-indexed system at the cube context `Fin.append ctx a` equals evaluating the
+original `diophOf` system at the re-indexed context `reindexCtx`. An instance of
+`SosSystem.eval_weaken` (the embedding `reindexEmb` is injective) composed with
+`append_comp_reindexEmb`. -/
+theorem reindexSys_eval {n : ℕ} (τ : ETm n) (ctx : Fin n → ℕ)
+    (a : Fin (1 + (diophOf τ).witArity) → ℕ) :
+    SosSystem.eval (reindexSys τ) (Fin.append ctx a)
+      = SosSystem.eval (diophOf τ).sys (reindexCtx τ ctx a) := by
+  rw [reindexSys, SosSystem.eval_weaken _ _ (reindexEmb_injective n (diophOf τ).witArity),
+    append_comp_reindexEmb]
+
+/-- The re-indexed system inherits the polynomial-exponent-zero invariant of the
+`diophOf` encoding (`diophOf_polyExpZero`) through `SosSystem.weaken_polyExpZero`,
+so it is a valid input to the Lemma 3.5 reduction (arXiv:2407.12928, Cor 3.6). -/
+theorem reindexSys_polyExpZero {n : ℕ} (τ : ETm n) : (reindexSys τ).PolyExpZero :=
+  SosSystem.weaken_polyExpZero (diophOf_polyExpZero τ) _
+
+/-- The re-indexed system inherits the coefficient-variable-product invariant of
+the `diophOf` encoding (`diophOf_coeffVarProduct`) through
+`SosSystem.weaken_coeffVarProduct` (arXiv:2407.12928, Cor 3.6). -/
+theorem reindexSys_coeffVarProduct {n : ℕ} (τ : ETm n) : (reindexSys τ).CoeffVarProduct :=
+  SosSystem.weaken_coeffVarProduct (diophOf_coeffVarProduct τ) _
+
+/-- The re-indexed system inherits the base-paired invariant of the `diophOf`
+encoding (`diophOf_basePaired`) through `SosSystem.weaken_basePaired`
+(arXiv:2407.12928, Cor 3.6). -/
+theorem reindexSys_basePaired {n : ℕ} (τ : ETm n) : (reindexSys τ).BasePaired :=
+  SosSystem.weaken_basePaired (diophOf_basePaired τ) _
+
+/-- The uniform base majorant of arXiv:2407.12928, Corollary 3.6: an input-only
+`ETm n` whose value dominates the `diophOf` encoding's value majorant `valBound`
+and every per-witness bound `bound i`. Realised as the `eraListSum` of those
+terms, so each summand is at most the whole sum. The count of `eraCountPred_eval`
+is taken at this base side. -/
+def eraBaseBound {n : ℕ} (τ : ETm n) : ETm n :=
+  eraListSum ((diophOf τ).valBound ::
+    (List.finRange (diophOf τ).witArity).map (diophOf τ).bound)
+
+/-- The base majorant dominates the value majorant `valBound`
+(arXiv:2407.12928, Cor 3.6): `valBound` is the head summand of `eraBaseBound`. -/
+theorem eraBaseBound_valBound {n : ℕ} (τ : ETm n) (ctx : Fin n → ℕ) :
+    Tm.eval eraInterp (diophOf τ).valBound ctx
+      ≤ Tm.eval eraInterp (eraBaseBound τ) ctx := by
+  rw [eraBaseBound, eraListSum_eval, List.map_cons]
+  exact List.le_sum_of_mem (List.mem_cons_self ..)
+
+/-- The base majorant dominates every per-witness bound `bound i`
+(arXiv:2407.12928, Cor 3.6): each `bound i` is a tail summand of `eraBaseBound`. -/
+theorem eraBaseBound_bound {n : ℕ} (τ : ETm n) (ctx : Fin n → ℕ)
+    (i : Fin (diophOf τ).witArity) :
+    Tm.eval eraInterp ((diophOf τ).bound i) ctx
+      ≤ Tm.eval eraInterp (eraBaseBound τ) ctx := by
+  rw [eraBaseBound, eraListSum_eval, List.map_cons, List.map_map]
+  refine List.le_sum_of_mem ?_
+  refine List.mem_cons_of_mem _ ?_
+  exact List.mem_map.mpr ⟨i, List.mem_finRange i, rfl⟩
+
+/-- The base coordinate bound of arXiv:2407.12928, Corollary 3.6: every cube
+point `x` at which the re-indexed system vanishes has all coordinates strictly
+below the base majorant `eraBaseBound`. The output coordinate `x 0` equals
+`Tm.eval eraInterp τ ctx`, below `valBound` (the value-majorisation conjunct of
+`diophOf_encodes`); each witness coordinate `x (1 + i)` is below `bound i`
+(`diophOf_bound`); both are dominated by `eraBaseBound`. -/
+theorem reindexSys_coord_bound {n : ℕ} (τ : ETm n) (ctx : Fin n → ℕ)
+    (x : Fin (1 + (diophOf τ).witArity) → ℕ)
+    (hx0 : SosSystem.eval (reindexSys τ) (Fin.append ctx x) = 0) :
+    ∀ c, x c < Tm.eval eraInterp (eraBaseBound τ) ctx := by
+  rw [reindexSys_eval] at hx0
+  have hval : x 0 < Tm.eval eraInterp (eraBaseBound τ) ctx := by
+    have hgraph : x 0 = Tm.eval eraInterp τ ctx :=
+      (diophOf_encodes τ).1 ctx (x 0) (fun i => x (Fin.natAdd 1 i)) hx0
+    calc x 0 = Tm.eval eraInterp τ ctx := hgraph
+      _ < Tm.eval eraInterp (diophOf τ).valBound ctx := (diophOf_encodes τ).2.2.2 ctx
+      _ ≤ Tm.eval eraInterp (eraBaseBound τ) ctx := eraBaseBound_valBound τ ctx
+  have hwit : ∀ i, x (Fin.natAdd 1 i) < Tm.eval eraInterp (eraBaseBound τ) ctx := by
+    intro i
+    calc x (Fin.natAdd 1 i)
+        < Tm.eval eraInterp ((diophOf τ).bound i) ctx :=
+          diophOf_bound τ ctx (x 0) (fun i => x (Fin.natAdd 1 i)) hx0 i
+      _ ≤ Tm.eval eraInterp (eraBaseBound τ) ctx := eraBaseBound_bound τ ctx i
+  intro c
+  refine Fin.addCases ?_ ?_ c
+  · intro j
+    rw [Subsingleton.elim j 0]
+    exact hval
+  · intro i
+    exact hwit i
+
+open GebLean.EraCompleteness in
+/-- The Era-term witness counter of arXiv:2407.12928, Corollary 3.6 (via
+Theorem 3.4): for a `diophOf`-encoded predicate `τ`, the closed `Era` term whose
+value at `ctx` is the number of cube points (output slot together with the
+`diophOf` witnesses) at which the encoding's sum-of-squares system vanishes. It is
+the count read-off `eraCount` of the Lemma 3.5-reduced re-indexed system
+`reindexSys τ`, taken at the enlarged side `eraTheta` (so the unique chain witness
+is a valid cube coordinate) and modulus `eraW + 1` (so the modulus is positive and
+strictly dominates the reduced predicate). -/
+def eraCountPred {n : ℕ} (τ : ETm n) : ETm n :=
+  eraCount (reindexSys τ) (eraTheta (reindexSys τ) (eraBaseBound τ))
+    (eraW (reindexSys τ) (eraTheta (reindexSys τ) (eraBaseBound τ)) +ᵉ eraNumeral 1)
+
+open GebLean.EraCompleteness in
+/-- The witness-counting identity of arXiv:2407.12928, Corollary 3.6 (via
+Theorem 3.4): `eraCountPred τ` evaluates to the number of cube points — output
+slot together with the `diophOf` witnesses — at side `eraBaseBound` at which the
+`diophOf` encoding's system vanishes. The proof composes the count read-off
+`eraCount_eval` at the enlarged side (discharging its block bound by `eraW_spec`
+and its positivity by the `+ 1` modulus), the fibre collapse `reducedCount_eq`
+(its chain-witness bound by `eraTheta_spec` over the base coordinate bound
+`reindexSys_coord_bound`), the shell collapse `predCount_side_eq` (its shell
+emptiness by the same coordinate bound), and the re-indexing bridge
+`reindexSys_eval`. -/
+theorem eraCountPred_eval {n : ℕ} (τ : ETm n) (ctx : Fin n → ℕ) :
+    Tm.eval eraInterp (eraCountPred τ) ctx
+      = ((GebLean.EraHypercube.cubePoints (1 + (diophOf τ).witArity)
+            (Tm.eval eraInterp (eraBaseBound τ) ctx)).filter
+          (fun a => SosSystem.eval (diophOf τ).sys (reindexCtx τ ctx a) = 0)).card := by
+  set sysW := reindexSys τ with hsysW
+  set tθT := eraTheta sysW (eraBaseBound τ) with htθT
+  set tBase := Tm.eval eraInterp (eraBaseBound τ) ctx with htBase
+  set tθ := Tm.eval eraInterp tθT ctx with htθ
+  have hzero : sysW.PolyExpZero := reindexSys_polyExpZero τ
+  have hcoeff : sysW.CoeffVarProduct := reindexSys_coeffVarProduct τ
+  have hbase : sysW.BasePaired := reindexSys_basePaired τ
+  have ht : 0 < tθ := by rw [htθ, htθT, eraTheta]; exact eraMajorant_pos _ ctx
+  have hwpos : 0 < Tm.eval eraInterp (eraW sysW tθT +ᵉ eraNumeral 1) ctx := by
+    rw [eadd, Tm.eval, eraInterp]
+    simp only [fcons, eraNumeral_eval]
+    omega
+  -- the base coordinate bound for the re-indexed system's zeros
+  have hcoord : ∀ x : Fin (1 + (diophOf τ).witArity) → ℕ,
+      SosSystem.eval sysW (Fin.append ctx x) = 0 → ∀ c, x c < tBase :=
+    fun x hx0 => reindexSys_coord_bound τ ctx x hx0
+  -- step 1: the count read-off at the enlarged side
+  rw [eraCountPred, eraCount_eval sysW tθT (eraW sysW tθT +ᵉ eraNumeral 1) ctx
+    hzero hcoeff hbase ht hwpos ?hP]
+  case hP =>
+    intro a ha
+    refine lt_of_lt_of_le (eraW_spec sysW tθT ctx hzero hcoeff hbase ht a ha) ?_
+    refine Nat.pow_le_pow_right (by norm_num) ?_
+    rw [eadd, Tm.eval, eraInterp]
+    simp only [fcons, eraNumeral_eval]
+    omega
+  -- step 2: the fibre collapse
+  rw [reducedCount_eq sysW ctx tθ hcoeff hbase ?hθ]
+  case hθ =>
+    intro x hx hx0 c i
+    have hxbase : ∀ c, x c < tBase := hcoord x hx0
+    exact eraTheta_spec sysW (eraBaseBound τ) ctx x hxbase c i
+  -- step 3: the shell collapse to the base side
+  rw [predCount_side_eq sysW ctx tBase tθ ?htθ ?hshell]
+  case htθ =>
+    rw [htθ, htθT, eraTheta]
+    refine le_trans ?_ (le_of_lt (eraMajorant_spec _ ctx))
+    rw [epow_eval, eraInterp, eraNumeral_eval]
+    simp only [fcons]
+    exact Nat.le_self_pow (by omega) _
+  case hshell =>
+    intro x _ hx0 c
+    exact hcoord x hx0 c
+  -- step 4: the re-indexing bridge on the predicate
+  refine congrArg Finset.card (Finset.filter_congr (fun x _ => ?_))
+  rw [reindexSys_eval]
+
 end GebLean
